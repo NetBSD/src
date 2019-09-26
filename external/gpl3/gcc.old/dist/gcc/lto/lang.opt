@@ -1,0 +1,70 @@
+; Options for the LTO front end.
+; Copyright (C) 2008-2017 Free Software Foundation, Inc.
+;
+; This file is part of GCC.
+;
+; GCC is free software; you can redistribute it and/or modify it under
+; the terms of the GNU General Public License as published by the Free
+; Software Foundation; either version 3, or (at your option) any later
+; version.
+; 
+; GCC is distributed in the hope that it will be useful, but WITHOUT ANY
+; WARRANTY; without even the implied warranty of MERCHANTABILITY or
+; FITNESS FOR A PARTICULAR PURPOSE.  See the GNU General Public License
+; for more details.
+; 
+; You should have received a copy of the GNU General Public License
+; along with GCC; see the file COPYING3.  If not see
+; <http://www.gnu.org/licenses/>.
+
+; See the GCC internals manual for a description of this file's format.
+
+; Please try to keep this file in ASCII collating order.
+
+Language
+LTO
+
+Enum
+Name(lto_linker_output) Type(enum lto_linker_output) UnknownError(unknown linker output %qs)
+
+EnumValue
+Enum(lto_linker_output) String(unknown) Value(LTO_LINKER_OUTPUT_UNKNOWN)
+
+EnumValue
+Enum(lto_linker_output) String(rel) Value(LTO_LINKER_OUTPUT_REL)
+
+EnumValue
+Enum(lto_linker_output) String(dyn) Value(LTO_LINKER_OUTPUT_DYN)
+
+EnumValue
+Enum(lto_linker_output) String(pie) Value(LTO_LINKER_OUTPUT_PIE)
+
+EnumValue
+Enum(lto_linker_output) String(exec) Value(LTO_LINKER_OUTPUT_EXEC)
+
+flinker-output=
+LTO Report Driver Joined RejectNegative Enum(lto_linker_output) Var(flag_lto_linker_output) Init(LTO_LINKER_OUTPUT_UNKNOWN)
+Set linker output type (used internally during LTO optimization)
+
+
+fltrans
+LTO Report Var(flag_ltrans)
+Run the link-time optimizer in local transformation (LTRANS) mode.
+
+fltrans-output-list=
+LTO Joined Var(ltrans_output_list)
+Specify a file to which a list of files output by LTRANS is written.
+
+fwpa
+LTO Driver Report
+Run the link-time optimizer in whole program analysis (WPA) mode.
+
+fwpa=
+LTO Driver RejectNegative Joined Var(flag_wpa)
+Whole program analysis (WPA) mode with number of parallel jobs specified.
+
+fresolution=
+LTO Joined
+The resolution file.
+
+; This comment is to ensure we retain the blank line above.
