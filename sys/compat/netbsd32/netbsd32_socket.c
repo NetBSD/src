@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.49 2018/11/14 17:51:37 hannken Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.50 2019/09/26 01:32:09 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.49 2018/11/14 17:51:37 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.50 2019/09/26 01:32:09 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,11 +74,12 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.49 2018/11/14 17:51:37 hannken
 #define CMSG32_LEN(l)	(CMSG32_ALIGN(sizeof(struct cmsghdr)) + (l))
 
 static int
-copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, int *len,
+copyout32_msg_control_mbuf(struct lwp *l, struct msghdr *mp, u_int *len,
     struct mbuf *m, char **q, bool *truncated)
 {
 	struct cmsghdr *cmsg, cmsg32;
-	int i, j, error;
+	size_t i, j;
+	int error;
 
 	*truncated = false;
 	cmsg = mtod(m, struct cmsghdr *);
