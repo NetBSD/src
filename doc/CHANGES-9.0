@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.60 2019/09/25 15:47:36 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.61 2019/09/26 19:16:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -3968,4 +3968,88 @@ usr.sbin/postinstall/postinstall.in		1.6,1.7
 	Add missing ${DEST_DIR} prefix to check target directory
 	(instead of host directory).
 	[nakayama, ticket #240]
+
+sys/arch/x86/include/specialreg.h		1.151-1.153
+sys/arch/x86/x86/spectre.c			1.30
+usr.sbin/cpuctl/arch/i386.c			1.105
+
+	Decode AMD Processor Capacity Parameters and Extended Features
+	(CPUID Fn8000_0008 %ebx).
+	[msaitoh, ticket #241]
+
+sys/arch/x86/x86/identcpu.c			1.94
+usr.sbin/cpuctl/arch/i386.c			1.106
+
+	Call cpu_dcp_cacheinfo() only when the cpuid Topology Extension flag is
+	set on AMD processors.
+	[msaitoh, ticket #242]
+
+sys/dev/pci/pci_subr.c				1.216,1.217
+
+	Print some DPC register values not with %04x but with %08x
+	because those are 32bit.
+	[msaitoh, ticket #243]
+
+sys/dev/i2c/ihidev.c				1.8
+
+	Abort attach if acpi_intr_establish() fails.
+	[bouyer, ticket #244]
+
+distrib/sets/lists/base/mi			1.1211
+sys/dev/microcode/radeon/BONAIRE_uvd.bin	1.2
+sys/dev/microcode/radeon/Makefile		1.4
+sys/dev/microcode/radeon/R600_uvd.bin		1.1
+sys/dev/microcode/radeon/RS780_uvd.bin		1.1
+sys/dev/microcode/radeon/RV770_uvd.bin		1.1
+sys/dev/microcode/radeon/TAHITI_vce.bin		1.1
+
+	Update radeon firmware:
+	 - BONAIRE_uvd.bin updated to latest
+	 - add TAHITI_vce.bin, RV770_uvd.bin, RS780_uvd.bin and R600_uvd.bin.
+	[msaitoh, ticket #245]
+
+sys/dev/pci/ixgbe/ixgbe_type.h			1.42-1.43
+sys/dev/pci/ixgbe/ixgbe.c			1.209-1.213
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.16
+sys/dev/pci/ixgbe/ixv.c				1.131-1.138
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.19-1.22
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.14
+sys/dev/pci/ixgbe/ixgbe.h			1.57-1.58
+share/man/man4/ixv.4				1.5
+
+	- Fix a bug that MBSDC (Bad SFD Count) isn't counted on X550EM_X and
+	  X550EM_A. The register is for X550 and newer.
+	- ixv(4): Make SIOCADDMULTI returns ENOSPC and print error message
+	  when the Ethernet multicast address list exceeds the limit(30) and
+	  can't be ALLMULTI.
+	- ixv(4): SIOCZIFDATA clear the event counters as ixgbe.c.
+	- Reduce ixv(4)'s multicast table array size in ixv_set_multi from
+	  MAX_NUM_MULTICAST_ADDRESSES(128) to IXGBE_MAX_VF_MC(30).
+	- ixv(4): Add support ALLMULTI and PROMISC.
+	- if_flags is neither int nor short. It's unsigned short.
+	- ixg(4): Fix a bug that the multicast filter isn't correctly
+	  initialized when the total number of the Ethernet multicast
+	  addresses is just 128.
+	- Make ixv_set_multi() work correctly (especially for PROMISC) when the
+	  function is called from if_init().
+	- Remove *_set_promisc() and use *_set_multi(). And then, rename
+	  *_set_multi() to *_set_rxfilter().
+	- ixv(4): If a multicast entry has range, use ALLMULTI like others.
+	- Fix typo in comment. Found by Wataru Ashihara.
+	[msaitoh, ticket #246]
+
+sys/dev/pci/if_mcx.c				1.2
+
+	Use IFM_50G_SR2.
+	[msaitoh, ticket #247]
+
+sys/dev/ic/nvme.c				1.46
+
+	nvme(4): don't attach the device if namespace is not found.
+	[nonaka, ticket #248]
+
+sys/stand/efiboot/efiboot.c			1.17
+
+	Do a full reset of the console at startup.
+	[jmcneill, ticket #249]
 
