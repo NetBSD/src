@@ -1,4 +1,4 @@
-/*	$NetBSD: raidframevar.h,v 1.19 2018/04/19 21:50:09 christos Exp $ */
+/*	$NetBSD: raidframevar.h,v 1.20 2019/09/26 01:36:10 christos Exp $ */
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -519,7 +519,7 @@ typedef struct RF_DeviceConfig_s {
 	u_int   maxqdepth;
 	int     ndevs;
 	RF_RaidDisk_t devs[RF_MAX_DISKS];
-	int     nspares;
+	u_int    nspares;
 	RF_RaidDisk_t spares[RF_MAX_DISKS];
 }       RF_DeviceConfig_t;
 
