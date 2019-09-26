@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.15 2017/01/02 14:28:29 alnsn Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.16 2019/09/26 11:47:38 gutteridge Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.15 2017/01/02 14:28:29 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.16 2019/09/26 11:47:38 gutteridge Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,7 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.15 2017/01/02 14:28:29 alnsn Exp $"
 
 /*
  * The general framework provides only one generic function.
- * It takes the name of an algorith and returns a struct cryptfuncs *
+ * It takes the name of an algorithm and returns a struct cryptfuncs *
  * for it.  It is up to the initialisation routines of the algorithm
  * to check key size and block size.
  */
