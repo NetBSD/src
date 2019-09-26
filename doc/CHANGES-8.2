@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.43 2019/09/25 15:49:45 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.44 2019/09/26 18:25:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1139,4 +1139,55 @@ sys/dev/ic/nvme.c				1.45
 	PRs kern/54275, kern/54503 and kern/54532:
 	don't set Phase Tag bit of Completion Queue entry at nvme_poll_done().
 	[nonaka, ticket #1386]
+
+sys/arch/sparc/include/ctlreg.h			1.30
+sys/dev/pci/if_xgereg.h				1.3
+
+	Add missing NUL to prevent buffer overrun.
+	[msaitoh, ticket #1387]
+
+sys/dev/pci/pcireg.h				1.147 via patch
+sys/dev/pci/pci_subr.c				1.212, 1.215-1.217 via patch
+
+	- Change fast back-to-back "capable" to "enable" in pci_subr.c.
+	- Print Primary Discard Timer, Secondary Discard Timer, Discard
+	  Timer Status and Discard Timer SERR# Enable bit in pci_subr.c.
+	- Print some DPC register values not with %04x but with %08x because
+	  those are 32bit.
+	- Remove whitespace for consistency.
+	- Use macro.
+	- Whitespace fixes.
+	[msaitoh, ticket #1388]
+
+sys/dev/pci/ixgbe/ixgbe_type.h			1.42-1.43
+sys/dev/pci/ixgbe/ixgbe.c			1.209-1.213 via patch
+sys/dev/pci/ixgbe/ixv.c				1.131-1.138 via patch
+sys/dev/pci/ixgbe/ixgbe_vf.c			1.19-1.22
+sys/dev/pci/ixgbe/ixgbe_vf.h			1.14
+sys/dev/pci/ixgbe/ixgbe.h			1.57-1.58 via patch
+share/man/man4/ixv.4				1.5 via patch
+
+	- Fix a bug that MBSDC (Bad SFD Count) isn't counted on X550EM_X and
+	  X550EM_A. The register is for X550 and newer.
+	- ixv(4): Make SIOCADDMULTI returns ENOSPC and print error message
+	  when the Ethernet multicast address list exceeds the limit(30) and
+	  can't be ALLMULTI.
+	- ixv(4): SIOCZIFDATA clear the event counters as ixgbe.c.
+	- Reduce ixv(4)'s multicast table array size in ixv_set_multi from
+	  MAX_NUM_MULTICAST_ADDRESSES(128) to IXGBE_MAX_VF_MC(30).
+	- ixv(4): Add support ALLMULTI and PROMISC.
+	- if_flags is neither int nor short. It's unsigned short.
+	- Fix a bug that the multicast filter isn't correctly initialized when
+	  the total number of the Ethernet multicast addresses is just 128.
+	- Make ixv_set_multi() work correctly (especially for PROMISC) when the
+	  function is called from if_init().
+	- Remove *_set_promisc() and use *_set_multi(). And then, rename
+	  *_set_multi() to *_set_rxfilter().
+	- ixv(4): If a multicast entry has range, use ALLMULTI like others.
+	[msaitoh, ticket #1389]
+
+sys/dev/ic/nvme.c				1.46
+
+	nvme(4): don't attach the device if namespace is not found.
+	[nonaka, ticket #1390]
 
