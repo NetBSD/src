@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.75 2019/08/23 12:42:14 maxv Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.76 2019/09/26 01:37:52 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.75 2019/08/23 12:42:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.76 2019/09/26 01:37:52 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1087,7 +1087,7 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 		}
 		break;
 	case OSS_SOUND_MIXER_READ_RECSRC:
-		if (di->source == -1) {
+		if (di->source == (u_long)-1) {
 			DPRINTF(("%s: OSS_SOUND_MIXER_READ_RECSRC bad source\n",
 			    __func__));
 			error = EINVAL;
@@ -1132,7 +1132,7 @@ oss_ioctl_mixer(struct lwp *lwp, const struct oss_sys_ioctl_args *uap, register_
 		break;
 	case OSS_SOUND_MIXER_WRITE_RECSRC:
 	case OSS_SOUND_MIXER_WRITE_R_RECSRC:
-		if (di->source == -1) {
+		if (di->source == (u_long)-1) {
 			DPRINTF(("%s: OSS_SOUND_MIXER_WRITE_RECSRC bad "
 			    "source\n", __func__));
 			error = EINVAL;
@@ -1492,11 +1492,11 @@ static void
 setblocksize(file_t *fp, struct audio_info *info)
 {
 	struct audio_info set;
-	int s;
+	u_int s;
 
-	 if (info->blocksize & (info->blocksize-1)) {
+	 if (info->blocksize & (info->blocksize - 1)) {
 		for(s = 32; s < info->blocksize; s <<= 1)
-			;
+			continue;
 		AUDIO_INITINFO(&set);
 		set.blocksize = s;
 		fp->f_ops->fo_ioctl(fp, AUDIO_SETINFO, &set);
