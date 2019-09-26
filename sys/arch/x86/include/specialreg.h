@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.152 2019/09/09 05:28:32 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.153 2019/09/26 06:42:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -740,7 +740,7 @@
 #define CPUID_CAPEX_FLAGS	"\20"					 \
 	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			 \
 	"\5RDPRU"			"\7B6"				 \
-	"\11MCOMMIT"	"\12WBNOINVD"	"\12B10"			 \
+	"\11MCOMMIT"	"\12WBNOINVD"	"\13B10"			 \
 	"\15IBPB"	"\16B13"	"\17IBRS"	"\20STIBP"	 \
 	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19" \
 	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
