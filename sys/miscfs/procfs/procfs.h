@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs.h,v 1.76 2019/04/25 22:48:42 mlelstv Exp $	*/
+/*	$NetBSD: procfs.h,v 1.77 2019/09/26 17:33:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -164,12 +164,27 @@ struct procfs_args {
 
 #define UIO_MX 32
 
-#define PROCFS_FILENO(pid, type, fd) \
-	(  (type) == PFSroot ? 2 \
-	 : (type) == PFScurproc ? 3 \
-	 : (type) == PFSself ? 4 \
-         : (fd) == -1 ? ((pid)+1) * PFSlast + (type) \
-         : ((uint64_t)((pid)+1) << 32 | (fd)) * PFSlast + (type))
+static __inline ino_t
+procfs_fileno(pid_t _pid, pfstype _type, int _fd)
+{
+	ino_t _ino;
+	switch (_type) {
+	case PFSroot:
+		return 2;
+	case PFScurproc:
+		return 3;
+	case PFSself:
+		return 4;
+	default:
+		_ino = _pid + 1;
+		if (_fd != -1)
+			_ino = _ino << 32 | _fd;
+		return _ino * PFSlast + _type;
+	}
+}
+
+#define PROCFS_FILENO(pid, type, fd) procfs_fileno(pid, type, fd)
+
 #define PROCFS_TYPE(type)	((type) % PFSlast)
 
 struct procfsmount {
