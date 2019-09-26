@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.45 2019/09/12 21:37:06 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.46 2019/09/26 22:39:55 bad Exp $
 #
 
 #
@@ -99,14 +99,12 @@ lsrc sys /lib/lib		c util
 lsrc sys /external/bsd/		flex mdocml byacc
 lsrc sys /external/cddl/	osnet
 lsrc sys /external/historical/	nawk
-lsrc sys /external/public-domain/	xz
-lsrc sys /bin/			cat pax
+lsrc sys /bin/			cat
 lsrc sys /usr.bin/		make xinstall config mktemp sed tsort
 lsrc sys /usr.bin/		lorder join cksum m4 mkdep Makefile.inc
 lsrc sys /usr.bin/		rpcgen rump_wmd
-lsrc sys /usr.bin/		genassym grep stat uname
+lsrc sys /usr.bin/		genassym stat uname
 lsrc sys /usr.sbin/		mtree
-lsrc sys /sbin/			mknod
 
 # sources hosted in the NetBSD tree that are required/useful
 # when targeting POSIX-y platforms
@@ -121,12 +119,12 @@ lsrc usr /lib/			i18n_module
 lsrc usr /lib/lib		crypt ipsec kvm m npf pci prop
 lsrc usr /lib/lib		pthread rmt y z
 lsrc usr /libexec/		ld.elf_so
-lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv
+lsrc usr /bin/			chmod cp dd df ed ln ls mkdir mv pax
 lsrc usr /bin/			rm rmdir
 lsrc usr /sbin/			brconfig cgdconfig chown
 lsrc usr /sbin/			disklabel dump fdisk
 lsrc usr /sbin/			fsck fsck_ext2fs fsck_ffs fsck_msdos
-lsrc usr /sbin/			ifconfig
+lsrc usr /sbin/			ifconfig mknod
 lsrc usr /sbin/			modstat mount
 lsrc usr /sbin/			mount_ext2fs mount_ffs mount_msdos mount_tmpfs
 lsrc usr /sbin/			newfs newfs_ext2fs newfs_msdos
