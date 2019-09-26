@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_20.c,v 1.42 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls_20.c,v 1.43 2019/09/26 01:28:27 christos Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.42 2019/09/22 22:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_20.c,v 1.43 2019/09/26 01:28:27 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -104,7 +104,7 @@ statvfs_to_statfs12(const void *vfs, void *vbfs, size_t len)
 {
 	struct statfs12 ofs, *bfs = vbfs;
 	const struct statvfs *fs = vfs;
-	int i;
+	size_t i;
 	ofs.f_type = 0;
 	ofs.f_oflags = (short)fs->f_flag;
 
