@@ -1,5 +1,5 @@
 /* IBM RS/6000 CPU names..
-   Copyright (C) 1991-2016 Free Software Foundation, Inc.
+   Copyright (C) 1991-2017 Free Software Foundation, Inc.
    Contributed by Richard Kenner (kenner@vlsi1.ultra.nyu.edu)
 
    This file is part of GCC.
@@ -45,6 +45,7 @@
 				 | OPTION_MASK_POPCNTD			\
 				 | OPTION_MASK_ALTIVEC			\
 				 | OPTION_MASK_VSX			\
+				 | OPTION_MASK_UPPER_REGS_DI		\
 				 | OPTION_MASK_UPPER_REGS_DF)
 
 /* For now, don't provide an embedded version of ISA 2.07.  */
@@ -57,10 +58,10 @@
 				 | OPTION_MASK_HTM			\
 				 | OPTION_MASK_QUAD_MEMORY		\
   				 | OPTION_MASK_QUAD_MEMORY_ATOMIC	\
-				 | OPTION_MASK_UPPER_REGS_SF)
+				 | OPTION_MASK_UPPER_REGS_SF		\
+				 | OPTION_MASK_VSX_SMALL_INTEGER)
 
 /* Add ISEL back into ISA 3.0, since it is supposed to be a win.  Do not add
-   P9_MINMAX until the hardware that supports it is available.  Do not add
    FLOAT128_HW here until we are ready to make -mfloat128 on by default.  */
 #define ISA_3_0_MASKS_SERVER	(ISA_2_7_MASKS_SERVER			\
 				 | OPTION_MASK_ISEL			\
@@ -68,6 +69,7 @@
 				 | OPTION_MASK_P9_FUSION		\
 				 | OPTION_MASK_P9_DFORM_SCALAR		\
 				 | OPTION_MASK_P9_DFORM_VECTOR		\
+				 | OPTION_MASK_P9_MINMAX		\
 				 | OPTION_MASK_P9_MISC			\
 				 | OPTION_MASK_P9_VECTOR)
 
@@ -77,8 +79,34 @@
 				 | OPTION_MASK_P8_VECTOR		\
 				 | OPTION_MASK_P9_VECTOR		\
 				 | OPTION_MASK_DIRECT_MOVE		\
+				 | OPTION_MASK_UPPER_REGS_DI		\
 				 | OPTION_MASK_UPPER_REGS_DF		\
-				 | OPTION_MASK_UPPER_REGS_SF)
+				 | OPTION_MASK_UPPER_REGS_SF		\
+				 | OPTION_MASK_VSX_SMALL_INTEGER)
+
+/* Flags that need to be turned off if -mno-power9-vector.  */
+#define OTHER_P9_VECTOR_MASKS	(OPTION_MASK_FLOAT128_HW		\
+				 | OPTION_MASK_P9_DFORM_SCALAR		\
+				 | OPTION_MASK_P9_DFORM_VECTOR		\
+				 | OPTION_MASK_P9_MINMAX)
+
+/* Flags that need to be turned off if -mno-power8-vector.  */
+#define OTHER_P8_VECTOR_MASKS	(OTHER_P9_VECTOR_MASKS			\
+				 | OPTION_MASK_P9_VECTOR		\
+				 | OPTION_MASK_DIRECT_MOVE		\
+				 | OPTION_MASK_CRYPTO			\
+				 | OPTION_MASK_UPPER_REGS_SF)		\
+
+/* Flags that need to be turned off if -mno-vsx.  */
+#define OTHER_VSX_VECTOR_MASKS	(OTHER_P8_VECTOR_MASKS			\
+				 | OPTION_MASK_EFFICIENT_UNALIGNED_VSX	\
+				 | OPTION_MASK_FLOAT128_KEYWORD		\
+				 | OPTION_MASK_FLOAT128_TYPE		\
+				 | OPTION_MASK_P8_VECTOR		\
+				 | OPTION_MASK_UPPER_REGS_DI		\
+				 | OPTION_MASK_UPPER_REGS_DF		\
+				 | OPTION_MASK_VSX_SMALL_INTEGER	\
+				 | OPTION_MASK_VSX_TIMODE)
 
 #define POWERPC_7400_MASK	(OPTION_MASK_PPC_GFXOPT | OPTION_MASK_ALTIVEC)
 
@@ -101,7 +129,9 @@
 				 | OPTION_MASK_DIRECT_MOVE		\
 				 | OPTION_MASK_DLMZB			\
 				 | OPTION_MASK_EFFICIENT_UNALIGNED_VSX	\
-				 | OPTION_MASK_FLOAT128			\
+				 | OPTION_MASK_FLOAT128_HW		\
+				 | OPTION_MASK_FLOAT128_KEYWORD		\
+				 | OPTION_MASK_FLOAT128_TYPE		\
 				 | OPTION_MASK_FPRND			\
 				 | OPTION_MASK_HTM			\
 				 | OPTION_MASK_ISEL			\
@@ -130,9 +160,11 @@
 				 | OPTION_MASK_SOFT_FLOAT		\
 				 | OPTION_MASK_STRICT_ALIGN_OPTIONAL	\
 				 | OPTION_MASK_TOC_FUSION		\
+				 | OPTION_MASK_UPPER_REGS_DI		\
 				 | OPTION_MASK_UPPER_REGS_DF		\
 				 | OPTION_MASK_UPPER_REGS_SF		\
 				 | OPTION_MASK_VSX			\
+				 | OPTION_MASK_VSX_SMALL_INTEGER	\
 				 | OPTION_MASK_VSX_TIMODE)
 
 #endif
@@ -222,7 +254,8 @@ RS6000_CPU ("power6x", PROCESSOR_POWER6, MASK_POWERPC64 | MASK_PPC_GPOPT
 RS6000_CPU ("power7", PROCESSOR_POWER7,   /* Don't add MASK_ISEL by default */
 	    POWERPC_7400_MASK | MASK_POWERPC64 | MASK_PPC_GPOPT | MASK_MFCRF
 	    | MASK_POPCNTB | MASK_FPRND | MASK_CMPB | MASK_DFP | MASK_POPCNTD
-	    | MASK_VSX | MASK_RECIP_PRECISION | OPTION_MASK_UPPER_REGS_DF)
+	    | MASK_VSX | MASK_RECIP_PRECISION | OPTION_MASK_UPPER_REGS_DF
+	    | OPTION_MASK_UPPER_REGS_DI)
 RS6000_CPU ("power8", PROCESSOR_POWER8, MASK_POWERPC64 | ISA_2_7_MASKS_SERVER)
 RS6000_CPU ("power9", PROCESSOR_POWER9, MASK_POWERPC64 | ISA_3_0_MASKS_SERVER)
 RS6000_CPU ("powerpc", PROCESSOR_POWERPC, 0)

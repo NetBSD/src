@@ -1,6 +1,6 @@
 // Deque implementation (out of line) -*- C++ -*-
 
-// Copyright (C) 2001-2016 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -119,7 +119,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	    {
 	      const_iterator __mid = __x.begin() + difference_type(__len);
 	      std::copy(__x.begin(), __mid, this->_M_impl._M_start);
-	      insert(this->_M_impl._M_finish, __mid, __x.end());
+	      _M_range_insert_aux(this->_M_impl._M_finish, __mid, __x.end(),
+				  std::random_access_iterator_tag());
 	    }
 	}
       return *this;
@@ -128,7 +129,11 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 #if __cplusplus >= 201103L
   template<typename _Tp, typename _Alloc>
     template<typename... _Args>
+#if __cplusplus > 201402L
+      typename deque<_Tp, _Alloc>::reference
+#else
       void
+#endif
       deque<_Tp, _Alloc>::
       emplace_front(_Args&&... __args)
       {
@@ -141,11 +146,18 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	  }
 	else
 	  _M_push_front_aux(std::forward<_Args>(__args)...);
+#if __cplusplus > 201402L
+	return front();
+#endif
       }
 
   template<typename _Tp, typename _Alloc>
     template<typename... _Args>
+#if __cplusplus > 201402L
+      typename deque<_Tp, _Alloc>::reference
+#else
       void
+#endif
       deque<_Tp, _Alloc>::
       emplace_back(_Args&&... __args)
       {
@@ -159,6 +171,9 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
 	  }
 	else
 	  _M_push_back_aux(std::forward<_Args>(__args)...);
+#if __cplusplus > 201402L
+	return back();
+#endif
       }
 #endif
 
@@ -280,7 +295,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
         if (__first == __last)
           _M_erase_at_end(__cur);
         else
-          insert(end(), __first, __last);
+          _M_range_insert_aux(end(), __first, __last,
+			      std::__iterator_category(__first));
       }
 
   template <typename _Tp, typename _Alloc>

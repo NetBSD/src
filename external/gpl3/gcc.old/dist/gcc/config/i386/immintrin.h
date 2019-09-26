@@ -1,4 +1,4 @@
-/* Copyright (C) 2008-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2008-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -68,6 +68,12 @@
 
 #include <avx512vbmivlintrin.h>
 
+#include <avx5124fmapsintrin.h>
+
+#include <avx5124vnniwintrin.h>
+
+#include <avx512vpopcntdqintrin.h>
+
 #include <shaintrin.h>
 
 #include <lzcntintrin.h>
@@ -106,6 +112,22 @@ _rdrand32_step (unsigned int *__P)
 #undef __DISABLE_RDRND__
 #pragma GCC pop_options
 #endif /* __DISABLE_RDRND__ */
+
+#ifndef __RDPID__
+#pragma GCC push_options
+#pragma GCC target("rdpid")
+#define __DISABLE_RDPID__
+#endif /* __RDPID__ */
+extern __inline unsigned int
+__attribute__((__gnu_inline__, __always_inline__, __artificial__))
+_rdpid_u32 (void)
+{
+  return __builtin_ia32_rdpid ();
+}
+#ifdef __DISABLE_RDPID__
+#undef __DISABLE_RDPID__
+#pragma GCC pop_options
+#endif /* __DISABLE_RDPID__ */
 
 #ifdef  __x86_64__
 

@@ -1,5 +1,5 @@
 /* Header file for SSA dominator optimizations.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -45,6 +45,20 @@ struct hashable_expr
     struct { gcall *fn_from; bool pure; size_t nargs; tree *args; } call;
     struct { size_t nargs; tree *args; } phi;
   } ops;
+};
+
+/* Structure for recording known value of a conditional expression.
+
+   Clients build vectors of these objects to record known values
+   that occur on edges.  */
+
+struct cond_equivalence
+{
+  /* The condition, in a HASHABLE_EXPR form.  */
+  struct hashable_expr cond;
+
+  /* The result of the condition (true or false.  */
+  tree value;
 };
 
 /* Structure for entries in the expression hash table.  */
@@ -132,6 +146,12 @@ class avail_exprs_stack
   hash_table<expr_elt_hasher> *avail_exprs (void)
     { return m_avail_exprs; }
 
+  /* Lookup and conditionally insert an expression into the table,
+     recording enough information to unwind as needed.  */
+  tree lookup_avail_expr (gimple *, bool, bool);
+
+  void record_cond (cond_equivalence *);
+
  private:
   vec<std::pair<expr_hash_elt_t, expr_hash_elt_t> > m_stack;
   hash_table<expr_elt_hasher> *m_avail_exprs;
@@ -182,5 +202,6 @@ class const_and_copies
 };
 
 void initialize_expr_from_cond (tree cond, struct hashable_expr *expr);
+void record_conditions (vec<cond_equivalence> *p, tree, tree);
 
 #endif /* GCC_TREE_SSA_SCOPED_TABLES_H */

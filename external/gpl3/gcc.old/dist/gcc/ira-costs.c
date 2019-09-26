@@ -1,5 +1,5 @@
 /* IRA hard register and memory cost calculation for allocnos or pseudos.
-   Copyright (C) 2006-2016 Free Software Foundation, Inc.
+   Copyright (C) 2006-2017 Free Software Foundation, Inc.
    Contributed by Vladimir Makarov <vmakarov@redhat.com>.
 
 This file is part of GCC.
@@ -26,6 +26,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "rtl.h"
 #include "tree.h"
 #include "predict.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -819,6 +820,9 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 
 	  constraints[i] = p;
 
+	  if (alt_fail)
+	    break;
+
 	  /* How we account for this operand now depends on whether it
 	     is a pseudo register or not.  If it is, we first check if
 	     any register classes are valid.  If not, we ignore this
@@ -998,10 +1002,21 @@ record_reg_classes (int n_alts, int n_ops, rtx *ops,
 	    alt_cost += ira_memory_move_cost[mode][classes[i]][1];
 	  else
 	    alt_fail = 1;
+
+	  if (alt_fail)
+	    break;
 	}
 
       if (alt_fail)
-	continue;
+	{
+	  /* The loop above might have exited early once the failure
+	     was seen.  Skip over the constraints for the remaining
+	     operands.  */
+	  i += 1;
+	  for (; i < n_ops; ++i)
+	    constraints[i] = skip_alternative (constraints[i]);
+	  continue;
+	}
 
       op_cost_add = alt_cost * frequency;
       /* Finally, update the costs with the information we've
@@ -1423,8 +1438,25 @@ scan_one_insn (rtx_insn *insn)
     return insn;
 
   pat_code = GET_CODE (PATTERN (insn));
-  if (pat_code == USE || pat_code == CLOBBER || pat_code == ASM_INPUT)
+  if (pat_code == ASM_INPUT)
     return insn;
+
+  /* If INSN is a USE/CLOBBER of a pseudo in a mode M then go ahead
+     and initialize the register move costs of mode M.
+
+     The pseudo may be related to another pseudo via a copy (implicit or
+     explicit) and if there are no mode M uses/sets of the original
+     pseudo, then we may leave the register move costs uninitialized for
+     mode M. */
+  if (pat_code == USE || pat_code == CLOBBER)
+    {
+      rtx x = XEXP (PATTERN (insn), 0);
+      if (GET_CODE (x) == REG
+	  && REGNO (x) >= FIRST_PSEUDO_REGISTER
+	  && have_regs_of_mode[GET_MODE (x)])
+        ira_init_register_move_cost_if_necessary (GET_MODE (x));
+      return insn;
+    }
 
   counted_mem = false;
   set = single_set (insn);
@@ -1453,7 +1485,10 @@ scan_one_insn (rtx_insn *insn)
 	      && targetm.legitimate_constant_p (GET_MODE (SET_DEST (set)),
 						XEXP (note, 0))
 	      && REG_N_SETS (REGNO (SET_DEST (set))) == 1))
-      && general_operand (SET_SRC (set), GET_MODE (SET_SRC (set))))
+      && general_operand (SET_SRC (set), GET_MODE (SET_SRC (set)))
+      /* LRA does not use equiv with a symbol for PIC code.  */
+      && (! ira_use_lra_p || ! pic_offset_table_rtx
+	  || ! contains_symbol_ref_p (XEXP (note, 0))))
     {
       enum reg_class cl = GENERAL_REGS;
       rtx reg = SET_DEST (set);
@@ -1845,14 +1880,19 @@ find_costs_and_classes (FILE *dump_file)
 	       short in -O0 code and so register pressure tends to be low.
 
 	       Avoid that by ignoring the alternative class if the best
-	       class has plenty of registers.  */
-	    regno_aclass[i] = best;
+	       class has plenty of registers.
+
+	       The union class arrays give important classes and only
+	       part of it are allocno classes.  So translate them into
+	       allocno classes.  */
+	    regno_aclass[i] = ira_allocno_class_translate[best];
 	  else
 	    {
 	      /* Make the common class the biggest class of best and
-		 alt_class.  */
-	      regno_aclass[i]
-		= ira_reg_class_superunion[best][alt_class];
+		 alt_class.  Translate the common class into an
+		 allocno class too.  */
+	      regno_aclass[i] = (ira_allocno_class_translate
+				 [ira_reg_class_superunion[best][alt_class]]);
 	      ira_assert (regno_aclass[i] != NO_REGS
 			  && ira_reg_allocno_class_p[regno_aclass[i]]);
 	    }

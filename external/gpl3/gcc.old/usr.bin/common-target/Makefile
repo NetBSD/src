@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.2 2017/07/23 01:05:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.3 2019/09/26 05:45:55 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -7,9 +7,8 @@ LIBISPRIVATE=	yes
 
 LIB=		common-target
 
-SRCS=		prefix.c params.c opts.c opts-common.c options.c vec.c \
-		hooks.c common-targhooks.c hash-table.c file-find.c \
-		${G_common_out_file:T}
+.include "${.CURDIR}/arch/${GCC_MACHINE_ARCH}.mk"
+SRCS=		${G_OBJS-libcommon-target:S/common\///:.o=.c}
 
 CPPFLAGS+=	-I${GCCARCH} -I${BACKENDOBJ} -I. \
 		${G_ALL_CFLAGS:M-D*} ${G_INCLUDES:M-I*:N-I.*} \

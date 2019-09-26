@@ -1,4 +1,4 @@
-/* Copyright (C) 2014-2016 Free Software Foundation, Inc.
+/* Copyright (C) 2014-2017 Free Software Foundation, Inc.
 
    Contributed by Mentor Embedded.
 
@@ -27,7 +27,7 @@
 #ifndef OACC_PLUGIN_H
 #define OACC_PLUGIN_H 1
 
-extern void GOMP_PLUGIN_async_unmap_vars (void *);
+extern void GOMP_PLUGIN_async_unmap_vars (void *, int);
 extern void *GOMP_PLUGIN_acc_thread (void);
 
 #endif

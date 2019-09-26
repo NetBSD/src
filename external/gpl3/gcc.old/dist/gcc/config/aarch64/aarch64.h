@@ -1,5 +1,5 @@
 /* Machine description for AArch64 architecture.
-   Copyright (C) 2009-2016 Free Software Foundation, Inc.
+   Copyright (C) 2009-2017 Free Software Foundation, Inc.
    Contributed by ARM Ltd.
 
    This file is part of GCC.
@@ -132,9 +132,14 @@ extern unsigned aarch64_architecture_version;
 #define AARCH64_FL_FP         (1 << 1)	/* Has FP.  */
 #define AARCH64_FL_CRYPTO     (1 << 2)	/* Has crypto.  */
 #define AARCH64_FL_CRC        (1 << 3)	/* Has CRC.  */
-/* ARMv8.1 architecture extensions.  */
+/* ARMv8.1-A architecture extensions.  */
 #define AARCH64_FL_LSE	      (1 << 4)  /* Has Large System Extensions.  */
-#define AARCH64_FL_V8_1	      (1 << 5)  /* Has ARMv8.1 extensions.  */
+#define AARCH64_FL_V8_1	      (1 << 5)  /* Has ARMv8.1-A extensions.  */
+/* ARMv8.2-A architecture extensions.  */
+#define AARCH64_FL_V8_2	      (1 << 8)  /* Has ARMv8.2-A features.  */
+#define AARCH64_FL_F16	      (1 << 9)  /* Has ARMv8.2-A FP16 extensions.  */
+/* ARMv8.3-A architecture extensions.  */
+#define AARCH64_FL_V8_3	      (1 << 10)  /* Has ARMv8.3-A features.  */
 
 /* Has FP and SIMD.  */
 #define AARCH64_FL_FPSIMD     (AARCH64_FL_FP | AARCH64_FL_SIMD)
@@ -146,6 +151,10 @@ extern unsigned aarch64_architecture_version;
 #define AARCH64_FL_FOR_ARCH8       (AARCH64_FL_FPSIMD)
 #define AARCH64_FL_FOR_ARCH8_1			       \
   (AARCH64_FL_FOR_ARCH8 | AARCH64_FL_LSE | AARCH64_FL_CRC | AARCH64_FL_V8_1)
+#define AARCH64_FL_FOR_ARCH8_2			\
+  (AARCH64_FL_FOR_ARCH8_1 | AARCH64_FL_V8_2)
+#define AARCH64_FL_FOR_ARCH8_3			\
+  (AARCH64_FL_FOR_ARCH8_2 | AARCH64_FL_V8_3)
 
 /* Macros to test ISA flags.  */
 
@@ -155,6 +164,9 @@ extern unsigned aarch64_architecture_version;
 #define AARCH64_ISA_SIMD           (aarch64_isa_flags & AARCH64_FL_SIMD)
 #define AARCH64_ISA_LSE		   (aarch64_isa_flags & AARCH64_FL_LSE)
 #define AARCH64_ISA_RDMA	   (aarch64_isa_flags & AARCH64_FL_V8_1)
+#define AARCH64_ISA_V8_2	   (aarch64_isa_flags & AARCH64_FL_V8_2)
+#define AARCH64_ISA_F16		   (aarch64_isa_flags & AARCH64_FL_F16)
+#define AARCH64_ISA_V8_3	   (aarch64_isa_flags & AARCH64_FL_V8_3)
 
 /* Crypto is an optional extension to AdvSIMD.  */
 #define TARGET_CRYPTO (TARGET_SIMD && AARCH64_ISA_CRYPTO)
@@ -164,6 +176,13 @@ extern unsigned aarch64_architecture_version;
 
 /* Atomic instructions that can be enabled through the +lse extension.  */
 #define TARGET_LSE (AARCH64_ISA_LSE)
+
+/* ARMv8.2-A FP16 support that can be enabled through the +fp16 extension.  */
+#define TARGET_FP_F16INST (TARGET_FLOAT && AARCH64_ISA_F16)
+#define TARGET_SIMD_F16INST (TARGET_SIMD && AARCH64_ISA_F16)
+
+/* ARMv8.3-A features.  */
+#define TARGET_ARMV8_3	(AARCH64_ISA_V8_3)
 
 /* Make sure this is always defined so we don't have to check for ifdefs
    but rather use normal ifs.  */
@@ -193,7 +212,7 @@ extern unsigned aarch64_architecture_version;
   ((aarch64_fix_a53_err843419 == 2)	\
   ? TARGET_FIX_ERR_A53_843419_DEFAULT : aarch64_fix_a53_err843419)
 
-/* ARMv8.1 Adv.SIMD support.  */
+/* ARMv8.1-A Adv.SIMD support.  */
 #define TARGET_SIMD_RDMA (TARGET_SIMD && AARCH64_ISA_RDMA)
 
 /* Standard register usage.  */
@@ -479,10 +498,9 @@ enum reg_class
 
 enum target_cpus
 {
-#define AARCH64_CORE(NAME, INTERNAL_IDENT, SCHED, ARCH, FLAGS, COSTS, IMP, PART) \
+#define AARCH64_CORE(NAME, INTERNAL_IDENT, SCHED, ARCH, FLAGS, COSTS, IMP, PART, VARIANT) \
   TARGET_CPU_##INTERNAL_IDENT,
 #include "aarch64-cores.def"
-#undef AARCH64_CORE
   TARGET_CPU_generic
 };
 
@@ -539,11 +557,14 @@ struct GTY (()) aarch64_frame
      STACK_BOUNDARY.  */
   HOST_WIDE_INT saved_varargs_size;
 
+  /* The size of the saved callee-save int/FP registers.  */
+
   HOST_WIDE_INT saved_regs_size;
-  /* Padding if needed after the all the callee save registers have
-     been saved.  */
-  HOST_WIDE_INT padding0;
-  HOST_WIDE_INT hardfp_offset;	/* HARD_FRAME_POINTER_REGNUM */
+
+  /* Offset from the base of the frame (incomming SP) to the
+     top of the locals area.  This value is always a multiple of
+     STACK_BOUNDARY.  */
+  HOST_WIDE_INT locals_offset;
 
   /* Offset from the base of the frame (incomming SP) to the
      hard_frame_pointer.  This value is always a multiple of
@@ -553,11 +574,24 @@ struct GTY (()) aarch64_frame
   /* The size of the frame.  This value is the offset from base of the
    * frame (incomming SP) to the stack_pointer.  This value is always
    * a multiple of STACK_BOUNDARY.  */
+  HOST_WIDE_INT frame_size;
+
+  /* The size of the initial stack adjustment before saving callee-saves.  */
+  HOST_WIDE_INT initial_adjust;
+
+  /* The writeback value when pushing callee-save registers.
+     It is zero when no push is used.  */
+  HOST_WIDE_INT callee_adjust;
+
+  /* The offset from SP to the callee-save registers after initial_adjust.
+     It may be non-zero if no push is used (ie. callee_adjust == 0).  */
+  HOST_WIDE_INT callee_offset;
+
+  /* The size of the stack adjustment after saving callee-saves.  */
+  HOST_WIDE_INT final_adjust;
 
   unsigned wb_candidate1;
   unsigned wb_candidate2;
-
-  HOST_WIDE_INT frame_size;
 
   bool laid_out;
 };
@@ -565,6 +599,8 @@ struct GTY (()) aarch64_frame
 typedef struct GTY (()) machine_function
 {
   struct aarch64_frame frame;
+  /* One entry for each hard register.  */
+  bool reg_is_wrapped_separately[LAST_SAVED_REGNUM];
 } machine_function;
 #endif
 
@@ -652,21 +688,6 @@ typedef struct
 
 #define CONSTANT_ADDRESS_P(X)		aarch64_constant_address_p(X)
 
-/* Try a machine-dependent way of reloading an illegitimate address
-   operand.  If we find one, push the reload and jump to WIN.  This
-   macro is used in only one place: `find_reloads_address' in reload.c.  */
-
-#define LEGITIMIZE_RELOAD_ADDRESS(X, MODE, OPNUM, TYPE, IND_L, WIN)	     \
-do {									     \
-  rtx new_x = aarch64_legitimize_reload_address (&(X), MODE, OPNUM, TYPE,    \
-						 IND_L);		     \
-  if (new_x)								     \
-    {									     \
-      X = new_x;							     \
-      goto WIN;								     \
-    }									     \
-} while (0)
-
 #define REGNO_OK_FOR_BASE_P(REGNO)	\
   aarch64_regno_ok_for_base_p (REGNO, true)
 
@@ -722,7 +743,12 @@ do {									     \
 #define USE_STORE_PRE_INCREMENT(MODE)   0
 #define USE_STORE_PRE_DECREMENT(MODE)   0
 
-/* ?? #define WORD_REGISTER_OPERATIONS  */
+/* WORD_REGISTER_OPERATIONS does not hold for AArch64.
+   The assigned word_mode is DImode but operations narrower than SImode
+   behave as 32-bit operations if using the W-form of the registers rather
+   than as word_mode (64-bit) operations as WORD_REGISTER_OPERATIONS
+   expects.  */
+#define WORD_REGISTER_OPERATIONS 0
 
 /* Define if loading from memory in MODE, an integral mode narrower than
    BITS_PER_WORD will either zero-extend or sign-extend.  The value of this
@@ -842,10 +868,7 @@ do {									     \
   extern void  __aarch64_sync_cache_range (void *, void *);	\
   __aarch64_sync_cache_range (beg, end)
 
-#define CANNOT_CHANGE_MODE_CLASS(FROM, TO, CLASS)	\
-  aarch64_cannot_change_mode_class (FROM, TO, CLASS)
-
-#define SHIFT_COUNT_TRUNCATED !TARGET_SIMD
+#define SHIFT_COUNT_TRUNCATED (!TARGET_SIMD)
 
 /* Choose appropriate mode for caller saves, so we do the minimum
    required size of load/store.  */

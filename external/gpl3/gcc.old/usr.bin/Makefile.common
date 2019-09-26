@@ -1,7 +1,9 @@
-#	$NetBSD: Makefile.common,v 1.1.1.1 2015/09/23 03:03:39 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.1.1.2 2019/09/26 05:45:54 mrg Exp $
 
 .ifndef _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_COMMON_
 _EXTERNAL_GPL3_GCC_USR_BIN_MAKEFILE_COMMON_=1
+
+.include <bsd.own.mk>
 
 COMMONOBJ!=		cd ${.CURDIR}/../common && ${PRINTOBJDIR}
 DPADD+=			${COMMONOBJ}/libcommon.a

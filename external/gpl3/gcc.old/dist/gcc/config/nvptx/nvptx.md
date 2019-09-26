@@ -1,5 +1,5 @@
 ;; Machine description for NVPTX.
-;; Copyright (C) 2014-2016 Free Software Foundation, Inc.
+;; Copyright (C) 2014-2017 Free Software Foundation, Inc.
 ;; Contributed by Bernd Schmidt <bernds@codesourcery.com>
 ;;
 ;; This file is part of GCC.
@@ -36,9 +36,15 @@
 
    UNSPEC_ALLOCA
 
+   UNSPEC_SET_SOFTSTACK
+
    UNSPEC_DIM_SIZE
 
    UNSPEC_BIT_CONV
+
+   UNSPEC_VOTE_BALLOT
+
+   UNSPEC_LANEID
 
    UNSPEC_SHUFFLE
    UNSPEC_BR_UNIFIED
@@ -55,9 +61,17 @@
    UNSPECV_FORKED
    UNSPECV_JOINING
    UNSPECV_JOIN
+
+   UNSPECV_NOUNROLL
+
+   UNSPECV_SIMT_ENTER
+   UNSPECV_SIMT_EXIT
 ])
 
 (define_attr "subregs_ok" "false,true"
+  (const_string "false"))
+
+(define_attr "atomic" "false,true"
   (const_string "false"))
 
 ;; The nvptx operand predicates, in general, don't permit subregs and
@@ -123,6 +137,17 @@
     }
   return true;
 })
+
+(define_attr "predicable" "false,true"
+  (const_string "true"))
+
+(define_cond_exec
+  [(match_operator 0 "predicate_operator"
+      [(match_operand:BI 1 "nvptx_register_operand" "")
+       (match_operand:BI 2 "const0_operand" "")])]
+  ""
+  ""
+  )
 
 (define_constraint "P0"
   "An integer with the value 0."
@@ -509,7 +534,8 @@
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
   ""
-  "%j0\\tbra\\t%l1;")
+  "%j0\\tbra\\t%l1;"
+  [(set_attr "predicable" "false")])
 
 (define_insn "br_false"
   [(set (pc)
@@ -518,7 +544,8 @@
 		      (label_ref (match_operand 1 "" ""))
 		      (pc)))]
   ""
-  "%J0\\tbra\\t%l1;")
+  "%J0\\tbra\\t%l1;"
+  [(set_attr "predicable" "false")])
 
 ;; unified conditional branch
 (define_insn "br_true_uni"
@@ -527,7 +554,8 @@
 		       UNSPEC_BR_UNIFIED) (const_int 0))
         (label_ref (match_operand 1 "" "")) (pc)))]
   ""
-  "%j0\\tbra.uni\\t%l1;")
+  "%j0\\tbra.uni\\t%l1;"
+  [(set_attr "predicable" "false")])
 
 (define_insn "br_false_uni"
   [(set (pc) (if_then_else
@@ -535,13 +563,14 @@
 		       UNSPEC_BR_UNIFIED) (const_int 0))
         (label_ref (match_operand 1 "" "")) (pc)))]
   ""
-  "%J0\\tbra.uni\\t%l1;")
+  "%J0\\tbra.uni\\t%l1;"
+  [(set_attr "predicable" "false")])
 
 (define_expand "cbranch<mode>4"
   [(set (pc)
 	(if_then_else (match_operator 0 "nvptx_comparison_operator"
 		       [(match_operand:HSDIM 1 "nvptx_register_operand" "")
-			(match_operand:HSDIM 2 "nvptx_register_operand" "")])
+			(match_operand:HSDIM 2 "nvptx_nonmemory_operand" "")])
 		      (label_ref (match_operand 3 "" ""))
 		      (pc)))]
   ""
@@ -556,7 +585,7 @@
   [(set (pc)
 	(if_then_else (match_operator 0 "nvptx_float_comparison_operator"
 		       [(match_operand:SDFM 1 "nvptx_register_operand" "")
-			(match_operand:SDFM 2 "nvptx_register_operand" "")])
+			(match_operand:SDFM 2 "nvptx_nonmemory_operand" "")])
 		      (label_ref (match_operand 3 "" ""))
 		      (pc)))]
   ""
@@ -794,6 +823,17 @@
   ""
   "%.\\tsqrt%#%t0\\t%0, %1;")
 
+(define_expand "sincossf3"
+  [(set (match_operand:SF 0 "nvptx_register_operand" "=R")
+	(unspec:SF [(match_operand:SF 2 "nvptx_register_operand" "R")]
+	           UNSPEC_COS))
+   (set (match_operand:SF 1 "nvptx_register_operand" "=R")
+	(unspec:SF [(match_dup 2)] UNSPEC_SIN))]
+  "flag_unsafe_math_optimizations"
+{
+  operands[2] = make_safe_from (operands[2], operands[0]);
+})
+
 (define_insn "sinsf2"
   [(set (match_operand:SF 0 "nvptx_register_operand" "=R")
 	(unspec:SF [(match_operand:SF 1 "nvptx_register_operand" "R")]
@@ -927,12 +967,16 @@
   ""
 {
   return nvptx_output_return ();
-})
+}
+  [(set_attr "predicable" "false")])
 
 (define_expand "epilogue"
   [(clobber (const_int 0))]
   ""
 {
+  if (TARGET_SOFT_STACK)
+    emit_insn (gen_set_softstack_insn (gen_rtx_REG (Pmode,
+						    SOFTSTACK_PREV_REGNUM)));
   emit_jump_insn (gen_return ());
   DONE;
 })
@@ -961,31 +1005,40 @@
    (match_operand 1 "nvptx_register_operand")]
   ""
 {
+  if (TARGET_SOFT_STACK)
+    {
+      emit_move_insn (stack_pointer_rtx,
+		      gen_rtx_MINUS (Pmode, stack_pointer_rtx, operands[1]));
+      emit_insn (gen_set_softstack_insn (stack_pointer_rtx));
+      emit_move_insn (operands[0], virtual_stack_dynamic_rtx);
+      DONE;
+    }
   /* The ptx documentation specifies an alloca intrinsic (for 32 bit
      only)  but notes it is not implemented.  The assembler emits a
      confused error message.  Issue a blunt one now instead.  */
   sorry ("target cannot support alloca.");
   emit_insn (gen_nop ());
   DONE;
-  if (TARGET_ABI64)
-    emit_insn (gen_allocate_stack_di (operands[0], operands[1]));
-  else
-    emit_insn (gen_allocate_stack_si (operands[0], operands[1]));
-  DONE;
 })
 
-(define_insn "allocate_stack_<mode>"
-  [(set (match_operand:P 0 "nvptx_register_operand" "=R")
-        (unspec:P [(match_operand:P 1 "nvptx_register_operand" "R")]
-                   UNSPEC_ALLOCA))]
-  ""
-  "%.\\tcall (%0), %%alloca, (%1);")
+(define_insn "set_softstack_insn"
+  [(unspec [(match_operand 0 "nvptx_register_operand" "R")]
+	   UNSPEC_SET_SOFTSTACK)]
+  "TARGET_SOFT_STACK"
+{
+  return nvptx_output_set_softstack (REGNO (operands[0]));
+})
 
 (define_expand "restore_stack_block"
   [(match_operand 0 "register_operand" "")
    (match_operand 1 "register_operand" "")]
   ""
 {
+  if (TARGET_SOFT_STACK)
+    {
+      emit_move_insn (operands[0], operands[1]);
+      emit_insn (gen_set_softstack_insn (operands[0]));
+    }
   DONE;
 })
 
@@ -1007,14 +1060,16 @@
 		(const_int 0))
 	    (const_int 0))]
   ""
-  "%j0 trap;")
+  "%j0 trap;"
+  [(set_attr "predicable" "false")])
 
 (define_insn "trap_if_false"
   [(trap_if (eq (match_operand:BI 0 "nvptx_register_operand" "R")
 		(const_int 0))
 	    (const_int 0))]
   ""
-  "%J0 trap;")
+  "%J0 trap;"
+  [(set_attr "predicable" "false")])
 
 (define_expand "ctrap<mode>4"
   [(trap_if (match_operator 0 "nvptx_comparison_operator"
@@ -1063,28 +1118,28 @@
 		       UNSPECV_FORK)]
   ""
   "// fork %0;"
-)
+  [(set_attr "predicable" "false")])
 
 (define_insn "nvptx_forked"
   [(unspec_volatile:SI [(match_operand:SI 0 "const_int_operand" "")]
 		       UNSPECV_FORKED)]
   ""
   "// forked %0;"
-)
+  [(set_attr "predicable" "false")])
 
 (define_insn "nvptx_joining"
   [(unspec_volatile:SI [(match_operand:SI 0 "const_int_operand" "")]
 		       UNSPECV_JOINING)]
   ""
   "// joining %0;"
-)
+  [(set_attr "predicable" "false")])
 
 (define_insn "nvptx_join"
   [(unspec_volatile:SI [(match_operand:SI 0 "const_int_operand" "")]
 		       UNSPECV_JOIN)]
   ""
   "// join %0;"
-)
+  [(set_attr "predicable" "false")])
 
 (define_expand "oacc_fork"
   [(set (match_operand:SI 0 "nvptx_nonmemory_operand" "")
@@ -1122,6 +1177,124 @@
 		  UNSPEC_SHUFFLE))]
   ""
   "%.\\tshfl%S3.b32\\t%0, %1, %2, 31;")
+
+(define_insn "nvptx_vote_ballot"
+  [(set (match_operand:SI 0 "nvptx_register_operand" "=R")
+	(unspec:SI [(match_operand:BI 1 "nvptx_register_operand" "R")]
+		   UNSPEC_VOTE_BALLOT))]
+  ""
+  "%.\\tvote.ballot.b32\\t%0, %1;")
+
+;; Patterns for OpenMP SIMD-via-SIMT lowering
+
+(define_insn "omp_simt_enter_insn"
+  [(set (match_operand 0 "nvptx_register_operand" "=R")
+	(unspec_volatile [(match_operand 1 "nvptx_nonmemory_operand" "Ri")
+			    (match_operand 2 "nvptx_nonmemory_operand" "Ri")]
+			   UNSPECV_SIMT_ENTER))]
+  ""
+{
+  return nvptx_output_simt_enter (operands[0], operands[1], operands[2]);
+})
+
+(define_expand "omp_simt_enter"
+  [(match_operand 0 "nvptx_register_operand" "=R")
+   (match_operand 1 "nvptx_nonmemory_operand" "Ri")
+   (match_operand 2 "const_int_operand" "n")]
+  ""
+{
+  if (!CONST_INT_P (operands[1]))
+    cfun->machine->simt_stack_size = HOST_WIDE_INT_M1U;
+  else
+    cfun->machine->simt_stack_size = MAX (UINTVAL (operands[1]),
+					  cfun->machine->simt_stack_size);
+  cfun->machine->simt_stack_align = MAX (UINTVAL (operands[2]),
+					 cfun->machine->simt_stack_align);
+  cfun->machine->has_simtreg = true;
+  emit_insn (gen_omp_simt_enter_insn (operands[0], operands[1], operands[2]));
+  DONE;
+})
+
+(define_insn "omp_simt_exit"
+  [(unspec_volatile [(match_operand 0 "nvptx_register_operand" "R")]
+		    UNSPECV_SIMT_EXIT)]
+  ""
+{
+  return nvptx_output_simt_exit (operands[0]);
+})
+
+;; Implement IFN_GOMP_SIMT_LANE: set operand 0 to lane index
+(define_insn "omp_simt_lane"
+  [(set (match_operand:SI 0 "nvptx_register_operand" "")
+	(unspec:SI [(const_int 0)] UNSPEC_LANEID))]
+  ""
+  "%.\\tmov.u32\\t%0, %%laneid;")
+
+;; Implement IFN_GOMP_SIMT_ORDERED: copy operand 1 to operand 0 and
+;; place a compiler barrier to disallow unrolling/peeling the containing loop
+(define_expand "omp_simt_ordered"
+  [(match_operand:SI 0 "nvptx_register_operand" "=R")
+   (match_operand:SI 1 "nvptx_register_operand" "R")]
+  ""
+{
+  emit_move_insn (operands[0], operands[1]);
+  emit_insn (gen_nvptx_nounroll ());
+  DONE;
+})
+
+;; Implement IFN_GOMP_SIMT_XCHG_BFLY: perform a "butterfly" exchange
+;; across lanes
+(define_expand "omp_simt_xchg_bfly"
+  [(match_operand 0 "nvptx_register_operand" "=R")
+   (match_operand 1 "nvptx_register_operand" "R")
+   (match_operand:SI 2 "nvptx_nonmemory_operand" "Ri")]
+  ""
+{
+  emit_insn (nvptx_gen_shuffle (operands[0], operands[1], operands[2],
+				SHUFFLE_BFLY));
+  DONE;
+})
+
+;; Implement IFN_GOMP_SIMT_XCHG_IDX: broadcast value in operand 1
+;; from lane given by index in operand 2 to operand 0 in all lanes
+(define_expand "omp_simt_xchg_idx"
+  [(match_operand 0 "nvptx_register_operand" "=R")
+   (match_operand 1 "nvptx_register_operand" "R")
+   (match_operand:SI 2 "nvptx_nonmemory_operand" "Ri")]
+  ""
+{
+  emit_insn (nvptx_gen_shuffle (operands[0], operands[1], operands[2],
+				SHUFFLE_IDX));
+  DONE;
+})
+
+;; Implement IFN_GOMP_SIMT_VOTE_ANY:
+;; set operand 0 to zero iff all lanes supply zero in operand 1
+(define_expand "omp_simt_vote_any"
+  [(match_operand:SI 0 "nvptx_register_operand" "=R")
+   (match_operand:SI 1 "nvptx_register_operand" "R")]
+  ""
+{
+  rtx pred = gen_reg_rtx (BImode);
+  emit_move_insn (pred, gen_rtx_NE (BImode, operands[1], const0_rtx));
+  emit_insn (gen_nvptx_vote_ballot (operands[0], pred));
+  DONE;
+})
+
+;; Implement IFN_GOMP_SIMT_LAST_LANE:
+;; set operand 0 to the lowest lane index that passed non-zero in operand 1
+(define_expand "omp_simt_last_lane"
+  [(match_operand:SI 0 "nvptx_register_operand" "=R")
+   (match_operand:SI 1 "nvptx_register_operand" "R")]
+  ""
+{
+  rtx pred = gen_reg_rtx (BImode);
+  rtx tmp = gen_reg_rtx (SImode);
+  emit_move_insn (pred, gen_rtx_NE (BImode, operands[1], const0_rtx));
+  emit_insn (gen_nvptx_vote_ballot (tmp, pred));
+  emit_insn (gen_ctzsi2 (operands[0], tmp));
+  DONE;
+})
 
 ;; extract parts of a 64 bit object into 2 32-bit ints
 (define_insn "unpack<mode>si2"
@@ -1175,7 +1348,8 @@
    (set (match_dup 1)
 	(unspec_volatile:SDIM [(const_int 0)] UNSPECV_CAS))]
   ""
-  "%.\\tatom%A1.cas.b%T0\\t%0, %1, %2, %3;")
+  "%.\\tatom%A1.cas.b%T0\\t%0, %1, %2, %3;"
+  [(set_attr "atomic" "true")])
 
 (define_insn "atomic_exchange<mode>"
   [(set (match_operand:SDIM 0 "nvptx_register_operand" "=R")	;; output
@@ -1186,7 +1360,8 @@
    (set (match_dup 1)
 	(match_operand:SDIM 2 "nvptx_nonmemory_operand" "Ri"))]	;; input
   ""
-  "%.\\tatom%A1.exch.b%T0\\t%0, %1, %2;")
+  "%.\\tatom%A1.exch.b%T0\\t%0, %1, %2;"
+  [(set_attr "atomic" "true")])
 
 (define_insn "atomic_fetch_add<mode>"
   [(set (match_operand:SDIM 1 "memory_operand" "+m")
@@ -1198,7 +1373,8 @@
    (set (match_operand:SDIM 0 "nvptx_register_operand" "=R")
 	(match_dup 1))]
   ""
-  "%.\\tatom%A1.add%t0\\t%0, %1, %2;")
+  "%.\\tatom%A1.add%t0\\t%0, %1, %2;"
+  [(set_attr "atomic" "true")])
 
 (define_insn "atomic_fetch_addsf"
   [(set (match_operand:SF 1 "memory_operand" "+m")
@@ -1210,7 +1386,8 @@
    (set (match_operand:SF 0 "nvptx_register_operand" "=R")
 	(match_dup 1))]
   ""
-  "%.\\tatom%A1.add%t0\\t%0, %1, %2;")
+  "%.\\tatom%A1.add%t0\\t%0, %1, %2;"
+  [(set_attr "atomic" "true")])
 
 (define_code_iterator any_logic [and ior xor])
 (define_code_attr logic [(and "and") (ior "or") (xor "xor")])
@@ -1226,10 +1403,18 @@
    (set (match_operand:SDIM 0 "nvptx_register_operand" "=R")
 	(match_dup 1))]
   "0"
-  "%.\\tatom%A1.b%T0.<logic>\\t%0, %1, %2;")
+  "%.\\tatom%A1.b%T0.<logic>\\t%0, %1, %2;"
+  [(set_attr "atomic" "true")])
 
 (define_insn "nvptx_barsync"
   [(unspec_volatile [(match_operand:SI 0 "const_int_operand" "")]
 		    UNSPECV_BARSYNC)]
   ""
-  "\\tbar.sync\\t%0;")
+  "\\tbar.sync\\t%0;"
+  [(set_attr "predicable" "false")])
+
+(define_insn "nvptx_nounroll"
+  [(unspec_volatile [(const_int 0)] UNSPECV_NOUNROLL)]
+  ""
+  "\\t.pragma \\\"nounroll\\\";"
+  [(set_attr "predicable" "false")])

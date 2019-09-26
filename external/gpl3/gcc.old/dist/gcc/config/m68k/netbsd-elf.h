@@ -1,7 +1,7 @@
 /* Definitions of target machine for GNU compiler,
    for m68k (including m68010) NetBSD platforms using the
    ELF object format.
-   Copyright (C) 2002-2016 Free Software Foundation, Inc.
+   Copyright (C) 2002-2017 Free Software Foundation, Inc.
    Contributed by Wasabi Systems. Inc.
 
    This file is derived from <m68k/m68kv4.h>, <m68k/m68kelf.h>,
@@ -79,7 +79,7 @@ along with GCC; see the file COPYING3.  If not see
 #define LINK_SPEC NETBSD_LINK_SPEC_ELF
 
 /* NetBSD/sun2 does not support shlibs, avoid using libgcc_pic.  */
-#if TARGET_DEFAULT_CPU == 0
+#ifndef ENABLE_SHARED_LIBGCC
 #undef REAL_LIBGCC_SPEC
 #define REAL_LIBGCC_SPEC	"-lgcc"
 #endif
@@ -162,9 +162,13 @@ while (0)
       {							\
 	if (ADDRESS_REG_P (operands[0]))		\
 	  return "jmp %%pc@(2,%0:l)";			\
+	else if (TARGET_LONG_JUMP_TABLE_OFFSETS)	\
+	  return "jmp %%pc@(2,%0:l)";			\
 	else						\
 	  return "ext%.l %0\n\tjmp %%pc@(2,%0:l)";	\
       }							\
+    else if (TARGET_LONG_JUMP_TABLE_OFFSETS)		\
+      return "jmp %%pc@(2,%0:l)";			\
     else						\
       return "jmp %%pc@(2,%0:w)";			\
   } while (0)

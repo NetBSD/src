@@ -1,6 +1,6 @@
 // Locale support -*- C++ -*-
 
-// Copyright (C) 2007-2016 Free Software Foundation, Inc.
+// Copyright (C) 2007-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -327,6 +327,8 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
     __timepunct<char>::_M_put(char*, size_t, const char*, const tm*) const throw ();
 
 #ifdef _GLIBCXX_USE_WCHAR_T
+  template<>
+    __timepunct<wchar_t>::~__timepunct();
   template<>
     void
     __timepunct<wchar_t>::_M_initialize_timepunct(__c_locale __cloc);

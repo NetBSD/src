@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.5 2017/07/23 01:05:10 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.6 2019/09/26 05:45:53 mrg Exp $
 
 REQUIRETOOLS=	yes
 NOLINT=		# defined
@@ -74,19 +74,7 @@ ${OBJS} ${POBJS} ${SOBJS}: runtime-info.h
 
 ${SRCS}: tconfig.h options.h
 
-.if ${HAVE_LIBGCC_EH} == "no"
-G_CONFIGLINKS:= ${G_CONFIGLINKS:S,libgcc/config/arm/unwind-arm.h,libgcc/unwind-generic.h,}
-.endif
-
-.if ${MKGCC} != "no"
-.if defined(G_CONFIGLINKS) && !empty(G_CONFIGLINKS)
-BUILDSYMLINKS+=	${G_CONFIGLINKS}
-.for _src _dst in ${G_CONFIGLINKS}
-DPSRCS+=	${_dst}
-.endfor
-.endif
-.endif
-
+.include "../Makefile.gthr"
 .include "../Makefile.tconfigh"
 .include "../Makefile.hacks"
 

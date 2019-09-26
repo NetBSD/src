@@ -1,5 +1,5 @@
 /* Declarations and definitions dealing with attribute handling.
-   Copyright (C) 2013-2016 Free Software Foundation, Inc.
+   Copyright (C) 2013-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -37,5 +37,8 @@ extern bool cxx11_attribute_p (const_tree);
 extern tree get_attribute_name (const_tree);
 extern void apply_tm_attr (tree, tree);
 extern tree make_attribute (const char *, const char *, tree);
+
+extern struct scoped_attributes* register_scoped_attributes (const struct attribute_spec *,
+							     const char *);
 
 #endif // GCC_ATTRIBS_H

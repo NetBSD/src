@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2018/08/01 22:19:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2019/09/26 05:45:54 mrg Exp $
 
 NOOBJ=# defined
 
@@ -8,8 +8,9 @@ GCC_MACHINE_ARCH=${MACHINE_ARCH:S/earmv5/earm/}
 
 .if ${MKGCC} != "no" && exists(${.CURDIR}/gcc/arch/${GCC_MACHINE_ARCH}/defs.mk)
 
-# We keep libcpp here since it depends upon frontend.
+.if ${MKGCCCMDS} != "no" || make(includes)
 
+# We keep libcpp here since it depends upon frontend.
 SUBDIR+=	host-libiberty .WAIT \
 		host-libcpp .WAIT \
 		backend .WAIT \
@@ -19,6 +20,8 @@ SUBDIR+=	host-libiberty .WAIT \
 		gcov gcov-dump cc1 cc1obj cc1plus cpp g++ gcc \
 		lto1 lto-wrapper \
 		include
+
+.endif
 
 .include <bsd.subdir.mk>
 

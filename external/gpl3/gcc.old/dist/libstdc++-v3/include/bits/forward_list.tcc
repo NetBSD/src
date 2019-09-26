@@ -1,6 +1,6 @@
 // <forward_list.tcc> -*- C++ -*-
 
-// Copyright (C) 2008-2016 Free Software Foundation, Inc.
+// Copyright (C) 2008-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -69,8 +69,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
     {
       _Node* __curr = static_cast<_Node*>(__pos->_M_next);
       __pos->_M_next = __curr->_M_next;
-      _Tp_alloc_type __a(_M_get_Node_allocator());
-      allocator_traits<_Tp_alloc_type>::destroy(__a, __curr->_M_valptr());
+      _Node_alloc_traits::destroy(_M_get_Node_allocator(),
+				  __curr->_M_valptr());
       __curr->~_Node();
       _M_put_node(__curr);
       return __pos->_M_next;
@@ -87,8 +87,8 @@ _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
         {
           _Node* __temp = __curr;
           __curr = static_cast<_Node*>(__curr->_M_next);
-	  _Tp_alloc_type __a(_M_get_Node_allocator());
-	  allocator_traits<_Tp_alloc_type>::destroy(__a, __temp->_M_valptr());
+	  _Node_alloc_traits::destroy(_M_get_Node_allocator(),
+				      __temp->_M_valptr());
 	  __temp->~_Node();
           _M_put_node(__temp);
         }

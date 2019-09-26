@@ -1,5 +1,5 @@
 /* Natural loop discovery code for GNU compiler.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -135,6 +135,15 @@ flow_loop_dump (const struct loop *loop, FILE *file,
   fprintf (file, ";;  depth %d, outer %ld\n",
 	   loop_depth (loop), (long) (loop_outer (loop)
 				      ? loop_outer (loop)->num : -1));
+
+  if (loop->latch)
+    {
+      bool read_profile_p;
+      gcov_type nit = expected_loop_iterations_unbounded (loop, &read_profile_p);
+      if (read_profile_p && !loop->any_estimate)
+	fprintf (file, ";;  profile-based iteration count: %" PRIu64 "\n",
+		 (uint64_t) nit);
+    }
 
   fprintf (file, ";;  nodes:");
   bbs = get_loop_body (loop);
@@ -330,7 +339,9 @@ alloc_loop (void)
   loop->exits = ggc_cleared_alloc<loop_exit> ();
   loop->exits->next = loop->exits->prev = loop->exits;
   loop->can_be_parallel = false;
+  loop->constraints = 0;
   loop->nb_iterations_upper_bound = 0;
+  loop->nb_iterations_likely_upper_bound = 0;
   loop->nb_iterations_estimate = 0;
   return loop;
 }
@@ -1302,7 +1313,6 @@ DEBUG_FUNCTION void
 verify_loop_structure (void)
 {
   unsigned *sizes, i, j;
-  sbitmap irreds;
   basic_block bb, *bbs;
   struct loop *loop;
   int err = 0;
@@ -1310,7 +1320,6 @@ verify_loop_structure (void)
   unsigned num = number_of_loops (cfun);
   struct loop_exit *exit, *mexit;
   bool dom_available = dom_info_available_p (CDI_DOMINATORS);
-  sbitmap visited;
 
   if (loops_state_satisfies_p (LOOPS_NEED_FIXUP))
     {
@@ -1356,7 +1365,7 @@ verify_loop_structure (void)
       }
 
   /* Check the recorded loop father and sizes of loops.  */
-  visited = sbitmap_alloc (last_basic_block_for_fn (cfun));
+  auto_sbitmap visited (last_basic_block_for_fn (cfun));
   bitmap_clear (visited);
   bbs = XNEWVEC (basic_block, n_basic_blocks_for_fn (cfun));
   FOR_EACH_LOOP (loop, LI_FROM_INNERMOST)
@@ -1403,7 +1412,6 @@ verify_loop_structure (void)
 	}
     }
   free (bbs);
-  sbitmap_free (visited);
 
   /* Check headers and latches.  */
   FOR_EACH_LOOP (loop, 0)
@@ -1470,7 +1478,7 @@ verify_loop_structure (void)
   if (loops_state_satisfies_p (LOOPS_HAVE_MARKED_IRREDUCIBLE_REGIONS))
     {
       /* Record old info.  */
-      irreds = sbitmap_alloc (last_basic_block_for_fn (cfun));
+      auto_sbitmap irreds (last_basic_block_for_fn (cfun));
       FOR_EACH_BB_FN (bb, cfun)
 	{
 	  edge_iterator ei;
@@ -1522,7 +1530,6 @@ verify_loop_structure (void)
 	      e->flags &= ~(EDGE_ALL_FLAGS + 1);
 	    }
 	}
-      free (irreds);
     }
 
   /* Check the recorded loop exits.  */
@@ -1790,6 +1797,11 @@ record_niter_bound (struct loop *loop, const widest_int &i_bound,
     {
       loop->any_upper_bound = true;
       loop->nb_iterations_upper_bound = i_bound;
+      if (!loop->any_likely_upper_bound)
+	{
+	  loop->any_likely_upper_bound = true;
+	  loop->nb_iterations_likely_upper_bound = i_bound;
+	}
     }
   if (realistic
       && (!loop->any_estimate
@@ -1797,6 +1809,13 @@ record_niter_bound (struct loop *loop, const widest_int &i_bound,
     {
       loop->any_estimate = true;
       loop->nb_iterations_estimate = i_bound;
+    }
+  if (!realistic
+      && (!loop->any_likely_upper_bound
+          || wi::ltu_p (i_bound, loop->nb_iterations_likely_upper_bound)))
+    {
+      loop->any_likely_upper_bound = true;
+      loop->nb_iterations_likely_upper_bound = i_bound;
     }
 
   /* If an upper bound is smaller than the realistic estimate of the
@@ -1806,6 +1825,11 @@ record_niter_bound (struct loop *loop, const widest_int &i_bound,
       && wi::ltu_p (loop->nb_iterations_upper_bound,
 		    loop->nb_iterations_estimate))
     loop->nb_iterations_estimate = loop->nb_iterations_upper_bound;
+  if (loop->any_upper_bound
+      && loop->any_likely_upper_bound
+      && wi::ltu_p (loop->nb_iterations_upper_bound,
+		    loop->nb_iterations_likely_upper_bound))
+    loop->nb_iterations_likely_upper_bound = loop->nb_iterations_upper_bound;
 }
 
 /* Similar to get_estimated_loop_iterations, but returns the estimate only
@@ -1847,6 +1871,25 @@ max_stmt_executions_int (struct loop *loop)
   return snit < 0 ? -1 : snit;
 }
 
+/* Returns an likely upper bound on the number of executions of statements
+   in the LOOP.  For statements before the loop exit, this exceeds
+   the number of execution of the latch by one.  */
+
+HOST_WIDE_INT
+likely_max_stmt_executions_int (struct loop *loop)
+{
+  HOST_WIDE_INT nit = get_likely_max_loop_iterations_int (loop);
+  HOST_WIDE_INT snit;
+
+  if (nit == -1)
+    return -1;
+
+  snit = (HOST_WIDE_INT) ((unsigned HOST_WIDE_INT) nit + 1);
+
+  /* If the computation overflows, return -1.  */
+  return snit < 0 ? -1 : snit;
+}
+
 /* Sets NIT to the estimated number of executions of the latch of the
    LOOP.  If we have no reliable estimate, the function returns false, otherwise
    returns true.  */
@@ -1876,7 +1919,7 @@ get_estimated_loop_iterations (struct loop *loop, widest_int *nit)
    false, otherwise returns true.  */
 
 bool
-get_max_loop_iterations (struct loop *loop, widest_int *nit)
+get_max_loop_iterations (const struct loop *loop, widest_int *nit)
 {
   if (!loop->any_upper_bound)
     return false;
@@ -1890,12 +1933,46 @@ get_max_loop_iterations (struct loop *loop, widest_int *nit)
    on the number of iterations of LOOP could not be derived, returns -1.  */
 
 HOST_WIDE_INT
-get_max_loop_iterations_int (struct loop *loop)
+get_max_loop_iterations_int (const struct loop *loop)
 {
   widest_int nit;
   HOST_WIDE_INT hwi_nit;
 
   if (!get_max_loop_iterations (loop, &nit))
+    return -1;
+
+  if (!wi::fits_shwi_p (nit))
+    return -1;
+  hwi_nit = nit.to_shwi ();
+
+  return hwi_nit < 0 ? -1 : hwi_nit;
+}
+
+/* Sets NIT to an upper bound for the maximum number of executions of the
+   latch of the LOOP.  If we have no reliable estimate, the function returns
+   false, otherwise returns true.  */
+
+bool
+get_likely_max_loop_iterations (struct loop *loop, widest_int *nit)
+{
+  if (!loop->any_likely_upper_bound)
+    return false;
+
+  *nit = loop->nb_iterations_likely_upper_bound;
+  return true;
+}
+
+/* Similar to get_max_loop_iterations, but returns the estimate only
+   if it fits to HOST_WIDE_INT.  If this is not the case, or the estimate
+   on the number of iterations of LOOP could not be derived, returns -1.  */
+
+HOST_WIDE_INT
+get_likely_max_loop_iterations_int (struct loop *loop)
+{
+  widest_int nit;
+  HOST_WIDE_INT hwi_nit;
+
+  if (!get_likely_max_loop_iterations (loop, &nit))
     return -1;
 
   if (!wi::fits_shwi_p (nit))

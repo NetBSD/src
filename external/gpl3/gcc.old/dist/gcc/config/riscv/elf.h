@@ -1,6 +1,5 @@
 /* Target macros for riscv*-elf targets.
-   Copyright (C) 1994, 1997, 1999, 2000, 2002, 2003, 2004, 2007, 2010
-   Free Software Foundation, Inc.
+   Copyright (C) 1994-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -18,9 +17,14 @@ You should have received a copy of the GNU General Public License
 along with GCC; see the file COPYING3.  If not see
 <http://www.gnu.org/licenses/>.  */
 
-/* Leave the linker script to choose the appropriate libraries.  */
+#define LINK_SPEC "\
+-melf" XLEN_SPEC "lriscv \
+%{shared}"
+
+/* Link against Newlib libraries, because the ELF backend assumes Newlib.
+   Handle the circular dependence between libc and libgloss. */
 #undef  LIB_SPEC
-#define LIB_SPEC ""
+#define LIB_SPEC "--start-group -lc -lgloss --end-group"
 
 #undef  STARTFILE_SPEC
 #define STARTFILE_SPEC "crt0%O%s crtbegin%O%s"

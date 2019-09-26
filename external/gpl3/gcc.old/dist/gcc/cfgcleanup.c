@@ -1,5 +1,5 @@
 /* Control flow optimization code for GNU compiler.
-   Copyright (C) 1987-2016 Free Software Foundation, Inc.
+   Copyright (C) 1987-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -38,6 +38,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree.h"
 #include "cfghooks.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "emit-rtl.h"
@@ -59,7 +60,7 @@ along with GCC; see the file COPYING3.  If not see
 static bool first_pass;
 
 /* Set to true if crossjumps occurred in the latest run of try_optimize_cfg.  */
-static bool crossjumps_occured;
+static bool crossjumps_occurred;
 
 /* Set to true if we couldn't run an optimization due to stale liveness
    information; we should run df_analyze to enable more opportunities.  */
@@ -156,6 +157,7 @@ try_simplify_condjump (basic_block cbranch_block)
   cbranch_dest_block = cbranch_jump_edge->dest;
 
   if (cbranch_dest_block == EXIT_BLOCK_PTR_FOR_FN (cfun)
+      || jump_dest_block == EXIT_BLOCK_PTR_FOR_FN (cfun)
       || !can_fallthru (jump_block, cbranch_dest_block))
     return false;
 
@@ -686,7 +688,7 @@ static void
 merge_blocks_move_successor_nojumps (basic_block a, basic_block b)
 {
   rtx_insn *barrier, *real_b_end;
-  rtx label;
+  rtx_insn *label;
   rtx_jump_table_data *table;
 
   /* If we are partitioning hot/cold basic blocks, we don't want to
@@ -1109,6 +1111,48 @@ merge_dir (enum replace_direction a, enum replace_direction b)
   return dir_none;
 }
 
+/* Array of flags indexed by reg note kind, true if the given
+   reg note is CFA related.  */
+static const bool reg_note_cfa_p[] = {
+#undef REG_CFA_NOTE
+#define DEF_REG_NOTE(NAME) false,
+#define REG_CFA_NOTE(NAME) true,
+#include "reg-notes.def"
+#undef REG_CFA_NOTE
+#undef DEF_REG_NOTE
+  false
+};
+
+/* Return true if I1 and I2 have identical CFA notes (the same order
+   and equivalent content).  */
+
+static bool
+insns_have_identical_cfa_notes (rtx_insn *i1, rtx_insn *i2)
+{
+  rtx n1, n2;
+  for (n1 = REG_NOTES (i1), n2 = REG_NOTES (i2); ;
+       n1 = XEXP (n1, 1), n2 = XEXP (n2, 1))
+    {
+      /* Skip over reg notes not related to CFI information.  */
+      while (n1 && !reg_note_cfa_p[REG_NOTE_KIND (n1)])
+	n1 = XEXP (n1, 1);
+      while (n2 && !reg_note_cfa_p[REG_NOTE_KIND (n2)])
+	n2 = XEXP (n2, 1);
+      if (n1 == NULL_RTX && n2 == NULL_RTX)
+	return true;
+      if (n1 == NULL_RTX || n2 == NULL_RTX)
+	return false;
+      if (XEXP (n1, 0) == XEXP (n2, 0))
+	;
+      else if (XEXP (n1, 0) == NULL_RTX || XEXP (n2, 0) == NULL_RTX)
+	return false;
+      else if (!(reload_completed
+		 ? rtx_renumbered_equal_p (XEXP (n1, 0), XEXP (n2, 0))
+		 : rtx_equal_p (XEXP (n1, 0), XEXP (n2, 0))))
+	return false;
+    }
+}
+
 /* Examine I1 and I2 and return:
    - dir_forward if I1 can be replaced by I2, or
    - dir_backward if I2 can be replaced by I1, or
@@ -1145,6 +1189,11 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
 	return dir_none;
     }
   else if (p1 || p2)
+    return dir_none;
+
+  /* Do not allow cross-jumping between frame related insns and other
+     insns.  */
+  if (RTX_FRAME_RELATED_P (i1) != RTX_FRAME_RELATED_P (i2))
     return dir_none;
 
   p1 = PATTERN (i1);
@@ -1204,6 +1253,11 @@ old_insns_match_p (int mode ATTRIBUTE_UNUSED, rtx_insn *i1, rtx_insn *i2)
 	    }
 	}
     }
+
+  /* If both i1 and i2 are frame related, verify all the CFA notes
+     in the same order and with the same content.  */
+  if (RTX_FRAME_RELATED_P (i1) && !insns_have_identical_cfa_notes (i1, i2))
+    return dir_none;
 
 #ifdef STACK_REGS
   /* If cross_jump_death_matters is not 0, the insn's mode
@@ -1695,7 +1749,7 @@ outgoing_edges_match (int mode, basic_block bb1, basic_block bb2)
   /* Check whether there are tablejumps in the end of BB1 and BB2.
      Return true if they are identical.  */
     {
-      rtx label1, label2;
+      rtx_insn *label1, *label2;
       rtx_jump_table_data *table1, *table2;
 
       if (tablejump_p (BB_END (bb1), &label1, &table1)
@@ -1963,6 +2017,11 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
   if (newpos2 != NULL_RTX)
     src2 = BLOCK_FOR_INSN (newpos2);
 
+  /* Check that SRC1 and SRC2 have preds again.  They may have changed
+     above due to the call to flow_find_cross_jump.  */
+  if (EDGE_COUNT (src1->preds) == 0 || EDGE_COUNT (src2->preds) == 0)
+    return false;
+
   if (dir == dir_backward)
     {
 #define SWAP(T, X, Y) do { T tmp = (X); (X) = (Y); (Y) = tmp; } while (0)
@@ -1992,7 +2051,7 @@ try_crossjump_to_edge (int mode, edge e1, edge e2,
      they have been already compared for equivalence in outgoing_edges_match ()
      so replace the references to TABLE1 by references to TABLE2.  */
   {
-      rtx label1, label2;
+      rtx_insn *label1, *label2;
       rtx_jump_table_data *table1, *table2;
 
       if (tablejump_p (BB_END (osrc1), &label1, &table1)
@@ -2281,7 +2340,7 @@ try_crossjump_bb (int mode, basic_block bb)
     }
 
   if (changed)
-    crossjumps_occured = true;
+    crossjumps_occurred = true;
 
   return changed;
 }
@@ -2582,7 +2641,7 @@ try_head_merge_bb (basic_block bb)
   free (headptr);
   free (nextptr);
 
-  crossjumps_occured |= changed;
+  crossjumps_occurred |= changed;
 
   return changed;
 }
@@ -2605,6 +2664,35 @@ trivially_empty_bb_p (basic_block bb)
     }
 }
 
+/* Return true if BB contains just a return and possibly a USE of the
+   return value.  Fill in *RET and *USE with the return and use insns
+   if any found, otherwise NULL.  */
+
+static bool
+bb_is_just_return (basic_block bb, rtx_insn **ret, rtx_insn **use)
+{
+  *ret = *use = NULL;
+  rtx_insn *insn;
+
+  if (bb == EXIT_BLOCK_PTR_FOR_FN (cfun))
+    return false;
+
+  FOR_BB_INSNS (bb, insn)
+    if (NONDEBUG_INSN_P (insn))
+      {
+	if (!*ret && ANY_RETURN_P (PATTERN (insn)))
+	  *ret = insn;
+	else if (!*ret && !*use && GET_CODE (PATTERN (insn)) == USE
+	    && REG_P (XEXP (PATTERN (insn), 0))
+	    && REG_FUNCTION_VALUE_P (XEXP (PATTERN (insn), 0)))
+	  *use = insn;
+	else
+	  return false;
+      }
+
+  return !!*ret;
+}
+
 /* Do simple CFG optimizations - basic block merging, simplifying of jump
    instructions etc.  Return nonzero if changes were made.  */
 
@@ -2619,7 +2707,7 @@ try_optimize_cfg (int mode)
   if (mode & (CLEANUP_CROSSJUMP | CLEANUP_THREADING))
     clear_bb_flags ();
 
-  crossjumps_occured = false;
+  crossjumps_occurred = false;
 
   FOR_EACH_BB_FN (bb, cfun)
     update_forwarder_flag (bb);
@@ -2789,6 +2877,99 @@ try_optimize_cfg (int mode)
 			b = next;
 			changed_here = true;
 		      }
+		}
+
+	      /* Try to change a branch to a return to just that return.  */
+	      rtx_insn *ret, *use;
+	      if (single_succ_p (b)
+		  && onlyjump_p (BB_END (b))
+		  && bb_is_just_return (single_succ (b), &ret, &use))
+		{
+		  if (redirect_jump (as_a <rtx_jump_insn *> (BB_END (b)),
+				     PATTERN (ret), 0))
+		    {
+		      if (use)
+			emit_insn_before (copy_insn (PATTERN (use)),
+					  BB_END (b));
+		      if (dump_file)
+			fprintf (dump_file, "Changed jump %d->%d to return.\n",
+				 b->index, single_succ (b)->index);
+		      redirect_edge_succ (single_succ_edge (b),
+					  EXIT_BLOCK_PTR_FOR_FN (cfun));
+		      single_succ_edge (b)->flags &= ~EDGE_CROSSING;
+		      changed_here = true;
+		    }
+		}
+
+	      /* Try to change a conditional branch to a return to the
+		 respective conditional return.  */
+	      if (EDGE_COUNT (b->succs) == 2
+		  && any_condjump_p (BB_END (b))
+		  && bb_is_just_return (BRANCH_EDGE (b)->dest, &ret, &use))
+		{
+		  if (redirect_jump (as_a <rtx_jump_insn *> (BB_END (b)),
+				     PATTERN (ret), 0))
+		    {
+		      if (use)
+			emit_insn_before (copy_insn (PATTERN (use)),
+					  BB_END (b));
+		      if (dump_file)
+			fprintf (dump_file, "Changed conditional jump %d->%d "
+				 "to conditional return.\n",
+				 b->index, BRANCH_EDGE (b)->dest->index);
+		      redirect_edge_succ (BRANCH_EDGE (b),
+					  EXIT_BLOCK_PTR_FOR_FN (cfun));
+		      BRANCH_EDGE (b)->flags &= ~EDGE_CROSSING;
+		      changed_here = true;
+		    }
+		}
+
+	      /* Try to flip a conditional branch that falls through to
+		 a return so that it becomes a conditional return and a
+		 new jump to the original branch target.  */
+	      if (EDGE_COUNT (b->succs) == 2
+		  && BRANCH_EDGE (b)->dest != EXIT_BLOCK_PTR_FOR_FN (cfun)
+		  && any_condjump_p (BB_END (b))
+		  && bb_is_just_return (FALLTHRU_EDGE (b)->dest, &ret, &use))
+		{
+		  if (invert_jump (as_a <rtx_jump_insn *> (BB_END (b)),
+				   JUMP_LABEL (BB_END (b)), 0))
+		    {
+		      basic_block new_ft = BRANCH_EDGE (b)->dest;
+		      if (redirect_jump (as_a <rtx_jump_insn *> (BB_END (b)),
+					 PATTERN (ret), 0))
+			{
+			  if (use)
+			    emit_insn_before (copy_insn (PATTERN (use)),
+					      BB_END (b));
+			  if (dump_file)
+			    fprintf (dump_file, "Changed conditional jump "
+				     "%d->%d to conditional return, adding "
+				     "fall-through jump.\n",
+				     b->index, BRANCH_EDGE (b)->dest->index);
+			  redirect_edge_succ (BRANCH_EDGE (b),
+					      EXIT_BLOCK_PTR_FOR_FN (cfun));
+			  BRANCH_EDGE (b)->flags &= ~EDGE_CROSSING;
+			  std::swap (BRANCH_EDGE (b)->probability,
+				     FALLTHRU_EDGE (b)->probability);
+			  update_br_prob_note (b);
+			  basic_block jb = force_nonfallthru (FALLTHRU_EDGE (b));
+			  notice_new_block (jb);
+			  if (!redirect_jump (as_a <rtx_jump_insn *> (BB_END (jb)),
+					      block_label (new_ft), 0))
+			    gcc_unreachable ();
+			  redirect_edge_succ (single_succ_edge (jb), new_ft);
+			  changed_here = true;
+			}
+		      else
+			{
+			  /* Invert the jump back to what it was.  This should
+			     never fail.  */
+			  if (!invert_jump (as_a <rtx_jump_insn *> (BB_END (b)),
+					    JUMP_LABEL (BB_END (b)), 0))
+			    gcc_unreachable ();
+			}
+		    }
 		}
 
 	      /* Simplify branch over branch.  */
@@ -3045,7 +3226,7 @@ cleanup_cfg (int mode)
 	  if ((mode & CLEANUP_EXPENSIVE) && !reload_completed
 	      && !delete_trivially_dead_insns (get_insns (), max_reg_num ()))
 	    break;
-	  if ((mode & CLEANUP_CROSSJUMP) && crossjumps_occured)
+	  if ((mode & CLEANUP_CROSSJUMP) && crossjumps_occurred)
 	    run_fast_dce ();
 	}
       else

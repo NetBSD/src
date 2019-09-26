@@ -1,5 +1,5 @@
 /* Pragma related interfaces.
-   Copyright (C) 1995-2016 Free Software Foundation, Inc.
+   Copyright (C) 1995-2017 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -46,7 +46,7 @@ enum pragma_kind {
   PRAGMA_OMP_CANCEL,
   PRAGMA_OMP_CANCELLATION_POINT,
   PRAGMA_OMP_CRITICAL,
-  PRAGMA_OMP_DECLARE_REDUCTION,
+  PRAGMA_OMP_DECLARE,
   PRAGMA_OMP_DISTRIBUTE,
   PRAGMA_OMP_END_DECLARE_TARGET,
   PRAGMA_OMP_FLUSH,

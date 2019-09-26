@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1.1.4 2018/08/01 22:19:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.1.1.5 2019/09/26 05:45:55 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -11,20 +11,15 @@ BINDIR=		/usr/bin
 
 MAN=		gcov.1
 
-HOSTPROG_CXX=	1
-
-.include <bsd.prog.mk>
-
-# Force using C++ for this
-HOST_CC:=	${HOST_CXX}
-CC:=		${CXX}
-CFLAGS:=	${CXXFLAGS} -Wno-stack-protector
+.include "../Makefile.prog"
 
 .include "../Makefile.common"
 .include "../Makefile.libcpp"
 .include "../Makefile.backtrace"
 .include "../Makefile.libiberty"
 .include "../Makefile.libdecnumber"
+
+COPTS.gcov.c += -Wno-stack-protector
 
 LDADD+=		-lintl
 DPADD+=		${LIBINTL}

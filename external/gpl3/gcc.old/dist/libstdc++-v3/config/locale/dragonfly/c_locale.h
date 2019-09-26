@@ -1,6 +1,6 @@
 // localization implementation details, DragonFly version -*- C++ -*-
 
-// Copyright (C) 2001-2016 Free Software Foundation, Inc.
+// Copyright (C) 2001-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -40,7 +40,11 @@
 #pragma GCC system_header
 
 #include <clocale>
+#ifndef __NetBSD__
 #include <xlocale.h>
+#else
+#include <cstdio>
+#endif
 
 #define _GLIBCXX_NUM_CATEGORIES 0
 
@@ -59,20 +63,28 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		   const int __size __attribute__ ((__unused__)),
 		   const char* __fmt, ...)
   {
+#ifndef __NetBSD__
     __c_locale __old = (__c_locale)uselocale((locale_t)__cloc);
+#endif
 
     __builtin_va_list __args;
     __builtin_va_start(__args, __fmt);
 
+#ifndef __NetBSD__
 #if _GLIBCXX_USE_C99_STDIO
     const int __ret = __builtin_vsnprintf(__out, __size, __fmt, __args);
 #else
     const int __ret = __builtin_vsprintf(__out, __fmt, __args);
 #endif
 
+    uselocale((locale_t)__old);
+#else
+    const int __ret = vsnprintf_l(__out, __size, (locale_t)__cloc, __fmt,
+	__args);
+#endif
+
     __builtin_va_end(__args);
 
-    uselocale((locale_t)__old);
     return __ret;
   }
 

@@ -1,6 +1,6 @@
 // Special functions -*- C++ -*-
 
-// Copyright (C) 2006-2016 Free Software Foundation, Inc.
+// Copyright (C) 2006-2017 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -49,7 +49,7 @@
 
 namespace std _GLIBCXX_VISIBILITY(default)
 {
-#if __STDCPP_WANT_MATH_SPEC_FUNCS__
+#if _GLIBCXX_USE_STD_SPEC_FUNCS
 #elif defined(_GLIBCXX_TR1_CMATH)
 namespace tr1
 {
@@ -86,7 +86,7 @@ namespace tr1
       _Tp __term = _Tp(1);
       _Tp __esum = _Tp(0);
       _Tp __osum = _Tp(0);
-      const unsigned int __max_iter = 100;
+      const unsigned int __max_iter = 1000;
       for (unsigned int __i = 1; __i < __max_iter; ++__i)
         {
           __term *= - __x / __i;
@@ -156,7 +156,7 @@ namespace tr1
     _Tp
     __expint_En_series(unsigned int __n, _Tp __x)
     {
-      const unsigned int __max_iter = 100;
+      const unsigned int __max_iter = 1000;
       const _Tp __eps = std::numeric_limits<_Tp>::epsilon();
       const int __nm1 = __n - 1;
       _Tp __ans = (__nm1 != 0
@@ -202,7 +202,7 @@ namespace tr1
     _Tp
     __expint_En_cont_frac(unsigned int __n, _Tp __x)
     {
-      const unsigned int __max_iter = 100;
+      const unsigned int __max_iter = 1000;
       const _Tp __eps = std::numeric_limits<_Tp>::epsilon();
       const _Tp __fp_min = std::numeric_limits<_Tp>::min();
       const int __nm1 = __n - 1;
@@ -525,7 +525,7 @@ namespace tr1
 
   _GLIBCXX_END_NAMESPACE_VERSION
   } // namespace __detail
-#if ! __STDCPP_WANT_MATH_SPEC_FUNCS__ && defined(_GLIBCXX_TR1_CMATH)
+#if ! _GLIBCXX_USE_STD_SPEC_FUNCS && defined(_GLIBCXX_TR1_CMATH)
 } // namespace tr1
 #endif
 }

@@ -1,5 +1,5 @@
 /* Register renaming for the GNU compiler.
-   Copyright (C) 2000-2016 Free Software Foundation, Inc.
+   Copyright (C) 2000-2017 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -24,6 +24,7 @@
 #include "target.h"
 #include "rtl.h"
 #include "df.h"
+#include "memmodel.h"
 #include "tm_p.h"
 #include "insn-config.h"
 #include "regs.h"
@@ -61,7 +62,10 @@
      5. If a renaming register has been found, it is substituted in the chain.
 
   Targets can parameterize the pass by specifying a preferred class for the
-  renaming register for a given (super)class of registers to be renamed.  */
+  renaming register for a given (super)class of registers to be renamed.
+
+  DEBUG_INSNs are treated specially, in particular registers occurring inside
+  them are treated as requiring ALL_REGS as a class.  */
 
 #if HOST_BITS_PER_WIDE_INT <= MAX_RECOG_OPERANDS
 #error "Use a different bitmap implementation for untracked_operands."
@@ -478,7 +482,7 @@ rename_chains (void)
       if (fixed_regs[reg] || global_regs[reg]
 	  || (!HARD_FRAME_POINTER_IS_FRAME_POINTER && frame_pointer_needed
 	      && reg == HARD_FRAME_POINTER_REGNUM)
-	  || (HARD_FRAME_POINTER_REGNUM && frame_pointer_needed
+	  || (HARD_FRAME_POINTER_IS_FRAME_POINTER && frame_pointer_needed
 	      && reg == FRAME_POINTER_REGNUM))
 	continue;
 
@@ -1238,6 +1242,19 @@ scan_rtx_reg (rtx_insn *insn, rtx *loc, enum reg_class cl, enum scan_actions act
     }
 }
 
+/* A wrapper around base_reg_class which returns ALL_REGS if INSN is a
+   DEBUG_INSN.  The arguments MODE, AS, CODE and INDEX_CODE are as for
+   base_reg_class.  */
+
+static reg_class
+base_reg_class_for_rename (rtx_insn *insn, machine_mode mode, addr_space_t as,
+			   rtx_code code, rtx_code index_code)
+{
+  if (DEBUG_INSN_P (insn))
+    return ALL_REGS;
+  return base_reg_class (mode, as, code, index_code);
+}
+
 /* Adapted from find_reloads_address_1.  CL is INDEX_REG_CLASS or
    BASE_REG_CLASS depending on how the register is being considered.  */
 
@@ -1343,12 +1360,16 @@ scan_rtx_address (rtx_insn *insn, rtx *loc, enum reg_class cl,
 	  }
 
 	if (locI)
-	  scan_rtx_address (insn, locI, INDEX_REG_CLASS, action, mode, as);
+	  {
+	    reg_class iclass = DEBUG_INSN_P (insn) ? ALL_REGS : INDEX_REG_CLASS;
+	    scan_rtx_address (insn, locI, iclass, action, mode, as);
+	  }
 	if (locB)
-	  scan_rtx_address (insn, locB,
-			    base_reg_class (mode, as, PLUS, index_code),
-			    action, mode, as);
-
+	  {
+	    reg_class bclass = base_reg_class_for_rename (insn, mode, as, PLUS,
+							  index_code);
+	    scan_rtx_address (insn, locB, bclass, action, mode, as);
+	  }
 	return;
       }
 
@@ -1366,10 +1387,13 @@ scan_rtx_address (rtx_insn *insn, rtx *loc, enum reg_class cl,
       break;
 
     case MEM:
-      scan_rtx_address (insn, &XEXP (x, 0),
-			base_reg_class (GET_MODE (x), MEM_ADDR_SPACE (x),
-					MEM, SCRATCH),
-			action, GET_MODE (x), MEM_ADDR_SPACE (x));
+      {
+	reg_class bclass = base_reg_class_for_rename (insn, GET_MODE (x),
+						      MEM_ADDR_SPACE (x),
+						      MEM, SCRATCH);
+	scan_rtx_address (insn, &XEXP (x, 0), bclass, action, GET_MODE (x),
+			  MEM_ADDR_SPACE (x));
+      }
       return;
 
     case REG:
@@ -1416,10 +1440,14 @@ scan_rtx (rtx_insn *insn, rtx *loc, enum reg_class cl, enum scan_actions action,
       return;
 
     case MEM:
-      scan_rtx_address (insn, &XEXP (x, 0),
-			base_reg_class (GET_MODE (x), MEM_ADDR_SPACE (x),
-					MEM, SCRATCH),
-			action, GET_MODE (x), MEM_ADDR_SPACE (x));
+      {
+	reg_class bclass = base_reg_class_for_rename (insn, GET_MODE (x),
+						      MEM_ADDR_SPACE (x),
+						      MEM, SCRATCH);
+
+	scan_rtx_address (insn, &XEXP (x, 0), bclass, action, GET_MODE (x),
+			  MEM_ADDR_SPACE (x));
+      }
       return;
 
     case SET:
@@ -1628,6 +1656,8 @@ build_def_use (basic_block bb)
 	     (6) For any non-earlyclobber write we find in an operand, make
 	         a new chain or mark the hard register as live.
 	     (7) For any REG_UNUSED, close any chains we just opened.
+	     (8) For any REG_CFA_RESTORE or REG_CFA_REGISTER, kill any chain
+	         containing its dest.
 
 	     We cannot deal with situations where we track a reg in one mode
 	     and see a reference in another mode; these will cause the chain
@@ -1839,6 +1869,22 @@ build_def_use (basic_block bb)
 					  REGNO (XEXP (note, 0)));
 		scan_rtx (insn, &XEXP (note, 0), NO_REGS, terminate_dead,
 			  OP_IN);
+	      }
+
+	  /* Step 8: Kill the chains involving register restores.  Those
+	     should restore _that_ register.  Similar for REG_CFA_REGISTER.  */
+	  for (note = REG_NOTES (insn); note; note = XEXP (note, 1))
+	    if (REG_NOTE_KIND (note) == REG_CFA_RESTORE
+		|| REG_NOTE_KIND (note) == REG_CFA_REGISTER)
+	      {
+		rtx *x = &XEXP (note, 0);
+		if (!*x)
+		  x = &PATTERN (insn);
+		if (GET_CODE (*x) == PARALLEL)
+		  x = &XVECEXP (*x, 0, 0);
+		if (GET_CODE (*x) == SET)
+		  x = &SET_DEST (*x);
+		scan_rtx (insn, x, NO_REGS, mark_all_read, OP_IN);
 	      }
 	}
       else if (DEBUG_INSN_P (insn)
