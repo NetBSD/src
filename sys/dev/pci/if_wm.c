@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.648 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.649 2019/09/26 04:16:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.648 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.649 2019/09/26 04:16:03 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9894,7 +9894,7 @@ wm_gmii_reset(struct wm_softc *sc)
  * result might be incorrect.
  *
  *  In the second call, PHY OUI and model is used to identify PHY type.
- * It might not be perfpect because of the lack of compared entry, but it
+ * It might not be perfect because of the lack of compared entry, but it
  * would be better than the first call.
  *
  *  If the detected new result and previous assumption is different,
@@ -12852,12 +12852,12 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 	/*
 	 * Either we should have a hardware SPI cycle in progress bit to check
 	 * against, in order to start a new cycle or FDONE bit should be
-	 * changed in the hardware so that it is 1 after harware reset, which
+	 * changed in the hardware so that it is 1 after hardware reset, which
 	 * can then be used as an indication whether a cycle is in progress or
 	 * has been completed .. we should also have some software semaphore
 	 * mechanism to guard FDONE or the cycle in progress bit so that two
 	 * threads access to those bits can be sequentiallized or a way so that
-	 * 2 threads dont start the cycle at the same time
+	 * 2 threads don't start the cycle at the same time
 	 */
 
 	if ((hsfsts & HSFSTS_FLINPRO) == 0) {
