@@ -1,4 +1,4 @@
-/*	$NetBSD: imx51_spi.c,v 1.2 2019/08/19 11:41:36 hkenken Exp $	*/
+/*	$NetBSD: imx51_spi.c,v 1.3 2019/09/27 02:59:21 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx51_spi.c,v 1.2 2019/08/19 11:41:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx51_spi.c,v 1.3 2019/09/27 02:59:21 hkenken Exp $");
 
 #include "locators.h"
 #include "opt_imx.h"
@@ -95,6 +95,10 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_enhanced = cf_flags;
+	if (sc->sc_enhanced)
+		sc->sc_type = IMX51_ECSPI;
+	else
+		sc->sc_type = IMX35_CSPI;
 
 	sc->sc_nslaves = IMXSPINSLAVES;
 	sc->sc_freq = imx51_get_clock(IMX51CLK_CSPI_CLK_ROOT);
