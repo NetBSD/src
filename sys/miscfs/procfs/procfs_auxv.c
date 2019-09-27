@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_auxv.c,v 1.3 2019/09/26 17:34:08 christos Exp $	*/
+/*	$NetBSD: procfs_auxv.c,v 1.4 2019/09/27 14:36:18 christos Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_auxv.c,v 1.3 2019/09/26 17:34:08 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_auxv.c,v 1.4 2019/09/27 14:36:18 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -52,7 +52,7 @@ procfs_doauxv(struct lwp *curl, struct proc *p, struct pfsnode *pfs,
 	if ((error = proc_getauxv(p, &buffer, &bufsize)) != 0)
 		return error;
 
-	if ((size_t)uio->uio_offset < bufsize)
+	if ((uintmax_t)uio->uio_offset < bufsize)
 		error = uiomove((char *)buffer + uio->uio_offset,
 		    bufsize - uio->uio_offset, uio);
 	else
