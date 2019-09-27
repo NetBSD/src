@@ -1,4 +1,4 @@
-/*	$NetBSD: dev_net.c,v 1.1.2.3 2019/08/01 13:22:48 martin Exp $	*/
+/*	$NetBSD: dev_net.c,v 1.1.2.4 2019/09/27 09:40:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -76,23 +76,23 @@ int
 net_open(struct open_file *f, ...)
 {
 	va_list ap;
-	char *devname;		/* Device part of file name (or NULL). */
+	struct devdesc *dev;
 	int error = 0;
 
 	va_start(ap, f);
-	devname = va_arg(ap, char *);
+	dev = va_arg(ap, struct devdesc *);
 	va_end(ap);
 
 #ifdef	NETIF_DEBUG
 	if (debug)
-		printf("%s\n", devname);
+		printf("%s\n", dev->devname);
 #endif
 
 	/* On first open, do netif open, mount, etc. */
 	if (netdev_opens == 0) {
 		/* Find network interface. */
 		if (netdev_sock < 0) {
-			netdev_sock = netif_open(devname);
+			netdev_sock = netif_open(dev);
 			if (netdev_sock < 0) {
 				printf("netif_open() failed\n");
 				return ENXIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.5.2.8 2019/09/18 17:30:05 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.5.2.9 2019/09/27 09:40:08 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -109,6 +109,7 @@ const struct bootblk_command commands[] = {
 	{ NULL,		NULL },
 };
 
+static char *default_fsname;
 static char *default_devname;
 static int default_unit, default_partition;
 static const char *default_filename;
@@ -123,8 +124,11 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 {
 	const char *col;
 	static char savedevname[MAXDEVNAME+1];
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	const struct netboot_fstab *nf;
+#endif
 
-	*fsname = "ufs";
+	*fsname = default_fsname;
 	if (default_part_name == NULL) {
 		*devname = default_devname;
 	} else {
@@ -150,6 +154,7 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 
 		if (strstr(fname, "NAME=") == fname) {
 			strlcpy(savedevname, fname, devlen + 1);
+			*fsname = "ufs";
 			*devname = savedevname;
 			*unit = -1;
 			*partition = -1;
@@ -186,6 +191,13 @@ parsebootfile(const char *fname, char **fsname, char **devname, int *unit,
 		if (i != devlen)
 			return ENXIO;
 
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+		nf = netboot_fstab_find(savedevname);
+		if (nf != NULL)
+			*fsname = (char *)nf->name;
+		else
+#endif
+		*fsname = "ufs";
 		*devname = savedevname;
 		*unit = u;
 		*partition = p;
@@ -276,6 +288,9 @@ boot(void)
 {
 	int currname;
 	int c;
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	const struct netboot_fstab *nf;
+#endif
 
 	boot_modules_enabled = !(boot_params.bp_flags & X86_BP_FLAGS_NOMODULES);
 
@@ -285,6 +300,14 @@ boot(void)
 
 	/* if the user types "boot" without filename */
 	default_filename = DEFFILENAME;
+
+#if defined(SUPPORT_NFS) || defined(SUPPORT_TFTP)
+	nf = netboot_fstab_find(default_devname);
+	if (nf != NULL)
+		default_fsname = (char *)nf->name;
+	else
+#endif
+	default_fsname = "ufs";
 
 	if (!(boot_params.bp_flags & X86_BP_FLAGS_NOBOOTCONF)) {
 #ifdef EFIBOOTCFG_FILENAME
@@ -444,7 +467,7 @@ command_dev(char *arg)
 {
 	static char savedevname[MAXDEVNAME + 1];
 	char buf[80];
-	char *fsname, *devname;
+	char *devname;
 	const char *file; /* dummy */
 
 	if (*arg == '\0') {
@@ -462,7 +485,7 @@ command_dev(char *arg)
 	}
 
 	if (strchr(arg, ':') == NULL ||
-	    parsebootfile(arg, &fsname, &devname, &default_unit,
+	    parsebootfile(arg, &default_fsname, &devname, &default_unit,
 	      &default_partition, &file)) {
 		command_help(NULL);
 		return;
