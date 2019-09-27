@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_sdhc.c,v 1.2 2019/08/19 03:48:41 hkenken Exp $	*/
+/*	$NetBSD: imx6_sdhc.c,v 1.3 2019/09/27 02:54:57 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_sdhc.c,v 1.2 2019/08/19 03:48:41 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_sdhc.c,v 1.3 2019/09/27 02:54:57 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -119,7 +119,8 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 	    SDHC_FLAG_HAVE_DVS |
 	    SDHC_FLAG_32BIT_ACCESS |
 	    SDHC_FLAG_USE_ADMA2 |
-	    SDHC_FLAG_USDHC;
+	    SDHC_FLAG_USDHC |
+	    SDHC_FLAG_NO_BUSY_INTR;
 
 	if (bus_width == 8)
 		sc->sc_sdhc.sc_flags |= SDHC_FLAG_8BIT_MODE;
