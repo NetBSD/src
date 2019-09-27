@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.283 2019/09/14 15:06:33 mlelstv Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.284 2019/09/27 00:32:03 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.283 2019/09/14 15:06:33 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.284 2019/09/27 00:32:03 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2419,7 +2419,7 @@ sbsavetimestamp(int opt, struct mbuf **mp)
 
 	microtime(&tv);
 
-	MODULE_HOOK_CALL(uipc_socket_50_sbts_hook, (opt, mp), enosys(), error);
+	MODULE_HOOK_CALL(uipc_socket_50_sbts_hook, (opt, &mp), enosys(), error);
 	if (error == 0)
 		return mp;
 
