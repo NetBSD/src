@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.62 2019/09/27 09:36:56 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.63 2019/09/27 15:29:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4086,8 +4086,8 @@ external/cddl/osnet/lib/libzfs_core/Makefile	1.2
 external/cddl/osnet/lib/libzpool/Makefile	1.13
 lib/libpthread/Makefile				1.95
 
-	Move {zfs,zpool,mount_zfs} to /sbin and the libraries required
-	by them to /lib.	
+	Move the shared libraries requires by /sbin/{zfs,zpool,mount_zfs} to
+	them to /lib.
 	[brad, ticket #252]
 
 sys/arch/i386/stand/efiboot/boot.c		1.17
