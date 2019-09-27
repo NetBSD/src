@@ -1,4 +1,4 @@
-/* $NetBSD: sbc_encode.c,v 1.6 2019/07/27 23:33:09 maya Exp $ */
+/* $NetBSD: sbc_encode.c,v 1.6.2.1 2019/09/27 09:35:33 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 - 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -902,7 +902,7 @@ stream(int in, int outfd, uint8_t mode, uint8_t freq, uint8_t bands, uint8_t
 		totalSize += (size_t)mySize[numpkts];
 		numpkts++;
 
-		if (numpkts > 13)
+		if (numpkts > 12)
 			break;
 	}
 
