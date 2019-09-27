@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.9 2019/09/27 20:05:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.9 2019/09/27 20:05:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -142,16 +142,16 @@ fdtbus_pinctrl_configure_node(int phandle)
 		fdtbus_pinctrl_configure_node(child);
 
 		/*
-		 * Set configuration 0 for this node. This may fail if the
+		 * Set default configuration for this node. This may fail if the
 		 * pinctrl provider is missing; that's OK, we will re-configure
 		 * when that provider attaches.
 		 */
 		fdtbus_get_path(child, buf, sizeof(buf));
-		error = fdtbus_pinctrl_set_config_index(child, 0);
+		error = fdtbus_pinctrl_set_config(child, "default");
 		if (error == 0)
-			aprint_debug("pinctrl: set config pinctrl-0 for %s\n", buf);
+			aprint_debug("pinctrl: set default config for %s\n", buf);
 		else if (error != ENOENT)
-			aprint_debug("pinctrl: failed to set config pinctrl-0 for %s: %d\n", buf, error);
+			aprint_debug("pinctrl: failed to set default config for %s: %d\n", buf, error);
 	}
 }
 
