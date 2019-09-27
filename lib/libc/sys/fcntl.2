@@ -1,4 +1,4 @@
-.\"	$NetBSD: fcntl.2,v 1.44 2019/09/26 17:13:52 christos Exp $
+.\"	$NetBSD: fcntl.2,v 1.45 2019/09/27 07:20:07 wiz Exp $
 .\"
 .\" Copyright (c) 1983, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -420,6 +420,12 @@ error.
 .Fn fcntl
 will fail if:
 .Bl -tag -width Er
+.It Bq Er EACCES
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and read or search permission was denied for a component of the pathname.
 .It Bq Er EAGAIN
 The argument
 .Fa arg
@@ -522,6 +528,12 @@ is
 .Dv F_DUPFD
 and system-wide the maximum allowed number of file descriptors are
 currently open.
+.It Bq Er ENOENT
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and a component of the pathname no longer exists.
 .It Bq Er ENOLCK
 The argument
 .Fa cmd
@@ -531,37 +543,25 @@ or
 .Dv F_SETLKW ,
 and satisfying the lock or unlock request would result in the
 number of locked regions in the system exceeding a system-imposed limit.
+.It Bq Er ENOMEM
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and insufficient memory is available.
+.It Bq Er ERANGE
+The argument
+.Fa cmd
+is
+.Dv F_GETPATH
+and the resulting path would be greater than
+.Dv MAXPATHLEN .
 .It Bq Er ESRCH
 .Fa cmd
 is
 .Dv F_SETOWN
 and
 the process ID given as argument is not in use.
-.It Bq Er EACCES
-The argument
-.Fa cmd
-is
-.Dv F_GETPATH 
-and read or search permission was denied for a component of the pathname.
-.It Bq Er ENOENT
-The argument
-.Fa cmd
-is
-.Dv F_GETPATH 
-and a component of the pathname no longer exists.
-.It Bq Er ENOMEM
-The argument
-.Fa cmd
-is
-.Dv F_GETPATH 
-and insufficient memory is available.
-.It Bq Er ERANGE
-The argument
-.Fa cmd
-is
-.Dv F_GETPATH 
-and the resulting path would be greater than
-.Dv MAXPATHLEN .
 .El
 .Sh SEE ALSO
 .Xr close 2 ,
