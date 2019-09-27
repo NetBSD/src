@@ -1,4 +1,4 @@
-/*	$NetBSD: imxecspireg.h,v 1.1 2014/03/22 09:28:08 hkenken Exp $	*/
+/*	$NetBSD: imxecspireg.h,v 1.2 2019/09/27 02:59:21 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
 #define	ECSPI_RXDATA		0x00
 #define	ECSPI_TXDATA		0x04
 #define	ECSPI_CONREG		0x08
-#define	 ECSPI_CON_BITCOUNT	__BITS(31, 20)
+#define	 ECSPI_CON_BITCOUNT	__BITS(31,20)
 #define	 ECSPI_CON_CS		__BITS(19,18)
 #define	 ECSPI_CON_DRCTL	__BITS(17,16)
 #define	 ECSPI_CON_PREDIV	__BITS(15,12)	/* PRE DIVIDER */
