@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.48 2019/09/27 11:53:42 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.49 2019/09/27 11:57:42 bad Exp $
 #
 
 #
@@ -133,7 +133,7 @@ lsrc usr /sbin/			rndctl route setkey sysctl umount
 lsrc usr /usr.bin/		kdump ktrace mixerctl sockstat
 lsrc usr /usr.sbin/		arp dumpfs mdconfig ndp npf pcictl
 lsrc usr /usr.sbin/		rtadvd vnconfig wlanctl
-lsrc usr /external/bsd/		libelf libnv libpcap tcpdump wpa
+lsrc usr /external/bsd/		libnv libpcap tcpdump wpa
 lsrc usr /crypto/		Makefile.openssl
 lsrc usr /crypto/dist/		ipsec-tools
 lsrc usr /crypto/external/bsd/	openssl
