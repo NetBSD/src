@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.51 2019/09/27 08:12:01 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.52 2019/09/27 08:17:11 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.51 2019/09/27 08:12:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.52 2019/09/27 08:17:11 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,8 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 		/*
 		 * Sanity check the control message length.
 		 */
-		if (cmsg32.cmsg_len > (size_t)resid ||
+		if (resid < 0 ||
+		    cmsg32.cmsg_len > (size_t)resid ||
 		    cmsg32.cmsg_len < sizeof(cmsg32)) {
 			error = EINVAL;
 			goto failure;
