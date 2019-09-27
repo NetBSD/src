@@ -1,4 +1,4 @@
-/* $NetBSD: efiblock.c,v 1.6 2019/09/21 10:19:37 jmcneill Exp $ */
+/* $NetBSD: efiblock.c,v 1.7 2019/09/27 20:10:42 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -108,8 +108,8 @@ efi_block_allocate_device_buffer(struct efi_block_dev *bdev, UINTN size,
 		*buf_start = buf = AllocatePool(size);
 	else {
 		buf = AllocatePool(size + bdev->bio->Media->IoAlign - 1);
-		*buf_start = (buf == NULL) ? NULL : (void *)(((intptr_t)buf +
-			bdev->bio->Media->IoAlign - 1) & ~(bdev->bio->Media->IoAlign - 1));
+		*buf_start = (buf == NULL) ? NULL :
+		    (void *)roundup2((intptr_t)buf, bdev->bio->Media->IoAlign);
 	}
 
 	return buf;
