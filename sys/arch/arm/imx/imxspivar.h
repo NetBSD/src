@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspivar.h,v 1.2 2019/08/19 11:41:36 hkenken Exp $	*/
+/*	$NetBSD: imxspivar.h,v 1.3 2019/09/27 02:59:21 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -38,6 +38,12 @@ typedef struct spi_chipset_tag {
 	int (*spi_cs_disable)(void *, int);
 } *spi_chipset_tag_t;
 
+enum imxspi_type {
+	IMX31_CSPI,
+	IMX35_CSPI,
+	IMX51_ECSPI,
+};
+
 struct imxspi_softc {
 	device_t sc_dev;
 	int sc_phandle;
@@ -57,6 +63,7 @@ struct imxspi_softc {
 
 	int sc_nslaves;
 	int sc_enhanced;
+	enum imxspi_type sc_type;
 };
 
 int imxspi_attach_common(device_t);

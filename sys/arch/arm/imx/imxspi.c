@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.5 2019/08/19 11:41:36 hkenken Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.6 2019/09/27 02:59:21 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,9 +32,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.5 2019/08/19 11:41:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.6 2019/09/27 02:59:21 hkenken Exp $");
 
-#include "opt_imx.h"
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
 
@@ -68,8 +67,13 @@ void imxspi_send(struct imxspi_softc *);
 void imxspi_recv(struct imxspi_softc *);
 void imxspi_sched(struct imxspi_softc *);
 
-#define	IMXSPI(x)							      \
-	((sc->sc_enhanced) ? __CONCAT(ECSPI_, x) : __CONCAT(CSPI_, x))
+#define	IMXCSPI_TYPE(type, x)						      \
+	((sc->sc_type == IMX31_CSPI) ? __CONCAT(CSPI_IMX31_, x) :	      \
+	    (sc->sc_type == IMX35_CSPI) ? __CONCAT(CSPI_IMX35_, x) : 0)
+#define	IMXCSPI(x)	__CONCAT(CSPI_, x)
+#define	IMXESPI(x)	__CONCAT(ECSPI_, x)
+#define	IMXSPI(x)	((sc->sc_enhanced) ? IMXESPI(x) : IMXCSPI(x))
+#define	IMXSPI_TYPE(x)	((sc->sc_enhanced) ? IMXESPI(x) : IMXCSPI_TYPE(sc->sc_type, x))
 #define	READ_REG(sc, x)							      \
 	bus_space_read_4(sc->sc_iot, sc->sc_ioh, IMXSPI(x))
 #define	WRITE_REG(sc, x, v)						      \
@@ -123,13 +127,13 @@ imxspi_attach_common(device_t self)
 
 	/* configure SPI */
 	/* Setup Control Register */
-	WRITE_REG(sc, CONREG, __SHIFTIN(0, IMXSPI(CON_DRCTL)) |
-	    __SHIFTIN(8 - 1, IMXSPI(CON_BITCOUNT)) |
+	WRITE_REG(sc, CONREG,
+	    __SHIFTIN(0, IMXSPI_TYPE(CON_DRCTL)) |
+	    __SHIFTIN(8 - 1, IMXSPI_TYPE(CON_BITCOUNT)) |
 	    __SHIFTIN(0xf, IMXSPI(CON_MODE)) | IMXSPI(CON_ENABLE));
-
 	/* TC and RR interruption */
-	WRITE_REG(sc, INTREG,  (IMXSPI(INTR_TC_EN) | IMXSPI(INTR_RR_EN)));
-	WRITE_REG(sc, STATREG, IMXSPI(STAT_CLR));
+	WRITE_REG(sc, INTREG, (IMXSPI_TYPE(INTR_TC_EN) | IMXSPI(INTR_RR_EN)));
+	WRITE_REG(sc, STATREG, IMXSPI_TYPE(STAT_CLR));
 
 	WRITE_REG(sc, PERIODREG, 0x0);
 
@@ -332,8 +336,8 @@ imxspi_sched(struct imxspi_softc *sc)
 
 		/* chip slect */
 		chipselect = READ_REG(sc, CONREG);
-		chipselect &= ~IMXSPI(CON_CS);
-		chipselect |= __SHIFTIN(st->st_slave, IMXSPI(CON_CS));
+		chipselect &= ~IMXSPI_TYPE(CON_CS);
+		chipselect |= __SHIFTIN(st->st_slave, IMXSPI_TYPE(CON_CS));
 		WRITE_REG(sc, CONREG, chipselect);
 
 		delay(1);
@@ -398,11 +402,9 @@ imxspi_intr(void *arg)
 			imxspi_done(sc, err);
 	}
 
-	/* Transfer Conplete? */
-	if (sr & IMXSPI(INTR_TC_EN)) {
-		/* complete TX */
+	/* Transfer Complete? */
+	if (sr & IMXSPI_TYPE(INTR_TC_EN))
 		imxspi_send(sc);
-	}
 
 	/* status register clear */
 	WRITE_REG(sc, STATREG, sr);

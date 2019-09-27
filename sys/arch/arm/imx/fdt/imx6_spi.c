@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.1 2019/08/19 11:41:36 hkenken Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.2 2019/09/27 02:59:21 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.1 2019/08/19 11:41:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.2 2019/09/27 02:59:21 hkenken Exp $");
 
 #include "opt_imxspi.h"
 
@@ -48,8 +48,18 @@ struct imxspi_fdt_softc {
 	struct fdtbus_gpio_pin **sc_pin_cs;
 };
 
+struct imx_spi_config {
+	bool enhanced;
+	enum imxspi_type type;
+};
+
+static const struct imx_spi_config imx6q_spi_config = {
+	.enhanced = true,
+	.type = IMX51_ECSPI,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "fsl,imx6q-ecspi",		true },
+	{ "fsl,imx6q-ecspi",		(uintptr_t)&imx6q_spi_config },
 	{ NULL }
 };
 
@@ -122,7 +132,10 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_phandle = phandle;
 	sc->sc_iot = faa->faa_bst;
-	sc->sc_enhanced = of_search_compatible(phandle, compat_data)->data;
+
+	struct imx_spi_config *config = (void *)of_search_compatible(phandle, compat_data)->data;
+	sc->sc_enhanced = config->enhanced;
+	sc->sc_type = config->type;
 
 	sc->sc_nslaves = nslaves;
 	sc->sc_freq = clk_get_rate(ifsc->sc_clk);
