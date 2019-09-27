@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-#	$NetBSD: listsrcdirs,v 1.47 2019/09/26 22:43:36 bad Exp $
+#	$NetBSD: listsrcdirs,v 1.48 2019/09/27 11:53:42 bad Exp $
 #
 
 #
@@ -142,7 +142,12 @@ lsrc usr /crypto/external/bsd/	openssl
 # If -c is given, use CVS syntax to exclude large subdirectories
 # of sys.  Otherwise just do it wholesale.
 if ${cvsmode}; then
-	iswanted sys && echo \!src/sys/arch src/sys
+	iswanted sys && \
+	    echo \!src/sys/arch \
+		 \!src/sys/external/gpl2/dts \
+		 \!src/sys/external/bsd/drm \
+		 \!src/sys/external/bsd/drm2 \
+		src/sys
 
 	iswanted usr && \
 	    echo \!src/external/bsd/libc++/dist/libcxx/test \
