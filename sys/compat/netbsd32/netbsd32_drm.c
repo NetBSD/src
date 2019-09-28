@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_drm.c,v 1.3 2019/08/20 14:26:05 christos Exp $ */
+/*	$NetBSD: netbsd32_drm.c,v 1.4 2019/09/28 15:15:34 christos Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_drm.c,v 1.3 2019/08/20 14:26:05 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_drm.c,v 1.4 2019/09/28 15:15:34 christos Exp $");
 
 #include <compat/netbsd32/netbsd32.h>
 #include <compat/netbsd32/netbsd32_ioctl.h>
@@ -345,7 +345,7 @@ compat_drm_getstats(struct file *file, void *arg)
 	if (error)
 		return error;
 
-	for (int i = 0; i < st64.count; ++i) {
+	for (size_t i = 0; i < st64.count; ++i) {
 		st32.data[i].value = st64.data[i].value;
 		st32.data[i].type = st64.data[i].type;
 	}
