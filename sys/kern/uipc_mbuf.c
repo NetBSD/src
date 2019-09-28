@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.233 2019/09/18 16:18:12 maxv Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.234 2019/09/28 16:02:12 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.233 2019/09/18 16:18:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.234 2019/09/28 16:02:12 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -402,7 +402,7 @@ mbstat_type_add(int type, int diff)
 }
 
 static void
-mbstat_conver_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
+mbstat_convert_to_user_cb(void *v1, void *v2, struct cpu_info *ci)
 {
 	struct mbstat_cpu *mbsc = v1;
 	struct mbstat *mbs = v2;
@@ -419,7 +419,7 @@ mbstat_convert_to_user(struct mbstat *mbs)
 
 	memset(mbs, 0, sizeof(*mbs));
 	mbs->m_drain = mbstat.m_drain;
-	percpu_foreach(mbstat_percpu, mbstat_conver_to_user_cb, mbs);
+	percpu_foreach(mbstat_percpu, mbstat_convert_to_user_cb, mbs);
 }
 
 static int
