@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.31 2019/08/20 12:33:04 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.32 2019/09/28 15:11:53 christos Exp $	*/
 
 #ifdef __x86_64__
 
@@ -125,8 +125,6 @@
 
 #define btop(x)				x86_btop(x)
 #define ptob(x)				x86_ptob(x)
-
-#define mstohz(ms) ((ms + 0UL) * hz / 1000)
 
 #else	/*	__x86_64__	*/
 
