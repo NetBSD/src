@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.65 2019/09/28 07:43:34 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.66 2019/09/28 12:40:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4148,4 +4148,23 @@ usr.bin/audiocfg/main.c				1.10,1.11
 	Rename some members in adev for clarity.
 	Revert to using a single descriptor for "audiocfg test" as before.
 	[isaki, ticket #262]
+
+sys/arch/arm/nvidia/tegra210_pinmux.c		1.2
+sys/arch/arm/nvidia/tegra_pinmux.c		1.3
+sys/arch/arm/nvidia/tegra_pinmux.h		1.2
+
+	Update tegra*_pinmux to support all bindings (pins and pin groups).
+	[skrll, ticket #263]
+
+external/gpl3/binutils.old/*			remove whole subtree
+external/gpl3/gdb.old/*				remove whole subtree
+crypto/external/bsd/openssl.old/*		remove whole subtree
+
+	Remove unused sub trees.
+	[skrll, ticket #264]
+
+sys/dev/acpi/acpi_i2c.c				1.5
+
+	PR kern/54493: acpi_i2c uses incorrect arguments for _DSM call.
+	[bouyer, ticket #265]
 
