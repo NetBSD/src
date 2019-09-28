@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_socket.c,v 1.52 2019/09/27 08:17:11 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_socket.c,v 1.53 2019/09/28 08:21:08 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.52 2019/09/27 08:17:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_socket.c,v 1.53 2019/09/28 08:21:08 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -418,7 +418,7 @@ copyin32_msg_control(struct lwp *l, struct msghdr *mp)
 			size_t nclen;
 
 			nclen = cidx + cspace;
-			if (nclen >= PAGE_SIZE) {
+			if (nclen >= (size_t)PAGE_SIZE) {
 				error = EINVAL;
 				goto failure;
 			}
