@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.14 2017/04/27 10:01:54 msaitoh Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.15 2019/09/28 10:47:09 mlelstv Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.14 2017/04/27 10:01:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.15 2019/09/28 10:47:09 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -436,12 +436,11 @@ sdhc_pci_quirk_ricoh_lower_freq_hack(struct pci_attach_args *pa)
 
 	/*
 	 * Some SD/MMC cards don't work with the default base
-	 * clock frequency of 200MHz.  Lower it to 50Hz.
+	 * clock frequency of 200MHz.  Lower it to 50MHz.
 	 */
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x01);
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ, 50);
 	sdhc_pci_conf_write(pa, SDHC_PCI_BASE_FREQ_KEY, 0x00);
-printf("quirked\n");
 }
 
 static void
