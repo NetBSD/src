@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.3 2019/09/28 16:20:43 tnn Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.4 2019/09/28 16:22:45 tnn Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -5629,7 +5629,7 @@ mcx_rx_fill_slots(struct mcx_softc *sc, void *ring, struct mcx_slot *slots,
 		bus_dmamap_sync(sc->sc_dmat, ms->ms_map, 0, ms->ms_map->dm_mapsize, BUS_DMASYNC_PREREAD);
 		ms->ms_m = m;
 
-		rqe[slot].rqe_byte_count = htobe32(m->len);
+		rqe[slot].rqe_byte_count = htobe32(m->m_len);
 		rqe[slot].rqe_addr = htobe64(ms->ms_map->dm_segs[0].ds_addr);
 		rqe[slot].rqe_lkey = htobe32(sc->sc_lkey);
 
