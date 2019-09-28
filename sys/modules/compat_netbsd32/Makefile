@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2019/09/26 02:01:02 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2019/09/28 15:15:09 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -6,7 +6,7 @@
 KMOD=	compat_netbsd32
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
-#NETBSD32_DRMKMS?=yes
+NETBSD32_DRMKMS?=yes
 .endif
 
 CPPFLAGS+=	-DCOMPAT_NETBSD32
@@ -16,7 +16,8 @@ CPPFLAGS+=	-DKTRACE -DMODULAR -DQUOTA
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .if ${NETBSD32_DRMKMS:Uno} == "yes"
-CPPFLAGS+=	-DNETBSD32_DRMKMS
+# disable for now
+#CPPFLAGS+=	-DNETBSD32_DRMKMS
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/common/include
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/include
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/drm2/dist
