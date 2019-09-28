@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.151 2019/09/17 18:10:00 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.152 2019/09/28 07:52:18 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5895,4 +5895,13 @@ sys/netinet6/ip6_input.c			1.209 (patch)
 	Packet filters can return an mbuf chain with fragmented headers, so
 	m_pullup() when needed.
 	[bouyer, ticket #1708]
+
+sys/netbt/hci.h					1.46
+sys/netbt/hci_event.c				1.26
+
+	When encrypted connections are configured, verify that the encryption
+	key length has a minimum size when the adaptor supports that.
+	This addresses the 'Key Negotiation of Bluetooth' attack,
+	CVE-2019-9506.
+	[plunky, ticket #1709]
 
