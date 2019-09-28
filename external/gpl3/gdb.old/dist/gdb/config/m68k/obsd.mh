@@ -1,4 +1,0 @@
-# Host: OpenBSD/m68k
-NATDEPFILES= m68k-bsd-nat.o bsd-kvm.o fork-child.o inf-ptrace.o
-
-LOADLIBES= -lkvm
