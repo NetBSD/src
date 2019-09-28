@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.25 2019/09/27 12:58:54 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.26 2019/09/28 07:39:30 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.25 2019/09/27 12:58:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.26 2019/09/28 07:39:30 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -322,7 +322,6 @@ bcm2836_platform_devmap(void)
 
 	return devmap;
 }
-#endif
 
 static const struct pmap_devmap *
 bcm2838_platform_devmap(void)
@@ -342,6 +341,8 @@ bcm2838_platform_devmap(void)
 
 	return devmap;
 }
+#endif
+
 /*
  * Macros to translate between physical and virtual for a subset of the
  * kernel address space.  *Not* for general use.
