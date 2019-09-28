@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.64 2019/09/27 15:31:38 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.65 2019/09/28 07:43:34 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4104,4 +4104,48 @@ usr.sbin/bta2dpd/bta2dpd/sbc_encode.c		1.10
 
 	Fix off by one in sbc encoder.
 	[nat, ticket #254]
+
+sys/dev/fdt/fdt_pinctrl.c			1.9
+
+	Don't assume pinctrl-0 is the default configuration.
+	[jmcneill, ticket #256]
+
+sys/stand/efiboot/efiblock.c			1.7
+
+	Use roundup2() instead of open coding it.
+	Fixes disk access and booting in bootaa64.efi on machines with no
+	memory below 4GiB.
+	[jakllsch, ticket #257]
+
+usr.bin/audiocfg/main.c				1.9
+
+	Fix assertion of "audiocfg list <n>" when n is an illegal index.
+	[isaki, ticket #258]
+
+external/mit/expat/lib/libexpat/Makefile	1.3,1.4
+
+	More portable way to extract PACKAGE_VERSION.
+	[maya, ticket #259]
+
+sys/netbt/hci.h					1.46
+sys/netbt/hci_event.c				1.26
+
+	When encrypted connections are configured, verify that the encryption
+	key length has a minimum size when the adaptor supports that.
+	This addresses the 'Key Negotiation of Bluetooth' attack,
+	CVE-2019-9506.
+	[plunky, ticket #260]
+
+usr.bin/audiocfg/audiocfg.1			1.6
+
+	Fix markup.  Index of list command is optional.
+	[isaki, ticket #261]
+
+usr.bin/audiocfg/audiodev.c			1.8,1.9
+usr.bin/audiocfg/audiodev.h			1.6,1.7
+usr.bin/audiocfg/main.c				1.10,1.11
+
+	Rename some members in adev for clarity.
+	Revert to using a single descriptor for "audiocfg test" as before.
+	[isaki, ticket #262]
 
