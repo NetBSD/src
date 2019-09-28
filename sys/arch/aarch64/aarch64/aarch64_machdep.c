@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.31 2019/09/11 08:15:48 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.32 2019/09/28 07:06:32 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.31 2019/09/11 08:15:48 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.32 2019/09/28 07:06:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -224,7 +224,6 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	    L2_ROUND_BLOCK(kernend + kernend_extra), VM_PROT_EXECUTE);
 
 	aarch64_tlbi_all();
-
 
 	VPRINTF("%s: kernel phys start %lx end %lx+%lx\n", __func__,
 	    kernstart_phys, kernend_phys, kernend_extra);
