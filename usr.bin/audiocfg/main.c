@@ -1,4 +1,4 @@
-/* $NetBSD: main.c,v 1.8.2.1 2019/09/28 07:25:53 martin Exp $ */
+/* $NetBSD: main.c,v 1.8.2.2 2019/09/28 07:41:18 martin Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -87,17 +87,21 @@ print_audiodev(struct audiodev *adev, int i)
 		printf(" %s", adev->audio_device.version);
 	printf("\n");
 	printf("       playback: ");
-	if ((adev->info.mode & AUMODE_PLAY))
+	if ((adev->hwinfo.mode & AUMODE_PLAY)) {
 		printf("%uch, %uHz\n",
-		    adev->info.play.channels, adev->info.play.sample_rate);
-	else
+		    adev->hwinfo.play.channels,
+		    adev->hwinfo.play.sample_rate);
+	} else {
 		printf("unavailable\n");
+	}
 	printf("       record:   ");
-	if ((adev->info.mode & AUMODE_RECORD))
+	if ((adev->hwinfo.mode & AUMODE_RECORD)) {
 		printf("%uch, %uHz\n",
-		    adev->info.record.channels, adev->info.record.sample_rate);
-	else
+		    adev->hwinfo.record.channels,
+		    adev->hwinfo.record.sample_rate);
+	} else {
 		printf("unavailable\n");
+	}
 
 	TAILQ_FOREACH(f, &adev->formats, next) {
 		printf("       ");
@@ -249,13 +253,8 @@ main(int argc, char *argv[])
 			return EXIT_FAILURE;
 		}
 		print_audiodev(adev, i);
-		for (i = 0; i < adev->info.play.channels; i++) {
-			printf("  testing channel %d...", i);
-			fflush(stdout);
-			if (audiodev_test(adev, 1 << i) == -1)
-				return EXIT_FAILURE;
-			printf(" done\n");
-		}
+		if (audiodev_test(adev) == -1)
+			return EXIT_FAILURE;
 	} else
 		usage(argv[0]);
 		/* NOTREACHED */
