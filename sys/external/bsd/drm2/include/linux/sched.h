@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.12 2018/10/23 03:56:47 riastradh Exp $	*/
+/*	$NetBSD: sched.h,v 1.13 2019/09/28 15:13:08 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -62,7 +62,8 @@ schedule_timeout_uninterruptible(long timeout)
 	if (cold) {
 		unsigned us;
 		if (hz <= 1000) {
-			unsigned ms = hztoms(MIN(timeout, mstohz(INT_MAX)));
+			unsigned ms = hztoms(MIN((unsigned long)timeout,
+			    mstohz(INT_MAX)));
 			us = MIN(ms, INT_MAX/1000)*1000;
 		} else if (hz <= 1000000) {
 			us = MIN(timeout, (INT_MAX/1000000)/hz)*hz*1000000;
