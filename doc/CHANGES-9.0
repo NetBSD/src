@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.66 2019/09/28 12:40:33 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.67 2019/09/29 07:35:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4167,4 +4167,17 @@ sys/dev/acpi/acpi_i2c.c				1.5
 
 	PR kern/54493: acpi_i2c uses incorrect arguments for _DSM call.
 	[bouyer, ticket #265]
+
+sys/dev/pci/if_mcx.c				1.3,1.4
+
+	mcx(4): fix rx mbuf DMA overrun.
+	[tnn, ticket #266]
+
+usr.bin/audiocfg/audiodev.c			1.12
+usr.bin/audiocfg/dtmf.c				1.4
+usr.bin/audiocfg/main.c				1.14 (patch)
+
+	Use err(3)/warn(3) instead of perror(3)/fprintf(stderr,...).
+	Use getprogname(3) for usage().
+	[isaki, ticket #267]
 
