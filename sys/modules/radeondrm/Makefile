@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/02/17 04:05:57 rin Exp $
+# $NetBSD: Makefile,v 1.13 2019/09/29 23:45:00 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -23,7 +23,7 @@ CPPFLAGS+=	-I${S}/external/bsd/drm/dist/bsd-core \
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.radeon_cs.c+=	-Wno-error=implicit-fallthrough
 .endif
 
