@@ -117,6 +117,7 @@ void		npfctl_print_error(const npf_error_t *);
 char *		npfctl_print_addrmask(int, const char *, const npf_addr_t *,
 		    npf_netmask_t);
 void		npfctl_note_interface(const char *);
+nl_table_t *	npfctl_table_getbyname(nl_config_t *, const char *);
 unsigned	npfctl_table_getid(const char *);
 const char *	npfctl_table_getname(nl_config_t *, unsigned, bool *);
 int		npfctl_protono(const char *);
@@ -196,7 +197,10 @@ void		npfctl_show_init(void);
 int		npfctl_ruleset_show(int, const char *);
 
 nl_rule_t *	npfctl_rule_ref(void);
+nl_table_t *	npfctl_table_ref(void);
 bool		npfctl_debug_addif(const char *);
+
+nl_table_t *	npfctl_load_table(const char *, int, u_int, const char *, FILE *);
 
 void		npfctl_build_alg(const char *);
 void		npfctl_build_rproc(const char *, npfvar_t *);
