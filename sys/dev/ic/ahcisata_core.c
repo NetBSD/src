@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.77 2019/09/29 21:25:08 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.78 2019/09/29 21:28:20 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.77 2019/09/29 21:25:08 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.78 2019/09/29 21:28:20 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1265,6 +1265,7 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 {
 	struct ata_command *ata_c = &xfer->c_ata_c;
 	struct ahci_channel *achp = (struct ahci_channel *)chp;
+	struct ahci_softc *sc = AHCI_CH2SC(chp);
 
 	AHCIDEBUG_PRINT(("ahci_cmd_complete port %d CMD 0x%x CI 0x%x\n",
 	    chp->ch_channel,
@@ -1286,8 +1287,10 @@ ahci_cmd_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 		ata_c->flags |= AT_ERROR;
 	}
 
-	if (ata_c->flags & AT_READREG)
+	if (ata_c->flags & AT_READREG) {
+		AHCI_RFIS_SYNC(sc, achp, BUS_DMASYNC_POSTREAD);
 		satafis_rdh_cmd_readreg(ata_c, achp->ahcic_rfis->rfis_rfis);
+	}
 
 	ahci_cmd_done(chp, xfer);
 
