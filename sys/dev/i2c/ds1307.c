@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.32 2019/09/29 05:28:21 macallan Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.33 2019/09/29 05:35:29 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.32 2019/09/29 05:28:21 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.33 2019/09/29 05:35:29 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -775,8 +775,9 @@ static int
 dsrtc_clock_write_timeval(struct dsrtc_softc *sc, time_t t)
 {
 	const struct dsrtc_model * const dm = &sc->sc_model;
-	size_t buflen = dm->dm_rtc_size + 2; 
-	uint8_t buf[buflen];
+	size_t buflen = dm->dm_rtc_size + 2;
+	/* XXX: the biggest dm_rtc_size we have now is 7, so we should be ok */ 
+	uint8_t buf[16];
 	int error;
 
 	KASSERT((dm->dm_flags & DSRTC_FLAG_CLOCK_HOLD) == 0);
