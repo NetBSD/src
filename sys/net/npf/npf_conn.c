@@ -107,7 +107,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.29 2019/08/06 11:40:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_conn.c,v 1.30 2019/09/29 17:00:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -782,7 +782,8 @@ npf_conn_export(npf_t *npf, npf_conn_t *con)
 	nvlist_add_number(cdict, "flags", con->c_flags);
 	nvlist_add_number(cdict, "proto", con->c_proto);
 	if (con->c_ifid) {
-		const char *ifname = npf_ifmap_getname(npf, con->c_ifid);
+		char ifname[IFNAMSIZ];
+		npf_ifmap_copyname(npf, con->c_ifid, ifname, sizeof(ifname));
 		nvlist_add_string(cdict, "ifname", ifname);
 	}
 	nvlist_add_binary(cdict, "state", &con->c_state, sizeof(npf_state_t));

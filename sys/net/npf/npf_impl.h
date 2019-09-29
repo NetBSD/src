@@ -234,6 +234,8 @@ struct npf {
 	const npf_ifops_t *	ifops;
 	struct npf_ifmap *	ifmap;
 	unsigned		ifmap_cnt;
+	unsigned		ifmap_off;
+	kmutex_t		ifmap_lock;
 
 	/* Associated worker thread. */
 	unsigned		worker_id;
@@ -319,8 +321,8 @@ void		npf_ifmap_fini(npf_t *);
 u_int		npf_ifmap_register(npf_t *, const char *);
 void		npf_ifmap_flush(npf_t *);
 u_int		npf_ifmap_getid(npf_t *, const ifnet_t *);
-const char *	npf_ifmap_getname(npf_t *, const u_int);
-void		npf_ifmap_copyname(npf_t *, u_int, char *, size_t);
+void		npf_ifmap_copylogname(npf_t *, unsigned, char *, size_t);
+void		npf_ifmap_copyname(npf_t *, unsigned, char *, size_t);
 
 void		npf_ifaddr_sync(npf_t *, ifnet_t *);
 void		npf_ifaddr_flush(npf_t *, ifnet_t *);
