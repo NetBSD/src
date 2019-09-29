@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.compiler-rt,v 1.9 2019/04/05 14:00:16 thorpej Exp $
+# $NetBSD: Makefile.compiler-rt,v 1.10 2019/09/29 23:44:59 mrg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -128,7 +128,7 @@ COPTS.${src}+=	-Wno-missing-prototypes \
 CPPFLAGS.int_util.c+=	-DKERNEL_USE
 
 # XXX Explicit divide by zero in udivmoddi4.c -> abort().
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 . if ${MACHINE_CPU} != "arm"
 COPTS.udivmoddi4.c+=	-fnon-call-exceptions
 . endif

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.19 2019/02/04 04:05:16 mrg Exp $
+#	$NetBSD: Makefile,v 1.20 2019/09/29 23:44:59 mrg Exp $
 
 USE_FORT?= yes	# data driven bugs?
 
@@ -20,7 +20,7 @@ INCSDIR=	/usr/include
 COPTS+=		-O0
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS+=		-Wno-error=implicit-fallthrough
 .endif
 

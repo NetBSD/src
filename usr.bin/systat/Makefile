@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.41 2019/02/04 03:58:41 mrg Exp $
+#	$NetBSD: Makefile,v 1.42 2019/09/29 23:45:01 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -29,7 +29,7 @@ SRCS+=	ip6.c
 
 .include "../../compat/exec.mk"
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.df.c += -Wno-error=format-truncation
 .endif
 

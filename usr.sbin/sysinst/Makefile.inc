@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.22 2019/06/20 15:59:40 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.23 2019/09/29 23:45:02 mrg Exp $
 #
 # Makefile for sysinst
 
@@ -122,8 +122,8 @@ COPTS += -Os
 CPPFLAGS+=-DINET6
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
-COPTS+=-Wno-format-truncation	# most useless gcc warning ever
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
+COPTS+=-Wno-format-truncation
 .endif
 
 
