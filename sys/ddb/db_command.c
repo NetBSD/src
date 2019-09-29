@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.163 2019/09/29 02:42:12 uwe Exp $	*/
+/*	$NetBSD: db_command.c,v 1.164 2019/09/29 02:49:59 uwe Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.163 2019/09/29 02:42:12 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.164 2019/09/29 02:49:59 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -820,13 +820,13 @@ db_read_command(void)
 static void
 db_command(const struct db_command **last_cmdp)
 {
-	const struct db_command *command;
 	static db_expr_t last_count = 0;
-	db_expr_t	addr, count;
-	bool		have_addr;
-	char		modif[TOK_STRING_SIZE];
 
-	int			t;
+	int t;
+	const struct db_command *command;
+	db_expr_t addr, count;
+	bool have_addr;
+	char modif[TOK_STRING_SIZE];
 
 	command = NULL;
 	have_addr = false;
