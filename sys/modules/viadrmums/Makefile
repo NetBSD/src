@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2019/02/17 04:06:00 rin Exp $
+# $NetBSD: Makefile,v 1.4 2019/09/29 23:45:00 mrg Exp $
 
 .include "../Makefile.inc"
 .include "../drmkms/Makefile.inc"
@@ -29,7 +29,7 @@ SRCS+=	via_pci.c
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.via_dmablit.c+=	-Wno-error=implicit-fallthrough
 .endif
 

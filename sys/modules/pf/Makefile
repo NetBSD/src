@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2019/02/17 04:05:56 rin Exp $
+# $NetBSD: Makefile,v 1.12 2019/09/29 23:45:00 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -22,7 +22,7 @@ CPPFLAGS+=	-I${S}/dist/pf -I${S} -DINET6 -DINET
 
 WARNS=	3
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.pf.c+=	-Wno-error=implicit-fallthrough
 .endif
 

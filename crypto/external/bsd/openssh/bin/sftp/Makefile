@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2019/02/04 04:05:15 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2019/09/29 23:44:58 mrg Exp $
 
 BINDIR=	/usr/bin
 
@@ -14,7 +14,7 @@ COPTS.sftp-client.c+=	-Wno-pointer-sign
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.sftp.c+=		-Wno-error=implicit-fallthrough
 .endif
 

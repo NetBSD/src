@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2019/08/15 08:17:32 kamil Exp $
+# $NetBSD: Makefile,v 1.5 2019/09/29 23:45:00 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -29,7 +29,7 @@ CWARNFLAGS.clang+=	-Wno-nullability-completeness
 COPTS.t_ubsan.c += -Wno-stack-protector
 COPTS.t_ubsanxx.cpp += -Wno-stack-protector
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} == 7 && ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS.t_ubsan.c+=	-Wno-int-in-bool-context
 COPTS.t_ubsanxx.cpp+=	-Wno-int-in-bool-context
 .endif
