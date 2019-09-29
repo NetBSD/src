@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.48 2019/07/23 00:52:01 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.49 2019/09/29 17:00:29 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -680,7 +680,8 @@ npf_rule_export(npf_t *npf, const npf_rule_t *rl)
 		nvlist_add_binary(rule, "code", rl->r_code, rl->r_clen);
 	}
 	if (rl->r_ifid) {
-		const char *ifname = npf_ifmap_getname(npf, rl->r_ifid);
+		char ifname[IFNAMSIZ];
+		npf_ifmap_copyname(npf, rl->r_ifid, ifname, sizeof(ifname));
 		nvlist_add_string(rule, "ifname", ifname);
 	}
 	nvlist_add_number(rule, "id", rl->r_id);
