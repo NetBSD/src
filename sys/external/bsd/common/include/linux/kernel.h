@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.21 2018/08/27 14:48:07 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.22 2019/09/29 00:10:02 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -165,7 +165,7 @@ vscnprintf(char *buf, size_t size, const char *fmt, va_list va)
 		return ret;
 	if (__predict_false(size == 0))
 		return 0;
-	if (__predict_false(size <= ret))
+	if (__predict_false(size <= (size_t)ret))
 		return (size - 1);
 
 	return ret;
