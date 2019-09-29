@@ -1,4 +1,4 @@
-/*	$NetBSD: ds1307.c,v 1.31 2018/12/20 21:36:53 macallan Exp $	*/
+/*	$NetBSD: ds1307.c,v 1.32 2019/09/29 05:28:21 macallan Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.31 2018/12/20 21:36:53 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ds1307.c,v 1.32 2019/09/29 05:28:21 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,6 +159,7 @@ static const struct dsrtc_model mcp7940_model = {
 static const struct device_compatible_entry compat_data[] = {
 	{ "dallas,ds1307",		(uintptr_t)&ds1307_model },
 	{ "maxim,ds1307",		(uintptr_t)&ds1307_model },
+	{ "i2c-ds1307",			(uintptr_t)&ds1307_model },
 
 	{ "dallas,ds1339",		(uintptr_t)&ds1339_model },
 	{ "maxim,ds1339",		(uintptr_t)&ds1339_model },
