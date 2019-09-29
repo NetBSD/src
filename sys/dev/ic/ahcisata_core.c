@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.76 2019/09/29 21:21:41 jakllsch Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.77 2019/09/29 21:25:08 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.76 2019/09/29 21:21:41 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.77 2019/09/29 21:25:08 jakllsch Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -765,6 +765,7 @@ ahci_exec_fis(struct ata_channel *chp, int timeout, int flags, int slot)
 	else
 		timeout = timeout / 10;
 
+	AHCI_CMDTBL_SYNC(sc, achp, slot, BUS_DMASYNC_PREWRITE);
 	AHCI_CMDH_SYNC(sc, achp, slot,
 	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	/* start command */
