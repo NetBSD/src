@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rndq.c,v 1.94 2019/07/31 02:21:31 msaitoh Exp $	*/
+/*	$NetBSD: kern_rndq.c,v 1.95 2019/09/29 12:07:52 rhialto Exp $	*/
 
 /*-
  * Copyright (c) 1997-2013 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.94 2019/07/31 02:21:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rndq.c,v 1.95 2019/09/29 12:07:52 rhialto Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -324,22 +324,24 @@ rnd_getmore(size_t byteswanted)
  * non-zero.  If any of these are zero, return zero.
  */
 static inline uint32_t
-rnd_delta_estimate(rnd_delta_t *d, uint32_t v, int32_t delta)
+rnd_delta_estimate(rnd_delta_t *d, uint32_t v, uint32_t delta)
 {
-	int32_t delta2, delta3;
+	uint32_t delta2, delta3;
 
 	d->insamples++;
 
 	/*
 	 * Calculate the second and third order differentials
 	 */
-	delta2 = d->dx - delta;
-	if (delta2 < 0)
-		delta2 = -delta2;
+	if (delta > (uint32_t)d->dx)
+	    delta2 = delta - (uint32_t)d->dx;
+	else
+	    delta2 = (uint32_t)d->dx - delta;
 
-	delta3 = d->d2x - delta2;
-	if (delta3 < 0)
-		delta3 = -delta3;
+	if (delta2 > (uint32_t)d->d2x)
+	    delta3 = delta2 - (uint32_t)d->d2x;
+	else
+	    delta3 = (uint32_t)d->d2x - delta2;
 
 	d->x = v;
 	d->dx = delta;
@@ -357,23 +359,21 @@ rnd_delta_estimate(rnd_delta_t *d, uint32_t v, int32_t delta)
 }
 
 /*
- * Delta estimator for 32-bit timeestamps.  Must handle wrap.
+ * Delta estimator for 32-bit timestamps.
+ * Timestaps generally increase, but may wrap around to 0.
+ * If t decreases, it is assumed that wrap-around occurred (once).
  */
 static inline uint32_t
 rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 {
-	int32_t delta;
+	uint32_t delta;
 	uint32_t ret;
 	rnd_delta_t *d = &rs->time_delta;
 
-	if (t < d->x) {
-		delta = UINT32_MAX - d->x + t;
+	if (t < (uint32_t)d->x) {
+		delta = UINT32_MAX - (uint32_t)d->x + t;
 	} else {
-		delta = d->x - t;
-	}
-
-	if (delta < 0) {
-		delta = -delta;
+		delta = t - (uint32_t)d->x;
 	}
 
 	ret = rnd_delta_estimate(d, t, delta);
@@ -391,21 +391,22 @@ rnd_dt_estimate(krndsource_t *rs, uint32_t t)
 }
 
 /*
- * Delta estimator for 32 or bit values.  "Wrap" isn't.
+ * Delta estimator for arbitrary unsigned 32 bit values.
  */
 static inline uint32_t
 rnd_dv_estimate(krndsource_t *rs, uint32_t v)
 {
-	int32_t delta;
+	uint32_t delta;
 	uint32_t ret;
 	rnd_delta_t *d = &rs->value_delta;
 
-	delta = d->x - v;
-
-	if (delta < 0) {
-		delta = -delta;
+	if (v >= (uint32_t)d->x) {
+		delta = v - (uint32_t)d->x;
+	} else {
+		delta = (uint32_t)d->x - v;
 	}
-	ret = rnd_delta_estimate(d, v, (uint32_t)delta);
+
+	ret = rnd_delta_estimate(d, v, delta);
 
 	KASSERT(d->x == v);
 	KASSERT(d->dx == delta);
