@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.22 2011/05/26 15:34:14 joerg Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.23 2019/09/29 02:00:22 uwe Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,10 +34,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.22 2011/05/26 15:34:14 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.23 2019/09/29 02:00:22 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <ddb/ddb.h>
 
@@ -61,6 +62,11 @@ db_read_line(void)
 {
 	int	i;
 
+#ifdef MULTIPROCESSOR
+	db_printf("db{%ld}> ", (long)cpu_number());
+#else
+	db_printf("db> ");
+#endif
 	i = db_readline(db_line, sizeof(db_line));
 	if (i == 0)
 		return (0);	/* EOI */
