@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.40 2019/09/08 12:17:23 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.41 2019/09/29 08:33:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.40 2019/09/08 12:17:23 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.41 2019/09/29 08:33:20 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -799,7 +799,7 @@ init_mmutable:
 	adr	x0, start			/* va = start */
 	ADDR	x2, _end
 	sub	x2, x2, x0			/* size = _end - start */
-	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for boopage_alloc() */
+	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for bootpage_alloc() */
 	mov	x1, x0				/* pa */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
