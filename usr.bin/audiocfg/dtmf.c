@@ -1,4 +1,4 @@
-/* $NetBSD: dtmf.c,v 1.3 2013/08/11 06:31:00 dholland Exp $ */
+/* $NetBSD: dtmf.c,v 1.3.28.1 2019/09/29 07:34:09 martin Exp $ */
 
 /*
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -28,6 +28,7 @@
 
 #include <sys/endian.h>
 
+#include <err.h>
 #include <fcntl.h>
 #include <math.h>
 #include <stdio.h>
@@ -70,7 +71,7 @@ dtmf_new(int16_t **buf, size_t *buflen, unsigned int sample_rate,
 	*buflen = sample_rate * sizeof(int16_t) * sample_length * channels;
 	*buf = calloc(1, *buflen);
 	if (*buf == NULL) {
-		perror("calloc");
+		warn("calloc");
 		return;
 	}
 
