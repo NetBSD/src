@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.46 2019/09/28 07:48:30 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.47 2019/09/30 15:50:49 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1224,4 +1224,12 @@ sys/netbt/hci_event.c				1.26
 	This addresses the 'Key Negotiation of Bluetooth' attack,
 	CVE-2019-9506.
 	[plunky, ticket #1395]
+
+sys/netinet/if_arp.c				1.288 (patch)
+sys/netinet6/nd6.c				1.264
+sys/netinet6/nd6.h				1.88
+sys/netinet6/nd6_nbr.c				1.174
+
+	Initialize DAD components properly during boot.
+	[ozaki-r, ticket #1396]
 
