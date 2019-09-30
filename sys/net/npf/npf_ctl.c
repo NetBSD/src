@@ -36,7 +36,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.58 2019/08/25 17:38:25 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ctl.c,v 1.59 2019/09/30 00:37:11 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -196,7 +196,7 @@ npf_mk_table(npf_t *npf, const nvlist_t *tbl_dict, nvlist_t *errdict,
 		goto out;
 	}
 
-	t = npf_table_create(name, (u_int)tid, type, blob, size);
+	t = npf_table_create(name, (unsigned)tid, type, blob, size);
 	if (t == NULL) {
 		NPF_ERR_DEBUG(errdict);
 		error = ENOMEM;
@@ -473,7 +473,7 @@ npf_mk_singlenat(npf_t *npf, const nvlist_t *nat, npf_ruleset_t *ntset,
 	KASSERT(rl != NULL);
 	*rlp = rl;
 
-	/* If rule is named, it is a group with NAT policies. */
+	/* If this rule is named, then it is a group with NAT policies. */
 	if (dnvlist_get_string(nat, "name", NULL)) {
 		return 0;
 	}
@@ -816,7 +816,7 @@ npfctl_rule(npf_t *npf, u_long cmd, void *data)
 		return error;
 	}
 	rcmd = dnvlist_get_number(npf_rule, "command", 0);
-	natset = dnvlist_get_bool(npf_rule, "nat-rule", false);
+	natset = dnvlist_get_bool(npf_rule, "nat-ruleset", false);
 	ruleset_name = dnvlist_get_string(npf_rule, "ruleset-name", NULL);
 	if (!ruleset_name) {
 		error = EINVAL;
