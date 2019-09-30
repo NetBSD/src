@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.250.2.9 2018/11/06 14:38:58 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.250.2.10 2019/09/30 15:48:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.9 2018/11/06 14:38:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.250.2.10 2019/09/30 15:48:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -154,6 +154,7 @@ int		arp_debug = 0;
 #endif
 
 static	void arp_init(void);
+static	void arp_dad_init(void);
 
 static	void arprequest(struct ifnet *,
     const struct in_addr *, const struct in_addr *,
@@ -288,6 +289,8 @@ arp_init(void)
 	sysctl_net_inet_arp_setup(NULL);
 	arpstat_percpu = percpu_alloc(sizeof(uint64_t) * ARP_NSTATS);
 	IFQ_LOCK_INIT(&arpintrq);
+
+	arp_dad_init();
 }
 
 static void
@@ -1517,9 +1520,16 @@ struct dadq {
 };
 
 static struct dadq_head dadq;
-static int dad_init = 0;
 static int dad_maxtry = 15;     /* max # of *tries* to transmit DAD packet */
 static kmutex_t arp_dad_lock;
+
+static void
+arp_dad_init(void)
+{
+
+	TAILQ_INIT(&dadq);
+	mutex_init(&arp_dad_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
 static struct dadq *
 arp_dad_find(struct ifaddr *ifa)
@@ -1595,12 +1605,6 @@ arp_dad_start(struct ifaddr *ifa)
 	struct dadq *dp;
 	char ipbuf[INET_ADDRSTRLEN];
 
-	if (!dad_init) {
-		TAILQ_INIT(&dadq);
-		mutex_init(&arp_dad_lock, MUTEX_DEFAULT, IPL_NONE);
-		dad_init++;
-	}
-
 	/*
 	 * If we don't need DAD, don't do it.
 	 * - DAD is disabled (ip_dad_count == 0)
@@ -1668,9 +1672,6 @@ static void
 arp_dad_stop(struct ifaddr *ifa)
 {
 	struct dadq *dp;
-
-	if (!dad_init)
-		return;
 
 	mutex_enter(&arp_dad_lock);
 	dp = arp_dad_find(ifa);

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.232.2.12 2019/08/19 14:28:12 martin Exp $	*/
+/*	$NetBSD: nd6.c,v 1.232.2.13 2019/09/30 15:48:45 martin Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.12 2019/08/19 14:28:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.232.2.13 2019/09/30 15:48:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -138,6 +138,8 @@ void
 nd6_init(void)
 {
 	int error;
+
+	nd6_nbr_init();
 
 	rw_init(&nd6_lock);
 
