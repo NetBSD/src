@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.94 2019/09/09 13:57:13 maya Exp $
+#	$NetBSD: Makefile,v 1.95 2019/09/30 08:40:20 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -8,7 +8,7 @@ MODULE=			gcc4
 GCCDIST=	${.CURDIR}/../../external/gpl3/${EXTERNAL_GCC_SUBDIR}/dist
 GNUHOSTDIST=	${GCCDIST}
 
-.if ${HAVE_GCC} == 6
+.if ${HAVE_GCC} == 7
 MKNATIVE=		${.CURDIR}/mknative-gcc.old
 .endif
 
@@ -95,10 +95,10 @@ MKNATIVE_CONFIG_TARGET_LIBS=
 
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgcc
 MKNATIVE_CONFIG_TARGET_LIBS+=	configure-target-libgomp
-.if ${HAVE_GCC} == 7
+.if ${HAVE_GCC} == 8
+MKNATIVE_TARGET=	gcc8
+.elif ${HAVE_GCC} == 7
 MKNATIVE_TARGET=	gcc7
-.elif ${HAVE_GCC} == 6
-MKNATIVE_TARGET=	gcc6
 .endif
 
 MKNATIVE_CONFIG_TARGET_LIBS+= \
