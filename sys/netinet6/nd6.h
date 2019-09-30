@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.h,v 1.83.6.1 2017/07/07 13:57:26 martin Exp $	*/
+/*	$NetBSD: nd6.h,v 1.83.6.2 2019/09/30 15:48:45 martin Exp $	*/
 /*	$KAME: nd6.h,v 1.95 2002/06/08 11:31:06 itojun Exp $	*/
 
 /*
@@ -426,6 +426,7 @@ union nd_opts {
 /* XXX: need nd6_var.h?? */
 /* nd6.c */
 void nd6_init(void);
+void nd6_nbr_init(void);
 struct nd_ifinfo *nd6_ifattach(struct ifnet *);
 void nd6_ifdetach(struct ifnet *, struct in6_ifextra *);
 int nd6_is_addr_neighbor(const struct sockaddr_in6 *, struct ifnet *);

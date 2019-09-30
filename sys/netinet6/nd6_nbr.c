@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.138.6.8 2019/09/23 08:17:24 martin Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.138.6.9 2019/09/30 15:48:45 martin Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.8 2019/09/23 08:17:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.138.6.9 2019/09/30 15:48:45 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1076,8 +1076,15 @@ struct dadq {
 };
 
 static struct dadq_head dadq;
-static int dad_init = 0;
 static kmutex_t nd6_dad_lock;
+
+void
+nd6_nbr_init(void)
+{
+
+	TAILQ_INIT(&dadq);
+	mutex_init(&nd6_dad_lock, MUTEX_DEFAULT, IPL_NONE);
+}
 
 static struct dadq *
 nd6_dad_find(struct ifaddr *ifa)
@@ -1135,12 +1142,6 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 	struct in6_ifaddr *ia = (struct in6_ifaddr *)ifa;
 	struct dadq *dp;
 	char ip6buf[INET6_ADDRSTRLEN];
-
-	if (!dad_init) {
-		TAILQ_INIT(&dadq);
-		mutex_init(&nd6_dad_lock, MUTEX_DEFAULT, IPL_NONE);
-		dad_init++;
-	}
 
 	/*
 	 * If we don't need DAD, don't do it.
@@ -1218,9 +1219,6 @@ void
 nd6_dad_stop(struct ifaddr *ifa)
 {
 	struct dadq *dp;
-
-	if (!dad_init)
-		return;
 
 	mutex_enter(&nd6_dad_lock);
 	dp = nd6_dad_find(ifa);
