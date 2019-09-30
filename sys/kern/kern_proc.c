@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.234 2019/08/02 22:46:44 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.235 2019/09/30 21:13:33 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.234 2019/08/02 22:46:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.235 2019/09/30 21:13:33 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2263,12 +2263,7 @@ fill_proc(const struct proc *psrc, struct proc *p, bool allowaddr)
 	COND_SET_VALUE(p->p_sigpend, psrc->p_sigpend, allowaddr);
 	COND_SET_VALUE(p->p_lwpctl, psrc->p_lwpctl, allowaddr);
 	p->p_ppid = psrc->p_ppid;
-	p->p_fpid = psrc->p_fpid;
-	p->p_vfpid = psrc->p_vfpid;
-	p->p_vfpid_done = psrc->p_vfpid_done;
-	p->p_lwp_created = psrc->p_lwp_created;
-	p->p_lwp_exited = psrc->p_lwp_exited;
-	p->p_pspid = psrc->p_pspid;
+	p->p_oppid = psrc->p_oppid;
 	COND_SET_VALUE(p->p_path, psrc->p_path, allowaddr);
 	COND_SET_VALUE(p->p_sigctx, psrc->p_sigctx, allowaddr);
 	p->p_nice = psrc->p_nice;
