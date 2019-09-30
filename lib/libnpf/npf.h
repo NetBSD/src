@@ -56,6 +56,12 @@ typedef struct nl_ext		nl_ext_t;
 typedef signed long		nl_iter_t;
 
 /*
+ * Ruleset prefix(es).
+ */
+
+#define	NPF_RULESET_MAP_PREF	"map:"
+
+/*
  * Extensions API types.
  */
 typedef int (*npfext_initfunc_t)(void);
