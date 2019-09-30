@@ -56,7 +56,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.11 2019/09/29 17:00:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_if.c,v 1.12 2019/09/30 22:04:33 rmind Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -191,20 +191,22 @@ npf_ifmap_getid(npf_t *npf, const ifnet_t *ifp)
 }
 
 /*
- * This function is toxic; it can return garbage since we don't
- * lock, but it is only used temporarily and only for logging.
+ * npf_ifmap_copylogname: this function is toxic; it can return garbage
+ * as we don't lock, but it is only used temporarily and only for logging.
  */
 void
 npf_ifmap_copylogname(npf_t *npf, unsigned id, char *buf, size_t len)
 {
-	if (id != NPF_IFMAP_NOID) {
-		const unsigned i = NPF_IFMAP_ID2SLOT(npf, id);
-		npf_ifmap_t *ifmap = &npf->ifmap[i];
+	const unsigned i = NPF_IFMAP_ID2SLOT(npf, id);
 
+	membar_consumer();
+
+	if (id != NPF_IFMAP_NOID && i < NPF_MAX_IFMAP) {
 		/*
 		 * Lock-free access is safe as there is an extra byte
 		 * with a permanent NUL terminator at the end.
 		 */
+		const npf_ifmap_t *ifmap = &npf->ifmap[i];
 		strlcpy(buf, ifmap->ifname, MIN(len, IFNAMSIZ));
 	} else {
 		strlcpy(buf, "???", len);
