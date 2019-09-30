@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.45.2.2 2019/09/01 13:52:53 martin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.45.2.3 2019/09/30 15:42:03 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45.2.2 2019/09/01 13:52:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45.2.3 2019/09/30 15:42:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2513,11 +2513,11 @@ vmxnet3_legacy_intr(void *xsc)
 		vmxnet3_evintr(sc);
 
 	VMXNET3_RXQ_LOCK(rxq);
-	rxmore = vmxnet3_rxq_eof(rxq, txlimit);
+	rxmore = vmxnet3_rxq_eof(rxq, rxlimit);
 	VMXNET3_RXQ_UNLOCK(rxq);
 
 	VMXNET3_TXQ_LOCK(txq);
-	txmore = vmxnet3_txq_eof(txq, rxlimit);
+	txmore = vmxnet3_txq_eof(txq, txlimit);
 	VMXNET3_TXQ_UNLOCK(txq);
 
 	if (txmore || rxmore) {
