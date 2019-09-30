@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.22 2019/09/29 00:10:02 mrg Exp $	*/
+/*	$NetBSD: kernel.h,v 1.23 2019/09/30 12:20:54 christos Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -138,13 +138,13 @@
 	__access_once_tmp;						      \
 })
 
-static inline int64_t
+static __inline int64_t
 abs64(int64_t x)
 {
 	return (x < 0? (-x) : x);
 }
 
-static inline uintmax_t
+static __inline uintmax_t
 mult_frac(uintmax_t x, uintmax_t multiplier, uintmax_t divisor)
 {
 	uintmax_t q = (x / divisor);
@@ -155,7 +155,7 @@ mult_frac(uintmax_t x, uintmax_t multiplier, uintmax_t divisor)
 
 static int panic_timeout __unused = 0;
 
-static inline int
+static __inline int __printflike(3, 0)
 vscnprintf(char *buf, size_t size, const char *fmt, va_list va)
 {
 	int ret;
@@ -171,7 +171,7 @@ vscnprintf(char *buf, size_t size, const char *fmt, va_list va)
 	return ret;
 }
 
-static inline int
+static __inline int __printflike(3, 4)
 scnprintf(char *buf, size_t size, const char *fmt, ...)
 {
 	va_list va;
@@ -184,7 +184,7 @@ scnprintf(char *buf, size_t size, const char *fmt, ...)
 	return ret;
 }
 
-static inline int
+static __inline int
 kstrtol(const char *s, unsigned base, long *vp)
 {
 	long long v;
@@ -196,7 +196,7 @@ kstrtol(const char *s, unsigned base, long *vp)
 	return 0;
 }
 
-static inline char *
+static __inline char * __printflike(2, 0)
 kvasprintf(gfp_t gfp, const char *fmt, va_list va)
 {
 	va_list tva;
@@ -215,7 +215,7 @@ kvasprintf(gfp_t gfp, const char *fmt, va_list va)
 	return str;
 }
 
-static inline char * __printflike(2,3)
+static __inline char * __printflike(2, 3)
 kasprintf(gfp_t gfp, const char *fmt, ...)
 {
 	va_list va;
