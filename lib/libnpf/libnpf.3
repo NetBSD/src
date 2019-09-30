@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnpf.3,v 1.10 2019/08/21 21:45:47 rmind Exp $
+.\"	$NetBSD: libnpf.3,v 1.11 2019/09/30 00:37:11 rmind Exp $
 .\"
 .\" Copyright (c) 2011-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd August 21, 2019
+.Dd August 25, 2019
 .Dt LIBNPF 3
 .Os
 .Sh NAME
@@ -108,6 +108,15 @@
 .Fn npf_table_replace "int fd" "nl_table_t *tl" "npf_error_t *errinfo"
 .Ft void
 .Fn npf_table_destroy "nl_table_t *tl"
+.\" ---
+.Ft int
+.Fn npf_ruleset_add "int fd" "const char *name" "nl_rule_t *rl" "uint64_t *id"
+.Ft int
+.Fn npf_ruleset_remove "int fd" "const char *name" "uint64_t id"
+.Ft int
+.Fn npf_ruleset_remkey "int fd" "const char *name" "const void *key" "size_t len"
+.Ft int
+.Fn npf_ruleset_flush "int fd" "const char *name"
 .\" -----
 .Sh DESCRIPTION
 The
@@ -352,7 +361,9 @@ Additionally,
 may be specified to indicate the translation network;
 otherwise, it should be set to
 .Dv NPF_NO_NETMASK .
-In such case, a custom algorithm may need to be specified using the
+.Pp
+In order to use the translation network, a custom algorithm may need to
+be specified using the
 .Fn npf_nat_setalgo
 function.
 .\" ---
@@ -368,6 +379,9 @@ Currently, the following algorithms are supported with dynamic NAT:
 Hash of the source and destination addresses.
 .It Dv NPF_ALGO_RR
 Round-robin for the translation addresses.
+.It Dv NPF_ALGO_NETMAP
+Network-to-network map as described below, but with state tracking.
+It is used when it is necessary to translate the ports.
 .El
 .Pp
 The following are support with static NAT:
@@ -448,6 +462,39 @@ specified by
 .\" ---
 .It Fn npf_table_destroy "tl"
 Destroy the specified table.
+.El
+.\" -----
+.Ss Ruleset interface
+.Bl -tag -width 4n
+.It Fn npf_ruleset_add "fd" "name" "rl" "id"
+Add a given rule, specified by
+.Fa rl ,
+into the dynamic ruleset named
+.Fa name .
+On success, return 0 and a unique rule ID in the
+.Fa id
+parameter.
+.It Fn npf_ruleset_remove "fd" "name" "id"
+Remove a rule from the dynamic ruleset, specified by
+.Fa name .
+The rule is specified by its unique ID in the
+.Fa id
+parameter.
+.It Fn npf_ruleset_remkey "fd" "name" "key" "len"
+Remove a rule from the dynamic ruleset, specified by
+.Fa name .
+The rule is specified by its key, in the
+.Fa key
+and
+.Fa len
+parameters.
+The key for the rule must have been set during its construction, using the
+.Fn npf_rule_setkey
+routine.
+.It Fn npf_ruleset_flush "fd" "name"
+Clear the dynamic ruleset, specified by
+.Fa name ,
+by removing all its rules.
 .El
 .\" -----
 .Sh SEE ALSO

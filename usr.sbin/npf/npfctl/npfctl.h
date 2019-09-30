@@ -102,7 +102,11 @@ typedef struct proc_param {
 	const char *	pp_value;
 } proc_param_t;
 
-enum { NPFCTL_PARSE_FILE, NPFCTL_PARSE_STRING };
+typedef enum {
+	NPFCTL_PARSE_DEFAULT,
+	NPFCTL_PARSE_RULE,
+	NPFCTL_PARSE_MAP
+} parse_entry_t;
 
 #define	NPF_IFNET_TABLE_PREF		".ifnet-"
 #define	NPF_IFNET_TABLE_PREFLEN		(sizeof(NPF_IFNET_TABLE_PREF) - 1)
@@ -111,7 +115,7 @@ bool		join(char *, size_t, int, char **, const char *);
 void		yyerror(const char *, ...) __printflike(1, 2) __dead;
 void		npfctl_bpfjit(bool);
 void		npfctl_parse_file(const char *);
-void		npfctl_parse_string(const char *);
+void		npfctl_parse_string(const char *, parse_entry_t);
 
 void		npfctl_print_error(const npf_error_t *);
 char *		npfctl_print_addrmask(int, const char *, const npf_addr_t *,
@@ -136,6 +140,7 @@ npfvar_t *	npfctl_parse_fam_addr_mask(const char *, const char *,
 bool		npfctl_parse_cidr(char *, fam_addr_mask_t *, int *);
 uint16_t	npfctl_npt66_calcadj(npf_netmask_t, const npf_addr_t *,
 		    const npf_addr_t *);
+int		npfctl_nat_ruleset_p(const char *, bool *);
 
 /*
  * NPF extension loading.
