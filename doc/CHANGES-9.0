@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.67 2019/09/29 07:35:15 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.68 2019/09/30 16:06:03 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4180,4 +4180,19 @@ usr.bin/audiocfg/main.c				1.14 (patch)
 	Use err(3)/warn(3) instead of perror(3)/fprintf(stderr,...).
 	Use getprogname(3) for usage().
 	[isaki, ticket #267]
+
+sys/arch/x86/pci/if_vmx.c			1.50
+
+	Fix typo in vmxnet3_legacy_intr() that broke sysctl hw.vmx*.{rx,tx}.
+	[knakahara, ticket #268]
+
+sys/net/rtsock_shared.c				1.10
+sys/netinet/if_arp.c				1.283,1.288
+sys/netinet6/nd6.c				1.264
+sys/netinet6/nd6.h				1.88
+sys/netinet6/nd6_nbr.c				1.174
+
+	Initialize dom_mowner for MBUFTRACE.
+	Initialize DAD components properly during boot.
+	[ozaki-r, ticket #269]
 
