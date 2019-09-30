@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk.c,v 1.128 2019/05/22 08:47:02 hannken Exp $	*/
+/*	$NetBSD: subr_disk.c,v 1.129 2019/09/30 23:23:59 cnst Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1999, 2000, 2009 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.128 2019/05/22 08:47:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk.c,v 1.129 2019/09/30 23:23:59 cnst Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -385,7 +385,7 @@ bounds_check_with_label(struct disk *dk, struct buf *bp, int wlabel)
 	}
 
 	/* Protect against division by zero. XXX: Should never happen?!?! */
-	if (lp->d_secpercyl == 0) {
+	if ((lp->d_secsize / DEV_BSIZE) == 0 || lp->d_secpercyl == 0) {
 		bp->b_error = EINVAL;
 		return -1;
 	}
