@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.47 2019/08/21 21:45:47 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.48 2019/09/30 00:37:11 rmind Exp $");
 
 #include <sys/types.h>
 #include <sys/mman.h>
@@ -401,14 +401,31 @@ npf_param_set(nl_config_t *ncf, const char *name, int val)
  * DYNAMIC RULESET INTERFACE.
  */
 
+static inline bool
+_npf_nat_ruleset_p(const char *name)
+{
+	return strncmp(name, NPF_RULESET_MAP_PREF,
+	    sizeof(NPF_RULESET_MAP_PREF) - 1) == 0;
+}
+
 int
 npf_ruleset_add(int fd, const char *rname, nl_rule_t *rl, uint64_t *id)
 {
+	const bool natset = _npf_nat_ruleset_p(rname);
 	nvlist_t *rule_dict = rl->rule_dict;
 	nvlist_t *ret_dict;
 
+	nvlist_add_number(rule_dict, "attr",
+	    NPF_RULE_DYNAMIC | nvlist_take_number(rule_dict, "attr"));
+
+	if (natset && !dnvlist_get_bool(rule_dict, "nat-rule", false)) {
+		errno = EINVAL;
+		return errno;
+	}
 	nvlist_add_string(rule_dict, "ruleset-name", rname);
+	nvlist_add_bool(rule_dict, "nat-ruleset", natset);
 	nvlist_add_number(rule_dict, "command", NPF_CMD_RULE_ADD);
+
 	if (nvlist_xfer_ioctl(fd, IOC_NPF_RULE, rule_dict, &ret_dict) == -1) {
 		return errno;
 	}
@@ -419,11 +436,14 @@ npf_ruleset_add(int fd, const char *rname, nl_rule_t *rl, uint64_t *id)
 int
 npf_ruleset_remove(int fd, const char *rname, uint64_t id)
 {
+	const bool natset = _npf_nat_ruleset_p(rname);
 	nvlist_t *rule_dict = nvlist_create(0);
 
 	nvlist_add_string(rule_dict, "ruleset-name", rname);
+	nvlist_add_bool(rule_dict, "nat-ruleset", natset);
 	nvlist_add_number(rule_dict, "command", NPF_CMD_RULE_REMOVE);
 	nvlist_add_number(rule_dict, "id", id);
+
 	if (nvlist_send_ioctl(fd, IOC_NPF_RULE, rule_dict) == -1) {
 		return errno;
 	}
@@ -433,11 +453,14 @@ npf_ruleset_remove(int fd, const char *rname, uint64_t id)
 int
 npf_ruleset_remkey(int fd, const char *rname, const void *key, size_t len)
 {
+	const bool natset = _npf_nat_ruleset_p(rname);
 	nvlist_t *rule_dict = nvlist_create(0);
 
 	nvlist_add_string(rule_dict, "ruleset-name", rname);
+	nvlist_add_bool(rule_dict, "nat-ruleset", natset);
 	nvlist_add_number(rule_dict, "command", NPF_CMD_RULE_REMKEY);
 	nvlist_add_binary(rule_dict, "key", key, len);
+
 	if (nvlist_send_ioctl(fd, IOC_NPF_RULE, rule_dict) == -1) {
 		return errno;
 	}
@@ -447,10 +470,13 @@ npf_ruleset_remkey(int fd, const char *rname, const void *key, size_t len)
 int
 npf_ruleset_flush(int fd, const char *rname)
 {
+	const bool natset = _npf_nat_ruleset_p(rname);
 	nvlist_t *rule_dict = nvlist_create(0);
 
 	nvlist_add_string(rule_dict, "ruleset-name", rname);
+	nvlist_add_bool(rule_dict, "nat-ruleset", natset);
 	nvlist_add_number(rule_dict, "command", NPF_CMD_RULE_FLUSH);
+
 	if (nvlist_send_ioctl(fd, IOC_NPF_RULE, rule_dict) == -1) {
 		return errno;
 	}
@@ -678,10 +704,12 @@ npf_rule_getcode(nl_rule_t *rl, int *type, size_t *len)
 int
 _npf_ruleset_list(int fd, const char *rname, nl_config_t *ncf)
 {
+	const bool natset = _npf_nat_ruleset_p(rname);
 	nvlist_t *req, *ret;
 
 	req = nvlist_create(0);
 	nvlist_add_string(req, "ruleset-name", rname);
+	nvlist_add_bool(req, "nat-ruleset", natset);
 	nvlist_add_number(req, "command", NPF_CMD_RULE_LIST);
 
 	if (nvlist_xfer_ioctl(fd, IOC_NPF_RULE, req, &ret) == -1) {

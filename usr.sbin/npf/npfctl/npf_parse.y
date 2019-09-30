@@ -42,11 +42,11 @@
 
 #define	YYSTACKSIZE	4096
 
-int			yyparsetarget;
+int			yystarttoken;
 const char *		yyfilename;
 
 extern int		yylineno, yycolumn;
-extern int		yylex(void);
+extern int		yylex(int);
 
 void
 yyerror(const char *fmt, ...)
@@ -78,14 +78,6 @@ yyerror(const char *fmt, ...)
 	exit(EXIT_FAILURE);
 }
 
-#define	CHECK_PARSER_FILE				\
-	if (yyparsetarget != NPFCTL_PARSE_FILE)		\
-		yyerror("rule must be in the group");
-
-#define	CHECK_PARSER_STRING				\
-	if (yyparsetarget != NPFCTL_PARSE_STRING)	\
-		yyerror("invalid rule syntax");
-
 %}
 
 /*
@@ -94,6 +86,17 @@ yyerror(const char *fmt, ...)
 %expect 0
 %expect-rr 0
 
+/*
+ * Depending on the mode of operation, set a different start symbol.
+ * Workaround yacc limitation by passing the start token.
+ */
+%start input
+%token RULE_ENTRY_TOKEN MAP_ENTRY_TOKEN
+%lex-param { int yystarttoken }
+
+/*
+ * General tokens.
+ */
 %token			ALG
 %token			ALGO
 %token			ALL
@@ -209,8 +212,9 @@ yyerror(const char *fmt, ...)
 %%
 
 input
-	: { CHECK_PARSER_FILE	} lines
-	| { CHECK_PARSER_STRING	} rule
+	: lines
+	| RULE_ENTRY_TOKEN	rule
+	| MAP_ENTRY_TOKEN	map
 	;
 
 lines

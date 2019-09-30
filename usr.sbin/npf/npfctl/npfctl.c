@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npfctl.c,v 1.62 2019/09/29 16:58:35 rmind Exp $");
+__RCSID("$NetBSD: npfctl.c,v 1.63 2019/09/30 00:37:11 rmind Exp $");
 
 #include <sys/stat.h>
 #include <sys/types.h>
@@ -53,8 +53,6 @@ __RCSID("$NetBSD: npfctl.c,v 1.62 2019/09/29 16:58:35 rmind Exp $");
 #include <arpa/inet.h>
 
 #include "npfctl.h"
-
-extern void		npf_yyparse_string(const char *);
 
 enum {
 	NPFCTL_START,
@@ -282,11 +280,9 @@ npfctl_print_addrmask(int alen, const char *fmt, const npf_addr_t *addr,
 static int
 npfctl_table_type(const char *typename)
 {
-	int i;
-
 	static const struct tbltype_s {
-		const char *name;
-		u_int type;
+		const char *	name;
+		unsigned	type;
 	} tbltypes[] = {
 		{ "ipset",	NPF_TABLE_IPSET	},
 		{ "lpm",	NPF_TABLE_LPM	},
@@ -294,12 +290,11 @@ npfctl_table_type(const char *typename)
 		{ NULL,		0		}
 	};
 
-	for (i = 0; tbltypes[i].name != NULL; i++) {
+	for (unsigned i = 0; tbltypes[i].name != NULL; i++) {
 		if (strcmp(typename, tbltypes[i].name) == 0) {
 			return tbltypes[i].type;
 		}
 	}
-
 	return 0;
 }
 
@@ -484,7 +479,7 @@ again:
 }
 
 static nl_rule_t *
-npfctl_parse_rule(int argc, char **argv)
+npfctl_parse_rule(int argc, char **argv, parse_entry_t entry)
 {
 	char rule_string[1024];
 	nl_rule_t *rl;
@@ -493,7 +488,7 @@ npfctl_parse_rule(int argc, char **argv)
 	if (!join(rule_string, sizeof(rule_string), argc, argv, " ")) {
 		errx(EXIT_FAILURE, "command too long");
 	}
-	npfctl_parse_string(rule_string);
+	npfctl_parse_string(rule_string, entry);
 	if ((rl = npfctl_rule_ref()) == NULL) {
 		errx(EXIT_FAILURE, "could not parse the rule");
 	}
@@ -528,6 +523,14 @@ npfctl_generate_key(nl_rule_t *rl, void *key)
 	free(meta);
 }
 
+int
+npfctl_nat_ruleset_p(const char *name, bool *natset)
+{
+	const size_t preflen = sizeof(NPF_RULESET_MAP_PREF) - 1;
+	*natset = strncmp(name, NPF_RULESET_MAP_PREF, preflen) == 0;
+	return (*natset && strlen(name) <= preflen) ? -1 : 0;
+}
+
 static void
 npfctl_rule(int fd, int argc, char **argv)
 {
@@ -548,11 +551,12 @@ npfctl_rule(int fd, int argc, char **argv)
 	const char *ruleset_name = argv[0];
 	const char *cmd = argv[1];
 	int error, action = 0;
+	bool extra_arg, natset;
+	parse_entry_t entry;
 	uint64_t rule_id;
-	bool extra_arg;
 	nl_rule_t *rl;
 
-	for (int n = 0; ruleops[n].cmd != NULL; n++) {
+	for (unsigned n = 0; ruleops[n].cmd != NULL; n++) {
 		if (strcmp(cmd, ruleops[n].cmd) == 0) {
 			action = ruleops[n].action;
 			extra_arg = ruleops[n].extra_arg;
@@ -566,15 +570,22 @@ npfctl_rule(int fd, int argc, char **argv)
 		usage();
 	}
 
+	if (npfctl_nat_ruleset_p(ruleset_name, &natset) != 0) {
+		errx(EXIT_FAILURE,
+		    "invalid NAT ruleset name (note: the name must be "
+		    "prefixed with `" NPF_RULESET_MAP_PREF "`)");
+	}
+	entry = natset ? NPFCTL_PARSE_MAP : NPFCTL_PARSE_RULE;
+
 	switch (action) {
 	case NPF_CMD_RULE_ADD:
-		rl = npfctl_parse_rule(argc, argv);
+		rl = npfctl_parse_rule(argc, argv, entry);
 		npfctl_generate_key(rl, key);
 		npf_rule_setkey(rl, key, sizeof(key));
 		error = npf_ruleset_add(fd, ruleset_name, rl, &rule_id);
 		break;
 	case NPF_CMD_RULE_REMKEY:
-		rl = npfctl_parse_rule(argc, argv);
+		rl = npfctl_parse_rule(argc, argv, entry);
 		npfctl_generate_key(rl, key);
 		error = npf_ruleset_remkey(fd, ruleset_name, key, sizeof(key));
 		break;

@@ -1,4 +1,4 @@
-.\"    $NetBSD: npf.conf.5,v 1.88 2019/07/23 14:20:22 wiz Exp $
+.\"    $NetBSD: npf.conf.5,v 1.89 2019/09/30 00:37:11 rmind Exp $
 .\"
 .\" Copyright (c) 2009-2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 19, 2019
+.Dd August 25, 2019
 .Dt NPF.CONF 5
 .Os
 .Sh NAME
@@ -356,6 +356,11 @@ redirecting the public port 9022 to the port 22 of an internal host:
 .Pp
 .Dl map $ext_if dynamic proto tcp 10.1.1.2 port 22 <- $ext_if port 9022
 .Pp
+In the regular dynamic NAT case, it is also possible to disable port
+translation using the
+.Cm no-ports
+flag.
+.Pp
 The translation address can also be dynamic, based on the interface.
 The following would select the IPv4 address(es) currently assigned to the
 interface:
@@ -528,13 +533,15 @@ table-def	= "table" table-id "type" ( "ipset" | "lpm" | "const" )
 
 # Mapping for address translation.
 
-map		= "map" interface
+map		= map-common | map-ruleset
+map-common	= "map" interface
 		  ( "static" [ "algo" map-algo ] | "dynamic" )
 		  [ map-flags ] [ proto ]
 		  map-seg ( "->" | "<-" | "<->" ) map-seg
 		  [ "pass" [ proto ] filt-opts ]
+map-ruleset	= "map" "ruleset" group-opts
 
-map-algo	= "npt66"
+map-algo	= "ip-hash" | "round-robin" | "netmap" | "npt66"
 map-flags	= "no-ports"
 map-seg		= ( addr-mask | interface ) [ port-opts ]
 
