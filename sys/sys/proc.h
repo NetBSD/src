@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.355 2019/07/15 19:34:45 pgoyette Exp $	*/
+/*	$NetBSD: proc.h,v 1.356 2019/09/30 21:13:33 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -311,12 +311,7 @@ struct proc {
 	sigpend_t	p_sigpend;	/* p: pending signals */
 	struct lcproc	*p_lwpctl;	/* p, a: _lwp_ctl() information */
 	pid_t		p_ppid;		/* :: cached parent pid */
-	pid_t 		p_fpid;		/* :: forked pid */
-	pid_t 		p_vfpid;	/* :: vforked pid */
-	pid_t 		p_vfpid_done;	/* :: vforked done pid */
-	lwpid_t		p_lwp_created;	/* :: lwp created */
-	lwpid_t		p_lwp_exited;	/* :: lwp exited */
-	pid_t 		p_pspid;	/* :: posix_spawn pid */
+	pid_t		p_oppid;	/* :: cached original parent pid */
 	char		*p_path;	/* :: full pathname of executable */
 
 /*
