@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-sita.c,v 1.5 2018/09/03 15:26:43 christos Exp $	*/
+/*	$NetBSD: pcap-sita.c,v 1.6 2019/10/01 16:02:12 christos Exp $	*/
 
 /*
  *  pcap-sita.c: Packet capture interface additions for SITA ACN devices
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-sita.c,v 1.5 2018/09/03 15:26:43 christos Exp $");
+__RCSID("$NetBSD: pcap-sita.c,v 1.6 2019/10/01 16:02:12 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -889,7 +889,7 @@ static void acn_start_monitor(int fd, int snaplen, int timeout, int promiscuous,
 }
 
 static int pcap_inject_acn(pcap_t *p, const void *buf _U_, size_t size _U_) {
-	strlcpy(p->errbuf, "Sending packets isn't supported on ACN adapters",
+	pcap_strlcpy(p->errbuf, "Sending packets isn't supported on ACN adapters",
 	    PCAP_ERRBUF_SIZE);
 	return (-1);
 }

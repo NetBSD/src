@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.24 2019/09/30 00:06:02 mrg Exp $	
+# $NetBSD: Makefile,v 1.25 2019/10/01 16:02:12 christos Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -28,14 +28,11 @@ SRCDIR=		${.CURDIR}/../dist
 
 LIB=		pcap
 MAN3= \
-pcap.3pcap \
 pcap_activate.3pcap \
 pcap_breakloop.3pcap \
 pcap_can_set_rfmon.3pcap \
 pcap_close.3pcap \
-pcap_compile.3pcap \
 pcap_create.3pcap \
-pcap_datalink.3pcap \
 pcap_datalink_name_to_val.3pcap \
 pcap_datalink_val_to_name.3pcap \
 pcap_dump.3pcap \
@@ -43,35 +40,29 @@ pcap_dump_close.3pcap \
 pcap_dump_file.3pcap \
 pcap_dump_flush.3pcap \
 pcap_dump_ftell.3pcap \
-pcap_dump_open.3pcap \
 pcap_file.3pcap \
 pcap_fileno.3pcap \
 pcap_findalldevs.3pcap \
 pcap_freecode.3pcap \
+pcap_get_required_select_timeout.3pcap \
 pcap_get_selectable_fd.3pcap \
 pcap_geterr.3pcap \
 pcap_inject.3pcap \
 pcap_is_swapped.3pcap \
 pcap_lib_version.3pcap \
-pcap_list_datalinks.3pcap \
-pcap_list_tstamp_types.3pcap \
 pcap_lookupdev.3pcap \
 pcap_lookupnet.3pcap \
 pcap_loop.3pcap \
 pcap_major_version.3pcap \
 pcap_next_ex.3pcap \
 pcap_offline_filter.3pcap \
-pcap_open_dead.3pcap \
 pcap_open_live.3pcap \
-pcap_open_offline.3pcap \
 pcap_set_buffer_size.3pcap \
 pcap_set_datalink.3pcap \
-pcap_set_immediate_mode.3pcap \
 pcap_set_promisc.3pcap \
 pcap_set_rfmon.3pcap \
 pcap_set_snaplen.3pcap \
 pcap_set_timeout.3pcap \
-pcap_set_tstamp_type.3pcap \
 pcap_setdirection.3pcap \
 pcap_setfilter.3pcap \
 pcap_setnonblock.3pcap \
@@ -80,8 +71,8 @@ pcap_stats.3pcap \
 pcap_statustostr.3pcap \
 pcap_strerror.3pcap \
 pcap_tstamp_type_name_to_val.3pcap \
-pcap_tstamp_type_val_to_name.3pcap
-
+pcap_tstamp_type_val_to_name.3pcap \
+${MAN3IN:.in=}
 
 MAN3IN= \
 pcap.3pcap.in \
@@ -93,14 +84,19 @@ pcap_list_datalinks.3pcap.in \
 pcap_list_tstamp_types.3pcap.in \
 pcap_open_dead.3pcap.in \
 pcap_open_offline.3pcap.in \
+pcap_set_immediate_mode.3pcap.in \
 pcap_set_tstamp_precision.3pcap.in \
 pcap_set_tstamp_type.3pcap.in
+
+MANFILEIN= \
+pcap-savefile.manfile.in
 
 MANMISCIN= \
 pcap-filter.manmisc.in \
 pcap-linktype.manmisc.in \
-pcap-tstamp.manmisc.in
-MANFILEIN= pcap-savefile.manfile.in
+pcap-tstamp.manmisc.in 
+
+
 CLEANFILES+= ${MAN}
 
 MAN=	${MAN3:S/3pcap/3/g} ${MAN3IN:S/3pcap.in/3/g} \
@@ -154,7 +150,7 @@ sf-pcapng.c
 
 
 INCS=		pcap/pcap.h pcap/namedb.h pcap/funcattrs.h \
-	pcap/pcap-inttypes.h pcap/compiler-tests.h
+	pcap/pcap-inttypes.h pcap/compiler-tests.h pcap/socket.h
 INCSDIR=	/usr/include
 INCSYMLINKS+=   ../net/bpf.h ${INCSDIR}/pcap/bpf.h
 INCSYMLINKS+=	pcap/pcap.h ${INCSDIR}/pcap.h

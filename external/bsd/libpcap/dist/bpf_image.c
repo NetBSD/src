@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf_image.c,v 1.4 2018/09/03 15:26:43 christos Exp $	*/
+/*	$NetBSD: bpf_image.c,v 1.5 2019/10/01 16:02:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1992, 1994, 1995, 1996
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bpf_image.c,v 1.4 2018/09/03 15:26:43 christos Exp $");
+__RCSID("$NetBSD: bpf_image.c,v 1.5 2019/10/01 16:02:11 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
