@@ -1,5 +1,5 @@
 /* Parser for GIMPLE.
-   Copyright (C) 2016-2017 Free Software Foundation, Inc.
+   Copyright (C) 2016-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -53,7 +53,6 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-ssanames.h"
 #include "gimple-ssa.h"
 #include "tree-dfa.h"
-#include "tree-dump.h"
 
 
 /* Gimple parsing functions.  */
@@ -117,7 +116,7 @@ c_parser_parse_gimple_body (c_parser *parser)
      we have to go through lowering again.  */
   cfun->curr_properties = PROP_gimple_any;
 
-  dump_function (TDI_generic, current_function_decl);
+  dump_function (TDI_gimple, current_function_decl);
 }
 
 /* Parse a compound statement in gimple function body.
@@ -277,7 +276,7 @@ c_parser_gimple_statement (c_parser *parser, gimple_seq *seq)
       && TREE_CODE (lhs.value) == CALL_EXPR)
     {
       gimple *call;
-      call = gimple_build_call_from_tree (lhs.value);
+      call = gimple_build_call_from_tree (lhs.value, NULL);
       gimple_seq_add_stmt (seq, call);
       gimple_set_location (call, loc);
       return;
@@ -408,7 +407,7 @@ c_parser_gimple_statement (c_parser *parser, gimple_seq *seq)
       rhs = c_parser_gimple_unary_expression (parser);
       if (rhs.value != error_mark_node)
 	{
-	  gimple *call = gimple_build_call_from_tree (rhs.value);
+	  gimple *call = gimple_build_call_from_tree (rhs.value, NULL);
 	  gimple_call_set_lhs (call, lhs.value);
 	  gimple_seq_add_stmt (seq, call);
 	  gimple_set_location (call, loc);
@@ -420,6 +419,23 @@ c_parser_gimple_statement (c_parser *parser, gimple_seq *seq)
   if (lhs.value != error_mark_node
       && rhs.value != error_mark_node)
     {
+      /* If we parsed a comparison and the next token is a '?' then
+         parse a conditional expression.  */
+      if (COMPARISON_CLASS_P (rhs.value)
+	  && c_parser_next_token_is (parser, CPP_QUERY))
+	{
+	  struct c_expr trueval, falseval;
+	  c_parser_consume_token (parser);
+	  trueval = c_parser_gimple_postfix_expression (parser);
+	  falseval.set_error ();
+	  if (c_parser_require (parser, CPP_COLON, "expected %<:%>"))
+	    falseval = c_parser_gimple_postfix_expression (parser);
+	  if (trueval.value == error_mark_node
+	      || falseval.value == error_mark_node)
+	    return;
+	  rhs.value = build3_loc (loc, COND_EXPR, TREE_TYPE (trueval.value),
+				  rhs.value, trueval.value, falseval.value);
+	}
       assign = gimple_build_assign (lhs.value, rhs.value);
       gimple_seq_add_stmt (seq, assign);
       gimple_set_location (assign, loc);
@@ -567,6 +583,11 @@ c_parser_gimple_unary_expression (c_parser *parser)
 	op = c_parser_gimple_postfix_expression (parser);
 	if (op.value == error_mark_node)
 	  return ret;
+	if (! POINTER_TYPE_P (TREE_TYPE (op.value)))
+	  {
+	    error_at (op_loc, "expected pointer as argument of unary %<*%>");
+	    return ret;
+	  }
 	finish = op.get_finish ();
 	location_t combined_loc = make_location (op_loc, op_loc, finish);
 	ret.value = build_simple_mem_ref_loc (combined_loc, op.value);
@@ -687,6 +708,13 @@ c_parser_parse_ssa_name (c_parser *parser,
 	      c_parser_error (parser, "base variable or SSA name undeclared"); 
 	      return error_mark_node;
 	    }
+	  if (!(VAR_P (parent)
+		|| TREE_CODE (parent) == PARM_DECL
+		|| TREE_CODE (parent) == RESULT_DECL))
+	    {
+	      error ("invalid base %qE for SSA name", parent);
+	      return error_mark_node;
+	    }
 	  if (VECTOR_TYPE_P (TREE_TYPE (parent))
 	      || TREE_CODE (TREE_TYPE (parent)) == COMPLEX_TYPE)
 	    DECL_GIMPLE_REG_P (parent) = 1;
@@ -799,6 +827,16 @@ c_parser_gimple_postfix_expression (c_parser *parser)
 			}
 		    }
 		  ptr = c_parser_gimple_unary_expression (parser);
+		  if (ptr.value == error_mark_node
+		      || ! POINTER_TYPE_P (TREE_TYPE (ptr.value)))
+		    {
+		      if (ptr.value != error_mark_node)
+			error_at (ptr.get_start (),
+				  "invalid type of %<__MEM%> operand");
+		      c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
+						 "expected %<)%>");
+		      return expr;
+		    }
 		  if (! alias_type)
 		    alias_type = TREE_TYPE (ptr.value);
 		  /* Optional constant offset.  */
@@ -829,7 +867,7 @@ c_parser_gimple_postfix_expression (c_parser *parser)
 	    }
 	  else if (strcmp (IDENTIFIER_POINTER (id), "_Literal") == 0)
 	    {
-	      /* _Literal '(' type-name ')' number  */
+	      /* _Literal '(' type-name ')' [ '-' ] constant */
 	      c_parser_consume_token (parser);
 	      tree type = NULL_TREE;
 	      if (c_parser_require (parser, CPP_OPEN_PAREN, "expected %<(%>"))
@@ -841,14 +879,26 @@ c_parser_gimple_postfix_expression (c_parser *parser)
 		  c_parser_skip_until_found (parser, CPP_CLOSE_PAREN,
 					     "expected %<)%>");
 		}
+	      bool neg_p;
+	      if ((neg_p = c_parser_next_token_is (parser, CPP_MINUS)))
+		c_parser_consume_token (parser);
 	      tree val = c_parser_gimple_postfix_expression (parser).value;
 	      if (! type
 		  || ! val
 		  || val == error_mark_node
-		  || TREE_CODE (val) != INTEGER_CST)
+		  || ! CONSTANT_CLASS_P (val))
 		{
 		  c_parser_error (parser, "invalid _Literal");
 		  return expr;
+		}
+	      if (neg_p)
+		{
+		  val = const_unop (NEGATE_EXPR, TREE_TYPE (val), val);
+		  if (! val)
+		    {
+		      c_parser_error (parser, "invalid _Literal");
+		      return expr;
+		    }
 		}
 	      expr.value = fold_convert (type, val);
 	      return expr;
@@ -1314,9 +1364,14 @@ c_parser_gimple_if_stmt (c_parser *parser, gimple_seq *seq)
     {
       loc = c_parser_peek_token (parser)->location;
       c_parser_consume_token (parser);
+      if (! c_parser_next_token_is (parser, CPP_NAME))
+	{
+	  c_parser_error (parser, "expected label");
+	  return;
+	}
       label = c_parser_peek_token (parser)->value;
-      t_label = lookup_label_for_goto (loc, label);
       c_parser_consume_token (parser);
+      t_label = lookup_label_for_goto (loc, label);
       if (! c_parser_require (parser, CPP_SEMICOLON, "expected %<;%>"))
 	return;
     }
@@ -1338,6 +1393,11 @@ c_parser_gimple_if_stmt (c_parser *parser, gimple_seq *seq)
     {
       loc = c_parser_peek_token (parser)->location;
       c_parser_consume_token (parser);
+      if (! c_parser_next_token_is (parser, CPP_NAME))
+	{
+	  c_parser_error (parser, "expected label");
+	  return;
+	}
       label = c_parser_peek_token (parser)->value;
       f_label = lookup_label_for_goto (loc, label);
       c_parser_consume_token (parser);

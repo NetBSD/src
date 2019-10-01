@@ -1,5 +1,5 @@
 /* Language hooks common to C++ and ObjC++ front ends.
-   Copyright (C) 2004-2017 Free Software Foundation, Inc.
+   Copyright (C) 2004-2018 Free Software Foundation, Inc.
    Contributed by Ziemowit Laski  <zlaski@apple.com>
 
 This file is part of GCC.
@@ -31,6 +31,9 @@ extern int cp_decl_dwarf_attribute (const_tree, int);
 extern int cp_type_dwarf_attribute (const_tree, int);
 extern void cp_common_init_ts (void);
 extern tree cp_unit_size_without_reusable_padding (tree);
+extern tree cp_get_global_decls ();
+extern tree cp_pushdecl (tree);
+extern void cp_register_dumps (gcc::dump_manager *);
 
 /* Lang hooks that are shared between C++ and ObjC++ are defined here.  Hooks
    specific to C++ or ObjC++ go in cp/cp-lang.c and objcp/objcp-lang.c,
@@ -54,6 +57,8 @@ extern tree cp_unit_size_without_reusable_padding (tree);
 #define LANG_HOOKS_INIT_OPTIONS c_common_init_options
 #undef LANG_HOOKS_INITIALIZE_DIAGNOSTICS
 #define LANG_HOOKS_INITIALIZE_DIAGNOSTICS cxx_initialize_diagnostics
+#undef LANG_HOOKS_REGISTER_DUMPS
+#define LANG_HOOKS_REGISTER_DUMPS cp_register_dumps
 #undef LANG_HOOKS_HANDLE_OPTION
 #define LANG_HOOKS_HANDLE_OPTION c_common_handle_option
 #undef LANG_HOOKS_HANDLE_FILENAME
@@ -68,6 +73,8 @@ extern tree cp_unit_size_without_reusable_padding (tree);
 #define LANG_HOOKS_DUP_LANG_SPECIFIC_DECL cxx_dup_lang_specific_decl
 #undef LANG_HOOKS_SET_DECL_ASSEMBLER_NAME
 #define LANG_HOOKS_SET_DECL_ASSEMBLER_NAME mangle_decl
+#undef LANG_HOOKS_OVERWRITE_DECL_ASSEMBLER_NAME
+#define LANG_HOOKS_OVERWRITE_DECL_ASSEMBLER_NAME overwrite_mangling
 #undef LANG_HOOKS_PRINT_STATISTICS
 #define LANG_HOOKS_PRINT_STATISTICS cxx_print_statistics
 #undef LANG_HOOKS_PRINT_XNODE
@@ -100,6 +107,8 @@ extern tree cp_unit_size_without_reusable_padding (tree);
 #define LANG_HOOKS_MISSING_NORETURN_OK_P cp_missing_noreturn_ok_p
 #undef LANG_HOOKS_BLOCK_MAY_FALLTHRU
 #define LANG_HOOKS_BLOCK_MAY_FALLTHRU cxx_block_may_fallthru
+#undef LANG_HOOKS_EMITS_BEGIN_STMT
+#define LANG_HOOKS_EMITS_BEGIN_STMT true
 
 /* Attribute hooks.  */
 #undef LANG_HOOKS_COMMON_ATTRIBUTE_TABLE
@@ -167,4 +176,9 @@ extern tree cp_unit_size_without_reusable_padding (tree);
 
 #undef LANG_HOOKS_EH_PROTECT_CLEANUP_ACTIONS
 #define LANG_HOOKS_EH_PROTECT_CLEANUP_ACTIONS cp_protect_cleanup_actions
+
+#undef LANG_HOOKS_GETDECLS
+#define LANG_HOOKS_GETDECLS cp_get_global_decls
+#undef LANG_HOOKS_PUSHDECL
+#define LANG_HOOKS_PUSHDECL cp_pushdecl
 #endif /* GCC_CP_OBJCP_COMMON */

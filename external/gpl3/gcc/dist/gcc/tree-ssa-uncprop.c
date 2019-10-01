@@ -1,5 +1,5 @@
 /* Routines for discovering and unpropagating edge equivalences.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -268,21 +268,24 @@ associate_equivalences_with_edges (void)
    so with each value we have a list of SSA_NAMEs that have the
    same value.  */
 
-
-/* Main structure for recording equivalences into our hash table.  */
-struct equiv_hash_elt
+/* Traits for the hash_map to record the value to SSA name equivalences
+   mapping.  */
+struct ssa_equip_hash_traits : default_hash_traits <tree>
 {
-  /* The value/key of this entry.  */
-  tree value;
-
-  /* List of SSA_NAMEs which have the same value/key.  */
-  vec<tree> equivalences;
+  static inline hashval_t hash (value_type value)
+    { return iterative_hash_expr (value, 0); }
+  static inline bool equal (value_type existing, value_type candidate)
+    { return operand_equal_p (existing, candidate, 0); }
 };
+
+typedef hash_map<tree, auto_vec<tree>,
+		 simple_hashmap_traits <ssa_equip_hash_traits,
+					auto_vec <tree> > > val_ssa_equiv_t;
 
 /* Global hash table implementing a mapping from invariant values
    to a list of SSA_NAMEs which have the same value.  We might be
    able to reuse tree-vn for this code.  */
-static hash_map<tree, auto_vec<tree> > *val_ssa_equiv;
+val_ssa_equiv_t *val_ssa_equiv;
 
 static void uncprop_into_successor_phis (basic_block);
 
@@ -408,40 +411,10 @@ uncprop_into_successor_phis (basic_block bb)
     }
 }
 
-/* Ignoring loop backedges, if BB has precisely one incoming edge then
-   return that edge.  Otherwise return NULL.  */
-static edge
-single_incoming_edge_ignoring_loop_edges (basic_block bb)
-{
-  edge retval = NULL;
-  edge e;
-  edge_iterator ei;
-
-  FOR_EACH_EDGE (e, ei, bb->preds)
-    {
-      /* A loop back edge can be identified by the destination of
-	 the edge dominating the source of the edge.  */
-      if (dominated_by_p (CDI_DOMINATORS, e->src, e->dest))
-	continue;
-
-      /* If we have already seen a non-loop edge, then we must have
-	 multiple incoming non-loop edges and thus we return NULL.  */
-      if (retval)
-	return NULL;
-
-      /* This is the first non-loop incoming edge we have found.  Record
-	 it.  */
-      retval = e;
-    }
-
-  return retval;
-}
-
 edge
 uncprop_dom_walker::before_dom_children (basic_block bb)
 {
   basic_block parent;
-  edge e;
   bool recorded = false;
 
   /* If this block is dominated by a single incoming edge and that edge
@@ -450,7 +423,7 @@ uncprop_dom_walker::before_dom_children (basic_block bb)
   parent = get_immediate_dominator (CDI_DOMINATORS, bb);
   if (parent)
     {
-      e = single_incoming_edge_ignoring_loop_edges (bb);
+      edge e = single_pred_edge_ignoring_loop_edges (bb, false);
 
       if (e && e->src == parent && e->aux)
 	{
@@ -506,7 +479,7 @@ pass_uncprop::execute (function *fun)
   associate_equivalences_with_edges ();
 
   /* Create our global data structures.  */
-  val_ssa_equiv = new hash_map<tree, auto_vec<tree> > (1024);
+  val_ssa_equiv = new val_ssa_equiv_t (1024);
 
   /* We're going to do a dominator walk, so ensure that we have
      dominance information.  */

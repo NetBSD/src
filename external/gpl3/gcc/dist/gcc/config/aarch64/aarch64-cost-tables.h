@@ -1,6 +1,6 @@
 /* RTX cost tables for AArch64.
 
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    This file is part of GCC.
 
@@ -136,8 +136,8 @@ const struct cpu_cost_table thunderx_extra_costs =
     0,			/* Logical.  */
     0,			/* Shift.  */
     0,			/* Shift_reg.  */
-    COSTS_N_INSNS (1),	/* Arith_shift.  */
-    COSTS_N_INSNS (1),	/* Arith_shift_reg.  */
+    COSTS_N_INSNS (1)+1,	/* Arith_shift.  */
+    COSTS_N_INSNS (1)+1,	/* Arith_shift_reg.  */
     COSTS_N_INSNS (1),	/* UNUSED: Log_shift.  */
     COSTS_N_INSNS (1),	/* UNUSED: Log_shift_reg.  */
     0,			/* Extend.  */

@@ -1,5 +1,5 @@
 /* Top-level LTO routines.
-   Copyright (C) 2009-2017 Free Software Foundation, Inc.
+   Copyright (C) 2009-2018 Free Software Foundation, Inc.
    Contributed by CodeSourcery, Inc.
 
 This file is part of GCC.
@@ -46,13 +46,14 @@ along with GCC; see the file COPYING3.  If not see
 #include "lto-partition.h"
 #include "context.h"
 #include "pass_manager.h"
-#include "ipa-inline.h"
+#include "ipa-fnsummary.h"
 #include "params.h"
 #include "ipa-utils.h"
 #include "gomp-constants.h"
 #include "lto-symtab.h"
 #include "stringpool.h"
 #include "fold-const.h"
+#include "attribs.h"
 #include "builtins.h"
 
 
@@ -316,7 +317,7 @@ hash_canonical_type (tree type)
 
   if (VECTOR_TYPE_P (type))
     {
-      hstate.add_int (TYPE_VECTOR_SUBPARTS (type));
+      hstate.add_poly_int (TYPE_VECTOR_SUBPARTS (type));
       hstate.add_int (TYPE_UNSIGNED (type));
     }
 
@@ -591,7 +592,7 @@ mentions_vars_p_decl_with_vis (tree t)
     return true;
 
   /* Accessor macro has side-effects, use field-name here. */
-  CHECK_NO_VAR (t->decl_with_vis.assembler_name);
+  CHECK_NO_VAR (DECL_ASSEMBLER_NAME_RAW (t));
   return false;
 }
 
@@ -647,11 +648,11 @@ mentions_vars_p_type (tree t)
   CHECK_NO_VAR (TYPE_ATTRIBUTES (t));
   CHECK_NO_VAR (TYPE_NAME (t));
 
-  CHECK_VAR (TYPE_MINVAL (t));
-  CHECK_VAR (TYPE_MAXVAL (t));
+  CHECK_VAR (TYPE_MIN_VALUE_RAW (t));
+  CHECK_VAR (TYPE_MAX_VALUE_RAW (t));
 
   /* Accessor is for derived node types only. */
-  CHECK_NO_VAR (t->type_non_common.binfo);
+  CHECK_NO_VAR (TYPE_LANG_SLOT_1 (t));
 
   CHECK_VAR (TYPE_CONTEXT (t));
   CHECK_NO_VAR (TYPE_CANONICAL (t));
@@ -1058,7 +1059,7 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 
   if (CODE_CONTAINS_STRUCT (code, TS_INT_CST))
     {
-      if (!wi::eq_p (t1, t2))
+      if (wi::to_wide (t1) != wi::to_wide (t2))
 	return false;
     }
 
@@ -1084,6 +1085,12 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 			TREE_FIXED_CST_PTR (t1), TREE_FIXED_CST_PTR (t2)))
       return false;
 
+  if (CODE_CONTAINS_STRUCT (code, TS_VECTOR))
+    {
+      compare_values (VECTOR_CST_LOG2_NPATTERNS);
+      compare_values (VECTOR_CST_NELTS_PER_PATTERN);
+    }
+
   if (CODE_CONTAINS_STRUCT (code, TS_DECL_COMMON))
     {
       compare_values (DECL_MODE);
@@ -1106,6 +1113,7 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 	{
 	  compare_values (DECL_PACKED);
 	  compare_values (DECL_NONADDRESSABLE_P);
+	  compare_values (DECL_PADDING_P);
 	  compare_values (DECL_OFFSET_ALIGN);
 	}
       else if (code == VAR_DECL)
@@ -1184,6 +1192,7 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 	compare_values (TYPE_NONALIASED_COMPONENT);
       if (AGGREGATE_TYPE_P (t1))
 	compare_values (TYPE_TYPELESS_STORAGE);
+      compare_values (TYPE_EMPTY_P);
       compare_values (TYPE_PACKED);
       compare_values (TYPE_RESTRICT);
       compare_values (TYPE_USER_ALIGN);
@@ -1298,11 +1307,12 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 
   if (CODE_CONTAINS_STRUCT (code, TS_VECTOR))
     {
-      unsigned i;
       /* Note that the number of elements for EXPR has already been emitted
 	 in EXPR's header (see streamer_write_tree_header).  */
-      for (i = 0; i < VECTOR_CST_NELTS (t1); ++i)
-	compare_tree_edges (VECTOR_CST_ELT (t1, i), VECTOR_CST_ELT (t2, i));
+      unsigned int count = vector_cst_encoded_nelts (t1);
+      for (unsigned int i = 0; i < count; ++i)
+	compare_tree_edges (VECTOR_CST_ENCODED_ELT (t1, i),
+			    VECTOR_CST_ENCODED_ELT (t2, i));
     }
 
   if (CODE_CONTAINS_STRUCT (code, TS_COMPLEX))
@@ -1429,14 +1439,14 @@ compare_tree_sccs_1 (tree t1, tree t2, tree **map)
 	       f1 || f2;
 	       f1 = TREE_CHAIN (f1), f2 = TREE_CHAIN (f2))
 	    compare_tree_edges (f1, f2);
-	  compare_tree_edges (TYPE_BINFO (t1), TYPE_BINFO (t2));
 	}
       else if (code == FUNCTION_TYPE
 	       || code == METHOD_TYPE)
 	compare_tree_edges (TYPE_ARG_TYPES (t1), TYPE_ARG_TYPES (t2));
+
       if (!POINTER_TYPE_P (t1))
-	compare_tree_edges (TYPE_MINVAL (t1), TYPE_MINVAL (t2));
-      compare_tree_edges (TYPE_MAXVAL (t1), TYPE_MAXVAL (t2));
+	compare_tree_edges (TYPE_MIN_VALUE_RAW (t1), TYPE_MIN_VALUE_RAW (t2));
+      compare_tree_edges (TYPE_MAX_VALUE_RAW (t1), TYPE_MAX_VALUE_RAW (t2));
     }
 
   if (CODE_CONTAINS_STRUCT (code, TS_LIST))
@@ -1659,6 +1669,9 @@ unify_scc (struct data_in *data_in, unsigned from,
 	      free_node (scc->entries[i]);
 	    }
 
+	  /* Drop DIE references.  */
+	  dref_queue.truncate (0);
+
 	  break;
 	}
 
@@ -1682,6 +1695,40 @@ unify_scc (struct data_in *data_in, unsigned from,
 }
 
 
+/* Compare types based on source file location.  */
+
+static int
+cmp_type_location (const void *p1_, const void *p2_)
+{
+  tree *p1 = (tree*)(const_cast<void *>(p1_));
+  tree *p2 = (tree*)(const_cast<void *>(p2_));
+  if (*p1 == *p2)
+    return 0;
+
+  tree tname1 = TYPE_NAME (*p1);
+  tree tname2 = TYPE_NAME (*p2);
+
+  const char *f1 = DECL_SOURCE_FILE (tname1);
+  const char *f2 = DECL_SOURCE_FILE (tname2);
+
+  int r = strcmp (f1, f2);
+  if (r == 0)
+    {
+      int l1 = DECL_SOURCE_LINE (tname1);
+      int l2 = DECL_SOURCE_LINE (tname2);
+      if (l1 == l2)
+       {
+	 int l1 = DECL_SOURCE_COLUMN (tname1);
+	 int l2 = DECL_SOURCE_COLUMN (tname2);
+	 return l1 - l2;
+       }
+      else
+       return l1 - l2;
+    }
+  else
+    return r;
+}
+
 /* Read all the symbols from buffer DATA, using descriptors in DECL_DATA.
    RESOLUTIONS is the set of symbols picked by the linker (read from the
    resolution file when the linker plugin is being used).  */
@@ -1698,6 +1745,7 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
   unsigned int i;
   const uint32_t *data_ptr, *data_end;
   uint32_t num_decl_states;
+  auto_vec<tree> odr_types;
 
   lto_input_block ib_main ((const char *) data + main_offset,
 			   header->main_size, decl_data->mode_table);
@@ -1734,8 +1782,7 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 						     from);
 	  if (len == 1
 	      && (TREE_CODE (first) == IDENTIFIER_NODE
-		  || TREE_CODE (first) == INTEGER_CST
-		  || TREE_CODE (first) == TRANSLATION_UNIT_DECL))
+		  || TREE_CODE (first) == INTEGER_CST))
 	    continue;
 
 	  /* Try to unify the SCC with already existing ones.  */
@@ -1760,30 +1807,21 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 		  seen_type = true;
 		  num_prevailing_types++;
 		  lto_fixup_prevailing_type (t);
-		}
-	      /* Compute the canonical type of all types.
-		 ???  Should be able to assert that !TYPE_CANONICAL.  */
-	      if (TYPE_P (t) && !TYPE_CANONICAL (t))
-		{
-		  gimple_register_canonical_type (t);
+
+		  /* Compute the canonical type of all types.
+		     Because SCC components are streamed in random (hash) order
+		     we may have encountered the type before while registering
+		     type canonical of a derived type in the same SCC.  */
+		  if (!TYPE_CANONICAL (t))
+		    gimple_register_canonical_type (t);
 		  if (odr_type_p (t))
-		    register_odr_type (t);
+		    odr_types.safe_push (t);
 		}
 	      /* Link shared INTEGER_CSTs into TYPE_CACHED_VALUEs of its
 		 type which is also member of this SCC.  */
 	      if (TREE_CODE (t) == INTEGER_CST
 		  && !TREE_OVERFLOW (t))
 		cache_integer_cst (t);
-	      /* Register TYPE_DECLs with the debuginfo machinery.  */
-	      if (!flag_wpa
-		  && TREE_CODE (t) == TYPE_DECL)
-		{
-		  /* Dwarf2out needs location information.
-		     TODO: Moving this out of the streamer loop may noticealy
-		     improve ltrans linemap memory use.  */
-		  data_in->location_cache.apply_location_cache ();
-		  debug_hooks->type_decl (t, !DECL_FILE_SCOPE_P (t));
-		}
 	      if (!flag_ltrans)
 		{
 		  lto_maybe_register_decl (data_in, t, from + i);
@@ -1793,6 +1831,14 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
 		    vec_safe_push (tree_with_vars, t);
 		}
 	    }
+
+	  /* Register DECLs with the debuginfo machinery.  */
+	  while (!dref_queue.is_empty ())
+	    {
+	      dref_entry e = dref_queue.pop ();
+	      debug_hooks->register_external_die (e.decl, e.sym, e.off);
+	    }
+
 	  if (seen_type)
 	    num_type_scc_trees += len;
 	}
@@ -1830,6 +1876,15 @@ lto_read_decls (struct lto_file_decl_data *decl_data, const void *data,
       gcc_assert (*slot == NULL);
       *slot = state;
     }
+
+  /* Sort types for the file before registering in ODR machinery.  */
+  if (lto_location_cache::current_cache)
+    lto_location_cache::current_cache->apply_location_cache ();
+  odr_types.qsort (cmp_type_location);
+
+  /* Register ODR types.  */
+  for (unsigned i = 0; i < odr_types.length (); i++)
+    register_odr_type (odr_types[i]);
 
   if (data_ptr != data_end)
     internal_error ("bytecode stream: garbage at the end of symbols section");
@@ -1972,7 +2027,12 @@ lto_section_with_id (const char *name, unsigned HOST_WIDE_INT *id)
   if (strncmp (name, section_name_prefix, strlen (section_name_prefix)))
     return 0;
   s = strrchr (name, '.');
-  return s && sscanf (s, "." HOST_WIDE_INT_PRINT_HEX_PURE, id) == 1;
+  if (!s)
+    return 0;
+  /* If the section is not suffixed with an ID return.  */
+  if ((size_t)(s - name) == strlen (section_name_prefix))
+    return 0;
+  return sscanf (s, "." HOST_WIDE_INT_PRINT_HEX_PURE, id) == 1;
 }
 
 /* Create file_data of each sub file id */
@@ -2002,7 +2062,7 @@ create_subid_section_table (struct lto_section_slot *ls, splay_tree file_ids,
       file_data = ggc_alloc<lto_file_decl_data> ();
       memset(file_data, 0, sizeof (struct lto_file_decl_data));
       file_data->id = id;
-      file_data->section_hash_table = lto_obj_create_section_hash_table ();;
+      file_data->section_hash_table = lto_obj_create_section_hash_table ();
       lto_splay_tree_insert (file_ids, id, file_data);
 
       /* Maintain list in linker order */
@@ -2267,38 +2327,6 @@ free_section_data (struct lto_file_decl_data *file_data ATTRIBUTE_UNUSED,
 
 static lto_file *current_lto_file;
 
-/* Helper for qsort; compare partitions and return one with smaller size.
-   We sort from greatest to smallest so parallel build doesn't stale on the
-   longest compilation being executed too late.  */
-
-static int
-cmp_partitions_size (const void *a, const void *b)
-{
-  const struct ltrans_partition_def *pa
-     = *(struct ltrans_partition_def *const *)a;
-  const struct ltrans_partition_def *pb
-     = *(struct ltrans_partition_def *const *)b;
-  return pb->insns - pa->insns;
-}
-
-/* Helper for qsort; compare partitions and return one with smaller order.  */
-
-static int
-cmp_partitions_order (const void *a, const void *b)
-{
-  const struct ltrans_partition_def *pa
-     = *(struct ltrans_partition_def *const *)a;
-  const struct ltrans_partition_def *pb
-     = *(struct ltrans_partition_def *const *)b;
-  int ordera = -1, orderb = -1;
-
-  if (lto_symtab_encoder_size (pa->encoder))
-    ordera = lto_symtab_encoder_deref (pa->encoder, 0)->order;
-  if (lto_symtab_encoder_size (pb->encoder))
-    orderb = lto_symtab_encoder_deref (pb->encoder, 0)->order;
-  return orderb - ordera;
-}
-
 /* Actually stream out ENCODER into TEMP_FILENAME.  */
 
 static void
@@ -2408,7 +2436,8 @@ lto_wpa_write_files (void)
   ltrans_partition part;
   FILE *ltrans_output_list_stream;
   char *temp_filename;
-  vec <char *>temp_filenames = vNULL;
+  auto_vec <char *>temp_filenames;
+  auto_vec <int>temp_priority;
   size_t blen;
 
   /* Open the LTRANS output list.  */
@@ -2435,15 +2464,6 @@ lto_wpa_write_files (void)
   blen = strlen (temp_filename);
 
   n_sets = ltrans_partitions.length ();
-
-  /* Sort partitions by size so small ones are compiled last.
-     FIXME: Even when not reordering we may want to output one list for parallel make
-     and other for final link command.  */
-
-  if (!flag_profile_reorder_functions || !flag_profile_use)
-    ltrans_partitions.qsort (flag_toplevel_reorder
-			   ? cmp_partitions_size
-			   : cmp_partitions_order);
 
   for (i = 0; i < n_sets; i++)
     {
@@ -2496,6 +2516,7 @@ lto_wpa_write_files (void)
 
       part->encoder = NULL;
 
+      temp_priority.safe_push (part->insns);
       temp_filenames.safe_push (xstrdup (temp_filename));
     }
   ltrans_output_list_stream = fopen (ltrans_output_list, "w");
@@ -2505,13 +2526,13 @@ lto_wpa_write_files (void)
   for (i = 0; i < n_sets; i++)
     {
       unsigned int len = strlen (temp_filenames[i]);
-      if (fwrite (temp_filenames[i], 1, len, ltrans_output_list_stream) < len
+      if (fprintf (ltrans_output_list_stream, "%i\n", temp_priority[i]) < 0
+	  || fwrite (temp_filenames[i], 1, len, ltrans_output_list_stream) < len
 	  || fwrite ("\n", 1, 1, ltrans_output_list_stream) < 1)
 	fatal_error (input_location, "writing to LTRANS output list %s: %m",
 		     ltrans_output_list);
      free (temp_filenames[i]);
     }
-  temp_filenames.release();
 
   lto_stats.num_output_files += n_sets;
 
@@ -2572,7 +2593,7 @@ lto_fixup_prevailing_decls (tree t)
 	}
       if (CODE_CONTAINS_STRUCT (code, TS_DECL_WITH_VIS))
 	{
-	  LTO_NO_PREVAIL (t->decl_with_vis.assembler_name);
+	  LTO_NO_PREVAIL (DECL_ASSEMBLER_NAME_RAW (t));
 	}
       if (CODE_CONTAINS_STRUCT (code, TS_DECL_NON_COMMON))
 	{
@@ -2601,9 +2622,9 @@ lto_fixup_prevailing_decls (tree t)
       LTO_NO_PREVAIL (TYPE_ATTRIBUTES (t));
       LTO_NO_PREVAIL (TYPE_NAME (t));
 
-      LTO_SET_PREVAIL (TYPE_MINVAL (t));
-      LTO_SET_PREVAIL (TYPE_MAXVAL (t));
-      LTO_NO_PREVAIL (t->type_non_common.binfo);
+      LTO_SET_PREVAIL (TYPE_MIN_VALUE_RAW (t));
+      LTO_SET_PREVAIL (TYPE_MAX_VALUE_RAW (t));
+      LTO_NO_PREVAIL (TYPE_LANG_SLOT_1 (t));
 
       LTO_SET_PREVAIL (TYPE_CONTEXT (t));
 
@@ -2960,7 +2981,7 @@ read_cgraph_and_symbols (unsigned nfiles, const char **fnames)
   if (symtab->dump_file)
     {
       fprintf (symtab->dump_file, "Before merging:\n");
-      symtab_node::dump_table (symtab->dump_file);
+      symtab->dump (symtab->dump_file);
     }
   if (!flag_ltrans)
     {
@@ -3125,7 +3146,7 @@ do_whole_program_analysis (void)
   symtab->function_flags_ready = true;
 
   if (symtab->dump_file)
-    symtab_node::dump_table (symtab->dump_file);
+    symtab->dump (symtab->dump_file);
   bitmap_obstack_initialize (NULL);
   symtab->state = IPA_SSA;
 
@@ -3138,7 +3159,7 @@ do_whole_program_analysis (void)
   if (symtab->dump_file)
     {
       fprintf (symtab->dump_file, "Optimized ");
-      symtab_node::dump_table (symtab->dump_file);
+      symtab->dump (symtab->dump_file);
     }
 
   symtab_node::checking_verify_symtab_nodes ();
@@ -3162,7 +3183,7 @@ do_whole_program_analysis (void)
 
   /* Inline summaries are needed for balanced partitioning.  Free them now so
      the memory can be used for streamer caches.  */
-  inline_free_summary ();
+  ipa_free_fn_summary ();
 
   /* AUX pointers are used by partitioning code to bookkeep number of
      partitions symbol is in.  This is no longer needed.  */
