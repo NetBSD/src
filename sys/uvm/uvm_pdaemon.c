@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.110 2019/04/21 15:32:18 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.111 2019/10/01 17:40:22 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.110 2019/04/21 15:32:18 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.111 2019/10/01 17:40:22 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -132,6 +132,9 @@ void
 uvm_wait(const char *wmsg)
 {
 	int timo = 0;
+
+	if (uvm.pagedaemon_lwp == NULL)
+		panic("out of memory before the pagedaemon thread exists");
 
 	mutex_spin_enter(&uvm_fpageqlock);
 
