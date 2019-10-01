@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2585 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2586 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -47,3 +47,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[mrg 20190814]
 	mcx(4): Added driver for Mellanox 5th generation ethernet.
 		[jmcneill 20190921]
+	libpcap: Import 1.9.1. [christos 20191001]
+	tcpdump(8): Import 4.9.3. [christos 20191001]
+
