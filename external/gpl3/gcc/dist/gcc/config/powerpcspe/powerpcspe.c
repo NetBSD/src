@@ -4369,7 +4369,10 @@ rs6000_option_override_internal (bool global_init_p)
      load/store multiple and string instructions.  */
   if (BYTES_BIG_ENDIAN && optimize_size && rs6000_gen_cell_microcode)
     rs6000_isa_flags |= ~rs6000_isa_flags_explicit & (OPTION_MASK_MULTIPLE
-						      | OPTION_MASK_STRING);
+#if !defined (POWERPC_NETBSD)
+						      | OPTION_MASK_STRING
+#endif
+						      );
 
   /* Don't allow -mmultiple or -mstring on little endian systems
      unless the cpu is a 750, because the hardware doesn't support the
