@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-icmp.c,v 1.10 2019/10/01 16:06:16 christos Exp $");
 #endif
 
 /* \summary: Internet Control Message Protocol (ICMP) printer */
@@ -405,7 +405,7 @@ icmp_print(netdissect_options *ndo, const u_char *bp, u_int plen, const u_char *
 
 			default:
 				(void)snprintf(buf, sizeof(buf),
-					"%s protocol %d port %d unreachable",
+					"%s protocol %u port %u unreachable",
 					ipaddr_string(ndo, &oip->ip_dst),
 					oip->ip_p, dport);
 				break;
@@ -511,7 +511,7 @@ icmp_print(netdissect_options *ndo, const u_char *bp, u_int plen, const u_char *
 			break;
 
 		default:
-			(void)snprintf(buf, sizeof(buf), "time exceeded-#%d",
+			(void)snprintf(buf, sizeof(buf), "time exceeded-#%u",
 			    dp->icmp_code);
 			break;
 		}
@@ -520,11 +520,11 @@ icmp_print(netdissect_options *ndo, const u_char *bp, u_int plen, const u_char *
 	case ICMP_PARAMPROB:
 		if (dp->icmp_code)
 			(void)snprintf(buf, sizeof(buf),
-			    "parameter problem - code %d", dp->icmp_code);
+			    "parameter problem - code %u", dp->icmp_code);
 		else {
 			ND_TCHECK(dp->icmp_pptr);
 			(void)snprintf(buf, sizeof(buf),
-			    "parameter problem - octet %d", dp->icmp_pptr);
+			    "parameter problem - octet %u", dp->icmp_pptr);
 		}
 		break;
 
@@ -562,13 +562,15 @@ icmp_print(netdissect_options *ndo, const u_char *bp, u_int plen, const u_char *
 	}
 	ND_PRINT((ndo, "ICMP %s, length %u", str, plen));
 	if (ndo->ndo_vflag && !fragmented) { /* don't attempt checksumming if this is a frag */
-		uint16_t sum, icmp_sum;
-
 		if (ND_TTEST2(*bp, plen)) {
+			uint16_t sum;
+
 			vec[0].ptr = (const uint8_t *)(const void *)dp;
 			vec[0].len = plen;
 			sum = in_cksum(vec, 1);
 			if (sum != 0) {
+				uint16_t icmp_sum;
+				ND_TCHECK_16BITS(&dp->icmp_cksum);
 				icmp_sum = EXTRACT_16BITS(&dp->icmp_cksum);
 				ND_PRINT((ndo, " (wrong icmp cksum %x (->%x)!)",
 					     icmp_sum,

@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-sll.c,v 1.8 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-sll.c,v 1.9 2019/10/01 16:06:16 christos Exp $");
 #endif
 
 /* \summary: Linux cooked sockets capture printer */
@@ -203,6 +203,7 @@ sll_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char 
 	u_int caplen = h->caplen;
 	u_int length = h->len;
 	register const struct sll_header *sllp;
+	u_short hatype;
 	u_short ether_type;
 	int llc_hdrlen;
 	u_int hdrlen;
@@ -230,6 +231,16 @@ sll_if_print(netdissect_options *ndo, const struct pcap_pkthdr *h, const u_char 
 	p += SLL_HDR_LEN;
 	hdrlen = SLL_HDR_LEN;
 
+	hatype = EXTRACT_16BITS(&sllp->sll_hatype);
+	switch (hatype) {
+
+	case 803:
+		/*
+		 * This is an packet with a radiotap header;
+		 * just dissect the payload as such.
+		 */
+		return (SLL_HDR_LEN + ieee802_11_radio_print(ndo, p, length, caplen));
+	}
 	ether_type = EXTRACT_16BITS(&sllp->sll_protocol);
 
 recurse:

@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-vtp.c,v 1.4 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-vtp.c,v 1.5 2019/10/01 16:06:16 christos Exp $");
 #endif
 
 /* \summary: Cisco VLAN Trunking Protocol (VTP) printer */
@@ -246,7 +246,7 @@ vtp_print (netdissect_options *ndo,
 	 */
 
 	tptr += 4;
-	while (tptr < (pptr+length)) {
+	while ((unsigned)(tptr - pptr) < length) {
 
 	    ND_TCHECK_8BITS(tptr);
 	    len = *tptr;

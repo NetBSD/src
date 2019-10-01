@@ -447,7 +447,7 @@ terminal rather than to a file or pipe.
 .PD
 Set the time stamp type for the capture to \fItstamp_type\fP.  The names
 to use for the time stamp types are given in
-.BR pcap-tstamp (@MAN_MISC_INFO@);
+.BR \%pcap-tstamp (@MAN_MISC_INFO@);
 not all the types listed there will necessarily be valid for any given
 interface.
 .TP
@@ -1906,7 +1906,7 @@ It is currently being maintained by tcpdump.org.
 The current version is available via http:
 .LP
 .RS
-.I http://www.tcpdump.org/
+.I https://www.tcpdump.org/
 .RE
 .LP
 The original distribution is available via anonymous ftp:

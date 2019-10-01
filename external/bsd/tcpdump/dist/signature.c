@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: signature.c,v 1.8 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: signature.c,v 1.9 2019/10/01 16:06:16 christos Exp $");
 #endif
 
 #ifdef HAVE_CONFIG_H
@@ -135,7 +135,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
     /*
      * Do we have all the packet data to be checked?
      */
-    if (!ND_TTEST2(pptr, plen)) {
+    if (!ND_TTEST2(*pptr, plen)) {
         /* No. */
         return (CANT_CHECK_SIGNATURE);
     }
@@ -143,7 +143,7 @@ signature_verify(netdissect_options *ndo, const u_char *pptr, u_int plen,
     /*
      * Do we have the entire signature to check?
      */
-    if (!ND_TTEST2(sig_ptr, sizeof(sig))) {
+    if (!ND_TTEST2(*sig_ptr, sizeof(sig))) {
         /* No. */
         return (CANT_CHECK_SIGNATURE);
     }
