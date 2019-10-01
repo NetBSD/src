@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bgp.c,v 1.9 2017/09/08 14:01:12 christos Exp $");
+__RCSID("$NetBSD: print-bgp.c,v 1.10 2019/10/01 16:06:16 christos Exp $");
 #endif
 
 /* \summary: Border Gateway Protocol (BGP) printer */
@@ -51,6 +51,8 @@ __RCSID("$NetBSD: print-bgp.c,v 1.9 2017/09/08 14:01:12 christos Exp $");
 #include "extract.h"
 #include "af.h"
 #include "l2vpn.h"
+
+static const char tstr[] = "[|BGP]";
 
 struct bgp {
 	uint8_t bgp_marker[16];
@@ -1018,7 +1020,7 @@ trunc:
  */
 #define UPDATE_BUF_BUFLEN(buf, buflen, stringlen) \
     if (stringlen<0) \
-       	buflen=0; \
+        buflen=0; \
     else if ((u_int)stringlen>buflen) \
         buflen=0; \
     else { \
@@ -1364,7 +1366,7 @@ trunc:
 
 static int
 bgp_attr_print(netdissect_options *ndo,
-               u_int atype, const u_char *pptr, u_int len)
+               u_int atype, const u_char *pptr, u_int len, const unsigned attr_set_level)
 {
 	int i;
 	uint16_t af;
@@ -1487,7 +1489,7 @@ bgp_attr_print(netdissect_options *ndo,
 		}
 		ND_TCHECK2(tptr[0], 8);
 		ND_PRINT((ndo, " AS #%s, origin %s",
-	   	    as_printf(ndo, astostr, sizeof(astostr), EXTRACT_32BITS(tptr)),
+		    as_printf(ndo, astostr, sizeof(astostr), EXTRACT_32BITS(tptr)),
 		    ipaddr_string(ndo, tptr + 4)));
 		break;
 	case BGPTYPE_COMMUNITIES:
@@ -1703,10 +1705,12 @@ bgp_attr_print(netdissect_options *ndo,
                                        bgp_vpn_rd_print(ndo, tptr),
                                        isonsap_string(ndo, tptr+BGP_VPN_RD_LEN,tlen-BGP_VPN_RD_LEN)));
                                 /* rfc986 mapped IPv4 address ? */
-                                if (EXTRACT_32BITS(tptr+BGP_VPN_RD_LEN) ==  0x47000601)
+                                if (tlen == BGP_VPN_RD_LEN + 4 + sizeof(struct in_addr)
+                                    && EXTRACT_32BITS(tptr+BGP_VPN_RD_LEN) ==  0x47000601)
                                     ND_PRINT((ndo, " = %s", ipaddr_string(ndo, tptr+BGP_VPN_RD_LEN+4)));
                                 /* rfc1888 mapped IPv6 address ? */
-                                else if (EXTRACT_24BITS(tptr+BGP_VPN_RD_LEN) ==  0x350000)
+                                else if (tlen == BGP_VPN_RD_LEN + 3 + sizeof(struct in6_addr)
+                                         && EXTRACT_24BITS(tptr+BGP_VPN_RD_LEN) ==  0x350000)
                                     ND_PRINT((ndo, " = %s", ip6addr_string(ndo, tptr+BGP_VPN_RD_LEN+3)));
                                 tptr += tlen;
                                 tlen = 0;
@@ -2285,8 +2289,16 @@ bgp_attr_print(netdissect_options *ndo,
                             ND_PRINT((ndo, "+%x", aflags & 0xf));
                         ND_PRINT((ndo, "]: "));
                     }
-                    /* FIXME check for recursion */
-                    if (!bgp_attr_print(ndo, atype, tptr, alen))
+                    /* The protocol encoding per se allows ATTR_SET to be nested as many times
+                     * as the message can accommodate. This printer used to be able to recurse
+                     * into ATTR_SET contents until the stack exhaustion, but now there is a
+                     * limit on that (if live protocol exchange goes that many levels deep,
+                     * something is probably wrong anyway). Feel free to refine this value if
+                     * you can find the spec with respective normative text.
+                     */
+                    if (attr_set_level == 10)
+                        ND_PRINT((ndo, "(too many nested levels, not recursing)"));
+                    else if (!bgp_attr_print(ndo, atype, tptr, alen, attr_set_level + 1))
                         return 0;
                     tptr += alen;
                     len -= alen;
@@ -2347,6 +2359,8 @@ bgp_capabilities_print(netdissect_options *ndo,
                 ND_TCHECK2(opt[i+2], cap_len);
                 switch (cap_type) {
                 case BGP_CAPCODE_MP:
+                    /* AFI (16 bits), Reserved (8 bits), SAFI (8 bits) */
+                    ND_TCHECK_8BITS(opt + i + 5);
                     ND_PRINT((ndo, "\n\t\tAFI %s (%u), SAFI %s (%u)",
                            tok2str(af_values, "Unknown",
                                       EXTRACT_16BITS(opt+i+2)),
@@ -2356,12 +2370,15 @@ bgp_capabilities_print(netdissect_options *ndo,
                            opt[i+5]));
                     break;
                 case BGP_CAPCODE_RESTART:
+                    /* Restart Flags (4 bits), Restart Time in seconds (12 bits) */
+                    ND_TCHECK_16BITS(opt + i + 2);
                     ND_PRINT((ndo, "\n\t\tRestart Flags: [%s], Restart Time %us",
                            ((opt[i+2])&0x80) ? "R" : "none",
                            EXTRACT_16BITS(opt+i+2)&0xfff));
                     tcap_len-=2;
                     cap_offset=4;
                     while(tcap_len>=4) {
+                        ND_TCHECK_8BITS(opt + i + cap_offset + 3);
                         ND_PRINT((ndo, "\n\t\t  AFI %s (%u), SAFI %s (%u), Forwarding state preserved: %s",
                                tok2str(af_values,"Unknown",
                                           EXTRACT_16BITS(opt+i+cap_offset)),
@@ -2425,7 +2442,7 @@ bgp_capabilities_print(netdissect_options *ndo,
         return;
 
 trunc:
-	ND_PRINT((ndo, "[|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 }
 
 static void
@@ -2488,7 +2505,7 @@ bgp_open_print(netdissect_options *ndo,
 	}
 	return;
 trunc:
-	ND_PRINT((ndo, "[|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 }
 
 static void
@@ -2588,7 +2605,7 @@ bgp_update_print(netdissect_options *ndo,
 				goto trunc;
 			if (length < alen)
 				goto trunc;
-			if (!bgp_attr_print(ndo, atype, p, alen))
+			if (!bgp_attr_print(ndo, atype, p, alen, 0))
 				goto trunc;
 			p += alen;
 			len -= alen;
@@ -2625,7 +2642,7 @@ bgp_update_print(netdissect_options *ndo,
 	}
 	return;
 trunc:
-	ND_PRINT((ndo, "[|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 }
 
 static void
@@ -2706,7 +2723,7 @@ bgp_notification_print(netdissect_options *ndo,
 
 	return;
 trunc:
-	ND_PRINT((ndo, "[|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 }
 
 static void
@@ -2740,7 +2757,7 @@ bgp_route_refresh_print(netdissect_options *ndo,
 
         return;
 trunc:
-	ND_PRINT((ndo, "[|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 }
 
 static int
@@ -2780,7 +2797,7 @@ bgp_header_print(netdissect_options *ndo,
 	}
 	return 1;
 trunc:
-	ND_PRINT((ndo, "[|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 	return 0;
 }
 
@@ -2829,7 +2846,7 @@ bgp_print(netdissect_options *ndo,
 		memcpy(&bgp, p, BGP_SIZE);
 
 		if (start != p)
-			ND_PRINT((ndo, " [|BGP]"));
+			ND_PRINT((ndo, " %s", tstr));
 
 		hlen = ntohs(bgp.bgp_len);
 		if (hlen < BGP_SIZE) {
@@ -2855,7 +2872,7 @@ bgp_print(netdissect_options *ndo,
 	return;
 
 trunc:
-	ND_PRINT((ndo, " [|BGP]"));
+	ND_PRINT((ndo, "%s", tstr));
 }
 
 /*
