@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.138 2019/08/23 10:22:14 maxv Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.139 2019/10/01 16:36:58 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.138 2019/08/23 10:22:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.139 2019/10/01 16:36:58 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -87,6 +87,7 @@ struct shmmap_entry {
 	SLIST_ENTRY(shmmap_entry) next;
 	vaddr_t va;
 	int shmid;
+	bool busy;
 };
 
 int			shm_nused		__cacheline_aligned;
@@ -313,8 +314,10 @@ sys_shmdt(struct lwp *l, const struct sys_shmdt_args *uap, register_t *retval)
 	struct uvm_object *uobj;
 	struct shmid_ds *shmseg;
 	size_t size;
+	int segnum;
 
 	mutex_enter(&shm_lock);
+restart:
 	/* In case of reallocation, we will wait for completion */
 	while (__predict_false(shm_realloc_state))
 		cv_wait(&shm_realloc_cv, &shm_lock);
@@ -346,12 +349,18 @@ sys_shmdt(struct lwp *l, const struct sys_shmdt_args *uap, register_t *retval)
 		}
 	}
 
+	segnum = IPCID_TO_IX(shmmap_se->shmid);
+	if (shmmap_se->busy) {
+		cv_wait(&shm_cv[segnum], &shm_lock);
+		goto restart;
+	}
+
 	SHMPRINTF(("shmdt: vm %p: remove %d @%lx\n",
 	    p->p_vmspace, shmmap_se->shmid, shmmap_se->va));
 
 	/* Delete the entry from shm map */
 	uobj = shm_delete_mapping(shmmap_s, shmmap_se);
-	shmseg = &shmsegs[IPCID_TO_IX(shmmap_se->shmid)];
+	shmseg = &shmsegs[segnum];
 	size = (shmseg->shm_segsz + PGOFSET) & ~PGOFSET;
 	mutex_exit(&shm_lock);
 
@@ -386,10 +395,13 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	vaddr_t attach_va;
 	vm_prot_t prot;
 	vsize_t size;
+	int segnum;
 
 	/* Allocate a new map entry and set it */
 	shmmap_se = kmem_alloc(sizeof(struct shmmap_entry), KM_SLEEP);
 	shmmap_se->shmid = SCARG(uap, shmid);
+	shmmap_se->busy = true;
+	segnum = IPCID_TO_IX(shmmap_se->shmid);
 
 	mutex_enter(&shm_lock);
 	/* In case of reallocation, we will wait for completion */
@@ -466,11 +478,13 @@ sys_shmat(struct lwp *l, const struct sys_shmat_args *uap, register_t *retval)
 	/* Set the new address, and update the time */
 	mutex_enter(&shm_lock);
 	shmmap_se->va = attach_va;
+	shmmap_se->busy = false;
 	shmseg->shm_atime = time_second;
 	shm_realloc_disable--;
 	retval[0] = attach_va;
 	SHMPRINTF(("shmat: vm %p: add %d @%lx\n",
 	    p->p_vmspace, shmmap_se->shmid, attach_va));
+	cv_broadcast(&shm_cv[segnum]);
 err:
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
@@ -484,6 +498,7 @@ err_detach:
 	mutex_enter(&shm_lock);
 	uobj = shm_delete_mapping(shmmap_s, shmmap_se);
 	shm_realloc_disable--;
+	cv_broadcast(&shm_cv[segnum]);
 	cv_broadcast(&shm_realloc_cv);
 	mutex_exit(&shm_lock);
 	if (uobj != NULL) {
