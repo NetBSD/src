@@ -1,5 +1,5 @@
 This is doc/cppinternals.info, produced by makeinfo version 4.8 from
-/usr/src6/tools/gcc/../../external/gpl3/gcc/dist/gcc/doc/cppinternals.texi.
+/usr/src/tools/gcc/../../external/gpl3/gcc/dist/gcc/doc/cppinternals.texi.
 
 INFO-DIR-SECTION Software development
 START-INFO-DIR-ENTRY
@@ -8,7 +8,7 @@ END-INFO-DIR-ENTRY
 
    This file documents the internals of the GNU C Preprocessor.
 
-   Copyright (C) 2000-2017 Free Software Foundation, Inc.
+   Copyright (C) 2000-2018 Free Software Foundation, Inc.
 
    Permission is granted to make and distribute verbatim copies of this
 manual provided the copyright notice and this permission notice are
@@ -1019,17 +1019,17 @@ Concept Index
 
 
 Tag Table:
-Node: Top969
-Node: Conventions2654
-Node: Lexer3596
-Ref: Invalid identifiers11508
-Ref: Lexing a line13457
-Node: Hash Nodes18226
-Node: Macro Expansion21105
-Node: Token Spacing30048
-Node: Line Numbering35907
-Node: Guard Macros39992
-Node: Files44783
-Node: Concept Index48249
+Node: Top968
+Node: Conventions2653
+Node: Lexer3595
+Ref: Invalid identifiers11507
+Ref: Lexing a line13456
+Node: Hash Nodes18225
+Node: Macro Expansion21104
+Node: Token Spacing30047
+Node: Line Numbering35906
+Node: Guard Macros39991
+Node: Files44782
+Node: Concept Index48248
 
 End Tag Table
