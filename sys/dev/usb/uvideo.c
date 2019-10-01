@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.48 2019/09/15 09:21:36 maxv Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.49 2019/10/01 18:00:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.48 2019/09/15 09:21:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.49 2019/10/01 18:00:08 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -563,12 +563,6 @@ uvideo_attach(device_t parent, device_t self, void *aux)
 			vs = uvideo_find_stream(sc, ifdesc->bInterfaceNumber);
 			if (vs == NULL) {
 				vs = uvideo_stream_alloc();
-				if (vs == NULL) {
-					DPRINTF(("uvideo_attach: "
-						 "failed to alloc stream\n"));
-					err = USBD_NOMEM;
-					goto bad;
-				}
 				err = uvideo_stream_init(vs, sc, ifdesc,
 							 ifaceidx);
 				if (err != USBD_NORMAL_COMPLETION) {
@@ -765,7 +759,7 @@ uvideo_stream_guess_format(struct uvideo_stream *vs,
 static struct uvideo_stream *
 uvideo_stream_alloc(void)
 {
-	return kmem_alloc(sizeof(struct uvideo_stream), KM_NOSLEEP);
+	return kmem_alloc(sizeof(struct uvideo_stream), KM_SLEEP);
 }
 
 
@@ -1161,10 +1155,7 @@ uvideo_stream_init_desc(struct uvideo_stream *vs,
 						desc, bEndpointAddress);
 				}
 
-				alt = kmem_alloc(sizeof(*alt), KM_NOSLEEP);
-				if (alt == NULL)
-					return USBD_NOMEM;
-
+				alt = kmem_alloc(sizeof(*alt), KM_SLEEP);
 				alt->altno = ifdesc->bAlternateSetting;
 				alt->interval =
 				    GET(usb_endpoint_descriptor_t,

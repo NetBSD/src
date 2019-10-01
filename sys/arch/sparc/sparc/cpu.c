@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.254 2018/09/03 16:29:27 riastradh Exp $ */
+/*	$NetBSD: cpu.c,v 1.255 2019/10/01 18:00:07 chs Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.254 2018/09/03 16:29:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.255 2019/10/01 18:00:07 chs Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_lockdebug.h"
@@ -2095,7 +2095,7 @@ getcpuinfo(struct cpu_info *sc, int node)
 					       sizeof namebuf);
 		if (cpu_name && cpu_name[0])
 			sc->cpu_longname = kmem_strdupsize(cpu_name, NULL,
-							   KM_NOSLEEP);
+							   KM_SLEEP);
 	}
 
 	for (mp = cpu_conf; ; mp++) {

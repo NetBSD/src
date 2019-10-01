@@ -1,4 +1,4 @@
-/*	$NetBSD: iscsi_main.c,v 1.31 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: iscsi_main.c,v 1.32 2019/10/01 18:00:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2004,2005,2006,2011 The NetBSD Foundation, Inc.
@@ -217,12 +217,7 @@ iscsiattach(int n)
 		aprint_error("%s: only one device supported\n",
 		    iscsi_cd.cd_name);
 
-	cf = kmem_alloc(sizeof(struct cfdata), KM_NOSLEEP);
-	if (cf == NULL) {
-		aprint_error("%s: couldn't allocate cfdata\n",
-		    iscsi_cd.cd_name);
-		return;
-	}
+	cf = kmem_alloc(sizeof(struct cfdata), KM_SLEEP);
 	cf->cf_name = iscsi_cd.cd_name;
 	cf->cf_atname = iscsi_cd.cd_name;
 	cf->cf_unit = 0;

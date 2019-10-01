@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.4 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.5 2019/10/01 18:00:08 chs Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.4 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.5 2019/10/01 18:00:08 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -904,7 +904,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 		HVN_NVS_PROTO_VERSION_2,
 		HVN_NVS_PROTO_VERSION_1
 	};
-	const int kmemflags = cold ? KM_NOSLEEP : KM_SLEEP;
 	struct hvn_nvs_init cmd;
 	struct hvn_nvs_init_resp *rsp;
 	struct hvn_nvs_ndis_init ncmd;
@@ -913,12 +912,7 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	uint64_t tid;
 	int i;
 
-	sc->sc_nvsbuf = kmem_zalloc(HVN_NVS_BUFSIZE, kmemflags);
-	if (sc->sc_nvsbuf == NULL) {
-		DPRINTF("%s: failed to allocate channel data buffer\n",
-		    device_xname(sc->sc_dev));
-		return -1;
-	}
+	sc->sc_nvsbuf = kmem_zalloc(HVN_NVS_BUFSIZE, KM_SLEEP);
 
 	/* We need to be able to fit all RNDIS control and data messages */
 	ringsize = HVN_RNDIS_CTLREQS *

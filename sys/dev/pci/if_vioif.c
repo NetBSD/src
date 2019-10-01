@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vioif.c,v 1.50 2019/09/14 21:09:00 christos Exp $	*/
+/*	$NetBSD: if_vioif.c,v 1.51 2019/10/01 18:00:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.50 2019/09/14 21:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vioif.c,v 1.51 2019/10/01 18:00:08 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -356,7 +356,7 @@ vioif_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-static int
+static void
 vioif_alloc_queues(struct vioif_softc *sc)
 {
 	int nvq_pairs = sc->sc_max_nvq_pairs;
@@ -366,22 +366,14 @@ vioif_alloc_queues(struct vioif_softc *sc)
 	KASSERT(nvq_pairs <= VIRTIO_NET_CTRL_MQ_VQ_PAIRS_MAX);
 
 	sc->sc_rxq = kmem_zalloc(sizeof(sc->sc_rxq[0]) * nvq_pairs,
-	    KM_NOSLEEP);
-	if (sc->sc_rxq == NULL)
-		return -1;
-
+	    KM_SLEEP);
 	sc->sc_txq = kmem_zalloc(sizeof(sc->sc_txq[0]) * nvq_pairs,
-	    KM_NOSLEEP);
-	if (sc->sc_txq == NULL)
-		return -1;
+	    KM_SLEEP);
 
 	if (sc->sc_has_ctrl)
 		nvqs++;
 
-	sc->sc_vqs = kmem_zalloc(sizeof(sc->sc_vqs[0]) * nvqs, KM_NOSLEEP);
-	if (sc->sc_vqs == NULL)
-		return -1;
-
+	sc->sc_vqs = kmem_zalloc(sizeof(sc->sc_vqs[0]) * nvqs, KM_SLEEP);
 	nvqs = 0;
 	for (i = 0; i < nvq_pairs; i++) {
 		sc->sc_rxq[i].rxq_vq = &sc->sc_vqs[nvqs++];
@@ -390,8 +382,6 @@ vioif_alloc_queues(struct vioif_softc *sc)
 
 	if (sc->sc_has_ctrl)
 		sc->sc_ctrlq.ctrlq_vq = &sc->sc_vqs[nvqs++];
-
-	return 0;
 }
 
 static void
@@ -766,10 +756,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		sc->sc_req_nvq_pairs = MIN(sc->sc_max_nvq_pairs, ncpu);
 	}
 
-	r = vioif_alloc_queues(sc);
-	if (r != 0)
-		goto err;
-
+	vioif_alloc_queues(sc);
 	virtio_child_attach_set_vqs(vsc, sc->sc_vqs, sc->sc_req_nvq_pairs);
 
 #ifdef VIOIF_MPSAFE
@@ -823,9 +810,7 @@ vioif_attach(device_t parent, device_t self, void *aux)
 		txq->txq_vq->vq_done_ctx = (void *)txq;
 		txq->txq_link_active = sc->sc_link_active;
 		txq->txq_stopping = false;
-		txq->txq_intrq = pcq_create(txq->txq_vq->vq_num, KM_NOSLEEP);
-		if (txq->txq_intrq == NULL)
-			goto err;
+		txq->txq_intrq = pcq_create(txq->txq_vq->vq_num, KM_SLEEP);
 	}
 
 	if (sc->sc_has_ctrl) {

@@ -1,4 +1,4 @@
-/*      $NetBSD: sdtemp.c,v 1.35 2019/02/28 16:56:35 khorben Exp $        */
+/*      $NetBSD: sdtemp.c,v 1.36 2019/10/01 18:00:08 chs Exp $        */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.35 2019/02/28 16:56:35 khorben Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdtemp.c,v 1.36 2019/10/01 18:00:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -342,11 +342,7 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_get_limits = sdtemp_get_limits;
 	sc->sc_sme->sme_set_limits = sdtemp_set_limits;
 
-	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t), KM_NOSLEEP);
-	if (!sc->sc_sensor) {
-		aprint_error_dev(self, "unable to allocate sc_sensor\n");
-		goto bad2;
-	}
+	sc->sc_sensor = kmem_zalloc(sizeof(envsys_data_t), KM_SLEEP);
 
 	/* Initialize sensor data. */
 	sc->sc_sensor->units =  ENVSYS_STEMP;
@@ -400,7 +396,6 @@ sdtemp_attach(device_t parent, device_t self, void *aux)
 
 bad:
 	kmem_free(sc->sc_sensor, sizeof(envsys_data_t));
-bad2:
 	sysmon_envsys_destroy(sc->sc_sme);
 }
 

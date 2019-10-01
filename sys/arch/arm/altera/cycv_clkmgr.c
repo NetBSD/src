@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.2 2019/01/17 12:49:53 skrll Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.3 2019/10/01 18:00:07 chs Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.2 2019/01/17 12:49:53 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.3 2019/10/01 18:00:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -166,13 +166,7 @@ cycv_clkmgr_init(struct cycv_clkmgr_softc *sc, int clkmgr_handle)
 						     0);
 
 	sc->sc_clocks = kmem_zalloc(sc->sc_nclocks * sizeof *sc->sc_clocks,
-				    KM_NOSLEEP);
-	if (sc->sc_clocks == NULL) {
-		aprint_error_dev(sc->sc_dev, "no memory\n");
-		sc->sc_nclocks = 0;
-		return;
-	}
-
+				    KM_SLEEP);
 	cycv_clkmgr_clocks_traverse(sc, clocks_handle, cycv_clkmgr_clock_parse,
 				    0);
 

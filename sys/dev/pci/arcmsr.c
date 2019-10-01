@@ -1,4 +1,4 @@
-/*	$NetBSD: arcmsr.c,v 1.39 2018/12/09 11:14:01 jdolecek Exp $ */
+/*	$NetBSD: arcmsr.c,v 1.40 2019/10/01 18:00:08 chs Exp $ */
 /*	$OpenBSD: arc.c,v 1.68 2007/10/27 03:28:27 dlg Exp $ */
 
 /*
@@ -21,7 +21,7 @@
 #include "bio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.39 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arcmsr.c,v 1.40 2019/10/01 18:00:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -2034,10 +2034,7 @@ arc_dmamem_alloc(struct arc_softc *sc, size_t size)
 	struct arc_dmamem		*adm;
 	int				nsegs;
 
-	adm = kmem_zalloc(sizeof(*adm), KM_NOSLEEP);
-	if (adm == NULL)
-		return NULL;
-
+	adm = kmem_zalloc(sizeof(*adm), KM_SLEEP);
 	adm->adm_size = size;
 
 	if (bus_dmamap_create(sc->sc_dmat, size, 1, size, 0,

@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.c,v 1.5 2017/12/28 08:49:28 maxv Exp $ */
+/* $NetBSD: acpi_srat.c,v 1.6 2019/10/01 18:00:08 chs Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.5 2017/12/28 08:49:28 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.6 2019/10/01 18:00:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -79,7 +79,7 @@ static TAILQ_HEAD(, memlist) memlisthead;
 static struct cpulist *
 cpu_alloc(void)
 {
-	return kmem_zalloc(sizeof(struct cpulist), KM_NOSLEEP);
+	return kmem_zalloc(sizeof(struct cpulist), KM_SLEEP);
 }
 
 static void
@@ -91,7 +91,7 @@ cpu_free(struct cpulist *c)
 static struct memlist *
 mem_alloc(void)
 {
-	return kmem_zalloc(sizeof(struct memlist), KM_NOSLEEP);
+	return kmem_zalloc(sizeof(struct memlist), KM_SLEEP);
 }
 
 static void
@@ -335,19 +335,11 @@ acpisrat_refresh(void)
 	nnodes = MAX(cnodes, mnodes) + 1;
 
 	node_array = kmem_zalloc(nnodes * sizeof(struct acpisrat_node),
-	    KM_NOSLEEP);
-	if (node_array == NULL)
-		return ENOMEM;
-
+	    KM_SLEEP);
 	cpu_array = kmem_zalloc(ncpus * sizeof(struct acpisrat_cpu),
-	    KM_NOSLEEP);
-	if (cpu_array == NULL)
-		return ENOMEM;
-
+	    KM_SLEEP);
 	mem_array = kmem_zalloc(nmems * sizeof(struct acpisrat_mem),
-	    KM_NOSLEEP);
-	if (mem_array == NULL)
-		return ENOMEM;
+	    KM_SLEEP);
 
 	i = 0;
 	CPU_FOREACH(citer) {
@@ -367,9 +359,9 @@ acpisrat_refresh(void)
 		node_array[i].nodeid = i;
 
 		node_array[i].cpu = kmem_zalloc(node_array[i].ncpus *
-		    sizeof(struct acpisrat_cpu *), KM_NOSLEEP);
+		    sizeof(struct acpisrat_cpu *), KM_SLEEP);
 		node_array[i].mem = kmem_zalloc(node_array[i].nmems *
-		    sizeof(struct acpisrat_mem *), KM_NOSLEEP);
+		    sizeof(struct acpisrat_mem *), KM_SLEEP);
 
 		k = 0;
 		for (j = 0; j < ncpus; j++) {
@@ -534,4 +526,3 @@ acpisrat_get_node(uint32_t apicid)
 
 	return NULL;
 }
-

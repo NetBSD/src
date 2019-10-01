@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.41 2019/03/01 09:26:00 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.42 2019/10/01 18:00:08 chs Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.41 2019/03/01 09:26:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.42 2019/10/01 18:00:08 chs Exp $");
 
 #include "opt_pci.h"
 
@@ -319,10 +319,7 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 	pcireg_t	io, pmem;
 	pciconf_win_t	*pi, *pm;
 
-	pb = kmem_zalloc(sizeof (pciconf_bus_t), KM_NOSLEEP);
-	if (!pb)
-		panic("Unable to allocate memory for PCI configuration.");
-
+	pb = kmem_zalloc(sizeof (pciconf_bus_t), KM_SLEEP);
 	pb->cacheline_size = parent->cacheline_size;
 	pb->parent_bus = parent;
 	alloc_busno(parent, pb);
@@ -1115,7 +1112,7 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	pciconf_bus_t	*pb;
 	int		rv;
 
-	pb = kmem_zalloc(sizeof (pciconf_bus_t), KM_NOSLEEP);
+	pb = kmem_zalloc(sizeof (pciconf_bus_t), KM_SLEEP);
 	pb->busno = firstbus;
 	pb->next_busno = pb->busno + 1;
 	pb->last_busno = 255;
