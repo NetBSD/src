@@ -1,4 +1,4 @@
-/* $NetBSD: rk3328_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $ */
+/* $NetBSD: rk3328_iomux.c,v 1.3 2019/10/01 23:32:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk3328_iomux.c,v 1.2 2019/01/23 04:21:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk3328_iomux.c,v 1.3 2019/10/01 23:32:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -307,8 +307,6 @@ rk3328_iomux_attach(device_t parent, device_t self, void *aux)
 			fdtbus_register_pinctrl_config(self, sub, &rk3328_iomux_pinctrl_funcs);
 		}
 	}
-
-	fdtbus_pinctrl_configure();
 
 	for (child = OF_child(phandle); child; child = OF_peer(child)) {
 		struct fdt_attach_args cfaa = *faa;
