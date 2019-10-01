@@ -1,4 +1,4 @@
-/* $NetBSD: siotty.c,v 1.45 2019/06/30 02:11:56 tsutsui Exp $ */
+/* $NetBSD: siotty.c,v 1.46 2019/10/01 18:00:07 chs Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.45 2019/06/30 02:11:56 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siotty.c,v 1.46 2019/10/01 18:00:07 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -188,11 +188,7 @@ siotty_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal("\n");
 
-	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * 2, KM_NOSLEEP);
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(self, "unable to allocate ring buffer\n");
-		return;
-	}
+	sc->sc_rbuf = kmem_alloc(siotty_rbuf_size * 2, KM_SLEEP);
 	sc->sc_rbufend = sc->sc_rbuf + (siotty_rbuf_size * 2);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = siotty_rbuf_size;
