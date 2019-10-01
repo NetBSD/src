@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.276 2019/07/17 03:26:24 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.277 2019/10/01 08:13:16 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.276 2019/07/17 03:26:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.277 2019/10/01 08:13:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -619,6 +619,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			    ifp->if_xname, m->m_pkthdr.len);
 		}
 		mutex_exit(&bigpktpps_lock);
+		ifp->if_iqdrops++;
 		m_freem(m);
 		return;
 	}
