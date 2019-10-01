@@ -1,6 +1,6 @@
 // Node handles for containers -*- C++ -*-
 
-// Copyright (C) 2016-2017 Free Software Foundation, Inc.
+// Copyright (C) 2016-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -62,7 +62,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 
       explicit operator bool() const noexcept { return _M_ptr != nullptr; }
 
-      bool empty() const noexcept { return _M_ptr == nullptr; }
+      [[nodiscard]] bool empty() const noexcept { return _M_ptr == nullptr; }
 
     protected:
       constexpr _Node_handle_common() noexcept : _M_ptr(), _M_alloc() {}
@@ -87,10 +87,14 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 		|| !this->_M_alloc)
 	      this->_M_alloc = std::move(__nh._M_alloc);
 	    else
-	      __glibcxx_assert(this->_M_alloc == __nh._M_alloc);
+	      {
+		__glibcxx_assert(this->_M_alloc == __nh._M_alloc);
+	      }
 	  }
 	else
-	  __glibcxx_assert(_M_alloc);
+	  {
+	    __glibcxx_assert(_M_alloc);
+	  }
 	__nh._M_ptr = nullptr;
 	__nh._M_alloc = nullopt;
 	return *this;
@@ -109,7 +113,9 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	    || !_M_alloc || !__nh._M_alloc)
 	  _M_alloc.swap(__nh._M_alloc);
 	else
-	  __glibcxx_assert(_M_alloc == __nh._M_alloc);
+	  {
+	    __glibcxx_assert(_M_alloc == __nh._M_alloc);
+	  }
       }
 
     private:

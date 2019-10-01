@@ -1,6 +1,6 @@
 // Debugging mode support code -*- C++ -*-
 
-// Copyright (C) 2003-2017 Free Software Foundation, Inc.
+// Copyright (C) 2003-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -1069,6 +1069,7 @@ namespace __gnu_debug
     abort();
   }
 
+#if !_GLIBCXX_INLINE_VERSION
   // Deprecated methods kept for backward compatibility.
   void
   _Error_formatter::_Parameter::_M_print_field(
@@ -1116,4 +1117,6 @@ namespace __gnu_debug
     void
     _Error_formatter::_M_format_word(char*, int, const char*,
                                     const char*) const;
+#endif
+
 } // namespace __gnu_debug

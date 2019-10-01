@@ -1,5 +1,5 @@
 /* Callgraph handling code.
-   Copyright (C) 2003-2017 Free Software Foundation, Inc.
+   Copyright (C) 2003-2018 Free Software Foundation, Inc.
    Contributed by Jan Hubicka
 
 This file is part of GCC.
@@ -33,6 +33,8 @@ along with GCC; see the file COPYING3.  If not see
 #include "output.h"
 #include "omp-offload.h"
 #include "context.h"
+#include "stringpool.h"
+#include "attribs.h"
 
 const char * const tls_model_names[]={"none", "emulated",
 				      "global-dynamic", "local-dynamic",
@@ -331,14 +333,14 @@ varpool_node::ctor_useable_for_folding_p (void)
   if (TREE_THIS_VOLATILE (decl))
     return false;
 
+  /* Avoid attempts to load constructors that was not streamed.  */
+  if (in_lto_p && DECL_INITIAL (real_node->decl) == error_mark_node
+      && real_node->body_removed)
+    return false;
+
   /* If we do not have a constructor, we can't use it.  */
   if (DECL_INITIAL (real_node->decl) == error_mark_node
       && !real_node->lto_file_data)
-    return false;
-
-  /* Avoid attempts to load constructors that was not streamed.  */
-  if (flag_ltrans && DECL_INITIAL (real_node->decl) == error_mark_node
-      && real_node->body_removed)
     return false;
 
   /* Vtables are defined by their types and must match no matter of interposition
@@ -786,10 +788,10 @@ varpool_node::create_extra_name_alias (tree alias, tree decl)
 {
   varpool_node *alias_node;
 
-#ifndef ASM_OUTPUT_DEF
   /* If aliases aren't supported by the assembler, fail.  */
-  return NULL;
-#endif
+  if (!TARGET_SUPPORTS_ALIASES)
+    return NULL;
+
   alias_node = varpool_node::create_alias (alias, decl);
   alias_node->cpp_implicit_alias = true;
 
