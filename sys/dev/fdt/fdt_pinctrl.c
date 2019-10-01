@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_pinctrl.c,v 1.9 2019/09/27 20:05:53 jmcneill Exp $ */
+/* $NetBSD: fdt_pinctrl.c,v 1.10 2019/10/01 23:32:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.9 2019/09/27 20:05:53 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_pinctrl.c,v 1.10 2019/10/01 23:32:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -123,42 +123,17 @@ fdtbus_pinctrl_set_config(int phandle, const char *cfgname)
 
 	err = fdtbus_get_index(phandle, "pinctrl-names", cfgname, &index);
 	if (err != 0)
-		return -1;
+		return ENOENT;
 
 	return fdtbus_pinctrl_set_config_index(phandle, index);
 }
 
-static void
-fdtbus_pinctrl_configure_node(int phandle)
+bool
+fdtbus_pinctrl_has_config(int phandle, const char *cfgname)
 {
-	char buf[256];
-	int child, error;
+	u_int index;
 
-	for (child = OF_child(phandle); child; child = OF_peer(child)) {
-		if (!fdtbus_status_okay(child))
-			continue;
-
-		/* Configure child nodes */
-		fdtbus_pinctrl_configure_node(child);
-
-		/*
-		 * Set default configuration for this node. This may fail if the
-		 * pinctrl provider is missing; that's OK, we will re-configure
-		 * when that provider attaches.
-		 */
-		fdtbus_get_path(child, buf, sizeof(buf));
-		error = fdtbus_pinctrl_set_config(child, "default");
-		if (error == 0)
-			aprint_debug("pinctrl: set default config for %s\n", buf);
-		else if (error != ENOENT)
-			aprint_debug("pinctrl: failed to set default config for %s: %d\n", buf, error);
-	}
-}
-
-void
-fdtbus_pinctrl_configure(void)
-{
-	fdtbus_pinctrl_configure_node(OF_finddevice("/"));
+	return fdtbus_get_index(phandle, "pinctrl-names", cfgname, &index) == 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.25 2019/07/27 16:02:27 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.26 2019/10/01 23:32:52 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.25 2019/07/27 16:02:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.26 2019/10/01 23:32:52 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -991,9 +991,6 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 			config_found(sc->sc_dev, &aaa, NULL);
 		}
 	}
-
-	/* Notify pinctrl drivers that regulators are available. */
-	fdtbus_pinctrl_configure();
 
 	if (c->has_battery)
 		axppmic_attach_sensors(sc);
