@@ -140,8 +140,13 @@ const uptr kAllocatorSpace = ~(uptr)0;
 const uptr kAllocatorSize  =  0x8000000000ULL;  // 500G
 typedef DefaultSizeClassMap SizeClassMap;
 # else
+#if _LP64
 const uptr kAllocatorSpace = 0x600000000000ULL;
 const uptr kAllocatorSize  =  0x40000000000ULL;  // 4T.
+#else
+const uptr kAllocatorSpace = 0x60000000UL;
+const uptr kAllocatorSize  =  0x40000000ULL;     // 2G.
+#endif
 typedef DefaultSizeClassMap SizeClassMap;
 # endif
 struct AP64 {  // Allocator64 parameters. Deliberately using a short name.
