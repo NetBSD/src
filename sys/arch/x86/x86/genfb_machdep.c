@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.13 2019/05/19 07:43:17 mlelstv Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.14 2019/10/01 18:00:08 chs Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.13 2019/05/19 07:43:17 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.14 2019/10/01 18:00:08 chs Exp $");
 
 #include "opt_mtrr.h"
 
@@ -187,12 +187,8 @@ x86_genfb_cnattach(void)
 	if (x86_genfb_use_shadowfb && lookup_bootinfo(BTINFO_EFI) != NULL) {
 		/* XXX The allocated memory is never released... */
 		ri->ri_bits = kmem_alloc(ri->ri_stride * ri->ri_height,
-		    KM_NOSLEEP);
-		if (ri->ri_bits == NULL) {
-			aprint_error("%s: couldn't alloc shadowfb\n", __func__);
-			ri->ri_bits = bits;
-		} else
-			ri->ri_hwbits = bits;
+		    KM_SLEEP);
+		ri->ri_hwbits = bits;
 	} else
 		ri->ri_bits = bits;
 	ri->ri_flg = RI_CENTER | RI_FULLCLEAR | RI_CLEAR;
