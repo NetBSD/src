@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.60 2019/10/01 18:44:22 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.61 2019/10/01 21:49:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.60 2019/10/01 18:44:22 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.61 2019/10/01 21:49:50 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -704,12 +704,7 @@ ptrace_get_process_state(struct proc *t, void *addr, size_t data)
 		si = &t->p_sigctx.ps_info;
 		ps.pe_report_event = si->_reason._ptrace_state._pe_report_event;
 
-		CTASSERT(sizeof(ps.pe_other_pid) ==
-		    sizeof(si->_reason._ptrace_state._option._pe_other_pid));
-		CTASSERT(sizeof(ps.pe_lwp) ==
-		    sizeof(si->_reason._ptrace_state._option._pe_other_pid));
 		CTASSERT(sizeof(ps.pe_other_pid) == sizeof(ps.pe_lwp));
-
 		ps.pe_other_pid =
 			si->_reason._ptrace_state._option._pe_other_pid;
 	}
