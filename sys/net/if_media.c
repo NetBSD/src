@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.47 2019/08/10 01:04:05 mrg Exp $	*/
+/*	$NetBSD: if_media.c,v 1.48 2019/10/01 17:45:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.47 2019/08/10 01:04:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.48 2019/10/01 17:45:25 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,14 +162,10 @@ ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
 	}
 #endif
 
-	entry = malloc(sizeof(*entry), M_IFMEDIA, M_NOWAIT);
-	if (entry == NULL)
-		panic("ifmedia_add: can't malloc entry");
-
+	entry = malloc(sizeof(*entry), M_IFMEDIA, M_WAITOK);
 	entry->ifm_media = mword;
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
-
 	TAILQ_INSERT_TAIL(&ifm->ifm_list, entry, ifm_list);
 }
 
@@ -335,8 +331,6 @@ ifmedia_ioctl_locked(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 			int *kptr = malloc(minwords * sizeof(int), M_TEMP,
 			    M_WAITOK);
 
-			if (kptr == NULL)
-				return ENOMEM;
 			/* Get the media words from the interface's list. */
 			ep = TAILQ_FIRST(&ifm->ifm_list);
 			for (count = 0; ep != NULL && count < minwords;
