@@ -1,14 +1,24 @@
-2018-12-06  Release Manager
+2019-02-22  Release Manager
 
-	* GCC 7.4.0 released.
+	* GCC 8.3.0 released.
 
-2018-01-25  Release Manager
+2018-07-26  Release Manager
 
-	* GCC 7.3.0 released.
+	* GCC 8.2.0 released.
 
-2017-08-14  Release Manager
+2018-05-02  Release Manager
 
-	* GCC 7.2.0 released.
+	* GCC 8.1.0 released.
+
+2018-01-25  Richard Biener  <rguenther@suse.de>
+
+	* gcc_release (build_sources): Use getconf to get at the number
+	of cores in the system and pass -jN to gcc_build.
+
+2017-10-10  Jakub Jelinek  <jakub@redhat.com>
+
+	* update_version_svn: Ignore the GCC 5 branch.
+	* crontab: Remove entry for the GCC 5 branch.
 
 2017-05-23  Matthias Klose  <doko@ubuntu.com>
 
@@ -25,9 +35,9 @@
 	(XZ): New definition.
 	(<toplevel>): Look for both bz2 and xz compressed old tarballs.
 
-2017-05-02  Release Manager
+2017-04-20  Jakub Jelinek  <jakub@redhat.com>
 
-	* GCC 7.1.0 released.
+	* crontab: Enable snapshots from gcc-7-branch.
 
 2017-03-03  Gerald Pfeifer  <gerald@pfeifer.com>
 
