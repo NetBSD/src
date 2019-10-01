@@ -1,5 +1,5 @@
 /* Base configuration file for all NetBSD targets.
-   Copyright (C) 1997-2017 Free Software Foundation, Inc.
+   Copyright (C) 1997-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -107,16 +107,13 @@ along with GCC; see the file COPYING3.  If not see
    FIXME: Could eliminate the duplication here if we were allowed to
    use string concatenation.  */
 
-#define NETBSD_LIB_SPEC_PTHREAD \
+#define NETBSD_LIB_SPEC		\
   "%{pthread:			\
      %{!p:			\
        %{!pg:-lpthread}}	\
      %{p:-lpthread_p}		\
-     %{pg:-lpthread_p}}"
-
-#define NETBSD_LIB_SPEC		\
-  NETBSD_LIB_SPEC_PTHREAD       \
-  "%{posix:			\
+     %{pg:-lpthread_p}}		\
+   %{posix:			\
      %{!p:			\
        %{!pg:-lposix}}		\
      %{p:-lposix_p}		\
@@ -164,7 +161,7 @@ along with GCC; see the file COPYING3.  If not see
 #define CC1PLUS_SPEC NETBSD_CC1_AND_CC1PLUS_SPEC
 
 #if defined(HAVE_LD_EH_FRAME_HDR)
-#define LINK_EH_SPEC "%{!static:--eh-frame-hdr} "
+#define LINK_EH_SPEC "%{!static|static-pie:--eh-frame-hdr} "
 #endif
 
 #undef TARGET_LIBC_HAS_FUNCTION
