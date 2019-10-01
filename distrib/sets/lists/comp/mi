@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2286 2019/09/15 16:58:11 christos Exp $
+#	$NetBSD: mi,v 1.2287 2019/10/01 16:07:14 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2757,6 +2757,7 @@
 ./usr/include/pcap/namedb.h			comp-c-include
 ./usr/include/pcap/pcap-inttypes.h		comp-c-include
 ./usr/include/pcap/pcap.h			comp-c-include
+./usr/include/pcap/socket.h			comp-c-include
 ./usr/include/pci.h				comp-c-include
 ./usr/include/perfuse.h				comp-c-include
 ./usr/include/poll.h				comp-c-include
@@ -8713,8 +8714,9 @@
 ./usr/share/man/cat3/pcap_free_datalinks.0	comp-obsolete		obsolete
 ./usr/share/man/cat3/pcap_freealldevs.0		comp-obsolete		obsolete
 ./usr/share/man/cat3/pcap_freecode.0		comp-c-catman		.cat
+./usr/share/man/cat3/pcap_get_required_select_timeout.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pcap_get_selectable_fd.0	comp-c-catman		.cat
-./usr/share/man/cat3/pcap_get_tstamp_precision.0	comp-c-catman		.cat
+./usr/share/man/cat3/pcap_get_tstamp_precision.0	comp-c-catman	.cat
 ./usr/share/man/cat3/pcap_geterr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_inject.0		comp-c-catman		.cat
 ./usr/share/man/cat3/pcap_is_swapped.0		comp-c-catman		.cat
@@ -16715,6 +16717,7 @@
 ./usr/share/man/html3/pcap_free_datalinks.html	comp-obsolete		obsolete
 ./usr/share/man/html3/pcap_freealldevs.html	comp-obsolete		obsolete
 ./usr/share/man/html3/pcap_freecode.html	comp-c-htmlman		html
+./usr/share/man/html3/pcap_get_required_select_timeout.html	comp-c-htmlman	html
 ./usr/share/man/html3/pcap_get_selectable_fd.html comp-c-htmlman	html
 ./usr/share/man/html3/pcap_get_tstamp_precision.html comp-c-htmlman	html
 ./usr/share/man/html3/pcap_geterr.html		comp-c-htmlman		html
@@ -24707,6 +24710,7 @@
 ./usr/share/man/man3/pcap_free_datalinks.3	comp-obsolete		obsolete
 ./usr/share/man/man3/pcap_freealldevs.3		comp-obsolete		obsolete
 ./usr/share/man/man3/pcap_freecode.3		comp-c-man		.man
+./usr/share/man/man3/pcap_get_required_select_timeout.3	comp-c-man	.man
 ./usr/share/man/man3/pcap_get_selectable_fd.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_get_tstamp_precision.3	comp-c-man		.man
 ./usr/share/man/man3/pcap_geterr.3		comp-c-man		.man
