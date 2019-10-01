@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.108 2019/07/11 23:28:17 christos Exp $ */
+/*	$NetBSD: crypto.c,v 1.109 2019/10/01 18:00:09 chs Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.108 2019/07/11 23:28:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.109 2019/10/01 18:00:09 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -521,24 +521,18 @@ static	int crypto_timing = 0;
 
 static struct sysctllog *sysctl_opencrypto_clog;
 
-static int
+static void
 crypto_crp_ret_qs_init(void)
 {
-	int i, j;
+	int i;
 
 	crypto_crp_ret_qs_list = kmem_alloc(sizeof(struct crypto_crp_ret_qs *) * ncpu,
-	    KM_NOSLEEP);
-	if (crypto_crp_ret_qs_list == NULL) {
-		printf("crypto_init: crypto_crp_qs_list\n");
-		return ENOMEM;
-	}
+	    KM_SLEEP);
 
 	for (i = 0; i < ncpu; i++) {
 		struct crypto_crp_ret_qs *qs;
-		qs = kmem_alloc(sizeof(struct crypto_crp_ret_qs), KM_NOSLEEP);
-		if (qs == NULL)
-			break;
 
+		qs = kmem_alloc(sizeof(struct crypto_crp_ret_qs), KM_SLEEP);
 		mutex_init(&qs->crp_ret_q_mtx, MUTEX_DEFAULT, IPL_NET);
 		qs->crp_ret_q_exit_flag = false;
 
@@ -554,24 +548,11 @@ crypto_crp_ret_qs_init(void)
 
 		crypto_crp_ret_qs_list[i] = qs;
 	}
-	if (i == ncpu)
-		return 0;
-
-	for (j = 0; j < i; j++) {
-		struct crypto_crp_ret_qs *qs = crypto_crp_ret_qs_list[j];
-
-		mutex_destroy(&qs->crp_ret_q_mtx);
-		kmem_free(qs, sizeof(struct crypto_crp_ret_qs));
-	}
-	kmem_free(crypto_crp_ret_qs_list, sizeof(struct crypto_crp_ret_qs *) * ncpu);
-
-	return ENOMEM;
 }
 
 static int
 crypto_init0(void)
 {
-	int error;
 
 	mutex_init(&crypto_drv_mtx, MUTEX_DEFAULT, IPL_NONE);
 	cryptop_cache = pool_cache_init(sizeof(struct cryptop),
@@ -584,18 +565,10 @@ crypto_init0(void)
 	crypto_crp_qs_percpu = percpu_alloc(sizeof(struct crypto_crp_qs));
 	percpu_foreach(crypto_crp_qs_percpu, crypto_crp_qs_init_pc, NULL);
 
-	error = crypto_crp_ret_qs_init();
-	if (error) {
-		printf("crypto_init: cannot malloc ret_q list\n");
-		return ENOMEM;
-	}
+	crypto_crp_ret_qs_init();
 
 	crypto_drivers = kmem_zalloc(CRYPTO_DRIVERS_INITIAL *
-	    sizeof(struct cryptocap), KM_NOSLEEP);
-	if (crypto_drivers == NULL) {
-		printf("crypto_init: cannot malloc driver table\n");
-		return ENOMEM;
-	}
+	    sizeof(struct cryptocap), KM_SLEEP);
 	crypto_drivers_num = CRYPTO_DRIVERS_INITIAL;
 
 	crypto_q_si = softint_establish(SOFTINT_NET|SOFTINT_MPSAFE, cryptointr, NULL);
@@ -944,13 +917,7 @@ crypto_get_driverid(u_int32_t flags)
 		}
 
 		newdrv = kmem_zalloc(2 * crypto_drivers_num *
-		    sizeof(struct cryptocap), KM_NOSLEEP);
-		if (newdrv == NULL) {
-			mutex_exit(&crypto_drv_mtx);
-			printf("crypto: no space to expand driver table!\n");
-			return -1;
-		}
-
+		    sizeof(struct cryptocap), KM_SLEEP);
 		memcpy(newdrv, crypto_drivers,
 		    crypto_drivers_num * sizeof(struct cryptocap));
 		kmem_free(crypto_drivers,
