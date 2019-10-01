@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.6 2019/09/12 09:05:28 jmcneill Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.7 2019/10/01 18:00:07 chs Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.6 2019/09/12 09:05:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.7 2019/10/01 18:00:07 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -107,8 +107,7 @@ aarch64_getcacheinfo(void)
 
 	cinfo = aarch64_cacheinfo[curcpu()->ci_package_id] =
 	    kmem_zalloc(sizeof(struct aarch64_cache_info) * MAX_CACHE_LEVEL,
-	    KM_NOSLEEP);
-	KASSERT(cinfo != NULL);
+	    KM_SLEEP);
 	curcpu()->ci_cacheinfo = cinfo;
 
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.2 2019/07/21 16:08:13 rin Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.3 2019/10/01 18:00:08 chs Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.2 2019/07/21 16:08:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.3 2019/10/01 18:00:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -209,13 +209,7 @@ hvkbd_attach(device_t parent, device_t self, void *aux)
 	STAILQ_INIT(&sc->sc_ks_queue);
 	hvkbd_alloc_keybuf(sc);
 
-	sc->sc_buf = kmem_zalloc(HVKBD_BUFSIZE, cold ? KM_NOSLEEP : KM_SLEEP);
-	if (sc->sc_buf == NULL) {
-		aprint_error_dev(self,
-		    "failed to allocate channel data buffer\n");
-		return;
-	}
-
+	sc->sc_buf = kmem_zalloc(HVKBD_BUFSIZE, KM_SLEEP);
 	if (vmbus_channel_setdeferred(sc->sc_chan, device_xname(self))) {
 		aprint_error_dev(self,
 		    "failed to create the interrupt thread\n");
@@ -266,18 +260,8 @@ hvkbd_alloc_keybuf(struct hvkbd_softc *sc)
 	int i;
 
 	for (i = 0; i < HVKBD_KEYBUF_SIZE; i++) {
-		ksi = kmem_zalloc(sizeof(*ksi), cold ? KM_NOSLEEP : KM_SLEEP);
-		if (ksi != NULL) {
-			LIST_INSERT_HEAD(&sc->sc_ks_free, ksi, link);
-			continue;
-		}
-
-		while ((ksi = LIST_FIRST(&sc->sc_ks_free)) != NULL) {
-			LIST_REMOVE(ksi, link);
-			kmem_free(ksi, sizeof(*ksi));
-		}
-		return ENOMEM;
-
+		ksi = kmem_zalloc(sizeof(*ksi), KM_SLEEP);
+		LIST_INSERT_HEAD(&sc->sc_ks_free, ksi, link);
 	}
 
 	return 0;

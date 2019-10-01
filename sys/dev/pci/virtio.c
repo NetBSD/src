@@ -1,4 +1,4 @@
-/*	$NetBSD: virtio.c,v 1.37 2019/01/14 14:55:37 yamaguchi Exp $	*/
+/*	$NetBSD: virtio.c,v 1.38 2019/10/01 18:00:08 chs Exp $	*/
 
 /*
  * Copyright (c) 2010 Minoura Makoto.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.37 2019/01/14 14:55:37 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: virtio.c,v 1.38 2019/10/01 18:00:08 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -494,12 +494,7 @@ virtio_alloc_vq(struct virtio_softc *sc, struct virtqueue *vq, int index,
 
 	/* free slot management */
 	vq->vq_entries = kmem_zalloc(sizeof(struct vq_entry)*vq_size,
-				     KM_NOSLEEP);
-	if (vq->vq_entries == NULL) {
-		r = ENOMEM;
-		goto err;
-	}
-
+				     KM_SLEEP);
 	virtio_init_vq(sc, vq, false);
 
 	aprint_verbose_dev(sc->sc_dev,
