@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.11 2019/09/03 15:05:40 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.12 2019/10/01 18:41:58 msaitoh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -4609,7 +4609,7 @@ enum skl_disp_power_wells {
 #define   DSPFW_SPRITEA_MASK		(0x7f<<0) /* g4x */
 #define   DSPFW_SPRITEA_MASK_VLV	(0xff<<0) /* vlv/chv */
 #define DSPFW3			(dev_priv->info.display_mmio_offset + 0x7003c)
-#define   DSPFW_HPLL_SR_EN		(1<<31)
+#define   DSPFW_HPLL_SR_EN		(1U<<31)
 #define   PINEVIEW_SELF_REFRESH_EN	(1<<30)
 #define   DSPFW_CURSOR_SR_SHIFT		24
 #define   DSPFW_CURSOR_SR_MASK		(0x3f<<24)
