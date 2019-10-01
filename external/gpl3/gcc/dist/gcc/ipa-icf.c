@@ -1,5 +1,5 @@
 /* Interprocedural Identical Code Folding pass
-   Copyright (C) 2014-2017 Free Software Foundation, Inc.
+   Copyright (C) 2014-2018 Free Software Foundation, Inc.
 
    Contributed by Jan Hubicka <hubicka@ucw.cz> and Martin Liska <mliska@suse.cz>
 
@@ -74,7 +74,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "tree-cfg.h"
 #include "symbol-summary.h"
 #include "ipa-prop.h"
-#include "ipa-inline.h"
+#include "ipa-fnsummary.h"
 #include "except.h"
 #include "attribs.h"
 #include "print-tree.h"
@@ -83,6 +83,7 @@ along with GCC; see the file COPYING3.  If not see
 #include "ipa-icf.h"
 #include "stor-layout.h"
 #include "dbgcnt.h"
+#include "tree-vector-builder.h"
 
 using namespace ipa_icf_gimple;
 
@@ -195,8 +196,8 @@ sem_item::dump (void)
 {
   if (dump_file)
     {
-      fprintf (dump_file, "[%s] %s (%u) (tree:%p)\n", type == FUNC ? "func" : "var",
-	       node->name(), node->order, (void *) node->decl);
+      fprintf (dump_file, "[%s] %s (tree:%p)\n", type == FUNC ? "func" : "var",
+	       node->dump_name (), (void *) node->decl);
       fprintf (dump_file, "  hash: %u\n", get_hash ());
       fprintf (dump_file, "  references: ");
 
@@ -286,11 +287,11 @@ sem_function::get_hash (void)
 
       /* Add common features of declaration itself.  */
       if (DECL_FUNCTION_SPECIFIC_TARGET (decl))
-        hstate.add_wide_int
+        hstate.add_hwi
 	 (cl_target_option_hash
 	   (TREE_TARGET_OPTION (DECL_FUNCTION_SPECIFIC_TARGET (decl))));
       if (DECL_FUNCTION_SPECIFIC_OPTIMIZATION (decl))
-	hstate.add_wide_int
+	hstate.add_hwi
 	 (cl_optimization_hash
 	   (TREE_OPTIMIZATION (DECL_FUNCTION_SPECIFIC_OPTIMIZATION (decl))));
       hstate.add_flag (DECL_CXX_CONSTRUCTOR_P (decl));
@@ -869,13 +870,9 @@ sem_function::equals (sem_item *item,
 
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file,
-	     "Equals called for:%s:%s (%u:%u) (%s:%s) with result: %s\n\n",
-	     xstrdup_for_dump (node->name()),
-	     xstrdup_for_dump (item->node->name ()),
-	     node->order,
-	     item->node->order,
-	     xstrdup_for_dump (node->asm_name ()),
-	     xstrdup_for_dump (item->node->asm_name ()),
+	     "Equals called for: %s:%s with result: %s\n\n",
+	     node->dump_name (),
+	     item->node->dump_name (),
 	     eq ? "true" : "false");
 
   return eq;
@@ -1201,8 +1198,8 @@ sem_function::merge (sem_item *alias_item)
 	    fprintf (dump_file,
 		     "can not create wrapper of stdarg function.\n");
 	}
-      else if (inline_summaries
-	       && inline_summaries->get (alias)->self_size <= 2)
+      else if (ipa_fn_summaries
+	       && ipa_fn_summaries->get (alias)->self_size <= 2)
 	{
 	  if (dump_file)
 	    fprintf (dump_file, "Wrapper creation is not "
@@ -1343,7 +1340,8 @@ sem_function::merge (sem_item *alias_item)
       alias->icf_merged = true;
       local_original->icf_merged = true;
 
-      ipa_merge_profiles (local_original, alias, true);
+      /* FIXME update local_original counts.  */
+      ipa_merge_profiles (original, alias, true);
       alias->create_wrapper (local_original);
 
       if (dump_file)
@@ -1436,6 +1434,7 @@ sem_function::init (void)
 	      }
 	  }
 
+	hstate.commit_flag ();
 	gcode_hash = hstate.end ();
 	bb_sizes.safe_push (nondbg_stmt_count);
 
@@ -1451,8 +1450,8 @@ sem_function::init (void)
     {
       cfg_checksum = 0;
       inchash::hash hstate;
-      hstate.add_wide_int (cnode->thunk.fixed_offset);
-      hstate.add_wide_int (cnode->thunk.virtual_value);
+      hstate.add_hwi (cnode->thunk.fixed_offset);
+      hstate.add_hwi (cnode->thunk.virtual_value);
       hstate.add_flag (cnode->thunk.this_adjusting);
       hstate.add_flag (cnode->thunk.virtual_offset_p);
       hstate.add_flag (cnode->thunk.add_pointer_bounds_args);
@@ -1499,7 +1498,7 @@ sem_item::add_expr (const_tree exp, inchash::hash &hstate)
 	unsigned HOST_WIDE_INT idx;
 	tree value;
 
-	hstate.add_wide_int (int_size_in_bytes (TREE_TYPE (exp)));
+	hstate.add_hwi (int_size_in_bytes (TREE_TYPE (exp)));
 
 	FOR_EACH_CONSTRUCTOR_VALUE (CONSTRUCTOR_ELTS (exp), idx, value)
 	  if (value)
@@ -1514,7 +1513,7 @@ sem_item::add_expr (const_tree exp, inchash::hash &hstate)
     case VAR_DECL:
     case CONST_DECL:
     case PARM_DECL:
-      hstate.add_wide_int (int_size_in_bytes (TREE_TYPE (exp)));
+      hstate.add_hwi (int_size_in_bytes (TREE_TYPE (exp)));
       break;
     case MEM_REF:
     case POINTER_PLUS_EXPR:
@@ -1532,7 +1531,7 @@ sem_item::add_expr (const_tree exp, inchash::hash &hstate)
       }
       break;
     CASE_CONVERT:
-      hstate.add_wide_int (int_size_in_bytes (TREE_TYPE (exp)));
+      hstate.add_hwi (int_size_in_bytes (TREE_TYPE (exp)));
       return add_expr (TREE_OPERAND (exp, 0), hstate);
     default:
       break;
@@ -1603,11 +1602,11 @@ sem_item::add_type (const_tree type, inchash::hash &hstate)
 
 	  hstate2.add_int (nf);
 	  hash = hstate2.end ();
-	  hstate.add_wide_int (hash);
+	  hstate.add_hwi (hash);
 	  optimizer->m_type_hash_cache.put (type, hash);
 	}
       else
-        hstate.add_wide_int (*val);
+        hstate.add_hwi (*val);
     }
 }
 
@@ -1658,6 +1657,11 @@ sem_function::hash_stmt (gimple *stmt, inchash::hash &hstate)
 	  if (gimple_op (stmt, i))
 	    add_type (TREE_TYPE (gimple_op (stmt, i)), hstate);
 	}
+      /* Consider nocf_check attribute in hash as it affects code
+ 	 generation.  */
+      if (code == GIMPLE_CALL
+	  && flag_cf_protection & CF_BRANCH)
+	hstate.add_flag (gimple_call_nocf_check_p (as_a <gcall *> (stmt)));
     default:
       break;
     }
@@ -1898,12 +1902,9 @@ sem_variable::equals (sem_item *item,
 			      DECL_INITIAL (item->node->decl));
   if (dump_file && (dump_flags & TDF_DETAILS))
     fprintf (dump_file,
-	     "Equals called for vars:%s:%s (%u:%u) (%s:%s) with result: %s\n\n",
-	     xstrdup_for_dump (node->name()),
-	     xstrdup_for_dump (item->node->name ()),
-	     node->order, item->node->order,
-	     xstrdup_for_dump (node->asm_name ()),
-	     xstrdup_for_dump (item->node->asm_name ()), ret ? "true" : "false");
+	     "Equals called for vars: %s:%s with result: %s\n\n",
+	     node->dump_name (), item->node->dump_name (),
+	     ret ? "true" : "false");
 
   return ret;
 }
@@ -2035,17 +2036,17 @@ sem_variable::equals (tree t1, tree t2)
 						&TREE_REAL_CST (t2)));
     case VECTOR_CST:
       {
-	unsigned i;
+	if (maybe_ne (VECTOR_CST_NELTS (t1), VECTOR_CST_NELTS (t2)))
+	  return return_false_with_msg ("VECTOR_CST nelts mismatch");
 
-        if (VECTOR_CST_NELTS (t1) != VECTOR_CST_NELTS (t2))
-          return return_false_with_msg ("VECTOR_CST nelts mismatch");
+	unsigned int count
+	  = tree_vector_builder::binary_encoded_nelts (t1, t2);
+	for (unsigned int i = 0; i < count; ++i)
+	  if (!sem_variable::equals (VECTOR_CST_ENCODED_ELT (t1, i),
+				     VECTOR_CST_ENCODED_ELT (t2, i)))
+	    return false;
 
-	for (i = 0; i < VECTOR_CST_NELTS (t1); ++i)
-	  if (!sem_variable::equals (VECTOR_CST_ELT (t1, i),
-				     VECTOR_CST_ELT (t2, i)))
-	    return 0;
-
-	return 1;
+	return true;
       }
     case ARRAY_REF:
     case ARRAY_RANGE_REF:
@@ -2125,7 +2126,7 @@ sem_variable::get_hash (void)
 
   hstate.add_int (456346417);
   if (DECL_SIZE (decl) && tree_fits_shwi_p (DECL_SIZE (decl)))
-    hstate.add_wide_int (tree_to_shwi (DECL_SIZE (decl)));
+    hstate.add_hwi (tree_to_shwi (DECL_SIZE (decl)));
   add_expr (ctor, hstate);
   set_hash (hstate.end ());
 
@@ -2392,8 +2393,8 @@ sem_item_optimizer::read_section (lto_file_decl_data *file_data,
       gcc_assert (node->definition);
 
       if (dump_file)
-	fprintf (dump_file, "Symbol added:%s (tree: %p, uid:%u)\n",
-		 node->asm_name (), (void *) node->decl, node->order);
+	fprintf (dump_file, "Symbol added: %s (tree: %p)\n",
+		 node->dump_asm_name (), (void *) node->decl);
 
       if (is_a<cgraph_node *> (node))
 	{
@@ -2637,7 +2638,7 @@ sem_item_optimizer::execute (void)
   bool merged_p = merge_classes (prev_class_count);
 
   if (dump_file && (dump_flags & TDF_DETAILS))
-    symtab_node::dump_table (dump_file);
+    symtab->dump (dump_file);
 
   return merged_p;
 }
@@ -2720,7 +2721,7 @@ sem_item_optimizer::update_hash_by_addr_refs ()
 
 		if (TYPE_NAME (class_type)
 		     && DECL_ASSEMBLER_NAME_SET_P (TYPE_NAME (class_type)))
-		  hstate.add_wide_int
+		  hstate.add_hwi
 		    (IDENTIFIER_HASH_VALUE
 		       (DECL_ASSEMBLER_NAME (TYPE_NAME (class_type))));
 
@@ -3159,6 +3160,22 @@ sem_item_optimizer::traverse_congruence_split (congruence_class * const &cls,
   return true;
 }
 
+/* Compare function for sorting pairs in do_congruence_step_f.  */
+
+int
+sem_item_optimizer::sort_congruence_split (const void *a_, const void *b_)
+{
+  const std::pair<congruence_class *, bitmap> *a
+    = (const std::pair<congruence_class *, bitmap> *)a_;
+  const std::pair<congruence_class *, bitmap> *b
+    = (const std::pair<congruence_class *, bitmap> *)b_;
+  if (a->first->id < b->first->id)
+    return -1;
+  else if (a->first->id > b->first->id)
+    return 1;
+  return 0;
+}
+
 /* Tests if a class CLS used as INDEXth splits any congruence classes.
    Bitmap stack BMSTACK is used for bitmap allocation.  */
 
@@ -3199,13 +3216,20 @@ sem_item_optimizer::do_congruence_step_for_index (congruence_class *cls,
 	}
     }
 
+  auto_vec<std::pair<congruence_class *, bitmap> > to_split;
+  to_split.reserve_exact (split_map.elements ());
+  for (hash_map <congruence_class *, bitmap>::iterator i = split_map.begin ();
+       i != split_map.end (); ++i)
+    to_split.safe_push (*i);
+  to_split.qsort (sort_congruence_split);
+
   traverse_split_pair pair;
   pair.optimizer = this;
   pair.cls = cls;
 
   splitter_class_removed = false;
-  split_map.traverse <traverse_split_pair *,
-		      sem_item_optimizer::traverse_congruence_split> (&pair);
+  for (unsigned i = 0; i < to_split.length (); ++i)
+    traverse_congruence_split (to_split[i].first, to_split[i].second, &pair);
 
   /* Bitmap clean-up.  */
   split_map.traverse <traverse_split_pair *,
@@ -3661,9 +3685,7 @@ congruence_class::dump (FILE *file, unsigned int indent) const
 
   FPUTS_SPACES (file, indent + 2, "");
   for (unsigned i = 0; i < members.length (); i++)
-    fprintf (file, "%s(%p/%u) ", members[i]->node->asm_name (),
-	     (void *) members[i]->decl,
-	     members[i]->node->order);
+    fprintf (file, "%s ", members[i]->node->dump_asm_name ());
 
   fprintf (file, "\n");
 }
