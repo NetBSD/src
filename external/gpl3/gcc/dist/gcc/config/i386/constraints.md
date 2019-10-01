@@ -1,5 +1,5 @@
 ;; Constraint definitions for IA-32 and x86-64.
-;; Copyright (C) 2006-2017 Free Software Foundation, Inc.
+;; Copyright (C) 2006-2018 Free Software Foundation, Inc.
 ;;
 ;; This file is part of GCC.
 ;;
@@ -101,18 +101,24 @@
 ;;  z	First SSE register.
 ;;  i	SSE2 inter-unit moves to SSE register enabled
 ;;  j	SSE2 inter-unit moves from SSE register enabled
+;;  d	any EVEX encodable SSE register for AVX512BW target or any SSE register
+;;	for SSE4_1 target, when inter-unit moves to SSE register are enabled
+;;  e	any EVEX encodable SSE register for AVX512BW target or any SSE register
+;;	for SSE4_1 target, when inter-unit moves from SSE register are enabled
 ;;  m	MMX inter-unit moves to MMX register enabled
 ;;  n	MMX inter-unit moves from MMX register enabled
+;;  p	Integer register when TARGET_PARTIAL_REG_STALL is disabled
 ;;  a	Integer register when zero extensions with AND are disabled
 ;;  b	Any register that can be used as the GOT base when calling
 ;;	___tls_get_addr: that is, any general register except EAX
 ;;	and ESP, for -fno-plt if linker supports it.  Otherwise,
 ;;	EBX.
-;;  p	Integer register when TARGET_PARTIAL_REG_STALL is disabled
 ;;  f	x87 register when 80387 floating point arithmetic is enabled
 ;;  r	SSE regs not requiring REX prefix when prefixes avoidance is enabled
 ;;	and all SSE regs otherwise
-;;  h   EVEX encodable SSE register with number factor of four
+;;  v	any EVEX encodable SSE register for AVX512VL target,
+;;	otherwise any SSE register
+;;  h	EVEX encodable SSE register with number factor of four
 
 (define_register_constraint "Yz" "TARGET_SSE ? SSE_FIRST_REG : NO_REGS"
  "First SSE register (@code{%xmm0}).")
@@ -124,6 +130,22 @@
 (define_register_constraint "Yj"
  "TARGET_SSE2 && TARGET_INTER_UNIT_MOVES_FROM_VEC ? ALL_SSE_REGS : NO_REGS"
  "@internal Any SSE register, when SSE2 and inter-unit moves from vector registers are enabled.")
+
+(define_register_constraint "Yd"
+ "TARGET_INTER_UNIT_MOVES_TO_VEC
+  ? (TARGET_AVX512DQ
+     ? ALL_SSE_REGS
+     : (TARGET_SSE4_1 ? SSE_REGS : NO_REGS))
+  : NO_REGS"
+ "@internal Any EVEX encodable SSE register (@code{%xmm0-%xmm31}) for AVX512DQ target or any SSE register for SSE4_1 target, when inter-unit moves to vector registers are enabled.")
+
+(define_register_constraint "Ye"
+ "TARGET_INTER_UNIT_MOVES_FROM_VEC
+  ? (TARGET_AVX512DQ
+     ? ALL_SSE_REGS
+     : (TARGET_SSE4_1 ? SSE_REGS : NO_REGS))
+  : NO_REGS"
+ "@internal Any EVEX encodable SSE register (@code{%xmm0-%xmm31}) for AVX512DQ target or any SSE register for SSE4_1 target, when inter-unit moves from vector registers are enabled.")
 
 (define_register_constraint "Ym"
  "TARGET_MMX && TARGET_INTER_UNIT_MOVES_TO_VEC ? MMX_REGS : NO_REGS"
@@ -306,6 +328,11 @@
   "128-bit integer constant where both the high and low 64-bit word
    of it satisfies the e constraint."
   (match_operand 0 "x86_64_hilo_int_operand"))
+
+(define_constraint "Wf"
+  "32-bit signed integer constant zero extended from word size
+   to double word size."
+  (match_operand 0 "x86_64_dwzext_immediate_operand"))
 
 (define_constraint "Z"
   "32-bit unsigned integer constant, or a symbolic reference known
