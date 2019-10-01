@@ -1,5 +1,5 @@
 /* RTL dead code elimination.
-   Copyright (C) 2005-2017 Free Software Foundation, Inc.
+   Copyright (C) 2005-2018 Free Software Foundation, Inc.
 
 This file is part of GCC.
 
@@ -108,7 +108,10 @@ deletable_insn_p (rtx_insn *insn, bool fast, bitmap arg_stores)
       /* We can delete dead const or pure calls as long as they do not
          infinite loop.  */
       && (RTL_CONST_OR_PURE_CALL_P (insn)
-	  && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn)))
+	  && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn))
+      /* Don't delete calls that may throw if we cannot do so.  */
+      && ((cfun->can_delete_dead_exceptions && can_alter_cfg)
+	  || insn_nothrow_p (insn)))
     return find_call_stack_args (as_a <rtx_call_insn *> (insn), false,
 				 fast, arg_stores);
 
@@ -200,7 +203,9 @@ mark_insn (rtx_insn *insn, bool fast)
 	  && !df_in_progress
 	  && !SIBLING_CALL_P (insn)
 	  && (RTL_CONST_OR_PURE_CALL_P (insn)
-	      && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn)))
+	      && !RTL_LOOPING_CONST_OR_PURE_CALL_P (insn))
+	  && ((cfun->can_delete_dead_exceptions && can_alter_cfg)
+	      || insn_nothrow_p (insn)))
 	find_call_stack_args (as_a <rtx_call_insn *> (insn), true, fast, NULL);
     }
 }
@@ -299,9 +304,8 @@ find_call_stack_args (rtx_call_insn *call_insn, bool do_mark, bool fast,
       {
 	rtx mem = XEXP (XEXP (p, 0), 0), addr;
 	HOST_WIDE_INT off = 0, size;
-	if (!MEM_SIZE_KNOWN_P (mem))
+	if (!MEM_SIZE_KNOWN_P (mem) || !MEM_SIZE (mem).is_constant (&size))
 	  return false;
-	size = MEM_SIZE (mem);
 	addr = XEXP (mem, 0);
 	if (GET_CODE (addr) == PLUS
 	    && REG_P (XEXP (addr, 0))
@@ -366,7 +370,9 @@ find_call_stack_args (rtx_call_insn *call_insn, bool do_mark, bool fast,
 	&& MEM_P (XEXP (XEXP (p, 0), 0)))
       {
 	rtx mem = XEXP (XEXP (p, 0), 0), addr;
-	HOST_WIDE_INT off = 0, byte;
+	HOST_WIDE_INT off = 0, byte, size;
+	/* Checked in the previous iteration.  */
+	size = MEM_SIZE (mem).to_constant ();
 	addr = XEXP (mem, 0);
 	if (GET_CODE (addr) == PLUS
 	    && REG_P (XEXP (addr, 0))
@@ -392,7 +398,7 @@ find_call_stack_args (rtx_call_insn *call_insn, bool do_mark, bool fast,
 	    set = single_set (DF_REF_INSN (defs->ref));
 	    off += INTVAL (XEXP (SET_SRC (set), 1));
 	  }
-	for (byte = off; byte < off + MEM_SIZE (mem); byte++)
+	for (byte = off; byte < off + size; byte++)
 	  {
 	    if (!bitmap_set_bit (sp_bytes, byte - min_sp_off))
 	      gcc_unreachable ();
@@ -475,8 +481,10 @@ find_call_stack_args (rtx_call_insn *call_insn, bool do_mark, bool fast,
 	    break;
 	}
 
+      HOST_WIDE_INT size;
       if (!MEM_SIZE_KNOWN_P (mem)
-	  || !check_argument_store (MEM_SIZE (mem), off, min_sp_off,
+	  || !MEM_SIZE (mem).is_constant (&size)
+	  || !check_argument_store (size, off, min_sp_off,
 				    max_sp_off, sp_bytes))
 	break;
 
@@ -569,7 +577,12 @@ delete_unmarked_insns (void)
 	  rtx turn_into_use = NULL_RTX;
 
 	  /* Always delete no-op moves.  */
-	  if (noop_move_p (insn))
+	  if (noop_move_p (insn)
+	      /* Unless the no-op move can throw and we are not allowed
+		 to alter cfg.  */
+	      && (!cfun->can_throw_non_call_exceptions
+		  || (cfun->can_delete_dead_exceptions && can_alter_cfg)
+		  || insn_nothrow_p (insn)))
 	    {
 	      if (RTX_FRAME_RELATED_P (insn))
 		turn_into_use
@@ -612,12 +625,6 @@ delete_unmarked_insns (void)
 	     for the destination regs in order to avoid dangling notes.  */
 	  remove_reg_equal_equiv_notes_for_defs (insn);
 
-	  /* If a pure or const call is deleted, this may make the cfg
-	     have unreachable blocks.  We rememeber this and call
-	     delete_unreachable_blocks at the end.  */
-	  if (CALL_P (insn))
-	    must_clean = true;
-
 	  if (turn_into_use)
 	    {
 	      /* Don't remove frame related noop moves if they cary
@@ -630,12 +637,15 @@ delete_unmarked_insns (void)
 	    }
 	  else
 	    /* Now delete the insn.  */
-	    delete_insn_and_edges (insn);
+	    must_clean |= delete_insn_and_edges (insn);
 	}
 
   /* Deleted a pure or const call.  */
   if (must_clean)
-    delete_unreachable_blocks ();
+    {
+      delete_unreachable_blocks ();
+      free_dominance_info (CDI_DOMINATORS);
+    }
 }
 
 
@@ -795,7 +805,7 @@ rest_of_handle_ud_dce (void)
     }
   worklist.release ();
 
-  if (MAY_HAVE_DEBUG_INSNS)
+  if (MAY_HAVE_DEBUG_BIND_INSNS)
     reset_unmarked_insns_debug_uses ();
 
   /* Before any insns are deleted, we must remove the chains since
@@ -899,8 +909,8 @@ word_dce_process_block (basic_block bb, bool redo_out,
 	df_ref use;
 	FOR_EACH_INSN_USE (use, insn)
 	  if (DF_REF_REGNO (use) >= FIRST_PSEUDO_REGISTER
-	      && (GET_MODE_SIZE (GET_MODE (DF_REF_REAL_REG (use)))
-		  == 2 * UNITS_PER_WORD)
+	      && known_eq (GET_MODE_SIZE (GET_MODE (DF_REF_REAL_REG (use))),
+			   2 * UNITS_PER_WORD)
 	      && !bitmap_bit_p (local_live, 2 * DF_REF_REGNO (use))
 	      && !bitmap_bit_p (local_live, 2 * DF_REF_REGNO (use) + 1))
 	    dead_debug_add (&debug, use, DF_REF_REGNO (use));

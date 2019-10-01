@@ -1,6 +1,6 @@
 // String based streams -*- C++ -*-
 
-// Copyright (C) 1997-2017 Free Software Foundation, Inc.
+// Copyright (C) 1997-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -129,7 +129,7 @@ _GLIBCXX_BEGIN_NAMESPACE_VERSION
 	  const __size_type __opt_len = std::max(__size_type(2 * __capacity),
 						 __size_type(512));
 	  const __size_type __len = std::min(__opt_len, __max_size);
-	  __string_type __tmp;
+	  __string_type __tmp(_M_string.get_allocator());
 	  __tmp.reserve(__len);
 	  if (this->pbase())
 	    __tmp.assign(this->pbase(), this->epptr() - this->pbase());
