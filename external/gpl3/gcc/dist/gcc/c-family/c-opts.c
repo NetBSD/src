@@ -305,7 +305,7 @@ c_common_handle_option (size_t scode, const char *arg, int value,
       break;
 
     case OPT_cxx_isystem:
-      add_path (xstrdup (arg), SYSTEM, 1, true);
+      add_path (xstrdup (arg), INC_SYSTEM, 1, true);
       break;
 
     case OPT_D:

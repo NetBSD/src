@@ -1955,6 +1955,7 @@ CPP_SELFTEST_DEPS = cc1plus$(exeext) $(SELFTEST_DEPS)
 selftest: s-selftest-c
 
 # C selftests
+C_SELFTEST_DEPS = 
 s-selftest-c: $(C_SELFTEST_DEPS)
 	@echo "NOT REBUILDING $@"
 NetBSD_DISABLED_s-selftest:
