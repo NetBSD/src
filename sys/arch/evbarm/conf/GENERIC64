@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.107 2019/09/21 14:04:12 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.108 2019/10/01 10:08:05 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -7,6 +7,8 @@
 include	"arch/evbarm/conf/std.generic64"
 include "arch/evbarm/conf/files.generic64"
 include	"arch/evbarm/conf/GENERIC.common"
+
+maxusers	64
 
 #
 # FDT files supported by this kernel - add to DTSSUBDIR and DTS as
