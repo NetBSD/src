@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.7 2019/02/06 04:00:43 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.8 2019/10/02 02:54:34 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -9,14 +9,18 @@ interception_mac.cc \
 interception_type_test.cc \
 interception_win.cc
 
+# XXXmknative
 SANITIZER_SRCS+= \
+	sancov_flags.cc \
 	sanitizer_allocator.cc \
+	sanitizer_allocator_checks.cc \
 	sanitizer_common.cc \
 	sanitizer_common_libcdep.cc \
-	sanitizer_coverage_libcdep.cc \
-	sanitizer_coverage_mapping_libcdep.cc \
+	sanitizer_coverage_libcdep_new.cc \
 	sanitizer_deadlock_detector1.cc \
 	sanitizer_deadlock_detector2.cc \
+	sanitizer_errno.cc \
+	sanitizer_file.cc \
 	sanitizer_flags.cc \
 	sanitizer_flag_parser.cc \
 	sanitizer_libc.cc \

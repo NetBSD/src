@@ -7621,7 +7621,6 @@ driver::set_up_specs () const
 			      PREFIX_PRIORITY_LAST, 0, 1);
       else if (*cross_compile == '0')
 	{
-/* XXXMRG not sure this one is right? */
 #if !defined(NETBSD_NATIVE) && !defined(NETBSD_TOOLS)
 	  add_prefix (&startfile_prefixes,
 		      concat (gcc_exec_prefix

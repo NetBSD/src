@@ -11119,39 +11119,6 @@ output_indirect_thunk_function (enum indirect_thunk_prefix need_prefix,
 	ASM_OUTPUT_LABEL (asm_out_file, name);
       }
 
-/* XXXMRG - this was in our original patch against 6.4, not in 6.5 at all. */
-#if 0
-  if (regno == INVALID_REGNUM)
-    {
-      /* Create alias for __x86.return_thunk/__x86.return_thunk_bnd.  */
-      char alias[32];
-
-      indirect_thunk_name (alias, regno, need_bnd_p, true);
-#if TARGET_MACHO
-      if (TARGET_MACHO)
-	{
-	  fputs ("\t.weak_definition\t", asm_out_file);
-	  assemble_name (asm_out_file, alias);
-	  fputs ("\n\t.private_extern\t", asm_out_file);
-	  assemble_name (asm_out_file, alias);
-	  putc ('\n', asm_out_file);
-	  ASM_OUTPUT_LABEL (asm_out_file, alias);
-	}
-#else
-      ASM_OUTPUT_DEF (asm_out_file, alias, name);
-      if (USE_HIDDEN_LINKONCE)
-	{
-	  fputs ("\t.globl\t", asm_out_file);
-	  assemble_name (asm_out_file, alias);
-	  putc ('\n', asm_out_file);
-	  fputs ("\t.hidden\t", asm_out_file);
-	  assemble_name (asm_out_file, alias);
-	  putc ('\n', asm_out_file);
-	}
-#endif
-    }
-#endif
-
   DECL_INITIAL (decl) = make_node (BLOCK);
   current_function_decl = decl;
   allocate_struct_function (decl, false);
