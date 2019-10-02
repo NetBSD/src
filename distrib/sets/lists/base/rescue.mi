@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.44 2018/12/12 07:04:05 maxv Exp $
+# $NetBSD: rescue.mi,v 1.45 2019/10/02 09:45:10 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -64,6 +64,7 @@
 ./rescue/ksh					base-rescue-root
 ./rescue/ktrace					base-rescue-root
 ./rescue/ktruss					base-rescue-root
+./rescue/ldconfig				base-obsolete	obsolete
 ./rescue/ldd					base-rescue-root
 ./rescue/less					base-rescue-root
 ./rescue/lfs_cleanerd				base-rescue-root

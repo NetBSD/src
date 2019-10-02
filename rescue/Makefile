@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.37 2019/01/27 04:42:46 dholland Exp $
+#	$NetBSD: Makefile,v 1.38 2019/10/02 09:45:10 maya Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -26,13 +26,6 @@ SMALLPROG=	0
 LISTS=		${.CURDIR}/list
 TARGETDIR=	${DESTDIR}/rescue
 PARSELISTENV+=  TARGETDIR=${TARGETDIR:Q}
-
-.for f in ldconfig
-PROG_${f}!=	cd ${NETBSDSRCDIR}/sbin/${f} && ${MAKE} -V PROG
-.if (${PROG_${f}} != "")
-LISTS+=		${.CURDIR}/list.${f}
-.endif
-.endfor
 
 .for f in pdisk
 PROG_${f}!=	cd ${NETBSDSRCDIR}/external/bsd/${f}/bin && ${MAKE} -V PROG
