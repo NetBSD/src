@@ -4,7 +4,7 @@
 
 // Predefined symbols and macros -*- C++ -*-
 
-// Copyright (C) 1997-2017 Free Software Foundation, Inc.
+// Copyright (C) 1997-2018 Free Software Foundation, Inc.
 //
 // This file is part of the GNU ISO C++ Library.  This library is free
 // software; you can redistribute it and/or modify it under the
@@ -35,10 +35,10 @@
 #define _GLIBCXX_CXX_CONFIG_H 1
 
 // The major release number for the GCC release the C++ library belongs to.
-#define _GLIBCXX_RELEASE 7
+#define _GLIBCXX_RELEASE 8
 
 // The datestamp of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20181206
+#define __GLIBCXX__ 20190222
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -81,6 +81,7 @@
 // Macros for deprecated attributes.
 //   _GLIBCXX_USE_DEPRECATED
 //   _GLIBCXX_DEPRECATED
+//   _GLIBCXX17_DEPRECATED
 #ifndef _GLIBCXX_USE_DEPRECATED
 # define _GLIBCXX_USE_DEPRECATED 1
 #endif
@@ -89,6 +90,12 @@
 # define _GLIBCXX_DEPRECATED __attribute__ ((__deprecated__))
 #else
 # define _GLIBCXX_DEPRECATED
+#endif
+
+#if defined(__DEPRECATED) && (__cplusplus >= 201703L)
+# define _GLIBCXX17_DEPRECATED [[__deprecated__]]
+#else
+# define _GLIBCXX17_DEPRECATED
 #endif
 
 // Macros for ABI tag attributes.
@@ -271,87 +278,57 @@ namespace __gnu_cxx
 # define _GLIBCXX_DEFAULT_ABI_TAG
 #endif
 
-
 // Defined if inline namespaces are used for versioning.
 # define _GLIBCXX_INLINE_VERSION 0 
 
 // Inline namespace for symbol versioning.
 #if _GLIBCXX_INLINE_VERSION
+# define _GLIBCXX_BEGIN_NAMESPACE_VERSION namespace __8 {
+# define _GLIBCXX_END_NAMESPACE_VERSION }
 
 namespace std
 {
-  inline namespace __7 { }
-
-  namespace rel_ops { inline namespace __7 { } }
-
-  namespace tr1
-  {
-    inline namespace __7 { }
-    namespace placeholders { inline namespace __7 { } }
-    namespace regex_constants { inline namespace __7 { } }
-    namespace __detail { inline namespace __7 { } }
-  }
-
-  namespace tr2
-  { inline namespace __7 { } }
-
-  namespace decimal { inline namespace __7 { } }
-
-#if __cplusplus >= 201103L
-  namespace chrono { inline namespace __7 { } }
-  namespace placeholders { inline namespace __7 { } }
-  namespace regex_constants { inline namespace __7 { } }
-  namespace this_thread { inline namespace __7 { } }
-
+inline _GLIBCXX_BEGIN_NAMESPACE_VERSION
 #if __cplusplus >= 201402L
   inline namespace literals {
-    inline namespace chrono_literals { inline namespace __7 { } }
-    inline namespace complex_literals { inline namespace __7 { } }
-    inline namespace string_literals { inline namespace __7 { } }
+    inline namespace chrono_literals { }
+    inline namespace complex_literals { }
+    inline namespace string_literals { }
 #if __cplusplus > 201402L
-    inline namespace string_view_literals { inline namespace __7 { } }
+    inline namespace string_view_literals { }
 #endif // C++17
   }
 #endif // C++14
-#endif // C++11
-
-  namespace __detail {
-    inline namespace __7 { }
-#if __cplusplus > 201402L
-    namespace __variant { inline namespace __7 { } }
-#endif
-  }
+_GLIBCXX_END_NAMESPACE_VERSION
 }
 
 namespace __gnu_cxx
 {
-  inline namespace __7 { }
-  namespace __detail { inline namespace __7 { } }
+inline _GLIBCXX_BEGIN_NAMESPACE_VERSION
+_GLIBCXX_END_NAMESPACE_VERSION
 }
-# define _GLIBCXX_BEGIN_NAMESPACE_VERSION namespace __7 {
-# define _GLIBCXX_END_NAMESPACE_VERSION }
+
 #else
 # define _GLIBCXX_BEGIN_NAMESPACE_VERSION
 # define _GLIBCXX_END_NAMESPACE_VERSION
 #endif
-
 
 // Inline namespaces for special modes: debug, parallel, profile.
 #if defined(_GLIBCXX_DEBUG) || defined(_GLIBCXX_PARALLEL) \
     || defined(_GLIBCXX_PROFILE)
 namespace std
 {
+_GLIBCXX_BEGIN_NAMESPACE_VERSION
+
   // Non-inline namespace for components replaced by alternates in active mode.
   namespace __cxx1998
   {
-# if _GLIBCXX_INLINE_VERSION
-  inline namespace __7 { }
-# endif
-
 # if _GLIBCXX_USE_CXX11_ABI
   inline namespace __cxx11 __attribute__((__abi_tag__ ("cxx11"))) { }
 # endif
   }
+
+_GLIBCXX_END_NAMESPACE_VERSION
 
   // Inline namespace for debug mode.
 # ifdef _GLIBCXX_DEBUG
@@ -400,25 +377,23 @@ namespace std
 #if defined(_GLIBCXX_DEBUG) || defined(_GLIBCXX_PROFILE)
 # define _GLIBCXX_STD_C __cxx1998
 # define _GLIBCXX_BEGIN_NAMESPACE_CONTAINER \
-	 namespace _GLIBCXX_STD_C { _GLIBCXX_BEGIN_NAMESPACE_VERSION
-# define _GLIBCXX_END_NAMESPACE_CONTAINER \
-	 _GLIBCXX_END_NAMESPACE_VERSION }
+	 namespace _GLIBCXX_STD_C {
+# define _GLIBCXX_END_NAMESPACE_CONTAINER }
 #else
 # define _GLIBCXX_STD_C std
-# define _GLIBCXX_BEGIN_NAMESPACE_CONTAINER _GLIBCXX_BEGIN_NAMESPACE_VERSION
-# define _GLIBCXX_END_NAMESPACE_CONTAINER _GLIBCXX_END_NAMESPACE_VERSION
+# define _GLIBCXX_BEGIN_NAMESPACE_CONTAINER
+# define _GLIBCXX_END_NAMESPACE_CONTAINER
 #endif
 
 #ifdef _GLIBCXX_PARALLEL
 # define _GLIBCXX_STD_A __cxx1998
 # define _GLIBCXX_BEGIN_NAMESPACE_ALGO \
-	 namespace _GLIBCXX_STD_A { _GLIBCXX_BEGIN_NAMESPACE_VERSION
-# define _GLIBCXX_END_NAMESPACE_ALGO \
-	 _GLIBCXX_END_NAMESPACE_VERSION }
+	 namespace _GLIBCXX_STD_A {
+# define _GLIBCXX_END_NAMESPACE_ALGO }
 #else
 # define _GLIBCXX_STD_A std
-# define _GLIBCXX_BEGIN_NAMESPACE_ALGO _GLIBCXX_BEGIN_NAMESPACE_VERSION
-# define _GLIBCXX_END_NAMESPACE_ALGO _GLIBCXX_END_NAMESPACE_VERSION
+# define _GLIBCXX_BEGIN_NAMESPACE_ALGO
+# define _GLIBCXX_END_NAMESPACE_ALGO
 #endif
 
 // GLIBCXX_ABI Deprecated
@@ -914,6 +889,12 @@ namespace std
 /* Define if futex syscall is available. */
 /* #undef _GLIBCXX_HAVE_LINUX_FUTEX */
 
+/* Define to 1 if you have the <linux/random.h> header file. */
+/* #undef _GLIBCXX_HAVE_LINUX_RANDOM_H */
+
+/* Define to 1 if you have the <linux/types.h> header file. */
+/* #undef _GLIBCXX_HAVE_LINUX_TYPES_H */
+
 /* Define to 1 if you have the <locale.h> header file. */
 #define _GLIBCXX_HAVE_LOCALE_H 1
 
@@ -1117,7 +1098,7 @@ namespace std
 #define _GLIBCXX_HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-#define _GLIBCXX_HAVE_TGMATH_H 1
+/* #undef _GLIBCXX_HAVE_TGMATH_H */
 
 /* Define to 1 if the target supports thread-local storage. */
 #define _GLIBCXX_HAVE_TLS 1

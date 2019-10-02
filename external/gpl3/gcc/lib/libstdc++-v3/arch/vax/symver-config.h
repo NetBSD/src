@@ -272,6 +272,12 @@
 /* Define if futex syscall is available. */
 /* #undef HAVE_LINUX_FUTEX */
 
+/* Define to 1 if you have the <linux/random.h> header file. */
+/* #undef HAVE_LINUX_RANDOM_H */
+
+/* Define to 1 if you have the <linux/types.h> header file. */
+/* #undef HAVE_LINUX_TYPES_H */
+
 /* Define to 1 if you have the <locale.h> header file. */
 #define HAVE_LOCALE_H 1
 
@@ -475,7 +481,7 @@
 /* #undef HAVE_TANL */
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-#define HAVE_TGMATH_H 1
+/* #undef HAVE_TGMATH_H */
 
 /* Define to 1 if the target supports thread-local storage. */
 #define HAVE_TLS 1
