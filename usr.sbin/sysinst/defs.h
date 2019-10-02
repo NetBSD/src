@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.44 2019/08/27 14:11:00 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.45 2019/10/02 11:16:04 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,7 @@ enum {
     SET_MAN_PAGES,	/* online manual pages */
     SET_MISC,		/* miscellaneuous */
     SET_MODULES,	/* kernel modules */
+    SET_RESCUE,		/* /rescue recovery tools */
     SET_TESTS,		/* tests */
     SET_TEXT_TOOLS,	/* text processing tools */
 
@@ -160,7 +161,8 @@ enum {
 #define SET_CORE SET_MODULES, SET_BASE, SET_ETC
 /* All system sets */
 #define SET_SYSTEM SET_CORE, SET_COMPILER, SET_GAMES, \
-		    SET_MAN_PAGES, SET_MISC, SET_TESTS, SET_TEXT_TOOLS
+		    SET_MAN_PAGES, SET_MISC, SET_RESCUE, \
+		    SET_TESTS, SET_TEXT_TOOLS
 /* All X11 sets */
 #define SET_X11_NOSERVERS SET_X11_BASE, SET_X11_FONTS, SET_X11_PROG, SET_X11_ETC
 #define SET_X11 SET_X11_NOSERVERS, SET_X11_SERVERS
