@@ -1,4 +1,4 @@
-# $NetBSD: rescue.mi,v 1.45 2019/10/02 09:45:10 maya Exp $
+# $NetBSD: rescue.mi,v 1.46 2019/10/02 09:47:24 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -33,6 +33,7 @@
 ./rescue/dumplfs				base-rescue-root
 ./rescue/echo					base-rescue-root
 ./rescue/ed					base-rescue-root
+./rescue/edlabel				base-obsolete	obsolete
 ./rescue/egrep					base-rescue-root
 ./rescue/ekermit				base-rescue-root
 ./rescue/ex					base-rescue-root
