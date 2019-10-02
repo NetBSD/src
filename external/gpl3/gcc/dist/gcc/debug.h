@@ -251,10 +251,6 @@ extern void dwarf2out_switch_text_section (void);
 extern bool dwarf2out_default_as_loc_support (void);
 extern bool dwarf2out_default_as_locview_support (void);
 
-const char *remap_debug_filename (const char *);
-void add_debug_prefix_map (const char *);
-void add_debug_regex_map (const char *);
-
 /* For -fdump-go-spec.  */
 
 extern const struct gcc_debug_hooks *

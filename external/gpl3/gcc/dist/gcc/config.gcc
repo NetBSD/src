@@ -465,12 +465,6 @@ nios2-*-*)
 nvptx-*-*)
 	cpu_type=nvptx
 	;;
-or1k-*-*)
-        cpu_type=or1k
-        ;;
-or1knd-*-*)
-        cpu_type=or1k
-        ;;
 powerpc*-*-*spe*)
 	cpu_type=powerpcspe
 	extra_headers="ppc-asm.h altivec.h spe.h ppu_intrinsics.h paired.h spu2vmx.h vec_types.h si2vmx.h htmintrin.h htmxlintrin.h"
@@ -1154,9 +1148,9 @@ arm*-*-freebsd*)                # ARM FreeBSD EABI
 	with_tls=${with_tls:-gnu}
 	;;
 arm*-*-netbsdelf*)
-	tmake_file="${tmake_file} arm/t-arm"
 	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h arm/aout.h ${tm_file} arm/netbsd-elf.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	tmake_file="${tmake_file} arm/t-arm"
 	case ${target} in
 	arm*eb-*) tm_defines="${tm_defines} TARGET_BIG_ENDIAN_DEFAULT=1" ;;
 	esac
@@ -2042,7 +2036,6 @@ m68k-*-elf* | fido-*-elf*)
 	esac
 	;;
 m68010-*-netbsdelf* | m68k-*-netbsdelf* | m5407-*-netbsdelf*)
-	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} m68k/netbsd-elf.h"
 	default_m68k_cpu=68020
 	case ${target} in
 	m5407*)
@@ -2062,6 +2055,7 @@ m68010-*-netbsdelf* | m68k-*-netbsdelf* | m5407-*-netbsdelf*)
 		;;
 	esac
 	default_cf_cpu=5475
+	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} m68k/netbsd-elf.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	tm_defines="${tm_defines} MOTOROLA=1 CHAR_FAST8=1 SHORT_FAST16=1"
 	;;
@@ -2491,42 +2485,6 @@ nvptx-*)
 		tm_file="${tm_file} nvptx/offload.h"
 	fi
 	;;
-or1k*-*-elf*)
-	tm_file="${tm_file} dbxelf.h elfos.h newlib-stdint.h ${cpu_type}/elf.h"
-	extra_parts="crti.o crtbegin.o crtend.o crtn.o"
-	case ${target} in
-	  or1knd-*)
-	    tmake_file=or1k/t-or1knd
-	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
-	    ;;
-	  *)
-	    tmake_file=or1k/t-or1k
-	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
-	    ;;
-	esac
-	;;
-or1k*-*-linux-*)
-	tm_file="${tm_file} dbxelf.h elfos.h or1k/elf.h gnu-user.h linux.h or1k/linux-gas.h or1k/linux-elf.h uclibc-stdint.h"
-	case ${target} in
-	  or1knd-*)
-	    tmake_file="or1k/t-or1knd or1k/t-linux ${tmake_file}"
-	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF"
-	    ;;
-	  *)
-	    tmake_file="or1k/t-or1k or1k/t-linux ${tmake_file}"
-	    tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON"
-	    ;;
-	esac
-	;;
-or1k*-*-netbsd*)
-	tm_file="${tm_file} dbxelf.h elfos.h ${nbsd_tm_file} or1k/netbsd.h"
-	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
-	case ${target} in
-	  or1knd-*) tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_OFF" ;;
-	  *) tm_defines="${tm_defines} OR1K_DELAY_DEFAULT=OR1K_DELAY_ON" ;;
-	esac
-	gcc_cv_initfini_array=yes
-	;;
 pdp11-*-*)
 	tm_file="${tm_file} newlib-stdint.h"
 	use_gcc_stdint=wrap
@@ -2587,10 +2545,10 @@ powerpc*-*-netbsd*)
 		;;
 	esac
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
+	extra_options="${extra_options} rs6000/sysv4.opt rs6000/linux64.opt"
 	if test x${enable_secureplt} != xno; then
 	    tm_file="rs6000/secureplt.h ${tm_file}"
 	fi
-	extra_options="${extra_options} rs6000/sysv4.opt rs6000/linux64.opt"
 	;;
 powerpc-*-eabispe*)
 	tm_file="${tm_file} dbxelf.h elfos.h freebsd-spec.h newlib-stdint.h ${cpu_type}/sysv4.h ${cpu_type}/eabi.h ${cpu_type}/e500.h ${cpu_type}/eabispe.h"
@@ -3243,7 +3201,6 @@ vax-*-linux*)
 	;;
 vax-*-netbsdelf*)
 	tm_file="${tm_file} elfos.h ${nbsd_tm_file} vax/elf.h vax/netbsd-elf.h"
-	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt vax/elf.opt"
 	tm_defines="${tm_defines} CHAR_FAST8=1 SHORT_FAST16=1"
 	;;
