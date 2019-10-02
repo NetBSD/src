@@ -1156,7 +1156,7 @@ arm*-*-netbsdelf*)
 	esac
 	case ${target} in
 	arm*-*-netbsdelf-*eabi*)
-	    tm_file="$tm_file arm/bpabi.h arm/netbsd-elf.h arm/netbsd-eabi.h"
+	    tm_file="${tm_file} arm/bpabi.h arm/netbsd-eabi.h"
 	    # GCC 7 vs NetBSD/eabi -> avoid arm unwinder
 	    #tmake_file="$tmake_file arm/t-bpabi"
 	    tmake_file="$tmake_file arm/t-netbsdeabi"
@@ -1164,13 +1164,11 @@ arm*-*-netbsdelf*)
 	    default_use_cxa_atexit=yes
 	    ;;
 	*)
-	    tm_file="$tm_file arm/netbsd-elf.h"
 	    tmake_file="$tmake_file arm/t-netbsd"
 	    # NetBSD/arm (non-eabi) is only old platforms
 	    with_cpu=${with_cpu:-strongarm}
 	    ;;
 	esac
-	tm_file="${tm_file} arm/arm.h"
 	case ${target} in
 	arm*-*-netbsdelf-*eabihf*)
 	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
@@ -2536,11 +2534,10 @@ powerpc*-*-netbsd*)
 	case ${target} in
 	    powerpc64*)
 		tm_file="rs6000/biarch64.h ${tm_file}"
-		tm_file="${tm_file} rs6000/sysv4.h rs6000/default64.h rs6000/netbsd64.h"
+		tm_file="${tm_file} rs6000/default64.h rs6000/netbsd64.h"
 		tmake_file="${tmake_file} rs6000/t-netbsd64"
 		;;
 	    *)
-		tm_file="${tm_file} rs6000/sysv4.h rs6000/netbsd.h"
 		tmake_file="${tmake_file} rs6000/t-netbsd"
 		;;
 	esac
