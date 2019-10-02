@@ -1,7 +1,8 @@
-# $NetBSD: rescue.mi,v 1.46 2019/10/02 09:47:24 maya Exp $
+# $NetBSD: mi,v 1.1 2019/10/02 11:16:00 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
+./etc/mtree/set.rescue				base-rescue-root
 ./rescue/[					base-rescue-root
 ./rescue/atactl					base-rescue-root
 ./rescue/badsect				base-rescue-root
@@ -166,3 +167,4 @@
 ./rescue/zegrep					base-rescue-root
 ./rescue/zfgrep					base-rescue-root
 ./rescue/zgrep					base-rescue-root
+./var/db/obsolete/rescue			base-rescue-root

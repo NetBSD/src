@@ -1,4 +1,4 @@
-#	$NetBSD: sets.subr,v 1.186 2019/04/16 21:20:51 mrg Exp $
+#	$NetBSD: sets.subr,v 1.187 2019/10/02 11:16:00 maya Exp $
 #
 
 #
@@ -163,7 +163,7 @@ stlib=$shlib
 if [ "${MKPIC}" = "no" ]; then
 	shlib=no
 fi
-nlists="base comp $debugset etc games man misc $modset $testset text"
+nlists="base comp $debugset etc games man misc $modset rescue $testset text"
 xlists="xbase xcomp $xdebugset xetc xfont xserver"
 extlists="extbase extcomp extetc"
 
@@ -180,7 +180,7 @@ SUBST="${SUBST};s#@MACHINE@#${MACHINE}#g"
 # In each file, a record consists of a path and a System Package name,
 # separated by whitespace. E.g.,
 #
-# 	# $NetBSD: sets.subr,v 1.186 2019/04/16 21:20:51 mrg Exp $
+# 	# $NetBSD: sets.subr,v 1.187 2019/10/02 11:16:00 maya Exp $
 # 	.			base-sys-root	[keyword[,...]]
 # 	./altroot		base-sys-root
 # 	./bin			base-sys-root
