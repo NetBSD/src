@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.440 2019/08/28 21:48:14 rmind Exp $
+#       $NetBSD: Makefile,v 1.441 2019/10/02 08:21:08 rin Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -787,6 +787,7 @@ MLINKS+=rnd.9 rnd_attach_source.9 rnd.9 rnd_detach_source.9 \
 	rnd.9 rnd_add_data.9 rnd.9 rnd_add_uint32.9
 MLINKS+=roundup.9 howmany.9 \
 	roundup.9 rounddown.9 \
+	roundup.9 rounddown2.9 \
 	roundup.9 roundup2.9 \
 	roundup.9 powerof2.9
 MLINKS+=rssadapt.9 ieee80211_rssadapt_choose.9 \
