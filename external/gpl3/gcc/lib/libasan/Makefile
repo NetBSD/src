@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.28 2019/02/08 22:06:12 mrg Exp $
+# $NetBSD: Makefile,v 1.29 2019/10/02 02:54:34 mrg Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -10,6 +10,7 @@ NOSANITIZER=	# defined
 
 .PATH: ${SANITIZER}/asan ${SANITIZER}/lsan
 
+# XXXmknative
 ASAN_SRCS= \
 	asan_activation.cc \
 	asan_allocator.cc \
@@ -20,6 +21,7 @@ ASAN_SRCS= \
 	asan_flags.cc \
 	asan_globals.cc \
 	asan_interceptors.cc \
+	asan_interceptors_memintrinsics.cc \
 	asan_linux.cc \
 	asan_mac.cc \
 	asan_malloc_linux.cc \
@@ -31,6 +33,7 @@ ASAN_SRCS= \
 	asan_posix.cc \
 	asan_report.cc \
 	asan_rtl.cc \
+	asan_shadow_setup.cc \
 	asan_stack.cc \
 	asan_stats.cc \
 	asan_suppressions.cc \
