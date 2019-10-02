@@ -22,8 +22,6 @@ along with GCC; see the file COPYING3.  If not see
 #undef EXTENDED_COFF
 #define OBJECT_FORMAT_ELF
 
-/* ??? Move all SDB stuff from alpha.h to osf.h.  */
-#undef SDB_DEBUGGING_INFO
 #undef DBX_DEBUGGING_INFO
 
 #define DWARF2_DEBUGGING_INFO 1

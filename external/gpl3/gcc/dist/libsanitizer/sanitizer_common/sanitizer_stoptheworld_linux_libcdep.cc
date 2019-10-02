@@ -26,7 +26,6 @@
 #include <errno.h>
 #include <sched.h> // for CLONE_* definitions
 #include <stddef.h>
-#include <signal.h>
 #if SANITIZER_LINUX
 #include <sys/prctl.h> // for PR_* definitions
 #endif
@@ -38,7 +37,13 @@
 // GLIBC 2.20+ sys/user does not include asm/ptrace.h
 # include <asm/ptrace.h>
 #endif
-#if SANITIZER_NETBSD
+#if SANITIZER_LINUX
+#include <sys/user.h>  // for user_regs_struct
+#if SANITIZER_ANDROID && SANITIZER_MIPS
+# include <asm/reg.h>  // for mips SP register in sys/user.h
+#endif
+#elif SANITIZER_NETBSD
+# include <signal.h>
 # define PTRACE_ATTACH PT_ATTACH
 # define PTRACE_GETREGS PT_GETREGS
 # define PTRACE_KILL PT_KILL
@@ -48,12 +53,6 @@
 # include <machine/reg.h>
 typedef struct reg user_regs;
 typedef struct reg user_regs_struct;
-#else
-# include <sys/user.h>  // for user_regs_struct
-# if SANITIZER_ANDROID && SANITIZER_MIPS
-#  include <asm/reg.h>  // for mips SP register in sys/user.h
-#  endif
-# endif
 #endif
 #include <sys/wait.h> // for signal-related stuff
 
