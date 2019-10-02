@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.55 2019/02/09 21:03:24 maya Exp $
+#	$NetBSD: Makefile,v 1.56 2019/10/02 06:52:00 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -71,7 +71,7 @@ COPTS.varasm.c=			-Wno-error
 
 # Headers that host objects depend on (except gen*rtl*)
 HH_NORTL=	${G_tm_file_list} ${G_build_xm_include_list}
-HH=		${HH_NORTL} genrtl.h insn-modes.h
+HH=		${HH_NORTL} genrtl.h insn-modes.h insn-modes-inline.h
 
 #
 # Generate the various header files we need.
@@ -161,12 +161,15 @@ insn-modes.h-test: genmodes
 min-insn-modes.c: genmodes
 	${_MKTARGET_CREATE}
 	./genmodes -m >${.TARGET}
+insn-modes-inline.h: genmodes
+	${_MKTARGET_CREATE}
+	./genmodes -i >${.TARGET}
 genmodes.lo: ${HH_NORTL}
 genmodes: genmodes.lo build-errors.lo
 	${_MKTARGET_LINK}
 	${HOST_LINK.cc} -o ${.TARGET} ${.ALLSRC} ${NBCOMPATLIB} ${HOSTLIBIBERTY}
 
-CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c
+CLEANFILES+=	genmodes insn-modes.c insn-modes.h-test min-insn-modes.c insn-modes-inline.h
 
 gimple-match.c: genmatch cfn-operators.pd
 	./genmatch --gimple ${GNUHOSTDIST}/gcc/match.pd > gimple-match.c.tmp
@@ -257,7 +260,7 @@ build-print-rtl.c: print-rtl.c \
 		${GNUHOSTDIST}/gcc/print-rtl.c >${.TARGET}
 build-print-rtl.lo: ${HH}
 build-print-rtl.o: print-rtl.c $(BCONFIG_H) $(SYSTEM_H) coretypes.h     \
-  $(GTM_H) $(RTL_BASE_H)
+  ${GTM_H} ${G_RTL_BASE_H}
 CLEANFILES+=	build-print-rtl.c
 
 build-bitmap.c: bitmap.c \
@@ -313,7 +316,7 @@ build-genattrtab.o: ${G_GGC_H}
 #
 # The normal insn-foo generators
 #
-.for f in gensupport.c read-rtl.c dummy-conditions.c
+.for f in gensupport.c read-rtl.c dummy-conditions.c read-md.c
 ${f:R}.lo: ${HH}
 .endfor
 

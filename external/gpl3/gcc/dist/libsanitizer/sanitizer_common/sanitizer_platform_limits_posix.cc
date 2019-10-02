@@ -76,18 +76,12 @@
 #include <net/if_arp.h>
 #endif
 
-#if SANITIZER_FREEBSD
-# include <sys/consio.h>
-# include <sys/kbio.h>
-# include <sys/link_elf.h>
-# include <net/ethernet.h>
-#endif
-
 #if SANITIZER_NETBSD
 # include <link_elf.h>
 # include <net/if_ether.h>
 # define statfs statvfs
 # define d_ino d_fileno
+# include "sanitizer_platform_limits_netbsd.h"
 #endif
 
 #if SANITIZER_FREEBSD || SANITIZER_NETBSD

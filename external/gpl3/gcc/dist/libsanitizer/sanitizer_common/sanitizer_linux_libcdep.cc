@@ -369,12 +369,6 @@ uptr ThreadSelf() {
 uptr ThreadSelf() { return (uptr)pthread_self(); }
 #endif  // SANITIZER_NETBSD
 
-#if SANITIZER_NETBSD
-uptr ThreadSelf() {
-  return (uptr)pthread_self();
-}
-#endif // SANITIZER_NETBSD
-
 #if !SANITIZER_GO
 static void GetTls(uptr *addr, uptr *size) {
 #if SANITIZER_LINUX && !SANITIZER_ANDROID

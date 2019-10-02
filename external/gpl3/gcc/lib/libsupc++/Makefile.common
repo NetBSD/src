@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.13 2019/02/28 01:11:04 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.14 2019/10/02 06:51:59 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -57,7 +57,7 @@ STD_GNU14=	\
 		del_opvs.cc
 
 .for _f in ${STD_GNU14} ${G_FILESYSTEM_SOURCES:M*.cc}
-COPTS.${_f}+=	-std=gnu++14  -Wno-sized-deallocation
+COPTS.${_f}+=	-std=gnu++17  -Wno-sized-deallocation
 .endfor
 
 STD_GNU1Z=	\
