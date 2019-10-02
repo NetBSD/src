@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomux.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $	*/
+/*	$NetBSD: imx6_iomux.c,v 1.2 2019/10/02 01:34:09 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.1 2019/07/24 13:12:33 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.2 2019/10/02 01:34:09 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -172,7 +172,5 @@ imxiomux_attach(device_t parent, device_t self, void *aux)
 			fdtbus_register_pinctrl_config(self, sub, &imx6_pinctrl_funcs);
 		}
 	}
-
-	fdtbus_pinctrl_configure();
 }
 
