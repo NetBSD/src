@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2287 2019/10/01 16:07:14 christos Exp $
+#	$NetBSD: mi,v 1.2288 2019/10/02 08:21:08 rin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11718,6 +11718,7 @@
 ./usr/share/man/cat9/rootconf.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/round_page.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rounddown.0		comp-sys-catman		.cat
+./usr/share/man/cat9/rounddown2.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/roundup.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/roundup2.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rssadapt.0			comp-sys-catman		.cat
@@ -19623,6 +19624,7 @@
 ./usr/share/man/html9/rootconf.html		comp-sys-htmlman	html
 ./usr/share/man/html9/round_page.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rounddown.html		comp-sys-htmlman	html
+./usr/share/man/html9/rounddown2.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup.html		comp-sys-htmlman	html
 ./usr/share/man/html9/roundup2.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rssadapt.html		comp-sys-htmlman	html
@@ -27709,6 +27711,7 @@
 ./usr/share/man/man9/rootconf.9			comp-sys-man		.man
 ./usr/share/man/man9/round_page.9		comp-sys-man		.man
 ./usr/share/man/man9/rounddown.9		comp-sys-man		.man
+./usr/share/man/man9/rounddown2.9		comp-sys-man		.man
 ./usr/share/man/man9/roundup.9			comp-sys-man		.man
 ./usr/share/man/man9/roundup2.9			comp-sys-man		.man
 ./usr/share/man/man9/rssadapt.9			comp-sys-man		.man
