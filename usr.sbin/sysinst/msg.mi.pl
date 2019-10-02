@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.22 2019/08/17 17:51:19 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.23 2019/10/02 11:16:04 maya Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -799,6 +799,9 @@ message set_misc
 
 message set_modules
 {Moduly kernela}
+
+message set_rescue
+{Recovery tools}
 
 message set_tests
 {Programy testujace}
