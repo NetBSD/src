@@ -1,4 +1,4 @@
-/*	$NetBSD: siphash.c,v 1.2 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: siphash.c,v 1.3 2019/10/02 15:43:15 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -60,9 +60,13 @@
 void
 isc_siphash24(const uint8_t *k, const uint8_t *in, size_t inlen, uint8_t *out)
 {
-	const uint64_t *key = (const uint64_t *)k;
-	uint64_t k0 = le64toh(key[0]);
-	uint64_t k1 = le64toh(key[1]);
+	uint64_t k0, k1;
+
+	memcpy(&k0, k, sizeof(k0));
+	memcpy(&k1, k + sizeof(k0), sizeof(k1));
+
+	k0 = le64toh(k0);
+	k1 = le64toh(k1);
 
 	uint64_t v0 = 0x736f6d6570736575ULL ^ k0;
 	uint64_t v1 = 0x646f72616e646f6dULL ^ k1;
