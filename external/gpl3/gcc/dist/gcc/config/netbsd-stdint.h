@@ -67,5 +67,5 @@ see the files COPYING3 and COPYING.RUNTIME respectively.  If not, see
 #define UINT_FAST32_TYPE  UINT32_TYPE
 #define UINT_FAST64_TYPE  (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "long long unsigned int")
 
-#define INTPTR_TYPE       (LONG_TYPE_SIZE == 64 ? "long int" : "int")
-#define UINTPTR_TYPE      (LONG_TYPE_SIZE == 64 ? "long unsigned int" : "unsigned int")
+#define INTPTR_TYPE       (LONG_TYPE_SIZE == 64 ?  INT64_TYPE :  INT32_TYPE)
+#define UINTPTR_TYPE      (LONG_TYPE_SIZE == 64 ? UINT64_TYPE : UINT32_TYPE)
