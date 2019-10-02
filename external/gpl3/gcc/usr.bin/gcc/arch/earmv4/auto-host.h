@@ -289,6 +289,12 @@
 #endif
 
 
+/* Define if your avr assembler supports -mgcc-isr option. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_AS_AVR_MGCCISR_OPTION */
+#endif
+
+
 /* Define if your avr assembler supports --mlink-relax option. */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_AVR_MLINK_RELAX_OPTION */
@@ -354,6 +360,12 @@
    preserves file table indices exactly as given. */
 #ifndef USED_FOR_TARGET
 #define HAVE_AS_DWARF2_DEBUG_LINE 1
+#endif
+
+
+/* Define if your assembler supports views in dwarf2 .loc directives. */
+#ifndef USED_FOR_TARGET
+#define HAVE_AS_DWARF2_DEBUG_VIEW 1
 #endif
 
 
@@ -665,10 +677,12 @@
 /* #undef HAVE_AS_SPARC5_VIS4 */
 #endif
 
+
 /* Define if your assembler supports SPARC6 instructions. */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_AS_SPARC6 */
 #endif
+
 
 /* Define if your assembler and linker support GOTDATA_OP relocs. */
 #ifndef USED_FOR_TARGET
@@ -1475,6 +1489,13 @@
 #endif
 
 
+/* Define if your default avr linker script for avrxmega3 leaves .rodata in
+   flash. */
+#ifndef USED_FOR_TARGET
+/* #undef HAVE_LD_AVR_AVRXMEGA3_RODATA_IN_FLASH */
+#endif
+
+
 /* Define if your linker supports -z bndplt */
 #ifndef USED_FOR_TARGET
 /* #undef HAVE_LD_BNDPLT_SUPPORT */
@@ -2024,6 +2045,12 @@
 #endif
 
 
+/* Value to set mingw's _dowildcard to. */
+#ifndef USED_FOR_TARGET
+/* #undef MINGW_DOWILDCARD */
+#endif
+
+
 /* Define if host mkdir takes a single argument. */
 #ifndef USED_FOR_TARGET
 /* #undef MKDIR_TAKES_ONE_ARG */
@@ -2188,6 +2215,12 @@
    DLL exports wrappers to support libstdc++ function replacement. */
 #ifndef USED_FOR_TARGET
 /* #undef USE_CYGWIN_LIBSTDCXX_WRAPPERS */
+#endif
+
+
+/* Define 0/1 if your linker supports hidden thunks in linkonce sections. */
+#ifndef USED_FOR_TARGET
+/* #undef USE_HIDDEN_LINKONCE */
 #endif
 
 
