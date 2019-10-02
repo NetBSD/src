@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.23 2019/09/29 02:00:22 uwe Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.24 2019/10/02 09:36:30 rin Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.23 2019/09/29 02:00:22 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.24 2019/10/02 09:36:30 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,14 +210,14 @@ db_lex(void)
 		for (;;) {
 			if (c >= '0' && c <= ((r == 8) ? '7' : '9'))
 				digit = c - '0';
-			else if (r == 16 && ((c >= 'A' && c <= 'F') ||
-				(c >= 'a' && c <= 'f'))) {
-				if (c >= 'a')
-					digit = c - 'a' + 10;
-				else if (c >= 'A')
+			else if (r == 16) {
+				if (c >= 'A' && c <= 'F')
 					digit = c - 'A' + 10;
-			}
-			else
+				else if (c >= 'a' && c <= 'f')
+					digit = c - 'a' + 10;
+				else
+					break;
+			} else
 				break;
 			db_tok_number = db_tok_number * r + digit;
 			c = db_read_char();
