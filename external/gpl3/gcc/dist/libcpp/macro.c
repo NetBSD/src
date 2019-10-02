@@ -496,7 +496,6 @@ _cpp_builtin_macro_text (cpp_reader *pfile, cpp_hashnode *node,
       {
 	unsigned int len;
 	const char *name;
-	char *tmp_name;
 	uchar *buf;
 	
 	if (node->value.builtin == BT_FILE)
@@ -515,7 +514,6 @@ _cpp_builtin_macro_text (cpp_reader *pfile, cpp_hashnode *node,
 	result = buf;
 	*buf = '"';
 	buf = cpp_quote_string (buf + 1, (const unsigned char *) name, len);
-	free (tmp_name);
 	*buf++ = '"';
 	*buf = '\0';
       }
@@ -1067,7 +1065,6 @@ collect_args (cpp_reader *pfile, const cpp_hashnode *node,
   memset (args, 0, argc * sizeof (macro_arg));
   buff->cur = (unsigned char *) &args[argc];
   arg = args, argc = 0;
-  pfile->state.collecting_args = 1;
 
   /* Collect the tokens making up each argument.  We don't yet know
      how many arguments have been supplied, whether too many or too
@@ -1203,7 +1200,6 @@ collect_args (cpp_reader *pfile, const cpp_hashnode *node,
 	}
     }
   while (token->type != CPP_CLOSE_PAREN && token->type != CPP_EOF);
-  pfile->state.collecting_args = 0;
 
   if (token->type == CPP_EOF)
     {
