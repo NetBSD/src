@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-# $NetBSD: regpkgset,v 1.12 2009/12/01 15:49:21 apb Exp $
+# $NetBSD: regpkgset,v 1.13 2019/10/02 11:16:00 maya Exp $
 #
 # Copyright (c) 2003,2009 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -123,7 +123,7 @@ if [ $# -lt 1 ]; then
 fi
 
 case "$1" in
-all)	list="base comp etc games man misc tests text" ;;
+all)	list="base comp etc games man misc rescue tests text" ;;
 *)	list="$*" ;;
 esac
 

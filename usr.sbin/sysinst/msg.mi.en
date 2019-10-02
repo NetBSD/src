@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.21 2019/08/17 17:51:19 martin Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.22 2019/10/02 11:16:04 maya Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -805,6 +805,9 @@ message set_misc
 
 message set_modules
 {Kernel modules}
+
+message set_rescue
+{Recovery tools}
 
 message set_tests
 {Test programs}
