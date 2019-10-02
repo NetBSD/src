@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.291 2019/09/25 20:17:59 sevan Exp $
+$NetBSD: acronyms.comp,v 1.292 2019/10/02 11:14:46 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -332,6 +332,7 @@ CVE	common vulnerabilities and exposures
 CVS	Concurrent Versions System
 DA	destination address
 DAA	distributed application architecture
+DAAP	digital audio access protocol
 DAB	digital audio broadcasting
 DAC	digital [to] analog converter
 DAC	discretionary access control
@@ -401,6 +402,7 @@ DL	download
 DLCI	data link connection identifier
 DLE	data link escape
 DLL	dynamic link library
+DLNA	digital living network alliance
 DLP	discrete logarithm problem
 DMA	direct memory access
 DMI	desktop management interface
