@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.198 2019/09/15 13:40:46 kamil Exp $	 */
+/*	$NetBSD: rtld.c,v 1.199 2019/10/03 10:34:30 tnn Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.198 2019/09/15 13:40:46 kamil Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.199 2019/10/03 10:34:30 tnn Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1674,7 +1674,7 @@ _rtld_shared_enter(void)
 		if (cur == (self | RTLD_EXCLUSIVE_MASK)) {
 			if (_rtld_mutex_may_recurse)
 				return;
-			_rtld_error("dead lock detected");
+			_rtld_error("%s: dead lock detected", __FUNCTION__);
 			_rtld_die();
 		}
 		waiter = atomic_swap_uint(&_rtld_waiter_shared, self);
@@ -1738,7 +1738,7 @@ _rtld_exclusive_enter(sigset_t *mask)
 		membar_sync();
 		cur = _rtld_mutex;
 		if (cur == locked_value) {
-			_rtld_error("dead lock detected");
+			_rtld_error("%s: dead lock detected", __FUNCTION__);
 			_rtld_die();
 		}
 		if (cur)
