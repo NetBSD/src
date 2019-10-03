@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.14 2019/10/01 23:32:52 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.15 2019/10/03 11:24:27 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.14 2019/10/01 23:32:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.15 2019/10/03 11:24:27 mlelstv Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -241,7 +241,12 @@ bcm283x_pinctrl_set_config(device_t dev, const void *data, size_t len)
 static int
 bcmgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "brcm,bcm2835-gpio", NULL };
+	const char * const compatible[] = {
+		"brcm,bcm2835-gpio",
+		"brcm,bcm2838-gpio",
+		"brcm,bcm2711-gpio",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
@@ -815,7 +820,6 @@ bcm283x_pin_setpull(const struct bcmgpio_softc * const sc, u_int pin, u_int pud)
 		mask = 1 << (pin % BCM2835_GPIO_GPPUD_PINS_PER_REGISTER);
 		regid = (pin / BCM2835_GPIO_GPPUD_PINS_PER_REGISTER);
 
-printf("2835: pin=%u, pud=%u, regid=%u, mask=%08x\n",pin,pud,regid,mask);
 		bus_space_write_4(sc->sc_iot, sc->sc_ioh,
 		    BCM2835_GPIO_GPPUD, pud);
 		delay(1);
@@ -841,7 +845,6 @@ printf("2835: pin=%u, pud=%u, regid=%u, mask=%08x\n",pin,pud,regid,mask);
 			pud = BCM2838_GPIO_GPPUD_PULLOFF;
 			break;
 		}
-printf("2838: pin=%u, pud=%u, regid=%u, mask=%08x\n",pin,pud,regid,mask);
 
 		reg = bus_space_read_4(sc->sc_iot, sc->sc_ioh,
 		    BCM2838_GPIO_GPPUPPDN(regid));
