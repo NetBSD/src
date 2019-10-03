@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_80_mod.c,v 1.4 2019/05/17 07:37:11 msaitoh Exp $	*/
+/*	$NetBSD: compat_80_mod.c,v 1.5 2019/10/03 19:56:16 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.4 2019/05/17 07:37:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_80_mod.c,v 1.5 2019/10/03 19:56:16 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -66,7 +66,7 @@ compat_80_fini(void)
 	return 0;
 }
 
-MODULE(MODULE_CLASS_EXEC, compat_80, NULL);
+MODULE(MODULE_CLASS_EXEC, compat_80, "compat_90");
 
 static int
 compat_80_modcmd(modcmd_t cmd, void *arg)
