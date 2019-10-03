@@ -1,4 +1,4 @@
-# $NetBSD: ad.aarch64,v 1.32 2019/03/22 11:09:43 uki Exp $
+# $NetBSD: ad.aarch64,v 1.33 2019/10/03 00:59:50 mrg Exp $
 ./usr/include/aarch64				comp-c-include
 ./usr/include/aarch64/ansi.h			comp-c-include
 ./usr/include/aarch64/aout_machdep.h		comp-c-include
@@ -135,13 +135,17 @@
 ./usr/include/gcc-4.8/mmintrin.h		comp-c-include		gcc=48
 ./usr/include/gcc-4.8/tgmath.h			comp-c-include		gcc=48
 ./usr/include/gcc-4.8/unwind-arm-common.h	comp-c-include		gcc=48,eabi
-./usr/include/gcc-6/arm_acle.h			comp-c-include		gcc=6
-./usr/include/gcc-6/arm_neon.h			comp-c-include		gcc=6
-./usr/include/gcc-6/tgmath.h			comp-c-include		gcc=6
+./usr/include/gcc-6/arm_acle.h			comp-c-include		obsolete
+./usr/include/gcc-6/arm_neon.h			comp-c-include		obsolete
+./usr/include/gcc-6/tgmath.h			comp-c-include		obsolete
 ./usr/include/gcc-7/arm_acle.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/arm_neon.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/arm_fp16.h			comp-c-include		gcc=7
+./usr/include/gcc-8/arm_acle.h			comp-c-include		gcc=8
+./usr/include/gcc-8/arm_neon.h			comp-c-include		gcc=8
+./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
+./usr/include/gcc-8/arm_fp16.h			comp-c-include		gcc=8
 ./usr/include/ieeefp.h				comp-c-include
 ./usr/lib/eabi/libarm.a				comp-c-lib		compat,llvm
 ./usr/lib/eabi/libarm.so			base-sys-shlib		compat,pic,llvm
