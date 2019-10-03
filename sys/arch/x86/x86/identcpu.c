@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.95 2019/09/12 06:39:47 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.96 2019/10/03 05:06:29 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.95 2019/09/12 06:39:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.96 2019/10/03 05:06:29 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -758,7 +758,6 @@ cpu_probe_fpu(struct cpu_info *ci)
 	u_int descs[4];
 	int i;
 
-	x86_fpu_eager = true;
 	x86_fpu_save = FPU_SAVE_FSAVE;
 
 #ifdef i386

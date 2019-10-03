@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.108 2019/08/07 06:23:48 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109 2019/10/03 05:06:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -462,7 +462,6 @@ extern uint64_t x86_xsave_features;
 extern size_t x86_xsave_offsets[];
 extern size_t x86_xsave_sizes[];
 extern uint32_t x86_fpu_mxcsr_mask;
-extern bool x86_fpu_eager;
 
 extern void (*x86_cpu_idle)(void);
 #define	cpu_idle() (*x86_cpu_idle)()
