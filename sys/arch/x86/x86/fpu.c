@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.55 2019/07/05 17:08:56 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.56 2019/10/03 05:06:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.55 2019/07/05 17:08:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.56 2019/10/03 05:06:29 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -127,7 +127,6 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.55 2019/07/05 17:08:56 maxv Exp $");
 #endif
 
 uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
-bool x86_fpu_eager __read_mostly = false;
 
 static inline union savefpu *
 lwp_fpuarea(struct lwp *l)
@@ -440,20 +439,13 @@ fputrap(struct trapframe *frame)
 }
 
 /*
- * Implement device not available (DNA) exception.
- *
- * If we were the last lwp to use the FPU, we can simply return.
- * Otherwise, we save the previous state, if necessary, and restore
- * our last saved state.
- *
- * Called directly from the trap 0x13 entry with interrupts still disabled.
+ * Implement device not available (DNA) exception. Called with interrupts still
+ * disabled.
  */
 void
 fpudna(struct trapframe *frame)
 {
 	struct cpu_info *ci = curcpu();
-	struct lwp *l, *fl;
-	struct pcb *pcb;
 	int s;
 
 	if (!USERMODE(frame->tf_cs)) {
@@ -461,55 +453,9 @@ fpudna(struct trapframe *frame)
 		    (void *)X86_TF_RIP(frame), frame);
 	}
 
-	s = splhigh();
-
-	/* Save state on current CPU. */
-	l = ci->ci_curlwp;
-	pcb = lwp_getpcb(l);
-	fl = ci->ci_fpcurlwp;
-	if (fl != NULL) {
-		if (__predict_false(x86_fpu_eager)) {
-			panic("%s: FPU busy with EagerFPU enabled",
-			    __func__);
-		}
-
-		/*
-		 * It seems we can get here on Xen even if we didn't
-		 * switch lwp.  In this case do nothing
-		 */
-		if (fl == l) {
-			KASSERT(pcb->pcb_fpcpu == ci);
-			clts();
-			splx(s);
-			return;
-		}
-		fpusave_cpu(true);
-	}
-
-	/* Save our state if on a remote CPU. */
-	if (pcb->pcb_fpcpu != NULL) {
-		if (__predict_false(x86_fpu_eager)) {
-			panic("%s: LWP busy with EagerFPU enabled",
-			    __func__);
-		}
-
-		/* Explicitly disable preemption before dropping spl. */
-		kpreempt_disable();
-		splx(s);
-
-		/* Actually enable interrupts */
-		x86_enable_intr();
-
-		fpusave_lwp(l, true);
-		KASSERT(pcb->pcb_fpcpu == NULL);
-		s = splhigh();
-		kpreempt_enable();
-	}
-
 	/* Install the LWP's FPU state. */
-	fpu_lwp_install(l);
-
-	KASSERT(ci == curcpu());
+	s = splhigh();
+	fpu_lwp_install(ci->ci_curlwp);
 	splx(s);
 }
 
@@ -625,14 +571,9 @@ fpu_clear(struct lwp *l, unsigned int x87_cw)
 	pcb = lwp_getpcb(l);
 
 	s = splhigh();
-	if (x86_fpu_eager) {
-		KASSERT(pcb->pcb_fpcpu == NULL ||
-		    pcb->pcb_fpcpu == curcpu());
-		fpusave_cpu(false);
-	} else {
-		splx(s);
-		fpusave_lwp(l, false);
-	}
+
+	KASSERT(pcb->pcb_fpcpu == NULL || pcb->pcb_fpcpu == curcpu());
+	fpusave_cpu(false);
 	KASSERT(pcb->pcb_fpcpu == NULL);
 
 	switch (x86_fpu_save) {
@@ -667,10 +608,8 @@ fpu_clear(struct lwp *l, unsigned int x87_cw)
 
 	pcb->pcb_fpu_dflt_cw = x87_cw;
 
-	if (x86_fpu_eager) {
-		fpu_lwp_install(l);
-		splx(s);
-	}
+	fpu_lwp_install(l);
+	splx(s);
 }
 
 void
@@ -1072,111 +1011,4 @@ process_write_xstate(struct lwp *l, const struct xstate *xstate)
 #undef COPY_COMPONENT
 
 	return 0;
-}
-
-/* -------------------------------------------------------------------------- */
-
-static volatile unsigned long eagerfpu_cpu_barrier1 __cacheline_aligned;
-static volatile unsigned long eagerfpu_cpu_barrier2 __cacheline_aligned;
-
-static void
-eager_change_cpu(void *arg1, void *arg2)
-{
-	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
-	int s;
-
-	s = splhigh();
-
-	/* Rendez-vous 1. */
-	atomic_dec_ulong(&eagerfpu_cpu_barrier1);
-	while (atomic_cas_ulong(&eagerfpu_cpu_barrier1, 0, 0) != 0) {
-		x86_pause();
-	}
-
-	fpusave_cpu(true);
-	if (ci == &cpu_info_primary) {
-		x86_fpu_eager = enabled;
-	}
-
-	/* Rendez-vous 2. */
-	atomic_dec_ulong(&eagerfpu_cpu_barrier2);
-	while (atomic_cas_ulong(&eagerfpu_cpu_barrier2, 0, 0) != 0) {
-		x86_pause();
-	}
-
-	splx(s);
-}
-
-static int
-eager_change(bool enabled)
-{
-	struct cpu_info *ci = NULL;
-	CPU_INFO_ITERATOR cii;
-	uint64_t xc;
-
-	mutex_enter(&cpu_lock);
-
-	/*
-	 * We expect all the CPUs to be online.
-	 */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		struct schedstate_percpu *spc = &ci->ci_schedstate;
-		if (spc->spc_flags & SPCF_OFFLINE) {
-			printf("[!] cpu%d offline, EagerFPU not changed\n",
-			    cpu_index(ci));
-			mutex_exit(&cpu_lock);
-			return EOPNOTSUPP;
-		}
-	}
-
-	/* Initialize the barriers */
-	eagerfpu_cpu_barrier1 = ncpu;
-	eagerfpu_cpu_barrier2 = ncpu;
-
-	printf("[+] %s EagerFPU...",
-	    enabled ? "Enabling" : "Disabling");
-	xc = xc_broadcast(0, eager_change_cpu,
-	    (void *)enabled, NULL);
-	xc_wait(xc);
-	printf(" done!\n");
-
-	mutex_exit(&cpu_lock);
-
-	return 0;
-}
-
-static int
-sysctl_machdep_fpu_eager(SYSCTLFN_ARGS)
-{
-	struct sysctlnode node;
-	int error;
-	bool val;
-
-	val = *(bool *)rnode->sysctl_data;
-
-	node = *rnode;
-	node.sysctl_data = &val;
-
-	error = sysctl_lookup(SYSCTLFN_CALL(&node));
-	if (error != 0 || newp == NULL)
-		return error;
-
-	if (val == x86_fpu_eager)
-		return 0;
-	return eager_change(val);
-}
-
-void sysctl_eagerfpu_init(struct sysctllog **);
-
-void
-sysctl_eagerfpu_init(struct sysctllog **clog)
-{
-	sysctl_createv(clog, 0, NULL, NULL,
-		       CTLFLAG_READWRITE,
-		       CTLTYPE_BOOL, "fpu_eager",
-		       SYSCTL_DESCR("Whether the kernel uses Eager FPU Switch"),
-		       sysctl_machdep_fpu_eager, 0,
-		       &x86_fpu_eager, 0,
-		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
