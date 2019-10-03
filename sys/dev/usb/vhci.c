@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.2 2019/09/14 12:32:08 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.3 2019/10/03 05:13:23 maxv Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.2 2019/09/14 12:32:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.3 2019/10/03 05:13:23 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -239,11 +239,10 @@ vhci_pkt_create(vhci_port_t *port, struct usbd_xfer *xfer, bool usb_to_host)
 		TAILQ_INSERT_TAIL(&vxfer->pkts, pkt, xferlist);
 
 	/* Insert in the port. */
-	mutex_enter(&port->lock);
+	KASSERT(mutex_owned(&port->lock));
 	TAILQ_INSERT_TAIL(reqlist, req, portlist);
 	if (pkt != NULL)
 		TAILQ_INSERT_TAIL(pktlist, pkt, portlist);
-	mutex_exit(&port->lock);
 }
 
 static void
@@ -508,7 +507,7 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 	vhci_port_t *port;
 	bool polling = sc->sc_bus.ub_usepolling;
 	bool isread = (req->bmRequestType & UT_READ) != 0;
-	int portno;
+	int portno, ret;
 
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
 	KASSERT(dev->ud_myhsport != NULL);
@@ -524,13 +523,21 @@ vhci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	if (!polling)
 		mutex_enter(&sc->sc_lock);
-	xfer->ux_status = USBD_IN_PROGRESS;
+
+	mutex_enter(&port->lock);
+	if (port->status & UPS_PORT_ENABLED) {
+		xfer->ux_status = USBD_IN_PROGRESS;
+		vhci_pkt_create(port, xfer, isread);
+		ret = USBD_IN_PROGRESS;
+	} else {
+		ret = USBD_IOERROR;
+	}
+	mutex_exit(&port->lock);
+
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	vhci_pkt_create(port, xfer, isread);
-
-	return USBD_IN_PROGRESS;
+	return ret;
 }
 
 static void
@@ -554,7 +561,7 @@ vhci_device_ctrl_abort(struct usbd_xfer *xfer)
 		return;
 
 	mutex_enter(&port->lock);
-	for (; vxfer->refcnt > 0; vxfer->refcnt--) {
+	while (vxfer->refcnt > 0) {
 		pkt = TAILQ_FIRST(&vxfer->pkts);
 		KASSERT(pkt != NULL);
 		vhci_pkt_destroy(sc, pkt);
@@ -708,9 +715,11 @@ vhci_usb_attach(vhci_fd_t *vfd, struct vhci_ioc_usb_attach *args)
 
 	mutex_enter(&sc->sc_lock);
 
+	mutex_enter(&port->lock);
 	port->status = UPS_CURRENT_CONNECT_STATUS | UPS_PORT_ENABLED |
 	    UPS_PORT_POWER;
 	port->change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
+	mutex_exit(&port->lock);
 
 	xfer = sc->sc_intrxfer;
 
@@ -741,7 +750,7 @@ vhci_port_flush(vhci_softc_t *sc, vhci_port_t *port)
 	vhci_xfer_t *vxfer;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-	mutex_enter(&port->lock);
+	KASSERT(mutex_owned(&port->lock));
 
 	TAILQ_INIT(&vxferlist);
 
@@ -769,12 +778,9 @@ vhci_port_flush(vhci_softc_t *sc, vhci_port_t *port)
 		struct usbd_xfer *xfer = &vxfer->xfer;
 		TAILQ_REMOVE(&vxferlist, vxfer, freelist);
 
-		xfer->ux_actlen = xfer->ux_length;
-		xfer->ux_status = USBD_NORMAL_COMPLETION;
+		xfer->ux_status = USBD_TIMEOUT;
 		usb_transfer_complete(xfer);
 	}
-
-	mutex_exit(&port->lock);
 }
 
 static int
@@ -797,6 +803,8 @@ vhci_usb_detach(vhci_fd_t *vfd, struct vhci_ioc_usb_detach *args)
 		return ENOBUFS;
 	}
 
+	mutex_enter(&port->lock);
+
 	port->status = 0;
 	port->change = UPS_C_CONNECT_STATUS | UPS_C_PORT_RESET;
 
@@ -808,8 +816,9 @@ vhci_usb_detach(vhci_fd_t *vfd, struct vhci_ioc_usb_detach *args)
 
 	usb_transfer_complete(xfer);
 	vhci_port_flush(sc, port);
-	mutex_exit(&sc->sc_lock);
 
+	mutex_exit(&port->lock);
+	mutex_exit(&sc->sc_lock);
 	return 0;
 }
 
@@ -905,11 +914,13 @@ vhci_fd_close(file_t *fp)
 {
 	struct vhci_ioc_usb_detach args;
 	vhci_fd_t *vfd = fp->f_data;
+	int ret __diagused;
 
 	KASSERT(vfd != NULL);
 
 	args.port = vfd->port;
-	vhci_usb_detach(vfd, &args);
+	ret = vhci_usb_detach(vfd, &args);
+	KASSERT(ret == 0);
 
 	kmem_free(vfd, sizeof(*vfd));
 	fp->f_data = NULL;
@@ -1022,6 +1033,7 @@ vhci_fd_write(struct file *fp, off_t *offp, struct uio *uio, kauth_cred_t cred,
 	TAILQ_FOREACH_SAFE(pkt, pktlist, portlist, nxt) {
 		vxfer = (vhci_xfer_t *)pkt->xfer;
 		buf = pkt->buf + pkt->cursor;
+		KASSERT(pkt->size >= pkt->cursor);
 		size = uimin(uio->uio_resid, pkt->size - pkt->cursor);
 
 		KASSERT(vxfer->xfer.ux_status == USBD_IN_PROGRESS);
@@ -1087,9 +1099,10 @@ vhci_fd_ioctl(file_t *fp, u_long cmd, void *data)
 
 static int vhci_match(device_t, cfdata_t, void *);
 static void vhci_attach(device_t, device_t, void *);
+static int vhci_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(vhci, sizeof(vhci_softc_t), vhci_match, vhci_attach,
-    NULL, NULL);
+    NULL, vhci_activate);
 
 void
 vhciattach(int nunits)
@@ -1111,6 +1124,20 @@ vhciattach(int nunits)
 	}
 
 	config_attach_pseudo(&vhci_cfdata);
+}
+
+static int
+vhci_activate(device_t self, enum devact act)
+{
+	vhci_softc_t *sc = device_private(self);
+
+	switch (act) {
+	case DVACT_DEACTIVATE:
+		sc->sc_dying = 1;
+		return 0;
+	default:
+		return EOPNOTSUPP;
+	}
 }
 
 static int
