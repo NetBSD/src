@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.56 2015/08/24 22:21:26 pooka Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.57 2019/10/03 17:46:56 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.56 2015/08/24 22:21:26 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.57 2019/10/03 17:46:56 jmcneill Exp $");
 #endif
 
 /*
@@ -464,7 +464,7 @@ ieee80211_announce(struct ieee80211com *ic)
 	for (mode = IEEE80211_MODE_11A; mode < IEEE80211_MODE_MAX; mode++) {
 		if ((ic->ic_modecaps & (1<<mode)) == 0)
 			continue;
-		aprint_normal("%s: %s rates: ", ifp->if_xname,
+		aprint_debug("%s: %s rates: ", ifp->if_xname,
 		    ieee80211_phymode_name[mode]);
 		rs = &ic->ic_sup_rates[mode];
 		for (i = 0; i < rs->rs_nrates; i++) {
@@ -472,11 +472,11 @@ ieee80211_announce(struct ieee80211com *ic)
 			mword = ieee80211_rate2media(ic, rate, mode);
 			if (mword == 0)
 				continue;
-			aprint_normal("%s%d%sMbps", (i != 0 ? " " : ""),
+			aprint_debug("%s%d%sMbps", (i != 0 ? " " : ""),
 			    (rate & IEEE80211_RATE_VAL) / 2,
 			    ((rate & 0x1) != 0 ? ".5" : ""));
 		}
-		aprint_normal("\n");
+		aprint_debug("\n");
 	}
 }
 
