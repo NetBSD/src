@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.224 2019/09/30 10:22:14 knakahara Exp $	*/
+/*	$NetBSD: route.c,v 1.225 2019/10/03 03:10:02 knakahara Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.224 2019/09/30 10:22:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.225 2019/10/03 03:10:02 knakahara Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -1400,11 +1400,8 @@ rt_update_get_ifa(const struct rt_addrinfo *info, const struct rtentry *rt,
 		*ifp = ifa->ifa_ifp;
 		if_acquire(*ifp, psref_ifp);
 		if (info->rti_info[RTAX_IFA] == NULL &&
-		    info->rti_info[RTAX_GATEWAY] == NULL) {
-			ifa_release(ifa, psref);
-			ifa = NULL;
-			goto next;
-		}
+		    info->rti_info[RTAX_GATEWAY] == NULL)
+			goto out;
 		ifa_release(ifa, psref);
 		if (info->rti_info[RTAX_IFA] == NULL) {
 			/* route change <dst> <gw> -ifp <if> */
