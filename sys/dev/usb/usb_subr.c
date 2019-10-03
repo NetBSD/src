@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.240 2019/09/15 09:24:38 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.241 2019/10/03 05:20:31 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.240 2019/09/15 09:24:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.241 2019/10/03 05:20:31 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1479,6 +1479,15 @@ usbd_remove_device(struct usbd_device *dev, struct usbd_port *up)
 	up->up_dev = NULL;
 	dev->ud_bus->ub_devices[usb_addr2dindex(dev->ud_addr)] = NULL;
 
+	if (dev->ud_vendor != NULL) {
+		kmem_free(dev->ud_vendor, USB_MAX_ENCODED_STRING_LEN);
+	}
+	if (dev->ud_product != NULL) {
+		kmem_free(dev->ud_product, USB_MAX_ENCODED_STRING_LEN);
+	}
+	if (dev->ud_serial != NULL) {
+		kmem_free(dev->ud_serial, USB_MAX_ENCODED_STRING_LEN);
+	}
 	kmem_free(dev, sizeof(*dev));
 }
 
