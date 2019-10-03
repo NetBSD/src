@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.38 2019/10/03 13:49:33 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.39 2019/10/03 15:10:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.38 2019/10/03 13:49:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.39 2019/10/03 15:10:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -633,7 +633,8 @@ sunxi_mmc_intr(void *priv)
 			/* Wait for command to complete */
 			sc->sc_wait_data = sc->sc_wait_dma = false;
 			if (cmd->c_opcode != SD_IO_SEND_OP_COND &&
-			    cmd->c_opcode != SD_IO_RW_DIRECT)
+			    cmd->c_opcode != SD_IO_RW_DIRECT &&
+			    !ISSET(cmd->c_flags, SCF_TOUT_OK))
 				device_printf(sc->sc_dev, "host controller timeout, mint=0x%08x\n", mint);
 		} else {
 			device_printf(sc->sc_dev, "host controller error, mint=0x%08x\n", mint);
