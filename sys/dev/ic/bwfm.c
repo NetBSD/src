@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.16 2019/09/02 07:25:48 mlelstv Exp $ */
+/* $NetBSD: bwfm.c,v 1.17 2019/10/03 14:42:20 jmcneill Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -112,6 +112,7 @@ int	 bwfm_fwvar_var_set_int(struct bwfm_softc *, const char *, uint32_t);
 struct ieee80211_channel *bwfm_bss2chan(struct bwfm_softc *, struct bwfm_bss_info *);
 void	 bwfm_scan(struct bwfm_softc *);
 void	 bwfm_connect(struct bwfm_softc *);
+void	 bwfm_get_sta_info(struct bwfm_softc *, struct ifmediareq *);
 
 void	 bwfm_rx(struct bwfm_softc *, struct mbuf *);
 void	 bwfm_rx_event(struct bwfm_softc *, struct mbuf *);
@@ -510,6 +511,12 @@ bwfm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			/* setup multicast filter, etc */
 			error = 0;
 		}
+		break;
+
+	case SIOCGIFMEDIA:
+		error = ieee80211_ioctl(ic, cmd, data);
+		if (error == 0 && ic->ic_state == IEEE80211_S_RUN)
+			bwfm_get_sta_info(sc, (struct ifmediareq *)data);
 		break;
 
 	default:
@@ -1785,6 +1792,50 @@ bwfm_connect(struct bwfm_softc *sc)
 			    sizeof(join));
 		}
 		kmem_free(params, sizeof(*params));
+	}
+}
+
+void
+bwfm_get_sta_info(struct bwfm_softc *sc, struct ifmediareq *ifmr)
+{
+	struct ieee80211com *ic = &sc->sc_ic;
+	struct ieee80211_node *ni = ic->ic_bss;
+	struct bwfm_sta_info sta;
+	uint32_t flags, txrate;
+
+	memset(&sta, 0, sizeof(sta));
+	memcpy(&sta, ni->ni_macaddr, sizeof(ni->ni_macaddr));
+
+	if (bwfm_fwvar_var_get_data(sc, "sta_info", &sta, sizeof(sta)))
+		return;
+
+	if (!IEEE80211_ADDR_EQ(ni->ni_macaddr, sta.ea))
+		return;
+
+	if (le16toh(sta.ver) < 4)
+		return;
+
+	flags = le32toh(sta.flags);
+	if ((flags & BWFM_STA_SCBSTATS) == 0)
+		return;
+
+	txrate = le32toh(sta.tx_rate);
+	if (txrate == 0xffffffff)
+		return;
+
+	if ((flags & BWFM_STA_VHT_CAP) != 0) {
+		ifmr->ifm_active &= ~IFM_TMASK;
+		ifmr->ifm_active |= IFM_IEEE80211_VHT;
+		ifmr->ifm_active &= ~IFM_MMASK;
+		ifmr->ifm_active |= IFM_IEEE80211_11AC;
+	} else if ((flags & BWFM_STA_N_CAP) != 0) {
+		ifmr->ifm_active &= ~IFM_TMASK;
+		ifmr->ifm_active |= IFM_IEEE80211_MCS;
+		ifmr->ifm_active &= ~IFM_MMASK;
+		if (IEEE80211_IS_CHAN_2GHZ(ic->ic_curchan))
+			ifmr->ifm_active |= IFM_IEEE80211_11NG;
+		else
+			ifmr->ifm_active |= IFM_IEEE80211_11NA;
 	}
 }
 
