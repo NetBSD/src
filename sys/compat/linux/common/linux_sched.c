@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_sched.c,v 1.71 2018/04/16 14:51:59 kamil Exp $	*/
+/*	$NetBSD: linux_sched.c,v 1.72 2019/10/03 22:16:53 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.71 2018/04/16 14:51:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_sched.c,v 1.72 2019/10/03 22:16:53 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/mount.h>
@@ -255,7 +255,7 @@ linux_clone_nptl(struct lwp *l, const struct linux_sys_clone_args *uap, register
 	mutex_enter(p->p_lock);
 	lwp_lock(l2);
 	spc = &l2->l_cpu->ci_schedstate;
-	if ((l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
+	if ((l->l_flag & (LW_WREBOOT | LW_DBGSUSPEND | LW_WSUSPEND | LW_WEXIT)) == 0) {
 	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 			KASSERT(l2->l_wchan == NULL);
 	    		l2->l_stat = LSSTOP;

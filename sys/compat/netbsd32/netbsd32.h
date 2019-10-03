@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.126 2019/09/26 01:30:46 christos Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.127 2019/10/03 22:16:53 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -1003,7 +1003,7 @@ struct netbsd32_kevent {
 	uint32_t		flags;
 	uint32_t		fflags;
 	netbsd32_int64		data;
-	netbsd32_intptr_t	udata;
+	netbsd32_pointer_t	udata;
 };
 
 /* from <sys/sched.h> */

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.39 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.40 2019/10/03 22:16:53 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -754,7 +754,7 @@ netbsd32_to_kevent(struct netbsd32_kevent *ke32, struct kevent *ke)
 	ke->flags = ke32->flags;
 	ke->fflags = ke32->fflags;
 	ke->data = ke32->data;
-	ke->udata = ke32->udata;
+	ke->udata = NETBSD32PTR64(ke32->udata);
 }
 
 static __inline void
@@ -765,7 +765,7 @@ netbsd32_from_kevent(struct kevent *ke, struct netbsd32_kevent *ke32)
 	ke32->flags = ke->flags;
 	ke32->fflags = ke->fflags;
 	ke32->data = ke->data;
-	ke32->udata = ke->udata;
+	NETBSD32PTR32(ke32->udata, ke->udata);
 }
 
 static __inline void
