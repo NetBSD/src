@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.93 2019/07/16 14:41:43 skrll Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.94 2019/10/03 15:36:24 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.93 2019/07/16 14:41:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.94 2019/10/03 15:36:24 msaitoh Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -518,7 +518,7 @@ initarm(void *cookie)
 #endif
 	for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; ++loop) {
 #ifdef VERBOSE_INIT_ARM
-		printf("0x0x%x + 0x%0x, type = 0x%08x\n", bootconfig.dram[loop].address,
+		printf("0x%x + 0x%0x, type = 0x%08x\n", bootconfig.dram[loop].address,
 				 bootconfig.dram[loop].pages * PAGE_SIZE,
 				 bootconfig.dram[loop].flags);
 #endif
