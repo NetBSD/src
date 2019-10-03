@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.68 2019/09/30 16:06:03 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.69 2019/10/03 17:35:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4195,4 +4195,78 @@ sys/netinet6/nd6_nbr.c				1.174
 	Initialize dom_mowner for MBUFTRACE.
 	Initialize DAD components properly during boot.
 	[ozaki-r, ticket #269]
+
+sys/arch/luna68k/dev/lunafb.c			1.41
+
+	Correct size of the framebuffer.
+	[rin, ticket #271]
+
+sys/net/route.c					1.222,1.224,1.225
+
+	Stop passing a large const structure by value, in order to avoid
+	possible kernel stack overflow; const pointer is suffice here.
+	Refactor a bit.
+	[knakahara, ticket #272]
+
+sys/arch/evbarm/conf/GENERIC64			1.108
+sys/arch/evbarm/conf/files.evbarm		1.33
+
+	Increase maxusers to 64 for 64-bit kernels
+	[jmcneill, ticket #273]
+
+sys/external/bsd/ipf/netinet/fil.c		1.31
+sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.32,1.33
+
+	- pfil_run_hooks() can be called recursively, so we have to
+	  #define FASTROUTE_RECURSION in fil.c
+	- ip6_if_output()/nd6_output() will free the mbuf on error, to make sure
+	  to set *mpp to NULL so the caller won't try to free it again.
+	[bouyer, ticket #274]
+
+sys/kern/sysv_shm.c				1.139
+
+	in shmdt(), wait until shmat() completes before detaching.
+	[chs, ticket #275]
+
+sys/arch/arm/amlogic/meson_pinctrl.c		1.6
+sys/arch/arm/broadcom/bcm2835_gpio.c		1.14
+sys/arch/arm/nvidia/tegra_pinmux.c		1.4
+sys/arch/arm/rockchip/rk3328_iomux.c		1.3
+sys/arch/arm/rockchip/rk3399_iomux.c		1.6
+sys/arch/arm/samsung/exynos_pinctrl.c		1.14
+sys/arch/arm/sunxi/sunxi_gpio.c			1.27
+sys/dev/fdt/fdt_pinctrl.c			1.10
+sys/dev/fdt/fdtbus.c				1.30
+sys/dev/fdt/fdtvar.h				1.54
+sys/dev/i2c/axppmic.c				1.26
+
+	Add support for devices with separate "init" and "default"
+	pinctrl states.
+	[jmcneill, ticket #276]
+
+sys/arch/i386/stand/pxeboot/Makefile		1.28
+sys/arch/i386/stand/pxeboot/start_pxe.S		1.7
+
+	Incrase pxeboot code size limit from 64k to 128k.
+	[manu, ticket #277]
+
+external/bsd/jemalloc/dist/src/jemalloc.c	1.8
+
+	Make realloc(ptr, 0) return a valid pointer (again).
+	[christos, ticket #278]
+
+external/mpl/bind/dist/lib/isc/siphash.c	1.3
+
+	Fix unaligned pointer access in bind.
+	[christos, ticket #279]
+
+external/gpl3/gdb/dist/gdb/arm-nbsd-tdep.c	1.5
+
+	arm: fix gdb core-dump register fetching.
+	[christos, ticket #280]
+
+external/gpl3/gdb/dist/gdb/arm-nbsd-nat.c	1.13
+
+	Validate register number before fetching/storing it.
+	[christos, ticket #281]
 
