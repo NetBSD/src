@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.37 2019/09/05 17:25:23 bouyer Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.38 2019/10/03 13:49:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.37 2019/09/05 17:25:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.38 2019/10/03 13:49:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,6 +98,7 @@ static void	sunxi_mmc_attach_i(device_t);
 static int	sunxi_mmc_intr(void *);
 static int	sunxi_mmc_dmabounce_setup(struct sunxi_mmc_softc *);
 static int	sunxi_mmc_idma_setup(struct sunxi_mmc_softc *);
+static void	sunxi_mmc_dma_complete(struct sunxi_mmc_softc *, struct sdmmc_command *);
 
 static int	sunxi_mmc_host_reset(sdmmc_chipset_handle_t);
 static uint32_t	sunxi_mmc_host_ocr(sdmmc_chipset_handle_t);
@@ -153,7 +154,6 @@ struct sunxi_mmc_softc {
 	void *sc_ih;
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_intr_cv;
-	kcondvar_t sc_idst_cv;
 
 	int sc_mmc_width;
 	int sc_mmc_present;
@@ -175,10 +175,6 @@ struct sunxi_mmc_softc {
 	void *sc_dmabounce_buf;
 	size_t sc_dmabounce_buflen;
 
-	uint32_t sc_intr_rint;
-	uint32_t sc_intr_card;
-	uint32_t sc_idma_idst;
-
 	struct clk *sc_clk_ahb;
 	struct clk *sc_clk_mmc;
 	struct clk *sc_clk_output;
@@ -198,6 +194,12 @@ struct sunxi_mmc_softc {
 
 	bool sc_non_removable;
 	bool sc_broken_cd;
+
+	uint32_t sc_intr_card;
+	struct sdmmc_command *sc_curcmd;
+	bool sc_wait_dma;
+	bool sc_wait_cmd;
+	bool sc_wait_data;
 };
 
 CFATTACH_DECL_NEW(sunxi_mmc, sizeof(struct sunxi_mmc_softc),
@@ -351,8 +353,7 @@ sunxi_mmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_dmat = faa->faa_dmat;
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
-	cv_init(&sc->sc_intr_cv, "awinmmcirq");
-	cv_init(&sc->sc_idst_cv, "awinmmcdma");
+	cv_init(&sc->sc_intr_cv, "sunximmcirq");
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
@@ -598,78 +599,89 @@ static int
 sunxi_mmc_intr(void *priv)
 {
 	struct sunxi_mmc_softc *sc = priv;
-	uint32_t idst, rint, imask;
+	struct sdmmc_command *cmd;
+	uint32_t idst, mint, imask;
 
 	mutex_enter(&sc->sc_intr_lock);
 	idst = MMC_READ(sc, SUNXI_MMC_IDST);
-	rint = MMC_READ(sc, SUNXI_MMC_RINT);
-	if (!idst && !rint) {
+	mint = MMC_READ(sc, SUNXI_MMC_MINT);
+	if (!idst && !mint) {
 		mutex_exit(&sc->sc_intr_lock);
 		return 0;
 	}
 	MMC_WRITE(sc, SUNXI_MMC_IDST, idst);
-	MMC_WRITE(sc, SUNXI_MMC_RINT, rint);
+	MMC_WRITE(sc, SUNXI_MMC_RINT, mint);
 
-	DPRINTF(sc->sc_dev, "mmc intr idst=%08X rint=%08X\n",
-	    idst, rint);
+	cmd = sc->sc_curcmd;
 
-	if (idst != 0) {
-		MMC_WRITE(sc, SUNXI_MMC_IDIE, 0);
-		sc->sc_idma_idst |= idst;
-		cv_broadcast(&sc->sc_idst_cv);
-	}
+	DPRINTF(sc->sc_dev, "mmc intr idst=%08X mint=%08X\n",
+	    idst, mint);
 
-	if ((rint & ~SUNXI_MMC_INT_SDIO_INT) != 0) {
-		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
-		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & SUNXI_MMC_INT_SDIO_INT);
-		sc->sc_intr_rint |= (rint & ~SUNXI_MMC_INT_SDIO_INT);
-		cv_broadcast(&sc->sc_intr_cv);
-	}
-
-	if ((rint & SUNXI_MMC_INT_SDIO_INT) != 0) {
+	/* Handle SDIO card interrupt */
+	if ((mint & SUNXI_MMC_INT_SDIO_INT) != 0) {
 		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
 		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & ~SUNXI_MMC_INT_SDIO_INT);
 		sdmmc_card_intr(sc->sc_sdmmc_dev);
 	}
 
+	/* Error interrupts take priority over command and transfer interrupts */
+	if (cmd != NULL && (mint & SUNXI_MMC_INT_ERROR) != 0) {
+		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
+		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & ~SUNXI_MMC_INT_ERROR);
+		if ((mint & SUNXI_MMC_INT_RESP_TIMEOUT) != 0) {
+			cmd->c_error = ETIMEDOUT;
+			/* Wait for command to complete */
+			sc->sc_wait_data = sc->sc_wait_dma = false;
+			if (cmd->c_opcode != SD_IO_SEND_OP_COND &&
+			    cmd->c_opcode != SD_IO_RW_DIRECT)
+				device_printf(sc->sc_dev, "host controller timeout, mint=0x%08x\n", mint);
+		} else {
+			device_printf(sc->sc_dev, "host controller error, mint=0x%08x\n", mint);
+			cmd->c_error = EIO;
+			SET(cmd->c_flags, SCF_ITSDONE);
+			goto done;
+		}
+	}
+
+	if (cmd != NULL && (idst & SUNXI_MMC_IDST_RECEIVE_INT) != 0) {
+		MMC_WRITE(sc, SUNXI_MMC_IDIE, 0);
+		if (sc->sc_wait_dma == false)
+			device_printf(sc->sc_dev, "unexpected DMA receive interrupt\n");
+		sc->sc_wait_dma = false;
+	}
+
+	if (cmd != NULL && (mint & SUNXI_MMC_INT_CMD_DONE) != 0) {
+		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
+		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & ~SUNXI_MMC_INT_CMD_DONE);
+		if (sc->sc_wait_cmd == false)
+			device_printf(sc->sc_dev, "unexpected command complete interrupt\n");
+		sc->sc_wait_cmd = false;
+	}
+
+	const uint32_t dmadone_mask = SUNXI_MMC_INT_AUTO_CMD_DONE|SUNXI_MMC_INT_DATA_OVER;
+	if (cmd != NULL && (mint & dmadone_mask) != 0) {
+		imask = MMC_READ(sc, SUNXI_MMC_IMASK);
+		MMC_WRITE(sc, SUNXI_MMC_IMASK, imask & ~dmadone_mask);
+		if (sc->sc_wait_data == false)
+			device_printf(sc->sc_dev, "unexpected data complete interrupt\n");
+		sc->sc_wait_data = false;
+	}
+
+	if (cmd != NULL &&
+	    sc->sc_wait_dma == false &&
+	    sc->sc_wait_cmd == false &&
+	    sc->sc_wait_data == false) {
+		SET(cmd->c_flags, SCF_ITSDONE);
+	}
+
+done:
+	if (cmd != NULL && ISSET(cmd->c_flags, SCF_ITSDONE)) {
+		cv_broadcast(&sc->sc_intr_cv);
+	}
+
 	mutex_exit(&sc->sc_intr_lock);
 
 	return 1;
-}
-
-static int
-sunxi_mmc_wait_rint(struct sunxi_mmc_softc *sc, uint32_t mask,
-    int secs, bool poll)
-{
-	int retry;
-	int error;
-
-	KASSERT(mutex_owned(&sc->sc_intr_lock));
-
-	if (sc->sc_intr_rint & mask)
-		return 0;
-
-	if (poll) {
-		retry = secs * 1000;
-		while (retry > 0) {
-			sc->sc_intr_rint |= MMC_READ(sc, SUNXI_MMC_RINT);
-			if (sc->sc_intr_rint & mask)
-				return 0;
-			delay(1000);	
-			--retry;
-		}
-		return ETIMEDOUT;
-	} else {
-		struct bintime timeout = { .sec = secs, .frac = 0 };
-		const struct bintime epsilon = { .sec = 1, .frac = 0 };
-		while ((sc->sc_intr_rint & mask) == 0) {
-			error = cv_timedwaitbt(&sc->sc_intr_cv,
-			    &sc->sc_intr_lock, &timeout, &epsilon);
-			if (error != 0)
-				return error;
-		}
-		return 0;
-	}
 }
 
 static int
@@ -1039,8 +1051,6 @@ sunxi_mmc_dma_prepare(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_idma_map, 0,
 	    sc->sc_idma_size, BUS_DMASYNC_PREWRITE);
 
-	sc->sc_idma_idst = 0;
-
 	MMC_WRITE(sc, SUNXI_MMC_DLBA, desc_paddr);
 	MMC_WRITE(sc, SUNXI_MMC_FTRGLEVEL, sc->sc_config->dma_ftrglevel);
 
@@ -1066,6 +1076,7 @@ static void
 sunxi_mmc_dma_complete(struct sunxi_mmc_softc *sc, struct sdmmc_command *cmd)
 {
 	MMC_WRITE(sc, SUNXI_MMC_DMAC, 0);
+	MMC_WRITE(sc, SUNXI_MMC_IDIE, 0);
 
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_idma_map, 0,
 	    sc->sc_idma_size, BUS_DMASYNC_POSTWRITE);
@@ -1088,16 +1099,24 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 {
 	struct sunxi_mmc_softc *sc = sch;
 	uint32_t cmdval = SUNXI_MMC_CMD_START;
-	uint32_t imask, oimask;
-	const bool poll = (cmd->c_flags & SCF_POLL) != 0;
-	int retry;
+	uint32_t imask;
+	int retry, error;
 
 	DPRINTF(sc->sc_dev,
-	    "opcode %d flags 0x%x data %p datalen %d blklen %d poll %d\n",
+	    "opcode %d flags 0x%x data %p datalen %d blklen %d\n",
 	    cmd->c_opcode, cmd->c_flags, cmd->c_data, cmd->c_datalen,
-	    cmd->c_blklen, poll);
+	    cmd->c_blklen);
 
 	mutex_enter(&sc->sc_intr_lock);
+	if (sc->sc_curcmd != NULL) {
+		device_printf(sc->sc_dev,
+		    "WARNING: driver submitted a command while the controller was busy\n");
+		cmd->c_error = EBUSY;
+		SET(cmd->c_flags, SCF_ITSDONE);
+		mutex_exit(&sc->sc_intr_lock);
+		return;
+	}
+	sc->sc_curcmd = cmd;
 
 	if (cmd->c_opcode == 0)
 		cmdval |= SUNXI_MMC_CMD_SEND_INIT_SEQ;
@@ -1108,8 +1127,7 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_flags & SCF_RSP_CRC)
 		cmdval |= SUNXI_MMC_CMD_CHECK_RSP_CRC;
 
-	imask = oimask = MMC_READ(sc, SUNXI_MMC_IMASK);
-	imask |= SUNXI_MMC_INT_ERROR;
+	imask = SUNXI_MMC_INT_ERROR | SUNXI_MMC_INT_CMD_DONE;
 
 	if (cmd->c_datalen > 0) {
 		unsigned int nblks;
@@ -1132,78 +1150,49 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 		MMC_WRITE(sc, SUNXI_MMC_BLKSZ, cmd->c_blklen);
 		MMC_WRITE(sc, SUNXI_MMC_BYTECNT, nblks * cmd->c_blklen);
-	} else {
-		imask |= SUNXI_MMC_INT_CMD_DONE;
 	}
 
-	MMC_WRITE(sc, SUNXI_MMC_IMASK, imask);
-	MMC_WRITE(sc, SUNXI_MMC_RINT, 0xffff);
-
-	sc->sc_intr_rint = 0;
+	MMC_WRITE(sc, SUNXI_MMC_IMASK, imask | sc->sc_intr_card);
+	MMC_WRITE(sc, SUNXI_MMC_RINT, 0x7fff);
 
 	MMC_WRITE(sc, SUNXI_MMC_A12A,
 	    (cmdval & SUNXI_MMC_CMD_SEND_AUTO_STOP) ? 0 : 0xffff);
 
 	MMC_WRITE(sc, SUNXI_MMC_ARG, cmd->c_arg);
 
+	cmd->c_resid = cmd->c_datalen;
+	if (cmd->c_resid > 0) {
+		cmd->c_error = sunxi_mmc_dma_prepare(sc, cmd);
+		if (cmd->c_error != 0) {
+			SET(cmd->c_flags, SCF_ITSDONE);
+			goto done;
+		}
+		sc->sc_wait_dma = ISSET(cmd->c_flags, SCF_CMD_READ);
+		sc->sc_wait_data = true;
+	} else {
+		sc->sc_wait_dma = false;
+		sc->sc_wait_data = false;
+	}
+	sc->sc_wait_cmd = true;
+
 	DPRINTF(sc->sc_dev, "cmdval = %08x\n", cmdval);
 
-	if (cmd->c_datalen == 0) {
-		MMC_WRITE(sc, SUNXI_MMC_CMD, cmdval | cmd->c_opcode);
-	} else {
-		cmd->c_resid = cmd->c_datalen;
-		cmd->c_error = sunxi_mmc_dma_prepare(sc, cmd);
-		MMC_WRITE(sc, SUNXI_MMC_CMD, cmdval | cmd->c_opcode);
-		if (cmd->c_error == 0 && ISSET(cmd->c_flags, SCF_CMD_READ)) {
-			const uint32_t idst_mask = SUNXI_MMC_IDST_RECEIVE_INT;
+	MMC_WRITE(sc, SUNXI_MMC_CMD, cmdval | cmd->c_opcode);
 
-			retry = 10;
-			while ((sc->sc_idma_idst & idst_mask) == 0) {
-				if (retry-- == 0) {
-					cmd->c_error = ETIMEDOUT;
-					break;
-				}
-				cv_timedwait(&sc->sc_idst_cv,
-				    &sc->sc_intr_lock, hz);
-			}
-		}
-	}
-
-	cmd->c_error = sunxi_mmc_wait_rint(sc,
-	    SUNXI_MMC_INT_ERROR|SUNXI_MMC_INT_CMD_DONE, 5, poll);
-	if (cmd->c_error == 0 && (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
-		if (sc->sc_intr_rint & SUNXI_MMC_INT_RESP_TIMEOUT) {
-			cmd->c_error = ETIMEDOUT;
-		} else {
-			cmd->c_error = EIO;
-		}
-	}
-	if (cmd->c_error) {
-		DPRINTF(sc->sc_dev,
-		    "cmd failed, error %d\n", cmd->c_error);
-		goto done;
-	}
-		
-	if (cmd->c_datalen > 0) {
-		sunxi_mmc_dma_complete(sc, cmd);
-
-		cmd->c_error = sunxi_mmc_wait_rint(sc,
-		    SUNXI_MMC_INT_ERROR|
-		    SUNXI_MMC_INT_AUTO_CMD_DONE|
-		    SUNXI_MMC_INT_DATA_OVER,
-		    5, poll);
-		if (cmd->c_error == 0 &&
-		    (sc->sc_intr_rint & SUNXI_MMC_INT_ERROR)) {
-			cmd->c_error = ETIMEDOUT;
-		}
-		if (cmd->c_error) {
-			DPRINTF(sc->sc_dev,
-			    "data timeout, rint = %08x\n",
-			    sc->sc_intr_rint);
-			cmd->c_error = ETIMEDOUT;
+	struct bintime timeout = { .sec = 15, .frac = 0 };
+	const struct bintime epsilon = { .sec = 1, .frac = 0 };
+	while (!ISSET(cmd->c_flags, SCF_ITSDONE)) {
+		error = cv_timedwaitbt(&sc->sc_intr_cv,
+		    &sc->sc_intr_lock, &timeout, &epsilon);
+		if (error != 0) {
+			cmd->c_error = error;
+			SET(cmd->c_flags, SCF_ITSDONE);
 			goto done;
 		}
 	}
+
+	if (cmd->c_error == 0 && cmd->c_datalen > 0)
+		sunxi_mmc_dma_complete(sc, cmd);
 
 	if (cmd->c_flags & SCF_RSP_PRESENT) {
 		if (cmd->c_flags & SCF_RSP_136) {
@@ -1226,11 +1215,11 @@ sunxi_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 
 done:
-	cmd->c_flags |= SCF_ITSDONE;
-	MMC_WRITE(sc, SUNXI_MMC_IMASK,
-	    (oimask & ~SUNXI_MMC_INT_SDIO_INT) | sc->sc_intr_card);
-	MMC_WRITE(sc, SUNXI_MMC_RINT, 0xffff);
+	KASSERT(ISSET(cmd->c_flags, SCF_ITSDONE));
+	MMC_WRITE(sc, SUNXI_MMC_IMASK, sc->sc_intr_card);
+	MMC_WRITE(sc, SUNXI_MMC_RINT, 0x7fff);
 	MMC_WRITE(sc, SUNXI_MMC_IDST, 0x337);
+	sc->sc_curcmd = NULL;
 	mutex_exit(&sc->sc_intr_lock);
 
 	if (cmd->c_error) {
