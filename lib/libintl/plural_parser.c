@@ -1,4 +1,4 @@
-/*	$NetBSD: plural_parser.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $	*/
+/*	$NetBSD: plural_parser.c,v 1.3 2019/10/03 16:37:45 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005 Citrus Project,
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: plural_parser.c,v 1.2 2007/01/17 23:24:22 hubertf Exp $");
+__RCSID("$NetBSD: plural_parser.c,v 1.3 2019/10/03 16:37:45 christos Exp $");
 
 #include <assert.h>
 #include <stdio.h>
@@ -188,8 +188,9 @@ retry:
 			return T_LAND;
 		case '|':
 			return T_LOR;
+		default:
+			return T_ILTOKEN;
 		}
-		/*NOTREACHED*/
 	case '=': case '!': case '<': case '>':
 		prevch = ch;
 		ch = _memstream_getc(&tcx->memstream);
