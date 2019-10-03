@@ -32,7 +32,7 @@
  */
 #define	MPCORE_PMR_SCU 	0x0000
 #define	MPCORE_PMR_CII 	0x0100	/* CPU Interrupt Interface (for current core) */
-#define	MPCORE_PMR_CII_CORE(n)	(0x0x200 + 0x100 * (n))	/* for core N */
+#define	MPCORE_PMR_CII_CORE(n)	(0x200 + 0x100 * (n))	/* for core N */
 #define	MPCORE_PMR_CII_SIZE	0x100
 #define	MPCORE_PMR_TIMER	0x600	/* for current core */
 #define	MPCORE_PMR_TIMER_CORE(n)	(0x700 + 0x100 * (n))	/* for core N */
