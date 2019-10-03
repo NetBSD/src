@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2587 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2588 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -24,7 +24,7 @@
 # ----------------------------------------------------------------------------
 
 Changes from NetBSD 9.0 to NetBSD 10.0:
-	openldap: Import 2.4.48. [christos 20180808]
+	openldap: Import 2.4.48. [christos 20190808]
 	usbnet(9): Add common framework for USB network devices.  Port the
 		axe(4), axen(4), cdce(4), cue(4), mue(4), smsc(4), udav(4),
 		ure(4), url(4), and urndis(4) drivers fixing many bugs and
