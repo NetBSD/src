@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.873 2019/10/01 16:07:14 christos Exp $
+# $NetBSD: shl.mi,v 1.874 2019/10/03 00:59:50 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -204,10 +204,12 @@
 ./usr/lib/libasan.so				base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/libasan.so.2				base-obsolete		obsolete
 ./usr/lib/libasan.so.2.0			base-obsolete		obsolete
-./usr/lib/libasan.so.3				base-sys-shlib		compatfile,cxx,gcc=6
-./usr/lib/libasan.so.3.0			base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/libasan.so.3				base-sys-shlib		compatfile,obsolete
+./usr/lib/libasan.so.3.0			base-sys-shlib		compatfile,obsolete
 ./usr/lib/libasan.so.4				base-sys-shlib		compatfile,cxx,gcc=7
 ./usr/lib/libasan.so.4.0			base-sys-shlib		compatfile,cxx,gcc=7
+./usr/lib/libasan.so.5				base-sys-shlib		compatfile,cxx,gcc=8
+./usr/lib/libasan.so.5.0			base-sys-shlib		compatfile,cxx,gcc=8
 ./usr/lib/libasn1.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libasn1.so.10.0			base-krb5-shlib		compatfile,kerberos
@@ -328,14 +330,16 @@
 ./usr/lib/libgnumalloc.so.1			base-sys-shlib		compatfile
 ./usr/lib/libgnumalloc.so.1.0			base-sys-shlib		compatfile
 ./usr/lib/libgomp.so				base-sys-shlib		compatfile,gcc
-./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,gcc=6
-./usr/lib/libgomp.so.1.3			base-sys-shlib		compatfile,gcc=6,!machine_arch=mips64eb,!machine_arch=mips64el
-./usr/lib/libgomp.so.1.3			base-sys-shlib		gcc=6,machine_arch=mips64eb
-./usr/lib/libgomp.so.1.3			base-sys-shlib		gcc=6,machine_arch=mips64el
+./usr/lib/libgomp.so.1				base-sys-shlib		compatfile,obsolete
+./usr/lib/libgomp.so.1.3			base-sys-shlib		obsolete
 ./usr/lib/libgomp.so.2				base-sys-shlib		compatfile,gcc=7
 ./usr/lib/libgomp.so.2.0			base-sys-shlib		compatfile,gcc=7,!machine_arch=mips64eb,!machine_arch=mips64el
 ./usr/lib/libgomp.so.2.0			base-sys-shlib		gcc=7,machine_arch=mips64eb
 ./usr/lib/libgomp.so.2.0			base-sys-shlib		gcc=7,machine_arch=mips64el
+./usr/lib/libgomp.so.2				base-sys-shlib		compatfile,gcc=8
+./usr/lib/libgomp.so.2.0			base-sys-shlib		compatfile,gcc=8,!machine_arch=mips64eb,!machine_arch=mips64el
+./usr/lib/libgomp.so.2.0			base-sys-shlib		gcc=8,machine_arch=mips64eb
+./usr/lib/libgomp.so.2.0			base-sys-shlib		gcc=8,machine_arch=mips64el
 ./usr/lib/libgssapi.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libgssapi.so.11			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libgssapi.so.11.0			base-krb5-shlib		compatfile,kerberos
@@ -410,10 +414,12 @@
 ./usr/lib/libldap_r.so.4			base-ldap-shlib		ldap,compatfile
 ./usr/lib/libldap_r.so.4.3			base-ldap-shlib		ldap,compatfile
 ./usr/lib/liblsan.so				base-sys-shlib		compatfile,cxx,gcc
-./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,cxx,gcc=6
-./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,cxx,gcc=6
+./usr/lib/liblsan.so.1				base-sys-shlib		compatfile,obsolete
+./usr/lib/liblsan.so.1.0			base-sys-shlib		compatfile,obsolete
 ./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,cxx,gcc=7
 ./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=7
+./usr/lib/liblsan.so.2				base-sys-shlib		compatfile,cxx,gcc=8
+./usr/lib/liblsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=8
 ./usr/lib/liblua.so				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.5				base-sys-shlib		compatfile
 ./usr/lib/liblua.so.5.3				base-sys-shlib		compatfile
@@ -853,10 +859,12 @@
 ./usr/lib/libssl.so.14				base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libssl.so.14.0			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
-./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,gcc=6,cxx,libstdcxx
-./usr/lib/libstdc++.so.8.1			base-sys-shlib		compatfile,gcc=6,cxx,libstdcxx
+./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,obsolete
+./usr/lib/libstdc++.so.8.1			base-sys-shlib		compatfile,obsolete
 ./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
 ./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
+./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc=8,cxx,libstdcxx
+./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc=8,cxx,libstdcxx
 ./usr/lib/libtelnet.so				base-obsolete		obsolete
 ./usr/lib/libtermcap.so				base-sys-shlib		compatfile
 ./usr/lib/libtermcap.so.0			base-sys-shlib		compatfile
@@ -879,10 +887,12 @@
 ./usr/lib/libubsan.so				base-sys-shlib		compatfile,cxx,gcc
 ./usr/lib/libubsan.so.1				base-sys-shlib		obsolete,gcc=5
 ./usr/lib/libubsan.so.1.0			base-sys-shlib		obsolete,gcc=5
-./usr/lib/libubsan.so.2				base-sys-shlib		compatfile,cxx,gcc=6
-./usr/lib/libubsan.so.2.0			base-sys-shlib		compatfile,cxx,gcc=6
-./usr/lib/libubsan.so.3				base-sys-shlib		compatfile,cxx,cxx,gcc=7
+./usr/lib/libubsan.so.2				base-sys-shlib		compatfile,obsolete
+./usr/lib/libubsan.so.2.0			base-sys-shlib		compatfile,obsolete
+./usr/lib/libubsan.so.3				base-sys-shlib		compatfile,cxx,gcc=7
 ./usr/lib/libubsan.so.3.0			base-sys-shlib		compatfile,cxx,gcc=7
+./usr/lib/libubsan.so.4				base-sys-shlib		compatfile,cxx,gcc=8
+./usr/lib/libubsan.so.4.0			base-sys-shlib		compatfile,cxx,gcc=8
 ./usr/lib/libukfs.so				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1				base-sys-shlib		compatfile,rump
 ./usr/lib/libukfs.so.1.0			base-sys-shlib		compatfile,rump

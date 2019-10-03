@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2288 2019/10/02 08:21:08 rin Exp $
+#	$NetBSD: mi,v 1.2289 2019/10/03 00:59:50 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -903,6 +903,7 @@
 ./usr/include/g++/algobase.h			comp-obsolete		obsolete
 ./usr/include/g++/algorithm			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/alloc.h			comp-obsolete		obsolete
+./usr/include/g++/any				comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/any				comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/array				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/atomic			comp-cxx-include	gcc,cxx,libstdcxx
@@ -970,8 +971,8 @@
 ./usr/include/g++/bits/basic_string.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/boost_concept_check.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++0x_warning.h		comp-cxx-include	gcc,cxx,libstdcxx
-./usr/include/g++/bits/c++14_warning.h		comp-cxx-include	gcc=6,cxx,libstdcxx
 ./usr/include/g++/bits/c++14_warning.h		comp-cxx-include	gcc=7,obsolete
+./usr/include/g++/bits/c++14_warning.h		comp-cxx-include	obsolete,cxx,libstdcxx
 ./usr/include/g++/bits/c++allocator.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++config.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/c++io.h			comp-cxx-include	gcc,cxx,libstdcxx
@@ -988,11 +989,13 @@
 ./usr/include/g++/bits/ctype_inline.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/ctype_noninline.h	comp-obsolete		obsolete
 ./usr/include/g++/bits/cxxabi_forced.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/cxxabi_init_exception.h	comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/cxxabi_init_exception.h	comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/cxxabi_tweaks.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/deque.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/enable_special_members.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/error_constants.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/exception.h		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/exception.h		comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/exception_defines.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/exception_ptr.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1000,6 +1003,10 @@
 ./usr/include/g++/bits/forward_list.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/forward_list.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/fpos.h			comp-obsolete		obsolete
+./usr/include/g++/bits/fs_dir.h			comp-cxx-include	cxx,libstdcxx,gcc=8
+./usr/include/g++/bits/fs_fwd.h			comp-cxx-include	cxx,libstdcxx,gcc=8
+./usr/include/g++/bits/fs_ops.h			comp-cxx-include	cxx,libstdcxx,gcc=8
+./usr/include/g++/bits/fs_path.h		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/fstream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/functexcept.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/functional_hash.h	comp-cxx-include	gcc,cxx,libstdcxx
@@ -1014,6 +1021,7 @@
 ./usr/include/g++/bits/hashtable.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/hashtable_policy.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/indirect_array.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/invoke.h			comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/invoke.h			comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/ios_base.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/istream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1031,6 +1039,7 @@
 ./usr/include/g++/bits/messages_members.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/move.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/nested_exception.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/node_handle.h		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/node_handle.h		comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/opt_random.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/os_defines.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1045,6 +1054,7 @@
 ./usr/include/g++/bits/random.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/random.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/range_access.h		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/refwrap.h		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/refwrap.h		comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/regex.h			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/regex.tcc		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1069,7 +1079,9 @@
 ./usr/include/g++/bits/slice_array.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/specfun.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/sstream.tcc		comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/std_abs.h		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/std_abs.h		comp-cxx-include	gcc=7,cxx,libstdcxx
+./usr/include/g++/bits/std_function.h		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/std_function.h		comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/std_mutex.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/stdc++.h			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1105,6 +1117,7 @@
 ./usr/include/g++/bits/stream_iterator.h	comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/streambuf.tcc		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/streambuf_iterator.h	comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/bits/string_view.tcc		comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/bits/string_view.tcc		comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/bits/stringfwd.h		comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/bits/time_members.h		comp-cxx-include	gcc,cxx,libstdcxx
@@ -1132,6 +1145,7 @@
 ./usr/include/g++/cerrno			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cfenv				comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cfloat			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/charconv			comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/chrono			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/cinttypes			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/ciso646			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1504,6 +1518,7 @@
 ./usr/include/g++/faralloc.h			comp-obsolete		obsolete
 ./usr/include/g++/fdeque.h			comp-obsolete		obsolete
 ./usr/include/g++/fenv.h			comp-obsolete		obsolete
+./usr/include/g++/filesystem			comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/flist.h			comp-obsolete		obsolete
 ./usr/include/g++/floatio.h			comp-obsolete		obsolete
 ./usr/include/g++/fmap.h			comp-obsolete		obsolete
@@ -1699,6 +1714,7 @@
 ./usr/include/g++/nmultset.h			comp-obsolete		obsolete
 ./usr/include/g++/nset.h			comp-obsolete		obsolete
 ./usr/include/g++/numeric			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/optional			comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/optional			comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/osfcn.h			comp-obsolete		obsolete
 ./usr/include/g++/ostream			comp-cxx-include	gcc,cxx,libstdcxx
@@ -1894,6 +1910,7 @@
 ./usr/include/g++/streambuf.h			comp-obsolete		obsolete
 ./usr/include/g++/strfile.h			comp-obsolete		obsolete
 ./usr/include/g++/string			comp-cxx-include	gcc,cxx,libstdcxx
+./usr/include/g++/string_view			comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/string_view			comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/strstream			comp-obsolete		obsolete
 ./usr/include/g++/strstream.h			comp-obsolete		obsolete
@@ -2011,6 +2028,7 @@
 ./usr/include/g++/utility			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/valarray			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/values.h			comp-obsolete		obsolete
+./usr/include/g++/variant			comp-cxx-include	cxx,libstdcxx,gcc=8
 ./usr/include/g++/variant			comp-cxx-include	gcc=7,cxx,libstdcxx
 ./usr/include/g++/vector			comp-cxx-include	gcc,cxx,libstdcxx
 ./usr/include/g++/vector.h			comp-obsolete		obsolete
@@ -2082,21 +2100,29 @@
 ./usr/include/gcc-5/xsaveoptintrin.h		comp-obsolete		obsolete
 ./usr/include/gcc-5/xsavesintrin.h		comp-obsolete		obsolete
 ./usr/include/gcc-5/xtestintrin.h		comp-obsolete		obsolete
-./usr/include/gcc-6/omp.h			comp-gcc-include	gcc=6
-./usr/include/gcc-6/openacc.h			comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/allocator_interface.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/asan_interface.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=6
-./usr/include/gcc-6/stdatomic.h			comp-gcc-include	gcc=6
-./usr/include/gcc-7/omp.h			comp-gcc-include	gcc=7
-./usr/include/gcc-7/openacc.h			comp-gcc-include	gcc=7
+./usr/include/gcc-6/omp.h				comp-gcc-include	obsolete
+./usr/include/gcc-6/openacc.h				comp-gcc-include	obsolete
+./usr/include/gcc-6/sanitizer/allocator_interface.h	comp-gcc-include	obsolete
+./usr/include/gcc-6/sanitizer/asan_interface.h		comp-gcc-include	obsolete
+./usr/include/gcc-6/sanitizer/common_interface_defs.h	comp-gcc-include	obsolete
+./usr/include/gcc-6/sanitizer/tsan_interface_atomic.h	comp-gcc-include	obsolete
+./usr/include/gcc-6/stdatomic.h				comp-gcc-include	obsolete
+./usr/include/gcc-7/omp.h				comp-gcc-include	gcc=7
+./usr/include/gcc-7/openacc.h				comp-gcc-include	gcc=7
 ./usr/include/gcc-7/sanitizer/allocator_interface.h	comp-gcc-include	gcc=7
-./usr/include/gcc-7/sanitizer/asan_interface.h	comp-gcc-include	gcc=7
+./usr/include/gcc-7/sanitizer/asan_interface.h		comp-gcc-include	gcc=7
 ./usr/include/gcc-7/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=7
-./usr/include/gcc-7/sanitizer/lsan_interface.h	comp-gcc-include	gcc=7
+./usr/include/gcc-7/sanitizer/lsan_interface.h		comp-gcc-include	gcc=7
 ./usr/include/gcc-7/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=7
-./usr/include/gcc-7/stdatomic.h			comp-gcc-include	gcc=7
+./usr/include/gcc-7/stdatomic.h				comp-gcc-include	gcc=7
+./usr/include/gcc-8/omp.h				comp-gcc-include	gcc=8
+./usr/include/gcc-8/openacc.h				comp-gcc-include	gcc=8
+./usr/include/gcc-8/sanitizer/allocator_interface.h	comp-gcc-include	gcc=8
+./usr/include/gcc-8/sanitizer/asan_interface.h		comp-gcc-include	gcc=8
+./usr/include/gcc-8/sanitizer/common_interface_defs.h	comp-gcc-include	gcc=8
+./usr/include/gcc-8/sanitizer/lsan_interface.h		comp-gcc-include	gcc=8
+./usr/include/gcc-8/sanitizer/tsan_interface_atomic.h	comp-gcc-include	gcc=8
+./usr/include/gcc-8/stdatomic.h				comp-gcc-include	gcc=8
 ./usr/include/gelf.h				comp-c-include
 ./usr/include/getopt.h				comp-c-include
 ./usr/include/glob.h				comp-c-include
@@ -4869,13 +4895,13 @@
 ./usr/share/man/cat3/MDC2_Init.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/MIN.0			comp-c-catman		.cat
 ./usr/share/man/cat3/OBJ_nid2obj.0		comp-c-catman		.cat
-./usr/share/man/cat3/ONCE_FLAG_INIT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/OCSP_REQUEST_new.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_cert_to_id.0		comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_request_add1_nonce.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_resp_find_status.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_response_status.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OCSP_sendreq_new.0		comp-c-catman		.cat,openssl=11
+./usr/share/man/cat3/ONCE_FLAG_INIT.0		comp-c-catman		.cat
 ./usr/share/man/cat3/OPENSSL_Applink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/OPENSSL_LH_COMPFUNC.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/OPENSSL_LH_stats.0		comp-c-catman		.cat,openssl=11
@@ -5115,7 +5141,6 @@
 ./usr/share/man/cat3/SQLITE_VERSION.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_VTAB_CONSTRAINT_SUPPORT.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.0   comp-c-catman           .cat
-./usr/share/man/cat3/SSL_get_peer_tmp_key.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/SSL_CIPHER_get_name.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_COMP_add_compression_method.0	comp-c-catman		.cat
 ./usr/share/man/cat3/SSL_CONF_CTX_new.0			comp-c-catman	.cat,openssl=11
@@ -5229,6 +5254,7 @@
 ./usr/share/man/cat3/SSL_get_peer_cert_chain.0		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_get_peer_certificate.0		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_get_peer_signature_nid.0	comp-c-catman	.cat,openssl=11
+./usr/share/man/cat3/SSL_get_peer_tmp_key.0	comp-c-catman		.cat,openssl=11
 ./usr/share/man/cat3/SSL_get_psk_identity.0 		comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_get_rbio.0			comp-c-catman	.cat
 ./usr/share/man/cat3/SSL_get_server_tmp_key.0	comp-c-catman	.cat,openssl=11
@@ -6072,12 +6098,12 @@
 ./usr/share/man/cat3/cabsf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cabsl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacos.0			comp-c-catman		complex,.cat
-./usr/share/man/cat3/call_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/cacosf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacosh.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacoshf.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacoshl.0			comp-c-catman		complex,.cat
 ./usr/share/man/cat3/cacosl.0			comp-c-catman		complex,.cat
+./usr/share/man/cat3/call_once.0		comp-c-catman		.cat
 ./usr/share/man/cat3/calloc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/callrpc.0			comp-c-catman		.cat
 ./usr/share/man/cat3/can_change_color.0		comp-c-catman		.cat
@@ -8486,6 +8512,13 @@
 ./usr/share/man/cat3/mq_unlink.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mqueue.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mrand48.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx_destroy.0		comp-c-catman		.cat
+./usr/share/man/cat3/mtx_init.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx_lock.0			comp-c-catman		.cat
+./usr/share/man/cat3/mtx_timedlock.0		comp-c-catman		.cat
+./usr/share/man/cat3/mtx_trylock.0		comp-c-catman		.cat
+./usr/share/man/cat3/mtx_unlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddch.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddchnstr.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvaddchstr.0		comp-c-catman		.cat
@@ -8523,13 +8556,6 @@
 ./usr/share/man/cat3/mvwinstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/mvwprintw.0		comp-c-catman		.cat
 ./usr/share/man/cat3/mvwvline.0			comp-c-catman		.cat
-./usr/share/man/cat3/mtx.0			comp-c-catman		.cat
-./usr/share/man/cat3/mtx_destroy.0		comp-c-catman		.cat
-./usr/share/man/cat3/mtx_init.0			comp-c-catman		.cat
-./usr/share/man/cat3/mtx_lock.0			comp-c-catman		.cat
-./usr/share/man/cat3/mtx_timedlock.0		comp-c-catman		.cat
-./usr/share/man/cat3/mtx_trylock.0		comp-c-catman		.cat
-./usr/share/man/cat3/mtx_unlock.0		comp-c-catman		.cat
 ./usr/share/man/cat3/nan.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nanf.0			comp-c-catman		.cat
 ./usr/share/man/cat3/nanl.0			comp-c-catman		.cat
@@ -10091,7 +10117,6 @@
 ./usr/share/man/cat3/tgetstr.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgmath.0			comp-c-catman		.cat
 ./usr/share/man/cat3/tgoto.0			comp-c-catman		.cat
-./usr/share/man/cat3/threads.0			comp-c-catman		.cat
 ./usr/share/man/cat3/thrd.0			comp-c-catman		.cat
 ./usr/share/man/cat3/thrd_create.0		comp-c-catman		.cat
 ./usr/share/man/cat3/thrd_current.0		comp-c-catman		.cat
@@ -10101,6 +10126,7 @@
 ./usr/share/man/cat3/thrd_join.0		comp-c-catman		.cat
 ./usr/share/man/cat3/thrd_sleep.0		comp-c-catman		.cat
 ./usr/share/man/cat3/thrd_yield.0		comp-c-catman		.cat
+./usr/share/man/cat3/threads.0			comp-c-catman		.cat
 ./usr/share/man/cat3/ti_getflag.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ti_getnum.0		comp-c-catman		.cat
 ./usr/share/man/cat3/ti_getstr.0		comp-c-catman		.cat
@@ -12925,13 +12951,13 @@
 ./usr/share/man/html3/MDC2_Init.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/MIN.html			comp-c-htmlman		html
 ./usr/share/man/html3/OBJ_nid2obj.html		comp-c-htmlman		html
-./usr/share/man/html3/ONCE_FLAG_INIT.html	comp-c-htmlman		html
 ./usr/share/man/html3/OCSP_REQUEST_new.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_cert_to_id.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_request_add1_nonce.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_resp_find_status.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_response_status.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OCSP_sendreq_new.html	comp-c-htmlman	html,openssl=11
+./usr/share/man/html3/ONCE_FLAG_INIT.html	comp-c-htmlman		html
 ./usr/share/man/html3/OPENSSL_Applink.html	comp-c-htmlman		html
 ./usr/share/man/html3/OPENSSL_LH_COMPFUNC.html	comp-c-htmlman	html,openssl=11
 ./usr/share/man/html3/OPENSSL_LH_stats.html	comp-c-htmlman	html,openssl=11
@@ -13172,7 +13198,6 @@
 ./usr/share/man/html3/SQLITE_VERSION.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_VTAB_CONSTRAINT_SUPPORT.html	comp-c-htmlman		html
 ./usr/share/man/html3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.html       comp-c-htmlman          html
-./usr/share/man/html3/SSL_get_peer_tmp_key.html	comp-c-htmlman		html,openssl=11
 ./usr/share/man/html3/SSL_CIPHER_get_name.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_COMP_add_compression_method.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_CONF_CTX_new.html		comp-c-htmlman	html,openssl=11
@@ -13291,6 +13316,7 @@
 ./usr/share/man/html3/SSL_get_peer_cert_chain.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_get_peer_certificate.html	comp-c-htmlman		html
 ./usr/share/man/html3/SSL_get_peer_signature_nid.html	comp-htmlman	html
+./usr/share/man/html3/SSL_get_peer_tmp_key.html	comp-c-htmlman		html,openssl=11
 ./usr/share/man/html3/SSL_get_psk_identity.html		comp-c-htmlman	html
 ./usr/share/man/html3/SSL_get_rbio.html		comp-c-htmlman		html
 ./usr/share/man/html3/SSL_get_server_tmp_key.html	comp-htmlman	html
@@ -16470,6 +16496,13 @@
 ./usr/share/man/html3/mq_unlink.html		comp-c-htmlman		html
 ./usr/share/man/html3/mqueue.html		comp-c-htmlman		html
 ./usr/share/man/html3/mrand48.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx.html			comp-c-htmlman		html
+./usr/share/man/html3/mtx_destroy.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_init.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_lock.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_timedlock.html	comp-c-htmlman		html
+./usr/share/man/html3/mtx_trylock.html		comp-c-htmlman		html
+./usr/share/man/html3/mtx_unlock.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvaddch.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvaddchnstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvaddchstr.html		comp-c-htmlman		html
@@ -16507,13 +16540,6 @@
 ./usr/share/man/html3/mvwinstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwprintw.html		comp-c-htmlman		html
 ./usr/share/man/html3/mvwvline.html		comp-c-htmlman		html
-./usr/share/man/html3/mtx.html			comp-c-htmlman		html
-./usr/share/man/html3/mtx_destroy.html		comp-c-htmlman		html
-./usr/share/man/html3/mtx_init.html		comp-c-htmlman		html
-./usr/share/man/html3/mtx_lock.html		comp-c-htmlman		html
-./usr/share/man/html3/mtx_timedlock.html	comp-c-htmlman		html
-./usr/share/man/html3/mtx_trylock.html		comp-c-htmlman		html
-./usr/share/man/html3/mtx_unlock.html		comp-c-htmlman		html
 ./usr/share/man/html3/nan.html			comp-c-htmlman		html
 ./usr/share/man/html3/nanf.html			comp-c-htmlman		html
 ./usr/share/man/html3/nanl.html			comp-c-htmlman		html
@@ -18057,7 +18083,6 @@
 ./usr/share/man/html3/tgetstr.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgmath.html		comp-c-htmlman		html
 ./usr/share/man/html3/tgoto.html		comp-c-htmlman		html
-./usr/share/man/html3/threads.html		comp-c-htmlman		html
 ./usr/share/man/html3/thrd.html			comp-c-htmlman		html
 ./usr/share/man/html3/thrd_create.html		comp-c-htmlman		html
 ./usr/share/man/html3/thrd_current.html		comp-c-htmlman		html
@@ -18067,6 +18092,7 @@
 ./usr/share/man/html3/thrd_join.html		comp-c-htmlman		html
 ./usr/share/man/html3/thrd_sleep.html		comp-c-htmlman		html
 ./usr/share/man/html3/thrd_yield.html		comp-c-htmlman		html
+./usr/share/man/html3/threads.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getflag.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getnum.html		comp-c-htmlman		html
 ./usr/share/man/html3/ti_getstr.html		comp-c-htmlman		html
@@ -20824,13 +20850,13 @@
 ./usr/share/man/man3/MDC2_Init.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/MIN.3			comp-c-man		.man
 ./usr/share/man/man3/OBJ_nid2obj.3		comp-c-man		.man
-./usr/share/man/man3/ONCE_FLAG_INIT.3		comp-c-man		.man
 ./usr/share/man/man3/OCSP_REQUEST_new.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_cert_to_id.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_request_add1_nonce.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_resp_find_status.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_response_status.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OCSP_sendreq_new.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/ONCE_FLAG_INIT.3		comp-c-man		.man
 ./usr/share/man/man3/OPENSSL_Applink.3		comp-c-man		.man
 ./usr/share/man/man3/OPENSSL_LH_COMPFUNC.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/OPENSSL_LH_stats.3	comp-c-man	.man,openssl=11
@@ -21072,7 +21098,6 @@
 ./usr/share/man/man3/SQLITE_VERSION.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_VTAB_CONSTRAINT_SUPPORT.3	comp-c-man		.man
 ./usr/share/man/man3/SQLITE_WIN32_DATA_DIRECTORY_TYPE.3   comp-c-man              .man
-./usr/share/man/man3/SSL_get_peer_tmp_key.3	comp-c-man		.man,openssl=11
 ./usr/share/man/man3/SSL_CIPHER_get_name.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_COMP_add_compression_method.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_CONF_CTX_new.3			comp-c-man	.man,openssl=11
@@ -21191,6 +21216,7 @@
 ./usr/share/man/man3/SSL_get_peer_cert_chain.3	comp-c-man		.man
 ./usr/share/man/man3/SSL_get_peer_certificate.3 comp-c-man		.man
 ./usr/share/man/man3/SSL_get_peer_signature_nid.3	comp-c-man	.man,openssl=11
+./usr/share/man/man3/SSL_get_peer_tmp_key.3	comp-c-man		.man,openssl=11
 ./usr/share/man/man3/SSL_get_psk_identity.3		comp-c-man	.man
 ./usr/share/man/man3/SSL_get_rbio.3		comp-c-man		.man
 ./usr/share/man/man3/SSL_get_server_tmp_key.3	comp-c-man	.man,openssl=11
@@ -22035,12 +22061,12 @@
 ./usr/share/man/man3/cabsf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cabsl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacos.3			comp-c-man		complex,.man
-./usr/share/man/man3/call_once.3		comp-c-man		.man
 ./usr/share/man/man3/cacosf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacosh.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacoshf.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacoshl.3			comp-c-man		complex,.man
 ./usr/share/man/man3/cacosl.3			comp-c-man		complex,.man
+./usr/share/man/man3/call_once.3		comp-c-man		.man
 ./usr/share/man/man3/calloc.3			comp-c-man		.man
 ./usr/share/man/man3/callrpc.3			comp-c-man		.man
 ./usr/share/man/man3/can_change_color.3		comp-c-man		.man
@@ -24461,6 +24487,13 @@
 ./usr/share/man/man3/mq_unlink.3		comp-c-man		.man
 ./usr/share/man/man3/mqueue.3			comp-c-man		.man
 ./usr/share/man/man3/mrand48.3			comp-c-man		.man
+./usr/share/man/man3/mtx.3			comp-c-man		.man
+./usr/share/man/man3/mtx_destroy.3		comp-c-man		.man
+./usr/share/man/man3/mtx_init.3			comp-c-man		.man
+./usr/share/man/man3/mtx_lock.3			comp-c-man		.man
+./usr/share/man/man3/mtx_timedlock.3		comp-c-man		.man
+./usr/share/man/man3/mtx_trylock.3		comp-c-man		.man
+./usr/share/man/man3/mtx_unlock.3		comp-c-man		.man
 ./usr/share/man/man3/mvaddch.3			comp-c-man		.man
 ./usr/share/man/man3/mvaddchnstr.3		comp-c-man		.man
 ./usr/share/man/man3/mvaddchstr.3		comp-c-man		.man
@@ -24498,13 +24531,6 @@
 ./usr/share/man/man3/mvwinstr.3			comp-c-man		.man
 ./usr/share/man/man3/mvwprintw.3		comp-c-man		.man
 ./usr/share/man/man3/mvwvline.3			comp-c-man		.man
-./usr/share/man/man3/mtx.3			comp-c-man		.man
-./usr/share/man/man3/mtx_destroy.3		comp-c-man		.man
-./usr/share/man/man3/mtx_init.3			comp-c-man		.man
-./usr/share/man/man3/mtx_lock.3			comp-c-man		.man
-./usr/share/man/man3/mtx_timedlock.3		comp-c-man		.man
-./usr/share/man/man3/mtx_trylock.3		comp-c-man		.man
-./usr/share/man/man3/mtx_unlock.3		comp-c-man		.man
 ./usr/share/man/man3/nan.3			comp-c-man		.man
 ./usr/share/man/man3/nanf.3			comp-c-man		.man
 ./usr/share/man/man3/nanl.3			comp-c-man		.man
@@ -24558,8 +24584,8 @@
 ./usr/share/man/man3/o2i_SCT_LIST.3	comp-c-man	.man,openssl=11
 ./usr/share/man/man3/offsetof.3			comp-c-man		.man
 ./usr/share/man/man3/offtime.3			comp-c-man		.man
-./usr/share/man/man3/once_flag.3		comp-c-man		.man
 ./usr/share/man/man3/offtime_r.3		comp-c-man		.man
+./usr/share/man/man3/once_flag.3		comp-c-man		.man
 ./usr/share/man/man3/open_memstream.3		comp-c-man		.man
 ./usr/share/man/man3/open_wmemstream.3		comp-c-man		.man
 ./usr/share/man/man3/opendir.3			comp-c-man		.man
@@ -26085,7 +26111,6 @@
 ./usr/share/man/man3/tgetstr.3			comp-c-man		.man
 ./usr/share/man/man3/tgmath.3			comp-c-man		.man
 ./usr/share/man/man3/tgoto.3			comp-c-man		.man
-./usr/share/man/man3/threads.3			comp-c-man		.man
 ./usr/share/man/man3/thrd.3			comp-c-man		.man
 ./usr/share/man/man3/thrd_create.3		comp-c-man		.man
 ./usr/share/man/man3/thrd_current.3		comp-c-man		.man
@@ -26095,6 +26120,7 @@
 ./usr/share/man/man3/thrd_join.3		comp-c-man		.man
 ./usr/share/man/man3/thrd_sleep.3		comp-c-man		.man
 ./usr/share/man/man3/thrd_yield.3		comp-c-man		.man
+./usr/share/man/man3/threads.3			comp-c-man		.man
 ./usr/share/man/man3/ti_getflag.3		comp-c-man		.man
 ./usr/share/man/man3/ti_getnum.3		comp-c-man		.man
 ./usr/share/man/man3/ti_getstr.3		comp-c-man		.man
