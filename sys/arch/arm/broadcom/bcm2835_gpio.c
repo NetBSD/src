@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.12 2019/05/10 08:28:50 skrll Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.12.2.1 2019/10/03 17:23:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.12 2019/05/10 08:28:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.12.2.1 2019/10/03 17:23:11 martin Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -347,8 +347,6 @@ bcmgpio_attach(device_t parent, device_t self, void *aux)
 		fdtbus_register_pinctrl_config(self, child,
 		    &bcm283x_pinctrl_funcs);
 	}
-
-	fdtbus_pinctrl_configure();
 
 	fdtbus_register_interrupt_controller(self, phandle,
 	    &bcmgpio_fdt_intrfuncs);

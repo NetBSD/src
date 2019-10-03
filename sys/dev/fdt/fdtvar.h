@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.52 2019/06/14 11:08:18 hkenken Exp $ */
+/* $NetBSD: fdtvar.h,v 1.52.2.1 2019/10/03 17:23:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -309,9 +309,9 @@ audio_dai_tag_t	fdtbus_dai_acquire(int, const char *);
 audio_dai_tag_t	fdtbus_dai_acquire_index(int, const char *, int);
 pwm_tag_t	fdtbus_pwm_acquire(int, const char *);
 pwm_tag_t	fdtbus_pwm_acquire_index(int, const char *, int);
-void		fdtbus_pinctrl_configure(void);
 int		fdtbus_pinctrl_set_config_index(int, u_int);
 int		fdtbus_pinctrl_set_config(int, const char *);
+bool		fdtbus_pinctrl_has_config(int, const char *);
 const char *	fdtbus_pinctrl_parse_function(int);
 const void *	fdtbus_pinctrl_parse_pins(int, int *);
 const char *	fdtbus_pinctrl_parse_groups(int, int *);

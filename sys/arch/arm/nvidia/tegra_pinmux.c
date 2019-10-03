@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pinmux.c,v 1.2.4.1 2019/09/28 12:21:29 martin Exp $ */
+/* $NetBSD: tegra_pinmux.c,v 1.2.4.2 2019/10/03 17:23:11 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.2.4.1 2019/09/28 12:21:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pinmux.c,v 1.2.4.2 2019/10/03 17:23:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -285,8 +285,6 @@ tegra_pinmux_attach(device_t parent, device_t self, void *aux)
 
 	for (child = OF_child(phandle); child; child = OF_peer(child))
 		fdtbus_register_pinctrl_config(self, child, &tegra_pinmux_funcs);
-
-	fdtbus_pinctrl_configure();
 }
 
 CFATTACH_DECL_NEW(tegra_pinmux, sizeof(struct tegra_pinmux_softc),
