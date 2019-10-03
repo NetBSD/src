@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.79 2019/09/15 09:18:17 maxv Exp $	*/
+/*	$NetBSD: umidi.c,v 1.80 2019/10/03 05:16:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.79 2019/09/15 09:18:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.80 2019/10/03 05:16:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1081,9 +1081,10 @@ alloc_all_jacks(struct umidi_softc *sc)
 		cn_spec = NULL;
 
 	/* allocate/initialize structures */
-	sc->sc_jacks =
-	    kmem_zalloc(sizeof(*sc->sc_out_jacks)*(sc->sc_in_num_jacks
-		    + sc->sc_out_num_jacks), KM_SLEEP);
+	if (sc->sc_in_num_jacks == 0 && sc->sc_out_num_jacks == 0)
+		return USBD_INVAL;
+	sc->sc_jacks = kmem_zalloc(sizeof(*sc->sc_out_jacks) *
+	    (sc->sc_in_num_jacks + sc->sc_out_num_jacks), KM_SLEEP);
 	if (!sc->sc_jacks)
 		return USBD_NOMEM;
 	sc->sc_out_jacks =
@@ -1154,8 +1155,8 @@ free_all_jacks(struct umidi_softc *sc)
 
 	mutex_enter(&sc->sc_lock);
 	jacks = sc->sc_jacks;
-	len = sizeof(*sc->sc_out_jacks)
-	    * (sc->sc_in_num_jacks + sc->sc_out_num_jacks);
+	len = sizeof(*sc->sc_out_jacks) *
+	    (sc->sc_in_num_jacks + sc->sc_out_num_jacks);
 	sc->sc_jacks = sc->sc_in_jacks = sc->sc_out_jacks = NULL;
 	mutex_exit(&sc->sc_lock);
 
