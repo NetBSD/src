@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmain.c,v 1.34 2017/05/04 16:26:10 sevan Exp $	*/
+/*	$NetBSD: supcmain.c,v 1.35 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -718,7 +718,7 @@ init(int argc, char **argv)
 				c->Cnotify = estrdup(username);
 		}
 		if (c->Cbase == NULL) {
-			(void) sprintf(buf, FILEBASEDEFAULT, c->Cname);
+			snprintf(buf, sizeof buf, FILEBASEDEFAULT, c->Cname);
 			c->Cbase = estrdup(buf);
 		}
 	}
@@ -737,7 +737,7 @@ init(int argc, char **argv)
 	else if (sysflag)
 		p = "system software";
 	else
-		(void) sprintf(p = buf, "file %s", supfname);
+		snprintf(p = buf, sizeof buf, "file %s", supfname);
 	if (!silent)
 		loginfo("SUP %d.%d (%s) for %s at %s", PROTOVERSION, PGMVERSION,
 		    scmversion, p, fmttime(timenow));
