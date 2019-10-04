@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.47 2019/09/30 15:50:49 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.48 2019/10/04 11:35:44 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1232,4 +1232,25 @@ sys/netinet6/nd6_nbr.c				1.174
 
 	Initialize DAD components properly during boot.
 	[ozaki-r, ticket #1396]
+
+sys/net/route.c					1.222
+
+	Reduce kernel stack usage by passing a const pointer instead of a
+	huge structure by value.
+	[rin, ticket #1398]
+
+sys/external/bsd/ipf/netinet/fil.c		1.31
+sys/external/bsd/ipf/netinet/ip_fil_netbsd.c	1.32,1.33
+
+	- pfil_run_hooks() can be called recursively, so we have to
+	  #define FASTROUTE_RECURSION in fil.c
+	- ip6_if_output()/nd6_output() will free the mbuf on error, to make sure
+	  to set *mpp to NULL so the caller won't try to free it again.
+	[bouyer, ticket #1399]
+
+sys/arch/i386/stand/pxeboot/Makefile		1.28
+sys/arch/i386/stand/pxeboot/start_pxe.S		1.7
+
+	Incrase pxeboot code size limit from 64k to 128k.
+	[manu, ticket #1400]
 
