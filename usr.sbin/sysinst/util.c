@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.33 2019/10/02 11:16:04 maya Exp $	*/
+/*	$NetBSD: util.c,v 1.34 2019/10/04 21:36:02 mrg Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -171,7 +171,8 @@ int have_raid, have_vnd, have_cgd, have_lvm, have_gpt, have_dk;
  */
 
 static int check_for(unsigned int mode, const char *pathname);
-static int get_iso9660_volname(int dev, int sess, char *volname);
+static int get_iso9660_volname(int dev, int sess, char *volname,
+		size_t volnamelen);
 static int get_available_cds(void);
 static int binary_available(const char *prog);
 
@@ -377,7 +378,7 @@ get_via_floppy(void)
  * Get the volume name of a ISO9660 file system
  */
 static int
-get_iso9660_volname(int dev, int sess, char *volname)
+get_iso9660_volname(int dev, int sess, char *volname, size_t volnamelen)
 {
 	int blkno, error, last;
 	char buf[ISO_BLKSIZE];
@@ -394,8 +395,9 @@ get_iso9660_volname(int dev, int sess, char *volname)
 		if (isonum_711((const unsigned char *)&vd->type)
 		     == ISO_VD_PRIMARY) {
 			pd = (struct iso_primary_descriptor*)buf;
-			strncpy(volname, pd->volume_id, sizeof pd->volume_id);
-			last = sizeof pd->volume_id-1;
+			strncpy(volname, pd->volume_id, volnamelen - 1);
+			volname[volnamelen - 1] = '\0';
+			last = volnamelen - 1;
 			while (last >= 0
 			    && (volname[last] == ' ' || volname[last] == 0))
 				last--;
@@ -456,7 +458,8 @@ get_available_cds_helper(void *arg, const char *device)
 			dev = open(dname, O_RDONLY, 0);
 			if (dev == -1)
 				continue;
-			error = get_iso9660_volname(dev, sess, volname);
+			error = get_iso9660_volname(dev, sess, volname,
+			    sizeof volname);
 			close(dev);
 			if (error)
 				continue;
