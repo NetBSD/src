@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.1,v 1.12 2019/10/04 15:30:16 uwe Exp $
+.\"	$NetBSD: flock.1,v 1.13 2019/10/04 16:14:05 uwe Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -28,33 +28,48 @@
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 18, 2014
+.Dd October 4, 2019
 .Dt FLOCK 1
 .Os
 .Sh NAME
 .Nm flock
 .Nd Provide locking API for shell scripts
 .Sh SYNOPSIS
+.\"
 .Nm
 .Op Fl dnosvx
 .Op Fl w Ar timeout
-.Ar lockfile|lockdir
-.Oo Fl c Oc Ar command ...
+.Ar file Ns \^|\^ Ns Ar directory
+.Ar command
+.Op Ar args No ...
+.\"
+.Nm
+.Op Fl dnosvx
+.Op Fl w Ar timeout
+.Ar file Ns \^|\^ Ns Ar directory
+.Fl c Ar command
+.\"
 .Nm
 .Op Fl dnsuvx
 .Op Fl w Ar timeout
-.Ar lockfd
+.Ar number
 .Sh DESCRIPTION
 The
 .Nm
 utility provides
 .Xr flock 2
 access to the command line or scripts.
-The first form locks a file or directory while the command provided is executed.
-If the file or directory does not exist, then a file is created.
+The first two forms lock the specified
+.Ar file
+or
+.Ar directory
+while the provided command is executed.
+If the path does not exist, then a file of that name is created with
+mode 0600.
 .Pp
-The second form can use an arbitrary file descriptor that is provided from a
-shell script for example:
+The third form can use an arbitrary file descriptor
+.Ar number
+that is provided from a shell script for example:
 .Bd -literal -offset indent
 (
 	flock -s 100
