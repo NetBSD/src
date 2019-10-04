@@ -1,4 +1,4 @@
-/*	$NetBSD: utmpentry.c,v 1.19 2019/10/04 11:40:43 mrg Exp $	*/
+/*	$NetBSD: utmpentry.c,v 1.20 2019/10/04 11:43:07 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: utmpentry.c,v 1.19 2019/10/04 11:40:43 mrg Exp $");
+__RCSID("$NetBSD: utmpentry.c,v 1.20 2019/10/04 11:43:07 mrg Exp $");
 #endif
 
 #include <sys/stat.h>
@@ -283,9 +283,9 @@ getentry(struct utmpentry *e, struct utmp *up)
 	 * reason we use the size of the _source_ as the length
 	 * argument.
 	 */
-	(void)strncpy(e->name, up->ut_name, sizeof(e->name));
-	(void)strncpy(e->line, up->ut_line, sizeof(e->line));
-	(void)strncpy(e->host, up->ut_host, sizeof(e->host));
+	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
+	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
+	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
 
 	e->tv.tv_sec = up->ut_time;
 	e->tv.tv_usec = 0;
@@ -314,9 +314,9 @@ getentryx(struct utmpentry *e, struct utmpx *up)
 	 * reason we use the size of the _source_ as the length
 	 * argument.
 	 */
-	(void)strncpy(e->name, up->ut_name, sizeof(e->name));
-	(void)strncpy(e->line, up->ut_line, sizeof(e->line));
-	(void)strncpy(e->host, up->ut_host, sizeof(e->host));
+	(void)strncpy(e->name, up->ut_name, sizeof(up->ut_name));
+	(void)strncpy(e->line, up->ut_line, sizeof(up->ut_line));
+	(void)strncpy(e->host, up->ut_host, sizeof(up->ut_host));
 
 	e->tv = up->ut_tv;
 	e->pid = up->ut_pid;
