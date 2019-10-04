@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_msg.c,v 1.75 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: sysv_msg.c,v 1.76 2019/10/04 23:20:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.75 2019/08/07 00:38:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_msg.c,v 1.76 2019/10/04 23:20:22 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sysv.h"
@@ -1100,6 +1100,7 @@ restart:
 				 */
 
 				if (msgtyp != msghdr->msg_type &&
+				    msgtyp != LONG_MIN &&
 				    msghdr->msg_type > -msgtyp)
 					continue;
 
