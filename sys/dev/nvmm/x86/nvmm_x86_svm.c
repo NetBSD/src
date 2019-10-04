@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.47 2019/10/04 12:11:38 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.48 2019/10/04 12:15:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.47 2019/10/04 12:11:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.48 2019/10/04 12:15:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,7 +287,8 @@ struct vmcb_ctrl {
 #define VMCB_CTRL_INTERCEPT_ICEBP	__BIT(8)
 #define VMCB_CTRL_INTERCEPT_WBINVD	__BIT(9)
 #define VMCB_CTRL_INTERCEPT_MONITOR	__BIT(10)
-#define VMCB_CTRL_INTERCEPT_MWAIT	__BIT(12)
+#define VMCB_CTRL_INTERCEPT_MWAIT	__BIT(11)
+#define VMCB_CTRL_INTERCEPT_MWAIT_ARMED	__BIT(12)
 #define VMCB_CTRL_INTERCEPT_XSETBV	__BIT(13)
 #define VMCB_CTRL_INTERCEPT_RDPRU	__BIT(14)
 #define VMCB_CTRL_INTERCEPT_EFER_SPEC	__BIT(15)
