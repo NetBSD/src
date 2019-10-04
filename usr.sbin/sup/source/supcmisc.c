@@ -1,4 +1,4 @@
-/*	$NetBSD: supcmisc.c,v 1.23 2013/03/08 20:56:44 christos Exp $	*/
+/*	$NetBSD: supcmisc.c,v 1.24 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -85,15 +85,15 @@ prtime(void)
 	time_t twhen;
 
 	if ((thisC->Cflags & CFURELSUF) && thisC->Crelease)
-		(void) sprintf(relsufix, ".%s", thisC->Crelease);
+		snprintf(relsufix, sizeof relsufix, ".%s", thisC->Crelease);
 	else
 		relsufix[0] = '\0';
 	if (chdir(thisC->Cbase) < 0)
 		logerr("Can't change to base directory %s for collection %s",
 		    thisC->Cbase, thisC->Cname);
 	twhen = getwhen(thisC->Cname, relsufix);
-	(void) strcpy(buf, ctime(&twhen));
-	buf[strlen(buf) - 1] = '\0';
+	strncpy(buf, ctime(&twhen), sizeof(buf) - 1);
+	buf[sizeof(buf) - 1] = '\0';
 	loginfo("Last update occurred at %s for collection %s%s",
 	    buf, thisC->Cname, relsufix);
 }
@@ -282,9 +282,10 @@ notify(int f, const char *fmt, ...)
 	va_start(ap, fmt);
 
 	if ((thisC->Cflags & CFURELSUF) && thisC->Crelease)
-		(void) sprintf(collrelname, "%s-%s", collname, thisC->Crelease);
+		snprintf(collrelname, sizeof collrelname, "%s-%s", collname,
+		    thisC->Crelease);
 	else
-		(void) strcpy(collrelname, collname);
+		strcpy(collrelname, collname);
 
 	if (fmt == NULL) {
 		if (noteF && noteF != stdout && (!silent || thisC->Cnogood)) {
