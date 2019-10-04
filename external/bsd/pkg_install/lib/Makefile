@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2010/04/23 20:56:01 joerg Exp $
+# $NetBSD: Makefile,v 1.10 2019/10/04 09:47:28 mrg Exp $
 # Original from FreeBSD, no rcs id.
 
 LIBISPRIVATE=	yes
@@ -24,5 +24,7 @@ pkg_install.conf.5: ${DIST}/lib/pkg_install.conf.5.in
 CLEANFILES+=	pkg_install.conf.5
 
 CPPFLAGS+=	-DNETBSD
+
+COPTS.plist.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
 
 .include <bsd.lib.mk>

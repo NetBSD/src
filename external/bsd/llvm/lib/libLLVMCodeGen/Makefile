@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2018/07/17 18:55:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.35 2019/10/04 09:47:27 mrg Exp $
 
 LIB=	LLVMCodeGen
 
@@ -168,6 +168,10 @@ SRCS+=	AggressiveAntiDepBreaker.cpp \
 	WasmEHPrepare.cpp \
 	WinEHPrepare.cpp \
 	XRayInstrumentation.cpp
+
+.if !defined(HOSTLIB)
+COPTS.ScheduleDAGInstrs.cpp+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-attributes :}
+.endif
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2013/06/01 07:53:11 mrg Exp $
+#	$NetBSD: Makefile,v 1.9 2019/10/04 09:47:28 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -99,6 +99,8 @@ INCS=	MITMisc.h \
 INCSDIR=${X11INCDIR}/X11/extensions
 
 PKGDIST=	${LIB}
+
+COPTS.XEVI.c+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error :}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
