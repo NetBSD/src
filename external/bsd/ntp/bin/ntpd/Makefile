@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2018/02/02 01:02:39 mrg Exp $
+#	$NetBSD: Makefile,v 1.23 2019/10/04 09:47:27 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -91,5 +91,7 @@ YHEADER=1
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 5 && ${ACTIVE_CC} == "gcc"
 COPTS.ntp_control.c+=  -Wno-error=maybe-uninitialized
 .endif
+
+COPTS.ntp_loopfilter.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
 
 .include <bsd.prog.mk>
