@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.82 2018/04/04 04:43:46 kre Exp $
+#	$NetBSD: Makefile,v 1.83 2019/10/04 00:03:56 christos Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/4/93
 
 USE_SHLIBDIR=	yes
@@ -38,6 +38,11 @@ MAN=	efun.3 \
 CPPFLAGS.sockaddr_snprintf.c+=-DHAVE_UTIL_H
 CPPFLAGS.sockaddr_snprintf.c+=-DHAVE_NETATALK_AT_H
 CPPFLAGS.sockaddr_snprintf.c+=-DHAVE_NET_IF_DL_H
+
+#.if ${HAVE_GCC:U0} > 7
+COPTS.logwtmp.c += -Wno-stringop-truncation
+COPTS.logwtmpx.c += -Wno-stringop-truncation
+#.endif
 
 YPREFIX=__pd
 .PATH:	${NETBSDSRCDIR}/lib/libc/gen
