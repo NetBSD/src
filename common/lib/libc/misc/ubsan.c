@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.6 2019/06/17 18:55:37 kamil Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.7 2019/10/04 12:12:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.6 2019/06/17 18:55:37 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.7 2019/10/04 12:12:47 mrg Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.6 2019/06/17 18:55:37 kamil Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.7 2019/10/04 12:12:47 mrg Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -1403,7 +1403,8 @@ DeserializeFloatInlined(char *pBuffer, size_t zBUfferLength, struct CTypeDescrip
 
 	switch (zDeserializeTypeWidth(pType)) {
 	case WIDTH_64:
-		memcpy(&D, &ulNumber, sizeof(double));
+		ASSERT(sizeof(D) == sizeof(ulNumber));
+		memcpy(&D, &ulNumber, sizeof(ulNumber));
 		snprintf(pBuffer, zBUfferLength, "%g", D);
 		break;
 	case WIDTH_32:
