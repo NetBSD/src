@@ -1,4 +1,4 @@
-/*	$NetBSD: rpc_machdep.c,v 1.95 2019/10/04 01:53:58 christos Exp $	*/
+/*	$NetBSD: rpc_machdep.c,v 1.96 2019/10/04 12:08:33 christos Exp $	*/
 
 /*
  * Copyright (c) 2000-2002 Reinoud Zandijk.
@@ -55,7 +55,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.95 2019/10/04 01:53:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rpc_machdep.c,v 1.96 2019/10/04 12:08:33 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/kernel.h>
@@ -518,7 +518,7 @@ initarm(void *cookie)
 #endif
 	for (loop = 0, physmem = 0; loop < bootconfig.dramblocks; ++loop) {
 #ifdef VERBOSE_INIT_ARM
-		printf("%#x + %#0x, type = %#08x\n", bootconfig.dram[loop].address,
+		printf("0x%x + 0x%0x, type = 0x%08x\n", bootconfig.dram[loop].address,
 				 bootconfig.dram[loop].pages * PAGE_SIZE,
 				 bootconfig.dram[loop].flags);
 #endif
@@ -626,13 +626,13 @@ initarm(void *cookie)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("Setting up stacks :\n");
-	printf("IRQ stack: p%#08lx v%#08lx\n",
+	printf("IRQ stack: p0x%08lx v0x%08lx\n",
 	    irqstack.pv_pa, irqstack.pv_va); 
-	printf("ABT stack: p%#08lx v%#08lx\n",
+	printf("ABT stack: p0x%08lx v0x%08lx\n",
 	    abtstack.pv_pa, abtstack.pv_va); 
-	printf("UND stack: p%#08lx v%#08lx\n",
+	printf("UND stack: p0x%08lx v0x%08lx\n",
 	    undstack.pv_pa, undstack.pv_va); 
-	printf("SVC stack: p%#08lx v%#08lx\n",
+	printf("SVC stack: p0x%08lx v0x%08lx\n",
 	    kernelstack.pv_pa, kernelstack.pv_va); 
 	printf("\n");
 #endif
@@ -656,7 +656,7 @@ initarm(void *cookie)
 	 */
 
 #ifdef VERBOSE_INIT_ARM
-	printf("Creating L1 page table p@%#08x\n", (uint32_t)kernel_l1pt.pv_pa);
+	printf("Creating L1 page table p@0x%08x\n", (uint32_t)kernel_l1pt.pv_pa);
 #endif
 
 	/*
