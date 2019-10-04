@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_misc.c,v 1.174 2019/09/23 21:07:50 christos Exp $	*/
+/*	$NetBSD: sunos_misc.c,v 1.175 2019/10/04 12:24:12 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.174 2019/09/23 21:07:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_misc.c,v 1.175 2019/10/04 12:24:12 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,7 @@ sunos_sys_uname(struct lwp *l, const struct sunos_sys_uname_args *uap, register_
 	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
 	sut.nodename[sizeof(sut.nodename)-1] = '\0';
 	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
-	memcpy(sut.version, "1", sizeof(sut.version) - 1);
+	sut.version[0] = '1';
 	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
 
 	return copyout((void *)&sut, (void *)SCARG(uap, name),
