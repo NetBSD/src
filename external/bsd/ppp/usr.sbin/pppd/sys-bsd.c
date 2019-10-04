@@ -1045,11 +1045,12 @@ output(int unit, u_char *p, int len)
 void
 wait_input(struct timeval *timo)
 {
-    fd_set ready;
+    fd_set ready, eready;
     int n;
 
     ready = in_fds;
-    n = select(max_in_fd + 1, &ready, NULL, &ready, timo);
+    eready = in_fds;
+    n = select(max_in_fd + 1, &ready, NULL, &eready, timo);
     if (n < 0 && errno != EINTR)
 	fatal("%s: select: %m", __func__);
 }
