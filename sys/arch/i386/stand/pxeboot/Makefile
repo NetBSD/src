@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.24.10.1 2019/09/18 17:30:06 martin Exp $
+#	$NetBSD: Makefile,v 1.24.10.2 2019/10/04 11:34:18 martin Exp $
 
 S=	${.CURDIR}/../../../..
 
@@ -71,7 +71,7 @@ CPPFLAGS+= -DBOOTPARAM_DEFFLAGS=0x0c
 #CFLAGS= -O2 -fomit-frame-pointer -fno-defer-pop
 CFLAGS+= -Wall -Wmissing-prototypes -Wstrict-prototypes -Wno-main
 
-SAMISCCPPFLAGS+= -DHEAP_START=0x10000 -DHEAP_LIMIT=0x30000
+SAMISCCPPFLAGS+= -DHEAP_START=0x20000 -DHEAP_LIMIT=0x40000
 SAMISCMAKEFLAGS+= SA_USE_CREAD=yes	# Read compressed kernels
 
 CPPFLAGS+= -DPASS_BIOSGEOM
