@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen.c,v 1.2 2019/08/17 15:49:13 msaitoh Exp $	*/
+/*	$NetBSD: radeon_evergreen.c,v 1.3 2019/10/04 12:29:05 mrg Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.2 2019/08/17 15:49:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.3 2019/10/04 12:29:05 mrg Exp $");
 
 #include <linux/bitops.h>
 #include <linux/firmware.h>
@@ -5468,6 +5468,7 @@ restart_ih:
 				DRM_ERROR("Unhandled interrupt: %d %d\n", src_id, src_data);
 				break;
 			}
+			break;
 		case 96:
 			DRM_ERROR("SRBM_READ_ERROR: 0x%x\n", RREG32(SRBM_READ_ERROR));
 			WREG32(SRBM_INT_ACK, 0x1);
