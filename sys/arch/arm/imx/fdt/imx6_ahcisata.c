@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ahcisata.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $	*/
+/*	$NetBSD: imx6_ahcisata.c,v 1.3 2019/10/04 06:49:40 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ahcisata.c,v 1.3 2019/10/04 06:49:40 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -116,6 +116,8 @@ imx6_ahcisata_attach(device_t parent, device_t self, void *aux)
 		sc->sc_rx_eq = 3000;
 	if (of_getprop_bool(phandle, "fsl,no-spread-spectrum") == false)
 		sc->sc_ss = 1;
+	else
+		sc->sc_ss = 0;
 
 	sc->sc_clk_sata = fdtbus_clock_get(phandle, "sata");
 	if (sc->sc_clk_sata == NULL) {
@@ -181,8 +183,8 @@ imx6_ahcisata_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO,
-	    FDT_INTR_MPSAFE, ahci_intr, &sc->sc);
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_BIO, 0,
+	    ahci_intr, &sc->sc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt on %s\n",
 		    intrstr);
@@ -412,10 +414,10 @@ imx6_ahcisata_init(struct imx6_ahcisata_softc *sc)
 			val = gpr13_sata_phy_settings[i].def_val;
 		v |= __SHIFTIN(val, gpr13_sata_phy_settings[i].mask);
 	}
-	v |= __SHIFTIN(sc->sc_ss, IOMUX_GPR13_SATA_PHY_5);
 	v |= __SHIFTIN(0x12, IOMUX_GPR13_SATA_PHY_7);	/* Rx SATA2m */
 	v |= __SHIFTIN(3, IOMUX_GPR13_SATA_PHY_6);	/* Rx DPLL mode */
 	v |= __SHIFTIN(1, IOMUX_GPR13_SATA_SPEED);	/* 3.0GHz */
+	v |= __SHIFTIN(sc->sc_ss, IOMUX_GPR13_SATA_PHY_5);
 	v |= __SHIFTIN(1, IOMUX_GPR13_SATA_PHY_1);	/* PLL clock enable */
 	bus_space_write_4(sc->sc_iot, sc->sc_gpr_ioh, IOMUX_GPR13, v);
 
