@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_build.c,v 1.50.2.1 2019/08/11 10:10:23 martin Exp $");
+__RCSID("$NetBSD: npf_build.c,v 1.50.2.2 2019/10/04 08:06:34 martin Exp $");
 
 #include <sys/types.h>
 #define	__FAVOR_BSD
@@ -151,25 +151,32 @@ npfctl_debug_addif(const char *ifname)
 	return 0;
 }
 
-unsigned
-npfctl_table_getid(const char *name)
+nl_table_t *
+npfctl_table_getbyname(nl_config_t *ncf, const char *name)
 {
-	unsigned tid = (unsigned)-1;
 	nl_iter_t i = NPF_ITER_BEGIN;
 	nl_table_t *tl;
 
 	/* XXX dynamic ruleset */
-	if (!npf_conf) {
-		return (unsigned)-1;
+	if (!ncf) {
+		return NULL;
 	}
-	while ((tl = npf_table_iterate(npf_conf, &i)) != NULL) {
+	while ((tl = npf_table_iterate(ncf, &i)) != NULL) {
 		const char *tname = npf_table_getname(tl);
 		if (strcmp(tname, name) == 0) {
-			tid = npf_table_getid(tl);
 			break;
 		}
 	}
-	return tid;
+	return tl;
+}
+
+unsigned
+npfctl_table_getid(const char *name)
+{
+	nl_table_t *tl;
+
+	tl = npfctl_table_getbyname(npf_conf, name);
+	return tl ? npf_table_getid(tl) : (unsigned)-1;
 }
 
 const char *
@@ -530,16 +537,32 @@ npfctl_build_rproc(const char *name, npfvar_t *procs)
 	npf_rproc_insert(npf_conf, rp);
 }
 
+/*
+ * npfctl_build_maprset: create and insert a NAT ruleset.
+ */
 void
 npfctl_build_maprset(const char *name, int attr, const char *ifname)
 {
 	const int attr_di = (NPF_RULE_IN | NPF_RULE_OUT);
 	nl_rule_t *rl;
+	bool natset;
+	int err;
+
+	/* Validate the prefix. */
+	err = npfctl_nat_ruleset_p(name, &natset);
+	if (!natset) {
+		yyerror("NAT ruleset names must be prefixed with `"
+		    NPF_RULESET_MAP_PREF "`");
+	}
+	if (err) {
+		yyerror("NAT ruleset is missing a name (only prefix found)");
+	}
 
 	/* If no direction is not specified, then both. */
 	if ((attr & attr_di) == 0) {
 		attr |= attr_di;
 	}
+
 	/* Allow only "in/out" attributes. */
 	attr = NPF_RULE_GROUP | NPF_RULE_DYNAMIC | (attr & attr_di);
 	rl = npf_rule_create(name, attr, ifname);
@@ -859,13 +882,22 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
 		}
 	}
 
-	if (nt1) {
-		npf_rule_setprio(nt1, NPF_PRI_LAST);
-		npf_nat_insert(npf_conf, nt1);
-	}
-	if (nt2) {
-		npf_rule_setprio(nt2, NPF_PRI_LAST);
-		npf_nat_insert(npf_conf, nt2);
+	if (npf_conf) {
+		if (nt1) {
+			npf_rule_setprio(nt1, NPF_PRI_LAST);
+			npf_nat_insert(npf_conf, nt1);
+		}
+		if (nt2) {
+			npf_rule_setprio(nt2, NPF_PRI_LAST);
+			npf_nat_insert(npf_conf, nt2);
+		}
+	} else {
+		// XXX/TODO: need to refactor a bit to enable this..
+		if (nt1 && nt2) {
+			errx(EXIT_FAILURE, "bidirectional NAT is currently "
+			    "not yet supported in the dynamic rules");
+		}
+		the_rule = nt1 ? nt1 : nt2;
 	}
 }
 
@@ -873,15 +905,13 @@ npfctl_build_natseg(int sd, int type, unsigned mflags, const char *ifname,
  * npfctl_fill_table: fill NPF table with entries from a specified file.
  */
 static void
-npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
+npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname, FILE *fp)
 {
 	char *buf = NULL;
 	int l = 0;
-	FILE *fp;
 	size_t n;
 
-	fp = fopen(fname, "r");
-	if (fp == NULL) {
+	if (fp == NULL && (fp = fopen(fname, "r")) == NULL) {
 		err(EXIT_FAILURE, "open '%s'", fname);
 	}
 	while (l++, getline(&buf, &n, fp) != -1) {
@@ -908,6 +938,23 @@ npfctl_fill_table(nl_table_t *tl, u_int type, const char *fname)
 }
 
 /*
+ * npfctl_load_table: create an NPF table and fill with contents from a file.
+ */
+nl_table_t *
+npfctl_load_table(const char *tname, int tid, u_int type,
+    const char *fname, FILE *fp)
+{
+	nl_table_t *tl;
+
+	tl = npf_table_create(tname, tid, type);
+	if (tl && fname) {
+		npfctl_fill_table(tl, type, fname, fp);
+	}
+
+	return tl;
+}
+
+/*
  * npfctl_build_table: create an NPF table, add to the configuration and,
  * if required, fill with contents from a file.
  */
@@ -916,14 +963,12 @@ npfctl_build_table(const char *tname, u_int type, const char *fname)
 {
 	nl_table_t *tl;
 
-	tl = npf_table_create(tname, npfctl_tid_counter++, type);
-	assert(tl != NULL);
-
-	if (fname) {
-		npfctl_fill_table(tl, type, fname);
-	} else if (type == NPF_TABLE_CONST) {
+	if (type == NPF_TABLE_CONST && !fname) {
 		yyerror("table type 'const' must be loaded from a file");
 	}
+
+	tl = npfctl_load_table(tname, npfctl_tid_counter++, type, fname, NULL);
+	assert(tl != NULL);
 
 	if (npf_table_insert(npf_conf, tl)) {
 		yyerror("table '%s' is already defined", tname);
@@ -939,9 +984,13 @@ npfctl_ifnet_table(const char *ifname)
 {
 	char tname[NPF_TABLE_MAXNAMELEN];
 	nl_table_t *tl;
-	u_int tid;
+	unsigned tid;
 
 	snprintf(tname, sizeof(tname), NPF_IFNET_TABLE_PREF "%s", ifname);
+	if (!npf_conf) {
+		errx(EXIT_FAILURE, "expression `ifaddrs(%s)` is currently "
+		    "not yet supported in dynamic rules", ifname);
+	}
 
 	tid = npfctl_table_getid(tname);
 	if (tid == (unsigned)-1) {
@@ -949,7 +998,7 @@ npfctl_ifnet_table(const char *ifname)
 		tl = npf_table_create(tname, tid, NPF_TABLE_IFADDR);
 		(void)npf_table_insert(npf_conf, tl);
 	}
-	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(u_int));
+	return npfvar_create_element(NPFVAR_TABLE, &tid, sizeof(unsigned));
 }
 
 /*
