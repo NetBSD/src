@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.170 2019/10/04 11:47:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.171 2019/10/04 15:28:00 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.170 2019/10/04 11:47:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.171 2019/10/04 15:28:00 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1264,6 +1264,7 @@ IDTVEC(syscall)
 	pushl	$T_ASTFLT	/* trap # for doing ASTs */
 	INTRENTRY
 	STI(%eax)
+
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 	testl	%ebx,%ebx
@@ -1276,6 +1277,7 @@ IDTVEC(syscall)
 #endif
 1:
 #endif /* DIAGNOSTIC */
+
 	addl	$1,CPUVAR(NSYSCALL)	/* count it atomically */
 	adcl	$0,CPUVAR(NSYSCALL)+4	/* count it atomically */
 	movl	CPUVAR(CURLWP),%edi
@@ -1290,6 +1292,7 @@ IDTVEC(syscall)
 	movl	L_MD_ASTPENDING(%edi), %eax
 	orl	CPUVAR(WANT_PMAPLOAD), %eax
 	jnz	9f
+
 #ifdef XEN
 	STIC(%eax)
 	jz	14f
@@ -1313,12 +1316,15 @@ IDTVEC(syscall)
 	jmp	.Lsyscall_checkast
 14:
 #endif /* XEN */
-#ifndef DIAGNOSTIC
-	INTRFASTEXIT
-#else /* DIAGNOSTIC */
+
+#ifdef DIAGNOSTIC
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
+#endif
+
 	INTRFASTEXIT
+
+#ifdef DIAGNOSTIC
 3:	STI(%eax)
 	pushl	$4f
 	call	_C_LABEL(panic)
@@ -1329,7 +1335,8 @@ IDTVEC(syscall)
 	jmp	.Lsyscall_checkast
 4:	.asciz	"SPL NOT LOWERED ON SYSCALL EXIT\n"
 5:	.asciz	"SPL NOT ZERO ON SYSCALL ENTRY\n"
-#endif /* DIAGNOSTIC */
+#endif
+
 9:
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
 	jz	10f
