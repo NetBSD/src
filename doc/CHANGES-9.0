@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.69 2019/10/03 17:35:13 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.70 2019/10/04 08:09:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4269,4 +4269,32 @@ external/gpl3/gdb/dist/gdb/arm-nbsd-nat.c	1.13
 
 	Validate register number before fetching/storing it.
 	[christos, ticket #281]
+
+lib/libnpf/libnpf.3				1.11
+lib/libnpf/npf.c				1.48
+lib/libnpf/npf.h				1.38
+sys/net/npf/npf_conn.c				1.30
+sys/net/npf/npf_ctl.c				1.59
+sys/net/npf/npf_if.c				1.11,1.12
+sys/net/npf/npf_impl.h				1.80
+sys/net/npf/npf_ruleset.c			1.49
+usr.sbin/npf/npfctl/npf.conf.5			1.89,1.90
+usr.sbin/npf/npfctl/npf_build.c			1.52,1.53
+usr.sbin/npf/npfctl/npf_parse.y			1.50
+usr.sbin/npf/npfctl/npf_scan.l			1.30
+usr.sbin/npf/npfctl/npfctl.8			1.22-1.24
+usr.sbin/npf/npfctl/npfctl.c			1.62,1.63
+usr.sbin/npf/npfctl/npfctl.h			1.50,1.51
+usr.sbin/npf/npftest/npftest.conf		1.8
+
+	npfctl: implement table replace subcommand.
+	NPF ifmap: rework and fix a few small bugs.
+	libnpf/npfctl: support dynamic NAT rulesets using a name prefix.
+	npf_ifmap_copylogname: be more defensive.
+	[rmind, ticket #282]
+
+sys/arch/arm/dts/sun50i-h5-nanopi-neo-plus2.dts	1.4
+
+	Increase voltage for frequencies above 1GHz.
+	[jmcneill, ticket #283]
 
