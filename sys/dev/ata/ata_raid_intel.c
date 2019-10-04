@@ -1,4 +1,4 @@
-/*	$NetBSD: ata_raid_intel.c,v 1.9 2018/10/22 19:38:06 jdolecek Exp $	*/
+/*	$NetBSD: ata_raid_intel.c,v 1.10 2019/10/04 12:24:32 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2000-2008 Søren Schmidt <sos@FreeBSD.org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.9 2018/10/22 19:38:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ata_raid_intel.c,v 1.10 2019/10/04 12:24:32 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -176,7 +176,7 @@ ata_raid_read_config_intel(struct wd_softc *sc)
 
 	tmp = (char *)info;
 	(void)memcpy(tmp + 1024, tmp, 512);
-	(void)memcpy(tmp, tmp + 512, 1024);
+	(void)memmove(tmp, tmp + 512, 1024);
 	(void)memset(tmp + 1024, 0, 512);
 
 	/* Check if this is a Intel RAID struct */
