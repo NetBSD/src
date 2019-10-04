@@ -218,7 +218,7 @@ parse_signal(const std::string& str)
     if (signo == INT_MIN) {
         try {
             return atf::text::to_type< int >(str);
-        } catch (std::runtime_error) {
+        } catch (std::runtime_error &e) {
             throw atf::application::usage_error("Invalid signal name or number "
                 "in -s option");
         }
