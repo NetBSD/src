@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.17 2019/06/26 12:30:13 mgorny Exp $	*/
+/*	$NetBSD: fpu.h,v 1.18 2019/10/04 11:47:08 maxv Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -19,8 +19,6 @@ void fpu_area_restore(void *, uint64_t);
 
 void fpusave_lwp(struct lwp *, bool);
 void fpusave_cpu(bool);
-
-void fpu_eagerswitch(struct lwp *, struct lwp *);
 
 void fpu_set_default_cw(struct lwp *, unsigned int);
 
