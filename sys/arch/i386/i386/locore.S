@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.169 2019/10/03 05:06:29 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.170 2019/10/04 11:47:07 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.169 2019/10/03 05:06:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.170 2019/10/04 11:47:07 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1141,7 +1141,7 @@ skip_save:
 	pushl	%edx
 	pushl	%edi
 	pushl	%esi
-	call	_C_LABEL(fpu_eagerswitch)
+	call	_C_LABEL(fpu_switch)
 	addl	$8,%esp
 	popl	%edx
 
