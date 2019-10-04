@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.common,v 1.14 2019/10/02 06:51:59 mrg Exp $
+#	$NetBSD: Makefile.common,v 1.15 2019/10/04 08:51:33 mrg Exp $
 
 DIST=		${GCCDIST}
 GNUHOSTDIST=	${DIST}
@@ -35,8 +35,6 @@ COPTS.${_f}+=	-std=gnu++98
 .endfor
 
 STD_GNU11=	\
-		bad_array_length.cc \
-		bad_array_new.cc \
 		eh_aux_runtime.cc \
 		eh_ptr.cc \
 		eh_terminate.cc \

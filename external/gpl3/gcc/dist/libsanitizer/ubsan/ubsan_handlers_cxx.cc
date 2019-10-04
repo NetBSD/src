@@ -92,6 +92,7 @@ void __ubsan::__ubsan_handle_dynamic_type_cache_miss_abort(
     Die();
 }
 
+#ifdef UBSAN_CAN_USE_CXXABI
 namespace __ubsan {
 void __ubsan_handle_cfi_bad_type(CFICheckFailData *Data, ValueHandle Vtable,
                                  bool ValidVtable, ReportOptions Opts) {
@@ -142,5 +143,6 @@ void __ubsan_handle_cfi_bad_type(CFICheckFailData *Data, ValueHandle Vtable,
   }
 }
 }  // namespace __ubsan
+#endif
 
 #endif // CAN_SANITIZE_UB

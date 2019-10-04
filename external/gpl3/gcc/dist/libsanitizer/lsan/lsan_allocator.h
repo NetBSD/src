@@ -48,8 +48,10 @@ struct ChunkMetadata {
   u32 stack_trace_id;
 };
 
-#if defined(__mips64) || defined(__aarch64__) || defined(__i386__) || \
-    defined(__arm__)
+#if defined(__aarch64__) || defined(__i386__) || defined(__arm__) || \
+    ((defined(__sparc__) || \
+      defined(__powerpc__) || \
+      defined(__mips__)) && !defined(_LP64))
 static const uptr kRegionSizeLog = 20;
 static const uptr kNumRegions = SANITIZER_MMAP_RANGE_SIZE >> kRegionSizeLog;
 typedef TwoLevelByteMap<(kNumRegions >> 12), 1 << 12> ByteMap;
@@ -65,7 +67,8 @@ struct AP32 {
   static const uptr kFlags = 0;
 };
 typedef SizeClassAllocator32<AP32> PrimaryAllocator;
-#elif defined(__x86_64__) || defined(__powerpc64__)
+#elif defined(__x86_64__) || defined(__powerpc64__) || defined(__sparc64__) || \
+      (defined(__mips64) && defined(_LP64))
 struct AP64 {  // Allocator64 parameters. Deliberately using a short name.
   static const uptr kSpaceBeg = 0x600000000000ULL;
   static const uptr kSpaceSize =  0x40000000000ULL; // 4T.
@@ -76,6 +79,8 @@ struct AP64 {  // Allocator64 parameters. Deliberately using a short name.
 };
 
 typedef SizeClassAllocator64<AP64> PrimaryAllocator;
+#else
+#error "unsupported lsan platform"
 #endif
 typedef SizeClassAllocatorLocalCache<PrimaryAllocator> AllocatorCache;
 
