@@ -1,12 +1,11 @@
-/*	$NetBSD: extern.h,v 1.24 2019/10/04 08:57:38 mrg Exp $	*/
+/*	$NetBSD: dd_swab.c,v 1.1 2019/10/04 08:57:38 mrg Exp $	*/
 
-/*-
- * Copyright (c) 1991, 1993, 1994
+/*
+ * Copyright (c) 1988, 1993
  *	The Regents of the University of California.  All rights reserved.
  *
  * This code is derived from software contributed to Berkeley by
- * Keith Muller of the University of California, San Diego and Lance
- * Visser of Convex Computer Corporation.
+ * Jeffrey Mogul.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,57 +31,53 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- *	@(#)extern.h	8.3 (Berkeley) 4/2/94
+ * from: NetBSD: swab.c,v 1.18 2011/01/04 17:14:07 martin Exp
  */
 
+/* This copy has no restrict on it, that dd wants */
+
 #include <sys/cdefs.h>
-
-#ifdef NO_CONV
-__dead void block(void);
-__dead void block_close(void);
-__dead void unblock(void);
-__dead void unblock_close(void);
+#if defined(LIBC_SCCS) && !defined(lint)
+#if 0
+static char sccsid[] = "@(#)swab.c	8.1 (Berkeley) 6/4/93";
 #else
-void block(void);
-void block_close(void);
-void unblock(void);
-void unblock_close(void);
+__RCSID("$NetBSD: dd_swab.c,v 1.1 2019/10/04 08:57:38 mrg Exp $");
 #endif
+#endif /* LIBC_SCCS and not lint */
 
-#ifndef NO_MSGFMT
-int dd_write_msg(const char *, int);
-#endif
+#include <sys/types.h>
 
-void dd_out(int);
-void def(void);
-void def_close(void);
-void jcl(char **);
-void pos_in(void);
-void pos_out(void);
-void summary(void);
-void summaryx(int);
-__dead void terminate(int);
-void unblock(void);
-void unblock_close(void);
-ssize_t bwrite(IO *, const void *, size_t);
+#include "dd.h"
+#include "extern.h"
 
-extern IO		in, out;
-extern STAT		st;
-extern void		(*cfunc)(void);
-extern uint64_t		cpy_cnt;
-extern uint64_t		cbsz;
-extern u_int		ddflags;
-#ifndef NO_IOFLAG
-extern u_int		iflag;
-extern u_int		oflag;
-#endif /* NO_IOFLAG */
-extern u_int		files_cnt;
-extern uint64_t		progress;
-extern const u_char	*ctab;
-extern const u_char	a2e_32V[], a2e_POSIX[];
-extern const u_char	e2a_32V[], e2a_POSIX[];
-extern const u_char	a2ibm_32V[], a2ibm_POSIX[];
-extern u_char		casetab[];
-extern const char	*msgfmt;
+void
+dd_swab(const void * from, void * to, ssize_t len)
+{
+	char temp;
+	const char *fp;
+	char *tp;
 
-void dd_swab(const void *, void *, ssize_t len);
+	if (len <= 1)
+		return;
+
+	len /= 2;
+	fp = (const char *)from;
+	tp = (char *)to;
+#define	STEP	temp = *fp++,*tp++ = *fp++,*tp++ = temp
+
+	if (__predict_false(len == 1)) {
+		STEP;
+		return;
+	}
+
+	/* round to multiple of 8 */
+	while ((--len % 8) != 0)
+		STEP;
+	len /= 8;
+	if (len == 0)
+		return;
+	while (len-- != 0) {
+		STEP; STEP; STEP; STEP;
+		STEP; STEP; STEP; STEP;
+	}
+}
