@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.56 2019/10/03 05:06:29 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.57 2019/10/04 11:47:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.56 2019/10/03 05:06:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.57 2019/10/04 11:47:08 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -267,8 +267,10 @@ fpu_lwp_install(struct lwp *l)
 	fpu_area_restore(&pcb->pcb_savefpu, x86_xsave_features);
 }
 
+void fpu_switch(struct lwp *, struct lwp *);
+
 void
-fpu_eagerswitch(struct lwp *oldlwp, struct lwp *newlwp)
+fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 {
 	int s;
 
@@ -536,6 +538,17 @@ fpusave_lwp(struct lwp *l, bool save)
 	}
 }
 
+static inline void
+fpu_xstate_reload(union savefpu *fpu_save, uint64_t xstate)
+{
+	/*
+	 * Force a reload of the given xstate during the next XRSTOR.
+	 */
+	if (x86_fpu_save >= FPU_SAVE_XSAVE) {
+		fpu_save->sv_xsave_hdr.xsh_xstate_bv |= xstate;
+	}
+}
+
 void
 fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 {
@@ -544,13 +557,8 @@ fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 
 	if (i386_use_fxsave) {
 		fpu_save->sv_xmm.fx_cw = x87_cw;
-
-		/* Force a reload of CW */
-		if ((x87_cw != __INITIAL_NPXCW__) &&
-		    (x86_fpu_save == FPU_SAVE_XSAVE ||
-		    x86_fpu_save == FPU_SAVE_XSAVEOPT)) {
-			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
-			    XCR0_X87;
+		if (x87_cw != __INITIAL_NPXCW__) {
+			fpu_xstate_reload(fpu_save, XCR0_X87);
 		}
 	} else {
 		fpu_save->sv_87.s87_cw = x87_cw;
@@ -594,14 +602,8 @@ fpu_clear(struct lwp *l, unsigned int x87_cw)
 		fpu_save->sv_xmm.fx_mxcsr = __INITIAL_MXCSR__;
 		fpu_save->sv_xmm.fx_mxcsr_mask = x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_cw = x87_cw;
-
-		/*
-		 * Force a reload of CW if we're using the non-default
-		 * value.
-		 */
 		if (__predict_false(x87_cw != __INITIAL_NPXCW__)) {
-			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
-			    XCR0_X87;
+			fpu_xstate_reload(fpu_save, XCR0_X87);
 		}
 		break;
 	}
@@ -781,15 +783,7 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 		fpu_save->sv_xmm.fx_mxcsr_mask &= x86_fpu_mxcsr_mask;
 		fpu_save->sv_xmm.fx_mxcsr &= fpu_save->sv_xmm.fx_mxcsr_mask;
 
-		/*
-		 * Make sure the x87 and SSE bits are set in xstate_bv.
-		 * Otherwise xrstor will not restore them.
-		 */
-		if (x86_fpu_save == FPU_SAVE_XSAVE ||
-		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
-			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
-			    (XCR0_X87 | XCR0_SSE);
-		}
+		fpu_xstate_reload(fpu_save, XCR0_X87 | XCR0_SSE);
 	} else {
 		process_xmm_to_s87(fpregs, &fpu_save->sv_87);
 	}
@@ -805,16 +799,7 @@ process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 		fpusave_lwp(l, true);
 		fpu_save = lwp_fpuarea(l);
 		process_s87_to_xmm(fpregs, &fpu_save->sv_xmm);
-
-		/*
-		 * Make sure the x87 and SSE bits are set in xstate_bv.
-		 * Otherwise xrstor will not restore them.
-		 */
-		if (x86_fpu_save == FPU_SAVE_XSAVE ||
-		    x86_fpu_save == FPU_SAVE_XSAVEOPT) {
-			fpu_save->sv_xsave_hdr.xsh_xstate_bv |=
-			    (XCR0_X87 | XCR0_SSE);
-		}
+		fpu_xstate_reload(fpu_save, XCR0_X87 | XCR0_SSE);
 	} else {
 		fpusave_lwp(l, false);
 		fpu_save = lwp_fpuarea(l);

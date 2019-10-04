@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.187 2019/10/03 05:06:29 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.188 2019/10/04 11:47:07 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1150,7 +1150,7 @@ ENTRY(cpu_switchto)
 	/* Switch the FPU. */
 	movq	%r13,%rdi
 	movq	%r12,%rsi
-	callq	_C_LABEL(fpu_eagerswitch)
+	callq	_C_LABEL(fpu_switch)
 
 	/* Don't bother with the rest if switching to a system process. */
 	testl	$LW_SYSTEM,L_FLAG(%r12)
