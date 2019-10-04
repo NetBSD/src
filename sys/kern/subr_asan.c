@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_asan.c,v 1.14 2019/09/22 10:35:12 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.15 2019/10/04 06:27:42 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.14 2019/09/22 10:35:12 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.15 2019/10/04 06:27:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -929,6 +929,103 @@ ASAN_BUS_WRITE_FUNC(4, 32)
 ASAN_BUS_WRITE_FUNC(8, 64)
 
 #endif /* __HAVE_KASAN_INSTR_BUS */
+
+/* -------------------------------------------------------------------------- */
+
+#ifdef __HAVE_KASAN_INSTR_DMA
+
+#include <sys/mbuf.h>
+
+static void
+kasan_dma_sync_linear(uint8_t *buf, bus_addr_t offset, bus_size_t len,
+    bool write, uintptr_t pc)
+{
+	kasan_shadow_check((uintptr_t)(buf + offset), len, write, pc);
+}
+
+static void
+kasan_dma_sync_mbuf(struct mbuf *m, bus_addr_t offset, bus_size_t len,
+    bool write, uintptr_t pc)
+{
+	bus_addr_t minlen;
+
+	for (; m != NULL && len != 0; m = m->m_next) {
+		kasan_shadow_check((uintptr_t)m, sizeof(*m), false, pc);
+
+		if (offset >= m->m_len) {
+			offset -= m->m_len;
+			continue;
+		}
+
+		minlen = MIN(len, m->m_len - offset);
+		kasan_shadow_check((uintptr_t)(mtod(m, char *) + offset),
+		    minlen, write, pc);
+
+		offset = 0;
+		len -= minlen;
+	}
+}
+
+static void
+kasan_dma_sync_uio(struct uio *uio, bus_addr_t offset, bus_size_t len,
+    bool write, uintptr_t pc)
+{
+	bus_size_t minlen, resid;
+	struct iovec *iov;
+	int i;
+
+	if (uio->uio_vmspace != NULL)
+		return;
+
+	kasan_shadow_check((uintptr_t)uio, sizeof(struct uio), false, pc);
+
+	resid = uio->uio_resid;
+	iov = uio->uio_iov;
+
+	for (i = 0; i < uio->uio_iovcnt && resid != 0; i++) {
+		kasan_shadow_check((uintptr_t)&iov[i], sizeof(iov[i]),
+		    false, pc);
+		minlen = MIN(resid, iov[i].iov_len);
+		kasan_shadow_check((uintptr_t)iov[i].iov_base, minlen,
+		    write, pc);
+		resid -= minlen;
+	}
+}
+
+void
+kasan_dma_sync(bus_dmamap_t map, bus_addr_t offset, bus_size_t len, int ops)
+{
+	bool write = (ops & (BUS_DMASYNC_PREWRITE|BUS_DMASYNC_POSTWRITE)) != 0;
+
+	switch (map->dm_buftype) {
+	case KASAN_DMA_LINEAR:
+		kasan_dma_sync_linear(map->dm_buf, offset, len, write,
+		    __RET_ADDR);
+		break;
+	case KASAN_DMA_MBUF:
+		kasan_dma_sync_mbuf(map->dm_buf, offset, len, write,
+		    __RET_ADDR);
+		break;
+	case KASAN_DMA_UIO:
+		kasan_dma_sync_uio(map->dm_buf, offset, len, write,
+		    __RET_ADDR);
+		break;
+	case KASAN_DMA_RAW:
+		break;
+	default:
+		panic("%s: impossible", __func__);
+	}
+}
+
+void
+kasan_dma_load(bus_dmamap_t map, void *buf, bus_size_t buflen, int type)
+{
+	map->dm_buf = buf;
+	map->dm_buflen = buflen;
+	map->dm_buftype = type;
+}
+
+#endif /* __HAVE_KASAN_INSTR_DMA */
 
 /* -------------------------------------------------------------------------- */
 

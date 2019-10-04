@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.3 2019/09/23 16:17:58 skrll Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.4 2019/10/04 06:27:42 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -63,6 +63,10 @@
 
 #ifndef _X86_BUS_H_
 #define _X86_BUS_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_kasan.h"
+#endif
 
 #include <x86/busdefs.h>
 
@@ -141,6 +145,11 @@ struct x86_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
+#if defined(KASAN)
+	void		*dm_buf;
+	bus_size_t	dm_buflen;
+	int		dm_buftype;
+#endif
 	bus_size_t	dm_maxsegsz;	/* largest possible segment */
 	bus_size_t	dm_mapsize;	/* size of the mapping */
 	int		dm_nsegs;	/* # valid segments in mapping */
