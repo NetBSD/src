@@ -1,4 +1,4 @@
-.\"	$NetBSD: flock.1,v 1.10 2014/08/18 09:45:52 christos Exp $
+.\"	$NetBSD: flock.1,v 1.11 2019/10/04 11:49:48 uwe Exp $
 .\"
 .\" Copyright (c) 2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -39,9 +39,7 @@
 .Op Fl dnosvx
 .Op Fl w Ar timeout
 .Ar lockfile|lockdir
-.Op Fl c Ar command
-|
-.Op Ar command ...
+.Op Oo Fl c Oc Ar command ...
 .Nm
 .Op Fl dnsuvx
 .Op Fl w Ar timeout
@@ -57,7 +55,7 @@ If the file or directory does not exist, then a file is created.
 .Pp
 The second form can use an arbitrary file descriptor that is provided from a
 shell script for example:
-.Bd -literal
+.Bd -literal -offset indent
 (
 	flock -s 100
 	# commands to be executed under the lock
@@ -65,7 +63,7 @@ shell script for example:
 .Ed
 .Pp
 The following options are available:
-.Bl -tag -width "XXXXXXXXXXXXXXXXX"
+.Bl -tag -width Fl
 .It Fl c Ar command
 Pass a command to a the shell.
 .It Fl d , Fl Fl debug
