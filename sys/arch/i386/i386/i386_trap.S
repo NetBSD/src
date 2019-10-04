@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.18 2019/02/11 17:28:52 cherry Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.19 2019/10/04 15:28:00 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.18 2019/02/11 17:28:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.19 2019/10/04 15:28:00 maxv Exp $");
 #endif
 
 /*
@@ -220,7 +220,7 @@ IDTVEC(trap07)
 	pushl	%esp
 	call	_C_LABEL(fpudna)
 	addl	$4,%esp
-	jmp	_C_LABEL(trapreturn)
+	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap07)
 
 IDTVEC(trap08)
@@ -282,7 +282,7 @@ IDTVEC(trap0f)
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
 #endif
-	jmp	_C_LABEL(trapreturn)
+	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap0f)
 IDTVEC_END(intrspurious)
 
@@ -302,7 +302,7 @@ IDTVEC(trap10)
 	adcl	$0,CPUVAR(NTRAP)+4
 	call	_C_LABEL(fputrap)
 	addl	$4,%esp
-	jmp	_C_LABEL(trapreturn)
+	jmp	.Lalltraps_checkusr
 IDTVEC_END(trap10)
 
 IDTVEC(trap11)
@@ -394,13 +394,14 @@ IDTVEC_END(tss_trap08)
 	.type	_C_LABEL(trap_return_fault_return),@function
 LABEL(trap_return_fault_return)
 	mov	4(%esp),%esp	/* frame for user return */
-	jmp	_C_LABEL(trapreturn)
+	jmp	.Lalltraps_checkusr
 END(trap_return_fault_return)
 
 /* LINTSTUB: Ignore */
 ENTRY(alltraps)
 	INTRENTRY
 	STI(%eax)
+
 calltrap:
 #ifdef DIAGNOSTIC
 	movl	CPUVAR(ILEVEL),%ebx
@@ -410,16 +411,18 @@ calltrap:
 	pushl	%esp
 	call	_C_LABEL(trap)
 	addl	$4,%esp
-_C_LABEL(trapreturn):	.globl	trapreturn
+
+.Lalltraps_checkusr:
 	testb	$CHK_UPL,TF_CS(%esp)
 	jnz	.Lalltraps_checkast
 	jmp	6f
+
 .Lalltraps_checkast:
 	/* Check for ASTs on exit to user mode. */
 	CLI(%eax)
 	CHECK_ASTPENDING(%eax)
 	jz	3f
-5:	CLEAR_ASTPENDING(%eax)
+	CLEAR_ASTPENDING(%eax)
 	STI(%eax)
 	movl	$T_ASTFLT,TF_TRAPNO(%esp)
 	addl	$1,CPUVAR(NTRAP)	/* statistical info */
@@ -430,6 +433,7 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
+
 #ifdef XEN
 	STIC(%eax)
 	jz	6f
@@ -450,15 +454,23 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
 7:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
-	jmp	_C_LABEL(trapreturn)
-#endif /* XEN */
-#ifndef DIAGNOSTIC
-6:	INTRFASTEXIT
-#else
-6:	cmpl	CPUVAR(ILEVEL),%ebx
-	jne	3f
+	jmp	.Lalltraps_checkusr
+#endif
+
+6:
+#ifdef DIAGNOSTIC
+	cmpl	CPUVAR(ILEVEL),%ebx
+	jne	.Lspl_error
+#endif
 	INTRFASTEXIT
-3:	STI(%eax)
+
+9:	STI(%eax)
+	call	_C_LABEL(pmap_load)
+	jmp	.Lalltraps_checkast	/* re-check ASTs */
+
+#ifdef DIAGNOSTIC
+.Lspl_error:
+	STI(%eax)
 	pushl	$4f
 	call	_C_LABEL(panic)
 	addl	$4,%esp
@@ -467,8 +479,5 @@ _C_LABEL(trapreturn):	.globl	trapreturn
 	addl	$4,%esp
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 4:	.asciz	"SPL NOT LOWERED ON TRAP EXIT\n"
-#endif /* DIAGNOSTIC */
-9:	STI(%eax)
-	call	_C_LABEL(pmap_load)
-	jmp	.Lalltraps_checkast	/* re-check ASTs */
+#endif
 END(alltraps)
