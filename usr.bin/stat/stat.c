@@ -1,4 +1,4 @@
-/*	$NetBSD: stat.c,v 1.44 2019/02/04 08:07:33 mrg Exp $ */
+/*	$NetBSD: stat.c,v 1.45 2019/10/04 11:12:16 mrg Exp $ */
 
 /*
  * Copyright (c) 2002-2011 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: stat.c,v 1.44 2019/02/04 08:07:33 mrg Exp $");
+__RCSID("$NetBSD: stat.c,v 1.45 2019/10/04 11:12:16 mrg Exp $");
 #endif
 
 #if ! HAVE_NBTOOL_CONFIG_H
@@ -806,8 +806,8 @@ format1(const struct stat *st,
 			nsecs = st->st_ctimensec;
 #endif
 		}
-		/* FALLTHROUGH */
 #if HAVE_STRUCT_STAT_ST_BIRTHTIME
+		/* FALLTHROUGH */
 	case SHOW_st_btime:
 		if (!gottime) {
 			gottime = 1;
