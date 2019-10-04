@@ -5318,7 +5318,8 @@ zfs_netbsd_create(void *v)
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	if (error == 0)
 		VN_KNOTE(dvp, NOTE_WRITE);
-	VOP_UNLOCK(*vpp, 0);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5358,7 +5359,8 @@ zfs_netbsd_mknod(void *v)
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	if (error == 0)
 		VN_KNOTE(dvp, NOTE_WRITE);
-	VOP_UNLOCK(*vpp, 0);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5428,7 +5430,8 @@ zfs_netbsd_mkdir(void *v)
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
 	if (error == 0)
 		VN_KNOTE(dvp, NOTE_WRITE | NOTE_LINK);
-	VOP_UNLOCK(*vpp, 0);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
@@ -5717,7 +5720,8 @@ zfs_netbsd_symlink(void *v)
 		VN_KNOTE(ap->a_dvp, NOTE_WRITE);
 	KASSERT((error == 0) == (*vpp != NULL));
 	KASSERT(VOP_ISLOCKED(dvp) == LK_EXCLUSIVE);
-	VOP_UNLOCK(*vpp, 0);
+	if (*vpp != NULL)
+		VOP_UNLOCK(*vpp, 0);
 
 	return (error);
 }
