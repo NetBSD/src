@@ -1,4 +1,4 @@
-/*	$NetBSD: scan.c,v 1.32 2016/03/12 02:26:40 dholland Exp $	*/
+/*	$NetBSD: scan.c,v 1.33 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -279,7 +279,7 @@ getrelease(char *release)
 		frelease = release = estrdup(DEFRELEASE);
 	listTL = NULL;
 
-	(void) sprintf(buf, FILERELEASES, collname);
+	snprintf(buf, sizeof buf, FILERELEASES, collname);
 	f = fopen(buf, "r");
 	if (f != NULL) {
 		rewound = TRUE;
@@ -350,7 +350,7 @@ makescanlists(void)
 	char *saveprefix = prefix;
 	int count = 0;
 
-	(void) sprintf(buf, FILERELEASES, collname);
+	snprintf(buf, sizeof buf, FILERELEASES, collname);
 	f = fopen(buf, "r");
 	if (f != NULL) {
 		while ((p = fgets(buf, sizeof(buf), f)) != NULL) {
@@ -451,7 +451,7 @@ doscan(char *listfile)
 	rsymT = NULL;
 	if (listfile == NULL)
 		listfile = FILELISTDEF;
-	(void) sprintf(buf, FILELIST, collname, listfile);
+	snprintf(buf, sizeof buf, FILELIST, collname, listfile);
 	readlistfile(buf);	/* get contents of list file */
 	(void) Tprocess(upgT, listone, NULL);	/* build list of files
 						 * specified */
@@ -577,7 +577,7 @@ expTinsert(char *p, TREE ** t, int flags, char *exec)
 		newt = Tinsert(t, speclist[i], TRUE);
 		newt->Tflags |= flags;
 		if (exec) {
-			(void) sprintf(buf, exec, speclist[i]);
+			snprintf(buf, sizeof buf, exec, speclist[i]);
 			(void) Tinsert(&newt->Texec, buf, FALSE);
 		}
 		free(speclist[i]);
@@ -724,7 +724,7 @@ listdir(char *name, int always)
 		if (strcmp(dentry->d_name, "..") == 0)
 			continue;
 		if (*newname) {
-			(void)snprintf(filename, sizeof(filename), "%s/%s",
+			snprintf(filename, sizeof(filename), "%s/%s",
 			    newname, dentry->d_name);
 		} else {
 			(void)strncpy(filename, dentry->d_name,
@@ -829,7 +829,7 @@ getscanfile(char *scanfile)
 
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
-	(void) sprintf(buf, FILESCAN, collname, scanfile);
+	snprintf(buf, sizeof buf, FILESCAN, collname, scanfile);
 	if (stat(buf, &sbuf) < 0)
 		return (FALSE);
 	if ((f = fopen(buf, "r")) == NULL)
@@ -930,8 +930,8 @@ chkscanfile(char *scanfile)
 
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
-	(void) sprintf(fname, FILESCAN, collname, scanfile);
-	(void) sprintf(tname, "%s.temp", fname);
+	snprintf(fname, sizeof fname, FILESCAN, collname, scanfile);
+	snprintf(tname, sizeof tname,  "%s.temp", fname);
 	if (NULL == (f = fopen(tname, "w")))
 		goaway("Can't test scan file temp %s for %s", tname, collname);
 	else {
@@ -949,8 +949,8 @@ makescanfile(char *scanfile)
 
 	if (scanfile == NULL)
 		scanfile = FILESCANDEF;
-	(void) sprintf(fname, FILESCAN, collname, scanfile);
-	(void) sprintf(tname, "%s.temp", fname);
+	snprintf(fname, sizeof fname, FILESCAN, collname, scanfile);
+	snprintf(tname, sizeof tname, "%s.temp", fname);
 	scanF = fopen(tname, "w");
 	if (scanF == NULL)
 		goto out;

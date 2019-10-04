@@ -1,4 +1,4 @@
-/*	$NetBSD: supcname.c,v 1.7 2009/10/17 20:46:03 christos Exp $	*/
+/*	$NetBSD: supcname.c,v 1.8 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -77,7 +77,7 @@ getnams(void)
 	for (c = firstC; c && c->Chtree != NULL; c = c->Cnext);
 	if (c == NULL)
 		return;
-	(void) sprintf(buf, FILEHOSTS, DEFDIR);
+	snprintf(buf, sizeof buf, FILEHOSTS, DEFDIR);
 	f = fopen(buf, "r");
 	if (f == NULL)
 		logquit(1, "Can't open %s", buf);

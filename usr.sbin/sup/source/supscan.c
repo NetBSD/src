@@ -1,4 +1,4 @@
-/*	$NetBSD: supscan.c,v 1.24 2017/05/04 16:26:10 sevan Exp $	*/
+/*	$NetBSD: supscan.c,v 1.25 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -284,7 +284,7 @@ init(int argc, char **argv)
 		argv++;
 	}
 	if (!fflag) {
-		(void) sprintf(fbuf, FILEDIRS, DEFDIR);
+		snprintf(fbuf, sizeof fbuf, FILEDIRS, DEFDIR);
 		filename = fbuf;
 	}
 	if (sflag) {
@@ -292,7 +292,7 @@ init(int argc, char **argv)
 			usage();
 		firstC = NULL;
 		c = &firstC;
-		(void) sprintf(buf, FILEHOSTS, DEFDIR);
+		snprintf(buf, sizeof buf, FILEHOSTS, DEFDIR);
 		if ((f = fopen(buf, "r")) == NULL)
 			quit(1, "supscan: Unable to open %s\n", buf);
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
@@ -370,7 +370,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 			(void) fclose(f);
 		}
 		if (basedir == NULL) {
-			(void) sprintf(buf, FILEBASEDEFAULT, collname);
+			snprintf(buf, sizeof buf, FILEBASEDEFAULT, collname);
 			basedir = estrdup(buf);
 		}
 	}
@@ -380,7 +380,7 @@ getscancoll(char *filename, char *collname, char *basedir)
 		return (NULL);
 	}
 	prefix = NULL;
-	(void) sprintf(buf, FILEPREFIX, collname);
+	snprintf(buf, sizeof buf, FILEPREFIX, collname);
 	if ((f = fopen(buf, "r")) != NULL) {
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
 			q = strchr(p, '\n');

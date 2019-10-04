@@ -1,4 +1,4 @@
-/*	$NetBSD: supcparse.c,v 1.16 2013/04/09 16:39:20 christos Exp $	*/
+/*	$NetBSD: supcparse.c,v 1.17 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -242,7 +242,7 @@ getwhen(char *collection, char *relsuffix)
 	FILE *fp;
 	time_t tstamp;
 
-	(void) sprintf(buf, FILEWHEN, collection, relsuffix);
+	snprintf(buf, sizeof buf, FILEWHEN, collection, relsuffix);
 
 	if ((fp = fopen(buf, "r")) == NULL)
 		return 0;

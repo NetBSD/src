@@ -1,4 +1,4 @@
-/*	$NetBSD: supfilesrv.c,v 1.52 2019/02/03 03:19:31 mrg Exp $	*/
+/*	$NetBSD: supfilesrv.c,v 1.53 2019/10/04 21:33:57 mrg Exp $	*/
 
 /*
  * Copyright (c) 1992 Carnegie Mellon University
@@ -889,7 +889,7 @@ srvsetup(void)
 
 		/* check crosspatch host access file */
 		cryptkey = NULL;
-		(void) sprintf(buf, FILEXPATCH, xuser);
+		snprintf(buf, sizeof buf, FILEXPATCH, xuser);
 
 		/* Turn off link following */
 		if (link_nofollow(1) != -1) {
@@ -955,7 +955,7 @@ srvsetup(void)
 		release = estrdup(DEFRELEASE);
 	if (basedir == NULL || *basedir == '\0') {
 		basedir = NULL;
-		(void) sprintf(filename, FILEDIRS, DEFDIR);
+		snprintf(filename, sizeof filename, FILEDIRS, DEFDIR);
 		f = fopen(filename, "r");
 		if (f) {
 			while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
@@ -974,14 +974,14 @@ srvsetup(void)
 			(void) fclose(f);
 		}
 		if (basedir == NULL) {
-			(void) sprintf(buf, FILEBASEDEFAULT, collname);
+			snprintf(buf, sizeof buf, FILEBASEDEFAULT, collname);
 			basedir = estrdup(buf);
 		}
 	}
 	if (chdir(basedir) < 0)
 		goaway("Can't chdir to base directory %s (%s)", basedir,
 		    strerror(errno));
-	(void) sprintf(filename, FILEPREFIX, collname);
+	snprintf(filename, sizeof filename, FILEPREFIX, collname);
 	f = fopen(filename, "r");
 	if (f) {
 		while ((p = fgets(buf, STRINGLENGTH, f)) != NULL) {
@@ -1038,7 +1038,7 @@ srvsetup(void)
 		char *h;
 		if ((h = tl->TLhost) == NULL)
 			h = FILEHOSTDEF;
-		(void) sprintf(buf, FILEHOST, collname, h);
+		snprintf(buf, sizeof buf, FILEHOST, collname, h);
 		f = fopen(buf, "r");
 		if (f) {
 			int hostok = FALSE;
@@ -1073,7 +1073,7 @@ srvsetup(void)
 		}
 	}
 	/* try to lock collection */
-	(void) sprintf(buf, FILELOCK, collname);
+	snprintf(buf, sizeof buf, FILELOCK, collname);
 #ifdef LOCK_SH
 	x = open(buf, O_RDONLY, 0);
 	if (x >= 0) {
@@ -1107,7 +1107,7 @@ docrypt(void)
 	struct stat sbuf;
 
 	if (!xpatch) {
-		(void) sprintf(buf, FILECRYPT, collname);
+		snprintf(buf, sizeof buf, FILECRYPT, collname);
 
 		/* Turn off link following */
 		if (link_nofollow(1) != -1) {
@@ -1393,7 +1393,8 @@ send_one(TREE * t, void *v __unused)
 					av[ac++] = "-q";
 					av[ac++] = "-p";
 					if (rcs_branch != NULL) {
-						sprintf(rcs_release, "-r%s",
+						snprintf(rcs_release,
+						    sizeof rcs_release, "-r%s",
 						    rcs_branch);
 						av[ac++] = rcs_release;
 					}
@@ -1561,7 +1562,7 @@ srvfinishup(time_t starttime)
 		logerr("%s: NULL collection in svrfinishup", remotehost());
 		return;
 	}
-	(void) sprintf(lognam, FILELOGFILE, collname);
+	snprintf(lognam, sizeof lognam, FILELOGFILE, collname);
 	if ((logfd = open(lognam, O_APPEND | O_WRONLY, 0644)) < 0)
 		return;		/* can not open file up...error */
 	finishtime = time(NULL);
@@ -1703,9 +1704,9 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 	if (namep == NULL) {
 		pwd = getpwuid(fileuid);
 		if (pwd == NULL) {
-			(void) sprintf(errbuf, "Reason:  Unknown user id %d",
-			    fileuid);
-			return (errbuf);
+			snprintf(errbuf, sizeof errbuf,
+			    "Reason:  Unknown user id %d", fileuid);
+			return errbuf;
 		}
 		grp = getgrgid(filegid);
 		if (grp)
@@ -1730,9 +1731,9 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 		}
 		pwd = getpwnam(nbuf);
 		if (pwd == NULL) {
-			(void) sprintf(errbuf, "Reason:  Unknown user %s",
-			    nbuf);
-			return (errbuf);
+			snprintf(errbuf, sizeof errbuf,
+			    "Reason:  Unknown user %s", nbuf);
+			return errbuf;
 		}
 		if (strcmp(nbuf, DEFUSER) == 0)
 			pswdp = NULL;
@@ -1744,11 +1745,11 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 			setpag();	/* set a pag */
 			if (ka_UserAuthenticate(pwd->pw_name, "", 0,
 				pswdp, 1, &reason)) {
-				(void) sprintf(errbuf, "AFS authentication failed, %s",
-				    reason);
+				snprintf(errbuf, sizeof errbuf,
+				    "AFS authentication failed, %s", reason);
 				logerr("Attempt by %s; %s",
 				    nbuf, errbuf);
-				return (errbuf);
+				return errbuf;
 			}
 		}
 #endif
@@ -1789,7 +1790,7 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 		break;
 #if	CMUCS
 	case ACCESS_CODE_INSECUREPWD:
-		(void) sprintf(errbuf, "Reason:  %s", p);
+		snprintf(errbuf, sizeof errbuf, "Reason:  %s", p);
 		p = errbuf;
 		break;
 	case ACCESS_CODE_DENIED:
@@ -1830,7 +1831,8 @@ changeuid(char *namep, char *passwordp, int fileuid, int filegid)
 		break;
 #endif				/* CMUCS */
 	default:
-		(void) sprintf(p = errbuf, "Reason:  Status %d", status);
+		snprintf(errbuf, sizeof errbuf, "Reason:  Status %d", status);
+		p = errbuf;
 		break;
 	}
 	if (status != ACCESS_CODE_OK) {
