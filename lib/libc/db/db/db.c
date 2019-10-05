@@ -1,4 +1,4 @@
-/*	$NetBSD: db.c,v 1.19 2019/10/05 18:01:52 uwe Exp $	*/
+/*	$NetBSD: db.c,v 1.20 2019/10/05 18:07:58 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: db.c,v 1.19 2019/10/05 18:01:52 uwe Exp $");
+__RCSID("$NetBSD: db.c,v 1.20 2019/10/05 18:07:58 uwe Exp $");
 
 #include "namespace.h"
 #include <sys/types.h>
@@ -45,7 +45,7 @@ __RCSID("$NetBSD: db.c,v 1.19 2019/10/05 18:01:52 uwe Exp $");
 #include <stdio.h>
 
 #include <db.h>
-static int __dberr(void);
+static int __dberr(const DB *, ...);
 
 #ifdef __weak_alias
 __weak_alias(dbopen,_dbopen)
@@ -82,7 +82,7 @@ dbopen(const char *fname, int flags, mode_t mode, DBTYPE type,
 }
 
 static int
-__dberr(void)
+__dberr(const DB *dbp, ...)
 {
 	return (RET_ERROR);
 }
