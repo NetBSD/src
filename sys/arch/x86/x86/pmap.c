@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.335 2019/08/07 06:23:48 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.336 2019/10/05 07:19:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.335 2019/08/07 06:23:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.336 2019/10/05 07:19:49 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -299,10 +299,10 @@ struct pmap *const kernel_pmap_ptr = &kernel_pmap_store;
 struct bootspace bootspace __read_mostly;
 struct slotspace slotspace __read_mostly;
 
-/* Set to PG_NX if supported. */
+/* Set to PTE_NX if supported. */
 pd_entry_t pmap_pg_nx __read_mostly = 0;
 
-/* Set to PG_G if supported. */
+/* Set to PTE_G if supported. */
 pd_entry_t pmap_pg_g __read_mostly = 0;
 
 /* Set to true if large pages are supported. */
@@ -512,10 +512,10 @@ static inline void
 pmap_stats_update_bypte(struct pmap *pmap, pt_entry_t npte, pt_entry_t opte)
 {
 	int resid_diff = ((npte & PTE_P) ? 1 : 0) - ((opte & PTE_P) ? 1 : 0);
-	int wired_diff = ((npte & PG_W) ? 1 : 0) - ((opte & PG_W) ? 1 : 0);
+	int wired_diff = ((npte & PTE_WIRED) ? 1 : 0) - ((opte & PTE_WIRED) ? 1 : 0);
 
-	KASSERT((npte & (PTE_P | PG_W)) != PG_W);
-	KASSERT((opte & (PTE_P | PG_W)) != PG_W);
+	KASSERT((npte & (PTE_P | PTE_WIRED)) != PTE_WIRED);
+	KASSERT((opte & (PTE_P | PTE_WIRED)) != PTE_WIRED);
 
 	pmap_stats_update(pmap, resid_diff, wired_diff);
 }
@@ -973,7 +973,7 @@ pmap_kremove1(vaddr_t sva, vsize_t len, bool localonly)
 		}
 		KASSERTMSG((opte & PTE_PS) == 0,
 		    "va %#" PRIxVADDR " is a large page", va);
-		KASSERTMSG((opte & PG_PVLIST) == 0,
+		KASSERTMSG((opte & PTE_PVLIST) == 0,
 		    "va %#" PRIxVADDR " is a pv tracked page", va);
 	}
 	if (localonly) {
@@ -3507,12 +3507,12 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	/*
 	 * If we are not on a pv_head list - we are done.
 	 */
-	if ((opte & PG_PVLIST) == 0) {
+	if ((opte & PTE_PVLIST) == 0) {
 #ifndef DOM0OPS
 		KASSERTMSG((PHYS_TO_VM_PAGE(pmap_pte2pa(opte)) == NULL),
-		    "managed page without PG_PVLIST for %#"PRIxVADDR, va);
+		    "managed page without PTE_PVLIST for %#"PRIxVADDR, va);
 		KASSERTMSG((pmap_pv_tracked(pmap_pte2pa(opte)) == NULL),
-		    "pv-tracked page without PG_PVLIST for %#"PRIxVADDR, va);
+		    "pv-tracked page without PTE_PVLIST for %#"PRIxVADDR, va);
 #endif
 		return true;
 	}
@@ -3522,7 +3522,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 		pp = VM_PAGE_TO_PP(pg);
 	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
 		paddr_t pa = pmap_pte2pa(opte);
-		panic("%s: PG_PVLIST with pv-untracked page"
+		panic("%s: PTE_PVLIST with pv-untracked page"
 		    " va = %#"PRIxVADDR"pa = %#"PRIxPADDR" (%#"PRIxPADDR")",
 		    __func__, va, pa, atop(pa));
 	}
@@ -4124,8 +4124,8 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	opte = *ptep;
 	KASSERT(pmap_valid_entry(opte));
 
-	if (opte & PG_W) {
-		pt_entry_t npte = opte & ~PG_W;
+	if (opte & PTE_WIRED) {
+		pt_entry_t npte = opte & ~PTE_WIRED;
 
 		opte = pmap_pte_testset(ptep, npte);
 		pmap_stats_update_bypte(pmap, npte, opte);
@@ -4202,7 +4202,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	npte = ma | protection_codes[prot] | PTE_P;
 	npte |= pmap_pat_flags(flags);
 	if (wired)
-	        npte |= PG_W;
+	        npte |= PTE_WIRED;
 	if (va < VM_MAXUSER_ADDRESS)
 		npte |= PTE_U;
 
@@ -4224,11 +4224,11 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		new_pg = PHYS_TO_VM_PAGE(pa);
 	if (new_pg != NULL) {
 		/* This is a managed page */
-		npte |= PG_PVLIST;
+		npte |= PTE_PVLIST;
 		new_pp = VM_PAGE_TO_PP(new_pg);
 	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
 		/* This is an unmanaged pv-tracked page */
-		npte |= PG_PVLIST;
+		npte |= PTE_PVLIST;
 	} else {
 		new_pp = NULL;
 	}
@@ -4334,19 +4334,19 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 * If the same page, we can skip pv_entry handling.
 	 */
 	if (((opte ^ npte) & (PTE_FRAME | PTE_P)) == 0) {
-		KASSERT(((opte ^ npte) & PG_PVLIST) == 0);
+		KASSERT(((opte ^ npte) & PTE_PVLIST) == 0);
 		goto same_pa;
 	}
 
 	/*
 	 * If old page is pv-tracked, remove pv_entry from its list.
 	 */
-	if ((~opte & (PTE_P | PG_PVLIST)) == 0) {
+	if ((~opte & (PTE_P | PTE_PVLIST)) == 0) {
 		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
 			KASSERT(uvm_page_locked_p(old_pg));
 			old_pp = VM_PAGE_TO_PP(old_pg);
 		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
-			panic("%s: PG_PVLIST with pv-untracked page"
+			panic("%s: PTE_PVLIST with pv-untracked page"
 			    " va = %#"PRIxVADDR
 			    " pa = %#" PRIxPADDR " (%#" PRIxPADDR ")",
 			    __func__, va, oldpa, atop(pa));
@@ -5217,7 +5217,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		/*
 		 * if the same page, inherit PTE_A and PTE_D.
 		 */
-		if (((opte ^ npte) & (PG_FRAME | EPT_R)) == 0) {
+		if (((opte ^ npte) & (PTE_FRAME | EPT_R)) == 0) {
 			npte |= opte & (EPT_A | EPT_D);
 		}
 	} while (pmap_pte_cas(ptep, opte, npte) != opte);
@@ -5234,7 +5234,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	/*
 	 * If the same page, we can skip pv_entry handling.
 	 */
-	if (((opte ^ npte) & (PG_FRAME | EPT_R)) == 0) {
+	if (((opte ^ npte) & (PTE_FRAME | EPT_R)) == 0) {
 		KASSERT(((opte ^ npte) & EPT_PVLIST) == 0);
 		goto same_pa;
 	}
@@ -5272,7 +5272,7 @@ same_pa:
 	} else {
 		accessed = (opte & EPT_R) != 0;
 	}
-	if (accessed && ((opte ^ npte) & (PG_FRAME | EPT_W)) != 0) {
+	if (accessed && ((opte ^ npte) & (PTE_FRAME | EPT_W)) != 0) {
 		pmap_tlb_shootdown(pmap, va, 0, TLBSHOOT_ENTER);
 	}
 
@@ -5541,7 +5541,7 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 		KASSERT((opte & (EPT_D | EPT_A)) != EPT_D);
 		KASSERT((opte & (EPT_A | EPT_R)) != EPT_A);
 		KASSERT(opte == 0 || (opte & EPT_R) != 0);
-		if ((opte & (PG_FRAME | EPT_R)) != expect) {
+		if ((opte & (PTE_FRAME | EPT_R)) != expect) {
 			/*
 			 * We lost a race with a V->P operation like
 			 * pmap_remove().  Wait for the competitor
@@ -5630,8 +5630,8 @@ pmap_ept_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t pr
 	if (!(prot & VM_PROT_WRITE))
 		bit_rem = EPT_W;
 
-	sva &= PG_FRAME;
-	eva &= PG_FRAME;
+	sva &= PTE_FRAME;
+	eva &= PTE_FRAME;
 
 	/* Acquire pmap. */
 	kpreempt_disable();
