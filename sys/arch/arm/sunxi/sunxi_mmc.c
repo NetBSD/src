@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mmc.c,v 1.39 2019/10/03 15:10:32 jmcneill Exp $ */
+/* $NetBSD: sunxi_mmc.c,v 1.40 2019/10/05 12:09:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_sunximmc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.39 2019/10/03 15:10:32 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mmc.c,v 1.40 2019/10/05 12:09:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -575,8 +575,7 @@ sunxi_mmc_attach_i(device_t self)
 		       SMC_CAPS_MULTI_SEG_DMA |
 		       SMC_CAPS_AUTO_STOP |
 		       SMC_CAPS_SD_HIGHSPEED |
-		       SMC_CAPS_MMC_HIGHSPEED |
-		       SMC_CAPS_POLLING;
+		       SMC_CAPS_MMC_HIGHSPEED;
 
 	if (sc->sc_config->delays || (flags & SUNXI_MMC_FLAG_NEW_TIMINGS))
 		saa.saa_caps |= SMC_CAPS_MMC_DDR52;
