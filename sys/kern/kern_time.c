@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.200 2019/09/20 14:12:57 kamil Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.201 2019/10/05 12:57:40 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.200 2019/09/20 14:12:57 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.201 2019/10/05 12:57:40 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -216,6 +216,9 @@ clock_settime1(struct proc *p, clockid_t clock_id, const struct timespec *tp,
     bool check_kauth)
 {
 	int error;
+
+	if (tp->tv_nsec < 0 || tp->tv_nsec >= 1000000000L)
+		return EINVAL;
 
 	switch (clock_id) {
 	case CLOCK_REALTIME:
