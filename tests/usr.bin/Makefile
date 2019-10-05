@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2019/04/04 15:22:13 kamil Exp $
+#	$NetBSD: Makefile,v 1.28 2019/10/05 18:06:16 jhigh Exp $
 #
 
 .include <bsd.own.mk>
@@ -8,7 +8,7 @@ TESTSDIR=       ${TESTSBASE}/usr.bin
 TESTS_SUBDIRS=	awk basename bzip2 cc cmp config cut \
 		diff dirname find gdb grep gzip id indent \
 		infocmp jot ld m4 make mixerctl mkdep nbperf netpgpverify \
-		pkill pr printf rump_server shmif_dumpbus sdiff \
+		pkill pr printf pwhash rump_server shmif_dumpbus sdiff \
 		sed sort tmux tr unifdef uniq vmstat xlint
 
 .if ${MKCXX} != "no"
