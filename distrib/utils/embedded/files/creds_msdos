@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: creds_msdos,v 1.3 2019/06/12 03:06:48 mrg Exp $
+# $NetBSD: creds_msdos,v 1.4 2019/10/05 09:25:11 mlelstv Exp $
 #
 # Copyright (c) 2019 Matthew R. Green
 # All rights reserved.
@@ -135,7 +135,7 @@ creds_msdos_start()
 	local fstab_file=/etc/fstab
 
 	if [ -z "${creds_msdos_partition}" ]; then
-		echo "Not looking for credientials on msdos"
+		echo "Not looking for credentials on msdos"
 		return
 	fi
 	while read junk1 mp fstype junk2; do
