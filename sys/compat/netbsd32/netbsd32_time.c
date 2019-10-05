@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_time.c,v 1.52 2019/09/26 01:30:00 christos Exp $	*/
+/*	$NetBSD: netbsd32_time.c,v 1.53 2019/10/05 14:19:53 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.52 2019/09/26 01:30:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_time.c,v 1.53 2019/10/05 14:19:53 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -243,6 +243,10 @@ netbsd32___settimeofday50(struct lwp *l, const struct netbsd32___settimeofday50_
 		return error;
 
 	netbsd32_to_timeval(&atv32, &atv);
+
+	if (atv.tv_usec < 0 || atv.tv_usec >= 1000000)
+		return EINVAL;
+
 	TIMEVAL_TO_TIMESPEC(&atv, &ats);
 	return settime(p, &ats);
 }
@@ -546,4 +550,3 @@ netbsd32_clock_getcpuclockid2(struct lwp *l,
 	}
 	return copyout(&clock_id, SCARG_P32(uap, clock_id), sizeof(clock_id));
 }
-
