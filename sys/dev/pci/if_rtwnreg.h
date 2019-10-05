@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwnreg.h,v 1.5 2018/06/29 04:02:10 thorpej Exp $	*/
+/*	$NetBSD: if_rtwnreg.h,v 1.6 2019/10/05 23:27:20 mrg Exp $	*/
 /*	$OpenBSD: if_rtwnreg.h,v 1.3 2015/06/14 08:02:47 stsp Exp $	*/
 
 /*-
@@ -76,7 +76,7 @@ struct rtwn_rx_radiotap_header {
 	uint16_t	wr_chan_freq;
 	uint16_t	wr_chan_flags;
 	uint8_t		wr_dbm_antsignal;
-} __packed;
+};
 
 #define RTWN_RX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -89,7 +89,7 @@ struct rtwn_tx_radiotap_header {
 	uint8_t		wt_flags;
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
-} __packed;
+};
 
 #define RTWN_TX_RADIOTAP_PRESENT			\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
