@@ -1,4 +1,4 @@
-/*	$NetBSD: xirc.c,v 1.35 2018/12/08 17:46:14 thorpej Exp $	*/
+/*	$NetBSD: xirc.c,v 1.36 2019/10/05 01:35:26 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.35 2018/12/08 17:46:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xirc.c,v 1.36 2019/10/05 01:35:26 mrg Exp $");
 
 #include "opt_inet.h"
 
@@ -694,6 +694,7 @@ xi_xirc_lan_nid_ciscallback(struct pcmcia_tuple *tuple, void *arg)
 				myla[i] = pcmcia_tuple_read_1(tuple, i + 3);
 			return (1);
 		}
+		break;
 
 	case 0x89:
 		if (pcmcia_tuple_read_1(tuple, 0) != 0x04 ||
