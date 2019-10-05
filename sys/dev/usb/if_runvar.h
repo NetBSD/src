@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.4 2017/11/17 13:08:48 skrll Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.5 2019/10/05 23:27:20 mrg Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -49,7 +49,7 @@ struct run_rx_radiotap_header {
 	uint8_t		wr_dbm_antsignal;
 	uint8_t		wr_antenna;
 	uint8_t		wr_antsignal;
-} __packed;
+};
 
 #define RUN_RX_RADIOTAP_PRESENT				\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
@@ -66,7 +66,7 @@ struct run_tx_radiotap_header {
 	uint16_t	wt_chan_freq;
 	uint16_t	wt_chan_flags;
 	uint8_t		wt_hwqueue;
-} __packed;
+};
 
 #define RUN_TX_RADIOTAP_PRESENT				\
 	(1 << IEEE80211_RADIOTAP_FLAGS |		\
