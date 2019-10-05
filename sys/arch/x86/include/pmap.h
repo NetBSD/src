@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.102 2019/08/07 06:23:48 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.103 2019/10/05 07:30:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -315,8 +315,8 @@ struct pmap {
  */
 extern u_long PDPpaddr;
 
-extern pd_entry_t pmap_pg_g;			/* do we support PG_G? */
-extern pd_entry_t pmap_pg_nx;			/* do we support PG_NX? */
+extern pd_entry_t pmap_pg_g;			/* do we support PTE_G? */
+extern pd_entry_t pmap_pg_nx;			/* do we support PTE_NX? */
 extern int pmap_largepages;
 extern long nkptp[PTP_LEVELS];
 
@@ -526,7 +526,7 @@ kvtopte(vaddr_t va)
 	KASSERT(va >= VM_MIN_KERNEL_ADDRESS);
 
 	pde = L2_BASE + pl2_i(va);
-	if (*pde & PG_PS)
+	if (*pde & PTE_PS)
 		return ((pt_entry_t *)pde);
 
 	return (PTE_BASE + pl1_i(va));
@@ -560,7 +560,7 @@ xpmap_ptetomach(pt_entry_t *pte)
 	va = ((va & XPTE_MASK) >> XPTE_SHIFT) | (vaddr_t) PTE_BASE;
 	up_pte = (pt_entry_t *) va;
 
-	return (paddr_t) (((*up_pte) & PG_FRAME) + (((vaddr_t) pte) & (~PG_FRAME & ~VA_SIGN_MASK)));
+	return (paddr_t) (((*up_pte) & PTE_FRAME) + (((vaddr_t) pte) & (~PTE_FRAME & ~VA_SIGN_MASK)));
 }
 
 /* Xen helpers to change bits of a pte */
