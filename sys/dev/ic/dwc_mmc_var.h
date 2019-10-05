@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.8 2019/04/30 23:19:55 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.9 2019/10/05 12:27:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -46,7 +46,6 @@ struct dwc_mmc_softc {
 	void *sc_ih;
 	kmutex_t sc_intr_lock;
 	kcondvar_t sc_intr_cv;
-	kcondvar_t sc_idst_cv;
 
 	int sc_mmc_width;
 	int sc_mmc_port;
@@ -61,9 +60,15 @@ struct dwc_mmc_softc {
 	int sc_idma_ndesc;
 	void *sc_idma_desc;
 
-	uint32_t sc_intr_rint;
-	uint32_t sc_intr_mint;
-	uint32_t sc_idma_idst;
+	bus_dmamap_t sc_dmabounce_map;
+	void *sc_dmabounce_buf;
+	size_t sc_dmabounce_buflen;
+
+	uint32_t sc_intr_card;
+	struct sdmmc_command *sc_curcmd;
+	bool sc_wait_dma;
+	bool sc_wait_cmd;
+	bool sc_wait_data;
 
 	int (*sc_card_detect)(struct dwc_mmc_softc *);
 	int (*sc_write_protect)(struct dwc_mmc_softc *);
