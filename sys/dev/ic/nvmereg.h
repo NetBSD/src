@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmereg.h,v 1.13 2018/12/01 18:25:39 jdolecek Exp $	*/
+/*	$NetBSD: nvmereg.h,v 1.14 2019/10/05 23:27:20 mrg Exp $	*/
 /*	$OpenBSD: nvmereg.h,v 1.10 2016/04/14 11:18:32 dlg Exp $ */
 
 /*
@@ -136,7 +136,7 @@ struct nvme_sqe {
 	union {
 		uint64_t	prp[2];
 		struct nvme_sge	sge;
-	} __packed	entry;
+	} entry;
 
 	uint32_t	cdw10;
 	uint32_t	cdw11;
@@ -189,7 +189,7 @@ struct nvme_sqe_io {
 	union {
 		uint64_t	prp[2];
 		struct nvme_sge	sge;
-	} __packed	entry;
+	} entry;
 
 	uint64_t	slba;	/* Starting LBA */
 
