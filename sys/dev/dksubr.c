@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.109 2019/06/28 14:56:46 jmcneill Exp $ */
+/* $NetBSD: dksubr.c,v 1.110 2019/10/05 05:28:44 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.109 2019/06/28 14:56:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.110 2019/10/05 05:28:44 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,6 +144,12 @@ dk_open(struct dk_softc *dksc, dev_t dev,
 	 */
 	if (dk->dk_nwedges != 0 && part != RAW_PART) {
 		ret = EBUSY;
+		goto done;
+	}
+
+	/* If no dkdriver attached, bail */
+	if (dkd == NULL) {
+		ret = ENXIO;
 		goto done;
 	}
 
