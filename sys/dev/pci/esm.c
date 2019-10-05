@@ -1,4 +1,4 @@
-/*      $NetBSD: esm.c,v 1.63 2019/06/08 08:02:38 isaki Exp $      */
+/*      $NetBSD: esm.c,v 1.64 2019/10/05 01:30:28 mrg Exp $      */
 
 /*-
  * Copyright (c) 2002, 2003 Matt Fredette
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.63 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: esm.c,v 1.64 2019/10/05 01:30:28 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1482,6 +1482,7 @@ esm_match(device_t dev, cfdata_t match, void *aux)
 		case PCI_PRODUCT_ESSTECH_MAESTRO2E:
 			return 1;
 		}
+		break;
 
 	case PCI_VENDOR_ESSTECH2:
 		switch (PCI_PRODUCT(pa->pa_id)) {
