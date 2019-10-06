@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.c,v 1.27 2010/11/13 13:52:00 uebayasi Exp $        */
+/*      $NetBSD: advlib.c,v 1.28 2019/10/06 00:48:19 uwe Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.27 2010/11/13 13:52:00 uebayasi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advlib.c,v 1.28 2019/10/06 00:48:19 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1549,10 +1549,7 @@ AscIsrQDone(ASC_SOFTC *sc)
 	u_int8_t        cur_target_qng;
 	ASC_QDONE_INFO  scsiq_buf;
 	ASC_QDONE_INFO *scsiq;
-	ASC_ISR_CALLBACK asc_isr_callback;
 
-
-	asc_isr_callback = (ASC_ISR_CALLBACK) sc->isr_callback;
 	n_q_used = 1;
 	scsiq = (ASC_QDONE_INFO *) & scsiq_buf;
 	done_q_tail = ASC_GET_VAR_DONE_QTAIL(iot, ioh);
@@ -1631,7 +1628,7 @@ AscIsrQDone(ASC_SOFTC *sc)
 					ASC_SET_CHIP_CONTROL(iot, ioh, 0);
 				}
 			}
-			(*asc_isr_callback) (sc, scsiq);
+			(*sc->isr_callback)(sc, scsiq);
 
 			return (1);
 		} else {
@@ -2818,11 +2815,8 @@ AscRiscHaltedAbortCCB(ASC_SOFTC *sc, ADV_CCB *ccb)
 	u_int8_t        q_no;
 	ASC_QDONE_INFO  scsiq_buf;
 	ASC_QDONE_INFO *scsiq;
-	ASC_ISR_CALLBACK asc_isr_callback;
 	int             last_int_level;
 
-
-	asc_isr_callback = (ASC_ISR_CALLBACK) sc->isr_callback;
 	last_int_level = DvcEnterCritical();
 	scsiq = (ASC_QDONE_INFO *) & scsiq_buf;
 
@@ -2840,7 +2834,7 @@ AscRiscHaltedAbortCCB(ASC_SOFTC *sc, ADV_CCB *ccb)
 				AscWriteLramDWord(iot, ioh, q_addr + ASC_SCSIQ_D_CCBPTR, 0L);
 				AscWriteLramByte(iot, ioh, q_addr + ASC_SCSIQ_B_STATUS,
 						 scsiq->q_status);
-				(*asc_isr_callback) (sc, scsiq);
+				(*sc->isr_callback)(sc, scsiq);
 				return (1);
 			}
 		}
@@ -2860,11 +2854,8 @@ AscRiscHaltedAbortTIX(ASC_SOFTC *sc, u_int8_t target_ix)
 	u_int8_t        q_no;
 	ASC_QDONE_INFO  scsiq_buf;
 	ASC_QDONE_INFO *scsiq;
-	ASC_ISR_CALLBACK asc_isr_callback;
 	int             last_int_level;
 
-
-	asc_isr_callback = (ASC_ISR_CALLBACK) sc->isr_callback;
 	last_int_level = DvcEnterCritical();
 	scsiq = (ASC_QDONE_INFO *) & scsiq_buf;
 	for (q_no = ASC_MIN_ACTIVE_QNO; q_no <= sc->max_total_qng; q_no++) {
@@ -2879,7 +2870,7 @@ AscRiscHaltedAbortTIX(ASC_SOFTC *sc, u_int8_t target_ix)
 				AscWriteLramDWord(iot, ioh, q_addr + ASC_SCSIQ_D_CCBPTR, 0L);
 				AscWriteLramByte(iot, ioh, q_addr + ASC_SCSIQ_B_STATUS,
 						 scsiq->q_status);
-				(*asc_isr_callback) (sc, scsiq);
+				(*sc->isr_callback)(sc, scsiq);
 			}
 		}
 	}

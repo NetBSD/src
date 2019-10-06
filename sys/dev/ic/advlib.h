@@ -1,4 +1,4 @@
-/*      $NetBSD: advlib.h,v 1.19 2012/10/27 17:18:18 chs Exp $        */
+/*      $NetBSD: advlib.h,v 1.20 2019/10/06 00:48:19 uwe Exp $        */
 
 /*
  * Definitions for low level routines and data structures
@@ -833,8 +833,6 @@ typedef struct ext_msg
 #define	CCB_HASH_SHIFT	9
 #define CCB_HASH(x)	((((long)(x))>>CCB_HASH_SHIFT) & (CCB_HASH_SIZE - 1))
 
-typedef int (* ASC_CALLBACK) (int);
-
 typedef struct asc_softc
 {
 	device_t		sc_dev;
@@ -866,7 +864,7 @@ typedef struct asc_softc
 	u_int16_t		bug_fix_cntl;
 	u_int16_t		bus_type;
 
-	ASC_CALLBACK		isr_callback;
+	void (*isr_callback)(struct asc_softc *, ASC_QDONE_INFO *);
 
 	ASC_SCSI_BIT_ID_TYPE	init_sdtr;
 	ASC_SCSI_BIT_ID_TYPE	sdtr_done;
