@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.462 2019/09/25 09:53:37 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.463 2019/10/06 15:11:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.462 2019/09/25 09:53:37 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.463 2019/10/06 15:11:17 uwe Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1307,7 +1307,6 @@ if_detach(struct ifnet *ifp)
 	struct domain *dp;
 	const struct protosw *pr;
 	int s, i, family, purged;
-	uint64_t xc;
 
 #ifdef IFAREF_DEBUG
 	if_build_ifa_list(ifp);
@@ -1513,8 +1512,7 @@ restart:
 	if (in6_present)
 		pktq_barrier(ip6_pktq);
 #endif
-	xc = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(xc);
+	xc_barrier(0);
 
 	if (ifp->if_percpuq != NULL) {
 		if_percpuq_destroy(ifp->if_percpuq);
