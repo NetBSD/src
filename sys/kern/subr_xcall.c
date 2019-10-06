@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.27 2019/10/06 15:11:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.26 2018/02/07 04:25:09 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.27 2019/10/06 15:11:17 uwe Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -266,6 +266,30 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 		return xc_lowpri(func, arg1, arg2, NULL);
 	}
 }
+
+
+static void
+xc_nop(void *arg1, void *arg2)
+{
+
+    return;
+}
+
+
+/*
+ * xc_barrier:
+ *
+ *	Broadcast a nop to all CPUs in the system.
+ */
+void
+xc_barrier(unsigned int flags)
+{
+	uint64_t where;
+
+	where = xc_broadcast(flags, xc_nop, NULL, NULL);
+	xc_wait(where);
+}
+
 
 /*
  * xc_unicast:
