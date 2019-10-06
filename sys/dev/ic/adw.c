@@ -1,4 +1,4 @@
-/* $NetBSD: adw.c,v 1.54 2016/07/14 04:19:26 msaitoh Exp $	 */
+/* $NetBSD: adw.c,v 1.55 2019/10/06 01:04:49 uwe Exp $	 */
 
 /*
  * Generic driver for the Advanced Systems Inc. SCSI controllers
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.54 2016/07/14 04:19:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adw.c,v 1.55 2019/10/06 01:04:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -398,8 +398,8 @@ adw_init(ADW_SOFTC *sc)
 			    "setting. Using automatic termination.\n");
 	}
 
-	sc->isr_callback = (ADW_CALLBACK) adw_isr_callback;
-	sc->async_callback = (ADW_CALLBACK) adw_async_callback;
+	sc->isr_callback = adw_isr_callback;
+	sc->async_callback = adw_async_callback;
 
 	return 0;
 }

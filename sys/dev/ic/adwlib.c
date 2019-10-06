@@ -1,4 +1,4 @@
-/* $NetBSD: adwlib.c,v 1.42 2019/02/03 03:19:27 mrg Exp $        */
+/* $NetBSD: adwlib.c,v 1.43 2019/10/06 01:04:49 uwe Exp $        */
 
 /*
  * Low level routines for the Advanced Systems Inc. SCSI controllers chips
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.42 2019/02/03 03:19:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adwlib.c,v 1.43 2019/10/06 01:04:49 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2021,7 +2021,7 @@ AdwISR(ADW_SOFTC *sc)
 		}
 
 		if (sc->async_callback != 0) {
-		    (*(ADW_ASYNC_CALLBACK)sc->async_callback)(sc, intrb_code);
+			(*sc->async_callback)(sc, intrb_code);
 		}
 	}
 
@@ -2098,7 +2098,7 @@ AdwISR(ADW_SOFTC *sc)
 		 * Notify the driver of the completed request by passing
 		 * the ADW_SCSI_REQ_Q pointer to its callback function.
 		 */
-		(*(ADW_ISR_CALLBACK)sc->isr_callback)(sc, scsiq);
+		(*sc->isr_callback)(sc, scsiq);
 		/*
 		 * Note: After the driver callback function is called, 'scsiq'
 		 * can no longer be referenced.
