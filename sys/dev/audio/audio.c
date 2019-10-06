@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.1 2019/10/06 10:58:14 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.2 2019/10/06 11:00:15 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.1 2019/10/06 10:58:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.2 2019/10/06 11:00:15 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5730,6 +5730,36 @@ audio_track_drain(struct audio_softc *sc, audio_track_t *track)
 }
 
 /*
+ * Send signal to process.
+ * This is intended to be called only from audio_softintr_{rd,wr}.
+ * Must be called with sc_lock && sc_intr_lock held.
+ */
+static inline void
+audio_psignal(struct audio_softc *sc, pid_t pid, int signum)
+{
+	proc_t *p;
+
+	KASSERT(mutex_owned(sc->sc_lock));
+	KASSERT(mutex_owned(sc->sc_intr_lock));
+	KASSERT(pid != 0);
+
+	/*
+	 * psignal() must be called without spin lock held.
+	 * So leave intr_lock temporarily here.
+	 */
+	mutex_exit(sc->sc_intr_lock);
+
+	mutex_enter(proc_lock);
+	p = proc_find(pid);
+	if (p)
+		psignal(p, signum);
+	mutex_exit(proc_lock);
+
+	/* Enter intr_lock again */
+	mutex_enter(sc->sc_intr_lock);
+}
+
+/*
  * This is software interrupt handler for record.
  * It is called from recording hardware interrupt everytime.
  * It does:
@@ -5747,7 +5777,6 @@ audio_softintr_rd(void *cookie)
 {
 	struct audio_softc *sc = cookie;
 	audio_file_t *f;
-	proc_t *p;
 	pid_t pid;
 
 	mutex_enter(sc->sc_lock);
@@ -5767,10 +5796,7 @@ audio_softintr_rd(void *cookie)
 		pid = f->async_audio;
 		if (pid != 0) {
 			TRACEF(4, f, "sending SIGIO %d", pid);
-			mutex_enter(proc_lock);
-			if ((p = proc_find(pid)) != NULL)
-				psignal(p, SIGIO);
-			mutex_exit(proc_lock);
+			audio_psignal(sc, pid, SIGIO);
 		}
 	}
 	mutex_exit(sc->sc_intr_lock);
@@ -5799,7 +5825,6 @@ audio_softintr_wr(void *cookie)
 	struct audio_softc *sc = cookie;
 	audio_file_t *f;
 	bool found;
-	proc_t *p;
 	pid_t pid;
 
 	TRACE(4, "called");
@@ -5826,14 +5851,13 @@ audio_softintr_wr(void *cookie)
 		 */
 		if (track->usrbuf.used <= track->usrbuf_usedlow &&
 		    !track->is_pause) {
+			/* For selnotify */
 			found = true;
+			/* For SIGIO */
 			pid = f->async_audio;
 			if (pid != 0) {
 				TRACEF(4, f, "sending SIGIO %d", pid);
-				mutex_enter(proc_lock);
-				if ((p = proc_find(pid)) != NULL)
-					psignal(p, SIGIO);
-				mutex_exit(proc_lock);
+				audio_psignal(sc, pid, SIGIO);
 			}
 		}
 	}
