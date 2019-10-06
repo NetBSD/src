@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.12 2018/08/14 01:06:01 ozaki-r Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.13 2019/10/06 15:11:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.12 2018/08/14 01:06:01 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.13 2019/10/06 15:11:17 uwe Exp $");
 
 #include <sys/param.h>
 
@@ -147,7 +147,6 @@ void
 pserialize_perform(pserialize_t psz)
 {
 	int n;
-	uint64_t xc;
 
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
@@ -187,8 +186,7 @@ pserialize_perform(pserialize_t psz)
 		 */
 		if (n++ > 1)
 			kpause("psrlz", false, 1, NULL);
-		xc = xc_broadcast(XC_HIGHPRI, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(xc);
+		xc_barrier(XC_HIGHPRI);
 
 		mutex_spin_enter(&psz_lock);
 	} while (!kcpuset_iszero(psz->psz_target));

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.204 2019/10/03 22:48:44 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.205 2019/10/06 15:11:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.204 2019/10/03 22:48:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.205 2019/10/06 15:11:17 uwe Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -367,7 +367,6 @@ static void
 lwp_dtor(void *arg, void *obj)
 {
 	lwp_t *l = obj;
-	uint64_t where;
 	(void)l;
 
 	/*
@@ -379,8 +378,7 @@ lwp_dtor(void *arg, void *obj)
 	 * the value of l->l_cpu must be still valid at this point.
 	 */
 	KASSERT(l->l_cpu != NULL);
-	where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-	xc_wait(where);
+	xc_barrier(0);
 }
 
 /*

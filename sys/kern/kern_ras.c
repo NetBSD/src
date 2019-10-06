@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ras.c,v 1.38 2016/07/04 07:56:07 maxv Exp $	*/
+/*	$NetBSD: kern_ras.c,v 1.39 2019/10/06 15:11:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.38 2016/07/04 07:56:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ras.c,v 1.39 2019/10/06 15:11:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,7 @@ ras_sync(void)
 	/* No need to sync if exiting or single threaded. */
 	if (curproc->p_nlwps > 1 && ncpu > 1) {
 #ifdef NO_SOFTWARE_PATENTS
-		uint64_t where;
-		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(where);
+		xc_barrier(0);
 #else
 		/*
 		 * Assumptions:

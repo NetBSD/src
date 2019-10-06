@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.47 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.48 2019/10/06 15:11:17 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.47 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.48 2019/10/06 15:11:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -407,7 +407,6 @@ softint_disestablish(void *arg)
 	softcpu_t *sc;
 	softhand_t *sh;
 	uintptr_t offset;
-	uint64_t where;
 	u_int flags;
 
 	offset = (uintptr_t)arg;
@@ -432,8 +431,7 @@ softint_disestablish(void *arg)
 	 * SOFTINT_ACTIVE already set.
 	 */
 	if (__predict_true(mp_online)) {
-		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(where);
+		xc_barrier(0);
 	}
 
 	for (;;) {
