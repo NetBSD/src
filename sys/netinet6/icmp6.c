@@ -1,4 +1,4 @@
-/*	$NetBSD: icmp6.c,v 1.242 2018/12/22 14:07:54 maxv Exp $	*/
+/*	$NetBSD: icmp6.c,v 1.243 2019/10/06 02:30:58 uwe Exp $	*/
 /*	$KAME: icmp6.c,v 1.217 2001/06/20 15:03:29 jinmei Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.242 2018/12/22 14:07:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icmp6.c,v 1.243 2019/10/06 02:30:58 uwe Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -950,7 +950,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 
 	/* Detect the upper level protocol */
 	{
-		void (*ctlfunc)(int, struct sockaddr *, void *);
+		void *(*ctlfunc)(int, const struct sockaddr *, void *);
 		u_int8_t nxt = eip6->ip6_nxt;
 		int eoff = off + sizeof(struct icmp6_hdr) +
 			sizeof(struct ip6_hdr);
@@ -1077,8 +1077,7 @@ icmp6_notify_error(struct mbuf *m, int off, int icmp6len, int code)
 			ip6cp.ip6c_cmdarg = (void *)&notifymtu;
 		}
 
-		ctlfunc = (void (*)(int, struct sockaddr *, void *))
-		    (inet6sw[ip6_protox[nxt]].pr_ctlinput);
+		ctlfunc = inet6sw[ip6_protox[nxt]].pr_ctlinput;
 		if (ctlfunc) {
 			(void)(*ctlfunc)(code, sin6tosa(&icmp6dst), &ip6cp);
 		}
