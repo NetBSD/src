@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.1 2019/09/24 18:14:59 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.2 2019/10/06 11:04:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.1 2019/09/24 18:14:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.2 2019/10/06 11:04:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2749,7 +2749,7 @@ vmx_tlb_flush(struct pmap *pm)
 	atomic_inc_64(&machdata->mach_htlb_gen);
 
 	/* Generates IPIs, which cause #VMEXITs. */
-	pmap_tlb_shootdown(pmap_kernel(), -1, PG_G, TLBSHOOT_UPDATE);
+	pmap_tlb_shootdown(pmap_kernel(), -1, PTE_G, TLBSHOOT_UPDATE);
 }
 
 static void
