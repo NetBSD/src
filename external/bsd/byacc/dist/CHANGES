@@ -1,3 +1,107 @@
+2019-06-17  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* test/btyacc/big_b.error, test/btyacc/big_l.error, test/btyacc/help.error, test/btyacc/no_b_opt.error, test/btyacc/no_output2.error, test/btyacc/no_p_opt.error, test/btyacc/nostdin.error, test/yacc/big_b.error, test/yacc/big_l.error, test/yacc/help.error, test/yacc/no_b_opt.error, test/yacc/no_output2.error, test/yacc/no_p_opt.error, test/yacc/nostdin.error:
+	regen
+
+	* test/run_test.sh: test "-H" rather than "-D"
+
+2019-06-16  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* main.c, yacc.1:
+	change "-D" option to "-H" (discussion with Ethan Sommer)
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+	* test/btyacc/defines1.calc.c, test/btyacc/defines2.calc.c, test/btyacc/defines3.calc.c:
+	RCS_BASE
+
+	* test/run_test.sh: in test_defines, save the ".c" file too
+
+	* test/yacc/defines3.calc.c, test/yacc/defines2.calc.c, test/yacc/defines1.calc.c:
+	RCS_BASE
+
+	* test/run_test.sh:
+	output of test_defines should be a header ".h", not ".c"
+
+	* test/btyacc/defines1.calc.h, test/btyacc/defines1.error, test/btyacc/defines1.output, test/btyacc/defines2.calc.h, test/btyacc/defines2.error, test/btyacc/defines2.output, test/btyacc/defines3.calc.h, test/btyacc/defines3.error, test/btyacc/defines3.output:
+	RCS_BASE
+
+	* main.c: however, a subsequent -d cancels -D
+
+	* test/yacc/defines1.calc.h, test/yacc/defines3.calc.h: RCS_BASE
+
+	* main.c: -D option implies -d
+
+	* test/yacc/defines1.error, test/yacc/defines1.output, test/yacc/defines2.calc.h, test/yacc/defines2.error, test/yacc/defines2.output, test/yacc/defines3.error, test/yacc/defines3.output:
+	RCS_BASE
+
+	* yacc.1: align macro definitions with my other manpages
+
+	* test/run_test.sh: add test for -D after -d or -b options
+
+	* test/btyacc/stdin1.calc.c, test/btyacc/stdin1.error, test/btyacc/stdin1.output, test/btyacc/stdin2.calc.c, test/btyacc/stdin2.error, test/btyacc/stdin2.output:
+	RCS_BASE
+
+	* test/btyacc/big_b.error, test/btyacc/big_b.output, test/btyacc/big_l.error, test/btyacc/big_l.output, test/btyacc/help.error, test/btyacc/help.output, test/btyacc/no_b_opt.error, test/btyacc/no_b_opt.output, test/btyacc/no_b_opt1.error, test/btyacc/no_b_opt1.output, test/btyacc/no_code_c.error, test/btyacc/no_code_c.output, test/btyacc/no_defines.error, test/btyacc/no_defines.output, test/btyacc/no_graph.error, test/btyacc/no_graph.output, test/btyacc/no_include.error, test/btyacc/no_include.output, test/btyacc/no_opts.error, test/btyacc/no_opts.output, test/btyacc/no_output.error, test/btyacc/no_output.output, test/btyacc/no_output1.error, test/btyacc/no_output1.output, test/btyacc/no_output2.error, test/btyacc/no_output2.output, test/btyacc/no_p_opt.error, test/btyacc/no_p_opt.output, test/btyacc/no_p_opt1.error, test/btyacc/no_p_opt1.output, test/btyacc/no_verbose.error, test/btyacc/no_verbose.output, test/btyacc/nostdin.error, test/btyacc/nostdin.output, test/yacc/big_b.error, test/yacc/big_b.output, test/yacc/big_l.error, test/yacc/big_l.output, test/yacc/help.error, test/yacc/help.output, test/yacc/no_b_opt.error, test/yacc/no_b_opt.output, test/yacc/no_b_opt1.error, test/yacc/no_b_opt1.output, test/yacc/no_code_c.error, test/yacc/no_code_c.output, test/yacc/no_defines.error, test/yacc/no_defines.output, test/yacc/no_graph.error, test/yacc/no_graph.output, test/yacc/no_include.error, test/yacc/no_include.output, test/yacc/no_opts.error, test/yacc/no_opts.output, test/yacc/no_output.error, test/yacc/no_output.output, test/yacc/no_output1.error, test/yacc/no_output1.output, test/yacc/no_output2.error, test/yacc/no_output2.output, test/yacc/no_p_opt.error, test/yacc/no_p_opt.output, test/yacc/no_p_opt1.error, test/yacc/no_p_opt1.output, test/yacc/no_verbose.error, test/yacc/no_verbose.output, test/yacc/nostdin.error, test/yacc/nostdin.output:
+	regen
+
+	* test/run_test.sh:
+	add a test for stdin "-" vs end-options "--", and correct a redirection
+	of stderr in test_flags
+
+	* test/yacc/stdin2.output, test/yacc/stdin2.calc.c, test/yacc/stdin1.calc.c, test/yacc/stdin1.error, test/yacc/stdin1.output, test/yacc/stdin2.error:
+	RCS_BASE
+
+	* test/btyacc/big_b.output, test/btyacc/big_l.output, test/btyacc/help.output, test/btyacc/no_b_opt.output, test/btyacc/no_output2.output, test/btyacc/no_p_opt.output, test/btyacc/nostdin.output, test/yacc/big_b.output, test/yacc/big_l.output, test/yacc/help.output, test/yacc/no_b_opt.output, test/yacc/no_output2.output, test/yacc/no_p_opt.output, test/yacc/nostdin.output:
+	regen
+
+	* main.c: add -D option, to specify filename vs y.tab.h for -d
+
+	* defs.h: add dflag2, for -D option
+
+	* yacc.1: document -D option
+
+	* config_h.in: updated with autoheader-252
+
+	* configure: regen
+
+	* package/debian/copyright: bump
+
+	* aclocal.m4: add CF_GETOPT_HEADER
+
+	* aclocal.m4: Improved autoconf macros:
+	+ CF_CC_ENV_FLAGS
+		putting preprocessor flags in CFLAGS also is a nuisance, which can be
+		addressed in the same way.
+	+ CF_GCC_WARNINGS
+		factor out workaround for XTSTRINGDEFINES as CF_CONST_X_STRING
+	+ CF_GNU_SOURCE
+		The check for _DEFAULT_SOURCE should apply to "recent" Cygwin (since early 2016),
+		and except for "NEWLIB" vs "GLIBC" in the test, acts the same if I pretend
+		that "newlib" is the GNU C library.  Without this, the check falls through
+		to the _XOPEN_SOURCE test, which breaks the pseudoterminal checks for xterm.
+	+ CF_POSIX_C_SOURCE
+		add/use CF_POSIX_VISIBLE
+	+ CF_TRY_XOPEN_SOURCE
+		use CF_APPEND_TEXT
+	+ CF_WITH_MAN2HTML
+		use sed to work around non-POSIX tail utility
+	+ CF_XOPEN_SOURCE
+		use CF_APPEND_TEXT
+		add/use CF_POSIX_VISIBLE
+
+	* VERSION, package/byacc.spec, package/debian/changelog, package/mingw-byacc.spec, package/pkgsrc/Makefile:
+	bump
+
+2019-06-10  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.guess: 2019-06-10
+
+2019-05-22  Thomas E. Dickey  <dickey@invisible-island.net>
+
+	* config.sub: 2019-05-22
+
 2018-06-09  Thomas E. Dickey  <dickey@invisible-island.net>
 
 	* yacc.1: minor typographical fixes
@@ -120,11 +224,11 @@
 
 2017-12-04  erik.b.andersen
 
-	* main.c: A proper path for temporary files is needed by byacc under 
-	Windows commandline, otherwise there's a risk of empty files. 
+	* main.c: A proper path for temporary files is needed by byacc under
+	Windows commandline, otherwise there's a risk of empty files.
 	The TEMP environment variable is always defined in Windows.
 
-	* defs.h: The noreturn attribute needs to be specified before function 
+	* defs.h: The noreturn attribute needs to be specified before function
 	to be portable among compilers (gcc, clang, msvc).
 
 2017-12-04  Thomas E. Dickey  <dickey@invisible-island.net>
@@ -2729,7 +2833,7 @@
 
 	* vmsbuild.com: original version
 
-2000-02-23  Thomas (CM)  <dickey@clark.net>
+2000-02-23  Thomas E. Dickey  <dickey@clark.net>
 
 	* test/RCS, RCS: PERMIT FILE
 
