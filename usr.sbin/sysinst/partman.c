@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.42 2019/08/13 17:57:49 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.43 2019/10/06 00:05:10 mrg Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -950,7 +950,8 @@ pm_vnd_edit_menufmt(menudesc *m, int opt, void *arg)
 			break;
 		case PMV_MENU_NSECTORS:
 			if (dev_ptr->manual_geom && !dev_ptr->is_exist)
-				snprintf(buf, SSTRSIZE, "%d", dev_ptr->nsectors);
+				snprintf(buf, SSTRSIZE, "%d",
+				    dev_ptr->nsectors);
 			wprintw(m->mw, "%*s %s", -lcol_width,
 			    msg_string(MSG_vnd_spt_fmt), buf);
 			break;
@@ -962,7 +963,8 @@ pm_vnd_edit_menufmt(menudesc *m, int opt, void *arg)
 			break;
 		case PMV_MENU_NCYLINDERS:
 			if (dev_ptr->manual_geom && !dev_ptr->is_exist)
-				snprintf(buf, SSTRSIZE, "%d", dev_ptr->ncylinders);
+				snprintf(buf, SSTRSIZE, "%d",
+				    dev_ptr->ncylinders);
 			wprintw(m->mw, "%*s %s", -lcol_width,
 			    msg_string(MSG_vnd_cyl_fmt), buf);
 			break;
@@ -983,10 +985,13 @@ pm_vnd_set_value(menudesc *m, void *arg)
 			    dev_ptr->filepath, dev_ptr->filepath, STRSIZE);
 			if (dev_ptr->filepath[0] != '/') {
 				strlcpy(buf, dev_ptr->filepath, MOUNTLEN);
-				snprintf(dev_ptr->filepath, MOUNTLEN, "/%s", buf);
+				snprintf(dev_ptr->filepath, MOUNTLEN, "/%s",
+				    buf);
 			}
-			if (dev_ptr->filepath[strlen(dev_ptr->filepath) - 1] == '/')
-				dev_ptr->filepath[strlen(dev_ptr->filepath) - 1] = '\0';
+			if (dev_ptr->filepath[strlen(dev_ptr->filepath) - 1]
+			    == '/')
+				dev_ptr->filepath[strlen(dev_ptr->filepath)
+				     - 1] = '\0';
 			return 0;
 		case PMV_MENU_EXIST:
 			dev_ptr->is_exist = !dev_ptr->is_exist;
@@ -1540,15 +1545,18 @@ pm_lvm_edit_menufmt(menudesc *m, int opt, void *arg)
 	int i;
 	char buf[STRSIZE];
 	lvms_t *dev_ptr = arg;
-	strlcpy(buf, msg_string(MSG_auto), STRSIZE);
+	strlcpy(buf, msg_string(MSG_auto), sizeof buf);
 
 	switch (opt) {
 		case PML_MENU_PV:
 			buf[0] = '\0';
-			for (i = 0; i < MAX_LVM_PV; i++)
-				if (dev_ptr->pv[i].pm != NULL)
-					snprintf(buf, STRSIZE, "%s %s",
-					    buf, dev_ptr->pv[i].pm_name);
+			for (i = 0; i < MAX_LVM_PV; i++) {
+				if (dev_ptr->pv[i].pm != NULL) {
+					strlcat(buf, " ", sizeof buf);
+					strlcat(buf, dev_ptr->pv[i].pm_name,
+					    sizeof buf);
+				}
+			}
 			wprintw(m->mw, "%-20s: %s",
 			     msg_string(MSG_lvm_disks_fmt), buf);
 			break;
@@ -1565,13 +1573,15 @@ pm_lvm_edit_menufmt(menudesc *m, int opt, void *arg)
 			break;
 		case PML_MENU_MAXPHYSICALVOLUMES:
 			if (dev_ptr->maxphysicalvolumes > 0)
-				snprintf(buf, STRSIZE, "%d", dev_ptr->maxphysicalvolumes);
+				snprintf(buf, STRSIZE, "%d",
+				    dev_ptr->maxphysicalvolumes);
 			wprintw(m->mw, "%-20s: %s",
 			    msg_string(MSG_lvm_maxpv_fmt), buf);
 			break;
 		case PML_MENU_PHYSICALEXTENTSIZE:
 			if (dev_ptr->physicalextentsize > 0)
-				snprintf(buf, STRSIZE, "%dM", dev_ptr->physicalextentsize);
+				snprintf(buf, STRSIZE, "%dM",
+				    dev_ptr->physicalextentsize);
 			wprintw(m->mw, "%-20s: %s",
 			    msg_string(MSG_lvm_extsiz_fmt), buf);
 			break;
@@ -1872,8 +1882,7 @@ pm_lvm_commit(void)
 {
 	int i, ii, error;
 	uint used_size = 0;
-	char params[STRSIZE*3];
-	char devs[STRSIZE*3];
+	char params[STRSIZE*3], devs[STRSIZE*3], arg[STRSIZE];
 
 	for (i = 0; i < MAX_LVM_VG; i++) {
 		/* Stage 0: checks */
@@ -1891,26 +1900,37 @@ pm_lvm_commit(void)
 		for (ii = 0; ii < MAX_LVM_PV && ! error; ii++)
 			if (lvms[i].pv[ii].pm != NULL) {
 				run_program(RUN_SILENT | RUN_ERROR_OK, 
-										"lvm pvremove -ffy /dev/r%s",
-										(char*)lvms[i].pv[ii].pm_name);
+				    "lvm pvremove -ffy /dev/r%s",
+				    (char*)lvms[i].pv[ii].pm_name);
 				error += run_program(RUN_DISPLAY | RUN_PROGRESS,
-										"lvm pvcreate -ffy /dev/r%s",
-										(char*)lvms[i].pv[ii].pm_name);
+				    "lvm pvcreate -ffy /dev/r%s",
+				    (char*)lvms[i].pv[ii].pm_name);
 				if (error)
 					break;
-				snprintf(devs, STRSIZE*3, "%s /dev/r%s", devs, (char*)lvms[i].pv[ii].pm_name);
+				strlcat(devs, " /dev/r", sizeof devs);
+				strlcat(devs, lvms[i].pv[ii].pm_name,
+				    sizeof devs);
 			}
 		if (error)
 			continue;
 		/* Stage 2: creating Volume Groups (VG's) */
-		if (lvms[i].maxlogicalvolumes > 0)
-			snprintf(params, STRSIZE*3, "%s -l %d", params, lvms[i].maxlogicalvolumes);
-		if (lvms[i].maxphysicalvolumes > 0)
-			snprintf(params, STRSIZE*3, "%s -p %d", params, lvms[i].maxphysicalvolumes);
-		if (lvms[i].physicalextentsize > 0)
-			snprintf(params, STRSIZE*3, "%s -s %d", params, lvms[i].physicalextentsize);
-		error += run_program(RUN_DISPLAY | RUN_PROGRESS, "lvm vgcreate %s %s %s",
-							params, lvms[i].name, devs);
+		if (lvms[i].maxlogicalvolumes > 0) {
+			snprintf(arg, sizeof arg, " -l %d",
+			    lvms[i].maxlogicalvolumes);
+			strlcat(params, arg, sizeof params);
+		}
+		if (lvms[i].maxphysicalvolumes > 0) {
+			snprintf(arg, sizeof arg, " -p %d",
+			    lvms[i].maxphysicalvolumes);
+			strlcat(params, arg, sizeof params);
+		}
+		if (lvms[i].physicalextentsize > 0) {
+			snprintf(arg, sizeof arg, " -s %d",
+			    lvms[i].physicalextentsize);
+			strlcat(params, arg, sizeof params);
+		}
+		error += run_program(RUN_DISPLAY | RUN_PROGRESS,
+		    "lvm vgcreate %s %s %s", params, lvms[i].name, devs);
 		if (error)
 			continue;
 		/* Stage 3: creating Logical Volumes (LV's) */
@@ -1919,30 +1939,62 @@ pm_lvm_commit(void)
 				continue;
 
 			params[0] = '\0';
-			snprintf(params, STRSIZE*3, "%s -C %c", params, lvms[i].lv[ii].contiguous?'y':'n');
-			snprintf(params, STRSIZE*3, "%s -M %c", params, lvms[i].lv[ii].persistent?'y':'n');
-			snprintf(params, STRSIZE*3, "%s -p %s", params, lvms[i].lv[ii].readonly?"r":"rw");
-			snprintf(params, STRSIZE*3, "%s -Z %c", params, lvms[i].lv[ii].zero?'y':'n');
-			if (strlen(lvms[i].lv[ii].name) > 0)
-				snprintf(params, STRSIZE*3, "%s -n %s", params, lvms[i].lv[ii].name);
-			if (strlen(lvms[i].lv[ii].extents) > 0)
-				snprintf(params, STRSIZE*3, "%s -l %s", params, lvms[i].lv[ii].extents);
-			if (lvms[i].lv[ii].minor > 0)
-				snprintf(params, STRSIZE*3, "%s --minor %d", params, lvms[i].lv[ii].minor);
+			snprintf(arg, sizeof arg, " -C %c",
+			    lvms[i].lv[ii].contiguous?'y':'n');
+			strlcat(params, arg, sizeof params);
+			snprintf(arg, sizeof arg, " -M %c",
+			    lvms[i].lv[ii].persistent?'y':'n');
+			strlcat(params, arg, sizeof params);
+			snprintf(arg, sizeof arg, " -p %s",
+			    lvms[i].lv[ii].readonly?"r":"rw");
+			strlcat(params, arg, sizeof params);
+			snprintf(arg, sizeof arg, " -Z %c",
+			    lvms[i].lv[ii].zero?'y':'n');
+			strlcat(params, arg, sizeof params);
+			if (strlen(lvms[i].lv[ii].name) > 0) {
+				snprintf(arg, sizeof arg, " -n %s",
+				    lvms[i].lv[ii].name);
+				strlcat(params, arg, sizeof params);
+			}
+			if (strlen(lvms[i].lv[ii].extents) > 0) {
+				snprintf(arg, sizeof arg, " -l %s",
+				    lvms[i].lv[ii].extents);
+				strlcat(params, arg, sizeof params);
+			}
+			if (lvms[i].lv[ii].minor > 0) {
+				snprintf(arg, sizeof arg, " --minor %d",
+				    lvms[i].lv[ii].minor);
+				strlcat(params, arg, sizeof params);
+			}
 			if (lvms[i].lv[ii].mirrors > 0) {
-				snprintf(params, STRSIZE*3, "%s -m %d", params, lvms[i].lv[ii].mirrors);
-				if (lvms[i].lv[ii].regionsize > 0)
-					snprintf(params, STRSIZE*3, "%s -R %d", params, lvms[i].lv[ii].regionsize);
+				snprintf(arg, sizeof arg, " -m %d",
+				    lvms[i].lv[ii].mirrors);
+				strlcat(params, arg, sizeof params);
+				if (lvms[i].lv[ii].regionsize > 0) {
+					snprintf(arg, sizeof arg, " -R %d",
+					     lvms[i].lv[ii].regionsize);
+					strlcat(params, arg, sizeof params);
+				}
 			}
-			if (lvms[i].lv[ii].readahead > 0)
-				snprintf(params, STRSIZE*3, "%s -r %d", params, lvms[i].lv[ii].readahead);
+			if (lvms[i].lv[ii].readahead > 0) {
+				snprintf(arg, sizeof arg, " -r %d",
+				    lvms[i].lv[ii].readahead);
+				strlcat(params, arg, sizeof params);
+			}
 			if (lvms[i].lv[ii].stripes > 0) {
-				snprintf(params, STRSIZE*3, "%s -i %d", params, lvms[i].lv[ii].stripes);
-				if (lvms[i].lv[ii].stripesize > 0)
-					snprintf(params, STRSIZE*3, "%s -I %d", params, lvms[i].lv[ii].stripesize);
+				snprintf(arg, sizeof arg, " -i %d",
+				    lvms[i].lv[ii].stripes);
+				strlcat(params, arg, sizeof params);
+				if (lvms[i].lv[ii].stripesize > 0) {
+					snprintf(arg, sizeof arg, " -I %d",
+					    lvms[i].lv[ii].stripesize);
+					strlcat(params, arg, sizeof params);
+				}
 			}
-			snprintf(params, STRSIZE*3, "%s -L %" PRIi64 "M",
-			    params, lvms[i].lv[ii].size);
+			snprintf(arg, sizeof arg, " -L %" PRIi64 "M",
+			    lvms[i].lv[ii].size);
+			strlcat(params, arg, sizeof params);
+
 			error += run_program(RUN_DISPLAY | RUN_PROGRESS,
 			    "lvm lvcreate %s %s", params, lvms[i].name);
 		}
@@ -1968,7 +2020,7 @@ int
 pm_getrefdev(struct pm_devs *pm_cur)
 {
 	int i, ii, dev_num, num_devs, num_devs_s;
-	char dev[SSTRSIZE]; dev[0] = '\0';
+	char descr[SSTRSIZE], dev[SSTRSIZE] = "";
 
 	pm_cur->refdev = NULL;
 	if (! strncmp(pm_cur->diskdev, "cgd", 3)) {
@@ -1976,11 +2028,11 @@ pm_getrefdev(struct pm_devs *pm_cur)
 		for (i = 0; i < MAX_CGD; i++)
 			if (cgds[i].blocked && cgds[i].node == dev_num) {
 				pm_cur->refdev = &cgds[i];
-				snprintf(pm_cur->diskdev_descr,
-				    sizeof(pm_cur->diskdev_descr),
-				    "%s (%s, %s-%d)",
-				    pm_cur->diskdev_descr, cgds[i].pm_name,
+				snprintf(descr, sizeof descr,
+				    " (%s, %s-%d)", cgds[i].pm_name,
 				    cgds[i].enc_type, cgds[i].key_size);
+				strlcat(pm_cur->diskdev_descr, descr,
+				    sizeof(pm_cur->diskdev_descr));
 				break;
 			}
  	} else if (! strncmp(pm_cur->diskdev, "vnd", 3)) {
@@ -1991,11 +2043,10 @@ pm_getrefdev(struct pm_devs *pm_cur)
 				vnds[i].pm->parts->pscheme->get_part_device(
 				    vnds[i].pm->parts, vnds[i].pm_part,
 				    dev, sizeof dev, NULL, plain_name, false);
-				snprintf(pm_cur->diskdev_descr,
-				    sizeof(pm_cur->diskdev_descr),
-				    "%s (%s, %s)",
-				    pm_cur->diskdev_descr, dev,
-				    vnds[i].filepath);
+				snprintf(descr, sizeof descr, " (%s, %s)",
+				    dev, vnds[i].filepath);
+				strlcat(pm_cur->diskdev_descr, descr,
+				    sizeof(pm_cur->diskdev_descr));
 				break;
 			}
 	} else if (! strncmp(pm_cur->diskdev, "raid", 4)) {
@@ -2011,10 +2062,12 @@ pm_getrefdev(struct pm_devs *pm_cur)
 						else
 							num_devs++;
 					}
-				snprintf(pm_cur->diskdev_descr,
-					sizeof(pm_cur->diskdev_descr),
-					"%s (lvl %d, %d disks, %d spare)", pm_cur->diskdev_descr,
-					raids[i].raid_level, num_devs, num_devs_s);
+				snprintf(descr, sizeof descr,
+				    " (lvl %d, %d disks, %d spare)",
+				    raids[i].raid_level, num_devs,
+				    num_devs_s);
+				strlcat(pm_cur->diskdev_descr, descr,
+				    sizeof(pm_cur->diskdev_descr));
 				break;
 			}
 	} else
