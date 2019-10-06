@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.75 2018/11/13 11:06:19 skrll Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.76 2019/10/06 02:04:26 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.75 2018/11/13 11:06:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.76 2019/10/06 02:04:26 uwe Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -95,8 +95,8 @@ CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
 CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #endif
 
-static void	cpu_xc_online(struct cpu_info *);
-static void	cpu_xc_offline(struct cpu_info *);
+static void	cpu_xc_online(struct cpu_info *, void *);
+static void	cpu_xc_offline(struct cpu_info *, void *);
 
 dev_type_ioctl(cpuctl_ioctl);
 
@@ -328,7 +328,7 @@ cpu_lookup(u_int idx)
 }
 
 static void
-cpu_xc_offline(struct cpu_info *ci)
+cpu_xc_offline(struct cpu_info *ci, void *unused)
 {
 	struct schedstate_percpu *spc, *mspc = NULL;
 	struct cpu_info *target_ci;
@@ -403,7 +403,7 @@ fail:
 }
 
 static void
-cpu_xc_online(struct cpu_info *ci)
+cpu_xc_online(struct cpu_info *ci, void *unused)
 {
 	struct schedstate_percpu *spc;
 	int s;
@@ -489,7 +489,7 @@ cpu_getmodel(void)
 
 #ifdef __HAVE_INTR_CONTROL
 static void
-cpu_xc_intr(struct cpu_info *ci)
+cpu_xc_intr(struct cpu_info *ci, void *unused)
 {
 	struct schedstate_percpu *spc;
 	int s;
@@ -501,7 +501,7 @@ cpu_xc_intr(struct cpu_info *ci)
 }
 
 static void
-cpu_xc_nointr(struct cpu_info *ci)
+cpu_xc_nointr(struct cpu_info *ci, void *unused)
 {
 	struct schedstate_percpu *spc;
 	int s;
