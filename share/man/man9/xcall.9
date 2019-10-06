@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.12 2018/02/01 03:15:28 ozaki-r Exp $
+.\"     $NetBSD: xcall.9,v 1.13 2019/10/06 17:01:15 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -97,7 +97,7 @@ with other cross calls in the system.
 .Bl -tag -width compact
 .It Fn xc_broadcast "flags" "func" "arg1" "arg2"
 Call
-.Fo "(*func)"
+.Pf (* Fa func\| ) Ns Fo ""
 .Fa "arg1"
 .Fa "arg2"
 .Fc
@@ -129,7 +129,7 @@ should not be called from interrupt context.
 Like
 .Fn xc_broadcast ,
 but call
-.Fn "(*func)"
+.Fa func
 on only the CPU indicated by
 .Fa ci .
 .Fn xc_unicast
