@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.46 2019/05/11 07:31:56 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.46.4.1 2019/10/06 11:04:55 martin Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46 2019/05/11 07:31:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.46.4.1 2019/10/06 11:04:55 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,6 +202,7 @@ int svm_vmrun(paddr_t, uint64_t *);
 #define VMCB_EXITCODE_MWAIT		0x008B
 #define VMCB_EXITCODE_MWAIT_CONDITIONAL	0x008C
 #define VMCB_EXITCODE_XSETBV		0x008D
+#define VMCB_EXITCODE_RDPRU		0x008E
 #define VMCB_EXITCODE_EFER_WRITE_TRAP	0x008F
 #define VMCB_EXITCODE_CR0_WRITE_TRAP	0x0090
 #define VMCB_EXITCODE_CR1_WRITE_TRAP	0x0091
@@ -219,6 +220,7 @@ int svm_vmrun(paddr_t, uint64_t *);
 #define VMCB_EXITCODE_CR13_WRITE_TRAP	0x009D
 #define VMCB_EXITCODE_CR14_WRITE_TRAP	0x009E
 #define VMCB_EXITCODE_CR15_WRITE_TRAP	0x009F
+#define VMCB_EXITCODE_MCOMMIT		0x00A3
 #define VMCB_EXITCODE_NPF		0x0400
 #define VMCB_EXITCODE_AVIC_INCOMP_IPI	0x0401
 #define VMCB_EXITCODE_AVIC_NOACCEL	0x0402
@@ -285,12 +287,17 @@ struct vmcb_ctrl {
 #define VMCB_CTRL_INTERCEPT_ICEBP	__BIT(8)
 #define VMCB_CTRL_INTERCEPT_WBINVD	__BIT(9)
 #define VMCB_CTRL_INTERCEPT_MONITOR	__BIT(10)
-#define VMCB_CTRL_INTERCEPT_MWAIT	__BIT(12)
+#define VMCB_CTRL_INTERCEPT_MWAIT	__BIT(11)
+#define VMCB_CTRL_INTERCEPT_MWAIT_ARMED	__BIT(12)
 #define VMCB_CTRL_INTERCEPT_XSETBV	__BIT(13)
+#define VMCB_CTRL_INTERCEPT_RDPRU	__BIT(14)
 #define VMCB_CTRL_INTERCEPT_EFER_SPEC	__BIT(15)
 #define VMCB_CTRL_INTERCEPT_WCR_SPEC(x)	__BIT(16 + x)
 
-	uint8_t  rsvd1[40];
+	uint32_t intercept_misc3;
+#define VMCB_CTRL_INTERCEPT_MCOMMIT	__BIT(3)
+
+	uint8_t  rsvd1[36];
 	uint16_t pause_filt_thresh;
 	uint16_t pause_filt_cnt;
 	uint64_t iopm_base_pa;
@@ -332,6 +339,8 @@ struct vmcb_ctrl {
 #define VMCB_CTRL_ENABLE_NP		__BIT(0)
 #define VMCB_CTRL_ENABLE_SEV		__BIT(1)
 #define VMCB_CTRL_ENABLE_ES_SEV		__BIT(2)
+#define VMCB_CTRL_ENABLE_GMET		__BIT(3)
+#define VMCB_CTRL_ENABLE_VTE		__BIT(5)
 
 	uint64_t avic;
 #define VMCB_CTRL_AVIC_APIC_BAR		__BITS(51,0)
@@ -2122,7 +2131,7 @@ svm_tlb_flush(struct pmap *pm)
 	atomic_inc_64(&machdata->mach_htlb_gen);
 
 	/* Generates IPIs, which cause #VMEXITs. */
-	pmap_tlb_shootdown(pmap_kernel(), -1, PG_G, TLBSHOOT_UPDATE);
+	pmap_tlb_shootdown(pmap_kernel(), -1, PTE_G, TLBSHOOT_UPDATE);
 }
 
 static void
