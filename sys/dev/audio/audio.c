@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28 2019/07/10 13:26:47 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.1 2019/10/06 10:58:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28 2019/07/10 13:26:47 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.1 2019/10/06 10:58:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -7726,7 +7726,9 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 		} else {
 			ma = NULL;
 		}
+		mutex_enter(sc->sc_lock);
 		mixer_remove(sc);	/* remove old entry */
+		mutex_exit(sc->sc_lock);
 		if (ma != NULL) {
 			ma->next = sc->sc_async_mixer;
 			ma->pid = curproc->p_pid;
