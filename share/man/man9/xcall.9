@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.14 2019/10/06 17:14:18 uwe Exp $
+.\"     $NetBSD: xcall.9,v 1.15 2019/10/06 17:21:28 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -94,7 +94,7 @@ Functions being called should be relatively lightweight.
 They may block on locks, but carefully and minimally, to not interfere
 with other cross calls in the system.
 .Sh FUNCTIONS
-.Bl -tag -width compact
+.Bl -tag -width Fn
 .It Fn xc_broadcast "flags" "func" "arg1" "arg2"
 Call
 .Pf (* Fa func\| ) Ns Fo ""
