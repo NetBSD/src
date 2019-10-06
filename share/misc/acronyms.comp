@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.292 2019/10/02 11:14:46 sevan Exp $
+$NetBSD: acronyms.comp,v 1.293 2019/10/06 15:17:39 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -117,6 +117,7 @@ AV	anti virus
 AVB	audio video bridging
 AVL	Adelson-Velsky-Landis
 AVX	advanced vector extensions
+AWDL	Apple wireless direct link
 BA	byte align
 BAL	basic assembly language
 BAR	base address register
@@ -150,6 +151,7 @@ BIU	bus interface unit
 BKDG	BIOS and kernel developer's guide
 BLAS	basic linear algebra subprograms
 BLC	back light control
+BLE	Bluetooth low energy
 BLOB	binary large object
 BM	bus master
 BMC	baseboard management controller
@@ -1007,6 +1009,7 @@ MWE	module width encoding
 MX	mail exchange
 NACK	negative acknowledgement
 NAK	negative acknowledgement
+NAN	neighbor awareness networking
 NAN	not a number
 NAPT	Network Address Port Translation
 NAS	network attached storage
