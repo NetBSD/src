@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.70 2019/10/04 08:09:49 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.71 2019/10/06 11:20:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4297,4 +4297,46 @@ sys/arch/arm/dts/sun50i-h5-nanopi-neo-plus2.dts	1.4
 
 	Increase voltage for frequencies above 1GHz.
 	[jmcneill, ticket #283]
+
+sys/dev/audio/audio.c				1.29
+
+	Add missing mutex, we were hitting a KASSERT. 
+	[isaki, ticket #284]
+
+sys/dev/audio/audio.c				1.30
+sys/dev/audio/audiovar.h			1.5
+
+	Fix lock assertion on async I/O mode. 
+	[isaki, ticket #285]
+
+sys/dev/audio/audio.c				1.31
+
+	Tune some debug message levels, to help debugging hardware drivers.
+	[isaki, ticket #286]
+
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.47-1.49
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.38
+
+	Add definitions for RDPRU, MCOMMIT, GMET and VTE.
+	Fix definition for MWAIT.
+	Switch to the new PTE naming.
+	[maxv, ticket #287]
+
+etc/rc.d/npf_boot				1.2
+etc/rc.d/pf_boot				1.5
+
+	Work around a hack in the scripts: make sure to run the packet
+	filter boot scripts even when booting to single user initially and
+	then exiting to multi-user.
+	[sevan, ticket #288]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.53
+
+	Fix error handling in NetBSD specific functions.
+	[brad, ticket #289]
+
+sys/arch/evbarm/conf/GENERIC			1.53
+
+	Disable tegradrm for now as it causes random crashes.
+	[skrll, ticket #290]
 
