@@ -1,4 +1,4 @@
-.\"     $NetBSD: xcall.9,v 1.13 2019/10/06 17:01:15 uwe Exp $
+.\"     $NetBSD: xcall.9,v 1.14 2019/10/06 17:14:18 uwe Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -112,15 +112,13 @@ on for the cross-call to complete.
 should be
 .Dv XC_HIGHPRI
 or
-.Fo XC_HIGHPRI_IPL
-.Fa ipl
-.Fc
+.Dv XC_HIGHPRI_IPL\| Ns Fn "" ipl
 for a "high priority" call, and 0 for a "low priority" call.
 .Dv XC_HIGHPRI
 uses an
 .Dv IPL_SOFTSERIAL
 software interrupt while
-.Fn XC_HIGHPRI_IPL
+.Dv XC_HIGHPRI_IPL
 uses a software interrupt with an IPL specified by
 .Fa ipl .
 .Fn xc_broadcast
