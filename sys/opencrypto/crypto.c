@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.109 2019/10/01 18:00:09 chs Exp $ */
+/*	$NetBSD: crypto.c,v 1.110 2019/10/06 15:11:17 uwe Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.109 2019/10/01 18:00:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.110 2019/10/06 15:11:17 uwe Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -618,7 +618,6 @@ crypto_destroy(bool exit_kthread)
 
 	if (exit_kthread) {
 		struct cryptocap *cap = NULL;
-		uint64_t where;
 		bool is_busy = false;
 
 		/* if we have any in-progress requests, don't unload */
@@ -657,8 +656,7 @@ crypto_destroy(bool exit_kthread)
 			qs->crp_ret_q_exit_flag = true;
 			crypto_put_crp_ret_qs(ci);
 		}
-		where = xc_broadcast(0, (xcfunc_t)nullop, NULL, NULL);
-		xc_wait(where);
+		xc_barrier(0);
 	}
 
 	if (sysctl_opencrypto_clog != NULL)
