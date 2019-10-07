@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.71 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.72 2019/10/07 09:37:16 skrll Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.71 2019/08/23 04:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.72 2019/10/07 09:37:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -864,7 +864,7 @@ udav_mii_statchg(struct ifnet *ifp)
 	if (usbnet_isdying(un))
 		return;
 
-	if (mii->mii_media_status & IFM_ACTIVE &&
+	if ((mii->mii_media_status & IFM_ACTIVE) &&
 	    IFM_SUBTYPE(mii->mii_media_active) != IFM_NONE) {
 		DPRINTF(("%s: %s: got link\n",
 			 device_xname(un->un_dev), __func__));
