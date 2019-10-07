@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.123 2019/10/03 19:01:13 tnn Exp $
+# $NetBSD: ALL,v 1.124 2019/10/07 11:53:40 msaitoh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.123 $"
+#ident		"ALL-$Revision: 1.124 $"
 
 maxusers	64		# estimated number of users
 
@@ -1105,6 +1105,7 @@ ihphy*	at mii? phy ?			# Intel 82577 PHYs
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+ipgphy* at mii? phy ?			# IC PLUS IP1000A/IP1001 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
