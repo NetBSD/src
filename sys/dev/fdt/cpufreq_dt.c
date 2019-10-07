@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.9 2019/10/06 11:28:24 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.10 2019/10/07 13:54:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.9 2019/10/06 11:28:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.10 2019/10/07 13:54:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 	const struct sysctlnode *node, *cpunode;
 	struct sysctllog *cpufreq_log = NULL;
 	struct cpu_info *ci;
-	uint64_t mpidr;
+	bus_addr_t mpidr;
 	int error, i;
 
 	if (fdtbus_get_reg(sc->sc_phandle, 0, &mpidr, 0) != 0)
