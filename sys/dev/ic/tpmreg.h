@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.4 2019/06/22 12:57:41 maxv Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.5 2019/10/08 18:43:02 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -78,6 +78,7 @@
 #define		TPM_STS_GO			__BIT(5)
 #define		TPM_STS_DATA_AVAIL		__BIT(4)
 #define		TPM_STS_DATA_EXPECT		__BIT(3)
+#define		TPM_STS_SELFTEST_DONE		__BIT(2)
 #define		TPM_STS_RESP_RETRY		__BIT(1)
 
 #define	TPM_DATA			0x0024	/* 32bit register */

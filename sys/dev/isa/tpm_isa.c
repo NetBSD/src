@@ -1,8 +1,37 @@
-/*	$NetBSD: tpm_isa.c,v 1.4 2019/06/22 12:57:41 maxv Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.5 2019/10/08 18:43:03 maxv Exp $	*/
+
+/*
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Maxime Villard.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2008, 2009 Michael Shalayeff
- * Copyright (c) 2009, 2010 Hans-Jörg Höxer
+ * Copyright (c) 2009, 2010 Hans-Joerg Hoexer
  * All rights reserved.
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -19,13 +48,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.4 2019/06/22 12:57:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.5 2019/10/08 18:43:03 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-#include <sys/kernel.h>
-#include <sys/malloc.h>
-#include <sys/proc.h>
 #include <sys/device.h>
 #include <sys/bus.h>
 #include <sys/pmf.h>
@@ -36,13 +62,13 @@ __KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.4 2019/06/22 12:57:41 maxv Exp $");
 #include <dev/isa/isareg.h>
 #include <dev/isa/isavar.h>
 
+#include "ioconf.h"
+
 static int	tpm_isa_match(device_t, cfdata_t, void *);
 static void	tpm_isa_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(tpm_isa, sizeof(struct tpm_softc),
-    tpm_isa_match, tpm_isa_attach, NULL, NULL);
-
-extern struct cfdriver tpm_cd;
+CFATTACH_DECL_NEW(tpm_isa, sizeof(struct tpm_softc), tpm_isa_match,
+    tpm_isa_attach, NULL, NULL);
 
 static int
 tpm_isa_match(device_t parent, cfdata_t match, void *aux)
@@ -60,8 +86,8 @@ tpm_isa_match(device_t parent, cfdata_t match, void *aux)
 		return 0;
 
 	/* XXX: integer locator sign extension */
-	if (bus_space_map(bt, (unsigned int)ia->ia_iomem[0].ir_addr, TPM_SPACE_SIZE,
-	    0, &bh))
+	if (bus_space_map(bt, (unsigned int)ia->ia_iomem[0].ir_addr,
+	    TPM_SPACE_SIZE, 0, &bh))
 		return 0;
 
 	if ((rv = tpm_tis12_probe(bt, bh))) {
@@ -80,46 +106,33 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 {
 	struct tpm_softc *sc = device_private(self);
 	struct isa_attach_args *ia = aux;
-	bus_addr_t iobase;
+	bus_addr_t base;
 	bus_size_t size;
-	int rv;
 
 	sc->sc_dev = self;
 	sc->sc_ver = TPM_1_2;
-
-	sc->sc_bt = ia->ia_memt;
-	iobase = (unsigned int)ia->ia_iomem[0].ir_addr;
-	size = TPM_SPACE_SIZE;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_busy = false;
 	sc->sc_init = tpm_tis12_init;
 	sc->sc_start = tpm_tis12_start;
 	sc->sc_read = tpm_tis12_read;
 	sc->sc_write = tpm_tis12_write;
 	sc->sc_end = tpm_tis12_end;
+	sc->sc_bt = ia->ia_memt;
 
-	if (bus_space_map(sc->sc_bt, iobase, size, 0, &sc->sc_bh)) {
+	base = (unsigned int)ia->ia_iomem[0].ir_addr;
+	size = TPM_SPACE_SIZE;
+
+	if (bus_space_map(sc->sc_bt, base, size, 0, &sc->sc_bh)) {
 		aprint_error_dev(sc->sc_dev, "cannot map registers\n");
 		return;
 	}
 
-	if ((rv = (*sc->sc_init)(sc, ia->ia_irq[0].ir_irq)) != 0) {
+	if ((*sc->sc_init)(sc) != 0) {
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, size);
 		return;
 	}
 
-	/*
-	 * Only setup interrupt handler when we have a vector and the
-	 * chip is TIS 1.2 compliant.
-	 */
-	if (sc->sc_init == tpm_tis12_init &&
-	    ia->ia_irq[0].ir_irq != ISA_UNKNOWN_IRQ &&
-	    (sc->sc_ih = isa_intr_establish_xname(ia->ia_ic,
-	     ia->ia_irq[0].ir_irq, IST_EDGE, IPL_TTY, tpm_intr, sc,
-	     device_xname(sc->sc_dev))) == NULL) {
-		bus_space_unmap(sc->sc_bt, sc->sc_bh, TPM_SPACE_SIZE);
-		aprint_error_dev(sc->sc_dev, "cannot establish interrupt\n");
-		return;
-	}
-
 	if (!pmf_device_register(sc->sc_dev, tpm12_suspend, tpm12_resume))
-		aprint_error_dev(sc->sc_dev, "cannot set power mgmt handler\n");
+		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
 }
