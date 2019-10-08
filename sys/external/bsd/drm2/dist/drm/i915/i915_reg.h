@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.12 2019/10/01 18:41:58 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.13 2019/10/08 17:41:04 msaitoh Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -1645,7 +1645,7 @@ enum skl_disp_power_wells {
 
 #define ERROR_GEN6	0x040a0
 #define GEN7_ERR_INT	0x44040
-#define   ERR_INT_POISON		(1<<31)
+#define   ERR_INT_POISON		(1U<<31)
 #define   ERR_INT_MMIO_UNCLAIMED	(1<<13)
 #define   ERR_INT_PIPE_CRC_DONE_C	(1<<8)
 #define   ERR_INT_FIFO_UNDERRUN_C	(1<<6)
@@ -3481,7 +3481,7 @@ enum skl_disp_power_wells {
 #define   VIDEO_DIP_VSC_DATA_SIZE	36
 #define VIDEO_DIP_CTL		0x61170
 /* Pre HSW: */
-#define   VIDEO_DIP_ENABLE		(1 << 31)
+#define   VIDEO_DIP_ENABLE		(1U << 31)
 #define   VIDEO_DIP_PORT(port)		((port) << 29)
 #define   VIDEO_DIP_PORT_MASK		(3 << 29)
 #define   VIDEO_DIP_ENABLE_GCP		(1 << 25)
@@ -6091,7 +6091,7 @@ enum skl_disp_power_wells {
 #define SDEIER  0xc400c
 
 #define SERR_INT			0xc4040
-#define  SERR_INT_POISON		(1<<31)
+#define  SERR_INT_POISON		(1U<<31)
 #define  SERR_INT_TRANS_C_FIFO_UNDERRUN	(1<<6)
 #define  SERR_INT_TRANS_B_FIFO_UNDERRUN	(1<<3)
 #define  SERR_INT_TRANS_A_FIFO_UNDERRUN	(1<<0)
