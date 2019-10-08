@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.5 2019/10/05 23:27:20 mrg Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.6 2019/10/08 07:30:58 mlelstv Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -29,7 +29,7 @@
 /* NB: "11" is the maximum number of padding bytes needed for Tx */
 #define RUN_MAX_TXSZ			\
 	(sizeof(struct rt2870_txd) +	\
-	 sizeof(struct rt2860_rxwi) +	\
+	 sizeof(struct rt2860_txwi) +	\
 	 MCLBYTES + 11)
 
 #define RUN_TX_TIMEOUT	5000	/* ms */
@@ -37,7 +37,7 @@
 #define RUN_RX_RING_COUNT	1
 #define RUN_TX_RING_COUNT	8
 
-#define RT2870_WCID_MAX		253
+#define RT2870_WCID_MAX		64
 #define RUN_AID2WCID(aid)	((aid) & 0xff)
 
 struct run_rx_radiotap_header {
