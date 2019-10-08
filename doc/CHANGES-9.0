@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.71 2019/10/06 11:20:50 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.72 2019/10/08 17:06:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4339,4 +4339,20 @@ sys/arch/evbarm/conf/GENERIC			1.53
 
 	Disable tegradrm for now as it causes random crashes.
 	[skrll, ticket #290]
+
+sys/dev/fdt/cpufreq_dt.c			1.9,1.10
+
+	Change sysctl to be named after the first CPU in the DVFS domain.
+	[jmcneill, ticket #291]
+
+sys/net/if_ethersubr.c				1.277,1.278
+
+	- Increment if_iqdrops when dropping an oversized frame.
+	- Print oversized frame message only when DIAGNOSTIC is set.
+	[msaitoh, ticket #292]
+
+sys/dev/pci/ixgbe/ixv.c				1.139
+
+	ixv(4): set MTU correctly if mtu > 1500.
+	[msaitoh, ticket #293]
 
