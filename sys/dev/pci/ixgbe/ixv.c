@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.25 2019/09/26 18:19:26 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.26 2019/10/08 18:16:50 martin Exp $*/
 
 /******************************************************************************
 
@@ -736,6 +736,9 @@ ixv_init_locked(struct adapter *adapter)
 	for (i = 0, que = adapter->queues; i < adapter->num_queues; i++, que++)
 		que->disabled_count = 0;
 
+	adapter->max_frame_size =
+	    ifp->if_mtu + ETHER_HDR_LEN + ETHER_CRC_LEN;
+
 	/* reprogram the RAR[0] in case user changed it. */
 	hw->mac.ops.set_rar(hw, 0, hw->mac.addr, 0, IXGBE_RAH_AV);
 
@@ -768,10 +771,10 @@ ixv_init_locked(struct adapter *adapter)
 	 * Determine the correct mbuf pool
 	 * for doing jumbo/headersplit
 	 */
-	if (ifp->if_mtu > ETHERMTU)
-		adapter->rx_mbuf_sz = MJUMPAGESIZE;
-	else
+	if (adapter->max_frame_size <= MCLBYTES)
 		adapter->rx_mbuf_sz = MCLBYTES;
+	else
+		adapter->rx_mbuf_sz = MJUMPAGESIZE;
 
 	/* Prepare receive descriptors and buffers */
 	if (ixgbe_setup_receive_structures(adapter)) {
