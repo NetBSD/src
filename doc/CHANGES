@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2589 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2590 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -51,3 +51,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	tcpdump(8): Import 4.9.3. [christos 20191001]
 	rescue(8): Moved into a separate, rescue-only set. [maya 20191001]
 	byacc: Update to 20190617. [christos 20191006]
+	tzdata updates from 2019a to 2019c (incl 2019b) [kre 20191008]
