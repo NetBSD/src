@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.276 2019/07/17 03:26:24 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.276.2.1 2019/10/08 17:02:24 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.276 2019/07/17 03:26:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.276.2.1 2019/10/08 17:02:24 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -164,10 +164,12 @@ extern u_char	aarp_org_code[3];
 #include <netmpls/mpls_var.h>
 #endif
 
+#ifdef DIAGNOSTIC
 static struct timeval bigpktppslim_last;
 static int bigpktppslim = 2;	/* XXX */
 static int bigpktpps_count;
 static kmutex_t bigpktpps_lock __cacheline_aligned;
+#endif
 
 const uint8_t etherbroadcastaddr[ETHER_ADDR_LEN] =
     { 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
@@ -612,6 +614,7 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 	 */
 	if (etype != ETHERTYPE_MPLS && m->m_pkthdr.len >
 	    ETHER_MAX_FRAME(ifp, etype, m->m_flags & M_HASFCS)) {
+#ifdef DIAGNOSTIC
 		mutex_enter(&bigpktpps_lock);
 		if (ppsratecheck(&bigpktppslim_last, &bigpktpps_count,
 		    bigpktppslim)) {
@@ -619,6 +622,8 @@ ether_input(struct ifnet *ifp, struct mbuf *m)
 			    ifp->if_xname, m->m_pkthdr.len);
 		}
 		mutex_exit(&bigpktpps_lock);
+#endif
+		ifp->if_iqdrops++;
 		m_freem(m);
 		return;
 	}
@@ -1717,6 +1722,8 @@ void
 etherinit(void)
 {
 
+#ifdef DIAGNOSTIC
 	mutex_init(&bigpktpps_lock, MUTEX_DEFAULT, IPL_NET);
+#endif
 	ether_sysctl_setup(NULL);
 }
