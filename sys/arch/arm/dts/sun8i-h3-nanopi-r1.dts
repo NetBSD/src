@@ -1,4 +1,4 @@
-/* $NetBSD: sun8i-h3-nanopi-r1.dts,v 1.1 2019/10/08 22:55:58 bad Exp $ */
+/* $NetBSD: sun8i-h3-nanopi-r1.dts,v 1.2 2019/10/08 23:00:36 bad Exp $ */
 
 /*
  * Copyright (C) 2019 Igor Pecovnik <igor@armbian.com>
@@ -63,6 +63,7 @@
 
 	reg_gmac_3v3: gmac-3v3 {
 		compatible = "regulator-fixed";
+		pinctrl-names = "default";
 		regulator-name = "gmac-3v3";
 		regulator-min-microvolt = <3300000>;
 		regulator-max-microvolt = <3300000>;
@@ -129,6 +130,15 @@
 	};
 };
 
+#if 0 /* XXX u-boot dts for NanoPi R1 has this but not needed? */
+&pio {
+	gmac_power_pin_nanopi: gmac_power_pin@0 {
+		pins = "PD6";
+		function = "gpio_out";
+	};
+};
+#endif
+
 &emac {
 	pinctrl-names = "default";
 	pinctrl-0 = <&emac_rgmii_pins>;
@@ -170,6 +180,11 @@
 	vqmmc-supply = <&reg_vcc3v3>;
 	bus-width = <8>;
 	non-removable;
+	cap-mmc-hw-reset;
+	status = "okay";
+};
+
+&ehci0 {
 	status = "okay";
 };
 
