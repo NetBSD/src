@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.151 2016/12/17 03:46:52 riastradh Exp $	*/
+/*	$NetBSD: conf.h,v 1.152 2019/10/08 07:16:25 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -219,7 +219,6 @@ void	       ttyldisc_release(struct linesw *);
 #define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
 #define	ttyerrclose ((int (*)(struct tty *, int))enodev)
 #define	ttyerrio ((int (*)(struct tty *, struct uio *, int))enodev)
-#define	ttyerrinput ((int (*)(int, struct tty *))enodev)
 #define	ttyerrstart ((int (*)(struct tty *))enodev)
 
 int	ttyerrpoll (struct tty *, int, struct lwp *);
