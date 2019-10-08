@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.133 2019/10/08 03:52:44 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.134 2019/10/08 03:53:57 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.133 2019/10/08 03:52:44 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.134 2019/10/08 03:53:57 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1955,7 +1955,6 @@ patmatch(const char *pattern, const char *string, int squoted)
 			}
 			/* end shortcut */
 
-			invert = 0;
 			savep = p, saveq = q;
 			invert = 0;
 			if (*p == '!' || *p == '^') {
