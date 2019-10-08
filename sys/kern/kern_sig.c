@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.366 2019/10/03 22:48:44 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.367 2019/10/08 18:02:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.366 2019/10/03 22:48:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.367 2019/10/08 18:02:46 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -913,6 +913,7 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
 
+repeat:
 	/*
 	 * If we are exiting, demise now.
 	 *
@@ -924,6 +925,16 @@ trapsignal(struct lwp *l, ksiginfo_t *ksi)
 		lwp_exit(l);
 		panic("trapsignal");
 		/* NOTREACHED */
+	}
+
+	/*
+	 * The process is already stopping.
+	 */
+	if ((p->p_sflag & PS_STOPPING) != 0) {
+		sigswitch(0, p->p_xsig, false);
+		mutex_enter(proc_lock);
+		mutex_enter(p->p_lock);
+		goto repeat; /* XXX */
 	}
 
 	mask = &l->l_sigmask;
@@ -1589,17 +1600,29 @@ eventswitch(int code, int pe_report_event, int entity)
 	KASSERT((code == TRAP_CHLD) || (code == TRAP_LWP) ||
 	        (code == TRAP_EXEC));
 
+repeat:
 	/*
 	 * If we are exiting, demise now.
 	 *
 	 * This avoids notifying tracer and deadlocking.
-	*/
+	 */
 	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		lwp_exit(l);
 		panic("eventswitch");
 		/* NOTREACHED */
+	}
+
+	/*
+	 * If we are no longer traced, abandon this event signal.
+	 *
+	 * This avoids killing a process after detaching the debugger.
+	 */
+	if (__predict_false(!ISSET(p->p_slflag, PSL_TRACED))) {
+		mutex_exit(p->p_lock);
+		mutex_exit(proc_lock);
+		return;
 	}
 
 	/*
@@ -1610,6 +1633,16 @@ eventswitch(int code, int pe_report_event, int entity)
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
 		return;
+	}
+
+	/*
+	 * The process is already stopping.
+	 */
+	if ((p->p_sflag & PS_STOPPING) != 0) {
+		sigswitch(0, p->p_xsig, false);
+		mutex_enter(proc_lock);
+		mutex_enter(p->p_lock);
+		goto repeat; /* XXX */
 	}
 
 	KSI_INIT_TRAP(&ksi);
@@ -2448,6 +2481,7 @@ proc_stoptrace(int trapno, int sysnum, const register_t args[],
 
 	mutex_enter(p->p_lock);
 
+repeat:
 	/*
 	 * If we are exiting, demise now.
 	 *
@@ -2467,6 +2501,25 @@ proc_stoptrace(int trapno, int sysnum, const register_t args[],
 	    sigismember(&p->p_sigpend.sp_set, SIGKILL)) {
 		mutex_exit(p->p_lock);
 		return;
+	}
+
+	/*
+	 * If we are no longer traced, abandon this event signal.
+	 *
+	 * This avoids killing a process after detaching the debugger.
+	 */
+	if (__predict_false(!ISSET(p->p_slflag, PSL_TRACED))) {
+		mutex_exit(p->p_lock);
+		return;
+	}
+
+	/*
+	 * The process is already stopping.
+	 */
+	if ((p->p_sflag & PS_STOPPING) != 0) {
+		sigswitch(0, p->p_xsig, true);
+		mutex_enter(p->p_lock);
+		goto repeat; /* XXX */
 	}
 
 	/* Needed for ktrace */
