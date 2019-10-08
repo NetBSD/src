@@ -2622,7 +2622,7 @@ read_ssh_file(pgpv_t *pgp, pgpv_primarykey_t *primary, const char *fmt, ...)
 	int64_t			 off;
 	va_list			 args;
 	char			 hostname[256];
-	char			 owner[256];
+	char			 owner[2 * 256];
 	char			*space;
 	char		 	*buf;
 	char		 	*bin;
