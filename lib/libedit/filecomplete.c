@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.58 2019/09/08 05:50:58 abhinav Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.59 2019/10/08 19:17:57 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.58 2019/09/08 05:50:58 abhinav Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.59 2019/10/08 19:17:57 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -86,8 +86,7 @@ fn_tilde_expand(const char *txt)
 		temp = el_calloc(len, sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
-		(void)strncpy(temp, txt + 1, len - 2);
-		temp[len - 2] = '\0';
+		(void)strlcpy(temp, txt + 1, len - 2);
 	}
 	if (temp[0] == 0) {
 #ifdef HAVE_GETPW_R_POSIX
@@ -354,8 +353,7 @@ fn_filename_completion_function(const char *text, int state)
 				return NULL;
 			}
 			dirname = nptr;
-			(void)strncpy(dirname, text, len);
-			dirname[len] = '\0';
+			(void)strlcpy(dirname, text, len);
 		} else {
 			el_free(filename);
 			if (*text == 0)
@@ -464,6 +462,7 @@ out:
  */
 char ** completion_matches(const char *, char *(*)(const char *, int));
 char **
+/*###467 [lint] completion_matches arg 1 declared inconsistently (pointer to const char != pointer to char) filecomplete.c(467) :: readline.c?(53)%%%*/
 completion_matches(const char *text, char *(*genfunc)(const char *, int))
 {
 	char **match_list = NULL, *retstr, *prevstr;
@@ -509,8 +508,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 		el_free(match_list);
 		return NULL;
 	}
-	(void)strncpy(retstr, match_list[1], max_equal);
-	retstr[max_equal] = '\0';
+	(void)strlcpy(retstr, match_list[1], max_equal);
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
