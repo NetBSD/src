@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.h,v 1.153 2019/10/08 07:33:14 mrg Exp $	*/
+/*	$NetBSD: conf.h,v 1.154 2019/10/08 12:49:56 uwe Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -223,10 +223,10 @@ struct linesw *ttyldisc_default(void);
 void	       ttyldisc_release(struct linesw *);
 
 /* For those defining their own line disciplines: */
-#define	ttynodisc ((int (*)(dev_t, struct tty *))enodev)
-#define	ttyerrclose ((int (*)(struct tty *, int))enodev)
-#define	ttyerrio ((int (*)(struct tty *, struct uio *, int))enodev)
-#define	ttyerrstart ((int (*)(struct tty *))enodev)
+#define	ttynodisc ((int (*)(dev_t, struct tty *))devenodev)
+#define	ttyerrclose ((int (*)(struct tty *, int))ttyenodev)
+#define	ttyerrio ((int (*)(struct tty *, struct uio *, int))ttyenodev)
+#define	ttyerrstart ((int (*)(struct tty *))ttyenodev)
 
 int	ttyerrpoll (struct tty *, int, struct lwp *);
 int	ttynullioctl(struct tty *, u_long, void *, int, struct lwp *);
