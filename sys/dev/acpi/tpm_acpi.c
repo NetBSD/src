@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.8 2019/06/22 12:57:40 maxv Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.9 2019/10/08 18:43:02 maxv Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,10 +30,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.8 2019/06/22 12:57:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.9 2019/10/08 18:43:02 maxv Exp $");
 
 #include <sys/param.h>
-#include <sys/device.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/bus.h>
@@ -44,8 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.8 2019/06/22 12:57:40 maxv Exp $");
 
 #include <dev/acpi/acpireg.h>
 #include <dev/acpi/acpivar.h>
-
-#include <dev/isa/isavar.h>
 
 #include "ioconf.h"
 
@@ -100,41 +97,41 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
-	struct acpi_irq *irq;
 	bus_addr_t base;
 	bus_addr_t size;
-	int rv, inum;
-
-	sc->sc_dev = self;
-	sc->sc_ver = TPM_2_0;
+	int rv;
 
 	rv = acpi_resource_parse(self, aa->aa_node->ad_handle, "_CRS", &res,
 	    &acpi_resource_parse_ops_default);
 	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "cannot parse resources %d\n", rv);
+		aprint_error_dev(self, "cannot parse resources %d\n", rv);
 		return;
 	}
 
 	mem = acpi_res_mem(&res, 0);
 	if (mem == NULL) {
-		aprint_error_dev(sc->sc_dev, "cannot find mem\n");
+		aprint_error_dev(self, "cannot find mem\n");
 		goto out;
 	}
 	if (mem->ar_length != TPM_SPACE_SIZE) {
-		aprint_error_dev(sc->sc_dev,
-		    "wrong size mem %"PRIu64" != %u\n",
+		aprint_error_dev(self, "wrong size mem %"PRIu64" != %u\n",
 		    (uint64_t)mem->ar_length, TPM_SPACE_SIZE);
 		goto out;
 	}
 
-	base = mem->ar_base;
-	size = mem->ar_length;
-	sc->sc_bt = aa->aa_memt;
+	sc->sc_dev = self;
+	sc->sc_ver = TPM_2_0;
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
+	sc->sc_busy = false;
 	sc->sc_init = tpm_tis12_init;
 	sc->sc_start = tpm_tis12_start;
 	sc->sc_read = tpm_tis12_read;
 	sc->sc_write = tpm_tis12_write;
 	sc->sc_end = tpm_tis12_end;
+	sc->sc_bt = aa->aa_memt;
+
+	base = mem->ar_base;
+	size = mem->ar_length;
 
 	if (bus_space_map(sc->sc_bt, base, size, 0, &sc->sc_bh)) {
 		aprint_error_dev(sc->sc_dev, "cannot map registers\n");
@@ -146,21 +143,8 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 		goto out1;
 	}
 
-	irq = acpi_res_irq(&res, 0);
-	if (irq == NULL)
-		inum = -1;
-	else
-		inum = irq->ar_irq;
-
-	if ((rv = (*sc->sc_init)(sc, inum)) != 0) {
+	if ((*sc->sc_init)(sc) != 0) {
 		aprint_error_dev(sc->sc_dev, "cannot init device %d\n", rv);
-		goto out1;
-	}
-
-	if (inum != -1 &&
-	    (sc->sc_ih = isa_intr_establish(aa->aa_ic, irq->ar_irq,
-	    IST_EDGE, IPL_TTY, tpm_intr, sc)) == NULL) {
-		aprint_error_dev(sc->sc_dev, "cannot establish interrupt\n");
 		goto out1;
 	}
 
