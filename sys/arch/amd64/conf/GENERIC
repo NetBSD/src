@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.537 2019/10/07 11:53:40 msaitoh Exp $
+# $NetBSD: GENERIC,v 1.538 2019/10/08 18:50:44 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.537 $"
+#ident		"GENERIC-$Revision: 1.538 $"
 
 maxusers	64		# estimated number of users
 
@@ -437,10 +437,6 @@ ubsec*	at pci? dev ? function ?	# Broadcom 5501/5601/580x/582x
 
 # Trusted Platform Module
 tpm*	at isa? iomem 0xfed40000 irq 7
-#tpm*	at isa? port 0x02e
-#tpm*	at isa? port 0x04e
-#tpm*	at isa? port 0x07e
-#tpm*	at isa? port 0x0ee
 
 # Serial Devices
 
