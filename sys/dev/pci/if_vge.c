@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.74 2019/09/13 07:55:07 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.75 2019/10/08 14:26:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.74 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.75 2019/10/08 14:26:27 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -328,6 +328,7 @@ static void vge_miibus_statchg(struct ifnet *);
 
 static void vge_cam_clear(struct vge_softc *);
 static int vge_cam_set(struct vge_softc *, uint8_t *);
+static void	vge_clrwol(struct vge_softc *);
 static void vge_setmulti(struct vge_softc *);
 static void vge_reset(struct vge_softc *);
 
@@ -952,6 +953,9 @@ vge_attach(device_t parent, device_t self, void *aux)
 
 	aprint_normal_dev(self, "Ethernet address %s\n",
 	    ether_sprintf(eaddr));
+
+	/* Clear WOL and take hardware from powerdown. */
+	vge_clrwol(sc);
 
 	/*
 	 * Use the 32bit tag. Hardware supports 48bit physical addresses,
@@ -2155,4 +2159,31 @@ vge_shutdown(device_t self, int howto)
 	vge_stop(&sc->sc_ethercom.ec_if, 1);
 
 	return true;
+}
+
+static void
+vge_clrwol(struct vge_softc *sc)
+{
+	uint8_t val;
+
+	val = CSR_READ_1(sc, VGE_PWRSTAT);
+	val &= ~VGE_STICKHW_SWPTAG;
+	CSR_WRITE_1(sc, VGE_PWRSTAT, val);
+	/* Disable WOL and clear power state indicator. */
+	val = CSR_READ_1(sc, VGE_PWRSTAT);
+	val &= ~(VGE_STICKHW_DS0 | VGE_STICKHW_DS1);
+	CSR_WRITE_1(sc, VGE_PWRSTAT, val);
+
+	CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_GMII);
+	CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
+
+	/* Clear WOL on pattern match. */
+	CSR_WRITE_1(sc, VGE_WOLCR0C, VGE_WOLCR0_PATTERN_ALL);
+	/* Disable WOL on magic/unicast packet. */
+	CSR_WRITE_1(sc, VGE_WOLCR1C, 0x0F);
+	CSR_WRITE_1(sc, VGE_WOLCFGC, VGE_WOLCFG_SAB | VGE_WOLCFG_SAM |
+	    VGE_WOLCFG_PMEOVR);
+	/* Clear WOL status on pattern match. */
+	CSR_WRITE_1(sc, VGE_WOLSR0C, 0xFF);
+	CSR_WRITE_1(sc, VGE_WOLSR1C, 0xFF);
 }
