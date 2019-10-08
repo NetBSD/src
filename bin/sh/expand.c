@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.132 2019/04/10 08:13:11 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.133 2019/10/08 03:52:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.132 2019/04/10 08:13:11 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.133 2019/10/08 03:52:44 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1792,24 +1792,44 @@ match_charclass(const char *p, wchar_t chr, const char **end)
 	char name[20];
 	char *nameend;
 	wctype_t cclass;
+	char *q;
 
 	*end = NULL;
 	p++;
+	q = &name[0];
 	nameend = strstr(p, ":]");
 	if (nameend == NULL || nameend == p)	/* not a valid class */
 		return 0;
 
-	if (!is_alpha(*p) || strspn(p,		/* '_' is a local extension */
-	    "0123456789"  "_"
-	    "abcdefghijklmnopqrstuvwxyz"
-	    "ABCDEFGHIJKLMNOPQRSTUVWXYZ") != (size_t)(nameend - p))
+	if (*p == CTLESC) {
+		if (*++p == CTLESC)
+			return 0;
+		if (p == nameend)
+			return 0;
+	}
+	if (!is_alpha(*p))
 		return 0;
+	while (p < nameend) {
+		if (*p == CTLESC) {
+			p++;
+			if (p == nameend)
+				return 0;
+		}
+		if (!is_in_name(*p))	/* '_' is a local extension */
+			return 0;
+		if (q < &name[sizeof name])
+			*q++ = *p++;
+		else
+			p++;
+	}
 
 	*end = nameend + 2;		/* committed to it being a char class */
-	if ((size_t)(nameend - p) >= sizeof(name))	/* but too long */
-		return 0;				/* so no match */
-	memcpy(name, p, nameend - p);
-	name[nameend - p] = '\0';
+
+	if (q < &name[sizeof name])	/* a usable name found */
+		*q++ = '\0';
+	else				/* too long, valid, but no match */
+		return 0;
+
 	cclass = wctype(name);
 	/* An unknown class matches nothing but is valid nevertheless. */
 	if (cclass == 0)
