@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.8 2019/05/21 22:15:26 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.8.2.1 2019/10/08 16:56:37 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.8 2019/05/21 22:15:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.8.2.1 2019/10/08 16:56:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.8 2019/05/21 22:15:26 jmcneill Exp 
 #include <sys/sysctl.h>
 #include <sys/queue.h>
 #include <sys/once.h>
+#include <sys/cpu.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -250,13 +251,35 @@ cpufreq_dt_sysctl_helper(SYSCTLFN_ARGS)
 	return error;
 }
 
+static struct cpu_info *
+cpufreq_dt_cpu_lookup(cpuid_t mpidr)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci->ci_cpuid == mpidr)
+			return ci;
+	}
+
+	return NULL;
+}
+
 static void
 cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 {
-	const struct sysctlnode *node, *cpunode, *freqnode;
+	const struct sysctlnode *node, *cpunode;
 	struct sysctllog *cpufreq_log = NULL;
-	const char *cpunodename;
+	struct cpu_info *ci;
+	bus_addr_t mpidr;
 	int error, i;
+
+	if (fdtbus_get_reg(sc->sc_phandle, 0, &mpidr, 0) != 0)
+		return;
+
+	ci = cpufreq_dt_cpu_lookup(mpidr);
+	if (ci == NULL)
+		return;
 
 	sc->sc_freq_available = kmem_zalloc(strlen("XXXX ") * sc->sc_nopp, KM_SLEEP);
 	for (i = 0; i < sc->sc_nopp; i++) {
@@ -265,28 +288,23 @@ cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 		strcat(sc->sc_freq_available, buf);
 	}
 
-	if (device_unit(sc->sc_dev) == 0)
-		cpunodename = "cpu";
-	else
-		cpunodename = device_xname(sc->sc_dev);
-
 	error = sysctl_createv(&cpufreq_log, 0, NULL, &node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "machdep", NULL,
 	    NULL, 0, NULL, 0, CTL_MACHDEP, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
-	error = sysctl_createv(&cpufreq_log, 0, &node, &cpunode,
-	    0, CTLTYPE_NODE, cpunodename, NULL,
+	error = sysctl_createv(&cpufreq_log, 0, &node, &node,
+	    0, CTLTYPE_NODE, "cpufreq", NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
-	error = sysctl_createv(&cpufreq_log, 0, &cpunode, &freqnode,
-	    0, CTLTYPE_NODE, "frequency", NULL,
+	error = sysctl_createv(&cpufreq_log, 0, &node, &cpunode,
+	    0, CTLTYPE_NODE, cpu_name(ci), NULL,
 	    NULL, 0, NULL, 0, CTL_CREATE, CTL_EOL);
 	if (error)
 		goto sysctl_failed;
 
-	error = sysctl_createv(&cpufreq_log, 0, &freqnode, &node,
+	error = sysctl_createv(&cpufreq_log, 0, &cpunode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "target", NULL,
 	    cpufreq_dt_sysctl_helper, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
@@ -294,7 +312,7 @@ cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 		goto sysctl_failed;
 	sc->sc_node_target = node->sysctl_num;
 
-	error = sysctl_createv(&cpufreq_log, 0, &freqnode, &node,
+	error = sysctl_createv(&cpufreq_log, 0, &cpunode, &node,
 	    CTLFLAG_READWRITE, CTLTYPE_INT, "current", NULL,
 	    cpufreq_dt_sysctl_helper, 0, (void *)sc, 0,
 	    CTL_CREATE, CTL_EOL);
@@ -302,7 +320,7 @@ cpufreq_dt_init_sysctl(struct cpufreq_dt_softc *sc)
 		goto sysctl_failed;
 	sc->sc_node_current = node->sysctl_num;
 
-	error = sysctl_createv(&cpufreq_log, 0, &freqnode, &node,
+	error = sysctl_createv(&cpufreq_log, 0, &cpunode, &node,
 	    0, CTLTYPE_STRING, "available", NULL,
 	    NULL, 0, sc->sc_freq_available, 0,
 	    CTL_CREATE, CTL_EOL);
