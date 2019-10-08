@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_stub.c,v 1.47 2019/01/27 02:55:26 christos Exp $	*/
+/*	$NetBSD: kern_stub.c,v 1.48 2019/10/08 07:33:15 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.47 2019/01/27 02:55:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_stub.c,v 1.48 2019/10/08 07:33:15 mrg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ktrace.h"
@@ -183,6 +183,16 @@ __strong_alias(sys_sa_unblockyield,sys_nosys);
  */
 __strong_alias(dosa_register,sys_nosys);
 __strong_alias(sa_stacks1,sys_nosys);
+
+/*
+ * Stubs for drivers.  See sys/conf.h.
+ */
+__strong_alias(devenodev,enodev);
+__strong_alias(deveopnotsupp,eopnotsupp);
+__strong_alias(devnullop,nullop);
+__strong_alias(ttyenodev,enodev);
+__strong_alias(ttyvenodev,voidop);
+__strong_alias(ttyvnullop,nullop);
 
 /*
  * Stubs for architectures that do not support kernel preemption.
