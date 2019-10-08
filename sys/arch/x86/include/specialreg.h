@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.154 2019/10/03 15:21:44 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.155 2019/10/08 03:16:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -792,7 +792,7 @@
 #define CPUID_AMD_ENCMEM_VTE	__BIT(16)  /* Virtual Transparent Encryption */
 
 #define CPUID_AMD_ENCMEM_FLAGS	 "\20"					      \
-	"\1" "NP"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
+	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
 	"\21" "VTE"
 
 /*
