@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.48 2019/10/04 11:35:44 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.49 2019/10/08 18:18:30 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1253,4 +1253,21 @@ sys/arch/i386/stand/pxeboot/start_pxe.S		1.7
 
 	Incrase pxeboot code size limit from 64k to 128k.
 	[manu, ticket #1400]
+
+sys/net/if_ethersubr.c				1.255
+
+	The ALTQ classifier for Ethernet frames did not work in some
+	cases.
+	[ozaki-r, ticket #1401]
+
+
+sys/net/if_ethersubr.c				1.277
+
+	Increment if_iqdrops when dropping an oversized frame.
+	[msaitoh, ticket #1402]
+
+sys/dev/pci/ixgbe/ixv.c				1.139
+
+	ixv(4): set MTU correctly if mtu > 1500.
+	[msaitoh, ticket #1403]
 
