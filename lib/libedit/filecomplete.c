@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.59 2019/10/08 19:17:57 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.60 2019/10/08 19:21:40 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.59 2019/10/08 19:17:57 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.60 2019/10/08 19:21:40 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -462,7 +462,6 @@ out:
  */
 char ** completion_matches(const char *, char *(*)(const char *, int));
 char **
-/*###467 [lint] completion_matches arg 1 declared inconsistently (pointer to const char != pointer to char) filecomplete.c(467) :: readline.c?(53)%%%*/
 completion_matches(const char *text, char *(*genfunc)(const char *, int))
 {
 	char **match_list = NULL, *retstr, *prevstr;
