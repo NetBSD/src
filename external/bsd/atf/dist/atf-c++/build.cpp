@@ -63,7 +63,7 @@ atf::process::argv_array
 cargv_to_argv_and_free(char** l)
 {
     try {
-        atf::process::argv_array argv((const char* const*)l);
+        atf::process::argv_array argv(const_cast<const char* const*>(l));
         atf_utils_free_charpp(l);
         return argv;
     } catch (...) {
