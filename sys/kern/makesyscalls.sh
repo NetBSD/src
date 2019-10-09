@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.173 2019/06/18 16:24:17 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.174 2019/10/09 01:43:00 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -70,8 +70,8 @@ rumpcallshdr="/dev/null"
 rumpsysmap="/dev/null"
 rumpsysent="rumpsysent.tmp"
 rumpnoflags="\n\t\t.sy_flags = SYCALL_NOSYS,"
-rumpnosys="(sy_call_t *)rumpns_enosys"
-rumpnomodule="(sy_call_t *)rumpns_sys_nomodule"
+rumpnosys="(sy_call_t *)(void *)rumpns_enosys"
+rumpnomodule="(sy_call_t *)(void *)rumpns_sys_nomodule"
 
 case $1 in
 /*)	. $1;;
@@ -84,6 +84,15 @@ errmsg()
 	printf '%s: %s\n' "$0" "$*" >&2
 }
 
+addsuffix()
+{
+	if [ "$1" = "/dev/null" -o -z "$2" ]; then
+		echo $1
+	else
+		echo $1.$2
+	fi
+}
+
 fail=false
 case "${nsysent:-0}" in
 *[!0-9]*)	errmsg "Non numeric value for nsysent:" "${nsysent}";;
@@ -94,13 +103,13 @@ esac
 $fail && exit 1
 
 # tmp files:
-sysautoloadbottom="$sysautoload.bottom"
+sysautoloadbottom=$(addsuffix $sysautoload "bottom")
 sysdcl="sysent.dcl"
 sysprotos="sys.protos"
 syscompat_pref="sysent."
 sysent="sysent.switch"
-sysnamesbottom="$sysnames.bottom"
-sysnamesfriendly="$sysnames.friendly"
+sysnamesbottom=$(addsuffix $sysnames "bottom")
+sysnamesfriendly=$(addsuffix $sysnames "friendly")
 rumptypes="rumphdr.types"
 rumpprotos="rumphdr.protos"
 systracetmp="systrace.$$"
@@ -174,7 +183,7 @@ BEGIN {
 	systracetmp = \"$systracetmp\"
 	systraceret = \"$systraceret\"
 	sysautoload = \"$sysautoload\"
-	sysautoloadbottom = \"${sysautoload}.bottom\"
+	sysautoloadbottom = \"$sysautoloadbottom\"
 	rumpcalls = \"$rumpcalls\"
 	rumpcallshdr = \"$rumpcallshdr\"
 	rumpsysent = \"$rumpsysent\"
@@ -193,8 +202,8 @@ BEGIN {
 	sysdcl = \"$sysdcl\"
 	syscompat_pref = \"$syscompat_pref\"
 	sysent = \"$sysent\"
-	sysnamesbottom = \"${sysnames}.bottom\"
-	sysnamesfriendly = \"${sysnames}.friendly\"
+	sysnamesbottom = \"$sysnamesbottom\"
+	sysnamesfriendly = \"$sysnamesfriendly\"
 	rumpprotos = \"$rumpprotos\"
 	rumptypes = \"$rumptypes\"
 	sys_nosys = \"$sys_nosys\"
