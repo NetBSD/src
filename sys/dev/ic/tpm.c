@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.14 2019/10/08 18:43:02 maxv Exp $	*/
+/*	$NetBSD: tpm.c,v 1.15 2019/10/09 07:30:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.14 2019/10/08 18:43:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.15 2019/10/09 07:30:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,9 @@ __KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.14 2019/10/08 18:43:02 maxv Exp $");
 
 #include "ioconf.h"
 
+CTASSERT(sizeof(struct tpm_header) == 10);
+
 #define TPM_BUFSIZ	1024
-#define TPM_HDRSIZE	10
 
 #define TPM_PARAM_SIZE	0x0001	/* that's a flag */
 
@@ -163,31 +164,69 @@ tpm_status(struct tpm_softc *sc)
 
 /* -------------------------------------------------------------------------- */
 
-/*
- * Save TPM state on suspend. On resume we don't do anything, since the BIOS
- * is supposed to restore the previously saved state.
- */
-
-bool
-tpm12_suspend(device_t dev, const pmf_qual_t *qual)
+static bool
+tpm12_suspend(struct tpm_softc *sc)
 {
-	struct tpm_softc *sc = device_private(dev);
-	static const uint8_t command[] = {
-		0, 0xC1,	/* TPM_TAG_RQU_COMMAND */
-		0, 0, 0, 10,	/* Length in bytes */
-		0, 0, 0, 0x98	/* TPM_ORD_SaveState */
+	static const uint8_t command[10] = {
+		0x00, 0xC1,		/* TPM_TAG_RQU_COMMAND */
+		0x00, 0x00, 0x00, 10,	/* Length in bytes */
+		0x00, 0x00, 0x00, 0x98	/* TPM_ORD_SaveState */
 	};
-	uint8_t scratch[sizeof(command)];
+	struct tpm_header response;
 
-	(*sc->sc_write)(sc, &command, sizeof(command));
-	(*sc->sc_read)(sc, &scratch, sizeof(scratch), NULL, 0);
+	if ((*sc->sc_write)(sc, &command, sizeof(command)) != 0)
+		return false;
+	if ((*sc->sc_read)(sc, &response, sizeof(response), NULL, 0) != 0)
+		return false;
+	if (TPM_BE32(response.code) != 0)
+		return false;
+
+	return true;
+}
+
+static bool
+tpm20_suspend(struct tpm_softc *sc)
+{
+	static const uint8_t command[12] = {
+		0x80, 0x01,		/* TPM_ST_NO_SESSIONS */
+		0x00, 0x00, 0x00, 12,	/* Length in bytes */
+		0x00, 0x00, 0x01, 0x45,	/* TPM_CC_Shutdown */
+		0x00, 0x01		/* TPM_SU_STATE */
+	};
+	struct tpm_header response;
+
+	if ((*sc->sc_write)(sc, &command, sizeof(command)) != 0)
+		return false;
+	if ((*sc->sc_read)(sc, &response, sizeof(response), NULL, 0) != 0)
+		return false;
+	if (TPM_BE32(response.code) != 0)
+		return false;
 
 	return true;
 }
 
 bool
-tpm12_resume(device_t dev, const pmf_qual_t *qual)
+tpm_suspend(device_t dev, const pmf_qual_t *qual)
 {
+	struct tpm_softc *sc = device_private(dev);
+
+	switch (sc->sc_ver) {
+	case TPM_1_2:
+		return tpm12_suspend(sc);
+	case TPM_2_0:
+		return tpm20_suspend(sc);
+	default:
+		panic("%s: impossible", __func__);
+	}
+}
+
+bool
+tpm_resume(device_t dev, const pmf_qual_t *qual)
+{
+	/*
+	 * Don't do anything, the BIOS is supposed to restore the previously
+	 * saved state.
+	 */
 	return true;
 }
 
@@ -508,6 +547,7 @@ static int
 tpmread(dev_t dev, struct uio *uio, int flags)
 {
 	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	struct tpm_header hdr;
 	uint8_t buf[TPM_BUFSIZ];
 	size_t cnt, len, n;
 	int rv;
@@ -519,11 +559,11 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 		goto out;
 
 	/* Get the header. */
-	if ((rv = (*sc->sc_read)(sc, buf, TPM_HDRSIZE, &cnt, 0))) {
+	if ((rv = (*sc->sc_read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
 		(*sc->sc_end)(sc, UIO_READ, rv);
 		goto out;
 	}
-	len = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5];
+	len = TPM_BE32(hdr.length);
 	if (len > uio->uio_resid || len < cnt) {
 		rv = EIO;
 		(*sc->sc_end)(sc, UIO_READ, rv);
@@ -531,7 +571,7 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 	}
 
 	/* Copy out the header. */
-	if ((rv = uiomove(buf, cnt, uio))) {
+	if ((rv = uiomove(&hdr, cnt, uio))) {
 		(*sc->sc_end)(sc, UIO_READ, rv);
 		goto out;
 	}
