@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1657 2019/10/09 22:13:50 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1658 2019/10/09 22:50:14 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1448,8 +1448,8 @@ Imported to src/common/dist/zlib and shared by the kernel and userland.
 Remember to run cleantags
 
 Package:	services, protocols
-Version:	2018-12-19 (services), 2017-10-13 (protocols)
-Current Vers:	2018-12-19 (services), 2017-10-13 (protocols)
+Version:	2019-10-09 (services), 2017-10-13 (protocols)
+Current Vers:	2019-10-09 (services), 2017-10-13 (protocols)
 Maintainer:	IANA
 Archive Site:	http://www.iana.org/assignments/service-names-port-numbers/service-names-port-numbers.txt (services)
 Archive Site:	http://www.iana.org/assignments/protocol-numbers/protocol-numbers.txt (protocols)
