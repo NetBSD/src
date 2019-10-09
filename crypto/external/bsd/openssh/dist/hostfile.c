@@ -1,4 +1,4 @@
-/*	$NetBSD: hostfile.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $	*/
+/*	$NetBSD: hostfile.c,v 1.14 2019/10/09 20:59:26 christos Exp $	*/
 /* $OpenBSD: hostfile.c,v 1.73 2018/07/16 03:09:13 djm Exp $ */
 
 /*
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.13 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.14 2019/10/09 20:59:26 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -124,7 +124,7 @@ host_hash(const char *host, const char *name_from_hostfile, u_int src_len)
 	struct ssh_hmac_ctx *ctx;
 	u_char salt[256], result[256];
 	char uu_salt[512], uu_result[512];
-	static char encoded[1024];
+	static char encoded[2048];
 	u_int len;
 
 	len = ssh_digest_bytes(SSH_DIGEST_SHA1);
