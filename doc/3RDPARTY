@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1658 2019/10/09 22:50:14 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1659 2019/10/09 23:04:33 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1249,12 +1249,12 @@ TDB code as found in 2.4.x, x>1 is under the GPL.  Therefore, we're
 using the version found in 2.4.1.
 
 Package:	root.cache
-Version:	2018111402 (November 14, 2018)
-Current Vers:	2018111402 (November 14, 2018)
+Version:	2019093001 (September 30, 2019)
+Current Vers:	2019093001 (September 30, 2019)
 Maintainer:	InterNIC
 Archive Site:	ftp://ftp.internic.net/domain/named.root
 Home Page:	ftp://ftp.internic.net/domain/named.root
-Date:		2019-01-09
+Date:		2019-10-09
 Mailing List:
 Responsible:	thorpej
 License:	Public domain
