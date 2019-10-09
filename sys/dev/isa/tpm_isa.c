@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm_isa.c,v 1.5 2019/10/08 18:43:03 maxv Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.6 2019/10/09 07:30:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.5 2019/10/08 18:43:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.6 2019/10/09 07:30:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -133,6 +133,6 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (!pmf_device_register(sc->sc_dev, tpm12_suspend, tpm12_resume))
-		aprint_error_dev(sc->sc_dev, "couldn't establish power handler\n");
+	if (!pmf_device_register(self, tpm_suspend, tpm_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 }
