@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.15 2019/10/09 07:30:58 maxv Exp $	*/
+/*	$NetBSD: tpm.c,v 1.16 2019/10/09 14:03:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.15 2019/10/09 07:30:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.16 2019/10/09 14:03:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,42 +90,6 @@ tpm_tmotohz(int tmo)
 	tv.tv_usec = 1000 * (tmo % 1000);
 
 	return tvtohz(&tv);
-}
-
-static int
-tpm_request_locality(struct tpm_softc *sc, int l)
-{
-	uint32_t r;
-	int to, rv;
-
-	if (l != 0)
-		return EINVAL;
-
-	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) ==
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY))
-		return 0;
-
-	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS,
-	    TPM_ACCESS_REQUEST_USE);
-
-	to = tpm_tmotohz(TPM_ACCESS_TMO);
-
-	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && to--) {
-		rv = tsleep(sc->sc_init, PCATCH, "tpm_locality", 1);
-		if (rv && rv != EWOULDBLOCK) {
-			return rv;
-		}
-	}
-
-	if ((r & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
-		return EBUSY;
-	}
-
-	return 0;
 }
 
 static int
@@ -174,9 +138,9 @@ tpm12_suspend(struct tpm_softc *sc)
 	};
 	struct tpm_header response;
 
-	if ((*sc->sc_write)(sc, &command, sizeof(command)) != 0)
+	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
 		return false;
-	if ((*sc->sc_read)(sc, &response, sizeof(response), NULL, 0) != 0)
+	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
 		return false;
 	if (TPM_BE32(response.code) != 0)
 		return false;
@@ -195,9 +159,9 @@ tpm20_suspend(struct tpm_softc *sc)
 	};
 	struct tpm_header response;
 
-	if ((*sc->sc_write)(sc, &command, sizeof(command)) != 0)
+	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
 		return false;
-	if ((*sc->sc_read)(sc, &response, sizeof(response), NULL, 0) != 0)
+	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
 		return false;
 	if (TPM_BE32(response.code) != 0)
 		return false;
@@ -286,10 +250,46 @@ restart:
 /* -------------------------------------------------------------------------- */
 
 /*
- * TPM using TIS 1.2 interface.
+ * TPM using the TIS 1.2 interface.
  */
 
-int
+static int
+tpm12_request_locality(struct tpm_softc *sc, int l)
+{
+	uint32_t r;
+	int to, rv;
+
+	if (l != 0)
+		return EINVAL;
+
+	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) ==
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY))
+		return 0;
+
+	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS,
+	    TPM_ACCESS_REQUEST_USE);
+
+	to = tpm_tmotohz(TPM_ACCESS_TMO);
+
+	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && to--) {
+		rv = tsleep(sc->sc_intf->init, PCATCH, "tpm_locality", 1);
+		if (rv && rv != EWOULDBLOCK) {
+			return rv;
+		}
+	}
+
+	if ((r & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
+		return EBUSY;
+	}
+
+	return 0;
+}
+
+static int
 tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 {
 	uint32_t cap;
@@ -298,9 +298,9 @@ tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 
 	cap = bus_space_read_4(bt, bh, TPM_INTF_CAPABILITY);
 	if (cap == 0xffffffff)
-		return 0;
+		return EINVAL;
 	if ((cap & TPM_CAPS_REQUIRED) != TPM_CAPS_REQUIRED)
-		return 0;
+		return ENOTSUP;
 
 	/* Request locality 0. */
 	bus_space_write_1(bt, bh, TPM_ACCESS, TPM_ACCESS_REQUEST_USE);
@@ -314,18 +314,20 @@ tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 	}
 	if ((reg & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
-		return 0;
+		return ETIMEDOUT;
 	}
 
 	if (bus_space_read_4(bt, bh, TPM_ID) == 0xffffffff)
-		return 0;
+		return EINVAL;
 
-	return 1;
+	return 0;
 }
 
-int
+static int
 tpm_tis12_init(struct tpm_softc *sc)
 {
+	int rv;
+
 	sc->sc_caps = bus_space_read_4(sc->sc_bt, sc->sc_bh,
 	    TPM_INTF_CAPABILITY);
 	sc->sc_devid = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_ID);
@@ -334,8 +336,8 @@ tpm_tis12_init(struct tpm_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "device 0x%08x rev 0x%x\n",
 	    sc->sc_devid, sc->sc_rev);
 
-	if (tpm_request_locality(sc, 0))
-		return 1;
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
+		return rv;
 
 	/* Abort whatever it thought it was doing. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
@@ -343,19 +345,19 @@ tpm_tis12_init(struct tpm_softc *sc)
 	return 0;
 }
 
-int
+static int
 tpm_tis12_start(struct tpm_softc *sc, int rw)
 {
 	int rv;
 
 	if (rw == UIO_READ) {
 		rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-		    TPM_READ_TMO, sc->sc_read);
+		    TPM_READ_TMO, sc->sc_intf->read);
 		return rv;
 	}
 
 	/* Request the 0th locality. */
-	if ((rv = tpm_request_locality(sc, 0)) != 0)
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
 	sc->sc_status = tpm_status(sc);
@@ -364,14 +366,14 @@ tpm_tis12_start(struct tpm_softc *sc, int rw)
 
 	/* Abort previous and restart. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
-	rv = tpm_waitfor(sc, TPM_STS_CMD_READY, TPM_READY_TMO, sc->sc_write);
+	rv = tpm_waitfor(sc, TPM_STS_CMD_READY, TPM_READY_TMO, sc->sc_intf->write);
 	if (rv)
 		return rv;
 
 	return 0;
 }
 
-int
+static int
 tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
     int flags)
 {
@@ -382,7 +384,7 @@ tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
 	cnt = 0;
 	while (len > 0) {
 		rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-		    TPM_READ_TMO, sc->sc_read);
+		    TPM_READ_TMO, sc->sc_intf->read);
 		if (rv)
 			return rv;
 
@@ -404,7 +406,7 @@ tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
 	return 0;
 }
 
-int
+static int
 tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
@@ -413,7 +415,7 @@ tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 
 	if (len == 0)
 		return 0;
-	if ((rv = tpm_request_locality(sc, 0)) != 0)
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
 	cnt = 0;
@@ -444,13 +446,13 @@ tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 	return 0;
 }
 
-int
+static int
 tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 {
 	int rv = 0;
 
 	if (rw == UIO_READ) {
-		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_read);
+		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_intf->read);
 		if (rv)
 			return rv;
 
@@ -479,6 +481,16 @@ tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 
 	return rv;
 }
+
+const struct tpm_intf tpm_intf_tis12 = {
+	.version = TIS_1_2,
+	.probe = tpm_tis12_probe,
+	.init = tpm_tis12_init,
+	.start = tpm_tis12_start,
+	.read = tpm_tis12_read,
+	.write = tpm_tis12_write,
+	.end = tpm_tis12_end
+};
 
 /* -------------------------------------------------------------------------- */
 
@@ -555,24 +567,21 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 	if (sc == NULL)
 		return ENXIO;
 
-	if ((rv = (*sc->sc_start)(sc, UIO_READ)))
-		goto out;
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)))
+		return rv;
 
 	/* Get the header. */
-	if ((rv = (*sc->sc_read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
-		(*sc->sc_end)(sc, UIO_READ, rv);
+	if ((rv = (*sc->sc_intf->read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
 		goto out;
 	}
 	len = TPM_BE32(hdr.length);
 	if (len > uio->uio_resid || len < cnt) {
 		rv = EIO;
-		(*sc->sc_end)(sc, UIO_READ, rv);
 		goto out;
 	}
 
 	/* Copy out the header. */
 	if ((rv = uiomove(&hdr, cnt, uio))) {
-		(*sc->sc_end)(sc, UIO_READ, rv);
 		goto out;
 	}
 
@@ -580,19 +589,17 @@ tpmread(dev_t dev, struct uio *uio, int flags)
 	len -= cnt;
 	while (len > 0) {
 		n = MIN(sizeof(buf), len);
-		if ((rv = (*sc->sc_read)(sc, buf, n, NULL, TPM_PARAM_SIZE))) {
-			(*sc->sc_end)(sc, UIO_READ, rv);
+		if ((rv = (*sc->sc_intf->read)(sc, buf, n, NULL, TPM_PARAM_SIZE))) {
 			goto out;
 		}
 		if ((rv = uiomove(buf, n, uio))) {
-			(*sc->sc_end)(sc, UIO_READ, rv);
 			goto out;
 		}
 		len -= n;
 	}
 
-	rv = (*sc->sc_end)(sc, UIO_READ, rv);
 out:
+	rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
 	return rv;
 }
 
@@ -610,14 +617,14 @@ tpmwrite(dev_t dev, struct uio *uio, int flags)
 	if ((rv = uiomove(buf, n, uio))) {
 		goto out;
 	}
-	if ((rv = (*sc->sc_start)(sc, UIO_WRITE))) {
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE))) {
 		goto out;
 	}
-	if ((rv = (*sc->sc_write)(sc, buf, n))) {
+	if ((rv = (*sc->sc_intf->write)(sc, buf, n))) {
 		goto out;
 	}
 
-	rv = (*sc->sc_end)(sc, UIO_WRITE, rv);
+	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
 out:
 	return rv;
 }
@@ -636,6 +643,7 @@ tpmioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		info = addr;
 		info->api_version = TPM_API_VERSION;
 		info->tpm_version = sc->sc_ver;
+		info->itf_version = sc->sc_intf->version;
 		info->device_id = sc->sc_devid;
 		info->device_rev = sc->sc_rev;
 		info->device_caps = sc->sc_caps;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm_isa.c,v 1.6 2019/10/09 07:30:58 maxv Exp $	*/
+/*	$NetBSD: tpm_isa.c,v 1.7 2019/10/09 14:03:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.6 2019/10/09 07:30:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_isa.c,v 1.7 2019/10/09 14:03:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ tpm_isa_match(device_t parent, cfdata_t match, void *aux)
 	    TPM_SPACE_SIZE, 0, &bh))
 		return 0;
 
-	if ((rv = tpm_tis12_probe(bt, bh))) {
+	if ((rv = (*tpm_intf_tis12.probe)(bt, bh)) == 0) {
 		ia->ia_nio = 0;
 		ia->ia_io[0].ir_size = 0;
 		ia->ia_iomem[0].ir_size = TPM_SPACE_SIZE;
@@ -98,7 +98,7 @@ tpm_isa_match(device_t parent, cfdata_t match, void *aux)
 	ia->ia_ndrq = 0;
 
 	bus_space_unmap(bt, bh, TPM_SPACE_SIZE);
-	return rv;
+	return (rv == 0) ? 1 : 0;
 }
 
 static void
@@ -108,27 +108,24 @@ tpm_isa_attach(device_t parent, device_t self, void *aux)
 	struct isa_attach_args *ia = aux;
 	bus_addr_t base;
 	bus_size_t size;
+	int rv;
+
+	base = (unsigned int)ia->ia_iomem[0].ir_addr;
+	size = TPM_SPACE_SIZE;
 
 	sc->sc_dev = self;
 	sc->sc_ver = TPM_1_2;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_busy = false;
-	sc->sc_init = tpm_tis12_init;
-	sc->sc_start = tpm_tis12_start;
-	sc->sc_read = tpm_tis12_read;
-	sc->sc_write = tpm_tis12_write;
-	sc->sc_end = tpm_tis12_end;
+	sc->sc_intf = &tpm_intf_tis12;
 	sc->sc_bt = ia->ia_memt;
-
-	base = (unsigned int)ia->ia_iomem[0].ir_addr;
-	size = TPM_SPACE_SIZE;
-
 	if (bus_space_map(sc->sc_bt, base, size, 0, &sc->sc_bh)) {
 		aprint_error_dev(sc->sc_dev, "cannot map registers\n");
 		return;
 	}
 
-	if ((*sc->sc_init)(sc) != 0) {
+	if ((rv = (*sc->sc_intf->init)(sc)) != 0) {
+		aprint_error_dev(sc->sc_dev, "cannot init device, rv=%d\n", rv);
 		bus_space_unmap(sc->sc_bt, sc->sc_bh, size);
 		return;
 	}
