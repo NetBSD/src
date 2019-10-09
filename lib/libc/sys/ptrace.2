@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.80 2019/07/30 20:18:11 mgorny Exp $
+.\"	$NetBSD: ptrace.2,v 1.81 2019/10/09 13:42:37 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd July 11, 2019
+.Dd October 9, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -249,9 +249,37 @@ ID of the thread to be resumed, and only that thread executes.
 .It Dv PT_KILL
 The traced process terminates, as if
 .Dv PT_CONTINUE
-had been used with
+has been used with
 .Dv SIGKILL
 given as the signal to be delivered.
+However, unlike
+.Dv PT_CONTINUE ,
+.Dv PT_KILL
+can be used on a non-stopped tracee.
+The
+.Fa addr
+and
+.Fa data
+arguments are ignored.
+.It Dv PT_STOP
+The traced process stops, as if
+.Xr kill
+has been used with
+.Dv SIGSTOP
+given as the signal to be delivered.
+.Xr wait 2
+will report the child (again) as stopped even if it was stopped before.
+The
+.Fa addr
+and
+.Fa data
+arguments are ignored.
+Unlike
+.Dv PT_CONTINUE
+call with
+.Dv SIGSTOP ,
+.Dv PT_STOP
+works both on running and stopped processes.
 .It Dv PT_ATTACH
 This request allows a process to gain control of an otherwise unrelated
 process and begin tracing it.
