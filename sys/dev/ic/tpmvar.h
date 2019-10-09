@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.6 2019/10/09 07:30:58 maxv Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.7 2019/10/09 14:03:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,9 +36,15 @@ enum tpm_version {
 	TPM_2_0
 };
 
+enum itf_version {
+	TIS_1_2,
+	CRB
+};
+
 struct tpm_ioc_getinfo {
 	uint32_t api_version;
 	uint32_t tpm_version;
+	uint32_t itf_version;
 	uint32_t device_id;
 	uint32_t device_rev;
 	uint32_t device_caps;
@@ -48,18 +54,27 @@ struct tpm_ioc_getinfo {
 
 #ifdef _KERNEL
 
+struct tpm_softc;
+
+struct tpm_intf {
+	enum itf_version version;
+	int (*probe)(bus_space_tag_t, bus_space_handle_t);
+	int (*init)(struct tpm_softc *);
+	int (*start)(struct tpm_softc *, int);
+	int (*read)(struct tpm_softc *, void *, size_t, size_t *, int);
+	int (*write)(struct tpm_softc *, const void *, size_t);
+	int (*end)(struct tpm_softc *, int, int);
+};
+
+extern const struct tpm_intf tpm_intf_tis12;
+
 struct tpm_softc {
 	device_t sc_dev;
 	enum tpm_version sc_ver;
 	kmutex_t sc_lock;
 	bool sc_busy;
 
-	int (*sc_init)(struct tpm_softc *);
-	int (*sc_start)(struct tpm_softc *, int);
-	int (*sc_read)(struct tpm_softc *, void *, size_t, size_t *, int);
-	int (*sc_write)(struct tpm_softc *, const void *, size_t);
-	int (*sc_end)(struct tpm_softc *, int, int);
-
+	const struct tpm_intf *sc_intf;
 	bus_space_tag_t sc_bt;
 	bus_space_handle_t sc_bh;
 
@@ -71,12 +86,5 @@ struct tpm_softc {
 
 bool tpm_suspend(device_t, const pmf_qual_t *);
 bool tpm_resume(device_t, const pmf_qual_t *);
-
-int tpm_tis12_probe(bus_space_tag_t, bus_space_handle_t);
-int tpm_tis12_init(struct tpm_softc *);
-int tpm_tis12_start(struct tpm_softc *, int);
-int tpm_tis12_read(struct tpm_softc *, void *, size_t, size_t *, int);
-int tpm_tis12_write(struct tpm_softc *, const void *, size_t);
-int tpm_tis12_end(struct tpm_softc *, int, int);
 
 #endif
