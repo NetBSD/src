@@ -1,4 +1,4 @@
-.\"	$NetBSD: ptrace.2,v 1.81 2019/10/09 13:42:37 kamil Exp $
+.\"	$NetBSD: ptrace.2,v 1.82 2019/10/09 14:20:47 wiz Exp $
 .\"
 .\" This file is in the public domain.
 .Dd October 9, 2019
@@ -263,7 +263,7 @@ and
 arguments are ignored.
 .It Dv PT_STOP
 The traced process stops, as if
-.Xr kill
+.Xr kill 2
 has been used with
 .Dv SIGSTOP
 given as the signal to be delivered.
