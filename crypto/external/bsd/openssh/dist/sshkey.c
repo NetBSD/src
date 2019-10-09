@@ -1,4 +1,4 @@
-/*	$NetBSD: sshkey.c,v 1.19 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: sshkey.c,v 1.20 2019/10/09 20:59:26 christos Exp $	*/
 /* $OpenBSD: sshkey.c,v 1.73 2019/01/21 09:54:11 djm Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
@@ -26,7 +26,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey.c,v 1.19 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: sshkey.c,v 1.20 2019/10/09 20:59:26 christos Exp $");
 
 #include <sys/types.h>
 #include <netinet/in.h>
@@ -2665,7 +2665,7 @@ sshkey_cert_check_authority(const struct sshkey *k,
 size_t
 sshkey_format_cert_validity(const struct sshkey_cert *cert, char *s, size_t l)
 {
-	char from[32], to[32], ret[64];
+	char from[32], to[32], ret[128];
 	time_t tt;
 	struct tm *tm;
 
