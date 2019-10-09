@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.5 2014/01/16 20:31:43 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.6 2019/10/09 23:39:20 christos Exp $
 
 # net sources
 .PATH: ${.CURDIR}/resolv
@@ -9,3 +9,7 @@ SRCS+=	h_errno.c herror.c res_comp.c res_data.c res_debug.c \
 	res_state.c mtctxres.c
 # For COMPAT__RES
 SRCS+=	res_compat.c
+
+.if ${ACTIVE_CC} == "gcc"
+COPTS.res_query.c += -Wno-error=stringop-overflow
+.endif

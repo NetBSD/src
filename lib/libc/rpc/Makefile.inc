@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.23 2015/11/06 19:34:13 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.24 2019/10/09 23:39:20 christos Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -17,6 +17,18 @@ SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 	xdr_stdio.c xdr_sizeof.c __rpc_getxid.c
 
 CPPFLAGS+=	-DPORTMAP
+
+.if ${ACTIVE_CC} == "gcc"
+COPTS.clnt_bcast.c += -Wno-error=cast-function-type
+COPTS.clnt_generic.c += -Wno-error=cast-function-type
+COPTS.clnt_vc.c += -Wno-error=cast-function-type
+COPTS.pmap_getmaps.c += -Wno-error=cast-function-type
+COPTS.rpc_generic.c += -Wno-error=cast-function-type
+COPTS.rpcb_clnt.c += -Wno-error=cast-function-type
+COPTS.svc_simple.c += -Wno-error=cast-function-type
+COPTS.xdr_sizeof.c += -Wno-error=cast-function-type
+COPTS.getrpcent.c += -Wno-error=stringop-truncation
+.endif
 
 MAN+=	bindresvport.3 getnetconfig.3 getnetpath.3 getrpcent.3 getrpcport.3 \
 	rpc.3 rpc_soc.3 rpc_clnt_auth.3 rpc_clnt_calls.3 rpc_clnt_create.3 \
