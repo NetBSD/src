@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.60 2019/10/08 19:21:40 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.61 2019/10/09 14:31:07 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.60 2019/10/08 19:21:40 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.61 2019/10/09 14:31:07 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -86,7 +86,7 @@ fn_tilde_expand(const char *txt)
 		temp = el_calloc(len, sizeof(*temp));
 		if (temp == NULL)
 			return NULL;
-		(void)strlcpy(temp, txt + 1, len - 2);
+		(void)strlcpy(temp, txt + 1, len - 1);
 	}
 	if (temp[0] == 0) {
 #ifdef HAVE_GETPW_R_POSIX
@@ -353,7 +353,7 @@ fn_filename_completion_function(const char *text, int state)
 				return NULL;
 			}
 			dirname = nptr;
-			(void)strlcpy(dirname, text, len);
+			(void)strlcpy(dirname, text, len + 1);
 		} else {
 			el_free(filename);
 			if (*text == 0)
@@ -507,7 +507,7 @@ completion_matches(const char *text, char *(*genfunc)(const char *, int))
 		el_free(match_list);
 		return NULL;
 	}
-	(void)strlcpy(retstr, match_list[1], max_equal);
+	(void)strlcpy(retstr, match_list[1], max_equal + 1);
 	match_list[0] = retstr;
 
 	/* add NULL as last pointer to the array */
