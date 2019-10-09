@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.88 2018/08/02 08:40:48 rjs Exp $
+#	$NetBSD: Makefile.inc,v 1.89 2019/10/09 23:39:20 christos Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -29,6 +29,10 @@ SRCS+=	if_indextoname.c if_nameindex.c if_nametoindex.c
 LPREFIX=_nsyy
 YPREFIX=_nsyy
 YHEADER=1
+
+.if ${ACTIVE_CC} == "gcc"
+COPTS.getaddrinfo.c += -Wno-error=stringop-overflow
+.endif
 
 CLEANFILES+=nsparser.c nslexer.c nsparser.h
 
