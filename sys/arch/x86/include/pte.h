@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.2 2019/10/05 07:30:03 maxv Exp $	*/
+/*	$NetBSD: pte.h,v 1.3 2019/10/09 17:28:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -39,12 +39,14 @@
 #define PGC_UC		(PTE_PWT | PTE_PCD)	/* hard UC */
 
 /*
- * page protection exception bits
+ * Page protection exception bits
  */
-
-#define PGEX_P		0x01	/* protection violation (vs. no mapping) */
-#define PGEX_W		0x02	/* exception during a write cycle */
-#define PGEX_U		0x04	/* exception while in user mode (upl) */
-#define PGEX_X		0x10	/* exception during instruction fetch */
+#define PGEX_P		0x0001	/* the page was present */
+#define PGEX_W		0x0002	/* exception during a write cycle */
+#define PGEX_U		0x0004	/* exception while in user mode */
+#define PGEX_RSVD	0x0008	/* a reserved bit was set in the page tables */
+#define PGEX_X		0x0010	/* exception during instruction fetch */
+#define PGEX_PK		0x0020	/* access disallowed by protection key */
+#define PGEX_SGX	0x8000	/* violation of sgx-specific access rights */
 
 #endif /* _X86_PTE_H */
