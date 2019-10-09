@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.10 2019/10/09 07:30:58 maxv Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.11 2019/10/09 14:03:57 maxv Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.10 2019/10/09 07:30:58 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.11 2019/10/09 14:03:57 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -118,33 +118,26 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 		    (uint64_t)mem->ar_length, TPM_SPACE_SIZE);
 		goto out;
 	}
+	base = mem->ar_base;
+	size = mem->ar_length;
 
 	sc->sc_dev = self;
 	sc->sc_ver = TPM_2_0;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_busy = false;
-	sc->sc_init = tpm_tis12_init;
-	sc->sc_start = tpm_tis12_start;
-	sc->sc_read = tpm_tis12_read;
-	sc->sc_write = tpm_tis12_write;
-	sc->sc_end = tpm_tis12_end;
+	sc->sc_intf = &tpm_intf_tis12;
 	sc->sc_bt = aa->aa_memt;
-
-	base = mem->ar_base;
-	size = mem->ar_length;
-
 	if (bus_space_map(sc->sc_bt, base, size, 0, &sc->sc_bh)) {
 		aprint_error_dev(sc->sc_dev, "cannot map registers\n");
 		goto out;
 	}
 
-	if (!tpm_tis12_probe(sc->sc_bt, sc->sc_bh)) {
-		aprint_error_dev(sc->sc_dev, "TIS1.2 probe failed\n");
+	if ((rv = (*sc->sc_intf->probe)(sc->sc_bt, sc->sc_bh)) != 0) {
+		aprint_error_dev(sc->sc_dev, "probe failed, rv=%d\n", rv);
 		goto out1;
 	}
-
-	if ((*sc->sc_init)(sc) != 0) {
-		aprint_error_dev(sc->sc_dev, "cannot init device %d\n", rv);
+	if ((rv = (*sc->sc_intf->init)(sc)) != 0) {
+		aprint_error_dev(sc->sc_dev, "cannot init device, rv=%d\n", rv);
 		goto out1;
 	}
 
