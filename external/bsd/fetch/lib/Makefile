@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/08/27 22:48:53 kamil Exp $
+# $NetBSD: Makefile,v 1.13 2019/10/09 21:19:28 christos Exp $
 
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
@@ -34,6 +34,10 @@ httperr.h: ${LIBFETCHDIR}/http.errors ${LIBFETCHDIR}/errlist.sh
 
 .if ${MKSANITIZER:Uno} == "yes"
 CFLAGS+=	-Wno-macro-redefined # _REENTRANT redefined
+.endif
+
+.if ${ACTIVE_CC} == "gcc"
+COPTS.http.c += -Wno-error=stringop-truncation
 .endif
 
 .include <bsd.lib.mk>
