@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmvar.h,v 1.5 2019/10/08 18:43:02 maxv Exp $	*/
+/*	$NetBSD: tpmvar.h,v 1.6 2019/10/09 07:30:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -69,8 +69,8 @@ struct tpm_softc {
 	uint32_t sc_caps;
 };
 
-bool tpm12_suspend(device_t, const pmf_qual_t *);
-bool tpm12_resume(device_t, const pmf_qual_t *);
+bool tpm_suspend(device_t, const pmf_qual_t *);
+bool tpm_resume(device_t, const pmf_qual_t *);
 
 int tpm_tis12_probe(bus_space_tag_t, bus_space_handle_t);
 int tpm_tis12_init(struct tpm_softc *);

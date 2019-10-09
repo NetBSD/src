@@ -1,4 +1,4 @@
-/* $NetBSD: tpm_acpi.c,v 1.9 2019/10/08 18:43:02 maxv Exp $ */
+/* $NetBSD: tpm_acpi.c,v 1.10 2019/10/09 07:30:58 maxv Exp $ */
 
 /*
  * Copyright (c) 2012, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.9 2019/10/08 18:43:02 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm_acpi.c,v 1.10 2019/10/09 07:30:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -148,6 +148,8 @@ tpm_acpi_attach(device_t parent, device_t self, void *aux)
 		goto out1;
 	}
 
+	if (!pmf_device_register(self, tpm_suspend, tpm_resume))
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	acpi_resource_cleanup(&res);
 	return;
 
