@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.21 2019/03/05 08:25:02 msaitoh Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.22 2019/10/10 23:37:13 bad Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.21 2019/03/05 08:25:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.22 2019/10/10 23:37:13 bad Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1313,8 +1313,7 @@ cmalo_cmd_rsp_hwspec(struct malo_softc *sc)
 	body = (struct malo_cmd_body_spec *)(hdr + 1);
 
 	/* get our MAC address */
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		ic->ic_myaddr[i] = body->macaddr[i];
+	memcpy(ic->ic_myaddr, body->macaddr, ETHER_ADDR_LEN);
 
 	return 0;
 }
