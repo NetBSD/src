@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.72 2019/10/08 17:06:28 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.73 2019/10/10 17:33:23 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4355,4 +4355,30 @@ sys/dev/pci/ixgbe/ixv.c				1.139
 
 	ixv(4): set MTU correctly if mtu > 1500.
 	[msaitoh, ticket #293]
+
+sys/kern/sysv_shm.c				1.140,1.141
+
+	Revert rev 1.139 und implement a simpler fix for the
+	race between shmat() and shmdt().
+	[chs, ticket #294]
+
+etc/services					1.102
+
+	Sync with latest from IANA.
+	[sevan, ticket #295]
+
+etc/namedb/root.cache				1.25
+
+	Update to 2019093001.
+	[sevan, ticket #296]
+
+sys/netatalk/at_var.h				1.9
+
+	Prevent stack information leak.
+	[maxv, ticket #297]
+
+sys/arch/x86/pci/if_vmx.c			1.51
+
+	Fix a kassert failure in vmxnet3_transmit().
+	[knakahara, ticket #298]
 
