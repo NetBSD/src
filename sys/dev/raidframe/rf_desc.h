@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_desc.h,v 1.20 2007/03/04 06:02:36 christos Exp $	*/
+/*	$NetBSD: rf_desc.h,v 1.21 2019/10/10 03:43:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -87,7 +87,7 @@ struct RF_RaidAccessDesc_s {
 	struct buf *bp;		/* buf pointer for this RAID acc */
 	RF_AccTraceEntry_t tracerec;	/* perf monitoring information for a
 					 * user access (not for dag stats) */
-	void    (*callbackFunc) (RF_CBParam_t);	/* callback function for this
+	void    (*callbackFunc) (void *);	/* callback function for this
 						 * I/O */
 	void   *callbackArg;	/* arg to give to callback func */
 	RF_RaidAccessDesc_t *next;
