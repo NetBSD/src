@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.29 2019/02/09 03:34:00 christos Exp $	*/
+/*	$NetBSD: rf_paritylogDiskMgr.c,v 1.30 2019/10/10 03:43:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.29 2019/02/09 03:34:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_paritylogDiskMgr.c,v 1.30 2019/10/10 03:43:59 christos Exp $");
 
 #include "rf_archs.h"
 
@@ -583,9 +583,10 @@ rf_ShutdownLogging(RF_Raid_t * raidPtr)
 	return (0);
 }
 
-int
-rf_ParityLoggingDiskManager(RF_Raid_t * raidPtr)
+void
+rf_ParityLoggingDiskManager(void *v)
 {
+	RF_Raid_t *raidPtr = v;
 	RF_ParityLog_t *reintQueue, *flushQueue;
 	int     workNeeded, done = RF_FALSE;
 	int s;
