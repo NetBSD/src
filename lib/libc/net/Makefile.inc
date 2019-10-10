@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.89 2019/10/09 23:39:20 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.90 2019/10/10 08:37:16 kre Exp $
 #	@(#)Makefile.inc	8.2 (Berkeley) 9/5/93
 
 # net sources
@@ -30,7 +30,7 @@ LPREFIX=_nsyy
 YPREFIX=_nsyy
 YHEADER=1
 
-.if ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc"
 COPTS.getaddrinfo.c += -Wno-error=stringop-overflow
 .endif
 
