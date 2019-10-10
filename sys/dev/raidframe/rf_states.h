@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_states.h,v 1.4 2001/10/04 15:58:56 oster Exp $	*/
+/*	$NetBSD: rf_states.h,v 1.5 2019/10/10 03:43:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -31,7 +31,7 @@
 
 #include <dev/raidframe/raidframevar.h>
 
-void    rf_ContinueRaidAccess(RF_RaidAccessDesc_t * desc);
+void    rf_ContinueRaidAccess(void *);
 void    rf_ContinueDagAccess(RF_DagList_t * dagList);
 int     rf_State_LastState(RF_RaidAccessDesc_t * desc);
 int     rf_State_IncrAccessCount(RF_RaidAccessDesc_t * desc);
