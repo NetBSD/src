@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.15 2019/10/04 06:27:42 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.16 2019/10/10 13:45:14 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.15 2019/10/04 06:27:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.16 2019/10/10 13:45:14 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -556,6 +556,109 @@ kasan_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	kasan_shadow_check((unsigned long)kaddr, len, false, __RET_ADDR);
 	return copyoutstr(kaddr, uaddr, len, done);
 }
+
+/* -------------------------------------------------------------------------- */
+
+#undef _ucas_32
+#undef _ucas_32_mp
+#undef _ucas_64
+#undef _ucas_64_mp
+#undef _ufetch_8
+#undef _ufetch_16
+#undef _ufetch_32
+#undef _ufetch_64
+
+int _ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int kasan__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int
+kasan__ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+    uint32_t *ret)
+{
+	kasan_shadow_check((unsigned long)ret, sizeof(*ret), true,
+	    __RET_ADDR);
+	return _ucas_32(uaddr, old, new, ret);
+}
+
+#ifdef __HAVE_UCAS_MP
+int _ucas_32_mp(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int kasan__ucas_32_mp(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int
+kasan__ucas_32_mp(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+    uint32_t *ret)
+{
+	kasan_shadow_check((unsigned long)ret, sizeof(*ret), true,
+	    __RET_ADDR);
+	return _ucas_32_mp(uaddr, old, new, ret);
+}
+#endif
+
+#ifdef _LP64
+int _ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int kasan__ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int
+kasan__ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+    uint64_t *ret)
+{
+	kasan_shadow_check((unsigned long)ret, sizeof(*ret), true,
+	    __RET_ADDR);
+	return _ucas_64(uaddr, old, new, ret);
+}
+
+#ifdef __HAVE_UCAS_MP
+int _ucas_64_mp(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int kasan__ucas_64_mp(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int
+kasan__ucas_64_mp(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+    uint64_t *ret)
+{
+	kasan_shadow_check((unsigned long)ret, sizeof(*ret), true,
+	    __RET_ADDR);
+	return _ucas_64_mp(uaddr, old, new, ret);
+}
+#endif
+#endif
+
+int _ufetch_8(const uint8_t *, uint8_t *);
+int kasan__ufetch_8(const uint8_t *, uint8_t *);
+int
+kasan__ufetch_8(const uint8_t *uaddr, uint8_t *valp)
+{
+	kasan_shadow_check((unsigned long)valp, sizeof(*valp), true,
+	    __RET_ADDR);
+	return _ufetch_8(uaddr, valp);
+}
+
+int _ufetch_16(const uint16_t *, uint16_t *);
+int kasan__ufetch_16(const uint16_t *, uint16_t *);
+int
+kasan__ufetch_16(const uint16_t *uaddr, uint16_t *valp)
+{
+	kasan_shadow_check((unsigned long)valp, sizeof(*valp), true,
+	    __RET_ADDR);
+	return _ufetch_16(uaddr, valp);
+}
+
+int _ufetch_32(const uint32_t *, uint32_t *);
+int kasan__ufetch_32(const uint32_t *, uint32_t *);
+int
+kasan__ufetch_32(const uint32_t *uaddr, uint32_t *valp)
+{
+	kasan_shadow_check((unsigned long)valp, sizeof(*valp), true,
+	    __RET_ADDR);
+	return _ufetch_32(uaddr, valp);
+}
+
+#ifdef _LP64
+int _ufetch_64(const uint64_t *, uint64_t *);
+int kasan__ufetch_64(const uint64_t *, uint64_t *);
+int
+kasan__ufetch_64(const uint64_t *uaddr, uint64_t *valp)
+{
+	kasan_shadow_check((unsigned long)valp, sizeof(*valp), true,
+	    __RET_ADDR);
+	return _ufetch_64(uaddr, valp);
+}
+#endif
 
 /* -------------------------------------------------------------------------- */
 
