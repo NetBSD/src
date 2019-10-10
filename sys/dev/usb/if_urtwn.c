@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.72 2019/08/19 07:20:07 mrg Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.73 2019/10/10 23:30:02 bad Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.72 2019/08/19 07:20:07 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.73 2019/10/10 23:30:02 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1340,10 +1340,8 @@ urtwn_dump_rom(struct urtwn_softc *sc, struct r92c_rom *rp)
 	    rp->usb_opt, rp->ep_setting, rp->usb_phy);
 
 	aprint_normal_dev(sc->sc_dev,
-	    "macaddr %02x:%02x:%02x:%02x:%02x:%02x\n",
-	    rp->macaddr[0], rp->macaddr[1],
-	    rp->macaddr[2], rp->macaddr[3],
-	    rp->macaddr[4], rp->macaddr[5]);
+	    "macaddr %s\n",
+	    ether_sprintf(rp->macaddr));
 
 	aprint_normal_dev(sc->sc_dev,
 	    "string %s, subcustomer_id 0x%x\n",
