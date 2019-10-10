@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.9 2019/10/09 22:05:35 christos Exp $
+# $NetBSD: Makefile,v 1.10 2019/10/10 02:39:07 kre Exp $
 # Copyright 2001 Mark R V Murray
 # All rights reserved.
 #
@@ -35,6 +35,6 @@ LIBDPLIBS+=	util	${.CURDIR}/../../../libutil
 
 .include "${.CURDIR}/../mod.mk"
 
-.if ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc"
 COPTS.pam_lastlog.c += -Wno-stringop-truncation
 .endif
