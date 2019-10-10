@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2019/10/09 21:49:50 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2019/10/10 02:35:45 kre Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -85,7 +85,7 @@ COPTS.dt_printf.c	+= -Wno-stack-protector
 COPTS.dt_program.c	+= -Wno-stack-protector
 COPTS.dt_provider.c	+= -Wno-stack-protector
 COPTS.dt_subr.c		+= -Wno-stack-protector
-.if ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc"
 COPTS.dt_lex.c		+= -Wno-error=stringop-truncation
 COPTS.dt_pid.c		+= -Wno-error=stringop-truncation
 .endif
