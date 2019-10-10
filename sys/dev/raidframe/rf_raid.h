@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_raid.h,v 1.47 2019/02/06 02:49:09 oster Exp $	*/
+/*	$NetBSD: rf_raid.h,v 1.48 2019/10/10 03:43:59 christos Exp $	*/
 /*
  * Copyright (c) 1995 Carnegie-Mellon University.
  * All rights reserved.
@@ -201,7 +201,7 @@ struct RF_Raid_s {
 	RF_IoCount_t accs_in_flight;
 	int     access_suspend_release;
 	int     waiting_for_quiescence;
-	RF_CallbackDesc_t *quiesce_wait_list;
+	RF_CallbackFuncDesc_t *quiesce_wait_list;
 
 	/*
          * Statistics
