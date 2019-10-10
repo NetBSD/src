@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.24 2019/10/09 23:39:20 christos Exp $
+#	$NetBSD: Makefile.inc,v 1.25 2019/10/10 08:37:16 kre Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -18,7 +18,7 @@ SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 
 CPPFLAGS+=	-DPORTMAP
 
-.if ${ACTIVE_CC} == "gcc"
+.if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc"
 COPTS.clnt_bcast.c += -Wno-error=cast-function-type
 COPTS.clnt_generic.c += -Wno-error=cast-function-type
 COPTS.clnt_vc.c += -Wno-error=cast-function-type
