@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.45.2.3 2019/09/30 15:42:03 martin Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.45.2.4 2019/10/10 17:32:15 martin Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45.2.3 2019/09/30 15:42:03 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.45.2.4 2019/10/10 17:32:15 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -3276,7 +3276,9 @@ vmxnet3_transmit(struct ifnet *ifp, struct mbuf *m)
 		vmxnet3_transmit_locked(ifp, txq);
 		VMXNET3_TXQ_UNLOCK(txq);
 	} else {
+		kpreempt_disable();
 		softint_schedule(txq->vxtxq_si);
+		kpreempt_enable();
 	}
 
 	return 0;
