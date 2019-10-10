@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1659 2019/10/09 23:04:33 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1660 2019/10/10 18:23:43 mrg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -193,20 +193,6 @@ Todo[3]: net/base64.c is imported from bind but should be moved from net
 	 to isc/base64.c.
 Todo[4]: Re-entrant functions of net/*
 Todo[5]: Reconcile the doc directory.
-
-Package:	bozohttpd
-Version:	20190228
-Current Vers:	20190228
-Maintainer:	mrg@eterna.com.au
-Archive Site:	ftp://ftp.NetBSD.org/pub/NetBSD/packages/distfiles/LOCAL_PORTS/
-Home Page:	http://eterna.com.au/bozohttpd/
-Date:		2019-01-09
-Mailing List:
-Responsible:	mrg
-License:	BSD
-Location:	libexec/httpd
-Notes:
-Delete "queue.h" from the distribution.
 
 Package:	bsd-family-tree
 Version:	349295
