@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2289 2019/10/03 00:59:50 mrg Exp $
+#	$NetBSD: mi,v 1.2290 2019/10/11 18:36:22 nros Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -7102,6 +7102,8 @@
 ./usr/share/man/cat3/freemntopts.0		comp-c-catman		.cat
 ./usr/share/man/cat3/freopen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/frexp.0			comp-c-catman		.cat
+./usr/share/man/cat3/frexpf.0			comp-c-catman		.cat
+./usr/share/man/cat3/frexpl.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fropen.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fropen2.0			comp-c-catman		.cat
 ./usr/share/man/cat3/fscanf.0			comp-c-catman		.cat
@@ -15120,6 +15122,8 @@
 ./usr/share/man/html3/freemntopts.html		comp-c-htmlman		html
 ./usr/share/man/html3/freopen.html		comp-c-htmlman		html
 ./usr/share/man/html3/frexp.html		comp-c-htmlman		html
+./usr/share/man/html3/frexpf.html		comp-c-htmlman		html
+./usr/share/man/html3/frexpl.html		comp-c-htmlman		html
 ./usr/share/man/html3/fropen.html		comp-c-htmlman		html
 ./usr/share/man/html3/fropen2.html		comp-c-htmlman		html
 ./usr/share/man/html3/fscanf.html		comp-c-htmlman		html
@@ -23076,6 +23080,8 @@
 ./usr/share/man/man3/freemntopts.3		comp-c-man		.man
 ./usr/share/man/man3/freopen.3			comp-c-man		.man
 ./usr/share/man/man3/frexp.3			comp-c-man		.man
+./usr/share/man/man3/frexpf.3			comp-c-man		.man
+./usr/share/man/man3/frexpl.3			comp-c-man		.man
 ./usr/share/man/man3/fropen.3			comp-c-man		.man
 ./usr/share/man/man3/fropen2.3			comp-c-man		.man
 ./usr/share/man/man3/fscanf.3			comp-c-man		.man
