@@ -260,7 +260,7 @@ int dhcp_get_routes(rb_tree_t *, struct interface *);
 ssize_t dhcp_env(FILE *, const char *, const struct interface *,
     const struct bootp *, size_t);
 
-void dhcp_handleifa(int, struct ipv4_addr *, pid_t pid);
+struct ipv4_addr *dhcp_handleifa(int, struct ipv4_addr *, pid_t pid);
 void dhcp_drop(struct interface *, const char *);
 void dhcp_start(struct interface *);
 void dhcp_abort(struct interface *);
