@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.71 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.72 2019/10/11 14:22:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.71 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.72 2019/10/11 14:22:46 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1708,12 +1708,13 @@ pcn_init(struct ifnet *ifp)
 	sc->sc_initblock.init_rdra = htole32(PCN_CDRXADDR(sc, 0));
 	sc->sc_initblock.init_tdra = htole32(PCN_CDTXADDR(sc, 0));
 	sc->sc_initblock.init_mode = htole32(sc->sc_mode |
-	    ((ffs(PCN_NTXDESC) - 1) << 28) |
+	    (((uint32_t)ffs(PCN_NTXDESC) - 1) << 28) |
 	    ((ffs(PCN_NRXDESC) - 1) << 20));
 
 	/* Set the station address in the init block. */
 	sc->sc_initblock.init_padr[0] = htole32(enaddr[0] |
-	    (enaddr[1] << 8) | (enaddr[2] << 16) | (enaddr[3] << 24));
+	    (enaddr[1] << 8) | (enaddr[2] << 16) |
+	    ((uint32_t)enaddr[3] << 24));
 	sc->sc_initblock.init_padr[1] = htole32(enaddr[4] |
 	    (enaddr[5] << 8));
 
