@@ -594,7 +594,9 @@ rt_add(rb_tree_t *kroutes, struct rt *nrt, struct rt *ort)
 	}
 #endif
 
-	if (if_route(RTM_ADD, nrt) != -1) {
+	/* Shouldn't need to check for EEXIST, but some kernels don't
+	 * dump the subnet route just after we added the address. */
+	if (if_route(RTM_ADD, nrt) != -1 || errno == EEXIST) {
 		result = true;
 		goto out;
 	}

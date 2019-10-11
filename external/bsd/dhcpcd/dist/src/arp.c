@@ -129,12 +129,11 @@ arp_report_conflicted(const struct arp_state *astate,
 	    inet_ntoa(astate->addr));
 }
 
-
 static void
 arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 {
 	struct interface *ifp;
-	struct ivp4_addr *ia;
+	struct ipv4_addr *ia;
 #ifndef KERNEL_RFC5227
 	struct timespec now, defend;
 #endif
@@ -142,11 +141,8 @@ arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 	arp_report_conflicted(astate, amsg);
 	ifp = astate->iface;
 
-#pragma GCC diagnostic push /* GCC is clearly wrong about this warning. */
-#pragma GCC diagnostic ignored "-Wincompatible-pointer-types"
 	/* If we haven't added the address we're doing a probe. */
 	ia = ipv4_iffindaddr(ifp, &astate->addr, NULL);
-#pragma GCC diagnostic pop
 	if (ia == NULL) {
 		if (astate->found_cb != NULL)
 			astate->found_cb(astate, amsg);
@@ -182,6 +178,35 @@ arp_found(struct arp_state *astate, const struct arp_msg *amsg)
 		astate->defend_failed_cb(astate);
 }
 
+static bool
+arp_validate(const struct interface *ifp, struct arphdr *arp)
+{
+
+	/* Families must match */
+	if (arp->ar_hrd != htons(ifp->family))
+		return false;
+
+	/* Protocol must be IP. */
+	if (arp->ar_pro != htons(ETHERTYPE_IP))
+		return false;
+
+	/* lladdr length matches */
+	if (arp->ar_hln != ifp->hwlen)
+		return false;
+
+	/* Protocol length must match in_addr_t */
+	if (arp->ar_pln != sizeof(in_addr_t))
+		return false;
+
+	/* Only these types are recognised */
+	if (arp->ar_op != htons(ARPOP_REPLY) &&
+	    arp->ar_op != htons(ARPOP_REQUEST))
+		return false;
+
+	return true;
+}
+
+
 static void
 arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 {
@@ -197,25 +222,12 @@ arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 		return;
 	memcpy(&ar, data, sizeof(ar));
 
-	/* These checks are enforced in the BPF filter. */
-#if 0
-	/* Families must match */
-	if (ar.ar_hrd != htons(ifp->family))
-		return;
-	/* Protocol must be IP. */
-	if (ar.ar_pro != htons(ETHERTYPE_IP))
-		continue;
-	/* lladdr length matches */
-	if (ar.ar_hln != ifp->hwlen)
-		continue;
-	/* Protocol length must match in_addr_t */
-	if (ar.ar_pln != sizeof(arm.sip.s_addr))
-		return;
-	/* Only these types are recognised */
-	if (ar.ar_op != htons(ARPOP_REPLY) &&
-	    ar.ar_op != htons(ARPOP_REQUEST))
-		continue;
+	if (!arp_validate(ifp, &ar)) {
+#ifdef BPF_DEBUG
+		logerrx("%s: ARP BPF validation failure", ifp->name);
 #endif
+		return;
+	}
 
 	/* Get pointers to the hardware addresses */
 	hw_s = data + sizeof(ar);
@@ -329,10 +341,8 @@ arp_open(struct interface *ifp)
 	state = ARP_STATE(ifp);
 	if (state->bpf_fd == -1) {
 		state->bpf_fd = bpf_open(ifp, bpf_arp);
-		if (state->bpf_fd == -1) {
-			logerr("%s: %s", __func__, ifp->name);
+		if (state->bpf_fd == -1)
 			return -1;
-		}
 		eloop_event_add(ifp->ctx->eloop, state->bpf_fd, arp_read, ifp);
 	}
 	return state->bpf_fd;
@@ -428,6 +438,7 @@ arp_announce1(void *arg)
 {
 	struct arp_state *astate = arg;
 	struct interface *ifp = astate->iface;
+	struct ipv4_addr *ia;
 
 	if (++astate->claims < ANNOUNCE_NUM)
 		logdebugx("%s: ARP announcing %s (%d of %d), "
@@ -438,23 +449,30 @@ arp_announce1(void *arg)
 		logdebugx("%s: ARP announcing %s (%d of %d)",
 		    ifp->name, inet_ntoa(astate->addr),
 		    astate->claims, ANNOUNCE_NUM);
+
+	/* The kernel will send a Gratuitous ARP for newly added addresses.
+	 * So we can avoid sending the same.
+	 * Linux is special and doesn't send one. */
+	ia = ipv4_iffindaddr(ifp, &astate->addr, NULL);
+#ifndef __linux__
+	if (astate->claims == 1 && ia != NULL && ia->flags & IPV4_AF_NEW)
+		goto skip_request;
+#endif
+
 	if (arp_request(ifp, &astate->addr, &astate->addr) == -1)
 		logerr(__func__);
+
+#ifndef __linux__
+skip_request:
+#endif
+	/* No longer a new address. */
+	if (ia != NULL)
+		ia->flags |= ~IPV4_AF_NEW;
+
 	eloop_timeout_add_sec(ifp->ctx->eloop, ANNOUNCE_WAIT,
 	    astate->claims < ANNOUNCE_NUM ? arp_announce1 : arp_announced,
 	    astate);
 }
-
-/*
- * XXX FIXME
- * Kernels supporting RFC5227 will announce the address when it's
- * added.
- * dhcpcd should not announce when this happens, nor need to open
- * a BPF socket for it.
- * Also, an address might be added to a non preferred inteface when
- * the same address exists on a preferred one so we need to instruct
- * the kernel not to announce the address somehow.
- */
 
 void
 arp_announce(struct arp_state *astate)
@@ -500,6 +518,9 @@ void
 arp_ifannounceaddr(struct interface *ifp, const struct in_addr *ia)
 {
 	struct arp_state *astate;
+
+	if (ifp->flags & IFF_NOARP)
+		return;
 
 	astate = arp_find(ifp, ia);
 	if (astate == NULL) {
