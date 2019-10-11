@@ -29,6 +29,8 @@
 #ifndef CONTROL_H
 #define CONTROL_H
 
+#include <stdbool.h>
+
 #include "dhcpcd.h"
 
 #if !defined(CTL_FREE_LIST)

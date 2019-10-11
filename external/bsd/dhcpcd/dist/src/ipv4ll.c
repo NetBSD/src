@@ -198,12 +198,16 @@ ipv4ll_not_found(struct interface *ifp)
 	struct ipv4_addr *ia;
 #ifdef KERNEL_RFC5227
 	struct arp_state *astate;
+	bool new_addr;
 #endif
 
 	state = IPV4LL_STATE(ifp);
 	assert(state != NULL);
 
 	ia = ipv4_iffindaddr(ifp, &state->pickedaddr, &inaddr_llmask);
+#ifdef KERNEL_RFC5227
+	new_addr = ia == NULL;
+#endif
 #ifdef IN_IFF_NOTREADY
 	if (ia == NULL || ia->addr_flags & IN_IFF_NOTREADY)
 #endif
@@ -233,11 +237,13 @@ test:
 	}
 	rt_build(ifp->ctx, AF_INET);
 #ifdef KERNEL_RFC5227
-	astate = arp_new(ifp, &ia->addr);
-	if (astate != NULL) {
-		astate->announced_cb = ipv4ll_announced_arp;
-		astate->free_cb = ipv4ll_arpfree;
-		arp_announce(astate);
+	if (!new_addr) {
+		astate = arp_new(ifp, &ia->addr);
+		if (astate != NULL) {
+			astate->announced_cb = ipv4ll_announced_arp;
+			astate->free_cb = ipv4ll_arpfree;
+			arp_announce(astate);
+		}
 	}
 #else
 	arp_announce(state->arp);
@@ -261,10 +267,12 @@ ipv4ll_found(struct interface *ifp)
 {
 	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
 
-	arp_cancel(state->arp);
+	if (state->arp != NULL)
+		arp_cancel(state->arp);
 	if (++state->conflicts == MAX_CONFLICTS)
-		logerr("%s: failed to acquire an IPv4LL address",
+		logerrx("%s: failed to acquire an IPv4LL address",
 		    ifp->name);
+	state->pickedaddr.s_addr = ipv4ll_pickaddr(ifp);
 	eloop_timeout_add_sec(ifp->ctx->eloop,
 	    state->conflicts >= MAX_CONFLICTS ?
 	    RATE_LIMIT_INTERVAL : PROBE_WAIT,
@@ -276,11 +284,14 @@ ipv4ll_defend_failed(struct interface *ifp)
 {
 	struct ipv4ll_state *state = IPV4LL_STATE(ifp);
 
+	if (state->arp != NULL)
+		arp_cancel(state->arp);
 	ipv4_deladdr(state->addr, 1);
 	state->down = true;
 	state->addr = NULL;
 	rt_build(ifp->ctx, AF_INET);
 	script_runreason(ifp, "IPV4LL");
+	state->pickedaddr.s_addr = ipv4ll_pickaddr(ifp);
 	ipv4ll_start1(ifp, state->arp);
 }
 
@@ -544,7 +555,7 @@ ipv4ll_recvrt(__unused int cmd, const struct rt *rt)
 }
 #endif
 
-void
+struct ipv4_addr *
 ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 {
 	struct interface *ifp;
@@ -553,7 +564,7 @@ ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 	ifp = ia->iface;
 	state = IPV4LL_STATE(ifp);
 	if (state == NULL)
-		return;
+		return ia;
 
 	if (cmd == RTM_DELADDR &&
 	    state->addr != NULL &&
@@ -562,20 +573,28 @@ ipv4ll_handleifa(int cmd, struct ipv4_addr *ia, pid_t pid)
 		loginfox("%s: pid %d deleted IP address %s",
 		    ifp->name, pid, ia->saddr);
 		ipv4ll_defend_failed(ifp);
-		return;
+		return ia;
 	}
 
 #ifdef IN_IFF_DUPLICATED
 	if (cmd != RTM_NEWADDR)
-		return;
+		return ia;
 	if (!IN_ARE_ADDR_EQUAL(&state->pickedaddr, &ia->addr))
-		return;
+		return ia;
 	if (!(ia->addr_flags & IN_IFF_NOTUSEABLE))
 		ipv4ll_not_found(ifp);
 	else if (ia->addr_flags & IN_IFF_DUPLICATED) {
 		logerrx("%s: DAD detected %s", ifp->name, ia->saddr);
-		ipv4_deladdr(state->addr, 1);
+#ifdef KERNEL_RFC5227
+		arp_freeaddr(ifp, &ia->addr);
+#endif
+		ipv4_deladdr(ia, 1);
+		state->addr = NULL;
+		rt_build(ifp->ctx, AF_INET);
 		ipv4ll_found(ifp);
+		return NULL;
 	}
 #endif
+
+	return ia;
 }
