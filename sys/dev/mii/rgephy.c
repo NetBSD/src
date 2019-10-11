@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.56 2019/10/11 03:40:01 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.57 2019/10/11 09:29:04 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.56 2019/10/11 03:40:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.57 2019/10/11 09:29:04 msaitoh Exp $");
 
 
 /*
@@ -356,7 +356,7 @@ static void
 rgephy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	uint16_t gstat, bmsr, bmcr, physr, ssr;
+	uint16_t gstat, bmsr, bmcr, gtsr, physr, ssr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -441,6 +441,12 @@ rgephy_status(struct mii_softc *sc)
 			    IFM_FDX;
 		else
 			mii->mii_media_active |= IFM_HDX;
+	}
+
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+		PHY_READ(sc, MII_GTSR, &gtsr);
+		if ((gtsr & GTSR_MS_RES) != 0)
+			mii->mii_media_active |= IFM_ETH_MASTER;
 	}
 }
 
