@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.22 2019/10/10 23:37:13 bad Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.23 2019/10/11 04:25:11 kre Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.22 2019/10/10 23:37:13 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.23 2019/10/11 04:25:11 kre Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -1308,7 +1308,6 @@ cmalo_cmd_rsp_hwspec(struct malo_softc *sc)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct malo_cmd_header *hdr = (struct malo_cmd_header *)sc->sc_cmd;
 	struct malo_cmd_body_spec *body;
-	int i;
 
 	body = (struct malo_cmd_body_spec *)(hdr + 1);
 
