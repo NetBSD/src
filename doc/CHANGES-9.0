@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.73 2019/10/10 17:33:23 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.74 2019/10/11 18:23:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4381,4 +4381,14 @@ sys/arch/x86/pci/if_vmx.c			1.51
 
 	Fix a kassert failure in vmxnet3_transmit().
 	[knakahara, ticket #298]
+
+external/bsd/ipf/dist/man/ipf.5			1.6
+
+	Fix typo.
+	[uwe, ticket #299]
+
+sys/netinet/if_arp.c				1.289
+
+	ARP: Don't defend ARP probes.
+	[roy, ticket #300]
 
