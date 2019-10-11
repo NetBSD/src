@@ -1,4 +1,4 @@
-/*	$NetBSD: pcap-bpf.c,v 1.9 2019/10/01 16:02:11 christos Exp $	*/
+/*	$NetBSD: pcap-bpf.c,v 1.10 2019/10/11 18:20:20 christos Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995, 1996, 1998
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pcap-bpf.c,v 1.9 2019/10/01 16:02:11 christos Exp $");
+__RCSID("$NetBSD: pcap-bpf.c,v 1.10 2019/10/11 18:20:20 christos Exp $");
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
@@ -628,7 +628,7 @@ bpf_open_and_bind(const char *name, char *errbuf)
 	/*
 	 * Now bind to the device.
 	 */
-	(void)strncpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
+	pcap_strlcpy(ifr.ifr_name, name, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 		switch (errno) {
 
@@ -835,7 +835,7 @@ pcap_can_set_rfmon_bpf(pcap_t *p)
 	/*
 	 * Now bind to the device.
 	 */
-	(void)strncpy(ifr.ifr_name, p->opt.device, sizeof(ifr.ifr_name));
+	pcap_strlcpy(ifr.ifr_name, p->opt.device, sizeof(ifr.ifr_name));
 	if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 		switch (errno) {
 
@@ -1445,7 +1445,7 @@ pcap_cleanup_bpf(pcap_t *p)
 				    strerror(errno));
 			} else {
 				memset(&req, 0, sizeof(req));
-				strncpy(req.ifm_name, pb->device,
+				pcap_strlcpy(req.ifm_name, pb->device,
 				    sizeof(req.ifm_name));
 				if (ioctl(sock, SIOCGIFMEDIA, &req) < 0) {
 					fprintf(stderr,
@@ -1459,7 +1459,7 @@ pcap_cleanup_bpf(pcap_t *p)
 						 * turn it off.
 						 */
 						memset(&ifr, 0, sizeof(ifr));
-						(void)strncpy(ifr.ifr_name,
+						pcap_strlcpy(ifr.ifr_name,
 						    pb->device,
 						    sizeof(ifr.ifr_name));
 						ifr.ifr_media =
@@ -2002,7 +2002,7 @@ pcap_activate_bpf(pcap_t *p)
 			status = PCAP_ERROR;
 			goto bad;
 		}
-		(void)strncpy(ifrname, p->opt.device, ifnamsiz);
+		pcap_strlcpy(ifrname, p->opt.device, ifnamsiz);
 		if (ioctl(fd, BIOCSETIF, (caddr_t)&ifr) < 0) {
 			pcap_fmt_errmsg_for_errno(p->errbuf, PCAP_ERRBUF_SIZE,
 			    errno, "BIOCSETIF: %s", p->opt.device);
@@ -2033,7 +2033,7 @@ pcap_activate_bpf(pcap_t *p)
 			/*
 			 * Now bind to the device.
 			 */
-			(void)strncpy(ifrname, p->opt.device, ifnamsiz);
+			pcap_strlcpy(ifrname, p->opt.device, ifnamsiz);
 #ifdef BIOCSETLIF
 			if (ioctl(fd, BIOCSETLIF, (caddr_t)&ifr) < 0)
 #else
@@ -2066,7 +2066,7 @@ pcap_activate_bpf(pcap_t *p)
 				 */
 				(void) ioctl(fd, BIOCSBLEN, (caddr_t)&v);
 
-				(void)strncpy(ifrname, p->opt.device, ifnamsiz);
+				pcap_strlcpy(ifrname, p->opt.device, ifnamsiz);
 #ifdef BIOCSETLIF
 				if (ioctl(fd, BIOCSETLIF, (caddr_t)&ifr) >= 0)
 #else
@@ -2764,7 +2764,7 @@ get_if_flags(const char *name, bpf_u_int32 *flags, char *errbuf)
 		return (-1);
 	}
 	memset(&req, 0, sizeof(req));
-	strncpy(req.ifm_name, name, sizeof(req.ifm_name));
+	pcap_strlcpy(req.ifm_name, name, sizeof(req.ifm_name));
 	if (ioctl(sock, SIOCGIFMEDIA, &req) < 0) {
 		if (errno == EOPNOTSUPP || errno == EINVAL || errno == ENOTTY ||
 		    errno == ENODEV || errno == EPERM) {
@@ -2891,7 +2891,7 @@ monitor_mode(pcap_t *p, int set)
 	}
 
 	memset(&req, 0, sizeof req);
-	strncpy(req.ifm_name, p->opt.device, sizeof req.ifm_name);
+	pcap_strlcpy(req.ifm_name, p->opt.device, sizeof(req.ifm_name));
 
 	/*
 	 * Find out how many media types we have.
@@ -3001,7 +3001,7 @@ monitor_mode(pcap_t *p, int set)
 				return (PCAP_ERROR);
 			}
 			memset(&ifr, 0, sizeof(ifr));
-			(void)strncpy(ifr.ifr_name, p->opt.device,
+			pcap_strlcpy(ifr.ifr_name, p->opt.device,
 			    sizeof(ifr.ifr_name));
 			ifr.ifr_media = req.ifm_current | IFM_IEEE80211_MONITOR;
 			if (ioctl(sock, SIOCSIFMEDIA, &ifr) == -1) {
