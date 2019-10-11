@@ -520,7 +520,7 @@ parse_addr(__unused struct in_addr *addr, __unused struct in_addr *net,
 }
 #endif
 
-static const char *
+static void
 set_option_space(struct dhcpcd_ctx *ctx,
     const char *arg,
     const struct dhcp_opt **d, size_t *dl,
@@ -543,7 +543,7 @@ set_option_space(struct dhcpcd_ctx *ctx,
 		*require = ifo->requiremasknd;
 		*no = ifo->nomasknd;
 		*reject = ifo->rejectmasknd;
-		return arg + strlen("nd_");
+		return;
 	}
 
 #ifdef DHCP6
@@ -556,7 +556,7 @@ set_option_space(struct dhcpcd_ctx *ctx,
 		*require = ifo->requiremask6;
 		*no = ifo->nomask6;
 		*reject = ifo->rejectmask6;
-		return arg + strlen("dhcp6_");
+		return;
 	}
 #endif
 #endif
@@ -576,7 +576,6 @@ set_option_space(struct dhcpcd_ctx *ctx,
 	*require = ifo->requiremask;
 	*no = ifo->nomask;
 	*reject = ifo->rejectmask;
-	return arg;
 }
 
 void
@@ -806,7 +805,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'o':
 		ARG_REQUIRED;
-		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
+		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, 1) != 0 ||
 		    make_option_mask(d, dl, od, odl, no, arg, -1) != 0 ||
@@ -818,7 +817,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case O_REJECT:
 		ARG_REQUIRED;
-		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
+		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, reject, arg, 1) != 0 ||
 		    make_option_mask(d, dl, od, odl, request, arg, -1) != 0 ||
@@ -1053,7 +1052,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'O':
 		ARG_REQUIRED;
-		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
+		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, request, arg, -1) != 0 ||
 		    make_option_mask(d, dl, od, odl, require, arg, -1) != 0 ||
@@ -1065,7 +1064,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case 'Q':
 		ARG_REQUIRED;
-		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
+		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl, require, arg, 1) != 0 ||
 		    make_option_mask(d, dl, od, odl, request, arg, 1) != 0 ||
@@ -1253,7 +1252,7 @@ parse_option(struct dhcpcd_ctx *ctx, const char *ifname, struct if_options *ifo,
 		break;
 	case O_DESTINATION:
 		ARG_REQUIRED;
-		arg = set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
+		set_option_space(ctx, arg, &d, &dl, &od, &odl, ifo,
 		    &request, &require, &no, &reject);
 		if (make_option_mask(d, dl, od, odl,
 		    ifo->dstmask, arg, 2) != 0)

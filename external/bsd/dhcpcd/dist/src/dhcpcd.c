@@ -1094,8 +1094,13 @@ static void
 dhcpcd_checkcarrier(void *arg)
 {
 	struct interface *ifp = arg;
+	int carrier;
 
-	dhcpcd_handlecarrier(ifp->ctx, LINK_UNKNOWN, ifp->flags, ifp->name);
+	/* Check carrier here rather than setting LINK_UNKNOWN.
+	 * This is because we force LINK_UNKNOWN as down for wireless which
+	 * we do not want when dealing with a route socket overflow. */
+	carrier = if_carrier(ifp);
+	dhcpcd_handlecarrier(ifp->ctx, carrier, ifp->flags, ifp->name);
 }
 
 #ifndef SMALL

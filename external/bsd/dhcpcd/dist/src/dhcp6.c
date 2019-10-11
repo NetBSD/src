@@ -532,13 +532,6 @@ dhcp6_delegateaddr(struct in6_addr *addr, struct interface *ifp,
 		asla.prefix_len = 0;
 		asla.sla_set = 0;
 		sla = &asla;
-	} else if (sla->sla == 0 && sla->prefix_len == 0) {
-		/* An SLA of 0 was set with no prefix length specified.
-		 * This means we delegate the whole prefix. */
-		asla.sla = sla->sla;
-		asla.prefix_len = prefix->prefix_len;
-		asla.sla_set = 0;
-		sla = &asla;
 	} else if (sla->prefix_len == 0) {
 		/* An SLA was given, but prefix length was not.
 		 * We need to work out a suitable prefix length for
@@ -680,27 +673,21 @@ dhcp6_makemessage(struct interface *ifp)
 					break;
 			}
 			if (n < ifo->dhcp6_override_len)
-			    continue;
-			if (!(opt->type & OT_NOREQ) &&
-			    (opt->type & OT_REQUEST ||
-			    has_option_mask(ifo->requestmask6, opt->option)))
-			{
-				n_options++;
-				len += sizeof(o.len);
-			}
+				continue;
+			if (!DHC_REQOPT(opt, ifo->requestmask6, ifo->nomask6))
+				continue;
+			n_options++;
+			len += sizeof(o.len);
 		}
 #ifndef SMALL
 		for (l = 0, opt = ifo->dhcp6_override;
 		    l < ifo->dhcp6_override_len;
 		    l++, opt++)
 		{
-			if (!(opt->type & OT_NOREQ) &&
-			    (opt->type & OT_REQUEST ||
-			    has_option_mask(ifo->requestmask6, opt->option)))
-			{
-				n_options++;
-				len += sizeof(o.len);
-			}
+			if (!DHC_REQOPT(opt, ifo->requestmask6, ifo->nomask6))
+				continue;
+			n_options++;
+			len += sizeof(o.len);
 		}
 		if (dhcp6_findselfsla(ifp)) {
 			n_options++;
@@ -1037,7 +1024,8 @@ dhcp6_makemessage(struct interface *ifp)
 
 #ifdef AUTH
 		if ((ifo->auth.options & DHCPCD_AUTH_SENDREQUIRE) !=
-		    DHCPCD_AUTH_SENDREQUIRE)
+		    DHCPCD_AUTH_SENDREQUIRE &&
+		    !has_option_mask(ifo->nomask6, D6_OPTION_RECONF_ACCEPT))
 			COPYIN1(D6_OPTION_RECONF_ACCEPT, 0);
 #endif
 
@@ -1060,34 +1048,26 @@ dhcp6_makemessage(struct interface *ifp)
 				if (n < ifo->dhcp6_override_len)
 				    continue;
 #endif
-				if (!(opt->type & OT_NOREQ) &&
-				    (opt->type & OT_REQUEST ||
-				    has_option_mask(ifo->requestmask6,
-				        opt->option)))
-				{
-					o.code = htons((uint16_t)opt->option);
-					memcpy(p, &o.code, sizeof(o.code));
-					p += sizeof(o.code);
-					o.len = (uint16_t)
-					    (o.len + sizeof(o.code));
-				}
+				if (!DHC_REQOPT(opt, ifo->requestmask6,
+				    ifo->nomask6))
+					continue;
+				o.code = htons((uint16_t)opt->option);
+				memcpy(p, &o.code, sizeof(o.code));
+				p += sizeof(o.code);
+				o.len = (uint16_t)(o.len + sizeof(o.code));
 			}
 #ifndef SMALL
 			for (l = 0, opt = ifo->dhcp6_override;
 			    l < ifo->dhcp6_override_len;
 			    l++, opt++)
 			{
-				if (!(opt->type & OT_NOREQ) &&
-				    (opt->type & OT_REQUEST ||
-				    has_option_mask(ifo->requestmask6,
-				        opt->option)))
-				{
-					o.code = htons((uint16_t)opt->option);
-					memcpy(p, &o.code, sizeof(o.code));
-					p += sizeof(o.code);
-					o.len = (uint16_t)
-					    (o.len + sizeof(o.code));
-				}
+				if (!DHC_REQOPT(opt, ifo->requestmask6,
+				    ifo->nomask6))
+					continue;
+				o.code = htons((uint16_t)opt->option);
+				memcpy(p, &o.code, sizeof(o.code));
+				p += sizeof(o.code);
+				o.len = (uint16_t)(o.len + sizeof(o.code));
 			}
 			if (dhcp6_findselfsla(ifp)) {
 				o.code = htons(D6_OPTION_PD_EXCLUDE);
@@ -3008,7 +2988,9 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 			TAILQ_FOREACH(ia, &state->addrs, next) {
 				if (ia->flags & IPV6_AF_STALE)
 					continue;
-				if (ia->prefix_vltime <= state->renew)
+				if (!(state->renew == ND6_INFINITE_LIFETIME &&
+				    ia->prefix_vltime == ND6_INFINITE_LIFETIME)
+				    && ia->prefix_vltime <= state->renew)
 					logwarnx(
 					    "%s: %s will expire before renewal",
 					    ifp->name, ia->saddr);
@@ -3152,6 +3134,8 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 		if (state->state == DH6S_INFORMED)
 			lognewinfo("%s: refresh in %"PRIu32" seconds",
 			    ifp->name, state->renew);
+		else if (state->renew == ND6_INFINITE_LIFETIME)
+			lognewinfo("%s: leased for infinity", ifp->name);
 		else if (state->renew || state->rebind)
 			lognewinfo("%s: renew in %"PRIu32", "
 			    "rebind in %"PRIu32", "
