@@ -100,6 +100,7 @@ struct ipv4_addr {
 TAILQ_HEAD(ipv4_addrhead, ipv4_addr);
 
 #define	IPV4_AF_STALE		(1U << 0)
+#define	IPV4_AF_NEW		(1U << 1)
 
 #define	IPV4_ADDR_EQ(a1, a2)	((a1) && (a1)->addr.s_addr == (a2)->addr.s_addr)
 #define	IPV4_MASK1_EQ(a1, a2)	((a1) && (a1)->mask.s_addr == (a2)->mask.s_addr)

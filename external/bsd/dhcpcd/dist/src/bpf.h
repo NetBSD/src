@@ -34,6 +34,25 @@
 #define	BPF_PARTIALCSUM		(1U << 2)
 #define	BPF_BCAST		(1U << 3)
 
+/*
+ * Even though we program the BPF filter should we trust it?
+ * On Linux at least there is a window between opening the socket,
+ * binding the interface and setting the filter where we receive data.
+ * This data is NOT checked OR flushed and IS returned when reading.
+ * We have no way of flushing it other than reading these packets!
+ * But we don't know if they passed the filter or not ..... so we need
+ * to validate each and every packet that comes through ourselves as well.
+ * Even if Linux does fix this sorry state, who is to say other kernels
+ * don't have bugs causing a similar effect?
+ *
+ * As such, let's strive to keep the filters just for pattern matching
+ * to avoid waking dhcpcd up.
+ *
+ * If you want to be notified of any packet failing the BPF filter,
+ * define BPF_DEBUG below.
+ */
+//#define	BPF_DEBUG
+
 #include "dhcpcd.h"
 
 extern const char *bpf_name;
