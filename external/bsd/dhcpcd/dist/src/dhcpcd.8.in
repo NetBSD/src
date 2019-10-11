@@ -24,7 +24,7 @@
 .\" OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 .\" SUCH DAMAGE.
 .\"
-.Dd August 28, 2019
+.Dd October 9, 2019
 .Dt DHCPCD 8
 .Os
 .Sh NAME
@@ -203,6 +203,15 @@ changes the routes to use the interface with the same route and the lowest
 metric.
 See options below for controlling which interfaces we allow and deny through
 the use of patterns.
+.Pp
+Non-ethernet interfaces and some virtual ethernet interfaces
+such as TAP and bridge are ignored by default,
+as is the FireWire interface.
+To work with these devices they either need to be specified on the command line,
+be listed in
+.Fl Fl allowinterfaces
+or have an interface directive in
+.Pa @SYSCONFDIR@/dhcpcd.conf .
 .Ss Hooking into events
 .Nm
 runs
