@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.66 2017/06/04 08:03:26 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.67 2019/10/11 08:04:52 hannken Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -318,7 +318,7 @@ echo '
 
 if [ -z "${rump}" ] ; then
 	echo "
-enum fst_op { FST_NO, FST_YES, FST_TRY };
+enum fst_op { FST_NO, FST_YES, FST_LAZY, FST_TRY };
 
 static inline int
 vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
@@ -331,7 +331,7 @@ vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
 		KERNEL_LOCK(1, curlwp);
 	}
 
-	if (op == FST_YES || op == FST_TRY) {
+	if (op == FST_YES || op == FST_LAZY || op == FST_TRY) {
 		for (;;) {
 			*mp = vp->v_mount;
 			if (op == FST_TRY) {
@@ -342,6 +342,8 @@ vop_pre(vnode_t *vp, struct mount **mp, bool *mpsafe, enum fst_op op)
 					}
 					return error;
 				}
+			} else if (op == FST_LAZY) {
+				fstrans_start_lazy(*mp);
 			} else {
 				fstrans_start(*mp);
 			}
@@ -360,7 +362,7 @@ static inline void
 vop_post(vnode_t *vp, struct mount *mp, bool mpsafe, enum fst_op op)
 {
 
-	if (op == FST_YES) {
+	if (op == FST_YES || op == FST_LAZY) {
 		fstrans_done(mp);
 	}
 
