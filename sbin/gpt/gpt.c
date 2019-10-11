@@ -35,7 +35,7 @@
 __FBSDID("$FreeBSD: src/sbin/gpt/gpt.c,v 1.16 2006/07/07 02:44:23 marcel Exp $");
 #endif
 #ifdef __RCSID
-__RCSID("$NetBSD: gpt.c,v 1.80 2019/06/25 03:50:18 jnemeth Exp $");
+__RCSID("$NetBSD: gpt.c,v 1.81 2019/10/11 23:04:52 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -1293,7 +1293,7 @@ gpt_uuid_get(gpt_t gpt, gpt_uuid_t *uuid)
 	if (!gpt_uuid_is_nil(*uuid))
 		return -1;
 	if (gpt_uuid_parse(optarg, *uuid) != 0) {
-		gpt_warn(gpt, "Can't parse uuid");
+		gpt_warnx(gpt, "Can't parse uuid/type `%s'", optarg);
 		return -1;
 	}
 	return 0;
