@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.55 2019/06/05 17:50:06 triaxx Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.56 2019/10/11 03:40:01 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.55 2019/06/05 17:50:06 triaxx Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.56 2019/10/11 03:40:01 msaitoh Exp $");
 
 
 /*
@@ -75,6 +75,7 @@ static int	rgephy_service(struct mii_softc *, struct mii_data *, int);
 static void	rgephy_status(struct mii_softc *);
 static int	rgephy_mii_phy_auto(struct mii_softc *);
 static void	rgephy_reset(struct mii_softc *);
+static bool	rgephy_linkup(struct mii_softc *);
 static void	rgephy_loop(struct mii_softc *);
 static void	rgephy_load_dspcode(struct mii_softc *);
 
@@ -295,26 +296,9 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		 * need to restart the autonegotiation process.  Read
 		 * the BMSR twice in case it's latched.
 		 */
-		if (sc->mii_mpd_rev >= RGEPHY_8211F) {
-			/* RTL8211F */
-			PHY_READ(sc, RGEPHY_MII_PHYSR, &reg);
-			if (reg & RGEPHY_PHYSR_LINK) {
-				sc->mii_ticks = 0;
-				break;
-			}
-		} else if (sc->mii_mpd_rev >= RGEPHY_8211B) {
-			/* RTL8211B(L) */
-			PHY_READ(sc, RGEPHY_MII_SSR, &reg);
-			if (reg & RGEPHY_SSR_LINK) {
-				sc->mii_ticks = 0;
-				break;
-			}
-		} else {
-			PHY_READ(sc, RTK_GMEDIASTAT, &reg);
-			if ((reg & RTK_GMEDIASTAT_LINK) != 0) {
-				sc->mii_ticks = 0;
-				break;
-			}
+		if (rgephy_linkup(sc)) {
+			sc->mii_ticks = 0;
+			break;
 		}
 
 		/* Announce link loss right after it happens. */
@@ -345,6 +329,29 @@ rgephy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 	return 0;
 }
 
+static bool
+rgephy_linkup(struct mii_softc *sc)
+{
+	bool linkup = false;
+	uint16_t reg;
+
+	if (sc->mii_mpd_rev >= RGEPHY_8211F) {
+		PHY_READ(sc, RGEPHY_MII_PHYSR, &reg);
+		if (reg & RGEPHY_PHYSR_LINK)
+			linkup = true;
+	} else if (sc->mii_mpd_rev >= RGEPHY_8211B) {
+		PHY_READ(sc, RGEPHY_MII_SSR, &reg);
+		if (reg & RGEPHY_SSR_LINK)
+			linkup = true;
+	} else {
+		PHY_READ(sc, RTK_GMEDIASTAT, &reg);
+		if ((reg & RTK_GMEDIASTAT_LINK) != 0)
+			linkup = true;
+	}
+
+	return linkup;
+}
+
 static void
 rgephy_status(struct mii_softc *sc)
 {
@@ -354,19 +361,8 @@ rgephy_status(struct mii_softc *sc)
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
-	if (sc->mii_mpd_rev >= RGEPHY_8211F) {
-		PHY_READ(sc, RGEPHY_MII_PHYSR, &physr);
-		if (physr & RGEPHY_PHYSR_LINK)
-			mii->mii_media_status |= IFM_ACTIVE;
-	} else if (sc->mii_mpd_rev >= RGEPHY_8211B) {
-		PHY_READ(sc, RGEPHY_MII_SSR, &ssr);
-		if (ssr & RGEPHY_SSR_LINK)
-			mii->mii_media_status |= IFM_ACTIVE;
-	} else {
-		PHY_READ(sc, RTK_GMEDIASTAT, &gstat);
-		if ((gstat & RTK_GMEDIASTAT_LINK) != 0)
-			mii->mii_media_status |= IFM_ACTIVE;
-	}
+	if (rgephy_linkup(sc))
+		mii->mii_media_status |= IFM_ACTIVE;
 
 	PHY_READ(sc, MII_BMSR, &bmsr);
 	PHY_READ(sc, MII_BMCR, &bmcr);
