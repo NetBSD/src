@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.282.2.4 2019/09/30 15:55:40 martin Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.282.2.5 2019/10/11 18:22:14 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.4 2019/09/30 15:55:40 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.282.2.5 2019/10/11 18:22:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1157,15 +1157,17 @@ in_arpinput(struct mbuf *m)
 	/*
 	 * DAD check, RFC 5227.
 	 * Collision on sender address is always a duplicate.
-	 * Collision on target address is only a duplicate IF
-	 * the sender address is the null host (ie a DAD probe) AND
-	 * the message was broadcast - if it's unicast then it's
-	 * a valid Unicast Poll from RFC 1122.
+	 * Collision on target address is only a duplicate
+	 * IF the sender address is the null host (ie a DAD probe)
+	 * AND the message was broadcast
+	 * AND our address is either tentative or duplicated
+	 * If it was unicast then it's a valid Unicast Poll from RFC 1122.
 	 */
 	if (do_dad &&
 	    (in_hosteq(isaddr, myaddr) ||
 	    (in_nullhost(isaddr) && in_hosteq(itaddr, myaddr) &&
-	     m->m_flags & M_BCAST)))
+	     m->m_flags & M_BCAST &&
+	     ia->ia4_flags & (IN_IFF_TENTATIVE | IN_IFF_DUPLICATED))))
 	{
 		struct sockaddr_dl sdl, *sdlp;
 
