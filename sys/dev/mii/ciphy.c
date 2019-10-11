@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.35 2019/10/11 09:29:04 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.36 2019/10/11 09:31:52 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.35 2019/10/11 09:29:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.36 2019/10/11 09:31:52 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -339,7 +339,7 @@ ciphy_status(struct mii_softc *sc)
 	}
 
 	if (bmsr & CIPHY_AUXCSR_FDX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
 	else
 		mii->mii_media_active |= IFM_HDX;
 
