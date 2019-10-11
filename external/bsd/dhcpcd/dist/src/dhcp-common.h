@@ -81,6 +81,11 @@
 #define	OT_BITFLAG		(1 << 27)
 #define	OT_RESERVED		(1 << 28)
 
+#define DHC_REQOPT(o, r, n)						  \
+	(!((o)->type & OT_NOREQ) &&					  \
+	 ((o)->type & OT_REQUEST || has_option_mask((r), (o)->option)) && \
+	  !has_option_mask((n), (o)->option))
+
 struct dhcp_opt {
 	uint32_t option; /* Also used for IANA Enterpise Number */
 	int type;
