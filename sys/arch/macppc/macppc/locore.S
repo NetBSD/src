@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.73 2018/07/15 05:16:43 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.74 2019/10/11 21:56:55 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -87,7 +87,9 @@ __start:
 	bl	_C_LABEL(cpu_model_init)	/* init oeacpufeat */
 
 	li	0,0
+#ifndef FIRMWORKSBUGS
 	mtmsr	0			/* Disable FPU/MMU/exceptions */
+#endif
 #if defined(PMAP_OEA64_BRIDGE)
 	mfmsr	0			/* Clear SF and ISF bits */
 	clrldi	0,0,3
