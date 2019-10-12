@@ -1,6 +1,5 @@
-/*	$NetBSD: auth2-passwd.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: auth2-passwd.c,v 1.16 2018/07/09 21:35:50 markus Exp $ */
-
+/*	$NetBSD: auth2-passwd.c,v 1.12 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: auth2-passwd.c,v 1.17 2019/09/06 04:53:27 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -26,11 +25,13 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-passwd.c,v 1.11 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: auth2-passwd.c,v 1.12 2019/10/12 18:32:22 christos Exp $");
 #include <sys/types.h>
 
+#include <stdlib.h>
 #include <string.h>
 #include <stdarg.h>
+#include <stdio.h>
 
 #include "packet.h"
 #include "ssherr.h"

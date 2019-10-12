@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.h,v 1.11 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: dh.h,v 1.17 2019/01/20 01:12:40 dtucker Exp $ */
+/*	$NetBSD: dh.h,v 1.12 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: dh.h,v 1.18 2019/09/06 05:23:55 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
@@ -26,6 +26,8 @@
  */
 #ifndef DH_H
 #define DH_H
+
+#ifdef WITH_OPENSSL
 
 struct dhgroup {
 	int size;
@@ -77,5 +79,6 @@ u_int	 dh_estimate(int);
 #define MODULI_TESTS_JACOBI		(0x08)
 #define MODULI_TESTS_ELLIPTIC		(0x10)
 
+#endif /* WITH_OPENSSL */
 
-#endif
+#endif /* DH_H */

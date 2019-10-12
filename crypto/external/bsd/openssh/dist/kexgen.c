@@ -1,5 +1,5 @@
-/*	$NetBSD: kexgen.c,v 1.2 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: kexgen.c,v 1.2 2019/01/23 00:30:41 djm Exp $ */
+/*	$NetBSD: kexgen.c,v 1.3 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: kexgen.c,v 1.3 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Copyright (c) 2019 Markus Friedl.  All rights reserved.
  *
@@ -102,6 +102,7 @@ kex_gen_client(struct ssh *ssh)
 	int r;
 
 	switch (kex->kex_type) {
+#ifdef WITH_OPENSSL
 	case KEX_DH_GRP1_SHA1:
 	case KEX_DH_GRP14_SHA1:
 	case KEX_DH_GRP14_SHA256:
@@ -112,6 +113,7 @@ kex_gen_client(struct ssh *ssh)
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_keypair(kex);
 		break;
+#endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
 		r = kex_c25519_keypair(kex);
 		break;
@@ -168,6 +170,7 @@ input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
 
 	/* compute shared secret */
 	switch (kex->kex_type) {
+#ifdef WITH_OPENSSL
 	case KEX_DH_GRP1_SHA1:
 	case KEX_DH_GRP14_SHA1:
 	case KEX_DH_GRP14_SHA256:
@@ -178,6 +181,7 @@ input_kex_gen_reply(int type, u_int32_t seq, struct ssh *ssh)
 	case KEX_ECDH_SHA2:
 		r = kex_ecdh_dec(kex, server_blob, &shared_secret);
 		break;
+#endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
 		r = kex_c25519_dec(kex, server_blob, &shared_secret);
 		break;
@@ -260,6 +264,7 @@ input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
 
 	/* compute shared secret */
 	switch (kex->kex_type) {
+#ifdef WITH_OPENSSL
 	case KEX_DH_GRP1_SHA1:
 	case KEX_DH_GRP14_SHA1:
 	case KEX_DH_GRP14_SHA256:
@@ -272,6 +277,7 @@ input_kex_gen_init(int type, u_int32_t seq, struct ssh *ssh)
 		r = kex_ecdh_enc(kex, client_pubkey, &server_pubkey,
 		    &shared_secret);
 		break;
+#endif /* WITH_OPENSSL */
 	case KEX_C25519_SHA256:
 		r = kex_c25519_enc(kex, client_pubkey, &server_pubkey,
 		    &shared_secret);
