@@ -273,7 +273,7 @@ int ipv6_handleifa_addrs(int, struct ipv6_addrhead *, const struct ipv6_addr *,
 struct ipv6_addr *ipv6_iffindaddr(struct interface *,
     const struct in6_addr *, int);
 int ipv6_hasaddr(const struct interface *);
-struct ipv6_addr *ipv6_ifanyglobal(struct interface *);
+struct ipv6_addr *ipv6_anyglobal(struct interface *);
 int ipv6_findaddrmatch(const struct ipv6_addr *, const struct in6_addr *,
     unsigned int);
 struct ipv6_addr *ipv6_findaddr(struct dhcpcd_ctx *,

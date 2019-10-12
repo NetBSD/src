@@ -101,6 +101,14 @@
 #define RT_ADVANCE(x, n) (x += RT_ROUNDUP((n)->sa_len))
 #endif
 
+/* Ignore these interface names which look like ethernet but are virtual. */
+static const char * const ifnames_ignore[] = {
+	"bridge",
+	"fwe",		/* Firewire */
+	"tap",
+	NULL
+};
+
 #ifdef INET6
 static void ifa_setscope(struct sockaddr_in6 *, unsigned int);
 static unsigned int ifa_getscope(const struct sockaddr_in6 *);
@@ -206,6 +214,61 @@ if_closesockets_os(struct dhcpcd_ctx *ctx)
 	priv = (struct priv *)ctx->priv;
 	if (priv->pf_inet6_fd != -1)
 		close(priv->pf_inet6_fd);
+}
+
+static bool
+if_ignore1(const char *drvname)
+{
+	const char * const *p;
+
+	for (p = ifnames_ignore; *p; p++) {
+		if (strcmp(*p, drvname) == 0)
+			return true;
+	}
+	return false;
+}
+
+bool
+if_ignore(struct dhcpcd_ctx *ctx, const char *ifname)
+{
+	struct if_spec spec;
+
+	if (if_nametospec(ifname, &spec) != 0)
+		return false;
+
+	if (if_ignore1(spec.drvname))
+		return true;
+
+#ifdef SIOCGIFGROUP
+	struct ifgroupreq ifgr = { .ifgr_len = 0 };
+	struct ifg_req *ifg;
+	size_t ifg_len;
+
+	/* Sadly it is possible to remove the device name
+	 * from the interface groups, but hopefully this
+	 * will be very unlikely.... */
+
+	strlcpy(ifgr.ifgr_name, ifname, sizeof(ifgr.ifgr_name));
+	if (ioctl(ctx->pf_inet_fd, SIOCGIFGROUP, &ifgr) == -1 ||
+	    (ifgr.ifgr_groups = malloc(ifgr.ifgr_len)) == NULL ||
+	    ioctl(ctx->pf_inet_fd, SIOCGIFGROUP, &ifgr) == -1)
+	{
+		logerr(__func__);
+		return false;
+	}
+
+	for (ifg = ifgr.ifgr_groups, ifg_len = ifgr.ifgr_len;
+	     ifg && ifg_len >= sizeof(*ifg);
+	     ifg++, ifg_len -= sizeof(*ifg))
+	{
+		if (if_ignore1(ifg->ifgrq_group))
+			return true;
+	}
+#else
+	UNUSED(ctx);
+#endif
+
+	return false;
 }
 
 int
@@ -649,6 +712,12 @@ if_copyrt(struct dhcpcd_ctx *ctx, struct rt *rt, const struct rt_msghdr *rtm)
 	}
 #ifdef RTF_CLONED
 	if (rtm->rtm_flags & RTF_CLONED) {
+		errno = ENOTSUP;
+		return -1;
+	}
+#endif
+#ifdef RTF_WASCLONED
+	if (rtm->rtm_flags & RTF_WASCLONED) {
 		errno = ENOTSUP;
 		return -1;
 	}
