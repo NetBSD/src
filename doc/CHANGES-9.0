@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.74 2019/10/11 18:23:40 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.75 2019/10/12 14:49:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4391,4 +4391,116 @@ sys/netinet/if_arp.c				1.289
 
 	ARP: Don't defend ARP probes.
 	[roy, ticket #300]
+
+sys/dev/tprof/tprof_x86_amd.c			1.5
+usr.sbin/tprof/arch/tprof_x86.c			1.9
+usr.sbin/tprof/tprof.8				1.15
+
+	Add support for AMD Family 15h.
+	[jmcneill, ticket #301]
+
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.c  up to 1.1.1.2
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.h  up to 1.1.1.2
+external/bsd/dhcpcd/NetBSD-upgrade              up to 1.2
+external/bsd/dhcpcd/dist/compat/crypt/sha256.c  delete
+external/bsd/dhcpcd/dist/compat/crypt/hmac.c    delete
+external/bsd/dhcpcd/dist/compat/crypt/hmac.h    delete
+external/bsd/dhcpcd/dist/compat/crypt/md5.c     delete
+external/bsd/dhcpcd/dist/compat/crypt/md5.h     delete
+external/bsd/dhcpcd/dist/compat/crypt/sha256.h  delete
+external/bsd/dhcpcd/dist/compat/_strtoi.h       delete
+external/bsd/dhcpcd/dist/compat/arc4random.c    delete
+external/bsd/dhcpcd/dist/compat/arc4random.h    delete
+external/bsd/dhcpcd/dist/compat/arc4random_uniform.c delete
+external/bsd/dhcpcd/dist/compat/arc4random_uniform.h delete
+external/bsd/dhcpcd/dist/compat/bitops.h        delete
+external/bsd/dhcpcd/dist/compat/consttime_memequal.h delete
+external/bsd/dhcpcd/dist/compat/dprintf.c       delete
+external/bsd/dhcpcd/dist/compat/dprintf.h       delete
+external/bsd/dhcpcd/dist/compat/endian.h        delete
+external/bsd/dhcpcd/dist/compat/pidfile.c       delete
+external/bsd/dhcpcd/dist/compat/pidfile.h       delete
+external/bsd/dhcpcd/dist/compat/queue.h         delete
+external/bsd/dhcpcd/dist/compat/rb.c            delete
+external/bsd/dhcpcd/dist/compat/rbtree.h        delete
+external/bsd/dhcpcd/dist/compat/reallocarray.c  delete
+external/bsd/dhcpcd/dist/compat/reallocarray.h  delete
+external/bsd/dhcpcd/dist/compat/strlcpy.c       delete
+external/bsd/dhcpcd/dist/compat/strlcpy.h       delete
+external/bsd/dhcpcd/dist/compat/strtoi.c        delete
+external/bsd/dhcpcd/dist/compat/strtoi.h        delete
+external/bsd/dhcpcd/dist/compat/strtou.c        delete
+external/bsd/dhcpcd/dist/.gitignore             delete
+external/bsd/dhcpcd/dist/BUILDING.md            delete
+external/bsd/dhcpcd/dist/Makefile               delete
+external/bsd/dhcpcd/dist/Makefile.inc           delete
+external/bsd/dhcpcd/dist/config-null.mk         delete
+external/bsd/dhcpcd/dist/configure              delete
+external/bsd/dhcpcd/dist/iconfig.mk             delete
+external/bsd/dhcpcd/dist/hooks/Makefile         delete
+external/bsd/dhcpcd/dist/hooks/50-dhcpcd-compat delete
+external/bsd/dhcpcd/dist/hooks/50-yp.conf       delete
+external/bsd/dhcpcd/dist/src/Makefile           delete
+external/bsd/dhcpcd/dist/src/GNUmakefile        delete
+external/bsd/dhcpcd/dist/src/dev.c              delete
+external/bsd/dhcpcd/dist/src/dhcpcd-definitions-small.conf delete
+external/bsd/dhcpcd/dist/src/dhcpcd-definitions.conf delete
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.c.in delete
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.h.in delete
+external/bsd/dhcpcd/dist/src/genembedc          delete
+external/bsd/dhcpcd/dist/src/genembedh          delete
+external/bsd/dhcpcd/dist/src/if-linux-wext.c    delete
+external/bsd/dhcpcd/dist/src/if-linux.c         delete
+external/bsd/dhcpcd/dist/src/if-sun.c           delete
+external/bsd/dhcpcd/dist/src/dev/Makefile       delete
+external/bsd/dhcpcd/dist/src/dev/udev.c         delete
+external/bsd/dhcpcd/dist/tests/crypt/.gitignore delete
+external/bsd/dhcpcd/dist/tests/crypt/GNUmakefile delete
+external/bsd/dhcpcd/dist/tests/crypt/Makefile   delete
+external/bsd/dhcpcd/dist/tests/crypt/README.md  delete
+external/bsd/dhcpcd/dist/tests/crypt/run-test.c delete
+external/bsd/dhcpcd/dist/tests/crypt/test.h     delete
+external/bsd/dhcpcd/dist/tests/crypt/test_hmac_md5.c delete
+external/bsd/dhcpcd/dist/tests/Makefile         delete
+external/bsd/dhcpcd/dist/tests/eloop-bench/.gitignore delete
+external/bsd/dhcpcd/dist/tests/eloop-bench/Makefile delete
+external/bsd/dhcpcd/dist/tests/eloop-bench/README.md delete
+external/bsd/dhcpcd/dist/tests/eloop-bench/eloop-bench.c delete
+external/bsd/dhcpcd/dist/src/arp.c              up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/bpf.c              up to 1.13
+external/bsd/dhcpcd/dist/src/bpf.h              up to 1.1.1.7
+external/bsd/dhcpcd/dist/src/common.c           up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/common.h           up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/control.h          up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.30
+external/bsd/dhcpcd/dist/src/dhcp-common.c      up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/dhcp-common.h      up to 1.1.1.5
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.28
+external/bsd/dhcpcd/dist/src/dhcp.h             up to 1.1.1.11
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.13
+external/bsd/dhcpcd/dist/src/dhcpcd.8.in        up to 1.4
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.27
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in   up to 1.1.1.15
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.14
+external/bsd/dhcpcd/dist/src/if-options.c       up to 1.18
+external/bsd/dhcpcd/dist/src/if.c               up to 1.1.1.17
+external/bsd/dhcpcd/dist/src/if.h               up to 1.1.1.12
+external/bsd/dhcpcd/dist/src/ipv4.c             up to 1.1.1.18
+external/bsd/dhcpcd/dist/src/ipv4.h             up to 1.1.1.11
+external/bsd/dhcpcd/dist/src/ipv4ll.c           up to 1.1.1.10
+external/bsd/dhcpcd/dist/src/ipv4ll.h           up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.5
+external/bsd/dhcpcd/dist/src/ipv6.h             up to 1.6
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.12
+external/bsd/dhcpcd/dist/src/route.c            up to 1.1.1.15
+external/bsd/dhcpcd/sbin/dhcpcd/Makefile        up to 1.49
+doc/3RDPARTY					modified manually
+
+	Import dhcpcd-8.1.0.
+	[roy, ticket #302]
+
+common/lib/libc/arch/aarch64/gen/byte_swap_8.S	1.2
+
+	Remove htonll and ntohll as symbols from aarch64 libc.
+	[maya, ticket #304]
 
