@@ -1,11 +1,11 @@
-/*	$NetBSD: fpu.c,v 1.57 2019/10/04 11:47:08 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.58 2019/10/12 06:31:04 maxv Exp $	*/
 
 /*
- * Copyright (c) 2008 The NetBSD Foundation, Inc.  All
+ * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
  * rights reserved.
  *
  * This code is derived from software developed for The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran and Maxime Villard.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.57 2019/10/04 11:47:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.58 2019/10/12 06:31:04 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -126,14 +126,44 @@ __KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.57 2019/10/04 11:47:08 maxv Exp $");
 #define stts() HYPERVISOR_fpu_taskswitch(1)
 #endif
 
+void fpu_handle_deferred(void);
+void fpu_switch(struct lwp *, struct lwp *);
+
 uint32_t x86_fpu_mxcsr_mask __read_mostly = 0;
 
 static inline union savefpu *
-lwp_fpuarea(struct lwp *l)
+fpu_lwp_area(struct lwp *l)
 {
 	struct pcb *pcb = lwp_getpcb(l);
+	union savefpu *area = &pcb->pcb_savefpu;
 
-	return &pcb->pcb_savefpu;
+	KASSERT((l->l_flag & LW_SYSTEM) == 0);
+	if (l == curlwp) {
+		fpu_save();
+	}
+	KASSERT(!(l->l_md.md_flags & MDL_FPU_IN_CPU));
+
+	return area;
+}
+
+/*
+ * Bring curlwp's FPU state in memory. It will get installed back in the CPU
+ * when returning to userland.
+ */
+void
+fpu_save(void)
+{
+	struct lwp *l = curlwp;
+	struct pcb *pcb = lwp_getpcb(l);
+	union savefpu *area = &pcb->pcb_savefpu;
+
+	kpreempt_disable();
+	if (l->l_md.md_flags & MDL_FPU_IN_CPU) {
+		KASSERT((l->l_flag & LW_SYSTEM) == 0);
+		fpu_area_save(area, x86_xsave_features);
+		l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
+	}
+	kpreempt_enable();
 }
 
 void
@@ -213,8 +243,6 @@ fpu_errata_amd(void)
 void
 fpu_area_save(void *area, uint64_t xsave_features)
 {
-	clts();
-
 	switch (x86_fpu_save) {
 	case FPU_SAVE_FSAVE:
 		fnsave(area);
@@ -229,6 +257,8 @@ fpu_area_save(void *area, uint64_t xsave_features)
 		xsaveopt(area, xsave_features);
 		break;
 	}
+
+	stts();
 }
 
 void
@@ -254,45 +284,56 @@ fpu_area_restore(void *area, uint64_t xsave_features)
 	}
 }
 
-static void
-fpu_lwp_install(struct lwp *l)
+void
+fpu_handle_deferred(void)
 {
-	struct pcb *pcb = lwp_getpcb(l);
-	struct cpu_info *ci = curcpu();
-
-	KASSERT(ci->ci_fpcurlwp == NULL);
-	KASSERT(pcb->pcb_fpcpu == NULL);
-	ci->ci_fpcurlwp = l;
-	pcb->pcb_fpcpu = ci;
+	struct pcb *pcb = lwp_getpcb(curlwp);
 	fpu_area_restore(&pcb->pcb_savefpu, x86_xsave_features);
 }
-
-void fpu_switch(struct lwp *, struct lwp *);
 
 void
 fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 {
-	int s;
+	struct pcb *pcb;
 
-	s = splhigh();
-#ifdef DIAGNOSTIC
-	if (oldlwp != NULL) {
-		struct pcb *pcb = lwp_getpcb(oldlwp);
-		struct cpu_info *ci = curcpu();
-		if (pcb->pcb_fpcpu == NULL) {
-			KASSERT(ci->ci_fpcurlwp != oldlwp);
-		} else if (pcb->pcb_fpcpu == ci) {
-			KASSERT(ci->ci_fpcurlwp == oldlwp);
-		} else {
-			panic("%s: oldlwp's state installed elsewhere",
-			    __func__);
-		}
+	if ((oldlwp != NULL) && (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU)) {
+		KASSERT(!(oldlwp->l_flag & LW_SYSTEM));
+		pcb = lwp_getpcb(oldlwp);
+		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features);
+		oldlwp->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
-#endif
-	fpusave_cpu(true);
-	if (!(newlwp->l_flag & LW_SYSTEM))
-		fpu_lwp_install(newlwp);
-	splx(s);
+	KASSERT(!(newlwp->l_md.md_flags & MDL_FPU_IN_CPU));
+}
+
+void
+fpu_lwp_fork(struct lwp *l1, struct lwp *l2)
+{
+	struct pcb *pcb2 = lwp_getpcb(l2);
+	union savefpu *fpu_save;
+
+	/* Kernel threads have no FPU. */
+	if (__predict_false(l2->l_flag & LW_SYSTEM)) {
+		return;
+	}
+	/* For init(8). */
+	if (__predict_false(l1->l_flag & LW_SYSTEM)) {
+		memset(&pcb2->pcb_savefpu, 0, x86_fpu_save_size);
+		return;
+	}
+
+	fpu_save = fpu_lwp_area(l1);
+	memcpy(&pcb2->pcb_savefpu, fpu_save, x86_fpu_save_size);
+	l2->l_md.md_flags &= ~MDL_FPU_IN_CPU;
+}
+
+void
+fpu_lwp_abandon(struct lwp *l)
+{
+	KASSERT(l == curlwp);
+	kpreempt_disable();
+	l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
+	stts();
+	kpreempt_enable();
 }
 
 /* -------------------------------------------------------------------------- */
@@ -399,11 +440,7 @@ fputrap(struct trapframe *frame)
 		panic("fpu trap from kernel, trapframe %p\n", frame);
 	}
 
-	/*
-	 * At this point, fpcurlwp should be curlwp.  If it wasn't, the TS bit
-	 * should be set, and we should have gotten a DNA exception.
-	 */
-	KASSERT(curcpu()->ci_fpcurlwp == curlwp);
+	KASSERT(curlwp->l_md.md_flags & MDL_FPU_IN_CPU);
 
 	if (frame->tf_trapno == T_XMM) {
 		uint32_t mxcsr;
@@ -440,103 +477,15 @@ fputrap(struct trapframe *frame)
 	(*curlwp->l_proc->p_emul->e_trapsignal)(curlwp, &ksi);
 }
 
-/*
- * Implement device not available (DNA) exception. Called with interrupts still
- * disabled.
- */
 void
 fpudna(struct trapframe *frame)
 {
-	struct cpu_info *ci = curcpu();
-	int s;
-
-	if (!USERMODE(frame->tf_cs)) {
-		panic("fpudna from kernel, ip %p, trapframe %p\n",
-		    (void *)X86_TF_RIP(frame), frame);
-	}
-
-	/* Install the LWP's FPU state. */
-	s = splhigh();
-	fpu_lwp_install(ci->ci_curlwp);
-	splx(s);
+	panic("fpudna from %s, ip %p, trapframe %p",
+	    USERMODE(frame->tf_cs) ? "userland" : "kernel",
+	    (void *)X86_TF_RIP(frame), frame);
 }
 
 /* -------------------------------------------------------------------------- */
-
-/*
- * Save current CPU's FPU state.  Must be called at IPL_HIGH.
- */
-void
-fpusave_cpu(bool save)
-{
-	struct cpu_info *ci;
-	struct pcb *pcb;
-	struct lwp *l;
-
-	KASSERT(curcpu()->ci_ilevel == IPL_HIGH);
-
-	ci = curcpu();
-	l = ci->ci_fpcurlwp;
-	if (l == NULL) {
-		return;
-	}
-	pcb = lwp_getpcb(l);
-
-	if (save) {
-		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features);
-	}
-
-	stts();
-	pcb->pcb_fpcpu = NULL;
-	ci->ci_fpcurlwp = NULL;
-}
-
-/*
- * Save l's FPU state, which may be on this processor or another processor.
- * It may take some time, so we avoid disabling preemption where possible.
- * Caller must know that the target LWP is stopped, otherwise this routine
- * may race against it.
- */
-void
-fpusave_lwp(struct lwp *l, bool save)
-{
-	struct pcb *pcb = lwp_getpcb(l);
-	struct cpu_info *oci;
-	int s, spins, ticks;
-
-	spins = 0;
-	ticks = hardclock_ticks;
-	for (;;) {
-		s = splhigh();
-		oci = pcb->pcb_fpcpu;
-		if (oci == NULL) {
-			splx(s);
-			break;
-		}
-		if (oci == curcpu()) {
-			KASSERT(oci->ci_fpcurlwp == l);
-			fpusave_cpu(save);
-			splx(s);
-			break;
-		}
-		splx(s);
-#ifdef XENPV
-		if (xen_send_ipi(oci, XEN_IPI_SYNCH_FPU) != 0) {
-			panic("xen_send_ipi(%s, XEN_IPI_SYNCH_FPU) failed.",
-			    cpu_name(oci));
-		}
-#else
-		x86_send_ipi(oci, X86_IPI_SYNCH_FPU);
-#endif
-		while (pcb->pcb_fpcpu == oci && ticks == hardclock_ticks) {
-			x86_pause();
-			spins++;
-		}
-		if (spins > 100000000) {
-			panic("fpusave_lwp: did not");
-		}
-	}
-}
 
 static inline void
 fpu_xstate_reload(union savefpu *fpu_save, uint64_t xstate)
@@ -552,7 +501,7 @@ fpu_xstate_reload(union savefpu *fpu_save, uint64_t xstate)
 void
 fpu_set_default_cw(struct lwp *l, unsigned int x87_cw)
 {
-	union savefpu *fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 	struct pcb *pcb = lwp_getpcb(l);
 
 	if (i386_use_fxsave) {
@@ -571,18 +520,9 @@ fpu_clear(struct lwp *l, unsigned int x87_cw)
 {
 	union savefpu *fpu_save;
 	struct pcb *pcb;
-	int s;
 
 	KASSERT(l == curlwp);
-	KASSERT((l->l_flag & LW_SYSTEM) == 0);
-	fpu_save = lwp_fpuarea(l);
-	pcb = lwp_getpcb(l);
-
-	s = splhigh();
-
-	KASSERT(pcb->pcb_fpcpu == NULL || pcb->pcb_fpcpu == curcpu());
-	fpusave_cpu(false);
-	KASSERT(pcb->pcb_fpcpu == NULL);
+	fpu_save = fpu_lwp_area(l);
 
 	switch (x86_fpu_save) {
 	case FPU_SAVE_FSAVE:
@@ -608,16 +548,14 @@ fpu_clear(struct lwp *l, unsigned int x87_cw)
 		break;
 	}
 
+	pcb = lwp_getpcb(l);
 	pcb->pcb_fpu_dflt_cw = x87_cw;
-
-	fpu_lwp_install(l);
-	splx(s);
 }
 
 void
 fpu_sigreset(struct lwp *l)
 {
-	union savefpu *fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 	struct pcb *pcb = lwp_getpcb(l);
 
 	/*
@@ -633,17 +571,6 @@ fpu_sigreset(struct lwp *l)
 		fpu_save->sv_87.s87_tw = 0xffff;
 		fpu_save->sv_87.s87_cw = pcb->pcb_fpu_dflt_cw;
 	}
-}
-
-void
-fpu_save_area_fork(struct pcb *pcb2, const struct pcb *pcb1)
-{
-	const uint8_t *src = (const uint8_t *)&pcb1->pcb_savefpu;
-	uint8_t *dst = (uint8_t *)&pcb2->pcb_savefpu;
-
-	memcpy(dst, src, x86_fpu_save_size);
-
-	KASSERT(pcb2->pcb_fpcpu == NULL);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -769,10 +696,7 @@ process_s87_to_xmm(const struct save87 *s87, struct fxsave *sxmm)
 void
 process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 {
-	union savefpu *fpu_save;
-
-	fpusave_lwp(l, true);
-	fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 
 	if (i386_use_fxsave) {
 		memcpy(&fpu_save->sv_xmm, fpregs, sizeof(fpu_save->sv_xmm));
@@ -792,17 +716,12 @@ process_write_fpregs_xmm(struct lwp *l, const struct fxsave *fpregs)
 void
 process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 {
-	union savefpu *fpu_save;
+	union savefpu *fpu_save = fpu_lwp_area(l);
 
 	if (i386_use_fxsave) {
-		/* Save so we don't lose the xmm registers */
-		fpusave_lwp(l, true);
-		fpu_save = lwp_fpuarea(l);
 		process_s87_to_xmm(fpregs, &fpu_save->sv_xmm);
 		fpu_xstate_reload(fpu_save, XCR0_X87 | XCR0_SSE);
 	} else {
-		fpusave_lwp(l, false);
-		fpu_save = lwp_fpuarea(l);
 		memcpy(&fpu_save->sv_87, fpregs, sizeof(fpu_save->sv_87));
 	}
 }
@@ -810,10 +729,7 @@ process_write_fpregs_s87(struct lwp *l, const struct save87 *fpregs)
 void
 process_read_fpregs_xmm(struct lwp *l, struct fxsave *fpregs)
 {
-	union savefpu *fpu_save;
-
-	fpusave_lwp(l, true);
-	fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 
 	if (i386_use_fxsave) {
 		memcpy(fpregs, &fpu_save->sv_xmm, sizeof(fpu_save->sv_xmm));
@@ -826,10 +742,7 @@ process_read_fpregs_xmm(struct lwp *l, struct fxsave *fpregs)
 void
 process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 {
-	union savefpu *fpu_save;
-
-	fpusave_lwp(l, true);
-	fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 
 	if (i386_use_fxsave) {
 		memset(fpregs, 0, sizeof(*fpregs));
@@ -842,10 +755,7 @@ process_read_fpregs_s87(struct lwp *l, struct save87 *fpregs)
 int
 process_read_xstate(struct lwp *l, struct xstate *xstate)
 {
-	union savefpu *fpu_save;
-
-	fpusave_lwp(l, true);
-	fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 
 	if (x86_fpu_save == FPU_SAVE_FSAVE) {
 		/* Convert from legacy FSAVE format. */
@@ -924,10 +834,7 @@ process_verify_xstate(const struct xstate *xstate)
 int
 process_write_xstate(struct lwp *l, const struct xstate *xstate)
 {
-	union savefpu *fpu_save;
-
-	fpusave_lwp(l, true);
-	fpu_save = lwp_fpuarea(l);
+	union savefpu *fpu_save = fpu_lwp_area(l);
 
 	/* Convert data into legacy FSAVE format. */
 	if (x86_fpu_save == FPU_SAVE_FSAVE) {

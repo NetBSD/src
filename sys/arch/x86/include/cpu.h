@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2019/10/03 05:06:29 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.110 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -119,7 +119,6 @@ struct cpu_info {
 	 */
 	struct cpu_info *ci_next;	/* next cpu */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	uint32_t ci_acpiid;		/* our ACPI/MADT ID */
 	uint32_t ci_initapicid;		/* our initial APIC ID */
