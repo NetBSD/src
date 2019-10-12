@@ -1,4 +1,4 @@
-#	$NetBSD: std.n900,v 1.8 2019/10/12 05:19:00 skrll Exp $
+#	$NetBSD: std.n900,v 1.9 2019/10/12 05:19:49 skrll Exp $
 #
 # standard NetBSD/evbarm for N900 options
 
@@ -16,6 +16,7 @@ options 	FPU_VFP
 options 	TPIDRPRW_IS_CURCPU
 options 	__HAVE_CPU_COUNTER
 options 	__HAVE_FAST_SOFTINTS		# should be in types.h
+options 	__HAVE_GENERIC_START
 options 	__HAVE_MM_MD_DIRECT_MAPPED_PHYS
 
 makeoptions 	LOADADDRESS="0x80300000"
