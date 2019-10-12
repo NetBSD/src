@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.66 2019/10/09 13:19:43 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.67 2019/10/12 12:04:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.66 2019/10/09 13:19:43 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.67 2019/10/12 12:04:37 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1202,8 +1202,12 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 				signo = tmp;
 				tmp = 0;	/* don't search for LWP */
 			}
-		} else
+		} else if (tmp == INT_MIN) {
+			error = ESRCH;
+			break;
+		} else {
 			tmp = -tmp;
+		}
 
 		if (tmp > 0) {
 			if (req == PT_DETACH) {
