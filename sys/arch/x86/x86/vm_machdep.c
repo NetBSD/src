@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.37 2019/02/11 14:59:33 cherry Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.38 2019/10/12 06:31:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.37 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2019/10/12 06:31:04 maxv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -140,12 +140,6 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	pcb2 = lwp_getpcb(l2);
 
 	/*
-	 * If parent LWP was using FPU, then we have to save the FPU h/w
-	 * state to PCB so that we can copy it.
-	 */
-	fpusave_lwp(l1, true);
-
-	/*
 	 * Sync the PCB before we copy it.
 	 */
 	if (l1 == curlwp) {
@@ -158,11 +152,8 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	/* Copy the PCB from parent, except the FPU state. */
 	memcpy(pcb2, pcb1, offsetof(struct pcb, pcb_savefpu));
 
-	/* FPU state not installed. */
-	pcb2->pcb_fpcpu = NULL;
-
-	/* Copy FPU state. */
-	fpu_save_area_fork(pcb2, pcb1);
+	/* Fork the FPU state. */
+	fpu_lwp_fork(l1, l2);
 
 	/* Never inherit CPU Debug Registers */
 	pcb2->pcb_dbregs = NULL;
@@ -260,8 +251,8 @@ void
 cpu_lwp_free(struct lwp *l, int proc)
 {
 
-	/* If we were using the FPU, forget about it. */
-	fpusave_lwp(l, false);
+	/* Abandon the FPU state. */
+	fpu_lwp_abandon(l);
 
 	/* Abandon the dbregs state. */
 	x86_dbregs_abandon(l);

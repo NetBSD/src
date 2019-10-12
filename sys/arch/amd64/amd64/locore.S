@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.188 2019/10/04 11:47:07 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.189 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1170,29 +1170,10 @@ ENTRY(cpu_switchto)
 	movq	%rax,TF_RIP(%rbx)
 .Lno_RAS:
 
-	/*
-	 * Restore cr0 including FPU state (may have CR0_TS set).  Note that
-	 * IPL_SCHED prevents from FPU interrupt altering the LWP's saved cr0.
-	 */
 #ifndef XENPV
+	/* Raise the IPL to IPL_HIGH. Dropping the priority is deferred until
+	 * mi_switch(), when cpu_switchto() returns. XXX Still needed? */
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%r14),%ecx	/* has CR0_TS clear */
-	movq	%cr0,%rdx
-
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	cmpq	CPUVAR(FPCURLWP),%r12
-	je	.Lskip_TS
-	orq	$CR0_TS,%rcx
-.Lskip_TS:
-
-	/* Reloading CR0 is very expensive - avoid if possible. */
-	cmpq	%rdx,%rcx
-	je	.Lskip_CR0
-	movq	%rcx,%cr0
-.Lskip_CR0:
 
 	/* The 32bit LWPs are handled differently. */
 	testl	$PCB_COMPAT32,PCB_FLAGS(%r14)
@@ -1304,6 +1285,8 @@ ENTRY(handle_syscall)
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	.Lspl_error
 #endif
+
+	HANDLE_DEFERRED_FPU
 
 	/*
 	 * Decide if we need to take a slow path. That's the case when we

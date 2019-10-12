@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.49 2019/10/04 12:17:05 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.50 2019/10/12 06:31:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.49 2019/10/04 12:17:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.50 2019/10/12 06:31:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -541,8 +541,6 @@ struct svm_cpudata {
 	uint64_t sfmask;
 	uint64_t fsbase;
 	uint64_t kernelgsbase;
-	bool ts_set;
-	struct xsave_header hfpu __aligned(64);
 
 	/* Intr state */
 	bool int_window_exit;
@@ -1137,6 +1135,9 @@ svm_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	}
 
 	cpudata->gxcr0 = val;
+	if (svm_xcr0_mask != 0) {
+		wrxcr(0, cpudata->gxcr0);
+	}
 
 	svm_inkernel_advance(cpudata->vmcb);
 	return;
@@ -1159,9 +1160,7 @@ svm_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct svm_cpudata *cpudata = vcpu->cpudata;
 
-	cpudata->ts_set = (rcr0() & CR0_TS) != 0;
-
-	fpu_area_save(&cpudata->hfpu, svm_xcr0_mask);
+	fpu_save();
 	fpu_area_restore(&cpudata->gfpu, svm_xcr0_mask);
 
 	if (svm_xcr0_mask != 0) {
@@ -1181,11 +1180,6 @@ svm_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 	}
 
 	fpu_area_save(&cpudata->gfpu, svm_xcr0_mask);
-	fpu_area_restore(&cpudata->hfpu, svm_xcr0_mask);
-
-	if (cpudata->ts_set) {
-		stts();
-	}
 }
 
 static void
@@ -1327,6 +1321,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	svm_vcpu_guest_dbregs_enter(vcpu);
 	svm_vcpu_guest_misc_enter(vcpu);
+	svm_vcpu_guest_fpu_enter(vcpu);
 
 	while (1) {
 		if (cpudata->gtlb_want_flush) {
@@ -1342,9 +1337,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 		s = splhigh();
 		machgen = svm_htlb_flush(machdata, cpudata);
-		svm_vcpu_guest_fpu_enter(vcpu);
 		svm_vmrun(cpudata->vmcb_pa, cpudata->gprs);
-		svm_vcpu_guest_fpu_leave(vcpu);
 		svm_htlb_flush_ack(cpudata, machgen);
 		splx(s);
 
@@ -1437,6 +1430,7 @@ svm_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	cpudata->gtsc = rdtsc() + vmcb->ctrl.tsc_offset;
 
+	svm_vcpu_guest_fpu_leave(vcpu);
 	svm_vcpu_guest_misc_leave(vcpu);
 	svm_vcpu_guest_dbregs_leave(vcpu);
 

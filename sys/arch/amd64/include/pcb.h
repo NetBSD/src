@@ -1,4 +1,4 @@
-/*	$NetBSD: pcb.h,v 1.29 2018/07/26 09:29:08 maxv Exp $	*/
+/*	$NetBSD: pcb.h,v 1.30 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -96,7 +96,6 @@ struct pcb {
 
 	uint32_t pcb_unused[8];		/* unused */
 
-	struct cpu_info *pcb_fpcpu;	/* cpu holding our fp state. */
 	union savefpu	pcb_savefpu __aligned(64); /* floating point state */
 	/* **** DO NOT ADD ANYTHING HERE **** */
 };

@@ -1,4 +1,4 @@
-/*	$NetBSD: i386_trap.S,v 1.19 2019/10/04 15:28:00 maxv Exp $	*/
+/*	$NetBSD: i386_trap.S,v 1.20 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright 2002 (c) Wasabi Systems, Inc.
@@ -66,7 +66,7 @@
 
 #if 0
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.19 2019/10/04 15:28:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i386_trap.S,v 1.20 2019/10/12 06:31:03 maxv Exp $");
 #endif
 
 /*
@@ -436,10 +436,10 @@ calltrap:
 
 #ifdef XEN
 	STIC(%eax)
-	jz	6f
+	jz	22f
 	call	_C_LABEL(stipending)
 	testl	%eax,%eax
-	jz	6f
+	jz	22f
 	/* process pending interrupts */
 	CLI(%eax)
 	movl	CPUVAR(ILEVEL),%ebx
@@ -448,14 +448,17 @@ calltrap:
 	movl	%ebx,%eax		/* get cpl */
 	movl	CPUVAR(XUNMASK)(,%eax,4),%eax
 	andl	CPUVAR(XPENDING),%eax	/* any non-masked bits left? */
-	jz	7f
+	jz	11f
 	bsrl	%eax,%eax
 	btrl	%eax,CPUVAR(XPENDING)
 	movl	CPUVAR(XSOURCES)(,%eax,4),%eax
 	jmp	*IS_RESUME(%eax)
-7:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
+11:	movl	%ebx,CPUVAR(ILEVEL)	/* restore cpl */
 	jmp	.Lalltraps_checkusr
+22:
 #endif
+
+	HANDLE_DEFERRED_FPU
 
 6:
 #ifdef DIAGNOSTIC

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.171 2019/10/04 15:28:00 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.172 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.171 2019/10/04 15:28:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.172 2019/10/12 06:31:03 maxv Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1187,33 +1187,14 @@ skip_save:
 	movl	%eax,TF_EIP(%ecx)
 no_RAS:
 
-	/*
-	 * Restore cr0 (including FPU state).  Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
-	 */
 #ifdef XENPV
 	pushl	%edi
 	call	_C_LABEL(i386_tls_switch)
 	addl	$4,%esp
 #else
+	/* Raise the IPL to IPL_HIGH. Dropping the priority is deferred until
+	 * mi_switch(), when cpu_switchto() returns. XXX Still needed? */
 	movl	$IPL_HIGH,CPUVAR(ILEVEL)
-	movl	PCB_CR0(%ebx),%ecx		/* has CR0_TS clear */
-	movl	%cr0,%edx
-
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	cmpl	CPUVAR(FPCURLWP),%edi
-	je	skip_TS
-	orl	$CR0_TS,%ecx
-skip_TS:
-
-	/* Reloading CR0 is very expensive - avoid if possible. */
-	cmpl	%edx,%ecx
-	je	switch_return
-	movl	%ecx,%cr0
 #endif
 
 switch_return:
@@ -1321,6 +1302,8 @@ IDTVEC(syscall)
 	cmpl	$IPL_NONE,CPUVAR(ILEVEL)
 	jne	3f
 #endif
+
+	HANDLE_DEFERRED_FPU
 
 	INTRFASTEXIT
 

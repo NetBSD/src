@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.40 2019/02/14 08:18:25 cherry Exp $	*/
+/*	$NetBSD: spl.S,v 1.41 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -397,6 +397,7 @@ LABEL(doreti_checkast)
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
+	HANDLE_DEFERRED_FPU
 6:
 	INTRFASTEXIT
 9:

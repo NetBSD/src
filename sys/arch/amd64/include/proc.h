@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.22 2017/02/25 13:34:21 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.23 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -55,6 +55,7 @@ struct mdlwp {
 
 #define	MDL_COMPAT32		0x0008	/* i386, always return via iret */
 #define	MDL_IRET		0x0010	/* force return via iret, not sysret */
+#define	MDL_FPU_IN_CPU		0x0020	/* the FPU state is in the CPU */
 
 struct mdproc {
 	int	md_flags;

@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.48 2019/05/18 13:32:12 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.49 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -672,6 +672,7 @@ calltrap:
 	jmp	.Lalltraps_checkast	/* re-check ASTs */
 3:	CHECK_DEFERRED_SWITCH
 	jnz	9f
+	HANDLE_DEFERRED_FPU
 
 6:
 #ifdef DIAGNOSTIC

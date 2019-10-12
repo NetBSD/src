@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.820 2019/05/19 08:46:15 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.821 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.820 2019/05/19 08:46:15 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.821 2019/10/12 06:31:03 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -509,19 +509,9 @@ i386_tls_switch(lwp_t *l)
 	struct pcb *pcb = lwp_getpcb(l);
 
 	/*
-	 * Raise the IPL to IPL_HIGH.
-	 * FPU IPIs can alter the LWP's saved cr0.  Dropping the priority
-	 * is deferred until mi_switch(), when cpu_switchto() returns.
+	 * Raise the IPL to IPL_HIGH. XXX Still needed?
 	 */
 	(void)splhigh();
-
-	/*
-	 * If our floating point registers are on a different CPU,
-	 * set CR0_TS so we'll trap rather than reuse bogus state.
-	 */
-	if (l != ci->ci_fpcurlwp) {
-		HYPERVISOR_fpu_taskswitch(1);
-	}
 
 	/* Update TLS segment pointers */
 	update_descriptor(&ci->ci_gdt[GUFS_SEL],

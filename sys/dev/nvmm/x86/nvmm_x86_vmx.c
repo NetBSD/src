@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.38 2019/10/04 12:17:05 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.39 2019/10/12 06:31:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.38 2019/10/04 12:17:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.39 2019/10/12 06:31:04 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -733,8 +733,6 @@ struct vmx_cpudata {
 	uint64_t cstar;
 	uint64_t sfmask;
 	uint64_t kernelgsbase;
-	bool ts_set;
-	struct xsave_header hfpu __aligned(64);
 
 	/* Intr state */
 	bool int_window_exit;
@@ -1659,6 +1657,9 @@ vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	}
 
 	cpudata->gxcr0 = val;
+	if (vmx_xcr0_mask != 0) {
+		wrxcr(0, cpudata->gxcr0);
+	}
 
 	vmx_inkernel_advance();
 	return;
@@ -1703,9 +1704,7 @@ vmx_vcpu_guest_fpu_enter(struct nvmm_cpu *vcpu)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 
-	cpudata->ts_set = (rcr0() & CR0_TS) != 0;
-
-	fpu_area_save(&cpudata->hfpu, vmx_xcr0_mask);
+	fpu_save();
 	fpu_area_restore(&cpudata->gfpu, vmx_xcr0_mask);
 
 	if (vmx_xcr0_mask != 0) {
@@ -1725,11 +1724,6 @@ vmx_vcpu_guest_fpu_leave(struct nvmm_cpu *vcpu)
 	}
 
 	fpu_area_save(&cpudata->gfpu, vmx_xcr0_mask);
-	fpu_area_restore(&cpudata->hfpu, vmx_xcr0_mask);
-
-	if (cpudata->ts_set) {
-		stts();
-	}
 }
 
 static void
@@ -1911,6 +1905,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	vmx_vcpu_guest_dbregs_enter(vcpu);
 	vmx_vcpu_guest_misc_enter(vcpu);
+	vmx_vcpu_guest_fpu_enter(vcpu);
 
 	while (1) {
 		if (cpudata->gtlb_want_flush) {
@@ -1927,7 +1922,6 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 		s = splhigh();
 		machgen = vmx_htlb_flush(machdata, cpudata);
-		vmx_vcpu_guest_fpu_enter(vcpu);
 		lcr2(cpudata->gcr2);
 		if (launched) {
 			ret = vmx_vmresume(cpudata->gprs);
@@ -1935,7 +1929,6 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			ret = vmx_vmlaunch(cpudata->gprs);
 		}
 		cpudata->gcr2 = rcr2();
-		vmx_vcpu_guest_fpu_leave(vcpu);
 		vmx_htlb_flush_ack(cpudata, machgen);
 		splx(s);
 
@@ -2039,6 +2032,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 	cpudata->gtsc = vmx_vmread(VMCS_TSC_OFFSET) + rdtsc();
 
+	vmx_vcpu_guest_fpu_leave(vcpu);
 	vmx_vcpu_guest_misc_leave(vcpu);
 	vmx_vcpu_guest_dbregs_leave(vcpu);
 

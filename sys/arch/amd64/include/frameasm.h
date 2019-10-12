@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.44 2019/05/18 13:32:12 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.45 2019/10/12 06:31:03 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -245,5 +245,19 @@
 
 #define CHECK_ASTPENDING(reg)	cmpl	$0, L_MD_ASTPENDING(reg)
 #define CLEAR_ASTPENDING(reg)	movl	$0, L_MD_ASTPENDING(reg)
+
+/*
+ * If the FPU state is not in the CPU, restore it. Executed with interrupts
+ * disabled.
+ *
+ *     %r14 is curlwp, must not be modified
+ *     %rbx must not be modified
+ */
+#define HANDLE_DEFERRED_FPU	\
+	testl	$MDL_FPU_IN_CPU,L_MD_FLAGS(%r14)	; \
+	jnz	1f					; \
+	call	_C_LABEL(fpu_handle_deferred)		; \
+	orl	$MDL_FPU_IN_CPU,L_MD_FLAGS(%r14)	; \
+1:
 
 #endif /* _AMD64_MACHINE_FRAMEASM_H */

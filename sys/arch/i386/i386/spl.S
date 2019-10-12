@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.48 2019/10/04 15:28:00 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.49 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.48 2019/10/04 15:28:00 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spl.S,v 1.49 2019/10/12 06:31:03 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_spldebug.h"
@@ -326,6 +326,7 @@ END(doreti_checkast)
 3:
 	CHECK_DEFERRED_SWITCH
 	jnz	9f
+	HANDLE_DEFERRED_FPU
 6:
 #ifdef XEN
 	STIC(%eax)
