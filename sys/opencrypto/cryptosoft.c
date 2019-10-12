@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptosoft.c,v 1.53 2019/07/11 23:27:24 christos Exp $ */
+/*	$NetBSD: cryptosoft.c,v 1.54 2019/10/12 00:49:30 christos Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptosoft.c,v 1.2.2.1 2002/11/21 23:34:23 sam Exp $	*/
 /*	$OpenBSD: cryptosoft.c,v 1.35 2002/04/26 08:43:50 deraadt Exp $	*/
 
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.53 2019/07/11 23:27:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptosoft.c,v 1.54 2019/10/12 00:49:30 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -500,7 +500,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 		break;
 	case CRYPTO_BUF_MBUF:
 		err = m_apply((struct mbuf *) buf, crd->crd_skip, crd->crd_len,
-		    (int (*)(void*, void *, unsigned int)) axf->Update,
+		    (int (*)(void*, void *, unsigned int))(void *)axf->Update,
 		    (void *) &ctx);
 		if (err)
 			return err;
@@ -508,7 +508,7 @@ swcr_authcompute(struct cryptop *crp, struct cryptodesc *crd,
 	case CRYPTO_BUF_IOV:
 		err = cuio_apply((struct uio *) buf, crd->crd_skip,
 		    crd->crd_len,
-		    (int (*)(void *, void *, unsigned int)) axf->Update,
+		    (int (*)(void *, void *, unsigned int))(void *)axf->Update,
 		    (void *) &ctx);
 		if (err) {
 			return err;
