@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.27 2017/02/08 10:08:26 maxv Exp $	*/
+/*	$NetBSD: ipi.c,v 1.28 2019/10/12 06:31:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.27 2017/02/08 10:08:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.28 2019/10/12 06:31:04 maxv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -176,7 +176,7 @@ static void
 x86_ipi_synch_fpu(struct cpu_info *ci)
 {
 
-	fpusave_cpu(true);
+	panic("%s: impossible", __func__);
 }
 
 #ifdef MTRR

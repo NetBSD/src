@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.129 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130 2019/10/12 06:31:04 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.129 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130 2019/10/12 06:31:04 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -759,15 +759,14 @@ cpu_debug_dump(void)
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
 
-	db_printf("addr		dev	id	flags	ipis	curlwp 		fpcurlwp\n");
+	db_printf("addr		dev	id	flags	ipis	curlwp\n");
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%s	%ld	%x	%x	%10p	%10p\n",
+		db_printf("%p	%s	%ld	%x	%x	%10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
 		    (long)ci->ci_cpuid,
 		    ci->ci_flags, ci->ci_ipis,
-		    ci->ci_curlwp,
-		    ci->ci_fpcurlwp);
+		    ci->ci_curlwp);
 	}
 }
 #endif /* DDB */
@@ -1066,11 +1065,7 @@ cpu_init_msrs(struct cpu_info *ci, bool full)
 void
 cpu_offline_md(void)
 {
-	int s;
-
-	s = splhigh();
-	fpusave_cpu(true);
-	splx(s);
+	return;
 }
 
 void

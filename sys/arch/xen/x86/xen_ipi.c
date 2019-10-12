@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.32 2019/02/02 12:32:55 cherry Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.33 2019/10/12 06:31:04 maxv Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.32 2019/02/02 12:32:55 cherry Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.33 2019/10/12 06:31:04 maxv Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.32 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.33 2019/10/12 06:31:04 maxv Exp $");
 
 #include "opt_ddb.h"
 
@@ -237,7 +237,7 @@ xen_ipi_synch_fpu(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
 
-	fpusave_cpu(true);
+	panic("%s: impossible", __func__);
 }
 
 #ifdef DDB

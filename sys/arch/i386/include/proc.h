@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.45 2017/02/25 13:34:21 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.46 2019/10/12 06:31:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -42,6 +42,8 @@
  */
 struct pmap;
 struct vm_page;
+
+#define	MDL_FPU_IN_CPU		0x0020	/* the FPU state is in the CPU */
 
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
