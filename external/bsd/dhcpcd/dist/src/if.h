@@ -152,6 +152,7 @@ int if_nametospec(const char *, struct if_spec *);
 int if_conf(struct interface *);
 int if_init(struct interface *);
 int if_getssid(struct interface *);
+bool if_ignore(struct dhcpcd_ctx *, const char *);
 int if_vimaster(const struct dhcpcd_ctx *ctx, const char *);
 unsigned short if_vlanid(const struct interface *);
 int if_opensockets(struct dhcpcd_ctx *);

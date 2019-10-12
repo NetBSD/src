@@ -312,6 +312,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 	struct if_head *ifs;
 	struct interface *ifp;
 	struct if_spec spec;
+	bool if_noconf;
 #ifdef AF_LINK
 	const struct sockaddr_dl *sdl;
 #ifdef IFLR_ACTIVE
@@ -405,18 +406,22 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			continue;
 #endif
 
-		/* Don't allow loopback or pointopoint unless explicit */
-		if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT)) {
-			if ((argc == 0 || argc == -1) &&
-			    ctx->ifac == 0 && !if_hasconf(ctx, spec.devname))
-				active = IF_INACTIVE;
-		}
-
 		if (if_vimaster(ctx, spec.devname) == 1) {
 			logfunc_t *logfunc = argc != 0 ? logerrx : logdebugx;
 			logfunc("%s: is a Virtual Interface Master, skipping",
 			    spec.devname);
 			continue;
+		}
+
+		if_noconf = ((argc == 0 || argc == -1) && ctx->ifac == 0 &&
+		    !if_hasconf(ctx, spec.devname));
+
+		/* Don't allow loopback or pointopoint unless explicit.
+		 * Don't allow some reserved interface names unless explicit. */
+		if (if_noconf) {
+			if (ifa->ifa_flags & (IFF_LOOPBACK | IFF_POINTOPOINT) ||
+			    if_ignore(ctx, spec.devname))
+				active = IF_INACTIVE;
 		}
 
 		ifp = calloc(1, sizeof(*ifp));
@@ -453,27 +458,23 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #ifdef IFT_BRIDGE
 			case IFT_BRIDGE: /* FALLTHROUGH */
 #endif
-#ifdef IFT_PPP
-			case IFT_PPP: /* FALLTHROUGH */
-#endif
 #ifdef IFT_PROPVIRTUAL
-			case IFT_PROPVIRTUAL:
+			case IFT_PROPVIRTUAL: /* FALLTHROUGH */
 #endif
-#if defined(IFT_BRIDGE) || defined(IFT_PPP) || defined(IFT_PROPVIRTUAL)
+#ifdef IFT_TUNNEL
+			case IFT_TUNNEL: /* FALLTHROUGH */
+#endif
+			case IFT_PPP:
 				/* Don't allow unless explicit */
-				if ((argc == 0 || argc == -1) &&
-				    ctx->ifac == 0 && active &&
-				    !if_hasconf(ctx, ifp->name))
-				{
+				if (if_noconf) {
 					logdebugx("%s: ignoring due to"
 					    " interface type and"
 					    " no config",
 					    ifp->name);
 					active = IF_INACTIVE;
 				}
-				__fallthrough; /* Appease gcc-7 */
+				__fallthrough; /* appease gcc */
 				/* FALLTHROUGH */
-#endif
 #ifdef IFT_L2VLAN
 			case IFT_L2VLAN: /* FALLTHROUGH */
 #endif
@@ -495,13 +496,11 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 #endif
 			default:
 				/* Don't allow unless explicit */
-				if ((argc == 0 || argc == -1) &&
-				    ctx->ifac == 0 &&
-				    !if_hasconf(ctx, ifp->name))
+				if (if_noconf)
 					active = IF_INACTIVE;
 				if (active)
 					logwarnx("%s: unsupported"
-					    " interface type %.2x",
+					    " interface type 0x%.2x",
 					    ifp->name, sdl->sdl_type);
 				/* Pretend it's ethernet */
 				ifp->family = ARPHRD_ETHER;
@@ -564,7 +563,7 @@ if_discover(struct dhcpcd_ctx *ctx, struct ifaddrs **ifaddrs,
 			default:
 				if (active)
 					logwarnx("%s: unsupported"
-					    " interface family %.2x",
+					    " interface family 0x%.2x",
 					    ifp->name, ifp->family);
 				break;
 #endif

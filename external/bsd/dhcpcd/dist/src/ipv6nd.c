@@ -1290,7 +1290,7 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 		}
 	}
 
-	if (new_data && !has_address && rap->lifetime && !ipv6_ifanyglobal(ifp))
+	if (new_data && !has_address && rap->lifetime && !ipv6_anyglobal(ifp))
 		logwarnx("%s: no global addresses for default route",
 		    ifp->name);
 

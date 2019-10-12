@@ -64,7 +64,7 @@ ssize_t ipv4ll_env(FILE *, const char *, const struct interface *);
 void ipv4ll_start(void *);
 void ipv4ll_claimed(void *);
 void ipv4ll_handle_failure(void *);
-void ipv4ll_handleifa(int, struct ipv4_addr *, pid_t pid);
+struct ipv4_addr *ipv4ll_handleifa(int, struct ipv4_addr *, pid_t pid);
 #ifdef HAVE_ROUTE_METRIC
 int ipv4ll_recvrt(int, const struct rt *);
 #endif

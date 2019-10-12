@@ -590,6 +590,12 @@ configure_interface1(struct interface *ifp)
 		}
 	}
 #endif
+
+	/* If root is network mounted, we don't want to kill the connection
+	 * if the DHCP server goes the way of the dodo OR dhcpcd is rebooting
+	 * and the lease file has expired. */
+	if (is_root_local() == 0)
+		ifo->options |= DHCPCD_LASTLEASE_EXTEND;
 }
 
 int
@@ -1088,8 +1094,13 @@ static void
 dhcpcd_checkcarrier(void *arg)
 {
 	struct interface *ifp = arg;
+	int carrier;
 
-	dhcpcd_handlecarrier(ifp->ctx, LINK_UNKNOWN, ifp->flags, ifp->name);
+	/* Check carrier here rather than setting LINK_UNKNOWN.
+	 * This is because we force LINK_UNKNOWN as down for wireless which
+	 * we do not want when dealing with a route socket overflow. */
+	carrier = if_carrier(ifp);
+	dhcpcd_handlecarrier(ifp->ctx, carrier, ifp->flags, ifp->name);
 }
 
 #ifndef SMALL

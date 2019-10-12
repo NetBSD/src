@@ -26,28 +26,12 @@
  * SUCH DAMAGE.
  */
 
-#include <sys/param.h>
-#include <sys/time.h>
-#ifdef __sun
-#include <sys/sysmacros.h>
-#endif
+#include <sys/statvfs.h>
 
-#include <assert.h>
 #include <ctype.h>
-#include <err.h>
 #include <errno.h>
-#include <fcntl.h>
-#include <limits.h>
-#ifdef BSD
-#  include <paths.h>
-#endif
-#include <stdarg.h>
-#include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
-#include <string.h>
-#include <time.h>
-#include <unistd.h>
 
 #include "common.h"
 #include "dhcpcd.h"
@@ -152,4 +136,19 @@ read_hwaddr_aton(uint8_t **data, const char *path)
 	}
 	fclose(fp);
 	return len;
+}
+
+int
+is_root_local(void)
+{
+#ifdef ST_LOCAL
+	struct statvfs vfs;
+
+	if (statvfs("/", &vfs) == -1)
+		return -1;
+	return vfs.f_flag & ST_LOCAL ? 1 : 0;
+#else
+	errno = ENOTSUP;
+	return -1;
+#endif
 }
