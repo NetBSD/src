@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.75 2019/10/12 14:49:29 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.76 2019/10/12 15:12:09 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4503,4 +4503,10 @@ common/lib/libc/arch/aarch64/gen/byte_swap_8.S	1.2
 
 	Remove htonll and ntohll as symbols from aarch64 libc.
 	[maya, ticket #304]
+
+sbin/newfs_msdos/mkfs_msdos.c			1.15
+
+	Allow FAT32 formatting of typical EFI partitions with default
+	parameters.
+	[martin, ticket #303]
 
