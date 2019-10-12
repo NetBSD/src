@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.96 2019/09/30 21:13:33 kamil Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.97 2019/10/12 19:57:09 kamil Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -153,7 +153,6 @@ void	setsigvec(struct proc *, int, struct sigaction *);
 int	killpg1(struct lwp *, struct ksiginfo *, int, int);
 void	proc_unstop(struct proc *p);
 void	eventswitch(int, int, int);
-void	sigswitch(int, int, bool);
 
 
 int	sigaction1(struct lwp *, int, const struct sigaction *,
