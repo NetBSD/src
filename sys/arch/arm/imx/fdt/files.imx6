@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.6 2019/08/19 11:41:36 hkenken Exp $
+#	$NetBSD: files.imx6,v 1.7 2019/10/12 06:46:13 skrll Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -71,13 +71,13 @@ attach	imxpcie at fdt with imxpcie_fdt
 file	arch/arm/imx/imxpcie.c			imxpcie
 file	arch/arm/imx/fdt/imx6_pcie.c		imxpcie_fdt
 
-# iMX iic Controler
+# iMX iic controller
 device	imxi2c: motoi2c, i2cbus, i2cexec
 attach	imxi2c at fdt
 file	arch/arm/imx/imxi2c.c			imxi2c
 file	arch/arm/imx/fdt/imx6_i2c.c		imxi2c
 
-# SPI bus controlloer
+# SPI bus controller
 device  imxspi : spibus
 attach	imxspi at fdt with imxspi_fdt
 file    arch/arm/imx/imxspi.c			imxspi
