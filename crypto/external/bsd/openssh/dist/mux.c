@@ -1,5 +1,5 @@
-/*	$NetBSD: mux.c,v 1.23 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: mux.c,v 1.79 2019/01/19 21:35:25 djm Exp $ */
+/*	$NetBSD: mux.c,v 1.24 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: mux.c,v 1.80 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Copyright (c) 2002-2008 Damien Miller <djm@openbsd.org>
  *
@@ -19,7 +19,7 @@
 /* ssh session multiplexing support */
 
 #include "includes.h"
-__RCSID("$NetBSD: mux.c,v 1.23 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: mux.c,v 1.24 2019/10/12 18:32:22 christos Exp $");
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/stat.h>
@@ -1482,7 +1482,7 @@ mux_client_read(int fd, struct sshbuf *b, size_t need)
 			return -1;
 		}
 		len = read(fd, p + have, need - have);
-		if (len < 0) {
+		if (len == -1) {
 			switch (errno) {
 			case EAGAIN:
 				(void)poll(&pfd, 1, -1);
@@ -1528,7 +1528,7 @@ mux_client_write_packet(int fd, struct sshbuf *m)
 			return -1;
 		}
 		len = write(fd, ptr + have, need - have);
-		if (len < 0) {
+		if (len == -1) {
 			switch (errno) {
 			case EAGAIN:
 				(void)poll(&pfd, 1, -1);
@@ -2310,7 +2310,7 @@ muxclient(const char *path)
 		fatal("ControlPath too long ('%s' >= %u bytes)", path,
 		     (unsigned int)sizeof(addr.sun_path));
 
-	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) < 0)
+	if ((sock = socket(PF_UNIX, SOCK_STREAM, 0)) == -1)
 		fatal("%s socket(): %s", __func__, strerror(errno));
 
 	if (connect(sock, (struct sockaddr *)&addr, sizeof(addr)) == -1) {

@@ -1,5 +1,5 @@
-/*	$NetBSD: packet.c,v 1.38 2019/04/26 01:51:55 christos Exp $	*/
-/* $OpenBSD: packet.c,v 1.283 2019/03/01 03:29:32 djm Exp $ */
+/*	$NetBSD: packet.c,v 1.39 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: packet.c,v 1.286 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -39,7 +39,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: packet.c,v 1.38 2019/04/26 01:51:55 christos Exp $");
+__RCSID("$NetBSD: packet.c,v 1.39 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/param.h>	/* MIN roundup */
 #include <sys/types.h>
@@ -64,7 +64,6 @@ __RCSID("$NetBSD: packet.c,v 1.38 2019/04/26 01:51:55 christos Exp $");
 #include <zlib.h>
 
 #include "xmalloc.h"
-#include "crc32.h"
 #include "compat.h"
 #include "ssh2.h"
 #include "cipher.h"
@@ -284,7 +283,7 @@ ssh_packet_set_connection(struct ssh *ssh, int fd_in, int fd_out)
 	if (ssh == NULL)
 		ssh = ssh_alloc_session_state();
 	if (ssh == NULL) {
-		error("%s: cound not allocate state", __func__);
+		error("%s: could not allocate state", __func__);
 		return NULL;
 	}
 	state = ssh->state;
@@ -428,12 +427,12 @@ ssh_packet_connection_is_on_socket(struct ssh *ssh)
 	fromlen = sizeof(from);
 	memset(&from, 0, sizeof(from));
 	if (getpeername(state->connection_in, (struct sockaddr *)&from,
-	    &fromlen) < 0)
+	    &fromlen) == -1)
 		return 0;
 	tolen = sizeof(to);
 	memset(&to, 0, sizeof(to));
 	if (getpeername(state->connection_out, (struct sockaddr *)&to,
-	    &tolen) < 0)
+	    &tolen) == -1)
 		return 0;
 	if (fromlen != tolen || memcmp(&from, &to, fromlen) != 0)
 		return 0;
@@ -459,7 +458,7 @@ ssh_packet_connection_af(struct ssh *ssh)
 
 	memset(&to, 0, sizeof(to));
 	if (getsockname(ssh->state->connection_out, (struct sockaddr *)&to,
-	    &tolen) < 0)
+	    &tolen) == -1)
 		return 0;
 #ifdef IPV4_IN_IPV6
 	if (to.ss_family == AF_INET6 &&
@@ -1353,7 +1352,7 @@ ssh_packet_read_seqnr(struct ssh *ssh, u_char *typep, u_int32_t *seqnr_p)
 			r = SSH_ERR_CONN_CLOSED;
 			goto out;
 		}
-		if (len < 0) {
+		if (len == -1) {
 			r = SSH_ERR_SYSTEM_ERROR;
 			goto out;
 		}
@@ -2033,14 +2032,14 @@ ssh_packet_set_tos(struct ssh *ssh, int tos)
 	case AF_INET:
 		debug3("%s: set IP_TOS 0x%02x", __func__, tos);
 		if (setsockopt(ssh->state->connection_in,
-		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) < 0)
+		    IPPROTO_IP, IP_TOS, &tos, sizeof(tos)) == -1)
 			error("setsockopt IP_TOS %d: %.100s:",
 			    tos, strerror(errno));
 		break;
 	case AF_INET6:
 		debug3("%s: set IPV6_TCLASS 0x%02x", __func__, tos);
 		if (setsockopt(ssh->state->connection_in,
-		    IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof(tos)) < 0)
+		    IPPROTO_IPV6, IPV6_TCLASS, &tos, sizeof(tos)) == -1)
 			error("setsockopt IPV6_TCLASS %d: %.100s:",
 			    tos, strerror(errno));
 		break;

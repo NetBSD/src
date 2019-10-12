@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.h,v 1.13 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: cipher.h,v 1.53 2018/09/13 02:08:33 djm Exp $ */
+/*	$NetBSD: cipher.h,v 1.14 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: cipher.h,v 1.54 2019/09/06 05:23:55 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -39,7 +39,9 @@
 #define CIPHER_H
 
 #include <sys/types.h>
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
+#endif
 #include "cipher-chachapoly.h"
 #include "cipher-aesctr.h"
 

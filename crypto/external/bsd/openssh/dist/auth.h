@@ -1,5 +1,5 @@
-/*	$NetBSD: auth.h,v 1.19 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: auth.h,v 1.99 2019/01/19 21:43:56 djm Exp $ */
+/*	$NetBSD: auth.h,v 1.20 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: auth.h,v 1.100 2019/09/06 05:23:55 djm Exp $ */
 
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.

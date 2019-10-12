@@ -1,6 +1,5 @@
-/*	$NetBSD: sshkey-xmss.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $	*/
-/* $OpenBSD: sshkey-xmss.c,v 1.3 2018/07/09 21:59:10 markus Exp $ */
-
+/*	$NetBSD: sshkey-xmss.c,v 1.5 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: sshkey-xmss.c,v 1.6 2019/10/09 00:02:57 djm Exp $ */
 /*
  * Copyright (c) 2017 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +24,7 @@
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshkey-xmss.c,v 1.4 2019/01/27 02:08:33 pgoyette Exp $");
+__RCSID("$NetBSD: sshkey-xmss.c,v 1.5 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/uio.h>
@@ -465,18 +464,18 @@ sshkey_xmss_get_state(const struct sshkey *k, sshkey_printfn *pr)
 	}
 	if ((filename = k->xmss_filename) == NULL)
 		goto done;
-	if (asprintf(&lockfile, "%s.lock", filename) < 0 ||
-	    asprintf(&statefile, "%s.state", filename) < 0 ||
-	    asprintf(&ostatefile, "%s.ostate", filename) < 0) {
+	if (asprintf(&lockfile, "%s.lock", filename) == -1 ||
+	    asprintf(&statefile, "%s.state", filename) == -1 ||
+	    asprintf(&ostatefile, "%s.ostate", filename) == -1) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto done;
 	}
-	if ((lockfd = open(lockfile, O_CREAT|O_RDONLY, 0600)) < 0) {
+	if ((lockfd = open(lockfile, O_CREAT|O_RDONLY, 0600)) == -1) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: cannot open/create: %s", __func__, lockfile);
 		goto done;
 	}
-	while (flock(lockfd, LOCK_EX|LOCK_NB) < 0) {
+	while (flock(lockfd, LOCK_EX|LOCK_NB) == -1) {
 		if (errno != EWOULDBLOCK) {
 			ret = SSH_ERR_SYSTEM_ERROR;
 			PRINT("%s: cannot lock: %s", __func__, lockfile);
@@ -592,9 +591,9 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 	state->idx = idx;
 	if ((filename = k->xmss_filename) == NULL)
 		goto done;
-	if (asprintf(&statefile, "%s.state", filename) < 0 ||
-	    asprintf(&ostatefile, "%s.ostate", filename) < 0 ||
-	    asprintf(&nstatefile, "%s.nstate", filename) < 0) {
+	if (asprintf(&statefile, "%s.state", filename) == -1 ||
+	    asprintf(&ostatefile, "%s.ostate", filename) == -1 ||
+	    asprintf(&nstatefile, "%s.nstate", filename) == -1) {
 		ret = SSH_ERR_ALLOC_FAIL;
 		goto done;
 	}
@@ -611,7 +610,7 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 		PRINT("%s: ENCRYPT FAILED: %d", __func__, ret);
 		goto done;
 	}
-	if ((fd = open(nstatefile, O_CREAT|O_WRONLY|O_EXCL, 0600)) < 0) {
+	if ((fd = open(nstatefile, O_CREAT|O_WRONLY|O_EXCL, 0600)) == -1) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: open new state file: %s", __func__, nstatefile);
 		goto done;
@@ -630,13 +629,13 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 		close(fd);
 		goto done;
 	}
-	if (fsync(fd) < 0) {
+	if (fsync(fd) == -1) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: sync new state file: %s", __func__, nstatefile);
 		close(fd);
 		goto done;
 	}
-	if (close(fd) < 0) {
+	if (close(fd) == -1) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: close new state file: %s", __func__, nstatefile);
 		goto done;
@@ -650,7 +649,7 @@ sshkey_xmss_update_state(const struct sshkey *k, sshkey_printfn *pr)
 			goto done;
 		}
 	}
-	if (rename(nstatefile, statefile) < 0) {
+	if (rename(nstatefile, statefile) == -1) {
 		ret = SSH_ERR_SYSTEM_ERROR;
 		PRINT("%s: rename %s to %s", __func__, nstatefile, statefile);
 		goto done;
@@ -975,7 +974,8 @@ sshkey_xmss_decrypt_state(const struct sshkey *k, struct sshbuf *encoded,
 		goto out;
 	}
 	/* check that an appropriate amount of auth data is present */
-	if (sshbuf_len(encoded) < encrypted_len + authlen) {
+	if (sshbuf_len(encoded) < authlen ||
+	    sshbuf_len(encoded) - authlen < encrypted_len) {
 		r = SSH_ERR_INVALID_FORMAT;
 		goto out;
 	}

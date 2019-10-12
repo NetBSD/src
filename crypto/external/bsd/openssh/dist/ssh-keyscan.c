@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.24 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.126 2019/01/26 22:35:01 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.25 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.130 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.24 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.25 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -18,7 +18,9 @@ __RCSID("$NetBSD: ssh-keyscan.c,v 1.24 2019/04/20 17:16:40 christos Exp $");
 #include <sys/time.h>
 #include <sys/resource.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/bn.h>
+#endif
 
 #include <errno.h>
 #include <netdb.h>
@@ -120,7 +122,7 @@ fdlim_get(int hard)
 {
 	struct rlimit rlfd;
 
-	if (getrlimit(RLIMIT_NOFILE, &rlfd) < 0)
+	if (getrlimit(RLIMIT_NOFILE, &rlfd) == -1)
 		return (-1);
 	if ((hard ? rlfd.rlim_max : rlfd.rlim_cur) == RLIM_INFINITY)
 		return sysconf(_SC_OPEN_MAX);
@@ -135,10 +137,10 @@ fdlim_set(int lim)
 
 	if (lim <= 0)
 		return (-1);
-	if (getrlimit(RLIMIT_NOFILE, &rlfd) < 0)
+	if (getrlimit(RLIMIT_NOFILE, &rlfd) == -1)
 		return (-1);
 	rlfd.rlim_cur = lim;
-	if (setrlimit(RLIMIT_NOFILE, &rlfd) < 0)
+	if (setrlimit(RLIMIT_NOFILE, &rlfd) == -1)
 		return (-1);
 	return (0);
 }
@@ -222,7 +224,12 @@ keygrab_ssh2(con *c)
 		break;
 	case KT_RSA:
 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
-		    "ssh-rsa-cert-v01@openssh.com" : "ssh-rsa";
+		    "rsa-sha2-512-cert-v01@openssh.com,"
+		    "rsa-sha2-256-cert-v01@openssh.com,"
+		    "ssh-rsa-cert-v01@openssh.com" :
+		    "rsa-sha2-512,"
+		    "rsa-sha2-256,"
+		    "ssh-rsa";
 		break;
 	case KT_ED25519:
 		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
@@ -330,13 +337,13 @@ tcpconnect(char *host)
 	}
 	for (ai = aitop; ai; ai = ai->ai_next) {
 		s = socket(ai->ai_family, ai->ai_socktype, ai->ai_protocol);
-		if (s < 0) {
+		if (s == -1) {
 			error("socket: %s", strerror(errno));
 			continue;
 		}
 		if (set_nonblock(s) == -1)
 			fatal("%s: set_nonblock(%d)", __func__, s);
-		if (connect(s, ai->ai_addr, ai->ai_addrlen) < 0 &&
+		if (connect(s, ai->ai_addr, ai->ai_addrlen) == -1 &&
 		    errno != EINPROGRESS)
 			error("connect (`%s'): %s", host, strerror(errno));
 		else
@@ -643,7 +650,6 @@ main(int argc, char **argv)
 	extern int optind;
 	extern char *optarg;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&tq);
 
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */

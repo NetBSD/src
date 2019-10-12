@@ -1,5 +1,5 @@
-/*	$NetBSD: moduli.c,v 1.13 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: moduli.c,v 1.34 2019/01/23 09:49:00 dtucker Exp $ */
+/*	$NetBSD: moduli.c,v 1.14 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: moduli.c,v 1.36 2019/10/04 03:26:58 dtucker Exp $ */
 /*
  * Copyright 1994 Phil Karn <karn@qualcomm.com>
  * Copyright 1996-1998, 2003 William Allen Simpson <wsimpson@greendragon.com>
@@ -38,7 +38,7 @@
  * Second step: test primes' safety (processor intensive)
  */
 #include "includes.h"
-__RCSID("$NetBSD: moduli.c,v 1.13 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: moduli.c,v 1.14 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/types.h>
 
@@ -156,6 +156,8 @@ qfileout(FILE * ofile, u_int32_t otype, u_int32_t otests, u_int32_t otries,
 
 	time(&time_now);
 	gtm = gmtime(&time_now);
+	if (gtm == NULL)
+		return -1;
 
 	res = fprintf(ofile, "%04d%02d%02d%02d%02d%02d %u %u %u %u %x ",
 	    gtm->tm_year + 1900, gtm->tm_mon + 1, gtm->tm_mday,
@@ -450,7 +452,7 @@ write_checkpoint(char *cpfile, u_int32_t lineno)
 	int r;
 
 	r = snprintf(tmp, sizeof(tmp), "%s.XXXXXXXXXX", cpfile);
-	if (r == -1 || r >= PATH_MAX) {
+	if (r < 0 || r >= PATH_MAX) {
 		logit("write_checkpoint: temp pathname too long");
 		return;
 	}

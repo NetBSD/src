@@ -1,5 +1,5 @@
-/*	$NetBSD: serverloop.c,v 1.25 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: serverloop.c,v 1.215 2019/03/27 09:29:14 djm Exp $ */
+/*	$NetBSD: serverloop.c,v 1.26 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: serverloop.c,v 1.216 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -37,7 +37,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: serverloop.c,v 1.25 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: serverloop.c,v 1.26 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -140,7 +140,7 @@ static int notify_pipe[2];
 static void
 notify_setup(void)
 {
-	if (pipe(notify_pipe) < 0) {
+	if (pipe(notify_pipe) == -1) {
 		error("pipe(notify_pipe) failed %s", strerror(errno));
 	} else if ((fcntl(notify_pipe[0], F_SETFD, FD_CLOEXEC) == -1) ||
 	    (fcntl(notify_pipe[1], F_SETFD, FD_CLOEXEC) == -1)) {
@@ -345,7 +345,7 @@ process_input(struct ssh *ssh, fd_set *readset, int connection_in)
 			verbose("Connection closed by %.100s port %d",
 			    ssh_remote_ipaddr(ssh), ssh_remote_port(ssh));
 			return -1;
-		} else if (len < 0) {
+		} else if (len == -1) {
 			if (errno != EINTR && errno != EAGAIN) {
 				verbose("Read error from remote host "
 				    "%.100s port %d: %.100s",
@@ -400,7 +400,7 @@ collect_children(struct ssh *ssh)
 	if (child_terminated) {
 		debug("Received SIGCHLD.");
 		while ((pid = waitpid(-1, &status, WNOHANG)) > 0 ||
-		    (pid < 0 && errno == EINTR))
+		    (pid == -1 && errno == EINTR))
 			if (pid > 0)
 				session_close_by_pid(ssh, pid, status);
 		child_terminated = 0;

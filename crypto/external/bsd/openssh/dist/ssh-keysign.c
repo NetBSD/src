@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.17 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.56 2018/11/23 05:08:07 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.18 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.61 2019/10/02 00:42:30 djm Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,16 +25,18 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.17 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.18 2019/10/12 18:32:22 christos Exp $");
 #include <sys/types.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
-#include <openssl/rsa.h>
+#endif
 
 #include <fcntl.h>
 #include <paths.h>
 #include <pwd.h>
 #include <stdlib.h>
+#include <stdio.h>
 #include <string.h>
 #include <unistd.h>
 #include <errno.h>
@@ -52,7 +54,6 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.17 2019/04/20 17:16:40 christos Exp $");
 #include "pathnames.h"
 #include "readconf.h"
 #include "uidswap.h"
-#include "sshkey.h"
 #include "ssherr.h"
 
 extern char *__progname;
@@ -169,7 +170,6 @@ main(int argc, char **argv)
 	char *host, *fp;
 	size_t slen, dlen;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 #ifdef __OpenBSD__
 	if (pledge("stdio rpath getpw dns id", NULL) != 0)
 		fatal("%s: pledge: %s", __progname, strerror(errno));
@@ -216,8 +216,9 @@ main(int argc, char **argv)
 	if (found == 0)
 		fatal("could not open any host key");
 
+#ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
-
+#endif
 	found = 0;
 	for (i = 0; i < NUM_KEYTYPES; i++) {
 		keys[i] = NULL;
@@ -252,7 +253,7 @@ main(int argc, char **argv)
 	if ((r = sshbuf_get_u32(b, (u_int *)&fd)) != 0)
 		fatal("%s: buffer error: %s", __progname, ssh_err(r));
 	if (fd < 0 || fd == STDIN_FILENO || fd == STDOUT_FILENO)
-		fatal("bad fd");
+		fatal("bad fd = %d", fd);
 	if ((host = get_local_name(fd)) == NULL)
 		fatal("cannot get local name for fd");
 

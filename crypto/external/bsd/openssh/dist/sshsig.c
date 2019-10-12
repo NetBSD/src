@@ -1,3 +1,5 @@
+/*	$NetBSD: sshsig.c,v 1.2 2019/10/12 18:32:22 christos Exp $	*/
+
 /*
  * Copyright (c) 2019 Google LLC
  *
@@ -13,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sshsig.c,v 1.2 2019/10/12 18:32:22 christos Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -396,7 +400,7 @@ hash_buffer(const struct sshbuf *m, const char *hashalg, struct sshbuf **bp)
 		    __func__, hashalg);
 		return SSH_ERR_INTERNAL_ERROR;
 	}
-	if ((r = ssh_digest_buffer(alg, m, hash, sizeof(hash))) != 0) {
+	if ((r = ssh_digest_buffer(alg, m, (unsigned char *)hash, sizeof(hash))) != 0) {
 		error("%s: ssh_digest_buffer failed: %s", __func__, ssh_err(r));
 		return r;
 	}
@@ -521,7 +525,7 @@ hash_file(int fd, const char *hashalg, struct sshbuf **bp)
 			goto out;
 		}
 	}
-	if ((r = ssh_digest_final(ctx, hash, sizeof(hash))) != 0) {
+	if ((r = ssh_digest_final(ctx, (unsigned char *)hash, sizeof(hash))) != 0) {
 		error("%s: ssh_digest_final: %s", __func__, ssh_err(r));
 		goto out;
 	}

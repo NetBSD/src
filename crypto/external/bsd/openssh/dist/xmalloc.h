@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.h,v 1.10 2017/10/07 19:39:19 christos Exp $	*/
-/* $OpenBSD: xmalloc.h,v 1.17 2017/05/31 09:15:42 deraadt Exp $ */
+/*	$NetBSD: xmalloc.h,v 1.11 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: xmalloc.h,v 1.18 2019/06/06 05:13:13 otto Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -17,7 +17,6 @@
  * called by a name other than "ssh" or "Secure Shell".
  */
 
-void	 ssh_malloc_init(void);
 void	*xmalloc(size_t);
 void	*xcalloc(size_t, size_t);
 void	*xreallocarray(void *, size_t, size_t);
