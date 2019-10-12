@@ -1,5 +1,5 @@
-/*	$NetBSD: auth-options.h,v 1.11 2018/08/26 07:46:36 christos Exp $	*/
-/* $OpenBSD: auth-options.h,v 1.27 2018/06/06 18:23:32 djm Exp $ */
+/*	$NetBSD: auth-options.h,v 1.12 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: auth-options.h,v 1.28 2019/07/09 04:15:00 djm Exp $ */
 
 /*
  * Copyright (c) 2018 Damien Miller <djm@mindrot.org>
@@ -22,6 +22,9 @@
 
 struct passwd;
 struct sshkey;
+
+/* Maximum number of permitopen/permitlisten directives to accept */
+#define SSH_AUTHOPT_PERMIT_MAX 4096
 
 /*
  * sshauthopt represents key options parsed from authorized_keys or

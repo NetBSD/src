@@ -1,5 +1,5 @@
-/*	$NetBSD: dh.c,v 1.17 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: dh.c,v 1.69 2018/11/09 02:56:22 djm Exp $ */
+/*	$NetBSD: dh.c,v 1.18 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: dh.c,v 1.71 2019/09/06 06:08:11 djm Exp $ */
 /*
  * Copyright (c) 2000 Niels Provos.  All rights reserved.
  *
@@ -25,11 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: dh.c,v 1.17 2019/04/20 17:16:40 christos Exp $");
-
-#include <sys/param.h>	/* MIN */
-#include <openssl/bn.h>
-#include <openssl/dh.h>
+__RCSID("$NetBSD: dh.c,v 1.18 2019/10/12 18:32:22 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -37,6 +33,9 @@ __RCSID("$NetBSD: dh.c,v 1.17 2019/04/20 17:16:40 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <limits.h>
+
+#include <openssl/bn.h>
+#include <openssl/dh.h>
 
 #include "dh.h"
 #include "pathnames.h"

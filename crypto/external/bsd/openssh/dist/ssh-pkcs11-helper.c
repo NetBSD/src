@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-pkcs11-helper.c,v 1.16 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.17 2019/01/23 02:01:10 djm Exp $ */
+/*	$NetBSD: ssh-pkcs11-helper.c,v 1.17 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.21 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -16,13 +16,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.16 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.17 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/queue.h>
 #include <sys/time.h>
 #include <sys/param.h>
 
+#include <stdlib.h>
 #include <errno.h>
 #include <poll.h>
 #include <stdarg.h>
@@ -37,6 +38,8 @@ __RCSID("$NetBSD: ssh-pkcs11-helper.c,v 1.16 2019/04/20 17:16:40 christos Exp $"
 #include "authfd.h"
 #include "ssh-pkcs11.h"
 #include "ssherr.h"
+
+#ifdef WITH_OPENSSL
 
 /* borrows code from sftp-server and ssh-agent */
 
@@ -192,7 +195,6 @@ process_sign(void)
 	else {
 		if ((found = lookup_key(key)) != NULL) {
 #ifdef WITH_OPENSSL
-			u_int xslen;
 			int ret;
 
 			if (key->type == KEY_RSA) {
@@ -205,7 +207,8 @@ process_sign(void)
 					ok = 0;
 				}
 			} else if (key->type == KEY_ECDSA) {
-				xslen = ECDSA_size(key->ecdsa);
+				u_int xslen = ECDSA_size(key->ecdsa);
+
 				signature = xmalloc(xslen);
 				/* "The parameter type is ignored." */
 				ret = ECDSA_sign(-1, data, dlen, signature,
@@ -317,7 +320,6 @@ main(int argc, char **argv)
 	extern char *__progname;
 	struct pollfd pfd[2];
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&pkcs11_keylist);
 
 	log_init(__progname, log_level, log_facility, log_stderr);
@@ -417,3 +419,18 @@ main(int argc, char **argv)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	}
 }
+
+#else /* WITH_OPENSSL */
+void
+cleanup_exit(int i)
+{
+	_exit(i);
+}
+
+int
+main(int argc, char **argv)
+{
+	fprintf(stderr, "PKCS#11 code is not enabled\n");
+	return 1;
+}
+#endif /* WITH_OPENSSL */
