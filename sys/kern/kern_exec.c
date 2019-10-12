@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.482 2019/09/30 21:13:33 kamil Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.483 2019/10/12 10:55:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.482 2019/09/30 21:13:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.483 2019/10/12 10:55:23 kamil Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -2249,7 +2249,7 @@ spawn_return(void *arg)
 		}
 
 		mutex_enter(p->p_lock);
-		eventswitch(TRAP_CHLD, PTRACE_POSIX_SPAWN, p->p_oppid);
+		eventswitch(TRAP_CHLD, PTRACE_POSIX_SPAWN, p->p_opptr->p_pid);
 	}
 
  cpu_return:
@@ -2630,7 +2630,6 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	if ((p1->p_slflag & (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) ==
 	    (PSL_TRACEPOSIX_SPAWN|PSL_TRACED)) {
 		proc_changeparent(p2, p1->p_pptr);
-		p2->p_oppid = p1->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);

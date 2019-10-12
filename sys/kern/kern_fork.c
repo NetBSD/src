@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.214 2019/09/30 21:13:33 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.215 2019/10/12 10:55:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.214 2019/09/30 21:13:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.215 2019/10/12 10:55:23 kamil Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -510,10 +510,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
-	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
+	if (tracefork(p1, flags) || tracevfork(p1, flags))
 		proc_changeparent(p2, p1->p_pptr);
-		p2->p_oppid = p1->p_pid;
-	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
 	LIST_INSERT_HEAD(&allproc, p2, p_list);
@@ -640,7 +638,7 @@ child_return(void *arg)
 		mutex_enter(p->p_lock);
 		eventswitch(TRAP_CHLD,
 		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK,
-		    p->p_oppid);
+		    p->p_opptr->p_pid);
 	}
 
 my_tracer_is_gone:

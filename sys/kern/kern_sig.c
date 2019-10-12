@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.367 2019/10/08 18:02:46 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.368 2019/10/12 10:55:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.367 2019/10/08 18:02:46 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.368 2019/10/12 10:55:23 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1599,6 +1599,8 @@ eventswitch(int code, int pe_report_event, int entity)
 	KASSERT(p->p_nrlwps > 0);
 	KASSERT((code == TRAP_CHLD) || (code == TRAP_LWP) ||
 	        (code == TRAP_EXEC));
+	KASSERT((code != TRAP_CHLD) || (entity > 1)); /* prevent pid1 */
+	KASSERT((code != TRAP_LWP) || (entity > 0));
 
 repeat:
 	/*
