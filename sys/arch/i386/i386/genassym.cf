@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.113 2019/03/09 08:42:25 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.114 2019/10/12 06:31:03 maxv Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -165,6 +165,7 @@ define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
+define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	L_CPU			offsetof(struct lwp, l_cpu)
@@ -175,6 +176,8 @@ define	L_KPRIORITY		offsetof(struct lwp, l_kpriority)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_MD_SYSCALL		offsetof(struct proc, p_md.md_syscall)
+
+define	MDL_FPU_IN_CPU		MDL_FPU_IN_CPU
 
 define	LW_SYSTEM		LW_SYSTEM
 
@@ -200,6 +203,7 @@ define	PCB_ONFAULT		offsetof(struct pcb, pcb_onfault)
 define	PCB_FSD			offsetof(struct pcb, pcb_fsd)
 define	PCB_GSD			offsetof(struct pcb, pcb_gsd)
 define	PCB_IOMAP		offsetof(struct pcb, pcb_iomap)
+define	PCB_SAVEFPU		offsetof(struct pcb, pcb_savefpu)
 
 define	TF_CS			offsetof(struct trapframe, tf_cs)
 define	TF_EIP			offsetof(struct trapframe, tf_eip)
@@ -251,7 +255,6 @@ define	CPU_INFO_WANT_PMAPLOAD	offsetof(struct cpu_info, ci_want_pmapload)
 define	CPU_INFO_TLBSTATE	offsetof(struct cpu_info, ci_tlbstate)
 define	TLBSTATE_VALID		TLBSTATE_VALID
 define	CPU_INFO_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CPU_INFO_FPCURLWP	offsetof(struct cpu_info, ci_fpcurlwp)
 define	CPU_INFO_CURLDT		offsetof(struct cpu_info, ci_curldt)
 define	CPU_INFO_IDLELWP	offsetof(struct cpu_info, ci_data.cpu_idlelwp)
 define	CPU_INFO_PMAP		offsetof(struct cpu_info, ci_pmap)
