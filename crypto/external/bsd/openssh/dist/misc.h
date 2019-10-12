@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.16 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.79 2019/01/23 21:50:56 dtucker Exp $ */
+/*	$NetBSD: misc.h,v 1.17 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: misc.h,v 1.81 2019/09/03 08:32:11 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -45,6 +45,7 @@ struct ForwardOptions {
 /* misc.c */
 
 char	*chop(char *);
+void	skip_space(char **);
 char	*strdelim(char **);
 char	*strdelimw(char **);
 int	 set_nonblock(int);
@@ -171,6 +172,11 @@ int	 safe_path(const char *, struct stat *, const char *, uid_t,
 	     char *, size_t);
 int	 safe_path_fd(int, const char *, struct passwd *,
 	     char *err, size_t errlen);
+
+/* authorized_key-style options parsing helpers */
+int	opt_flag(const char *opt, int allow_negate, const char **optsp);
+char	*opt_dequote(const char **sp, const char **errstrp);
+int	opt_match(const char **opts, const char *term);
 
 /* readpass.c */
 
