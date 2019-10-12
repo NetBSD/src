@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.874 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: shl.mi,v 1.875 2019/10/12 09:09:14 mrg Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -859,8 +859,6 @@
 ./usr/lib/libssl.so.14				base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libssl.so.14.0			base-crypto-shlib	compatfile,openssl=11
 ./usr/lib/libstdc++.so				base-sys-shlib		compatfile,gcc,cxx,libstdcxx
-./usr/lib/libstdc++.so.8			base-sys-shlib		compatfile,obsolete
-./usr/lib/libstdc++.so.8.1			base-sys-shlib		compatfile,obsolete
 ./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
 ./usr/lib/libstdc++.so.9.0			base-sys-shlib		compatfile,gcc=7,cxx,libstdcxx
 ./usr/lib/libstdc++.so.9			base-sys-shlib		compatfile,gcc=8,cxx,libstdcxx
