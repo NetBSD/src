@@ -1,4 +1,4 @@
-/*	$NetBSD: btpin.c,v 1.7 2017/12/21 09:04:34 plunky Exp $	*/
+/*	$NetBSD: btpin.c,v 1.8 2019/10/12 17:50:56 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2006 Itronix, Inc.  All rights reserved.");
-__RCSID("$NetBSD: btpin.c,v 1.7 2017/12/21 09:04:34 plunky Exp $");
+__RCSID("$NetBSD: btpin.c,v 1.8 2019/10/12 17:50:56 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/un.h>
@@ -132,8 +132,11 @@ main(int ac, char *av[])
 	} else {
 		if (len != -1)
 			usage();
+		len = strlen(pin);
+		if (len > HCI_PIN_SIZE)
+			len = HCI_PIN_SIZE;
 
-		strncpy((char *)rp.pin, pin, HCI_PIN_SIZE);
+		memcpy(rp.pin, pin, len);
 	}
 
 	s = socket(PF_LOCAL, SOCK_STREAM, 0);
