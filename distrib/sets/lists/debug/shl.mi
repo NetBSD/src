@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.233 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: shl.mi,v 1.234 2019/10/12 09:09:14 mrg Exp $
 ./usr/lib/libbfd_g.a						comp-c-debuglib	debuglib,compatfile,binutils
 ./usr/libdata/debug/lib						base-sys-usr	debug,dynamicroot,compatdir
 ./usr/libdata/debug/lib/libavl.so.0.0.debug			comp-zfs-debug	debug,dynamicroot,zfs
@@ -294,7 +294,6 @@
 ./usr/libdata/debug/usr/lib/libssh.so.34.0.debug		comp-secsh-debug	debug,compatfile
 ./usr/libdata/debug/usr/lib/libssl.so.12.0.debug		comp-crypto-debug	debug,compatfile,openssl=10
 ./usr/libdata/debug/usr/lib/libssl.so.14.0.debug		comp-crypto-debug	debug,compatfile,openssl=11
-./usr/libdata/debug/usr/lib/libstdc++.so.8.1.debug		comp-sys-debug	debug,compatfile,obsolete
 ./usr/libdata/debug/usr/lib/libstdc++.so.9.0.debug		comp-sys-debug	debug,compatfile,gcc=7,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libstdc++.so.9.0.debug		comp-sys-debug	debug,compatfile,gcc=8,cxx,libstdcxx
 ./usr/libdata/debug/usr/lib/libterminfo.so.1.0.debug		comp-sys-debug	debug,compatfile
