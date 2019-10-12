@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-agent.c,v 1.26 2019/04/20 17:16:40 christos Exp $	*/
-/* $OpenBSD: ssh-agent.c,v 1.233 2019/01/22 22:58:50 djm Exp $ */
+/*	$NetBSD: ssh-agent.c,v 1.27 2019/10/12 18:32:22 christos Exp $	*/
+/* $OpenBSD: ssh-agent.c,v 1.237 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -36,7 +36,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-agent.c,v 1.26 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: ssh-agent.c,v 1.27 2019/10/12 18:32:22 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -260,6 +260,11 @@ agent_decode_alg(struct sshkey *key, u_int flags)
 			return "rsa-sha2-256";
 		else if (flags & SSH_AGENT_RSA_SHA2_512)
 			return "rsa-sha2-512";
+	} else if (key->type == KEY_RSA_CERT) {
+		if (flags & SSH_AGENT_RSA_SHA2_256)
+			return "rsa-sha2-256-cert-v01@openssh.com";
+		else if (flags & SSH_AGENT_RSA_SHA2_512)
+			return "rsa-sha2-512-cert-v01@openssh.com";
 	}
 	return NULL;
 }
@@ -409,7 +414,10 @@ process_add_identity(SocketEntry *e)
 		error("%s: decode private key: %s", __func__, ssh_err(r));
 		goto err;
 	}
-
+	if ((r = sshkey_shield_private(k)) != 0) {
+		error("%s: shield private key: %s", __func__, ssh_err(r));
+		goto err;
+	}
 	while (sshbuf_len(e->request)) {
 		if ((r = sshbuf_get_u8(e->request, &ctype)) != 0) {
 			error("%s: buffer error: %s", __func__, ssh_err(r));
@@ -810,11 +818,11 @@ handle_socket_read(u_int socknum)
 
 	slen = sizeof(sunaddr);
 	fd = accept(sockets[socknum].fd, (struct sockaddr *)&sunaddr, &slen);
-	if (fd < 0) {
+	if (fd == -1) {
 		error("accept from AUTH_SOCKET: %s", strerror(errno));
 		return -1;
 	}
-	if (getpeereid(fd, &euid, &egid) < 0) {
+	if (getpeereid(fd, &euid, &egid) == -1) {
 		error("getpeereid %d failed: %s", fd, strerror(errno));
 		close(fd);
 		return -1;
@@ -1110,7 +1118,6 @@ main(int ac, char **av)
 	size_t npfd = 0;
 	u_int maxfds;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
@@ -1362,7 +1369,7 @@ main(int ac, char **av)
 
 	/* deny core dumps, since memory contains unencrypted private keys */
 	rlim.rlim_cur = rlim.rlim_max = 0;
-	if (setrlimit(RLIMIT_CORE, &rlim) < 0) {
+	if (setrlimit(RLIMIT_CORE, &rlim) == -1) {
 		error("setrlimit RLIMIT_CORE: %s", strerror(errno));
 		cleanup_exit(1);
 	}
@@ -1395,7 +1402,7 @@ skip:
 		if (parent_alive_interval != 0)
 			check_parent_exists();
 		(void) reaper();	/* remove expired keys */
-		if (result < 0) {
+		if (result == -1) {
 			if (saved_errno == EINTR)
 				continue;
 			fatal("poll: %s", strerror(saved_errno));
