@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-add.c,v 1.138 2019/01/21 12:53:35 djm Exp $ */
+/* $OpenBSD: ssh-add.c,v 1.141 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,9 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 
+#ifdef WITH_OPENSSL
 #include <openssl/evp.h>
+#endif
 
 #include <errno.h>
 #include <fcntl.h>
@@ -195,7 +197,7 @@ add_file(int agent_fd, const char *filename, int key_only, int qflag)
 	if (strcmp(filename, "-") == 0) {
 		fd = STDIN_FILENO;
 		filename = "(stdin)";
-	} else if ((fd = open(filename, O_RDONLY)) < 0) {
+	} else if ((fd = open(filename, O_RDONLY)) == -1) {
 		perror(filename);
 		return -1;
 	}
@@ -567,12 +569,12 @@ main(int argc, char **argv)
 	SyslogFacility log_facility = SYSLOG_FACILITY_AUTH;
 	LogLevel log_level = SYSLOG_LEVEL_INFO;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	/* Ensure that fds 0, 1 and 2 are open or directed to /dev/null */
 	sanitise_stdfd();
 
+#ifdef WITH_OPENSSL
 	OpenSSL_add_all_algorithms();
-
+#endif
 	log_init(__progname, log_level, log_facility, 1);
 
 	setvbuf(stdout, NULL, _IOLBF, 0);
@@ -719,7 +721,7 @@ main(int argc, char **argv)
 		for (i = 0; default_files[i]; i++) {
 			snprintf(buf, sizeof(buf), "%s/%s", pw->pw_dir,
 			    default_files[i]);
-			if (stat(buf, &st) < 0)
+			if (stat(buf, &st) == -1)
 				continue;
 			if (do_file(agent_fd, deleting, key_only, buf,
 			    qflag) == -1)

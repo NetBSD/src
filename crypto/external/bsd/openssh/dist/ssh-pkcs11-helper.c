@@ -1,4 +1,4 @@
-/* $OpenBSD: ssh-pkcs11-helper.c,v 1.17 2019/01/23 02:01:10 djm Exp $ */
+/* $OpenBSD: ssh-pkcs11-helper.c,v 1.21 2019/09/06 05:23:55 djm Exp $ */
 /*
  * Copyright (c) 2010 Markus Friedl.  All rights reserved.
  *
@@ -19,6 +19,7 @@
 #include <sys/queue.h>
 #include <sys/time.h>
 
+#include <stdlib.h>
 #include <errno.h>
 #include <poll.h>
 #include <stdarg.h>
@@ -33,6 +34,8 @@
 #include "authfd.h"
 #include "ssh-pkcs11.h"
 #include "ssherr.h"
+
+#ifdef WITH_OPENSSL
 
 /* borrows code from sftp-server and ssh-agent */
 
@@ -188,7 +191,6 @@ process_sign(void)
 	else {
 		if ((found = lookup_key(key)) != NULL) {
 #ifdef WITH_OPENSSL
-			u_int xslen;
 			int ret;
 
 			if (key->type == KEY_RSA) {
@@ -201,7 +203,8 @@ process_sign(void)
 					ok = 0;
 				}
 			} else if (key->type == KEY_ECDSA) {
-				xslen = ECDSA_size(key->ecdsa);
+				u_int xslen = ECDSA_size(key->ecdsa);
+
 				signature = xmalloc(xslen);
 				/* "The parameter type is ignored." */
 				ret = ECDSA_sign(-1, data, dlen, signature,
@@ -313,7 +316,6 @@ main(int argc, char **argv)
 	extern char *__progname;
 	struct pollfd pfd[2];
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	TAILQ_INIT(&pkcs11_keylist);
 
 	log_init(__progname, log_level, log_facility, log_stderr);
@@ -413,3 +415,18 @@ main(int argc, char **argv)
 			fatal("%s: buffer error: %s", __func__, ssh_err(r));
 	}
 }
+
+#else /* WITH_OPENSSL */
+void
+cleanup_exit(int i)
+{
+	_exit(i);
+}
+
+int
+main(int argc, char **argv)
+{
+	fprintf(stderr, "PKCS#11 code is not enabled\n");
+	return 1;
+}
+#endif /* WITH_OPENSSL */

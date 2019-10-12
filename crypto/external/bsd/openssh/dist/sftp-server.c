@@ -1,4 +1,4 @@
-/* $OpenBSD: sftp-server.c,v 1.114 2019/01/16 23:22:10 djm Exp $ */
+/* $OpenBSD: sftp-server.c,v 1.117 2019/07/05 04:55:40 djm Exp $ */
 /*
  * Copyright (c) 2000-2004 Markus Friedl.  All rights reserved.
  *
@@ -42,6 +42,8 @@
 
 #include "sftp.h"
 #include "sftp-common.h"
+
+char *sftp_realpath(const char *, char *); /* sftp-realpath.c */
 
 /* Our verbosity */
 static LogLevel log_level = SYSLOG_LEVEL_ERROR;
@@ -693,7 +695,7 @@ process_open(u_int32_t id)
 		status = SSH2_FX_PERMISSION_DENIED;
 	} else {
 		fd = open(name, flags, mode);
-		if (fd < 0) {
+		if (fd == -1) {
 			status = errno_to_portable(errno);
 		} else {
 			handle = handle_new(HANDLE_FILE, name, fd, flags, NULL);
@@ -746,12 +748,12 @@ process_read(u_int32_t id)
 	}
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
-		if (lseek(fd, off, SEEK_SET) < 0) {
+		if (lseek(fd, off, SEEK_SET) == -1) {
 			error("process_read: seek failed");
 			status = errno_to_portable(errno);
 		} else {
 			ret = read(fd, buf, len);
-			if (ret < 0) {
+			if (ret == -1) {
 				status = errno_to_portable(errno);
 			} else if (ret == 0) {
 				status = SSH2_FX_EOF;
@@ -787,13 +789,13 @@ process_write(u_int32_t id)
 		status = SSH2_FX_FAILURE;
 	else {
 		if (!(handle_to_flags(handle) & O_APPEND) &&
-				lseek(fd, off, SEEK_SET) < 0) {
+				lseek(fd, off, SEEK_SET) == -1) {
 			status = errno_to_portable(errno);
 			error("process_write: seek failed");
 		} else {
 /* XXX ATOMICIO ? */
 			ret = write(fd, data, len);
-			if (ret < 0) {
+			if (ret == -1) {
 				error("process_write: write failed");
 				status = errno_to_portable(errno);
 			} else if ((size_t)ret == len) {
@@ -823,7 +825,7 @@ process_do_stat(u_int32_t id, int do_lstat)
 	debug3("request %u: %sstat", id, do_lstat ? "l" : "");
 	verbose("%sstat name \"%s\"", do_lstat ? "l" : "", name);
 	r = do_lstat ? lstat(name, &st) : stat(name, &st);
-	if (r < 0) {
+	if (r == -1) {
 		status = errno_to_portable(errno);
 	} else {
 		stat_to_attrib(&st, &a);
@@ -861,7 +863,7 @@ process_fstat(u_int32_t id)
 	fd = handle_to_fd(handle);
 	if (fd >= 0) {
 		r = fstat(fd, &st);
-		if (r < 0) {
+		if (r == -1) {
 			status = errno_to_portable(errno);
 		} else {
 			stat_to_attrib(&st, &a);
@@ -1059,7 +1061,7 @@ process_readdir(u_int32_t id)
 /* XXX OVERFLOW ? */
 			snprintf(pathname, sizeof pathname, "%s%s%s", path,
 			    strcmp(path, "/") ? "/" : "", dp->d_name);
-			if (lstat(pathname, &st) < 0)
+			if (lstat(pathname, &st) == -1)
 				continue;
 			stat_to_attrib(&st, &(stats[count].attrib));
 			stats[count].name = xstrdup(dp->d_name);
@@ -1154,7 +1156,7 @@ process_realpath(u_int32_t id)
 	}
 	debug3("request %u: realpath", id);
 	verbose("realpath \"%s\"", path);
-	if (realpath(path, resolvedname) == NULL) {
+	if (sftp_realpath(path, resolvedname) == NULL) {
 		send_status(id, errno_to_portable(errno));
 	} else {
 		Stat s;
@@ -1547,7 +1549,6 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 	extern char *optarg;
 	extern char *__progname;
 
-	ssh_malloc_init();	/* must be called before any mallocs */
 	log_init(__progname, log_level, log_facility, log_stderr);
 
 	pw = pwcopy(user_pw);
@@ -1683,7 +1684,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 		if (olen > 0)
 			FD_SET(out, wset);
 
-		if (select(max+1, rset, wset, NULL, NULL) < 0) {
+		if (select(max+1, rset, wset, NULL, NULL) == -1) {
 			if (errno == EINTR)
 				continue;
 			error("select: %s", strerror(errno));
@@ -1696,7 +1697,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 			if (len == 0) {
 				debug("read eof");
 				sftp_server_cleanup_exit(0);
-			} else if (len < 0) {
+			} else if (len == -1) {
 				error("read: %s", strerror(errno));
 				sftp_server_cleanup_exit(1);
 			} else if ((r = sshbuf_put(iqueue, buf, len)) != 0) {
@@ -1707,7 +1708,7 @@ sftp_server_main(int argc, char **argv, struct passwd *user_pw)
 		/* send oqueue to stdout */
 		if (FD_ISSET(out, wset)) {
 			len = write(out, sshbuf_ptr(oqueue), olen);
-			if (len < 0) {
+			if (len == -1) {
 				error("write: %s", strerror(errno));
 				sftp_server_cleanup_exit(1);
 			} else if ((r = sshbuf_consume(oqueue, len)) != 0) {
