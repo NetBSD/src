@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_gpio.c,v 1.15 2019/10/03 11:24:27 mlelstv Exp $	*/
+/*	$NetBSD: bcm2835_gpio.c,v 1.16 2019/10/12 09:46:18 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2013, 2014, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.15 2019/10/03 11:24:27 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_gpio.c,v 1.16 2019/10/12 09:46:18 mlelstv Exp $");
 
 /*
  * Driver for BCM2835 GPIO
@@ -221,7 +221,7 @@ bcm283x_pinctrl_set_config(device_t dev, const void *data, size_t len)
 	for (int i = 0; i < npins; i++) {
 		const u_int pin = be32toh(pins[i]);
 
-		if (pin > sc->sc_maxpins)
+		if (pin >= sc->sc_maxpins)
 			continue;
 		if (pull) {
 			const int value = be32toh(pull[npull == 1 ? 0 : i]);
