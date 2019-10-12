@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.27 2019/04/20 17:16:41 christos Exp $
+#	$NetBSD: Makefile,v 1.28 2019/10/12 18:32:22 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -20,7 +20,6 @@ cipher-chachapoly.c \
 cipher.c \
 cleanup.c \
 compat.c \
-crc32.c \
 dh.c \
 dispatch.c \
 dns.c \
@@ -70,7 +69,6 @@ uidswap.c \
 umac.c \
 umac128.c \
 utf8.c \
-uuencode.c \
 verify.c \
 xmalloc.c \
 xmss_commons.c \

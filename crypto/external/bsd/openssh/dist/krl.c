@@ -1,4 +1,4 @@
-/*	$NetBSD: krl.c,v 1.14 2019/04/20 17:16:40 christos Exp $	*/
+/*	$NetBSD: krl.c,v 1.15 2019/10/12 18:32:22 christos Exp $	*/
 
 /*
  * Copyright (c) 2012 Damien Miller <djm@mindrot.org>
@@ -16,10 +16,10 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-/* $OpenBSD: krl.c,v 1.42 2018/09/12 01:21:34 djm Exp $ */
+/* $OpenBSD: krl.c,v 1.44 2019/09/06 04:53:27 djm Exp $ */
 
 #include "includes.h"
-__RCSID("$NetBSD: krl.c,v 1.14 2019/04/20 17:16:40 christos Exp $");
+__RCSID("$NetBSD: krl.c,v 1.15 2019/10/12 18:32:22 christos Exp $");
 #include <sys/param.h>	/* MIN */
 #include <sys/types.h>
 #include <sys/tree.h>
@@ -31,6 +31,7 @@ __RCSID("$NetBSD: krl.c,v 1.14 2019/04/20 17:16:40 christos Exp $");
 #include <string.h>
 #include <time.h>
 #include <unistd.h>
+#include <stdlib.h>
 
 #include "sshbuf.h"
 #include "ssherr.h"
@@ -738,7 +739,7 @@ revoked_certs_generate(struct revoked_certs *rc, struct sshbuf *buf)
 
 int
 ssh_krl_to_blob(struct ssh_krl *krl, struct sshbuf *buf,
-    const struct sshkey **sign_keys, u_int nsign_keys)
+    struct sshkey **sign_keys, u_int nsign_keys)
 {
 	int r = SSH_ERR_INTERNAL_ERROR;
 	struct revoked_certs *rc;
