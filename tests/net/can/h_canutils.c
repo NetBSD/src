@@ -1,4 +1,4 @@
-/*	$NetBSD: h_canutils.c,v 1.3 2017/05/28 13:55:07 kre Exp $	*/
+/*	$NetBSD: h_canutils.c,v 1.4 2019/10/13 07:46:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: h_canutils.c,v 1.3 2017/05/28 13:55:07 kre Exp $");
+__RCSID("$NetBSD: h_canutils.c,v 1.4 2019/10/13 07:46:16 mrg Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -70,14 +70,16 @@ cancfg_rump_createif(const char *ifname)
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ-1);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 
 	if ((rv = rump_sys_ioctl(s, SIOCIFCREATE, &ifr)) < 0) {
 		atf_tc_fail_errno("if config create");
 	}
 
 	memset(&ifr, 0, sizeof(ifr));
-	strncpy(ifr.ifr_name, ifname, IFNAMSIZ);
+	strncpy(ifr.ifr_name, ifname, IFNAMSIZ-1);
+	ifr.ifr_name[IFNAMSIZ - 1] = '\0';
 
 	if ((rv = rump_sys_ioctl(s, SIOCGIFFLAGS, &ifr)) < 0) {
 		atf_tc_fail_errno("if config get flags");

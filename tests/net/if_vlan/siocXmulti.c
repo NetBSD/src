@@ -56,7 +56,8 @@ main(int argc, char *argv[])
 	if (ifidx == 0)
 		err(1, "if_nametoindex(%s)", argv[ARG_IFNAME]);
 
-	strncpy(ifr.ifr_name, argv[ARG_IFNAME], sizeof(ifr.ifr_name));
+	strncpy(ifr.ifr_name, argv[ARG_IFNAME], sizeof(ifr.ifr_name) - 1);
+	ifr.ifr_name[sizeof(ifr.ifr_name) - 1] = '\0';
 
 	sin = (struct sockaddr_in *)&ifr.ifr_addr;
 	sin->sin_family = AF_INET;
