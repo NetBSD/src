@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_drm_mode.c,v 1.18 2019/07/07 10:27:41 jmcneill Exp $ */
+/* $NetBSD: tegra_drm_mode.c,v 1.19 2019/10/13 05:56:52 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.18 2019/07/07 10:27:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_drm_mode.c,v 1.19 2019/10/13 05:56:52 skrll Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -699,7 +699,7 @@ tegra_crtc_mode_set_base(struct drm_crtc *crtc, int x, int y,
     struct drm_framebuffer *old_fb)
 {
 	struct tegra_crtc *tegra_crtc = to_tegra_crtc(crtc);
-	
+
 	tegra_crtc_do_set_base(crtc, old_fb, x, y, 0);
 
 	/* Commit settings */
