@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_com.c,v 1.10 2018/12/08 17:46:09 thorpej Exp $ */
+/* $NetBSD: tegra_com.c,v 1.11 2019/10/13 05:57:14 skrll Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.10 2018/12/08 17:46:09 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: tegra_com.c,v 1.11 2019/10/13 05:57:14 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,8 +126,7 @@ tegra_com_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 
