@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2019/10/12 18:32:22 christos Exp $
+#	$NetBSD: Makefile,v 1.29 2019/10/13 07:28:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -119,5 +119,8 @@ COPTS.channels.c+=	-fno-strict-aliasing
 COPTS.poly1305.c+=	-O0
 COPTS.umac.c+=		-O0
 .endif
+
+COPTS.hostfile.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.sshkey.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.lib.mk>

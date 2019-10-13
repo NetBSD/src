@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2012/05/05 16:03:55 tsutsui Exp $
+#	$NetBSD: Makefile,v 1.43 2019/10/13 07:28:12 mrg Exp $
 
 PROG=	fdisk 
 SRCS=	fdisk.c
@@ -19,6 +19,8 @@ CPPFLAGS+= -D_PATH_DEFDISK='"/dev/rsd0d"'
 .if ${MACHINE} == "netwinder"
 CPPFLAGS+= -D_PATH_DEFDISK='"/dev/rwd0c"'
 .endif
+
+COPTS.fdisk.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
 

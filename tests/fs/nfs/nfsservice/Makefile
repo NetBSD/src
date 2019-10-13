@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/08/15 08:23:45 kamil Exp $
+#	$NetBSD: Makefile,v 1.14 2019/10/13 07:28:14 mrg Exp $
 #
 
 NOMAN=	1
@@ -49,5 +49,11 @@ LDADD+= -lwrap -lutil
 DPADD+= ${LIBWRAP} ${LIBUTIL}
 
 SANITIZER_RENAME_SYMBOL+=	__getmntinfo13
+
+COPTS.pmap_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_4.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_svc_com.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.mountd.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.test.mk>
