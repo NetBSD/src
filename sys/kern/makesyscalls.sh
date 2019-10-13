@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.174 2019/10/09 01:43:00 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.175 2019/10/13 22:31:19 christos Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -1071,7 +1071,7 @@ $2 == "OBSOL" || $2 == "UNIMPL" || $2 == "EXCL" || $2 == "IGNORED" {
 		comment=comment " " $i
 
 	if ($2 == "IGNORED")
-		sys_stub = "(sy_call_t *)nullop";
+		sys_stub = "(sy_call_t *)(void *)nullop";
 	else
 		sys_stub = sys_nosys;
 
