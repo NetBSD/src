@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.2 2012/07/22 14:27:51 darrenr Exp $
+#	$NetBSD: Makefile,v 1.3 2019/10/13 01:17:24 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -139,7 +139,5 @@ SRCS=		addicmp.c \
 		vtof.c \
 		v6ionames.c \
 		v6optvalue.c
-
-#CPPFLAGS.printstate.c=	-Wno-error
 
 .include <bsd.lib.mk>
