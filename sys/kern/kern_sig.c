@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.371 2019/10/13 03:19:57 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.372 2019/10/13 03:50:26 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.371 2019/10/13 03:19:57 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.372 2019/10/13 03:50:26 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1614,6 +1614,12 @@ repeat:
 	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
 		mutex_exit(p->p_lock);
 		mutex_exit(proc_lock);
+
+		if (pe_report_event == PTRACE_LWP_EXIT) {
+			/* Avoid double lwp_exit() and panic. */
+			return;
+		}
+
 		lwp_exit(l);
 		panic("eventswitch");
 		/* NOTREACHED */
