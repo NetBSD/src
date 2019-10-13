@@ -1,4 +1,4 @@
-/* $NetBSD: tegra124_xusbpad.c,v 1.3 2019/10/13 05:57:14 skrll Exp $ */
+/* $NetBSD: tegra124_xusbpad.c,v 1.4 2019/10/13 06:11:31 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra124_xusbpad.c,v 1.3 2019/10/13 05:57:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra124_xusbpad.c,v 1.4 2019/10/13 06:11:31 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -98,7 +98,7 @@ tegra124_xusbpad_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %" PRIxBUSADDR ": %d", addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 
