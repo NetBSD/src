@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2014/07/27 04:38:03 dholland Exp $
+#	$NetBSD: Makefile,v 1.21 2019/10/13 07:28:19 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -21,3 +21,5 @@ version.c: VERSION
 .include <bsd.lib.mk>
 
 COPTS.print.c+=	-Wno-pointer-sign
+
+COPTS.pf.c+=	${GCC_NO_STRINGOP_TRUNCATION}

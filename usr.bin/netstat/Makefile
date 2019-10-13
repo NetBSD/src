@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.46 2019/08/18 04:14:40 kamil Exp $
+#	$NetBSD: Makefile,v 1.47 2019/10/13 07:28:16 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -37,5 +37,9 @@ CPPFLAGS+= -DINET6
 .endif
 
 .include "../../compat/exec.mk"
+
+COPTS.atalk.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.inet6.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.rtutil.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.17 2019/09/29 23:44:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.18 2019/10/13 07:28:04 mrg Exp $
 
 PROG=netpgpverify
 BINDIR=		/usr/bin
@@ -31,6 +31,8 @@ EXTDIST=${.CURDIR}/../../dist
 .if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
 COPTS+=	-Wno-error=implicit-fallthrough
 .endif
+
+COPTS.libverify.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
 
