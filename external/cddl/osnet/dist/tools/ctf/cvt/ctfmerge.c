@@ -528,9 +528,10 @@ worker_runphase2(workqueue_t *wq)
 /*
  * Main loop for worker threads.
  */
-static void
-worker_thread(workqueue_t *wq)
+static void *
+worker_thread(void *v)
 {
+	workqueue_t *wq = v;
 	worker_runphase1(wq);
 
 	debug(2, "0x%jx: entering first barrier\n",
@@ -559,6 +560,7 @@ worker_thread(workqueue_t *wq)
 	    (uintmax_t)(uintptr_t)pthread_self());
 
 	worker_runphase2(wq);
+	return NULL;
 }
 
 /*
@@ -728,8 +730,7 @@ start_threads(workqueue_t *wq)
 	pthread_sigmask(SIG_BLOCK, &sets, NULL);
 
 	for (i = 0; i < wq->wq_nthreads; i++) {
-		pthread_create(&wq->wq_thread[i], NULL,
-		    (void *(*)(void *))worker_thread, wq);
+		pthread_create(&wq->wq_thread[i], NULL, worker_thread, wq);
 	}
 
 #ifdef illumos
