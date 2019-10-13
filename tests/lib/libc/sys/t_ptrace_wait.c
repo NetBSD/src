@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.135 2019/10/13 04:00:12 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.136 2019/10/13 04:05:39 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.135 2019/10/13 04:00:12 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.136 2019/10/13 04:05:39 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -126,7 +126,7 @@ static int debug = 0;
 #endif
 
 #ifndef TEST_LWP_ENABLED
-#define TEST_LWP_ENABLED 0
+#define TEST_LWP_ENABLED 1
 #endif
 
 /// ----------------------------------------------------------------------------
