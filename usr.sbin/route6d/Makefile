@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.7 2007/05/28 12:06:39 tls Exp $
+# $NetBSD: Makefile,v 1.8 2019/10/13 07:28:20 mrg Exp $
 
 USE_FORT?= yes	# network server
 
@@ -9,5 +9,7 @@ CPPFLAGS+=-DINET6
 
 LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
+
+COPTS.route6d.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

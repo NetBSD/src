@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2018/06/11 14:18:16 kamil Exp $
+#	$NetBSD: Makefile,v 1.21 2019/10/13 07:28:09 mrg Exp $
 #	@(#)Makefile	8.1 (Berkeley) 5/31/93
 
 PROG=	rogue
@@ -13,6 +13,8 @@ SETGIDGAME=yes
 MAN=	rogue.6
 
 SUBDIR.roff+=USD.doc
+
+COPTS.score.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>
 .include <bsd.subdir.mk>

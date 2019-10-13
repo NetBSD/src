@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2019/08/15 21:05:16 uwe Exp $
+#	$NetBSD: Makefile,v 1.41 2019/10/13 07:28:04 mrg Exp $
 #       @(#)Makefile	8.1 (Berkeley) 5/31/93
 
 .include <bsd.own.mk>
@@ -49,5 +49,7 @@ CPPFLAGS+=	-DSUPPORT_RMT
 LDADD+=	-lrmt
 DPADD+=	${LIBRMT}
 .endif
+
+COPTS.tar.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

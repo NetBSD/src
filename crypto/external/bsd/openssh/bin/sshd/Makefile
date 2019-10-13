@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2019/10/12 18:32:21 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2019/10/13 07:28:05 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -58,8 +58,6 @@ LDADD+=	-lldap -lssl -llber
 DPADD+=	${LIBLDAP} ${LIBSSL} ${LIBLBER}
 .endif
 
-.include <bsd.prog.mk>
-
 LDADD+=	-lcrypt -lutil
 DPADD+=	${LIBCRYPT} ${LIBUTIL}
 
@@ -72,3 +70,8 @@ CPPFLAGS+=-DSMALL
 LDADD+=	-lblacklist
 DPADD+=	${LIBBLACKLIST}
 .endif
+
+COPTS.sshlogin.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.ldapauth.c+=	${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_STRINGOP_OVERFLOW}
+
+.include <bsd.prog.mk>

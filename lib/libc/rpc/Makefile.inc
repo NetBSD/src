@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.25 2019/10/10 08:37:16 kre Exp $
+#	$NetBSD: Makefile.inc,v 1.26 2019/10/13 07:28:10 mrg Exp $
 
 # librpc sources
 .PATH:	${.CURDIR}/rpc
@@ -17,18 +17,6 @@ SRCS+=	auth_none.c auth_unix.c authunix_prot.c bindresvport.c \
 	xdr_stdio.c xdr_sizeof.c __rpc_getxid.c
 
 CPPFLAGS+=	-DPORTMAP
-
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 8 && ${ACTIVE_CC} == "gcc"
-COPTS.clnt_bcast.c += -Wno-error=cast-function-type
-COPTS.clnt_generic.c += -Wno-error=cast-function-type
-COPTS.clnt_vc.c += -Wno-error=cast-function-type
-COPTS.pmap_getmaps.c += -Wno-error=cast-function-type
-COPTS.rpc_generic.c += -Wno-error=cast-function-type
-COPTS.rpcb_clnt.c += -Wno-error=cast-function-type
-COPTS.svc_simple.c += -Wno-error=cast-function-type
-COPTS.xdr_sizeof.c += -Wno-error=cast-function-type
-COPTS.getrpcent.c += -Wno-error=stringop-truncation
-.endif
 
 MAN+=	bindresvport.3 getnetconfig.3 getnetpath.3 getrpcent.3 getrpcport.3 \
 	rpc.3 rpc_soc.3 rpc_clnt_auth.3 rpc_clnt_calls.3 rpc_clnt_create.3 \
@@ -179,3 +167,13 @@ MLINKS+=	bindresvport.3 bindresvport_sa.3 \
 		xdr.3 xdr_vector.3 \
 		xdr.3 xdr_void.3 \
 		xdr.3 xdr_wrapstring.3
+
+COPTS.clnt_bcast.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.clnt_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.clnt_vc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpcb_clnt.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.xdr_sizeof.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.svc_simple.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.pmap_getmaps.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.rpc_generic.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+COPTS.getrpcent.c+=	${GCC_NO_STRINGOP_TRUNCATION}

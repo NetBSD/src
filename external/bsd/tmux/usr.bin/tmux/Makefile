@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.21 2019/01/05 21:44:40 christos Exp $
+# $NetBSD: Makefile,v 1.22 2019/10/13 07:28:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -224,9 +224,6 @@ LDADD+=		-levent -lterminfo -lutil -lm
 DPADD+=		${LIBEVENT} ${LIBTERMINFO} ${LIBUTIL}
 
 COPTS.format.c += -Wno-format-nonliteral
-#COPTS.cmd-display-message.c += -Wno-format-nonliteral
-#COPTS.cmd-pipe-pane.c += -Wno-format-nonliteral
-#COPTS.server-client.c += -Wno-format-nonliteral
-#COPTS.status.c += -Wno-format-nonliteral
+COPTS.utempter.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

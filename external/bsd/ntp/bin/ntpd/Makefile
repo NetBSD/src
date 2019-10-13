@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.23 2019/10/04 09:47:27 mrg Exp $
+#	$NetBSD: Makefile,v 1.24 2019/10/13 07:28:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -93,5 +93,10 @@ COPTS.ntp_control.c+=  -Wno-error=maybe-uninitialized
 .endif
 
 COPTS.ntp_loopfilter.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} == 8:? -Wno-error=restrict :}
+COPTS.ntp_loopfilter.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.ntp_crypto.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.refclock_parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.refclock_leitch.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.refclock_neoclock4x.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

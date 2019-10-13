@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.11 2019/09/29 23:44:58 mrg Exp $
+# $NetBSD: Makefile,v 1.12 2019/10/13 07:28:05 mrg Exp $
 
 LIB=netpgpverify
 SRCS+=b64.c
@@ -27,8 +27,7 @@ INCSDIR=/usr/include/netpgp
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS+=			${${ACTIVE_CC} == "gcc":? -Wno-implicit-fallthrough :}
+COPTS.libverify.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.lib.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2019/03/10 12:14:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:06 mrg Exp $
 
 LIB=	LLVMRuntimeDyld
 
@@ -21,4 +21,5 @@ SRCS+=	RuntimeDyldELFMips.cpp
 .include <bsd.hostlib.mk>
 .else
 .include <bsd.lib.mk>
+COPTS.RuntimeDyldChecker.cpp+=	${GCC_NO_STRINGOP_OVERFLOW}
 .endif

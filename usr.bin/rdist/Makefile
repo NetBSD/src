@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/09/29 23:45:01 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2019/10/13 07:28:16 mrg Exp $
 #	from: @(#)Makefile	8.3 (Berkeley) 7/19/93
 
 USE_FORT?= yes	# network client/server
@@ -9,8 +9,6 @@ SRCS=	docmd.c expand.c gram.y lookup.c main.c server.c
 
 .include <bsd.own.mk>
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.server.c += -Wno-error=format-truncation
-.endif
+COPTS.server.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 1997/10/08 09:07:35 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2019/10/13 07:28:12 mrg Exp $
 
 PROG =	rpc.sprayd
 SRCS =	sprayd.c
@@ -8,5 +8,6 @@ MLINKS=	rpc.sprayd.8 sprayd.8
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
 
-.include <bsd.prog.mk>
+COPTS.sprayd.c+=	${GCC_NO_STRINGOP_TRUNCATION} ${GCC_NO_CAST_FUNCTION_TYPE}
 
+.include <bsd.prog.mk>

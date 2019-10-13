@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2016/12/23 10:19:57 mrg Exp $
+#	$NetBSD: Makefile,v 1.26 2019/10/13 07:28:15 mrg Exp $
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
 
 .include <bsd.own.mk>
@@ -22,5 +22,7 @@ LDADD+=-lutil
 DPADD+=${LIBUTIL}
 
 .include "../../compat/exec.mk"
+
+COPTS.fstat.c+=		${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.prog.mk>

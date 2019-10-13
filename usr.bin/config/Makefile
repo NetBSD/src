@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/10/29 19:10:49 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:14 mrg Exp $
 #	from: @(#)Makefile	8.2 (Berkeley) 4/19/94
 
 .include <bsd.own.mk>
@@ -20,6 +20,8 @@ CPPFLAGS+= -I${NETBSDSRCDIR}/usr.bin/cksum
 .ifndef HOSTPROG
 LDADD+=-lutil
 DPADD+=${LIBUTIL}
+COPTS.mkheaders.c+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.sem.c+=		${GCC_NO_FORMAT_TRUNCATION}
 .endif
 
 CWARNFLAGS+=-Wno-format-y2k

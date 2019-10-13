@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/6/93
-#	$NetBSD: Makefile,v 1.10 2012/02/13 01:35:09 dholland Exp $
+#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:20 mrg Exp $
 
 WARNS ?= 4
 .include <bsd.own.mk>
@@ -16,5 +16,7 @@ LDADD=	-lquota -lrpcsvc
 
 .PATH:	${NETBSDSRCDIR}/usr.bin/quota
 SRCS+=	printquota.c
+
+COPTS.printquota.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

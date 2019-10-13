@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2017/05/21 15:28:42 riastradh Exp $
+# $NetBSD: Makefile,v 1.5 2019/10/13 07:28:14 mrg Exp $
 
 TESTSDIR=	${TESTSBASE}/lib/libevent
 
@@ -25,5 +25,7 @@ LDADD+=		-levent_openssl -lssl -lcrypto
 CPPFLAGS+=	-DLIBEVENT_CRYPTO
 DPADD+=		${LIBEVENT} ${LIBEVENT_PTHREADS} ${LIBZ} ${LIBPTHREAD}
 LDADD+=		-levent_pthreads -levent -lz -lpthread
+
+COPTS.regress_rpc.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.test.mk>

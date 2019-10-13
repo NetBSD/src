@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2018/12/12 01:40:20 rin Exp $
+#	$NetBSD: Makefile,v 1.32 2019/10/13 07:28:14 mrg Exp $
 #
 
 
@@ -26,6 +26,8 @@ SRCS+=	rtsock_50.c uipc_syscalls_50.c
 .if !empty(RUMP_NBCOMPAT:M70)
 SRCS+=	rtsock_70.c uipc_usrreq_70.c
 .endif
+
+COPTS.if_ethersubr.c+=		${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include "${.CURDIR}/../libnetinet/Makefile.inc"
 .include "${.CURDIR}/../libnetinet6/Makefile.inc"

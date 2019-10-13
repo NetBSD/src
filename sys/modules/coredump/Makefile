@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2019/02/17 04:05:46 rin Exp $
+#	$NetBSD: Makefile,v 1.5 2019/10/13 07:28:13 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -24,5 +24,7 @@ SRCS+=	uvm_coredump.c
 SRCS+=	core_machdep.c
 
 WARNS=	3
+
+COPTS.kern_core.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.kmodule.mk>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2009/01/16 07:09:09 junyoung Exp $
+#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:21 mrg Exp $
 
 LIBISPRIVATE=	yes
 
@@ -11,5 +11,7 @@ SRCS+=	atoo.c expand.c ffilecopy.c filecopy.c \
 .PATH: ${.CURDIR}/../source
 
 BUILDSYMLINKS=	${.CURDIR}/../source/netcryptvoid.c netcrypt.c
+
+COPTS.log.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.lib.mk>

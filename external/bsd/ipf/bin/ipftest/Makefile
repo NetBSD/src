@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.6 2019/09/29 23:44:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.7 2019/10/13 07:28:06 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -108,5 +108,7 @@ ipf_l.h: lexer.h
 COPTS.ipf_y.c+=	-O1
 . endif
 .endif
+
+COPTS.fil.c+=	${GCC_NO_STRINGOP_OVERFLOW}
 
 .include <bsd.prog.mk>

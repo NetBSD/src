@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2019/01/11 20:41:53 christos Exp $
+# $NetBSD: Makefile,v 1.23 2019/10/13 07:28:21 mrg Exp $
 
 WARNS?=	4
 
@@ -32,5 +32,8 @@ DPADD.rump+=	${LIBRUMPRES}
 .endif
 
 CWARNFLAGS.clang+=	-Wno-error=address-of-packed-member
+
+COPTS.if.c+=		${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.config.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
