@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.25 2019/10/01 16:02:12 christos Exp $	
+# $NetBSD: Makefile,v 1.26 2019/10/13 07:28:06 mrg Exp $	
 
 USE_SHLIBDIR=yes
 .include <bsd.own.mk>
@@ -165,10 +165,9 @@ CLEANFILES+=	tokdefs.h scanner.h
 
 COPTS.bpf_image.c+=	-Wno-format-nonliteral
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS.pcap.c+=		-Wno-error=format-truncation
-COPTS.gencode.c+=	-Wno-error=implicit-fallthrough
-.endif
+COPTS.gencode.c+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 7:? -Wno-error=implicit-fallthrough :}
+COPTS.pcap.c+=		${GCC_NO_FORMAT_TRUNCATION}
+COPTS.pcap-bpf.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 CWARNFLAGS.clang+=	-Wno-format-extra-args \
 			-Wno-unneeded-internal-declaration

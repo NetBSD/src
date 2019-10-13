@@ -1,9 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2018/04/07 22:31:37 christos Exp $
+# $NetBSD: Makefile,v 1.2 2019/10/13 07:28:09 mrg Exp $
 
 SRCS   = dhcrelay.c
 PROG   = dhcrelay
 MAN    = dhcrelay.8
 
 DHCPSRCDIR=	relay
+
+COPTS.dhcrelay.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

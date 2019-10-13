@@ -1,5 +1,5 @@
 #	from: @(#)Makefile	8.1 (Berkeley) 6/4/93
-#	$NetBSD: Makefile,v 1.14 2012/08/10 12:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:20 mrg Exp $
 
 USE_FORT?= yes	# network server
 
@@ -15,5 +15,7 @@ DPADD+=	${LIBUTIL}
 .if defined(HAVE_GCC) || defined(HAVE_LLVM)
 COPTS.utils.c+=	-fno-strict-aliasing
 .endif
+
+COPTS.bpf.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
