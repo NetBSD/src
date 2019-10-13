@@ -1,4 +1,4 @@
-/*	$NetBSD: shots.c,v 1.14 2014/03/29 21:43:19 dholland Exp $	*/
+/*	$NetBSD: shots.c,v 1.15 2019/10/13 07:42:57 mrg Exp $	*/
 /*
  * Copyright (c) 1983-2003, Regents of the University of California.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: shots.c,v 1.14 2014/03/29 21:43:19 dholland Exp $");
+__RCSID("$NetBSD: shots.c,v 1.15 2019/10/13 07:42:57 mrg Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -347,10 +347,11 @@ move_normal_shot(BULLET *bp)
 			/*
 			 * The shot hit that sucker!  Blow it up.
 			 */
-			/* FALLTHROUGH */
 #ifndef RANDOM
+			/* FALLTHROUGH */
 		  case DOOR:
 #endif
+			/* FALLTHROUGH */
 		  case WALL1:
 		  case WALL2:
 		  case WALL3:
@@ -548,6 +549,7 @@ save_bullet(BULLET *bp)
 	  case BOOT:
 	  case BOOT_PAIR:
 		mark_boot(bp);
+		break;
 #endif
 
 	  default:
