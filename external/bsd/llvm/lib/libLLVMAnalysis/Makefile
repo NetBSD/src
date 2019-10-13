@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.25 2018/07/17 18:55:27 joerg Exp $
+#	$NetBSD: Makefile,v 1.26 2019/10/13 07:28:06 mrg Exp $
 
 LIB=	LLVMAnalysis
 
@@ -99,4 +99,5 @@ SRCS+=	AliasAnalysis.cpp \
 .include <bsd.hostlib.mk>
 .else
 .include <bsd.lib.mk>
+COPTS.ValueTracking.cpp+=	${GCC_NO_STRINGOP_OVERFLOW}
 .endif

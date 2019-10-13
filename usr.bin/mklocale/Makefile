@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.16 2009/04/14 22:15:24 lukem Exp $
+#	$NetBSD: Makefile,v 1.17 2019/10/13 07:28:15 mrg Exp $
 
 WARNS?=	2	# XXX -Wextra -Wsign-compare issues
 
@@ -22,4 +22,5 @@ YHEADER=	1
 
 .ifndef HOSTPROG
 .include <bsd.prog.mk>
+COPTS.man.c+=	${GCC_NO_FORMAT_TRUNCATION}
 .endif

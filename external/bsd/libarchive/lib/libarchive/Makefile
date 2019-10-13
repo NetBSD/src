@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2019/07/24 14:07:17 joerg Exp $
+#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:06 mrg Exp $
 
 .include <bsd.init.mk>
 
@@ -454,5 +454,8 @@ COPTS.archive_read.c += -Wno-error=implicit-fallthrough
 COPTS.archive_read_support_format_7zip.c += -Wno-error=implicit-fallthrough
 COPTS.archive_read_support_format_mtree.c += -Wno-error=implicit-fallthrough
 .endif
+
+COPTS.target.c+=	${GCC_NO_STRINGOP_TRUNCATION}
+COPTS.archive_write_set_format_iso9660.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.lib.mk>

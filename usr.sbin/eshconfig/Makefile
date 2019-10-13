@@ -1,6 +1,8 @@
-#	$NetBSD: Makefile,v 1.1 1998/05/16 18:55:17 kml Exp $
+#	$NetBSD: Makefile,v 1.2 2019/10/13 07:28:18 mrg Exp $
 
 PROG=	eshconfig
 MAN=	eshconfig.8
+
+COPTS.eshconfig.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

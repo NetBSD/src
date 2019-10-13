@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.18 2013/05/02 03:56:42 matt Exp $
+#	$NetBSD: Makefile,v 1.19 2019/10/13 07:28:18 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -17,5 +17,7 @@ LINKS=	${BINDIR}/apm ${BINDIR}/zzz
 
 MAN=	apm.8
 MLINKS=	apm.8 zzz.8
+
+COPTS.apm.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>

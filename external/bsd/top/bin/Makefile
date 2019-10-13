@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2016/01/23 21:22:45 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2019/10/13 07:28:07 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -38,4 +38,7 @@ config.h: config.h.in
 	${TOOL_SED} -e s/@MACHINE@/${MACHINE}/ < $? > $@
 
 COPTS.display.c = -Wno-format-nonliteral
+
+COPTS.commands.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
+
 .include <bsd.prog.mk>

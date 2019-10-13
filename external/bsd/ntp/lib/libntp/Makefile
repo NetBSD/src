@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.20 2018/02/02 01:02:40 mrg Exp $
+#	$NetBSD: Makefile,v 1.21 2019/10/13 07:28:07 mrg Exp $
 
 LIBISPRIVATE=yes
 
@@ -98,5 +98,7 @@ MKREPRO_TIME != ${TOOL_AWK} '{print $$4}' \
 CPPFLAGS.ntp_calendar.c += -DMKREPRO_DATE=\"${MKREPRO_DATE:Q}\"
 CPPFLAGS.ntp_calendar.c += -DMKREPRO_TIME=\"${MKREPRO_TIME:Q}\"
 .endif
+
+COPTS.timetoa.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 .include <bsd.lib.mk>
