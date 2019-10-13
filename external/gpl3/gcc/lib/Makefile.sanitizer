@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sanitizer,v 1.9 2019/10/02 06:51:59 mrg Exp $
+#	$NetBSD: Makefile.sanitizer,v 1.10 2019/10/13 21:18:20 mrg Exp $
 
 SANITIZER=${GCCDIST}/libsanitizer
 .PATH: ${SANITIZER}/interception ${SANITIZER}/sanitizer_common
@@ -31,7 +31,7 @@ SANITIZER_SRCS+= \
 	sanitizer_mac.cc \
 	sanitizer_persistent_allocator.cc \
 	sanitizer_platform_limits_linux.cc \
-	sanitizer_platform_limits_posix.cc \
+	sanitizer_platform_limits_netbsd.cc \
 	sanitizer_posix.cc \
 	sanitizer_posix_libcdep.cc \
 	sanitizer_printf.cc \
