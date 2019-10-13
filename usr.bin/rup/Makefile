@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2009/04/14 22:15:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.9 2019/10/13 07:28:16 mrg Exp $
 
 USE_FORT?= yes	# network client
 
@@ -6,5 +6,7 @@ PROG=	rup
 
 DPADD=	${LIBRPCSVC}
 LDADD=	-lrpcsvc
+
+COPTS.rup.c+=	${GCC_NO_CAST_FUNCTION_TYPE}
 
 .include <bsd.prog.mk>

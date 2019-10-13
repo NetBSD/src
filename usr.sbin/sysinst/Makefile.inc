@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.26 2019/10/06 00:07:11 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.27 2019/10/13 07:28:21 mrg Exp $
 #
 # Makefile for sysinst
 
@@ -122,9 +122,7 @@ COPTS += -Os
 CPPFLAGS+=-DINET6
 .endif
 
-.if defined(HAVE_GCC) && ${HAVE_GCC} >= 7 && ${ACTIVE_CC} == "gcc"
-COPTS+=-Wno-format-truncation
-.endif
+COPTS+=	${GCC_NO_FORMAT_TRUNCATION}
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"

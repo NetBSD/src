@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2012/08/10 12:10:29 joerg Exp $
+#	$NetBSD: Makefile,v 1.15 2019/10/13 07:28:19 mrg Exp $
 
 USE_FORT?= yes	# network server
 
@@ -15,5 +15,7 @@ LDADD+=	-lutil
 DPADD+=	${LIBUTIL}
 
 .include <bsd.prog.mk>
+
+COPTS.rarpd.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 COPTS.mkarp.c+=	-Wno-pointer-sign

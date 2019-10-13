@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2013/11/28 22:33:43 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2019/10/13 07:28:07 mrg Exp $
 
 .include "../Makefile.inc"
 
@@ -8,5 +8,7 @@ PROG=	pppstats
 MAN=	pppstats.8
 LINKS=  ${BINDIR}/pppstats ${BINDIR}/slstats
 MLINKS=	pppstats.8 slstats.8
+
+COPTS.pppstats.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
