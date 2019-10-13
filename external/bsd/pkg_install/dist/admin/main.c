@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.3 2018/03/25 04:04:36 sevan Exp $	*/
+/*	$NetBSD: main.c,v 1.4 2019/10/13 21:56:14 joerg Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,10 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.3 2018/03/25 04:04:36 sevan Exp $");
+__RCSID("$NetBSD: main.c,v 1.4 2019/10/13 21:56:14 joerg Exp $");
 
 /*-
- * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,8 +59,10 @@ __RCSID("$NetBSD: main.c,v 1.3 2018/03/25 04:04:36 sevan Exp $");
 #endif
 #ifndef NETBSD
 #include <nbcompat/md5.h>
+#include <nbcompat/sha2.h>
 #else
 #include <md5.h>
+#include <sha2.h>
 #endif
 #if HAVE_LIMITS_H
 #include <limits.h>
@@ -93,6 +95,7 @@ static const char Options[] = "C:K:SVbd:qs:v";
 int	quiet, verbose;
 
 static void set_unset_variable(char **, Boolean);
+static void digest_input(char **);
 
 /* print usage message and exit */
 void 
@@ -521,6 +524,9 @@ main(int argc, char *argv[])
 	} else if (strcasecmp(argv[0], "unset") == 0) {
 		argv++;		/* "unset" */
 		set_unset_variable(argv, TRUE);
+	} else if (strcasecmp(argv[0], "digest") == 0) {
+		argv++;		/* "digest" */
+		digest_input(argv);
 	} else if (strcasecmp(argv[0], "config-var") == 0) {
 		argv++;
 		if (argv == NULL || argv[1] != NULL)
@@ -735,4 +741,23 @@ set_unset_variable(char **argv, Boolean unset)
 	free(variable);
 
 	return;
+}
+
+static void
+digest_input(char **argv)
+{
+	char digest[SHA256_DIGEST_STRING_LENGTH];
+	int failures = 0;
+
+	while (*argv != NULL) {
+		if (SHA256_File(*argv, digest)) {
+			puts(digest);
+		} else {
+			warn("cannot process %s", *argv);
+			++failures;
+		}
+		argv++;
+	}
+	if (failures)
+		exit(EXIT_FAILURE);
 }
