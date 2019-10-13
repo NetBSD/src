@@ -1,7 +1,7 @@
-/*	$NetBSD: h_mem_assist_asm.S,v 1.6 2019/03/19 19:23:39 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist_asm.S,v 1.7 2019/10/13 17:32:15 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -293,3 +293,73 @@ test14_begin:
 	movq	$0,(%rax)
 	TEST_END
 test14_end:
+
+/* -------------------------------------------------------------------------- */
+
+	.globl	test_16bit_1_begin, test_16bit_1_end
+	.globl	test_16bit_2_begin, test_16bit_2_end
+	.globl	test_16bit_3_begin, test_16bit_3_end
+	.globl	test_16bit_4_begin, test_16bit_4_end
+	.globl	test_16bit_5_begin, test_16bit_5_end
+
+#define TEST16_END	\
+	rdmsr
+
+	.code16
+
+	.align	64
+test_16bit_1_begin:
+	movw	$0x10f1,%bx
+	movw	$0x123,%dx
+
+	movb	%dl,(%bx)
+
+	TEST16_END
+test_16bit_1_end:
+
+	.align	64
+test_16bit_2_begin:
+	movw	$0x10f1,%bx
+	movw	$2,%di
+	movw	$0x123,%dx
+
+	movw	%dx,(%bx,%di)
+
+	TEST16_END
+test_16bit_2_end:
+
+	.align	64
+test_16bit_3_begin:
+	movw	$0x10f1,%bp
+	movw	$2,%si
+	movw	$0x678,%dx
+
+	movw	%dx,-2(%bp,%si)
+
+	TEST16_END
+test_16bit_3_end:
+
+	.align	64
+test_16bit_4_begin:
+	movw	$0x10f0,%bp
+	movw	$2,%si
+	movw	$2+4+4,%di
+	movw	$0xFFFF,%dx
+	movl	$0x0001,%eax
+	movl	$0x0010,%ebx
+	movl	$0x1000,%ecx
+
+	movw	%dx,4(%bp,%si)		/* 16bit opr 16bit adr */
+	andl	%eax,4(%bp,%si)		/* 32bit opr 16bit adr */
+	orw	%bx,4(%ebp,%esi)	/* 16bit opr 32bit adr */
+	orl	%ecx,-4(%bp,%di)	/* 32bit opr 16bit adr, negative */
+
+	TEST16_END
+test_16bit_4_end:
+
+	.align	64
+test_16bit_5_begin:
+	movb	$0x12,0x1234
+
+	TEST16_END
+test_16bit_5_end:

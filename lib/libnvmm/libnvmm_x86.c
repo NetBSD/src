@@ -1,7 +1,7 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.31 2019/06/08 07:27:44 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.32 2019/10/13 17:32:15 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -440,6 +440,12 @@ nvmm_gva_to_gpa(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
 }
 
 /* -------------------------------------------------------------------------- */
+
+#define DISASSEMBLER_BUG()	\
+	do {			\
+		errno = EINVAL;	\
+		return -1;	\
+	} while (0);
 
 static inline bool
 is_long_mode(struct nvmm_x64_state *state)
@@ -928,45 +934,22 @@ struct x86_reg {
 	uint64_t mask;
 };
 
+struct x86_dualreg {
+	int reg1;
+	int reg2;
+};
+
 enum x86_disp_type {
 	DISP_NONE,
 	DISP_0,
 	DISP_1,
+	DISP_2,
 	DISP_4
 };
 
 struct x86_disp {
 	enum x86_disp_type type;
 	uint64_t data; /* 4 bytes, but can be sign-extended */
-};
-
-enum REGMODRM__Mod {
-	MOD_DIS0, /* also, register indirect */
-	MOD_DIS1,
-	MOD_DIS4,
-	MOD_REG
-};
-
-enum REGMODRM__Reg {
-	REG_000, /* these fields are indexes to the register map */
-	REG_001,
-	REG_010,
-	REG_011,
-	REG_100,
-	REG_101,
-	REG_110,
-	REG_111
-};
-
-enum REGMODRM__Rm {
-	RM_000, /* reg */
-	RM_001, /* reg */
-	RM_010, /* reg */
-	RM_011, /* reg */
-	RM_RSP_SIB, /* reg or SIB, depending on the MOD */
-	RM_RBP_DISP32, /* reg or displacement-only (= RIP-relative on amd64) */
-	RM_110,
-	RM_111
 };
 
 struct x86_regmodrm {
@@ -988,6 +971,7 @@ struct x86_sib {
 enum x86_store_type {
 	STORE_NONE,
 	STORE_REG,
+	STORE_DUALREG,
 	STORE_IMM,
 	STORE_SIB,
 	STORE_DMO
@@ -997,6 +981,7 @@ struct x86_store {
 	enum x86_store_type type;
 	union {
 		const struct x86_reg *reg;
+		struct x86_dualreg dualreg;
 		struct x86_immediate imm;
 		struct x86_sib sib;
 		uint64_t dmo;
@@ -1761,6 +1746,18 @@ static const struct x86_reg gpr_map[2][8][8] __cacheline_aligned = {
 	}
 };
 
+/* [enc] */
+static const int gpr_dual_reg1_rm[8] __cacheline_aligned = {
+	[0b000] = NVMM_X64_GPR_RBX, /* BX (+SI) */
+	[0b001] = NVMM_X64_GPR_RBX, /* BX (+DI) */
+	[0b010] = NVMM_X64_GPR_RBP, /* BP (+SI) */
+	[0b011] = NVMM_X64_GPR_RBP, /* BP (+DI) */
+	[0b100] = NVMM_X64_GPR_RSI, /* SI */
+	[0b101] = NVMM_X64_GPR_RDI, /* DI */
+	[0b110] = NVMM_X64_GPR_RBP, /* BP */
+	[0b111] = NVMM_X64_GPR_RBX, /* BX */
+};
+
 static int
 node_overflow(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
@@ -1957,8 +1954,12 @@ node_disp(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 
 	if (instr->strm->disp.type == DISP_1) {
 		n = 1;
-	} else { /* DISP4 */
+	} else if (instr->strm->disp.type == DISP_2) {
+		n = 2;
+	} else if (instr->strm->disp.type == DISP_4) {
 		n = 4;
+	} else {
+		DISASSEMBLER_BUG();
 	}
 
 	if (fsm_read(fsm, (uint8_t *)&data, n) == -1) {
@@ -1975,6 +1976,47 @@ node_disp(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		fsm_advance(fsm, n, node_immediate);
 	} else {
 		fsm_advance(fsm, n, NULL);
+	}
+
+	return 0;
+}
+
+/*
+ * Special node to handle 16bit addressing encoding, which can reference two
+ * registers at once.
+ */
+static int
+node_dual(struct x86_decode_fsm *fsm, struct x86_instr *instr)
+{
+	int reg1, reg2;
+
+	reg1 = gpr_dual_reg1_rm[instr->regmodrm.rm];
+
+	if (instr->regmodrm.rm == 0b000 ||
+	    instr->regmodrm.rm == 0b010) {
+		reg2 = NVMM_X64_GPR_RSI;
+	} else if (instr->regmodrm.rm == 0b001 ||
+	    instr->regmodrm.rm == 0b011) {
+		reg2 = NVMM_X64_GPR_RDI;
+	} else {
+		DISASSEMBLER_BUG();
+	}
+
+	instr->strm->type = STORE_DUALREG;
+	instr->strm->u.dualreg.reg1 = reg1;
+	instr->strm->u.dualreg.reg2 = reg2;
+
+	if (instr->strm->disp.type == DISP_NONE) {
+		DISASSEMBLER_BUG();
+	} else if (instr->strm->disp.type == DISP_0) {
+		/* Indirect register addressing mode */
+		if (instr->opcode->immediate) {
+			fsm_advance(fsm, 1, node_immediate);
+		} else {
+			fsm_advance(fsm, 1, NULL);
+		}
+	} else {
+		fsm_advance(fsm, 1, node_disp);
 	}
 
 	return 0;
@@ -2053,7 +2095,9 @@ node_sib(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		instr->strm->u.sib.bas = get_register_bas(instr, base);
 
 	/* May have a displacement, or an immediate */
-	if (instr->strm->disp.type == DISP_1 || instr->strm->disp.type == DISP_4) {
+	if (instr->strm->disp.type == DISP_1 ||
+	    instr->strm->disp.type == DISP_2 ||
+	    instr->strm->disp.type == DISP_4) {
 		fsm_advance(fsm, 1, node_disp);
 	} else if (opcode->immediate) {
 		fsm_advance(fsm, 1, node_immediate);
@@ -2106,35 +2150,58 @@ get_register_rm(struct x86_instr *instr, const struct x86_opcode *opcode)
 static inline bool
 has_sib(struct x86_instr *instr)
 {
-	return (instr->regmodrm.mod != 3 && instr->regmodrm.rm == 4);
+	return (instr->address_size != 2 && /* no SIB in 16bit addressing */
+	    instr->regmodrm.mod != 0b11 &&
+	    instr->regmodrm.rm == 0b100);
 }
 
 static inline bool
 is_rip_relative(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
-	return (fsm->is64bit && instr->strm->disp.type == DISP_0 &&
-	    instr->regmodrm.rm == RM_RBP_DISP32);
+	return (fsm->is64bit && /* RIP-relative only in 64bit mode */
+	    instr->regmodrm.mod == 0b00 &&
+	    instr->regmodrm.rm == 0b101);
 }
 
 static inline bool
 is_disp32_only(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 {
-	return (!fsm->is64bit && instr->strm->disp.type == DISP_0 &&
-	    instr->regmodrm.rm == RM_RBP_DISP32);
+	return (!fsm->is64bit && /* no disp32-only in 64bit mode */
+	    instr->address_size != 2 && /* no disp32-only in 16bit addressing */
+	    instr->regmodrm.mod == 0b00 &&
+	    instr->regmodrm.rm == 0b101);
+}
+
+static inline bool
+is_disp16_only(struct x86_decode_fsm *fsm, struct x86_instr *instr)
+{
+	return (instr->address_size == 2 && /* disp16-only only in 16bit addr */
+	    instr->regmodrm.mod == 0b00 &&
+	    instr->regmodrm.rm == 0b110);
+}
+
+static inline bool
+is_dual(struct x86_decode_fsm *fsm, struct x86_instr *instr)
+{
+	return (instr->address_size == 2 &&
+	    instr->regmodrm.mod != 0b11 &&
+	    instr->regmodrm.rm <= 0b011);
 }
 
 static enum x86_disp_type
 get_disp_type(struct x86_instr *instr)
 {
 	switch (instr->regmodrm.mod) {
-	case MOD_DIS0:	/* indirect */
+	case 0b00:	/* indirect */
 		return DISP_0;
-	case MOD_DIS1:	/* indirect+1 */
+	case 0b01:	/* indirect+1 */
 		return DISP_1;
-	case MOD_DIS4:	/* indirect+4 */
+	case 0b10:	/* indirect+{2,4} */
+		if (__predict_false(instr->address_size == 2)) {
+			return DISP_2;
+		}
 		return DISP_4;
-	case MOD_REG:	/* direct */
-	default:	/* gcc */
+	case 0b11:	/* direct */
 		return DISP_NONE;
 	}
 }
@@ -2222,6 +2289,21 @@ node_regmodrm(struct x86_decode_fsm *fsm, struct x86_instr *instr)
 		strm->u.reg = NULL;
 		strm->disp.type = DISP_4;
 		fsm_advance(fsm, 1, node_disp);
+		return 0;
+	}
+
+	if (__predict_false(is_disp16_only(fsm, instr))) {
+		/* Overwrites RM */
+		strm->type = STORE_REG;
+		strm->u.reg = NULL;
+		strm->disp.type = DISP_2;
+		fsm_advance(fsm, 1, node_disp);
+		return 0;
+	}
+
+	if (__predict_false(is_dual(fsm, instr))) {
+		/* Overwrites RM */
+		fsm_advance(fsm, 0, node_dual);
 		return 0;
 	}
 
@@ -2864,10 +2946,14 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 		}
 	} else if (store->type == STORE_REG) {
 		if (store->u.reg == NULL) {
-			/* The base is null. Happens with disp32-only. */
+			/* The base is null. Happens with disp32-only and
+			 * disp16-only. */
 		} else {
 			gva = gpr_read_address(instr, state, store->u.reg->num);
 		}
+	} else if (store->type == STORE_DUALREG) {
+		gva = gpr_read_address(instr, state, store->u.dualreg.reg1) +
+		    gpr_read_address(instr, state, store->u.dualreg.reg2);
 	} else {
 		gva = store->u.dmo;
 	}
@@ -3021,12 +3107,6 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	return 0;
 }
 
-#define DISASSEMBLER_BUG()	\
-	do {			\
-		errno = EINVAL;	\
-		return -1;	\
-	} while (0);
-
 static int
 assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
     struct x86_instr *instr, struct nvmm_exit *exit)
@@ -3051,6 +3131,12 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 			/* Direct access. */
 			mem.write = true;
 		}
+		break;
+	case STORE_DUALREG:
+		if (instr->src.disp.type == DISP_NONE) {
+			DISASSEMBLER_BUG();
+		}
+		mem.write = false;
 		break;
 	case STORE_IMM:
 		mem.write = true;
