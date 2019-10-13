@@ -1,4 +1,4 @@
-/*	$NetBSD: expand.c,v 1.134 2019/10/08 03:53:57 kre Exp $	*/
+/*	$NetBSD: expand.c,v 1.135 2019/10/13 20:55:04 christos Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)expand.c	8.5 (Berkeley) 5/15/95";
 #else
-__RCSID("$NetBSD: expand.c,v 1.134 2019/10/08 03:53:57 kre Exp $");
+__RCSID("$NetBSD: expand.c,v 1.135 2019/10/13 20:55:04 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -268,12 +268,13 @@ argstr(const char *p, int flag)
 			return p - 1;
 		case CTLENDVAR: /* end of expanding yyy in ${xxx-yyy} */
 		case CTLENDARI: /* end of a $(( )) string */
-			if (had_dol_at && (*p&0xFF) == CTLQUOTEEND)
+			if (had_dol_at &&
+			    (*p & 0xff) == (unsigned char)CTLQUOTEEND)
 				p++;
 			NULLTERM_4_TRACE(expdest);
 			VTRACE(DBG_EXPAND, ("argstr returning at \"%.6s\"..."
 			    " after %2.2X; added \"%s\" to expdest\n",
-			    p, (c&0xff), stackblock()));
+			    p, (c & 0xff), stackblock()));
 			return p;
 		case CTLQUOTEMARK:
 			/* "$@" syntax adherence hack */
