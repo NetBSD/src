@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.369 2019/10/12 19:57:09 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.370 2019/10/13 03:10:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.369 2019/10/12 19:57:09 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.370 2019/10/13 03:10:22 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -126,6 +126,7 @@ static int	sigpost(struct lwp *, sig_t, int, int);
 static int	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 static int	sigunwait(struct proc *, const ksiginfo_t *);
 static void	sigswitch(int, int, bool);
+static void	sigswitch_unlock_and_switch_away(struct lwp *);
 
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
@@ -932,10 +933,11 @@ repeat:
 	 * The process is already stopping.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		sigswitch(0, p->p_xsig, true);
+		mutex_exit(proc_lock);
+		sigswitch_unlock_and_switch_away(l);
 		mutex_enter(proc_lock);
 		mutex_enter(p->p_lock);
-		goto repeat; /* XXX */
+		goto repeat;
 	}
 
 	mask = &l->l_sigmask;
@@ -1642,10 +1644,11 @@ repeat:
 	 * The process is already stopping.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		sigswitch(0, p->p_xsig, true);
+		mutex_exit(proc_lock);
+		sigswitch_unlock_and_switch_away(l);
 		mutex_enter(proc_lock);
 		mutex_enter(p->p_lock);
-		goto repeat; /* XXX */
+		goto repeat;
 	}
 
 	KSI_INIT_TRAP(&ksi);
@@ -1692,7 +1695,6 @@ sigswitch(int ppmask, int signo, bool proc_lock_held)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
-	int biglocks;
 
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(l->l_stat == LSONPROC);
@@ -1752,10 +1754,26 @@ sigswitch(int ppmask, int signo, bool proc_lock_held)
 		mutex_exit(proc_lock);
 	}
 
-	/*
-	 * Unlock and switch away.
-	 */
+	sigswitch_unlock_and_switch_away(l);
+}
+
+/*
+ * Unlock and switch away.
+ */
+static void
+sigswitch_unlock_and_switch_away(struct lwp *l)
+{
+	struct proc *p;
+	int biglocks;
+
+	p = l->l_proc;
+
+	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(!mutex_owned(proc_lock));
+
+	KASSERT(l->l_stat == LSONPROC);
+	KASSERT(p->p_nrlwps > 0);
+
 	KERNEL_UNLOCK_ALL(l, &biglocks);
 	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 		p->p_nrlwps--;
@@ -1845,7 +1863,7 @@ issignal(struct lwp *l)
 		 * we awaken, check for a signal from the debugger.
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			sigswitch(PS_NOCLDSTOP, 0, false);
+			sigswitch_unlock_and_switch_away(l);
 			mutex_enter(p->p_lock);
 			signo = sigchecktrace();
 		} else if (p->p_stat == SACTIVE)
@@ -2527,9 +2545,9 @@ repeat:
 	 * The process is already stopping.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		sigswitch(0, p->p_xsig, false);
+		sigswitch_unlock_and_switch_away(l);
 		mutex_enter(p->p_lock);
-		goto repeat; /* XXX */
+		goto repeat;
 	}
 
 	/* Needed for ktrace */
