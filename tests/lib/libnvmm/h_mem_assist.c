@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.12 2019/10/13 17:32:15 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.13 2019/10/14 01:15:32 christos Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -175,21 +175,21 @@ extern uint8_t test13_begin, test13_end;
 extern uint8_t test14_begin, test14_end;
 
 static const struct test tests64[] = {
-	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004 },
-	{ "test2 - OR",  &test2_begin, &test2_end, 0x16FF },
-	{ "test3 - AND", &test3_begin, &test3_end, 0x1FC0 },
-	{ "test4 - XOR", &test4_begin, &test4_end, 0x10CF },
-	{ "test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00 },
-	{ "test6 - DMO", &test6_begin, &test6_end, 0xFFAB },
-	{ "test7 - STOS", &test7_begin, &test7_end, 0x00123456 },
-	{ "test8 - LODS", &test8_begin, &test8_end, 0x12345678 },
-	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678 },
-	{ "test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078 },
-	{ "test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678 },
-	{ "test12 - CMP", &test12_begin, &test12_end, 0x00000001 },
-	{ "test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF },
-	{ "test14 - TEST", &test14_begin, &test14_end, 0x00000001 },
-	{ NULL, NULL, NULL, -1 }
+	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004, 0 },
+	{ "test2 - OR",  &test2_begin, &test2_end, 0x16FF, 0 },
+	{ "test3 - AND", &test3_begin, &test3_end, 0x1FC0, 0 },
+	{ "test4 - XOR", &test4_begin, &test4_end, 0x10CF, 0 },
+	{ "test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00, 0 },
+	{ "test6 - DMO", &test6_begin, &test6_end, 0xFFAB, 0 },
+	{ "test7 - STOS", &test7_begin, &test7_end, 0x00123456, 0 },
+	{ "test8 - LODS", &test8_begin, &test8_end, 0x12345678, 0 },
+	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678, 0 },
+	{ "test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078, 0 },
+	{ "test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678, 0 },
+	{ "test12 - CMP", &test12_begin, &test12_end, 0x00000001, 0 },
+	{ "test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF, 0 },
+	{ "test14 - TEST", &test14_begin, &test14_end, 0x00000001, 0 },
+	{ NULL, NULL, NULL, -1, 0 }
 };
 
 static void
