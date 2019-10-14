@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.9 2019/06/25 22:23:39 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.10 2019/10/14 00:16:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.9 2019/06/25 22:23:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.10 2019/10/14 00:16:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,9 +144,12 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	if (cca == 0)
 		sc->sc_dmat._nranges = 0;
 
+	sc->sc_ap.ap_dev = self;
 	sc->sc_ap.ap_pc = *aa->aa_pc;
 	sc->sc_ap.ap_pc.pc_conf_v = &sc->sc_ap;
 	sc->sc_ap.ap_seg = seg;
+	sc->sc_ap.ap_bus = sc->sc_bus;
+	sc->sc_ap.ap_bst = sc->sc_memt;
 
 	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
 		if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0)
