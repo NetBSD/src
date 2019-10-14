@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.13 2019/10/14 01:15:32 christos Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.14 2019/10/14 10:39:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -173,6 +173,8 @@ extern uint8_t test11_begin, test11_end;
 extern uint8_t test12_begin, test12_end;
 extern uint8_t test13_begin, test13_end;
 extern uint8_t test14_begin, test14_end;
+extern uint8_t test_64bit_15_begin, test_64bit_15_end;
+extern uint8_t test_64bit_16_begin, test_64bit_16_end;
 
 static const struct test tests64[] = {
 	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004, 0 },
@@ -189,6 +191,9 @@ static const struct test tests64[] = {
 	{ "test12 - CMP", &test12_begin, &test12_end, 0x00000001, 0 },
 	{ "test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF, 0 },
 	{ "test14 - TEST", &test14_begin, &test14_end, 0x00000001, 0 },
+	{ "test15 - XCHG", &test_64bit_15_begin, &test_64bit_15_end, 0x123456, 0 },
+	{ "test16 - XCHG", &test_64bit_16_begin, &test_64bit_16_end,
+	  0x123456, 0 },
 	{ NULL, NULL, NULL, -1, 0 }
 };
 
@@ -371,6 +376,7 @@ extern uint8_t test_16bit_2_begin, test_16bit_2_end;
 extern uint8_t test_16bit_3_begin, test_16bit_3_end;
 extern uint8_t test_16bit_4_begin, test_16bit_4_end;
 extern uint8_t test_16bit_5_begin, test_16bit_5_end;
+extern uint8_t test_16bit_6_begin, test_16bit_6_end;
 
 static const struct test tests16[] = {
 	{ "16bit test1 - MOV single", &test_16bit_1_begin, &test_16bit_1_end,
@@ -383,6 +389,8 @@ static const struct test tests16[] = {
 	  0x1011, 0x10f6 - 0x1000 },
 	{ "16bit test5 - disp16-only", &test_16bit_5_begin, &test_16bit_5_end,
 	  0x12, 0x1234 - 0x1000 },
+	{ "16bit test6 - XCHG", &test_16bit_6_begin, &test_16bit_6_end,
+	  0x1234, 0x1234 - 0x1000 },
 	{ NULL, NULL, NULL, -1, -1 }
 };
 
