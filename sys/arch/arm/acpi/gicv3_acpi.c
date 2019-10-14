@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.4 2019/09/12 09:02:36 jmcneill Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.5 2019/10/14 11:00:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.4 2019/09/12 09:02:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.5 2019/10/14 11:00:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.4 2019/09/12 09:02:36 jmcneill Exp 
 #include <arm/cortex/gicv3.h>
 #include <arm/cortex/gicv3_its.h>
 #include <arm/cortex/gic_reg.h>
+
+#include <arm/acpi/gic_v2m_acpi.h>
 
 #define	GICD_SIZE	0x10000
 #define	GICR_SIZE	0x20000
@@ -71,7 +73,7 @@ static void	gicv3_acpi_attach(device_t, device_t, void *);
 static int	gicv3_acpi_map_dist(struct gicv3_acpi_softc *);
 static int	gicv3_acpi_map_redist(struct gicv3_acpi_softc *);
 #if NPCI > 0
-static int	gicv3_acpi_map_its(struct gicv3_acpi_softc *);
+static int	gicv3_acpi_map_msi(struct gicv3_acpi_softc *);
 #endif
 
 CFATTACH_DECL_NEW(gicv3_acpi, sizeof(struct gicv3_acpi_softc), gicv3_acpi_match, gicv3_acpi_attach, NULL, NULL);
@@ -132,7 +134,7 @@ gicv3_acpi_attach(device_t parent, device_t self, void *aux)
 	}
 
 #if NPCI > 0
-	gicv3_acpi_map_its(sc);
+	gicv3_acpi_map_msi(sc);
 #endif
 
 	arm_fdt_irq_set_handler(gicv3_irq_handler);
@@ -309,10 +311,12 @@ gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 }
 
 static int
-gicv3_acpi_map_its(struct gicv3_acpi_softc *sc)
+gicv3_acpi_map_msi(struct gicv3_acpi_softc *sc)
 {
 	acpi_madt_walk(gicv3_acpi_map_gits, sc);
+	acpi_madt_walk(gic_v2m_acpi_find_msi_frame, sc->sc_gic.sc_dev);
 
 	return 0;
 }
+
 #endif
