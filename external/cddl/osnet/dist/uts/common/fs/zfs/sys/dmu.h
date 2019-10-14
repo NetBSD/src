@@ -957,13 +957,8 @@ typedef void (*dmu_traverse_cb_t)(objset_t *os, void *arg, struct blkptr *bp,
 void dmu_traverse_objset(objset_t *os, uint64_t txg_start,
     dmu_traverse_cb_t cb, void *arg);
 
-#ifdef __FreeBSD__
 int dmu_diff(const char *tosnap_name, const char *fromsnap_name,
     struct file *fp, offset_t *offp);
-#else
-int dmu_diff(const char *tosnap_name, const char *fromsnap_name,
-    struct vnode *vp, offset_t *offp);
-#endif
 
 /* CRC64 table */
 #define	ZFS_CRC64_POLY	0xC96C5795D7870F42ULL	/* ECMA-182, reflected form */
