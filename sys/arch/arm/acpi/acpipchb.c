@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.10 2019/10/14 00:16:29 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.11 2019/10/14 22:59:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.10 2019/10/14 00:16:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.11 2019/10/14 22:59:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -92,6 +92,174 @@ struct acpipchb_softc {
 	struct acpipchb_bus_space sc_pciio_bst;
 };
 
+static int
+acpipchb_amazon_graviton_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *data)
+{
+	struct acpi_pci_context *ap = pc->pc_conf_v;
+	int b, d, f;
+
+	pci_decompose_tag(pc, tag, &b, &d, &f);
+
+	if (ap->ap_bus == b) {
+		if (d > 0 || f > 0) {
+			*data = -1;
+			return EINVAL;
+		}
+		*data = bus_space_read_4(ap->ap_bst, ap->ap_conf_bsh, reg);
+		return 0;
+	}
+	
+	return acpimcfg_conf_read(pc, tag, reg, data);
+}
+
+static int
+acpipchb_amazon_graviton_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
+{
+	struct acpi_pci_context *ap = pc->pc_conf_v;
+	int b, d, f;
+
+	pci_decompose_tag(pc, tag, &b, &d, &f);
+
+	if (ap->ap_bus == b) {
+		if (d > 0 || f > 0) {
+			return EINVAL;
+		}
+		bus_space_write_4(ap->ap_bst, ap->ap_conf_bsh, reg, data);
+		return 0;
+	}
+	
+	return acpimcfg_conf_write(pc, tag, reg, data);
+}
+
+static int
+acpipchb_amazon_graviton_bus_maxdevs(struct acpi_pci_context *ap, int busno)
+{
+	if (busno == ap->ap_bus + 1)
+		return 1;
+
+	return 32;
+}
+
+static ACPI_STATUS
+acpipchb_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void **retval)
+{
+	struct acpi_pci_context *ap = ctx;
+	struct acpi_resources res;
+	struct acpi_mem *mem;
+	ACPI_STATUS rv;
+	int error;
+
+	rv = acpi_resource_parse(ap->ap_dev, handle, "_CRS", &res, &acpi_resource_parse_ops_quiet);
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	mem = acpi_res_mem(&res, 0);
+	if (mem == NULL) {
+		acpi_resource_cleanup(&res);
+		return AE_NOT_FOUND;
+	}
+
+	error = bus_space_map(ap->ap_bst, mem->ar_base, mem->ar_length, 0, &ap->ap_conf_bsh);
+	if (error != 0)
+		return AE_NO_MEMORY;
+
+	return AE_CTRL_TERMINATE;
+}
+
+static ACPI_STATUS
+acpipchb_amazon_graviton_busres(ACPI_RESOURCE *res, void *context)
+{
+	if (res->Type != ACPI_RESOURCE_TYPE_ADDRESS16)
+		return AE_OK;
+	if (res->Data.Address16.ResourceType != ACPI_BUS_NUMBER_RANGE)
+		return AE_OK;
+
+	*(ACPI_RESOURCE *)context = *res;
+	return AE_CTRL_TERMINATE;
+}
+
+static void
+acpipchb_amazon_graviton_init(struct acpi_pci_context *ap)
+{
+	ACPI_STATUS rv;
+	ACPI_RESOURCE res;
+	pcitag_t tag;
+	pcireg_t busdata;
+
+	rv = AcpiGetDevices(__UNCONST("AMZN0001"), acpipchb_amazon_graviton_map, ap, NULL);
+	if (ACPI_FAILURE(rv))
+		return;
+
+	ap->ap_conf_read = acpipchb_amazon_graviton_conf_read;
+	ap->ap_conf_write = acpipchb_amazon_graviton_conf_write;
+	ap->ap_bus_maxdevs = acpipchb_amazon_graviton_bus_maxdevs;
+
+	/*
+	 * The root port's may not have the correct bus information. Fix this up...
+	 */
+	/* Find bus number range */
+	memset(&res, 0, sizeof(res));
+	rv = AcpiWalkResources(ap->ap_handle, "_CRS", acpipchb_amazon_graviton_busres, &res);
+	if (ACPI_FAILURE(rv) || res.Type != ACPI_RESOURCE_TYPE_ADDRESS16)
+		return;
+
+	const int bus_primary = res.Data.Address16.Address.Minimum;
+	const int bus_secondary = bus_primary + 1;
+	const int bus_subordinate = res.Data.Address16.Address.Maximum;
+
+	tag = pci_make_tag(&ap->ap_pc, ap->ap_bus, 0, 0);
+	busdata = pci_conf_read(&ap->ap_pc, tag, PCI_BRIDGE_BUS_REG);
+	if (PCI_BRIDGE_BUS_NUM_PRIMARY(busdata) != bus_primary ||
+	    PCI_BRIDGE_BUS_NUM_SECONDARY(busdata) != bus_secondary ||
+	    PCI_BRIDGE_BUS_NUM_SUBORDINATE(busdata) != bus_subordinate) {
+
+		aprint_normal_dev(ap->ap_dev,
+		    "fixup bridge bus numbers %#x/%#x/%#x -> %#x/%#x/%#x\n",
+		    PCI_BRIDGE_BUS_NUM_PRIMARY(busdata),
+		    PCI_BRIDGE_BUS_NUM_SECONDARY(busdata),
+		    PCI_BRIDGE_BUS_NUM_SUBORDINATE(busdata),
+		    bus_primary, bus_secondary, bus_subordinate);
+		busdata &= ~PCI_BRIDGE_BUS_PRIMARY;
+		busdata |= __SHIFTIN(bus_primary, PCI_BRIDGE_BUS_PRIMARY);
+		busdata &= ~PCI_BRIDGE_BUS_SECONDARY;
+		busdata |= __SHIFTIN(bus_secondary, PCI_BRIDGE_BUS_SECONDARY);
+		busdata &= ~PCI_BRIDGE_BUS_SUBORDINATE;
+		busdata |= __SHIFTIN(bus_subordinate, PCI_BRIDGE_BUS_SUBORDINATE);
+		pci_conf_write(&ap->ap_pc, tag, PCI_BRIDGE_BUS_REG, busdata);
+	}
+}
+
+static const struct acpipchb_quirk {
+	const char			q_oemid[ACPI_OEM_ID_SIZE+1];
+	const char			q_oemtableid[ACPI_OEM_TABLE_ID_SIZE+1];
+	uint32_t			q_oemrevision;
+	void				(*q_init)(struct acpi_pci_context *);
+} acpipchb_quirks[] = {
+	{ "AMAZON",	"GRAVITON",	0,	acpipchb_amazon_graviton_init },
+};
+
+static const struct acpipchb_quirk *
+acpipchb_find_quirk(void)
+{
+	ACPI_STATUS rv;
+	ACPI_TABLE_MCFG *mcfg;
+	u_int n;
+
+	rv = AcpiGetTable(ACPI_SIG_MCFG, 0, (ACPI_TABLE_HEADER **)&mcfg);
+	if (ACPI_FAILURE(rv))
+		return NULL;
+
+	for (n = 0; n < __arraycount(acpipchb_quirks); n++) {
+		const struct acpipchb_quirk *q = &acpipchb_quirks[n];
+		if (memcmp(q->q_oemid, mcfg->Header.OemId, ACPI_OEM_ID_SIZE) == 0 &&
+		    memcmp(q->q_oemtableid, mcfg->Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE) == 0 &&
+		    q->q_oemrevision == mcfg->Header.OemRevision)
+			return q;
+	}
+
+	return NULL;
+}
+
 static int	acpipchb_match(device_t, cfdata_t, void *);
 static void	acpipchb_attach(device_t, device_t, void *);
 
@@ -122,6 +290,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	struct acpipchb_softc * const sc = device_private(self);
 	struct acpi_attach_args *aa = aux;
 	struct pcibus_attach_args pba;
+	const struct acpipchb_quirk *q;
 	ACPI_INTEGER cca, seg;
 
 	sc->sc_dev = self;
@@ -148,8 +317,13 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ap.ap_pc = *aa->aa_pc;
 	sc->sc_ap.ap_pc.pc_conf_v = &sc->sc_ap;
 	sc->sc_ap.ap_seg = seg;
+	sc->sc_ap.ap_handle = sc->sc_handle;
 	sc->sc_ap.ap_bus = sc->sc_bus;
 	sc->sc_ap.ap_bst = sc->sc_memt;
+
+	q = acpipchb_find_quirk();
+	if (q != NULL)
+		q->q_init(&sc->sc_ap);
 
 	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
 		if (acpimcfg_configure_bus(self, &sc->sc_ap.ap_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0)
