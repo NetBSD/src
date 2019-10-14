@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.21 2019/09/15 15:16:30 tnn Exp $ */
+/* $NetBSD: cpu.c,v 1.22 2019/10/14 22:53:05 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.21 2019/09/15 15:16:30 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.22 2019/10/14 22:53:05 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -432,14 +432,6 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 	}
 
 	aprint_normal("\n");
-
-	if ((id->ac_midr & CPU_PARTMASK) == (CPU_ID_CORTEXA72R0 & CPU_PARTMASK)
-	    && __SHIFTOUT(id->ac_midr, CPU_ID_REVISION_MASK) <= 3) {
-		aprint_normal_dev(self, "A72 errata #859971 present"
-		    ", workaround %s\n",
-		    ISSET(reg_a72_cpuactlr_el1_read(), __BIT(32))
-		    ? "enabled" : "NOT enabled (U-Boot update needed)");
-	}
 }
 
 /*
