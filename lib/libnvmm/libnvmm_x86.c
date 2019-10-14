@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.32 2019/10/13 17:32:15 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.33 2019/10/14 10:39:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -838,13 +838,15 @@ out:
 /* -------------------------------------------------------------------------- */
 
 struct x86_emul {
-	bool read;
+	bool readreg;
+	bool backprop;
 	bool notouch;
 	void (*func)(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 };
 
 static void x86_func_or(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 static void x86_func_and(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_xchg(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 static void x86_func_sub(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 static void x86_func_xor(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 static void x86_func_cmp(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
@@ -855,22 +857,28 @@ static void x86_func_lods(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 static void x86_func_movs(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
 
 static const struct x86_emul x86_emul_or = {
-	.read = true,
+	.readreg = true,
 	.func = x86_func_or
 };
 
 static const struct x86_emul x86_emul_and = {
-	.read = true,
+	.readreg = true,
 	.func = x86_func_and
 };
 
+static const struct x86_emul x86_emul_xchg = {
+	.readreg = true,
+	.backprop = true,
+	.func = x86_func_xchg
+};
+
 static const struct x86_emul x86_emul_sub = {
-	.read = true,
+	.readreg = true,
 	.func = x86_func_sub
 };
 
 static const struct x86_emul x86_emul_xor = {
-	.read = true,
+	.readreg = true,
 	.func = x86_func_xor
 };
 
@@ -1319,6 +1327,28 @@ static const struct x86_opcode primary_opcode_table[256] __cacheline_aligned = {
 		.szoverride = true,
 		.defsize = -1,
 		.emul = &x86_emul_xor
+	},
+
+	/*
+	 * XCHG
+	 */
+	[0x86] = {
+		/* Eb, Gb */
+		.valid = true,
+		.regmodrm = true,
+		.regtorm = true,
+		.szoverride = false,
+		.defsize = OPSIZE_BYTE,
+		.emul = &x86_emul_xchg
+	},
+	[0x87] = {
+		/* Ev, Gv */
+		.valid = true,
+		.regmodrm = true,
+		.regtorm = true,
+		.szoverride = true,
+		.defsize = -1,
+		.emul = &x86_emul_xchg
 	},
 
 	/*
@@ -2616,10 +2646,10 @@ exec_##instr##sz(uint##sz##_t op1, uint##sz##_t op2, uint64_t *rflags)	\
 {									\
 	uint##sz##_t res;						\
 	__asm __volatile (						\
-		#instr " %2, %3;"					\
-		"mov %3, %1;"						\
+		#instr"	%2, %3;"					\
+		"mov	%3, %1;"					\
 		"pushfq;"						\
-		"popq %0"						\
+		"popq	%0"						\
 	    : "=r" (*rflags), "=r" (res)				\
 	    : "r" (op1), "r" (op2));					\
 	return res;							\
@@ -2677,7 +2707,7 @@ EXEC_DISPATCHER(xor)
 
 /*
  * Emulation functions. We don't care about the order of the operands, except
- * for SUB, CMP and TEST. For these ones we look at mem->write todetermine who
+ * for SUB, CMP and TEST. For these ones we look at mem->write to determine who
  * is op1 and who is op2.
  */
 
@@ -2743,6 +2773,28 @@ x86_func_and(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 
 	gprs[NVMM_X64_GPR_RFLAGS] &= ~PSL_AND_MASK;
 	gprs[NVMM_X64_GPR_RFLAGS] |= (fl & PSL_AND_MASK);
+}
+
+static void
+x86_func_xchg(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+{
+	uint64_t *op1, op2;
+
+	op1 = (uint64_t *)mem->data;
+	op2 = 0;
+
+	/* Fetch op2. */
+	mem->data = (uint8_t *)&op2;
+	mem->write = false;
+	(*mach->cbs.mem)(mem);
+
+	/* Write op1 in op2. */
+	mem->data = (uint8_t *)op1;
+	mem->write = true;
+	(*mach->cbs.mem)(mem);
+
+	/* Write op2 in op1. */
+	*op1 = op2;
 }
 
 static void
@@ -3154,7 +3206,9 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	if (mem.write) {
 		switch (instr->src.type) {
 		case STORE_REG:
-			if (instr->src.disp.type != DISP_NONE) {
+			/* The instruction was "reg -> mem". Fetch the register
+			 * in membuf. */
+			if (__predict_false(instr->src.disp.type != DISP_NONE)) {
 				DISASSEMBLER_BUG();
 			}
 			val = state->gprs[instr->src.u.reg->num];
@@ -3162,16 +3216,20 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 			memcpy(mem.data, &val, mem.size);
 			break;
 		case STORE_IMM:
+			/* The instruction was "imm -> mem". Fetch the immediate
+			 * in membuf. */
 			memcpy(mem.data, &instr->src.u.imm.data, mem.size);
 			break;
 		default:
 			DISASSEMBLER_BUG();
 		}
-	} else if (instr->emul->read) {
-		if (instr->dst.type != STORE_REG) {
+	} else if (instr->emul->readreg) {
+		/* The instruction was "mem -> reg", but the value of the
+		 * register matters for the emul func. Fetch it in membuf. */
+		if (__predict_false(instr->dst.type != STORE_REG)) {
 			DISASSEMBLER_BUG();
 		}
-		if (instr->dst.disp.type != DISP_NONE) {
+		if (__predict_false(instr->dst.disp.type != DISP_NONE)) {
 			DISASSEMBLER_BUG();
 		}
 		val = state->gprs[instr->dst.u.reg->num];
@@ -3181,8 +3239,19 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 	(*instr->emul->func)(mach, &mem, state->gprs);
 
-	if (!instr->emul->notouch && !mem.write) {
-		if (instr->dst.type != STORE_REG) {
+	if (instr->emul->notouch) {
+		/* We're done. */
+		return 0;
+	}
+
+	if (!mem.write) {
+		/* The instruction was "mem -> reg". The emul func has filled
+		 * membuf with the memory content. Install membuf in the
+		 * register. */
+		if (__predict_false(instr->dst.type != STORE_REG)) {
+			DISASSEMBLER_BUG();
+		}
+		if (__predict_false(instr->dst.disp.type != DISP_NONE)) {
 			DISASSEMBLER_BUG();
 		}
 		memcpy(&val, membuf, sizeof(uint64_t));
@@ -3190,6 +3259,21 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		state->gprs[instr->dst.u.reg->num] &= ~instr->dst.u.reg->mask;
 		state->gprs[instr->dst.u.reg->num] |= val;
 		state->gprs[instr->dst.u.reg->num] &= ~instr->zeroextend_mask;
+	} else if (instr->emul->backprop) {
+		/* The instruction was "reg -> mem", but the memory must be
+		 * back-propagated to the register. Install membuf in the
+		 * register. */
+		if (__predict_false(instr->src.type != STORE_REG)) {
+			DISASSEMBLER_BUG();
+		}
+		if (__predict_false(instr->src.disp.type != DISP_NONE)) {
+			DISASSEMBLER_BUG();
+		}
+		memcpy(&val, membuf, sizeof(uint64_t));
+		val = __SHIFTIN(val, instr->src.u.reg->mask);
+		state->gprs[instr->src.u.reg->num] &= ~instr->src.u.reg->mask;
+		state->gprs[instr->src.u.reg->num] |= val;
+		state->gprs[instr->src.u.reg->num] &= ~instr->zeroextend_mask;
 	}
 
 	return 0;
