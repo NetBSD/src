@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.c,v 1.154 2018/12/15 05:38:45 msaitoh Exp $	*/
+/*	$NetBSD: pci.c,v 1.155 2019/10/14 00:20:09 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 1998
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.154 2018/12/15 05:38:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci.c,v 1.155 2019/10/14 00:20:09 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -723,10 +723,6 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 
 		tag = pci_make_tag(pc, sc->sc_bus, device, 0);
 
-		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
-		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
-			continue;
-
 		id = pci_conf_read(pc, tag, PCI_ID_REG);
 
 		/* Invalid vendor ID value? */
@@ -734,6 +730,10 @@ pci_enumerate_bus(struct pci_softc *sc, const int *locators,
 			continue;
 		/* XXX Not invalid, but we've done this ~forever. */
 		if (PCI_VENDOR(id) == 0)
+			continue;
+
+		bhlcr = pci_conf_read(pc, tag, PCI_BHLC_REG);
+		if (PCI_HDRTYPE_TYPE(bhlcr) > 2)
 			continue;
 
 		qd = pci_lookup_quirkdata(PCI_VENDOR(id), PCI_PRODUCT(id));
