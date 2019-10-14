@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.9 2018/12/08 15:04:40 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.10 2019/10/14 00:16:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.9 2018/12/08 15:04:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.10 2019/10/14 00:16:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -59,6 +59,120 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.9 2018/12/08 15:04:40 jmcneil
 #include <arm/acpi/acpi_pci_machdep.h>
 
 #include <arm/pci/pci_msi_machdep.h>
+
+static int
+acpi_pci_amazon_graviton_conf_read(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t *data)
+{
+	struct acpi_pci_context *ap = pc->pc_conf_v;
+	bus_size_t off;
+	int b, d, f;
+
+	pci_decompose_tag(pc, tag, &b, &d, &f);
+
+	if (ap->ap_bus == b) {
+		if (d > 0) {
+			*data = -1;
+			return EINVAL;
+		}
+		off = f * PCI_EXTCONF_SIZE + reg;
+		*data = bus_space_read_4(ap->ap_bst, ap->ap_conf_bsh, off);
+		return 0;
+	}
+	
+	return acpimcfg_conf_read(pc, tag, reg, data);
+}
+
+static int
+acpi_pci_amazon_graviton_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
+{
+	struct acpi_pci_context *ap = pc->pc_conf_v;
+	bus_size_t off;
+	int b, d, f;
+
+	pci_decompose_tag(pc, tag, &b, &d, &f);
+
+	if (ap->ap_bus == b) {
+		if (d > 0) {
+			return EINVAL;
+		}
+		off = f * PCI_EXTCONF_SIZE + reg;
+		bus_space_write_4(ap->ap_bst, ap->ap_conf_bsh, off, data);
+		return 0;
+	}
+	
+	return acpimcfg_conf_write(pc, tag, reg, data);
+}
+
+static ACPI_STATUS
+acpi_pci_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void **retval)
+{
+	struct acpi_pci_context *ap = ctx;
+	struct acpi_resources res;
+	struct acpi_mem *mem;
+	ACPI_STATUS rv;
+	int error;
+
+	rv = acpi_resource_parse(ap->ap_dev, handle, "_CRS", &res, &acpi_resource_parse_ops_quiet);
+	if (ACPI_FAILURE(rv))
+		return rv;
+
+	mem = acpi_res_mem(&res, 0);
+	if (mem == NULL) {
+		acpi_resource_cleanup(&res);
+		return AE_NOT_FOUND;
+	}
+
+	error = bus_space_map(ap->ap_bst, mem->ar_base, mem->ar_length, 0, &ap->ap_conf_bsh);
+	if (error != 0)
+		return AE_NO_MEMORY;
+
+	return AE_CTRL_TERMINATE;
+}
+
+static void
+acpi_pci_amazon_graviton_init(struct pcibus_attach_args *pba)
+{
+	struct acpi_pci_context *ap = pba->pba_pc->pc_conf_v;
+	ACPI_STATUS rv;
+
+	rv = AcpiGetDevices(__UNCONST("AMZN0001"), acpi_pci_amazon_graviton_map, ap, NULL);
+	if (ACPI_FAILURE(rv))
+		return;
+
+	ap->ap_conf_read = acpi_pci_amazon_graviton_conf_read;
+	ap->ap_conf_write = acpi_pci_amazon_graviton_conf_write;
+}
+
+static const struct acpi_pci_quirk {
+	const char			q_oemid[ACPI_OEM_ID_SIZE+1];
+	const char			q_oemtableid[ACPI_OEM_TABLE_ID_SIZE+1];
+	uint32_t			q_oemrevision;
+	void				(*q_init)(struct pcibus_attach_args *);
+} acpi_pci_quirks[] = {
+	{ "AMAZON",	"GRAVITON",	0,	acpi_pci_amazon_graviton_init },
+};
+
+static const struct acpi_pci_quirk *
+acpi_pci_find_quirk(void)
+{
+	ACPI_STATUS rv;
+	ACPI_TABLE_MCFG *mcfg;
+	u_int n;
+
+	rv = AcpiGetTable(ACPI_SIG_MCFG, 0, (ACPI_TABLE_HEADER **)&mcfg);
+	if (ACPI_FAILURE(rv))
+		return NULL;
+
+	for (n = 0; n < __arraycount(acpi_pci_quirks); n++) {
+		const struct acpi_pci_quirk *q = &acpi_pci_quirks[n];
+		if (memcmp(q->q_oemid, mcfg->Header.OemId, ACPI_OEM_ID_SIZE) == 0 &&
+		    memcmp(q->q_oemtableid, mcfg->Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE) == 0 &&
+		    q->q_oemrevision == mcfg->Header.OemRevision)
+			return q;
+	}
+
+	return NULL;
+}
 
 struct acpi_pci_prt {
 	u_int				prt_segment;
@@ -160,6 +274,7 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 {
 	struct acpi_pci_context *ap = pba->pba_pc->pc_conf_v;
 	struct acpi_pci_prt *prt, *prtp;
+	const struct acpi_pci_quirk *q;
 	struct acpi_devnode *ad;
 	ACPI_HANDLE handle;
 	int seg, bus, dev, func;
@@ -201,6 +316,10 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 		prt->prt_handle = handle;
 		TAILQ_INSERT_TAIL(&acpi_pci_irq_routes, prt, prt_list);
 	}
+
+	q = acpi_pci_find_quirk();
+	if (q != NULL)
+		q->q_init(pba);
 
 	acpimcfg_map_bus(self, pba->pba_pc, pba->pba_bus);
 
@@ -260,7 +379,10 @@ acpi_pci_md_conf_read(void *v, pcitag_t tag, int offset)
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return (pcireg_t) -1;
 
-	acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
+	if (ap->ap_conf_read != NULL)
+		ap->ap_conf_read(&ap->ap_pc, tag, offset, &val);
+	else
+		acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
 
 	return val;
 }
@@ -273,7 +395,10 @@ acpi_pci_md_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return;
 
-	acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
+	if (ap->ap_conf_write != NULL)
+		ap->ap_conf_write(&ap->ap_pc, tag, offset, val);
+	else
+		acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
 }
 
 static int
