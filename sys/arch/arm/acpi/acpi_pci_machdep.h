@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.h,v 1.2 2018/10/19 11:40:27 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.h,v 1.3 2019/10/14 00:16:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,13 @@ extern struct arm32_pci_chipset arm_acpi_pci_chipset;
 
 struct acpi_pci_context {
 	struct arm32_pci_chipset ap_pc;
+	device_t ap_dev;
 	u_int ap_seg;
+	int ap_bus;
+	bus_space_tag_t ap_bst;
+	bus_space_handle_t ap_conf_bsh;
+	int (*ap_conf_read)(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
+	int (*ap_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
 };
 
 #endif /* !_ARM_ACPI_PCI_MACHDEP_H */
