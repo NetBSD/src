@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.10 2019/08/19 03:23:30 ozaki-r Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.11 2019/10/14 16:43:04 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.10 2019/08/19 03:23:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.11 2019/10/14 16:43:04 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -227,6 +227,8 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 		return EINVAL;
 
 	rtm = mtod(m, struct rt_xmsghdr *);
+	if (rtm->rtm_type >= sizeof(rop->rocb_msgfilter) * CHAR_BIT)
+		return EINVAL;
 	/* If the rtm type is filtered out, return a positive. */
 	if (!(rop->rocb_msgfilter & RTMSGFILTER(rtm->rtm_type)))
 		return EEXIST;
