@@ -112,6 +112,24 @@ argon2_argon2d_k2096_p1_v13_body() {
 		'echo -n 'password' | argon2 somesalt -e -d -k 2096 -p 1 -v 13'
 }
 
+atf_test_case argon2_argon2id_k2096_p1_v19_inver
+argon2_argon2id_k2096_p1_v19_inver_head() {
+	atf_set "descr" "ATF test for argon2 argon2d,k=2096,p=1 invalid version specification"
+}
+argon2_argon2id_k2096_p1_v19_inver_body() {
+	atf_check -s exit:1 -e match:"Error: invalid Argon2 version" -x \
+		'echo -n 'password' | argon2 somesalt -e -d -k 2096 -p 1 -v 19'
+}
+
+atf_test_case argon2_argon2id_k2096_p1_sts
+argon2_argon2id_k2096_p1_sts_head() {
+	atf_set "descr" "ATF test for argon2 argon2d,k=2096,p=1 salt too short"
+}
+argon2_argon2id_k2096_p1_sts_body() {
+	atf_check -s exit:1 -e match:"Error: Salt is too short" -x \
+		'echo -n 'password' | argon2 tshort -e -d -k 2096 -p 1'
+}
+
 atf_init_test_cases()
 {
 	atf_add_test_case argon2_argon2id
@@ -126,4 +144,6 @@ atf_init_test_cases()
 	atf_add_test_case argon2_argon2i_k2096_p1_v13
 	atf_add_test_case argon2_argon2d_k2096_p1_v10
 	atf_add_test_case argon2_argon2d_k2096_p1_v13
+	atf_add_test_case argon2_argon2id_k2096_p1_v19_inver
+	atf_add_test_case argon2_argon2id_k2096_p1_sts
 }
