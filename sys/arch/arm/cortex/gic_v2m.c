@@ -1,4 +1,4 @@
-/* $NetBSD: gic_v2m.c,v 1.6 2019/06/17 00:49:55 jmcneill Exp $ */
+/* $NetBSD: gic_v2m.c,v 1.7 2019/10/14 11:00:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.6 2019/06/17 00:49:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.7 2019/10/14 11:00:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -43,6 +43,24 @@ __KERNEL_RCSID(0, "$NetBSD: gic_v2m.c,v 1.6 2019/06/17 00:49:55 jmcneill Exp $")
 
 #include <arm/pic/picvar.h>
 #include <arm/cortex/gic_v2m.h>
+
+static uint64_t
+gic_v2m_msi_addr(struct gic_v2m_frame *frame, int spi)
+{
+	if ((frame->frame_flags & GIC_V2M_FLAG_GRAVITON) != 0)
+		return frame->frame_reg + ((spi - 32) << 3);
+
+	return frame->frame_reg + GIC_MSI_SETSPI;
+}
+
+static uint32_t
+gic_v2m_msi_data(struct gic_v2m_frame *frame, int spi)
+{
+	if ((frame->frame_flags & GIC_V2M_FLAG_GRAVITON) != 0)
+		return 0;
+
+	return spi;
+}
 
 static int
 gic_v2m_msi_alloc_spi(struct gic_v2m_frame *frame, int count,
@@ -111,18 +129,20 @@ gic_v2m_msi_enable(struct gic_v2m_frame *frame, int spi, int count)
 	ctl |= __SHIFTIN(ilog2(count), PCI_MSI_CTL_MME_MASK);
 	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
 
-	const uint64_t addr = frame->frame_reg + GIC_MSI_SETSPI;
+	const uint64_t addr = gic_v2m_msi_addr(frame, spi);
+	const uint32_t data = gic_v2m_msi_data(frame, spi);
+
 	ctl = pci_conf_read(pc, tag, off + PCI_MSI_CTL);
 	if (ctl & PCI_MSI_CTL_64BIT_ADDR) {
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR64_LO,
 		    addr & 0xffffffff);
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR64_HI,
 		    (addr >> 32) & 0xffffffff);
-		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64, spi);
+		pci_conf_write(pc, tag, off + PCI_MSI_MDATA64, data);
 	} else {
 		pci_conf_write(pc, tag, off + PCI_MSI_MADDR,
 		    addr & 0xffffffff);
-		pci_conf_write(pc, tag, off + PCI_MSI_MDATA, spi);
+		pci_conf_write(pc, tag, off + PCI_MSI_MDATA, data);
 	}
 	ctl |= PCI_MSI_CTL_MSI_ENABLE;
 	pci_conf_write(pc, tag, off + PCI_MSI_CTL, ctl);
@@ -162,11 +182,12 @@ gic_v2m_msix_enable(struct gic_v2m_frame *frame, int spi, int msix_vec,
 	ctl &= ~PCI_MSIX_CTL_ENABLE;
 	pci_conf_write(pc, tag, off + PCI_MSIX_CTL, ctl);
 
-	const uint64_t addr = frame->frame_reg + GIC_MSI_SETSPI;
+	const uint64_t addr = gic_v2m_msi_addr(frame, spi);
+	const uint32_t data = gic_v2m_msi_data(frame, spi);
 	const uint64_t entry_base = PCI_MSIX_TABLE_ENTRY_SIZE * msix_vec;
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_LO, (uint32_t)addr);
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_ADDR_HI, (uint32_t)(addr >> 32));
-	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, spi);
+	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_DATA, data);
 	bus_space_write_4(bst, bsh, entry_base + PCI_MSIX_TABLE_ENTRY_VECTCTL, 0);
 
 	ctl = pci_conf_read(pc, tag, off + PCI_MSIX_CTL);

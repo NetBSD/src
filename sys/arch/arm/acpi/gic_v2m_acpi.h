@@ -1,7 +1,7 @@
-/* $NetBSD: gic_v2m.h,v 1.2 2019/10/14 11:00:13 jmcneill Exp $ */
+/* $NetBSD: gic_v2m_acpi.h,v 1.1 2019/10/14 11:00:13 jmcneill Exp $ */
 
 /*-
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,25 +29,9 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ARM_CORTEX_GIC_V2M_H
-#define _ARM_CORTEX_GIC_V2M_H
+#ifndef _ARM_GIC_V2M_ACPI_H
+#define _ARM_GIC_V2M_ACPI_H
 
-#include <arm/pci/pci_msi_machdep.h>
-#include <arm/cortex/gic_reg.h>
+ACPI_STATUS	gic_v2m_acpi_find_msi_frame(ACPI_SUBTABLE_HEADER *, void *);
 
-struct gic_v2m_frame {
-	uint64_t		frame_reg;
-	struct pic_softc	*frame_pic;
-	uint16_t		frame_base;
-	uint16_t		frame_count;
-	uint32_t		frame_flags;
-#define	GIC_V2M_FLAG_GRAVITON		0x01	/* Amazon Graviton quirk */
-
-	const struct pci_attach_args *frame_pa[GICC_IAR_IRQ];
-
-	struct arm_pci_msi	frame_msi;
-};
-
-int	gic_v2m_init(struct gic_v2m_frame *, device_t, uint32_t);
-
-#endif /* !_ARM_CORTEX_GIC_V2M_H */
+#endif /* !_ARM_GIC_V2M_ACPI_H */
