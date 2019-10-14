@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.33 2019/10/14 10:39:24 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.34 2019/10/14 10:43:40 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -70,20 +70,28 @@ nvmm_vcpu_dump(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 		return -1;
 
 	printf("+ VCPU id=%d\n", (int)vcpu->cpuid);
-	printf("| -> RIP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RIP]);
-	printf("| -> RSP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RSP]);
 	printf("| -> RAX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RAX]);
-	printf("| -> RBX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RBX]);
 	printf("| -> RCX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RCX]);
+	printf("| -> RDX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RDX]);
+	printf("| -> RBX=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RBX]);
+	printf("| -> RSP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RSP]);
+	printf("| -> RBP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RBP]);
+	printf("| -> RSI=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RSI]);
+	printf("| -> RDI=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RDI]);
+	printf("| -> RIP=%"PRIx64"\n", state->gprs[NVMM_X64_GPR_RIP]);
 	printf("| -> RFLAGS=%p\n", (void *)state->gprs[NVMM_X64_GPR_RFLAGS]);
 	for (i = 0; i < NVMM_X64_NSEG; i++) {
 		attr = (uint16_t *)&state->segs[i].attrib;
-		printf("| -> %s: sel=0x%x base=%"PRIx64", limit=%x, attrib=%x\n",
+		printf("| -> %s: sel=0x%x base=%"PRIx64", limit=%x, "
+		    "attrib=%x [type=%d,l=%d,def=%d]\n",
 		    segnames[i],
 		    state->segs[i].selector,
 		    state->segs[i].base,
 		    state->segs[i].limit,
-		    *attr);
+		    *attr,
+		    state->segs[i].attrib.type,
+		    state->segs[i].attrib.l,
+		    state->segs[i].attrib.def);
 	}
 	printf("| -> MSR_EFER=%"PRIx64"\n", state->msrs[NVMM_X64_MSR_EFER]);
 	printf("| -> CR0=%"PRIx64"\n", state->crs[NVMM_X64_CR_CR0]);
