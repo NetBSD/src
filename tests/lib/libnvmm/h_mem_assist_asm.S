@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist_asm.S,v 1.7 2019/10/13 17:32:15 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist_asm.S,v 1.8 2019/10/14 10:39:24 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -43,6 +43,8 @@
 	.globl	test12_begin, test12_end
 	.globl	test13_begin, test13_end
 	.globl	test14_begin, test14_end
+	.globl	test_64bit_15_begin, test_64bit_15_end
+	.globl	test_64bit_16_begin, test_64bit_16_end
 	.text
 	.code64
 
@@ -294,6 +296,35 @@ test14_begin:
 	TEST_END
 test14_end:
 
+	.align	64
+test_64bit_15_begin:
+	movq	$0x1000,%rax
+	movq	$0x120000,%rbx
+	movq	$0x003400,%rcx
+	movq	$0x000056,%rdx
+
+	xchgq	%rbx,(%rax)
+	xchgw	(%rax),%cx
+	xchgb	%dl,(%rax)
+
+	TEST_END
+test_64bit_15_end:
+
+	.align	64
+test_64bit_16_begin:
+	movq	$0x1000,%rax
+	movq	$0x000000,%rbx
+	movq	$0x000000,%rcx
+	movq	$0x000000,%rdx
+
+	movq	$0x123456,(%rax)
+	xchgq	%rbx,(%eax)
+	movq	$0,(%rax)
+	xchgq	%rbx,(%eax)
+
+	TEST_END
+test_64bit_16_end:
+
 /* -------------------------------------------------------------------------- */
 
 	.globl	test_16bit_1_begin, test_16bit_1_end
@@ -301,6 +332,7 @@ test14_end:
 	.globl	test_16bit_3_begin, test_16bit_3_end
 	.globl	test_16bit_4_begin, test_16bit_4_end
 	.globl	test_16bit_5_begin, test_16bit_5_end
+	.globl	test_16bit_6_begin, test_16bit_6_end
 
 #define TEST16_END	\
 	rdmsr
@@ -363,3 +395,16 @@ test_16bit_5_begin:
 
 	TEST16_END
 test_16bit_5_end:
+
+	.align	64
+test_16bit_6_begin:
+	movw	$0x1234,%bp
+	movw	$4,%di
+	movw	$0x1200,%bx
+	movw	$0x0034,%cx
+
+	xchgw	%bx,(%bp)
+	xchgb	-4(%bp,%di),%cl
+
+	TEST16_END
+test_16bit_6_end:
