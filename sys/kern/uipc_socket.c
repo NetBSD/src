@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.284 2019/09/27 00:32:03 pgoyette Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.285 2019/10/14 16:27:03 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.284 2019/09/27 00:32:03 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.285 2019/10/14 16:27:03 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2096,7 +2096,9 @@ sockopt_set(struct sockopt *sopt, const void *buf, size_t len)
 	}
 
 	sopt->sopt_retsize = MIN(sopt->sopt_size, len);
-	memcpy(sopt->sopt_data, buf, sopt->sopt_retsize);
+	if (sopt->sopt_retsize > 0) {
+		memcpy(sopt->sopt_data, buf, sopt->sopt_retsize);
+	}
 
 	return 0;
 }
