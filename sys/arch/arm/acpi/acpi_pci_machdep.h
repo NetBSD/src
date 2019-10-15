@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.h,v 1.4 2019/10/14 22:59:15 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.h,v 1.5 2019/10/15 13:27:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -44,7 +44,6 @@ struct acpi_pci_context {
 	bus_space_handle_t ap_conf_bsh;
 	int (*ap_conf_read)(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 	int (*ap_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
-	int (*ap_bus_maxdevs)(struct acpi_pci_context *, int);
 };
 
 #endif /* !_ARM_ACPI_PCI_MACHDEP_H */
