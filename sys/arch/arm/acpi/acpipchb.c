@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.11 2019/10/14 22:59:15 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.12 2019/10/15 00:23:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.11 2019/10/14 22:59:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.12 2019/10/15 00:23:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -146,8 +146,15 @@ acpipchb_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void *
 	struct acpi_pci_context *ap = ctx;
 	struct acpi_resources res;
 	struct acpi_mem *mem;
+	ACPI_HANDLE parent;
 	ACPI_STATUS rv;
 	int error;
+
+	rv = AcpiGetParent(handle, &parent);
+	if (ACPI_FAILURE(rv))
+		return rv;
+	if (ap->ap_handle != parent)
+		return AE_OK;
 
 	rv = acpi_resource_parse(ap->ap_dev, handle, "_CRS", &res, &acpi_resource_parse_ops_quiet);
 	if (ACPI_FAILURE(rv))
@@ -163,18 +170,10 @@ acpipchb_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void *
 	if (error != 0)
 		return AE_NO_MEMORY;
 
-	return AE_CTRL_TERMINATE;
-}
+	ap->ap_conf_read = acpipchb_amazon_graviton_conf_read;
+	ap->ap_conf_write = acpipchb_amazon_graviton_conf_write;
+	ap->ap_bus_maxdevs = acpipchb_amazon_graviton_bus_maxdevs;
 
-static ACPI_STATUS
-acpipchb_amazon_graviton_busres(ACPI_RESOURCE *res, void *context)
-{
-	if (res->Type != ACPI_RESOURCE_TYPE_ADDRESS16)
-		return AE_OK;
-	if (res->Data.Address16.ResourceType != ACPI_BUS_NUMBER_RANGE)
-		return AE_OK;
-
-	*(ACPI_RESOURCE *)context = *res;
 	return AE_CTRL_TERMINATE;
 }
 
@@ -182,51 +181,10 @@ static void
 acpipchb_amazon_graviton_init(struct acpi_pci_context *ap)
 {
 	ACPI_STATUS rv;
-	ACPI_RESOURCE res;
-	pcitag_t tag;
-	pcireg_t busdata;
 
 	rv = AcpiGetDevices(__UNCONST("AMZN0001"), acpipchb_amazon_graviton_map, ap, NULL);
 	if (ACPI_FAILURE(rv))
 		return;
-
-	ap->ap_conf_read = acpipchb_amazon_graviton_conf_read;
-	ap->ap_conf_write = acpipchb_amazon_graviton_conf_write;
-	ap->ap_bus_maxdevs = acpipchb_amazon_graviton_bus_maxdevs;
-
-	/*
-	 * The root port's may not have the correct bus information. Fix this up...
-	 */
-	/* Find bus number range */
-	memset(&res, 0, sizeof(res));
-	rv = AcpiWalkResources(ap->ap_handle, "_CRS", acpipchb_amazon_graviton_busres, &res);
-	if (ACPI_FAILURE(rv) || res.Type != ACPI_RESOURCE_TYPE_ADDRESS16)
-		return;
-
-	const int bus_primary = res.Data.Address16.Address.Minimum;
-	const int bus_secondary = bus_primary + 1;
-	const int bus_subordinate = res.Data.Address16.Address.Maximum;
-
-	tag = pci_make_tag(&ap->ap_pc, ap->ap_bus, 0, 0);
-	busdata = pci_conf_read(&ap->ap_pc, tag, PCI_BRIDGE_BUS_REG);
-	if (PCI_BRIDGE_BUS_NUM_PRIMARY(busdata) != bus_primary ||
-	    PCI_BRIDGE_BUS_NUM_SECONDARY(busdata) != bus_secondary ||
-	    PCI_BRIDGE_BUS_NUM_SUBORDINATE(busdata) != bus_subordinate) {
-
-		aprint_normal_dev(ap->ap_dev,
-		    "fixup bridge bus numbers %#x/%#x/%#x -> %#x/%#x/%#x\n",
-		    PCI_BRIDGE_BUS_NUM_PRIMARY(busdata),
-		    PCI_BRIDGE_BUS_NUM_SECONDARY(busdata),
-		    PCI_BRIDGE_BUS_NUM_SUBORDINATE(busdata),
-		    bus_primary, bus_secondary, bus_subordinate);
-		busdata &= ~PCI_BRIDGE_BUS_PRIMARY;
-		busdata |= __SHIFTIN(bus_primary, PCI_BRIDGE_BUS_PRIMARY);
-		busdata &= ~PCI_BRIDGE_BUS_SECONDARY;
-		busdata |= __SHIFTIN(bus_secondary, PCI_BRIDGE_BUS_SECONDARY);
-		busdata &= ~PCI_BRIDGE_BUS_SUBORDINATE;
-		busdata |= __SHIFTIN(bus_subordinate, PCI_BRIDGE_BUS_SUBORDINATE);
-		pci_conf_write(&ap->ap_pc, tag, PCI_BRIDGE_BUS_REG, busdata);
-	}
 }
 
 static const struct acpipchb_quirk {
