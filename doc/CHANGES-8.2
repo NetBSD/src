@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.50 2019/10/11 18:16:45 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.51 2019/10/15 04:24:16 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1275,4 +1275,11 @@ external/bsd/ipf/dist/man/ipf.5			1.6
 
 	Fix typo.
 	[uwe, ticket #1404]
+
+sys/kern/vnode_if.sh				1.67
+sys/kern/vnode_if.src				1.78
+sys/kern/vnode_if.c				(regen)
+
+	Add fstrans type LAZY and use it for VOP_STRATEGY().
+	[hannken, ticket #1405]
 
