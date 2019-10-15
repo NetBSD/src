@@ -691,7 +691,7 @@ OtXrefWalkPart3 (
     else
     {
         FlPrintFile (ASL_FILE_XREF_OUTPUT,
-            "            %u references to this object in this module\n",
+            "            %u references to this object in this module [%s]\n",
             XrefInfo->ThisObjectReferences, ParentPath);
     }
 
