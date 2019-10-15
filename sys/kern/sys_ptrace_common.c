@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.7 2019/10/15 19:07:14 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.8 2019/10/15 19:11:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.7 2019/10/15 19:07:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.8 2019/10/15 19:11:02 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -286,6 +286,7 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_DUMPCORE:
 	case PT_RESUME:
 	case PT_SUSPEND:
+	case PT_STOP:
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -493,6 +494,7 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p,
 	case PT_GET_PROCESS_STATE:
 	case PT_RESUME:
 	case PT_SUSPEND:
+	case PT_STOP:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -511,8 +513,11 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p,
 
 		/*
 		 *	(3) it's not currently stopped.
+		 *
+		 *	As an exception allow PT_KILL and PT_STOP here.
 		 */
-		if (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */) {
+		if (req != PT_KILL && req != PT_STOP &&
+		    (t->p_stat != SSTOP || !t->p_waited /* XXXSMP */)) {
 			DPRINTF(("stat %d flag %d\n", t->p_stat,
 			    !t->p_waited));
 			return EBUSY;
@@ -540,6 +545,7 @@ ptrace_needs_hold(int req)
 	case PT_TRACE_ME:
 	case PT_GET_SIGINFO:
 	case PT_SET_SIGINFO:
+	case PT_STOP:
 		return 1;
 	default:
 		return 0;
@@ -891,7 +897,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 #endif
 
 static int
-ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
+ptrace_sendsig(struct lwp *l, int req, struct proc *t, struct lwp *lt, int signo, int resume_all)
 {
 	ksiginfo_t ksi;
 
@@ -919,23 +925,20 @@ ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 		return 0;
 	}
 
-	KSI_INIT_EMPTY(&ksi);
-	if (t->p_sigctx.ps_faked) {
-		if (signo != t->p_sigctx.ps_info._signo)
-			return EINVAL;
-		t->p_sigctx.ps_faked = false;
-		ksi.ksi_info = t->p_sigctx.ps_info;
-		ksi.ksi_lid = t->p_sigctx.ps_lwp;
-	} else if (signo == 0) {
-		return 0;
-	} else {
-		ksi.ksi_signo = signo;
-	}
-	DPRINTF(("%s: pid=%d.%d signal=%d resume_all=%d\n", __func__, t->p_pid,
-	    t->p_sigctx.ps_lwp, signo, resume_all));
+	KASSERT(req == PT_KILL || req == PT_STOP || req == PT_ATTACH);
 
-	kpsignal2(t, &ksi);
-	return 0;
+	KSI_INIT(&ksi);
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = SI_USER;
+	ksi.ksi_pid = l->l_proc->p_pid;
+	ksi.ksi_uid = kauth_cred_geteuid(l->l_cred);
+
+	t->p_sigctx.ps_faked = false;
+
+	DPRINTF(("%s: pid=%d.%d signal=%d resume_all=%d\n", __func__, t->p_pid,
+	    lt->l_lid, signo, resume_all));
+
+	return kpsignal2(t, &ksi);
 }
 
 static int
@@ -1332,7 +1335,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 			CLR(lt->l_pflag, LP_SINGLESTEP);
 		}
 	sendsig:
-		error = ptrace_sendsig(t, lt, signo, resume_all);
+		error = ptrace_sendsig(l, req, t, lt, signo, resume_all);
 		break;
 
 	case PT_SYSCALLEMU:
@@ -1363,6 +1366,11 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_KILL:
 		/* just send the process a KILL signal. */
 		signo = SIGKILL;
+		goto sendsig;	/* in PT_CONTINUE, above. */
+
+	case PT_STOP:
+		/* just send the process a STOP signal. */
+		signo = SIGSTOP;
 		goto sendsig;	/* in PT_CONTINUE, above. */
 
 	case PT_ATTACH:

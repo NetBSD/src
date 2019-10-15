@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.65 2019/06/11 23:18:55 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.65.2.1 2019/10/15 19:11:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -57,6 +57,7 @@
 #define	PT_GET_SIGINFO		20	/* get signal state, defined below */
 #define	PT_RESUME		21	/* allow execution of the LWP */
 #define	PT_SUSPEND		22	/* prevent execution of the LWP */
+#define	PT_STOP			23	/* stop the child process */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
