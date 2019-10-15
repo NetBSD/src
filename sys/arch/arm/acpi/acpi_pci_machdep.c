@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.9 2018/12/08 15:04:40 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.9.6.1 2019/10/15 19:37:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.9 2018/12/08 15:04:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.9.6.1 2019/10/15 19:37:58 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -215,6 +215,11 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 static int
 acpi_pci_md_bus_maxdevs(void *v, int busno)
 {
+	struct acpi_pci_context * const ap = v;
+
+	if (ap->ap_bus_maxdevs != NULL)
+		return ap->ap_bus_maxdevs(ap, busno);
+
 	return 32;
 }
 
@@ -260,7 +265,10 @@ acpi_pci_md_conf_read(void *v, pcitag_t tag, int offset)
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return (pcireg_t) -1;
 
-	acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
+	if (ap->ap_conf_read != NULL)
+		ap->ap_conf_read(&ap->ap_pc, tag, offset, &val);
+	else
+		acpimcfg_conf_read(&ap->ap_pc, tag, offset, &val);
 
 	return val;
 }
@@ -273,7 +281,10 @@ acpi_pci_md_conf_write(void *v, pcitag_t tag, int offset, pcireg_t val)
 	if (offset < 0 || offset >= PCI_EXTCONF_SIZE)
 		return;
 
-	acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
+	if (ap->ap_conf_write != NULL)
+		ap->ap_conf_write(&ap->ap_pc, tag, offset, val);
+	else
+		acpimcfg_conf_write(&ap->ap_pc, tag, offset, val);
 }
 
 static int
