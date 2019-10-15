@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.202 2019/06/04 11:54:03 kamil Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.202.2.1 2019/10/15 18:32:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.202 2019/06/04 11:54:03 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.202.2.1 2019/10/15 18:32:13 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -239,6 +239,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.202 2019/06/04 11:54:03 kamil Exp $")
 #include <sys/fstrans.h>
 #include <sys/dtrace_bsd.h>
 #include <sys/sdt.h>
+#include <sys/ptrace.h>
 #include <sys/xcall.h>
 #include <sys/uidinfo.h>
 #include <sys/sysctl.h>
@@ -1091,8 +1092,7 @@ lwp_exit(struct lwp *l)
 			 * about a terminating LWP as it would deadlock.
 			 */
 		} else {
-			p->p_lwp_exited = l->l_lid;
-			eventswitch(TRAP_LWP);
+			eventswitch(TRAP_LWP, PTRACE_LWP_EXIT, l->l_lid);
 			mutex_enter(proc_lock);
 		}
 	}

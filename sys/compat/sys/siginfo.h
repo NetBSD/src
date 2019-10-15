@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.7 2019/06/30 08:49:21 martin Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.7.2.1 2019/10/15 18:32:13 martin Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -75,6 +75,14 @@ struct __ksiginfo32 {
 			int	_error;
 			uint64_t _args[8]; /* SYS_MAXSYSARGS */
 		} _syscall;
+
+		struct {
+			int	_pe_report_event;
+			union {
+				pid_t	_pe_other_pid;
+				lwpid_t	_pe_lwp;
+			} _option;
+		} _ptrace_state;
 	} _reason;
 };
 

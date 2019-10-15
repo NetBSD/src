@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.213 2019/06/13 20:20:18 kamil Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.213.2.1 2019/10/15 18:32:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.213 2019/06/13 20:20:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.213.2.1 2019/10/15 18:32:13 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -252,7 +252,6 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	int		count;
 	vaddr_t		uaddr;
 	int		tnprocs;
-	bool		trace_fork, trace_vfork;
 	int		error = 0;
 
 	p1 = l1->l_proc;
@@ -511,17 +510,8 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Trace fork(2) and vfork(2)-like events on demand in a debugger.
 	 */
-	trace_fork = tracefork(p1, flags);
-	trace_vfork = tracevfork(p1, flags);
-	if (trace_fork || trace_vfork)
+	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		proc_changeparent(p2, p1->p_pptr);
-	if (trace_fork) {
-		p1->p_fpid = p2->p_pid;
-		p2->p_fpid = p1->p_pid;
-	}
-	if (trace_vfork) {
-		p1->p_vfpid = p2->p_pid;
-		p2->p_vfpid = p1->p_pid;
 	}
 
 	LIST_INSERT_AFTER(p1, p2, p_pglist);
@@ -605,7 +595,9 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (tracefork(p1, flags) || tracevfork(p1, flags)) {
 		mutex_enter(p1->p_lock);
-		eventswitch(TRAP_CHLD);
+		eventswitch(TRAP_CHLD,
+		    tracefork(p1, flags) ? PTRACE_FORK : PTRACE_VFORK,
+		    retval[0]);
 		mutex_enter(proc_lock);
 	}
 
@@ -621,8 +613,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	 */
 	if (tracevforkdone(p1, flags)) {
 		mutex_enter(p1->p_lock);
-		p1->p_vfpid_done = retval[0];
-		eventswitch(TRAP_CHLD);
+		eventswitch(TRAP_CHLD, PTRACE_VFORK_DONE, retval[0]);
 	} else
 		mutex_exit(proc_lock);
 
@@ -645,9 +636,10 @@ child_return(void *arg)
 			mutex_exit(proc_lock);
 			goto my_tracer_is_gone;
 		}
-
 		mutex_enter(p->p_lock);
-		eventswitch(TRAP_CHLD);
+		eventswitch(TRAP_CHLD,
+		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK,
+		    p->p_opptr->p_pid);
 	}
 
 my_tracer_is_gone:

@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.69 2019/07/10 17:52:22 maxv Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.69.2.1 2019/10/15 18:32:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.69 2019/07/10 17:52:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.69.2.1 2019/10/15 18:32:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.69 2019/07/10 17:52:22 maxv Exp $");
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/kmem.h>
+#include <sys/ptrace.h>
 #include <sys/sleepq.h>
 #include <sys/lwpctl.h>
 #include <sys/cpu.h>
@@ -91,8 +92,7 @@ mi_startlwp(void *arg)
 		}
 
 		mutex_enter(p->p_lock);
-		p->p_lwp_created = l->l_lid;
-		eventswitch(TRAP_LWP);
+		eventswitch(TRAP_LWP, PTRACE_LWP_CREATE, l->l_lid);
 	}
 }
 
