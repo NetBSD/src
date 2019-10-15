@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.39 2019/10/15 15:56:26 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.40 2019/10/15 15:59:26 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -166,6 +166,7 @@ static void	alc_stop_mac(struct alc_softc *);
 static void	alc_stop_queue(struct alc_softc *);
 static void	alc_tick(void *);
 static void	alc_txeof(struct alc_softc *);
+static void	alc_init_pcie(struct alc_softc *);
 
 uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0 };
 
@@ -1172,6 +1173,83 @@ alc_aspm_816x(struct alc_softc *sc, int init)
 }
 
 static void
+alc_init_pcie(struct alc_softc *sc)
+{
+	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
+	uint32_t cap, ctl, val;
+	int state;
+
+	/* Clear data link and flow-control protocol error. */
+	val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
+	val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
+	CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
+		    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
+		CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
+		    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
+		    PCIE_PHYMISC_FORCE_RCV_DET);
+		if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
+		    sc->alc_rev == ATHEROS_AR8152_B_V10) {
+			val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
+			val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
+			    PCIE_PHYMISC2_SERDES_TH_MASK);
+			val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
+			val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
+			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
+		}
+		/* Disable ASPM L0S and L1. */
+		cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    sc->alc_expcap + PCIE_LCAP) >> 16;
+		if ((cap & PCIE_LCAP_ASPM) != 0) {
+			ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+			    sc->alc_expcap + PCIE_LCSR) >> 16;
+			if ((ctl & 0x08) != 0)
+				sc->alc_rcb = DMA_CFG_RCB_128;
+			if (alcdebug)
+				printf("%s: RCB %u bytes\n",
+				    device_xname(sc->sc_dev),
+				    sc->alc_rcb == DMA_CFG_RCB_64 ? 64 : 128);
+			state = ctl & 0x03;
+			if (state & 0x01)
+				sc->alc_flags |= ALC_FLAG_L0S;
+			if (state & 0x02)
+				sc->alc_flags |= ALC_FLAG_L1S;
+			if (alcdebug)
+				printf("%s: ASPM %s %s\n",
+				    device_xname(sc->sc_dev),
+				    aspm_state[state],
+				    state == 0 ? "disabled" : "enabled");
+			alc_disable_l0s_l1(sc);
+		} else {
+			aprint_debug_dev(sc->sc_dev, "no ASPM support\n");
+		}
+	} else {
+		val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
+		val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
+		CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
+		val = CSR_READ_4(sc, ALC_MASTER_CFG);
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+		    (sc->alc_rev & 0x01) != 0) {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) == 0) {
+				val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		} else {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) != 0) {
+				val |= MASTER_WAKEN_25M;
+				val &= ~MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		}
+	}
+	alc_aspm(sc, 1, IFM_UNKNOWN);
+}
+
+static void
 alc_attach(device_t parent, device_t self, void *aux)
 {
 
@@ -1183,10 +1261,8 @@ alc_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
-	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
 	uint16_t burst;
-	int base, mii_flags, state, error = 0;
-	uint32_t cap, ctl, val;
+	int base, mii_flags, error = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->alc_ident = alc_find_ident(pa);
@@ -1268,74 +1344,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
 			sc->alc_dma_wr_burst = 3;
 
-		/* Clear data link and flow-control protocol error. */
-		val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
-		val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
-		CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
-
-		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
-			CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
-			    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
-			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
-			    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
-			    PCIE_PHYMISC_FORCE_RCV_DET);
-			if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
-			    sc->alc_rev == ATHEROS_AR8152_B_V10) {
-				val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
-				val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
-				    PCIE_PHYMISC2_SERDES_TH_MASK);
-				val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
-				val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
-				CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
-			}
-			/* Disable ASPM L0S and L1. */
-			cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-			    base + PCIE_LCAP) >> 16;
-			if ((cap & PCIE_LCAP_ASPM) != 0) {
-				ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-				    base + PCIE_LCSR) >> 16;
-				if ((ctl & 0x08) != 0)
-					sc->alc_rcb = DMA_CFG_RCB_128;
-				if (alcdebug)
-					printf("%s: RCB %u bytes\n",
-					    device_xname(sc->sc_dev),
-					    sc->alc_rcb == DMA_CFG_RCB_64 ? 64 : 128);
-				state = ctl & 0x03;
-				if (state & 0x01)
-					sc->alc_flags |= ALC_FLAG_L0S;
-				if (state & 0x02)
-					sc->alc_flags |= ALC_FLAG_L1S;
-				if (alcdebug)
-					printf("%s: ASPM %s %s\n",
-					    device_xname(sc->sc_dev),
-					    aspm_state[state],
-					    state == 0 ? "disabled" : "enabled");
-				alc_disable_l0s_l1(sc);
-			} else {
-				aprint_debug_dev(sc->sc_dev, "no ASPM support\n");
-			}
-		} else {
-			val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
-			val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
-			CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
-			val = CSR_READ_4(sc, ALC_MASTER_CFG);
-			if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
-			    (sc->alc_rev & 0x01) != 0) {
-				if ((val & MASTER_WAKEN_25M) == 0 ||
-				    (val & MASTER_CLK_SEL_DIS) == 0) {
-					val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
-					CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
-				}
-			} else {
-				if ((val & MASTER_WAKEN_25M) == 0 ||
-				    (val & MASTER_CLK_SEL_DIS) != 0) {
-					val |= MASTER_WAKEN_25M;
-					val &= ~MASTER_CLK_SEL_DIS;
-					CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
-				}
-			}
-		}
-		alc_aspm(sc, 1, IFM_UNKNOWN);
+		alc_init_pcie(sc);
 	}
 
 	/* Reset PHY. */
