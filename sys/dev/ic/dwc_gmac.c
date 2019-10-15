@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.66 2019/10/15 16:30:49 tnn Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.67 2019/10/15 17:19:05 tnn Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.66 2019/10/15 16:30:49 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.67 2019/10/15 17:19:05 tnn Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -501,8 +501,7 @@ dwc_gmac_alloc_rx_ring(struct dwc_gmac_softc *sc,
 		}
 		data->rd_m->m_len = data->rd_m->m_pkthdr.len
 		    = data->rd_m->m_ext.ext_size;
-		m_adj(data->rd_m,
-		    roundup((uintptr_t)data->rd_m->m_data & 0x3f, 0x40));
+		m_adj(data->rd_m, (-(uintptr_t)data->rd_m->m_data) & 0x3f);
 		if (data->rd_m->m_len > AWGE_MAX_PACKET) {
 			data->rd_m->m_len = data->rd_m->m_pkthdr.len
 			    = AWGE_MAX_PACKET;
@@ -1276,7 +1275,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 			goto skip;
 		}
 		mnew->m_len = mnew->m_pkthdr.len = mnew->m_ext.ext_size;
-		m_adj(mnew, roundup((uintptr_t)mnew->m_data & 0x3f, 0x40));
+		m_adj(mnew, (-(uintptr_t)mnew->m_data) & 0x3f);
 		if (mnew->m_len > AWGE_MAX_PACKET) {
 			mnew->m_len = mnew->m_pkthdr.len = AWGE_MAX_PACKET;
 		}
