@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.85 2018/08/27 07:34:54 riastradh Exp $	*/
+/*	$NetBSD: agp.c,v 1.86 2019/10/15 16:59:15 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.85 2018/08/27 07:34:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.86 2019/10/15 16:59:15 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -312,7 +312,7 @@ agpmatch(device_t parent, cfdata_t match, void *aux)
 	return (1);
 }
 
-static const int agp_max[][2] = {
+static const u_int agp_max[][2] = {
 	{0,	0},
 	{32,	4},
 	{64,	28},
@@ -332,7 +332,8 @@ agpattach(device_t parent, device_t self, void *aux)
 	struct pci_attach_args *pa = &apa->apa_pci_args;
 	struct agp_softc *sc = device_private(self);
 	const struct agp_product *ap;
-	int memsize, i, ret;
+	int ret;
+	u_int memsize, i;
 
 	ap = agp_lookup(pa);
 	KASSERT(ap != NULL);
