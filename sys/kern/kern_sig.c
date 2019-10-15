@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.364 2019/06/21 04:28:12 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.364.2.1 2019/10/15 18:32:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364 2019/06/21 04:28:12 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.1 2019/10/15 18:32:13 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1560,7 +1560,7 @@ proc_stop_done(struct proc *p, int ppmask)
  * an event specific to a traced process only.
  */
 void
-eventswitch(int code)
+eventswitch(int code, int pe_report_event, int entity)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1605,8 +1605,12 @@ eventswitch(int code)
 
 	KSI_INIT_TRAP(&ksi);
 	ksi.ksi_lid = l->l_lid;
-	ksi.ksi_info._signo = signo;
-	ksi.ksi_info._code = code;
+	ksi.ksi_signo = signo;
+	ksi.ksi_code = code;
+	ksi.ksi_pe_report_event = pe_report_event;
+
+	CTASSERT(sizeof(ksi.ksi_pe_other_pid) == sizeof(ksi.ksi_pe_lwp));
+	ksi.ksi_pe_other_pid = entity;
 
 	/* Needed for ktrace */
 	ps = p->p_sigacts;

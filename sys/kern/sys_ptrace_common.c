@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.1 2019/10/15 18:21:06 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.2 2019/10/15 18:32:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.1 2019/10/15 18:21:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.2 2019/10/15 18:32:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -694,27 +694,25 @@ ptrace_get_process_state(struct proc *t, void *addr, size_t data)
 		DPRINTF(("%s: %zu != %zu\n", __func__, data, sizeof(ps)));
 		return EINVAL;
 	}
-	memset(&ps, 0, sizeof(ps));
 
-	if (t->p_fpid) {
-		ps.pe_report_event = PTRACE_FORK;
-		ps.pe_other_pid = t->p_fpid;
-	} else if (t->p_vfpid) {
-		ps.pe_report_event = PTRACE_VFORK;
-		ps.pe_other_pid = t->p_vfpid;
-	} else if (t->p_vfpid_done) {
-		ps.pe_report_event = PTRACE_VFORK_DONE;
-		ps.pe_other_pid = t->p_vfpid_done;
-	} else if (t->p_lwp_created) {
-		ps.pe_report_event = PTRACE_LWP_CREATE;
-		ps.pe_lwp = t->p_lwp_created;
-	} else if (t->p_lwp_exited) {
-		ps.pe_report_event = PTRACE_LWP_EXIT;
-		ps.pe_lwp = t->p_lwp_exited;
-	} else if (t->p_pspid) {
-		ps.pe_report_event = PTRACE_POSIX_SPAWN;
-		ps.pe_other_pid = t->p_pspid;
+	if (t->p_sigctx.ps_info._signo != SIGTRAP ||
+	    (t->p_sigctx.ps_info._code != TRAP_CHLD &&
+	        t->p_sigctx.ps_info._code != TRAP_LWP)) {
+		return EINVAL;
 	}
+
+	ps.pe_report_event =
+		t->p_sigctx.ps_info._reason._ptrace_state._pe_report_event;
+
+	CTASSERT(sizeof(ps.pe_other_pid) ==
+	    sizeof(t->p_sigctx.ps_info._reason._ptrace_state._option._pe_other_pid));
+	CTASSERT(sizeof(ps.pe_lwp) ==
+	    sizeof(t->p_sigctx.ps_info._reason._ptrace_state._option._pe_other_pid));
+	CTASSERT(sizeof(ps.pe_other_pid) == sizeof(ps.pe_lwp));
+
+	ps.pe_other_pid =
+		t->p_sigctx.ps_info._reason._ptrace_state._option._pe_other_pid;
+
 	DPRINTF(("%s: lwp=%d event=%#x pid=%d lwp=%d\n", __func__,
 	    t->p_sigctx.ps_lwp, ps.pe_report_event,
 	    ps.pe_other_pid, ps.pe_lwp));
@@ -893,13 +891,6 @@ static int
 ptrace_sendsig(struct proc *t, struct lwp *lt, int signo, int resume_all)
 {
 	ksiginfo_t ksi;
-
-	t->p_fpid = 0;
-	t->p_vfpid = 0;
-	t->p_vfpid_done = 0;
-	t->p_lwp_created = 0;
-	t->p_lwp_exited = 0;
-	t->p_pspid = 0;
 
 	/* Finally, deliver the requested signal (or none). */
 	if (t->p_stat == SSTOP) {
