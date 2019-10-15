@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.334 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: rump.c,v 1.335 2019/10/15 18:36:38 christos Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.334 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.335 2019/10/15 18:36:38 christos Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -807,7 +807,7 @@ rump_syscall_boot_establish(const struct rump_onesyscall *calls, size_t ncall)
 	for (i = 0; i < ncall; i++) {
 		callp = rump_sysent + calls[i].ros_num;
 		KASSERT(bootlwp != NULL
-		    && callp->sy_call == (sy_call_t *)enosys);
+		    && callp->sy_call == (sy_call_t *)(void *)enosys);
 		callp->sy_call = calls[i].ros_handler;
 	}
 }
