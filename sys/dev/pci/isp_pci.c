@@ -1,4 +1,4 @@
-/* $NetBSD: isp_pci.c,v 1.120 2018/12/09 11:14:02 jdolecek Exp $ */
+/* $NetBSD: isp_pci.c,v 1.121 2019/10/15 19:29:58 christos Exp $ */
 /*
  * Copyright (C) 1997, 1998, 1999 National Aeronautics & Space Administration
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.120 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: isp_pci.c,v 1.121 2019/10/15 19:29:58 christos Exp $");
 
 #include <dev/ic/isp_netbsd.h>
 #include <dev/pci/pcireg.h>
@@ -1137,8 +1137,7 @@ isp_pci_rd_reg_1080(struct ispsoftc *isp, int regoff)
 	uint16_t rv, oc = 0;
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
-	    (regoff & _BLK_REG_MASK) == (SXP_BLOCK|SXP_BANK1_SELECT)) {
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		uint16_t tc;
 		/*
 		 * We will assume that someone has paused the RISC processor.
@@ -1168,8 +1167,7 @@ isp_pci_wr_reg_1080(struct ispsoftc *isp, int regoff, uint32_t val)
 	struct isp_pcisoftc *pcs = (struct isp_pcisoftc *) isp;
 	int oc = 0;
 
-	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK ||
-	    (regoff & _BLK_REG_MASK) == (SXP_BLOCK|SXP_BANK1_SELECT)) {
+	if ((regoff & _BLK_REG_MASK) == SXP_BLOCK) {
 		uint16_t tc;
 		/*
 		 * We will assume that someone has paused the RISC processor.
