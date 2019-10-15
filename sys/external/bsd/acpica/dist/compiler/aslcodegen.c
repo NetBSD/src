@@ -510,8 +510,8 @@ CgWriteTableHeader (
         Op->Asl.AmlSubtreeLength +=
             strlen (AslGbl_ParseTreeRoot->Asl.Filename) + 3;
 
-        CvDbgPrint ("     Length: %lu\n",
-            strlen (AslGbl_ParseTreeRoot->Asl.Filename) + 3);
+        CvDbgPrint ("     Length: %u\n",
+            (UINT32) strlen (AslGbl_ParseTreeRoot->Asl.Filename) + 3);
 
         if (Op->Asl.CommentList)
         {
@@ -582,7 +582,8 @@ CgUpdateHeader (
     {
         if (FlReadFile (ASL_FILE_AML_OUTPUT, &FileByte, 1) != AE_OK)
         {
-            printf ("EOF while reading checksum bytes\n");
+            AslError (ASL_ERROR, ASL_MSG_COMPILER_INTERNAL, NULL,
+                "Table length is greater than size of the input file");
             return;
         }
 
