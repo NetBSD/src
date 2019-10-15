@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.186 2019/06/19 21:39:53 kamil Exp $	*/
+/*	$NetBSD: lwp.h,v 1.186.2.1 2019/10/15 18:48:56 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -236,6 +236,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LW_CVLOCKDEBUG	0x00000004 /* Waker does lockdebug */
 #define	LW_SINTR	0x00000080 /* Sleep is interruptible. */
 #define	LW_SYSTEM	0x00000200 /* Kernel thread */
+#define	LW_DBGSUSPEND	0x00010000 /* Suspend by debugger */
 #define	LW_WSUSPEND	0x00020000 /* Suspend before return to user */
 #define	LW_BATCH	0x00040000 /* LWP tends to hog CPU */
 #define	LW_WCORE	0x00080000 /* Stop for core dump on return to user */
