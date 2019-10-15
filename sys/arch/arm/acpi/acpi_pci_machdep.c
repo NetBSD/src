@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.11 2019/10/14 22:59:15 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.12 2019/10/15 13:27:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.11 2019/10/14 22:59:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12 2019/10/15 13:27:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -215,11 +215,6 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 static int
 acpi_pci_md_bus_maxdevs(void *v, int busno)
 {
-	struct acpi_pci_context * const ap = v;
-
-	if (ap->ap_bus_maxdevs != NULL)
-		return ap->ap_bus_maxdevs(ap, busno);
-
 	return 32;
 }
 
