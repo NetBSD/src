@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.76 2019/10/12 15:12:09 bouyer Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.77 2019/10/15 19:44:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4509,4 +4509,186 @@ sbin/newfs_msdos/mkfs_msdos.c			1.15
 	Allow FAT32 formatting of typical EFI partitions with default
 	parameters.
 	[martin, ticket #303]
+
+sys/arch/x86/pci/msipic.c			1.18
+
+	Change bus_space_map to use _x86_memio_map to avoid reservation
+	conflicts.
+	[tnn, ticket #305]
+
+sys/arch/amd64/conf/GENERIC			1.536
+
+	amd64: add mcx(4) to GENERIC.
+	[tnn, ticket #306]
+
+sys/kern/vnode_if.sh				1.67
+sys/kern/vnode_if.src				1.78
+sys/kern/vnode_if.c				(regen)
+
+	Add fstrans type LAZY and use it for VOP_STRATEGY().
+	[hannken, ticket #307]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/dmu_diff.c 1.3,1.4
+external/cddl/osnet/dist/uts/common/fs/zfs/sys/dmu.h 1.4
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_ioctl.c 1.21
+
+	Change dmu_diff() back to use a "file" instead of a "vnode".
+	[hannken, ticket #308]
+
+sys/kern/sys_ptrace_common.c			1.67
+
+	Avoid signed integer overflow for -lwp where lwp is INT_MIN.
+	[kamil, ticket #309]
+
+tests/lib/libc/sys/t_ptrace_wait.c		1.134
+
+	Remove ATF t_ptrace_wait test suspend1.
+	[kamil, ticket #310]
+
+sys/compat/sys/siginfo.h			1.8 (patch)
+sys/kern/kern_exec.c				1.482 (patch)
+sys/kern/kern_fork.c				1.214 (patch)
+sys/kern/kern_lwp.c				1.203 (patch)
+sys/kern/kern_sig.c				1.365 (patch)
+sys/kern/sys_lwp.c				1.70 (patch)
+sys/kern/sys_ptrace_common.c			1.59 (patch)
+sys/sys/siginfo.h				1.34 (patch)
+sys/sys/signalvar.h				1.96 (patch)
+
+	Move TRAP_CHLD/TRAP_LWP ptrace information from struct proc to siginfo.
+	[kamil, ticket #311]
+
+tests/lib/libc/sys/t_ptrace_wait.c		1.135
+
+	Bump the number of threads in LWP t_ptrace_wait*() tests from to 100.
+	[kamil, ticket #312]
+
+sys/kern/sys_ptrace_common.c			1.60
+
+	Restore the old behavior in PT_GET_PROCESS_STATE for non child or lwp
+	events.
+	[kamil, ticket #313]
+
+tests/lib/libc/sys/t_ptrace_wait.c		1.137
+
+	Fix race in t_ptrace_wait* LWP tests.
+	[kamil, ticket #314]
+
+tests/lib/libc/sys/t_ptrace_wait.c		1.132
+
+	Add a few static asserts in t_ptrace_wait.c for invariants.
+	[kamil, ticket #315]
+
+tests/lib/libc/sys/t_ptrace_wait.c		1.133
+
+	Merge PT_GET_PROCESS_STATE checks into traceme_raise ATF ptrace tests.
+	[kamil, ticket #317]
+
+sys/sys/lwp.h					1.187
+
+	Define LW_DBGSUSPEND in sys/lwp.h.
+	[kamil, ticket #318]
+
+sys/kern/sys_ptrace_common.c			1.61
+
+	Remove 2 static asserts from the kernel ptrace code.
+	[kamil, ticket #319]
+
+sys/kern/kern_exit.c				1.277
+sys/kern/kern_lwp.c				1.204
+sys/kern/kern_sig.c				1.366
+sys/kern/kern_synch.c				1.324
+sys/kern/sys_ptrace_common.c			1.62
+
+	Separate flag for suspended by _lwp_suspend and suspended by a
+	debugger.
+	[kamil, ticket #320]
+
+sys/kern/sys_ptrace_common.c			1.63
+
+	Add two KASSERTS in the ptrace(2) kernel code to
+	verify that we will never return empty ptrace_state for
+	CHILD/LWP event.
+	[kamil, ticket #321]
+
+sys/kern/sysv_msg.c				1.76
+
+	Avoid -LONG_MIN msgtyp in msgrcv(2) and treat it as LONG_MAX.
+	[kamil, ticket #322]
+
+sys/kern/sys_ptrace_common.c			1.65
+
+	Correct the same expression on both sides of |.
+	[kamil, ticket #323]
+
+sys/kern/kern_sig.c				1.367
+
+	Enhance reliability of ptrace(2) in a debuggee with multiple LWPs.
+	[kamil, ticket #324]
+
+sys/kern/sys_ptrace_common.c			1.66
+sys/sys/ptrace.h				1.66
+
+	Introduce new ptrace(2) operation PT_STOP.
+	[kamil, ticket #325]
+
+lib/libc/sys/ptrace.2				1.81
+
+	Document PT_STOP, update PT_KILL in the ptrace(2) man-page.
+	[kamil, ticket #326]
+
+sys/kern/kern_sig.c				1.369
+sys/sys/signalvar.h				1.97
+
+	Refactor sigswitch().
+	[kamil, ticket #328]
+
+sys/kern/kern_sig.c				1.370
+
+	Add sigswitch_unlock_and_switch_away(), extracted from sigswitch()
+	and use it where possible.
+	[kamil, ticket #327]
+
+sys/kern/kern_sig.c				1.371
+
+	Fix one of the root causes of unreliability of the ptrace(2)ed
+	threads.
+	[kamil, ticket #329]
+
+sys/kern/kern_sig.c				1.372
+
+	Avoid double lwp_exit() in eventswitch().
+	[kamil, ticket #330]
+
+sys/dev/pci/pci.c				1.155
+
+	pci(4): fix undefined behavior in device enumeration.
+	[jmcneill, ticket #331]
+
+sys/arch/arm/acpi/acpi_pci_machdep.c		1.10,1.11
+sys/arch/arm/acpi/acpi_pci_machdep.h		1.3
+sys/arch/arm/acpi/acpi_pci_machdep.h		1.4
+sys/arch/arm/acpi/acpipchb.c			1.10-1.12
+
+	Add quirks for Amazon Graviton PCIe root ports.
+	[jmcneill, ticket #332]
+
+sys/dev/acpi/acpi_mcfg.c			1.17
+
+	The MCFG base address field is the physical address of the base of
+	mmio space relative to bus 0, not the start bus number specified in
+	the table entry.
+	[jmcneill, ticket #333]
+
+sys/arch/arm/acpi/files.acpi			1.8
+sys/arch/arm/acpi/gic_acpi.c			1.4
+sys/arch/arm/acpi/gic_v2m_acpi.c		1.1
+sys/arch/arm/acpi/gic_v2m_acpi.h		1.1
+sys/arch/arm/acpi/gicv3_acpi.c			1.5
+sys/arch/arm/cortex/files.cortex		1.13
+sys/arch/arm/cortex/gic_v2m.c			1.7
+sys/arch/arm/cortex/gic_v2m.h			1.2
+
+	Add support for Amazon's Graviton MSI controller.
+	[jmcneill, ticket #334]
 
