@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1662 2019/10/12 18:35:52 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1663 2019/10/15 16:17:43 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -41,7 +41,7 @@
 #
 
 Package:	acpica
-Version:	20190405
+Version:	20190816
 Current Vers:	20190816
 Maintainer:	Intel
 Archive Site:	http://www.acpica.org/downloads/
