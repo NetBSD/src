@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.364.2.5 2019/10/15 19:25:11 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.364.2.6 2019/10/15 19:27:04 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.5 2019/10/15 19:25:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.6 2019/10/15 19:27:04 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1863,7 +1863,7 @@ issignal(struct lwp *l)
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 			sigswitch_unlock_and_switch_away(l);
 			mutex_enter(p->p_lock);
-			signo = sigchecktrace();
+			continue;
 		} else if (p->p_stat == SACTIVE)
 			signo = sigchecktrace();
 		else
