@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.17 2019/06/26 10:20:06 knakahara Exp $	*/
+/*	$NetBSD: msipic.c,v 1.17.2.1 2019/10/15 18:08:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.17 2019/06/26 10:20:06 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.17.2.1 2019/10/15 18:08:31 martin Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -711,7 +711,7 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 		flags &= ~BUS_SPACE_MAP_PREFETCHABLE;
 	}
 	bssize = roundup(table_size, PAGE_SIZE);
-	err = bus_space_map(pa->pa_memt, memaddr + table_offset, bssize, flags,
+	err = _x86_memio_map(pa->pa_memt, memaddr + table_offset, bssize, flags,
 	    &bshandle);
 	bstag = pa->pa_memt;
 #endif
@@ -739,8 +739,8 @@ msipic_destruct_msix_pic(struct pic *msix_pic)
 	KASSERT(msix_pic->pic_type == PIC_MSIX);
 
 	msipic = msix_pic->pic_msipic;
-	bus_space_unmap(msipic->mp_bstag, msipic->mp_bshandle,
-	    msipic->mp_bssize);
+	_x86_memio_unmap(msipic->mp_bstag, msipic->mp_bshandle,
+	    msipic->mp_bssize, NULL);
 
 	msipic_destruct_common_msi_pic(msix_pic);
 }
