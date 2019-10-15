@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.215 2019/07/26 13:29:36 roy Exp $
+# $NetBSD: mi,v 1.216 2019/10/15 18:33:57 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1609,11 +1609,11 @@
 ./usr/share/examples/supfiles/skarven.itea.unit.no	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.au.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.de.netbsd.org	misc-obsolete		obsolete
-./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup.jp.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.no.netbsd.org	misc-obsolete		obsolete
 ./usr/share/examples/supfiles/sup.uk.netbsd.org	misc-obsolete		obsolete
-./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-sup-examples	share
+./usr/share/examples/supfiles/sup2.fr.netbsd.org	misc-obsolete	obsolete
 ./usr/share/examples/syslogd/all.debug		misc-sysutil-examples	share
 ./usr/share/examples/syslogd/all.newsyslog.conf	misc-sysutil-examples	share
 ./usr/share/examples/tmux			misc-tmux-examples

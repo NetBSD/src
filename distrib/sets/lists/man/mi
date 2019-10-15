@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1656 2019/10/07 11:53:40 msaitoh Exp $
+# $NetBSD: mi,v 1.1657 2019/10/15 18:33:57 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -549,7 +549,7 @@
 ./usr/share/man/cat1/stty.0			man-util-catman		.cat
 ./usr/share/man/cat1/su.0			man-util-catman		.cat
 ./usr/share/man/cat1/sum.0			man-util-catman		.cat
-./usr/share/man/cat1/sup.0			man-sup-catman		.cat
+./usr/share/man/cat1/sup.0			man-obsolete		obsolete
 ./usr/share/man/cat1/suspend.0			man-util-catman		.cat
 ./usr/share/man/cat1/sys_info.0			man-util-catman		.cat
 ./usr/share/man/cat1/sysstat.0			man-util-catman		.cat
@@ -3120,9 +3120,9 @@
 ./usr/share/man/cat8/sun3x			man-obsolete		obsolete
 ./usr/share/man/cat8/sun3x/installboot.0	man-obsolete		obsolete
 ./usr/share/man/cat8/sunlabel.0			man-sysutil-catman	.cat
-./usr/share/man/cat8/supfilesrv.0		man-sup-catman		.cat
-./usr/share/man/cat8/supscan.0			man-sup-catman		.cat
-./usr/share/man/cat8/supservers.0		man-sup-catman		.cat
+./usr/share/man/cat8/supfilesrv.0		man-obsolete		obsolete
+./usr/share/man/cat8/supscan.0			man-obsolete		obsolete
+./usr/share/man/cat8/supservers.0		man-obsolete		obsolete
 ./usr/share/man/cat8/sushi.0			man-obsolete		obsolete
 ./usr/share/man/cat8/svhlabel.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/swapctl.0			man-sysutil-catman	.cat
@@ -3783,7 +3783,7 @@
 ./usr/share/man/html1/stty.html			man-util-htmlman	html
 ./usr/share/man/html1/su.html			man-util-htmlman	html
 ./usr/share/man/html1/sum.html			man-util-htmlman	html
-./usr/share/man/html1/sup.html			man-sup-htmlman		html
+./usr/share/man/html1/sup.html			man-obsolete		obsolete
 ./usr/share/man/html1/suspend.html		man-util-htmlman	html
 ./usr/share/man/html1/sys_info.html		man-util-htmlman	html
 ./usr/share/man/html1/sysstat.html		man-util-htmlman	html
@@ -6011,9 +6011,9 @@
 ./usr/share/man/html8/sun2/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/sun3/boot.html		man-sys-htmlman		html
 ./usr/share/man/html8/sunlabel.html		man-sysutil-htmlman	html
-./usr/share/man/html8/supfilesrv.html		man-sup-htmlman		html
-./usr/share/man/html8/supscan.html		man-sup-htmlman		html
-./usr/share/man/html8/supservers.html		man-sup-htmlman		html
+./usr/share/man/html8/supfilesrv.html		man-obsolete		obsolete
+./usr/share/man/html8/supscan.html		man-obsolete		obsolete
+./usr/share/man/html8/supservers.html		man-obsolete		obsolete
 ./usr/share/man/html8/svhlabel.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/swapctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/swapon.html		man-sysutil-htmlman	html
@@ -6669,7 +6669,7 @@
 ./usr/share/man/man1/stty.1			man-util-man		.man
 ./usr/share/man/man1/su.1			man-util-man		.man
 ./usr/share/man/man1/sum.1			man-util-man		.man
-./usr/share/man/man1/sup.1			man-sup-man		.man
+./usr/share/man/man1/sup.1			man-obsolete		obsolete
 ./usr/share/man/man1/suspend.1			man-util-man		.man
 ./usr/share/man/man1/sys_info.1			man-util-man		.man
 ./usr/share/man/man1/sysstat.1			man-util-man		.man
@@ -9240,9 +9240,9 @@
 ./usr/share/man/man8/sun3x			man-obsolete		obsolete
 ./usr/share/man/man8/sun3x/installboot.8	man-obsolete		obsolete
 ./usr/share/man/man8/sunlabel.8			man-sysutil-man		.man
-./usr/share/man/man8/supfilesrv.8		man-sup-man		.man
-./usr/share/man/man8/supscan.8			man-sup-man		.man
-./usr/share/man/man8/supservers.8		man-sup-man		.man
+./usr/share/man/man8/supfilesrv.8		man-obsolete		obsolete
+./usr/share/man/man8/supscan.8			man-obsolete		obsolete
+./usr/share/man/man8/supservers.8		man-obsolete		obsolete
 ./usr/share/man/man8/sushi.8			man-obsolete		obsolete
 ./usr/share/man/man8/svhlabel.8			man-sysutil-man		.man
 ./usr/share/man/man8/swapctl.8			man-sysutil-man		.man

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.288 2019/09/15 16:58:11 christos Exp $
+# $NetBSD: mi,v 1.289 2019/10/15 18:33:57 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1280,9 +1280,9 @@
 ./usr/libdata/debug/usr/sbin/stdhosts.debug	comp-nis-debug		yp,debug
 ./usr/libdata/debug/usr/sbin/sti.debug		comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/sunlabel.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/sup.debug		comp-sup-debug		debug
-./usr/libdata/debug/usr/sbin/supfilesrv.debug	comp-sup-debug		debug
-./usr/libdata/debug/usr/sbin/supscan.debug	comp-sup-debug		debug
+./usr/libdata/debug/usr/sbin/sup.debug		comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/supfilesrv.debug	comp-obsolete		obsolete
+./usr/libdata/debug/usr/sbin/supscan.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/sysinst.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/syslogd.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/tcpdchk.debug	comp-netutil-debug	debug
