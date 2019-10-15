@@ -1,4 +1,4 @@
-/*	$NetBSD: ldc.c,v 1.5 2019/10/01 18:00:07 chs Exp $	*/
+/*	$NetBSD: ldc.c,v 1.6 2019/10/15 00:13:52 chs Exp $	*/
 /*	$OpenBSD: ldc.c,v 1.12 2015/03/21 18:02:58 kettenis Exp $	*/
 /*
  * Copyright (c) 2009 Mark Kettenis
@@ -604,10 +604,7 @@ ldc_map_alloc(int nentries)
 #if OPENBSD_BUSDMA
 	int nsegs;
 #endif
-	lm = kmem_zalloc(sizeof(struct ldc_map), KM_NOSLEEP);
-	if (lm == NULL)
-		return NULL;
-
+	lm = kmem_zalloc(sizeof(struct ldc_map), KM_SLEEP);
 	size = roundup(nentries * sizeof(struct ldc_map_slot), PAGE_SIZE);
 
 #if OPENBSD_BUSDMA
@@ -634,9 +631,7 @@ ldc_map_alloc(int nentries)
 		goto unmap;
 	}
 #else
-	va = (vaddr_t)kmem_zalloc(size, KM_NOSLEEP);
-	if (va == 0)
-		goto free;
+	va = (vaddr_t)kmem_zalloc(size, KM_SLEEP);
 #endif
 	lm->lm_slot = (struct ldc_map_slot *)va;
 	lm->lm_nentries = nentries;
@@ -650,9 +645,6 @@ free:
 	bus_dmamem_free(t, &lm->lm_seg, 1);
 destroy:
 	bus_dmamap_destroy(t, lm->lm_map);
-#else
-free:
-	kmem_free(lm, sizeof(struct ldc_map));
 #endif
 	return (NULL);
 }

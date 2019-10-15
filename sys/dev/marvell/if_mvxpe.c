@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.29 2019/10/01 17:35:09 chs Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.30 2019/10/15 00:13:53 chs Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.29 2019/10/01 17:35:09 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.30 2019/10/15 00:13:53 chs Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -401,9 +401,7 @@ mvxpe_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_sysctl_mib_size =
 	    __arraycount(mvxpe_mib_list) * sizeof(struct mvxpe_sysctl_mib);
-	sc->sc_sysctl_mib = kmem_alloc(sc->sc_sysctl_mib_size, KM_NOSLEEP);
-	if (sc->sc_sysctl_mib == NULL)
-		goto fail;
+	sc->sc_sysctl_mib = kmem_alloc(sc->sc_sysctl_mib_size, KM_SLEEP);
 	memset(sc->sc_sysctl_mib, 0, sc->sc_sysctl_mib_size);
 
 	/*

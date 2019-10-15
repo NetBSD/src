@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_ucode_amd.c,v 1.9 2019/01/27 02:08:39 pgoyette Exp $ */
+/* $NetBSD: cpu_ucode_amd.c,v 1.10 2019/10/15 00:13:52 chs Exp $ */
 /*
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.9 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_ucode_amd.c,v 1.10 2019/10/15 00:13:52 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
@@ -263,16 +263,8 @@ cpu_ucode_amd_apply(struct cpu_ucode_softc *sc, int cpuno)
 		return EINVAL;
 	}
 
-	mc.mc_amd = kmem_zalloc(sizeof(*mc.mc_amd), KM_NOSLEEP);
-	if (mc.mc_amd == NULL)
-		return ENOMEM;
-
-	mc.mc_amd->ect = kmem_alloc(mc.mc_mpbuf->mpb_len, KM_NOSLEEP);
-	if (mc.mc_amd->ect == NULL) {
-		error = ENOMEM;
-		goto err0;
-	}
-
+	mc.mc_amd = kmem_zalloc(sizeof(*mc.mc_amd), KM_SLEEP);
+	mc.mc_amd->ect = kmem_alloc(mc.mc_mpbuf->mpb_len, KM_SLEEP);
 	memcpy(mc.mc_amd->ect, mc.mc_mpbuf->mpb_data, mc.mc_mpbuf->mpb_len);
 	mc.mc_amd->ect_size = mc.mc_mpbuf->mpb_len;
 
@@ -307,7 +299,6 @@ cpu_ucode_amd_apply(struct cpu_ucode_softc *sc, int cpuno)
 
 err1:
 	kmem_free(mc.mc_amd->ect, mc.mc_amd->ect_size);
-err0:
 	kmem_free(mc.mc_amd, sizeof(*mc.mc_amd));
 	return error;
 }
