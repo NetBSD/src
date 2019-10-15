@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.25 2019/04/13 19:15:25 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.26 2019/10/15 17:25:02 bad Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.25 2019/04/13 19:15:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.26 2019/10/15 17:25:02 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -348,6 +348,7 @@ cpu_enable_psci(int phandle)
 
 	fdtbus_get_reg64(phandle, 0, &mpidr, NULL);
 
+	cpu_dcache_wbinv_all();
 	ret = psci_cpu_on(mpidr, cpu_fdt_mpstart_pa(), 0);
 	if (ret != PSCI_SUCCESS)
 		return EIO;
