@@ -1,4 +1,4 @@
-#	$NetBSD: files.acpi,v 1.6.6.1 2019/09/23 07:06:31 martin Exp $
+#	$NetBSD: files.acpi,v 1.6.6.2 2019/10/15 19:40:34 martin Exp $
 #
 # Configuration info for ACPI compliant ARM boards.
 #
@@ -25,6 +25,8 @@ file	arch/arm/acpi/gic_acpi.c		gic_acpi
 
 attach	gicvthree at acpimadtbus with gicv3_acpi
 file	arch/arm/acpi/gicv3_acpi.c		gicv3_acpi
+
+file	arch/arm/acpi/gic_v2m_acpi.c		(gic_acpi | gicv3_acpi) & pci
 
 attach	gtmr at acpisdtbus with gtmr_acpi
 file	arch/arm/acpi/gtmr_acpi.c		gtmr_acpi
