@@ -1,4 +1,4 @@
-/*	$NetBSD: pccbbreg.h,v 1.15 2009/12/15 22:17:12 snj Exp $	*/
+/*	$NetBSD: pccbbreg.h,v 1.16 2019/10/15 18:20:44 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1999 HAYAKAWA Koichi.  All rights reserved.
@@ -67,7 +67,7 @@
 
 /* PCI_CB_LSCP_REG */
 #define PCI_CB_LATENCY_SHIFT 24
-#define PCI_CB_LATENCY_MASK  0xff
+#define PCI_CB_LATENCY_MASK  0xffU
 #define PCI_CB_LATENCY(x) (((x) >> PCI_CB_LATENCY_SHIFT) & PCI_CB_LATENCY_MASK)
 
 
