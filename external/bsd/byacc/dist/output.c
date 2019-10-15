@@ -1,11 +1,11 @@
-/*	$NetBSD: output.c,v 1.20 2018/12/23 20:27:23 jakllsch Exp $	*/
+/*	$NetBSD: output.c,v 1.21 2019/10/15 15:58:46 christos Exp $	*/
 
 /* Id: output.c,v 1.87 2018/05/10 09:08:46 tom Exp  */
 
 #include "defs.h"
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: output.c,v 1.20 2018/12/23 20:27:23 jakllsch Exp $");
+__RCSID("$NetBSD: output.c,v 1.21 2019/10/15 15:58:46 christos Exp $");
 
 #define StaticOrR	(rflag ? "" : "static ")
 #define CountLine(fp)   (!rflag || ((fp) == code_file))
@@ -35,6 +35,16 @@ static Value_t *table;
 static Value_t *check;
 static int lowzero;
 static long high;
+
+static void
+output_code_lines(FILE *fp, int cl)
+{
+    if (code_lines[cl].lines == NULL)
+	return;
+    if (fp == code_file)
+	outline += code_lines[cl].num;
+    fputs(code_lines[cl].lines, fp);
+}
 
 static void
 putc_code(FILE * fp, int c)
@@ -1244,6 +1254,12 @@ output_defines(FILE * fp)
     if (fp != defines_file || iflag)
 	fprintf(fp, "#define YYERRCODE %d\n", symbol_value[1]);
 
+    if (fp == defines_file)
+    {
+	output_code_lines(fp, CODE_REQUIRES);
+	output_code_lines(fp, CODE_PROVIDES);
+    }
+
     if (token_table && rflag && fp != externs_file)
     {
 	if (fp == code_file)
@@ -1269,7 +1285,10 @@ output_defines(FILE * fp)
 	}
 #if defined(YYBTYACC)
 	if (locations)
+	{
 	    output_ltype(fp);
+	    fprintf(fp, "extern YYLTYPE %slloc;\n", symbol_prefix);
+	}
 #endif
     }
 }
@@ -2007,6 +2026,7 @@ output(void)
     free_shifts();
     free_reductions();
 
+    output_code_lines(code_file, CODE_TOP);
 #if defined(YYBTYACC)
     output_backtracking_parser(output_file);
     if (rflag)
@@ -2022,6 +2042,9 @@ output(void)
     }
     else
 	fp = code_file;
+
+    output_code_lines(code_file, CODE_REQUIRES);
+    output_code_lines(code_file, CODE_PROVIDES);
 
     output_prefix(fp);
     output_pure_parser(fp);
