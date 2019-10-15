@@ -742,7 +742,7 @@ PrDoDirective (
 
         DbgPrint (ASL_PARSE_OUTPUT, PR_PREFIX_ID
             "Start #include file \"%s\"\n", AslGbl_CurrentLineNumber,
-            Token, AslGbl_CurrentLineNumber);
+            Token);
 
         PrDoIncludeFile (Token);
         break;
@@ -1248,7 +1248,7 @@ PrDoIncludeBuffer (
     {
         if (!(i % 8))
         {
-            FlPrintFile (ASL_FILE_PREPROCESSOR, "\n   ", c);
+            FlPrintFile (ASL_FILE_PREPROCESSOR, "\n   ");
         }
 
         FlPrintFile (ASL_FILE_PREPROCESSOR, " 0x%2.2X,", c);
@@ -1261,6 +1261,6 @@ PrDoIncludeBuffer (
 
     /* Close the Name() operator */
 
-    FlPrintFile (ASL_FILE_PREPROCESSOR, "\n})\n", BufferName);
+    FlPrintFile (ASL_FILE_PREPROCESSOR, "\n})\n");
     fclose (BinaryBufferFile);
 }
