@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.293 2019/10/05 18:37:39 uwe Exp $
+#	$NetBSD: bsd.sys.mk,v 1.294 2019/10/15 15:05:00 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -333,7 +333,7 @@ MV?=		mv -f
 
 # Lex
 LFLAGS+=	${LPREFIX.${.IMPSRC:T}:D-P${LPREFIX.${.IMPSRC:T}}}
-LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
+LFLAGS+=	${LPREFIX:D-P${LPREFIX}} ${LFLAGS.${.IMPSRC:T}}
 
 .l.c:
 	${_MKTARGET_LEX}
@@ -341,7 +341,7 @@ LFLAGS+=	${LPREFIX:D-P${LPREFIX}}
 
 # Yacc
 YFLAGS+=	${YPREFIX.${.IMPSRC:T}:D-p${YPREFIX.${.IMPSRC:T}}} ${YHEADER.${.IMPSRC:T}:D-d}
-YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d}
+YFLAGS+=	${YPREFIX:D-p${YPREFIX}} ${YHEADER:D-d} ${YFLAGS.${.IMPSRC:T}}
 
 .y.c:
 	${_MKTARGET_YACC}
