@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.202.2.1 2019/10/15 18:32:13 martin Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.202.2.2 2019/10/15 19:01:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.202.2.1 2019/10/15 18:32:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.202.2.2 2019/10/15 19:01:06 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -408,6 +408,11 @@ lwp_suspend(struct lwp *curl, struct lwp *t)
 		return (EDEADLK);
 	}
 
+	if ((t->l_flag & LW_DBGSUSPEND) != 0) {
+		lwp_unlock(t);
+		return 0;
+	}
+
 	error = 0;
 
 	switch (t->l_stat) {
@@ -472,7 +477,7 @@ lwp_continue(struct lwp *l)
 
 	l->l_flag &= ~LW_WSUSPEND;
 
-	if (l->l_stat != LSSUSPENDED) {
+	if (l->l_stat != LSSUSPENDED || (l->l_flag & LW_DBGSUSPEND) != 0) {
 		lwp_unlock(l);
 		return;
 	}
@@ -496,6 +501,8 @@ lwp_unstop(struct lwp *l)
 	KASSERT(mutex_owned(p->p_lock));
 
 	lwp_lock(l);
+
+	KASSERT((l->l_flag & LW_DBGSUSPEND) == 0);
 
 	/* If not stopped, then just bail out. */
 	if (l->l_stat != LSSTOP) {

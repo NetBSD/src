@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.276 2019/06/13 20:20:18 kamil Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.276.2.1 2019/10/15 19:01:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.276 2019/06/13 20:20:18 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.276.2.1 2019/10/15 19:01:06 martin Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -617,6 +617,7 @@ retry:
 		l2->l_flag |= LW_WEXIT;
 		if ((l2->l_stat == LSSLEEP && (l2->l_flag & LW_SINTR)) ||
 		    l2->l_stat == LSSUSPENDED || l2->l_stat == LSSTOP) {
+			l2->l_flag &= ~LW_DBGSUSPEND;
 		    	/* setrunnable() will release the lock. */
 			setrunnable(l2);
 			continue;

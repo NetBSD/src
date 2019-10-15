@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.364.2.1 2019/10/15 18:32:13 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.364.2.2 2019/10/15 19:01:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.1 2019/10/15 18:32:13 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.2 2019/10/15 19:01:06 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1108,11 +1108,20 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 
 	SDT_PROBE(proc, kernel, , signal__send, l, p, sig, 0, 0);
 
+	lwp_lock(l);
+	if (__predict_false((l->l_flag & LW_DBGSUSPEND) != 0)) {
+		if ((prop & SA_KILL) != 0)
+			l->l_flag &= ~LW_DBGSUSPEND;
+		else {
+			lwp_unlock(l);
+			return 0;
+		}
+	}
+
 	/*
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
-	lwp_lock(l);
 	l->l_flag |= LW_PENDSIG;
 
 	/*
@@ -2179,7 +2188,8 @@ sigexit(struct lwp *l, int signo)
 			LIST_FOREACH(t, &p->p_lwps, l_sibling) {
 				lwp_lock(t);
 				if (t == l) {
-					t->l_flag &= ~LW_WSUSPEND;
+					t->l_flag &=
+					    ~(LW_WSUSPEND | LW_DBGSUSPEND);
 					lwp_unlock(t);
 					continue;
 				}
@@ -2376,7 +2386,7 @@ proc_unstop(struct proc *p)
 
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
-		if (l->l_stat != LSSTOP) {
+		if (l->l_stat != LSSTOP || (l->l_flag & LW_DBGSUSPEND) != 0) {
 			lwp_unlock(l);
 			continue;
 		}
