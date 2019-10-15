@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.12 2019/10/15 00:23:44 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.13 2019/10/15 13:27:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.12 2019/10/15 00:23:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.13 2019/10/15 13:27:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -131,15 +131,6 @@ acpipchb_amazon_graviton_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg,
 	return acpimcfg_conf_write(pc, tag, reg, data);
 }
 
-static int
-acpipchb_amazon_graviton_bus_maxdevs(struct acpi_pci_context *ap, int busno)
-{
-	if (busno == ap->ap_bus + 1)
-		return 1;
-
-	return 32;
-}
-
 static ACPI_STATUS
 acpipchb_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void **retval)
 {
@@ -172,7 +163,6 @@ acpipchb_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void *
 
 	ap->ap_conf_read = acpipchb_amazon_graviton_conf_read;
 	ap->ap_conf_write = acpipchb_amazon_graviton_conf_write;
-	ap->ap_bus_maxdevs = acpipchb_amazon_graviton_bus_maxdevs;
 
 	return AE_CTRL_TERMINATE;
 }
