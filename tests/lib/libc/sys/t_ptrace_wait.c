@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.3 2019/10/15 18:40:02 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.4 2019/10/15 18:43:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.3 2019/10/15 18:40:02 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.4 2019/10/15 18:43:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.3 2019/10/15 18:40:02 martin Exp $")
 #include <sys/uio.h>
 #include <sys/wait.h>
 #include <machine/reg.h>
+#include <assert.h>
 #include <elf.h>
 #include <err.h>
 #include <errno.h>
@@ -72,6 +73,20 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.3 2019/10/15 18:40:02 martin Exp $")
 #include <gelf.h>
 
 #include <atf-c.h>
+
+/* Assumptions in the kernel code that must be kept. */
+static_assert(sizeof(((struct ptrace_state *)0)->pe_report_event) ==
+    sizeof(((siginfo_t *)0)->si_pe_report_event),
+    "pe_report_event and si_pe_report_event must be of the same size");
+static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
+    sizeof(((siginfo_t *)0)->si_pe_other_pid),
+    "pe_other_pid and si_pe_other_pid must be of the same size");
+static_assert(sizeof(((struct ptrace_state *)0)->pe_lwp) ==
+    sizeof(((siginfo_t *)0)->si_pe_lwp),
+    "pe_lwp and si_pe_lwp must be of the same size");
+static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
+    sizeof(((struct ptrace_state *)0)->pe_lwp),
+    "pe_other_pid and pe_lwp must be of the same size");
 
 #include "h_macros.h"
 
