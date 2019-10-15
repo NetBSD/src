@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.531.2.2 2019/08/09 16:06:39 martin Exp $
+# $NetBSD: GENERIC,v 1.531.2.3 2019/10/15 18:10:09 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.531.2.2 $"
+#ident		"GENERIC-$Revision: 1.531.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -792,6 +792,7 @@ hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
+mcx*	at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
