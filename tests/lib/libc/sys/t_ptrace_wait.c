@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.4 2019/10/15 18:43:02 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.5 2019/10/15 18:47:03 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.4 2019/10/15 18:43:02 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.5 2019/10/15 18:47:03 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -140,7 +140,10 @@ traceme_raise(int sigval)
 	int status;
 #endif
 
+	ptrace_state_t state, zero_state;
+	const int slen = sizeof(state);
 	struct ptrace_siginfo info;
+	memset(&zero_state, 0, sizeof(zero_state));
 	memset(&info, 0, sizeof(info));
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
@@ -170,6 +173,9 @@ traceme_raise(int sigval)
 	switch (sigval) {
 	case SIGKILL:
 		validate_status_signaled(status, sigval, 0);
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) == -1);
+
 		break;
 	default:
 		validate_status_stopped(status, sigval);
@@ -187,6 +193,11 @@ traceme_raise(int sigval)
 
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, sigval);
 		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, SI_LWP);
+
+		DPRINTF("Assert that PT_GET_PROCESS_STATE returns non-error");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
+		ATF_REQUIRE(memcmp(&state, &zero_state, slen) == 0);
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
