@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.6 2019/10/15 19:03:20 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.7 2019/10/15 19:07:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.6 2019/10/15 19:03:20 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.7 2019/10/15 19:07:14 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1265,7 +1265,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 					break;
 			}
 		} else {
-			if (lt->l_flag & (LW_WSUSPEND | LW_WSUSPEND)) {
+			if (lt->l_flag & (LW_WSUSPEND | LW_DBGSUSPEND)) {
 				error = EDEADLK;
 				break;
 			}
