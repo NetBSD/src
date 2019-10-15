@@ -57,7 +57,11 @@ void *                      AslLocalAllocate (unsigned int Size);
 
 int                         DtCompilerParserlex (void);
 int                         DtCompilerParserparse (void);
-void                        DtCompilerParsererror (char const *msg);
+void                        DtCompilerParsererror (
+#ifdef YYBYACC
+				    YYLTYPE *loc,
+#endif
+				    char const *msg);
 extern char                 *DtCompilerParsertext;
 extern DT_FIELD             *AslGbl_CurrentField;
 
@@ -166,6 +170,9 @@ Datum
 
 void
 DtCompilerParsererror (
+#ifdef YYBYACC
+    YYLTYPE *loc,
+#endif
     char const              *Message)
 {
     DtError (ASL_ERROR, ASL_MSG_SYNTAX,

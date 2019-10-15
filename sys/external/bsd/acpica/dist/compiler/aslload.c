@@ -56,6 +56,7 @@
 
 static ACPI_STATUS
 LdLoadFieldElements (
+    UINT32                  AmlType,
     ACPI_PARSE_OBJECT       *Op,
     ACPI_WALK_STATE         *WalkState);
 
@@ -82,6 +83,10 @@ LdCommonNamespaceEnd (
     UINT32                  Level,
     void                    *Context);
 
+static void
+LdCheckSpecialNames (
+    ACPI_NAMESPACE_NODE     *Node,
+    ACPI_PARSE_OBJECT       *Op);
 
 /*******************************************************************************
  *
@@ -139,7 +144,8 @@ LdLoadNamespace (
  *
  * FUNCTION:    LdLoadFieldElements
  *
- * PARAMETERS:  Op              - Parent node (Field)
+ * PARAMETERS:  AmlType         - Type to search
+ *              Op              - Parent node (Field)
  *              WalkState       - Current walk state
  *
  * RETURN:      Status
@@ -151,13 +157,32 @@ LdLoadNamespace (
 
 static ACPI_STATUS
 LdLoadFieldElements (
+    UINT32                  AmlType,
     ACPI_PARSE_OBJECT       *Op,
     ACPI_WALK_STATE         *WalkState)
 {
     ACPI_PARSE_OBJECT       *Child = NULL;
+    ACPI_PARSE_OBJECT       *SourceRegion;
     ACPI_NAMESPACE_NODE     *Node;
     ACPI_STATUS             Status;
 
+
+    SourceRegion = UtGetArg (Op, 0);
+    if (SourceRegion)
+    {
+        Status = AcpiNsLookup (WalkState->ScopeInfo,
+            SourceRegion->Asl.Value.String,
+            AmlType, ACPI_IMODE_EXECUTE,
+            ACPI_NS_DONT_OPEN_SCOPE, NULL, &Node);
+        if (Status == AE_NOT_FOUND)
+        {
+            /*
+             * If the named object is not found, it means that it is either a
+             * forward reference or the named object does not exist.
+             */
+            SourceRegion->Asl.CompileFlags |= OP_NOT_FOUND_DURING_LOAD;
+        }
+    }
 
     /* Get the first named field element */
 
@@ -380,12 +405,16 @@ LdNamespace1Begin (
      */
     switch (Op->Asl.AmlOpcode)
     {
-    case AML_BANK_FIELD_OP:
     case AML_INDEX_FIELD_OP:
+
+        Status = LdLoadFieldElements (ACPI_TYPE_LOCAL_REGION_FIELD, Op, WalkState);
+        return (Status);
+
+    case AML_BANK_FIELD_OP:
     case AML_FIELD_OP:
 
-        Status = LdLoadFieldElements (Op, WalkState);
-        break;
+        Status = LdLoadFieldElements (ACPI_TYPE_REGION, Op, WalkState);
+        return (Status);
 
     case AML_INT_CONNECTION_OP:
 
@@ -449,8 +478,7 @@ LdNamespace1Begin (
          * We only want references to named objects:
          *      Store (2, WXYZ) -> Attempt to resolve the name
          */
-        if ((OpInfo->Class == AML_CLASS_NAMED_OBJECT) &&
-            (OpInfo->Type != AML_TYPE_NAMED_FIELD))
+        if (OpInfo->Class == AML_CLASS_NAMED_OBJECT)
         {
             return (AE_OK);
         }
@@ -840,6 +868,10 @@ LdNamespace1Begin (
         }
     }
 
+    /* Check special names like _WAK and _PTS */
+
+    LdCheckSpecialNames (Node, Op);
+
     if (ForceNewScope)
     {
         Status = AcpiDsScopeStackPush (Node, ObjectType, WalkState);
@@ -875,6 +907,50 @@ FinishNode:
     }
 
     return_ACPI_STATUS (Status);
+}
+
+
+/*******************************************************************************
+ *
+ * FUNCTION:    LdCheckSpecialNames
+ *
+ * PARAMETERS:  Node        - Node that represents the named object
+ *              Op          - Named object declaring this named object
+ *
+ * RETURN:      None
+ *
+ * DESCRIPTION: Check if certain named objects are declared in the incorrect
+ *              scope. Special named objects are listed in
+ *              AslGbl_SpecialNamedObjects and can only be declared at the root
+ *              scope. _UID inside of a processor declaration must not be a
+ *              string.
+ *
+ ******************************************************************************/
+
+static void
+LdCheckSpecialNames (
+    ACPI_NAMESPACE_NODE     *Node,
+    ACPI_PARSE_OBJECT       *Op)
+{
+    UINT32                  i;
+
+
+    for (i = 0; i < MAX_SPECIAL_NAMES; i++)
+    {
+        if (ACPI_COMPARE_NAMESEG(Node->Name.Ascii, AslGbl_SpecialNamedObjects[i]) &&
+            Node->Parent != AcpiGbl_RootNode)
+        {
+            AslError (ASL_ERROR, ASL_MSG_INVALID_SPECIAL_NAME, Op, Op->Asl.ExternalName);
+            return;
+        }
+    }
+
+    if (ACPI_COMPARE_NAMESEG (Node->Name.Ascii, "_UID") &&
+        Node->Parent->Type == ACPI_TYPE_PROCESSOR &&
+        Node->Type == ACPI_TYPE_STRING)
+    {
+        AslError (ASL_ERROR, ASL_MSG_INVALID_PROCESSOR_UID , Op, "found a string");
+    }
 }
 
 
