@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1218 2019/10/03 00:59:49 mrg Exp $
+# $NetBSD: mi,v 1.1219 2019/10/15 18:33:57 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1991,9 +1991,9 @@
 ./usr/sbin/stdhosts				base-nis-bin		yp
 ./usr/sbin/sti					base-sysutil-bin
 ./usr/sbin/sunlabel				base-sysutil-bin
-./usr/sbin/sup					base-sup-bin
-./usr/sbin/supfilesrv				base-sup-bin
-./usr/sbin/supscan				base-sup-bin
+./usr/sbin/sup					base-obsolete		obsolete
+./usr/sbin/supfilesrv				base-obsolete		obsolete
+./usr/sbin/supscan				base-obsolete		obsolete
 ./usr/sbin/sushi				base-obsolete		obsolete
 ./usr/sbin/sysconfd				base-obsolete		obsolete
 ./usr/sbin/sysctl				base-obsolete		obsolete
@@ -2282,7 +2282,7 @@
 ./usr/share/examples/rtadvd			base-router-examples
 ./usr/share/examples/slip			base-slip-examples
 ./usr/share/examples/smbfs			base-sysutil-examples
-./usr/share/examples/supfiles			base-sup-examples
+./usr/share/examples/supfiles			base-obsolete	obsolete
 ./usr/share/examples/syslogd			base-sysutil-examples
 ./usr/share/examples/veriexecctl		base-obsolete	obsolete
 ./usr/share/examples/veriexecctl/fpgen.sh	base-obsolete	obsolete
