@@ -1,4 +1,4 @@
-/*	$NetBSD: firewire.c,v 1.48 2018/09/03 16:29:31 riastradh Exp $	*/
+/*	$NetBSD: firewire.c,v 1.49 2019/10/15 18:21:47 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.48 2018/09/03 16:29:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: firewire.c,v 1.49 2019/10/15 18:21:47 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1407,12 +1407,12 @@ fw_reset_csr(struct firewire_comm *fc)
 	CSRARC(fc, BANDWIDTH_AV) = 4915;
 	CSRARC(fc, CHANNELS_AV_HI) = 0xffffffff;
 	CSRARC(fc, CHANNELS_AV_LO) = 0xffffffff;
-	CSRARC(fc, IP_CHANNELS) = (1 << 31);
+	CSRARC(fc, IP_CHANNELS) = (1U << 31);
 
 	CSRARC(fc, CONF_ROM) = 0x04 << 24;
 	CSRARC(fc, CONF_ROM + 4) = 0x31333934; /* means strings 1394 */
 	CSRARC(fc, CONF_ROM + 8) =
-	    1 << 31 | 1 << 30 | 1 << 29 | 1 << 28 | 0xff << 16 | 0x09 << 8;
+	    1U << 31 | 1 << 30 | 1 << 29 | 1 << 28 | 0xff << 16 | 0x09 << 8;
 	CSRARC(fc, CONF_ROM + 0xc) = 0;
 
 /* DV depend CSRs see blue book */
