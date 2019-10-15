@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.364.2.3 2019/10/15 19:08:46 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.364.2.4 2019/10/15 19:23:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.3 2019/10/15 19:08:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.4 2019/10/15 19:23:09 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -125,6 +125,7 @@ static int	sigchecktrace(void);
 static int	sigpost(struct lwp *, sig_t, int, int);
 static int	sigput(sigpend_t *, struct proc *, ksiginfo_t *);
 static int	sigunwait(struct proc *, const ksiginfo_t *);
+static void	sigswitch(int, int, bool);
 
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
@@ -931,7 +932,7 @@ repeat:
 	 * The process is already stopping.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		sigswitch(0, p->p_xsig, false);
+		sigswitch(0, p->p_xsig, true);
 		mutex_enter(proc_lock);
 		mutex_enter(p->p_lock);
 		goto repeat; /* XXX */
@@ -949,7 +950,7 @@ repeat:
 		p->p_sigctx.ps_faked = true;
 		p->p_sigctx.ps_lwp = ksi->ksi_lid;
 		p->p_sigctx.ps_info = ksi->ksi_info;
-		sigswitch(0, signo, false);
+		sigswitch(0, signo, true);
 
 		if (ktrpoint(KTR_PSIG)) {
 			if (p->p_emul->e_ktrpsig)
@@ -1639,7 +1640,7 @@ repeat:
 	 * The process is already stopping.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		sigswitch(0, p->p_xsig, false);
+		sigswitch(0, p->p_xsig, true);
 		mutex_enter(proc_lock);
 		mutex_enter(p->p_lock);
 		goto repeat; /* XXX */
@@ -1664,7 +1665,7 @@ repeat:
 	p->p_sigctx.ps_lwp = ksi.ksi_lid;
 	p->p_sigctx.ps_info = ksi.ksi_info;
 
-	sigswitch(0, signo, false);
+	sigswitch(0, signo, true);
 
 	if (code == TRAP_CHLD) {
 		mutex_enter(proc_lock);
@@ -1684,8 +1685,8 @@ repeat:
 /*
  * Stop the current process and switch away when being stopped or traced.
  */
-void
-sigswitch(int ppmask, int signo, bool relock)
+static void
+sigswitch(int ppmask, int signo, bool proc_lock_held)
 {
 	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
@@ -1695,6 +1696,12 @@ sigswitch(int ppmask, int signo, bool relock)
 	KASSERT(l->l_stat == LSONPROC);
 	KASSERT(p->p_nrlwps > 0);
 
+	if (proc_lock_held) {
+		KASSERT(mutex_owned(proc_lock));
+	} else {
+		KASSERT(!mutex_owned(proc_lock));
+	}
+
 	/*
 	 * If we are exiting, demise now.
 	 *
@@ -1702,7 +1709,7 @@ sigswitch(int ppmask, int signo, bool relock)
 	 */
 	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
 		mutex_exit(p->p_lock);
-		if (!relock) {
+		if (proc_lock_held) {
 			mutex_exit(proc_lock);
 		}
 		lwp_exit(l);
@@ -1726,7 +1733,7 @@ sigswitch(int ppmask, int signo, bool relock)
 	 * a new signal, then signal the parent.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		if (relock && !mutex_tryenter(proc_lock)) {
+		if (!proc_lock_held && !mutex_tryenter(proc_lock)) {
 			mutex_exit(p->p_lock);
 			mutex_enter(proc_lock);
 			mutex_enter(p->p_lock);
@@ -1746,6 +1753,7 @@ sigswitch(int ppmask, int signo, bool relock)
 	/*
 	 * Unlock and switch away.
 	 */
+	KASSERT(!mutex_owned(proc_lock));
 	KERNEL_UNLOCK_ALL(l, &biglocks);
 	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
 		p->p_nrlwps--;
@@ -1835,7 +1843,7 @@ issignal(struct lwp *l)
 		 * we awaken, check for a signal from the debugger.
 		 */
 		if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			sigswitch(PS_NOCLDSTOP, 0, true);
+			sigswitch(PS_NOCLDSTOP, 0, false);
 			mutex_enter(p->p_lock);
 			signo = sigchecktrace();
 		} else if (p->p_stat == SACTIVE)
@@ -1907,7 +1915,7 @@ issignal(struct lwp *l)
 			p->p_xsig = signo;
 
 			/* Handling of signal trace */
-			sigswitch(0, signo, true);
+			sigswitch(0, signo, false);
 			mutex_enter(p->p_lock);
 
 			/* Check for a signal from the debugger. */
@@ -1964,7 +1972,7 @@ issignal(struct lwp *l)
 				p->p_xsig = signo;
 				p->p_sflag &= ~PS_CONTINUED;
 				signo = 0;
-				sigswitch(PS_NOCLDSTOP, p->p_xsig, true);
+				sigswitch(PS_NOCLDSTOP, p->p_xsig, false);
 				mutex_enter(p->p_lock);
 			} else if (prop & SA_IGNORE) {
 				/*
@@ -2517,7 +2525,7 @@ repeat:
 	 * The process is already stopping.
 	 */
 	if ((p->p_sflag & PS_STOPPING) != 0) {
-		sigswitch(0, p->p_xsig, true);
+		sigswitch(0, p->p_xsig, false);
 		mutex_enter(p->p_lock);
 		goto repeat; /* XXX */
 	}
@@ -2530,7 +2538,7 @@ repeat:
 	p->p_xsig = signo;
 	p->p_sigctx.ps_lwp = ksi.ksi_lid;
 	p->p_sigctx.ps_info = ksi.ksi_info;
-	sigswitch(0, signo, true);
+	sigswitch(0, signo, false);
 
 	if (ktrpoint(KTR_PSIG)) {
 		if (p->p_emul->e_ktrpsig)
