@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.2 2019/10/15 18:34:34 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.3 2019/10/15 18:40:02 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.2 2019/10/15 18:34:34 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.3 2019/10/15 18:40:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5432,12 +5432,15 @@ TRACEME_EXEC(traceme_signalignored_exec, false, true)
 #define TRACE_THREADS_NUM 100
 
 static volatile int done;
+pthread_mutex_t trace_threads_mtx = PTHREAD_MUTEX_INITIALIZER;
 
 static void *
 trace_threads_cb(void *arg __unused)
 {
 
+	pthread_mutex_lock(&trace_threads_mtx);
 	done++;
+	pthread_mutex_unlock(&trace_threads_mtx);
 
 	while (done < TRACE_THREADS_NUM)
 		sched_yield();
