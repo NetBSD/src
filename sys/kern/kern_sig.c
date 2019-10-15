@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.372 2019/10/13 03:50:26 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.373 2019/10/15 13:59:57 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.372 2019/10/13 03:50:26 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.373 2019/10/15 13:59:57 kamil Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1710,21 +1710,6 @@ sigswitch(int ppmask, int signo, bool proc_lock_held)
 		KASSERT(mutex_owned(proc_lock));
 	} else {
 		KASSERT(!mutex_owned(proc_lock));
-	}
-
-	/*
-	 * If we are exiting, demise now.
-	 *
-	 * This avoids notifying tracer and deadlocking.
-	 */
-	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
-		mutex_exit(p->p_lock);
-		if (proc_lock_held) {
-			mutex_exit(proc_lock);
-		}
-		lwp_exit(l);
-		panic("sigswitch");
-		/* NOTREACHED */
 	}
 
 	/*
