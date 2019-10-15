@@ -67,7 +67,9 @@ write_bytes(struct diffarg *da)
 	auio.uio_segflg = UIO_SYSSPACE;
 	auio.uio_td = da->da_td;
 #else
+#ifdef _KERNEL
 	auio.uio_vmspace = vmspace_kernel();
+#endif
 #endif /* __FreeBSD__ */
 #ifdef _KERNEL
 #ifdef __FreeBSD__
