@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.38 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.39 2019/10/15 15:56:26 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1190,6 +1190,7 @@ alc_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->alc_ident = alc_find_ident(pa);
+	sc->alc_rev = PCI_REVISION(pa->pa_class);
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->alc_ident->name);
@@ -1393,7 +1394,6 @@ alc_attach(device_t parent, device_t self, void *aux)
 	 * Don't use Tx CMB. It is known to have silicon bug.
 	 */
 	sc->alc_flags |= ALC_FLAG_CMB_BUG;
-	sc->alc_rev = PCI_REVISION(pa->pa_class);
 	sc->alc_chip_rev = CSR_READ_4(sc, ALC_MASTER_CFG) >>
 	    MASTER_CHIP_REV_SHIFT;
 	if (alcdebug) {
