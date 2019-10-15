@@ -53,7 +53,7 @@ static char                 VersionString[9];
 
 /* Local prototypes */
 
-static ACPI_STATUS
+void
 DtInitialize (
     void);
 
@@ -88,16 +88,12 @@ DtDoCompile (
     ACPI_STATUS             Status;
     UINT8                   Event;
     DT_FIELD                *FieldList;
+    ASL_GLOBAL_FILE_NODE    *FileNode;
 
 
     /* Initialize globals */
 
-    Status = DtInitialize ();
-    if (ACPI_FAILURE (Status))
-    {
-        printf ("Error during compiler initialization, 0x%X\n", Status);
-        return (Status);
-    }
+    DtInitialize ();
 
     /* Preprocessor */
 
@@ -115,13 +111,29 @@ DtDoCompile (
         }
     }
 
-    /*
-     * Scan the input file (file is already open) and
-     * build the parse tree
-     */
-    Event = UtBeginEvent ("Scan and parse input file");
-    FieldList = DtScanFile (AslGbl_Files[ASL_FILE_INPUT].Handle);
-    UtEndEvent (Event);
+    /* Compile the parse tree */
+
+    if (AslGbl_DtLexBisonPrototype)
+    {
+        Event = UtBeginEvent ("Parse data table in prototype mode");
+
+        DtCompilerInitLexer (AslGbl_Files[ASL_FILE_INPUT].Handle);
+        DtCompilerParserparse ();
+        FieldList = AslGbl_FieldList;
+        DtCompilerTerminateLexer ();
+
+        UtEndEvent (Event);
+    }
+    else
+    {
+        /*
+         * Scan the input file (file is already open) and
+         * build the parse tree
+         */
+        Event = UtBeginEvent ("Scan and parse input file");
+        FieldList = DtScanFile (AslGbl_Files[ASL_FILE_INPUT].Handle);
+        UtEndEvent (Event);
+    }
 
     /* Did the parse tree get successfully constructed? */
 
@@ -137,14 +149,27 @@ DtDoCompile (
 
     Event = UtBeginEvent ("Compile parse tree");
 
-    /*
-     * Compile the parse tree
-     */
     Status = DtCompileDataTable (&FieldList);
     UtEndEvent (Event);
 
+    FileNode = FlGetCurrentFileNode ();
+    if (!FileNode)
+    {
+        fprintf (stderr, "Summary for %s could not be generated",
+            AslGbl_Files[ASL_FILE_INPUT].Filename);
+    }
+    else
+    {
+        FileNode->TotalLineCount = AslGbl_CurrentLineNumber;
+        FileNode->OriginalInputFileSize = AslGbl_InputByteCount;
+        DbgPrint (ASL_PARSE_OUTPUT, "Line count: %u input file size: %u\n",
+                FileNode->TotalLineCount, FileNode->OriginalInputFileSize);
+    }
+
     if (ACPI_FAILURE (Status))
     {
+        FileNode->ParserErrorDetected = TRUE;
+
         /* TBD: temporary error message. Msgs should come from function above */
 
         DtError (ASL_ERROR, ASL_MSG_SYNTAX, NULL,
@@ -168,6 +193,14 @@ DtDoCompile (
     HxDoHexOutput ();
     DtWriteTableToListing ();
 
+    /* Save the compile time statistics to the current file node */
+
+    if (FileNode)
+    {
+        FileNode->TotalFields = AslGbl_InputFieldCount;
+        FileNode->OutputByteLength = AslGbl_TableLength;
+    }
+
     return (Status);
 }
 
@@ -185,24 +218,11 @@ DtDoCompile (
  *
  *****************************************************************************/
 
-static ACPI_STATUS
+void
 DtInitialize (
     void)
 {
-    ACPI_STATUS             Status;
 
-
-    Status = AcpiOsInitialize ();
-    if (ACPI_FAILURE (Status))
-    {
-        return (Status);
-    }
-
-    Status = AcpiUtInitGlobals ();
-    if (ACPI_FAILURE (Status))
-    {
-        return (Status);
-    }
 
     AcpiUtSetIntegerWidth (2); /* Set width to 64 bits */
 
@@ -212,7 +232,7 @@ DtInitialize (
 
     snprintf (VersionString, sizeof(VersionString), "%X",
 	(UINT32) ACPI_CA_VERSION);
-    return (AE_OK);
+    return;
 }
 
 
