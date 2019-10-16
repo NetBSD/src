@@ -138,14 +138,10 @@ ipv6_init(struct dhcpcd_ctx *ctx)
 		return -1;
 	TAILQ_INIT(ctx->ra_routers);
 
-#ifdef PRIVSEP
-#else /* !PRIVSEP */
 #ifndef __sun
 	ctx->nd_fd = -1;
 #endif
 	ctx->dhcp6_fd = -1;
-#endif /* PRIVSEP */
-
 	return 0;
 }
 

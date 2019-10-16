@@ -53,7 +53,6 @@
 #include "ipv6.h"
 #include "ipv6nd.h"
 #include "logerr.h"
-#include "privsep.h"
 #include "route.h"
 #include "script.h"
 
@@ -268,7 +267,7 @@ ipv6nd_open(struct interface *ifp)
 	return s;
 }
 #else
-int
+static int
 ipv6nd_open(struct dhcpcd_ctx *ctx)
 {
 	int s, on;
@@ -289,8 +288,7 @@ ipv6nd_open(struct dhcpcd_ctx *ctx)
 	}
 
 	ctx->nd_fd = s;
-	if (!(ctx->options & DHCPCD_PRIVSEP))
-		eloop_event_add(ctx->eloop, s, ipv6nd_handledata, ctx);
+	eloop_event_add(ctx->eloop, s, ipv6nd_handledata, ctx);
 	return s;
 }
 #endif
@@ -368,24 +366,17 @@ ipv6nd_sendrsprobe(void *arg)
 	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
 
 	logdebugx("%s: sending Router Solicitation", ifp->name);
-#ifdef PRIVSEP
-	if (ifp->ctx->options & DHCPCD_PRIVSEP)
-		privsep_sendmsg(ifp->ctx, PS_ND, &msg);
-	else
-#endif
-	{
 #ifdef __sun
-		s = state->nd_fd;
+	s = state->nd_fd;
 #else
-		s = ifp->ctx->nd_fd;
+	s = ifp->ctx->nd_fd;
 #endif
-		if (sendmsg(s, &msg, 0) == -1) {
-			logerr(__func__);
-			/* Allow IPv6ND to continue .... at most a few errors
-			 * would be logged.
-			 * Generally the error is ENOBUFS when struggling to
-			* associate with an access point. */
-		}
+	if (sendmsg(s, &msg, 0) == -1) {
+		logerr(__func__);
+		/* Allow IPv6ND to continue .... at most a few errors
+		 * would be logged.
+		 * Generally the error is ENOBUFS when struggling to
+		 * associate with an access point. */
 	}
 
 	if (state->rsprobes++ < MAX_RTR_SOLICITATIONS)
@@ -436,21 +427,13 @@ ipv6nd_sendadvertisement(void *arg)
 	cm->cmsg_len = CMSG_LEN(sizeof(pi));
 	memcpy(CMSG_DATA(cm), &pi, sizeof(pi));
 	logdebugx("%s: sending NA for %s", ifp->name, ia->saddr);
-
-#ifdef PRIVSEP
-	if (ifp->ctx->options & DHCPCD_PRIVSEP)
-		privsep_sendmsg(ifp->ctx, PS_ND, &msg);
-	else
-#endif
-	{
 #ifdef __sun
-		s = state->nd_fd;
+	s = state->nd_fd;
 #else
-		s = ctx->nd_fd;
+	s = ctx->nd_fd;
 #endif
-		if (sendmsg(s, &msg, 0) == -1)
-			logerr(__func__);
-	}
+	if (sendmsg(s, &msg, 0) == -1)
+		logerr(__func__);
 
 	if (++ia->na_count < MAX_NEIGHBOR_ADVERTISEMENT) {
 		eloop_timeout_add_sec(ctx->eloop,
@@ -1735,51 +1718,6 @@ ipv6nd_drop(struct interface *ifp)
 	}
 }
 
-void
-ipv6nd_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg)
-{
-	struct sockaddr_in6 *from = (struct sockaddr_in6 *)msg->msg_name;
-	char sfrom[INET6_ADDRSTRLEN];
-	int hoplimit = 0;
-	struct icmp6_hdr *icp;
-	struct interface *ifp;
-	size_t len = msg->msg_iov[0].iov_len;
-
-	inet_ntop(AF_INET6, &from->sin6_addr, sfrom, sizeof(sfrom));
-	if ((size_t)len < sizeof(struct icmp6_hdr)) {
-		logerrx("IPv6 ICMP packet too short from %s", sfrom);
-		return;
-	}
-
-#ifdef __sun
-	if_findifpfromcmsg(ctx, msg, &hoplimit);
-#else
-	ifp = if_findifpfromcmsg(ctx, msg, &hoplimit);
-	if (ifp == NULL) {
-		logerr(__func__);
-		return;
-	}
-#endif
-
-	/* Don't do anything if the user hasn't configured it. */
-	if (ifp->active != IF_ACTIVE_USER ||
-	    !(ifp->options->options & DHCPCD_IPV6))
-		return;
-
-	icp = (struct icmp6_hdr *)msg->msg_iov[0].iov_base;
-	if (icp->icmp6_code == 0) {
-		switch(icp->icmp6_type) {
-			case ND_ROUTER_ADVERT:
-				ipv6nd_handlera(ctx, from, sfrom,
-				    ifp, icp, (size_t)len, hoplimit);
-				return;
-		}
-	}
-
-	logerrx("invalid IPv6 type %d or code %d from %s",
-	    icp->icmp6_type, icp->icmp6_code, sfrom);
-}
-
 static void
 ipv6nd_handledata(void *arg)
 {
@@ -1798,6 +1736,10 @@ ipv6nd_handledata(void *arg)
 	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
 	};
 	ssize_t len;
+	char sfrom[INET6_ADDRSTRLEN];
+	int hoplimit = 0;
+	struct icmp6_hdr *icp;
+	struct interface *ifp;
 
 #ifdef __sun
 	struct rs_state *state;
@@ -1815,9 +1757,39 @@ ipv6nd_handledata(void *arg)
 		logerr(__func__);
 		return;
 	}
+	inet_ntop(AF_INET6, &from.sin6_addr, sfrom, sizeof(sfrom));
+	if ((size_t)len < sizeof(struct icmp6_hdr)) {
+		logerrx("IPv6 ICMP packet too short from %s", sfrom);
+		return;
+	}
 
-	iov.iov_len = (size_t)len;
-	ipv6nd_recvmsg(ctx, &msg);
+#ifdef __sun
+	if_findifpfromcmsg(ctx, &msg, &hoplimit);
+#else
+	ifp = if_findifpfromcmsg(ctx, &msg, &hoplimit);
+	if (ifp == NULL) {
+		logerr(__func__);
+		return;
+	}
+#endif
+
+	/* Don't do anything if the user hasn't configured it. */
+	if (ifp->active != IF_ACTIVE_USER ||
+	    !(ifp->options->options & DHCPCD_IPV6))
+		return;
+
+	icp = (struct icmp6_hdr *)buf;
+	if (icp->icmp6_code == 0) {
+		switch(icp->icmp6_type) {
+			case ND_ROUTER_ADVERT:
+				ipv6nd_handlera(ctx, &from, sfrom,
+				    ifp, icp, (size_t)len, hoplimit);
+				return;
+		}
+	}
+
+	logerrx("invalid IPv6 type %d or code %d from %s",
+	    icp->icmp6_type, icp->icmp6_code, sfrom);
 }
 
 static void
@@ -1840,19 +1812,17 @@ ipv6nd_startrs1(void *arg)
 #endif
 	}
 
-	if (!(ifp->ctx->options & DHCPCD_PRIVSEP)) {
 #ifdef __sun
-		if (ipv6nd_open(ifp) == -1) {
-			logerr(__func__);
-			return;
-		}
-#else
-		if (ipv6nd_open(ifp->ctx) == -1) {
-			logerr(__func__);
-			return;
-		}
-#endif
+	if (ipv6nd_open(ifp) == -1) {
+		logerr(__func__);
+		return;
 	}
+#else
+	if (ipv6nd_open(ifp->ctx) == -1) {
+		logerr(__func__);
+		return;
+	}
+#endif
 
 	/* Always make a new probe as the underlying hardware
 	 * address could have changed. */
