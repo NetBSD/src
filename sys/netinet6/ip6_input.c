@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.211 2019/09/19 05:31:50 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.212 2019/10/16 07:40:40 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.211 2019/09/19 05:31:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.212 2019/10/16 07:40:40 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -134,7 +134,6 @@ percpu_t *ip6stat_percpu;
 
 percpu_t *ip6_forward_rt_percpu __cacheline_aligned;
 
-static void ip6_init2(void);
 static void ip6intr(void *);
 static bool ip6_badaddr(struct ip6_hdr *);
 static struct m_tag *ip6_setdstifaddr(struct mbuf *, const struct in6_ifaddr *);
@@ -185,7 +184,7 @@ ip6_init(void)
 	frag6_init();
 	ip6_desync_factor = cprng_fast32() % MAX_TEMP_DESYNC_FACTOR;
 
-	ip6_init2();
+	in6_tmpaddrtimer_init();
 #ifdef GATEWAY
 	ip6flow_init(ip6_hashsize);
 #endif
@@ -195,18 +194,6 @@ ip6_init(void)
 
 	ip6stat_percpu = percpu_alloc(sizeof(uint64_t) * IP6_NSTATS);
 	ip6_forward_rt_percpu = rtcache_percpu_alloc();
-}
-
-static void
-ip6_init2(void)
-{
-
-	/* timer for regeneration of temporary addresses randomize ID */
-	callout_init(&in6_tmpaddrtimer_ch, CALLOUT_MPSAFE);
-	callout_reset(&in6_tmpaddrtimer_ch,
-		      (ip6_temp_preferred_lifetime - ip6_desync_factor -
-		       ip6_temp_regen_advance) * hz,
-		      in6_tmpaddrtimer, NULL);
 }
 
 /*
