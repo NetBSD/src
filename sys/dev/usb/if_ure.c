@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.31 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.32 2019/10/16 13:02:51 bad Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.31 2019/08/23 04:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.32 2019/10/16 13:02:51 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -941,7 +941,8 @@ ure_attach(device_t parent, device_t self, void *aux)
 	else
 		ure_rtl8153_init(un);
 
-	if (un->un_flags & URE_FLAG_VER_4C00)
+	if ((un->un_flags & URE_FLAG_VER_4C00) ||
+	    (un->un_flags & URE_FLAG_VER_4C10))
 		ure_read_mem(un, URE_PLA_IDR, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
 	else
