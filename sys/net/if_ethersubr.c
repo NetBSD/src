@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.278 2019/10/02 04:17:16 msaitoh Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.279 2019/10/16 15:27:39 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.278 2019/10/02 04:17:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.279 2019/10/16 15:27:39 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1035,7 +1035,7 @@ ether_ifdetach(struct ifnet *ifp)
 	 * is in the process of being detached. Return device not configured
 	 * instead.
 	 */
-	ifp->if_ioctl = (int (*)(struct ifnet *, u_long, void *))enxio;
+	ifp->if_ioctl = (int (*)(struct ifnet *, u_long, void *))(void *)enxio;
 
 #if NBRIDGE > 0
 	if (ifp->if_bridge)

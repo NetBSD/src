@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_ipi.c,v 1.5 2019/09/05 09:20:05 ryo Exp $	*/
+/*	$NetBSD: subr_ipi.c,v 1.6 2019/10/16 15:27:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.5 2019/09/05 09:20:05 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_ipi.c,v 1.6 2019/10/16 15:27:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -150,7 +150,7 @@ ipi_register(ipi_func_t func, void *arg)
 void
 ipi_unregister(u_int ipi_id)
 {
-	ipi_msg_t ipimsg = { .func = (ipi_func_t)nullop };
+	ipi_msg_t ipimsg = { .func = (ipi_func_t)(void *)nullop };
 
 	KASSERT(ipi_id != IPI_SYNCH_ID);
 	KASSERT(ipi_id < IPI_MAXREG);
