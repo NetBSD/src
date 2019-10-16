@@ -41,7 +41,6 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2019 Roy Marples";
 #include <getopt.h>
 #include <limits.h>
 #include <paths.h>
-#include <pwd.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -67,7 +66,6 @@ const char dhcpcd_copyright[] = "Copyright (c) 2006-2019 Roy Marples";
 #include "ipv6.h"
 #include "ipv6nd.h"
 #include "logerr.h"
-#include "privsep.h"
 #include "script.h"
 
 #ifdef HAVE_UTIL_H
@@ -1600,9 +1598,6 @@ main(int argc, char **argv)
 #ifdef AUTH
 			" AUTH"
 #endif
-#ifdef PRIVSEP
-			" PRIVSEP"
-#endif
 			"\n");
 			return EXIT_SUCCESS;
 		}
@@ -1621,12 +1616,6 @@ main(int argc, char **argv)
 #endif
 #ifdef INET
 	ctx.udp_fd = -1;
-#endif
-#ifdef INET6
-	ctx.nd_fd = -1;
-#endif
-#ifdef DHCP6
-	ctx.dhcp6_fd = -1;
 #endif
 	rt_init(&ctx);
 
@@ -2000,18 +1989,6 @@ printpidfile:
 	    ctx.options & DHCPCD_IPV4 ? " [ip4]" : "",
 	    ctx.options & DHCPCD_IPV6 ? " [ip6]" : "");
 
-#ifdef PRIVSEP
-	switch (pid = privsep_start(&ctx)) {
-	case -1:
-		goto exit_failure;
-	case 0:
-		goto run_loop;
-	default:
-		logdebugx("spawned unprivledged process %d", pid);
-		ctx.options |= DHCPCD_PRIVSEP;
-	}
-#endif
-
 	if (if_opensockets(&ctx) == -1) {
 		logerr("%s: if_opensockets", __func__);
 		goto exit_failure;
@@ -2124,9 +2101,6 @@ printpidfile:
 			    dhcpcd_prestartinterface, ifp);
 	}
 
-#ifdef PRIVSEP
-run_loop:
-#endif
 	i = eloop_start(ctx.eloop, &ctx.sigset);
 	if (i < 0) {
 		logerr("%s: eloop_start", __func__);
