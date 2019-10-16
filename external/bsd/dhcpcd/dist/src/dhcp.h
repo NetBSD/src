@@ -253,8 +253,6 @@ struct dhcp_state {
 ssize_t print_rfc3361(FILE *, const uint8_t *, size_t);
 ssize_t print_rfc3442(FILE *, const uint8_t *, size_t);
 
-int dhcp_open(struct dhcpcd_ctx *);
-void dhcp_recvmsg(struct dhcpcd_ctx *, struct msghdr *);
 void dhcp_printoptions(const struct dhcpcd_ctx *,
     const struct dhcp_opt *, size_t);
 uint16_t dhcp_get_mtu(const struct interface *);
