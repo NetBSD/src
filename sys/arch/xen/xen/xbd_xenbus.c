@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.93 2019/10/16 19:38:13 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.94 2019/10/16 19:52:08 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.93 2019/10/16 19:38:13 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.94 2019/10/16 19:52:08 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -588,7 +588,7 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
 
 		format_bytes(buf, sizeof(buf), sc->sc_sectors * sc->sc_secsize);
-		aprint_verbose_dev(sc->sc_dksc.sc_dev,
+		aprint_normal_dev(sc->sc_dksc.sc_dev,
 				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
 				buf, (int)dg->dg_secsize, sc->sc_xbdsize);
 
