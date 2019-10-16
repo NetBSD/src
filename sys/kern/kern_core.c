@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.24 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.25 2019/10/16 15:27:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.24 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.25 2019/10/16 15:27:38 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -78,7 +78,7 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 		 * no references, and so can be unloaded, no user programs
 		 * can be running and so nothing can call *coredump_vec.
 		 */
-		coredump_vec = (int (*)(struct lwp *, const char *))enosys;
+		coredump_vec = (int (*)(struct lwp *, const char *))(void *)enosys;
 		return 0;
 	default:
 		return ENOTTY;

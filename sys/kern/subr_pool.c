@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.259 2019/09/23 05:39:59 skrll Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.260 2019/10/16 15:27:38 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.259 2019/09/23 05:39:59 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.260 2019/10/16 15:27:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -2063,10 +2063,10 @@ pool_cache_bootstrap(pool_cache_t pc, size_t size, u_int align,
 	mutex_init(&pc->pc_lock, MUTEX_DEFAULT, ipl);
 
 	if (ctor == NULL) {
-		ctor = (int (*)(void *, void *, int))nullop;
+		ctor = (int (*)(void *, void *, int))(void *)nullop;
 	}
 	if (dtor == NULL) {
-		dtor = (void (*)(void *, void *))nullop;
+		dtor = (void (*)(void *, void *))(void *)nullop;
 	}
 
 	pc->pc_emptygroups = NULL;
@@ -2339,7 +2339,7 @@ pool_cache_invalidate(pool_cache_t pc)
 		 * cache back to the global pool then wait for the xcall to
 		 * complete.
 		 */
-		where = xc_broadcast(0, (xcfunc_t)pool_cache_transfer,
+		where = xc_broadcast(0, (xcfunc_t)(void *)pool_cache_transfer,
 		    pc, NULL);
 		xc_wait(where);
 	}

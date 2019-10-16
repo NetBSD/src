@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.373 2019/10/15 13:59:57 kamil Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.374 2019/10/16 15:27:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.373 2019/10/15 13:59:57 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.374 2019/10/16 15:27:38 christos Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -133,7 +133,7 @@ static void	*sigacts_poolpage_alloc(struct pool *, int);
 
 void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
 int (*coredump_vec)(struct lwp *, const char *) =
-    (int (*)(struct lwp *, const char *))enosys;
+    (int (*)(struct lwp *, const char *))(void *)enosys;
 
 /*
  * DTrace SDT provider definitions
