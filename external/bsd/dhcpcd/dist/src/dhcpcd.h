@@ -32,8 +32,6 @@
 #include <sys/socket.h>
 #include <net/if.h>
 
-#include <stdio.h>
-
 #include "config.h"
 #ifdef HAVE_SYS_QUEUE_H
 #include <sys/queue.h>
@@ -178,11 +176,6 @@ struct dhcpcd_ctx {
 	size_t vivso_len;
 
 	char *randomstate; /* original state */
-
-#ifdef PRIVSEP
-	char *priv_user;
-	int priv_fd;
-#endif
 
 #ifdef INET
 	struct dhcp_opt *dhcp_opts;
