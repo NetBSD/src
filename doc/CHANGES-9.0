@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.78 2019/10/16 09:53:38 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.79 2019/10/16 17:43:35 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4714,4 +4714,29 @@ sys/dev/isa/tpm_isa.c				1.5-1.7
 	 - Add suspend support for TPM 2.0 chips.
 	 - Provide a better abstraction for the TPM interface.
 	[maxv, ticket #336]
+
+sys/compat/netbsd32/netbsd32_fs.c		1.83
+
+	Fix netbsd32___mount50():
+	 - zero out fs_args32 to prevent info leaks
+	 - declare udata, and don't pass kernel pointers to copyout
+	 - make sure data_len is just big enough, to mimic the native behavior
+	 - don't forget to update *retval with the 32bit value
+	[maxv, ticket #337]
+
+sys/arch/x86/include/cpufunc.h			1.35
+
+	Add a memory barrier on wrmsr, because some MSRs control memory access
+	rights (we don't use them though). Also add barriers on fninit and clts
+	for safety.
+	[maxv, ticket #338]
+
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.32
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.29
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.28
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.6
+src/doc/3RDPARTY				(manually edited)
+
+	Import dhcpcd-8.1.1.
+	[roy, ticket #340]
 
