@@ -1984,12 +1984,10 @@ printpidfile:
 	logdebugx(PACKAGE "-" VERSION " starting");
 	ctx.options |= DHCPCD_STARTED;
 
-#ifdef HAVE_SETPROCTITLE
 	setproctitle("%s%s%s",
 	    ctx.options & DHCPCD_MASTER ? "[master]" : argv[optind],
 	    ctx.options & DHCPCD_IPV4 ? " [ip4]" : "",
 	    ctx.options & DHCPCD_IPV6 ? " [ip6]" : "");
-#endif
 
 	if (if_opensockets(&ctx) == -1) {
 		logerr("%s: if_opensockets", __func__);
@@ -2155,6 +2153,9 @@ exit1:
 		loginfox(PACKAGE " exited");
 	logclose();
 	free(ctx.logfile);
+#ifdef SETPROCTITLE_H
+	setproctitle_free();
+#endif
 #ifdef USE_SIGNALS
 	if (ctx.options & DHCPCD_FORKED)
 		_exit(i); /* so atexit won't remove our pidfile */
