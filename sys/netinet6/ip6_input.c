@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.212 2019/10/16 07:40:40 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.213 2019/10/16 07:41:28 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.212 2019/10/16 07:40:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.213 2019/10/16 07:41:28 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1531,6 +1531,28 @@ sysctl_net_inet6_ip6_stats(SYSCTLFN_ARGS)
 	return (NETSTAT_SYSCTL(ip6stat_percpu, IP6_NSTATS));
 }
 
+static int
+sysctl_net_inet6_ip6_temppltime(SYSCTLFN_ARGS)
+{
+	int error;
+	uint32_t pltime;
+	struct sysctlnode node;
+
+	node = *rnode;
+	node.sysctl_data = &pltime;
+	pltime = ip6_temp_preferred_lifetime;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (pltime <= (MAX_TEMP_DESYNC_FACTOR + TEMPADDR_REGEN_ADVANCE))
+		return EINVAL;
+
+	ip6_temp_preferred_lifetime = pltime;
+
+	return 0;
+}
+
 static void
 sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 {
@@ -1742,7 +1764,7 @@ sysctl_net_inet6_ip6_setup(struct sysctllog **clog)
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "temppltime",
 		       SYSCTL_DESCR("preferred lifetime of a temporary address"),
-		       NULL, 0, &ip6_temp_preferred_lifetime, 0,
+		       sysctl_net_inet6_ip6_temppltime, 0, NULL, 0,
 		       CTL_NET, PF_INET6, IPPROTO_IPV6,
 		       CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, NULL, NULL,
