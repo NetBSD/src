@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.35 2019/10/16 15:01:10 christos Exp $	*/
+/*	$NetBSD: clock.c,v 1.36 2019/10/16 18:29:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -121,7 +121,7 @@ WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.35 2019/10/16 15:01:10 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.36 2019/10/16 18:29:49 christos Exp $");
 
 /* #define CLOCKDEBUG */
 /* #define CLOCK_PARANOIA */
@@ -554,7 +554,7 @@ i8254_initclocks(void)
 	 * want to keep track of clock handlers.
 	 */
 	(void)isa_intr_establish(NULL, 0, IST_PULSE, IPL_CLOCK,
-	    (int (*)(void *))(void *)clockintr, 0);
+	    __FPTRCAST(int (*)(void *), clockintr), 0);
 }
 
 void
