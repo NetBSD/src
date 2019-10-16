@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.92 2019/02/02 12:32:55 cherry Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.93 2019/10/16 19:38:13 jdolecek Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.92 2019/02/02 12:32:55 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.93 2019/10/16 19:38:13 jdolecek Exp $");
 
 #include "opt_xen.h"
 
@@ -587,12 +587,11 @@ xbd_backend_changed(void *arg, XenbusState new_state)
 
 		sc->sc_backend_status = BLKIF_STATE_CONNECTED;
 
-		/* try to read the disklabel */
-		dk_getdisklabel(&sc->sc_dksc, 0 /* XXX ? */);
 		format_bytes(buf, sizeof(buf), sc->sc_sectors * sc->sc_secsize);
 		aprint_verbose_dev(sc->sc_dksc.sc_dev,
 				"%s, %d bytes/sect x %" PRIu64 " sectors\n",
 				buf, (int)dg->dg_secsize, sc->sc_xbdsize);
+
 		/* Discover wedges on this disk. */
 		dkwedge_discover(&sc->sc_dksc.sc_dkdev);
 
