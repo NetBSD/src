@@ -1148,7 +1148,7 @@ arm*-*-freebsd*)                # ARM FreeBSD EABI
 	with_tls=${with_tls:-gnu}
 	;;
 arm*-*-netbsdelf*)
-	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h arm/aout.h ${tm_file} arm/netbsd-elf.h"
+	tm_file="dbxelf.h elfos.h ${nbsd_tm_file} arm/elf.h arm/aout.h arm/netbsd-elf.h"
 	extra_options="${extra_options} netbsd.opt netbsd-elf.opt"
 	tmake_file="${tmake_file} arm/t-arm"
 	case ${target} in
@@ -1169,6 +1169,7 @@ arm*-*-netbsdelf*)
 	    with_cpu=${with_cpu:-strongarm}
 	    ;;
 	esac
+	tm_file="${tm_file} vxworks-dummy.h arm/arm.h"
 	case ${target} in
 	arm*-*-netbsdelf-*eabihf*)
 	    tm_defines="${tm_defines} TARGET_DEFAULT_FLOAT_ABI=ARM_FLOAT_ABI_HARD"
