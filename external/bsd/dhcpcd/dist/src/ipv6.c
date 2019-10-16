@@ -1253,7 +1253,9 @@ out:
 	 * or DHCP6 handlers and the existance of any useable
 	 * global address on the interface has changed,
 	 * call rt_build to add/remove the default route. */
-	if (ifp->active && ifp->options->options & DHCPCD_IPV6 &&
+	if (ifp->active &&
+	    ((ifp->options != NULL && ifp->options->options & DHCPCD_IPV6) ||
+	     (ifp->options == NULL && ctx->options & DHCPCD_IPV6)) &&
 	    !(ctx->options & DHCPCD_RTBUILD) &&
 	    (ipv6_anyglobal(ifp) != NULL) != anyglobal)
 		rt_build(ctx, AF_INET6);
