@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.34 2019/07/05 17:08:55 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.34.2.1 2019/10/16 17:32:17 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -271,7 +271,7 @@ union savefpu;
 static inline void
 fninit(void)
 {
-	__asm volatile ("fninit");
+	__asm volatile ("fninit" ::: "memory");
 }
 
 static inline void
@@ -303,7 +303,7 @@ fnstsw(uint16_t *val)
 static inline void
 clts(void)
 {
-	__asm volatile ("clts");
+	__asm volatile ("clts" ::: "memory");
 }
 
 void	stts(void);
@@ -433,6 +433,7 @@ wrmsr(u_int msr, uint64_t val)
 		"wrmsr"
 		:
 		: "a" (low), "d" (high), "c" (msr)
+		: "memory"
 	);
 }
 
