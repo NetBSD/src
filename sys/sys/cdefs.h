@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.146 2019/09/22 23:23:12 kamil Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.147 2019/10/16 18:29:49 christos Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -197,6 +197,12 @@
  * For the same reasons as above, we use unsigned long and not intptr_t.
  */
 #define __UNVOLATILE(a)	((void *)(unsigned long)(volatile void *)(a))
+
+/*
+ * The following macro is used to remove the the function type cast warnings
+ * from gcc -Wcast-function-type and as above should be used with caution.
+ */
+#define __FPTRCAST(t, f)	((t)(void *)(f))
 
 /*
  * GCC2 provides __extension__ to suppress warnings for various GNU C

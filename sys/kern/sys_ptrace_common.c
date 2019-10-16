@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.68 2019/10/16 15:27:38 christos Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.69 2019/10/16 18:29:49 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.68 2019/10/16 15:27:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.69 2019/10/16 18:29:49 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1505,14 +1505,14 @@ process_doregs(struct lwp *curl /*tracer*/,
 			return EINVAL;
 		}
 		s = sizeof(process_reg32);
-		r = (regrfunc_t)(void *)process_read_regs32;
-		w = (regwfunc_t)(void *)process_write_regs32;
+		r = __FPTRCAST(regrfunc_t, process_read_regs32);
+		w = __FPTRCAST(regwfunc_t, process_write_regs32);
 	} else
 #endif
 	{
 		s = sizeof(struct reg);
-		r = (regrfunc_t)(void *)process_read_regs;
-		w = (regwfunc_t)(void *)process_write_regs;
+		r = __FPTRCAST(regrfunc_t, process_read_regs);
+		w = __FPTRCAST(regwfunc_t, process_write_regs);
 	}
 	return proc_regio(l, uio, s, r, w);
 #else
