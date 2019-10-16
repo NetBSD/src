@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.13 2019/07/27 08:02:04 skrll Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.14 2019/10/16 11:16:30 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.13 2019/07/27 08:02:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.14 2019/10/16 11:16:30 hkenken Exp $");
 
 #include "opt_pci.h"
 
@@ -151,19 +151,19 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 	imx6_set_gpio(self, "imxpcie-reset-gpio", &ipsc->sc_gpio_reset,
 	    &ipsc->sc_gpio_reset_active, GPIO_PIN_OUTPUT);
 
-	sc->sc_clk_pcie_axi = imx6_get_clock("pcie_axi");
-	if (sc->sc_clk_pcie_axi == NULL) {
-		aprint_error(": couldn't get clock pcie_axi\n");
+	sc->sc_clk_pcie = imx6_get_clock("pcie_axi");
+	if (sc->sc_clk_pcie == NULL) {
+		aprint_error(": couldn't get clock pcie\n");
 		return;
 	}
-	sc->sc_clk_lvds1_gate = imx6_get_clock("lvds1_gate");
-	if (sc->sc_clk_lvds1_gate == NULL) {
-		aprint_error(": couldn't get clock lvds1_gate\n");
+	sc->sc_clk_pcie_bus = imx6_get_clock("lvds1_gate");
+	if (sc->sc_clk_pcie_bus == NULL) {
+		aprint_error(": couldn't get clock pcie_bus\n");
 		return;
 	}
-	sc->sc_clk_pcie_ref = imx6_get_clock("pcie_ref_125m");
-	if (sc->sc_clk_pcie_ref == NULL) {
-		aprint_error(": couldn't get clock pcie_ref\n");
+	sc->sc_clk_pcie_phy = imx6_get_clock("pcie_ref_125m");
+	if (sc->sc_clk_pcie_phy == NULL) {
+		aprint_error(": couldn't get clock pcie_phy\n");
 		return;
 	}
 

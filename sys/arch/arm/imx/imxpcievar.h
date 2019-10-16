@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpcievar.h,v 1.2 2019/09/02 01:28:41 hkenken Exp $	*/
+/*	$NetBSD: imxpcievar.h,v 1.3 2019/10/16 11:16:30 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2019  Genetec Corporation.  All rights reserved.
@@ -51,9 +51,9 @@ struct imxpcie_softc {
 	kmutex_t sc_lock;
 	u_int sc_intrgen;
 
-	struct clk *sc_clk_pcie_axi;
-	struct clk *sc_clk_lvds1_gate;
-	struct clk *sc_clk_pcie_ref;
+	struct clk *sc_clk_pcie;
+	struct clk *sc_clk_pcie_bus;
+	struct clk *sc_clk_pcie_phy;
 	struct clk *sc_clk_pcie_ext;
 	struct clk *sc_clk_pcie_ext_src;
 	bool sc_ext_osc;
