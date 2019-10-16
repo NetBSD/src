@@ -1,4 +1,4 @@
-/*	$NetBSD: r600d.h,v 1.3 2019/08/17 15:50:05 msaitoh Exp $	*/
+/*	$NetBSD: r600d.h,v 1.4 2019/10/16 01:44:48 msaitoh Exp $	*/
 
 /*
  * Copyright 2009 Advanced Micro Devices, Inc.
@@ -644,7 +644,7 @@
 #define DMA_MODE                                          0xd0bc
 
 /* async DMA packets */
-#define DMA_PACKET(cmd, t, s, n)	((((cmd) & 0xF) << 28) |	\
+#define DMA_PACKET(cmd, t, s, n)	((((u32)(cmd) & 0xF) << 28) |	\
 					 (((t) & 0x1) << 23) |		\
 					 (((s) & 0x1) << 22) |		\
 					 (((n) & 0xFFFF) << 0))
