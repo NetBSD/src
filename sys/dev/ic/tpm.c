@@ -1,4 +1,4 @@
-/*	$NetBSD: tpm.c,v 1.13 2019/06/22 12:57:41 maxv Exp $	*/
+/*	$NetBSD: tpm.c,v 1.13.2.1 2019/10/16 09:52:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13 2019/06/22 12:57:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13.2.1 2019/10/16 09:52:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -65,8 +65,10 @@ __KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13 2019/06/22 12:57:41 maxv Exp $");
 
 #include "ioconf.h"
 
+CTASSERT(sizeof(struct tpm_header) == 10);
+
 #define TPM_BUFSIZ	1024
-#define TPM_HDRSIZE	10
+
 #define TPM_PARAM_SIZE	0x0001	/* that's a flag */
 
 /* Timeouts. */
@@ -79,23 +81,6 @@ __KERNEL_RCSID(0, "$NetBSD: tpm.c,v 1.13 2019/06/22 12:57:41 maxv Exp $");
 	(TPM_INTF_DATA_AVAIL_INT|TPM_INTF_LOCALITY_CHANGE_INT| \
 	 TPM_INTF_INT_LEVEL_LOW)
 
-static const struct {
-	uint32_t devid;
-	const char *name;
-	int flags;
-#define TPM_DEV_NOINTS	0x0001
-} tpm_devs[] = {
-	{ 0x000615d1, "IFX SLD 9630 TT 1.1", 0 },
-	{ 0x000b15d1, "IFX SLB 9635 TT 1.2", 0 },
-	{ 0x100214e4, "Broadcom BCM0102", TPM_DEV_NOINTS },
-	{ 0x00fe1050, "WEC WPCT200", 0 },
-	{ 0x687119fa, "SNS SSX35", 0 },
-	{ 0x2e4d5453, "STM ST19WP18", 0 },
-	{ 0x32021114, "ATML 97SC3203", TPM_DEV_NOINTS },
-	{ 0x10408086, "INTEL INTC0102", 0 },
-	{ 0, "", TPM_DEV_NOINTS },
-};
-
 static inline int
 tpm_tmotohz(int tmo)
 {
@@ -105,42 +90,6 @@ tpm_tmotohz(int tmo)
 	tv.tv_usec = 1000 * (tmo % 1000);
 
 	return tvtohz(&tv);
-}
-
-static int
-tpm_request_locality(struct tpm_softc *sc, int l)
-{
-	uint32_t r;
-	int to, rv;
-
-	if (l != 0)
-		return EINVAL;
-
-	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) ==
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY))
-		return 0;
-
-	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS,
-	    TPM_ACCESS_REQUEST_USE);
-
-	to = tpm_tmotohz(TPM_ACCESS_TMO);
-
-	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && to--) {
-		rv = tsleep(sc->sc_init, PRIBIO | PCATCH, "tpm_locality", 1);
-		if (rv && rv != EWOULDBLOCK) {
-			return rv;
-		}
-	}
-
-	if ((r & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
-	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
-		return EBUSY;
-	}
-
-	return 0;
 }
 
 static int
@@ -161,7 +110,7 @@ tpm_getburst(struct tpm_softc *sc)
 		if (burst)
 			return burst;
 
-		rv = tsleep(sc, PRIBIO | PCATCH, "tpm_getburst", 1);
+		rv = tsleep(sc, PCATCH, "tpm_getburst", 1);
 		if (rv && rv != EWOULDBLOCK) {
 			return 0;
 		}
@@ -179,46 +128,81 @@ tpm_status(struct tpm_softc *sc)
 
 /* -------------------------------------------------------------------------- */
 
-/*
- * Save TPM state on suspend. On resume we don't do anything, since the BIOS
- * is supposed to restore the previously saved state.
- */
-
-bool
-tpm12_suspend(device_t dev, const pmf_qual_t *qual)
+static bool
+tpm12_suspend(struct tpm_softc *sc)
 {
-	struct tpm_softc *sc = device_private(dev);
-	static const uint8_t command[] = {
-		0, 193,		/* TPM_TAG_RQU_COMMAND */
-		0, 0, 0, 10,	/* Length in bytes */
-		0, 0, 0, 156	/* TPM_ORD_SaveStates */
+	static const uint8_t command[10] = {
+		0x00, 0xC1,		/* TPM_TAG_RQU_COMMAND */
+		0x00, 0x00, 0x00, 10,	/* Length in bytes */
+		0x00, 0x00, 0x00, 0x98	/* TPM_ORD_SaveState */
 	};
-	uint8_t scratch[sizeof(command)];
+	struct tpm_header response;
 
-	(*sc->sc_write)(sc, &command, sizeof(command));
-	(*sc->sc_read)(sc, &scratch, sizeof(scratch), NULL, 0);
+	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
+		return false;
+	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
+		return false;
+	if (TPM_BE32(response.code) != 0)
+		return false;
+
+	return true;
+}
+
+static bool
+tpm20_suspend(struct tpm_softc *sc)
+{
+	static const uint8_t command[12] = {
+		0x80, 0x01,		/* TPM_ST_NO_SESSIONS */
+		0x00, 0x00, 0x00, 12,	/* Length in bytes */
+		0x00, 0x00, 0x01, 0x45,	/* TPM_CC_Shutdown */
+		0x00, 0x01		/* TPM_SU_STATE */
+	};
+	struct tpm_header response;
+
+	if ((*sc->sc_intf->write)(sc, &command, sizeof(command)) != 0)
+		return false;
+	if ((*sc->sc_intf->read)(sc, &response, sizeof(response), NULL, 0) != 0)
+		return false;
+	if (TPM_BE32(response.code) != 0)
+		return false;
 
 	return true;
 }
 
 bool
-tpm12_resume(device_t dev, const pmf_qual_t *qual)
+tpm_suspend(device_t dev, const pmf_qual_t *qual)
 {
+	struct tpm_softc *sc = device_private(dev);
+
+	switch (sc->sc_ver) {
+	case TPM_1_2:
+		return tpm12_suspend(sc);
+	case TPM_2_0:
+		return tpm20_suspend(sc);
+	default:
+		panic("%s: impossible", __func__);
+	}
+}
+
+bool
+tpm_resume(device_t dev, const pmf_qual_t *qual)
+{
+	/*
+	 * Don't do anything, the BIOS is supposed to restore the previously
+	 * saved state.
+	 */
 	return true;
 }
 
 /* -------------------------------------------------------------------------- */
 
-/*
- * Wait for given status bits using polling.
- */
 static int
-tpm_waitfor_poll(struct tpm_softc *sc, uint8_t mask, int to, wchan_t chan)
+tpm_poll(struct tpm_softc *sc, uint8_t mask, int to, wchan_t chan)
 {
 	int rv;
 
 	while (((sc->sc_status = tpm_status(sc)) & mask) != mask && to--) {
-		rv = tsleep(chan, PRIBIO | PCATCH, "tpm_poll", 1);
+		rv = tsleep(chan, PCATCH, "tpm_poll", 1);
 		if (rv && rv != EWOULDBLOCK) {
 			return rv;
 		}
@@ -227,138 +211,32 @@ tpm_waitfor_poll(struct tpm_softc *sc, uint8_t mask, int to, wchan_t chan)
 	return 0;
 }
 
-/*
- * Wait for given status bits using interrupts.
- */
-static int
-tpm_waitfor_int(struct tpm_softc *sc, uint8_t mask, int tmo, wchan_t chan,
-    int inttype)
-{
-	int rv, to;
-
-	sc->sc_status = tpm_status(sc);
-	if ((sc->sc_status & mask) == mask)
-		return 0;
-
-	/*
-	 * Enable interrupt on tpm chip.  Note that interrupts on our
-	 * level (SPL_TTY) are disabled (see tpm{read,write} et al) and
-	 * will not be delivered to the cpu until we call tsleep(9) below.
-	 */
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE) |
-	    inttype);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE) |
-	    TPM_GLOBAL_INT_ENABLE);
-
-	sc->sc_status = tpm_status(sc);
-	if ((sc->sc_status & mask) == mask) {
-		rv = 0;
-		goto out;
-	}
-
-	to = tpm_tmotohz(tmo);
-
-	/*
-	 * tsleep(9) enables interrupts on the cpu and returns after
-	 * wake up with interrupts disabled again.  Note that interrupts
-	 * generated by the tpm chip while being at SPL_TTY are not lost
-	 * but held and delivered as soon as the cpu goes below SPL_TTY.
-	 */
-	rv = tsleep(chan, PRIBIO | PCATCH, "tpm_wait", to);
-
-	sc->sc_status = tpm_status(sc);
-	if ((sc->sc_status & mask) == mask)
-		rv = 0;
-
-out:
-	/* Disable interrupts on tpm chip again. */
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE) &
-	    ~TPM_GLOBAL_INT_ENABLE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE) &
-	    ~inttype);
-
-	return rv;
-}
-
-/*
- * Wait on given status bits, use interrupts where possible, otherwise poll.
- */
 static int
 tpm_waitfor(struct tpm_softc *sc, uint8_t bits, int tmo, wchan_t chan)
 {
 	int retry, to, rv;
 	uint8_t todo;
 
-	/*
-	 * We use interrupts for TPM_STS_DATA_AVAIL and TPM_STS_VALID (if the
-	 * TPM chip supports them) as waiting for those can take really long.
-	 * The other TPM_STS* are not needed very often so we do not support
-	 * them.
-	 */
-	if (sc->sc_vector != -1) {
-		todo = bits;
-
-		/*
-		 * Wait for data ready. This interrupt only occurs when both
-		 * TPM_STS_VALID and TPM_STS_DATA_AVAIL are asserted. Thus we
-		 * don't have to bother with TPM_STS_VALID separately and can
-		 * just return.
-		 *
-		 * This only holds for interrupts! When using polling both
-		 * flags have to be waited for, see below.
-		 */
-		if ((bits & TPM_STS_DATA_AVAIL) &&
-		    (sc->sc_capabilities & TPM_INTF_DATA_AVAIL_INT))
-			return tpm_waitfor_int(sc, bits, tmo, chan,
-			    TPM_DATA_AVAIL_INT);
-
-		/* Wait for status valid bit. */
-		if ((bits & TPM_STS_VALID) &&
-		    (sc->sc_capabilities & TPM_INTF_STS_VALID_INT)) {
-			rv = tpm_waitfor_int(sc, bits, tmo, chan,
-			    TPM_STS_VALID_INT);
-			if (rv)
-				return rv;
-			todo = bits & ~TPM_STS_VALID;
-		}
-
-		/*
-		 * When all flags have been taken care of, return. Otherwise
-		 * use polling for eg TPM_STS_CMD_READY.
-		 */
-		if (todo == 0)
-			return 0;
-	}
-
+	to = tpm_tmotohz(tmo);
 	retry = 3;
 
 restart:
-	/*
-	 * If requested, wait for TPM_STS_VALID before dealing with any other
-	 * flag. Eg when both TPM_STS_DATA_AVAIL and TPM_STS_VALID are
-	 * requested, wait for the latter first.
-	 */
 	todo = bits;
-	if (bits & TPM_STS_VALID)
-		todo = TPM_STS_VALID;
-	to = tpm_tmotohz(tmo);
-again:
-	if ((rv = tpm_waitfor_poll(sc, todo, to, chan)) != 0)
-		return rv;
 
-	if ((todo & sc->sc_status) == TPM_STS_VALID) {
-		/* Now wait for other flags. */
-		todo = bits & ~TPM_STS_VALID;
-		to++;
-		goto again;
+	/*
+	 * TPM_STS_VALID has priority over the others.
+	 */
+	if (todo & TPM_STS_VALID) {
+		if ((rv = tpm_poll(sc, TPM_STS_VALID, to+1, chan)) != 0)
+			return rv;
+		todo &= ~TPM_STS_VALID;
 	}
 
+	if ((rv = tpm_poll(sc, todo, to, chan)) != 0)
+		return rv;
+
 	if ((todo & sc->sc_status) != todo) {
-		if (retry-- && (bits & TPM_STS_VALID)) {
+		if ((retry-- > 0) && (bits & TPM_STS_VALID)) {
 			bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS,
 			    TPM_STS_RESP_RETRY);
 			goto restart;
@@ -369,38 +247,49 @@ again:
 	return 0;
 }
 
-int
-tpm_intr(void *v)
-{
-	struct tpm_softc *sc = v;
-	uint32_t reg;
-
-	reg = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS);
-	if (!(reg & (TPM_CMD_READY_INT | TPM_LOCALITY_CHANGE_INT |
-	    TPM_STS_VALID_INT | TPM_DATA_AVAIL_INT)))
-		return 0;
-
-	if (reg & TPM_STS_VALID_INT)
-		wakeup(sc);
-	if (reg & TPM_CMD_READY_INT)
-		wakeup(sc->sc_write);
-	if (reg & TPM_DATA_AVAIL_INT)
-		wakeup(sc->sc_read);
-	if (reg & TPM_LOCALITY_CHANGE_INT)
-		wakeup(sc->sc_init);
-
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS, reg);
-
-	return 1;
-}
-
 /* -------------------------------------------------------------------------- */
 
 /*
- * TPM using TIS 1.2 interface.
+ * TPM using the TIS 1.2 interface.
  */
 
-int
+static int
+tpm12_request_locality(struct tpm_softc *sc, int l)
+{
+	uint32_t r;
+	int to, rv;
+
+	if (l != 0)
+		return EINVAL;
+
+	if ((bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) ==
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY))
+		return 0;
+
+	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS,
+	    TPM_ACCESS_REQUEST_USE);
+
+	to = tpm_tmotohz(TPM_ACCESS_TMO);
+
+	while ((r = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_ACCESS) &
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY) && to--) {
+		rv = tsleep(sc->sc_intf->init, PCATCH, "tpm_locality", 1);
+		if (rv && rv != EWOULDBLOCK) {
+			return rv;
+		}
+	}
+
+	if ((r & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
+	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
+		return EBUSY;
+	}
+
+	return 0;
+}
+
+static int
 tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 {
 	uint32_t cap;
@@ -409,11 +298,9 @@ tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 
 	cap = bus_space_read_4(bt, bh, TPM_INTF_CAPABILITY);
 	if (cap == 0xffffffff)
-		return 0;
+		return EINVAL;
 	if ((cap & TPM_CAPS_REQUIRED) != TPM_CAPS_REQUIRED)
-		return 0;
-	if (!(cap & (TPM_INTF_INT_EDGE_RISING | TPM_INTF_INT_LEVEL_LOW)))
-		return 0;
+		return ENOTSUP;
 
 	/* Request locality 0. */
 	bus_space_write_1(bt, bh, TPM_ACCESS, TPM_ACCESS_REQUEST_USE);
@@ -427,82 +314,30 @@ tpm_tis12_probe(bus_space_tag_t bt, bus_space_handle_t bh)
 	}
 	if ((reg & (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) !=
 	    (TPM_ACCESS_VALID | TPM_ACCESS_ACTIVE_LOCALITY)) {
-		return 0;
+		return ETIMEDOUT;
 	}
 
 	if (bus_space_read_4(bt, bh, TPM_ID) == 0xffffffff)
-		return 0;
-
-	return 1;
-}
-
-static int
-tpm_tis12_irqinit(struct tpm_softc *sc, int irq, int idx)
-{
-	uint32_t reg;
-
-	if ((irq == -1) || (tpm_devs[idx].flags & TPM_DEV_NOINTS)) {
-		sc->sc_vector = -1;
-		return 0;
-	}
-
-	/* Ack and disable all interrupts. */
-	reg = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE,
-	    reg & ~TPM_GLOBAL_INT_ENABLE);
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS,
-	    bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_INT_STATUS));
-
-	/* Program interrupt vector. */
-	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_INT_VECTOR, irq);
-	sc->sc_vector = irq;
-
-	/* Program interrupt type. */
-	reg &= ~(TPM_INT_EDGE_RISING|TPM_INT_EDGE_FALLING|TPM_INT_LEVEL_HIGH|
-	    TPM_INT_LEVEL_LOW);
-	reg |= TPM_GLOBAL_INT_ENABLE|TPM_CMD_READY_INT|TPM_LOCALITY_CHANGE_INT|
-	    TPM_STS_VALID_INT|TPM_DATA_AVAIL_INT;
-	if (sc->sc_capabilities & TPM_INTF_INT_EDGE_RISING)
-		reg |= TPM_INT_EDGE_RISING;
-	else if (sc->sc_capabilities & TPM_INTF_INT_EDGE_FALLING)
-		reg |= TPM_INT_EDGE_FALLING;
-	else if (sc->sc_capabilities & TPM_INTF_INT_LEVEL_HIGH)
-		reg |= TPM_INT_LEVEL_HIGH;
-	else
-		reg |= TPM_INT_LEVEL_LOW;
-
-	bus_space_write_4(sc->sc_bt, sc->sc_bh, TPM_INT_ENABLE, reg);
+		return EINVAL;
 
 	return 0;
 }
 
-int
-tpm_tis12_init(struct tpm_softc *sc, int irq)
+static int
+tpm_tis12_init(struct tpm_softc *sc)
 {
-	int i;
+	int rv;
 
-	sc->sc_capabilities = bus_space_read_4(sc->sc_bt, sc->sc_bh,
+	sc->sc_caps = bus_space_read_4(sc->sc_bt, sc->sc_bh,
 	    TPM_INTF_CAPABILITY);
 	sc->sc_devid = bus_space_read_4(sc->sc_bt, sc->sc_bh, TPM_ID);
 	sc->sc_rev = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_REV);
 
-	for (i = 0; tpm_devs[i].devid; i++) {
-		if (tpm_devs[i].devid == sc->sc_devid)
-			break;
-	}
+	aprint_normal_dev(sc->sc_dev, "device 0x%08x rev 0x%x\n",
+	    sc->sc_devid, sc->sc_rev);
 
-	if (tpm_devs[i].devid)
-		aprint_normal_dev(sc->sc_dev, "%s rev 0x%x\n",
-		    tpm_devs[i].name, sc->sc_rev);
-	else
-		aprint_normal_dev(sc->sc_dev, "device 0x%08x rev 0x%x\n",
-		    sc->sc_devid, sc->sc_rev);
-
-	if (tpm_tis12_irqinit(sc, irq, i))
-		return 1;
-
-	if (tpm_request_locality(sc, 0))
-		return 1;
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
+		return rv;
 
 	/* Abort whatever it thought it was doing. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
@@ -510,19 +345,19 @@ tpm_tis12_init(struct tpm_softc *sc, int irq)
 	return 0;
 }
 
-int
-tpm_tis12_start(struct tpm_softc *sc, int flag)
+static int
+tpm_tis12_start(struct tpm_softc *sc, int rw)
 {
 	int rv;
 
-	if (flag == UIO_READ) {
+	if (rw == UIO_READ) {
 		rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-		    TPM_READ_TMO, sc->sc_read);
+		    TPM_READ_TMO, sc->sc_intf->read);
 		return rv;
 	}
 
 	/* Request the 0th locality. */
-	if ((rv = tpm_request_locality(sc, 0)) != 0)
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
 	sc->sc_status = tpm_status(sc);
@@ -531,34 +366,34 @@ tpm_tis12_start(struct tpm_softc *sc, int flag)
 
 	/* Abort previous and restart. */
 	bus_space_write_1(sc->sc_bt, sc->sc_bh, TPM_STS, TPM_STS_CMD_READY);
-	rv = tpm_waitfor(sc, TPM_STS_CMD_READY, TPM_READY_TMO, sc->sc_write);
+	rv = tpm_waitfor(sc, TPM_STS_CMD_READY, TPM_READY_TMO, sc->sc_intf->write);
 	if (rv)
 		return rv;
 
 	return 0;
 }
 
-int
+static int
 tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
     int flags)
 {
 	uint8_t *p = buf;
 	size_t cnt;
-	int rv, n, bcnt;
+	int rv, n;
 
 	cnt = 0;
 	while (len > 0) {
 		rv = tpm_waitfor(sc, TPM_STS_DATA_AVAIL | TPM_STS_VALID,
-		    TPM_READ_TMO, sc->sc_read);
+		    TPM_READ_TMO, sc->sc_intf->read);
 		if (rv)
 			return rv;
 
-		bcnt = tpm_getburst(sc);
-		n = MIN(len, bcnt);
-
-		for (; n--; len--) {
+		n = MIN(len, tpm_getburst(sc));
+		while (n > 0) {
 			*p++ = bus_space_read_1(sc->sc_bt, sc->sc_bh, TPM_DATA);
 			cnt++;
+			len--;
+			n--;
 		}
 
 		if ((flags & TPM_PARAM_SIZE) == 0 && cnt >= 6)
@@ -571,7 +406,7 @@ tpm_tis12_read(struct tpm_softc *sc, void *buf, size_t len, size_t *count,
 	return 0;
 }
 
-int
+static int
 tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 {
 	const uint8_t *p = buf;
@@ -580,7 +415,7 @@ tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 
 	if (len == 0)
 		return 0;
-	if ((rv = tpm_request_locality(sc, 0)) != 0)
+	if ((rv = tpm12_request_locality(sc, 0)) != 0)
 		return rv;
 
 	cnt = 0;
@@ -611,20 +446,19 @@ tpm_tis12_write(struct tpm_softc *sc, const void *buf, size_t len)
 	return 0;
 }
 
-int
-tpm_tis12_end(struct tpm_softc *sc, int flag, int err)
+static int
+tpm_tis12_end(struct tpm_softc *sc, int rw, int err)
 {
 	int rv = 0;
 
-	if (flag == UIO_READ) {
-		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_read);
+	if (rw == UIO_READ) {
+		rv = tpm_waitfor(sc, TPM_STS_VALID, TPM_READ_TMO, sc->sc_intf->read);
 		if (rv)
 			return rv;
 
 		/* Still more data? */
 		sc->sc_status = tpm_status(sc);
-		if (!err && ((sc->sc_status & TPM_STS_DATA_AVAIL) ==
-		    TPM_STS_DATA_AVAIL)) {
+		if (!err && (sc->sc_status & TPM_STS_DATA_AVAIL)) {
 			rv = EIO;
 		}
 
@@ -648,6 +482,16 @@ tpm_tis12_end(struct tpm_softc *sc, int flag, int err)
 	return rv;
 }
 
+const struct tpm_intf tpm_intf_tis12 = {
+	.version = TIS_1_2,
+	.probe = tpm_tis12_probe,
+	.init = tpm_tis12_init,
+	.start = tpm_tis12_start,
+	.read = tpm_tis12_read,
+	.write = tpm_tis12_write,
+	.end = tpm_tis12_end
+};
+
 /* -------------------------------------------------------------------------- */
 
 static dev_type_open(tpmopen);
@@ -668,128 +512,127 @@ const struct cdevsw tpm_cdevsw = {
 	.d_mmap = nommap,
 	.d_kqfilter = nokqfilter,
 	.d_discard = nodiscard,
-	.d_flag = D_OTHER,
+	.d_flag = D_OTHER | D_MPSAFE,
 };
-
-#define TPMUNIT(a)	minor(a)
 
 static int
 tpmopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	int ret = 0;
 
 	if (sc == NULL)
 		return ENXIO;
-	if (sc->sc_flags & TPM_OPEN)
-		return EBUSY;
 
-	sc->sc_flags |= TPM_OPEN;
+	mutex_enter(&sc->sc_lock);
+	if (sc->sc_busy) {
+		ret = EBUSY;
+	} else {
+		sc->sc_busy = true;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	return 0;
+	return ret;
 }
 
 static int
 tpmclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	int ret = 0;
 
 	if (sc == NULL)
 		return ENXIO;
-	if (!(sc->sc_flags & TPM_OPEN))
-		return EINVAL;
 
-	sc->sc_flags &= ~TPM_OPEN;
+	mutex_enter(&sc->sc_lock);
+	if (!sc->sc_busy) {
+		ret = EINVAL;
+	} else {
+		sc->sc_busy = false;
+	}
+	mutex_exit(&sc->sc_lock);
 
-	return 0;
+	return ret;
 }
 
 static int
 tpmread(dev_t dev, struct uio *uio, int flags)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
-	uint8_t buf[TPM_BUFSIZ], *p;
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
+	struct tpm_header hdr;
+	uint8_t buf[TPM_BUFSIZ];
 	size_t cnt, len, n;
-	int  rv, s;
+	int rv;
 
 	if (sc == NULL)
 		return ENXIO;
 
-	s = spltty();
-	if ((rv = (*sc->sc_start)(sc, UIO_READ)))
-		goto out;
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_READ)))
+		return rv;
 
-	if ((rv = (*sc->sc_read)(sc, buf, TPM_HDRSIZE, &cnt, 0))) {
-		(*sc->sc_end)(sc, UIO_READ, rv);
+	/* Get the header. */
+	if ((rv = (*sc->sc_intf->read)(sc, &hdr, sizeof(hdr), &cnt, 0))) {
 		goto out;
 	}
-
-	len = (buf[2] << 24) | (buf[3] << 16) | (buf[4] << 8) | buf[5];
-	if (len > uio->uio_resid) {
+	len = TPM_BE32(hdr.length);
+	if (len > uio->uio_resid || len < cnt) {
 		rv = EIO;
-		(*sc->sc_end)(sc, UIO_READ, rv);
 		goto out;
 	}
 
-	/* Copy out header. */
-	if ((rv = uiomove(buf, cnt, uio))) {
-		(*sc->sc_end)(sc, UIO_READ, rv);
+	/* Copy out the header. */
+	if ((rv = uiomove(&hdr, cnt, uio))) {
 		goto out;
 	}
 
-	/* Get remaining part of the answer (if anything is left). */
-	for (len -= cnt, p = buf, n = sizeof(buf); len > 0; p = buf, len -= n,
-	    n = sizeof(buf)) {
-		n = MIN(n, len);
-		if ((rv = (*sc->sc_read)(sc, p, n, NULL, TPM_PARAM_SIZE))) {
-			(*sc->sc_end)(sc, UIO_READ, rv);
+	/* Process the rest. */
+	len -= cnt;
+	while (len > 0) {
+		n = MIN(sizeof(buf), len);
+		if ((rv = (*sc->sc_intf->read)(sc, buf, n, NULL, TPM_PARAM_SIZE))) {
 			goto out;
 		}
-		p += n;
-		if ((rv = uiomove(buf, p - buf, uio))) {
-			(*sc->sc_end)(sc, UIO_READ, rv);
+		if ((rv = uiomove(buf, n, uio))) {
 			goto out;
 		}
+		len -= n;
 	}
 
-	rv = (*sc->sc_end)(sc, UIO_READ, rv);
 out:
-	splx(s);
+	rv = (*sc->sc_intf->end)(sc, UIO_READ, rv);
 	return rv;
 }
 
 static int
 tpmwrite(dev_t dev, struct uio *uio, int flags)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	uint8_t buf[TPM_BUFSIZ];
-	int n, rv, s;
+	int n, rv;
 
 	if (sc == NULL)
 		return ENXIO;
-
-	s = spltty();
 
 	n = MIN(sizeof(buf), uio->uio_resid);
 	if ((rv = uiomove(buf, n, uio))) {
 		goto out;
 	}
-	if ((rv = (*sc->sc_start)(sc, UIO_WRITE))) {
+	if ((rv = (*sc->sc_intf->start)(sc, UIO_WRITE))) {
 		goto out;
 	}
-	if ((rv = (*sc->sc_write)(sc, buf, n))) {
+	if ((rv = (*sc->sc_intf->write)(sc, buf, n))) {
 		goto out;
 	}
 
-	rv = (*sc->sc_end)(sc, UIO_WRITE, rv);
+	rv = (*sc->sc_intf->end)(sc, UIO_WRITE, rv);
 out:
-	splx(s);
 	return rv;
 }
 
 static int
 tpmioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
-	struct tpm_softc *sc = device_lookup_private(&tpm_cd, TPMUNIT(dev));
+	struct tpm_softc *sc = device_lookup_private(&tpm_cd, minor(dev));
 	struct tpm_ioc_getinfo *info;
 
 	if (sc == NULL)
@@ -800,9 +643,10 @@ tpmioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 		info = addr;
 		info->api_version = TPM_API_VERSION;
 		info->tpm_version = sc->sc_ver;
+		info->itf_version = sc->sc_intf->version;
 		info->device_id = sc->sc_devid;
 		info->device_rev = sc->sc_rev;
-		info->device_caps = sc->sc_capabilities;
+		info->device_caps = sc->sc_caps;
 		return 0;
 	default:
 		break;

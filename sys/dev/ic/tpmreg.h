@@ -1,4 +1,4 @@
-/*	$NetBSD: tpmreg.h,v 1.4 2019/06/22 12:57:41 maxv Exp $	*/
+/*	$NetBSD: tpmreg.h,v 1.4.2.1 2019/10/16 09:52:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -28,6 +28,22 @@
  * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGE.
  */
+
+#if (BYTE_ORDER == LITTLE_ENDIAN)
+#define TPM_BE16(a)	bswap16(a)
+#define TPM_BE32(a)	bswap32(a)
+#else
+#define TPM_BE16(a)	(a)
+#define TPM_BE32(a)	(a)
+#endif
+
+struct tpm_header {
+	uint16_t tag;
+	uint32_t length;
+	uint32_t code;
+} __packed;
+
+/* -------------------------------------------------------------------------- */
 
 /*
  * TPM Interface Specification 1.2 (TIS12).
@@ -78,6 +94,7 @@
 #define		TPM_STS_GO			__BIT(5)
 #define		TPM_STS_DATA_AVAIL		__BIT(4)
 #define		TPM_STS_DATA_EXPECT		__BIT(3)
+#define		TPM_STS_SELFTEST_DONE		__BIT(2)
 #define		TPM_STS_RESP_RETRY		__BIT(1)
 
 #define	TPM_DATA			0x0024	/* 32bit register */
