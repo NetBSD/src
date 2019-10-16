@@ -67,6 +67,7 @@
 #include "ipv4.h"
 #include "ipv4ll.h"
 #include "logerr.h"
+#include "privsep.h"
 #include "sa.h"
 #include "script.h"
 
@@ -164,8 +165,6 @@ dhcp_printoptions(const struct dhcpcd_ctx *ctx,
 	}
 }
 
-#define get_option_raw(ctx, bootp, bootp_len, opt)	\
-	get_option((ctx), (bootp), (bootp_len), NULL)
 static const uint8_t *
 get_option(struct dhcpcd_ctx *ctx,
     const struct bootp *bootp, size_t bootp_len,
@@ -1650,39 +1649,43 @@ static ssize_t
 dhcp_sendudp(struct interface *ifp, struct in_addr *to, void *data, size_t len)
 {
 	int s;
-	struct msghdr msg;
-	struct sockaddr_in sin;
-	struct iovec iov[1];
+	struct sockaddr_in sin = {
+		.sin_family = AF_INET,
+		.sin_addr = *to,
+		.sin_port = htons(BOOTPS),
+#ifdef HAVE_SA_LEN
+		.sin_len = sizeof(sin),
+#endif
+	};
+	struct iovec iov[] = {
+		{ .iov_base = data, .iov_len = len }
+	};
+	struct msghdr msg = {
+		.msg_name = (void *)&sin,
+		.msg_namelen = sizeof(sin),
+		.msg_iov = iov,
+		.msg_iovlen = 1,
+	};
 	struct dhcp_state *state = D_STATE(ifp);
 	ssize_t r;
 
-	iov[0].iov_base = data;
-	iov[0].iov_len = len;
-
-	memset(&sin, 0, sizeof(sin));
-	sin.sin_family = AF_INET;
-	sin.sin_addr = *to;
-	sin.sin_port = htons(BOOTPS);
-#ifdef HAVE_SA_LEN
-	sin.sin_len = sizeof(sin);
+#ifdef PRIVSEP
+	if (ifp->ctx->options & DHCPCD_PRIVSEP)
+		return privsep_sendmsg(ifp->ctx, PS_BOOTP, &msg);
+	else
 #endif
-
-	memset(&msg, 0, sizeof(msg));
-	msg.msg_name = (void *)&sin;
-	msg.msg_namelen = sizeof(sin);
-	msg.msg_iov = iov;
-	msg.msg_iovlen = 1;
-
-	s = state->udp_fd;
-	if (s == -1) {
-		s = dhcp_openudp(ifp);
-		if (s == -1)
-			return -1;
+	{
+		s = state->udp_fd;
+		if (s == -1) {
+			s = dhcp_openudp(ifp);
+			if (s == -1)
+				return -1;
+		}
+		r = sendmsg(s, &msg, 0);
+		if (state->udp_fd == -1)
+			close(s);
+		return r;
 	}
-	r = sendmsg(s, &msg, 0);
-	if (state->udp_fd == -1)
-		close(s);
-	return r;
 }
 
 static void
@@ -3275,26 +3278,35 @@ is_packet_udp_bootp(void *packet, size_t plen)
 {
 	struct ip *ip = packet;
 	size_t ip_hlen;
-	struct udphdr *udp;
+	struct udphdr udp;
 
-	if (sizeof(*ip) > plen)
+	if (plen < sizeof(*ip))
 		return false;
 
 	if (ip->ip_v != IPVERSION || ip->ip_p != IPPROTO_UDP)
 		return false;
 
 	/* Sanity. */
-	if (ntohs(ip->ip_len) != plen)
+	if (ntohs(ip->ip_len) > plen)
 		return false;
 
 	ip_hlen = (size_t)ip->ip_hl * 4;
+	if (ip_hlen < sizeof(*ip))
+		return false;
+
 	/* Check we have a UDP header and BOOTP. */
-	if (ip_hlen + sizeof(*udp) + offsetof(struct bootp, vend) > plen)
+	if (ip_hlen + sizeof(udp) + offsetof(struct bootp, vend) > plen)
+		return false;
+
+	/* Sanity. */
+	memcpy(&udp, (char *)ip + ip_hlen, sizeof(udp));
+	if (ntohs(udp.uh_ulen) < sizeof(udp))
+		return false;
+	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
 		return false;
 
 	/* Check it's to and from the right ports. */
-	udp = (struct udphdr *)(void *)((char *)ip + ip_hlen);
-	if (udp->uh_dport != htons(BOOTPC) || udp->uh_sport != htons(BOOTPS))
+	if (udp.uh_dport != htons(BOOTPC) || udp.uh_sport != htons(BOOTPS))
 		return false;
 
 	return true;
@@ -3306,14 +3318,17 @@ checksums_valid(void *packet,
     struct in_addr *from, unsigned int flags)
 {
 	struct ip *ip = packet;
-	struct ip pseudo_ip = {
-		.ip_p = IPPROTO_UDP,
-		.ip_src = ip->ip_src,
-		.ip_dst = ip->ip_dst
+	union pip {
+		struct ip ip;
+		uint16_t w[sizeof(struct ip)];
+	} pip = {
+		.ip.ip_p = IPPROTO_UDP,
+		.ip.ip_src = ip->ip_src,
+		.ip.ip_dst = ip->ip_dst,
 	};
 	size_t ip_hlen;
-	uint16_t udp_len, uh_sum;
-	struct udphdr *udp;
+	struct udphdr udp;
+	char *udpp, *uh_sump;
 	uint32_t csum;
 
 	if (from != NULL)
@@ -3324,22 +3339,32 @@ checksums_valid(void *packet,
 		return false;
 
 	if (flags & BPF_PARTIALCSUM)
-		return 0;
+		return true;
 
-	udp = (struct udphdr *)(void *)((char *)ip + ip_hlen);
-	if (udp->uh_sum == 0)
-		return 0;
+	udpp = (char *)ip + ip_hlen;
+	memcpy(&udp, udpp, sizeof(udp));
+	if (udp.uh_sum == 0)
+		return true;
 
 	/* UDP checksum is based on a pseudo IP header alongside
 	 * the UDP header and payload. */
-	udp_len = ntohs(udp->uh_ulen);
-	uh_sum = udp->uh_sum;
-	udp->uh_sum = 0;
-	pseudo_ip.ip_len = udp->uh_ulen;
+	pip.ip.ip_len = udp.uh_ulen;
 	csum = 0;
-	in_cksum(&pseudo_ip, sizeof(pseudo_ip), &csum);
-	csum = in_cksum(udp, udp_len, &csum);
-	return csum == uh_sum;
+
+	/* Need to zero the UDP sum in the packet for the checksum to work. */
+	uh_sump = udpp + offsetof(struct udphdr, uh_sum);
+	memset(uh_sump, 0, sizeof(udp.uh_sum));
+
+	/* Checksum psuedo header and then UDP + payload. */
+	in_cksum(pip.w, sizeof(pip.w), &csum);
+	csum = in_cksum(udpp, ntohs(udp.uh_ulen), &csum);
+
+#if 0	/* Not needed, just here for completeness. */
+	/* Put the checksum back. */
+	memcpy(uh_sump, &udp.uh_sum, sizeof(udp.uh_sum));
+#endif
+
+	return csum == udp.uh_sum;
 }
 
 static void
@@ -3430,6 +3455,40 @@ dhcp_readbpf(void *arg)
 		state->bpf_flags &= ~BPF_READING;
 }
 
+void
+dhcp_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg)
+{
+#ifdef IP_PKTINFO
+	struct sockaddr_in *from = (struct sockaddr_in *)msg->msg_name;
+	struct iovec *iov = &msg->msg_iov[0];
+	char sfrom[INET_ADDRSTRLEN];
+	struct interface *ifp;
+	const struct dhcp_state *state;
+
+	inet_ntop(AF_INET, &from->sin_addr, sfrom, sizeof(sfrom));
+
+	ifp = if_findifpfromcmsg(ctx, msg, NULL);
+	if (ifp == NULL) {
+		logerr(__func__);
+		return;
+	}
+	state = D_CSTATE(ifp);
+	if (state == NULL) {
+		logdebugx("%s: received BOOTP for inactive interface",
+		    ifp->name);
+		return;
+	}
+
+	if (state->bpf_fd != -1) {
+		/* Avoid a duplicate read if BPF is open for the interface. */
+		return;
+	}
+
+	dhcp_handlebootp(ifp, (struct bootp *)iov->iov_base, iov->iov_len,
+	    &from->sin_addr);
+#endif
+}
+
 static void
 dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 {
@@ -3442,7 +3501,6 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 	};
 #ifdef IP_PKTINFO
 	unsigned char ctl[CMSG_SPACE(sizeof(struct in_pktinfo))] = { 0 };
-	char sfrom[INET_ADDRSTRLEN];
 #endif
 	struct msghdr msg = {
 	    .msg_name = &from, .msg_namelen = sizeof(from),
@@ -3466,31 +3524,8 @@ dhcp_readudp(struct dhcpcd_ctx *ctx, struct interface *ifp)
 		return;
 	}
 
-#ifdef IP_PKTINFO
-	inet_ntop(AF_INET, &from.sin_addr, sfrom, sizeof(sfrom));
-
-	if (ifp == NULL) {
-		ifp = if_findifpfromcmsg(ctx, &msg, NULL);
-		if (ifp == NULL) {
-			logerr(__func__);
-			return;
-		}
-		state = D_CSTATE(ifp);
-		if (state == NULL) {
-			logdebugx("%s: received BOOTP for inactive interface",
-			    ifp->name);
-			return;
-		}
-	}
-
-	if (state->bpf_fd != -1) {
-		/* Avoid a duplicate read if BPF is open for the interface. */
-		return;
-	}
-
-	dhcp_handlebootp(ifp, (struct bootp *)(void *)buf, (size_t)bytes,
-	    &from.sin_addr);
-#endif
+	iov.iov_len = (size_t)bytes;
+	dhcp_recvmsg(ctx, &msg);
 }
 
 static void
@@ -3511,6 +3546,18 @@ dhcp_handleifudp(void *arg)
 
 }
 #endif
+
+int
+dhcp_open(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->udp_fd != -1 || (ctx->udp_fd = dhcp_openudp(NULL)) == -1)
+		return ctx->udp_fd;
+
+	if (!(ctx->options & DHCPCD_PRIVSEP))
+		eloop_event_add(ctx->eloop, ctx->udp_fd, dhcp_handleudp, ctx);
+	return ctx->udp_fd;
+}
 
 static int
 dhcp_openbpf(struct interface *ifp)
@@ -3720,16 +3767,13 @@ dhcp_start1(void *arg)
 	 * ICMP port unreachable message back to the DHCP server.
 	 * Only do this in master mode so we don't swallow messages
 	 * for dhcpcd running on another interface. */
-	if (ctx->udp_fd == -1 && ctx->options & DHCPCD_MASTER) {
-		ctx->udp_fd = dhcp_openudp(NULL);
-		if (ctx->udp_fd == -1) {
+	if (!(ctx->options & DHCPCD_PRIVSEP) && ctx->options & DHCPCD_MASTER) {
+		if (dhcp_open(ctx) == -1) {
 			/* Don't log an error if some other process
 			 * is handling this. */
 			if (errno != EADDRINUSE)
-				logerr("%s: dhcp_openudp", __func__);
-		} else
-			eloop_event_add(ctx->eloop,
-			    ctx->udp_fd, dhcp_handleudp, ctx);
+				logerr("%s: dhcp_open", __func__);
+		}
 	}
 
 	if (dhcp_init(ifp) == -1) {
