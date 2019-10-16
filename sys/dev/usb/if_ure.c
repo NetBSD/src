@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.32 2019/10/16 13:02:51 bad Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.33 2019/10/16 13:11:16 bad Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.32 2019/10/16 13:02:51 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.33 2019/10/16 13:11:16 bad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.32 2019/10/16 13:02:51 bad Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/cprng.h>
 
 #include <net/route.h>
 
@@ -65,6 +66,9 @@ int	uredebug = 0;
 #define DPRINTF(x)
 #define DPRINTFN(n, x)
 #endif
+
+#define ETHER_IS_ZERO(addr) \
+	(!(addr[0] | addr[1] | addr[2] | addr[3] | addr[4] | addr[5]))
 
 static const struct usb_devno ure_devs[] = {
 	{ USB_VENDOR_REALTEK, USB_PRODUCT_REALTEK_RTL8152 },
@@ -848,6 +852,7 @@ ure_attach(device_t parent, device_t self, void *aux)
 	uint16_t ver;
 	uint8_t eaddr[8]; /* 2byte padded */
 	char *devinfop;
+	uint32_t maclo, machi;
 
 	aprint_naive("\n");
 	aprint_normal("\n");
@@ -949,6 +954,16 @@ ure_attach(device_t parent, device_t self, void *aux)
 		ure_read_mem(un, URE_PLA_BACKUP, URE_MCU_TYPE_PLA, eaddr,
 		    sizeof(eaddr));
 	usbnet_unlock(un);
+	if (ETHER_IS_ZERO(eaddr)) {
+		maclo = 0x00f2 | (cprng_strong32() & 0xffff0000);
+		machi = cprng_strong32() & 0xffff;
+		eaddr[0] = maclo & 0xff;
+		eaddr[1] = (maclo >> 8) & 0xff;
+		eaddr[2] = (maclo >> 16) & 0xff;
+		eaddr[3] = (maclo >> 24) & 0xff;
+		eaddr[4] = machi & 0xff;
+		eaddr[5] = (machi >> 8) & 0xff;
+	}
 	memcpy(un->un_eaddr, eaddr, sizeof un->un_eaddr);
 
 	struct ifnet *ifp = usbnet_ifp(un);
