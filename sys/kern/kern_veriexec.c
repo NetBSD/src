@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_veriexec.c,v 1.20 2019/04/28 21:36:19 alnsn Exp $	*/
+/*	$NetBSD: kern_veriexec.c,v 1.21 2019/10/16 15:27:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.20 2019/04/28 21:36:19 alnsn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_veriexec.c,v 1.21 2019/10/16 15:27:38 christos Exp $");
 
 #include "opt_veriexec.h"
 
@@ -351,8 +351,8 @@ veriexec_init(void)
 	rw_init(&veriexec_op_lock);
 
 #define	FPOPS_ADD(a, b, c, d, e, f)	\
-	veriexec_fpops_add(a, b, c, (veriexec_fpop_init_t)d, \
-	 (veriexec_fpop_update_t)e, (veriexec_fpop_final_t)f)
+	veriexec_fpops_add(a, b, c, (veriexec_fpop_init_t)(void *)d, \
+	 (veriexec_fpop_update_t)(void *)e, (veriexec_fpop_final_t)(void *)f)
 
 #ifdef VERIFIED_EXEC_FP_SHA256
 	FPOPS_ADD("SHA256", SHA256_DIGEST_LENGTH, sizeof(SHA256_CTX),
