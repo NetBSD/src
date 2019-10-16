@@ -31,6 +31,10 @@
 #define PACKAGE			"dhcpcd"
 #define VERSION			"8.1.0"
 
+#ifndef DHCPCD_USER
+# define DHCPCD_USER		"_dhcpcd"
+#endif
+
 #ifndef CONFIG
 # define CONFIG			SYSCONFDIR "/" PACKAGE ".conf"
 #endif
