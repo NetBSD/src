@@ -164,8 +164,6 @@ dhcp_printoptions(const struct dhcpcd_ctx *ctx,
 	}
 }
 
-#define get_option_raw(ctx, bootp, bootp_len, opt)	\
-	get_option((ctx), (bootp), (bootp_len), NULL)
 static const uint8_t *
 get_option(struct dhcpcd_ctx *ctx,
     const struct bootp *bootp, size_t bootp_len,
@@ -3275,26 +3273,35 @@ is_packet_udp_bootp(void *packet, size_t plen)
 {
 	struct ip *ip = packet;
 	size_t ip_hlen;
-	struct udphdr *udp;
+	struct udphdr udp;
 
-	if (sizeof(*ip) > plen)
+	if (plen < sizeof(*ip))
 		return false;
 
 	if (ip->ip_v != IPVERSION || ip->ip_p != IPPROTO_UDP)
 		return false;
 
 	/* Sanity. */
-	if (ntohs(ip->ip_len) != plen)
+	if (ntohs(ip->ip_len) > plen)
 		return false;
 
 	ip_hlen = (size_t)ip->ip_hl * 4;
+	if (ip_hlen < sizeof(*ip))
+		return false;
+
 	/* Check we have a UDP header and BOOTP. */
-	if (ip_hlen + sizeof(*udp) + offsetof(struct bootp, vend) > plen)
+	if (ip_hlen + sizeof(udp) + offsetof(struct bootp, vend) > plen)
+		return false;
+
+	/* Sanity. */
+	memcpy(&udp, (char *)ip + ip_hlen, sizeof(udp));
+	if (ntohs(udp.uh_ulen) < sizeof(udp))
+		return false;
+	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
 		return false;
 
 	/* Check it's to and from the right ports. */
-	udp = (struct udphdr *)(void *)((char *)ip + ip_hlen);
-	if (udp->uh_dport != htons(BOOTPC) || udp->uh_sport != htons(BOOTPS))
+	if (udp.uh_dport != htons(BOOTPC) || udp.uh_sport != htons(BOOTPS))
 		return false;
 
 	return true;
@@ -3306,14 +3313,17 @@ checksums_valid(void *packet,
     struct in_addr *from, unsigned int flags)
 {
 	struct ip *ip = packet;
-	struct ip pseudo_ip = {
-		.ip_p = IPPROTO_UDP,
-		.ip_src = ip->ip_src,
-		.ip_dst = ip->ip_dst
+	union pip {
+		struct ip ip;
+		uint16_t w[sizeof(struct ip)];
+	} pip = {
+		.ip.ip_p = IPPROTO_UDP,
+		.ip.ip_src = ip->ip_src,
+		.ip.ip_dst = ip->ip_dst,
 	};
 	size_t ip_hlen;
-	uint16_t udp_len, uh_sum;
-	struct udphdr *udp;
+	struct udphdr udp;
+	char *udpp, *uh_sump;
 	uint32_t csum;
 
 	if (from != NULL)
@@ -3324,22 +3334,32 @@ checksums_valid(void *packet,
 		return false;
 
 	if (flags & BPF_PARTIALCSUM)
-		return 0;
+		return true;
 
-	udp = (struct udphdr *)(void *)((char *)ip + ip_hlen);
-	if (udp->uh_sum == 0)
-		return 0;
+	udpp = (char *)ip + ip_hlen;
+	memcpy(&udp, udpp, sizeof(udp));
+	if (udp.uh_sum == 0)
+		return true;
 
 	/* UDP checksum is based on a pseudo IP header alongside
 	 * the UDP header and payload. */
-	udp_len = ntohs(udp->uh_ulen);
-	uh_sum = udp->uh_sum;
-	udp->uh_sum = 0;
-	pseudo_ip.ip_len = udp->uh_ulen;
+	pip.ip.ip_len = udp.uh_ulen;
 	csum = 0;
-	in_cksum(&pseudo_ip, sizeof(pseudo_ip), &csum);
-	csum = in_cksum(udp, udp_len, &csum);
-	return csum == uh_sum;
+
+	/* Need to zero the UDP sum in the packet for the checksum to work. */
+	uh_sump = udpp + offsetof(struct udphdr, uh_sum);
+	memset(uh_sump, 0, sizeof(udp.uh_sum));
+
+	/* Checksum psuedo header and then UDP + payload. */
+	in_cksum(pip.w, sizeof(pip.w), &csum);
+	csum = in_cksum(udpp, ntohs(udp.uh_ulen), &csum);
+
+#if 0	/* Not needed, just here for completeness. */
+	/* Put the checksum back. */
+	memcpy(uh_sump, &udp.uh_sum, sizeof(udp.uh_sum));
+#endif
+
+	return csum == udp.uh_sum;
 }
 
 static void
