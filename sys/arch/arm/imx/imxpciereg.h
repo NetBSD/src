@@ -1,4 +1,4 @@
-/*	$NetBSD: imxpciereg.h,v 1.2 2019/09/02 01:28:41 hkenken Exp $	*/
+/*	$NetBSD: imxpciereg.h,v 1.3 2019/10/16 11:16:30 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2015 Ryo Shimizu <ryo@nerv.org>
@@ -220,21 +220,21 @@
 #define PCIE_PHY_SS_PHASE			0x0005
 #define PCIE_PHY_SS_FREQ			0x0006
 #define PCIE_PHY_ATEOVRD			0x0010
-#define  ATEOVRD_EN		__BIT(3)
-#define  REF_USB2_EN		__BIT(2)
-#define  REF_CLKDIV2		__BIT(1)
+#define  ATEOVRD_EN				__BIT(2)
+#define  REF_USB2_EN				__BIT(1)
+#define  REF_CLKDIV2				__BIT(0)
 #define PCIE_PHY_MPLL_OVRD_IN_LO		0x0011
 #define PCIE_PHY_MPLL_OVRD_IN_HI		0x0011
-#define  RES_ACK_IN_OVRD	__BIT(15)
-#define  RES_ACK_IN		__BIT(14)
-#define  RES_REQ_IN_OVRD	__BIT(13)
-#define  RES_REQ_IN		__BIT(12)
-#define  RTUNE_REQ_OVRD		__BIT(11)
-#define  RTUNE_REQ		__BIT(10)
-#define  MPLL_MULTIPLIER_OVRD	__BIT(9)
-#define  MPLL_MULTIPLIER	__BITS(8, 2)
-#define  MPLL_EN_OVRD		__BIT(1)
-#define  MPLL_EN		__BIT(0)
+#define  RES_ACK_IN_OVRD			__BIT(15)
+#define  RES_ACK_IN				__BIT(14)
+#define  RES_REQ_IN_OVRD			__BIT(13)
+#define  RES_REQ_IN				__BIT(12)
+#define  RTUNE_REQ_OVRD				__BIT(11)
+#define  RTUNE_REQ				__BIT(10)
+#define  MPLL_MULTIPLIER_OVRD			__BIT(9)
+#define  MPLL_MULTIPLIER			__BITS(8, 2)
+#define  MPLL_EN_OVRD				__BIT(1)
+#define  MPLL_EN				__BIT(0)
 #define PCIE_PHY_SSC_OVRD_IN			0x0013
 #define PCIE_PHY_BS_OVRD_IN			0x0014
 #define PCIE_PHY_LEVEL_OVRD_IN			0x0015
