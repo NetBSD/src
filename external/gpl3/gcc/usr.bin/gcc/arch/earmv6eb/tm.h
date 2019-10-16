@@ -30,11 +30,11 @@
 # include "config/netbsd-elf.h"
 # include "config/arm/elf.h"
 # include "config/arm/aout.h"
-# include "config/vxworks-dummy.h"
-# include "config/arm/arm.h"
 # include "config/arm/netbsd-elf.h"
 # include "config/arm/bpabi.h"
 # include "config/arm/netbsd-eabi.h"
+# include "config/vxworks-dummy.h"
+# include "config/arm/arm.h"
 # include "config/initfini-array.h"
 #endif
 #if defined IN_GCC && !defined GENERATOR_FILE && !defined USED_FOR_TARGET
