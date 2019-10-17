@@ -1,4 +1,4 @@
-/*	$NetBSD: siphash_test.c,v 1.2 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: siphash_test.c,v 1.3 2019/10/17 16:47:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -19,6 +19,7 @@
 #include <stddef.h>
 #include <setjmp.h>
 
+#include <sched.h>
 #include <stdlib.h>
 
 #define UNIT_TESTING
@@ -26,7 +27,35 @@
 
 #include <isc/siphash.h>
 
+void
+native_isc_siphash24(const uint8_t *,
+		     const uint8_t *, const size_t,
+		     uint8_t *);
+
+#if HAVE_OPENSSL_SIPHASH
+
+void
+openssl_isc_siphash24(const uint8_t *,
+		     const uint8_t *, const size_t,
+		     uint8_t *);
+
+#undef HAVE_OPENSSL_SIPHASH
+#define isc_siphash24 native_isc_siphash24
 #include "../siphash.c"
+#undef isc_siphash24
+
+#define HAVE_OPENSSL_SIPHASH 1
+#define isc_siphash24 openssl_isc_siphash24
+#include "../siphash.c"
+#undef isc_siphash24
+
+#else
+
+#define isc_siphash24 native_isc_siphash24
+#include "../siphash.c"
+#undef isc_siphash24
+
+#endif
 
 const uint8_t vectors[64][8] = {
     { 0x31, 0x0e, 0x0e, 0xdd, 0x47, 0xdb, 0x6f, 0x72, },
@@ -95,8 +124,9 @@ const uint8_t vectors[64][8] = {
     { 0x72, 0x45, 0x06, 0xeb, 0x4c, 0x32, 0x8a, 0x95, },
 };
 
+#if HAVE_OPENSSL_SIPHASH
 static void
-isc_siphash24_test(void **state) {
+openssl_isc_siphash24_test(void **state) {
 	UNUSED(state);
 
 	uint8_t in[64], out[8], key[16];
@@ -106,14 +136,34 @@ isc_siphash24_test(void **state) {
 
 	for (int i = 0; i < 64; i++) {
 		in[i] = i;
-		isc_siphash24(key, in, i, out);
+		openssl_isc_siphash24(key, in, i, out);
+		assert_memory_equal(out, vectors[i], 8);
+	}
+}
+#endif
+
+static void
+native_isc_siphash24_test(void **state) {
+	UNUSED(state);
+
+	uint8_t in[64], out[8], key[16];
+	for (int i = 0; i < 16; i++) {
+		key[i] = i;
+	}
+
+	for (int i = 0; i < 64; i++) {
+		in[i] = i;
+		native_isc_siphash24(key, in, i, out);
 		assert_memory_equal(out, vectors[i], 8);
 	}
 }
 
 int main(void) {
 	const struct CMUnitTest tests[] = {
-		cmocka_unit_test(isc_siphash24_test),
+#if HAVE_OPENSSL_SIPHASH
+		cmocka_unit_test(openssl_isc_siphash24_test),
+#endif
+		cmocka_unit_test(native_isc_siphash24_test),
 	};
 
 	return (cmocka_run_group_tests(tests, NULL, NULL));

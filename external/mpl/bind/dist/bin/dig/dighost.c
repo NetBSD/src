@@ -1,4 +1,4 @@
-/*	$NetBSD: dighost.c,v 1.5 2019/09/05 19:32:55 christos Exp $	*/
+/*	$NetBSD: dighost.c,v 1.6 2019/10/17 16:46:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1401,6 +1401,7 @@ typedef struct dig_ednsoptname {
 } dig_ednsoptname_t;
 
 dig_ednsoptname_t optnames[] = {
+	{ 1, "LLQ" },		/* draft-sekar-dns-llq */
 	{ 3, "NSID" },		/* RFC 5001 */
 	{ 5, "DAU" },		/* RFC 6975 */
 	{ 6, "DHU" },		/* RFC 6975 */
@@ -4380,9 +4381,20 @@ idn_ace_to_locale(const char *src, char **dst) {
 	 */
 	res = idn2_to_unicode_8zlz(utf8_src, &local_src, 0);
 	if (res != IDN2_OK) {
-		fatal("Cannot represent '%s' in the current locale (%s), "
-		      "use +noidnout or a different locale",
-		      src, idn2_strerror(res));
+		static bool warned = false;
+
+		res = idn2_to_ascii_8z(utf8_src, &local_src, 0);
+		if (res != IDN2_OK) {
+			fatal("Cannot represent '%s' "
+			      "in the current locale nor ascii (%s), "
+			      "use +noidnout or a different locale",
+			      src, idn2_strerror(res));
+		} else if (!warned) {
+			fprintf(stderr, ";; Warning: cannot represent '%s' "
+			      "in the current locale",
+			      local_src);
+			warned = true;
+		}
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: sockaddr.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: sockaddr.c,v 1.6 2019/10/17 16:47:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -168,6 +168,7 @@ isc_sockaddr_totext(const isc_sockaddr_t *sockaddr, isc_buffer_t *target) {
 	 */
 	isc_buffer_availableregion(target, &avail);
 	INSIST(avail.length >= 1);
+	/* cppcheck-suppress unreadVariable */
 	avail.base[0] = '\0';
 
 	return (ISC_R_SUCCESS);
