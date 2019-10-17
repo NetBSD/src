@@ -540,6 +540,31 @@
 #define VGE_TXBLOCK_128PKTS	0x08
 #define VGE_TXBLOCK_8PKTS	0x0C
 
+/* Sticky bit shadow register */
+
+#define	VGE_STICKHW_DS0		0x01
+#define	VGE_STICKHW_DS1		0x02
+#define	VGE_STICKHW_WOL_ENB	0x04
+#define	VGE_STICKHW_WOL_STS	0x08
+#define	VGE_STICKHW_SWPTAG	0x10
+
+/* WOL pattern control */
+#define	VGE_WOLCR0_PATTERN0	0x01
+#define	VGE_WOLCR0_PATTERN1	0x02
+#define	VGE_WOLCR0_PATTERN2	0x04
+#define	VGE_WOLCR0_PATTERN3	0x08
+#define	VGE_WOLCR0_PATTERN4	0x10
+#define	VGE_WOLCR0_PATTERN5	0x20
+#define	VGE_WOLCR0_PATTERN6	0x40
+#define	VGE_WOLCR0_PATTERN7	0x80
+#define	VGE_WOLCR0_PATTERN_ALL	0xFF
+
+/* WOL config register */
+#define	VGE_WOLCFG_PHYINT_ENB	0x01
+#define	VGE_WOLCFG_SAB		0x10
+#define	VGE_WOLCFG_SAM		0x20
+#define	VGE_WOLCFG_PMEOVR	0x80
+
 /* EEPROM control/status register */
 
 #define VGE_EECSR_EDO		0x01	/* data out pin */
