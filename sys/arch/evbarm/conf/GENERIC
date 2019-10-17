@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.48.2.2 2019/10/06 11:19:25 martin Exp $
+#	$NetBSD: GENERIC,v 1.48.2.3 2019/10/17 18:47:47 martin Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -123,8 +123,10 @@ makeoptions	DTS="
 	sun8i-h3-beelink-x2.dts
 	sun8i-h3-libretech-all-h3-cc.dts
 	sun8i-h3-mapleboard-mp130.dts
+	sun8i-h3-nanopi-duo2.dts
 	sun8i-h3-nanopi-m1-plus.dts
 	sun8i-h3-nanopi-m1.dts
+	sun8i-h3-nanopi-r1.dts
 	sun8i-h3-nanopi-neo.dts
 	sun8i-h3-nanopi-neo-air.dts
 	sun8i-h3-orangepi-2.dts
