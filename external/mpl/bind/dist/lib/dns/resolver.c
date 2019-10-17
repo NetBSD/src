@@ -1,4 +1,4 @@
-/*	$NetBSD: resolver.c,v 1.6 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: resolver.c,v 1.7 2019/10/17 16:47:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -4049,6 +4049,35 @@ fctx_try(fetchctx_t *fctx, bool retrying, bool badcache) {
 	if (fctx->minimized && !fctx->forwarding) {
 		unsigned int options = fctx->options;
 		options &= ~DNS_FETCHOPT_QMINIMIZE;
+
+		/*
+		 * Is another QNAME minimization fetch still running?
+		 */
+		if (fctx->qminfetch != NULL) {
+			bool validfctx = (DNS_FETCH_VALID(fctx->qminfetch) &&
+					  VALID_FCTX(fctx->qminfetch->private));
+			char namebuf[DNS_NAME_FORMATSIZE];
+			char typebuf[DNS_RDATATYPE_FORMATSIZE];
+
+			dns_name_format(&fctx->qminname, namebuf,
+					sizeof(namebuf));
+			dns_rdatatype_format(fctx->qmintype, typebuf,
+					     sizeof(typebuf));
+
+			isc_log_write(dns_lctx, DNS_LOGCATEGORY_RESOLVER,
+				      DNS_LOGMODULE_RESOLVER, ISC_LOG_ERROR,
+				      "fctx %p(%s): attempting QNAME "
+				      "minimization fetch for %s/%s but "
+				      "fetch %p(%s) still running",
+				      fctx, fctx->info, namebuf, typebuf,
+				      fctx->qminfetch,
+				      validfctx
+				       ? fctx->qminfetch->private->info
+				       : "<invalid>");
+			fctx_done(fctx, DNS_R_SERVFAIL, __LINE__);
+			return;
+		}
+
 		/*
 		 * In "_ A" mode we're asking for _.domain -
 		 * resolver by default will follow delegations
@@ -9211,6 +9240,23 @@ rctx_referral(respctx_t *rctx) {
 	if (result != ISC_R_SUCCESS) {
 		rctx->result = result;
 		return (ISC_R_COMPLETE);
+	}
+
+	if ((fctx->options & DNS_FETCHOPT_QMINIMIZE) != 0) {
+		dns_name_free(&fctx->qmindcname, fctx->mctx);
+		dns_name_init(&fctx->qmindcname, NULL);
+		result = dns_name_dup(rctx->ns_name, fctx->mctx,
+				      &fctx->qmindcname);
+		if (result != ISC_R_SUCCESS) {
+			rctx->result = result;
+			return (ISC_R_COMPLETE);
+		}
+
+		result= fctx_minimize_qname(fctx);
+		if (result != ISC_R_SUCCESS) {
+			rctx->result = result;
+			return (ISC_R_COMPLETE);
+		}
 	}
 
 	result = fcount_incr(fctx, true);
