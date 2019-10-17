@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.40 2019/10/15 15:59:26 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.41 2019/10/17 09:12:12 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -168,7 +168,7 @@ static void	alc_tick(void *);
 static void	alc_txeof(struct alc_softc *);
 static void	alc_init_pcie(struct alc_softc *);
 
-uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0 };
+static uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
 
 CFATTACH_DECL_NEW(alc, sizeof(struct alc_softc),
     alc_match, alc_attach, alc_detach, NULL);
@@ -763,7 +763,6 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 
 	alc_get_macaddr_par(sc);
 }
-
 
 static void
 alc_get_macaddr_par(struct alc_softc *sc)
@@ -1790,7 +1789,6 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	return (0);
 }
-
 
 static void
 alc_dma_free(struct alc_softc *sc)
@@ -2856,7 +2854,7 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		CSR_WRITE_4(sc, ALC_RRD1_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD2_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD3_HEAD_ADDR_LO, 0);
-	}\
+	}
 	/* Set Rx return descriptor counter. */
 	CSR_WRITE_4(sc, ALC_RRD_RING_CNT,
 	    (ALC_RR_RING_CNT << RRD_RING_CNT_SHIFT) & RRD_RING_CNT_MASK);
@@ -3053,13 +3051,17 @@ alc_init_backend(struct ifnet *ifp, bool init)
 	reg = (RXQ_CFG_RD_BURST_DEFAULT << RXQ_CFG_RD_BURST_SHIFT) &
 	    RXQ_CFG_RD_BURST_MASK;
 	reg |= RXQ_CFG_RSS_MODE_DIS;
-	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
 		reg |= (RXQ_CFG_816X_IDT_TBL_SIZE_DEFAULT <<
 		    RXQ_CFG_816X_IDT_TBL_SIZE_SHIFT) &
 		    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
-	if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
-	    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
-		reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	} else {
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
+		    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	}
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 
 	/* Configure DMA parameters. */
@@ -3083,12 +3085,12 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		switch (AR816X_REV(sc->alc_rev)) {
 		case AR816X_REV_A0:
 		case AR816X_REV_A1:
-			reg |= DMA_CFG_RD_CHNL_SEL_1;
+			reg |= DMA_CFG_RD_CHNL_SEL_2;
 			break;
 		case AR816X_REV_B0:
 			/* FALLTHROUGH */
 		default:
-			reg |= DMA_CFG_RD_CHNL_SEL_3;
+			reg |= DMA_CFG_RD_CHNL_SEL_4;
 			break;
 		}
 	}
