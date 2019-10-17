@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2597 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2598 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -60,3 +60,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sup: removed, use ftp://ftp.astron.com/pub/sup [christos 20191015]
 	dhcpcd(8): Import dhcpcd-8.1.1 [roy 20191016]
 	evbarm: Add support for the NanoPi R1 and Duo2. [bad 20191016]
+	alc(4): Add support for Killer E2400 and E2500. [msaitoh 20191017]
