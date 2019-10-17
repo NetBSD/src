@@ -1,4 +1,4 @@
-/*	$NetBSD: resconf.c,v 1.1.1.1 2019/01/09 16:48:20 christos Exp $	*/
+/*	$NetBSD: resconf.c,v 1.1.1.2 2019/10/17 16:25:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -34,7 +34,6 @@ isc_result_t
 get_win32_searchlist(irs_resconf_t *conf) {
 	isc_result_t result = ISC_R_SUCCESS;
 	HKEY hKey;
-	BOOL keyFound = TRUE;
 	char searchlist[MAX_PATH];
 	DWORD searchlen = MAX_PATH;
 	LSTATUS status;

@@ -1,4 +1,4 @@
-/*	$NetBSD: hmac_test.c,v 1.1.1.2 2019/09/05 19:27:37 christos Exp $	*/
+/*	$NetBSD: hmac_test.c,v 1.1.1.3 2019/10/17 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -174,8 +174,10 @@ isc_hmac_update_test(void **state) {
 static void
 isc_hmac_reset_test(void **state) {
 	isc_hmac_t *hmac = *state;
+#if 0
 	unsigned char digest[ISC_MAX_MD_SIZE] __attribute((unused));
 	unsigned int digestlen __attribute((unused));
+#endif
 
 	assert_non_null(hmac);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: siphash.h,v 1.1.1.1 2019/09/05 19:27:38 christos Exp $	*/
+/*	$NetBSD: siphash.h,v 1.1.1.2 2019/10/17 16:25:45 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -27,7 +27,7 @@ ISC_LANG_BEGINDECLS
 
 void
 isc_siphash24(const uint8_t *key,
-	      const uint8_t *in, size_t inlen,
+	      const uint8_t *in, const size_t inlen,
 	      uint8_t *out);
 
 ISC_LANG_ENDDECLS

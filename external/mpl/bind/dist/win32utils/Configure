@@ -293,7 +293,9 @@ my @substdll = ("COMERR_DLL",
 
 # variables
 
-my %configvar;
+my %configvar = (
+	"TOOLS_VERSION" => "4.0",
+);
 
 my @substvar = ("BIND9_VERSION",
                 "BUILD_MACHINE",
@@ -311,11 +313,14 @@ my @substvar = ("BIND9_VERSION",
                 "OPENSSL_PATH",
                 "PLATFORM",
                 "PKCS11_TOOLS",
+                "PLATFORM_TOOLSET",
                 "prefix",
                 "PSSUSPEND",
                 "PYTHON",
                 "PYTHON_INSTALL_DIR",
-                "VCREDIST_PATH"),
+                "TOOLS_VERSION",
+                "VCREDIST_PATH",
+                "WINDOWS_TARGET_PLATFORM_VERSION"),
 
 # defines
 
@@ -435,8 +440,12 @@ my @help = (
 "  with-iconv[=PATH]     path of the iconv DLL [default=same than idn]\n",
 "  with-zlib[=PATH]      build with zlib library yes|no|path\n",
 "  with-vcredist[=PATH]  visual C++ redistributable package yes|path\n",
-"  with-tuning=OPTION    tune for plaform size (large|default)\n",
-"  with-cross-compile    32 / 64 bit build / host plaforms\n");
+"  with-tuning=OPTION    tune for platform size (large|default)\n",
+"  with-cross-compile    32 / 64 bit build / host platforms\n",
+"\nOptional Visual Studio project parameters:\n",
+"  with-tools-version=VERSION     set the ToolsVersion attribute to VERSION\n",
+"  with-platform-toolset=VERSION  use supplied toolset VERSION for building\n",
+"  with-platform-version=VERSION  use supplied Windows SDK VERSION for building\n");
 
 # Parse arguments
 
@@ -857,6 +866,12 @@ sub mywith {
         if ($val =~ /^large$/i) {
             $tuning = "large";
         }
+    } elsif ($key =~ /^tools-version$/i) {
+        $configvar{"TOOLS_VERSION"} = $val;
+    } elsif ($key =~ /^platform-version$/i) {
+        $configvar{"WINDOWS_TARGET_PLATFORM_VERSION"} = "<WindowsTargetPlatformVersion>$val</WindowsTargetPlatformVersion>";
+    } elsif ($key =~ /^platform-toolset$/i) {
+        $configvar{"PLATFORM_TOOLSET"} = "<PlatformToolset>$val</PlatformToolset>";
     } else {
         $want_unknown = "yes";
         if ($val eq "no") {

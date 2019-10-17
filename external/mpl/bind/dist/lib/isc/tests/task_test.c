@@ -1,4 +1,4 @@
-/*	$NetBSD: task_test.c,v 1.1.1.3 2019/09/05 19:27:38 christos Exp $	*/
+/*	$NetBSD: task_test.c,v 1.1.1.4 2019/10/17 16:25:44 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -424,6 +424,8 @@ basic_cb(isc_task_t *task, isc_event_t *event) {
 	for (i = 0; i < 1000000; i++) {
 		j += 100;
 	}
+
+	UNUSED(j);
 
 	if (verbose) {
 		print_message("# task %s\n", (char *)event->ev_arg);
