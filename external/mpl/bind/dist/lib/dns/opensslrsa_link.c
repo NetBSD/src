@@ -1,4 +1,4 @@
-/*	$NetBSD: opensslrsa_link.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: opensslrsa_link.c,v 1.5 2019/10/17 16:47:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -430,6 +430,7 @@ progress_cb(int p, int n, BN_GENCB *cb) {
 
 	UNUSED(n);
 
+	/* cppcheck-suppress unreadVariable */
 	u.dptr = BN_GENCB_get_arg(cb);
 	if (u.fptr != NULL)
 		u.fptr(p);
@@ -498,6 +499,7 @@ opensslrsa_generate(dst_key_t *key, int exp, void (*callback)(int)) {
 	if (callback == NULL) {
 		BN_GENCB_set_old(cb, NULL, NULL);
 	} else {
+		/* cppcheck-suppress unreadVariable */
 		u.fptr = callback;
 		BN_GENCB_set(cb, &progress_cb, u.dptr);
 	}

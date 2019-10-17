@@ -1,4 +1,4 @@
-/*	$NetBSD: mdig.c,v 1.4 2019/09/05 19:32:57 christos Exp $	*/
+/*	$NetBSD: mdig.c,v 1.5 2019/10/17 16:46:59 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -905,7 +905,6 @@ save_opt(struct query *query, char *code, char *value) {
 
 static isc_result_t
 parse_netprefix(isc_sockaddr_t **sap, const char *value) {
-	isc_result_t result = ISC_R_SUCCESS;
 	isc_sockaddr_t *sa = NULL;
 	struct in_addr in4;
 	struct in6_addr in6;
@@ -919,6 +918,7 @@ parse_netprefix(isc_sockaddr_t **sap, const char *value) {
 
 	slash = strchr(buf, '/');
 	if (slash != NULL) {
+		isc_result_t result;
 		*slash = '\0';
 		result = isc_parse_uint32(&netmask, slash + 1, 10);
 		if (result != ISC_R_SUCCESS) {

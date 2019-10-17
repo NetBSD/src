@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.c,v 1.2 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: zoneverify.c,v 1.3 2019/10/17 16:47:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1527,9 +1527,9 @@ static isc_result_t
 check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 		  dns_rdata_t *rdata, bool is_ksk)
 {
-	unsigned char *active_keys, *standby_keys;
+	unsigned char *active_keys = NULL, *standby_keys = NULL;
 	dns_keynode_t *keynode = NULL;
-	bool *goodkey;
+	bool *goodkey = NULL;
 	dst_key_t *key = NULL;
 	isc_result_t result;
 
@@ -1575,42 +1575,48 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	if (result != ISC_R_SUCCESS) {
 		return (result);
 	}
+
 	result = dns_keytable_findkeynode(vctx->secroots, vctx->origin,
 					  dst_key_alg(key), dst_key_id(key),
 					  &keynode);
-	switch (result) {
-	case ISC_R_SUCCESS:
-		/*
-		 * The supplied key is a trust anchor.
-		 */
-		dns_keytable_detachkeynode(vctx->secroots, &keynode);
-		dns_rdataset_settrust(&vctx->keyset, dns_trust_secure);
-		dns_rdataset_settrust(&vctx->keysigs, dns_trust_secure);
-		*goodkey = true;
-		break;
-	case DNS_R_PARTIALMATCH:
-	case ISC_R_NOTFOUND:
-		/*
-		 * The supplied key is not present in the trust anchor table,
-		 * but other keys signing the DNSKEY RRset may be, so this is
-		 * not an error, we just do not set 'vctx->good[kz]sk'.
-		 */
-		result = ISC_R_SUCCESS;
-		break;
-	default:
-		/*
-		 * An error occurred while searching the trust anchor table,
-		 * return it to the caller.
-		 */
-		break;
-	}
 
 	/*
-	 * Clean up.
+	 * No such trust anchor.
 	 */
-	dst_key_free(&key);
+	if (result != ISC_R_SUCCESS) {
+		if (result == DNS_R_PARTIALMATCH || result == ISC_R_NOTFOUND) {
+			result = ISC_R_SUCCESS;
+		}
 
-	return (result);
+		goto cleanup;
+	}
+
+	while (result == ISC_R_SUCCESS) {
+		dns_keynode_t *nextnode = NULL;
+
+		if (dst_key_compare(key, dns_keynode_key(keynode))) {
+			dns_keytable_detachkeynode(vctx->secroots, &keynode);
+			dns_rdataset_settrust(&vctx->keyset, dns_trust_secure);
+			dns_rdataset_settrust(&vctx->keysigs, dns_trust_secure);
+			*goodkey = true;
+
+			goto cleanup;
+		}
+
+		result = dns_keytable_findnextkeynode(vctx->secroots,
+						      keynode, &nextnode);
+		dns_keytable_detachkeynode(vctx->secroots, &keynode);
+		keynode = nextnode;
+	}
+
+ cleanup:
+	if (keynode != NULL) {
+		dns_keytable_detachkeynode(vctx->secroots, &keynode);
+	}
+	if (key != NULL) {
+		dst_key_free(&key);
+	}
+	return (ISC_R_SUCCESS);
 }
 
 /*%

@@ -380,6 +380,7 @@
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
 #ifndef __lint__
+/* Gcc provides its own */
 #define HAVE_STDATOMIC_H 1
 #endif
 

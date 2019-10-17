@@ -1,4 +1,4 @@
-/*	$NetBSD: opt_41.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: opt_41.c,v 1.5 2019/10/17 16:47:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -118,6 +118,12 @@ fromwire_opt(ARGS_FROMWIRE) {
 			return (ISC_R_UNEXPECTEDEND);
 		}
 		switch (opt) {
+		case DNS_OPT_LLQ:
+			if (length != 18U) {
+				return (DNS_R_OPTERR);
+			}
+			isc_region_consume(&sregion, length);
+			break;
 		case DNS_OPT_CLIENT_SUBNET: {
 			uint16_t family;
 			uint8_t addrlen;

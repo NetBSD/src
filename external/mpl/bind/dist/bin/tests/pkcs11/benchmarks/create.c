@@ -1,4 +1,4 @@
-/*	$NetBSD: create.c,v 1.3 2019/01/09 16:55:01 christos Exp $	*/
+/*	$NetBSD: create.c,v 1.4 2019/10/17 16:46:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -77,10 +77,10 @@ clock_gettime(int32_t id, struct timespec *tp)
 	UNUSED(id);
 
 	result = gettimeofday(&tv, NULL);
-	if (result)
-		return (result);
-	tp->tv_sec = tv.tv_sec;
-	tp->tv_nsec = (long) tv.tv_usec * 1000;
+	if (result == 0) {
+		tp->tv_sec = tv.tv_sec;
+		tp->tv_nsec = (long) tv.tv_usec * 1000;
+	}
 	return (result);
 }
 #endif
