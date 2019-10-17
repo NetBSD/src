@@ -1,5 +1,4 @@
-
-# $NetBSD: CHANGES-9.0,v 1.1.2.80 2019/10/17 18:48:55 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.81 2019/10/17 19:39:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4747,4 +4746,331 @@ sys/arch/evbarm/conf/GENERIC			1.54
 
 	Add support (dtb files) for NanoPi R1 and Duo2.
 	[bad, ticket #341]
+
+sys/dev/usb/if_ure.c				1.32,1.33
+
+	Fix reading the mac address of ure version 4c10.
+	Allocate a random mac address if on-chip mac is all zeroes.
+	[bad, ticket #343]
+
+sys/arch/x86/include/specialreg.h		1.154,1.155
+sys/arch/x86/x86/procfs_machdep.c		1.34
+usr.sbin/cpuctl/arch/i386.c			1.107
+
+	- Add definitions of AMD's CPUID Fn8000_001f Encrypted Memory features.
+	- Add definition of AMD's CPUID Fn8000_000a %edx bit 11 "GMET".
+	- Define CPUID_AMD_SVM_PFThreshold correctly.
+	- Modify comment a bit for consistency.
+	- Add rdpru support to /proc/cpuinfo.
+	[msaitoh, ticket #344]
+
+sys/dev/pci/if_vge.c				1.75
+sys/dev/pci/if_vgereg.h				1.5
+
+	Recover from powerdown mode.
+	[msaitoh, ticket #345]
+
+sys/dev/pci/if_et.c				1.27
+
+	Fix a bug that multicast address filter doesn't work correctly.
+	[msaitoh, ticket #346]
+
+sys/dev/mii/ciphy.c				1.35
+sys/dev/mii/rgephy.c				1.56,1.57
+
+	Indicate master mode if the negotiated result say so.
+	[msaitoh, ticket #347]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.214
+
+	Disable EEE for backplane X550EM_X.
+	[msaitoh, ticket #348]
+
+doc/CHANGES					1.2599
+
+	evbarm: Add support for Amazon Graviton "a1.metal" instances.
+	[jmcneill, ticket #349]
+
+sys/external/bsd/drm2/linux/linux_dma_buf.c	1.6
+
+	Fix error handling.
+	[maya, ticket #350]
+
+external/mpl/bind/dist/bin/tests/system/checkzone/zones/bad-cdnskey.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/checkzone/zones/bad-cds.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/checkzone/zones/good-cdnskey.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/checkzone/zones/good-cds.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/forward/ns1/sld.tld.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/forward/ns2/tld.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/forward/ns8/named.conf.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/forward/ns8/root.db up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/rpz/ns5/expire.conf.in up to 1.1.1.1
+external/mpl/bind/dist/bin/tests/system/rpz/ns5/fast-expire.db.in up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-bug-fixes.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-download.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-eol.xml    up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-intro.xml  up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-license.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-new-features.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-numbering.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-platforms.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-sec-fixes.xml up to 1.1.1.1
+external/mpl/bind/dist/doc/arm/notes-thankyou.xml up to 1.1.1.1
+external/mpl/bind/dist/bin/pkcs11/Makefile      delete
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/Makefile delete
+external/mpl/bind/dist/bin/tests/pkcs11/Makefile delete
+external/mpl/bind/dist/bin/tests/system/dlzexternal/ns1/dlzs.conf delete
+external/mpl/bind/dist/bin/tests/system/glue/ns1/cache.in delete
+external/mpl/bind/dist/bin/tests/system/glue/ns1/mil.db delete
+external/mpl/bind/dist/bin/tests/system/glue/xx.good delete
+external/mpl/bind/dist/bin/tests/system/glue/yy.good delete
+external/mpl/bind/dist/bin/tests/virtual-time/Makefile delete
+external/mpl/bind/dist/bin/tests/virtual-time/conf.sh delete
+external/mpl/bind/dist/lib/dns/tests/tkey_test.c delete
+external/mpl/bind/dist/lib/samples/Makefile-postinstall delete
+external/mpl/bind/dist/contrib/scripts/zone-edit.sh delete
+external/mpl/bind/dist/contrib/scripts/check-secure-delegation.pl delete
+external/mpl/bind/dist/unit/unittest.sh         delete
+external/mpl/bind/bind2netbsd                   up to 1.4
+external/mpl/bind/bin/dnssec/dnssec-verify/Makefile up to 1.2
+external/mpl/bind/dist/CHANGES                  up to 1.1.1.6
+external/mpl/bind/dist/README                   up to 1.1.1.6
+external/mpl/bind/dist/README.md                up to 1.1.1.6
+external/mpl/bind/dist/config.h.in              up to 1.7
+external/mpl/bind/dist/configure                up to 1.7
+external/mpl/bind/dist/configure.ac             up to 1.1.1.5
+external/mpl/bind/dist/srcid                    up to 1.1.1.6
+external/mpl/bind/dist/version                  up to 1.1.1.6
+external/mpl/bind/dist/bin/check/win32/checkconf.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/check/win32/checktool.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/check/win32/checkzone.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/confgen/win32/confgentool.vcxproj.in up to 1.1.1.2
+external/mpl/bind/dist/bin/confgen/win32/ddnsconfgen.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/confgen/win32/rndcconfgen.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/delv/win32/delv.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dig/dighost.c        up to 1.6
+external/mpl/bind/dist/bin/dig/win32/dig.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dig/win32/dighost.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dig/win32/host.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dig/win32/nslookup.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/dnssec-dsfromkey.c up to 1.6
+external/mpl/bind/dist/bin/dnssec/win32/cds.vcxproj.in up to 1.1.1.2
+external/mpl/bind/dist/bin/dnssec/win32/dnssectool.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/dsfromkey.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/importkey.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/keyfromlabel.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/keygen.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/revoke.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/settime.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/signzone.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/dnssec/win32/verify.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/named/config.c       up to 1.6
+external/mpl/bind/dist/bin/named/main.c         up to 1.6
+external/mpl/bind/dist/bin/named/server.c       up to 1.8
+external/mpl/bind/dist/bin/named/statschannel.c up to 1.5
+external/mpl/bind/dist/bin/named/zoneconf.c     up to 1.5
+external/mpl/bind/dist/bin/named/win32/named.vcxproj.in up to 1.1.1.4
+external/mpl/bind/dist/bin/named/win32/os.c     up to 1.6
+external/mpl/bind/dist/bin/nsupdate/win32/nsupdate.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/pkcs11/win32/pk11destroy.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/pkcs11/win32/pk11keygen.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/pkcs11/win32/pk11list.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/pkcs11/win32/pk11tokens.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/rndc/win32/rndc.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/rndc/win32/rndcutil.vcxproj.in up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/optional/nsecify.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/create.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/find.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/genrsa.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/login.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/privrsa.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/pubrsa.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/session.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/sha1.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/sign.c up to 1.4
+external/mpl/bind/dist/bin/tests/pkcs11/benchmarks/verify.c up to 1.4
+external/mpl/bind/dist/bin/tests/system/conf.sh.common up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/conf.sh.win32 up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/runall.sh up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/digdelv/tests.sh up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/dnssec/tests.sh up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/dnssec/ns2/sign.sh up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/forward/setup.sh up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/forward/tests.sh up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/forward/ns1/named.conf.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/forward/ns2/named.conf.in up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/glue/clean.sh up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/glue/setup.sh up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/glue/ns1/named.conf.in up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/glue/ns1/root.db up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/idna/tests.sh up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/keymgr/tests.sh up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/resolver/tests.sh up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/resolver/ns6/delegation-only.db up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/rpz/clean.sh up to 1.1.1.4
+external/mpl/bind/dist/bin/tests/system/rpz/setup.sh up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/system/rpz/tests.sh up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/rpz/ns3/named.conf.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/rpz/ns5/named.conf.in up to 1.1.1.2
+external/mpl/bind/dist/bin/tests/system/statschannel/tests.sh up to 1.1.1.6
+external/mpl/bind/dist/bin/tests/system/win32/bigkey.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/win32/feature-test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/win32/gencheck.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/win32/keycreate.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/win32/keydelete.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/win32/pipequeries.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/system/xfer/tests.sh up to 1.1.1.5
+external/mpl/bind/dist/bin/tests/win32/backtrace_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/inter_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/makejournal.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/rwlock_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/shutdown_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/sock_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/task_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tests/win32/timer_test.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tools/mdig.c         up to 1.5
+external/mpl/bind/dist/bin/tools/win32/arpaname.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tools/win32/journalprint.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tools/win32/mdig.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tools/win32/nsec3hash.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/tools/win32/rrchecker.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/win32/BINDInstall/AccountInfo.cpp up to 1.1.1.2
+external/mpl/bind/dist/bin/win32/BINDInstall/BINDInstall.rc up to 1.1.1.2
+external/mpl/bind/dist/bin/win32/BINDInstall/BINDInstall.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/bin/win32/BINDInstall/BINDInstallDlg.cpp up to 1.1.1.3
+external/mpl/bind/dist/bin/win32/BINDInstall/DirBrowse.cpp up to 1.1.1.2
+external/mpl/bind/dist/bin/win32/BINDInstall/VersionInfo.cpp up to 1.1.1.2
+external/mpl/bind/dist/bin/win32/BINDInstall/resource.h up to 1.3
+external/mpl/bind/dist/contrib/dlz/modules/mysqldyn/dlz_mysqldyn_mod.c up to 1.4
+external/mpl/bind/dist/doc/arm/Bv9ARM-book.xml  up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch01.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch02.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch03.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch04.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch05.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch06.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch07.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch08.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch09.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch10.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch11.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.ch12.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.html      up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/Bv9ARM.pdf       up to 1.2
+external/mpl/bind/dist/doc/arm/Makefile.in      up to 1.1.1.2
+external/mpl/bind/dist/doc/arm/man.arpaname.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.ddns-confgen.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.delv.html    up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dig.html     up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-cds.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-checkds.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-coverage.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-dsfromkey.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-importkey.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-keyfromlabel.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-keygen.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-keymgr.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-revoke.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-settime.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-signzone.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnssec-verify.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.dnstap-read.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.filter-aaaa.html up to 1.1.1.5
+external/mpl/bind/dist/doc/arm/man.host.html    up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.mdig.html    up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named-checkconf.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named-checkzone.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named-journalprint.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named-nzd2nzf.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named-rrchecker.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named.conf.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.named.html   up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.nsec3hash.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.nslookup.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.nsupdate.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.pkcs11-destroy.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.pkcs11-keygen.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.pkcs11-list.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.pkcs11-tokens.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.rndc-confgen.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.rndc.conf.html up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/man.rndc.html    up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/notes.html       up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/notes.pdf        up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/notes.txt        up to 1.1.1.6
+external/mpl/bind/dist/doc/arm/notes.xml        up to 1.1.1.6
+external/mpl/bind/dist/fuzz/dns_rdata_fromwire_text.c up to 1.3
+external/mpl/bind/dist/lib/bind9/win32/libbind9.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/dns/api              up to 1.1.1.6
+external/mpl/bind/dist/lib/dns/dnssec.c         up to 1.5
+external/mpl/bind/dist/lib/dns/dst_api.c        up to 1.5
+external/mpl/bind/dist/lib/dns/ecdb.c           up to 1.4
+external/mpl/bind/dist/lib/dns/message.c        up to 1.7
+external/mpl/bind/dist/lib/dns/name.c           up to 1.5
+external/mpl/bind/dist/lib/dns/nsec.c           up to 1.4
+external/mpl/bind/dist/lib/dns/openssldh_link.c up to 1.4
+external/mpl/bind/dist/lib/dns/opensslrsa_link.c up to 1.5
+external/mpl/bind/dist/lib/dns/rbt.c            up to 1.4
+external/mpl/bind/dist/lib/dns/rcode.c          up to 1.5
+external/mpl/bind/dist/lib/dns/resolver.c       up to 1.7
+external/mpl/bind/dist/lib/dns/rpz.c            up to 1.6
+external/mpl/bind/dist/lib/dns/sdb.c            up to 1.4
+external/mpl/bind/dist/lib/dns/ttl.c            up to 1.4
+external/mpl/bind/dist/lib/dns/zone.c           up to 1.7
+external/mpl/bind/dist/lib/dns/zoneverify.c     up to 1.3
+external/mpl/bind/dist/lib/dns/include/dns/message.h up to 1.6
+external/mpl/bind/dist/lib/dns/rdata/generic/opt_41.c up to 1.5
+external/mpl/bind/dist/lib/dns/tests/Kyuafile   up to 1.1.1.3
+external/mpl/bind/dist/lib/dns/tests/Makefile.in up to 1.1.1.4
+external/mpl/bind/dist/lib/dns/tests/rbt_serialize_test.c up to 1.5
+external/mpl/bind/dist/lib/dns/win32/gen.vcxproj.in up to 1.1.1.2
+external/mpl/bind/dist/lib/dns/win32/libdns.vcxproj.in up to 1.1.1.5
+external/mpl/bind/dist/lib/irs/win32/libirs.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/irs/win32/resconf.c  up to 1.3
+external/mpl/bind/dist/lib/isc/api              up to 1.1.1.6
+external/mpl/bind/dist/lib/isc/lex.c            up to 1.6
+external/mpl/bind/dist/lib/isc/ratelimiter.c    up to 1.4
+external/mpl/bind/dist/lib/isc/siphash.c        up to 1.4
+external/mpl/bind/dist/lib/isc/sockaddr.c       up to 1.6
+external/mpl/bind/dist/lib/isc/include/isc/siphash.h up to 1.3
+external/mpl/bind/dist/lib/isc/include/isc/socket.h up to 1.5
+external/mpl/bind/dist/lib/isc/tests/hmac_test.c up to 1.4
+external/mpl/bind/dist/lib/isc/tests/md_test.c  up to 1.3
+external/mpl/bind/dist/lib/isc/tests/queue_test.c up to 1.5
+external/mpl/bind/dist/lib/isc/tests/random_test.c up to 1.5
+external/mpl/bind/dist/lib/isc/tests/siphash_test.c up to 1.3
+external/mpl/bind/dist/lib/isc/tests/task_test.c up to 1.5
+external/mpl/bind/dist/lib/isc/unix/resource.c  up to 1.4
+external/mpl/bind/dist/lib/isc/unix/socket.c    up to 1.12
+external/mpl/bind/dist/lib/isc/win32/file.c     up to 1.4
+external/mpl/bind/dist/lib/isc/win32/libisc.vcxproj.in up to 1.1.1.5
+external/mpl/bind/dist/lib/isc/win32/ntgroups.c up to 1.4
+external/mpl/bind/dist/lib/isc/win32/socket.c   up to 1.5
+external/mpl/bind/dist/lib/isc/win32/time.c     up to 1.4
+external/mpl/bind/dist/lib/isc/win32/include/isc/stdatomic.h up to 1.4
+external/mpl/bind/dist/lib/isccc/win32/libisccc.vcxproj.in up to 1.1.1.4
+external/mpl/bind/dist/lib/isccfg/api           up to 1.1.1.6
+external/mpl/bind/dist/lib/isccfg/namedconf.c   up to 1.7
+external/mpl/bind/dist/lib/isccfg/parser.c      up to 1.6
+external/mpl/bind/dist/lib/isccfg/win32/libisccfg.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/ns/api               up to 1.1.1.6
+external/mpl/bind/dist/lib/ns/client.c          up to 1.7
+external/mpl/bind/dist/lib/ns/win32/libns.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/samples/win32/async.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/samples/win32/gai.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/samples/win32/nsprobe.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/samples/win32/request.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/samples/win32/resolve.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/samples/win32/update.vcxproj.in up to 1.1.1.3
+external/mpl/bind/dist/lib/win32/bindevt/bindevt.vcxproj.in up to 1.1.1.2
+external/mpl/bind/dist/unit/unittest.sh.in      up to 1.1.1.3
+external/mpl/bind/dist/win32utils/Configure     up to 1.1.1.6
+external/mpl/bind/dist/win32utils/bind9.sln.in  up to 1.1.1.4
+external/mpl/bind/dist/win32utils/build.txt     up to 1.1.1.4
+external/mpl/bind/dist/win32utils/readme1st.txt up to 1.1.1.3
+external/mpl/bind/include/config.h              up to 1.8
+doc/3RDPARTY					(apply patch)
+
+	Import bind 9.14.7.
+	[maya, ticket #351]
 
