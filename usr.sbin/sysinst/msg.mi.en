@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.22 2019/10/02 11:16:04 maya Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.23 2019/10/17 08:54:50 maxv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -980,7 +980,7 @@ message Configure_network {Configure network}
 message Partition_a_disk {Partition a disk}
 message Logging_functions {Logging functions}
 message Halt_the_system {Halt the system}
-message yes_or_no {yes or no?}
+message yes_or_no {Yes or no?}
 message Hit_enter_to_continue {Hit enter to continue}
 message Choose_your_installation {Choose your installation}
 

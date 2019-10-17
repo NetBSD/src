@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.fr,v 1.20 2019/10/02 11:16:04 maya Exp $	*/
+/*	$NetBSD: msg.mi.fr,v 1.21 2019/10/17 08:54:50 maxv Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -269,7 +269,7 @@ message add_another_ptn
  *  $1 = size unit			GB
  */
 message fssizesok
-{Go on.  Free space $0 $1.}
+{Valider. Espace libre $0 $1.}
 
 /* Called with: 			Example
  *  $0 = missing space			1.4
@@ -1053,7 +1053,6 @@ message Finished {Terminée}
 message Command_failed {Échec}
 message Command_ended_on_signal {Commande terminée par un signal}
 
-
 message NetBSD_VERSION_Install_System {NetBSD-@@VERSION@@ Programme d'installation}
 message Exit_Install_System {Quitter le programme d'installation}
 message Install_NetBSD_to_hard_disk {Installation de NetBSD sur disque dur}
@@ -1062,8 +1061,8 @@ message Re_install_sets_or_install_additional_sets {Réinstaller ou installer de 
 message Reboot_the_computer {Redémarrer l'ordinateur}
 message Utility_menu {Utilitaires}
 message Config_menu {Configuration}
-message exit_menu_generic {Quitter}
 message exit_utility_menu {Quitter}
+message exit_menu_generic {Quitter}
 message NetBSD_VERSION_Utilities {Utilitaires NetBSD-@@VERSION@@}
 message Run_bin_sh {Exécuter /bin/sh}
 message Set_timezone {Configurer le fuseau horaire}
@@ -1071,7 +1070,7 @@ message Configure_network {Configurer le réseau}
 message Partition_a_disk {Partitionner un disque}
 message Logging_functions {Journaux}
 message Halt_the_system {Arrêter le système}
-message yes_or_no {oui ou non?}
+message yes_or_no {Oui ou non?}
 message Hit_enter_to_continue {Appuyez sur la touche Entrée pour continuer}
 message Choose_your_installation {Choisir le type d'installation désiré}
 
@@ -1334,7 +1333,7 @@ message	custom_type	{Unknown}
 
 message dl_type_invalid	{Invalid file system type code (0 .. 255)}
 
-message	cancel		{Cancel}
+message	cancel		{Annuler}
 
 message	out_of_range	{Invalid value}
 
@@ -1380,7 +1379,7 @@ message	fs_type_ffsv2	{FFSv2}
 message	fs_type_ffs	{FFS}
 message	other_fs_type	{Other type}
 
-message	editpack	{Edit name of the disk}
+message	editpack	{Changer le nom du disque}
 message	edit_disk_pack_hdr
 {The name of the disk is arbitrary. 
 It is useful for distinguishing between multiple disks.
