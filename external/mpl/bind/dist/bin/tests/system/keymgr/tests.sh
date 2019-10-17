@@ -134,7 +134,7 @@ n=`expr $n + 1`
 echo_i "checking policy.conf parser ($n)"
 ret=0
 ${PYTHON} testpolicy.py policy.sample > policy.out
-$DOS2UNIX policy.out > /dev/null
+$DOS2UNIX policy.out > /dev/null 2>&1
 cmp -s policy.good policy.out || ret=1
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

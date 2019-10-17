@@ -13,7 +13,7 @@
 # Clean up after glue tests.
 #
 
-rm -f dig.out ns1/cache
+rm -f dig.out
 rm -f */named.conf
 rm -f */named.memstats
 rm -f */named.run

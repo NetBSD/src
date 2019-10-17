@@ -3312,7 +3312,7 @@ echo_i "check that CDS records are not signed using ZSK by dnssec-signzone -x ($
 ret=0
 dig_with_opts +noall +answer @10.53.0.2 cds cds-x.secure > dig.out.test$n
 lines=$(awk '$4 == "RRSIG" && $5 == "CDS" {print}' dig.out.test$n | wc -l)
-test "$lines" -eq 1 || ret=1
+test "$lines" -eq 2 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))
@@ -3464,7 +3464,7 @@ echo_i "check that CDNSKEY records are not signed using ZSK by dnssec-signzone -
 ret=0
 dig_with_opts +noall +answer @10.53.0.2 cdnskey cdnskey-x.secure > dig.out.test$n
 lines=$(awk '$4 == "RRSIG" && $5 == "CDNSKEY" {print}' dig.out.test$n | wc -l)
-test "$lines" -eq 1 || ret=1
+test "$lines" -eq 2 || ret=1
 n=$((n+1))
 test "$ret" -eq 0 || echo_i "failed"
 status=$((status+ret))

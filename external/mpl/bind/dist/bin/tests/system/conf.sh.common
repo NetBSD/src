@@ -457,6 +457,7 @@ export ARPANAME
 export BIGKEY
 export CDS
 export CHECKZONE
+export CYGWIN
 export DESCRIPTION
 export DIG
 export FEATURETEST
