@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.88.2.35 2019/09/26 18:19:26 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.88.2.36 2019/10/17 18:39:41 martin Exp $ */
 
 /******************************************************************************
 
@@ -5819,7 +5819,7 @@ ixgbe_sysctl_eee_state(SYSCTLFN_ARGS)
 	if ((new_eee < 0) || (new_eee > 1))
 		return (EINVAL);
 
-	retval = adapter->hw.mac.ops.setup_eee(&adapter->hw, new_eee);
+	retval = ixgbe_setup_eee(&adapter->hw, new_eee);
 	if (retval) {
 		device_printf(dev, "Error in EEE setup: 0x%08X\n", retval);
 		return (EINVAL);
@@ -5993,8 +5993,6 @@ ixgbe_init_device_features(struct adapter *adapter)
 		 */
 		adapter->feat_cap |= IXGBE_FEATURE_SRIOV;
 		adapter->feat_cap |= IXGBE_FEATURE_FDIR;
-		if (adapter->hw.device_id == IXGBE_DEV_ID_X550EM_X_KR)
-			adapter->feat_cap |= IXGBE_FEATURE_EEE;
 		break;
 	case ixgbe_mac_X550EM_a:
 		/*
