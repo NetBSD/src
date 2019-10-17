@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1640.2.5 2019/10/16 17:41:40 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.1640.2.6 2019/10/17 19:34:12 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -120,8 +120,8 @@ Notes:
 bc includes dc, both of which are in the NetBSD tree.
 
 Package:	bind [named and utils]
-Version:	9.14.1/MPL
-Current Vers:	9.14.1/MPL
+Version:	9.14.7/MPL
+Current Vers:	9.14.7/MPL
 Maintainer:	ISC
 Archive Site:	ftp://ftp.isc.org/isc/bind9/
 Home Page:	http://www.isc.org/software/bind/
@@ -130,10 +130,10 @@ Mailing List:	https://lists.isc.org/mailman/listinfo/bind-announce
 Mailing List:	https://lists.isc.org/mailman/listinfo/bind-users
 Responsible:	christos
 License:	BSD-like (2-clause) / MPL
-Location:	external/bsd/bind/dist
+Location:	external/mpl/bind/dist
 Notes:
 First bind2netbsd script to import into src/external/bsd/bind/dist.
-The Makefiles in src/external/bsd/bind are not handled by the script.
+The Makefiles in src/external/mpl/bind are not handled by the script.
 Build bind to generate the include files.
 Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.

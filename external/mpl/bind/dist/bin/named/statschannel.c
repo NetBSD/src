@@ -1,4 +1,4 @@
-/*	$NetBSD: statschannel.c,v 1.3.4.1 2019/09/12 19:18:00 martin Exp $	*/
+/*	$NetBSD: statschannel.c,v 1.3.4.2 2019/10/17 19:34:14 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3584,6 +3584,10 @@ named_statschannels_configure(named_server_t *server, const cfg_obj_t *config,
 
 	ISC_LIST_INIT(new_listeners);
 
+#ifdef HAVE_LIBXML2
+	xmlInitThreads();
+#endif /* HAVE_LIBXML2 */
+
 	/*
 	 * Get the list of named.conf 'statistics-channels' statements.
 	 */
@@ -3716,6 +3720,10 @@ named_statschannels_shutdown(named_server_t *server) {
 		ISC_LIST_UNLINK(server->statschannels, listener, link);
 		shutdown_listener(listener);
 	}
+
+#ifdef HAVE_LIBXML2
+	xmlCleanupThreads();
+#endif /* HAVE_LIBXML2 */
 }
 
 isc_result_t

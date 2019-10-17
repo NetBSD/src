@@ -380,6 +380,7 @@
 
 /* Define to 1 if you have the <stdatomic.h> header file. */
 #ifndef __lint__
+/* Gcc provides its own */
 #define HAVE_STDATOMIC_H 1
 #endif
 
@@ -490,9 +491,6 @@
 
 /* Define to allow building of objects for dlopen(). */
 #define ISC_DLZ_DLOPEN 1
-
-/* define if the linker supports --wrap option */
-#define LD_WRAP 1
 
 /* have __attribute__s used in librpz.h */
 #define LIBRPZ_HAVE_ATTR 1

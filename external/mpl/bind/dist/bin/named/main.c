@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.4.4.1 2019/09/12 19:18:00 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.4.4.2 2019/10/17 19:34:14 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -363,7 +363,7 @@ save_command_line(int argc, char *argv[]) {
 			 * nearly always be fine.
 			 */
 			if (quoted || isalnum(*src & 0xff) ||
-			    *src == '-' || *src == '_' ||
+			    *src == ',' || *src == '-' || *src == '_' ||
 			    *src == '.' || *src == '/') {
 				*dst++ = *src++;
 				quoted = false;
@@ -616,6 +616,9 @@ parse_T_opt(char *option) {
 		maxudp = 1460;
 	} else if (!strncmp(option, "maxudp=", 7)) {
 		maxudp = atoi(option + 7);
+		if (maxudp <= 0) {
+			named_main_earlyfatal("bad maxudp");
+		}
 	} else if (!strncmp(option, "mkeytimers=", 11)) {
 		p = strtok_r(option + 11, "/", &last);
 		if (p == NULL) {
@@ -1363,6 +1366,17 @@ main(int argc, char *argv[]) {
 
 #ifdef HAVE_GPERFTOOLS_PROFILER
 	(void) ProfilerStart(NULL);
+#endif
+
+#ifdef WIN32
+	/*
+	 * Prevent unbuffered I/O from crippling named performance on Windows
+	 * when it is logging to stderr (e.g. in system tests).  Use full
+	 * buffering (_IOFBF) as line buffering (_IOLBF) is unavailable on
+	 * Windows and fflush() is called anyway after each log message gets
+	 * written to the default stderr logging channels created by libisc.
+	*/
+	setvbuf(stderr, NULL, _IOFBF, BUFSIZ);
 #endif
 
 	/*

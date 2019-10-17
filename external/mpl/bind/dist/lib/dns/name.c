@@ -1,4 +1,4 @@
-/*	$NetBSD: name.c,v 1.3.4.1 2019/09/12 19:18:14 martin Exp $	*/
+/*	$NetBSD: name.c,v 1.3.4.2 2019/10/17 19:34:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2380,15 +2380,10 @@ dns_name_format(const dns_name_t *name, char *cp, unsigned int size) {
 	isc_buffer_init(&buf, cp, size - 1);
 	result = dns_name_totext(name, true, &buf);
 	if (result == ISC_R_SUCCESS) {
-		/*
-		 * Null terminate.
-		 */
-		isc_region_t r;
-		isc_buffer_usedregion(&buf, &r);
-		((char *) r.base)[r.length] = '\0';
-
-	} else
+		isc_buffer_putuint8(&buf, (uint8_t)'\0');
+	} else {
 		snprintf(cp, size, "<unknown>");
+	}
 }
 
 /*

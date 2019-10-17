@@ -14,5 +14,3 @@ SYSTEMTESTTOP=..
 
 $SHELL clean.sh
 copy_setports ns1/named.conf.in ns1/named.conf
-
-cd ns1 && cp -f cache.in cache

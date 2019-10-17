@@ -759,6 +759,11 @@ EOF
     done
   fi
 
+  # reconfigure the ns5 master server without the fast-exire zone, so
+  # it can't be refreshed on ns3, and will expire in 5 seconds.
+  cat /dev/null > ns5/expire.conf
+  rndc_reconfig ns5 10.53.0.5
+
   # restart the main test RPZ server to see if that creates a core file
   if test -z "$HAVE_CORE"; then
     $PERL $SYSTEMTESTTOP/stop.pl --use-rndc --port ${CONTROLPORT} rpz ns3
@@ -854,6 +859,12 @@ EOF
     echo_i "checking rpz with delegation fails correctly (${t})"
     $DIG -p ${PORT} @$ns3 ns example.com > dig.out.$t
     grep "status: SERVFAIL" dig.out.$t > /dev/null || setret "failed"
+
+    t=`expr $t + 1`
+    echo_i "checking policies from expired zone are no longer in effect ($t)"
+    $DIG -p ${PORT} @$ns3 a expired > dig.out.$t
+    grep "expired.*10.0.0.10" dig.out.$t > /dev/null && setret "failed"
+    grep "fast-expire/IN: response-policy zone expired" ns3/named.run > /dev/null || setret "failed"
   fi
 
   # RPZ 'CNAME *.' (NODATA) trumps DNS64.  Test against various DNS64 senarios.

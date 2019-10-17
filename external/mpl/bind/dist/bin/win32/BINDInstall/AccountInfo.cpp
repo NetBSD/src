@@ -215,15 +215,20 @@ CreateServiceAccount(char *name, char *password) {
 	ui.usri1_flags = UF_PASSWD_CANT_CHANGE | UF_DONT_EXPIRE_PASSWD |
 			 UF_SCRIPT;
 	ui.usri1_script_path = NULL;
+
 	/*
 	 * Call the NetUserAdd function, specifying level 1.
 	 */
 	nStatus = NetUserAdd(NULL, dwLevel, (LPBYTE)&ui, &dwError);
-
-	if (nStatus != NERR_Success)
+	if (nStatus != NERR_Success) {
 		return (FALSE);
+	}
 
 	retstat = AddPrivilegeToAcccount(name, SE_SERVICE_LOGON_PRIV);
+	if (retstat != RTN_OK) {
+		return (FALSE);
+	}
+
 	return (TRUE);
 }
 
@@ -239,9 +244,10 @@ AddPrivilegeToAcccount(LPTSTR name, LPWSTR PrivilegeName) {
 	/*
 	 * Open the policy on the target machine.
 	 */
-	if ((Status = OpenPolicy(NULL, POLICY_ALL_ACCESS, &PolicyHandle))
-		!= STATUS_SUCCESS)
+	Status = OpenPolicy(NULL, POLICY_ALL_ACCESS, &PolicyHandle);
+	if (Status != STATUS_SUCCESS) {
 		return (RTN_ERROR);
+	}
 
 	/*
 	 * Let's see if the account exists. Return if not
@@ -258,13 +264,14 @@ AddPrivilegeToAcccount(LPTSTR name, LPWSTR PrivilegeName) {
 	}
 
 	err = LsaNtStatusToWinError(SetPrivilegeOnAccount(PolicyHandle,
-		pSid, PrivilegeName, TRUE));
+				    pSid, PrivilegeName, TRUE));
 
 	LsaClose(PolicyHandle);
-	if (err == ERROR_SUCCESS)
+	if (err == ERROR_SUCCESS) {
 		return (RTN_OK);
-	else
+	} else {
 		return (err);
+	}
 }
 
 void
@@ -393,7 +400,6 @@ GetPrivilegesOnAccount(LSA_HANDLE PolicyHandle, PSID AccountSid,
 	NTSTATUS Status;
 	LSA_UNICODE_STRING *UserRights;
 	ULONG CountOfRights;
-	unsigned int retlen = 0;
 	DWORD i, j;
 	int found;
 
@@ -404,6 +410,7 @@ GetPrivilegesOnAccount(LSA_HANDLE PolicyHandle, PSID AccountSid,
 		return (Status);
 
 	for (i = 0; i < CountOfRights; i++) {
+		unsigned int retlen;
 		found = -1;
 		retlen = UserRights[i].Length/sizeof(wchar_t);
 		for (j = 0; j < *PrivCount; j++) {

@@ -9,25 +9,9 @@
  * information regarding copyright ownership.
  */
 
-dlz "example one" {
-	database "dlopen ../driver.so example.nil";
-};
-
-dlz "example two" {
-	database "dlopen ../driver.so alternate.nil";
-};
-
-dlz "unsearched1" {
-	database "dlopen ../driver.so other.nil";
-	search no;
-};
-
-dlz "unsearched2" {
-	database "dlopen ../driver.so zone.nil";
-	search no;
-};
-
-dlz redzone {
-	database "dlopen ../driver.so .";
-	search no;
+zone "fast-expire." {
+	type master;
+	file "fast-expire.db";
+	allow-transfer { any; };
+	notify no;
 };

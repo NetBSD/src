@@ -1,4 +1,4 @@
-/*	$NetBSD: namedconf.c,v 1.5.4.1 2019/09/12 19:18:17 martin Exp $	*/
+/*	$NetBSD: namedconf.c,v 1.5.4.2 2019/10/17 19:34:22 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2598,8 +2598,9 @@ parse_unitstring(char *str, isc_resourcevalue_t *valuep) {
 	default:
 		return (ISC_R_FAILURE);
 	}
-	if (value > UINT64_MAX / unit)
+	if (value > ((uint64_t)UINT64_MAX / unit)) {
 		return (ISC_R_FAILURE);
+	}
 	*valuep = value * unit;
 	return (ISC_R_SUCCESS);
 }

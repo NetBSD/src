@@ -483,9 +483,6 @@
 /* Define to allow building of objects for dlopen(). */
 #undef ISC_DLZ_DLOPEN
 
-/* define if the linker supports --wrap option */
-#undef LD_WRAP
-
 /* have __attribute__s used in librpz.h */
 #undef LIBRPZ_HAVE_ATTR
 

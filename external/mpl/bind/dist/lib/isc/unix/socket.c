@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.10.4.1 2019/09/12 19:18:16 martin Exp $	*/
+/*	$NetBSD: socket.c,v 1.10.4.2 2019/10/17 19:34:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -392,7 +392,7 @@ struct isc__socketmgr {
 	ISC_LIST(isc__socket_t)	socklist;
 	int			reserved;	/* unlocked */
 	isc_condition_t		shutdown_ok;
-	int			maxudp;
+	size_t			maxudp;
 };
 
 struct isc__socketthread {
@@ -1604,8 +1604,11 @@ doio_recv(isc__socket_t *sock, isc_socketevent_t *dev) {
 		 * Simulate a firewall blocking UDP responses bigger than
 		 * 'maxudp' bytes.
 		 */
-		if (sock->manager->maxudp != 0 && cc > sock->manager->maxudp)
+		if (sock->manager->maxudp != 0 &&
+		    cc > (int)sock->manager->maxudp)
+		{
 			return (DOIO_SOFT);
+		}
 	}
 
 	socket_log(sock, &dev->address, IOEVENT,
@@ -1678,7 +1681,7 @@ doio_send(isc__socket_t *sock, isc_socketevent_t *dev) {
  resend:
 	if (sock->type == isc_sockettype_udp &&
 	    sock->manager->maxudp != 0 &&
-	    write_count > (size_t)sock->manager->maxudp)
+	    write_count > sock->manager->maxudp)
 		cc = write_count;
 	else
 		cc = sendmsg(sock->fd, &msghdr, 0);
@@ -3689,7 +3692,7 @@ isc_socketmgr_setreserved(isc_socketmgr_t *manager0, uint32_t reserved) {
 }
 
 void
-isc_socketmgr_maxudp(isc_socketmgr_t *manager0, int maxudp) {
+isc_socketmgr_maxudp(isc_socketmgr_t *manager0, unsigned int maxudp) {
 	isc__socketmgr_t *manager = (isc__socketmgr_t *)manager0;
 
 	REQUIRE(VALID_MANAGER(manager));

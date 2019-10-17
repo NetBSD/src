@@ -215,6 +215,7 @@ CBINDInstallDlg::CBINDInstallDlg(CWnd* pParent /*=NULL*/)
 	char winsys[MAX_PATH];
 
 	//{{AFX_DATA_INIT(CBINDInstallDlg)
+	/* cppcheck-suppress useInitializationList */
 	m_targetDir = _T("");
 	m_version = _T("");
 	m_toolsOnly = FALSE;
@@ -1089,7 +1090,6 @@ CBINDInstallDlg::UpdateService(CString StartName) {
 			SERVICE_ERROR_NORMAL, pathBuffer, NULL, NULL, NULL,
 			StartName, m_accountPassword, BIND_DISPLAY_NAME)
 			!= TRUE) {
-			DWORD err = GetLastError();
 			MsgBox(IDS_ERR_UPDATE_SERVICE, GetErrMessage());
 		}
 	}
@@ -1314,6 +1314,9 @@ void CBINDInstallDlg::StopBINDService() {
 	}
 
 	BOOL rc = ControlService(hBINDSvc, SERVICE_CONTROL_STOP, &svcStatus);
+	if (!rc) {
+		MsgBox(IDS_ERR_STOP_SERVICE, GetErrMessage());
+	}
 }
 
 /*
@@ -1328,30 +1331,38 @@ void CBINDInstallDlg::StartBINDService() {
 	}
 
 	SC_HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME,
-				      SERVICE_ALL_ACCESS);
+					 SERVICE_ALL_ACCESS);
 	if (!hBINDSvc) {
 		MsgBox(IDS_ERR_OPEN_SERVICE, GetErrMessage());
 	}
 	BOOL rc = StartService(hBINDSvc, 0, NULL);
+	if (!rc) {
+		MsgBox(IDS_ERR_START_SERVICE, GetErrMessage());
+	}
 }
 
 /*
  * Check to see if the BIND service is running or not
  */
-BOOL CBINDInstallDlg::CheckBINDService() {
+BOOL
+CBINDInstallDlg::CheckBINDService() {
 	SERVICE_STATUS svcStatus;
 
 	SC_HANDLE hSCManager = OpenSCManager(NULL, NULL, SC_MANAGER_ALL_ACCESS);
 	if (hSCManager) {
 		SC_HANDLE hBINDSvc = OpenService(hSCManager, BIND_SERVICE_NAME,
-					      SERVICE_ALL_ACCESS);
+						 SERVICE_ALL_ACCESS);
 		if (hBINDSvc) {
 			BOOL rc = ControlService(hBINDSvc,
-				  SERVICE_CONTROL_INTERROGATE, &svcStatus);
-			if (!rc)
+						 SERVICE_CONTROL_INTERROGATE,
+						 &svcStatus);
+			if (!rc) {
+				/* cppcheck-suppress unreadVariable */
 				DWORD err = GetLastError();
+			}
 
-			return (svcStatus.dwCurrentState == SERVICE_RUNNING);
+			return (rc &&
+				svcStatus.dwCurrentState == SERVICE_RUNNING);
 		}
 	}
 	return (FALSE);
@@ -1560,14 +1571,16 @@ void CBINDInstallDlg::ProgramGroup(BOOL create) {
 		return;
 	}
 
-	hr = SHGetPathFromIDList(itemList, commonPath);
-	pMalloc->Free(itemList);
-
-	if (create) {
-		ProgramGroupCreate(commonPath);
+	if (SHGetPathFromIDList(itemList, commonPath)) {
+		if (create) {
+			ProgramGroupCreate(commonPath);
+		} else {
+			ProgramGroupRemove(commonPath);
+		}
 	} else {
-		ProgramGroupRemove(commonPath);
+		MessageBox("SHGetPathFromIDList failed");
 	}
+	pMalloc->Free(itemList);
 }
 
 CString CBINDInstallDlg::DestDir(int destination) {
