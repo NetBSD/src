@@ -1,4 +1,4 @@
-/* $NetBSD: loadfile_elf32.c,v 1.55 2019/07/21 16:53:17 rin Exp $ */
+/* $NetBSD: loadfile_elf32.c,v 1.56 2019/10/17 14:00:28 maxv Exp $ */
 
 /*
  * Copyright (c) 1997, 2008, 2017 The NetBSD Foundation, Inc.
@@ -698,6 +698,11 @@ ELFNAMEEND(loadfile_static)(int fd, Elf_Ehdr *elf, u_long *marks, int flags)
 	marks[MARK_DATA] = 0;
 
 	internalize_ehdr(elf->e_ident[EI_DATA], elf);
+
+	if (elf->e_type != ET_EXEC) {
+		errno = EINVAL;
+		return 1;
+	}
 
 	sz = elf->e_phnum * sizeof(Elf_Phdr);
 	phdr = ALLOC(sz);
