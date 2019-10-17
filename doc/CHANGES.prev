@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.147 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.148 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12639,4 +12639,5 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 	usbnet(9): Port kue(4) and upl(4). [mrg 20190818]
 	mcx(4): Added driver for Mellanox 5th generation ethernet.
 		[jmcneill 20190921]
-
+	evbarm: Add support for Amazon Graviton "a1.metal" instances.
+		[jmcneill 20191015]
