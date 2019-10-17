@@ -1,3 +1,53 @@
+	--- 9.14.7 released ---
+
+5299.	[security]	A flaw in DNSSEC verification when transferring
+			mirror zones could allow data to be incorrectly
+			marked valid. (CVE-2019-6475) [GL #16P]
+
+5298.	[security]	Named could assert if a forwarder returned a
+			referral, rather than resolving the query, when QNAME
+			minimization was enabled. (CVE-2019-6476) [GL #1051]
+
+5297.	[bug]		Check whether a previous QNAME minimization fetch
+			is still running before starting a new one; return
+			SERVFAIL and log an error if so. [GL #1191]
+
+5294.	[func]		Fallback to ACE name on output in locale, which does not
+			support converting it to unicode.  [GL #846]
+
+5293.	[bug]		On Windows, named crashed upon any attempt to fetch XML
+			statistics from it. [GL #1245]
+
+5292.	[bug]		Queue 'rndc nsec3param' requests while signing inline
+			zone changes. [GL #1205]
+
+	--- 9.14.6 released ---
+
+5289.	[bug]		Address NULL pointer dereference in rpz.c:rpz_detach.
+			[GL #1210]
+
+5286.	[contrib]	Address potential NULL pointer dereferences in
+			dlz_mysqldyn_mod.c. [GL #1207]
+
+5285.	[port]		win32: implement "-T maxudpXXX". [GL #837]
+
+5283.	[bug]		When a response-policy zone expires, ensure that
+			its policies are removed from the RPZ summary
+			database. [GL #1146]
+
+5282.	[bug]		Fixed a bug in searching for possible wildcard matches
+			for query names in the RPZ summary database. [GL #1146]
+
+5281.	[cleanup]	Don't escape commas when reporting named's command
+			line. [GL #1189]
+
+5280.	[protocol]	Add support for displaying EDNS option LLQ. [GL #1201]
+
+5279.	[bug]		When loading, reject zones containing CDS or CDNSKEY
+			RRsets at the zone apex if they would cause DNSSEC
+			validation failures if published in the parent zone
+			as the DS RRset.  [GL #1187]
+
 	--- 9.14.5 released ---
 
 5277.	[bug]		Cache DB statistics could underflow when serve-stale
@@ -95,7 +145,7 @@
 			code in a high-load cold-cache resolver scenario.
 			[GL #943]
 
-5242.	[bug]		In relaxed qname minimizatiom mode, fall back to
+5242.	[bug]		In relaxed qname minimization mode, fall back to
 			normal resolution when encountering a lame
 			delegation, and use _.domain/A queries rather
 			than domain/NS. [GL #1055]

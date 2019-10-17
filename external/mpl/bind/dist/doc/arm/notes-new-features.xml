@@ -1,0 +1,78 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes_features"><info><title>New Features</title></info>
+  <itemizedlist>
+    <listitem>
+      <para>
+        The new GeoIP2 API from MaxMind is now supported when BIND
+        is compiled using <command>configure --with-geoip2</command>.
+        The legacy GeoIP API can be used by compiling with
+        <command>configure --with-geoip</command> instead.  (Note that
+        the databases for the legacy API are no longer maintained by
+        MaxMind.)
+      </para>
+      <para>
+        The default path to the GeoIP2 databases will be set based
+        on the location of the <command>libmaxminddb</command> library;
+        for example, if it is in <filename>/usr/local/lib</filename>,
+        then the default path will be
+        <filename>/usr/local/share/GeoIP</filename>.
+        This value can be overridden in <filename>named.conf</filename>
+        using the <command>geoip-directory</command> option.
+      </para>
+      <para>
+        Some <command>geoip</command> ACL settings that were available with
+        legacy GeoIP, including searches for <command>netspeed</command>,
+        <command>org</command>, and three-letter ISO country codes, will
+        no longer work when using GeoIP2. Supported GeoIP2 database
+        types are <command>country</command>, <command>city</command>,
+        <command>domain</command>, <command>isp</command>, and
+        <command>as</command>. All of the databases support both IPv4
+        and IPv6 lookups. [GL #182]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        Two new metrics have been added to the
+        <command>statistics-channel</command> to report DNSSEC
+        signing operations.  For each key in each zone, the
+        <command>dnssec-sign</command> counter indicates the total
+        number of signatures <command>named</command> has generated
+        using that key since server startup, and the
+        <command>dnssec-refresh</command> counter indicates how
+        many of those signatures were refreshed during zone
+        maintenance, as opposed to having been generated
+        as a result of a zone update.  [GL #513]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        A SipHash 2-4 based DNS Cookie (RFC 7873) algorithm has been added.
+        [GL #605]
+      </para>
+      <para>
+        If you are running multiple DNS Servers (different versions of BIND 9
+        or DNS server from multiple vendors) responding from the same IP
+        address (anycast or load-balancing scenarios), you'll have to make
+        sure that all the servers are configured with the same DNS Cookie
+        algorithm and same Server Secret for the best performance.
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        DS records included in DNS referral messages can now be validated
+        and cached immediately, reducing the number of queries needed for
+        a DNSSEC validation. [GL #964]
+      </para>
+    </listitem>
+  </itemizedlist>
+</section>

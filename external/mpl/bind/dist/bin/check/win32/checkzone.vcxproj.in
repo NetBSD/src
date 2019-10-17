@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="utf-8"?>
-<Project DefaultTargets="Build" ToolsVersion="4.0" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
+<Project DefaultTargets="Build" ToolsVersion="@TOOLS_VERSION@" xmlns="http://schemas.microsoft.com/developer/msbuild/2003">
   <ItemGroup Label="ProjectConfigurations">
     <ProjectConfiguration Include="Debug|@PLATFORM@">
       <Configuration>Debug</Configuration>
@@ -14,18 +14,21 @@
     <ProjectGuid>{66028555-7DD5-4016-B601-9EF9A1EE8BFA}</ProjectGuid>
     <Keyword>Win32Proj</Keyword>
     <RootNamespace>checkzone</RootNamespace>
+    @WINDOWS_TARGET_PLATFORM_VERSION@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|@PLATFORM@'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>true</UseDebugLibraries>
     <CharacterSet>MultiByte</CharacterSet>
+    @PLATFORM_TOOLSET@
   </PropertyGroup>
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Release|@PLATFORM@'" Label="Configuration">
     <ConfigurationType>Application</ConfigurationType>
     <UseDebugLibraries>false</UseDebugLibraries>
     <WholeProgramOptimization>true</WholeProgramOptimization>
     <CharacterSet>MultiByte</CharacterSet>
+    @PLATFORM_TOOLSET@
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.props" />
   <ImportGroup Label="ExtensionSettings">
@@ -62,15 +65,15 @@
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
       <BrowseInformation>true</BrowseInformation>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@..\..\..\lib\isc\win32;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;..\..\..\lib\dns\include;..\..\..\lib\bind9\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@..\..\..\lib\isc\win32;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;..\..\..\lib\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);..\..\..\lib\isccfg\win32\$(Configuration);..\..\..\lib\bind9\win32\$(Configuration);..\..\..\lib\ns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>@OPENSSL_LIB@checktool.lib;libisc.lib;libdns.lib;libisccfg.lib;libbind9.lib;libns.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);..\..\..\lib\isccfg\win32\$(Configuration);..\..\..\lib\ns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>@OPENSSL_LIB@checktool.lib;libisc.lib;libdns.lib;libisccfg.lib;libns.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
     <PostBuildEvent>
       <Command>cd ..\..\..\Build\$(Configuration)
@@ -95,7 +98,7 @@ copy /Y named-checkzone.ilk named-compilezone.ilk
       <AssemblerListingLocation>.\$(Configuration)\</AssemblerListingLocation>
       <ObjectFileName>.\$(Configuration)\</ObjectFileName>
       <ProgramDataBaseFileName>$(OutDir)$(TargetName).pdb</ProgramDataBaseFileName>
-      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@..\..\..\lib\isc\win32;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;..\..\..\lib\dns\include;..\..\..\lib\bind9\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>.\;..\..\..\;@LIBXML2_INC@@OPENSSL_INC@..\..\..\lib\isc\win32;..\..\..\lib\isc\win32\include;..\..\..\lib\isc\include;..\..\..\lib\dns\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <CompileAs>CompileAsC</CompileAs>
     </ClCompile>
     <Link>
@@ -104,8 +107,8 @@ copy /Y named-checkzone.ilk named-compilezone.ilk
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <OutputFile>..\..\..\Build\$(Configuration)\$(TargetName)$(TargetExt)</OutputFile>
-      <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);..\..\..\lib\isccfg\win32\$(Configuration);..\..\..\lib\bind9\win32\$(Configuration);..\..\..\lib\ns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
-      <AdditionalDependencies>@OPENSSL_LIB@checktool.lib;libisc.lib;libdns.lib;libisccfg.lib;libbind9.lib;libns.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <AdditionalLibraryDirectories>$(Configuration);..\..\..\lib\isc\win32\$(Configuration);..\..\..\lib\dns\win32\$(Configuration);..\..\..\lib\isccfg\win32\$(Configuration);..\..\..\lib\ns\win32\$(Configuration);%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalDependencies>@OPENSSL_LIB@checktool.lib;libisc.lib;libdns.lib;libisccfg.lib;libns.lib;ws2_32.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <LinkTimeCodeGeneration>Default</LinkTimeCodeGeneration>
     </Link>
     <PostBuildEvent>
