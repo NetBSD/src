@@ -669,7 +669,6 @@ BIND9_ISCCFG_BUILDINCLUDE
 BIND9_ISCCC_BUILDINCLUDE
 BIND9_ISC_BUILDINCLUDE
 BIND9_TOP_BUILDDIR
-LD_WRAP_TESTS
 KYUA
 UNITTESTS
 CMOCKA_LIBS
@@ -677,8 +676,6 @@ CMOCKA_CFLAGS
 LIBIDN2_LDFLAGS
 LIBIDN2_LIBS
 LIBIDN2_CFLAGS
-XSLT_DBLATEX_FASTBOOK
-XSLT_DBLATEX_STYLE
 XSLT_DOCBOOK_MAKETOC_XHTML
 XSLT_DOCBOOK_MAKETOC_HTML
 XSLT_DOCBOOK_CHUNKTOC_XHTML
@@ -19621,7 +19618,7 @@ case "$docbook_path" in
 auto)
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: auto" >&5
 $as_echo "auto" >&6; }
-	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
+	docbook_xsl_trees="/usr/pkg/share/xsl/docbook /usr/local/share/xsl/docbook-ns /usr/local/share/xsl/docbook /usr/share/xsl/docbook /usr/share/sgml/docbook/xsl-stylesheets /opt/local/share/xsl/docbook-xsl /opt/local/share/xsl/docbook-xsl-nons /usr/share/xml/docbook/stylesheet/docbook-xsl"
 	;;
 *)
 	docbook_xsl_trees="$withval"
@@ -19838,57 +19835,6 @@ then
 	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
 $as_echo "\"not found\"" >&6; };
 	XSLT_DOCBOOK_MAKETOC_XHTML=xhtml/maketoc.xsl
-fi
-
-
-
-#
-# Same dance for dblatex
-#
-dblatex_xsl_trees="/usr/local/share/xml/docbook/stylesheet/dblatex /usr/pkg/share/xml/docbook/stylesheet/dblatex /usr/share/xml/docbook/stylesheet/dblatex"
-
-XSLT_DBLATEX_STYLE=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsl/docbook.xsl" >&5
-$as_echo_n "checking for xsl/docbook.xsl... " >&6; }
-for d in $dblatex_xsl_trees
-do
-	f=$d/xsl/docbook.xsl
-	if test -f $f
-	then
-		XSLT_DBLATEX_STYLE=$f
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $f" >&5
-$as_echo "$f" >&6; }
-		break
-	fi
-done
-if test "X$XSLT_DBLATEX_STYLE" = "X"
-then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
-$as_echo "\"not found\"" >&6; };
-	XSLT_DBLATEX_STYLE=xsl/docbook.xsl
-fi
-
-
-
-XSLT_DBLATEX_FASTBOOK=""
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for xsl/latex_book_fast.xsl" >&5
-$as_echo_n "checking for xsl/latex_book_fast.xsl... " >&6; }
-for d in $dblatex_xsl_trees
-do
-	f=$d/xsl/latex_book_fast.xsl
-	if test -f $f
-	then
-		XSLT_DBLATEX_FASTBOOK=$f
-		{ $as_echo "$as_me:${as_lineno-$LINENO}: result: $f" >&5
-$as_echo "$f" >&6; }
-		break
-	fi
-done
-if test "X$XSLT_DBLATEX_FASTBOOK" = "X"
-then
-	{ $as_echo "$as_me:${as_lineno-$LINENO}: result: \"not found\"" >&5
-$as_echo "\"not found\"" >&6; };
-	XSLT_DBLATEX_FASTBOOK=xsl/latex_book_fast.xsl
 fi
 
 
@@ -20351,168 +20297,6 @@ done
 $as_echo "$as_me: WARNING: kyua test execution engine not found" >&2;}
 fi
 fi
-
-
-
-#
-# Check for -Wl,--wrap= support
-#
-
-
-
-  CCASFLAGS_wrap_ax_save_flags=$CCASFLAGS
-
-
-
-  CFLAGS_wrap_ax_save_flags=$CFLAGS
-
-
-
-  CPPFLAGS_wrap_ax_save_flags=$CPPFLAGS
-
-
-
-  CXXFLAGS_wrap_ax_save_flags=$CXXFLAGS
-
-
-
-  ERLCFLAGS_wrap_ax_save_flags=$ERLCFLAGS
-
-
-
-  FCFLAGS_wrap_ax_save_flags=$FCFLAGS
-
-
-
-  FCLIBS_wrap_ax_save_flags=$FCLIBS
-
-
-
-  FFLAGS_wrap_ax_save_flags=$FFLAGS
-
-
-
-  FLIBS_wrap_ax_save_flags=$FLIBS
-
-
-
-  GCJFLAGS_wrap_ax_save_flags=$GCJFLAGS
-
-
-
-  JAVACFLAGS_wrap_ax_save_flags=$JAVACFLAGS
-
-
-
-  LDFLAGS_wrap_ax_save_flags=$LDFLAGS
-
-
-
-  LIBS_wrap_ax_save_flags=$LIBS
-
-
-
-  OBJCFLAGS_wrap_ax_save_flags=$OBJCFLAGS
-
-
-
-  OBJCXXFLAGS_wrap_ax_save_flags=$OBJCXXFLAGS
-
-
-
-  UPCFLAGS_wrap_ax_save_flags=$UPCFLAGS
-
-
-
-  VALAFLAGS_wrap_ax_save_flags=$VALAFLAGS
-
-
-
-
-LDFLAGS="-Wl,-wrap,exit"
-LD_WRAP_TESTS=false
-{ $as_echo "$as_me:${as_lineno-$LINENO}: checking for linker support for --wrap option" >&5
-$as_echo_n "checking for linker support for --wrap option... " >&6; }
-cat confdefs.h - <<_ACEOF >conftest.$ac_ext
-/* end confdefs.h.  */
-#include <stdlib.h>
-		       void __real_exit (int status);
-		       void __wrap_exit (int status) { __real_exit (status); }
-
-int
-main ()
-{
-exit (1);
-  ;
-  return 0;
-}
-_ACEOF
-if ac_fn_c_try_link "$LINENO"; then :
-  LD_WRAP_TESTS=true
-
-$as_echo "#define LD_WRAP 1" >>confdefs.h
-
-     { $as_echo "$as_me:${as_lineno-$LINENO}: result: yes" >&5
-$as_echo "yes" >&6; }
-else
-  { $as_echo "$as_me:${as_lineno-$LINENO}: result: no" >&5
-$as_echo "no" >&6; }
-fi
-rm -f core conftest.err conftest.$ac_objext \
-    conftest$ac_exeext conftest.$ac_ext
-
-
-
-  CCASFLAGS=$CCASFLAGS_wrap_ax_save_flags
-
-
-  CFLAGS=$CFLAGS_wrap_ax_save_flags
-
-
-  CPPFLAGS=$CPPFLAGS_wrap_ax_save_flags
-
-
-  CXXFLAGS=$CXXFLAGS_wrap_ax_save_flags
-
-
-  ERLCFLAGS=$ERLCFLAGS_wrap_ax_save_flags
-
-
-  FCFLAGS=$FCFLAGS_wrap_ax_save_flags
-
-
-  FCLIBS=$FCLIBS_wrap_ax_save_flags
-
-
-  FFLAGS=$FFLAGS_wrap_ax_save_flags
-
-
-  FLIBS=$FLIBS_wrap_ax_save_flags
-
-
-  GCJFLAGS=$GCJFLAGS_wrap_ax_save_flags
-
-
-  JAVACFLAGS=$JAVACFLAGS_wrap_ax_save_flags
-
-
-  LDFLAGS=$LDFLAGS_wrap_ax_save_flags
-
-
-  LIBS=$LIBS_wrap_ax_save_flags
-
-
-  OBJCFLAGS=$OBJCFLAGS_wrap_ax_save_flags
-
-
-  OBJCXXFLAGS=$OBJCXXFLAGS_wrap_ax_save_flags
-
-
-  UPCFLAGS=$UPCFLAGS_wrap_ax_save_flags
-
-
-  VALAFLAGS=$VALAFLAGS_wrap_ax_save_flags
-
 
 
 

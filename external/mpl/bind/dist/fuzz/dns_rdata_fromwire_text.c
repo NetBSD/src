@@ -1,4 +1,4 @@
-/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.2 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: dns_rdata_fromwire_text.c,v 1.3 2019/10/17 16:47:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -40,14 +40,13 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size);
 
 static void
 nullmsg(dns_rdatacallbacks_t *cb, const char *fmt, ...) {
-	va_list ap;
 
 	UNUSED(cb);
 	UNUSED(fmt);
-	UNUSED(ap);
 }
 
-int LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
+int
+LLVMFuzzerTestOneInput(const uint8_t* data, size_t size) {
 	char totext[1024];
 	dns_compress_t cctx;
 	dns_decompress_t dctx;
