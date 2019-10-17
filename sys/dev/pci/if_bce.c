@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.52 2019/05/30 02:32:18 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.53 2019/10/17 15:57:56 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.52 2019/05/30 02:32:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.53 2019/10/17 15:57:56 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -1010,7 +1010,7 @@ bce_add_mac(struct bce_softc *sc, uint8_t *mac, u_long idx)
 	uint32_t	rval;
 
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_LOW,
-	    mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5]);
+	    (uint32_t)mac[2] << 24 | mac[3] << 16 | mac[4] << 8 | mac[5]);
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_HI,
 	    mac[0] << 8 | mac[1] | 0x10000);	/* MAGIC */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_FILT_CTL,
