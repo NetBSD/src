@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.5 2019/09/05 19:32:55 christos Exp $	*/
+/*	$NetBSD: config.c,v 1.6 2019/10/17 16:46:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -885,7 +885,9 @@ named_config_getipandkeylist(const cfg_obj_t *config, const cfg_obj_t *list,
 	if (stack != NULL)
 		isc_mem_put(mctx, stack, stackcount * sizeof(*stack));
 
+	INSIST(dscpcount == addrcount);
 	INSIST(keycount == addrcount);
+	INSIST(keycount == dscpcount);
 
 	ipkl->addrs = addrs;
 	ipkl->dscps = dscps;

@@ -1,4 +1,4 @@
-/*	$NetBSD: server.c,v 1.7 2019/09/05 19:32:55 christos Exp $	*/
+/*	$NetBSD: server.c,v 1.8 2019/10/17 16:46:58 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -10750,17 +10750,21 @@ dumpdone(void *arg, isc_result_t result) {
 	char buf[1024+32];
 	const dns_master_style_t *style;
 
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		goto cleanup;
-	if (dctx->mdctx != NULL)
+	}
+	if (dctx->mdctx != NULL) {
 		dns_dumpctx_detach(&dctx->mdctx);
+	}
 	if (dctx->view == NULL) {
 		dctx->view = ISC_LIST_HEAD(dctx->viewlist);
-		if (dctx->view == NULL)
+		if (dctx->view == NULL) {
 			goto done;
+		}
 		INSIST(dctx->zone == NULL);
-	} else
+	} else {
 		goto resume;
+	}
  nextview:
 	fprintf(dctx->fp, ";\n; Start view %s\n;\n", dctx->view->view->name);
  resume:
@@ -10774,8 +10778,9 @@ dumpdone(void *arg, isc_result_t result) {
 	{
 		style = &dns_master_style_cache;
 		/* start cache dump */
-		if (dctx->view->view->cachedb != NULL)
+		if (dctx->view->view->cachedb != NULL) {
 			dns_db_attach(dctx->view->view->cachedb, &dctx->cache);
+		}
 		if (dctx->cache != NULL) {
 			fprintf(dctx->fp,
 				";\n; Cache dump of view '%s' (cache %s)\n;\n",
@@ -10787,43 +10792,52 @@ dumpdone(void *arg, isc_result_t result) {
 							    dctx->task,
 							    dumpdone, dctx,
 							    &dctx->mdctx);
-			if (result == DNS_R_CONTINUE)
+			if (result == DNS_R_CONTINUE) {
 				return;
-			if (result == ISC_R_NOTIMPLEMENTED)
+			}
+			if (result == ISC_R_NOTIMPLEMENTED) {
 				fprintf(dctx->fp, "; %s\n",
 					dns_result_totext(result));
-			else if (result != ISC_R_SUCCESS)
+			} else if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 		}
 	}
 
 	if ((dctx->dumpadb || dctx->dumpbad || dctx->dumpfail) &&
-	    dctx->cache == NULL && dctx->view->view->cachedb != NULL)
+	    dctx->cache == NULL && dctx->view->view->cachedb != NULL) {
 		dns_db_attach(dctx->view->view->cachedb, &dctx->cache);
+	}
 
 	if (dctx->cache != NULL) {
-		if (dctx->dumpadb)
+		if (dctx->dumpadb) {
 			dns_adb_dump(dctx->view->view->adb, dctx->fp);
-		if (dctx->dumpbad)
+		}
+		if (dctx->dumpbad) {
 			dns_resolver_printbadcache(dctx->view->view->resolver,
 						   dctx->fp);
-		if (dctx->dumpfail)
+		}
+		if (dctx->dumpfail) {
 			dns_badcache_print(dctx->view->view->failcache,
 					   "SERVFAIL cache", dctx->fp);
+		}
 		dns_db_detach(&dctx->cache);
 	}
 	if (dctx->dumpzones) {
 		style = &dns_master_style_full;
  nextzone:
-		if (dctx->version != NULL)
+		if (dctx->version != NULL) {
 			dns_db_closeversion(dctx->db, &dctx->version,
 					    false);
-		if (dctx->db != NULL)
+		}
+		if (dctx->db != NULL) {
 			dns_db_detach(&dctx->db);
-		if (dctx->zone == NULL)
+		}
+		if (dctx->zone == NULL) {
 			dctx->zone = ISC_LIST_HEAD(dctx->view->zonelist);
-		else
+		} else {
 			dctx->zone = ISC_LIST_NEXT(dctx->zone, link);
+		}
 		if (dctx->zone != NULL) {
 			/* start zone dump */
 			dns_zone_name(dctx->zone->zone, buf, sizeof(buf));
@@ -10842,8 +10856,9 @@ dumpdone(void *arg, isc_result_t result) {
 							    dctx->task,
 							    dumpdone, dctx,
 							    &dctx->mdctx);
-			if (result == DNS_R_CONTINUE)
+			if (result == DNS_R_CONTINUE) {
 				return;
+			}
 			if (result == ISC_R_NOTIMPLEMENTED) {
 				fprintf(dctx->fp, "; %s\n",
 					dns_result_totext(result));
@@ -10851,26 +10866,31 @@ dumpdone(void *arg, isc_result_t result) {
 				POST(result);
 				goto nextzone;
 			}
-			if (result != ISC_R_SUCCESS)
+			if (result != ISC_R_SUCCESS) {
 				goto cleanup;
+			}
 		}
 	}
-	if (dctx->view != NULL)
+	if (dctx->view != NULL) {
 		dctx->view = ISC_LIST_NEXT(dctx->view, link);
-	if (dctx->view != NULL)
-		goto nextview;
+		if (dctx->view != NULL) {
+			goto nextview;
+		}
+	}
  done:
 	fprintf(dctx->fp, "; Dump complete\n");
 	result = isc_stdio_flush(dctx->fp);
-	if (result == ISC_R_SUCCESS)
+	if (result == ISC_R_SUCCESS) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_INFO,
 			      "dumpdb complete");
+	}
  cleanup:
-	if (result != ISC_R_SUCCESS)
+	if (result != ISC_R_SUCCESS) {
 		isc_log_write(named_g_lctx, NAMED_LOGCATEGORY_GENERAL,
 			      NAMED_LOGMODULE_SERVER, ISC_LOG_ERROR,
 			      "dumpdb failed: %s", dns_result_totext(result));
+	}
 	dumpcontext_destroy(dctx);
 }
 
@@ -15401,13 +15421,14 @@ named_server_servestale(named_server_t *server, isc_lex_t *lex,
 	/* Look for the optional class name. */
 	classtxt = next_token(lex, text);
 	if (classtxt != NULL) {
-		/* Look for the optional view name. */
-		viewtxt = next_token(lex, text);
-	}
-
-	if (classtxt != NULL) {
 		isc_textregion_t r;
 
+		/* Look for the optional view name. */
+		viewtxt = next_token(lex, text);
+
+		/*
+		 * If 'classtext' is not a valid class then it us a view name.
+		 */
 		r.base = classtxt;
 		r.length = strlen(classtxt);
 		result = dns_rdataclass_fromtext(&rdclass, &r);

@@ -1,4 +1,4 @@
-/*	$NetBSD: message.h,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: message.h,v 1.6 2019/10/17 16:47:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -101,6 +101,7 @@
 #define DNS_MESSAGEEXTFLAG_DO		0x8000U
 
 /*%< EDNS0 extended OPT codes */
+#define DNS_OPT_LLQ		1		/*%< LLQ opt code */
 #define DNS_OPT_NSID		3		/*%< NSID opt code */
 #define DNS_OPT_CLIENT_SUBNET	8		/*%< client subnet opt code */
 #define DNS_OPT_EXPIRE		9		/*%< EXPIRE opt code */

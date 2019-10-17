@@ -1,4 +1,4 @@
-/*	$NetBSD: random_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: random_test.c,v 1.5 2019/10/17 16:47:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -328,7 +328,7 @@ random_test(pvalue_func_t *func, isc_random_func test_func) {
 		case ISC_RANDOM_UNIFORM:
 			uniform_values = (uint16_t *)values;
 			for (i = 0;
-			     i < (sizeof(values) / sizeof(*uniform_values));
+			     i < (sizeof(values) / (sizeof(*uniform_values)));
 			     i++)
 			{
 				uniform_values[i] =
@@ -547,6 +547,7 @@ blockfrequency(isc_mem_t *mctx, uint16_t *values, size_t length) {
 
 	/* Preconditions (section 2.2.7 in NIST SP 800-22) */
 	assert_true(numbits >= 100);
+	/* cppcheck-suppress constArgument */
 	assert_true(mbits >= 20);
 	assert_true((double) mbits > (0.01 * numbits));
 	assert_true(numblocks < 100);

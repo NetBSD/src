@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt_serialize_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: rbt_serialize_test.c,v 1.5 2019/10/17 16:47:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -337,6 +337,7 @@ serialize_test(void **state) {
 	 * Map in the whole file in one go
 	 */
 	fd = open("zone.bin", O_RDWR);
+	assert_int_not_equal(fd, -1);
 	isc_file_getsizefd(fd, &filesize);
 	base = mmap(NULL, filesize, PROT_READ|PROT_WRITE,
 		    MAP_FILE|MAP_PRIVATE, fd, 0);
@@ -397,6 +398,7 @@ deserialize_corrupt_test(void **state) {
 		dns_rbt_t *rbt_deserialized = NULL;
 
 		fd = open("zone.bin", O_RDWR);
+		assert_int_not_equal(fd, -1);
 		isc_file_getsizefd(fd, &filesize);
 		base = mmap(NULL, filesize, PROT_READ|PROT_WRITE,
 			    MAP_FILE|MAP_PRIVATE, fd, 0);
