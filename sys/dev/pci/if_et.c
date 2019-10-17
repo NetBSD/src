@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.14.8.3 2019/08/06 16:10:17 martin Exp $	*/
+/*	$NetBSD: if_et.c,v 1.14.8.4 2019/10/17 18:36:44 martin Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.14.8.3 2019/08/06 16:10:17 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.14.8.4 2019/10/17 18:36:44 martin Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1302,7 +1302,6 @@ et_setmulti(struct et_softc *sc)
 	uint32_t rxmac_ctrl, pktfilt;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	uint8_t addr[ETHER_ADDR_LEN];
 	int i, count;
 
 	pktfilt = CSR_READ_4(sc, ET_PKTFILT);
@@ -1314,19 +1313,12 @@ et_setmulti(struct et_softc *sc)
 		goto back;
 	}
 
-	bcopy(etherbroadcastaddr, addr, ETHER_ADDR_LEN);
-
 	count = 0;
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		uint32_t *hp, h;
 
-		for (i = 0; i < ETHER_ADDR_LEN; i++) {
-			addr[i] &= enm->enm_addrlo[i];
-		}
-
-		h = ether_crc32_be(LLADDR((struct sockaddr_dl *)addr),
-		    ETHER_ADDR_LEN);
+		h = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
 		h = (h & 0x3f800000) >> 23;
 
 		hp = &hash[0];
