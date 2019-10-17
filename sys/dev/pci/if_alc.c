@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.41 2019/10/17 09:12:12 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.42 2019/10/17 09:13:48 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -101,6 +101,10 @@ static struct alc_ident alc_ident_table[] = {
 		"Atheros AR8172 PCIe Fast Ethernet" },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2200, 9 * 1024,
 		"Killer E2200 Gigabit Ethernet" },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2400, 9 * 1024,
+		"Killer E2400 Gigabit Ethernet" },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2500, 9 * 1024,
+		"Killer E2500 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL },
 };
 
@@ -1002,6 +1006,8 @@ alc_phy_down(struct alc_softc *sc)
 	switch (sc->alc_ident->deviceid) {
 	case PCI_PRODUCT_ATTANSIC_AR8161:
 	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
 	case PCI_PRODUCT_ATTANSIC_AR8162:
 	case PCI_PRODUCT_ATTANSIC_AR8171:
 	case PCI_PRODUCT_ATTANSIC_AR8172:
@@ -1342,7 +1348,13 @@ alc_attach(device_t parent, device_t self, void *aux)
 			sc->alc_dma_rd_burst = 3;
 		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
 			sc->alc_dma_wr_burst = 3;
-
+		/*
+		 * Force maximum payload size to 128 bytes for
+		 * E2200/E2400/E2500.
+		 * Otherwise it triggers DMA write error.
+		 */
+		if ((sc->alc_flags & ALC_FLAG_E2X00) != 0)
+			sc->alc_dma_wr_burst = 0;
 		alc_init_pcie(sc);
 	}
 
@@ -1361,13 +1373,17 @@ alc_attach(device_t parent, device_t self, void *aux)
 	 * shows the same PHY model/revision number of AR8131.
 	 */
 	switch (sc->alc_ident->deviceid) {
+	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
+		sc->alc_flags |= ALC_FLAG_E2X00;
+		/* FALLTHROUGH */
 	case PCI_PRODUCT_ATTANSIC_AR8161:
 		if (PCI_SUBSYS_ID(pci_conf_read(
 		   sc->sc_pct, sc->sc_pcitag, PCI_SUBSYS_ID_REG)) == 0x0091 &&
 		   sc->alc_rev == 0)
 			sc->alc_flags |= ALC_FLAG_LINK_WAR;
 		/* FALLTHROUGH */
-	case PCI_PRODUCT_ATTANSIC_E2200:
 	case PCI_PRODUCT_ATTANSIC_AR8171:
 		sc->alc_flags |= ALC_FLAG_AR816X_FAMILY;
 		break;
