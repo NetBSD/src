@@ -1,5 +1,5 @@
 
-# $NetBSD: CHANGES-9.0,v 1.1.2.79 2019/10/16 17:43:35 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.80 2019/10/17 18:48:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -4739,4 +4739,12 @@ src/doc/3RDPARTY				(manually edited)
 
 	Import dhcpcd-8.1.1.
 	[roy, ticket #340]
+
+sys/arch/arm/dts/sun8i-h3-nanopi-duo2.dts	1.1
+sys/arch/arm/dts/sun8i-h3-nanopi-r1.dts		1.1
+sys/arch/arm/dts/sun8i-h3-nanopi-r1.dts		1.2
+sys/arch/evbarm/conf/GENERIC			1.54
+
+	Add support (dtb files) for NanoPi R1 and Duo2.
+	[bad, ticket #341]
 
