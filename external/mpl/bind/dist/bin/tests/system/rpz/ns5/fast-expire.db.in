@@ -7,9 +7,10 @@
 ; See the COPYRIGHT file distributed with this work for additional
 ; information regarding copyright ownership.
 
-; Preloaded cache data for glue test
+$TTL 300
+@					SOA	fast-expire. hostmaster (
+						1 3 1 5 60
+						)
+					NS	ns.tld3.
 
-$TTL 86400
-ns.zz.	  3600	IN	A	10.0.0.1
-ns.zz.		IN	AAAA	10::1
-ns.zz.		IN	A6	0 ffff:ffff:ffff:ffff:ffff:ffff:ffff:ffff
+expired.fast-expire.		        A	10.0.0.10

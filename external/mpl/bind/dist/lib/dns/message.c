@@ -1,4 +1,4 @@
-/*	$NetBSD: message.c,v 1.5.4.1 2019/09/12 19:18:14 martin Exp $	*/
+/*	$NetBSD: message.c,v 1.5.4.2 2019/10/17 19:34:20 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3437,6 +3437,42 @@ render_ecs(isc_buffer_t *ecsbuf, isc_buffer_t *target) {
 	return (result);
 }
 
+static isc_result_t
+render_llq(isc_buffer_t *optbuf, isc_buffer_t *target) {
+	char buf[sizeof("18446744073709551615")]; /* 2^64-1 */
+	isc_result_t result = ISC_R_SUCCESS;
+	uint32_t u;
+	uint64_t q;
+
+	u = isc_buffer_getuint16(optbuf);
+	ADD_STRING(target, " Version: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+
+	u = isc_buffer_getuint16(optbuf);
+	ADD_STRING(target, ", Opcode: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+
+	u = isc_buffer_getuint16(optbuf);
+	ADD_STRING(target, ", Error: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+
+	q = isc_buffer_getuint32(optbuf);
+	q <<= 32;
+	q |= isc_buffer_getuint32(optbuf);
+	ADD_STRING(target, ", Identifier: ");
+	snprintf(buf, sizeof(buf), "%" PRIu64, q);
+	ADD_STRING(target, buf);
+
+	u = isc_buffer_getuint32(optbuf);
+	ADD_STRING(target, ", Lifetime: ");
+	snprintf(buf, sizeof(buf), "%u", u);
+	ADD_STRING(target, buf);
+ cleanup:
+	return (result);
+}
 
 static isc_result_t
 dns_message_pseudosectiontoyaml(dns_message_t *msg,
@@ -3523,7 +3559,19 @@ dns_message_pseudosectiontoyaml(dns_message_t *msg,
 			optlen = isc_buffer_getuint16(&optbuf);
 			INSIST(isc_buffer_remaininglength(&optbuf) >= optlen);
 
-			if (optcode == DNS_OPT_NSID) {
+			if (optcode == DNS_OPT_LLQ) {
+				INDENT(style);
+				if (optlen == 18U) {
+					ADD_STRING(target, "LLQ: ");
+					result = render_llq(&optbuf, target);
+					if (result != ISC_R_SUCCESS) {
+						goto cleanup;
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
+				ADD_STRING(target, "LLQ");
+			} else if (optcode == DNS_OPT_NSID) {
 				INDENT(style);
 				ADD_STRING(target, "NSID");
 			} else if (optcode == DNS_OPT_COOKIE) {
@@ -3805,7 +3853,18 @@ dns_message_pseudosectiontotext(dns_message_t *msg,
 
 			INDENT(style);
 
-			if (optcode == DNS_OPT_NSID) {
+			if (optcode == DNS_OPT_LLQ) {
+				if (optlen == 18U) {
+					ADD_STRING(target, "; LLQ:");
+					result = render_llq(&optbuf, target);
+					if (result != ISC_R_SUCCESS) {
+						return (result);
+					}
+					ADD_STRING(target, "\n");
+					continue;
+				}
+				ADD_STRING(target, "; LLQ");
+			} else if (optcode == DNS_OPT_NSID) {
 				ADD_STRING(target, "; NSID");
 			} else if (optcode == DNS_OPT_COOKIE) {
 				ADD_STRING(target, "; COOKIE");

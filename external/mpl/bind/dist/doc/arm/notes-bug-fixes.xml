@@ -1,0 +1,81 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes_bugs"><info><title>Bug Fixes</title></info>
+  <itemizedlist>
+    <listitem>
+      <para>
+        When <command>qname-minimization</command> was set to
+        <command>relaxed</command>, some improperly configured domains
+        would fail to resolve, but would have succeeded when minimization
+        was disabled. <command>named</command> will now fall back to normal
+        resolution in such cases, and also uses type A rather than NS for
+        minimal queries in order to reduce the likelihood of encountering
+        the problem. [GL #1055]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        Glue address records were not being returned in responses
+        to root priming queries; this has been corrected. [GL #1092]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        Interaction between DNS64 and RPZ No Data rule (CNAME *.) could
+        cause unexpected results; this has been fixed. [GL #1106]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <command>named-checkconf</command> now checks DNS64 prefixes
+        to ensure bits 64-71 are zero. [GL #1159]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <command>named-checkconf</command> could crash during
+        configuration if configured to use "geoip continent" ACLs with
+        legacy GeoIP. [GL #1163]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        <command>named-checkconf</command> now correctly reports a missing
+        <command>dnstap-output</command> option when
+        <command>dnstap</command> is set. [GL #1136]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        Handle ETIMEDOUT error on connect() with a non-blocking
+        socket. [GL #1133]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        Cache database statistics counters could report invalid values
+        when stale answers were enabled, because of a bug in counter
+        maintenance when cache data becomes stale. The statistics counters
+        have been corrected to report the number of RRsets for each
+        RR type that are active, stale but still potentially served,
+        or stale and marked for deletion. [GL #602]
+      </para>
+    </listitem>
+    <listitem>
+      <para>
+        When a <command>response-policy</command> zone expires, ensure
+        that its policies are removed from the RPZ summary database.
+        [GL #1146]
+      </para>
+    </listitem>
+  </itemizedlist>
+</section>

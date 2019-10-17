@@ -1,4 +1,4 @@
-/*	$NetBSD: dst_api.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: dst_api.c,v 1.4.4.1 2019/10/17 19:34:20 martin Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -395,7 +395,7 @@ dst_key_tofile(const dst_key_t *key, int type, const char *directory) {
 	    (key->key_flags & DNS_KEYFLAG_TYPEMASK) != DNS_KEYTYPE_NOKEY)
 		return (key->func->tofile(key, directory));
 	else
-		return (ISC_R_SUCCESS);
+		return (ret);
 }
 
 void

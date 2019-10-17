@@ -1,4 +1,4 @@
-/*	$NetBSD: md_test.c,v 1.2 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: md_test.c,v 1.2.6.1 2019/10/17 19:34:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -161,8 +161,10 @@ isc_md_update_test(void **state) {
 static void
 isc_md_reset_test(void **state) {
 	isc_md_t *md = *state;
+#if 0
 	unsigned char digest[ISC_MAX_MD_SIZE] __attribute((unused));
 	unsigned int digestlen __attribute((unused));
+#endif
 
 	assert_non_null(md);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: queue_test.c,v 1.3.4.1 2019/09/12 19:18:16 martin Exp $	*/
+/*	$NetBSD: queue_test.c,v 1.3.4.2 2019/10/17 19:34:21 martin Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -141,6 +141,8 @@ queue_valid(void **state) {
 	assert_non_null(p);
 	assert_int_equal(p->value, 5);
 
+	assert_null(queue.head);
+	assert_null(queue.tail);
 	assert_true(ISC_QUEUE_EMPTY(queue));
 
 	ISC_QUEUE_DESTROY(queue);
