@@ -28,7 +28,7 @@ CYGWIN=1
 . $TOP/bin/tests/system/conf.sh.common
 
 # Visual Studio build configurations are Release and Debug
-VSCONF=Debug
+VSCONF=${VSCONF:-Debug}
 
 ARPANAME=$TOP/Build/$VSCONF/arpaname@EXEEXT@
 CDS=$TOP/Build/$VSCONF/dnssec-cds@EXEEXT@
