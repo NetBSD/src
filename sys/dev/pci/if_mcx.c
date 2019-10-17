@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.4 2019/09/28 16:22:45 tnn Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.5 2019/10/17 15:57:56 msaitoh Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -130,7 +130,7 @@
 #define MCX_CMDQ_DOORBELL		0x0018
 
 #define MCX_STATE		0x01fc
-#define MCX_STATE_MASK			(1 << 31)
+#define MCX_STATE_MASK			(1U << 31)
 #define MCX_STATE_INITIALIZING		(1 << 31)
 #define MCX_STATE_READY			(0 << 31)
 #define MCX_STATE_INTERFACE_MASK	(0x3 << 24)
@@ -1324,7 +1324,7 @@ CTASSERT(sizeof(struct mcx_wq_ctx) == 0xC0);
 
 struct mcx_sq_ctx {
 	uint32_t		sq_flags;
-#define MCX_SQ_CTX_RLKEY			(1 << 31)
+#define MCX_SQ_CTX_RLKEY			(1U << 31)
 #define MCX_SQ_CTX_FRE_SHIFT			(1 << 29)
 #define MCX_SQ_CTX_FLUSH_IN_ERROR		(1 << 28)
 #define MCX_SQ_CTX_MIN_WQE_INLINE_SHIFT		24
@@ -1434,7 +1434,7 @@ struct mcx_cmd_destroy_sq_out {
 
 struct mcx_rq_ctx {
 	uint32_t		rq_flags;
-#define MCX_RQ_CTX_RLKEY			(1 << 31)
+#define MCX_RQ_CTX_RLKEY			(1U << 31)
 #define MCX_RQ_CTX_VLAN_STRIP_DIS		(1 << 28)
 #define MCX_RQ_CTX_MEM_RQ_TYPE_SHIFT		24
 #define MCX_RQ_CTX_STATE_SHIFT			20
@@ -6501,7 +6501,7 @@ mcx_media_add_types(struct mcx_softc *sc)
 
 	proto_cap = be32toh(ptys.rp_eth_proto_cap);
 	for (i = 0; i < __arraycount(mcx_eth_cap_map); i++) {
-		if ((proto_cap & (1 << i)) && (mcx_eth_cap_map[i] != 0))
+		if ((proto_cap & (1U << i)) && (mcx_eth_cap_map[i] != 0))
 			ifmedia_add(&sc->sc_media, IFM_ETHER |
 			    mcx_eth_cap_map[i], 0, NULL);
 	}
@@ -6531,7 +6531,7 @@ mcx_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	media_oper = 0;
 	for (i = 0; i < __arraycount(mcx_eth_cap_map); i++) {
-		if (proto_oper & (1 << i)) {
+		if (proto_oper & (1U << i)) {
 			media_oper = mcx_eth_cap_map[i];
 		}
 	}
