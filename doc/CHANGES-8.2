@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.51 2019/10/15 04:24:16 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.52 2019/10/17 18:41:27 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1282,4 +1282,20 @@ sys/kern/vnode_if.c				(regen)
 
 	Add fstrans type LAZY and use it for VOP_STRATEGY().
 	[hannken, ticket #1405]
+
+sys/dev/pci/if_vge.c				1.75
+sys/dev/pci/if_vgereg.h				1.5
+
+	Properly recover from powerdown mode.
+	[msaitoh, ticket #1406]
+
+sys/dev/pci/if_et.c                             1.27 via patch
+
+	Fix a bug that multicast address filter doesn't work correctly.
+	[msaitoh, ticket #1407]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.214
+
+	Disable EEE for backplane X550EM_X.
+	[msaitoh, ticket #1408]
 
