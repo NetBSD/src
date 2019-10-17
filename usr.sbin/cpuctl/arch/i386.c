@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.104.2.2 2019/09/26 18:50:18 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.104.2.3 2019/10/17 18:56:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.104.2.2 2019/09/26 18:50:18 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.104.2.3 2019/10/17 18:56:25 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -2311,6 +2311,11 @@ identifycpu(int fd, const char *cpuname)
 			    descs[1]);
 			print_bits(cpuname, "SVM features",
 			    CPUID_AMD_SVM_FLAGS, descs[3]);
+		}
+		if (ci->ci_max_ext_cpuid >= 0x8000001f) {
+			x86_cpuid(0x8000001f, descs);
+			print_bits(cpuname, "Encrypted Memory features",
+			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		int32_t bi_index;
