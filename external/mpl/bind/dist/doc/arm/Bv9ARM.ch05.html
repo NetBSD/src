@@ -6994,18 +6994,7 @@ avoid-v6-udp-ports { 40000; range 50000 60000; };
                   this has the greatest chance of success on the first try.
                 </p>
                 <p>
-                  If the initial response times out, <span class="command"><strong>named</strong></span>
-                  will try again with plain DNS, and if that is successful,
-                  it will be taken as evidence that the server does not
-                  support EDNS. After enough failures using EDNS and
-                  successes using plain DNS, <span class="command"><strong>named</strong></span>
-                  will default to plain DNS for future communications
-                  with that server.  (Periodically, <span class="command"><strong>named</strong></span>
-                  will send an EDNS query to see if the situation has
-                  improved.)
-                </p>
-                <p>
-                  However, if the initial query is successful with
+                  If the initial query is successful with
                   EDNS advertising a buffer size of 512, then
                   <span class="command"><strong>named</strong></span> will advertise progressively
                   larger buffer sizes on successive queries, until
@@ -8282,22 +8271,6 @@ example.com                 CNAME   rpz-tcp-only.
             (250/1000)*20 or 5.
             Responses sent via TCP are not limited
             but are counted to compute the query per second rate.
-          </p>
-
-          <p>
-            Rate limiters for different name spaces maintain
-            separate counters: If, for example, there is a
-            <span class="command"><strong>rate-limit</strong></span> statement for "com" and
-            another for "example.com", queries matching "example.com"
-            will not be debited against the rate limiter for "com".
-          </p>
-
-          <p>
-            If a <span class="command"><strong>rate-limit</strong></span> statement does not specify a
-            <span class="command"><strong>domain</strong></span>, then it applies to the root domain
-            (".") and thus affects the entire DNS namespace, except those
-            portions covered by other <span class="command"><strong>rate-limit</strong></span>
-            statements.
           </p>
 
           <p>
@@ -14924,6 +14897,6 @@ HOST-127.EXAMPLE. MX 0 .
 </tr>
 </table>
 </div>
-<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.5 (Stable Release)</p>
+<p xmlns:db="http://docbook.org/ns/docbook" style="text-align: center;">BIND 9.14.7 (Stable Release)</p>
 </body>
 </html>

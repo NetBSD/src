@@ -46,6 +46,7 @@ CDirBrowse::CDirBrowse(CString initialDir, CWnd* pParent /*=NULL*/)
 	//{{AFX_DATA_INIT(CDirBrowse)
 		// NOTE: the ClassWizard will add member initialization here
 	//}}AFX_DATA_INIT
+	/* cppcheck-suppress useInitializationList */
 	m_selectedDir = initialDir;
 }
 
