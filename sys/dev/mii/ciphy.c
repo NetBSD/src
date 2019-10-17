@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.34 2019/04/11 09:14:07 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.34.4.1 2019/10/17 19:06:58 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.34 2019/04/11 09:14:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.34.4.1 2019/10/17 19:06:58 martin Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -297,7 +297,7 @@ static void
 ciphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	uint16_t bmsr, bmcr;
+	uint16_t bmsr, bmcr, gtsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -343,16 +343,19 @@ ciphy_status(struct mii_softc *sc)
 	else
 		mii->mii_media_active |= IFM_HDX;
 
-	return;
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+		PHY_READ(sc, MII_GTSR, &gtsr);
+		if ((gtsr & GTSR_MS_RES) != 0)
+			mii->mii_media_active |= IFM_ETH_MASTER;
+	}
 }
 
 static void
 ciphy_reset(struct mii_softc *sc)
 {
+
 	mii_phy_reset(sc);
 	DELAY(1000);
-
-	return;
 }
 
 static inline int
@@ -437,6 +440,4 @@ ciphy_fixup(struct mii_softc *sc)
 		    model);
 		break;
 	}
-
-	return;
 }
