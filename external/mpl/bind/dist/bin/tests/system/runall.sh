@@ -79,9 +79,9 @@ if [ "$NOPARALLEL" = "" ]; then
         # used for the build. So we create a special makefile for the purpose
         # of parallel execution of system tests, and use that.
         $SHELL parallel.sh > parallel.mk
-        make -f parallel.mk -j $numproc check || status=$?
-	$SHELL ./runsequential.sh -r || status=$?
-	$SHELL ./testsummary.sh
+        make -f parallel.mk -j $numproc check
+        $SHELL ./runsequential.sh -r
+        $SHELL ./testsummary.sh || status=1
     fi
 else
     # the NOPARALLEL environment variable indicates that tests must be

@@ -245,7 +245,7 @@ key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
 key3=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 "$DSFROMKEY" -C "$key2.key" > "$key2.cds"
-cat "$infile" "$key1.key" "$key3.key" "$key2.cds" > "$zonefile"
+cat "$infile" "$key1.key" "$key2.key" "$key3.key" "$key2.cds" > "$zonefile"
 "$SIGNER" -P -g -x -o "$zone" "$zonefile" > /dev/null 2>&1
 
 zone=cds-update.secure
@@ -269,8 +269,8 @@ infile=cds-auto.secure.db.in
 zonefile=cds-auto.secure.db
 key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
-"$DSFROMKEY" -C "$key1.key" > "$key1.cds"
-cat "$infile" "$key1.cds" > "$zonefile.signed"
+$SETTIME -P sync now "$key1" > /dev/null
+cat "$infile" > "$zonefile.signed"
 
 zone=cdnskey.secure
 infile=cdnskey.secure.db.in
@@ -288,7 +288,7 @@ key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
 key3=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
 sed 's/DNSKEY/CDNSKEY/' "$key1.key" > "$key1.cds"
-cat "$infile" "$key2.key" "$key3.key" "$key1.cds" > "$zonefile"
+cat "$infile" "$key1.key" "$key2.key" "$key3.key" "$key1.cds" > "$zonefile"
 "$SIGNER" -P -g -x -o "$zone" "$zonefile" > /dev/null 2>&1
 
 zone=cdnskey-update.secure
@@ -312,8 +312,8 @@ infile=cdnskey-auto.secure.db.in
 zonefile=cdnskey-auto.secure.db
 key1=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone -f KSK "$zone")
 key2=$("$KEYGEN" -q -a "$DEFAULT_ALGORITHM" -b "$DEFAULT_BITS" -n zone "$zone")
-sed 's/DNSKEY/CDNSKEY/' "$key1.key" > "$key1.cds"
-cat "$infile" "$key1.cds" > "$zonefile.signed"
+$SETTIME -P sync now "$key1" > /dev/null
+cat "$infile" > "$zonefile.signed"
 
 zone=updatecheck-kskonly.secure
 infile=template.secure.db.in

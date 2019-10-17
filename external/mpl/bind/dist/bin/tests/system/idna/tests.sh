@@ -244,6 +244,25 @@ idna_enabled_test() {
     idna_test "$text" "+idnin +noidnout"   "xn--nxasmq6b.com" "xn--nxasmq6b.com."
     idna_test "$text" "+idnin +idnout"     "xn--nxasmq6b.com" "βόλοσ.com."
 
+    # Test of valid A-label in locale that cannot display it
+    #
+    # +noidnout: The string is sent as-is to the server and the returned qname
+    #            is displayed in the same form.
+    # +idnout:   The string is sent as-is to the server and the returned qname
+    #            is displayed as the corresponding A-label.
+    #
+    # The "+[no]idnout" flag has no effect in these cases.
+    text="Checking valid A-label in C locale"
+    label="xn--nxasmq6b.com"
+    if command -v idn2 >/dev/null && ! LC_ALL=C idn2 -d "$label" >/dev/null 2>/dev/null; then
+	LC_ALL=C idna_test "$text" ""                   "$label" "$label."
+	LC_ALL=C idna_test "$text" "+noidnin +noidnout" "$label" "$label."
+	LC_ALL=C idna_test "$text" "+noidnin +idnout"   "$label" "$label."
+	LC_ALL=C idna_test "$text" "+idnin +noidnout"   "$label" "$label."
+	LC_ALL=C idna_test "$text" "+idnin +idnout"     "$label" "$label."
+	LC_ALL=C idna_test "$text" "+noidnin +idnout"   "$label" "$label."
+    fi
+
 
 
     # Tests of invalid A-labels
