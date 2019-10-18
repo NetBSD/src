@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.4 2018/12/08 17:46:10 thorpej Exp $ */
+/* $NetBSD: ti_com.c,v 1.5 2019/10/18 06:58:06 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.4 2018/12/08 17:46:10 thorpej Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.5 2019/10/18 06:58:06 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -102,7 +102,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 
