@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_combiner.c,v 1.10 2018/10/18 09:01:53 skrll Exp $ */
+/*	$NetBSD: exynos_combiner.c,v 1.11 2019/10/18 06:13:38 skrll Exp $ */
 
 /*-
 * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "gpio.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.10 2018/10/18 09:01:53 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exynos_combiner.c,v 1.11 2019/10/18 06:13:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,8 +134,8 @@ exynos_combiner_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+			     addr, error);
 		return;
 	}
 
