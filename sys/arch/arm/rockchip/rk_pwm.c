@@ -1,4 +1,4 @@
-/* $NetBSD: rk_pwm.c,v 1.1 2019/05/01 10:41:33 jmcneill Exp $ */
+/* $NetBSD: rk_pwm.c,v 1.2 2019/10/18 06:51:02 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk_pwm.c,v 1.1 2019/05/01 10:41:33 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk_pwm.c,v 1.2 2019/10/18 06:51:02 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -221,8 +221,8 @@ rk_pwm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#" PRIx64 ": %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+		    addr, error);
 		return;
 	}
 
