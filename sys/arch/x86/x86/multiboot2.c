@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot2.c,v 1.1 2019/10/18 01:38:28 manu Exp $	*/
+/*	$NetBSD: multiboot2.c,v 1.2 2019/10/18 14:59:22 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.1 2019/10/18 01:38:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.2 2019/10/18 14:59:22 hannken Exp $");
 
 #include "opt_multiboot.h"
 
@@ -784,6 +784,9 @@ multiboot2_print_info(void)
 	char *cp;
 	uint32_t total_size;
 	uint32_t reserved;
+#ifdef DEBUG
+	int i = 0;
+#endif
 
 	if (multiboot2_enabled == false)
 		goto out;
