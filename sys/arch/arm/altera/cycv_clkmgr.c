@@ -1,9 +1,9 @@
-/* $NetBSD: cycv_clkmgr.c,v 1.3 2019/10/01 18:00:07 chs Exp $ */
+/* $NetBSD: cycv_clkmgr.c,v 1.4 2019/10/18 06:50:08 skrll Exp $ */
 
 /* This file is in the public domain. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.3 2019/10/01 18:00:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_clkmgr.c,v 1.4 2019/10/18 06:50:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,8 +138,8 @@ cycv_clkmgr_attach(device_t parent, device_t self, void *aux)
 	sc->sc_bst = faa->faa_bst;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-			     (uint64_t) addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+			     addr, error);
 		return;
 	}
 
