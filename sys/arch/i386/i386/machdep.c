@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.822 2019/10/18 01:00:24 manu Exp $	*/
+/*	$NetBSD: machdep.c,v 1.823 2019/10/18 01:38:28 manu Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.822 2019/10/18 01:00:24 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.823 2019/10/18 01:38:28 manu Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -420,7 +420,8 @@ cpu_startup(void)
 	initmsgbuf((void *)msgbuf_vaddr, sz);
 
 #ifdef MULTIBOOT
-	multiboot_print_info();
+	multiboot1_print_info();
+	multiboot2_print_info();
 #endif
 
 #if NCARDBUS > 0
@@ -1063,7 +1064,10 @@ init386_ksyms(void)
 #endif
 
 #if defined(MULTIBOOT)
-	if (multiboot_ksyms_addsyms_elf())
+	if (multiboot1_ksyms_addsyms_elf())
+		return;
+
+	if (multiboot2_ksyms_addsyms_elf())
 		return;
 #endif
 
