@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs_data.h,v 1.144 2019/10/17 09:22:00 msaitoh Exp $	*/
+/*	$NetBSD: miidevs_data.h,v 1.145 2019/10/18 20:42:10 maya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
