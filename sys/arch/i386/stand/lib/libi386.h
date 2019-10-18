@@ -1,4 +1,4 @@
-/*	$NetBSD: libi386.h,v 1.46 2019/10/18 01:09:46 manu Exp $	*/
+/*	$NetBSD: libi386.h,v 1.47 2019/10/18 01:24:51 manu Exp $	*/
 
 /*
  * Copyright (c) 1996
@@ -170,8 +170,6 @@ void module_add_split(const char *, uint8_t);
 
 struct btinfo_framebuffer;
 void framebuffer_configure(struct btinfo_framebuffer *);
-
-void ksyms_addr_set(void *, void *, void *);
 
 void ksyms_addr_set(void *, void *, void *);
 
