@@ -1,4 +1,4 @@
-/* $NetBSD: exynos_dwcmmc.c,v 1.8 2019/04/09 05:59:24 skrll Exp $ */
+/* $NetBSD: exynos_dwcmmc.c,v 1.9 2019/10/18 06:13:38 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.8 2019/04/09 05:59:24 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_dwcmmc.c,v 1.9 2019/10/18 06:13:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -132,8 +132,8 @@ exynos_dwcmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d\n",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d\n",
+		    addr, error);
 		return;
 	}
 
