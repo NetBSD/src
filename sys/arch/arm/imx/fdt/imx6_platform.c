@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_platform.c,v 1.6 2019/08/19 10:44:35 hkenken Exp $	*/
+/*	$NetBSD: imx6_platform.c,v 1.7 2019/10/18 12:53:08 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.6 2019/08/19 10:44:35 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_platform.c,v 1.7 2019/10/18 12:53:08 hkenken Exp $");
 
 #include "arml2cc.h"
 #include "opt_console.h"
@@ -116,6 +116,20 @@ imx_platform_early_putchar(char c)
 static void
 imx_platform_device_register(device_t self, void *aux)
 {
+	prop_dictionary_t prop = device_properties(self);
+
+	if (device_is_a(self, "atphy")) {
+		const char * compat[] = {
+			"fsl,imx6dl-sabresd",
+			"fsl,imx6q-sabresd",
+			"fsl,imx6qp-sabresd",
+			"solidrun,hummingboard2/q",
+			"solidrun,hummingboard2/dl",
+			NULL
+		};
+		if (of_match_compatible(OF_finddevice("/"), compat))
+			prop_dictionary_set_uint32(prop, "clk_25m", 125000000);
+	}
 }
 
 static u_int

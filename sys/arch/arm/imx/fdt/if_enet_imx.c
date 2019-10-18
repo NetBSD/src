@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.3 2019/08/19 03:45:51 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.4 2019/10/18 12:53:08 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.3 2019/08/19 03:45:51 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.4 2019/10/18 12:53:08 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -71,6 +71,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	struct enet_fdt_softc * const efsc = device_private(self);
 	struct enet_softc *sc = &efsc->sc_enet;
 	struct fdt_attach_args * const faa = aux;
+	prop_dictionary_t prop = device_properties(self);
 	const int phandle = faa->faa_phandle;
 	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
@@ -103,15 +104,35 @@ enet_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Gigabit Ethernet Controller\n");
 
-	enet_phy_reset(efsc, phandle);
-
 	sc->sc_dev = self;
 	sc->sc_iot = bst;
 	sc->sc_ioh = bsh;
 	sc->sc_dmat = faa->faa_dmat;
 
 	sc->sc_imxtype = 6;	/* i.MX6 */
-	sc->sc_rgmii = 1;
+	sc->sc_unit = 0;
+
+	const char *phy_mode = fdtbus_get_string(phandle, "phy-mode");
+	if (phy_mode == NULL) {
+		aprint_error(": missing 'phy-mode' property\n");
+		goto failure;
+	}
+
+	if (strcmp(phy_mode, "rgmii-txid") == 0) {
+		prop_dictionary_set_bool(prop, "tx_internal_delay", true);
+		sc->sc_rgmii = 1;
+	} else if (strcmp(phy_mode, "rgmii-rxid") == 0) {
+		prop_dictionary_set_bool(prop, "rx_internal_delay", true);
+		sc->sc_rgmii = 1;
+	} else if (strcmp(phy_mode, "rgmii-id") == 0) {
+		prop_dictionary_set_bool(prop, "tx_internal_delay", true);
+		prop_dictionary_set_bool(prop, "rx_internal_delay", true);
+		sc->sc_rgmii = 1;
+	} else if (strcmp(phy_mode, "rgmii") == 0) {
+		sc->sc_rgmii = 1;
+	} else {
+		sc->sc_rgmii = 0;
+	}
 
 	char intrstr[128];
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
@@ -128,7 +149,9 @@ enet_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	enet_init_clocks(sc);
-	sc->sc_pllclock = clk_get_rate(sc->sc_clk_enet);
+	sc->sc_pllclock = clk_get_rate(sc->sc_clk_enet_ref);
+
+	enet_phy_reset(efsc, phandle);
 
 	if (enet_attach_common(self) != 0)
 		goto failure;
