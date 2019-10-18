@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.25 2019/10/18 01:19:00 manu Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.26 2019/10/18 01:38:28 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.25 2019/10/18 01:19:00 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.26 2019/10/18 01:38:28 manu Exp $");
 
 #include "opt_multiboot.h"
 
@@ -84,7 +84,7 @@ extern int *		esym;
 /*
  * Copy of the Multiboot information structure passed to us by the boot
  * loader.  The Multiboot_Info structure has some pointers adjusted to the
- * other variables -- see multiboot_pre_reloc() -- so you oughtn't access
+ * other variables -- see multiboot1_pre_reloc() -- so you oughtn't access
  * them directly.  In other words, always access them through the
  * Multiboot_Info variable.
  */
@@ -129,7 +129,7 @@ static void	setup_memmap(struct multiboot_info *);
  *        can be obtained using the RELOC macro.
  */
 void
-multiboot_pre_reloc(struct multiboot_info *mi)
+multiboot1_pre_reloc(struct multiboot_info *mi)
 {
 #define RELOC(type, x) ((type)((vaddr_t)(x) - KERNBASE))
 	struct multiboot_info *midest =
@@ -175,7 +175,7 @@ multiboot_pre_reloc(struct multiboot_info *mi)
  * that no devices have been initialized yet (not even the console!).
  */
 void
-multiboot_post_reloc(void)
+multiboot1_post_reloc(void)
 {
 	struct multiboot_info *mi;
 
@@ -202,7 +202,7 @@ multiboot_post_reloc(void)
  * the console has to be available.
  */
 void
-multiboot_print_info(void)
+multiboot1_print_info(void)
 {
 	struct multiboot_info *mi = &Multiboot_Info;
 	struct multiboot_symbols *ms = &Multiboot_Symbols;
@@ -269,7 +269,7 @@ bootinfo_add(struct btinfo_common *item, int type, int len)
  * that this data is properly copied into upper memory during relocation.
  *
  * WARNING: This code runs before the kernel has relocated itself.  See
- * the note in multiboot_pre_reloc() for more information.
+ * the note in multiboot1_pre_reloc() for more information.
  */
 static void
 copy_syms(struct multiboot_info *mi)
@@ -685,10 +685,13 @@ setup_memory(struct multiboot_info *mi)
  * passed in by Multiboot; false otherwise.
  */
 bool
-multiboot_ksyms_addsyms_elf(void)
+multiboot1_ksyms_addsyms_elf(void)
 {
 	struct multiboot_info *mi = &Multiboot_Info;
 	struct multiboot_symbols *ms = &Multiboot_Symbols;
+
+	if (! Multiboot_Loader)
+		return false;
 
 	if (mi->mi_flags & MULTIBOOT_INFO_HAS_ELF_SYMS) {
 		Elf32_Ehdr ehdr;
