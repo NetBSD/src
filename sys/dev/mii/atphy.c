@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.23 2019/09/02 12:48:52 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.24 2019/10/18 12:53:08 hkenken Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.23 2019/09/02 12:48:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.24 2019/10/18 12:53:08 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,6 +74,11 @@ __KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.23 2019/09/02 12:48:52 msaitoh Exp $");
 #define ATPHY_SSR_100MBS		0x4000
 #define ATPHY_SSR_1000MBS		0x8000
 
+#define ATPHY_DEBUG_PORT_ADDR		0x1d
+#define ATPHY_DEBUG_PORT_DATA		0x1e
+#define ATPHY_RGMII_RX_CLK_DLY		__BIT(15)
+#define ATPHY_RGMII_TX_CLK_DLY		__BIT(8)
+
 static int atphy_match(device_t, cfdata_t, void *);
 static void atphy_attach(device_t, device_t, void *);
 
@@ -83,7 +88,14 @@ static void atphy_status(struct mii_softc *);
 static int atphy_mii_phy_auto(struct mii_softc *);
 static bool atphy_is_gige(const struct mii_phydesc *);
 
-CFATTACH_DECL_NEW(atphy, sizeof(struct mii_softc),
+struct atphy_softc {
+	struct mii_softc mii_sc;
+	int mii_clk_25m;
+	bool rgmii_tx_internal_delay;
+	bool rgmii_rx_internal_delay;
+};
+
+CFATTACH_DECL_NEW(atphy, sizeof(struct atphy_softc),
 	atphy_match, atphy_attach, mii_phy_detach, mii_phy_activate);
 
 const struct mii_phy_funcs atphy_funcs = {
@@ -98,6 +110,35 @@ static const struct mii_phydesc atphys[] = {
 	MII_PHY_DESC(ATTANSIC, AR8035),
 	MII_PHY_END,
 };
+
+static void
+atphy_clk_25m(struct atphy_softc *asc)
+{
+	struct mii_softc *sc = &asc->mii_sc;
+	struct {
+		uint32_t hz;
+		uint16_t data;
+	} select_clk[] = {
+		{  25000000, 0x0 },
+		{  50000000, 0x1 },
+		{  62500000, 0x2 },
+		{ 125000000, 0x3 }
+	};
+	uint16_t data = 0;
+	uint16_t reg = 0;
+
+	for (int i = 0; i < __arraycount(select_clk); i++) {
+		if (asc->mii_clk_25m <= select_clk[i].hz)
+			data = select_clk[i].data;
+	}
+
+	PHY_WRITE(sc, 0x0d, 0x0007);
+	PHY_WRITE(sc, 0x0e, 0x8016);
+	PHY_WRITE(sc, 0x0d, 0x4007);
+	PHY_READ(sc, 0x0e, &reg);
+	PHY_WRITE(sc, 0x0e, reg | __SHIFTIN(data, __BITS(4, 3)));
+}
+
 
 static bool
 atphy_is_gige(const struct mii_phydesc *mpd)
@@ -127,7 +168,10 @@ atphy_match(device_t parent, cfdata_t match, void *aux)
 void
 atphy_attach(device_t parent, device_t self, void *aux)
 {
-	struct mii_softc *sc = device_private(self);
+	struct atphy_softc *asc = device_private(self);
+	prop_dictionary_t parent_prop = device_properties(parent);
+	prop_dictionary_t prop = device_properties(self);
+	struct mii_softc *sc = &asc->mii_sc;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
@@ -152,6 +196,13 @@ atphy_attach(device_t parent, device_t self, void *aux)
 		sc->mii_anegticks = MII_ANEGTICKS;
 
 	sc->mii_flags |= MIIF_NOLOOP;
+
+	prop_dictionary_get_bool(parent_prop, "tx_internal_delay", &asc->rgmii_tx_internal_delay);
+	prop_dictionary_get_bool(parent_prop, "rx_internal_delay", &asc->rgmii_rx_internal_delay);
+
+	prop_dictionary_get_uint32(prop, "clk_25m", &asc->mii_clk_25m);
+	if (asc->mii_clk_25m != 0)
+		atphy_clk_25m(asc);
 
 	PHY_RESET(sc);
 
@@ -355,6 +406,7 @@ atphy_status(struct mii_softc *sc)
 static void
 atphy_reset(struct mii_softc *sc)
 {
+	struct atphy_softc *asc = (struct atphy_softc *)sc;
 	uint16_t reg;
 	int i;
 
@@ -385,6 +437,15 @@ atphy_reset(struct mii_softc *sc)
 		PHY_READ(sc, MII_BMCR, &reg);
 		if ((reg & BMCR_RESET) == 0)
 			break;
+	}
+
+	if (asc->rgmii_tx_internal_delay) {
+		PHY_WRITE(sc, ATPHY_DEBUG_PORT_ADDR, 0x05);
+		PHY_WRITE(sc, ATPHY_DEBUG_PORT_DATA, ATPHY_RGMII_TX_CLK_DLY);
+	}
+	if (asc->rgmii_rx_internal_delay) {
+		PHY_WRITE(sc, ATPHY_DEBUG_PORT_ADDR, 0x00);
+		PHY_WRITE(sc, ATPHY_DEBUG_PORT_DATA, ATPHY_RGMII_RX_CLK_DLY);
 	}
 }
 
