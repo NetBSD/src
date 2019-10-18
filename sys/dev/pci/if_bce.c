@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.54 2019/10/18 04:09:02 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.55 2019/10/18 23:06:57 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.54 2019/10/18 04:09:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.55 2019/10/18 23:06:57 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -63,8 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.54 2019/10/18 04:09:02 msaitoh Exp $");
 
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
-#include <dev/mii/miidevs.h>
-#include <dev/mii/brgphyreg.h>
 
 #include <dev/pci/if_bcereg.h>
 
@@ -653,7 +651,7 @@ bce_watchdog(struct ifnet *ifp)
 {
 	struct bce_softc *sc = ifp->if_softc;
 
-	aprint_error_dev(sc->bce_dev, "device timeout\n");
+	device_printf(sc->bce_dev, "device timeout\n");
 	ifp->if_oerrors++;
 
 	(void) bce_init(ifp);
@@ -1476,9 +1474,11 @@ static void
 bce_tick(void *v)
 {
 	struct bce_softc *sc = v;
+	int s;
 
-	/* Tick the MII. */
+	s = splnet();
 	mii_tick(&sc->bce_mii);
+	splx(s);
 
 	callout_reset(&sc->bce_timeout, hz, bce_tick, sc);
 }
