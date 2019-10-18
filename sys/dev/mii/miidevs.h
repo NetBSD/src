@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs.h,v 1.156 2019/10/17 09:22:00 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.157 2019/10/18 20:42:10 maya Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
@@ -101,7 +101,7 @@
 #define	MII_OUI_BROADCOM4	0x18c086	/* Broadcom Corporation */
 #define	MII_OUI_RENESAS	0x749050	/* Renesas */
 
-/* Unregisterd or wrong OUI */
+/* Unregistered or wrong OUI */
 #define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
 #define	MII_OUI_xxMYSON	0x00032d	/* Myson Technology */

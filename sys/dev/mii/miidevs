@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.158 2019/10/17 09:21:40 msaitoh Exp $
+$NetBSD: miidevs,v 1.159 2019/10/18 20:42:10 maya Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -94,7 +94,7 @@ oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
 oui RENESAS			0x749050	Renesas
 
-/* Unregisterd or wrong OUI */
+/* Unregistered or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
 oui yyAMD			0x000058	Advanced Micro Devices
 oui xxMYSON			0x00032d	Myson Technology
