@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.38 2019/10/12 06:31:04 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39 2019/10/18 16:26:38 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.38 2019/10/12 06:31:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2019/10/18 16:26:38 maxv Exp $");
 
 #include "opt_mtrr.h"
 
@@ -136,18 +136,10 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	struct switchframe *sf;
 	vaddr_t uv;
 
+	KASSERT(l1 == curlwp || l1 == &lwp0);
+
 	pcb1 = lwp_getpcb(l1);
 	pcb2 = lwp_getpcb(l2);
-
-	/*
-	 * Sync the PCB before we copy it.
-	 */
-	if (l1 == curlwp) {
-		KASSERT(pcb1 == curpcb);
-		savectx(pcb1);
-	} else {
-		KASSERT(l1 == &lwp0);
-	}
 
 	/* Copy the PCB from parent, except the FPU state. */
 	memcpy(pcb2, pcb1, offsetof(struct pcb, pcb_savefpu));
