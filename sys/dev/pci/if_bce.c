@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.55 2019/10/18 23:06:57 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.56 2019/10/18 23:08:29 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.55 2019/10/18 23:06:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.56 2019/10/18 23:08:29 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -420,6 +420,8 @@ bce_attach(device_t parent, device_t self, void *aux)
 	ifp->if_init = bce_init;
 	ifp->if_stop = bce_stop;
 	IFQ_SET_READY(&ifp->if_snd);
+
+	sc->ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
 
 	/* Initialize our media structures and probe the MII. */
 
@@ -918,10 +920,15 @@ bce_init(struct ifnet *ifp)
 	sc->bce_txsnext = 0;
 	sc->bce_txin = 0;
 
-	/* enable crc32 generation */
+	/* enable crc32 generation and set proper LED modes */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL,
 	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) |
-	    BCE_EMC_CG);
+	    BCE_EMC_CRC32_ENAB | BCE_EMC_LED);
+
+	/* reset or clear powerdown control bit  */
+	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL,
+	    bus_space_read_4(sc->bce_btag, sc->bce_bhandle, BCE_MACCTL) &
+	    ~BCE_EMC_PDOWN);
 
 	/* setup DMA interrupt control */
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMAI_CTL, 1 << 24);	/* MAGIC */
