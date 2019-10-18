@@ -1,4 +1,4 @@
-/*	$NetBSD: pxe.h,v 1.7 2019/05/28 08:59:34 msaitoh Exp $	*/
+/*	$NetBSD: pxe.h,v 1.8 2019/10/18 04:13:56 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Alfred Perlstein <alfred@freebsd.org>
@@ -140,7 +140,7 @@ typedef struct {
 	ADDR32_t	ProtocolIni;	/* Phys addr of a copy of the
 					   driver module */
 	uint8_t		reserved[8];
-} __packed t_PXENV_UNDI_INITALIZE;
+} __packed t_PXENV_UNDI_INITIALIZE;
 
 
 #define	MAXNUM_MCADDR		8
@@ -219,7 +219,7 @@ typedef struct {
 #define	PXENV_UNDI_SET_STATION_ADDRESS	0x000A
 typedef struct {
 	PXENV_STATUS_t	Status;
-	MAC_ADDR	StationAddress;		/* Temp MAC addres to use */
+	MAC_ADDR	StationAddress;		/* Temp MAC address to use */
 } __packed t_PXENV_UNDI_SET_STATION_ADDR;
 
 #define	PXENV_UNDI_SET_PACKET_FILTER	0x000B
@@ -345,7 +345,7 @@ typedef struct {
 #	define PXENV_UNDI_ISR_OUT_NOT_OUTS	1
 
 	/*
-	 * one of these will bre returnd for PXEND_UNDI_ISR_IN_PROCESS
+	 * one of these will be returned for PXEND_UNDI_ISR_IN_PROCESS
 	 * and PXENV_UNDI_ISR_IN_GET_NEXT
 	 */
 #	define PXENV_UNDI_ISR_OUT_DONE		0
