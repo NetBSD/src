@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.213 2019/10/16 07:41:28 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.214 2019/10/18 04:33:53 ozaki-r Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.213 2019/10/16 07:41:28 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.214 2019/10/18 04:33:53 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1549,6 +1549,8 @@ sysctl_net_inet6_ip6_temppltime(SYSCTLFN_ARGS)
 		return EINVAL;
 
 	ip6_temp_preferred_lifetime = pltime;
+
+	in6_tmpaddrtimer_schedule();
 
 	return 0;
 }

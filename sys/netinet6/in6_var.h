@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_var.h,v 1.101 2019/10/16 07:40:40 ozaki-r Exp $	*/
+/*	$NetBSD: in6_var.h,v 1.102 2019/10/18 04:33:53 ozaki-r Exp $	*/
 /*	$KAME: in6_var.h,v 1.81 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -733,6 +733,8 @@ struct in6pcb;
 #define	LLTABLE6(ifp)	(((struct in6_ifextra *)(ifp)->if_afdata[AF_INET6])->lltable)
 
 void	in6_sysctl_multicast_setup(struct sysctllog **);
+
+void	in6_tmpaddrtimer_schedule(void);
 
 #endif /* _KERNEL */
 

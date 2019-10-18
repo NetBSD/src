@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_ifattach.c,v 1.116 2019/10/16 07:40:40 ozaki-r Exp $	*/
+/*	$NetBSD: in6_ifattach.c,v 1.117 2019/10/18 04:33:53 ozaki-r Exp $	*/
 /*	$KAME: in6_ifattach.c,v 1.124 2001/07/18 08:32:51 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.116 2019/10/16 07:40:40 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_ifattach.c,v 1.117 2019/10/18 04:33:53 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,6 @@ static int get_ifid(struct ifnet *, struct ifnet *, struct in6_addr *);
 static int in6_ifattach_linklocal(struct ifnet *, struct ifnet *);
 static int in6_ifattach_loopback(struct ifnet *);
 
-static void in6_tmpaddrtimer_schedule(void);
 static void in6_tmpaddrtimer(void *);
 
 #define EUI64_GBIT	0x01
@@ -861,7 +860,7 @@ in6_tmpaddrtimer_init(void)
 	in6_tmpaddrtimer_schedule();
 }
 
-static void
+void
 in6_tmpaddrtimer_schedule(void)
 {
 
