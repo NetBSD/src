@@ -1,4 +1,4 @@
-/* $NetBSD: piixpcib.c,v 1.23 2019/10/18 01:00:25 manu Exp $ */
+/* $NetBSD: piixpcib.c,v 1.24 2019/10/18 15:00:15 hannken Exp $ */
 
 /*-
  * Copyright (c) 2004, 2006 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.23 2019/10/18 01:00:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.24 2019/10/18 15:00:15 hannken Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: piixpcib.c,v 1.23 2019/10/18 01:00:25 manu Exp $");
 
 #include <machine/frame.h>
 #include <machine/bioscall.h>
+#include <machine/bootinfo.h>
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
