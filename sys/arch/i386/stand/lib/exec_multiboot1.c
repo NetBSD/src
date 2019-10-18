@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot1.c,v 1.2 2019/10/18 01:04:24 manu Exp $ */
+/* $NetBSD: exec_multiboot1.c,v 1.3 2019/10/18 01:09:46 manu Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -42,6 +42,80 @@
 
 extern struct btinfo_modulelist *btinfo_modulelist;
 
+void
+ksyms_addr_set(void *ehdr, void *shdr, void *symbase)
+{
+	int class;
+	Elf32_Ehdr *ehdr32 = NULL;
+	Elf64_Ehdr *ehdr64 = NULL;
+	uint64_t shnum;
+	int i;
+
+	class = ((Elf_Ehdr *)ehdr)->e_ident[EI_CLASS];
+
+        switch (class) {
+        case ELFCLASS32:     
+                ehdr32 = (Elf32_Ehdr *)ehdr;
+                shnum = ehdr32->e_shnum;
+                break;
+        case ELFCLASS64:
+                ehdr64 = (Elf64_Ehdr *)ehdr;
+                shnum = ehdr64->e_shnum;
+                break;
+        default:        
+		panic("Unexpected ELF class");
+		break;
+        }
+
+	for (i = 0; i < shnum; i++) {
+		Elf64_Shdr *shdrp64 = NULL;
+		Elf32_Shdr *shdrp32 = NULL;
+		uint64_t shtype, shaddr, shsize, shoffset;
+
+		switch(class) {
+		case ELFCLASS64:
+			shdrp64 = &((Elf64_Shdr *)shdr)[i];	
+			shtype = shdrp64->sh_type;
+			shaddr = shdrp64->sh_addr;
+			shsize = shdrp64->sh_size;
+			shoffset = shdrp64->sh_offset;
+			break;
+		case ELFCLASS32:
+			shdrp32 = &((Elf32_Shdr *)shdr)[i];	
+			shtype = shdrp32->sh_type;
+			shaddr = shdrp32->sh_addr;
+			shsize = shdrp32->sh_size;
+			shoffset = shdrp32->sh_offset;
+			break;
+		default:
+			panic("Unexpected ELF class");
+			break;
+		}
+
+		if (shtype != SHT_SYMTAB && shtype != SHT_STRTAB)
+			continue;
+
+		if (shaddr != 0 || shsize == 0)
+			continue;
+
+		shaddr = (uint64_t)(uintptr_t)(symbase + shoffset);
+
+		switch(class) {
+		case ELFCLASS64:
+			shdrp64->sh_addr = shaddr;
+			break;
+		case ELFCLASS32:
+			shdrp32->sh_addr = shaddr;
+			break;
+		default:
+			panic("Unexpected ELF class");
+			break;
+		}
+	}
+
+	return;
+}
+
 static int
 exec_multiboot1(struct multiboot_package *mbp)
 {
@@ -84,6 +158,38 @@ exec_multiboot1(struct multiboot_package *mbp)
 		mbi->mi_mods_count = btinfo_modulelist->num;
 		mbi->mi_mods_addr = vtophys(mbm);
 	}
+
+	if (mbp->mbp_marks[MARK_SYM] != 0) {
+		Elf32_Ehdr ehdr;
+		void *shbuf;
+		size_t shlen;
+		u_long shaddr;
+
+		pvbcopy((void *)mbp->mbp_marks[MARK_SYM], &ehdr, sizeof(ehdr));
+
+		if (memcmp(&ehdr.e_ident, ELFMAG, SELFMAG) != 0)
+			goto skip_ksyms;
+
+		shaddr = mbp->mbp_marks[MARK_SYM] + ehdr.e_shoff;
+
+		shlen = ehdr.e_shnum * ehdr.e_shentsize;
+		shbuf = alloc(shlen);
+
+		pvbcopy((void *)shaddr, shbuf, shlen);
+		ksyms_addr_set(&ehdr, shbuf,
+		    (void *)(KERNBASE + mbp->mbp_marks[MARK_SYM]));
+		vpbcopy(shbuf, (void *)shaddr, shlen);
+
+		dealloc(shbuf, shlen);
+
+		mbi->mi_elfshdr_num = ehdr.e_shnum;
+		mbi->mi_elfshdr_size = ehdr.e_shentsize;
+		mbi->mi_elfshdr_addr = shaddr;
+		mbi->mi_elfshdr_shndx = ehdr.e_shstrndx;
+
+		mbi->mi_flags |= MULTIBOOT_INFO_HAS_ELF_SYMS;
+	}
+skip_ksyms:
 
 #ifdef DEBUG
 	printf("Start @ 0x%lx [%ld=0x%lx-0x%lx]...\n",
