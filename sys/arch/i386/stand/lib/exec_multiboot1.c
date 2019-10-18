@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot1.c,v 1.1 2019/09/13 02:19:46 manu Exp $ */
+/* $NetBSD: exec_multiboot1.c,v 1.2 2019/10/18 01:04:24 manu Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -126,7 +126,7 @@ probe_multiboot1(const char *path)
 	if (readen < sizeof(struct multiboot_header))
 		goto out;
 
-	for (i = 0; i < readen; i += 8) {
+	for (i = 0; i < readen; i += 4) {
 		struct multiboot_header *mbh;
 
 		mbh = (struct multiboot_header *)(buf + i);
