@@ -1,4 +1,4 @@
-/*	$NetBSD: pm.c,v 1.15 2018/01/24 05:35:58 riastradh Exp $	*/
+/*	$NetBSD: pm.c,v 1.16 2019/10/18 04:09:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.15 2018/01/24 05:35:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pm.c,v 1.16 2019/10/18 04:09:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -320,7 +320,7 @@ pm_common_init(void)
 	pm_stdscreen.capabilities = ri->ri_caps;
 
 	/*
-	 * Initalize the VDAC.
+	 * Initialize the VDAC.
 	 */
 	*(uint8_t *)MIPS_PHYS_TO_KSEG1(KN01_PHYS_COLMASK_START) = 0xff;
 	wbflush();

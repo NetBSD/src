@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.16 2019/08/01 13:43:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.17 2019/10/18 04:09:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3792,7 +3792,7 @@ ena_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* initialize rings basic information */
-	device_printf(self, "initalize %d io queues\n", io_queue_num);
+	device_printf(self, "initialize %d io queues\n", io_queue_num);
 	ena_init_io_rings(adapter);
 
 	/* setup network interface */
