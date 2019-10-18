@@ -1,4 +1,4 @@
-/* $NetBSD: exec_multiboot2.c,v 1.2 2019/09/15 23:55:26 manu Exp $ */
+/* $NetBSD: exec_multiboot2.c,v 1.3 2019/10/18 01:15:54 manu Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -976,9 +976,10 @@ mbi_elf_sections(struct multiboot_package *mbp, void *buf)
 	size_t len = 0;
 	struct multiboot_tag_elf_sections *mbt = buf;
 	Elf_Ehdr ehdr;
+	int class;
 	Elf32_Ehdr *ehdr32 = NULL;
 	Elf64_Ehdr *ehdr64 = NULL;
-	uint32_t shnum, shentsize, shstrndx, shoff;
+	uint64_t shnum, shentsize, shstrndx, shoff;
 	size_t shdr_len;
 
 	if (mbp->mbp_marks[MARK_SYM] == 0)
@@ -992,7 +993,9 @@ mbi_elf_sections(struct multiboot_package *mbp, void *buf)
 	if (memcmp(&ehdr.e_ident, ELFMAG, SELFMAG) != 0)
 		goto out;
 
-	switch (ehdr.e_ident[EI_CLASS]) {
+	class = ehdr.e_ident[EI_CLASS];
+
+	switch (class) {
 	case ELFCLASS32:
 		ehdr32 = (Elf32_Ehdr *)&ehdr;
 		shnum = ehdr32->e_shnum;
@@ -1017,8 +1020,7 @@ mbi_elf_sections(struct multiboot_package *mbp, void *buf)
 
 	len = sizeof(*mbt) + shdr_len;
 	if (mbt) {
-		int fd = -1;
-		int ret = -1;
+		char *shdr = (char *)mbp->mbp_marks[MARK_SYM] + shoff;
 
 		mbt->type = MULTIBOOT_TAG_TYPE_ELF_SECTIONS;
 		mbt->size = len;
@@ -1026,26 +1028,16 @@ mbi_elf_sections(struct multiboot_package *mbp, void *buf)
 		mbt->entsize = shentsize;
 		mbt->shndx = shstrndx;
 		
-		if ((fd = open(mbp->mbp_file, 0)) == -1)
-			goto out_read;
+		pvbcopy((void *)shdr, mbt + 1, shdr_len);
 
-		if (lseek(fd, shoff, SEEK_SET) != shoff)
-			goto out_read;
- 
-		if (read(fd, mbt + 1,  shdr_len) != shdr_len)
-			goto out_read;
-
-		ret = 0;
-out_read:
-		if (fd != -1)
-			close(fd);
-
-		if (ret != 0) {
-			printf("Error reading ELF sections from %s\n",
-			    mbp->mbp_file);
-			len = 0;
-		}
+		/*
+		 * Adjust sh_addr for symtab and strtab
+		 * section that have been loaded.
+		 */
+		ksyms_addr_set(&ehdr, mbt + 1,
+		    (void *)mbp->mbp_marks[MARK_SYM]);
 	}
+
 out:
 	return roundup(len, MULTIBOOT_TAG_ALIGN);
 }
