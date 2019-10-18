@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_vfsops.c,v 1.107 2017/04/17 08:32:00 hannken Exp $	*/
+/*	$NetBSD: ntfs_vfsops.c,v 1.108 2019/10/18 08:18:40 hannken Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.107 2017/04/17 08:32:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_vfsops.c,v 1.108 2019/10/18 08:18:40 hannken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -322,6 +322,7 @@ ntfs_mountfs(struct vnode *devvp, struct mount *mp, struct ntfs_args *argsp, str
 	dev_t dev = devvp->v_rdev;
 	int error, i;
 	struct vnode *vp;
+	struct vnode_iterator *marker;
 
 	ntmp = NULL;
 
@@ -471,9 +472,13 @@ out1:
 		if (ntmp->ntm_sysvn[i])
 			vrele(ntmp->ntm_sysvn[i]);
 
-	if (vflush(mp, NULLVP, 0)) {
-		dprintf(("ntfs_mountfs: vflush failed\n"));
+	vfs_vnode_iterator_init(mp, &marker);
+	while ((vp = vfs_vnode_iterator_next(marker, NULL, NULL))) {
+		if (vrecycle(vp))
+			continue;
+		panic("%s: cannot recycle vnode %p", __func__, vp);
 	}
+	vfs_vnode_iterator_destroy(marker);
 out:
 	spec_node_setmountedfs(devvp, NULL);
 	if (bp)
