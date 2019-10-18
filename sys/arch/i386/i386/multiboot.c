@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot.c,v 1.24 2018/11/08 06:23:48 msaitoh Exp $	*/
+/*	$NetBSD: multiboot.c,v 1.25 2019/10/18 01:19:00 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.24 2018/11/08 06:23:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot.c,v 1.25 2019/10/18 01:19:00 manu Exp $");
 
 #include "opt_multiboot.h"
 
@@ -302,14 +302,14 @@ copy_syms(struct multiboot_info *mi)
 
 		shdrp = &((Elf32_Shdr *)mi->mi_elfshdr_addr)[i];
 
-		if ((shdrp->sh_type & SHT_SYMTAB) &&
+		if ((shdrp->sh_type == SHT_SYMTAB) &&
 		    shdrp->sh_link != SHN_UNDEF) {
 			Elf32_Shdr *shdrp2;
 
 			shdrp2 = &((Elf32_Shdr *)mi->mi_elfshdr_addr)
 			    [shdrp->sh_link];
 
-			if (shdrp2->sh_type & SHT_STRTAB) {
+			if (shdrp2->sh_type == SHT_STRTAB) {
 				symtabp = shdrp;
 				strtabp = shdrp2;
 			}
