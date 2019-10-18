@@ -1,4 +1,4 @@
-/*	$NetBSD: icp.c,v 1.31 2012/10/27 17:18:20 chs Exp $	*/
+/*	$NetBSD: icp.c,v 1.32 2019/10/18 04:09:02 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2003 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.31 2012/10/27 17:18:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: icp.c,v 1.32 2019/10/18 04:09:02 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,7 +207,7 @@ icp_init(struct icp_softc *icp, const char *intrstr)
 #endif
 
 	/*
-	 * Initalize the controller.
+	 * Initialize the controller.
 	 */
 	if (!icp_cmd(icp, ICP_SCREENSERVICE, ICP_INIT, 0, 0, 0)) {
 		aprint_error_dev(icp->icp_dv, "screen service init error %d\n",

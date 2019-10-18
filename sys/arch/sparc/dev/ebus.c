@@ -1,4 +1,4 @@
-/*	$NetBSD: ebus.c,v 1.35 2014/10/18 08:33:26 snj Exp $ */
+/*	$NetBSD: ebus.c,v 1.36 2019/10/18 04:09:02 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1999, 2000 Matthew R. Green
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.35 2014/10/18 08:33:26 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ebus.c,v 1.36 2019/10/18 04:09:02 msaitoh Exp $");
 
 #if defined(DEBUG) && !defined(EBUS_DEBUG)
 #define EBUS_DEBUG
@@ -211,7 +211,7 @@ ebus_init_wiring_table(struct ebus_softc *sc)
 	char *model;
 
 	if (wiring_map != NULL) {
-		printf("%s: global ebus wiring map already initalized\n",
+		printf("%s: global ebus wiring map already initialized\n",
 		    device_xname(sc->sc_dev));
 		return (0);
 	}

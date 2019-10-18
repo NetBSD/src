@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.53 2019/10/17 15:57:56 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.54 2019/10/18 04:09:02 msaitoh Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.53 2019/10/17 15:57:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.54 2019/10/18 04:09:02 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -959,7 +959,7 @@ bce_init(struct ifnet *ifp)
 	bus_space_write_4(sc->bce_btag, sc->bce_bhandle, BCE_DMA_RXADDR,
 	    sc->bce_ring_map->dm_segs[0].ds_addr + 0x40000000);		/* MAGIC */
 
-	/* Initalize receive descriptors */
+	/* Initialize receive descriptors */
 	for (i = 0; i < BCE_NRXDESC; i++) {
 		if (sc->bce_cdata.bce_rx_chain[i] == NULL) {
 			if ((error = bce_add_rxbuf(sc, i)) != 0) {
