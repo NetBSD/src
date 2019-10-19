@@ -1,4 +1,4 @@
-/*	$NetBSD: kinit.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: kinit.c,v 1.3 2019/10/19 15:55:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -711,18 +711,18 @@ get_new_tickets(krb5_context context,
     }
 
     if (ticket_life != 0) {
-	if (labs(cred.times.endtime - cred.times.starttime - ticket_life) > 30) {
+	krb5_deltat d = cred.times.endtime - cred.times.starttime;
+	if (llabs(d - ticket_life) > 30) {
 	    char life[64];
-	    unparse_time_approx(cred.times.endtime - cred.times.starttime,
-				life, sizeof(life));
+	    unparse_time_approx(d, life, sizeof(life));
 	    krb5_warnx(context, N_("NOTICE: ticket lifetime is %s", ""), life);
 	}
     }
     if (renew_life) {
-	if (labs(cred.times.renew_till - cred.times.starttime - renew) > 30) {
+	krb5_deltat d = cred.times.renew_till - cred.times.starttime;
+	if (llabs(d - renew) > 30) {
 	    char life[64];
-	    unparse_time_approx(cred.times.renew_till - cred.times.starttime,
-				life, sizeof(life));
+	    unparse_time_approx(d, life, sizeof(life));
 	    krb5_warnx(context,
 		       N_("NOTICE: ticket renewable lifetime is %s", ""),
 		       life);
