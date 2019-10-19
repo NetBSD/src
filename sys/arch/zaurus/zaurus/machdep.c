@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.42 2019/07/16 14:41:49 skrll Exp $	*/
+/*	$NetBSD: machdep.c,v 1.43 2019/10/19 14:42:30 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.42 2019/07/16 14:41:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2019/10/19 14:42:30 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -772,7 +772,7 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	/* Tell the user about the memory */
-	printf("physmemory: %d pages at 0x%08lx -> 0x%08lx\n", physmem,
+	printf("physmemory: %lu pages at 0x%08lx -> 0x%08lx\n", physmem,
 	    physical_start, physical_end - 1);
 #endif
 
