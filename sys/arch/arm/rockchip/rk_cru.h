@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.4 2018/09/01 19:35:53 jmcneill Exp $ */
+/* $NetBSD: rk_cru.h,v 1.5 2019/10/19 12:55:21 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -265,6 +265,15 @@ const char *rk_cru_gate_get_parent(struct rk_cru_softc *,
 		.u.gate.reg = (_reg),				\
 		.u.gate.mask = __BIT(_bit),			\
 		.enable = rk_cru_gate_enable,			\
+		.get_parent = rk_cru_gate_get_parent,		\
+	}
+
+#define	RK_SECURE_GATE(_id, _name, _pname)			\
+	{							\
+		.id = (_id),					\
+		.type = RK_CRU_GATE,				\
+		.base.name = (_name),				\
+		.u.gate.parent = (_pname),			\
 		.get_parent = rk_cru_gate_get_parent,		\
 	}
 
