@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.234 2019/09/28 16:02:12 jmcneill Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.235 2019/10/19 06:36:47 tnn Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.234 2019/09/28 16:02:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.235 2019/10/19 06:36:47 tnn Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -188,8 +188,8 @@ mbinit(void)
 	    NULL, IPL_VM, mb_ctor, NULL, NULL);
 	KASSERT(mb_cache != NULL);
 
-	mcl_cache = pool_cache_init(mclbytes, 0, 0, 0, "mclpl", NULL,
-	    IPL_VM, NULL, NULL, NULL);
+	mcl_cache = pool_cache_init(mclbytes, COHERENCY_UNIT, 0, 0, "mclpl",
+	    NULL, IPL_VM, NULL, NULL, NULL);
 	KASSERT(mcl_cache != NULL);
 
 	pool_cache_set_drain_hook(mb_cache, mb_drain, NULL);
