@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.13 2018/12/21 08:01:01 ryo Exp $ */
+/* $NetBSD: cpu.h,v 1.14 2019/10/19 18:04:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -126,8 +126,8 @@ void cpu_mpstart(void);
 void cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];
-extern volatile u_int arm_cpu_hatched;	/* MULTIPROCESSOR */
 extern uint64_t cpu_mpidr[];		/* MULTIPROCESSOR */
+bool cpu_hatched_p(u_int);		/* MULTIPROCESSOR */
 
 #define CPU_INFO_ITERATOR	cpuid_t
 #ifdef MULTIPROCESSOR
