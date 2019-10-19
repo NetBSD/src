@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.22 2019/10/14 22:53:05 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.23 2019/10/19 18:04:26 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.22 2019/10/14 22:53:05 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.23 2019/10/19 18:04:26 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -69,8 +69,9 @@ static void cpu_setup_sysctl(device_t, struct cpu_info *);
 #ifdef MULTIPROCESSOR
 uint64_t cpu_mpidr[MAXCPUS];
 
-volatile u_int arm_cpu_hatched __cacheline_aligned = 0;
-volatile uint32_t arm_cpu_mbox __cacheline_aligned = 0;
+volatile u_int aarch64_cpu_mbox[MAXCPUS] __cacheline_aligned = { 0 };
+#define CPU_MBOX_HATCHED	__BIT(0)
+#define	CPU_MBOX_START		__BIT(1)
 u_int arm_cpu_max = 1;
 
 static kmutex_t cpu_hatch_lock;
@@ -126,7 +127,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		/* ci_id is stored by own cpus when hatching */
 
 		cpu_info[ncpu] = ci;
-		if ((arm_cpu_hatched & __BIT(unit)) == 0) {
+		if (cpu_hatched_p(unit) == 0) {
 			ci->ci_dev = dv;
 			dv->dv_private = ci;
 			ci->ci_index = -1;
@@ -499,27 +500,35 @@ cpu_setup_sysctl(device_t dv, struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
+	u_int cpuno;
+
 	if ((boothowto & RB_MD1) != 0)
 		return;
 
 	mutex_init(&cpu_hatch_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
+	VPRINTF("%s: starting secondary processors\n", __func__);
 
 	/* send mbox to have secondary processors do cpu_hatch() */
-	atomic_or_32(&arm_cpu_mbox, arm_cpu_hatched);
+	for (cpuno = 1; cpuno < ncpu; cpuno++) {
+		if (cpu_hatched_p(cpuno) == false)
+			continue;
+		atomic_or_uint(&aarch64_cpu_mbox[cpuno], CPU_MBOX_START);
+	}
 	__asm __volatile ("sev; sev; sev");
 
 	/* wait all cpus have done cpu_hatch() */
-	while (membar_consumer(), arm_cpu_mbox & arm_cpu_hatched) {
-		__asm __volatile ("wfe");
+	for (cpuno = 1; cpuno < ncpu; cpuno++) {
+		if (cpu_hatched_p(cpuno) == 0)
+			continue;
+		while (membar_consumer(), aarch64_cpu_mbox[cpuno] & CPU_MBOX_START) {
+			__asm __volatile ("wfe");
+		}
+		/* Add processor to kcpuset */
+		kcpuset_set(kcpuset_attached, cpuno);
 	}
 
 	VPRINTF("%s: secondary processors hatched\n", __func__);
-
-	/* add available processors to kcpuset */
-	uint32_t mbox = arm_cpu_hatched;
-	kcpuset_export_u32(kcpuset_attached, &mbox, sizeof(mbox));
 }
 
 void
@@ -549,12 +558,20 @@ cpu_hatch(struct cpu_info *ci)
 #endif
 
 	/*
-	 * clear my bit of arm_cpu_mbox to tell cpu_boot_secondary_processors().
+	 * clear my bit of aarch64_cpu_mbox to tell cpu_boot_secondary_processors().
 	 * there are cpu0,1,2,3, and if cpu2 is unresponsive,
 	 * ci_index are each cpu0=0, cpu1=1, cpu2=undef, cpu3=2.
 	 * therefore we have to use device_unit instead of ci_index for mbox.
 	 */
-	atomic_and_32(&arm_cpu_mbox, ~__BIT(device_unit(ci->ci_dev)));
+	const u_int cpuno = device_unit(ci->ci_dev);
+	atomic_and_uint(&aarch64_cpu_mbox[cpuno], ~(u_int)CPU_MBOX_START);
 	__asm __volatile ("sev; sev; sev");
+}
+
+bool
+cpu_hatched_p(u_int cpuindex)
+{
+	membar_consumer();
+	return (aarch64_cpu_mbox[cpuindex] & CPU_MBOX_HATCHED) != 0;
 }
 #endif /* MULTIPROCESSOR */
