@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.132 2019/09/29 06:51:45 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.133 2019/10/19 18:04:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.132 2019/09/29 06:51:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2019/10/19 18:04:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -130,7 +130,7 @@ cpu_attach(device_t dv, cpuid_t id)
 		ci->ci_undefsave[2] = cpu_info_store.ci_undefsave[2];
 
 		cpu_info[unit] = ci;
-		if ((arm_cpu_hatched & __BIT(unit)) == 0) {
+		if (cpu_hatched_p(unit) == false) {
 			ci->ci_dev = dv;
 			dv->dv_private = ci;
 			aprint_naive(": disabled\n");
@@ -237,6 +237,13 @@ cpu_attach(device_t dv, cpuid_t id)
 #endif
 
 	vfp_attach(ci);		/* XXX SMP */
+}
+
+bool
+cpu_hatched_p(u_int cpuindex)
+{
+	membar_consumer();
+	return (arm_cpu_hatched & __BIT(cpuindex)) != 0;
 }
 
 enum cpu_class {
