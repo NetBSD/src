@@ -219,7 +219,7 @@ AdCreateTableHeader (
      * makes it easier to rename the disassembled ASL file if needed.
      */
     AcpiOsPrintf (
-        "DefinitionBlock (\"\", \"%4.4s\", %hu, \"%.6s\", \"%.8s\", 0x%8.8X)\n",
+        "DefinitionBlock (\"\", \"%4.4s\", %hhu, \"%.6s\", \"%.8s\", 0x%8.8X)\n",
         Table->Signature, Table->Revision,
         Table->OemId, Table->OemTableId, Table->OemRevision);
 }
