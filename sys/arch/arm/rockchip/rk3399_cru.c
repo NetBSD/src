@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.9 2019/08/04 17:09:07 tnn Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.10 2019/10/19 12:55:21 tnn Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.9 2019/08/04 17:09:07 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.10 2019/10/19 12:55:21 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -803,6 +803,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 	RK_GATE(RK3399_PCLK_SPI2, "pclk_rkspi2", "pclk_perilp1", CLKGATE_CON(23), 12),
 	RK_GATE(RK3399_PCLK_SPI4, "pclk_rkspi4", "pclk_perilp1", CLKGATE_CON(23), 13),
 	RK_GATE(RK3399_PCLK_SPI5, "pclk_rkspi5", "hclk_perilp1", CLKGATE_CON(34), 5),
+
+	/* Watchdog */
+	RK_SECURE_GATE(RK3399_PCLK_WDT, "pclk_wdt", "pclk_alive" /*, SECURE_CLKGATE_CON(3), 8 */),
 
 	/* PCIe */
 	RK_GATE(RK3399_ACLK_PERF_PCIE, "aclk_perf_pcie", "aclk_perihp", CLKGATE_CON(20), 2),
