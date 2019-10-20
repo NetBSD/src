@@ -1,4 +1,4 @@
-.\" $NetBSD: gpioctl.8,v 1.23 2019/10/20 09:41:53 tnn Exp $
+.\" $NetBSD: gpioctl.8,v 1.24 2019/10/20 17:45:08 wiz Exp $
 .\"
 .\" Copyright (c) 2009, 2010, 2011, 2013 Marc Balmer <marc@msys.ch>
 .\" Copyright (c) 2004 Alexander Yurchenko <grange@openbsd.org>
@@ -155,9 +155,7 @@ When executed with only the
 .Xr gpio 4
 device name as argument,
 .Nm
-reads information about the
-.Tn GPIO
-device and displays it.
+reads information about the GPIO device and displays it.
 At securelevel 0 the number of physically available pins is displayed,
 at higher securelevels the number of configured (set) pins is displayed.
 .Pp
