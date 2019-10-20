@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.24 2019/10/20 11:17:41 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.25 2019/10/20 14:03:51 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.24 2019/10/20 11:17:41 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.25 2019/10/20 14:03:51 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -69,9 +69,8 @@ static void cpu_setup_sysctl(device_t, struct cpu_info *);
 #ifdef MULTIPROCESSOR
 uint64_t cpu_mpidr[MAXCPUS];
 
-volatile u_int aarch64_cpu_mbox[MAXCPUS] __cacheline_aligned = { 0 };
-#define CPU_MBOX_HATCHED	__BIT(0)
-#define	CPU_MBOX_START		__BIT(1)
+volatile u_int aarch64_cpu_mbox[howmany(MAXCPUS, sizeof(u_int))] __cacheline_aligned = { 0 };
+volatile u_int aarch64_cpu_hatched[howmany(MAXCPUS, sizeof(u_int))] __cacheline_aligned = { 0 };
 u_int arm_cpu_max = 1;
 
 static kmutex_t cpu_hatch_lock;
@@ -500,7 +499,7 @@ cpu_setup_sysctl(device_t dv, struct cpu_info *ci)
 void
 cpu_boot_secondary_processors(void)
 {
-	u_int cpuno;
+	u_int n, bit;
 
 	if ((boothowto & RB_MD1) != 0)
 		return;
@@ -510,22 +509,20 @@ cpu_boot_secondary_processors(void)
 	VPRINTF("%s: starting secondary processors\n", __func__);
 
 	/* send mbox to have secondary processors do cpu_hatch() */
-	for (cpuno = 1; cpuno < ncpu; cpuno++) {
-		if (cpu_hatched_p(cpuno) == false)
-			continue;
-		atomic_or_uint(&aarch64_cpu_mbox[cpuno], CPU_MBOX_START);
-	}
+	for (n = 0; n < __arraycount(aarch64_cpu_mbox); n++)
+		atomic_or_uint(&aarch64_cpu_mbox[n], aarch64_cpu_hatched[n]);
 	__asm __volatile ("sev; sev; sev");
 
 	/* wait all cpus have done cpu_hatch() */
-	for (cpuno = 1; cpuno < ncpu; cpuno++) {
-		if (cpu_hatched_p(cpuno) == 0)
-			continue;
-		while (membar_consumer(), aarch64_cpu_mbox[cpuno] & CPU_MBOX_START) {
+	for (n = 0; n < __arraycount(aarch64_cpu_mbox); n++) {
+		while (membar_consumer(), aarch64_cpu_mbox[n] & aarch64_cpu_hatched[n]) {
 			__asm __volatile ("wfe");
 		}
-		/* Add processor to kcpuset */
-		kcpuset_set(kcpuset_attached, cpuno);
+		/* Add processors to kcpuset */
+		for (bit = 0; bit < 32; bit++) {
+			if (aarch64_cpu_hatched[n] & __BIT(bit))
+				kcpuset_set(kcpuset_attached, n * 32 + bit);
+		}
 	}
 
 	VPRINTF("%s: secondary processors hatched\n", __func__);
@@ -563,15 +560,18 @@ cpu_hatch(struct cpu_info *ci)
 	 * ci_index are each cpu0=0, cpu1=1, cpu2=undef, cpu3=2.
 	 * therefore we have to use device_unit instead of ci_index for mbox.
 	 */
-	const u_int cpuno = device_unit(ci->ci_dev);
-	atomic_and_uint(&aarch64_cpu_mbox[cpuno], ~(u_int)CPU_MBOX_START);
+	const u_int off = device_unit(ci->ci_dev) / 32;
+	const u_int bit = device_unit(ci->ci_dev) % 32;
+	atomic_and_uint(&aarch64_cpu_mbox[off], ~__BIT(bit));
 	__asm __volatile ("sev; sev; sev");
 }
 
 bool
 cpu_hatched_p(u_int cpuindex)
 {
-	aarch64_dcache_inv_range((vaddr_t)&aarch64_cpu_mbox[cpuindex], 4);
-	return (aarch64_cpu_mbox[cpuindex] & CPU_MBOX_HATCHED) != 0;
+	const u_int off = cpuindex / 32;
+	const u_int bit = cpuindex % 32;
+	membar_consumer();
+	return (aarch64_cpu_hatched[off] & __BIT(bit)) != 0;
 }
 #endif /* MULTIPROCESSOR */
