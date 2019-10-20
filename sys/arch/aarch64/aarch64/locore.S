@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.43 2019/10/20 12:25:43 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.44 2019/10/20 14:03:51 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.43 2019/10/20 12:25:43 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.44 2019/10/20 14:03:51 jmcneill Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -361,19 +361,16 @@ ENTRY_NP(cpu_mpstart)
 	mov	x1, xzr
 1:
 	add	x1, x1, #1
-	cmp	x1, MAXCPUS		/* cpuindex >= MAXCPUS ? */
+	cmp	x1, #MAXCPUS		/* cpuindex >= MAXCPUS ? */
 	bge	toomanycpus
 	ldr	x2, [x0, x1, lsl #3]	/* cpu_mpidr[cpuindex] */
 	cmp	x2, x3			/* == mpidr_el1 & MPIDR_AFF ? */
 	bne	1b
 
 	mov	x27, x1			/* x27 = cpuindex */
-	ADDR	x0, _C_LABEL(aarch64_cpu_mbox)
-	add	x28, x0, x27, lsl #2	/* x28 = &aarch64_cpu_mbox[cpuindex] */
 
 	/*
 	 * x27 = cpuindex
-	 * x28 = &aarch64_cpu_mbox[cpuindex]
 	 */
 
 	/* set stack pointer for boot */
@@ -445,21 +442,35 @@ mp_vstart:
 	mrs	x1, mpidr_el1
 	str	x1, [x0, #CI_MPIDR]	/* curcpu()->ci_mpidr = mpidr_el1 */
 
+	mov	x0, #32
+	udiv	x1, x27, x0
+	ADDR	x0, _C_LABEL(aarch64_cpu_hatched)
+	add	x28, x0, x1, lsl #2	/* x28 = &aarch64_cpu_hatched[cpuindex/32] */
+	mov	x0, #1
+	mov	x2, #32
+	msub	x1, x1, x2, x27
+	lsl	x29, x0, x1		/* x29 = 1 << (cpuindex % 32) */
+
 	/*
-	 * atomic_or_uint(&aarch64_cpu_mbox[cpuindex], 1)
+	 * atomic_or_uint(&aarch64_cpu_hatched[cpuindex/32], 1<<cpuindex%32)
 	 * to tell my activity to primary processor.
 	 */
 	mov	x0, x28
-	mov	x1, #1
+	mov	x1, x29
 	bl	_C_LABEL(atomic_or_uint)	/* hatched! */
 	dsb	sy
 	sev
 
+	mov	x0, #32
+	udiv	x1, x27, x0
+	ADDR	x0, _C_LABEL(aarch64_cpu_mbox)
+	add	x28, x0, x1, lsl #2	/* x28 = &aarch64_cpu_mbox[cpuindex/32] */
+
 	/* wait for the mailbox start bit to become true */
 1:
 	dmb	sy
-	ldr	x20, [x28]
-	tst	x20, #2
+	ldr	w20, [x28]
+	tst	w20, w29
 	bne	9f
 	wfe
 	b	1b
