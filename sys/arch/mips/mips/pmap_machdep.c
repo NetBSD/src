@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_machdep.c,v 1.25 2019/08/15 12:24:08 maxv Exp $	*/
+/*	$NetBSD: pmap_machdep.c,v 1.26 2019/10/20 08:29:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.25 2019/08/15 12:24:08 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_machdep.c,v 1.26 2019/10/20 08:29:38 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -643,7 +643,7 @@ pmap_copy_page(paddr_t src_pa, paddr_t dst_pa)
 	const register_t src_va = pmap_md_map_ephemeral_page(src_pg, false,
 	    VM_PROT_READ, &src_pte);
 
-	KASSERT(VM_PAGE_TO_MD(dst_pg)->mdpg_first.pv_pmap == NULL);
+	KASSERT(VM_PAGEMD_PVLIST_EMPTY_P(VM_PAGE_TO_MD(dst_pg)));
 	KASSERT(!VM_PAGEMD_EXECPAGE_P(VM_PAGE_TO_MD(dst_pg)));
 	const register_t dst_va = pmap_md_map_ephemeral_page(dst_pg, false,
 	    VM_PROT_READ|VM_PROT_WRITE, &dst_pte);
