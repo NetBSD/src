@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_segtab.c,v 1.10 2019/09/23 18:20:07 skrll Exp $	*/
+/*	$NetBSD: pmap_segtab.c,v 1.11 2019/10/20 07:22:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.10 2019/09/23 18:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_segtab.c,v 1.11 2019/10/20 07:22:51 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -139,10 +139,10 @@ pmap_check_stp(pmap_segtab_t *stp, const char *caller, const char *why)
 #ifdef DEBUG_NOISY
 			for (size_t j = i; j < PMAP_SEGTABSIZE; j++)
 				printf("%s: pm_segtab.seg_tab[%zu] = 0x%p\n",
-				       caller, j, stp->seg_tab[j]);
+				    caller, j, stp->seg_tab[j]);
 #endif
 			panic("%s: pm_segtab.seg_tab[%zu] != 0 (0x%p): %s",
-			      caller, i, stp->seg_tab[i], why);
+			    caller, i, stp->seg_tab[i], why);
 		}
 	}
 #endif
