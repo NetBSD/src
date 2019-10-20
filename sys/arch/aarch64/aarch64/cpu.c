@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.23 2019/10/19 18:04:26 jmcneill Exp $ */
+/* $NetBSD: cpu.c,v 1.24 2019/10/20 11:17:41 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.23 2019/10/19 18:04:26 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.24 2019/10/20 11:17:41 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -571,7 +571,7 @@ cpu_hatch(struct cpu_info *ci)
 bool
 cpu_hatched_p(u_int cpuindex)
 {
-	membar_consumer();
+	aarch64_dcache_inv_range((vaddr_t)&aarch64_cpu_mbox[cpuindex], 4);
 	return (aarch64_cpu_mbox[cpuindex] & CPU_MBOX_HATCHED) != 0;
 }
 #endif /* MULTIPROCESSOR */
