@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.133 2019/10/19 18:04:26 jmcneill Exp $	*/
+/*	$NetBSD: cpu.c,v 1.134 2019/10/20 14:25:14 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.133 2019/10/19 18:04:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2019/10/20 14:25:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -239,12 +239,14 @@ cpu_attach(device_t dv, cpuid_t id)
 	vfp_attach(ci);		/* XXX SMP */
 }
 
+#ifdef MULTIPROCESSOR
 bool
 cpu_hatched_p(u_int cpuindex)
 {
 	membar_consumer();
 	return (arm_cpu_hatched & __BIT(cpuindex)) != 0;
 }
+#endif
 
 enum cpu_class {
 	CPU_CLASS_NONE,
