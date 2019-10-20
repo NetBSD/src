@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.13 2019/10/20 07:54:29 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.14 2019/10/20 07:58:21 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -101,11 +101,11 @@ struct vm_page_md {
 #define	VM_PAGEMD_PVLIST_LOCK_INIT(mdpg)	__nothing
 #endif /* MULTIPROCESSOR || MODULAR */
 
-#define	VM_PAGEMD_PVLIST_LOCK(mdpg)		pmap_pvlist_lock(mdpg, 1)
-#define	VM_PAGEMD_PVLIST_READLOCK(mdpg)		pmap_pvlist_lock(mdpg, 0)
-#define	VM_PAGEMD_PVLIST_UNLOCK(mdpg)		pmap_pvlist_unlock(mdpg)
-#define	VM_PAGEMD_PVLIST_LOCKED_P(mdpg)		pmap_pvlist_locked_p(mdpg)
-#define	VM_PAGEMD_PVLIST_GEN(mdpg)		((mdpg)->mdpg_attrs >> 16)
+#define	VM_PAGEMD_PVLIST_LOCK(mdpg)	pmap_pvlist_lock(mdpg, 1)
+#define	VM_PAGEMD_PVLIST_READLOCK(mdpg)	pmap_pvlist_lock(mdpg, 0)
+#define	VM_PAGEMD_PVLIST_UNLOCK(mdpg)	pmap_pvlist_unlock(mdpg)
+#define	VM_PAGEMD_PVLIST_LOCKED_P(mdpg)	pmap_pvlist_locked_p(mdpg)
+#define	VM_PAGEMD_PVLIST_GEN(mdpg)	((mdpg)->mdpg_attrs >> 16)
 
 #ifdef _KERNEL
 #if defined(MULTIPROCESSOR) || defined(MODULAR)
