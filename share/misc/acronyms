@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.288 2019/09/09 12:42:52 sevan Exp $
+$NetBSD: acronyms,v 1.289 2019/10/20 21:53:42 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -94,6 +94,7 @@ CFV	call for votes
 CFY	calling for you
 CG	center of gravity
 CHANOPS	channel operator status
+CIA	central intelligence agency
 CMIIW	correct me if I'm wrong
 CNP	continued [in my] next post
 COB	close of business [day]
