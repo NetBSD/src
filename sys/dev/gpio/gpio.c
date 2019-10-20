@@ -1,4 +1,4 @@
-/* $NetBSD: gpio.c,v 1.63 2019/10/15 00:13:53 chs Exp $ */
+/* $NetBSD: gpio.c,v 1.64 2019/10/20 09:35:18 tnn Exp $ */
 /*	$OpenBSD: gpio.c,v 1.6 2006/01/14 12:33:49 grange Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.63 2019/10/15 00:13:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpio.c,v 1.64 2019/10/20 09:35:18 tnn Exp $");
 
 /*
  * General Purpose Input/Output framework.
@@ -722,9 +722,8 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 		req = data;
 
 		if (req->gp_name[0] != '\0')
-			pin = gpio_pinbyname(sc, req->gp_name);
-		else
-			pin = req->gp_pin;
+			req->gp_pin = gpio_pinbyname(sc, req->gp_name);
+		pin = req->gp_pin;
 
 		if (pin < 0 || pin >= sc->sc_npins)
 			return EINVAL;
@@ -736,6 +735,11 @@ gpio_ioctl(struct gpio_softc *sc, u_long cmd, void *data, int flag,
 
 		/* return read value */
 		req->gp_value = gpiobus_pin_read(gc, pin);
+		LIST_FOREACH(nm, &sc->sc_names, gp_next)
+			if (nm->gp_pin == pin) {
+				strlcpy(req->gp_name, nm->gp_name, GPIOMAXNAME);
+				break;
+			}
 		break;
 	case GPIOWRITE:
 		if ((flag & FWRITE) == 0)
