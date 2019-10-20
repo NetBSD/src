@@ -1,4 +1,4 @@
-/*	$NetBSD: vmpagemd.h,v 1.12 2019/07/12 10:39:12 skrll Exp $	*/
+/*	$NetBSD: vmpagemd.h,v 1.13 2019/10/20 07:54:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -75,14 +75,14 @@ typedef struct pv_entry {
 #define	VM_PAGEMD_UNCACHED	__BIT(4)	/* page is mapped uncached */
 #endif
 
+#define	VM_PAGEMD_REFERENCED_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_REFERENCED) != 0)
+#define	VM_PAGEMD_MODIFIED_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_MODIFIED) != 0)
+#define	VM_PAGEMD_POOLPAGE_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_POOLPAGE) != 0)
+#define	VM_PAGEMD_EXECPAGE_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_EXECPAGE) != 0)
 #ifdef PMAP_VIRTUAL_CACHE_ALIASES
 #define	VM_PAGEMD_CACHED_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_UNCACHED) == 0)
 #define	VM_PAGEMD_UNCACHED_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_UNCACHED) != 0)
 #endif
-#define	VM_PAGEMD_MODIFIED_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_MODIFIED) != 0)
-#define	VM_PAGEMD_REFERENCED_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_REFERENCED) != 0)
-#define	VM_PAGEMD_POOLPAGE_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_POOLPAGE) != 0)
-#define	VM_PAGEMD_EXECPAGE_P(mdpg)	(((mdpg)->mdpg_attrs & VM_PAGEMD_EXECPAGE) != 0)
 
 #endif /* !_MODULE */
 
