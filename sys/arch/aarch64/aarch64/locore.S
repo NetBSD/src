@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.42 2019/10/19 18:04:26 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.43 2019/10/20 12:25:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.42 2019/10/19 18:04:26 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.43 2019/10/20 12:25:43 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -379,9 +379,8 @@ ENTRY_NP(cpu_mpstart)
 	/* set stack pointer for boot */
 	mov	x1, #BOOT_AP_STACKSIZE
 	mul	x1, x1, x27
-	ADDR	x0, bootstk_cpus
-	sub	sp, x0, x1  /* sp = bootstk_cpus-(BOOT_AP_STACKSIZE*cpuindex) */
-
+	ADDR	x0, bootstk
+	add	sp, x0, x1  /* sp = bootstk + (BOOT_AP_STACKSIZE * cpuindex) */
 
 	bl	1f
 1:	CPU_DPRINTREG("PC               = ", lr)
@@ -1038,7 +1037,6 @@ bootstk:
 
 #ifdef MULTIPROCESSOR
 	.space	BOOT_AP_STACKSIZE * (MAXCPUS - 1)
-bootstk_cpus:
 #endif
 
 	.section ".init_pagetable", "aw", %nobits
