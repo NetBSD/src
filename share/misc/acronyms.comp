@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.293 2019/10/06 15:17:39 sevan Exp $
+$NetBSD: acronyms.comp,v 1.294 2019/10/20 21:53:42 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -241,6 +241,7 @@ CHFS	chip file system
 CHS	cylinder/head/sector
 CI	continuous integration
 CI	{common,component} interface
+CIA	confidentiality, integrity, availability
 CIDR	Classless Inter-Domain Routing
 CIF	common intermediate format
 CIFS	Common Internet File System
@@ -769,6 +770,7 @@ ISDN	integrated services digital network
 ISI	inter-symbol interference
 ISL	initial system load
 ISM	industrial, scientific, [and] medical
+ISMS	information system management system
 ISN	initial serial number
 ISO	International Standards Organization
 ISOC	Internet Society
