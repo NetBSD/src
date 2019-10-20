@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fcntl.c,v 1.1 2019/09/15 16:25:58 christos Exp $	*/
+/*	$NetBSD: t_fcntl.c,v 1.2 2019/10/20 16:02:11 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@ static const struct {
 	{ "/bin/sh", 0 },
 	{ "/dev/zero", 0 },
 	{ "/dev/null", 0 },
-	{ "/bin/chgrp", 0 },
+	{ "/sbin/chown", 0 },
 	{ "/", ENOENT },
 };
 
@@ -64,7 +64,7 @@ ATF_TC_BODY(getpath, tc)
 
 	for (size_t i = 0; i < __arraycount(files); i++) {
 		fd = open(files[i].name, O_RDONLY|O_NOFOLLOW);
-		ATF_REQUIRE(fd != -1);
+		ATF_REQUIRE_MSG(fd != -1, "Cannot open `%s'", files[i].name);
 		rv = fcntl(fd, F_GETPATH, path);
 		if (files[i].rv) {
 			ATF_REQUIRE_MSG(errno == files[i].rv,
