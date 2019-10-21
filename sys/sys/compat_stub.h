@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.18 2019/07/20 20:59:05 mrg Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.18.2.1 2019/10/21 20:06:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -231,7 +231,7 @@ MODULE_HOOK(uipc_socket_50_setopt1_hook, int,
     (int, struct socket *, const struct sockopt *));
 MODULE_HOOK(uipc_socket_50_getopt1_hook, int,
     (int, struct socket *, struct sockopt *));
-MODULE_HOOK(uipc_socket_50_sbts_hook, int, (int, struct mbuf **));
+MODULE_HOOK(uipc_socket_50_sbts_hook, int, (int, struct mbuf ***));
 
 /*
  * uipc_syscalls_50 compatibility
