@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.47 2018/12/01 14:05:33 maxv Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.47.4.1 2019/10/21 20:13:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.47 2018/12/01 14:05:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.47.4.1 2019/10/21 20:13:09 martin Exp $");
 
 #include "opt_dtrace.h"
 
@@ -466,7 +466,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 
 	ps = p->p_sigacts;
 	if (osa)
-		*osa = SIGACTION_PS(ps, signum);
+		sigaction_copy(osa, &SIGACTION_PS(ps, signum));
 	if (!nsa)
 		goto out;
 
@@ -476,7 +476,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 		goto out;
 	}
 
-	SIGACTION_PS(ps, signum) = *nsa;
+	sigaction_copy(&SIGACTION_PS(ps, signum), nsa);
 	ps->sa_sigdesc[signum].sd_tramp = tramp;
 	ps->sa_sigdesc[signum].sd_vers = vers;
 	sigminusset(&sigcantmask, &SIGACTION_PS(ps, signum).sa_mask);

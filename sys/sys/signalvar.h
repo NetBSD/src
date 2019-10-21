@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.93.2.2 2019/10/15 19:23:09 martin Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.93.2.3 2019/10/21 20:13:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -38,6 +38,10 @@
 #include <sys/queue.h>
 #include <sys/mutex.h>
 #include <sys/stdbool.h>
+
+#ifndef _KERNEL
+#include <string.h>     /* Required for memset(3) and memcpy(3) prototypes */
+#endif /* _KERNEL */
 
 /*
  * Kernel signal definitions and data structures,
@@ -91,6 +95,18 @@ struct sigctx {
  */
 #define SIGACTION(p, sig)	(p->p_sigacts->sa_sigdesc[(sig)].sd_sigact)
 #define	SIGACTION_PS(ps, sig)	(ps->sa_sigdesc[(sig)].sd_sigact)
+
+/*
+ * Copy a sigaction structure without padding.
+ */
+static __inline void
+sigaction_copy(struct sigaction *dst, const struct sigaction *src)
+{
+	memset(dst, 0, sizeof(*dst));
+	dst->_sa_u._sa_handler = src->_sa_u._sa_handler;
+	memcpy(&dst->sa_mask, &src->sa_mask, sizeof(dst->sa_mask));
+	dst->sa_flags = src->sa_flags;
+}
 
 /*
  * Signal properties and actions.
