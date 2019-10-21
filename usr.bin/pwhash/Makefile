@@ -1,9 +1,13 @@
-#	$NetBSD: Makefile,v 1.7 2009/04/14 22:15:25 lukem Exp $
+#	$NetBSD: Makefile,v 1.8 2019/10/21 02:36:48 jhigh Exp $
 #	from: @(#)Makefile    8.3 (Berkeley) 4/2/94
 
 .include <bsd.own.mk>
 
 PROG=	pwhash
+
+.if ( defined(MKARGON2) && ${MKARGON2} != "no" )
+CPPFLAGS+=	-DHAVE_ARGON2
+.endif
 
 CPPFLAGS+=-I${.CURDIR} -DLOGIN_CAP
 
