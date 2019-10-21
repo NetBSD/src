@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.30 2019/09/13 07:55:06 msaitoh Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.31 2019/10/21 08:22:06 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.30 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.31 2019/10/21 08:22:06 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -725,9 +725,7 @@ netdock_rxint(struct netdock_softc *sc)
 		len -= ETHER_CRC_LEN;
 
 		if ((regdata1 & 0x00ac) == 0) {
-			if (netdock_read(sc, len))
-				ifp->if_ipackets++;
-			else
+			if (netdock_read(sc, len) == 0)
 				ifp->if_ierrors++;
 		} else {
 			ifp->if_ierrors++;
