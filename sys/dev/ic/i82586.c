@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.85 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.86 2019/10/21 08:22:06 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.85 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.86 2019/10/21 08:22:06 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1041,7 +1041,6 @@ ie_readframe(
 	 * Finally pass this packet up to higher layers.
 	 */
 	if_percpuq_enqueue((&sc->sc_ethercom.ec_if)->if_percpuq, m);
-	sc->sc_ethercom.ec_if.if_ipackets++;
 	return (0);
 }
 
