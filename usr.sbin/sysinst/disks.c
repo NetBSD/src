@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.51 2019/08/20 06:38:17 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.52 2019/10/21 14:07:42 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1955,12 +1955,30 @@ check_swap(const char *disk, int remove_swap)
 char *
 bootxx_name(struct install_partition_desc *install)
 {
-	int fstype;
+	size_t i;
+	int fstype = -1;
 	const char *bootxxname;
 	char *bootxx;
 
+	/* find a partition to be mounted as / */
+	for (i = 0; i < install->num; i++) {
+		if ((install->infos[i].instflags & PUIINST_MOUNT)
+		    && strcmp(install->infos[i].mount, "/") == 0) {
+			fstype = install->infos[i].fs_type;
+			break;
+		}
+	}
+	if (fstype < 0) {
+		/* not found? take first root type partition instead */
+		for (i = 0; i < install->num; i++) {
+			if (install->infos[i].type == PT_root) {
+				fstype = install->infos[i].fs_type;
+				break;
+			}
+		}
+	}
+
 	/* check we have boot code for the root partition type */
-	fstype = install->infos[0].fs_type;
 	switch (fstype) {
 #if defined(BOOTXX_FFSV1) || defined(BOOTXX_FFSV2)
 	case FS_BSDFFS:
