@@ -1,4 +1,4 @@
-/*	$NetBSD: identcpu.c,v 1.96 2019/10/03 05:06:29 maxv Exp $	*/
+/*	$NetBSD: identcpu.c,v 1.97 2019/10/21 10:09:24 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.96 2019/10/03 05:06:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: identcpu.c,v 1.97 2019/10/21 10:09:24 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -736,7 +736,7 @@ cpu_probe_vortex86(struct cpu_info *ci)
 }
 
 static void
-cpu_probe_old_fpu(struct cpu_info *ci)
+cpu_probe_fpu_old(struct cpu_info *ci)
 {
 #if defined(__i386__) && !defined(XENPV)
 
@@ -764,8 +764,7 @@ cpu_probe_fpu(struct cpu_info *ci)
 	/* If we have FXSAVE/FXRESTOR, use them. */
 	if ((ci->ci_feat_val[0] & CPUID_FXSR) == 0) {
 		i386_use_fxsave = 0;
-		/* Allow for no fpu even if cpuid is supported */
-		cpu_probe_old_fpu(ci);
+		cpu_probe_fpu_old(ci);
 		return;
 	}
 
@@ -788,14 +787,14 @@ cpu_probe_fpu(struct cpu_info *ci)
 	x86_fpu_save = FPU_SAVE_FXSAVE;
 	x86_fpu_save_size = sizeof(struct fxsave);
 
-	/* See if xsave (for AVX) is supported */
+	/* See if XSAVE is supported */
 	if ((ci->ci_feat_val[1] & CPUID2_XSAVE) == 0)
 		return;
 
 #ifdef XENPV
 	/*
 	 * Xen kernel can disable XSAVE via "no-xsave" option, in that case
-	 * XSAVE instructions like xrstor become privileged and trigger
+	 * the XSAVE/XRSTOR instructions become privileged and trigger
 	 * supervisor trap. OSXSAVE flag seems to be reliably set according
 	 * to whether XSAVE is actually available.
 	 */
@@ -843,7 +842,7 @@ cpu_probe(struct cpu_info *ci)
 
 	if (cpuid_level < 0) {
 		/* cpuid instruction not supported */
-		cpu_probe_old_fpu(ci);
+		cpu_probe_fpu_old(ci);
 		return;
 	}
 
@@ -949,7 +948,9 @@ cpu_probe(struct cpu_info *ci)
 	cpu_probe_geode(ci);
 	cpu_probe_vortex86(ci);
 
-	cpu_probe_fpu(ci);
+	if (ci == &cpu_info_primary) {
+		cpu_probe_fpu(ci);
+	}
 
 	x86_cpu_topology(ci);
 
