@@ -1,4 +1,4 @@
-/* $NetBSD: init_sysent.c,v 1.325 2019/09/22 23:03:20 christos Exp $ */
+/* $NetBSD: init_sysent.c,v 1.326 2019/10/21 14:23:53 christos Exp $ */
 
 /*
  * System call switch table.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.325 2019/09/22 23:03:20 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysent.c,v 1.326 2019/10/21 14:23:53 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_modular.h"
@@ -1887,7 +1887,7 @@ struct sysent sysent[] = {
 		.sy_call = (sy_call_t *)sys___getdents30
 	},		/* 390 = __getdents30 */
 	{
-		.sy_call = (sy_call_t *)nullop,
+		.sy_call = (sy_call_t *)(void *)nullop,
 	},		/* 391 = filler */
 	{
 		ns(struct compat_30_sys___fhstat30_args),
