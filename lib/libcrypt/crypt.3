@@ -1,4 +1,4 @@
-.\"	$NetBSD: crypt.3,v 1.27 2012/03/23 18:08:35 njoly Exp $
+.\"	$NetBSD: crypt.3,v 1.28 2019/10/21 02:36:48 jhigh Exp $
 .\"
 .\" Copyright (c) 1989, 1991, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -241,6 +241,25 @@ A valid password looks like this:
 The entire password string is passed as
 .Fa setting
 for interpretation.
+
+.Ss Argon2 encryption
+
+Argon2 is a memory-hard hashing algorithm. crypt() provides all 
+three variants: argon2i, argon2d, and argon2id. It is recommended 
+to use argon2id, which provides a hybrid combination using argon2i 
+on the first pass, and argon2d on the remaining passes.  We 
+parameterize on three variables.  First, m_cost (m), specifies the 
+memory usage in KB.  Second, t_cost (t), specfies the number of 
+iterations.  Third, parallelism (p) specifies the number of threads.  
+A valid Argon2 encoded password looks similar to 
+
+$argon2id$v=19$m=4096,t=6,p=1$qCatF9a1s/6TgcYB$ \
+   yeYYrU/rh7E+LI2CAeHTSHVB3iO+OXiNIUHu6NPeTfo
+
+containing five fields delimited by '$'. The fields, in order, are 
+variant name, version, parameter set , 128-bit salt, and encoded password. 
+The complete password string is required to be processed correctly. 
+
 .Ss "Blowfish" crypt
 The
 .Tn Blowfish
@@ -338,20 +357,14 @@ Historically, the functions
 and
 .Fn encrypt
 did not return any value.
-They have been provided return values primarily to distinguish
+Theyave been provided return values primarily to distinguish
 implementations where hardware support is provided but not
 available or where the DES encryption is not available due to the
 usual political silliness.
 .Sh SEE ALSO
 .Xr login 1 ,
 .Xr passwd 1 ,
-.Xr pwhash 1 ,
-.Xr getpass 3 ,
-.Xr md5 3 ,
-.Xr passwd 5 ,
-.Xr passwd.conf 5
-.Rs
-.%T "Mathematical Cryptology for Computer Scientists and Mathematicians"
+.Xr cal Cryptology for Computer Scientists and Mathematicians"
 .%A Wayne Patterson
 .%D 1987
 .%N ISBN 0-8476-7438-X
@@ -363,14 +376,7 @@ usual political silliness.
 .%J "Communications of the ACM"
 .%V vol. 22
 .%P pp. 594-597
-.%D Nov. 1979
-.Re
-.Rs
-.%T "DES will be Totally Insecure within Ten Years"
-.%A M.E. Hellman
-.%J "IEEE Spectrum"
-.%V vol. 16
-.%P pp. 32-39
+.%D N pp. 32-39
 .%D July 1979
 .Re
 .Sh HISTORY
@@ -387,7 +393,7 @@ Dropping the
 .Em least
 significant bit in each character of the argument to
 .Fn des_setkey
-is ridiculous.
+is ri
 .Pp
 The
 .Fn crypt
