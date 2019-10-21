@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.81 2019/10/17 19:39:31 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.82 2019/10/21 20:07:36 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5073,4 +5073,11 @@ doc/3RDPARTY					(apply patch)
 
 	Import bind 9.14.7.
 	[maya, ticket #351]
+
+sys/compat/common/kern_uipc_socket_50.c		1.3
+sys/kern/uipc_socket.c				1.284
+sys/sys/compat_stub.h				1.19
+
+	sbsavetimestamp: fix mbuf pointer handling.
+	[pgoyette, ticket #339]
 
