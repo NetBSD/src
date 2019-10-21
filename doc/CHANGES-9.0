@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.82 2019/10/21 20:07:36 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.83 2019/10/21 20:25:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5080,4 +5080,32 @@ sys/sys/compat_stub.h				1.19
 
 	sbsavetimestamp: fix mbuf pointer handling.
 	[pgoyette, ticket #339]
+
+external/bsd/pkg_install/dist/admin/main.c      up to 1.4
+external/bsd/pkg_install/dist/admin/pkg_admin.1 up to 1.5
+external/bsd/pkg_install/dist/lib/license.c     up to 1.9
+external/bsd/pkg_install/dist/lib/version.h     up to 1.15
+
+	Merge pkg_install-20191008 from pkgsrc.
+	[joerg, ticket #352]
+
+sys/kern/sys_sig.c				1.48
+sys/sys/signalvar.h				1.94,1.95
+
+	Fix info leaks in the signal functions.
+	[maxv, ticket #353]
+
+sys/fs/ntfs/ntfs_subr.c				1.62
+sys/fs/ntfs/ntfs_vfsops.c			1.108
+
+	It is not possible to call vflush() from xxx_mount().
+	Replace with a vnode iterator and use vrecycle().
+	When the MFT record size is lower than the cluster size we have
+	to read consecutive clusters to fill the MFT record.
+	[hannken, ticket #354]
+
+sys/uvm/uvm_mmap.c				1.173
+
+	Change 'npgs' from int to size_t.
+	[maxv, ticket #355]
 
