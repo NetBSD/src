@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.139 2019/10/21 18:31:40 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.140 2019/10/21 18:36:08 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.139 2019/10/21 18:31:40 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.140 2019/10/21 18:36:08 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -120,10 +120,6 @@ static int debug = 0;
 	if (debug) \
 	printf("%s() %s:%d " a, __func__, __FILE__, __LINE__,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
-
-#ifndef TEST_LWP_ENABLED
-#define TEST_LWP_ENABLED 1
-#endif
 
 /// ----------------------------------------------------------------------------
 
@@ -5483,11 +5479,6 @@ trace_threads(bool trace_create, bool trace_exit)
 
 	/* Track created and exited threads */
 	bool traced_lwps[__arraycount(t)];
-
-#if !TEST_LWP_ENABLED
-	if (trace_create || trace_exit)
-		atf_tc_skip("PR kern/51995");
-#endif
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
