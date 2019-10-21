@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.13 2019/08/14 13:58:00 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.14 2019/10/21 16:09:59 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -717,6 +717,8 @@ again:
 				continue;
 			if (parts->l.d_partitions[i].p_fstype == FS_UNUSED)
 				continue;
+			if (parts->l.d_partitions[i].p_size == 0)
+				continue;
 
 			s = parts->l.d_partitions[i].p_offset;
 			e = parts->l.d_partitions[i].p_size + s;
@@ -823,11 +825,17 @@ disklabel_get_part_device(const struct disk_partitions *arg,
 	if (ptn >= parts->l.d_npartitions)
 		return false;
 
-	for (id = part_index = 0; id < ptn &&
-	    part_index < parts->l.d_npartitions; part_index++)
-		if (parts->l.d_partitions[part_index].p_fstype != FS_UNUSED ||
-		    parts->l.d_partitions[part_index].p_size != 0)
-			id++;
+	for (id = part_index = 0; part_index < parts->l.d_npartitions;
+	    part_index++) {
+		if (parts->l.d_partitions[part_index].p_fstype == FS_UNUSED &&
+		    parts->l.d_partitions[part_index].p_size == 0)
+			continue;
+		if (id == ptn)
+			break;
+		id++;
+		if (id > ptn)
+			return false;
+	}
 
 	if (part != 0)
 		*part = part_index;
