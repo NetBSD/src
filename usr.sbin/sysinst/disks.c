@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.52 2019/10/21 14:07:42 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.53 2019/10/21 16:10:54 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1289,6 +1289,9 @@ make_fstab(struct install_partition_desc *install)
 	for (size_t i = 0; i < install->num; i++) {
 
 		const struct part_usage_info *ptn = &install->infos[i];
+
+		if (ptn->size == 0)
+			continue;
 
 		if (ptn->type != PT_swap &&
 		    (ptn->instflags & PUIINST_MOUNT) == 0)

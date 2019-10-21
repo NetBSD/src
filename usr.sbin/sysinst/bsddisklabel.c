@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.27 2019/08/28 15:19:05 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.28 2019/10/21 16:10:54 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1277,6 +1277,8 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 
 		for (i = 0; i < wanted->num; i++) {
 			if (wanted->infos[i].cur_part_id != NO_PART)
+				continue;
+			if (wanted->infos[i].size <= 0)
 				continue;
 			if (t.start == infos[i].start) {
 				wanted->infos[i].cur_part_id = pno;
