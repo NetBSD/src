@@ -1,4 +1,4 @@
-/*	$NetBSD: license.c,v 1.5 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: license.c,v 1.5.4.1 2019/10/21 16:57:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2009 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -51,9 +51,12 @@ const char *default_acceptable_licenses =
     "artistic artistic-2.0 "
     "boost-license "
     "cc-by-sa-v3.0 "
+    "cc-by-sa-v4.0 "
+    "cc-by-v4.0 "
     "cc0-1.0-universal "
     "cddl-1.0 "
     "cecill-2.1 "
+    "cecill-b-v1 "
     "cpl-1.0 "
     "epl-v1.0 "
     "eupl-v1.1 "
@@ -62,6 +65,7 @@ const char *default_acceptable_licenses =
     "gnu-gpl-v1 "
     "gnu-gpl-v2 gnu-lgpl-v2 gnu-lgpl-v2.1 "
     "gnu-gpl-v3 gnu-lgpl-v3 "
+    "happy "
     "hpnd "
     "info-zip "
     "ipafont "
@@ -76,6 +80,7 @@ const char *default_acceptable_licenses =
     "ofl-v1.0 ofl-v1.1 "
     "openssl "
     "original-bsd modified-bsd 2-clause-bsd "
+    "osl "
     "paratype "
     "php "
     "png-license "
@@ -92,7 +97,8 @@ const char *default_acceptable_licenses =
     "w3c "
     "x11 "
     "zlib "
-    "zpl-2.0 zpl-2.1";
+    "zpl-2.0 zpl-2.1 "
+    "zsh";
 
 #ifdef DEBUG
 static size_t hash_collisions;

@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $	*/
+/*	$NetBSD: main.c,v 1.2.4.1 2019/10/21 16:57:40 martin Exp $	*/
 
 #if HAVE_CONFIG_H
 #include "config.h"
@@ -7,10 +7,10 @@
 #if HAVE_SYS_CDEFS_H
 #include <sys/cdefs.h>
 #endif
-__RCSID("$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
+__RCSID("$NetBSD: main.c,v 1.2.4.1 2019/10/21 16:57:40 martin Exp $");
 
 /*-
- * Copyright (c) 1999-2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,8 +59,10 @@ __RCSID("$NetBSD: main.c,v 1.2 2017/04/20 13:18:23 joerg Exp $");
 #endif
 #ifndef NETBSD
 #include <nbcompat/md5.h>
+#include <nbcompat/sha2.h>
 #else
 #include <md5.h>
+#include <sha2.h>
 #endif
 #if HAVE_LIMITS_H
 #include <limits.h>
@@ -93,6 +95,7 @@ static const char Options[] = "C:K:SVbd:qs:v";
 int	quiet, verbose;
 
 static void set_unset_variable(char **, Boolean);
+static void digest_input(char **);
 
 /* print usage message and exit */
 void 
@@ -112,9 +115,9 @@ usage(void)
 	    " pmatch pattern pkg          - returns true if pkg matches pattern, otherwise false\n"
 	    " fetch-pkg-vulnerabilities [-s] - fetch new vulnerability file\n"
 	    " check-pkg-vulnerabilities [-s] <file> - check syntax and checksums of the vulnerability file\n"
-	    " audit [-es] [-t type] ...       - check installed packages for vulnerabilities\n"
-	    " audit-pkg [-es] [-t type] ...   - check listed packages for vulnerabilities\n"
-	    " audit-batch [-es] [-t type] ... - check packages in listed files for vulnerabilities\n"
+	    " audit [-eis] [-t type] ...       - check installed packages for vulnerabilities\n"
+	    " audit-pkg [-eis] [-t type] ...   - check listed packages for vulnerabilities\n"
+	    " audit-batch [-eis] [-t type] ... - check packages in listed files for vulnerabilities\n"
 	    " audit-history [-t type] ...     - print all advisories for package names\n"
 	    " check-license <condition>       - check if condition is acceptable\n"
 	    " check-single-license <license>  - check if license is acceptable\n"
@@ -521,6 +524,9 @@ main(int argc, char *argv[])
 	} else if (strcasecmp(argv[0], "unset") == 0) {
 		argv++;		/* "unset" */
 		set_unset_variable(argv, TRUE);
+	} else if (strcasecmp(argv[0], "digest") == 0) {
+		argv++;		/* "digest" */
+		digest_input(argv);
 	} else if (strcasecmp(argv[0], "config-var") == 0) {
 		argv++;
 		if (argv == NULL || argv[1] != NULL)
@@ -735,4 +741,23 @@ set_unset_variable(char **argv, Boolean unset)
 	free(variable);
 
 	return;
+}
+
+static void
+digest_input(char **argv)
+{
+	char digest[SHA256_DIGEST_STRING_LENGTH];
+	int failures = 0;
+
+	while (*argv != NULL) {
+		if (SHA256_File(*argv, digest)) {
+			puts(digest);
+		} else {
+			warn("cannot process %s", *argv);
+			++failures;
+		}
+		argv++;
+	}
+	if (failures)
+		exit(EXIT_FAILURE);
 }
