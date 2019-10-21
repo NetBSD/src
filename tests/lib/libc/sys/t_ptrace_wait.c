@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.137 2019/10/13 09:42:15 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.138 2019/10/21 17:07:00 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.137 2019/10/13 09:42:15 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.138 2019/10/21 17:07:00 mgorny Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -7722,6 +7722,152 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 
 /// ----------------------------------------------------------------------------
 
+#if defined(TWAIT_HAVE_STATUS)
+
+ATF_TC(thread_concurrent_signals);
+ATF_TC_HEAD(thread_concurrent_signals, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that concurrent signals issued to a single thread "
+	    "are reported correctly");
+}
+
+/* List of signals to use for the test */
+const int thread_concurrent_signals_list[] = {
+	SIGIO,
+	SIGXCPU,
+	SIGXFSZ,
+	SIGVTALRM,
+	SIGPROF,
+	SIGWINCH,
+	SIGINFO,
+	SIGUSR1,
+	SIGUSR2
+};
+
+pthread_barrier_t thread_concurrent_signals_barrier;
+
+static void *
+thread_concurrent_signals_thread(void *arg)
+{
+	int sigval = thread_concurrent_signals_list[
+	    _lwp_self() % __arraycount(thread_concurrent_signals_list)];
+	pthread_barrier_wait(&thread_concurrent_signals_barrier);
+	DPRINTF("Before raising %s from LWP %d\n", strsignal(sigval),
+		_lwp_self());
+	pthread_kill(pthread_self(), sigval);
+	return NULL;
+}
+
+#define THREAD_CONCURRENT_SIGNALS_NUM 50
+
+ATF_TC_BODY(thread_concurrent_signals, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	int status;
+	int signal_counts[THREAD_CONCURRENT_SIGNALS_NUM] = {0};
+	unsigned int i;
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		pthread_t threads[THREAD_CONCURRENT_SIGNALS_NUM];
+
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		DPRINTF("Before starting threads from the child\n");
+		FORKEE_ASSERT(pthread_barrier_init(
+		    &thread_concurrent_signals_barrier, NULL,
+		    __arraycount(threads)) == 0);
+
+		for (i = 0; i < __arraycount(threads); i++) {
+			FORKEE_ASSERT(pthread_create(&threads[i], NULL,
+			    thread_concurrent_signals_thread, NULL) == 0);
+		}
+
+		DPRINTF("Before joining threads from the child\n");
+		for (i = 0; i < __arraycount(threads); i++) {
+			FORKEE_ASSERT(pthread_join(threads[i], NULL) == 0);
+		}
+
+		FORKEE_ASSERT(pthread_barrier_destroy(
+		    &thread_concurrent_signals_barrier) == 0);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before resuming the child process where it left off\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before entering signal collection loop\n");
+	while (1) {
+		ptrace_siginfo_t info;
+		int expected_sig;
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		    child);
+		if (WIFEXITED(status))
+			break;
+		/* Note: we use validate_status_stopped() to get nice error
+		 * message.  Signal is irrelevant since it won't be reached.
+		 */
+		else if (!WIFSTOPPED(status))
+			validate_status_stopped(status, 0);
+
+		DPRINTF("Before calling PT_GET_SIGINFO\n");
+		SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info,
+		    sizeof(info)) != -1);
+
+		DPRINTF("Received signal %d from LWP %d (wait: %d)\n",
+		    info.psi_siginfo.si_signo, info.psi_lwpid,
+		    WSTOPSIG(status));
+
+		expected_sig = thread_concurrent_signals_list[info.psi_lwpid %
+		    __arraycount(thread_concurrent_signals_list)];
+		ATF_CHECK_EQ_MSG(info.psi_siginfo.si_signo, expected_sig,
+		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
+		    expected_sig, info.psi_siginfo.si_signo);
+		ATF_CHECK_EQ_MSG(WSTOPSIG(status), expected_sig,
+		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
+		    expected_sig, WSTOPSIG(status));
+
+		/* We assume that LWPs will be given successive numbers starting
+		 * from 2.
+		 */
+		ATF_REQUIRE(info.psi_lwpid >= 2);
+		ATF_REQUIRE((unsigned int)info.psi_lwpid <
+		    __arraycount(signal_counts)+2);
+		signal_counts[info.psi_lwpid-2]++;
+
+		DPRINTF("Before resuming the child process\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	}
+
+	for (i = 0; i < __arraycount(signal_counts); i++)
+		ATF_CHECK_EQ_MSG(signal_counts[i], 1, "signal_counts[%d]=%d",
+		    i, signal_counts[i]);
+
+	validate_status_exited(status, exitval);
+}
+
+#endif /*defined(TWAIT_HAVE_STATUS)*/
+
+/// ----------------------------------------------------------------------------
+
 #include "t_ptrace_amd64_wait.h"
 #include "t_ptrace_i386_wait.h"
 #include "t_ptrace_x86_wait.h"
@@ -8213,6 +8359,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_detach);
 
 	ATF_TP_ADD_TC(tp, core_dump_procinfo);
+
+#if defined(TWAIT_HAVE_STATUS)
+	ATF_TP_ADD_TC(tp, thread_concurrent_signals);
+#endif
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
