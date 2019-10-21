@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.35 2019/10/05 18:06:16 jhigh Exp $	*/
+/*	$NetBSD: crypt.c,v 1.36 2019/10/21 02:36:48 jhigh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.35 2019/10/05 18:06:16 jhigh Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.36 2019/10/21 02:36:48 jhigh Exp $");
 #endif
 #endif /* not lint */
 
@@ -575,6 +575,18 @@ __crypt(const char *key, const char *setting)
 		} else if (strcmp(scheme, "1") == 0) {
 		     /* $1$ found in pw_gensalt.c:__gensalt_md5 */
 			return (__md5crypt(key, setting));
+#ifdef HAVE_ARGON2
+		/* explicit argon2 variant */
+		} else if (strcmp(scheme, "argon2id") == 0) {
+		     /* $argon2id$ found in pw_gensalt.c:__gensalt_argon2 */
+			return (__crypt_argon2(key, setting));
+		} else if (strcmp(scheme, "argon2i") == 0) {
+		     /* $argon2i$ found in pw_gensalt.c:__gensalt_argon2 */
+			return (__crypt_argon2(key, setting));
+		} else if (strcmp(scheme, "argon2d") == 0) {
+		     /* $argon2d$ found in pw_gensalt.c:__gensalt_argon2 */
+			return (__crypt_argon2(key, setting));
+#endif /* HAVE_ARGON2 */
 		} else {
 		     /* invalid scheme, including empty string */
 			return NULL;
@@ -675,6 +687,7 @@ char *
 crypt(const char *key, const char *salt)
 {
 	char *res = __crypt(key, salt);
+
 	if (res)
 		return res;
 	/* How do I handle errors ? Return "*0" or "*1" */

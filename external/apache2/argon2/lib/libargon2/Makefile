@@ -12,15 +12,7 @@ INCSDIR=	/usr/include
 LIB=	argon2	
 SRCS=	argon2.c core.c blake2b.c thread.c encoding.c ref.c
 
-
-CPPFLAGS= -std=c89 -O3 -Wall -g -I../../dist/phc-winner-argon2/include -Isrc -shared -fPIC
-
-.ifdef NO_THREADS
-CPPFLAGS += -DARGON2_NO_THREADS
-.else
-CPPFLAGS += -pthread
-LDADD+=-lpthread
-.endif
+CPPFLAGS= -std=c89 -O3 -Wall -g -I../../dist/phc-winner-argon2/include -Isrc -fPIC -DARGON2_NO_THREADS
 
 OPTTARGET ?= native
 OPTTEST := $(shell $(CC) -Iinclude -Isrc -march=$(OPTTARGET) src/opt.c -c \
