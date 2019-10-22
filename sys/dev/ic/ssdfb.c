@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.6 2019/06/05 20:32:28 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.7 2019/10/22 21:41:01 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.6 2019/06/05 20:32:28 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.7 2019/10/22 21:41:01 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -638,20 +638,16 @@ ssdfb_init(struct ssdfb_softc *sc)
 	 * Configure timing characteristics.
 	 */
 	SSDFB_CMD2(SSDFB_CMD_SET_DISPLAY_CLOCK_RATIO,
-	    ((sc->sc_p->p_fosc << SSDFB_DISPLAY_CLOCK_OSCILLATOR_SHIFT) &
-	     SSDFB_DISPLAY_CLOCK_OSCILLATOR_MASK) |
-	    ((sc->sc_p->p_fosc_div << SSDFB_DISPLAY_CLOCK_DIVIDER_SHIFT) &
-	     SSDFB_DISPLAY_CLOCK_DIVIDER_MASK));
+	    __SHIFTIN(sc->sc_p->p_fosc, SSDFB_DISPLAY_CLOCK_OSCILLATOR_MASK) |
+	    __SHIFTIN(sc->sc_p->p_fosc_div, SSDFB_DISPLAY_CLOCK_DIVIDER_MASK));
 	if (error)
 		return error;
 	SSDFB_CMD2(SSDFB_CMD_SET_CONTRAST_CONTROL, sc->sc_contrast);
 	if (error)
 		return error;
 	SSDFB_CMD2(SSDFB_CMD_SET_PRECHARGE_PERIOD,
-	    ((sc->sc_p->p_precharge << SSDFB_PRECHARGE_SHIFT) &
-	     SSDFB_PRECHARGE_MASK) |
-	    ((sc->sc_p->p_discharge << SSDFB_DISCHARGE_SHIFT) &
-	     SSDFB_DISCHARGE_MASK));
+	    __SHIFTIN(sc->sc_p->p_precharge, SSDFB_PRECHARGE_MASK) |
+	    __SHIFTIN(sc->sc_p->p_discharge, SSDFB_DISCHARGE_MASK));
 	if (error)
 		return error;
 	SSDFB_CMD2(SSDFB_CMD_SET_VCOMH_DESELECT_LEVEL,
