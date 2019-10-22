@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.292 2019/09/14 17:11:39 tsutsui Exp $ */
+/*	$NetBSD: wdc.c,v 1.293 2019/10/22 12:09:11 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.292 2019/09/14 17:11:39 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.293 2019/10/22 12:09:11 martin Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -295,15 +295,16 @@ wdc_drvprobe(struct ata_channel *chp)
 	u_int8_t st0 = 0, st1 = 0;
 	int i, j, error, tfd;
 
+	ata_channel_lock(chp);
 	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0)
 		return;
 	if (wdcprobe1(chp, 0) == 0) {
 		/* No drives, abort the attach here. */
 		atabus_free_drives(chp);
+		ata_channel_unlock(chp);
 		return;
 	}
 
-	ata_channel_lock(chp);
 	/* for ATA/OLD drives, wait for DRDY, 3s timeout */
 	for (i = 0; i < mstohz(3000); i++) {
 		/*
@@ -498,7 +499,9 @@ wdcprobe_with_reset(struct wdc_regs *wdr,
 	/* check the MD reset method */
 	wdc.reset = (do_reset != NULL) ? do_reset : wdc_do_reset;
 
+	ata_channel_lock(&ch);
 	rv = wdcprobe1(&ch, 1);
+	ata_channel_unlock(&ch);
 
 	ata_channel_destroy(&ch);
 
@@ -522,7 +525,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 	 * Sanity check to see if the wdc channel responds at all.
 	 */
 
-	ata_channel_lock(chp);
 	if ((wdc->cap & WDC_CAPABILITY_NO_EXTRA_RESETS) == 0) {
 		while (wdc_probe_count-- > 0) {
 			if (wdc->select)
@@ -675,7 +677,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		}
 
 		if (ret_value == 0) {
-			ata_channel_unlock(chp);
 			return 0;
 		}
 	}
@@ -723,7 +724,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 
 	/* if reset failed, there's nothing here */
 	if (ret_value == 0) {
-		ata_channel_unlock(chp);
 		return 0;
 	}
 
@@ -776,7 +776,6 @@ wdcprobe1(struct ata_channel *chp, int poll)
 		(void)bus_space_read_1(wdr->cmd_iot,
 		    wdr->cmd_iohs[wd_status], 0);
 	}
-	ata_channel_unlock(chp);
 	return (ret_value);
 }
 
