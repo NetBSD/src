@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.7 2019/10/22 21:41:01 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.8 2019/10/22 22:03:27 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.7 2019/10/22 21:41:01 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.8 2019/10/22 22:03:27 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -72,7 +72,7 @@ static void	ssdfb_eraserows(void *, int, int, long);
 static void	ssdfb_cursor(void *, int, int, int);
 
 /* hardware interface */
-static int	ssdfb_init(struct ssdfb_softc *);
+static int	ssdfb_init_ssd1306(struct ssdfb_softc *);
 static int	ssdfb_set_contrast(struct ssdfb_softc *, uint8_t, bool);
 static int	ssdfb_set_display_on(struct ssdfb_softc *, bool, bool);
 static int	ssdfb_set_mode(struct ssdfb_softc *, u_int);
@@ -100,7 +100,8 @@ static void	ssdfb_ddb_trap_callback(int);
 static const char *ssdfb_controller_names[] = {
 	[SSDFB_CONTROLLER_UNKNOWN] =	"unknown",
 	[SSDFB_CONTROLLER_SSD1306] =	"Solomon Systech SSD1306",
-	[SSDFB_CONTROLLER_SH1106] =	"Sino Wealth SH1106"
+	[SSDFB_CONTROLLER_SH1106] =	"Sino Wealth SH1106",
+	[SSDFB_CONTROLLER_SSD1322] =	"Solomon Systech SSD1322"
 };
 
 /*
@@ -124,7 +125,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_default_contrast =	0x7f,
 		.p_multiplex_ratio =	0x3f,
 		.p_chargepump_cmd =	SSD1306_CMD_SET_CHARGE_PUMP,
-		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE
+		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE,
+		.p_init =		ssdfb_init_ssd1306
 	},
 	{
 		.p_product_id =		SSDFB_PRODUCT_SH1106_GENERIC,
@@ -143,7 +145,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_default_contrast =	0x80,
 		.p_multiplex_ratio =	0x3f,
 		.p_chargepump_cmd =	SH1106_CMD_SET_CHARGE_PUMP_7V4,
-		.p_chargepump_arg =	SSDFB_CMD_NOP
+		.p_chargepump_arg =	SSDFB_CMD_NOP,
+		.p_init =		ssdfb_init_ssd1306
 	},
 	{
 		.p_product_id =		SSDFB_PRODUCT_ADAFRUIT_938,
@@ -161,7 +164,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_default_contrast =	0x8f,
 		.p_multiplex_ratio =	0x3f,
 		.p_chargepump_cmd =	SSD1306_CMD_SET_CHARGE_PUMP,
-		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE
+		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE,
+		.p_init =		ssdfb_init_ssd1306
 	},
 	{
 		.p_product_id =		SSDFB_PRODUCT_ADAFRUIT_931,
@@ -179,7 +183,8 @@ static const struct ssdfb_product ssdfb_products[] = {
 		.p_default_contrast =	0x8f,
 		.p_multiplex_ratio =	0x1f,
 		.p_chargepump_cmd =	SSD1306_CMD_SET_CHARGE_PUMP,
-		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE
+		.p_chargepump_arg =	SSD1306_CHARGE_PUMP_ENABLE,
+		.p_init =		ssdfb_init_ssd1306
 	}
 };
 
@@ -294,7 +299,7 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	/*
 	 * Initialize hardware.
 	 */
-	error = ssdfb_init(sc);
+	error = p->p_init(sc);
 	if (error)
 		goto out;
 
@@ -581,7 +586,7 @@ ssdfb_cursor(void *cookie, int on, int row, int col)
 }
 
 static int
-ssdfb_init(struct ssdfb_softc *sc)
+ssdfb_init_ssd1306(struct ssdfb_softc *sc)
 {
 	int error;
 	uint8_t cmd[2];
