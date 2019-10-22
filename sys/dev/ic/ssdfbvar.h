@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfbvar.h,v 1.3 2019/10/22 21:40:10 tnn Exp $ */
+/* $NetBSD: ssdfbvar.h,v 1.4 2019/10/22 22:03:27 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -209,6 +209,8 @@
 	#define SSD1322_COMMAND_UNLOCK_MAGIC		0x12
 	#define SSD1322_COMMAND_LOCK_MAGIC		0x16
 
+struct ssdfb_softc;
+
 typedef enum {
 	SSDFB_CONTROLLER_UNKNOWN=0,
 	SSDFB_CONTROLLER_SSD1306=1,
@@ -254,6 +256,7 @@ struct ssdfb_product {
 	uint8_t				p_multiplex_ratio;
 	uint8_t				p_chargepump_cmd;
 	uint8_t				p_chargepump_arg;
+	int				(*p_init)(struct ssdfb_softc *);
 };
 
 struct ssdfb_softc {
