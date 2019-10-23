@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.36 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.37 2019/10/23 12:02:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -555,9 +555,10 @@ rep_set_cnt(struct nvmm_x64_state *state, size_t adsize, uint64_t cnt)
 }
 
 static int
-read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
+read_guest_memory(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     gvaddr_t gva, uint8_t *data, size_t size)
 {
+	struct nvmm_x64_state *state = vcpu->state;
 	struct nvmm_mem mem;
 	nvmm_prot_t prot;
 	gpaddr_t gpa;
@@ -585,11 +586,13 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	is_mmio = (ret == -1);
 
 	if (is_mmio) {
+		mem.mach = mach;
+		mem.vcpu = vcpu;
 		mem.data = data;
 		mem.gpa = gpa;
 		mem.write = false;
 		mem.size = size;
-		(*mach->cbs.mem)(&mem);
+		(*vcpu->cbs.mem)(&mem);
 	} else {
 		if (__predict_false(!(prot & NVMM_PROT_READ))) {
 			errno = EFAULT;
@@ -599,7 +602,7 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	}
 
 	if (remain > 0) {
-		ret = read_guest_memory(mach, state, gva + size,
+		ret = read_guest_memory(mach, vcpu, gva + size,
 		    data + size, remain);
 	} else {
 		ret = 0;
@@ -609,9 +612,10 @@ read_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 }
 
 static int
-write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
+write_guest_memory(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     gvaddr_t gva, uint8_t *data, size_t size)
 {
+	struct nvmm_x64_state *state = vcpu->state;
 	struct nvmm_mem mem;
 	nvmm_prot_t prot;
 	gpaddr_t gpa;
@@ -639,11 +643,13 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	is_mmio = (ret == -1);
 
 	if (is_mmio) {
+		mem.mach = mach;
+		mem.vcpu = vcpu;
 		mem.data = data;
 		mem.gpa = gpa;
 		mem.write = true;
 		mem.size = size;
-		(*mach->cbs.mem)(&mem);
+		(*vcpu->cbs.mem)(&mem);
 	} else {
 		if (__predict_false(!(prot & NVMM_PROT_WRITE))) {
 			errno = EFAULT;
@@ -653,7 +659,7 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	}
 
 	if (remain > 0) {
-		ret = write_guest_memory(mach, state, gva + size,
+		ret = write_guest_memory(mach, vcpu, gva + size,
 		    data + size, remain);
 	} else {
 		ret = 0;
@@ -664,12 +670,12 @@ write_guest_memory(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 /* -------------------------------------------------------------------------- */
 
-static int fetch_segment(struct nvmm_machine *, struct nvmm_x64_state *);
+static int fetch_segment(struct nvmm_machine *, struct nvmm_vcpu *);
 
 #define NVMM_IO_BATCH_SIZE	32
 
 static int
-assist_io_batch(struct nvmm_machine *mach, struct nvmm_x64_state *state,
+assist_io_batch(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     struct nvmm_io *io, gvaddr_t gva, uint64_t cnt)
 {
 	uint8_t iobuf[NVMM_IO_BATCH_SIZE];
@@ -683,18 +689,18 @@ assist_io_batch(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	io->data = iobuf;
 
 	if (!io->in) {
-		ret = read_guest_memory(mach, state, gva, iobuf, iosize);
+		ret = read_guest_memory(mach, vcpu, gva, iobuf, iosize);
 		if (ret == -1)
 			return -1;
 	}
 
 	for (i = 0; i < iocnt; i++) {
-		(*mach->cbs.io)(io);
+		(*vcpu->cbs.io)(io);
 		io->data += io->size;
 	}
 
 	if (io->in) {
-		ret = write_guest_memory(mach, state, gva, iobuf, iosize);
+		ret = write_guest_memory(mach, vcpu, gva, iobuf, iosize);
 		if (ret == -1)
 			return -1;
 	}
@@ -721,6 +727,8 @@ nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 		return -1;
 	}
 
+	io.mach = mach;
+	io.vcpu = vcpu;
 	io.port = exit->u.io.port;
 	io.in = exit->u.io.in;
 	io.size = exit->u.io.operand_size;
@@ -763,7 +771,7 @@ nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 			if (io.in) {
 				seg = NVMM_X64_SEG_ES;
 			} else {
-				seg = fetch_segment(mach, state);
+				seg = fetch_segment(mach, vcpu);
 				if (seg == -1)
 					return -1;
 			}
@@ -781,7 +789,7 @@ nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 		}
 
 		if (exit->u.io.rep && !psld) {
-			iocnt = assist_io_batch(mach, state, &io, gva, cnt);
+			iocnt = assist_io_batch(mach, vcpu, &io, gva, cnt);
 			if (iocnt == -1)
 				return -1;
 			goto done;
@@ -792,14 +800,14 @@ nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 		if (!exit->u.io.str) {
 			memcpy(io.data, &state->gprs[NVMM_X64_GPR_RAX], io.size);
 		} else {
-			ret = read_guest_memory(mach, state, gva, io.data,
+			ret = read_guest_memory(mach, vcpu, gva, io.data,
 			    io.size);
 			if (ret == -1)
 				return -1;
 		}
 	}
 
-	(*mach->cbs.io)(&io);
+	(*vcpu->cbs.io)(&io);
 
 	if (io.in) {
 		if (!exit->u.io.str) {
@@ -809,7 +817,7 @@ nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 				state->gprs[NVMM_X64_GPR_RAX] &= size_to_mask(4);
 			}
 		} else {
-			ret = write_guest_memory(mach, state, gva, io.data,
+			ret = write_guest_memory(mach, vcpu, gva, io.data,
 			    io.size);
 			if (ret == -1)
 				return -1;
@@ -849,20 +857,20 @@ struct x86_emul {
 	bool readreg;
 	bool backprop;
 	bool notouch;
-	void (*func)(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+	void (*func)(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
 };
 
-static void x86_func_or(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_and(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_xchg(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_sub(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_xor(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_cmp(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_test(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_mov(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_stos(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_lods(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
-static void x86_func_movs(struct nvmm_machine *, struct nvmm_mem *, uint64_t *);
+static void x86_func_or(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_and(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_xchg(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_sub(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_xor(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_cmp(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_test(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_mov(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_stos(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_lods(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
+static void x86_func_movs(struct nvmm_vcpu *, struct nvmm_mem *, uint64_t *);
 
 static const struct x86_emul x86_emul_or = {
 	.readreg = true,
@@ -2721,7 +2729,7 @@ EXEC_DISPATCHER(xor)
  */
 
 static void
-x86_func_or(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_or(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2733,7 +2741,7 @@ x86_func_or(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be OR'ed (op2). */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Perform the OR. */
 	ret = exec_or(*op1, op2, &fl, mem->size);
@@ -2742,7 +2750,7 @@ x86_func_or(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*mach->cbs.mem)(mem);
+		(*vcpu->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2753,7 +2761,7 @@ x86_func_or(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_and(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_and(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2765,7 +2773,7 @@ x86_func_and(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be AND'ed (op2). */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Perform the AND. */
 	ret = exec_and(*op1, op2, &fl, mem->size);
@@ -2774,7 +2782,7 @@ x86_func_and(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*mach->cbs.mem)(mem);
+		(*vcpu->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2785,7 +2793,7 @@ x86_func_and(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_xchg(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_xchg(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *op1, op2;
 
@@ -2795,19 +2803,19 @@ x86_func_xchg(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch op2. */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Write op1 in op2. */
 	mem->data = (uint8_t *)op1;
 	mem->write = true;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Write op2 in op1. */
 	*op1 = op2;
 }
 
 static void
-x86_func_sub(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_sub(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2822,7 +2830,7 @@ x86_func_sub(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be SUB'ed (op1 or op2). */
 	mem->data = (uint8_t *)&tmp;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Perform the SUB. */
 	ret = exec_sub(*op1, *op2, &fl, mem->size);
@@ -2831,7 +2839,7 @@ x86_func_sub(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*mach->cbs.mem)(mem);
+		(*vcpu->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2842,7 +2850,7 @@ x86_func_sub(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_xor(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_xor(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *retval = (uint64_t *)mem->data;
 	const bool write = mem->write;
@@ -2854,7 +2862,7 @@ x86_func_xor(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be XOR'ed (op2). */
 	mem->data = (uint8_t *)&op2;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Perform the XOR. */
 	ret = exec_xor(*op1, op2, &fl, mem->size);
@@ -2863,7 +2871,7 @@ x86_func_xor(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 		/* Write back the result. */
 		mem->data = (uint8_t *)&ret;
 		mem->write = true;
-		(*mach->cbs.mem)(mem);
+		(*vcpu->cbs.mem)(mem);
 	} else {
 		/* Return data to the caller. */
 		*retval = ret;
@@ -2874,7 +2882,7 @@ x86_func_xor(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_cmp(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_cmp(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *op1, *op2, fl;
 	uint64_t tmp;
@@ -2887,7 +2895,7 @@ x86_func_cmp(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be CMP'ed (op1 or op2). */
 	mem->data = (uint8_t *)&tmp;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Perform the CMP. */
 	exec_sub(*op1, *op2, &fl, mem->size);
@@ -2897,7 +2905,7 @@ x86_func_cmp(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_test(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_test(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	uint64_t *op1, *op2, fl;
 	uint64_t tmp;
@@ -2910,7 +2918,7 @@ x86_func_test(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 	/* Fetch the value to be TEST'ed (op1 or op2). */
 	mem->data = (uint8_t *)&tmp;
 	mem->write = false;
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	/* Perform the TEST. */
 	exec_and(*op1, *op2, &fl, mem->size);
@@ -2920,21 +2928,21 @@ x86_func_test(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_mov(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_mov(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Nothing special, just move without emulation.
 	 */
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 }
 
 static void
-x86_func_stos(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_stos(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Just move, and update RDI.
 	 */
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
 		gprs[NVMM_X64_GPR_RDI] -= mem->size;
@@ -2944,12 +2952,12 @@ x86_func_stos(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_lods(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_lods(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Just move, and update RSI.
 	 */
-	(*mach->cbs.mem)(mem);
+	(*vcpu->cbs.mem)(mem);
 
 	if (gprs[NVMM_X64_GPR_RFLAGS] & PSL_D) {
 		gprs[NVMM_X64_GPR_RSI] -= mem->size;
@@ -2959,7 +2967,7 @@ x86_func_lods(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
 }
 
 static void
-x86_func_movs(struct nvmm_machine *mach, struct nvmm_mem *mem, uint64_t *gprs)
+x86_func_movs(struct nvmm_vcpu *vcpu, struct nvmm_mem *mem, uint64_t *gprs)
 {
 	/*
 	 * Special instruction: double memory operand. Don't call the cb,
@@ -3049,8 +3057,9 @@ store_to_gva(struct nvmm_x64_state *state, struct x86_instr *instr,
 }
 
 static int
-fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
+fetch_segment(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
+	struct nvmm_x64_state *state = vcpu->state;
 	uint8_t inst_bytes[5], byte;
 	size_t i, fetchsize;
 	gvaddr_t gva;
@@ -3067,7 +3076,7 @@ fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 		segment_apply(&state->segs[NVMM_X64_SEG_CS], &gva);
 	}
 
-	ret = read_guest_memory(mach, state, gva, inst_bytes, fetchsize);
+	ret = read_guest_memory(mach, vcpu, gva, inst_bytes, fetchsize);
 	if (ret == -1)
 		return -1;
 
@@ -3106,9 +3115,10 @@ fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 }
 
 static int
-fetch_instruction(struct nvmm_machine *mach, struct nvmm_x64_state *state,
+fetch_instruction(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     struct nvmm_vcpu_exit *exit)
 {
+	struct nvmm_x64_state *state = vcpu->state;
 	size_t fetchsize;
 	gvaddr_t gva;
 	int ret;
@@ -3124,7 +3134,7 @@ fetch_instruction(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		segment_apply(&state->segs[NVMM_X64_SEG_CS], &gva);
 	}
 
-	ret = read_guest_memory(mach, state, gva, exit->u.mem.inst_bytes,
+	ret = read_guest_memory(mach, vcpu, gva, exit->u.mem.inst_bytes,
 	    fetchsize);
 	if (ret == -1)
 		return -1;
@@ -3135,9 +3145,10 @@ fetch_instruction(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 }
 
 static int
-assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
+assist_mem_double(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
     struct x86_instr *instr)
 {
+	struct nvmm_x64_state *state = vcpu->state;
 	struct nvmm_mem mem;
 	uint8_t data[8];
 	gvaddr_t gva;
@@ -3150,7 +3161,7 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	ret = store_to_gva(state, instr, &instr->src, &gva, size);
 	if (ret == -1)
 		return -1;
-	ret = read_guest_memory(mach, state, gva, data, size);
+	ret = read_guest_memory(mach, vcpu, gva, data, size);
 	if (ret == -1)
 		return -1;
 
@@ -3158,26 +3169,30 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 	ret = store_to_gva(state, instr, &instr->dst, &gva, size);
 	if (ret == -1)
 		return -1;
-	ret = write_guest_memory(mach, state, gva, data, size);
+	ret = write_guest_memory(mach, vcpu, gva, data, size);
 	if (ret == -1)
 		return -1;
 
 	mem.size = size;
-	(*instr->emul->func)(mach, &mem, state->gprs);
+	(*instr->emul->func)(vcpu, &mem, state->gprs);
 
 	return 0;
 }
 
 static int
-assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
-    struct x86_instr *instr, struct nvmm_vcpu_exit *exit)
+assist_mem_single(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
+    struct x86_instr *instr)
 {
+	struct nvmm_x64_state *state = vcpu->state;
+	struct nvmm_vcpu_exit *exit = vcpu->exit;
 	struct nvmm_mem mem;
 	uint8_t membuf[8];
 	uint64_t val;
 
 	memset(membuf, 0, sizeof(membuf));
 
+	mem.mach = mach;
+	mem.vcpu = vcpu;
 	mem.gpa = exit->u.mem.gpa;
 	mem.size = instr->operand_size;
 	mem.data = membuf;
@@ -3246,7 +3261,7 @@ assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 		memcpy(mem.data, &val, mem.size);
 	}
 
-	(*instr->emul->func)(mach, &mem, state->gprs);
+	(*instr->emul->func)(vcpu, &mem, state->gprs);
 
 	if (instr->emul->notouch) {
 		/* We're done. */
@@ -3313,7 +3328,7 @@ nvmm_assist_mem(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 		 * The instruction was not fetched from the kernel. Fetch
 		 * it ourselves.
 		 */
-		ret = fetch_instruction(mach, state, exit);
+		ret = fetch_instruction(mach, vcpu, exit);
 		if (ret == -1)
 			return -1;
 	}
@@ -3334,9 +3349,9 @@ nvmm_assist_mem(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 	}
 
 	if (instr.opcode->movs) {
-		ret = assist_mem_double(mach, state, &instr);
+		ret = assist_mem_double(mach, vcpu, &instr);
 	} else {
-		ret = assist_mem_single(mach, state, &instr, exit);
+		ret = assist_mem_single(mach, vcpu, &instr);
 	}
 	if (ret == -1) {
 		errno = ENODEV;
