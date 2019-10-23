@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.151.2.1 2019/09/02 07:06:11 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.151.2.2 2019/10/23 19:46:53 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.153.2.1 2019/09/01 13:56:01 martin Exp
+ *	NetBSD: miidevs,v 1.153.2.2 2019/10/23 19:45:56 martin Exp
  */
 
 /*-
@@ -57,10 +57,8 @@
  */
 
 #define	MII_OUI_AMD	0x00001a	/* Advanced Micro Devices */
-#define	MII_OUI_VITESSE	0x0001c1	/* Vitesse */
 #define	MII_OUI_TRIDIUM	0x0001f0	/* Tridium */
 #define	MII_OUI_DATATRACK	0x0002c6	/* Data Track Technology */
-#define	MII_OUI_CICADA	0x0003f1	/* Cicada Semiconductor */
 #define	MII_OUI_AGERE	0x00053d	/* Agere */
 #define	MII_OUI_BANKSPEED	0x0006b8	/* Bankspeed Pty */
 #define	MII_OUI_NETEXCELL	0x0008bb	/* NetExcell */
@@ -118,6 +116,7 @@
 #define	MII_OUI_xxBROADCOM_ALT1	0x0050ef	/* Broadcom Corporation */
 #define	MII_OUI_yyINTEL	0x005500	/* Intel */
 #define	MII_OUI_yyASIX	0x007063	/* Asix Semiconductor */
+#define	MII_OUI_xxVITESSE	0x008083	/* Vitesse Semiconductor */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 #define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
 #define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
@@ -305,23 +304,26 @@
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
 #define	MII_STR_xxBROADCOM_ALT1_BCM5906	"BCM5906 10/100baseTX media interface"
 
-/* Cicada Semiconductor PHYs (now owned by Vitesse?) */
-#define	MII_MODEL_CICADA_CS8201	0x0001
-#define	MII_STR_CICADA_CS8201	"Cicada CS8201 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_CS8204	0x0004
-#define	MII_STR_CICADA_CS8204	"Cicada CS8204 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_VSC8211	0x000b
-#define	MII_STR_CICADA_VSC8211	"Cicada VSC8211 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_CS8201A	0x0020
-#define	MII_STR_CICADA_CS8201A	"Cicada CS8201 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_CS8201B	0x0021
-#define	MII_STR_CICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
-#define	MII_MODEL_CICADA_CS8244	0x002c
-#define	MII_STR_CICADA_CS8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
+/* Cicada Semiconductor PHYs (-> Vitesse -> Microsemi) */
+
+#define	MII_MODEL_xxCICADA_CIS8201	0x0001
+#define	MII_STR_xxCICADA_CIS8201	"Cicada CIS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_CIS8204	0x0004
+#define	MII_STR_xxCICADA_CIS8204	"Cicada CIS8204 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8211	0x000b
+#define	MII_STR_xxCICADA_VSC8211	"Cicada VSC8211 10/100/1000TX PHY"
 #define	MII_MODEL_xxCICADA_VSC8221	0x0015
 #define	MII_STR_xxCICADA_VSC8221	"Vitesse VSC8221 10/100/1000BASE-T PHY"
-#define	MII_MODEL_xxCICADA_CS8201B	0x0021
-#define	MII_STR_xxCICADA_CS8201B	"Cicada CS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8224	0x0018
+#define	MII_STR_xxCICADA_VSC8224	"Vitesse VSC8224 10/100/1000BASE-T PHY"
+#define	MII_MODEL_xxCICADA_CIS8201A	0x0020
+#define	MII_STR_xxCICADA_CIS8201A	"Cicada CIS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_CIS8201B	0x0021
+#define	MII_STR_xxCICADA_CIS8201B	"Cicada CIS8201 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8234	0x0022
+#define	MII_STR_xxCICADA_VSC8234	"Vitesse VSC8234 10/100/1000TX PHY"
+#define	MII_MODEL_xxCICADA_VSC8244	0x002c
+#define	MII_STR_xxCICADA_VSC8244	"Vitesse VSC8244 Quad 10/100/1000BASE-T PHY"
 
 /* Davicom Semiconductor PHYs */
 /* AMD Am79C873 seems to be a relabeled DM9101 */
@@ -601,9 +603,13 @@
 #define	MII_MODEL_VIA_VT6103_2	0x0034
 #define	MII_STR_VIA_VT6103_2	"VT6103 10/100 PHY"
 
-/* Vitesse PHYs */
-#define	MII_MODEL_VITESSE_VSC8601	0x0002
-#define	MII_STR_VITESSE_VSC8601	"VSC8601 10/100/1000 PHY"
+/* Vitesse PHYs (Now Microsemi) */
+#define	MII_MODEL_xxVITESSE_VSC8601	0x0002
+#define	MII_STR_xxVITESSE_VSC8601	"VSC8601 10/100/1000 PHY"
+#define	MII_MODEL_xxVITESSE_VSC8641	0x0003
+#define	MII_STR_xxVITESSE_VSC8641	"Vitesse VSC8641 10/100/1000TX PHY"
+#define	MII_MODEL_xxVITESSE_VSC8501	0x0013
+#define	MII_STR_xxVITESSE_VSC8501	"Vitesse VSC8501 10/100/1000TX PHY"
 
 /* XaQti Corp. PHYs */
 #define	MII_MODEL_xxXAQTI_XMACII	0x0000
