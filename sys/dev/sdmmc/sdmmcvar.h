@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.31 2019/09/01 05:45:42 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.32 2019/10/23 05:20:52 hkenken Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -291,6 +291,8 @@ struct sdmmc_softc {
 	struct evcnt sc_ev_xfer_aligned[8]; /* aligned xfer counts */
 	struct evcnt sc_ev_xfer_unaligned; /* unaligned xfer count */
 	struct evcnt sc_ev_xfer_error;	/* error xfer count */
+
+	uint32_t sc_max_seg;		/* maximum segment size */
 };
 
 /*

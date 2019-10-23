@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhcvar.h,v 1.30 2019/03/13 12:16:49 jmcneill Exp $	*/
+/*	$NetBSD: sdhcvar.h,v 1.31 2019/10/23 05:20:52 hkenken Exp $	*/
 /*	$OpenBSD: sdhcvar.h,v 1.3 2007/09/06 08:01:01 jsg Exp $	*/
 
 /*
@@ -62,6 +62,11 @@ struct sdhc_softc {
 #define	SDHC_FLAG_NO_AUTO_STOP	0x01000000 /* No auto CMD12 */
 #define	SDHC_FLAG_NO_BUSY_INTR	0x02000000 /* No intr when RESP_BUSY */
 #define	SDHC_FLAG_STOP_WITH_TC	0x04000000 /* CMD12 can set xfer complete w/o SCF_RSP_BSY */
+#define	SDHC_FLAG_BROKEN_ADMA2_ZEROLEN 0x08000000 /*
+						   * Broken ADMA2 zero length descriptor
+						   * Can't 64K Byte data transfer
+						   */
+#define	SDHC_FLAG_NO_1_8_V	0x10000000 /* No 1.8V supply */
 
 	uint32_t		sc_clkbase;
 	int			sc_clkmsk;	/* Mask for SDCLK */

@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.103 2019/07/03 23:10:08 jmcneill Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.104 2019/10/23 05:20:52 hkenken Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.103 2019/07/03 23:10:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.104 2019/10/23 05:20:52 hkenken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -476,21 +476,23 @@ sdhc_host_found(struct sdhc_softc *sc, bus_space_tag_t iot,
 		SET(hp->ocr, MMC_OCR_HCS);
 		aprint_normal(" HS");
 	}
-	if (ISSET(caps2, SDHC_SDR50_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" SDR50");
-	}
-	if (ISSET(caps2, SDHC_DDR50_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" DDR50");
-	}
-	if (ISSET(caps2, SDHC_SDR104_SUPP)) {
-		SET(hp->ocr, MMC_OCR_S18A);
-		aprint_normal(" SDR104 HS200");
-	}
-	if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
-		SET(hp->ocr, MMC_OCR_1_65V_1_95V);
-		aprint_normal(" 1.8V");
+	if (!ISSET(hp->sc->sc_flags, SDHC_FLAG_NO_1_8_V)) {
+		if (ISSET(caps2, SDHC_SDR50_SUPP)) {
+			SET(hp->ocr, MMC_OCR_S18A);
+			aprint_normal(" SDR50");
+		}
+		if (ISSET(caps2, SDHC_DDR50_SUPP)) {
+			SET(hp->ocr, MMC_OCR_S18A);
+			aprint_normal(" DDR50");
+		}
+		if (ISSET(caps2, SDHC_SDR104_SUPP)) {
+			SET(hp->ocr, MMC_OCR_S18A);
+			aprint_normal(" SDR104 HS200");
+		}
+		if (ISSET(caps, SDHC_VOLTAGE_SUPP_1_8V)) {
+			SET(hp->ocr, MMC_OCR_1_65V_1_95V);
+			aprint_normal(" 1.8V");
+		}
 	}
 	if (ISSET(caps, SDHC_VOLTAGE_SUPP_3_0V)) {
 		SET(hp->ocr, MMC_OCR_2_9V_3_0V | MMC_OCR_3_0V_3_1V);
@@ -620,6 +622,10 @@ adma_done:
 		saa.saa_caps |= SMC_CAPS_SINGLE_ONLY;
 	if (ISSET(sc->sc_flags, SDHC_FLAG_POLL_CARD_DET))
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
+
+	if (ISSET(sc->sc_flags, SDHC_FLAG_BROKEN_ADMA2_ZEROLEN))
+		saa.saa_max_seg = 65535;
+
 	hp->sdmmc = config_found(sc->sc_dev, &saa, sdhc_cfprint);
 
 	return 0;
@@ -1818,12 +1824,9 @@ sdhc_start_command(struct sdhc_host *hp, struct sdmmc_command *cmd)
 		if (ISSET(hp->sc->sc_flags, SDHC_FLAG_USDHC)) {
 			/* mode bits is in MIX_CTRL register on uSDHC */
 			HWRITE4(hp, SDHC_MIX_CTRL, mode |
-			    (HREAD4(hp, SDHC_MIX_CTRL) &
-			    ~(SDHC_MULTI_BLOCK_MODE |
-			    SDHC_READ_MODE |
-			    SDHC_AUTO_CMD12_ENABLE |
-			    SDHC_BLOCK_COUNT_ENABLE |
-			    SDHC_DMA_ENABLE)));
+			    (HREAD4(hp, SDHC_MIX_CTRL) & ~SDHC_TRANSFER_MODE_MASK));
+			if (cmd->c_opcode == MMC_STOP_TRANSMISSION)
+				command |= SDHC_COMMAND_TYPE_ABORT;
 			HWRITE4(hp, SDHC_TRANSFER_MODE, command << 16);
 		} else {
 			HWRITE4(hp, SDHC_TRANSFER_MODE, mode | (command << 16));
