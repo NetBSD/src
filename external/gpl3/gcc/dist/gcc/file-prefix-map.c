@@ -123,7 +123,8 @@ remap_macro_filename (const char *filename)
   return remap_filename (macro_prefix_maps, filename);
 }
 
-#ifndef __NetBSD__
+/* Original GCC version disabled. The NetBSD version handles regex */
+#if 0
 /* Remap using -fdebug-prefix-map.  Return the GC-allocated new name
    corresponding to FILENAME or FILENAME if no remapping was performed.  */
 const char *
@@ -131,7 +132,12 @@ remap_debug_filename (const char *filename)
 {
   return remap_filename (debug_prefix_maps, filename);
 }
-#else
+#endif
+
+/*****
+ ***** The following code is a NetBSD extension that allows regex and
+ ***** \[0-9] substitutition arguments.
+ *****/
 
 /* Perform user-specified mapping of debug filename prefixes.  Return
    the new name corresponding to FILENAME.  */
@@ -238,4 +244,3 @@ remap_debug_filename (const char *filename)
 {
    return remap_debug_regex_filename (remap_debug_prefix_filename (filename));
 }
-#endif
