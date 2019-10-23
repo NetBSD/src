@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.37 2019/09/01 05:45:42 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.38 2019/10/23 05:20:52 hkenken Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.37 2019/09/01 05:45:42 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.38 2019/10/23 05:20:52 hkenken Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -130,10 +130,11 @@ sdmmc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_busclk = sc->sc_clkmax;
 	sc->sc_buswidth = 1;
 	sc->sc_caps = saa->saa_caps;
+	sc->sc_max_seg = saa->saa_max_seg ? saa->saa_max_seg : MAXPHYS;
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_DMA)) {
 		error = bus_dmamap_create(sc->sc_dmat, MAXPHYS, SDMMC_MAXNSEGS,
-		    MAXPHYS, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
+		    sc->sc_max_seg, 0, BUS_DMA_NOWAIT|BUS_DMA_ALLOCNOW, &sc->sc_dmap);
 		if (error) {
 			aprint_error_dev(sc->sc_dev,
 			    "couldn't create dma map. (error=%d)\n", error);
