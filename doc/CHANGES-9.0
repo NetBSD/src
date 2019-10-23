@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.83 2019/10/21 20:25:52 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.84 2019/10/23 19:50:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5108,4 +5108,97 @@ sys/uvm/uvm_mmap.c				1.173
 
 	Change 'npgs' from int to size_t.
 	[maxv, ticket #355]
+
+sys/dev/fss.c					1.108
+
+	Avoid (harmless) test of uninitialized structure member.
+	[maxv, ticket #356]
+
+sys/dev/ic/ahcisata_core.c			1.76
+
+	Ensure cmdh_prdtl is 0 in ahci_do_reset_drive().
+	[jdolecek, ticket #357]
+
+sys/dev/pci/ahcisata_pci.c			1.56
+
+	ahcisata: make sure bus mastering and memory space are actually enabled.
+	[tnn, ticket #358]
+
+sys/arch/aarch64/aarch64/cpu.c			1.23-1.25
+sys/arch/aarch64/aarch64/locore.S		1.42-1.44
+sys/arch/aarch64/include/cpu.h			1.14
+sys/arch/aarch64/include/param.h		1.12
+sys/arch/arm/acpi/cpu_acpi.c			1.7
+sys/arch/arm/arm32/cpu.c			1.133,1.134
+sys/arch/arm/fdt/cpu_fdt.c			1.28
+sys/arch/arm/include/cpu.h			1.101
+
+	aarch64: support upto 256 CPUs.
+	[jmcneill, ticket #359]
+
+sys/lib/libsa/loadfile_elf32.c			1.56
+
+	Make sure the kernel image we load is a static binary.
+	[maxv, ticket #361]
+
+sys/kern/kern_sig.c				1.373,1.376
+sys/kern/sys_ptrace_common.c			1.64
+tests/lib/libc/sys/t_ptrace_wait.c		1.136,1.138-1.140
+
+	Fix a race condition when handling concurrent LWP signals,
+	add a test. Enable previously optional vfork and LWP events
+	tests.
+	[kamil, ticket #366]
+
+sys/net/if_vlan.c				1.147
+
+	vlan(4): fix received packet statistics.
+	[ozaki-r, ticket #367]
+
+sys/netinet6/in6_ifattach.c			1.116,1.117
+sys/netinet6/in6_ifattach.h			1.14
+sys/netinet6/in6_var.h				1.101,1.102
+sys/netinet6/ip6_input.c			1.212-1.214
+tests/net/ndp/t_ra.sh				1.33
+
+	- Refactor the IPv6 temporary address timer
+	- Reject a small value being set to net.inet6.ip6.temppltime
+	  that may lead a kernel panic
+	- Add tests for the above fix
+	- Reset the timer immediately after changing
+	  net.inet6.ip6.temppltime, otherwise changing
+	  the value isn't reflected until an old interval
+	  period (one day by default) goes by
+	[ozaki-r, ticket #368]
+
+sys/dev/pci/if_bce.c				1.55,1.56
+sys/dev/pci/if_bcereg.h				1.5
+
+	- Add missing splnet()/splx() around mii_tick().
+	- Use device_printf() instead of aprint_error_dev)() in bce_watchdog().
+	- Mark ETHERCAP_VLAN_MTU.	 
+	- Clear the powerdown mode. Fixes PR kern/24911.
+	- Set proper LED modes.
+	[msaitoh, ticket #370]
+
+sys/arch/arm/ep93xx/epe.c			1.45
+sys/arch/arm/sunxi/sunxi_can.c			1.2
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.31
+sys/dev/ic/i82586.c				1.86
+sys/dev/pcmcia/if_cnw.c				1.66
+sys/dev/pcmcia/if_ray.c				1.95
+sys/dev/qbus/if_il.c				1.36
+sys/dev/qbus/if_qt.c				1.24
+
+	Do not double count incoming packets.
+	[msaitoh, ticket #371]
+
+sys/dev/mii/ciphy.c				1.37
+sys/dev/mii/miidevs				1.158
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
+
+	- Match a lot of Cicada and Vitesse devices correctly.
+	- Add support for VSC8221, VSC8234, VSC8641.
+	[msaitoh, ticket #372]
 
