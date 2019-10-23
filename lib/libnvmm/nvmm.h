@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.13 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.14 2019/10/23 12:02:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -40,21 +40,10 @@
 
 #define NVMM_USER_VERSION	1
 
-struct nvmm_io {
-	uint64_t port;
-	bool in;
-	size_t size;
-	uint8_t *data;
-};
+struct nvmm_io;
+struct nvmm_mem;
 
-struct nvmm_mem {
-	gpaddr_t gpa;
-	bool write;
-	size_t size;
-	uint8_t *data;
-};
-
-struct nvmm_callbacks {
+struct nvmm_assist_callbacks {
 	void (*io)(struct nvmm_io *);
 	void (*mem)(struct nvmm_mem *);
 };
@@ -63,17 +52,35 @@ struct nvmm_machine {
 	nvmm_machid_t machid;
 	struct nvmm_comm_page **pages;
 	void *areas; /* opaque */
-	struct nvmm_callbacks cbs;
 };
 
 struct nvmm_vcpu {
 	nvmm_cpuid_t cpuid;
+	struct nvmm_assist_callbacks cbs;
 	struct nvmm_vcpu_state *state;
 	struct nvmm_vcpu_event *event;
 	struct nvmm_vcpu_exit *exit;
 };
 
-#define NVMM_MACH_CONF_CALLBACKS	NVMM_MACH_CONF_LIBNVMM_BEGIN
+struct nvmm_io {
+	struct nvmm_machine *mach;
+	struct nvmm_vcpu *vcpu;
+	uint64_t port;
+	bool in;
+	size_t size;
+	uint8_t *data;
+};
+
+struct nvmm_mem {
+	struct nvmm_machine *mach;
+	struct nvmm_vcpu *vcpu;
+	gpaddr_t gpa;
+	bool write;
+	size_t size;
+	uint8_t *data;
+};
+
+#define NVMM_VCPU_CONF_CALLBACKS	NVMM_VCPU_CONF_LIBNVMM_BEGIN
 
 #define NVMM_PROT_READ		0x01
 #define NVMM_PROT_WRITE		0x02
