@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.75 2019/04/07 17:46:49 bouyer Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.75.4.1 2019/10/23 18:06:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75 2019/04/07 17:46:49 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75.4.1 2019/10/23 18:06:46 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -842,6 +842,7 @@ again:
 	cmd_tbl = achp->ahcic_cmd_tbl[c_slot];
 	cmd_h->cmdh_flags = htole16(AHCI_CMDH_F_RST | AHCI_CMDH_F_CBSY |
 	    RHD_FISLEN / 4 | (drive << AHCI_CMDH_F_PMP_SHIFT));
+	cmd_h->cmdh_prdtl = 0;
 	cmd_h->cmdh_prdbc = 0;
 	memset(cmd_tbl->cmdt_cfis, 0, 64);
 	cmd_tbl->cmdt_cfis[fis_type] = RHD_FISTYPE;
