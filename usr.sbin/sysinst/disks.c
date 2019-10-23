@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.44.2.8 2019/10/23 06:04:44 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.44.2.9 2019/10/23 06:30:16 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1487,12 +1487,14 @@ process_found_fs(struct data *list, size_t num, const struct lookfor *item,
 	const char *fsname = (const char*)item->var;
 	part_id pno;
 	struct disk_partitions *parts;
-	bool first;
+	size_t len;
+	bool first, is_root;
 
 	if (num < 2 || strstr(list[2].u.s_val, "noauto") != NULL)
 		return 0;
 
-	if ((strcmp(list[1].u.s_val, "/") == 0) && target_mounted())
+	is_root = strcmp(list[1].u.s_val, "/") == 0;
+	if (is_root && target_mounted())
 		return 0;
 
 	if (strcmp(item->head, name_prefix) == 0) {
@@ -1505,11 +1507,36 @@ process_found_fs(struct data *list, size_t num, const struct lookfor *item,
 		parts->pscheme->get_part_device(parts, pno,
 		    rdev, sizeof(rdev), NULL, raw_dev_name, true);
 	} else {
-		/* plain device name */
-		strcpy(rdev, "/dev/r");
-		strlcat(rdev, list[0].u.s_val, sizeof(rdev));
-		strcpy(dev, "/dev/");
-		strlcat(dev, list[0].u.s_val, sizeof(dev));
+		/* this fstab entry uses the plain device name */
+		if (is_root) {
+			/*
+			 * PR 54480: we can not use the current device name
+			 * as it might be different from the real environment.
+			 * This is an abuse of the functionality, but it used
+			 * to work before (and still does work if only a single
+			 * target disk is involved).
+			 * Use the device name from the current "pm" instead.
+			 */
+			strcpy(rdev, "/dev/r");
+			strlcat(rdev, pm->diskdev, sizeof(rdev));
+			strcpy(dev, "/dev/");
+			strlcat(dev, pm->diskdev, sizeof(dev));
+			/* copy over the partition letter, if any */
+			len = strlen(list[0].u.s_val);
+			if (list[0].u.s_val[len-1] >= 'a' &&
+			    list[0].u.s_val[len-1] <=
+			    ('a' + getmaxpartitions())) {
+				strlcat(rdev, &list[0].u.s_val[len-1],
+				    sizeof(rdev));
+				strlcat(dev, &list[0].u.s_val[len-1],
+				    sizeof(dev));
+			}
+		} else {
+			strcpy(rdev, "/dev/r");
+			strlcat(rdev, list[0].u.s_val, sizeof(rdev));
+			strcpy(dev, "/dev/");
+			strlcat(dev, list[0].u.s_val, sizeof(dev));
+		}
 	}
 
 	if (with_fsck) {
