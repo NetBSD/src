@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.15 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.16 2019/10/23 12:02:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -260,12 +260,6 @@ nvmm_machine_configure(struct nvmm_machine *mach, uint64_t op, void *conf)
 	struct nvmm_ioc_machine_configure args;
 	int ret;
 
-	switch (op) {
-	case NVMM_MACH_CONF_CALLBACKS:
-		memcpy(&mach->cbs, conf, sizeof(mach->cbs));
-		return 0;
-	}
-
 	args.machid = mach->machid;
 	args.op = op;
 	args.conf = conf;
@@ -334,6 +328,12 @@ nvmm_vcpu_configure(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu,
 {
 	struct nvmm_ioc_vcpu_configure args;
 	int ret;
+
+	switch (op) {
+	case NVMM_VCPU_CONF_CALLBACKS:
+		memcpy(&vcpu->cbs, conf, sizeof(vcpu->cbs));
+		return 0;
+	}
 
 	args.machid = mach->machid;
 	args.cpuid = vcpu->cpuid;
