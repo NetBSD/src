@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.364.2.7 2019/10/15 19:28:16 martin Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.364.2.8 2019/10/23 19:25:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.7 2019/10/15 19:28:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.364.2.8 2019/10/23 19:25:39 martin Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1318,10 +1318,6 @@ kpsignal2(struct proc *p, ksiginfo_t *ksi)
 	if (p->p_stat != SACTIVE && p->p_stat != SSTOP)
 		return 0;
 
-	/* XXX for core dump/debugger */
-	p->p_sigctx.ps_lwp = ksi->ksi_lid;
-	p->p_sigctx.ps_info = ksi->ksi_info;
-
 	/*
 	 * Notify any interested parties of the signal.
 	 */
@@ -1711,21 +1707,6 @@ sigswitch(int ppmask, int signo, bool proc_lock_held)
 	}
 
 	/*
-	 * If we are exiting, demise now.
-	 *
-	 * This avoids notifying tracer and deadlocking.
-	 */
-	if (__predict_false(ISSET(p->p_sflag, PS_WEXIT))) {
-		mutex_exit(p->p_lock);
-		if (proc_lock_held) {
-			mutex_exit(proc_lock);
-		}
-		lwp_exit(l);
-		panic("sigswitch");
-		/* NOTREACHED */
-	}
-
-	/*
 	 * On entry we know that the process needs to stop.  If it's
 	 * the result of a 'sideways' stop signal that has been sourced
 	 * through issignal(), then stop other LWPs in the process too.
@@ -1844,7 +1825,7 @@ int
 issignal(struct lwp *l)
 {
 	struct proc *p;
-	int signo, prop;
+	int siglwp, signo, prop;
 	sigpend_t *sp;
 	sigset_t ss;
 
@@ -1886,6 +1867,7 @@ issignal(struct lwp *l)
 		if (signo == 0) {
 			sp = &l->l_sigpend;
 			ss = sp->sp_set;
+			siglwp = l->l_lid;
 			if ((p->p_lflag & PL_PPWAIT) != 0)
 				sigminusset(&vforksigmask, &ss);
 			sigminusset(&l->l_sigmask, &ss);
@@ -1893,6 +1875,7 @@ issignal(struct lwp *l)
 			if ((signo = firstsig(&ss)) == 0) {
 				sp = &p->p_sigpend;
 				ss = sp->sp_set;
+				siglwp = 0;
 				if ((p->p_lflag & PL_PPWAIT) != 0)
 					sigminusset(&vforksigmask, &ss);
 				sigminusset(&l->l_sigmask, &ss);
@@ -1908,6 +1891,28 @@ issignal(struct lwp *l)
 					sp = NULL;
 					break;
 				}
+			}
+		}
+
+		if (sp) {
+			/* Overwrite process' signal context to correspond
+			 * to the currently reported LWP.  This is necessary
+			 * for PT_GET_SIGINFO to report the correct signal when
+			 * multiple LWPs have pending signals.  We do this only
+			 * when the signal comes from the queue, for signals
+			 * created by the debugger we assume it set correct
+			 * siginfo.
+			 */
+			ksiginfo_t *ksi = TAILQ_FIRST(&sp->sp_info);
+			if (ksi) {
+				p->p_sigctx.ps_lwp = ksi->ksi_lid;
+				p->p_sigctx.ps_info = ksi->ksi_info;
+			} else {
+				p->p_sigctx.ps_lwp = siglwp;
+				memset(&p->p_sigctx.ps_info, 0,
+				    sizeof(p->p_sigctx.ps_info));
+				p->p_sigctx.ps_info._signo = signo;
+				p->p_sigctx.ps_info._code = SI_NOINFO;
 			}
 		}
 

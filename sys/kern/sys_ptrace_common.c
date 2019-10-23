@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.8 2019/10/15 19:11:02 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.58.2.9 2019/10/23 19:25:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.8 2019/10/15 19:11:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.58.2.9 2019/10/23 19:25:39 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1275,7 +1275,7 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 		}
 
 		/*
-		 * Reject setting program cunter to 0x0 if VA0 is disabled.
+		 * Reject setting program counter to 0x0 if VA0 is disabled.
 		 *
 		 * Not all kernels implement this feature to set Program
 		 * Counter in one go in PT_CONTINUE and similar operations.

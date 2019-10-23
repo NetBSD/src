@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.5 2019/10/15 18:47:03 martin Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.131.2.6 2019/10/23 19:25:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.5 2019/10/15 18:47:03 martin Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.131.2.6 2019/10/23 19:25:39 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -120,14 +120,6 @@ static int debug = 0;
 	if (debug) \
 	printf("%s() %s:%d " a, __func__, __FILE__, __LINE__,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
-
-#ifndef TEST_VFORK_ENABLED
-#define TEST_VFORK_ENABLED 1
-#endif
-
-#ifndef TEST_LWP_ENABLED
-#define TEST_LWP_ENABLED 0
-#endif
 
 /// ----------------------------------------------------------------------------
 
@@ -3269,7 +3261,6 @@ FORK_TEST(fork15, "fork", true, false, true, true)
 FORK_TEST(fork16, "fork", true, true, true, true)
 #endif
 
-#if TEST_VFORK_ENABLED
 FORK_TEST(vfork1, "vfork", false, false, false, false)
 #if defined(TWAIT_HAVE_PID)
 FORK_TEST(vfork2, "vfork", false, true, false, false)
@@ -3293,7 +3284,6 @@ FORK_TEST(vfork13, "vfork", true, false, false, true)
 FORK_TEST(vfork14, "vfork", true, true, false, true)
 FORK_TEST(vfork15, "vfork", true, false, true, true)
 FORK_TEST(vfork16, "vfork", true, true, true, true)
-#endif
 #endif
 
 FORK_TEST(posix_spawn1, "spawn", false, false, false, false)
@@ -3497,22 +3487,17 @@ ATF_TC_BODY(name, tc)							\
 
 FORK_DETACH_FORKER(posix_spawn_detach_spawner, "spawn", false)
 FORK_DETACH_FORKER(fork_detach_forker, "fork", false)
-#if TEST_VFORK_ENABLED
 FORK_DETACH_FORKER(vfork_detach_vforker, "vfork", false)
 FORK_DETACH_FORKER(vfork_detach_vforkerdone, "vforkdone", false)
-#endif
 
 FORK_DETACH_FORKER(posix_spawn_kill_spawner, "spawn", true)
 FORK_DETACH_FORKER(fork_kill_forker, "fork", true)
-#if TEST_VFORK_ENABLED
 FORK_DETACH_FORKER(vfork_kill_vforker, "vfork", true)
 FORK_DETACH_FORKER(vfork_kill_vforkerdone, "vforkdone", true)
-#endif
 #endif
 
 /// ----------------------------------------------------------------------------
 
-#if TEST_VFORK_ENABLED
 static void
 traceme_vfork_fork_body(pid_t (*fn)(void))
 {
@@ -3571,7 +3556,6 @@ ATF_TC_BODY(name, tc)							\
 
 TRACEME_VFORK_FORK_TEST(traceme_vfork_fork, fork)
 TRACEME_VFORK_FORK_TEST(traceme_vfork_vfork, vfork)
-#endif
 
 /// ----------------------------------------------------------------------------
 
@@ -5496,11 +5480,6 @@ trace_threads(bool trace_create, bool trace_exit)
 	/* Track created and exited threads */
 	bool traced_lwps[__arraycount(t)];
 
-#if !TEST_LWP_ENABLED
-	if (trace_create || trace_exit)
-		atf_tc_skip("PR kern/51995");
-#endif
-
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
@@ -6126,12 +6105,10 @@ FORK2_TEST(posix_spawn_singalmasked, "spawn", true, false)
 FORK2_TEST(posix_spawn_singalignored, "spawn", false, true)
 FORK2_TEST(fork_singalmasked, "fork", true, false)
 FORK2_TEST(fork_singalignored, "fork", false, true)
-#if TEST_VFORK_ENABLED
 FORK2_TEST(vfork_singalmasked, "vfork", true, false)
 FORK2_TEST(vfork_singalignored, "vfork", false, true)
 FORK2_TEST(vforkdone_singalmasked, "vforkdone", true, false)
 FORK2_TEST(vforkdone_singalignored, "vforkdone", false, true)
-#endif
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -6991,7 +6968,6 @@ CLONE_TEST(clone_files8, CLONE_FILES, true, true, true)
 //CLONE_TEST(clone_sighand8, CLONE_SIGHAND, true, true, true)
 #endif
 
-#if TEST_VFORK_ENABLED
 CLONE_TEST(clone_vfork1, CLONE_VFORK, false, false, false)
 #if defined(TWAIT_HAVE_PID)
 CLONE_TEST(clone_vfork2, CLONE_VFORK, true, false, false)
@@ -7003,7 +6979,6 @@ CLONE_TEST(clone_vfork5, CLONE_VFORK, false, false, true)
 CLONE_TEST(clone_vfork6, CLONE_VFORK, true, false, true)
 CLONE_TEST(clone_vfork7, CLONE_VFORK, false, true, true)
 CLONE_TEST(clone_vfork8, CLONE_VFORK, true, true, true)
-#endif
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -7367,15 +7342,12 @@ CLONE_TEST2(clone_files_signalignored, CLONE_FILES, true, false)
 CLONE_TEST2(clone_files_signalmasked, CLONE_FILES, false, true)
 //CLONE_TEST2(clone_sighand_signalignored, CLONE_SIGHAND, true, false) // XXX
 //CLONE_TEST2(clone_sighand_signalmasked, CLONE_SIGHAND, false, true)  // XXX
-#if TEST_VFORK_ENABLED
 CLONE_TEST2(clone_vfork_signalignored, CLONE_VFORK, true, false)
 CLONE_TEST2(clone_vfork_signalmasked, CLONE_VFORK, false, true)
-#endif
 #endif
 
 /// ----------------------------------------------------------------------------
 
-#if TEST_VFORK_ENABLED
 #if defined(TWAIT_HAVE_PID)
 static void
 traceme_vfork_clone_body(int flags)
@@ -7455,7 +7427,6 @@ TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_fs, CLONE_FS)
 TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_files, CLONE_FILES)
 //TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_sighand, CLONE_SIGHAND)  // XXX
 TRACEME_VFORK_CLONE_TEST(traceme_vfork_clone_vfork, CLONE_VFORK)
-#endif
 #endif
 
 /// ----------------------------------------------------------------------------
@@ -7722,6 +7693,152 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 
 /// ----------------------------------------------------------------------------
 
+#if defined(TWAIT_HAVE_STATUS)
+
+ATF_TC(thread_concurrent_signals);
+ATF_TC_HEAD(thread_concurrent_signals, tc)
+{
+	atf_tc_set_md_var(tc, "descr",
+	    "Verify that concurrent signals issued to a single thread "
+	    "are reported correctly");
+}
+
+/* List of signals to use for the test */
+const int thread_concurrent_signals_list[] = {
+	SIGIO,
+	SIGXCPU,
+	SIGXFSZ,
+	SIGVTALRM,
+	SIGPROF,
+	SIGWINCH,
+	SIGINFO,
+	SIGUSR1,
+	SIGUSR2
+};
+
+pthread_barrier_t thread_concurrent_signals_barrier;
+
+static void *
+thread_concurrent_signals_thread(void *arg)
+{
+	int sigval = thread_concurrent_signals_list[
+	    _lwp_self() % __arraycount(thread_concurrent_signals_list)];
+	pthread_barrier_wait(&thread_concurrent_signals_barrier);
+	DPRINTF("Before raising %s from LWP %d\n", strsignal(sigval),
+		_lwp_self());
+	pthread_kill(pthread_self(), sigval);
+	return NULL;
+}
+
+#define THREAD_CONCURRENT_SIGNALS_NUM 50
+
+ATF_TC_BODY(thread_concurrent_signals, tc)
+{
+	const int exitval = 5;
+	const int sigval = SIGSTOP;
+	pid_t child, wpid;
+	int status;
+	int signal_counts[THREAD_CONCURRENT_SIGNALS_NUM] = {0};
+	unsigned int i;
+
+	DPRINTF("Before forking process PID=%d\n", getpid());
+	SYSCALL_REQUIRE((child = fork()) != -1);
+	if (child == 0) {
+		pthread_t threads[THREAD_CONCURRENT_SIGNALS_NUM];
+
+		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
+		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		DPRINTF("Before raising %s from child\n", strsignal(sigval));
+		FORKEE_ASSERT(raise(sigval) == 0);
+
+		DPRINTF("Before starting threads from the child\n");
+		FORKEE_ASSERT(pthread_barrier_init(
+		    &thread_concurrent_signals_barrier, NULL,
+		    __arraycount(threads)) == 0);
+
+		for (i = 0; i < __arraycount(threads); i++) {
+			FORKEE_ASSERT(pthread_create(&threads[i], NULL,
+			    thread_concurrent_signals_thread, NULL) == 0);
+		}
+
+		DPRINTF("Before joining threads from the child\n");
+		for (i = 0; i < __arraycount(threads); i++) {
+			FORKEE_ASSERT(pthread_join(threads[i], NULL) == 0);
+		}
+
+		FORKEE_ASSERT(pthread_barrier_destroy(
+		    &thread_concurrent_signals_barrier) == 0);
+
+		DPRINTF("Before exiting of the child process\n");
+		_exit(exitval);
+	}
+	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
+
+	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+	validate_status_stopped(status, sigval);
+
+	DPRINTF("Before resuming the child process where it left off\n");
+	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+	DPRINTF("Before entering signal collection loop\n");
+	while (1) {
+		ptrace_siginfo_t info;
+		int expected_sig;
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		    child);
+		if (WIFEXITED(status))
+			break;
+		/* Note: we use validate_status_stopped() to get nice error
+		 * message.  Signal is irrelevant since it won't be reached.
+		 */
+		else if (!WIFSTOPPED(status))
+			validate_status_stopped(status, 0);
+
+		DPRINTF("Before calling PT_GET_SIGINFO\n");
+		SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info,
+		    sizeof(info)) != -1);
+
+		DPRINTF("Received signal %d from LWP %d (wait: %d)\n",
+		    info.psi_siginfo.si_signo, info.psi_lwpid,
+		    WSTOPSIG(status));
+
+		expected_sig = thread_concurrent_signals_list[info.psi_lwpid %
+		    __arraycount(thread_concurrent_signals_list)];
+		ATF_CHECK_EQ_MSG(info.psi_siginfo.si_signo, expected_sig,
+		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
+		    expected_sig, info.psi_siginfo.si_signo);
+		ATF_CHECK_EQ_MSG(WSTOPSIG(status), expected_sig,
+		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
+		    expected_sig, WSTOPSIG(status));
+
+		/* We assume that LWPs will be given successive numbers starting
+		 * from 2.
+		 */
+		ATF_REQUIRE(info.psi_lwpid >= 2);
+		ATF_REQUIRE((unsigned int)info.psi_lwpid <
+		    __arraycount(signal_counts)+2);
+		signal_counts[info.psi_lwpid-2]++;
+
+		DPRINTF("Before resuming the child process\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+	}
+
+	for (i = 0; i < __arraycount(signal_counts); i++)
+		ATF_CHECK_EQ_MSG(signal_counts[i], 1, "signal_counts[%d]=%d",
+		    i, signal_counts[i]);
+
+	validate_status_exited(status, exitval);
+}
+
+#endif /*defined(TWAIT_HAVE_STATUS)*/
+
+/// ----------------------------------------------------------------------------
+
 #include "t_ptrace_amd64_wait.h"
 #include "t_ptrace_i386_wait.h"
 #include "t_ptrace_x86_wait.h"
@@ -7926,7 +8043,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork15);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork16);
 
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, vfork1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork2);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork3);
@@ -7943,7 +8059,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork14);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork15);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork16);
-#endif
 
 	ATF_TP_ADD_TC(tp, posix_spawn1);
 	ATF_TP_ADD_TC(tp, posix_spawn2);
@@ -7964,22 +8079,16 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_detach_spawner);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_detach_forker);
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_detach_vforker);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_detach_vforkerdone);
-#endif
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_kill_spawner);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_kill_forker);
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_kill_vforker);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_kill_vforkerdone);
-#endif
 
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, traceme_vfork_fork);
 	ATF_TP_ADD_TC(tp, traceme_vfork_vfork);
-#endif
 
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_8);
 	ATF_TP_ADD_TC(tp, bytes_transfer_piod_read_d_16);
@@ -8110,12 +8219,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_singalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_singalmasked);
 	ATF_TP_ADD_TC_HAVE_PID(tp, fork_singalignored);
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_singalmasked);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vfork_singalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalmasked);
 	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalignored);
-#endif
 
 	ATF_TP_ADD_TC(tp, signal9);
 	ATF_TP_ADD_TC(tp, signal10);
@@ -8173,7 +8280,6 @@ ATF_TP_ADD_TCS(tp)
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand7); // XXX
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand8); // XXX
 
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC(tp, clone_vfork1);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork2);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork3);
@@ -8182,7 +8288,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork6);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork7);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork8);
-#endif
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_signalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_signalmasked);
@@ -8194,25 +8299,25 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_files_signalmasked);
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand_signalignored); // XXX
 //	ATF_TP_ADD_TC_HAVE_PID(tp, clone_sighand_signalmasked); // XXX
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork_signalignored);
 	ATF_TP_ADD_TC_HAVE_PID(tp, clone_vfork_signalmasked);
-#endif
 
-#if TEST_VFORK_ENABLED
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone);
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_vm);
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_fs);
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_files);
 //	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_sighand); // XXX
 	ATF_TP_ADD_TC_HAVE_PID(tp, traceme_vfork_clone_vfork);
-#endif
 
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_continue);
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_syscall);
 	ATF_TP_ADD_TC(tp, user_va0_disable_pt_detach);
 
 	ATF_TP_ADD_TC(tp, core_dump_procinfo);
+
+#if defined(TWAIT_HAVE_STATUS)
+	ATF_TP_ADD_TC(tp, thread_concurrent_signals);
+#endif
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
