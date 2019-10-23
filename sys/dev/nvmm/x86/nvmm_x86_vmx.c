@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.39 2019/10/12 06:31:04 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.40 2019/10/23 07:01:11 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.39 2019/10/12 06:31:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.40 2019/10/23 07:01:11 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -697,14 +697,12 @@ static uint64_t vmx_xcr0_mask __read_mostly;
 /* -------------------------------------------------------------------------- */
 
 struct vmx_machdata {
-	bool cpuidpresent[VMX_NCPUIDS];
-	struct nvmm_mach_conf_x86_cpuid cpuid[VMX_NCPUIDS];
 	volatile uint64_t mach_htlb_gen;
 };
 
-static const size_t vmx_conf_sizes[NVMM_X86_NCONF] = {
-	[NVMM_MACH_CONF_MD(NVMM_MACH_CONF_X86_CPUID)] =
-	    sizeof(struct nvmm_mach_conf_x86_cpuid)
+static const size_t vmx_vcpu_conf_sizes[NVMM_X86_VCPU_NCONF] = {
+	[NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID)] =
+	    sizeof(struct nvmm_vcpu_conf_cpuid)
 };
 
 struct vmx_cpudata {
@@ -750,6 +748,10 @@ struct vmx_cpudata {
 	uint64_t drs[NVMM_X64_NDR];
 	uint64_t gtsc;
 	struct xsave_header gfpu __aligned(64);
+
+	/* VCPU configuration. */
+	bool cpuidpresent[VMX_NCPUIDS];
+	struct nvmm_vcpu_conf_cpuid cpuid[VMX_NCPUIDS];
 };
 
 static const struct {
@@ -973,7 +975,7 @@ vmx_event_waitexit_disable(struct nvmm_cpu *vcpu, bool nmi)
 }
 
 static inline int
-vmx_event_has_error(uint64_t vector)
+vmx_event_has_error(uint8_t vector)
 {
 	switch (vector) {
 	case 8:		/* #DF */
@@ -996,30 +998,19 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 	struct nvmm_comm_page *comm = vcpu->comm;
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	int type = 0, err = 0, ret = EINVAL;
-	enum nvmm_event_type evtype;
-	uint64_t info, vector, error;
+	u_int evtype;
+	uint8_t vector;
+	uint64_t info, error;
 
 	evtype = comm->event.type;
 	vector = comm->event.vector;
-	error = comm->event.u.error;
+	error = comm->event.u.excp.error;
 	__insn_barrier();
-
-	if (__predict_false(vector >= 256)) {
-		return EINVAL;
-	}
 
 	vmx_vmcs_enter(vcpu);
 
 	switch (evtype) {
-	case NVMM_EVENT_INTERRUPT_HW:
-		type = INTR_TYPE_EXT_INT;
-		if (vector == 2) {
-			type = INTR_TYPE_NMI;
-			vmx_event_waitexit_enable(vcpu, true);
-		}
-		err = 0;
-		break;
-	case NVMM_EVENT_EXCEPTION:
+	case NVMM_VCPU_EVENT_EXCP:
 		if (vector == 2 || vector >= 32)
 			goto out;
 		if (vector == 3 || vector == 0)
@@ -1027,15 +1018,23 @@ vmx_vcpu_inject(struct nvmm_cpu *vcpu)
 		type = INTR_TYPE_HW_EXC;
 		err = vmx_event_has_error(vector);
 		break;
+	case NVMM_VCPU_EVENT_INTR:
+		type = INTR_TYPE_EXT_INT;
+		if (vector == 2) {
+			type = INTR_TYPE_NMI;
+			vmx_event_waitexit_enable(vcpu, true);
+		}
+		err = 0;
+		break;
 	default:
 		goto out;
 	}
 
 	info =
-	    __SHIFTIN(vector, INTR_INFO_VECTOR) |
-	    __SHIFTIN(type, INTR_INFO_TYPE) |
-	    __SHIFTIN(err, INTR_INFO_ERROR) |
-	    __SHIFTIN(1, INTR_INFO_VALID);
+	    __SHIFTIN((uint64_t)vector, INTR_INFO_VECTOR) |
+	    __SHIFTIN((uint64_t)type, INTR_INFO_TYPE) |
+	    __SHIFTIN((uint64_t)err, INTR_INFO_ERROR) |
+	    __SHIFTIN((uint64_t)1, INTR_INFO_VALID);
 	vmx_vmwrite(VMCS_ENTRY_INTR_INFO, info);
 	vmx_vmwrite(VMCS_ENTRY_EXCEPTION_ERROR, error);
 
@@ -1053,9 +1052,9 @@ vmx_inject_ud(struct nvmm_cpu *vcpu)
 	struct nvmm_comm_page *comm = vcpu->comm;
 	int ret __diagused;
 
-	comm->event.type = NVMM_EVENT_EXCEPTION;
+	comm->event.type = NVMM_VCPU_EVENT_EXCP;
 	comm->event.vector = 6;
-	comm->event.u.error = 0;
+	comm->event.u.excp.error = 0;
 
 	ret = vmx_vcpu_inject(vcpu);
 	KASSERT(ret == 0);
@@ -1067,9 +1066,9 @@ vmx_inject_gp(struct nvmm_cpu *vcpu)
 	struct nvmm_comm_page *comm = vcpu->comm;
 	int ret __diagused;
 
-	comm->event.type = NVMM_EVENT_EXCEPTION;
+	comm->event.type = NVMM_VCPU_EVENT_EXCP;
 	comm->event.vector = 13;
-	comm->event.u.error = 0;
+	comm->event.u.excp.error = 0;
 
 	ret = vmx_vcpu_inject(vcpu);
 	KASSERT(ret == 0);
@@ -1104,15 +1103,15 @@ vmx_inkernel_advance(void)
 }
 
 static void
-vmx_exit_invalid(struct nvmm_exit *exit, uint64_t code)
+vmx_exit_invalid(struct nvmm_vcpu_exit *exit, uint64_t code)
 {
 	exit->u.inv.hwcode = code;
-	exit->reason = NVMM_EXIT_INVALID;
+	exit->reason = NVMM_VCPU_EXIT_INVALID;
 }
 
 static void
 vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	uint64_t qual;
 
@@ -1125,7 +1124,7 @@ vmx_exit_exc_nmi(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		goto error;
 	}
 
-	exit->reason = NVMM_EXIT_NONE;
+	exit->reason = NVMM_VCPU_EXIT_NONE;
 	return;
 
 error:
@@ -1211,12 +1210,22 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 }
 
 static void
-vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+vmx_exit_insn(struct nvmm_vcpu_exit *exit, uint64_t reason)
 {
-	struct vmx_machdata *machdata = mach->machdata;
+	uint64_t inslen, rip;
+
+	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
+	rip = vmx_vmread(VMCS_GUEST_RIP);
+	exit->u.insn.npc = rip + inslen;
+	exit->reason = reason;
+}
+
+static void
+vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    struct nvmm_vcpu_exit *exit)
+{
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	struct nvmm_mach_conf_x86_cpuid *cpuid;
+	struct nvmm_vcpu_conf_cpuid *cpuid;
 	uint64_t eax, ecx;
 	u_int descs[4];
 	size_t i;
@@ -1233,36 +1242,42 @@ vmx_exit_cpuid(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	vmx_inkernel_handle_cpuid(vcpu, eax, ecx);
 
 	for (i = 0; i < VMX_NCPUIDS; i++) {
-		cpuid = &machdata->cpuid[i];
-		if (!machdata->cpuidpresent[i]) {
+		if (!cpudata->cpuidpresent[i]) {
 			continue;
 		}
+		cpuid = &cpudata->cpuid[i];
 		if (cpuid->leaf != eax) {
 			continue;
 		}
 
+		if (cpuid->exit) {
+			vmx_exit_insn(exit, NVMM_VCPU_EXIT_CPUID);
+			return;
+		}
+		KASSERT(cpuid->mask);
+
 		/* del */
-		cpudata->gprs[NVMM_X64_GPR_RAX] &= ~cpuid->del.eax;
-		cpudata->gprs[NVMM_X64_GPR_RBX] &= ~cpuid->del.ebx;
-		cpudata->gprs[NVMM_X64_GPR_RCX] &= ~cpuid->del.ecx;
-		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~cpuid->del.edx;
+		cpudata->gprs[NVMM_X64_GPR_RAX] &= ~cpuid->u.mask.del.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] &= ~cpuid->u.mask.del.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] &= ~cpuid->u.mask.del.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] &= ~cpuid->u.mask.del.edx;
 
 		/* set */
-		cpudata->gprs[NVMM_X64_GPR_RAX] |= cpuid->set.eax;
-		cpudata->gprs[NVMM_X64_GPR_RBX] |= cpuid->set.ebx;
-		cpudata->gprs[NVMM_X64_GPR_RCX] |= cpuid->set.ecx;
-		cpudata->gprs[NVMM_X64_GPR_RDX] |= cpuid->set.edx;
+		cpudata->gprs[NVMM_X64_GPR_RAX] |= cpuid->u.mask.set.eax;
+		cpudata->gprs[NVMM_X64_GPR_RBX] |= cpuid->u.mask.set.ebx;
+		cpudata->gprs[NVMM_X64_GPR_RCX] |= cpuid->u.mask.set.ecx;
+		cpudata->gprs[NVMM_X64_GPR_RDX] |= cpuid->u.mask.set.edx;
 
 		break;
 	}
 
 	vmx_inkernel_advance();
-	exit->reason = NVMM_EXIT_NONE;
+	exit->reason = NVMM_VCPU_EXIT_NONE;
 }
 
 static void
 vmx_exit_hlt(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint64_t rflags;
@@ -1275,7 +1290,7 @@ vmx_exit_hlt(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	}
 
 	vmx_inkernel_advance();
-	exit->reason = NVMM_EXIT_HALTED;
+	exit->reason = NVMM_VCPU_EXIT_HALTED;
 }
 
 #define VMX_QUAL_CR_NUM		__BITS(3,0)
@@ -1427,7 +1442,7 @@ vmx_inkernel_handle_cr8(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 static void
 vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	uint64_t qual;
 	int ret;
@@ -1453,7 +1468,7 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		vmx_inject_gp(vcpu);
 	}
 
-	exit->reason = NVMM_EXIT_NONE;
+	exit->reason = NVMM_VCPU_EXIT_NONE;
 }
 
 #define VMX_QUAL_IO_SIZE	__BITS(2,0)
@@ -1474,21 +1489,16 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 static void
 vmx_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	uint64_t qual, info, inslen, rip;
 
 	qual = vmx_vmread(VMCS_EXIT_QUALIFICATION);
 	info = vmx_vmread(VMCS_EXIT_INSTRUCTION_INFO);
 
-	exit->reason = NVMM_EXIT_IO;
+	exit->reason = NVMM_VCPU_EXIT_IO;
 
-	if (qual & VMX_QUAL_IO_IN) {
-		exit->u.io.type = NVMM_EXIT_IO_IN;
-	} else {
-		exit->u.io.type = NVMM_EXIT_IO_OUT;
-	}
-
+	exit->u.io.in = (qual & VMX_QUAL_IO_IN) != 0;
 	exit->u.io.port = __SHIFTOUT(qual, VMX_QUAL_IO_PORT);
 
 	KASSERT(__SHIFTOUT(info, VMX_INFO_IO_SEG) < 6);
@@ -1513,7 +1523,7 @@ vmx_exit_io(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	exit->u.io.rep = (qual & VMX_QUAL_IO_REP) != 0;
 	exit->u.io.str = (qual & VMX_QUAL_IO_STR) != 0;
 
-	if ((exit->u.io.type == NVMM_EXIT_IO_IN) && exit->u.io.str) {
+	if (exit->u.io.in && exit->u.io.str) {
 		exit->u.io.seg = NVMM_X64_SEG_ES;
 	}
 
@@ -1533,59 +1543,56 @@ static const uint64_t msr_ignore_list[] = {
 
 static bool
 vmx_inkernel_handle_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint64_t val;
 	size_t i;
 
-	switch (exit->u.msr.type) {
-	case NVMM_EXIT_MSR_RDMSR:
-		if (exit->u.msr.msr == MSR_CR_PAT) {
+	if (exit->reason == NVMM_VCPU_EXIT_RDMSR) {
+		if (exit->u.rdmsr.msr == MSR_CR_PAT) {
 			val = vmx_vmread(VMCS_GUEST_IA32_PAT);
 			cpudata->gprs[NVMM_X64_GPR_RAX] = (val & 0xFFFFFFFF);
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
-		if (exit->u.msr.msr == MSR_MISC_ENABLE) {
+		if (exit->u.rdmsr.msr == MSR_MISC_ENABLE) {
 			val = cpudata->gmsr_misc_enable;
 			cpudata->gprs[NVMM_X64_GPR_RAX] = (val & 0xFFFFFFFF);
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
-			if (msr_ignore_list[i] != exit->u.msr.msr)
+			if (msr_ignore_list[i] != exit->u.rdmsr.msr)
 				continue;
 			val = 0;
 			cpudata->gprs[NVMM_X64_GPR_RAX] = (val & 0xFFFFFFFF);
 			cpudata->gprs[NVMM_X64_GPR_RDX] = (val >> 32);
 			goto handled;
 		}
-		break;
-	case NVMM_EXIT_MSR_WRMSR:
-		if (exit->u.msr.msr == MSR_TSC) {
-			cpudata->gtsc = exit->u.msr.val;
+	} else {
+		if (exit->u.wrmsr.msr == MSR_TSC) {
+			cpudata->gtsc = exit->u.wrmsr.val;
 			cpudata->gtsc_want_update = true;
 			goto handled;
 		}
-		if (exit->u.msr.msr == MSR_CR_PAT) {
-			val = exit->u.msr.val;
+		if (exit->u.wrmsr.msr == MSR_CR_PAT) {
+			val = exit->u.wrmsr.val;
 			if (__predict_false(!nvmm_x86_pat_validate(val))) {
 				goto error;
 			}
 			vmx_vmwrite(VMCS_GUEST_IA32_PAT, val);
 			goto handled;
 		}
-		if (exit->u.msr.msr == MSR_MISC_ENABLE) {
+		if (exit->u.wrmsr.msr == MSR_MISC_ENABLE) {
 			/* Don't care. */
 			goto handled;
 		}
 		for (i = 0; i < __arraycount(msr_ignore_list); i++) {
-			if (msr_ignore_list[i] != exit->u.msr.msr)
+			if (msr_ignore_list[i] != exit->u.wrmsr.msr)
 				continue;
 			goto handled;
 		}
-		break;
 	}
 
 	return false;
@@ -1600,50 +1607,61 @@ error:
 }
 
 static void
-vmx_exit_msr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit, bool rdmsr)
+vmx_exit_rdmsr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint64_t inslen, rip;
 
-	if (rdmsr) {
-		exit->u.msr.type = NVMM_EXIT_MSR_RDMSR;
-	} else {
-		exit->u.msr.type = NVMM_EXIT_MSR_WRMSR;
-	}
-
-	exit->u.msr.msr = (cpudata->gprs[NVMM_X64_GPR_RCX] & 0xFFFFFFFF);
-
-	if (rdmsr) {
-		exit->u.msr.val = 0;
-	} else {
-		uint64_t rdx, rax;
-		rdx = cpudata->gprs[NVMM_X64_GPR_RDX];
-		rax = cpudata->gprs[NVMM_X64_GPR_RAX];
-		exit->u.msr.val = (rdx << 32) | (rax & 0xFFFFFFFF);
-	}
+	exit->reason = NVMM_VCPU_EXIT_RDMSR;
+	exit->u.rdmsr.msr = (cpudata->gprs[NVMM_X64_GPR_RCX] & 0xFFFFFFFF);
 
 	if (vmx_inkernel_handle_msr(mach, vcpu, exit)) {
-		exit->reason = NVMM_EXIT_NONE;
+		exit->reason = NVMM_VCPU_EXIT_NONE;
 		return;
 	}
 
-	exit->reason = NVMM_EXIT_MSR;
 	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
 	rip = vmx_vmread(VMCS_GUEST_RIP);
-	exit->u.msr.npc = rip + inslen;
+	exit->u.rdmsr.npc = rip + inslen;
+
+	vmx_vcpu_state_provide(vcpu, NVMM_X64_STATE_GPRS);
+}
+
+static void
+vmx_exit_wrmsr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
+    struct nvmm_vcpu_exit *exit)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	uint64_t rdx, rax, inslen, rip;
+
+	rdx = cpudata->gprs[NVMM_X64_GPR_RDX];
+	rax = cpudata->gprs[NVMM_X64_GPR_RAX];
+
+	exit->reason = NVMM_VCPU_EXIT_WRMSR;
+	exit->u.wrmsr.msr = (cpudata->gprs[NVMM_X64_GPR_RCX] & 0xFFFFFFFF);
+	exit->u.wrmsr.val = (rdx << 32) | (rax & 0xFFFFFFFF);
+
+	if (vmx_inkernel_handle_msr(mach, vcpu, exit)) {
+		exit->reason = NVMM_VCPU_EXIT_NONE;
+		return;
+	}
+
+	inslen = vmx_vmread(VMCS_EXIT_INSTRUCTION_LENGTH);
+	rip = vmx_vmread(VMCS_GUEST_RIP);
+	exit->u.wrmsr.npc = rip + inslen;
 
 	vmx_vcpu_state_provide(vcpu, NVMM_X64_STATE_GPRS);
 }
 
 static void
 vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint16_t val;
 
-	exit->reason = NVMM_EXIT_NONE;
+	exit->reason = NVMM_VCPU_EXIT_NONE;
 
 	val = (cpudata->gprs[NVMM_X64_GPR_RDX] << 32) |
 	    (cpudata->gprs[NVMM_X64_GPR_RAX] & 0xFFFFFFFF);
@@ -1674,14 +1692,14 @@ error:
 
 static void
 vmx_exit_epf(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	uint64_t perm;
 	gpaddr_t gpa;
 
 	gpa = vmx_vmread(VMCS_GUEST_PHYSICAL_ADDRESS);
 
-	exit->reason = NVMM_EXIT_MEMORY;
+	exit->reason = NVMM_VCPU_EXIT_MEMORY;
 	perm = vmx_vmread(VMCS_EXIT_QUALIFICATION);
 	if (perm & VMX_EPT_VIOLATION_WRITE)
 		exit->u.mem.prot = PROT_WRITE;
@@ -1865,7 +1883,7 @@ vmx_exit_evt(struct vmx_cpudata *cpudata)
 
 static int
 vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	struct nvmm_comm_page *comm = vcpu->comm;
 	struct vmx_machdata *machdata = mach->machdata;
@@ -1948,7 +1966,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			vmx_exit_exc_nmi(mach, vcpu, exit);
 			break;
 		case VMCS_EXITCODE_EXT_INT:
-			exit->reason = NVMM_EXIT_NONE;
+			exit->reason = NVMM_VCPU_EXIT_NONE;
 			break;
 		case VMCS_EXITCODE_CPUID:
 			vmx_exit_cpuid(mach, vcpu, exit);
@@ -1963,19 +1981,19 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			vmx_exit_io(mach, vcpu, exit);
 			break;
 		case VMCS_EXITCODE_RDMSR:
-			vmx_exit_msr(mach, vcpu, exit, true);
+			vmx_exit_rdmsr(mach, vcpu, exit);
 			break;
 		case VMCS_EXITCODE_WRMSR:
-			vmx_exit_msr(mach, vcpu, exit, false);
+			vmx_exit_wrmsr(mach, vcpu, exit);
 			break;
 		case VMCS_EXITCODE_SHUTDOWN:
-			exit->reason = NVMM_EXIT_SHUTDOWN;
+			exit->reason = NVMM_VCPU_EXIT_SHUTDOWN;
 			break;
 		case VMCS_EXITCODE_MONITOR:
-			exit->reason = NVMM_EXIT_MONITOR;
+			vmx_exit_insn(exit, NVMM_VCPU_EXIT_MONITOR);
 			break;
 		case VMCS_EXITCODE_MWAIT:
-			exit->reason = NVMM_EXIT_MWAIT;
+			vmx_exit_insn(exit, NVMM_VCPU_EXIT_MWAIT);
 			break;
 		case VMCS_EXITCODE_XSETBV:
 			vmx_exit_xsetbv(mach, vcpu, exit);
@@ -1995,18 +2013,18 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		case VMCS_EXITCODE_VMXOFF:
 		case VMCS_EXITCODE_VMXON:
 			vmx_inject_ud(vcpu);
-			exit->reason = NVMM_EXIT_NONE;
+			exit->reason = NVMM_VCPU_EXIT_NONE;
 			break;
 		case VMCS_EXITCODE_EPT_VIOLATION:
 			vmx_exit_epf(mach, vcpu, exit);
 			break;
 		case VMCS_EXITCODE_INT_WINDOW:
 			vmx_event_waitexit_disable(vcpu, false);
-			exit->reason = NVMM_EXIT_INT_READY;
+			exit->reason = NVMM_VCPU_EXIT_INT_READY;
 			break;
 		case VMCS_EXITCODE_NMI_WINDOW:
 			vmx_event_waitexit_disable(vcpu, true);
-			exit->reason = NVMM_EXIT_NMI_READY;
+			exit->reason = NVMM_VCPU_EXIT_NMI_READY;
 			break;
 		default:
 			vmx_exit_invalid(exit, exitcode);
@@ -2023,7 +2041,7 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		if (curlwp->l_flag & LW_USERRET) {
 			break;
 		}
-		if (exit->reason != NVMM_EXIT_NONE) {
+		if (exit->reason != NVMM_VCPU_EXIT_NONE) {
 			break;
 		}
 	}
@@ -2732,6 +2750,67 @@ vmx_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
 }
 
+static int
+vmx_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+	struct nvmm_vcpu_conf_cpuid *cpuid;
+	size_t i;
+
+	if (__predict_false(op != NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID))) {
+		return EINVAL;
+	}
+	cpuid = data;
+
+	if (__predict_false(cpuid->mask && cpuid->exit)) {
+		return EINVAL;
+	}
+	if (__predict_false(cpuid->mask &&
+	    ((cpuid->u.mask.set.eax & cpuid->u.mask.del.eax) ||
+	     (cpuid->u.mask.set.ebx & cpuid->u.mask.del.ebx) ||
+	     (cpuid->u.mask.set.ecx & cpuid->u.mask.del.ecx) ||
+	     (cpuid->u.mask.set.edx & cpuid->u.mask.del.edx)))) {
+		return EINVAL;
+	}
+
+	/* If unset, delete, to restore the default behavior. */
+	if (!cpuid->mask && !cpuid->exit) {
+		for (i = 0; i < VMX_NCPUIDS; i++) {
+			if (!cpudata->cpuidpresent[i]) {
+				continue;
+			}
+			if (cpudata->cpuid[i].leaf == cpuid->leaf) {
+				cpudata->cpuidpresent[i] = false;
+			}
+		}
+		return 0;
+	}
+
+	/* If already here, replace. */
+	for (i = 0; i < VMX_NCPUIDS; i++) {
+		if (!cpudata->cpuidpresent[i]) {
+			continue;
+		}
+		if (cpudata->cpuid[i].leaf == cpuid->leaf) {
+			memcpy(&cpudata->cpuid[i], cpuid,
+			    sizeof(struct nvmm_vcpu_conf_cpuid));
+			return 0;
+		}
+	}
+
+	/* Not here, insert. */
+	for (i = 0; i < VMX_NCPUIDS; i++) {
+		if (!cpudata->cpuidpresent[i]) {
+			cpudata->cpuidpresent[i] = true;
+			memcpy(&cpudata->cpuid[i], cpuid,
+			    sizeof(struct nvmm_vcpu_conf_cpuid));
+			return 0;
+		}
+	}
+
+	return ENOBUFS;
+}
+
 /* -------------------------------------------------------------------------- */
 
 static void
@@ -2777,44 +2856,7 @@ vmx_machine_destroy(struct nvmm_machine *mach)
 static int
 vmx_machine_configure(struct nvmm_machine *mach, uint64_t op, void *data)
 {
-	struct nvmm_mach_conf_x86_cpuid *cpuid = data;
-	struct vmx_machdata *machdata = (struct vmx_machdata *)mach->machdata;
-	size_t i;
-
-	if (__predict_false(op != NVMM_MACH_CONF_MD(NVMM_MACH_CONF_X86_CPUID))) {
-		return EINVAL;
-	}
-
-	if (__predict_false((cpuid->set.eax & cpuid->del.eax) ||
-	    (cpuid->set.ebx & cpuid->del.ebx) ||
-	    (cpuid->set.ecx & cpuid->del.ecx) ||
-	    (cpuid->set.edx & cpuid->del.edx))) {
-		return EINVAL;
-	}
-
-	/* If already here, replace. */
-	for (i = 0; i < VMX_NCPUIDS; i++) {
-		if (!machdata->cpuidpresent[i]) {
-			continue;
-		}
-		if (machdata->cpuid[i].leaf == cpuid->leaf) {
-			memcpy(&machdata->cpuid[i], cpuid,
-			    sizeof(struct nvmm_mach_conf_x86_cpuid));
-			return 0;
-		}
-	}
-
-	/* Not here, insert. */
-	for (i = 0; i < VMX_NCPUIDS; i++) {
-		if (!machdata->cpuidpresent[i]) {
-			machdata->cpuidpresent[i] = true;
-			memcpy(&machdata->cpuid[i], cpuid,
-			    sizeof(struct nvmm_mach_conf_x86_cpuid));
-			return 0;
-		}
-	}
-
-	return ENOBUFS;
+	panic("%s: impossible", __func__);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3138,14 +3180,17 @@ const struct nvmm_impl nvmm_x86_vmx = {
 	.init = vmx_init,
 	.fini = vmx_fini,
 	.capability = vmx_capability,
-	.conf_max = NVMM_X86_NCONF,
-	.conf_sizes = vmx_conf_sizes,
+	.mach_conf_max = NVMM_X86_MACH_NCONF,
+	.mach_conf_sizes = NULL,
+	.vcpu_conf_max = NVMM_X86_VCPU_NCONF,
+	.vcpu_conf_sizes = vmx_vcpu_conf_sizes,
 	.state_size = sizeof(struct nvmm_x64_state),
 	.machine_create = vmx_machine_create,
 	.machine_destroy = vmx_machine_destroy,
 	.machine_configure = vmx_machine_configure,
 	.vcpu_create = vmx_vcpu_create,
 	.vcpu_destroy = vmx_vcpu_destroy,
+	.vcpu_configure = vmx_vcpu_configure,
 	.vcpu_setstate = vmx_vcpu_setstate,
 	.vcpu_getstate = vmx_vcpu_getstate,
 	.vcpu_inject = vmx_vcpu_inject,

@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.35 2019/10/19 19:45:10 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.36 2019/10/23 07:01:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -706,7 +706,7 @@ int
 nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_x64_state *state = vcpu->state;
-	struct nvmm_exit *exit = vcpu->exit;
+	struct nvmm_vcpu_exit *exit = vcpu->exit;
 	struct nvmm_io io;
 	uint64_t cnt = 0; /* GCC */
 	uint8_t iobuf[8];
@@ -716,13 +716,13 @@ nvmm_assist_io(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 	int ret, seg;
 	bool psld = false;
 
-	if (__predict_false(exit->reason != NVMM_EXIT_IO)) {
+	if (__predict_false(exit->reason != NVMM_VCPU_EXIT_IO)) {
 		errno = EINVAL;
 		return -1;
 	}
 
 	io.port = exit->u.io.port;
-	io.in = (exit->u.io.type == NVMM_EXIT_IO_IN);
+	io.in = exit->u.io.in;
 	io.size = exit->u.io.operand_size;
 	io.data = iobuf;
 
@@ -3107,7 +3107,7 @@ fetch_segment(struct nvmm_machine *mach, struct nvmm_x64_state *state)
 
 static int
 fetch_instruction(struct nvmm_machine *mach, struct nvmm_x64_state *state,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	size_t fetchsize;
 	gvaddr_t gva;
@@ -3170,7 +3170,7 @@ assist_mem_double(struct nvmm_machine *mach, struct nvmm_x64_state *state,
 
 static int
 assist_mem_single(struct nvmm_machine *mach, struct nvmm_x64_state *state,
-    struct x86_instr *instr, struct nvmm_exit *exit)
+    struct x86_instr *instr, struct nvmm_vcpu_exit *exit)
 {
 	struct nvmm_mem mem;
 	uint8_t membuf[8];
@@ -3292,12 +3292,12 @@ int
 nvmm_assist_mem(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_x64_state *state = vcpu->state;
-	struct nvmm_exit *exit = vcpu->exit;
+	struct nvmm_vcpu_exit *exit = vcpu->exit;
 	struct x86_instr instr;
 	uint64_t cnt = 0; /* GCC */
 	int ret;
 
-	if (__predict_false(exit->reason != NVMM_EXIT_MEMORY)) {
+	if (__predict_false(exit->reason != NVMM_VCPU_EXIT_MEMORY)) {
 		errno = EINVAL;
 		return -1;
 	}

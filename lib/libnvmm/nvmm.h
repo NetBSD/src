@@ -1,7 +1,7 @@
-/*	$NetBSD: nvmm.h,v 1.12 2019/06/08 07:27:44 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.13 2019/10/23 07:01:11 maxv Exp $	*/
 
 /*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,6 +38,8 @@
 #include <dev/nvmm/nvmm.h>
 #include <dev/nvmm/nvmm_ioctl.h>
 
+#define NVMM_USER_VERSION	1
+
 struct nvmm_io {
 	uint64_t port;
 	bool in;
@@ -67,8 +69,8 @@ struct nvmm_machine {
 struct nvmm_vcpu {
 	nvmm_cpuid_t cpuid;
 	struct nvmm_vcpu_state *state;
-	struct nvmm_event *event;
-	struct nvmm_exit *exit;
+	struct nvmm_vcpu_event *event;
+	struct nvmm_vcpu_exit *exit;
 };
 
 #define NVMM_MACH_CONF_CALLBACKS	NVMM_MACH_CONF_LIBNVMM_BEGIN
@@ -88,6 +90,8 @@ int nvmm_machine_configure(struct nvmm_machine *, uint64_t, void *);
 
 int nvmm_vcpu_create(struct nvmm_machine *, nvmm_cpuid_t, struct nvmm_vcpu *);
 int nvmm_vcpu_destroy(struct nvmm_machine *, struct nvmm_vcpu *);
+int nvmm_vcpu_configure(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t,
+    void *);
 int nvmm_vcpu_setstate(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t);
 int nvmm_vcpu_getstate(struct nvmm_machine *, struct nvmm_vcpu *, uint64_t);
 int nvmm_vcpu_inject(struct nvmm_machine *, struct nvmm_vcpu *);
