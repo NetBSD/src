@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.293 2019/10/22 12:09:11 martin Exp $ */
+/*	$NetBSD: wdc.c,v 1.294 2019/10/23 14:44:41 christos Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.293 2019/10/22 12:09:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.294 2019/10/23 14:44:41 christos Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -296,8 +296,10 @@ wdc_drvprobe(struct ata_channel *chp)
 	int i, j, error, tfd;
 
 	ata_channel_lock(chp);
-	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0)
+	if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0) {
+		ata_channel_unlock(chp);
 		return;
+	}
 	if (wdcprobe1(chp, 0) == 0) {
 		/* No drives, abort the attach here. */
 		atabus_free_drives(chp);
