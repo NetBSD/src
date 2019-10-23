@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.1 2018/03/07 20:55:31 bouyer Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.1.8.1 2019/10/23 19:43:25 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.1 2018/03/07 20:55:31 bouyer Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.1.8.1 2019/10/23 19:43:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -292,7 +292,6 @@ sunxi_can_rx_intr(struct sunxi_can_softc *sc)
 	}
 	sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_REL_RX_BUF);
 	m->m_len = m->m_pkthdr.len = CAN_MTU;
-	ifp->if_ipackets++;
 	ifp->if_ibytes += m->m_len;
 	m_set_rcvif(m, ifp);
 	can_bpf_mtap(ifp, m, 1);
