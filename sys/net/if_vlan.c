@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.141.2.1 2019/09/01 11:07:06 martin Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.141.2.2 2019/10/23 19:28:49 martin Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.141.2.1 2019/09/01 11:07:06 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.141.2.2 2019/10/23 19:28:49 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1656,7 +1656,6 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	m_set_rcvif(m, &ifv->ifv_if);
-	ifv->ifv_if.if_ipackets++;
 
 	if (pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN) != 0)
 		goto out;
