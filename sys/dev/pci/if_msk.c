@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.91 2019/06/03 05:22:57 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.91.2.1 2019/10/24 16:19:23 martin Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.91 2019/06/03 05:22:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.91.2.1 2019/10/24 16:19:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2118,9 +2118,6 @@ msk_txeof(struct sk_if_softc *sc_if)
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
 
-			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
-			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
-
 			bus_dmamap_sync(sc->sc_dmatag, entry->dmamap, 0,
 			    entry->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 
@@ -2128,6 +2125,8 @@ msk_txeof(struct sk_if_softc *sc_if)
 			SIMPLEQ_INSERT_TAIL(&sc_if->sk_txmap_head, entry,
 					  link);
 			sc_if->sk_cdata.sk_tx_map[idx] = NULL;
+			m_freem(sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf);
+			sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf = NULL;
 		}
 		sc_if->sk_cdata.sk_tx_cnt--;
 		SK_INC(idx, MSK_TX_RING_CNT);
@@ -2646,13 +2645,19 @@ msk_stop(struct ifnet *ifp, int disable)
 
 	for (i = 0; i < MSK_TX_RING_CNT; i++) {
 		if (sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf != NULL) {
-			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
-			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
+			dma = sc_if->sk_cdata.sk_tx_map[i];
+
+			bus_dmamap_sync(sc->sc_dmatag, dma->dmamap, 0,
+			    dma->dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
+
+			bus_dmamap_unload(sc->sc_dmatag, dma->dmamap);
 #if 1
 			SIMPLEQ_INSERT_HEAD(&sc_if->sk_txmap_head,
 			    sc_if->sk_cdata.sk_tx_map[i], link);
 			sc_if->sk_cdata.sk_tx_map[i] = 0;
 #endif
+			m_freem(sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf);
+			sc_if->sk_cdata.sk_tx_chain[i].sk_mbuf = NULL;
 		}
 	}
 
