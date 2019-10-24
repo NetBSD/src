@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.36.6.1 2018/07/26 23:55:28 snj Exp $	*/
+/*	$NetBSD: epe.c,v 1.36.6.2 2019/10/24 16:06:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.36.6.1 2018/07/26 23:55:28 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.36.6.2 2019/10/24 16:06:09 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -259,7 +259,6 @@ begin:
 	}
 
 	if (ndq > 0) {
-		ifp->if_ipackets += ndq;
 		CTRLPAGE_DMASYNC(TX_QLEN * 3 * sizeof(uint32_t),
  			RX_QLEN * 4 * sizeof(uint32_t), 
 			BUS_DMASYNC_PREWRITE|BUS_DMASYNC_PREREAD);
