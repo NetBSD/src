@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.84 2019/10/23 19:50:47 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.85 2019/10/24 02:31:34 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5109,6 +5109,43 @@ sys/uvm/uvm_mmap.c				1.173
 	Change 'npgs' from int to size_t.
 	[maxv, ticket #355]
 
+usr.sbin/sysinst/disks.c			1.52
+
+	Remove a hardcoded assumption that for BIOS boot we always will have
+	the first partition as root - in mixed EFI/BIOS setups this might not
+	be true (and in general the user is free to define arbitrary orders).
+	Pointed out by Robert Nestor.
+	[martin, ticket #362]
+
+usr.sbin/sysinst/msg.mi.en			1.23
+usr.sbin/sysinst/msg.mi.fr			1.21
+
+	Sentence begins with capital letter ("yes or no?"). Also add a few
+	french sentences, to make it less awful, but not complete.
+	[martin, ticket #363]
+
+usr.sbin/sysinst/disklabel.c			1.14
+
+	When translating (internal) indices to device names, properly deal with
+	gaps in partition allocations (e.g. no swap partition).
+	[martin, ticket #364]
+
+usr.sbin/sysinst/bsddisklabel.c			1.28
+usr.sbin/sysinst/disks.c			1.53
+
+	Skip unwanted (zero sized) partitions.
+	[martin, ticket #365]
+
+usr.sbin/sysinst/disks.c			1.51
+
+	PR install/54480: when upgrading a system and re-mounting the target /
+	with proper options, and the installed system does not use NAME= syntax
+	in fstab(5), use the device name we used to get here, instead of the
+	name from fstab, it might be different to what the real system calls
+	the device (compact flash root showing up as wd0 native, but sd? on the
+	card reader used for updating it right now).
+	[martin, ticket #369]
+
 sys/dev/fss.c					1.108
 
 	Avoid (harmless) test of uninitialized structure member.
@@ -5201,4 +5238,3 @@ sys/dev/mii/miidevs_data.h			(regen)
 	- Match a lot of Cicada and Vitesse devices correctly.
 	- Add support for VSC8221, VSC8234, VSC8641.
 	[msaitoh, ticket #372]
-
