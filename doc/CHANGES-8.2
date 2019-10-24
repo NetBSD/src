@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.53 2019/10/21 17:03:01 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.54 2019/10/24 17:43:43 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1326,4 +1326,57 @@ sys/fs/ntfs/ntfs_vfsops.c			1.108
 	When the MFT record size is lower than the cluster size we have
 	to read consecutive clusters to fill the MFT record.
 	[hannken, ticket #1410]
+
+sys/net/if_vlan.c				1.147
+
+	vlan(4): fix input packet statistics.
+	[ozaki-r, ticket #1411]
+
+sys/dev/hpc/hpcapm.c				1.21
+
+	Fix an spl(9) leak.
+	[msaitoh, ticket #1412]
+
+sys/dev/mii/rgephy.c			1.43, 1.47, 1.49, 1.54-1.57 (patch)
+sys/dev/mii/rgephyreg.h 		1.10, 1.12 (patch)
+
+	- It seems EEE support is not only on 8211F but on 8211D and newer.
+	- Indicate master mode if the negotiated result say so.
+	- Use symbolic names for chip revision.
+	- Cosmetic changes.
+	- KNF.
+	[msaitoh, ticket #1413]
+
+sys/dev/mii/ciphy.c			1.34-1.37 via patch
+sys/dev/mii/miidevs			1.158
+sys/dev/mii/miidevs.h			regen
+sys/dev/mii/miidevs_data.h		regen
+
+	- Indicate master mode if the negotiated result say so.
+	- Call mii_phy_flowstatus() to show the flow setting.
+	- Match a lot of Cicada and Vitesse devices correctly.
+	- Add support for VSC8221, VSC8234 and VSC8641.
+	- KNF
+	[msaitoh, ticket #1414]
+
+sys/dev/pci/if_bce.c				1.55,1.56
+sys/dev/pci/if_bcereg.h				1.5
+
+	- Add missing splnet()/splx() around mii_tick().
+	- Use device_printf() instead of aprint_error_dev)() in bce_watchdog().
+	- Mark ETHERCAP_VLAN_MTU.
+	- PR kern/24911: clear the powerdown mode.
+	- Set proper LED modes.
+	[msaitoh, ticket #1415]
+
+sys/arch/arm/ep93xx/epe.c			1.45
+sys/arch/mac68k/nubus/if_netdock_nubus.c	1.31
+sys/dev/ic/i82586.c				1.86
+sys/dev/pcmcia/if_cnw.c				1.66
+sys/dev/pcmcia/if_ray.c				1.95
+sys/dev/qbus/if_il.c				1.36
+sys/dev/qbus/if_qt.c				1.24
+
+	Do not double count incoming packets.
+	[msaitoh, ticket #1416]
 
