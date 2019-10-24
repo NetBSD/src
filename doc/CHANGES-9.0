@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.85 2019/10/24 02:31:34 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.86 2019/10/24 16:34:51 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5238,3 +5238,47 @@ sys/dev/mii/miidevs_data.h			(regen)
 	- Match a lot of Cicada and Vitesse devices correctly.
 	- Add support for VSC8221, VSC8234, VSC8641.
 	[msaitoh, ticket #372]
+
+sys/dev/pci/pcidev				1.1386,1.1387
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Modify Attansic Ethernet devices' description to clarify.
+	Add Killer E2400 and E2500.
+	[msaitoh, ticket #373]
+
+sys/dev/pci/if_msk.c				1.92
+
+	msk(4): fix mbuf deallocation.
+	[msaitoh, ticket #374]
+
+share/man/man4/alc.4				1.6
+sys/dev/pci/if_alc.c				1.39-1.42
+sys/dev/pci/if_alcreg.h				1.8
+
+	- Identify device revision correctly in alc_attach().
+	- Correct DMA channel number selection on AR816x family of
+	  controllers.
+	- Add support for Killer E2400 and E2500.
+	[msaitoh, ticket #375]
+
+sys/dev/pci/if_jme.c				1.46
+
+	jme(4): fix use-after-free.
+	[msaitoh, ticket #376]
+
+usr.sbin/sysinst/msg.mi.pl			1.24
+
+	Fix polish translation for sysinst.
+	[kamil, ticket #377]
+
+sys/dev/mii/ciphy.c				1.36
+
+	ciphy(4): call mii_phy_flowstatus() to show the flow setting.
+	[msaitoh, ticket #378]
+
+sys/external/bsd/drm/dist/shared-core/r128_drv.h 1.3
+
+	Fix undefined behaviour.
+	[hauke, ticket #379]
+
