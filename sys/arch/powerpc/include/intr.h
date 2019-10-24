@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.h,v 1.13 2018/04/19 21:50:07 christos Exp $ */
+/*	$NetBSD: intr.h,v 1.14 2019/10/24 23:03:35 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -28,7 +28,7 @@
 
 #ifndef _LOCORE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.13 2018/04/19 21:50:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.h,v 1.14 2019/10/24 23:03:35 macallan Exp $");
 #endif
 
 #ifndef _POWERPC_INTR_MACHDEP_H_
@@ -105,7 +105,7 @@ extern imask_t imask[];
 
 #define NVIRQ		(sizeof(imask_t)*8)	/* 32 virtual IRQs */
 #ifndef NIRQ
-#define NIRQ		128	/* up to 128 HW IRQs */
+#define NIRQ		256	/* up to 256 HW IRQs */
 #endif
 
 #define HWIRQ_MAX       (NVIRQ - 1)
