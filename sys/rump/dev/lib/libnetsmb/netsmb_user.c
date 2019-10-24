@@ -1,4 +1,4 @@
-/*	$NetBSD: netsmb_user.c,v 1.6 2019/03/26 08:56:17 bad Exp $	*/
+/*	$NetBSD: netsmb_user.c,v 1.7 2019/10/24 18:18:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 2014 Takeshi Nakayama.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: netsmb_user.c,v 1.6 2019/03/26 08:56:17 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netsmb_user.c,v 1.7 2019/10/24 18:18:00 kamil Exp $");
 #endif
 
 #ifndef _KERNEL
@@ -89,7 +89,8 @@ rumpcomp_netsmb_iconv_conv(void *handle, const char **inbuf,
 #ifdef __NetBSD__
 	int rv;
 
-	if (iconv((iconv_t)handle, inbuf, inbytesleft, outbuf, outbytesleft)
+	if (iconv((iconv_t)handle, __UNCONST(inbuf), inbytesleft, outbuf,
+	    outbytesleft)
 	    == (size_t)-1)
 		rv = errno;
 	else

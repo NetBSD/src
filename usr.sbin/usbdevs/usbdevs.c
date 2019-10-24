@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.37 2019/09/21 16:22:25 gson Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.38 2019/10/24 18:18:00 kamil Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.37 2019/09/21 16:22:25 gson Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.38 2019/10/24 18:18:00 kamil Exp $");
 #endif
 
 #include <stdio.h>
@@ -94,7 +94,8 @@ u2t(const char *utf8str, char *termstr)
 	if (ic != (iconv_t)-1) {
 		insz = strlen(utf8str);
 		outsz = MAXLEN - 1;
-		icres = iconv(ic, &utf8str, &insz, &termstr, &outsz);
+		icres = iconv(ic, __UNCONST(&utf8str), &insz, &termstr,
+			&outsz);
 		if (icres != (size_t)-1) {
 			*termstr = '\0';
 			return;
