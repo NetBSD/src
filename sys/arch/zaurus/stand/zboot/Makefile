@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2019/09/23 13:42:37 christos Exp $
+#	$NetBSD: Makefile,v 1.22 2019/10/24 18:46:21 christos Exp $
 
 PROG=		zboot
 
@@ -22,7 +22,6 @@ CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	${ARM_APCS_FLAGS} -mcpu=xscale
-CPPFLAGS+=	-marm
 CPUFLAGS=
 AFLAGS+=	-D_LOCORE
 LDFLAGS+=	-nostdlib -Bstatic
