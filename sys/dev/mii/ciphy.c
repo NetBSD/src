@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.26.10.2 2019/09/01 10:19:04 martin Exp $ */
+/* $NetBSD: ciphy.c,v 1.26.10.3 2019/10/24 15:58:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.26.10.2 2019/09/01 10:19:04 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.26.10.3 2019/10/24 15:58:45 martin Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -74,35 +74,35 @@ static const struct mii_phy_funcs ciphy_funcs = {
 };
 
 static const struct mii_phydesc ciphys[] = {
-	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201,
-	  MII_STR_CICADA_CS8201 },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CIS8201,
+	  MII_STR_xxCICADA_CIS8201 },
 
-	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201A,
-	  MII_STR_CICADA_CS8201A },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CIS8201A,
+	  MII_STR_xxCICADA_CIS8201A },
 
-	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8201B,
-	  MII_STR_CICADA_CS8201B },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CIS8201B,
+	  MII_STR_xxCICADA_CIS8201B },
 
-	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8204,
-	  MII_STR_CICADA_CS8204 },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CIS8204,
+	  MII_STR_xxCICADA_CIS8204 },
 
-	{ MII_OUI_CICADA,		MII_MODEL_CICADA_VSC8211,
-	  MII_STR_CICADA_VSC8211 },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_VSC8211,
+	  MII_STR_xxCICADA_VSC8211 },
 
-	{ MII_OUI_CICADA,		MII_MODEL_CICADA_CS8244,
-	  MII_STR_CICADA_CS8244 },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_VSC8221,
+	  MII_STR_xxCICADA_VSC8221 },
 
-	{ MII_OUI_xxCICADA,		MII_MODEL_CICADA_CS8201,
-	  MII_STR_CICADA_CS8201 },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_VSC8234,
+	  MII_STR_xxCICADA_VSC8234 },
 
-	{ MII_OUI_xxCICADA,		MII_MODEL_CICADA_CS8201A,
-	  MII_STR_CICADA_CS8201A },
+	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_VSC8244,
+	  MII_STR_xxCICADA_VSC8244 },
 
-	{ MII_OUI_xxCICADA,		MII_MODEL_xxCICADA_CS8201B,
-	  MII_STR_xxCICADA_CS8201B },
+	{ MII_OUI_xxVITESSE,		MII_MODEL_xxVITESSE_VSC8601,
+	  MII_STR_xxVITESSE_VSC8601 },
 
-	{ MII_OUI_VITESSE,		MII_MODEL_VITESSE_VSC8601,
-	  MII_STR_VITESSE_VSC8601 },
+	{ MII_OUI_xxVITESSE,		MII_MODEL_xxVITESSE_VSC8641,
+	  MII_STR_xxVITESSE_VSC8641 },
 
 	{ 0,				0,
 	  NULL },
@@ -231,9 +231,8 @@ setit:
 			if ((mii->mii_ifp->if_flags & IFF_LINK0)) {
 				PHY_WRITE(sc, MII_100T2CR,
 				    gig | GTCR_MAN_MS | GTCR_ADV_MS);
-			} else {
+			} else
 				PHY_WRITE(sc, MII_100T2CR, gig | GTCR_MAN_MS);
-			}
 			break;
 		case IFM_NONE:
 			PHY_WRITE(sc, MII_BMCR, BMCR_ISO | BMCR_PDOWN);
@@ -316,7 +315,7 @@ static void
 ciphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	int bmsr, bmcr;
+	int bmsr, bmcr, gtsr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -357,20 +356,23 @@ ciphy_status(struct mii_softc *sc)
 	}
 
 	if (bmsr & CIPHY_AUXCSR_FDX)
-		mii->mii_media_active |= IFM_FDX;
+		mii->mii_media_active |= IFM_FDX | mii_phy_flowstatus(sc);
 	else
 		mii->mii_media_active |= IFM_HDX;
 
-	return;
+	if (IFM_SUBTYPE(mii->mii_media_active) == IFM_1000_T) {
+		gtsr = PHY_READ(sc, MII_100T2SR);
+		if ((gtsr & GTSR_MS_RES) != 0)
+			mii->mii_media_active |= IFM_ETH_MASTER;
+	}
 }
 
 static void
 ciphy_reset(struct mii_softc *sc)
 {
+
 	mii_phy_reset(sc);
 	DELAY(1000);
-
-	return;
 }
 
 #define PHY_SETBIT(x, y, z) \
@@ -395,9 +397,8 @@ ciphy_fixup(struct mii_softc *sc)
 	}
 
 	switch (model) {
-	case MII_MODEL_CICADA_CS8201:
-	case MII_MODEL_CICADA_CS8204:
-
+	case MII_MODEL_xxCICADA_CIS8201:
+	case MII_MODEL_xxCICADA_CIS8204:
 		/* Turn off "aux mode" (whatever that means) */
 		PHY_SETBIT(sc, CIPHY_MII_AUXCSR, CIPHY_AUXCSR_MDPPS);
 
@@ -406,40 +407,39 @@ ciphy_fixup(struct mii_softc *sc)
 		 * when using MII in full duplex mode.
 		 */
 		if ((speed == CIPHY_SPEED10 || speed == CIPHY_SPEED100) &&
-		    (status & CIPHY_AUXCSR_FDX)) {
+		    (status & CIPHY_AUXCSR_FDX))
 			PHY_SETBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		} else {
+		else
 			PHY_CLRBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		}
 
 		/* Enable link/activity LED blink. */
 		PHY_SETBIT(sc, CIPHY_MII_LED, CIPHY_LED_LINKACTBLINK);
 
 		break;
 
-	case MII_MODEL_CICADA_CS8201A:
-	case MII_MODEL_CICADA_CS8201B:
-
+	case MII_MODEL_xxCICADA_CIS8201A:
+	case MII_MODEL_xxCICADA_CIS8201B:
 		/*
 		 * Work around speed polling bug in VT3119/VT3216
 		 * when using MII in full duplex mode.
 		 */
 		if ((speed == CIPHY_SPEED10 || speed == CIPHY_SPEED100) &&
-		    (status & CIPHY_AUXCSR_FDX)) {
+		    (status & CIPHY_AUXCSR_FDX))
 			PHY_SETBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
-		} else
+		else
 			PHY_CLRBIT(sc, CIPHY_MII_10BTCSR, CIPHY_10BTCSR_ECHO);
 
 		break;
-	case MII_MODEL_CICADA_VSC8211:
-	case MII_MODEL_CICADA_CS8244:
-	case MII_MODEL_VITESSE_VSC8601:
+	case MII_MODEL_xxCICADA_VSC8211:
+	case MII_MODEL_xxCICADA_VSC8221:
+	case MII_MODEL_xxCICADA_VSC8234:
+	case MII_MODEL_xxCICADA_VSC8244:
+	case MII_MODEL_xxVITESSE_VSC8601:
+	case MII_MODEL_xxVITESSE_VSC8641:
 		break;
 	default:
 		aprint_error_dev(sc->mii_dev, "unknown CICADA PHY model %x\n",
 		    model);
 		break;
 	}
-
-	return;
 }
