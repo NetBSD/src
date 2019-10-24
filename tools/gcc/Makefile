@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.95 2019/09/30 08:40:20 mrg Exp $
+#	$NetBSD: Makefile,v 1.96 2019/10/24 03:19:14 christos Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -189,6 +189,9 @@ NATIVE_CONFIGURE_ARGS+= --disable-shared
 
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 EXTRA_GCC_TARGETS=	i386-builtin-types.inc
+.endif
+.if !empty(MACHINE_ARCH:M*arm*)
+EXTRA_GCC_TARGETS=	arm-cpu-data.h arm-cpu-cdata.h
 .endif
 
 NATIVE_CONFIGURE_ARGS+=	\
