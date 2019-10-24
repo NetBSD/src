@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephyreg.h,v 1.9 2015/08/21 16:29:48 jmcneill Exp $	*/
+/*	$NetBSD: rgephyreg.h,v 1.9.10.1 2019/10/24 15:54:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -36,6 +36,12 @@
 
 #ifndef _DEV_MII_RGEPHYREG_H_
 #define	_DEV_MII_RGEPHYREG_H_
+
+#define	RGEPHY_8211B		2
+#define	RGEPHY_8211C		3
+#define	RGEPHY_8211D		4
+#define	RGEPHY_8211E		5
+#define	RGEPHY_8211F		6
 
 /*
  * RealTek 8169S/8110S gigE PHY registers
