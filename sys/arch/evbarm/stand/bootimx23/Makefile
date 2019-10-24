@@ -1,4 +1,4 @@
-# $Id: Makefile,v 1.15 2017/02/22 13:14:45 maya Exp $
+# $Id: Makefile,v 1.16 2019/10/24 18:46:21 christos Exp $
 
 S=		${.CURDIR}/../../../../
 PROG=		bootimx23
@@ -13,7 +13,6 @@ CPPFLAGS+=	-D_STANDALONE -DMEMSIZE=64
 CPPFLAGS+=	-DKERNEL_BOOT_ARGS=\"root=ld0a\"
 CPPFLAGS+=	-nostdinc -I. -I${.CURDIR} -I${.OBJDIR} -I${S} -I${S}/arch
 CPPFLAGS+=	${ARM_APCS_FLAGS}
-CPPFLAGS+=	-marm
 #CPPFLAGS+=	-DDEBUG
 #CPPFLAGS+=	-DDIAGNOSTIC
 DBG=		-g

@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1157 2019/10/22 13:49:30 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1158 2019/10/24 18:46:20 christos Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -890,8 +890,8 @@ MACHINE_GNU_PLATFORM?=${MACHINE_GNU_ARCH}--netbsd
 
 .if !empty(MACHINE_ARCH:M*arm*)
 # Flags to pass to CC for using the old APCS ABI on ARM for compat or stand.
-ARM_APCS_FLAGS=	-mabi=apcs-gnu -mfloat-abi=soft
-ARM_APCS_FLAGS+=${${ACTIVE_CC} == "gcc":? -marm :}
+ARM_APCS_FLAGS=	-mabi=apcs-gnu -mfloat-abi=soft -marm
+ARM_APCS_FLAGS+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -mno-thumb-interwork :}
 ARM_APCS_FLAGS+=${${ACTIVE_CC} == "clang":? -target ${MACHINE_GNU_ARCH}--netbsdelf -B ${TOOLDIR}/${MACHINE_GNU_PLATFORM}/bin :}
 .endif
 
