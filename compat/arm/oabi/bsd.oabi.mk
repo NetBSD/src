@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.oabi.mk,v 1.4 2015/06/24 22:20:24 matt Exp $
+#	$NetBSD: bsd.oabi.mk,v 1.5 2019/10/24 18:46:20 christos Exp $
 
 .if !defined(MLIBDIR)
 MLIBDIR=		oabi
@@ -11,6 +11,7 @@ ARM_LD=			-m armelf_nbsd
 LDFLAGS+=		-Wl,-m,armelf_nbsd
 COPTS+=			-mcpu=cortex-a53
 ARM_APCS_FLAGS= ${${ACTIVE_CC} == "clang":? -target arm--netbsdelf -B ${TOOLDIR}/aarch64--netbsd/bin :} -mabi=apcs-gnu -mfloat-abi=soft
+ARM_APCS_FLAGS+= ${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} >= 8:? -mno-thumb-interwork :}
 .elif !empty(MACHINE_ARCH:M*eb)
 ARM_MACHINE_ARCH=	armeb
 ARM_LD=			-m armelfb_nbsd
