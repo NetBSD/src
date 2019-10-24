@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.20 2018/03/16 22:08:53 macallan Exp $	*/
+/*	$NetBSD: cpu.h,v 1.21 2019/10/24 23:04:46 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995-1997 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #define	_MACPPC_CPU_H_
 
 #if defined(_KERNEL) && !defined(_MODULE)
-#define	CPU_MAXNUM	2
+#define	CPU_MAXNUM	4
 extern char bootpath[];
 int get_cpuid(int, uint8_t *);
 #endif /* _KERNEL */
