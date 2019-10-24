@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20.2.2 2019/08/18 13:25:21 msaitoh Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20.2.3 2019/10/24 16:27:21 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -75,15 +75,16 @@ message mount_failed
 
 message hello
 {Witaj w sysinst, systemie instalacyjnym NetBSD-@@VERSION@@.
-To oparte na menu narzedzie zostalo stworzone aby pomoc ci zainstalowac
-NetBSD na twardym dysku, lub zaktualizowac istniejacy system NetBSD,
-zuzywajac minimum czasu. W ponizszych menu mozesz zmienic aktualne
-ustawienia poprzez naciskanie klawiszy (a, b, c, ...). Klawisze strzalek
-takze moga dzialac. Aktywujesz ustawienie poprzez nacisniecie ENTER.
+To oparte na menu narzedzie (sysinst) zostalo zaprojektowane w celu
+ulatwienia instalacji NetBSD na dysku twardym, lub uaktualnienia istniejacego 
+systemu NetBSD przy minimalnym nakladzie pracy. W ponizszych menu, aby wybrac
+pozycje wpisz litere (a, b, c, ...). Mozesz tez uzyc CTRL+N/CTRL+P, aby wybrac
+nastepna/poprzednia pozycje. Klawisze strzalek i Page-up/Page-down takze moga
+dzialac. Aby aktywowac biezacy wybor z menu, nacisnij klawisz Enter.
 }
 
 message thanks
-{Dziekujemy za uzywanie NetBSD!
+{Dziekujemy za wybranie NetBSD!
 }
 
 message installusure
@@ -483,8 +484,12 @@ message distset
 {Dystrybucja NetBSD jest rozbita w kolekcje pakietow dystrybucyjnych.
 Czesc z nich to pakiety podstawowe wymagane przez wszystkie instalacje,
 a czesc nie jest przez wszystkie wymagana. Mozesz zainstalowac je
-wszystkie (Pelna instalacja) lub wybrac z opcjonalnych pakietow.
-} /* XXX add 'minimal installation' */
+wszystkie (Pelna instalacja) lub wybrac z opcjonalnych pakietow. Mozesz
+takze zainstalowac tylko podstawowy zestaw (minimalna instalacja), lub
+wybrac te, ktore chcesz (Inna instalacja)
+}
+
+
 
 message ftpsource
 {Ponizej masz site %s, katalog, uzytkownika, oraz haslo gotowe do uzycia.
