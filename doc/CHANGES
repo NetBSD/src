@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2602 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2603 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -55,3 +55,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Add support for the NanoPi R1 and Duo2. [bad 20191016]
 	alc(4): Add support for Killer E2400 and E2500. [msaitoh 20191017]
 	bind: Import version 9.14.7. [christos 20191017]
+	libc: Changed the iconv(3) function signature to the POSIX variation
+		[kamil 20191024]
