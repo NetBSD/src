@@ -229,7 +229,7 @@ sha1_process_bytes (const void *buffer, size_t len, struct sha1_ctx *ctx)
   if (len >= 64)
     {
 #if !_STRING_ARCH_unaligned
-# ifdef __clang__
+# if defined(__clang__) || defined(__GNUC__)
 # define alignof(type) __alignof__(type)
 # else
 # define alignof(type) offsetof (struct { char c; type x; }, x)
