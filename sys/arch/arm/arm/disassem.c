@@ -1,4 +1,4 @@
-/*	$NetBSD: disassem.c,v 1.40 2018/10/30 09:05:51 skrll Exp $	*/
+/*	$NetBSD: disassem.c,v 1.41 2019/10/24 18:34:22 christos Exp $	*/
 
 /*
  * Copyright (c) 1996 Mark Brinicombe.
@@ -49,7 +49,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.40 2018/10/30 09:05:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disassem.c,v 1.41 2019/10/24 18:34:22 christos Exp $");
 
 #include <sys/systm.h>
 
@@ -951,7 +951,7 @@ disassemble_printaddr(u_int address)
 
 static const disasm_interface_t disassemble_di = {
 	disassemble_readword, disassemble_printaddr,
-	(void (*)(const char *, ...))printf
+	__FPTRCAST(void (*)(const char *, ...), printf)
 };
 
 void
