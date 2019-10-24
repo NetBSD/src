@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.38 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.38.2.1 2019/10/24 16:23:17 martin Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -101,6 +101,10 @@ static struct alc_ident alc_ident_table[] = {
 		"Atheros AR8172 PCIe Fast Ethernet" },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2200, 9 * 1024,
 		"Killer E2200 Gigabit Ethernet" },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2400, 9 * 1024,
+		"Killer E2400 Gigabit Ethernet" },
+	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_E2500, 9 * 1024,
+		"Killer E2500 Gigabit Ethernet" },
 	{ 0, 0, 0, NULL },
 };
 
@@ -166,8 +170,9 @@ static void	alc_stop_mac(struct alc_softc *);
 static void	alc_stop_queue(struct alc_softc *);
 static void	alc_tick(void *);
 static void	alc_txeof(struct alc_softc *);
+static void	alc_init_pcie(struct alc_softc *);
 
-uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0 };
+static uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
 
 CFATTACH_DECL_NEW(alc, sizeof(struct alc_softc),
     alc_match, alc_attach, alc_detach, NULL);
@@ -763,7 +768,6 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 	alc_get_macaddr_par(sc);
 }
 
-
 static void
 alc_get_macaddr_par(struct alc_softc *sc)
 {
@@ -1002,6 +1006,8 @@ alc_phy_down(struct alc_softc *sc)
 	switch (sc->alc_ident->deviceid) {
 	case PCI_PRODUCT_ATTANSIC_AR8161:
 	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
 	case PCI_PRODUCT_ATTANSIC_AR8162:
 	case PCI_PRODUCT_ATTANSIC_AR8171:
 	case PCI_PRODUCT_ATTANSIC_AR8172:
@@ -1172,6 +1178,83 @@ alc_aspm_816x(struct alc_softc *sc, int init)
 }
 
 static void
+alc_init_pcie(struct alc_softc *sc)
+{
+	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
+	uint32_t cap, ctl, val;
+	int state;
+
+	/* Clear data link and flow-control protocol error. */
+	val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
+	val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
+	CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
+
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
+		CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
+		    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
+		CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
+		    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
+		    PCIE_PHYMISC_FORCE_RCV_DET);
+		if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
+		    sc->alc_rev == ATHEROS_AR8152_B_V10) {
+			val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
+			val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
+			    PCIE_PHYMISC2_SERDES_TH_MASK);
+			val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
+			val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
+			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
+		}
+		/* Disable ASPM L0S and L1. */
+		cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+		    sc->alc_expcap + PCIE_LCAP) >> 16;
+		if ((cap & PCIE_LCAP_ASPM) != 0) {
+			ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+			    sc->alc_expcap + PCIE_LCSR) >> 16;
+			if ((ctl & 0x08) != 0)
+				sc->alc_rcb = DMA_CFG_RCB_128;
+			if (alcdebug)
+				printf("%s: RCB %u bytes\n",
+				    device_xname(sc->sc_dev),
+				    sc->alc_rcb == DMA_CFG_RCB_64 ? 64 : 128);
+			state = ctl & 0x03;
+			if (state & 0x01)
+				sc->alc_flags |= ALC_FLAG_L0S;
+			if (state & 0x02)
+				sc->alc_flags |= ALC_FLAG_L1S;
+			if (alcdebug)
+				printf("%s: ASPM %s %s\n",
+				    device_xname(sc->sc_dev),
+				    aspm_state[state],
+				    state == 0 ? "disabled" : "enabled");
+			alc_disable_l0s_l1(sc);
+		} else {
+			aprint_debug_dev(sc->sc_dev, "no ASPM support\n");
+		}
+	} else {
+		val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
+		val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
+		CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
+		val = CSR_READ_4(sc, ALC_MASTER_CFG);
+		if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
+		    (sc->alc_rev & 0x01) != 0) {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) == 0) {
+				val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		} else {
+			if ((val & MASTER_WAKEN_25M) == 0 ||
+			    (val & MASTER_CLK_SEL_DIS) != 0) {
+				val |= MASTER_WAKEN_25M;
+				val &= ~MASTER_CLK_SEL_DIS;
+				CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
+			}
+		}
+	}
+	alc_aspm(sc, 1, IFM_UNKNOWN);
+}
+
+static void
 alc_attach(device_t parent, device_t self, void *aux)
 {
 
@@ -1183,13 +1266,12 @@ alc_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_miibus;
 	pcireg_t memtype;
-	const char *aspm_state[] = { "L0s/L1", "L0s", "L1", "L0s/L1" };
 	uint16_t burst;
-	int base, mii_flags, state, error = 0;
-	uint32_t cap, ctl, val;
+	int base, mii_flags, error = 0;
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc->alc_ident = alc_find_ident(pa);
+	sc->alc_rev = PCI_REVISION(pa->pa_class);
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->alc_ident->name);
@@ -1266,75 +1348,14 @@ alc_attach(device_t parent, device_t self, void *aux)
 			sc->alc_dma_rd_burst = 3;
 		if (alc_dma_burst[sc->alc_dma_wr_burst] > 1024)
 			sc->alc_dma_wr_burst = 3;
-
-		/* Clear data link and flow-control protocol error. */
-		val = CSR_READ_4(sc, ALC_PEX_UNC_ERR_SEV);
-		val &= ~(PEX_UNC_ERR_SEV_DLP | PEX_UNC_ERR_SEV_FCP);
-		CSR_WRITE_4(sc, ALC_PEX_UNC_ERR_SEV, val);
-
-		if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) == 0) {
-			CSR_WRITE_4(sc, ALC_LTSSM_ID_CFG,
-			    CSR_READ_4(sc, ALC_LTSSM_ID_CFG) & ~LTSSM_ID_WRO_ENB);
-			CSR_WRITE_4(sc, ALC_PCIE_PHYMISC,
-			    CSR_READ_4(sc, ALC_PCIE_PHYMISC) |
-			    PCIE_PHYMISC_FORCE_RCV_DET);
-			if (sc->alc_ident->deviceid == PCI_PRODUCT_ATTANSIC_AR8152_B &&
-			    sc->alc_rev == ATHEROS_AR8152_B_V10) {
-				val = CSR_READ_4(sc, ALC_PCIE_PHYMISC2);
-				val &= ~(PCIE_PHYMISC2_SERDES_CDR_MASK |
-				    PCIE_PHYMISC2_SERDES_TH_MASK);
-				val |= 3 << PCIE_PHYMISC2_SERDES_CDR_SHIFT;
-				val |= 3 << PCIE_PHYMISC2_SERDES_TH_SHIFT;
-				CSR_WRITE_4(sc, ALC_PCIE_PHYMISC2, val);
-			}
-			/* Disable ASPM L0S and L1. */
-			cap = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-			    base + PCIE_LCAP) >> 16;
-			if ((cap & PCIE_LCAP_ASPM) != 0) {
-				ctl = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
-				    base + PCIE_LCSR) >> 16;
-				if ((ctl & 0x08) != 0)
-					sc->alc_rcb = DMA_CFG_RCB_128;
-				if (alcdebug)
-					printf("%s: RCB %u bytes\n",
-					    device_xname(sc->sc_dev),
-					    sc->alc_rcb == DMA_CFG_RCB_64 ? 64 : 128);
-				state = ctl & 0x03;
-				if (state & 0x01)
-					sc->alc_flags |= ALC_FLAG_L0S;
-				if (state & 0x02)
-					sc->alc_flags |= ALC_FLAG_L1S;
-				if (alcdebug)
-					printf("%s: ASPM %s %s\n",
-					    device_xname(sc->sc_dev),
-					    aspm_state[state],
-					    state == 0 ? "disabled" : "enabled");
-				alc_disable_l0s_l1(sc);
-			} else {
-				aprint_debug_dev(sc->sc_dev, "no ASPM support\n");
-			}
-		} else {
-			val = CSR_READ_4(sc, ALC_PDLL_TRNS1);
-			val &= ~PDLL_TRNS1_D3PLLOFF_ENB;
-			CSR_WRITE_4(sc, ALC_PDLL_TRNS1, val);
-			val = CSR_READ_4(sc, ALC_MASTER_CFG);
-			if (AR816X_REV(sc->alc_rev) <= AR816X_REV_A1 &&
-			    (sc->alc_rev & 0x01) != 0) {
-				if ((val & MASTER_WAKEN_25M) == 0 ||
-				    (val & MASTER_CLK_SEL_DIS) == 0) {
-					val |= MASTER_WAKEN_25M | MASTER_CLK_SEL_DIS;
-					CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
-				}
-			} else {
-				if ((val & MASTER_WAKEN_25M) == 0 ||
-				    (val & MASTER_CLK_SEL_DIS) != 0) {
-					val |= MASTER_WAKEN_25M;
-					val &= ~MASTER_CLK_SEL_DIS;
-					CSR_WRITE_4(sc, ALC_MASTER_CFG, val);
-				}
-			}
-		}
-		alc_aspm(sc, 1, IFM_UNKNOWN);
+		/*
+		 * Force maximum payload size to 128 bytes for
+		 * E2200/E2400/E2500.
+		 * Otherwise it triggers DMA write error.
+		 */
+		if ((sc->alc_flags & ALC_FLAG_E2X00) != 0)
+			sc->alc_dma_wr_burst = 0;
+		alc_init_pcie(sc);
 	}
 
 	/* Reset PHY. */
@@ -1352,13 +1373,17 @@ alc_attach(device_t parent, device_t self, void *aux)
 	 * shows the same PHY model/revision number of AR8131.
 	 */
 	switch (sc->alc_ident->deviceid) {
+	case PCI_PRODUCT_ATTANSIC_E2200:
+	case PCI_PRODUCT_ATTANSIC_E2400:
+	case PCI_PRODUCT_ATTANSIC_E2500:
+		sc->alc_flags |= ALC_FLAG_E2X00;
+		/* FALLTHROUGH */
 	case PCI_PRODUCT_ATTANSIC_AR8161:
 		if (PCI_SUBSYS_ID(pci_conf_read(
 		   sc->sc_pct, sc->sc_pcitag, PCI_SUBSYS_ID_REG)) == 0x0091 &&
 		   sc->alc_rev == 0)
 			sc->alc_flags |= ALC_FLAG_LINK_WAR;
 		/* FALLTHROUGH */
-	case PCI_PRODUCT_ATTANSIC_E2200:
 	case PCI_PRODUCT_ATTANSIC_AR8171:
 		sc->alc_flags |= ALC_FLAG_AR816X_FAMILY;
 		break;
@@ -1393,7 +1418,6 @@ alc_attach(device_t parent, device_t self, void *aux)
 	 * Don't use Tx CMB. It is known to have silicon bug.
 	 */
 	sc->alc_flags |= ALC_FLAG_CMB_BUG;
-	sc->alc_rev = PCI_REVISION(pa->pa_class);
 	sc->alc_chip_rev = CSR_READ_4(sc, ALC_MASTER_CFG) >>
 	    MASTER_CHIP_REV_SHIFT;
 	if (alcdebug) {
@@ -1781,7 +1805,6 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	return (0);
 }
-
 
 static void
 alc_dma_free(struct alc_softc *sc)
@@ -2847,7 +2870,7 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		CSR_WRITE_4(sc, ALC_RRD1_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD2_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD3_HEAD_ADDR_LO, 0);
-	}\
+	}
 	/* Set Rx return descriptor counter. */
 	CSR_WRITE_4(sc, ALC_RRD_RING_CNT,
 	    (ALC_RR_RING_CNT << RRD_RING_CNT_SHIFT) & RRD_RING_CNT_MASK);
@@ -3044,13 +3067,17 @@ alc_init_backend(struct ifnet *ifp, bool init)
 	reg = (RXQ_CFG_RD_BURST_DEFAULT << RXQ_CFG_RD_BURST_SHIFT) &
 	    RXQ_CFG_RD_BURST_MASK;
 	reg |= RXQ_CFG_RSS_MODE_DIS;
-	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0)
+	if ((sc->alc_flags & ALC_FLAG_AR816X_FAMILY) != 0) {
 		reg |= (RXQ_CFG_816X_IDT_TBL_SIZE_DEFAULT <<
 		    RXQ_CFG_816X_IDT_TBL_SIZE_SHIFT) &
 		    RXQ_CFG_816X_IDT_TBL_SIZE_MASK;
-	if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
-	    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
-		reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_1M;
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	} else {
+		if ((sc->alc_flags & ALC_FLAG_FASTETHER) == 0 &&
+		    sc->alc_ident->deviceid != PCI_PRODUCT_ATTANSIC_AR8151_V2)
+			reg |= RXQ_CFG_ASPM_THROUGHPUT_LIMIT_100M;
+	}
 	CSR_WRITE_4(sc, ALC_RXQ_CFG, reg);
 
 	/* Configure DMA parameters. */
@@ -3074,12 +3101,12 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		switch (AR816X_REV(sc->alc_rev)) {
 		case AR816X_REV_A0:
 		case AR816X_REV_A1:
-			reg |= DMA_CFG_RD_CHNL_SEL_1;
+			reg |= DMA_CFG_RD_CHNL_SEL_2;
 			break;
 		case AR816X_REV_B0:
 			/* FALLTHROUGH */
 		default:
-			reg |= DMA_CFG_RD_CHNL_SEL_3;
+			reg |= DMA_CFG_RD_CHNL_SEL_4;
 			break;
 		}
 	}
