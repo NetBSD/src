@@ -1637,7 +1637,7 @@
 
 /* Define as const if the declaration of iconv() needs const. */
 #ifndef USED_FOR_TARGET
-#define ICONV_CONST const
+#define ICONV_CONST
 #endif
 
 

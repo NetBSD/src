@@ -1206,7 +1206,7 @@ namespace std
 #define _GLIBCXX_HAVE___CXA_THREAD_ATEXIT_IMPL 1
 
 /* Define as const if the declaration of iconv() needs const. */
-#define _GLIBCXX_ICONV_CONST const
+#define _GLIBCXX_ICONV_CONST
 
 /* Define to the sub-directory in which libtool stores uninstalled libraries.
    */
