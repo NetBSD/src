@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.61.8.1 2018/07/26 23:55:30 snj Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.61.8.2 2019/10/24 16:06:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61.8.1 2018/07/26 23:55:30 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.61.8.2 2019/10/24 16:06:09 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -849,7 +849,6 @@ cnw_recv(struct cnw_softc *sc)
 			++ifp->if_ierrors;
 			return;
 		}
-		++ifp->if_ipackets;
 
 		/* Pass the packet up. */
 		if_percpuq_enqueue(ifp->if_percpuq, m);
