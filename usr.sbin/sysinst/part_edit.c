@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.7 2019/07/12 18:25:08 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.8 2019/10/24 18:17:08 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1152,8 +1152,10 @@ edit_outer_parts(struct disk_partitions *parts)
 				return false;
 			}
 		}
-		if (!md_parts_use_wholedisk(parts))
+		if (!md_parts_use_wholedisk(parts)) {
+			hit_enter_to_continue(MSG_No_free_space, NULL);
 			return false;
+		}
 		if (parts->pscheme->post_edit_verify) {
 			return
 			    parts->pscheme->post_edit_verify(parts, true) == 2;
