@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.6 2019/08/14 13:02:23 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.7 2019/10/25 12:49:58 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -549,7 +549,7 @@ extern size_t num_available_part_schemes;
  * Generic reader - query a disk device and read all partitions from it
  */
 struct disk_partitions *
-partitions_read_disk(const char *, daddr_t disk_size);
+partitions_read_disk(const char *, daddr_t disk_size, bool no_mbr);
 
 /*
  * One time initialization
