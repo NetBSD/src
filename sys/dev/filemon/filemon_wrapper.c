@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon_wrapper.c,v 1.11 2015/11/25 07:34:49 pgoyette Exp $	*/
+/*	$NetBSD: filemon_wrapper.c,v 1.12 2019/10/25 16:22:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.11 2015/11/25 07:34:49 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon_wrapper.c,v 1.12 2019/10/25 16:22:48 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -43,7 +43,7 @@ static int filemon_wrapper_chdir(struct lwp *, const struct sys_chdir_args *,
 				register_t *);
 static int filemon_wrapper_execve(struct lwp *, struct sys_execve_args *,
 				register_t *);
-static void filemon_wrapper_sys_exit(struct lwp *, struct sys_exit_args *,
+static int filemon_wrapper_sys_exit(struct lwp *, struct sys_exit_args *,
 				register_t *);
 static int filemon_wrapper_fork(struct lwp *, const void *, register_t *);
 static int filemon_wrapper_link(struct lwp *, struct sys_link_args *,
@@ -380,7 +380,7 @@ out:
 }
 
 
-static void
+static int
 filemon_wrapper_sys_exit(struct lwp * l, struct sys_exit_args * uap,
     register_t * retval)
 {
@@ -398,8 +398,7 @@ filemon_wrapper_sys_exit(struct lwp * l, struct sys_exit_args * uap,
 
 		rw_exit(&filemon->fm_mtx);
 	}
-	sys_exit(l, uap, retval);
-	/* NOT REACHED */
+	return sys_exit(l, uap, retval);
 }
 
 static int
