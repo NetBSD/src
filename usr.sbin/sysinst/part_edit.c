@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.8 2019/10/24 18:17:08 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.9 2019/10/25 12:24:34 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1217,6 +1217,8 @@ select_part_scheme(
 			continue;
 		if (bootable && p->have_boot_support != NULL &&
 		    !p->have_boot_support(dev->diskdev))
+			continue;
+		if (dev->no_mbr && p->name == MSG_parttype_mbr)
 			continue;
 		if (p->size_limit && dev->dlsize > p->size_limit) {
 			char buf[255], hum_lim[5];
