@@ -1,4 +1,4 @@
-/*	$NetBSD: owtemp.c,v 1.17 2014/05/14 08:14:56 kardel Exp $ */
+/*	$NetBSD: owtemp.c,v 1.18 2019/10/25 16:25:14 martin Exp $	*/
 /*	$OpenBSD: owtemp.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.17 2014/05/14 08:14:56 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.18 2019/10/25 16:25:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,8 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: owtemp.c,v 1.17 2014/05/14 08:14:56 kardel Exp $");
 #define DS_CMD_READ_SCRATCHPAD	0xbe
 
 struct owtemp_softc {
-	void *				sc_onewire;
+	device_t			sc_dv;
+	void				*sc_onewire;
 	u_int64_t			sc_rom;
+	const char			*sc_chipname;
 
 	envsys_data_t			sc_sensor;
 	struct sysmon_envsys		*sc_sme;
@@ -89,15 +91,21 @@ owtemp_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 
+	sc->sc_dv = self;
 	sc->sc_onewire = oa->oa_onewire;
 	sc->sc_rom = oa->oa_rom;
 
 	switch(ONEWIRE_ROM_FAMILY_TYPE(sc->sc_rom)) {
 	case ONEWIRE_FAMILY_DS18B20:
+		sc->sc_chipname = "DS18B20";
+		sc->sc_owtemp_decode = owtemp_decode_ds18b20;
+		break;
 	case ONEWIRE_FAMILY_DS1822:
+		sc->sc_chipname = "DS1822";
 		sc->sc_owtemp_decode = owtemp_decode_ds18b20;
 		break;
 	case ONEWIRE_FAMILY_DS1920:
+		sc->sc_chipname = "DS1920";
 		sc->sc_owtemp_decode = owtemp_decode_ds1920;
 		break;
 	}
@@ -109,6 +117,8 @@ owtemp_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sensor.state = ENVSYS_SINVALID;
 	(void)strlcpy(sc->sc_sensor.desc,
 	    device_xname(self), sizeof(sc->sc_sensor.desc));
+	(void)snprintf(sc->sc_sensor.desc, sizeof(sc->sc_sensor.desc),
+	    "%s S/N %012" PRIx64, sc->sc_chipname, ONEWIRE_ROM_SN(sc->sc_rom));
 	if (sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor)) {
 		sysmon_envsys_destroy(sc->sc_sme);
 		return;
@@ -159,8 +169,10 @@ owtemp_update(void *arg)
 	u_int8_t data[9];
 
 	onewire_lock(sc->sc_onewire);
-	if (onewire_reset(sc->sc_onewire) != 0)
+	if (onewire_reset(sc->sc_onewire) != 0) {
+		aprint_error_dev(sc->sc_dv, "owtemp_update: 1st reset failed\n");
 		goto done;
+	}
 	onewire_matchrom(sc->sc_onewire, sc->sc_rom);
 
 	/*
@@ -168,13 +180,15 @@ owtemp_update(void *arg)
 	 * After sending the command, the data line must be held high for
 	 * at least 750ms to provide power during the conversion process.
 	 * As such, no other activity may take place on the 1-Wire bus for
-	 * at least this period.
+	 * at least this period.  Keep the parent bus locked while waiting.
 	 */
 	onewire_write_byte(sc->sc_onewire, DS_CMD_CONVERT);
-	tsleep(sc, PRIBIO, "owtemp", hz);
+	kpause("owtemp", false, mstohz(750 + 10), NULL);
 
-	if (onewire_reset(sc->sc_onewire) != 0)
+	if (onewire_reset(sc->sc_onewire) != 0) {
+		aprint_error_dev(sc->sc_dv, "owtemp_update: 2nd reset failed\n");
 		goto done;
+	}
 	onewire_matchrom(sc->sc_onewire, sc->sc_rom);
 
 	/*
