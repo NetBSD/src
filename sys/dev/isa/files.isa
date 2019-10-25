@@ -1,4 +1,4 @@
-#	$NetBSD: files.isa,v 1.173 2019/05/08 13:40:18 isaki Exp $
+#	$NetBSD: files.isa,v 1.174 2019/10/25 17:39:57 martin Exp $
 #
 # Config file and device description for machine-independent ISA code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -510,6 +510,11 @@ file   dev/isa/tpm_isa.c		tpm_isa	needs-flag
 device	soekrisgpio: gpiobus
 attach	soekrisgpio at isa
 file	dev/isa/soekrisgpio.c		soekrisgpio
+
+# NCT5104D GPIO
+device	nct: gpiobus
+attach	nct at isa
+file	dev/isa/nct.c			nct
 
 #
 # ISA Plug 'n Play autoconfiguration glue.
