@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.101 2019/09/20 21:27:29 macallan Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.102 2019/10/25 17:17:30 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Matt Thomas.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.101 2019/09/20 21:27:29 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.102 2019/10/25 17:17:30 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_ppccache.h"
@@ -451,6 +451,12 @@ cpu_attach_common(device_t self, int id)
 	ci->ci_idepth = -1;
 	ci->ci_dev = self;
 	ci->ci_idlespin = cpu_idlespin;
+
+#ifdef MULTIPROCESSOR
+	/* Register IPI Interrupt */
+	if ((ipiops.ppc_establish_ipi) && (id == 0))
+		ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
+#endif
 
 	pvr = mfpvr();
 	vers = (pvr >> 16) & 0xffff;
@@ -1407,10 +1413,6 @@ cpu_spinup(device_t self, struct cpu_info *ci)
 		Debugger();
 		return -1;
 	}
-
-	/* Register IPI Interrupt */
-	if (ipiops.ppc_establish_ipi)
-		ipiops.ppc_establish_ipi(IST_LEVEL, IPL_HIGH, NULL);
 
 	return 0;
 }
