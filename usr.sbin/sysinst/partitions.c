@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.2 2019/08/14 13:02:23 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.3 2019/10/25 12:49:58 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@ size_t num_available_part_schemes;
  * Generic reader - query a disk device and read all partitions from it
  */
 struct disk_partitions *
-partitions_read_disk(const char *dev, daddr_t disk_size)
+partitions_read_disk(const char *dev, daddr_t disk_size, bool no_mbr)
 {
 	const struct disk_partitioning_scheme **ps;
 
@@ -53,6 +53,8 @@ partitions_read_disk(const char *dev, daddr_t disk_size)
 		return NULL;
 
 	for (ps = available_part_schemes; *ps; ps++) {
+		if (no_mbr && (*ps)->name == MSG_parttype_mbr)
+			continue;
 		struct disk_partitions *parts =
 		    (*ps)->read_from_disk(dev, 0, disk_size, *ps);
 		if (parts)
