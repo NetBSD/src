@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.540 2019/10/25 17:25:23 martin Exp $
+# $NetBSD: GENERIC,v 1.541 2019/10/25 17:39:57 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.540 $"
+#ident		"GENERIC-$Revision: 1.541 $"
 
 maxusers	64		# estimated number of users
 
@@ -592,6 +592,9 @@ owtemp* 	at onewire?			# Temperature sensors
 
 # Soekris 6501 GPIO/LED driver (provides gpiobus, needs gpio)
 #soekrisgpio0	at isa? port 0x680
+
+# Nuvoton NCT5104D SuperIO providing GPIO
+nct0		at isa? port ?
 
 # SCSI Controllers and Devices
 
