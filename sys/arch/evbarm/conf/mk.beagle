@@ -1,4 +1,4 @@
-#	$NetBSD: mk.beagle,v 1.12 2019/05/18 08:49:23 skrll Exp $
+#	$NetBSD: mk.beagle,v 1.12.2.1 2019/10/25 16:01:17 martin Exp $
 .if ${KERNEL_BUILD:T:MPANDA*} != ""
 CPPFLAGS+=		-mcpu=cortex-a9
 .elif ${KERNEL_BUILD:T:MOMAP5*} != ""
@@ -13,7 +13,7 @@ SYSTEM_FIRST_SFILE=	${ARM}/arm/armv6_start.S
 
 _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 
-MKUBOOTIMAGEARGS=	-A arm -T kernel -O linux
+MKUBOOTIMAGEARGS=	-A arm -T kernel -O netbsd
 MKUBOOTIMAGEARGS+=	-a $(LOADADDRESS) -e $(LOADADDRESS)
 MKUBOOTIMAGEARGS+=	-n "NetBSD/$(BOARDTYPE) ${_OSRELEASE}"
 MKUBOOTIMAGEARGS_NONE=	${MKUBOOTIMAGEARGS} -C none
