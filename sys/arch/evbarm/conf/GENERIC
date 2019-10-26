@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.54 2019/10/08 23:03:01 bad Exp $
+#	$NetBSD: GENERIC,v 1.55 2019/10/26 15:01:18 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -12,9 +12,9 @@ include	"arch/evbarm/conf/GENERIC.common"
 # FDT files supported by this kernel - add to DTSSUBDIR and DTS as
 # appropriate
 #
-makeoptions	DTSARCH="arm aarch64"
-makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip socfpga"
+makeoptions	DTSARCH="arm"
+makeoptions	DTSGNUARCH="arm"
+makeoptions	DTSSUBDIR=""
 makeoptions	DTS="
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-a-plus.dts
