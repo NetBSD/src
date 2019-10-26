@@ -1,4 +1,4 @@
-/*	$NetBSD: db_disasm.c,v 1.43 2019/07/11 03:49:51 msaitoh Exp $	*/
+/*	$NetBSD: db_disasm.c,v 1.44 2019/10/26 17:50:18 christos Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.43 2019/07/11 03:49:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_disasm.c,v 1.44 2019/10/26 17:50:18 christos Exp $");
 
 #include <sys/param.h>
 #ifdef _KERNEL
@@ -1493,6 +1493,7 @@ opcode_fpu(dis_buffer_t *dbuf, u_short opc)
 			return;
 
 		}
+		/* FALLTHROUGH */
 	/* cpBcc */
 	case 2:
 		if (BITFIELD(opc,5,0) == 0 && *(dbuf->val + 1) == 0) {
