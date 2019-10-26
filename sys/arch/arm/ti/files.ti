@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.5 2019/10/26 14:57:27 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.6 2019/10/26 15:58:55 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
@@ -6,7 +6,12 @@ file	arch/arm/ti/ti_platform.c	soc_ti
 # Interrupt controller
 device	omapintc: pic, pic_splfuncs
 attach  omapintc at fdt
-file	arch/arm/ti/ti_omapintc.c omapintc
+file	arch/arm/ti/ti_omapintc.c	omapintc
+
+# sysc interconnect
+device	tisysc { } : fdt, ti_prcm
+attach	tisysc at fdt with ti_sysc
+file	arch/arm/ti/ti_sysc.c		ti_sysc
 
 # PRCM
 define	ti_prcm
