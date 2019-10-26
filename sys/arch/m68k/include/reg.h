@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.19 2014/01/04 00:10:02 dsl Exp $	*/
+/*	$NetBSD: reg.h,v 1.20 2019/10/26 17:49:34 christos Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,8 +57,9 @@ struct fpreg {
 	int	r_fpiar;
 };
 
-/* XXXX this is historical (but it can't be deprecated quite yet) */
+#ifdef _KERNEL
 
+/* XXXX this is historical (but it can't be deprecated quite yet) */
 /*
  * Location of the users' stored
  * registers relative to D0.
@@ -86,7 +87,6 @@ struct fpreg {
 #define	PS	(16)
 #define	PC	(17)
 
-#ifdef _KERNEL
 /*
  * Due to a mental lapse somewhere down the line, wait returns its values
  * in strange registers.  Kludge it up here so we don't have to in the
