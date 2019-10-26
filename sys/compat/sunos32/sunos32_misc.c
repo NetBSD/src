@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos32_misc.c,v 1.82 2019/09/23 21:07:39 christos Exp $	*/
+/*	$NetBSD: sunos32_misc.c,v 1.83 2019/10/26 11:34:48 christos Exp $	*/
 /* from :NetBSD: sunos_misc.c,v 1.107 2000/12/01 19:25:10 jdolecek Exp	*/
 
 /*
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.82 2019/09/23 21:07:39 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos32_misc.c,v 1.83 2019/10/26 11:34:48 christos Exp $");
 
 #define COMPAT_SUNOS 1
 
@@ -926,15 +926,13 @@ sunos32_sys_uname(struct lwp *l, const struct sunos32_sys_uname_args *uap, regis
 
 	memset(&sut, 0, sizeof(sut));
 
-	memcpy(sut.sysname, ostype, sizeof(sut.sysname) - 1);
-	memcpy(sut.nodename, hostname, sizeof(sut.nodename));
-	sut.nodename[sizeof(sut.nodename)-1] = '\0';
-	memcpy(sut.release, osrelease, sizeof(sut.release) - 1);
-	memcpy(sut.version, "1", sizeof(sut.version) - 1);
-	memcpy(sut.machine, machine, sizeof(sut.machine) - 1);
+	strlcpy(sut.sysname, ostype, sizeof(sut.sysname));
+	strlcpy(sut.nodename, hostname, sizeof(sut.nodename));
+	strlcpy(sut.release, osrelease, sizeof(sut.release));
+	strlcpy(sut.version, "1", sizeof(sut.version));
+	strlcpy(sut.machine, machine, sizeof(sut.machine));
 
-	return copyout((void *)&sut, SCARG_P32(uap, name),
-	    sizeof(struct sunos_utsname));
+	return copyout(&sut, SCARG_P32(uap, name), sizeof(sut));
 }
 
 int
