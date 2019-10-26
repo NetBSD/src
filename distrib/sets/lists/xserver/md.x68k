@@ -1,5 +1,5 @@
-# $NetBSD: md.x68k,v 1.19 2016/08/19 22:37:04 mrg Exp $
-./usr/X11R7/bin/X					-unknown-	xorg
+# $NetBSD: md.x68k,v 1.20 2019/10/26 07:31:39 uki Exp $
+./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/X68k					-unknown-	xorg
 ./usr/X11R7/man/cat1/X68k.0				-unknown-	.cat,xorg
 ./usr/X11R7/man/html1/X68k.html				-unknown-	html,xorg
