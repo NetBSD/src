@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.3 2019/10/25 12:49:58 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.4 2019/10/26 07:32:52 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -53,8 +53,10 @@ partitions_read_disk(const char *dev, daddr_t disk_size, bool no_mbr)
 		return NULL;
 
 	for (ps = available_part_schemes; *ps; ps++) {
+#ifdef HAVE_MBR
 		if (no_mbr && (*ps)->name == MSG_parttype_mbr)
 			continue;
+#endif
 		struct disk_partitions *parts =
 		    (*ps)->read_from_disk(dev, 0, disk_size, *ps);
 		if (parts)
