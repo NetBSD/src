@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.9 2013/12/02 18:36:11 joerg Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.10 2019/10/26 09:58:40 tsutsui Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -284,6 +284,13 @@ elf32bsdboot(void)
 		"mov	r1, r1;"
 		"sub	pc, pc, #4;"
 		"mov	r1, #(0x00000010 | 0x00000020);"
+		/*
+		 * Put the rest of instructions into the same cacheline
+		 * to make sure no I$ refill after invalidation.
+		 */
+		"b	2f;"
+		".align 5;"
+		"2:"
 		"mcr	p15, 0, r1, c1, c0, 0;" /* Write new control register */
 		"mcr	p15, 0, r1, c8, c7, 0;" /* invalidate I+D TLB */
 		"mcr	p15, 0, r1, c7, c5, 0;" /* invalidate I$ and BTB */
