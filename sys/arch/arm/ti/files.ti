@@ -1,16 +1,7 @@
-#	$NetBSD: files.ti,v 1.4 2018/11/21 08:55:05 skrll Exp $
+#	$NetBSD: files.ti,v 1.5 2019/10/26 14:57:27 jmcneill Exp $
 #
 
-file	arch/arm/arm32/arm32_boot.c
-file	arch/arm/arm32/arm32_kvminit.c
-file	arch/arm/arm32/arm32_reboot.c
-file	arch/arm/arm32/irq_dispatch.S
-
-file	arch/arm/arm32/armv7_generic_space.c
-file	arch/arm/arm/arm_generic_dma.c
-file	arch/arm/arm/bus_space_a4x.S
-
-file	arch/arm/ti/ti_platform.c
+file	arch/arm/ti/ti_platform.c	soc_ti
 
 # Interrupt controller
 device	omapintc: pic, pic_splfuncs
@@ -27,8 +18,10 @@ attach	am3prcm at fdt with am3_prcm
 file	arch/arm/ti/am3_prcm.c		am3_prcm
 
 # UART
-attach	com at fdt with ti_com
-file	arch/arm/ti/ti_com.c	ti_com needs-flag
+ifdef soc_ti
+attach	com at fdt with ti_com: ti_prcm
+file	arch/arm/ti/ti_com.c		ti_com needs-flag
+endif
 
 # Timer
 device	omaptimer
@@ -38,4 +31,8 @@ file	arch/arm/ti/ti_omaptimer.c	omaptimer
 # Ethernet
 device  cpsw: ether, ifnet, arp, mii, mii_phy
 attach  cpsw at fdt
-file    arch/arm/ti/if_cpsw.c                 cpsw
+file    arch/arm/ti/if_cpsw.c		cpsw
+
+# SOC parameters
+defflag	opt_soc.h			SOC_TI
+defflag	opt_soc.h			SOC_TI_AM335X: SOC_TI
