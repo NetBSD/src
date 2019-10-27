@@ -33,15 +33,6 @@ if test "${soc}" = "tegra124" ; then
 	setenv mmcpart 1:1
 	setenv use_fdt 1
 fi
-if test "${soc}" = "tegra210" ; then
-	setenv kernel netbsd.ub
-	setenv bootargs root=wd0a
-	setenv mmcpart 1:1
-	setenv use_fdt 1
-	setenv fdtfile ${soc}-${board}.dtb
-	# enable PCIe
-	pci enum
-fi
 
 if test "${kernel}" = "" ; then
 	echo '>>>'
