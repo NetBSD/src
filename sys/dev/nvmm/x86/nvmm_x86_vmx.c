@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.40 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.41 2019/10/27 10:28:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.40 2019/10/23 07:01:11 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.41 2019/10/27 10:28:55 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,9 @@ struct vmx_machdata {
 
 static const size_t vmx_vcpu_conf_sizes[NVMM_X86_VCPU_NCONF] = {
 	[NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID)] =
-	    sizeof(struct nvmm_vcpu_conf_cpuid)
+	    sizeof(struct nvmm_vcpu_conf_cpuid),
+	[NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_TPR)] =
+	    sizeof(struct nvmm_vcpu_conf_tpr)
 };
 
 struct vmx_cpudata {
@@ -752,6 +754,7 @@ struct vmx_cpudata {
 	/* VCPU configuration. */
 	bool cpuidpresent[VMX_NCPUIDS];
 	struct nvmm_vcpu_conf_cpuid cpuid[VMX_NCPUIDS];
+	struct nvmm_vcpu_conf_tpr tpr;
 };
 
 static const struct {
@@ -1404,7 +1407,7 @@ vmx_inkernel_handle_cr4(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 
 static int
 vmx_inkernel_handle_cr8(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    uint64_t qual)
+    uint64_t qual, struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
 	uint64_t type, gpr;
@@ -1428,6 +1431,9 @@ vmx_inkernel_handle_cr8(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		} else {
 			cpudata->gcr8 = cpudata->gprs[gpr];
 		}
+		if (cpudata->tpr.exit_changed) {
+			exit->reason = NVMM_VCPU_EXIT_TPR_CHANGED;
+		}
 	} else {
 		if (gpr == NVMM_X64_GPR_RSP) {
 			vmx_vmwrite(VMCS_GUEST_RSP, cpudata->gcr8);
@@ -1447,6 +1453,8 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	uint64_t qual;
 	int ret;
 
+	exit->reason = NVMM_VCPU_EXIT_NONE;
+
 	qual = vmx_vmread(VMCS_EXIT_QUALIFICATION);
 
 	switch (__SHIFTOUT(qual, VMX_QUAL_CR_NUM)) {
@@ -1457,7 +1465,7 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 		ret = vmx_inkernel_handle_cr4(mach, vcpu, qual);
 		break;
 	case 8:
-		ret = vmx_inkernel_handle_cr8(mach, vcpu, qual);
+		ret = vmx_inkernel_handle_cr8(mach, vcpu, qual, exit);
 		break;
 	default:
 		ret = -1;
@@ -1467,8 +1475,6 @@ vmx_exit_cr(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	if (ret == -1) {
 		vmx_inject_gp(vcpu);
 	}
-
-	exit->reason = NVMM_VCPU_EXIT_NONE;
 }
 
 #define VMX_QUAL_IO_SIZE	__BITS(2,0)
@@ -2750,17 +2756,13 @@ vmx_vcpu_destroy(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	    roundup(sizeof(*cpudata), PAGE_SIZE), UVM_KMF_WIRED);
 }
 
-static int
-vmx_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
-{
-	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	struct nvmm_vcpu_conf_cpuid *cpuid;
-	size_t i;
+/* -------------------------------------------------------------------------- */
 
-	if (__predict_false(op != NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID))) {
-		return EINVAL;
-	}
-	cpuid = data;
+static int
+vmx_vcpu_configure_cpuid(struct vmx_cpudata *cpudata, void *data)
+{
+	struct nvmm_vcpu_conf_cpuid *cpuid = data;
+	size_t i;
 
 	if (__predict_false(cpuid->mask && cpuid->exit)) {
 		return EINVAL;
@@ -2809,6 +2811,30 @@ vmx_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
 	}
 
 	return ENOBUFS;
+}
+
+static int
+vmx_vcpu_configure_tpr(struct vmx_cpudata *cpudata, void *data)
+{
+	struct nvmm_vcpu_conf_tpr *tpr = data;
+
+	memcpy(&cpudata->tpr, tpr, sizeof(*tpr));
+	return 0;
+}
+
+static int
+vmx_vcpu_configure(struct nvmm_cpu *vcpu, uint64_t op, void *data)
+{
+	struct vmx_cpudata *cpudata = vcpu->cpudata;
+
+	switch (op) {
+	case NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_CPUID):
+		return vmx_vcpu_configure_cpuid(cpudata, data);
+	case NVMM_VCPU_CONF_MD(NVMM_VCPU_CONF_TPR):
+		return vmx_vcpu_configure_tpr(cpudata, data);
+	default:
+		return EINVAL;
+	}
 }
 
 /* -------------------------------------------------------------------------- */
@@ -3170,6 +3196,10 @@ vmx_fini(void)
 static void
 vmx_capability(struct nvmm_capability *cap)
 {
+	cap->arch.mach_conf_support = 0;
+	cap->arch.vcpu_conf_support =
+	    NVMM_CAP_ARCH_VCPU_CONF_CPUID |
+	    NVMM_CAP_ARCH_VCPU_CONF_TPR;
 	cap->arch.xcr0_mask = vmx_xcr0_mask;
 	cap->arch.mxcsr_mask = x86_fpu_mxcsr_mask;
 	cap->arch.conf_cpuid_maxops = VMX_NCPUIDS;

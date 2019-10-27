@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.16 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.17 2019/10/27 10:28:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -84,6 +84,7 @@ struct nvmm_x86_exit_invalid {
 #define NVMM_VCPU_EXIT_INT_READY	0x0000000000001001ULL
 #define NVMM_VCPU_EXIT_NMI_READY	0x0000000000001002ULL
 #define NVMM_VCPU_EXIT_HALTED		0x0000000000001003ULL
+#define NVMM_VCPU_EXIT_TPR_CHANGED	0x0000000000001004ULL
 /* x86: instructions. */
 #define NVMM_VCPU_EXIT_RDMSR		0x0000000000002000ULL
 #define NVMM_VCPU_EXIT_WRMSR		0x0000000000002001ULL
@@ -118,10 +119,16 @@ struct nvmm_x86_event {
 };
 
 struct nvmm_cap_md {
+	uint64_t mach_conf_support;
+
+	uint64_t vcpu_conf_support;
+#define NVMM_CAP_ARCH_VCPU_CONF_CPUID	__BIT(0)
+#define NVMM_CAP_ARCH_VCPU_CONF_TPR	__BIT(1)
+
 	uint64_t xcr0_mask;
 	uint32_t mxcsr_mask;
 	uint32_t conf_cpuid_maxops;
-	uint64_t rsvd[6];
+	uint64_t rsvd[4];
 };
 
 #endif
@@ -261,6 +268,7 @@ struct nvmm_x64_state {
 };
 
 #define NVMM_VCPU_CONF_CPUID	NVMM_VCPU_CONF_MD_BEGIN
+#define NVMM_VCPU_CONF_TPR	(NVMM_VCPU_CONF_MD_BEGIN + 1)
 
 struct nvmm_vcpu_conf_cpuid {
 	/* The options. */
@@ -290,13 +298,18 @@ struct nvmm_vcpu_conf_cpuid {
 	} u;
 };
 
+struct nvmm_vcpu_conf_tpr {
+	uint32_t exit_changed:1;
+	uint32_t rsvd:31;
+};
+
 #define nvmm_vcpu_exit		nvmm_x86_exit
 #define nvmm_vcpu_event		nvmm_x86_event
 #define nvmm_vcpu_state		nvmm_x64_state
 
 #ifdef _KERNEL
 #define NVMM_X86_MACH_NCONF	0
-#define NVMM_X86_VCPU_NCONF	1
+#define NVMM_X86_VCPU_NCONF	2
 struct nvmm_x86_cpuid_mask {
 	uint32_t eax;
 	uint32_t ebx;
