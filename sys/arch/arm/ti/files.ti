@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.9 2019/10/27 15:43:46 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.10 2019/10/27 16:31:26 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
@@ -47,6 +47,14 @@ file	arch/arm/ti/ti_tptc.c		ti_tptc
 # MMCHS
 attach	sdhc at fdt with ti_sdhc: ti_edma, ti_prcm
 file	arch/arm/ti/ti_sdhc.c		ti_sdhc
+
+# USB
+device	tiotg { } : fdt
+attach	tiotg at fdt with ti_otg
+file	arch/arm/ti/ti_otg.c		ti_otg
+
+attach	motg at fdt with ti_motg
+file	arch/arm/ti/ti_motg.c		ti_motg
 
 # SOC parameters
 defflag	opt_soc.h			SOC_TI
