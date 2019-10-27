@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.31 2019/03/26 09:22:17 mlelstv Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.32 2019/10/27 19:10:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.31 2019/03/26 09:22:17 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.32 2019/10/27 19:10:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,6 +125,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ "i2c-at34c02",		256 },
 	{ "atmel,24c02",		256 },
 	{ "atmel,24c16",		2048 },
+	{ "atmel,24c256",		32768 },
 	{ NULL,				0 }
 };
 
