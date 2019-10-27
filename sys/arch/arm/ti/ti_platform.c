@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.8 2019/10/27 17:58:42 jmcneill Exp $ */
+/* $NetBSD: ti_platform.c,v 1.9 2019/10/27 21:26:04 jmcneill Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.8 2019/10/27 17:58:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.9 2019/10/27 21:26:04 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -26,7 +26,7 @@ void
 am33xx_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
-#define CONSADDR_VA ((CONSADDR - 0x44c00000) + 0xe4c00000)
+#define CONSADDR_VA ((CONSADDR - 0x44c00000) + (KERNEL_IO_VBASE | 0x04c00000))
 	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
 	    (volatile uint32_t *)CONSADDR_VA :
 	    (volatile uint32_t *)CONSADDR;
@@ -130,12 +130,21 @@ am33xx_platform_delay(u_int n)
 	}
 }
 
+static void
+am33xx_platform_reset(void)
+{
+	volatile uint32_t *resetaddr = (volatile uint32_t *)(KERNEL_IO_VBASE | 0x04e00f00);
+
+	*resetaddr = 1;
+}
+
 static const struct arm_platform am33xx_platform = {
 	.ap_devmap = am33xx_platform_devmap,
 	.ap_init_attach_args = am33xx_platform_init_attach_args,
 	.ap_bootstrap = am33xx_platform_bootstrap,
 	.ap_uart_freq = am33xx_platform_uart_freq,
 	.ap_delay = am33xx_platform_delay,
+	.ap_reset = am33xx_platform_reset,
 };
 
 ARM_PLATFORM(am33xx, "ti,am33xx", &am33xx_platform);
