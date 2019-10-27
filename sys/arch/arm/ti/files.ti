@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.6 2019/10/26 15:58:55 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.7 2019/10/27 11:33:56 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
@@ -23,10 +23,8 @@ attach	am3prcm at fdt with am3_prcm
 file	arch/arm/ti/am3_prcm.c		am3_prcm
 
 # UART
-ifdef soc_ti
 attach	com at fdt with ti_com: ti_prcm
 file	arch/arm/ti/ti_com.c		ti_com needs-flag
-endif
 
 # Timer
 device	omaptimer
