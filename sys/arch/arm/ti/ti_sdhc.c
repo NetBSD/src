@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.1 2019/10/27 15:43:46 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.2 2019/10/27 17:21:23 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.1 2019/10/27 15:43:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.2 2019/10/27 17:21:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,8 +297,12 @@ no_dma:
 		aprint_error_dev(dev, "Soft reset timeout\n");
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh, MMCHS_SYSCONFIG,
 	    SYSCONFIG_ENAWAKEUP |
+#if notyet
 	    SYSCONFIG_AUTOIDLE |
 	    SYSCONFIG_SIDLEMODE_AUTO |
+#else
+	    SYSCONFIG_SIDLEMODE_IGNORE |
+#endif
 	    SYSCONFIG_CLOCKACTIVITY_FCLK |
 	    SYSCONFIG_CLOCKACTIVITY_ICLK);
 
