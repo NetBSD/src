@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.41 2019/10/27 10:28:55 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.42 2019/10/27 11:11:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.41 2019/10/27 10:28:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.42 2019/10/27 11:11:09 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1171,6 +1171,12 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
 		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
+		break;
+	case 0x0000000A:
+		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+		cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 		break;
 	case 0x0000000D:
 		if (vmx_xcr0_mask == 0) {
