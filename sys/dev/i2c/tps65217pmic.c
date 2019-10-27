@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.12 2018/06/16 21:22:13 thorpej Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.13 2019/10/27 20:11:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,8 +34,10 @@
  * TODO: battery, sequencer, pgood
  */
 
+#include "opt_fdt.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.12 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.13 2019/10/27 20:11:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,16 +53,23 @@ __KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.12 2018/06/16 21:22:13 thorpej Ex
 #include <dev/i2c/tps65217pmicreg.h>
 #include <dev/i2c/tps65217pmicvar.h>
 
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
+
 #define NTPS_REG	7
 #define SNUM_REGS	NTPS_REG-1
 #define SNUM_USBSTATUS	NTPS_REG
 #define SNUM_ACSTATUS	NTPS_REG+1
+
+struct tps_reg_param;
 
 struct tps65217pmic_softc {
 	device_t		sc_dev;
 
 	i2c_tag_t		sc_tag;
 	i2c_addr_t		sc_addr;
+	int			sc_phandle;
 
 	uint8_t			sc_version;
 	uint8_t			sc_revision;
@@ -81,6 +90,17 @@ struct tps65217pmic_softc {
 	envsys_data_t		sc_usbsensor;
 
 	struct sysmon_pswitch	sc_smpsw;
+};
+
+struct tps65217reg_softc {
+	device_t		sc_dev;
+	int			sc_phandle;
+	struct tps_reg_param	*sc_param;
+};
+
+struct tps65217reg_attach_args {
+	struct tps_reg_param	*reg_param;
+	int			reg_phandle;
 };
 
 /* Voltage regulators */
@@ -159,6 +179,10 @@ static void tps65217pmic_wled_init(struct tps65217pmic_softc *, int, int, int);
 CFATTACH_DECL_NEW(tps65217pmic, sizeof (struct tps65217pmic_softc),
     tps65217pmic_match, tps65217pmic_attach, NULL, NULL);
 
+#ifdef FDT
+static void tps65217pmic_regulator_attach(struct tps65217pmic_softc *);
+#endif
+
 /* Possible settings of LDO1 in mV. */
 static const uint16_t ldo1voltages[] = { 1000, 1100, 1200, 1250, 1300, 1350,
     1400, 1500, 1600, 1800, 2500, 2750, 2800, 3000, 3100, 3300 };
@@ -177,7 +201,7 @@ static const uint16_t ldo3voltages[] = { 1500, 1550, 1600, 1650, 1700, 1750,
 
 static struct tps_reg_param tps_regulators[] = {
 	{
-		.name = "LDO1",
+		.name = "ldo1",
 		.voltage_min = 1000,
 		.voltage_max = 3300,
 		.voltages = ldo1voltages,
@@ -190,7 +214,7 @@ static struct tps_reg_param tps_regulators[] = {
 		.enable_bit = TPS65217PMIC_ENABLE_LDO1
 	},
 	{
-		.name = "LDO2",
+		.name = "ldo2",
 		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
@@ -203,7 +227,7 @@ static struct tps_reg_param tps_regulators[] = {
 		.enable_bit = TPS65217PMIC_ENABLE_LDO2
 	},
 	{
-		.name = "LDO3",
+		.name = "ldo3",
 		.voltage_min = 1500,
 		.voltage_max = 3300,
 		.voltages = ldo3voltages,
@@ -216,7 +240,7 @@ static struct tps_reg_param tps_regulators[] = {
 		.enable_bit = TPS65217PMIC_ENABLE_LDO3
 	},
 	{
-		.name = "LDO4",
+		.name = "ldo4",
 		.voltage_min = 1500,
 		.voltage_max = 3300,
 		.voltages = ldo3voltages,
@@ -229,7 +253,7 @@ static struct tps_reg_param tps_regulators[] = {
 		.enable_bit = TPS65217PMIC_ENABLE_LDO4
 	},
 	{
-		.name = "DCDC1",
+		.name = "dcdc1",
 		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
@@ -242,7 +266,7 @@ static struct tps_reg_param tps_regulators[] = {
 		.enable_bit = TPS65217PMIC_ENABLE_DCDC1
 	},
 	{
-		.name = "DCDC2",
+		.name = "dcdc2",
 		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
@@ -255,7 +279,7 @@ static struct tps_reg_param tps_regulators[] = {
 		.enable_bit = TPS65217PMIC_ENABLE_DCDC2
 	},
 	{
-		.name = "DCDC3",
+		.name = "dcdc3",
 		.voltage_min = 900,
 		.voltage_max = 3300,
 		.voltages = ldo2voltages,
@@ -271,10 +295,19 @@ static struct tps_reg_param tps_regulators[] = {
 
 static bool matched = false;
 
+static const struct device_compatible_entry compat_data[] = {
+	{ "ti,tps65217",			0 },
+	{ NULL }
+};
+
 static int
 tps65217pmic_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct i2c_attach_args *ia = aux;
+	int match_result;
+
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
+		return match_result;
 
 	if (ia->ia_addr == TPS65217PMIC_ADDR) {
 		/* we can only have one */
@@ -299,6 +332,7 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_addr = ia->ia_addr;
+	sc->sc_phandle = ia->ia_cookie;
 	sc->sc_tag = ia->ia_tag;
 
 	dict = device_properties(self);
@@ -349,6 +383,10 @@ tps65217pmic_attach(device_t parent, device_t self, void *aux)
 		tps65217pmic_wled_init(sc, isel, fdim, brightness);
 
 	tps65217pmic_envsys_register(sc);
+
+#ifdef FDT
+	tps65217pmic_regulator_attach(sc);
+#endif
 }
 
 static void
@@ -835,5 +873,160 @@ tps65217pmic_set_volt(device_t self, const char *name, int mvolt)
 	while (val & TPS65217PMIC_DEFSLEW_GO) {
 		val = tps65217pmic_reg_read(sc, TPS65217PMIC_DEFSLEW);
 	}
+
+	regulator->current_voltage = regulator->voltages[i];
+
 	return 0;
 }
+
+#ifdef FDT
+static struct tps_reg_param *
+tps65217pmic_get_params(const char *name)
+{
+	int i;
+
+	for (i = 0; i < __arraycount(tps_regulators); i++) {
+		if (strcmp(name, tps_regulators[i].name) == 0)
+			return &tps_regulators[i];
+	}
+
+	return NULL;
+}
+
+static void
+tps65217pmic_regulator_attach(struct tps65217pmic_softc *sc)
+{
+	struct tps65217reg_attach_args raa;
+	struct tps_reg_param *param;
+	const char *compat_name;
+	int phandle, child;
+
+	phandle = of_find_firstchild_byname(sc->sc_phandle, "regulators");
+	if (phandle <= 0)
+		return;
+
+	for (child = OF_child(phandle); child; child = OF_peer(child)) {
+		compat_name = fdtbus_get_string(child, "regulator-compatible");
+		if (compat_name == NULL)
+			continue;
+		param = tps65217pmic_get_params(compat_name);
+		if (param == NULL)
+			continue;
+
+		raa.reg_param = param;
+		raa.reg_phandle = child;
+		config_found(sc->sc_dev, &raa, NULL);
+	}
+}
+
+static int
+tps65217reg_acquire(device_t dev)
+{
+	return 0;
+}
+
+static void
+tps65217reg_release(device_t dev)
+{
+}
+
+static int
+tps65217reg_enable(device_t dev, bool enable)
+{
+	struct tps65217reg_softc *sc = device_private(dev);
+	struct tps65217pmic_softc *pmic_sc = device_private(device_parent(dev));
+	struct tps_reg_param *regulator = sc->sc_param;
+	uint8_t val;
+	int error;
+
+	error = iic_acquire_bus(pmic_sc->sc_tag, I2C_F_POLL);
+	if (error != 0)
+		return error;
+
+	val = tps65217pmic_reg_read(pmic_sc, TPS65217PMIC_ENABLE);
+	if (enable)
+		val |= regulator->enable_bit;
+	else
+		val &= ~regulator->enable_bit;
+	tps65217pmic_reg_write(pmic_sc, TPS65217PMIC_ENABLE, val);
+
+	regulator->is_enabled = enable;
+
+	iic_release_bus(pmic_sc->sc_tag, I2C_F_POLL);
+
+	return 0;
+}
+
+static int
+tps65217reg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
+{
+	struct tps65217reg_softc *sc = device_private(dev);
+	struct tps65217pmic_softc *pmic_sc = device_private(device_parent(dev));
+	struct tps_reg_param *regulator = sc->sc_param;
+	int error;
+
+	error = iic_acquire_bus(pmic_sc->sc_tag, I2C_F_POLL);
+	if (error != 0)
+		return error;
+
+	error = tps65217pmic_set_volt(pmic_sc->sc_dev, regulator->name, min_uvol / 1000);
+
+	iic_release_bus(pmic_sc->sc_tag, I2C_F_POLL);
+
+	return error;
+}
+
+static int
+tps65217reg_get_voltage(device_t dev, u_int *puvol)
+{
+	struct tps65217reg_softc *sc = device_private(dev);
+	struct tps_reg_param *regulator = sc->sc_param;
+
+	*puvol = (u_int)regulator->current_voltage * 1000;
+
+	return 0;
+}
+
+static struct fdtbus_regulator_controller_func tps65217reg_funcs = {
+	.acquire = tps65217reg_acquire,
+	.release = tps65217reg_release,
+	.enable = tps65217reg_enable,
+	.set_voltage = tps65217reg_set_voltage,
+	.get_voltage = tps65217reg_get_voltage,
+};
+
+static int
+tps65217reg_match(device_t parent, cfdata_t match, void *aux)
+{
+	return 1;
+}
+
+static void
+tps65217reg_attach(device_t parent, device_t self, void *aux)
+{
+	struct tps65217reg_softc *sc = device_private(self);
+	struct tps65217reg_attach_args *raa = aux;
+	const char *regname;
+
+	sc->sc_dev = self;
+	sc->sc_phandle = raa->reg_phandle;
+	sc->sc_param = raa->reg_param;
+
+	fdtbus_register_regulator_controller(self, sc->sc_phandle,
+	    &tps65217reg_funcs);
+
+	regname = fdtbus_get_string(sc->sc_phandle, "regulator-name");
+	if (regname == NULL)
+		regname = fdtbus_get_string(sc->sc_phandle, "regulator-compatible");
+
+	aprint_naive("\n");
+	if (regname != NULL)
+		aprint_normal(": %s\n", regname);
+	else
+		aprint_normal("\n");
+}
+
+CFATTACH_DECL_NEW(tps65217reg, sizeof (struct tps65217reg_softc),
+    tps65217reg_match, tps65217reg_attach, NULL, NULL);
+
+#endif
