@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6 2019/05/29 06:17:27 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.7 2019/10/27 23:25:38 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6 2019/05/29 06:17:27 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.7 2019/10/27 23:25:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -398,14 +398,14 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	struct cpsw_softc * const sc = device_private(self);
-	prop_dictionary_t dict = device_properties(self);
 	struct ethercom * const ec = &sc->sc_ec;
 	struct ifnet * const ifp = &ec->ec_if;
 	struct mii_data * const mii = &sc->sc_mii;
 	const int phandle = faa->faa_phandle;
+	const uint8_t *macaddr;
 	bus_addr_t addr;
 	bus_size_t size;
-	int error;
+	int error, slave, len;
 	u_int i;
 
 	KERNHIST_INIT(cpswhist, 4096);
@@ -423,8 +423,14 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 	callout_init(&sc->sc_tick_ch, 0);
 	callout_setfunc(&sc->sc_tick_ch, cpsw_tick, sc);
 
-	prop_data_t eaprop = prop_dictionary_get(dict, "mac-address");
-	if (eaprop == NULL) {
+	macaddr = NULL;
+	slave = of_find_firstchild_byname(phandle, "slave");
+	if (slave > 0) {
+		macaddr = fdtbus_get_prop(slave, "mac-address", &len);
+		if (len != ETHER_ADDR_LEN)
+			macaddr = NULL;
+	}
+	if (macaddr == NULL) {
 #if 0
 		/* grab mac_id0 from AM335x control module */
 		uint32_t reg_lo, reg_hi;
@@ -461,10 +467,7 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 #endif
 		}
 	} else {
-		KASSERT(prop_object_type(eaprop) == PROP_TYPE_DATA);
-		KASSERT(prop_data_size(eaprop) == ETHER_ADDR_LEN);
-		memcpy(sc->sc_enaddr, prop_data_data_nocopy(eaprop),
-		    ETHER_ADDR_LEN);
+		memcpy(sc->sc_enaddr, macaddr, ETHER_ADDR_LEN);
 	}
 
 #if 0
