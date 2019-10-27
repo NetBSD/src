@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.2 2019/10/27 17:59:21 jmcneill Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.1 2017/10/26 01:16:32 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.2 2019/10/27 17:59:21 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -14,6 +14,23 @@ __KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.1 2017/10/26 01:16:32 jakllsch Ex
 #include <arm/fdt/arm_fdtvar.h>
 
 #include <dev/fdt/fdtvar.h>
+
+#include <arm/ti/ti_prcm.h>
+
+#define	TIMER_IRQENABLE_SET	0x2c
+#define	TIMER_IRQENABLE_CLR	0x30
+#define	 MAT_EN_FLAG		__BIT(0)
+#define	 OVF_EN_FLAG		__BIT(1)
+#define	 TCAR_EN_FLAG		__BIT(2)
+#define	TIMER_TCLR		0x38
+#define	 TCLR_ST		__BIT(0)
+#define	 TCLR_AR		__BIT(1)
+#define	TIMER_TCRR		0x3c
+#define	TIMER_TLDR		0x40
+
+/* XXX */
+#define	IS_TIMER2(addr)	((addr) == 0x48040000)
+#define	IS_TIMER3(addr)	((addr) == 0x48042000)
 
 static const char * const compatible[] = {
 	"ti,am335x-timer-1ms",
@@ -61,12 +78,16 @@ omaptimer_cpu_initclocks(void)
 	
 	aprint_normal_dev(sc->sc_dev, "interrupting on %s\n", intrstr);
 
-	uint32_t value;
-	value = (0xffffffff - ((24000000UL / hz) - 1));
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, 0x40, value);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, 0x3c, value);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, 0x2c, 2);
-	bus_space_write_4(sc->sc_bst, sc->sc_bsh, 0x38, 3);
+	/* Enable interrupts */
+	bus_space_write_4(sc->sc_bst, sc->sc_bsh, TIMER_IRQENABLE_SET, OVF_EN_FLAG);
+}
+
+static u_int
+omaptimer_get_timecount(struct timecounter *tc)
+{
+	struct omaptimer_softc * const sc = tc->tc_priv;
+
+	return bus_space_read_4(sc->sc_bst, sc->sc_bsh, TIMER_TCRR);
 }
 
 static int
@@ -83,6 +104,7 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	struct omaptimer_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	struct timecounter *tc = &sc->sc_tc;
 	bus_addr_t addr;
 	bus_size_t size;
 
@@ -107,13 +129,37 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
+		aprint_error(": couldn't enable module\n");
+		return;
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": Timer\n");
 
-	/* Use this as the OS timer in UP configurations */
-	if (!arm_has_mpext_p && addr == 0x48042000) { /* TIMER3 */
-		timer_softc = sc;
-		arm_fdt_timer_register(omaptimer_cpu_initclocks);
+	if (IS_TIMER2(addr)) {
+		/* Install timecounter */
+		tc->tc_get_timecount = omaptimer_get_timecount;
+		tc->tc_counter_mask = ~0u;
+		tc->tc_frequency = 24000000;
+		tc->tc_name = "Timer2";
+		tc->tc_quality = 200;
+		tc->tc_priv = sc;
+		tc_init(tc);
+	} else if (IS_TIMER3(addr)) {
+		/* Configure the timer */
+		const uint32_t value = (0xffffffff - ((24000000UL / hz) - 1));
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, TIMER_TLDR, value);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, TIMER_TCRR, value);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, TIMER_IRQENABLE_CLR, 
+		    MAT_EN_FLAG | OVF_EN_FLAG | TCAR_EN_FLAG);
+		bus_space_write_4(sc->sc_bst, sc->sc_bsh, TIMER_TCLR, TCLR_ST | TCLR_AR);
+
+		/* Use this as the OS timer in UP configurations */
+		if (!arm_has_mpext_p) {
+			timer_softc = sc;
+			arm_fdt_timer_register(omaptimer_cpu_initclocks);
+		}
 	}
 }
 
