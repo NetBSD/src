@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.16 2019/10/23 12:02:55 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.17 2019/10/27 07:08:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -459,6 +459,8 @@ test_vm16(void)
 
 int main(int argc, char *argv[])
 {
+	if (nvmm_init() == -1)
+		err(errno, "nvmm_init");
 	test_vm64();
 	test_vm16();
 	return 0;

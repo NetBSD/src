@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.16 2019/10/23 12:02:55 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.17 2019/10/27 07:08:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ __area_remove_all(struct nvmm_machine *mach)
 
 /* -------------------------------------------------------------------------- */
 
-static int
+int
 nvmm_init(void)
 {
 	if (nvmm_fd != -1)
@@ -185,10 +185,6 @@ nvmm_capability(struct nvmm_capability *cap)
 	struct nvmm_ioc_capability args;
 	int ret;
 
-	if (nvmm_init() == -1) {
-		return -1;
-	}
-
 	ret = ioctl(nvmm_fd, NVMM_IOC_CAPABILITY, &args);
 	if (ret == -1)
 		return -1;
@@ -205,10 +201,6 @@ nvmm_machine_create(struct nvmm_machine *mach)
 	struct nvmm_comm_page **pages;
 	area_list_t *areas;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	areas = calloc(1, sizeof(*areas));
 	if (areas == NULL)
@@ -536,10 +528,6 @@ nvmm_ctl(int op, void *data, size_t size)
 {
 	struct nvmm_ioc_ctl args;
 	int ret;
-
-	if (nvmm_init() == -1) {
-		return -1;
-	}
 
 	args.op = op;
 	args.data = data;

@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.20 2019/10/25 09:09:24 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.21 2019/10/27 07:08:15 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -37,6 +37,8 @@
 .Lb libnvmm
 .Sh SYNOPSIS
 .In nvmm.h
+.Ft int
+.Fn nvmm_init "void"
 .Ft int
 .Fn nvmm_capability "struct nvmm_capability *cap"
 .Ft int
@@ -97,6 +99,12 @@ should use the API provided by
 to manage virtual machines.
 A virtual CPU is described by a public structure,
 .Cd nvmm_vcpu .
+.Pp
+.Fn nvmm_init
+initializes NVMM.
+See
+.Sx NVMM Initialization
+below for details.
 .Pp
 .Fn nvmm_capability
 gets the capabilities of NVMM.
@@ -277,6 +285,23 @@ from machine
 See
 .Sx Mem Assist
 below for details.
+.Ss NVMM Initialization
+NVMM initialization is performed by the
+.Fn nvmm_init
+function, which must be invoked by emulator software before any other NVMM
+function.
+.Pp
+.Fn nvmm_init
+opens the NVMM device, and expects to have the proper permissions to do so.
+In a default configuration, this implies being part of the "nvmm" group.
+If using a special configuration, emulator software should arrange to have the
+proper permissions before invoking
+.Fn nvmm_init ,
+and can drop them after the call has completed.
+.Pp
+It is to be noted that
+.Fn nvmm_init
+may perform non-re-entrant operations, and should be called only once.
 .Ss NVMM Capability
 The
 .Cd nvmm_capability

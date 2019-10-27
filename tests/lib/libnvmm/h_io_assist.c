@@ -1,4 +1,4 @@
-/*	$NetBSD: h_io_assist.c,v 1.10 2019/10/23 12:02:55 maxv Exp $	*/
+/*	$NetBSD: h_io_assist.c,v 1.11 2019/10/27 07:08:15 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -373,6 +373,8 @@ int main(int argc, char *argv[])
 	struct nvmm_vcpu vcpu;
 	size_t i;
 
+	if (nvmm_init() == -1)
+		err(errno, "nvmm_init");
 	if (nvmm_machine_create(&mach) == -1)
 		err(errno, "nvmm_machine_create");
 	if (nvmm_vcpu_create(&mach, 0, &vcpu) == -1)
