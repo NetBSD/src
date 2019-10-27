@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.7 2019/10/27 11:08:04 martin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.8 2019/10/27 11:21:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1992 OMRON Corporation.
@@ -71,9 +71,7 @@
  */
 
 #include <sys/param.h>
-#define _KERNEL	/* we need the register defines (PC/SP/...) */
 #include <luna68k/include/reg.h>
-#undef _KERNEL
 #include <luna68k/stand/boot/samachdep.h>
 
 static void dumpmem(int *, int, int);
