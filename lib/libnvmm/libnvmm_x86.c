@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.37 2019/10/23 12:02:55 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.38 2019/10/27 08:30:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -116,7 +116,7 @@ nvmm_vcpu_dump(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 #define pte32_l1idx(va)	(((va) & PTE32_L1_MASK) >> PTE32_L1_SHIFT)
 #define pte32_l2idx(va)	(((va) & PTE32_L2_MASK) >> PTE32_L2_SHIFT)
 
-#define CR3_FRAME_32BIT	PG_FRAME
+#define CR3_FRAME_32BIT	__BITS(31, 12)
 
 typedef uint32_t pte_32bit_t;
 
@@ -138,36 +138,36 @@ x86_gva_to_gpa_32bit(struct nvmm_machine *mach, uint64_t cr3,
 		return -1;
 	pdir = (pte_32bit_t *)L2hva;
 	pte = pdir[pte32_l2idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if ((pte & PG_PS) && !has_pse)
+	if ((pte & PTE_PS) && !has_pse)
 		return -1;
-	if (pte & PG_PS) {
+	if (pte & PTE_PS) {
 		*gpa = (pte & PTE32_L2_FRAME);
 		*gpa = *gpa + (gva & PTE32_L1_MASK);
 		return 0;
 	}
 
 	/* Parse L1. */
-	L1gpa = (pte & PG_FRAME);
+	L1gpa = (pte & PTE_FRAME);
 	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_t *)L1hva;
 	pte = pdir[pte32_l1idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_PS)
+	if (pte & PTE_PS)
 		return -1;
 
-	*gpa = (pte & PG_FRAME);
+	*gpa = (pte & PTE_FRAME);
 	return 0;
 }
 
@@ -211,51 +211,51 @@ x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
 		return -1;
 	pdir = (pte_32bit_pae_t *)L3hva;
 	pte = pdir[pte32_pae_l3idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS)
+	if (pte & PTE_PS)
 		return -1;
 
 	/* Parse L2. */
-	L2gpa = (pte & PG_FRAME);
+	L2gpa = (pte & PTE_FRAME);
 	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_pae_t *)L2hva;
 	pte = pdir[pte32_pae_l2idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS) {
+	if (pte & PTE_PS) {
 		*gpa = (pte & PTE32_PAE_L2_FRAME);
 		*gpa = *gpa + (gva & PTE32_PAE_L1_MASK);
 		return 0;
 	}
 
 	/* Parse L1. */
-	L1gpa = (pte & PG_FRAME);
+	L1gpa = (pte & PTE_FRAME);
 	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_32bit_pae_t *)L1hva;
 	pte = pdir[pte32_pae_l1idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS)
+	if (pte & PTE_PS)
 		return -1;
 
-	*gpa = (pte & PG_FRAME);
+	*gpa = (pte & PTE_FRAME);
 	return 0;
 }
 
@@ -281,7 +281,7 @@ x86_gva_to_gpa_32bit_pae(struct nvmm_machine *mach, uint64_t cr3,
 #define pte64_l3idx(va)	(((va) & PTE64_L3_MASK) >> PTE64_L3_SHIFT)
 #define pte64_l4idx(va)	(((va) & PTE64_L4_MASK) >> PTE64_L4_SHIFT)
 
-#define CR3_FRAME_64BIT	PG_FRAME
+#define CR3_FRAME_64BIT	__BITS(51, 12)
 
 typedef uint64_t pte_64bit_t;
 
@@ -314,75 +314,75 @@ x86_gva_to_gpa_64bit(struct nvmm_machine *mach, uint64_t cr3,
 		return -1;
 	pdir = (pte_64bit_t *)L4hva;
 	pte = pdir[pte64_l4idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS)
+	if (pte & PTE_PS)
 		return -1;
 
 	/* Parse L3. */
-	L3gpa = (pte & PG_FRAME);
+	L3gpa = (pte & PTE_FRAME);
 	if (nvmm_gpa_to_hva(mach, L3gpa, &L3hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L3hva;
 	pte = pdir[pte64_l3idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS) {
+	if (pte & PTE_PS) {
 		*gpa = (pte & PTE64_L3_FRAME);
 		*gpa = *gpa + (gva & (PTE64_L2_MASK|PTE64_L1_MASK));
 		return 0;
 	}
 
 	/* Parse L2. */
-	L2gpa = (pte & PG_FRAME);
+	L2gpa = (pte & PTE_FRAME);
 	if (nvmm_gpa_to_hva(mach, L2gpa, &L2hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L2hva;
 	pte = pdir[pte64_l2idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS) {
+	if (pte & PTE_PS) {
 		*gpa = (pte & PTE64_L2_FRAME);
 		*gpa = *gpa + (gva & PTE64_L1_MASK);
 		return 0;
 	}
 
 	/* Parse L1. */
-	L1gpa = (pte & PG_FRAME);
+	L1gpa = (pte & PTE_FRAME);
 	if (nvmm_gpa_to_hva(mach, L1gpa, &L1hva, &pageprot) == -1)
 		return -1;
 	pdir = (pte_64bit_t *)L1hva;
 	pte = pdir[pte64_l1idx(gva)];
-	if ((pte & PG_V) == 0)
+	if ((pte & PTE_P) == 0)
 		return -1;
-	if ((pte & PG_u) == 0)
+	if ((pte & PTE_U) == 0)
 		*prot &= ~NVMM_PROT_USER;
-	if ((pte & PG_KW) == 0)
+	if ((pte & PTE_W) == 0)
 		*prot &= ~NVMM_PROT_WRITE;
-	if (pte & PG_NX)
+	if (pte & PTE_NX)
 		*prot &= ~NVMM_PROT_EXEC;
-	if (pte & PG_PS)
+	if (pte & PTE_PS)
 		return -1;
 
-	*gpa = (pte & PG_FRAME);
+	*gpa = (pte & PTE_FRAME);
 	return 0;
 }
 
