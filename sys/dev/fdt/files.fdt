@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.45 2019/08/13 16:46:49 tnn Exp $
+# $NetBSD: files.fdt,v 1.46 2019/10/27 15:31:15 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -81,6 +81,10 @@ file	dev/fdt/mmc_pwrseq_emmc.c		mmcpwrseq_emmc
 device	syscon { } : fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c			syscon
+
+device	pinctrl
+attach	pinctrl at fdt with pinctrl_single
+file	dev/fdt/pinctrl_single.c		pinctrl_single
 
 device	pwmbacklight
 attach	pwmbacklight at fdt
