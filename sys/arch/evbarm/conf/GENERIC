@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.56 2019/10/27 18:00:46 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.57 2019/10/27 19:11:24 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -492,6 +492,7 @@ exyoi2c* 	at fdt?			# Samsung Exynos I2C
 sunxirsb* 	at fdt? pass 4		# Allwinner RSB
 sunxitwi* 	at fdt?			# Allwinner TWI
 tegrai2c* 	at fdt? pass 4		# NVIDIA Tegra I2C
+tiiic*		at fdt? pass 4		# TI OMAP I2C
 iic* 		at i2cbus?
 
 # I2C devices
@@ -510,6 +511,7 @@ sy8106a* 	at iic?			# Silergy SY81061 regulator
 tcakp* 		at iic?			# TI TCA8418 Keypad Scan IC
 tcagpio* 	at iic?
 titemp* 	at iic?
+tps65217pmic*	at iic?			# TI TPS65217 Power Management IC
 wskbd* 		at tcakp? console ?
 
 # CAN bus
