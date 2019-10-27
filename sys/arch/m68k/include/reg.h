@@ -1,4 +1,4 @@
-/*	$NetBSD: reg.h,v 1.20 2019/10/26 17:49:34 christos Exp $	*/
+/*	$NetBSD: reg.h,v 1.21 2019/10/27 09:38:09 rin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -57,7 +57,7 @@ struct fpreg {
 	int	r_fpiar;
 };
 
-#ifdef _KERNEL
+#if defined(_KERNEL) || defined(_STANDALONE)
 
 /* XXXX this is historical (but it can't be deprecated quite yet) */
 /*
@@ -95,10 +95,14 @@ struct fpreg {
 #define	R0	D1
 #define	R1	A0
 
+#endif /* _KERNEL || _STANDALONE */
+
+#ifdef _KERNEL
+
 struct lwp;
 int	process_read_regs(struct lwp *, struct reg *);
 int	process_read_fpregs(struct lwp *, struct fpreg *, size_t *);
 
-#endif
+#endif /* _KERNEL */
 
 #endif /* !_M68K_REG_H_ */
