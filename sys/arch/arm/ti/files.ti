@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.7 2019/10/27 11:33:56 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.8 2019/10/27 12:14:51 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
@@ -35,6 +35,14 @@ file	arch/arm/ti/ti_omaptimer.c	omaptimer
 device  cpsw: ether, ifnet, arp, mii, mii_phy
 attach  cpsw at fdt
 file    arch/arm/ti/if_cpsw.c		cpsw
+
+# EDMA
+device	tiedma
+attach	tiedma at fdt with ti_edma
+file	arch/arm/ti/ti_edma.c		ti_edma
+device	titptc
+attach	titptc at fdt with ti_tptc
+file	arch/arm/ti/ti_tptc.c		ti_tptc
 
 # SOC parameters
 defflag	opt_soc.h			SOC_TI

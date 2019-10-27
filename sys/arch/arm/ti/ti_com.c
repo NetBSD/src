@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.6 2019/10/27 11:33:56 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.7 2019/10/27 12:14:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.6 2019/10/27 11:33:56 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.7 2019/10/27 12:14:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -79,7 +79,6 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t bsh;
 	bus_space_tag_t bst;
 	char intrstr[128];
-	struct clk *hwmod;
 	bus_addr_t addr;
 	bus_size_t size;
 	int error;
@@ -106,9 +105,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	hwmod = ti_prcm_get_hwmod(OF_parent(phandle), 0);
-	KASSERT(hwmod != NULL);
-	if (clk_enable(hwmod) != 0) {
+	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}

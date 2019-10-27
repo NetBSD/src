@@ -1,4 +1,4 @@
-/* $NetBSD: ti_prcm.h,v 1.1 2017/10/26 23:28:15 jmcneill Exp $ */
+/* $NetBSD: ti_prcm.h,v 1.2 2019/10/27 12:14:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -165,5 +165,6 @@ struct ti_prcm_softc {
 #endif /* !TI_PRCM_PRIVATE */
 
 struct clk *	ti_prcm_get_hwmod(const int, u_int);
+int		ti_prcm_enable_hwmod(const int, u_int);
 
 #endif /* !_ARM_TI_PRCM_H */
