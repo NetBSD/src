@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.15 2019/10/27 07:08:15 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.16 2019/10/27 20:17:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct nvmm_mem {
 typedef uint64_t nvmm_prot_t;
 
 int nvmm_init(void);
+int nvmm_root_init(void);
 
 int nvmm_capability(struct nvmm_capability *);
 

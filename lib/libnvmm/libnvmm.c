@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm.c,v 1.17 2019/10/27 07:08:15 maxv Exp $	*/
+/*	$NetBSD: libnvmm.c,v 1.18 2019/10/27 20:17:36 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -162,6 +162,29 @@ nvmm_init(void)
 	if (nvmm_fd != -1)
 		return 0;
 	nvmm_fd = open("/dev/nvmm", O_RDONLY | O_CLOEXEC);
+	if (nvmm_fd == -1)
+		return -1;
+	if (nvmm_capability(&__capability) == -1) {
+		close(nvmm_fd);
+		nvmm_fd = -1;
+		return -1;
+	}
+	if (__capability.version != NVMM_KERN_VERSION) {
+		close(nvmm_fd);
+		nvmm_fd = -1;
+		errno = EPROGMISMATCH;
+		return -1;
+	}
+
+	return 0;
+}
+
+int
+nvmm_root_init(void)
+{
+	if (nvmm_fd != -1)
+		return 0;
+	nvmm_fd = open("/dev/nvmm", O_WRONLY | O_CLOEXEC);
 	if (nvmm_fd == -1)
 		return -1;
 	if (nvmm_capability(&__capability) == -1) {
