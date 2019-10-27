@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.7 2019/10/26 15:58:15 jmcneill Exp $ */
+/* $NetBSD: ti_platform.c,v 1.8 2019/10/27 17:58:42 jmcneill Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.7 2019/10/26 15:58:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.8 2019/10/27 17:58:42 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -13,6 +13,8 @@ __KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.7 2019/10/26 15:58:15 jmcneill Exp
 #include <uvm/uvm_extern.h>
 
 #include <dev/ic/comreg.h>
+
+#include <arch/evbarm/fdt/platform.h>
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
@@ -41,9 +43,9 @@ static const struct pmap_devmap *
 am33xx_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
-		DEVMAP_ENTRY(0xe4c00000, 0x44c00000, 0x00400000),
-		DEVMAP_ENTRY(0xe8000000, 0x48000000, 0x01000000),
-		DEVMAP_ENTRY(0xea000000, 0x4a000000, 0x01000000),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE | 0x04c00000, 0x44c00000, 0x00400000),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE | 0x08000000, 0x48000000, 0x01000000),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE | 0x0a000000, 0x4a000000, 0x01000000),
 		DEVMAP_ENTRY_END
 	};
 
@@ -120,10 +122,10 @@ am33xx_platform_delay(u_int n)
 	prev = bus_space_read_4(bst, bsh, 0x3c);
 	while (ticks > 0) {
 		cur = bus_space_read_4(bst, bsh, 0x3c);
-		if (cur > prev)
+		if (cur >= prev)
 			ticks -= (cur - prev);
 		else
-			ticks -= (UINT32_MAX - prev + 1 - cur);
+			ticks -= (UINT32_MAX - cur + prev);
 		prev = cur;
 	}
 }
@@ -136,12 +138,4 @@ static const struct arm_platform am33xx_platform = {
 	.ap_delay = am33xx_platform_delay,
 };
 
-void dummysetstatclockrate(int);
-void
-dummysetstatclockrate(int newhz)
-{
-}
-__weak_alias(setstatclockrate, dummysetstatclockrate);
-
 ARM_PLATFORM(am33xx, "ti,am33xx", &am33xx_platform);
-
