@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.42 2019/10/27 11:11:09 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.43 2019/10/27 18:26:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.42 2019/10/27 11:11:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.43 2019/10/27 18:26:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1150,6 +1150,9 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000001.ecx;
 		cpudata->gprs[NVMM_X64_GPR_RCX] |= CPUID2_RAZ;
+		if (vmx_procbased_ctls2 & PROC_CTLS2_INVPCID_ENABLE) {
+			cpudata->gprs[NVMM_X64_GPR_RCX] |= CPUID2_PCID;
+		}
 
 		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000001.edx;
 
@@ -1171,6 +1174,9 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 		cpudata->gprs[NVMM_X64_GPR_RBX] &= nvmm_cpuid_00000007.ebx;
 		cpudata->gprs[NVMM_X64_GPR_RCX] &= nvmm_cpuid_00000007.ecx;
 		cpudata->gprs[NVMM_X64_GPR_RDX] &= nvmm_cpuid_00000007.edx;
+		if (vmx_procbased_ctls2 & PROC_CTLS2_INVPCID_ENABLE) {
+			cpudata->gprs[NVMM_X64_GPR_RBX] |= CPUID_SEF_INVPCID;
+		}
 		break;
 	case 0x0000000A:
 		cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
@@ -2893,6 +2899,40 @@ vmx_machine_configure(struct nvmm_machine *mach, uint64_t op, void *data)
 
 /* -------------------------------------------------------------------------- */
 
+#define CTLS_ONE_ALLOWED(msrval, bitoff) \
+	((msrval & __BIT(32 + bitoff)) != 0)
+#define CTLS_ZERO_ALLOWED(msrval, bitoff) \
+	((msrval & __BIT(bitoff)) == 0)
+
+static int
+vmx_check_ctls(uint64_t msr_ctls, uint64_t msr_true_ctls, uint64_t set_one)
+{
+	uint64_t basic, val, true_val;
+	bool has_true;
+	size_t i;
+
+	basic = rdmsr(MSR_IA32_VMX_BASIC);
+	has_true = (basic & IA32_VMX_BASIC_TRUE_CTLS) != 0;
+
+	val = rdmsr(msr_ctls);
+	if (has_true) {
+		true_val = rdmsr(msr_true_ctls);
+	} else {
+		true_val = val;
+	}
+
+	for (i = 0; i < 32; i++) {
+		if (!(set_one & __BIT(i))) {
+			continue;
+		}
+		if (!CTLS_ONE_ALLOWED(true_val, i)) {
+			return -1;
+		}
+	}
+
+	return 0;
+}
+
 static int
 vmx_init_ctls(uint64_t msr_ctls, uint64_t msr_true_ctls,
     uint64_t set_one, uint64_t set_zero, uint64_t *res)
@@ -2911,14 +2951,9 @@ vmx_init_ctls(uint64_t msr_ctls, uint64_t msr_true_ctls,
 		true_val = val;
 	}
 
-#define ONE_ALLOWED(msrval, bitoff) \
-	((msrval & __BIT(32 + bitoff)) != 0)
-#define ZERO_ALLOWED(msrval, bitoff) \
-	((msrval & __BIT(bitoff)) == 0)
-
 	for (i = 0; i < 32; i++) {
-		one_allowed = ONE_ALLOWED(true_val, i);
-		zero_allowed = ZERO_ALLOWED(true_val, i);
+		one_allowed = CTLS_ONE_ALLOWED(true_val, i);
+		zero_allowed = CTLS_ZERO_ALLOWED(true_val, i);
 
 		if (zero_allowed && !one_allowed) {
 			if (set_one & __BIT(i))
@@ -2935,9 +2970,9 @@ vmx_init_ctls(uint64_t msr_ctls, uint64_t msr_true_ctls,
 				*res |= __BIT(i);
 			} else if (!has_true) {
 				*res &= ~__BIT(i);
-			} else if (ZERO_ALLOWED(val, i)) {
+			} else if (CTLS_ZERO_ALLOWED(val, i)) {
 				*res &= ~__BIT(i);
-			} else if (ONE_ALLOWED(val, i)) {
+			} else if (CTLS_ONE_ALLOWED(val, i)) {
 				*res |= __BIT(i);
 			} else {
 				return -1;
@@ -3010,6 +3045,12 @@ vmx_ident(void)
 	    &vmx_procbased_ctls2);
 	if (ret == -1) {
 		return false;
+	}
+	ret = vmx_check_ctls(
+	    MSR_IA32_VMX_PROCBASED_CTLS2, MSR_IA32_VMX_PROCBASED_CTLS2,
+	    PROC_CTLS2_INVPCID_ENABLE);
+	if (ret != -1) {
+		vmx_procbased_ctls2 |= PROC_CTLS2_INVPCID_ENABLE;
 	}
 	ret = vmx_init_ctls(
 	    MSR_IA32_VMX_ENTRY_CTLS, MSR_IA32_VMX_TRUE_ENTRY_CTLS,
