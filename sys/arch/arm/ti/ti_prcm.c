@@ -1,4 +1,4 @@
-/* $NetBSD: ti_prcm.c,v 1.1 2017/10/26 23:28:15 jmcneill Exp $ */
+/* $NetBSD: ti_prcm.c,v 1.2 2019/10/27 12:14:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_prcm.c,v 1.1 2017/10/26 23:28:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_prcm.c,v 1.2 2019/10/27 12:14:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -254,4 +254,16 @@ ti_prcm_get_hwmod(const int phandle, u_int index)
 	}
 
 	return NULL;
+}
+
+int
+ti_prcm_enable_hwmod(const int phandle, u_int index)
+{
+	struct clk *clk;
+
+	clk = ti_prcm_get_hwmod(phandle, index);
+	if (clk == NULL)
+		return ENOENT;
+
+	return clk_enable(clk);
 }
