@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.55 2019/10/26 15:01:18 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.56 2019/10/27 18:00:46 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -16,6 +16,37 @@ makeoptions	DTSARCH="arm"
 makeoptions	DTSGNUARCH="arm"
 makeoptions	DTSSUBDIR=""
 makeoptions	DTS="
+	am335x-baltos-ir2110.dts
+	am335x-baltos-ir3220.dts
+	am335x-baltos-ir5221.dts
+	am335x-base0033.dts
+	am335x-bone.dts
+	am335x-boneblack-wireless.dts
+	am335x-boneblack.dts
+	am335x-boneblue.dts
+	am335x-bonegreen-wireless.dts
+	am335x-bonegreen.dts
+	am335x-chiliboard.dts
+	am335x-cm-t335.dts
+	am335x-evm.dts
+	am335x-evmsk.dts
+	am335x-guardian.dts
+	am335x-icev2.dts
+	am335x-lxm.dts
+	am335x-moxa-uc-2101.dts
+	am335x-moxa-uc-8100-me-t.dts
+	am335x-nano.dts
+	am335x-osd3358-sm-red.dts
+	am335x-pdu001.dts
+	am335x-pepper.dts
+	am335x-phycore-rdk.dts
+	am335x-pocketbeagle.dts
+	am335x-sancloud-bbe.dts
+	am335x-sbc-t335.dts
+	am335x-shc.dts
+	am335x-sl50.dts
+	am335x-wega-rdk.dts
+
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-a-plus.dts
 	bcm2837-rpi-3-b.dts
@@ -193,6 +224,8 @@ options 	SOC_SUN9I_A80
 
 options 	SOC_TEGRA124
 
+options 	SOC_TI_AM335X
+
 options 	SOC_VIRT
 
 options 	SOC_ZYNQ7000
@@ -211,6 +244,8 @@ options 	MSGBUFSIZE=32768
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
+
+#options 	EARLYCONS=am33xx, CONSADDR=0x44e09000
 
 # ODROID-C1
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
@@ -259,6 +294,7 @@ cpufreqdt*	at cpu?
 psci*		at fdt?
 
 # Clock and reset controllers
+am3prcm*	at fdt? pass 1		# TI AM335x PRCM
 cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk* 	at fdt? pass 3		# Exynos5410 clock controller
@@ -298,6 +334,7 @@ sunxisramc* 	at fdt? pass 4		# SRAM controller
 
 # System Controller
 syscon*		at fdt? pass 1		# Generic System Controller
+tisysc*		at fdt? pass 2		# TI sysc interconnect
 #zynqslcr*	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
@@ -309,6 +346,7 @@ gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
 mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
 armgtmr*	at mct?
+omaptimer*	at fdt?			# TI OMAP Timer
 meson6timer* 	at fdt?			# Amlogic Timer
 sunxitimer* 	at fdt?			# Allwinner async timer
 sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
@@ -325,6 +363,7 @@ gic*		at fdt? pass 1		# ARM GIC
 armgic0		at gic?
 bcmicu* 	at fdt? pass 1		# Broadcom BCM283x ICU
 exyointr* 	at fdt? pass 1		# Samsung Exynos ICU
+omapintc*	at fdt? pass 2		# TI OMAP INTC
 tegralic* 	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc* 	at fdt? pass 1		# Allwinner INTC
 sunxinmi* 	at fdt? pass 2		# Allwinner NMI / R_INTC
@@ -346,6 +385,8 @@ bcmdmac* 	at fdt?			# Broadcom BCM283x DMA controller
 sun4idma* 	at fdt? pass 4		# Allwinner DMA controller (sun4i)
 sun6idma* 	at fdt?	pass 4		# Allwinner DMA controller (sun6i)
 tegraapbdma* 	at fdt? pass 4		# NVIDIA Tegra APB DMA
+tiedma*		at fdt? pass 4		# TI EDMA3 (TPCC)
+titptc*		at fdt? pass 3		# TI EDMA3 (TPTC)
 
 # FUSE controller
 tegrafuse* 	at fdt? pass 4		# NVIDIA Tegra FUSE
@@ -371,6 +412,7 @@ tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO
 gpio* 		at gpiobus?
 
 # MPIO / Pinmux
+pinctrl*	at fdt? pass 2		# Generic pinctrl driver
 tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
 
 # PWM controller
@@ -398,6 +440,7 @@ pci* 		at ppb?
 # Ethernet
 awge* 		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
 cemac* 		at fdt?			# Cadence EMAC/GEM ethernet controller
+cpsw*		at fdt?			# TI CPSW 3-port Ethernet Switch
 emac* 		at fdt?			# Allwinner Fast/Gigabit Ethernet (EMAC)
 smsh* 		at fdt?			# SMSC LAN9118
 
@@ -618,6 +661,7 @@ sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
+tiotg*		at fdt?			# TI dual port OTG
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 motg* 		at fdt?			# Mentor Graphics USB OTG
