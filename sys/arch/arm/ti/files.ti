@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.10 2019/10/27 16:31:26 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.11 2019/10/27 19:11:07 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
@@ -30,6 +30,11 @@ file	arch/arm/ti/ti_com.c		ti_com needs-flag
 device	omaptimer
 attach  omaptimer at fdt
 file	arch/arm/ti/ti_omaptimer.c	omaptimer
+
+# I2C
+device	tiiic: i2cbus, i2cexec
+attach	tiiic at fdt with ti_iic
+file	arch/arm/ti/ti_iic.c		ti_iic
 
 # Ethernet
 device  cpsw: ether, ifnet, arp, mii, mii_phy
