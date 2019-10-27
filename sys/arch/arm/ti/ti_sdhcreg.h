@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhcreg.h,v 1.1 2019/10/27 15:43:46 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhcreg.h,v 1.2 2019/10/27 17:21:23 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -61,6 +61,7 @@
 #  define SYSCONFIG_CLOCKACTIVITY_ICLK	(1 << 8)
 #  define SYSCONFIG_SIDLEMODE_MASK	(3 << 3)
 #  define SYSCONFIG_SIDLEMODE_AUTO	(2 << 3)
+#  define SYSCONFIG_SIDLEMODE_IGNORE	(1 << 3)
 #  define SYSCONFIG_ENAWAKEUP		(1 << 2)
 #  define SYSCONFIG_SOFTRESET		(1 << 1)
 #  define SYSCONFIG_AUTOIDLE		(1 << 0)
