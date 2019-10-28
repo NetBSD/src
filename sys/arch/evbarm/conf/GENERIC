@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.59 2019/10/28 22:21:54 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.60 2019/10/28 23:58:18 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -532,6 +532,7 @@ spi* 		at spibus?
 # Random number generators
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
+tirng*		at fdt?			# TI RNG
 
 # Security ID EFUSE
 sunxisid* 	at fdt? pass 4		# SID
