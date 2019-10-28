@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.58 2019/10/28 21:17:25 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.59 2019/10/28 22:21:54 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -412,6 +412,7 @@ mesonpinctrl* 	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio* 	at fdt?			# ARM PrimeCell GPIO
 sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
 tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO
+tigpio*		at fdt? pass 2		# TI GPIO
 gpio* 		at gpiobus?
 
 # MPIO / Pinmux
