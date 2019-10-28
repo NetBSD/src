@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.57 2019/10/27 19:11:24 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.58 2019/10/28 21:17:25 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -317,6 +317,9 @@ sun9immcclk* 	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
 sun9iusbclk* 	at fdt? pass 2		# Allwinner A80 USB HCI
 tegra124car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
+tidivclk*	at fdt? pass 1		# TI divider clock
+tidpllclk*	at fdt? pass 2		# TI DPLL clock
+timuxclk*	at fdt? pass 1		# TI mux clock
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
@@ -512,6 +515,7 @@ tcakp* 		at iic?			# TI TCA8418 Keypad Scan IC
 tcagpio* 	at iic?
 titemp* 	at iic?
 tps65217pmic*	at iic?			# TI TPS65217 Power Management IC
+tps65217reg*	at tps65217pmic?
 wskbd* 		at tcakp? console ?
 
 # CAN bus
