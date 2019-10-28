@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.357.2.13 2018/06/07 18:24:16 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.357.2.14 2019/10/28 19:12:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Nathanial Sloss <nathanialsloss@yahoo.com.au>
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.13 2018/06/07 18:24:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.357.2.14 2019/10/28 19:12:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3520,6 +3520,9 @@ audio_mmap(struct audio_softc *sc, off_t *offp, size_t len, int prot,
 	DPRINTF(("audio_mmap: off=%lld, prot=%d\n", (long long)(*offp), prot));
 	if (!(audio_get_props(sc) & AUDIO_PROP_MMAP))
 		return ENOTSUP;
+
+	if (vc->sc_open != AUOPEN_WRITE)
+		return EINVAL;
 
 	if (*offp < 0)
 		return EINVAL;
