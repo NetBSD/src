@@ -1,6 +1,6 @@
 #!/usr/bin/awk -
 #
-#	$NetBSD: MAKEDEV.awk,v 1.26 2019/06/13 20:54:04 christos Exp $
+#	$NetBSD: MAKEDEV.awk,v 1.27 2019/10/28 02:53:29 ozaki-r Exp $
 #
 # Copyright (c) 2003 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -214,7 +214,7 @@ BEGIN {
 	print "# Generated from:"
 
 	# MAKEDEV.awk (this script) RCS Id
-	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.26 2019/06/13 20:54:04 christos Exp $"
+	ARCSID = "$NetBSD: MAKEDEV.awk,v 1.27 2019/10/28 02:53:29 ozaki-r Exp $"
 	gsub(/\$/, "", ARCSID)
 	print "#	" ARCSID
 	
@@ -305,7 +305,7 @@ BEGIN {
 		# or block device definition remains within the entry,
 		# print it to output, otherwise scrap it.
 		parsed = ""
-		while (match(deventry, /%[a-z]*_(blk|chr)%/)) {
+		while (match(deventry, /%[a-z0-9]*_(blk|chr)%/)) {
 			nam = substr(deventry, RSTART + 1, RLENGTH - 6);
 			typ = substr(deventry, RSTART + RLENGTH - 4, 3);
 			if (typ == "blk") {
