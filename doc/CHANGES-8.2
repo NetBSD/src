@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.54 2019/10/24 17:43:43 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.55 2019/10/28 18:40:31 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1379,4 +1379,17 @@ sys/dev/qbus/if_qt.c				1.24
 
 	Do not double count incoming packets.
 	[msaitoh, ticket #1416]
+
+distrib/sets/lists/modules/mi			1.127
+sys/modules/Makefile				1.229,1.230
+sys/modules/filemon/Makefile			1.4 (manually adjusted)
+
+	Do not install the filemon module.
+	[maya, ticket #1418]
+
+sys/dev/ic/ld_nvme.c				1.23
+
+	Do not attach an ld device if the format descriptor is
+	unsupported/unused.
+	[mlelstv, ticket #1417]
 
