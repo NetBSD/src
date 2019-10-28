@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.190 2019/05/14 02:53:16 maya Exp $
+# $NetBSD: HACKS,v 1.191 2019/10/28 18:41:23 christos Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -892,6 +892,14 @@ cdate	Sat May 24 09:40:58 CEST 2014
 who	martin
 file	src/sys/arch/vax/boot/boot/Makefile: 1.41
 descr	/boot does not work when compiled with -O2 and gcc 4.8
+kcah
+
+port	vax
+hack	compile nir.c in gallium with -O1
+cdate	Mon Oct 28 14:39:35 EDT 2019
+who	christos
+file	/cvsroot/src/external/mit/xorg/lib/gallium/Makefile 1.36
+descr	gallium does not compile.
 kcah
 
 port	arm
