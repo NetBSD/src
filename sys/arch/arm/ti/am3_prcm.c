@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.4 2019/10/27 19:11:07 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.5 2019/10/28 21:16:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.4 2019/10/27 19:11:07 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.5 2019/10/28 21:16:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -134,6 +134,7 @@ am3_prcm_attach(device_t parent, device_t self, void *aux)
 {
 	struct ti_prcm_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	int clocks;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -147,4 +148,8 @@ am3_prcm_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": AM3xxx PRCM\n");
+
+	clocks = of_find_firstchild_byname(sc->sc_phandle, "clocks");
+	if (clocks > 0)
+		fdt_add_bus(self, clocks, faa);
 }
