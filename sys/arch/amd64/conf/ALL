@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.125 2019/10/08 18:50:44 maxv Exp $
+# $NetBSD: ALL,v 1.126 2019/10/28 03:01:11 ozaki-r Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.125 $"
+#ident		"ALL-$Revision: 1.126 $"
 
 maxusers	64		# estimated number of users
 
@@ -1573,6 +1573,7 @@ ld*	at virtio?			# Virtio disk device
 vioif*	at virtio?			# Virtio network device
 viornd* at virtio?			# Virtio entropy device
 vioscsi* at virtio?			# Virtio SCSI device
+vio9p*	at virtio?			# Virtio 9P device
 
 # Flash subsystem
 flash* at flashbus?
