@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2019/09/24 19:29:41 maya Exp $
+# $NetBSD: Makefile,v 1.36 2019/10/28 18:38:54 christos Exp $
 
 # Link the gallium mega driver.
 
@@ -1186,6 +1186,9 @@ SYMLINKS+= gallium_dri.so.${SHLIB_MAJOR}.debug ${DRIDEBUGDIR}/${_d}_dri.so.${SHL
 COPTS+=	${${ACTIVE_CC} == "clang":? -Wa,-Av8plus  :}
 .endif
 
+.if ${MACHINE_ARCH} == "vax"
+COPTS.nir.c += -O1
+.endif
 
 .include <bsd.lib.mk>
 # Don't regenerate c files
