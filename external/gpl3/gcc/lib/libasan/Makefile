@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.30 2019/10/13 21:18:20 mrg Exp $
+# $NetBSD: Makefile,v 1.31 2019/10/28 16:25:05 christos Exp $
 
 UNSUPPORTED_COMPILER.clang=	# defined
 NOSANITIZER=	# defined
@@ -51,6 +51,7 @@ CPPFLAGS+=-DCAN_SANITIZE_UB=0
 .if ${MACHINE_ARCH} == "vax"
 COPTS.asan_allocator.cc += -O1
 COPTS.asan_report.cc += -O1
+COPTS.sanitizer_file.cc += -O1
 COPTS.ubsan_diag.cc += -O1
 COPTS.ubsan_init.cc += -O1
 .endif
