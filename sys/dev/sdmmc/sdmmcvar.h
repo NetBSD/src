@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.33 2019/10/28 06:16:46 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.34 2019/10/28 06:20:01 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -359,8 +359,7 @@ void	sdmmc_dump_data(const char *, void *, size_t);
 int	sdmmc_io_enable(struct sdmmc_softc *);
 void	sdmmc_io_scan(struct sdmmc_softc *);
 int	sdmmc_io_init(struct sdmmc_softc *, struct sdmmc_function *);
-int	sdmmc_io_set_blocklen(struct sdmmc_softc *, struct sdmmc_function *,
-	    int);
+int	sdmmc_io_set_blocklen(struct sdmmc_function *, int);
 uint8_t sdmmc_io_read_1(struct sdmmc_function *, int);
 uint16_t sdmmc_io_read_2(struct sdmmc_function *, int);
 uint32_t sdmmc_io_read_4(struct sdmmc_function *, int);
