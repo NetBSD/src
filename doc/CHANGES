@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2603 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2604 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -57,3 +57,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.14.7. [christos 20191017]
 	libc: Changed the iconv(3) function signature to the POSIX variation
 		[kamil 20191024]
+	vio9p(4): Add virtio-9p front-end driver. [ozaki-r 20191028]
+	mount_9p(8): Enable to mount a filesystem exported via virtio-9p.
+		[ozaki-r 20191028]
