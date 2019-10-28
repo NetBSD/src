@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.13 2019/10/28 22:21:35 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.14 2019/10/28 23:57:59 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
@@ -79,6 +79,11 @@ file	arch/arm/ti/ti_otg.c		ti_otg
 
 attach	motg at fdt with ti_motg
 file	arch/arm/ti/ti_motg.c		ti_motg
+
+# RNG
+device	tirng
+attach	tirng at fdt with ti_rng
+file	arch/arm/ti/ti_rng.c		ti_rng
 
 # SOC parameters
 defflag	opt_soc.h			SOC_TI
