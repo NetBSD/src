@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.54 2019/10/01 23:32:52 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.55 2019/10/28 21:14:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -250,6 +250,21 @@ static const struct fdt_console_info __CONCAT(_name,_consinfo) = {	\
 	.ops = (_ops)							\
 };									\
 _FDT_CONSOLE_REGISTER(_name)
+
+struct fdt_opp_info {
+	const char *	opp_compat;
+	bool		(*opp_supported)(const int, const int);
+};
+
+#define	_FDT_OPP_REGISTER(name)		\
+	__link_set_add_rodata(fdt_opps, __CONCAT(name,_oppinfo));
+
+#define	FDT_OPP(_name, _compat, _suppfn)				\
+static const struct fdt_opp_info __CONCAT(_name,_oppinfo) = {		\
+	.opp_compat = (_compat),					\
+	.opp_supported = (_suppfn)					\
+};									\
+_FDT_OPP_REGISTER(_name)
 
 TAILQ_HEAD(fdt_conslist, fdt_console_info);
 
