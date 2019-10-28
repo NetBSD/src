@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.17 2019/10/28 06:16:46 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.18 2019/10/28 06:20:01 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.17 2019/10/28 06:16:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.18 2019/10/28 06:20:01 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -825,9 +825,10 @@ sdmmc_intr_task(void *arg)
 }
 
 int
-sdmmc_io_set_blocklen(struct sdmmc_softc *sc, struct sdmmc_function *sf,
+sdmmc_io_set_blocklen(struct sdmmc_function *sf,
      int blklen)
 {
+	struct sdmmc_softc *sc = sf->sc;
 	struct sdmmc_function *sf0 = sc->sc_fn0;
 	int error = EINVAL;
 

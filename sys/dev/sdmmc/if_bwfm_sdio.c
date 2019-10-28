@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.7 2019/10/27 21:39:50 bad Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.8 2019/10/28 06:20:01 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -293,8 +293,8 @@ bwfm_sdio_attach(device_t parent, device_t self, void *aux)
 		sc->sc_sf[sf->number] = sf;
 	}
 
-	sdmmc_io_set_blocklen(sc->sc_sf[1]->sc, sc->sc_sf[1], 64);
-	sdmmc_io_set_blocklen(sc->sc_sf[2]->sc, sc->sc_sf[2], 512);
+	sdmmc_io_set_blocklen(sc->sc_sf[1], 64);
+	sdmmc_io_set_blocklen(sc->sc_sf[2], 512);
 
 	/* Enable Function 1. */
 	if (sdmmc_io_function_enable(sc->sc_sf[1]) != 0) {
