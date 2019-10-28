@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.10 2019/10/26 09:58:40 tsutsui Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.11 2019/10/28 15:26:09 tsutsui Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -261,6 +261,10 @@ elf32bsdboot(void)
 				((char *)phdr[i].p_vaddr)[sz] =
 				    (((char *)elf) + phdr[i].p_offset)[sz];
 			}
+		}
+		if (IS_BSS(phdr[i])) {
+			memset((void *)(phdr[i].p_vaddr + phdr[i].p_filesz), 0,
+			    phdr[i].p_memsz - phdr[i].p_filesz);
 		}
 	}
 
