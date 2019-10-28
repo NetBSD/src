@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.6 2019/10/28 22:21:35 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.7 2019/10/28 23:57:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.6 2019/10/28 22:21:35 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.7 2019/10/28 23:57:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -124,6 +124,8 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	AM3_PRCM_HWMOD_PER("tptc2", 0x100, "PERIPH_CLK"),
 
 	AM3_PRCM_HWMOD_PER("usb_otg_hs", 0x1c, "PERIPH_CLK"),
+
+	AM3_PRCM_HWMOD_PER("rng", 0x90, "PERIPH_CLK"),
 };
 
 static int
