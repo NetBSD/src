@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.24 2019/10/28 13:43:42 wiz Exp $
+.\"	$NetBSD: libnvmm.3,v 1.25 2019/10/28 14:20:28 maxv Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -336,7 +336,7 @@ if they were not already destroyed by the owner itself via
 .Fn nvmm_machine_destroy .
 .Pp
 Virtual machines are not inherited across
-.Xr fork 9
+.Xr fork 2
 operations.
 .Ss Machine Configuration
 Emulator software can configure several parameters of a virtual machine by using
