@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.227 2019/09/22 22:59:39 christos Exp $
+#	$NetBSD: Makefile,v 1.228 2019/10/28 02:56:40 ozaki-r Exp $
 
 .include <bsd.own.mk>
 
@@ -458,6 +458,7 @@ SUBDIR+=	ld_nvme
 SUBDIR+=	nvme
 SUBDIR+=	twa
 SUBDIR+=	twe
+SUBDIR+=	vio9p
 SUBDIR+=	viomb
 SUBDIR+=	virtio
 SUBDIR+=	virtio_pci
