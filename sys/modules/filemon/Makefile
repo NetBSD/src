@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2010/09/09 00:10:16 sjg Exp $
+# $NetBSD: Makefile,v 1.1.40.1 2019/10/28 18:03:46 martin Exp $
 
 .include "../Makefile.inc"
 
@@ -7,5 +7,11 @@
 KMOD = filemon
 SRCS = filemon.c filemon_wrapper.c
 NOMAN = no
+
+# Due to security concerns, we don't install the filemon module.  We
+# do, however, want to keep building it to prevent bit-rot.  Define
+# an empty install target for this.
+
+kmodinstall:
 
 .include <bsd.kmodule.mk>
