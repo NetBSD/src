@@ -1,4 +1,4 @@
-/*	$NetBSD: ld_nvme.c,v 1.16.2.3 2018/04/19 15:37:56 martin Exp $	*/
+/*	$NetBSD: ld_nvme.c,v 1.16.2.4 2019/10/28 18:27:47 martin Exp $	*/
 
 /*-
  * Copyright (C) 2016 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.16.2.3 2018/04/19 15:37:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld_nvme.c,v 1.16.2.4 2019/10/28 18:27:47 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,6 +104,19 @@ ld_nvme_attach(device_t parent, device_t self, void *aux)
 	ns = nvme_ns_get(sc->sc_nvme, sc->sc_nsid);
 	KASSERT(ns);
 	f = &ns->ident->lbaf[NVME_ID_NS_FLBAS(ns->ident->flbas)];
+
+	/*
+	 * NVME1.0e 6.11 Identify command
+	 *
+	 * LBADS values smaller than 9 are not supported, a value
+	 * of zero means that the format is not used.
+	 */
+	if (f->lbads < 9) {
+		if (f->lbads > 0)
+			aprint_error_dev(self,
+			    "unsupported logical data size %u\n", f->lbads);
+		return;
+	}
 
 	ld->sc_secsize = 1 << f->lbads;
 	ld->sc_secperunit = ns->ident->nsze;
