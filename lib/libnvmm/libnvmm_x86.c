@@ -1,4 +1,4 @@
-/*	$NetBSD: libnvmm_x86.c,v 1.38 2019/10/27 08:30:05 maxv Exp $	*/
+/*	$NetBSD: libnvmm_x86.c,v 1.39 2019/10/28 18:12:17 joerg Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -2251,6 +2251,7 @@ get_disp_type(struct x86_instr *instr)
 	default:	/* llvm */
 		return DISP_NONE;
 	}
+	__unreachable();
 }
 
 static int
