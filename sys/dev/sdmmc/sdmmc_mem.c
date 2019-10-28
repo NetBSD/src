@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_mem.c,v 1.69 2019/10/28 06:16:46 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_mem.c,v 1.70 2019/10/28 06:31:39 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_mem.c,v 1.10 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
 /* Routines for SD/MMC memory cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.69 2019/10/28 06:16:46 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_mem.c,v 1.70 2019/10/28 06:31:39 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -771,7 +771,7 @@ sdmmc_mem_execute_tuning(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			break;
 		case 208000:
 			timing = SDMMC_TIMING_UHS_SDR104;
-			break; 
+			break;
 		default:
 			return 0;
 		}
