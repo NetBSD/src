@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc.c,v 1.105 2019/10/28 06:00:14 mlelstv Exp $	*/
+/*	$NetBSD: sdhc.c,v 1.106 2019/10/28 18:11:15 joerg Exp $	*/
 /*	$OpenBSD: sdhc.c,v 1.25 2009/01/13 19:44:20 grange Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.105 2019/10/28 06:00:14 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc.c,v 1.106 2019/10/28 18:11:15 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -170,17 +170,17 @@ hwrite4(struct sdhc_host *hp, bus_size_t o, uint32_t val)
 #define HWRITE4(hp, reg, val)		hwrite4(hp, reg, val)
 
 #define HCLR1(hp, reg, bits)						\
-	do if (bits) HWRITE1((hp), (reg), HREAD1((hp), (reg)) & ~(bits)); while (0)
+	do if ((bits) != 0) HWRITE1((hp), (reg), HREAD1((hp), (reg)) & ~(bits)); while (0)
 #define HCLR2(hp, reg, bits)						\
-	do if (bits) HWRITE2((hp), (reg), HREAD2((hp), (reg)) & ~(bits)); while (0)
+	do if ((bits) != 0) HWRITE2((hp), (reg), HREAD2((hp), (reg)) & ~(bits)); while (0)
 #define HCLR4(hp, reg, bits)						\
-	do if (bits) HWRITE4((hp), (reg), HREAD4((hp), (reg)) & ~(bits)); while (0)
+	do if ((bits) != 0) HWRITE4((hp), (reg), HREAD4((hp), (reg)) & ~(bits)); while (0)
 #define HSET1(hp, reg, bits)						\
-	do if (bits) HWRITE1((hp), (reg), HREAD1((hp), (reg)) | (bits)); while (0)
+	do if ((bits) != 0) HWRITE1((hp), (reg), HREAD1((hp), (reg)) | (bits)); while (0)
 #define HSET2(hp, reg, bits)						\
-	do if (bits) HWRITE2((hp), (reg), HREAD2((hp), (reg)) | (bits)); while (0)
+	do if ((bits) != 0) HWRITE2((hp), (reg), HREAD2((hp), (reg)) | (bits)); while (0)
 #define HSET4(hp, reg, bits)						\
-	do if (bits) HWRITE4((hp), (reg), HREAD4((hp), (reg)) | (bits)); while (0)
+	do if ((bits) != 0) HWRITE4((hp), (reg), HREAD4((hp), (reg)) | (bits)); while (0)
 
 static int	sdhc_host_reset(sdmmc_chipset_handle_t);
 static int	sdhc_host_reset1(sdmmc_chipset_handle_t);
