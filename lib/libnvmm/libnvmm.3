@@ -1,4 +1,4 @@
-.\"	$NetBSD: libnvmm.3,v 1.23 2019/10/28 08:30:49 maxv Exp $
+.\"	$NetBSD: libnvmm.3,v 1.24 2019/10/28 13:43:42 wiz Exp $
 .\"
 .\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -344,7 +344,8 @@ Emulator software can configure several parameters of a virtual machine by using
 Currently, no parameters are implemented.
 .Ss VCPU Configuration
 Emulator software can configure several parameters of a VCPU by using
-.Fn nvmm_vcpu_configure , which can take the following operations:
+.Fn nvmm_vcpu_configure ,
+which can take the following operations:
 .Bd -literal
 #define NVMM_VCPU_CONF_CALLBACKS	0
 	...
