@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.16 2019/09/02 11:09:42 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.17 2019/10/28 06:16:46 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.16 2019/09/02 11:09:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.17 2019/10/28 06:16:46 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -230,7 +230,7 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 			sf->csd.tran_speed = 50000;	/* 50MHz */
 
 			/* Wait 400KHz x 8 clock */
-			delay(1);
+			sdmmc_delay(20);
 		}
 		if (sc->sc_busclk > sf->csd.tran_speed)
 			sc->sc_busclk = sf->csd.tran_speed;
@@ -240,6 +240,15 @@ sdmmc_io_init(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 		if (error)
 			aprint_error_dev(sc->sc_dev,
 			    "can't change bus clock\n");
+
+		aprint_normal_dev(sc->sc_dev, "%u-bit width,", sf->width);
+		if ((sc->sc_busclk / 1000) != 0)
+			aprint_normal(" %u.%03u MHz\n",
+			    sc->sc_busclk / 1000, sc->sc_busclk % 1000);
+		else
+			aprint_normal(" %u KHz\n", sc->sc_busclk % 1000);
+
+
 	} else {
 		reg = sdmmc_io_read_1(sf0, SD_IO_FBR(sf->number) + 0x000);
 		sf->interface = FBR_STD_FUNC_IF_CODE(reg);
@@ -357,7 +366,15 @@ sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R5;
 
 	error = sdmmc_mmc_command(sc, &cmd);
-	*datap = SD_R5_DATA(cmd.c_resp);
+	if (error == 0)
+		*datap = SD_R5_DATA(cmd.c_resp);
+
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "direct I/O error %d, r=%d p=%p %s\n",
+		    error, reg, datap,
+		    ISSET(arg, SD_ARG_CMD53_WRITE) ? "write" : "read");
+	}
 
 	return error;
 }
@@ -403,6 +420,13 @@ sdmmc_io_rw_extended(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 		cmd.c_flags |= SCF_CMD_READ;
 
 	error = sdmmc_mmc_command(sc, &cmd);
+
+	if (error) {
+		device_printf(sc->sc_dev,
+		    "extended I/O error %d, r=%d p=%p l=%d %s\n",
+		    error, reg, datap, datalen,
+		    ISSET(arg, SD_ARG_CMD53_WRITE) ? "write" : "read");
+	}
 
 	return error;
 }
@@ -603,6 +627,18 @@ sdmmc_io_xchg(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 #endif
 
 /*
+ * Abort I/O function of the card
+ */
+int
+sdmmc_io_function_abort(struct sdmmc_function *sf)
+{
+	u_char data = CCCR_CTL_AS(sf->number);
+
+	return sdmmc_io_rw_direct(sf->sc, NULL, SD_IO_CCCR_CTL, &data,
+	    SD_ARG_CMD52_WRITE);
+}
+
+/*
  * Reset the I/O functions of the card.
  */
 static void
@@ -612,7 +648,7 @@ sdmmc_io_reset(struct sdmmc_softc *sc)
 
 	if (sdmmc_io_rw_direct(sc, NULL, SD_IO_CCCR_CTL, &data,
 	    SD_ARG_CMD52_WRITE) == 0)
-		sdmmc_delay(100000);
+		sdmmc_pause(100000, NULL); /* XXX SDMMC_LOCK */
 }
 
 /*
@@ -647,7 +683,7 @@ sdmmc_io_send_op_cond(struct sdmmc_softc *sc, u_int32_t ocr, u_int32_t *ocrp)
 			break;
 
 		error = ETIMEDOUT;
-		sdmmc_delay(10000);
+		sdmmc_pause(10000, NULL);
 	}
 	if (error == 0 && ocrp != NULL)
 		*ocrp = MMC_R4(cmd.c_resp);
@@ -814,3 +850,4 @@ err:
 
 	return error;
 }
+
