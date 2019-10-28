@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.21 2019/03/31 13:04:54 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.22 2019/10/28 22:24:56 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -8,7 +8,6 @@ ARMADILLO9	2005/11/13	Atmark Techno Armadillo-9
 BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
 BEAGLEBOARD	2008/10/22	TI OMAP3530 BeagleBoard
 BEAGLEBOARDXM	2008/08/20	TI DM37xx BeagleBoard-XM
-BEAGLEBONE	2012/08/20	TI AM335x BeagleBone
 CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
 DEVKIT8000	2010/09/08	Embest OMAP3530 DevKit8000 eval Kit 
