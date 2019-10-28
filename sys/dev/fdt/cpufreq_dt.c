@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.10 2019/10/07 13:54:59 martin Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.11 2019/10/28 10:43:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.10 2019/10/07 13:54:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.11 2019/10/28 10:43:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -363,7 +363,7 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 	struct cpufreq_dt_table *table;
 	const u_int *opp_uv;
 	uint64_t opp_hz;
-	int opp_node, len, i;
+	int opp_node, len, i, index;
 
 	const int opp_table = fdtbus_get_phandle(phandle, "operating-points-v2");
 	if (opp_table < 0)
@@ -379,16 +379,22 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 	}
 
 	for (opp_node = OF_child(opp_table); opp_node; opp_node = OF_peer(opp_node)) {
-		if (fdtbus_status_okay(opp_node))
-			sc->sc_nopp++;
+		if (!fdtbus_status_okay(opp_node))
+			continue;
+		if (of_hasprop(opp_node, "opp-suspend"))
+			continue;
+		sc->sc_nopp++;
 	}
 
 	if (sc->sc_nopp == 0)
 		return EINVAL;
 
 	sc->sc_opp = kmem_zalloc(sizeof(*sc->sc_opp) * sc->sc_nopp, KM_SLEEP);
+	index = sc->sc_nopp - 1;
 	for (opp_node = OF_child(opp_table), i = 0; opp_node; opp_node = OF_peer(opp_node), i++) {
 		if (!fdtbus_status_okay(opp_node))
+			continue;
+		if (of_hasprop(opp_node, "opp-suspend"))
 			continue;
 		if (of_getprop_uint64(opp_node, "opp-hz", &opp_hz) != 0)
 			return EINVAL;
@@ -396,10 +402,10 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 		if (opp_uv == NULL || len < 1)
 			return EINVAL;
 		/* Table is in reverse order */
-		const int index = sc->sc_nopp - i - 1;
 		sc->sc_opp[index].freq_khz = (u_int)(opp_hz / 1000);
 		sc->sc_opp[index].voltage_uv = be32toh(opp_uv[0]);
 		of_getprop_uint32(opp_node, "clock-latency-ns", &sc->sc_opp[index].latency_ns);
+		--index;
 	}
 
 	return 0;
