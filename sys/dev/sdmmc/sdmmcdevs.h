@@ -1,10 +1,10 @@
-/*	$NetBSD: sdmmcdevs.h,v 1.6 2019/08/24 11:24:17 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcdevs.h,v 1.7 2019/10/28 06:32:10 mlelstv Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		NetBSD: sdmmcdevs,v 1.6 2019/08/24 11:24:00 mlelstv Exp 
+ *		NetBSD: sdmmcdevs,v 1.7 2019/10/28 06:31:39 mlelstv Exp 
  */
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
@@ -48,7 +48,7 @@
 #define	SDMMC_CIS_ABOCOM_SDW11G	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_ABOCOM_SDW11G	0xac02
 
-/* Atheros */ 
+/* Atheros */
 #define	SDMMC_CIS_ATHEROS_AR6001_8	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_ATHEROS_AR6001_8	0x0108
 #define	SDMMC_CIS_ATHEROS_AR6001_9	{ NULL, NULL, NULL, NULL }
@@ -58,7 +58,7 @@
 #define	SDMMC_CIS_ATHEROS_AR6001_b	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_ATHEROS_AR6001_b	0x010b
 
-/* Broadcom */ 
+/* Broadcom */
 #define	SDMMC_CIS_BROADCOM_BCM4324	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_BROADCOM_BCM4324	0x4324
 #define	SDMMC_CIS_BROADCOM_BCM4329	{ NULL, NULL, NULL, NULL }
