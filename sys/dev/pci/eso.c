@@ -1,4 +1,4 @@
-/*	$NetBSD: eso.c,v 1.71 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: eso.c,v 1.72 2019/10/28 18:38:43 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.71 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: eso.c,v 1.72 2019/10/28 18:38:43 joerg Exp $");
 
 #include "mpu.h"
 
@@ -1489,7 +1489,7 @@ eso_allocmem(struct eso_softc *sc, size_t size, size_t align,
 
 	error = bus_dmamap_load(ed->ed_dmat, ed->ed_map, ed->ed_kva,
 	    ed->ed_size, NULL, BUS_DMA_WAITOK |
-	    (direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE);
+	    ((direction == AUMODE_RECORD) ? BUS_DMA_READ : BUS_DMA_WRITE));
 	if (error)
 		goto destroy;
 
