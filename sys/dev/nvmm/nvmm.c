@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.24 2019/10/27 20:17:36 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.25 2019/10/28 09:00:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.24 2019/10/27 20:17:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.25 2019/10/28 09:00:08 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -915,6 +915,14 @@ nvmm_ctl_mach_info(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
 		ctl.nvcpus++;
 		nvmm_vcpu_put(vcpu);
 	}
+
+	ctl.nram = 0;
+	for (i = 0; i < NVMM_MAX_HMAPPINGS; i++) {
+		if (!mach->hmap[i].present)
+			continue;
+		ctl.nram += mach->hmap[i].size;
+	}
+
 	ctl.pid = mach->owner->pid;
 	ctl.time = mach->time;
 
