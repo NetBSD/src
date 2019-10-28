@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.h,v 1.17 2019/10/27 10:28:55 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.h,v 1.18 2019/10/28 08:30:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -102,7 +102,15 @@ struct nvmm_x86_exit {
 		struct nvmm_x86_exit_insn insn;
 		struct nvmm_x86_exit_invalid inv;
 	} u;
-	uint64_t exitstate[8];
+	struct {
+		uint64_t rflags;
+		uint64_t cr8;
+		uint64_t int_shadow:1;
+		uint64_t int_window_exiting:1;
+		uint64_t nmi_window_exiting:1;
+		uint64_t evt_pending:1;
+		uint64_t rsvd:60;
+	} exitstate;
 };
 
 #define NVMM_VCPU_EVENT_EXCP	0
@@ -128,7 +136,7 @@ struct nvmm_cap_md {
 	uint64_t xcr0_mask;
 	uint32_t mxcsr_mask;
 	uint32_t conf_cpuid_maxops;
-	uint64_t rsvd[4];
+	uint64_t rsvd[6];
 };
 
 #endif
@@ -235,14 +243,6 @@ struct nvmm_x64_state_intr {
 	uint64_t evt_pending:1;
 	uint64_t rsvd:60;
 };
-
-/* VM exit state indexes. */
-#define NVMM_X64_EXITSTATE_CR8			0
-#define NVMM_X64_EXITSTATE_RFLAGS		1
-#define NVMM_X64_EXITSTATE_INT_SHADOW		2
-#define NVMM_X64_EXITSTATE_INT_WINDOW_EXIT	3
-#define NVMM_X64_EXITSTATE_NMI_WINDOW_EXIT	4
-#define NVMM_X64_EXITSTATE_EVT_PENDING		5
 
 /* Flags. */
 #define NVMM_X64_STATE_SEGS	0x01
