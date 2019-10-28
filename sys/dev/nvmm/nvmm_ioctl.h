@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_ioctl.h,v 1.8 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: nvmm_ioctl.h,v 1.9 2019/10/28 09:00:08 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -122,7 +122,8 @@ struct nvmm_ioc_gpa_unmap {
 
 struct nvmm_ctl_mach_info {
 	nvmm_machid_t machid;
-	size_t nvcpus;
+	uint32_t nvcpus;
+	uint64_t nram;
 	pid_t pid;
 	time_t time;
 };
