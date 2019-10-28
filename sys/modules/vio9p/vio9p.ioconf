@@ -1,0 +1,10 @@
+#       $NetBSD: vio9p.ioconf,v 1.1 2019/10/28 02:56:40 ozaki-r Exp $
+
+ioconf vio9p
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root virtio*
+
+vio9p* at virtio?
