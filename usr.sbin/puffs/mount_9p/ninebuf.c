@@ -1,4 +1,4 @@
-/*      $NetBSD: ninebuf.c,v 1.8 2012/11/04 22:38:19 christos Exp $	*/
+/*      $NetBSD: ninebuf.c,v 1.9 2019/10/28 02:59:25 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ninebuf.c,v 1.8 2012/11/04 22:38:19 christos Exp $");
+__RCSID("$NetBSD: ninebuf.c,v 1.9 2019/10/28 02:59:25 ozaki-r Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -138,7 +138,7 @@ p9pbuf_write(struct puffs_usermount *pu, struct puffs_framebuf *pb,
 		winlen = howmuch;
 		if (puffs_framebuf_getwindow(pb, CUROFF(pb), &win, &winlen)==-1)
 			return errno;
-		n = send(fd, win, winlen, MSG_NOSIGNAL);
+		n = write(fd, win, winlen);
 		switch (n) {
 		case 0:
 			return ECONNRESET;
