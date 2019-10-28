@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.55 2019/10/28 18:40:31 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.56 2019/10/28 19:15:51 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1392,4 +1392,9 @@ sys/dev/ic/ld_nvme.c				1.23
 	Do not attach an ld device if the format descriptor is
 	unsupported/unused.
 	[mlelstv, ticket #1417]
+
+sys/dev/audio.c					(apply patch)
+
+	Do not allow mmap(2) on audio devices opened read-only.
+	[nat, ticket #1419]
 
