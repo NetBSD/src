@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.44.2.9 2019/10/23 06:30:16 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.44.2.10 2019/10/28 02:53:17 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -901,7 +901,8 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 						pm_i->parts =
 						    partitions_read_disk(
 						    pm_i->diskdev,
-						    disk->dd_totsec);
+						    disk->dd_totsec,
+						    disk->dd_no_mbr);
 					}
 				}
 				continue;
@@ -929,7 +930,8 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 			pm->dlsize = disk->dd_cyl * disk->dd_head
 			    * disk->dd_sec;
 
-		pm->parts = partitions_read_disk(pm->diskdev, disk->dd_totsec);
+		pm->parts = partitions_read_disk(pm->diskdev,
+		    disk->dd_totsec, disk->dd_no_mbr);
 
 again:
 
@@ -1443,7 +1445,7 @@ find_part_by_name(const char *name, struct disk_partitions **parts,
 			if (strcmp(disks[n].dd_name, pm->diskdev) == 0)
 				continue;
 			ps = partitions_read_disk(disks[n].dd_name,
-			    disks[n].dd_totsec);
+			    disks[n].dd_totsec, disks[n].dd_no_mbr);
 			if (ps == NULL)
 				continue;
 			if (ps->pscheme->find_by_name == NULL)
