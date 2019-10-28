@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_ioreg.h,v 1.4 2019/09/01 05:45:42 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_ioreg.h,v 1.5 2019/10/28 06:26:19 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_ioreg.h,v 1.4 2007/06/02 01:48:37 uwe Exp $	*/
 
 /*
@@ -88,6 +88,7 @@
 #define SD_IO_CCCR_FN_INTPENDING	0x05
 #define SD_IO_CCCR_CTL			0x06
 #define  CCCR_CTL_RES			(1<<3)
+#define  CCCR_CTL_AS(x)			((x) & 0x7)
 #define SD_IO_CCCR_BUS_WIDTH		0x07
 #define  CCCR_BUS_WIDTH_4		(2<<0)
 #define  CCCR_BUS_WIDTH_1		(0<<0)
