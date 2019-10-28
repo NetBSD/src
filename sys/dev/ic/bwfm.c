@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.17 2019/10/03 14:42:20 jmcneill Exp $ */
+/* $NetBSD: bwfm.c,v 1.18 2019/10/28 06:37:51 mlelstv Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -345,6 +345,7 @@ bwfm_init(struct ifnet *ifp)
 	struct ieee80211com *ic = &sc->sc_ic;
 	uint8_t evmask[BWFM_EVENT_MASK_LEN];
 	struct bwfm_join_pref_params join_pref[2];
+	int pm;
 
 	if (bwfm_fwvar_var_set_int(sc, "mpc", 1)) {
 		printf("%s: could not set mpc\n", DEVNAME(sc));
@@ -370,10 +371,31 @@ bwfm_init(struct ifnet *ifp)
 
 #define	ENABLE_EVENT(e)		evmask[(e) / 8] |= 1 << ((e) % 8)
 	/* Events used to drive the state machine */
-	ENABLE_EVENT(BWFM_E_ASSOC);
-	ENABLE_EVENT(BWFM_E_ESCAN_RESULT);
-	ENABLE_EVENT(BWFM_E_SET_SSID);
-	ENABLE_EVENT(BWFM_E_LINK);
+	switch (ic->ic_opmode) {
+	case IEEE80211_M_STA:
+		ENABLE_EVENT(BWFM_E_IF);
+		ENABLE_EVENT(BWFM_E_LINK);
+		ENABLE_EVENT(BWFM_E_AUTH);
+		ENABLE_EVENT(BWFM_E_ASSOC);
+		ENABLE_EVENT(BWFM_E_DEAUTH);
+		ENABLE_EVENT(BWFM_E_DISASSOC);
+		ENABLE_EVENT(BWFM_E_SET_SSID);
+		ENABLE_EVENT(BWFM_E_ESCAN_RESULT);
+		break;
+#ifndef IEEE80211_STA_ONLY
+	case IEEE80211_M_HOSTAP:
+		ENABLE_EVENT(BWFM_E_AUTH_IND);
+		ENABLE_EVENT(BWFM_E_ASSOC_IND);
+		ENABLE_EVENT(BWFM_E_REASSOC_IND);
+		ENABLE_EVENT(BWFM_E_DEAUTH_IND);
+		ENABLE_EVENT(BWFM_E_DISASSOC_IND);
+		ENABLE_EVENT(BWFM_E_ESCAN_RESULT);
+		ENABLE_EVENT(BWFM_E_ESCAN_RESULT);
+		break;
+#endif
+	default:
+		break;
+	}
 #undef	ENABLE_EVENT
 
 #ifdef BWFM_DEBUG
@@ -401,7 +423,16 @@ bwfm_init(struct ifnet *ifp)
 		return EIO;
 	}
 
-	if (bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 2)) {
+        /*
+         * Use CAM (constantly awake) when we are running as AP
+         * otherwise use fast power saving.
+         */
+	pm = BWFM_PM_FAST_PS;
+#ifndef IEEE80211_STA_ONLY
+	if (ic->ic_opmode == IEEE80211_M_HOSTAP)
+		pm = BWFM_PM_CAM;
+#endif
+	if (bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, pm)) {
 		printf("%s: could not set power\n", DEVNAME(sc));
 		return EIO;
 	}
@@ -448,15 +479,25 @@ bwfm_stop(struct ifnet *ifp, int disable)
 {
 	struct bwfm_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
+	struct bwfm_join_params join;
 
 	sc->sc_tx_timer = 0;
 	ifp->if_timer = 0;
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 
+	memset(&join, 0, sizeof(join));
+	bwfm_fwvar_cmd_set_data(sc, BWFM_C_SET_SSID, &join, sizeof(join));
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_DOWN, 1);
 	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_AP, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_INFRA, 0);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_UP, 1);
+	bwfm_fwvar_cmd_set_int(sc, BWFM_C_SET_PM, BWFM_PM_FAST_PS);
 
 	ieee80211_new_state(ic, IEEE80211_S_INIT, -1);
+
+	if (sc->sc_bus_ops->bs_stop)
+		sc->sc_bus_ops->bs_stop(sc);
 }
 
 void
@@ -606,7 +647,7 @@ bwfm_key_set_cb(struct bwfm_softc *sc, struct bwfm_cmd_key *ck)
 	wsec_key.len = htole32(wk->wk_keylen);
 	memcpy(wsec_key.data, wk->wk_key, sizeof(wsec_key.data));
 	if (!ext_key)
-		wsec_key.flags = htole32(BWFM_PRIMARY_KEY);
+		wsec_key.flags = htole32(BWFM_WSEC_PRIMARY_KEY);
 
 	switch (wk->wk_cipher->ic_cipher) {
 	case IEEE80211_CIPHER_WEP:
@@ -670,7 +711,7 @@ bwfm_key_delete_cb(struct bwfm_softc *sc, struct bwfm_cmd_key *ck)
 
 	memset(&wsec_key, 0, sizeof(wsec_key));
 	wsec_key.index = htole32(wk->wk_keyix);
-	wsec_key.flags = htole32(BWFM_PRIMARY_KEY);
+	wsec_key.flags = htole32(BWFM_WSEC_PRIMARY_KEY);
 
 	if (bwfm_fwvar_var_set_data(sc, "wsec_key", &wsec_key, sizeof(wsec_key)))
 		return;
@@ -1452,10 +1493,10 @@ bwfm_proto_bcdc_query_dcmd(struct bwfm_softc *sc, int ifidx,
 {
 	struct bwfm_proto_bcdc_dcmd *dcmd;
 	size_t size = sizeof(dcmd->hdr) + *len;
-	static int reqid = 0;
+	int reqid;
 	int ret = 1;
 
-	reqid++;
+	reqid = sc->sc_bcdc_reqid++;
 
 	dcmd = kmem_zalloc(sizeof(*dcmd), KM_SLEEP);
 	if (*len > sizeof(dcmd->buf))
@@ -1512,10 +1553,9 @@ bwfm_proto_bcdc_set_dcmd(struct bwfm_softc *sc, int ifidx,
 {
 	struct bwfm_proto_bcdc_dcmd *dcmd;
 	size_t size = sizeof(dcmd->hdr) + len;
-	int reqid = 0;
-	int ret = 1;
+	int ret = 1, reqid;
 
-	reqid++;
+	reqid = sc->sc_bcdc_reqid++;
 
 	dcmd = kmem_zalloc(sizeof(*dcmd), KM_SLEEP);
 	if (len > sizeof(dcmd->buf))
@@ -1845,7 +1885,6 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 	struct ieee80211com *ic = &sc->sc_ic;
 	struct ifnet *ifp = ic->ic_ifp;
 	struct bwfm_event *e = mtod(m, struct bwfm_event *);
-	int s;
 
 	if (m->m_len >= sizeof(e->ehdr) &&
 	    ntohs(e->ehdr.ether_type) == BWFM_ETHERTYPE_LINK_CTL &&
@@ -1856,14 +1895,8 @@ bwfm_rx(struct bwfm_softc *sc, struct mbuf *m)
 		return;
 	}
 
-	s = splnet();
-
-	//if ((ifp->if_flags & IFF_RUNNING) != 0) {
-		m_set_rcvif(m, ifp);
-		if_percpuq_enqueue(ifp->if_percpuq, m);
-	//}
-
-	splx(s);
+	m_set_rcvif(m, ifp);
+	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
 void
