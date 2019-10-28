@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.4 2019/09/01 05:40:39 mlelstv Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.5 2019/10/28 06:37:51 mlelstv Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -169,6 +169,8 @@ struct bwfm_softc {
 
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+
+	int			 sc_bcdc_reqid;
 };
 
 void bwfm_attach(struct bwfm_softc *);
