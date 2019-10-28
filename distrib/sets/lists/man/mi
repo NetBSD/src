@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1659 2019/10/28 02:56:40 ozaki-r Exp $
+# $NetBSD: mi,v 1.1660 2019/10/28 13:04:18 maxv Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2873,6 +2873,7 @@
 ./usr/share/man/cat8/ntptime.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/ntptrace.0			man-ntp-catman		.cat
 ./usr/share/man/cat8/nvmectl.0			man-sysutil-catman	.cat
+./usr/share/man/cat8/nvmmctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ofctl.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/ofppc/MAKEDEV.0		man-obsolete		obsolete
 ./usr/share/man/cat8/ofppc/makedev.0		man-obsolete		obsolete
@@ -5823,6 +5824,7 @@
 ./usr/share/man/html8/ntptime.html		man-ntp-htmlman		html
 ./usr/share/man/html8/ntptrace.html		man-ntp-htmlman		html
 ./usr/share/man/html8/nvmectl.html		man-sysutil-htmlman	html
+./usr/share/man/html8/nvmmctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/ofctl.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/oqmgr.html		man-postfix-htmlman	postfix,html
 ./usr/share/man/html8/pac.html			man-sysutil-htmlman	html
@@ -8997,6 +8999,7 @@
 ./usr/share/man/man8/ntptime.8			man-ntp-man		.man
 ./usr/share/man/man8/ntptrace.8			man-ntp-man		.man
 ./usr/share/man/man8/nvmectl.8			man-sysutil-man		.man
+./usr/share/man/man8/nvmmctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/ofctl.8			man-sysutil-man		.man
 ./usr/share/man/man8/ofppc/MAKEDEV.8		man-obsolete		obsolete
 ./usr/share/man/man8/ofppc/makedev.8		man-obsolete		obsolete
