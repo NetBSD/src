@@ -1,7 +1,8 @@
-#	$NetBSD: files.ti,v 1.11 2019/10/27 19:11:07 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.12 2019/10/28 21:16:47 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_platform.c	soc_ti
+file	arch/arm/ti/ti_cpufreq.c	soc_ti
 
 # Interrupt controller
 device	omapintc: pic, pic_splfuncs
@@ -18,9 +19,22 @@ define	ti_prcm
 file	arch/arm/ti/ti_prcm.c		ti_prcm
 
 # PRCM (AM3xxx)
-device	am3prcm: ti_prcm
+device	am3prcm { } : fdt, ti_prcm
 attach	am3prcm at fdt with am3_prcm
 file	arch/arm/ti/am3_prcm.c		am3_prcm
+
+# Clocks
+device	timuxclk
+attach	timuxclk at fdt with ti_mux_clock
+file	arch/arm/ti/ti_mux_clock.c	ti_mux_clock
+
+device	tidivclk
+attach	tidivclk at fdt with ti_div_clock
+file	arch/arm/ti/ti_div_clock.c	ti_div_clock
+
+device	tidpllclk
+attach	tidpllclk at fdt with ti_dpll_clock
+file	arch/arm/ti/ti_dpll_clock.c	ti_dpll_clock
 
 # UART
 attach	com at fdt with ti_com: ti_prcm
