@@ -1,4 +1,4 @@
-.\"	$NetBSD: mount_9p.8,v 1.11 2019/10/28 02:59:25 ozaki-r Exp $
+.\"	$NetBSD: mount_9p.8,v 1.12 2019/10/28 13:42:28 wiz Exp $
 .\"
 .\" Copyright (c) 2007 Antti Kantee.  All rights reserved.
 .\"
@@ -60,7 +60,7 @@ must be an absolute path.
 .Pp
 The
 .Fl c
-opiton enables to mount a filesystem exported by a VM host through
+opiton enables to mount a file system exported by a VM host through
 a character device file
 .Ar devfile
 backed by the
@@ -92,8 +92,8 @@ environments.
 .Sh SEE ALSO
 .Xr puffs 3 ,
 .Xr puffs 4 ,
-.Xr mount 8 ,
-.Xr vio9p 4
+.Xr vio9p 4 ,
+.Xr mount 8
 .Rs
 .%T RFC and standards documents relating the 9P protocol
 .%U http://ericvh.github.io/9p-rfc/
