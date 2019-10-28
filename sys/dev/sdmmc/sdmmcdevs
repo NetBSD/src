@@ -1,4 +1,4 @@
-	$NetBSD: sdmmcdevs,v 1.6 2019/08/24 11:24:00 mlelstv Exp $
+	$NetBSD: sdmmcdevs,v 1.7 2019/10/28 06:31:39 mlelstv Exp $
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
 /*
@@ -40,13 +40,13 @@ vendor ABOCOM			0x13d1	AboCom Systems, Inc.
 /* AboCom Systems, Inc. */
 product ABOCOM SDW11G		0xac02	SDW11G
 
-/* Atheros */ 
+/* Atheros */
 product ATHEROS AR6001_8	0x0108	AR6001
 product ATHEROS AR6001_9	0x0109	AR6001
 product ATHEROS AR6001_a	0x010a	AR6001
 product ATHEROS AR6001_b	0x010b	AR6001
 
-/* Broadcom */ 
+/* Broadcom */
 product BROADCOM BCM4324	0x4324	BCM 4324
 product BROADCOM BCM4329	0x4329	BCM 4329
 product BROADCOM BCM4330	0x4330	BCM 4330
