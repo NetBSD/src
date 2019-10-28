@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.88 2019/10/28 02:58:09 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.89 2019/10/28 16:41:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5306,3 +5306,12 @@ usr.sbin/sysinst/partitions.h			1.7
 	- In non-MBR specific files, #ifdef all tests for MBR for architectures
 	  that do not even compile in MBR support.
 	[martin, ticket #382]
+
+distrib/sets/lists/modules/mi			1.127
+sys/modules/Makefile				1.229,1.230
+sys/modules/filemon/Makefile			1.4 (manually adjusted)
+
+	Do not install the filemon module.
+	[maya, ticket #385]
+
+
