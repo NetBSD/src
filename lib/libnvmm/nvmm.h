@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.16 2019/10/27 20:17:36 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.17 2019/10/28 08:30:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@ struct nvmm_vcpu {
 struct nvmm_io {
 	struct nvmm_machine *mach;
 	struct nvmm_vcpu *vcpu;
-	uint64_t port;
+	uint16_t port;
 	bool in;
 	size_t size;
 	uint8_t *data;

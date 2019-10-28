@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.43 2019/10/27 18:26:54 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.44 2019/10/28 08:30:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.43 2019/10/27 18:26:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.44 2019/10/28 08:30:49 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2072,18 +2072,14 @@ vmx_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 	vmx_vcpu_guest_misc_leave(vcpu);
 	vmx_vcpu_guest_dbregs_leave(vcpu);
 
-	exit->exitstate[NVMM_X64_EXITSTATE_CR8] = cpudata->gcr8;
-	exit->exitstate[NVMM_X64_EXITSTATE_RFLAGS] =
-	    vmx_vmread(VMCS_GUEST_RFLAGS);
+	exit->exitstate.rflags = vmx_vmread(VMCS_GUEST_RFLAGS);
+	exit->exitstate.cr8 = cpudata->gcr8;
 	intstate = vmx_vmread(VMCS_GUEST_INTERRUPTIBILITY);
-	exit->exitstate[NVMM_X64_EXITSTATE_INT_SHADOW] =
+	exit->exitstate.int_shadow =
 	    (intstate & (INT_STATE_STI|INT_STATE_MOVSS)) != 0;
-	exit->exitstate[NVMM_X64_EXITSTATE_INT_WINDOW_EXIT] =
-	    cpudata->int_window_exit;
-	exit->exitstate[NVMM_X64_EXITSTATE_NMI_WINDOW_EXIT] =
-	    cpudata->nmi_window_exit;
-	exit->exitstate[NVMM_X64_EXITSTATE_EVT_PENDING] =
-	    cpudata->evt_pending;
+	exit->exitstate.int_window_exiting = cpudata->int_window_exit;
+	exit->exitstate.nmi_window_exiting = cpudata->nmi_window_exit;
+	exit->exitstate.evt_pending = cpudata->evt_pending;
 
 	vmx_vmcs_leave(vcpu);
 
