@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmreg.h,v 1.5 2019/10/03 14:42:20 jmcneill Exp $ */
+/* $NetBSD: bwfmreg.h,v 1.6 2019/10/28 06:37:51 mlelstv Exp $ */
 /* $OpenBSD: bwfmreg.h,v 1.16 2018/02/07 21:44:09 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -372,21 +372,26 @@ struct bwfm_bss_info {
 	uint16_t capability;
 	uint8_t ssid_len;
 	uint8_t ssid[BWFM_MAX_SSID_LEN];
+	uint8_t pad0;
 	uint32_t nrates;
 	uint8_t rates[16];
 	uint16_t chanspec;
 	uint16_t atim_window;
 	uint8_t dtim_period;
+	uint8_t pad1;
 	uint16_t rssi;
 	uint8_t phy_noise;
 	uint8_t n_cap;
+	uint16_t pad2;
 	uint32_t nbss_cap;
 	uint8_t ctl_ch;
+	uint8_t pad3[3];
 	uint32_t reserved32[1];
 	uint8_t flags;
 	uint8_t reserved[3];
 	uint8_t basic_mcs[BWFM_MCSSET_LEN];
 	uint16_t ie_offset;
+	uint16_t pad4;
 	uint32_t ie_length;
 	uint16_t snr;
 };
@@ -572,6 +577,7 @@ struct bwfm_escan_results {
 
 struct bwfm_assoc_params {
 	uint8_t bssid[ETHER_ADDR_LEN];
+	uint16_t pad;
 	uint32_t chanspec_num;
 	uint16_t chanspec_list[];
 };
@@ -599,6 +605,7 @@ struct bwfm_join_params {
 
 struct bwfm_join_scan_params {
 	uint8_t scan_type;
+	uint8_t pad[3];
 	uint32_t nprobes;
 	uint32_t active_time;
 	uint32_t passive_time;
@@ -633,15 +640,18 @@ struct bwfm_wsec_key {
 #define	BWFM_CRYPTO_ALGO_AES_RESERVED1	5
 #define	BWFM_CRYPTO_ALGO_AES_RESERVED2	6
 	uint32_t flags;
-#define	BWFM_PRIMARY_KEY		(1 << 1)
+#define	BWFM_WSEC_PRIMARY_KEY		(1 << 1)
+#define	BWFM_PRIMARY_KEY		BWFM_WSEC_PRIMARY_KEY
 	uint32_t pad_2[3];
 	uint32_t iv_initialized;
 	uint32_t pad_3;
+	/* Rx IV */
 	struct {
 		uint32_t hi;
 		uint16_t lo;
+		uint16_t pad_4;
 	} rxiv;
-	uint32_t pad_4[2];
+	uint32_t pad_5[2];
 	uint8_t ea[IEEE80211_ADDR_LEN];
 };
 
@@ -753,7 +763,7 @@ struct bwfm_ethhdr {
 #define	BWFM_BRCM_OUI			"\x00\x10\x18"
 	uint16_t usr_subtype;
 #define	BWFM_BRCM_SUBTYPE_EVENT		1
-};
+} __packed;
 
 struct bwfm_event_msg {
 	uint16_t version;
@@ -767,7 +777,7 @@ struct bwfm_event_msg {
 	char ifname[IFNAMSIZ];
 	uint8_t ifidx;
 	uint8_t bsscfgidx;
-};
+} __packed;
 
 struct bwfm_event {
 	struct ether_header ehdr;
@@ -775,4 +785,3 @@ struct bwfm_event {
 	struct bwfm_ethhdr hdr;
 	struct bwfm_event_msg msg;
 } __packed;
-
