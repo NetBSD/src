@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.h,v 1.11 2019/10/23 07:01:11 maxv Exp $	*/
+/*	$NetBSD: nvmm.h,v 1.12 2019/10/28 08:30:49 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -51,10 +51,10 @@ typedef uint32_t	nvmm_cpuid_t;
 #define NVMM_KERN_VERSION		1
 
 struct nvmm_capability {
-	uint64_t version;
-	uint64_t state_size;
-	uint64_t max_machines;
-	uint64_t max_vcpus;
+	uint32_t version;
+	uint32_t state_size;
+	uint32_t max_machines;
+	uint32_t max_vcpus;
 	uint64_t max_ram;
 	struct nvmm_cap_md arch;
 };
