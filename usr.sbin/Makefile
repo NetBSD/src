@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.281 2019/10/15 18:33:23 christos Exp $
+#	$NetBSD: Makefile,v 1.282 2019/10/28 13:04:18 maxv Exp $
 #	from: @(#)Makefile	5.20 (Berkeley) 6/12/93
 
 .include <bsd.own.mk>
@@ -53,6 +53,8 @@ SUBDIR+=mld6query route6d rtadvd traceroute6
 .endif
 
 SUBDIR+= racoon racoonctl
+
+SUBDIR+= nvmmctl
 
 # NPF
 .if (${MKNPF} != "no")
