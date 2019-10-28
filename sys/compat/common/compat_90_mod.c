@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_90_mod.c,v 1.1 2019/09/22 22:59:38 christos Exp $	*/
+/*	$NetBSD: compat_90_mod.c,v 1.2 2019/10/28 23:32:15 christos Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.1 2019/09/22 22:59:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.2 2019/10/28 23:32:15 christos Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -50,18 +50,14 @@ int
 compat_90_init(void)
 {
 
-	vfs_syscalls_90_init();
-
-	return 0;
+	return vfs_syscalls_90_init();
 }
 
 int
 compat_90_fini(void)
 {
 
-	vfs_syscalls_90_fini();
-
-	return 0;
+	return vfs_syscalls_90_fini();
 }
 
 MODULE(MODULE_CLASS_EXEC, compat_90, NULL);
