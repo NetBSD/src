@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.87 2019/10/25 16:02:11 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.88 2019/10/28 02:58:09 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5287,3 +5287,22 @@ sys/arch/evbarm/conf/mk.beagle			1.13
 	BEAGLE* kernel expects NetBSD bootargs (command line, no FDT).
 	[mlelstv, ticket #381]
 
+usr.sbin/sysinst/part_edit.c			1.8
+
+	When we fail to setup for "all of the disk for NetBSD" report failure,
+	instead of silently aborting the install.
+	[martin, ticket #380]
+
+usr.sbin/sysinst/bsddisklabel.c			1.29
+usr.sbin/sysinst/disks.c			1.54
+usr.sbin/sysinst/part_edit.c			1.9-1.10
+usr.sbin/sysinst/partitions.c			1.3-1.4
+usr.sbin/sysinst/partitions.h			1.7
+
+	- Honor the "no_mbr" flag (used especially for raid and xbd devices).
+	- On device where we do not want a MBR (raid, xbd) skip the MBR
+	  partitioning scheme when trying to read partitions from disk.
+	  The generic reader will fall back to disklabel then.
+	- In non-MBR specific files, #ifdef all tests for MBR for architectures
+	  that do not even compile in MBR support.
+	[martin, ticket #382]
