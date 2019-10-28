@@ -1,4 +1,4 @@
-.\" $NetBSD: vio9p.4,v 1.1 2019/10/28 02:56:40 ozaki-r Exp $
+.\" $NetBSD: vio9p.4,v 1.2 2019/10/28 13:41:31 wiz Exp $
 .\"
 .\" Copyright (c) 2019 Internet Initiative Japan, Inc.
 .\" All rights reserved.
@@ -34,9 +34,12 @@
 .Cd "vio9p* at virtio?"
 .Sh DESCRIPTION
 In conjunction with
-.Xr mount_9p 8 , the
+.Xr mount_9p 8 ,
+the
 .Nm
-driver enables a NetBSD system running as a VM guest to mount an exported filesystem
+driver enables a
+.Nx
+system running as a VM guest to mount an exported filesystem
 by the host via virtio-9p.
 It exports a 9p end-point of virtio-9p via a character device file for
 .Xr mount_9p 8 .
@@ -44,20 +47,20 @@ It exports a 9p end-point of virtio-9p via a character device file for
 Each exported filesystem is assigned a character device and accesible via
 .Pa /dev/vio9p0 ,
 .Pa /dev/vio9p1
-and so on, respectively in exporting order by the host.
+and so on, respectively, in exporting order by the host.
 .Sh FILES
 .Bl -tag -width XdevXvio9pX -compact
 .It Pa /dev/vio9p?
 .El
 .Sh EXAMPLES
-The following command mounts a first exported filesystem by the host at
+The following command mounts the first exported filesystem by the host at
 .Pa /mnt/9p :
 .Bd -literal -offset indent
 # mount_9p -cu /dev/vio9p0 /mnt/9p
 .Ed
 .Sh SEE ALSO
-.Xr mount_9p 8 ,
-.Xr virtio 4
+.Xr virtio 4 ,
+.Xr mount_9p 8
 .Sh HISTORY
 The
 .Nm
