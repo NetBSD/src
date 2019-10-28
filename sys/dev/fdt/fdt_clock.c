@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.9 2019/10/28 21:15:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.9 2019/10/28 21:15:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,8 +133,8 @@ fdtbus_clock_get_prop(int phandle, const char *clkname, const char *prop)
 	return fdtbus_clock_get_index(phandle, index);
 }
 
-static u_int
-fdtbus_clock_count_prop(int phandle, const char *prop)
+u_int
+fdtbus_clock_count(int phandle, const char *prop)
 {
 	u_int n, clock_cells;
 	int len, resid;
@@ -207,8 +207,8 @@ fdtbus_clock_assign(int phandle)
 	if (rates == NULL)
 		rates_len = 0;
 
-	const u_int nclocks = fdtbus_clock_count_prop(phandle, "assigned-clocks");
-	const u_int nparents = fdtbus_clock_count_prop(phandle, "assigned-clock-parents");
+	const u_int nclocks = fdtbus_clock_count(phandle, "assigned-clocks");
+	const u_int nparents = fdtbus_clock_count(phandle, "assigned-clock-parents");
 	const u_int nrates = rates_len / sizeof(*rates);
 
 	for (index = 0; index < nclocks; index++) {
