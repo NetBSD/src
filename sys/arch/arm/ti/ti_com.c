@@ -1,4 +1,4 @@
-/* $NetBSD: ti_com.c,v 1.7 2019/10/27 12:14:51 jmcneill Exp $ */
+/* $NetBSD: ti_com.c,v 1.8 2019/10/29 22:19:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.7 2019/10/27 12:14:51 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ti_com.c,v 1.8 2019/10/29 22:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -105,7 +105,7 @@ ti_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
+	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}
