@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.9 2019/10/27 21:26:04 jmcneill Exp $ */
+/* $NetBSD: am3_platform.c,v 1.1 2019/10/29 10:54:10 jmcneill Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.9 2019/10/27 21:26:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.1 2019/10/29 10:54:10 jmcneill Exp $");
 
 #include <sys/param.h>
 

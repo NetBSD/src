@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_iicreg.h,v 1.1 2019/10/27 19:11:07 jmcneill Exp $	*/
+/*	$NetBSD: ti_iicreg.h,v 1.2 2019/10/29 10:54:10 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -133,11 +133,5 @@
 #define		I2C_ACTOA_OA2_ACT		0x0004
 #define		I2C_ACTOA_OA1_ACT		0x0002
 #define		I2C_ACTOA_OA0_ACT		0x0001
-
-#if defined(TI_AM335X)
-#define	OMAP2_I2C0_BASE	0x44E0B000
-#define	OMAP2_I2C1_BASE	0x4802A000
-#define	OMAP2_I2C2_BASE	0x4819C000
-#endif /* TI_AM335X */
 
 #endif /* _OMAP2IICREG_H */
