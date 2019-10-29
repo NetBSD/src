@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.inc,v 1.35 2017/07/23 09:50:54 martin Exp $
+# $NetBSD: Makefile.inc,v 1.36 2019/10/29 16:08:50 joerg Exp $
 
 COMPILER_RT_SRCDIR=	${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -144,6 +144,9 @@ GENERIC_SRCS+= \
 	floatuntidf.c \
 	floatuntisf.c \
 	floatuntixf.c
+.else
+GENERIC_SRCS+= \
+	comparetf2.c
 .endif
 
 # These have h/w instructions which are always used.
