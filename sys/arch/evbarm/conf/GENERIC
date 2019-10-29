@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.61 2019/10/29 10:54:10 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.62 2019/10/29 22:21:53 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -61,6 +61,57 @@ makeoptions	DTS="
 	meson8b-ec100.dts
 	meson8b-mxq.dts
 	meson8b-odroidc1.dts
+
+	omap3-beagle-xm-ab.dts
+	omap3-beagle-xm.dts
+	omap3-beagle.dts
+	omap3-cm-t3517.dts
+	omap3-cm-t3530.dts
+	omap3-cm-t3730.dts
+	omap3-devkit8000-lcd43.dts
+	omap3-devkit8000-lcd70.dts
+	omap3-devkit8000.dts
+	omap3-evm-37xx.dts
+	omap3-evm.dts
+	omap3-gta04a3.dts
+	omap3-gta04a4.dts
+	omap3-gta04a5.dts
+	omap3-gta04a5one.dts
+	omap3-ha-lcd.dts
+	omap3-ha.dts
+	omap3-igep0020-rev-f.dts
+	omap3-igep0020.dts
+	omap3-igep0030-rev-g.dts
+	omap3-igep0030.dts
+	omap3-ldp.dts
+	omap3-lilly-dbb056.dts
+	omap3-n9.dts
+	omap3-n900.dts
+	omap3-n950.dts
+	omap3-overo-alto35.dts
+	omap3-overo-chestnut43.dts
+	omap3-overo-gallop43.dts
+	omap3-overo-palo35.dts
+	omap3-overo-palo43.dts
+	omap3-overo-storm-alto35.dts
+	omap3-overo-storm-chestnut43.dts
+	omap3-overo-storm-gallop43.dts
+	omap3-overo-storm-palo35.dts
+	omap3-overo-storm-palo43.dts
+	omap3-overo-storm-summit.dts
+	omap3-overo-storm-tobi.dts
+	omap3-overo-storm-tobiduo.dts
+	omap3-overo-summit.dts
+	omap3-overo-tobi.dts
+	omap3-overo-tobiduo.dts
+	omap3-pandora-1ghz.dts
+	omap3-pandora-600mhz.dts
+	omap3-sbc-t3517.dts
+	omap3-sbc-t3530.dts
+	omap3-sbc-t3730.dts
+	omap3-sniper.dts
+	omap3-thunder.dts
+	omap3-zoom3.dts
 
 	socfpga_cyclone5_de0_nano_soc.dts
 
@@ -203,17 +254,13 @@ options 	CPU_CORTEXA8
 options 	CPU_CORTEXA9
 options 	CPU_CORTEXA15
 options 	CPU_CORTEXA17
-
 options 	CPU_CORTEXA53
 
-# Can't add SOC_BCM2835 until interrupt and register issues sorted out
-#options 	SOC_BCM2835
+options 	SOC_AM33XX
 options 	SOC_BCM2836
-
 options 	SOC_EXYNOS5422
-
 options 	SOC_MESON8B
-
+options 	SOC_OMAP3
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
 options 	SOC_SUN6I_A31
@@ -221,13 +268,8 @@ options 	SOC_SUN7I_A20
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	SOC_SUN9I_A80
-
 options 	SOC_TEGRA124
-
-options 	SOC_AM33XX
-
 options 	SOC_VIRT
-
 options 	SOC_ZYNQ7000
 
 options 	MULTIPROCESSOR
@@ -246,6 +288,7 @@ options 	MSGBUFSIZE=32768
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 
 #options 	EARLYCONS=am33xx, CONSADDR=0x44e09000
+#options 	EARLYCONS=omap3, CONSADDR=0x49020000
 
 # ODROID-C1
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
@@ -301,6 +344,8 @@ exy5410clk* 	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk* 	at fdt? pass 3		# Exynos5422 clock controller
 meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
+omap3cm*	at fdt? pass 1		# TI OMAP3 CM
+omap3prm*	at fdt? pass 1		# TI OMAP3 PRM
 sun4ia10ccu* 	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu* 	at fdt? pass 2		# Allwinner A13 CCU
 sun6ia31ccu* 	at fdt? pass 2		# Allwinner A31 CCU
