@@ -1,4 +1,4 @@
-/* $NetBSD: ti_prcm.c,v 1.2 2019/10/27 12:14:51 jmcneill Exp $ */
+/* $NetBSD: ti_prcm.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_prcm.c,v 1.2 2019/10/27 12:14:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_prcm.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -228,12 +228,15 @@ ti_prcm_get_hwmod(const int phandle, u_int index)
 {
 	struct ti_prcm_clk *tc;
 	const char *hwmods, *p;
-	int len, resid;
+	int len, resid, hwmod_phandle;
 	u_int n;
 
 	KASSERTMSG(prcm_softc != NULL, "prcm driver not attached");
 
-	hwmods = fdtbus_get_prop(phandle, "ti,hwmods", &len);
+	/* If this node does not have a ti,hwmods property, try the parent */
+	hwmod_phandle = of_hasprop(phandle, "ti,hwmods") ? phandle : OF_parent(phandle);
+
+	hwmods = fdtbus_get_prop(hwmod_phandle, "ti,hwmods", &len);
 	if (len <= 0)
 		return NULL;
 
