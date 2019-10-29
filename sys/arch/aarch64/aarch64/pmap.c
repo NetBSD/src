@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.47 2019/09/22 13:57:55 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.48 2019/10/29 20:01:22 maya Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2019/09/22 13:57:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2019/10/29 20:01:22 maya Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -875,6 +875,22 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	}
 
 	pm_unlock(pm);
+}
+
+/*
+ * Routine:	pmap_procwr
+ *
+ * Function:
+ *	Synchronize caches corresponding to [addr, addr+len) in p.
+ *
+ */
+void
+pmap_procwr(struct proc *p, vaddr_t va, int len)
+{
+
+	/* We only need to do anything if it is the current process. */
+	if (p == curproc)
+		cpu_icache_sync_range(va, len);
 }
 
 static pt_entry_t

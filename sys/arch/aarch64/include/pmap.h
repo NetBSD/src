@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.25 2019/08/12 10:28:04 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.26 2019/10/29 20:01:22 maya Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -46,6 +46,7 @@
 
 #include <aarch64/pte.h>
 
+#define PMAP_NEED_PROCWR
 #define PMAP_GROWKERNEL
 #define PMAP_STEAL_MEMORY
 
@@ -272,6 +273,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 #define pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 #define pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 
+void	pmap_procwr(struct proc *, vaddr_t, int);
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
 
