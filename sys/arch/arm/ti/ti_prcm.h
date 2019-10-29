@@ -1,4 +1,4 @@
-/* $NetBSD: ti_prcm.h,v 1.2 2019/10/27 12:14:51 jmcneill Exp $ */
+/* $NetBSD: ti_prcm.h,v 1.3 2019/10/29 22:19:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -55,6 +55,7 @@ struct ti_prcm_fixed_factor {
 
 struct ti_prcm_hwmod {
 	bus_size_t		reg;
+	uint32_t		mask;
 	const char		*parent;
 };
 
@@ -137,9 +138,13 @@ ti_prcm_hwmod_get_parent(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc)
 }
 
 #define	TI_PRCM_HWMOD(_name, _reg, _parent, _enable)			\
+	TI_PRCM_HWMOD_MASK(_name, _reg, 0, _parent, _enable)
+
+#define	TI_PRCM_HWMOD_MASK(_name, _reg, _mask, _parent, _enable)	\
 	{								\
 		.type = TI_PRCM_HWMOD, .base.name = (_name),		\
 		.u.hwmod.reg = (_reg),					\
+		.u.hwmod.mask = (_mask),				\
 		.u.hwmod.parent = (_parent),				\
 		.enable = (_enable),					\
 		.get_parent = ti_prcm_hwmod_get_parent,			\

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_rng.c,v 1.1 2019/10/28 23:57:59 jmcneill Exp $ */
+/* $NetBSD: ti_rng.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.1 2019/10/28 23:57:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_rng.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ ti_rng_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
+	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}

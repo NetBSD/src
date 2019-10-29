@@ -1,8 +1,9 @@
-#	$NetBSD: files.ti,v 1.15 2019/10/29 10:54:10 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.16 2019/10/29 22:19:13 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
 file	arch/arm/ti/am3_platform.c	soc_am33xx
+file	arch/arm/ti/omap3_platform.c	soc_omap3
 
 # Interrupt controller
 device	omapintc: pic, pic_splfuncs
@@ -22,6 +23,16 @@ file	arch/arm/ti/ti_prcm.c		ti_prcm
 device	am3prcm { } : fdt, ti_prcm
 attach	am3prcm at fdt with am3_prcm
 file	arch/arm/ti/am3_prcm.c		am3_prcm
+
+# CM (OMAP3)
+device	omap3cm { } : fdt, ti_prcm
+attach	omap3cm at fdt with omap3_cm
+file	arch/arm/ti/omap3_cm.c		omap3_cm
+
+# PRM (OMAP3)
+device	omap3prm { } : fdt
+attach	omap3prm at fdt with omap3_prm
+file	arch/arm/ti/omap3_prm.c		omap3_prm
 
 # Clocks
 device	timuxclk
@@ -88,3 +99,4 @@ file	arch/arm/ti/ti_rng.c		ti_rng
 # SOC parameters
 defflag	opt_soc.h			SOC_TI
 defflag	opt_soc.h			SOC_AM33XX: SOC_TI
+defflag	opt_soc.h			SOC_OMAP3: SOC_TI

@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.1 2019/10/27 19:11:07 jmcneill Exp $ */
+/* $NetBSD: ti_iic.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.1 2019/10/27 19:11:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,9 +81,11 @@ __KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.1 2019/10/27 19:11:07 jmcneill Exp $");
 #define DPRINTF(args)
 #endif
 
-static const char * compatible [] = {
-	"ti,omap4-i2c",
-	NULL
+static const struct of_compat_data compat_data[] = {
+	/* compatible		reg shift */
+	{ "ti,omap3-i2c",	2 },
+	{ "ti,omap4-i2c",	0 },
+	{ NULL }
 };
 
 /* operation in progress */
@@ -103,6 +105,8 @@ struct ti_iic_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
+	u_int			sc_reg_shift;
+
 	void			*sc_ih;
 	kmutex_t		sc_mtx;
 	kcondvar_t		sc_cv;
@@ -118,13 +122,13 @@ struct ti_iic_softc {
 };
 
 #define I2C_READ_REG(sc, reg)		\
-	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg))
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg) << (sc)->sc_reg_shift)
 #define I2C_READ_DATA(sc)		\
-	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, OMAP2_I2C_DATA);
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, OMAP2_I2C_DATA << (sc)->sc_reg_shift);
 #define I2C_WRITE_REG(sc, reg, val)	\
-	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (reg), (val))
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (reg) << (sc)->sc_reg_shift, (val))
 #define I2C_WRITE_DATA(sc, val)		\
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, OMAP2_I2C_DATA, (val))
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, OMAP2_I2C_DATA << (sc)->sc_reg_shift, (val))
 
 static int	ti_iic_match(device_t, cfdata_t, void *);
 static void	ti_iic_attach(device_t, device_t, void *);
@@ -161,7 +165,7 @@ ti_iic_match(device_t parent, cfdata_t match, void *opaque)
 {
 	struct fdt_attach_args * const faa = opaque;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -185,7 +189,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
+	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}
@@ -204,6 +208,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_reg_shift = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
 	    ti_iic_intr, sc);
