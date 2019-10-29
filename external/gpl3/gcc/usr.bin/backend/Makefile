@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.56 2019/10/02 06:52:00 mrg Exp $
+#	$NetBSD: Makefile,v 1.57 2019/10/29 02:49:05 christos Exp $
 
 LIBISPRIVATE=	yes
 
@@ -534,14 +534,17 @@ COPTS.builtins.c+=-O0
 COPTS.calls.c+=-O0
 COPTS.convert.c+=-O0
 COPTS.data-streamer-out.c+=-O0
-COPTS.dwarf2out.c+=-O0
 COPTS.dse.c+=-O0					# XXX port-vax/51967
+COPTS.dwarf2out.c+=-O0
 COPTS.expmed.c+=-O0
 COPTS.expr.c+=-O0 -Wno-error=tautological-compare
 COPTS.fixed-value.c+=-O0
 COPTS.fold-const.c+=-O0
+COPTS.generic-match.c+=-O0
 COPTS.gimple-fold.c+=-O0
+COPTS.gimple-match.c+=-O0
 COPTS.gimple-ssa-strength-reduction.c+=-O0
+COPTS.gimple-ssa-warn-restrict.c+=-O0
 COPTS.gimple.c+=-O0
 COPTS.internal-fn.c+=-O0
 COPTS.lto-streamer-out.c+=-O0
@@ -554,13 +557,13 @@ COPTS.stor-layout.c+=-O0
 COPTS.targhooks.c+=-O0
 COPTS.tree-affine.c+=-O0
 COPTS.tree-cfg.c+=-O0
+COPTS.tree-data-ref.c+=-O0
 COPTS.tree-eh.c+=-O0
 COPTS.tree-if-conv.c+=-O0
 COPTS.tree-object-size.c+=-O0
 COPTS.tree-parloops.c+=-O0
 COPTS.tree-predcom.c+=-O0
 COPTS.tree-pretty-print.c+=-O0
-COPTS.tree-ssa.c+=-O0
 COPTS.tree-ssa-alias.c+=-O0
 COPTS.tree-ssa-ccp.c+=-O0
 COPTS.tree-ssa-forwprop.c+=-O0
@@ -570,18 +573,21 @@ COPTS.tree-ssa-loop-niter.c+=-O0
 COPTS.tree-ssa-math-opts.c+=-O0
 COPTS.tree-ssa-pre.c+=-O0
 COPTS.tree-ssa-reassoc.c+=-O0
+COPTS.tree-ssa-strlen.c+=-O0
 COPTS.tree-ssa-uninit.c+=-O0
+COPTS.tree-ssa.c+=-O0
 COPTS.tree-switch-conversion.c+=-O0
 COPTS.tree-vect-data-refs.c+=-O0
-COPTS.tree-vect-loop.c+=-O0
 COPTS.tree-vect-loop-manip.c+=-O0
+COPTS.tree-vect-loop.c+=-O0
 COPTS.tree-vect-patterns.c+=-O0
 COPTS.tree-vect-stmts.c+=-O0
 COPTS.tree-vrp.c+=-O0
 COPTS.tree.c+=-O0
 COPTS.ubsan.c+=-O0
-COPTS.web.c+=-O0
 COPTS.varasm.c+=-O0
+COPTS.vr-values.c+=-O0
+COPTS.web.c+=-O0
 COPTS.wide-int.cc+=-O0
 .else
 COPTS.tree.c=	${${ACTIVE_CC} == "clang" :? -O0 :}
