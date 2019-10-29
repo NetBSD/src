@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.94 2019/09/13 06:30:10 skrll Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.95 2019/10/29 16:18:23 joerg Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,9 +87,13 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.94 2019/09/13 06:30:10 skrll Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.95 2019/10/29 16:18:23 joerg Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
+
+#ifdef FPU_VFP
+	.fpu vfpv2
+#endif
 
 #undef IRQdisable
 #undef IRQenable
