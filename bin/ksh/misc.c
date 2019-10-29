@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.24 2018/05/08 16:37:59 kamil Exp $	*/
+/*	$NetBSD: misc.c,v 1.25 2019/10/29 16:19:59 joerg Exp $	*/
 
 /*
  * Miscellaneous functions
@@ -6,7 +6,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: misc.c,v 1.24 2018/05/08 16:37:59 kamil Exp $");
+__RCSID("$NetBSD: misc.c,v 1.25 2019/10/29 16:19:59 joerg Exp $");
 #endif
 
 
@@ -1091,7 +1091,7 @@ print_value_quoted(s)
 	}
 	for (p = s; *p; p++) {
 		if (*p == '\'') {
-			shprintf("%s", "'\\'" + 1 - inquote);
+			shprintf("%s", &"'\\'"[1 - inquote]);
 			inquote = 0;
 		} else {
 			if (!inquote) {
