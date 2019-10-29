@@ -1,8 +1,8 @@
-#	$NetBSD: files.ti,v 1.14 2019/10/28 23:57:59 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.15 2019/10/29 10:54:10 jmcneill Exp $
 #
 
-file	arch/arm/ti/ti_platform.c	soc_ti
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
+file	arch/arm/ti/am3_platform.c	soc_am33xx
 
 # Interrupt controller
 device	omapintc: pic, pic_splfuncs
@@ -87,4 +87,4 @@ file	arch/arm/ti/ti_rng.c		ti_rng
 
 # SOC parameters
 defflag	opt_soc.h			SOC_TI
-defflag	opt_soc.h			SOC_TI_AM335X: SOC_TI
+defflag	opt_soc.h			SOC_AM33XX: SOC_TI
