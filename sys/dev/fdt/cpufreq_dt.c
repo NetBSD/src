@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.12 2019/10/28 21:14:58 jmcneill Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.13 2019/10/29 10:52:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.12 2019/10/28 21:14:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.13 2019/10/29 10:52:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -377,6 +377,14 @@ cpufreq_dt_lookup_opp_info(const int opp_table)
 }
 
 static bool
+cpufreq_dt_opp_v2_supported(const int opp_table, const int opp_node)
+{
+	return true;
+}
+
+FDT_OPP(opp_v2, "operating-points-v2", cpufreq_dt_opp_v2_supported);
+
+static bool
 cpufreq_dt_node_supported(const struct fdt_opp_info *opp_info, const int opp_table, const int opp_node)
 {
 	if (!fdtbus_status_okay(opp_node))
@@ -387,7 +395,7 @@ cpufreq_dt_node_supported(const struct fdt_opp_info *opp_info, const int opp_tab
 	if (opp_info != NULL)
 		return opp_info->opp_supported(opp_table, opp_node);
 
-	return true;
+	return false;
 }
 
 static int
