@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.1 2019/10/28 22:21:35 jmcneill Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.1 2019/10/28 22:21:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,14 +44,16 @@ __KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.1 2019/10/28 22:21:35 jmcneill Exp $")
 
 #include <arm/ti/ti_prcm.h>
 
-#define	GPIO_OE				0x134
-#define	GPIO_DATAIN			0x138
-#define	GPIO_CLEARDATAOUT		0x190
-#define	GPIO_SETDATAOUT			0x194
+#define	GPIO_OE				0x34
+#define	GPIO_DATAIN			0x38
+#define	GPIO_CLEARDATAOUT		0x90
+#define	GPIO_SETDATAOUT			0x94
 
-static const char * const compatible[] = {
-	"ti,omap4-gpio",
-	NULL
+static const struct of_compat_data compat_data[] = {
+	/* compatible			reg offset */
+	{ "ti,omap3-gpio",		0x0 },
+	{ "ti,omap4-gpio",		0x100 },
+	{ NULL }
 };
 
 struct ti_gpio_softc {
@@ -59,6 +61,7 @@ struct ti_gpio_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	kmutex_t sc_lock;
+	bus_size_t sc_regoff;
 
 	struct gpio_chipset_tag sc_gp;
 	gpio_pin_t sc_pins[32];
@@ -73,9 +76,9 @@ struct ti_gpio_pin {
 };
 
 #define RD4(sc, reg) 		\
-    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg) + (sc)->sc_regoff)
 #define WR4(sc, reg, val) 	\
-    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg), (val))
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg) + (sc)->sc_regoff, (val))
 
 static int	ti_gpio_match(device_t, cfdata_t, void *);
 static void	ti_gpio_attach(device_t, device_t, void *);
@@ -264,7 +267,7 @@ ti_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -273,6 +276,7 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 	struct ti_gpio_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
+	const char *modname;
 	bus_addr_t addr;
 	bus_size_t size;
 
@@ -280,7 +284,7 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
-	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
+	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}
@@ -291,10 +295,15 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_regoff = of_search_compatible(phandle, compat_data)->data;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
+	modname = fdtbus_get_string(phandle, "ti,hwmods");
+	if (modname == NULL)
+		modname = fdtbus_get_string(OF_parent(phandle), "ti,hwmods");
+
 	aprint_naive("\n");
-	aprint_normal(": GPIO (%s)\n", fdtbus_get_string(OF_parent(phandle), "ti,hwmods"));
+	aprint_normal(": GPIO (%s)\n", modname);
 
 	fdtbus_register_gpio_controller(self, phandle, &ti_gpio_funcs);
 

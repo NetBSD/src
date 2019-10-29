@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.2 2019/10/27 17:21:23 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.2 2019/10/27 17:21:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ ti_sdhc_attach(device_t parent, device_t self, void *aux)
 
 	conf = (const void *)of_search_compatible(phandle, compat_data)->data;
 
-	if (ti_prcm_enable_hwmod(OF_parent(phandle), 0) != 0) {
+	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}
