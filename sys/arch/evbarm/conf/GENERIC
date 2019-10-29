@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.60 2019/10/28 23:58:18 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.61 2019/10/29 10:54:10 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -224,7 +224,7 @@ options 	SOC_SUN9I_A80
 
 options 	SOC_TEGRA124
 
-options 	SOC_TI_AM335X
+options 	SOC_AM33XX
 
 options 	SOC_VIRT
 

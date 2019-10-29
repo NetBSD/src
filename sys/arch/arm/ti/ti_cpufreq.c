@@ -1,4 +1,4 @@
-/* $NetBSD: ti_cpufreq.c,v 1.1 2019/10/28 21:16:47 jmcneill Exp $ */
+/* $NetBSD: ti_cpufreq.c,v 1.2 2019/10/29 10:54:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_soc.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.1 2019/10/28 21:16:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_cpufreq.c,v 1.2 2019/10/29 10:54:10 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,7 +44,7 @@ static bool		ti_opp_probed = false;
 static bool		(*ti_opp_supportedfn)(const int, const int);
 static struct syscon	*ti_opp_syscon;
 
-#ifdef SOC_TI_AM335X
+#ifdef SOC_AM33XX
 
 #define	AM33XX_REV_OFFSET	0x0600
 #define	AM33XX_REV_MASK		0xf0000000
@@ -93,7 +93,7 @@ ti_opp_probe(const int opp_table)
 
 	ti_opp_syscon = fdtbus_syscon_acquire(opp_table, "syscon");
 
-#ifdef SOC_TI_AM335X
+#ifdef SOC_AM33XX
 	if (ti_opp_syscon && of_match_compatible(OF_finddevice("/"), am33xx_compatible))
 		ti_opp_supportedfn = am33xx_opp_supported;
 #endif
