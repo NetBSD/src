@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.46 2019/10/27 15:31:15 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.47 2019/10/30 21:37:56 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -153,3 +153,8 @@ file	dev/fdt/amdccp_fdt.c			amdccp_fdt
 # Arasan SDHCI controller
 attach	sdhc at fdt with arasan_sdhc_fdt
 file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
+
+# Generic USB PHY
+device	usbnopphy
+attach	usbnopphy at fdt
+file	dev/fdt/usbnopphy.c			usbnopphy
