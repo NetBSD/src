@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.36 2019/09/07 18:33:16 maxv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.37 2019/10/30 17:06:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2019 The NetBSD Foundation, Inc.
@@ -358,15 +358,105 @@ wrxcr(uint32_t xcr, uint64_t val)
 	);
 }
 
-void	fnsave(union savefpu *);
-void	frstor(const union savefpu *);
+static inline void
+fnsave(void *addr)
+{
+	uint8_t *area = addr;
 
-void	fxsave(union savefpu *);
-void	fxrstor(const union savefpu *);
+	__asm volatile (
+		"fnsave	%[area]"
+		: [area] "=m" (*area)
+		:
+		: "memory"
+	);
+}
 
-void	xsave(union savefpu *, uint64_t);
-void	xsaveopt(union savefpu *, uint64_t);
-void	xrstor(const union savefpu *, uint64_t);
+static inline void
+frstor(void *addr)
+{
+	const uint8_t *area = addr;
+
+	__asm volatile (
+		"frstor	%[area]"
+		:
+		: [area] "m" (*area)
+		: "memory"
+	);
+}
+
+static inline void
+fxsave(void *addr)
+{
+	uint8_t *area = addr;
+
+	__asm volatile (
+		"fxsave	%[area]"
+		: [area] "=m" (*area)
+		:
+		: "memory"
+	);
+}
+
+static inline void
+fxrstor(void *addr)
+{
+	const uint8_t *area = addr;
+
+	__asm volatile (
+		"fxrstor %[area]"
+		:
+		: [area] "m" (*area)
+		: "memory"
+	);
+}
+
+static inline void
+xsave(void *addr, uint64_t mask)
+{
+	uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xsave	%[area]"
+		: [area] "=m" (*area)
+		: "a" (low), "d" (high)
+		: "memory"
+	);
+}
+
+static inline void
+xsaveopt(void *addr, uint64_t mask)
+{
+	uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xsaveopt %[area]"
+		: [area] "=m" (*area)
+		: "a" (low), "d" (high)
+		: "memory"
+	);
+}
+
+static inline void
+xrstor(void *addr, uint64_t mask)
+{
+	const uint8_t *area = addr;
+	uint32_t low, high;
+
+	low = mask;
+	high = mask >> 32;
+	__asm volatile (
+		"xrstor %[area]"
+		:
+		: [area] "m" (*area), "a" (low), "d" (high)
+		: "memory"
+	);
+}
 
 /* -------------------------------------------------------------------------- */
 
