@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.62 2019/10/29 22:21:53 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.63 2019/10/30 21:42:41 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -562,6 +562,7 @@ tcagpio* 	at iic?
 titemp* 	at iic?
 tps65217pmic*	at iic?			# TI TPS65217 Power Management IC
 tps65217reg*	at tps65217pmic?
+twl*		at iic?			# TI TWL4030 Power Management IC
 wskbd* 		at tcakp? console ?
 
 # CAN bus
@@ -714,7 +715,10 @@ sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
+usbnopphy*	at fdt? pass 9		# Generic USB PHY
 tiotg*		at fdt?			# TI dual port OTG
+tiusb*		at fdt?			# TI HS USB host
+tiusbtll*	at fdt? pass 9		# TI HS USB host TLL
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 motg* 		at fdt?			# Mentor Graphics USB OTG
