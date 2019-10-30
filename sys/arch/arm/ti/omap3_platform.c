@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_platform.c,v 1.1 2019/10/29 22:19:13 jmcneill Exp $ */
+/* $NetBSD: omap3_platform.c,v 1.2 2019/10/30 22:21:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.1 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.2 2019/10/30 22:21:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,7 +71,7 @@ __KERNEL_RCSID(0, "$NetBSD: omap3_platform.c,v 1.1 2019/10/29 22:19:13 jmcneill 
 #define	OMAP3_PRCM_BASE		0x48306000
 #define	OMAP3_PRCM_GR_BASE	(OMAP3_PRCM_BASE + 0x1200)
 #define	 PRM_RSTCTRL		(OMAP3_PRCM_GR_BASE + 0x50)
-#define	  PRM_RSTCTRL_RST_DPLL3	__BIT(1)
+#define	  PRM_RSTCTRL_RST_DPLL3	__BIT(2)
 
 #define	OMAP3_32KTIMER_BASE	0x48320000
 #define	 REG_32KSYNCNT_CR	(OMAP3_32KTIMER_BASE + 0x10)
