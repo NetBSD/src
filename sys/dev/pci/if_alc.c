@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.42 2019/10/17 09:13:48 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.43 2019/10/30 07:26:28 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2275,8 +2275,6 @@ alc_stats_update(struct alc_softc *sc)
 
 	ifp->if_oerrors += smb->tx_late_colls + smb->tx_excess_colls +
 	    smb->tx_underrun + smb->tx_pkts_truncated;
-
-	ifp->if_ipackets += smb->rx_frames;
 
 	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
