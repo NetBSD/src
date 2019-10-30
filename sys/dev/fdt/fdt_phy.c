@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_phy.c,v 1.5 2019/02/27 16:56:00 jakllsch Exp $ */
+/* $NetBSD: fdt_phy.c,v 1.6 2019/10/30 21:37:36 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.5 2019/02/27 16:56:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_phy.c,v 1.6 2019/10/30 21:37:36 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -100,6 +100,10 @@ fdtbus_phy_get_index(int phandle, u_int index)
 
 	p = phys;
 	for (n = 0, resid = len; resid > 0; n++) {
+		if (p[0] == 0) {
+			phy_cells = 0;
+			goto next;
+		}
 		const int pc_phandle =
 		    fdtbus_get_phandle_from_native(be32toh(p[0]));
 		if (of_getprop_uint32(pc_phandle, "#phy-cells", &phy_cells))
@@ -117,6 +121,7 @@ fdtbus_phy_get_index(int phandle, u_int index)
 			}
 			break;
 		}
+next:
 		resid -= (phy_cells + 1) * 4;
 		p += phy_cells + 1;
 	}
