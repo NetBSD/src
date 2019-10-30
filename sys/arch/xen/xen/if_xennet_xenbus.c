@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.86 2019/03/09 08:42:25 maxv Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.87 2019/10/30 07:40:06 maxv Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.86 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.87 2019/10/30 07:40:06 maxv Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -149,9 +149,9 @@ int xennet_debug = 0xff;
 #ifdef XENPVHVM
 /* Glue for p2m table stuff. Should be removed eventually */
 #define xpmap_mtop_masked(mpa) (mpa & ~PAGE_MASK)
-#define xpmap_mtop(mpa) (mpa & ~PG_FRAME)
+#define xpmap_mtop(mpa) (mpa & ~PTE_4KFRAME)
 #define xpmap_ptom_masked(mpa) (mpa & ~PAGE_MASK)
-#define xpmap_ptom(mpa) (mpa & ~PG_FRAME)
+#define xpmap_ptom(mpa) (mpa & ~PTE_4KFRAME)
 #define xpmap_ptom_map(ppa, mpa)
 #define xpmap_ptom_unmap(ppa)
 #define xpmap_ptom_isvalid 1 /* XXX: valid PA check */
@@ -1238,7 +1238,7 @@ xennet_softstart(void *arg)
 		}
 
 		if (m->m_pkthdr.len != m->m_len ||
-		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PG_FRAME) {
+		    (pa ^ (pa + m->m_pkthdr.len - 1)) & PTE_4KFRAME) {
 
 			MGETHDR(new_m, M_DONTWAIT, MT_DATA);
 			if (__predict_false(new_m == NULL)) {
@@ -1295,7 +1295,7 @@ xennet_softstart(void *arg)
 		}
 		MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 
-		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PG_FRAME) == 0);
+		KASSERT(((pa ^ (pa + m->m_pkthdr.len -  1)) & PTE_4KFRAME) == 0);
 
 		SLIST_REMOVE_HEAD(&sc->sc_txreq_head, txreq_next);
 		req->txreq_m = m;
@@ -1319,7 +1319,7 @@ xennet_softstart(void *arg)
 		txreq = RING_GET_REQUEST(&sc->sc_tx_ring, req_prod);
 		txreq->id = req->txreq_id;
 		txreq->gref = req->txreq_gntref;
-		txreq->offset = pa & ~PG_FRAME;
+		txreq->offset = pa & ~PTE_4KFRAME;
 		txreq->size = m->m_pkthdr.len;
 		txreq->flags = txflags;
 

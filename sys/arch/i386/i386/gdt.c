@@ -1,4 +1,4 @@
-/*	$NetBSD: gdt.c,v 1.70 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: gdt.c,v 1.71 2019/10/30 07:40:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.70 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gdt.c,v 1.71 2019/10/30 07:40:05 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
@@ -83,7 +83,7 @@ update_descriptor(union descriptor *table, union descriptor *entry)
 	pt_entry_t *ptp;
 
 	ptp = kvtopte((vaddr_t)table);
-	pa = (*ptp & PG_FRAME) | ((vaddr_t)table & ~PG_FRAME);
+	pa = (*ptp & PTE_4KFRAME) | ((vaddr_t)table & ~PTE_4KFRAME);
 	if (HYPERVISOR_update_descriptor(pa, entry->raw[0], entry->raw[1]))
 		panic("HYPERVISOR_update_descriptor failed\n");
 #endif
