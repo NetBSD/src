@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.108 2019/10/28 22:23:51 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.109 2019/10/30 21:45:25 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -82,8 +82,6 @@ EVBARM_BOARDS.armv7+=		BCM5301X
 EVBARM_BOARDS.armv7hf+= 	BCM5301X
 #EVBARM_BOARDS.armv7+=		BCM56340
 #EVBARM_BOARDS.armv7hf+= 	BCM56340
-KERNEL_SETS.armv7+=		BEAGLEBOARD
-KERNEL_SETS.armv7hf+= 		BEAGLEBOARD
 EVBARM_BOARDS.armv7+=		BEAGLEBOARDXM
 EVBARM_BOARDS.armv7hf+= 	BEAGLEBOARDXM
 EVBARM_BOARDS.armv7+=		CUBOX
