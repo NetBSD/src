@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.377 2019/10/30 07:59:44 maxv Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.378 2019/10/30 16:00:13 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.377 2019/10/30 07:59:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.378 2019/10/30 16:00:13 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -487,7 +487,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	RF_ConfigSet_t *next_cset;
 	int num_root;
 	struct raid_softc *sc, *rsc;
-	struct dk_softc *dksc;
+	struct dk_softc *dksc = NULL;	/* XXX gcc -Os: may be used uninit. */
 
 	sc = rsc = NULL;
 	num_root = 0;
