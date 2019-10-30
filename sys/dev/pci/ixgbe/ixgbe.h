@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.58 2019/09/13 07:55:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.59 2019/10/30 07:27:51 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -645,7 +645,6 @@ struct adapter {
 
 /* Stats macros */
 #if __FreeBSD_version >= 1100036
-#define IXGBE_SET_IPACKETS(sc, count)    (sc)->ipackets = (count)
 #define IXGBE_SET_IERRORS(sc, count)     (sc)->ierrors = (count)
 #define IXGBE_SET_OPACKETS(sc, count)    (sc)->opackets = (count)
 #define IXGBE_SET_OERRORS(sc, count)     (sc)->oerrors = (count)
@@ -656,7 +655,6 @@ struct adapter {
 #define IXGBE_SET_OMCASTS(sc, count)     (sc)->omcasts = (count)
 #define IXGBE_SET_IQDROPS(sc, count)     (sc)->iqdrops = (count)
 #else
-#define IXGBE_SET_IPACKETS(sc, count)    (sc)->ifp->if_ipackets = (count)
 #define IXGBE_SET_IERRORS(sc, count)     (sc)->ifp->if_ierrors = (count)
 #define IXGBE_SET_OPACKETS(sc, count)    (sc)->ifp->if_opackets = (count)
 #define IXGBE_SET_OERRORS(sc, count)     (sc)->ifp->if_oerrors = (count)
