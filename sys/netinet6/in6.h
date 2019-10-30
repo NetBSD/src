@@ -1,4 +1,4 @@
-/*	$NetBSD: in6.h,v 1.96 2019/09/05 20:17:27 kamil Exp $	*/
+/*	$NetBSD: in6.h,v 1.97 2019/10/30 03:45:59 knakahara Exp $	*/
 /*	$KAME: in6.h,v 1.83 2001/03/29 02:55:07 jinmei Exp $	*/
 
 /*
@@ -536,6 +536,7 @@ struct ip6_mtuinfo {
 					/* via router advertisement */
 #define IPV6CTL_RTADV_NUMROUTES 44	/* current number of routes */
 					/* via router advertisement */
+#define IPV6CTL_GIF_PMTU	45	/* gif(4) Path MTU setting */
 #endif /* _NETBSD_SOURCE */
 
 #ifdef _KERNEL

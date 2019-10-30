@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.h,v 1.33 2019/09/19 06:07:24 knakahara Exp $	*/
+/*	$NetBSD: if_gif.h,v 1.34 2019/10/30 03:45:59 knakahara Exp $	*/
 /*	$KAME: if_gif.h,v 1.23 2001/07/27 09:21:42 itojun Exp $	*/
 
 /*
@@ -75,6 +75,8 @@ struct gif_softc {
 					 */
 	kmutex_t gif_lock;		/* writer lock for gif_var */
 	pserialize_t gif_psz;
+
+	int gif_pmtu;
 
 	LIST_ENTRY(gif_softc) gif_list;	/* list of all gifs */
 };
