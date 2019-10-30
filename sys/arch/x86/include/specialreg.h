@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.155 2019/10/08 03:16:21 msaitoh Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.156 2019/10/30 05:35:36 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2014-2019 The NetBSD Foundation, Inc.
@@ -755,19 +755,20 @@
 #define CPUID_AMD_SVM_FlushByASID	0x00000040
 #define CPUID_AMD_SVM_DecodeAssist	0x00000080
 #define CPUID_AMD_SVM_PauseFilter	0x00000400
-#define CPUID_AMD_SVM_GMET		0x00000800
 #define CPUID_AMD_SVM_PFThreshold	0x00001000 /* PAUSE filter threshold */
 #define CPUID_AMD_SVM_AVIC		0x00002000 /* AMD Virtual intr. ctrl */
 #define CPUID_AMD_SVM_V_VMSAVE_VMLOAD	0x00008000 /* Virtual VM{SAVE/LOAD} */
 #define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
+#define CPUID_AMD_SVM_GMET		0x00020000
 #define CPUID_AMD_SVM_FLAGS	 "\20" \
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
 	"\5" "TSCRate"	"\6" "VMCBCleanBits" 				\
 			        "\7" "FlushByASID" "\10" "DecodeAssist"	\
-	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "GMET" \
+	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11"	\
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
-	"\21" "VGIF"
+	"\21" "VGIF"	"\22" "GMET"					\
+	"\25" "B20"
 
 /*
  * AMD Fn8000_0001d Cache Topology Information.
