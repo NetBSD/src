@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_gif.c,v 1.94 2019/09/19 06:07:25 knakahara Exp $	*/
+/*	$NetBSD: in6_gif.c,v 1.95 2019/10/30 03:45:59 knakahara Exp $	*/
 /*	$KAME: in6_gif.c,v 1.62 2001/07/29 04:27:25 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.94 2019/09/19 06:07:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_gif.c,v 1.95 2019/10/30 03:45:59 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -73,6 +73,7 @@ static int gif_validate6(const struct ip6_hdr *, struct gif_variant *,
 	struct ifnet *);
 
 int	ip6_gif_hlim = GIF_HLIM;
+int	ip6_gif_pmtu = 0;
 
 static const struct encapsw in6_gif_encapsw;
 
@@ -198,12 +199,54 @@ in6_gif_output(struct gif_variant *var, int family, struct mbuf *m)
 	rtcache_unref(rt, ro_pc);
 
 #ifdef IPV6_MINMTU
+	int flags;
+
 	/*
-	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
-	 * it is too painful to ask for resend of inner packet, to achieve
+	 * - GIF_PMTU_MINMTU
+	 *   Force fragmentation to minimum MTU to avoid path MTU discovery
+	 * - GIF_PMTU_OUTERMTU
+	 *   Trust outer MTU is large enough to send all packets
+	 *
+	 * It is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
+	 *
+	 * See RFC4459.
 	 */
-	error = ip6_output(m, 0, ro_pc, IPV6_MINMTU, NULL, NULL, NULL);
+	if (sc->gif_pmtu == GIF_PMTU_SYSDEFAULT) {
+		switch (ip6_gif_pmtu) {
+		case GIF_PMTU_MINMTU:
+			flags = IPV6_MINMTU;
+			break;
+		case GIF_PMTU_OUTERMTU:
+			flags = 0;
+			break;
+		default:
+#ifdef DEBUG
+			log(LOG_DEBUG, "%s: ignore unexpected ip6_gif_pmtu %d\n",
+			    __func__, ip6_gif_pmtu);
+#endif
+			flags = IPV6_MINMTU;
+			break;
+		}
+	} else {
+		switch (sc->gif_pmtu) {
+		case GIF_PMTU_MINMTU:
+			flags = IPV6_MINMTU;
+			break;
+		case GIF_PMTU_OUTERMTU:
+			flags = 0;
+			break;
+		default:
+#ifdef DEBUG
+			log(LOG_DEBUG, "%s: ignore unexpected gif_pmtu of %s %d\n",
+			    __func__, ifp->if_xname, sc->gif_pmtu);
+#endif
+			flags = IPV6_MINMTU;
+			break;
+		}
+	}
+
+	error = ip6_output(m, 0, ro_pc, flags, NULL, NULL, NULL);
 #else
 	error = ip6_output(m, 0, ro_pc, 0, NULL, NULL, NULL);
 #endif
