@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.157 2019/10/18 20:42:10 maya Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.158 2019/10/30 12:02:01 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.158 2019/10/17 09:21:40 msaitoh Exp
+ *	NetBSD: miidevs,v 1.160 2019/10/30 12:01:36 msaitoh Exp
  */
 
 /*-
@@ -411,10 +411,10 @@
 
 
 /* JMicron PHYs */
-#define	MII_MODEL_JMICRON_JMC250	0x0021
-#define	MII_STR_JMICRON_JMC250	"JMC250 10/100/1000 media interface"
-#define	MII_MODEL_JMICRON_JMC260	0x0022
-#define	MII_STR_JMICRON_JMC260	"JMC260 10/100 media interface"
+#define	MII_MODEL_JMICRON_JMP211	0x0021
+#define	MII_STR_JMICRON_JMP211	"JMP211 10/100/1000 media interface"
+#define	MII_MODEL_JMICRON_JMP202	0x0022
+#define	MII_STR_JMICRON_JMP202	"JMP202 10/100 media interface"
 
 /* Level 1 PHYs */
 #define	MII_MODEL_xxLEVEL1_LXT970	0x0000
