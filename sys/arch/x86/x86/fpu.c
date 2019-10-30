@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.58 2019/10/12 06:31:04 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.59 2019/10/30 16:32:04 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.58 2019/10/12 06:31:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.59 2019/10/30 16:32:04 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -784,16 +784,15 @@ process_read_xstate(struct lwp *l, struct xstate *xstate)
 	xstate->xs_xstate_bv = fpu_save->sv_xsave_hdr.xsh_xstate_bv;
 	KASSERT(!(xstate->xs_xstate_bv & ~xstate->xs_rfbm));
 
-#define COPY_COMPONENT(xcr0_val, xsave_val, field)				\
-	if (xstate->xs_xstate_bv & xcr0_val) {					\
-		KASSERT(x86_xsave_offsets[xsave_val]				\
-		    >= sizeof(struct xsave_header));				\
-		KASSERT(x86_xsave_sizes[xsave_val]				\
-		    >= sizeof(xstate -> field));				\
-										\
-		memcpy(&xstate -> field,					\
-		    (char*)fpu_save + x86_xsave_offsets[xsave_val],		\
-		    sizeof(xstate -> field));					\
+#define COPY_COMPONENT(xcr0_val, xsave_val, field)			\
+	if (xstate->xs_xstate_bv & xcr0_val) {				\
+		KASSERT(x86_xsave_offsets[xsave_val]			\
+		    >= sizeof(struct xsave_header));			\
+		KASSERT(x86_xsave_sizes[xsave_val]			\
+		    >= sizeof(xstate->field));				\
+		memcpy(&xstate->field,					\
+		    (char*)fpu_save + x86_xsave_offsets[xsave_val],	\
+		    sizeof(xstate->field));				\
 	}
 
 	COPY_COMPONENT(XCR0_YMM_Hi128, XSAVE_YMM_Hi128, xs_ymm_hi128);
@@ -846,8 +845,8 @@ process_write_xstate(struct lwp *l, const struct xstate *xstate)
 	/* If XSAVE is supported, make sure that xstate_bv is set correctly. */
 	if (x86_fpu_save >= FPU_SAVE_XSAVE) {
 		/*
-		 * Bit-wise xstate->xs_rfbm ? xstate->xs_xstate_bv
-		 *                          : fpu_save->sv_xsave_hdr.xsh_xstate_bv
+		 * Bit-wise "xstate->xs_rfbm ? xstate->xs_xstate_bv :
+		 *           fpu_save->sv_xsave_hdr.xsh_xstate_bv"
 		 */
 		fpu_save->sv_xsave_hdr.xsh_xstate_bv =
 		    (fpu_save->sv_xsave_hdr.xsh_xstate_bv & ~xstate->xs_rfbm) |
@@ -865,8 +864,8 @@ process_write_xstate(struct lwp *l, const struct xstate *xstate)
 	}
 
 	/*
-	 * Copy MXCSR if either SSE or AVX state is requested, to match the XSAVE
-	 * behavior for those flags.
+	 * Copy MXCSR if either SSE or AVX state is requested, to match the
+	 * XSAVE behavior for those flags.
 	 */
 	if (xstate->xs_xstate_bv & (XCR0_SSE|XCR0_YMM_Hi128)) {
 		/*
@@ -880,19 +879,17 @@ process_write_xstate(struct lwp *l, const struct xstate *xstate)
 
 	if (xstate->xs_xstate_bv & XCR0_SSE) {
 		memcpy(&fpu_save->sv_xsave_hdr.xsh_fxsave[160],
-		    xstate->xs_fxsave.fx_xmm,
-		    sizeof(xstate->xs_fxsave.fx_xmm));
+		    xstate->xs_fxsave.fx_xmm, sizeof(xstate->xs_fxsave.fx_xmm));
 	}
 
-#define COPY_COMPONENT(xcr0_val, xsave_val, field)				\
-	if (xstate->xs_xstate_bv & xcr0_val) {					\
-		KASSERT(x86_xsave_offsets[xsave_val]				\
-		    >= sizeof(struct xsave_header));				\
-		KASSERT(x86_xsave_sizes[xsave_val]				\
-		    >= sizeof(xstate -> field));				\
-										\
-		memcpy((char*)fpu_save + x86_xsave_offsets[xsave_val],		\
-		    &xstate -> field, sizeof(xstate -> field));		\
+#define COPY_COMPONENT(xcr0_val, xsave_val, field)			\
+	if (xstate->xs_xstate_bv & xcr0_val) {				\
+		KASSERT(x86_xsave_offsets[xsave_val]			\
+		    >= sizeof(struct xsave_header));			\
+		KASSERT(x86_xsave_sizes[xsave_val]			\
+		    >= sizeof(xstate->field));				\
+		memcpy((char *)fpu_save + x86_xsave_offsets[xsave_val],	\
+		    &xstate->field, sizeof(xstate->field));		\
 	}
 
 	COPY_COMPONENT(XCR0_YMM_Hi128, XSAVE_YMM_Hi128, xs_ymm_hi128);
