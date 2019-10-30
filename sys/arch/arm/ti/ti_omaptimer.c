@@ -1,7 +1,7 @@
-/*	$NetBSD: ti_omaptimer.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $	*/
+/*	$NetBSD: ti_omaptimer.c,v 1.4 2019/10/30 21:40:04 jmcneill Exp $	*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_omaptimer.c,v 1.4 2019/10/30 21:40:04 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -125,6 +125,16 @@ omaptimer_get_timecount(struct timecounter *tc)
 	return RD4(sc, TIMER_TCRR);
 }
 
+static void
+omaptimer_enable(struct omaptimer_softc *sc, uint32_t value)
+{
+	/* Configure the timer */
+	WR4(sc, TIMER_TLDR, value);
+	WR4(sc, TIMER_TCRR, value);
+	WR4(sc, TIMER_TIER, 0);
+	WR4(sc, TIMER_TCLR, TCLR_ST | TCLR_AR);
+}
+
 static int
 omaptimer_match(device_t parent, cfdata_t match, void *aux)
 {
@@ -141,8 +151,10 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	const int phandle = faa->faa_phandle;
 	struct timecounter *tc = &sc->sc_tc;
 	const char *modname;
+	struct clk *hwmod;
 	bus_addr_t addr;
 	bus_size_t size;
+	u_int rate;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -159,7 +171,8 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
+	hwmod = ti_prcm_get_hwmod(phandle, 0);
+	if (hwmod == NULL || clk_enable(hwmod) != 0) {
 		aprint_error(": couldn't enable module\n");
 		return;
 	}
@@ -171,22 +184,23 @@ omaptimer_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": Timer (%s)\n", modname);
 
+	rate = clk_get_rate(hwmod);
+
 	if (strcmp(modname, "timer2") == 0) {
+		omaptimer_enable(sc, 0);
+
 		/* Install timecounter */
 		tc->tc_get_timecount = omaptimer_get_timecount;
 		tc->tc_counter_mask = ~0u;
-		tc->tc_frequency = 24000000;
+		tc->tc_frequency = rate;
 		tc->tc_name = modname;
 		tc->tc_quality = 200;
 		tc->tc_priv = sc;
 		tc_init(tc);
+
 	} else if (strcmp(modname, "timer3") == 0) {
-		/* Configure the timer */
-		const uint32_t value = (0xffffffff - ((24000000UL / hz) - 1));
-		WR4(sc, TIMER_TLDR, value);
-		WR4(sc, TIMER_TCRR, value);
-		WR4(sc, TIMER_TIER, 0);
-		WR4(sc, TIMER_TCLR, TCLR_ST | TCLR_AR);
+		const uint32_t value = (0xffffffff - ((rate / hz) - 1));
+		omaptimer_enable(sc, value);
 
 		/* Use this as the OS timer in UP configurations */
 		if (!arm_has_mpext_p) {
