@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1660 2019/10/28 13:04:18 maxv Exp $
+# $NetBSD: mi,v 1.1661 2019/10/30 12:06:25 msaitoh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1379,6 +1379,7 @@
 ./usr/share/man/cat4/iy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
+./usr/share/man/cat4/jmphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/joy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kame_ipsec.0		man-obsolete		obsolete
 ./usr/share/man/cat4/kcov.0			man-sys-catman		.cat
@@ -4522,6 +4523,7 @@
 ./usr/share/man/html4/iy.html			man-sys-htmlman		html
 ./usr/share/man/html4/jme.html			man-sys-htmlman		html
 ./usr/share/man/html4/jmide.html		man-sys-htmlman		html
+./usr/share/man/html4/jmphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/joy.html			man-sys-htmlman		html
 ./usr/share/man/html4/kame_ipsec.html		man-obsolete		obsolete
 ./usr/share/man/html4/kcov.html		man-sys-htmlman		html
@@ -7505,6 +7507,7 @@
 ./usr/share/man/man4/iy.4			man-sys-man		.man
 ./usr/share/man/man4/jme.4			man-sys-man		.man
 ./usr/share/man/man4/jmide.4			man-sys-man		.man
+./usr/share/man/man4/jmphy.4			man-sys-man		.man
 ./usr/share/man/man4/joy.4			man-sys-man		.man
 ./usr/share/man/man4/kame_ipsec.4		man-obsolete		obsolete
 ./usr/share/man/man4/kcov.4			man-sys-man		.man
