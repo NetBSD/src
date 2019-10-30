@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.7 2019/10/04 12:12:47 mrg Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.8 2019/10/30 00:13:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.7 2019/10/04 12:12:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.8 2019/10/30 00:13:46 kamil Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.7 2019/10/04 12:12:47 mrg Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.8 2019/10/30 00:13:46 kamil Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -238,6 +238,13 @@ struct CFloatCastOverflowData {
 	struct CTypeDescriptor *mToType;
 };
 
+struct CImplicitConversionData {
+	struct CSourceLocation mLocation;
+	struct CTypeDescriptor *mFromType;
+	struct CTypeDescriptor *mToType;
+	uint8_t mKind;
+};
+
 /* Local utility functions */
 static void Report(bool isFatal, const char *pFormat, ...) __printflike(2, 3);
 static bool isAlreadyReported(struct CSourceLocation *pLocation);
@@ -261,6 +268,7 @@ static void DeserializeNumber(char *szLocation, char *pBuffer, size_t zBUfferLen
 static const char *DeserializeTypeCheckKind(uint8_t hhuTypeCheckKind);
 static const char *DeserializeBuiltinCheckKind(uint8_t hhuBuiltinCheckKind);
 static const char *DeserializeCFICheckKind(uint8_t hhuCFICheckKind);
+static const char *DeserializeImplicitConversionCheckKind(uint8_t hhuImplicitConversionCheckKind);
 static bool isNegativeNumber(char *szLocation, struct CTypeDescriptor *pType, unsigned long ulNumber);
 static bool isShiftExponentTooLarge(char *szLocation, struct CTypeDescriptor *pType, unsigned long ulNumber, size_t zWidth);
 
@@ -313,6 +321,8 @@ void __ubsan_handle_type_mismatch_v1(struct CTypeMismatchData_v1 *pData, unsigne
 void __ubsan_handle_type_mismatch_v1_abort(struct CTypeMismatchData_v1 *pData, unsigned long ulPointer);
 void __ubsan_handle_vla_bound_not_positive(struct CVLABoundData *pData, unsigned long ulBound);
 void __ubsan_handle_vla_bound_not_positive_abort(struct CVLABoundData *pData, unsigned long ulBound);
+void __ubsan_handle_implicit_conversion(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo);
+void __ubsan_handle_implicit_conversion_abort(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo);
 void __ubsan_get_current_report_data(const char **ppOutIssueKind, const char **ppOutMessage, const char **ppOutFilename, uint32_t *pOutLine, uint32_t *pOutCol, char **ppOutMemoryAddr);
 
 static void HandleOverflow(bool isFatal, struct COverflowData *pData, unsigned long ulLHS, unsigned long ulRHS, const char *szOperation);
@@ -682,6 +692,26 @@ HandlePointerOverflow(bool isFatal, struct CPointerOverflowData *pData, unsigned
 
 	Report(isFatal, "UBSan: Undefined Behavior in %s, pointer expression with base %#lx overflowed to %#lx\n",
 	       szLocation, ulBase, ulResult);
+}
+
+static void
+HandleImplicitConversion(bool isFatal, struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo)
+{
+	char szLocation[LOCATION_MAXLEN];
+	char szFrom[NUMBER_MAXLEN];
+	char szTo[NUMBER_MAXLEN];
+
+	ASSERT(pData);
+
+	if (isAlreadyReported(&pData->mLocation))
+		return;
+
+	DeserializeLocation(szLocation, LOCATION_MAXLEN, &pData->mLocation);
+	DeserializeNumber(szLocation, szFrom, NUMBER_MAXLEN, pData->mFromType, ulFrom);
+	DeserializeNumber(szLocation, szTo, NUMBER_MAXLEN, pData->mToType, ulTo);
+
+	Report(isFatal, "UBSan: Undefined Behavior in %s, %s from %s %zu-bit %s (%s) to %s changed the value to %s %zu-bit %s\n",
+	       szLocation, DeserializeImplicitConversionCheckKind(pData->mKind), szFrom, zDeserializeTypeWidth(pData->mFromType), ISSET(pData->mFromType->mTypeInfo, NUMBER_SIGNED_BIT) ? "signed" : "unsigned", pData->mFromType->mTypeName, pData->mToType->mTypeName, szTo, zDeserializeTypeWidth(pData->mToType), ISSET(pData->mToType->mTypeInfo, NUMBER_SIGNED_BIT) ? "signed" : "unsigned");
 }
 
 /* Definions of public symbols emitted by the instrumentation code */
@@ -1092,6 +1122,23 @@ __ubsan_handle_vla_bound_not_positive_abort(struct CVLABoundData *pData, unsigne
 	ASSERT(pData);
 
 	HandleVlaBoundNotPositive(true, pData, ulBound);
+}
+
+void
+__ubsan_handle_implicit_conversion(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo)
+{
+
+	ASSERT(pData);
+
+	HandleImplicitConversion(false, pData, ulFrom, ulTo);
+}
+
+void
+__ubsan_handle_implicit_conversion_abort(struct CImplicitConversionData *pData, unsigned long ulFrom, unsigned long ulTo)
+{
+	ASSERT(pData);
+
+	HandleImplicitConversion(true, pData, ulFrom, ulTo);
 }
 
 void
@@ -1639,6 +1686,22 @@ DeserializeCFICheckKind(uint8_t hhuCFICheckKind)
 	ASSERT(__arraycount(rgczCFICheckKinds) > hhuCFICheckKind);
 
 	return rgczCFICheckKinds[hhuCFICheckKind];
+}
+
+static const char *
+DeserializeImplicitConversionCheckKind(uint8_t hhuImplicitConversionCheckKind)
+{
+	const char *rgczImplicitConversionCheckKind[] = {
+		"integer truncation",			/* Not used since 2018 October 11th */
+		"unsigned integer truncation",
+		"signed integer truncation",
+		"integer sign change",
+		"signed integer trunctation or sign change",
+	};
+
+	ASSERT(__arraycount(rgczImplicitConversionCheckKind) > hhuImplicitConversionCheckKind);
+
+	return rgczImplicitConversionCheckKind[hhuImplicitConversionCheckKind];
 }
 
 static bool
