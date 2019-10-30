@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.91 2019/10/30 10:12:37 msaitoh Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.90 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.91 2019/10/30 10:12:37 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -330,7 +330,6 @@ xi_intr(void *arg)
 		}
 		tempint = xi_get(sc);	/* XXX doesn't check the error! */
 		recvcount += tempint;
-		ifp->if_ibytes += tempint;
 		esr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, ESR);
 		rsr = bus_space_read_1(sc->sc_bst, sc->sc_bsh, RSR);
 	}
