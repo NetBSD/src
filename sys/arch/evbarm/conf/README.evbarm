@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.23 2019/10/30 21:46:06 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.24 2019/10/30 22:25:44 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -9,7 +9,6 @@ BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
 BEAGLEBOARDXM	2008/08/20	TI DM37xx BeagleBoard-XM
 CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
-DEVKIT8000	2010/09/08	Embest OMAP3530 DevKit8000 eval Kit 
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
 DUOVERO		2016/10/15	Gumstix Inc. DuoVero COMS boards
 GEMINI		2008/10/24	Cortina Systems SL3516 eval board
