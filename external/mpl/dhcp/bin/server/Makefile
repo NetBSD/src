@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2018/04/07 22:31:37 christos Exp $
+# $NetBSD: Makefile,v 1.2 2019/10/30 00:25:00 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -13,6 +13,10 @@ DHCPSRCDIR=	server
 FILESDIR= /usr/share/examples/dhcp
 
 FILES=	dhcpd.conf
+.endif
+
+.if !empty(MACHINE_ARCH:Msh3*)
+COPTS.ddns.c +=-Wno-stringop-overflow
 .endif
 
 COPTS.omapi.c +=	-Wno-stack-protector
