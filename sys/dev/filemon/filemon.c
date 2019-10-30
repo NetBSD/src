@@ -1,4 +1,4 @@
-/*      $NetBSD: filemon.c,v 1.30 2018/06/06 01:49:08 maya Exp $ */
+/*      $NetBSD: filemon.c,v 1.31 2019/10/30 18:35:06 sjg Exp $ */
 /*
  * Copyright (c) 2010, Juniper Networks, Inc.
  *
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.30 2018/06/06 01:49:08 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filemon.c,v 1.31 2019/10/30 18:35:06 sjg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -314,6 +314,11 @@ filemon_ioctl(struct file * fp, u_long cmd, void *data)
 		if ((filemon->fm_fp = fd_getfile2(curproc, fd)) == NULL) {
 			error = EBADF;
 			break;
+		}
+		if ((filemon->fm_fp->f_flag & FWRITE) == 0) {
+			closef(filemon->fm_fp);
+			filemon->fm_fp = NULL;
+			return (EBADF);
 		}
 		/* Write the file header. */
 		filemon_comment(filemon);
