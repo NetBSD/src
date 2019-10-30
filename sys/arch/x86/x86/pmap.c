@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.336 2019/10/05 07:19:49 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.337 2019/10/30 07:40:05 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.336 2019/10/05 07:19:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.337 2019/10/30 07:40:05 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -747,7 +747,7 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 	    pm != vm_map_pmap(&curproc->p_vmspace->vm_map))
 		return;
 
-	if ((opte ^ npte) & PG_X)
+	if ((opte ^ npte) & PTE_X)
 		pmap_update_pg(va);
 
 	/*
@@ -757,7 +757,7 @@ pmap_exec_account(struct pmap *pm, vaddr_t va, pt_entry_t opte, pt_entry_t npte)
 	 * We can't do that because of locking constraints on the vm map.
 	 */
 
-	if ((opte & PG_X) && (npte & PG_X) == 0 && va == pm->pm_hiexec) {
+	if ((opte & PTE_X) && (npte & PTE_X) == 0 && va == pm->pm_hiexec) {
 		struct trapframe *tf = curlwp->l_md.md_regs;
 
 		tf->tf_cs = GSEL(GUCODE_SEL, SEL_UPL);
@@ -1068,13 +1068,13 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * into a x86 PTE.
 	 */
 	protection_codes[VM_PROT_NONE] = pmap_pg_nx;
-	protection_codes[VM_PROT_EXECUTE] = PG_X;
+	protection_codes[VM_PROT_EXECUTE] = PTE_X;
 	protection_codes[VM_PROT_READ] = pmap_pg_nx;
-	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PG_X;
+	protection_codes[VM_PROT_READ|VM_PROT_EXECUTE] = PTE_X;
 	protection_codes[VM_PROT_WRITE] = PTE_W | pmap_pg_nx;
-	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PTE_W | PG_X;
+	protection_codes[VM_PROT_WRITE|VM_PROT_EXECUTE] = PTE_W | PTE_X;
 	protection_codes[VM_PROT_WRITE|VM_PROT_READ] = PTE_W | pmap_pg_nx;
-	protection_codes[VM_PROT_ALL] = PTE_W | PG_X;
+	protection_codes[VM_PROT_ALL] = PTE_W | PTE_X;
 
 	/*
 	 * Now we init the kernel's pmap.
