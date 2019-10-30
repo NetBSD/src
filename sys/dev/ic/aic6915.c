@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.40 2019/10/30 07:26:28 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.39 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.40 2019/10/30 07:26:28 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -854,8 +854,6 @@ sf_stats_update(struct sf_softc *sc)
 	ifp->if_oerrors += stats.TransmitAbortDueToExcessiveCollisions +
 	    stats.TransmitAbortDueToExcessingDeferral +
 	    stats.FramesLostDueToInternalTransmitErrors;
-
-	ifp->if_ipackets += stats.ReceiveOKFrames;
 
 	ifp->if_ierrors += stats.ReceiveCRCErrors + stats.AlignmentErrors +
 	    stats.ReceiveFramesTooLong + stats.ReceiveFramesTooShort +
