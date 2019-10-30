@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.101 2019/10/27 20:11:13 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.102 2019/10/30 21:38:28 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -373,3 +373,8 @@ file	dev/i2c/anxedp.c			anxedp
 device	pcapwm: pwm
 attach	pcapwm at iic
 file	dev/i2c/pca9685.c			pcapwm
+
+# TI TWL4030 Power Management IC
+device	twl
+attach	twl at iic
+file	dev/i2c/twl4030.c			twl
