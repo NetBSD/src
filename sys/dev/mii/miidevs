@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.159 2019/10/18 20:42:10 maya Exp $
+$NetBSD: miidevs,v 1.160 2019/10/30 12:01:36 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -281,8 +281,8 @@ model ATTANSIC I82578		0x0004 Intel 82578 10/100/1000 media interface
 
 
 /* JMicron PHYs */
-model JMICRON JMC250		0x0021 JMC250 10/100/1000 media interface
-model JMICRON JMC260		0x0022 JMC260 10/100 media interface
+model JMICRON JMP211		0x0021 JMP211 10/100/1000 media interface
+model JMICRON JMP202		0x0022 JMP202 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
