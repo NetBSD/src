@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.45 2019/09/07 18:56:01 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.46 2019/10/30 17:06:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -313,16 +313,6 @@ ENTRY(x86_mwait)
 	ret
 END(x86_mwait)
 
-ENTRY(fnsave)
-	fnsave	(%rdi)
-	ret
-END(fnsave)
-
-ENTRY(frstor)
-	frstor	(%rdi)
-	ret
-END(frstor)
-
 ENTRY(stts)
 	movq	%cr0, %rax
 	orq	$CR0_TS, %rax
@@ -330,45 +320,11 @@ ENTRY(stts)
 	ret
 END(stts)
 
-ENTRY(fxsave)
-	fxsave	(%rdi)
-	ret
-END(fxsave)
-
-ENTRY(fxrstor)
-	fxrstor	(%rdi)
-	ret
-END(fxrstor)
-
 ENTRY(fldummy)
 	ffree	%st(7)
 	fldz
 	ret
 END(fldummy)
-
-ENTRY(xsave)
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	xsave	(%rdi)
-	ret
-END(xsave)
-
-ENTRY(xsaveopt)
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	xsaveopt	(%rdi)
-	ret
-END(xsaveopt)
-
-ENTRY(xrstor)
-	movq	%rsi, %rax
-	movq	%rsi, %rdx
-	shrq	$32, %rdx
-	xrstor	(%rdi)
-	ret
-END(xrstor)
 
 ENTRY(inb)
 	movq	%rdi, %rdx
