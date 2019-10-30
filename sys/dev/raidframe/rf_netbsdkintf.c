@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_netbsdkintf.c,v 1.376 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: rf_netbsdkintf.c,v 1.377 2019/10/30 07:59:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008-2011 The NetBSD Foundation, Inc.
@@ -101,7 +101,7 @@
  ***********************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.376 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rf_netbsdkintf.c,v 1.377 2019/10/30 07:59:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_raid_autoconfig.h"
@@ -518,7 +518,6 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 		rf_cleanup_config_set(cset);
 		cset = next_cset;
 	}
-	dksc = &rsc->sc_dksc;
 
 	/* if the user has specified what the root device should be
 	   then we don't touch booted_device or boothowto... */
@@ -543,6 +542,7 @@ rf_buildroothack(RF_ConfigSet_t *config_sets)
 	 */
 	if (num_root == 1) {
 		device_t candidate_root;
+		dksc = &rsc->sc_dksc;
 		if (dksc->sc_dkdev.dk_nwedges != 0) {
 			char cname[sizeof(cset->ac->devname)];
 			/* XXX: assume partition 'a' first */
