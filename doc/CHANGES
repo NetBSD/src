@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2605 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2606 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -53,6 +53,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sup: removed, use ftp://ftp.astron.com/pub/sup [christos 20191015]
 	dhcpcd(8): Import dhcpcd-8.1.1 [roy 20191016]
 	evbarm: Add support for the NanoPi R1 and Duo2. [bad 20191016]
+	ipgphy(4): Add support for IC Plus IP1000* PHY. [msaitoh 20191017]
 	alc(4): Add support for Killer E2400 and E2500. [msaitoh 20191017]
 	bind: Import version 9.14.7. [christos 20191017]
 	libc: Changed the iconv(3) function signature to the POSIX variation
@@ -62,3 +63,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[ozaki-r 20191028]
 	evbarm: Update TI AM335x SoC support to use FDT based configuration.
 		[jmcneill 20191028]
+	jmphy(4): Add support for JMicron JMP202 and JMP211 PHY.
+		[msaitoh 20191030]
