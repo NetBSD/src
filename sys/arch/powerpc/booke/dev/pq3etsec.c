@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.46 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.47 2019/10/30 10:12:37 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.46 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.47 2019/10/30 10:12:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1608,8 +1608,6 @@ pq3etsec_rx_input(
 		m->m_flags |= M_MCAST;
 	m->m_flags |= M_HASFCS;
 	m_set_rcvif(m, &sc->sc_if);
-
-	ifp->if_ibytes += m->m_pkthdr.len;
 
 	/*
 	 * Let's give it to the network subsystm to deal with.
