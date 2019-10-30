@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.7 2019/09/24 13:27:39 nakayama Exp $
+# $NetBSD: postinstall.in,v 1.8 2019/10/30 20:24:44 prlw1 Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1138,7 +1138,7 @@ do_gid()
 	    "${SRC_DIR}/etc/group" 14 \
 	    named ntpd sshd SKIP _pflogd _rwhod staff _proxy _timedc \
 	    _sdpd _httpd _mdnsd _tests _tcpdump _tss _gpio _rtadvd SKIP \
-	    _unbound _nsd
+	    _unbound _nsd nvmm
 }
 
 #
