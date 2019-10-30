@@ -1,4 +1,4 @@
-/* $NetBSD: if_gpn.c,v 1.12 2019/05/29 10:07:28 msaitoh Exp $ */
+/* $NetBSD: if_gpn.c,v 1.13 2019/10/30 10:12:37 msaitoh Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
 
 #include "opt_gemini.h"
 
-__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.12 2019/05/29 10:07:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gpn.c,v 1.13 2019/10/30 10:12:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -299,7 +299,6 @@ gpn_process_data(struct gpn_softc *sc, const ipm_gpn_desc_t *gd)
 		sc->sc_rxmbuf = NULL;
 		m_set_rcvif(m, ifp);
 		KASSERT(((m->m_pkthdr.len + 63) >> 6) == gd->gd_pktlen64);
-		ifp->if_ibytes += m->m_pkthdr.len;
 #ifdef GPNDEBUG
 		printf("%s: rx len=%d crc=%#x\n", ifp->if_xname,
 		    m->m_pkthdr.len, m_crc32_le(m));
