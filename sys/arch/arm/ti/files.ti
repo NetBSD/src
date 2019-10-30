@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.16 2019/10/29 22:19:13 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.17 2019/10/30 21:41:40 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -87,6 +87,17 @@ file	arch/arm/ti/ti_sdhc.c		ti_sdhc
 device	tiotg { } : fdt
 attach	tiotg at fdt with ti_otg
 file	arch/arm/ti/ti_otg.c		ti_otg
+
+device	tiusb { } : fdt
+attach	tiusb at fdt with ti_usb
+file	arch/arm/ti/ti_usb.c		ti_usb
+
+device	tiusbtll
+attach	tiusbtll at fdt with ti_usbtll
+file	arch/arm/ti/ti_usbtll.c		ti_usbtll
+
+attach	ehci at fdt with ti_ehci
+file	arch/arm/ti/ti_ehci.c		ti_ehci
 
 attach	motg at fdt with ti_motg
 file	arch/arm/ti/ti_motg.c		ti_motg
