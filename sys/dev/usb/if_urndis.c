@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.33 2019/08/20 06:37:06 mrg Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.34 2019/10/31 11:59:40 maya Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.33 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.34 2019/10/31 11:59:40 maya Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1068,7 +1068,8 @@ urndis_attach(device_t parent, device_t self, void *aux)
 		kmem_free(buf, bufsz);
 	} else {
 		aprint_error("%s: invalid address\n", DEVNAME(un));
-		kmem_free(buf, bufsz);
+		if (buf && bufsz)
+			kmem_free(buf, bufsz);
 		usbnet_lock(un);
 		usbnet_stop(un, ifp, 1);
 		usbnet_unlock(un);
