@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.27 2019/10/13 07:28:21 mrg Exp $
+#	$NetBSD: Makefile.inc,v 1.28 2019/10/31 09:44:13 martin Exp $
 #
 # Makefile for sysinst
 
@@ -74,10 +74,8 @@ CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
 		${NODISKLABEL:D-DNO_DISKLABEL} \
 		${NOPARTMAN:D-DNO_PARTMAN}
 
-.if ${MACHINE} == "evbarm" \
-    || ${MACHINE} == "evbmips" \
-    || ${MACHINE} == "evbsh3"
-CPPFLAGS+=	-DARCH_SUBDIR="\"${MACHINE}-${MACHINE_ARCH}\""
+.if ${RELEASEMACHINEDIR} != ${MACHINE}
+CPPFLAGS+=	-DARCH_SUBDIR="\"${RELEASEMACHINEDIR}\""
 CPPFLAGS+=	-DPKG_ARCH_SUBDIR="\"${MACHINE_ARCH}\""
 .endif
 
