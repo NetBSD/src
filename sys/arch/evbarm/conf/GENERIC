@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.63 2019/10/30 21:42:41 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.64 2019/10/31 17:08:54 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -662,6 +662,7 @@ hdmicec* 	at hdmicecbus?
 #tegrafb* 	at tegrafbbus?
 genfb* 		at fdt?			# Simple Framebuffer
 mesonfb* 	at fdt?			# Amlogic Meson Framebuffer
+omapfb*		at fdt?			# TI OMAP3 Framebuffer
 wsdisplay* 	at wsemuldisplaydev?
 sunxidebe* 	at fdt? pass 4		# Display Backend
 genfb* 		at sunxidebe?
