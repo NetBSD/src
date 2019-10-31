@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.41.2.3 2015/03/21 17:11:35 snj Exp $
+# $NetBSD: md.amd64,v 1.41.2.3.2.1 2019/10/31 01:55:22 martin Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -292,8 +292,8 @@
 ./stand/amd64-xen/@OSRELEASE@/modules/ffs/ffs.kmod			base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/filecore				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/filecore/filecore.kmod		base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/filemon				base-kernel-modules	kmod,compatmodules
-./stand/amd64-xen/@OSRELEASE@/modules/filemon/filemon.kmod		base-kernel-modules	kmod,compatmodules
+./stand/amd64-xen/@OSRELEASE@/modules/filemon				base-obsolete		obsolete
+./stand/amd64-xen/@OSRELEASE@/modules/filemon/filemon.kmod		base-obsolete		obsolete
 ./stand/amd64-xen/@OSRELEASE@/modules/finsio				base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/finsio/finsio.kmod		base-kernel-modules	kmod,compatmodules
 ./stand/amd64-xen/@OSRELEASE@/modules/flash				base-kernel-modules	kmod,compatmodules
