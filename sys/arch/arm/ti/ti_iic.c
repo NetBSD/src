@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $ */
+/* $NetBSD: ti_iic.c,v 1.3 2019/10/31 10:21:29 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.3 2019/10/31 10:21:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,10 +81,75 @@ __KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
 #define DPRINTF(args)
 #endif
 
+enum ti_iic_type {
+	TI_IIC_OMAP3,
+	TI_IIC_OMAP4,
+	TI_NTYPES
+};
+
+enum {
+	I2C_SYSC,
+	I2C_IRQSTATUS_RAW,
+	I2C_IRQSTATUS,
+	I2C_IRQENABLE,		/* OMAP3 */
+	I2C_IRQENABLE_SET,	/* OMAP4 */
+	I2C_IRQENABLE_CLR,	/* OMAP4 */
+	I2C_SYSS,
+	I2C_BUF,
+	I2C_CNT,
+	I2C_DATA,
+	I2C_CON,
+	I2C_OA,
+	I2C_SA,
+	I2C_PSC,
+	I2C_SCLL,
+	I2C_SCLH,
+	I2C_BUFSTAT,
+	TI_NREGS
+};
+
+static const u_int ti_iic_regmap[TI_NTYPES][TI_NREGS] = {
+	[TI_IIC_OMAP3] = {
+		[I2C_SYSC] = 0x20,
+		[I2C_IRQSTATUS_RAW] = 0x08,
+		[I2C_IRQSTATUS] = 0x08,
+		[I2C_IRQENABLE] = 0x04,
+		[I2C_SYSS] = 0x10,
+		[I2C_BUF] = 0x14,
+		[I2C_CNT] = 0x18,
+		[I2C_DATA] = 0x1c,
+		[I2C_CON] = 0x24,
+		[I2C_OA] = 0x28,
+		[I2C_SA] = 0x2c,
+		[I2C_PSC] = 0x30,
+		[I2C_SCLL] = 0x34,
+		[I2C_SCLH] = 0x38,
+		[I2C_BUFSTAT] = 0x40,
+	},
+	[TI_IIC_OMAP4] = {
+		[I2C_SYSC] = 0x10,
+		[I2C_IRQSTATUS_RAW] = 0x24,
+		[I2C_IRQSTATUS] = 0x28,
+		[I2C_IRQENABLE_SET] = 0x2c,
+		[I2C_IRQENABLE_CLR] = 0x30,
+		[I2C_SYSS] = 0x90,
+		[I2C_BUF] = 0x94,
+		[I2C_CNT] = 0x98,
+		[I2C_DATA] = 0x9c,
+		[I2C_CON] = 0xa4,
+		[I2C_OA] = 0xa8,
+		[I2C_SA] = 0xac,
+		[I2C_PSC] = 0xb0,
+		[I2C_SCLL] = 0xb4,
+		[I2C_SCLH] = 0xb8,
+		[I2C_BUFSTAT] = 0xc0,
+	},
+};
+
 static const struct of_compat_data compat_data[] = {
-	/* compatible		reg shift */
-	{ "ti,omap3-i2c",	2 },
-	{ "ti,omap4-i2c",	0 },
+	/* compatible		type */
+	{ "ti,omap3-i2c",	TI_IIC_OMAP3 },
+	{ "ti,omap4-i2c",	TI_IIC_OMAP4 },
 	{ NULL }
 };
 
@@ -105,7 +170,7 @@ struct ti_iic_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 
-	u_int			sc_reg_shift;
+	enum ti_iic_type	sc_type;
 
 	void			*sc_ih;
 	kmutex_t		sc_mtx;
@@ -122,13 +187,13 @@ struct ti_iic_softc {
 };
 
 #define I2C_READ_REG(sc, reg)		\
-	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, (reg) << (sc)->sc_reg_shift)
+	bus_space_read_2((sc)->sc_iot, (sc)->sc_ioh, ti_iic_regmap[(sc)->sc_type][(reg)])
 #define I2C_READ_DATA(sc)		\
-	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, OMAP2_I2C_DATA << (sc)->sc_reg_shift);
+	bus_space_read_1((sc)->sc_iot, (sc)->sc_ioh, ti_iic_regmap[(sc)->sc_type][I2C_DATA])
 #define I2C_WRITE_REG(sc, reg, val)	\
-	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, (reg) << (sc)->sc_reg_shift, (val))
+	bus_space_write_2((sc)->sc_iot, (sc)->sc_ioh, ti_iic_regmap[(sc)->sc_type][(reg)], (val))
 #define I2C_WRITE_DATA(sc, val)		\
-	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, OMAP2_I2C_DATA << (sc)->sc_reg_shift, (val))
+	bus_space_write_1((sc)->sc_iot, (sc)->sc_ioh, ti_iic_regmap[(sc)->sc_type][I2C_DATA], (val))
 
 static int	ti_iic_match(device_t, cfdata_t, void *);
 static void	ti_iic_attach(device_t, device_t, void *);
@@ -174,11 +239,11 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 	struct ti_iic_softc *sc = device_private(self);
 	struct fdt_attach_args * const faa = opaque;
 	const int phandle = faa->faa_phandle;
-	int scheme, major, minor, fifodepth, fifo;
+	int fifodepth, fifo;
+	const char *modname;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
-	uint16_t rev;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
@@ -208,7 +273,7 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_reg_shift = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET, 0,
 	    ti_iic_intr, sc);
@@ -217,22 +282,16 @@ ti_iic_attach(device_t parent, device_t self, void *opaque)
 		return;
 	}
 
-	scheme = I2C_REVNB_HI_SCHEME(I2C_READ_REG(sc, OMAP2_I2C_REVNB_HI));
-	rev = I2C_READ_REG(sc, OMAP2_I2C_REVNB_LO);
-	if (scheme == 0) {
-		major = I2C_REV_SCHEME_0_MAJOR(rev);
-		minor = I2C_REV_SCHEME_0_MINOR(rev);
-	} else {
-		major = I2C_REVNB_LO_MAJOR(rev);
-		minor = I2C_REVNB_LO_MINOR(rev);
-	}
-	aprint_normal(": rev %d.%d, scheme %d\n", major, minor, scheme);
-	aprint_naive("\n");
+	modname = fdtbus_get_string(phandle, "ti,hwmods");
+	if (modname == NULL)
+		modname = fdtbus_get_string(OF_parent(phandle), "ti,hwmods");
 
-	fifodepth = I2C_BUFSTAT_FIFODEPTH(I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT));
+	fifodepth = I2C_BUFSTAT_FIFODEPTH(I2C_READ_REG(sc, I2C_BUFSTAT));
 	fifo = OMAP2_I2C_FIFOBYTES(fifodepth);
-	aprint_normal_dev(self, "%d-bytes FIFO\n", fifo);
 	sc->sc_rxthres = sc->sc_txthres = fifo >> 1;
+
+	aprint_naive("\n");
+	aprint_normal(": I2C controller (%s), %d-bytes FIFO\n", modname, fifo);
 
 	ti_iic_reset(sc);
 	ti_iic_flush(sc);
@@ -250,10 +309,10 @@ ti_iic_intr(void *arg)
 
 	mutex_enter(&sc->sc_mtx);
 	DPRINTF(("ti_iic_intr\n"));
-	stat = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS);
+	stat = I2C_READ_REG(sc, I2C_IRQSTATUS);
 	DPRINTF(("ti_iic_intr pre handle sc->sc_op eq %#x\n", sc->sc_op));
 	ti_iic_handle_intr(sc, stat);
-	I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
+	I2C_WRITE_REG(sc, I2C_IRQSTATUS, stat);
 	if (sc->sc_op == TI_I2CERROR || sc->sc_op == TI_I2CDONE) {
 		DPRINTF(("ti_iic_intr post handle sc->sc_op %#x\n", sc->sc_op));
 		cv_broadcast(&sc->sc_cv);
@@ -342,19 +401,19 @@ ti_iic_reset(struct ti_iic_softc *sc)
 	DPRINTF(("ti_iic_reset\n"));
 
 	/* Disable */
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, 0);
+	I2C_WRITE_REG(sc, I2C_CON, 0);
 	/* Soft reset */
-	I2C_WRITE_REG(sc, OMAP2_I2C_SYSC, I2C_SYSC_SRST);
+	I2C_WRITE_REG(sc, I2C_SYSC, I2C_SYSC_SRST);
 	delay(1000);
 	/* enable so that we can check for reset complete */
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, I2C_CON_EN);
+	I2C_WRITE_REG(sc, I2C_CON, I2C_CON_EN);
 	delay(1000);
 	for (i = 0; i < 1000; i++) { /* 1s delay for reset */
-		if (I2C_READ_REG(sc, OMAP2_I2C_SYSS) & I2C_SYSS_RDONE)
+		if (I2C_READ_REG(sc, I2C_SYSS) & I2C_SYSS_RDONE)
 			break;
 	}
 	/* Disable again */
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, 0);
+	I2C_WRITE_REG(sc, I2C_CON, 0);
 	delay(50000);
 
 	if (i >= 1000) {
@@ -369,19 +428,19 @@ ti_iic_reset(struct ti_iic_softc *sc)
 	sclh = 55;
 
 	/* Clocks */
-	I2C_WRITE_REG(sc, OMAP2_I2C_PSC, psc);
-	I2C_WRITE_REG(sc, OMAP2_I2C_SCLL, scll);
-	I2C_WRITE_REG(sc, OMAP2_I2C_SCLH, sclh);
+	I2C_WRITE_REG(sc, I2C_PSC, psc);
+	I2C_WRITE_REG(sc, I2C_SCLL, scll);
+	I2C_WRITE_REG(sc, I2C_SCLH, sclh);
 
 	/* Own I2C address */
-	I2C_WRITE_REG(sc, OMAP2_I2C_OA, OMAP2_I2C_SLAVE_ADDR);
+	I2C_WRITE_REG(sc, I2C_OA, OMAP2_I2C_SLAVE_ADDR);
 
 	/* 5 bytes fifo */
-	I2C_WRITE_REG(sc, OMAP2_I2C_BUF,
+	I2C_WRITE_REG(sc, I2C_BUF,
 	    I2C_BUF_RXTRSH(sc->sc_rxthres) | I2C_BUF_TXTRSH(sc->sc_txthres));
 
 	/* Enable */
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, I2C_CON_EN);
+	I2C_WRITE_REG(sc, I2C_CON, I2C_CON_EN);
 
 	return 0;
 }
@@ -426,21 +485,25 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 	sc->sc_buflen = buflen;
 	sc->sc_bufidx = 0;
 
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, I2C_CON_EN | I2C_CON_MST | I2C_CON_STP);
+	I2C_WRITE_REG(sc, I2C_CON, I2C_CON_EN | I2C_CON_MST | I2C_CON_STP);
 	DPRINTF(("ti_iic_op: op %d con 0x%x ", op, con));
-	I2C_WRITE_REG(sc, OMAP2_I2C_CNT, buflen);
-	I2C_WRITE_REG(sc, OMAP2_I2C_SA, (addr & I2C_SA_MASK));
-	DPRINTF(("SA 0x%x len %d\n", I2C_READ_REG(sc, OMAP2_I2C_SA), I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+	I2C_WRITE_REG(sc, I2C_CNT, buflen);
+	I2C_WRITE_REG(sc, I2C_SA, (addr & I2C_SA_MASK));
+	DPRINTF(("SA 0x%x len %d\n", I2C_READ_REG(sc, I2C_SA), I2C_READ_REG(sc, I2C_CNT)));
 
 	if ((flags & I2C_F_POLL) == 0) {
 		/* clear any pending interrupt */
-		I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS,
-		    I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS));
+		I2C_WRITE_REG(sc, I2C_IRQSTATUS,
+		    I2C_READ_REG(sc, I2C_IRQSTATUS));
 		/* and enable */
-		I2C_WRITE_REG(sc, OMAP2_I2C_IRQENABLE_SET, mask);
+		if (sc->sc_type == TI_IIC_OMAP4) {
+			I2C_WRITE_REG(sc, I2C_IRQENABLE_SET, mask);
+		} else {
+			I2C_WRITE_REG(sc, I2C_IRQENABLE, mask);
+		}
 	}
 	/* start transfer */
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, con);
+	I2C_WRITE_REG(sc, I2C_CON, con);
 
 	if ((flags & I2C_F_POLL) == 0) {
 		/* and wait for completion */
@@ -455,7 +518,11 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 		DPRINTF(("ti_iic_op waiting done, op %#x\n", sc->sc_op));
 
 		/* disable interrupts */
-		I2C_WRITE_REG(sc, OMAP2_I2C_IRQENABLE_CLR, 0xffff);
+		if (sc->sc_type == TI_IIC_OMAP4) {
+			I2C_WRITE_REG(sc, I2C_IRQENABLE_CLR, 0xffff);
+		} else {
+			I2C_WRITE_REG(sc, I2C_IRQENABLE, 0);
+		}
 	} else {
 		/* poll for completion */
 		DPRINTF(("ti_iic_op polling, op %x\n", sc->sc_op));
@@ -468,14 +535,14 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 			} else {
 				ti_iic_handle_intr(sc, stat);
 			}
-			I2C_WRITE_REG(sc, OMAP2_I2C_IRQSTATUS, stat);
+			I2C_WRITE_REG(sc, I2C_IRQSTATUS, stat);
 		}
 		DPRINTF(("ti_iic_op polling done, op now %x\n", sc->sc_op));
 	}
 	mutex_exit(&sc->sc_mtx);
 	retry = 10000;
-	I2C_WRITE_REG(sc, OMAP2_I2C_CON, 0);
-	while (I2C_READ_REG(sc, OMAP2_I2C_CON) & I2C_CON_MST) {
+	I2C_WRITE_REG(sc, I2C_CON, 0);
+	while (I2C_READ_REG(sc, I2C_CON) & I2C_CON_MST) {
 		delay(100);
 		if (--retry == 0)
 			break;
@@ -514,14 +581,14 @@ ti_iic_do_read(struct ti_iic_softc *sc, uint32_t stat)
 	KASSERT(mutex_owned(&sc->sc_mtx));
 	DPRINTF(("ti_iic_do_read stat %#x\n", stat));
 	if (stat & I2C_IRQSTATUS_RDR) {
-		len = I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT);
+		len = I2C_READ_REG(sc, I2C_BUFSTAT);
 		len = I2C_BUFSTAT_RXSTAT(len);
 		DPRINTF(("ti_iic_do_read receive drain len %d left %d\n",
-		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+		    len, I2C_READ_REG(sc, I2C_CNT)));
 	} else if (stat & I2C_IRQSTATUS_RRDY) {
 		len = sc->sc_rxthres + 1;
 		DPRINTF(("ti_iic_do_read receive len %d left %d\n",
-		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+		    len, I2C_READ_REG(sc, I2C_CNT)));
 	}
 	for (;
 	    sc->sc_bufidx < sc->sc_buflen && len > 0;
@@ -541,14 +608,14 @@ ti_iic_do_write(struct ti_iic_softc *sc, uint32_t stat)
 	DPRINTF(("ti_iic_do_write stat %#x\n", stat));
 	KASSERT(mutex_owned(&sc->sc_mtx));
 	if (stat & I2C_IRQSTATUS_XDR) {
-		len = I2C_READ_REG(sc, OMAP2_I2C_BUFSTAT);
+		len = I2C_READ_REG(sc, I2C_BUFSTAT);
 		len = I2C_BUFSTAT_TXSTAT(len);
 		DPRINTF(("ti_iic_do_write xmit drain len %d left %d\n",
-		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+		    len, I2C_READ_REG(sc, I2C_CNT)));
 	} else if (stat & I2C_IRQSTATUS_XRDY) {
 		len = sc->sc_txthres + 1;
 		DPRINTF(("ti_iic_do_write xmit len %d left %d\n",
-		    len, I2C_READ_REG(sc, OMAP2_I2C_CNT)));
+		    len, I2C_READ_REG(sc, I2C_CNT)));
 	}
 	for (;
 	    sc->sc_bufidx < sc->sc_buflen && len > 0;
@@ -567,7 +634,7 @@ ti_iic_wait(struct ti_iic_softc *sc, uint16_t mask, uint16_t val, int flags)
 	uint16_t v;
 	DPRINTF(("ti_iic_wait mask %#x val %#x flags %#x\n", mask, val, flags));
 
-	while (((v = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW)) & mask) != val) {
+	while (((v = I2C_READ_REG(sc, I2C_IRQSTATUS_RAW)) & mask) != val) {
 		--retry;
 		if (retry == 0) {
 			aprint_error_dev(sc->sc_dev, ": wait timeout, "
@@ -593,7 +660,7 @@ ti_iic_stat(struct ti_iic_softc *sc, uint32_t mask)
 	int retry = 500;
 	DPRINTF(("ti_iic_wait mask %#x\n", mask));
 	while (--retry > 0) {
-		v = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW) & mask;
+		v = I2C_READ_REG(sc, I2C_IRQSTATUS_RAW) & mask;
 		if (v != 0)
 			break;
 		delay(100);
@@ -610,7 +677,7 @@ ti_iic_flush(struct ti_iic_softc *sc)
 	int retry = 1000;
 	uint16_t v;
 
-	while ((v = I2C_READ_REG(sc, OMAP2_I2C_IRQSTATUS_RAW)) & I2C_IRQSTATUS_RRDY) {
+	while ((v = I2C_READ_REG(sc, I2C_IRQSTATUS_RAW)) & I2C_IRQSTATUS_RRDY) {
 		if (--retry == 0) {
 			aprint_error_dev(sc->sc_dev,
 			    ": flush timeout, stat = %#x\n", v);
@@ -621,7 +688,7 @@ ti_iic_flush(struct ti_iic_softc *sc)
 	}
 #endif
 
-	I2C_WRITE_REG(sc, OMAP2_I2C_CNT, 0);
+	I2C_WRITE_REG(sc, I2C_CNT, 0);
 	return 0;
 }
 
