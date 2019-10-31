@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_cm.c,v 1.2 2019/10/30 21:41:40 jmcneill Exp $ */
+/* $NetBSD: omap3_cm.c,v 1.3 2019/10/31 01:05:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.2 2019/10/30 21:41:40 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.3 2019/10/31 01:05:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -43,7 +43,6 @@ __KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.2 2019/10/30 21:41:40 jmcneill Exp $"
 #define	CM_CORE1_BASE		0x0a00
 #define	CM_CORE3_BASE		0x0a08
 #define	CM_WKUP_BASE		0x0c00
-#define	CM_CLK_CTRL_REG_BASE	0x0d00
 #define	CM_PER_BASE		0x1000
 #define	CM_USBHOST_BASE		0x1400
 
@@ -51,12 +50,6 @@ __KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.2 2019/10/30 21:41:40 jmcneill Exp $"
 #define	CM_ICLKEN		0x10
 #define	CM_AUTOIDLE		0x30
 #define	CM_CLKSEL		0x40
-
-#define	CM_CLKEN2_PLL		0x04
-#define	CM_IDLEST2_CKGEN	0x24
-#define	CM_AUTOIDLE2_PLL	0x34
-#define	CM_CLKSEL4_PLL		0x4c
-#define	CM_CLKSEL5_PLL		0x50
 
 static int omap3_cm_match(device_t, cfdata_t, void *);
 static void omap3_cm_attach(device_t, device_t, void *);
@@ -173,15 +166,6 @@ omap3_cm_initclocks(struct ti_prcm_softc *sc)
 	val |= __BIT(0);	/* CLKSEL_GPT2  0x1: source is SYS_CLK */
 	val |= __BIT(1);	/* CLKSEL_GPT3  0x1: source is SYS_CLK */
 	PRCM_WRITE(sc, CM_PER_BASE + CM_CLKSEL, val);
-
-	/* Enable DPLL5  */
-	const u_int m = 443, n = 11, m2 = 4;
-	PRCM_WRITE(sc, CM_CLK_CTRL_REG_BASE + CM_CLKEN2_PLL, (0x4 << 4) | 0x7);
-	PRCM_WRITE(sc, CM_CLK_CTRL_REG_BASE + CM_CLKSEL4_PLL, (m << 8) | n);
-	PRCM_WRITE(sc, CM_CLK_CTRL_REG_BASE + CM_CLKSEL5_PLL, m2);
-	PRCM_WRITE(sc, CM_CLK_CTRL_REG_BASE + CM_AUTOIDLE2_PLL, 1);
-	while ((PRCM_READ(sc, CM_CLK_CTRL_REG_BASE + CM_IDLEST2_CKGEN) & 1) == 0)
-		delay(100);
 }
 
 static int
