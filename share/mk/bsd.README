@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.394 2019/08/10 12:46:38 christos Exp $
+#	$NetBSD: bsd.README,v 1.395 2019/10/31 06:43:19 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -796,7 +796,8 @@ MAKEDIRTARGET dir target [params]
 
 RELEASEMACHINEDIR
 		Subdirectory used below RELEASEDIR when building
-		a release.  [${MACHINE}]
+		a release.  [${MACHINE},
+		or ${MACHINE}-${MACHINE_ARCH} for evb{arm,mips,sh3}*]
 
 RELEASEMACHINE	Subdirectory or path component used for the following
 		paths:
