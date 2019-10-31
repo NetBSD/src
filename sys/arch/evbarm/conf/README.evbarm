@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.24 2019/10/30 22:25:44 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.25 2019/10/31 01:55:12 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -6,7 +6,6 @@ ADI_BRH		2003/01/25	ADI Eng. Big Read Head i80200 eval board
 ARMADILLO210	2006/02/06	Atmark Techno Armadillo-210
 ARMADILLO9	2005/11/13	Atmark Techno Armadillo-9
 BCM5301X	2012/08/31	Broadcom BCM95301X evaluation/reference board
-BEAGLEBOARDXM	2008/08/20	TI DM37xx BeagleBoard-XM
 CUBOX		2017/01/07	SolidRun Cubox
 CP3100		2006/11/08	Certance IOP321 CP-3100
 DNS323		2010/10/02	D-Link DNS-323 Marvell SoC based NAS
