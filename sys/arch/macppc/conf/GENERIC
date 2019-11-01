@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.357 2019/09/16 07:11:08 macallan Exp $
+# $NetBSD: GENERIC,v 1.358 2019/11/01 17:55:12 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.357 $"
+#ident 		"GENERIC-$Revision: 1.358 $"
 
 maxusers	32
 
@@ -373,6 +373,7 @@ iic*	at ki2c?
 dbcool* 	at iic?		# dbCool thermal monitor & fan control
 deq* 		at iic?		# mixer/equalizer, used by snapper
 admtemp* 	at iic?		# temperature sensor found in Mini, G5
+psoc* 		at iic?		# fan controller found in TiBooks
 videopll*	at iic?		# for valkyriefb
 sgsmix* 	at iic?		# Additional mixer found in beige G3
 				# use with awacs.
