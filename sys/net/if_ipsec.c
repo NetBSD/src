@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.24 2019/09/19 06:07:24 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.25 2019/11/01 04:28:14 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.24 2019/09/19 06:07:24 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.25 2019/11/01 04:28:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.24 2019/09/19 06:07:24 knakahara Exp 
 #include <sys/mutex.h>
 #include <sys/pserialize.h>
 #include <sys/psref.h>
+#include <sys/sysctl.h>
 
 #include <net/if.h>
 #include <net/if_types.h>
@@ -147,6 +148,138 @@ struct if_clone ipsec_cloner =
     IF_CLONE_INITIALIZER("ipsec", if_ipsec_clone_create, if_ipsec_clone_destroy);
 static int max_ipsec_nesting = MAX_IPSEC_NEST;
 
+static struct sysctllog *if_ipsec_sysctl;
+
+#ifdef INET6
+static int
+sysctl_if_ipsec_pmtu_global(SYSCTLFN_ARGS)
+{
+	int error, pmtu;
+	struct sysctlnode node = *rnode;
+
+	pmtu = ip6_ipsec_pmtu;
+	node.sysctl_data = &pmtu;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	switch (pmtu) {
+	case IPSEC_PMTU_MINMTU:
+	case IPSEC_PMTU_OUTERMTU:
+		ip6_ipsec_pmtu = pmtu;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+
+static int
+sysctl_if_ipsec_pmtu_perif(SYSCTLFN_ARGS)
+{
+	int error, pmtu;
+	struct sysctlnode node = *rnode;
+	struct ipsec_softc *sc = (struct ipsec_softc *)node.sysctl_data;
+
+	pmtu = sc->ipsec_pmtu;
+	node.sysctl_data = &pmtu;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	switch (pmtu) {
+	case IPSEC_PMTU_SYSDEFAULT:
+	case IPSEC_PMTU_MINMTU:
+	case IPSEC_PMTU_OUTERMTU:
+		sc->ipsec_pmtu = pmtu;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	return 0;
+}
+#endif
+
+static void
+if_ipsec_sysctl_setup(void)
+{
+	if_ipsec_sysctl = NULL;
+
+#ifdef INET6
+	/*
+	 * Previously create "net.inet6.ip6" entry to avoid sysctl_createv error.
+	 */
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "inet6",
+		       SYSCTL_DESCR("PF_INET6 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, CTL_EOL);
+	sysctl_createv(NULL, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "ip6",
+		       SYSCTL_DESCR("IPv6 related settings"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6, CTL_EOL);
+
+	sysctl_createv(&if_ipsec_sysctl, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ipsecifhlim",
+		       SYSCTL_DESCR("Default hop limit for a ipsec tunnel datagram"),
+		       NULL, 0, &ip6_ipsec_hlim, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_IPSEC_HLIM, CTL_EOL);
+
+	sysctl_createv(&if_ipsec_sysctl, 0, NULL, NULL,
+		       CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		       CTLTYPE_INT, "ipsecifpmtu",
+		       SYSCTL_DESCR("Default Path MTU setting for ipsec tunnels"),
+		       sysctl_if_ipsec_pmtu_global, 0, NULL, 0,
+		       CTL_NET, PF_INET6, IPPROTO_IPV6,
+		       IPV6CTL_IPSEC_PMTU, CTL_EOL);
+#endif
+}
+
+static void
+if_ipsec_perif_sysctl_setup(struct sysctllog **clog, struct ipsec_softc *sc)
+{
+#ifdef INET6
+	const struct sysctlnode *cnode, *rnode;
+	struct ifnet *ifp = &sc->ipsec_if;
+	const char *ifname = ifp->if_xname;
+	int rv;
+
+	/*
+	 * Already created in sysctl_sndq_setup().
+	 */
+	sysctl_createv(clog, 0, NULL, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, "interfaces",
+		       SYSCTL_DESCR("Per-interface controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_NET, CTL_CREATE, CTL_EOL);
+	sysctl_createv(clog, 0, &rnode, &rnode,
+		       CTLFLAG_PERMANENT,
+		       CTLTYPE_NODE, ifname,
+		       SYSCTL_DESCR("Interface controls"),
+		       NULL, 0, NULL, 0,
+		       CTL_CREATE, CTL_EOL);
+
+	rv = sysctl_createv(clog, 0, &rnode, &cnode,
+			    CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+			    CTLTYPE_INT, "pmtu",
+			    SYSCTL_DESCR("Path MTU setting for this ipsec tunnel"),
+			    sysctl_if_ipsec_pmtu_perif, 0, (void *)sc, 0,
+			    CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		log(LOG_WARNING, "%s: could not attach sysctl node pmtu\n", ifname);
+
+	sc->ipsec_pmtu = IPSEC_PMTU_SYSDEFAULT;
+#endif
+}
+
 /* ARGSUSED */
 void
 ipsecifattach(int count)
@@ -157,6 +290,8 @@ ipsecifattach(int count)
 
 	iv_psref_class = psref_class_create("ipsecvar", IPL_SOFTNET);
 
+	if_ipsec_sysctl_setup();
+
 	if_clone_attach(&ipsec_cloner);
 }
 
@@ -165,12 +300,16 @@ if_ipsec_clone_create(struct if_clone *ifc, int unit)
 {
 	struct ipsec_softc *sc;
 	struct ipsec_variant *var;
+	struct ifnet *ifp;
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 
 	if_initname(&sc->ipsec_if, ifc->ifc_name, unit);
 
 	if_ipsec_attach0(sc);
+
+	ifp = &sc->ipsec_if;
+	if_ipsec_perif_sysctl_setup(&ifp->if_sysctl_log, sc);
 
 	var = kmem_zalloc(sizeof(*var), KM_SLEEP);
 	var->iv_softc = sc;

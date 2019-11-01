@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.5 2019/09/19 06:07:24 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.6 2019/11/01 04:28:14 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -95,6 +95,7 @@ struct ipsec_softc {
 					  */
 	kmutex_t ipsec_lock;		/* writer lock for ipsec_var */
 	pserialize_t ipsec_psz;
+	int ipsec_pmtu;
 
 	LIST_ENTRY(ipsec_softc) ipsec_list; /* list of all gifs */
 };
