@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.364 2019/08/10 01:06:45 mrg Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.365 2019/11/01 08:26:18 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.364 2019/08/10 01:06:45 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.365 2019/11/01 08:26:18 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -185,6 +185,23 @@ int user_va0_disable = __USER_VA0_DISABLE_DEFAULT;
 /*
  * macros
  */
+
+/*
+ * uvm_map_align_va: round down or up virtual address
+ */
+static __inline void
+uvm_map_align_va(vaddr_t *vap, vsize_t align, int topdown)
+{
+
+	KASSERT(powerof2(align));
+
+	if (align != 0 && (*vap & (align - 1)) != 0) {
+		if (topdown)
+			*vap = rounddown2(*vap, align);
+		else
+			*vap = roundup2(*vap, align);
+	}
+}
 
 /*
  * UVM_ET_ISCOMPATIBLE: check some requirements for map entry merging
@@ -1063,6 +1080,7 @@ uvm_map(struct vm_map *map, vaddr_t *startp /* IN/OUT */, vsize_t size,
 	int error;
 
 	KASSERT((size & PAGE_MASK) == 0);
+	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
 
 	/*
 	 * for pager_map, allocate the new entry first to avoid sleeping
@@ -1805,13 +1823,9 @@ uvm_map_space_avail(vaddr_t *start, vsize_t length, voff_t uoffset,
 				*start = ptoa(hint + align); /* adjust to color */
 			}
 		}
-	} else if (align != 0) {
-		if ((*start & (align - 1)) != 0) {
-			if (topdown)
-				*start &= ~(align - 1);
-			else
-				*start = roundup(*start, align);
-		}
+	} else {
+		KASSERT(powerof2(align));
+		uvm_map_align_va(start, align, topdown);
 		/*
 		 * XXX Should we PMAP_PREFER() here again?
 		 * eh...i think we're okay
@@ -1861,7 +1875,7 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 
 	UVMHIST_LOG(maphist, "(map=%#jx, hint=%#jx, len=%ju, flags=%#jx)",
 	    (uintptr_t)map, hint, length, flags);
-	KASSERT((flags & UVM_FLAG_COLORMATCH) != 0 || (align & (align - 1)) == 0);
+	KASSERT((flags & UVM_FLAG_COLORMATCH) != 0 || powerof2(align));
 	KASSERT((flags & UVM_FLAG_COLORMATCH) == 0 || align < uvmexp.ncolors);
 	KASSERT((flags & UVM_FLAG_FIXED) == 0 || align == 0);
 
@@ -1886,6 +1900,12 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 		    hint, vm_map_min(map), vm_map_max(map), 0);
 		return (NULL);
 	}
+
+	/*
+	 * hint may not be aligned properly; we need round up or down it
+	 * before proceeding further.
+	 */
+	uvm_map_align_va(&hint, align, topdown);
 
 	/*
 	 * Look for the first possible address; if there's already
