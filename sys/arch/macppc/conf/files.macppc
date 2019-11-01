@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.111 2019/05/08 13:40:15 isaki Exp $
+#	$NetBSD: files.macppc,v 1.112 2019/11/01 17:51:56 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -312,3 +312,9 @@ defflag opt_valkyriefb.h VALKYRIEFB_DEBUG
 device platinumfb: wsemuldisplaydev, rasops8, vcons, videomode
 attach platinumfb at mainbus
 file arch/macppc/dev/platinumfb.c			platinumfb
+
+# 'Psoc' fan controller found in (some?) TiBooks
+device	psoc: sysmon_envsys
+attach	psoc at iic
+file	arch/macppc/dev/psoc.c				psoc
+
