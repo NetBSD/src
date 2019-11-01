@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_tcp.c,v 1.23 2019/06/12 22:23:50 christos Exp $ */
+/*	$NetBSD: xform_tcp.c,v 1.24 2019/11/01 04:23:21 knakahara Exp $ */
 /*	$FreeBSD: xform_tcp.c,v 1.1.2.1 2004/02/14 22:24:09 bms Exp $ */
 
 /*
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.23 2019/06/12 22:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_tcp.c,v 1.24 2019/11/01 04:23:21 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -132,7 +132,7 @@ tcpsignature_input(struct mbuf *m, struct secasvar *sav, int skip,
 
 static int
 tcpsignature_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff, int flags)
 {
 	panic("%s: should not have been called", __func__);
 }

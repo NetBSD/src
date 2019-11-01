@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_esp.c,v 1.98 2019/06/12 22:23:50 christos Exp $	*/
+/*	$NetBSD: xform_esp.c,v 1.99 2019/11/01 04:23:21 knakahara Exp $	*/
 /*	$FreeBSD: xform_esp.c,v 1.2.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_esp.c,v 1.69 2001/06/26 06:18:59 angelos Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.98 2019/06/12 22:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_esp.c,v 1.99 2019/11/01 04:23:21 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -686,7 +686,7 @@ bad:
  */
 static int
 esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
-    int skip, int protoff)
+    int skip, int protoff, int flags)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct enc_xform *espx;
@@ -905,6 +905,7 @@ esp_output(struct mbuf *m, const struct ipsecrequest *isr, struct secasvar *sav,
 	tc->tc_spi = sav->spi;
 	tc->tc_dst = saidx->dst;
 	tc->tc_proto = saidx->proto;
+	tc->tc_flags = flags;
 	tc->tc_sav = sav;
 
 	/* Crypto operation descriptor. */
@@ -954,7 +955,7 @@ esp_output_cb(struct cryptop *crp)
 	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m;
-	int err, error;
+	int err, error, flags;
 	IPSEC_DECLARE_LOCK_VARIABLE;
 
 	KASSERT(crp->crp_opaque != NULL);
@@ -987,6 +988,7 @@ esp_output_cb(struct cryptop *crp)
 	if (sav->tdb_authalgxform != NULL)
 		AH_STATINC(AH_STAT_HIST + ah_stats[sav->alg_auth]);
 
+	flags = tc->tc_flags;
 	/* Release crypto descriptors. */
 	pool_cache_put(esp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
@@ -1010,7 +1012,7 @@ esp_output_cb(struct cryptop *crp)
 #endif
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	err = ipsec_process_done(m, isr, sav);
+	err = ipsec_process_done(m, isr, sav, flags);
 	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
