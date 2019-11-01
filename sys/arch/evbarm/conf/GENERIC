@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.65 2019/11/01 11:53:51 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.66 2019/11/01 12:01:09 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -720,8 +720,8 @@ sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
 usbnopphy*	at fdt? pass 9		# Generic USB PHY
 tiotg*		at fdt?			# TI dual port OTG
-tiusb*		at fdt?			# TI HS USB host
-tiusbtll*	at fdt? pass 9		# TI HS USB host TLL
+tiusb*		at fdt? pass 9		# TI HS USB host
+tiusbtll*	at fdt? pass 8		# TI HS USB host TLL
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 motg* 		at fdt?			# Mentor Graphics USB OTG
