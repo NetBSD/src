@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_gmac.c,v 1.6 2019/07/21 08:24:32 mrg Exp $ */
+/* $NetBSD: sunxi_gmac.c,v 1.7 2019/11/01 13:30:02 bad Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.6 2019/07/21 08:24:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_gmac.c,v 1.7 2019/11/01 13:30:02 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,24 @@ static int
 sunxi_gmac_intr(void *arg)
 {
 	return dwc_gmac_intr(arg);
+}
+
+static int
+sunxi_gmac_get_phyid(int phandle)
+{
+	bus_addr_t addr;
+	int phy_phandle;
+
+	phy_phandle = fdtbus_get_phandle(phandle, "phy");
+	if (phy_phandle == -1)
+		phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
+	if (phy_phandle == -1)
+		return MII_PHY_ANY;
+
+	if (fdtbus_get_reg(phy_phandle, 0, &addr, NULL) != 0)
+		return MII_PHY_ANY;
+
+	return (int)addr;
 }
 
 static int
@@ -192,7 +210,8 @@ sunxi_gmac_attach(device_t parent, device_t self, void *aux)
 	if (sunxi_gmac_reset(phandle) != 0)
 		aprint_error_dev(self, "PHY reset failed\n");
 
-	dwc_gmac_attach(sc, MII_PHY_ANY, GMAC_MII_CLK_150_250M_DIV102);
+	dwc_gmac_attach(sc, sunxi_gmac_get_phyid(phandle),
+	    GMAC_MII_CLK_150_250M_DIV102);
 }
 
 CFATTACH_DECL_NEW(sunxi_gmac, sizeof(struct dwc_gmac_softc),
