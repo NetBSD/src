@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.17 2019/09/19 06:07:25 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.18 2019/11/01 04:28:14 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.17 2019/09/19 06:07:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.18 2019/11/01 04:28:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -87,8 +87,8 @@ static int ipsecif6_filter6(const struct ip6_hdr *, struct ipsec_variant *,
 static int ip_ipsec_ttl = IPSEC_TTL;
 static int ip_ipsec_copy_tos = 0;
 #ifdef INET6
-static int ip6_ipsec_hlim = IPSEC_HLIM;
-static int ip6_ipsec_pmtu = 0; /* XXX: per interface configuration?? */
+int ip6_ipsec_hlim = IPSEC_HLIM;
+int ip6_ipsec_pmtu = 0;
 static int ip6_ipsec_copy_tos = 0;
 #endif
 
@@ -506,7 +506,7 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	struct sockaddr_in6 *sin6_src;
 	struct sockaddr_in6 *sin6_dst;
 	struct ip6_hdr *ip6;
-	int proto, error;
+	int proto, error, flags;
 	u_int8_t itos, otos;
 	union {
 		struct sockaddr		dst;
@@ -626,12 +626,50 @@ ipsecif6_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	}
 
 	/*
-	 * force fragmentation to minimum MTU, to avoid path MTU discovery.
-	 * it is too painful to ask for resend of inner packet, to achieve
+	 * - IPSEC_PMTU_MINMTU
+	 *   Force fragmentation to minimum MTU to avoid path MTU discovery
+	 * - IPSEC_PMTU_OUTERMTU
+	 *   Trust outer MTU is large enough to send all packets
+	 *
+	 * It is too painful to ask for resend of inner packet, to achieve
 	 * path MTU discovery for encapsulated packets.
+	 *
+	 * See RFC4459.
 	 */
-	error = ip6_output(m, 0, ro_pc,
-	    ip6_ipsec_pmtu ? 0 : IPV6_MINMTU, 0, NULL, NULL);
+	if (sc->ipsec_pmtu == IPSEC_PMTU_SYSDEFAULT) {
+		switch (ip6_ipsec_pmtu) {
+		case IPSEC_PMTU_MINMTU:
+			flags = IPV6_MINMTU;
+			break;
+		case IPSEC_PMTU_OUTERMTU:
+			flags = 0;
+			break;
+		default:
+#ifdef DEBUG
+			log(LOG_DEBUG, "%s: ignore unexpected ip6_ipsec_pmtu %d\n",
+			    __func__, ip6_ipsec_pmtu);
+#endif
+			flags = IPV6_MINMTU;
+			break;
+		}
+	} else {
+		switch (sc->ipsec_pmtu) {
+		case IPSEC_PMTU_MINMTU:
+			flags = IPV6_MINMTU;
+			break;
+		case IPSEC_PMTU_OUTERMTU:
+			flags = 0;
+			break;
+		default:
+#ifdef DEBUG
+			log(LOG_DEBUG, "%s: ignore unexpected ipsec_pmtu of %s %d\n",
+			    __func__, ifp->if_xname, sc->ipsec_pmtu);
+#endif
+			flags = IPV6_MINMTU;
+			break;
+		}
+	}
+	error = ip6_output(m, 0, ro_pc, flags, 0, NULL, NULL);
 
 out:
 	if (error)
