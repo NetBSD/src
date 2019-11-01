@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.56 2019/10/28 19:15:51 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.57 2019/11/01 09:30:36 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1397,4 +1397,10 @@ sys/dev/audio.c					(apply patch)
 
 	Do not allow mmap(2) on audio devices opened read-only.
 	[nat, ticket #1419]
+
+sys/kern/subr_disk.c				1.129
+
+	Avoid division by zero in bounds_check_with_label() on misbehaving
+	or broken drives.
+	[cnst, ticket #1397]
 
