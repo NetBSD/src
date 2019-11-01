@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.62 2019/08/07 06:23:48 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.63 2019/11/01 15:11:43 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -68,6 +68,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_xen.h"
 #include "opt_kasan.h"
+#include "opt_kubsan.h"
 #endif
 
 #include <sys/atomic.h>
@@ -139,7 +140,11 @@ extern pt_entry_t *pte_base;
 
 #define NKL4_KIMG_ENTRIES	1
 #define NKL3_KIMG_ENTRIES	1
+#if defined(KUBSAN)
+#define NKL2_KIMG_ENTRIES	64	/* really big kernel */
+#else
 #define NKL2_KIMG_ENTRIES	48
+#endif
 
 /*
  * Since kva space is below the kernel in its entirety, we start off
