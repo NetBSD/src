@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.90 2019/10/28 18:41:58 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.91 2019/11/01 09:37:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5367,4 +5367,22 @@ etc/etc.zaurus/ttys				1.4
 
 	Switch default console tty from /dev/console to /dev/constty.
 	[abs, ticket #384]
+
+usr.sbin/syslogd/tls.c				1.17
+
+	With TLSv1.3 a client has to receive and process metadata.
+	[hannken, ticket #386]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.56
+sys/net/if_gre.c				1.176
+sys/net/if_l2tp.c				1.40
+sys/net/if_tap.c				1.114
+
+	Fix missing kpreempt_disable() before softint_schedule().
+	[knakahara, ticket #387]
+
+sys/uvm/uvm_map.c				1.365
+
+	PR kern/54395: fix virtual address alignment in uvm_map().
+	[rin, ticket #388]
 
