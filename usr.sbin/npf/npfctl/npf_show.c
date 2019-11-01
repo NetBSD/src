@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: npf_show.c,v 1.29 2019/08/10 22:23:55 rmind Exp $");
+__RCSID("$NetBSD: npf_show.c,v 1.30 2019/11/01 13:58:32 christos Exp $");
 
 #include <sys/socket.h>
 #define	__FAVOR_BSD
@@ -125,7 +125,7 @@ tcpflags2string(char *buf, u_int tfl)
 	if (tfl & TH_ACK)	buf[i++] = 'A';
 	if (tfl & TH_URG)	buf[i++] = 'U';
 	if (tfl & TH_ECE)	buf[i++] = 'E';
-	if (tfl & TH_CWR)	buf[i++] = 'C';
+	if (tfl & TH_CWR)	buf[i++] = 'W';
 	buf[i] = '\0';
 	return i;
 }
@@ -209,7 +209,7 @@ static char *
 print_tcpflags(npf_conf_info_t *ctx __unused, const uint32_t *words)
 {
 	const u_int tf = words[0], tf_mask = words[1];
-	char buf[16];
+	char buf[20];
 
 	size_t n = tcpflags2string(buf, tf);
 	if (tf != tf_mask) {
