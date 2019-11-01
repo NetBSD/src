@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.29 2019/11/01 12:44:54 bad Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.30 2019/11/01 13:22:08 bad Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.29 2019/11/01 12:44:54 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.30 2019/11/01 13:22:08 bad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -349,7 +349,7 @@ cpu_enable_psci(int phandle)
 
 #if !defined(AARCH64)
 	/*
-	 * not necessary on AARCH64. besids there it hangs the sysmte
+	 * not necessary on AARCH64. beside there it hangs the system
 	 * because cache ops are only functional after cpu_attach()
 	 * was called.
 	 */
