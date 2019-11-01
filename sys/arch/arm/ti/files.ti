@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.18 2019/10/31 17:08:54 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.19 2019/11/01 11:53:35 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -111,6 +111,16 @@ file	arch/arm/ti/ti_rng.c		ti_rng
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at fdt with omap3_dss
 file	arch/arm/ti/omap3_dss.c		omap3_dss
+
+# Memory controller
+device	tigpmc { } : fdt
+attach	tigpmc at fdt with ti_gpmc
+file	arch/arm/ti/ti_gpmc.c		ti_gpmc
+
+# NAND flash controller
+device	omapnand: nandbus
+attach	omapnand at fdt
+file	arch/arm/ti/omap2_nand.c	omapnand
 
 # SOC parameters
 defflag	opt_soc.h			SOC_TI

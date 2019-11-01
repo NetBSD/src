@@ -1,4 +1,4 @@
-/* $NetBSD: omap3_cm.c,v 1.3 2019/10/31 01:05:06 jmcneill Exp $ */
+/* $NetBSD: omap3_cm.c,v 1.4 2019/11/01 11:53:35 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.3 2019/10/31 01:05:06 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.4 2019/11/01 11:53:35 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -53,6 +53,12 @@ __KERNEL_RCSID(1, "$NetBSD: omap3_cm.c,v 1.3 2019/10/31 01:05:06 jmcneill Exp $"
 
 static int omap3_cm_match(device_t, cfdata_t, void *);
 static void omap3_cm_attach(device_t, device_t, void *);
+
+static int
+omap3_cm_hwmod_nopenable(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, int enable)
+{
+	return 0;
+}
 
 static int
 omap3_cm_hwmod_enable(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, int enable)
@@ -92,6 +98,8 @@ omap3_cm_hwmod_enable(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, int enab
 	TI_PRCM_HWMOD_MASK((_name), CM_PER_BASE, __BIT(_bit), (_parent), omap3_cm_hwmod_enable, (_flags))
 #define	OMAP3_CM_HWMOD_USBHOST(_name, _bit, _parent, _flags)	\
 	TI_PRCM_HWMOD_MASK((_name), CM_USBHOST_BASE, __BIT(_bit), (_parent), omap3_cm_hwmod_enable, (_flags))
+#define	OMAP3_CM_HWMOD_NOP(_name, _parent)			\
+	TI_PRCM_HWMOD_MASK((_name), 0, 0, (_parent), omap3_cm_hwmod_nopenable, 0)
 
 static const char * const compatible[] = {
 	"ti,omap3-cm",
@@ -154,6 +162,8 @@ static struct ti_prcm_clk omap3_cm_clks[] = {
 	OMAP3_CM_HWMOD_PER("gpio6", 17, "PERIPH_CLK", 0),
 
 	OMAP3_CM_HWMOD_USBHOST("usb_host_hs", 0, "PERIPH_CLK", 0),
+
+	OMAP3_CM_HWMOD_NOP("gpmc", "PERIPH_CLK"),
 };
 
 static void
