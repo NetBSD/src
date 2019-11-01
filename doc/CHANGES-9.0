@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.92 2019/11/01 18:19:19 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.93 2019/11/01 18:25:22 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5381,7 +5381,7 @@ sys/net/if_tap.c				1.114
 	Fix missing kpreempt_disable() before softint_schedule().
 	[knakahara, ticket #387]
 
-sys/uvm/uvm_map.c				1.365
+sys/uvm/uvm_map.c				1.365,1.366
 
 	PR kern/54395: fix virtual address alignment in uvm_map().
 	[rin, ticket #388]
