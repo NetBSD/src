@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.209 2019/10/27 07:08:15 maxv Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.210 2019/11/01 02:58:50 ozaki-r Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1760,6 +1760,11 @@ pad[0-9]*)
 qemufwcfg[0-9]*)
 	unit=${i#qemufwcfg}
 	mkdev qemufwcfg$unit c %qemufwcfg_chr% $unit 660
+	;;
+
+vio9p[0-9]*)
+	unit=${i#vio9p}
+	mkdev vio9p$unit c %vio9p_chr% $unit 660
 	;;
 
 nvram)
