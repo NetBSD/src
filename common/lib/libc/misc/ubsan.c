@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsan.c,v 1.8 2019/10/30 00:13:46 kamil Exp $	*/
+/*	$NetBSD: ubsan.c,v 1.9 2019/11/01 14:54:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,9 +38,9 @@
 
 #include <sys/cdefs.h>
 #if defined(_KERNEL)
-__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.8 2019/10/30 00:13:46 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsan.c,v 1.9 2019/11/01 14:54:07 kamil Exp $");
 #else
-__RCSID("$NetBSD: ubsan.c,v 1.8 2019/10/30 00:13:46 kamil Exp $");
+__RCSID("$NetBSD: ubsan.c,v 1.9 2019/11/01 14:54:07 kamil Exp $");
 #endif
 
 #if defined(_KERNEL)
@@ -290,6 +290,8 @@ void __ubsan_handle_float_cast_overflow(struct CFloatCastOverflowData *pData, un
 void __ubsan_handle_float_cast_overflow_abort(struct CFloatCastOverflowData *pData, unsigned long ulFrom);
 void __ubsan_handle_function_type_mismatch(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction);
 void __ubsan_handle_function_type_mismatch_abort(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction);
+void __ubsan_handle_function_type_mismatch_v1(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI);
+void __ubsan_handle_function_type_mismatch_v1_abort(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI);
 void __ubsan_handle_invalid_builtin(struct CInvalidBuiltinData *pData);
 void __ubsan_handle_invalid_builtin_abort(struct CInvalidBuiltinData *pData);
 void __ubsan_handle_load_invalid_value(struct CInvalidValueData *pData, unsigned long ulVal);
@@ -838,7 +840,45 @@ __ubsan_handle_function_type_mismatch_abort(struct CFunctionTypeMismatchData *pD
 
 	ASSERT(pData);
 
+	HandleFunctionTypeMismatch(true, pData, ulFunction);
+}
+
+void
+__ubsan_handle_function_type_mismatch_v1(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI)
+{
+
+	ASSERT(pData);
+#if 0
+	/*
+	 * Unimplemented.
+	 *
+	 * This UBSan handler is special as the check has to be impelemented
+	 * in an implementation. In order to handle it there is need to
+	 * introspect into C++ ABI internals (RTTI) and use low-level
+	 * C++ runtime interfaces.
+	 */
+
 	HandleFunctionTypeMismatch(false, pData, ulFunction);
+#endif
+}
+
+void
+__ubsan_handle_function_type_mismatch_v1_abort(struct CFunctionTypeMismatchData *pData, unsigned long ulFunction, unsigned long ulCalleeRTTI, unsigned long ulFnRTTI)
+{
+
+	ASSERT(pData);
+#if 0
+	/*
+	 * Unimplemented.
+	 *
+	 * This UBSan handler is special as the check has to be impelemented
+	 * in an implementation. In order to handle it there is need to
+	 * introspect into C++ ABI internals (RTTI) and use low-level
+	 * C++ runtime interfaces.
+	 */
+
+	HandleFunctionTypeMismatch(true, pData, ulFunction);
+#endif
 }
 
 void
