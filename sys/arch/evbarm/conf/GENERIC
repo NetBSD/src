@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.64 2019/10/31 17:08:54 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.65 2019/11/01 11:53:51 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -422,6 +422,7 @@ arml2cc* 	at l2cc?
 
 # Memory controller
 tegramc* 	at fdt?	pass 4		# NVIDIA Tegra MC
+tigpmc*		at fdt? pass 4		# TI OMAP2 GPMC
 
 # Firmware devices
 bcmmbox* 	at fdt?			# Broadcom VideoCore IV mailbox
@@ -633,7 +634,8 @@ ld3 		at sdmmc3
 ld* 		at sdmmc?
 
 # NAND Flash
-sunxinand* 	at fdt?			# NAND flash controller
+sunxinand* 	at fdt?			# Allwinner NAND flash controller
+omapnand*	at fdt?			# TI OMAP2 flash controller
 nand* 		at nandbus?
 flash* 		at nand? dynamic 1
 
