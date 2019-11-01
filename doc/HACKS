@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.194 2019/10/30 00:26:54 christos Exp $
+# $NetBSD: HACKS,v 1.195 2019/11/01 20:55:55 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -961,4 +961,13 @@ who	christos
 file	src/libexec/ld.elf_so/Makefile: 1.141
 descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
 	second pass loop with elm == 0xffffffff
+kcah
+
+port	alpha
+hack	userland binaries crash randomly (port-alpha/54307)
+cdate	Fri Nov  1 20:43:35 UTC 2019
+who	rin
+file	src/external/bsd/jemalloc/lib/Makefile.inc: 1.11
+descr	rtree.c and tcache.c need to be compiled with -O0, alternatively,
+	you can compile whole jemalloc with -DJEMALLOC_DEBUG.
 kcah
