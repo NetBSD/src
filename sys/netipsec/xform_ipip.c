@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipip.c,v 1.76 2019/06/12 22:23:50 christos Exp $	*/
+/*	$NetBSD: xform_ipip.c,v 1.77 2019/11/01 04:23:21 knakahara Exp $	*/
 /*	$FreeBSD: xform_ipip.c,v 1.3.2.1 2003/01/24 05:11:36 sam Exp $	*/
 /*	$OpenBSD: ip_ipip.c,v 1.25 2002/06/10 18:04:55 itojun Exp $ */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.76 2019/06/12 22:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipip.c,v 1.77 2019/11/01 04:23:21 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -575,7 +575,7 @@ ipe4_input(struct mbuf *m, struct secasvar *sav, int skip, int protoff)
 
 static int
 ipe4_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff, int flags)
 {
 	panic("%s: should not have been called", __func__);
 }

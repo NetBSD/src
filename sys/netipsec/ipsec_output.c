@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsec_output.c,v 1.83 2019/09/19 04:08:30 ozaki-r Exp $	*/
+/*	$NetBSD: ipsec_output.c,v 1.84 2019/11/01 04:23:21 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Sam Leffler, Errno Consulting
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.83 2019/09/19 04:08:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsec_output.c,v 1.84 2019/11/01 04:23:21 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -105,7 +105,7 @@ ipsec_register_done(struct mbuf *m, int *error)
 }
 
 static int
-ipsec_reinject_ipstack(struct mbuf *m, int af)
+ipsec_reinject_ipstack(struct mbuf *m, int af, int flags)
 {
 	int rv = -1;
 	struct route *ro;
@@ -127,7 +127,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 		 * We don't need massage, IPv6 header fields are always in
 		 * net endian.
 		 */
-		rv = ip6_output(m, NULL, ro, 0, NULL, NULL, NULL);
+		rv = ip6_output(m, NULL, ro, flags, NULL, NULL, NULL);
 		break;
 #endif
 	}
@@ -139,7 +139,7 @@ ipsec_reinject_ipstack(struct mbuf *m, int af)
 
 int
 ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav)
+    struct secasvar *sav, int flags)
 {
 	struct secasindex *saidx;
 	int error;
@@ -259,7 +259,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 #endif
 #ifdef INET6
 		case AF_INET6:
-			return ipsec6_process_packet(m, isr->next);
+			return ipsec6_process_packet(m, isr->next, flags);
 #endif
 		default:
 			IPSECLOG(LOG_DEBUG, "unknown protocol family %u\n",
@@ -278,7 +278,7 @@ ipsec_process_done(struct mbuf *m, const struct ipsecrequest *isr,
 	if (ipsec_register_done(m, &error) < 0)
 		goto bad;
 
-	return ipsec_reinject_ipstack(m, saidx->dst.sa.sa_family);
+	return ipsec_reinject_ipstack(m, saidx->dst.sa.sa_family, flags);
 
 bad:
 	m_freem(m);
@@ -507,7 +507,7 @@ ipsec4_process_packet(struct mbuf *m, const struct ipsecrequest *isr,
 				goto bad;
 
 			splx(s);
-			return ipsec_reinject_ipstack(m, AF_INET);
+			return ipsec_reinject_ipstack(m, AF_INET, 0);
 		}
 	}
 	KASSERT(sav != NULL);
@@ -628,9 +628,9 @@ noneed:
 			i = sizeof(struct ip6_hdr);
 			off = offsetof(struct ip6_hdr, ip6_nxt);
 		}
-		error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off);
+		error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off, 0);
 	} else {
-		error = ipsec_process_done(m, isr, sav);
+		error = ipsec_process_done(m, isr, sav, 0);
 	}
 	KEY_SA_UNREF(&sav);
 	splx(s);
@@ -734,7 +734,7 @@ in6_sa_equal_addrwithscope(const struct sockaddr_in6 *sa,
 }
 
 int
-ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
+ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr, int flags)
 {
 	struct secasvar *sav = NULL;
 	struct ip6_hdr *ip6;
@@ -757,7 +757,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 				goto bad;
 
 			splx(s);
-			return ipsec_reinject_ipstack(m, AF_INET6);
+			return ipsec_reinject_ipstack(m, AF_INET6, flags);
 		}
 	}
 
@@ -821,7 +821,7 @@ ipsec6_process_packet(struct mbuf *m, const struct ipsecrequest *isr)
 		if (error)
 			goto unrefsav;
 	}
-	error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off);
+	error = (*sav->tdb_xform->xf_output)(m, isr, sav, i, off, flags);
 	KEY_SA_UNREF(&sav);
 	splx(s);
 	return error;
