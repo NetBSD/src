@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.54.2.1 2019/09/05 09:11:03 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.54.2.2 2019/11/01 09:34:27 martin Exp $ */
 
 /******************************************************************************
 
@@ -266,8 +266,11 @@ ixgbe_mq_start(struct ifnet *ifp, struct mbuf *m)
 				    &txr->wq_cookie, curcpu());
 			} else
 				percpu_putref(adapter->txr_wq_enqueued);
-		} else
+		} else {
+			kpreempt_disable();
 			softint_schedule(txr->txr_si);
+			kpreempt_enable();
+		}
 	}
 
 	return (0);

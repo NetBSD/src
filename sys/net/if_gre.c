@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.175 2019/04/26 11:51:56 pgoyette Exp $ */
+/*	$NetBSD: if_gre.c,v 1.175.2.1 2019/11/01 09:34:27 martin Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.175 2019/04/26 11:51:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.175.2.1 2019/11/01 09:34:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -964,8 +964,11 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	if ((error = gre_bufq_enqueue(&sc->sc_snd, m)) != 0) {
 		sc->sc_oflow_ev.ev_count++;
 		m_freem(m);
-	} else
+	} else {
+		kpreempt_disable();
 		softint_schedule(sc->sc_si);
+		kpreempt_enable();
+	}
 
 end:
 	if (error)

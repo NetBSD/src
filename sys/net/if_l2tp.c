@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.35.2.1 2019/09/24 03:10:35 martin Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.35.2.2 2019/11/01 09:34:27 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.35.2.1 2019/09/24 03:10:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.35.2.2 2019/11/01 09:34:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -655,7 +655,9 @@ l2tp_start(struct ifnet *ifp)
 	if (var->lv_psrc == NULL || var->lv_pdst == NULL)
 		return;
 
+	kpreempt_disable();
 	softint_schedule(sc->l2tp_si);
+	kpreempt_enable();
 	l2tp_putref_variant(var, &psref);
 }
 
