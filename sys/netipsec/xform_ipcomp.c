@@ -1,4 +1,4 @@
-/*	$NetBSD: xform_ipcomp.c,v 1.68 2019/06/12 22:23:50 christos Exp $	*/
+/*	$NetBSD: xform_ipcomp.c,v 1.69 2019/11/01 04:23:21 knakahara Exp $	*/
 /*	$FreeBSD: xform_ipcomp.c,v 1.1.4.1 2003/01/24 05:11:36 sam Exp $	*/
 /* $OpenBSD: ip_ipcomp.c,v 1.1 2001/07/05 12:08:52 jjbg Exp $ */
 
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.68 2019/06/12 22:23:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xform_ipcomp.c,v 1.69 2019/11/01 04:23:21 knakahara Exp $");
 
 /* IP payload compression protocol (IPComp), see RFC 2393 */
 #if defined(_KERNEL_OPT)
@@ -366,7 +366,7 @@ bad:
  */
 static int
 ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
-    struct secasvar *sav, int skip, int protoff)
+    struct secasvar *sav, int skip, int protoff, int flags)
 {
 	char buf[IPSEC_ADDRSTRLEN];
 	const struct comp_algo *ipcompx;
@@ -385,7 +385,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	/* Don't process the packet if it is too short */
 	if (ralen < ipcompx->minlen) {
 		IPCOMP_STATINC(IPCOMP_STAT_MINLEN);
-		return ipsec_process_done(m, isr, sav);
+		return ipsec_process_done(m, isr, sav, 0);
 	}
 
 	hlen = IPCOMP_HLENGTH;
@@ -495,6 +495,7 @@ ipcomp_output(struct mbuf *m, const struct ipsecrequest *isr,
 	tc->tc_proto = sav->sah->saidx.proto;
 	tc->tc_skip = skip;
 	tc->tc_protoff = protoff;
+	tc->tc_flags = flags;
 	tc->tc_sav = sav;
 
 	/* Crypto operation descriptor */
@@ -524,7 +525,7 @@ ipcomp_output_cb(struct cryptop *crp)
 	const struct ipsecrequest *isr;
 	struct secasvar *sav;
 	struct mbuf *m, *mo;
-	int error, skip, rlen, roff;
+	int error, skip, rlen, roff, flags;
 	uint8_t prot;
 	uint16_t cpi;
 	struct ipcomp * ipcomp;
@@ -629,12 +630,13 @@ ipcomp_output_cb(struct cryptop *crp)
 		    "and compressed size is %d\n", rlen, crp->crp_olen);
 	}
 
+	flags = tc->tc_flags;
 	/* Release the crypto descriptor */
 	pool_cache_put(ipcomp_tdb_crypto_pool_cache, tc);
 	crypto_freereq(crp);
 
 	/* NB: m is reclaimed by ipsec_process_done. */
-	error = ipsec_process_done(m, isr, sav);
+	error = ipsec_process_done(m, isr, sav, flags);
 	KEY_SA_UNREF(&sav);
 	KEY_SP_UNREF(&isr->sp);
 	IPSEC_RELEASE_GLOBAL_LOCKS();
