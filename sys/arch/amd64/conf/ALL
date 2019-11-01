@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.127 2019/10/30 12:06:25 msaitoh Exp $
+# $NetBSD: ALL,v 1.128 2019/11/01 02:53:23 msaitoh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.127 $"
+#ident		"ALL-$Revision: 1.128 $"
 
 maxusers	64		# estimated number of users
 
@@ -1116,6 +1116,7 @@ qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
 rdcphy* at mii? phy ?			# RDC R6040 internal PHY
 rgephy* at mii? phy ?			# Realtek 8169S/8110S internal PHYs
 rlphy*	at mii? phy ?			# Realtek 8139/8201L PHYs
+smscphy* at mii? phy ?			# SMSC LAN87xx PHYs
 sqphy*	at mii? phy ?			# Seeq 80220/80221/80223 PHYs
 tlphy*	at mii? phy ?			# ThunderLAN PHYs
 tqphy*	at mii? phy ?			# TDK Semiconductor PHYs
