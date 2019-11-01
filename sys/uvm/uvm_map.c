@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.365 2019/11/01 08:26:18 rin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.366 2019/11/01 13:04:22 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.365 2019/11/01 08:26:18 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.366 2019/11/01 13:04:22 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -1905,7 +1905,8 @@ uvm_map_findspace(struct vm_map *map, vaddr_t hint, vsize_t length,
 	 * hint may not be aligned properly; we need round up or down it
 	 * before proceeding further.
 	 */
-	uvm_map_align_va(&hint, align, topdown);
+	if ((flags & UVM_FLAG_COLORMATCH) == 0)
+		uvm_map_align_va(&hint, align, topdown);
 
 	/*
 	 * Look for the first possible address; if there's already
