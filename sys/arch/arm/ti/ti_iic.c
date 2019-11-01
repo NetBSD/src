@@ -1,4 +1,4 @@
-/* $NetBSD: ti_iic.c,v 1.3 2019/10/31 10:21:29 jmcneill Exp $ */
+/* $NetBSD: ti_iic.c,v 1.4 2019/11/01 09:49:21 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2013 Manuel Bouyer.  All rights reserved.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.3 2019/10/31 10:21:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_iic.c,v 1.4 2019/11/01 09:49:21 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ struct ti_iic_softc {
 	kmutex_t		sc_mtx;
 	kcondvar_t		sc_cv;
 	ti_i2cop_t		sc_op;
+	int			sc_opflags;
 	int			sc_buflen;
 	int			sc_bufidx;
 	char			*sc_buf;
@@ -308,14 +309,16 @@ ti_iic_intr(void *arg)
 	uint32_t stat;
 
 	mutex_enter(&sc->sc_mtx);
-	DPRINTF(("ti_iic_intr\n"));
-	stat = I2C_READ_REG(sc, I2C_IRQSTATUS);
-	DPRINTF(("ti_iic_intr pre handle sc->sc_op eq %#x\n", sc->sc_op));
-	ti_iic_handle_intr(sc, stat);
-	I2C_WRITE_REG(sc, I2C_IRQSTATUS, stat);
-	if (sc->sc_op == TI_I2CERROR || sc->sc_op == TI_I2CDONE) {
-		DPRINTF(("ti_iic_intr post handle sc->sc_op %#x\n", sc->sc_op));
-		cv_broadcast(&sc->sc_cv);
+	DPRINTF(("ti_iic_intr opflags=%#x\n", sc->sc_opflags));
+	if ((sc->sc_opflags & I2C_F_POLL) == 0) {
+		stat = I2C_READ_REG(sc, I2C_IRQSTATUS);
+		DPRINTF(("ti_iic_intr pre handle sc->sc_op eq %#x\n", sc->sc_op));
+		ti_iic_handle_intr(sc, stat);
+		I2C_WRITE_REG(sc, I2C_IRQSTATUS, stat);
+		if (sc->sc_op == TI_I2CERROR || sc->sc_op == TI_I2CDONE) {
+			DPRINTF(("ti_iic_intr post handle sc->sc_op %#x\n", sc->sc_op));
+			cv_broadcast(&sc->sc_cv);
+		}
 	}
 	mutex_exit(&sc->sc_mtx);
 	DPRINTF(("ti_iic_intr status 0x%x\n", stat));
@@ -423,9 +426,14 @@ ti_iic_reset(struct ti_iic_softc *sc)
 
 
 	/* XXX standard speed only */
-	psc = 3;
-	scll = 53;
-	sclh = 55;
+	if (sc->sc_type == TI_IIC_OMAP3) {
+		psc = (96000000 / 19200000) - 1;
+		scll = sclh = (19200000 / (2 * 100000)) - 6;
+	} else {
+		psc = 3;
+		scll = 53;
+		sclh = 55;
+	}
 
 	/* Clocks */
 	I2C_WRITE_REG(sc, I2C_PSC, psc);
@@ -481,6 +489,7 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 
 	mutex_enter(&sc->sc_mtx);
 	sc->sc_op = op;
+	sc->sc_opflags = flags;
 	sc->sc_buf = buf;
 	sc->sc_buflen = buflen;
 	sc->sc_bufidx = 0;
@@ -491,7 +500,7 @@ ti_iic_op(struct ti_iic_softc *sc, i2c_addr_t addr, ti_i2cop_t op,
 	I2C_WRITE_REG(sc, I2C_SA, (addr & I2C_SA_MASK));
 	DPRINTF(("SA 0x%x len %d\n", I2C_READ_REG(sc, I2C_SA), I2C_READ_REG(sc, I2C_CNT)));
 
-	if ((flags & I2C_F_POLL) == 0) {
+	if ((flags & I2C_F_POLL) == 0 || sc->sc_type == TI_IIC_OMAP3) {
 		/* clear any pending interrupt */
 		I2C_WRITE_REG(sc, I2C_IRQSTATUS,
 		    I2C_READ_REG(sc, I2C_IRQSTATUS));
