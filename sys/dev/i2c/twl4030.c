@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.1 2019/10/30 21:38:28 jmcneill Exp $ */
+/* $NetBSD: twl4030.c,v 1.2 2019/11/01 09:49:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.1 2019/10/30 21:38:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.2 2019/11/01 09:49:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,12 @@ __KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.1 2019/10/30 21:38:28 jmcneill Exp $")
 #define	ADDR_AUX	0x02
 #define	ADDR_POWER	0x03
 
+/* INTBR registers */
+#define	IDCODE_7_0	0x85
+#define	IDCODE_15_8	0x86
+#define	IDCODE_23_16	0x87
+#define	IDCODE_31_24	0x88
+
 /* GPIO registers */
 #define	GPIOBASE		0x98
 #define	GPIODATAIN(pin)		(GPIOBASE + 0x00 + (pin) / 8)
@@ -60,6 +66,18 @@ __KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.1 2019/10/30 21:38:28 jmcneill Exp $")
 #define	GPIOPUPDCTR(pin)	(GPIOBASE + 0x13 + (n) / 4)
 #define	 PUPD_BITS(pin)		__BITS((pin) % 4 + 1, (pin) % 4)
 
+/* POWER registers */
+#define	SECONDS_REG		0x1c
+#define	MINUTES_REG		0x1d
+#define	HOURS_REG		0x1e
+#define	DAYS_REG		0x1f
+#define	MONTHS_REG		0x20
+#define	YEARS_REG		0x21
+#define	WEEKS_REG		0x22
+#define	RTC_CTRL_REG		0x29
+#define	 GET_TIME		__BIT(6)
+#define	 STOP_RTC		__BIT(0)
+
 struct twl_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
@@ -67,6 +85,8 @@ struct twl_softc {
 	int		sc_phandle;
 
 	int		sc_npins;
+
+	struct todr_chip_handle sc_todr;
 };
 
 struct twl_pin {
@@ -81,6 +101,7 @@ static const struct device_compatible_entry compat_data[] = {
 	{ NULL,				0 }
 };
 
+static const char * const rtc_compatible[] = { "ti,twl4030-rtc", NULL };
 static const char * const gpio_compatible[] = { "ti,twl4030-gpio", NULL };
 
 static uint8_t
@@ -117,6 +138,70 @@ twl_write(struct twl_softc *sc, uint8_t mod, uint8_t reg, uint8_t val, int flags
 
 #define	INT_READ(sc, reg)	twl_read((sc), ADDR_INT, (reg), I2C_F_POLL)
 #define	INT_WRITE(sc, reg, val)	twl_write((sc), ADDR_INT, (reg), (val), I2C_F_POLL)
+
+#define	POWER_READ(sc, reg)	twl_read((sc), ADDR_POWER, (reg), I2C_F_POLL)
+#define	POWER_WRITE(sc, reg, val) twl_write((sc), ADDR_POWER, (reg), (val), I2C_F_POLL)
+
+static void
+twl_rtc_enable(struct twl_softc *sc, bool onoff)
+{
+	uint8_t rtc_ctrl;
+
+	rtc_ctrl = POWER_READ(sc, RTC_CTRL_REG);
+	if (onoff)
+		rtc_ctrl |= STOP_RTC;	/* 1: RTC is running */
+	else
+		rtc_ctrl &= ~STOP_RTC;	/* 0: RTC is frozen */
+	POWER_WRITE(sc, RTC_CTRL_REG, rtc_ctrl);
+}
+
+static int
+twl_rtc_gettime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct twl_softc *sc = tch->cookie;
+	uint8_t seconds_reg, minutes_reg, hours_reg,
+	    days_reg, months_reg, years_reg, weeks_reg;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	seconds_reg = POWER_READ(sc, SECONDS_REG);
+	minutes_reg = POWER_READ(sc, MINUTES_REG);
+	hours_reg = POWER_READ(sc, HOURS_REG);
+	days_reg = POWER_READ(sc, DAYS_REG);
+	months_reg = POWER_READ(sc, MONTHS_REG);
+	years_reg = POWER_READ(sc, YEARS_REG);
+	weeks_reg = POWER_READ(sc, WEEKS_REG);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	dt->dt_sec = bcdtobin(seconds_reg);
+	dt->dt_min = bcdtobin(minutes_reg);
+	dt->dt_hour = bcdtobin(hours_reg);
+	dt->dt_day = bcdtobin(days_reg);
+	dt->dt_mon = bcdtobin(months_reg);
+	dt->dt_year = bcdtobin(years_reg) + 2000;
+	dt->dt_wday = bcdtobin(weeks_reg);
+
+	return 0;
+}
+
+static int
+twl_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
+{
+	struct twl_softc *sc = tch->cookie;
+
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	twl_rtc_enable(sc, false);
+        POWER_WRITE(sc, SECONDS_REG, bintobcd(dt->dt_sec));
+        POWER_WRITE(sc, MINUTES_REG, bintobcd(dt->dt_min));
+        POWER_WRITE(sc, HOURS_REG, bintobcd(dt->dt_hour));
+        POWER_WRITE(sc, DAYS_REG, bintobcd(dt->dt_day));
+        POWER_WRITE(sc, MONTHS_REG, bintobcd(dt->dt_mon));
+        POWER_WRITE(sc, YEARS_REG, bintobcd(dt->dt_year % 100));
+        POWER_WRITE(sc, WEEKS_REG, bintobcd(dt->dt_wday));
+	twl_rtc_enable(sc, true);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	return 0;
+}
 
 static int
 twl_gpio_config(struct twl_softc *sc, int pin, int flags)
@@ -235,6 +320,19 @@ static struct fdtbus_gpio_controller_func twl_gpio_funcs = {
 };
 
 static void
+twl_rtc_attach(struct twl_softc *sc, const int phandle)
+{
+	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	twl_rtc_enable(sc, true);
+	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+
+	sc->sc_todr.todr_gettime_ymdhms = twl_rtc_gettime;
+	sc->sc_todr.todr_settime_ymdhms = twl_rtc_settime;
+	sc->sc_todr.cookie = sc;
+	fdtbus_todr_attach(sc->sc_dev, phandle, &sc->sc_todr);
+}
+
+static void
 twl_gpio_attach(struct twl_softc *sc, const int phandle)
 {
 	fdtbus_register_gpio_controller(sc->sc_dev, phandle, &twl_gpio_funcs);
@@ -257,6 +355,7 @@ twl_attach(device_t parent, device_t self, void *aux)
 {
 	struct twl_softc * const sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	uint32_t idcode;
 	int child;
 
 	sc->sc_dev = self;
@@ -272,9 +371,20 @@ twl_attach(device_t parent, device_t self, void *aux)
 		if (of_match_compatible(child, gpio_compatible)) {
 			aprint_normal(", GPIO");
 			twl_gpio_attach(sc, child);
+		} else if (of_match_compatible(child, rtc_compatible)) {
+			aprint_normal(", RTC");
+			twl_rtc_attach(sc, child);
 		}
 	}
-	aprint_normal("\n");
+
+	I2C_LOCK(sc);
+	idcode = INT_READ(sc, IDCODE_7_0);
+	idcode |= (uint32_t)INT_READ(sc, IDCODE_15_8) << 8;
+	idcode |= (uint32_t)INT_READ(sc, IDCODE_23_16) << 16;
+	idcode |= (uint32_t)INT_READ(sc, IDCODE_31_24) << 24;
+	I2C_UNLOCK(sc);
+
+	aprint_normal(", IDCODE 0x%08x\n", idcode);
 }
 
 CFATTACH_DECL_NEW(twl, sizeof(struct twl_softc),
