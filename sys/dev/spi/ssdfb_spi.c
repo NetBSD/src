@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.1 2019/11/02 14:33:27 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.2 2019/11/02 17:13:20 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.1 2019/11/02 14:33:27 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.2 2019/11/02 17:13:20 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -170,7 +170,7 @@ ssdfb_spi_xfer_rect_3wire_ssd1322(void *cookie, uint8_t fromcol, uint8_t tocol,
 	/*
 	 * Unlike iic(4), there is no way to force spi(4) to use polling.
 	 */
-	if (usepoll || cold)
+	if (usepoll && !cold)
 		return 0;
 
 	ssdfb_bitstream_init(&s, bitstream);
@@ -294,7 +294,7 @@ ssdfb_spi_xfer_rect_4wire_ssd1322(void *cookie, uint8_t fromcol, uint8_t tocol,
 	/*
 	 * Unlike iic(4), there is no way to force spi(4) to use polling.
 	 */
-	if (usepoll || cold)
+	if (usepoll && !cold)
 		return 0;
 
 	ssdfb_spi_4wire_set_dc(sc, 0);
