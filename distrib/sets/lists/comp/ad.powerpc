@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.95 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: ad.powerpc,v 1.96 2019/11/02 21:34:58 christos Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -75,17 +75,24 @@
 ./usr/include/gcc-7/spu2vmx.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/tgmath.h			comp-c-include		gcc=7
 ./usr/include/gcc-7/vec_types.h			comp-c-include		gcc=7
+./usr/include/gcc-8/amo.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/altivec.h			comp-c-include		gcc=8
+./usr/include/gcc-8/bmi2intrin.h		comp-c-include		gcc=8
+./usr/include/gcc-8/bmiintrin.h			comp-c-include		gcc=8
+./usr/include/gcc-8/emmintrin.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/htmintrin.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/htmxlintrin.h		comp-c-include		gcc=8
+./usr/include/gcc-8/mm_malloc.h			comp-c-include		gcc=8
+./usr/include/gcc-8/mmintrin.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/paired.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/ppc-asm.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/ppu_intrinsics.h		comp-c-include		gcc=8
 ./usr/include/gcc-8/si2vmx.h			comp-c-include		gcc=8
-./usr/include/gcc-8/spe.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/spu2vmx.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/tgmath.h			comp-c-include		gcc=8
 ./usr/include/gcc-8/vec_types.h			comp-c-include		gcc=8
+./usr/include/gcc-8/x86intrin.h			comp-c-include		gcc=8
+./usr/include/gcc-8/xmmintrin.h			comp-c-include		gcc=8
 ./usr/include/powerpc				comp-c-include
 ./usr/include/powerpc/ansi.h			comp-c-include
 ./usr/include/powerpc/aout_machdep.h		comp-c-include
