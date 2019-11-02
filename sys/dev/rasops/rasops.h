@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.48 2019/08/14 00:51:10 rin Exp $ */
+/* 	$NetBSD: rasops.h,v 1.49 2019/11/02 01:14:57 tsutsui Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -149,10 +149,8 @@ struct rasops_info {
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
 
-#if NRASOPS_ROTATION > 0
 	/* Used to intercept putchar to permit display rotation */
 	struct	wsdisplay_emulops ri_real_ops;
-#endif
 };
 
 #define CHAR_IN_FONT(c, font)						\
