@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb.c,v 1.9 2019/11/02 14:18:36 tnn Exp $ */
+/* $NetBSD: ssdfb.c,v 1.10 2019/11/02 17:13:20 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.9 2019/11/02 14:18:36 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb.c,v 1.10 2019/11/02 17:13:20 tnn Exp $");
 
 #include "opt_ddb.h"
 
@@ -331,7 +331,8 @@ ssdfb_attach(struct ssdfb_softc *sc, int flags)
 	if (sc->sc_is_console)
 		ssdfb_set_usepoll(sc, true);
 
-	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT, IPL_SCHED);
+	mutex_init(&sc->sc_cond_mtx, MUTEX_DEFAULT,
+	    ISSET(flags, SSDFB_ATTACH_FLAG_MPSAFE) ? IPL_SCHED : IPL_BIO);
 	cv_init(&sc->sc_cond, "ssdfb");
 	kt_flags = KTHREAD_MUSTJOIN;
 	/* XXX spi(4) is not MPSAFE yet. */
