@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.76 2019/09/26 01:37:52 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.77 2019/11/02 11:56:34 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.76 2019/09/26 01:37:52 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.77 2019/11/02 11:56:34 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -238,7 +238,10 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			 __func__, error));
 			goto out;
 		}
-		idat = tmpinfo.play.sample_rate;
+		if (tmpinfo.mode == AUMODE_RECORD)
+			idat = tmpinfo.record.sample_rate;
+		else
+			idat = tmpinfo.play.sample_rate;
 		DPRINTF(("%s: SNDCTL_PCM_READ_RATE < %d\n", __func__, idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
