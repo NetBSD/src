@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfb_spi.c,v 1.2 2019/11/02 17:13:20 tnn Exp $ */
+/* $NetBSD: ssdfb_spi.c,v 1.3 2019/11/02 22:55:57 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.2 2019/11/02 17:13:20 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ssdfb_spi.c,v 1.3 2019/11/02 22:55:57 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -73,18 +73,28 @@ static void	ssdfb_bitstream_final(struct bs_state *);
 CFATTACH_DECL_NEW(ssdfb_spi, sizeof(struct ssdfb_spi_softc),
     ssdfb_spi_match, ssdfb_spi_attach, NULL, NULL);
 
+static const struct device_compatible_entry compat_data[] = {
+	{ "solomon,ssd1322",	0 },
+	{ NULL,			0 }
+};
+
 static int
 ssdfb_spi_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct spi_attach_args *sa = aux;
+	int res;
+
+	res = spi_compatible_match(sa, match, compat_data);
+	if (!res)
+		return res;
 
 	/*
 	 * SSD1306 and SSD1322 data sheets specify 100ns cycle time.
 	 */
 	if (spi_configure(sa->sa_handle, SPI_MODE_0, 10000000))
-		return 0;
+		res = 0;
 
-	return 1;
+	return res;
 }
 
 static void
