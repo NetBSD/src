@@ -1,4 +1,4 @@
-.\"	$NetBSD: jmphy.4,v 1.1 2019/10/30 13:32:32 msaitoh Exp $
+.\"	$NetBSD: jmphy.4,v 1.2 2019/11/02 16:34:49 wiz Exp $
 .\"	$openbsd: jmphy.4,v 1.2 2013/07/16 16:05:49 schwarze Exp $
 .\"
 .\" Copyright (c) 2008 Jonathan Gray <jsg@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd October 30 2019
+.Dd October 30, 2019
 .Dt JMPHY 4
 .Os
 .Sh NAME
@@ -38,7 +38,9 @@ JMP211 10/100/Gigabit Ethernet PHYs.
 The
 .Nm
 device driver first appeared in
-.Ox 4.5 .
+.Ox 4.5
+and
+.Nx 9.0 .
 .Sh AUTHORS
 .An -nosplit
 The
@@ -52,10 +54,10 @@ and ported to
 by
 .An Jonathan Gray Aq Mt jsg@openbsd.org
 and then ported to
-.Nx 9.0
+.Nx
 by
-.An Masanobu SAITOH.
+.An Masanobu SAITOH .
 .Sh BUGS
-It the media is set to gigabit speed, it may not linkup or takes very log time
-to go link up.
-It depends on the link partnet.
+It the media is set to gigabit speed, it may not link up or take a very long time
+to set the link up.
+It depends on the link partner.
