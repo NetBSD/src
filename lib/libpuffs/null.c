@@ -1,4 +1,4 @@
-/*	$NetBSD: null.c,v 1.34 2019/09/23 12:00:57 christos Exp $	*/
+/*	$NetBSD: null.c,v 1.35 2019/11/02 18:14:36 tnn Exp $	*/
 
 /*
  * Copyright (c) 2007  Antti Kantee.  All Rights Reserved.
@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: null.c,v 1.34 2019/09/23 12:00:57 christos Exp $");
+__RCSID("$NetBSD: null.c,v 1.35 2019/11/02 18:14:36 tnn Exp $");
 #endif /* !lint */
 
 /*
@@ -412,20 +412,25 @@ puffs_null_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 	int fd, rv;
 	int fflags;
 	struct stat sb;
+	DIR *dirp;
 
 	rv = 0;
 	if (stat(PNPATH(pn), &sb) == -1)
 		return errno;
 	if (S_ISDIR(sb.st_mode)) {
-		DIR *dirp;
-		if ((dirp = opendir(PNPATH(pn))) == 0)
+		if ((dirp = opendir(PNPATH(pn))) == NULL)
 			return errno;
 		fd = dirfd(dirp);
-		if (fd == -1)
-			return errno;
+		if (fd == -1) {
+			rv = errno;
+			closedir(dirp);
+			return rv;
+		}
 
 		if (fsync(fd) == -1)
 			rv = errno;
+
+		closedir(dirp);
 	} else {
 		fd = writeableopen(PNPATH(pn));
 		if (fd == -1)
@@ -440,9 +445,9 @@ puffs_null_node_fsync(struct puffs_usermount *pu, puffs_cookie_t opc,
 
 		if (fsync_range(fd, fflags, offlo, offhi - offlo) == -1)
 			rv = errno;
-	}
 
-	close(fd);
+		close(fd);
+	}
 
 	return rv;
 }
