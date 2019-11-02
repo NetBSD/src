@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.36 2019/02/02 04:52:16 isaki Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.37 2019/11/02 11:48:23 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: ossaudio.c,v 1.36 2019/02/02 04:52:16 isaki Exp $");
+__RCSID("$NetBSD: ossaudio.c,v 1.37 2019/11/02 11:48:23 isaki Exp $");
 
 /*
  * This is an OSS (Linux) sound API emulator.
@@ -134,7 +134,10 @@ audio_ioctl(int fd, unsigned long com, void *argp)
 		retval = ioctl(fd, AUDIO_GETBUFINFO, &tmpinfo);
 		if (retval < 0)
 			return retval;
-		INTARG = tmpinfo.play.sample_rate;
+		if (tmpinfo.mode == AUMODE_RECORD)
+			INTARG = tmpinfo.record.sample_rate;
+		else
+			INTARG = tmpinfo.play.sample_rate;
 		break;
 	case SNDCTL_DSP_STEREO:
 		AUDIO_INITINFO(&tmpinfo);
