@@ -1,4 +1,4 @@
-/* $NetBSD: ssdfbvar.h,v 1.4 2019/10/22 22:03:27 tnn Exp $ */
+/* $NetBSD: ssdfbvar.h,v 1.5 2019/11/02 14:18:36 tnn Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -36,6 +36,7 @@
 #define SSDFB_ATTACH_FLAG_UPSIDEDOWN		0x00000100
 #define SSDFB_ATTACH_FLAG_INVERSE		0x00000200
 #define SSDFB_ATTACH_FLAG_CONSOLE		0x00000400
+#define SSDFB_ATTACH_FLAG_MPSAFE		0x00000800
 
 /*
  * Fundamental commands
@@ -159,14 +160,14 @@
 #define SSD1322_CMD_ENTIRE_DISPLAY_ON			0xa5
 #define SSD1322_CMD_NORMAL_DISPLAY			0xa6
 #define SSD1322_CMD_INVERSE_DISPLAY			0xa7
+#define SSD1322_CMD_SET_SLEEP_MODE_ON			0xae
+#define SSD1322_CMD_SET_SLEEP_MODE_OFF			0xaf
 
 #define SSD1322_CMD_ENABLE_PARTIAL_DISPLAY		0xa8
 #define SSD1322_CMD_EXIT_PARTIAL_DISPLAY		0xa9
 #define SSD1322_CMD_FUNCTION_SELECTION			0xab
 	#define SSD1322_FUNCTION_SELECTION_EXTERNAL_VDD	0
 	#define SSD1322_FUNCTION_SELECTION_INTERNAL_VDD	__BIT(0)
-#define SSD1322_CMD_SET_SLEEP_MODE_ON			0xae
-#define SSD1322_CMD_SET_SLEEP_MODE_OFF			0xaf
 #define SSD1322_CMD_SET_PHASE_LENGTH			0xb1
 	#define SSD1322_PHASE_LENGTH_PHASE_2_MASK	__BITS(7, 4)
 	#define SSD1322_DEFAULT_PHASE_2			7
@@ -245,6 +246,7 @@ struct ssdfb_product {
 	const char			*p_name;
 	int				p_width;
 	int				p_height;
+	int				p_bits_per_pixel;
 	int				p_panel_shift;
 	uint8_t				p_fosc;
 	uint8_t				p_fosc_div;
@@ -254,9 +256,8 @@ struct ssdfb_product {
 	uint8_t				p_vcomh_deselect_level;
 	uint8_t				p_default_contrast;
 	uint8_t				p_multiplex_ratio;
-	uint8_t				p_chargepump_cmd;
-	uint8_t				p_chargepump_arg;
 	int				(*p_init)(struct ssdfb_softc *);
+	int				(*p_sync)(struct ssdfb_softc *, bool);
 };
 
 struct ssdfb_softc {
