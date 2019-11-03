@@ -1,4 +1,4 @@
-/* $NetBSD: twl4030.c,v 1.2 2019/11/01 09:49:55 jmcneill Exp $ */
+/* $NetBSD: twl4030.c,v 1.3 2019/11/03 09:34:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -26,8 +26,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#include "opt_fdt.h"
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.2 2019/11/01 09:49:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: twl4030.c,v 1.3 2019/11/03 09:34:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,8 +103,10 @@ static const struct device_compatible_entry compat_data[] = {
 	{ NULL,				0 }
 };
 
+#ifdef FDT
 static const char * const rtc_compatible[] = { "ti,twl4030-rtc", NULL };
 static const char * const gpio_compatible[] = { "ti,twl4030-gpio", NULL };
+#endif
 
 static uint8_t
 twl_read(struct twl_softc *sc, uint8_t mod, uint8_t reg, int flags)
@@ -203,6 +207,7 @@ twl_rtc_settime(todr_chip_handle_t tch, struct clock_ymdhms *dt)
 	return 0;
 }
 
+#ifdef FDT
 static int
 twl_gpio_config(struct twl_softc *sc, int pin, int flags)
 {
@@ -318,6 +323,7 @@ static struct fdtbus_gpio_controller_func twl_gpio_funcs = {
 	.read = twl_gpio_read,
 	.write = twl_gpio_write,
 };
+#endif /* !FDT */
 
 static void
 twl_rtc_attach(struct twl_softc *sc, const int phandle)
@@ -329,13 +335,19 @@ twl_rtc_attach(struct twl_softc *sc, const int phandle)
 	sc->sc_todr.todr_gettime_ymdhms = twl_rtc_gettime;
 	sc->sc_todr.todr_settime_ymdhms = twl_rtc_settime;
 	sc->sc_todr.cookie = sc;
+#ifdef FDT
 	fdtbus_todr_attach(sc->sc_dev, phandle, &sc->sc_todr);
+#else
+	todr_attach(&sc->sc_todr);
+#endif
 }
 
 static void
 twl_gpio_attach(struct twl_softc *sc, const int phandle)
 {
+#ifdef FDT
 	fdtbus_register_gpio_controller(sc->sc_dev, phandle, &twl_gpio_funcs);
+#endif
 }
 
 static int
@@ -347,6 +359,9 @@ twl_match(device_t parent, cfdata_t match, void *aux)
 	if (iic_use_direct_match(ia, match, compat_data, &match_result))
 		return match_result;
 
+	if (ia->ia_addr == 0x48)
+		return I2C_MATCH_ADDRESS_ONLY;
+
 	return 0;
 }
 
@@ -356,7 +371,6 @@ twl_attach(device_t parent, device_t self, void *aux)
 	struct twl_softc * const sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
 	uint32_t idcode;
-	int child;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -367,7 +381,8 @@ twl_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": TWL4030");
 
-	for (child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
+#ifdef FDT
+	for (int child = OF_child(sc->sc_phandle); child; child = OF_peer(child)) {
 		if (of_match_compatible(child, gpio_compatible)) {
 			aprint_normal(", GPIO");
 			twl_gpio_attach(sc, child);
@@ -376,6 +391,11 @@ twl_attach(device_t parent, device_t self, void *aux)
 			twl_rtc_attach(sc, child);
 		}
 	}
+#else
+	aprint_normal("\n");
+	twl_gpio_attach(sc, -1);
+	twl_rtc_attach(sc, -1);
+#endif
 
 	I2C_LOCK(sc);
 	idcode = INT_READ(sc, IDCODE_7_0);
