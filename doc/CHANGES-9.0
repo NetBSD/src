@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.93 2019/11/01 18:25:22 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.94 2019/11/03 11:42:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5401,4 +5401,27 @@ sys/arch/x86/x86/cpu_rng.c			1.10
 	PR kern/54655: check CPU support of RDRAND before calling
 	cpu_rng_rdrand().
 	[taca, ticket #390]
+
+sys/arch/zaurus/conf/Makefile.zaurus.inc	1.10
+sys/arch/zaurus/stand/zbsdmod/Makefile		1.12
+sys/arch/zaurus/stand/zbsdmod/compat_linux.h	1.7
+sys/arch/zaurus/stand/zbsdmod/zbsdmod.c		1.10,1.11
+
+	Explicitly set empty LINKENTRY to keep ENTRY address specified
+	in ldscript. Cacheline-align code used to enter the kernel.
+	Misc cleanup to avoid future confusion:
+	- Remove more unnecessary debug sections
+	- Use DBG instead of COPTS to specify -Os as defined in bsd.prog.mk
+	- Use CFLAGS and CPPFLAGS correctly
+	- Explicitly set -ffreestanding
+	Make sure to clear bss before jumping to a kernel copied from
+	load buffer.
+	[tsutsui, ticket #391]
+
+doc/HACKS					1.195,1.196
+external/bsd/jemalloc/include/jemalloc/internal/jemalloc_internal_defs.h 1.11
+external/bsd/jemalloc/lib/Makefile.inc		1.11
+
+	PR port-alpha/54307: workaround for random crash of userland binaries.
+	[rin, ticket #392]
 
