@@ -1,4 +1,4 @@
-# $NetBSD: HACKS,v 1.195 2019/11/01 20:55:55 rin Exp $
+# $NetBSD: HACKS,v 1.196 2019/11/03 07:10:42 rin Exp $
 #
 # This file is intended to document workarounds for currently unsolved
 # (mostly) compiler bugs.
@@ -964,7 +964,7 @@ descr	Disable optimization for rtld.c on the vax with gcc-7. Crashes on the
 kcah
 
 port	alpha
-hack	userland binaries crash randomly (port-alpha/54307)
+hack	GCC 7.4/8.3: userland binaries crash randomly (port-alpha/54307)
 cdate	Fri Nov  1 20:43:35 UTC 2019
 who	rin
 file	src/external/bsd/jemalloc/lib/Makefile.inc: 1.11
