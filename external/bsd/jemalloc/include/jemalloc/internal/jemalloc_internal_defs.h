@@ -47,9 +47,13 @@
  */
 #ifdef _LP64
 /* XXX: I will take care of this later */
-#define LG_VADDR 48
+# ifdef __alpha__
+#  define LG_VADDR 43	/* bit 42 indicates direct map, 42--63 are same */
+# else
+#  define LG_VADDR 48
+# endif
 #else
-#define LG_VADDR 32
+# define LG_VADDR 32
 #endif
 
 /* Defined if C11 atomics are available. */
