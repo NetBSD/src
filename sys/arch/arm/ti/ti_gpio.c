@@ -1,4 +1,4 @@
-/* $NetBSD: ti_gpio.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $ */
+/* $NetBSD: ti_gpio.c,v 1.3 2019/11/03 11:34:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.3 2019/11/03 11:34:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -44,16 +44,72 @@ __KERNEL_RCSID(0, "$NetBSD: ti_gpio.c,v 1.2 2019/10/29 22:19:13 jmcneill Exp $")
 
 #include <arm/ti/ti_prcm.h>
 
-#define	GPIO_OE				0x34
-#define	GPIO_DATAIN			0x38
-#define	GPIO_CLEARDATAOUT		0x90
-#define	GPIO_SETDATAOUT			0x94
+#define	TI_GPIO_NPINS			32
+
+enum ti_gpio_type {
+	TI_GPIO_OMAP3,
+	TI_GPIO_OMAP4,
+	TI_NGPIO
+};
+
+enum {
+	GPIO_IRQSTATUS1,
+	GPIO_IRQENABLE1,	/* OMAP3 */
+	GPIO_IRQENABLE1_SET,	/* OMAP4 */
+	GPIO_IRQENABLE1_CLR,	/* OMAP4 */
+	GPIO_OE,
+	GPIO_DATAIN,
+	GPIO_DATAOUT,
+	GPIO_LEVELDETECT0,
+	GPIO_LEVELDETECT1,
+	GPIO_RISINGDETECT,
+	GPIO_FALLINGDETECT,
+	GPIO_CLEARDATAOUT,
+	GPIO_SETDATAOUT,
+	GPIO_NREG
+};
+
+static const u_int ti_gpio_regmap[TI_NGPIO][GPIO_NREG] = {
+	[TI_GPIO_OMAP3] = {
+		[GPIO_IRQSTATUS1]	= 0x18,
+		[GPIO_IRQENABLE1]	= 0x1c,
+		[GPIO_OE]		= 0x34,
+		[GPIO_DATAIN]		= 0x38,
+		[GPIO_DATAOUT]		= 0x3c,
+		[GPIO_LEVELDETECT0]	= 0x40,
+		[GPIO_LEVELDETECT1]	= 0x44,
+		[GPIO_RISINGDETECT]	= 0x48,
+		[GPIO_FALLINGDETECT]	= 0x4c,
+		[GPIO_CLEARDATAOUT]	= 0x90,
+		[GPIO_SETDATAOUT]	= 0x94,
+	},
+	[TI_GPIO_OMAP4] = {
+		[GPIO_IRQSTATUS1]	= 0x2c,
+		[GPIO_IRQENABLE1_SET]	= 0x34,
+		[GPIO_IRQENABLE1_CLR]	= 0x38,
+		[GPIO_OE]		= 0x134,
+		[GPIO_DATAIN]		= 0x138,
+		[GPIO_DATAOUT]		= 0x13c,
+		[GPIO_LEVELDETECT0]	= 0x140,
+		[GPIO_LEVELDETECT1]	= 0x144,
+		[GPIO_RISINGDETECT]	= 0x148,
+		[GPIO_FALLINGDETECT]	= 0x14c,
+		[GPIO_CLEARDATAOUT]	= 0x190,
+		[GPIO_SETDATAOUT]	= 0x194,
+	},
+};
 
 static const struct of_compat_data compat_data[] = {
-	/* compatible			reg offset */
-	{ "ti,omap3-gpio",		0x0 },
-	{ "ti,omap4-gpio",		0x100 },
+	{ "ti,omap3-gpio",		TI_GPIO_OMAP3 },
+	{ "ti,omap4-gpio",		TI_GPIO_OMAP4 },
 	{ NULL }
+};
+
+struct ti_gpio_intr {
+	u_int intr_pin;
+	int (*intr_func)(void *);
+	void *intr_arg;
+	bool intr_mpsafe;
 };
 
 struct ti_gpio_softc {
@@ -61,10 +117,14 @@ struct ti_gpio_softc {
 	bus_space_tag_t sc_bst;
 	bus_space_handle_t sc_bsh;
 	kmutex_t sc_lock;
-	bus_size_t sc_regoff;
+	enum ti_gpio_type sc_type;
+	const char *sc_modname;
+	void *sc_ih;
 
 	struct gpio_chipset_tag sc_gp;
-	gpio_pin_t sc_pins[32];
+	gpio_pin_t sc_pins[TI_GPIO_NPINS];
+	bool sc_pinout[TI_GPIO_NPINS];
+	struct ti_gpio_intr sc_intr[TI_GPIO_NPINS];
 	device_t sc_gpiodev;
 };
 
@@ -76,9 +136,9 @@ struct ti_gpio_pin {
 };
 
 #define RD4(sc, reg) 		\
-    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg) + (sc)->sc_regoff)
+    bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, ti_gpio_regmap[(sc)->sc_type][(reg)])
 #define WR4(sc, reg, val) 	\
-    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, (reg) + (sc)->sc_regoff, (val))
+    bus_space_write_4((sc)->sc_bst, (sc)->sc_bsh, ti_gpio_regmap[(sc)->sc_type][(reg)], (val))
 
 static int	ti_gpio_match(device_t, cfdata_t, void *);
 static void	ti_gpio_attach(device_t, device_t, void *);
@@ -99,6 +159,8 @@ ti_gpio_ctl(struct ti_gpio_softc *sc, u_int pin, int flags)
 	else if (flags & GPIO_PIN_OUTPUT)
 		oe &= ~__BIT(pin);
 	WR4(sc, GPIO_OE, oe);
+
+	sc->sc_pinout[pin] = (flags & GPIO_PIN_OUTPUT) != 0;
 
 	return 0;
 }
@@ -162,7 +224,10 @@ ti_gpio_read(device_t dev, void *priv, bool raw)
 	const uint32_t data_mask = __BIT(pin->pin_nr);
 
 	/* No lock required for reads */
-	data = RD4(sc, GPIO_DATAIN);
+	if (sc->sc_pinout[pin->pin_nr])
+		data = RD4(sc, GPIO_DATAOUT);
+	else
+		data = RD4(sc, GPIO_DATAIN);
 	val = __SHIFTOUT(data, data_mask);
 	if (!raw && pin->pin_actlo)
 		val = !val;
@@ -193,6 +258,126 @@ static struct fdtbus_gpio_controller_func ti_gpio_funcs = {
 	.release = ti_gpio_release,
 	.read = ti_gpio_read,
 	.write = ti_gpio_write,
+};
+
+static void
+ti_gpio_intr_disestablish(device_t dev, void *ih)
+{
+	struct ti_gpio_softc * const sc = device_private(dev);
+	struct ti_gpio_intr *intr = ih;
+	const u_int pin = intr->intr_pin;
+	const uint32_t pin_mask = __BIT(pin);
+	uint32_t val;
+
+	/* Disable interrupts */
+	if (sc->sc_type == TI_GPIO_OMAP3) {
+		val = RD4(sc, GPIO_IRQENABLE1);
+		WR4(sc, GPIO_IRQENABLE1, val & ~pin_mask);
+	} else {
+		WR4(sc, GPIO_IRQENABLE1_CLR, pin_mask);
+	}
+
+	intr->intr_func = NULL;
+	intr->intr_arg = NULL;
+}
+
+static void *
+ti_gpio_intr_establish(device_t dev, u_int *specifier, int ipl, int flags,
+    int (*func)(void *), void *arg)
+{
+	struct ti_gpio_softc * const sc = device_private(dev);
+	uint32_t val;
+
+	/* 1st cell is the pin */
+	/* 2nd cell is flags */
+	const u_int pin = be32toh(specifier[0]);
+	const u_int type = be32toh(specifier[2]) & 0xf;
+
+	if (ipl != IPL_VM || pin >= __arraycount(sc->sc_pins))
+		return NULL;
+
+	/*
+	 * Enabling both high and low level triggers will cause the GPIO
+	 * controller to always assert the interrupt.
+	 */
+	if ((type & (FDT_INTR_TYPE_LOW_LEVEL|FDT_INTR_TYPE_HIGH_LEVEL)) ==
+	    (FDT_INTR_TYPE_LOW_LEVEL|FDT_INTR_TYPE_HIGH_LEVEL))
+		return NULL;
+
+	if (sc->sc_intr[pin].intr_func != NULL)
+		return NULL;
+
+	/* Set pin as input */
+	if (ti_gpio_ctl(sc, pin, GPIO_PIN_INPUT) != 0)
+		return NULL;
+
+	sc->sc_intr[pin].intr_pin = pin;
+	sc->sc_intr[pin].intr_func = func;
+	sc->sc_intr[pin].intr_arg = arg;
+	sc->sc_intr[pin].intr_mpsafe = (flags & FDT_INTR_MPSAFE) != 0;
+
+	const uint32_t pin_mask = __BIT(pin);
+
+	/* Configure triggers */
+	val = RD4(sc, GPIO_LEVELDETECT0);
+	if ((type & FDT_INTR_TYPE_LOW_LEVEL) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_LEVELDETECT0, val);
+
+	val = RD4(sc, GPIO_LEVELDETECT1);
+	if ((type & FDT_INTR_TYPE_HIGH_LEVEL) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_LEVELDETECT1, val);
+
+	val = RD4(sc, GPIO_RISINGDETECT);
+	if ((type & FDT_INTR_TYPE_POS_EDGE) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_RISINGDETECT, val);
+
+	val = RD4(sc, GPIO_FALLINGDETECT);
+	if ((type & FDT_INTR_TYPE_NEG_EDGE) != 0)
+		val |= pin_mask;
+	else
+		val &= ~pin_mask;
+	WR4(sc, GPIO_FALLINGDETECT, val);
+
+	/* Enable interrupts */
+	if (sc->sc_type == TI_GPIO_OMAP3) {
+		val = RD4(sc, GPIO_IRQENABLE1);
+		WR4(sc, GPIO_IRQENABLE1, val | pin_mask);
+	} else {
+		WR4(sc, GPIO_IRQENABLE1_SET, pin_mask);
+	}
+
+	return &sc->sc_intr[pin];
+}
+
+static bool
+ti_gpio_intrstr(device_t dev, u_int *specifier, char *buf, size_t buflen)
+{
+	struct ti_gpio_softc * const sc = device_private(dev);
+
+	/* 1st cell is the pin */
+	/* 2nd cell is flags */
+	const u_int pin = be32toh(specifier[0]);
+
+	if (pin >= __arraycount(sc->sc_pins))
+		return false;
+
+	snprintf(buf, buflen, "%s pin %d", sc->sc_modname, pin);
+	return true;
+}
+
+static struct fdtbus_interrupt_controller_func ti_gpio_intrfuncs = {
+	.establish = ti_gpio_intr_establish,
+	.disestablish = ti_gpio_intr_disestablish,
+	.intrstr = ti_gpio_intrstr,
 };
 
 static int
@@ -263,6 +448,34 @@ ti_gpio_attach_ports(struct ti_gpio_softc *sc)
 }
 
 static int
+ti_gpio_intr(void *priv)
+{
+	struct ti_gpio_softc * const sc = priv;
+	uint32_t status;
+	u_int bit;
+	int rv = 0;
+
+	status = RD4(sc, GPIO_IRQSTATUS1);
+	WR4(sc, GPIO_IRQSTATUS1, status);
+
+	while ((bit = ffs32(status)) != 0) {
+		const u_int pin = bit - 1;
+		const uint32_t pin_mask = __BIT(pin);
+		struct ti_gpio_intr *intr = &sc->sc_intr[pin];
+		status &= ~pin_mask;
+		if (intr->intr_func == NULL)
+			continue;
+		if (!intr->intr_mpsafe)
+			KERNEL_LOCK(1, curlwp);
+		rv |= intr->intr_func(intr->intr_arg);
+		if (!intr->intr_mpsafe)
+			KERNEL_UNLOCK_ONE(curlwp);
+	}
+
+	return rv;
+}
+
+static int
 ti_gpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
@@ -276,12 +489,16 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 	struct ti_gpio_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	const char *modname;
+	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
+		return;
+	}
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
+		aprint_error(": couldn't decode interrupt\n");
 		return;
 	}
 	if (ti_prcm_enable_hwmod(phandle, 0) != 0) {
@@ -295,17 +512,27 @@ ti_gpio_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
-	sc->sc_regoff = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_type = of_search_compatible(phandle, compat_data)->data;
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
-	modname = fdtbus_get_string(phandle, "ti,hwmods");
-	if (modname == NULL)
-		modname = fdtbus_get_string(OF_parent(phandle), "ti,hwmods");
+	sc->sc_modname = fdtbus_get_string(phandle, "ti,hwmods");
+	if (sc->sc_modname == NULL)
+		sc->sc_modname = fdtbus_get_string(OF_parent(phandle), "ti,hwmods");
 
 	aprint_naive("\n");
-	aprint_normal(": GPIO (%s)\n", modname);
+	aprint_normal(": GPIO (%s)\n", sc->sc_modname);
 
 	fdtbus_register_gpio_controller(self, phandle, &ti_gpio_funcs);
 
 	ti_gpio_attach_ports(sc);
+
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
+	    ti_gpio_intr, sc);
+	if (sc->sc_ih == NULL) {
+		aprint_error_dev(self, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return;
+	}
+	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
+	fdtbus_register_interrupt_controller(self, phandle, &ti_gpio_intrfuncs);
 }
