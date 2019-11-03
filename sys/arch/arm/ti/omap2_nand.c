@@ -1,4 +1,4 @@
-/*	$NetBSD: omap2_nand.c,v 1.1 2019/11/01 11:53:35 jmcneill Exp $	*/
+/*	$NetBSD: omap2_nand.c,v 1.2 2019/11/03 13:45:57 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.1 2019/11/01 11:53:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: omap2_nand.c,v 1.2 2019/11/03 13:45:57 jmcneill Exp $");
 
 /* TODO move to opt_* */
 #undef OMAP2_NAND_HARDWARE_ECC
@@ -126,6 +126,7 @@ struct omap2_nand_softc {
 
 static const char * compatible[] = {
 	"ti,omap2-nand",
+	"ti,omap2-onenand",
 	NULL
 };
 
