@@ -1,4 +1,4 @@
-$NetBSD: README.evbarm,v 1.26 2019/11/03 12:11:42 jmcneill Exp $
+$NetBSD: README.evbarm,v 1.27 2019/11/03 12:17:32 jmcneill Exp $
 
 config		date		boards
 -------------------------------------------------------------------------------
@@ -14,7 +14,6 @@ GEMINI		2008/10/24	Cortina Systems SL3516 eval board
 GUMSTIX		2006/10/16	Gumstix Inc. PXA255/270 based boards
 HDL_G		2006/04/16	I-O DATA HDL-G Giga LANDISK
 HPT5325		2012/03/31	HP t5325 Thin Client
-IGEPV2		2010/06/16	IGEPv2 OMAP3530 eval board
 IMX31LITE	2008/04/27	Freescale i.M31 DEV LITE KIT
 INTEGRATOR	2001/10/27	ARM Integrator board
 IQ31244		2003/05/14	Intel IQ31244 reference board
