@@ -1,4 +1,4 @@
-/*	$NetBSD: tps65217pmic.c,v 1.13 2019/10/27 20:11:13 jmcneill Exp $ */
+/*	$NetBSD: tps65217pmic.c,v 1.14 2019/11/03 22:55:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.13 2019/10/27 20:11:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.14 2019/11/03 22:55:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: tps65217pmic.c,v 1.13 2019/10/27 20:11:13 jmcneill E
 #include <dev/i2c/i2cvar.h>
 
 #include <dev/sysmon/sysmonvar.h>
+#include <dev/sysmon/sysmon_taskq.h>
 
 #include <dev/i2c/tps65217pmicreg.h>
 #include <dev/i2c/tps65217pmicvar.h>
@@ -419,7 +420,7 @@ tps65217pmic_power_monitor_init(struct tps65217pmic_softc *sc)
 }
 
 static void
-tps65217pmic_power_monitor(void *aux)
+tps65217pmic_power_monitor_task(void *aux)
 {
 	struct tps65217pmic_softc *sc;
 	uint8_t status;
@@ -459,6 +460,12 @@ tps65217pmic_power_monitor(void *aux)
 	mutex_exit(&sc->sc_lock);
 
 	callout_schedule(&sc->sc_powerpollco, hz);
+}
+
+static void
+tps65217pmic_power_monitor(void *aux)
+{
+	sysmon_task_queue_sched(0, tps65217pmic_power_monitor_task, aux);
 }
 
 static void
