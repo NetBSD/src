@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.66 2019/11/01 12:01:09 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.67 2019/11/03 22:59:24 jmcneill Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -560,6 +560,7 @@ seeprom* 	at iic?			# AT24Cxx Serial EEPROM
 sy8106a* 	at iic?			# Silergy SY81061 regulator
 tcakp* 		at iic?			# TI TCA8418 Keypad Scan IC
 tcagpio* 	at iic?
+tdahdmi*	at iic? 		# NXP TDA19988 HDMI encoder
 titemp* 	at iic?
 tps65217pmic*	at iic?			# TI TPS65217 Power Management IC
 tps65217reg*	at tps65217pmic?
@@ -674,6 +675,8 @@ connector* 	at fdt? pass 4
 panel* 		at fdt? pass 4
 #sunxidep must be after display pipeline elements but before genfb@fdt
 sunxidep* 	at fdt? pass 5		# Display Engine Pipeline
+tilcdc*		at fdt?			# TI OMAP4 LCDC
+tifb*		at tilcdc?
 
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
