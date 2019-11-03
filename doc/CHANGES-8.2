@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.57 2019/11/01 09:30:36 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.58 2019/11/03 11:39:47 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1403,4 +1403,20 @@ sys/kern/subr_disk.c				1.129
 	Avoid division by zero in bounds_check_with_label() on misbehaving
 	or broken drives.
 	[cnst, ticket #1397]
+
+sys/arch/zaurus/conf/Makefile.zaurus.inc	1.10
+sys/arch/zaurus/stand/zbsdmod/Makefile		1.12
+sys/arch/zaurus/stand/zbsdmod/compat_linux.h	1.7
+sys/arch/zaurus/stand/zbsdmod/zbsdmod.c		1.10,1.11
+
+	Explicitly set empty LINKENTRY to keep ENTRY address specified
+	in ldscript. Cacheline-align code used to enter the kernel.
+	Misc cleanup to avoid future confusion:
+	- Remove more unnecessary debug sections
+	- Use DBG instead of COPTS to specify -Os as defined in bsd.prog.mk
+	- Use CFLAGS and CPPFLAGS correctly
+	- Explicitly set -ffreestanding
+	Make sure to clear bss before jumping to a kernel copied from
+	load buffer.
+	[tsutsui, ticket #1420]
 
