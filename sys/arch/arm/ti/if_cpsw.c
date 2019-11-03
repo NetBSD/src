@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.7 2019/10/27 23:25:38 jmcneill Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.8 2019/11/03 10:09:04 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.7 2019/10/27 23:25:38 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.8 2019/11/03 10:09:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,14 +73,11 @@ __KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.7 2019/10/27 23:25:38 jmcneill Exp $")
 #include <dev/mii/mii.h>
 #include <dev/mii/miivar.h>
 
-#if 0
-#include <arch/arm/omap/omap2_obiovar.h>
-#else
 #include <dev/fdt/fdtvar.h>
-#endif
-#include <arch/arm/omap/if_cpswreg.h>
-#include <arch/arm/omap/sitara_cmreg.h>
-#include <arch/arm/omap/sitara_cm.h>
+
+#include <arm/ti/if_cpswreg.h>
+
+#define FDT_INTR_FLAGS	0
 
 #define CPSW_TXFRAGS	16
 
@@ -470,22 +467,10 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 		memcpy(sc->sc_enaddr, macaddr, ETHER_ADDR_LEN);
 	}
 
-#if 0
-	sc->sc_rxthih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_RXTH,
-	    IPL_VM, IST_LEVEL, cpsw_rxthintr, sc);
-	sc->sc_rxih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_RX,
-	    IPL_VM, IST_LEVEL, cpsw_rxintr, sc);
-	sc->sc_txih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_TX,
-	    IPL_VM, IST_LEVEL, cpsw_txintr, sc);
-	sc->sc_miscih = intr_establish(oa->obio_intrbase + CPSW_INTROFF_MISC,
-	    IPL_VM, IST_LEVEL, cpsw_miscintr, sc);
-#else
-#define FDT_INTR_FLAGS 0
 	sc->sc_rxthih = fdtbus_intr_establish(phandle, CPSW_INTROFF_RXTH, IPL_VM, FDT_INTR_FLAGS, cpsw_rxthintr, sc);
 	sc->sc_rxih = fdtbus_intr_establish(phandle, CPSW_INTROFF_RX, IPL_VM, FDT_INTR_FLAGS, cpsw_rxintr, sc);
 	sc->sc_txih = fdtbus_intr_establish(phandle, CPSW_INTROFF_TX, IPL_VM, FDT_INTR_FLAGS, cpsw_txintr, sc);
 	sc->sc_miscih = fdtbus_intr_establish(phandle, CPSW_INTROFF_MISC, IPL_VM, FDT_INTR_FLAGS, cpsw_miscintr, sc);
-#endif
 
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_bss = size;
@@ -590,19 +575,6 @@ cpsw_attach(device_t parent, device_t self, void *aux)
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		sc->sc_phy_has_1000t = cpsw_phy_has_1000t(sc);
-		if (sc->sc_phy_has_1000t) {
-#if 0
-			aprint_normal_dev(sc->sc_dev, "1000baseT PHY found. "
-			    "Setting RGMII Mode\n");
-			/*
-			 * Select the Interface RGMII Mode in the Control
-			 * Module
-			 */
-			sitara_cm_reg_write_4(CPSW_GMII_SEL,
-			    GMIISEL_GMII2_SEL(RGMII_MODE) |
-			    GMIISEL_GMII1_SEL(RGMII_MODE));
-#endif
-		}
 
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
 	}
