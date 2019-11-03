@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.1 2019/11/03 22:59:06 jmcneill Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.2 2019/11/03 23:31:49 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.1 2019/11/03 22:59:06 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.2 2019/11/03 23:31:49 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,6 +138,7 @@ static bool
 tilcdc_mode_fixup(struct drm_crtc *crtc,
     const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
 {
+#if 0
 	adjusted_mode->hskew = mode->hsync_end - mode->hsync_start;
 	adjusted_mode->flags |= DRM_MODE_FLAG_HSKEW;
 
@@ -146,7 +147,7 @@ tilcdc_mode_fixup(struct drm_crtc *crtc,
 		adjusted_mode->flags |= DRM_MODE_FLAG_PHSYNC;
 	else
 		adjusted_mode->flags |= DRM_MODE_FLAG_NHSYNC;
-		
+#endif
 
 	return true;
 }
