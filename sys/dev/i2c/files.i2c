@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.103 2019/11/01 09:59:22 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.104 2019/11/03 22:57:52 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -373,3 +373,8 @@ file	dev/i2c/pca9685.c			pcapwm
 device	twl
 attach	twl at iic
 file	dev/i2c/twl4030.c			twl
+
+# NXP TDA19988 HDMI encoder
+device	tdahdmi: edid, videomode, drmkms, drmkms_i2c
+attach	tdahdmi at iic
+file	dev/i2c/tda19988.c			tdahdmi
