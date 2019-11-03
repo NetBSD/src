@@ -1,4 +1,4 @@
-/* $NetBSD: tda19988.c,v 1.1 2019/11/03 22:57:52 jmcneill Exp $ */
+/* $NetBSD: tda19988.c,v 1.2 2019/11/03 23:28:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Oleksandr Tymoshenko <gonzo@freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.1 2019/11/03 22:57:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.2 2019/11/03 23:28:59 jmcneill Exp $");
 
 /*
 * NXP TDA19988 HDMI encoder 
@@ -421,10 +421,10 @@ tda19988_init_encoder(struct tda19988_softc *sc, const struct drm_display_mode *
 	de_start = mode->crtc_htotal - mode->crtc_hdisplay;
 	ref_pix = hs_pix_start + 3;
 
-	if (mode->flags & VID_HSKEW)
+	if (mode->flags & DRM_MODE_FLAG_HSKEW)
 		ref_pix += mode->crtc_hskew;
 
-	if ((mode->flags & VID_INTERLACE) == 0) {
+	if ((mode->flags & DRM_MODE_FLAG_INTERLACE) == 0) {
 		ref_line = 1 + mode->crtc_vsync_start - mode->crtc_vdisplay;
 		vwin1_line_start = mode->crtc_vtotal - mode->crtc_vdisplay - 1;
 		vwin1_line_end = vwin1_line_start + mode->crtc_vdisplay;
@@ -495,16 +495,16 @@ tda19988_init_encoder(struct tda19988_softc *sc, const struct drm_display_mode *
 	 * Sync on rising HSYNC/VSYNC
 	 */
 	reg = VIP_CNTRL_3_SYNC_HS;
-	if (mode->flags & VID_NHSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		reg |= VIP_CNTRL_3_H_TGL;
-	if (mode->flags & VID_NVSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		reg |= VIP_CNTRL_3_V_TGL;
 	tda19988_reg_write(sc, TDA_VIP_CNTRL_3, reg);
 
 	reg = TBG_CNTRL_1_TGL_EN;
-	if (mode->flags & VID_NHSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NHSYNC)
 		reg |= TBG_CNTRL_1_H_TGL;
-	if (mode->flags & VID_NVSYNC)
+	if (mode->flags & DRM_MODE_FLAG_NVSYNC)
 		reg |= TBG_CNTRL_1_V_TGL;
 	tda19988_reg_write(sc, TDA_TBG_CNTRL_1, reg);
 
