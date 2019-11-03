@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.113 2019/11/03 12:09:04 jmcneill Exp $
+#	$NetBSD: Makefile.inc,v 1.114 2019/11/03 12:16:35 jmcneill Exp $
 #
 #	etc.evbarm/Makefile.inc -- evbarm-specific etc Makefile targets
 #
@@ -86,7 +86,6 @@ EVBARM_BOARDS.armv7+=		CUBOX
 EVBARM_BOARDS.armv7hf+= 	CUBOX
 EVBARM_BOARDS.armv7+=		CUBOX-I
 EVBARM_BOARDS.armv7hf+= 	CUBOX-I
-#EVBARM_BOARDS.armv7+=		IGEPV2
 EVBARM_BOARDS.armv7+=		IMX6UL-STARTER
 EVBARM_BOARDS.armv7hf+=		IMX6UL-STARTER
 EVBARM_BOARDS.armv7+=		KOBO
