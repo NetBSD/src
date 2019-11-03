@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.77 2019/11/02 11:56:34 isaki Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.78 2019/11/03 11:13:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.77 2019/11/02 11:56:34 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.78 2019/11/03 11:13:46 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -58,6 +58,10 @@ int ossdebug = 0;
 
 #define TO_OSSVOL(x)	(((x) * 100 + 127) / 255)
 #define FROM_OSSVOL(x)	((((x) > 100 ? 100 : (x)) * 255 + 50) / 100)
+
+#define GETPRINFO(info, name)	\
+	(((info)->mode == AUMODE_RECORD) \
+	    ? (info)->record.name : (info)->play.name)
 
 static struct audiodevinfo *getdevinfo(file_t *);
 static int opaque_to_enum(struct audiodevinfo *di, audio_mixer_name_t *label, int opq);
@@ -177,6 +181,8 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 	struct oss_count_info cntinfo;
 	struct audio_encoding tmpenc;
 	u_int u;
+	u_int encoding;
+	u_int precision;
 	int idat, idata;
 	int error = 0;
 	int (*ioctlf)(file_t *, u_long, void *);
@@ -238,10 +244,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			 __func__, error));
 			goto out;
 		}
-		if (tmpinfo.mode == AUMODE_RECORD)
-			idat = tmpinfo.record.sample_rate;
-		else
-			idat = tmpinfo.play.sample_rate;
+		idat = GETPRINFO(&tmpinfo, sample_rate);
 		DPRINTF(("%s: SNDCTL_PCM_READ_RATE < %d\n", __func__, idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
@@ -272,7 +275,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		idat = tmpinfo.play.channels - 1;
+		idat = GETPRINFO(&tmpinfo, channels) - 1;
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
 			DPRINTF(("%s: SNDCTL_DSP_STEREO %d = %d\n",
@@ -383,7 +386,9 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		switch (tmpinfo.play.encoding) {
+		encoding = GETPRINFO(&tmpinfo, encoding);
+		precision = GETPRINFO(&tmpinfo, precision);
+		switch (encoding) {
 		case AUDIO_ENCODING_ULAW:
 			idat = OSS_AFMT_MU_LAW;
 			break;
@@ -391,25 +396,25 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			idat = OSS_AFMT_A_LAW;
 			break;
 		case AUDIO_ENCODING_SLINEAR_LE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_S16_LE;
 			else
 				idat = OSS_AFMT_S8;
 			break;
 		case AUDIO_ENCODING_SLINEAR_BE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_S16_BE;
 			else
 				idat = OSS_AFMT_S8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_LE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_U16_LE;
 			else
 				idat = OSS_AFMT_U8;
 			break;
 		case AUDIO_ENCODING_ULINEAR_BE:
-			if (tmpinfo.play.precision == 16)
+			if (precision == 16)
 				idat = OSS_AFMT_U16_BE;
 			else
 				idat = OSS_AFMT_U8;
@@ -460,7 +465,7 @@ oss_ioctl_audio(struct lwp *l, const struct oss_sys_ioctl_args *uap, register_t 
 			     __func__, error));
 			goto out;
 		}
-		idat = tmpinfo.play.channels;
+		idat = GETPRINFO(&tmpinfo, channels);
 		DPRINTF(("%s: SOUND_PCM_READ_CHANNELS < %d\n", __func__, idat));
 		error = copyout(&idat, SCARG(uap, data), sizeof idat);
 		if (error) {
