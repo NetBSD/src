@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.19 2019/11/01 11:53:35 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.20 2019/11/03 22:59:06 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -111,6 +111,15 @@ file	arch/arm/ti/ti_rng.c		ti_rng
 device	omapfb: rasops16, rasops8, wsemuldisplaydev, vcons, edid
 attach	omapfb at fdt with omap3_dss
 file	arch/arm/ti/omap3_dss.c		omap3_dss
+
+define	tilcdcfbbus { }
+device	tilcdc: drmkms, tilcdcfbbus
+attach	tilcdc at fdt with ti_lcdc
+file	arch/arm/ti/ti_lcdc.c		ti_lcdc
+
+device	tifb: tilcdcfbbus, drmfb, wsemuldisplaydev
+attach	tifb at tilcdcfbbus with ti_fb
+file	arch/arm/ti/ti_fb.c		ti_fb
 
 # Memory controller
 device	tigpmc { } : fdt
