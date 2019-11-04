@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.9 2018/07/13 19:50:21 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.10 2019/11/04 12:45:10 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.9 2018/07/13 19:50:21 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.10 2019/11/04 12:45:10 joerg Exp $");
 
 #include "namespace.h"
 
@@ -85,7 +85,7 @@ _rtld_tls_allocate(void)
 
 	if (initial_thread_tcb == NULL) {
 #ifdef __HAVE_TLS_VARIANT_II
-		tls_size = roundup2(tls_size, sizeof(void *));
+		tls_size = roundup2(tls_size, sizeof(max_align_t));
 #endif
 		tls_allocation = tls_size + sizeof(*tcb);
 
