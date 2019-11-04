@@ -1,4 +1,4 @@
-/* $NetBSD: tda19988.c,v 1.2 2019/11/03 23:28:59 jmcneill Exp $ */
+/* $NetBSD: tda19988.c,v 1.3 2019/11/04 10:02:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Oleksandr Tymoshenko <gonzo@freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.2 2019/11/03 23:28:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tda19988.c,v 1.3 2019/11/04 10:02:39 jmcneill Exp $");
 
 /*
 * NXP TDA19988 HDMI encoder 
@@ -257,6 +257,7 @@ struct tda19988_connector {
 
 struct tda19988_softc {
 	device_t		sc_dev;
+	int			sc_phandle;
 	i2c_tag_t		sc_i2c;
 	i2c_addr_t		sc_addr;
 	uint32_t		sc_cec_addr;
@@ -264,12 +265,14 @@ struct tda19988_softc {
 	int			sc_current_page;
 	uint8_t			*sc_edid;
 	uint32_t		sc_edid_len;
+	bool			sc_edid_valid;
 
 	struct drm_bridge	sc_bridge;
 	struct tda19988_connector sc_connector;
 
 	struct fdt_device_ports	sc_ports;
-	struct drm_display_mode	sc_curmode;
+
+	enum drm_connector_status sc_last_status;
 };
 
 #define	to_tda_connector(x)	container_of(x, struct tda19988_connector, base)
@@ -280,7 +283,8 @@ tda19988_set_page(struct tda19988_softc *sc, uint8_t page)
 	uint8_t buf[2] = { TDA_CURPAGE_ADDR, page };
 	int result;
 
-	result = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, buf, 2, NULL, 0, I2C_F_POLL);
+	result = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, buf, 2, NULL, 0,
+	    cold ? I2C_F_POLL : 0);
 	if (result == 0)
 		sc->sc_current_page = page;
 
@@ -290,7 +294,8 @@ tda19988_set_page(struct tda19988_softc *sc, uint8_t page)
 static int
 tda19988_cec_read(struct tda19988_softc *sc, uint8_t addr, uint8_t *data)
 {
-	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_cec_addr, &addr, 1, data, 1, I2C_F_POLL);
+	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_cec_addr, &addr, 1, data, 1,
+	    cold ? I2C_F_POLL : 0);
 }
 
 static int 
@@ -298,7 +303,8 @@ tda19988_cec_write(struct tda19988_softc *sc, uint8_t addr, uint8_t data)
 {
 	uint8_t buf[2] = { addr, data };
 
-	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_cec_addr, buf, 2, NULL, 0, I2C_F_POLL);
+	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_cec_addr, buf, 2, NULL, 0,
+	    cold ? I2C_F_POLL : 0);
 }
 
 static int
@@ -311,19 +317,8 @@ tda19988_block_read(struct tda19988_softc *sc, uint16_t addr, uint8_t *data, int
 	if (sc->sc_current_page != REGPAGE(addr))
 		tda19988_set_page(sc, REGPAGE(addr));
 
-#if notyet
-	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1, data, len, I2C_F_POLL);
-#else
-	int error, i;
-	for (i = 0; i < len; i++) {
-		error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1, &data[i], 1, I2C_F_POLL);
-		if (error != 0)
-			return error;
-		reg++;
-	}
-
-	return 0;
-#endif
+	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1, data, len,
+	    cold ? I2C_F_POLL : 0);
 }
 
 static int
@@ -336,7 +331,8 @@ tda19988_reg_read(struct tda19988_softc *sc, uint16_t addr, uint8_t *data)
 	if (sc->sc_current_page != REGPAGE(addr))
 		tda19988_set_page(sc, REGPAGE(addr));
 
-	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1, data, 1, I2C_F_POLL);
+	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1, data, 1,
+	    cold ? I2C_F_POLL : 0);
 }
 
 static int
@@ -347,7 +343,8 @@ tda19988_reg_write(struct tda19988_softc *sc, uint16_t addr, uint8_t data)
 	if (sc->sc_current_page != REGPAGE(addr))
 		tda19988_set_page(sc, REGPAGE(addr));
 
-	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, buf, 2, NULL, 0, I2C_F_POLL);
+	return iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, buf, 2, NULL, 0,
+	    cold ? I2C_F_POLL : 0);
 }
 
 static int
@@ -362,7 +359,8 @@ tda19988_reg_write2(struct tda19988_softc *sc, uint16_t address, uint16_t data)
 	if (sc->sc_current_page != REGPAGE(address))
 		tda19988_set_page(sc, REGPAGE(address));
 
-	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, buf, 3, NULL, 0, I2C_F_POLL);
+	return iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr, buf, 3, NULL, 0,
+	    cold ? I2C_F_POLL : 0);
 }
 
 static void
@@ -686,13 +684,6 @@ tda19988_start(struct tda19988_softc *sc)
     	tda19988_cec_write(sc, TDA_CEC_FRO_IM_CLK_CTRL,
             CEC_FRO_IM_CLK_CTRL_GHOST_DIS | CEC_FRO_IM_CLK_CTRL_IMCLK_SEL);
 
-#if 0
-	if (tda19988_read_edid(sc) < 0) {
-		device_printf(dev, "failed to read EDID\n");
-		return;
-	}
-#endif
-
 	/* Default values for RGB 4:4:4 mapping */
 	tda19988_reg_write(sc, TDA_VIP_CNTRL_0, 0x23);
 	tda19988_reg_write(sc, TDA_VIP_CNTRL_1, 0x01);
@@ -704,15 +695,25 @@ tda19988_connector_detect(struct drm_connector *connector, bool force)
 {
 	struct tda19988_connector *tda_connector = to_tda_connector(connector);
 	struct tda19988_softc * const sc = tda_connector->sc;
+	enum drm_connector_status status;
 	uint8_t data = 0;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_i2c, cold ? I2C_F_POLL : 0);
 	tda19988_cec_read(sc, TDA_CEC_RXSHPDLEV, &data);
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, cold ? I2C_F_POLL : 0);
 
-	return (data & RXSHPDLEV_HPD) ?
+	status = (data & RXSHPDLEV_HPD) ?
 	    connector_status_connected :
 	    connector_status_disconnected;
+
+	/* On connect, invalidate the last EDID */
+	if (status == connector_status_connected &&
+	    sc->sc_last_status != connector_status_connected)
+		sc->sc_edid_valid = false;
+
+	sc->sc_last_status = status;
+
+	return status;
 }
 
 static void
@@ -737,10 +738,15 @@ tda19988_connector_get_modes(struct drm_connector *connector)
 	struct edid *pedid = NULL;
 	int error;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	if (tda19988_read_edid(sc) == 0)
+	if (sc->sc_edid_valid) {
 		pedid = (struct edid *)sc->sc_edid;
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	} else {
+		iic_acquire_bus(sc->sc_i2c, cold ? I2C_F_POLL : 0);
+		if (tda19988_read_edid(sc) == 0)
+			pedid = (struct edid *)sc->sc_edid;
+		iic_release_bus(sc->sc_i2c, cold ? I2C_F_POLL : 0);
+		sc->sc_edid_valid = true;
+	}
 
 	drm_mode_connector_update_edid_property(connector, pedid);
 	if (pedid == NULL)
@@ -805,9 +811,7 @@ tda19988_bridge_enable(struct drm_bridge *bridge)
 {
 	struct tda19988_softc * const sc = bridge->driver_private;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	tda19988_init_encoder(sc, &sc->sc_curmode);
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	fdtbus_pinctrl_set_config(sc->sc_phandle, "default");
 }
 
 static void
@@ -818,6 +822,9 @@ tda19988_bridge_pre_enable(struct drm_bridge *bridge)
 static void
 tda19988_bridge_disable(struct drm_bridge *bridge)
 {
+	struct tda19988_softc * const sc = bridge->driver_private;
+
+	fdtbus_pinctrl_set_config(sc->sc_phandle, "off");
 }
 
 static void
@@ -831,7 +838,9 @@ tda19988_bridge_mode_set(struct drm_bridge *bridge,
 {
 	struct tda19988_softc * const sc = bridge->driver_private;
 
-	sc->sc_curmode = *adjusted_mode;
+	iic_acquire_bus(sc->sc_i2c, cold ? I2C_F_POLL : 0);
+	tda19988_init_encoder(sc, adjusted_mode);
+	iic_release_bus(sc->sc_i2c, cold ? I2C_F_POLL : 0);
 }
 
 static bool
@@ -905,17 +914,18 @@ tda19988_attach(device_t parent, device_t self, void *aux)
 	const int phandle = ia->ia_cookie;
 
 	sc->sc_dev = self;
+	sc->sc_phandle = phandle;
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_cec_addr = 0x34; /* hardcoded */
 	sc->sc_current_page = 0xff;
 	sc->sc_edid = kmem_zalloc(EDID_LENGTH, KM_SLEEP);
 	sc->sc_edid_len = EDID_LENGTH;
+	sc->sc_edid_valid = false;
+	sc->sc_last_status = connector_status_unknown;
 
 	aprint_naive("\n");
 	aprint_normal(": NXP TDA19988 HDMI transmitter\n");
-
-	fdtbus_pinctrl_set_config(phandle, "default");
 
 	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
 	tda19988_start(sc);
