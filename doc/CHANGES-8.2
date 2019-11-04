@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.58 2019/11/03 11:39:47 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.59 2019/11/04 14:50:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1419,4 +1419,38 @@ sys/arch/zaurus/stand/zbsdmod/zbsdmod.c		1.10,1.11
 	Make sure to clear bss before jumping to a kernel copied from
 	load buffer.
 	[tsutsui, ticket #1420]
+
+sys/dev/scsipi/st.c				1.238
+
+	Add simple position recovery when positioning to EOM by reading
+	the position with READ_POSITION.
+	[jnemeth, ticket #1421]
+
+sys/dev/rasops/rasops.h				1.49
+
+	rasops(9): avoid size changes of struct rasops_info depending
+	on kernel options.
+	[tsutsui, ticket #1422]
+
+etc/MAKEDEV.awk					1.28
+
+	PR port-arm/54640: hack to work around conditional RAW_PART
+	definition in arm/include/disklabel.h.
+	[tsutsui, ticket #1423]
+
+sys/arch/zaurus/dev/zrc.c			1.10
+
+	Fix build errors with options WSDISPLAY_COMPAT_RAWKBD.
+	[tsutsui, ticket #1424]
+
+sys/compat/netbsd32/syscalls.master			1.129
+sys/compat/netbsd32/netbsd32_syscallargs.h		(regen)
+sys/compat/netbsd32/netbsd32_syscall.h			(regen)
+sys/compat/netbsd32/netbsd32_sysent.c			(regen)
+sys/compat/netbsd32/netbsd32_syscalls.c 		(regen)
+sys/compat/netbsd32/netbsd32_syscalls_autoload.c	(regen)
+sys/compat/netbsd32/netbsd32_systrace_args.c		(regen)
+
+	For netbsd32_readlinkat(2), bufsize is netbsd_size_t, not size_t.
+	[rin, ticket #1425]
 
