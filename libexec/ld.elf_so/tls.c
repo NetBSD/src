@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.12 2019/04/13 00:23:32 rin Exp $	*/
+/*	$NetBSD: tls.c,v 1.13 2019/11/04 12:45:10 joerg Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,11 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.12 2019/04/13 00:23:32 rin Exp $");
+__RCSID("$NetBSD: tls.c,v 1.13 2019/11/04 12:45:10 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/ucontext.h>
 #include <lwp.h>
+#include <stddef.h>
 #include <string.h>
 #include "debug.h"
 #include "rtld.h"
@@ -99,7 +100,7 @@ _rtld_tls_initial_allocation(void)
 
 #ifndef __HAVE_TLS_VARIANT_I
 	_rtld_tls_static_space = roundup2(_rtld_tls_static_space,
-	    sizeof(void *));
+	    sizeof(max_align_t));
 #endif
 	dbg(("_rtld_tls_static_space %zu", _rtld_tls_static_space));
 
