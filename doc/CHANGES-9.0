@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.94 2019/11/03 11:42:52 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.95 2019/11/04 14:49:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5424,4 +5424,44 @@ external/bsd/jemalloc/lib/Makefile.inc		1.11
 
 	PR port-alpha/54307: workaround for random crash of userland binaries.
 	[rin, ticket #392]
+
+sys/arch/aarch64/aarch64/pmap.c			1.48
+sys/arch/aarch64/include/pmap.h			1.26
+
+	aarch64: synchronize icache more often.
+	[maya, ticket #393]
+
+sys/dev/rasops/rasops.h				1.49
+
+	rasops(9): avoid size changes of struct rasops_info depending
+	on kernel options.
+	[tsutsui, ticket #394]
+
+sys/arch/zaurus/dev/zrc.c			1.10
+
+	Fix build errors with options WSDISPLAY_COMPAT_RAWKBD.
+	[tsutsui, ticket #395]
+
+sys/arch/zaurus/conf/GENERIC			1.88
+
+	Put back options WSDISPLAY_COMPAT_RAWKBD. It is required for the
+	Xorg server.
+	[tsutsui, ticket #396]
+
+etc/MAKEDEV.awk					1.28
+
+	PR port-arm/54640: hack to work around conditional RAW_PART
+	definition in arm/include/disklabel.h.
+	[tsutsui, ticket #397]
+
+sys/compat/netbsd32/syscalls.master			1.129
+sys/compat/netbsd32/netbsd32_syscallargs.h		(regen)
+sys/compat/netbsd32/netbsd32_syscall.h			(regen)
+sys/compat/netbsd32/netbsd32_sysent.c			(regen)
+sys/compat/netbsd32/netbsd32_syscalls.c 		(regen)
+sys/compat/netbsd32/netbsd32_syscalls_autoload.c	(regen)
+sys/compat/netbsd32/netbsd32_systrace_args.c		(regen)
+
+	For netbsd32_readlinkat(2), bufsize is netbsd_size_t, not size_t.
+	[rin, ticket #398]
 
