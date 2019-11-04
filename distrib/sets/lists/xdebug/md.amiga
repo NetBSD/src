@@ -1,9 +1,10 @@
-# $NetBSD: md.amiga,v 1.11 2019/11/03 01:35:47 uki Exp $
+# $NetBSD: md.amiga,v 1.12 2019/11/04 00:33:29 rin Exp $
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	xdebug-xf86-video-wsfb-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	xdebug-obsolete	xorg,obsolete,xorg_server_ver=120
