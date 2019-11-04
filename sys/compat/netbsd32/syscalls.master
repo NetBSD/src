@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.129 2019/11/04 11:20:22 rin Exp $
+	$NetBSD: syscalls.master,v 1.130 2019/11/04 11:32:22 rin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1169,11 +1169,11 @@
 			    id_t id, netbsd32_clockidp_t clock_id); }
 483	STD 		{ int|netbsd32|90|getvfsstat( \
 			    netbsd32_statvfsp_t buf, \
-			    size_t bufsize, int flags); }
+			    netbsd32_size_t bufsize, int flags); }
 484	STD 		{ int|netbsd32|90|statvfs1(netbsd32_charp path, \
 			    netbsd32_statvfsp_t buf, int flags); }
 485	STD 		{ int|netbsd32|90|fstatvfs1(int fd, \
 			    netbsd32_statvfsp_t buf, int flags); }
 486	STD 		{ int|netbsd32|90|fhstatvfs1(netbsd32_voidp fhp, \
-			    size_t fh_size, netbsd32_statvfsp_t buf, \
+			    netbsd32_size_t fh_size, netbsd32_statvfsp_t buf, \
 			    int flags); }
