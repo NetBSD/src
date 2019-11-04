@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.141 2019/04/03 21:37:58 christos Exp $
+#	$NetBSD: Makefile,v 1.142 2019/11/04 12:45:10 joerg Exp $
 #
 # NOTE: when changing ld.so, ensure that ldd still compiles.
 #
@@ -92,6 +92,7 @@ CLEANFILES+=	errlist_concat.h ${PROG}.map
 
 BINDIR=		${SHLINKINSTALLDIR}
 
+CPPFLAGS.tls.c+=	-std=gnu11
 CPPFLAGS+=	-DLIBDIR=\"${LIBDIR}\" -D_PATH_RTLD=\"${BINDIR}/${PROG}\"
 CPPFLAGS+=	-I${.CURDIR} -I. -D_KERNTYPES
 CPPFLAGS+=	-DRTLD_LOADER
