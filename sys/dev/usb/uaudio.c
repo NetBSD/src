@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.161 2019/06/06 12:59:33 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.162 2019/11/04 05:46:39 isaki Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.161 2019/06/06 12:59:33 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.162 2019/11/04 05:46:39 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1795,13 +1795,12 @@ uaudio_identify_as(struct uaudio_softc *sc,
 	}
 
 	/* build audio_format array */
-	sc->sc_formats = kmem_alloc(sizeof(struct audio_format) * sc->sc_nalts,
+	sc->sc_formats = kmem_zalloc(sizeof(struct audio_format) * sc->sc_nalts,
 	    KM_SLEEP);
 	sc->sc_nformats = sc->sc_nalts;
 	for (i = 0; i < sc->sc_nalts; i++) {
 		auf = &sc->sc_formats[i];
 		t1desc = sc->sc_alts[i].asf1desc;
-		auf->driver_data = NULL;
 		if (UE_GET_DIR(sc->sc_alts[i].edesc->bEndpointAddress) == UE_DIR_OUT)
 			auf->mode = AUMODE_PLAY;
 		else
