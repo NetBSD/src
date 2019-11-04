@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.43 2019/10/19 14:42:30 tsutsui Exp $	*/
+/*	$NetBSD: machdep.c,v 1.44 2019/11/04 10:36:18 tsutsui Exp $	*/
 /*	$OpenBSD: zaurus_machdep.c,v 1.25 2006/06/20 18:24:04 todd Exp $	*/
 
 /*
@@ -107,7 +107,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.43 2019/10/19 14:42:30 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.44 2019/11/04 10:36:18 tsutsui Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -635,7 +635,7 @@ hw_isc1000(void)
 vaddr_t
 initarm(void *arg)
 {
-#ifdef DIAGNOSTIC
+#if defined(DIAGNOSTIC) || defined(VERBOSE_INIT_ARM)
 	extern vsize_t xscale_minidata_clean_size; /* used in KASSERT */
 #endif
 	extern vaddr_t xscale_cache_clean_addr;
