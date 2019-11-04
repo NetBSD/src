@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.9 2019/11/03 22:59:06 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.10 2019/11/04 09:37:51 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.9 2019/11/03 22:59:06 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.10 2019/11/04 09:37:51 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,7 +52,6 @@ __KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.9 2019/11/03 22:59:06 jmcneill Exp $"
 #define	AM3_PRCM_CLKCTRL_MODULEMODE		__BITS(1,0)
 #define	AM3_PRCM_CLKCTRL_MODULEMODE_ENABLE	0x2
 
-/* WKUP */
 #define	AM3_PRCM_CM_IDLEST_DPLL_DISP	(AM3_PRCM_CM_WKUP + 0x48)
 #define	 AM3_PRCM_CM_IDLEST_DPLL_DISP_ST_MN_BYPASS	__BIT(8)
 #define	 AM3_PRCM_CM_IDLEST_DPLL_DISP_ST_DPLL_CLK	__BIT(0)
@@ -63,6 +62,8 @@ __KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.9 2019/11/03 22:59:06 jmcneill Exp $"
 #define	 AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN		__BITS(2,0)
 #define	  AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_MN_BYPASS	4
 #define	  AM3_PRCM_CM_CLKMODE_DPLL_DISP_DPLL_EN_LOCK		7
+
+#define	DPLL_DISP_RATE				297000000
 
 static int am3_prcm_match(device_t, cfdata_t, void *);
 static void am3_prcm_attach(device_t, device_t, void *);
@@ -100,8 +101,8 @@ am3_prcm_hwmod_enable_display(struct ti_prcm_softc *sc, struct ti_prcm_clk *tc, 
 			delay(10);
 		}
 
-		/* Set DPLL frequency to 270 MHz */
-		val = __SHIFTIN(270, AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_MULT);
+		/* Set DPLL frequency to DPLL_DISP_RATE (297 MHz) */
+		val = __SHIFTIN(DPLL_DISP_RATE / 1000000, AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_MULT);
 		val |= __SHIFTIN(24 - 1, AM3_PRCM_CM_CLKSEL_DPLL_DISP_DPLL_DIV);
 		PRCM_WRITE(sc, AM3_PRCM_CM_CLKSEL_DPLL_DISP, val);
 
@@ -141,7 +142,7 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	TI_PRCM_FIXED("FIXED_24MHZ", 24000000),
 	TI_PRCM_FIXED("FIXED_48MHZ", 48000000),
 	TI_PRCM_FIXED("FIXED_96MHZ", 96000000),
-	TI_PRCM_FIXED("DISPLAY_CLK", 270000000),
+	TI_PRCM_FIXED("DISPLAY_CLK", DPLL_DISP_RATE),
 	TI_PRCM_FIXED_FACTOR("PERIPH_CLK", 1, 1, "FIXED_48MHZ"),
 	TI_PRCM_FIXED_FACTOR("MMC_CLK", 1, 1, "FIXED_96MHZ"),
 
