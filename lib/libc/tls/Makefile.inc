@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2011/03/12 07:55:09 matt Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2019/11/04 12:45:10 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -6,4 +6,4 @@
 .PATH:	${.PARSEDIR} ${ARCHDIR}/tls
 
 SRCS+=			tls.c
-CPPFLAGS.tls.c+=	-D_LIBC_SOURCE
+CPPFLAGS.tls.c+=	-D_LIBC_SOURCE -std=gnu11
