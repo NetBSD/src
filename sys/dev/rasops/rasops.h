@@ -1,4 +1,4 @@
-/* 	$NetBSD: rasops.h,v 1.32 2017/04/22 15:05:02 macallan Exp $ */
+/* 	$NetBSD: rasops.h,v 1.32.4.1 2019/11/04 14:23:28 martin Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -132,10 +132,8 @@ struct rasops_info {
 	/* Callbacks so we can share some code */
 	void	(*ri_do_cursor)(struct rasops_info *);
 
-#if NRASOPS_ROTATION > 0
 	/* Used to intercept putchar to permit display rotation */
 	struct	wsdisplay_emulops ri_real_ops;
-#endif
 };
 
 #define DELTA(p, d, cast) ((p) = (cast)((char *)(p) + (d)))
