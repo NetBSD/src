@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.115 2016/10/19 09:44:01 skrll Exp $
+	$NetBSD: syscalls.master,v 1.115.8.1 2019/11/04 14:39:59 martin Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -1018,7 +1018,7 @@
 469	STD  		{ netbsd32_ssize_t|netbsd32||readlinkat(int fd, \
 			    const netbsd32_charp path, \
 			    netbsd32_charp buf, \
-			    size_t bufsize); }
+			    netbsd32_size_t bufsize); }
 470	STD  		{ int|netbsd32||symlinkat(const netbsd32_charp path1, \
 			    int fd, \
 			    const netbsd32_charp path2); }
