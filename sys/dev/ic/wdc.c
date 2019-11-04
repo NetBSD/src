@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.294 2019/10/23 14:44:41 christos Exp $ */
+/*	$NetBSD: wdc.c,v 1.295 2019/11/04 15:12:10 prlw1 Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.294 2019/10/23 14:44:41 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.295 2019/11/04 15:12:10 prlw1 Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1240,7 +1240,7 @@ __wdcwait(struct ata_channel *chp, int mask, int bits, int timeout, int *tfd)
 	if (!cold && xtime > WDCNDELAY_DEBUG) {
 		struct ata_xfer *xfer;
 
-		xfer = ata_queue_get_active_xfer(chp);
+		xfer = ata_queue_get_active_xfer_locked(chp);
 		if (xfer == NULL)
 			printf("%s channel %d: warning: busy-wait took %dus\n",
 			    device_xname(chp->ch_atac->atac_dev),
