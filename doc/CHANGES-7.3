@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.65 2019/10/31 01:53:00 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.66 2019/11/04 14:53:35 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -701,4 +701,15 @@ sys/modules/filemon/Makefile			1.4 (manually adjusted)
 
 	Do not install the filemon module.
 	[maya, ticket #1710]
+
+sys/compat/netbsd32/syscalls.master			1.129
+sys/compat/netbsd32/netbsd32_syscallargs.h		(regen)
+sys/compat/netbsd32/netbsd32_syscall.h			(regen)
+sys/compat/netbsd32/netbsd32_sysent.c			(regen)
+sys/compat/netbsd32/netbsd32_syscalls.c 		(regen)
+sys/compat/netbsd32/netbsd32_syscalls_autoload.c	(regen)
+sys/compat/netbsd32/netbsd32_systrace_args.c		(regen)
+
+	For netbsd32_readlinkat(2), bufsize is netbsd_size_t, not size_t.
+	[rin, ticket #1711]
 
