@@ -1,4 +1,4 @@
-/* $NetBSD: ti_lcdc.c,v 1.2 2019/11/03 23:31:49 jmcneill Exp $ */
+/* $NetBSD: ti_lcdc.c,v 1.3 2019/11/04 09:38:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.2 2019/11/03 23:31:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_lcdc.c,v 1.3 2019/11/04 09:38:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,8 +159,8 @@ tilcdc_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 {
 	struct tilcdc_crtc *mixer_crtc = to_tilcdc_crtc(crtc);
 	struct tilcdc_softc * const sc = mixer_crtc->sc;
+	int clk_div, div, diff, best_diff;
 	uint32_t val;
-	u_int clk_div;
 
 	const u_int hspw = adjusted_mode->crtc_hsync_end - adjusted_mode->crtc_hsync_start;
 	const u_int hbp = adjusted_mode->crtc_htotal - adjusted_mode->crtc_hsync_end;
@@ -170,9 +170,16 @@ tilcdc_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	const u_int vfp = adjusted_mode->crtc_vsync_start - adjusted_mode->crtc_vdisplay;
 
 	const u_int rate = clk_get_rate(sc->sc_clk);
-	for (clk_div = 2; clk_div < 255; clk_div++) {
-		if (rate / clk_div <= (int)adjusted_mode->crtc_clock * 1000)
-			break;
+
+	clk_div = 255;
+	best_diff = -1;
+	for (div = 2; div < 255; div++) {
+		const int pixel_clock = (rate / div) / 1000;
+		diff = abs(adjusted_mode->crtc_clock - pixel_clock);
+		if (best_diff == -1 || diff < best_diff) {
+			best_diff = diff;
+			clk_div = div;
+		}
 	}
 	if (clk_div == 255) {
 		device_printf(sc->sc_dev, "couldn't configure pixel clock (%u)\n",
