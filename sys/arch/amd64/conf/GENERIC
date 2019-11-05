@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.544 2019/11/01 02:53:23 msaitoh Exp $
+# $NetBSD: GENERIC,v 1.545 2019/11/05 20:19:17 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.544 $"
+#ident		"GENERIC-$Revision: 1.545 $"
 
 maxusers	64		# estimated number of users
 
@@ -127,6 +127,11 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #no options	SVS		# mandatory
 #options 	POOL_QUARANTINE	# optional
 #options 	KASAN_PANIC	# optional
+
+# Kernel Concurrency Sanitizer (kCSan).
+#makeoptions 	KCSAN=1		# mandatory
+#options 	KCSAN		# mandatory
+#options 	KCSAN_PANIC	# optional
 
 # Kernel Info Leak Detector.
 #makeoptions 	KLEAK=1
