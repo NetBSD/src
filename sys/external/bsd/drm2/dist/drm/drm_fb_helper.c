@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.12 2018/08/27 13:37:21 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.13 2019/11/05 04:09:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.12 2018/08/27 13:37:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.13 2019/11/05 04:09:51 msaitoh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -2086,9 +2086,9 @@ static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 		struct drm_display_mode *mode = modes[i];
 		struct drm_fb_helper_crtc *fb_crtc = crtcs[i];
 		struct drm_fb_offset *offset = &offsets[i];
-		modeset = &fb_crtc->mode_set;
 
 		if (mode && fb_crtc) {
+			modeset = &fb_crtc->mode_set;
 			DRM_DEBUG_KMS("desired mode %s set on crtc %d (%d,%d)\n",
 				      mode->name, fb_crtc->mode_set.crtc->base.id, offset->x, offset->y);
 			fb_crtc->desired_mode = mode;
