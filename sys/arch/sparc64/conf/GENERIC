@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.216 2019/05/06 02:24:37 sevan Exp $
+# $NetBSD: GENERIC,v 1.217 2019/11/05 12:28:23 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.216 $"
+#ident		"GENERIC-$Revision: 1.217 $"
 
 maxusers	64
 
@@ -353,6 +353,7 @@ optiide* at pci? dev ? function ?	# Opti IDE controllers
 pdcide* at pci? dev ? function ?	# Promise IDE controllers
 pdcsata* at pci? dev ? function ?	# Promise SATA150 controllers
 satalink* at pci? dev ? function ?	# SiI SATALink controllers
+siisata* at pci? dev ? function ?	# SiI SteelVine controllers
 siside* at pci? dev ? function ?	# SiS IDE controllers
 slide*	at pci? dev ? function ?	# Symphony Labs IDE controllers
 viaide* at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
