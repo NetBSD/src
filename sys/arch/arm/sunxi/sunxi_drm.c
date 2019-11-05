@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.7 2019/02/06 03:07:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.8 2019/11/05 23:31:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.7 2019/02/06 03:07:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.8 2019/11/05 23:31:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,9 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.7 2019/02/06 03:07:08 jmcneill Exp $
 
 #include <arm/sunxi/sunxi_drm.h>
 
+#define	SUNXI_DRM_MAX_WIDTH	3840
+#define	SUNXI_DRM_MAX_HEIGHT	2160
+
 static TAILQ_HEAD(, sunxi_drm_endpoint) sunxi_drm_endpoints =
     TAILQ_HEAD_INITIALIZER(sunxi_drm_endpoints);
 
@@ -68,6 +71,7 @@ static int	sunxi_drm_match(device_t, cfdata_t, void *);
 static void	sunxi_drm_attach(device_t, device_t, void *);
 
 static void	sunxi_drm_init(device_t);
+static vmem_t	*sunxi_drm_alloc_cma_pool(struct drm_device *, size_t);
 
 static int	sunxi_drm_set_busid(struct drm_device *, struct drm_master *);
 
@@ -176,6 +180,25 @@ sunxi_drm_init(device_t dev)
 	    driver->date, sc->sc_ddev->primary->index);
 }
 
+static vmem_t *
+sunxi_drm_alloc_cma_pool(struct drm_device *ddev, size_t cma_size)
+{
+	struct sunxi_drm_softc * const sc = sunxi_drm_private(ddev);
+	bus_dma_segment_t segs[1];
+	int nsegs;
+	int error;
+
+	error = bus_dmamem_alloc(sc->sc_dmat, cma_size, PAGE_SIZE, 0,
+	    segs, 1, &nsegs, BUS_DMA_NOWAIT);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't allocate CMA pool\n");
+		return NULL;
+	}
+
+	return vmem_create("sunxidrm", segs[0].ds_addr, segs[0].ds_len,
+	    PAGE_SIZE, NULL, NULL, NULL, 0, VM_SLEEP, IPL_NONE);
+}
+
 static int
 sunxi_drm_set_busid(struct drm_device *ddev, struct drm_master *master)
 {
@@ -280,6 +303,7 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 	struct sunxi_drm_framebuffer *sfb = to_sunxi_drm_framebuffer(helper->fb);
 	struct drm_framebuffer *fb = helper->fb;
 	struct sunxi_drmfb_attach_args sfa;
+	size_t cma_size;
 	int error;
 
 	const u_int width = sizes->surface_width;
@@ -287,6 +311,15 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 	const u_int pitch = width * (32 / 8);
 
 	const size_t size = roundup(height * pitch, PAGE_SIZE);
+
+	/* Reserve enough memory for the FB console plus a 4K plane, rounded to 1MB */
+	cma_size = size;
+	cma_size += (SUNXI_DRM_MAX_WIDTH * SUNXI_DRM_MAX_HEIGHT * 4);
+	cma_size = roundup(cma_size, 1024 * 1024);
+	sc->sc_ddev->cma_pool = sunxi_drm_alloc_cma_pool(sc->sc_ddev, cma_size);
+	if (sc->sc_ddev->cma_pool != NULL)
+		aprint_normal_dev(sc->sc_dev, "reserved %u MB DRAM for CMA\n",
+		    (u_int)(cma_size / (1024 * 1024)));
 
 	sfb->obj = drm_gem_cma_create(ddev, size);
 	if (sfb->obj == NULL) {
@@ -340,8 +373,8 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 	drm_mode_config_init(ddev);
 	ddev->mode_config.min_width = 0;
 	ddev->mode_config.min_height = 0;
-	ddev->mode_config.max_width = 3840;
-	ddev->mode_config.max_height = 2160;
+	ddev->mode_config.max_width = SUNXI_DRM_MAX_WIDTH;
+	ddev->mode_config.max_height = SUNXI_DRM_MAX_HEIGHT;
 	ddev->mode_config.funcs = &sunxi_drm_mode_config_funcs;
 
 	num_crtc = 0;
