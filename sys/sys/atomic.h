@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.15 2019/09/11 14:56:25 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.16 2019/11/05 20:19:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -39,6 +39,7 @@
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_kasan.h"
+#include "opt_kcsan.h"
 #endif
 
 #if defined(KASAN)
@@ -62,6 +63,27 @@
 #define ATOMIC_PROTO_INC(name, tret, targ1) \
 	void kasan_atomic_inc_##name(volatile targ1 *); \
 	tret kasan_atomic_inc_##name##_nv(volatile targ1 *)
+#elif defined(KCSAN)
+#define ATOMIC_PROTO_ADD(name, tret, targ1, targ2) \
+	void kcsan_atomic_add_##name(volatile targ1 *, targ2); \
+	tret kcsan_atomic_add_##name##_nv(volatile targ1 *, targ2)
+#define ATOMIC_PROTO_AND(name, tret, targ1, targ2) \
+	void kcsan_atomic_and_##name(volatile targ1 *, targ2); \
+	tret kcsan_atomic_and_##name##_nv(volatile targ1 *, targ2)
+#define ATOMIC_PROTO_OR(name, tret, targ1, targ2) \
+	void kcsan_atomic_or_##name(volatile targ1 *, targ2); \
+	tret kcsan_atomic_or_##name##_nv(volatile targ1 *, targ2)
+#define ATOMIC_PROTO_CAS(name, tret, targ1, targ2) \
+	tret kcsan_atomic_cas_##name(volatile targ1 *, targ2, targ2); \
+	tret kcsan_atomic_cas_##name##_ni(volatile targ1 *, targ2, targ2)
+#define ATOMIC_PROTO_SWAP(name, tret, targ1, targ2) \
+	tret kcsan_atomic_swap_##name(volatile targ1 *, targ2)
+#define ATOMIC_PROTO_DEC(name, tret, targ1) \
+	void kcsan_atomic_dec_##name(volatile targ1 *); \
+	tret kcsan_atomic_dec_##name##_nv(volatile targ1 *)
+#define ATOMIC_PROTO_INC(name, tret, targ1) \
+	void kcsan_atomic_inc_##name(volatile targ1 *); \
+	tret kcsan_atomic_inc_##name##_nv(volatile targ1 *)
 #else
 #define ATOMIC_PROTO_ADD(name, tret, targ1, targ2) \
 	void atomic_add_##name(volatile targ1 *, targ2); \
@@ -213,6 +235,68 @@ __END_DECLS
 #define atomic_inc_ulong_nv	kasan_atomic_inc_ulong_nv
 #define atomic_inc_ptr_nv	kasan_atomic_inc_ptr_nv
 #define atomic_inc_64_nv	kasan_atomic_inc_64_nv
+#elif defined(KCSAN)
+#define atomic_add_32		kcsan_atomic_add_32
+#define atomic_add_int		kcsan_atomic_add_int
+#define atomic_add_long		kcsan_atomic_add_long
+#define atomic_add_ptr		kcsan_atomic_add_ptr
+#define atomic_add_64		kcsan_atomic_add_64
+#define atomic_add_32_nv	kcsan_atomic_add_32_nv
+#define atomic_add_int_nv	kcsan_atomic_add_int_nv
+#define atomic_add_long_nv	kcsan_atomic_add_long_nv
+#define atomic_add_ptr_nv	kcsan_atomic_add_ptr_nv
+#define atomic_add_64_nv	kcsan_atomic_add_64_nv
+#define atomic_and_32		kcsan_atomic_and_32
+#define atomic_and_uint		kcsan_atomic_and_uint
+#define atomic_and_ulong	kcsan_atomic_and_ulong
+#define atomic_and_64		kcsan_atomic_and_64
+#define atomic_and_32_nv	kcsan_atomic_and_32_nv
+#define atomic_and_uint_nv	kcsan_atomic_and_uint_nv
+#define atomic_and_ulong_nv	kcsan_atomic_and_ulong_nv
+#define atomic_and_64_nv	kcsan_atomic_and_64_nv
+#define atomic_or_32		kcsan_atomic_or_32
+#define atomic_or_uint		kcsan_atomic_or_uint
+#define atomic_or_ulong		kcsan_atomic_or_ulong
+#define atomic_or_64		kcsan_atomic_or_64
+#define atomic_or_32_nv		kcsan_atomic_or_32_nv
+#define atomic_or_uint_nv	kcsan_atomic_or_uint_nv
+#define atomic_or_ulong_nv	kcsan_atomic_or_ulong_nv
+#define atomic_or_64_nv		kcsan_atomic_or_64_nv
+#define atomic_cas_32		kcsan_atomic_cas_32
+#define atomic_cas_uint		kcsan_atomic_cas_uint
+#define atomic_cas_ulong	kcsan_atomic_cas_ulong
+#define atomic_cas_ptr		kcsan_atomic_cas_ptr
+#define atomic_cas_64		kcsan_atomic_cas_64
+#define atomic_cas_32_ni	kcsan_atomic_cas_32_ni
+#define atomic_cas_uint_ni	kcsan_atomic_cas_uint_ni
+#define atomic_cas_ulong_ni	kcsan_atomic_cas_ulong_ni
+#define atomic_cas_ptr_ni	kcsan_atomic_cas_ptr_ni
+#define atomic_cas_64_ni	kcsan_atomic_cas_64_ni
+#define atomic_swap_32		kcsan_atomic_swap_32
+#define atomic_swap_uint	kcsan_atomic_swap_uint
+#define atomic_swap_ulong	kcsan_atomic_swap_ulong
+#define atomic_swap_ptr		kcsan_atomic_swap_ptr
+#define atomic_swap_64		kcsan_atomic_swap_64
+#define atomic_dec_32		kcsan_atomic_dec_32
+#define atomic_dec_uint		kcsan_atomic_dec_uint
+#define atomic_dec_ulong	kcsan_atomic_dec_ulong
+#define atomic_dec_ptr		kcsan_atomic_dec_ptr
+#define atomic_dec_64		kcsan_atomic_dec_64
+#define atomic_dec_32_nv	kcsan_atomic_dec_32_nv
+#define atomic_dec_uint_nv	kcsan_atomic_dec_uint_nv
+#define atomic_dec_ulong_nv	kcsan_atomic_dec_ulong_nv
+#define atomic_dec_ptr_nv	kcsan_atomic_dec_ptr_nv
+#define atomic_dec_64_nv	kcsan_atomic_dec_64_nv
+#define atomic_inc_32		kcsan_atomic_inc_32
+#define atomic_inc_uint		kcsan_atomic_inc_uint
+#define atomic_inc_ulong	kcsan_atomic_inc_ulong
+#define atomic_inc_ptr		kcsan_atomic_inc_ptr
+#define atomic_inc_64		kcsan_atomic_inc_64
+#define atomic_inc_32_nv	kcsan_atomic_inc_32_nv
+#define atomic_inc_uint_nv	kcsan_atomic_inc_uint_nv
+#define atomic_inc_ulong_nv	kcsan_atomic_inc_ulong_nv
+#define atomic_inc_ptr_nv	kcsan_atomic_inc_ptr_nv
+#define atomic_inc_64_nv	kcsan_atomic_inc_64_nv
 #endif
 
 #endif /* ! _SYS_ATOMIC_H_ */
