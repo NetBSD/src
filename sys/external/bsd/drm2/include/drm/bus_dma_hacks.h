@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.17 2018/08/27 15:32:39 riastradh Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.18 2019/11/05 23:27:23 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,6 +51,9 @@ PHYS_TO_BUS_MEM(bus_dma_tag_t dmat, paddr_t pa)
 {
 	unsigned i;
 
+	if (dmat->_nranges == 0)
+		return (bus_addr_t)pa;
+
 	for (i = 0; i < dmat->_nranges; i++) {
 		const struct arm32_dma_range *dr = &dmat->_ranges[i];
 
@@ -63,6 +66,9 @@ static inline paddr_t
 BUS_MEM_TO_PHYS(bus_dma_tag_t dmat, bus_addr_t ba)
 {
 	unsigned i;
+
+	if (dmat->_nranges == 0)
+		return (paddr_t)ba;
 
 	for (i = 0; i < dmat->_nranges; i++) {
 		const struct arm32_dma_range *dr = &dmat->_ranges[i];
