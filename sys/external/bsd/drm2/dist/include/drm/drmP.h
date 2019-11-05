@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.35 2018/12/21 07:51:18 maya Exp $	*/
+/*	$NetBSD: drmP.h,v 1.36 2019/11/05 23:29:28 jmcneill Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -931,6 +931,7 @@ struct drm_device {
 	bool dmat_subregion_p;
 	bus_addr_t dmat_subregion_min;
 	bus_addr_t dmat_subregion_max;
+	vmem_t *cma_pool;
 #endif
 
 	struct drm_sg_mem *sg;	/**< Scatter gather memory */
