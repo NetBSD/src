@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.7 2019/03/08 02:53:22 mrg Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.8 2019/11/05 09:59:16 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.7 2019/03/08 02:53:22 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.8 2019/11/05 09:59:16 jmcneill Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -55,7 +55,8 @@ drm_gem_cma_create_internal(struct drm_device *ddev, size_t size,
 	if (error)
 		goto failed;
 	error = bus_dmamem_map(obj->dmat, obj->dmasegs, nsegs,
-	    obj->dmasize, &obj->vaddr, BUS_DMA_WAITOK | BUS_DMA_COHERENT);
+	    obj->dmasize, &obj->vaddr,
+	    BUS_DMA_WAITOK | BUS_DMA_PREFETCHABLE);
 	if (error)
 		goto free;
 	error = bus_dmamap_create(obj->dmat, obj->dmasize, 1,
