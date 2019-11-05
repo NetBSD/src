@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.116 2019/08/24 11:51:26 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.117 2019/11/05 09:57:47 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.116 2019/08/24 11:51:26 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.117 2019/11/05 09:57:47 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1426,6 +1426,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 		    pa < (segs[curseg].ds_addr + segs[curseg].ds_len);
 		    pa += PAGE_SIZE, va += PAGE_SIZE, size -= PAGE_SIZE) {
 			bool uncached = (flags & BUS_DMA_COHERENT);
+			bool prefetchable = (flags & BUS_DMA_PREFETCHABLE);
 #ifdef DEBUG_DMA
 			printf("wiring p%lx to v%lx", pa, va);
 #endif	/* DEBUG_DMA */
@@ -1443,8 +1444,14 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 				uncached = false;
 			}
 
+			u_int pmap_flags = PMAP_WIRED;
+			if (prefetchable)
+				pmap_flags |= PMAP_WRITE_COMBINE;
+			else if (uncached)
+				pmap_flags |= PMAP_NOCACHE;
+
 			pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
-			    PMAP_WIRED | (uncached ? PMAP_NOCACHE : 0));
+			    pmap_flags);
 		}
 	}
 	pmap_update(pmap_kernel());
