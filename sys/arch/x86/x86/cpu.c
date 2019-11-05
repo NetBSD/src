@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.173 2019/10/12 06:31:04 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.174 2019/11/05 20:19:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.173 2019/10/12 06:31:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.174 2019/11/05 20:19:17 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -82,6 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.173 2019/10/12 06:31:04 maxv Exp $");
 #include <sys/idle.h>
 #include <sys/atomic.h>
 #include <sys/reboot.h>
+#include <sys/csan.h>
 
 #include <uvm/uvm.h>
 
@@ -429,6 +430,7 @@ cpu_attach(device_t parent, device_t self, void *aux)
 #endif
 		/* Make sure DELAY() is initialized. */
 		DELAY(1);
+		kcsan_cpu_init(ci);
 		again = true;
 	}
 
@@ -960,6 +962,8 @@ cpu_hatch(void *v)
 	x86_errata();
 
 	aprint_debug_dev(ci->ci_dev, "running\n");
+
+	kcsan_cpu_init(ci);
 
 	idle_loop(NULL);
 	KASSERT(false);

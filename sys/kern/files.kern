@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.35 2019/08/15 12:24:08 maxv Exp $
+#	$NetBSD: files.kern,v 1.36 2019/11/05 20:19:17 maxv Exp $
 
 #
 # kernel sources
@@ -105,6 +105,7 @@ file	kern/subr_callback.c		kern
 file	kern/subr_cprng.c		kern
 file	kern/subr_cpufreq.c		kern
 file	kern/subr_copy.c		kern
+file	kern/subr_csan.c		kcsan
 file	kern/subr_debug.c		debug
 file	kern/subr_device.c		kern
 file	kern/subr_devsw.c		kern

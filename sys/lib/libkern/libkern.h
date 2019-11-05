@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.132 2019/09/20 13:38:00 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.133 2019/11/05 20:19:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,6 +37,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_diagnostic.h"
 #include "opt_kasan.h"
+#include "opt_kcsan.h"
 #endif
 
 #include <sys/types.h>
@@ -376,11 +377,18 @@ void	*kasan_memset(void *, int, size_t);
 #define	memcpy(d, s, l)		kasan_memcpy(d, s, l)
 #define	memcmp(a, b, l)		kasan_memcmp(a, b, l)
 #define	memset(d, v, l)		kasan_memset(d, v, l)
+#elif defined(_KERNEL) && defined(KCSAN)
+void	*kcsan_memcpy(void *, const void *, size_t);
+int	 kcsan_memcmp(const void *, const void *, size_t);
+void	*kcsan_memset(void *, int, size_t);
+#define	memcpy(d, s, l)		kcsan_memcpy(d, s, l)
+#define	memcmp(a, b, l)		kcsan_memcmp(a, b, l)
+#define	memset(d, v, l)		kcsan_memset(d, v, l)
 #else
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
 #define	memset(d, v, l)		__builtin_memset(d, v, l)
-#endif /* _KERNEL && KASAN */
+#endif
 #endif
 
 char	*strcpy(char *, const char *);
@@ -396,11 +404,18 @@ size_t	 kasan_strlen(const char *);
 #define	strcpy(d, s)		kasan_strcpy(d, s)
 #define	strcmp(a, b)		kasan_strcmp(a, b)
 #define	strlen(a)		kasan_strlen(a)
+#elif defined(_KERNEL) && defined(KCSAN)
+char	*kcsan_strcpy(char *, const char *);
+int	 kcsan_strcmp(const char *, const char *);
+size_t	 kcsan_strlen(const char *);
+#define	strcpy(d, s)		kcsan_strcpy(d, s)
+#define	strcmp(a, b)		kcsan_strcmp(a, b)
+#define	strlen(a)		kcsan_strlen(a)
 #else
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
 #define	strlen(a)		__builtin_strlen(a)
-#endif /* _KERNEL && KASAN */
+#endif
 #endif
 
 /* Functions for which we always use built-ins. */
@@ -442,6 +457,9 @@ void	*memmove(void *, const void *, size_t);
 #if defined(_KERNEL) && defined(KASAN)
 void	*kasan_memmove(void *, const void *, size_t);
 #define	memmove(d, s, l)	kasan_memmove(d, s, l)
+#elif defined(_KERNEL) && defined(KCSAN)
+void	*kcsan_memmove(void *, const void *, size_t);
+#define	memmove(d, s, l)	kcsan_memmove(d, s, l)
 #endif
 
 int	 pmatch(const char *, const char *, const char **);

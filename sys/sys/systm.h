@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.287 2019/10/10 13:45:14 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.288 2019/11/05 20:19:18 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -44,6 +44,7 @@
 #include "opt_multiprocessor.h"
 #include "opt_gprof.h"
 #include "opt_kasan.h"
+#include "opt_kcsan.h"
 #include "opt_kleak.h"
 #include "opt_wsdisplay_compat.h"
 #endif
@@ -267,6 +268,9 @@ void	tablefull(const char *, const char *);
 #if defined(_KERNEL) && defined(KASAN)
 int	kasan_kcopy(const void *, void *, size_t);
 #define kcopy		kasan_kcopy
+#elif defined(_KERNEL) && defined(KCSAN)
+int	kcsan_kcopy(const void *, void *, size_t);
+#define kcopy		kcsan_kcopy
 #else
 int	kcopy(const void *, void *, size_t);
 #endif
@@ -286,6 +290,15 @@ int	kasan_copyin(const void *, void *, size_t);
 #define copyinstr	kasan_copyinstr
 #define copyoutstr	kasan_copyoutstr
 #define copyin		kasan_copyin
+#elif defined(_KERNEL) && defined(KCSAN)
+int	kcsan_copystr(const void *, void *, size_t, size_t *);
+int	kcsan_copyinstr(const void *, void *, size_t, size_t *);
+int	kcsan_copyoutstr(const void *, void *, size_t, size_t *);
+int	kcsan_copyin(const void *, void *, size_t);
+#define copystr		kcsan_copystr
+#define copyinstr	kcsan_copyinstr
+#define copyoutstr	kcsan_copyoutstr
+#define copyin		kcsan_copyin
 #else
 int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
