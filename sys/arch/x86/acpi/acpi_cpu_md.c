@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_cpu_md.c,v 1.80 2019/10/06 15:11:17 uwe Exp $ */
+/* $NetBSD: acpi_cpu_md.c,v 1.81 2019/11/05 20:21:34 maxv Exp $ */
 
 /*-
  * Copyright (c) 2010, 2011 Jukka Ruohonen <jruohonen@iki.fi>
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.80 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_cpu_md.c,v 1.81 2019/11/05 20:21:34 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -400,7 +400,7 @@ acpicpu_md_cstate_stop(void)
 /*
  * Called with interrupts enabled.
  */
-void
+void __nocsan
 acpicpu_md_cstate_enter(int method, int state)
 {
 	struct cpu_info *ci = curcpu();
