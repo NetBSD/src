@@ -204,8 +204,8 @@ extern int dot_symbols;
 %{,assembler|,assembler-with-cpp: %{mregnames} %{mno-regnames}}" \
   ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 
-#undef	SUBSUBTARGET_EXTRA_SPECS
-#define SUBSUBTARGET_EXTRA_SPECS \
+#undef	EXTRA_SPECS
+#define EXTRA_SPECS \
   { "asm_spec_common",		ASM_SPEC_COMMON },			\
   { "asm_spec32",		ASM_SPEC32 },				\
   { "asm_spec64",		ASM_SPEC64 },				\
@@ -296,7 +296,7 @@ extern int dot_symbols;
    registers and memory.  FIRST is nonzero if this is the only
    element.  */
 #define BLOCK_REG_PADDING(MODE, TYPE, FIRST) \
-  (!(FIRST) ? upward : FUNCTION_ARG_PADDING (MODE, TYPE))
+  (!(FIRST) ? PAD_UPWARD : targetm.calls.function_arg_padding (MODE, TYPE))
 
 /* NetBSD doesn't support saving and restoring 64-bit regs in a 32-bit
    process.  */
