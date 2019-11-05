@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.117 2019/11/05 09:57:47 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.118 2019/11/05 10:21:31 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.117 2019/11/05 09:57:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.118 2019/11/05 10:21:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1339,7 +1339,7 @@ _bus_dmamem_map(bus_dma_tag_t t, bus_dma_segment_t *segs, int nsegs,
 	 * contiguous area then this area is already mapped.  Let's see if we
 	 * avoid having a separate mapping for it.
 	 */
-	if (nsegs == 1) {
+	if (nsegs == 1 && (flags & BUS_DMA_PREFETCHABLE) == 0) {
 		/*
 		 * If this is a non-COHERENT mapping, then the existing kernel
 		 * mapping is already compatible with it.
