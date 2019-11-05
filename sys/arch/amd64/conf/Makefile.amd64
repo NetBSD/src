@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.78 2019/09/07 18:56:01 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.79 2019/11/05 20:19:17 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -58,6 +58,15 @@ KASANFLAGS=	-fsanitize=kernel-address \
 KASANFLAGS.${f}=	# empty
 .endfor
 CFLAGS+=	${KASANFLAGS.${.IMPSRC:T}:U${KASANFLAGS}}
+.endif
+
+.if ${KCSAN:U0} > 0 && ${HAVE_GCC:U0} > 0
+KCSANFLAGS=	-fsanitize=thread
+.for f in subr_csan.c clock.c lapic.c subr_kcov.c subr_lwp_specificdata.c \
+	subr_specificdata.c
+KCSANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KCSANFLAGS.${.IMPSRC:T}:U${KCSANFLAGS}}
 .endif
 
 ##

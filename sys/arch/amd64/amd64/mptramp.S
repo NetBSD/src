@@ -1,4 +1,4 @@
-/*	$NetBSD: mptramp.S,v 1.26 2017/11/26 14:54:43 maxv Exp $	*/
+/*	$NetBSD: mptramp.S,v 1.27 2019/11/05 20:19:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000, 2016 The NetBSD Foundation, Inc.
@@ -75,6 +75,7 @@
  */
 
 #include "assym.h"
+#include "opt_kcsan.h"
 #include <machine/asm.h>
 #include <machine/specialreg.h>
 #include <machine/segments.h>
@@ -243,6 +244,18 @@ _C_LABEL(cpu_spinup_trampoline_end):	/* end of code copied to MP_TRAMPOLINE */
 
 	movl	PCB_CR0(%rsi),%eax
 	movq	%rax,%cr0
+
+#ifdef KCSAN
+	/*
+	 * The C instrumentation uses GS.base, so initialize it right now. It
+	 * gets re-initialized later, that's fine.
+	 */
+	movl	$MSR_GSBASE,%ecx
+	movq	%rdi,%rax
+	movq	%rdi,%rdx
+	shrq	$32,%rdx
+	wrmsr
+#endif
 
 	call	_C_LABEL(cpu_hatch)
 END(cpu_spinup_trampoline)

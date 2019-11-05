@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.337 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.338 2019/11/05 20:19:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.337 2019/10/12 06:31:03 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.338 2019/11/05 20:19:17 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -152,6 +152,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.337 2019/10/12 06:31:03 maxv Exp $");
 #include <sys/lwp.h>
 #include <sys/proc.h>
 #include <sys/asan.h>
+#include <sys/csan.h>
 
 #ifdef KGDB
 #include <sys/kgdb.h>
@@ -1761,6 +1762,7 @@ init_x86_64(paddr_t first_avail)
 #ifdef KASAN
 	kasan_init();
 #endif
+	kcsan_init();
 
 	pmap_growkernel(VM_MIN_KERNEL_ADDRESS + 32 * 1024 * 1024);
 
