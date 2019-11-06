@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.147.6.1 2017/10/24 08:38:59 snj Exp $	*/
+/*	$NetBSD: i82557.c,v 1.147.6.2 2019/11/06 10:04:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.147.6.1 2017/10/24 08:38:59 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.147.6.2 2019/11/06 10:04:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1475,7 +1475,6 @@ fxp_tick(void *arg)
 	ifp->if_opackets += le32toh(sp->tx_good);
 	ifp->if_collisions += le32toh(sp->tx_total_collisions);
 	if (sp->rx_good) {
-		ifp->if_ipackets += le32toh(sp->rx_good);
 		sc->sc_rxidle = 0;
 	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->sc_rxidle++;
