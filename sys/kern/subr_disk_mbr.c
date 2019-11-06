@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.51 2019/05/17 18:50:40 christos Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.52 2019/11/06 13:07:32 kamil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.51 2019/05/17 18:50:40 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.52 2019/11/06 13:07:32 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,8 +571,11 @@ look_netbsd_part(mbr_args_t *a, mbr_partition_t *dp, int slot, uint ext_base)
 static bool
 check_label_magic(const struct disklabel *dlp, uint32_t diskmagic)
 {
-	return memcmp(&dlp->d_magic, &diskmagic, sizeof(diskmagic)) == 0 &&
-	    memcmp(&dlp->d_magic2, &diskmagic, sizeof(diskmagic)) == 0;
+
+	return memcmp((const char *)dlp + offsetof(struct disklabel, d_magic),
+	              &diskmagic, sizeof(diskmagic)) == 0 &&
+	    memcmp((const char *)dlp + offsetof(struct disklabel, d_magic2),
+	           &diskmagic, sizeof(diskmagic)) == 0;
 }
 
 #ifdef DISKLABEL_EI
