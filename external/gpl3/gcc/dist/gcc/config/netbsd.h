@@ -99,13 +99,9 @@ along with GCC; see the file COPYING3.  If not see
    1. Select the appropriate set of libs, depending on whether we're
       profiling.
 
-   2. Include the pthread library if -pthread is specified (only
-      if threads are enabled).
+   2. Include the pthread library if -pthread is specified.
 
-   3. Include the posix library if -posix is specified.
-
-   FIXME: Could eliminate the duplication here if we were allowed to
-   use string concatenation.  */
+   3. Include the posix library if -posix is specified. */
 
 #define NETBSD_LIB_SPEC		\
   "%{pthread:			\
