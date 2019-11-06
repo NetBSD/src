@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.29 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.30 2019/11/06 07:30:59 mrg Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.29 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.30 2019/11/06 07:30:59 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -64,6 +64,8 @@ struct usbnet_private {
 	 *	ifnet lock -> unp_lock -> unp_rxlock -> unp_txlock
 	 *      unp_lock -> unp_miilock
 	 * and unp_lock may be dropped after taking unp_miilock.
+	 * - ifnet lock is not needed for unp_lock, but if ifnet lock is
+	 *   involved, it must be taken first
 	 */
 	kmutex_t		unp_lock;
 	kmutex_t		unp_miilock;
