@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.14 2019/04/07 20:28:41 maya Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.14.4.1 2019/11/06 09:48:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -71,5 +71,7 @@
 #include <drm/drm_auth_netbsd.h>
 #include <drm/drm_irq_netbsd.h>
 #include <drm/drm_wait_netbsd.h>
+
+#include <sys/vmem.h>
 
 #endif  /* _DRM_DRM_OS_NETBSD_H_ */
