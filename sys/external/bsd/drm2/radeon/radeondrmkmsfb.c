@@ -1,4 +1,4 @@
-/*	$NetBSD: radeondrmkmsfb.c,v 1.12 2019/05/31 03:41:32 maya Exp $	*/
+/*	$NetBSD: radeondrmkmsfb.c,v 1.13 2019/11/06 07:31:20 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.12 2019/05/31 03:41:32 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeondrmkmsfb.c,v 1.13 2019/11/06 07:31:20 mrg Exp $");
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -119,7 +119,6 @@ radeonfb_detach(device_t self, int flags)
 
 	if (sc->sc_scheduled)
 		return EBUSY;
-;
 
 	if (sc->sc_attached) {
 		pmf_device_deregister(self);
