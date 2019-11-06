@@ -1,4 +1,4 @@
-/*	$NetBSD: savecore.c,v 1.88 2018/12/27 21:25:46 mrg Exp $	*/
+/*	$NetBSD: savecore.c,v 1.89 2019/11/06 07:29:08 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1986, 1992, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1986, 1992, 1993\
 #if 0
 static char sccsid[] = "@(#)savecore.c	8.5 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: savecore.c,v 1.88 2018/12/27 21:25:46 mrg Exp $");
+__RCSID("$NetBSD: savecore.c,v 1.89 2019/11/06 07:29:08 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -74,11 +74,17 @@ __RCSID("$NetBSD: savecore.c,v 1.88 2018/12/27 21:25:46 mrg Exp $");
 extern FILE *zopen(const char *fname, const char *mode);
 
 /*
- * Note that KREAD_LOGWARN takes a variable name, not pointer to it, unlike
- * KREAD() itself.
+ * Note that KREAD_LOGWARN and KREAD_ERR take a variable name, not
+ * pointer to it, unlike KREAD() itself.
  */
 #define	KREAD(kd, addr, p)\
 	(kvm_read(kd, addr, (char *)(p), sizeof(*(p))) != sizeof(*(p)))
+#define KREAD_ERR(kd, addr, p, err)					\
+do {									\
+	if (KREAD(kd, addr, &(p)) != 0) {				\
+		err;							\
+	}								\
+} while (0) 
 #define KREAD_LOGWARN(kd, addr, p, err)					\
 do {									\
 	if (KREAD(kd, addr, &(p)) != 0) {				\
@@ -468,8 +474,8 @@ dump_exists(int verbose)
 	u_int32_t newdumpmag;
 
 	/* Read the dump magic and size. */
-	KREAD_LOGWARN(kd_dump, dump_nl[X_DUMPMAG].n_value, newdumpmag, return 0);
-	KREAD_LOGWARN(kd_dump, dump_nl[X_DUMPSIZE].n_value, dumpsize, return 0);
+	KREAD_ERR(kd_dump, dump_nl[X_DUMPMAG].n_value, newdumpmag, return 0);
+	KREAD_ERR(kd_dump, dump_nl[X_DUMPSIZE].n_value, dumpsize, return 0);
 
 	dumpbytes = (off_t)dumpsize * getpagesize();
 
