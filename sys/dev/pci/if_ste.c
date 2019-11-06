@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.50.8.1 2019/11/06 10:04:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.50 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.50.8.1 2019/11/06 10:04:47 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1096,8 +1096,8 @@ ste_stats_update(struct ste_softc *sc)
 
 	ifp->if_opackets +=
 	    (u_int) bus_space_read_2(st, sh, STE_FramesTransmittedOK);
-	ifp->if_ipackets +=
-	    (u_int) bus_space_read_2(st, sh, STE_FramesReceivedOK);
+
+	(u_int) bus_space_read_2(st, sh, STE_FramesReceivedOK);
 
 	ifp->if_collisions +=
 	    (u_int) bus_space_read_1(st, sh, STE_LateCollisions) +

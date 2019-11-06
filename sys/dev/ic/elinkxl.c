@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121.6.1 2018/07/26 23:55:29 snj Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.121.6.2 2019/11/06 10:04:46 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.6.1 2018/07/26 23:55:29 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.6.2 2019/11/06 10:04:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1483,8 +1483,6 @@ ex_getstats(struct ex_softc *sc)
 
 	GO_WINDOW(6);
 	upperok = bus_space_read_1(iot, ioh, UPPER_FRAMES_OK);
-	ifp->if_ipackets += bus_space_read_1(iot, ioh, RX_FRAMES_OK);
-	ifp->if_ipackets += (upperok & 0x03) << 8;
 	ifp->if_opackets += bus_space_read_1(iot, ioh, TX_FRAMES_OK);
 	ifp->if_opackets += (upperok & 0x30) << 4;
 	ifp->if_ierrors += bus_space_read_1(iot, ioh, RX_OVERRUNS);
