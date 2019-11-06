@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.96 2019/10/24 03:19:14 christos Exp $
+#	$NetBSD: Makefile,v 1.97 2019/11/06 07:26:31 mrg Exp $
 
 .include <bsd.hostinit.mk>
 
@@ -253,6 +253,27 @@ MKENV_BUILD_MAKE=cd .native && ${MKNATIVE_ENV} ${BUILD_MAKE}
 			all-local) && \
 	true
 	@touch $@
+
+.if !defined(PREV_GCC)
+.  if exists(PREV_GCC)
+PREV_GCC!=	cat PREV_GCC
+.  else
+PREV_GCC=
+.  endif
+.endif
+
+CLEANFILES+=	PREV_GCC
+
+realall realdepend: .MAKE
+.if !empty(PREV_GCC) && "${PREV_GCC}" != "${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}"
+	@echo "*** WARNING: GCC has changed version?"
+	@echo "*** PREV_GCC '${PREV_GCC}'"
+	@echo "***     !=  EXTERNAL_GCC_SUBDIR-HAVE_GCC '${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC}'"
+	@echo "*** Cleaning mis-matched tools/gcc"
+	rm -f PREV_GCC
+	(cd ${.CURDIR} && ${MAKE} cleandir)
+.endif
+	echo ${EXTERNAL_GCC_SUBDIR}-${HAVE_GCC} >PREV_GCC
 
 clean: clean.native
 clean.native:
