@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.1 2019/11/05 20:19:17 maxv Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.2 2019/11/06 06:57:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.1 2019/11/05 20:19:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.2 2019/11/06 06:57:22 maxv Exp $");
 
 #include "opt_kcsan.h"
 
@@ -69,8 +69,8 @@ static bool kcsan_enabled __read_mostly;
 
 #define __RET_ADDR	(uintptr_t)__builtin_return_address(0)
 
-#define KCSAN_NACCESSES	2000
-#define KCSAN_DELAY	10000	/* 10 milliseconds */
+#define KCSAN_NACCESSES	1024
+#define KCSAN_DELAY	10	/* 10 microseconds */
 
 /* -------------------------------------------------------------------------- */
 
