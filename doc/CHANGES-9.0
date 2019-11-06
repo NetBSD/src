@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.95 2019/11/04 14:49:31 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.96 2019/11/06 10:19:30 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5464,4 +5464,62 @@ sys/compat/netbsd32/netbsd32_systrace_args.c		(regen)
 
 	For netbsd32_readlinkat(2), bufsize is netbsd_size_t, not size_t.
 	[rin, ticket #398]
+
+sys/arch/arm/arm32/bus_dma.c			1.1171.118
+sys/external/bsd/drm2/drm/drm_gem_cma_helper.c	1.8
+
+	bus_dmamem_map: honour BUS_DMA_PREFETCHABLE hint.
+	Map buffer objects with BUS_DMA_PREFETCHABLE.
+	[jmcneill, ticket #399]
+
+sys/arch/arm/sunxi/sunxi_drm.c			1.8
+sys/external/bsd/drm2/dist/include/drm/drmP.h	1.36
+sys/external/bsd/drm2/dist/include/drm/drm_gem_cma_helper.h 1.6
+sys/external/bsd/drm2/drm/drm_gem_cma_helper.c	1.9
+sys/external/bsd/drm2/include/drm/bus_dma_hacks.h 1.18
+sys/external/bsd/drm2/include/drm/drm_os_netbsd.h 1.15
+
+	Arm DMA tags with _nranges=0 require no address translation.
+	Handle this in PHYS_TO_BUS_MEM and BUS_TO_PHYS_MEM instead of panicing.
+	Add support for DRM GEM/CMA helpers using a driver provided vmem arena.
+	Reserve enough memory at boot to support the drmfb buffer plus a 4K
+	buffer for Xorg.
+	[jmcneill, ticket #400]
+
+sys/dev/pci/pci.c				1.156
+
+	PCIe downstream ports only have a single child device, so limit
+	probing to dev 0.
+	[mrg, ticket #401]
+
+sys/dev/mii/ukphy_subr.c			1.16
+
+	Fix a bug that ukphy_status() misunderstand master mode.
+	[msaitoh, ticket #402]
+
+sys/arch/arm/broadcom/bcm53xx_eth.c		1.39
+sys/arch/arm/gemini/gemini_gmac.c		1.18
+sys/arch/arm/gemini/if_gpn.c			1.13
+sys/arch/powerpc/booke/dev/pq3etsec.c		1.47
+sys/dev/ic/aic6915.c				1.40
+sys/dev/ic/elinkxl.c				1.133
+sys/dev/ic/i82557.c				1.156
+sys/dev/pci/if_age.c				1.62
+sys/dev/pci/if_alc.c				1.43
+sys/dev/pci/if_ale.c				1.34
+sys/dev/pci/if_ste.c				1.57
+sys/dev/pci/if_stge.c				1.72
+sys/dev/pci/if_tl.c				1.117
+sys/dev/pci/if_txp.c				1.60
+sys/dev/pci/if_vte.c				1.27
+sys/dev/pcmcia/if_xi.c				1.91
+
+	Fix input counter to prevent double count.
+	[msaitoh, ticket #403]
+
+sys/dev/pci/if_wm.c				1.646,1.647,1.649
+
+	Avoid undefined behavior in wm_i82543_mii_sendbits().
+	Change printf to device_printf.
+	[msaitoh, ticket #404]
 
