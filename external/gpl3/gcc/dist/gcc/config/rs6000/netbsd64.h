@@ -204,8 +204,8 @@ extern int dot_symbols;
 %{,assembler|,assembler-with-cpp: %{mregnames} %{mno-regnames}}" \
   ENDIAN_SELECT(" -mbig", " -mlittle", DEFAULT_ASM_ENDIAN)
 
-#undef	EXTRA_SPECS
-#define EXTRA_SPECS \
+#undef	SUBSUBTARGET_EXTRA_SPECS
+#define SUBSUBTARGET_EXTRA_SPECS \
   { "asm_spec_common",		ASM_SPEC_COMMON },			\
   { "asm_spec32",		ASM_SPEC32 },				\
   { "asm_spec64",		ASM_SPEC64 },				\
