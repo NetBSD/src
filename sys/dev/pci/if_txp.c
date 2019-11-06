@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.59 2019/07/09 08:46:59 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.59.2.1 2019/11/06 09:59:39 martin Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.59 2019/07/09 08:46:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.59.2.1 2019/11/06 09:59:39 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -1373,7 +1373,6 @@ txp_tick(void *vsc)
 	ifp->if_collisions += ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 +
 	    ext[1].ext_3;
 	ifp->if_opackets += rsp->rsp_par2;
-	ifp->if_ipackets += ext[2].ext_3;
 
 out:
 	if (rsp != NULL)
