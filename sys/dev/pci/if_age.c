@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.60.2.1 2019/09/22 12:15:28 martin Exp $ */
+/*	$NetBSD: if_age.c,v 1.60.2.2 2019/11/06 09:59:39 martin Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.60.2.1 2019/09/22 12:15:28 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.60.2.2 2019/11/06 09:59:39 martin Exp $");
 
 #include "vlan.h"
 
@@ -2042,8 +2042,6 @@ age_stats_update(struct age_softc *sc)
 	ifp->if_oerrors += smb->tx_excess_colls +
 	    smb->tx_late_colls + smb->tx_underrun +
 	    smb->tx_pkts_truncated;
-
-	ifp->if_ipackets += smb->rx_frames;
 
 	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +

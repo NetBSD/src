@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.70 2019/07/09 08:46:59 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.70.2.1 2019/11/06 09:59:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.70 2019/07/09 08:46:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.70.2.1 2019/11/06 09:59:39 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1420,8 +1420,7 @@ stge_stats_update(struct stge_softc *sc)
 
 	(void) bus_space_read_4(st, sh, STGE_OctetRcvOk);
 
-	ifp->if_ipackets +=
-	    bus_space_read_4(st, sh, STGE_FramesRcvdOk);
+	(void) bus_space_read_4(st, sh, STGE_FramesRcvdOk);
 
 	ifp->if_ierrors +=
 	    (u_int) bus_space_read_2(st, sh, STGE_FramesLostRxErrors);
