@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.38 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.39 2019/11/06 14:33:52 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.38 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.39 2019/11/06 14:33:52 nisimura Exp $");
 
 
 #include <sys/param.h>
@@ -57,6 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.38 2019/05/29 10:07:29 msaitoh Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+
+#define KSE_LINKDEBUG 0
 
 #define CSR_READ_4(sc, off) \
 	    bus_space_read_4(sc->sc_st, sc->sc_sh, off)
@@ -93,6 +95,17 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.38 2019/05/29 10:07:29 msaitoh Exp $");
 #define P1SR	0x514	/* port 1 status */
 #define P2CR4	0x532	/* port 2 control 4 */
 #define P2SR	0x534	/* port 2 status */
+#define PxCR_STARTNEG	(1U << 9)	/* restart auto negotiation */
+#define PxCR_AUTOEN	(1U << 7)	/* auto negotiation enable */
+#define PxCR_SPD100	(1U << 6)	/* force speed 100 */
+#define PxCR_USEFDX	(1U << 5)	/* force full duplex */
+#define PxCR_USEFC	(1U << 4)	/* advertise pause flow control */
+#define PxSR_ACOMP	(1U << 6)	/* auto negotiation completed */
+#define PxSR_SPD100	(1U << 10)	/* speed is 100Mbps */
+#define PxSR_FDX	(1U << 9)	/* full duplex */
+#define PxSR_LINKUP	(1U << 5)	/* link is good */
+#define PxSR_RXFLOW	(1U << 12)	/* receive flow control active */
+#define PxSR_TXFLOW	(1U << 11)	/* transmit flow control active */
 
 #define TXC_BS_MSK	0x3f000000	/* burst size */
 #define TXC_BS_SFT	(24)		/* 1,2,4,8,16,32 or 0 for unlimited */
@@ -207,8 +220,8 @@ struct kse_softc {
 	void *sc_ih;			/* interrupt cookie */
 
 	struct ifmedia sc_media;	/* ifmedia information */
-	int sc_media_status;		/* PHY */
-	int sc_media_active;		/* PHY */
+	int sc_linkstatus;		/* last P1SR register value */
+
 	callout_t  sc_callout;		/* MII tick callout */
 	callout_t  sc_stat_ch;		/* statistics counter callout */
 
@@ -313,11 +326,9 @@ static int kse_intr(void *);
 static void rxintr(struct kse_softc *);
 static void txreap(struct kse_softc *);
 static void lnkchg(struct kse_softc *);
-static int ifmedia_upd(struct ifnet *);
-static void ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static int ksephy_change(struct ifnet *);
+static void ksephy_status(struct ifnet *, struct ifmediareq *);
 static void phy_tick(void *);
-static int ifmedia2_upd(struct ifnet *);
-static void ifmedia2_sts(struct ifnet *, struct ifmediareq *);
 #ifdef KSE_EVENT_COUNTERS
 static void stat_tick(void *);
 static void zerostats(struct kse_softc *);
@@ -493,8 +504,9 @@ kse_attach(device_t parent, device_t self, void *aux)
 	/* Initialize ifmedia structures. */
 	ifm = &sc->sc_media;
 	sc->sc_ethercom.ec_ifmedia = ifm;
+	sc->sc_linkstatus = 0;
 	if (sc->sc_chip == 0x8841) {
-		ifmedia_init(ifm, 0, ifmedia_upd, ifmedia_sts);
+		ifmedia_init(ifm, 0, ksephy_change, ksephy_status);
 		ifmedia_add(ifm, IFM_ETHER | IFM_10_T, 0, NULL);
 		ifmedia_add(ifm, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
 		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX, 0, NULL);
@@ -502,9 +514,10 @@ kse_attach(device_t parent, device_t self, void *aux)
 		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
 	} else {
-		ifmedia_init(ifm, 0, ifmedia2_upd, ifmedia2_sts);
-		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
+		ifmedia_init(ifm, 0, NULL, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX, 0, NULL);
+		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
+		ifmedia_set(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX);
 	}
 
 	printf("%s: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n",
@@ -766,7 +779,8 @@ kse_init(struct ifnet *ifp)
 	kse_set_filter(sc);
 
 	/* set current media */
-	(void)ifmedia_upd(ifp);
+	if (sc->sc_chip == 0x8841)
+		(void)ksephy_change(ifp);
 
 	/* enable transmitter and receiver */
 	CSR_WRITE_4(sc, MDTXC, sc->sc_txc);
@@ -1257,92 +1271,77 @@ lnkchg(struct kse_softc *sc)
 {
 	struct ifmediareq ifmr;
 
-#if 0 /* rambling link status */
-	printf("%s: link %s\n", device_xname(sc->sc_dev),
-	    (CSR_READ_2(sc, P1SR) & (1U << 5)) ? "up" : "down");
+#if KSE_LINKDEBUG > 0
+printf("link change detected\n");
 #endif
-	ifmedia_sts(&sc->sc_ethercom.ec_if, &ifmr);
+	ksephy_status(&sc->sc_ethercom.ec_if, &ifmr);
 }
 
 static int
-ifmedia_upd(struct ifnet *ifp)
+ksephy_change(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_media;
-	uint16_t ctl;
-
-	ctl = 0;
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		ctl |= (1U << 13); /* Restart AN */
-		ctl |= (1U << 7);  /* Enable AN */
-		ctl |= (1U << 4);  /* Advertise flow control pause */
-		ctl |= (1U << 3) | (1U << 2) | (1U << 1) | (1U << 0);
-	}
-	else {
-		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX)
-			ctl |= (1U << 6);
+	uint16_t p1cr4;
+#if KSE_LINKDEBUG > 0
+printf("ifm_media: %x\n", ifm->ifm_cur->ifm_media);
+#endif
+	p1cr4 = 0;
+	if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_AUTO) {
+		p1cr4 |= PxCR_STARTNEG;	/* restart AN */
+		p1cr4 |= PxCR_AUTOEN;	/* enable AN */
+		p1cr4 |= PxCR_USEFC;	/* advertise flow control pause */
+		p1cr4 |= 0xf;		/* advertise 100-FDX,100-HDX,10-FDX,10-HDX */
+	} else {
+		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
+			p1cr4 |= PxCR_SPD100;
 		if (ifm->ifm_media & IFM_FDX)
-			ctl |= (1U << 5);
+			p1cr4 |= PxCR_USEFDX;
 	}
-	CSR_WRITE_2(sc, P1CR4, ctl);
-
-	sc->sc_media_active = IFM_NONE;
-	sc->sc_media_status = IFM_AVALID;
-
+	CSR_WRITE_2(sc, P1CR4, p1cr4);
+#if KSE_LINKDEBUG > 0
+printf("P1CR4: %04x\n", p1cr4);
+#endif
 	return 0;
 }
 
 static void
-ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
+ksephy_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct kse_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
-	uint16_t ctl, sts, result;
+	int media_status;
+	u_int media_active;
+	uint16_t p1cr4, p1sr;
 
-	ifmr->ifm_status = IFM_AVALID;
-	ifmr->ifm_active = IFM_ETHER;
+	media_status = IFM_AVALID;
+	media_active = IFM_ETHER;
 
-	ctl = CSR_READ_2(sc, P1CR4);
-	sts = CSR_READ_2(sc, P1SR);
-	if ((sts & (1U << 5)) == 0) {
-		ifmr->ifm_active |= IFM_NONE;
-		goto out; /* Link is down */
-	}
-	ifmr->ifm_status |= IFM_ACTIVE;
-	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
-		if ((sts & (1U << 6)) == 0) {
-			ifmr->ifm_active |= IFM_NONE;
+	p1cr4 = CSR_READ_2(sc, P1CR4);
+	p1sr = CSR_READ_2(sc, P1SR);
+#if KSE_LINKDEBUG > 0
+printf("P1SR: %04x link %s\n", p1sr, (p1sr & PxSR_LINKUP) ? "up" : "down");
+#endif
+	sc->sc_linkstatus = p1sr;
+	if (p1sr & PxSR_LINKUP)
+		media_status |= IFM_ACTIVE;
+
+	if (p1cr4 & PxCR_AUTOEN) {
+		if ((p1sr & PxSR_ACOMP) == 0) {
+			media_active |= IFM_NONE;
 			goto out; /* Negotiation in progress */
 		}
-		result = ctl & sts & 017;
-		if (result & (1U << 3))
-			ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
-		else if (result & (1U << 2))
-			ifmr->ifm_active |= IFM_100_TX | IFM_HDX;
-		else if (result & (1U << 1))
-			ifmr->ifm_active |= IFM_10_T | IFM_FDX;
-		else if (result & (1U << 0))
-			ifmr->ifm_active |= IFM_10_T | IFM_HDX;
-		else
-			ifmr->ifm_active |= IFM_NONE;
-		if (ctl & (1U << 4))
-			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
-		if (sts & (1U << 4))
-			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
-	}
-	else {
-		ifmr->ifm_active |= (sts & (1U << 10)) ? IFM_100_TX : IFM_10_T;
-		if (sts & (1U << 9))
-			ifmr->ifm_active |= IFM_FDX;
-		if (sts & (1U << 12))
-			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
-		if (sts & (1U << 11))
-			ifmr->ifm_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
 	}
 
+	media_active |= (p1sr & PxSR_SPD100) ? IFM_100_TX : IFM_10_T;
+	if (p1sr & PxSR_FDX)
+		media_active |= IFM_FDX;
+	if (p1sr & PxSR_RXFLOW)
+		media_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
+	if (p1sr & PxSR_TXFLOW)
+		media_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
   out:
-	sc->sc_media_status = ifmr->ifm_status;
-	sc->sc_media_active = ifmr->ifm_active;
+	ifmr->ifm_active = media_active;
+	ifmr->ifm_status = media_status;
 }
 
 static void
@@ -1351,44 +1350,15 @@ phy_tick(void *arg)
 	struct kse_softc *sc = arg;
 	struct ifmediareq ifmr;
 	int s;
+	uint16_t p1sr;
 
 	s = splnet();
-	ifmedia_sts(&sc->sc_ethercom.ec_if, &ifmr);
+	p1sr = CSR_READ_2(sc, P1SR);
+	if (sc->sc_linkstatus != p1sr)
+		ksephy_status(&sc->sc_ethercom.ec_if, &ifmr);
 	splx(s);
 
 	callout_reset(&sc->sc_callout, hz, phy_tick, sc);
-}
-
-static int
-ifmedia2_upd(struct ifnet *ifp)
-{
-	struct kse_softc *sc = ifp->if_softc;
-
-	sc->sc_media_status = IFM_AVALID;
-	sc->sc_media_active = IFM_NONE;
-	return 0;
-}
-
-static void
-ifmedia2_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct kse_softc *sc = ifp->if_softc;
-	int p1sts, p2sts;
-
-	ifmr->ifm_status = IFM_AVALID;
-	ifmr->ifm_active = IFM_ETHER;
-	p1sts = CSR_READ_2(sc, P1SR);
-	p2sts = CSR_READ_2(sc, P2SR);
-	if (((p1sts | p2sts) & (1U << 5)) == 0)
-		ifmr->ifm_active |= IFM_NONE;
-	else {
-		ifmr->ifm_status |= IFM_ACTIVE;
-		ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
-		ifmr->ifm_active |= IFM_FLOW
-		    | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE;
-	}
-	sc->sc_media_status = ifmr->ifm_status;
-	sc->sc_media_active = ifmr->ifm_active;
 }
 
 #ifdef KSE_EVENT_COUNTERS
