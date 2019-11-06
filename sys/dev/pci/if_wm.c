@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.645 2019/07/30 04:42:29 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.645.2.1 2019/11/06 10:07:42 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645 2019/07/30 04:42:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.645.2.1 2019/11/06 10:07:42 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4616,8 +4616,8 @@ wm_flush_desc_rings(struct wm_softc *sc)
 		return;
 
 	/* TX */
-	printf("%s: Need TX flush (reg = %08x, len = %u)\n",
-	    device_xname(sc->sc_dev), preg, reg);
+	device_printf(sc->sc_dev, "Need TX flush (reg = %08x, len = %u)\n",
+	    preg, reg);
 	reg = CSR_READ(sc, WMREG_TCTL);
 	CSR_WRITE(sc, WMREG_TCTL, reg | TCTL_EN);
 
@@ -4644,8 +4644,7 @@ wm_flush_desc_rings(struct wm_softc *sc)
 		return;
 
 	/* RX */
-	printf("%s: Need RX flush (reg = %08x)\n",
-	    device_xname(sc->sc_dev), preg);
+	device_printf(sc->sc_dev, "Need RX flush (reg = %08x)\n", preg);
 	rctl = CSR_READ(sc, WMREG_RCTL);
 	CSR_WRITE(sc, WMREG_RCTL, rctl & ~RCTL_EN);
 	CSR_WRITE_FLUSH(sc);
@@ -4885,7 +4884,7 @@ wm_reset(struct wm_softc *sc)
 			reg |= CTRL_PHY_RESET;
 			phy_reset = 1;
 		} else
-			printf("XXX reset is blocked!!!\n");
+			device_printf(sc->sc_dev, "XXX reset is blocked!!!\n");
 		sc->phy.acquire(sc);
 		CSR_WRITE(sc, WMREG_CTRL, reg);
 		/* Don't insert a completion barrier when reset */
@@ -9033,7 +9032,8 @@ wm_linkintr_gmii(struct wm_softc *sc, uint32_t icr)
 				 * Fiber?
 				 * Shoud not enter here.
 				 */
-				printf("unknown media (%x)\n", active);
+				device_printf(dev, "unknown media (%x)\n",
+				    active);
 				break;
 			}
 			if (active & IFM_FDX)
@@ -9893,7 +9893,7 @@ wm_gmii_reset(struct wm_softc *sc)
  * result might be incorrect.
  *
  *  In the second call, PHY OUI and model is used to identify PHY type.
- * It might not be perfpect because of the lack of compared entry, but it
+ * It might not be perfect because of the lack of compared entry, but it
  * would be better than the first call.
  *
  *  If the detected new result and previous assumption is different,
@@ -10413,7 +10413,7 @@ wm_i82543_mii_sendbits(struct wm_softc *sc, uint32_t data, int nbits)
 	v &= ~(MDI_IO | MDI_CLK | (CTRL_SWDPIO_MASK << CTRL_SWDPIO_SHIFT));
 	v |= MDI_DIR | CTRL_SWDPIO(3);
 
-	for (i = 1 << (nbits - 1); i != 0; i >>= 1) {
+	for (i = __BIT(nbits - 1); i != 0; i >>= 1) {
 		if (data & i)
 			v |= MDI_IO;
 		else
@@ -11137,7 +11137,7 @@ wm_gmii_hv_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 	 * own func
 	 */
 	if ((page > 0) && (page < HV_INTC_FC_PAGE_START)) {
-		printf("gmii_hv_readreg!!!\n");
+		device_printf(dev, "gmii_hv_readreg!!!\n");
 		return -1;
 	}
 
@@ -11205,7 +11205,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 	 * own func
 	 */
 	if ((page > 0) && (page < HV_INTC_FC_PAGE_START)) {
-		printf("gmii_hv_writereg!!!\n");
+		device_printf(dev, "gmii_hv_writereg!!!\n");
 		return -1;
 	}
 
@@ -11229,7 +11229,7 @@ wm_gmii_hv_writereg_locked(device_t dev, int phy, int reg, uint16_t val)
 			if ((child != NULL) && (child->mii_mpd_rev >= 1)
 			    && (phy == 2) && ((regnum & MII_ADDRMASK) == 0)
 			    && ((val & (1 << 11)) != 0)) {
-				printf("XXX need workaround\n");
+				device_printf(dev, "XXX need workaround\n");
 			}
 		}
 
@@ -12851,12 +12851,12 @@ wm_ich8_cycle_init(struct wm_softc *sc)
 	/*
 	 * Either we should have a hardware SPI cycle in progress bit to check
 	 * against, in order to start a new cycle or FDONE bit should be
-	 * changed in the hardware so that it is 1 after harware reset, which
+	 * changed in the hardware so that it is 1 after hardware reset, which
 	 * can then be used as an indication whether a cycle is in progress or
 	 * has been completed .. we should also have some software semaphore
 	 * mechanism to guard FDONE or the cycle in progress bit so that two
 	 * threads access to those bits can be sequentiallized or a way so that
-	 * 2 threads dont start the cycle at the same time
+	 * 2 threads don't start the cycle at the same time
 	 */
 
 	if ((hsfsts & HSFSTS_FLINPRO) == 0) {
@@ -13870,8 +13870,9 @@ wm_get_swfw_semaphore(struct wm_softc *sc, uint16_t mask)
 		delay(5000);
 		timeout--;
 	}
-	printf("%s: failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
-	    device_xname(sc->sc_dev), mask, swfw_sync);
+	device_printf(sc->sc_dev,
+	    "failed to get swfw semaphore mask 0x%x swfw 0x%x\n",
+	    mask, swfw_sync);
 	return 1;
 }
 
@@ -14017,8 +14018,8 @@ wm_get_swfwhw_semaphore(struct wm_softc *sc)
 			return 0;
 		delay(5000);
 	}
-	printf("%s: failed to get swfwhw semaphore ext_ctrl 0x%x\n",
-	    device_xname(sc->sc_dev), ext_ctrl);
+	device_printf(sc->sc_dev,
+	    "failed to get swfwhw semaphore ext_ctrl 0x%x\n", ext_ctrl);
 	mutex_exit(sc->sc_ich_phymtx); /* Use PHY mtx for both PHY and NVM */
 	return 1;
 }
@@ -14054,8 +14055,8 @@ wm_get_swflag_ich8lan(struct wm_softc *sc)
 		delay(1000);
 	}
 	if (timeout >= WM_PHY_CFG_TIMEOUT) {
-		printf("%s: SW has already locked the resource\n",
-		    device_xname(sc->sc_dev));
+		device_printf(sc->sc_dev,
+		    "SW has already locked the resource\n");
 		goto out;
 	}
 
@@ -14068,8 +14069,7 @@ wm_get_swflag_ich8lan(struct wm_softc *sc)
 		delay(1000);
 	}
 	if (timeout >= 1000) {
-		printf("%s: failed to acquire semaphore\n",
-		    device_xname(sc->sc_dev));
+		device_printf(sc->sc_dev, "failed to acquire semaphore\n");
 		ext_ctrl &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
 		CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
 		goto out;
@@ -14093,8 +14093,7 @@ wm_put_swflag_ich8lan(struct wm_softc *sc)
 		ext_ctrl &= ~EXTCNFCTR_MDIO_SW_OWNERSHIP;
 		CSR_WRITE(sc, WMREG_EXTCNFCTR, ext_ctrl);
 	} else {
-		printf("%s: Semaphore unexpectedly released\n",
-		    device_xname(sc->sc_dev));
+		device_printf(sc->sc_dev, "Semaphore unexpectedly released\n");
 	}
 
 	mutex_exit(sc->sc_ich_phymtx);
@@ -14450,7 +14449,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 				break;
 
 		if (wm_phy_resetisblocked(sc) == true) {
-			printf("XXX reset is blocked(3)\n");
+			device_printf(sc->sc_dev, "XXX reset is blocked(3)\n");
 			break;
 		}
 
@@ -14483,7 +14482,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 	if (rv == 0) {
 		/* Check to see if able to reset PHY.  Print error if not */
 		if (wm_phy_resetisblocked(sc)) {
-			printf("XXX reset is blocked(4)\n");
+			device_printf(sc->sc_dev, "XXX reset is blocked(4)\n");
 			goto out;
 		}
 
@@ -14502,7 +14501,7 @@ wm_init_phy_workarounds_pchlan(struct wm_softc *sc)
 		 *  the PHY is in.
 		 */
 		if (wm_phy_resetisblocked(sc))
-			printf("XXX reset is blocked(4)\n");
+			device_printf(sc->sc_dev, "XXX reset is blocked(4)\n");
 	}
 
 out:
@@ -14638,7 +14637,8 @@ wm_ulp_disable(struct wm_softc *sc)
 		/* Poll up to 300msec for ME to clear ULP_CFG_DONE. */
 		while ((CSR_READ(sc, WMREG_FWSM) & FWSM_ULP_CFG_DONE) != 0) {
 			if (i++ == 30) {
-				printf("%s timed out\n", __func__);
+				device_printf(sc->sc_dev, "%s timed out\n",
+				    __func__);
 				return -1;
 			}
 			delay(10 * 1000);
@@ -15978,7 +15978,7 @@ wm_phy_is_accessible_pchlan(struct wm_softc *sc)
 		sc->phy.acquire(sc);
 	}
 	if ((rv != 0) || MII_INVALIDID(id1) || MII_INVALIDID(id2)) {
-		printf("XXX return with false\n");
+		device_printf(sc->sc_dev, "XXX return with false\n");
 		return false;
 	}
 out:
@@ -16102,8 +16102,8 @@ wm_platform_pm_pch_lpt(struct wm_softc *sc, bool link)
 			value = howmany(value, __BIT(5));
 		}
 		if (scale > LTRV_SCALE_MAX) {
-			printf("%s: Invalid LTR latency scale %d\n",
-			    device_xname(sc->sc_dev), scale);
+			device_printf(sc->sc_dev,
+			    "Invalid LTR latency scale %d\n", scale);
 			return -1;
 		}
 		lat_enc = (uint16_t)(__SHIFTIN(scale, LTRV_SCALE) | value);
