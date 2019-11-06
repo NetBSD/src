@@ -1,4 +1,4 @@
-/*	$NetBSD: csan.h,v 1.1 2019/11/05 20:19:17 maxv Exp $	*/
+/*	$NetBSD: csan.h,v 1.2 2019/11/06 06:57:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 static inline bool
 kcsan_md_is_avail(void)
 {
-	return (x86_read_psl() & PSL_I) == 0;
+	return true;
 }
 
 static inline void
