@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.h,v 1.13 2016/03/11 17:16:40 christos Exp $	*/
+/*	$NetBSD: bl.h,v 1.14 2019/11/06 20:50:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,9 @@
 typedef enum {
 	BL_INVALID,
 	BL_ADD,
-	BL_DELETE
+	BL_DELETE,
+	BL_ABUSE,
+	BL_BADUSER
 } bl_type_t;
 
 typedef struct {
