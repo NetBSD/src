@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.99 2018/12/09 20:45:37 jdolecek Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.100 2019/11/07 07:45:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.99 2018/12/09 20:45:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.100 2019/11/07 07:45:14 skrll Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -713,7 +713,7 @@ ubc_release(void *va, int flags)
 			    inactive);
 		}
 	}
-	UVMHIST_LOG(ubchist, "umap %cw#jxp refs %jd", (uintptr_t)umap,
+	UVMHIST_LOG(ubchist, "umap %#jx refs %jd", (uintptr_t)umap,
 	    umap->refcount, 0, 0);
 	mutex_exit(ubc_object.uobj.vmobjlock);
 }
