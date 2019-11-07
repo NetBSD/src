@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2609 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2610 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -71,3 +71,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[jmcneill 20191101]
 	amd64: Add support for kCSan - Kernel Concurrency Sanitizer.
 		[maxv 20191105]
+	micphy(4): Add support for Microchip KSZ80[0456]1, KSZ8721, KSZ9[01]31,
+		KS8731 and KSZ9477.
+		[msaitoh 20191107]
