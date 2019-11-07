@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.39 2019/11/06 14:33:52 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.40 2019/11/07 09:05:29 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,8 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.39 2019/11/06 14:33:52 nisimura Exp $");
-
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.40 2019/11/07 09:05:29 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,6 +327,7 @@ static void txreap(struct kse_softc *);
 static void lnkchg(struct kse_softc *);
 static int ksephy_change(struct ifnet *);
 static void ksephy_status(struct ifnet *, struct ifmediareq *);
+static void nopifm_status(struct ifnet *, struct ifmediareq *);
 static void phy_tick(void *);
 #ifdef KSE_EVENT_COUNTERS
 static void stat_tick(void *);
@@ -514,8 +514,16 @@ kse_attach(device_t parent, device_t self, void *aux)
 		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
 	} else {
-		ifmedia_init(ifm, 0, NULL, NULL);
-		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX, 0, NULL);
+		/*
+		 * pretend 100FDX w/ no alternative media selection.
+		 * 8842 MAC is tied with a builtin 3 port switch.
+		 * It can do rate control over either of tx / rx direction
+		 * respectively, tough, this driver leaves the rate unlimited
+		 * intending 100Mbps maxinum.
+		 * 2 ports behave in AN mode and this driver provides no mean
+		 * to see the exact details.
+		 */
+		ifmedia_init(ifm, 0, NULL, nopifm_status);
 		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX);
 	}
@@ -1342,6 +1350,21 @@ printf("P1SR: %04x link %s\n", p1sr, (p1sr & PxSR_LINKUP) ? "up" : "down");
   out:
 	ifmr->ifm_active = media_active;
 	ifmr->ifm_status = media_status;
+}
+
+static void
+nopifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
+{
+	struct kse_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_media;
+
+#if KSE_LINKDEBUG > 1
+printf("p1sr: %04x, p2sr: %04x\n", CSR_READ_2(sc, P1SR), CSR_READ_2(sc, P2SR));
+#endif
+
+	/* 8842 MAC pretends 100FDX all the time */
+	ifmr->ifm_active = ifm->ifm_cur->ifm_media;
+	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 }
 
 static void
