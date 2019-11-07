@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.40 2019/11/07 09:05:29 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -29,8 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+/*
+ * Micrel 8841/8842 10/100 ethernet driver
+ */
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.40 2019/11/07 09:05:29 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -519,7 +523,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		 * 8842 MAC is tied with a builtin 3 port switch.
 		 * It can do rate control over either of tx / rx direction
 		 * respectively, tough, this driver leaves the rate unlimited
-		 * intending 100Mbps maxinum.
+		 * intending 100Mbps maximum.
 		 * 2 ports behave in AN mode and this driver provides no mean
 		 * to see the exact details.
 		 */
@@ -543,7 +547,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * KSZ8842 can handle 802.1Q VLAN-sized frames,
+	 * capable of 802.1Q VLAN-sized frames,
 	 * can do IPv4, TCPv4, and UDPv4 checksums in hardware.
 	 */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
