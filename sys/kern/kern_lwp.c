@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.205 2019/10/06 15:11:17 uwe Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.206 2019/11/07 19:45:18 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.205 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.206 2019/11/07 19:45:18 joerg Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -902,6 +902,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	if ((flags & LWP_PIDLID) != 0) {
 		lid = proc_alloc_pid(p2);
 		l2->l_pflag |= LP_PIDLID;
+	} else if (p2->p_nlwps == 0) {
+		lid = l1->l_lid;
 	} else {
 		lid = 0;
 	}
