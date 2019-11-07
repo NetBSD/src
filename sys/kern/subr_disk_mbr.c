@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_disk_mbr.c,v 1.52 2019/11/06 13:07:32 kamil Exp $	*/
+/*	$NetBSD: subr_disk_mbr.c,v 1.53 2019/11/07 18:30:27 kamil Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.52 2019/11/06 13:07:32 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_disk_mbr.c,v 1.53 2019/11/07 18:30:27 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ check_label_magic(const struct disklabel *dlp, uint32_t diskmagic)
 static int
 validate_label(mbr_args_t *a, uint label_sector)
 {
-	struct disklabel *dlp;
+	struct disklabel *dlp, tlp;
 	char *dlp_lim, *dlp_byte;
 	int error;
 #ifdef DISKLABEL_EI
@@ -624,21 +624,23 @@ validate_label(mbr_args_t *a, uint label_sector)
 			else
 				dlp_byte += LABELSECTOR * a->lp->d_secsize;
 			dlp = (void *)dlp_byte;
+			memcpy(&tlp, dlp, sizeof(tlp));
 			break;
 		}
-		if (!check_label_magic(dlp, DISKMAGIC))
+		memcpy(&tlp, dlp, sizeof(tlp));
+		if (!check_label_magic(&tlp, DISKMAGIC))
 #ifdef DISKLABEL_EI
 		{
-			if (!check_label_magic(dlp, bswap32(DISKMAGIC)))
+			if (!check_label_magic(&tlp, bswap32(DISKMAGIC)))
 				continue;
 
 			/*
 			 * The label is in the other byte order. We need to
 			 * checksum before swapping the byte order.
 			 */
-			npartitions = bswap16(dlp->d_npartitions);
+			npartitions = bswap16(tlp.d_npartitions);
 			if (npartitions > MAXPARTITIONS ||
-			    dkcksum_sized(dlp, npartitions) != 0)
+			    dkcksum_sized(&tlp, npartitions) != 0)
 				goto corrupted;
 
 			swapped = 1;
@@ -646,8 +648,8 @@ validate_label(mbr_args_t *a, uint label_sector)
 #else
 			continue;
 #endif
-		else if (dlp->d_npartitions > MAXPARTITIONS ||
-			 dkcksum(dlp) != 0) {
+		else if (tlp.d_npartitions > MAXPARTITIONS ||
+			 dkcksum(&tlp) != 0) {
 #ifdef DISKLABEL_EI
 corrupted:
 #endif
@@ -661,11 +663,11 @@ corrupted:
 	case READ_LABEL:
 #ifdef DISKLABEL_EI
 		if (swapped)
-			swap_disklabel(a->lp, dlp);
+			swap_disklabel(a->lp, &tlp);
 		else
-			*a->lp = *dlp;
+			*a->lp = tlp;
 #else
-		*a->lp = *dlp;
+		*a->lp = tlp;
 #endif
 		if ((a->msg = convertdisklabel(a->lp, a->strat, a->bp,
 		                              a->secperunit)) != NULL)
@@ -677,12 +679,13 @@ corrupted:
 #ifdef DISKLABEL_EI
 		/* DO NOT swap a->lp itself for later references. */
 		if (swapped)
-			swap_disklabel(dlp, a->lp);
+			swap_disklabel(&tlp, a->lp);
 		else
-			*dlp = *a->lp;
+			tlp = *a->lp;
 #else
-		*dlp = *a->lp;
+		tlp = *a->lp;
 #endif
+		memcpy(dlp, &tlp, sizeof(tlp));
 		a->bp->b_oflags &= ~BO_DONE;
 		a->bp->b_flags &= ~B_READ;
 		a->bp->b_flags |= B_WRITE;
