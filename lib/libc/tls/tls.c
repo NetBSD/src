@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.11 2019/11/05 22:22:42 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.12 2019/11/07 22:25:21 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.11 2019/11/05 22:22:42 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.12 2019/11/07 22:25:21 joerg Exp $");
 
 #include "namespace.h"
 
@@ -86,14 +86,16 @@ _rtld_tls_allocate(void)
 
 	if (initial_thread_tcb == NULL) {
 #ifdef __HAVE_TLS_VARIANT_II
-		tls_size = roundup2(tls_size, alignof(max_align_t));
+		tls_allocation = roundup2(tls_size, alignof(max_align_t));
+#else
+		tls_allocation = tls_size;
 #endif
-		tls_allocation = tls_size + sizeof(*tcb);
 
-		initial_thread_tcb = p = mmap(NULL, tls_allocation,
-		    PROT_READ | PROT_WRITE, MAP_ANON, -1, 0);
+		initial_thread_tcb = p = mmap(NULL,
+		    tls_allocation + sizeof(*tcb), PROT_READ | PROT_WRITE,
+		    MAP_ANON, -1, 0);
 	} else {
-		p = calloc(1, tls_allocation);
+		p = calloc(1, tls_allocation + sizeof(*tcb));
 	}
 	if (p == NULL) {
 		static const char msg[] =  "TLS allocation failed, terminating\n";
@@ -106,7 +108,8 @@ _rtld_tls_allocate(void)
 	p += sizeof(struct tls_tcb);
 #else
 	/* LINTED tls_size is rounded above */
-	tcb = (struct tls_tcb *)(p + tls_size);
+	tcb = (struct tls_tcb *)(p + tls_allocation);
+	p = (uint8_t *)tcb - tls_size;
 	tcb->tcb_self = tcb;
 #endif
 	memcpy(p, tls_initaddr, tls_initsize);
@@ -126,10 +129,10 @@ _rtld_tls_free(struct tls_tcb *tcb)
 	p = (uint8_t *)tcb;
 #else
 	/* LINTED */
-	p = (uint8_t *)tcb - tls_size;
+	p = (uint8_t *)tcb - tls_allocation;
 #endif
 	if (p == initial_thread_tcb)
-		munmap(p, tls_allocation);
+		munmap(p, tls_allocation + sizeof(*tcb));
 	else
 		free(p);
 }
