@@ -1,4 +1,4 @@
-/*	$NetBSD: dtrace_subr.c,v 1.13 2019/07/05 08:29:18 hannken Exp $	*/
+/*	$NetBSD: dtrace_subr.c,v 1.14 2019/11/08 11:06:21 hannken Exp $	*/
 
 /*
  * CDDL HEADER START
@@ -412,7 +412,11 @@ dtrace_trap(struct trapframe *frame, u_int type)
 	 */
 	nofault = (cpu_core[cpuid].cpuc_dtrace_flags & CPU_DTRACE_NOFAULT) != 0;
 	if (nofault) {
+#if 0
+		This assertion would always fire, we get called from
+		alltraps() -> trap() with interrupts enabled.
 		KASSERTMSG((x86_read_flags() & PSL_I) == 0, "interrupts enabled");
+#endif
 
 		/*
 		 * There are only a couple of trap types that are expected.
