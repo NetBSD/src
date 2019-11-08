@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1389 2019/10/29 16:31:48 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1390 2019/11/08 04:37:45 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3117,7 +3117,7 @@ product INTEL X1000_HS_UART	0x0936	Quark X1000 HS-UART
 product INTEL X1000_MAC		0x0937	Quark X1000 10/100 Ethernet MAC
 product INTEL X1000_EHCI	0x0939	Quark X1000 EHCI
 product INTEL X1000_OHCI	0x093a	Quark X1000 OHCI
-product INTEL PCIE_NVME_SSD	0x0953	PCIe NVMe SSD
+product INTEL PCIE_NVME_SSD	0x0953	750 or DC P3[567]00 SSD
 product INTEL X1000_HB		0x0958	Quark X1000 Host Bridge
 product INTEL WIFI_LINK_7265_1	0x095a	Dual Band Wireless AC 7265
 product INTEL WIFI_LINK_7265_2	0x095b	Dual Band Wireless AC 7265
@@ -3142,6 +3142,8 @@ product INTEL CORE4G_S_ULT_GT3	0x0a2a	HD Graphics
 product INTEL CORE4G_R_ULT_GT3_1 0x0a2b	HD Graphics
 product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
 product INTEL DC_P3520_SSD	0x0a53	SSD DC P3520
+product INTEL DC_P4500_SSD	0x0a54	SSD DC P4500
+product INTEL DC_P4600_SSD	0x0a55	SSD DC P4600
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
 product INTEL HASWELL_PCIE16	0x0c01	Haswell PCI-E x16 Controller
 product INTEL HASWELL_PCIE8	0x0c05	Haswell PCI-E x8 Controller
@@ -4944,6 +4946,9 @@ product INTEL APL_P2SB		0x5a92	Apollo Lake Primary to SideBand Bridge
 product INTEL APL_PMC		0x5a94	Apollo Lake PMC
 product INTEL APL_FASTSPI	0x5a96	Apollo Lake Fast SPI
 product INTEL APL_HDA		0x5a98	Apollo Lake HD Audio
+product INTEL APL_TXE_HECI_1	0x5a9a	Apollo Lake TXE HECI1
+product INTEL APL_TXE_HECI_2	0x5a9c	Apollo Lake TXE HECI2
+product INTEL APL_TXE_HECI_3	0x5a9e	Apollo Lake TXE HECI3
 product INTEL APL_ISH		0x5aa2	Apollo Lake Integrated Sensor Hub
 product INTEL APL_XHCI		0x5aa8	Apollo Lake USB Host (xHCI)
 product INTEL APL_XDCI		0x5aaa	Apollo Lake USB Device (xDCI)
