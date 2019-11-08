@@ -1,4 +1,4 @@
-/*	$NetBSD: csan.h,v 1.2 2019/11/06 06:57:22 maxv Exp $	*/
+/*	$NetBSD: csan.h,v 1.3 2019/11/08 12:36:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,16 @@
  */
 
 #include <sys/ksyms.h>
+#include <uvm/uvm.h>
+#include <amd64/pmap.h>
 #include <x86/cpufunc.h>
+
+static inline bool
+kcsan_md_unsupported(vaddr_t addr)
+{
+	return (addr >= (vaddr_t)PTE_BASE &&
+	    addr < ((vaddr_t)PTE_BASE + NBPD_L4));
+}
 
 static inline bool
 kcsan_md_is_avail(void)

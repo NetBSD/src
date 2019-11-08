@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.2 2019/11/06 06:57:22 maxv Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.3 2019/11/08 12:36:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.2 2019/11/06 06:57:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.3 2019/11/08 12:36:10 maxv Exp $");
 
 #include "opt_kcsan.h"
 
@@ -135,6 +135,8 @@ kcsan_access(uintptr_t addr, size_t size, bool write, bool atomic, uintptr_t pc)
 	size_t i;
 
 	if (__predict_false(!kcsan_enabled))
+		return;
+	if (__predict_false(kcsan_md_unsupported((vaddr_t)addr)))
 		return;
 
 	new.addr = addr;
