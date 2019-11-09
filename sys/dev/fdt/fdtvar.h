@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.56 2019/10/28 21:15:34 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.57 2019/11/09 23:28:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -367,6 +367,8 @@ struct clk *	fdtbus_clock_get_index(int, u_int);
 struct clk *	fdtbus_clock_byname(const char *);
 void		fdtbus_clock_assign(int);
 u_int		fdtbus_clock_count(int, const char *);
+int		fdtbus_clock_enable(int, const char *, bool);
+int		fdtbus_clock_enable_index(int, u_int, bool);
 
 struct fdtbus_reset *fdtbus_reset_get(int, const char *);
 struct fdtbus_reset *fdtbus_reset_get_index(int, u_int);
