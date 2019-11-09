@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.h,v 1.121 2019/11/09 16:40:38 christos Exp $	*/
+/*	$NetBSD: disklabel.h,v 1.122 2019/11/09 16:46:09 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1987, 1988, 1993
@@ -121,7 +121,7 @@ struct	partition {		/* the partition table */
  * We'd rather have disklabel be the same size on 32 and 64 bit systems
  * but it really isn't. In revision 108 matt@ tried to do that by adding
  * un_d_pad as a uint64_t. This was really smart because the net effect
- * as to grow the struct by 4 bytes on most LP32 machines and make it
+ * was to grow the struct by 4 bytes on most LP32 machines and make it
  * the same as LP64 without changing the layout (which is a nono because
  * it is stored on existing disks). The easy way would have been to add
  * padding at the end, but that would have been confusing (although that
