@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.10 2019/10/19 12:55:21 tnn Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.11 2019/11/09 23:29:48 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.10 2019/10/19 12:55:21 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.11 2019/11/09 23:29:48 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -348,13 +348,18 @@ static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpl
 static const char * mux_clk_tsadc_parents[] = { "xin24m", "xin32k" };
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
+static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "npll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
 static const char * mux_pll_src_cpll_gpll_npll_24m_parents[] = { "cpll", "gpll", "npll", "xin24m" };
 static const char * mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents[] = { "cpll", "gpll", "npll", "ppll", "upll", "xin24m" };
+static const char * mux_pll_src_vpll_cpll_gpll_parents[] = { "vpll", "cpll", "gpll" };
+static const char * mux_pll_src_vpll_cpll_gpll_npll_parents[] = { "vpll", "cpll", "gpll", "npll" };
 static const char * mux_aclk_perilp0_parents[] = { "cpll_aclk_perilp0_src", "gpll_aclk_perilp0_src" };
 static const char * mux_hclk_perilp1_parents[] = { "cpll_hclk_perilp1_src", "gpll_hclk_perilp1_src" };
 static const char * mux_aclk_perihp_parents[] = { "cpll_aclk_perihp_src", "gpll_aclk_perihp_src" };
 static const char * mux_aclk_cci_parents[] = { "cpll_aclk_cci_src", "gpll_aclk_cci_src", "npll_aclk_cci_src", "vpll_aclk_cci_src" };
+static const char * mux_dclk_vop0_parents[] = { "dclk_vop0_div", "dclk_vop0_frac" };
+static const char * mux_dclk_vop1_parents[] = { "dclk_vop1_div", "dclk_vop1_frac" };
 static const char * mux_uart0_parents[] = { "clk_uart0_div", "clk_uart0_frac", "xin24m" };
 static const char * mux_uart1_parents[] = { "clk_uart1_div", "clk_uart1_frac", "xin24m" };
 static const char * mux_uart2_parents[] = { "clk_uart2_div", "clk_uart2_frac", "xin24m" };
@@ -403,7 +408,7 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		   __BIT(31),		/* lock_mask */
 		   pll_rates),
 	RK3399_PLL(RK3399_PLL_VPLL, "vpll", pll_parents,
-		   PLL_CON(43),		/* con_base */
+		   PLL_CON(48),		/* con_base */
 		   PLL_CON(51),		/* mode_reg */
 		   __BIT(8),		/* mode_mask */
 		   __BIT(31),		/* lock_mask */
@@ -843,6 +848,96 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BIT(1),		/* gate_mask */
 		     RK_COMPOSITE_ROUND_DOWN),
 	RK_GATE(RK3399_PCLK_TSADC, "pclk_tsadc", "pclk_perilp1", CLKGATE_CON(22), 13),
+
+	/* VOP0 */
+	RK_COMPOSITE(RK3399_ACLK_VOP0_PRE, "aclk_vop0_pre", mux_pll_src_vpll_cpll_gpll_npll_parents,
+		     CLKSEL_CON(47),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(8),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(0, "hclk_vop0_pre", "aclk_vop0_pre",
+			   CLKSEL_CON(47),	/* div_reg */
+			   __BITS(12,8),	/* div_mask */
+			   CLKGATE_CON(10),	/* gate_reg */
+			   __BIT(9),		/* gate_mask */
+			   0),
+	RK_COMPOSITE(RK3399_DCLK_VOP0_DIV, "dclk_vop0_div", mux_pll_src_vpll_cpll_gpll_parents,
+		     CLKSEL_CON(49),	/* muxdiv_reg */
+		     __BITS(9,8),	/* mux_mask */
+		     __BITS(7,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_ACLK_VOP0, "aclk_vop0", "aclk_vop0_pre", CLKGATE_CON(28), 3),
+	RK_GATE(RK3399_HCLK_VOP0, "hclk_vop0", "hclk_vop0_pre", CLKGATE_CON(28), 2),
+	RK_MUX(RK3399_DCLK_VOP0, "dclk_vop0", mux_dclk_vop0_parents, CLKSEL_CON(49), __BIT(11)),
+
+	/* VOP1 */
+	RK_COMPOSITE(RK3399_ACLK_VOP1_PRE, "aclk_vop1_pre", mux_pll_src_vpll_cpll_gpll_npll_parents,
+		     CLKSEL_CON(48),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(10),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(0, "hclk_vop1_pre", "aclk_vop1_pre",
+			   CLKSEL_CON(48),	/* div_reg */
+			   __BITS(12,8),	/* div_mask */
+			   CLKGATE_CON(10),	/* gate_reg */
+			   __BIT(11),		/* gate_mask */
+			   0),
+	RK_COMPOSITE(RK3399_DCLK_VOP1_DIV, "dclk_vop1_div", mux_pll_src_vpll_cpll_gpll_parents,
+		     CLKSEL_CON(50),	/* muxdiv_reg */
+		     __BITS(9,8),	/* mux_mask */
+		     __BITS(7,0),	/* div_mask */
+		     CLKGATE_CON(10),	/* gate_reg */
+		     __BIT(13),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_ACLK_VOP1, "aclk_vop1", "aclk_vop1_pre", CLKGATE_CON(28), 7),
+	RK_GATE(RK3399_HCLK_VOP1, "hclk_vop1", "hclk_vop1_pre", CLKGATE_CON(28), 6),
+	RK_MUX(RK3399_DCLK_VOP1, "dclk_vop1", mux_dclk_vop1_parents, CLKSEL_CON(50), __BIT(11)),
+
+	/* VIO */
+	RK_COMPOSITE(RK3399_ACLK_VIO, "aclk_vio", mux_pll_src_cpll_gpll_ppll_parents,
+		     CLKSEL_CON(42),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(0),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(RK3399_PCLK_VIO, "pclk_vio", "aclk_vio",
+			   CLKSEL_CON(43),	/* div_reg */
+			   __BITS(4,0),		/* div_mask */
+			   CLKGATE_CON(11),	/* gate_reg */
+			   __BIT(1),		/* gate_mask */
+			   0),
+	RK_GATE(RK3399_PCLK_VIO_GRF, "pclk_vio_grf", "pclk_vio", CLKGATE_CON(29), 12),
+
+	/* HDMI */
+	RK_COMPOSITE(RK3399_ACLK_HDCP, "aclk_hdcp", mux_pll_src_cpll_gpll_ppll_parents,
+		     CLKSEL_CON(42),	/* muxdiv_reg */
+		     __BITS(15,14),	/* mux_mask */
+		     __BITS(12,8),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(12),		/* gate_mask */
+		     0),
+	RK_COMPOSITE_NOMUX(RK3399_PCLK_HDCP, "pclk_hdcp", "aclk_hdcp",
+			   CLKSEL_CON(43),	/* div_reg */
+			   __BITS(14,10),	/* div_mask */
+			   CLKGATE_CON(11),	/* gate_reg */
+			   __BIT(10),		/* gate_mask */
+			   0),
+	RK_COMPOSITE(RK3399_SCLK_HDMI_CEC, "clk_hdmi_cec", pll_parents,
+		     CLKSEL_CON(45),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(9,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(7),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_HDMI_CTRL, "pclk_hdmi_ctrl", "pclk_hdcp", CLKGATE_CON(29), 6),
+	RK_GATE(RK3399_SCLK_HDMI_SFR, "clk_hdmi_sfr", "xin24m", CLKGATE_CON(11), 6),
 };
 
 static void
