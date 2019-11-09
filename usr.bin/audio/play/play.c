@@ -1,7 +1,7 @@
-/*	$NetBSD: play.c,v 1.58 2019/11/09 12:46:44 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.59 2019/11/09 12:54:34 mrg Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2001, 2002, 2010 Matthew R. Green
+ * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019 Matthew R. Green
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.58 2019/11/09 12:46:44 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.59 2019/11/09 12:54:34 mrg Exp $");
 #endif
 
 #include <sys/param.h>
