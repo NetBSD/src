@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.h,v 1.1 2019/01/30 01:19:49 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.h,v 1.2 2019/11/09 23:27:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -44,19 +44,42 @@ struct dwhdmi_connector {
 	bool			monitor_audio;
 };
 
+struct dwhdmi_phy_config {
+	u_int			pixel_clock;
+	uint32_t		sym;
+	uint32_t		term;
+	uint32_t		vlev;
+};
+
+struct dwhdmi_mpll_config {
+	u_int			pixel_clock;
+	uint32_t		cpce;
+	uint32_t		gmp;
+	uint32_t		curr;
+};
+
 struct dwhdmi_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
 	bus_space_handle_t	sc_bsh;
 	u_int			sc_reg_width;
+	u_int			sc_flags;
+#define	DWHDMI_USE_INTERNAL_PHY	__BIT(0)
 
-	struct i2c_controller	sc_ic;
+	u_int			sc_phytype;
+	u_int			sc_version;
+
+	i2c_tag_t		sc_ic;
 	kmutex_t		sc_ic_lock;
+	struct i2c_controller	sc_ic_builtin;
 
 	struct dwhdmi_connector	sc_connector;
 	struct drm_bridge	sc_bridge;
 
 	struct drm_display_mode	sc_curmode;
+
+	const struct dwhdmi_mpll_config *sc_mpll_config;
+	const struct dwhdmi_phy_config *sc_phy_config;
 
 	enum drm_connector_status (*sc_detect)(struct dwhdmi_softc *, bool);
 	void			(*sc_enable)(struct dwhdmi_softc *);
@@ -73,5 +96,12 @@ int		dwhdmi_bind(struct dwhdmi_softc *, struct drm_encoder *);
 
 uint8_t		dwhdmi_read(struct dwhdmi_softc *, bus_size_t);
 void		dwhdmi_write(struct dwhdmi_softc *, bus_size_t, uint8_t);
+
+enum drm_connector_status dwhdmi_phy_detect(struct dwhdmi_softc *, bool);
+void		dwhdmi_phy_enable(struct dwhdmi_softc *);
+void		dwhdmi_phy_disable(struct dwhdmi_softc *);
+void		dwhdmi_phy_mode_set(struct dwhdmi_softc *,
+				    struct drm_display_mode *,
+				    struct drm_display_mode *);
 
 #endif /* !_DEV_IC_DWHDMI_H */

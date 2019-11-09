@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1241 2019/11/05 20:19:17 maxv Exp $
+#	$NetBSD: files,v 1.1242 2019/11/09 23:27:50 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1497,6 +1497,7 @@ attach	ipmi at ipmibus
 # Designware HDMI TX
 device	dwhdmi: edid, videomode, drmkms, drmkms_i2c
 file	dev/ic/dw_hdmi.c		dwhdmi
+file	dev/ic/dw_hdmi_phy.c		dwhdmi
 
 #
 # File systems
