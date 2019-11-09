@@ -1,4 +1,4 @@
-#	$NetBSD: makesyscalls.sh,v 1.175 2019/10/13 22:31:19 christos Exp $
+#	$NetBSD: makesyscalls.sh,v 1.176 2019/11/09 22:05:50 jdolecek Exp $
 #
 # Copyright (c) 1994, 1996, 2000 Christopher G. Demetriou
 # All rights reserved.
@@ -116,7 +116,7 @@ systracetmp="systrace.$$"
 systraceret="systraceret.$$"
 
 cleanup() {
-    rm $sysdcl $sysprotos $sysent $sysnamesbottom $sysnamesfriendly $rumpsysent $rumptypes $rumpprotos $systracetmp $systraceret $sysautoloadbottom
+    rm $sysdcl $sysprotos $sysent $sysnamesbottom $sysnamesfriendly $rumpsysent $rumptypes $rumpprotos $systracetmp $systraceret ${sysautoloadbottom#/dev/null}
 }
 trap "cleanup" 0
 
