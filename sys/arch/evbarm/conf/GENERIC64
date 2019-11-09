@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.109 2019/10/19 13:09:57 tnn Exp $
+#	$NetBSD: GENERIC64,v 1.110 2019/11/09 23:30:54 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -344,7 +344,7 @@ options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
-rkiic*		at fdt?			# Rockchip I2C
+rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
@@ -436,6 +436,9 @@ hdmicec*	at hdmicecbus?
 anxedp*		at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
 dwhdmi* 	at fdt?			# Designware HDMI TX
+#rkdrm*		at fdt? pass 5		# Rockchip DRM master
+#rkfb*		at rkdrm?		# Rockchip DRM framebuffer
+#rkvop*		at fdt?			# Rockchip Visual Output Processor
 sunxide2bus*	at fdt? pass 4		# Allwinner DE2 bus
 sunxidrm*	at fdt?	pass 5		# Allwinner Display Pipeline
 sunxifb*	at sunxidrm?		# Allwinner DRM framebuffer
