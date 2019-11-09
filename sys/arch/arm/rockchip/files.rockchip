@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.20 2019/08/05 15:22:59 tnn Exp $
+#	$NetBSD: files.rockchip,v 1.21 2019/11/09 23:30:14 jmcneill Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -82,6 +82,26 @@ file	arch/arm/rockchip/rk_tsadc.c		rk_tsadc
 device	rkpwm: pwm
 attach	rkpwm at fdt with rk_pwm
 file	arch/arm/rockchip/rk_pwm.c		rk_pwm
+
+# DRM master
+define	rkfbbus { }
+device	rkdrm: drmkms, ddc_read_edid, rkfbbus
+attach	rkdrm at fdt with rk_drm
+file	arch/arm/rockchip/rk_drm.c		rk_drm
+
+# DRM framebuffer console
+device	rkfb: rkfbbus, drmfb, wsemuldisplaydev
+attach	rkfb at rkfbbus with rk_fb
+file	arch/arm/rockchip/rk_fb.c		rk_fb
+
+# Visual Output Processor
+device	rkvop: drmkms
+attach	rkvop at fdt with rk_vop
+file	arch/arm/rockchip/rk_vop.c		rk_vop
+
+# HDMI TX (Designware based)
+attach	dwhdmi at fdt with rk_dwhdmi
+file	arch/arm/rockchip/rk_dwhdmi.c		rk_dwhdmi
 
 # SOC parameters
 defflag	opt_soc.h			SOC_ROCKCHIP
