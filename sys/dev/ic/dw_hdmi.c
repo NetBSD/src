@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.1 2019/01/30 01:19:49 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.2 2019/11/09 23:27:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1 2019/01/30 01:19:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.2 2019/11/09 23:27:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -49,6 +49,10 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1 2019/01/30 01:19:49 jmcneill Exp $")
 #include <drm/drm_crtc.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_edid.h>
+
+#define	HDMI_DESIGN_ID		0x0000
+#define	HDMI_REVISION_ID	0x0001
+#define	HDMI_CONFIG2_ID		0x0006
 
 #define	HDMI_IH_I2CM_STAT0	0x0105
 #define	 HDMI_IH_I2CM_STAT0_DONE		__BIT(1)
@@ -128,6 +132,23 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1 2019/01/30 01:19:49 jmcneill Exp $")
 #define	HDMI_FC_CH2PREAM	0x1016
 #define	 HDMI_FC_CH2PREAM_DEFAULT		0x21
 
+#define	HDMI_PHY_CONF0		0x3000
+#define	 HDMI_PHY_CONF0_PDZ			__BIT(7)
+#define	 HDMI_PHY_CONF0_ENTMDS			__BIT(6)
+#define	 HDMI_PHY_CONF0_SVSRET			__BIT(5)
+#define	 HDMI_PHY_CONF0_PDDQ			__BIT(4)
+#define	 HDMI_PHY_CONF0_TXPWRON			__BIT(3)
+#define	 HDMI_PHY_CONF0_ENHPDRXSENSE		__BIT(2)
+#define	 HDMI_PHY_CONF0_SELDATAENPOL		__BIT(1)
+#define	 HDMI_PHY_CONF0_SELDIPIF		__BIT(0)
+#define	HDMI_PHY_STAT0		0x3004
+#define	 HDMI_PHY_STAT0_RX_SENSE_3		__BIT(7)
+#define	 HDMI_PHY_STAT0_RX_SENSE_2		__BIT(6)
+#define	 HDMI_PHY_STAT0_RX_SENSE_1		__BIT(5)
+#define	 HDMI_PHY_STAT0_RX_SENSE_0		__BIT(4)
+#define	 HDMI_PHY_STAT0_HPD			__BIT(1)
+#define	 HDMI_PHY_STAT0_TX_PHY_LOCK		__BIT(0)
+
 #define	HDMI_MC_CLKDIS		0x4001
 #define	 HDMI_MC_CLKDIS_HDCPCLK_DISABLE		__BIT(6)
 #define	 HDMI_MC_CLKDIS_CECCLK_DISABLE		__BIT(5)
@@ -143,6 +164,8 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.1 2019/01/30 01:19:49 jmcneill Exp $")
 #define	 HDMI_MC_SWRSTZREQ_PIXELSWRST_REQ	__BIT(0)
 #define	HDMI_MC_FLOWCTRL	0x4004
 #define	HDMI_MC_PHYRSTZ		0x4005
+#define	 HDMI_MC_PHYRSTZ_ASSERT			__BIT(0)
+#define	 HDMI_MC_PHYRSTZ_DEASSERT		0
 #define	HDMI_MC_LOCKONCLOCK	0x4006
 #define	HDMI_MC_HEACPHY_RST	0x4007
 
@@ -412,7 +435,7 @@ dwhdmi_mc_init(struct dwhdmi_softc *sc)
 {
 	struct dwhdmi_connector *dwhdmi_connector = &sc->sc_connector;
 	uint8_t val;
-	u_int n;
+	u_int n, iter;
 
 	/* Bypass colour space converter */
 	dwhdmi_write(sc, HDMI_MC_FLOWCTRL, 0);
@@ -430,8 +453,10 @@ dwhdmi_mc_init(struct dwhdmi_softc *sc)
 	val = 0xff & ~HDMI_MC_SWRSTZREQ_TMDSSWRST_REQ;
 	dwhdmi_write(sc, HDMI_MC_SWRSTZREQ, val);
 
+	iter = sc->sc_version == 0x130a ? 4 : 1;
+
 	val = dwhdmi_read(sc, HDMI_FC_INVIDCONF);
-	for (n = 0; n < 4; n++)
+	for (n = 0; n < iter; n++)
 		dwhdmi_write(sc, HDMI_FC_INVIDCONF, val);
 }
 
@@ -479,7 +504,7 @@ dwhdmi_connector_get_modes(struct drm_connector *connector)
 
 	memset(edid, 0, sizeof(edid));
 	for (block = 0; block < 4; block++) {
-		error = ddc_read_edid_block(&sc->sc_ic,
+		error = ddc_read_edid_block(sc->sc_ic,
 		    &edid[block * EDID_LENGTH], EDID_LENGTH, block);
 		if (error != 0)
 			break;
@@ -624,7 +649,7 @@ static const struct drm_bridge_funcs dwhdmi_bridge_funcs = {
 int
 dwhdmi_attach(struct dwhdmi_softc *sc)
 {
-	struct i2c_controller *ic = &sc->sc_ic;
+	uint8_t val;
 
 	if (sc->sc_reg_width != 1 && sc->sc_reg_width != 4) {
 		aprint_error_dev(sc->sc_dev, "unsupported register width %d\n", sc->sc_reg_width);
@@ -633,10 +658,37 @@ dwhdmi_attach(struct dwhdmi_softc *sc)
 
 	mutex_init(&sc->sc_ic_lock, MUTEX_DEFAULT, IPL_NONE);
 
-	ic->ic_cookie = sc;
-	ic->ic_acquire_bus = dwhdmi_ddc_acquire_bus;
-	ic->ic_release_bus = dwhdmi_ddc_release_bus;
-	ic->ic_exec = dwhdmi_ddc_exec;
+	sc->sc_version = dwhdmi_read(sc, HDMI_DESIGN_ID);
+	sc->sc_version <<= 8;
+	sc->sc_version |= dwhdmi_read(sc, HDMI_REVISION_ID);
+
+	sc->sc_phytype = dwhdmi_read(sc, HDMI_CONFIG2_ID);
+
+	aprint_normal_dev(sc->sc_dev, "version %x.%03x, phytype 0x%02x\n",
+	    sc->sc_version >> 12, sc->sc_version & 0xfff,
+	    sc->sc_phytype);
+
+	/*
+	 * If a DDC i2c bus tag is provided by the caller, use it. Otherwise,
+	 * use the I2C master built-in to DWC HDMI.
+	 */
+	if (sc->sc_ic == NULL) {
+		struct i2c_controller *ic = &sc->sc_ic_builtin;
+		ic->ic_cookie = sc;
+		ic->ic_acquire_bus = dwhdmi_ddc_acquire_bus;
+		ic->ic_release_bus = dwhdmi_ddc_release_bus;
+		ic->ic_exec = dwhdmi_ddc_exec;
+		sc->sc_ic = ic;
+	}
+
+	/*
+	 * Enable HPD on internal PHY
+	 */
+	if ((sc->sc_flags & DWHDMI_USE_INTERNAL_PHY) != 0) {
+		val = dwhdmi_read(sc, HDMI_PHY_CONF0);
+		val |= HDMI_PHY_CONF0_ENHPDRXSENSE;
+		dwhdmi_write(sc, HDMI_PHY_CONF0, val);
+	}
 
 	return 0;
 }
