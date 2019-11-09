@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_unistd.c,v 1.41 2019/09/20 15:25:19 kamil Exp $ */
+/*	$NetBSD: linux32_unistd.c,v 1.42 2019/11/09 23:44:31 jdolecek Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.41 2019/09/20 15:25:19 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_unistd.c,v 1.42 2019/11/09 23:44:31 jdolecek Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -733,4 +733,20 @@ linux32_sys_pwrite(struct lwp *l,
 	SCARG(&pra, offset) = SCARG(uap, offset);
 
 	return sys_pwrite(l, &pra, retval);
+}
+
+/*
+ * fallocate(2)
+ */
+int
+linux32_sys_fallocate(struct lwp *l,
+    const struct linux32_sys_fallocate_args *uap, register_t *retval)
+{
+	/*
+	 * For now just return EOPNOTSUPP, this makes glibc posix_fallocate()
+	 * to fallback to emulation.
+	 * XXX Right now no filesystem actually implements fallocate support,
+	 * so no need for mapping.
+	 */
+	return EOPNOTSUPP;
 }
