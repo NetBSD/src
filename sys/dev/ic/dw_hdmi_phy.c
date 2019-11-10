@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi_phy.c,v 1.1 2019/11/09 23:27:50 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi_phy.c,v 1.2 2019/11/10 10:36:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Oleksandr Tymoshenko <gonzo@freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi_phy.c,v 1.1 2019/11/09 23:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi_phy.c,v 1.2 2019/11/10 10:36:01 jmcneill Exp $");
 
 #include <sys/param.h>
 
@@ -300,7 +300,7 @@ dwhdmi_phy_configure(struct dwhdmi_softc *sc, struct drm_display_mode *mode)
 	 * PLL/MPLL config
 	 */
 	for (mpll_conf = &sc->sc_mpll_config[0]; mpll_conf->pixel_clock != 0; mpll_conf++)
-		if (mpll_conf->pixel_clock <= mode->clock)
+		if (mode->clock <= mpll_conf->pixel_clock)
 			break;
 
 	dwhdmi_phy_i2c_write(sc, mpll_conf->cpce, HDMI_PHY_I2C_CPCE_CTRL);
@@ -308,7 +308,7 @@ dwhdmi_phy_configure(struct dwhdmi_softc *sc, struct drm_display_mode *mode)
 	dwhdmi_phy_i2c_write(sc, mpll_conf->curr, HDMI_PHY_I2C_CURRCTRL);
 
 	for (phy_conf = &sc->sc_phy_config[0]; phy_conf->pixel_clock != 0; phy_conf++)
-		if (phy_conf->pixel_clock <= mode->clock)
+		if (mode->clock <= phy_conf->pixel_clock)
 			break;
 
 	dwhdmi_phy_i2c_write(sc, 0x0000, HDMI_PHY_I2C_PLLPHBYCTRL);
