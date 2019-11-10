@@ -1,4 +1,4 @@
-/*	$NetBSD: smdk2410_machdep.c,v 1.41 2019/07/16 14:41:48 skrll Exp $ */
+/*	$NetBSD: smdk2410_machdep.c,v 1.42 2019/11/10 21:16:26 chs Exp $ */
 
 /*
  * Copyright (c) 2002, 2003 Fujitsu Component Limited
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.41 2019/07/16 14:41:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smdk2410_machdep.c,v 1.42 2019/11/10 21:16:26 chs Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -993,9 +993,7 @@ s3c2xx0_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 #if 1
 	dmat = dma_tag_template;
 #else
-	dmat = malloc(sizeof *dmat, M_DEVBUF, M_NOWAIT);
-	if (dmat == NULL)
-		return NULL;
+	dmat = malloc(sizeof *dmat, M_DEVBUF, M_WAITOK);
 	*dmat =  *dma_tag_template;
 #endif
 

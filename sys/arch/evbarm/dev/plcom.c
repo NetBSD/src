@@ -1,4 +1,4 @@
-/*	$NetBSD: plcom.c,v 1.59 2019/07/23 15:56:14 jmcneill Exp $	*/
+/*	$NetBSD: plcom.c,v 1.60 2019/11/10 21:16:25 chs Exp $	*/
 
 /*-
  * Copyright (c) 2001 ARM Ltd
@@ -94,7 +94,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.59 2019/07/23 15:56:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: plcom.c,v 1.60 2019/11/10 21:16:25 chs Exp $");
 
 #include "opt_plcom.h"
 #include "opt_ddb.h"
@@ -514,14 +514,9 @@ plcom_attach_subr(struct plcom_softc *sc)
 	tp->t_hwiflow = plcomhwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(plcom_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(plcom_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = plcom_rbuf_size;
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate ring buffer\n");
-		return;
-	}
 	sc->sc_ebuf = sc->sc_rbuf + (plcom_rbuf_size << 1);
 
 	tty_attach(tp);

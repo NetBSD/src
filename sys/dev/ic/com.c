@@ -1,4 +1,4 @@
-/* $NetBSD: com.c,v 1.355 2019/01/11 23:10:40 thorpej Exp $ */
+/* $NetBSD: com.c,v 1.356 2019/11/10 21:16:35 chs Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2004, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.355 2019/01/11 23:10:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: com.c,v 1.356 2019/11/10 21:16:35 chs Exp $");
 
 #include "opt_com.h"
 #include "opt_ddb.h"
@@ -659,14 +659,9 @@ fifodone:
 	tp->t_softc = sc;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(com_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = com_rbuf_size;
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate ring buffer\n");
-		return;
-	}
 	sc->sc_ebuf = sc->sc_rbuf + (com_rbuf_size << 1);
 
 	tty_attach(tp);

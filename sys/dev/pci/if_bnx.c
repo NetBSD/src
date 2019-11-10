@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.87 2019/07/26 05:53:30 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.88 2019/11/10 21:16:36 chs Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.87 2019/07/26 05:53:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.88 2019/11/10 21:16:36 chs Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -589,14 +589,9 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	int i, j;
 
 	if (bnx_tx_pool == NULL) {
-		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF, M_NOWAIT);
-		if (bnx_tx_pool != NULL) {
-			pool_init(bnx_tx_pool, sizeof(struct bnx_pkt),
-			    0, 0, 0, "bnxpkts", NULL, IPL_NET);
-		} else {
-			aprint_error(": can't alloc bnx_tx_pool\n");
-			return;
-		}
+		bnx_tx_pool = malloc(sizeof(*bnx_tx_pool), M_DEVBUF, M_WAITOK);
+		pool_init(bnx_tx_pool, sizeof(struct bnx_pkt),
+		    0, 0, 0, "bnxpkts", NULL, IPL_NET);
 	}
 
 	bp = bnx_lookup(pa);
