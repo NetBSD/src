@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru_composite.c,v 1.3 2018/06/19 01:24:17 jmcneill Exp $ */
+/* $NetBSD: rk_cru_composite.c,v 1.4 2019/11/10 11:43:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.3 2018/06/19 01:24:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_cru_composite.c,v 1.4 2019/11/10 11:43:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -91,6 +91,13 @@ rk_cru_composite_set_rate(struct rk_cru_softc *sc,
 	struct clk *clk_parent;
 
 	KASSERT(clk->type == RK_CRU_COMPOSITE);
+
+	if (composite->flags & RK_COMPOSITE_SET_RATE_PARENT) {
+		clk_parent = clk_get_parent(&clk->base);
+		if (clk_parent == NULL)
+			return ENXIO;
+		return clk_set_rate(clk_parent, rate);
+	}
 
 	best_div = 0;
 	best_mux = 0;
