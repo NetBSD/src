@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.60 2019/11/06 10:27:05 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.61 2019/11/10 13:37:22 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1490,4 +1490,14 @@ sys/dev/usb/ubt.c				1.61
 
 	Fix mbuf deallocation.
 	[msaitoh, ticket #1429]
+
+sys/dev/pci/if_jme.c				1.46
+
+	Fix potential use after free mbuf access.
+	[msaitoh, ticket #1430]
+
+sys/dev/pci/ixgbe/ix_txrx.c			1.56
+
+	Fix missing kpreempt_disable() before softint_schedule().
+	[knakahara, ticket #1431]
 
