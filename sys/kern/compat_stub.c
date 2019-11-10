@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.16 2019/11/10 13:28:06 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.17 2019/11/10 14:20:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -279,3 +279,8 @@ struct netbsd32_reg_validate_hook_t netbsd32_reg_validate_hook;
  * Hook for sendsig_sigcontext_16
  */
 struct sendsig_sigcontext_16_hook_t sendsig_sigcontext_16_hook;
+
+/*
+ * Hook for coredumps
+ */
+struct coredump_hook_t coredump_hook;
