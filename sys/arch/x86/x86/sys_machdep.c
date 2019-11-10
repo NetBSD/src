@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_machdep.c,v 1.51 2019/02/11 14:59:33 cherry Exp $	*/
+/*	$NetBSD: sys_machdep.c,v 1.52 2019/11/10 21:16:34 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2009, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.51 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_machdep.c,v 1.52 2019/11/10 21:16:34 chs Exp $");
 
 #include "opt_mtrr.h"
 #include "opt_user_ldt.h"
@@ -190,10 +190,7 @@ x86_set_ldt(struct lwp *l, void *args, register_t *retval)
 	if (ua.num < 0 || ua.num > 8192)
 		return EINVAL;
 
-	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_NOWAIT);
-	if (descv == NULL)
-		return ENOMEM;
-
+	descv = malloc(sizeof (*descv) * ua.num, M_TEMP, M_WAITOK);
 	error = copyin(ua.desc, descv, sizeof (*descv) * ua.num);
 	if (error == 0)
 		error = x86_set_ldt1(l, &ua, descv);

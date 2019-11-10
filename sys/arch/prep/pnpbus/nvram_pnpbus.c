@@ -1,4 +1,4 @@
-/* $NetBSD: nvram_pnpbus.c,v 1.21 2018/09/03 16:29:26 riastradh Exp $ */
+/* $NetBSD: nvram_pnpbus.c,v 1.22 2019/11/10 21:16:32 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.21 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvram_pnpbus.c,v 1.22 2019/11/10 21:16:32 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -153,7 +153,7 @@ nvram_pnpbus_attach(device_t parent, device_t self, void *aux)
 	 */
 
 	nvlen = 1024 * prep_nvram_header.Size;
-	nvramData = malloc(nvlen, M_DEVBUF, M_NOWAIT);
+	nvramData = malloc(nvlen, M_DEVBUF, M_WAITOK);
 	p = (uint8_t *) nvramData;
 
 	/*

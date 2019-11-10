@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ep_isa.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: if_ep_isa.c,v 1.46 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.45 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ep_isa.c,v 1.46 2019/11/10 21:16:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -177,11 +177,7 @@ ep_isa_probe(device_t parent, cfdata_t match, void *aux)
 	/*
 	 * Mark this bus so we don't probe it again.
 	 */
-	er = (struct ep_isa_done_probe *)
-	    malloc(sizeof(struct ep_isa_done_probe), M_DEVBUF, M_NOWAIT);
-	if (er == NULL)
-		panic("ep_isa_probe: can't allocate state storage");
-
+	er = malloc(sizeof(struct ep_isa_done_probe), M_DEVBUF, M_WAITOK);
 	er->er_bus = bus;
 	LIST_INSERT_HEAD(&ep_isa_all_probes, er, er_link);
 

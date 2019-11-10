@@ -1,4 +1,4 @@
-/*	$NetBSD: ap_ms104_sh4_intr.c,v 1.2 2012/01/21 19:44:29 nonaka Exp $	*/
+/*	$NetBSD: ap_ms104_sh4_intr.c,v 1.3 2019/11/10 21:16:27 chs Exp $	*/
 
 /*-
  * Copyright (C) 2009 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ap_ms104_sh4_intr.c,v 1.2 2012/01/21 19:44:29 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ap_ms104_sh4_intr.c,v 1.3 2019/11/10 21:16:27 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,9 +102,7 @@ extintr_establish(int irq, int trigger, int level,
 
 	KDASSERT(irq >= 1 && irq <= 14);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("intr_establish: can't malloc handler info");
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 
 	s = _cpu_intr_suspend();
 

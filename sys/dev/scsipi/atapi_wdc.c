@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.133 2018/11/12 20:54:03 jdolecek Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.134 2019/11/10 21:16:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.133 2018/11/12 20:54:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.134 2019/11/10 21:16:37 chs Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -294,13 +294,7 @@ wdc_atapi_probe_device(struct atapibus_softc *sc, int target)
 		    id->atap_config & ATAPI_CFG_CMD_MASK,
 		    id->atap_config & ATAPI_CFG_DRQ_MASK);
 #endif
-		periph = scsipi_alloc_periph(M_NOWAIT);
-		if (periph == NULL) {
-			aprint_error_dev(sc->sc_dev,
-			    "unable to allocate periph for drive %d\n",
-			    target);
-			return;
-		}
+		periph = scsipi_alloc_periph(M_WAITOK);
 		periph->periph_dev = NULL;
 		periph->periph_channel = chan;
 		periph->periph_switch = &atapi_probe_periphsw;

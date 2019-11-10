@@ -1,4 +1,4 @@
-/* $NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Exp $ */
+/* $NetBSD: xenbus_client.c,v 1.14 2019/11/10 21:16:34 chs Exp $ */
 /******************************************************************************
  * Client-facing interface for the Xenbus driver.  In other words, the
  * interface between the Xenbus and the device-specific code, be it the
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.13 2014/09/21 12:46:15 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenbus_client.c,v 1.14 2019/11/10 21:16:34 chs Exp $");
 
 #if 0
 #define DPRINTK(fmt, args...) \
@@ -86,11 +86,7 @@ xenbus_watch_path2(struct xenbus_device *dev, const char *path,
 	DPRINTK("xenbus_watch_path2 path %s path2 %s\n", path, path2);
 	state =
 		malloc(strlen(path) + 1 + strlen(path2) + 1, M_DEVBUF,
-		    M_NOWAIT);
-	if (!state) {
-		xenbus_dev_fatal(dev, ENOMEM, "allocating path for watch");
-		return ENOMEM;
-	}
+		    M_WAITOK);
 	strcpy(state, path);
 	strcat(state, "/");
 	strcat(state, path2);

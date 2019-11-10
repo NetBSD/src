@@ -1,4 +1,4 @@
-/* $NetBSD: sbjcn.c,v 1.30 2014/07/25 08:10:34 dholland Exp $ */
+/* $NetBSD: sbjcn.c,v 1.31 2019/11/10 21:16:30 chs Exp $ */
 
 /*
  * Copyright 2000, 2001
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.30 2014/07/25 08:10:34 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbjcn.c,v 1.31 2019/11/10 21:16:30 chs Exp $");
 
 #define	SBJCN_DEBUG
 
@@ -322,13 +322,7 @@ sbjcn_attach_channel(struct sbjcn_softc *sc, int chan, int intr)
 	tp->t_hwiflow = sbjcn_hwiflow;
 
 	ch->ch_tty = tp;
-	ch->ch_rbuf = malloc(sbjcn_rbuf_size << 1, M_DEVBUF, M_NOWAIT);
-	if (ch->ch_rbuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "channel %d: unable to allocate ring buffer\n",
-		    chan);
-		return;
-	}
+	ch->ch_rbuf = malloc(sbjcn_rbuf_size << 1, M_DEVBUF, M_WAITOK);
 	ch->ch_ebuf = ch->ch_rbuf + (sbjcn_rbuf_size << 1);
 
 	tty_attach(tp);
