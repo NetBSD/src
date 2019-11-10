@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.20 2019/11/10 13:28:06 pgoyette Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.21 2019/11/10 14:20:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -365,5 +365,10 @@ MODULE_HOOK(netbsd32_reg_validate_hook, int,
 struct ksiginfo;
 MODULE_HOOK(sendsig_sigcontext_16_hook, void,
     (const struct ksiginfo *, const sigset_t *));
+
+/*
+ * Hook for coredumps
+ */
+MODULE_HOOK(coredump_hook, int, (struct lwp *, const char *));
 
 #endif	/* _SYS_COMPAT_STUB_H */
