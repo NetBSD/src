@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm.c,v 1.22 2019/07/06 05:13:10 maxv Exp $	*/
+/*	$NetBSD: nvmm.c,v 1.22.2.1 2019/11/10 12:58:30 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22 2019/07/06 05:13:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm.c,v 1.22.2.1 2019/11/10 12:58:30 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,7 +247,7 @@ nvmm_kill_machines(struct nvmm_owner *owner)
 static int
 nvmm_capability(struct nvmm_owner *owner, struct nvmm_ioc_capability *args)
 {
-	args->cap.version = NVMM_CAPABILITY_VERSION;
+	args->cap.version = NVMM_KERN_VERSION;
 	args->cap.state_size = nvmm_impl->state_size;
 	args->cap.max_machines = NVMM_MAX_MACHINES;
 	args->cap.max_vcpus = NVMM_MAX_VCPUS;
@@ -343,11 +343,11 @@ nvmm_machine_configure(struct nvmm_owner *owner,
 	int error;
 
 	op = NVMM_MACH_CONF_MD(args->op);
-	if (__predict_false(op >= nvmm_impl->conf_max)) {
+	if (__predict_false(op >= nvmm_impl->mach_conf_max)) {
 		return EINVAL;
 	}
 
-	allocsz = nvmm_impl->conf_sizes[op];
+	allocsz = nvmm_impl->mach_conf_sizes[op];
 	data = kmem_alloc(allocsz, KM_SLEEP);
 
 	error = nvmm_machine_get(owner, args->machid, &mach, true);
@@ -443,6 +443,51 @@ out:
 }
 
 static int
+nvmm_vcpu_configure(struct nvmm_owner *owner,
+    struct nvmm_ioc_vcpu_configure *args)
+{
+	struct nvmm_machine *mach;
+	struct nvmm_cpu *vcpu;
+	size_t allocsz;
+	uint64_t op;
+	void *data;
+	int error;
+
+	op = NVMM_VCPU_CONF_MD(args->op);
+	if (__predict_false(op >= nvmm_impl->vcpu_conf_max))
+		return EINVAL;
+
+	allocsz = nvmm_impl->vcpu_conf_sizes[op];
+	data = kmem_alloc(allocsz, KM_SLEEP);
+
+	error = nvmm_machine_get(owner, args->machid, &mach, false);
+	if (error) {
+		kmem_free(data, allocsz);
+		return error;
+	}
+
+	error = nvmm_vcpu_get(mach, args->cpuid, &vcpu);
+	if (error) {
+		nvmm_machine_put(mach);
+		kmem_free(data, allocsz);
+		return error;
+	}
+
+	error = copyin(args->conf, data, allocsz);
+	if (error) {
+		goto out;
+	}
+
+	error = (*nvmm_impl->vcpu_configure)(vcpu, op, data);
+
+out:
+	nvmm_vcpu_put(vcpu);
+	nvmm_machine_put(mach);
+	kmem_free(data, allocsz);
+	return error;
+}
+
+static int
 nvmm_vcpu_setstate(struct nvmm_owner *owner,
     struct nvmm_ioc_vcpu_setstate *args)
 {
@@ -515,7 +560,7 @@ out:
 
 static int
 nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
-    struct nvmm_exit *exit)
+    struct nvmm_vcpu_exit *exit)
 {
 	struct vmspace *vm = mach->vm;
 	int ret;
@@ -526,7 +571,7 @@ nvmm_do_vcpu_run(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
 			return ret;
 		}
 
-		if (__predict_true(exit->reason != NVMM_EXIT_MEMORY)) {
+		if (__predict_true(exit->reason != NVMM_VCPU_EXIT_MEMORY)) {
 			break;
 		}
 		if (exit->u.mem.gpa >= mach->gpa_end) {
@@ -844,7 +889,7 @@ out:
 /* -------------------------------------------------------------------------- */
 
 static int
-nvmm_ctl_mach_info(struct nvmm_ioc_ctl *args)
+nvmm_ctl_mach_info(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
 {
 	struct nvmm_ctl_mach_info ctl;
 	struct nvmm_machine *mach;
@@ -858,7 +903,7 @@ nvmm_ctl_mach_info(struct nvmm_ioc_ctl *args)
 	if (error)
 		return error;
 
-	error = nvmm_machine_get(&root_owner, ctl.machid, &mach, true);
+	error = nvmm_machine_get(owner, ctl.machid, &mach, true);
 	if (error)
 		return error;
 
@@ -870,6 +915,14 @@ nvmm_ctl_mach_info(struct nvmm_ioc_ctl *args)
 		ctl.nvcpus++;
 		nvmm_vcpu_put(vcpu);
 	}
+
+	ctl.nram = 0;
+	for (i = 0; i < NVMM_MAX_HMAPPINGS; i++) {
+		if (!mach->hmap[i].present)
+			continue;
+		ctl.nram += mach->hmap[i].size;
+	}
+
 	ctl.pid = mach->owner->pid;
 	ctl.time = mach->time;
 
@@ -885,16 +938,9 @@ nvmm_ctl_mach_info(struct nvmm_ioc_ctl *args)
 static int
 nvmm_ctl(struct nvmm_owner *owner, struct nvmm_ioc_ctl *args)
 {
-	int error;
-
-	error = kauth_authorize_device(curlwp->l_cred, KAUTH_DEVICE_NVMM_CTL,
-	    NULL, NULL, NULL, NULL);
-	if (error)
-		return error;
-
 	switch (args->op) {
 	case NVMM_CTL_MACH_INFO:
-		return nvmm_ctl_mach_info(args);
+		return nvmm_ctl_mach_info(owner, args);
 	default:
 		return EINVAL;
 	}
@@ -996,12 +1042,18 @@ nvmm_open(dev_t dev, int flags, int type, struct lwp *l)
 
 	if (minor(dev) != 0)
 		return EXDEV;
+	if (!(flags & O_CLOEXEC))
+		return EINVAL;
 	error = fd_allocfile(&fp, &fd);
 	if (error)
 		return error;
 
-	owner = kmem_alloc(sizeof(*owner), KM_SLEEP);
-	owner->pid = l->l_proc->p_pid;
+	if (OFLAGS(flags) & O_WRONLY) {
+		owner = &root_owner;
+	} else {
+		owner = kmem_alloc(sizeof(*owner), KM_SLEEP);
+		owner->pid = l->l_proc->p_pid;
+	}
 
 	return fd_clone(fp, fd, flags, &nvmm_fileops, owner);
 }
@@ -1013,7 +1065,9 @@ nvmm_close(file_t *fp)
 
 	KASSERT(owner != NULL);
 	nvmm_kill_machines(owner);
-	kmem_free(owner, sizeof(*owner));
+	if (owner != &root_owner) {
+		kmem_free(owner, sizeof(*owner));
+	}
 	fp->f_data = NULL;
 
    	return 0;
@@ -1073,6 +1127,8 @@ nvmm_ioctl(file_t *fp, u_long cmd, void *data)
 		return nvmm_vcpu_create(owner, data);
 	case NVMM_IOC_VCPU_DESTROY:
 		return nvmm_vcpu_destroy(owner, data);
+	case NVMM_IOC_VCPU_CONFIGURE:
+		return nvmm_vcpu_configure(owner, data);
 	case NVMM_IOC_VCPU_SETSTATE:
 		return nvmm_vcpu_setstate(owner, data);
 	case NVMM_IOC_VCPU_GETSTATE:
