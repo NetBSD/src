@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xe.c,v 1.25 2019/04/25 08:31:33 msaitoh Exp $	*/
+/*	$NetBSD: if_xe.c,v 1.26 2019/11/10 21:16:31 chs Exp $	*/
 /*
  * Copyright (c) 1998 Darrin B. Jewell
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.25 2019/04/25 08:31:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xe.c,v 1.26 2019/11/10 21:16:31 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -205,11 +205,7 @@ findchannel_defer(device_t self)
 	 * the  2000 covers at least a 1500 mtu + headers
 	 * + DMA_BEGINALIGNMENT+ DMA_ENDALIGNMENT
 	 */
-	xsc->sc_txbuf = malloc(2000, M_DEVBUF, M_NOWAIT);
-	if (!xsc->sc_txbuf)
-		panic("%s: can't malloc tx DMA buffer",
-		    device_xname(sc->sc_dev));
-	
+	xsc->sc_txbuf = malloc(2000, M_DEVBUF, M_WAITOK);
 	xsc->sc_tx_mb_head = NULL;
 	xsc->sc_tx_loaded = 0;
 	

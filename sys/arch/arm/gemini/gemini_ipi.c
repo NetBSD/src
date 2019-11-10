@@ -7,7 +7,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.7 2019/08/30 00:33:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_ipi.c,v 1.8 2019/11/10 21:16:23 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,12 +103,7 @@ gemini_ipi_intrq_insert(gemini_ipi_softc_t *sc, int (*func)(void *), void *arg)
 {
 	gemini_ipi_intrq_t *iqp;
 
-        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_NOWAIT|M_ZERO);
-        if (iqp == NULL) {
-		printf("gemini_ipi_intrq_insert: malloc failed\n");
-		return NULL;
-	}
-
+        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_WAITOK|M_ZERO);
         iqp->iq_func = func;
         iqp->iq_arg = arg;
         SIMPLEQ_INSERT_TAIL(&sc->sc_intrq, iqp, iq_q);
@@ -154,12 +149,6 @@ ipi_intr_establish(int (*func)(void *), void *arg)
 		return NULL;
 
 	ih = gemini_ipi_intrq_insert(sc, func, arg);
-#ifdef DEBUG
-        if (ih == NULL)
-		panic("%s: gemini_ipi_intrq_insert failed",
-			device_xname(sc->sc_dev));
-#endif
-
 	return ih;
 }
 

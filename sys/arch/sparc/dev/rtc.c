@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.18 2011/07/18 00:31:13 mrg Exp $ */
+/*	$NetBSD: rtc.c,v 1.19 2019/11/10 21:16:32 chs Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.18 2011/07/18 00:31:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19 2019/11/10 21:16:32 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -135,8 +135,7 @@ rtcattach_ebus(device_t parent, device_t self, void *aux)
 
 	/* setup our todr_handle */
 	handle = malloc(ALIGN(sizeof(struct todr_chip_handle)),
-			M_DEVBUF, M_NOWAIT);
-
+			M_DEVBUF, M_WAITOK);
 	handle->cookie = sc;
 	handle->bus_cookie = NULL; /* unused */
 	handle->todr_gettime = rtc_gettime;

@@ -1,4 +1,4 @@
-/*	$NetBSD: cac.c,v 1.60 2019/05/08 05:40:51 cnst Exp $	*/
+/*	$NetBSD: cac.c,v 1.61 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2006, 2007 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.60 2019/05/08 05:40:51 cnst Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cac.c,v 1.61 2019/11/10 21:16:35 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "bio.h"
@@ -693,12 +693,7 @@ cac_create_sensors(struct cac_softc *sc)
 
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sensor = malloc(sizeof(envsys_data_t) * nsensors,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc_sensor == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't allocate envsys_data_t\n");
-		return(ENOMEM);
-	}
-
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	for (i = 0; i < nsensors; i++) {
 		sc->sc_sensor[i].units = ENVSYS_DRIVE;
 		sc->sc_sensor[i].state = ENVSYS_SINVALID;

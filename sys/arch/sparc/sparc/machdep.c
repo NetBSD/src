@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.330 2019/04/06 03:06:27 thorpej Exp $ */
+/*	$NetBSD: machdep.c,v 1.331 2019/11/10 21:16:33 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.330 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.331 2019/11/10 21:16:33 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -2794,9 +2794,7 @@ bus_space_tag_alloc(bus_space_tag_t parent, void *cookie)
 	struct sparc_bus_space_tag *sbt;
 
 	sbt = malloc(sizeof(struct sparc_bus_space_tag),
-		     M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sbt == NULL)
-		return (NULL);
+		     M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (parent) {
 		memcpy(sbt, parent, sizeof(*sbt));
@@ -3014,11 +3012,7 @@ sparc_mainbus_intr_establish(bus_space_tag_t t, int pil, int level,
 {
 	struct intrhand *ih;
 
-	ih = (struct intrhand *)
-		malloc(sizeof(struct intrhand), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return (NULL);
-
+	ih = malloc(sizeof(struct intrhand), M_DEVBUF, M_WAITOK);
 	ih->ih_fun = handler;
 	ih->ih_arg = arg;
 	intr_establish(pil, level, ih, fastvec, false);

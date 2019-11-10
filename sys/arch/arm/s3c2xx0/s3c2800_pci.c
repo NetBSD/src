@@ -1,4 +1,4 @@
-/*	$NetBSD: s3c2800_pci.c,v 1.26 2018/11/26 12:21:51 jmcneill Exp $	*/
+/*	$NetBSD: s3c2800_pci.c,v 1.27 2019/11/10 21:16:24 chs Exp $	*/
 
 /*
  * Copyright (c) 2002 Fujitsu Component Limited
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.26 2018/11/26 12:21:51 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s3c2800_pci.c,v 1.27 2019/11/10 21:16:24 chs Exp $");
 
 #include "opt_pci.h"
 #include "pci.h"
@@ -519,10 +519,7 @@ s3c2800_pci_intr_establish(void *pcv, pci_intr_handle_t ih, int level,
 	    "func=%p, arg=%p, xname=%s)\n", pcv, ih, level, func, arg, xname);
 #endif
 
-	handler = malloc(sizeof *handler, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (handler == NULL)
-		panic("sspci_intr_establish: can't malloc handler info");
-
+	handler = malloc(sizeof *handler, M_DEVBUF, M_WAITOK);
 	handler->func = func;
 	handler->arg = arg;
 	handler->level = level;

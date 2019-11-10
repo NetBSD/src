@@ -1,4 +1,4 @@
-/*	$NetBSD: gemini_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $	*/
+/*	$NetBSD: gemini_pci.c,v 1.20 2019/11/10 21:16:23 chs Exp $	*/
 
 /* adapted from:
  *	NetBSD: i80312_pci.c,v 1.9 2005/12/11 12:16:51 christos Exp
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.19 2018/11/16 15:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_pci.c,v 1.20 2019/11/10 21:16:23 chs Exp $");
 
 #include "opt_gemini.h"
 #include "opt_pci.h"
@@ -117,12 +117,7 @@ gemini_pci_intrq_insert(void *ih, int (*func)(void *), void *arg)
 {
 	struct gemini_pci_intrq *iqp;
 
-        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_NOWAIT|M_ZERO);
-        if (iqp == NULL) {
-		printf("gemini_pci_intrq_insert: malloc failed\n");
-		return NULL;
-	}
-
+        iqp = malloc(sizeof(*iqp), M_DEVBUF, M_WAITOK|M_ZERO);
         iqp->iq_func = func;
         iqp->iq_arg = arg;
         iqp->iq_ih = ih;
@@ -406,11 +401,6 @@ gemini_pci_intr_establish(void *v, pci_intr_handle_t pci_ih, int ipl,
 			gemini_pci_intr_handler, v, xname);
 
 	cookie = gemini_pci_intrq_insert(ih, func, arg);
-	if (cookie == NULL) {
-		if (gemini_pci_intrq_empty())
-			intr_disestablish(ih);
-	}
-
 	return cookie;
 }
 

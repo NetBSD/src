@@ -1,4 +1,4 @@
-/*	$NetBSD: memory.c,v 1.5 2011/10/26 13:54:18 macallan Exp $	*/
+/*	$NetBSD: memory.c,v 1.6 2019/11/10 21:16:29 chs Exp $	*/
 /*	$OpenBSD: mem.c,v 1.15 2007/10/14 17:29:04 kettenis Exp $	*/
 
 /*-
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.5 2011/10/26 13:54:18 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: memory.c,v 1.6 2019/11/10 21:16:29 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -101,11 +101,7 @@ memory_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_len = OF_getproplen(ca->ca_node, "dimm-info");
 	if (sc->sc_len > 0) {
-		sc->sc_buf = malloc(sc->sc_len, M_DEVBUF, M_NOWAIT);
-		if (sc->sc_buf == NULL) {
-			printf(": can't allocate memory\n");
-			return;
-		}
+		sc->sc_buf = malloc(sc->sc_len, M_DEVBUF, M_WAITOK);
 		printf(": len=%d", sc->sc_len);
 	}
 
@@ -172,5 +168,3 @@ memory_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	memcpy(buf, &sc->sc_buf[off], len);
 	return (0);
 }
-
-

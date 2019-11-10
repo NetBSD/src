@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_pci.c,v 1.15 2019/09/28 10:47:09 mlelstv Exp $	*/
+/*	$NetBSD: sdhc_pci.c,v 1.16 2019/11/10 21:16:36 chs Exp $	*/
 /*	$OpenBSD: sdhc_pci.c,v 1.7 2007/10/30 18:13:45 chl Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.15 2019/09/28 10:47:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_pci.c,v 1.16 2019/11/10 21:16:36 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -283,11 +283,7 @@ sdhc_pci_attach(device_t parent, device_t self, void *aux)
 
 	/* Allocate an array big enough to hold all the possible hosts */
 	sc->sc.sc_host = malloc(sizeof(struct sdhc_host *) * nslots,
-	    M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc->sc.sc_host == NULL) {
-		aprint_error_dev(self, "couldn't alloc memory\n");
-		goto err;
-	}
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Enable the device. */
 	csr = pci_conf_read(pc, tag, PCI_COMMAND_STATUS_REG);

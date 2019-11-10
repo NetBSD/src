@@ -1,4 +1,4 @@
-/*	$NetBSD: if_malo_pcmcia.c,v 1.23 2019/10/11 04:25:11 kre Exp $	*/
+/*	$NetBSD: if_malo_pcmcia.c,v 1.24 2019/11/10 21:16:36 chs Exp $	*/
 /*      $OpenBSD: if_malo.c,v 1.65 2009/03/29 21:53:53 sthen Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.23 2019/10/11 04:25:11 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_malo_pcmcia.c,v 1.24 2019/11/10 21:16:36 chs Exp $");
 
 #ifdef _MODULE
 #include <sys/module.h>
@@ -323,10 +323,10 @@ cmalo_attach(void *arg)
 	sc->sc_flags |= MALO_FW_LOADED;
 
 	/* allocate command buffer */
-	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+	sc->sc_cmd = malloc(MALO_CMD_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
 
 	/* allocate data buffer */
-	sc->sc_data = malloc(MALO_DATA_BUFFER_SIZE, M_DEVBUF, M_NOWAIT);
+	sc->sc_data = malloc(MALO_DATA_BUFFER_SIZE, M_DEVBUF, M_WAITOK);
 
 	/* enable interrupts */
 	cmalo_intr_mask(sc, 1);

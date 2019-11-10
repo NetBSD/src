@@ -34,7 +34,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_acl.c,v 1.4 2005/08/13 17:31:48 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.9 2011/06/12 00:07:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_acl.c,v 1.10 2019/11/10 21:16:38 chs Exp $");
 #endif
 
 /*
@@ -99,9 +99,7 @@ acl_attach(struct ieee80211com *ic)
 	struct aclstate *as;
 
 	as = malloc(sizeof(struct aclstate),
-		M_80211_ACL, M_NOWAIT | M_ZERO);
-	if (as == NULL)
-		return 0;
+		M_80211_ACL, M_WAITOK | M_ZERO);
 	ACL_LOCK_INIT(as, "acl");
 	TAILQ_INIT(&as->as_list);
 	as->as_policy = ACL_POLICY_OPEN;
@@ -169,13 +167,7 @@ acl_add(struct ieee80211com *ic, const u_int8_t mac[IEEE80211_ADDR_LEN])
 	struct acl *acl, *new;
 	int hash;
 
-	new = malloc(sizeof(struct acl), M_80211_ACL, M_NOWAIT | M_ZERO);
-	if (new == NULL) {
-		IEEE80211_DPRINTF(ic, IEEE80211_MSG_ACL,
-			"ACL: add %s failed, no memory\n", ether_sprintf(mac));
-		/* XXX statistic */
-		return ENOMEM;
-	}
+	new = malloc(sizeof(struct acl), M_80211_ACL, M_WAITOK | M_ZERO);
 
 	ACL_LOCK(as);
 	hash = ACL_HASH(mac);
@@ -294,9 +286,7 @@ acl_getioctl(struct ieee80211com *ic, struct ieee80211req *ireq)
 			ireq->i_len = space;	/* return required space */
 			return 0;		/* NB: must not error */
 		}
-		ap = malloc(space, M_TEMP, M_NOWAIT);
-		if (ap == NULL)
-			return ENOMEM;
+		ap = malloc(space, M_TEMP, M_WAITOK);
 		i = 0;
 		ACL_LOCK(as);
 		TAILQ_FOREACH(acl, &as->as_list, acl_list) {

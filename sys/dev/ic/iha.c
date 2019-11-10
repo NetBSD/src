@@ -1,4 +1,4 @@
-/*	$NetBSD: iha.c,v 1.42 2011/05/24 16:38:25 joerg Exp $ */
+/*	$NetBSD: iha.c,v 1.43 2019/11/10 21:16:35 chs Exp $ */
 
 /*-
  * Copyright (c) 2001, 2002 Izumi Tsutsui
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.42 2011/05/24 16:38:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: iha.c,v 1.43 2019/11/10 21:16:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -524,12 +524,7 @@ iha_attach(struct iha_softc *sc)
 	}
 
 	sc->sc_scb = malloc(sizeof(struct iha_scb) * IHA_MAX_SCB,
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sc->sc_scb == NULL) {
-		aprint_error_dev(sc->sc_dev, "cannot allocate SCB\n");
-		return;
-	}
-
+	    M_DEVBUF, M_WAITOK|M_ZERO);
 	for (i = 0, scb = sc->sc_scb; i < IHA_MAX_SCB; i++, scb++) {
 		scb->scb_tagid = i;
 		scb->sgoffset = IHA_SG_SIZE * i;

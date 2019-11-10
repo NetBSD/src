@@ -1,4 +1,4 @@
-/*	$NetBSD: pdqvar.h,v 1.49 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: pdqvar.h,v 1.50 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -106,7 +106,7 @@ typedef enum _pdq_state_t pdq_state_t;
 #if !defined(PDQ_BUS_DMA)
 #define	PDQ_OS_VA_TO_BUSPA(pdq, p)		vtophys(p)
 #endif
-#define	PDQ_OS_MEMALLOC(n)		malloc(n, M_DEVBUF, M_NOWAIT)
+#define	PDQ_OS_MEMALLOC(n)		malloc(n, M_DEVBUF, M_WAITOK)
 #define	PDQ_OS_MEMFREE(p, n)		free((void *) p, M_DEVBUF)
 #ifdef __FreeBSD__
 #define	PDQ_OS_MEMALLOC_CONTIG(n)	vm_page_alloc_contig(n, 0, 0xffffffff, PAGE_SIZE)

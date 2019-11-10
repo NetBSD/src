@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.183 2019/09/19 03:37:31 msaitoh Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.184 2019/11/10 21:16:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.183 2019/09/19 03:37:31 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.184 2019/11/10 21:16:37 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -1385,16 +1385,9 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 	 *     if timeout exists insert maximum into opcode table
 	 */
 
-	data = malloc(len, M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (data == NULL) {
-		SC_DEBUG(periph, SCSIPI_DB3,
-			 ("unable to allocate data buffer "
-			  "for REPORT SUPPORTED OPERATION CODES\n"));
-		return;
-	}
+	data = malloc(len, M_DEVBUF, M_WAITOK|M_ZERO);
 
 	memset(&cmd, 0, sizeof(cmd));
-	
 	cmd.opcode = SCSI_MAINTENANCE_IN;
 	cmd.svcaction = RSOC_REPORT_SUPPORTED_OPCODES;
 	cmd.repoption = RSOC_RCTD|RSOC_ALL;
@@ -1414,9 +1407,8 @@ scsipi_get_opcodeinfo(struct scsipi_periph *periph)
 		SC_DEBUG(periph, SCSIPI_DB3,
 			 ("CMD  LEN  SA    spec  nom. time  cmd timeout\n"));
 
-		struct scsipi_opcodes *tot =
-		  (struct scsipi_opcodes *)malloc(sizeof(struct scsipi_opcodes),
-						  M_DEVBUF, M_NOWAIT|M_ZERO);
+		struct scsipi_opcodes *tot = malloc(sizeof(struct scsipi_opcodes),
+		    M_DEVBUF, M_WAITOK|M_ZERO);
 
 		count = 0;
                 while (tot != NULL &&

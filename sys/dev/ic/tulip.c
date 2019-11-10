@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.199 2019/09/13 07:55:06 msaitoh Exp $	*/
+/*	$NetBSD: tulip.c,v 1.200 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.199 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.200 2019/11/10 21:16:35 chs Exp $");
 
 
 #include <sys/param.h>
@@ -2198,7 +2198,7 @@ tlp_read_srom(struct tulip_softc *sc)
 	if (sc->sc_srom_addrbits == 0)
 		return 0;
 	size = TULIP_ROM_SIZE(sc->sc_srom_addrbits);
-	sc->sc_srom = malloc(size, M_DEVBUF, M_NOWAIT);
+	sc->sc_srom = malloc(size, M_DEVBUF, M_WAITOK);
 
 	/* Select the SROM. */
 	miirom = MIIROM_SR;

@@ -1,4 +1,4 @@
-/*      $NetBSD: xengnt.c,v 1.26 2019/02/06 12:24:46 cherry Exp $      */
+/*      $NetBSD: xengnt.c,v 1.27 2019/11/10 21:16:34 chs Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.26 2019/02/06 12:24:46 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xengnt.c,v 1.27 2019/11/10 21:16:34 chs Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -98,9 +98,7 @@ xengnt_init(void)
 	if (grant_table == NULL)
 		panic("xengnt_init() no VM space");
 	gnt_entries = malloc((nr_grant_entries + 1) * sizeof(grant_ref_t),
-	    M_DEVBUF, M_NOWAIT);
-	if (gnt_entries == NULL)
-		panic("xengnt_init() no space for bitmask");
+	    M_DEVBUF, M_WAITOK);
 	for (i = 0; i <= nr_grant_entries; i++)
 		gnt_entries[i] = XENGNT_NO_ENTRY;
 

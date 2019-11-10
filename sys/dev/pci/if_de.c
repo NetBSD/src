@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.163 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: if_de.c,v 1.164 2019/11/10 21:16:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.163 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.164 2019/11/10 21:16:36 chs Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -5196,9 +5196,7 @@ tulip_busdma_init(tulip_softc_t * const sc)
 	}
 #else
 	if (error == 0) {
-		sc->tulip_txdescs = (tulip_desc_t *) malloc(TULIP_TXDESCS * sizeof(tulip_desc_t), M_DEVBUF, M_NOWAIT);
-		if (sc->tulip_txdescs == NULL)
-			error = ENOMEM;
+		sc->tulip_txdescs = malloc(TULIP_TXDESCS * sizeof(tulip_desc_t), M_DEVBUF, M_WAITOK);
 	}
 #endif
 #if !defined(TULIP_BUS_DMA_NORX)
@@ -5229,9 +5227,7 @@ tulip_busdma_init(tulip_softc_t * const sc)
 	}
 #else
 	if (error == 0) {
-		sc->tulip_rxdescs = (tulip_desc_t *) malloc(TULIP_RXDESCS * sizeof(tulip_desc_t), M_DEVBUF, M_NOWAIT);
-		if (sc->tulip_rxdescs == NULL)
-			error = ENOMEM;
+		sc->tulip_rxdescs = malloc(TULIP_RXDESCS * sizeof(tulip_desc_t), M_DEVBUF, M_WAITOK);
 	}
 #endif
 	return error;
@@ -5644,10 +5640,7 @@ tulip_pci_attach(TULIP_PCI_ATTACH_ARGS)
 	}
 
 #if defined(__FreeBSD__)
-	sc = (tulip_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT);
-	if (sc == NULL)
-		return;
-	memset(sc, 0, sizeof(*sc));	/* Zero out the softc*/
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
 #endif
 
 	PCI_GETBUSDEVINFO(sc);

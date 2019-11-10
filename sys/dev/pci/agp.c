@@ -1,4 +1,4 @@
-/*	$NetBSD: agp.c,v 1.86 2019/10/15 16:59:15 msaitoh Exp $	*/
+/*	$NetBSD: agp.c,v 1.87 2019/11/10 21:16:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2000 Doug Rabson
@@ -65,7 +65,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.86 2019/10/15 16:59:15 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: agp.c,v 1.87 2019/11/10 21:16:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -408,9 +408,7 @@ agp_alloc_gatt(struct agp_softc *sc)
 	void *virtual;
 	int dummyseg;
 
-	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_NOWAIT);
-	if (!gatt)
-		return NULL;
+	gatt = malloc(sizeof(struct agp_gatt), M_AGP, M_WAITOK);
 	gatt->ag_entries = entries;
 
 	if (agp_alloc_dmamem(sc->as_dmat, entries * sizeof(u_int32_t),

@@ -1,4 +1,4 @@
-/*	$NetBSD: zx.c,v 1.44 2019/03/13 22:30:01 thorpej Exp $	*/
+/*	$NetBSD: zx.c,v 1.45 2019/11/10 21:16:37 chs Exp $	*/
 
 /*
  *  Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.44 2019/03/13 22:30:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zx.c,v 1.45 2019/11/10 21:16:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ zx_attach(device_t parent, device_t self, void *args)
 	if (sa->sa_nintr != 0)
 		bus_intr_establish(bt, sa->sa_pri, IPL_NONE, zx_intr, sc);
 
-	sc->sc_cmap = malloc(768, M_DEVBUF, M_NOWAIT);
+	sc->sc_cmap = malloc(768, M_DEVBUF, M_WAITOK);
 	zx_reset(sc);
 
 	sc->sc_width = fb->fb_type.fb_width;

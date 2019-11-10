@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.291 2019/01/07 13:10:44 martin Exp $ */
+/*	$NetBSD: machdep.c,v 1.292 2019/11/10 21:16:33 chs Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.291 2019/01/07 13:10:44 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.292 2019/11/10 21:16:33 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2183,9 +2183,7 @@ bus_space_tag_alloc(bus_space_tag_t parent, void *cookie)
 	struct sparc_bus_space_tag *sbt;
 
 	sbt = malloc(sizeof(struct sparc_bus_space_tag),
-		     M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (sbt == NULL)
-		return (NULL);
+		     M_DEVBUF, M_WAITOK|M_ZERO);
 
 	if (parent) {
 		memcpy(sbt, parent, sizeof(*sbt));

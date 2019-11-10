@@ -1,4 +1,4 @@
-/* $NetBSD: btvmeii.c,v 1.23 2019/03/01 09:26:00 msaitoh Exp $ */
+/* $NetBSD: btvmeii.c,v 1.24 2019/11/10 21:16:36 chs Exp $ */
 
 /*
  * Copyright (c) 1999
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.23 2019/03/01 09:26:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: btvmeii.c,v 1.24 2019/11/10 21:16:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -433,10 +433,7 @@ b3_2706_establish_vmeint(void *vsc, vme_intr_handle_t handle, int prior, int (*f
 	long lv;
 	int s;
 
-	/* no point in sleeping unless someone can free memory. */
-	ih = malloc(sizeof *ih, M_DEVBUF, cold ? M_NOWAIT : M_WAITOK);
-	if (ih == NULL)
-		panic("b3_2706_map_vmeint: can't malloc handler info");
+	ih = malloc(sizeof *ih, M_DEVBUF, M_WAITOK);
 
 	lv = (long)handle; /* XXX */
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: pdq.c,v 1.40 2013/09/15 09:26:39 martin Exp $	*/
+/*	$NetBSD: pdq.c,v 1.41 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995,1996 Matt Thomas <matt@3am-software.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.40 2013/09/15 09:26:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pdq.c,v 1.41 2019/11/10 21:16:35 chs Exp $");
 
 #define	PDQ_HWSUPPORT	/* for pdq.h */
 
@@ -1584,10 +1584,6 @@ pdq_initialize(
     PDQ_ASSERT(sizeof(pdq_unsolicited_event_t) == 512);
 
     pdq = (pdq_t *) PDQ_OS_MEMALLOC(sizeof(pdq_t));
-    if (pdq == NULL) {
-	PDQ_PRINTF(("malloc(%d) failed\n", sizeof(*pdq)));
-	return NULL;
-    }
     PDQ_OS_MEMZERO(pdq, sizeof(pdq_t));
     pdq->pdq_type = type;
     pdq->pdq_unit = unit;

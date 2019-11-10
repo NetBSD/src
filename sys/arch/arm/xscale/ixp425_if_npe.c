@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.42 2019/09/13 07:55:06 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.43 2019/11/10 21:16:24 chs Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.42 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.43 2019/11/10 21:16:24 chs Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -465,23 +465,13 @@ npe_dma_setup(struct npe_softc *sc, struct npedma *dma,
 		aprint_error_dev(sc->sc_dev,
 		    "unable to %s for %s %s buffers, error %u\n",
 		    "load map", dma->name, "h/w", error);
- destroy_dmamap:
 		bus_dmamap_destroy(sc->sc_dt, dma->buf_map);
 		goto unmap_dmamem;
 	}
 
 	/* XXX M_TEMP */
 	dma->buf = malloc(nbuf * sizeof(struct npebuf), M_TEMP,
-	    M_NOWAIT | M_ZERO);
-	if (dma->buf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to %s for %s %s buffers, error %u\n",
-		    "allocate memory", dma->name, "h/w", error);
-		bus_dmamap_unload(sc->sc_dt, dma->buf_map);
-		error = ENOMEM;
-		goto destroy_dmamap;
-	}
-
+	    M_WAITOK | M_ZERO);
 	dma->buf_phys = dma->buf_map->dm_segs[0].ds_addr;
 	for (i = 0; i < dma->nbuf; i++) {
 		struct npebuf *npe = &dma->buf[i];

@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.92 2019/10/17 05:55:18 msaitoh Exp $ */
+/* $NetBSD: if_msk.c,v 1.93 2019/11/10 21:16:36 chs Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.92 2019/10/17 05:55:18 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.93 2019/11/10 21:16:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -643,13 +643,7 @@ msk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 		sc_if->sk_cdata.sk_jslots[i] = ptr;
 		ptr += SK_JLEN;
 		entry = malloc(sizeof(struct sk_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			sc_if->sk_cdata.sk_jumbo_buf = NULL;
-			aprint_error(": no memory for jumbo buffer queue!");
-			error = ENOBUFS;
-			goto out;
-		}
+		    M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		LIST_INSERT_HEAD(&sc_if->sk_jfree_listhead,
 				 entry, jpool_entries);

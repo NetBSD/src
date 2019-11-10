@@ -1,4 +1,4 @@
-/* $NetBSD: seeq8005.c,v 1.64 2019/05/28 07:41:48 msaitoh Exp $ */
+/* $NetBSD: seeq8005.c,v 1.65 2019/11/10 21:16:35 chs Exp $ */
 
 /*
  * Copyright (c) 2000, 2001 Ben Harris
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.64 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: seeq8005.c,v 1.65 2019/11/10 21:16:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,11 +247,7 @@ seeq8005_attach(struct seeq8005_softc *sc, const uint8_t *myaddr, int *media,
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
-		    M_ZERO | M_NOWAIT);
-		if (padbuf == NULL) {
-			aprint_error_dev(dev, "can't allocate pad buffer\n");
-			return;
-		}
+		    M_ZERO | M_WAITOK);
 	}
 
 	/* Initialise ifnet structure. */

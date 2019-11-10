@@ -316,25 +316,13 @@ s3c2440_i2s_alloc(void *handle,
 		  int direction, size_t size, int flags,
 		  s3c2440_i2s_buf_t *out)
 {
-	int kalloc_flags = KM_SLEEP;
-	int dma_flags = BUS_DMA_WAITOK;
 	int retval = 0;
 	struct s3c2xx0_softc *sc = s3c2xx0_softc; /* Shortcut */
 	s3c2440_i2s_buf_t buf;
 
 	DPRINTF(("%s\n", __func__));
 
-	if (flags & M_NOWAIT) {
-		kalloc_flags = KM_NOSLEEP;
-		dma_flags = BUS_DMA_NOWAIT;
-	}
-
-	*out = kmem_alloc(sizeof(struct s3c2440_i2s_buf), kalloc_flags);
-	if (*out == NULL) {
-		DPRINTF(("Failed to allocate memory\n"));
-		return ENOMEM;
-	}
-
+	*out = kmem_alloc(sizeof(struct s3c2440_i2s_buf), KM_SLEEP);
 	buf = *out;
 	buf->i2b_parent = handle;
 	buf->i2b_size = size;
@@ -346,7 +334,7 @@ s3c2440_i2s_alloc(void *handle,
 	/* We first allocate some DMA-friendly memory for the buffer... */
 	retval = bus_dmamem_alloc(sc->sc_dmat, buf->i2b_size, NBPG, 0,
 				  buf->i2b_segs, buf->i2b_nsegs, &buf->i2b_nsegs,
-				  dma_flags);
+				  BUS_DMA_WAITOK);
 	if (retval != 0) {
 		printf("%s: Failed to allocate DMA memory\n", __func__);
 		goto cleanup_dealloc;
@@ -355,7 +343,7 @@ s3c2440_i2s_alloc(void *handle,
 	DPRINTF(("%s: Using %d DMA segments\n", __func__, buf->i2b_nsegs));
 
 	retval = bus_dmamem_map(sc->sc_dmat, buf->i2b_segs, buf->i2b_nsegs,
-				buf->i2b_size, &buf->i2b_addr, dma_flags);
+				buf->i2b_size, &buf->i2b_addr, BUS_DMA_WAITOK);
 
 	if (retval != 0) {
 		printf("%s: Failed to map DMA memory\n", __func__);
@@ -367,7 +355,7 @@ s3c2440_i2s_alloc(void *handle,
 
 	/* XXX: Not sure if nsegments is really 1...*/
 	retval = bus_dmamap_create(sc->sc_dmat, buf->i2b_size, 1,
-				   buf->i2b_size, 0, dma_flags,
+				   buf->i2b_size, 0, BUS_DMA_WAITOK,
 				   &buf->i2b_dmamap);
 	if (retval != 0) {
 		printf("%s: Failed to create DMA map\n", __func__);
@@ -376,15 +364,9 @@ s3c2440_i2s_alloc(void *handle,
 
 	DPRINTF(("%s: DMA map created successfully\n", __func__));
 
-	buf->i2b_xfer = s3c2440_dmac_allocate_xfer(M_NOWAIT);
-	if (buf->i2b_xfer == NULL) {
-		retval = ENOMEM;
-		goto cleanup_destroy_dmamap;
-	}
+	buf->i2b_xfer = s3c2440_dmac_allocate_xfer();
 
 	return 0;
-cleanup_destroy_dmamap:
-	bus_dmamap_destroy(sc->sc_dmat, buf->i2b_dmamap);
  cleanup_unmap_dma:
 	bus_dmamem_unmap(sc->sc_dmat, &buf->i2b_addr, buf->i2b_size);
  cleanup_dealloc_dma:

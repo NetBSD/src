@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.60 2019/10/30 07:26:28 msaitoh Exp $ */
+/* $NetBSD: if_txp.c,v 1.61 2019/11/10 21:16:36 chs Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.60 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.61 2019/11/10 21:16:36 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -1080,13 +1080,10 @@ txp_alloc_rings(struct txp_softc *sc)
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
 	for (nb = 0; nb < RXBUF_ENTRIES; nb++) {
-		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
-		    M_DEVBUF, M_NOWAIT);
+		sd = malloc(sizeof(struct txp_swdesc), M_DEVBUF, M_WAITOK);
 		/* stash away pointer */
 		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd,
 		    sizeof(sd));
-		if (sd == NULL)
-			break;
 
 		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
 		if (sd->sd_mbuf == NULL) {

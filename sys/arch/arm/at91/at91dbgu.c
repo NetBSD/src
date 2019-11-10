@@ -1,5 +1,5 @@
-/*	$Id: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $	*/
-/*	$NetBSD: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $ */
+/*	$Id: at91dbgu.c,v 1.16 2019/11/10 21:16:23 chs Exp $	*/
+/*	$NetBSD: at91dbgu.c,v 1.16 2019/11/10 21:16:23 chs Exp $ */
 
 /*
  *
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.15 2015/09/21 13:31:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91dbgu.c,v 1.16 2019/11/10 21:16:23 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -256,14 +256,9 @@ at91dbgu_attach(device_t parent, device_t self, void *aux)
 	tp->t_hwiflow = at91dbgu_hwiflow;
 
 	sc->sc_tty = tp;
-	sc->sc_rbuf = malloc(AT91DBGU_RING_SIZE << 1, M_DEVBUF, M_NOWAIT);
+	sc->sc_rbuf = malloc(AT91DBGU_RING_SIZE << 1, M_DEVBUF, M_WAITOK);
 	sc->sc_rbput = sc->sc_rbget = sc->sc_rbuf;
 	sc->sc_rbavail = AT91DBGU_RING_SIZE;
-	if (sc->sc_rbuf == NULL) {
-		printf("%s: unable to allocate ring buffer\n",
-		    device_xname(sc->sc_dev));
-		return;
-	}
 	sc->sc_ebuf = sc->sc_rbuf + (AT91DBGU_RING_SIZE << 1);
 	sc->sc_tbc = 0;
 

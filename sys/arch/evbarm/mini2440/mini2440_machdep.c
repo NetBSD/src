@@ -131,7 +131,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.15 2019/07/16 14:41:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mini2440_machdep.c,v 1.16 2019/11/10 21:16:26 chs Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -1026,9 +1026,7 @@ s3c2xx0_bus_dma_init(struct arm32_bus_dma_tag *dma_tag_template)
 #if 1
 	dmat = dma_tag_template;
 #else
-	dmat = malloc(sizeof *dmat, M_DEVBUF, M_NOWAIT);
-	if (dmat == NULL)
-		return NULL;
+	dmat = malloc(sizeof *dmat, M_DEVBUF, M_WAITOK);
 	*dmat =  *dma_tag_template;
 #endif
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.60 2019/05/28 07:41:47 msaitoh Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.61 2019/11/10 21:16:29 chs Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.60 2019/05/28 07:41:47 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.61 2019/11/10 21:16:29 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -217,13 +217,8 @@ bmac_attach(device_t parent, device_t self, void *aux)
 	sc->sc_txcmd = dbdma_alloc(BMAC_TXBUFS * sizeof(dbdma_command_t), NULL);
 	sc->sc_rxcmd = dbdma_alloc((BMAC_RXBUFS + 1) * sizeof(dbdma_command_t),
 	    NULL);
-	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_NOWAIT);
-	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_NOWAIT);
-	if (sc->sc_txbuf == NULL || sc->sc_rxbuf == NULL ||
-	    sc->sc_txcmd == NULL || sc->sc_rxcmd == NULL) {
-		aprint_error("cannot allocate memory\n");
-		return;
-	}
+	sc->sc_txbuf = malloc(BMAC_BUFLEN * BMAC_TXBUFS, M_DEVBUF, M_WAITOK);
+	sc->sc_rxbuf = malloc(BMAC_BUFLEN * BMAC_RXBUFS, M_DEVBUF, M_WAITOK);
 
 	aprint_normal(" irq %d,%d: address %s\n",
 	    ca->ca_intr[0], ca->ca_intr[2],

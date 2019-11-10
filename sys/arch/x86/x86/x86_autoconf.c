@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_autoconf.c,v 1.78 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: x86_autoconf.c,v 1.79 2019/11/10 21:16:34 chs Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.78 2019/05/24 14:28:48 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_autoconf.c,v 1.79 2019/11/10 21:16:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,10 +137,7 @@ matchbiosdisks(void)
 	    sizeof(struct nativedisk_info);
 
 	/* XXX M_TEMP is wrong */
-	x86_alldisks = malloc(dklist_size, M_TEMP, M_NOWAIT | M_ZERO);
-	if (x86_alldisks == NULL)
-		return;
-
+	x86_alldisks = malloc(dklist_size, M_TEMP, M_WAITOK | M_ZERO);
 	x86_alldisks->dl_nnativedisks = x86_ndisks;
 	x86_alldisks->dl_nbiosdisks = numbig;
 	for (i = 0; i < numbig; i++) {

@@ -273,10 +273,10 @@ s3c2440_dma_intr(void *arg)
 }
 
 dmac_xfer_t
-s3c2440_dmac_allocate_xfer(int flags) {
+s3c2440_dmac_allocate_xfer(void) {
 	struct dmac_xfer_state *dxs;
 
-	dxs = malloc(sizeof(struct dmac_xfer_state), M_DEVBUF, flags);
+	dxs = malloc(sizeof(struct dmac_xfer_state), M_DEVBUF, M_WAITOK);
 
 	dxs->dxs_xfer.dx_done = NULL;
 	dxs->dxs_xfer.dx_sync_bus = DMAC_SYNC_BUS_AUTO;

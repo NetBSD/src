@@ -1,4 +1,4 @@
-/* $NetBSD: cardbus_exrom.c,v 1.13 2018/09/03 16:29:30 riastradh Exp $ */
+/* $NetBSD: cardbus_exrom.c,v 1.14 2019/11/10 21:16:34 chs Exp $ */
 
 /*
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cardbus_exrom.c,v 1.13 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cardbus_exrom.c,v 1.14 2019/11/10 21:16:34 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -121,11 +121,7 @@ cardbus_read_exrom(bus_space_tag_t romt, bus_space_handle_t romh,
 			 */
 			image_size = 1;
 		image_size <<= 9;
-		image = malloc(sizeof(*image), M_DEVBUF, M_NOWAIT);
-		if (image == NULL) {
-			printf("%s: out of memory\n", thisfunc);
-			return 1;
-		}
+		image = malloc(sizeof(*image), M_DEVBUF, M_WAITOK);
 		image->rom_image = rom_image;
 		image->image_size = image_size;
 		image->romt = romt;

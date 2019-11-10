@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.338 2019/09/23 07:47:45 maxv Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.339 2019/11/10 21:16:36 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.338 2019/09/23 07:47:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.339 2019/11/10 21:16:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1359,13 +1359,7 @@ bge_alloc_jumbo_mem(struct bge_softc *sc)
 		sc->bge_cdata.bge_jslots[i] = ptr;
 		ptr += BGE_JLEN;
 		entry = malloc(sizeof(struct bge_jpool_entry),
-		    M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			aprint_error_dev(sc->bge_dev,
-			    "no memory for jumbo buffer queue!\n");
-			error = ENOBUFS;
-			goto out;
-		}
+		    M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		SLIST_INSERT_HEAD(&sc->bge_jfree_listhead,
 				 entry, jpool_entries);

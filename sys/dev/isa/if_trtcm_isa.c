@@ -1,4 +1,4 @@
-/*	$NetBSD: if_trtcm_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $	*/
+/*	$NetBSD: if_trtcm_isa.c,v 1.20 2019/11/10 21:16:35 chs Exp $	*/
 
 /* XXXJRT verify doens't change isa_attach_args too early */
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.19 2009/05/12 09:10:15 cegger Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_trtcm_isa.c,v 1.20 2019/11/10 21:16:35 chs Exp $");
 
 #undef TRTCMISADEBUG
 
@@ -221,13 +221,7 @@ trtcm_isa_probe(device_t parent, cfdata_t match, void *aux)
 	/*
 	 * Mark this bus so we don't probe it again.
 	 */
-	tcm = (struct tcm_isa_done_probe *)
-	    malloc(sizeof(struct tcm_isa_done_probe), M_DEVBUF, M_NOWAIT);
-	if (tcm == NULL) {
-		printf("trtcm_isa_probe: can't allocate state storage");
-		return 0;
-	}
-
+	tcm = malloc(sizeof(struct tcm_isa_done_probe), M_DEVBUF, M_WAITOK);
 	tcm->tcm_bus = bus;
 	LIST_INSERT_HEAD(&tcm_isa_all_probes, tcm, tcm_link);
 
