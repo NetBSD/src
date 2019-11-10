@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.377 2019/11/10 13:28:06 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.378 2019/11/10 14:20:50 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.377 2019/11/10 13:28:06 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.378 2019/11/10 14:20:50 pgoyette Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -131,9 +131,6 @@ static void	sigswitch_unlock_and_switch_away(struct lwp *);
 
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
-
-int (*coredump_vec)(struct lwp *, const char *) =
-    __FPTRCAST(int (*)(struct lwp *, const char *), enosys);
 
 /*
  * DTrace SDT provider definitions
@@ -2289,7 +2286,7 @@ sigexit(struct lwp *l, int signo)
 
 	if (docore) {
 		mutex_exit(p->p_lock);
-		error = (*coredump_vec)(l, NULL);
+		MODULE_HOOK_CALL(coredump_hook, (l, NULL), enosys(), error);
 
 		if (kern_logsigexit) {
 			int uid = l->l_cred ?
