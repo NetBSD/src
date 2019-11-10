@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.49 2019/11/09 23:34:13 pgoyette Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.50 2019/11/10 13:28:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.49 2019/11/09 23:34:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.50 2019/11/10 13:28:06 pgoyette Exp $");
 
 #include "opt_dtrace.h"
 
@@ -81,6 +81,7 @@ __KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.49 2019/11/09 23:34:13 pgoyette Exp $"
 #include <sys/kmem.h>
 #include <sys/module.h>
 #include <sys/sdt.h>
+#include <sys/compat_stub.h>
 
 SDT_PROVIDER_DECLARE(proc);
 SDT_PROBE_DEFINE2(proc, kernel, , signal__clear,
@@ -413,11 +414,9 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 				v0v1valid = true;
 			else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
 				kernconfig_lock();
-				if (sendsig_sigcontext_vec == NULL) {
-					(void)module_autoload("compat_16",
-					    MODULE_CLASS_ANY);
-				}
-				if (sendsig_sigcontext_vec != NULL) {
+				(void)module_autoload("compat_16",
+				    MODULE_CLASS_ANY);
+				if (sendsig_sigcontext_16_hook.hooked) {
 					/*
 					 * We need to remember if the
 					 * sigcontext method may be useable,
