@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.1 2019/09/22 10:22:15 martin Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.205.2.2 2019/11/10 12:58:31 martin Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -499,6 +499,7 @@ setup()
 	g_gpio="%gid__gpio%"
 	g_kmem="%gid_kmem%"
 	g_ntpd="%gid_ntpd%"
+	g_nvmm="%gid_nvmm%"
 	g_operator="%gid_operator%"
 	g_wheel="%gid_wheel%"
 	dialin=0
@@ -2222,7 +2223,7 @@ nvme[0-9]*)
 	;;
 
 nvmm)
-	mkdev nvmm c %nvmm_chr% 0
+	mkdev nvmm c %nvmm_chr% 0 640 $g_nvmm
 	;;
 
 autofs)

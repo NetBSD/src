@@ -29,6 +29,7 @@ _rtadvd:*:30:
 guest:*:31:root
 _unbound:*:32:
 _nsd:*:33:
+nvmm:*:34:root
 nobody:*:39:
 utmp:*:45:
 authpf:*:72:
