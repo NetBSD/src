@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sig.c,v 1.47.4.1 2019/10/21 20:13:09 martin Exp $	*/
+/*	$NetBSD: sys_sig.c,v 1.47.4.2 2019/11/10 13:24:50 martin Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.47.4.1 2019/10/21 20:13:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sig.c,v 1.47.4.2 2019/11/10 13:24:50 martin Exp $");
 
 #include "opt_dtrace.h"
 
@@ -414,7 +414,7 @@ sigaction1(struct lwp *l, int signum, const struct sigaction *nsa,
 			else if ((p->p_lflag & PL_SIGCOMPAT) == 0) {
 				kernconfig_lock();
 				if (sendsig_sigcontext_vec == NULL) {
-					(void)module_autoload("compat",
+					(void)module_autoload("compat_16",
 					    MODULE_CLASS_ANY);
 				}
 				if (sendsig_sigcontext_vec != NULL) {
