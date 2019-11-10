@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.11 2019/11/09 23:29:48 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.12 2019/11/10 11:43:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.11 2019/11/09 23:29:48 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.12 2019/11/10 11:43:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -271,20 +271,21 @@ rk3399_cru_pll_set_rate(struct rk_cru_softc *sc,
 	struct rk_cru_pll *pll = &clk->u.pll;
 	const struct rk_cru_pll_rate *pll_rate = NULL;
 	uint32_t val;
-	int retry;
+	int retry, best_diff;
 
 	KASSERT(clk->type == RK_CRU_PLL);
 
 	if (pll->rates == NULL || rate == 0)
 		return EIO;
 
-	for (int i = 0; i < pll->nrates; i++)
-		if (pll->rates[i].rate == rate) {
+	best_diff = INT_MAX;
+	for (int i = 0; i < pll->nrates; i++) {
+		const int diff = (int)rate - (int)pll->rates[i].rate;
+		if (abs(diff) < best_diff) {
 			pll_rate = &pll->rates[i];
-			break;
+			best_diff = abs(diff);
 		}
-	if (pll_rate == NULL)
-		return EINVAL;
+	}
 
 	val = __SHIFTIN(PLL_WORK_MODE_SLOW, PLL_WORK_MODE) | (PLL_WORK_MODE << 16);
 	CRU_WRITE(sc, pll->con_base + PLL_CON3, val);
@@ -869,7 +870,7 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BITS(7,0),	/* div_mask */
 		     CLKGATE_CON(10),	/* gate_reg */
 		     __BIT(12),		/* gate_mask */
-		     0),
+		     RK_COMPOSITE_SET_RATE_PARENT),
 	RK_GATE(RK3399_ACLK_VOP0, "aclk_vop0", "aclk_vop0_pre", CLKGATE_CON(28), 3),
 	RK_GATE(RK3399_HCLK_VOP0, "hclk_vop0", "hclk_vop0_pre", CLKGATE_CON(28), 2),
 	RK_MUX(RK3399_DCLK_VOP0, "dclk_vop0", mux_dclk_vop0_parents, CLKSEL_CON(49), __BIT(11)),
@@ -894,7 +895,7 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     __BITS(7,0),	/* div_mask */
 		     CLKGATE_CON(10),	/* gate_reg */
 		     __BIT(13),		/* gate_mask */
-		     0),
+		     RK_COMPOSITE_SET_RATE_PARENT),
 	RK_GATE(RK3399_ACLK_VOP1, "aclk_vop1", "aclk_vop1_pre", CLKGATE_CON(28), 7),
 	RK_GATE(RK3399_HCLK_VOP1, "hclk_vop1", "hclk_vop1_pre", CLKGATE_CON(28), 6),
 	RK_MUX(RK3399_DCLK_VOP1, "dclk_vop1", mux_dclk_vop1_parents, CLKSEL_CON(50), __BIT(11)),
@@ -944,12 +945,21 @@ static void
 rk3399_cru_init(struct rk_cru_softc *sc)
 {
 	struct rk_cru_clk *clk;
+	uint32_t write_mask, write_val;
 
 	/*
 	 * Force an update of BPLL to bring it out of slow mode.
 	 */
 	clk = rk_cru_clock_find(sc, "armclkb");
 	clk_set_rate(&clk->base, clk_get_rate(&clk->base));
+
+	/*
+	 * Set DCLK_VOP0 and DCLK_VOP1 dividers to 1.
+	 */
+	write_mask = __BITS(7,0) << 16;
+	write_val = 0;
+	CRU_WRITE(sc, CLKSEL_CON(49), write_mask | write_val);
+	CRU_WRITE(sc, CLKSEL_CON(50), write_mask | write_val);
 }
 
 static int
