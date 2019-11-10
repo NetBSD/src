@@ -1,4 +1,4 @@
-/*	$NetBSD: sbp.c,v 1.38 2019/09/23 06:56:20 maxv Exp $	*/
+/*	$NetBSD: sbp.c,v 1.39 2019/11/10 21:16:35 chs Exp $	*/
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
  * Copyright (c) 1998-2002 Katsushi Kobayashi and Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.38 2019/09/23 06:56:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbp.c,v 1.39 2019/11/10 21:16:35 chs Exp $");
 
 
 #include <sys/param.h>
@@ -711,13 +711,7 @@ END_DEBUG
 	if (maxlun != target->num_lun) {
 		newluns = (struct sbp_dev **) realloc(target->luns,
 		    sizeof(struct sbp_dev *) * maxlun,
-		    M_SBP, M_NOWAIT | M_ZERO);
-
-		if (newluns == NULL) {
-			aprint_error_dev(sc->sc_fd.dev, "realloc failed\n");
-			newluns = target->luns;
-			maxlun = target->num_lun;
-		}
+		    M_SBP, M_WAITOK | M_ZERO);
 
 		/*
 		 * We must zero the extended region for the case
@@ -751,12 +745,7 @@ END_DEBUG
 		sdev = target->luns[lun];
 		if (sdev == NULL) {
 			sdev = malloc(sizeof(struct sbp_dev),
-			    M_SBP, M_NOWAIT | M_ZERO);
-			if (sdev == NULL) {
-				aprint_error_dev(sc->sc_fd.dev,
-				    "malloc failed\n");
-				goto next;
-			}
+			    M_SBP, M_WAITOK | M_ZERO);
 			target->luns[lun] = sdev;
 			sdev->lun_id = lun;
 			sdev->target = target;

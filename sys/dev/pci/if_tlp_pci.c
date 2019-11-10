@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tlp_pci.c,v 1.126 2019/05/29 06:17:28 msaitoh Exp $	*/
+/*	$NetBSD: if_tlp_pci.c,v 1.127 2019/11/10 21:16:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.126 2019/05/29 06:17:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tlp_pci.c,v 1.127 2019/11/10 21:16:36 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -588,7 +588,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	switch (sc->sc_chip) {
 	case TULIP_CHIP_21040:
 		sc->sc_srom_addrbits = 6;
-		sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF, M_NOWAIT);
+		sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF, M_WAITOK);
 		TULIP_WRITE(sc, CSR_MIIROM, MIIROM_SROMCS);
 		for (i = 0; i < TULIP_ROM_SIZE(6); i++) {
 			for (j = 0; j < 10000; j++) {
@@ -604,7 +604,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 	case TULIP_CHIP_82C169:
 	    {
 		sc->sc_srom_addrbits = 2;
-		sc->sc_srom = malloc(TULIP_ROM_SIZE(2), M_DEVBUF, M_NOWAIT);
+		sc->sc_srom = malloc(TULIP_ROM_SIZE(2), M_DEVBUF, M_WAITOK);
 
 		/*
 		 * The Lite-On PNIC stores the Ethernet address in
@@ -652,7 +652,7 @@ tlp_pci_attach(device_t parent, device_t self, void *aux)
 
 			sc->sc_srom_addrbits = 6;
 			sc->sc_srom = malloc(TULIP_ROM_SIZE(6), M_DEVBUF,
-			    M_NOWAIT | M_ZERO);
+			    M_WAITOK | M_ZERO);
 			memcpy(sc->sc_srom, enaddr, sizeof(enaddr));
 			if (tlp_srom_debug) {
 				aprint_normal("SROM CONTENTS:");

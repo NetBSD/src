@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_qmgr.c,v 1.8 2019/06/03 06:04:20 msaitoh Exp $	*/
+/*	$NetBSD: ixp425_qmgr.c,v 1.9 2019/11/10 21:16:24 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006 Sam Leffler, Errno Consulting
@@ -60,7 +60,7 @@
 */
 #include <sys/cdefs.h>
 /*__FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/ixp425_qmgr.c,v 1.1 2006/11/19 23:55:23 sam Exp $");*/
-__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.8 2019/06/03 06:04:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_qmgr.c,v 1.9 2019/11/10 21:16:24 chs Exp $");
 
 /*
  * Intel XScale Queue Manager support.
@@ -229,10 +229,7 @@ ixpqmgr_init(bus_space_tag_t iot)
 	sc->sc_dev = dev;
 	sc->sc_iot = sa->sc_iot;
 #else
-	sc = malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (sc == NULL)
-		return (NULL);
-
+	sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK | M_ZERO);
 	sc->sc_iot = iot;
 #endif
 

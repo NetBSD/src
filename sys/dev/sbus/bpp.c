@@ -1,4 +1,4 @@
-/*	$NetBSD: bpp.c,v 1.43 2018/09/03 16:29:33 riastradh Exp $ */
+/*	$NetBSD: bpp.c,v 1.44 2019/11/10 21:16:37 chs Exp $ */
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.43 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpp.c,v 1.44 2019/11/10 21:16:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -212,7 +212,7 @@ bppattach(device_t parent, device_t self, void *aux)
 
 	/* Allocate buffer XXX - should actually use dmamap_uio() */
 	dsc->sc_bufsz = 1024;
-	dsc->sc_buf = malloc(dsc->sc_bufsz, M_DEVBUF, M_NOWAIT);
+	dsc->sc_buf = malloc(dsc->sc_bufsz, M_DEVBUF, M_WAITOK);
 
 	/* XXX read default state */
 	{

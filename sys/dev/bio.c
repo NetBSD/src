@@ -1,4 +1,4 @@
-/*	$NetBSD: bio.c,v 1.15 2019/03/01 11:06:56 pgoyette Exp $ */
+/*	$NetBSD: bio.c,v 1.16 2019/11/10 21:16:34 chs Exp $ */
 /*	$OpenBSD: bio.c,v 1.9 2007/03/20 02:35:55 marco Exp $	*/
 
 /*
@@ -28,7 +28,7 @@
 /* A device controller ioctl tunnelling device.  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.15 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bio.c,v 1.16 2019/11/10 21:16:34 chs Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -208,9 +208,7 @@ bio_register(device_t dev, int (*ioctl)(device_t, u_long, void *))
 	if (!bio_lock_initialized)
 		bio_initialize();
 
-	bm = malloc(sizeof(*bm), M_DEVBUF, M_NOWAIT|M_ZERO);
-	if (bm == NULL)
-		return ENOMEM;
+	bm = malloc(sizeof(*bm), M_DEVBUF, M_WAITOK|M_ZERO);
 	bm->bm_dev = dev;
 	bm->bm_ioctl = ioctl;
 	mutex_enter(&bio_lock);

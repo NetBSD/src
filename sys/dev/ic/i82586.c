@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.86 2019/10/21 08:22:06 msaitoh Exp $	*/
+/*	$NetBSD: i82586.c,v 1.87 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.86 2019/10/21 08:22:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.87 2019/11/10 21:16:35 chs Exp $");
 
 
 #include <sys/param.h>
@@ -258,12 +258,7 @@ i82586_attach(struct ie_softc *sc, const char *name, uint8_t *etheraddr,
 
 	if (padbuf == NULL) {
 		padbuf = malloc(ETHER_MIN_LEN - ETHER_CRC_LEN, M_DEVBUF,
-		    M_ZERO | M_NOWAIT);
-		if (padbuf == NULL) {
-			 aprint_error_dev(sc->sc_dev,
-			     "can't allocate pad buffer\n");
-			 return;
-		}
+		    M_ZERO | M_WAITOK);
 	}
 
 	/* Attach the interface. */

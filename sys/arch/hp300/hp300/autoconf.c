@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.106 2019/06/29 02:41:17 tsutsui Exp $	*/
+/*	$NetBSD: autoconf.c,v 1.107 2019/11/10 21:16:27 chs Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 2002 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.106 2019/06/29 02:41:17 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.107 2019/11/10 21:16:27 chs Exp $");
 
 #include "dvbox.h"
 #include "gbox.h"
@@ -395,10 +395,7 @@ device_register(device_t dev, void *aux)
 	 * we can mount as root.
 	 */
 
-	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (dd == NULL)
-		panic("device_register: can't allocate dev_data");
-
+	dd = malloc(sizeof(struct dev_data), M_DEVBUF, M_WAITOK | M_ZERO);
 	dd->dd_dev = dev;
 
 	/*

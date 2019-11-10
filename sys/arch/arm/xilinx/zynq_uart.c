@@ -1,4 +1,4 @@
-/*	$NetBSD: zynq_uart.c,v 1.1 2019/06/11 13:01:48 skrll Exp $	*/
+/*	$NetBSD: zynq_uart.c,v 1.2 2019/11/10 21:16:24 chs Exp $	*/
 
 /*
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.1 2019/06/11 13:01:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: zynq_uart.c,v 1.2 2019/11/10 21:16:24 chs Exp $");
 
 #include "opt_soc.h"
 #include "opt_console.h"
@@ -413,15 +413,9 @@ zynquart_attach_common(device_t parent, device_t self,
 
 	sc->sc_tty = tp;
 	sc->sc_rbuf = malloc(sizeof (*sc->sc_rbuf) * zynquart_rbuf_size,
-	    M_DEVBUF, M_NOWAIT);
+	    M_DEVBUF, M_WAITOK);
 	sc->sc_rbuf_size = zynquart_rbuf_size;
 	sc->sc_rbuf_in = sc->sc_rbuf_out = 0;
-	if (sc->sc_rbuf == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate ring buffer\n");
-		return;
-	}
-
 	sc->sc_txfifo_len = 64;
 	sc->sc_txfifo_thresh = 32;
 

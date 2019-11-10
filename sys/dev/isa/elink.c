@@ -1,4 +1,4 @@
-/*	$NetBSD: elink.c,v 1.17 2009/03/14 15:36:18 dsl Exp $	*/
+/*	$NetBSD: elink.c,v 1.18 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.17 2009/03/14 15:36:18 dsl Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink.c,v 1.18 2019/11/10 21:16:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,10 +85,7 @@ elink_reset(bus_space_tag_t iot, bus_space_handle_t ioh, int bus)
 
 	/* Mark this bus so we don't do it again. */
 	er = (struct elink_done_reset *)malloc(sizeof(struct elink_done_reset),
-	    M_DEVBUF, M_NOWAIT);
-	if (er == NULL)
-		panic("elink_reset: can't allocate state storage");
-
+	    M_DEVBUF, M_WAITOK);
 	er->er_bus = bus;
 	LIST_INSERT_HEAD(&elink_all_resets, er, er_link);
 

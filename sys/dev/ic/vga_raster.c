@@ -1,4 +1,4 @@
-/*	$NetBSD: vga_raster.c,v 1.44 2015/03/01 07:05:59 mlelstv Exp $	*/
+/*	$NetBSD: vga_raster.c,v 1.45 2019/11/10 21:16:35 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Bang Jun-Young
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.44 2015/03/01 07:05:59 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vga_raster.c,v 1.45 2019/11/10 21:16:35 chs Exp $");
 
 #include "opt_vga.h"
 #include "opt_wsmsgattrs.h" /* for WSDISPLAY_CUSTOM_OUTPUT */
@@ -867,12 +867,7 @@ vga_raster_setup_font(struct vga_config *vc, struct vgascreen *scr)
 	if (wsfont_lock(cookie, &wf))
 		return;
 
-	vf = malloc(sizeof(struct vga_raster_font), M_DEVBUF, M_NOWAIT);
-	if (!vf) {
-		wsfont_unlock(cookie);
-		return;
-	}
-
+	vf = malloc(sizeof(struct vga_raster_font), M_DEVBUF, M_WAITOK);
 	vf->font = wf;
 	scr->encoding = vf->font->encoding;
 	LIST_INSERT_HEAD(&scr->fontset, vf, next);

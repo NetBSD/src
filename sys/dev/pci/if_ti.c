@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.112 2019/07/09 08:46:59 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.113 2019/11/10 21:16:36 chs Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.112 2019/07/09 08:46:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.113 2019/11/10 21:16:36 chs Exp $");
 
 #include "opt_inet.h"
 
@@ -612,14 +612,7 @@ ti_alloc_jumbo_mem(struct ti_softc *sc)
 		sc->ti_cdata.ti_jslots[i] = ptr;
 		ptr += TI_JLEN;
 		entry = malloc(sizeof(struct ti_jpool_entry),
-			       M_DEVBUF, M_NOWAIT);
-		if (entry == NULL) {
-			free(sc->ti_cdata.ti_jumbo_buf, M_DEVBUF);
-			sc->ti_cdata.ti_jumbo_buf = NULL;
-			printf("%s: no memory for jumbo "
-			    "buffer queue!\n", device_xname(sc->sc_dev));
-			return (ENOBUFS);
-		}
+			       M_DEVBUF, M_WAITOK);
 		entry->slot = i;
 		SIMPLEQ_INSERT_HEAD(&sc->ti_jfree_listhead, entry,
 				    jpool_entries);

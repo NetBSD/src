@@ -1,4 +1,4 @@
-/*	$NetBSD: neptune.c,v 1.20 2014/03/26 08:17:59 christos Exp $	*/
+/*	$NetBSD: neptune.c,v 1.21 2019/11/10 21:16:33 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.20 2014/03/26 08:17:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neptune.c,v 1.21 2019/11/10 21:16:33 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,9 +108,7 @@ neptune_attach(device_t parent, device_t self, void *aux)
 		panic("IO map for Neptune corruption??");
 #endif
 
-	sc->sc_bst = malloc(sizeof(struct x68k_bus_space), M_DEVBUF, M_NOWAIT);
-	if (sc->sc_bst == NULL)
-		panic("neptune_attach: can't allocate bus_space structure");
+	sc->sc_bst = malloc(sizeof(struct x68k_bus_space), M_DEVBUF, M_WAITOK);
 	*sc->sc_bst = neptune_bus;
 	sc->sc_bst->x68k_bus_device = self;
 

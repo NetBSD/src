@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.128 2019/09/26 01:39:22 christos Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.129 2019/11/10 21:16:22 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.128 2019/09/26 01:39:22 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.129 2019/11/10 21:16:22 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -554,10 +554,7 @@ x86_64_set_ldt32(struct lwp *l, void *args, register_t *retval)
 	if (ua.num < 0 || ua.num > 8192)
 		return EINVAL;
 
-	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_NOWAIT);
-	if (descv == NULL)
-		return ENOMEM;
-
+	descv = malloc(sizeof(*descv) * ua.num, M_TEMP, M_WAITOK);
 	error = copyin((void *)(uintptr_t)ua32.desc, descv,
 	    sizeof(*descv) * ua.num);
 	if (error == 0)
@@ -586,9 +583,6 @@ x86_64_get_ldt32(struct lwp *l, void *args, register_t *retval)
 		return EINVAL;
 
 	cp = malloc(ua.num * sizeof(union descriptor), M_TEMP, M_WAITOK);
-	if (cp == NULL)
-		return ENOMEM;
-
 	error = x86_get_ldt1(l, &ua, cp);
 	*retval = ua.num;
 	if (error == 0)

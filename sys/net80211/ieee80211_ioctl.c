@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_ioctl.c,v 1.66 2019/05/17 04:08:54 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_ioctl.c,v 1.67 2019/11/10 21:16:38 chs Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_ioctl.c,v 1.35 2005/08/30 14:27:47 avatar Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.66 2019/05/17 04:08:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_ioctl.c,v 1.67 2019/11/10 21:16:38 chs Exp $");
 #endif
 
 /*
@@ -1229,10 +1229,7 @@ ieee80211_ioctl_getstainfo(struct ieee80211com *ic, struct ieee80211req *ireq)
 		void *p;
 
 		space = req.space;
-		/* XXX M_WAITOK after driver lock released */
-		p = malloc(space, M_TEMP, M_NOWAIT);
-		if (p == NULL)
-			return ENOMEM;
+		p = malloc(space, M_TEMP, M_WAITOK);
 		req.si = p;
 		ieee80211_iterate_nodes(&ic->ic_sta, get_sta_info, &req);
 		ireq->i_len = space - req.space;
