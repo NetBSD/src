@@ -1,4 +1,4 @@
-/* $NetBSD: rk_dwhdmi.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
+/* $NetBSD: rk_dwhdmi.c,v 1.2 2019/11/10 12:07:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.2 2019/11/10 12:07:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -64,7 +64,7 @@ static const struct dwhdmi_phy_config rk_dwhdmi_phy_config[] = {
 	{ 74250,	0x8009, 0x0004, 0x0272 },
 	{ 148500,	0x802b, 0x0004, 0x028d },
 	{ 297000,	0x8039, 0x0005, 0x028d },
-	{ 584000,	0x8039, 0x0000, 0x019d },
+	{ 594000,	0x8039, 0x0000, 0x019d },
 	{ 0,		0x0000, 0x0000, 0x0000 }
 };
 
