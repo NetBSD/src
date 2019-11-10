@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.96 2019/11/06 10:19:30 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.97 2019/11/10 13:26:20 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5522,4 +5522,75 @@ sys/dev/pci/if_wm.c				1.646,1.647,1.649
 	Avoid undefined behavior in wm_i82543_mii_sendbits().
 	Change printf to device_printf.
 	[msaitoh, ticket #404]
+
+distrib/sets/lists/base/md.amd64		1.281
+distrib/sets/lists/debug/md.amd64		1.106
+distrib/sets/lists/man/mi			1.1660
+etc/MAKEDEV.tmpl				1.209
+etc/group					1.35
+lib/libnvmm/libnvmm.3				1.20-1.25
+lib/libnvmm/libnvmm.c				1.15-1.18
+lib/libnvmm/libnvmm_x86.c			1.32-1.39
+lib/libnvmm/nvmm.h				1.13-1.17
+share/mk/bsd.hostprog.mk			1.82
+sys/dev/nvmm/nvmm.c				1.23-1.25
+sys/dev/nvmm/nvmm.h				1.11,1.12
+sys/dev/nvmm/nvmm_internal.h			1.13
+sys/dev/nvmm/nvmm_ioctl.h			1.8,1.9
+sys/dev/nvmm/x86/nvmm_x86.h			1.16-1.18
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.51-1.53
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.40-1.44
+tests/lib/libnvmm/h_io_assist.c			1.9-1.11
+tests/lib/libnvmm/h_mem_assist.c		1.12-1.17
+tests/lib/libnvmm/h_mem_assist_asm.S		1.7,1.8
+usr.sbin/Makefile				1.282
+usr.sbin/nvmmctl/Makefile			1.1,1.2
+usr.sbin/nvmmctl/nvmmctl.8			1.1,1.2
+usr.sbin/nvmmctl/nvmmctl.c			1.1
+usr.sbin/postinstall/postinstall.in		1.8
+
+	Various fixes in NVMM (requires updating kernel, modules,
+	userland and qemu).
+	Add a nvmm group to allow better configuration of access rights
+	to controll guests.
+	Add nvmmctl(8).
+	[maxv, ticket #405]
+
+sys/dev/pci/if_kse.c				1.39-1.41
+
+	kse(4): fix link control for some chips.
+	[nisimura, ticket #406]
+
+sys/arch/x86/include/specialreg.h		1.156
+
+	- GMET is not bit 11 but 17.
+	- Add unknown CPUID Fn8000_000a %edx bit 20.
+	[msaitoh, ticket #407]
+
+sys/external/bsd/drm2/dist/drm/drm_fb_helper.c	1.13
+
+	Avoid null pointer dereference.
+	[msaitoh, ticket #408]
+
+sys/arch/arm/dts/sun50i-a64.dtsi		1.12
+
+	Fix PMU interrupt numbers on Allwinner A64.
+	[jmcneill, ticket #409]
+
+external/cddl/osnet/dev/dtrace/amd64/dtrace_subr.c 1.14
+
+	PR kern/54603: remove bogus assertion in dtrace_trap().
+	[hannken, ticket #410]
+
+sys/arch/arm/dts/socfpga_cyclone5_de0_nano_soc.dts 1.3
+
+	Disable private timer whose new driver clashes with the global
+	timer's one.
+	[aymeric, ticket #411]
+
+sys/kern/sys_sig.c				1.49
+
+	Fix compat module name when dealing with old-version signals.
+	[pgoyette, ticket #412]
+
 
