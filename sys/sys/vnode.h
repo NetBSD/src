@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.282 2019/09/26 20:57:19 christos Exp $	*/
+/*	$NetBSD: vnode.h,v 1.283 2019/11/10 06:47:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -490,6 +490,7 @@ struct vop_generic_args {
 struct file;
 struct filedesc;
 struct nameidata;
+struct pathbuf;
 struct proc;
 struct stat;
 struct uio;
@@ -550,6 +551,9 @@ int	vn_extattr_set(struct vnode *, int, int, const char *, size_t,
 int	vn_extattr_rm(struct vnode *, int, int, const char *, struct lwp *);
 void	vn_ra_allocctx(struct vnode *);
 int	vn_fifo_bypass(void *);
+int	vn_bdev_open(dev_t, struct vnode **, struct lwp *);
+int	vn_bdev_openpath(struct pathbuf *pb, struct vnode **, struct lwp *);
+
 
 #ifdef DIAGNOSTIC
 static __inline bool
