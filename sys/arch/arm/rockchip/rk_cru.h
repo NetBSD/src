@@ -1,4 +1,4 @@
-/* $NetBSD: rk_cru.h,v 1.5 2019/10/19 12:55:21 tnn Exp $ */
+/* $NetBSD: rk_cru.h,v 1.6 2019/11/10 11:43:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -204,6 +204,7 @@ struct rk_cru_composite {
 	u_int		nparents;
 	u_int		flags;
 #define	RK_COMPOSITE_ROUND_DOWN		0x01
+#define	RK_COMPOSITE_SET_RATE_PARENT	0x02
 };
 
 int	rk_cru_composite_enable(struct rk_cru_softc *, struct rk_cru_clk *, int);
