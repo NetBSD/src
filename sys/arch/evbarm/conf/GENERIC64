@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.110 2019/11/09 23:30:54 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.111 2019/11/10 09:55:29 mrg Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -514,6 +514,9 @@ ld*		at virtio?		# Virtio disk device
 vioif*		at virtio?		# Virtio network device
 viornd*		at virtio?		# Virtio entropy device
 vioscsi*	at virtio?		# Virtio SCSI device
+
+# SCSI controllers
+mpt*		at pci? dev ? function ?
 
 # SCSI bus support
 scsibus*	at scsi?
