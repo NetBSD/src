@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.69 2018/02/08 10:52:05 mrg Exp $	*/
+/*	$NetBSD: kbd.c,v 1.70 2019/11/10 21:16:37 chs Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.69 2018/02/08 10:52:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.70 2019/11/10 21:16:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -509,8 +509,7 @@ kbd_cc_alloc(struct kbd_softc *k)
 {
 	struct cons_channel *cc;
 
-	if ((cc = malloc(sizeof *cc, M_DEVBUF, M_NOWAIT)) == NULL)
-		return NULL;
+	cc = malloc(sizeof *cc, M_DEVBUF, M_WAITOK);
 
 	/* our callbacks for the console driver */
 	cc->cc_private = k;

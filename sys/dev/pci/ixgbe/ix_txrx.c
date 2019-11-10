@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.56 2019/10/16 06:36:00 knakahara Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.57 2019/11/10 21:16:36 chs Exp $ */
 
 /******************************************************************************
 
@@ -610,14 +610,8 @@ ixgbe_allocate_transmit_buffers(struct tx_ring *txr)
 		goto fail;
 	}
 
-	txr->tx_buffers =
-	    (struct ixgbe_tx_buf *) malloc(sizeof(struct ixgbe_tx_buf) *
-	    adapter->num_tx_desc, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (txr->tx_buffers == NULL) {
-		aprint_error_dev(dev, "Unable to allocate tx_buffer memory\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	txr->tx_buffers = malloc(sizeof(struct ixgbe_tx_buf) *
+	    adapter->num_tx_desc, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Create the descriptor buffer dma maps */
 	txbuf = txr->tx_buffers;
@@ -1415,13 +1409,7 @@ ixgbe_allocate_receive_buffers(struct rx_ring *rxr)
 	int                 bsize, error;
 
 	bsize = sizeof(struct ixgbe_rx_buf) * rxr->num_desc;
-	rxr->rx_buffers = (struct ixgbe_rx_buf *)malloc(bsize, M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (rxr->rx_buffers == NULL) {
-		aprint_error_dev(dev, "Unable to allocate rx_buffer memory\n");
-		error = ENOMEM;
-		goto fail;
-	}
+	rxr->rx_buffers = malloc(bsize, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	error = ixgbe_dma_tag_create(
 	         /*      parent */ adapter->osdep.dmat,
@@ -2229,30 +2217,15 @@ ixgbe_allocate_queues(struct adapter *adapter)
 
 	/* First, allocate the top level queue structs */
 	adapter->queues = (struct ix_queue *)malloc(sizeof(struct ix_queue) *
-            adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
-        if (adapter->queues == NULL) {
-		aprint_error_dev(dev, "Unable to allocate queue memory\n");
-                error = ENOMEM;
-                goto fail;
-        }
+            adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Second, allocate the TX ring struct memory */
-	adapter->tx_rings = (struct tx_ring *)malloc(sizeof(struct tx_ring) *
-	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (adapter->tx_rings == NULL) {
-		aprint_error_dev(dev, "Unable to allocate TX ring memory\n");
-		error = ENOMEM;
-		goto tx_fail;
-	}
+	adapter->tx_rings = malloc(sizeof(struct tx_ring) *
+	    adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* Third, allocate the RX ring */
 	adapter->rx_rings = (struct rx_ring *)malloc(sizeof(struct rx_ring) *
-	    adapter->num_queues, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (adapter->rx_rings == NULL) {
-		aprint_error_dev(dev, "Unable to allocate RX ring memory\n");
-		error = ENOMEM;
-		goto rx_fail;
-	}
+	    adapter->num_queues, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* For the ring itself */
 	tsize = roundup2(adapter->num_tx_desc * sizeof(union ixgbe_adv_tx_desc),
@@ -2372,10 +2345,7 @@ err_tx_desc:
 	for (txr = adapter->tx_rings; txconf > 0; txr++, txconf--)
 		ixgbe_dma_free(adapter, &txr->txdma);
 	free(adapter->rx_rings, M_DEVBUF);
-rx_fail:
 	free(adapter->tx_rings, M_DEVBUF);
-tx_fail:
 	free(adapter->queues, M_DEVBUF);
-fail:
 	return (error);
 } /* ixgbe_allocate_queues */

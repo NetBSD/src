@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.214 2019/10/16 04:07:42 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.215 2019/11/10 21:16:36 chs Exp $ */
 
 /******************************************************************************
 
@@ -894,12 +894,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 
 	/* Allocate multicast array memory. */
 	adapter->mta = malloc(sizeof(*adapter->mta) *
-	    MAX_NUM_MULTICAST_ADDRESSES, M_DEVBUF, M_NOWAIT);
-	if (adapter->mta == NULL) {
-		aprint_error_dev(dev, "Cannot allocate multicast setup array\n");
-		error = ENOMEM;
-		goto err_out;
-	}
+	    MAX_NUM_MULTICAST_ADDRESSES, M_DEVBUF, M_WAITOK);
 
 	/* Enable WoL (if supported) */
 	ixgbe_check_wol_support(adapter);

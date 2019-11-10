@@ -1,4 +1,4 @@
-/*	$NetBSD: scsiconf.c,v 1.284 2019/03/28 10:44:29 kardel Exp $	*/
+/*	$NetBSD: scsiconf.c,v 1.285 2019/11/10 21:16:37 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2004 The NetBSD Foundation, Inc.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.284 2019/03/28 10:44:29 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsiconf.c,v 1.285 2019/11/10 21:16:37 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -816,15 +816,7 @@ scsi_probe_device(struct scsibus_softc *sc, int target, int lun)
 	if (scsipi_lookup_periph(chan, target, lun) != NULL)
 		return (docontinue);
 
-	periph = scsipi_alloc_periph(M_NOWAIT);
-	if (periph == NULL) {
-#ifdef	DIAGNOSTIC
-		aprint_error_dev(sc->sc_dev,
-		    "cannot allocate periph for target %d lun %d\n",
-		    target, lun);
-#endif
-		return (ENOMEM);
-	}
+	periph = scsipi_alloc_periph(M_WAITOK);
 	periph->periph_channel = chan;
 	periph->periph_switch = &scsi_probe_dev;
 

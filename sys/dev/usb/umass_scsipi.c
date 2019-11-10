@@ -1,4 +1,4 @@
-/*	$NetBSD: umass_scsipi.c,v 1.62 2019/05/30 21:44:49 mlelstv Exp $	*/
+/*	$NetBSD: umass_scsipi.c,v 1.63 2019/11/10 21:16:38 chs Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.62 2019/05/30 21:44:49 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass_scsipi.c,v 1.63 2019/11/10 21:16:38 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -550,13 +550,7 @@ umass_atapi_probe_device(struct atapibus_softc *atapi, int target)
 		return;
 	}
 
-	periph = scsipi_alloc_periph(M_NOWAIT);
-	if (periph == NULL) {
-		aprint_error_dev(atapi->sc_dev,
-		    "can't allocate link for drive %d\n", target);
-		return;
-	}
-
+	periph = scsipi_alloc_periph(M_WAITOK);
 	DIF(UDMASS_UPPER, periph->periph_dbflags |= 1); /* XXX 1 */
 	periph->periph_channel = chan;
 	periph->periph_switch = &atapi_probe_periphsw;

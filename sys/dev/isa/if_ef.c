@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ef.c,v 1.34 2019/04/25 10:08:46 msaitoh Exp $	*/
+/*	$NetBSD: if_ef.c,v 1.35 2019/11/10 21:16:35 chs Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.34 2019/04/25 10:08:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ef.c,v 1.35 2019/11/10 21:16:35 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,12 +346,7 @@ ef_match(device_t parent, cfdata_t cf, void *aux)
 		bus_addr_t iobase;
 
 		/* Mark this bus so we don't probe it again. */
-		bus = (struct ef_isabus *)
-			malloc(sizeof(struct ef_isabus), M_DEVBUF, M_NOWAIT);
-		if (bus == NULL)
-			panic("%s: can't allocate state storage for %s",
-			    __func__, device_xname(parent));
-
+		bus = malloc(sizeof(struct ef_isabus), M_DEVBUF, M_WAITOK);
 		bus->bus_state = 0;		/* Nothing done yet */
 		bus->isa_bus = parent;
 
@@ -664,4 +659,3 @@ ef_port_check(bus_space_tag_t iot, bus_space_handle_t ioh)
 
 CFATTACH_DECL_NEW(ef, sizeof(struct ef_softc),
     ef_match, ef_attach, NULL, NULL);
-

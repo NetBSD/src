@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fpa.c,v 1.62 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_fpa.c,v 1.63 2019/11/10 21:16:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1996 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.62 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fpa.c,v 1.63 2019/11/10 21:16:36 chs Exp $");
 
 #ifdef __NetBSD__
 #include "opt_inet.h"
@@ -199,9 +199,7 @@ pdq_pci_attach(
 	pci_conf_write(config_id, PCI_CFLT, data);
     }
 
-    sc = (pdq_softc_t *) malloc(sizeof(*sc), M_DEVBUF, M_NOWAIT|M_ZERO);
-    if (sc == NULL)
-	return;
+    sc = malloc(sizeof(*sc), M_DEVBUF, M_WAITOK|M_ZERO);
 
     if (!pci_map_mem(config_id, PCI_CBMA, &va_csrs, &pa_csrs)) {
 	free((void *) sc, M_DEVBUF);

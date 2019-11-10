@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.96 2016/11/10 06:44:35 macallan Exp $ */
+/*	$NetBSD: sbus.c,v 1.97 2019/11/10 21:16:33 chs Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.96 2016/11/10 06:44:35 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.97 2019/11/10 21:16:33 chs Exp $");
 
 #include "opt_ddb.h"
 
@@ -246,9 +246,7 @@ sbus_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sb.sb_flush = &sc->sc_flush;
 
 	/* give us a nice name.. */
-	name = (char *)malloc(32, M_DEVBUF, M_NOWAIT);
-	if (name == 0)
-		panic("couldn't malloc iommu name");
+	name = malloc(32, M_DEVBUF, M_WAITOK);
 	snprintf(name, 32, "%s dvma", device_xname(self));
 
 	iommu_init(name, &sc->sc_is, 0, -1);
@@ -455,9 +453,7 @@ sbus_get_intr(struct sbus_softc *sc, int node, struct openprom_intr **ipp,
 
 		/* Change format to an `struct sbus_intr' array */
 		ip = malloc(*np * sizeof(struct openprom_intr), M_DEVBUF,
-		    M_NOWAIT);
-		if (ip == NULL)
-			return (ENOMEM);
+		    M_WAITOK);
 
 		/*
 		 * Now things get ugly.  We need to take this value which is
@@ -595,12 +591,7 @@ sbus_alloc_dmatag(struct sbus_softc *sc)
 {
 	bus_dma_tag_t sdt, psdt = sc->sc_dmatag;
 
-	sdt = (bus_dma_tag_t)
-		malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_NOWAIT);
-	if (sdt == NULL)
-		/* Panic? */
-		return (psdt);
-
+	sdt = malloc(sizeof(struct sparc_bus_dma_tag), M_DEVBUF, M_WAITOK);
 	sdt->_cookie = sc;
 	sdt->_parent = psdt;
 #define PCOPY(x)	sdt->x = psdt->x
