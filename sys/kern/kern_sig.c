@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.376 2019/10/21 17:07:00 mgorny Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.377 2019/11/10 13:28:06 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.376 2019/10/21 17:07:00 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.377 2019/11/10 13:28:06 pgoyette Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -100,6 +100,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.376 2019/10/21 17:07:00 mgorny Exp $"
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/sdt.h>
+#include <sys/compat_stub.h>
 
 #ifdef PAX_SEGVGUARD
 #include <sys/pax.h>
@@ -131,7 +132,6 @@ static void	sigswitch_unlock_and_switch_away(struct lwp *);
 static void	sigacts_poolpage_free(struct pool *, void *);
 static void	*sigacts_poolpage_alloc(struct pool *, int);
 
-void (*sendsig_sigcontext_vec)(const struct ksiginfo *, const sigset_t *);
 int (*coredump_vec)(struct lwp *, const char *) =
     __FPTRCAST(int (*)(struct lwp *, const char *), enosys);
 
@@ -2147,10 +2147,8 @@ sendsig(const struct ksiginfo *ksi, const sigset_t *mask)
 	case 0:
 	case 1:
 		/* Compat for 1.6 and earlier. */
-		if (sendsig_sigcontext_vec == NULL) {
-			break;
-		}
-		(*sendsig_sigcontext_vec)(ksi, mask);
+		MODULE_HOOK_CALL_VOID(sendsig_sigcontext_16_hook, (ksi, mask),
+		    break);
 		return;
 	case 2:
 	case 3:
