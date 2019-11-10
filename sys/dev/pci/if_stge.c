@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.72 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.73 2019/11/10 13:34:52 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.72 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.73 2019/11/10 13:34:52 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -264,6 +264,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	char intrbuf[PCI_INTRSTR_LEN];
 
+	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
 
 	sp = stge_lookup(pa);
