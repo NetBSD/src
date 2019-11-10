@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.75 2018/01/18 17:59:29 maxv Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.76 2019/11/10 21:16:38 chs Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.75 2018/01/18 17:59:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.76 2019/11/10 21:16:38 chs Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -134,20 +134,11 @@ ieee80211_node_lateattach(struct ieee80211com *ic)
 	if (ic->ic_max_aid > IEEE80211_AID_MAX)
 		ic->ic_max_aid = IEEE80211_AID_MAX;
 	ic->ic_aid_bitmap = malloc(howmany(ic->ic_max_aid, 32) *
-	    sizeof(u_int32_t), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ic->ic_aid_bitmap == NULL) {
-		/* XXX no way to recover */
-		printf("%s: no memory for AID bitmap!\n", __func__);
-		ic->ic_max_aid = 0;
-	}
+	    sizeof(u_int32_t), M_DEVBUF, M_WAITOK | M_ZERO);
 
 	/* XXX defer until using hostap/ibss mode */
 	ic->ic_tim_len = howmany(ic->ic_max_aid, 8) * sizeof(u_int8_t);
-	ic->ic_tim_bitmap = malloc(ic->ic_tim_len, M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (ic->ic_tim_bitmap == NULL) {
-		/* XXX no way to recover */
-		printf("%s: no memory for TIM bitmap!\n", __func__);
-	}
+	ic->ic_tim_bitmap = malloc(ic->ic_tim_len, M_DEVBUF, M_WAITOK | M_ZERO);
 
 	ieee80211_node_table_init(ic, &ic->ic_sta, "station",
 		IEEE80211_INACT_INIT, ic->ic_crypto.cs_max_keyix,
@@ -2512,11 +2503,7 @@ ieee80211_node_table_init(struct ieee80211com *ic,
 	if (nt->nt_keyixmax > 0) {
 		nt->nt_keyixmap = malloc(keyixmax *
 		    sizeof(struct ieee80211_node *), M_80211_NODE,
-		    M_NOWAIT | M_ZERO);
-		if (nt->nt_keyixmap == NULL)
-			if_printf(ic->ic_ifp,
-			    "Cannot allocate key index map with %u entries\n",
-			    keyixmax);
+		    M_WAITOK | M_ZERO);
 	} else
 		nt->nt_keyixmap = NULL;
 }

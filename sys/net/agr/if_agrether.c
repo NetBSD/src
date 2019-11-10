@@ -1,4 +1,4 @@
-/*	$NetBSD: if_agrether.c,v 1.10 2017/12/06 04:37:00 ozaki-r Exp $	*/
+/*	$NetBSD: if_agrether.c,v 1.11 2019/11/10 21:16:38 chs Exp $	*/
 
 /*-
  * Copyright (c)2005 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.10 2017/12/06 04:37:00 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_agrether.c,v 1.11 2019/11/10 21:16:38 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -91,10 +91,7 @@ agrether_ctor(struct agr_softc *sc, struct ifnet *ifp_port)
 	struct ethercom *ec = (void *)ifp;
 	struct agrether_private *priv;
 
-	priv = malloc(sizeof(*priv), M_DEVBUF, M_NOWAIT | M_ZERO);
-	if (!priv)
-		return ENOMEM;
-
+	priv = malloc(sizeof(*priv), M_DEVBUF, M_WAITOK | M_ZERO);
 	agr_mc_init(sc, &priv->aep_multiaddrs);
 
 	sc->sc_iftprivate = priv;

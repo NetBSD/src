@@ -1,4 +1,4 @@
-/*	$NetBSD: trm.c,v 1.40 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: trm.c,v 1.41 2019/11/10 21:16:36 chs Exp $	*/
 /*-
  * Copyright (c) 2002 Izumi Tsutsui.  All rights reserved.
  *
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.40 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trm.c,v 1.41 2019/11/10 21:16:36 chs Exp $");
 
 /* #define TRM_DEBUG */
 #ifdef TRM_DEBUG
@@ -581,12 +581,8 @@ trm_init(struct trm_softc *sc)
 	TAILQ_INIT(&sc->sc_readysrb);
 
 	sc->sc_srb = malloc(sizeof(struct trm_srb) * TRM_MAX_SRB,
-	    M_DEVBUF, M_NOWAIT|M_ZERO);
+	    M_DEVBUF, M_WAITOK | M_ZERO);
 	DPRINTF(("all SRB size=%zx\n", sizeof(struct trm_srb) * TRM_MAX_SRB));
-	if (sc->sc_srb == NULL) {
-		aprint_error(": can not allocate SRB\n");
-		return 1;
-	}
 
 	for (i = 0, srb = sc->sc_srb; i < TRM_MAX_SRB; i++) {
 		srb->sgentry = sc->sc_sglist + TRM_MAX_SG_ENTRIES * i;

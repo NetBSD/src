@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.158 2019/07/25 20:26:39 jmcneill Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.159 2019/11/10 21:16:38 chs Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.158 2019/07/25 20:26:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.159 2019/11/10 21:16:38 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -460,9 +460,7 @@ wsdisplay_addscreen(struct wsdisplay_softc *sc, int idx,
 	 */
 	if (scrdesc->capabilities & WSSCREEN_RESIZE) {
 		/* we want per screen wsscreen_descr */
-		scrdescr2 = malloc(sizeof(struct wsscreen_descr), M_DEVBUF, M_NOWAIT);
-		if (scrdescr2 == NULL)
-			return ENOMEM;
+		scrdescr2 = malloc(sizeof(struct wsscreen_descr), M_DEVBUF, M_WAITOK);
 		memcpy(scrdescr2, scrdesc, sizeof(struct wsscreen_descr));
 		scrdescr2->capabilities |= WSSCREEN_FREE;
 		scrdesc = scrdescr2;
@@ -845,9 +843,6 @@ wsdisplay_common_attach(struct wsdisplay_softc *sc, int console, int kbdmux,
 		mux = wsmux_getmux(kbdmux);
 	else
 		mux = wsmux_create("dmux", device_unit(sc->sc_dev));
-	/* XXX panic()ing isn't nice, but attach cannot fail */
-	if (mux == NULL)
-		panic("wsdisplay_common_attach: no memory");
 	sc->sc_input = &mux->sc_base;
 	mux->sc_base.me_dispdv = sc->sc_dev;
 	aprint_normal(" kbdmux %d", kbdmux);

@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsec.c,v 1.46 2018/12/22 14:07:53 maxv Exp $	*/
+/*	$NetBSD: ubsec.c,v 1.47 2019/11/10 21:16:36 chs Exp $	*/
 /* $FreeBSD: src/sys/dev/ubsec/ubsec.c,v 1.6.2.6 2003/01/23 21:06:43 sam Exp $ */
 /*	$OpenBSD: ubsec.c,v 1.143 2009/03/27 13:31:30 reyk Exp$	*/
 
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.46 2018/12/22 14:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsec.c,v 1.47 2019/11/10 21:16:36 chs Exp $");
 
 #undef UBSEC_DEBUG
 
@@ -437,13 +437,7 @@ ubsec_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < UBS_MAX_NQUEUE; i++, dmap++) {
 		struct ubsec_q *q;
 
-		q = (struct ubsec_q *)malloc(sizeof(struct ubsec_q),
-		    M_DEVBUF, M_ZERO|M_NOWAIT);
-		if (q == NULL) {
-			aprint_error_dev(self,
-			    "can't allocate queue buffers\n");
-			break;
-		}
+		q = malloc(sizeof(struct ubsec_q), M_DEVBUF, M_ZERO|M_WAITOK);
 
 		if (ubsec_dma_malloc(sc, sizeof(struct ubsec_dmachunk),
 		    &dmap->d_alloc, 0)) {

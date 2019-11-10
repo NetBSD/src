@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wpi.c,v 1.86 2019/06/24 13:57:30 jakllsch Exp $	*/
+/*	$NetBSD: if_wpi.c,v 1.87 2019/11/10 21:16:36 chs Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.86 2019/06/24 13:57:30 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wpi.c,v 1.87 2019/11/10 21:16:36 chs Exp $");
 
 /*
  * Driver for Intel PRO/Wireless 3945ABG 802.11 network adapters.
@@ -812,12 +812,7 @@ wpi_alloc_tx_ring(struct wpi_softc *sc, struct wpi_tx_ring *ring, int count,
 	}
 
 	ring->data = malloc(count * sizeof (struct wpi_tx_data), M_DEVBUF,
-	    M_NOWAIT | M_ZERO);
-	if (ring->data == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "could not allocate tx data slots\n");
-		goto fail;
-	}
+	    M_WAITOK | M_ZERO);
 
 	for (i = 0; i < count; i++) {
 		struct wpi_tx_data *data = &ring->data[i];

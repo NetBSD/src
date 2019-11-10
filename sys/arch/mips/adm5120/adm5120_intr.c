@@ -1,4 +1,4 @@
-/*	$NetBSD: adm5120_intr.c,v 1.7 2016/08/26 15:45:48 skrll Exp $	*/
+/*	$NetBSD: adm5120_intr.c,v 1.8 2019/11/10 21:16:29 chs Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.7 2016/08/26 15:45:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm5120_intr.c,v 1.8 2019/11/10 21:16:29 chs Exp $");
 
 #include "opt_ddb.h"
 #define __INTR_PRIVATE
@@ -191,10 +191,7 @@ adm5120_intr_establish(int irq, int priority, int (*func)(void *), void *arg)
 	if (irq < 0 || irq >= NIRQS)
 		panic("adm5120_intr_establish: bogus IRQ %d", irq);
 
-	ih = malloc(sizeof(*ih), M_DEVBUF, M_NOWAIT);
-	if (ih == NULL)
-		return NULL;
-
+	ih = malloc(sizeof(*ih), M_DEVBUF, M_WAITOK);
 	ih->ih_func = func;
 	ih->ih_arg = arg;
 	ih->ih_irq = irq;

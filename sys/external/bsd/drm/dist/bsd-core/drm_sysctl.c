@@ -288,11 +288,7 @@ static int drm_vm_info DRM_SYSCTL_HANDLER_ARGS
 		mapcount++;
 
 	tempmaps = malloc(sizeof(drm_local_map_t) * mapcount, DRM_MEM_DRIVER,
-	    M_NOWAIT);
-	if (tempmaps == NULL) {
-		DRM_UNLOCK();
-		return ENOMEM;
-	}
+	    M_WAITOK);
 
 	i = 0;
 	TAILQ_FOREACH(map, &dev->maplist, link)
@@ -355,7 +351,7 @@ static int drm_bufs_info DRM_SYSCTL_HANDLER_ARGS
 	DRM_SPINLOCK(&dev->dma_lock);
 	tempdma = *dma;
 	templists = malloc(sizeof(int) * dma->buf_count, DRM_MEM_DRIVER,
-	    M_NOWAIT);
+	    M_WAITOK);
 	for (i = 0; i < dma->buf_count; i++)
 		templists[i] = dma->buflist[i]->list;
 	dma = &tempdma;
@@ -412,11 +408,7 @@ static int drm_clients_info DRM_SYSCTL_HANDLER_ARGS
 		privcount++;
 
 	tempprivs = malloc(sizeof(struct drm_file) * privcount, DRM_MEM_DRIVER,
-	    M_NOWAIT);
-	if (tempprivs == NULL) {
-		DRM_UNLOCK();
-		return ENOMEM;
-	}
+	    M_WAITOK);
 	i = 0;
 	TAILQ_FOREACH(priv, &dev->files, link)
 		tempprivs[i++] = *priv;
