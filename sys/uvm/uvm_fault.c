@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.206 2019/05/28 08:59:35 msaitoh Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.206.2.1 2019/11/11 17:13:28 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.206 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.206.2.1 2019/11/11 17:13:28 martin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1901,10 +1901,17 @@ uvm_fault_lower_io(
 	int gotpages;
 	int error;
 	voff_t uoff;
+	vm_prot_t access_type;
+	int advice;
 	UVMHIST_FUNC("uvm_fault_lower_io"); UVMHIST_CALLED(maphist);
 
 	/* update rusage counters */
 	curlwp->l_ru.ru_majflt++;
+
+	/* grab everything we need from the entry before we unlock */
+	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
+	access_type = flt->access_type & MASK(ufi->entry);
+	advice = ufi->entry->advice;
 
 	/* Locked: maps(read), amap(if there), uobj */
 	uvmfault_unlockall(ufi, amap, NULL);
@@ -1915,10 +1922,8 @@ uvm_fault_lower_io(
 	uvmexp.fltget++;
 	gotpages = 1;
 	pg = NULL;
-	uoff = (ufi->orig_rvaddr - ufi->entry->start) + ufi->entry->offset;
 	error = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
-	    0, flt->access_type & MASK(ufi->entry), ufi->entry->advice,
-	    PGO_SYNCIO);
+	    0, access_type, advice, PGO_SYNCIO);
 	/* locked: pg(if no error) */
 
 	/*
