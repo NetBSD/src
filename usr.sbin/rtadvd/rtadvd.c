@@ -1,4 +1,4 @@
-/*	$NetBSD: rtadvd.c,v 1.70 2019/11/10 21:07:39 roy Exp $	*/
+/*	$NetBSD: rtadvd.c,v 1.71 2019/11/11 13:42:49 roy Exp $	*/
 /*	$KAME: rtadvd.c,v 1.92 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -89,7 +89,7 @@ static char *mcastif;
 int sock;
 int rtsock = -1;
 int accept_rr = 0;
-int dflag = 0, sflag = 0, Dflag;
+int Cflag = 0, dflag = 0, sflag = 0, Dflag;
 
 static char **if_argv;
 static int if_argc;
@@ -193,6 +193,9 @@ main(int argc, char *argv[])
 		switch (ch) {
 		case 'c':
 			conffile = optarg;
+			break;
+		case 'C':
+			Cflag++;
 			break;
 		case 'd':
 			dflag++;
