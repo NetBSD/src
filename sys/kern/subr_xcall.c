@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.27 2019/10/06 15:11:17 uwe Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.28 2019/11/11 09:50:11 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.27 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.28 2019/11/11 09:50:11 maxv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -334,12 +334,7 @@ xc_wait(uint64_t where)
 		xc = &xc_low_pri;
 	}
 
-	/* Fast path, if already done. */
-	if (xc->xc_donep >= where) {
-		return;
-	}
-
-	/* Slow path: block until awoken. */
+	/* Block until awoken. */
 	mutex_enter(&xc->xc_lock);
 	while (xc->xc_donep < where) {
 		cv_wait(&xc->xc_busy, &xc->xc_lock);
@@ -462,7 +457,6 @@ xc__highpri_intr(void *dummy)
 	 * Lock-less fetch of function and its arguments.
 	 * Safe since it cannot change at this point.
 	 */
-	KASSERT(xc->xc_donep < xc->xc_headp);
 	func = xc->xc_func;
 	arg1 = xc->xc_arg1;
 	arg2 = xc->xc_arg2;
@@ -475,6 +469,7 @@ xc__highpri_intr(void *dummy)
 	 * cross-call has been processed - notify waiters, if any.
 	 */
 	mutex_enter(&xc->xc_lock);
+	KASSERT(xc->xc_donep < xc->xc_headp);
 	if (++xc->xc_donep == xc->xc_headp) {
 		cv_broadcast(&xc->xc_busy);
 	}
