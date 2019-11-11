@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.98 2019/11/11 17:21:11 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.99 2019/11/11 19:52:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5626,4 +5626,19 @@ sys/arch/x86/x86/intr.c				1.147
 
 	Do not call evcnt_detach() twice when the idt vector is full.
 	[msaitoh, ticket #416]
+
+usr.sbin/rtadvd/config.c			1.42,1.43
+usr.sbin/rtadvd/rtadvd.8			1.27
+usr.sbin/rtadvd/rtadvd.c			1.70,1.71
+usr.sbin/rtadvd/rtadvd.h			1.20
+
+	rtadvd(8): fix reloading configuration killing interface timers,
+	remove support for SIOCSIFINFO_IN6, add a -C command like arg
+	to avoid clearing configuration on exit.
+	[roy, ticket #417]
+
+sys/external/bsd/ipf/netinet/ip_fil.h		1.8
+
+	ipf(8): fix binary compatibility (accidently broken in rev. 1.7).
+	[chs, ticket #418]
 
