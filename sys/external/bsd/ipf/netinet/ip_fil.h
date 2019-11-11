@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_fil.h,v 1.7 2019/06/26 15:26:57 christos Exp $	*/
+/*	$NetBSD: ip_fil.h,v 1.8 2019/11/11 19:33:43 chs Exp $	*/
 
 /*
  * Copyright (C) 2012 by Darren Reed.
@@ -576,6 +576,7 @@ typedef	struct	frdest	{
 	addrfamily_t	fd_addr;
 	fr_dtypes_t	fd_type;
 	int		fd_name;
+	int		fd_unused; /* part of the kernel/user ABI */
 } frdest_t;
 
 #define	fd_ip6	fd_addr.adf_addr
