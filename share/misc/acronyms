@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.289 2019/10/20 21:53:42 sevan Exp $
+$NetBSD: acronyms,v 1.290 2019/11/11 04:11:53 pgoyette Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -574,6 +574,7 @@ TY	thank you
 TYVM	thank you very much
 U/L	upload
 UGT	universal greeting time
+UPC	Universal Product Code
 UR	your
 UR	{you're, you are}
 UTSL	use the source, Luke
