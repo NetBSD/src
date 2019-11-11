@@ -1,4 +1,4 @@
-/*	$NetBSD: play.c,v 1.59 2019/11/09 12:54:34 mrg Exp $	*/
+/*	$NetBSD: play.c,v 1.60 2019/11/11 15:40:42 joerg Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2001, 2002, 2010, 2015, 2019 Matthew R. Green
@@ -28,7 +28,7 @@
 #include <sys/cdefs.h>
 
 #ifndef lint
-__RCSID("$NetBSD: play.c,v 1.59 2019/11/09 12:54:34 mrg Exp $");
+__RCSID("$NetBSD: play.c,v 1.60 2019/11/11 15:40:42 joerg Exp $");
 #endif
 
 #include <sys/param.h>
@@ -236,7 +236,7 @@ float32_to_linear32(void *inbuf, void *outbuf, size_t len)
 			f = 1.0;
 
 		/* Convert -1.0 to +1.0 into a 32 bit signed value */
-		i = f * ((1u << 31) - 1);
+		i = f * (float)INT32_MAX;
 
 		memcpy(outbuf8, &i, sizeof i);
 
