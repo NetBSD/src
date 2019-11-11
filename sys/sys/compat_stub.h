@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.18.2.1 2019/10/21 20:06:17 martin Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.18.2.2 2019/11/11 17:11:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/module_hook.h>
 #include <sys/param.h>
 #include <sys/socket.h>
+#include <sys/sigtypes.h>
 
 /*
  * NOTE: If you make changes here, please remember to update the
@@ -357,4 +358,17 @@ struct reg;
 MODULE_HOOK(netbsd32_machine32_hook, const char *, (void));
 MODULE_HOOK(netbsd32_reg_validate_hook, int,
     (struct lwp *, const struct reg *));
+
+/*
+ * Hook for compat_16 sendsig_sigcontext
+ */
+struct ksiginfo;
+MODULE_HOOK(sendsig_sigcontext_16_hook, void,
+    (const struct ksiginfo *, const sigset_t *));
+
+/*
+ * Hook for coredumps
+ */
+MODULE_HOOK(coredump_hook, int, (struct lwp *, const char *));
+
 #endif	/* _SYS_COMPAT_STUB_H */
