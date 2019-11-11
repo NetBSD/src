@@ -68,7 +68,6 @@ ski emulator tasks:
   source code lines respectively 
 - create a ski network driver
 - create a ski disk driver
-- fix ski to run on other archs beside i386, or at least amd64
 
 Pie in the sky:
 - Xen and itanium!
