@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.97 2019/11/10 13:26:20 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.98 2019/11/11 17:21:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5593,4 +5593,37 @@ sys/kern/sys_sig.c				1.49
 	Fix compat module name when dealing with old-version signals.
 	[pgoyette, ticket #412]
 
+
+sys/compat/common/kern_sig_16.c			1.4
+sys/kern/compat_stub.c				1.16,1.17
+sys/kern/kern_core.c				1.27 (via patch)
+sys/kern/kern_sig.c				1.377,1.378 (via patch)
+sys/kern/sys_ptrace_common.c			1.70
+sys/kern/sys_sig.c				1.50
+sys/sys/compat_stub.h				1.20,1.21
+sys/sys/signalvar.h				1.98,1.99
+
+	Convert the sendsig_sigcontext_16 and the coredump_vec
+	function pointers to use the new compat_hook mechanism.
+	This breaks the kernel/module ABI; kernel and modules should
+	be updated together. No practical problems expected in commmon
+	setups.
+	[pgoyette, ticket #413]
+
+sys/uvm/uvm_fault.c				1.208
+
+	uvm_fault_lower_io(): fetch all the map entry values that we need
+	before we unlock everything.
+	[chs, ticket #414]
+
+sys/dev/ic/nvme.c				1.47
+
+	nvme(4): Use the SET_FEATURES command to get the number of allocated
+	queues.
+	[nonaka, ticket #415]
+
+sys/arch/x86/x86/intr.c				1.147
+
+	Do not call evcnt_detach() twice when the idt vector is full.
+	[msaitoh, ticket #416]
 
