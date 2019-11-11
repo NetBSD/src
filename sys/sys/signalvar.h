@@ -1,4 +1,4 @@
-/*	$NetBSD: signalvar.h,v 1.93.2.3 2019/10/21 20:13:09 martin Exp $	*/
+/*	$NetBSD: signalvar.h,v 1.93.2.4 2019/11/11 17:11:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -200,13 +200,6 @@ void	sendsig_sigcontext(const struct ksiginfo *, const sigset_t *);
 void	sendsig_siginfo(const struct ksiginfo *, const sigset_t *);
 
 extern	struct pool ksiginfo_pool;
-
-/*
- * Modularity / compatibility.
- */
-extern void	(*sendsig_sigcontext_vec)(const struct ksiginfo *,
-					  const sigset_t *);
-extern int	(*coredump_vec)(struct lwp *, const char *);
 
 /*
  * firstsig:

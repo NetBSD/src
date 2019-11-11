@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.24 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.24.22.1 2019/11/11 17:11:07 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.24 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.24.22.1 2019/11/11 17:11:07 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.24 2016/07/07 06:55:43 msaitoh Exp $
 #include <sys/filedesc.h>
 #include <sys/kauth.h>
 #include <sys/module.h>
+#include <sys/compat_stub.h>
 
 MODULE(MODULE_CLASS_MISC, coredump, NULL);
 
@@ -69,16 +70,17 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		coredump_vec = coredump;
+		MODULE_HOOK_SET(coredump_hook, "coredump", coredump);
 		return 0;
 	case MODULE_CMD_FINI:
 		/*
-		 * In theory we don't need to patch this, as the various
+		 * In theory we don't need to UNSET this, as the various
 		 * exec formats depend on this module.  If this module has
 		 * no references, and so can be unloaded, no user programs
 		 * can be running and so nothing can call *coredump_vec.
 		 */
-		coredump_vec = (int (*)(struct lwp *, const char *))enosys;
+
+		MODULE_HOOK_UNSET(coredump_hook);
 		return 0;
 	default:
 		return ENOTTY;

@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.15 2019/07/20 18:23:05 christos Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.15.2.1 2019/11/11 17:11:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -274,3 +274,13 @@ struct ifmedia_80_post_hook_t ifmedia_80_post_hook;
  */
 struct netbsd32_machine32_hook_t netbsd32_machine32_hook;
 struct netbsd32_reg_validate_hook_t netbsd32_reg_validate_hook;
+
+/*
+ * Hook for sendsig_sigcontext_16
+ */
+struct sendsig_sigcontext_16_hook_t sendsig_sigcontext_16_hook;
+
+/*
+ * Hook for coredumps
+ */
+struct coredump_hook_t coredump_hook;
