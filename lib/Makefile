@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.272 2019/08/23 08:17:26 mrg Exp $
+#	$NetBSD: Makefile,v 1.273 2019/11/11 22:45:27 joerg Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -171,7 +171,7 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 .endif
 
 .if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
-SUBDIR+=	../external/bsd/llvm/include
+SUBDIR+=	../external/apache2/llvm/include
 .endif
 
 #==================== 2nd library dependency barrier ====================
@@ -186,7 +186,7 @@ SUBDIR+= ../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/lib${sanitizer}
 .endif
 
 .if (${MKLLVMRT} != "no" && (!defined(MLIBDIR) || ${MKCOMPATX11} != "no"))
-SUBDIR+=	../external/bsd/llvm/librt
+SUBDIR+=	../external/apache2/llvm/librt
 .endif
 
 SUBDIR+=	../external/bsd/libarchive/lib	# depends on libxz
