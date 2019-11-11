@@ -1,10 +1,9 @@
-#	$NetBSD: Makefile.inc,v 1.20 2017/05/21 15:28:39 riastradh Exp $
+#	$NetBSD: Makefile.inc,v 1.21 2019/11/11 22:45:26 joerg Exp $
 
 .include <bsd.own.mk>
 
 USE_FORT?= yes	# network client and server
-CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args
-
+CWARNFLAGS.clang+=	-Wno-empty-body -Wno-format-extra-args -Wno-string-plus-int
 WARNS?=	0
 
 PFIX_DISTDIR=	${NETBSDSRCDIR}/external/ibm-public/postfix/dist

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.204 2019/09/26 09:21:34 bad Exp $
+#	$NetBSD: Makefile,v 1.205 2019/11/11 22:45:27 joerg Exp $
 
 .include <bsd.own.mk>
 .include <bsd.endian.mk>
@@ -138,12 +138,6 @@ SUBDIR+= \
 	.WAIT llvm-include .WAIT \
 	llvm-lib .WAIT \
 	llvm-clang
-. if ${MKLLD} != "no"
-SUBDIR+=	llvm-lld
-. endif
-. if ${MKMCLINKER} != "no"
-SUBDIR+=	llvm-mcld
-. endif
 .endif
 
 .if ${MKMAN} != "no" || ${MKDOC} != "no" || ${MKHTML} != "no"
