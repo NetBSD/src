@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.41 2019/06/14 09:06:45 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.41.2.1 2019/11/11 19:49:11 martin Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -507,34 +507,6 @@ getconfig(const char *intface, int exithard)
 		goto errexit;
 	}
 
-#ifdef SIOCSIFINFO_IN6
-	{
-		struct in6_ndireq ndi;
-		int s;
-
-		if ((s = prog_socket(AF_INET6, SOCK_DGRAM, 0)) < 0) {
-			logit(LOG_ERR, "<%s> socket: %m", __func__);
-			goto errexit;
-		}
-		memset(&ndi, 0, sizeof(ndi));
-		strncpy(ndi.ifname, intface, IFNAMSIZ);
-		if (prog_ioctl(s, SIOCGIFINFO_IN6, &ndi) < 0) {
-			logit(LOG_INFO, "<%s> ioctl:SIOCGIFINFO_IN6 at %s: %m",
-			     __func__, intface);
-		}
-
-		/* reflect the RA info to the host variables in kernel */
-		ndi.ndi.chlim = tmp->hoplimit;
-		ndi.ndi.retrans = tmp->retranstimer;
-		ndi.ndi.basereachable = tmp->reachabletime;
-		if (prog_ioctl(s, SIOCSIFINFO_IN6, &ndi) < 0) {
-			logit(LOG_INFO, "<%s> ioctl:SIOCSIFINFO_IN6 at %s: %m",
-			     __func__, intface);
-		}
-		prog_close(s);
-	}
-#endif
-
 	/* route information */
 	for (i = -1; i < MAXROUTE; i++) {
 		struct rtinfo *rti;
@@ -747,6 +719,11 @@ getconfig(const char *intface, int exithard)
 	TAILQ_FOREACH(rai, &ralist, next) {
 		if (rai->ifindex == tmp->ifindex) {
 			TAILQ_REMOVE(&ralist, rai, next);
+			if (Cflag) {
+				free_rainfo(rai);
+				rai = NULL;
+				break;
+			}
 			/* If we already have a leaving RA use that
 			 * as this config hasn't been advertised */
 			if (rai->leaving) {
