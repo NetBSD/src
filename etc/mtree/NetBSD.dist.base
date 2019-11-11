@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.203 2019/10/03 01:34:31 mrg Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.204 2019/11/11 22:44:57 joerg Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -110,7 +110,7 @@
 ./usr/include/c++
 ./usr/include/c++/experimental
 ./usr/include/c++/ext
-./usr/include/clang-7.0
+./usr/include/clang-9.0
 ./usr/include/crypto
 ./usr/include/dev
 ./usr/include/dev/apm

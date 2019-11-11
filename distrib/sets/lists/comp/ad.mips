@@ -1,4 +1,4 @@
-# $NetBSD: ad.mips,v 1.83 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: ad.mips,v 1.84 2019/11/11 22:44:56 joerg Exp $
 -./usr/lib/64/libgomp.a
 -./usr/lib/64/libgomp.so
 -./usr/lib/64/libgomp.so.1
@@ -11,7 +11,8 @@
 ./usr/bin/elf2ecoff				comp-sysutil-bin
 ./usr/include/clang-4.0/msa.h			comp-obsolete		obsolete
 ./usr/include/clang-5.0/msa.h			comp-obsolete		obsolete
-./usr/include/clang-7.0/msa.h			comp-c-include		llvm
+./usr/include/clang-7.0/msa.h			comp-obsolete		obsolete
+./usr/include/clang-9.0/msa.h			comp-c-include		llvm
 ./usr/include/g++/bits/mips32			comp-c-include		compat,arch64
 ./usr/include/g++/bits/mips32/c++config.h	comp-c-include		compat,arch64,gcc
 ./usr/include/g++/bits/mips64			comp-c-include		compat,arch64

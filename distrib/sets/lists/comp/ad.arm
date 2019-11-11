@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.98 2019/10/03 00:59:50 mrg Exp $
+# $NetBSD: ad.arm,v 1.99 2019/11/11 22:44:56 joerg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/include/acorn26				comp-obsolete		obsolete
 ./usr/include/acorn26/ansi.h			comp-obsolete		obsolete
@@ -304,8 +304,10 @@
 ./usr/include/clang-4.0/arm_neon.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/arm_acle.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/arm_neon.h		comp-obsolete		obsolete
-./usr/include/clang-7.0/arm_acle.h		comp-c-include		llvm
-./usr/include/clang-7.0/arm_neon.h		comp-c-include		llvm
+./usr/include/clang-7.0/arm_acle.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/arm_neon.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/arm_acle.h		comp-c-include		llvm
+./usr/include/clang-9.0/arm_neon.h		comp-c-include		llvm
 ./usr/include/epoc32				comp-c-include
 ./usr/include/epoc32/ansi.h			comp-obsolete		obsolete
 ./usr/include/epoc32/aout_machdep.h		comp-obsolete		obsolete
