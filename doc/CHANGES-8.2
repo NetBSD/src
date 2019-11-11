@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.61 2019/11/10 13:37:22 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.62 2019/11/11 17:18:14 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1500,4 +1500,10 @@ sys/dev/pci/ixgbe/ix_txrx.c			1.56
 
 	Fix missing kpreempt_disable() before softint_schedule().
 	[knakahara, ticket #1431]
+
+sys/dev/ic/nvme.c				1.47
+
+	nvme(4): Use the SET_FEATURES command to get the number of allocated
+	queues.
+	[nonaka, ticket #1432]
 
