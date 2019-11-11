@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/07/19 20:21:52 christos Exp $
+#	$NetBSD: Makefile,v 1.11 2019/11/11 22:45:27 joerg Exp $
 
 .include "../Makefile.inc"
 
@@ -21,5 +21,7 @@ SRCS+=		lauxlib.c lbaselib.c lbitlib.c lcorolib.c ldblib.c \
 
 CPPFLAGS+=	-I${S}/../external/mit/lua/dist/src \
 		-I${S}/sys
+
+CWARNFLAGS.clang+=     -Wno-error=string-plus-int
 
 .include <bsd.kmodule.mk>
