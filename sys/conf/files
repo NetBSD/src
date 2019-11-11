@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1242 2019/11/09 23:27:50 jmcneill Exp $
+#	$NetBSD: files,v 1.1243 2019/11/11 04:04:29 msaitoh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1028,17 +1028,6 @@ file	dev/ic/wdc.c			(ata_dma | ata_udma | ata_piobm | atabus) & atabus & wdc_com
 # Workbit NinjaATA-32 IDE controllers
 device	njata: ata, ata_piobm, wdc_common
 file	dev/ic/ninjaata32.c		njata
-
-# CHIPS and Technologies 82C7[12][01] Universal Peripheral Controller
-#
-device	upc { [offset = -1] }
-attach	wdc at upc with wdc_upc
-attach	com at upc with com_upc
-attach	lpt at upc with lpt_upc
-file	dev/ic/upc.c			upc
-file	dev/ic/wdc_upc.c		wdc_upc
-file	dev/ic/com_upc.c		com_upc
-file	dev/ic/lpt_upc.c		lpt_upc
 
 # AHCI-compatible SATA controllers
 define ahcisata_core
