@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.50 2019/08/26 17:18:42 rin Exp $
+#	$NetBSD: Makefile.arm,v 1.51 2019/11/11 22:45:27 joerg Exp $
 
 # Makefile for NetBSD
 #
@@ -36,15 +36,18 @@ GENASSYM_CONF=	${ARM}/arm32/genassym.cf
 AFLAGS+=	-x assembler-with-cpp
 COPTS.arm32_kvminit.c+=		-fno-stack-protector
 COPTS.vfp_init.c=		-mfpu=vfp
-AFLAGS.bcopyinout.S+=-marm
-AFLAGS.cpuswitch.S+=-marm -mfpu=vfp
-AFLAGS.locore.S+=-marm
-AFLAGS.fusu.S+=-marm
-AFLAGS.exception.S+=-marm
-AFLAGS.irq_dispatch.S+=-marm
-AFLAGS.blockio.S+=-marm
-AFLAGS.copystr.S+=-marm
-CFLAGS+=	 -mfloat-abi=soft
+CLANG_OBSOLETE_MULTI_ST=	${${ACTIVE_CC} == "clang":? -Wa,-W :}
+AFLAGS.bcopyinout.S+=	-marm
+AFLAGS.blockio.S+=	-marm ${CLANG_OBSOLETE_MULTI_ST}
+AFLAGS.copystr.S+=	-marm
+AFLAGS.cpufunc_asm.S+=	${CLANG_OBSOLETE_MULTI_ST}
+AFLAGS.cpuswitch.S+=	-marm -mfpu=vfp
+AFLAGS.exception.S+=	-marm ${CLANG_OBSOLETE_MULTI_ST}
+AFLAGS.fiq_subr.S+=	${CLANG_OBSOLETE_MULTI_ST}
+AFLAGS.fusu.S+=		-marm
+AFLAGS.irq_dispatch.S+=	-marm ${CLANG_OBSOLETE_MULTI_ST}
+AFLAGS.locore.S+=	-marm ${CLANG_OBSOLETE_MULTI_ST}
+CFLAGS+=	 	-mfloat-abi=soft
 
 # This files use instructions deprecated for ARMv7+, but still
 # included in kernel that build with higher -mcpu=... settings.

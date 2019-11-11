@@ -1,4 +1,4 @@
-# $NetBSD: ad.powerpc,v 1.96 2019/11/02 21:34:58 christos Exp $
+# $NetBSD: ad.powerpc,v 1.97 2019/11/11 22:44:56 joerg Exp $
 ./usr/bin/elf2aout				comp-sysutil-bin
 ./usr/bin/psim					comp-debug-bin		gdb
 ./usr/include/altivec.h				comp-obsolete		obsolete
@@ -14,9 +14,12 @@
 ./usr/include/clang-5.0/altivec.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/htmintrin.h		comp-obsolete		obsolete
 ./usr/include/clang-5.0/htmxlintrin.h		comp-obsolete		obsolete
-./usr/include/clang-7.0/altivec.h		comp-c-include		llvm
-./usr/include/clang-7.0/htmintrin.h		comp-c-include		llvm
-./usr/include/clang-7.0/htmxlintrin.h		comp-c-include		llvm
+./usr/include/clang-7.0/altivec.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/htmintrin.h		comp-obsolete		obsolete
+./usr/include/clang-7.0/htmxlintrin.h		comp-obsolete		obsolete
+./usr/include/clang-9.0/altivec.h		comp-c-include		llvm
+./usr/include/clang-9.0/htmintrin.h		comp-c-include		llvm
+./usr/include/clang-9.0/htmxlintrin.h		comp-c-include		llvm
 ./usr/include/g++/bits/powerpc			comp-c-include		compat
 ./usr/include/g++/bits/powerpc/c++config.h	comp-c-include		compat,gcc
 ./usr/include/g++/bits/powerpc64		comp-c-include		compat

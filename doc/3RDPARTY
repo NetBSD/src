@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1667 2019/11/06 23:44:39 sevan Exp $
+#	$NetBSD: 3RDPARTY,v 1.1668 2019/11/11 22:44:57 joerg Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -729,14 +729,14 @@ Notes:
   .so'ing only. Copy the rest to man.
 
 Package:	llvm
-Version:	7.0.0svn (r337282)
+Version:	10.0.0git (01f3a59fb3e2542fce74c768718f594d0debd0da)
 Current Vers.:	9.0.0
 Maintainer:	llvm-dev@lists.llvm.org
 Home Page:	https://llvm.org
 Date:		2019-10-09
 Responsible:	joerg
-License:	BSD/MIT
-Location:	external/bsd/llvm/dist
+License:	Apache2 with runtime exceptions
+Location:	external/apache2/llvm/dist
 Notes:
 A CVS ACL is in place for the location to prevent unintentioned commits.
 All changes should come via import from upstream SVN.

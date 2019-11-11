@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/02/24 20:01:33 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2019/11/11 22:45:26 joerg Exp $
 
 LIB=dns
 #USE_SHLIBDIR=   yes
@@ -30,6 +30,8 @@ DNSSEC_SRCS=	dst_api.c dst_parse.c dst_result.c \
 	opensslecdsa_link.c openssleddsa_link.c
 .if ${MKKERBEROS} != "no"
 DNSSEC_SRCS+=	gssapi_link.c spnego.c
+
+CWARNFLAGS.clang+=	-Wno-error=tautological-constant-compare
 .endif
 
 
