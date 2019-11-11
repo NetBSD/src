@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.147 2019/10/21 06:26:12 ozaki-r Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.148 2019/11/11 02:34:46 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.147 2019/10/21 06:26:12 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.148 2019/11/11 02:34:46 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -119,6 +119,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.147 2019/10/21 06:26:12 ozaki-r Exp $"
 #ifdef INET6
 #include <netinet6/in6_ifattach.h>
 #include <netinet6/in6_var.h>
+#include <netinet6/nd6.h>
 #endif
 
 #include "ioconf.h"
@@ -540,6 +541,12 @@ vlan_config(struct ifvlan *ifv, struct ifnet *p, uint16_t tag)
 	nmib->ifvm_p = p;
 	nmib->ifvm_tag = vid;
 	ifv->ifv_if.if_mtu = p->if_mtu - nmib->ifvm_mtufudge;
+#ifdef INET6
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	if (in6_present)
+		nd6_setmtu(ifp);
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+#endif
 	ifv->ifv_if.if_flags = p->if_flags &
 	    (IFF_UP | IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST);
 
