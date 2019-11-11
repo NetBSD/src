@@ -1,4 +1,4 @@
-.\"	$NetBSD: __FPTRCAST.3,v 1.1 2019/11/10 18:45:09 christos Exp $ $
+.\"	$NetBSD: __FPTRCAST.3,v 1.2 2019/11/11 11:06:27 wiz Exp $ $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Dt __FPTRCAST 3
 .Os
 .Sh NAME
-.Nm __FPTRCAST ,
+.Nm __FPTRCAST
 .Nd function pointer cast
 .Sh SYNOPSIS
 .In sys/cdefs.h
@@ -44,7 +44,8 @@ macro can be used to silence warnings produced by certain compilers when
 converting from one function pointer type to another.
 The
 .Fa ftype
-argument is the function pointer type to cast the function pointer in
+argument is the function pointer type to which to cast the function
+pointer in
 .Fa fname .
 .Pp
 This cast should be used sparingly and it is typically used in the following
@@ -53,7 +54,7 @@ situations:
 .It
 We know that the function prototypes don't match at all, but we don't care
 because we point it to a function that does not take arguments and returns
-an error. 
+an error.
 .It
 We only care about the first few arguments and we don't care about the rest.
 .It
