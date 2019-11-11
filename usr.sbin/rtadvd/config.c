@@ -1,4 +1,4 @@
-/*	$NetBSD: config.c,v 1.42 2019/11/10 21:32:38 roy Exp $	*/
+/*	$NetBSD: config.c,v 1.43 2019/11/11 13:42:49 roy Exp $	*/
 /*	$KAME: config.c,v 1.93 2005/10/17 14:40:02 suz Exp $	*/
 
 /*
@@ -719,6 +719,11 @@ getconfig(const char *intface, int exithard)
 	TAILQ_FOREACH(rai, &ralist, next) {
 		if (rai->ifindex == tmp->ifindex) {
 			TAILQ_REMOVE(&ralist, rai, next);
+			if (Cflag) {
+				free_rainfo(rai);
+				rai = NULL;
+				break;
+			}
 			/* If we already have a leaving RA use that
 			 * as this config hasn't been advertised */
 			if (rai->leaving) {
