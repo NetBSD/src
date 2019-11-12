@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx7.c,v 1.4 2019/07/30 06:26:31 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx7.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.4 2019/07/30 06:26:31 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -103,9 +103,9 @@ enet_attach(device_t parent, device_t self, void *aux)
 		    "couldn't enable CCM_ANALOG_PLL_ENET\n");
 		return;
 	}
-	sc->sc_pllclock = imx7_get_clock(IMX7CLK_ENET_PLL);
+	sc->sc_clock = imx7_get_clock(IMX7CLK_IPG_CLK_ROOT);
 #else
-	sc->sc_pllclock = 1000000000;
+	sc->sc_clock = 66000000;
 #endif
 
 	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
