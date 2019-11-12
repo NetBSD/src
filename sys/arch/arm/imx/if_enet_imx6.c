@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.6 2019/07/30 06:26:31 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.7 2019/11/12 05:09:29 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.6 2019/07/30 06:26:31 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.7 2019/11/12 05:09:29 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -131,6 +131,11 @@ enet_attach(device_t parent, device_t self, void *aux)
 		iomux_write(IMX6UL_IOMUX_GPR1, v);
 	}
 
+	sc->sc_clk_ipg = imx6_get_clock("enet");
+	if (sc->sc_clk_enet == NULL) {
+		aprint_error(": couldn't get clock ipg\n");
+		return;
+	}
 	sc->sc_clk_enet = imx6_get_clock("enet");
 	if (sc->sc_clk_enet == NULL) {
 		aprint_error(": couldn't get clock enet\n");
@@ -146,7 +151,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_pllclock = clk_get_rate(sc->sc_clk_enet_ref);
+	sc->sc_clock = clk_get_rate(sc->sc_clk_ipg);
 
 	if (bus_space_map(sc->sc_iot, aa->aa_addr, aa->aa_size, 0,
 	    &sc->sc_ioh)) {
@@ -179,6 +184,11 @@ enet_init_clocks(struct enet_softc *sc)
 {
 	int error;
 
+	error = clk_enable(sc->sc_clk_ipg);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable ipg: %d\n", error);
+		return error;
+	}
 	error = clk_enable(sc->sc_clk_enet);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't enable enet: %d\n", error);

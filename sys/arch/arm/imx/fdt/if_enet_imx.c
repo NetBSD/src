@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.4 2019/10/18 12:53:08 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.4 2019/10/18 12:53:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -90,6 +90,11 @@ enet_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	sc->sc_clk_ipg = fdtbus_clock_get(phandle, "ipg");
+	if (sc->sc_clk_enet == NULL) {
+		aprint_error(": couldn't get clock ipg\n");
+		goto failure;
+	}
 	sc->sc_clk_enet = fdtbus_clock_get(phandle, "ahb");
 	if (sc->sc_clk_enet == NULL) {
 		aprint_error(": couldn't get clock ahb\n");
@@ -149,7 +154,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	enet_init_clocks(sc);
-	sc->sc_pllclock = clk_get_rate(sc->sc_clk_enet_ref);
+	sc->sc_clock = clk_get_rate(sc->sc_clk_ipg);
 
 	enet_phy_reset(efsc, phandle);
 
@@ -168,6 +173,11 @@ enet_init_clocks(struct enet_softc *sc)
 {
 	int error;
 
+	error = clk_enable(sc->sc_clk_ipg);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "couldn't enable ipg: %d\n", error);
+		return error;
+	}
 	error = clk_enable(sc->sc_clk_enet);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "couldn't enable enet: %d\n", error);
