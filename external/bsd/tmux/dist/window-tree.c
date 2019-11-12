@@ -24,13 +24,14 @@
 
 #include "tmux.h"
 
-static struct screen	*window_tree_init(struct window_pane *,
+static struct screen	*window_tree_init(struct window_mode_entry *,
 			     struct cmd_find_state *, struct args *);
-static void		 window_tree_free(struct window_pane *);
-static void		 window_tree_resize(struct window_pane *, u_int, u_int);
-static void		 window_tree_key(struct window_pane *,
-			     struct client *, struct session *, key_code,
-			     struct mouse_event *);
+static void		 window_tree_free(struct window_mode_entry *);
+static void		 window_tree_resize(struct window_mode_entry *, u_int,
+			     u_int);
+static void		 window_tree_key(struct window_mode_entry *,
+			     struct client *, struct session *,
+			     struct winlink *, key_code, struct mouse_event *);
 
 #define WINDOW_TREE_DEFAULT_COMMAND "switch-client -t '%%'"
 
@@ -54,6 +55,7 @@ static void		 window_tree_key(struct window_pane *,
 
 const struct window_mode window_tree_mode = {
 	.name = "tree-mode",
+	.default_format = WINDOW_TREE_DEFAULT_FORMAT,
 
 	.init = window_tree_init,
 	.free = window_tree_free,
@@ -461,7 +463,6 @@ window_tree_build(void *modedata, u_int sort_type, uint64_t *tag,
 	}
 }
 
-
 static void
 window_tree_draw_label(struct screen_write_ctx *ctx, u_int px, u_int py,
     u_int sx, u_int sy, const struct grid_cell *gc, const char *label)
@@ -476,10 +477,10 @@ window_tree_draw_label(struct screen_write_ctx *ctx, u_int px, u_int py,
 	oy = (sy + 1) / 2;
 
 	if (ox > 1 && ox + len < sx - 1 && sy >= 3) {
-		screen_write_cursormove(ctx, px + ox - 1, py + oy - 1);
+		screen_write_cursormove(ctx, px + ox - 1, py + oy - 1, 0);
 		screen_write_box(ctx, len + 2, 3);
 	}
-	screen_write_cursormove(ctx, px + ox, py + oy);
+	screen_write_cursormove(ctx, px + ox, py + oy, 0);
 	screen_write_puts(ctx, gc, "%s", label);
 }
 
@@ -554,17 +555,17 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 
 	if (left) {
 		data->left = cx + 2;
-		screen_write_cursormove(ctx, cx + 2, cy);
+		screen_write_cursormove(ctx, cx + 2, cy, 0);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, cx, cy + sy / 2);
+		screen_write_cursormove(ctx, cx, cy + sy / 2, 0);
 		screen_write_puts(ctx, &grid_default_cell, "<");
 	} else
 		data->left = -1;
 	if (right) {
 		data->right = cx + sx - 3;
-		screen_write_cursormove(ctx, cx + sx - 3, cy);
+		screen_write_cursormove(ctx, cx + sx - 3, cy, 0);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, cx + sx - 1, cy + sy / 2);
+		screen_write_cursormove(ctx, cx + sx - 1, cy + sy / 2, 0);
 		screen_write_puts(ctx, &grid_default_cell, ">");
 	} else
 		data->right = -1;
@@ -597,7 +598,7 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 		else
 			width = each - 1;
 
-		screen_write_cursormove(ctx, cx + offset, cy);
+		screen_write_cursormove(ctx, cx + offset, cy, 0);
 		screen_write_preview(ctx, &w->active->base, width, sy);
 
 		xasprintf(&label, " %u:%s ", wl->idx, w->name);
@@ -608,7 +609,7 @@ window_tree_draw_session(struct window_tree_modedata *data, struct session *s,
 		free(label);
 
 		if (loop != end - 1) {
-			screen_write_cursormove(ctx, cx + offset + width, cy);
+			screen_write_cursormove(ctx, cx + offset + width, cy, 0);
 			screen_write_vline(ctx, sy, 0, 0);
 		}
 		loop++;
@@ -688,17 +689,17 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 
 	if (left) {
 		data->left = cx + 2;
-		screen_write_cursormove(ctx, cx + 2, cy);
+		screen_write_cursormove(ctx, cx + 2, cy, 0);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, cx, cy + sy / 2);
+		screen_write_cursormove(ctx, cx, cy + sy / 2, 0);
 		screen_write_puts(ctx, &grid_default_cell, "<");
 	} else
 		data->left = -1;
 	if (right) {
 		data->right = cx + sx - 3;
-		screen_write_cursormove(ctx, cx + sx - 3, cy);
+		screen_write_cursormove(ctx, cx + sx - 3, cy, 0);
 		screen_write_vline(ctx, sy, 0, 0);
-		screen_write_cursormove(ctx, cx + sx - 1, cy + sy / 2);
+		screen_write_cursormove(ctx, cx + sx - 1, cy + sy / 2, 0);
 		screen_write_puts(ctx, &grid_default_cell, ">");
 	} else
 		data->right = -1;
@@ -730,7 +731,7 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 		else
 			width = each - 1;
 
-		screen_write_cursormove(ctx, cx + offset, cy);
+		screen_write_cursormove(ctx, cx + offset, cy, 0);
 		screen_write_preview(ctx, &wp->base, width, sy);
 
 		if (window_pane_index(wp, &pane_idx) != 0)
@@ -741,7 +742,7 @@ window_tree_draw_window(struct window_tree_modedata *data, struct session *s,
 		free(label);
 
 		if (loop != end - 1) {
-			screen_write_cursormove(ctx, cx + offset + width, cy);
+			screen_write_cursormove(ctx, cx + offset + width, cy, 0);
 			screen_write_vline(ctx, sy, 0, 0);
 		}
 		loop++;
@@ -812,13 +813,14 @@ window_tree_search(__unused void *modedata, void *itemdata, const char *ss)
 }
 
 static struct screen *
-window_tree_init(struct window_pane *wp, struct cmd_find_state *fs,
+window_tree_init(struct window_mode_entry *wme, struct cmd_find_state *fs,
     struct args *args)
 {
+	struct window_pane		*wp = wme->wp;
 	struct window_tree_modedata	*data;
 	struct screen			*s;
 
-	wp->modedata = data = xcalloc(1, sizeof *data);
+	wme->data = data = xcalloc(1, sizeof *data);
 
 	if (args_has(args, 's'))
 		data->type = WINDOW_TREE_SESSION;
@@ -873,9 +875,9 @@ window_tree_destroy(struct window_tree_modedata *data)
 }
 
 static void
-window_tree_free(struct window_pane *wp)
+window_tree_free(struct window_mode_entry *wme)
 {
-	struct window_tree_modedata *data = wp->modedata;
+	struct window_tree_modedata *data = wme->data;
 
 	if (data == NULL)
 		return;
@@ -886,9 +888,9 @@ window_tree_free(struct window_pane *wp)
 }
 
 static void
-window_tree_resize(struct window_pane *wp, u_int sx, u_int sy)
+window_tree_resize(struct window_mode_entry *wme, u_int sx, u_int sy)
 {
-	struct window_tree_modedata	*data = wp->modedata;
+	struct window_tree_modedata	*data = wme->data;
 
 	mode_tree_resize(data->data, sx, sy);
 }
@@ -1121,10 +1123,12 @@ window_tree_mouse(struct window_tree_modedata *data, key_code key, u_int x,
 }
 
 static void
-window_tree_key(struct window_pane *wp, struct client *c,
-    __unused struct session *s, key_code key, struct mouse_event *m)
+window_tree_key(struct window_mode_entry *wme, struct client *c,
+    __unused struct session *s, __unused struct winlink *wl, key_code key,
+    struct mouse_event *m)
 {
-	struct window_tree_modedata	*data = wp->modedata;
+	struct window_pane		*wp = wme->wp;
+	struct window_tree_modedata	*data = wme->data;
 	struct window_tree_itemdata	*item, *new_item;
 	char				*name, *prompt = NULL;
 	struct cmd_find_state		 fs;
