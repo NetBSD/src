@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.3 2019/06/29 14:45:10 jmcneill Exp $ */
+/* $NetBSD: fan53555.c,v 1.4 2019/11/12 07:40:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.3 2019/06/29 14:45:10 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.4 2019/11/12 07:40:04 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.3 2019/06/29 14:45:10 jmcneill Exp $"
 #define	 ID1_VENDOR			__BITS(7,5)
 #define	 ID1_DIE_ID			__BITS(3,0)
 #define	  SILERGY_DIE_ID_SYR82X		8
+#define	  SILERGY_DIE_ID_SYR83X		9
 #define	ID2_REG			0x04
 #define	 ID2_DIE_REV			__BITS(3,0)
 #define	MONITOR_REG		0x05
@@ -228,6 +229,11 @@ fan53555_init(struct fan53555_softc *sc, enum fan53555_vendor vendor)
 		switch (die_id) {
 		case SILERGY_DIE_ID_SYR82X:
 			aprint_normal(": Silergy SYR82X\n");
+			sc->sc_base = 712500;
+			sc->sc_step = 12500;
+			break;
+		case SILERGY_DIE_ID_SYR83X:
+			aprint_normal(": Silergy SYR83X\n");
 			sc->sc_base = 712500;
 			sc->sc_step = 12500;
 			break;
