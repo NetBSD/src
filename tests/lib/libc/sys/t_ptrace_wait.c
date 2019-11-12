@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.140 2019/10/21 18:36:08 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.141 2019/11/12 18:18:04 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.140 2019/10/21 18:36:08 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.141 2019/11/12 18:18:04 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5478,7 +5478,7 @@ trace_threads(bool trace_create, bool trace_exit)
 	lwpid_t lid;
 
 	/* Track created and exited threads */
-	bool traced_lwps[__arraycount(t)];
+	struct lwp_event_count traced_lwps[__arraycount(t)] = {{0, 0}};
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -5541,8 +5541,6 @@ trace_threads(bool trace_create, bool trace_exit)
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	memset(traced_lwps, 0, sizeof(traced_lwps));
-
 	for (n = 0; n < (trace_create ? __arraycount(t) : 0); n++) {
 		DPRINTF("Before calling %s() for the child - expected stopped "
 		    "SIGTRAP\n", TWAIT_FNAME);
@@ -5574,7 +5572,7 @@ trace_threads(bool trace_create, bool trace_exit)
 		lid = state.pe_lwp;
 		DPRINTF("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
 
-		traced_lwps[lid - 1] = true;
+		*FIND_EVENT_COUNT(traced_lwps, lid) += 1;
 
 		DPRINTF("Before resuming the child process where it left off "
 		    "and without signal to be sent\n");
@@ -5613,8 +5611,9 @@ trace_threads(bool trace_create, bool trace_exit)
 		DPRINTF("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
 
 		if (trace_create) {
-			ATF_REQUIRE(traced_lwps[lid - 1] == true);
-			traced_lwps[lid - 1] = false;
+			int *count = FIND_EVENT_COUNT(traced_lwps, lid);
+			ATF_REQUIRE_EQ(*count, 1);
+			*count = 0;
 		}
 
 		DPRINTF("Before resuming the child process where it left off "
@@ -7738,7 +7737,8 @@ ATF_TC_BODY(thread_concurrent_signals, tc)
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
 	int status;
-	int signal_counts[THREAD_CONCURRENT_SIGNALS_NUM] = {0};
+	struct lwp_event_count signal_counts[THREAD_CONCURRENT_SIGNALS_NUM]
+	    = {{0, 0}};
 	unsigned int i;
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
@@ -7816,21 +7816,16 @@ ATF_TC_BODY(thread_concurrent_signals, tc)
 		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
 		    expected_sig, WSTOPSIG(status));
 
-		/* We assume that LWPs will be given successive numbers starting
-		 * from 2.
-		 */
-		ATF_REQUIRE(info.psi_lwpid >= 2);
-		ATF_REQUIRE((unsigned int)info.psi_lwpid <
-		    __arraycount(signal_counts)+2);
-		signal_counts[info.psi_lwpid-2]++;
+		*FIND_EVENT_COUNT(signal_counts, info.psi_lwpid) += 1;
 
 		DPRINTF("Before resuming the child process\n");
 		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 	}
 
 	for (i = 0; i < __arraycount(signal_counts); i++)
-		ATF_CHECK_EQ_MSG(signal_counts[i], 1, "signal_counts[%d]=%d",
-		    i, signal_counts[i]);
+		ATF_CHECK_EQ_MSG(signal_counts[i].lec_count, 1,
+		    "signal_counts[%d].lec_count=%d; lec_lwp=%d",
+		    i, signal_counts[i].lec_count, signal_counts[i].lec_lwp);
 
 	validate_status_exited(status, exitval);
 }
