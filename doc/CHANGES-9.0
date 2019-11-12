@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.99 2019/11/11 19:52:59 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.100 2019/11/12 18:25:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5641,4 +5641,10 @@ sys/external/bsd/ipf/netinet/ip_fil.h		1.8
 
 	ipf(8): fix binary compatibility (accidently broken in rev. 1.7).
 	[chs, ticket #418]
+
+sys/arch/x86/include/specialreg.h		1.157
+sys/arch/x86/x86/spectre.c			1.31
+
+	Mitigation for CVE-2019-11135: TSX Asynchronous Abort (TAA).
+	[maxv, ticket #419]
 
