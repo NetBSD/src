@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.8 2019/10/30 20:24:44 prlw1 Exp $
+# $NetBSD: postinstall.in,v 1.9 2019/11/12 23:54:34 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -2253,7 +2253,6 @@ getarchsubdirs() {
 
 getcompatlibdirs() {
 	for i in $(getarchsubdirs); do
-		echo $i 1>&2
 		if [ -d "${DEST_DIR}/usr/lib/$i" ]; then
 			echo /usr/lib/$i
 		fi
