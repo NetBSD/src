@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17 2019/06/22 20:46:07 christos Exp $	*/
+/*	$NetBSD: main.c,v 1.18 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -280,6 +280,8 @@ main(int argc, char **argv)
 	/* clean up internal storage */
 	pm_destroy_all();
 #endif
+
+	partitions_cleanup();
 
 	exit_cleanly = 1;
 	return 0;

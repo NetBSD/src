@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.h,v 1.3 2019/06/19 17:32:31 martin Exp $	*/
+/*	$NetBSD: mbr.h,v 1.4 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997, 1988 Piermont Information Systems Inc.
@@ -54,6 +54,8 @@
 #define MBR_PUT_LSCYL(c)		((c) & 0xff)
 #define MBR_PUT_MSCYLANDSEC(c,s)	(((s) & 0x3f) | (((c) >> 2) & 0xc0))
 
+#define MBR_DEV_LEN	16		/* for wedge names */
+
 typedef struct mbr_info_t mbr_info_t;
 struct mbr_info_t {
 	struct mbr_sector	mbr;
@@ -69,6 +71,8 @@ struct mbr_info_t {
 	/* only in first item... */
 	uint		bootsec;	/* start sector of bootmenu default */
 #endif
+	/* for temporary access */
+	char		wedge[MBR_PART_COUNT][MBR_DEV_LEN];
 };
 
 #ifdef BOOTSEL

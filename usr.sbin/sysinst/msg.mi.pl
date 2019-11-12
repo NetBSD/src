@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.24 2019/10/23 18:08:31 kamil Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.25 2019/11/12 16:33:14 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1234,6 +1234,7 @@ message dl_type_invalid	{Nieznany typ systemu plikow (0 .. 255)}
 message	cancel		{Anuluj}
 
 message	out_of_range	{Nieprawidlowa wartosc}
+message	invalid_guid	{Nieprawidlowa GUID}
 
 message	reedit_partitions	{Edytuj ponownie}
 message abort_installation	{Anuluj instalacje}
@@ -1385,6 +1386,8 @@ message newfs_flag	{N}
 message ptn_install	{do instalacji}
 message ptn_instflag_desc	{(I)nstalacja, }
 
+message clone_flag	{C}
+message clone_flag_desc	{, (C)lone}
 
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
@@ -1410,4 +1413,16 @@ message	gpt_flag_desc	{, (R)ozruchowa}
 message size_ptn_not_mounted		{(Inna: $0)}
 
 message running_system			{current system}
+
+message clone_from_elsewhere		{Clone external partition(s)}
+message select_foreign_part
+{Please select an external source partition:}
+message select_source_hdr
+{Your currently selected source partitions are:}
+message clone_with_data			{Clone with data}
+message	select_source_add		{Add another partition}
+message clone_target_end		{Add at end}
+message clone_target_hdr
+{Insert cloned partitions before:}
+message clone_target_disp		{cloned partition(s)}
 

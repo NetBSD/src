@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.11 2019/08/26 12:14:06 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.12 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -32,10 +32,12 @@
 #include "md.h"
 #include "gpt_uuid.h"
 #include <assert.h>
+#include <err.h>
 #include <paths.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
 #include <util.h>
+#include <uuid.h>
 
 bool	gpt_parts_check(void);	/* check for needed binaries */
 
@@ -44,7 +46,8 @@ bool	gpt_parts_check(void);	/* check for needed binaries */
 /* a GPT based disk_partitions interface */
 
 #define GUID_STR_LEN	40
-#define	GPT_PTYPE_MAX	32	/* should be >  gpt type -l | wc -l */
+#define	GPT_PTYPE_ALLOC	32	/* initial type array allocation, should be >
+				 * gpt type -l | wc -l */
 #define	GPT_DEV_LEN	16	/* dkNN */
 
 #define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector hols 4 entries */
@@ -112,8 +115,11 @@ struct {
 	{ .name = "vmresered",	.fstype = FS_VMWRESV,	.ptype = PT_unknown }
 };
 
-static size_t gpt_ptype_cnt;
-static struct gpt_ptype_desc gpt_ptype_descs[GPT_PTYPE_MAX];
+static size_t gpt_ptype_cnt = 0, gpt_ptype_alloc = 0;
+static struct gpt_ptype_desc *gpt_ptype_descs = NULL;
+
+/* "well" known types with special handling */
+static const struct part_type_desc *gpt_native_root;
 
 /* similar to struct gpt_ent, but matching our needs */
 struct gpt_part_entry {
@@ -364,7 +370,7 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
 	}
 
 	parts->dp.pscheme = scheme;
-	parts->dp.disk = dev;
+	parts->dp.disk = strdup(dev);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = disk_size;
 	parts->dp.free_space = avail_size;
@@ -449,7 +455,7 @@ gpt_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 		return NULL;
 
 	parts->dp.pscheme = &gpt_parts;
-	parts->dp.disk = disk;
+	parts->dp.disk = strdup(disk);
 
 	gpt_md_init(is_boot_drive, &parts->max_num_parts, &parts->prologue,
 	    &parts->epilogue);
@@ -709,26 +715,6 @@ gpt_get_free_spaces(const struct disk_partitions *arg,
 	    max_num_result, min_space_size, align, start, ignore);
 }
 
-
-static bool
-gpt_adapt(const struct disk_partitions *arg,
-    const struct disk_part_info *src, struct disk_part_info *dest)
-{
-	/* slightly simplistic, enhance when needed */
-	memcpy(dest, src, sizeof(*dest));
-
-	if (src->nat_type == NULL)
-		return false;
-
-	dest->nat_type = arg->pscheme->get_generic_part_type(
-	    src->nat_type->generic_ptype);
-	if (dest->nat_type == NULL)
-		dest->nat_type = arg->pscheme->get_generic_part_type(
-		    PT_unknown);
-
-	return true;
-}
-
 static void
 gpt_match_ptype(const char *name, struct gpt_ptype_desc *t)
 {
@@ -739,6 +725,11 @@ gpt_match_ptype(const char *name, struct gpt_ptype_desc *t)
 			t->gent.generic_ptype = gpt_fs_types[i].ptype;
 			t->fsflags = gpt_fs_types[i].fsflags;
 			t->default_fs_type = gpt_fs_types[i].fstype;
+
+			/* recongnize special entries */
+			if (gpt_native_root == NULL && i == 0)
+				gpt_native_root = &t->gent;
+
 			return;
 		}
 	}
@@ -751,10 +742,20 @@ gpt_match_ptype(const char *name, struct gpt_ptype_desc *t)
 static void
 gpt_internal_add_ptype(const char *uid, const char *name, const char *desc)
 {
+	if (gpt_ptype_cnt >= gpt_ptype_alloc) {
+		gpt_ptype_alloc = gpt_ptype_alloc ? 2*gpt_ptype_alloc
+		    : GPT_PTYPE_ALLOC;
+		struct gpt_ptype_desc *nptypes = realloc(gpt_ptype_descs,
+		    gpt_ptype_alloc*sizeof(*gpt_ptype_descs));
+		if (nptypes == 0)
+			errx(EXIT_FAILURE, "out of memory");
+		gpt_ptype_descs = nptypes;
+	}
+
 	strlcpy(gpt_ptype_descs[gpt_ptype_cnt].tid, uid,
 	    sizeof(gpt_ptype_descs[gpt_ptype_cnt].tid));
-	gpt_ptype_descs[gpt_ptype_cnt].gent.short_desc = name;
-	gpt_ptype_descs[gpt_ptype_cnt].gent.description = desc;
+	gpt_ptype_descs[gpt_ptype_cnt].gent.short_desc = strdup(name);
+	gpt_ptype_descs[gpt_ptype_cnt].gent.description = strdup(desc);
 	gpt_match_ptype(name, &gpt_ptype_descs[gpt_ptype_cnt]);
 	gpt_ptype_cnt++;
 }
@@ -764,6 +765,19 @@ gpt_init_ptypes(void)
 {
 	if (gpt_ptype_cnt == 0)
 		gpt_uuid_query(gpt_internal_add_ptype);
+}
+
+static void
+gpt_cleanup(void)
+{
+	/* free all of gpt_ptype_descs */
+	for (size_t i = 0; i < gpt_ptype_cnt; i++) {
+		free(__UNCONST(gpt_ptype_descs[i].gent.short_desc));
+		free(__UNCONST(gpt_ptype_descs[i].gent.description));
+	}
+	free(gpt_ptype_descs);
+	gpt_ptype_descs = NULL;
+	gpt_ptype_cnt = gpt_ptype_alloc = 0;
 }
 
 static size_t
@@ -792,6 +806,11 @@ gpt_get_generic_type(enum part_type gent)
 {
 	if (gpt_ptype_cnt == 0)
 		gpt_init_ptypes();
+
+	if (gent == PT_root)
+		return gpt_native_root;
+	if (gent == PT_unknown)
+		return NULL;
 
 	for (size_t i = 0; i < gpt_ptype_cnt; i++)
 		if (gpt_ptype_descs[i].gent.generic_ptype == gent)
@@ -863,7 +882,61 @@ gpt_get_fs_part_type(unsigned fstype, unsigned fs_sub_type)
 		if (fstype == gpt_fs_types[i].fstype)
 			return gpt_find_type(gpt_fs_types[i].name);
 
-	return gpt_get_generic_type(PT_root);
+	return NULL;
+}
+
+static const struct part_type_desc *
+gpt_get_uuid_part_type(const uuid_t *id)
+{
+	char str[GUID_STR_LEN], desc[GUID_STR_LEN + MENUSTRSIZE];
+	const struct gpt_ptype_desc *t;
+	char *guid = NULL;
+	uint32_t err;
+
+	uuid_to_string(id, &guid, &err);
+	strlcpy(str, err == uuid_s_ok ? guid : "-", sizeof str);
+	free(guid);
+
+	t = gpt_find_guid_type(str);
+	if (t == NULL) {
+		snprintf(desc, sizeof desc, "%s (%s)",
+		    msg_string(MSG_custom_type), str);
+		gpt_internal_add_ptype(str, str, desc);
+		t = gpt_find_guid_type(str);
+		assert(t != NULL);
+	}
+	return &t->gent;
+}
+
+static const struct part_type_desc *
+gpt_create_custom_part_type(const char *custom, const char **err_msg)
+{
+	uuid_t id;
+	uint32_t err;
+
+	uuid_from_string(custom, &id, &err);
+	if (err_msg != NULL &&
+	   (err == uuid_s_invalid_string_uuid || err == uuid_s_bad_version)) {
+		*err_msg = MSG_invalid_guid;
+		return NULL;
+	}
+	if (err != uuid_s_ok)
+		return NULL;
+
+	return gpt_get_uuid_part_type(&id);
+}
+
+static const struct part_type_desc *
+gpt_create_unknown_part_type(void)
+{
+	uuid_t id;
+	uint32_t err;
+
+	uuid_create(&id, &err);
+	if (err != uuid_s_ok)
+		return NULL;
+
+	return gpt_get_uuid_part_type(&id);
 }
 
 static daddr_t
@@ -1312,9 +1385,11 @@ gpt_write_to_disk(struct disk_partitions *arg)
 	close(fd);
 
 	/*
-	 * Collect first root and efi partition (if available)
+	 * Collect first root and efi partition (if available), clear
+	 * "have wedge" flags.
 	 */
 	for (pno = 0, p = parts->partitions; p != NULL; p = p->gp_next, pno++) {
+		p->gp_flags &= ~GPEF_WEDGE;
 		if (root_id == NO_PART && p->gp_type != NULL) {
 			if (p->gp_type->gent.generic_ptype == PT_root &&
 			    p->gp_start == pm->ptstart) {
@@ -1455,6 +1530,7 @@ gpt_free(struct disk_partitions *arg)
 		n = p->gp_next;
 		free(p);
 	}
+	free(__UNCONST(parts->dp.disk));
 	free(parts);
 }
 
@@ -1657,6 +1733,8 @@ gpt_parts = {
 	.get_part_type = gpt_get_ptype,
 	.get_generic_part_type = gpt_get_generic_type,
 	.get_fs_part_type = gpt_get_fs_part_type,
+	.create_custom_part_type = gpt_create_custom_part_type,
+	.create_unknown_part_type = gpt_create_unknown_part_type,
 	.get_part_alignment = gpt_get_part_alignment,
 	.read_from_disk = gpt_read_from_disk,
 	.create_new_for_disk = gpt_create_new,
@@ -1671,7 +1749,7 @@ gpt_parts = {
 	.get_part_device = gpt_get_part_device,
 	.max_free_space_at = gpt_max_free_space_at,
 	.get_free_spaces = gpt_get_free_spaces,
-	.adapt_foreign_part_info = gpt_adapt,
+	.adapt_foreign_part_info = generic_adapt_foreign_part_info,
 	.get_part_info = gpt_get_part_info,
 	.get_part_attr_str = gpt_get_part_attr_str,
 	.set_part_info = gpt_set_part_info,
@@ -1680,4 +1758,5 @@ gpt_parts = {
 	.delete_partition = gpt_delete_partition,
 	.write_to_disk = gpt_write_to_disk,
 	.free = gpt_free,
+	.cleanup = gpt_cleanup,
 };
