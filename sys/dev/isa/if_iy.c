@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.110 2019/09/13 07:55:06 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.111 2019/11/12 13:17:44 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.110 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.111 2019/11/12 13:17:44 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -282,6 +282,7 @@ iyattach(device_t parent, device_t self, void *aux)
 	uint8_t myaddr[ETHER_ADDR_LEN];
 	int eirq;
 
+	sc->sc_dev = self;
 	iot = ia->ia_iot;
 
 	if (bus_space_map(iot, ia->ia_io[0].ir_addr, 16, 0, &ioh)) {
