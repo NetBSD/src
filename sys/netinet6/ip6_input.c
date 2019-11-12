@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_input.c,v 1.214 2019/10/18 04:33:53 ozaki-r Exp $	*/
+/*	$NetBSD: ip6_input.c,v 1.215 2019/11/12 08:11:55 maxv Exp $	*/
 /*	$KAME: ip6_input.c,v 1.188 2001/03/29 05:34:31 itojun Exp $	*/
 
 /*
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.214 2019/10/18 04:33:53 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_input.c,v 1.215 2019/11/12 08:11:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_gateway.h"
@@ -1056,6 +1056,8 @@ ip6_savecontrol(struct in6pcb *in6p, struct mbuf **mp,
 #define IS2292(x, y)	(y)
 #endif
 
+	KASSERT(m->m_flags & M_PKTHDR);
+
 	if (SOOPT_TIMESTAMP(so->so_options))
 		mp = sbsavetimestamp(so->so_options, mp);
 
@@ -1297,11 +1299,17 @@ ip6_pullexthdr(struct mbuf *m, size_t off, int nxt)
 	size_t elen;
 	struct mbuf *n;
 
+	if (off + sizeof(ip6e) > m->m_pkthdr.len)
+		return NULL;
+
 	m_copydata(m, off, sizeof(ip6e), (void *)&ip6e);
 	if (nxt == IPPROTO_AH)
 		elen = (ip6e.ip6e_len + 2) << 2;
 	else
 		elen = (ip6e.ip6e_len + 1) << 3;
+
+	if (off + elen > m->m_pkthdr.len)
+		return NULL;
 
 	MGET(n, M_DONTWAIT, MT_DATA);
 	if (n && elen >= MLEN) {
