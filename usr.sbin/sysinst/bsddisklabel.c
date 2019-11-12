@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.29 2019/10/25 12:24:34 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.30 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,6 +251,11 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 		mount = swap;
 	} else if (pset->infos[opt].mount[0]) {
 		mount = pset->infos[opt].mount;
+	} else if (pset->infos[opt].flags & PUIFLG_CLONE_PARTS) {
+		snprintf(swap, sizeof swap, "%zu %s",
+		    pset->infos[opt].clone_src->num_sel,
+		    msg_string(MSG_clone_target_disp));
+		mount = swap;
 	} else {
 		mount = NULL;
 		if (pset->infos[opt].parts->pscheme->other_partition_identifier
@@ -319,7 +324,7 @@ add_other_ptn_size(menudesc *menu, void *arg)
 			break;
 	}
 
-	m = realloc(pset->menu_opts, (pset->num+4)*sizeof(*pset->menu_opts));
+	m = realloc(pset->menu_opts, (pset->num+5)*sizeof(*pset->menu_opts));
 	if (m == NULL)
 		return 0;
 	p = realloc(pset->infos, (pset->num+1)*sizeof(*pset->infos));
@@ -348,6 +353,84 @@ add_other_ptn_size(menudesc *menu, void *arg)
 	return -1;
 }
 
+static int
+inst_ext_clone(menudesc *menu, void *arg)
+{
+	struct selected_partitions selected;
+	struct clone_target_menu_data data;
+	struct partition_usage_set *pset = arg;
+	struct part_usage_info *p;
+	menu_ent *men;
+	int num_men, i;
+ 
+	if (!select_partitions(&selected, pm->parts))
+		return 0;
+
+	num_men = pset->num+1;
+	men = calloc(num_men, sizeof *men);
+	if (men == NULL)
+		return 0;
+	for (i = 0; i < num_men; i++)
+		men[i].opt_action = clone_target_select;
+	men[num_men-1].opt_name = MSG_clone_target_end;
+
+	memset(&data, 0, sizeof data);
+	data.usage = *pset;
+	data.res = -1;
+
+	data.usage.menu = new_menu(MSG_clone_target_hdr,
+	    men, num_men, 3, 2, 0, 65, MC_SCROLL,
+	    NULL, draw_size_menu_line, NULL, NULL, MSG_cancel);
+	process_menu(data.usage.menu, &data);
+	free_menu(data.usage.menu);
+	free(men);
+
+	if (data.res < 0)
+		goto err;
+
+	/* insert clone record */
+	men = realloc(pset->menu_opts, (pset->num+5)*sizeof(*pset->menu_opts));
+	if (men == NULL)
+		goto err;
+	pset->menu_opts = men;
+	menu->opts = men;
+	menu->numopts = pset->num+4;
+
+	p = realloc(pset->infos, (pset->num+1)*sizeof(*pset->infos));
+	if (p == NULL)
+		goto err;
+	pset->infos = p;
+
+	men += data.res;
+	p += data.res;
+	memmove(men+1, men, sizeof(*men)*((pset->num+4)-data.res));
+	memmove(p+1, p, sizeof(*p)*((pset->num)-data.res));
+	memset(men, 0, sizeof(*men));
+	memset(p, 0, sizeof(*p));
+	p->flags = PUIFLG_CLONE_PARTS;
+	p->cur_part_id = NO_PART;
+	p->clone_src = malloc(sizeof(selected));
+	if (p->clone_src != NULL) {
+		*p->clone_src = selected;
+		p->clone_ndx = ~0U;
+		p->size = selected_parts_size(&selected);
+		p->parts = pset->parts;
+	} else {
+		p->clone_ndx = 0;
+		free_selected_partitions(&selected);
+	}
+
+	menu->cursel = data.res == 0 ? 1 : 0;
+	pset->num++;
+	fill_ptn_menu(pset);
+
+	return -1;
+
+err:
+	free_selected_partitions(&selected);
+	return 0;
+}
+
 static size_t
 fill_ptn_menu(struct partition_usage_set *pset)
 {
@@ -357,9 +440,12 @@ fill_ptn_menu(struct partition_usage_set *pset)
 	size_t i;
 	daddr_t free_space;
 
-	memset(pset->menu_opts, 0, (pset->num+3)*sizeof(*pset->menu_opts));
+	memset(pset->menu_opts, 0, (pset->num+4)*sizeof(*pset->menu_opts));
 	for (m = pset->menu_opts, p = pset->infos, i = 0; i < pset->num;
 	    m++, p++, i++) {
+		if (p->flags & PUIFLG_CLONE_PARTS)
+			m->opt_flags = OPT_IGNORE|OPT_NOSHORT;
+		else
 		m->opt_action = set_ptn_size;
 	}
 
@@ -369,6 +455,10 @@ fill_ptn_menu(struct partition_usage_set *pset)
 
 	m->opt_name = MSG_add_another_ptn;
 	m->opt_action = add_other_ptn_size;
+	m++;
+
+	m->opt_name = MSG_clone_from_elsewhere;
+	m->opt_action = inst_ext_clone;
 	m++;
 
 	m->opt_name = MSG_askunits;
@@ -552,7 +642,7 @@ get_ptn_sizes(struct partition_usage_set *pset)
 	wrefresh(stdscr);
 
 	if (pset->menu_opts == NULL)
-		pset->menu_opts = calloc(pset->num+3, sizeof(*pset->menu_opts));
+		pset->menu_opts = calloc(pset->num+4, sizeof(*pset->menu_opts));
 
 	pset->menu = -1;
 	num = fill_ptn_menu(pset);
@@ -1000,7 +1090,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 			continue;
 		if (pset->infos[i].flags & PUIFLG_JUST_MOUNTPOINT)
 			continue;
-		if ((pset->infos[i].flags & (PUIFLG_IS_OUTER|PUIFLAG_ADD_INNER))
+		if ((pset->infos[i].flags & (PUIFLG_IS_OUTER|PUIFLG_ADD_INNER))
 		    == PUIFLG_IS_OUTER)
 			continue;
 		if (pno >= pset->parts->num_part)
@@ -1046,16 +1136,72 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 	pset->infos = infos;
 }
 
+/*
+ * Convert clone entries with more than one source into
+ * several entries with a single source each.
+ */
+static void
+normalize_clones(struct part_usage_info **infos, size_t *num)
+{
+	size_t i, j, add_clones;
+	struct part_usage_info *ui, *src, *target;
+	struct disk_part_info info;
+	struct selected_partition *clone;
+
+	for (add_clones = 0, i = 0; i < *num; i++) {
+		if ((*infos)[i].clone_src != NULL &&
+		    (*infos)[i].flags & PUIFLG_CLONE_PARTS &&
+		    (*infos)[i].cur_part_id == NO_PART)
+			add_clones += (*infos)[i].clone_src->num_sel-1;
+	}
+	if (add_clones == 0)
+		return;
+
+	ui = calloc(*num+add_clones, sizeof(**infos));
+	if (ui == NULL)
+		return;	/* can not handle this well here, drop some clones */
+
+	/* walk the list and dedup clones */
+	for (src = *infos, target = ui, i = 0; i < *num; i++) {
+		if (src != target)
+			*target = *src;
+		if (target->clone_src != NULL &&
+		    (target->flags & PUIFLG_CLONE_PARTS) &&
+		    target->cur_part_id == NO_PART) {
+			for (j = 0; j < src->clone_src->num_sel; j++) {
+				if (j > 0) {
+					target++;
+					*target = *src;
+				}
+				target->clone_ndx = j;
+				clone = &target->clone_src->selection[j];
+				clone->parts->pscheme->get_part_info(
+				    clone->parts, clone->id, &info);
+				target->size = info.size;
+			}
+		}
+		target++;
+		src++;
+	}
+	*num += add_clones;
+	assert((target-ui) >= 0 && (size_t)(target-ui) == *num);
+	free(*infos);
+	*infos = ui;
+}
+
 static void
 apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
     struct partition_usage_set *wanted, daddr_t start, daddr_t size)
 {
 	size_t i, exp_ndx = ~0U;
 	daddr_t planned_space = 0, nsp, from, align;
-	struct disk_part_info *infos;
+	struct disk_part_info *infos, cinfo, srcinfo;
 	struct disk_part_free_space space;
 	struct disk_partitions *ps = NULL;
+	struct selected_partition *sp;
 	part_id pno, new_part_id;
+
+	normalize_clones(&wanted->infos, &wanted->num);
 
 	infos = calloc(wanted->num, sizeof(*infos));
 	if (infos == NULL) {
@@ -1167,14 +1313,14 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			    new_part_id, &infos[i]);
 			want->cur_part_id = new_part_id;
 
-			want->flags |= PUIFLAG_ADD_INNER|PUIFLG_IS_OUTER;
+			want->flags |= PUIFLG_ADD_INNER|PUIFLG_IS_OUTER;
 			from = rounddown(infos[i].start + 
 			    infos[i].size+outer_align, outer_align);
 		}
 	}
 
 	/*
-	 * Now add new inner partitions
+	 * Now add new inner partitions (and cloned partitions)
 	 */
 	for (i = 0; i < wanted->num && from < wanted->parts->disk_size; i++) {
 		struct part_usage_info *want = &wanted->infos[i];
@@ -1183,35 +1329,66 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			continue;
 		if (want->flags & (PUIFLG_JUST_MOUNTPOINT|PUIFLG_IS_OUTER))
 			continue;
-		if (want->size <= 0)
-			continue;
+		if ((want->flags & PUIFLG_CLONE_PARTS) &&
+		    want->clone_src != NULL &&
+		    want->clone_ndx < want->clone_src->num_sel) {
+			sp = &want->clone_src->selection[want->clone_ndx];
+			if (!sp->parts->pscheme->get_part_info(
+			    sp->parts, sp->id, &srcinfo))
+				continue;
+			if (!wanted->parts->pscheme->
+			    adapt_foreign_part_info(wanted->parts,
+			    &cinfo, sp->parts->pscheme, &srcinfo))
+				continue;
 
-		size_t cnt = wanted->parts->pscheme->get_free_spaces(
-		    wanted->parts, &space, 1, want->size-align, align, from,
-		    -1);
-		if (cnt == 0)
-			cnt = wanted->parts->pscheme->get_free_spaces(
-			    wanted->parts, &space, 1,
-			    want->size-5*align, align, from, -1);
+			/* find space for cinfo and add a partition */
+			size_t cnt = wanted->parts->pscheme->get_free_spaces(
+			    wanted->parts, &space, 1, want->size-align, align,
+			    from, -1);
+			if (cnt == 0)
+				cnt = wanted->parts->pscheme->get_free_spaces(
+				    wanted->parts, &space, 1,
+				    want->size-5*align, align, from, -1);
 
-		if (cnt == 0)
-			continue;	/* no free space for this partition */
+			if (cnt == 0)
+				continue; /* no free space for this clone */
 
-		infos[i].start = space.start;
-		infos[i].size = min(want->size, space.size);
-		infos[i].nat_type =
-		    wanted->parts->pscheme->get_fs_part_type(want->fs_type,
-		    want->fs_version);
-		infos[i].last_mounted = want->mount;
-		infos[i].fs_type = want->fs_type;
-		infos[i].fs_sub_type = want->fs_version;
-		if (want->fs_type != FS_UNUSED && want->type != PT_swap) {
-			want->instflags |= PUIINST_NEWFS;
-			if (want->mount[0] != 0)
-				want->instflags |= PUIINST_MOUNT;
+			infos[i] = cinfo;
+			infos[i].start = space.start;
+			new_part_id = wanted->parts->pscheme->add_partition(
+			    wanted->parts, &infos[i], NULL);
+		} else {
+			if (want->size <= 0)
+				continue;
+			size_t cnt = wanted->parts->pscheme->get_free_spaces(
+			    wanted->parts, &space, 1, want->size-align, align,
+			    from, -1);
+			if (cnt == 0)
+				cnt = wanted->parts->pscheme->get_free_spaces(
+				    wanted->parts, &space, 1,
+				    want->size-5*align, align, from, -1);
+
+			if (cnt == 0)
+				continue; /* no free space for this partition */
+
+			infos[i].start = space.start;
+			infos[i].size = min(want->size, space.size);
+			infos[i].nat_type =
+			    wanted->parts->pscheme->get_fs_part_type(
+			    want->fs_type, want->fs_version);
+			infos[i].last_mounted = want->mount;
+			infos[i].fs_type = want->fs_type;
+			infos[i].fs_sub_type = want->fs_version;
+			if (want->fs_type != FS_UNUSED &&
+			    want->type != PT_swap) {
+				want->instflags |= PUIINST_NEWFS;
+				if (want->mount[0] != 0)
+					want->instflags |= PUIINST_MOUNT;
+			}
+			new_part_id = wanted->parts->pscheme->add_partition(
+			    wanted->parts, &infos[i], NULL);
 		}
-		new_part_id = wanted->parts->pscheme->add_partition(
-		    wanted->parts, &infos[i], NULL);
+
 		if (new_part_id == NO_PART)
 			continue;	/* failed to add, skip */
 
@@ -1235,8 +1412,8 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		if (want->size <= 0)
 			continue;
 
-		if ((want->flags & (PUIFLAG_ADD_INNER|PUIFLG_IS_OUTER)) !=
-		    (PUIFLAG_ADD_INNER|PUIFLG_IS_OUTER))
+		if ((want->flags & (PUIFLG_ADD_INNER|PUIFLG_IS_OUTER)) !=
+		    (PUIFLG_ADD_INNER|PUIFLG_IS_OUTER))
 			continue;
 
 		infos[i].start = want->cur_start;

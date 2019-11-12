@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.21 2019/08/14 12:55:36 martin Exp $ */
+/*	$NetBSD: md.c,v 1.22 2019/11/12 16:33:14 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -895,7 +895,7 @@ x86_md_part_defaults(struct pm_devs *cur_pm, struct part_usage_info **partsp,
 		if (info.nat_type->generic_ptype != boot->type)
 			continue;
 		boot->flags &= ~PUIFLAG_ADD_OUTER;
-		boot->flags |= PUIFLG_IS_OUTER|PUIFLAG_ADD_INNER;
+		boot->flags |= PUIFLG_IS_OUTER|PUIFLG_ADD_INNER;
 		boot->size = info.size;
 		boot->cur_start = info.start;
 		boot->cur_flags = info.flags;

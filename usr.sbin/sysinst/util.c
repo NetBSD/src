@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.34 2019/10/04 21:36:02 mrg Exp $	*/
+/*	$NetBSD: util.c,v 1.35 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2043,41 +2043,47 @@ usage_set_from_parts(struct partition_usage_set *wanted,
 	return usage_info_list_from_parts(&wanted->infos, &wanted->num, parts);
 }
 
+struct disk_partitions *
+get_inner_parts(struct disk_partitions *parts)
+{
+	daddr_t start, size;
+	part_id pno;
+	struct disk_part_info info;
+
+	if (parts->pscheme->secondary_scheme == NULL)
+		return NULL;
+
+	start = -1;
+	size = -1;
+	if (parts->pscheme->guess_install_target == NULL ||
+	    !parts->pscheme->guess_install_target(parts, &start, &size)) {
+		for (pno = 0; pno < parts->num_part; pno++) {
+			if (!parts->pscheme->get_part_info(parts, pno, &info))
+				continue;
+			if (!(info.flags & PTI_SEC_CONTAINER))
+				continue;
+			start = info.start;
+			size = info.size;
+		}
+	}
+
+	if (size > 0)
+		return parts->pscheme->secondary_partitions(parts, start,
+		    false);
+
+	return NULL;
+}
+
 bool
 install_desc_from_parts(struct install_partition_desc *install,
     struct disk_partitions *parts)
 {
 	struct disk_partitions *inner_parts;
-	daddr_t start, size;
-	part_id pno;
-	struct disk_part_info info;
 
 	memset(install, 0, sizeof(*install));
-
-	if (parts->pscheme->secondary_scheme != NULL) {
-		start = -1;
-		size = -1;
-		if (parts->pscheme->guess_install_target != NULL &&
-		    parts->pscheme->guess_install_target(parts,
-			&start, &size)) {
-		} else {
-			for (pno = 0; pno < parts->num_part; pno++) {
-				if (!parts->pscheme->get_part_info(parts, pno,
-				    &info))
-					continue;
-				if (!(info.flags & PTI_SEC_CONTAINER))
-					continue;
-				start = info.start;
-				size = info.size;
-			}
-		}
-		if (size > 0) {
-			inner_parts = parts->pscheme->secondary_partitions(
-			    parts, start, false);
-			if (inner_parts != NULL)
-				parts = inner_parts;
-		}
-	}
+	inner_parts = get_inner_parts(parts);
+	if (inner_parts != NULL)
+		parts = inner_parts;
 
 	return usage_info_list_from_parts(&install->infos, &install->num,
 	    parts);
@@ -2086,6 +2092,7 @@ install_desc_from_parts(struct install_partition_desc *install,
 void
 free_usage_set(struct partition_usage_set *wanted)
 {
+	/* XXX - free parts? free clone src? */
 	free(wanted->menu_opts);
 	free(wanted->infos);
 }
@@ -2093,6 +2100,18 @@ free_usage_set(struct partition_usage_set *wanted)
 void
 free_install_desc(struct install_partition_desc *install)
 {
+	size_t i, j;
+
+	for (i = 0; i < install->num; i++) {
+		struct selected_partitions *src = install->infos[i].clone_src;
+		if (!(install->infos[i].flags & PUIFLG_CLONE_PARTS) ||
+		    src == NULL)
+			continue;
+		free_selected_partitions(src);
+		for (j = i+1; j < install->num; j++)
+			if (install->infos[j].clone_src == src)
+				install->infos[j].clone_src = NULL; 
+	}
 	free(install->infos);
 }
 

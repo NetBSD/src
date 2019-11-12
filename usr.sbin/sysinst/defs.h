@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.45 2019/10/02 11:16:04 maya Exp $	*/
+/*	$NetBSD: defs.h,v 1.46 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -252,8 +252,9 @@ struct part_usage_info {
 #define	PUIFLAG_ADD_OUTER	2	/* Add this partition to the outer
 					 * partitions (if available) */
 #define	PUIFLG_IS_OUTER		4	/* this is an existing outer one */
-#define	PUIFLAG_ADD_INNER	8	/* add outer also to inner */
+#define	PUIFLG_ADD_INNER	8	/* add outer also to inner */
 #define	PUIFLG_JUST_MOUNTPOINT	16	/* tmpfs of mfs mountpoints */
+#define	PUIFLG_CLONE_PARTS	32	/* clone external partitions */
 	uint flags;
 	struct disk_partitions *parts;	/* Where does this partition live?
 					 * We currently only support
@@ -282,6 +283,17 @@ struct part_usage_info {
 	unsigned int instflags;		/* installer handling flags */
 	uint fs_type, fs_version;	/* e.g. FS_LFS, or FS_BSDFS,
 					 * version = 2 for FFSv2 */
+	/*
+	 * Only != NULL when PUIFLG_CLONE_PARTS is set, describes the
+	 * source partitions to clone here.
+	 */
+	struct selected_partitions *clone_src;
+	/*
+	 * If clone_src != NULL, this record corresponds to a single
+	 * selected source partition, if clone_ndx is a valid index in clone_src
+	 * (>= 0 && <= clone_src->num_sel, or all of them if clone_ndx = ~0U.
+	 */
+	size_t clone_ndx;
 };
 
 /*
@@ -607,6 +619,30 @@ bool is_cdrom_device(const char *dev, bool as_target);
 bool is_bootable_device(const char *dev);
 bool is_partitionable_device(const char *dev);
 bool convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg);
+/* a single partition selected for cloning (etc) */
+struct selected_partition {
+	struct disk_partitions *parts;
+	part_id id;
+};
+struct selected_partitions {
+	struct selected_partition *selection;
+	size_t num_sel;
+	bool with_data;		/* partitions and their data selected */
+	bool free_parts;	/* caller should free parts */
+};
+bool select_partitions(struct selected_partitions *res,
+    const struct disk_partitions *ignore);
+daddr_t	selected_parts_size(struct selected_partitions *);
+void	free_selected_partitions(struct selected_partitions *);
+
+struct clone_target_menu_data {
+	struct partition_usage_set usage;
+	int res;
+};
+
+int	clone_target_select(menudesc *m, void *arg);
+bool	clone_partition_data(struct disk_partitions *dest_parts, part_id did,
+	struct disk_partitions *src_parts, part_id sid);
 
 struct menudesc;
 void	disp_cur_fspart(int, int);
@@ -716,6 +752,7 @@ bool	md_parts_use_wholedisk(struct disk_partitions*);
 /* from util.c */
 bool	root_is_read_only(void);
 void	get_ptn_alignment(const struct disk_partitions *parts, daddr_t *align, daddr_t *p0off);
+struct disk_partitions *get_inner_parts(struct disk_partitions *parts);
 char*	str_arg_subst(const char *, size_t, const char **);
 void	msg_display_subst(const char *, size_t, ...);
 void	msg_display_add_subst(const char *, size_t, ...);

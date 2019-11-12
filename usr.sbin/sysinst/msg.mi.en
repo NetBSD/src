@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.en,v 1.23 2019/10/17 08:54:50 maxv Exp $	*/
+/*	$NetBSD: msg.mi.en,v 1.24 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -307,7 +307,7 @@ message fspart
 {We now have your $2 partitions for $0 below.
 This is your last chance to change them.
 
-Flags: $3(N)ewfs$4.   Total size: $5,  free space: $6}
+Flags: $3(N)ewfs$4.   Total size: $5, free: $6}
 
 message ptnheaders_start	{Start}
 message ptnheaders_end		{End}
@@ -1234,6 +1234,7 @@ message dl_type_invalid	{Invalid file system type code (0 .. 255)}
 message	cancel		{Cancel}
 
 message	out_of_range	{Invalid value}
+message	invalid_guid	{Invalid GUID}
 
 message	reedit_partitions	{Re-edit}
 message abort_installation	{Abort installation}
@@ -1395,6 +1396,9 @@ Select the partition you wish to change:
 message install_flag	{I}
 message newfs_flag	{N}
 
+message clone_flag	{C}
+message clone_flag_desc	{, (C)lone}
+
 message ptn_install	{install}
 message ptn_instflag_desc	{(I)nstall, }
 
@@ -1422,4 +1426,16 @@ message	gpt_flag_desc	{, (B)ootable}
 message size_ptn_not_mounted		{(Other: $0)}
 
 message running_system			{current system}
+
+message clone_from_elsewhere		{Clone external partition(s)}
+message select_foreign_part
+{Please select an external source partition:}
+message select_source_hdr
+{Your currently selected source partitions are:}
+message clone_with_data			{Clone with data}
+message	select_source_add		{Add another partition}
+message clone_target_end		{Add at end}
+message clone_target_hdr
+{Insert cloned partitions before:}
+message clone_target_disp		{cloned partition(s)}
 

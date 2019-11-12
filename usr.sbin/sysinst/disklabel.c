@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.14 2019/10/21 16:09:59 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.15 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 	parts->l.d_secpercyl = geo.dg_nsectors * geo.dg_ntracks;
 
 	parts->dp.pscheme = &disklabel_parts;
-	parts->dp.disk = dev;
+	parts->dp.disk = strdup(dev);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;
 	disklabel_init_default_alignment(parts, parts->l.d_secpercyl);
@@ -216,7 +216,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	if (len > disklabel_parts.size_limit)
 		len = disklabel_parts.size_limit;
 	parts->dp.pscheme = scheme;
-	parts->dp.disk = disk;
+	parts->dp.disk = strdup(disk);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;
 	disklabel_init_default_alignment(parts, 0);
@@ -579,6 +579,12 @@ static const struct part_type_desc *
 disklabel_get_fs_part_type(unsigned fstype, unsigned subtype)
 {
 	return disklabel_find_type(fstype, false);
+}
+
+static const struct part_type_desc *
+disklabel_create_unknown_part_type(void)
+{
+	return disklabel_find_type(FS_OTHER, false);
 }
 
 static const struct part_type_desc *
@@ -1076,6 +1082,7 @@ disklabel_free(struct disk_partitions *arg)
 {
 
 	assert(arg != NULL);
+	free(__UNCONST(arg->disk));
 	free(arg);
 }
 
@@ -1100,7 +1107,9 @@ disklabel_parts = {
 	.get_generic_part_type = disklabel_get_generic_type,
 	.get_fs_part_type = disklabel_get_fs_part_type,
 	.create_custom_part_type = disklabel_create_custom_part_type,
+	.create_unknown_part_type = disklabel_create_unknown_part_type,
 	.get_part_alignment = disklabel_get_alignment,
+	.adapt_foreign_part_info = generic_adapt_foreign_part_info,
 	.get_part_info = disklabel_get_part_info,
 	.can_add_partition = disklabel_can_add_partition,
 	.set_part_info = disklabel_set_part_info,

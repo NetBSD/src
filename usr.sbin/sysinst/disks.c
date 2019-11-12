@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.54 2019/10/25 12:49:58 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.55 2019/11/12 16:33:14 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -734,7 +734,7 @@ convert_copy(struct disk_partitions *old_parts,
 		}
 
 		if (!new_parts->pscheme->adapt_foreign_part_info(new_parts,
-			    &oinfo, &ninfo))
+			    &ninfo, old_parts->pscheme, &oinfo))
 			continue;
 		new_parts->pscheme->add_partition(new_parts, &ninfo, NULL);
 	}
@@ -2044,4 +2044,473 @@ get_dkwedges(struct dkwedge_info **dkw, const char *diskdev)
 	}
 
 	return dkwl.dkwl_nwedges;
+}
+
+/*
+ * Helper structures used in the partition select menu
+ */
+struct single_partition {
+	struct disk_partitions *parts;
+	part_id id;
+};
+
+struct sel_menu_data {
+	struct single_partition *partitions;
+	struct selected_partition result;
+};
+
+static int
+select_single_part(menudesc *m, void *arg)
+{
+	struct sel_menu_data *data = arg;
+
+	data->result.parts = data->partitions[m->cursel].parts;
+	data->result.id = data->partitions[m->cursel].id;
+
+	return 1;
+}
+
+static void
+display_single_part(menudesc *m, int opt, void *arg)
+{
+	const struct sel_menu_data *data = arg;
+	struct disk_part_info info;
+	struct disk_partitions *parts = data->partitions[opt].parts;
+	part_id id = data->partitions[opt].id;
+	int l;
+	const char *desc = NULL;
+	char line[MENUSTRSIZE*2];
+
+	if (!parts->pscheme->get_part_info(parts, id, &info))
+		return;
+
+	if (parts->pscheme->other_partition_identifier != NULL)
+		desc = parts->pscheme->other_partition_identifier(
+		    parts, id);
+
+	daddr_t start = info.start / sizemult;
+	daddr_t size = info.size / sizemult;
+	snprintf(line, sizeof line, "%s [%" PRIu64 " @ %" PRIu64 "]",
+	    parts->disk, size, start);
+
+	if (info.nat_type != NULL) {
+		strlcat(line, " ", sizeof line);
+		strlcat(line, info.nat_type->description, sizeof line);
+	}
+
+	if (desc != NULL) {
+		strlcat(line, ": ", sizeof line);
+		strlcat(line, desc, sizeof line);
+	}
+
+	l = strlen(line);
+	if (l >= (m->w))
+		strcpy(line + (m->w-3), "...");
+	wprintw(m->mw, "%s", line);
+}
+
+/*
+ * is the given "test" partitions set used in the selected set?
+ */
+static bool
+selection_has_parts(struct selected_partitions *sel,
+    const struct disk_partitions *test)
+{
+	size_t i;
+
+	for (i = 0; i < sel->num_sel; i++) {
+		if (sel->selection[i].parts == test)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * is the given "test" partition in the selected set?
+ */
+static bool
+selection_has_partition(struct selected_partitions *sel,
+    const struct disk_partitions *test, part_id test_id)
+{
+	size_t i;
+
+	for (i = 0; i < sel->num_sel; i++) {
+		if (sel->selection[i].parts == test &&
+		    sel->selection[i].id == test_id)
+			return true;
+	}
+	return false;
+}
+
+/*
+ * let the user select a partition, optionally skipping all partitions
+ * on the "ignore" device
+ */
+static bool
+add_select_partition(struct selected_partitions *res,
+    struct disk_partitions **all_parts, size_t all_cnt)
+{
+	struct disk_partitions *ps;
+	struct disk_part_info info;
+	part_id id;
+	struct single_partition *partitions, *pp;
+	struct menu_ent *part_menu_opts, *menup;
+	size_t n, part_cnt;
+	int sel_menu;
+
+	/*
+	 * count how many items our menu will have
+	 */
+	part_cnt = 0;
+	for (n = 0; n < all_cnt; n++) {
+		ps = all_parts[n];
+		for (id = 0; id < ps->num_part; id++) {
+			if (selection_has_partition(res, ps, id))
+				continue;
+			if (!ps->pscheme->get_part_info(ps, id, &info))
+				continue;
+			if (info.flags & (PTI_SEC_CONTAINER|PTI_WHOLE_DISK|
+			    PTI_PSCHEME_INTERNAL|PTI_RAW_PART))
+				continue;
+			part_cnt++;
+		}
+	}
+
+	/*
+	 * create a menu from this and let the user
+	 * select one partition
+	 */
+	part_menu_opts = NULL;
+	partitions = calloc(part_cnt, sizeof *partitions);
+	if (partitions == NULL)
+		goto done;
+	part_menu_opts = calloc(part_cnt, sizeof *part_menu_opts);
+	if (part_menu_opts == NULL)
+		goto done;
+	pp = partitions;
+	menup = part_menu_opts;
+	for (n = 0; n < all_cnt; n++) {
+		ps = all_parts[n];
+		for (id = 0; id < ps->num_part; id++) {
+			if (selection_has_partition(res, ps, id))
+				continue;
+			if (!ps->pscheme->get_part_info(ps, id, &info))
+				continue;
+			if (info.flags & (PTI_SEC_CONTAINER|PTI_WHOLE_DISK|
+			    PTI_PSCHEME_INTERNAL|PTI_RAW_PART))
+				continue;
+			pp->parts = ps;
+			pp->id = id;
+			pp++;
+			menup->opt_action = select_single_part;
+			menup++;
+		}
+	}
+	sel_menu = new_menu(MSG_select_foreign_part, part_menu_opts, part_cnt,
+	    3, 3, 0, 60,
+	    MC_SUBMENU | MC_SCROLL | MC_NOCLEAR,
+	    NULL, display_single_part, NULL,
+	    NULL, NULL);
+	if (sel_menu != -1) {
+		struct selected_partition *newsels;
+		struct sel_menu_data data;
+
+		memset(&data, 0, sizeof data);
+		data.partitions = partitions;
+		process_menu(sel_menu, &data);
+		free_menu(sel_menu);
+
+		if (data.result.parts != NULL) {
+			newsels = realloc(res->selection,
+			    sizeof(*res->selection)*(res->num_sel+1));
+			if (newsels != NULL) {
+				res->selection = newsels;
+				newsels += res->num_sel++;
+				newsels->parts = data.result.parts;
+				newsels->id = data.result.id;
+			}
+		}
+	}
+
+	/*
+	 * Final cleanup
+	 */
+done:
+	free(part_menu_opts);
+	free(partitions);
+
+	return res->num_sel > 0;
+}
+
+struct part_selection_and_all_parts {
+	struct selected_partitions *selection;
+	struct disk_partitions **all_parts;
+	size_t all_cnt;
+	char *title;
+	bool cancelled;
+};
+
+static int
+toggle_clone_data(struct menudesc *m, void *arg)
+{
+	struct part_selection_and_all_parts *sel = arg;
+
+	sel->selection->with_data = !sel->selection->with_data;
+	return 0;
+}
+
+static int
+add_another(struct menudesc *m, void *arg)
+{
+	struct part_selection_and_all_parts *sel = arg;
+
+	add_select_partition(sel->selection, sel->all_parts, sel->all_cnt);
+	return 0;
+}
+
+static int
+cancel_clone(struct menudesc *m, void *arg)
+{	
+	struct part_selection_and_all_parts *sel = arg;
+
+	sel->cancelled = true;
+	return 1;
+}
+
+static void
+update_sel_part_title(struct part_selection_and_all_parts *sel)
+{
+	struct disk_part_info info;
+	char *buf, line[MENUSTRSIZE];
+	size_t buf_len, i;
+
+	buf_len = MENUSTRSIZE * (1+sel->selection->num_sel);
+	buf = malloc(buf_len);
+	if (buf == NULL)
+		return;
+
+	strcpy(buf, msg_string(MSG_select_source_hdr));
+	for (i = 0; i < sel->selection->num_sel; i++) {
+		struct selected_partition *s =
+		    &sel->selection->selection[i];
+		if (!s->parts->pscheme->get_part_info(s->parts, s->id, &info))
+			continue;
+		daddr_t start = info.start / sizemult;
+		daddr_t size = info.size / sizemult;
+		sprintf(line, "\n  %s [%" PRIu64 " @ %" PRIu64 "] ",
+		    s->parts->disk, size, start);
+		if (info.nat_type != NULL)
+			strlcat(line, info.nat_type->description, sizeof(line));
+		strlcat(buf, line, buf_len);
+	}
+	free(sel->title);
+	sel->title = buf;
+}
+
+static void
+post_sel_part(struct menudesc *m, void *arg)
+{
+	struct part_selection_and_all_parts *sel = arg;
+
+	if (m->mw == NULL)
+		return;
+	update_sel_part_title(sel);
+	m->title = sel->title;
+	m->h = 0;
+	resize_menu_height(m);
+}
+
+static void
+fmt_sel_part_line(struct menudesc *m, int i, void *arg)
+{
+	struct part_selection_and_all_parts *sel = arg;
+
+	wprintw(m->mw, "%s: %s", msg_string(MSG_clone_with_data),
+	    sel->selection->with_data ?
+		msg_string(MSG_Yes) :
+		 msg_string(MSG_No));
+}
+
+bool
+select_partitions(struct selected_partitions *res,
+    const struct disk_partitions *ignore)
+{
+	struct disk_desc disks[MAX_DISKS];
+	struct disk_partitions *ps;
+	struct part_selection_and_all_parts data;
+	struct pm_devs *i;
+	size_t j;
+	int cnt, n, m;
+	static menu_ent men[] = {
+		{ .opt_name = MSG_select_source_add,
+		  .opt_action = add_another },
+		{ .opt_action = toggle_clone_data },
+		{ .opt_name = MSG_cancel, .opt_action = cancel_clone },
+	};
+
+	memset(res, 0, sizeof *res);
+	memset(&data, 0, sizeof data);
+	data.selection = res;
+
+	/*
+	 * collect all available partition sets
+	 */
+	data.all_cnt = 0;
+	if (SLIST_EMPTY(&pm_head)) {
+		cnt = get_disks(disks, false);
+		if (cnt <= 0)
+			return false;
+
+		/*
+		 * allocate two slots for each disk (primary/secondary)
+		 */
+		data.all_parts = calloc(2*cnt, sizeof *data.all_parts);
+		if (data.all_parts == NULL)
+			return false;
+
+		for (n = 0; n < cnt; n++) {
+			if (ignore != NULL &&
+			    strcmp(disks[n].dd_name, ignore->disk) == 0)
+				continue;
+
+			ps = partitions_read_disk(disks[n].dd_name,
+			    disks[n].dd_totsec, disks[n].dd_no_mbr);
+			if (ps == NULL)
+				continue;
+			data.all_parts[data.all_cnt++] = ps;
+			ps = get_inner_parts(ps);
+			if (ps == NULL)
+				continue;
+			data.all_parts[data.all_cnt++] = ps;
+		}
+		if (data.all_cnt > 0)
+			res->free_parts = true;
+	} else {
+		cnt = 0;
+		SLIST_FOREACH(i, &pm_head, l)
+			cnt++;
+
+		data.all_parts = calloc(cnt, sizeof *data.all_parts);
+		if (data.all_parts == NULL)
+			return false;
+
+		SLIST_FOREACH(i, &pm_head, l) {
+			if (i->parts == NULL)
+				continue;
+			if (i->parts == ignore)
+				continue;
+			data.all_parts[data.all_cnt++] = i->parts;
+		}
+	}
+
+	if (!add_select_partition(res, data.all_parts, data.all_cnt))
+		goto fail;
+
+	/* loop with menu */
+	update_sel_part_title(&data);
+	m = new_menu(data.title, men, __arraycount(men), 3, 2, 0, 65, MC_SCROLL,
+	    post_sel_part, fmt_sel_part_line, NULL, NULL,
+	    "Source selection OK, proceed to target selection");
+	process_menu(m, &data);
+	free(data.title);
+	if (res->num_sel == 0)
+		goto fail;
+
+	/* cleanup */
+	if (res->free_parts) {
+		for (j = 0; j < data.all_cnt; j++) {
+			if (selection_has_parts(res, data.all_parts[j]))
+				continue;
+			if (data.all_parts[j]->parent != NULL)
+				continue;
+			data.all_parts[j]->pscheme->free(data.all_parts[j]);
+		}
+	}
+	free(data.all_parts);
+	return true;
+
+fail:
+	if (res->free_parts) {
+		for (j = 0; j < data.all_cnt; j++) {
+			if (data.all_parts[j]->parent != NULL)
+				continue;
+			data.all_parts[j]->pscheme->free(data.all_parts[j]);
+		}
+	}
+	free(data.all_parts);
+	return false;
+}
+
+void
+free_selected_partitions(struct selected_partitions *selected)
+{
+	size_t i;
+	struct disk_partitions *parts;
+
+	if (!selected->free_parts)
+		return;
+
+	for (i = 0; i < selected->num_sel; i++) {
+		parts = selected->selection[i].parts;
+
+		/* remove from list before testing for other instances */
+		selected->selection[i].parts = NULL;
+
+		/* if this is the secondary partion set, the parent owns it */
+		if (parts->parent != NULL)
+			continue;
+
+		/* only free once (we use the last one) */
+		if (selection_has_parts(selected, parts))
+			continue;
+		parts->pscheme->free(parts);
+	}
+	free(selected->selection);
+}
+
+daddr_t
+selected_parts_size(struct selected_partitions *selected)
+{
+	struct disk_part_info info;
+	size_t i;
+	daddr_t s = 0;
+
+	for (i = 0; i < selected->num_sel; i++) {
+		if (!selected->selection[i].parts->pscheme->get_part_info(
+		    selected->selection[i].parts,
+		    selected->selection[i].id, &info))
+			continue;
+		s += info.size;
+	}
+
+	return s;
+}
+
+int
+clone_target_select(menudesc *m, void *arg)
+{
+	struct clone_target_menu_data *data = arg;
+
+	data->res = m->cursel;
+	return 1;
+}
+
+bool
+clone_partition_data(struct disk_partitions *dest_parts, part_id did,
+    struct disk_partitions *src_parts, part_id sid)
+{
+	char src_dev[MAXPATHLEN], target_dev[MAXPATHLEN];
+
+	if (!src_parts->pscheme->get_part_device(
+	    src_parts, sid, src_dev, sizeof src_dev, NULL,
+	    raw_dev_name, true))
+		return false;
+	if (!dest_parts->pscheme->get_part_device(
+	    dest_parts, did, target_dev, sizeof target_dev, NULL,
+	    raw_dev_name, true))
+		return false;
+
+	return run_program(RUN_DISPLAY | RUN_PROGRESS, 
+	    "progress -f %s -b 1m dd bs=1m of=%s",
+	    src_dev, target_dev) == 0;
 }

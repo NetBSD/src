@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.4 2019/10/26 07:32:52 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.5 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -63,6 +63,34 @@ partitions_read_disk(const char *dev, daddr_t disk_size, bool no_mbr)
 			return parts;
 	}
 	return NULL;
+}
+
+bool
+generic_adapt_foreign_part_info(const struct disk_partitions *myself,
+    struct disk_part_info *dest,
+    const struct disk_partitioning_scheme *src_scheme,
+    const struct disk_part_info *src)
+{
+	*dest = *src;
+	if (myself->pscheme == src_scheme)
+		return true;	/* no conversion needed */
+
+	if (src->nat_type == NULL)
+		return false;
+
+	/* slightly simplistic, enhance when needed */
+	dest->nat_type = myself->pscheme->get_fs_part_type(dest->fs_type,
+	    dest->fs_sub_type);
+	if (dest->nat_type == NULL)
+		dest->nat_type = myself->pscheme->get_generic_part_type(
+		    src->nat_type->generic_ptype);
+	if (dest->nat_type == NULL)
+		dest->nat_type = myself->pscheme->create_unknown_part_type();
+	if (dest->nat_type == NULL)
+		dest->nat_type = myself->pscheme->get_generic_part_type(
+		    PT_unknown);
+
+	return true;
 }
 
 /*************** global init ****************************************/
@@ -170,4 +198,16 @@ static const struct part_scheme_desc all_descs[] = {
 	*out = NULL;
 
 	free(is_available);
+}
+
+/*
+ * Final cleanup
+ */
+void
+partitions_cleanup(void)
+{
+	for (size_t i = 0; i < num_available_part_schemes; i++)
+		if (available_part_schemes[i]->cleanup != NULL)
+			available_part_schemes[i]->cleanup();
+	free(available_part_schemes);
 }

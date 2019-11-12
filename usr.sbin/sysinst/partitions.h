@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.7 2019/10/25 12:49:58 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.8 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -233,6 +233,15 @@ struct disk_partitioning_scheme {
 	 */
 	const struct part_type_desc * (*create_custom_part_type)
 	    (const char *custom, const char **err_msg);
+	/*
+	 * Return a usable internal partition type representation
+	 * for types that are not otherwise mappable.
+	 * This could be FS_OTHER for disklabel, or a randomly
+	 * created type guid for GPT. This type may or may not be
+	 * in the regular type list. If not, it needs to behave like a
+	 * custom type.
+	 */
+	const struct part_type_desc * (*create_unknown_part_type)(void);
 
 	/*
 	 * Global attributes
@@ -343,8 +352,10 @@ struct disk_partitioning_scheme {
 	 * This mostly adjusts flags and partition type pointers (using
 	 * more lose matching than add_partition would do).
 	 */
-	bool (*adapt_foreign_part_info)(const struct disk_partitions*,
-	    const struct disk_part_info *src, struct disk_part_info *dest);
+	bool (*adapt_foreign_part_info)(
+	    const struct disk_partitions *myself, struct disk_part_info *dest,
+	    const struct disk_partitioning_scheme *src_scheme,
+	    const struct disk_part_info *src);
 
 	/*
 	 * Update data for an existing partition
@@ -491,6 +502,9 @@ struct disk_partitioning_scheme {
 
 	/* Free all the data */
 	void (*free)(struct disk_partitions*);
+
+	/* Scheme global cleanup */
+	void (*cleanup)(void);
 };
 
 /*
@@ -552,6 +566,16 @@ struct disk_partitions *
 partitions_read_disk(const char *, daddr_t disk_size, bool no_mbr);
 
 /*
- * One time initialization
+ * Generic part info adaption, may be overriden by individual partitionin
+ * schemes
+ */
+bool generic_adapt_foreign_part_info(
+    const struct disk_partitions *myself, struct disk_part_info *dest,
+    const struct disk_partitioning_scheme *src_scheme,
+    const struct disk_part_info *src);
+
+/*
+ * One time initialization and clenaup
  */
 void partitions_init(void);
+void partitions_cleanup(void);

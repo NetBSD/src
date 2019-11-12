@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.16 2019/10/02 11:16:04 maya Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.17 2019/11/12 16:33:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -318,7 +318,7 @@ message fspart
 {Nachfolgend sehen Sie Ihre $2 Partitionen für $0.
 Dies ist die letzte Chance, diese zu ändern.
 
-Flags: $3(F)ormatieren$4.   Gesamtgröße: $5,  noch frei: $6}
+Flags: $3(F)ormatieren$4.   Gesamtgröße: $5, frei: $6}
 
 message ptnheaders_start	{Start}
 message ptnheaders_end		{Ende}
@@ -1302,6 +1302,7 @@ message	custom_type	{Unbekannt}
 message	cancel		{Abbrechen}
 
 message	out_of_range	{Ungültiger Wert}
+message	invalid_guid	{Ungültige GUID}
 
 message	reedit_partitions	{Erneut bearbeiten}
 message abort_installation	{Installation abbrechen}
@@ -1459,6 +1460,9 @@ Wählen Sie die Partition, die Sie verändern möchten:
 message ptn_install {Installation}
 message	ptn_instflag_desc	{(I)nstalllieren, }
 
+message clone_flag	{C}
+message clone_flag_desc	{, (C)lone}
+
 message parttype_gpt {Guid Partition Table (GPT)}
 message parttype_gpt_short {GPT}
 
@@ -1483,3 +1487,14 @@ message	gpt_flag_desc	{, (S)tart}
 message size_ptn_not_mounted		{(Sonstige: $0)}
 
 message running_system			{aktuelles System}
+
+message clone_from_elsewhere		{Externe Partition(en) duplizieren}
+message select_foreign_part		{Wählen Sie eine Quellpartition:}
+message select_source_hdr
+{Zur Zeit ausgwählte Quellpartitionen:}
+message clone_with_data			{Auch die Inhalte duplizieren}
+message	select_source_add		{Weitere Partition hinzufügen}
+message clone_target_end		{Als letzte hinzufügen}
+message clone_target_hdr
+{Einfügen der duplizierten Partitionen vor:}
+message clone_target_disp		{duplizierte Partition(en)}
