@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.21 2019/08/27 17:23:24 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.22 2019/11/12 16:33:14 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -74,6 +74,8 @@
 #include <unistd.h>
 #include <fcntl.h>
 #include <util.h>
+#include <paths.h>
+#include <sys/ioctl.h>
 #include "defs.h"
 #include "mbr.h"
 #include "md.h"
@@ -87,6 +89,9 @@
 #define MAXCYL		1023    /* Possibly 1024 */
 #define MAXHEAD		255     /* Possibly 256 */
 #define MAXSECTOR	63
+
+
+#define	MBR_UNKNOWN_PTYPE	94	/* arbitrary not widely used value */
 
 
 /* A list of predefined partition types */
@@ -588,7 +593,7 @@ static int
 write_mbr(const char *disk, mbr_info_t *mbri, int bsec, int bhead, int bcyl)
 {
 	char diskpath[MAXPATHLEN];
-	int fd, i, ret = 0;
+	int fd, i, ret = 0, bits = 0;
 	struct mbr_partition *mbrp;
 	u_int32_t pstart, psize;
 #ifdef BOOTSEL
@@ -603,6 +608,10 @@ write_mbr(const char *disk, mbr_info_t *mbri, int bsec, int bhead, int bcyl)
 	/* Open the disk. */
 	fd = opendisk(disk, O_WRONLY, diskpath, sizeof(diskpath), 0);
 	if (fd < 0)
+		return -1;
+
+	/* Remove all wedges */
+	if (ioctl(fd, DIOCRMWEDGES, &bits) == -1)
 		return -1;
 
 #ifdef BOOTSEL
@@ -646,6 +655,7 @@ write_mbr(const char *disk, mbr_info_t *mbri, int bsec, int bhead, int bcyl)
 #endif
 
 	for (ext = mbri; ext != NULL; ext = ext->extended) {
+		memset(mbri->wedge, 0, sizeof mbri->wedge);
 		sector = ext->sector;
 		mbrsec = ext->mbr;	/* copy sector */
 		mbrp = &mbrsec.mbr_parts[0];
@@ -830,7 +840,7 @@ mbr_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 		return NULL;
 
 	parts->dp.pscheme = &mbr_parts;
-	parts->dp.disk = disk;
+	parts->dp.disk = strdup(disk);
 	if (len > mbr_parts.size_limit)
 		len = mbr_parts.size_limit;
 	parts->dp.disk_start = start;
@@ -894,7 +904,7 @@ mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len,
 		return NULL;
 
 	parts->dp.pscheme = scheme;
-	parts->dp.disk = disk;
+	parts->dp.disk = strdup(disk);
 	if (len >= mbr_parts.size_limit)
 		len = mbr_parts.size_limit;
 	parts->dp.disk_start = start;
@@ -1127,6 +1137,16 @@ mbr_custom_part_type(const char *custom, const char **err_msg)
 }
 
 static const struct part_type_desc *
+mbr_create_unknown_part_type(void)
+{
+
+	if (mbr_gen_type_desc[MBR_UNKNOWN_PTYPE].gen.short_desc != NULL)
+		return &mbr_gen_type_desc[MBR_UNKNOWN_PTYPE].gen;
+
+	return mbr_new_custom_part_type(MBR_UNKNOWN_PTYPE);
+}
+
+static const struct part_type_desc *
 mbr_get_gen_type_desc(unsigned int pt)
 {
 
@@ -1231,9 +1251,77 @@ mbr_do_get_part_info(const struct disk_partitions *arg, part_id id,
 	mbr_partition_to_info(mp, mb->sector, info);
 	if (mb->last_mounted[i] != NULL && mb->last_mounted[i][0] != 0)
 		info->last_mounted = mb->last_mounted[i];
-	info->fs_type = mb->fs_type[i];
-	info->fs_sub_type = mb->fs_sub_type[i];
+	if (mb->fs_type[i] != FS_UNUSED) {
+		info->fs_type = mb->fs_type[i];
+		info->fs_sub_type = mb->fs_sub_type[i];
+	} else {
+		info->fs_sub_type = 0;
+		switch (mp->mbrp_type) {
+		case MBR_PTYPE_FAT12:
+		case MBR_PTYPE_FAT16S:
+		case MBR_PTYPE_FAT16B:
+		case MBR_PTYPE_FAT32:
+		case MBR_PTYPE_FAT32L:
+		case MBR_PTYPE_FAT16L:
+		case MBR_PTYPE_OS2_DOS12:
+		case MBR_PTYPE_OS2_DOS16S:
+		case MBR_PTYPE_OS2_DOS16B:
+		case MBR_PTYPE_HID_FAT32:
+		case MBR_PTYPE_HID_FAT32_LBA:
+		case MBR_PTYPE_HID_FAT16_LBA:
+		case MBR_PTYPE_MDOS_FAT12:
+		case MBR_PTYPE_MDOS_FAT16S:
+		case MBR_PTYPE_MDOS_EXT:
+		case MBR_PTYPE_MDOS_FAT16B:
+		case MBR_PTYPE_SPEEDSTOR_16S:
+		case MBR_PTYPE_EFI:
+			info->fs_type = FS_MSDOS;
+			break;
+		case MBR_PTYPE_XENIX_ROOT:
+		case MBR_PTYPE_XENIX_USR:
+			info->fs_type = FS_SYSV;
+			break;
+		case MBR_PTYPE_NTFS:
+			info->fs_type = FS_NTFS;
+			break;
+		case MBR_PTYPE_APPLE_HFS:
+			info->fs_type = FS_HFS;
+			break;
+		case MBR_PTYPE_VMWARE:
+			info->fs_type = FS_VMFS;
+			break;
+		case MBR_PTYPE_AST_SWAP:
+		case MBR_PTYPE_DRDOS_LSWAP:
+		case MBR_PTYPE_LNXSWAP:
+		case MBR_PTYPE_BSDI_SWAP:
+		case MBR_PTYPE_HID_LNX_SWAP:
+		case MBR_PTYPE_VMWARE_SWAP:
+			info->fs_type = FS_SWAP;
+			break;
+		}
+	}
 	return true;
+}
+
+static bool
+get_wedge_devname(const struct disk_partitions *arg, part_id id,
+    const mbr_info_t *mb, int i, bool primary,   
+    const struct mbr_partition *mp, void *cookie)
+{
+	char **res = cookie;
+
+	if (!res)
+		return false;
+
+	*res = __UNCONST(mb->wedge[i]);
+	return true;
+}
+
+static bool
+mbr_part_get_wedge(const struct disk_partitions *arg, part_id id,
+    char **res)
+{
+	return mbr_part_apply(arg, id, get_wedge_devname, res);
 }
 
 static bool
@@ -2382,17 +2470,49 @@ mbr_can_add_partition(const struct disk_partitions *arg)
 }
 
 static void
+mbr_free_wedge(int *fd, const char *disk, const char *wedge)
+{
+	struct dkwedge_info dkw;
+	char diskpath[MAXPATHLEN];
+
+	if (*fd == -1)
+		*fd = opendisk(disk, O_RDWR, diskpath,
+		    sizeof(diskpath), 0);
+	if (*fd != -1) {
+		memset(&dkw, 0, sizeof(dkw));
+		strlcpy(dkw.dkw_devname, wedge,
+		    sizeof(dkw.dkw_devname));
+		ioctl(*fd, DIOCDWEDGE, &dkw);
+	}
+}
+
+static void
 mbr_free(struct disk_partitions *arg)
 {
 	struct mbr_disk_partitions *parts = (struct mbr_disk_partitions*)arg;
+	mbr_info_t *m;
+	int i, fd;
 
 	assert(parts != NULL);
+
+	fd = -1;
+	m = &parts->mbr;
+	do {
+		for (i = 0; i < MBR_PART_COUNT; i++) {
+			if (m->wedge[i][0] != 0)
+				mbr_free_wedge(&fd, arg->disk, m->wedge[i]);
+		}
+	} while ((m = m->extended));
+
+	if (fd != -1)
+		close(fd);
 
 	if (parts->dlabel)
 		parts->dlabel->pscheme->free(parts->dlabel);
 
 	free_mbr_info(parts->mbr.extended);
 	free_last_mounted(&parts->mbr);
+	free(__UNCONST(parts->dp.disk));
 	free(parts);
 }
 
@@ -2677,6 +2797,103 @@ mbr_part_alignment(const struct disk_partitions *arg)
 }
 
 static bool
+add_wedge(const char *disk, daddr_t start, daddr_t size,
+    char *wname, size_t max_len)
+{
+	struct dkwedge_info dkw;
+	char diskpath[MAXPATHLEN];
+	int fd;
+
+	memset(&dkw, 0, sizeof(dkw));
+	dkw.dkw_offset = start;
+	dkw.dkw_size = size;
+	snprintf((char*)dkw.dkw_wname, sizeof dkw.dkw_wname,
+	    "%s_%" PRIi64 "@%" PRIi64, (const char*)disk, size, start);
+
+	*wname = 0;
+
+	fd = opendisk(disk, O_RDWR, diskpath, sizeof(diskpath), 0);
+	if (fd < 0)
+		return false;
+	if (ioctl(fd, DIOCAWEDGE, &dkw) == -1) {
+		close(fd);
+		return false;
+	}
+	close(fd);
+	strlcpy(wname, dkw.dkw_devname, max_len);
+	return true;
+}
+
+static bool
+mbr_get_part_device(const struct disk_partitions *arg,
+    part_id ptn, char *devname, size_t max_devname_len, int *part,
+    enum dev_name_usage usage, bool with_path)
+{
+	const struct mbr_disk_partitions *parts =
+	    (const struct mbr_disk_partitions*)arg;
+	struct disk_part_info info, tmp;
+	part_id dptn;
+	char *wedge_dev;
+
+	if (!mbr_get_part_info(arg, ptn, &info))
+		return false;
+
+	if (!mbr_part_get_wedge(arg, ptn, &wedge_dev) || wedge_dev == NULL)
+		return false;
+
+	if (wedge_dev[0] == 0) {
+		/*
+		 * If we have secondary partitions, try to find a match there
+		 * and use that...
+		 */
+		if (parts->dlabel != NULL) {
+			for (dptn = 0; dptn < parts->dlabel->num_part; dptn++) {
+				if (!parts->dlabel->pscheme->get_part_info(
+				    parts->dlabel, dptn, &tmp))
+					continue;
+				if (tmp.start != info.start ||
+				    tmp.size != info.size)
+					continue;
+				return parts->dlabel->pscheme->get_part_device(
+				    parts->dlabel, dptn, devname,
+				     max_devname_len,
+				    part, usage, with_path);
+			}
+		}
+
+		/*
+		 * Configure a new wedge and remember the name
+		 */
+		if (!add_wedge(arg->disk, info.start, info.size, wedge_dev,
+		    MBR_DEV_LEN))
+			return false;
+	}
+
+	assert(wedge_dev[0] != 0);
+
+	switch (usage) {
+	case logical_name:
+	case plain_name:
+		if (with_path)
+			snprintf(devname, max_devname_len, _PATH_DEV "%s",
+			    wedge_dev);
+		else
+			strlcpy(devname, wedge_dev, max_devname_len);
+		return true;
+	case raw_dev_name:
+		if (with_path)
+			snprintf(devname, max_devname_len, _PATH_DEV "r%s",
+			    wedge_dev);
+		else
+			snprintf(devname, max_devname_len, "r%s",
+			    wedge_dev);
+		return true;
+	default:
+		return false;
+	}
+}
+
+static bool
 is_custom_attribute_writable(const struct disk_partitions *arg, part_id id,
     const mbr_info_t *mb, int i, bool primary,
     const struct mbr_partition *mp, void *cookie)
@@ -2766,16 +2983,19 @@ mbr_parts = {
 	.custom_attribute_toggle = mbr_custom_attribute_toggle,
 	.custom_attribute_set_str = mbr_custom_attribute_set_str,
 	.get_part_types_count = mbr_get_part_type_count,
+	.adapt_foreign_part_info = generic_adapt_foreign_part_info,
 	.get_part_type = mbr_get_part_type,
 	.get_fs_part_type = mbr_get_fs_part_type,
 	.get_generic_part_type = mbr_get_generic_part_type,
 	.create_custom_part_type = mbr_custom_part_type,
+	.create_unknown_part_type = mbr_create_unknown_part_type,
 	.secondary_partitions = mbr_read_disklabel,
 	.write_to_disk = mbr_write_to_disk,
 	.read_from_disk = mbr_read_from_disk,
 	.create_new_for_disk = mbr_create_new,
 	.guess_disk_geom = mbr_guess_geom,
 	.change_disk_geom = mbr_change_disk_geom,
+	.get_part_device = mbr_get_part_device,
 	.max_free_space_at = mbr_max_part_size,
 	.get_free_spaces = mbr_get_free_spaces,
 	.set_part_info = mbr_set_part_info,
