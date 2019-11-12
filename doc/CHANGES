@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2610 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2611 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -39,7 +39,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	kernel: Add vHCI, a driver that allows to send and receive USB
 		packets from userland. [maxv 20190914]
 	mos(4): Ported driver for MosChip MCS7730/7830/7832 USB ethernet.
-		[mrg 20190814]
+		[mrg 20190920]
 	libpcap: Import 1.9.1. [christos 20191001]
 	tcpdump(8): Import 4.9.3. [christos 20191001]
 	rescue(8): Moved into a separate, rescue-only set. [maya 20191001]

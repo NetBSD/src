@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.148 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.149 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12594,6 +12594,7 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		SIGTRAP and si_code TRAP_SCE/TRAP_SCX. [kamil 20190506]
 	installboot(8): Add support for NetBSD/evbarm boards that use
 		u-boot for bootstrap. [thorpej 20190506]
+	moscom(4): Obsoleted by umcs(4).  [mrg 20190507]
 	ifmedia(4): Extend Ethernet's ifmedia word's subword up to 255.
 		[msaitoh 20190517]
 	mount_9p(8): Initial support for 9P2000.u. [ozaki-r 20190517]
