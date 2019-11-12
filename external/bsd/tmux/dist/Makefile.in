@@ -162,20 +162,21 @@ dist_tmux_OBJECTS = alerts.$(OBJEXT) arguments.$(OBJEXT) \
 	cmd-pipe-pane.$(OBJEXT) cmd-queue.$(OBJEXT) \
 	cmd-refresh-client.$(OBJEXT) cmd-rename-session.$(OBJEXT) \
 	cmd-rename-window.$(OBJEXT) cmd-resize-pane.$(OBJEXT) \
-	cmd-respawn-pane.$(OBJEXT) cmd-respawn-window.$(OBJEXT) \
-	cmd-rotate-window.$(OBJEXT) cmd-run-shell.$(OBJEXT) \
-	cmd-save-buffer.$(OBJEXT) cmd-select-layout.$(OBJEXT) \
-	cmd-select-pane.$(OBJEXT) cmd-select-window.$(OBJEXT) \
-	cmd-send-keys.$(OBJEXT) cmd-set-buffer.$(OBJEXT) \
-	cmd-set-environment.$(OBJEXT) cmd-set-hook.$(OBJEXT) \
-	cmd-set-option.$(OBJEXT) cmd-show-environment.$(OBJEXT) \
-	cmd-show-messages.$(OBJEXT) cmd-show-options.$(OBJEXT) \
-	cmd-source-file.$(OBJEXT) cmd-split-window.$(OBJEXT) \
-	cmd-string.$(OBJEXT) cmd-swap-pane.$(OBJEXT) \
-	cmd-swap-window.$(OBJEXT) cmd-switch-client.$(OBJEXT) \
-	cmd-unbind-key.$(OBJEXT) cmd-wait-for.$(OBJEXT) cmd.$(OBJEXT) \
-	colour.$(OBJEXT) control-notify.$(OBJEXT) control.$(OBJEXT) \
-	environ.$(OBJEXT) format.$(OBJEXT) grid-view.$(OBJEXT) \
+	cmd-resize-window.$(OBJEXT) cmd-respawn-pane.$(OBJEXT) \
+	cmd-respawn-window.$(OBJEXT) cmd-rotate-window.$(OBJEXT) \
+	cmd-run-shell.$(OBJEXT) cmd-save-buffer.$(OBJEXT) \
+	cmd-select-layout.$(OBJEXT) cmd-select-pane.$(OBJEXT) \
+	cmd-select-window.$(OBJEXT) cmd-send-keys.$(OBJEXT) \
+	cmd-set-buffer.$(OBJEXT) cmd-set-environment.$(OBJEXT) \
+	cmd-set-hook.$(OBJEXT) cmd-set-option.$(OBJEXT) \
+	cmd-show-environment.$(OBJEXT) cmd-show-messages.$(OBJEXT) \
+	cmd-show-options.$(OBJEXT) cmd-source-file.$(OBJEXT) \
+	cmd-split-window.$(OBJEXT) cmd-string.$(OBJEXT) \
+	cmd-swap-pane.$(OBJEXT) cmd-swap-window.$(OBJEXT) \
+	cmd-switch-client.$(OBJEXT) cmd-unbind-key.$(OBJEXT) \
+	cmd-wait-for.$(OBJEXT) cmd.$(OBJEXT) colour.$(OBJEXT) \
+	control-notify.$(OBJEXT) control.$(OBJEXT) environ.$(OBJEXT) \
+	format.$(OBJEXT) format-draw.$(OBJEXT) grid-view.$(OBJEXT) \
 	grid.$(OBJEXT) hooks.$(OBJEXT) input-keys.$(OBJEXT) \
 	input.$(OBJEXT) job.$(OBJEXT) key-bindings.$(OBJEXT) \
 	key-string.$(OBJEXT) layout-custom.$(OBJEXT) \
@@ -475,6 +476,7 @@ dist_tmux_SOURCES = \
 	cmd-rename-session.c \
 	cmd-rename-window.c \
 	cmd-resize-pane.c \
+	cmd-resize-window.c \
 	cmd-respawn-pane.c \
 	cmd-respawn-window.c \
 	cmd-rotate-window.c \
@@ -506,6 +508,7 @@ dist_tmux_SOURCES = \
 	control.c \
 	environ.c \
 	format.c \
+	format-draw.c \
 	grid-view.c \
 	grid.c \
 	hooks.c \
@@ -698,6 +701,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-rename-session.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-rename-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-resize-pane.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-resize-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-respawn-pane.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-respawn-window.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/cmd-rotate-window.Po@am__quote@
@@ -727,6 +731,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control-notify.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/control.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/environ.Po@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format-draw.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/format.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid-view.Po@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@./$(DEPDIR)/grid.Po@am__quote@
@@ -1187,7 +1192,7 @@ install-exec-hook:
 			>$(srcdir)/tmux.1.mdoc; \
 	else \
 		sed -e "s|@SYSCONFDIR@|$(sysconfdir)|g" $(srcdir)/tmux.1| \
-			$(AWK) -f$(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
+			$(AWK) -f $(srcdir)/mdoc2man.awk >$(srcdir)/tmux.1.man; \
 	fi
 	$(mkdir_p) $(DESTDIR)$(mandir)/man1
 	$(INSTALL_DATA) $(srcdir)/tmux.1.@MANFORMAT@ \

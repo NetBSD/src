@@ -1,6 +1,6 @@
 # configure.ac
 
-AC_INIT(tmux, 2.8)
+AC_INIT([tmux], 2.9a)
 AC_PREREQ([2.60])
 
 AC_CONFIG_AUX_DIR(etc)
@@ -35,7 +35,7 @@ AC_USE_SYSTEM_EXTENSIONS
 test "$sysconfdir" = '${prefix}/etc' && sysconfdir=/etc
 
 # Is this --enable-debug?
-test "x$VERSION" = xmaster && enable_debug=yes
+case "x$VERSION" in xnext*) enable_debug=yes;; esac
 AC_ARG_ENABLE(
 	debug,
 	AC_HELP_STRING(--enable-debug, enable debug build flags),
@@ -477,6 +477,9 @@ if test "x$found_forkpty" = xyes; then
 	AC_DEFINE(HAVE_FORKPTY)
 fi
 AM_CONDITIONAL(NEED_FORKPTY, test "x$found_forkpty" = xno)
+
+# Look for kinfo_getfile in libutil.
+AC_SEARCH_LIBS(kinfo_getfile, [util util-freebsd])
 
 # Look for a suitable queue.h.
 AC_CHECK_DECL(
