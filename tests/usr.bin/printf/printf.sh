@@ -1,4 +1,4 @@
-# $NetBSD: printf.sh,v 1.4 2019/07/21 15:25:59 kre Exp $
+# $NetBSD: printf.sh,v 1.5 2019/11/12 18:59:51 kre Exp $
 #
 # Copyright (c) 2018 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -118,7 +118,7 @@ expect()
 		(${WANT})
 		    ;;
 		(*) 
-		    atf_fail "$* ... Expected <<${WANT}>> Received <<${RES}>"
+		    atf_fail "$* ... Expected <<${WANT}>> Received <<${RES}>>"
 		    ;;
 		esac
 	fi
