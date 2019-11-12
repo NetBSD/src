@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2019/10/13 07:28:07 mrg Exp $
+# $NetBSD: Makefile,v 1.23 2019/11/12 21:02:46 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -56,6 +56,7 @@ cmd-refresh-client.c \
 cmd-rename-session.c \
 cmd-rename-window.c \
 cmd-resize-pane.c \
+cmd-resize-window.c \
 cmd-respawn-pane.c \
 cmd-respawn-window.c \
 cmd-rotate-window.c \
@@ -86,6 +87,7 @@ control-notify.c \
 control.c \
 environ.c \
 format.c \
+format-draw.c \
 grid-view.c \
 grid.c \
 hooks.c \
@@ -206,13 +208,13 @@ CPPFLAGS+=	\
 -DPACKAGE=\"tmux\" \
 -DPACKAGE_BUGREPORT=\"\" \
 -DPACKAGE_NAME=\"tmux\" \
--DPACKAGE_STRING=\"tmux\ 2.8\" \
+-DPACKAGE_STRING=\"tmux\ 2.9a\" \
 -DPACKAGE_TARNAME=\"tmux\" \
 -DPACKAGE_URL=\"\" \
--DPACKAGE_VERSION=\"2.8\" \
+-DPACKAGE_VERSION=\"2.9a\" \
 -DSTDC_HEADERS=1 \
 -DTMUX_CONF="\"/etc/tmux.conf\"" \
--DVERSION=\"2.8\" \
+-DVERSION=\"2.9a\" \
 -D_ALL_SOURCE=1 \
 -D_GNU_SOURCE=1 \
 -D_OPENBSD_SOURCE \
