@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.15 2019/08/16 15:36:17 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.16 2019/11/12 18:28:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -762,9 +762,14 @@
 #define 	IA32_ARCH_SKIP_L1DFL_VMENTRY 0x08
 #define 	IA32_ARCH_SSB_NO	0x10
 #define 	IA32_ARCH_MDS_NO	0x20
+#define 	IA32_ARCH_TSX_CTRL	0x80
+#define 	IA32_ARCH_TAA_NO	0x100
 #define MSR_IA32_FLUSH_CMD	0x10b
 #define 	IA32_FLUSH_CMD_L1D_FLUSH 0x01
 #define MSR_TSX_FORCE_ABORT	0x10f
+#define MSR_IA32_TSX_CTRL	0x122
+#define 	IA32_TSX_CTRL_RTM_DISABLE	__BIT(0)
+#define 	IA32_TSX_CTRL_TSX_CPUID_CLEAR	__BIT(1)
 #define MSR_BBL_CR_ADDR		0x116	/* PII+ only */
 #define MSR_BBL_CR_DECC		0x118	/* PII+ only */
 #define MSR_BBL_CR_CTL		0x119	/* PII+ only */
