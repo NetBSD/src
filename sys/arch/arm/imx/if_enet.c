@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.27 2019/09/20 08:48:55 maxv Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.28 2019/11/12 05:09:29 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.27 2019/09/20 08:48:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.28 2019/11/12 05:09:29 hkenken Exp $");
 
 #include "vlan.h"
 
@@ -1769,9 +1769,9 @@ enet_init_regs(struct enet_softc *sc, int init)
 	ENET_REG_WRITE(sc, ENET_MIBC, ENET_MIBC_MIB_CLEAR);
 	ENET_REG_WRITE(sc, ENET_MIBC, 0);
 
-	/* MII speed setup. MDCclk(=2.5MHz) = ENET_PLL/((val+1)*2) */
-	val = ((sc->sc_pllclock) / 500000 - 1) / 10;
-	ENET_REG_WRITE(sc, ENET_MSCR, val << 1);
+	/* MII speed setup. MDCclk(=2.5MHz) = (internal module clock)/((val+1)*2) */
+	val = (sc->sc_clock + (5000000 - 1)) / 5000000 - 1;
+	ENET_REG_WRITE(sc, ENET_MSCR, __SHIFTIN(val, ENET_MSCR_MII_SPEED));
 
 	/* Opcode/Pause Duration */
 	ENET_REG_WRITE(sc, ENET_OPD, 0x00010020);
