@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_ccm.c,v 1.14 2019/09/02 01:28:41 hkenken Exp $	*/
+/*	$NetBSD: imx6_ccm.c,v 1.15 2019/11/12 04:32:36 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2010-2012, 2014  Genetec Corporation.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.14 2019/09/02 01:28:41 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_ccm.c,v 1.15 2019/11/12 04:32:36 hkenken Exp $");
 
 #include "opt_cputypes.h"
 
@@ -1165,7 +1165,7 @@ imxccm_clk_get_rate_div(struct imxccm_softc *sc, struct imx6_clk *iclk)
 		KASSERT(div->tbl != NULL);
 
 		for (int i = 0; div->tbl[i] != 0; i++)
-			if (div->tbl[i] == n)
+			if (i == n)
 				rate /= div->tbl[i];
 	} else {
 		rate /= n + 1;
@@ -1275,11 +1275,54 @@ imxccm_clk_get_parent_mux(struct imxccm_softc *sc, struct imx6_clk *iclk)
 
 static int
 imxccm_clk_set_rate_pll(struct imxccm_softc *sc,
-    struct imx6_clk *eclk, u_int rate)
+    struct imx6_clk *iclk, u_int rate)
 {
 	/* ToDo */
 
 	return EOPNOTSUPP;
+}
+
+static int
+imxccm_clk_set_rate_div(struct imxccm_softc *sc,
+    struct imx6_clk *iclk, u_int rate)
+{
+        struct imx6_clk_div *div = &iclk->clk.div;
+        struct imx6_clk *parent;
+
+        KASSERT(iclk->type == IMX6_CLK_DIV);
+
+        parent = imx6_clk_find(iclk->parent);
+        KASSERT(parent != NULL);
+
+        u_int rate_parent = imxccm_clk_get_rate(sc, &parent->base);
+        u_int divider = rate_parent / rate;
+
+        KASSERT(div->tbl != NULL);
+
+        bus_space_handle_t ioh;
+        if (div->base == IMX6_CLK_REG_CCM_ANALOG)
+                ioh = sc->sc_ioh_analog;
+        else
+                ioh = sc->sc_ioh;
+
+        uint32_t v = bus_space_read_4(sc->sc_iot, ioh, div->reg);
+        v &= ~div->mask;
+        if (div->type == IMX6_CLK_DIV_TABLE) {
+                int n = -1;
+                for (int i = 0; div->tbl[i] != 0; i++)
+                        if (div->tbl[i] == divider)
+                                n = i;
+
+                if (n >= 0)
+                        v |= __SHIFTIN(n, div->mask);
+                else
+                        return EINVAL;
+        } else {
+                v |= __SHIFTIN(divider - 1, div->mask);
+        }
+        bus_space_write_4(sc->sc_iot, ioh, div->reg, v);
+
+        return 0;
 }
 
 /*
@@ -1345,13 +1388,15 @@ imxccm_clk_set_rate(void *priv, struct clk *clk, u_int rate)
 	switch (iclk->type) {
 	case IMX6_CLK_FIXED:
 	case IMX6_CLK_FIXED_FACTOR:
-		return EIO;
+		return ENXIO;
 	case IMX6_CLK_PLL:
 		return imxccm_clk_set_rate_pll(sc, iclk, rate);
 	case IMX6_CLK_MUX:
-		return EIO;
+		return ENXIO;
 	case IMX6_CLK_GATE:
+		return ENXIO;
 	case IMX6_CLK_DIV:
+		return imxccm_clk_set_rate_div(sc, iclk, rate);
 	case IMX6_CLK_PFD:
 		return EINVAL;
 	default:
