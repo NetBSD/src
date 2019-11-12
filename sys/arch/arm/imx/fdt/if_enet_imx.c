@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.6 2019/11/12 08:40:57 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.6 2019/11/12 08:40:57 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -91,7 +91,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_clk_ipg = fdtbus_clock_get(phandle, "ipg");
-	if (sc->sc_clk_enet == NULL) {
+	if (sc->sc_clk_ipg == NULL) {
 		aprint_error(": couldn't get clock ipg\n");
 		goto failure;
 	}
