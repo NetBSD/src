@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.27 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.28 2019/11/12 19:44:46 maya Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.27 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.28 2019/11/12 19:44:46 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -847,7 +847,7 @@ vte_mediachange(struct ifnet *ifp)
 		aprint_error_dev(sc->vte_dev, "could not set media\n");
 		return error;
 	}
-											return 0;
+	return 0;
 
 }
 
