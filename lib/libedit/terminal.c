@@ -1,4 +1,4 @@
-/*	$NetBSD: terminal.c,v 1.40 2019/09/15 21:09:11 christos Exp $	*/
+/*	$NetBSD: terminal.c,v 1.41 2019/11/12 20:59:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)term.c	8.2 (Berkeley) 4/30/95";
 #else
-__RCSID("$NetBSD: terminal.c,v 1.40 2019/09/15 21:09:11 christos Exp $");
+__RCSID("$NetBSD: terminal.c,v 1.41 2019/11/12 20:59:46 christos Exp $");
 #endif
 #endif /* not lint && not SCCSID */
 
@@ -497,7 +497,7 @@ terminal_move_to_line(EditLine *el, int where)
 	if (where == el->el_cursor.v)
 		return;
 
-	if (where > el->el_terminal.t_size.v) {
+	if (where >= el->el_terminal.t_size.v) {
 #ifdef DEBUG_SCREEN
 		(void) fprintf(el->el_errfile,
 		    "%s: where is ridiculous: %d\r\n", __func__, where);
@@ -647,7 +647,8 @@ terminal_overwrite(EditLine *el, const wchar_t *cp, size_t n)
 	if (el->el_cursor.h >= el->el_terminal.t_size.h) {	/* wrap? */
 		if (EL_HAS_AUTO_MARGINS) {	/* yes */
 			el->el_cursor.h = 0;
-			el->el_cursor.v++;
+			if (el->el_cursor.v + 1 < el->el_terminal.t_size.v)
+				el->el_cursor.v++;
 			if (EL_HAS_MAGIC_MARGINS) {
 				/* force the wrap to avoid the "magic"
 				 * situation */
