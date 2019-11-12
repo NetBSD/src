@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.38 2019/10/24 18:18:00 kamil Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.39 2019/11/12 07:41:50 mrg Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,13 +31,15 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.38 2019/10/24 18:18:00 kamil Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.39 2019/11/12 07:41:50 mrg Exp $");
 #endif
+
+#include <sys/types.h>
+#include <sys/drvctlio.h>
 
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/types.h>
 #include <fcntl.h>
 #include <unistd.h>
 #include <err.h>
@@ -45,6 +47,8 @@ __RCSID("$NetBSD: usbdevs.c,v 1.38 2019/10/24 18:18:00 kamil Exp $");
 #include <locale.h>
 #include <langinfo.h>
 #include <iconv.h>
+#include <ctype.h>
+
 #include <dev/usb/usb.h>
 
 #define USBDEV "/dev/usb"
@@ -316,6 +320,50 @@ dumpone(char *name, int f, int addr)
 		usbdump(f);
 }
 
+static int
+getusbcount_device(int fd, const char *dev, int depth)
+{
+	struct devlistargs laa = {
+	    .l_childname = NULL,
+	    .l_children = 0,
+	};
+	size_t i;
+	size_t children;
+	int nbusses = 0;
+
+	if (depth && (dev == NULL || *dev == '\0'))
+		return 0;
+
+	/*
+	 * Look for children that match "usb[0-9]*".  Could maybe
+	 * simply return 1 here, but there's always a chance that
+	 * someone has eg, a USB to PCI bridge, with a USB
+	 * controller behind PCI.
+	 */
+	if (strncmp(dev, "usb", 3) == 0 && isdigit((int)dev[3]))
+		nbusses++;
+
+	strlcpy(laa.l_devname, dev, sizeof(laa.l_devname));
+
+	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
+		err(EXIT_FAILURE, "DRVLISTDEV");
+	children = laa.l_children;
+
+	laa.l_childname = malloc(children * sizeof(laa.l_childname[0]));
+	if (laa.l_childname == NULL)
+		err(EXIT_FAILURE, "out of memory");
+	if (ioctl(fd, DRVLISTDEV, &laa) == -1)
+		err(EXIT_FAILURE, "DRVLISTDEV");
+	if (laa.l_children > children)
+		err(EXIT_FAILURE, "DRVLISTDEV: number of children grew");
+
+	for (i = 0; i < laa.l_children; i++) {
+		nbusses += getusbcount_device(fd, laa.l_childname[i], depth+1);
+	}
+
+	return nbusses;
+}
+
 int
 main(int argc, char **argv)
 {
@@ -348,7 +396,17 @@ main(int argc, char **argv)
 	argv += optind;
 
 	if (dev == NULL) {
-		for (ncont = 0, i = 0; i < 16; i++) {
+		int nbusses;
+		int fd = open(DRVCTLDEV, O_RDONLY, 0);
+
+		/* If no drvctl configured, default to 16. */
+		if (fd != -1)
+			nbusses = getusbcount_device(fd, "", 0);
+		else
+			nbusses = 16;
+		close(fd);
+
+		for (ncont = 0, i = 0; i < nbusses; i++) {
 			snprintf(buf, sizeof(buf), "%s%d", USBDEV, i);
 			f = open(buf, O_RDONLY);
 			if (f >= 0) {
