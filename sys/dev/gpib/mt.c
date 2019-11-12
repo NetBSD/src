@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.32 2019/02/24 20:54:13 kamil Exp $ */
+/*	$NetBSD: mt.c,v 1.33 2019/11/12 13:17:44 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.32 2019/02/24 20:54:13 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.33 2019/11/12 13:17:44 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,6 +230,7 @@ mtattach(device_t parent, device_t self, void *aux)
 	struct cs80bus_attach_args *ca = aux;
 	int type;
 
+	sc->sc_dev = self;
 	sc->sc_ic = ca->ca_ic;
 	sc->sc_slave = ca->ca_slave;
 
