@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.62 2019/11/11 17:18:14 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.63 2019/11/12 19:24:08 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1506,4 +1506,10 @@ sys/dev/ic/nvme.c				1.47
 	nvme(4): Use the SET_FEATURES command to get the number of allocated
 	queues.
 	[nonaka, ticket #1432]
+
+sys/arch/x86/include/specialreg.h		1.157 (patch)
+sys/arch/x86/x86/spectre.c			1.31 (patch)
+
+	Mitigation for CVE-2019-11135: TSX Asynchronous Abort (TAA).
+	[maxv, ticket #1433]
 
