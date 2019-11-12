@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.267 2019/09/25 09:53:38 ozaki-r Exp $	*/
+/*	$NetBSD: key.c,v 1.268 2019/11/12 05:13:29 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.267 2019/09/25 09:53:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.268 2019/11/12 05:13:29 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -4883,14 +4883,20 @@ key_bb_match_withmask(const void *a1, const void *a2, u_int bits)
 }
 
 static void
-key_timehandler_spd(time_t now)
+key_timehandler_spd(void)
 {
 	u_int dir;
 	struct secpolicy *sp;
+	volatile time_t now;
 
 	for (dir = 0; dir < IPSEC_DIR_MAX; dir++) {
 	    retry:
 		mutex_enter(&key_spd.lock);
+		/*
+		 * To avoid for sp->created to overtake "now" because of
+		 * wating mutex, set time_uptime here.
+		 */
+		now = time_uptime;
 		SPLIST_WRITER_FOREACH(sp, dir) {
 			KASSERTMSG(sp->state != IPSEC_SPSTATE_DEAD,
 			    "sp->state=%u", sp->state);
@@ -4925,10 +4931,11 @@ key_timehandler_spd(time_t now)
 }
 
 static void
-key_timehandler_sad(time_t now)
+key_timehandler_sad(void)
 {
 	struct secashead *sah;
 	int s;
+	volatile time_t now;
 
 restart:
 	mutex_enter(&key_sad.lock);
@@ -4954,6 +4961,10 @@ restart:
 		/* if LARVAL entry doesn't become MATURE, delete it. */
 		mutex_enter(&key_sad.lock);
 	restart_sav_LARVAL:
+		/*
+		 * Same as key_timehandler_spd(), set time_uptime here.
+		 */
+		now = time_uptime;
 		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_LARVAL) {
 			if (now - sav->created > key_larval_lifetime) {
 				key_sa_chgstate(sav, SADB_SASTATE_DEAD);
@@ -4968,6 +4979,10 @@ restart:
 		 */
 	restart_sav_MATURE:
 		mutex_enter(&key_sad.lock);
+		/*
+		 * ditto
+		 */
+		now = time_uptime;
 		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_MATURE) {
 			/* we don't need to check. */
 			if (sav->lft_s == NULL)
@@ -5032,6 +5047,10 @@ restart:
 		/* check DYING entry to change status to DEAD. */
 		mutex_enter(&key_sad.lock);
 	restart_sav_DYING:
+		/*
+		 * ditto
+		 */
+		now = time_uptime;
 		SAVLIST_WRITER_FOREACH(sav, sah, SADB_SASTATE_DYING) {
 			/* we don't need to check. */
 			if (sav->lft_h == NULL)
@@ -5098,13 +5117,18 @@ restart:
 }
 
 static void
-key_timehandler_acq(time_t now)
+key_timehandler_acq(void)
 {
 #ifndef IPSEC_NONBLOCK_ACQUIRE
 	struct secacq *acq, *nextacq;
+	volatile time_t now;
 
     restart:
 	mutex_enter(&key_misc.lock);
+	/*
+	 * Same as key_timehandler_spd(), set time_uptime here.
+	 */
+	now = time_uptime;
 	LIST_FOREACH_SAFE(acq, &key_misc.acqlist, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime) {
 			LIST_REMOVE(acq, chain);
@@ -5118,10 +5142,11 @@ key_timehandler_acq(time_t now)
 }
 
 static void
-key_timehandler_spacq(time_t now)
+key_timehandler_spacq(void)
 {
 #ifdef notyet
 	struct secspacq *acq, *nextacq;
+	time_t now = time_uptime;
 
 	LIST_FOREACH_SAFE(acq, &key_misc.spacqlist, chain, nextacq) {
 		if (now - acq->created > key_blockacq_lifetime) {
@@ -5143,15 +5168,14 @@ static unsigned int key_timehandler_work_enqueued = 0;
 static void
 key_timehandler_work(struct work *wk, void *arg)
 {
-	time_t now = time_uptime;
 
 	/* We can allow enqueuing another work at this point */
 	atomic_swap_uint(&key_timehandler_work_enqueued, 0);
 
-	key_timehandler_spd(now);
-	key_timehandler_sad(now);
-	key_timehandler_acq(now);
-	key_timehandler_spacq(now);
+	key_timehandler_spd();
+	key_timehandler_sad();
+	key_timehandler_acq();
+	key_timehandler_spacq();
 
 	key_acquire_sendup_pending_mbuf();
 
