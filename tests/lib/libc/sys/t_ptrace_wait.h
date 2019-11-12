@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.17 2019/05/25 03:22:53 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.18 2019/11/12 18:18:04 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -673,6 +673,30 @@ trigger_bus(void)
 	/* Invalid memory access causes CPU trap, translated to SIGBUS */
 	*p = 'a';
 }
+
+struct lwp_event_count {
+	lwpid_t lec_lwp;
+	int lec_count;
+};
+
+static int *
+find_event_count(struct lwp_event_count list[], lwpid_t lwp, size_t max_lwps)
+{
+	size_t i;
+
+	for (i = 0; i < max_lwps; i++) {
+		if (list[i].lec_lwp == 0)
+			list[i].lec_lwp = lwp;
+		if (list[i].lec_lwp == lwp)
+			return &list[i].lec_count;
+	}
+
+	atf_tc_fail("More LWPs reported than expected");
+}
+
+#define FIND_EVENT_COUNT(list, lwp)			\
+	find_event_count(list, lwp, __arraycount(list))
+
 
 #if defined(TWAIT_HAVE_PID)
 #define ATF_TP_ADD_TC_HAVE_PID(a,b)	ATF_TP_ADD_TC(a,b)
