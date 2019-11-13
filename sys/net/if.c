@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.463 2019/10/06 15:11:17 uwe Exp $	*/
+/*	$NetBSD: if.c,v 1.464 2019/11/13 02:51:22 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.463 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.464 2019/11/13 02:51:22 ozaki-r Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2197,10 +2197,10 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
 	struct ifnet *ifp;
 	struct psref psref;
 
-	if (cmd != RTM_ADD || (ifa = rt->rt_ifa) == NULL ||
-	    (ifp = ifa->ifa_ifp) == NULL || (dst = rt_getkey(rt)) == NULL ||
-	    ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
+	if (cmd != RTM_ADD || ISSET(info->rti_flags, RTF_DONTCHANGEIFA))
 		return;
+	ifp = rt->rt_ifa->ifa_ifp;
+	dst = rt_getkey(rt);
 	if ((ifa = ifaof_ifpforaddr_psref(dst, ifp, &psref)) != NULL) {
 		rt_replace_ifa(rt, ifa);
 		if (ifa->ifa_rtrequest && ifa->ifa_rtrequest != link_rtrequest)
