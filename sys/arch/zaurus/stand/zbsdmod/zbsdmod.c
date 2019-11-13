@@ -1,4 +1,4 @@
-/*	$NetBSD: zbsdmod.c,v 1.11 2019/10/28 15:26:09 tsutsui Exp $	*/
+/*	$NetBSD: zbsdmod.c,v 1.12 2019/11/13 17:59:56 tsutsui Exp $	*/
 /*	$OpenBSD: zbsdmod.c,v 1.7 2005/05/02 02:45:29 uwe Exp $	*/
 
 /*
@@ -139,8 +139,8 @@ elf32bsdboot(void)
 			if (maxv < posv)
 				maxv = posv;
 		}
-		if (IS_DATA(phdr[i]) && IS_BSS(phdr[i])) {
-			posv += phdr[i].p_memsz;
+		if (IS_BSS(phdr[i])) {
+			posv += phdr[i].p_memsz - phdr[i].p_filesz;
 			if (maxv < posv)
 				maxv = posv;
 		}
