@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.5 2019/03/09 08:42:26 maxv Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.6 2019/11/13 12:55:10 maxv Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -82,8 +82,8 @@ struct pmap_page {
 #define	pp_link	pp_u.u_link
 	uint8_t pp_flags;
 	uint8_t pp_attrs;
-#define PP_ATTRS_M	0x01	/* Dirty */
-#define PP_ATTRS_U	0x02	/* Accessed */
+#define PP_ATTRS_D	0x01	/* Dirty */
+#define PP_ATTRS_A	0x02	/* Accessed */
 #define PP_ATTRS_W	0x04	/* Writable */
 };
 
