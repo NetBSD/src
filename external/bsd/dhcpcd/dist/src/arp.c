@@ -206,7 +206,6 @@ arp_validate(const struct interface *ifp, struct arphdr *arp)
 	return true;
 }
 
-
 static void
 arp_packet(struct interface *ifp, uint8_t *data, size_t len)
 {
@@ -280,9 +279,9 @@ arp_close(struct interface *ifp)
 }
 
 static void
-arp_tryfree(struct interface *ifp)
+arp_tryfree(struct iarp_state *state)
 {
-	struct iarp_state *state = ARP_STATE(ifp);
+	struct interface *ifp = state->ifp;
 
 	/* If there are no more ARP states, close the socket. */
 	if (TAILQ_FIRST(&state->arp_states) == NULL) {
@@ -302,15 +301,14 @@ arp_tryfree(struct interface *ifp)
 static void
 arp_read(void *arg)
 {
-	struct interface *ifp = arg;
-	struct iarp_state *state;
+	struct iarp_state *state = arg;
+	struct interface *ifp = state->ifp;
 	uint8_t buf[ARP_LEN];
 	ssize_t bytes;
 
 	/* Some RAW mechanisms are generic file descriptors, not sockets.
 	 * This means we have no kernel call to just get one packet,
 	 * so we have to process the entire buffer. */
-	state = ARP_STATE(ifp);
 	state->bpf_flags &= ~BPF_EOF;
 	state->bpf_flags |= BPF_READING;
 	while (!(state->bpf_flags & BPF_EOF)) {
@@ -329,7 +327,7 @@ arp_read(void *arg)
 	if (state != NULL) {
 		state->bpf_flags &= ~BPF_READING;
 		/* Try and free the state if nothing left to do. */
-		arp_tryfree(ifp);
+		arp_tryfree(state);
 	}
 }
 
@@ -343,7 +341,7 @@ arp_open(struct interface *ifp)
 		state->bpf_fd = bpf_open(ifp, bpf_arp);
 		if (state->bpf_fd == -1)
 			return -1;
-		eloop_event_add(ifp->ctx->eloop, state->bpf_fd, arp_read, ifp);
+		eloop_event_add(ifp->ctx->eloop, state->bpf_fd, arp_read, state);
 	}
 	return state->bpf_fd;
 }
@@ -571,6 +569,7 @@ arp_new(struct interface *ifp, const struct in_addr *addr)
 			logerr(__func__);
 			return NULL;
 		}
+		state->ifp = ifp;
 		state->bpf_fd = -1;
 		state->bpf_flags = 0;
 		TAILQ_INIT(&state->arp_states);
@@ -618,7 +617,7 @@ arp_free(struct arp_state *astate)
 	if (astate->free_cb)
 		astate->free_cb(astate);
 	free(astate);
-	arp_tryfree(ifp);
+	arp_tryfree(state);
 }
 
 void
