@@ -3465,23 +3465,10 @@ dhcp6_recvif(struct interface *ifp, const char *sfrom,
 }
 
 static void
-dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
+dhcp6_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, struct ipv6_addr *ia)
 {
-	struct sockaddr_in6 from;
-	unsigned char buf[64 * 1024]; /* Maximum UDP message size */
-	struct iovec iov = {
-		.iov_base = buf,
-		.iov_len = sizeof(buf),
-	};
-	unsigned char ctl[CMSG_SPACE(sizeof(struct in6_pktinfo))] = { 0 };
-	struct msghdr msg = {
-	    .msg_name = &from, .msg_namelen = sizeof(from),
-	    .msg_iov = &iov, .msg_iovlen = 1,
-	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
-	};
-	int s;
-	size_t len;
-	ssize_t bytes;
+	struct sockaddr_in6 *from = msg->msg_name;
+	size_t len = msg->msg_iov[0].iov_len;
 	char sfrom[INET6_ADDRSTRLEN];
 	struct interface *ifp;
 	struct dhcp6_message *r;
@@ -3489,14 +3476,7 @@ dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	uint8_t *o;
 	uint16_t ol;
 
-	s = ia != NULL ? ia->dhcp6_fd : ctx->dhcp6_fd;
-	bytes = recvmsg(s, &msg, 0);
-	if (bytes == -1) {
-		logerr(__func__);
-		return;
-	}
-	len = (size_t)bytes;
-	inet_ntop(AF_INET6, &from.sin6_addr, sfrom, sizeof(sfrom));
+	inet_ntop(AF_INET6, &from->sin6_addr, sfrom, sizeof(sfrom));
 	if (len < sizeof(struct dhcp6_message)) {
 		logerrx("DHCPv6 packet too short from %s", sfrom);
 		return;
@@ -3505,14 +3485,14 @@ dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	if (ia != NULL)
 		ifp = ia->iface;
 	else {
-		ifp = if_findifpfromcmsg(ctx, &msg, NULL);
+		ifp = if_findifpfromcmsg(ctx, msg, NULL);
 		if (ifp == NULL) {
 			logerr(__func__);
 			return;
 		}
 	}
 
-	r = (struct dhcp6_message *)buf;
+	r = (struct dhcp6_message *)msg->msg_iov[0].iov_base;
 	o = dhcp6_findmoption(r, len, D6_OPTION_CLIENTID, &ol);
 	if (o == NULL || ol != ctx->duid_len ||
 	    memcmp(o, ctx->duid, ol) != 0)
@@ -3578,6 +3558,35 @@ dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	}
 
 	dhcp6_recvif(ifp, sfrom, r, len);
+}
+
+static void
+dhcp6_recv(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
+{
+	struct sockaddr_in6 from;
+	unsigned char buf[64 * 1024]; /* Maximum UDP message size */
+	struct iovec iov = {
+		.iov_base = buf,
+		.iov_len = sizeof(buf),
+	};
+	unsigned char ctl[CMSG_SPACE(sizeof(struct in6_pktinfo))] = { 0 };
+	struct msghdr msg = {
+	    .msg_name = &from, .msg_namelen = sizeof(from),
+	    .msg_iov = &iov, .msg_iovlen = 1,
+	    .msg_control = ctl, .msg_controllen = sizeof(ctl),
+	};
+	int s;
+	ssize_t bytes;
+
+	s = ia != NULL ? ia->dhcp6_fd : ctx->dhcp6_fd;
+	bytes = recvmsg(s, &msg, 0);
+	if (bytes == -1) {
+		logerr(__func__);
+		return;
+	}
+
+	iov.iov_len = (size_t)bytes;
+	dhcp6_recvmsg(ctx, &msg, ia);
 }
 
 static void
@@ -3677,6 +3686,18 @@ dhcp6_activateinterfaces(struct interface *ifp)
 }
 #endif
 
+static int
+dhcp6_open(struct dhcpcd_ctx *ctx)
+{
+
+	if (ctx->dhcp6_fd != -1 ||
+	    (ctx->dhcp6_fd = dhcp6_listen(ctx, NULL)) == -1)
+		return ctx->dhcp6_fd;
+
+	eloop_event_add(ctx->eloop, ctx->dhcp6_fd, dhcp6_recvctx, ctx);
+	return ctx->dhcp6_fd;
+}
+
 static void
 dhcp6_start1(void *arg)
 {
@@ -3687,11 +3708,9 @@ dhcp6_start1(void *arg)
 	size_t i;
 	const struct dhcp_compat *dhc;
 
-	if (ctx->dhcp6_fd == -1 && ctx->options & DHCPCD_MASTER) {
-		ctx->dhcp6_fd = dhcp6_listen(ctx, NULL);
-		if (ctx->dhcp6_fd == -1)
+	if (ctx->options & DHCPCD_MASTER) {
+		if (dhcp6_open(ctx) == -1)
 			return;
-		eloop_event_add(ctx->eloop, ctx->dhcp6_fd, dhcp6_recvctx, ctx);
 	}
 
 	state = D6_STATE(ifp);
