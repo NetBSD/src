@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.11 2019/11/12 16:33:14 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.12 2019/11/13 18:57:26 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -57,14 +57,18 @@ struct part_edit_info {
 	bool num_changed;		/* number of partitions has changed */
 };
 
+#ifndef NO_CLONES
 struct single_clone_data {
 	struct selected_partitions clone_src;
 	part_id *clone_ids;	/* partition IDs in target */
 };
+#endif
 struct outer_parts_data {
 	struct arg_rv av;
+#ifndef NO_CLONES
 	struct single_clone_data *clones;
 	size_t num_clone_entries;
+#endif
 };
 
 static menu_ent *part_menu_opts;		/* the currently edited partitions */
@@ -445,6 +449,7 @@ edit_part_entry(menudesc *m, void *arg)
 	return 0;
 }
 
+#ifndef NO_CLONES
 static int
 add_part_clone(menudesc *menu, void *arg)
 {
@@ -553,7 +558,7 @@ err:
 	free_selected_partitions(&selected);
 	return -1;
 }
-
+#endif
 
 static int
 add_part_entry(menudesc *m, void *arg)
@@ -814,7 +819,10 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 	bool may_add;
 
 	may_add = parts->pscheme->can_add_partition(parts);
-	num_opts = 4 + parts->num_part;
+	num_opts = 3 + parts->num_part;
+#ifndef NO_CLONES
+	num_opts++;
+#endif
 	if (parts->num_part == 0)
 		num_opts++;
 	if (may_add)
@@ -852,10 +860,12 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 		op++;
 	}
 
+#ifndef NO_CLONES
 	/* and a partition cloner */
 	op->opt_name = MSG_clone_from_elsewhere;
 	op->opt_action = add_part_clone;
 	op++;
+#endif
 
 	/* and unit changer */
 	op->opt_name = MSG_askunits;
@@ -1158,7 +1168,10 @@ ask_outer_partsizes(struct disk_partitions *parts)
 {
 	int j;
 	int part_menu;
-	size_t num_opts, i, ci;
+	size_t num_opts;
+#ifndef NO_CLONES
+	size_t i, ci;
+#endif
 	struct outer_parts_data data;
 
 	part_menu_opts = outer_fill_part_menu_opts(parts, &num_opts);
@@ -1197,6 +1210,7 @@ ask_outer_partsizes(struct disk_partitions *parts)
 		break;
 	}
 
+#ifndef NO_CLONES
 	/* handle cloned partitions content copies now */
 	for (i = 0; i < data.num_clone_entries; i++) {
 		for (ci = 0; ci < data.clones[i].clone_src.num_sel; ci++) {
@@ -1215,6 +1229,7 @@ ask_outer_partsizes(struct disk_partitions *parts)
 			free_selected_partitions(&data.clones[i].clone_src);
 		free(data.clones);
 	}
+#endif
 
 	free_menu(part_menu);
 	free(part_menu_opts);

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.30 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.31 2019/11/13 18:57:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -251,11 +251,13 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 		mount = swap;
 	} else if (pset->infos[opt].mount[0]) {
 		mount = pset->infos[opt].mount;
+#ifndef NO_CLONES
 	} else if (pset->infos[opt].flags & PUIFLG_CLONE_PARTS) {
 		snprintf(swap, sizeof swap, "%zu %s",
 		    pset->infos[opt].clone_src->num_sel,
 		    msg_string(MSG_clone_target_disp));
 		mount = swap;
+#endif
 	} else {
 		mount = NULL;
 		if (pset->infos[opt].parts->pscheme->other_partition_identifier
@@ -353,6 +355,7 @@ add_other_ptn_size(menudesc *menu, void *arg)
 	return -1;
 }
 
+#ifndef NO_CLONES
 static int
 inst_ext_clone(menudesc *menu, void *arg)
 {
@@ -430,6 +433,7 @@ err:
 	free_selected_partitions(&selected);
 	return 0;
 }
+#endif
 
 static size_t
 fill_ptn_menu(struct partition_usage_set *pset)
@@ -440,7 +444,14 @@ fill_ptn_menu(struct partition_usage_set *pset)
 	size_t i;
 	daddr_t free_space;
 
-	memset(pset->menu_opts, 0, (pset->num+4)*sizeof(*pset->menu_opts));
+#ifdef NO_CLONES
+#define	ADD_ITEMS	3
+#else
+#define	ADD_ITEMS	4
+#endif
+
+	memset(pset->menu_opts, 0, (pset->num+ADD_ITEMS)
+	    *sizeof(*pset->menu_opts));
 	for (m = pset->menu_opts, p = pset->infos, i = 0; i < pset->num;
 	    m++, p++, i++) {
 		if (p->flags & PUIFLG_CLONE_PARTS)
@@ -457,9 +468,11 @@ fill_ptn_menu(struct partition_usage_set *pset)
 	m->opt_action = add_other_ptn_size;
 	m++;
 
+#ifndef NO_CLONES
 	m->opt_name = MSG_clone_from_elsewhere;
 	m->opt_action = inst_ext_clone;
 	m++;
+#endif
 
 	m->opt_name = MSG_askunits;
 	m->opt_menu = MENU_sizechoice;
@@ -1136,6 +1149,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 	pset->infos = infos;
 }
 
+#ifndef NO_CLONES
 /*
  * Convert clone entries with more than one source into
  * several entries with a single source each.
@@ -1188,6 +1202,7 @@ normalize_clones(struct part_usage_info **infos, size_t *num)
 	free(*infos);
 	*infos = ui;
 }
+#endif
 
 static void
 apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
@@ -1195,13 +1210,18 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 {
 	size_t i, exp_ndx = ~0U;
 	daddr_t planned_space = 0, nsp, from, align;
-	struct disk_part_info *infos, cinfo, srcinfo;
+	struct disk_part_info *infos;
+#ifndef NO_CLONES
+	struct disk_part_info cinfo, srcinfo;
+	struct selected_partition *sp;
+#endif
 	struct disk_part_free_space space;
 	struct disk_partitions *ps = NULL;
-	struct selected_partition *sp;
 	part_id pno, new_part_id;
 
+#ifndef NO_CLONES
 	normalize_clones(&wanted->infos, &wanted->num);
+#endif
 
 	infos = calloc(wanted->num, sizeof(*infos));
 	if (infos == NULL) {
@@ -1329,6 +1349,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			continue;
 		if (want->flags & (PUIFLG_JUST_MOUNTPOINT|PUIFLG_IS_OUTER))
 			continue;
+#ifndef NO_CLONES
 		if ((want->flags & PUIFLG_CLONE_PARTS) &&
 		    want->clone_src != NULL &&
 		    want->clone_ndx < want->clone_src->num_sel) {
@@ -1358,6 +1379,9 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			new_part_id = wanted->parts->pscheme->add_partition(
 			    wanted->parts, &infos[i], NULL);
 		} else {
+#else
+		{
+#endif
 			if (want->size <= 0)
 				continue;
 			size_t cnt = wanted->parts->pscheme->get_free_spaces(

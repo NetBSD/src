@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.55 2019/11/12 16:33:14 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.56 2019/11/13 18:57:26 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2046,6 +2046,7 @@ get_dkwedges(struct dkwedge_info **dkw, const char *diskdev)
 	return dkwl.dkwl_nwedges;
 }
 
+#ifndef NO_CLONES
 /*
  * Helper structures used in the partition select menu
  */
@@ -2514,3 +2515,5 @@ clone_partition_data(struct disk_partitions *dest_parts, part_id did,
 	    "progress -f %s -b 1m dd bs=1m of=%s",
 	    src_dev, target_dev) == 0;
 }
+#endif
+
