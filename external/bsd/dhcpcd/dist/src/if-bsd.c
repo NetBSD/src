@@ -1130,6 +1130,10 @@ if_ifinfo(struct dhcpcd_ctx *ctx, const struct if_msghdr *ifm)
 	case LINK_STATE_UNKNOWN:
 		link_state = LINK_UNKNOWN;
 		break;
+#ifdef LINK_STATE_FULL_DUPLEX
+	case LINK_STATE_HALF_DUPLEX:	/* FALLTHROUGH */
+	case LINK_STATE_FULL_DUPLEX:	/* FALLTHROUGH */
+#endif
 	case LINK_STATE_UP:
 		link_state = LINK_UP;
 		break;
@@ -1484,6 +1488,42 @@ inet6_sysctl(int code, int val, int action)
 }
 #endif
 
+int
+if_applyra(const struct ra *rap)
+{
+#ifdef SIOCSIFINFO_IN6
+	struct in6_ndireq ndi = { .ndi.chlim = 0 };
+	struct priv *priv = rap->iface->ctx->priv;
+	int error;
+
+	strlcpy(ndi.ifname, rap->iface->name, sizeof(ndi.ifname));
+	if (ioctl(priv->pf_inet6_fd, SIOCGIFINFO_IN6, &ndi) == -1)
+		return -1;
+
+	ndi.ndi.linkmtu = rap->mtu;
+	ndi.ndi.chlim = rap->hoplimit;
+	ndi.ndi.retrans = rap->retrans;
+	ndi.ndi.basereachable = rap->reachable;
+	error = ioctl(priv->pf_inet6_fd, SIOCSIFINFO_IN6, &ndi);
+	if (error == -1 && errno == EINVAL) {
+		/*
+		 * Very likely that this is caused by a dodgy MTU
+		 * setting specific to the interface.
+		 * Let's set it to "unspecified" and try again.
+		 * Doesn't really matter as we fix the MTU against the
+		 * routes we add as not all OS support SIOCSIFINFO_IN6.
+		 */
+		ndi.ndi.linkmtu = 0;
+		error = ioctl(priv->pf_inet6_fd, SIOCSIFINFO_IN6, &ndi);
+	}
+	return error;
+#else
+#warning OS does not allow setting of RA bits hoplimit, retrans or reachable
+	UNUSED(rap);
+	return 0;
+#endif
+}
+
 #ifdef IPV6_MANAGETEMPADDR
 #ifndef IPV6CTL_TEMPVLTIME
 #define get_inet6_sysctlbyname(code) inet6_sysctlbyname(code, 0, 0)
@@ -1620,6 +1660,22 @@ set_ifxflags(int s, const struct interface *ifp)
 #endif
 
 void
+if_disable_rtadv(void)
+{
+#if defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)
+	int ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
+
+	if (ra == -1) {
+		if (errno != ENOENT)
+			logerr("IPV6CTL_ACCEPT_RTADV");
+	else if (ra != 0)
+		if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 0) == -1)
+			logerr("IPV6CTL_ACCEPT_RTADV");
+	}
+#endif
+}
+
+void
 if_setup_inet6(const struct interface *ifp)
 {
 	struct priv *priv;
@@ -1688,21 +1744,6 @@ if_setup_inet6(const struct interface *ifp)
 #ifdef SIOCGIFXFLAGS
 	if (set_ifxflags(s, ifp) == -1)
 		logerr("%s: set_ifxflags", ifp->name);
-#endif
-
-#if defined(IPV6CTL_ACCEPT_RTADV) && !defined(ND6_IFF_ACCEPT_RTADV)
-	/* If we cannot control ra per interface, disable it globally. */
-	if (ifp->options->options & DHCPCD_IPV6RS) {
-		int ra = get_inet6_sysctl(IPV6CTL_ACCEPT_RTADV);
-
-		if (ra == -1) {
-			if (errno != ENOENT)
-				logerr("IPV6CTL_ACCEPT_RTADV");
-		else if (ra != 0)
-			if (set_inet6_sysctl(IPV6CTL_ACCEPT_RTADV, 0) == -1)
-				logerr("IPV6CTL_ACCEPT_RTADV");
-		}
-	}
 #endif
 
 #if defined(IPV6CTL_ACCEPT_RTADV) || defined(ND6_IFF_ACCEPT_RTADV)
