@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.63 2019/11/12 19:24:08 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.64 2019/11/13 12:55:05 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1512,4 +1512,9 @@ sys/arch/x86/x86/spectre.c			1.31 (patch)
 
 	Mitigation for CVE-2019-11135: TSX Asynchronous Abort (TAA).
 	[maxv, ticket #1433]
+
+sys/net/if_vlan.c				1.148
+
+	Fix a bug that vlan(4) fragments IPv6 packets unecessarily.
+	[yamaguchi, ticket #1434]
 
