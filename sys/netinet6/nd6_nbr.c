@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.174 2019/09/25 09:52:32 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.175 2019/11/13 02:51:22 ozaki-r Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.174 2019/09/25 09:52:32 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.175 2019/11/13 02:51:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1179,8 +1179,7 @@ nd6_dad_find(struct ifaddr *ifa, struct nd_opt_nonce *nonce, bool *found_nonce)
 			*found_nonce = true;
 			log(LOG_DEBUG,
 			    "%s: detected a looped back NS message for %s\n",
-			    ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???",
-			    IN6_PRINT(ip6buf, myaddr6));
+			    if_name(ifa->ifa_ifp), IN6_PRINT(ip6buf, myaddr6));
 			dp->dad_ns_lcount++;
 			continue;
 		}
@@ -1256,7 +1255,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 			"nd6_dad_start: called with non-tentative address "
 			"%s(%s)\n",
 			IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			if_name(ifa->ifa_ifp));
 		return;
 	}
 	if (ia->ia6_flags & IN6_IFF_ANYCAST || !ip6_dad_enabled()) {
@@ -1264,7 +1263,6 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 		rt_addrmsg(RTM_NEWADDR, ifa);
 		return;
 	}
-	KASSERT(ifa->ifa_ifp != NULL);
 	if (!(ifa->ifa_ifp->if_flags & IFF_UP))
 		return;
 
@@ -1284,7 +1282,7 @@ nd6_dad_start(struct ifaddr *ifa, int xtick)
 		log(LOG_ERR, "nd6_dad_start: memory allocation failed for "
 			"%s(%s)\n",
 			IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			if_name(ifa->ifa_ifp));
 		return;
 	}
 
@@ -1361,14 +1359,14 @@ nd6_dad_timer(struct dadq *dp)
 		log(LOG_ERR, "nd6_dad_timer: called with duplicate address "
 			"%s(%s)\n",
 			IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			if_name(ifa->ifa_ifp));
 		goto done;
 	}
 	if ((ia->ia6_flags & IN6_IFF_TENTATIVE) == 0) {
 		log(LOG_ERR, "nd6_dad_timer: called with non-tentative address "
 			"%s(%s)\n",
 			IN6_PRINT(ip6buf, &ia->ia_addr.sin6_addr),
-			ifa->ifa_ifp ? if_name(ifa->ifa_ifp) : "???");
+			if_name(ifa->ifa_ifp));
 		goto done;
 	}
 
