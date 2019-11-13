@@ -50,6 +50,7 @@ struct ra {
 	uint32_t reachable;
 	uint32_t retrans;
 	uint32_t mtu;
+	uint8_t hoplimit;
 	struct ipv6_addrhead addrs;
 	bool hasdns;
 	bool expired;
@@ -78,6 +79,10 @@ struct rs_state {
 #define	RTR_SOLICITATION_INTERVAL	4	/* seconds */
 #define	MAX_RTR_SOLICITATIONS		3	/* times */
 #define	MAX_NEIGHBOR_ADVERTISEMENT	3	/* 3 transmissions */
+
+#ifndef IPV6_DEFHLIM
+#define	IPV6_DEFHLIM			64
+#endif
 #endif
 
 /* On carrier up, expire known routers after RTR_CARRIER_EXPIRE seconds. */
