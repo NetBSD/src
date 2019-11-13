@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.70 2019/11/10 14:20:50 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.71 2019/11/13 15:48:36 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.70 2019/11/10 14:20:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.71 2019/11/13 15:48:36 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -959,7 +959,7 @@ ptrace_dumpcore(struct lwp *lt, char *path, size_t len)
 		path[len] = '\0';
 	}
 	DPRINTF(("%s: lwp=%d\n", __func__, lt->l_lid));
-	MODULE_HOOK_CALL(coredump_hook, (lt, path), enosys(), error);
+	MODULE_HOOK_CALL(coredump_hook, (lt, path), 0, error);
 out:
 	if (path)
 		kmem_free(path, len + 1);
