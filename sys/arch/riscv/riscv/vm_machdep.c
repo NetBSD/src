@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.2 2019/11/13 16:11:27 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,12 +30,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.1 2015/03/28 16:13:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.2 2019/11/13 16:11:27 pgoyette Exp $");
 
 #define _PMAP_PRIVATE
 
 #include "opt_ddb.h"
-#include "opt_coredump.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
