@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.13 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.14 2019/11/13 18:57:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.13 2019/11/12 16:33:14 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.14 2019/11/13 18:57:26 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1187,12 +1187,15 @@ fmt_fspart_row(menudesc *m, int ptn, void *arg)
 	static const char *Yes;
 	char flag_str[MENUSTRSIZE], *fp;
 	unsigned inst_flags;
+#ifndef NO_CLONES
 	size_t clone_cnt;
+#endif
 	bool with_inst_flag = pset->parts->parent == NULL;
 
 	if (Yes == NULL)
 		Yes = msg_string(MSG_Yes);
 
+#ifndef NO_CLONES
 	if ((pset->infos[ptn].flags & PUIFLG_CLONE_PARTS) &&
 	   pset->infos[ptn].cur_part_id == NO_PART) {
 		psize = pset->infos[ptn].size / sizemult;
@@ -1220,6 +1223,7 @@ fmt_fspart_row(menudesc *m, int ptn, void *arg)
 			m->opts[ptn].opt_flags &= ~OPT_IGNORE;
 		return;
 	}
+#endif
 
 	if (!real_partition(pset, ptn))
 		return;
@@ -1296,6 +1300,7 @@ fmt_fspart_row(menudesc *m, int ptn, void *arg)
 		     info.last_mounted[0] ? info.last_mounted : "");
 }
 
+#ifndef NO_CLONES
 static int
 part_ext_clone(menudesc *m, void *arg)
 {
@@ -1442,6 +1447,7 @@ err:
 	free_selected_partitions(&selected);
 	return 0;
 }
+#endif
 
 static int
 edit_fspart_pack(menudesc *m, void *arg)
@@ -1594,8 +1600,13 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 	    pset->parts->pscheme->get_disk_pack_name != NULL &&
 	    pset->parts->pscheme->set_disk_pack_name != NULL;
 
+#ifdef NO_CLONES
+#define	C_M_ITEMS	0
+#else
+#define	C_M_ITEMS	1
+#endif
 	pset->menu_opts = calloc(pset->parts->num_part
-	     +4+may_add+may_edit_pack,
+	     +3+C_M_ITEMS+may_add+may_edit_pack,
 	     sizeof *pset->menu_opts);
 	if (pset->menu_opts == NULL)
 		return 0;
@@ -1632,10 +1643,12 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 		op++;
 	}
 
+#ifndef NO_CLONES
 	/* add a clone-from-elsewhere option */
 	op->opt_name = MSG_clone_from_elsewhere;
 	op->opt_action = part_ext_clone;
 	op++;
+#endif
 	        
 	/* and abort option */
 	op->opt_name = MSG_cancel;
@@ -1643,7 +1656,7 @@ edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset)
 	op->opt_action = edit_fspart_abort;
 	op++;
 	cnt = op - pset->menu_opts;
-	assert(cnt == pset->parts->num_part+4+may_add+may_edit_pack);
+	assert(cnt == pset->parts->num_part+3+C_M_ITEMS+may_add+may_edit_pack);
 
 	pset->menu = new_menu(fspart_title, pset->menu_opts, cnt,
 			0, -1, 0, 74,
