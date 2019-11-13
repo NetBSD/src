@@ -931,6 +931,7 @@ tty_keys_clipboard(__unused struct tty *tty, const char *buf, size_t len,
 		return (1);
 
 	/* Find the terminator if any. */
+	terminator = 0;	/* XXX: appease gcc (this value is never used) */
 	for (end = 5; end < len; end++) {
 		if (buf[end] == '\007') {
 			terminator = 1;
