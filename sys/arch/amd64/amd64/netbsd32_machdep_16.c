@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.3 2019/03/01 11:06:55 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.4 2019/11/13 16:11:27 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,11 +36,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.3 2019/03/01 11:06:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.4 2019/11/13 16:11:27 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
-#include "opt_coredump.h"
 #include "opt_execfmt.h"
 #endif
 
