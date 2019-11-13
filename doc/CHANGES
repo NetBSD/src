@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2612 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2613 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -75,3 +75,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		KS8731 and KSZ9477.
 		[msaitoh 20191107]
 	tmux(1): Imported 2.9a. [christos 20191112]
+	dhcpcd(8): Import 8.1.2. [roy 20191113]
