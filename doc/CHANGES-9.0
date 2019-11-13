@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.100 2019/11/12 18:25:33 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.101 2019/11/13 12:57:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5647,4 +5647,16 @@ sys/arch/x86/x86/spectre.c			1.31
 
 	Mitigation for CVE-2019-11135: TSX Asynchronous Abort (TAA).
 	[maxv, ticket #419]
+
+sys/net/if_vlan.c				1.148
+tests/net/if_vlan/t_vlan.sh			1.16
+
+	Fix a bug that vlan(4) fragments IPv6 packets unecessarily.
+	Add a test case for this.
+	[yamaguchi, ticket #420]
+
+bin/pax/Makefile				1.40
+
+	PR bin/54468: install manual pages for tar and cpio only once.
+	[nakayama, ticket #421]
 
