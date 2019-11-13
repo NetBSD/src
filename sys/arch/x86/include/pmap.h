@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.103 2019/10/05 07:30:03 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.104 2019/11/13 12:55:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -327,11 +327,11 @@ extern long nkptp[PTP_LEVELS];
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PP_ATTRS_M)
-#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PP_ATTRS_U)
+#define pmap_clear_modify(pg)		pmap_clear_attrs(pg, PP_ATTRS_D)
+#define pmap_clear_reference(pg)	pmap_clear_attrs(pg, PP_ATTRS_A)
 #define pmap_copy(DP,SP,D,L,S)		__USE(L)
-#define pmap_is_modified(pg)		pmap_test_attrs(pg, PP_ATTRS_M)
-#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PP_ATTRS_U)
+#define pmap_is_modified(pg)		pmap_test_attrs(pg, PP_ATTRS_D)
+#define pmap_is_referenced(pg)		pmap_test_attrs(pg, PP_ATTRS_A)
 #define pmap_move(DP,SP,D,L,S)
 #define pmap_phys_address(ppn)		(x86_ptob(ppn) & ~X86_MMAP_FLAG_MASK)
 #define pmap_mmap_flags(ppn)		x86_mmap_flags(ppn)

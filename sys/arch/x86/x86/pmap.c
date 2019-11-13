@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.337 2019/10/30 07:40:05 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.338 2019/11/13 12:55:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.337 2019/10/30 07:40:05 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2019/11/13 12:55:10 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -3434,9 +3434,9 @@ pmap_pte_to_pp_attrs(pt_entry_t pte)
 {
 	uint8_t ret = 0;
 	if (pte & PTE_D)
-		ret |= PP_ATTRS_M;
+		ret |= PP_ATTRS_D;
 	if (pte & PTE_A)
-		ret |= PP_ATTRS_U;
+		ret |= PP_ATTRS_A;
 	if (pte & PTE_W)
 		ret |= PP_ATTRS_W;
 	return ret;
@@ -3446,9 +3446,9 @@ static inline pt_entry_t
 pmap_pp_attrs_to_pte(uint8_t attrs)
 {
 	pt_entry_t pte = 0;
-	if (attrs & PP_ATTRS_M)
+	if (attrs & PP_ATTRS_D)
 		pte |= PTE_D;
-	if (attrs & PP_ATTRS_U)
+	if (attrs & PP_ATTRS_A)
 		pte |= PTE_A;
 	if (attrs & PP_ATTRS_W)
 		pte |= PTE_W;
@@ -3674,7 +3674,7 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 	expect = pmap_pa2pte(pa) | PTE_P;
 
 	if (clearbits != ~0) {
-		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
+		KASSERT((clearbits & ~(PP_ATTRS_D|PP_ATTRS_A|PP_ATTRS_W)) == 0);
 		clearbits = pmap_pp_attrs_to_pte(clearbits);
 	}
 
@@ -4938,11 +4938,11 @@ pmap_ept_to_pp_attrs(pt_entry_t ept)
 	uint8_t ret = 0;
 	if (pmap_ept_has_ad) {
 		if (ept & EPT_D)
-			ret |= PP_ATTRS_M;
+			ret |= PP_ATTRS_D;
 		if (ept & EPT_A)
-			ret |= PP_ATTRS_U;
+			ret |= PP_ATTRS_A;
 	} else {
-		ret |= (PP_ATTRS_M|PP_ATTRS_U);
+		ret |= (PP_ATTRS_D|PP_ATTRS_A);
 	}
 	if (ept & EPT_W)
 		ret |= PP_ATTRS_W;
@@ -4953,9 +4953,9 @@ static inline pt_entry_t
 pmap_pp_attrs_to_ept(uint8_t attrs)
 {
 	pt_entry_t ept = 0;
-	if (attrs & PP_ATTRS_M)
+	if (attrs & PP_ATTRS_D)
 		ept |= EPT_D;
-	if (attrs & PP_ATTRS_U)
+	if (attrs & PP_ATTRS_A)
 		ept |= EPT_A;
 	if (attrs & PP_ATTRS_W)
 		ept |= EPT_W;
@@ -5531,7 +5531,7 @@ pmap_ept_sync_pv(struct vm_page *ptp, vaddr_t va, paddr_t pa, int clearbits,
 	pmap = ptp_to_pmap(ptp);
 
 	if (clearbits != ~0) {
-		KASSERT((clearbits & ~(PP_ATTRS_M|PP_ATTRS_U|PP_ATTRS_W)) == 0);
+		KASSERT((clearbits & ~(PP_ATTRS_D|PP_ATTRS_A|PP_ATTRS_W)) == 0);
 		clearbits = pmap_pp_attrs_to_ept(clearbits);
 	}
 
