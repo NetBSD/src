@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.28 2019/10/31 09:44:13 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.29 2019/11/13 18:57:26 martin Exp $
 #
 # Makefile for sysinst
 
@@ -42,6 +42,9 @@ CPPFLAGS.gpt.c+=	-I${GPT_DIR}
 .if ${NO_MBR:Uyes} != "yes"
 CPPFLAGS+=	-DHAVE_MBR
 SRCS+=	mbr.c
+.endif
+.if ${NO_CLONES:Uno} == "yes"
+CPPFLAGS+=	-DNO_CLONES
 .endif
 
 MSG_MD?=	msg.md.${SYSINSTLANG}
