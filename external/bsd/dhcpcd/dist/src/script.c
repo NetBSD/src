@@ -86,9 +86,9 @@ if_printoptions(void)
 }
 
 static int
-exec_script(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
+script_exec(const struct dhcpcd_ctx *ctx, char *const *argv, char *const *env)
 {
-	pid_t pid;
+	pid_t pid = 0;
 	posix_spawnattr_t attr;
 	int r;
 #ifdef USE_SIGNALS
@@ -173,14 +173,55 @@ efprintf(FILE *fp, const char *fmt, ...)
 	return r;
 }
 
+static char **
+script_buftoenv(struct dhcpcd_ctx *ctx, char *buf, size_t len)
+{
+	char **env, **envp, *bufp, *endp;
+	size_t nenv;
+
+	/* Count the terminated env strings.
+	 * Assert that the terminations are correct. */
+	nenv = 0;
+	endp = buf + len;
+	for (bufp = buf; bufp < endp; bufp++) {
+		if (*bufp == '\0') {
+#ifndef NDEBUG
+			if (bufp + 1 < endp)
+				assert(*(bufp + 1) != '\0');
+#endif
+			nenv++;
+		}
+	}
+	assert(*(bufp - 1) == '\0');
+
+	if (ctx->script_envlen < nenv) {
+		env = reallocarray(ctx->script_env, nenv + 1, sizeof(*env));
+		if (env == NULL)
+			return NULL;
+		ctx->script_env = env;
+		ctx->script_envlen = nenv;
+	}
+
+	bufp = buf;
+	envp = ctx->script_env;
+	*envp++ = bufp++;
+	endp--; /* Avoid setting the last \0 to an invalid pointer */
+	for (; bufp < endp; bufp++) {
+		if (*bufp == '\0')
+			*envp++ = bufp + 1;
+	}
+	*envp = NULL;
+
+	return ctx->script_env;
+}
+
 static long
 make_env(const struct interface *ifp, const char *reason)
 {
 	struct dhcpcd_ctx *ctx = ifp->ctx;
 	FILE *fp;
-	char **env, **envp, *bufp, *endp, *path;
-	size_t nenv;
 	long buf_pos, i;
+	char *path;
 	int protocol = PROTO_LINK;
 	const struct if_options *ifo = ifp->options;
 	const struct interface *ifp2;
@@ -377,7 +418,7 @@ make_env(const struct interface *ifp, const char *reason)
 		if (efprintf(fp, "syslog_debug=true") == -1)
 			goto eexit;
 	}
-	if (*ifp->profile) {
+	if (*ifp->profile != '\0') {
 		if (efprintf(fp, "profile=%s", ifp->profile) == -1)
 			goto eexit;
 	}
@@ -476,38 +517,8 @@ dumplease:
 	fp = NULL;
 #endif
 
-	/* Count the terminated env strings.
-	 * Assert that the terminations are correct. */
-	nenv = 0;
-	endp = ctx->script_buf + buf_pos;
-	for (bufp = ctx->script_buf; bufp < endp; bufp++) {
-		if (*bufp == '\0') {
-#ifndef NDEBUG
-			if (bufp + 1 < endp)
-				assert(*(bufp + 1) != '\0');
-#endif
-			nenv++;
-		}
-	}
-	assert(*(bufp - 1) == '\0');
-
-	if (ctx->script_envlen < nenv) {
-		env = reallocarray(ctx->script_env, nenv + 1, sizeof(*env));
-		if (env == NULL)
-			goto eexit;
-		ctx->script_env = env;
-		ctx->script_envlen = nenv;
-	}
-
-	bufp = ctx->script_buf;
-	envp = ctx->script_env;
-	*envp++ = bufp++;
-	endp--; /* Avoid setting the last \0 to an invalid pointer */
-	for (; bufp < endp; bufp++) {
-		if (*bufp == '\0')
-			*envp++ = bufp + 1;
-	}
-	*envp = NULL;
+	if (script_buftoenv(ctx, ctx->script_buf, (size_t)buf_pos) == NULL)
+		goto eexit;
 
 	return buf_pos - 1;
 
@@ -620,7 +631,7 @@ script_runreason(const struct interface *ifp, const char *reason)
 	argv[1] = NULL;
 	logdebugx("%s: executing `%s' %s", ifp->name, argv[0], reason);
 
-	pid = exec_script(ctx, argv, ctx->script_env);
+	pid = script_exec(ctx, argv, ctx->script_env);
 	if (pid == -1)
 		logerr("%s: %s", __func__, argv[0]);
 	else if (pid != 0) {
