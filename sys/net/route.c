@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.225 2019/10/03 03:10:02 knakahara Exp $	*/
+/*	$NetBSD: route.c,v 1.226 2019/11/13 02:51:22 ozaki-r Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.225 2019/10/03 03:10:02 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.226 2019/11/13 02:51:22 ozaki-r Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -355,9 +355,8 @@ rt_get_ifa(struct rtentry *rt)
 {
 	struct ifaddr *ifa;
 
-	if ((ifa = rt->rt_ifa) == NULL)
-		return ifa;
-	else if (ifa->ifa_getifa == NULL)
+	ifa = rt->rt_ifa;
+	if (ifa->ifa_getifa == NULL)
 		return ifa;
 #if 0
 	else if (ifa->ifa_seqno != NULL && *ifa->ifa_seqno == rt->rt_ifa_seqno)
@@ -412,8 +411,7 @@ rt_replace_ifa(struct rtentry *rt, struct ifaddr *ifa)
 	if (rt->rt_ifa == ifa)
 		return;
 
-	if (rt->rt_ifa &&
-	    rt->rt_ifa != ifa &&
+	if (rt->rt_ifa != ifa &&
 	    rt->rt_ifa->ifa_flags & IFA_ROUTE &&
 	    rt_ifa_connected(rt, rt->rt_ifa))
 	{
@@ -1194,18 +1192,17 @@ rtrequest1(int req, struct rt_addrinfo *info, struct rtentry **ret_nrt)
 		if ((rt = rt_deladdr(rtbl, dst, netmask)) == NULL)
 			senderr(ESRCH);
 		rt->rt_flags &= ~RTF_UP;
-		if ((ifa = rt->rt_ifa)) {
-			if (ifa->ifa_flags & IFA_ROUTE &&
-			    rt_ifa_connected(rt, ifa)) {
-				RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
-				    "deleted IFA_ROUTE\n",
-				    (void *)rt->_rt_key, (void *)ifa);
-				ifa->ifa_flags &= ~IFA_ROUTE;
-			}
-			if (ifa->ifa_rtrequest)
-				ifa->ifa_rtrequest(RTM_DELETE, rt, info);
-			ifa = NULL;
+		ifa = rt->rt_ifa;
+		if (ifa->ifa_flags & IFA_ROUTE &&
+		    rt_ifa_connected(rt, ifa)) {
+			RT_DPRINTF("rt->_rt_key = %p, ifa = %p, "
+			    "deleted IFA_ROUTE\n",
+			    (void *)rt->_rt_key, (void *)ifa);
+			ifa->ifa_flags &= ~IFA_ROUTE;
 		}
+		if (ifa->ifa_rtrequest)
+			ifa->ifa_rtrequest(RTM_DELETE, rt, info);
+		ifa = NULL;
 		rttrash++;
 		if (ret_nrt) {
 			*ret_nrt = rt;
@@ -1519,7 +1516,7 @@ rt_update(struct rtentry *rt, struct rt_addrinfo *info, void *rtm)
 		rt->rt_flags = (info->rti_flags & ~PRESERVED_RTF) |
 		    (rt->rt_flags & PRESERVED_RTF);
 	}
-	if (rt->rt_ifa && rt->rt_ifa->ifa_rtrequest)
+	if (rt->rt_ifa->ifa_rtrequest)
 		rt->rt_ifa->ifa_rtrequest(RTM_ADD, rt, info);
 #if defined(INET) || defined(INET6)
 	if (ifp_changed && rt_mask(rt) != NULL)

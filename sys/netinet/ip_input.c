@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_input.c,v 1.392 2019/09/19 05:31:50 ozaki-r Exp $	*/
+/*	$NetBSD: ip_input.c,v 1.393 2019/11/13 02:51:22 ozaki-r Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.392 2019/09/19 05:31:50 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_input.c,v 1.393 2019/11/13 02:51:22 ozaki-r Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1400,8 +1400,7 @@ ip_forward(struct mbuf *m, int srcrt, struct ifnet *rcvif)
 	    (rt->rt_flags & (RTF_DYNAMIC|RTF_MODIFIED)) == 0 &&
 	    !in_nullhost(satocsin(rt_getkey(rt))->sin_addr) &&
 	    ipsendredirects && !srcrt) {
-		if (rt->rt_ifa &&
-		    (ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
+		if ((ip->ip_src.s_addr & ifatoia(rt->rt_ifa)->ia_subnetmask) ==
 		    ifatoia(rt->rt_ifa)->ia_subnet) {
 			if (rt->rt_flags & RTF_GATEWAY)
 				dest = satosin(rt->rt_gateway)->sin_addr.s_addr;
