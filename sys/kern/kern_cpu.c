@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.76 2019/10/06 02:04:26 uwe Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.77 2019/11/13 01:31:47 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.76 2019/10/06 02:04:26 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.77 2019/11/13 01:31:47 mrg Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -602,7 +602,9 @@ cpu_ucode_load(struct cpu_ucode_softc *sc, const char *fwname)
 
 	error = cpu_ucode_md_open(&fwh, sc->loader_version, fwname);
 	if (error != 0) {
-		aprint_error("ucode: firmware_open failed: %i\n", error);
+#ifdef DEBUG
+		printf("ucode: firmware_open(%s) failed: %i\n", fwname, error);
+#endif
 		goto err0;
 	}
 
