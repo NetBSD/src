@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.12 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: install.c,v 1.13 2019/11/13 18:57:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -50,7 +50,9 @@ static bool
 write_all_parts(struct install_partition_desc *install)
 {
 	struct disk_partitions **allparts, *parts;
+#ifndef NO_CLONES
 	struct selected_partition *src;
+#endif
 	size_t num_parts, i, j;
 	bool found, res;
 
@@ -100,6 +102,7 @@ write_all_parts(struct install_partition_desc *install)
 	/* phase 3: now we may have a first chance to enable swap space */
 	set_swap_if_low_ram(install);
 
+#ifndef NO_CLONES
 	/* phase 4: copy any cloned partitions data (if requested) */
 	for (i = 0; i < install->num; i++) {
 		if ((install->infos[i].flags & PUIFLG_CLONE_PARTS) == 0
@@ -112,6 +115,7 @@ write_all_parts(struct install_partition_desc *install)
 		    install->infos[i].cur_part_id,
 		    src->parts, src->id);
 	}
+#endif
 
 	/* phase 5: post disklabel (used for updating boot loaders) */
 	for (i = 0; i < num_parts; i++) {

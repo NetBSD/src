@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.36 2019/11/12 18:04:37 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.37 2019/11/13 18:57:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2100,6 +2100,7 @@ free_usage_set(struct partition_usage_set *wanted)
 void
 free_install_desc(struct install_partition_desc *install)
 {
+#ifndef NO_CLONES
 	size_t i, j;
 
 	for (i = 0; i < install->num; i++) {
@@ -2112,6 +2113,7 @@ free_install_desc(struct install_partition_desc *install)
 			if (install->infos[j].clone_src == src)
 				install->infos[j].clone_src = NULL; 
 	}
+#endif
 	free(install->infos);
 }
 

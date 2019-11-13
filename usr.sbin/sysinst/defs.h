@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.46 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.47 2019/11/13 18:57:26 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -283,6 +283,7 @@ struct part_usage_info {
 	unsigned int instflags;		/* installer handling flags */
 	uint fs_type, fs_version;	/* e.g. FS_LFS, or FS_BSDFS,
 					 * version = 2 for FFSv2 */
+#ifndef	NO_CLONES
 	/*
 	 * Only != NULL when PUIFLG_CLONE_PARTS is set, describes the
 	 * source partitions to clone here.
@@ -294,6 +295,7 @@ struct part_usage_info {
 	 * (>= 0 && <= clone_src->num_sel, or all of them if clone_ndx = ~0U.
 	 */
 	size_t clone_ndx;
+#endif
 };
 
 /*
@@ -619,6 +621,8 @@ bool is_cdrom_device(const char *dev, bool as_target);
 bool is_bootable_device(const char *dev);
 bool is_partitionable_device(const char *dev);
 bool convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg);
+
+#ifndef	NO_CLONES
 /* a single partition selected for cloning (etc) */
 struct selected_partition {
 	struct disk_partitions *parts;
@@ -643,6 +647,7 @@ struct clone_target_menu_data {
 int	clone_target_select(menudesc *m, void *arg);
 bool	clone_partition_data(struct disk_partitions *dest_parts, part_id did,
 	struct disk_partitions *src_parts, part_id sid);
+#endif
 
 struct menudesc;
 void	disp_cur_fspart(int, int);
