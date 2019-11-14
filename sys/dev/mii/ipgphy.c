@@ -32,7 +32,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.3 2019/11/14 09:00:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.4 2019/11/14 09:06:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,7 +60,7 @@ CFATTACH_DECL_NEW(ipgphy, sizeof(struct mii_softc),
 
 static int	ipgphy_service(struct mii_softc *, struct mii_data *, int);
 static void	ipgphy_status(struct mii_softc *);
-static int	ipgphy_mii_phy_auto(struct mii_softc *);
+static int	ipgphy_mii_phy_auto(struct mii_softc *, u_int);
 static void	ipgphy_load_dspcode(struct mii_softc *);
 static void	ipgphy_reset(struct mii_softc *);
 
@@ -126,7 +126,7 @@ static int
 ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 {
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
-	uint16_t gig, reg, speed;
+	uint16_t reg, speed;
 
 	switch (cmd) {
 	case MII_POLLSTAT:
@@ -154,16 +154,13 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 		switch (IFM_SUBTYPE(ife->ifm_media)) {
 		case IFM_AUTO:
-			(void)ipgphy_mii_phy_auto(sc);
-			goto done;
-			break;
-
 		case IFM_1000_T:
 			/*
-			 * XXX
-			 * Manual 1000baseT setting doesn't seem to work.
+			 * This device is required to do auto negotiation
+			 * on 1000BASE-T.
 			 */
-			speed = BMCR_S1000;
+			(void)ipgphy_mii_phy_auto(sc, ife->ifm_media);
+			goto done;
 			break;
 
 		case IFM_100_TX:
@@ -178,26 +175,11 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return EINVAL;
 		}
 
-		if (((ife->ifm_media & IFM_GMASK) & IFM_FDX) != 0) {
+		if ((ife->ifm_media & IFM_FDX) != 0)
 			speed |= BMCR_FDX;
-			gig = GTCR_ADV_1000TFDX;
-		} else
-			gig = GTCR_ADV_1000THDX;
 
 		PHY_WRITE(sc, MII_100T2CR, 0);
 		PHY_WRITE(sc, MII_BMCR, speed);
-
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)
-			break;
-
-		PHY_WRITE(sc, MII_100T2CR, gig);
-		PHY_WRITE(sc, MII_BMCR, speed);
-
-		if (mii->mii_media.ifm_media & IFM_ETH_MASTER)
-			gig |= GTCR_MAN_MS | GTCR_ADV_MS;
-
-		PHY_WRITE(sc, MII_100T2CR, gig);
-
 done:
 		break;
 
@@ -211,7 +193,8 @@ done:
 			return 0;
 
 		/* Only used for autonegotiation. */
-		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
+		if ((IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) &&
+		    (IFM_SUBTYPE(ife->ifm_media) != IFM_1000_T)) {
 			sc->mii_ticks = 0;
 			break;
 		}
@@ -242,7 +225,7 @@ done:
 			break;
 
 		sc->mii_ticks = 0;
-		ipgphy_mii_phy_auto(sc);
+		ipgphy_mii_phy_auto(sc, ife->ifm_media);
 		break;
 	}
 
@@ -320,26 +303,36 @@ ipgphy_status(struct mii_softc *sc)
 }
 
 static int
-ipgphy_mii_phy_auto(struct mii_softc *sc)
+ipgphy_mii_phy_auto(struct mii_softc *sc, u_int media)
 {
 	uint16_t reg = 0;
+	u_int subtype = IFM_SUBTYPE(media);
 
+	/* XXX Is it requreid ? */
 	if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1001) {
 		PHY_READ(sc, MII_ANAR, &reg);
 		reg &= ~(ANAR_PAUSE_SYM | ANAR_PAUSE_ASYM);
 		reg |= ANAR_NP;
 	}
 
-	reg |= ANAR_10 | ANAR_10_FD | ANAR_TX | ANAR_TX_FD;
+	if (subtype == IFM_AUTO)
+		reg |= ANAR_10 | ANAR_10_FD | ANAR_TX | ANAR_TX_FD;
 
 	if (sc->mii_flags & MIIF_DOPAUSE)
 		reg |= ANAR_PAUSE_SYM | ANAR_PAUSE_ASYM;
 
 	PHY_WRITE(sc, MII_ANAR, reg | ANAR_CSMA);
 
-	reg = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
-	if (sc->mii_mpd_model != MII_MODEL_xxICPLUS_IP1001)
-		reg |= GTCR_ADV_MS;
+	if (subtype == IFM_AUTO)
+		reg = GTCR_ADV_1000TFDX | GTCR_ADV_1000THDX;
+	else if (subtype == IFM_1000_T) {
+		if ((media & IFM_FDX) != 0)
+			reg = GTCR_ADV_1000TFDX;
+		else
+			reg = GTCR_ADV_1000THDX;
+	} else
+		reg = 0;
+
 	PHY_WRITE(sc, MII_100T2CR, reg);
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_FDX | BMCR_AUTOEN | BMCR_STARTNEG);
