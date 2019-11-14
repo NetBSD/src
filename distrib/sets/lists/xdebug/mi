@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.34 2019/11/03 01:35:47 uki Exp $
+# $NetBSD: mi,v 1.35 2019/11/14 02:27:18 uki Exp $
 ./etc/mtree/set.xdebug					comp-sys-root
 ./usr/X11R7/lib						base-x11-root	xorg,debuglib,compatx11dir
 ./usr/X11R7/lib/libEGL_g.a				xdebug-libEGL-debuglib	xorg,debuglib,compatx11file,xorg_glamor
@@ -14,7 +14,7 @@
 ./usr/X11R7/lib/libXRes_g.a				xdebug-libXres-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXTrap_g.a				xdebug-libXTrap-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXau_g.a				xdebug-libXau-debuglib	xorg,debuglib,compatx11file
-./usr/X11R7/lib/libXaw6_g.a				xdebug-unknown-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libXaw6_g.a				xdebug-libXaw6-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXaw7_g.a				xdebug-libXaw-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libXaw8_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libXcomposite_g.a			xdebug-libXcomposite-debuglib	xorg,debuglib,compatx11file
@@ -65,7 +65,7 @@
 ./usr/X11R7/lib/libmp_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libpciaccess_g.a			xdebug-libpciaccess-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libpixman-1_g.a				xdebug-pixman-debuglib	xorg,debuglib,compatx11file
-./usr/X11R7/lib/libpthread-stubs_g.a			xdebug-unknown-debuglib	xorg,debuglib,compatx11file
+./usr/X11R7/lib/libpthread-stubs_g.a			xdebug-libpthread-stubs-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libre_g.a				xdebug-obsolete	xorg,obsolete
 ./usr/X11R7/lib/libxcb-atom_g.a				xdebug-xcb-util-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libxcb-aux_g.a				xdebug-xcb-util-debuglib	xorg,debuglib,compatx11file
