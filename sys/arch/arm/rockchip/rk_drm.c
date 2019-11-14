@@ -1,4 +1,4 @@
-/* $NetBSD: rk_drm.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
+/* $NetBSD: rk_drm.c,v 1.2 2019/11/14 20:39:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_drm.c,v 1.2 2019/11/14 20:39:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -133,8 +133,6 @@ rk_drm_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_phandle = faa->faa_phandle;
-
-	drm_debug = 0xff;
 
 	aprint_naive("\n");
 
