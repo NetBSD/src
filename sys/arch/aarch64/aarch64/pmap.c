@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.49 2019/11/14 16:48:51 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.50 2019/11/14 17:09:22 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2019/11/14 16:48:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2019/11/14 17:09:22 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1681,11 +1681,9 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	opte = atomic_swap_64(ptep, 0);
 	need_sync_icache = (prot & VM_PROT_EXECUTE);
 
-#ifdef KASAN
 	if (!user) {
 		kasan_shadow_map((void *)va, PAGE_SIZE);
 	}
-#endif
 
 	/* for lock ordering for pg and opg */
 	pgs[0] = pg;
