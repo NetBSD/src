@@ -1542,9 +1542,9 @@ static void drm_setup_crtcs(struct drm_fb_helper *fb_helper)
 	for (i = 0; i < fb_helper->connector_count; i++) {
 		struct drm_display_mode *mode = modes[i];
 		struct drm_fb_helper_crtc *fb_crtc = crtcs[i];
-		modeset = &fb_crtc->mode_set;
 
 		if (mode && fb_crtc) {
+			modeset = &fb_crtc->mode_set;
 			DRM_DEBUG_KMS("desired mode %s set on crtc %d\n",
 				      mode->name, fb_crtc->mode_set.crtc->base.id);
 			fb_crtc->desired_mode = mode;
