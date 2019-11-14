@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.7 2019/11/13 07:56:10 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.8 2019/11/14 06:00:16 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.7 2019/11/13 07:56:10 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.8 2019/11/14 06:00:16 hkenken Exp $");
 
 #include "opt_fdt.h"
 
@@ -210,7 +210,7 @@ enet_phy_reset(struct enet_fdt_softc *sc, const int phandle)
 	fdtbus_gpio_write(sc->sc_pin_reset, 0);
 
 	/* Post delay */
-	if (!of_getprop_uint32(phandle, "phy-reset-post-delay", &msec))
+	if (of_getprop_uint32(phandle, "phy-reset-post-delay", &msec))
 		msec = 0;
 
 	delay(msec * 1000);
