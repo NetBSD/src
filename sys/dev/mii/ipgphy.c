@@ -32,7 +32,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.2 2019/11/14 08:52:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.3 2019/11/14 09:00:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,6 +261,12 @@ ipgphy_status(struct mii_softc *sc)
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint16_t bmsr, bmcr, stat, gtsr;
 
+	/* For IP1000A, use generic way */
+	if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1000A) {
+		ukphy_status(sc);
+		return;
+	}
+
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
 
@@ -280,52 +286,26 @@ ipgphy_status(struct mii_softc *sc)
 			return;
 		}
 
-		if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1001) {
-			PHY_READ(sc, IPGPHY_LSR, &stat);
-			switch (stat & IPGPHY_LSR_SPEED_MASK) {
-			case IPGPHY_LSR_SPEED_10:
-				mii->mii_media_active |= IFM_10_T;
-				break;
-			case IPGPHY_LSR_SPEED_100:
-				mii->mii_media_active |= IFM_100_TX;
-				break;
-			case IPGPHY_LSR_SPEED_1000:
-				mii->mii_media_active |= IFM_1000_T;
-				break;
-			default:
-				mii->mii_media_active |= IFM_NONE;
-				return;
-			}
-
-			if (stat & IPGPHY_LSR_FULL_DUPLEX)
-				mii->mii_media_active |= IFM_FDX;
-			else
-				mii->mii_media_active |= IFM_HDX;
-		} else {
-			PHY_READ(sc, STGE_PhyCtrl, &stat);
-			switch (PC_LinkSpeed(stat)) {
-			case PC_LinkSpeed_Down:
-				mii->mii_media_active |= IFM_NONE;
-				return;
-			case PC_LinkSpeed_10:
-				mii->mii_media_active |= IFM_10_T;
-				break;
-			case PC_LinkSpeed_100:
-				mii->mii_media_active |= IFM_100_TX;
-				break;
-			case PC_LinkSpeed_1000:
-				mii->mii_media_active |= IFM_1000_T;
-				break;
-			default:
-				mii->mii_media_active |= IFM_NONE;
-				return;
-			}
-
-			if (stat & PC_PhyDuplexStatus)
-				mii->mii_media_active |= IFM_FDX;
-			else
-				mii->mii_media_active |= IFM_HDX;
+		PHY_READ(sc, IPGPHY_LSR, &stat);
+		switch (stat & IPGPHY_LSR_SPEED_MASK) {
+		case IPGPHY_LSR_SPEED_10:
+			mii->mii_media_active |= IFM_10_T;
+			break;
+		case IPGPHY_LSR_SPEED_100:
+			mii->mii_media_active |= IFM_100_TX;
+			break;
+		case IPGPHY_LSR_SPEED_1000:
+			mii->mii_media_active |= IFM_1000_T;
+			break;
+		default:
+			mii->mii_media_active |= IFM_NONE;
+			return;
 		}
+
+		if (stat & IPGPHY_LSR_FULL_DUPLEX)
+			mii->mii_media_active |= IFM_FDX;
+		else
+			mii->mii_media_active |= IFM_HDX;
 
 		if (mii->mii_media_active & IFM_FDX)
 			mii->mii_media_active |= mii_phy_flowstatus(sc);
