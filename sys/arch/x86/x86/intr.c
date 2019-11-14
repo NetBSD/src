@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.101.2.6 2019/03/09 17:10:19 martin Exp $	*/
+/*	$NetBSD: intr.c,v 1.101.2.7 2019/11/14 15:58:06 martin Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.6 2019/03/09 17:10:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.101.2.7 2019/11/14 15:58:06 martin Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -591,8 +591,10 @@ intr_free_io_intrsource_direct(struct intrsource *isp)
 	SIMPLEQ_REMOVE(&io_interrupt_sources, isp, intrsource, is_list);
 
 	/* Is this interrupt established? */
-	if (isp->is_evname[0] != '\0')
+	if (isp->is_evname[0] != '\0') {
 		evcnt_detach(&isp->is_evcnt);
+		isp->is_evname[0] = '\0';
+	}
 
 	kmem_free(isp->is_saved_evcnt,
 	    sizeof(*(isp->is_saved_evcnt)) * ncpu);
@@ -782,6 +784,7 @@ intr_allocate_slot(struct pic *pic, int pin, int level,
 	}
 	if (idtvec == 0) {
 		evcnt_detach(&ci->ci_isources[slot]->is_evcnt);
+		ci->ci_isources[slot]->is_evname[0] = '\0';
 		ci->ci_isources[slot] = NULL;
 		return EBUSY;
 	}
