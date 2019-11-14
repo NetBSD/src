@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.11 2019/10/04 06:27:42 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.12 2019/11/14 17:09:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -60,9 +60,10 @@
 #define KASAN_DMA_UIO		3
 #define KASAN_DMA_RAW		4
 
-void kasan_shadow_map(void *, size_t);
 void kasan_early_init(void *);
 void kasan_init(void);
+void kasan_shadow_map(void *, size_t);
+
 void kasan_softint(struct lwp *);
 
 void kasan_dma_sync(bus_dmamap_t, bus_addr_t, bus_size_t, int);
@@ -71,6 +72,9 @@ void kasan_dma_load(bus_dmamap_t, void *, bus_size_t, int);
 void kasan_add_redzone(size_t *);
 void kasan_mark(const void *, size_t, size_t, uint8_t);
 #else
+#define kasan_early_init(u)		__nothing
+#define kasan_init()			__nothing
+#define kasan_shadow_map(a, s)		__nothing
 #define kasan_dma_sync(m, a, s, o)	__nothing
 #define kasan_dma_load(m, b, s, o)	__nothing
 #define kasan_add_redzone(s)		__nothing
