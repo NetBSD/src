@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tr_pcmcia.c,v 1.27 2016/11/27 00:21:43 maya Exp $	*/
+/*	$NetBSD: if_tr_pcmcia.c,v 1.27.8.1 2019/11/14 16:04:31 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Soren S. Jorvang.  All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.27 2016/11/27 00:21:43 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tr_pcmcia.c,v 1.27.8.1 2019/11/14 16:04:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,6 +124,7 @@ tr_pcmcia_attach(device_t parent, device_t self, void *aux)
 	bus_size_t offset;
 
 	psc->sc_pf = pa->pf;
+	sc->sc_dev = self;
 
 	cfe = SIMPLEQ_FIRST(&pa->pf->cfe_head);
 
