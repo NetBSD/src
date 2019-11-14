@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.140 2019/08/05 22:03:10 maya Exp $
+.\"	$NetBSD: sysctl.7,v 1.141 2019/11/14 21:23:46 jdolecek Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	@(#)sysctl.3	8.4 (Berkeley) 5/9/95
 .\"
-.Dd August 6, 2019
+.Dd November 14, 2019
 .Dt SYSCTL 7
 .Os
 .Sh NAME
@@ -2531,6 +2531,12 @@ the fifth is the size of
 Returns an array of
 .Vt struct kinfo_vmentry
 objects.
+.It Li vm.ubc_direct
+Use direct map for UBC I/O, avoiding need to map and unmap buffer memory.
+Speeds up operation for fast I/O devices like NVMe, especially
+on multi-CPU systems.
+Only available on some architectures.
+Currently still experimental, default is off.
 .It Li vm.uspace ( Dv VM_USPACE )
 The number of bytes allocated for each kernel stack.
 .It Li vm.uvmexp ( Dv VM_UVMEXP )
