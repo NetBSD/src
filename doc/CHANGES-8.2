@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.64 2019/11/13 12:55:05 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.65 2019/11/14 16:06:17 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1517,4 +1517,53 @@ sys/net/if_vlan.c				1.148
 
 	Fix a bug that vlan(4) fragments IPv6 packets unecessarily.
 	[yamaguchi, ticket #1434]
+
+sys/dev/pci/ixgbe/ixv.c				1.140
+
+	ixv(4): disable RSS configuration on 82599 and X540 VFs.
+	[msaitoh, ticket #1435]
+
+external/bsd/drm2/dist/drm/drm_fb_helper.c	1.13 via patch
+ 
+	Avoid null pointer dereference.
+	[msaitoh, ticket #1436]
+
+sys/arch/x86/x86/intr.c				1.147
+
+	Fix a bug that evcnt_detach() called twice when the idt vector is
+	full.
+	[msaitoh, ticket #1437]
+
+sys/net/if_loop.c			1.108-1.109 via patch
+
+	Fix a bug that an IP broadcast packet back to myself
+	is dropped as bad checksum when an interface's checksum
+	offload is set.
+	[msaitoh, ticket #1438]
+
+sys/arch/amiga/dev/if_qn.c			1.48
+sys/arch/amiga/dev/zssc.c			1.46
+sys/arch/mac68k/obio/iwm_fd.c			1.57
+sys/arch/mvme68k/dev/wdsc.c			1.33
+sys/arch/next68k/dev/nextdisplay.c		1.22
+sys/dev/gpib/ct.c				1.31
+sys/dev/gpib/mt.c				1.33
+sys/dev/gpib/ppi.c				1.25
+sys/dev/isa/if_iy.c				1.111
+sys/dev/isa/mcd.c				1.119
+sys/dev/isa/tcic2_isa.c				1.28
+sys/dev/isa/uha_isa.c				1.42
+sys/dev/pci/if_stge.c				1.73
+sys/dev/pci/neo.c				1.55
+sys/dev/pcmcia/if_tr_pcmcia.c			1.29
+sys/dev/sbus/sio16.c				1.25
+
+	Correctly initialize sc_dev.
+	[msaitoh, ticket #1439]
+
+sys/dev/pci/pucdata.c				1.105
+
+	puc(4): the 16C1054 and 16C1058 serial multi-port controllers need
+	a clock multiplier of 8, just like the 16C1050 controller.
+	[hauke, ticket #1440]
 
