@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.339 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.340 2019/11/14 17:09:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,14 +130,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339 2019/11/14 16:23:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.340 2019/11/14 17:09:23 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
 #include "opt_multiprocessor.h"
 #include "opt_xen.h"
 #include "opt_svs.h"
-#include "opt_kasan.h"
 #include "opt_kaslr.h"
 
 #include <sys/param.h>
@@ -4573,11 +4572,8 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	}
 #endif
 
-#ifdef KASAN
 	kasan_shadow_map((void *)pmap_maxkvaddr,
 	    (size_t)(maxkvaddr - pmap_maxkvaddr));
-#endif
-
 	kmsan_shadow_map((void *)pmap_maxkvaddr,
 	    (size_t)(maxkvaddr - pmap_maxkvaddr));
 

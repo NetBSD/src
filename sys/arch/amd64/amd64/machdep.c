@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.340 2019/11/14 16:48:51 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.341 2019/11/14 17:09:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.340 2019/11/14 16:48:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.341 2019/11/14 17:09:23 maxv Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -1684,9 +1684,7 @@ init_x86_64(paddr_t first_avail)
 
 	init_pte();
 
-#ifdef KASAN
 	kasan_early_init((void *)lwp0uarea);
-#endif
 
 	uvm_lwp_setuarea(&lwp0, lwp0uarea);
 
@@ -1766,9 +1764,7 @@ init_x86_64(paddr_t first_avail)
 
 	init_x86_msgbuf();
 
-#ifdef KASAN
 	kasan_init();
-#endif
 	kcsan_init();
 	kmsan_init((void *)lwp0uarea);
 
