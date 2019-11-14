@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.3 2019/11/08 12:36:10 maxv Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.4 2019/11/14 16:56:13 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,9 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.3 2019/11/08 12:36:10 maxv Exp $");
-
-#include "opt_kcsan.h"
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.4 2019/11/14 16:56:13 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
