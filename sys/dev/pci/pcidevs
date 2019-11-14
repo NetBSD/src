@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1390 2019/11/08 04:37:45 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1391 2019/11/14 09:10:41 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2513,6 +2513,7 @@ product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 product DLINK DGE550SX		0x4001	DGE-550SX
 product DLINK DFE520TX		0x4200	DFE-520TX 10/100 Ethernet
 product DLINK DGE528T		0x4300	DGE-528T Gigabit Ethernet
+product DLINK DGE530T_C1	0x4302	DGE-530T C1
 product DLINK DGE560T		0x4b00	DGE-560T Gigabit Ethernet
 product DLINK DGE560T_2		0x4b01	DGE-560T_2 Gigabit Ethernet
 product DLINK DGE560SX		0x4b02	DGE-560SX
@@ -5964,6 +5965,9 @@ product MYRICOM MYRINET	0x8043	Myrinet
 
 /* Myson-Century Technology products */
 product MYSON MTD803	0x0803	MTD803 3-in-1 Fast Ethernet Controller
+
+/* Ncube products */
+product NCUBE TG3648	0x8168	TP-Link TG-3468 v2 Gigabit Ethernet
 
 /* National Datacomm products */
 product NDC NCP130		0x0130 NCP130 Wireless NIC
