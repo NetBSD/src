@@ -32,7 +32,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.1 2019/10/07 11:53:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.2 2019/11/14 08:52:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,9 @@ ipgphy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (mii_phy_match(ma, ipgphys) != NULL) {
+	if (mii_phy_match(ma, ipgphys) != NULL)
 		return 10;
-	}
+
 	return 0;
 }
 
@@ -130,9 +130,7 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -148,9 +146,7 @@ ipgphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -206,21 +202,15 @@ done:
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO) {
 			sc->mii_ticks = 0;
 			break;
@@ -247,9 +237,7 @@ done:
 		if (sc->mii_ticks++ == 0)
 			break;
 
-		/*
-		 * Only retry autonegotiation every mii_anegticks seconds.
-		 */
+		/* Only retry autonegotiation every mii_anegticks seconds. */
 		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
 
@@ -401,7 +389,7 @@ ipgphy_reset(struct mii_softc *sc)
 
 	mii_phy_reset(sc);
 
-	/* clear autoneg/full-duplex as we don't want it after reset */
+	/* Clear autoneg/full-duplex as we don't want it after reset */
 	PHY_READ(sc, MII_BMCR, &reg);
 	reg &= ~(BMCR_AUTOEN | BMCR_FDX);
 	PHY_WRITE(sc, MII_BMCR, reg);
