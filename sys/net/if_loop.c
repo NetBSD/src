@@ -1,4 +1,4 @@
-/*	$NetBSD: if_loop.c,v 1.108 2019/11/11 08:12:35 msaitoh Exp $	*/
+/*	$NetBSD: if_loop.c,v 1.109 2019/11/14 04:14:30 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.108 2019/11/11 08:12:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_loop.c,v 1.109 2019/11/14 04:14:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -341,7 +341,7 @@ looutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 			m->m_pkthdr.csum_flags = 0;
 		} else {
 			/*
-			 * Do nothing. Pass M_CSUM_IPv4 and M_CSUM_UDPv4 as
+			 * Do nothing. Pass M_CSUM_UDPv6 as
 			 * they are to tell those are calculated and good.
 			 */
 		}
