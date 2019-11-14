@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.66 2019/11/04 14:53:35 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.67 2019/11/14 18:17:19 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -712,4 +712,10 @@ sys/compat/netbsd32/netbsd32_systrace_args.c		(regen)
 
 	For netbsd32_readlinkat(2), bufsize is netbsd_size_t, not size_t.
 	[rin, ticket #1711]
+
+sys/dev/pci/pucdata.c				1.105
+
+	puc(4): the 16C1054 and 16C1058 serial multi-port controllers need
+	a clock multiplier of 8, just like the 16C1050 controller.
+	[hauke, ticket #1712]
 
