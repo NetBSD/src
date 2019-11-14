@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.545 2019/11/05 20:19:17 maxv Exp $
+# $NetBSD: GENERIC,v 1.546 2019/11/14 16:23:52 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.545 $"
+#ident		"GENERIC-$Revision: 1.546 $"
 
 maxusers	64		# estimated number of users
 
@@ -132,6 +132,17 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #makeoptions 	KCSAN=1		# mandatory
 #options 	KCSAN		# mandatory
 #options 	KCSAN_PANIC	# optional
+
+# Kernel Memory Sanitizer (kMSan). You need to disable SVS and kernel modules
+# to use it. The quarantine is optional and can help KMSAN find uninitialized
+# memory in pool caches. Note that KMSAN requires at least 4GB of RAM.
+#makeoptions 	KMSAN=1		# mandatory
+#options 	KMSAN		# mandatory
+#no options	SVS		# mandatory
+#no options 	MODULAR		# mandatory
+#no options 	MODULAR_DEFAULT_AUTOLOAD	# mandatory
+#options	POOL_QUARANTINE	# optional
+#options 	KMSAN_PANIC	# optional
 
 # Kernel Info Leak Detector.
 #makeoptions 	KLEAK=1

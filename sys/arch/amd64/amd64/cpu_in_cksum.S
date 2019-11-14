@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_in_cksum.S,v 1.3 2015/06/30 21:08:24 christos Exp $ */
+/* $NetBSD: cpu_in_cksum.S,v 1.4 2019/11/14 16:23:52 maxv Exp $ */
 
 /*-
  * Copyright (c) 2008 Joerg Sonnenberger <joerg@NetBSD.org>.
@@ -30,6 +30,7 @@
  */
 
 #include <machine/asm.h>
+#include <machine/frameasm.h>
 #include "assym.h"
 
 ENTRY(cpu_in_cksum)
@@ -282,6 +283,7 @@ ENTRY(cpu_in_cksum)
 .Mreturn:
 	popq	%rbx
 	popq	%rbp
+	KMSAN_INIT_RET(4)
 	ret
 
 .Mout_of_mbufs:

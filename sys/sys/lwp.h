@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.187 2019/10/03 22:26:43 kamil Exp $	*/
+/*	$NetBSD: lwp.h,v 1.188 2019/11/14 16:23:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -53,6 +53,9 @@ struct lwp;
 /* forward declare this for <machine/cpu.h> so it can get l_cpu. */
 static __inline struct cpu_info *lwp_getcpu(struct lwp *);
 #include <machine/cpu.h>		/* curcpu() and cpu_info */
+#ifdef _KERNEL_OPT
+#include "opt_kmsan.h"
+#endif
 #endif
 
 #include <machine/proc.h>		/* Machine-dependent proc substruct. */
@@ -204,6 +207,10 @@ struct lwp {
 	uint64_t	*l_syscall_counter; /* !: counter for current process */
 
 	struct kdtrace_thread *l_dtrace; /* (: DTrace-specific data. */
+
+#ifdef KMSAN
+	void		*l_kmsan; /* !: KMSAN private data. */
+#endif
 };
 
 /*

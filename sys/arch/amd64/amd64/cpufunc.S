@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.46 2019/10/30 17:06:57 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.47 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -153,6 +153,7 @@ END(setusergs)
 ENTRY(x86_read_flags)
 	pushfq
 	popq	%rax
+	KMSAN_INIT_RET(8)
 	ret
 END(x86_read_flags)
 
@@ -174,6 +175,7 @@ ENTRY(tsc_get_timecount)
 	addl	CPUVAR(CC_SKEW), %eax
 	cmpq	%rdi, L_NCSW(%rcx)
 	jne	2f
+	KMSAN_INIT_RET(4)
 	ret
 2:
 	jmp	1b
@@ -194,6 +196,13 @@ ENTRY(rdmsr_safe)
 
 	xorq	%rax, %rax
 	movq	%rax, PCB_ONFAULT(%r8)
+#ifdef KMSAN
+	movq	%rsi,%rdi
+	movq	$8,%rsi
+	xorq	%rdx,%rdx
+	callq	_C_LABEL(kmsan_mark)
+#endif
+	KMSAN_INIT_RET(4)
 	ret
 END(rdmsr_safe)
 
@@ -211,12 +220,14 @@ ENTRY(cpu_counter)
 	shlq	$32, %rdx
 	orq	%rdx, %rax
 	addq	CPUVAR(CC_SKEW), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(cpu_counter)
 
 ENTRY(cpu_counter32)
 	rdtsc
 	addl	CPUVAR(CC_SKEW), %eax
+	KMSAN_INIT_RET(4)
 	ret
 END(cpu_counter32)
 
@@ -230,11 +241,13 @@ END(breakpoint)
 
 ENTRY(x86_curcpu)
 	movq	%gs:(CPU_INFO_SELF), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(x86_curcpu)
 
 ENTRY(x86_curlwp)
 	movq	%gs:(CPU_INFO_CURLWP), %rax
+	KMSAN_INIT_RET(8)
 	ret
 END(x86_curlwp)
 
@@ -246,12 +259,14 @@ END(cpu_set_curpri)
 ENTRY(__byte_swap_u32_variable)
 	movl	%edi, %eax
 	bswapl	%eax
+	KMSAN_INIT_RET(4)
 	ret
 END(__byte_swap_u32_variable)
 
 ENTRY(__byte_swap_u16_variable)
 	movl	%edi, %eax
 	xchgb	%al, %ah
+	KMSAN_INIT_RET(2)
 	ret
 END(__byte_swap_u16_variable)
 
@@ -330,6 +345,7 @@ ENTRY(inb)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
 	inb	%dx, %al
+	KMSAN_INIT_RET(1)
 	ret
 END(inb)
 
@@ -346,6 +362,7 @@ ENTRY(inw)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
 	inw	%dx, %ax
+	KMSAN_INIT_RET(2)
 	ret
 END(inw)
 
@@ -362,6 +379,7 @@ ENTRY(inl)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
 	inl	%dx, %eax
+	KMSAN_INIT_RET(4)
 	ret
 END(inl)
 

@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.36 2019/11/05 20:19:17 maxv Exp $
+#	$NetBSD: files.kern,v 1.37 2019/11/14 16:23:52 maxv Exp $
 
 #
 # kernel sources
@@ -132,6 +132,7 @@ file	kern/subr_localcount.c		kern
 file	kern/subr_lockdebug.c		kern
 file	kern/subr_log.c			kern
 file	kern/subr_lwp_specificdata.c	kern
+file	kern/subr_msan.c		kmsan
 file	kern/subr_once.c		kern
 file	kern/subr_optstr.c		kern
 file	kern/subr_pcq.c			kern

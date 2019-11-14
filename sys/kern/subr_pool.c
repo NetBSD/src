@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.261 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.262 2019/11/14 16:23:53 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.261 2019/10/16 18:29:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.262 2019/11/14 16:23:53 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -58,6 +58,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.261 2019/10/16 18:29:49 christos Exp
 #include <sys/cpu.h>
 #include <sys/atomic.h>
 #include <sys/asan.h>
+#include <sys/msan.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -83,7 +84,7 @@ static struct pool phpool[PHPOOL_MAX];
 #define	PHPOOL_FREELIST_NELEM(idx) \
 	(((idx) == 0) ? BITMAP_MIN_SIZE : BITMAP_SIZE * (1 << (idx)))
 
-#if defined(DIAGNOSTIC) || defined(KASAN)
+#if !defined(KMSAN) && (defined(DIAGNOSTIC) || defined(KASAN))
 #define POOL_REDZONE
 #endif
 
@@ -102,6 +103,18 @@ static void pool_cache_redzone_check(pool_cache_t, void *);
 # define pool_redzone_fill(pp, ptr)		__nothing
 # define pool_redzone_check(pp, ptr)		__nothing
 # define pool_cache_redzone_check(pc, ptr)	__nothing
+#endif
+
+#ifdef KMSAN
+static inline void pool_get_kmsan(struct pool *, void *);
+static inline void pool_put_kmsan(struct pool *, void *);
+static inline void pool_cache_get_kmsan(pool_cache_t, void *);
+static inline void pool_cache_put_kmsan(pool_cache_t, void *);
+#else
+#define pool_get_kmsan(pp, ptr)		__nothing
+#define pool_put_kmsan(pp, ptr)		__nothing
+#define pool_cache_get_kmsan(pc, ptr)	__nothing
+#define pool_cache_put_kmsan(pc, ptr)	__nothing
 #endif
 
 #ifdef KLEAK
@@ -128,10 +141,8 @@ static bool pool_cache_put_quarantine(pool_cache_t, void *, paddr_t);
 #define NO_CTOR	__FPTRCAST(int (*)(void *, void *, int), nullop)
 #define NO_DTOR	__FPTRCAST(void (*)(void *, void *), nullop)
 
-#if defined(KASAN) || defined(KLEAK)
 #define pc_has_ctor(pc) ((pc)->pc_ctor != NO_CTOR)
 #define pc_has_dtor(pc) ((pc)->pc_dtor != NO_DTOR)
-#endif
 
 /*
  * Pool backend allocators.
@@ -1194,6 +1205,7 @@ pool_get(struct pool *pp, int flags)
 	KASSERT((((vaddr_t)v) & (pp->pr_align - 1)) == 0);
 	FREECHECK_OUT(&pp->pr_freecheck, v);
 	pool_redzone_fill(pp, v);
+	pool_get_kmsan(pp, v);
 	if (flags & PR_ZERO)
 		memset(v, 0, pp->pr_reqsize);
 	else
@@ -1211,6 +1223,7 @@ pool_do_put(struct pool *pp, void *v, struct pool_pagelist *pq)
 
 	KASSERT(mutex_owned(&pp->pr_lock));
 	pool_redzone_check(pp, v);
+	pool_put_kmsan(pp, v);
 	FREECHECK_IN(&pp->pr_freecheck, v);
 	LOCKDEBUG_MEM_CHECK(v, pp->pr_size);
 
@@ -2563,6 +2576,7 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			splx(s);
 			FREECHECK_OUT(&pc->pc_freecheck, object);
 			pool_redzone_fill(&pc->pc_pool, object);
+			pool_cache_get_kmsan(pc, object);
 			pool_cache_kleak_fill(pc, object);
 			return object;
 		}
@@ -2712,6 +2726,7 @@ pool_cache_put_paddr(pool_cache_t pc, void *object, paddr_t pa)
 	int s;
 
 	KASSERT(object != NULL);
+	pool_cache_put_kmsan(pc, object);
 	pool_cache_redzone_check(pc, object);
 	FREECHECK_IN(&pc->pc_freecheck, object);
 
@@ -2895,6 +2910,36 @@ pool_page_free_meta(struct pool *pp, void *v)
 
 	vmem_free(kmem_meta_arena, (vmem_addr_t)v, pp->pr_alloc->pa_pagesz);
 }
+
+#ifdef KMSAN
+static inline void
+pool_get_kmsan(struct pool *pp, void *p)
+{
+	kmsan_orig(p, pp->pr_size, KMSAN_TYPE_POOL, __RET_ADDR);
+	kmsan_mark(p, pp->pr_size, KMSAN_STATE_UNINIT);
+}
+
+static inline void
+pool_put_kmsan(struct pool *pp, void *p)
+{
+	kmsan_mark(p, pp->pr_size, KMSAN_STATE_INITED);
+}
+
+static inline void
+pool_cache_get_kmsan(pool_cache_t pc, void *p)
+{
+	if (__predict_false(pc_has_ctor(pc))) {
+		return;
+	}
+	pool_get_kmsan(&pc->pc_pool, p);
+}
+
+static inline void
+pool_cache_put_kmsan(pool_cache_t pc, void *p)
+{
+	pool_put_kmsan(&pc->pc_pool, p);
+}
+#endif
 
 #ifdef KLEAK
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.207 2019/11/10 23:39:03 joerg Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.208 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.207 2019/11/10 23:39:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.208 2019/11/14 16:23:52 maxv Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -244,6 +244,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.207 2019/11/10 23:39:03 joerg Exp $")
 #include <sys/uidinfo.h>
 #include <sys/sysctl.h>
 #include <sys/psref.h>
+#include <sys/msan.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_object.h>
@@ -844,6 +845,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
 	l2->l_psrefs = 0;
+	kmsan_lwp_alloc(l2);
 
 	/*
 	 * For vfork, borrow parent's lwpctl context if it exists.
@@ -1298,6 +1300,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	if (l->l_name != NULL)
 		kmem_free(l->l_name, MAXCOMLEN);
 
+	kmsan_lwp_free(l);
 	cpu_lwp_free2(l);
 	uvm_lwp_exit(l);
 

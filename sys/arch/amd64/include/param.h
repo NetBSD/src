@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.32 2019/09/28 15:11:53 christos Exp $	*/
+/*	$NetBSD: param.h,v 1.33 2019/11/14 16:23:52 maxv Exp $	*/
 
 #ifdef __x86_64__
 
@@ -12,6 +12,7 @@
 #if defined(_KERNEL_OPT)
 #include "opt_kasan.h"
 #include "opt_kleak.h"
+#include "opt_kmsan.h"
 #endif
 #endif
 
@@ -44,7 +45,11 @@
 /*
  * Maximum physical memory supported by the implementation.
  */
+#if defined(KMSAN)
+#define MAXPHYSMEM	0x008000000000ULL /* 512GB */
+#else
 #define MAXPHYSMEM	0x100000000000ULL /* 16TB */
+#endif
 
 /*
  * XXXfvdl change this (after bootstrap) to take # of bits from
@@ -63,7 +68,7 @@
 #define	SSIZE		1		/* initial stack size/NBPG */
 #define	SINCR		1		/* increment of stack/NBPG */
 
-#if defined(KASAN) || defined(KLEAK)
+#if defined(KASAN) || defined(KLEAK) || defined(KMSAN)
 #define	UPAGES		8
 #elif defined(DIAGNOSTIC)
 #define	UPAGES		5		/* pages of u-area (1 for redzone) */

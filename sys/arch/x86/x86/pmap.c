@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.338 2019/11/13 12:55:10 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.339 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2019/11/13 12:55:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.339 2019/11/14 16:23:52 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -151,6 +151,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.338 2019/11/13 12:55:10 maxv Exp $");
 #include <sys/xcall.h>
 #include <sys/kcore.h>
 #include <sys/asan.h>
+#include <sys/msan.h>
 
 #include <uvm/uvm.h>
 #include <uvm/pmap/pmap_pvt.h>
@@ -1299,7 +1300,7 @@ pmap_pagetree_nentries_range(vaddr_t startva, vaddr_t endva, size_t pgsz)
 }
 #endif
 
-#if defined(__HAVE_DIRECT_MAP) || defined(KASAN)
+#if defined(__HAVE_DIRECT_MAP) || defined(KASAN) || defined(KMSAN)
 static inline void
 slotspace_copy(int type, pd_entry_t *dst, pd_entry_t *src)
 {
@@ -2282,6 +2283,9 @@ pmap_pdp_ctor(void *arg, void *v, int flags)
 #endif
 #ifdef KASAN
 	slotspace_copy(SLAREA_ASAN, pdir, PDP_BASE);
+#endif
+#ifdef KMSAN
+	slotspace_copy(SLAREA_MSAN, pdir, PDP_BASE);
 #endif
 #endif /* XENPV  && __x86_64__*/
 
@@ -4573,6 +4577,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	kasan_shadow_map((void *)pmap_maxkvaddr,
 	    (size_t)(maxkvaddr - pmap_maxkvaddr));
 #endif
+
+	kmsan_shadow_map((void *)pmap_maxkvaddr,
+	    (size_t)(maxkvaddr - pmap_maxkvaddr));
 
 	pmap_alloc_level(cpm, pmap_maxkvaddr, needed_kptp);
 

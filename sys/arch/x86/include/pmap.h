@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.104 2019/11/13 12:55:10 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.105 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -172,8 +172,9 @@ struct bootspace {
 #define SLAREA_DMAP	4
 #define SLAREA_HYPV	5
 #define SLAREA_ASAN	6
-#define SLAREA_KERN	7
-#define SLSPACE_NAREAS	8
+#define SLAREA_MSAN	7
+#define SLAREA_KERN	8
+#define SLSPACE_NAREAS	9
 
 struct slotspace {
 	struct {

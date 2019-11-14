@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.189 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.190 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1235,6 +1235,7 @@ ENTRY(cpu_switchto)
 
 .Lswitch_return:
 	/* Return to the new LWP, returning 'oldlwp' in %rax. */
+	KMSAN_INIT_RET(8)
 	movq	%r13,%rax
 	popq	%r15
 	popq	%r14
@@ -1321,6 +1322,7 @@ ENTRY(handle_syscall)
 	STI(si)
 	/* Pushed T_ASTFLT into tf_trapno on entry. */
 	movq	%rsp,%rdi
+	KMSAN_INIT_ARG(8)
 	call	_C_LABEL(trap)
 	jmp	.Lsyscall_checkast	/* re-check ASTs */
 END(handle_syscall)
@@ -1336,8 +1338,10 @@ ENTRY(lwp_trampoline)
 	movq	%rbp,%r14	/* for .Lsyscall_checkast */
 	movq	%rax,%rdi
 	xorq	%rbp,%rbp
+	KMSAN_INIT_ARG(16)
 	call	_C_LABEL(lwp_startup)
 	movq	%r13,%rdi
+	KMSAN_INIT_ARG(8)
 	call	*%r12
 	jmp	.Lsyscall_checkast
 END(lwp_trampoline)
@@ -1410,6 +1414,7 @@ IDTVEC(\name)
 	.if	\is_svs
 		SVS_ENTER
 	.endif
+	KMSAN_ENTER
 	jmp	handle_syscall
 IDTVEC_END(\name)
 .endm
@@ -1453,6 +1458,7 @@ IDTVEC_END(osyscall)
 	TEXT_USER_BEGIN
 	_ALIGN_TEXT
 LABEL(syscall_sysret)
+	KMSAN_LEAVE
 	MDS_LEAVE
 	SVS_LEAVE
 	IBRS_LEAVE
@@ -1501,10 +1507,12 @@ ENTRY(sse2_idlezero_page)
 	sfence
 	incl	%eax
 	popq	%rbp
+	KMSAN_INIT_RET(1)
 	ret
 2:
 	sfence
 	popq	%rbp
+	KMSAN_INIT_RET(1)
 	ret
 END(sse2_idlezero_page)
 
@@ -1546,6 +1554,7 @@ END(pagezero)
 	.type intrfastexit,@function
 LABEL(intrfastexit)
 	NOT_XEN(cli;)
+	KMSAN_LEAVE
 
 	testb	$SEL_UPL,TF_CS(%rsp)
 	jz	.Lkexit

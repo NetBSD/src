@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.64 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: cpu.h,v 1.65 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -43,7 +43,19 @@
 
 #ifdef _KERNEL
 
+#ifdef _KERNEL_OPT
+#include "opt_kmsan.h"
+#endif
+
 #if defined(__GNUC__) && !defined(_MODULE)
+
+/*
+ * KMSAN: disable the inlines below, to force the use of the ASM functions,
+ * where no KMSAN instrumentation is added. This is because the instrumentation
+ * does not handle the segment registers correctly. And there appears to be no
+ * way to tell LLVM not to add KMSAN instrumentation in these __asm blocks.
+ */
+#if !defined(KMSAN) || defined(KMSAN_NO_INST)
 static struct cpu_info *x86_curcpu(void);
 static lwp_t *x86_curlwp(void);
 
@@ -81,6 +93,12 @@ cpu_set_curpri(int pri)
 	    "r" (pri)
 	);
 }
+#else
+struct cpu_info *x86_curcpu(void);
+lwp_t *x86_curlwp(void);
+void cpu_set_curpri(int);
+#endif
+
 #endif	/* __GNUC__ && !_MODULE */
 
 #ifdef XENPV

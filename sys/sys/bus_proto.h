@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_proto.h,v 1.10 2019/11/05 20:19:18 maxv Exp $	*/
+/*	$NetBSD: bus_proto.h,v 1.11 2019/11/14 16:23:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001, 2007 The NetBSD Foundation, Inc.
@@ -67,6 +67,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_kasan.h"
 #include "opt_kcsan.h"
+#include "opt_kmsan.h"
 #endif
 
 /*
@@ -185,6 +186,32 @@ void kcsan_bus_space_read_region_stream_##bytes(bus_space_tag_t,		\
 #define bus_space_read_region_stream_2 kcsan_bus_space_read_region_stream_2
 #define bus_space_read_region_stream_4 kcsan_bus_space_read_region_stream_4
 #define bus_space_read_region_stream_8 kcsan_bus_space_read_region_stream_8
+#elif defined(KMSAN)
+#define BUS_SPACE_READ_MEM_PROTOS(bytes, bits)					\
+void kmsan_bus_space_read_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+    bus_size_t, uint##bits##_t *, bus_size_t);					\
+void kmsan_bus_space_read_multi_stream_##bytes(bus_space_tag_t,			\
+    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);		\
+void kmsan_bus_space_read_region_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+    bus_size_t, uint##bits##_t *, bus_size_t);					\
+void kmsan_bus_space_read_region_stream_##bytes(bus_space_tag_t,		\
+    bus_space_handle_t, bus_size_t, uint##bits##_t *, bus_size_t);
+#define bus_space_read_multi_1 kmsan_bus_space_read_multi_1
+#define bus_space_read_multi_2 kmsan_bus_space_read_multi_2
+#define bus_space_read_multi_4 kmsan_bus_space_read_multi_4
+#define bus_space_read_multi_8 kmsan_bus_space_read_multi_8
+#define bus_space_read_multi_stream_1 kmsan_bus_space_read_multi_stream_1
+#define bus_space_read_multi_stream_2 kmsan_bus_space_read_multi_stream_2
+#define bus_space_read_multi_stream_4 kmsan_bus_space_read_multi_stream_4
+#define bus_space_read_multi_stream_8 kmsan_bus_space_read_multi_stream_8
+#define bus_space_read_region_1 kmsan_bus_space_read_region_1
+#define bus_space_read_region_2 kmsan_bus_space_read_region_2
+#define bus_space_read_region_4 kmsan_bus_space_read_region_4
+#define bus_space_read_region_8 kmsan_bus_space_read_region_8
+#define bus_space_read_region_stream_1 kmsan_bus_space_read_region_stream_1
+#define bus_space_read_region_stream_2 kmsan_bus_space_read_region_stream_2
+#define bus_space_read_region_stream_4 kmsan_bus_space_read_region_stream_4
+#define bus_space_read_region_stream_8 kmsan_bus_space_read_region_stream_8
 #else
 #define BUS_SPACE_READ_MEM_PROTOS(bytes, bits)				\
 void bus_space_read_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
@@ -274,6 +301,32 @@ void kcsan_bus_space_write_region_stream_##bytes(bus_space_tag_t,		\
 #define bus_space_write_region_stream_2 kcsan_bus_space_write_region_stream_2
 #define bus_space_write_region_stream_4 kcsan_bus_space_write_region_stream_4
 #define bus_space_write_region_stream_8 kcsan_bus_space_write_region_stream_8
+#elif defined(KMSAN)
+#define BUS_SPACE_WRITE_MEM_PROTOS(bytes, bits)					\
+void kmsan_bus_space_write_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+    bus_size_t, const uint##bits##_t *, bus_size_t);				\
+void kmsan_bus_space_write_multi_stream_##bytes(bus_space_tag_t,		\
+    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);	\
+void kmsan_bus_space_write_region_##bytes(bus_space_tag_t, bus_space_handle_t,	\
+    bus_size_t, const uint##bits##_t *, bus_size_t);				\
+void kmsan_bus_space_write_region_stream_##bytes(bus_space_tag_t,		\
+    bus_space_handle_t, bus_size_t, const uint##bits##_t *, bus_size_t);
+#define bus_space_write_multi_1 kmsan_bus_space_write_multi_1
+#define bus_space_write_multi_2 kmsan_bus_space_write_multi_2
+#define bus_space_write_multi_4 kmsan_bus_space_write_multi_4
+#define bus_space_write_multi_8 kmsan_bus_space_write_multi_8
+#define bus_space_write_multi_stream_1 kmsan_bus_space_write_multi_stream_1
+#define bus_space_write_multi_stream_2 kmsan_bus_space_write_multi_stream_2
+#define bus_space_write_multi_stream_4 kmsan_bus_space_write_multi_stream_4
+#define bus_space_write_multi_stream_8 kmsan_bus_space_write_multi_stream_8
+#define bus_space_write_region_1 kmsan_bus_space_write_region_1
+#define bus_space_write_region_2 kmsan_bus_space_write_region_2
+#define bus_space_write_region_4 kmsan_bus_space_write_region_4
+#define bus_space_write_region_8 kmsan_bus_space_write_region_8
+#define bus_space_write_region_stream_1 kmsan_bus_space_write_region_stream_1
+#define bus_space_write_region_stream_2 kmsan_bus_space_write_region_stream_2
+#define bus_space_write_region_stream_4 kmsan_bus_space_write_region_stream_4
+#define bus_space_write_region_stream_8 kmsan_bus_space_write_region_stream_8
 #else
 #define BUS_SPACE_WRITE_MEM_PROTOS(bytes, bits)				\
 void bus_space_write_multi_##bytes(bus_space_tag_t, bus_space_handle_t,	\

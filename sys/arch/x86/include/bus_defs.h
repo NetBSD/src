@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_defs.h,v 1.4 2019/10/04 06:27:42 maxv Exp $	*/
+/*	$NetBSD: bus_defs.h,v 1.5 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2001 The NetBSD Foundation, Inc.
@@ -66,6 +66,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_kasan.h"
+#include "opt_kmsan.h"
 #endif
 
 #include <x86/busdefs.h>
@@ -145,7 +146,7 @@ struct x86_bus_dmamap {
 	/*
 	 * PUBLIC MEMBERS: these are used by machine-independent code.
 	 */
-#if defined(KASAN)
+#if defined(KASAN) || defined(KMSAN)
 	void		*dm_buf;
 	bus_size_t	dm_buflen;
 	int		dm_buftype;
