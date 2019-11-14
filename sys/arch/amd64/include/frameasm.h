@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.45 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.46 2019/11/14 16:23:52 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -6,6 +6,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #include "opt_svs.h"
+#include "opt_kmsan.h"
 #endif
 
 /*
@@ -205,6 +206,67 @@
 #define SVS_LEAVE_ALTSTACK	/* nothing */
 #endif
 
+#ifdef KMSAN
+#define KMSAN_ENTER	\
+	movq	%rsp,%rdi		; \
+	movq	$TF_REGSIZE+16+40,%rsi	; \
+	xorq	%rdx,%rdx		; \
+	callq	kmsan_mark		; \
+	callq	kmsan_intr_enter
+#define KMSAN_LEAVE	\
+	pushq	%rbp			; \
+	movq	%rsp,%rbp		; \
+	callq	kmsan_intr_leave	; \
+	popq	%rbp
+#define KMSAN_INIT_ARG(sz)	\
+	pushq	%rax			; \
+	pushq	%rcx			; \
+	pushq	%rdx			; \
+	pushq	%rsi			; \
+	pushq	%rdi			; \
+	pushq	%r8			; \
+	pushq	%r9			; \
+	pushq	%r10			; \
+	pushq	%r11			; \
+	movq	$sz,%rdi		; \
+	callq	_C_LABEL(kmsan_init_arg); \
+	popq	%r11			; \
+	popq	%r10			; \
+	popq	%r9			; \
+	popq	%r8			; \
+	popq	%rdi			; \
+	popq	%rsi			; \
+	popq	%rdx			; \
+	popq	%rcx			; \
+	popq	%rax
+#define KMSAN_INIT_RET(sz)	\
+	pushq	%rax			; \
+	pushq	%rcx			; \
+	pushq	%rdx			; \
+	pushq	%rsi			; \
+	pushq	%rdi			; \
+	pushq	%r8			; \
+	pushq	%r9			; \
+	pushq	%r10			; \
+	pushq	%r11			; \
+	movq	$sz,%rdi		; \
+	callq	_C_LABEL(kmsan_init_ret); \
+	popq	%r11			; \
+	popq	%r10			; \
+	popq	%r9			; \
+	popq	%r8			; \
+	popq	%rdi			; \
+	popq	%rsi			; \
+	popq	%rdx			; \
+	popq	%rcx			; \
+	popq	%rax
+#else
+#define KMSAN_ENTER		/* nothing */
+#define KMSAN_LEAVE		/* nothing */
+#define KMSAN_INIT_ARG(sz)	/* nothing */
+#define KMSAN_INIT_RET(sz)	/* nothing */
+#endif
+
 #define	INTRENTRY \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
@@ -219,7 +281,7 @@
 	movw	%fs,TF_FS(%rsp)		; \
 	movw	%es,TF_ES(%rsp)		; \
 	movw	%ds,TF_DS(%rsp)		; \
-98:
+98:	KMSAN_ENTER
 
 #define INTRFASTEXIT \
 	jmp	intrfastexit
@@ -238,7 +300,8 @@
 #define INTR_RECURSE_ENTRY \
 	subq	$TF_REGSIZE,%rsp	; \
 	INTR_SAVE_GPRS			; \
-	cld
+	cld				; \
+	KMSAN_ENTER
 
 #define	CHECK_DEFERRED_SWITCH \
 	cmpl	$0, CPUVAR(WANT_PMAPLOAD)
