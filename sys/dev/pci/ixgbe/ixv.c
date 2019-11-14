@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.26 2019/10/08 18:16:50 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.27 2019/11/14 15:53:39 martin Exp $*/
 
 /******************************************************************************
 
@@ -1931,7 +1931,8 @@ ixv_initialize_receive_units(struct adapter *adapter)
 			    adapter->num_rx_desc - 1);
 	}
 
-	ixv_initialize_rss_mapping(adapter);
+	if (adapter->hw.mac.type >= ixgbe_mac_X550_vf)
+		ixv_initialize_rss_mapping(adapter);
 } /* ixv_initialize_receive_units */
 
 /************************************************************************
