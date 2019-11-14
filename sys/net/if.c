@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.464 2019/11/13 02:51:22 ozaki-r Exp $	*/
+/*	$NetBSD: if.c,v 1.465 2019/11/14 16:23:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.464 2019/11/13 02:51:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.465 2019/11/14 16:23:53 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.464 2019/11/13 02:51:22 ozaki-r Exp $");
 #include <sys/intr.h>
 #include <sys/module_hook.h>
 #include <sys/compat_stub.h>
+#include <sys/msan.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -3609,6 +3610,8 @@ int
 if_transmit_lock(struct ifnet *ifp, struct mbuf *m)
 {
 	int error;
+
+	kmsan_check_mbuf(m);
 
 #ifdef ALTQ
 	KERNEL_LOCK(1, NULL);

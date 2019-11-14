@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1243 2019/11/11 04:04:29 msaitoh Exp $
+#	$NetBSD: files,v 1.1244 2019/11/14 16:23:52 maxv Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -33,6 +33,8 @@ defflag				KASAN
 defflag opt_kasan.h		KASAN_PANIC
 defflag				KCSAN
 defflag opt_kcsan.h		KCSAN_PANIC
+defflag				KMSAN
+defflag opt_kmsan.h		KMSAN_PANIC
 defflag				KLEAK
 defflag				KCOV
 defflag opt_pool.h		POOL_QUARANTINE
