@@ -1,4 +1,4 @@
-/*	$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: mcd.c,v 1.116.10.1 2019/11/14 16:04:31 martin Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.  All rights reserved.
@@ -56,7 +56,7 @@
 /*static char COPYRIGHT[] = "mcd-driver (C)1993 by H.Veit & B.Moore";*/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mcd.c,v 1.116.10.1 2019/11/14 16:04:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,6 +262,7 @@ mcdattach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	struct mcd_mbox mbx;
 
+	sc->sc_dev = self;
 	aprint_naive("\n");
 
 	/* Map i/o space */
