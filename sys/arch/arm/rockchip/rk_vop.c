@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $ */
+/* $NetBSD: rk_vop.c,v 1.2 2019/11/14 20:31:50 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2 2019/11/14 20:31:50 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -90,14 +90,14 @@ __KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.1 2019/11/09 23:30:14 jmcneill Exp $");
 #define	 DSP_VACT_ST_POST		__BITS(28,16)
 #define	 DSP_VACT_END_POST		__BITS(12,0)
 #define	VOP_DSP_HTOTAL_HS_END		0x0188
-#define	 DSP_HTOTAL			__BITS(28,16)
-#define	 DSP_HS_END			__BITS(12,0)
+#define	 DSP_HS_END			__BITS(28,16)
+#define	 DSP_HTOTAL			__BITS(12,0)
 #define	VOP_DSP_HACT_ST_END		0x018c
 #define	 DSP_HACT_ST			__BITS(28,16)
 #define	 DSP_HACT_END			__BITS(12,0)
 #define	VOP_DSP_VTOTAL_VS_END		0x0190
-#define	 DSP_VTOTAL			__BITS(28,16)
-#define	 DSP_VS_END			__BITS(12,0)
+#define	 DSP_VS_END			__BITS(28,16)
+#define	 DSP_VTOTAL			__BITS(12,0)
 #define	VOP_DSP_VACT_ST_END		0x0194
 #define	 DSP_VACT_ST			__BITS(28,16)
 #define	 DSP_VACT_END			__BITS(12,0)
@@ -306,8 +306,8 @@ rk_vop_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	      __SHIFTIN(vactive - 1, WIN0_DSP_HEIGHT);
 	WR4(sc, VOP_WIN0_DSP_INFO, val);
 
-	val = __SHIFTIN(hsync_len + hback_porch, WIN0_DSP_YST) |
-	      __SHIFTIN(vsync_len + vback_porch, WIN0_DSP_XST);
+	val = __SHIFTIN(hsync_len + hback_porch, WIN0_DSP_XST) |
+	      __SHIFTIN(vsync_len + vback_porch, WIN0_DSP_YST);
 	WR4(sc, VOP_WIN0_DSP_ST, val);
 
 	WR4(sc, VOP_WIN0_COLOR_KEY, 0);
