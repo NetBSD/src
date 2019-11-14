@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.21 2019/01/23 06:56:19 msaitoh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.22 2019/11/14 09:11:35 msaitoh Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.21 2019/01/23 06:56:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.22 2019/11/14 09:11:35 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -203,10 +203,17 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 		       csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Allocate and establish the interrupt. */
+#if 0
 	if (pci_intr_alloc(pa, &psc->sc_pihp, NULL, 0)) {
 		aprint_error_dev(self, "can't allocate handler\n");
 		goto fail;
 	}
+#else
+	if (pci_intx_alloc(pa, &psc->sc_pihp)) {
+		aprint_error_dev(self, "can't allocate handler\n");
+		goto fail;
+	}
+#endif
 	intrstr = pci_intr_string(pc, psc->sc_pihp[0], intrbuf,
 	    sizeof(intrbuf));
 	psc->sc_ih = pci_intr_establish_xname(pc, psc->sc_pihp[0], IPL_USB,

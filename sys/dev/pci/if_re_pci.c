@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.49 2018/11/13 20:12:45 jdolecek Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.50 2019/11/14 09:11:35 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.49 2018/11/13 20:12:45 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.50 2019/11/14 09:11:35 msaitoh Exp $");
 
 #include <sys/types.h>
 
@@ -99,6 +99,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8168,
 	    RTK_8168,
 	    "RealTek 8168/8111 PCIe Gigabit Ethernet" },
+	{ PCI_VENDOR_NCUBE, PCI_PRODUCT_NCUBE_TG3648,
+	    RTK_8168,
+	    "TP-Link TG-3468 v2 (RTL8168) Gigabit Ethernet" },
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8169,
 	    RTK_8169,
 	    "RealTek 8169/8110 Gigabit Ethernet" },
@@ -111,6 +114,9 @@ static const struct rtk_type re_devs[] = {
 	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE528T,
 	    RTK_8169,
 	    "D-Link DGE-528T Gigabit Ethernet" },
+	{ PCI_VENDOR_DLINK, PCI_PRODUCT_DLINK_DGE530T_C1,
+	    RTK_8169,
+	    "D-Link DGE-530T C1 Gigabit Ethernet" },
 	{ PCI_VENDOR_USR2, PCI_PRODUCT_USR2_USR997902,
 	    RTK_8169,
 	    "US Robotics (3Com) USR997902 Gigabit Ethernet" },
