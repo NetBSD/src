@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.29 2019/11/13 18:57:26 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.30 2019/11/14 13:58:22 martin Exp $
 #
 # Makefile for sysinst
 
@@ -67,6 +67,10 @@ MSG_XLAT_SH=	${.CURDIR}/../../msg_xlat.sh
 MSG_CMP_SH=	${.CURDIR}/../../msg_cmp.sh
 
 SETS_TAR_SUFF=${"${USE_XZ_SETS:Uno}"!="no":?"tar.xz":"tgz"}
+
+.if ${MKBSDTAR:Uno} == "no"
+CPPFLAGS+=	-DUSING_PAXASTAR
+.endif
 
 CATALOGDIR=	/usr/share/sysinst/catalog
 CPPFLAGS+=	-I. -I${.CURDIR}/../.. -I${.CURDIR} \
