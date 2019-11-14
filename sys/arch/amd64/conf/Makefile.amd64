@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.amd64,v 1.79 2019/11/05 20:19:17 maxv Exp $
+#	$NetBSD: Makefile.amd64,v 1.80 2019/11/14 16:23:52 maxv Exp $
 
 # Makefile for NetBSD
 #
@@ -67,6 +67,14 @@ KCSANFLAGS=	-fsanitize=thread
 KCSANFLAGS.${f}=	# empty
 .endfor
 CFLAGS+=	${KCSANFLAGS.${.IMPSRC:T}:U${KCSANFLAGS}}
+.endif
+
+.if ${KMSAN:U0} > 0 && ${HAVE_LLVM:Uno} == "yes"
+KMSANFLAGS=	-fsanitize=kernel-memory
+.for f in subr_msan.c
+KMSANFLAGS.${f}=	# empty
+.endfor
+CFLAGS+=	${KMSANFLAGS.${.IMPSRC:T}:U${KMSANFLAGS}}
 .endif
 
 ##

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kmem.c,v 1.76 2019/08/15 12:06:42 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.77 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.76 2019/08/15 12:06:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.77 2019/11/14 16:23:52 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -92,6 +92,7 @@ __KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.76 2019/08/15 12:06:42 maxv Exp $");
 #include <sys/lockdebug.h>
 #include <sys/cpu.h>
 #include <sys/asan.h>
+#include <sys/msan.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_map.h>
@@ -304,6 +305,10 @@ kmem_alloc(size_t size, km_flag_t kmflags)
 	KASSERTMSG((!cpu_intr_p() && !cpu_softintr_p()),
 	    "kmem(9) should not be used from the interrupt context");
 	v = kmem_intr_alloc(size, kmflags);
+	if (__predict_true(v != NULL)) {
+		kmsan_mark(v, size, KMSAN_STATE_UNINIT);
+		kmsan_orig(v, size, KMSAN_TYPE_KMEM, __RET_ADDR);
+	}
 	KASSERT(v || (kmflags & KM_NOSLEEP) != 0);
 	return v;
 }
@@ -334,6 +339,7 @@ kmem_free(void *p, size_t size)
 	KASSERT(!cpu_intr_p());
 	KASSERT(!cpu_softintr_p());
 	kmem_intr_free(p, size);
+	kmsan_mark(p, size, KMSAN_STATE_INITED);
 }
 
 static size_t

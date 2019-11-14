@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.288 2019/11/05 20:19:18 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.289 2019/11/14 16:23:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -271,6 +271,9 @@ int	kasan_kcopy(const void *, void *, size_t);
 #elif defined(_KERNEL) && defined(KCSAN)
 int	kcsan_kcopy(const void *, void *, size_t);
 #define kcopy		kcsan_kcopy
+#elif defined(_KERNEL) && defined(KMSAN)
+int	kmsan_kcopy(const void *, void *, size_t);
+#define kcopy		kmsan_kcopy
 #else
 int	kcopy(const void *, void *, size_t);
 #endif
@@ -286,6 +289,7 @@ int	kasan_copystr(const void *, void *, size_t, size_t *);
 int	kasan_copyinstr(const void *, void *, size_t, size_t *);
 int	kasan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kasan_copyin(const void *, void *, size_t);
+int	copyout(const void *, void *, size_t);
 #define copystr		kasan_copystr
 #define copyinstr	kasan_copyinstr
 #define copyoutstr	kasan_copyoutstr
@@ -295,17 +299,29 @@ int	kcsan_copystr(const void *, void *, size_t, size_t *);
 int	kcsan_copyinstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyin(const void *, void *, size_t);
+int	copyout(const void *, void *, size_t);
 #define copystr		kcsan_copystr
 #define copyinstr	kcsan_copyinstr
 #define copyoutstr	kcsan_copyoutstr
 #define copyin		kcsan_copyin
+#elif defined(_KERNEL) && defined(KMSAN)
+int	kmsan_copystr(const void *, void *, size_t, size_t *);
+int	kmsan_copyinstr(const void *, void *, size_t, size_t *);
+int	kmsan_copyoutstr(const void *, void *, size_t, size_t *);
+int	kmsan_copyin(const void *, void *, size_t);
+int	kmsan_copyout(const void *, void *, size_t);
+#define copystr		kmsan_copystr
+#define copyinstr	kmsan_copyinstr
+#define copyoutstr	kmsan_copyoutstr
+#define copyin		kmsan_copyin
+#define copyout		kmsan_copyout
 #else
 int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
-#endif
 int	copyout(const void *, void *, size_t);
+#endif
 
 #ifdef KLEAK
 #define copyout		kleak_copyout

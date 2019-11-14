@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.133 2019/11/05 20:19:18 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.134 2019/11/14 16:23:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -384,6 +384,13 @@ void	*kcsan_memset(void *, int, size_t);
 #define	memcpy(d, s, l)		kcsan_memcpy(d, s, l)
 #define	memcmp(a, b, l)		kcsan_memcmp(a, b, l)
 #define	memset(d, v, l)		kcsan_memset(d, v, l)
+#elif defined(_KERNEL) && defined(KMSAN)
+void	*kmsan_memcpy(void *, const void *, size_t);
+int	 kmsan_memcmp(const void *, const void *, size_t);
+void	*kmsan_memset(void *, int, size_t);
+#define	memcpy(d, s, l)		kmsan_memcpy(d, s, l)
+#define	memcmp(a, b, l)		kmsan_memcmp(a, b, l)
+#define	memset(d, v, l)		kmsan_memset(d, v, l)
 #else
 #define	memcpy(d, s, l)		__builtin_memcpy(d, s, l)
 #define	memcmp(a, b, l)		__builtin_memcmp(a, b, l)
@@ -411,6 +418,13 @@ size_t	 kcsan_strlen(const char *);
 #define	strcpy(d, s)		kcsan_strcpy(d, s)
 #define	strcmp(a, b)		kcsan_strcmp(a, b)
 #define	strlen(a)		kcsan_strlen(a)
+#elif defined(_KERNEL) && defined(KMSAN)
+char	*kmsan_strcpy(char *, const char *);
+int	 kmsan_strcmp(const char *, const char *);
+size_t	 kmsan_strlen(const char *);
+#define	strcpy(d, s)		kmsan_strcpy(d, s)
+#define	strcmp(a, b)		kmsan_strcmp(a, b)
+#define	strlen(a)		kmsan_strlen(a)
 #else
 #define	strcpy(d, s)		__builtin_strcpy(d, s)
 #define	strcmp(a, b)		__builtin_strcmp(a, b)
@@ -460,6 +474,9 @@ void	*kasan_memmove(void *, const void *, size_t);
 #elif defined(_KERNEL) && defined(KCSAN)
 void	*kcsan_memmove(void *, const void *, size_t);
 #define	memmove(d, s, l)	kcsan_memmove(d, s, l)
+#elif defined(_KERNEL) && defined(KMSAN)
+void	*kmsan_memmove(void *, const void *, size_t);
+#define	memmove(d, s, l)	kmsan_memmove(d, s, l)
 #endif
 
 int	 pmatch(const char *, const char *, const char **);
