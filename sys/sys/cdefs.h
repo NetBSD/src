@@ -1,4 +1,4 @@
-/*	$NetBSD: cdefs.h,v 1.148 2019/11/05 20:19:18 maxv Exp $	*/
+/*	$NetBSD: cdefs.h,v 1.149 2019/11/14 16:23:53 maxv Exp $	*/
 
 /* * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -346,6 +346,12 @@
 #define	__nocsan	__attribute__((no_sanitize_thread))
 #else
 #define	__nocsan	/* nothing */
+#endif
+
+#if defined(__clang__) && defined(KMSAN)
+#define	__nomsan	__attribute__((no_sanitize("memory")))
+#else
+#define	__nomsan	/* nothing */
 #endif
 
 #if defined(__clang__)

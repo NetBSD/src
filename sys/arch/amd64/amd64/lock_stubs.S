@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.32 2019/09/05 12:57:30 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.33 2019/11/14 16:23:52 maxv Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -343,6 +343,7 @@ ENTRY(__cpu_simple_lock_try)
 	cmpxchgb %ah, (%rdi)
 	movl	$0, %eax
 	setz	%al
+	KMSAN_INIT_RET(4)
 	RET
 END(__cpu_simple_lock_try)
 
