@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.33 2019/11/14 16:48:51 maxv Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.34 2019/11/14 17:09:22 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.33 2019/11/14 16:48:51 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.34 2019/11/14 17:09:22 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -434,9 +434,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	 */
 	pmap_bootstrap(kernelvmstart, VM_MAX_KERNEL_ADDRESS);
 
-#ifdef KASAN
 	kasan_init();
-#endif
 
 	/*
 	 * setup lwp0
