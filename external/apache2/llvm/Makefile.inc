@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.1 2019/11/11 22:44:57 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.2 2019/11/14 13:16:35 martin Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -18,6 +18,9 @@ LLVM_TOPLEVEL:=	${.PARSEDIR}
 CONFIG_DIR:=	${.PARSEDIR}/autoconf
 
 CPPFLAGS+=	-I. -I${CLANG_SRCDIR}/include -I${LLVM_SRCDIR}/include
+
+# Bogus warning with -O2 in GCC 7 and 8.
+CWARNFLAGS.gcc+=	${${ACTIVE_CC} == "gcc" && ${HAVE_GCC:U0} < 9:? -Wno-stringop-overflow :}
 
 .if defined(HOSTLIB) || defined(HOSTPROG) || defined(_BSD_HOSTINIT_MK_)
 LLVM_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/include
