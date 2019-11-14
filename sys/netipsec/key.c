@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.268 2019/11/12 05:13:29 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.269 2019/11/14 03:17:08 knakahara Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.268 2019/11/12 05:13:29 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.269 2019/11/14 03:17:08 knakahara Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -4502,30 +4502,34 @@ key_ismyaddr6(const struct sockaddr_in6 *sin6)
 	bound = curlwp_bind();
 	s = pserialize_read_enter();
 	IN6_ADDRLIST_READER_FOREACH(ia) {
-		bool ingroup;
-
 		if (key_sockaddr_match((const struct sockaddr *)&sin6,
 		    (const struct sockaddr *)&ia->ia_addr, 0)) {
 			pserialize_read_exit(s);
 			goto ours;
 		}
-		ia6_acquire(ia, &psref);
-		pserialize_read_exit(s);
 
-		/*
-		 * XXX Multicast
-		 * XXX why do we care about multlicast here while we don't care
-		 * about IPv4 multicast??
-		 * XXX scope
-		 */
-		ingroup = in6_multi_group(&sin6->sin6_addr, ia->ia_ifp);
-		if (ingroup) {
+		if (IN6_IS_ADDR_MULTICAST(&sin6->sin6_addr)) {
+			bool ingroup;
+
+			ia6_acquire(ia, &psref);
+			pserialize_read_exit(s);
+
+			/*
+			 * XXX Multicast
+			 * XXX why do we care about multlicast here while we don't care
+			 * about IPv4 multicast??
+			 * XXX scope
+			 */
+			ingroup = in6_multi_group(&sin6->sin6_addr, ia->ia_ifp);
+			if (ingroup) {
+				ia6_release(ia, &psref);
+				goto ours;
+			}
+
+			s = pserialize_read_enter();
 			ia6_release(ia, &psref);
-			goto ours;
 		}
 
-		s = pserialize_read_enter();
-		ia6_release(ia, &psref);
 	}
 	pserialize_read_exit(s);
 
