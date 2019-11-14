@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.101 2019/11/13 12:57:15 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.102 2019/11/14 15:42:47 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5659,4 +5659,49 @@ bin/pax/Makefile				1.40
 
 	PR bin/54468: install manual pages for tar and cpio only once.
 	[nakayama, ticket #421]
+
+sys/dev/pci/ixgbe/ixv.c				1.140
+
+	ixv(4): disable RSS configuration on 82599 and X540 VFs.
+	[msaitoh, ticket #422]
+
+sys/netipsec/key.c				1.268,1.269
+
+	Fix SA can be expaired wrongly when there are many SPs.
+	Reduce load for IKE negotiations when the system has many IPv6
+	addresses.
+	[knakahara, ticket #423]
+
+sys/net/if_loop.c				1.108,1.109
+
+	Fix a bug that an IP broadcast packet back to myself
+	is dropped by bad checksum when an interface's checksum
+	offload is set.
+	[msaitoh, ticket #424]
+
+sys/arch/amiga/dev/if_qn.c			1.48
+sys/arch/amiga/dev/zssc.c			1.46
+sys/arch/mac68k/obio/iwm_fd.c			1.57
+sys/arch/mvme68k/dev/wdsc.c			1.33
+sys/arch/next68k/dev/nextdisplay.c		1.22
+sys/dev/gpib/ct.c				1.31
+sys/dev/gpib/mt.c				1.33
+sys/dev/gpib/ppi.c				1.25
+sys/dev/isa/if_iy.c				1.111
+sys/dev/isa/mcd.c				1.119
+sys/dev/isa/tcic2_isa.c				1.28
+sys/dev/isa/uha_isa.c				1.42
+sys/dev/pci/if_stge.c				1.73
+sys/dev/pci/neo.c				1.55
+sys/dev/pcmcia/if_tr_pcmcia.c			1.29
+sys/dev/sbus/sio16.c				1.25
+
+	Correctly initialize sc_dev.
+	[msaitoh, ticket #425]
+
+sys/dev/pci/pucdata.c				1.105
+
+	puc(4): the 16C1054 and 16C1058 serial multi-port controllers need
+	a clock multiplier of 8, just like the 16C1050 controller.
+	[hauke, ticket #426]
 
