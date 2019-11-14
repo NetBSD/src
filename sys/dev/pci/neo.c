@@ -1,4 +1,4 @@
-/*	$NetBSD: neo.c,v 1.54 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: neo.c,v 1.54.2.1 2019/11/14 15:38:02 martin Exp $	*/
 
 /*
  * Copyright (c) 1999 Cameron Grant <gandalf@vilnya.demon.co.uk>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.54 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: neo.c,v 1.54.2.1 2019/11/14 15:38:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -559,6 +559,7 @@ neo_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	sc = device_private(self);
+	sc->dev = self;
 	pa = aux;
 	pc = pa->pa_pc;
 

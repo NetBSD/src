@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2_isa.c,v 1.27 2016/07/14 10:19:06 msaitoh Exp $	*/
+/*	$NetBSD: tcic2_isa.c,v 1.27.24.1 2019/11/14 15:38:02 martin Exp $	*/
 
 /*
  *
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.27 2016/07/14 10:19:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcic2_isa.c,v 1.27.24.1 2019/11/14 15:38:02 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,6 +224,7 @@ tcic_isa_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh;
 	bus_space_handle_t memh;
 
+	sc->sc_dev = self;
 	aprint_naive("\n");
 
 	/* Map i/o space. */
