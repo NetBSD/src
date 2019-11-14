@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.48 2019/10/29 20:01:22 maya Exp $	*/
+/*	$NetBSD: pmap.c,v 1.49 2019/11/14 16:48:51 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,11 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.48 2019/10/29 20:01:22 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.49 2019/11/14 16:48:51 maxv Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
-#include "opt_kasan.h"
 #include "opt_multiprocessor.h"
 #include "opt_pmap.h"
 #include "opt_uvmhist.h"
