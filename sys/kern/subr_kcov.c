@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.8 2019/05/26 05:41:45 kamil Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.9 2019/11/15 09:44:44 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -339,7 +339,7 @@ out:
 	return error;
 }
 
-static inline bool
+static inline bool __nomsan
 in_interrupt(void)
 {
 	return curcpu()->ci_idepth >= 0;
@@ -347,7 +347,7 @@ in_interrupt(void)
 
 void __sanitizer_cov_trace_pc(void);
 
-void
+void __nomsan
 __sanitizer_cov_trace_pc(void)
 {
 	extern int cold;
@@ -388,7 +388,7 @@ __sanitizer_cov_trace_pc(void)
 	}
 }
 
-static void
+static void __nomsan
 trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 {
 	extern int cold;
@@ -433,7 +433,7 @@ trace_cmp(uint64_t type, uint64_t arg1, uint64_t arg2, intptr_t pc)
 
 void __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2)
 {
 
@@ -443,7 +443,7 @@ __sanitizer_cov_trace_cmp1(uint8_t arg1, uint8_t arg2)
 
 void __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2)
 {
 
@@ -453,7 +453,7 @@ __sanitizer_cov_trace_cmp2(uint16_t arg1, uint16_t arg2)
 
 void __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2)
 {
 
@@ -463,7 +463,7 @@ __sanitizer_cov_trace_cmp4(uint32_t arg1, uint32_t arg2)
 
 void __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2)
 {
 
@@ -473,7 +473,7 @@ __sanitizer_cov_trace_cmp8(uint64_t arg1, uint64_t arg2)
 
 void __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2)
 {
 
@@ -483,7 +483,7 @@ __sanitizer_cov_trace_const_cmp1(uint8_t arg1, uint8_t arg2)
 
 void __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2)
 {
 
@@ -493,7 +493,7 @@ __sanitizer_cov_trace_const_cmp2(uint16_t arg1, uint16_t arg2)
 
 void __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2)
 {
 
@@ -503,7 +503,7 @@ __sanitizer_cov_trace_const_cmp4(uint32_t arg1, uint32_t arg2)
 
 void __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2);
 
-void
+void __nomsan
 __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2)
 {
 
@@ -513,7 +513,7 @@ __sanitizer_cov_trace_const_cmp8(uint64_t arg1, uint64_t arg2)
 
 void __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases);
 
-void
+void __nomsan
 __sanitizer_cov_trace_switch(uint64_t val, uint64_t *cases)
 {
 	uint64_t i, nbits, ncases, type;
