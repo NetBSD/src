@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.36 2019/10/30 17:06:57 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.37 2019/11/15 09:03:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2007 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #include <sys/errno.h>
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.36 2019/10/30 17:06:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.S,v 1.37 2019/11/15 09:03:26 maxv Exp $");
 
 #include "opt_xen.h"
 
@@ -247,17 +247,6 @@ ENTRY(inb)
 	ret
 END(inb)
 
-ENTRY(insb)
-	pushl	%edi
-	movl	8(%esp), %edx
-	movl	12(%esp), %edi
-	movl	16(%esp), %ecx
-	rep
-	insb
-	popl	%edi
-	ret
-END(insb)
-
 ENTRY(inw)
 	movl	4(%esp), %edx
 	xorl	%eax, %eax
@@ -265,33 +254,11 @@ ENTRY(inw)
 	ret
 END(inw)
 
-ENTRY(insw)
-	pushl	%edi
-	movl	8(%esp), %edx
-	movl	12(%esp), %edi
-	movl	16(%esp), %ecx
-	rep
-	insw
-	popl	%edi
-	ret
-END(insw)
-
 ENTRY(inl)
 	movl	4(%esp), %edx
 	inl	%dx, %eax
 	ret
 END(inl)
-
-ENTRY(insl)
-	pushl	%edi
-	movl	8(%esp), %edx
-	movl	12(%esp), %edi
-	movl	16(%esp), %ecx
-	rep
-	insl
-	popl	%edi
-	ret
-END(insl)
 
 ENTRY(outb)
 	movl	4(%esp), %edx
@@ -300,17 +267,6 @@ ENTRY(outb)
 	ret
 END(outb)
 
-ENTRY(outsb)
-	pushl	%esi
-	movl	8(%esp), %edx
-	movl	12(%esp), %esi
-	movl	16(%esp), %ecx
-	rep
-	outsb
-	popl	%esi
-	ret
-END(outsb)
-
 ENTRY(outw)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
@@ -318,31 +274,9 @@ ENTRY(outw)
 	ret
 END(outw)
 
-ENTRY(outsw)
-	pushl	%esi
-	movl	8(%esp), %edx
-	movl	12(%esp), %esi
-	movl	16(%esp), %ecx
-	rep
-	outsw
-	popl	%esi
-	ret
-END(outsw)
-
 ENTRY(outl)
 	movl	4(%esp), %edx
 	movl	8(%esp), %eax
 	outl	%eax, %dx
 	ret
 END(outl)
-
-ENTRY(outsl)
-	pushl	%esi
-	movl	8(%esp), %edx
-	movl	12(%esp), %esi
-	movl	16(%esp), %ecx
-	rep
-	outsl
-	popl	%esi
-	ret
-END(outsl)
