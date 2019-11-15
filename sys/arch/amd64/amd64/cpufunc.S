@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.47 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.48 2019/11/15 09:03:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -349,15 +349,6 @@ ENTRY(inb)
 	ret
 END(inb)
 
-ENTRY(insb)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	movq	%rsi, %rdi
-	rep
-	insb
-	ret
-END(insb)
-
 ENTRY(inw)
 	movq	%rdi, %rdx
 	xorq	%rax, %rax
@@ -365,15 +356,6 @@ ENTRY(inw)
 	KMSAN_INIT_RET(2)
 	ret
 END(inw)
-
-ENTRY(insw)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	movq	%rsi, %rdi
-	rep
-	insw
-	ret
-END(insw)
 
 ENTRY(inl)
 	movq	%rdi, %rdx
@@ -383,29 +365,12 @@ ENTRY(inl)
 	ret
 END(inl)
 
-ENTRY(insl)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	movq	%rsi, %rdi
-	rep
-	insl
-	ret
-END(insl)
-
 ENTRY(outb)
 	movq	%rdi, %rdx
 	movq	%rsi, %rax
 	outb	%al, %dx
 	ret
 END(outb)
-
-ENTRY(outsb)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	rep
-	outsb
-	ret
-END(outsb)
 
 ENTRY(outw)
 	movq	%rdi, %rdx
@@ -414,25 +379,9 @@ ENTRY(outw)
 	ret
 END(outw)
 
-ENTRY(outsw)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	rep
-	outsw
-	ret
-END(outsw)
-
 ENTRY(outl)
 	movq	%rdi, %rdx
 	movq	%rsi, %rax
 	outl	%eax, %dx
 	ret
 END(outl)
-
-ENTRY(outsl)
-	movl	%edx, %ecx
-	movl	%edi, %edx
-	rep
-	outsl
-	ret
-END(outsl)
