@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.289 2019/11/14 16:23:53 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.290 2019/11/15 08:11:36 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -299,11 +299,12 @@ int	kcsan_copystr(const void *, void *, size_t, size_t *);
 int	kcsan_copyinstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyin(const void *, void *, size_t);
-int	copyout(const void *, void *, size_t);
+int	kcsan_copyout(const void *, void *, size_t);
 #define copystr		kcsan_copystr
 #define copyinstr	kcsan_copyinstr
 #define copyoutstr	kcsan_copyoutstr
 #define copyin		kcsan_copyin
+#define copyout		kcsan_copyout
 #elif defined(_KERNEL) && defined(KMSAN)
 int	kmsan_copystr(const void *, void *, size_t, size_t *);
 int	kmsan_copyinstr(const void *, void *, size_t, size_t *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.4 2019/11/14 16:56:13 maxv Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.5 2019/11/15 08:11:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.4 2019/11/14 16:56:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.5 2019/11/15 08:11:37 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -326,17 +326,20 @@ kcsan_strlen(const char *str)
 #undef copyinstr
 #undef copyoutstr
 #undef copyin
+#undef copyout
 
 int	kcsan_kcopy(const void *, void *, size_t);
 int	kcsan_copystr(const void *, void *, size_t, size_t *);
 int	kcsan_copyinstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyoutstr(const void *, void *, size_t, size_t *);
 int	kcsan_copyin(const void *, void *, size_t);
+int	kcsan_copyout(const void *, void *, size_t);
 int	kcopy(const void *, void *, size_t);
 int	copystr(const void *, void *, size_t, size_t *);
 int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
+int	copyout(const void *, void *, size_t);
 
 int
 kcsan_kcopy(const void *src, void *dst, size_t len)
@@ -358,6 +361,13 @@ kcsan_copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	kcsan_access((uintptr_t)kaddr, len, true, false, __RET_ADDR);
 	return copyin(uaddr, kaddr, len);
+}
+
+int
+kcsan_copyout(const void *kaddr, void *uaddr, size_t len)
+{
+	kcsan_access((uintptr_t)kaddr, len, false, false, __RET_ADDR);
+	return copyout(kaddr, uaddr, len);
 }
 
 int
