@@ -1,4 +1,4 @@
-/*	$NetBSD: imxspi.c,v 1.6 2019/09/27 02:59:21 hkenken Exp $	*/
+/*	$NetBSD: imxspi.c,v 1.7 2019/11/15 01:10:42 hkenken Exp $	*/
 
 /*-
  * Copyright (c) 2014  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.6 2019/09/27 02:59:21 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxspi.c,v 1.7 2019/11/15 01:10:42 hkenken Exp $");
 
 #include "opt_imxspi.h"
 #include "opt_fdt.h"
@@ -69,7 +69,7 @@ void imxspi_sched(struct imxspi_softc *);
 
 #define	IMXCSPI_TYPE(type, x)						      \
 	((sc->sc_type == IMX31_CSPI) ? __CONCAT(CSPI_IMX31_, x) :	      \
-	    (sc->sc_type == IMX35_CSPI) ? __CONCAT(CSPI_IMX35_, x) : 0)
+	 (sc->sc_type == IMX35_CSPI) ? __CONCAT(CSPI_IMX35_, x) : 0)
 #define	IMXCSPI(x)	__CONCAT(CSPI_, x)
 #define	IMXESPI(x)	__CONCAT(ECSPI_, x)
 #define	IMXSPI(x)	((sc->sc_enhanced) ? IMXESPI(x) : IMXCSPI(x))
@@ -228,6 +228,7 @@ imxspi_configure_enhanced(void *arg, int slave, int mode, int speed)
 
 	config = bus_space_read_4(sc->sc_iot, sc->sc_ioh, ECSPI_CONFIGREG);
 	config &= ~(__SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_POL) |
+	    __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_CTL) |
 	    __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_PHA));
 	switch (mode) {
 	case SPI_MODE_0:
@@ -240,11 +241,13 @@ imxspi_configure_enhanced(void *arg, int slave, int mode, int speed)
 	case SPI_MODE_2:
 		/* CPHA = 0, CPOL = 1 */
 		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_POL);
+		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_CTL);
 		break;
 	case SPI_MODE_3:
 		/* CPHA = 1, CPOL = 1 */
 		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_PHA);
 		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_POL);
+		config |= __SHIFTIN(__BIT(slave), ECSPI_CONFIG_SCLK_CTL);
 		break;
 	default:
 		return EINVAL;
