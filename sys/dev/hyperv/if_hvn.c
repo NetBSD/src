@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.5 2019/10/01 18:00:08 chs Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.6 2019/11/15 08:51:27 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.5 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.6 2019/11/15 08:51:27 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -921,12 +921,6 @@ hvn_nvs_attach(struct hvn_softc *sc)
 	    (HVN_TX_FRAGS + 1) * sizeof(struct vmbus_gpa));
 
 	sc->sc_chan->ch_flags &= ~CHF_BATCHED;
-
-	if (vmbus_channel_setdeferred(sc->sc_chan, device_xname(sc->sc_dev))) {
-		aprint_error_dev(sc->sc_dev,
-		    "failed to create the interrupt thread\n");
-		return -1;
-	}
 
 	/* Associate our interrupt handler with the channel */
 	if (vmbus_channel_open(sc->sc_chan, ringsize, NULL, 0,

@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.3 2019/10/01 18:00:08 chs Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.4 2019/11/15 08:51:27 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.3 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.4 2019/11/15 08:51:27 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -210,11 +210,6 @@ hvkbd_attach(device_t parent, device_t self, void *aux)
 	hvkbd_alloc_keybuf(sc);
 
 	sc->sc_buf = kmem_zalloc(HVKBD_BUFSIZE, KM_SLEEP);
-	if (vmbus_channel_setdeferred(sc->sc_chan, device_xname(self))) {
-		aprint_error_dev(self,
-		    "failed to create the interrupt thread\n");
-		goto free_buf;
-	}
 
 	sc->sc_chan->ch_flags &= ~CHF_BATCHED;
 	if (vmbus_channel_open(sc->sc_chan,
