@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.1 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.2 2019/11/15 12:18:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define KMSAN_NO_INST
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.1 2019/11/14 16:23:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.2 2019/11/15 12:18:46 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -867,6 +867,191 @@ kmsan_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 
 	return ret;
 }
+
+/* -------------------------------------------------------------------------- */
+
+#undef _ucas_32
+#undef _ucas_32_mp
+#undef _ucas_64
+#undef _ucas_64_mp
+#undef _ufetch_8
+#undef _ufetch_16
+#undef _ufetch_32
+#undef _ufetch_64
+#undef _ustore_8
+#undef _ustore_16
+#undef _ustore_32
+#undef _ustore_64
+
+int _ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int kmsan__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int
+kmsan__ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+    uint32_t *ret)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
+	    sizeof(new) + sizeof(ret), "ucas_32");
+	_ret = _ucas_32(uaddr, old, new, ret);
+	if (_ret == 0)
+		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+
+#ifdef __HAVE_UCAS_MP
+int _ucas_32_mp(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int kmsan__ucas_32_mp(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
+int
+kmsan__ucas_32_mp(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
+    uint32_t *ret)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
+	    sizeof(new) + sizeof(ret), "ucas_32_mp");
+	_ret = _ucas_32_mp(uaddr, old, new, ret);
+	if (_ret == 0)
+		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+#endif
+
+#ifdef _LP64
+int _ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int kmsan__ucas_64(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int
+kmsan__ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+    uint64_t *ret)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
+	    sizeof(new) + sizeof(ret), "ucas_64");
+	_ret = _ucas_64(uaddr, old, new, ret);
+	if (_ret == 0)
+		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+
+#ifdef __HAVE_UCAS_MP
+int _ucas_64_mp(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int kmsan__ucas_64_mp(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
+int
+kmsan__ucas_64_mp(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
+    uint64_t *ret)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
+	    sizeof(new) + sizeof(ret), "ucas_64_mp");
+	_ret = _ucas_64_mp(uaddr, old, new, ret);
+	if (_ret == 0)
+		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+#endif
+#endif
+
+int _ufetch_8(const uint8_t *, uint8_t *);
+int kmsan__ufetch_8(const uint8_t *, uint8_t *);
+int
+kmsan__ufetch_8(const uint8_t *uaddr, uint8_t *valp)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_8");
+	_ret = _ufetch_8(uaddr, valp);
+	if (_ret == 0)
+		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+
+int _ufetch_16(const uint16_t *, uint16_t *);
+int kmsan__ufetch_16(const uint16_t *, uint16_t *);
+int
+kmsan__ufetch_16(const uint16_t *uaddr, uint16_t *valp)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_16");
+	_ret = _ufetch_16(uaddr, valp);
+	if (_ret == 0)
+		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+
+int _ufetch_32(const uint32_t *, uint32_t *);
+int kmsan__ufetch_32(const uint32_t *, uint32_t *);
+int
+kmsan__ufetch_32(const uint32_t *uaddr, uint32_t *valp)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_32");
+	_ret = _ufetch_32(uaddr, valp);
+	if (_ret == 0)
+		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+
+#ifdef _LP64
+int _ufetch_64(const uint64_t *, uint64_t *);
+int kmsan__ufetch_64(const uint64_t *, uint64_t *);
+int
+kmsan__ufetch_64(const uint64_t *uaddr, uint64_t *valp)
+{
+	int _ret;
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_64");
+	_ret = _ufetch_64(uaddr, valp);
+	if (_ret == 0)
+		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
+	kmsan_init_ret(sizeof(int));
+	return _ret;
+}
+#endif
+
+int _ustore_8(uint8_t *, uint8_t);
+int kmsan__ustore_8(uint8_t *, uint8_t);
+int
+kmsan__ustore_8(uint8_t *uaddr, uint8_t val)
+{
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_8");
+	kmsan_init_ret(sizeof(int));
+	return _ustore_8(uaddr, val);
+}
+
+int _ustore_16(uint16_t *, uint16_t);
+int kmsan__ustore_16(uint16_t *, uint16_t);
+int
+kmsan__ustore_16(uint16_t *uaddr, uint16_t val)
+{
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_16");
+	kmsan_init_ret(sizeof(int));
+	return _ustore_16(uaddr, val);
+}
+
+int _ustore_32(uint32_t *, uint32_t);
+int kmsan__ustore_32(uint32_t *, uint32_t);
+int
+kmsan__ustore_32(uint32_t *uaddr, uint32_t val)
+{
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_32");
+	kmsan_init_ret(sizeof(int));
+	return _ustore_32(uaddr, val);
+}
+
+#ifdef _LP64
+int _ustore_64(uint64_t *, uint64_t);
+int kmsan__ustore_64(uint64_t *, uint64_t);
+int
+kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
+{
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_64");
+	kmsan_init_ret(sizeof(int));
+	return _ustore_64(uaddr, val);
+}
+#endif
 
 /* -------------------------------------------------------------------------- */
 
