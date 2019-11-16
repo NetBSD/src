@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2019/11/16 15:51:26 joerg Exp $
 
 LIB=	clangAST
 
@@ -112,6 +112,10 @@ CLANG_TABLEGEN_OUTPUT= \
 
 .if defined(HOSTLIB)
 .include <bsd.hostlib.mk>
+BAD_GCC_VERSION!=	case `${HOST_CXX} --version 2> /dev/null` in [cg]++*7.4*) echo yes ;; *) echo no ;; esac
+.  if ${BAD_GCC_VERSION} == "yes"
+HOST_CXXFLAGS+=	-O0
+.  endif
 .else
 .include <bsd.lib.mk>
 .endif
