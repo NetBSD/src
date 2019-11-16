@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.102 2019/11/14 15:42:47 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.103 2019/11/16 17:02:38 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5704,4 +5704,59 @@ sys/dev/pci/pucdata.c				1.105
 	puc(4): the 16C1054 and 16C1058 serial multi-port controllers need
 	a clock multiplier of 8, just like the 16C1050 controller.
 	[hauke, ticket #426]
+
+sys/arch/arm/dts/rk3399-rockpro64.dts		1.9
+sys/arch/arm/rockchip/files.rockchip		1.21,1.22
+sys/arch/arm/rockchip/rk3399_cru.c		1.11-1.13
+sys/arch/arm/rockchip/rk_cru.h			1.6,1.7
+sys/arch/arm/rockchip/rk_cru_composite.c	1.4,1.5
+sys/arch/arm/rockchip/rk_drm.c			1.1,1.2
+sys/arch/arm/rockchip/rk_drm.h			1.1
+sys/arch/arm/rockchip/rk_dwhdmi.c		1.1-1.3
+sys/arch/arm/rockchip/rk_fb.c			1.1
+sys/arch/arm/rockchip/rk_i2c.c			1.6
+sys/arch/arm/rockchip/rk_i2s.c			1.1
+sys/arch/arm/rockchip/rk_vop.c			1.1,1.2
+sys/arch/evbarm/conf/GENERIC64			1.110,1.112,1.113
+sys/conf/files					1.1242
+sys/dev/fdt/ausoc.c				1.5
+sys/dev/fdt/fdt_clock.c				1.10
+sys/dev/fdt/fdtvar.h				1.57
+sys/dev/ic/dw_hdmi.c				1.2-1.4
+sys/dev/ic/dw_hdmi.h				1.2-1.4
+sys/dev/ic/dw_hdmi_phy.c			1.1,1.2
+
+	arm: rockchip: rk3399 display and HDMI audio support.
+	[jmcneill, ticket #427]
+
+sys/dev/hyperv/hvkbd.c				1.4
+sys/dev/hyperv/if_hvn.c				1.6
+
+	hvn(4), hvkbd(4): No need to call vmbus_channel_setdeferred().
+	[nonaka, ticket #428]
+
+sys/arch/x86/pci/msipic.c			1.19
+
+	Disable MSI-X before writing the MSI-X table.
+	[hikaru, ticket #429]
+
+sys/arch/arm/sa11x0/sa11x0_ost.c		1.33
+sys/arch/zaurus/zaurus/autoconf.c		1.13
+
+	Fix zaurus zaudio(4) attach failure.
+	[tsutsui, ticket #430]
+
+sys/arch/zaurus/conf/GENERIC			1.89
+sys/arch/zaurus/conf/INSTALL			1.40
+sys/arch/zaurus/stand/zbsdmod/zbsdmod.c		1.12
+sys/arch/zaurus/zaurus/machdep.c		1.45
+
+	Make zaurus kernels use symbol tables loaded by the bootloader.
+	[tsutsui, ticket #431]
+
+sys/netinet6/ip6_input.c			1.215
+
+	Add more checks in ip6_pullexthdr, to prevent a panic in m_copydata.
+	The Rip6 entry point could see a garbage Hop6 option.
+	[maxv, ticket #432]
 
