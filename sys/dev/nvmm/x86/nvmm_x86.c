@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86.c,v 1.7 2019/05/15 04:39:52 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86.c,v 1.8 2019/11/16 17:53:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.7 2019/05/15 04:39:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86.c,v 1.8 2019/11/16 17:53:46 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -292,7 +292,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	.eax = ~0,
 	.ebx = ~0,
 	.ecx =
-	    /* Excluded: SVM, EAPIC, OSVW. */
+	    /* Excluded: SVM, EAPIC, OSVW, MWAITX. */
 	    CPUID_LAHF | CPUID_CMPLEGACY |
 	    CPUID_ALTMOVCR0 | CPUID_LZCNT |
 	    CPUID_SSE4A | CPUID_MISALIGNSSE |
@@ -304,7 +304,7 @@ const struct nvmm_x86_cpuid_mask nvmm_cpuid_80000001 = {
 	    CPUID_TOPOEXT | CPUID_PCEC |
 	    CPUID_PCENB | CPUID_SPM |
 	    CPUID_DBE | CPUID_PTSC |
-	    CPUID_L2IPERFC | CPUID_MWAITX,
+	    CPUID_L2IPERFC,
 	.edx =
 	    /* Excluded: RDTSCP. */
 	    CPUID_SYSCALL | CPUID_MPC |
