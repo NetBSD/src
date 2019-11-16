@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.8 2019/08/13 17:24:25 tnn Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.9 2019/11/16 13:24:25 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -87,4 +87,8 @@
 		reg = <0>;
 		status = "okay";
 	};
+};
+
+&hdmi_sound {
+	status = "okay";
 };
