@@ -1,4 +1,4 @@
-/* $NetBSD: rk_dwhdmi.c,v 1.2 2019/11/10 12:07:50 jmcneill Exp $ */
+/* $NetBSD: rk_dwhdmi.c,v 1.3 2019/11/16 13:25:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.2 2019/11/10 12:07:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.3 2019/11/16 13:25:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -194,6 +194,21 @@ rk_dwhdmi_mode_set(struct dwhdmi_softc *dsc,
 	dwhdmi_phy_mode_set(dsc, mode, adjusted_mode);
 }
 
+static audio_dai_tag_t
+rk_dwhdmi_dai_get_tag(device_t dev, const void *data, size_t len)
+{
+	struct rk_dwhdmi_softc * const sc = device_private(dev);
+
+	if (len != 4)
+		return NULL;
+
+	return &sc->sc_base.sc_dai;
+}
+
+static struct fdtbus_dai_controller_func rk_dwhdmi_dai_funcs = {
+	.get_tag = rk_dwhdmi_dai_get_tag
+};
+
 static int
 rk_dwhdmi_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -287,6 +302,8 @@ rk_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_activate = rk_dwhdmi_ep_activate;
 	sc->sc_ports.dp_ep_get_data = rk_dwhdmi_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_BRIDGE);
+
+	fdtbus_register_dai_controller(self, phandle, &rk_dwhdmi_dai_funcs);
 }
 
 CFATTACH_DECL_NEW(rk_dwhdmi, sizeof(struct rk_dwhdmi_softc),
