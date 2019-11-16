@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.22 2019/06/14 11:08:18 hkenken Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.23 2019/11/16 21:53:38 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.22 2019/06/14 11:08:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.23 2019/11/16 21:53:38 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,8 +138,10 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 	int ihandle;
 
 	specifier = get_specifier_by_index(phandle, index, &ihandle);
-	if (specifier == NULL)
+	if (specifier == NULL) {
+		printf("%s: handle not found %u@%x\n",__func__,index,phandle);
 		return NULL;
+	}
 
 	return fdtbus_intr_establish_raw(ihandle, specifier, ipl,
 	    flags, func, arg);
@@ -168,8 +170,10 @@ fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
 	void *ih;
 
 	ic = fdtbus_get_interrupt_controller(ihandle);
-	if (ic == NULL)
+	if (ic == NULL) {
+		printf("%s: ihandle %d is not a controller\n",__func__,ihandle);
 		return NULL;
+	}
 
 	ih = ic->ic_funcs->establish(ic->ic_dev, __UNCONST(specifier),
 	    ipl, flags, func, arg);
