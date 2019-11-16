@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.65 2019/11/14 16:06:17 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.66 2019/11/16 16:40:29 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1566,4 +1566,44 @@ sys/dev/pci/pucdata.c				1.105
 	puc(4): the 16C1054 and 16C1058 serial multi-port controllers need
 	a clock multiplier of 8, just like the 16C1050 controller.
 	[hauke, ticket #1440]
+
+sys/dev/hyperv/hvkbd.c				1.4
+sys/dev/hyperv/if_hvn.c				1.6
+
+	hvn(4), hvkbd(4): No need to call vmbus_channel_setdeferred().
+	[nonaka, ticket #1441]
+
+sys/dev/i2c/spdmem_i2c.c			1.14
+
+	Use 1-byte data-buffers when writing to the "control" device
+	for the SPD ROMs to prevent panic.
+	[msaitoh, ticket #1442]
+
+sys/arch/arm/nvidia/tegra_xusb.c	1.13-1.14 via patch
+sys/dev/pci/xhci_pci.c			1.13
+sys/dev/usb/usb.c			1.169
+sys/dev/usb/usbdivar.h			1.116
+sys/dev/usb/xhci.c			1.93, 1.95, 1.97
+sys/dev/usb/xhcireg.h			1.11-1.12
+
+	Detect USB 3.1
+	[msaitoh, ticket #1443]
+
+usr.sbin/usbdevs/usbdevs.c			1.36
+
+	Print USB_SPEED_SUPER_PLUS capability if present.
+	[msaitoh, ticket #1444]
+
+sys/arch/arm/sa11x0/sa11x0_ost.c		1.33
+	
+	Fix another attach failure of zaudio(4) WM8731 on Zaurus SL-C7x0/860.
+	[tsutsui, ticket #1445]
+
+sys/arch/zaurus/conf/GENERIC			1.85,1.89
+sys/arch/zaurus/conf/INSTALL			1.40
+sys/arch/zaurus/stand/zbsdmod/zbsdmod.c		1.12
+sys/arch/zaurus/zaurus/machdep.c		1.40,1.45
+
+	Make zaurus kernels use symbols loaded by bootloader.
+	[tsutsui, ticket #1446]
 
