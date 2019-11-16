@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399-rockpro64.dts,v 1.7 2019/07/28 10:03:56 jmcneill Exp $ */
+/* $NetBSD: rk3399-rockpro64.dts,v 1.7.2.1 2019/11/16 16:48:26 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -60,6 +60,10 @@
 				<2 RK_PD2 RK_FUNC_2 &pcfg_pull_none>;
 		};
 	};
+};
+
+&hdmi_sound {
+	status = "okay";
 };
 
 &pwm1 {
