@@ -1,4 +1,4 @@
-/*	$NetBSD: defined.c,v 1.1 2018/01/09 03:31:15 christos Exp $	*/
+/*	$NetBSD: defined.c,v 1.2 2019/11/16 12:26:54 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: defined.c,v 1.1 2018/01/09 03:31:15 christos Exp $");
+__RCSID("$NetBSD: defined.c,v 1.2 2019/11/16 12:26:54 tkusumi Exp $");
 
 /*
  * All the "defined" stuff is for handling variables,
@@ -256,6 +256,7 @@ defined_init(void)
 
 	defined_add("ARCH", name.machine);
 	defined_add("CPU", name.machine);
+	defined_add("DOLLAR", "$");
 	defined_add("HOST", name.nodename);
 	defined_add("OSNAME", name.sysname);
 	defined_add("OSREL", name.release);
