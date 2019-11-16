@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.340 2019/11/14 17:09:23 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.341 2019/11/16 10:19:29 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.340 2019/11/14 17:09:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.341 2019/11/16 10:19:29 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -541,6 +541,8 @@ static inline struct pv_pte *
 pve_to_pvpte(struct pv_entry *pve)
 {
 
+	if (pve == NULL)
+		return NULL;
 	KASSERT((void *)&pve->pve_pte == (void *)pve);
 	return &pve->pve_pte;
 }
