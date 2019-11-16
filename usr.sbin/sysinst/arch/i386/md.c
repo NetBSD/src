@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.22 2019/11/12 16:33:14 martin Exp $ */
+/*	$NetBSD: md.c,v 1.23 2019/11/16 18:08:36 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -256,11 +256,12 @@ md_post_newfs_bios(struct install_partition_desc *install)
 		 * Too hard to double check, so just 'know' the device numbers.
 		 */
 		len = sizeof condev;
-		if (sysctl(conmib, __arraycount(conmib), &condev, &len, NULL, 0) != -1
-		    && (condev & ~3) == 0x800) {
+		if (sysctl(conmib, __arraycount(conmib), &condev, &len, NULL,
+		    0) != -1 && (condev & ~3) == 0x800) {
 			/* Motherboard serial port */
 			boottype.bp_consdev = (condev & 3) + 1;
-			/* Defaulting the baud rate to that of stdin should suffice */
+			/* Defaulting the baud rate to that of stdin should
+			   suffice */
 			if (tcgetattr(0, &t) != -1)
 				boottype.bp_conspeed = t.c_ispeed;
 		}
