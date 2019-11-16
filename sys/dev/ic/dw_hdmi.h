@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.h,v 1.2 2019/11/09 23:27:50 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.h,v 1.3 2019/11/16 12:50:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,6 +31,8 @@
 
 #include <dev/i2c/i2cvar.h>
 #include <dev/i2c/ddcreg.h>
+
+#include <dev/audio/audio_dai.h>
 
 #include <drm/drmP.h>
 
@@ -72,6 +74,8 @@ struct dwhdmi_softc {
 	i2c_tag_t		sc_ic;
 	kmutex_t		sc_ic_lock;
 	struct i2c_controller	sc_ic_builtin;
+
+	struct audio_dai_device	sc_dai;
 
 	struct dwhdmi_connector	sc_connector;
 	struct drm_bridge	sc_bridge;
