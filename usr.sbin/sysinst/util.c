@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.38 2019/11/14 13:58:22 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.39 2019/11/16 20:26:59 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1467,7 +1467,8 @@ set_timezone(void)
 	menu_no = new_menu(NULL, NULL, 14, 23, 9,
 			   12, 32, MC_ALWAYS_SCROLL | MC_NOSHORTCUT,
 			   tzm_set_names, NULL, NULL,
-			   "\nPlease consult the install documents.", NULL);
+			   "\nPlease consult the install documents.",
+			   MSG_exit_menu_generic);
 	if (menu_no < 0)
 		goto done;	/* error - skip timezone setting */
 

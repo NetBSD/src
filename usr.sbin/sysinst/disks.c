@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.56 2019/11/13 18:57:26 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.57 2019/11/16 20:26:59 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -852,7 +852,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 			menu_no = new_menu(MSG_Available_disks,
 				dsk_menu, i, -1,
 				 4, 0, 0, MC_SCROLL,
-				NULL, NULL, NULL, NULL, NULL);
+				NULL, NULL, NULL, NULL, MSG_exit_menu_generic);
 			if (menu_no == -1)
 				return -1;
 			msg_fmt_display(MSG_ask_disk, "%s", doingwhat);
@@ -2211,7 +2211,7 @@ add_select_partition(struct selected_partitions *res,
 	    3, 3, 0, 60,
 	    MC_SUBMENU | MC_SCROLL | MC_NOCLEAR,
 	    NULL, display_single_part, NULL,
-	    NULL, NULL);
+	    NULL, MSG_exit_menu_generic);
 	if (sel_menu != -1) {
 		struct selected_partition *newsels;
 		struct sel_menu_data data;
@@ -2410,8 +2410,7 @@ select_partitions(struct selected_partitions *res,
 	/* loop with menu */
 	update_sel_part_title(&data);
 	m = new_menu(data.title, men, __arraycount(men), 3, 2, 0, 65, MC_SCROLL,
-	    post_sel_part, fmt_sel_part_line, NULL, NULL,
-	    "Source selection OK, proceed to target selection");
+	    post_sel_part, fmt_sel_part_line, NULL, NULL, MSG_clone_src_done);
 	process_menu(m, &data);
 	free(data.title);
 	if (res->num_sel == 0)
