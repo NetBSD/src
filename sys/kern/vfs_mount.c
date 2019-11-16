@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.71 2019/08/19 09:32:42 christos Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.72 2019/11/16 10:07:53 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.71 2019/08/19 09:32:42 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.72 2019/11/16 10:07:53 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -420,11 +420,12 @@ vfs_vnode_iterator_next1(struct vnode_iterator *vni,
 		TAILQ_REMOVE(&mp->mnt_vnodelist, mvip, vi_mntvnodes);
 		VIMPL_TO_VNODE(mvip)->v_usecount = 0;
 again:
-		vp = VIMPL_TO_VNODE(vip);
-		if (vp == NULL) {
+		if (vip == NULL) {
 	       		mutex_exit(&mntvnode_lock);
 	       		return NULL;
 		}
+		vp = VIMPL_TO_VNODE(vip);
+		KASSERT(vp != NULL);
 		mutex_enter(vp->v_interlock);
 		if (vnis_marker(vp) ||
 		    vdead_check(vp, (do_wait ? 0 : VDEAD_NOWAIT)) ||
