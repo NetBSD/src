@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.103 2019/11/16 17:02:38 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.104 2019/11/16 20:09:49 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5759,4 +5759,9 @@ sys/netinet6/ip6_input.c			1.215
 	Add more checks in ip6_pullexthdr, to prevent a panic in m_copydata.
 	The Rip6 entry point could see a garbage Hop6 option.
 	[maxv, ticket #432]
+
+sys/dev/nvmm/x86/nvmm_x86.c			1.8
+
+	Don't report MWAITX by default.
+	[jmcneill, ticket #434]
 
