@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysctl.7,v 1.141 2019/11/14 21:23:46 jdolecek Exp $
+.\"	$NetBSD: sysctl.7,v 1.142 2019/11/16 17:33:09 nia Exp $
 .\"
 .\" Copyright (c) 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -383,8 +383,10 @@ the variable may be created and removed dynamically
 upon loading or unloading the corresponding kernel module.
 .It Li kern.aio_max
 The maximum number of asynchronous I/O operations.
-.It Li kern.arandom
-This variable picks a random number each time it is queried.
+.It Li kern.arandom ( Dv KERN_ARND )
+This variable returns up to 256 bytes of random data.
+Multiple queries can be used to obtain an infinite amount of
+non-blocking cryptographically secure random data.
 The used random number generator
 .Pf ( RNG )
 is based on
