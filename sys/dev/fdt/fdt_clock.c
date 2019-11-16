@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_clock.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $ */
+/* $NetBSD: fdt_clock.c,v 1.8.4.1 2019/11/16 16:48:25 martin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.8 2019/02/27 16:56:00 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_clock.c,v 1.8.4.1 2019/11/16 16:48:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -159,6 +159,30 @@ struct clk *
 fdtbus_clock_get(int phandle, const char *clkname)
 {
 	return fdtbus_clock_get_prop(phandle, clkname, "clock-names");
+}
+
+int
+fdtbus_clock_enable(int phandle, const char *clkname, bool required)
+{
+	struct clk *clk;
+
+	clk = fdtbus_clock_get(phandle, clkname);
+	if (clk == NULL)
+		return required ? ENOENT : 0;
+
+	return clk_enable(clk);
+}
+
+int
+fdtbus_clock_enable_index(int phandle, u_int index, bool required)
+{
+	struct clk *clk;
+
+	clk = fdtbus_clock_get_index(phandle, index);
+	if (clk == NULL)
+		return required ? ENOENT : 0;
+
+	return clk_enable(clk);
 }
 
 /*

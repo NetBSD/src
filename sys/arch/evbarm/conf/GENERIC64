@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.103.2.2 2019/10/03 17:14:47 martin Exp $
+#	$NetBSD: GENERIC64,v 1.103.2.3 2019/11/16 16:48:25 martin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -340,7 +340,7 @@ options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
-rkiic*		at fdt?			# Rockchip I2C
+rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
 tegrai2c*	at fdt? pass 4		# NVIDIA Tegra I2C
@@ -412,6 +412,7 @@ options 	HDAUDIOVERBOSE
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 ausoc*		at fdt?			# Simple SoC audio card
+rki2s*		at fdt?			# Rockchip I2S/PCM
 sunxicodec*	at fdt?			# Allwinner audio codec
 sun8icodec*	at fdt?			# Allwinner audio codec (sun8i/sun50i)
 h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
@@ -429,6 +430,9 @@ hdmicec*	at hdmicecbus?
 anxedp*		at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
 dwhdmi* 	at fdt?			# Designware HDMI TX
+rkdrm*		at fdt? pass 5		# Rockchip DRM master
+rkfb*		at rkdrm?		# Rockchip DRM framebuffer
+rkvop*		at fdt?			# Rockchip Visual Output Processor
 sunxide2bus*	at fdt? pass 4		# Allwinner DE2 bus
 sunxidrm*	at fdt?	pass 5		# Allwinner Display Pipeline
 sunxifb*	at sunxidrm?		# Allwinner DRM framebuffer
