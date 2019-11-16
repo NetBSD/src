@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.32 2017/02/08 20:11:18 rin Exp $
+# $NetBSD: INSTALL,v 1.32.6.1 2019/11/16 16:39:10 martin Exp $
 #
 # INSTALL config file (GENERIC with memory disk root)
 #
@@ -67,7 +67,6 @@ options 		RASOPS_SMALL
 no options 		DIAGNOSTIC
 no options 		DDB
 no options 		DDB_HISTORY_SIZE
-no makeoptions	COPY_SYMTAB
 
 no options 		PXA2X0_DMAC_DMOVER_CONCURRENCY
 
