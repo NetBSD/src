@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.3 2019/11/16 12:50:08 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.4 2019/11/16 13:10:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.3 2019/11/16 12:50:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.4 2019/11/16 13:10:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -752,12 +752,47 @@ dwhdmi_dai_add_device(audio_dai_tag_t dai, audio_dai_tag_t aux)
 	return 0;
 }
 
-static int
-dwhdmi_dai_set_port(void *priv, mixer_ctrl_t *mc)
+static void
+dwhdmi_audio_swvol_codec(audio_filter_arg_t *arg)
 {
+	struct dwhdmi_softc * const sc = arg->context;
+	const aint_t *src;
+	aint_t *dst;
+	u_int sample_count;
+	u_int i;
+
+	src = arg->src;
+	dst = arg->dst;
+	sample_count = arg->count * arg->srcfmt->channels;
+	for (i = 0; i < sample_count; i++) {
+		aint2_t v = (aint2_t)(*src++);
+		v = v * sc->sc_swvol / 255;
+		*dst++ = (aint_t)v;
+	}
+}
+
+static int
+dwhdmi_audio_set_format(void *priv, int setmode,
+    const audio_params_t *play, const audio_params_t *rec,
+    audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
+{
+	struct dwhdmi_softc * const sc = priv;
+
+	pfil->codec = dwhdmi_audio_swvol_codec;
+	pfil->context = sc;
+
+	return 0;
+}
+
+static int
+dwhdmi_audio_set_port(void *priv, mixer_ctrl_t *mc)
+{
+	struct dwhdmi_softc * const sc = priv;
+
 	switch (mc->dev) {
 	case DWHDMI_DAI_OUTPUT_MASTER_VOLUME:
 	case DWHDMI_DAI_INPUT_DAC_VOLUME:
+		sc->sc_swvol = mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT];
 		return 0;
 	default:
 		return ENXIO;
@@ -765,13 +800,15 @@ dwhdmi_dai_set_port(void *priv, mixer_ctrl_t *mc)
 }
 
 static int
-dwhdmi_dai_get_port(void *priv, mixer_ctrl_t *mc)
+dwhdmi_audio_get_port(void *priv, mixer_ctrl_t *mc)
 {
+	struct dwhdmi_softc * const sc = priv;
+
 	switch (mc->dev) {
 	case DWHDMI_DAI_OUTPUT_MASTER_VOLUME:
 	case DWHDMI_DAI_INPUT_DAC_VOLUME:
-		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = 255;
-		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = 255;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_LEFT] = sc->sc_swvol;
+		mc->un.value.level[AUDIO_MIXER_LEVEL_RIGHT] = sc->sc_swvol;
 		return 0;
 	default:
 		return ENXIO;
@@ -779,7 +816,7 @@ dwhdmi_dai_get_port(void *priv, mixer_ctrl_t *mc)
 }
 
 static int
-dwhdmi_dai_query_devinfo(void *priv, mixer_devinfo_t *di)
+dwhdmi_audio_query_devinfo(void *priv, mixer_devinfo_t *di)
 {
 	switch (di->index) {
 	case DWHDMI_DAI_OUTPUT_CLASS:
@@ -822,9 +859,10 @@ dwhdmi_dai_query_devinfo(void *priv, mixer_devinfo_t *di)
 }
 
 static const struct audio_hw_if dwhdmi_dai_hw_if = {
-	.set_port = dwhdmi_dai_set_port,
-	.get_port = dwhdmi_dai_get_port,
-	.query_devinfo = dwhdmi_dai_query_devinfo,
+	.set_format = dwhdmi_audio_set_format,
+	.set_port = dwhdmi_audio_set_port,
+	.get_port = dwhdmi_audio_get_port,
+	.query_devinfo = dwhdmi_audio_query_devinfo,
 };
 
 int
@@ -848,6 +886,8 @@ dwhdmi_attach(struct dwhdmi_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "version %x.%03x, phytype 0x%02x\n",
 	    sc->sc_version >> 12, sc->sc_version & 0xfff,
 	    sc->sc_phytype);
+
+	sc->sc_swvol = 255;
 
 	/*
 	 * If a DDC i2c bus tag is provided by the caller, use it. Otherwise,

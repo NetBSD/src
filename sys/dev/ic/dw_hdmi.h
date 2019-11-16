@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.h,v 1.3 2019/11/16 12:50:08 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.h,v 1.4 2019/11/16 13:10:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,7 @@ struct dwhdmi_softc {
 	struct i2c_controller	sc_ic_builtin;
 
 	struct audio_dai_device	sc_dai;
+	uint8_t			sc_swvol;
 
 	struct dwhdmi_connector	sc_connector;
 	struct drm_bridge	sc_bridge;
