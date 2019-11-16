@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.39 2019/11/16 20:26:59 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.40 2019/11/16 21:25:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1151,8 +1151,15 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 					    "> /tmp/boot.cfg.tmp'");
 				mv_within_target_or_die("/tmp/boot.cfg.tmp",
 							"/boot.cfg");
+
 			}
 		}
+
+#ifdef MD_BOOT_CFG_FINALIZE
+		if (target_file_exists_p("/boot.cfg")) {
+			MD_BOOT_CFG_FINALIZE("/boot.cfg");
+		}
+#endif
 
 		/* Save keyboard type */
 		save_kb_encoding();
