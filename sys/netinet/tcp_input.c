@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_input.c,v 1.416 2019/09/25 19:06:30 jnemeth Exp $	*/
+/*	$NetBSD: tcp_input.c,v 1.417 2019/11/16 10:15:10 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.416 2019/09/25 19:06:30 jnemeth Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tcp_input.c,v 1.417 2019/11/16 10:15:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -260,9 +260,10 @@ nd6_hint(struct tcpcb *tp)
 	struct rtentry *rt = NULL;
 
 	if (tp != NULL && tp->t_in6pcb != NULL && tp->t_family == AF_INET6 &&
-	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL)
+	    (rt = rtcache_validate(&tp->t_in6pcb->in6p_route)) != NULL) {
 		nd6_nud_hint(rt);
-	rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
+		rtcache_unref(rt, &tp->t_in6pcb->in6p_route);
+	}
 }
 #else
 static inline void
