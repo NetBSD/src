@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.17 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.18 2019/11/16 20:26:59 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1498,3 +1498,5 @@ message clone_target_end		{Als letzte hinzufügen}
 message clone_target_hdr
 {Einfügen der duplizierten Partitionen vor:}
 message clone_target_disp		{duplizierte Partition(en)}
+message clone_src_done
+{Quellselektion OK, weiter mit der Zielauswahl}
