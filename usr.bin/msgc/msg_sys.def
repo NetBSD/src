@@ -1,4 +1,4 @@
-/*	$NetBSD: msg_sys.def,v 1.47 2019/06/25 21:09:33 joerg Exp $	*/
+/*	$NetBSD: msg_sys.def,v 1.48 2019/11/16 17:38:09 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -653,7 +653,7 @@ void
 msg_table_add(msg msg_no)
 {
 
-	msg_printf("%s", msg_string(msg_no));
+	msg_fmt_table_add(msg_no, "");
 }
 
 void __printflike(2, 3)
