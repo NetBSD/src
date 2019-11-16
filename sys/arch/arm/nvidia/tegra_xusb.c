@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_xusb.c,v 1.6 2017/04/28 09:46:49 jmcneill Exp $ */
+/* $NetBSD: tegra_xusb.c,v 1.6.2.1 2019/11/16 16:30:09 martin Exp $ */
 
 /*
  * Copyright (c) 2016 Jonathan A. Kollasch
@@ -30,7 +30,7 @@
 #include "opt_tegra.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.6 2017/04/28 09:46:49 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_xusb.c,v 1.6.2.1 2019/11/16 16:30:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -354,6 +354,29 @@ tegra_xusb_mountroot(device_t self)
 	val = csb_read_4(psc, XUSB_CSB_FALCON_CPUCTL_REG);
 	DPRINTF(sc->sc_dev, "XUSB_FALC_CPUCTL 0x%x\n", val);
 
+
+	val = bus_space_read_4(bst, psc->sc_bsh_fpci, PCI_USBREV)
+	    & PCI_USBREV_MASK;
+	switch (val) {
+	case PCI_USBREV_3_0:
+		sc->sc_bus.ub_revision = USBREV_3_0;
+		break;
+	case PCI_USBREV_3_1:
+		sc->sc_bus.ub_revision = USBREV_3_1;
+		break;
+	default:
+		if (val < PCI_USBREV_3_0) {
+			aprint_error_dev(self, "Unknown revision (%02x)\n",
+			    val);
+			sc->sc_bus.ub_revision = USBREV_UNKNOWN;
+		} else {
+			/* Default to the latest revision */
+			aprint_normal_dev(self,
+			    "Unknown revision (%02x). Set to 3.1.\n", val);
+			sc->sc_bus.ub_revision = USBREV_3_1;
+		}
+		break;
+	}
 
 	error = xhci_init(sc);
 	if (error) {

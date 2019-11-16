@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.165.6.4 2018/09/27 14:52:26 martin Exp $	*/
+/*	$NetBSD: usb.c,v 1.165.6.5 2019/11/16 16:30:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.4 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.165.6.5 2019/11/16 16:30:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -251,6 +251,7 @@ usb_attach(device_t parent, device_t self, void *aux)
 	case USBREV_1_1:
 	case USBREV_2_0:
 	case USBREV_3_0:
+	case USBREV_3_1:
 		break;
 	default:
 		aprint_error(", not supported\n");
@@ -343,6 +344,9 @@ usb_doattach(device_t self)
 		break;
 	case USBREV_3_0:
 		speed = USB_SPEED_SUPER;
+		break;
+	case USBREV_3_1:
+		speed = USB_SPEED_SUPER_PLUS;
 		break;
 	default:
 		panic("usb_doattach");
