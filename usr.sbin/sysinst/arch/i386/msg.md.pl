@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.pl,v 1.3 2019/11/16 17:53:02 martin Exp $	*/
+/*	$NetBSD: msg.md.pl,v 1.4 2019/11/16 21:25:14 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.md.en,v 1.24 2001/01/27 07:34:39 jmc Exp 	*/
 
@@ -156,3 +156,4 @@ message updatembr
 kodu rozruchowego NetBSD?}
 
 message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC_KASLR)}

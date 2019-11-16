@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.23 2019/11/16 18:08:36 martin Exp $ */
+/*	$NetBSD: md.c,v 1.24 2019/11/16 21:25:14 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -376,6 +376,13 @@ md_post_newfs_uefi(struct install_partition_desc *install)
 int
 md_post_newfs(struct install_partition_desc *install)
 {
+#if defined(__amd64__)
+	int ret;
+
+	ret = cp_to_target("/usr/mdec/prekern", "/prekern");
+	if (ret)
+		return ret;
+#endif
 
 	return uefi_boot ? md_post_newfs_uefi(install)
 	    : md_post_newfs_bios(install);
@@ -911,5 +918,3 @@ x86_md_need_bootblock(struct install_partition_desc *install)
 
 	return !uefi_boot;
 }
-
-

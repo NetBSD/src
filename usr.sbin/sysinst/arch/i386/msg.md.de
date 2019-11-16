@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.3 2019/11/16 17:53:02 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.4 2019/11/16 21:25:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -165,3 +165,4 @@ message updatembr
 NetBSD Bootcodes updaten?}
 
 message set_kernel_1	{Kernel (GENERIC)}
+message set_kernel_2	{Kernel (GENERIC_KASLR)}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.7 2019/10/02 11:16:01 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.8 2019/11/16 21:25:14 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -85,6 +85,7 @@
  * from floppy.
  */
 #define SET_KERNEL_1_NAME	"kern-GENERIC"
+#define	SET_KERNEL_2_NAME	"kern-GENERIC_KASLR"
 
 #define SET_KERNEL_GENERIC	SET_KERNEL_1
 
@@ -117,9 +118,13 @@ extern struct mbr_bootsel *mbs;
  */
 void x86_md_part_defaults(struct pm_devs*, struct part_usage_info**,
             size_t *num_usage_infos);
+
 #define MD_PART_DEFAULTS(A,B,C)	x86_md_part_defaults(A,&(B),&(C))
 
 /* no need to install bootblock if installing for UEFI */
 bool x86_md_need_bootblock(struct install_partition_desc *install);
 #define	MD_NEED_BOOTBLOCK(A)	x86_md_need_bootblock(A)
 
+/* post-process boot.cfg for KASLR if that kernel has been selected */
+void amd64_md_boot_cfg_finalize(const char*);
+#define	MD_BOOT_CFG_FINALIZE(P)	amd64_md_boot_cfg_finalize(P)
