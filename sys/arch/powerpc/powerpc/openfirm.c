@@ -1,4 +1,4 @@
-/*	$NetBSD: openfirm.c,v 1.28 2019/11/15 23:41:47 macallan Exp $	*/
+/*	$NetBSD: openfirm.c,v 1.29 2019/11/16 00:16:55 macallan Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -34,7 +34,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.28 2019/11/15 23:41:47 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: openfirm.c,v 1.29 2019/11/16 00:16:55 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,7 +278,7 @@ OF_finddevice(const char *name)
 	};
 
 	ofw_stack();
-	strncpy(OF_buf, name, 32);
+	strncpy(OF_buf, name, NBPG);
 	args.device = OF_buf;
 	if (openfirmware(&args) == -1)
 		return -1;
