@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.67 2019/11/14 18:17:19 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.68 2019/11/16 16:17:37 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -718,4 +718,11 @@ sys/dev/pci/pucdata.c				1.105
 	puc(4): the 16C1054 and 16C1058 serial multi-port controllers need
 	a clock multiplier of 8, just like the 16C1050 controller.
 	[hauke, ticket #1712]
+
+sys/dev/usb/usb_subr.c				1.239 (patch)
+sys/dev/usb/usbdi.c				1.186 (patch)
+sys/dev/usb/usbdi.h				1.97 (patch)
+
+	Work around memory corruption problem triggered by axe(4).
+	[mrg, ticket #1713]
 
