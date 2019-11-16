@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.12 2019/11/13 18:57:26 martin Exp $ */
+/*	$NetBSD: part_edit.c,v 1.13 2019/11/16 15:50:45 joerg Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -462,7 +462,7 @@ add_part_clone(menudesc *menu, void *arg)
 	struct disk_partitions *csrc;
 	struct disk_part_free_space space;
 	daddr_t offset, align;
-	size_t s, clone_cnt;
+	size_t s;
 	part_id cid;
 	struct selected_partitions selected;
 	struct single_clone_data *new_clones;
@@ -543,7 +543,6 @@ add_part_clone(menudesc *menu, void *arg)
 		if (cid == NO_PART)
 			continue;
 		parts->pscheme->get_part_info(parts, cid, &cinfo);
-			clone_cnt++;
 		offset = rounddown(cinfo.start+cinfo.size+align, align);
 	}
 
