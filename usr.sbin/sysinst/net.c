@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.33 2019/07/23 12:37:23 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.34 2019/11/16 20:26:59 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -524,7 +524,7 @@ config_network(void)
 	menu_no = new_menu(MSG_netdevs,
 		net_menu, num_devs, -1, 4, 0, 0,
 		MC_SCROLL,
-		NULL, NULL, NULL, NULL, NULL);
+		NULL, NULL, NULL, NULL, MSG_cancel);
 again:
 	selected_net = -1;
 	msg_display(MSG_asknetdev);

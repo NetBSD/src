@@ -1,4 +1,4 @@
-/*	$NetBSD: run.c,v 1.12 2019/06/22 20:46:07 christos Exp $	*/
+/*	$NetBSD: run.c,v 1.13 2019/11/16 20:26:59 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -99,7 +99,7 @@ do_logging(void)
 
 	menu_no = new_menu(MSG_Logging_functions, logmenu, 2, -1, 12,
 		0, 20, MC_SCROLL, NULL, log_menu_label, NULL,
-		MSG_Pick_an_option, NULL);
+		MSG_Pick_an_option, MSG_exit_menu_generic);
 
 	if (menu_no < 0) {
 		(void)fprintf(stderr, "Dynamic menu creation failed.\n");

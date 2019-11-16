@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.25 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.26 2019/11/16 20:26:59 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1425,4 +1425,6 @@ message clone_target_end		{Add at end}
 message clone_target_hdr
 {Insert cloned partitions before:}
 message clone_target_disp		{cloned partition(s)}
+message clone_src_done
+{Source selection OK, proceed to target selection}
 
