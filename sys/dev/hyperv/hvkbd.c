@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.1.4.4 2019/06/13 06:12:55 martin Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.1.4.5 2019/11/16 16:23:31 martin Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.1.4.4 2019/06/13 06:12:55 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.1.4.5 2019/11/16 16:23:31 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -214,12 +214,6 @@ hvkbd_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self,
 		    "failed to allocate channel data buffer\n");
 		return;
-	}
-
-	if (vmbus_channel_setdeferred(sc->sc_chan, device_xname(self))) {
-		aprint_error_dev(self,
-		    "failed to create the interrupt thread\n");
-		goto free_buf;
 	}
 
 	sc->sc_chan->ch_flags &= ~CHF_BATCHED;
