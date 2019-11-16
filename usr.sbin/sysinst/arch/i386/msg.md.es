@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.2 2019/11/14 19:26:58 martin Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.3 2019/11/16 17:53:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,8 +82,8 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # cilindros cabez sectors sect. totales GB 
------- --------- ----- ------- ------------- --- 
+{BIOS # cilindros cabez sectors sect. totales   GB 
+------ --------- ----- ------- ------------- ---- 
 }
 
 message onebiosmatch_row
@@ -102,7 +102,7 @@ message biosmultmatch
 }
 
 message biosmultmatch_header
-{   BIOS # cilindros cabez sectors sect totales  GB 
+{   BIOS # cilindros cabez sectors  sect totales   GB 
    ------ --------- ----- ------- ------------- ---- 
 }
 
