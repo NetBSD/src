@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.473 2019/11/15 15:51:57 maxv Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.474 2019/11/16 10:05:44 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.473 2019/11/15 15:51:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.474 2019/11/16 10:05:44 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -799,7 +799,8 @@ sched_sync(void *arg)
 			 * XXX The vnode may have been recycled, in which
 			 * case it may have a new identity.
 			 */
-			if (VIMPL_TO_VNODE(TAILQ_FIRST(slp)) == vp) {
+			vi = TAILQ_FIRST(slp);
+			if (vi != NULL && VIMPL_TO_VNODE(vi) == vp) {
 				/*
 				 * Put us back on the worklist.  The worklist
 				 * routine will remove us from our current
