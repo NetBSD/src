@@ -1,4 +1,4 @@
-/*	$NetBSD: nct.c,v 1.1 2019/10/25 17:39:57 martin Exp $	*/
+/*	$NetBSD: nct.c,v 1.2 2019/11/16 15:38:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.1 2019/10/25 17:39:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nct.c,v 1.2 2019/11/16 15:38:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,6 +241,7 @@ nct_match(device_t parent, cfdata_t match, void *aux)
 	int nioaddr, i;
 	u_int8_t low, high;
 	u_int16_t id;
+	const char *vendor, *product;
 
 	/*
 	 * Allow override of I/O base address.  If no I/O base address is
@@ -249,11 +250,15 @@ nct_match(device_t parent, cfdata_t match, void *aux)
 	if (ia->ia_nio > 0 && ia->ia_io[0].ir_addr != ISA_UNKNOWN_PORT) {
 		ioaddrs[0] = ia->ia_io[0].ir_addr;
 		nioaddr = 1;
-	} else if ((strcmp(pmf_get_platform("system-vendor"), "PC Engines") |
-	            strcmp(pmf_get_platform("system-product"), "APU")) == 0) {
-		nioaddr = __arraycount(ioaddrs);
 	} else {
-		nioaddr = 0;
+		vendor = pmf_get_platform("system-vendor");
+		product = pmf_get_platform("system-product");
+		if (vendor != NULL && strcmp(vendor, "PC Engines") == 0 &&
+		    product != NULL && strcmp(product, "APU") == 0) {
+			nioaddr = __arraycount(ioaddrs);
+		} else {
+			nioaddr = 0;
+		}
 	}
 
 	/*
