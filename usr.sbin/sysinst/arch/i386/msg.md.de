@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.de,v 1.2 2019/11/14 19:26:58 martin Exp $	*/
+/*	$NetBSD: msg.md.de,v 1.3 2019/11/16 17:53:02 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -82,8 +82,8 @@ message onebiosmatch
 }
 
 message onebiosmatch_header
-{BIOS # Zylinder Köpfe Sektoren Anzahl Sektoren  GB 
------- -------- ----- -------- --------------- --- 
+{BIOS # Zylinder Köpfe Sektoren Anzahl Sektoren   GB 
+------ -------- ----- -------- --------------- ---- 
 }
 
 message onebiosmatch_row
@@ -97,13 +97,13 @@ message Use_one_of_these_disks
 {Benutzen Sie eine dieser Festplatten}
 
 message biosmultmatch
-{Diese Festplatte entspricht der folgenden BIOS Disk:
+{Diese Festplatte entspricht den folgenden BIOS Disks:
 
 }
 
 message biosmultmatch_header
-{   BIOS # Zylinder Köpfe Sektoren Anzahl Sektoren  GB 
-   ------ -------- ----- -------- --------------- --- 
+{   BIOS # Zylinder Köpfe Sektoren  Anzahl Sektoren   GB 
+   ------ -------- ----- -------- ---------------- ---- 
 }
 
 message biosmultmatch_row
