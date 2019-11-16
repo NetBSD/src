@@ -1,4 +1,4 @@
-/* $NetBSD: compat_stub.c,v 1.17 2019/11/10 14:20:50 pgoyette Exp $	*/
+/* $NetBSD: compat_stub.c,v 1.18 2019/11/16 03:26:19 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -117,13 +117,6 @@ struct raidframe_netbsd32_ioctl_hook_t raidframe_netbsd32_ioctl_hook;
 
 struct puffs_out_50_hook_t puffs_out_50_hook;
 struct puffs_in_50_hook_t puffs_in_50_hook;
-
-/* XXX
-int (*puffs50_compat_outgoing)(struct puffs_req *, struct puffs_req **,
-    ssize_t *) = (void *)enosys;
-void (*puffs50_compat_incoming)(struct puffs_req *, struct puffs_req *) =
-    (void *)voidop;
-   XXX */
 
 /*
  * wsevents compatability
