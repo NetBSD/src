@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.161.2.4 2019/01/11 15:58:23 martin Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.161.2.5 2019/11/16 16:13:56 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.161.2.4 2019/01/11 15:58:23 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.161.2.5 2019/11/16 16:13:56 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -331,6 +331,8 @@ usbd_transfer(struct usbd_xfer *xfer)
 		 * accepted by the HCD for some reason.  It needs removing
 		 * from the pipe queue.
 		 */
+		USBHIST_LOG(usbdebug, "xfer failed: %s, reinserting",
+		    err, 0, 0, 0);
 		usbd_lock_pipe(pipe);
 		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		if (pipe->up_serialise)
@@ -1072,13 +1074,23 @@ usbd_status
 usbd_do_request_flags(struct usbd_device *dev, usb_device_request_t *req,
     void *data, uint16_t flags, int *actlen, uint32_t timeout)
 {
+	size_t len = UGETW(req->wLength);
+
+	return usbd_do_request_len(dev, req, len, data, flags, actlen, timeout);
+}
+
+usbd_status
+usbd_do_request_len(struct usbd_device *dev, usb_device_request_t *req,
+    size_t len, void *data, uint16_t flags, int *actlen, uint32_t timeout)
+{
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
 	struct usbd_xfer *xfer;
 	usbd_status err;
 
+	KASSERT(len >= UGETW(req->wLength));
+
 	ASSERT_SLEEPABLE();
 
-	size_t len = UGETW(req->wLength);
 	int error = usbd_create_xfer(dev->ud_pipe0, len, 0, 0, &xfer);
 	if (error)
 		return error;
