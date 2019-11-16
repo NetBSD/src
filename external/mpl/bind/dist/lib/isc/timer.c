@@ -1,4 +1,4 @@
-/*	$NetBSD: timer.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: timer.c,v 1.5 2019/11/16 19:23:56 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -725,7 +725,7 @@ isc_timermgr_create(isc_mem_t *mctx, isc_timermgr_t **managerp) {
 				 "isc_thread_create() failed");
 		return (ISC_R_UNEXPECTED);
 	}
-	isc_thread_setname(manager->thread, "isc-timer");
+	isc_thread_setname(manager->thread, "timer");
 
 	*managerp = (isc_timermgr_t *)manager;
 
