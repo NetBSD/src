@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.72.2.11 2019/09/17 18:53:52 martin Exp $	*/
+/*	$NetBSD: xhci.c,v 1.72.2.12 2019/11/16 16:30:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.11 2019/09/17 18:53:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.72.2.12 2019/11/16 16:30:09 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -900,11 +900,23 @@ xhci_ecp(struct xhci_softc *sc, uint32_t hcc)
 	"b\0AC64\0"						\
 	"\0"
 
+#define XHCI_HCC2_BITS	\
+	"\177\020"	/* New bitmask */			\
+	"b\7ETC_TSC\0"						\
+	"b\6ETC\0"						\
+	"b\5CIC\0"						\
+	"b\4LEC\0"						\
+	"b\3CTC\0"						\
+	"b\2FSC\0"						\
+	"b\1CMC\0"						\
+	"b\0U3C\0"						\
+	"\0"
+
 int
 xhci_init(struct xhci_softc *sc)
 {
 	bus_size_t bsz;
-	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff;
+	uint32_t cap, hcs1, hcs2, hcs3, hcc, dboff, rtsoff, hcc2;
 	uint32_t pagesize, config;
 	int i = 0;
 	uint16_t hciversion;
@@ -915,7 +927,6 @@ xhci_init(struct xhci_softc *sc)
 	/* Set up the bus struct for the usb 3 and usb 2 buses */
 	sc->sc_bus.ub_methods = &xhci_bus_methods;
 	sc->sc_bus.ub_pipesize = sizeof(struct xhci_pipe);
-	sc->sc_bus.ub_revision = USBREV_3_0;
 	sc->sc_bus.ub_usedma = true;
 	sc->sc_bus.ub_hcpriv = sc;
 
@@ -931,7 +942,7 @@ xhci_init(struct xhci_softc *sc)
 	hciversion = XHCI_CAP_HCIVERSION(cap);
 
 	if (hciversion < XHCI_HCIVERSION_0_96 ||
-	    hciversion > XHCI_HCIVERSION_1_0) {
+	    hciversion >= 0x0200) {
 		aprint_normal_dev(sc->sc_dev,
 		    "xHCI version %x.%x not known to be supported\n",
 		    (hciversion >> 8) & 0xff, (hciversion >> 0) & 0xff);
@@ -966,6 +977,11 @@ xhci_init(struct xhci_softc *sc)
 		snprintb(sbuf, sizeof(sbuf), XHCI_HCCV1_x_BITS, hcc);
 	aprint_debug_dev(sc->sc_dev, "hcc=%s\n", sbuf);
 	aprint_debug_dev(sc->sc_dev, "xECP %x\n", XHCI_HCC_XECP(hcc) * 4);
+	if (hciversion >= XHCI_HCIVERSION_1_1) {
+		hcc2 = xhci_cap_read_4(sc, XHCI_HCCPARAMS2);
+		snprintb(sbuf, sizeof(sbuf), XHCI_HCC2_BITS, hcc2);
+		aprint_debug_dev(sc->sc_dev, "hcc2=%s\n", sbuf);
+	}
 
 	/* default all ports to bus 0, i.e. usb 3 */
 	sc->sc_ctlrportbus = kmem_zalloc(

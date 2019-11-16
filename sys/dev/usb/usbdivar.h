@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.114.6.1 2018/08/25 11:29:52 martin Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.114.6.2 2019/11/16 16:30:09 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -153,7 +153,8 @@ struct usbd_bus {
 #define USBREV_1_1	3
 #define USBREV_2_0	4
 #define USBREV_3_0	5
-#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0" }
+#define USBREV_3_1	6
+#define USBREV_STR { "unknown", "pre 1.0", "1.0", "1.1", "2.0", "3.0", "3.1" }
 
 	const struct usbd_bus_methods
 			       *ub_methods;
