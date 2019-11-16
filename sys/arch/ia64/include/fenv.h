@@ -67,6 +67,11 @@ extern const fenv_t	__fe_dfl_env;
 #define	__stfpsr(__r)	__asm __volatile("mov %0=ar.fpsr" : "=r" (*(__r)))
 #define	__ldfpsr(__r)	__asm __volatile("mov ar.fpsr=%0;;" : : "r" (__r))
 
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wshadow"
+#endif
+
 __fenv_static inline int
 feclearexcept(int __excepts)
 {
@@ -205,6 +210,10 @@ fesetenv(const fenv_t *__envp)
 }
 
 int feupdateenv(const fenv_t *__envp);
+
+#if __GNUC_PREREQ__(8, 0)
+#pragma GCC diagnostic pop
+#endif
 
 #if defined(_NETBSD_SOURCE) || defined(_GNU_SOURCE)
 
