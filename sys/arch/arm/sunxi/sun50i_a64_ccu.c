@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.13 2019/07/01 21:06:47 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.14 2019/11/17 17:33:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13 2019/07/01 21:06:47 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.14 2019/11/17 17:33:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,9 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13 2019/07/01 21:06:47 jmcneill
 #define	SDMMC0_CLK_REG		0x088
 #define	SDMMC1_CLK_REG		0x08c
 #define	SDMMC2_CLK_REG		0x090
+#define	I2SPCM0_CLK_REG		0x0b0
+#define	I2SPCM1_CLK_REG		0x0b4
+#define	I2SPCM2_CLK_REG		0x0b8
 #define	USBPHY_CFG_REG		0x0cc
 #define	DRAM_CFG_REG		0x0f4
 #define	MBUS_RST_REG		0x0fc
@@ -154,6 +157,7 @@ static const char *mmc_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" 
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
 static const char *hdmi_parents[] = { "pll_video0", "pll_video1" };
+static const char *i2s_parents[] = { "pll_audio_8x", "pll_audio_4x", "pll_audio_2x", "pll_audio" };
 static const char *tcon1_parents[] = { "pll_video0", NULL, "pll_video1", NULL };
 static const char *gpu_parents[] = { "pll_gpu" };
 
@@ -406,6 +410,26 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 
 	SUNXI_CCU_GATE(A64_CLK_HDMI_DDC, "hdmi-ddc", "hosc",
 	    HDMI_SLOW_CLK_REG, 31),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_I2S0, "i2s0", i2s_parents,
+	    I2SPCM0_CLK_REG,	/* reg */
+	    0,			/* div */
+	    __BITS(17,16),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+	SUNXI_CCU_DIV_GATE(A64_CLK_I2S1, "i2s1", i2s_parents,
+	    I2SPCM1_CLK_REG,	/* reg */
+	    0,			/* div */
+	    __BITS(17,16),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+	SUNXI_CCU_DIV_GATE(A64_CLK_I2S2, "i2s2", i2s_parents,
+	    I2SPCM2_CLK_REG,	/* reg */
+	    0,			/* div */
+	    __BITS(17,16),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+
 
 	SUNXI_CCU_DIV_GATE(A64_CLK_TCON1, "tcon1", tcon1_parents,
 	    TCON1_CLK_REG,	/* reg */
