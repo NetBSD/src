@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.105 2019/11/17 07:13:09 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.106 2019/11/17 13:50:13 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5832,3 +5832,55 @@ usr.sbin/sysinst/util.c				1.33
 	Make /rescue into a separate set and minor cleanup of /rescue.
 	[maya, ticket #435]
 
+usr.bin/msgc/msg_sys.def			1.48
+
+	msg_table_add(): Fix mishap in the format safety changes in r1.45.
+	[martin, ticket #433]
+
+usr.sbin/sysinst/Makefile.inc			1.29-1.30
+usr.sbin/sysinst/arch/amd64/md.c		1.2
+usr.sbin/sysinst/arch/amd64/md.h		1.8
+usr.sbin/sysinst/arch/ews4800mips/Makefile	1.3
+usr.sbin/sysinst/arch/i386/md.c			1.22-1.24
+usr.sbin/sysinst/arch/i386/menus.md		1.3
+usr.sbin/sysinst/arch/i386/msg.md.de		1.2-.1.4
+usr.sbin/sysinst/arch/i386/msg.md.en		1.2-1.4
+usr.sbin/sysinst/arch/i386/msg.md.es		1.2-1.4
+usr.sbin/sysinst/arch/i386/msg.md.fr		1.2-1.4
+usr.sbin/sysinst/arch/i386/msg.md.pl		1.2-1.4
+usr.sbin/sysinst/arch/playstation2/msg.md.de	1.3
+usr.sbin/sysinst/arch/playstation2/msg.md.en	1.3
+usr.sbin/sysinst/arch/playstation2/msg.md.es	1.3
+usr.sbin/sysinst/arch/playstation2/msg.md.fr	1.3
+usr.sbin/sysinst/arch/playstation2/msg.md.pl	1.3
+usr.sbin/sysinst/bsddisklabel.c			1.30-1.31
+usr.sbin/sysinst/configmenu.c			1.11
+usr.sbin/sysinst/defs.h				1.46-1.48
+usr.sbin/sysinst/disklabel.c			1.15
+usr.sbin/sysinst/disks.c			1.55-1.57
+usr.sbin/sysinst/gpt.c				1.12
+usr.sbin/sysinst/install.c			1.12-1.13
+usr.sbin/sysinst/label.c			1.13-1.14
+usr.sbin/sysinst/main.c				1.18
+usr.sbin/sysinst/mbr.c				1.22
+usr.sbin/sysinst/mbr.h				1.4
+usr.sbin/sysinst/msg.mi.de			1.17-1.18
+usr.sbin/sysinst/msg.mi.en			1.24-1.25
+usr.sbin/sysinst/msg.mi.es			1.18-1.19
+usr.sbin/sysinst/msg.mi.fr			1.22-1.23
+usr.sbin/sysinst/msg.mi.pl			1.25-1.26
+usr.sbin/sysinst/net.c				1.34
+usr.sbin/sysinst/part_edit.c			1.11-1.13
+usr.sbin/sysinst/partitions.c			1.5
+usr.sbin/sysinst/partitions.h			1.8
+usr.sbin/sysinst/partman.c			1.44
+usr.sbin/sysinst/run.c				1.13
+usr.sbin/sysinst/util.c				1.35-1.40
+
+	Various sysinst changes:
+	 - allow cloning of alien partitions
+	 - adjust tar extraction flags depending on the tar variant in use
+	 - fix a few missing translations (always using "x: Exit" in menus)
+	 - x86: improve boot block selection menu
+	 - amd64: allow installation of KASLR kernel via "Custom Install"
+	[martin, ticket #436]
