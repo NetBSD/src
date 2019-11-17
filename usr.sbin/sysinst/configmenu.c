@@ -1,4 +1,4 @@
-/* $NetBSD: configmenu.c,v 1.10 2019/07/23 18:13:40 martin Exp $ */
+/* $NetBSD: configmenu.c,v 1.10.2.1 2019/11/17 13:45:26 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -464,7 +464,7 @@ do_configmenu(struct install_partition_desc *install)
 
 	menu_no = new_menu(NULL, me, opts, 0, -4, 0, 70,
 		MC_SCROLL | MC_NOBOX | MC_DFLTEXIT,
-		configmenu_hdr, set_config, NULL, "XXX Help String",
+		configmenu_hdr, set_config, NULL, NULL,
 		MSG_doneconfig);
 
 	process_menu(menu_no, ce);
