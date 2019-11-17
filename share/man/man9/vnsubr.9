@@ -1,4 +1,4 @@
-.\"     $NetBSD: vnsubr.9,v 1.46 2019/11/16 22:09:56 mlelstv Exp $
+.\"     $NetBSD: vnsubr.9,v 1.47 2019/11/17 11:46:38 wiz Exp $
 .\"
 .\" Copyright (c) 2001, 2005, 2006 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -185,12 +185,13 @@ stores the vnode pointer into
 .Fa *vpp .
 The argument
 .Fa l
-is the calling process. The vnode can be closed and freed with
+is the calling process.
+The vnode can be closed and freed with
 .Fa vn_close .
 .It Fn vn_bdev_openpath "pb" "vpp" "l"
 Works like
 .Fn vn_bdev_open
-but looks up a filesystem path
+but looks up a file system path
 .Fa pb
 to determine the device ID.
 .It Fn vn_rdwr "rw" "vp" "base" "len" "offset" "segflg" "ioflg" "cred" "aresid" "l"
