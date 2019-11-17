@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29.2.3 2019/08/28 10:00:53 msaitoh Exp $	*/
+/*	$NetBSD: util.c,v 1.29.2.4 2019/11/17 07:04:34 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -117,6 +117,7 @@ distinfo dist_list[] = {
 	{"games",		SET_GAMES,		false, MSG_set_games, NULL},
 	{"man",			SET_MAN_PAGES,		false, MSG_set_man_pages, NULL},
 	{"misc",		SET_MISC,		false, MSG_set_misc, NULL},
+	{"rescue",		SET_RESCUE,		false, MSG_set_rescue, NULL},
 	{"tests",		SET_TESTS,		false, MSG_set_tests, NULL},
 	{"text",		SET_TEXT_TOOLS,		false, MSG_set_text_tools, NULL},
 

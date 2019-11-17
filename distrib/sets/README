@@ -1,4 +1,4 @@
-# $NetBSD: README,v 1.13 2013/08/06 22:33:59 soren Exp $
+# $NetBSD: README,v 1.13.28.1 2019/11/17 07:04:33 martin Exp $
 
 the scripts should be run from the directory where they reside.
 
@@ -61,6 +61,8 @@ the sets are as follows:
 		be installed.
 
 	modules:	stand/${MACHINE}/${OSRELEASE}/modules kernel modules
+
+	rescue:	Standalone system recovery tools.
 
 	tests:	unit, regression, integration and stress tests for the
 		whole system.
