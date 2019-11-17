@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.104 2019/11/16 20:09:49 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.105 2019/11/17 07:13:09 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5764,4 +5764,71 @@ sys/dev/nvmm/x86/nvmm_x86.c			1.8
 
 	Don't report MWAITX by default.
 	[jmcneill, ticket #434]
+
+distrib/amd64/uefi-installimage/Makefile.bootimage 1.12
+distrib/common/bootimage/Makefile.bootimage	1.22
+distrib/miniroot/install.sub			1.49
+distrib/notes/atari/xfer			1.17
+distrib/notes/mvme68k/xfer			1.19
+distrib/sets/README				1.14
+distrib/sets/lists/base/rescue.ad.arm		delete
+distrib/sets/lists/base/rescue.ad.m68k		delete
+distrib/sets/lists/base/rescue.ad.m68k.shl	delete
+distrib/sets/lists/base/rescue.i386		delete
+distrib/sets/lists/base/rescue.mac68k		delete
+distrib/sets/lists/base/rescue.macppc		delete
+distrib/sets/lists/base/rescue.mi		delete
+distrib/sets/lists/base/rescue.shark		delete
+distrib/sets/lists/base/rescue.sparc		delete
+distrib/sets/lists/base/rescue.sparc64		delete
+distrib/sets/lists/base/rescue.sun2		delete
+distrib/sets/lists/base/rescue.vax		delete
+distrib/sets/lists/rescue/mi			1.1
+distrib/sets/maketars				1.90
+distrib/sets/regpkgset				1.13
+distrib/sets/sets.subr				1.187
+distrib/sun2/MakeInstTape			1.2
+distrib/sun3/MakeInstTape			1.3
+distrib/utils/embedded/mkimage			1.70
+etc/Makefile					1.441
+rescue/Makefile					1.38
+rescue/list.ldconfig				delete
+usr.sbin/sysinst/arch/acorn32/md.h		1.3
+usr.sbin/sysinst/arch/amd64/md.h		1.7
+usr.sbin/sysinst/arch/amiga/md.h		1.4
+usr.sbin/sysinst/arch/arc/md.h			1.4
+usr.sbin/sysinst/arch/atari/md.h		1.3
+usr.sbin/sysinst/arch/bebox/md.h		1.3
+usr.sbin/sysinst/arch/cats/md.h			1.4
+usr.sbin/sysinst/arch/cobalt/md.h		1.4
+usr.sbin/sysinst/arch/emips/md.h		1.5
+usr.sbin/sysinst/arch/evbarm/md.h		1.3
+usr.sbin/sysinst/arch/evbmips/md.h		1.3
+usr.sbin/sysinst/arch/evbppc/md.h		1.3
+usr.sbin/sysinst/arch/hp300/md.h		1.5
+usr.sbin/sysinst/arch/hpcarm/md.h		1.3
+usr.sbin/sysinst/arch/hpcmips/md.h		1.3
+usr.sbin/sysinst/arch/hpcsh/md.h		1.2
+usr.sbin/sysinst/arch/i386/md.h			1.7
+usr.sbin/sysinst/arch/landisk/md.h		1.2
+usr.sbin/sysinst/arch/mvme68k/md.h		1.3
+usr.sbin/sysinst/arch/ofppc/md.h		1.4
+usr.sbin/sysinst/arch/playstation2/md.h		1.2
+usr.sbin/sysinst/arch/pmax/md.h			1.4
+usr.sbin/sysinst/arch/prep/md.h			1.4
+usr.sbin/sysinst/arch/sandpoint/md.h		1.3
+usr.sbin/sysinst/arch/sgimips/md.h		1.4
+usr.sbin/sysinst/arch/shark/md.h		1.3
+usr.sbin/sysinst/arch/x68k/md.h			1.3
+usr.sbin/sysinst/arch/zaurus/md.h		1.3
+usr.sbin/sysinst/defs.h				1.45
+usr.sbin/sysinst/msg.mi.de			1.16
+usr.sbin/sysinst/msg.mi.en			1.22
+usr.sbin/sysinst/msg.mi.es			1.17
+usr.sbin/sysinst/msg.mi.fr			1.20
+usr.sbin/sysinst/msg.mi.pl			1.23
+usr.sbin/sysinst/util.c				1.33
+
+	Make /rescue into a separate set and minor cleanup of /rescue.
+	[maya, ticket #435]
 
