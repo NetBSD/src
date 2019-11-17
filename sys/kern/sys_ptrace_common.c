@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.71 2019/11/13 15:48:36 pgoyette Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.72 2019/11/17 02:22:14 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.71 2019/11/13 15:48:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.72 2019/11/17 02:22:14 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -1635,7 +1635,15 @@ process_auxv_offset(struct proc *p, struct uio *uio)
 	if (pss.ps_envstr == NULL)
 		return EIO;
 
-	uio->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr + pss.ps_nenvstr + 1);
+#ifdef COMPAT_NETBSD32
+	if (p->p_flag & PK_32)
+		uio->uio_offset += (off_t)((vaddr_t)pss.ps_envstr +
+		    sizeof(uint32_t) * (pss.ps_nenvstr + 1));
+	else
+#endif
+		uio->uio_offset += (off_t)(vaddr_t)(pss.ps_envstr +
+		    pss.ps_nenvstr + 1);
+
 #ifdef __MACHINE_STACK_GROWS_UP
 	if (uio->uio_offset < off)
 		return EIO;
