@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.12 2019/11/08 11:12:09 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.13 2019/11/17 17:35:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -58,6 +58,36 @@
 			     <GIC_SPI 117 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 118 IRQ_TYPE_LEVEL_HIGH>,
 			     <GIC_SPI 119 IRQ_TYPE_LEVEL_HIGH>;
+	};
+
+	i2s2: i2s@1c22800 {
+		#sound-dai-cells = <0>;
+		compatible = "allwinner,sun50i-a64-i2s",
+			     "allwinner,sun8i-h3-i2s";
+		reg = <0x01c22800 0x400>;
+		interrupts = <GIC_SPI 15 IRQ_TYPE_LEVEL_HIGH>;
+		clocks = <&ccu CLK_BUS_I2S2>, <&ccu CLK_I2S2>;
+		clock-names = "apb", "mod";
+		resets = <&ccu RST_BUS_I2S2>;
+		dma-names = "tx";
+		dmas = <&dma 27>;
+		status = "disabled";
+	};
+
+	sound_hdmi: sound-hdmi {
+		compatible = "simple-audio-card";
+		simple-audio-card,name = "hdmi-audio";
+		simple-audio-card,format = "i2s";
+		simple-audio-card,mclk-fs = <256>;
+		status = "disabled";
+
+		simple-audio-card,cpu {
+			sound-dai = <&i2s2>;
+		};
+
+		simple-audio-card,codec {
+			sound-dai = <&hdmi>;
+		};
 	};
 };
 
