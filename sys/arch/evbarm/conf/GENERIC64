@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.113 2019/11/16 13:24:40 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.114 2019/11/17 19:30:59 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -419,6 +419,7 @@ options 	HDAUDIOVERBOSE
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 ausoc*		at fdt?			# Simple SoC audio card
+spdiftx*	at fdt?			# SPDIF transmitter
 rki2s*		at fdt?			# Rockchip I2S/PCM
 sunxicodec*	at fdt?			# Allwinner audio codec
 sun8icodec*	at fdt?			# Allwinner audio codec (sun8i/sun50i)
