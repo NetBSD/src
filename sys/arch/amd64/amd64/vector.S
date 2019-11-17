@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.70 2019/03/07 10:16:07 nonaka Exp $	*/
+/*	$NetBSD: vector.S,v 1.71 2019/11/17 14:07:00 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -316,7 +316,9 @@ IDTVEC_END(intr_hyperv_hypercall)
 IDTVEC(handle_lapic_tlb)
 	movq	_C_LABEL(local_apic_va),%rax
 	movl	$0,LAPIC_EOI(%rax)
+	KCOV_DISABLE
 	callq	_C_LABEL(pmap_tlb_intr)
+	KCOV_ENABLE
 	INTRFASTEXIT
 IDTVEC_END(handle_lapic_tlb)
 IDTVEC(handle_x2apic_tlb)
@@ -324,7 +326,9 @@ IDTVEC(handle_x2apic_tlb)
 	xorl	%eax,%eax
 	xorl	%edx,%edx
 	wrmsr
+	KCOV_DISABLE
 	callq	_C_LABEL(pmap_tlb_intr)
+	KCOV_ENABLE
 	INTRFASTEXIT
 IDTVEC_END(handle_x2apic_tlb)
 

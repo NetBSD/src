@@ -1,4 +1,4 @@
-/*	$NetBSD: frameasm.h,v 1.46 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: frameasm.h,v 1.47 2019/11/17 14:07:00 maxv Exp $	*/
 
 #ifndef _AMD64_MACHINE_FRAMEASM_H
 #define _AMD64_MACHINE_FRAMEASM_H
@@ -6,6 +6,7 @@
 #ifdef _KERNEL_OPT
 #include "opt_xen.h"
 #include "opt_svs.h"
+#include "opt_kcov.h"
 #include "opt_kmsan.h"
 #endif
 
@@ -265,6 +266,16 @@
 #define KMSAN_LEAVE		/* nothing */
 #define KMSAN_INIT_ARG(sz)	/* nothing */
 #define KMSAN_INIT_RET(sz)	/* nothing */
+#endif
+
+#ifdef KCOV
+#define KCOV_DISABLE			\
+	incl	CPUVAR(IDEPTH)
+#define KCOV_ENABLE			\
+	decl	CPUVAR(IDEPTH)
+#else
+#define KCOV_DISABLE		/* nothing */
+#define KCOV_ENABLE		/* nothing */
 #endif
 
 #define	INTRENTRY \
