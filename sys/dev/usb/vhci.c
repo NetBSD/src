@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.3 2019/10/03 05:13:23 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.4 2019/11/17 11:28:48 maxv Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.3 2019/10/03 05:13:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.4 2019/11/17 11:28:48 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -376,8 +376,6 @@ vhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 	value = UGETW(req->wValue);
 	index = UGETW(req->wIndex);
 
-	port = &sc->sc_port[VHCI_INDEX2PORT(index)];
-
 #define C(x,y) ((x) | ((y) << 8))
 	switch (C(req->bRequest, req->bmRequestType)) {
 	case C(UR_GET_DESCRIPTOR, UT_READ_DEVICE):
@@ -414,6 +412,7 @@ vhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 			if (index < 1 || index >= sc->sc_nports) {
 				return -1;
 			}
+			port = &sc->sc_port[VHCI_INDEX2PORT(index)];
 			port->status |= UPS_C_PORT_RESET;
 			break;
 		case UHF_PORT_POWER:
@@ -430,6 +429,7 @@ vhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (index < 1 || index >= sc->sc_nports) {
 			return -1;
 		}
+		port = &sc->sc_port[VHCI_INDEX2PORT(index)];
 		switch (value) {
 		case UHF_PORT_ENABLE:
 			port->status &= ~UPS_PORT_ENABLED;
@@ -463,6 +463,7 @@ vhci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
 		if (index < 1 || index >= sc->sc_nports) {
 			return -1;
 		}
+		port = &sc->sc_port[VHCI_INDEX2PORT(index)];
 		USETW(ps.wPortStatus, port->status);
 		USETW(ps.wPortChange, port->change);
 		totlen = uimin(len, sizeof(ps));
