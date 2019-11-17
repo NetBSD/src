@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.31 2019/09/02 20:09:30 riastradh Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.32 2019/11/17 12:32:31 nia Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.31 2019/09/02 20:09:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.32 2019/11/17 12:32:31 nia Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -581,8 +581,9 @@ sysctl_kern_urnd(SYSCTLFN_ARGS)
  * requested.  Evidently this was used to key RC4 in userspace.
  *
  * In NetBSD, the libc stack-smash-protection code reads 64 bytes
- * from here at every program startup.  So though it would be nice
- * to make this node return only 32 or 64 bits, we can't.  Too bad!
+ * from here at every program startup.  Third-party software also often
+ * uses this to obtain a key for CSPRNG, reading 32 bytes or more, while
+ * avoiding the need to open /dev/urandom.
  */
 static int
 sysctl_kern_arnd(SYSCTLFN_ARGS)
