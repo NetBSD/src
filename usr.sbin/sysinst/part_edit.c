@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.7.2.2 2019/10/28 02:53:17 msaitoh Exp $ */
+/*	$NetBSD: part_edit.c,v 1.7.2.3 2019/11/17 13:45:26 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -57,8 +57,23 @@ struct part_edit_info {
 	bool num_changed;		/* number of partitions has changed */
 };
 
+#ifndef NO_CLONES
+struct single_clone_data {
+	struct selected_partitions clone_src;
+	part_id *clone_ids;	/* partition IDs in target */
+};
+#endif
+struct outer_parts_data {
+	struct arg_rv av;
+#ifndef NO_CLONES
+	struct single_clone_data *clones;
+	size_t num_clone_entries;
+#endif
+};
+
 static menu_ent *part_menu_opts;		/* the currently edited partitions */
 static menu_ent *outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt);
+static void draw_outer_part_line(menudesc *m, int opt, void *arg);
 
 static char 	outer_part_sep_line[MENUSTRSIZE],
 		outer_part_title[2*MENUSTRSIZE];
@@ -388,15 +403,16 @@ fill_part_edit_menu_opts(struct disk_partitions *parts,
 static int
 edit_part_entry(menudesc *m, void *arg)
 {
-	arg_rv *av = arg;
-	struct part_edit_info data = { .parts = av->arg, .cur_id = m->cursel,
+	struct outer_parts_data *pdata = arg;
+	struct part_edit_info data = { .parts = pdata->av.arg,
+	    .cur_id = m->cursel,
 	    .first_custom_opt = __arraycount(common_ptn_edit_opts) };
 	int ptn_menu;
 	const char *err;
 	menu_ent *opts;
 	size_t num_opts;
 
-	opts = fill_part_edit_menu_opts(av->arg, true, ptn_edit_opts,
+	opts = fill_part_edit_menu_opts(data.parts, true, ptn_edit_opts,
 	    __arraycount(ptn_edit_opts), &num_opts);
 	if (opts == NULL)
 		return 1;
@@ -433,11 +449,121 @@ edit_part_entry(menudesc *m, void *arg)
 	return 0;
 }
 
+#ifndef NO_CLONES
+static int
+add_part_clone(menudesc *menu, void *arg)
+{
+	struct outer_parts_data *pdata = arg;
+	struct disk_partitions *parts = pdata->av.arg;
+	struct clone_target_menu_data data;
+	menu_ent *men;
+	int num_men, i;
+	struct disk_part_info sinfo, cinfo;
+	struct disk_partitions *csrc;
+	struct disk_part_free_space space;
+	daddr_t offset, align;
+	size_t s;
+	part_id cid;
+	struct selected_partitions selected;
+	struct single_clone_data *new_clones;
+
+	if (!select_partitions(&selected, parts))
+		return 0;
+
+	new_clones = realloc(pdata->clones,
+	    sizeof(*pdata->clones)*(pdata->num_clone_entries+1));
+	if (new_clones == NULL)
+		return 0;
+	pdata->num_clone_entries++;
+	pdata->clones = new_clones;
+	new_clones += (pdata->num_clone_entries-1);
+	memset(new_clones, 0, sizeof *new_clones);
+	new_clones->clone_src = selected;
+
+	memset(&data, 0, sizeof data);
+	data.usage.parts = parts;
+
+	/* if we already have partitions, ask for the target position */
+	if (parts->num_part > 0) {
+		data.res = -1;
+		num_men = parts->num_part+1;
+		men = calloc(num_men, sizeof *men);
+		if (men == NULL)
+			return 0;
+		for (i = 0; i < num_men; i++)
+			men[i].opt_action = clone_target_select;
+		men[num_men-1].opt_name = MSG_clone_target_end;
+
+		data.usage.menu = new_menu(MSG_clone_target_hdr,
+		    men, num_men, 3, 2, 0, 65, MC_SCROLL,
+		    NULL, draw_outer_part_line, NULL, NULL, MSG_cancel);
+		process_menu(data.usage.menu, &data);
+		free_menu(data.usage.menu);
+		free(men);
+
+		if (data.res < 0)
+			goto err;
+	} else {
+		data.res = 0;
+	}
+
+	/* find selected offset from data.res and insert clones there */
+	align = parts->pscheme->get_part_alignment(parts);
+	offset = -1;
+	if (data.res > 0) {
+		for (cid = 0; cid < (size_t)data.res; cid++) {
+			if (!parts->pscheme->get_part_info(parts, cid, &sinfo))
+			continue;
+			offset = sinfo.start + sinfo.size;
+		}
+	} else {
+		offset = 0;
+	}
+
+	new_clones->clone_ids = calloc(selected.num_sel,
+	    sizeof(*new_clones->clone_ids));
+	if (new_clones->clone_ids == NULL)
+		goto err;
+	for (s = 0; s < selected.num_sel; s++) {
+		csrc = selected.selection[s].parts;
+		cid = selected.selection[s].id;
+		csrc->pscheme->get_part_info(csrc, cid, &sinfo);
+		if (!parts->pscheme->adapt_foreign_part_info(
+		    parts, &cinfo, csrc->pscheme, &sinfo))
+			continue;
+		size_t cnt = parts->pscheme->get_free_spaces(
+		    parts, &space, 1, cinfo.size-align, align,
+		    offset, -1);
+		if (cnt == 0)
+			continue;
+		cinfo.start = space.start;
+		cid = parts->pscheme->add_partition(
+		    parts, &cinfo, NULL);
+		new_clones->clone_ids[s] = cid;
+		if (cid == NO_PART)
+			continue;
+		parts->pscheme->get_part_info(parts, cid, &cinfo);
+		offset = rounddown(cinfo.start+cinfo.size+align, align);
+	}
+
+	/* reload menu and start again */
+	menu_opts_reload(menu, parts);
+	menu->cursel = parts->num_part+1;
+	if (parts->num_part == 0)
+		menu->cursel++;
+	return -1;
+
+err:
+	free_selected_partitions(&selected);
+	return -1;
+}
+#endif
+
 static int
 add_part_entry(menudesc *m, void *arg)
 {
-	arg_rv *av = arg;
-	struct part_edit_info data = { .parts = av->arg,
+	struct outer_parts_data *pdata = arg;
+	struct part_edit_info data = { .parts = pdata->av.arg,
 	    .first_custom_opt = PTN_OPTS_COMMON };
 	int ptn_menu;
 	daddr_t ptn_alignment;
@@ -446,7 +572,7 @@ add_part_entry(menudesc *m, void *arg)
 	struct disk_part_free_space space;
 	const char *err;
 
-	opts = fill_part_edit_menu_opts(av->arg, false, ptn_add_opts,
+	opts = fill_part_edit_menu_opts(data.parts, false, ptn_add_opts,
 	    __arraycount(ptn_add_opts), &num_opts);
 	if (opts == NULL)
 		return 1;
@@ -617,8 +743,8 @@ draw_outer_ptn_header(menudesc *m, void *arg)
 static void
 draw_outer_part_line(menudesc *m, int opt, void *arg)
 {
-	arg_rv *args = arg;
-	struct disk_partitions *parts = args->arg;
+	struct outer_parts_data *pdata = arg;
+	struct disk_partitions *parts = pdata->av.arg;
 	int len;
 	part_id pno = opt;
 	struct disk_part_info info;
@@ -677,9 +803,9 @@ draw_outer_part_line(menudesc *m, int opt, void *arg)
 static int
 part_edit_abort(menudesc *m, void *arg)
 {
-	arg_rv *args = arg;
+	struct outer_parts_data *pdata = arg;
 
-	args->rv = -1;
+	pdata->av.rv = -1;
 	return 0;
 }
 
@@ -693,6 +819,9 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 
 	may_add = parts->pscheme->can_add_partition(parts);
 	num_opts = 3 + parts->num_part;
+#ifndef NO_CLONES
+	num_opts++;
+#endif
 	if (parts->num_part == 0)
 		num_opts++;
 	if (may_add)
@@ -730,6 +859,13 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 		op++;
 	}
 
+#ifndef NO_CLONES
+	/* and a partition cloner */
+	op->opt_name = MSG_clone_from_elsewhere;
+	op->opt_action = add_part_clone;
+	op++;
+#endif
+
 	/* and unit changer */
 	op->opt_name = MSG_askunits;
 	op->opt_menu = MENU_sizechoice;
@@ -743,6 +879,9 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 	op->opt_action = part_edit_abort;
 	op++;
 
+	/* counts are consistent? */
+	assert((op - opts) >= 0 && (size_t)(op - opts) == num_opts);
+
 	*cnt = num_opts;
 	return opts;
 }
@@ -750,8 +889,8 @@ outer_fill_part_menu_opts(const struct disk_partitions *parts, size_t *cnt)
 static void
 draw_outer_part_header(menudesc *m, void *arg)
 {
-	arg_rv *av = arg;
-	struct disk_partitions *parts = av->arg;
+	struct outer_parts_data *pdata = arg;
+	struct disk_partitions *parts = pdata->av.arg;
 	char start[SSTRSIZE], size[SSTRSIZE], col[SSTRSIZE],
 	    *disk_info, total[SSTRSIZE], avail[SSTRSIZE];
 	size_t sep;
@@ -1029,7 +1168,10 @@ ask_outer_partsizes(struct disk_partitions *parts)
 	int j;
 	int part_menu;
 	size_t num_opts;
-	arg_rv av;
+#ifndef NO_CLONES
+	size_t i, ci;
+#endif
+	struct outer_parts_data data;
 
 	part_menu_opts = outer_fill_part_menu_opts(parts, &num_opts);
 	part_menu = new_menu(outer_part_title, part_menu_opts, num_opts,
@@ -1048,18 +1190,18 @@ ask_outer_partsizes(struct disk_partitions *parts)
 		pm->current_cylsize = 16065;	/* noone cares nowadays */
 	pm->ptstart = 0;
 	pm->ptsize = 0;
-	av.rv = 0;
+	memset(&data, 0, sizeof data);
+	data.av.arg = parts;
 
 	for (;;) {
-		av.arg = parts;
-		av.rv = 0;
-		process_menu(part_menu, &av);
-		if (av.rv < 0)
+		data.av.rv = 0;
+		process_menu(part_menu, &data);
+		if (data.av.rv < 0)
 			break;
 
 		j = verify_outer_parts(parts, false);
 		if (j == 0) {
-			av.rv = -1;
+			data.av.rv = -1;
 			return false;
 		} else if (j == 1) {
 			continue;
@@ -1067,10 +1209,31 @@ ask_outer_partsizes(struct disk_partitions *parts)
 		break;
 	}
 
+#ifndef NO_CLONES
+	/* handle cloned partitions content copies now */
+	for (i = 0; i < data.num_clone_entries; i++) {
+		for (ci = 0; ci < data.clones[i].clone_src.num_sel; ci++) {
+			if (data.clones[i].clone_src.with_data)
+				clone_partition_data(parts,
+				    data.clones[i].clone_ids[ci],
+				    data.clones[i].clone_src.selection[ci].
+				    parts,
+				    data.clones[i].clone_src.selection[ci].id);
+		}
+	}
+
+	/* free clone data */
+	if (data.clones) {
+		for (i = 0; i < data.num_clone_entries; i++)
+			free_selected_partitions(&data.clones[i].clone_src);
+		free(data.clones);
+	}
+#endif
+
 	free_menu(part_menu);
 	free(part_menu_opts);
 
-	return av.rv == 0;
+	return data.av.rv == 0;
 }
 
 bool

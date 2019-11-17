@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.9.2.1 2019/08/18 13:29:15 msaitoh Exp $	*/
+/*	$NetBSD: install.c,v 1.9.2.2 2019/11/17 13:45:26 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,6 +34,7 @@
 
 /* install.c -- system installation. */
 
+#include <sys/param.h>
 #include <stdio.h>
 #include <curses.h>
 #include "defs.h"
@@ -49,6 +50,9 @@ static bool
 write_all_parts(struct install_partition_desc *install)
 {
 	struct disk_partitions **allparts, *parts;
+#ifndef NO_CLONES
+	struct selected_partition *src;
+#endif
 	size_t num_parts, i, j;
 	bool found, res;
 
@@ -75,7 +79,7 @@ write_all_parts(struct install_partition_desc *install)
 		allparts[num_parts++] = parts;
 	}
 
-	/* do four phases, abort anytime and go out, returning res */
+	/* do multiple phases, abort anytime and go out, returning res */
 
 	res = true;
 
@@ -98,7 +102,22 @@ write_all_parts(struct install_partition_desc *install)
 	/* phase 3: now we may have a first chance to enable swap space */
 	set_swap_if_low_ram(install);
 
-	/* phase 4: post disklabel (used for updating boot loaders) */
+#ifndef NO_CLONES
+	/* phase 4: copy any cloned partitions data (if requested) */
+	for (i = 0; i < install->num; i++) {
+		if ((install->infos[i].flags & PUIFLG_CLONE_PARTS) == 0
+		    || install->infos[i].clone_src == NULL
+		    || !install->infos[i].clone_src->with_data)
+			continue;
+		src = &install->infos[i].clone_src
+		    ->selection[install->infos[i].clone_ndx];
+		clone_partition_data(install->infos[i].parts,
+		    install->infos[i].cur_part_id,
+		    src->parts, src->id);
+	}
+#endif
+
+	/* phase 5: post disklabel (used for updating boot loaders) */
 	for (i = 0; i < num_parts; i++) {
 		if (!md_post_disklabel(install, allparts[i])) {
 			res = false;
@@ -217,5 +236,5 @@ do_install(void)
 	hit_enter_to_continue(MSG_instcomplete, NULL);
 
 error:
-	free(install.infos);
+	free_install_desc(&install);
 }
