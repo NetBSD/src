@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.48 2019/11/18 10:14:52 rin Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.49 2019/11/18 10:25:48 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.48 2019/11/18 10:14:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.49 2019/11/18 10:25:48 rin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -195,6 +195,11 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	si->_code = si32->_code;
 	si->_errno = si32->_errno;
 
+	if (si32->_code == SI_NOINFO)
+		return;
+	else if (si32->_code <= 0)	/* codes described in siginfo(2) */
+		goto fill_rt;
+
 	switch (si32->_signo) {
 	case SIGILL:
 	case SIGFPE:
@@ -240,6 +245,7 @@ CTASSERT(sizeof(si->_reason._ptrace_state._option._pe_other_pid) ==
 	case SIGVTALRM:
 	case SIGPROF:
 	default:	/* see sigqueue() and kill1() */
+fill_rt:
 		si->_reason._rt._pid = si32->_reason._rt._pid;
 		si->_reason._rt._uid = si32->_reason._rt._uid;
 		si->_reason._rt._value.sival_int =
@@ -277,6 +283,11 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 	si32->_signo = si->_signo;
 	si32->_code = si->_code;
 	si32->_errno = si->_errno;
+
+	if (si->_code == SI_NOINFO)
+		return;
+	else if (si->_code <= 0)	/* codes described in siginfo(2) */
+		goto fill_rt;
 
 	switch (si->_signo) {
 	case SIGILL:
@@ -323,6 +334,7 @@ CTASSERT(sizeof(si32->_reason._ptrace_state._option._pe_other_pid) ==
 	case SIGVTALRM:
 	case SIGPROF:
 	default:	/* see sigqueue() and kill1() */
+fill_rt:
 		si32->_reason._rt._pid = si->_reason._rt._pid;
 		si32->_reason._rt._uid = si->_reason._rt._uid;
 		si32->_reason._rt._value.sival_int =
