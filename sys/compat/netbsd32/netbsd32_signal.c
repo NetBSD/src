@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.49 2019/11/18 10:25:48 rin Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.50 2019/11/18 11:01:41 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.49 2019/11/18 10:25:48 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.50 2019/11/18 11:01:41 rin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -213,6 +213,7 @@ fill_fault:
 	case SIGTRAP:
 		switch (si32->_code) {
 		case TRAP_EXEC:
+			break;
 		case TRAP_CHLD:
 		case TRAP_LWP:
 			si->_reason._ptrace_state._pe_report_event =
@@ -302,6 +303,7 @@ fill_fault:
 	case SIGTRAP:
 		switch (si->_code) {
 		case TRAP_EXEC:
+			break;
 		case TRAP_CHLD:
 		case TRAP_LWP:
 			si32->_reason._ptrace_state._pe_report_event =
