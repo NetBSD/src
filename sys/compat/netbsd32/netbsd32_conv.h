@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_conv.h,v 1.40 2019/10/03 22:16:53 kamil Exp $	*/
+/*	$NetBSD: netbsd32_conv.h,v 1.41 2019/11/18 04:09:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -58,7 +58,7 @@ netbsd32_from_timeval50(const struct timeval *tv,
     struct netbsd32_timeval50 *tv32)
 {
 
-	tv32->tv_sec = (netbsd32_time50_t)tv->tv_sec;
+	tv32->tv_sec = (netbsd32_long)tv->tv_sec;
 	tv32->tv_usec = (netbsd32_long)tv->tv_usec;
 }
 
@@ -152,7 +152,7 @@ netbsd32_from_timespec50(const struct timespec *p,
     struct netbsd32_timespec50 *s32p)
 {
 
-	s32p->tv_sec = (netbsd32_time50_t)p->tv_sec;
+	s32p->tv_sec = (int32_t)p->tv_sec;
 	s32p->tv_nsec = (netbsd32_long)p->tv_nsec;
 }
 
