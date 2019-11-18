@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.37 2019/11/11 22:45:26 joerg Exp $
+# $NetBSD: Makefile,v 1.38 2019/11/18 22:26:15 joerg Exp $
 
 # Link the gallium mega driver.
 
@@ -1049,12 +1049,16 @@ LLVMRT_LIBS+=	\
 		SelectionDAG \
 		AsmPrinter \
 		CodeGen \
+		TransformsCFGuard \
 		Target \
 		InstCombine \
 		ScalarOpts \
 		DebugInfoCodeView \
+		DebugInfoDWARF \
 		Object \
 		BitReader \
+		TextAPI \
+		MIRParser \
 		MCParser \
 		MC \
 		ipo \
@@ -1066,16 +1070,19 @@ LLVMRT_LIBS+=	\
 		ProfileData \
 		Analysis \
 		IR \
+		Remarks \
+		BitstreamReader \
 		Linker \
 		BinaryFormat \
 		TransformsUtils \
-		Support
+		Support \
+		Demangle
 
 .include "${NETBSDSRCDIR}/external/apache2/llvm/link.mk"
 
 .endif  # ${BUILD_LLVM_PIPE} == 1 || ${BUILD_RADEON} == 1
 
-LDFLAGS+=	-Wl,--version-script=${X11SRCDIR.Mesa}/src/gallium/targets/dri/dri.sym
+LDFLAGS+=	-Wl,--version-script=${X11SRCDIR.Mesa}/src/gallium/targets/dri/dri.sym -Wl,-z,defs
 
 ##  build mesagallium parts
 MESA_SRC_MODULES=  main math vbo state_tracker program asm_s
