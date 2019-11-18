@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.130 2019/11/18 04:17:08 rin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.131 2019/11/18 12:06:26 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -161,6 +161,10 @@ netbsd32_ptr32_incr(netbsd32_pointer_t *p32, uint32_t incr)
 typedef int64_t netbsd32_int64 NETBSD32_INT64_ALIGN;
 typedef uint64_t netbsd32_uint64 NETBSD32_INT64_ALIGN;
 #undef NETBSD32_INT64_ALIGN
+
+/* Type used in siginfo, avoids circular dependencies between headers. */
+CTASSERT(sizeof(netbsd32_uint64) == sizeof(netbsd32_siginfo_uint64));
+CTASSERT(__alignof__(netbsd32_uint64) == __alignof__(netbsd32_siginfo_uint64));
 
 /*
  * all pointers are netbsd32_pointer_t (defined in <machine/netbsd32_machdep.h>)

@@ -1,4 +1,4 @@
-/*	$NetBSD: siginfo.h,v 1.8 2019/09/30 21:13:33 kamil Exp $	 */
+/*	$NetBSD: siginfo.h,v 1.9 2019/11/18 12:06:26 rin Exp $	 */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -33,6 +33,15 @@
 #define	_COMPAT_SYS_SIGINFO_H_
 
 #ifdef _KERNEL
+
+/* Avoids circular dependency with machine/netbsd32_machdep.h */
+#if defined(__x86_64__) || (defined(__arm__) && defined(__ARM_EABI__))
+#define NETBSD32_SIGINFO_UINT64_ALIGN __attribute__((__aligned__(4)))
+#else
+#define NETBSD32_SIGINFO_UINT64_ALIGN __attribute__((__aligned__(8)))
+#endif
+typedef uint64_t netbsd32_siginfo_uint64 NETBSD32_SIGINFO_UINT64_ALIGN;
+#undef NETBSD32_SIGINFO_UINT64_ALIGN
 
 typedef union sigval32 {
 	int sival_int;
@@ -73,7 +82,7 @@ struct __ksiginfo32 {
 			int	_sysnum;
 			int	_retval[2];
 			int	_error;
-			uint64_t _args[8]; /* SYS_MAXSYSARGS */
+			netbsd32_siginfo_uint64 _args[8]; /* SYS_MAXSYSARGS */
 		} _syscall;
 
 		struct {
