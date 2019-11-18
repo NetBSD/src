@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.4.2.1 2019/11/16 16:51:45 martin Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.4.2.2 2019/11/18 19:46:33 martin Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.4.2.1 2019/11/16 16:51:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.4.2.2 2019/11/18 19:46:33 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -565,7 +565,7 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	case 0:
 		break;
 	case EFBIG:
-		if (m_defrag(m, M_NOWAIT) == 0 &&
+		if (m_defrag(m, M_NOWAIT) != NULL &&
 		    bus_dmamap_load_mbuf(sc->sc_dmat, txd->txd_dmap, m,
 		      BUS_DMA_READ | BUS_DMA_NOWAIT) == 0)
 			break;

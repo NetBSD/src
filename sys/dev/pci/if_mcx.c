@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.1.2.4 2019/09/29 07:26:23 martin Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.1.2.5 2019/11/18 19:46:33 martin Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -6347,7 +6347,7 @@ mcx_load_mbuf(struct mcx_softc *sc, struct mcx_slot *ms, struct mbuf *m)
 		break;
 
 	case EFBIG:
-		if (m_defrag(m, M_DONTWAIT) == 0 &&
+		if (m_defrag(m, M_DONTWAIT) != NULL &&
 		    bus_dmamap_load_mbuf(sc->sc_dmat, ms->ms_map, m,
 		    BUS_DMA_STREAMING | BUS_DMA_NOWAIT) == 0)
 			break;
