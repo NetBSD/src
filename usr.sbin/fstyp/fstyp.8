@@ -1,4 +1,4 @@
-.\" $NetBSD: fstyp.8,v 1.2 2018/01/09 09:41:29 wiz Exp $
+.\" $NetBSD: fstyp.8,v 1.3 2019/11/18 14:53:34 tkusumi Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd November 25, 2017
+.Dd November 19, 2019
 .Dt FSTYP 8
 .Os
 .Sh NAME
@@ -48,7 +48,7 @@
 The
 .Nm
 utility is used to determine the file system type on a given device.
-It can recognize ISO-9660, Ext2, FAT, NTFS, and UFS file systems.
+It can recognize ISO-9660, exFAT, Ext2, FAT, NTFS, and UFS file systems.
 When the
 .Fl u
 flag is specified,
@@ -63,6 +63,8 @@ as, respectively:
 .Bl -item -offset indent -compact
 .It
 cd9660
+.It
+exfat
 .It
 ext2fs
 .It

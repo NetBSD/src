@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.3 2019/11/18 14:53:34 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.2 2018/01/09 10:47:57 martin Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.3 2019/11/18 14:53:34 tkusumi Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -64,6 +64,7 @@ static struct {
 	bool		unmountable;
 } fstypes[] = {
 	{ "cd9660", &fstyp_cd9660, false },
+	{ "exfat", &fstyp_exfat, false },
 	{ "ext2fs", &fstyp_ext2fs, false },
 	{ "msdosfs", &fstyp_msdosfs, false },
 	{ "ntfs", &fstyp_ntfs, false },
