@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.395 2019/10/31 06:43:19 martin Exp $
+#	$NetBSD: bsd.README,v 1.396 2019/11/18 16:09:21 christos Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -1645,15 +1645,14 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBBLUETOOTH?=		${DESTDIR}/usr/lib/libbluetooth.a
 		LIBBSDMALLOC?=		${DESTDIR}/usr/lib/libbsdmalloc.a
 		LIBBZ2?=		${DESTDIR}/usr/lib/libbz2.a
-		LIBC_PIC?=		${DESTDIR}/usr/lib/libc_pic.a
 		LIBC?=			${DESTDIR}/usr/lib/libc.a
+		LIBC_PIC?=		${DESTDIR}/usr/lib/libc_pic.a
 		LIBCOMPAT?=		${DESTDIR}/usr/lib/libcompat.a
 		LIBCOM_ERR?=		${DESTDIR}/usr/lib/libcom_err.a
 		LIBCRYPT?=		${DESTDIR}/usr/lib/libcrypt.a
 		LIBCRYPTO?=		${DESTDIR}/usr/lib/libcrypto.a
 		LIBCURSES?=		${DESTDIR}/usr/lib/libcurses.a
-		LIBC_PIC?=		${DESTDIR}/usr/lib/libc_pic.a
-		LIBDBM?=		${DESTDIR}/usr/lib/libdbm.a
+		LIBCXX?=		${DESTDIR}/usr/lib/libc++.a
 		LIBDES?=		${DESTDIR}/usr/lib/libdes.a
 		LIBDNS?=		${DESTDIR}/usr/lib/libdns.a
 		LIBEDIT?=		${DESTDIR}/usr/lib/libedit.a
@@ -1665,7 +1664,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBFETCH?=		${DESTDIR}/usr/lib/libfetch.a
 		LIBFL?=			${DESTDIR}/usr/lib/libfl.a
 		LIBFORM?=		${DESTDIR}/usr/lib/libform.a
-		LIBG2C?=		${DESTDIR}/usr/lib/libg2c.a
 		LIBGCC?=		${DESTDIR}/usr/lib/libgcc.a
 		LIBGNUMALLOC?=		${DESTDIR}/usr/lib/libgnumalloc.a
 		LIBGSSAPI?=		${DESTDIR}/usr/lib/libgssapi.a
@@ -1688,7 +1686,6 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBLDAP?=		${DESTDIR}/usr/lib/libldap.a
 		LIBLDAP_R?=		${DESTDIR}/usr/lib/libldap_r.a
 		LIBLUA?=		${DESTDIR}/usr/lib/liblua.a
-		LIBLUTOK?=		${DESTDIR}/usr/lib/liblutok.a
 		LIBM?=			${DESTDIR}/usr/lib/libm.a
 		LIBMAGIC?=		${DESTDIR}/usr/lib/libmagic.a
 		LIBMENU?=		${DESTDIR}/usr/lib/libmenu.a
@@ -1712,28 +1709,25 @@ DPADD		Additional dependencies for the program.  Usually used for
 		LIBRPCSVC?=		${DESTDIR}/usr/lib/librpcsvc.a
 		LIBRT?=			${DESTDIR}/usr/lib/librt.a
 		LIBRUMP?=		${DESTDIR}/usr/lib/librump.a
-		LIBRUMPFS_CD966	0FS?=	${DESTDIR}/usr/lib/librumpfs_cd9660fs.a
+		LIBRUMPFS_CD9660?=	${DESTDIR}/usr/lib/librumpfs_cd9660.a
 		LIBRUMPFS_EFS?=		${DESTDIR}/usr/lib/librumpfs_efs.a
 		LIBRUMPFS_EXT2FS?=	${DESTDIR}/usr/lib/librumpfs_ext2fs.a
 		LIBRUMPFS_FFS?=		${DESTDIR}/usr/lib/librumpfs_ffs.a
 		LIBRUMPFS_HFS?=		${DESTDIR}/usr/lib/librumpfs_hfs.a
 		LIBRUMPFS_LFS?=		${DESTDIR}/usr/lib/librumpfs_lfs.a
-		LIBRUMPFS_MSDOSFS?=	${DESTDIR}/usr/lib/librumpfs_msdosfs.a
+		LIBRUMPFS_MSDOS?=	${DESTDIR}/usr/lib/librumpfs_msdos.a
 		LIBRUMPFS_NFS?=		${DESTDIR}/usr/lib/librumpfs_nfs.a
 		LIBRUMPFS_NTFS?=	${DESTDIR}/usr/lib/librumpfs_ntfs.a
 		LIBRUMPFS_SYSPUFFS?=	${DESTDIR}/usr/lib/librumpfs_syspuffs.a
 		LIBRUMPFS_TMPFS?=	${DESTDIR}/usr/lib/librumpfs_tmpfs.a
 		LIBRUMPFS_UDF?=		${DESTDIR}/usr/lib/librumpfs_udf.a
-		LIBRUMPFS_UFS?=		${DESTDIR}/usr/lib/librumpfs_ufs.a
 		LIBRUMPUSER?=		${DESTDIR}/usr/lib/librumpuser.a
 		LIBSASLC?=		${DESTDIR}/usr/lib/libsaslc.a
 		LIBSKEY?=		${DESTDIR}/usr/lib/libskey.a
 		LIBSL?=			${DESTDIR}/usr/lib/libsl.a
 		LIBSQLITE3?=		${DESTDIR}/usr/lib/libsqlite3.a
-		LIBSS?=			${DESTDIR}/usr/lib/libss.a
 		LIBSSH?=		${DESTDIR}/usr/lib/libssh.a
 		LIBSSL?=		${DESTDIR}/usr/lib/libssl.a
-		LIBSSP?=		${DESTDIR}/usr/lib/libssp.a
 		LIBSTDCXX?=		${DESTDIR}/usr/lib/libstdc++.a
 		LIBSUPCXX?=		${DESTDIR}/usr/lib/libsupc++.a
 		LIBTERMINFO?=		${DESTDIR}/usr/lib/libterminfo.a

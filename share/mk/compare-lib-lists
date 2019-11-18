@@ -1,15 +1,16 @@
 #!/bin/sh
-# $NetBSD: compare-lib-lists,v 1.1 2019/08/10 12:50:36 christos Exp $
+# $NetBSD: compare-lib-lists,v 1.2 2019/11/18 16:09:21 christos Exp $
 #
-# Q+D script to print the library lists for compariston between whats in the
+# Q+D script to print the library lists for comparison between whats in the
 # bsd.prog.mk file and bsd.README
 
 prog=$(basename "$0")
 
 RD=/tmp/${prog}.rd.$$
 MK=/tmp/${prog}.mk.$$
+IN=/tmp/${prog}.in.$$
 
-trap "rm -f ${MK} ${RD}" 0 1 2 3 15
+trap "rm -f ${MK} ${RD} ${IN}" 0 1 2 3 15
 
 make -f - all << \EOF > ${MK}
 .include <bsd.prog.mk>
@@ -31,3 +32,23 @@ grep '	LIB' bsd.README | \
     sed -e 's/.*lib\([a-zA-Z0-9_+\-]*\)\.a$/\1/' > ${RD}
 
 paste ${MK} ${RD}
+
+echo "------"
+echo "Not installed"
+
+cat << \EOF | make -f - xall > ${IN}
+.include <bsd.prog.mk>
+
+xall:
+.for _lib in ${_LIBLIST}
+	@echo ${DESTDIR}/usr/lib/lib${_lib:S/xx/++/:S/atf_c/atf-c/}.a
+.endfor
+.for _lib in ${_X11LIBLIST}
+	@echo ${DESTDIR}${X11USRLIBDIR}/lib${_lib}.a
+.endfor
+EOF
+for i in ${IN}; do
+	if [ ! -f $i ]; then
+		echo $i
+	fi
+done
