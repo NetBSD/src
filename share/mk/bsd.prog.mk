@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.prog.mk,v 1.323 2019/08/27 22:48:54 kamil Exp $
+#	$NetBSD: bsd.prog.mk,v 1.324 2019/11/18 16:09:21 christos Exp $
 #	@(#)bsd.prog.mk	8.2 (Berkeley) 4/2/94
 
 .ifndef HOSTPROG
@@ -123,7 +123,6 @@ _LIBLIST=\
 	crypto \
 	curses \
 	cxx \
-	dbm \
 	des \
 	dns \
 	edit \
@@ -135,7 +134,6 @@ _LIBLIST=\
 	fetch \
 	fl \
 	form \
-	g2c \
 	gcc \
 	gnumalloc \
 	gssapi \
@@ -158,7 +156,6 @@ _LIBLIST=\
 	ldap \
 	ldap_r \
 	lua \
-	lutok \
 	m \
 	magic \
 	menu \
@@ -182,28 +179,25 @@ _LIBLIST=\
 	rpcsvc \
 	rt \
 	rump \
-	rumpfs_cd9660fs \
+	rumpfs_cd9660 \
 	rumpfs_efs \
 	rumpfs_ext2fs \
 	rumpfs_ffs \
 	rumpfs_hfs \
 	rumpfs_lfs \
-	rumpfs_msdosfs \
+	rumpfs_msdos \
 	rumpfs_nfs \
 	rumpfs_ntfs \
 	rumpfs_syspuffs \
 	rumpfs_tmpfs \
 	rumpfs_udf \
-	rumpfs_ufs \
 	rumpuser \
 	saslc \
 	skey \
 	sl \
 	sqlite3 \
-	ss \
 	ssh \
 	ssl \
-	ssp \
 	stdc++ \
 	supc++ \
 	terminfo \
