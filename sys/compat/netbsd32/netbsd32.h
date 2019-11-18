@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32.h,v 1.129 2019/11/18 04:09:53 rin Exp $	*/
+/*	$NetBSD: netbsd32.h,v 1.130 2019/11/18 04:17:08 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001, 2008, 2015 Matthew R. Green
@@ -37,7 +37,6 @@
  */
 
 #include <sys/param.h> /* precautionary upon removal from ucred.h */
-#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/mount.h>
 #include <sys/stat.h>
@@ -73,11 +72,7 @@ typedef int32_t netbsd32_key_t;
 typedef int32_t netbsd32_intptr_t;
 typedef uint32_t netbsd32_uintptr_t;
 
-/*
- * netbsd32_[u]int64 are machine dependent and defined in <sys/types.h>:
- * 64 bit integers only have 4-byte alignment on some 32 bit ports,
- * but always have 8-byte alignment on 64 bit systems.
- */
+/* netbsd32_[u]int64 are machine dependent and defined below */
 
 /*
  * machine dependant section; must define:
@@ -159,6 +154,15 @@ netbsd32_ptr32_incr(netbsd32_pointer_t *p32, uint32_t incr)
 #undef NETBSD32_POINTER_TYPE
 
 /*
+ * 64 bit integers only have 4-byte alignment on some 32 bit ports,
+ * but always have 8-byte alignment on 64 bit systems.
+ * NETBSD32_INT64_ALIGN may be __attribute__((__aligned__(4)))
+ */
+typedef int64_t netbsd32_int64 NETBSD32_INT64_ALIGN;
+typedef uint64_t netbsd32_uint64 NETBSD32_INT64_ALIGN;
+#undef NETBSD32_INT64_ALIGN
+
+/*
  * all pointers are netbsd32_pointer_t (defined in <machine/netbsd32_machdep.h>)
  */
 
@@ -208,13 +212,14 @@ struct netbsd32_iovec {
 
 /* from <sys/time.h> */
 typedef int32_t netbsd32_timer_t;
+typedef	int32_t netbsd32_time50_t;
 typedef	netbsd32_int64 netbsd32_time_t;
 typedef netbsd32_pointer_t netbsd32_timerp_t;
 typedef netbsd32_pointer_t netbsd32_clockidp_t;
 
 typedef netbsd32_pointer_t netbsd32_timespec50p_t;
 struct netbsd32_timespec50 {
-	int32_t		tv_sec;			/* seconds */
+	netbsd32_time50_t tv_sec;			/* seconds */
 	netbsd32_long	tv_nsec;	/* and nanoseconds */
 };
 
@@ -226,7 +231,7 @@ struct netbsd32_timespec {
 
 typedef netbsd32_pointer_t netbsd32_timeval50p_t;
 struct netbsd32_timeval50 {
-	netbsd32_long		tv_sec;		/* seconds */
+	netbsd32_time50_t	tv_sec;		/* seconds */
 	netbsd32_long		tv_usec;	/* and microseconds */
 };
 
