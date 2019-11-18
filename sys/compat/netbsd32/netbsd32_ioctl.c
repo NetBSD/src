@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.105 2019/11/18 04:09:53 rin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.106 2019/11/18 04:17:08 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.105 2019/11/18 04:09:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.106 2019/11/18 04:17:08 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -1066,30 +1066,6 @@ netbsd32_do_clockctl_ntp_adjtime(struct clockctl_ntp_adjtime *args)
 }
 #endif
 
-#ifdef COMPAT_50
-static void
-netbsd32_ioctl_to_timeval50(
-    const struct netbsd32_timeval50 *s32p,
-    struct timeval50 *p,
-    u_long cmd)
-{
-
-	p->tv_sec = s32p->tv_sec;
-	p->tv_usec = s32p->tv_usec;
-}
-
-static void
-netbsd32_ioctl_from_timeval50(
-    const struct timeval50 *p,
-    struct netbsd32_timeval50 *s32p,
-    u_long cmd)
-{
-
-	s32p->tv_sec = (netbsd32_long)p->tv_sec;
-	s32p->tv_usec = (netbsd32_long)p->tv_usec;
-}
-#endif
-
 /*
  * main ioctl syscall.
  *
@@ -1427,28 +1403,16 @@ netbsd32_ioctl(struct lwp *l,
 
 	case BIOCSETF32:
 		IOCTL_STRUCT_CONV_TO(BIOCSETF, bpf_program);
-#ifdef COMPAT_50
-#define netbsd32_to_timeval50 netbsd32_ioctl_to_timeval50
-#define netbsd32_from_timeval50 netbsd32_ioctl_from_timeval50
-	case BIOCSORTIMEOUT32:
-		IOCTL_STRUCT_CONV_TO(BIOCSORTIMEOUT, timeval50);
-	case BIOCGORTIMEOUT32:
-		IOCTL_STRUCT_CONV_TO(BIOCGORTIMEOUT, timeval50);
-#undef netbsd32_to_timeval50
-#undef netbsd32_from_timeval50
-#endif
 	case BIOCSTCPF32:
 		IOCTL_STRUCT_CONV_TO(BIOCSTCPF, bpf_program);
 	case BIOCSUDPF32:
 		IOCTL_STRUCT_CONV_TO(BIOCSUDPF, bpf_program);
 	case BIOCGDLTLIST32:
 		IOCTL_STRUCT_CONV_TO(BIOCGDLTLIST, bpf_dltlist);
+	case BIOCSRTIMEOUT32:
 #define netbsd32_to_timeval(s32p, p, cmd) netbsd32_to_timeval(s32p, p)
 #define netbsd32_from_timeval(p, s32p, cmd) netbsd32_from_timeval(p, s32p)
-	case BIOCSRTIMEOUT32:
 		IOCTL_STRUCT_CONV_TO(BIOCSRTIMEOUT, timeval);
-	case BIOCGRTIMEOUT32:
-		IOCTL_STRUCT_CONV_TO(BIOCGRTIMEOUT, timeval);
 #undef netbsd32_to_timeval
 #undef netbsd32_from_timeval
 
