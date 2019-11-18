@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.66 2019/11/16 16:40:29 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.67 2019/11/18 19:29:27 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1606,4 +1606,9 @@ sys/arch/zaurus/zaurus/machdep.c		1.40,1.45
 
 	Make zaurus kernels use symbols loaded by bootloader.
 	[tsutsui, ticket #1446]
+
+sys/dev/hyperv/if_hvn.c				1.7
+
+	Fixed incorrect m_defrag return value check.
+	[nonaka, ticket #1447]
 
