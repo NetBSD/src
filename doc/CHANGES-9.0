@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.106 2019/11/17 13:50:13 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.107 2019/11/18 19:48:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5884,3 +5884,43 @@ usr.sbin/sysinst/util.c				1.35-1.40
 	 - x86: improve boot block selection menu
 	 - amd64: allow installation of KASLR kernel via "Custom Install"
 	[martin, ticket #436]
+
+sys/arch/arm/dts/sun50i-a64-pine64-plus.dts	1.3
+sys/arch/arm/dts/sun50i-a64-pine64.dts		1.2
+sys/arch/arm/dts/sun50i-a64-sopine-baseboard.dts 1.2
+sys/arch/arm/dts/sun50i-a64.dtsi		1.13
+sys/arch/arm/sunxi/sun50i_a64_ccu.c		1.14
+sys/arch/arm/sunxi/sunxi_ccu_div.c		1.6
+sys/arch/arm/sunxi/sunxi_dwhdmi.c		1.4
+sys/arch/arm/sunxi/sunxi_i2s.c			1.7
+
+	Add support for A64 I2S clocks.
+	Add A64 HDMI audio support.
+	Enable HDMI audio support on Pine64, Pine64+, and Pine64 LTS boards.
+	[jmcneill, ticket #437]
+
+sys/arch/evbarm/conf/GENERIC64			1.114
+sys/dev/fdt/files.fdt				1.48
+sys/dev/fdt/spdif_tx.c				1.1
+
+	Add driver for dummy spdif transmitter bindings.
+	[jmcneill, ticket #438]
+
+sys/arch/arm/sunxi/sun50i_a64_ccu.c		1.15
+sys/arch/evbarm/conf/GENERIC64			1.115
+
+	Add SPI clocks.
+	Add sun6ispi.
+	[jmcneill, ticket #439]
+
+share/man/man7/sysctl.7				1.142
+
+	Document usage of KERN_ARND.
+	[nia, ticket #440]
+
+sys/dev/hyperv/if_hvn.c				1.7
+sys/dev/pci/if_mcx.c				1.6
+
+	Fixed incorrect m_defrag return value check.
+	[nonaka, ticket #441]
+
