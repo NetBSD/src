@@ -1,4 +1,4 @@
-$NetBSD: README.gcc8,v 1.4 2019/11/16 11:50:58 mrg Exp $
+$NetBSD: README.gcc8,v 1.5 2019/11/18 01:13:39 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -28,39 +28,39 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	y	y	y		y		y	y	y
 alpha		y	y	y	y		y		?	?	?
-earmv4		y	y	y	y		?		?	?	?
-earmv4eb	y	?	?	y		?		?	?	?
-earm		y	?	?	y		?		?	?	?
-earmeb		y	?	?	y		?		?	?	?
-earmhf		y	?	?	y		?		?	?	?
-earmhfeb	y	?	?	y		?		?	?	?
-earmv6		y	?	?	y		?		?	?	?
-earmv6eb	y	?	?	y		?		?	?	?
-earmv6hf	y	?	?	y		?		?	?	?
-earmv6hfeb	y	?	?	y		?		?	?	?
-earmv7		y	?	?	y		?		?	?	?
-earmv7eb	y	?	?	y		?		?	?	?
+earmv4		y	y	y	y		y		y	?	?
+earmv4eb	y	?	y	y		?		?	?	?
+earm		y	?	y	y		?		?	?	?
+earmeb		y	?	y	y		?		?	?	?
+earmhf		y	?	y	y		?		?	?	?
+earmhfeb	y	?	y	y		?		?	?	?
+earmv6		y	?	y	y		?		?	?	?
+earmv6eb	y	?	y	y		?		?	?	?
+earmv6hf	y	?	y	y		?		?	?	?
+earmv6hfeb	y	?	y	y		?		?	?	?
+earmv7		y	?	y	y		?		?	?	?
+earmv7eb	y	?	y	y		?		?	?	?
 earmv7hf	y	y	y	y		y		y	n[3]	n
-earmv7hfeb	y	?	?	y		?		?	?	?
-hppa		y	?	?	y		?		?	?	?
+earmv7hfeb	y	?	y	y		?		?	?	?
+hppa		y	?	y	y		?		?	?	?
 i386		y	y	y	y		y		y	y	y
-ia64		y	?	?	y		?		?	?	?
-m68000		y	?	?	y		?		?	?	?
-m68k		y	?	?	y		?		?	?	?
-mipseb		y	?	?	y		?		?	?	?
-mipsel		y	?	?	y		?		?	?	?
+ia64		y	y	y	y		y		y	n[4]	y
+m68000		y	?	y	y		?		?	?	?
+m68k		y	y	y	y		y		?	?	?
+mipseb		y	y	y	y		?		?	?	?
+mipsel		y	?	y	y		?		?	?	?
 mips64eb	y	y	y	y		y		y	y[2]	?
-mips64el	y	?	?	y		?		?	?	?
+mips64el	y	?	y	y		?		?	?	?
 powerpc		y	y	y	y		y		y	y[1]	?
-powerpc64	y	?	y	y		y		?	?	?
-sh3eb		y	?	?	y		?		?	?	?
-sh3el		y	?	?	y		?		?	?	?
+powerpc64	y	n	y	y		y		y	y	y
+sh3eb		y	y	y	y		y		y	yX	?
+sh3el		y	y	y	y		y		?	?	?
 sparc		y	y	y	y		y		y	y	y
 sparc64		y	y	y	y		y		y	y	y
 vax		y	?	?	y		?		?	?	?
 x86_64		y	y	y	y		y		y	y	y
-riscv32		y	?	?	y		?		?	?	?	
-riscv64		y	?	?	y		?		?	?	?
+riscv32		y	?	y	y		y		?	?	?	
+riscv64		y	?	y	y		y		?	?	?
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
@@ -69,43 +69,43 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf
 [1] - many ipsec atf and c++ failures
 [2] - lots of failures, no idea if bad
 [3] - c++ exceptions are broken, all arm
+[4] - not upto userland yet
 
 CPU vs platform test table (for CPUs with multiple ports).  this is "make release" or just kernels.
 values:		y (yes), k (kernels only), n (failed), r (running), ? (not attempted)
 
 CPU		platform list
 ---		-------- ----
-		acorn32		cats		epoc32		evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
-arm:		?		?		?		?		?		?		?		?		?		?
-earmv4:		?		?		?		k		k		?		-		?		?		-
-earm:		-		-		-		?		?		-		?		-		-		k
-earmhf:		-		-		-		r		?		-		-		-		-		-
-earmv6:		-		-		-		k		k		-		-		-		-		-
-earmv6hf:	-		-		-		k		k		-		-		-		-		-
-earmv7:		-		-		-		k		k		-		-		-		-		-
-earmv7hf:	-		-		-		k		k		-		-		-		-		-
+		acorn32		cats	epoc32	evbarm-eb	evbarm-el	hpcarm		iyonix		netwinder	shark 		zaurus
+earmv4:		k		k	k	k		k		k		-		k		y		-
+earm:		-		-	-	k		k		-		k		-		-		k
+earmhf:		-		-	-	k		k		-		-		-		-		-
+earmv6:		-		-	-	k		k		-		-		-		-		-
+earmv6hf:	-		-	-	k		k		-		-		-		-		-
+earmv7:		-		-	-	k		k		-		-		-		-		-
+earmv7hf:	-		-	-	k		k		-		-		-		-		-
 
-		amiga		atari		cesfic		hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3		x68k
-m68k:		?		?		k		?		?		y[1]		?		?		?		y 		?
+		amiga		atari	cesfic	hp300		luna68k		mac68k		mvme68k		news68k		next68k		sun3	x68k
+m68k:		k		k	k	k		k		y		k		k		k		y 	k
 
 		evbmips		emips		ews4800mips	mipsco		newsmips	sgimips
-mipseb:		?		?		?		?		?		?
+mipseb:		k		k		k		k		k		y
 
 		evbmips		algor		arc		cobalt		hpcmips		pmax
-mipsel:		?		?		?		?		?		?
+mipsel:		y		y		y		y		y		y
 
 		algor		evbmips		pmax
-mips64eb:	-		?		-
-mips64el:	?		?		?
+mips64eb:	-		y		-
+mips64el:	y		y		y
 
-		amigappc	bebox		evbppc		ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
-powerpc:	?		?		?		?		?		?		?		?		?		?
-powerpc64:	-		-		?[9]		-		?[9]		-		?[9]		-		-		-
+		amigappc	bebox	evbppc	ibmnws		macppc		mvmeppc		ofppc		prep		rs6000		sandpoint
+powerpc:	k		k	k	k		y		k		y		k		k		k
+
+		evbppc		macppc		ofppc
+powerpc64:	y[1]		y[1]		y[1]
 
 		dreamcast	evbsh3		hpcsh		landisk		mmeye
-sh3eb:		-		?		-		-		?
-sh3el:		?		?		?		?		-
+sh3eb:		-		k		-		-		y
+sh3el:		k		k		k		y		-
 
-
-
-
+[1]: no kernels yet, but world builds
