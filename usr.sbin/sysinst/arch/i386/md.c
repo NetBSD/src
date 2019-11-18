@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.24 2019/11/16 21:25:14 martin Exp $ */
+/*	$NetBSD: md.c,v 1.25 2019/11/18 08:16:32 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -379,7 +379,7 @@ md_post_newfs(struct install_partition_desc *install)
 #if defined(__amd64__)
 	int ret;
 
-	ret = cp_to_target("/usr/mdec/prekern", "/prekern");
+	ret = cp_within_target("/usr/mdec/prekern", "/prekern", 0);
 	if (ret)
 		return ret;
 #endif
