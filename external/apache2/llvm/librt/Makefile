@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/11/11 22:45:18 joerg Exp $
+#	$NetBSD: Makefile,v 1.2 2019/11/18 22:26:14 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -12,8 +12,11 @@ SUBDIR=	libLLVMAnalysis \
 	libLLVMAsmPrinter \
 	libLLVMBinaryFormat \
 	libLLVMBitReader \
+	libLLVMBitstreamReader \
 	libLLVMCodeGen \
+	libLLVMDemangle \
 	libLLVMDebugInfoCodeView \
+	libLLVMDebugInfoDWARF \
 	libLLVMExecutionEngine \
 	libLLVMGlobalISel \
 	libLLVMInstCombine \
@@ -26,15 +29,19 @@ SUBDIR=	libLLVMAnalysis \
 	libLLVMMCDisassembler \
 	libLLVMMCJIT \
 	libLLVMMCParser \
+	libLLVMMIRParser \
 	libLLVMObject \
 	libLLVMPasses \
 	libLLVMProfileData \
+	libLLVMRemarks \
 	libLLVMRuntimeDyld \
 	libLLVMScalarOpts \
 	libLLVMSelectionDAG \
 	libLLVMSupport \
 	libLLVMTarget \
+	libLLVMTextAPI \
 	libLLVMTransformsAggressiveInstCombine \
+	libLLVMTransformsCFGuard \
 	libLLVMTransformsCoroutines \
 	libLLVMTransformsUtils \
 	libLLVMVectorize
