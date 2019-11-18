@@ -1,4 +1,4 @@
-$NetBSD: UPDATING,v 1.305 2019/11/13 09:59:02 martin Exp $
+$NetBSD: UPDATING,v 1.306 2019/11/18 15:42:26 christos Exp $
 
 This file (UPDATING) is intended to be a brief reference to recent
 changes that might cause problems in the build process, and a guide for
@@ -19,6 +19,11 @@ See also: BUILDING, build.sh, Makefile.
 Recent changes:
 ^^^^^^^^^^^^^^^
 
+20191118:
+	More architectures were switched to gcc8:
+	    i386, ia64 powerpc64, sparc, sparc64, arm
+	The same comments as in 20191022 apply.
+
 20191112:
 	The LLVM update requires a clean rebuild for all architectures using
 	LLVM during the tools build phase (i386, amd64, aarch64).
@@ -28,18 +33,16 @@ Recent changes:
 	In-place ("expert mode", build.sh -E) builds are not supported
 	when going from a GCC 7 userland to GCC 8. Do a regular
 	build to a different DESTDIR (or preferably: build.sh -U) at least
-	once and install sets, or download compt.{tar.xz,tgz} from the
+	once and install sets, or download comp.{tar.xz,tgz} from the
 	daily builds and install that before doing the next in-place build.
 
 20191001:
-
 	GCC 8.3 was imported.  Builds of src/tools/gcc may fail if
 	old builds with GCC 7 output now uses GCC 8.  Clean this
 	directory, and also clean src/external/gpl3/gcc.
 
 20190903:
-
-	File with names that coincide with existing files' names on
+	Files with names that coincide with existing files' names on
 	case-insensitive file systems were inadvertently committed, for
 	radeon GPU firmware.  We cannot mark these as obsolete for
 	postinstall to fix, so if you updated src since 2019-08-26, and
