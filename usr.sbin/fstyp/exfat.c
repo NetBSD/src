@@ -1,16 +1,8 @@
-/*	$NetBSD: fstyp.h,v 1.2 2019/11/18 14:53:34 tkusumi Exp $	*/
+/*	$NetBSD: exfat.c,v 1.1 2019/11/18 14:53:34 tkusumi Exp $	*/
 
-/*-
- * Copyright (c) 2017 The NetBSD Foundation, Inc.
- * Copyright (c) 2016 The DragonFly Project
- * Copyright (c) 2014 The FreeBSD Foundation
+/*
+ * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Tomohiro Kusumi <kusumi.tomohiro@gmail.com>.
- *
- * This software was developed by Edward Tomasz Napierala under sponsorship
- * from the FreeBSD Foundation.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -32,25 +24,55 @@
  * LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
- *
- * $FreeBSD$
  */
+#include <sys/cdefs.h>
+__RCSID("$NetBSD: exfat.c,v 1.1 2019/11/18 14:53:34 tkusumi Exp $");
 
-#ifndef FSTYP_H
-#define	FSTYP_H
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 
-void	*read_buf(FILE *, off_t, size_t);
-char	*checked_strdup(const char *);
-void	rtrim(char *, size_t);
+#include "fstyp.h"
 
-int	fstyp_cd9660(FILE *, char *, size_t);
-int	fstyp_exfat(FILE *fp, char *label, size_t size);
-int	fstyp_ext2fs(FILE *, char *, size_t);
-int	fstyp_msdosfs(FILE *, char *, size_t);
-int	fstyp_ntfs(FILE *, char *, size_t);
-int	fstyp_ufs(FILE *, char *, size_t);
-#ifdef HAVE_ZFS
-int	fstyp_zfs(FILE *, char *, size_t);
-#endif
+struct exfat_vbr {
+	char		ev_jmp[3];
+	char		ev_fsname[8];
+	char		ev_zeros[53];
+	uint64_t	ev_part_offset;
+	uint64_t	ev_vol_length;
+	uint32_t	ev_fat_offset;
+	uint32_t	ev_fat_length;
+	uint32_t	ev_cluster_offset;
+	uint32_t	ev_cluster_count;
+	uint32_t	ev_rootdir_cluster;
+	uint32_t	ev_vol_serial;
+	uint16_t	ev_fs_revision;
+	uint16_t	ev_vol_flags;
+	uint8_t		ev_log_bytes_per_sect;
+	uint8_t		ev_log_sect_per_clust;
+	uint8_t		ev_num_fats;
+	uint8_t		ev_drive_sel;
+	uint8_t		ev_percent_used;
+} __packed;
 
-#endif /* !FSTYP_H */
+int
+fstyp_exfat(FILE *fp, char *label, size_t size)
+{
+	struct exfat_vbr *ev;
+
+	ev = (struct exfat_vbr *)read_buf(fp, 0, 512);
+	if (ev == NULL || strncmp(ev->ev_fsname, "EXFAT   ", 8) != 0)
+		goto fail;
+
+	/*
+	 * Reading the volume label requires walking the root directory to look
+	 * for a special label file.  Left as an exercise for the reader.
+	 */
+	free(ev);
+	return (0);
+
+fail:
+	free(ev);
+	return (1);
+}
