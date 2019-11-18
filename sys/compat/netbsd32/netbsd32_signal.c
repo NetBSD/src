@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.46 2019/11/18 04:09:53 rin Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.47 2019/11/18 04:58:42 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.46 2019/11/18 04:09:53 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.47 2019/11/18 04:58:42 rin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -197,9 +197,9 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 
 	switch (si32->_signo) {
 	case SIGILL:
+	case SIGFPE:
 	case SIGBUS:
 	case SIGSEGV:
-	case SIGFPE:
 fill_fault:
 		si->_reason._fault._addr =
 		    NETBSD32IPTR64(si32->_reason._fault._addr);
@@ -227,6 +227,11 @@ fill_fault:
 		si->_reason._rt._value.sival_int =
 		    si32->_reason._rt._value.sival_int;
 		break;
+	case SIGURG:
+	case SIGIO:
+		si->_reason._poll._band = si32->_reason._poll._band;
+		si->_reason._poll._fd = si32->_reason._poll._fd;
+		break;
 	case SIGCHLD:
 		si->_reason._child._pid = si32->_reason._child._pid;
 		si->_reason._child._uid = si32->_reason._child._uid;
@@ -234,12 +239,15 @@ fill_fault:
 		si->_reason._child._utime = si32->_reason._child._utime;
 		si->_reason._child._stime = si32->_reason._child._stime;
 		break;
-	case SIGURG:
-	case SIGIO:
-		si->_reason._poll._band = si32->_reason._poll._band;
-		si->_reason._poll._fd = si32->_reason._poll._fd;
-		break;
 	}
+}
+
+void
+netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
+{
+
+	memset(si, 0, sizeof (*si));
+	netbsd32_ksi32_to_ksi(&si->_info, &si32->_info);
 }
 
 static void
@@ -254,9 +262,9 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 
 	switch (si->_signo) {
 	case SIGILL:
+	case SIGFPE:
 	case SIGBUS:
 	case SIGSEGV:
-	case SIGFPE:
 fill_fault:
 		si32->_reason._fault._addr =
 		    NETBSD32PTR32I(si->_reason._fault._addr);
@@ -284,17 +292,17 @@ fill_fault:
 		si32->_reason._rt._value.sival_int =
 		    si->_reason._rt._value.sival_int;
 		break;
+	case SIGURG:
+	case SIGIO:
+		si32->_reason._poll._band = si->_reason._poll._band;
+		si32->_reason._poll._fd = si->_reason._poll._fd;
+		break;
 	case SIGCHLD:
 		si32->_reason._child._pid = si->_reason._child._pid;
 		si32->_reason._child._uid = si->_reason._child._uid;
 		si32->_reason._child._status = si->_reason._child._status;
 		si32->_reason._child._utime = si->_reason._child._utime;
 		si32->_reason._child._stime = si->_reason._child._stime;
-		break;
-	case SIGURG:
-	case SIGIO:
-		si32->_reason._poll._band = si->_reason._poll._band;
-		si32->_reason._poll._fd = si->_reason._poll._fd;
 		break;
 	}
 }
@@ -305,14 +313,6 @@ netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 
 	memset(si32, 0, sizeof (*si32));
 	netbsd32_ksi_to_ksi32(&si32->_info, &si->_info);
-}
-
-void
-netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
-{
-
-	memset(si, 0, sizeof (*si));
-	netbsd32_ksi32_to_ksi(&si->_info, &si32->_info);
 }
 
 void
