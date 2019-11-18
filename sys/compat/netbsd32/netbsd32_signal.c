@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.47 2019/11/18 04:58:42 rin Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.48 2019/11/18 10:14:52 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.47 2019/11/18 04:58:42 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.48 2019/11/18 10:14:52 rin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -206,17 +206,35 @@ fill_fault:
 		si->_reason._fault._trap = si32->_reason._fault._trap;
 		break;
 	case SIGTRAP:
-		if (si32->_code != TRAP_SCE && si32->_code != TRAP_SCX)
+		switch (si32->_code) {
+		case TRAP_EXEC:
+		case TRAP_CHLD:
+		case TRAP_LWP:
+			si->_reason._ptrace_state._pe_report_event =
+			    si32->_reason._ptrace_state._pe_report_event;
+CTASSERT(sizeof(si->_reason._ptrace_state._option._pe_other_pid) ==
+    sizeof(si->_reason._ptrace_state._option._pe_lwp));
+			si->_reason._ptrace_state._option._pe_other_pid =
+			    si32->_reason._ptrace_state._option._pe_other_pid;
+			break;
+		case TRAP_SCE:
+		case TRAP_SCX:
+			si->_reason._syscall._sysnum =
+			    si32->_reason._syscall._sysnum;
+			si->_reason._syscall._retval[0] =
+			    si32->_reason._syscall._retval[0];
+			si->_reason._syscall._retval[1] =
+			    si32->_reason._syscall._retval[1];
+			si->_reason._syscall._error =
+			    si32->_reason._syscall._error;
+			for (i = 0;
+			    i < __arraycount(si->_reason._syscall._args); i++)
+				si->_reason._syscall._args[i] =
+				    si32->_reason._syscall._args[i];
+			break;
+		default:
 			goto fill_fault;
-		si->_reason._syscall._sysnum = si32->_reason._syscall._sysnum;
-		si->_reason._syscall._retval[0] =
-		    si32->_reason._syscall._retval[0];
-		si->_reason._syscall._retval[1] =
-		    si32->_reason._syscall._retval[1];
-		si->_reason._syscall._error = si32->_reason._syscall._error;
-		for (i = 0; i < __arraycount(si->_reason._syscall._args); i++)
-			si->_reason._syscall._args[i] =
-			    si32->_reason._syscall._args[i];
+		}
 		break;
 	case SIGALRM:
 	case SIGVTALRM:
@@ -271,17 +289,35 @@ fill_fault:
 		si32->_reason._fault._trap = si->_reason._fault._trap;
 		break;
 	case SIGTRAP:
-		if (si->_code != TRAP_SCE && si->_code != TRAP_SCX)
+		switch (si->_code) {
+		case TRAP_EXEC:
+		case TRAP_CHLD:
+		case TRAP_LWP:
+			si32->_reason._ptrace_state._pe_report_event =
+			    si->_reason._ptrace_state._pe_report_event;
+CTASSERT(sizeof(si32->_reason._ptrace_state._option._pe_other_pid) ==
+    sizeof(si32->_reason._ptrace_state._option._pe_lwp));
+			si32->_reason._ptrace_state._option._pe_other_pid =
+			    si->_reason._ptrace_state._option._pe_other_pid;
+			break;
+		case TRAP_SCE:
+		case TRAP_SCX:
+			si32->_reason._syscall._sysnum =
+			    si->_reason._syscall._sysnum;
+			si32->_reason._syscall._retval[0] =
+			    si->_reason._syscall._retval[0];
+			si32->_reason._syscall._retval[1] =
+			    si->_reason._syscall._retval[1];
+			si32->_reason._syscall._error =
+			    si->_reason._syscall._error;
+			for (i = 0;
+			    i < __arraycount(si->_reason._syscall._args); i++)
+				si32->_reason._syscall._args[i] =
+				    si->_reason._syscall._args[i];
+			break;
+		default:
 			goto fill_fault;
-		si32->_reason._syscall._sysnum = si->_reason._syscall._sysnum;
-		si32->_reason._syscall._retval[0] =
-		    si->_reason._syscall._retval[0];
-		si32->_reason._syscall._retval[1] =
-		    si->_reason._syscall._retval[1];
-		si32->_reason._syscall._error = si->_reason._syscall._error;
-		for (i = 0; i < __arraycount(si32->_reason._syscall._args); i++)
-			si32->_reason._syscall._args[i] =
-			    si->_reason._syscall._args[i];
+		}
 		break;
 	case SIGALRM:
 	case SIGVTALRM:
