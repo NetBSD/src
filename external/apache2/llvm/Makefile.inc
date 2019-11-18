@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.2 2019/11/14 13:16:35 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.3 2019/11/18 19:54:23 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -28,7 +28,7 @@ CLANG_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/tools/clang/include
 LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
 LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
-HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions
+HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions 
 HOST_CPPFLAGS+=	-std=c++14
 LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips
 .else
@@ -38,7 +38,7 @@ LLVM_INCLUDE_OBJDIR!=	cd ${LLVM_TOPLEVEL}/include && ${PRINTOBJDIR}
 LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips,amdgpu
 
 CXXFLAGS+=	-std=c++14
-CXXFLAGS+=	-fno-rtti -fno-exceptions
+CXXFLAGS+=	-fno-rtti -fno-exceptions ${${ACTIVE_CC} == "gcc" :? -fno-strict-aliasing :}
 CXXFLAGS+=	-ffunction-sections -fdata-sections
 LDFLAGS+=	-Wl,--gc-sections
 DPADD+=		${LIBEXECINFO}
