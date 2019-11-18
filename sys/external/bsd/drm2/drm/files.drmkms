@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.31 2019/11/16 04:10:33 christos Exp $
+#	$NetBSD: files.drmkms,v 1.32 2019/11/18 20:02:09 christos Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -100,4 +100,4 @@ file	external/bsd/drm2/drm/drm_sysfs.c	drmkms
 file	external/bsd/drm2/dist/drm/drm_trace_points.c	drmkms
 file	external/bsd/drm2/drm/drm_vm.c	drmkms
 file	external/bsd/drm2/drm/drm_vma_manager.c	drmkms
-file	external/bsd/drm2/drm/drm_stub.c	!drmkms
+file	external/bsd/drm2/drm/drm_stub.c	!drmkms & !drmbase
