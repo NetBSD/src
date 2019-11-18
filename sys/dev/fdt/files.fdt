@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.44 2019/03/13 12:17:45 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.44.4.1 2019/11/18 19:33:10 martin Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -92,6 +92,10 @@ file	dev/fdt/pwm_fan.c			pwmfan
 device	ausoc: audiobus
 attach	ausoc at fdt
 file	dev/fdt/ausoc.c				ausoc
+
+device	spdiftx
+attach	spdiftx at fdt
+file	dev/fdt/spdif_tx.c			spdiftx
 
 define	fdt_display_timing
 file	dev/fdt/display_timing.c		fdt_display_timing
