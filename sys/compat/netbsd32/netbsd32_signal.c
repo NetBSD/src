@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_signal.c,v 1.45 2017/12/17 20:59:27 christos Exp $	*/
+/*	$NetBSD: netbsd32_signal.c,v 1.46 2019/11/18 04:09:53 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.45 2017/12/17 20:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_signal.c,v 1.46 2019/11/18 04:09:53 rin Exp $");
 
 #if defined(_KERNEL_OPT) 
 #include "opt_ktrace.h"
@@ -188,6 +188,8 @@ netbsd32___sigaction_sigtramp(struct lwp *l, const struct netbsd32___sigaction_s
 void
 netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 {
+	size_t i;
+
 	memset(si, 0, sizeof (*si));
 	si->_signo = si32->_signo;
 	si->_code = si32->_code;
@@ -198,10 +200,23 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	case SIGBUS:
 	case SIGSEGV:
 	case SIGFPE:
-	case SIGTRAP:
+fill_fault:
 		si->_reason._fault._addr =
 		    NETBSD32IPTR64(si32->_reason._fault._addr);
 		si->_reason._fault._trap = si32->_reason._fault._trap;
+		break;
+	case SIGTRAP:
+		if (si32->_code != TRAP_SCE && si32->_code != TRAP_SCX)
+			goto fill_fault;
+		si->_reason._syscall._sysnum = si32->_reason._syscall._sysnum;
+		si->_reason._syscall._retval[0] =
+		    si32->_reason._syscall._retval[0];
+		si->_reason._syscall._retval[1] =
+		    si32->_reason._syscall._retval[1];
+		si->_reason._syscall._error = si32->_reason._syscall._error;
+		for (i = 0; i < __arraycount(si->_reason._syscall._args); i++)
+			si->_reason._syscall._args[i] =
+			    si32->_reason._syscall._args[i];
 		break;
 	case SIGALRM:
 	case SIGVTALRM:
@@ -215,6 +230,7 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	case SIGCHLD:
 		si->_reason._child._pid = si32->_reason._child._pid;
 		si->_reason._child._uid = si32->_reason._child._uid;
+		si->_reason._child._status = si32->_reason._child._status;
 		si->_reason._child._utime = si32->_reason._child._utime;
 		si->_reason._child._stime = si32->_reason._child._stime;
 		break;
@@ -226,11 +242,11 @@ netbsd32_ksi32_to_ksi(struct _ksiginfo *si, const struct __ksiginfo32 *si32)
 	}
 }
 
-#ifdef notyet
-#ifdef KTRACE
 static void
 netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 {
+	size_t i;
+
 	memset(si32, 0, sizeof (*si32));
 	si32->_signo = si->_signo;
 	si32->_code = si->_code;
@@ -241,10 +257,23 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 	case SIGBUS:
 	case SIGSEGV:
 	case SIGFPE:
-	case SIGTRAP:
+fill_fault:
 		si32->_reason._fault._addr =
 		    NETBSD32PTR32I(si->_reason._fault._addr);
 		si32->_reason._fault._trap = si->_reason._fault._trap;
+		break;
+	case SIGTRAP:
+		if (si->_code != TRAP_SCE && si->_code != TRAP_SCX)
+			goto fill_fault;
+		si32->_reason._syscall._sysnum = si->_reason._syscall._sysnum;
+		si32->_reason._syscall._retval[0] =
+		    si->_reason._syscall._retval[0];
+		si32->_reason._syscall._retval[1] =
+		    si->_reason._syscall._retval[1];
+		si32->_reason._syscall._error = si->_reason._syscall._error;
+		for (i = 0; i < __arraycount(si32->_reason._syscall._args); i++)
+			si32->_reason._syscall._args[i] =
+			    si->_reason._syscall._args[i];
 		break;
 	case SIGALRM:
 	case SIGVTALRM:
@@ -258,6 +287,7 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 	case SIGCHLD:
 		si32->_reason._child._pid = si->_reason._child._pid;
 		si32->_reason._child._uid = si->_reason._child._uid;
+		si32->_reason._child._status = si->_reason._child._status;
 		si32->_reason._child._utime = si->_reason._child._utime;
 		si32->_reason._child._stime = si->_reason._child._stime;
 		break;
@@ -268,93 +298,21 @@ netbsd32_ksi_to_ksi32(struct __ksiginfo32 *si32, const struct _ksiginfo *si)
 		break;
 	}
 }
-#endif
-#endif
 
 void
 netbsd32_si_to_si32(siginfo32_t *si32, const siginfo_t *si)
 {
-	memset(si32, 0, sizeof (*si32));
-	si32->si_signo = si->si_signo;
-	si32->si_code = si->si_code;
-	si32->si_errno = si->si_errno;
 
-	switch (si32->si_signo) {
-	case 0:	/* SA */
-		si32->si_value.sival_int = si->si_value.sival_int;
-		break;
-	case SIGILL:
-	case SIGBUS:
-	case SIGSEGV:
-	case SIGFPE:
-	case SIGTRAP:
-		si32->si_addr = (uint32_t)(uintptr_t)si->si_addr;
-		si32->si_trap = si->si_trap;
-		break;
-	case SIGALRM:
-	case SIGVTALRM:
-	case SIGPROF:
-	default:
-		si32->si_pid = si->si_pid;
-		si32->si_uid = si->si_uid;
-		si32->si_value.sival_int = si->si_value.sival_int;
-		break;
-	case SIGCHLD:
-		si32->si_pid = si->si_pid;
-		si32->si_uid = si->si_uid;
-		si32->si_status = si->si_status;
-		si32->si_utime = si->si_utime;
-		si32->si_stime = si->si_stime;
-		break;
-	case SIGURG:
-	case SIGIO:
-		si32->si_band = si->si_band;
-		si32->si_fd = si->si_fd;
-		break;
-	}
+	memset(si32, 0, sizeof (*si32));
+	netbsd32_ksi_to_ksi32(&si32->_info, &si->_info);
 }
 
 void
 netbsd32_si32_to_si(siginfo_t *si, const siginfo32_t *si32)
 {
-	memset(si, 0, sizeof (*si));
-	si->si_signo = si32->si_signo;
-	si->si_code = si32->si_code;
-	si->si_errno = si32->si_errno;
 
-	switch (si->si_signo) {
-	case 0:	/* SA */
-		si->si_value.sival_int = si32->si_value.sival_int;
-		break;
-	case SIGILL:
-	case SIGBUS:
-	case SIGSEGV:
-	case SIGFPE:
-	case SIGTRAP:
-		si->si_addr = (void *)(uintptr_t)si32->si_addr;
-		si->si_trap = si32->si_trap;
-		break;
-	case SIGALRM:
-	case SIGVTALRM:
-	case SIGPROF:
-	default:
-		si->si_pid = si32->si_pid;
-		si->si_uid = si32->si_uid;
-		si->si_value.sival_int = si32->si_value.sival_int;
-		break;
-	case SIGCHLD:
-		si->si_pid = si32->si_pid;
-		si->si_uid = si32->si_uid;
-		si->si_status = si32->si_status;
-		si->si_utime = si32->si_utime;
-		si->si_stime = si32->si_stime;
-		break;
-	case SIGURG:
-	case SIGIO:
-		si->si_band = si32->si_band;
-		si->si_fd = si32->si_fd;
-		break;
-	}
+	memset(si, 0, sizeof (*si));
+	netbsd32_ksi32_to_ksi(&si->_info, &si32->_info);
 }
 
 void
