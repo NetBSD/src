@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.38 2019/11/18 22:26:15 joerg Exp $
+# $NetBSD: Makefile,v 1.39 2019/11/19 08:59:18 martin Exp $
 
 # Link the gallium mega driver.
 
@@ -22,6 +22,10 @@ CFLAGS+=	-std=gnu11
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/libdrm \
 		-I${NETBSDSRCDIR}/external/apache2/llvm/dist/llvm/include \
 		-I${LLVM_INCLUDE_OBJDIR} -I${NETBSDSRCDIR}/external/apache2/llvm/config
+
+CFLAGS+=	-pthread
+LDFLAGS+=	-pthread
+LIBDPLIBS+=	pthread		${.CURDIR}/../../../../../lib/libpthread
 
 GALLIUM_SUBDIRS= \
 	auxiliary \
