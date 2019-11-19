@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.75 2019/10/08 14:26:27 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.76 2019/11/19 09:54:07 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.75 2019/10/08 14:26:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.76 2019/11/19 09:54:07 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1916,6 +1916,7 @@ vge_miibus_statchg(struct ifnet *ifp)
 	struct vge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	uint8_t dctl;
 
 	/*
 	 * If the user manually selects a media mode, we need to turn
@@ -1928,23 +1929,26 @@ vge_miibus_statchg(struct ifnet *ifp)
 	 * the FDX bit cleared.
 	 */
 
+	dctl = CSR_READ_1(sc, VGE_DIAGCTL);
+
 	switch (IFM_SUBTYPE(ife->ifm_media)) {
 	case IFM_AUTO:
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
+		dctl &= ~VGE_DIAGCTL_MACFORCE;
+		dctl &= ~VGE_DIAGCTL_FDXFORCE;
 		break;
 	case IFM_1000_T:
-		CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
+		dctl |= VGE_DIAGCTL_MACFORCE;
+		dctl &= ~VGE_DIAGCTL_FDXFORCE;
+		dctl |= VGE_DIAGCTL_GMII;
 		break;
 	case IFM_100_TX:
 	case IFM_10_T:
-		CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		if ((ife->ifm_media & IFM_FDX) != 0) {
-			CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		} else {
-			CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		}
+		dctl |= VGE_DIAGCTL_MACFORCE;
+		dctl &= ~VGE_DIAGCTL_GMII;
+		if ((ife->ifm_media & IFM_FDX) != 0)
+			dctl |= VGE_DIAGCTL_FDXFORCE;
+		else
+			dctl &= ~VGE_DIAGCTL_FDXFORCE;
 		break;
 	default:
 		printf("%s: unknown media type: %x\n",
@@ -1952,6 +1956,8 @@ vge_miibus_statchg(struct ifnet *ifp)
 		    IFM_SUBTYPE(ife->ifm_media));
 		break;
 	}
+
+	CSR_WRITE_1(sc, VGE_DIAGCTL, dctl);
 }
 
 static int
