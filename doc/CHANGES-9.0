@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.108 2019/11/19 06:21:24 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.109 2019/11/19 13:38:30 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -5928,3 +5928,97 @@ usr.sbin/sysinst/arch/i386/md.c			1.25-1.26
 
 	Fix KASLR support for amd64.
 	[martin, ticket #443]
+
+share/examples/npf/soho_gw-npf.conf		1.13-1.20
+
+	Modernize the example, improve readability and add more descriptions.
+	Add support for blacklistd.
+	[sevan, ticket #444]
+
+share/examples/npf/host-npf.conf		1.11
+
+	With bin/54124 fixed, the rule needs to be explicitly set to stateful.
+	[sevan, ticket #445]
+
+lib/libossaudio/ossaudio.c			1.37,1.38
+sys/compat/ossaudio/ossaudio.c			1.77,1.78
+
+	PR lib/54667: use record.sample_rate for recording on SNDCTL_DSP_SPEED.
+	Use record field for recording even on SNDCTL_DSP_STEREO,
+	SNDCTL_DSP_SETFMT, and SNDCTL_DSP_CHANNELS.
+	[isaki, ticket #446]
+
+sys/dev/usb/uaudio.c				1.162
+
+	PR kern/54662: properly initialize audio format descriptors.
+	[isaki, ticket #447]
+
+sys/dev/audio/audio.c				1.33
+
+	Fix a wrong calculation of recording ring buffer.
+	[isaki, ticket #448]
+
+sys/dev/pci/pcidevs				1.1388-1.1391
+sys/dev/pci/pcidevs.h				(regen)
+sys/dev/pci/pcidevs_data.h			(regen)
+
+	Spell controller correctly.
+	Add Realtek RTL8125.
+	Update Intel's NVMe SSDs.
+	Add Apollo Lake TXE HECI.
+	Add D-Link DGE-530T C1 and TP-Link TG-3468 v2.
+	[msaitoh, ticket #449]
+
+sys/dev/pci/if_msk.c				1.94
+sys/dev/pci/if_skreg.h				1.27
+
+	Make Yukon EX, FE+, SUPR stable.
+	[msaitoh, ticket #450]
+
+sys/dev/pci/if_re_pci.c 		1.50 (patch)
+share/man/man4/re.4			1.17-1.18 (patch)
+
+	Add D-Link DGE-530T Rev. C,D and TP-Link TG-3468 v2,v3.
+	Add note about UDP checksum offload feature to the document.
+	[msaitoh, ticket #451]
+
+sys/arch/x86/include/specialreg.h		1.158
+usr.sbin/cpuctl/arch/i386.c			1.108
+
+	Add the following bit definitions from the latest Intel SDM:
+	 - CET shadow stack
+	 - Fast Short REP MOV
+	 - Hybrid part
+	 - CET Indirect Branch Tracking
+	0x7d and 0x7e are for 10th generation Core (Ice Lake).
+	[msaitoh, ticket #452]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.216
+sys/dev/pci/ixgbe/ixv.c				1.141
+
+	Print MAC address.
+	[msaitoh, ticket #453]
+
+share/man/man7/ascii.7				1.14,1.15
+
+	Document standards and correct history.
+	Add a table with the full names for the control character set.
+	[sevan, ticket #454]
+
+sys/kern/sys_ptrace_common.c			1.72
+
+	ptrace(2): fix PIOD_READ_AUXV for COMPAT_NETBSD32.
+	[rin, ticket #455]
+
+sys/compat/netbsd32/netbsd32_signal.c		1.46-1.50
+
+	Modernize signal handling codes in COMPAT_NETBSD32.
+	[rin, ticket #456]
+
+sys/compat/netbsd32/netbsd32.h			1.131
+sys/compat/sys/siginfo.h			1.9
+
+	Fix alignment of netbsd32 compat structures, detangle cyclic
+	dependencies in headers.
+	[rin, ticket #457]
+
