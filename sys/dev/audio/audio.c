@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.28.2.3 2019/10/06 11:02:32 martin Exp $	*/
+/*	$NetBSD: audio.c,v 1.28.2.4 2019/11/19 12:58:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.3 2019/10/06 11:02:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.28.2.4 2019/11/19 12:58:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4510,7 +4510,7 @@ audio_track_record(audio_track_t *track)
 		int bytes1;
 		int bytes2;
 
-		bytes1 = auring_get_contig_used(usrbuf);
+		bytes1 = auring_get_contig_free(usrbuf);
 		KASSERT(bytes1 % framesize == 0);
 		memcpy((uint8_t *)usrbuf->mem + auring_tail(usrbuf),
 		    (uint8_t *)outbuf->mem + outbuf->head * framesize,
