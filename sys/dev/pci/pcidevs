@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1383.2.3 2019/10/24 16:12:42 martin Exp $
+$NetBSD: pcidevs,v 1.1383.2.4 2019/11/19 13:03:32 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -2513,6 +2513,7 @@ product DLINK DL4000		0x4000	DL-4000 Gigabit Ethernet
 product DLINK DGE550SX		0x4001	DGE-550SX
 product DLINK DFE520TX		0x4200	DFE-520TX 10/100 Ethernet
 product DLINK DGE528T		0x4300	DGE-528T Gigabit Ethernet
+product DLINK DGE530T_C1	0x4302	DGE-530T C1
 product DLINK DGE560T		0x4b00	DGE-560T Gigabit Ethernet
 product DLINK DGE560T_2		0x4b01	DGE-560T_2 Gigabit Ethernet
 product DLINK DGE560SX		0x4b02	DGE-560SX
@@ -3117,7 +3118,7 @@ product INTEL X1000_HS_UART	0x0936	Quark X1000 HS-UART
 product INTEL X1000_MAC		0x0937	Quark X1000 10/100 Ethernet MAC
 product INTEL X1000_EHCI	0x0939	Quark X1000 EHCI
 product INTEL X1000_OHCI	0x093a	Quark X1000 OHCI
-product INTEL PCIE_NVME_SSD	0x0953	PCIe NVMe SSD
+product INTEL PCIE_NVME_SSD	0x0953	750 or DC P3[567]00 SSD
 product INTEL X1000_HB		0x0958	Quark X1000 Host Bridge
 product INTEL WIFI_LINK_7265_1	0x095a	Dual Band Wireless AC 7265
 product INTEL WIFI_LINK_7265_2	0x095b	Dual Band Wireless AC 7265
@@ -3142,6 +3143,8 @@ product INTEL CORE4G_S_ULT_GT3	0x0a2a	HD Graphics
 product INTEL CORE4G_R_ULT_GT3_1 0x0a2b	HD Graphics
 product INTEL CORE4G_R_ULT_GT3_2 0x0a2e	Iris Graphics 5100
 product INTEL DC_P3520_SSD	0x0a53	SSD DC P3520
+product INTEL DC_P4500_SSD	0x0a54	SSD DC P4500
+product INTEL DC_P4600_SSD	0x0a55	SSD DC P4600
 product INTEL HASWELL_HOST_DRAM	0x0c00	Haswell Host Bridge, DRAM
 product INTEL HASWELL_PCIE16	0x0c01	Haswell PCI-E x16 Controller
 product INTEL HASWELL_PCIE8	0x0c05	Haswell PCI-E x8 Controller
@@ -4944,6 +4947,9 @@ product INTEL APL_P2SB		0x5a92	Apollo Lake Primary to SideBand Bridge
 product INTEL APL_PMC		0x5a94	Apollo Lake PMC
 product INTEL APL_FASTSPI	0x5a96	Apollo Lake Fast SPI
 product INTEL APL_HDA		0x5a98	Apollo Lake HD Audio
+product INTEL APL_TXE_HECI_1	0x5a9a	Apollo Lake TXE HECI1
+product INTEL APL_TXE_HECI_2	0x5a9c	Apollo Lake TXE HECI2
+product INTEL APL_TXE_HECI_3	0x5a9e	Apollo Lake TXE HECI3
 product INTEL APL_ISH		0x5aa2	Apollo Lake Integrated Sensor Hub
 product INTEL APL_XHCI		0x5aa8	Apollo Lake USB Host (xHCI)
 product INTEL APL_XDCI		0x5aaa	Apollo Lake USB Device (xDCI)
@@ -5960,6 +5966,9 @@ product MYRICOM MYRINET	0x8043	Myrinet
 /* Myson-Century Technology products */
 product MYSON MTD803	0x0803	MTD803 3-in-1 Fast Ethernet Controller
 
+/* Ncube products */
+product NCUBE TG3648	0x8168	TP-Link TG-3468 v2 Gigabit Ethernet
+
 /* National Datacomm products */
 product NDC NCP130		0x0130 NCP130 Wireless NIC
 product NDC NCP130A2		0x0131 NCP130 rev A2 Wireless NIC
@@ -6839,7 +6848,7 @@ product PROMISE PDC20271	0x6269	PDC20271 Ultra/133 IDE Controller
 product PROMISE PDC20617	0x6617	PDC20617 Dual Ultra/133 IDE Controller
 product PROMISE PDC20620	0x6620	PDC20620 Dual Ultra/133 IDE Controller
 product PROMISE PDC20621	0x6621	PDC20621 Dual Ultra/133 IDE Controller
-product PROMISE PDC20618	0x6626	PDC20618 Dual Ultra/133 IDE Controler
+product PROMISE PDC20618	0x6626	PDC20618 Dual Ultra/133 IDE Controller
 product PROMISE PDC20619	0x6629	PDC20619 Dual Ultra/133 IDE Controller
 product PROMISE PDC20277	0x7275	PDC20277 Ultra/133 IDE Controller
 
@@ -7031,6 +7040,7 @@ product REALTEK RTL8411		0x5289	RTL8411 PCI-E Card Reader
 product REALTEK RT8029		0x8029	8029 Ethernet
 product REALTEK RT8139D		0x8039	8139D 10/100 Ethernet
 product REALTEK RT8100		0x8100	8100 10/100 Ethernet
+product REALTEK RT8125		0x8125	8129 10/100/1G/2.5G Ethernet
 product REALTEK RT8129		0x8129	8129 10/100 Ethernet
 product REALTEK RT8101E		0x8136	8100E/8101E/8102E 10/100 Ethernet
 product REALTEK RT8138		0x8138	8138 10/100 Ethernet
