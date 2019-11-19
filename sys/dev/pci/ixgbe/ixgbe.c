@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.199.2.6 2019/10/17 19:09:14 martin Exp $ */
+/* $NetBSD: ixgbe.c,v 1.199.2.7 2019/11/19 13:17:44 martin Exp $ */
 
 /******************************************************************************
 
@@ -1338,6 +1338,8 @@ ixgbe_setup_interface(device_t dev, struct adapter *adapter)
 	}
 	adapter->ipq = if_percpuq_create(&adapter->osdep.ec.ec_if);
 	ether_ifattach(ifp, adapter->hw.mac.addr);
+	aprint_normal_dev(dev, "Ethernet address %s\n",
+	    ether_sprintf(adapter->hw.mac.addr));
 	/*
 	 * We use per TX queue softint, so if_deferred_start_init() isn't
 	 * used.
