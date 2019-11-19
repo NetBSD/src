@@ -1,4 +1,4 @@
-/* $NetBSD: ieee80211_netbsd.c,v 1.31.2.8 2019/06/10 22:09:46 christos Exp $ */
+/* $NetBSD: ieee80211_netbsd.c,v 1.31.2.9 2019/11/19 19:17:16 phil Exp $ */
 
 /*-
  * SPDX-License-Identifier: BSD-2-Clause-FreeBSD
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.8 2019/06/10 22:09:46 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_netbsd.c,v 1.31.2.9 2019/11/19 19:17:16 phil Exp $");
 #endif
 
 /*
@@ -333,7 +333,7 @@ static struct sysctllog *ieee80211_sysctllog;
 static void
 ieee80211_sysctl_setup(void)
 {
-#ifdef notyet
+#ifdef IEEE80211_DEBUG
 	int rc;
 #endif
 	const struct sysctlnode *rnode;
