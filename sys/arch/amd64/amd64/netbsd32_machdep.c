@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.129 2019/11/10 21:16:22 chs Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.130 2019/11/20 10:57:08 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.129 2019/11/10 21:16:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.130 2019/11/20 10:57:08 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -487,13 +487,15 @@ netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
 		return EINVAL;
 	}
 
-	regs64.dr[0] = regs->dr[0];
-	regs64.dr[1] = regs->dr[1];
-	regs64.dr[2] = regs->dr[2];
-	regs64.dr[3] = regs->dr[3];
+	memset(&regs64, 0, sizeof(regs64));
 
-	regs64.dr[6] = regs->dr[6];
-	regs64.dr[7] = regs->dr[7];
+	regs64.dr[0] = (u_int)regs->dr[0];
+	regs64.dr[1] = (u_int)regs->dr[1];
+	regs64.dr[2] = (u_int)regs->dr[2];
+	regs64.dr[3] = (u_int)regs->dr[3];
+
+	regs64.dr[6] = (u_int)regs->dr[6];
+	regs64.dr[7] = (u_int)regs->dr[7];
 
 	x86_dbregs_write(l, &regs64);
 	return 0;
