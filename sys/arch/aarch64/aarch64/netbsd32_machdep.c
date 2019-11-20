@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.8 2019/11/20 19:37:51 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.8 2019/11/20 19:37:51 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.7 2019/07/12 06:44:49 skrll E
 #include <sys/ras.h>
 #include <sys/signalvar.h>
 #include <sys/syscallargs.h>
+#include <sys/compat_stub.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -193,13 +194,15 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE,
-	    &cseg, chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &cseg, chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE,
-	    &md_core32, sizeof(md_core32));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE,
+	    &md_core32, sizeof(md_core32)), ENOSYS, error);
+
+	return error;
 }
 
 static void
