@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.109 2019/11/19 13:38:30 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.110 2019/11/20 16:50:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6021,4 +6021,12 @@ sys/compat/sys/siginfo.h			1.9
 	Fix alignment of netbsd32 compat structures, detangle cyclic
 	dependencies in headers.
 	[rin, ticket #457]
+
+sys/arch/arm/rockchip/files.rockchip		1.20
+sys/arch/arm/rockchip/rk3399_cru.c		1.9
+sys/arch/arm/rockchip/rk_spi.c			1.1
+sys/arch/evbarm/conf/GENERIC64			1.104
+
+	Add SPI driver for Rockchip RK3399.
+	[tnn, ticket #458]
 
