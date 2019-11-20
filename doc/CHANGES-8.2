@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.68 2019/11/19 10:51:52 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.69 2019/11/20 16:37:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1657,4 +1657,9 @@ sys/kern/sys_ptrace_common.c			1.72
 
 	ptrace(2): fix PIOD_READ_AUXV for COMPAT_NETBSD32.
 	[rin, ticket #1452]
+
+sys/arch/x86/pci/msipic.c			1.19
+
+	Disable MSI-X before writing the MSI-X table.
+	[hikaru, ticket #1453]
 
