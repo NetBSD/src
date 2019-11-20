@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.19.2.1 2019/11/16 16:48:25 martin Exp $
+#	$NetBSD: files.rockchip,v 1.19.2.2 2019/11/20 16:49:58 martin Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -41,6 +41,11 @@ file	arch/arm/rockchip/rk_gpio.c		rk_gpio
 device	rkiic: i2cbus, i2cexec
 attach	rkiic at fdt with rk_i2c
 file	arch/arm/rockchip/rk_i2c.c		rk_i2c
+
+# SPI
+device	rkspi: spibus
+attach	rkspi at fdt with rk_spi
+file	arch/arm/rockchip/rk_spi.c		rk_spi
 
 # USB PHY
 device	rkusb { }
