@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1662 2019/11/01 02:53:22 msaitoh Exp $
+# $NetBSD: mi,v 1.1663 2019/11/20 09:37:44 hikaru Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1613,6 +1613,7 @@
 ./usr/share/man/cat4/pxagpio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pxaip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/pxg.0			man-sys-catman		.cat
+./usr/share/man/cat4/qat.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qe.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qec.0			man-sys-catman		.cat
 ./usr/share/man/cat4/qemufwcfg.0		man-sys-catman		.cat
@@ -4727,6 +4728,7 @@
 ./usr/share/man/html4/pxagpio.html		man-sys-htmlman		html
 ./usr/share/man/html4/pxaip.html		man-sys-htmlman		html
 ./usr/share/man/html4/pxg.html			man-sys-htmlman		html
+./usr/share/man/html4/qat.html			man-sys-htmlman		html
 ./usr/share/man/html4/qe.html			man-sys-htmlman		html
 ./usr/share/man/html4/qec.html			man-sys-htmlman		html
 ./usr/share/man/html4/qemufwcfg.html		man-sys-htmlman		html
@@ -7743,6 +7745,7 @@
 ./usr/share/man/man4/pxagpio.4			man-sys-man		.man
 ./usr/share/man/man4/pxaip.4			man-sys-man		.man
 ./usr/share/man/man4/pxg.4			man-sys-man		.man
+./usr/share/man/man4/qat.4			man-sys-man		.man
 ./usr/share/man/man4/qe.4			man-sys-man		.man
 ./usr/share/man/man4/qec.4			man-sys-man		.man
 ./usr/share/man/man4/qemufwcfg.4		man-sys-man		.man
