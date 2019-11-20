@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.113 2019/03/01 11:06:55 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.114 2019/11/20 19:37:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,14 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.113 2019/03/01 11:06:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.114 2019/11/20 19:37:53 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
 #include "opt_modular.h"
 #include "opt_execfmt.h"
-#include "opt_coredump.h"
 #include "firm_events.h"
 #endif
 
@@ -354,7 +353,6 @@ netbsd32_process_write_fpregs(struct lwp *l, const struct fpreg32 *regs,
 /*
  * 32-bit version of cpu_coredump.
  */
-#ifdef COREDUMP
 int
 cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
     struct core32 *chdr)
@@ -402,15 +400,16 @@ cpu_coredump32(struct lwp *l, struct coredump_iostate *iocookie,
 	cseg.c_addr = 0;
 	cseg.c_size = chdr->c_cpusize;
 
-	error = coredump_write(iocookie, UIO_SYSSPACE, &cseg,
-	    chdr->c_seghdrsize);
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &cseg,
+	    chdr->c_seghdrsize), ENOSYS, error);
 	if (error)
 		return error;
 
-	return coredump_write(iocookie, UIO_SYSSPACE, &md_core,
-	    sizeof(md_core));
+	MODULE_HOOK_CALL(coredump_write_hook, (iocookie, UIO_SYSSPACE, &md_core,
+	    sizeof(md_core)), ENOSYS, error);
+
+	return error;
 }
-#endif
 
 void netbsd32_cpu_getmcontext(struct lwp *, mcontext_t  *, unsigned int *);
 

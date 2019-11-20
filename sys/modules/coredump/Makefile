@@ -1,13 +1,11 @@
-#	$NetBSD: Makefile,v 1.5 2019/10/13 07:28:13 mrg Exp $
+#	$NetBSD: Makefile,v 1.6 2019/11/20 19:37:54 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	coredump
 
-CPPFLAGS+=	-DCOREDUMP
-
 .PATH:	${S}/kern
-SRCS=	kern_core.c core_netbsd.c
+SRCS=	kern_core.c core_netbsd.c 
 
 .PATH:	${S}/uvm
 SRCS+=	uvm_coredump.c
@@ -19,7 +17,7 @@ SRCS+=	uvm_coredump.c
 .PATH:	${S}/arch/x86/x86
 .endif
 .if ${MACHINE_ARCH} == "powerpc64"
-.PATH: ${S}/arch/powerpc/powerpc
+.PATH:	${S}/arch/powerpc/powerpc
 .endif
 SRCS+=	core_machdep.c
 

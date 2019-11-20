@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.21 2019/11/10 14:20:50 pgoyette Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.22 2019/11/20 19:37:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -367,8 +367,18 @@ MODULE_HOOK(sendsig_sigcontext_16_hook, void,
     (const struct ksiginfo *, const sigset_t *));
 
 /*
- * Hook for coredumps
+ * Hooks for coredumps
  */
+
+struct uvm_coredump_state;
 MODULE_HOOK(coredump_hook, int, (struct lwp *, const char *));
+MODULE_HOOK(coredump_offset_hook, off_t, (struct coredump_iostate *));
+MODULE_HOOK(coredump_write_hook, int,
+    (struct coredump_iostate *, enum uio_seg, const void *, size_t));
+MODULE_HOOK(coredump_netbsd_hook, int,
+    (struct lwp *, struct coredump_iostate *));
+MODULE_HOOK(uvm_coredump_walkmap_hook, int,
+    (struct proc *, int (*)(struct uvm_coredump_state *), void *));
+MODULE_HOOK(uvm_coredump_count_segs_hook, int, (struct proc *));
 
 #endif	/* _SYS_COMPAT_STUB_H */

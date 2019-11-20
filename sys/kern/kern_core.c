@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.27 2019/11/10 14:20:50 pgoyette Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.28 2019/11/20 19:37:53 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.27 2019/11/10 14:20:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.28 2019/11/20 19:37:53 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -63,6 +63,9 @@ struct coredump_iostate {
 
 static int	coredump(struct lwp *, const char *);
 static int	coredump_buildname(struct proc *, char *, const char *, size_t);
+static int	coredump_write(struct coredump_iostate *, enum uio_seg segflg,
+		    const void *, size_t);
+static off_t	coredump_offset(struct coredump_iostate *);
 
 static int
 coredump_modcmd(modcmd_t cmd, void *arg)
@@ -71,15 +74,23 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 	switch (cmd) {
 	case MODULE_CMD_INIT:
 		MODULE_HOOK_SET(coredump_hook, "coredump", coredump);
+		MODULE_HOOK_SET(coredump_write_hook, "coredump",
+		    coredump_write);
+		MODULE_HOOK_SET(coredump_offset_hook, "coredump",
+		    coredump_offset);
+		MODULE_HOOK_SET(coredump_netbsd_hook, "coredump",
+		    real_coredump_netbsd);
+		MODULE_HOOK_SET(uvm_coredump_walkmap_hook, "coredump",
+		    uvm_coredump_walkmap);
+		MODULE_HOOK_SET(uvm_coredump_count_segs_hook, "coredump",
+		    uvm_coredump_count_segs);
 		return 0;
 	case MODULE_CMD_FINI:
-		/*
-		 * In theory we don't need to UNSET this, as the various
-		 * exec formats depend on this module.  If this module has
-		 * no references, and so can be unloaded, no user programs
-		 * can be running and so nothing can call *coredump_vec.
-		 */
-
+		MODULE_HOOK_UNSET(uvm_coredump_count_segs_hook);
+		MODULE_HOOK_UNSET(uvm_coredump_walkmap_hook);
+		MODULE_HOOK_UNSET(coredump_netbsd_hook);
+		MODULE_HOOK_UNSET(coredump_offset_hook);
+		MODULE_HOOK_UNSET(coredump_write_hook);
 		MODULE_HOOK_UNSET(coredump_hook);
 		return 0;
 	default:
@@ -310,7 +321,7 @@ coredump_buildname(struct proc *p, char *dst, const char *src, size_t len)
 	return 0;
 }
 
-int
+static int
 coredump_write(struct coredump_iostate *io, enum uio_seg segflg,
     const void *data, size_t len)
 {
@@ -332,7 +343,7 @@ coredump_write(struct coredump_iostate *io, enum uio_seg segflg,
 	return (0);
 }
 
-off_t
+static off_t
 coredump_offset(struct coredump_iostate *io)
 {
 	return io->io_offset;

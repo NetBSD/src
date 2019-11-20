@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.159 2017/07/14 17:54:00 christos Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.160 2019/11/20 19:37:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,10 +39,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.159 2017/07/14 17:54:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.160 2019/11/20 19:37:52 pgoyette Exp $");
 
 #include "opt_ddb.h"
-#include "opt_coredump.h"
 #include "opt_cputype.h"
 
 #define __PMAP_PRIVATE
