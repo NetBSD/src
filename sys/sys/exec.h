@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.156 2019/09/17 15:19:27 christos Exp $	*/
+/*	$NetBSD: exec.h,v 1.157 2019/11/20 19:37:54 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -274,10 +274,6 @@ int	exec_init		(int);
 int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
 				    void *, size_t);
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
-
-int	coredump_write		(struct coredump_iostate *, enum uio_seg,
-				    const void *, size_t);
-off_t	coredump_offset		(struct coredump_iostate *);
 
 void	exec_free_emul_arg	(struct exec_package *);
 

@@ -1,10 +1,10 @@
-#	$NetBSD: Makefile,v 1.3 2008/11/20 11:01:54 ad Exp $
+#	$NetBSD: Makefile,v 1.4 2019/11/20 19:37:54 pgoyette Exp $
 
 .include "../Makefile.inc"
 
 KMOD=	exec_aout
 
-CPPFLAGS+=	-DEXEC_AOUT -DCOREDUMP -DCOMPAT_NOMID
+CPPFLAGS+=	-DEXEC_AOUT -DCOMPAT_NOMID
 
 .PATH:	${S}/kern
 SRCS=	exec_aout.c

@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.37 2019/11/14 16:23:52 maxv Exp $
+#	$NetBSD: files.kern,v 1.38 2019/11/20 19:37:53 pgoyette Exp $
 
 #
 # kernel sources
@@ -16,7 +16,7 @@ file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/compat_stub.c		kern
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
+file	kern/core_netbsd.c		coredump
 file	kern/cnmagic.c			kern
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff

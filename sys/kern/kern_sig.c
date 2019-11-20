@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.378 2019/11/10 14:20:50 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.379 2019/11/20 19:37:53 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.378 2019/11/10 14:20:50 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.379 2019/11/20 19:37:53 pgoyette Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -2314,6 +2314,22 @@ sigexit(struct lwp *l, int signo)
 
 	exit1(l, 0, exitsig);
 	/* NOTREACHED */
+}
+
+/*
+ * Many emulations have a common coredump_netbsd() established as their
+ * dump routine.  Since the "real" code may (or may not) be present in
+ * loadable module, we provide a routine here which calls the module
+ * hook.
+ */
+
+int
+coredump_netbsd(struct lwp *l, struct coredump_iostate *iocookie)
+{
+	int retval;
+
+	MODULE_HOOK_CALL(coredump_netbsd_hook, (l, iocookie), ENOSYS, retval);
+	return retval;
 }
 
 /*

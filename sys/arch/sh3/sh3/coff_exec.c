@@ -1,4 +1,4 @@
-/*	$NetBSD: coff_exec.c,v 1.33 2009/06/29 05:08:15 dholland Exp $	*/
+/*	$NetBSD: coff_exec.c,v 1.34 2019/11/20 19:37:52 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1994, 1995 Scott Bartram
@@ -35,11 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.33 2009/06/29 05:08:15 dholland Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_coredump.h"
-#endif
+__KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.34 2019/11/20 19:37:52 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,13 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: coff_exec.c,v 1.33 2009/06/29 05:08:15 dholland Exp 
 
 #include <uvm/uvm_extern.h>
 
-#ifdef COREDUMP
-#define	DEP	"coredump"
-#else
-#define	DEP	NULL
-#endif
-
-MODULE(MODULE_CLASS_MISC, exec_coff, DEP);
+MODULE(MODULE_CLASS_MISC, exec_coff, NULL);
 
 static int coff_find_section(struct lwp *, struct vnode *,
     struct coff_filehdr *, struct coff_scnhdr *, int);

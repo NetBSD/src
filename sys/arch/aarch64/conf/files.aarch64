@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.13 2019/01/27 02:08:36 pgoyette Exp $
+#	$NetBSD: files.aarch64,v 1.14 2019/11/20 19:37:51 pgoyette Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -88,7 +88,7 @@ file	arch/aarch64/aarch64/bus_space_notimpl.S
 file	arch/arm/arm/bootconfig.c
 file	arch/aarch64/aarch64/aarch64_machdep.c
 file	arch/aarch64/aarch64/aarch64_reboot.c
-file	arch/aarch64/aarch64/core_machdep.c
+file	arch/aarch64/aarch64/core_machdep.c		coredump
 file	arch/aarch64/aarch64/copyinout.S
 file	arch/aarch64/aarch64/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
 file	arch/aarch64/aarch64/cpu_machdep.c
