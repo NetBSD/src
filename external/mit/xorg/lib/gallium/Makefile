@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.39 2019/11/19 08:59:18 martin Exp $
+# $NetBSD: Makefile,v 1.40 2019/11/20 06:23:31 martin Exp $
 
 # Link the gallium mega driver.
 
@@ -1086,7 +1086,10 @@ LLVMRT_LIBS+=	\
 
 .endif  # ${BUILD_LLVM_PIPE} == 1 || ${BUILD_RADEON} == 1
 
-LDFLAGS+=	-Wl,--version-script=${X11SRCDIR.Mesa}/src/gallium/targets/dri/dri.sym -Wl,-z,defs
+LDFLAGS+=	-Wl,--version-script=${X11SRCDIR.Mesa}/src/gallium/targets/dri/dri.sym
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE_CPU} == "aarch64"
+LDFLAGS+=	-Wl,-z,defs
+.endif
 
 ##  build mesagallium parts
 MESA_SRC_MODULES=  main math vbo state_tracker program asm_s
