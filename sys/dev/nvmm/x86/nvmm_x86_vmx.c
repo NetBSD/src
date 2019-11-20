@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.44 2019/10/28 08:30:49 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.45 2019/11/20 10:26:56 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.44 2019/10/28 08:30:49 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.45 2019/11/20 10:26:56 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1201,7 +1201,18 @@ vmx_inkernel_handle_cpuid(struct nvmm_cpu *vcpu, uint64_t eax, uint64_t ecx)
 			cpudata->gprs[NVMM_X64_GPR_RDX] = vmx_xcr0_mask >> 32;
 			break;
 		case 1:
-			cpudata->gprs[NVMM_X64_GPR_RAX] &= ~CPUID_PES1_XSAVES;
+			cpudata->gprs[NVMM_X64_GPR_RAX] &=
+			    (CPUID_PES1_XSAVEOPT | CPUID_PES1_XSAVEC |
+			     CPUID_PES1_XGETBV);
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
+			break;
+		default:
+			cpudata->gprs[NVMM_X64_GPR_RAX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RBX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RCX] = 0;
+			cpudata->gprs[NVMM_X64_GPR_RDX] = 0;
 			break;
 		}
 		break;
