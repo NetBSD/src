@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.415 2019/09/22 09:54:56 jmcneill Exp $
+#	$NetBSD: files.pci,v 1.416 2019/11/20 09:37:45 hikaru Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1162,3 +1162,15 @@ attach	ena at pci
 file	dev/pci/if_ena.c			ena
 file	external/bsd/ena-com/ena_com.c		ena
 file	external/bsd/ena-com/ena_eth_com.c	ena
+
+# Intel QuickAssist
+device qat: opencrypto, firmload
+attach qat at pci
+file	dev/pci/qat/qat.c		qat
+file	dev/pci/qat/qat_ae.c		qat
+file	dev/pci/qat/qat_hw15.c		qat
+file	dev/pci/qat/qat_hw17.c		qat
+file	dev/pci/qat/qat_c2xxx.c		qat
+file	dev/pci/qat/qat_c3xxx.c		qat
+file	dev/pci/qat/qat_c62x.c		qat
+file	dev/pci/qat/qat_d15xx.c		qat
