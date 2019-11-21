@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst,v 1.107 2018/01/24 09:04:41 skrll Exp $
+.\"	$NetBSD: sysinst,v 1.108 2019/11/21 19:23:17 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -600,7 +600,7 @@ ROM issues which prevent you from enabling 32-bit addressing.
 Please see the
 .Nx*M
 FAQ at
-.Lk http://www.NetBSD.org/ports/mac68k/faq/
+.Lk https://www.NetBSD.org/ports/mac68k/faq/
 for more information.
 .tag)
 .Pp
@@ -1000,7 +1000,7 @@ reports
 .Dl "I can not find any hard disk for use by NetBSD"
 or the drive you wish to install onto is missing, then you should look at
 the FAQ entry
-.Lk http://www.NetBSD.org/ports/macppc/faq.html#nodisk
+.Lk https://www.NetBSD.org/ports/macppc/faq.html#nodisk
 .\}
 .\}
 .It
@@ -1630,9 +1630,9 @@ If you are installing from the 32-bit sparc distribution set, make sure
 that you installed the correct kernel.
 The \*M installation tools do not by default copy the correct 32-bit kernel.
 Unless you prepared ahead of time by renaming the
-.Pa kern-GENERIC_SUN4U.tgz
+.Pa kern-GENERIC_SUN4U.\*[setsuffix]
 to
-.Pa kern-GENERIC.tgz
+.Pa kern-GENERIC.\*[setsuffix]
 then you will need to follow the next few instructions.
 .Pp
 Go to the main installation menu, and select
@@ -1652,7 +1652,7 @@ with the partition name of your destination root partition):
 .Dl # Ic "cd /mnt"
 Now you need to mount the location of your distribution sets:
 .Dl # Ic "mount /dev/cd0a /mnt2"
-.Dl # Ic "tar xpzvf /mnt2/sparc/binary/kernel/kern-GENERIC_SUN4U.tgz"
+.Dl # Ic "tar xpzvf /mnt2/sparc/binary/kernel/kern-GENERIC_SUN4U.\*[setsuffix]"
 .Dl # Ic "umount /mnt"
 .Dl # Ic "umount /mnt2"
 .Dl # Ic "exit"

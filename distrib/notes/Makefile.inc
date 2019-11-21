@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43 2015/05/20 05:19:19 snj Exp $
+#	$NetBSD: Makefile.inc,v 1.44 2019/11/21 19:23:16 martin Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -27,6 +27,11 @@ SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
 whatis: .OPTIONAL
 
 PRESET=	${GFLAGS} -U -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
+.if ${USE_XZ_SETS}
+PRESET+=	-dsetsuffix=tar.xz
+.else
+PRESET+=	-dsetsuffix=tgz
+.endif
 
 POST_PLAIN= -P-b -P-u -P-o
 
