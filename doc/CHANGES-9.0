@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.111 2019/11/21 14:03:29 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.112 2019/11/21 18:22:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6042,4 +6042,57 @@ sys/arch/amd64/amd64/netbsd32_machdep.c		1.130
 
 	Fix netbsd32_process_write_dbregs() for amd64.
 	[rin, ticket #460]
+
+lib/libc/Makefile.inc				(manually edited)
+sys/modules/Makefile.inc			(manually edited)
+sys/arch/amd64/conf/GENERIC			(manually edited)
+sys/arch/amd64/conf/XEN3_DOM0			(manually edited)
+sys/arch/amd64/conf/XEN3_DOMU			(manually edited)
+sys/arch/cobalt/conf/GENERIC			(manually edited)
+sys/arch/evbarm/conf/ADI_BRH			(manually edited)
+sys/arch/evbarm/conf/ARMADAXP			(manually edited)
+sys/arch/evbarm/conf/ARMADILLO-IOT-G3		(manually edited)
+sys/arch/evbarm/conf/ARMADILLO9			(manually edited)
+sys/arch/evbarm/conf/BCM5301X			(manually edited)
+sys/arch/evbarm/conf/CP3100			(manually edited)
+sys/arch/evbarm/conf/CUBOX			(manually edited)
+sys/arch/evbarm/conf/CUBOX-I			(manually edited)
+sys/arch/evbarm/conf/GEMINI			(manually edited)
+sys/arch/evbarm/conf/GEMINI_MASTER		(manually edited)
+sys/arch/evbarm/conf/GEMINI_SLAVE		(manually edited)
+sys/arch/evbarm/conf/GENERIC.common		(manually edited)
+sys/arch/evbarm/conf/HAWK			(manually edited)
+sys/arch/evbarm/conf/HPT5325			(manually edited)
+sys/arch/evbarm/conf/IGEPV2			(manually edited)
+sys/arch/evbarm/conf/IMX6UL-STARTER		(manually edited)
+sys/arch/evbarm/conf/IQ31244			(manually edited)
+sys/arch/evbarm/conf/IQ80310			(manually edited)
+sys/arch/evbarm/conf/IQ80321			(manually edited)
+sys/arch/evbarm/conf/IXDP425			(manually edited)
+sys/arch/evbarm/conf/LUBBOCK			(manually edited)
+sys/arch/evbarm/conf/MPCSA_GENERIC		(manually edited)
+sys/arch/evbarm/conf/N900			(manually edited)
+sys/arch/evbarm/conf/OMAP5EVM			(manually edited)
+sys/arch/evbarm/conf/OSK5912			(manually edited)
+sys/arch/evbarm/conf/PANDABOARD			(manually edited)
+sys/arch/evbarm/conf/SMDK2800			(manually edited)
+sys/arch/evbarm/conf/TEAMASA_NPWR		(manually edited)
+sys/arch/evbarm/conf/TEAMASA_NPWR_FC		(manually edited)
+sys/arch/evbarm/conf/TISDP2420			(manually edited)
+sys/arch/evbarm/conf/TISDP2430			(manually edited)
+sys/arch/evbarm/conf/TS7200			(manually edited)
+sys/arch/evbarm/conf/TWINTAIL			(manually edited)
+sys/arch/evbarm/conf/VIPER			(manually edited)
+sys/arch/evbarm/conf/ZAO425			(manually edited)
+sys/arch/i386/conf/GENERIC			(manually edited)
+sys/arch/i386/conf/XEN3PAE_DOM0			(manually edited)
+sys/arch/i386/conf/XEN3PAE_DOMU			(manually edited)
+sys/arch/mvmeppc/conf/GENERIC			(manually edited)
+sys/arch/pmax/conf/GENERIC			(manually edited)
+sys/arch/shark/conf/GENERIC			(manually edited)
+sys/arch/sparc64/conf/GENERIC			(manually edited)
+sys/arch/zaurus/conf/GENERIC			(manually edited)
+
+	Remove options DIAGNOSTIC/DEBUG.
+
 
