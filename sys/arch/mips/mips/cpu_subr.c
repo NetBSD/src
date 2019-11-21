@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.34 2019/01/21 08:04:26 skrll Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.35 2019/11/21 19:57:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.34 2019/01/21 08:04:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.35 2019/11/21 19:57:23 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -566,15 +566,6 @@ cpu_need_proftick(struct lwp *l)
 	l->l_pflag |= LP_OWEUPC;
 	l->l_md.md_astpending = 1;		/* force call to ast() */
 }
-
-void
-cpu_set_curpri(int pri)
-{
-	kpreempt_disable();
-	curcpu()->ci_schedstate.spc_curpriority = pri;
-	kpreempt_enable();
-}
-
 
 #ifdef __HAVE_PREEMPTION
 bool

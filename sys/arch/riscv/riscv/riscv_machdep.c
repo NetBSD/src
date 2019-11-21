@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.4 2019/04/06 11:54:20 kamil Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.5 2019/11/21 19:57:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -321,14 +321,6 @@ cpu_need_proftick(struct lwp *l)
 
 	l->l_pflag |= LP_OWEUPC;
 	l->l_md.md_astpending = 1;		/* force call to ast() */
-}
-
-void
-cpu_set_curpri(int pri)
-{
-	kpreempt_disable();
-	curcpu()->ci_schedstate.spc_curpriority = pri;
-	kpreempt_enable();
 }
 
 void

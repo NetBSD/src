@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_machdep.c,v 1.6 2018/08/03 17:04:30 ryo Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.7 2019/11/21 19:57:23 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.6 2018/08/03 17:04:30 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.7 2019/11/21 19:57:23 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -298,15 +298,6 @@ cpu_need_proftick(struct lwp *l)
 	l->l_pflag |= LP_OWEUPC;
 	setsoftast(l->l_cpu);
 }
-
-void
-cpu_set_curpri(int pri)
-{
-	kpreempt_disable();
-	curcpu()->ci_schedstate.spc_curpriority = pri;
-	kpreempt_enable();
-}
-
 
 #ifdef __HAVE_PREEMPTION
 bool
