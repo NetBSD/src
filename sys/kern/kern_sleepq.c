@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sleepq.c,v 1.51 2016/07/03 14:24:58 christos Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.52 2019/11/21 18:56:55 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.51 2016/07/03 14:24:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.52 2019/11/21 18:56:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -65,7 +65,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.51 2016/07/03 14:24:58 christos Ex
 static int	sleepq_sigtoerror(lwp_t *, int);
 
 /* General purpose sleep table, used by mtsleep() and condition variables. */
-sleeptab_t	sleeptab	__cacheline_aligned;
+sleeptab_t	sleeptab __cacheline_aligned;
+kmutex_t	*sleepq_locks[SLEEPTAB_HASH_SIZE] __read_mostly;
 
 /*
  * sleeptab_init:
@@ -75,14 +76,11 @@ sleeptab_t	sleeptab	__cacheline_aligned;
 void
 sleeptab_init(sleeptab_t *st)
 {
-	sleepq_t *sq;
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-		sq = &st->st_queues[i].st_queue;
-		st->st_queues[i].st_mutex =
-		    mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
-		sleepq_init(sq);
+		sleepq_locks[i] = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+		sleepq_init(&st->st_queue[i]);
 	}
 }
 
@@ -266,8 +264,12 @@ sleepq_block(int timo, bool catch_p)
 		/* The LWP and sleep queue are now unlocked. */
 		if (timo) {
 			/*
-			 * Even if the callout appears to have fired, we need to
-			 * stop it in order to synchronise with other CPUs.
+			 * Even if the callout appears to have fired, we
+			 * need to stop it in order to synchronise with
+			 * other CPUs.  It's important that we do this in
+			 * this LWP's context, and not during wakeup, in
+			 * order to keep the callout & its cache lines
+			 * co-located on the CPU with the LWP.
 			 */
 			if (callout_halt(&l->l_timeout_ch, NULL))
 				error = EWOULDBLOCK;
@@ -333,10 +335,10 @@ sleepq_wake(sleepq_t *sq, wchan_t wchan, u_int expected, kmutex_t *mp)
  *
  *	Remove an LWP from its sleep queue and set it runnable again. 
  *	sleepq_unsleep() is called with the LWP's mutex held, and will
- *	always release it.
+ *	release it if "unlock" is true.
  */
 void
-sleepq_unsleep(lwp_t *l, bool cleanup)
+sleepq_unsleep(lwp_t *l, bool unlock)
 {
 	sleepq_t *sq = l->l_sleepq;
 	kmutex_t *mp = l->l_mutex;
@@ -345,7 +347,7 @@ sleepq_unsleep(lwp_t *l, bool cleanup)
 	KASSERT(l->l_wchan != NULL);
 
 	sleepq_remove(sq, l);
-	if (cleanup) {
+	if (unlock) {
 		mutex_spin_exit(mp);
 	}
 }
