@@ -1,7 +1,7 @@
-/*	$NetBSD: sleepq.h,v 1.25 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.26 2019/11/21 18:56:55 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -53,10 +53,7 @@ TAILQ_HEAD(sleepq, lwp);
 typedef struct sleepq sleepq_t;
 
 typedef struct sleeptab {
-	struct {
-		kmutex_t	*st_mutex;
-		sleepq_t	st_queue;
-	} st_queues[SLEEPTAB_HASH_SIZE];
+	sleepq_t	st_queue[SLEEPTAB_HASH_SIZE];
 } sleeptab_t;
 
 void	sleepq_init(sleepq_t *);
@@ -95,10 +92,13 @@ sleepq_dontsleep(lwp_t *l)
 static __inline sleepq_t *
 sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 {
+	extern kmutex_t *sleepq_locks[SLEEPTAB_HASH_SIZE];
 	sleepq_t *sq;
+	u_int hash;
 
-	sq = &st->st_queues[SLEEPTAB_HASH(wchan)].st_queue;
-	*mp = st->st_queues[SLEEPTAB_HASH(wchan)].st_mutex;
+	hash = SLEEPTAB_HASH(wchan);
+	sq = &st->st_queue[hash];
+	*mp = sleepq_locks[hash];
 	mutex_spin_enter(*mp);
 	return sq;
 }
@@ -106,9 +106,10 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 static __inline kmutex_t *
 sleepq_hashlock(wchan_t wchan)
 {
+	extern kmutex_t *sleepq_locks[SLEEPTAB_HASH_SIZE];
 	kmutex_t *mp;
 
-	mp = sleeptab.st_queues[SLEEPTAB_HASH(wchan)].st_mutex;
+	mp = sleepq_locks[SLEEPTAB_HASH(wchan)];
 	mutex_spin_enter(mp);
 	return mp;
 }
@@ -148,10 +149,9 @@ typedef struct turnstile {
 	SLIST_ENTRY(turnstile)	ts_pichain;
 } turnstile_t;
 
-typedef struct tschain {
-	kmutex_t		*tc_mutex;	/* mutex on structs & queues */
-	LIST_HEAD(, turnstile)	tc_chain;	/* turnstile chain */
-} tschain_t;
+LIST_HEAD(tschain, turnstile);
+
+typedef struct tschain tschain_t;
 
 #define	TS_READER_Q	0		/* reader sleep queue */
 #define	TS_WRITER_Q	1		/* writer sleep queue */
