@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.70 2018/08/01 09:44:31 reinoud Exp $ */
+/* $NetBSD: trap.c,v 1.71 2019/11/21 19:24:02 ad Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.70 2018/08/01 09:44:31 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2019/11/21 19:24:02 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -202,12 +202,6 @@ ast(struct lwp *l)
 	}
 #endif
 
-	/* allow a forced task switch */
-	if (curcpu()->ci_want_resched) {
-		curcpu()->ci_want_resched = 0;
-		preempt();
-		/* returns here! */
-	}
 	KASSERT(l == curlwp); KASSERT(l);
 	pcb = lwp_getpcb(l); KASSERT(pcb);
 	mi_userret(l);

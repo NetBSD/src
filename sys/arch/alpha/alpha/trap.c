@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.134 2019/04/06 03:06:24 thorpej Exp $ */
+/* $NetBSD: trap.c,v 1.135 2019/11/21 19:23:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -93,7 +93,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.134 2019/04/06 03:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.135 2019/11/21 19:23:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -601,13 +601,6 @@ ast(struct trapframe *framep)
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(l);
-	}
-
-	if (curcpu()->ci_want_resched) {
-		/*
-		 * We are being preempted.
-		 */
-		preempt();
 	}
 
 	userret(l);

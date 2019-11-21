@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.101 2019/10/19 18:04:26 jmcneill Exp $	*/
+/*	$NetBSD: cpu.h,v 1.102 2019/11/21 19:23:59 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -314,9 +314,6 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  */
 #define	cpu_need_proftick(l)	((l)->l_pflag |= LP_OWEUPC, \
 				 setsoftast((l)->l_cpu))
-
-/* for preeemption. */
-void	cpu_set_curpri(int);
 
 /*
  * We've already preallocated the stack for the idlelwps for additional CPUs.

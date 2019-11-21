@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.S,v 1.48 2019/11/15 09:03:26 maxv Exp $	*/
+/*	$NetBSD: cpufunc.S,v 1.49 2019/11/21 19:23:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -250,11 +250,6 @@ ENTRY(x86_curlwp)
 	KMSAN_INIT_RET(8)
 	ret
 END(x86_curlwp)
-
-ENTRY(cpu_set_curpri)
-	movl	%edi, %gs:(CPU_INFO_CURPRIORITY)
-	ret
-END(cpu_set_curpri)
 
 ENTRY(__byte_swap_u32_variable)
 	movl	%edi, %eax

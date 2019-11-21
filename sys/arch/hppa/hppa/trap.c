@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.111 2019/04/15 20:45:08 skrll Exp $	*/
+/*	$NetBSD: trap.c,v 1.112 2019/11/21 19:24:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.111 2019/04/15 20:45:08 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2019/11/21 19:24:00 ad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -202,13 +202,8 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	if (l->l_md.md_astpending) {
-		l->l_md.md_astpending = 0;
-		//curcpu()->ci_data.cpu_nast++;
-
-		if (curcpu()->ci_want_resched)
-			preempt();
-	}
+	l->l_md.md_astpending = 0;
+	//curcpu()->ci_data.cpu_nast++;
 
 	mi_userret(l);
 
