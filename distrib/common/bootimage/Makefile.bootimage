@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.bootimage,v 1.22 2019/10/02 11:15:59 maya Exp $
+#	$NetBSD: Makefile.bootimage,v 1.23 2019/11/21 22:29:03 joerg Exp $
 #
 # Copyright (c) 2009, 2010, 2011 Izumi Tsutsui.  All rights reserved.
 #
@@ -37,6 +37,9 @@
 #	USE_MBR
 #		set yes if target disk image requires MBR partition
 #		(default: no)
+#	USE_GPT
+#		set yes if target disk image requires GPT partition
+#		(default: no)
 #	MBR_BOOTCODE
 #		optional MBR bootcode which should be installed by fdisk(8)
 #		(default: empty)
@@ -56,6 +59,9 @@
 #		(default: 2048)
 #	SWAPMB
 #		swap size in target image in MB
+#		(default: 128)
+#	EFIMB
+#		EFI partition size in target image in MB
 #		(default: 128)
 #	KERN_SET
 #		kernel set name which should be extracted into image
@@ -114,9 +120,9 @@
 #		template file of disklabel -R
 #		(default: ${DISTRIBDIR}/common/bootimage/diskproto.in
 #		       or ${DISTRIBDIR}/common/bootimage/diskproto.mbr.in)
-#	OMIT_SWAPIMG
-#		no need to put swap partition into image (for USB stick)
-#		(default: no)
+#	EFIBOOT
+#		EFI bootloader
+#		(default: empty)
 #
 
 .include <bsd.own.mk> 		#
@@ -126,6 +132,7 @@
 
 .if ${MKREPRO_TIMESTAMP:Uno} != "no"
 MAKEFS_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
+GPT_TIMESTAMP=-T "${MKREPRO_TIMESTAMP}"
 PAX_TIMESTAMP=--timestamp "${MKREPRO_TIMESTAMP}"
 .endif
 
@@ -146,6 +153,7 @@ RM?=		rm
 # common definitions for image
 #
 USE_MBR?=	no
+USE_GPT?=	no
 USE_SUNLABEL?=	no
 INSTALLBOOT_AFTER_DISKLABEL?=	no
 
@@ -154,12 +162,20 @@ INSTALLBOOT_AFTER_DISKLABEL?=	no
 #
 IMAGEMB?=	2048		# 2048MB
 SWAPMB?=	128		# 128MB
+.if ${USE_GPT} == "no"
+EFIMB?=		0
+GPTSECTORS=	0
+.else
+EFIMB?=		128		# 128MB
+GPTSECTORS=	2048
+.endif
 
 # XXX: SWAPMB could be zero and expr(1) returns exit status 1 in that case
 IMAGESECTORS!=	expr ${IMAGEMB} \* 1024 \* 1024 / 512
 SWAPSECTORS!=	expr ${SWAPMB} \* 1024 \* 1024 / 512 || true
+EFISECTORS!=	expr ${EFIMB} \* 1024 \* 1024 / 512 || true
 
-.if ${USE_MBR} == "no"
+.if ${USE_MBR} == "no" && ${USE_GPT} == "no"
 LABELSECTORS?=	0
 .else
 #LABELSECTORS?=	63	# historical
@@ -167,7 +183,8 @@ LABELSECTORS?=	0
 LABELSECTORS?=	2048	# 1MB aligned for modern flash devices
 .endif
 
-FSSECTORS!=	expr ${IMAGESECTORS} - ${SWAPSECTORS} - ${LABELSECTORS}
+FSSECTORS!=	expr ${IMAGESECTORS} - ${SWAPSECTORS} - ${LABELSECTORS} \
+		    - ${EFISECTORS} - ${GPTSECTORS}
 FSSIZE!=	expr ${FSSECTORS} \* 512
 
 # parameters for disklabel and MBR
@@ -180,14 +197,18 @@ MBRSECTORS=	63
 MBRCYLINDERS!=	expr ${IMAGESECTORS} / \( ${MBRHEADS} \* ${MBRSECTORS} \)
 MBRNETBSD=	169
 
-BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS}
-FSOFFSET=	${LABELSECTORS}
-SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS}
+BSDPARTSECTORS!= expr ${IMAGESECTORS} - ${LABELSECTORS} - ${EFISECTORS} - ${GPTSECTORS}
+FSOFFSET!=	expr ${LABELSECTORS} + ${EFISECTORS}
+SWAPOFFSET!=	expr ${LABELSECTORS} + ${FSSECTORS} + ${EFISECTORS}
 
 # parameters for sunlabel
 FSCYLINDERS!=	expr ${FSSECTORS} / \( ${HEADS} \* ${SECTORS} \)
 SWAPCYLINDERS!=	expr ${SWAPSECTORS} / \( ${HEADS} \* ${SECTORS} \) || true
 
+.if ${USE_GPT} != "no"
+BOOTDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 2 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
+SWAPDISK_UUID=`${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} show -i 3 | ${TOOL_AWK} '/^GUID/ {print $$2}'`
+.endif
 
 #
 # definitions to create root fs
@@ -220,9 +241,65 @@ CLEANFILES+=	${WORKSPEC} ${WORKFSTAB} ${WORKRCCONF} ${WORKFS}
 CLEANFILES+=	${TARGETFS}
 
 #
+# definitions to create image
+#
+.if ${SWAPSECTORS} == 0
+.  if ${USE_MBR} != "no"
+DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.noswap.mbr.in
+.  else
+DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.noswap.in
+.  endif
+.else
+.  if ${USE_MBR} != "no"
+DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.mbr.in
+.  else
+DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.in
+.  endif
+.endif
+
+MBR_DEFAULT_BOOTCODE?=	mbr
+
+WORKMBR?=	work.mbr
+WORKMBRTRUNC?=	work.mbr.truncated
+WORKSWAP?=	work.swap
+WORKEFI?=	work.efi
+WORKGPT?=	work.gpt
+WORKLABEL?=	work.diskproto
+WORKIMG?=	work.img
+EFIWORKDIR?=	work.efidir
+
+.if ${USE_GPT} != "no"
+${WORKFSTAB}: ${WORKMBR}
+.endif
+
+${WORKFSTAB}:
+	@echo Preparing /etc/fstab ...
+.if ${USE_GPT} != "no"
+.  if ${SWAPSECTORS} != 0
+	${TOOL_SED}							\
+	    -e "s/ROOT.a/NAME=${BOOTDISK_UUID}/"			\
+	    -e "s/ROOT.b/NAME=${SWAPDISK_UUID}/"			\
+	    < ${FSTAB_IN} > ${WORKFSTAB}
+.  else
+	${TOOL_SED}							\
+	    -e "s/ROOT.a/NAME=${BOOTDISK_UUID}/"			\
+	    -e "/ROOT.b/d"						\
+	    < ${FSTAB_IN} > ${WORKFSTAB}
+.  endif
+.else
+.  if ${SWAPSECTORS} != 0
+	${TOOL_SED} < ${FSTAB_IN} > ${WORKFSTAB}
+.  else
+	${TOOL_SED}							\
+	    -e "/ROOT.b/d"						\
+	    < ${FSTAB_IN} > ${WORKFSTAB}
+.  endif
+.endif
+
+#
 # create root file system for the image
 #
-${TARGETFS}: prepare_md_post
+${TARGETFS}: prepare_md_post ${WORKFSTAB}
 	@if [ ! -d ${RELEASEDIR}/${RELEASEMACHINEDIR} ]; then 		\
 		echo "Missing ${RELEASEDIR}/${RELEASEMACHINEDIR}, aborting"; \
 		false; 							\
@@ -242,8 +319,6 @@ ${TARGETFS}: prepare_md_post
 	@echo Copying secondary boot...
 	${INSTALL} ${COPY} -m 0444 ${WORKDIR}/usr/mdec/${SECONDARY_BOOT} ${WORKDIR}
 .endif
-	@echo Preparing /etc/fstab ...
-	${TOOL_SED} < ${FSTAB_IN} > ${WORKFSTAB}
 	${INSTALL} ${COPY} -m 0644 ${WORKFSTAB} ${WORKDIR}/etc/fstab
 	@echo Setting rc_configured=YES in /etc/rc.conf ...
 	${TOOL_SED} "s/rc_configured=NO/rc_configured=YES/"		\
@@ -306,27 +381,35 @@ ${TARGETFS}: prepare_md_post
 	@echo done.
 	mv ${WORKFS} ${.TARGET}
 
-#
-# definitions to create image
-#
-.if ${USE_MBR} != "no"
-DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.mbr.in
-.else
-DISKPROTO_IN?=	${DISTRIBDIR}/common/bootimage/diskproto.in
+TARGET_BLOCKS=
+.if ${USE_MBR} != "no" || ${USE_GPT} != "no"
+TARGET_BLOCKS+=	${WORKMBRTRUNC}
+.endif
+.if ${USE_GPT} != "no"
+TARGET_BLOCKS+=	${WORKEFI}
+.endif
+TARGET_BLOCKS+=	 ${TARGETFS}
+.if ${SWAPSECTORS} != 0
+TARGET_BLOCKS+=	${WORKSWAP}
+.endif
+.if ${USE_GPT} != "no"
+TARGET_BLOCKS+=	${WORKGPT}
 .endif
 
-MBR_DEFAULT_BOOTCODE?=	mbr
-
-OMIT_SWAPIMG?=	no
-
-WORKMBR?=	work.mbr
-WORKSWAP?=	work.swap
-WORKLABEL?=	work.diskproto
-WORKIMG?=	work.img
-
-CLEANFILES+=	${WORKMBR} ${WORKSWAP}
+CLEANFILES+=	${WORKMBR} ${WORKMBRTRUNC} ${WORKSWAP}
+CLEANFILES+=	${WORKEFI} ${WORKGPT}
 CLEANFILES+=	${WORKLABEL}.tmp ${WORKLABEL}
 CLEANFILES+=	${WORKIMG} ${IMGBASE}.img
+
+${WORKSWAP}:
+.if ${SWAPSECTORS} == 0
+	printf "" > ${WORKSWAP}
+.else
+	${DD} if=/dev/zero of=${WORKSWAP} seek=$$((${SWAPSECTORS} - 1)) count=1
+.endif
+
+${WORKMBRTRUNC}: ${WORKMBR}
+	${DD} if=${WORKMBR} count=${LABELSECTORS} of=${WORKMBRTRUNC}
 
 ${WORKLABEL}:
 	${TOOL_SED}							\
@@ -343,15 +426,38 @@ ${WORKLABEL}:
 	    < ${DISKPROTO_IN} > ${WORKLABEL}.tmp
 	mv ${WORKLABEL}.tmp ${WORKLABEL}
 
-${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
-.if ${USE_MBR} != "no"
+${WORKEFI}: ${TARGETFS}
+	@echo create EFI system partition...
+	@${MKDIR} ${MKDIRPERM} ${EFIWORKDIR}/EFI/boot
+.for f in ${EFIBOOT}
+	${INSTALL} ${COPY} -m 0644 ${f} ${EFIWORKDIR}/EFI/boot/`basename ${f}`
+.endfor
+	${RM} -f ${WORKEFI}
+	${TOOL_MAKEFS} -M ${EFIMB}m -m ${EFIMB}m			\
+	    -B ${TARGET_ENDIANNESS}					\
+	    ${MAKEFS_TIMESTAMP}						\
+	    -t msdos -o F=32,c=1					\
+	    ${WORKEFI} ${EFIWORKDIR}
+
+${WORKMBR}:
+.if ${USE_GPT} != "no"
+	@echo creating GPT header and partition entries...
+	${RM} -f ${WORKMBR}
+	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} create
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${EFISECTORS} -t efi -l "EFI system"
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${FSSECTORS} -t ffs
+.  if ${SWAPSECTORS} != 0
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKMBR} add -a 1m -s ${SWAPSECTORS} -t swap
+.  endif
+.elif ${USE_MBR} != "no"
 	@echo creating MBR labels...
 	${DD} if=/dev/zero of=${WORKMBR} seek=$$((${IMAGESECTORS} - 1)) count=1
 	${TOOL_FDISK} -f -i -u \
 	    -b ${MBRCYLINDERS}/${MBRHEADS}/${MBRSECTORS}		\
 	    -0 -a -s ${MBRNETBSD}/${FSOFFSET}/${BSDPARTSECTORS}		\
 	    -F ${WORKMBR}
-.if empty(MBR_BOOTCODE)
+.  if empty(MBR_BOOTCODE)
 	@if [ -f ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE} ]; then 	\
 		echo ${TOOL_FDISK} -f					\
 		    -i -c ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE}	\
@@ -360,23 +466,32 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 		    -i -c ${WORKDIR}/usr/mdec/${MBR_DEFAULT_BOOTCODE}	\
 		    -F ${WORKMBR};					\
 	fi
-.else
+.  else
 	@if [ ! -f ${WORKDIR}/usr/mdec/${MBR_BOOTCODE} ]; then 		\
 		echo "${MBR_BOOTCODE} is not found in DESTDIR/usr/mdec, aborting"; \
 		false; 							\
 	fi
 	${TOOL_FDISK} -f -i -c ${WORKDIR}/usr/mdec/${MBR_BOOTCODE}	\
 	    -F ${WORKMBR}
+.  endif
 .endif
-	${DD} if=${WORKMBR} count=${LABELSECTORS} |			\
-	    ${CAT} - ${TARGETFS} > ${WORKIMG}
-.else	# USE_MBR == "no"
-	${INSTALL} ${COPY} -m 0644 ${TARGETFS} ${WORKIMG}
-.endif	# USE_MBR != "no"
-.if ${OMIT_SWAPIMG} == "no"
-	${DD} if=/dev/zero of=${WORKSWAP} seek=$$((${SWAPSECTORS} - 1)) count=1
-	${CAT} ${WORKSWAP} >> ${WORKIMG}
+
+${WORKGPT}: ${WORKMBR}
+	@echo create GPT image...
+	${DD} if=${WORKMBR} of=${WORKGPT} skip=$$((${IMAGESECTORS} - 2048)) \
+	    count=2048
+
+.if ${USE_GPT} == "no"
+${IMGBASE}.img:	${WORKLABEL}
 .endif
+
+${IMGBASE}.img:	${TARGET_BLOCKS}
+	${CAT} ${TARGET_BLOCKS} > ${WORKIMG}
+.if ${USE_GPT} != "no"
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} biosboot -i 2		\
+	    -c ${.OBJDIR}/${WORKDIR}/usr/mdec/gptmbr.bin
+	${TOOL_GPT} ${GPT_TIMESSTAMP} ${WORKIMG} set -a bootme -i 2
+.endif	# USE_GPT != "no"
 .if ${USE_SUNLABEL} != "no"
 	@echo Creating sun disklabel...
 	printf 'V ncyl %d\nV nhead %d\nV nsect %d\na %d %d/0/0\nb %d %d/0/0\nW\n' \
@@ -384,13 +499,14 @@ ${IMGBASE}.img:	${TARGETFS} ${WORKLABEL}
 	    ${FSOFFSET} ${FSCYLINDERS} ${FSCYLINDERS} ${SWAPCYLINDERS} | \
 	    ${TOOL_SUNLABEL} -nq ${WORKIMG}
 .endif
+.if ${USE_GPT} == "no"
 	${TOOL_DISKLABEL} -R -F ${WORKIMG} ${WORKLABEL}
 .if !empty(PRIMARY_BOOT) && ${INSTALLBOOT_AFTER_DISKLABEL} != "no"
 	${TOOL_INSTALLBOOT} -v -m ${MACHINE} ${INSTALLBOOTOPTIONS} ${WORKIMG} \
 	    ${WORKDIR}/usr/mdec/${PRIMARY_BOOT}
 .endif
+.endif
 	mv ${WORKIMG} ${.TARGET}
-
 
 CLEANFILES+=	${IMGBASE}.img.gz ${IMGBASE}.img.gz.tmp
 
@@ -403,6 +519,7 @@ clean:
 		${CHMOD} +r ${WORKDIR}/var/spool/ftp/hidden;		\
 	fi	# XXX
 	${RM} -fr ${WORKDIR}
+	${RM} -fr ${EFIWORKDIR}
 
 prepare_md_post: .PHONY
 image_md_post: .PHONY
