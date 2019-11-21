@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_timeout.c,v 1.56 2019/03/10 13:44:49 kre Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.57 2019/11/21 17:57:40 ad Exp $	*/
 
 /*-
- * Copyright (c) 2003, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.56 2019/03/10 13:44:49 kre Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.57 2019/11/21 17:57:40 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -185,8 +185,10 @@ struct callout_cpu {
 #ifndef CRASH
 
 static void	callout_softclock(void *);
-static struct callout_cpu callout_cpu0;
-static void *callout_sih;
+static void	callout_wait(callout_impl_t *, void *, kmutex_t *);
+
+static struct callout_cpu callout_cpu0 __cacheline_aligned;
+static void *callout_sih __read_mostly;
 
 static inline kmutex_t *
 callout_lock(callout_impl_t *c)
@@ -466,24 +468,42 @@ bool
 callout_halt(callout_t *cs, void *interlock)
 {
 	callout_impl_t *c = (callout_impl_t *)cs;
-	struct callout_cpu *cc;
-	struct lwp *l;
-	kmutex_t *lock, *relock;
-	bool expired;
+	kmutex_t *lock;
+	int flags;
 
 	KASSERT(c->c_magic == CALLOUT_MAGIC);
 	KASSERT(!cpu_intr_p());
 	KASSERT(interlock == NULL || mutex_owned(interlock));
 
+	/* Fast path. */
 	lock = callout_lock(c);
-	relock = NULL;
-
-	expired = ((c->c_flags & CALLOUT_FIRED) != 0);
-	if ((c->c_flags & CALLOUT_PENDING) != 0)
+	flags = c->c_flags;
+	if ((flags & CALLOUT_PENDING) != 0)
 		CIRCQ_REMOVE(&c->c_list);
-	c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
+	c->c_flags = flags & ~(CALLOUT_PENDING|CALLOUT_FIRED);
+	if (__predict_false(flags & CALLOUT_FIRED)) {
+		callout_wait(c, interlock, lock);
+		return true;
+	}
+	mutex_spin_exit(lock);
+	return false;
+}
+
+/*
+ * callout_wait:
+ *
+ *	Slow path for callout_halt().  Deliberately marked __noinline to
+ *	prevent unneeded overhead in the caller.
+ */
+static void __noinline
+callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
+{
+	struct callout_cpu *cc;
+	struct lwp *l;
+	kmutex_t *relock;
 
 	l = curlwp;
+	relock = NULL;
 	for (;;) {
 		cc = c->c_cpu;
 		if (__predict_true(cc->cc_active != c || cc->cc_lwp == l))
@@ -515,8 +535,6 @@ callout_halt(callout_t *cs, void *interlock)
 	mutex_spin_exit(lock);
 	if (__predict_false(relock != NULL))
 		mutex_enter(relock);
-
-	return expired;
 }
 
 #ifdef notyet
