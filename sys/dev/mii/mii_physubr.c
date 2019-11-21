@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.80.26.1 2018/12/30 12:16:16 martin Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.80.26.2 2019/11/21 14:06:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.80.26.1 2018/12/30 12:16:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.80.26.2 2019/11/21 14:06:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -692,19 +692,16 @@ mii_phy_resume(device_t dv, const pmf_qual_t *qual)
 
 
 /*
- * Given an ifmedia word, return the corresponding ANAR value.
+ * Given an ifmedia_entry, return the corresponding ANAR value.
  */
 int
-mii_anar(int media)
+mii_anar(struct ifmedia_entry *ife)
 {
-	int rv;
 
 #ifdef DIAGNOSTIC
-	if (/* media < 0 || */ media >= MII_NMEDIA)
+	if (ife->ifm_data >= MII_NMEDIA)
 		panic("mii_anar");
 #endif
 
-	rv = mii_media_table[media].mm_anar;
-
-	return rv;
+	return mii_media_table[ife->ifm_data].mm_anar;
 }

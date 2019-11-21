@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.18 2016/11/02 10:11:32 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.18.8.1 2019/11/21 14:06:16 martin Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.18 2016/11/02 10:11:32 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.18.8.1 2019/11/21 14:06:16 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -90,7 +90,7 @@ const struct mii_phy_funcs atphy_funcs = {
         atphy_service, atphy_status, atphy_reset,
 };
 
-static const struct mii_phydesc etphys[] = {
+static const struct mii_phydesc atphys[] = {
 	{ MII_OUI_ATHEROS,	MII_MODEL_ATHEROS_F1,
 	  MII_STR_ATHEROS_F1 },
 	{ MII_OUI_ATTANSIC,	MII_MODEL_ATTANSIC_L1,
@@ -124,7 +124,7 @@ atphy_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct mii_attach_args *ma = aux;
 
-	if (mii_phy_match(ma, etphys) != NULL)
+	if (mii_phy_match(ma, atphys) != NULL)
 		return 10;
 
 	return 0;
@@ -139,7 +139,7 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	const struct mii_phydesc *mpd;
 	uint16_t bmsr;
 
-	mpd = mii_phy_match(ma, etphys);
+	mpd = mii_phy_match(ma, atphys);
 	aprint_naive(": Media interface\n");
 	aprint_normal(": %s, rev. %d\n", mpd->mpd_name, MII_REV(ma->mii_id2));
 
@@ -231,8 +231,8 @@ atphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return EINVAL;
 		}
 
-		anar = mii_anar(IFM_SUBTYPE(ife->ifm_media));
-		if (((ife->ifm_media & IFM_GMASK) & IFM_FDX) != 0) {
+		anar = mii_anar(ife);
+		if ((ife->ifm_media & IFM_FDX) != 0) {
 			bmcr |= BMCR_FDX;
 			/* Enable pause. */
 			if (sc->mii_flags & MIIF_DOPAUSE)
