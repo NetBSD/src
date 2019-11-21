@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.182 2019/04/05 00:33:21 mlelstv Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.183 2019/11/21 17:50:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.182 2019/04/05 00:33:21 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.183 2019/11/21 17:50:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -506,7 +506,8 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		bintime_add(&tm, &l->l_rtime);
-		if ((l->l_pflag & LP_RUNNING) != 0) {
+		if ((l->l_pflag & LP_RUNNING) != 0 &&
+		    (l->l_pflag & (LP_INTR | LP_TIMEINTR)) != LP_INTR) {
 			struct bintime diff;
 			/*
 			 * Adjust for the current time slice.  This is
@@ -516,6 +517,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 			 * error.
 			 */
 			binuptime(&diff);
+			membar_consumer(); /* for softint_dispatch() */
 			bintime_sub(&diff, &l->l_stime);
 			bintime_add(&tm, &diff);
 		}
