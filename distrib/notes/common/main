@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551 2019/05/31 13:38:57 maya Exp $
+.\"	$NetBSD: main,v 1.552 2019/11/21 18:46:40 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -496,7 +496,7 @@ possible,
 would not exist.
 .
 .if \n[FOR_RELEASE] \{\
-.Ss Changes Between The NetBSD 6.0 and 7.0 Releases
+.Ss Changes Between The NetBSD 9.0 and \*V Releases
 .Pp
 The
 .Nx
@@ -536,6 +536,7 @@ and
 can still be found in pkgsrc as
 .Pa textproc/groff .
 .
+.bullet)
 .Ss "The NetBSD Foundation"
 .Pp
 .
