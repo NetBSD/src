@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lwp.c,v 1.208 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.209 2019/11/21 18:17:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.208 2019/11/14 16:23:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.209 2019/11/21 18:17:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1147,7 +1147,7 @@ lwp_exit(struct lwp *l)
 	    firstsig(&p->p_sigpend.sp_set) != 0) {
 		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
 			lwp_lock(l2);
-			l2->l_flag |= LW_PENDSIG;
+			signotify(l2);
 			lwp_unlock(l2);
 		}
 	}
@@ -1616,15 +1616,26 @@ lwp_userret(struct lwp *l)
 void
 lwp_need_userret(struct lwp *l)
 {
+
+	KASSERT(!cpu_intr_p());
 	KASSERT(lwp_locked(l, NULL));
 
 	/*
-	 * Since the tests in lwp_userret() are done unlocked, make sure
-	 * that the condition will be seen before forcing the LWP to enter
-	 * kernel mode.
+	 * If the LWP is in any state other than LSONPROC, we know that it
+	 * is executing in-kernel and will hit userret() on the way out. 
+	 *
+	 * If the LWP is curlwp, then we know we'll be back out to userspace
+	 * soon (can't be called from a hardware interrupt here).
+	 *
+	 * Otherwise, we can't be sure what the LWP is doing, so first make
+	 * sure the update to l_flag will be globally visible, and then
+	 * force the LWP to take a trip through trap() where it will do
+	 * userret().
 	 */
-	membar_producer();
-	cpu_signotify(l);
+	if (l->l_stat == LSONPROC && l != curlwp) {
+		membar_producer();
+		cpu_signotify(l);
+	}
 }
 
 /*

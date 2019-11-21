@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sig.c,v 1.379 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.380 2019/11/21 18:17:36 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.379 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.380 2019/11/21 18:17:36 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -710,6 +710,9 @@ sigclearall(struct proc *p, const sigset_t *mask, ksiginfoq_t *kq)
  *	current LWP.  May be called unlocked provided that LW_PENDSIG is set,
  *	and that the signal has been posted to the appopriate queue before
  *	LW_PENDSIG is set.
+ *
+ *	This should only ever be called with (l == curlwp), unless the
+ *	result does not matter (procfs, sysctl).
  */ 
 int
 sigispending(struct lwp *l, int signo)
@@ -1133,7 +1136,7 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	 * Have the LWP check for signals.  This ensures that even if no LWP
 	 * is found to take the signal immediately, it should be taken soon.
 	 */
-	l->l_flag |= LW_PENDSIG;
+	signotify(l);
 
 	/*
 	 * SIGCONT can be masked, but if LWP is stopped, it needs restart.
@@ -1167,7 +1170,6 @@ sigpost(struct lwp *l, sig_t action, int prop, int sig)
 	switch (l->l_stat) {
 	case LSRUN:
 	case LSONPROC:
-		lwp_need_userret(l);
 		rv = 1;
 		break;
 
