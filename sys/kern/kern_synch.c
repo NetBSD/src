@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.324 2019/10/03 22:48:44 kamil Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.325 2019/11/21 20:51:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.324 2019/10/03 22:48:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.325 2019/11/21 20:51:05 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -272,6 +272,7 @@ yield(void)
 	lwp_lock(l);
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
+	/* Voluntary - ditch kpriority boost. */
 	l->l_kpriority = false;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
@@ -290,7 +291,7 @@ preempt(void)
 	lwp_lock(l);
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
-	l->l_kpriority = false;
+	/* Involuntary - keep kpriority boost. */
 	l->l_pflag |= LP_PREEMPTING;
 	(void)mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
@@ -324,12 +325,12 @@ kpreempt(uintptr_t where)
 			 * been blocked", since we're going to
 			 * context switch.
 			 */
-			l->l_dopreempt = 0;
+			atomic_swap_uint(&l->l_dopreempt, 0);
 			return true;
 		}
 		if (__predict_false((l->l_flag & LW_IDLE) != 0)) {
 			/* Can't preempt idle loop, don't count as failure. */
-			l->l_dopreempt = 0;
+			atomic_swap_uint(&l->l_dopreempt, 0);
 			return true;
 		}
 		if (__predict_false(l->l_nopreempt != 0)) {
@@ -342,7 +343,7 @@ kpreempt(uintptr_t where)
 		}
 		if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
 			/* Can't preempt soft interrupts yet. */
-			l->l_dopreempt = 0;
+			atomic_swap_uint(&l->l_dopreempt, 0);
 			failed = (uintptr_t)&is_softint;
 			break;
 		}
@@ -484,8 +485,11 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	}
 
 	/*
-	 * Only clear want_resched if there are no pending (slow)
-	 * software interrupts.
+	 * Only clear want_resched if there are no pending (slow) software
+	 * interrupts.  We can do this without an atomic, because no new
+	 * LWPs can appear in the queue due to our hold on spc_mutex, and
+	 * the update to ci_want_resched will become globally visible before
+	 * the release of spc_mutex becomes globally visible.
 	 */
 	ci->ci_want_resched = ci->ci_data.cpu_softints;
 	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
@@ -606,10 +610,11 @@ mi_switch(lwp_t *l)
 	}
 
 	/*
-	 * Preemption related tasks.  Must be done with the current
-	 * CPU locked.
+	 * Preemption related tasks.  Must be done holding spc_mutex.  Clear
+	 * l_dopreempt without an atomic - it's only ever set non-zero by
+	 * sched_resched_cpu() which also holds spc_mutex, and only ever
+	 * cleared by the LWP itself (us) with atomics when not under lock.
 	 */
-	cpu_did_resched(l);
 	l->l_dopreempt = 0;
 	if (__predict_false(l->l_pfailaddr != 0)) {
 		LOCKSTAT_FLAG(lsflag);
@@ -829,12 +834,6 @@ lwp_exit_switchaway(lwp_t *l)
 	 * itimers and forcing user threads to preempt (aston).
 	 */
 	ci->ci_data.cpu_onproc = newl;
-
-	/*
-	 * Preemption related tasks.  Must be done with the current
-	 * CPU locked.
-	 */
-	cpu_did_resched(l);
 
 	/* Unlock the run queue. */
 	spc_unlock(ci);
@@ -1215,7 +1214,6 @@ sched_pstats(void)
 			psignal(p, sig);
 		}
 	}
-	mutex_exit(proc_lock);
 
 	/* Load average calculation. */
 	if (__predict_false(lavg_count == 0)) {
@@ -1229,4 +1227,6 @@ sched_pstats(void)
 
 	/* Lightning bolt. */
 	cv_broadcast(&lbolt);
+
+	mutex_exit(proc_lock);
 }
