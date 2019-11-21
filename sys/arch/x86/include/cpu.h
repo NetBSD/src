@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.111 2019/11/21 19:57:24 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.112 2019/11/21 21:48:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -76,6 +76,7 @@
 
 struct intrsource;
 struct pmap;
+struct kcpuset;
 
 #ifdef __x86_64__
 #define	i386tss	x86_64_tss
@@ -135,7 +136,8 @@ struct cpu_info {
 	int ci_curldt;		/* current LDT descriptor */
 	int ci_nintrhand;	/* number of H/W interrupt handlers */
 	uint64_t ci_scratch;
-	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
+	uintptr_t ci_pmap_data[64 / sizeof(uintptr_t)];
+	struct kcpuset *ci_tlb_cpuset;
 
 #ifndef XENPV
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];
