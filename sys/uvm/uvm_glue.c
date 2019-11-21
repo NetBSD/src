@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.169 2019/11/14 16:48:51 maxv Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.170 2019/11/21 17:47:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.169 2019/11/14 16:48:51 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.170 2019/11/21 17:47:53 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -496,8 +496,8 @@ uvm_scheduler(void)
 	lwp_t *l = curlwp;
 
 	lwp_lock(l);
-	l->l_priority = PRI_VM;
 	l->l_class = SCHED_FIFO;
+	lwp_changepri(l, PRI_VM);
 	lwp_unlock(l);
 
 	for (;;) {
