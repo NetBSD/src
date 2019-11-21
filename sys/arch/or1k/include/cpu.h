@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.2 2018/04/19 21:50:07 christos Exp $ */
+/* $NetBSD: cpu.h,v 1.3 2019/11/21 19:24:01 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -84,7 +84,6 @@ cpu_number(void)
 #endif
 }
 
-void	cpu_set_curpri(int);
 void	cpu_proc_fork(struct proc *, struct proc *);
 void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *l);

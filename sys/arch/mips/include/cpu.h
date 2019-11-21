@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.126 2018/09/16 09:25:46 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.127 2019/11/21 19:24:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -251,11 +251,6 @@ struct pcb;
 struct reg;
 
 /*
- * Preempt the current process if in interrupt from user mode,
- * or after the current trap/syscall if in system mode.
- */
-void	cpu_need_resched(struct cpu_info *, int);
-/*
  * Notify the current lwp (l) that it has a signal pending,
  * process as soon as possible.
  */
@@ -267,7 +262,6 @@ void	cpu_signotify(struct lwp *);
  * through trap, marking the proc as needing a profiling tick.
  */
 void	cpu_need_proftick(struct lwp *);
-void	cpu_set_curpri(int);
 
 /* VM related hooks */
 void	cpu_boot_secondary_processors(void);

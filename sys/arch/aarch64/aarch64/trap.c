@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.19 2019/09/28 07:06:50 skrll Exp $ */
+/* $NetBSD: trap.c,v 1.20 2019/11/21 19:23:58 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.19 2019/09/28 07:06:50 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.20 2019/11/21 19:23:58 ad Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -158,7 +158,6 @@ trap_doast(struct trapframe *tf)
 	ci->ci_data.cpu_ntrap++;
 
 	KDASSERT(ci->ci_cpl == IPL_NONE);
-	const int want_resched = ci->ci_want_resched;
 #ifdef __HAVE_PREEMPTION
 	kpreempt_enable();
 #endif
@@ -168,9 +167,6 @@ trap_doast(struct trapframe *tf)
 		ADDUPROF(l);
 	}
 
-	/* Allow a forced task switch. */
-	if (want_resched)
-		preempt();
 	userret(l);
 }
 
