@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.69 2019/11/20 16:37:46 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.70 2019/11/21 14:07:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1662,4 +1662,13 @@ sys/arch/x86/pci/msipic.c			1.19
 
 	Disable MSI-X before writing the MSI-X table.
 	[hikaru, ticket #1453]
+
+sys/dev/mii/atphy.c			1.22-1.23, 1.25 via patch
+sys/dev/mii/mii_physubr.c		1.88 via patch
+sys/dev/mii/miivar.h			1.69 via patch
+
+	- Fix a bug that atphy(4) can't negotiate correctly when the media
+	  setting is neither auto nor 1000baseT.
+	- Code cleanup.
+	[msaitoh, ticket #1454]
 
