@@ -1,4 +1,4 @@
-/*	$NetBSD: ustarfs.c,v 1.36 2019/11/21 07:34:39 mrg Exp $	*/
+/*	$NetBSD: ustarfs.c,v 1.37 2019/11/21 21:45:34 mrg Exp $	*/
 
 /* [Notice revision 2.2]
  * Copyright (c) 1997, 1998 Avalon Computer Systems, Inc.
@@ -388,7 +388,7 @@ init_volzero_sig(struct open_file *f)
  * Until the real cause is located, work around it by using -O1
  * for this function.
  */
-#ifdef __i386__
+#if defined(__i386__) && !defined(__clang__)
 __attribute__((__optimize__("O1")))
 #endif
 __compactcall int
