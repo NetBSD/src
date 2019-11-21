@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.4 2018/06/24 09:38:47 leot Exp $
+.\"	$NetBSD: contents,v 1.5 2019/11/21 19:23:18 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -188,6 +188,11 @@ the typesettable document set, and other files from
 .It Sy modules
 This set includes kernel modules to add functionality to a running system.
 .
+.It Sy rescue
+This set includes the statically linked emergency recover binaries installed
+in
+.Pa /rescue .
+.
 .It Sy text
 This set includes
 .Nx Ns 's
@@ -248,9 +253,9 @@ The X server.
 .Pp
 The \*M binary distribution sets are distributed as gzipped tar files
 named with the extension
-.Sy .tgz ,
+.Sy .\*[setsuffix] ,
 e.g.
-.Pa base.tgz .
+.Pa base.\*[setsuffix] .
 .
 .
 .Pp
