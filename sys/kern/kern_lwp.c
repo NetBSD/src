@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.210 2019/11/21 18:22:05 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.211 2019/11/21 19:47:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.210 2019/11/21 18:22:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.211 2019/11/21 19:47:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1475,14 +1475,16 @@ lwp_locked(struct lwp *l, kmutex_t *mtx)
 /*
  * Lend a new mutex to an LWP.  The old mutex must be held.
  */
-void
+kmutex_t *
 lwp_setlock(struct lwp *l, kmutex_t *mtx)
 {
+	kmutex_t *oldmtx = l->l_mutex;
 
-	KASSERT(mutex_owned(l->l_mutex));
+	KASSERT(mutex_owned(oldmtx));
 
 	membar_exit();
 	l->l_mutex = mtx;
+	return oldmtx;
 }
 
 /*
@@ -1517,11 +1519,11 @@ lwp_trylock(struct lwp *l)
 }
 
 void
-lwp_unsleep(lwp_t *l, bool cleanup)
+lwp_unsleep(lwp_t *l, bool unlock)
 {
 
 	KASSERT(mutex_owned(l->l_mutex));
-	(*l->l_syncobj->sobj_unsleep)(l, cleanup);
+	(*l->l_syncobj->sobj_unsleep)(l, unlock);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.188 2019/11/14 16:23:53 maxv Exp $	*/
+/*	$NetBSD: lwp.h,v 1.189 2019/11/21 19:47:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
@@ -326,7 +326,7 @@ void	lwp_startup(lwp_t *, lwp_t *);
 void	startlwp(void *);
 
 int	lwp_locked(lwp_t *, kmutex_t *);
-void	lwp_setlock(lwp_t *, kmutex_t *);
+kmutex_t *lwp_setlock(lwp_t *, kmutex_t *);
 void	lwp_unlock_to(lwp_t *, kmutex_t *);
 int	lwp_trylock(lwp_t *);
 void	lwp_addref(lwp_t *);
