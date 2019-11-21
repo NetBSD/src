@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1165 2019/11/18 15:38:07 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1166 2019/11/21 07:56:58 mrg Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -70,7 +70,8 @@ TOOLCHAIN_MISSING?=	no
     ${MACHINE} == "sparc" || \
     ${MACHINE} == "sparc64" || \
     ${MACHINE_CPU} == "aarch64" || \
-    ${MACHINE_CPU} == "arm"
+    ${MACHINE_CPU} == "arm" || \
+    ${MACHINE_CPU} == "riscv"
 HAVE_GCC?=	8
 .else
 HAVE_GCC?=	7
