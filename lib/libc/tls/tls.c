@@ -1,4 +1,4 @@
-/*	$NetBSD: tls.c,v 1.12 2019/11/07 22:25:21 joerg Exp $	*/
+/*	$NetBSD: tls.c,v 1.13 2019/11/21 23:06:15 nakayama Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tls.c,v 1.12 2019/11/07 22:25:21 joerg Exp $");
+__RCSID("$NetBSD: tls.c,v 1.13 2019/11/21 23:06:15 nakayama Exp $");
 
 #include "namespace.h"
 
@@ -85,10 +85,10 @@ _rtld_tls_allocate(void)
 	uint8_t *p;
 
 	if (initial_thread_tcb == NULL) {
-#ifdef __HAVE_TLS_VARIANT_II
-		tls_allocation = roundup2(tls_size, alignof(max_align_t));
-#else
+#ifdef __HAVE_TLS_VARIANT_I
 		tls_allocation = tls_size;
+#else
+		tls_allocation = roundup2(tls_size, alignof(max_align_t));
 #endif
 
 		initial_thread_tcb = p = mmap(NULL,
@@ -152,7 +152,11 @@ __libc_static_tls_setup_cb(struct dl_phdr_info *data, size_t len, void *cookie)
 			continue;
 		tls_initaddr = (void *)(phdr->p_vaddr + data->dlpi_addr);
 		tls_initsize = phdr->p_filesz;
+#ifdef __HAVE_TLS_VARIANT_I
 		tls_size = phdr->p_memsz;
+#else
+		tls_size = roundup2(phdr->p_memsz, phdr->p_align);
+#endif
 	}
 	return 0;
 }
