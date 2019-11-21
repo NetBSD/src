@@ -1,4 +1,4 @@
-#	$NetBSD: CP3100,v 1.48 2018/08/01 20:04:10 maxv Exp $
+#	$NetBSD: CP3100,v 1.48.4.1 2019/11/21 18:17:59 martin Exp $
 #
 #	CP3100 -- Certance CP3100 Kernel
 #
@@ -107,7 +107,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

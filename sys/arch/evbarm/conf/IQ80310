@@ -1,4 +1,4 @@
-#	$NetBSD: IQ80310,v 1.91 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: IQ80310,v 1.91.8.1 2019/11/21 18:17:59 martin Exp $
 #
 #	IQ80310 -- Intel IQ80310 Evaluation Board Kernel
 #
@@ -109,7 +109,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

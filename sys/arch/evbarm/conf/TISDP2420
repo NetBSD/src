@@ -1,5 +1,5 @@
 #
-#	$NetBSD: TISDP2420,v 1.40 2018/10/23 19:58:52 jdolecek Exp $
+#	$NetBSD: TISDP2420,v 1.40.4.1 2019/11/21 18:17:59 martin Exp $
 #
 #	TISDP2420 -- TI OMAP 2420 Eval Board Kernel
 #
@@ -107,7 +107,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages

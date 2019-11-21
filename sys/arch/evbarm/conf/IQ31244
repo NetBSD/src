@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.74 2018/07/12 10:46:43 maxv Exp $
+#	$NetBSD: IQ31244,v 1.74.4.1 2019/11/21 18:17:59 martin Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -107,7 +107,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

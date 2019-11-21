@@ -1,4 +1,4 @@
-# $NetBSD: HAWK,v 1.8 2017/09/14 07:58:40 mrg Exp $
+# $NetBSD: HAWK,v 1.8.8.1 2019/11/21 18:17:59 martin Exp $
 #
 #	HAWK -- TI OMAPL138 based Board Kernel
 #
@@ -89,7 +89,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PGALLOC_VERBOSE
 #options 	DEBUG_DMA

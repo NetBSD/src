@@ -1,4 +1,4 @@
-#	$NetBSD: TS7200,v 1.73 2019/02/06 11:58:31 rin Exp $
+#	$NetBSD: TS7200,v 1.73.4.1 2019/11/21 18:17:59 martin Exp $
 #
 #	TS7200 - Kernel for Technologic Systems TS7200 ARM hardware
 #
@@ -111,7 +111,7 @@ options 	IRQSTATS	# manage IRQ statistics
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages
