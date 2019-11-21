@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.35 2019/05/28 07:41:49 msaitoh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.36 2019/11/21 09:12:30 msaitoh Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.35 2019/05/28 07:41:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.36 2019/11/21 09:12:30 msaitoh Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -1905,52 +1905,62 @@ cas_iff(struct cas_softc *sc)
 	    CAS_MAC_RX_PROMISC_GRP);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
-		else
-			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
-	} else {
-		/*
-		 * Set up multicast address filter by passing all multicast
-		 * addresses through a crc generator, and then using the
-		 * high order 8 bits as an index into the 256 bit logical
-		 * address filter.  The high order 4 bits selects the word,
-		 * while the other 4 bits select the bit within the word
-		 * (where bit 0 is the MSB).
-		 */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
 
-		rxcfg |= CAS_MAC_RX_HASH_FILTER;
+	/*
+	 * Set up multicast address filter by passing all multicast
+	 * addresses through a crc generator, and then using the
+	 * high order 8 bits as an index into the 256 bit logical
+	 * address filter.  The high order 4 bits selects the word,
+	 * while the other 4 bits select the bit within the word
+	 * (where bit 0 is the MSB).
+	 */
 
-		/* Clear hash table */
-		for (i = 0; i < 16; i++)
-			hash[i] = 0;
+	/* Clear hash table */
+	for (i = 0; i < 16; i++)
+		hash[i] = 0;
 
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_le(enm->enm_addrlo,
-			    ETHER_ADDR_LEN);
-
-			/* Just want the 8 most significant bits. */
-			crc >>= 24;
-
-			/* Set the corresponding bit in the filter. */
-			hash[crc >> 4] |= 1 << (15 - (crc & 15));
-
-			ETHER_NEXT_MULTI(step, enm);
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
 		}
-		ETHER_UNLOCK(ec);
 
-		/* Now load the hash table into the chip (if we are using it) */
-		for (i = 0; i < 16; i++) {
-			bus_space_write_4(t, h,
-			    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
-			    hash[i]);
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 8 most significant bits. */
+		crc >>= 24;
+
+		/* Set the corresponding bit in the filter. */
+		hash[crc >> 4] |= 1 << (15 - (crc & 15));
+
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+	rxcfg |= CAS_MAC_RX_HASH_FILTER;
+
+	/* Now load the hash table into the chip (if we are using it) */
+	for (i = 0; i < 16; i++) {
+		bus_space_write_4(t, h,
+		    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
+		    hash[i]);
 	}
 
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
+			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
+			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
+	}
 	bus_space_write_4(t, h, CAS_MAC_RX_CONFIG, rxcfg);
 }
 
