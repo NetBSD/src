@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.33 2019/03/25 07:34:13 msaitoh Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.34 2019/11/21 09:48:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.33 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.34 2019/11/21 09:48:57 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -264,7 +264,7 @@ gphyter_status(struct mii_softc *sc)
 			return;
 		}
 
-		switch (physup & (PHY_SUP_SPEED1|PHY_SUP_SPEED0)) {
+		switch (physup & (PHY_SUP_SPEED1 | PHY_SUP_SPEED0)) {
 		case PHY_SUP_SPEED1:
 			mii->mii_media_active |= IFM_1000_T;
 			PHY_READ(sc, MII_100T2SR, &gtsr);
