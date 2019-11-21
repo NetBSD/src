@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1208.2.1 2019/08/09 15:59:52 martin Exp $
+# $NetBSD: GENERIC,v 1.1208.2.2 2019/11/21 18:17:59 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1208.2.1 $"
+#ident		"GENERIC-$Revision: 1.1208.2.2 $"
 
 maxusers	64		# estimated number of users
 
@@ -109,7 +109,7 @@ options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
-options 	DIAGNOSTIC	# inexpensive kernel consistency checks
+#options 	DIAGNOSTIC	# inexpensive kernel consistency checks
 				# XXX to be commented out on release branch
 #options 	DEBUG		# expensive debugging checks/support
 #options 	LOCKDEBUG	# expensive locking checks/support
@@ -1506,8 +1506,8 @@ pseudo-device	drvctl
 
 include "dev/veriexec.config"
 
-options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+#options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
-options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+#options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

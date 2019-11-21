@@ -1,4 +1,4 @@
-#	$NetBSD: ADI_BRH,v 1.73 2017/09/14 07:58:40 mrg Exp $
+#	$NetBSD: ADI_BRH,v 1.73.8.1 2019/11/21 18:17:59 martin Exp $
 #
 #	ADI_BRH -- ADI Engineering "Big Red Head" i80200 Evaluation Board
 #
@@ -109,7 +109,7 @@ options 	MIIVERBOSE	# Verbose MII autoconfuration messages
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

@@ -1,4 +1,4 @@
-#	$NetBSD: TEAMASA_NPWR,v 1.95 2018/07/12 10:46:43 maxv Exp $
+#	$NetBSD: TEAMASA_NPWR,v 1.95.4.1 2019/11/21 18:17:59 martin Exp $
 #
 #	TEAMASA_NPWR -- Team ASA, Inc. Npwr -- XScale/IOP310-based
 #	server appliance.
@@ -115,7 +115,7 @@ options 	USERCONF	# userconf(4) support
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

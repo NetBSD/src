@@ -1,4 +1,4 @@
-# $NetBSD: ARMADILLO-IOT-G3,v 1.19 2019/07/24 12:33:18 hkenken Exp $
+# $NetBSD: ARMADILLO-IOT-G3,v 1.19.2.1 2019/11/21 18:17:59 martin Exp $
 #
 # ARMADILLO-IOT-G3 -- Atmark Techno, Armadillo-IoT G3
 #
@@ -49,7 +49,7 @@ options 	BUFQ_PRIOCSCAN
 
 # Diagnostic/debugging support options
 options 	VERBOSE_INIT_ARM # verbose bootstraping messages
-options 	DIAGNOSTIC	# internally consistency checks
+#options 	DIAGNOSTIC	# internally consistency checks
 				# XXX to be commented out on release branch/
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code

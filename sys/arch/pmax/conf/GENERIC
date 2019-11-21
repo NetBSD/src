@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.199 2019/04/26 21:40:31 sevan Exp $
+# $NetBSD: GENERIC,v 1.199.2.1 2019/11/21 18:18:00 martin Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/pmax/conf/std.pmax"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.199 $"
+#ident		"GENERIC-$Revision: 1.199.2.1 $"
 
 maxusers	64
 
@@ -308,8 +308,8 @@ pseudo-device	wsmux			# wsmux control device
 
 include "dev/veriexec.config"
 
-options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
+#options 	PAX_ASLR_DEBUG=1	# PaX ASLR debug
 options 	PAX_SEGVGUARD=0		# PaX Segmentation fault guard
 options 	PAX_MPROTECT=1		# PaX mprotect(2) restrictions
-options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
+#options 	PAX_MPROTECT_DEBUG=1	# PaX mprotect debug
 options 	PAX_ASLR=1		# PaX Address Space Layout Randomization

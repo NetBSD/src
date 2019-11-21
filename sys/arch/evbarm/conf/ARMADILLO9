@@ -1,4 +1,4 @@
-#	$NetBSD: ARMADILLO9,v 1.60 2018/08/01 20:04:10 maxv Exp $
+#	$NetBSD: ARMADILLO9,v 1.60.4.1 2019/11/21 18:17:59 martin Exp $
 #
 #	ARMADILLO9 -- Atmark Techno, Armadillo-9
 #
@@ -104,7 +104,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 #options 	VERBOSE_INIT_ARM # verbose bootstraping messages

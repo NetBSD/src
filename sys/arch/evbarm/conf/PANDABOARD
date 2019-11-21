@@ -1,5 +1,5 @@
 #
-#	$NetBSD: PANDABOARD,v 1.29.2.1 2019/08/15 09:49:49 martin Exp $
+#	$NetBSD: PANDABOARD,v 1.29.2.2 2019/11/21 18:17:59 martin Exp $
 #
 #	PANDABOARD -- TI OMAP 4430 Eval Board Kernel
 #
@@ -111,7 +111,7 @@ options 	KTRACE		# system call tracing, a la ktrace(1)
 
 # Development and Debugging options
 
-options 	DIAGNOSTIC	# internal consistency checks
+#options 	DIAGNOSTIC	# internal consistency checks
 #options 	DEBUG
 #options 	PMAP_DEBUG	# Enable pmap_debug_level code
 options 	DDB		# in-kernel debugger
