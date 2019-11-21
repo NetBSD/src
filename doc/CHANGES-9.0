@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.110 2019/11/20 16:50:50 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.111 2019/11/21 14:03:29 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6029,4 +6029,17 @@ sys/arch/evbarm/conf/GENERIC64			1.104
 
 	Add SPI driver for Rockchip RK3399.
 	[tnn, ticket #458]
+
+sys/dev/mii/atphy.c				1.23,1.25
+sys/dev/mii/mii_physubr.c			1.88
+sys/dev/mii/miivar.h				1.69
+
+	Fix a bug that atphy(4) can't negotiate correctly when the media
+	setting is neither auto nor 1000baseT.
+	[msaitoh, ticket #459]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.130
+
+	Fix netbsd32_process_write_dbregs() for amd64.
+	[rin, ticket #460]
 
