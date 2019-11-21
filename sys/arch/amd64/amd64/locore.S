@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.190 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: locore.S,v 1.191 2019/11/21 19:27:54 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1491,7 +1491,7 @@ ENTRY(sse2_idlezero_page)
 	xorq	%rax, %rax
 	.align	16
 1:
-	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
+	cmpl	$0, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%rax, 0(%rdi)
 	movnti	%rax, 8(%rdi)

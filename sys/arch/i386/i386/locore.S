@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.173 2019/10/18 01:38:28 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.174 2019/11/21 19:27:54 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.173 2019/10/18 01:38:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.174 2019/11/21 19:27:54 ad Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1590,7 +1590,7 @@ ENTRY(sse2_idlezero_page)
 	xorl	%eax, %eax
 	.align	16
 1:
-	testl	$RESCHED_KPREEMPT, CPUVAR(RESCHED)
+	cmpl	$0, CPUVAR(RESCHED)
 	jnz	2f
 	movnti	%eax, 0(%edx)
 	movnti	%eax, 4(%edx)
