@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.209 2019/11/21 18:17:36 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.210 2019/11/21 18:22:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.209 2019/11/21 18:17:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.210 2019/11/21 18:22:05 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -952,26 +952,18 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	KASSERT(l2->l_affinity == NULL);
 
-	if ((p2->p_flag & PK_SYSTEM) == 0) {
-		/* Inherit the affinity mask. */
+	/* Inherit the affinity mask. */
+	if (l1->l_affinity) {
+		/*
+		 * Note that we hold the state lock while inheriting
+		 * the affinity to avoid race with sched_setaffinity().
+		 */
+		lwp_lock(l1);
 		if (l1->l_affinity) {
-			/*
-			 * Note that we hold the state lock while inheriting
-			 * the affinity to avoid race with sched_setaffinity().
-			 */
-			lwp_lock(l1);
-			if (l1->l_affinity) {
-				kcpuset_use(l1->l_affinity);
-				l2->l_affinity = l1->l_affinity;
-			}
-			lwp_unlock(l1);
+			kcpuset_use(l1->l_affinity);
+			l2->l_affinity = l1->l_affinity;
 		}
-		lwp_lock(l2);
-		/* Inherit a processor-set */
-		l2->l_psid = l1->l_psid;
-		/* Look for a CPU to start */
-		l2->l_cpu = sched_takecpu(l2);
-		lwp_unlock_to(l2, l2->l_cpu->ci_schedstate.spc_mutex);
+		lwp_unlock(l1);
 	}
 	mutex_exit(p2->p_lock);
 
@@ -979,6 +971,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 
 	mutex_enter(proc_lock);
 	LIST_INSERT_HEAD(&alllwp, l2, l_list);
+	/* Inherit a processor-set */
+	l2->l_psid = l1->l_psid;
 	mutex_exit(proc_lock);
 
 	SYSCALL_TIME_LWP_INIT(l2);
