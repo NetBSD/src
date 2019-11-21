@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.72 2018/09/16 09:25:47 skrll Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.73 2019/11/21 19:57:24 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.72 2018/09/16 09:25:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.73 2019/11/21 19:57:24 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -377,11 +377,6 @@ cpu_ast(struct lwp *l, struct cpu_info *ci)
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(l);
-	}
-
-	/* Check whether we are being preempted. */
-	if (ci->ci_want_resched) {
-		preempt();
 	}
 }
 
