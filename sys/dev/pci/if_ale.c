@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.34 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.35 2019/11/21 09:12:30 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.34 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.35 2019/11/21 09:12:30 msaitoh Exp $");
 
 #include "vlan.h"
 
@@ -136,10 +136,9 @@ ale_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	if (phy != sc->ale_phyaddr)
 		return -1;
 
+#if 1
 	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
 		switch (reg) {
-		case MII_100T2CR:
-		case MII_100T2SR:
 		case MII_EXTSR:
 			*val = 0;
 			return 0;
@@ -147,6 +146,7 @@ ale_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 			break;
 		}
 	}
+#endif
 
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_READ |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
@@ -177,19 +177,23 @@ ale_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	if (phy != sc->ale_phyaddr)
 		return -1;
 
+#if 1
 	if (sc->ale_flags & ALE_FLAG_FASTETHER) {
+#if 0
 		switch (reg) {
-		case MII_100T2CR:
-		case MII_100T2SR:
 		case MII_EXTSR:
+			printf("%s: XXXX write EXTSR with %04hx\n", __func__,
+				val);
 			return 0;
 		default:
 			break;
 		}
+#endif
 	}
+#endif
 
 	CSR_WRITE_4(sc, ALE_MDIO, MDIO_OP_EXECUTE | MDIO_OP_WRITE |
-	    (val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
+		    ((uint32_t)val & MDIO_DATA_MASK) << MDIO_DATA_SHIFT |
 	    MDIO_SUP_PREAMBLE | MDIO_CLK_25_4 | MDIO_REG_ADDR(reg));
 	for (i = ALE_PHY_TIMEOUT; i > 0; i--) {
 		DELAY(5);
@@ -255,6 +259,9 @@ ale_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	struct ale_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_miibus;
 
+	if ((ifp->if_flags & IFF_UP) == 0)
+		return;
+
 	mii_pollstat(mii);
 	ifmr->ifm_status = mii->mii_media_status;
 	ifmr->ifm_active = mii->mii_media_active;
@@ -267,6 +274,7 @@ ale_mediachange(struct ifnet *ifp)
 	struct mii_data *mii = &sc->sc_miibus;
 	int error;
 
+	printf("%s: called\n", __func__);
 	if (mii->mii_instance != 0) {
 		struct mii_softc *miisc;
 
@@ -335,16 +343,20 @@ ale_get_macaddr(struct ale_softc *sc)
 void
 ale_phy_reset(struct ale_softc *sc)
 {
+//	int error;
+
+	printf("%s: called\n", __func__);
 	/* Reset magic from Linux. */
 	CSR_WRITE_2(sc, ALE_GPHY_CTRL,
 	    GPHY_CTRL_HIB_EN | GPHY_CTRL_HIB_PULSE | GPHY_CTRL_SEL_ANA_RESET |
 	    GPHY_CTRL_PHY_PLL_ON);
-	DELAY(1000);
+	DELAY(2000);
 	CSR_WRITE_2(sc, ALE_GPHY_CTRL,
 	    GPHY_CTRL_EXT_RESET | GPHY_CTRL_HIB_EN | GPHY_CTRL_HIB_PULSE |
 	    GPHY_CTRL_SEL_ANA_RESET | GPHY_CTRL_PHY_PLL_ON);
-	DELAY(1000);
+	DELAY(2000);
 
+#define	ATPHY_INT_CTRL		0x12
 #define	ATPHY_DBG_ADDR		0x1D
 #define	ATPHY_DBG_DATA		0x1E
 
@@ -374,9 +386,10 @@ ale_phy_reset(struct ale_softc *sc)
 	ale_miibus_writereg(sc->sc_dev, sc->ale_phyaddr,
 	    ATPHY_DBG_DATA, 0x2C46);
 
+	DELAY(1000);
+
 #undef	ATPHY_DBG_ADDR
 #undef	ATPHY_DBG_DATA
-	DELAY(1000);
 }
 
 void
@@ -389,7 +402,7 @@ ale_attach(device_t parent, device_t self, void *aux)
 	const char *intrstr;
 	struct ifnet *ifp;
 	struct mii_data * const mii = &sc->sc_miibus;
-	pcireg_t memtype;
+	pcireg_t memtype, pcireg, capoff;
 	int mii_flags, error = 0;
 	uint32_t rxf_len, txf_len;
 	const char *chipname;
@@ -423,6 +436,26 @@ ale_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	pcireg = pci_conf_read(sc->sc_pct, sc->sc_pcitag,
+	    PCI_COMMAND_STATUS_REG);
+	printf("%s: command = %08x\n", __func__, pcireg);
+	pcireg |= PCI_COMMAND_MEM_ENABLE | PCI_COMMAND_MASTER_ENABLE;
+	pci_conf_write(sc->sc_pct, sc->sc_pcitag, PCI_COMMAND_STATUS_REG, pcireg);
+
+#if 1
+	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PWRMGMT, &capoff,
+	    NULL) != 0) {
+		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    PCI_COMMAND_STATUS_REG);
+		printf("%s: CSR was %#08x\n", __func__, pcireg);
+		pcireg = pci_conf_read(pa->pa_pc, pa->pa_tag,
+		    capoff + PCI_PMCSR);
+		printf("%s: PMCSR was %#08x\n", __func__, pcireg);
+		pci_conf_write(pa->pa_pc, pa->pa_tag, capoff + PCI_PMCSR, 0);
+		delay(1000);
+	}
+#endif
+
 	if (pci_intr_map(pa, &ih) != 0) {
 		aprint_error_dev(self, "could not map interrupt\n");
 		goto fail;
@@ -446,11 +479,6 @@ ale_attach(device_t parent, device_t self, void *aux)
 	sc->ale_phyaddr = ALE_PHY_ADDR;
 
 	/* Reset PHY. */
-	ale_phy_reset(sc);
-
-	/* Reset the ethernet controller. */
-	ale_reset(sc);
-
 	/* Get PCI and chip id/revision. */
 	sc->ale_rev = PCI_REVISION(pa->pa_class);
 	if (sc->ale_rev >= 0xF0) {
@@ -469,6 +497,11 @@ ale_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 	aprint_normal_dev(self, "%s, %s\n", chipname, intrstr);
+
+	ale_phy_reset(sc);
+
+	/* Reset the ethernet controller. */
+	ale_reset(sc);
 
 	/*
 	 * All known controllers seems to require 4 bytes alignment
@@ -1046,12 +1079,12 @@ ale_start(struct ifnet *ifp)
 	struct mbuf *m_head;
 	int enq;
 
-	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
-		return;
-
 	/* Reclaim transmitted frames. */
 	if (sc->ale_cdata.ale_tx_cnt >= ALE_TX_DESC_HIWAT)
 		ale_txeof(sc);
+
+	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
+		return;
 
 	enq = 0;
 	for (;;) {
@@ -1248,7 +1281,6 @@ ale_stats_update(struct ale_softc *sc)
 	stat->tx_multi_colls += smb->tx_multi_colls;
 	stat->tx_late_colls += smb->tx_late_colls;
 	stat->tx_excess_colls += smb->tx_excess_colls;
-	stat->tx_abort += smb->tx_abort;
 	stat->tx_underrun += smb->tx_underrun;
 	stat->tx_desc_underrun += smb->tx_desc_underrun;
 	stat->tx_lenerrs += smb->tx_lenerrs;
@@ -1261,17 +1293,10 @@ ale_stats_update(struct ale_softc *sc)
 
 	ifp->if_collisions += smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +
-	    smb->tx_abort * HDPX_CFG_RETRY_DEFAULT;
+	    smb->tx_excess_colls * HDPX_CFG_RETRY_DEFAULT;
 
-	/*
-	 * XXX
-	 * tx_pkts_truncated counter looks suspicious. It constantly
-	 * increments with no sign of Tx errors. This may indicate
-	 * the counter name is not correct one so I've removed the
-	 * counter in output errors.
-	 */
-	ifp->if_oerrors += smb->tx_abort + smb->tx_late_colls +
-	    smb->tx_underrun;
+	ifp->if_oerrors += smb->tx_late_colls + smb->tx_excess_colls +
+	    smb->tx_underrun + smb->tx_pkts_truncated;
 
 	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
@@ -1287,6 +1312,7 @@ ale_intr(void *xsc)
 	uint32_t status;
 
 	status = CSR_READ_4(sc, ALE_INTR_STATUS);
+	printf("%s: status = %#08x\n", __func__, status);
 	if ((status & ALE_INTRS) == 0)
 		return 0;
 
@@ -1561,6 +1587,7 @@ ale_tick(void *xsc)
 	struct mii_data *mii = &sc->sc_miibus;
 	int s;
 
+	printf("%s: called\n", __func__);
 	s = splnet();
 	mii_tick(mii);
 	ale_stats_update(sc);
@@ -1575,10 +1602,8 @@ ale_reset(struct ale_softc *sc)
 	uint32_t reg;
 	int i;
 
-	/* Initialize PCIe module. From Linux. */
-	CSR_WRITE_4(sc, 0x1008, CSR_READ_4(sc, 0x1008) | 0x8000);
+	CSR_WRITE_4(sc, ALE_MASTER_CFG, MASTER_LED_MODE | MASTER_RESET);
 
-	CSR_WRITE_4(sc, ALE_MASTER_CFG, MASTER_RESET);
 	for (i = ALE_RESET_TIMEOUT; i > 0; i--) {
 		DELAY(10);
 		if ((CSR_READ_4(sc, ALE_MASTER_CFG) & MASTER_RESET) == 0)
@@ -1596,6 +1621,9 @@ ale_reset(struct ale_softc *sc)
 	if (i == 0)
 		printf("%s: reset timeout(0x%08x)!\n", device_xname(sc->sc_dev),
 		    reg);
+
+	/* Initialize PCIe module. From Linux. */
+	CSR_WRITE_4(sc, 0x1008, CSR_READ_4(sc, 0x1008) | 0x8000);
 }
 
 static int
@@ -1996,27 +2024,37 @@ ale_rxfilter(struct ale_softc *sc)
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
+	/* Program new filter. */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
+
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
+		}
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
 			rxcfg |= MAC_CFG_PROMISC;
-		else
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
 			rxcfg |= MAC_CFG_ALLMULTI;
 		mchash[0] = mchash[1] = 0xFFFFFFFF;
-	} else {
-		/* Program new filter. */
-		memset(mchash, 0, sizeof(mchash));
-
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-			ETHER_NEXT_MULTI(step, enm);
-		}
-		ETHER_UNLOCK(ec);
 	}
-
 	CSR_WRITE_4(sc, ALE_MAR0, mchash[0]);
 	CSR_WRITE_4(sc, ALE_MAR1, mchash[1]);
 	CSR_WRITE_4(sc, ALE_MAC_CFG, rxcfg);
