@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.76 2019/11/19 09:54:07 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.77 2019/11/21 02:59:43 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.76 2019/11/19 09:54:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.77 2019/11/21 02:59:43 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1928,33 +1928,34 @@ vge_miibus_statchg(struct ifnet *ifp)
 	 * always implied, so we turn on the forced mode bit but leave
 	 * the FDX bit cleared.
 	 */
-
 	dctl = CSR_READ_1(sc, VGE_DIAGCTL);
 
-	switch (IFM_SUBTYPE(ife->ifm_media)) {
-	case IFM_AUTO:
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
 		dctl &= ~VGE_DIAGCTL_MACFORCE;
 		dctl &= ~VGE_DIAGCTL_FDXFORCE;
-		break;
-	case IFM_1000_T:
+	} else {
+		u_int ifmword;
+
+		/* If the link is up, use the current active media. */
+		if ((mii->mii_media_status & IFM_ACTIVE) != 0)
+			ifmword = mii->mii_media_active;
+		else
+			ifmword = ife->ifm_media;
+
 		dctl |= VGE_DIAGCTL_MACFORCE;
-		dctl &= ~VGE_DIAGCTL_FDXFORCE;
-		dctl |= VGE_DIAGCTL_GMII;
-		break;
-	case IFM_100_TX:
-	case IFM_10_T:
-		dctl |= VGE_DIAGCTL_MACFORCE;
-		dctl &= ~VGE_DIAGCTL_GMII;
-		if ((ife->ifm_media & IFM_FDX) != 0)
+		if ((ifmword & IFM_FDX) != 0)
 			dctl |= VGE_DIAGCTL_FDXFORCE;
 		else
 			dctl &= ~VGE_DIAGCTL_FDXFORCE;
-		break;
-	default:
-		printf("%s: unknown media type: %x\n",
-		    device_xname(sc->sc_dev),
-		    IFM_SUBTYPE(ife->ifm_media));
-		break;
+
+		if (IFM_SUBTYPE(ifmword) == IFM_1000_T) {
+			/*
+			 * It means the user setting is not auto but it's
+			 * 1000baseT-FDX or 1000baseT.
+			 */
+			dctl |= VGE_DIAGCTL_GMII;
+		} else
+			dctl &= ~VGE_DIAGCTL_GMII;
 	}
 
 	CSR_WRITE_1(sc, VGE_DIAGCTL, dctl);
