@@ -1,7 +1,7 @@
-/*	$NetBSD: userret.h,v 1.28 2019/05/17 03:34:27 ozaki-r Exp $	*/
+/*	$NetBSD: userret.h,v 1.29 2019/11/21 19:24:02 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2003, 2006, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,48 +70,39 @@
 #include <sys/psref.h>
 
 /*
- * Define the MI code needed before returning to user mode, for
- * trap and syscall.
+ * Define the MI code needed before returning to user mode, for trap and
+ * syscall.
+ *
+ * We handle "exceptional" events: pending signals, stop/exit actions, etc. 
+ * Note that the event must be flagged BEFORE any AST is posted as we are
+ * reading unlocked.
  */
 static __inline void
 mi_userret(struct lwp *l)
 {
-#ifndef __HAVE_PREEMPTION
 	struct cpu_info *ci;
-#endif
 
-	KASSERT(l->l_blcnt == 0);
-#ifndef __HAVE_PREEMPTION
-	KASSERT(curcpu()->ci_biglock_count == 0);
-#endif
-
-	/*
-	 * Handle "exceptional" events: pending signals, stop/exit actions,
-	 * etc.  Note that the event must be flagged BEFORE any AST is
-	 * posted as we are reading unlocked.
-	 */
-#ifdef __HAVE_PREEMPTION
-	if (__predict_false(l->l_flag & LW_USERRET)) {
-		lwp_userret(l);
-	}
-	l->l_kpriority = false;
-	/*
-	 * cpu_set_curpri(prio) is a MD optimized version of:
-	 *
-	 *	kpreempt_disable();
-	 *	curcpu()->ci_schedstate.spc_curpriority = prio;
-	 *	kpreempt_enable();
-	 */
-	cpu_set_curpri(l->l_priority);	/* XXX this needs to die */
-#else
+	KPREEMPT_DISABLE(l);
 	ci = l->l_cpu;
+	KASSERT(l->l_blcnt == 0);
+	KASSERT(ci->ci_biglock_count == 0);
+	if (__predict_false(ci->ci_want_resched)) {
+		preempt();
+		ci = l->l_cpu;
+	}
+#ifdef __HAVE_FAST_SOFTINTS
+	if (__predict_false(l->l_flag & LW_USERRET)) {
+#else
 	if (((l->l_flag & LW_USERRET) | ci->ci_data.cpu_softints) != 0) {
+#endif
+		KPREEMPT_ENABLE(l);
 		lwp_userret(l);
+		KPREEMPT_DISABLE(l);
 		ci = l->l_cpu;
 	}
 	l->l_kpriority = false;
 	ci->ci_schedstate.spc_curpriority = l->l_priority;
-#endif
+	KPREEMPT_ENABLE(l);
 
 	LOCKDEBUG_BARRIER(NULL, 0);
 	KASSERT(l->l_nopreempt == 0);

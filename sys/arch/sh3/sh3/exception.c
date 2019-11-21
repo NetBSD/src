@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.67 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: exception.c,v 1.68 2019/11/21 19:24:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.67 2019/04/06 03:06:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.68 2019/11/21 19:24:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -478,11 +478,6 @@ ast(struct lwp *l, struct trapframe *tf)
 		if (l->l_pflag & LP_OWEUPC) {
 			l->l_pflag &= ~LP_OWEUPC;
 			ADDUPROF(l);
-		}
-
-		if (l->l_cpu->ci_want_resched) {
-			/* We are being preempted. */
-			preempt();
 		}
 
 		userret(l);
