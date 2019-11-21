@@ -32,7 +32,7 @@
 #define __PMAP_PRIVATE
 #define __UFETCHSTORE_PRIVATE
 
-__RCSID("$NetBSD: trap.c,v 1.3 2019/06/16 07:42:52 maxv Exp $");
+__RCSID("$NetBSD: trap.c,v 1.4 2019/11/21 19:24:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,10 +445,6 @@ cpu_ast(struct trapframe *tf)
 	if (curlwp->l_pflag & LP_OWEUPC) {
 		curlwp->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(curlwp);
-	}
-
-	if (ci->ci_want_resched) {
-		preempt();
 	}
 }
 

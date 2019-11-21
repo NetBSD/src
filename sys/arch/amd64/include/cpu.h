@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.65 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: cpu.h,v 1.66 2019/11/21 19:23:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,21 +82,9 @@ x86_curlwp(void)
 	    (*(struct cpu_info * const *)offsetof(struct cpu_info, ci_curlwp)));
 	return l;
 }
-
-__inline static void __unused
-cpu_set_curpri(int pri)
-{
-
-	__asm volatile(
-	    "movl %1, %%gs:%0" :
-	    "=m" (*(struct cpu_info *)offsetof(struct cpu_info, ci_schedstate.spc_curpriority)) :
-	    "r" (pri)
-	);
-}
 #else
 struct cpu_info *x86_curcpu(void);
 lwp_t *x86_curlwp(void);
-void cpu_set_curpri(int);
 #endif
 
 #endif	/* __GNUC__ && !_MODULE */
