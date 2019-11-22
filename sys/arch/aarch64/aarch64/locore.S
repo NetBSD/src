@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.44 2019/10/20 14:03:51 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.45 2019/11/22 05:21:19 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.44 2019/10/20 14:03:51 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.45 2019/11/22 05:21:19 mlelstv Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -179,6 +179,13 @@ vstart:
 	ADDR	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 	DPRINTREG("curcpu           = ", x0);
+
+	/* get cache configuration */
+	mrs	x0, tpidr_el1		/* curcpu */
+	mrs     x1, mpidr_el1
+	bl	aarch64_gettopology
+	mov	x0, xzr
+	bl	aarch64_getcacheinfo
 
 #ifdef KASAN
 	ADDR	x0, lwp0uspace
