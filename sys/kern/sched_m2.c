@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.33 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.34 2019/11/22 20:07:53 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.33 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.34 2019/11/22 20:07:53 ad Exp $");
 
 #include <sys/param.h>
 
@@ -282,19 +282,20 @@ sched_oncpu(lwp_t *l)
  */
 
 /*
- * Called once per time-quantum.  This routine is CPU-local and runs at
- * IPL_SCHED, thus the locking is not needed.
+ * Called once per time-quantum, with the running LWP lock held (spc_lwplock).
  */
 void
 sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
-	struct lwp *l = curlwp;
+	struct lwp *l = ci->ci_data.cpu_onproc;
 	struct proc *p;
 
 	if (__predict_false(CURCPU_IDLE_P()))
 		return;
 
+	lwp_lock(l);
+	KASSERT(l->l_mutex != spc->spc_mutex);
 	switch (l->l_class) {
 	case SCHED_FIFO:
 		/*
@@ -303,6 +304,7 @@ sched_tick(struct cpu_info *ci)
 		 */
 		KASSERT(l->l_priority > PRI_HIGHEST_TS);
 		spc->spc_ticks = l->l_sched.timeslice;
+		lwp_unlock(l);
 		return;
 	case SCHED_OTHER:
 		/*
@@ -328,9 +330,10 @@ sched_tick(struct cpu_info *ci)
 	 */
 	if (lwp_eprio(l) <= spc->spc_maxpriority || l->l_target_cpu) {
 		spc->spc_flags |= SPCF_SHOULDYIELD;
-		cpu_need_resched(ci, 0);
+		cpu_need_resched(ci, l, RESCHED_UPREEMPT);
 	} else
-		spc->spc_ticks = l->l_sched.timeslice;
+		spc->spc_ticks = l->l_sched.timeslice; 
+	lwp_unlock(l);
 }
 
 /*
