@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.4 2019/11/17 17:33:34 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.5 2019/11/22 19:48:58 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.4 2019/11/17 17:33:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.5 2019/11/22 19:48:58 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -226,7 +226,7 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	struct sunxi_dwhdmi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	struct clk *clk_iahb, *clk_isfr;
+	struct clk *clk_iahb, *clk_isfr, *clk_tmds;
 	struct fdtbus_reset *rst;
 	bus_addr_t addr;
 	bus_size_t size;
@@ -251,6 +251,12 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	clk_isfr = fdtbus_clock_get(phandle, "isfr");
 	if (clk_isfr == NULL || clk_enable(clk_isfr) != 0) {
 		aprint_error(": couldn't enable isfr clock\n");
+		return;
+	}
+
+	clk_tmds = fdtbus_clock_get(phandle, "tmds");
+	if (clk_tmds == NULL || clk_enable(clk_tmds) != 0) {
+		aprint_error(": couldn't enable tmds clock\n");
 		return;
 	}
 
