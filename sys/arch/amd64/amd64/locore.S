@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.191 2019/11/21 19:27:54 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.192 2019/11/22 23:36:25 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1519,24 +1519,16 @@ END(sse2_idlezero_page)
 /*
  * void pagezero(vaddr_t va)
  *
- * Zero a page without polluting the cache.
+ * Zero a page.
  */
 ENTRY(pagezero)
-	movq	$-PAGE_SIZE,%rdx
-	subq	%rdx,%rdi
+	pushq	%rbp
+	movq	%rsp,%rbp
+	movq	$(PAGE_SIZE / 8),%rcx
 	xorq	%rax,%rax
-1:
-	movnti	%rax,(%rdi,%rdx)
-	movnti	%rax,8(%rdi,%rdx)
-	movnti	%rax,16(%rdi,%rdx)
-	movnti	%rax,24(%rdi,%rdx)
-	movnti	%rax,32(%rdi,%rdx)
-	movnti	%rax,40(%rdi,%rdx)
-	movnti	%rax,48(%rdi,%rdx)
-	movnti	%rax,56(%rdi,%rdx)
-	addq	$64,%rdx
-	jne	1b
-	sfence
+	rep
+	stosq
+	leave
 	ret
 END(pagezero)
 
