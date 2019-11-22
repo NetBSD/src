@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.9 2019/11/21 21:48:33 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.10 2019/11/22 20:04:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008-2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.9 2019/11/21 21:48:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.10 2019/11/22 20:04:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -264,8 +264,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	tp = (pmap_tlb_packet_t *)ci->ci_pmap_data;
 
 	/* Whole address flush will be needed if PTE_G is set. */
-	CTASSERT(PTE_G == (uint16_t)PTE_G);
-	tp->tp_global |= ((pte & PTE_G) != 0);;
+	tp->tp_global |= ((pte & PTE_G) != 0);
 	count = tp->tp_count;
 
 	if (count < TP_MAXVA && va != (vaddr_t)-1LL) {
