@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.114 2019/11/22 08:05:10 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.115 2019/11/22 15:30:39 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6184,4 +6184,18 @@ doc/3RDPARTY					(manually adjusted)
 
 	Import dhcpcd-8.1.2.
 	[roy, ticket #461]
+
+etc/Makefile.params				1.21
+share/mk/bsd.README				1.397
+
+	Document NETBSD_OFFICIAL_RELEASE and add it to /etc/release - it is
+	important information when trying to reproduce a build.
+	[martin, ticket #462]
+
+sys/arch/arm/omap/obio_mputmr.c			1.9
+sys/arch/evbarm/beagle/beagle_machdep.c		1.79
+sys/arch/xen/xen/xenevt.c			1.54
+
+	Make these files compilable w/o options DIAGNOSTIC
+	[martin, ticket #463]
 
