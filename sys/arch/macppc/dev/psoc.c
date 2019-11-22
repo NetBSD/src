@@ -1,4 +1,4 @@
- /* $NetBSD: psoc.c,v 1.1 2019/11/01 17:51:56 macallan Exp $ */
+ /* $NetBSD: psoc.c,v 1.2 2019/11/22 05:16:54 macallan Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -30,15 +30,19 @@
  * fan controller found in 1GHz TiBook
  *
  * register values from OF:
- * fan1 - 0x20 ( status ), 0x31 ( data)
+ * fan1 - 0x20 ( status ), 0x31 ( data )
  * fan2 - 0x26 ( status ), 0x45 ( data )
- * fan3 - 0x59
+ * fan status byte 0:
+ * 0x5* - fan is running, 0x6* - fan stopped
+ * byte 1: unknown, 0x80 seems always set, lower bits seem to fluctuate
+ * byte 2: lower 6 bit seem to indicate speed
+ * fan speed may be lower 6 bit of byte 2 and lower 6 of byte 1 
  * temperature sensors start at 6, two bytes each, first appears to be
  * the temperature in degrees Celsius
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.1 2019/11/01 17:51:56 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.2 2019/11/22 05:16:54 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,6 +75,8 @@ static void	psoc_attach(device_t, device_t, void *);
 
 static void	psoc_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
 
+static void	psoc_dump(struct psoc_softc *);
+
 CFATTACH_DECL_NEW(psoc, sizeof(struct psoc_softc),
     psoc_match, psoc_attach, NULL, NULL);
 
@@ -98,7 +104,7 @@ psoc_attach(device_t parent, device_t self, void *aux)
 	struct i2c_attach_args *ia = aux;
 	char path[256];
 	envsys_data_t *s;
-	int error, ih, r;
+	int error, ih, r, i;
 
 	sc->sc_dev = self;
 	sc->sc_i2c = ia->ia_tag;
@@ -122,19 +128,8 @@ psoc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_sme->sme_refresh = psoc_sensors_refresh;
 	sc->sc_nsensors = 0;
 
-	int i, j;
-	uint8_t data, cmd;
-	for (i = 0; i < 0x7f; i+= 8) {
-		printf("%02x:", i);
-		for (j = 0; j < 8; j++) {
-			cmd = i + j;
-			data = 0;
-			iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-			    sc->sc_addr, &cmd, 1, &data, 1, 0);
-			printf(" %02x", data);
-		}
-		printf("\n");
-	}
+	psoc_dump(sc);
+
 	for (i = 0; i < 4; i++) {
 		r = i * 2 + 6;
 		s = &sc->sc_sensors[sc->sc_nsensors];
@@ -145,8 +140,8 @@ psoc_attach(device_t parent, device_t self, void *aux)
 		sysmon_envsys_sensor_attach(sc->sc_sme, s);
 		sc->sc_nsensors++;
 	}
-#if 0
-	for (r = 0x31; r < 0x50; r += 0x14) {
+
+	for (r = 0x20; r < 0x2b; r += 0x06) {
 		s = &sc->sc_sensors[sc->sc_nsensors];
 		s->state = ENVSYS_SINVALID;
 		s->units = ENVSYS_SFANRPM;
@@ -155,7 +150,7 @@ psoc_attach(device_t parent, device_t self, void *aux)
 		sysmon_envsys_sensor_attach(sc->sc_sme, s);
 		sc->sc_nsensors++;
 	}
-#endif
+
 	sysmon_envsys_register(sc->sc_sme);
 }
 
@@ -164,8 +159,8 @@ psoc_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct psoc_softc *sc = sme->sme_cookie;
 	uint8_t cmd = 6;
-	uint8_t buf[0x28];
-	int error = 1, data, i;
+	uint8_t buf[0x28], *bptr;
+	int error = 1, data;
 
 	if ( edata->private < 0x20) {
 		cmd = 0;
@@ -183,24 +178,53 @@ psoc_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			/* Celsius -> microkelvin */
 			edata->value_cur = ((int)data * 1000000) + 273150000;
 		}
+#ifdef PSOC_DEBUG
+		if (edata->private == 6)
+			psoc_dump(sc);
+#endif
 	} else {
-		cmd = 0x31;
+		cmd = 0x20;
 		iic_acquire_bus(sc->sc_i2c, 0);
 		error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-			    sc->sc_addr, &cmd, 1, buf, 0x28, 0);
+			    sc->sc_addr, &cmd, 1, buf, 12, 0);
 		iic_release_bus(sc->sc_i2c, 0);
 		if (error) return;
-		if (edata->private > 0) {
-			data = buf[edata->private - 0x20];
-			edata->value_cur = data;
-			for (i = 0; i < 14; i++)
-				printf(" %02x", buf[edata->private - 0x31 + i]);
-			printf("\n");
+		if (edata->private >= 0x20) {
+			bptr = &buf[edata->private - 0x20];
+			switch (bptr[0] & 0xf0) {
+				case 0x50:
+					data = bptr[edata->private - 0x20];
+					edata->value_cur = ((bptr[2] & 0x3f) << 6) | (bptr[1] & 0x3f);
+					break;
+				case 0x60:
+					edata->value_cur = 0;
+					break;
+				default:
+					error = -1;
+			}	
 		}
 	}
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
 	} else {
 		edata->state = ENVSYS_SVALID;
+	}
+}
+
+static void
+psoc_dump(struct psoc_softc *sc)
+{
+	int i, j;
+	uint8_t data, cmd;
+	for (i = 0x20; i < 0x5f; i+= 8) {
+		printf("%02x:", i);
+		for (j = 0; j < 8; j++) {
+			cmd = i + j;
+			data = 0;
+			iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
+			    sc->sc_addr, &cmd, 1, &data, 1, 0);
+			printf(" %02x", data);
+		}
+		printf("\n");
 	}
 }
