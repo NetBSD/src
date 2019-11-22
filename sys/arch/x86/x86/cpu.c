@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.174 2019/11/05 20:19:17 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.175 2019/11/22 23:36:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.174 2019/11/05 20:19:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.175 2019/11/22 23:36:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -723,7 +723,7 @@ cpu_boot_secondary_processors(void)
 	tsc_tc_init();
 
 	/* Enable zeroing of pages in the idle loop if we have SSE2. */
-	vm_page_zero_enable = ((cpu_feature[0] & CPUID_SSE2) != 0);
+	vm_page_zero_enable = false; /* ((cpu_feature[0] & CPUID_SSE2) != 0); */
 }
 #endif
 
