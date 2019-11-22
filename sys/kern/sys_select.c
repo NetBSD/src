@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.49 2019/11/21 21:42:30 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.50 2019/11/22 20:04:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.49 2019/11/21 21:42:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.50 2019/11/22 20:04:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -114,9 +114,9 @@ __KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.49 2019/11/21 21:42:30 ad Exp $");
 
 /*
  * Per-cluster state for select()/poll().  For a system with fewer
- * than 32 CPUs, this gives us per-CPU clusters.
+ * than 64 CPUs, this gives us per-CPU clusters.
  */
-#define	SELCLUSTERS	32
+#define	SELCLUSTERS	64
 #define	SELCLUSTERMASK	(SELCLUSTERS - 1)
 
 typedef struct selcluster {
