@@ -830,7 +830,8 @@ eloop_new(void)
 	return eloop;
 }
 
-void eloop_free(struct eloop *eloop)
+void
+eloop_clear(struct eloop *eloop)
 {
 	struct eloop_event *e;
 	struct eloop_timeout *t;
@@ -839,6 +840,12 @@ void eloop_free(struct eloop *eloop)
 		return;
 
 	free(eloop->event_fds);
+	eloop->event_fds = NULL;
+	eloop->events_len = 0;
+	eloop->events_maxfd = -1;
+	eloop->signals = NULL;
+	eloop->signals_len = 0;
+
 	while ((e = TAILQ_FIRST(&eloop->events))) {
 		TAILQ_REMOVE(&eloop->events, e, next);
 		free(e);
@@ -855,11 +862,23 @@ void eloop_free(struct eloop *eloop)
 		TAILQ_REMOVE(&eloop->free_timeouts, t, next);
 		free(t);
 	}
-#if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
-	close(eloop->poll_fd);
-#elif defined(HAVE_POLL)
+
+#if defined(HAVE_POLL)
 	free(eloop->fds);
+	eloop->fds = NULL;
+	eloop->fds_len = 0;
 #endif
+}
+
+void
+eloop_free(struct eloop *eloop)
+{
+
+#if defined(HAVE_KQUEUE) || defined(HAVE_EPOLL)
+	if (eloop != NULL)
+		close(eloop->poll_fd);
+#endif
+	eloop_clear(eloop);
 	free(eloop);
 }
 

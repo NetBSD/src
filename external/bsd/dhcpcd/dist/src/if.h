@@ -65,6 +65,7 @@
 #include "dhcpcd.h"
 #include "ipv4.h"
 #include "ipv6.h"
+#include "ipv6nd.h"
 #include "route.h"
 
 #define EUI64_ADDR_LEN			8
@@ -195,6 +196,7 @@ int if_addrflags(const struct interface *, const struct in_addr *,
 #endif
 
 #ifdef INET6
+void if_disable_rtadv(void);
 void if_setup_inet6(const struct interface *);
 #ifdef IPV6_MANAGETEMPADDR
 int ip6_use_tempaddr(const char *ifname);
@@ -205,6 +207,7 @@ int ip6_temp_valid_lifetime(const char *ifname);
 #endif
 int ip6_forwarding(const char *ifname);
 
+int if_applyra(const struct ra *);
 int if_address6(unsigned char, const struct ipv6_addr *);
 int if_addrflags6(const struct interface *, const struct in6_addr *,
     const char *);

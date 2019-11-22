@@ -740,8 +740,12 @@ if_findifpfromcmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, int *hoplimit)
 	struct cmsghdr *cm;
 	unsigned int ifindex = 0;
 	struct interface *ifp;
-#if defined(INET) && defined(IP_PKTINFO)
+#ifdef INET
+#ifdef IP_RECVIF
+	struct sockaddr_dl sdl;
+#else
 	struct in_pktinfo ipi;
+#endif
 #endif
 #ifdef INET6
 	struct in6_pktinfo ipi6;
@@ -753,15 +757,27 @@ if_findifpfromcmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, int *hoplimit)
 	     cm;
 	     cm = (struct cmsghdr *)CMSG_NXTHDR(msg, cm))
 	{
-#if defined(INET) && defined(IP_PKTINFO)
+#ifdef INET
 		if (cm->cmsg_level == IPPROTO_IP) {
 			switch(cm->cmsg_type) {
+#ifdef IP_RECVIF
+			case IP_RECVIF:
+				if (cm->cmsg_len <
+				    offsetof(struct sockaddr_dl, sdl_index) +
+				    sizeof(sdl.sdl_index))
+					continue;
+				memcpy(&sdl, CMSG_DATA(cm),
+				    MIN(sizeof(sdl), cm->cmsg_len));
+				ifindex = sdl.sdl_index;
+				break;
+#else
 			case IP_PKTINFO:
 				if (cm->cmsg_len != CMSG_LEN(sizeof(ipi)))
 					continue;
 				memcpy(&ipi, CMSG_DATA(cm), sizeof(ipi));
 				ifindex = (unsigned int)ipi.ipi_ifindex;
 				break;
+#endif
 			}
 		}
 #endif

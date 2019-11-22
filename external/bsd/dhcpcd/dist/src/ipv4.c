@@ -654,7 +654,7 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 #endif
 		ia->flags = IPV4_AF_NEW;
 	} else
-		ia->flags |= ~IPV4_AF_NEW;
+		ia->flags &= ~IPV4_AF_NEW;
 
 	ia->mask = *mask;
 	ia->brd = *bcast;
@@ -687,7 +687,8 @@ ipv4_addaddr(struct interface *ifp, const struct in_addr *addr,
 		if (errno != EEXIST)
 			logerr("%s: if_addaddress",
 			    __func__);
-		free(ia);
+		if (ia->flags & IPV4_AF_NEW)
+			free(ia);
 		return NULL;
 	}
 
@@ -941,7 +942,7 @@ ipv4_handleifa(struct dhcpcd_ctx *ctx,
 #endif
 	}
 
-	if (cmd == RTM_DELADDR && ia != NULL)
+	if (cmd == RTM_DELADDR)
 		free(ia);
 }
 
@@ -951,15 +952,13 @@ ipv4_free(struct interface *ifp)
 	struct ipv4_state *state;
 	struct ipv4_addr *ia;
 
-	if (ifp) {
-		state = IPV4_STATE(ifp);
-		if (state) {
-		        while ((ia = TAILQ_FIRST(&state->addrs))) {
-				TAILQ_REMOVE(&state->addrs, ia, next);
-				free(ia);
-			}
-			free(state->buffer);
-			free(state);
-		}
+	if (ifp == NULL || (state = IPV4_STATE(ifp)) == NULL)
+		return;
+
+	while ((ia = TAILQ_FIRST(&state->addrs))) {
+		TAILQ_REMOVE(&state->addrs, ia, next);
+		free(ia);
 	}
+	free(state->buffer);
+	free(state);
 }

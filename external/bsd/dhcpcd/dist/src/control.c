@@ -274,9 +274,8 @@ control_stop(struct dhcpcd_ctx *ctx)
 
 	if (ctx->control_fd == -1)
 		return 0;
-	eloop_event_delete(ctx->eloop, ctx->control_fd);
-	close(ctx->control_fd);
-	ctx->control_fd = -1;
+
+	control_close(ctx);
 	if (unlink(ctx->control_sock) == -1)
 		retval = -1;
 
@@ -455,6 +454,7 @@ control_close(struct dhcpcd_ctx *ctx)
 {
 
 	if (ctx->control_fd != -1) {
+		eloop_event_delete(ctx->eloop, ctx->control_fd);
 		close(ctx->control_fd);
 		ctx->control_fd = -1;
 	}
