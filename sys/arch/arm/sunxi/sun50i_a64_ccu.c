@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.15 2019/11/17 19:51:12 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.16 2019/11/22 19:46:38 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.15 2019/11/17 19:51:12 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.16 2019/11/22 19:46:38 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -521,7 +521,7 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_GATE(A64_CLK_BUS_CSI, "bus-csi", "ahb1",
 	    BUS_CLK_GATING_REG1, 8),
 	SUNXI_CCU_GATE(A64_CLK_BUS_HDMI, "bus-hdmi", "ahb1",
-	    BUS_CLK_GATING_REG1, 10),
+	    BUS_CLK_GATING_REG1, 11),
 	SUNXI_CCU_GATE(A64_CLK_BUS_DE, "bus-de", "ahb1",
 	    BUS_CLK_GATING_REG1, 12),
 	SUNXI_CCU_GATE(A64_CLK_BUS_GPU, "bus-gpu", "ahb1",
