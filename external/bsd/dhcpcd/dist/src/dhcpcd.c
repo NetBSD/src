@@ -186,6 +186,12 @@ handle_exit_timeout(void *arg)
 	ctx = arg;
 	logerrx("timed out");
 	if (!(ctx->options & DHCPCD_MASTER)) {
+		struct interface *ifp;
+
+		TAILQ_FOREACH(ifp, ctx->ifaces, next) {
+			if (ifp->active == IF_ACTIVE_USER)
+				script_runreason(ifp, "STOPPED");
+		}
 		eloop_exit(ctx->eloop, EXIT_FAILURE);
 		return;
 	}
@@ -702,6 +708,21 @@ dhcpcd_initstate(struct interface *ifp, unsigned long long options)
 	dhcpcd_initstate1(ifp, ifp->ctx->argc, ifp->ctx->argv, options);
 }
 
+static void
+dhcpcd_reportssid(struct interface *ifp)
+{
+	char pssid[IF_SSIDLEN * 4];
+
+	if (print_string(pssid, sizeof(pssid), OT_ESCSTRING,
+	    ifp->ssid, ifp->ssid_len) == -1)
+	{
+		logerr(__func__);
+		return;
+	}
+
+	loginfox("%s: connected to Access Point `%s'", ifp->name, pssid);
+}
+
 void
 dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
     const char *ifname)
@@ -773,6 +794,7 @@ dhcpcd_handlecarrier(struct dhcpcd_ctx *ctx, int carrier, unsigned int flags,
 				if (ifp->ssid_len != olen ||
 				    memcmp(ifp->ssid, ossid, ifp->ssid_len))
 				{
+					dhcpcd_reportssid(ifp);
 #ifdef NOCARRIER_PRESERVE_IP
 					dhcpcd_drop(ifp, 0);
 #endif
@@ -970,7 +992,8 @@ run_preinit(struct interface *ifp)
 		return;
 
 	script_runreason(ifp, "PREINIT");
-
+	if (ifp->wireless)
+		dhcpcd_reportssid(ifp);
 	if (ifp->options->options & DHCPCD_LINK && ifp->carrier != LINK_UNKNOWN)
 		script_runreason(ifp,
 		    ifp->carrier == LINK_UP ? "CARRIER" : "NOCARRIER");
@@ -1989,6 +2012,12 @@ printpidfile:
 	    ctx.options & DHCPCD_IPV4 ? " [ip4]" : "",
 	    ctx.options & DHCPCD_IPV6 ? " [ip6]" : "");
 
+#ifdef BSD
+	/* Disable the kernel RTADV sysctl as early as possible. */
+	if (ctx.options & DHCPCD_IPV6 && ctx.options & DHCPCD_IPV6RS)
+		if_disable_rtadv();
+#endif
+
 	if (if_opensockets(&ctx) == -1) {
 		logerr("%s: if_opensockets", __func__);
 		goto exit_failure;
@@ -2127,6 +2156,7 @@ exit1:
 			if_free(ifp);
 		}
 		free(ctx.ifaces);
+		ctx.ifaces = NULL;
 	}
 	free_options(&ctx, ifo);
 #ifdef HAVE_OPEN_MEMSTREAM
