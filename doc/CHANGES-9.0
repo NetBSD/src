@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.113 2019/11/21 19:29:58 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.114 2019/11/22 08:05:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6163,4 +6163,25 @@ distrib/notes/x68k/contents			1.20
 	Add missing .bullet) and replace some versions (more todo later)
 	Pass the set suffix (either .tgz or .tar.xz) from the makefile.
 	Document the rescue set.
+
+external/bsd/dhcpcd/dist/src/arp.c              up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/arp.h              up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/control.c          up to 1.1.1.9
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.33
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.30
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.14
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.29
+external/bsd/dhcpcd/dist/src/eloop.c            up to 1.1.1.8
+external/bsd/dhcpcd/dist/src/eloop.h            up to 1.1.1.6
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.15
+external/bsd/dhcpcd/dist/src/if.c               up to 1.1.1.18
+external/bsd/dhcpcd/dist/src/if.h               up to 1.1.1.13
+external/bsd/dhcpcd/dist/src/ipv4.c             up to 1.1.1.19
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.13
+external/bsd/dhcpcd/dist/src/ipv6nd.h           up to 1.1.1.14
+external/bsd/dhcpcd/dist/src/script.c           up to 1.1.1.12
+doc/3RDPARTY					(manually adjusted)
+
+	Import dhcpcd-8.1.2.
+	[roy, ticket #461]
 
