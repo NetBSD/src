@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.29 2019/11/21 19:24:02 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.30 2019/11/22 23:38:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019 The NetBSD Foundation, Inc.
@@ -101,6 +101,12 @@ mi_userret(struct lwp *l)
 		ci = l->l_cpu;
 	}
 	l->l_kpriority = false;
+	/*
+	 * lwp_eprio() is too involved to use here unlocked.  At this point
+	 * it only matters for PTHREAD_PRIO_PROTECT; setting a too low value
+	 * is OK because the scheduler will find out the true value if we
+	 * end up in mi_switch().
+	 */
 	ci->ci_schedstate.spc_curpriority = l->l_priority;
 	KPREEMPT_ENABLE(l);
 
