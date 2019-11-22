@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.59 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.60 2019/11/22 15:57:49 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.59 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.60 2019/11/22 15:57:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -113,9 +113,7 @@ ELFNAMEEND(coredump)(struct lwp *l, struct coredump_iostate *cookie)
 	off_t notestart;
 	size_t notesize;
 	int error, i;
-#ifdef DIAGNOSTIC
-	off_t offset;
-#endif
+	off_t offset __diagused;
 
 	struct note_state ns;
 	struct note_buf *nb;
