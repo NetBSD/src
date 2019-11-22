@@ -1,4 +1,4 @@
-/*	$NetBSD: h_mem_assist.c,v 1.17 2019/10/27 07:08:15 maxv Exp $	*/
+/*	$NetBSD: h_mem_assist.c,v 1.18 2019/11/22 10:26:32 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -113,7 +113,7 @@ run_machine(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 			return;
 
 		default:
-			printf("Invalid!\n");
+			printf("Invalid VMEXIT: 0x%lx\n", exit->reason);
 			return;
 		}
 	}
@@ -177,22 +177,22 @@ extern uint8_t test_64bit_15_begin, test_64bit_15_end;
 extern uint8_t test_64bit_16_begin, test_64bit_16_end;
 
 static const struct test tests64[] = {
-	{ "test1 - MOV", &test1_begin, &test1_end, 0x3004, 0 },
-	{ "test2 - OR",  &test2_begin, &test2_end, 0x16FF, 0 },
-	{ "test3 - AND", &test3_begin, &test3_end, 0x1FC0, 0 },
-	{ "test4 - XOR", &test4_begin, &test4_end, 0x10CF, 0 },
-	{ "test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00, 0 },
-	{ "test6 - DMO", &test6_begin, &test6_end, 0xFFAB, 0 },
-	{ "test7 - STOS", &test7_begin, &test7_end, 0x00123456, 0 },
-	{ "test8 - LODS", &test8_begin, &test8_end, 0x12345678, 0 },
-	{ "test9 - MOVS", &test9_begin, &test9_end, 0x12345678, 0 },
-	{ "test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078, 0 },
-	{ "test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678, 0 },
-	{ "test12 - CMP", &test12_begin, &test12_end, 0x00000001, 0 },
-	{ "test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF, 0 },
-	{ "test14 - TEST", &test14_begin, &test14_end, 0x00000001, 0 },
-	{ "test15 - XCHG", &test_64bit_15_begin, &test_64bit_15_end, 0x123456, 0 },
-	{ "test16 - XCHG", &test_64bit_16_begin, &test_64bit_16_end,
+	{ "64bit test1 - MOV", &test1_begin, &test1_end, 0x3004, 0 },
+	{ "64bit test2 - OR",  &test2_begin, &test2_end, 0x16FF, 0 },
+	{ "64bit test3 - AND", &test3_begin, &test3_end, 0x1FC0, 0 },
+	{ "64bit test4 - XOR", &test4_begin, &test4_end, 0x10CF, 0 },
+	{ "64bit test5 - Address Sizes", &test5_begin, &test5_end, 0x1F00, 0 },
+	{ "64bit test6 - DMO", &test6_begin, &test6_end, 0xFFAB, 0 },
+	{ "64bit test7 - STOS", &test7_begin, &test7_end, 0x00123456, 0 },
+	{ "64bit test8 - LODS", &test8_begin, &test8_end, 0x12345678, 0 },
+	{ "64bit test9 - MOVS", &test9_begin, &test9_end, 0x12345678, 0 },
+	{ "64bit test10 - MOVZXB", &test10_begin, &test10_end, 0x00000078, 0 },
+	{ "64bit test11 - MOVZXW", &test11_begin, &test11_end, 0x00005678, 0 },
+	{ "64bit test12 - CMP", &test12_begin, &test12_end, 0x00000001, 0 },
+	{ "64bit test13 - SUB", &test13_begin, &test13_end, 0x0000000F0000A0FF, 0 },
+	{ "64bit test14 - TEST", &test14_begin, &test14_end, 0x00000001, 0 },
+	{ "64bit test15 - XCHG", &test_64bit_15_begin, &test_64bit_15_end, 0x123456, 0 },
+	{ "64bit test16 - XCHG", &test_64bit_16_begin, &test_64bit_16_end,
 	  0x123456, 0 },
 	{ NULL, NULL, NULL, -1, 0 }
 };
@@ -217,6 +217,9 @@ static void
 reset_machine64(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 {
 	struct nvmm_x64_state *state = vcpu->state;
+
+	if (nvmm_vcpu_getstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
+		err(errno, "nvmm_vcpu_getstate");
 
 	memset(state, 0, sizeof(*state));
 
@@ -365,6 +368,8 @@ test_vm64(void)
 		run_test(&mach, &vcpu, &tests64[i]);
 	}
 
+	if (nvmm_vcpu_destroy(&mach, &vcpu) == -1)
+		err(errno, "nvmm_vcpu_destroy");
 	if (nvmm_machine_destroy(&mach) == -1)
 		err(errno, "nvmm_machine_destroy");
 }
@@ -400,10 +405,10 @@ reset_machine16(struct nvmm_machine *mach, struct nvmm_vcpu *vcpu)
 	struct nvmm_x64_state *state = vcpu->state;
 
 	if (nvmm_vcpu_getstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
-		err(errno, "nvmm_vcpu_setstate");
+		err(errno, "nvmm_vcpu_getstate");
 
 	state->segs[NVMM_X64_SEG_CS].base = 0;
-	state->segs[NVMM_X64_SEG_CS].limit = 0xFFFFFFFF;
+	state->segs[NVMM_X64_SEG_CS].limit = 0x2FFF;
 	state->gprs[NVMM_X64_GPR_RIP] = 0x2000;
 
 	if (nvmm_vcpu_setstate(mach, vcpu, NVMM_X64_STATE_ALL) == -1)
@@ -451,6 +456,8 @@ test_vm16(void)
 		run_test(&mach, &vcpu, &tests16[i]);
 	}
 
+	if (nvmm_vcpu_destroy(&mach, &vcpu) == -1)
+		err(errno, "nvmm_vcpu_destroy");
 	if (nvmm_machine_destroy(&mach) == -1)
 		err(errno, "nvmm_machine_destroy");
 }
