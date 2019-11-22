@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.README,v 1.396 2019/11/18 16:09:21 christos Exp $
+#	$NetBSD: bsd.README,v 1.397 2019/11/22 13:30:19 martin Exp $
 #	@(#)bsd.README	8.2 (Berkeley) 4/2/94
 
 This is the README file for the make "include" files for the NetBSD
@@ -151,6 +151,16 @@ MKCTF		If "no", do not build and install CTF tools, and also
 		don't generate and manipulate CTF data of ELF binaries
 		during build.
 		Default: no
+
+NETBSD_OFFICIAL_RELEASE
+		If defined and set to "yes", the build targets an official
+		NetBSD release which is going to be available from
+		ftp.NetBSD.org / cdn.NetBSD.org. This modifies a few
+		default paths in the installer and also creates different
+		links in the install documentation.
+		The auto-build cluster uses this variable to distinguish
+		"daily" builds from real releases.
+		Default: undefined (no)
 
 NOCTF		Don't generate and manipulate CTF data of ELF binaries
 		during build. It is set internally for standalone programs.
