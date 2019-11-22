@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.134 2019/11/14 16:23:53 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.135 2019/11/22 14:28:46 maxv Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -438,13 +438,22 @@ size_t	 kmsan_strlen(const char *);
 #endif
 
 /* These exist in GCC 3.x, but we don't bother. */
+#if defined(_KERNEL) && defined(KMSAN)
+char	*kmsan_strcat(char *, const char *);
+char	*kmsan_strchr(const char *, int);
+char	*kmsan_strrchr(const char *, int);
+#define	strcat(d, s)		kmsan_strcat(d, s)
+#define	strchr(s, c)		kmsan_strchr(s, c)
+#define	strrchr(s, c)		kmsan_strrchr(s, c)
+#else
 char	*strcat(char *, const char *);
+char	*strchr(const char *, int);
+char	*strrchr(const char *, int);
+#endif
 size_t	 strcspn(const char *, const char *);
 char	*strncpy(char *, const char *, size_t);
 char	*strncat(char *, const char *, size_t);
 int	 strncmp(const char *, const char *, size_t);
-char	*strchr(const char *, int);
-char	*strrchr(const char *, int);
 char	*strstr(const char *, const char *);
 char	*strpbrk(const char *, const char *);
 size_t	 strspn(const char *, const char *);

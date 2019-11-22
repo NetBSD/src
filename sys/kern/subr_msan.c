@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.2 2019/11/15 12:18:46 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.3 2019/11/22 14:28:46 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define KMSAN_NO_INST
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.2 2019/11/15 12:18:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.3 2019/11/22 14:28:46 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -187,7 +187,7 @@ kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 		var = (char *)ptr + 4;
 		strlcpy(buf, var, sizeof(buf));
 		var = buf;
-		fn = strchr(buf, '@');
+		fn = __builtin_strchr(buf, '@');
 		*fn++ = '\0';
 		REPORT("MSan: Uninitialized %s Memory In %s() At Offset "
 		    "%zu, Variable '%s' From %s()\n", typename, hook, off,
@@ -238,7 +238,7 @@ kmsan_report_inline(msan_orig_t orig, unsigned long pc)
 		var = (char *)ptr + 4;
 		strlcpy(buf, var, sizeof(buf));
 		var = buf;
-		fn = strchr(buf, '@');
+		fn = __builtin_strchr(buf, '@');
 		*fn++ = '\0';
 		REPORT("MSan: Uninitialized Variable '%s' From %s()\n",
 		    var, fn);
@@ -752,6 +752,51 @@ kmsan_strlen(const char *str)
 	kmsan_shadow_check(str, (size_t)(s - str) + 1, "strlen");
 	kmsan_init_ret(sizeof(size_t));
 	return (s - str);
+}
+
+char *
+kmsan_strcat(char *dst, const char *src)
+{
+	size_t ldst, lsrc;
+	char *ret;
+
+	kmsan_check_arg(sizeof(dst) + sizeof(src), "strcat");
+
+	ldst = __builtin_strlen(dst);
+	lsrc = __builtin_strlen(src);
+	kmsan_shadow_check(dst, ldst + 1, "strcat");
+	kmsan_shadow_check(src, lsrc + 1, "strcat");
+	ret = __builtin_strcat(dst, src);
+	kmsan_shadow_fill(dst, KMSAN_STATE_INITED, ldst + lsrc + 1);
+
+	kmsan_init_ret(sizeof(char *));
+	return ret;
+}
+
+char *
+kmsan_strchr(const char *s, int c)
+{
+	char *ret;
+
+	kmsan_check_arg(sizeof(s) + sizeof(c), "strchr");
+	kmsan_shadow_check(s, __builtin_strlen(s), "strchr");
+	ret = __builtin_strchr(s, c);
+
+	kmsan_init_ret(sizeof(char *));
+	return ret;
+}
+
+char *
+kmsan_strrchr(const char *s, int c)
+{
+	char *ret;
+
+	kmsan_check_arg(sizeof(s) + sizeof(c), "strrchr");
+	kmsan_shadow_check(s, __builtin_strlen(s), "strrchr");
+	ret = __builtin_strrchr(s, c);
+
+	kmsan_init_ret(sizeof(char *));
+	return ret;
 }
 
 #undef kcopy
