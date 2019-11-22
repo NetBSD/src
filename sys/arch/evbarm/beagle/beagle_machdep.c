@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.78 2019/07/16 14:41:44 skrll Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.79 2019/11/22 14:30:58 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.78 2019/07/16 14:41:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.79 2019/11/22 14:30:58 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -1075,6 +1075,7 @@ void
 beagle_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
+	int rv __diagused;
 
 	if (device_is_a(self, "armperiph")
 	    && device_is_a(device_parent(self), "mainbus")) {
@@ -1180,7 +1181,7 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_int16(dict, "port0-gpio", 80);
 		prop_dictionary_set_bool(dict, "port0-gpioval", true);
 #endif
-		int rv = bus_space_map(iot, OMAP5_CM_CTL_WKUP_REF_CLK0_OUT_REF_CLK1_OUT, 4, 0, &ioh);
+		rv = bus_space_map(iot, OMAP5_CM_CTL_WKUP_REF_CLK0_OUT_REF_CLK1_OUT, 4, 0, &ioh);
 		KASSERT(rv == 0);
 		uint32_t v = bus_space_read_4(iot, ioh, 0);
 		v &= 0xffff;
