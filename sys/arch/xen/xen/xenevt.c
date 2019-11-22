@@ -1,4 +1,4 @@
-/*      $NetBSD: xenevt.c,v 1.53 2018/12/25 06:50:12 cherry Exp $      */
+/*      $NetBSD: xenevt.c,v 1.54 2019/11/22 14:30:58 martin Exp $      */
 
 /*
  * Copyright (c) 2005 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.53 2018/12/25 06:50:12 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xenevt.c,v 1.54 2019/11/22 14:30:58 martin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -161,7 +161,7 @@ static evtchn_port_t xenevt_alloc_event(void)
 void
 xenevtattach(int n)
 {
-	struct intrhand *ih;
+	struct intrhand *ih __diagused;
 	int level = IPL_HIGH;
 	bool mpsafe = (level != IPL_VM);
 
