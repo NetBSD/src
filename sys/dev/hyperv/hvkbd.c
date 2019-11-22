@@ -1,4 +1,4 @@
-/*	$NetBSD: hvkbd.c,v 1.5 2019/11/22 12:30:32 nonaka Exp $	*/
+/*	$NetBSD: hvkbd.c,v 1.6 2019/11/22 12:40:07 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2017 Microsoft Corp.
@@ -36,7 +36,7 @@
 #endif /* _KERNEL_OPT */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.5 2019/11/22 12:30:32 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hvkbd.c,v 1.6 2019/11/22 12:40:07 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -344,13 +344,13 @@ hvkbd_connect(struct hvkbd_softc *sc)
 	}
 
 	do {
-		if (cold)
+		if (cold) {
 			delay(1000);
-		else
+			s = spltty();
+			hvkbd_intr(sc);
+			splx(s);
+		} else
 			tsleep(sc, PRIBIO | PCATCH, "hvkbdcon", mstohz(1));
-		s = spltty();
-		hvkbd_intr(sc);
-		splx(s);
 	} while (--timo > 0 && sc->sc_connected == 0);
 
 	if (timo == 0 && sc->sc_connected == 0) {
