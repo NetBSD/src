@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.h,v 1.2 2019/11/23 07:38:03 tkusumi Exp $	*/
+/*	$NetBSD: autofs.h,v 1.3 2019/11/23 08:00:59 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@ struct autofs_request {
 	char				ar_key[AUTOFS_MAXPATHLEN];
 	char				ar_options[AUTOFS_MAXPATHLEN];
 	struct callout			ar_callout;
-	volatile u_int			ar_refcount;
+	volatile unsigned int		ar_refcount;
 };
 
 struct autofs_softc {
