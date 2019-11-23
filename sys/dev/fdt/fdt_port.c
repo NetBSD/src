@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.2 2019/01/30 01:24:00 jmcneill Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.3 2019/11/23 18:53:05 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.2 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.3 2019/11/23 18:53:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,7 +296,7 @@ again:
 		}
 		if (strcmp(buf, "port") != 0)
 			continue;
-		if (fdtbus_get_reg64(child, 0, &id, NULL) != 0) {
+		if (fdtbus_get_reg(child, 0, &id, NULL) != 0) {
 			if (ports->dp_nports > 1)
 				aprint_error_dev(self,
 				    "%s: missing reg property",
