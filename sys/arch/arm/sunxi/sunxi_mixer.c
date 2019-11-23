@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.9 2019/11/23 21:40:57 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.10 2019/11/23 23:47:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.9 2019/11/23 21:40:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.10 2019/11/23 23:47:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -373,7 +373,7 @@ sunxi_mixer_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 	/* Set UI overlay offset */
 	OVL_UI_WRITE(sc, 1, OVL_UI_COOR(0), offset);
 	/* Set UI overlay line size */
-	OVL_UI_WRITE(sc, 1, OVL_UI_PITCH(0), crtc->primary->fb->pitches[0]);
+	OVL_UI_WRITE(sc, 1, OVL_UI_PITCH(0), width * 4);
 	/* Set UI overlay window size */
 	OVL_UI_WRITE(sc, 1, OVL_UI_SIZE, crtc_size);
 
