@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.16 2019/11/22 19:46:38 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.17 2019/11/23 12:29:20 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.16 2019/11/22 19:46:38 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.17 2019/11/23 12:29:20 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.16 2019/11/22 19:46:38 jmcneill
 #define	DRAM_CFG_REG		0x0f4
 #define	MBUS_RST_REG		0x0fc
 #define	DE_CLK_REG		0x104
+#define	TCON0_CLK_REG		0x118
 #define	TCON1_CLK_REG		0x11c
 #define	AC_DIG_CLK_REG		0x140
 #define	HDMI_CLK_REG		0x150
@@ -161,6 +162,7 @@ static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
 static const char *hdmi_parents[] = { "pll_video0", "pll_video1" };
 static const char *i2s_parents[] = { "pll_audio_8x", "pll_audio_4x", "pll_audio_2x", "pll_audio" };
 static const char *spi_parents[] = { "hosc", "pll_periph0", "pll_periph1", NULL };
+static const char *tcon0_parents[] = { "pll_mipi", NULL, "pll_video0_2x", NULL };
 static const char *tcon1_parents[] = { "pll_video0", NULL, "pll_video1", NULL };
 static const char *gpu_parents[] = { "pll_gpu" };
 
@@ -458,6 +460,13 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
+
+	SUNXI_CCU_DIV_GATE(A64_CLK_TCON0, "tcon0", tcon0_parents,
+	    TCON0_CLK_REG,	/* reg */
+	    0,			/* div */
+	    __BITS(26,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
 
 	SUNXI_CCU_DIV_GATE(A64_CLK_TCON1, "tcon1", tcon1_parents,
 	    TCON1_CLK_REG,	/* reg */
