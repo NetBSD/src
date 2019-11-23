@@ -1,7 +1,7 @@
- /* $NetBSD: psoc.c,v 1.2 2019/11/22 05:16:54 macallan Exp $ */
+ /* $NetBSD: psoc.c,v 1.3 2019/11/23 05:13:11 macallan Exp $ */
 
 /*-
- * Copyright (c) 2018 Michael Lorenz
+ * Copyright (c) 2019 Michael Lorenz
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.2 2019/11/22 05:16:54 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: psoc.c,v 1.3 2019/11/23 05:13:11 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -159,7 +159,7 @@ psoc_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct psoc_softc *sc = sme->sme_cookie;
 	uint8_t cmd = 6;
-	uint8_t buf[0x28], *bptr;
+	uint8_t buf[0x28];
 	int error = 1, data;
 
 	if ( edata->private < 0x20) {
@@ -183,26 +183,24 @@ psoc_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 			psoc_dump(sc);
 #endif
 	} else {
-		cmd = 0x20;
+		cmd = edata->private;
 		iic_acquire_bus(sc->sc_i2c, 0);
 		error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
-			    sc->sc_addr, &cmd, 1, buf, 12, 0);
+			    sc->sc_addr, &cmd, 1, buf, 3, 0);
 		iic_release_bus(sc->sc_i2c, 0);
 		if (error) return;
-		if (edata->private >= 0x20) {
-			bptr = &buf[edata->private - 0x20];
-			switch (bptr[0] & 0xf0) {
-				case 0x50:
-					data = bptr[edata->private - 0x20];
-					edata->value_cur = ((bptr[2] & 0x3f) << 6) | (bptr[1] & 0x3f);
-					break;
-				case 0x60:
-					edata->value_cur = 0;
-					break;
-				default:
-					error = -1;
-			}	
-		}
+		switch (buf[0] & 0xf0) {
+			case 0x50:
+				data = buf[edata->private - 0x20];
+				edata->value_cur = ((buf[2] & 0x3f) << 6) |
+						    (buf[1] & 0x3f);
+				break;
+			case 0x60:
+				edata->value_cur = 0;
+				break;
+			default:
+				error = 0;
+		}	
 	}
 	if (error) {
 		edata->state = ENVSYS_SINVALID;
