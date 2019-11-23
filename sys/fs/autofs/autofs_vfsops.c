@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.6 2019/11/16 09:22:00 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.7 2019/11/23 15:17:46 tkusumi Exp $");
 
 
 #include "autofs.h"
@@ -74,6 +74,7 @@ autofs_init(void)
 static void
 autofs_done(void)
 {
+
 	KASSERT(autofs_softc);
 	KASSERT(!autofs_softc->sc_dev_opened);
 
