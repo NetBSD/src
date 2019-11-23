@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.325 2019/11/21 20:51:05 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.326 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.325 2019/11/21 20:51:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.326 2019/11/23 19:42:52 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -104,7 +104,6 @@ dtrace_vtime_switch_func_t      dtrace_vtime_switch_func;
 static void	sched_unsleep(struct lwp *, bool);
 static void	sched_changepri(struct lwp *, pri_t);
 static void	sched_lendpri(struct lwp *, pri_t);
-static void	resched_cpu(struct lwp *);
 
 syncobj_t sleep_syncobj = {
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
@@ -303,10 +302,10 @@ preempt(void)
  *
  * Character addresses for lockstat only.
  */
-static char	in_critical_section;
+static char	kpreempt_is_disabled;
 static char	kernel_lock_held;
-static char	is_softint;
-static char	cpu_kpreempt_enter_fail;
+static char	is_softint_lwp;
+static char	spl_is_raised;
 
 bool
 kpreempt(uintptr_t where)
@@ -338,13 +337,13 @@ kpreempt(uintptr_t where)
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
 				kpreempt_ev_crit.ev_count++;
 			}
-			failed = (uintptr_t)&in_critical_section;
+			failed = (uintptr_t)&kpreempt_is_disabled;
 			break;
 		}
 		if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
 			/* Can't preempt soft interrupts yet. */
 			atomic_swap_uint(&l->l_dopreempt, 0);
-			failed = (uintptr_t)&is_softint;
+			failed = (uintptr_t)&is_softint_lwp;
 			break;
 		}
 		s = splsched();
@@ -365,7 +364,7 @@ kpreempt(uintptr_t where)
 			 * interrupt to retry later.
 			 */
 			splx(s);
-			failed = (uintptr_t)&cpu_kpreempt_enter_fail;
+			failed = (uintptr_t)&spl_is_raised;
 			break;
 		}
 		/* Do it! */
@@ -373,6 +372,7 @@ kpreempt(uintptr_t where)
 			kpreempt_ev_immed.ev_count++;
 		}
 		lwp_lock(l);
+		l->l_pflag |= LP_PREEMPTING;
 		mi_switch(l);
 		l->l_nopreempt++;
 		splx(s);
@@ -555,13 +555,6 @@ mi_switch(lwp_t *l)
 	}
 #endif	/* !__HAVE_FAST_SOFTINTS */
 
-	/* Count time spent in current system call */
-	if (!returning) {
-		SYSCALL_TIME_SLEEP(l);
-
-		updatertime(l, &bt);
-	}
-
 	/* Lock the runqueue */
 	KASSERT(l->l_stat != LSRUN);
 	mutex_spin_enter(spc->spc_mutex);
@@ -574,7 +567,7 @@ mi_switch(lwp_t *l)
 		if ((l->l_flag & LW_IDLE) == 0) {
 			l->l_stat = LSRUN;
 			lwp_setlock(l, spc->spc_mutex);
-			sched_enqueue(l, true);
+			sched_enqueue(l);
 			/*
 			 * Handle migration.  Note that "migrating LWP" may
 			 * be reset here, if interrupt/preemption happens
@@ -596,6 +589,11 @@ mi_switch(lwp_t *l)
 
 	/* Items that must be updated with the CPU locked. */
 	if (!returning) {
+		/* Count time spent in current system call */
+		SYSCALL_TIME_SLEEP(l);
+
+		updatertime(l, &bt);
+
 		/* Update the new LWP's start time. */
 		newl->l_stime = bt;
 
@@ -656,9 +654,8 @@ mi_switch(lwp_t *l)
 		l->l_ncsw++;
 		if ((l->l_pflag & LP_PREEMPTING) != 0)
 			l->l_nivcsw++;
-		l->l_pflag &= ~LP_PREEMPTING;
 		KASSERT((l->l_pflag & LP_RUNNING) != 0);
-		l->l_pflag &= ~LP_RUNNING;
+		l->l_pflag &= ~(LP_RUNNING | LP_PREEMPTING);
 
 		/*
 		 * Increase the count of spin-mutexes before the release
@@ -882,6 +879,7 @@ setrunnable(struct lwp *l)
 {
 	struct proc *p = l->l_proc;
 	struct cpu_info *ci;
+	kmutex_t *oldlock;
 
 	KASSERT((l->l_flag & LW_IDLE) == 0);
 	KASSERT((l->l_flag & LW_DBGSUSPEND) == 0);
@@ -900,12 +898,16 @@ setrunnable(struct lwp *l)
 		p->p_nrlwps++;
 		break;
 	case LSSUSPENDED:
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 		l->l_flag &= ~LW_WSUSPEND;
 		p->p_nrlwps++;
 		cv_broadcast(&p->p_lwpcv);
 		break;
 	case LSSLEEP:
 		KASSERT(l->l_wchan != NULL);
+		break;
+	case LSIDL:
+		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 		break;
 	default:
 		panic("setrunnable: lwp %p state was %d", l, l->l_stat);
@@ -939,14 +941,14 @@ setrunnable(struct lwp *l)
 	ci = sched_takecpu(l);
 	l->l_cpu = ci;
 	spc_lock(ci);
-	lwp_unlock_to(l, ci->ci_schedstate.spc_mutex);
+	oldlock = lwp_setlock(l, l->l_cpu->ci_schedstate.spc_mutex);
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
-
-	sched_enqueue(l, false);
-	resched_cpu(l);
-	lwp_unlock(l);
+	sched_enqueue(l);
+	sched_resched_lwp(l, true);
+	/* SPC & LWP now unlocked. */
+	mutex_spin_exit(oldlock);
 }
 
 /*
@@ -1012,13 +1014,19 @@ suspendsched(void)
 
 	/*
 	 * Kick all CPUs to make them preempt any LWPs running in user mode. 
-	 * They'll trap into the kernel and suspend themselves in userret().
+	 * They'll trap into the kernel and suspend themselves in userret(). 
+	 *
+	 * Unusually, we don't hold any other scheduler object locked, which
+	 * would keep preemption off for sched_resched_cpu(), so disable it
+	 * explicitly.
 	 */
+	kpreempt_disable();
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		spc_lock(ci);
-		cpu_need_resched(ci, RESCHED_IMMED);
-		spc_unlock(ci);
+		sched_resched_cpu(ci, PRI_KERNEL, true);
+		/* spc now unlocked */
 	}
+	kpreempt_enable();
 }
 
 /*
@@ -1037,49 +1045,64 @@ sched_unsleep(struct lwp *l, bool cleanup)
 }
 
 static void
-resched_cpu(struct lwp *l)
-{
-	struct cpu_info *ci = l->l_cpu;
-
-	KASSERT(lwp_locked(l, NULL));
-	if (lwp_eprio(l) > ci->ci_schedstate.spc_curpriority)
-		cpu_need_resched(ci, 0);
-}
-
-static void
 sched_changepri(struct lwp *l, pri_t pri)
 {
+	struct schedstate_percpu *spc;
+	struct cpu_info *ci;
 
 	KASSERT(lwp_locked(l, NULL));
 
+	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
+
 	if (l->l_stat == LSRUN) {
-		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+		KASSERT(lwp_locked(l, spc->spc_mutex));
 		sched_dequeue(l);
 		l->l_priority = pri;
-		sched_enqueue(l, false);
+		sched_enqueue(l);
+		sched_resched_lwp(l, false);
+	} else if (l->l_stat == LSONPROC && l->l_class != SCHED_OTHER) {
+		/* On priority drop, only evict realtime LWPs. */
+		KASSERT(lwp_locked(l, spc->spc_lwplock));
+		l->l_priority = pri;
+		spc_lock(ci);
+		sched_resched_cpu(ci, spc->spc_maxpriority, true);
+		/* spc now unlocked */
 	} else {
 		l->l_priority = pri;
 	}
-	resched_cpu(l);
 }
 
 static void
 sched_lendpri(struct lwp *l, pri_t pri)
 {
+	struct schedstate_percpu *spc;
+	struct cpu_info *ci;
 
 	KASSERT(lwp_locked(l, NULL));
 
+	ci = l->l_cpu;
+	spc = &ci->ci_schedstate;
+
 	if (l->l_stat == LSRUN) {
-		KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
+		KASSERT(lwp_locked(l, spc->spc_mutex));
 		sched_dequeue(l);
 		l->l_inheritedprio = pri;
 		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
-		sched_enqueue(l, false);
+		sched_enqueue(l);
+		sched_resched_lwp(l, false);
+	} else if (l->l_stat == LSONPROC && l->l_class != SCHED_OTHER) {
+		/* On priority drop, only evict realtime LWPs. */
+		KASSERT(lwp_locked(l, spc->spc_lwplock));
+		l->l_inheritedprio = pri;
+		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
+		spc_lock(ci);
+		sched_resched_cpu(ci, spc->spc_maxpriority, true);
+		/* spc now unlocked */
 	} else {
 		l->l_inheritedprio = pri;
 		l->l_auxprio = MAX(l->l_inheritedprio, l->l_protectprio);
 	}
-	resched_cpu(l);
 }
 
 struct lwp *

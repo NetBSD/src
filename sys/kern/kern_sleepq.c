@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.52 2019/11/21 18:56:55 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.53 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.52 2019/11/21 18:56:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.53 2019/11/23 19:42:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -156,8 +156,9 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	sched_setrunnable(l);
 	l->l_stat = LSRUN;
 	l->l_slptime = 0;
-	sched_enqueue(l, false);
-	spc_unlock(ci);
+	sched_enqueue(l);
+	sched_resched_lwp(l, true);
+	/* LWP & SPC now unlocked, but we still hold sleep queue lock. */
 }
 
 /*

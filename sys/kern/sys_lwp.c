@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_lwp.c,v 1.70 2019/09/30 21:13:33 kamil Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.71 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.70 2019/09/30 21:13:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.71 2019/11/23 19:42:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -102,7 +102,6 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
 {
 	struct proc *p = l->l_proc;
 	struct lwp *l2;
-	struct schedstate_percpu *spc;
 	vaddr_t uaddr;
 	int error;
 
@@ -120,35 +119,7 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
 	}
 
 	*new_lwp = l2->l_lid;
-
-	/*
-	 * Set the new LWP running, unless the caller has requested that
-	 * it be created in suspended state.  If the process is stopping,
-	 * then the LWP is created stopped.
-	 */
-	mutex_enter(p->p_lock);
-	lwp_lock(l2);
-	spc = &l2->l_cpu->ci_schedstate;
-	if ((flags & LWP_SUSPENDED) == 0 &&
-	    (l->l_flag & (LW_WREBOOT | LW_WSUSPEND | LW_WEXIT)) == 0) {
-	    	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
-			KASSERT(l2->l_wchan == NULL);
-	    		l2->l_stat = LSSTOP;
-			p->p_nrlwps--;
-			lwp_unlock_to(l2, spc->spc_lwplock);
-		} else {
-			KASSERT(lwp_locked(l2, spc->spc_mutex));
-			l2->l_stat = LSRUN;
-			sched_enqueue(l2, false);
-			lwp_unlock(l2);
-		}
-	} else {
-		l2->l_stat = LSSUSPENDED;
-		p->p_nrlwps--;
-		lwp_unlock_to(l2, spc->spc_lwplock);
-	}
-	mutex_exit(p->p_lock);
-
+	lwp_start(l2, flags);
 	return 0;
 }
 

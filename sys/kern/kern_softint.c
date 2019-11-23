@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.49 2019/11/21 17:50:49 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.50 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.49 2019/11/21 17:50:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.50 2019/11/23 19:42:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -661,19 +661,20 @@ schednetisr(int isr)
 void
 softint_init_md(lwp_t *l, u_int level, uintptr_t *machdep)
 {
+	struct proc *p;
 	softint_t *si;
 
 	*machdep = (1 << level);
 	si = l->l_private;
+	p = l->l_proc;
 
-	lwp_lock(l);
-	lwp_unlock_to(l, l->l_cpu->ci_schedstate.spc_mutex);
+	mutex_enter(p->p_lock);
 	lwp_lock(l);
 	/* Cheat and make the KASSERT in softint_thread() happy. */
 	si->si_active = 1;
-	l->l_stat = LSRUN;
-	sched_enqueue(l, false);
-	lwp_unlock(l);
+	setrunnable(l);
+	/* LWP now unlocked */
+	mutex_exit(p->p_lock);
 }
 
 /*
@@ -692,10 +693,10 @@ softint_trigger(uintptr_t machdep)
 	ci = l->l_cpu;
 	ci->ci_data.cpu_softints |= machdep;
 	if (l == ci->ci_data.cpu_idlelwp) {
-		cpu_need_resched(ci, 0);
+		atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
 	} else {
 		/* MI equivalent of aston() */
-		cpu_signotify(l);
+		lwp_need_userret(l);
 	}
 }
 

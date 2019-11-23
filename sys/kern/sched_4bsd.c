@@ -1,7 +1,8 @@
-/*	$NetBSD: sched_4bsd.c,v 1.35 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.36 2019/11/23 19:42:52 ad Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.35 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.36 2019/11/23 19:42:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -96,9 +97,6 @@ static int rrticks __read_mostly;
 /*
  * Force switch among equal priority processes every 100ms.
  * Called from hardclock every hz/10 == rrticks hardclock ticks.
- *
- * There's no need to lock anywhere in this routine, as it's
- * CPU-local and runs at IPL_SCHED (called from clock interrupt).
  */
 /* ARGSUSED */
 void
@@ -110,20 +108,27 @@ sched_tick(struct cpu_info *ci)
 	spc->spc_ticks = rrticks;
 
 	if (CURCPU_IDLE_P()) {
-		cpu_need_resched(ci, 0);
+		atomic_or_uint(&ci->ci_want_resched,
+		    RESCHED_IDLE | RESCHED_UPREEMPT);
 		return;
 	}
 	l = ci->ci_data.cpu_onproc;
 	if (l == NULL) {
 		return;
 	}
+	/*
+	 * Can only be spc_lwplock or a turnstile lock at this point
+	 * (if we interrupted priority inheritance trylock dance).
+	 */
+	KASSERT(l->l_mutex != spc->spc_mutex);
 	switch (l->l_class) {
 	case SCHED_FIFO:
 		/* No timeslicing for FIFO jobs. */
 		break;
 	case SCHED_RR:
 		/* Force it into mi_switch() to look for other jobs to run. */
-		cpu_need_resched(ci, RESCHED_KPREEMPT);
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
+		cpu_need_resched(ci, l, RESCHED_KPREEMPT);
 		break;
 	default:
 		if (spc->spc_flags & SPCF_SHOULDYIELD) {
@@ -132,7 +137,8 @@ sched_tick(struct cpu_info *ci)
 			 * due to buggy or inefficient code.  Force a
 			 * kernel preemption.
 			 */
-			cpu_need_resched(ci, RESCHED_KPREEMPT);
+			atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
+			cpu_need_resched(ci, l, RESCHED_KPREEMPT);
 		} else if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
@@ -140,7 +146,7 @@ sched_tick(struct cpu_info *ci)
 			 * Indicate that the process should yield.
 			 */
 			spc->spc_flags |= SPCF_SHOULDYIELD;
-			cpu_need_resched(ci, 0);
+			cpu_need_resched(ci, l, RESCHED_UPREEMPT);
 		} else {
 			spc->spc_flags |= SPCF_SEENRR;
 		}

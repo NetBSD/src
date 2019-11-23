@@ -1,4 +1,33 @@
-/*	$NetBSD: kern_runq.c,v 1.47 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.48 2019/11/23 19:42:52 ad Exp $	*/
+
+/*-
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -27,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.47 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.48 2019/11/23 19:42:52 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -101,7 +130,6 @@ static void	sched_balance(void *);
 /*
  * Preemption control.
  */
-int		sched_upreempt_pri = 0;
 #ifdef __HAVE_PREEMPTION
 # ifdef DEBUG
 int		sched_kpreempt_pri = 0;
@@ -209,26 +237,23 @@ sched_getrq(runqueue_t *ci_rq, const pri_t prio)
 	    &ci_rq->r_rt_queue[prio - PRI_HIGHEST_TS - 1].q_head;
 }
 
+/*
+ * Put an LWP onto a run queue.  The LWP must be locked by spc_mutex for
+ * l_cpu.
+ */
 void
-sched_enqueue(struct lwp *l, bool swtch)
+sched_enqueue(struct lwp *l)
 {
 	runqueue_t *ci_rq;
 	struct schedstate_percpu *spc;
 	TAILQ_HEAD(, lwp) *q_head;
 	const pri_t eprio = lwp_eprio(l);
 	struct cpu_info *ci;
-	int type;
 
 	ci = l->l_cpu;
 	spc = &ci->ci_schedstate;
 	ci_rq = spc->spc_sched_info;
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_mutex));
-
-	/* Update the last run time on switch */
-	if (__predict_true(swtch == true))
-		l->l_rticksum += (hardclock_ticks - l->l_rticks);
-	else if (l->l_rticks == 0)
-		l->l_rticks = hardclock_ticks;
 
 	/* Enqueue the thread */
 	q_head = sched_getrq(ci_rq, eprio);
@@ -242,7 +267,12 @@ sched_enqueue(struct lwp *l, bool swtch)
 		KASSERT((ci_rq->r_bitmap[i] & q) == 0);
 		ci_rq->r_bitmap[i] |= q;
 	}
-	TAILQ_INSERT_TAIL(q_head, l, l_runq);
+	/* Preempted SCHED_RR and SCHED_FIFO LWPs go to the queue head. */
+	if (l->l_class != SCHED_OTHER && (l->l_pflag & LP_PREEMPTING) != 0) {
+		TAILQ_INSERT_HEAD(q_head, l, l_runq);
+	} else {
+		TAILQ_INSERT_TAIL(q_head, l, l_runq);
+	}
 	ci_rq->r_count++;
 	if ((l->l_pflag & LP_BOUND) == 0)
 		ci_rq->r_mcount++;
@@ -255,23 +285,12 @@ sched_enqueue(struct lwp *l, bool swtch)
 		spc->spc_maxpriority = eprio;
 
 	sched_newts(l);
-
-	/*
-	 * Wake the chosen CPU or cause a preemption if the newly
-	 * enqueued thread has higher priority.  Don't cause a 
-	 * preemption if the thread is yielding (swtch).
-	 */
-	if (!swtch && eprio > spc->spc_curpriority) {
-		if (eprio >= sched_kpreempt_pri)
-			type = RESCHED_KPREEMPT;
-		else if (eprio >= sched_upreempt_pri)
-			type = RESCHED_IMMED;
-		else
-			type = RESCHED_LAZY;
-		cpu_need_resched(ci, type);
-	}
 }
 
+/*
+ * Remove and LWP from the run queue it's on.  The LWP must be in state
+ * LSRUN.
+ */
 void
 sched_dequeue(struct lwp *l)
 {
@@ -326,6 +345,121 @@ sched_dequeue(struct lwp *l)
 		/* If not found - set the lowest value */
 		spc->spc_maxpriority = 0;
 	}
+}
+
+/*
+ * Cause a preemption on the given CPU, if the priority "pri" is higher
+ * priority than the running LWP.  If "unlock" is specified, and ideally it
+ * will be for concurrency reasons, spc_mutex will be dropped before return.
+ */
+void
+sched_resched_cpu(struct cpu_info *ci, pri_t pri, bool unlock)
+{
+	struct schedstate_percpu *spc;
+	u_int o, n, f;
+	lwp_t *l;
+
+	spc = &ci->ci_schedstate;
+
+	KASSERT(mutex_owned(spc->spc_mutex));
+
+	/*
+	 * If the priority level we're evaluating wouldn't cause a new LWP
+	 * to be run on the CPU, then we have nothing to do.
+	 */
+	if (pri <= spc->spc_curpriority) {
+		if (__predict_true(unlock)) {
+			spc_unlock(ci);
+		}
+		return;
+	}
+
+	/*
+	 * Figure out what kind of preemption we should do.
+	 */	
+	l = ci->ci_data.cpu_onproc;
+	if ((l->l_flag & LW_IDLE) != 0) {
+		f = RESCHED_IDLE | RESCHED_UPREEMPT;
+	} else if ((l->l_pflag & LP_INTR) != 0) {
+		/* We can't currently preempt interrupt LWPs - should do. */
+		if (__predict_true(unlock)) {
+			spc_unlock(ci);
+		}
+		return;
+	} else if (pri >= sched_kpreempt_pri) {
+#ifdef __HAVE_PREEMPTION
+		f = RESCHED_KPREEMPT;
+#else
+		/* Leave door open for test: set kpreempt_pri with sysctl. */
+		f = RESCHED_UPREEMPT;
+#endif
+		/*
+		 * l_dopreempt must be set with the CPU locked to sync with
+		 * mi_switch().  It must also be set with an atomic to sync
+		 * with kpreempt().
+		 */
+		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
+	} else {
+		f = RESCHED_UPREEMPT;
+	}
+	if (ci != curcpu()) {
+		f |= RESCHED_REMOTE;
+	}
+
+	/*
+	 * Things start as soon as we touch ci_want_resched: x86 for example
+	 * has an instruction that monitors the memory cell it's in.  We
+	 * want to drop the schedstate lock in advance, otherwise the remote
+	 * CPU can awaken and immediately block on the lock.
+	 */
+	if (__predict_true(unlock)) {
+		spc_unlock(ci);
+	}
+
+	/*
+	 * The caller will always have a second scheduler lock held: either
+	 * the running LWP lock (spc_lwplock), or a sleep queue lock.  That
+	 * keeps preemption disabled, which among other things ensures all
+	 * LWPs involved won't be freed while we're here (see lwp_dtor()).
+	 */
+ 	KASSERT(kpreempt_disabled());
+
+	for (o = 0;; o = n) {
+		n = atomic_cas_uint(&ci->ci_want_resched, o, o | f);
+		if (__predict_true(o == n)) {
+			/*
+			 * We're the first.  If we're in process context on
+			 * the same CPU, we can avoid the visit to trap().
+			 */
+			if (l != curlwp || cpu_intr_p()) {
+				cpu_need_resched(ci, l, f);
+			}
+			break;
+		}
+		if (__predict_true(
+		    (n & (RESCHED_KPREEMPT|RESCHED_UPREEMPT)) >=
+		    (f & (RESCHED_KPREEMPT|RESCHED_UPREEMPT)))) {
+			/* Already in progress, nothing to do. */
+			break;
+		}
+	}
+}
+
+/*
+ * Cause a preemption on the given CPU, if the priority of LWP "l" in state
+ * LSRUN, is higher priority than the running LWP.  If "unlock" is
+ * specified, and ideally it will be for concurrency reasons, spc_mutex will
+ * be dropped before return.
+ */
+void
+sched_resched_lwp(struct lwp *l, bool unlock)
+{
+	struct cpu_info *ci = l->l_cpu;
+
+	KASSERT(lwp_locked(l, ci->ci_schedstate.spc_mutex));
+	KASSERT(l->l_stat == LSRUN);
+
+	sched_resched_cpu(ci, lwp_eprio(l), unlock);
 }
 
 /*
@@ -385,6 +519,7 @@ sched_takecpu(struct lwp *l)
 
 	spc = &ci->ci_schedstate;
 	ci_rq = spc->spc_sched_info;
+	eprio = lwp_eprio(l);
 
 	/* Make sure that thread is in appropriate processor-set */
 	if (__predict_true(spc->spc_psid == l->l_psid)) {
@@ -393,15 +528,22 @@ sched_takecpu(struct lwp *l)
 			ci_rq->r_ev_stay.ev_count++;
 			return ci;
 		}
+		/*
+		 * New LWPs must start on the same CPU as the parent (l_cpu
+		 * was inherited when the LWP was created).  Doing otherwise
+		 * is bad for performance and repeatability, and agitates
+		 * buggy programs.  Also, we want the child to have a good
+		 * chance of reusing the VM context from the parent.
+		 */
+		if (l->l_stat == LSIDL) {
+			ci_rq->r_ev_stay.ev_count++;
+			return ci;
+		}		 
 		/* Stay if thread is cache-hot */
-		eprio = lwp_eprio(l);
-		if (__predict_true(l->l_stat != LSIDL) &&
-		    lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
+		if (lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
 			ci_rq->r_ev_stay.ev_count++;
 			return ci;
 		}
-	} else {
-		eprio = lwp_eprio(l);
 	}
 
 	/* Run on current CPU if priority of thread is higher */
@@ -507,7 +649,7 @@ sched_catchlwp(struct cpu_info *ci)
 		l->l_cpu = curci;
 		ci_rq->r_ev_pull.ev_count++;
 		lwp_unlock_to(l, curspc->spc_mutex);
-		sched_enqueue(l, false);
+		sched_enqueue(l);
 		return l;
 	}
 	spc_unlock(ci);
@@ -569,7 +711,7 @@ sched_idle(void)
 {
 	struct cpu_info *ci = curcpu(), *tci = NULL;
 	struct schedstate_percpu *spc, *tspc;
-	runqueue_t *ci_rq;
+	runqueue_t *ci_rq, *tci_rq;
 	bool dlock = false;
 
 	/* Check if there is a migrating LWP */
@@ -631,8 +773,11 @@ sched_idle(void)
 		sched_dequeue(l);
 		l->l_cpu = tci;
 		lwp_setlock(l, tspc->spc_mutex);
-		sched_enqueue(l, false);
-		break;
+		sched_enqueue(l);
+		sched_resched_lwp(l, true);
+		/* tci now unlocked */
+		spc_unlock(ci);
+		goto no_migration;
 	}
 	if (dlock == true) {
 		KASSERT(tci != NULL);
@@ -653,9 +798,13 @@ no_migration:
 	tspc = &tci->ci_schedstate;
 	if (ci == tci || spc->spc_psid != tspc->spc_psid)
 		return;
-	spc_dlock(ci, tci);
-	(void)sched_catchlwp(tci);
-	spc_unlock(ci);
+	/* Don't hit the locks unless there's something to do. */
+	tci_rq = tci->ci_schedstate.spc_sched_info;
+	if (tci_rq->r_mcount >= min_catch) {
+		spc_dlock(ci, tci);
+		(void)sched_catchlwp(tci);
+		spc_unlock(ci);
+	}
 }
 
 #else
@@ -745,6 +894,10 @@ sched_nextlwp(void)
 	TAILQ_HEAD(, lwp) *q_head;
 	runqueue_t *ci_rq;
 	struct lwp *l;
+
+	/* Update the last run time on switch */
+	l = curlwp;
+	l->l_rticksum += (hardclock_ticks - l->l_rticks);
 
 	/* Return to idle LWP if there is a migrating thread */
 	spc = &ci->ci_schedstate;
@@ -872,12 +1025,6 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 		CTLTYPE_INT, "kpreempt_pri",
 		SYSCTL_DESCR("Minimum priority to trigger kernel preemption"),
 		NULL, 0, &sched_kpreempt_pri, 0,
-		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "upreempt_pri",
-		SYSCTL_DESCR("Minimum priority to trigger user preemption"),
-		NULL, 0, &sched_upreempt_pri, 0,
 		CTL_CREATE, CTL_EOL);
 }
 

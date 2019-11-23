@@ -1,7 +1,7 @@
-/*	$NetBSD: lwp.h,v 1.189 2019/11/21 19:47:21 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.190 2019/11/23 19:42:52 ad Exp $	*/
 
 /*
- * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -344,6 +344,7 @@ void	lwp_exit(lwp_t *);
 void	lwp_exit_switchaway(lwp_t *) __dead;
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
+void	lwp_start(lwp_t *, int);
 void	lwp_update_creds(lwp_t *);
 void	lwp_migrate(lwp_t *, struct cpu_info *);
 lwp_t *	lwp_find2(pid_t, lwpid_t);

@@ -1,7 +1,8 @@
-/*	$NetBSD: sched.h,v 1.76 2016/07/03 14:24:59 christos Exp $	*/
+/*	$NetBSD: sched.h,v 1.77 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
+ *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -228,7 +229,9 @@ void		sched_pstats_hook(struct lwp *, int);
 /* Runqueue-related functions */
 bool		sched_curcpu_runnable_p(void);
 void		sched_dequeue(struct lwp *);
-void		sched_enqueue(struct lwp *, bool);
+void		sched_enqueue(struct lwp *);
+void		sched_resched_cpu(struct cpu_info *, pri_t, bool);
+void		sched_resched_lwp(struct lwp *, bool);
 struct lwp *	sched_nextlwp(void);
 void		sched_oncpu(struct lwp *);
 void		sched_newts(struct lwp *);
