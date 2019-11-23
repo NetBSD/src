@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.10 2013/08/30 21:29:29 matt Exp $
+#	$NetBSD: genassym.cf,v 1.11 2019/11/23 19:40:36 ad Exp $
 
 #-
 # Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -163,7 +163,6 @@ define	CI_SIZE		sizeof(struct cpu_info)
 define	CI_CURLWP	offsetof(struct cpu_info, ci_curlwp)
 define	CI_CURPCB	offsetof(struct cpu_info, ci_curpcb)
 define	CI_CURPM	offsetof(struct cpu_info, ci_curpm)
-define	CI_WANT_RESCHED	offsetof(struct cpu_info, ci_want_resched)
 define	CI_CPL		offsetof(struct cpu_info, ci_cpl)
 define	CI_IDEPTH	offsetof(struct cpu_info, ci_idepth)
 define	CI_IDLESPIN	offsetof(struct cpu_info, ci_idlespin)

@@ -1,7 +1,7 @@
-/* $NetBSD: machdep.c,v 1.354 2019/04/05 14:12:14 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.355 2019/11/23 19:40:34 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.354 2019/04/05 14:12:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.355 2019/11/23 19:40:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1866,19 +1866,15 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * or after the current trap/syscall if in system mode.
  */
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
+	if ((flags & RESCHED_IDLE) == 0) {
+		if ((flags & RESCHED_REMOTE) != 0) {
 #if defined(MULTIPROCESSOR)
-	bool immed = (flags & RESCHED_IMMED) != 0;
+			alpha_send_ipi(ci->ci_cpuid, ALPHA_IPI_AST);
 #endif /* defined(MULTIPROCESSOR) */
-
-	aston(ci->ci_data.cpu_onproc);
-	ci->ci_want_resched = 1;
-	if (ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp) {
-#if defined(MULTIPROCESSOR)
-		if (immed && ci != curcpu()) {
-			alpha_send_ipi(ci->ci_cpuid, 0);
+		} else {
+			aston(l);
 		}
-#endif /* defined(MULTIPROCESSOR) */
 	}
 }

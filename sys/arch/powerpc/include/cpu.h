@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.108 2018/08/22 01:05:23 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.109 2019/11/23 19:40:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -434,10 +434,8 @@ vaddr_t	cpu_lwp_pc(struct lwp *);
 void	cpu_ast(struct lwp *, struct cpu_info *);
 void *	cpu_uarea_alloc(bool);
 bool	cpu_uarea_free(void *);
-void	cpu_need_resched(struct cpu_info *, int);
 void	cpu_signotify(struct lwp *);
 void	cpu_need_proftick(struct lwp *);
-#define	cpu_did_resched(l)			((l)->l_md.md_astpending = 0)
 
 void	cpu_fixup_stubs(void);
 

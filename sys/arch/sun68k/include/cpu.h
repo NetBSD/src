@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.24 2018/08/23 04:04:34 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.25 2019/11/23 19:40:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1990 The Regents of the University of California.
@@ -134,7 +134,6 @@ extern int astpending;	 /* need to trap before returning to user mode */
  */
 #define	cpu_need_resched(ci,flags)	do {	\
 	__USE(flags); 				\
-	ci->ci_want_resched = 1;		\
 	aston();				\
 } while (/*CONSTCOND*/0)
 

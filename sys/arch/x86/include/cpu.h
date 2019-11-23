@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.112 2019/11/21 21:48:33 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.113 2019/11/23 19:40:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -384,11 +384,7 @@ lwp_t   *x86_curlwp(void);
 
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
-#define	X86_AST_GENERIC		0x01
-#define	X86_AST_PREEMPT		0x02
-
-#define aston(l, why)		((l)->l_md.md_astpending |= (why))
-#define	cpu_did_resched(l)	((l)->l_md.md_astpending &= ~X86_AST_PREEMPT)
+#define aston(l)		((l)->l_md.md_astpending = 1)
 
 void cpu_boot_secondary_processors(void);
 void cpu_init_idle_lwps(void);

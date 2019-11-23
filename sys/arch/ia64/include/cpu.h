@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.17 2019/01/10 17:05:56 scole Exp $	*/
+/*	$NetBSD: cpu.h,v 1.18 2019/11/23 19:40:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -136,7 +136,7 @@ extern struct cpu_info *cpu_info_list;
 
 #define aston(l) ((l)->l_md.md_astpending = 1)
 
-#define	need_resched(ci)            /*XXX: FIXME */
+#define	need_resched(ci,l,f)            /*XXX: FIXME */
 
 struct clockframe {
 	struct trapframe cf_tf;
@@ -165,7 +165,7 @@ struct clockframe {
 #define	cpu_signotify(l)	aston(l)
 
 // void cpu_need_resched(struct cpu_info *ci, int flags)
-#define cpu_need_resched(ci, f) do {	\
+#define cpu_need_resched(ci, l, f) do {	\
 	__USE(ci);			\
 	__USE(f);			\
 } while(/*CONSTCOND*/0)

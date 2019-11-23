@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.55 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.56 2019/11/23 19:40:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.55 2019/04/06 03:06:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.56 2019/11/23 19:40:34 ad Exp $");
 
 #include <sys/exec.h>
 #include <sys/proc.h>
@@ -223,67 +223,38 @@ startlwp(void *arg)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct lwp * const l = ci->ci_data.cpu_onproc;
-	const bool immed = (flags & RESCHED_IMMED) != 0;
-#ifdef MULTIPROCESSOR
-	struct cpu_info * const cur_ci = curcpu();
-	u_long ipi = IPI_NOP;
-#endif
 
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-	if (ci->ci_want_resched && !immed)
-		return;
-
-	if (l == ci->ci_data.cpu_idlelwp) {
+	if (flags & RESCHED_IDLE) {
 #ifdef MULTIPROCESSOR
 		/*
 		 * If the other CPU is idling, it must be waiting for an
 		 * event.  So give it one.
 		 */
-		if (ci != cur_ci)
-			goto send_ipi;
+		if (flags & RESCHED_REMOTE) {
+			intr_ipi_send(ci->ci_kcpuset, IPI_NOP);
+		}
 #endif
 		return;
 	}
-#ifdef MULTIPROCESSOR
-	atomic_swap_uint(&ci->ci_want_resched, 1);
-#else
-	ci->ci_want_resched = 1;
-#endif
 	if (flags & RESCHED_KPREEMPT) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci == cur_ci) {
-			atomic_or_uint(&ci->ci_astpending, __BIT(1));
+		if (flags & RESCHED_REMOTE) {
+			intr_ipi_send(ci->ci_kcpuset, IPI_KPREEMPT);
 		} else {
-			ipi = IPI_KPREEMPT;
-			goto send_ipi;
+			atomic_or_uint(&ci->ci_astpending, __BIT(1));
 		}
 #endif /* __HAVE_PREEMPTION */
 		return;
 	}
+	if (flags & RESCHED_REMOTE) {
 #ifdef MULTIPROCESSOR
-	if (ci == cur_ci || !immed) {
-		setsoftast(ci);
-		return;
-	}
-	ipi = IPI_AST;
-
-   send_ipi:
-	intr_ipi_send(ci->ci_kcpuset, ipi);
-#else
-	setsoftast(ci);
+		intr_ipi_send(ci->ci_kcpuset, IPI_AST);
 #endif /* MULTIPROCESSOR */
+	} else {
+		setsoftast(ci);
+	}
 }
 
 bool
@@ -312,14 +283,6 @@ arm_curcpu(void)
 #endif
 
 #ifdef __HAVE_PREEMPTION
-void
-cpu_set_curpri(int pri)
-{
-	kpreempt_disable();
-	curcpu()->ci_schedstate.spc_curpriority = pri;
-	kpreempt_enable();
-}
-
 bool
 cpu_kpreempt_enter(uintptr_t where, int s)
 {

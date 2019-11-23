@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.11 2018/08/01 09:50:57 reinoud Exp $ */
+/* $NetBSD: cpu.h,v 1.12 2019/11/23 19:40:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -46,7 +46,6 @@ extern void	userret(struct lwp *);
 struct cpu_info;
 extern int	astpending;
 #define aston(ci) (astpending++)
-extern void cpu_need_resched(struct cpu_info *ci, int flags);
 extern void kgdb_port_init(void);
 
 struct cpu_info {

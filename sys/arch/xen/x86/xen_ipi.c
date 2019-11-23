@@ -1,7 +1,7 @@
-/* $NetBSD: xen_ipi.c,v 1.33 2019/10/12 06:31:04 maxv Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.34 2019/11/23 19:40:38 ad Exp $ */
 
 /*-
- * Copyright (c) 2011 The NetBSD Foundation, Inc.
+ * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.33 2019/10/12 06:31:04 maxv Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.34 2019/11/23 19:40:38 ad Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.33 2019/10/12 06:31:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.34 2019/11/23 19:40:38 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -71,6 +71,7 @@ static void xen_ipi_synch_fpu(struct cpu_info *, struct intrframe *);
 static void xen_ipi_xcall(struct cpu_info *, struct intrframe *);
 static void xen_ipi_hvcb(struct cpu_info *, struct intrframe *);
 static void xen_ipi_generic(struct cpu_info *, struct intrframe *);
+static void xen_ipi_ast(struct cpu_info *, struct intrframe *);
 
 static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 {	/* In order of priority (see: xen/include/intrdefs.h */
@@ -84,6 +85,7 @@ static void (*ipifunc[XEN_NIPIS])(struct cpu_info *, struct intrframe *) =
 	xen_ipi_xcall,
 	xen_ipi_hvcb,
 	xen_ipi_generic,
+	xen_ipi_ast
 };
 
 static int
@@ -152,7 +154,7 @@ valid_ipimask(uint32_t ipimask)
 {
 	uint32_t masks = XEN_IPI_GENERIC | XEN_IPI_HVCB | XEN_IPI_XCALL |
 		 XEN_IPI_DDB | XEN_IPI_SYNCH_FPU |
-		 XEN_IPI_HALT | XEN_IPI_KICK;
+		 XEN_IPI_HALT | XEN_IPI_KICK | XEN_IPI_AST;
 
 	if (ipimask & ~masks) {
 		return false;
@@ -281,6 +283,15 @@ xen_ipi_xcall(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(intrf != NULL);
 
 	xc_ipi_handler();
+}
+
+static void
+xen_ipi_ast(struct cpu_info *ci, struct intrframe *intrf)
+{
+	KASSERT(ci != NULL);
+	KASSERT(intrf != NULL);
+
+	aston(ci->ci_data.cpu_onproc);
 }
 
 void

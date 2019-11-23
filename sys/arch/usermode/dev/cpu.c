@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.80 2018/06/01 07:26:15 reinoud Exp $ */
+/* $NetBSD: cpu.c,v 1.81 2019/11/23 19:40:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.80 2018/06/01 07:26:15 reinoud Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.81 2019/11/23 19:40:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -182,9 +182,8 @@ cpu_reboot(int howto, char *bootstr)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	ci->ci_want_resched |= flags;
 	aston(ci);
 }
 
