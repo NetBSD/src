@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.79 2019/11/22 14:30:58 martin Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.80 2019/11/23 18:03:57 martin Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.79 2019/11/22 14:30:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.80 2019/11/23 18:03:57 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -1075,7 +1075,6 @@ void
 beagle_device_register(device_t self, void *aux)
 {
 	prop_dictionary_t dict = device_properties(self);
-	int rv __diagused;
 
 	if (device_is_a(self, "armperiph")
 	    && device_is_a(device_parent(self), "mainbus")) {
@@ -1170,6 +1169,7 @@ beagle_device_register(device_t self, void *aux)
 		prop_dictionary_set_int16(dict, "port2-gpio", -1);
 #endif
 #if defined(OMAP_5430)
+		int rv __diagused;
 		bus_space_tag_t iot = &omap_bs_tag;
 		bus_space_handle_t ioh;
 		omap2_gpio_ctl(80, GPIO_PIN_OUTPUT);
