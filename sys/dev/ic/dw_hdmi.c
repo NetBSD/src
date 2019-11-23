@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.5 2019/11/23 12:28:44 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.6 2019/11/23 20:27:39 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.5 2019/11/23 12:28:44 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.6 2019/11/23 20:27:39 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -429,14 +429,14 @@ dwhdmi_fc_init(struct dwhdmi_softc *sc, struct drm_display_mode *mode)
 	uint8_t val;
 
 	const uint8_t vic = drm_match_cea_mode(mode);
-	const uint16_t inhactiv = mode->hdisplay;
-	const uint16_t inhblank = mode->htotal - mode->hdisplay;
-	const uint16_t invactiv = mode->vdisplay;
-	const uint8_t invblank = mode->vtotal - mode->vdisplay;
-	const uint16_t hsyncindelay = mode->hsync_start - mode->hdisplay;
-	const uint16_t hsyncinwidth = mode->hsync_end - mode->hsync_start;
-	const uint8_t vsyncindelay = mode->vsync_start - mode->vdisplay;
-	const uint8_t vsyncinwidth = mode->vsync_end - mode->vsync_start;
+	const uint16_t inhactiv = mode->crtc_hdisplay;
+	const uint16_t inhblank = mode->crtc_htotal - mode->crtc_hdisplay;
+	const uint16_t invactiv = mode->crtc_vdisplay;
+	const uint8_t invblank = mode->crtc_vtotal - mode->crtc_vdisplay;
+	const uint16_t hsyncindelay = mode->crtc_hsync_start - mode->crtc_hdisplay;
+	const uint16_t hsyncinwidth = mode->crtc_hsync_end - mode->crtc_hsync_start;
+	const uint8_t vsyncindelay = mode->crtc_vsync_start - mode->crtc_vdisplay;
+	const uint8_t vsyncinwidth = mode->crtc_vsync_end - mode->crtc_vsync_start;
 
 	/* Input video configuration for frame composer */
 	val = HDMI_FC_INVIDCONF_DE_IN_POLARITY;
