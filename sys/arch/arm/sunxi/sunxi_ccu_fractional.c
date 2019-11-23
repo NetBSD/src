@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_ccu_fractional.c,v 1.4 2019/01/30 01:24:00 jmcneill Exp $ */
+/* $NetBSD: sunxi_ccu_fractional.c,v 1.5 2019/11/23 18:52:09 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.4 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_ccu_fractional.c,v 1.5 2019/11/23 18:52:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -140,6 +140,8 @@ sunxi_ccu_fractional_set_rate(struct sunxi_ccu_softc *sc,
 			val &= ~fractional->div_en;
 			val &= ~fractional->frac_sel;
 			val |= __SHIFTIN(i, fractional->frac_sel);
+			if (fractional->flags & SUNXI_CCU_FRACTIONAL_SET_ENABLE)
+				val |= fractional->enable;
 			CCU_WRITE(sc, fractional->reg, val);
 			return 0;
 		}
