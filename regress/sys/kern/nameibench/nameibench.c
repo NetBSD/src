@@ -1,4 +1,4 @@
-/*	$NetBSD: nameibench.c,v 1.2 2019/11/23 20:37:05 ad Exp $	*/
+/*	$NetBSD: nameibench.c,v 1.3 2019/11/23 20:37:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -51,8 +51,8 @@ const int primes[] = {
 };
 
 char	**sa;
-int	sasize;
-int	sacnt;
+u_int	sasize;
+u_int	sacnt;
 struct	timespec sts;
 struct	timespec ets;
 pthread_barrier_t	barrier;
@@ -103,7 +103,7 @@ makelist(void)
 static void
 lookups(int idx)
 {
-	int p, c;
+	u_int p, c;
 
 	for (c = 0, p = 0; !stop; c++) {
 		p += primes[idx];
