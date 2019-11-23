@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.2 2019/11/23 15:17:46 tkusumi Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.3 2019/11/23 17:13:46 tkusumi Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.2 2019/11/23 15:17:46 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.3 2019/11/23 17:13:46 tkusumi Exp $");
 
 #include "autofs.h"
 
@@ -578,10 +578,8 @@ autofs_reclaim(void *v)
 	 * We do not free autofs_node here; instead we are
 	 * destroying them in autofs_node_delete().
 	 */
-	mutex_enter(&anp->an_vnode_lock);
 	anp->an_vnode = NULL;
 	vp->v_data = NULL;
-	mutex_exit(&anp->an_vnode_lock);
 
 	return 0;
 }
@@ -629,7 +627,6 @@ autofs_node_new(struct autofs_node *parent, struct autofs_mount *amp,
 	anp->an_name = autofs_strndup(name, namelen, KM_SLEEP);
 	anp->an_ino = amp->am_last_ino++;
 	callout_init(&anp->an_callout, 0);
-	mutex_init(&anp->an_vnode_lock, MUTEX_DEFAULT, IPL_NONE);
 	getnanotime(&anp->an_ctime);
 	anp->an_parent = parent;
 	anp->an_mount = amp;
@@ -681,7 +678,6 @@ autofs_node_delete(struct autofs_node *anp)
 	if (anp->an_parent)
 		RB_REMOVE(autofs_node_tree, &anp->an_parent->an_children, anp);
 
-	mutex_destroy(&anp->an_vnode_lock);
 	kmem_strfree(anp->an_name);
 	pool_put(&autofs_node_pool, anp);
 }
