@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.1 2018/01/09 03:31:14 christos Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.2 2019/11/23 15:17:46 tkusumi Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.1 2018/01/09 03:31:14 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.2 2019/11/23 15:17:46 tkusumi Exp $");
 
 #include "autofs.h"
 
@@ -413,8 +413,7 @@ autofs_print(void *v)
 }
 
 static int
-autofs_readdir_one(struct uio *uio, const char *name, ino_t ino,
-    size_t *reclenp)
+autofs_readdir_one(struct uio *uio, const char *name, ino_t ino)
 {
 	struct dirent dirent;
 
@@ -423,9 +422,6 @@ autofs_readdir_one(struct uio *uio, const char *name, ino_t ino,
 	strlcpy(dirent.d_name, name, sizeof(dirent.d_name));
 	dirent.d_namlen = strlen(dirent.d_name);
 	dirent.d_reclen = _DIRENT_SIZE(&dirent);
-
-	if (reclenp)
-		*reclenp = dirent.d_reclen;
 
 	if (!uio)
 		return 0;
@@ -439,11 +435,12 @@ autofs_readdir_one(struct uio *uio, const char *name, ino_t ino,
 static size_t
 autofs_dirent_reclen(const char *name)
 {
-	size_t reclen;
+	struct dirent dirent;
 
-	(void)autofs_readdir_one(NULL, name, -1, &reclen);
+	strlcpy(dirent.d_name, name, sizeof(dirent.d_name));
+	dirent.d_namlen = strlen(dirent.d_name);
 
-	return reclen;
+	return _DIRENT_SIZE(&dirent);
 }
 
 static int
@@ -463,7 +460,7 @@ autofs_readdir(void *v)
 	struct autofs_mount *amp = VFSTOAUTOFS(vp->v_mount);
 	struct autofs_node *anp = VTOI(vp);
 	struct autofs_node *child;
-	size_t reclen, reclens;
+	size_t reclens;
 	int error;
 
 	if (vp->v_type != VDIR)
@@ -496,7 +493,7 @@ autofs_readdir(void *v)
 	 * Write out the directory entry for ".".
 	 */
 	if (uio->uio_offset == 0) {
-		error = autofs_readdir_one(uio, ".", anp->an_ino, &reclen);
+		error = autofs_readdir_one(uio, ".", anp->an_ino);
 		if (error)
 			goto out;
 	}
@@ -509,8 +506,7 @@ autofs_readdir(void *v)
 		if (uio->uio_offset != reclens)
 			return EINVAL;
 		error = autofs_readdir_one(uio, "..",
-		    (anp->an_parent ? anp->an_parent->an_ino : anp->an_ino),
-		    &reclen);
+		    anp->an_parent ? anp->an_parent->an_ino : anp->an_ino);
 		if (error)
 			goto out;
 	}
@@ -538,9 +534,8 @@ autofs_readdir(void *v)
 			return EINVAL;
 		}
 
-		error = autofs_readdir_one(uio, child->an_name,
-		    child->an_ino, &reclen);
-		reclens += reclen;
+		error = autofs_readdir_one(uio, child->an_name, child->an_ino);
+		reclens += autofs_dirent_reclen(child->an_name);
 		if (error) {
 			mutex_exit(&amp->am_lock);
 			goto out;
@@ -562,7 +557,7 @@ out:
 	/*
 	 * Don't return an error if we managed to copy out some entries.
 	 */
-	if (uio->uio_resid < reclen)
+	if (uio->uio_resid < initial_resid)
 		return 0;
 
 	return error;
