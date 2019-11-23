@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.5 2019/11/22 19:48:58 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.6 2019/11/23 12:30:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.5 2019/11/22 19:48:58 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.6 2019/11/23 12:30:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,13 +101,6 @@ sunxi_dwhdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	if (encoder == NULL)
 		return EINVAL;
 
-	sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "hdmi-phy");
-	if (sc->sc_phy == NULL) {
-		device_printf(dev, "couldn't find hdmi-phy\n");
-		return ENXIO;
-	}
-
-	sc->sc_regulator = fdtbus_regulator_acquire(sc->sc_phandle, "hvcc-supply");
 	if (sc->sc_regulator != NULL) {
 		error = fdtbus_regulator_enable(sc->sc_regulator);
 		if (error != 0) {
@@ -271,10 +264,24 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.sc_enable = sunxi_dwhdmi_enable;
 	sc->sc_base.sc_disable = sunxi_dwhdmi_disable;
 	sc->sc_base.sc_mode_set = sunxi_dwhdmi_mode_set;
+	sc->sc_base.sc_scl_hcnt = 0xd8;
+	sc->sc_base.sc_scl_lcnt = 0xfe;
 	sc->sc_phandle = faa->faa_phandle;
 
 	aprint_naive("\n");
 	aprint_normal(": HDMI TX\n");
+
+	sc->sc_regulator = fdtbus_regulator_acquire(sc->sc_phandle, "hvcc-supply");
+
+	sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "hdmi-phy");
+	if (sc->sc_phy == NULL)
+		sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "phy");
+	if (sc->sc_phy == NULL) {
+		device_printf(self, "couldn't find PHY\n");
+		return;
+	}
+
+	sunxi_hdmiphy_init(sc->sc_phy);
 
 	if (dwhdmi_attach(&sc->sc_base) != 0) {
 		aprint_error_dev(self, "failed to attach driver\n");

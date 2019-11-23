@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmiphy.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $ */
+/* $NetBSD: sunxi_hdmiphy.c,v 1.3 2019/11/23 12:30:45 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.2 2019/01/31 01:49:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.3 2019/11/23 12:30:45 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,6 +128,8 @@ struct sunxi_hdmiphy_softc {
 
 	const struct sunxi_hdmiphy_data *sc_data;
 
+	struct clk		*sc_clk_bus;
+	struct clk		*sc_clk_mod;
 	struct clk		*sc_clk_pll0;
 
 	u_int			sc_rcalib;
@@ -425,20 +427,10 @@ sunxi_hdmiphy_attach(device_t parent, device_t self, void *aux)
 	}
 
 	clk_bus = fdtbus_clock_get(phandle, "bus");
-	if (clk_bus == NULL || clk_enable(clk_bus) != 0) {
-		aprint_error(": couldn't enable bus clock\n");
-		return;
-	}
-
 	clk_mod = fdtbus_clock_get(phandle, "mod");
-	if (clk_mod == NULL || clk_enable(clk_mod) != 0) {
-		aprint_error(": couldn't enable mod clock\n");
-		return;
-	}
-
 	clk_pll0 = fdtbus_clock_get(phandle, "pll-0");
-	if (clk_pll0 == NULL || clk_enable(clk_pll0) != 0) {
-		aprint_error(": couldn't enable pll-0 clock\n");
+	if (clk_bus == NULL || clk_mod == NULL || clk_pll0 == NULL) {
+		aprint_error(": couldn't get clocks\n");
 		return;
 	}
 
@@ -449,12 +441,25 @@ sunxi_hdmiphy_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_clk_bus = clk_bus;
+	sc->sc_clk_mod = clk_mod;
 	sc->sc_clk_pll0 = clk_pll0;
 
 	aprint_naive("\n");
 	aprint_normal(": HDMI PHY\n");
 
 	fdtbus_register_phy_controller(self, phandle, &sunxi_hdmiphy_funcs);
+}
+
+void
+sunxi_hdmiphy_init(struct fdtbus_phy *phy)
+{
+	device_t dev = fdtbus_phy_device(phy);
+	struct sunxi_hdmiphy_softc * const sc = device_private(dev);
+
+	clk_enable(sc->sc_clk_bus);
+	clk_enable(sc->sc_clk_mod);
+	clk_enable(sc->sc_clk_pll0);
 
 	PHY_WRITE(sc, READ_EN, READ_EN_MAGIC);
 	PHY_WRITE(sc, UNSCRAMBLE, UNSCRAMBLE_MAGIC);
