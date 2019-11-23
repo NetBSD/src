@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.8 2019/11/23 20:24:12 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.9 2019/11/23 21:40:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.8 2019/11/23 20:24:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.9 2019/11/23 21:40:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -252,6 +252,9 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
 
+	paddr += y * sfb->base.pitches[0];
+	paddr += x * drm_format_plane_cpp(sfb->base.pixel_format, 0);
+
 	uint32_t haddr = (paddr >> 32) & OVL_UI_TOP_HADD_LAYER0;
 	uint32_t laddr = paddr & 0xffffffff;
 
@@ -461,7 +464,6 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 
 	const uint32_t size = ((adjusted_mode->vdisplay - 1) << 16) |
 			      (adjusted_mode->hdisplay - 1);
-	const uint32_t offset = (y << 16) | x;
 
 	/* Set global size */
 	GLB_WRITE(sc, GLB_SIZE, size);
@@ -474,7 +476,7 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set blender 0 input size */
 	BLD_WRITE(sc, BLD_CH_ISIZE(0), size);
 	/* Set blender 0 offset */
-	BLD_WRITE(sc, BLD_CH_OFFSET(0), offset);
+	BLD_WRITE(sc, BLD_CH_OFFSET(0), 0);
 	/* Route channel 1 to pipe 0 */
 	val = BLD_READ(sc, BLD_CH_RTCTL);
 	val &= ~BLD_CH_RTCTL_P0;
@@ -493,7 +495,7 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	/* Set UI overlay layer size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_MBSIZE(0), size);
 	/* Set UI overlay offset */
-	OVL_UI_WRITE(sc, 0, OVL_UI_COOR(0), offset);
+	OVL_UI_WRITE(sc, 0, OVL_UI_COOR(0), 0);
 	/* Set UI overlay window size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_SIZE, size);
 
