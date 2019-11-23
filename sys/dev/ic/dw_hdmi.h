@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.h,v 1.4 2019/11/16 13:10:07 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.h,v 1.5 2019/11/23 12:28:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,8 @@ struct dwhdmi_softc {
 	u_int			sc_reg_width;
 	u_int			sc_flags;
 #define	DWHDMI_USE_INTERNAL_PHY	__BIT(0)
+	u_int			sc_scl_hcnt;
+	u_int			sc_scl_lcnt;
 
 	u_int			sc_phytype;
 	u_int			sc_version;
