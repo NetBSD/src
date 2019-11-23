@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.211 2019/11/21 19:47:21 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.212 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -161,22 +161,23 @@
  *
  *	States and their associated locks:
  *
- *	LSONPROC, LSZOMB:
+ *	LSIDL, LSONPROC, LSZOMB, LSSUPENDED:
  *
- *		Always covered by spc_lwplock, which protects running LWPs.
- *		This is a per-CPU lock and matches lwp::l_cpu.
+ *		Always covered by spc_lwplock, which protects LWPs not
+ *		associated with any other sync object.  This is a per-CPU
+ *		lock and matches lwp::l_cpu.
  *
- *	LSIDL, LSRUN:
+ *	LSRUN:
  *
  *		Always covered by spc_mutex, which protects the run queues.
  *		This is a per-CPU lock and matches lwp::l_cpu.
  *
  *	LSSLEEP:
  *
- *		Covered by a lock associated with the sleep queue that the
- *		LWP resides on.  Matches lwp::l_sleepq::sq_mutex.
+ *		Covered by a lock associated with the sleep queue (sometimes
+ *		a turnstile sleep queue) that the LWP resides on.
  *
- *	LSSTOP, LSSUSPENDED:
+ *	LSSTOP:
  *
  *		If the LWP was previously sleeping (l_wchan != NULL), then
  *		l_mutex references the sleep queue lock.  If the LWP was
@@ -185,10 +186,7 @@
  *
  *	The lock order is as follows:
  *
- *		spc::spc_lwplock ->
- *		    sleeptab::st_mutex ->
- *			tschain_t::tc_mutex ->
- *			    spc::spc_mutex
+ *		sleepq -> turnstile -> spc_lwplock -> spc_mutex
  *
  *	Each process has an scheduler state lock (proc::p_lock), and a
  *	number of counters on LWPs and their states: p_nzlwps, p_nrlwps, and
@@ -199,7 +197,7 @@
  *		LSIDL, LSZOMB, LSSTOP, LSSUSPENDED
  *
  *	(But not always for kernel threads.  There are some special cases
- *	as mentioned above.  See kern_softint.c.)
+ *	as mentioned above: soft interrupts, and the idle loops.)
  *
  *	Note that an LWP is considered running or likely to run soon if in
  *	one of the following states.  This affects the value of p_nrlwps:
@@ -211,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.211 2019/11/21 19:47:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.212 2019/11/23 19:42:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -841,7 +839,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_inheritedprio = -1;
 	l2->l_protectprio = -1;
 	l2->l_auxprio = -1;
-	l2->l_flag = 0;
+	l2->l_flag = (l1->l_flag & (LW_WEXIT | LW_WREBOOT | LW_WCORE));
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
 	l2->l_psrefs = 0;
@@ -874,7 +872,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	}
 
 	kpreempt_disable();
-	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_mutex;
+	l2->l_mutex = l1->l_cpu->ci_schedstate.spc_lwplock;
 	l2->l_cpu = l1->l_cpu;
 	kpreempt_enable();
 
@@ -981,6 +979,35 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		(*p2->p_emul->e_lwp_fork)(l1, l2);
 
 	return (0);
+}
+
+/*
+ * Set a new LWP running.  If the process is stopping, then the LWP is
+ * created stopped.
+ */
+void
+lwp_start(lwp_t *l, int flags)
+{
+	proc_t *p = l->l_proc;
+
+	mutex_enter(p->p_lock);
+	lwp_lock(l);
+	KASSERT(l->l_stat == LSIDL);
+	if ((flags & LWP_SUSPENDED) != 0) {
+		/* It'll suspend itself in lwp_userret(). */
+		l->l_flag |= LW_WSUSPEND;
+	}
+	if (p->p_stat == SSTOP || (p->p_sflag & PS_STOPPING) != 0) {
+		KASSERT(l->l_wchan == NULL);
+	    	l->l_stat = LSSTOP;
+		p->p_nrlwps--;
+		lwp_unlock(l);
+	} else {
+		l->l_cpu = curcpu();
+		setrunnable(l);
+		/* LWP now unlocked */
+	}
+	mutex_exit(p->p_lock);
 }
 
 /*
@@ -1345,13 +1372,10 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	case LSRUN:
 		l->l_target_cpu = tci;
 		break;
-	case LSIDL:
-		l->l_cpu = tci;
-		lwp_unlock_to(l, tspc->spc_mutex);
-		return;
 	case LSSLEEP:
 		l->l_cpu = tci;
 		break;
+	case LSIDL:
 	case LSSTOP:
 	case LSSUSPENDED:
 		l->l_cpu = tci;
@@ -1363,8 +1387,8 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	case LSONPROC:
 		l->l_target_cpu = tci;
 		spc_lock(l->l_cpu);
-		cpu_need_resched(l->l_cpu, RESCHED_KPREEMPT);
-		spc_unlock(l->l_cpu);
+		sched_resched_cpu(l->l_cpu, PRI_USER_RT, true);
+		/* spc now unlocked */
 		break;
 	}
 	lwp_unlock(l);

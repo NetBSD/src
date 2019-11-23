@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.43 2018/04/19 21:19:07 christos Exp $	*/
+/*	$NetBSD: cpu.h,v 1.44 2019/11/23 19:42:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -50,17 +50,8 @@ void cpu_idle(void);
 #endif
 #endif
 
-/*
- * cpu_need_resched() must always be called with the target CPU
- * locked (via spc_lock() or another route), unless called locally.
- * If called locally, the caller need only be at IPL_SCHED.
- */
 #ifndef cpu_need_resched
-void cpu_need_resched(struct cpu_info *, int);
-#endif
-
-#ifndef cpu_did_resched
-#define	cpu_did_resched(l)	/* nothing */
+void cpu_need_resched(struct cpu_info *, struct lwp *, int);
 #endif
 
 /*
@@ -140,9 +131,13 @@ int cpu_ucode_md_open(firmware_handle_t *, int, const char *);
 #endif
 #endif	/* !_LOCORE */
 
-/* flags for cpu_need_resched */
-#define	RESCHED_LAZY		0x01	/* request a ctx switch */
-#define	RESCHED_IMMED		0x02	/* request an immediate ctx switch */
-#define	RESCHED_KPREEMPT	0x04	/* request in-kernel preemption */
+/*
+ * Flags for cpu_need_resched.  RESCHED_KERNEL must be greater than
+ * RESCHED_USER; see sched_resched_cpu().
+ */
+#define	RESCHED_REMOTE		0x01	/* request is for a remote CPU */
+#define	RESCHED_IDLE		0x02	/* idle LWP observed */
+#define	RESCHED_UPREEMPT	0x04	/* immediate user ctx switch */
+#define	RESCHED_KPREEMPT	0x08	/* immediate kernel ctx switch */
 
 #endif	/* !_SYS_CPU_H_ */
