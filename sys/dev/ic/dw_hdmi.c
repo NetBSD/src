@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.4 2019/11/16 13:10:07 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.5 2019/11/23 12:28:44 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.4 2019/11/16 13:10:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.5 2019/11/23 12:28:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -239,6 +239,8 @@ __KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.4 2019/11/16 13:10:07 jmcneill Exp $")
 #define	HDMI_I2CM_SOFTRSTZ	0x7e09
 #define	 HDMI_I2CM_SOFTRSTZ_I2C_SOFTRST		__BIT(0)
 #define	HDMI_I2CM_SEGPTR	0x7e0a
+#define	HDMI_I2CM_SS_SCL_HCNT_0_ADDR 0x730c
+#define	HDMI_I2CM_SS_SCL_LCNT_0_ADDR 0x730e
 
 enum dwhdmi_dai_mixer_ctrl {
 	DWHDMI_DAI_OUTPUT_CLASS,
@@ -291,6 +293,10 @@ dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 
 	dwhdmi_write(sc, HDMI_I2CM_SOFTRSTZ, 0);
 	dwhdmi_write(sc, HDMI_IH_I2CM_STAT0, dwhdmi_read(sc, HDMI_IH_I2CM_STAT0));
+	if (sc->sc_scl_hcnt)
+		dwhdmi_write(sc, HDMI_I2CM_SS_SCL_HCNT_0_ADDR, sc->sc_scl_hcnt);
+	if (sc->sc_scl_lcnt)
+		dwhdmi_write(sc, HDMI_I2CM_SS_SCL_LCNT_0_ADDR, sc->sc_scl_lcnt);
 	dwhdmi_write(sc, HDMI_I2CM_DIV, 0);
 	dwhdmi_write(sc, HDMI_I2CM_SLAVE, DDC_ADDR);
 	dwhdmi_write(sc, HDMI_I2CM_SEGADDR, DDC_SEGMENT_ADDR);
@@ -298,6 +304,8 @@ dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	block = *(const uint8_t *)cmdbuf;
 	operation = block ? HDMI_I2CM_OPERATION_RD_EXT : HDMI_I2CM_OPERATION_RD;
 	off = (block & 1) ? 128 : 0;
+
+	dwhdmi_write(sc, HDMI_I2CM_SEGPTR, block >> 1);
 
 	for (n = 0; n < len; n++) {
 		dwhdmi_write(sc, HDMI_I2CM_ADDRESS, n + off);
