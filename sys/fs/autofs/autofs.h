@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.h,v 1.3 2019/11/23 08:00:59 tkusumi Exp $	*/
+/*	$NetBSD: autofs.h,v 1.4 2019/11/23 17:13:46 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -111,7 +111,6 @@ struct autofs_node {
 	    autofs_node)		an_children;
 	struct autofs_mount		*an_mount;
 	struct vnode			*an_vnode;
-	kmutex_t			an_vnode_lock;
 	bool				an_cached;
 	bool				an_wildcards;
 	struct callout			an_callout;
