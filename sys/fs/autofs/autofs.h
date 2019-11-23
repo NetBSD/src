@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs.h,v 1.1 2018/01/09 03:31:14 christos Exp $	*/
+/*	$NetBSD: autofs.h,v 1.2 2019/11/23 07:38:03 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -120,7 +120,6 @@ struct autofs_node {
 };
 
 struct autofs_mount {
-	TAILQ_ENTRY(autofs_mount)	am_next;
 	struct autofs_node		*am_root;
 	struct mount			*am_mp;
 	kmutex_t			am_lock;
