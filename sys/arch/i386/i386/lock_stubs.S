@@ -1,7 +1,7 @@
-/*	$NetBSD: lock_stubs.S,v 1.30 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.31 2019/11/23 16:36:38 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.30 2019/02/11 14:59:32 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.31 2019/11/23 16:36:38 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -104,13 +104,15 @@ END(mutex_exit)
  */
 ENTRY(rw_enter)
 	movl	4(%esp), %edx
+	xorl	%eax, %eax
 	cmpl	$RW_READER, 8(%esp)
 	jne	2f
 
 	/*
-	 * Reader
+	 * Reader, and no existing readers on the lock: this is a most
+	 * common case.  Instead of reading from the lock word, use cmpxchg
+	 * and get the cache line into the EXCLUSIVE state to begin with.
 	 */
-	movl	(%edx), %eax
 0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	3f
@@ -125,7 +127,7 @@ ENTRY(rw_enter)
 	/*
 	 * Writer
 	 */
-2:	xorl	%eax, %eax
+2:
 	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(3)
@@ -186,13 +188,15 @@ END(rw_exit)
  */
 ENTRY(rw_tryenter)
 	movl	4(%esp), %edx
+	xorl	%eax, %eax
 	cmpl	$RW_READER, 8(%esp)
 	jne	2f
 
 	/*
-	 * Reader
+	 * Reader, and no existing readers on the lock: this is a most
+	 * common case.  Instead of reading from the lock word, use cmpxchg
+	 * and get the cache line into the EXCLUSIVE state to begin with.
 	 */
-	movl	(%edx), %eax
 0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	4f
@@ -209,7 +213,6 @@ ENTRY(rw_tryenter)
 	 * Writer
 	 */
 2:
-	xorl	%eax, %eax
 	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
 	orl	$RW_WRITE_LOCKED, %ecx
 	LOCK(13)

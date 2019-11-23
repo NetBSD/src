@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.33 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.34 2019/11/23 16:36:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -191,13 +191,15 @@ END(mutex_spin_exit)
  * Acquire one hold on a RW lock.
  */
 ENTRY(rw_enter)
-	cmpl	$RW_READER, %esi
+	xorl	%eax, %eax
+	testl	%esi, %esi	/* RW_READER = 0 */
 	jne	2f
 
 	/*
-	 * Reader: this is the most common case.
+	 * Reader, and no existing readers on the lock: this is a most
+	 * common case.  Instead of reading from the lock word, use cmpxchg
+	 * and get the cache line into the EXCLUSIVE state to begin with.
 	 */
-	movq	(%rdi), %rax
 0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	3f
@@ -213,7 +215,6 @@ ENTRY(rw_enter)
 	 * Writer: if the compare-and-set fails, don't bother retrying.
 	 */
 2:	movq	CPUVAR(CURLWP), %rcx
-	xorq	%rax, %rax
 	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK
 	cmpxchgq %rcx, (%rdi)
@@ -268,13 +269,15 @@ END(rw_exit)
  * Try to acquire one hold on a RW lock.
  */
 ENTRY(rw_tryenter)
-	cmpl	$RW_READER, %esi
+	xorl	%eax, %eax
+	testl	%esi, %esi	/* RW_READER = 0 */
 	jne	2f
 
 	/*
-	 * Reader: this is the most common case.
+	 * Reader, and no existing readers on the lock: this is a most
+	 * common case.  Instead of reading from the lock word, use cmpxchg
+	 * and get the cache line into the EXCLUSIVE state to begin with.
 	 */
-	movq	(%rdi), %rax
 0:
 	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
 	jnz	4f
@@ -291,7 +294,6 @@ ENTRY(rw_tryenter)
 	 * Writer: if the compare-and-set fails, don't bother retrying.
 	 */
 2:	movq	CPUVAR(CURLWP), %rcx
-	xorq	%rax, %rax
 	orq	$RW_WRITE_LOCKED, %rcx
 	LOCK
 	cmpxchgq %rcx, (%rdi)
