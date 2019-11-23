@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.36 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.37 2019/11/23 22:35:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.36 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.37 2019/11/23 22:35:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -85,6 +85,7 @@ __KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.36 2019/11/23 19:42:52 ad Exp $");
 #include <sys/sysctl.h>
 #include <sys/lockdebug.h>
 #include <sys/intr.h>
+#include <sys/atomic.h>
 
 static void updatepri(struct lwp *);
 static void resetpriority(struct lwp *);

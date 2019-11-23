@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.48 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.49 2019/11/23 22:35:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.48 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.49 2019/11/23 22:35:08 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -76,6 +76,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.48 2019/11/23 19:42:52 ad Exp $");
 #include <sys/systm.h>
 #include <sys/types.h>
 #include <sys/evcnt.h>
+#include <sys/atomic.h>
 
 /*
  * Priority related definitions.
