@@ -1,12 +1,12 @@
-/*	$NetBSD: x86_machdep.c,v 1.128 2019/10/03 05:06:29 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.129 2019/11/23 19:40:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
- * Copyright (c) 2005, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2005, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Julio M. Merino Vidal.
+ * by Julio M. Merino Vidal, and Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.128 2019/10/03 05:06:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.129 2019/11/23 19:40:37 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -290,53 +290,35 @@ module_init_md(void)
 #endif	/* MODULAR */
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct cpu_info *cur;
-	lwp_t *l;
 
 	KASSERT(kpreempt_disabled());
-	cur = curcpu();
-	l = ci->ci_data.cpu_onproc;
-	ci->ci_want_resched |= flags;
 
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-
-	if (l == ci->ci_data.cpu_idlelwp) {
-		if (ci == cur)
-			return;
-		if (x86_cpu_idle_ipi != false) {
+	if ((flags & RESCHED_IDLE) != 0) {
+		if ((flags & RESCHED_REMOTE) != 0 &&
+		    x86_cpu_idle_ipi != false) {
 			cpu_kick(ci);
 		}
 		return;
 	}
 
-	if ((flags & RESCHED_KPREEMPT) != 0) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci == cur) {
-			softint_trigger(1 << SIR_PREEMPT);
-		} else {
+	if ((flags & RESCHED_KPREEMPT) != 0) {
+		if ((flags & RESCHED_REMOTE) != 0) {
 			x86_send_ipi(ci, X86_IPI_KPREEMPT);
+		} else {
+			softint_trigger(1 << SIR_PREEMPT);
 		}
 		return;
+	}
 #endif
-	}
 
-	aston(l, X86_AST_PREEMPT);
-	if (ci == cur) {
-		return;
-	}
-	if ((flags & RESCHED_IMMED) != 0) {
+	KASSERT((flags & RESCHED_UPREEMPT) != 0);
+	if ((flags & RESCHED_REMOTE) != 0) {
 		cpu_kick(ci);
+	} else {
+		aston(l);
 	}
 }
 
@@ -345,9 +327,12 @@ cpu_signotify(struct lwp *l)
 {
 
 	KASSERT(kpreempt_disabled());
-	aston(l, X86_AST_GENERIC);
-	if (l->l_cpu != curcpu())
+
+	if (l->l_cpu != curcpu()) {
 		cpu_kick(l->l_cpu);
+	} else {
+		aston(l);
+	}
 }
 
 void
@@ -358,7 +343,7 @@ cpu_need_proftick(struct lwp *l)
 	KASSERT(l->l_cpu == curcpu());
 
 	l->l_pflag |= LP_OWEUPC;
-	aston(l, X86_AST_GENERIC);
+	aston(l);
 }
 
 bool
@@ -392,7 +377,6 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 	 */
 	if (s > IPL_PREEMPT) {
 		softint_trigger(1 << SIR_PREEMPT);
-		aston(l, X86_AST_PREEMPT);	/* paranoid */
 		return false;
 	}
 

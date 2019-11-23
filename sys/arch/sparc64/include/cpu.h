@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.126 2019/02/08 20:14:50 palle Exp $ */
+/*	$NetBSD: cpu.h,v 1.127 2019/11/23 19:40:36 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -267,7 +267,6 @@ extern struct pool_cache *fpstate_cache;
 #define curpcb		curcpu()->ci_cpcb
 
 #define want_ast	curcpu()->ci_want_ast
-#define want_resched	curcpu()->ci_want_resched
 
 /*
  * definitions of cpu-dependent requirements

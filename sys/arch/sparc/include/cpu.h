@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.101 2018/08/22 01:05:23 msaitoh Exp $ */
+/*	$NetBSD: cpu.h,v 1.102 2019/11/23 19:40:36 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -451,13 +451,12 @@ void	sparc_softintr_init(void);
  * Preempt the current process on the target CPU if in interrupt from
  * user mode, or after the current trap/syscall if in system mode.
  */
-#define cpu_need_resched(ci, flags) do {				\
+#define cpu_need_resched(ci, l, flags) do {				\
 	__USE(flags);							\
-	(ci)->ci_want_resched = 1;					\
 	(ci)->ci_want_ast = 1;						\
 									\
 	/* Just interrupt the target CPU, so it can notice its AST */	\
-	if (((flags) & RESCHED_IMMED) || (ci)->ci_cpuid != cpu_number()) \
+	if ((flags & RESCHED_REMOTE) != 0)				\
 		XCALL0(sparc_noop, 1U << (ci)->ci_cpuid);		\
 } while (/*CONSTCOND*/0)
 

@@ -1,7 +1,7 @@
-/* $NetBSD: cpu_machdep.c,v 1.7 2019/11/21 19:57:23 ad Exp $ */
+/* $NetBSD: cpu_machdep.c,v 1.8 2019/11/23 19:40:34 ad Exp $ */
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2014, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.7 2019/11/21 19:57:23 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu_machdep.c,v 1.8 2019/11/23 19:40:34 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -124,7 +124,8 @@ dosoftints(void)
 		if (softints == 0) {
 #ifdef __HAVE_PREEMPTION
 			if (ci->ci_want_resched & RESCHED_KPREEMPT) {
-				ci->ci_want_resched &= ~RESCHED_KPREEMPT;
+				atomic_and_uint(&ci->ci_want_resched,
+				    ~RESCHED_KPREEMPT);
 				splsched();
 				kpreempt(-2);
 			}
@@ -233,60 +234,25 @@ startlwp(void *arg)
 }
 
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
-	struct lwp * const l = ci->ci_data.cpu_onproc;
-#ifdef MULTIPROCESSOR
-	struct cpu_info * const cur_ci = curcpu();
-#endif
-
 	KASSERT(kpreempt_disabled());
 
-	ci->ci_want_resched |= flags;
-
-	if (__predict_false((l->l_pflag & LP_INTR) != 0)) {
-		/*
-		 * No point doing anything, it will switch soon.
-		 * Also here to prevent an assertion failure in
-		 * kpreempt() due to preemption being set on a
-		 * soft interrupt LWP.
-		 */
-		return;
-	}
-
-	if (__predict_false(l == ci->ci_data.cpu_idlelwp)) {
-#ifdef MULTIPROCESSOR
-		/*
-		 * If the other CPU is idling, it must be waiting for an
-		 * interrupt.  So give it one.
-		 */
-		if (__predict_false(ci != cur_ci))
-			intr_ipi_send(ci->ci_kcpuset, IPI_NOP);
-#endif
-		return;
-	}
-
-#ifdef MULTIPROCESSOR
-	atomic_or_uint(&ci->ci_want_resched, flags);
-#else
-	ci->ci_want_resched |= flags;
-#endif
-
-	if (flags & RESCHED_KPREEMPT) {
+	if ((flags & RESCHED_KPREEMPT) != 0) {
 #ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		if (ci != cur_ci) {
+		if ((flags & RESCHED_REMOTE) != 0) {
 			intr_ipi_send(ci->ci_kcpuset, IPI_KPREEMPT);
 		}
 #endif
 		return;
 	}
-	setsoftast(ci);	/* force call to ast() */
+	if ((flags & RESCHED_REMOTE) != 0) {
 #ifdef MULTIPROCESSOR
-	if (ci != cur_ci && (flags & RESCHED_IMMED)) {
 		intr_ipi_send(ci->ci_kcpuset, IPI_AST);
-	}
 #endif
+	} else {
+		setsoftast(ci);	/* force call to ast() */
+	}
 }
 
 void
