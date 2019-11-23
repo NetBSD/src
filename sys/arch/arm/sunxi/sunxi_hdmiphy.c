@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmiphy.c,v 1.3 2019/11/23 12:30:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_hdmiphy.c,v 1.4 2019/11/23 18:54:26 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.3 2019/11/23 12:30:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmiphy.c,v 1.4 2019/11/23 18:54:26 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,6 +128,7 @@ struct sunxi_hdmiphy_softc {
 
 	const struct sunxi_hdmiphy_data *sc_data;
 
+	struct fdtbus_reset	*sc_rst;
 	struct clk		*sc_clk_bus;
 	struct clk		*sc_clk_mod;
 	struct clk		*sc_clk_pll0;
@@ -173,14 +174,6 @@ sunxi_hdmiphy_release(device_t dev, void *priv)
 static int
 sunxi_hdmiphy_enable(device_t dev, void *priv, bool enable)
 {
-	struct sunxi_hdmiphy_softc * const sc = priv;
-
-	if (enable) {
-		sc->sc_data->init(sc);
-	} else {
-		sc->sc_data->config(sc, 0);
-	}
-
 	return 0;
 }
 
@@ -421,11 +414,10 @@ sunxi_hdmiphy_attach(device_t parent, device_t self, void *aux)
 	}
 
 	rst = fdtbus_reset_get(phandle, "phy");
-	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
-		aprint_error(": couldn't de-assert reset\n");
+	if (rst == NULL) {
+		aprint_error(": couldn't get reset\n");
 		return;
 	}
-
 	clk_bus = fdtbus_clock_get(phandle, "bus");
 	clk_mod = fdtbus_clock_get(phandle, "mod");
 	clk_pll0 = fdtbus_clock_get(phandle, "pll-0");
@@ -441,6 +433,7 @@ sunxi_hdmiphy_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't map registers\n");
 		return;
 	}
+	sc->sc_rst = rst;
 	sc->sc_clk_bus = clk_bus;
 	sc->sc_clk_mod = clk_mod;
 	sc->sc_clk_pll0 = clk_pll0;
@@ -460,6 +453,10 @@ sunxi_hdmiphy_init(struct fdtbus_phy *phy)
 	clk_enable(sc->sc_clk_bus);
 	clk_enable(sc->sc_clk_mod);
 	clk_enable(sc->sc_clk_pll0);
+
+	fdtbus_reset_deassert(sc->sc_rst);
+
+	sc->sc_data->init(sc);
 
 	PHY_WRITE(sc, READ_EN, READ_EN_MAGIC);
 	PHY_WRITE(sc, UNSCRAMBLE, UNSCRAMBLE_MAGIC);
