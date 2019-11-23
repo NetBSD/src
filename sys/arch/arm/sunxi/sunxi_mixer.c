@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.7 2019/02/16 16:20:50 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.8 2019/11/23 20:24:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.7 2019/02/16 16:20:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.8 2019/11/23 20:24:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -255,6 +255,9 @@ sunxi_mixer_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 	uint32_t haddr = (paddr >> 32) & OVL_UI_TOP_HADD_LAYER0;
 	uint32_t laddr = paddr & 0xffffffff;
 
+	/* Set UI overlay line size */
+	OVL_UI_WRITE(sc, 0, OVL_UI_PITCH(0), sfb->base.pitches[0]);
+
 	/* Framebuffer start address */
 	val = OVL_UI_READ(sc, 0, OVL_UI_TOP_HADD);
 	val &= ~OVL_UI_TOP_HADD_LAYER0;
@@ -367,7 +370,7 @@ sunxi_mixer_cursor_set(struct drm_crtc *crtc, struct drm_file *file_priv,
 	/* Set UI overlay offset */
 	OVL_UI_WRITE(sc, 1, OVL_UI_COOR(0), offset);
 	/* Set UI overlay line size */
-	OVL_UI_WRITE(sc, 1, OVL_UI_PITCH(0), width * 4);
+	OVL_UI_WRITE(sc, 1, OVL_UI_PITCH(0), crtc->primary->fb->pitches[0]);
 	/* Set UI overlay window size */
 	OVL_UI_WRITE(sc, 1, OVL_UI_SIZE, crtc_size);
 
@@ -491,8 +494,6 @@ sunxi_mixer_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	OVL_UI_WRITE(sc, 0, OVL_UI_MBSIZE(0), size);
 	/* Set UI overlay offset */
 	OVL_UI_WRITE(sc, 0, OVL_UI_COOR(0), offset);
-	/* Set UI overlay line size */
-	OVL_UI_WRITE(sc, 0, OVL_UI_PITCH(0), adjusted_mode->hdisplay * 4);
 	/* Set UI overlay window size */
 	OVL_UI_WRITE(sc, 0, OVL_UI_SIZE, size);
 
