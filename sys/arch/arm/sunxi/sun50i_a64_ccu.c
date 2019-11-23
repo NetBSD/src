@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.18 2019/11/23 18:57:36 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.19 2019/11/23 22:46:53 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.18 2019/11/23 18:57:36 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.19 2019/11/23 22:46:53 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -622,9 +622,15 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 	clk_set_parent(&sc->sc_clks[A64_CLK_DE].base, &sc->sc_clks[A64_CLK_PLL_DE].base);
 	clk_set_rate(&sc->sc_clks[A64_CLK_PLL_DE].base, 420000000);
 
+	/* Set video PLLs to 297 MHz */
+	clk_set_rate(&sc->sc_clks[A64_CLK_PLL_VIDEO0].base, 297000000);
+	clk_set_rate(&sc->sc_clks[A64_CLK_PLL_VIDEO1].base, 297000000);
+
 	/* Set TCON1 parent to PLL_VIDEO1(1X) */
 	clk_set_parent(&sc->sc_clks[A64_CLK_TCON1].base, &sc->sc_clks[A64_CLK_PLL_VIDEO1].base);
-	clk_set_rate(&sc->sc_clks[A64_CLK_PLL_VIDEO1].base, 297000000);
+
+	/* Set HDMI parent to PLL_VIDEO1(1X) */
+	clk_set_parent(&sc->sc_clks[A64_CLK_HDMI].base, &sc->sc_clks[A64_CLK_PLL_VIDEO1].base);
 
 	sunxi_ccu_print(sc);
 }
