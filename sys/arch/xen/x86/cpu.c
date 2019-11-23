@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130 2019/10/12 06:31:04 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.131 2019/11/23 19:40:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130 2019/10/12 06:31:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131 2019/11/23 19:40:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -1271,11 +1271,11 @@ cpu_broadcast_halt(void)
 }
 
 /*
- * Send a dummy ipi to a cpu.
+ * Send a dummy ipi to a cpu, and raise an AST on the running LWP.
  */
 
 void
 cpu_kick(struct cpu_info *ci)
 {
-	(void)xen_send_ipi(ci, XEN_IPI_KICK);
+	(void)xen_send_ipi(ci, XEN_IPI_AST);
 }

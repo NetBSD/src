@@ -1,7 +1,7 @@
-/*	$NetBSD: machdep.c,v 1.292 2019/11/10 21:16:33 chs Exp $ */
+/*	$NetBSD: machdep.c,v 1.293 2019/11/23 19:40:37 ad Exp $ */
 
 /*-
- * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.292 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.293 2019/11/23 19:40:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2622,19 +2622,16 @@ cpu_setmcontext(struct lwp *l, const mcontext_t *mcp, unsigned int flags)
  * or after the current trap/syscall if in system mode.
  */
 void
-cpu_need_resched(struct cpu_info *ci, int flags)
+cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 {
 
-	ci->ci_want_resched = 1;
 	ci->ci_want_ast = 1;
 
 #ifdef MULTIPROCESSOR
-	if (ci == curcpu())
-		return;
-	/* Just interrupt the target CPU, so it can notice its AST */
-	if ((flags & RESCHED_IMMED) != 0 &&
-	    ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp)
+	if ((flags & RESCHED_REMOTE) != 0) {
+		/* Just interrupt the target CPU, so it can notice its AST */
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
+	}
 #endif
 }
 
@@ -2648,8 +2645,9 @@ cpu_signotify(struct lwp *l)
 
 	ci->ci_want_ast = 1;
 #ifdef MULTIPROCESSOR
-	if (ci != curcpu())
+	if (ci != curcpu()) {
 		sparc64_send_ipi(ci->ci_cpuid, sparc64_ipi_nop, 0, 0);
+	}
 #endif
 }
 
