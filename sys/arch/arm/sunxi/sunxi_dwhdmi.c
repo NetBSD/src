@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.6 2019/11/23 12:30:45 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.7 2019/11/23 18:55:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.6 2019/11/23 12:30:45 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.7 2019/11/23 18:55:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -62,6 +62,7 @@ struct sunxi_dwhdmi_softc {
 	int			sc_phandle;
 	struct fdtbus_phy	*sc_phy;
 	struct fdtbus_regulator	*sc_regulator;
+	struct clk		*sc_clk;
 
 	struct fdt_device_ports	sc_ports;
 	struct drm_display_mode	sc_curmode;
@@ -186,6 +187,15 @@ sunxi_dwhdmi_mode_set(struct dwhdmi_softc *dsc, struct drm_display_mode *mode,
     struct drm_display_mode *adjusted_mode)
 {
 	struct sunxi_dwhdmi_softc * const sc = to_sunxi_dwhdmi_softc(dsc);
+	int error;
+
+	if (sc->sc_clk != NULL) {
+		error = clk_set_rate(sc->sc_clk, adjusted_mode->clock * 1000);
+		if (error != 0)
+			device_printf(sc->sc_base.sc_dev,
+			    "couldn't set pixel clock to %u Hz: %d\n",
+			    adjusted_mode->clock * 1000, error);
+	}
 
 	sc->sc_curmode = *adjusted_mode;
 }
@@ -229,12 +239,6 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	rst = fdtbus_reset_get(phandle, "ctrl");
-	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
-		aprint_error(": couldn't de-assert reset\n");
-		return;
-	}
-
 	clk_iahb = fdtbus_clock_get(phandle, "iahb");
 	if (clk_iahb == NULL || clk_enable(clk_iahb) != 0) {
 		aprint_error(": couldn't enable iahb clock\n");
@@ -267,6 +271,7 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 	sc->sc_base.sc_scl_hcnt = 0xd8;
 	sc->sc_base.sc_scl_lcnt = 0xfe;
 	sc->sc_phandle = faa->faa_phandle;
+	sc->sc_clk = clk_tmds;
 
 	aprint_naive("\n");
 	aprint_normal(": HDMI TX\n");
@@ -278,6 +283,12 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 		sc->sc_phy = fdtbus_phy_get(sc->sc_phandle, "phy");
 	if (sc->sc_phy == NULL) {
 		device_printf(self, "couldn't find PHY\n");
+		return;
+	}
+
+	rst = fdtbus_reset_get(phandle, "ctrl");
+	if (rst == NULL || fdtbus_reset_deassert(rst) != 0) {
+		aprint_error_dev(self, "couldn't de-assert reset\n");
 		return;
 	}
 
