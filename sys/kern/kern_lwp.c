@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.212 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.213 2019/11/24 13:14:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.212 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.213 2019/11/24 13:14:23 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -259,7 +259,7 @@ SDT_PROBE_DEFINE1(proc, kernel, , lwp__create, "struct lwp *");
 SDT_PROBE_DEFINE1(proc, kernel, , lwp__start, "struct lwp *");
 SDT_PROBE_DEFINE1(proc, kernel, , lwp__exit, "struct lwp *");
 
-struct turnstile turnstile0;
+struct turnstile turnstile0 __cacheline_aligned;
 struct lwp lwp0 __aligned(MIN_LWP_ALIGNMENT) = {
 #ifdef LWP0_CPU_INFO
 	.l_cpu = LWP0_CPU_INFO,
