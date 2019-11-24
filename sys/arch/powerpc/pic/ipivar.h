@@ -1,4 +1,4 @@
-/* $NetBSD: ipivar.h,v 1.9 2018/04/19 21:50:07 christos Exp $ */
+/* $NetBSD: ipivar.h,v 1.10 2019/11/24 15:49:12 ad Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.9 2018/04/19 21:50:07 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipivar.h,v 1.10 2019/11/24 15:49:12 ad Exp $");
 
 #ifndef _IPI_VAR_H_
 #define _IPI_VAR_H_
@@ -56,6 +56,7 @@ struct ipi_ops {
 #define IPI_KPREEMPT		0x0004
 #define IPI_GENERIC		0x0008
 #define IPI_SUSPEND		0x0010
+#define	IPI_AST			0x0020
 
 /* OpenPIC */
 void setup_openpic_ipi(void);
