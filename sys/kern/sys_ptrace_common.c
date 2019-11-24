@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.22.2.7 2019/11/19 10:50:25 martin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.22.2.8 2019/11/24 08:15:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.22.2.7 2019/11/19 10:50:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.22.2.8 2019/11/24 08:15:17 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -775,8 +775,11 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
     void *addr, size_t data)
 {
 	int error;
-	struct proc *t = (*lt)->l_proc;
+	struct proc *p, *t;
 	struct vmspace *vm;
+
+	p = l->l_proc;		/* tracer */
+	t = (*lt)->l_proc;	/* traced */
 
 	if ((error = ptrace_update_lwp(t, lt, data)) != 0)
 		return error;
@@ -791,7 +794,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	case_PT_SETREGS
 		if (!process_validregs(*lt))
 			return EINVAL;
-		size = PROC_REGSZ(t);
+		size = PROC_REGSZ(p);
 		func = ptm->ptm_doregs;
 		break;
 #endif
@@ -800,7 +803,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	case_PT_SETFPREGS
 		if (!process_validfpregs(*lt))
 			return EINVAL;
-		size = PROC_FPREGSZ(t);
+		size = PROC_FPREGSZ(p);
 		func = ptm->ptm_dofpregs;
 		break;
 #endif
@@ -809,7 +812,7 @@ ptrace_regs(struct lwp *l, struct lwp **lt, int rq, struct ptrace_methods *ptm,
 	case_PT_SETDBREGS
 		if (!process_validdbregs(*lt))
 			return EINVAL;
-		size = PROC_DBREGSZ(t);
+		size = PROC_DBREGSZ(p);
 		func = ptm->ptm_dodbregs;
 		break;
 #endif
