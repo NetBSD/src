@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usbphy.c,v 1.2 2019/06/20 08:16:19 hkenken Exp $	*/
+/*	$NetBSD: imx6_usbphy.c,v 1.3 2019/11/24 11:07:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017  Genetec Corporation.  All rights reserved.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.2 2019/06/20 08:16:19 hkenken Exp $");
+__KERNEL_RCSID(1, "$NetBSD: imx6_usbphy.c,v 1.3 2019/11/24 11:07:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -144,8 +144,8 @@ imx6_usbphy_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d",
-		    (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d",
+		    addr, error);
 		return;
 	}
 
