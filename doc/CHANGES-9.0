@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.115 2019/11/22 15:30:39 bouyer Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.116 2019/11/24 08:34:28 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6198,4 +6198,52 @@ sys/arch/xen/xen/xenevt.c			1.54
 
 	Make these files compilable w/o options DIAGNOSTIC
 	[martin, ticket #463]
+
+sys/dev/hyperv/hvkbd.c				1.5,1.6
+sys/dev/hyperv/if_hvn.c				1.8,1.9
+sys/dev/hyperv/vmbus.c				1.5
+
+	vmbus(4), hvn(4), hvkbd(4): fix wait time for tsleep(9).
+	hvn(4), hvkbd(4): only poll when cold.
+	[nonaka, ticket #464]
+
+sys/kern/sys_ptrace_common.c			1.73
+
+	Fix regression introduced to ptrace_regs() in rev 1.27:
+	Size of registers should be determined from tracer, NOT tracee.
+	[rin, ticket #465]
+
+bin/sh/expand.c					1.133
+
+	Fix quoting in character class names in patterns (e.g. [[:\alpha:]]).
+	[kre, ticket #467]
+
+external/public-domain/tz/dist/Makefile         up to 1.1.1.25
+external/public-domain/tz/dist/NEWS             up to 1.1.1.28
+external/public-domain/tz/dist/TZDATA_VERSION   up to 1.18
+external/public-domain/tz/dist/africa           up to 1.1.1.21
+external/public-domain/tz/dist/antarctica       up to 1.1.1.12
+external/public-domain/tz/dist/asia             up to 1.1.1.24
+external/public-domain/tz/dist/australasia      up to 1.1.1.18
+external/public-domain/tz/dist/backzone         up to 1.1.1.17
+external/public-domain/tz/dist/checktab.awk     up to 1.1.1.10
+external/public-domain/tz/dist/europe           up to 1.1.1.25
+external/public-domain/tz/dist/factory          up to 1.1.1.4
+external/public-domain/tz/dist/leap-seconds.list up to 1.1.1.12
+external/public-domain/tz/dist/leapseconds      up to 1.1.1.14
+external/public-domain/tz/dist/leapseconds.awk  up to 1.1.1.9
+external/public-domain/tz/dist/northamerica     up to 1.1.1.24
+external/public-domain/tz/dist/pacificnew       up to 1.1.1.3
+external/public-domain/tz/dist/southamerica     up to 1.1.1.16
+external/public-domain/tz/dist/systemv          up to 1.1.1.3
+external/public-domain/tz/dist/theory.html      up to 1.1.1.9
+external/public-domain/tz/dist/version          up to 1.1.1.15
+external/public-domain/tz/dist/zishrink.awk     up to 1.1.1.6
+external/public-domain/tz/dist/zone.tab         up to 1.1.1.17
+external/public-domain/tz/dist/zone1970.tab     up to 1.1.1.19
+external/public-domain/tz/dist/zoneinfo2tdf.pl  up to 1.1.1.3
+doc/3RDPARTY					1.1655 (patch)
+
+	Import tzdata2019c.
+	[kre, ticket #468]
 
