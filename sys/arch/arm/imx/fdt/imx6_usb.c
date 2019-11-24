@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usb.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $	*/
+/*	$NetBSD: imx6_usb.c,v 1.3 2019/11/24 11:07:19 skrll Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.2 2019/08/19 03:45:51 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usb.c,v 1.3 2019/11/24 11:07:19 skrll Exp $");
 
 #include "opt_fdt.h"
 
@@ -111,7 +111,7 @@ imx6_usb_attach(device_t parent, device_t self, void *aux)
 
 	error = bus_space_map(bst, addr, size, 0, &bsh);
 	if (error) {
-		aprint_error(": couldn't map %#llx: %d", (uint64_t)addr, error);
+		aprint_error(": couldn't map %#" PRIxBUSADDR ": %d", addr, error);
 		return;
 	}
 
