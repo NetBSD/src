@@ -1,4 +1,4 @@
-/* $NetBSD: exec_machdep.c,v 1.5 2019/11/24 04:08:36 rin Exp $ */
+/* $NetBSD: exec_machdep.c,v 1.6 2019/11/24 11:45:00 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.5 2019/11/24 04:08:36 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: exec_machdep.c,v 1.6 2019/11/24 11:45:00 rin Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_netbsd32.h"
@@ -86,6 +86,8 @@ aarch64_netbsd_elf32_probe(struct lwp *l, struct exec_package *epp, void *eh0,
 	/*
 	 * Copy (if any) the machine_arch of the executable to the proc.
 	 */
+	CTASSERT(sizeof(l->l_proc->p_md.md_march32) ==
+	    sizeof(epp->ep_machine_arch));
 	if (epp->ep_machine_arch[0] != 0)
 		strlcpy(l->l_proc->p_md.md_march32, epp->ep_machine_arch,
 		    sizeof(l->l_proc->p_md.md_march32));
