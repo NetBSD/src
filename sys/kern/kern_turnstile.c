@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.33 2019/11/21 18:56:55 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.34 2019/11/24 13:14:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.33 2019/11/21 18:56:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.34 2019/11/24 13:14:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -82,7 +82,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.33 2019/11/21 18:56:55 ad Exp $
 static tschain_t	turnstile_chains[TS_HASH_SIZE] __cacheline_aligned;
 static kmutex_t		*turnstile_locks[TS_HASH_SIZE] __read_mostly;
 pool_cache_t		turnstile_cache __read_mostly;
-extern turnstile_t	turnstile0 __cacheline_aligned;
+extern turnstile_t	turnstile0;
 
 static int		turnstile_ctor(void *, void *, int);
 
