@@ -1,4 +1,4 @@
-/* $NetBSD: proc.h,v 1.4 2019/11/24 04:08:36 rin Exp $ */
+/* $NetBSD: proc.h,v 1.5 2019/11/24 11:28:40 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -47,9 +47,7 @@ struct mdlwp {
 
 struct mdproc {
 	void (*md_syscall)(struct trapframe *);
-#ifdef COMPAT_NETBSD32
 	char md_march32[12];	/* machine arch of executable */
-#endif
 };
 
 #ifdef COMPAT_NETBSD32
