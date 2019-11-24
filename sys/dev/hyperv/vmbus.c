@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.2.2.4 2019/07/09 15:16:45 martin Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.2.2.5 2019/11/24 08:11:06 martin Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.2.2.4 2019/07/09 15:16:45 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.2.2.5 2019/11/24 08:11:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -604,7 +604,7 @@ vmbus_start(struct vmbus_softc *sc, struct vmbus_msg *msg, paddr_t msg_pa)
 			hyperv_intr();
 			splx(s);
 		} else
-			tsleep(wchan, PRIBIO, wchan, 1);
+			tsleep(wchan, PRIBIO, wchan, mstohz(delays[i]));
 	}
 	if (status != HYPERCALL_STATUS_SUCCESS) {
 		device_printf(sc->sc_dev,
@@ -666,7 +666,8 @@ vmbus_wait(struct vmbus_softc *sc,
 			hyperv_intr();
 			splx(s);
 		} else
-			tsleep(wchan, PRIBIO, wmsg ? wmsg : "hvwait", 1);
+			tsleep(wchan, PRIBIO, wmsg ? wmsg : "hvwait",
+			    mstohz(1));
 	}
 }
 
