@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.14 2019/09/07 11:15:25 ryo Exp $
+# $NetBSD: genassym.cf,v 1.15 2019/11/24 11:23:16 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -28,6 +28,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #-
 
+if defined(_KERNEL_OPT)
+include "opt_multiprocessor.h"
+include "opt_compat_netbsd.h"
+include "opt_execfmt.h"
+endif
+
 include <sys/param.h>
 include <sys/systm.h>
 include <sys/bitops.h>
@@ -51,12 +57,6 @@ include <aarch64/vmparam.h>
 include <aarch64/frame.h>
 include <aarch64/armreg.h>
 include <aarch64/pte.h>
-
-if defined(_KERNEL_OPT)
-include "opt_multiprocessor.h"
-include "opt_compat_netbsd.h"
-include "opt_execfmt.h"
-endif
 
 define	__HAVE_FAST_SOFTINTS	1
 
