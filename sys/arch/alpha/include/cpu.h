@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.84 2018/08/22 01:05:21 msaitoh Exp $ */
+/* $NetBSD: cpu.h,v 1.85 2019/11/24 15:40:24 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -121,7 +121,8 @@ struct cpu_info {
 	struct mchkinfo ci_mcinfo;	/* machine check info */
 	cpuid_t ci_cpuid;		/* our CPU ID */
 	struct cpu_softc *ci_softc;	/* pointer to our device */
-	u_long ci_want_resched;		/* preempt current process */
+	u_int ci_want_resched;		/* preempt current process */
+	u_int ci_unused;		/* unused */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_pcc_freq;		/* cpu cycles/second */
