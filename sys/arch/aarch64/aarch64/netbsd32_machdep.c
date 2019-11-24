@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.8 2019/11/20 19:37:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.9 2019/11/24 04:08:36 rin Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.8 2019/11/20 19:37:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2019/11/24 04:08:36 rin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -55,11 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.8 2019/11/20 19:37:51 pgoyett
 #include <aarch64/userret.h>
 
 const char machine32[] = MACHINE;
-#ifdef __AARCH64EB__
-const char machine_arch32[] = "earmv7hfeb";
-#else
-const char machine_arch32[] = "earmv7hf";
-#endif
+const char machine_arch32[] = MACHINE32_ARCH;
 
 void
 netbsd32_setregs(struct lwp *l, struct exec_package *pack, vaddr_t stack)
