@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.18 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.19 2019/11/24 15:45:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -107,7 +107,8 @@ struct cpu_info {
 	struct lwp *ci_fpcurlwp;	/* current owner of the FPU */
 	paddr_t ci_curpcb;		/* PA of current HW PCB */
 	struct pcb *ci_idle_pcb;	/* our idle PCB */
-	u_long ci_want_resched;		/* preempt current process */
+	u_int ci_want_resched;		/* preempt current process */
+	u_int ci_unused;		/* unused */
 	u_long ci_intrdepth;		/* interrupt trap depth */
 	struct trapframe *ci_db_regs;	/* registers for debuggers */
 	uint64_t ci_clock;		/* clock counter */
