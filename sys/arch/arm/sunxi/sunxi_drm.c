@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.8 2019/11/05 23:31:23 jmcneill Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.9 2019/11/24 12:21:14 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.8 2019/11/05 23:31:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.9 2019/11/24 12:21:14 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -296,6 +296,27 @@ static struct drm_mode_config_funcs sunxi_drm_mode_config_funcs = {
 };
 
 static int
+sunxi_drm_simplefb_lookup(bus_addr_t *paddr, bus_size_t *psize)
+{
+	static const char * compat[] = { "simple-framebuffer", NULL };
+	int chosen, child;
+
+	chosen = OF_finddevice("/chosen");
+	if (chosen == -1)
+		return ENOENT;
+
+	for (child = OF_child(chosen); child; child = OF_peer(child)) {
+		if (!fdtbus_status_okay(child))
+			continue;
+		if (!of_match_compatible(child, compat))
+			continue;
+		return fdtbus_get_reg(child, 0, paddr, psize);
+	}
+
+	return ENOENT;
+}
+
+static int
 sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_size *sizes)
 {
 	struct sunxi_drm_softc * const sc = sunxi_drm_private(helper->dev);
@@ -303,6 +324,8 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 	struct sunxi_drm_framebuffer *sfb = to_sunxi_drm_framebuffer(helper->fb);
 	struct drm_framebuffer *fb = helper->fb;
 	struct sunxi_drmfb_attach_args sfa;
+	bus_addr_t sfb_addr;
+	bus_size_t sfb_size;
 	size_t cma_size;
 	int error;
 
@@ -312,14 +335,31 @@ sunxi_drm_fb_probe(struct drm_fb_helper *helper, struct drm_fb_helper_surface_si
 
 	const size_t size = roundup(height * pitch, PAGE_SIZE);
 
-	/* Reserve enough memory for the FB console plus a 4K plane, rounded to 1MB */
-	cma_size = size;
-	cma_size += (SUNXI_DRM_MAX_WIDTH * SUNXI_DRM_MAX_HEIGHT * 4);
+	if (sunxi_drm_simplefb_lookup(&sfb_addr, &sfb_size) != 0)
+		sfb_size = 0;
+
+	/* Reserve enough memory for a 4K plane, rounded to 1MB */
+	cma_size = (SUNXI_DRM_MAX_WIDTH * SUNXI_DRM_MAX_HEIGHT * 4);
+	if (sfb_size == 0) {
+		/* Add memory for FB console if we cannot reclaim bootloader memory */
+		cma_size += size;
+	}
 	cma_size = roundup(cma_size, 1024 * 1024);
 	sc->sc_ddev->cma_pool = sunxi_drm_alloc_cma_pool(sc->sc_ddev, cma_size);
-	if (sc->sc_ddev->cma_pool != NULL)
-		aprint_normal_dev(sc->sc_dev, "reserved %u MB DRAM for CMA\n",
-		    (u_int)(cma_size / (1024 * 1024)));
+	if (sc->sc_ddev->cma_pool != NULL) {
+		if (sfb_size != 0) {
+			error = vmem_add(sc->sc_ddev->cma_pool, sfb_addr,
+			    sfb_size, VM_SLEEP);
+			if (error != 0)
+				sfb_size = 0;
+		}
+		aprint_normal_dev(sc->sc_dev, "reserved %u MB DRAM for CMA",
+		    (u_int)((cma_size + sfb_size) / (1024 * 1024)));
+		if (sfb_size != 0)
+			aprint_normal(" (%u MB reclaimed from bootloader)",
+			    (u_int)(sfb_size / (1024 * 1024)));
+		aprint_normal("\n");
+	}
 
 	sfb->obj = drm_gem_cma_create(ddev, size);
 	if (sfb->obj == NULL) {
