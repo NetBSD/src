@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.70 2019/11/21 14:07:52 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.71 2019/11/24 08:16:11 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1671,4 +1671,18 @@ sys/dev/mii/miivar.h			1.69 via patch
 	  setting is neither auto nor 1000baseT.
 	- Code cleanup.
 	[msaitoh, ticket #1454]
+
+sys/dev/hyperv/hvkbd.c				1.5,1.6
+sys/dev/hyperv/if_hvn.c				1.8,1.9
+sys/dev/hyperv/vmbus.c				1.5
+
+	vmbus(4), hvn(4), hvkbd(4): fix wait time for tsleep(9).
+	hvn(4), hvkbd(4): only poll when cold.
+	[nonaka, ticket #1455]
+
+sys/kern/sys_ptrace_common.c			1.73
+
+	Fix regression introduced to ptrace_regs() in rev 1.27:
+	Size of registers should be determined from tracer, NOT tracee.
+	[rin, ticket #1456]
 
