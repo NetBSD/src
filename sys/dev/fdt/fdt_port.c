@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.3 2019/11/23 18:53:05 jmcneill Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.4 2019/11/24 09:34:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.3 2019/11/23 18:53:05 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.4 2019/11/24 09:34:38 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ fdt_ports_register(struct fdt_device_ports *ports, device_t self,
 	int port_phandle, child;
 	int i;
 	char buf[20];
-	uint64_t id;
+	bus_addr_t id;
 
 	ports->dp_dev = self;
 	SLIST_INSERT_HEAD(&fdt_port_devices, ports, dp_list);
