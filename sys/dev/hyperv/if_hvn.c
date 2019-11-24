@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.4.2.2 2019/11/18 19:46:33 martin Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.4.2.3 2019/11/24 08:13:07 martin Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.4.2.2 2019/11/18 19:46:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.4.2.3 2019/11/24 08:13:07 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1069,7 +1069,7 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 			if (cold)
 				delay(1000);
 			else
-				tsleep(cmd, PRIBIO, "nvsout", 1);
+				tsleep(cmd, PRIBIO, "nvsout", mstohz(1));
 		} else if (rv) {
 			DPRINTF("%s: NVSP operation %u send error %d\n",
 			    device_xname(sc->sc_dev), hdr->nvs_type, rv);
@@ -1087,13 +1087,13 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 		return 0;
 
 	do {
-		if (cold)
+		if (cold) {
 			delay(1000);
-		else
-			tsleep(sc, PRIBIO | PCATCH, "nvscmd", 1);
-		s = splnet();
-		hvn_nvs_intr(sc);
-		splx(s);
+			s = splnet();
+			hvn_nvs_intr(sc);
+			splx(s);
+		} else
+			tsleep(sc, PRIBIO | PCATCH, "nvscmd", mstohz(1));
 	} while (--timo > 0 && sc->sc_nvsdone != 1);
 
 	if (timo == 0 && sc->sc_nvsdone != 1) {
@@ -1391,7 +1391,7 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 			if (cold)
 				delay(1000);
 			else
-				tsleep(rc, PRIBIO, "rndisout", 1);
+				tsleep(rc, PRIBIO, "rndisout", mstohz(1));
 		} else if (rv) {
 			DPRINTF("%s: RNDIS operation %u send error %d\n",
 			    device_xname(sc->sc_dev), hdr->rm_type, rv);
@@ -1410,13 +1410,13 @@ hvn_rndis_cmd(struct hvn_softc *sc, struct rndis_cmd *rc, int timo)
 	    BUS_DMASYNC_POSTWRITE);
 
 	do {
-		if (cold)
+		if (cold) {
 			delay(1000);
-		else
-			tsleep(rc, PRIBIO | PCATCH, "rndiscmd", 1);
-		s = splnet();
-		hvn_nvs_intr(sc);
-		splx(s);
+			s = splnet();
+			hvn_nvs_intr(sc);
+			splx(s);
+		} else
+			tsleep(rc, PRIBIO | PCATCH, "rndiscmd", mstohz(1));
 	} while (--timo > 0 && rc->rc_done != 1);
 
 	bus_dmamap_sync(sc->sc_dmat, rc->rc_dmap, 0, PAGE_SIZE,
