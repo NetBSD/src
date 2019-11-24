@@ -1,8 +1,49 @@
+        --- 9.14.8 released ---
+
+5315.	[bug]		Apply the inital RRSIG expiration spread fixed
+			to all dynamically created records in the zone
+			including NSEC3. Also fix the signature clusters
+			when the server has been offline for prolonged
+			period of times. [GL #1256]
+
+5314.	[func]		Added a new statistics variable "tcp-highwater"
+			that reports the maximum number of simultaneous TCP
+			clients BIND has handled while running. [GL #1206]
+
+5313.	[bug]		The default GeoIP2 database location did not match
+			the ARM.  'named -V' now reports the default
+			location. [GL #1301]
+
+5310.	[bug]		TCP failures were affecting EDNS statistics. [GL #1059]
+
+5308.	[bug]		Don't log DNS_R_UNCHANGED from sync_secure_journal()
+			at ERROR level in receive_secure_serial(). [GL #1288]
+
+5307.	[bug]		Fix hang when named-compilezone output is sent to pipe.
+			Thanks to Tony Finch. [GL !2481]
+
+5306.	[security]	Set a limit on the number of concurrently served
+			pipelined TCP queries. (CVE-2019-6477) [GL #1264]
+
+5305.	[bug]		NSEC Aggressive Cache ("synth-from-dnssec") has been
+			disabled by default because it was found to have
+			a significant performance impact on the recursive
+			service. [GL #1265]
+
+5304.	[bug]		"dnskey-sig-validity 0;" was not being accepted.
+			[GL #876]
+
+5302.	[bug]		Fix checking that "dnstap-output" is defined when
+			"dnstap" is specified in a view. [GL #1281]
+
+5301.	[bug]		Detect partial prefixes / incomplete IPv4 address in
+			acls. [GL #1143]
+
 	--- 9.14.7 released ---
 
 5299.	[security]	A flaw in DNSSEC verification when transferring
 			mirror zones could allow data to be incorrectly
-			marked valid. (CVE-2019-6475) [GL #16P]
+			marked valid. (CVE-2019-6475) [GL #1252]
 
 5298.	[security]	Named could assert if a forwarder returned a
 			referral, rather than resolving the query, when QNAME
@@ -11,6 +52,11 @@
 5297.	[bug]		Check whether a previous QNAME minimization fetch
 			is still running before starting a new one; return
 			SERVFAIL and log an error if so. [GL #1191]
+
+5295.	[cleanup]	Split dns_name_copy() calls into dns_name_copy() and
+			dns_name_copynf() for those calls that can potentially
+			fail and those that should not fail respectively.
+			[GL !2265]
 
 5294.	[func]		Fallback to ACE name on output in locale, which does not
 			support converting it to unicode.  [GL #846]

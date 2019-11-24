@@ -196,6 +196,11 @@ BIND 9.14.6 is a maintenance release.
 BIND 9.14.7 is a maintenance release, and also addresses the security
 vulnerabilities disclosed in CVE-2019-6475 and CVE-2019-6476.
 
+#### BIND 9.14.8
+
+BIND 9.14.8 is a maintenance release, and also addresses the security
+vulnerability disclosed in CVE-2019-6477.
+
 ### <a name="build"/> Building BIND
 
 Minimally, BIND requires a UNIX or Linux system with an ANSI C compiler,
