@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.44 2019/11/21 19:23:16 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.45 2019/11/24 11:15:31 martin Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -27,11 +27,33 @@ SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
 whatis: .OPTIONAL
 
 PRESET=	${GFLAGS} -U -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
+PRESET+=	-rmajor=${DISTRIBVER:C/\..*$//}
 .if ${USE_XZ_SETS}
 PRESET+=	-dsetsuffix=tar.xz
 .else
 PRESET+=	-dsetsuffix=tgz
 .endif
+.if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
+PRESET+=	-rFOR_RELEASE=1
+.else
+PRESET+=	-rFOR_RELEASE=0
+.endif
+.if (${DISTRIBVER:M*.99.*})
+PRESET+=	-rRELEASE_BRANCH=0
+.elif (${DISTRIBVER:M*.[0-9]*})
+PRESET+=	-rRELEASE_BRANCH=1
+PRESET+=	-rminor=${DISTRIBVER:C/^[0-9]+\.([0-9])+.*$/\1/}
+nextmin!=	expr ${DISTRIBVER:C/^[0-9]+\.([0-9])+.*$/\1/} + 1
+.if exists(${.CURDIR}/../../../doc/CHANGES-${DISTRIBVER:C/\..*$//}.${nextmin})
+PRESET+=	-rnextminor=${nextmin}
+.endif
+.endif
+.if defined(BUILDID) && "${BUILDID:M20*Z}" != ""
+curdate!=	env LANG="C" date -d "${BUILDID:C/[0-9][0-9][0-9][0-9]Z$//}" "+%b %d, %Y"
+.else
+curdate!=	env LANG="C" date "+%b %d, %Y"
+.endif
+PRESET+=	-dcur_date="${curdate}"
 
 POST_PLAIN= -P-b -P-u -P-o
 
