@@ -1,4 +1,4 @@
-/*	$NetBSD: delv.c,v 1.1.1.3 2019/02/24 18:56:38 christos Exp $	*/
+/*	$NetBSD: delv.c,v 1.1.1.4 2019/11/24 19:56:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -504,7 +504,7 @@ setup_style(dns_master_style_t **stylep) {
 	isc_result_t result;
 	dns_master_style_t *style = NULL;
 
-	REQUIRE(stylep != NULL || *stylep == NULL);
+	REQUIRE(stylep != NULL && *stylep == NULL);
 
 	styleflags |= DNS_STYLEFLAG_REL_OWNER;
 	if (showcomments)

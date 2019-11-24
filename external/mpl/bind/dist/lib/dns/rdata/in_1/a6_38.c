@@ -1,4 +1,4 @@
-/*	$NetBSD: a6_38.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: a6_38.c,v 1.1.1.3 2019/11/24 19:58:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -281,7 +281,7 @@ fromstruct_in_a6(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_a6);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(a6 != NULL);
 	REQUIRE(a6->common.rdtype == type);
 	REQUIRE(a6->common.rdclass == rdclass);
 
@@ -324,7 +324,7 @@ tostruct_in_a6(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_a6);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(a6 != NULL);
 	REQUIRE(rdata->length != 0);
 
 	a6->common.rdclass = rdata->rdclass;
@@ -364,7 +364,7 @@ static inline void
 freestruct_in_a6(ARGS_FREESTRUCT) {
 	dns_rdata_in_a6_t *a6 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(a6 != NULL);
 	REQUIRE(a6->common.rdclass == dns_rdataclass_in);
 	REQUIRE(a6->common.rdtype == dns_rdatatype_a6);
 

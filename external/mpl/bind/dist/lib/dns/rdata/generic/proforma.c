@@ -1,4 +1,4 @@
-/*	$NetBSD: proforma.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: proforma.c,v 1.1.1.3 2019/11/24 19:58:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,7 +88,7 @@ fromstruct_#(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_proforma.c#);
 	REQUIRE(rdclass == #);
-	REQUIRE(source != NULL);
+	REQUIRE(# != NULL);
 	REQUIRE(#->common.rdtype == dns_rdatatype_proforma.ctype);
 	REQUIRE(#->common.rdclass == rdclass);
 
@@ -109,7 +109,7 @@ static inline void
 freestruct_#(ARGS_FREESTRUCT) {
 	dns_rdata_#_t *# = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(# != NULL);
 	REQUIRE(#->common.rdtype == dns_rdatatype_proforma.c#);
 	REQUIRE(#->common.rdclass == #);
 

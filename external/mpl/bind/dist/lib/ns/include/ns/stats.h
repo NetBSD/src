@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.1.1.1 2018/08/12 12:08:07 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.1.1.2 2019/11/24 19:58:12 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -104,7 +104,9 @@ enum {
 	ns_statscounter_prefetch = 63,
 	ns_statscounter_keytagopt = 64,
 
-	ns_statscounter_max = 65
+	ns_statscounter_tcphighwater = 65,
+
+	ns_statscounter_max = 66,
 };
 
 void
@@ -124,5 +126,12 @@ ns_stats_decrement(ns_stats_t *stats, isc_statscounter_t counter);
 
 isc_stats_t *
 ns_stats_get(ns_stats_t *stats);
+
+void ns_stats_update_if_greater(ns_stats_t *stats,
+				isc_statscounter_t counter,
+				isc_statscounter_t value);
+
+isc_statscounter_t
+ns_stats_get_counter(ns_stats_t *stats, isc_statscounter_t counter);
 
 #endif /* NS_STATS_H */

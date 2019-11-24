@@ -1,4 +1,4 @@
-/*	$NetBSD: aclconf.c,v 1.1.1.3 2019/09/05 19:27:38 christos Exp $	*/
+/*	$NetBSD: aclconf.c,v 1.1.1.4 2019/11/24 19:57:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -156,6 +156,7 @@ convert_named_acl(const cfg_obj_t *nameobj, const cfg_obj_t *cctx,
 	     dacl != NULL;
 	     dacl = ISC_LIST_NEXT(dacl, nextincache))
 	{
+		/* cppcheck-suppress nullPointerRedundantCheck symbolName=dacl */
 		if (strcasecmp(aclname, dacl->name) == 0) {
 			if (ISC_MAGIC_VALID(dacl, LOOP_MAGIC)) {
 				cfg_obj_log(nameobj, lctx, ISC_LOG_ERROR,

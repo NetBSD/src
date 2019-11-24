@@ -1,4 +1,4 @@
-/*	$NetBSD: task.c,v 1.1.1.4 2019/09/05 19:27:37 christos Exp $	*/
+/*	$NetBSD: task.c,v 1.1.1.5 2019/11/24 19:57:50 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1572,9 +1572,11 @@ isc_taskmgr_excltask(isc_taskmgr_t *mgr0, isc_task_t **taskp) {
 isc_result_t
 isc_task_beginexclusive(isc_task_t *task0) {
 	isc__task_t *task = (isc__task_t *)task0;
-	isc__taskmgr_t *manager = task->manager;
+	isc__taskmgr_t *manager;
 
 	REQUIRE(VALID_TASK(task));
+
+	manager = task->manager;
 
 	REQUIRE(task->state == task_state_running);
 
@@ -1604,10 +1606,13 @@ isc_task_beginexclusive(isc_task_t *task0) {
 void
 isc_task_endexclusive(isc_task_t *task0) {
 	isc__task_t *task = (isc__task_t *)task0;
-	isc__taskmgr_t *manager = task->manager;
+	isc__taskmgr_t *manager;
 
 	REQUIRE(VALID_TASK(task));
 	REQUIRE(task->state == task_state_running);
+
+	manager = task->manager;
+
 	LOCK(&manager->halt_lock);
 	REQUIRE(atomic_load_relaxed(&manager->exclusive_req) == true);
 	atomic_store_relaxed(&manager->exclusive_req, false);

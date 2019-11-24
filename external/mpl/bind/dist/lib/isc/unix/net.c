@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.1.1.3 2019/02/24 18:56:47 christos Exp $	*/
+/*	$NetBSD: net.c,v 1.1.1.4 2019/11/24 19:57:53 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -17,7 +17,7 @@
 #include <stdbool.h>
 #include <sys/types.h>
 
-#if defined(HAVE_SYS_SYSCTL_H)
+#if defined(HAVE_SYS_SYSCTL_H) && !defined(__linux__)
 #if defined(HAVE_SYS_PARAM_H)
 #include <sys/param.h>
 #endif

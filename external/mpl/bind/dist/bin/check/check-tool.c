@@ -1,4 +1,4 @@
-/*	$NetBSD: check-tool.c,v 1.1.1.2 2019/01/09 16:48:17 christos Exp $	*/
+/*	$NetBSD: check-tool.c,v 1.1.1.3 2019/11/24 19:57:34 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -724,7 +724,7 @@ dump_zone(const char *zonename, dns_zone_t *zone, const char *filename,
 	FILE *output = stdout;
 	const char *flags;
 
-	flags = (fileformat == dns_masterformat_text) ? "w+" : "wb+";
+	flags = (fileformat == dns_masterformat_text) ? "w" : "wb";
 
 	if (debug) {
 		if (filename != NULL && strcmp(filename, "-") != 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: socket.c,v 1.1.1.4 2019/10/17 16:25:45 christos Exp $	*/
+/*	$NetBSD: socket.c,v 1.1.1.5 2019/11/24 19:57:55 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2510,7 +2510,6 @@ isc_socketmgr_create2(isc_mem_t *mctx, isc_socketmgr_t **managerp,
 		      unsigned int maxsocks, int nthreads)
 {
 	isc_socketmgr_t *manager;
-	isc_result_t result;
 
 	REQUIRE(managerp != NULL && *managerp == NULL);
 

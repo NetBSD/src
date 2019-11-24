@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.c,v 1.1.1.3 2019/02/24 18:56:50 christos Exp $	*/
+/*	$NetBSD: tsig.c,v 1.1.1.4 2019/11/24 19:58:00 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -660,6 +660,20 @@ dns_tsigkeyring_dumpanddetach(dns_tsig_keyring_t **ringp, FILE *fp) {
  destroy:
 	destroyring(ring);
 	return (result);
+}
+
+const dns_name_t *
+dns_tsigkey_identity(const dns_tsigkey_t *tsigkey) {
+	REQUIRE(tsigkey == NULL || VALID_TSIG_KEY(tsigkey));
+
+	if (tsigkey == NULL) {
+		return (NULL);
+	}
+	if (tsigkey->generated) {
+		return (tsigkey->creator);
+	} else {
+		return (&tsigkey->name);
+	}
 }
 
 isc_result_t
@@ -1550,6 +1564,7 @@ tsig_verify_tcp(isc_buffer_t *source, dns_message_t *msg) {
 		 * XXX Can TCP transfers be forwarded?  How would that
 		 * work?
 		 */
+		/* cppcheck-suppress uninitStructMember symbolName=tsig.originalid */
 		id = htons(tsig.originalid);
 		memmove(&header[0], &id, 2);
 	}

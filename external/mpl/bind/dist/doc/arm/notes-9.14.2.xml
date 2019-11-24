@@ -1,0 +1,36 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes-9.14.2"><info><title>Notes for BIND 9.14.2</title></info>
+
+  <section xml:id="relnotes-9.14.2-changes"><info><title>Feature Changes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          When <command>trusted-keys</command> and
+          <command>managed-keys</command> are both configured for the
+          same name, or when <command>trusted-keys</command> is used to
+          configure a trust anchor for the root zone and
+          <command>dnssec-validation</command> is set to the default
+          value of <literal>auto</literal>, automatic RFC 5011 key
+          rollovers will fail.
+        </para>
+        <para>
+          This combination of settings was never intended to work,
+          but there was no check for it in the parser. This has been
+          corrected; a warning is now logged. (In BIND 9.15 and
+          higher this error will be fatal.) [GL #868]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+</section>

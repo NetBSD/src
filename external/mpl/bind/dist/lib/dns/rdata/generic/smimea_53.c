@@ -1,4 +1,4 @@
-/*	$NetBSD: smimea_53.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: smimea_53.c,v 1.1.1.3 2019/11/24 19:58:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -83,8 +83,9 @@ static inline isc_result_t
 tostruct_smimea(ARGS_TOSTRUCT) {
 	dns_rdata_smimea_t *smimea = target;
 
+	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_smimea);
-	REQUIRE(target != NULL);
+	REQUIRE(smimea != NULL);
 
 	smimea->common.rdclass = rdata->rdclass;
 	smimea->common.rdtype = rdata->type;
@@ -97,7 +98,7 @@ static inline void
 freestruct_smimea(ARGS_FREESTRUCT) {
 	dns_rdata_smimea_t *smimea = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(smimea != NULL);
 	REQUIRE(smimea->common.rdtype == dns_rdatatype_smimea);
 
 	generic_freestruct_tlsa(source);

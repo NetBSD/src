@@ -1,4 +1,4 @@
-/*	$NetBSD: l64_106.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: l64_106.c,v 1.1.1.3 2019/11/24 19:58:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -124,7 +124,7 @@ fromstruct_l64(ARGS_FROMSTRUCT) {
 	dns_rdata_l64_t *l64 = source;
 
 	REQUIRE(type == dns_rdatatype_l64);
-	REQUIRE(source != NULL);
+	REQUIRE(l64 != NULL);
 	REQUIRE(l64->common.rdtype == type);
 	REQUIRE(l64->common.rdclass == rdclass);
 
@@ -141,7 +141,7 @@ tostruct_l64(ARGS_TOSTRUCT) {
 	dns_rdata_l64_t *l64 = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_l64);
-	REQUIRE(target != NULL);
+	REQUIRE(l64 != NULL);
 	REQUIRE(rdata->length == 10);
 
 	UNUSED(mctx);
@@ -160,7 +160,7 @@ static inline void
 freestruct_l64(ARGS_FREESTRUCT) {
 	dns_rdata_l64_t *l64 = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(l64 != NULL);
 	REQUIRE(l64->common.rdtype == dns_rdatatype_l64);
 
 	return;

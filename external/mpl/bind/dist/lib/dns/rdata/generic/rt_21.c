@@ -1,4 +1,4 @@
-/*	$NetBSD: rt_21.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: rt_21.c,v 1.1.1.3 2019/11/24 19:58:05 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -172,7 +172,7 @@ fromstruct_rt(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_rt);
-	REQUIRE(source != NULL);
+	REQUIRE(rt != NULL);
 	REQUIRE(rt->common.rdtype == type);
 	REQUIRE(rt->common.rdclass == rdclass);
 
@@ -191,7 +191,7 @@ tostruct_rt(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_rt);
-	REQUIRE(target != NULL);
+	REQUIRE(rt != NULL);
 	REQUIRE(rdata->length != 0);
 
 	rt->common.rdclass = rdata->rdclass;
@@ -214,7 +214,7 @@ static inline void
 freestruct_rt(ARGS_FREESTRUCT) {
 	dns_rdata_rt_t *rt = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(rt != NULL);
 	REQUIRE(rt->common.rdtype == dns_rdatatype_rt);
 
 	if (rt->mctx == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: ta_32768.c,v 1.1.1.2 2019/01/09 16:48:22 christos Exp $	*/
+/*	$NetBSD: ta_32768.c,v 1.1.1.3 2019/11/24 19:58:07 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -86,6 +86,7 @@ tostruct_ta(ARGS_TOSTRUCT) {
 	dns_rdata_ds_t *ds = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_ta);
+	REQUIRE(ds != NULL);
 
 	/*
 	 * Checked by generic_tostruct_ds().

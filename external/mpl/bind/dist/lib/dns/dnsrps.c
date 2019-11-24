@@ -1,4 +1,4 @@
-/*	$NetBSD: dnsrps.c,v 1.1.1.2 2019/01/09 16:48:21 christos Exp $	*/
+/*	$NetBSD: dnsrps.c,v 1.1.1.3 2019/11/24 19:58:01 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -597,7 +597,6 @@ rpsdb_finddb(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 	     dns_rdataset_t *rdataset, dns_rdataset_t *sigrdataset)
 {
 	dns_dbnode_t *node;
-	isc_result_t result;
 
 	UNUSED(version);
 	UNUSED(options);
@@ -609,9 +608,7 @@ rpsdb_finddb(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 		nodep = &node;
 	}
 	rpsdb_findnode(db, name, false, nodep);
-	result = dns_name_copy(name, foundname, NULL);
-	if (result != ISC_R_SUCCESS)
-		return (result);
+	dns_name_copynf(name, foundname);
 	return (rpsdb_findrdataset(db, *nodep, NULL, type, 0, 0,
 				    rdataset, sigrdataset));
 }
