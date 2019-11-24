@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.213 2019/11/24 13:14:23 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.214 2019/11/24 13:23:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.213 2019/11/24 13:14:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.214 2019/11/24 13:23:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1003,7 +1003,6 @@ lwp_start(lwp_t *l, int flags)
 		p->p_nrlwps--;
 		lwp_unlock(l);
 	} else {
-		l->l_cpu = curcpu();
 		setrunnable(l);
 		/* LWP now unlocked */
 	}
