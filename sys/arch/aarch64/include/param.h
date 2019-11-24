@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.12 2019/10/19 18:04:26 jmcneill Exp $ */
+/* $NetBSD: param.h,v 1.13 2019/11/24 04:08:36 rin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -59,9 +59,13 @@
 #  ifdef __AARCH64EB__
 #   define	_MACHINE_ARCH	aarch64eb
 #   define	MACHINE_ARCH	"aarch64eb"
+#   define	_MACHINE32_ARCH	earmv7hfeb
+#   define	MACHINE32_ARCH	"earmv7hfeb"
 #  else
 #   define	_MACHINE_ARCH	aarch64
 #   define	MACHINE_ARCH	"aarch64"
+#   define	_MACHINE32_ARCH	earmv7hf
+#   define	MACHINE32_ARCH	"earmv7hf"
 #  endif /* __AARCH64EB__ */
 # endif /* MACHINE_ARCH */
 #else
@@ -69,14 +73,20 @@
 # undef MACHINE
 # undef _MACHINE_ARCH
 # undef MACHINE_ARCH
+# undef _MACHINE32_ARCH
+# undef MACHINE32_ARCH
 # define	_MACHINE	aarch64
 # define	MACHINE		"aarch64"
 # ifdef __AARCH64EB__
 #  define	_MACHINE_ARCH	aarch64eb
 #  define	MACHINE_ARCH	"aarch64eb"
+#  define	_MACHINE32_ARCH	earmv7hfeb
+#  define	MACHINE32_ARCH	"earmv7hfeb"
 # else
 #  define	_MACHINE_ARCH	aarch64
 #  define	MACHINE_ARCH	"aarch64"
+#  define	_MACHINE32_ARCH	earmv7hf
+#  define	MACHINE32_ARCH	"earmv7hf"
 # endif /* __AARCH64EB__ */
 #endif /* !_KERNEL */
 
