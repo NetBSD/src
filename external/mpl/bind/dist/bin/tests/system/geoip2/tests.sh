@@ -55,7 +55,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database by code using IPv6 ($n)"
@@ -94,7 +94,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database with nested ACLs using IPv6 ($n)"
@@ -133,7 +133,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database by name using IPv6 ($n)"
@@ -173,7 +173,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Country database by continent code using IPv6 ($n)"
@@ -214,7 +214,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking City database by region code using IPv6 ($n)"
@@ -255,7 +255,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking City database by city name using IPv6 ($n)"
@@ -294,7 +294,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ISP database using IPv6 ($n)"
@@ -333,7 +333,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ASN database by org name using IPv6 ($n)"
@@ -372,7 +372,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ASN database, ASNNNN only, using IPv6 ($n)"
@@ -411,7 +411,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking ASN database, NNNN only, using IPv6 ($n)"
@@ -450,7 +450,7 @@ done
 [ $ret -eq 0 ] || echo_i "failed"
 status=`expr $status + $ret`
 
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
   n=`expr $n + 1`
   echo_i "checking Domain database using IPv6 ($n)"

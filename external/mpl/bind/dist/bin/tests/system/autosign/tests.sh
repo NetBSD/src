@@ -50,6 +50,43 @@ checkprivate () {
     return 1
 }
 
+# Check the signatures expiration times.  First check how many signatures
+# there are in total ($rrsigs).  Then see what the distribution of signature
+# expiration times is ($expiretimes).  Ignore the time part for a better
+# modelled distribution.
+checkjitter () {
+	_file=$1
+	_ret=0
+
+	cat $_file | awk '$4 == "RRSIG" {print substr($9,1,8)}' | sort | uniq -c | cat_i
+	_rrsigs=$(cat $_file | awk '$4 == "RRSIG" {print $4}' | cat_i | wc -l)
+	_expiretimes=$(cat $_file | awk '$4 == "RRSIG" {print substr($9,1,8)}' | sort | uniq -c | awk '{print $1}')
+	_count=0
+	_total=0
+	for _num in $_expiretimes
+	do
+		_total=$(($_total + $_num))
+	done
+	# Make sure the total number of numbers matches the number of RRSIGs.
+	test $_total -eq $_rrsigs || _ret=1
+	# Calculate mean: The number of signatures divided over 8 days.
+	_mean=$(($_total / 8))
+	# We expect the number of signatures not to exceed twice the mean.
+	_limit=$(($_mean * 2))
+	# Add an additional margin.
+	_limit=$(($_limit + 10))
+	# Find outliers.
+	for _num in $_expiretimes
+	do
+		if [ $_num -gt $_limit ]; then
+			echo_i "error: too many RRSIG records ($_num) with the same expiration time"
+			_ret=1
+		fi
+	done
+
+	return $_ret
+}
+
 #
 #  The NSEC record at the apex of the zone and its RRSIG records are
 #  added as part of the last step in signing a zone.  We wait for the
@@ -334,6 +371,15 @@ do
 	sleep 1
 done
 n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+# Check jitter distribution.
+echo_i "checking expired signatures were jittered correctly ($n)"
+ret=0
+$DIG $DIGOPTS axfr oldsigs.example @10.53.0.3 > dig.out.ns3.test$n || ret=1
+checkjitter dig.out.ns3.test$n || ret=1
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`
 
 echo_i "checking NSEC->NSEC3 conversion succeeded ($n)"
@@ -934,6 +980,36 @@ for i in 0 1 2 3 4 5 6 7 8 9; do
 	echo_i "waiting ... ($i)"
 	sleep 2
 done
+n=`expr $n + 1`
+if [ $ret != 0 ]; then echo_i "failed"; fi
+status=`expr $status + $ret`
+
+echo_i "checking jitter in a newly signed NSEC3 zone ($n)"
+ret=0
+# Use DNS UPDATE to add an NSEC3PARAM record into the zone.
+$NSUPDATE > nsupdate.out.test$n 2>&1 <<END || ret=1
+server 10.53.0.3 ${PORT}
+zone jitter.nsec3.example.
+update add jitter.nsec3.example. 3600 NSEC3PARAM 1 0 10 BEEF
+send
+END
+[ $ret != 0 ] && echo_i "error: dynamic update add NSEC3PARAM failed"
+# Create DNSSEC keys in the zone directory.
+$KEYGEN -a rsasha1 -3 -q -K ns3 jitter.nsec3.example > /dev/null
+# Trigger zone signing.
+$RNDCCMD 10.53.0.3 sign jitter.nsec3.example. 2>&1 | sed 's/^/ns3 /' | cat_i
+# Wait until zone has been signed.
+for i in 0 1 2 3 4 5 6 7 8 9; do
+	failed=0
+	$DIG $DIGOPTS axfr jitter.nsec3.example @10.53.0.3 > dig.out.ns3.test$n || failed=1
+	grep "NSEC3PARAM" dig.out.ns3.test$n > /dev/null || failed=1
+	[ $failed -eq 0 ] && break
+	echo_i "waiting ... ($i)"
+	sleep 2
+done
+[ $failed != 0 ] && echo_i "error: no NSEC3PARAM found in AXFR" && ret=1
+# Check jitter distribution.
+checkjitter dig.out.ns3.test$n || ret=1
 n=`expr $n + 1`
 if [ $ret != 0 ]; then echo_i "failed"; fi
 status=`expr $status + $ret`

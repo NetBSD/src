@@ -1,4 +1,4 @@
-/*	$NetBSD: zonemd_63.c,v 1.1.1.2 2019/04/27 23:47:30 christos Exp $	*/
+/*	$NetBSD: zonemd_63.c,v 1.1.1.3 2019/11/24 19:58:06 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -198,7 +198,7 @@ static inline isc_result_t
 fromstruct_zonemd(ARGS_FROMSTRUCT) {
 	dns_rdata_zonemd_t *zonemd = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(zonemd != NULL);
 	REQUIRE(zonemd->common.rdtype == type);
 	REQUIRE(zonemd->common.rdclass == rdclass);
 
@@ -224,7 +224,7 @@ tostruct_zonemd(ARGS_TOSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_zonemd);
-	REQUIRE(target != NULL);
+	REQUIRE(zonemd != NULL);
 	REQUIRE(rdata->length != 0);
 
 	zonemd->common.rdclass = rdata->rdclass;

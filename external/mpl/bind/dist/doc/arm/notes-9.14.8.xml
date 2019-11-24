@@ -1,0 +1,50 @@
+<!--
+ - Copyright (C) Internet Systems Consortium, Inc. ("ISC")
+ -
+ - This Source Code Form is subject to the terms of the Mozilla Public
+ - License, v. 2.0. If a copy of the MPL was not distributed with this
+ - file, You can obtain one at http://mozilla.org/MPL/2.0/.
+ -
+ - See the COPYRIGHT file distributed with this work for additional
+ - information regarding copyright ownership.
+-->
+
+<section xml:id="relnotes-9.14.8"><info><title>Notes for BIND 9.14.8</title></info>
+
+  <section xml:id="relnotes-9.14.8-security"><info><title>Security Fixes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Set a limit on the number of concurrently served pipelined TCP
+          queries. This flaw is disclosed in CVE-2019-6477. [GL #1264]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.8-features"><info><title>New Features</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          Added a new statistics variable <command>tcp-highwater</command>
+          that reports the maximum number of simultaneous TCP clients BIND
+          has handled while running. [GL #1206]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+  <section xml:id="relnotes-9.14.8-changes"><info><title>Feature Changes</title></info>
+    <itemizedlist>
+      <listitem>
+        <para>
+          NSEC Aggressive Cache (synth-from-dnssec) has been disabled by default
+          because it was found to have a significant performance impact on the
+          recursive service. The NSEC Aggressive Cache will be enable by default
+          in the future releases. [GL #1265]
+        </para>
+      </listitem>
+    </itemizedlist>
+  </section>
+
+</section>

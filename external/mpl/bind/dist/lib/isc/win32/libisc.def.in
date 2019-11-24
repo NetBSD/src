@@ -539,9 +539,11 @@ isc_stats_create
 isc_stats_decrement
 isc_stats_detach
 isc_stats_dump
+isc_stats_get_counter
 isc_stats_increment
 isc_stats_ncounters
 isc_stats_set
+isc_stats_update_if_greater
 isc_stdio_close
 isc_stdio_flush
 isc_stdio_open

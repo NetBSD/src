@@ -12,7 +12,7 @@
 <section xml:id="relnotes_download"><info><title>Download</title></info>
   <para>
     The latest versions of BIND 9 software can always be found at
-    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="http://www.isc.org/downloads/">http://www.isc.org/downloads/</link>.
+    <link xmlns:xlink="http://www.w3.org/1999/xlink" xlink:href="https://www.isc.org/download/">https://www.isc.org/download/</link>.
     There you will find additional information about each release,
     source code, and pre-compiled versions for Microsoft Windows
     operating systems.
