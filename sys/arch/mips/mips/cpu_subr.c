@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.36 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.37 2019/11/24 15:37:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.36 2019/11/23 19:40:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.37 2019/11/24 15:37:39 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -495,7 +495,7 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 #endif
 		return;
 	}
-	if ((flags & RESSCHED_REMOTE) != 0) {
+	if ((flags & RESCHED_REMOTE) != 0) {
 #ifdef MULTIPROCESSOR
 		cpu_send_ipi(ci, IPI_AST);
 #endif
