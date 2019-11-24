@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_platform.c,v 1.37 2019/06/17 05:27:01 mrg Exp $ */
+/* $NetBSD: sunxi_platform.c,v 1.38 2019/11/24 10:27:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.37 2019/06/17 05:27:01 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_platform.c,v 1.38 2019/11/24 10:27:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -230,10 +230,16 @@ sunxi_platform_device_register(device_t self, void *aux)
 		}
 	}
 
-	if (device_is_a(self, "sunxidrm")) {
+	if (device_is_a(self, "sunxidrm") || device_is_a(self, "dwhdmi")) {
 		if (get_bootconf_option(boot_args, "nomodeset", BOOTOPT_TYPE_BOOLEAN, &val))
 			if (val)
 				prop_dictionary_set_bool(prop, "disabled", true);
+	}
+
+	if (device_is_a(self, "sun50ia64ccu0")) {
+		if (get_bootconf_option(boot_args, "nomodeset", BOOTOPT_TYPE_BOOLEAN, &val))
+			if (val)
+				prop_dictionary_set_bool(prop, "nomodeset", true);
 	}
 }
 
