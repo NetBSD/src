@@ -102,6 +102,8 @@ ns_stats_create
 ns_stats_decrement
 ns_stats_detach
 ns_stats_get
+ns_stats_get_counter
 ns_stats_increment
+ns_stats_update_if_greater
 ns_update_start
 ns_xfr_start

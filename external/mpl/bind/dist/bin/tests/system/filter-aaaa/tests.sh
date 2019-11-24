@@ -166,7 +166,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is returned when both AAAA and A record exists, unsigned over IPv6 ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::1
+if testsock6 fd92:7065:b8e:ffff::1
 then
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b fd92:7065:b8e:ffff::1 @fd92:7065:b8e:ffff::1 > dig.out.ns1.test$n || ret=1
@@ -207,7 +207,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is included in additional section, qtype=MX, unsigned, over IPv6 ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::1
+if testsock6 fd92:7065:b8e:ffff::1
 then
 ret=0
 $DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::1 @fd92:7065:b8e:ffff::1 > dig.out.ns1.test$n || ret=1
@@ -340,7 +340,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is returned when both AAAA and A record exists, unsigned over IPv6 with break-dnssec ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::4
+if testsock6 fd92:7065:b8e:ffff::4
 then
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b fd92:7065:b8e:ffff::4 @fd92:7065:b8e:ffff::4 > dig.out.ns4.test$n || ret=1
@@ -378,7 +378,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is included in additional section, qtype=MX, unsigned, over IPv6, with break-dnssec ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::4
+if testsock6 fd92:7065:b8e:ffff::4
 then
 ret=0
 $DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::4 @fd92:7065:b8e:ffff::4 > dig.out.ns4.test$n || ret=1
@@ -513,7 +513,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is returned when both AAAA and A record exists, unsigned over IPv6, recursive ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::2
+if testsock6 fd92:7065:b8e:ffff::2
 then
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b fd92:7065:b8e:ffff::2 @fd92:7065:b8e:ffff::2 > dig.out.ns2.test$n || ret=1
@@ -557,7 +557,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is included in additional section, qtype=MX, unsigned, recursive, over IPv6 ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::2
+if testsock6 fd92:7065:b8e:ffff::2
 then
 ret=0
 $DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::2 @fd92:7065:b8e:ffff::2 > dig.out.ns2.test$n || ret=1
@@ -690,7 +690,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is returned when both AAAA and A record exists, unsigned over IPv6, recursive with break-dnssec ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
 ret=0
 $DIG $DIGOPTS aaaa dual.unsigned -b fd92:7065:b8e:ffff::3 @fd92:7065:b8e:ffff::3 > dig.out.ns3.test$n || ret=1
@@ -729,7 +729,7 @@ status=`expr $status + $ret`
 
 n=`expr $n + 1`
 echo_i "checking that AAAA is included in additional section, qtype=MX, unsigned, over IPv6, recursive with break-dnssec ($n)"
-if $TESTSOCK6 fd92:7065:b8e:ffff::3
+if testsock6 fd92:7065:b8e:ffff::3
 then
 ret=0
 $DIG $DIGOPTS +add +dnssec mx unsigned -b fd92:7065:b8e:ffff::3 @fd92:7065:b8e:ffff::3 > dig.out.ns3.test$n || ret=1
@@ -740,11 +740,12 @@ else
 echo_i "skipped."
 fi
 
-$TESTSOCK6 fd92:7065:b8e:ffff::1 || {
-        echo_i "IPv6 address not configured; skipping IPv6 query tests"
-        echo_i "exit status: $status"
-        exit $status
-}
+if ! testsock6 fd92:7065:b8e:ffff::1
+then
+	echo_i "IPv6 address not configured; skipping IPv6 query tests"
+	echo_i "exit status: $status"
+	exit $status
+fi
 
 # Reconfiguring for IPv6 tests
 echo_i "reconfiguring servers"
