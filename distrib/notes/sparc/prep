@@ -1,4 +1,4 @@
-.\"	$NetBSD: prep,v 1.27 2015/05/19 19:30:29 snj Exp $
+.\"	$NetBSD: prep,v 1.28 2019/11/24 23:26:43 uwe Exp $
 .
 .Ss2 Configuring your PROM
 .
@@ -212,7 +212,7 @@ kernel) to ensure that your disks remain showing up at the same
 .Nx
 device unit numbers even if you add disks to your system at a later time.
 .
-.Ss2 Determining how to access your SCSI disk from the PROM
+.Ss2 "Determining how to access your SCSI disk from the PROM"
 .
 sunmon and OpenBoot PROM 1 use an archaic
 .Li sd( Ns Ar c,u,p Ns Ic \&)
