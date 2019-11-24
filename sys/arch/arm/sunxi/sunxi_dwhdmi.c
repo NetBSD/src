@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_dwhdmi.c,v 1.7 2019/11/23 18:55:08 jmcneill Exp $ */
+/* $NetBSD: sunxi_dwhdmi.c,v 1.8 2019/11/24 10:27:37 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.7 2019/11/23 18:55:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_dwhdmi.c,v 1.8 2019/11/24 10:27:37 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -228,11 +228,19 @@ sunxi_dwhdmi_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_dwhdmi_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	prop_dictionary_t prop = device_properties(self);
 	const int phandle = faa->faa_phandle;
 	struct clk *clk_iahb, *clk_isfr, *clk_tmds;
 	struct fdtbus_reset *rst;
+	bool is_disabled;
 	bus_addr_t addr;
 	bus_size_t size;
+
+	if (prop_dictionary_get_bool(prop, "disabled", &is_disabled) && is_disabled) {
+		aprint_naive("\n");
+		aprint_normal(": HDMI TX (disabled)\n");
+		return;
+	}
 
 	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
