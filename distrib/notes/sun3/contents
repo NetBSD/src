@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.19 2019/11/21 19:23:21 martin Exp $
+.\"	$NetBSD: contents,v 1.20 2019/11/24 11:15:36 martin Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -31,8 +31,7 @@ The \*M-specific portion of the
 \*V release is found in the
 .Pa \*M
 subdirectory of the distribution:
-.ie \n[FOR_RELEASE] .Pa \&.../NetBSD-\*V/\*M/ .
-.el .Pa Pf \&.../arch/\*M/snapshot/ Ar yyyymmdd/ .
+.Pa \&.../NetBSD-\*V/\*M/ .
 It contains the following files and directories:
 .Pp
 .(tag INSTALL.html -compact \" top level
