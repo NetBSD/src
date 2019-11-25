@@ -1,4 +1,4 @@
-.\" $NetBSD: automountd.8,v 1.4 2019/11/21 15:24:17 tkusumi Exp $
+.\" $NetBSD: automountd.8,v 1.5 2019/11/25 16:57:09 tkusumi Exp $
 .\"
 .\" Copyright (c) 2017 The NetBSD Foundation, Inc.
 .\" Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
 .\"
 .\" $FreeBSD$
 .\"
-.Dd November 25, 2017
+.Dd November 26, 2019
 .Dt AUTOMOUNTD 8
 .Os
 .Sh NAME
@@ -85,6 +85,9 @@ The default is 30.
 Specify mount options.
 Options specified here will be overridden by options entered in maps or
 .Xr auto_master 5 .
+.It Fl T
+Increase verbosity.
+For compatibility with other implementations, such as OS X.
 .It Fl v
 Increase verbosity.
 .El
