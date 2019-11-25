@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.7 2019/11/12 05:09:29 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.8 2019/11/25 00:54:47 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.7 2019/11/12 05:09:29 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.8 2019/11/25 00:54:47 hkenken Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -132,7 +132,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_clk_ipg = imx6_get_clock("enet");
-	if (sc->sc_clk_enet == NULL) {
+	if (sc->sc_clk_ipg == NULL) {
 		aprint_error(": couldn't get clock ipg\n");
 		return;
 	}
