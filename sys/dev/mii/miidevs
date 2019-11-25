@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.153.2.2 2019/10/23 19:45:56 martin Exp $
+$NetBSD: miidevs,v 1.153.2.3 2019/11/25 16:26:00 martin Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -65,7 +65,9 @@ oui ALTIMA			0x0010a9	Altima Communications
 oui ENABLESEMI			0x0010dd	Enable Semiconductor
 oui SUNPLUS			0x001105	Sunplus Technology
 oui ATHEROS			0x001374	Atheros
+oui TERANETICS			0x0014a6	Teranetics
 oui RALINK2			0x0017a5	Ralink Technology
+oui AQUANTIA			0x0017b6	Aquantia Corporation
 oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
 oui VIA				0x004063	VIA Technologies
@@ -74,7 +76,6 @@ oui QUALSEMI			0x006051	Quality Semiconductor
 oui AMLOGIC			0x006051	Amlogic
 oui DAVICOM			0x00606e	Davicom Semiconductor
 oui SMSC			0x00800f	SMSC
-oui ICPLUS			0x0090c3	IC Plus Corp.
 oui SEEQ			0x00a07d	Seeq
 oui ICS				0x00a0be	Integrated Circuit Systems
 oui INTEL			0x00aa00	Intel
@@ -91,8 +92,9 @@ oui XAQTI			0x00e0ae	XaQti Corp.
 oui NATSEMI			0x080017	National Semiconductor
 oui TI				0x080028	Texas Instruments
 oui BROADCOM4			0x18c086	Broadcom Corporation
+oui RENESAS			0x749050	Renesas
 
-/* Unregisterd or wrong OUI */
+/* Unregistered or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
 oui yyAMD			0x000058	Advanced Micro Devices
 oui xxMYSON			0x00032d	Myson Technology
@@ -104,6 +106,7 @@ oui xxQUALSEMI			0x00068a	Quality Semiconductor
 oui xxREALTEK			0x000732	Realtek
 oui xxBROADCOM			0x000818	Broadcom Corporation
 oui xxPMCSIERRA			0x0009c0	PMC-Sierra
+oui xxICPLUS			0x0009c3	IC Plus Corp.
 oui xxMARVELL			0x000ac2	Marvell Semiconductor
 oui xxINTEL			0x001f00	Intel
 oui xxBROADCOM_ALT1		0x0050ef	Broadcom Corporation
@@ -242,10 +245,10 @@ model xxDAVICOM DM9161B		0x000b DM9161[BC] 10/100 media interface
 model xxDAVICOM DM9601		0x000c DM9601 internal 10/100 media interface
 
 /* IC Plus Corp. PHYs */
-model ICPLUS IP100		0x0004 IP100 10/100 PHY
-model ICPLUS IP101		0x0005 IP101 10/100 PHY
-model ICPLUS IP1000A		0x0008 IP1000A 10/100/1000 PHY
-model ICPLUS IP1001		0x0019 IP1001 10/100/1000 PHY
+model xxICPLUS IP100		0x0004 IP100 10/100 PHY
+model xxICPLUS IP101		0x0005 IP101 10/100 PHY
+model xxICPLUS IP1000A		0x0008 IP1000A 10/100/1000 PHY
+model xxICPLUS IP1001		0x0019 IP1001 10/100/1000 PHY
 
 /* Integrated Circuit Systems PHYs */
 model ICS 1889			0x0001 ICS1889 10/100 media interface
@@ -278,8 +281,8 @@ model ATTANSIC I82578		0x0004 Intel 82578 10/100/1000 media interface
 
 
 /* JMicron PHYs */
-model JMICRON JMC250		0x0021 JMC250 10/100/1000 media interface
-model JMICRON JMC260		0x0022 JMC260 10/100 media interface
+model JMICRON JMP211		0x0021 JMP211 10/100/1000 media interface
+model JMICRON JMP202		0x0022 JMP202 10/100 media interface
 
 /* Level 1 PHYs */
 model xxLEVEL1 LXT970		0x0000 LXT970 10/100 media interface
