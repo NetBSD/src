@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.71 2019/11/24 08:16:11 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.72 2019/11/25 16:04:46 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1685,4 +1685,30 @@ sys/kern/sys_ptrace_common.c			1.73
 	Fix regression introduced to ptrace_regs() in rev 1.27:
 	Size of registers should be determined from tracer, NOT tracee.
 	[rin, ticket #1456]
+
+sys/dev/mii/miidevs			1.155-1.157, 1.159-1.160
+sys/dev/mii/miidevs.h			regen
+sys/dev/mii/miidevs_data.h		regen
+sys/dev/mii/rlphy.c			1.37 via patch
+
+	- miidevs update:
+	 - Add Teranetics, Aquantia and Renesas.
+	 - Change ICPLUS(0x0090c3) to xxICPLUS(0x0009c3).
+	 - Fix typo. from vezhlys.
+	 - Rename JMICRON 0x0021 from JMC250 to JMP211
+	 - Rename JMICRON 0x0022 from JMC260 to JMP202
+	- rlphy(4): Print model name if it's ICPLUS IP101 to avoid printing
+	  "Realtek internal PHY".
+	[msaitoh, ticket #1457]
+
+sys/dev/hyperv/hvs.c				1.3
+sys/dev/hyperv/if_hvn.c				1.10
+
+	hvs(4), hvn(4): Set correct size for bus_dmamap_sync(9).
+	[nonaka, ticket #1458]
+
+sys/kern/subr_cprng.c				1.33
+
+	Use cprng_strong, not cprng_fast, for sysctl kern.arnd.
+	[riastradh, ticket #1459]
 
