@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cprng.c,v 1.30.2.1 2019/09/03 07:48:00 martin Exp $ */
+/*	$NetBSD: subr_cprng.c,v 1.30.2.2 2019/11/25 17:00:22 martin Exp $ */
 
 /*-
  * Copyright (c) 2011-2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.30.2.1 2019/09/03 07:48:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cprng.c,v 1.30.2.2 2019/11/25 17:00:22 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -539,6 +539,7 @@ cprng_strong_rndsink_callback(void *context, const void *seed, size_t bytes)
 	mutex_exit(&cprng->cs_lock);
 }
 
+static ONCE_DECL(sysctl_prng_once);
 static cprng_strong_t *sysctl_prng;
 
 static int
@@ -558,10 +559,9 @@ makeprng(void)
 static int
 sysctl_kern_urnd(SYSCTLFN_ARGS)
 {
-	static ONCE_DECL(control);
 	int v, rv;
 
-	RUN_ONCE(&control, makeprng);
+	RUN_ONCE(&sysctl_prng_once, makeprng);
 	rv = cprng_strong(sysctl_prng, &v, sizeof(v), 0);
 	if (rv == sizeof(v)) {
 		struct sysctlnode node = *rnode;
@@ -590,6 +590,7 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 	int error;
 	void *v;
 	struct sysctlnode node = *rnode;
+	size_t n __diagused;
 
 	switch (*oldlenp) {
 	    case 0:
@@ -598,8 +599,10 @@ sysctl_kern_arnd(SYSCTLFN_ARGS)
 		if (*oldlenp > 256) {
 			return E2BIG;
 		}
+		RUN_ONCE(&sysctl_prng_once, makeprng);
 		v = kmem_alloc(*oldlenp, KM_SLEEP);
-		cprng_fast(v, *oldlenp);
+		n = cprng_strong(sysctl_prng, v, *oldlenp, 0);
+		KASSERT(n == *oldlenp);
 		node.sysctl_data = v;
 		node.sysctl_size = *oldlenp;
 		error = sysctl_lookup(SYSCTLFN_CALL(&node));
