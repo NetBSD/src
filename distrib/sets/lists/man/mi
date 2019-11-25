@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1649.2.4 2019/11/25 16:44:32 martin Exp $
+# $NetBSD: mi,v 1.1649.2.5 2019/11/25 20:47:25 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1379,6 +1379,7 @@
 ./usr/share/man/cat4/iy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jme.0			man-sys-catman		.cat
 ./usr/share/man/cat4/jmide.0			man-sys-catman		.cat
+./usr/share/man/cat4/jmphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/joy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/kame_ipsec.0		man-obsolete		obsolete
 ./usr/share/man/cat4/kcov.0			man-sys-catman		.cat
@@ -1709,6 +1710,7 @@
 ./usr/share/man/cat4/slip.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sm.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsc.0			man-sys-catman		.cat
+./usr/share/man/cat4/smscphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smscmon.0			man-sys-catman		.cat
 ./usr/share/man/cat4/smsh.0			man-sys-catman		.cat
 ./usr/share/man/cat4/sn.0			man-sys-catman		.cat
@@ -4518,6 +4520,7 @@
 ./usr/share/man/html4/iy.html			man-sys-htmlman		html
 ./usr/share/man/html4/jme.html			man-sys-htmlman		html
 ./usr/share/man/html4/jmide.html		man-sys-htmlman		html
+./usr/share/man/html4/jmphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/joy.html			man-sys-htmlman		html
 ./usr/share/man/html4/kame_ipsec.html		man-obsolete		obsolete
 ./usr/share/man/html4/kcov.html		man-sys-htmlman		html
@@ -4815,6 +4818,7 @@
 ./usr/share/man/html4/slip.html			man-sys-htmlman		html
 ./usr/share/man/html4/sm.html			man-sys-htmlman		html
 ./usr/share/man/html4/smsc.html			man-sys-htmlman		html
+./usr/share/man/html4/smscphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/smscmon.html		man-sys-htmlman		html
 ./usr/share/man/html4/smsh.html			man-sys-htmlman		html
 ./usr/share/man/html4/sn.html			man-sys-htmlman		html
@@ -7497,6 +7501,7 @@
 ./usr/share/man/man4/iy.4			man-sys-man		.man
 ./usr/share/man/man4/jme.4			man-sys-man		.man
 ./usr/share/man/man4/jmide.4			man-sys-man		.man
+./usr/share/man/man4/jmphy.4			man-sys-man		.man
 ./usr/share/man/man4/joy.4			man-sys-man		.man
 ./usr/share/man/man4/kame_ipsec.4		man-obsolete		obsolete
 ./usr/share/man/man4/kcov.4			man-sys-man		.man
@@ -7828,6 +7833,7 @@
 ./usr/share/man/man4/sm.4			man-sys-man		.man
 ./usr/share/man/man4/smsc.4			man-sys-man		.man
 ./usr/share/man/man4/smscmon.4			man-sys-man		.man
+./usr/share/man/man4/smscphy.4			man-sys-man		.man
 ./usr/share/man/man4/smsh.4			man-sys-man		.man
 ./usr/share/man/man4/sn.4			man-sys-man		.man
 ./usr/share/man/man4/sony.4			man-sys-man		.man
