@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.340 2019/11/25 04:52:27 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.341 2019/11/25 05:18:59 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.340 2019/11/25 04:52:27 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.341 2019/11/25 05:18:59 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1027,10 +1027,10 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, uint8_t *dest)
 	 * Enable use of auto EEPROM access so we can avoid
 	 * having to use the bitbang method.
 	 */
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
+	BGE_SETBIT_FLUSH(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
 
 	/* Reset the EEPROM, load the clock period. */
-	CSR_WRITE_4(sc, BGE_EE_ADDR,
+	CSR_WRITE_4_FLUSH(sc, BGE_EE_ADDR,
 	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
 	DELAY(20);
 
@@ -2280,7 +2280,7 @@ bge_chipinit(struct bge_softc *sc)
 #endif
 
 	/* Set the timer prescaler (always 66MHz) */
-	CSR_WRITE_4(sc, BGE_MISC_CFG, BGE_32BITTIME_66MHZ);
+	CSR_WRITE_4_FLUSH(sc, BGE_MISC_CFG, BGE_32BITTIME_66MHZ);
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
 		DELAY(40);	/* XXX */
@@ -3434,6 +3434,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	else
 		mimode |= BGE_MIMODE_BASE;
 	CSR_WRITE_4(sc, BGE_MI_MODE, mimode);
+	DELAY(80);
 
 	/*
 	 * When using the BCM5701 in PCI-X mode, data corruption has
@@ -3630,10 +3631,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Reset NVRAM before bge_reset(). It's required to acquire NVRAM
 	 * lock in bge_reset().
 	 */
-	CSR_WRITE_4(sc, BGE_EE_ADDR,
+	CSR_WRITE_4_FLUSH(sc, BGE_EE_ADDR,
 	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
 	delay(1000);
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
+	BGE_SETBIT_FLUSH(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
 
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -5670,10 +5671,10 @@ bge_ifmedia_upd(struct ifnet *ifp)
 			break;
 		case IFM_1000_SX:
 			if ((ifm->ifm_media & IFM_FDX) != 0) {
-				BGE_CLRBIT(sc, BGE_MAC_MODE,
+				BGE_CLRBIT_FLUSH(sc, BGE_MAC_MODE,
 				    BGE_MACMODE_HALF_DUPLEX);
 			} else {
-				BGE_SETBIT(sc, BGE_MAC_MODE,
+				BGE_SETBIT_FLUSH(sc, BGE_MAC_MODE,
 				    BGE_MACMODE_HALF_DUPLEX);
 			}
 			DELAY(40);
@@ -6071,7 +6072,7 @@ bge_link_upd(struct bge_softc *sc)
 				BGE_STS_SETBIT(sc, BGE_STS_LINK);
 				if (BGE_ASICREV(sc->bge_chipid)
 				    == BGE_ASICREV_BCM5704) {
-					BGE_CLRBIT(sc, BGE_MAC_MODE,
+					BGE_CLRBIT_FLUSH(sc, BGE_MAC_MODE,
 					    BGE_MACMODE_TBI_SEND_CFGS);
 					DELAY(40);
 				}
