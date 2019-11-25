@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.73.2.1 2019/10/17 18:58:33 martin Exp $ */
+/* $NetBSD: if_vge.c,v 1.73.2.2 2019/11/25 16:47:16 martin Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.73.2.1 2019/10/17 18:58:33 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.73.2.2 2019/11/25 16:47:16 martin Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1916,6 +1916,7 @@ vge_miibus_statchg(struct ifnet *ifp)
 	struct vge_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
 	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
+	uint8_t dctl;
 
 	/*
 	 * If the user manually selects a media mode, we need to turn
@@ -1927,31 +1928,37 @@ vge_miibus_statchg(struct ifnet *ifp)
 	 * always implied, so we turn on the forced mode bit but leave
 	 * the FDX bit cleared.
 	 */
+	dctl = CSR_READ_1(sc, VGE_DIAGCTL);
 
-	switch (IFM_SUBTYPE(ife->ifm_media)) {
-	case IFM_AUTO:
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		break;
-	case IFM_1000_T:
-		CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		break;
-	case IFM_100_TX:
-	case IFM_10_T:
-		CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_MACFORCE);
-		if ((ife->ifm_media & IFM_FDX) != 0) {
-			CSR_SETBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		} else {
-			CSR_CLRBIT_1(sc, VGE_DIAGCTL, VGE_DIAGCTL_FDXFORCE);
-		}
-		break;
-	default:
-		printf("%s: unknown media type: %x\n",
-		    device_xname(sc->sc_dev),
-		    IFM_SUBTYPE(ife->ifm_media));
-		break;
+	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+		dctl &= ~VGE_DIAGCTL_MACFORCE;
+		dctl &= ~VGE_DIAGCTL_FDXFORCE;
+	} else {
+		u_int ifmword;
+
+		/* If the link is up, use the current active media. */
+		if ((mii->mii_media_status & IFM_ACTIVE) != 0)
+			ifmword = mii->mii_media_active;
+		else
+			ifmword = ife->ifm_media;
+
+		dctl |= VGE_DIAGCTL_MACFORCE;
+		if ((ifmword & IFM_FDX) != 0)
+			dctl |= VGE_DIAGCTL_FDXFORCE;
+		else
+			dctl &= ~VGE_DIAGCTL_FDXFORCE;
+
+		if (IFM_SUBTYPE(ifmword) == IFM_1000_T) {
+			/*
+			 * It means the user setting is not auto but it's
+			 * 1000baseT-FDX or 1000baseT.
+			 */
+			dctl |= VGE_DIAGCTL_GMII;
+		} else
+			dctl &= ~VGE_DIAGCTL_GMII;
 	}
+
+	CSR_WRITE_1(sc, VGE_DIAGCTL, dctl);
 }
 
 static int
