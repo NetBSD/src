@@ -1,4 +1,4 @@
-/*	$NetBSD: miidevs.h,v 1.151.2.4 2019/11/25 16:53:55 martin Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.151.2.5 2019/11/25 16:55:09 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
