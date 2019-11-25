@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.116 2019/11/24 08:34:28 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.117 2019/11/25 05:52:54 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6247,3 +6247,64 @@ doc/3RDPARTY					1.1655 (patch)
 	Import tzdata2019c.
 	[kre, ticket #468]
 
+sys/arch/evbarm/beagle/beagle_machdep.c		1.80
+
+	Fix compile error when DIAGNOSTIC is not used.
+	[martin, ticket #466]
+
+distrib/notes/Makefile.inc			1.45
+distrib/notes/acorn32/contents			1.6
+distrib/notes/alpha/contents			1.20
+distrib/notes/amd64/contents			1.9
+distrib/notes/amiga/contents			1.24
+distrib/notes/arc/contents			1.6
+distrib/notes/arc/prep				1.5
+distrib/notes/atari/contents			1.24
+distrib/notes/bebox/contents			1.6
+distrib/notes/cats/contents			1.6
+distrib/notes/cats/prep				1.14
+distrib/notes/common/contents			1.180
+distrib/notes/common/main			1.554
+distrib/notes/common/postinstall		1.85
+distrib/notes/common/sysinst			1.109
+distrib/notes/common/upgrade			1.31
+distrib/notes/emips/contents			1.6
+distrib/notes/evbarm/contents			1.6
+distrib/notes/evbppc/contents			1.7
+distrib/notes/ews4800mips/contents		1.6
+distrib/notes/hp300/contents			1.21
+distrib/notes/hpcarm/contents			1.7
+distrib/notes/hpcmips/contents			1.14
+distrib/notes/hpcsh/contents			1.7
+distrib/notes/hppa/contents			1.6
+distrib/notes/i386/contents			1.33
+distrib/notes/landisk/contents			1.7
+distrib/notes/mac68k/contents			1.24
+distrib/notes/macppc/contents			1.18
+distrib/notes/macppc/prep.OPENFIRMWARE		1.21
+distrib/notes/mmeye/contents			1.7
+distrib/notes/mvme68k/contents			1.17
+distrib/notes/news68k/contents			1.10
+distrib/notes/newsmips/contents			1.6
+distrib/notes/next68k/contents			1.11
+distrib/notes/ofppc/contents			1.7
+distrib/notes/pmax/contents			1.21
+distrib/notes/prep/contents			1.6
+distrib/notes/rs6000/contents			1.6
+distrib/notes/sandpoint/contents		1.6
+distrib/notes/sandpoint/xfer			1.4
+distrib/notes/sgimips/contents			1.6
+distrib/notes/shark/contents			1.6
+distrib/notes/sparc/contents			1.25
+distrib/notes/sparc64/contents			1.9
+distrib/notes/sparc64/upgrade			1.7
+distrib/notes/sun2/contents			1.6
+distrib/notes/sun3/contents			1.20
+distrib/notes/vax/contents			1.15
+distrib/notes/x68k/contents			1.21
+
+	Modernize release notes:
+	 - Use https where possible.
+	 - Adapt to cdn/nycdn and our current auto-build conventions.
+	 - Automate where possible.
+	[martin, ticket #471]
