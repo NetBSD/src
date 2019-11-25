@@ -1,4 +1,4 @@
-/*	$NetBSD: rlphy.c,v 1.30 2016/07/07 06:55:41 msaitoh Exp $	*/
+/*	$NetBSD: rlphy.c,v 1.30.10.1 2019/11/25 15:57:23 martin Exp $	*/
 /*	$OpenBSD: rlphy.c,v 1.20 2005/07/31 05:27:30 pvalchev Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30 2016/07/07 06:55:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rlphy.c,v 1.30.10.1 2019/11/25 15:57:23 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,8 +79,8 @@ const struct mii_phy_funcs rlphy_funcs = {
 static const struct mii_phydesc rlphys[] = {
 	{ MII_OUI_yyREALTEK,		MII_MODEL_yyREALTEK_RTL8201L,
 	  MII_STR_yyREALTEK_RTL8201L },
-	{ MII_OUI_ICPLUS,		MII_MODEL_ICPLUS_IP101,
-	  MII_STR_ICPLUS_IP101 },
+	{ MII_OUI_xxICPLUS,		MII_MODEL_xxICPLUS_IP101,
+	  MII_STR_xxICPLUS_IP101 },
 
 	{ 0,				0,
 	  NULL },
@@ -124,6 +124,9 @@ rlphyattach(device_t parent, device_t self, void *aux)
 	if (MII_MODEL(ma->mii_id2) == MII_MODEL_yyREALTEK_RTL8201L) {
 		rsc->sc_rtl8201l = 1;
 		aprint_normal(": %s, rev. %d\n", MII_STR_yyREALTEK_RTL8201L,
+		    MII_REV(ma->mii_id2));
+	} else if (MII_MODEL(ma->mii_id2) == MII_MODEL_xxICPLUS_IP101) {
+		aprint_normal(": %s, rev. %d\n", MII_STR_xxICPLUS_IP101,
 		    MII_REV(ma->mii_id2));
 	} else
 		aprint_normal(": Realtek internal PHY\n");
