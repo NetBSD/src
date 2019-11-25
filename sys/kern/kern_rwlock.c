@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_rwlock.c,v 1.54 2019/05/09 05:00:31 ozaki-r Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.55 2019/11/25 20:16:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.54 2019/05/09 05:00:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.55 2019/11/25 20:16:22 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -111,6 +111,19 @@ do {									\
 #else /* defined(LOCKDEBUG) */
 #define	RW_INHERITDEBUG(n, o)		/* nothing */
 #endif /* defined(LOCKDEBUG) */
+
+/*
+ * Memory barriers.
+ */
+#ifdef __HAVE_ATOMIC_AS_MEMBAR
+#define	RW_MEMBAR_ENTER()
+#define	RW_MEMBAR_EXIT()
+#define	RW_MEMBAR_PRODUCER()
+#else
+#define	RW_MEMBAR_ENTER()		membar_enter()
+#define	RW_MEMBAR_EXIT()		membar_exit()
+#define	RW_MEMBAR_PRODUCER()		membar_producer()
+#endif
 
 static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
 static void	rw_dump(const volatile void *, lockop_printer_t);
@@ -321,7 +334,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	LOCKSTAT_ENTER(lsflag);
 
 	KPREEMPT_DISABLE(curlwp);
-	for (owner = rw->rw_owner; ;) {
+	for (owner = rw->rw_owner;;) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
@@ -331,7 +344,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
-				membar_enter();
+				RW_MEMBAR_ENTER();
 				break;
 			}
 
@@ -460,7 +473,7 @@ rw_vector_exit(krwlock_t *rw)
 	 * proceed to do direct handoff if there are waiters, and if the
 	 * lock would become unowned.
 	 */
-	membar_exit();
+	RW_MEMBAR_EXIT();
 	for (;;) {
 		newown = (owner - decr);
 		if ((newown & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
@@ -554,13 +567,12 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 	}
 
 	for (owner = rw->rw_owner;; owner = next) {
-		owner = rw->rw_owner;
 		if (__predict_false((owner & need_wait) != 0))
 			return 0;
 		next = rw_cas(rw, owner, owner + incr);
 		if (__predict_true(next == owner)) {
 			/* Got it! */
-			membar_enter();
+			RW_MEMBAR_ENTER();
 			break;
 		}
 	}
@@ -576,7 +588,8 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 /*
  * rw_downgrade:
  *
- *	Downgrade a write lock to a read lock.
+ *	Downgrade a write lock to a read lock.  Optimise memory accesses for
+ *	the uncontended case.
  */
 void
 rw_downgrade(krwlock_t *rw)
@@ -594,24 +607,20 @@ rw_downgrade(krwlock_t *rw)
 	__USE(curthread);
 #endif
 
-
-	membar_producer();
-	owner = rw->rw_owner;
-	if ((owner & RW_HAS_WAITERS) == 0) {
-		/*
-		 * There are no waiters, so we can do this the easy way.
-		 * Try swapping us down to one read hold.  If it fails, the
-		 * lock condition has changed and we most likely now have
-		 * waiters.
-		 */
-		next = rw_cas(rw, owner, RW_READ_INCR);
-		if (__predict_true(next == owner)) {
-			RW_LOCKED(rw, RW_READER);
-			RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
-			RW_DASSERT(rw, RW_COUNT(rw) != 0);
-			return;
-		}
-		owner = next;
+	/*
+	 * If there are no waiters, so we can do this the easy way.
+	 * Try swapping us down to one read hold.  If it fails, the
+	 * lock condition has changed and we most likely now have
+	 * waiters.
+	 */
+	RW_MEMBAR_PRODUCER();
+	owner = curthread | RW_WRITE_LOCKED;
+	next = rw_cas(rw, owner, RW_READ_INCR);
+	if (__predict_true(next == owner)) {
+		RW_LOCKED(rw, RW_READER);
+		RW_DASSERT(rw, (rw->rw_owner & RW_WRITE_LOCKED) == 0);
+		RW_DASSERT(rw, RW_COUNT(rw) != 0);
+		return;
 	}
 
 	/*
@@ -619,7 +628,8 @@ rw_downgrade(krwlock_t *rw)
 	 * on the sleep queue.  Once we have that, we can adjust the
 	 * waiter bits.
 	 */
-	for (;; owner = next) {
+	for (;;) {
+		owner = next;
 		ts = turnstile_lookup(rw);
 		RW_DASSERT(rw, ts != NULL);
 
@@ -670,8 +680,8 @@ rw_downgrade(krwlock_t *rw)
 /*
  * rw_tryupgrade:
  *
- *	Try to upgrade a read lock to a write lock.  We must be the
- *	only reader.
+ *	Try to upgrade a read lock to a write lock.  We must be the only
+ *	reader.  Optimise memory accesses for the uncontended case.
  */
 int
 rw_tryupgrade(krwlock_t *rw)
@@ -682,17 +692,17 @@ rw_tryupgrade(krwlock_t *rw)
 	RW_ASSERT(rw, curthread != 0);
 	RW_ASSERT(rw, rw_read_held(rw));
 
-	for (owner = rw->rw_owner;; owner = next) {
-		RW_ASSERT(rw, (owner & RW_WRITE_LOCKED) == 0);
-		if (__predict_false((owner & RW_THREAD) != RW_READ_INCR)) {
-			RW_ASSERT(rw, (owner & RW_THREAD) != 0);
-			return 0;
-		}
+	for (owner = RW_READ_INCR;; owner = next) {
 		newown = curthread | RW_WRITE_LOCKED | (owner & ~RW_THREAD);
 		next = rw_cas(rw, owner, newown);
 		if (__predict_true(next == owner)) {
-			membar_producer();
+			RW_MEMBAR_PRODUCER();
 			break;
+		}
+		RW_ASSERT(rw, (next & RW_WRITE_LOCKED) == 0);
+		if (__predict_false((next & RW_THREAD) != RW_READ_INCR)) {
+			RW_ASSERT(rw, (next & RW_THREAD) != 0);
+			return 0;
 		}
 	}
 
