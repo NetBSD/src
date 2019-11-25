@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.117 2019/11/25 05:52:54 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.118 2019/11/25 17:03:50 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6308,3 +6308,124 @@ distrib/notes/x68k/contents			1.21
 	 - Adapt to cdn/nycdn and our current auto-build conventions.
 	 - Automate where possible.
 	[martin, ticket #471]
+
+sys/arch/arm/dts/sun50i-a64-pinebook.dts        1.17
+sys/arch/arm/sunxi/sun50i_a64_ccu.c             1.16-1.20 
+sys/arch/arm/sunxi/sunxi_ccu.h                  1.22
+sys/arch/arm/sunxi/sunxi_ccu_fractional.c       1.5,1.6
+sys/arch/arm/sunxi/sunxi_dwhdmi.c               1.5-1.8
+sys/arch/arm/sunxi/sunxi_hdmiphy.c              1.3,1.4
+sys/arch/arm/sunxi/sunxi_hdmiphy.h              1.2
+sys/arch/arm/sunxi/sunxi_lcdc.c                 1.7
+sys/arch/arm/sunxi/sunxi_mixer.c                1.8-1.10
+sys/arch/arm/sunxi/sunxi_platform.c             1.38
+sys/dev/fdt/fdt_port.c                          1.3,1.4
+sys/dev/ic/dw_hdmi.c                            1.5,1.6
+sys/dev/ic/dw_hdmi.h                            1.5
+
+        Add Pinebook HDMI support.
+	[jmcneill, ticket #470]
+
+sys/arch/arm/sunxi/sunxi_drm.c			1.9
+
+	Reclaim bootloader FB memory for CMA pool.
+	[jmcneill, ticket #472]
+
+sys/dev/mii/miidevs				1.155-1.157,1.159,1.160
+sys/dev/mii/rlphy.c				1.37
+sys/dev/mii/miidevs.h				(regen)
+sys/dev/mii/miidevs_data.h			(regen)
+
+	- miidevs update:		   
+	 - Add Teranetics, Aquantia and Renesas.
+	 - Change ICPLUS(0x0090c3) to xxICPLUS(0x0009c3).
+	 - Fix typo in comment. from vezhlys.
+	 - Rename JMICRON 0x0021 from JMC250 to JMP211
+	 - Rename JMICRON 0x0022 from JMC260 to JMP202
+	- rlphy(4): Print model name if it's ICPLUS IP101 to avoid printing
+	  "Realtek internal PHY".
+	[msaitoh, ticket #473]
+
+sys/dev/usb/if_upl.c				1.68
+
+	Make it compilable with UPL_DEBUG.
+	[msaitoh, ticket #474]
+
+sys/dev/nvmm/x86/nvmm_x86_svm.c			1.54
+sys/dev/nvmm/x86/nvmm_x86_vmx.c			1.45
+tests/lib/libnvmm/h_mem_assist.c		1.18
+
+	Hide XSAVES-specific stuff and the masked extended states.
+	Several improvements. In particular, reduce CS.limit, because
+	Intel CPUs perform strict sanity checks, and the previous (too high)
+	limit caused the VM entry to fail.
+	[maxv, ticket #475]
+
+distrib/sets/lists/man/mi			1.1656
+share/man/man4/Makefile				1.684
+share/man/man4/ipgphy.4				1.1,1.2
+share/man/man4/mii.4				1.28
+share/man/man4/vge.4				1.8,1.9
+sys/arch/amd64/conf/ALL				1.124
+sys/arch/amd64/conf/GENERIC			1.537
+sys/arch/i386/conf/ALL				1.471
+sys/arch/i386/conf/GENERIC			1.1211
+sys/dev/DEVNAMES				1.322
+sys/dev/mii/files.mii				1.51
+sys/dev/mii/ipgphy.c				1.1.1.5
+sys/dev/mii/ipgphyreg.h				1.1-1.3
+sys/dev/pci/if_stge.c				1.71
+sys/dev/pci/if_stgereg.h			1.6
+
+	Add support IC Plus IP1000* PHYs. PR/kern 42314 first reported by
+	Tomokazu HARADA and patch provided by Andrius V.
+	[msaitoh, ticket #476]
+
+sys/dev/pci/if_vge.c				1.76,1.77
+
+	- Fixes a bug that "ifmedia vge0 media 1000baseT-FDX" causes device
+	  time out.
+	- When the link is up, set VGE_DIAGCTL not from user media setting
+	  but from the current active link status.
+	[msaitoh, ticket #477]
+
+distrib/sets/lists/man/mi			1.1661,1.1662
+share/man/man4/Makefile				1.687,1.688
+share/man/man4/jme.4				1.8
+share/man/man4/jmphy.4				1.1
+share/man/man4/mii.4				1.29
+share/man/man4/smscphy.4			1.1
+sys/arch/amd64/conf/ALL				1.127,1.128
+sys/arch/amd64/conf/GENERIC			1.543,1.544
+sys/arch/i386/conf/ALL				1.473,1.474
+sys/arch/i386/conf/GENERIC			1.1214,1.1215
+sys/dev/DEVNAMES				1.324,1.325
+sys/dev/mii/files.mii				1.52,1.53
+sys/dev/mii/jmphy.c				1.1
+sys/dev/mii/jmphyreg.h				1.1
+sys/dev/mii/smscphy.c				1.1
+
+	- Add jmphy(4) from OpenBSD.
+	- Port SMSC LAN87xx 10/100 Ethernet PHY driver from FreeBSD with
+	  some cleanup and IFM_NONE support.
+	[msaitoh, ticket #478]
+
+share/man/man4/micphy.4				1.3
+sys/dev/mii/micphy.c				1.9
+sys/dev/mii/miidevs				1.161
+
+	Add support for KSZ80[0456]1, KSZ8721, KSZ9[01]31, KS8731 and KSZ9477.
+	It also supports LAN7430's internal PHY.
+	[msaitoh, ticket #479]
+
+sys/dev/hyperv/hvs.c				1.3
+sys/dev/hyperv/if_hvn.c				1.10
+
+	hvs(4), hvn(4): Set correct size for bus_dmamap_sync(9).
+	[nonaka, ticket #480]
+
+sys/kern/subr_cprng.c				1.33
+
+	Use cprng_strong, not cprng_fast, for sysctl kern.arnd.
+	[riastradh, ticket #481]
+
