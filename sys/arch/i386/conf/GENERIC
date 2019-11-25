@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1208.2.2 2019/11/21 18:17:59 martin Exp $
+# $NetBSD: GENERIC,v 1.1208.2.3 2019/11/25 16:44:32 martin Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1208.2.2 $"
+#ident		"GENERIC-$Revision: 1.1208.2.3 $"
 
 maxusers	64		# estimated number of users
 
@@ -1120,6 +1120,7 @@ ihphy*	at mii? phy ?			# Intel 82577 PHYs
 ikphy*	at mii? phy ?			# Intel 82563 PHYs
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
+ipgphy* at mii? phy ?			# IC PLUS IP1000A/IP1001 PHYs
 lxtphy* at mii? phy ?			# Level One LXT-970 PHYs
 makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
