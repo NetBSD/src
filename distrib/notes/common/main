@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.555 2019/11/24 16:16:21 pgoyette Exp $
+.\"	$NetBSD: main,v 1.556 2019/11/25 15:40:18 pgoyette Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -519,8 +519,8 @@ would not exist.
 .
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
-.el .Ss Changes Between The NetBSD \n[oldvers], \
-the \n[major] Releases, and newer.
+.el .Ss "Changes Between The NetBSD \n[oldvers] and" \
+\n[major] Releases, and newer.
 .Pp
 The
 .Nx
