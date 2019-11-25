@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.339 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.340 2019/11/25 04:52:27 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.339 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.340 2019/11/25 04:52:27 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3847,7 +3847,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * by its PCI subsystem ID, as we do below for the SysKonnect SK-9D41.
 	 * The SysKonnect SK-9D41 is a 1000baseSX card.
 	 */
-	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
+	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
 		if (BGE_IS_5705_PLUS(sc)) {
 			sc->bge_flags |= BGEF_FIBER_MII;
