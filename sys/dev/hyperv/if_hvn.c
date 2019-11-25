@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.9 2019/11/22 12:40:07 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.10 2019/11/25 08:53:39 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.9 2019/11/22 12:40:07 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.10 2019/11/25 08:53:39 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -632,7 +632,8 @@ hvn_decap(struct hvn_softc *sc, struct hvn_tx_desc *txd)
 {
 	struct ifnet *ifp = SC2IFP(sc);
 
-	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap,
+	    0, txd->txd_dmap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
 	txd->txd_buf = NULL;
@@ -667,7 +668,8 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 	}
 	txd->txd_buf = NULL;
 
-	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,
+	bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap,
+	    0, txd->txd_dmap->dm_mapsize,
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
 	m_freem(m);
@@ -844,7 +846,8 @@ hvn_tx_ring_destroy(struct hvn_softc *sc)
 		txd = &sc->sc_tx_desc[i];
 		if (txd->txd_dmap == NULL)
 			continue;
-		bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap, 0, 0,
+		bus_dmamap_sync(sc->sc_dmat, txd->txd_dmap,
+		    0, txd->txd_dmap->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
 		bus_dmamap_destroy(sc->sc_dmat, txd->txd_dmap);
@@ -855,7 +858,8 @@ hvn_tx_ring_destroy(struct hvn_softc *sc)
 		txd->txd_buf = NULL;
 	}
 	if (sc->sc_tx_rmap) {
-		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap, 0, 0,
+		bus_dmamap_sync(sc->sc_dmat, sc->sc_tx_rmap,
+		    0, txd->txd_dmap->dm_mapsize,
 		    BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_tx_rmap);
 		bus_dmamap_destroy(sc->sc_dmat, sc->sc_tx_rmap);
