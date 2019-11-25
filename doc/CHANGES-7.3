@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.68 2019/11/16 16:17:37 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.69 2019/11/25 15:47:16 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -725,4 +725,9 @@ sys/dev/usb/usbdi.h				1.97 (patch)
 
 	Work around memory corruption problem triggered by axe(4).
 	[mrg, ticket #1713]
+
+sys/kern/subr_cprng.c				1.33
+
+	Use cprng_strong, not cprng_fast, for sysctl kern.arnd.
+	[riastradh, ticket #1714]
 
