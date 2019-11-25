@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.2 2019/01/30 01:24:00 jmcneill Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.2.4.1 2019/11/25 16:18:40 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.2 2019/01/30 01:24:00 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.2.4.1 2019/11/25 16:18:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -257,7 +257,7 @@ fdt_ports_register(struct fdt_device_ports *ports, device_t self,
 	int port_phandle, child;
 	int i;
 	char buf[20];
-	uint64_t id;
+	bus_addr_t id;
 
 	ports->dp_dev = self;
 	SLIST_INSERT_HEAD(&fdt_port_devices, ports, dp_list);
@@ -296,7 +296,7 @@ again:
 		}
 		if (strcmp(buf, "port") != 0)
 			continue;
-		if (fdtbus_get_reg64(child, 0, &id, NULL) != 0) {
+		if (fdtbus_get_reg(child, 0, &id, NULL) != 0) {
 			if (ports->dp_nports > 1)
 				aprint_error_dev(self,
 				    "%s: missing reg property",

@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.13.2.2 2019/11/18 19:36:03 martin Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.13.2.3 2019/11/25 16:18:40 martin Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13.2.2 2019/11/18 19:36:03 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13.2.3 2019/11/25 16:18:40 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,7 @@ __KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.13.2.2 2019/11/18 19:36:03 mart
 #define	DRAM_CFG_REG		0x0f4
 #define	MBUS_RST_REG		0x0fc
 #define	DE_CLK_REG		0x104
+#define	TCON0_CLK_REG		0x118
 #define	TCON1_CLK_REG		0x11c
 #define	AC_DIG_CLK_REG		0x140
 #define	HDMI_CLK_REG		0x150
@@ -161,6 +162,7 @@ static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
 static const char *hdmi_parents[] = { "pll_video0", "pll_video1" };
 static const char *i2s_parents[] = { "pll_audio_8x", "pll_audio_4x", "pll_audio_2x", "pll_audio" };
 static const char *spi_parents[] = { "hosc", "pll_periph0", "pll_periph1", NULL };
+static const char *tcon0_parents[] = { "pll_mipi", NULL, "pll_video0_2x", NULL };
 static const char *tcon1_parents[] = { "pll_video0", NULL, "pll_video1", NULL };
 static const char *gpu_parents[] = { "pll_gpu" };
 
@@ -459,6 +461,13 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BIT(31),		/* enable */
 	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
 
+	SUNXI_CCU_DIV_GATE(A64_CLK_TCON0, "tcon0", tcon0_parents,
+	    TCON0_CLK_REG,	/* reg */
+	    0,			/* div */
+	    __BITS(26,24),	/* sel */
+	    __BIT(31),		/* enable */
+	    0),
+
 	SUNXI_CCU_DIV_GATE(A64_CLK_TCON1, "tcon1", tcon1_parents,
 	    TCON1_CLK_REG,	/* reg */
 	    __BITS(3,0),	/* div */
@@ -521,7 +530,7 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	SUNXI_CCU_GATE(A64_CLK_BUS_CSI, "bus-csi", "ahb1",
 	    BUS_CLK_GATING_REG1, 8),
 	SUNXI_CCU_GATE(A64_CLK_BUS_HDMI, "bus-hdmi", "ahb1",
-	    BUS_CLK_GATING_REG1, 10),
+	    BUS_CLK_GATING_REG1, 11),
 	SUNXI_CCU_GATE(A64_CLK_BUS_DE, "bus-de", "ahb1",
 	    BUS_CLK_GATING_REG1, 12),
 	SUNXI_CCU_GATE(A64_CLK_BUS_GPU, "bus-gpu", "ahb1",
@@ -592,6 +601,8 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 {
 	struct sunxi_ccu_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	prop_dictionary_t prop = device_properties(self);
+	bool nomodeset;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = faa->faa_phandle;
@@ -609,9 +620,23 @@ sun50i_a64_ccu_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": A64 CCU\n");
 
-	/* Set DE parent to PLL_DE */
-	clk_set_parent(&sc->sc_clks[A64_CLK_DE].base, &sc->sc_clks[A64_CLK_PLL_DE].base);
-	clk_set_rate(&sc->sc_clks[A64_CLK_PLL_DE].base, 420000000);
+	nomodeset = false;
+	prop_dictionary_get_bool(prop, "nomodeset", &nomodeset);
+	if (!nomodeset) {
+		/* Set DE parent to PLL_DE */
+		clk_set_parent(&sc->sc_clks[A64_CLK_DE].base, &sc->sc_clks[A64_CLK_PLL_DE].base);
+		clk_set_rate(&sc->sc_clks[A64_CLK_PLL_DE].base, 420000000);
+
+		/* Set video PLLs to 297 MHz */
+		clk_set_rate(&sc->sc_clks[A64_CLK_PLL_VIDEO0].base, 297000000);
+		clk_set_rate(&sc->sc_clks[A64_CLK_PLL_VIDEO1].base, 297000000);
+
+		/* Set TCON1 parent to PLL_VIDEO1(1X) */
+		clk_set_parent(&sc->sc_clks[A64_CLK_TCON1].base, &sc->sc_clks[A64_CLK_PLL_VIDEO1].base);
+
+		/* Set HDMI parent to PLL_VIDEO1(1X) */
+		clk_set_parent(&sc->sc_clks[A64_CLK_HDMI].base, &sc->sc_clks[A64_CLK_PLL_VIDEO1].base);
+	}
 
 	sunxi_ccu_print(sc);
 }
