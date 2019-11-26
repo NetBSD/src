@@ -1,4 +1,4 @@
-LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.149 $>
+LIST OF CHANGES FROM PREVIOUS RELEASES:			<$Revision: 1.150 $>
 
 
 Changes from 386bsd 0.1 + patchkit 0.2.2 to NetBSD 0.8:
@@ -12642,3 +12642,12 @@ Changes from NetBSD 8.0 to NetBSD 9.0:
 		[jmcneill 20190921]
 	evbarm: Add support for Amazon Graviton "a1.metal" instances.
 		[jmcneill 20191015]
+	ipgphy(4): Add support for IC Plus IP1000* PHY. [msaitoh 20191017]
+	alc(4): Add support for Killer E2400 and E2500. [msaitoh 20191017]
+	jmphy(4): Add support for JMicron JMP202 and JMP211 PHY.
+		[msaitoh 20191030]
+	smscphy(4): Add support for SMSC LAN87xx 10/100 Ethernet PHY.
+		[msaitoh 20191101]
+	micphy(4): Add support for Microchip KSZ80[0456]1, KSZ8721, KSZ9[01]31,
+		KS8731 and KSZ9477.
+		[msaitoh 20191107]
