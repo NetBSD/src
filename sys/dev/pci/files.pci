@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.416 2019/11/20 09:37:45 hikaru Exp $
+#	$NetBSD: files.pci,v 1.417 2019/11/26 08:37:05 nisimura Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -965,7 +965,7 @@ attach  nfe at pci
 file    dev/pci/if_nfe.c                nfe
 
 # MICREL Etherent
-device	kse: ether, ifnet, arp
+device	kse: ether, ifnet, arp, mii
 attach	kse at pci
 file	dev/pci/if_kse.c		kse
 
