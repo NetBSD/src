@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.33.2.1 2019/11/06 09:59:39 martin Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.33.2.2 2019/11/26 08:20:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.33.2.1 2019/11/06 09:59:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.33.2.2 2019/11/26 08:20:47 martin Exp $");
 
 #include "vlan.h"
 
@@ -1996,27 +1996,37 @@ ale_rxfilter(struct ale_softc *sc)
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
+	/* Program new filter. */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
+
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_LOCK(ec);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
+		}
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
+	}
+	ETHER_UNLOCK(ec);
+
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
 			rxcfg |= MAC_CFG_PROMISC;
-		else
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
 			rxcfg |= MAC_CFG_ALLMULTI;
 		mchash[0] = mchash[1] = 0xFFFFFFFF;
-	} else {
-		/* Program new filter. */
-		memset(mchash, 0, sizeof(mchash));
-
-		ETHER_LOCK(ec);
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-			ETHER_NEXT_MULTI(step, enm);
-		}
-		ETHER_UNLOCK(ec);
 	}
-
 	CSR_WRITE_4(sc, ALE_MAR0, mchash[0]);
 	CSR_WRITE_4(sc, ALE_MAR1, mchash[1]);
 	CSR_WRITE_4(sc, ALE_MAC_CFG, rxcfg);
