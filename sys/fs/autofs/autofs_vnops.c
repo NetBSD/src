@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.3 2019/11/23 17:13:46 tkusumi Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.4 2019/11/26 16:17:31 tkusumi Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.3 2019/11/23 17:13:46 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.4 2019/11/26 16:17:31 tkusumi Exp $");
 
 #include "autofs.h"
 
@@ -87,7 +87,7 @@ autofs_getattr(void *v)
 	if (autofs_mount_on_stat &&
 	    autofs_cached(anp, NULL, 0) == false &&
 	    autofs_ignore_thread() == false) {
-		struct vnode *newvp = NULL;
+		struct vnode *newvp = NULLVP;
 		int error = autofs_trigger_vn(vp, "", 0, &newvp);
 		if (error)
 			return error;
@@ -171,7 +171,7 @@ mounted:
 		return error;
 
 	if (!vp->v_mountedhere) {
-		*newvp = NULL;
+		*newvp = NULLVP;
 		return 0;
 	} else {
 		/*
@@ -212,7 +212,7 @@ autofs_lookup(void *v)
 	KASSERT(VOP_ISLOCKED(dvp));
 
 	anp = VTOI(dvp);
-	*vpp = NULL;
+	*vpp = NULLVP;
 
 	/* Check accessibility of directory. */
 	KASSERT(!VOP_ACCESS(dvp, VEXEC, cnp->cn_cred));
@@ -259,7 +259,7 @@ autofs_lookup(void *v)
 
 	if (autofs_cached(anp, cnp->cn_nameptr, cnp->cn_namelen) == false &&
 	    autofs_ignore_thread() == false) {
-		struct vnode *newvp = NULL;
+		struct vnode *newvp = NULLVP;
 		error = autofs_trigger_vn(dvp, cnp->cn_nameptr, cnp->cn_namelen,
 		    &newvp);
 		if (error)
@@ -468,7 +468,7 @@ autofs_readdir(void *v)
 
 	if (autofs_cached(anp, NULL, 0) == false &&
 	    autofs_ignore_thread() == false) {
-		struct vnode *newvp = NULL;
+		struct vnode *newvp = NULLVP;
 		error = autofs_trigger_vn(vp, "", 0, &newvp);
 		if (error)
 			return error;
@@ -578,7 +578,7 @@ autofs_reclaim(void *v)
 	 * We do not free autofs_node here; instead we are
 	 * destroying them in autofs_node_delete().
 	 */
-	anp->an_vnode = NULL;
+	anp->an_vnode = NULLVP;
 	vp->v_data = NULL;
 
 	return 0;
@@ -630,7 +630,7 @@ autofs_node_new(struct autofs_node *parent, struct autofs_mount *amp,
 	getnanotime(&anp->an_ctime);
 	anp->an_parent = parent;
 	anp->an_mount = amp;
-	anp->an_vnode = NULL;
+	anp->an_vnode = NULLVP;
 	anp->an_cached = false;
 	anp->an_wildcards = false;
 	anp->an_retries = 0;
