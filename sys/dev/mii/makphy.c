@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.60 2019/07/03 17:40:29 maxv Exp $	*/
+/*	$NetBSD: makphy.c,v 1.61 2019/11/26 08:19:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60 2019/07/03 17:40:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.61 2019/11/26 08:19:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -240,9 +240,7 @@ makphy_reset(struct mii_softc *sc)
 
 	mii_phy_reset(sc);
 
-	/*
-	 * Initialize PHY Specific Control Register.
-	 */
+	/* Initialize PHY Specific Control Register. */
 	PHY_READ(sc, MAKPHY_PSCR, &reg);
 
 	/* Assert CRS on transmit. */

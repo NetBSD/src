@@ -1,4 +1,4 @@
-/*	$NetBSD: jmphy.c,v 1.1 2019/10/30 12:06:26 msaitoh Exp $ */
+/*	$NetBSD: jmphy.c,v 1.2 2019/11/26 08:19:51 msaitoh Exp $ */
 /*	$OpenBSD: jmphy.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -127,9 +127,7 @@ jmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 
 	switch (cmd) {
 	case MII_POLLSTAT:
-		/*
-		 * If we're not polling our PHY instance, just return.
-		 */
+		/* If we're not polling our PHY instance, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 		break;
@@ -145,9 +143,7 @@ jmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			return 0;
 		}
 
-		/*
-		 * If the interface is not up, don't do anything.
-		 */
+		/* If the interface is not up, don't do anything. */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			break;
 
@@ -156,21 +152,15 @@ jmphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 		break;
 
 	case MII_TICK:
-		/*
-		 * If we're not currently selected, just return.
-		 */
+		/* If we're not currently selected, just return. */
 		if (IFM_INST(ife->ifm_media) != sc->mii_inst)
 			return 0;
 
-		/*
-		 * Is the interface even up?
-		 */
+		/* Is the interface even up? */
 		if ((mii->mii_ifp->if_flags & IFF_UP) == 0)
 			return 0;
 
-		/*
-		 * Only used for autonegotiation.
-		 */
+		/* Only used for autonegotiation. */
 		if (IFM_SUBTYPE(ife->ifm_media) != IFM_AUTO)
 			break;
 
