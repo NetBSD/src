@@ -1,4 +1,4 @@
-/* $NetBSD: m25p.c,v 1.14 2019/09/14 15:12:12 tnn Exp $ */
+/* $NetBSD: m25p.c,v 1.15 2019/11/26 02:41:58 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.14 2019/09/14 15:12:12 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m25p.c,v 1.15 2019/11/26 02:41:58 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -96,7 +96,8 @@ static const struct m25p_info {
 	{ 0x14, 0x20, 0x2015, "STMicro M25P16", 2048, 64 },	/* 16Mbit */
 	{ 0x12, 0x20, 0x2013, "STMicro M25P40", 512, 64 },	/* 4Mbit */
 	{ 0xc0, 0x20, 0x7117, "STMicro M25PX64", 8192, 64 },	/* 64Mbit */
-	{ 0x00, 0x20, 0xBB18, "Numonyx N25Q128", 16384, 64 },	/* 128Mbit */
+	{ 0x00, 0x20, 0xBA18, "Micron MT25QL128", 16384, 64 },  /* 128Mbit (3V) */
+	{ 0x00, 0x20, 0xBB18, "Micron MT25QU128", 16384, 64 },  /* 128Mbit (1.8V)  */
 	{ 0x00, 0xBF, 0x2541, "Microchip SST25VF016B", 2048, 64 }, /* 16Mbit */
 	{ 0x00, 0xC2, 0x2011, "Macronix MX25L10", 128, 64 },	/* 1Mbit */
 	{ 0x00, 0xC2, 0x2012, "Macronix MX25L20", 256, 64 },	/* 2Mbit */
