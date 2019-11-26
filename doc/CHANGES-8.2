@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.72 2019/11/25 16:04:46 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.73 2019/11/26 08:26:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1711,4 +1711,9 @@ sys/kern/subr_cprng.c				1.33
 
 	Use cprng_strong, not cprng_fast, for sysctl kern.arnd.
 	[riastradh, ticket #1459]
+
+sys/dev/hyperv/if_hvn.c				1.11
+
+	hvn(4): Fix incorrect ident when waiting for NVS command response.
+	[nonaka, ticket #1460]
 
