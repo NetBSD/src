@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.6 2019/11/18 04:40:05 nonaka Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.7 2019/11/26 10:33:19 jmcneill Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -6205,8 +6205,11 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct mcx_softc *sc = (struct mcx_softc *)ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
+	struct ethercom *ec = &sc->sc_ec;
 	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
-	int s, i, error = 0;
+	struct ether_multi *enm;
+	struct ether_multistep step;
+	int s, i, flags, error = 0;
 
 	s = splnet();
 	switch (cmd) {
@@ -6214,8 +6217,10 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCADDMULTI:
 		if (ether_addmulti(ifreq_getaddr(cmd, ifr), &sc->sc_ec) == ENETRESET) {
 			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
-			if (error != 0)
+			if (error != 0) {
+				splx(s);
 				return (error);
+			}
 
 			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 				if (sc->sc_mcast_flows[i][0] == 0) {
@@ -6238,7 +6243,7 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 					error = ENETRESET;
 				}
 
-				if (sc->sc_ec.ec_multicnt > 0) {
+				if (memcmp(addrlo, addrhi, ETHER_ADDR_LEN)) {
 					SET(ifp->if_flags, IFF_ALLMULTI);
 					error = ENETRESET;
 				}
@@ -6249,8 +6254,10 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	case SIOCDELMULTI:
 		if (ether_delmulti(ifreq_getaddr(cmd, ifr), &sc->sc_ec) == ENETRESET) {
 			error = ether_multiaddr(&ifr->ifr_addr, addrlo, addrhi);
-			if (error != 0)
+			if (error != 0) {
+				splx(s);
 				return (error);
+			}
 
 			for (i = 0; i < MCX_NUM_MCAST_FLOWS; i++) {
 				if (memcmp(sc->sc_mcast_flows[i], addrlo,
@@ -6269,10 +6276,23 @@ mcx_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				sc->sc_extra_mcast--;
 
 			if (ISSET(ifp->if_flags, IFF_ALLMULTI) &&
-			    (sc->sc_extra_mcast == 0) &&
-			    (sc->sc_ec.ec_multicnt == 0)) {
-				CLR(ifp->if_flags, IFF_ALLMULTI);
-				error = ENETRESET;
+			    sc->sc_extra_mcast == 0) {
+				flags = 0;
+				ETHER_LOCK(ec);
+				ETHER_FIRST_MULTI(step, ec, enm);
+				while (enm != NULL) {
+					if (memcmp(enm->enm_addrlo,
+					    enm->enm_addrhi, ETHER_ADDR_LEN)) {
+						SET(flags, IFF_ALLMULTI);
+						break;
+					}
+					ETHER_NEXT_MULTI(step, enm);
+				}
+				ETHER_UNLOCK(ec);
+				if (!ISSET(flags, IFF_ALLMULTI)) {
+					CLR(ifp->if_flags, IFF_ALLMULTI);
+					error = ENETRESET;
+				}
 			}
 		}
 		break;
