@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.118 2019/11/25 17:03:50 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.119 2019/11/26 08:24:43 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6428,4 +6428,31 @@ sys/kern/subr_cprng.c				1.33
 
 	Use cprng_strong, not cprng_fast, for sysctl kern.arnd.
 	[riastradh, ticket #481]
+
+lib/libc/tls/Makefile.inc			1.3
+lib/libc/tls/tls.c				1.10-1.13
+libexec/ld.elf_so/Makefile			1.142
+libexec/ld.elf_so/tls.c				1.13,1.14
+usr.bin/ldd/Makefile.elf			1.6
+
+	PR/54074 and PR/54093: fix static TLS allocation properly aligned.
+	[nakayama, ticket #469]
+
+sys/dev/pci/if_age.c				1.63
+
+	Fix multicast handling.
+	[msaitoh, ticket #482]
+
+sys/dev/pci/if_age.c				1.64
+sys/dev/pci/if_alc.c				1.44
+sys/dev/pci/if_ale.c				1.35,1.36
+sys/dev/pci/if_cas.c				1.36
+
+	Fix a bug that IFF_ALLMULTI is almost always set.
+	[msaitoh, ticket #483]
+
+sys/dev/hyperv/if_hvn.c				1.11
+
+	hvn(4): Fix incorrect ident when waiting for NVS command response.
+	[nonaka, ticket #484]
 
