@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.74 2019/11/26 10:24:17 gson Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.75 2019/11/26 10:34:16 gson Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.74 2019/11/26 10:24:17 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.75 2019/11/26 10:34:16 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -954,7 +954,7 @@ urtwn_write_region_1(struct urtwn_softc *sc, uint16_t addr, uint8_t *buf,
 	USETW(req.wLength, len);
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(DBG_REG, "error=%jd: addr=0x%jx, len=%jd",
+		DPRINTFN(DBG_REG, "error=%jd: addr=%#jx, len=%jd",
 		    error, addr, len, 0);
 	}
 	return error;
@@ -965,7 +965,7 @@ urtwn_write_1(struct urtwn_softc *sc, uint16_t addr, uint8_t val)
 {
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
-	DPRINTFN(DBG_REG, "addr=0x%jx, val=0x%jx", addr, val, 0, 0);
+	DPRINTFN(DBG_REG, "addr=%#jx, val=%#jx", addr, val, 0, 0);
 
 	urtwn_write_region_1(sc, addr, &val, 1);
 }
@@ -976,7 +976,7 @@ urtwn_write_2(struct urtwn_softc *sc, uint16_t addr, uint16_t val)
 	uint8_t buf[2];
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
-	DPRINTFN(DBG_REG, "addr=0x%jx, val=0x%jx", addr, val, 0, 0);
+	DPRINTFN(DBG_REG, "addr=%#jx, val=%#jx", addr, val, 0, 0);
 
 	buf[0] = (uint8_t)val;
 	buf[1] = (uint8_t)(val >> 8);
@@ -989,7 +989,7 @@ urtwn_write_4(struct urtwn_softc *sc, uint16_t addr, uint32_t val)
 	uint8_t buf[4];
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
-	DPRINTFN(DBG_REG, "addr=0x%jx, val=0x%jx", addr, val, 0, 0);
+	DPRINTFN(DBG_REG, "addr=%#jx, val=%#jx", addr, val, 0, 0);
 
 	buf[0] = (uint8_t)val;
 	buf[1] = (uint8_t)(val >> 8);
@@ -1003,7 +1003,7 @@ urtwn_write_region(struct urtwn_softc *sc, uint16_t addr, uint8_t *buf, int len)
 {
 
 	URTWNHIST_FUNC();
-	URTWNHIST_CALLARGS("addr=0x%jx, len=0x%jx", addr, len, 0, 0);
+	URTWNHIST_CALLARGS("addr=%#jx, len=%#jx", addr, len, 0, 0);
 
 	return urtwn_write_region_1(sc, addr, buf, len);
 }
@@ -1024,7 +1024,7 @@ urtwn_read_region_1(struct urtwn_softc *sc, uint16_t addr, uint8_t *buf,
 	USETW(req.wLength, len);
 	error = usbd_do_request(sc->sc_udev, &req, buf);
 	if (error != USBD_NORMAL_COMPLETION) {
-		DPRINTFN(DBG_REG, "error=%jd: addr=0x%jx, len=%jd",
+		DPRINTFN(DBG_REG, "error=%jd: addr=%#jx, len=%jd",
 		    error, addr, len, 0);
 	}
 	return error;
@@ -1040,7 +1040,7 @@ urtwn_read_1(struct urtwn_softc *sc, uint16_t addr)
 	if (urtwn_read_region_1(sc, addr, &val, 1) != USBD_NORMAL_COMPLETION)
 		return 0xff;
 
-	DPRINTFN(DBG_REG, "addr=0x%jx, val=0x%jx", addr, val, 0, 0);
+	DPRINTFN(DBG_REG, "addr=%#jx, val=%#jx", addr, val, 0, 0);
 	return val;
 }
 
@@ -1056,7 +1056,7 @@ urtwn_read_2(struct urtwn_softc *sc, uint16_t addr)
 		return 0xffff;
 
 	val = LE_READ_2(&buf[0]);
-	DPRINTFN(DBG_REG, "addr=0x%jx, val=0x%jx", addr, val, 0, 0);
+	DPRINTFN(DBG_REG, "addr=%#jx, val=%#jx", addr, val, 0, 0);
 	return val;
 }
 
@@ -1072,7 +1072,7 @@ urtwn_read_4(struct urtwn_softc *sc, uint16_t addr)
 		return 0xffffffff;
 
 	val = LE_READ_4(&buf[0]);
-	DPRINTFN(DBG_REG, "addr=0x%jx, val=0x%jx", addr, val, 0, 0);
+	DPRINTFN(DBG_REG, "addr=%#jx, val=%#jx", addr, val, 0, 0);
 	return val;
 }
 
@@ -1452,7 +1452,7 @@ urtwn_read_rom(struct urtwn_softc *sc)
 	sc->regulatory = MS(rom->rf_opt1, R92C_ROM_RF1_REGULATORY);
 
 	DPRINTFN(DBG_INIT,
-	    "PA setting=0x%jx, board=0x%jx, regulatory=%jd",
+	    "PA setting=%#jx, board=%#jx, regulatory=%jd",
 	    sc->pa_setting, sc->board_type, sc->regulatory, 0);
 
 	IEEE80211_ADDR_COPY(ic->ic_myaddr, rom->macaddr);
@@ -1610,8 +1610,8 @@ urtwn_ra_init(struct urtwn_softc *sc)
 	} else {
 		mode = R92C_RAID_11BG;
 	}
-	DPRINTFN(DBG_INIT, "mode=0x%jx", mode, 0, 0, 0);
-	DPRINTFN(DBG_INIT, "rates=0x%jx, basicrates=0x%jx, "
+	DPRINTFN(DBG_INIT, "mode=%#jx", mode, 0, 0, 0);
+	DPRINTFN(DBG_INIT, "rates=%#jx, basicrates=%#jx, "
 	    "maxrate=%jx, maxbasicrate=%jx",
 	    rates, basicrates, maxrate, maxbasicrate);
 
@@ -3571,7 +3571,7 @@ urtwn_r92c_dma_init(struct urtwn_softc *sc)
 	/* Get Tx queues to USB endpoints mapping. */
 	hashq = hasnq = haslq = 0;
 	reg = urtwn_read_2(sc, R92C_USB_EP + 1);
-	DPRINTFN(DBG_INIT, "USB endpoints mapping 0x%jx", reg, 0, 0, 0);
+	DPRINTFN(DBG_INIT, "USB endpoints mapping %#jx", reg, 0, 0, 0);
 	if (MS(reg, R92C_USB_EP_HQ) != 0)
 		hashq = 1;
 	if (MS(reg, R92C_USB_EP_NQ) != 0)
