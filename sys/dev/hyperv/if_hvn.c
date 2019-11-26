@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.10 2019/11/25 08:53:39 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.11 2019/11/26 01:46:31 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.10 2019/11/25 08:53:39 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.11 2019/11/26 01:46:31 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1091,7 +1091,8 @@ hvn_nvs_cmd(struct hvn_softc *sc, void *cmd, size_t cmdsize, uint64_t tid,
 			hvn_nvs_intr(sc);
 			splx(s);
 		} else
-			tsleep(sc, PRIBIO | PCATCH, "nvscmd", mstohz(1));
+			tsleep(sc->sc_nvsrsp, PRIBIO | PCATCH, "nvscmd",
+			    mstohz(1));
 	} while (--timo > 0 && sc->sc_nvsdone != 1);
 
 	if (timo == 0 && sc->sc_nvsdone != 1) {
