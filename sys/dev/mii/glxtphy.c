@@ -1,4 +1,4 @@
-/*	$NetBSD: glxtphy.c,v 1.29 2019/03/25 07:34:13 msaitoh Exp $	*/
+/*	$NetBSD: glxtphy.c,v 1.30 2019/11/26 08:21:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.29 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: glxtphy.c,v 1.30 2019/11/26 08:21:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -223,7 +223,7 @@ glxtphy_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The media status bits are only valid of autonegotiation
+		 * The media status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((qsr & QSR_ACOMP) == 0) {
