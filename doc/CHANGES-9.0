@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.120 2019/11/26 08:57:49 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.121 2019/11/26 18:31:55 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6461,4 +6461,9 @@ share/tmac/doc2html				1.68
 	PR toolchain/54715: Remove duplicate (incorrect) version of
 	the .Lk macro.
 	[kre, ticket #485]
+
+sys/dev/pci/if_mcx.c				1.7
+
+	mcx(4): fix IFF_ALLMULTI handling.
+	[jmcneill, ticket #486]
 
