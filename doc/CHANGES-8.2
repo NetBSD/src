@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.73 2019/11/26 08:26:19 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.74 2019/11/26 09:00:55 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1716,4 +1716,10 @@ sys/dev/hyperv/if_hvn.c				1.11
 
 	hvn(4): Fix incorrect ident when waiting for NVS command response.
 	[nonaka, ticket #1460]
+
+share/tmac/doc2html				1.68
+
+	PR toolchain/54715: Remove duplicate (incorrect) version of
+	the .Lk macro.
+	[kre, ticket #1461]
 
