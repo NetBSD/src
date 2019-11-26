@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.42 2019/11/26 08:37:05 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,11 +30,11 @@
  */
 
 /*
- * Micrel 8841/8842 10/100 ethernet driver
+ * Micrel 8841/8842 10/100 PCI ethernet driver
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.42 2019/11/26 08:37:05 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $")
 #include <net/if_media.h>
 #include <net/if_dl.h>
 #include <net/if_ether.h>
+#include <dev/mii/mii.h>
+#include <dev/mii/miivar.h>
 #include <net/bpf.h>
 
 #include <dev/pci/pcivar.h>
@@ -68,9 +70,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $")
 #define CSR_WRITE_4(sc, off, val) \
 	    bus_space_write_4(sc->sc_st, sc->sc_sh, off, val)
 #define CSR_READ_2(sc, off) \
-	    bus_space_read_2(sc->sc_st, sc->sc_sh, off)
+	    bus_space_read_2((sc)->sc_st, (sc)->sc_sh, (off))
 #define CSR_WRITE_2(sc, off, val) \
-	    bus_space_write_2(sc->sc_st, sc->sc_sh, off, val)
+	    bus_space_write_2((sc)->sc_st, (sc)->sc_sh, (off), (val))
 
 #define MDTXC	0x000	/* DMA transmit control */
 #define MDRXC	0x004	/* DMA receive control */
@@ -86,8 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $")
 #define MARM	0x202	/* MAC address middle */
 #define MARH	0x204	/* MAC address high */
 #define GRR	0x216	/* global reset */
-#define CIDR	0x400	/* chip ID and enable */
-#define CGCR	0x40a	/* chip global control */
+#define SIDER	0x400	/* switch ID and function enable */
 #define IACR	0x4a0	/* indirect access control */
 #define IADR1	0x4a2	/* indirect access data 66:63 */
 #define IADR2	0x4a4	/* indirect access data 47:32 */
@@ -98,24 +99,27 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $")
 #define P1SR	0x514	/* port 1 status */
 #define P2CR4	0x532	/* port 2 control 4 */
 #define P2SR	0x534	/* port 2 status */
-#define PxCR_STARTNEG	(1U << 9)	/* restart auto negotiation */
-#define PxCR_AUTOEN	(1U << 7)	/* auto negotiation enable */
-#define PxCR_SPD100	(1U << 6)	/* force speed 100 */
-#define PxCR_USEFDX	(1U << 5)	/* force full duplex */
-#define PxCR_USEFC	(1U << 4)	/* advertise pause flow control */
-#define PxSR_ACOMP	(1U << 6)	/* auto negotiation completed */
-#define PxSR_SPD100	(1U << 10)	/* speed is 100Mbps */
-#define PxSR_FDX	(1U << 9)	/* full duplex */
-#define PxSR_LINKUP	(1U << 5)	/* link is good */
-#define PxSR_RXFLOW	(1U << 12)	/* receive flow control active */
-#define PxSR_TXFLOW	(1U << 11)	/* transmit flow control active */
+#define  PxCR_STARTNEG	(1U<<9)		/* restart auto negotiation */
+#define  PxCR_AUTOEN	(1U<<7)		/* auto negotiation enable */
+#define  PxCR_SPD100	(1U<<6)		/* force speed 100 */
+#define  PxCR_USEFDX	(1U<<5)		/* force full duplex */
+#define  PxCR_USEFC	(1U<<4)		/* advertise pause flow control */
+#define  PxSR_ACOMP	(1U<<6)		/* auto negotiation completed */
+#define  PxSR_SPD100	(1U<<10)	/* speed is 100Mbps */
+#define  PxSR_FDX	(1U<<9)		/* full duplex */
+#define  PxSR_LINKUP	(1U<<5)		/* link is good */
+#define  PxSR_RXFLOW	(1U<<12)	/* receive flow control active */
+#define  PxSR_TXFLOW	(1U<<11)	/* transmit flow control active */
+#define P1VIDCR	0x504	/* port 1 vtag */
+#define P2VIDCR	0x524	/* port 2 vtag */
+#define P3VIDCR	0x544	/* 8842 host vtag */
 
 #define TXC_BS_MSK	0x3f000000	/* burst size */
 #define TXC_BS_SFT	(24)		/* 1,2,4,8,16,32 or 0 for unlimited */
 #define TXC_UCG		(1U<<18)	/* generate UDP checksum */
 #define TXC_TCG		(1U<<17)	/* generate TCP checksum */
 #define TXC_ICG		(1U<<16)	/* generate IP checksum */
-#define TXC_FCE		(1U<<9)		/* enable flowcontrol */
+#define TXC_FCE		(1U<<9)		/* generate PAUSE to moderate Rx lvl */
 #define TXC_EP		(1U<<2)		/* enable automatic padding */
 #define TXC_AC		(1U<<1)		/* add CRC to frame */
 #define TXC_TEN		(1)		/* enable DMA to run */
@@ -126,7 +130,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.41 2019/11/07 22:00:37 nisimura Exp $")
 #define RXC_UCC		(1U<<18)	/* run UDP checksum */
 #define RXC_TCC		(1U<<17)	/* run TDP checksum */
 #define RXC_ICC		(1U<<16)	/* run IP checksum */
-#define RXC_FCE		(1U<<9)		/* enable flowcontrol */
+#define RXC_FCE		(1U<<9)		/* accept PAUSE to throttle Tx */
 #define RXC_RB		(1U<<6)		/* receive broadcast frame */
 #define RXC_RM		(1U<<5)		/* receive multicast frame */
 #define RXC_RU		(1U<<4)		/* receive unicast frame */
@@ -218,14 +222,17 @@ struct kse_softc {
 	device_t sc_dev;		/* generic device information */
 	bus_space_tag_t sc_st;		/* bus space tag */
 	bus_space_handle_t sc_sh;	/* bus space handle */
+	bus_size_t sc_memsize;		/* csr map size */
 	bus_dma_tag_t sc_dmat;		/* bus DMA tag */
+	pci_chipset_tag_t sc_pc;	/* PCI chipset tag */
 	struct ethercom sc_ethercom;	/* Ethernet common data */
 	void *sc_ih;			/* interrupt cookie */
 
-	struct ifmedia sc_media;	/* ifmedia information */
-	int sc_linkstatus;		/* last P1SR register value */
+	struct mii_data sc_mii;		/* mii 8841 */
+	struct ifmedia sc_media;	/* ifmedia 8842 */
+	int sc_flowflags;		/* 802.3x PAUSE flow control */
 
-	callout_t  sc_callout;		/* MII tick callout */
+	callout_t  sc_tick_ch;		/* MII tick callout */
 	callout_t  sc_stat_ch;		/* statistics counter callout */
 
 	bus_dmamap_t sc_cddmamap;	/* control data DMA map */
@@ -329,10 +336,13 @@ static int kse_intr(void *);
 static void rxintr(struct kse_softc *);
 static void txreap(struct kse_softc *);
 static void lnkchg(struct kse_softc *);
-static int ksephy_change(struct ifnet *);
-static void ksephy_status(struct ifnet *, struct ifmediareq *);
-static void nopifm_status(struct ifnet *, struct ifmediareq *);
+static int kse_ifmedia_upd(struct ifnet *);
+static void kse_ifmedia_sts(struct ifnet *, struct ifmediareq *);
+static void nopifmedia_sts(struct ifnet *, struct ifmediareq *);
 static void phy_tick(void *);
+int kse_mii_readreg(device_t, int, int, uint16_t *);
+int kse_mii_writereg(device_t, int, int, uint16_t);
+void kse_mii_statchg(struct ifnet *);
 #ifdef KSE_EVENT_COUNTERS
 static void stat_tick(void *);
 static void zerostats(struct kse_softc *);
@@ -360,90 +370,77 @@ kse_attach(device_t parent, device_t self, void *aux)
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
 	const char *intrstr;
-	struct ifnet *ifp;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mii_data * const mii = &sc->sc_mii;
 	struct ifmedia *ifm;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	bus_dma_segment_t seg;
 	int i, error, nseg;
-	pcireg_t pmode;
-	int pmreg;
 	char intrbuf[PCI_INTRSTR_LEN];
+
+	aprint_normal(": Micrel KSZ%04x Ethernet (rev. 0x%02x)\n",
+	    PCI_PRODUCT(pa->pa_id), PCI_REVISION(pa->pa_class));
 
 	if (pci_mapreg_map(pa, 0x10,
 	    PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_32BIT,
-	    0, &sc->sc_st, &sc->sc_sh, NULL, NULL) != 0) {
-		printf(": unable to map device registers\n");
+	    0, &sc->sc_st, &sc->sc_sh, NULL, &sc->sc_memsize) != 0) {
+		aprint_error_dev(self, "unable to map device registers\n");
 		return;
 	}
-
-	sc->sc_dev = self;
-	sc->sc_dmat = pa->pa_dmat;
 
 	/* Make sure bus mastering is enabled. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
 	    pci_conf_read(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG) |
 	    PCI_COMMAND_MASTER_ENABLE);
 
-	/* Get it out of power save mode, if needed. */
-	if (pci_get_capability(pc, pa->pa_tag, PCI_CAP_PWRMGMT, &pmreg, 0)) {
-		pmode = pci_conf_read(pc, pa->pa_tag, pmreg + PCI_PMCSR) &
-		    PCI_PMCSR_STATE_MASK;
-		if (pmode == PCI_PMCSR_STATE_D3) {
-			/*
-			 * The card has lost all configuration data in
-			 * this state, so punt.
-			 */
-			printf("%s: unable to wake from power state D3\n",
-			    device_xname(sc->sc_dev));
-			return;
-		}
-		if (pmode != PCI_PMCSR_STATE_D0) {
-			printf("%s: waking up from power date D%d\n",
-			    device_xname(sc->sc_dev), pmode);
-			pci_conf_write(pc, pa->pa_tag, pmreg + PCI_PMCSR,
-			    PCI_PMCSR_STATE_D0);
-		}
+	/* Power up chip if necessary. */
+	if ((error = pci_activate(pc, pa->pa_tag, self, NULL))
+	    && error != EOPNOTSUPP) {
+		aprint_error_dev(self, "cannot activate %d\n", error);
+		return;
 	}
 
-	sc->sc_chip = PCI_PRODUCT(pa->pa_id);
-	printf(": Micrel KSZ%04x Ethernet (rev. 0x%02x)\n",
-	    sc->sc_chip, PCI_REVISION(pa->pa_class));
-
-	/*
-	 * Read the Ethernet address from the EEPROM.
-	 */
-	i = CSR_READ_2(sc, MARL);
-	enaddr[5] = i; enaddr[4] = i >> 8;
-	i = CSR_READ_2(sc, MARM);
-	enaddr[3] = i; enaddr[2] = i >> 8;
-	i = CSR_READ_2(sc, MARH);
-	enaddr[1] = i; enaddr[0] = i >> 8;
-	printf("%s: Ethernet address %s\n",
-		device_xname(sc->sc_dev), ether_sprintf(enaddr));
-
-	/*
-	 * Enable chip function.
-	 */
-	CSR_WRITE_2(sc, CIDR, 1);
-
-	/*
-	 * Map and establish our interrupt.
-	 */
+	/* Map and establish our interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-		aprint_error_dev(sc->sc_dev, "unable to map interrupt\n");
+		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
 	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, kse_intr, sc,
 	    device_xname(self));
 	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "unable to establish interrupt");
+		aprint_error_dev(self, "unable to establish interrupt");
 		if (intrstr != NULL)
 			aprint_error(" at %s", intrstr);
 		aprint_error("\n");
 		return;
 	}
-	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
+	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
+
+	sc->sc_dev = self;
+	sc->sc_dmat = pa->pa_dmat;
+	sc->sc_pc = pa->pa_pc;
+	sc->sc_chip = PCI_PRODUCT(pa->pa_id);
+
+	/*
+	 * Read the Ethernet address from the EEPROM.
+	 */
+	i = CSR_READ_2(sc, MARL);
+	enaddr[5] = i;
+	enaddr[4] = i >> 8;
+	i = CSR_READ_2(sc, MARM);
+	enaddr[3] = i;
+	enaddr[2] = i >> 8;
+	i = CSR_READ_2(sc, MARH);
+	enaddr[1] = i;
+	enaddr[0] = i >> 8;
+	aprint_normal_dev(self,
+	    "Ethernet address %s\n", ether_sprintf(enaddr));
+
+	/*
+	 * Enable chip function.
+	 */
+	CSR_WRITE_2(sc, SIDER, 1);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -452,7 +449,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	error = bus_dmamem_alloc(sc->sc_dmat,
 	    sizeof(struct kse_control_data), PAGE_SIZE, 0, &seg, 1, &nseg, 0);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(self,
 		    "unable to allocate control data, error = %d\n", error);
 		goto fail_0;
 	}
@@ -460,7 +457,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct kse_control_data), (void **)&sc->sc_control_data,
 	    BUS_DMA_COHERENT);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(self,
 		    "unable to map control data, error = %d\n", error);
 		goto fail_1;
 	}
@@ -468,7 +465,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	    sizeof(struct kse_control_data), 1,
 	    sizeof(struct kse_control_data), 0, 0, &sc->sc_cddmamap);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(self,
 		    "unable to create control data DMA map, "
 		    "error = %d\n", error);
 		goto fail_2;
@@ -476,7 +473,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	error = bus_dmamap_load(sc->sc_dmat, sc->sc_cddmamap,
 	    sc->sc_control_data, sizeof(struct kse_control_data), NULL, 0);
 	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
+		aprint_error_dev(self,
 		    "unable to load control data DMA map, error = %d\n",
 		    error);
 		goto fail_3;
@@ -485,7 +482,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    KSE_NTXSEGS, MCLBYTES, 0, 0,
 		    &sc->sc_txsoft[i].txs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(self,
 			    "unable to create tx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_4;
@@ -494,7 +491,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	for (i = 0; i < KSE_NRXDESC; i++) {
 		if ((error = bus_dmamap_create(sc->sc_dmat, MCLBYTES,
 		    1, MCLBYTES, 0, 0, &sc->sc_rxsoft[i].rxs_dmamap)) != 0) {
-			aprint_error_dev(sc->sc_dev,
+			aprint_error_dev(self,
 			    "unable to create rx DMA map %d, error = %d\n",
 			    i, error);
 			goto fail_5;
@@ -502,40 +499,53 @@ kse_attach(device_t parent, device_t self, void *aux)
 		sc->sc_rxsoft[i].rxs_mbuf = NULL;
 	}
 
-	callout_init(&sc->sc_callout, 0);
+	callout_init(&sc->sc_tick_ch, 0);
 	callout_init(&sc->sc_stat_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, phy_tick, sc);
+#ifdef KSE_EVENT_COUNTERS
+	callout_setfunc(&sc->sc_stat_ch, stat_tick, sc);
+#endif
+
+	mii->mii_ifp = ifp;
+	mii->mii_readreg = kse_mii_readreg;
+	mii->mii_writereg = kse_mii_writereg;
+	mii->mii_statchg = kse_mii_statchg;
 
 	/* Initialize ifmedia structures. */
-	ifm = &sc->sc_media;
-	sc->sc_ethercom.ec_ifmedia = ifm;
-	sc->sc_linkstatus = 0;
+	sc->sc_flowflags = 0;
 	if (sc->sc_chip == 0x8841) {
-		ifmedia_init(ifm, 0, ksephy_change, ksephy_status);
-		ifmedia_add(ifm, IFM_ETHER | IFM_10_T, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER | IFM_10_T | IFM_FDX, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
-		ifmedia_add(ifm, IFM_ETHER | IFM_AUTO, 0, NULL);
-		ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
+		/* use port 1 builtin PHY as index 1 device */
+		sc->sc_ethercom.ec_mii = mii;
+		ifm = &mii->mii_media;
+		ifmedia_init(ifm, 0, kse_ifmedia_upd, kse_ifmedia_sts);
+		mii_attach(sc->sc_dev, mii, 0xffffffff, 1 /* PHY1 */,
+		    MII_OFFSET_ANY, MIIF_DOPAUSE);
+		if (LIST_FIRST(&mii->mii_phys) == NULL) {
+			ifmedia_add(ifm, IFM_ETHER | IFM_NONE, 0, NULL);
+			ifmedia_set(ifm, IFM_ETHER | IFM_NONE);
+		} else
+			ifmedia_set(ifm, IFM_ETHER | IFM_AUTO);
 	} else {
 		/*
 		 * pretend 100FDX w/ no alternative media selection.
-		 * 8842 MAC is tied with a builtin 3 port switch.
-		 * It can do rate control over either of tx / rx direction
-		 * respectively, tough, this driver leaves the rate unlimited
-		 * intending 100Mbps maximum.
-		 * 2 ports behave in AN mode and this driver provides no mean
-		 * to see the exact details.
+		 * 8842 MAC is tied with a builtin 3 port switch. It can do
+		 * 4 degree priotised rate control over either of tx/rx
+		 * direction for any of ports, respectively. Tough, this
+		 * driver leaves the rate unlimited intending 100Mbps maximum.
+		 * 2 external ports behave in AN mode and this driver provides
+		 * no mean to manipulate and see their operational details.
 		 */
-		ifmedia_init(ifm, 0, NULL, nopifm_status);
+		sc->sc_ethercom.ec_ifmedia = ifm = &sc->sc_media;
+		ifmedia_init(ifm, 0, NULL, nopifmedia_sts);
 		ifmedia_add(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX, 0, NULL);
 		ifmedia_set(ifm, IFM_ETHER | IFM_100_TX | IFM_FDX);
+
+		aprint_normal_dev(self,
+		    "10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n");
 	}
+	ifm->ifm_media = ifm->ifm_cur->ifm_media; /* as if user has requested */
 
-	printf("%s: 10baseT, 10baseT-FDX, 100baseTX, 100baseTX-FDX, auto\n",
-	    device_xname(sc->sc_dev));
 
-	ifp = &sc->sc_ethercom.ec_if;
 	strlcpy(ifp->if_xname, device_xname(sc->sc_dev), IFNAMSIZ);
 	ifp->if_softc = sc;
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
@@ -547,11 +557,11 @@ kse_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	/*
-	 * capable of 802.1Q VLAN-sized frames,
+	 * capable of 802.1Q VLAN-sized frames and hw assisted tagging.
 	 * can do IPv4, TCPv4, and UDPv4 checksums in hardware.
 	 */
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_MTU;
-	ifp->if_capabilities |=
+	sc->sc_ethercom.ec_capabilities = ETHERCAP_VLAN_MTU;
+	ifp->if_capabilities =
 	    IFCAP_CSUM_IPv4_Tx | IFCAP_CSUM_IPv4_Rx |
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
@@ -658,6 +668,14 @@ kse_attach(device_t parent, device_t self, void *aux)
  fail_1:
 	bus_dmamem_free(sc->sc_dmat, &seg, nseg);
  fail_0:
+	if (sc->sc_ih != NULL) {
+		pci_intr_disestablish(pc, sc->sc_ih);
+		sc->sc_ih = NULL;
+	}
+	if (sc->sc_memsize) {
+		bus_space_unmap(sc->sc_st, sc->sc_sh, sc->sc_memsize);
+		sc->sc_memsize = 0;
+	}
 	return;
 }
 
@@ -665,11 +683,30 @@ static int
 kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct kse_softc *sc = ifp->if_softc;
+	struct ifreq *ifr = (struct ifreq *)data;
+	struct ifmedia *ifm;
 	int s, error;
 
 	s = splnet();
 
 	switch (cmd) {
+	case SIOCSIFMEDIA:
+		/* Flow control requires full-duplex mode. */
+		if (IFM_SUBTYPE(ifr->ifr_media) == IFM_AUTO ||
+		    (ifr->ifr_media & IFM_FDX) == 0)
+			ifr->ifr_media &= ~IFM_ETH_FMASK;
+		if (IFM_SUBTYPE(ifr->ifr_media) != IFM_AUTO) {
+			if ((ifr->ifr_media & IFM_ETH_FMASK) == IFM_FLOW) {
+				/* We can do both TXPAUSE and RXPAUSE. */
+				ifr->ifr_media |=
+				    IFM_ETH_TXPAUSE | IFM_ETH_RXPAUSE;
+			}
+			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
+		}
+		ifm = (sc->sc_chip == 0x8841)
+		    ? &sc->sc_mii.mii_media : &sc->sc_media;
+		error = ifmedia_ioctl(ifp, ifr, ifm, cmd);
+		break;
 	default:
 		if ((error = ether_ioctl(ifp, cmd, data)) != ENETRESET)
 			break;
@@ -689,8 +726,6 @@ kse_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	}
-
-	kse_start(ifp);
 
 	splx(s);
 	return error;
@@ -737,9 +772,10 @@ kse_init(struct ifnet *ifp)
 	for (i = 0; i < KSE_NRXDESC; i++) {
 		if (sc->sc_rxsoft[i].rxs_mbuf == NULL) {
 			if ((error = add_rxbuf(sc, i)) != 0) {
-				printf("%s: unable to allocate or map rx "
+				aprint_error_dev(sc->sc_dev,
+				    "unable to allocate or map rx "
 				    "buffer %d, error = %d\n",
-				     device_xname(sc->sc_dev), i, error);
+				    i, error);
 				rxdrain(sc);
 				goto out;
 			}
@@ -753,8 +789,8 @@ kse_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, TDLB, KSE_CDTXADDR(sc, 0));
 	CSR_WRITE_4(sc, RDLB, KSE_CDRXADDR(sc, 0));
 
-	sc->sc_txc = TXC_TEN | TXC_EP | TXC_AC | TXC_FCE;
-	sc->sc_rxc = RXC_REN | RXC_RU | RXC_FCE;
+	sc->sc_txc = TXC_TEN | TXC_EP | TXC_AC;
+	sc->sc_rxc = RXC_REN | RXC_RU;
 	if (ifp->if_flags & IFF_PROMISC)
 		sc->sc_rxc |= RXC_RA;
 	if (ifp->if_flags & IFF_BROADCAST)
@@ -787,12 +823,17 @@ kse_init(struct ifnet *ifp)
 	sc->sc_txc |= (kse_burstsize << TXC_BS_SFT);
 	sc->sc_rxc |= (kse_burstsize << RXC_BS_SFT);
 
+	if (sc->sc_chip == 0x8842) {
+		sc->sc_txc |= TXC_FCE;
+		sc->sc_rxc |= RXC_FCE;
+	}
+
 	/* build multicast hash filter if necessary */
 	kse_set_filter(sc);
 
 	/* set current media */
 	if (sc->sc_chip == 0x8841)
-		(void)ksephy_change(ifp);
+		(void)kse_ifmedia_upd(ifp);
 
 	/* enable transmitter and receiver */
 	CSR_WRITE_4(sc, MDTXC, sc->sc_txc);
@@ -811,19 +852,19 @@ kse_init(struct ifnet *ifp)
 
 	if (sc->sc_chip == 0x8841) {
 		/* start one second timer */
-		callout_reset(&sc->sc_callout, hz, phy_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz);
 	}
 #ifdef KSE_EVENT_COUNTERS
-	/* start statistics gather 1 minute timer */
+	/* start statistics gather 1 minute timer. should be tunable */
 	zerostats(sc);
-	callout_reset(&sc->sc_stat_ch, hz * 60, stat_tick, sc);
+	callout_schedule(&sc->sc_stat_ch, hz * 60);
 #endif
 
  out:
 	if (error) {
 		ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 		ifp->if_timer = 0;
-		printf("%s: interface not running\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "interface not running\n");
 	}
 	return error;
 }
@@ -836,7 +877,7 @@ kse_stop(struct ifnet *ifp, int disable)
 	int i;
 
 	if (sc->sc_chip == 0x8841)
-		callout_stop(&sc->sc_callout);
+		callout_stop(&sc->sc_tick_ch);
 	callout_stop(&sc->sc_stat_ch);
 
 	sc->sc_txc &= ~TXC_TEN;
@@ -864,11 +905,13 @@ static void
 kse_reset(struct kse_softc *sc)
 {
 
+	/* software reset */
 	CSR_WRITE_2(sc, GRR, 1);
 	delay(1000); /* PDF does not mention the delay amount */
 	CSR_WRITE_2(sc, GRR, 0);
 
-	CSR_WRITE_2(sc, CIDR, 1);
+	/* enable switch function */
+	CSR_WRITE_2(sc, SIDER, 1);
 }
 
 static void
@@ -883,17 +926,16 @@ kse_watchdog(struct ifnet *ifp)
 	txreap(sc);
 
 	if (sc->sc_txfree != KSE_NTXDESC) {
-		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
-		    device_xname(sc->sc_dev), sc->sc_txfree, sc->sc_txsfree,
-		    sc->sc_txnext);
+		aprint_error_dev(sc->sc_dev,
+		    "device timeout (txfree %d txsfree %d txnext %d)\n",
+		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
 		ifp->if_oerrors++;
 
 		/* Reset the interface. */
 		kse_init(ifp);
 	}
 	else if (ifp->if_flags & IFF_DEBUG)
-		printf("%s: recovered from device timeout\n",
-		    device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "recovered from device timeout\n");
 
 	/* Try to get more packets going. */
 	kse_start(ifp);
@@ -937,9 +979,9 @@ kse_start(struct ifnet *ifp)
 		    BUS_DMA_WRITE | BUS_DMA_NOWAIT);
 		if (error) {
 			if (error == EFBIG) {
-				printf("%s: Tx packet consumes too many "
-				    "DMA segments, dropping...\n",
-				    device_xname(sc->sc_dev));
+				aprint_error_dev(sc->sc_dev,
+				    "Tx packet consumes too many "
+				    "DMA segments, dropping...\n");
 				    IFQ_DEQUEUE(&ifp->if_snd, m0);
 				    m_freem(m0);
 				    continue;
@@ -1113,8 +1155,8 @@ add_rxbuf(struct kse_softc *sc, int idx)
 	error = bus_dmamap_load(sc->sc_dmat, rxs->rxs_dmamap,
 	    m->m_ext.ext_buf, m->m_ext.ext_size, NULL, BUS_DMA_NOWAIT);
 	if (error) {
-		printf("%s: can't load rx DMA map %d, error = %d\n",
-		    device_xname(sc->sc_dev), idx, error);
+		aprint_error_dev(sc->sc_dev,
+		    "can't load rx DMA map %d, error = %d\n", idx, error);
 		panic("kse_add_rxbuf");
 	}
 
@@ -1158,7 +1200,7 @@ kse_intr(void *arg)
 	if (isr & INT_DMLCS)
 		lnkchg(sc);
 	if (isr & INT_DMRBUS)
-		printf("%s: Rx descriptor full\n", device_xname(sc->sc_dev));
+		aprint_error_dev(sc->sc_dev, "Rx descriptor full\n");
 
 	CSR_WRITE_4(sc, INTST, isr);
 	return 1;
@@ -1190,8 +1232,8 @@ rxintr(struct kse_softc *sc)
 			ifp->if_ierrors++;
 #define PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
-				printf("%s: receive error: %s\n",	\
-				    device_xname(sc->sc_dev), str)
+				aprint_error_dev(sc->sc_dev,		\
+				    "%s\n", str)
 			PRINTERR(R0_TL, "frame too long");
 			PRINTERR(R0_RF, "runt frame");
 			PRINTERR(R0_CE, "bad FCS");
@@ -1232,7 +1274,8 @@ rxintr(struct kse_softc *sc)
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 #ifdef KSEDIAGNOSTIC
 		if (kse_monitor_rxintr > 0) {
-			printf("m stat %x data %p len %d\n",
+			aprint_error_dev(sc->sc_dev,
+			    "m stat %x data %p len %d\n",
 			    rxstat, m->m_data, m->m_len);
 		}
 #endif
@@ -1283,27 +1326,26 @@ lnkchg(struct kse_softc *sc)
 {
 	struct ifmediareq ifmr;
 
-#if KSE_LINKDEBUG > 0
-printf("link change detected\n");
+#if KSE_LINKDEBUG == 1
+	uint16_t p1sr = CSR_READ_2(sc, P1SR);
+printf("link %s detected\n", (p1sr & PxSR_LINKUP) ? "up" : "down");
 #endif
-	ksephy_status(&sc->sc_ethercom.ec_if, &ifmr);
+	kse_ifmedia_sts(&sc->sc_ethercom.ec_if, &ifmr);
 }
 
 static int
-ksephy_change(struct ifnet *ifp)
+kse_ifmedia_upd(struct ifnet *ifp)
 {
 	struct kse_softc *sc = ifp->if_softc;
-	struct ifmedia *ifm = &sc->sc_media;
+	struct ifmedia *ifm = &sc->sc_mii.mii_media;
 	uint16_t p1cr4;
-#if KSE_LINKDEBUG > 0
-printf("ifm_media: %x\n", ifm->ifm_cur->ifm_media);
-#endif
+
 	p1cr4 = 0;
 	if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_AUTO) {
 		p1cr4 |= PxCR_STARTNEG;	/* restart AN */
 		p1cr4 |= PxCR_AUTOEN;	/* enable AN */
 		p1cr4 |= PxCR_USEFC;	/* advertise flow control pause */
-		p1cr4 |= 0xf;		/* advertise 100-FDX,100-HDX,10-FDX,10-HDX */
+		p1cr4 |= 0xf;		/* adv. 100FDX,100HDX,10FDX,10HDX */
 	} else {
 		if (IFM_SUBTYPE(ifm->ifm_cur->ifm_media) == IFM_100_TX)
 			p1cr4 |= PxCR_SPD100;
@@ -1311,81 +1353,139 @@ printf("ifm_media: %x\n", ifm->ifm_cur->ifm_media);
 			p1cr4 |= PxCR_USEFDX;
 	}
 	CSR_WRITE_2(sc, P1CR4, p1cr4);
-#if KSE_LINKDEBUG > 0
+#if KSE_LINKDEBUG == 1
 printf("P1CR4: %04x\n", p1cr4);
 #endif
 	return 0;
 }
 
 static void
-ksephy_status(struct ifnet *ifp, struct ifmediareq *ifmr)
+kse_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct kse_softc *sc = ifp->if_softc;
-	int media_status;
-	u_int media_active;
-	uint16_t p1cr4, p1sr;
+	struct mii_data *mii = &sc->sc_mii;
 
-	media_status = IFM_AVALID;
-	media_active = IFM_ETHER;
-
-	p1cr4 = CSR_READ_2(sc, P1CR4);
-	p1sr = CSR_READ_2(sc, P1SR);
-#if KSE_LINKDEBUG > 0
-printf("P1SR: %04x link %s\n", p1sr, (p1sr & PxSR_LINKUP) ? "up" : "down");
-#endif
-	sc->sc_linkstatus = p1sr;
-	if (p1sr & PxSR_LINKUP)
-		media_status |= IFM_ACTIVE;
-
-	if (p1cr4 & PxCR_AUTOEN) {
-		if ((p1sr & PxSR_ACOMP) == 0) {
-			media_active |= IFM_NONE;
-			goto out; /* Negotiation in progress */
-		}
-	}
-
-	media_active |= (p1sr & PxSR_SPD100) ? IFM_100_TX : IFM_10_T;
-	if (p1sr & PxSR_FDX)
-		media_active |= IFM_FDX;
-	if (p1sr & PxSR_RXFLOW)
-		media_active |= IFM_FLOW | IFM_ETH_RXPAUSE;
-	if (p1sr & PxSR_TXFLOW)
-		media_active |= IFM_FLOW | IFM_ETH_TXPAUSE;
-  out:
-	ifmr->ifm_active = media_active;
-	ifmr->ifm_status = media_status;
+	mii_pollstat(mii);
+	ifmr->ifm_status = mii->mii_media_status;
+	ifmr->ifm_active = (mii->mii_media_active & ~IFM_ETH_FMASK) |
+	    sc->sc_flowflags;
 }
 
 static void
-nopifm_status(struct ifnet *ifp, struct ifmediareq *ifmr)
+nopifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct kse_softc *sc = ifp->if_softc;
 	struct ifmedia *ifm = &sc->sc_media;
 
-#if KSE_LINKDEBUG > 1
+#if KSE_LINKDEBUG == 2
 printf("p1sr: %04x, p2sr: %04x\n", CSR_READ_2(sc, P1SR), CSR_READ_2(sc, P2SR));
 #endif
 
 	/* 8842 MAC pretends 100FDX all the time */
-	ifmr->ifm_active = ifm->ifm_cur->ifm_media;
 	ifmr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+	ifmr->ifm_active = ifm->ifm_cur->ifm_media |
+	    IFM_FLOW | IFM_ETH_RXPAUSE | IFM_ETH_TXPAUSE;
 }
 
 static void
 phy_tick(void *arg)
 {
 	struct kse_softc *sc = arg;
-	struct ifmediareq ifmr;
+	struct mii_data *mii = &sc->sc_mii;
 	int s;
-	uint16_t p1sr;
 
 	s = splnet();
-	p1sr = CSR_READ_2(sc, P1SR);
-	if (sc->sc_linkstatus != p1sr)
-		ksephy_status(&sc->sc_ethercom.ec_if, &ifmr);
+	mii_tick(mii);
 	splx(s);
 
-	callout_reset(&sc->sc_callout, hz, phy_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
+}
+
+static const uint16_t phy1csr[] = {
+	/* 0 BMCR */	0x4d0,
+	/* 1 BMSR */	0x4d2,
+	/* 2 PHYID1 */	0x4d6,	/* 0x0022 - PHY1HR */
+	/* 3 PHYID2 */	0x4d4,	/* 0x1430 - PHY1LR */
+	/* 4 ANAR */	0x4d8,
+	/* 5 ANLPAR */	0x4da,
+};
+
+int
+kse_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
+{
+	struct kse_softc *sc = device_private(self);
+
+	if (phy != 1 || reg >= __arraycount(phy1csr) || reg < 0)
+		return EINVAL;
+	*val = CSR_READ_2(sc, phy1csr[reg]);
+	return 0;
+}
+
+int
+kse_mii_writereg(device_t self, int phy, int reg, uint16_t val)
+{
+	struct kse_softc *sc = device_private(self);
+
+	if (phy != 1 || reg >= __arraycount(phy1csr) || reg < 0)
+		return EINVAL;
+	CSR_WRITE_2(sc, phy1csr[reg], val);
+	return 0;
+}
+
+void
+kse_mii_statchg(struct ifnet *ifp)
+{
+	struct kse_softc *sc = ifp->if_softc;
+	struct mii_data *mii = &sc->sc_mii;
+
+#if KSE_LINKDEBUG == 1
+	/* decode P1SR register value */
+	uint16_t p1sr = CSR_READ_2(sc, P1SR);
+	printf("P1SR %04x, spd%d", p1sr, (p1sr & PxSR_SPD100) ? 100 : 10);
+	if (p1sr & PxSR_FDX)
+		printf(",full-duplex");
+	if (p1sr & PxSR_RXFLOW)
+		printf(",rxpause");
+	if (p1sr & PxSR_TXFLOW)
+		printf(",txpause");
+	printf("\n");
+	/* show resolved mii(4) parameters to compare against above */
+	printf("MII spd%d",
+	    (int)(sc->sc_ethercom.ec_if.if_baudrate / IF_Mbps(1)));
+	if (mii->mii_media_active & IFM_FDX)
+		printf(",full-duplex");
+	if (mii->mii_media_active & IFM_FLOW) {
+		printf(",flowcontrol");
+		if (mii->mii_media_active & IFM_ETH_RXPAUSE)
+			printf(",rxpause");
+		if (mii->mii_media_active & IFM_ETH_TXPAUSE)
+			printf(",txpause");
+	}
+	printf("\n");
+#endif
+	/* Get flow control negotiation result. */
+	if (IFM_SUBTYPE(mii->mii_media.ifm_cur->ifm_media) == IFM_AUTO &&
+	    (mii->mii_media_active & IFM_ETH_FMASK) != sc->sc_flowflags)
+		sc->sc_flowflags = mii->mii_media_active & IFM_ETH_FMASK;
+
+	/* Adjust MAC PAUSE flow control. */
+	if ((mii->mii_media_active & IFM_FDX)
+	    && (sc->sc_flowflags & IFM_ETH_TXPAUSE))
+		sc->sc_txc |= TXC_FCE;
+	else
+		sc->sc_txc &= ~TXC_FCE;
+	if ((mii->mii_media_active & IFM_FDX)
+	    && (sc->sc_flowflags & IFM_ETH_RXPAUSE))
+		sc->sc_rxc |= RXC_FCE;
+	else
+		sc->sc_rxc &= ~RXC_FCE;
+	CSR_WRITE_4(sc, MDTXC, sc->sc_txc);
+	CSR_WRITE_4(sc, MDRXC, sc->sc_rxc);
+#if KSE_LINKDEBUG == 1
+	printf("%ctxfce, %crxfce\n",
+	    (sc->sc_txc & TXC_FCE) ? '+' : '-',
+	    (sc->sc_rxc & RXC_FCE) ? '+' : '-');
+#endif
 }
 
 #ifdef KSE_EVENT_COUNTERS
@@ -1419,7 +1519,7 @@ stat_tick(void *arg)
 		CSR_WRITE_2(sc, IACR, 0x1c00 + 0x100 + p * 3 + 1);
 		ee->pev[p][33].ev_count = CSR_READ_2(sc, IADR4); /* 33 */
 	}
-	callout_reset(&sc->sc_stat_ch, hz * 60, stat_tick, arg);
+	callout_schedule(&sc->sc_stat_ch, hz * 60);
 }
 
 static void
