@@ -1,4 +1,4 @@
-/*	$NetBSD: gphyter.c,v 1.34 2019/11/21 09:48:57 msaitoh Exp $	*/
+/*	$NetBSD: gphyter.c,v 1.35 2019/11/26 08:21:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.34 2019/11/21 09:48:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gphyter.c,v 1.35 2019/11/26 08:21:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,7 +255,7 @@ gphyter_status(struct mii_softc *sc)
 
 	if (bmcr & BMCR_AUTOEN) {
 		/*
-		 * The media status bits are only valid of autonegotiation
+		 * The media status bits are only valid if autonegotiation
 		 * has completed (or it's disabled).
 		 */
 		if ((bmsr & BMSR_ACOMP) == 0) {
