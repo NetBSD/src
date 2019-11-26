@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2615 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2616 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -53,8 +53,6 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	sup: removed, use ftp://ftp.astron.com/pub/sup [christos 20191015]
 	dhcpcd(8): Import dhcpcd-8.1.1 [roy 20191016]
 	evbarm: Add support for the NanoPi R1 and Duo2. [bad 20191016]
-	ipgphy(4): Add support for IC Plus IP1000* PHY. [msaitoh 20191017]
-	alc(4): Add support for Killer E2400 and E2500. [msaitoh 20191017]
 	bind: Import version 9.14.7. [christos 20191017]
 	libc: Changed the iconv(3) function signature to the POSIX variation
 		[kamil 20191024]
@@ -63,17 +61,10 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		[ozaki-r 20191028]
 	evbarm: Update TI AM335x SoC support to use FDT based configuration.
 		[jmcneill 20191028]
-	jmphy(4): Add support for JMicron JMP202 and JMP211 PHY.
-		[msaitoh 20191030]
-	smscphy(4): Add support for SMSC LAN87xx 10/100 Ethernet PHY.
-		[msaitoh 20191101]
 	evbarm: Update TI OMAP3 SoC support to use FDT based configuration.
 		[jmcneill 20191101]
 	amd64: Add support for kCSan - Kernel Concurrency Sanitizer.
 		[maxv 20191105]
-	micphy(4): Add support for Microchip KSZ80[0456]1, KSZ8721, KSZ9[01]31,
-		KS8731 and KSZ9477.
-		[msaitoh 20191107]
 	tmux(1): Imported 2.9a. [christos 20191112]
 	dhcpcd(8): Import 8.1.2. [roy 20191113]
 	amd64: Add support for kMSan - Kernel Memory Sanitizer.
