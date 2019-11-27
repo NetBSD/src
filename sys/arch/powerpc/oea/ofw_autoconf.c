@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.23 2018/11/21 17:54:42 scole Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.24 2019/11/27 21:07:32 joerg Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.23 2018/11/21 17:54:42 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.24 2019/11/27 21:07:32 joerg Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -137,10 +137,17 @@ canonicalize_bootpath(void)
 	 *   /pci/mac-io/ata-3@2000/disk@0:0/netbsd.new		(OF-3.x)
 	 */
 	strcpy(cbootpath, bootpath);
-	while ((node = OF_finddevice(cbootpath)) == -1) {
-		if ((p = strrchr(cbootpath, '/')) == NULL)
-			break;
-		*p = '\0';
+
+	if ((node = OF_finddevice("/options")) == -1 ||
+	    OF_getprop(node, "qemu_boot_hack", type, sizeof(type) - 1) == -1 ||
+	    type[0] != 'y') {
+		while ((node = OF_finddevice(cbootpath)) == -1) {
+			if ((p = strrchr(cbootpath, '/')) == NULL)
+				break;
+			*p = '\0';
+		}
+	} else {
+		node = -1;
 	}
 
 	printf("bootpath: %s\n", bootpath);
