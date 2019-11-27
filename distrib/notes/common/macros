@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.47 2019/11/27 23:53:01 uwe Exp $
+.\"	$NetBSD: macros,v 1.48 2019/11/27 23:57:41 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -309,6 +309,7 @@
 .\" XXX To should be unnecessary if we handle parseable/callable.
 .\"   .Tc			import the TOC
 .\"   .Ti depth page "item"	(internal) output an entry
+.ds toc-file INSTALL.\*[format].toc
 .if dTOC \{\
 .de mktoc
 .nr mktoc-level \\$1
@@ -348,10 +349,10 @@
 .de Tc
 .Bd -literal
 .ta (\n(.lu)R
-\.tm ...reading INSTALL.\*[format].toc
+.tm ...reading \*[toc-file]
 .       Pp
-.\" Use so-real here because otherwise we lose on objdirs
-\.so-real INSTALL.\*[format].toc
+.\" Use so-real here because toc-file is in objdir not .CURDIR
+.so-real \*[toc-file]
 .Ed
 ..
 .
