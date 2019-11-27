@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.49 2019/11/27 22:41:41 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.50 2019/11/27 23:19:13 uwe Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -13,12 +13,13 @@ MKTOCS?=yes
 M?=	${.CURDIR:T}
 COMMON=	${.CURDIR}/../common
 
-MAIN=	${COMMON}/main ${COMMON}/macros ${EXTRA}
+MAIN=	${COMMON}/main ${EXTRA}
 TARG=	INSTALL
 TARGS=	${TARG}.ps ${TARG}.txt ${TARG}.html ${TARG}.more
 TOCS=	${TARG}.PostScript.toc ${TARG}.ASCII.toc ${TARG}.HTML.toc \
 	${TARG}.more.toc
-SRCS=	${MAIN} whatis ${COMMON}/contents hardware xfer prep \
+SRCS=	${MAIN} ${COMMON}/macros \
+	whatis ${COMMON}/contents hardware xfer prep \
 	${.CURDIR}/install ${COMMON}/postinstall upgrade \
 	${COMMON}/legal.common ${COMMON}/netboot \
 	${COMMON}/sysinst \
