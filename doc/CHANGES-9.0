@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.122 2019/11/27 11:22:13 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.123 2019/11/27 13:40:18 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6491,3 +6491,22 @@ sys/dev/mii/ipgphy.c				1.7
 	Print dmesg correctly.
 	[msaitoh, ticket #490]
 
+distrib/notes/Makefile.inc			1.46
+distrib/notes/common/list-portmasters.pl	delete
+distrib/notes/common/macros			1.44
+distrib/notes/common/main			1.555-1.557 via patch
+distrib/notes/common/netboot			1.38
+distrib/notes/common/postinstall		1.86
+distrib/notes/common/sysinst			1.110
+distrib/notes/sparc/prep			1.28-1.29
+distrib/notes/sparc64/prep			1.16
+
+	- Remove list-portmasters.pl script.
+	- Quote long .Ss2 title to avoid troff's limitation.
+	- Simplify TOC handling and remove arg limit (from uwe).
+	- Use Lk with explicit anchor text in some places.
+	- Do not allow official release builds when we can not derive the
+	  proper date from the buildid.
+	- Add "Oxford comma".
+	- Improve heading a bit.
+	[martin, ticket #489]
