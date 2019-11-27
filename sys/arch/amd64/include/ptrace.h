@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.18 2019/11/27 09:08:14 rin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.19 2019/11/27 09:16:58 rin Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -47,6 +47,13 @@
 #define	PT_CLEARSTEP		(PT_FIRSTMACH + 8)
 #define	PT_GETXSTATE		(PT_FIRSTMACH + 9)
 #define	PT_SETXSTATE		(PT_FIRSTMACH + 10)
+#ifdef _KERNEL
+/*
+ * Only used internally for COMPAT_NETBSD32
+ */
+#define	PT_GETXMMREGS		(PT_FIRSTMACH + 11)
+#define	PT_SETXMMREGS		(PT_FIRSTMACH + 12)
+#endif
 
 /* We have machine-dependent process tracing needs. */
 #define	__HAVE_PTRACE_MACHDEP
@@ -85,10 +92,16 @@
  */
 #define	PTRACE_MACHDEP_REQUEST_CASES					\
 	case PT_GETXSTATE:						\
-	case PT_SETXSTATE:
+	case PT_SETXSTATE:						\
+	case PT_GETXMMREGS:						\
+	case PT_SETXMMREGS:
 
 int process_machdep_doxstate(struct lwp *, struct lwp *, struct uio *);
 int process_machdep_validfpu(struct proc *);
+
+#include <sys/module_hook.h>
+MODULE_HOOK(netbsd32_process_doxmmregs_hook, int,
+    (struct lwp *, struct lwp *, void *, bool));
 
 #endif /* _KERNEL */
 

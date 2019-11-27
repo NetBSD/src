@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.46 2019/11/27 09:08:14 rin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.47 2019/11/27 09:16:58 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.46 2019/11/27 09:08:14 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.47 2019/11/27 09:16:58 rin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -93,6 +93,8 @@ __KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.46 2019/11/27 09:08:14 rin Exp
 #include <machine/segments.h>
 #include <x86/dbregs.h>
 #include <x86/fpu.h>
+
+struct netbsd32_process_doxmmregs_hook_t netbsd32_process_doxmmregs_hook;
 
 static inline struct trapframe *process_frame(struct lwp *);
 
@@ -357,6 +359,16 @@ ptrace_machdep_dorequest(
 		uio.uio_vmspace = vm;
 		error = process_machdep_doxstate(l, lt, &uio);
 		uvmspace_free(vm);
+		return error;
+
+	case PT_SETXMMREGS:		/* only for COMPAT_NETBSD32 */
+		write = true;
+
+		/* FALLTHROUGH */
+	case PT_GETXMMREGS:		/* only for COMPAT_NETBSD32 */
+		/* write = false done above. */
+		MODULE_HOOK_CALL(netbsd32_process_doxmmregs_hook,
+		    (l, lt, addr, write), EINVAL, error);
 		return error;
 	}
 
