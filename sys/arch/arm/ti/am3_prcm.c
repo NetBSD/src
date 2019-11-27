@@ -1,4 +1,4 @@
-/* $NetBSD: am3_prcm.c,v 1.10 2019/11/04 09:37:51 jmcneill Exp $ */
+/* $NetBSD: am3_prcm.c,v 1.11 2019/11/27 23:02:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.10 2019/11/04 09:37:51 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: am3_prcm.c,v 1.11 2019/11/27 23:02:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -161,7 +161,7 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	AM3_PRCM_HWMOD_PER("gpio3", 0xb0, "PERIPH_CLK"),
 	AM3_PRCM_HWMOD_PER("gpio4", 0xb4, "PERIPH_CLK"),
 
-	AM3_PRCM_HWMOD_WKUP("timer0", 0x10, "FIXED_32K"),
+	AM3_PRCM_HWMOD_WKUP("timer1", 0x10, "FIXED_32K"),
 	AM3_PRCM_HWMOD_PER("timer2", 0x80, "FIXED_24MHZ"),
 	AM3_PRCM_HWMOD_PER("timer3", 0x84, "FIXED_24MHZ"),
 	AM3_PRCM_HWMOD_PER("timer4", 0x88, "FIXED_24MHZ"),
@@ -169,9 +169,9 @@ static struct ti_prcm_clk am3_prcm_clks[] = {
 	AM3_PRCM_HWMOD_PER("timer6", 0xf0, "FIXED_24MHZ"),
 	AM3_PRCM_HWMOD_PER("timer7", 0x7c, "FIXED_24MHZ"),
 
-	AM3_PRCM_HWMOD_PER("mmc0", 0x3c, "MMC_CLK"),
-	AM3_PRCM_HWMOD_PER("mmc1", 0xf4, "MMC_CLK"),
-	AM3_PRCM_HWMOD_PER("mmc2", 0xf8, "MMC_CLK"),
+	AM3_PRCM_HWMOD_PER("mmc1", 0x3c, "MMC_CLK"),
+	AM3_PRCM_HWMOD_PER("mmc2", 0xf4, "MMC_CLK"),
+	AM3_PRCM_HWMOD_PER("mmc3", 0xf8, "MMC_CLK"),
 
 	AM3_PRCM_HWMOD_PER("tpcc", 0xbc, "PERIPH_CLK"),
 	AM3_PRCM_HWMOD_PER("tptc0", 0x24, "PERIPH_CLK"),
