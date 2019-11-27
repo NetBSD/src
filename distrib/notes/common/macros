@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.45 2019/11/27 19:07:31 uwe Exp $
+.\"	$NetBSD: macros,v 1.46 2019/11/27 21:37:27 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -309,7 +309,7 @@
 .\" XXX To should be unnecessary if we handle parseable/callable.
 .\"   .Tc			import the TOC
 .\"   .Ti depth page "item"	(internal) output an entry
-.if dTOC \{
+.if dTOC \{\
 .rn Ss Ss-toc
 .de Ss
 .Ss-toc \\$@
