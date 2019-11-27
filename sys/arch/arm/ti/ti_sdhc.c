@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.4 2019/11/27 23:03:24 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.3 2019/10/29 22:19:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.4 2019/11/27 23:03:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,6 @@ ti_sdhc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_addr = addr;
 	sc->sc_bst = faa->faa_bst;
 
-#if notyet
 	/* XXX use fdtbus_dma API */
 	int len;
 	const u_int *dmas = fdtbus_get_prop(phandle, "dmas", &len);
@@ -198,10 +197,6 @@ ti_sdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc_edma_chan[EDMA_CHAN_RX] = -1;
 		break;
 	}
-#else
-	sc->sc_edma_chan[EDMA_CHAN_TX] = -1;
-	sc->sc_edma_chan[EDMA_CHAN_RX] = -1;
-#endif
 
 	if (bus_space_map(sc->sc_bst, addr, size, 0, &sc->sc_bsh) != 0) {
 		aprint_error(": couldn't map registers\n");
@@ -219,7 +214,7 @@ ti_sdhc_attach(device_t parent, device_t self, void *aux)
 		sc->sc.sc_flags |= SDHC_FLAG_8BIT_MODE;
 	if (of_hasprop(phandle, "ti,needs-special-reset"))
 		sc->sc.sc_flags |= SDHC_FLAG_WAIT_RESET;
-	if (of_hasprop(phandle, "ti,needs-special-hs-handling"))
+	if (!of_hasprop(phandle, "ti,needs-special-hs-handling"))
 		sc->sc.sc_flags |= SDHC_FLAG_NO_HS_BIT;
 	if (of_hasprop(phandle, "ti,dual-volt"))
 		sc->sc.sc_caps = SDHC_VOLTAGE_SUPP_3_0V;
