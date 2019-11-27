@@ -1,4 +1,4 @@
-/*	$NetBSD: rdatalist.c,v 1.2 2018/08/12 13:02:35 christos Exp $	*/
+/*	$NetBSD: rdatalist.c,v 1.3 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -242,13 +242,16 @@ isc_result_t
 isc__rdatalist_getnoqname(dns_rdataset_t *rdataset, dns_name_t *name,
 			  dns_rdataset_t *neg, dns_rdataset_t *negsig)
 {
-	dns_rdataclass_t rdclass = rdataset->rdclass;
+	dns_rdataclass_t rdclass;
 	dns_rdataset_t *tneg = NULL;
 	dns_rdataset_t *tnegsig = NULL;
-	const dns_name_t *noqname = rdataset->private6;
+	const dns_name_t *noqname;
 
 	REQUIRE(rdataset != NULL);
 	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_NOQNAME) != 0);
+
+	rdclass = rdataset->rdclass;
+	noqname = rdataset->private6;
 
 	(void)dns_name_dynamic(noqname);	/* Sanity Check. */
 
@@ -333,13 +336,16 @@ isc_result_t
 isc__rdatalist_getclosest(dns_rdataset_t *rdataset, dns_name_t *name,
 			  dns_rdataset_t *neg, dns_rdataset_t *negsig)
 {
-	dns_rdataclass_t rdclass = rdataset->rdclass;
+	dns_rdataclass_t rdclass;
 	dns_rdataset_t *tneg = NULL;
 	dns_rdataset_t *tnegsig = NULL;
-	const dns_name_t *closest = rdataset->private7;
+	const dns_name_t *closest;
 
 	REQUIRE(rdataset != NULL);
 	REQUIRE((rdataset->attributes & DNS_RDATASETATTR_CLOSEST) != 0);
+
+	rdclass = rdataset->rdclass;
+	closest = rdataset->private7;
 
 	(void)dns_name_dynamic(closest);	/* Sanity Check. */
 

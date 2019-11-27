@@ -1,4 +1,4 @@
-/*	$NetBSD: dnstest.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: dnstest.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -471,11 +471,8 @@ dns_test_getdata(const char *file, unsigned char *buf,
 
 static void
 nullmsg(dns_rdatacallbacks_t *cb, const char *fmt, ...) {
-	va_list ap;
-
 	UNUSED(cb);
 	UNUSED(fmt);
-	UNUSED(ap);
 }
 
 isc_result_t

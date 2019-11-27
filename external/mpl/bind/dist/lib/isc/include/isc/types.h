@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: types.h,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -78,7 +78,11 @@ typedef struct isc_socket		isc_socket_t;		/*%< Socket */
 typedef struct isc_socketevent		isc_socketevent_t;	/*%< Socket Event */
 typedef struct isc_socketmgr		isc_socketmgr_t;	/*%< Socket Manager */
 typedef struct isc_stats		isc_stats_t;		/*%< Statistics */
-typedef int				isc_statscounter_t;	/*%< Statistics Counter */
+#if defined(_WIN32) && !defined(_WIN64)
+	typedef int_fast32_t 		isc_statscounter_t;	/*%< Statistics Counter */
+#else
+	typedef int_fast64_t 		isc_statscounter_t;
+#endif
 typedef struct isc_symtab		isc_symtab_t;		/*%< Symbol Table */
 typedef struct isc_task			isc_task_t;		/*%< Task */
 typedef ISC_LIST(isc_task_t)		isc_tasklist_t;		/*%< Task List */

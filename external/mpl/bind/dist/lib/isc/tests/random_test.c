@@ -1,4 +1,4 @@
-/*	$NetBSD: random_test.c,v 1.5 2019/10/17 16:47:01 christos Exp $	*/
+/*	$NetBSD: random_test.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -547,7 +547,6 @@ blockfrequency(isc_mem_t *mctx, uint16_t *values, size_t length) {
 
 	/* Preconditions (section 2.2.7 in NIST SP 800-22) */
 	assert_true(numbits >= 100);
-	/* cppcheck-suppress constArgument */
 	assert_true(mbits >= 20);
 	assert_true((double) mbits > (0.01 * numbits));
 	assert_true(numblocks < 100);

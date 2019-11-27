@@ -1,4 +1,4 @@
-/*	$NetBSD: rbt.c,v 1.4 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: rbt.c,v 1.5 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1050,9 +1050,7 @@ chain_name(dns_rbtnodechain_t *chain, dns_name_t *name,
 
 	if (include_chain_end && chain->end != NULL) {
 		NODENAME(chain->end, &nodename);
-		result = dns_name_copy(&nodename, name, NULL);
-		if (result != ISC_R_SUCCESS)
-			return (result);
+		dns_name_copynf(&nodename, name);
 	} else
 		dns_name_reset(name);
 
@@ -2693,6 +2691,7 @@ deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp) {
 	 * Fix color violations.
 	 */
 	if (IS_BLACK(item)) {
+		/* cppcheck-suppress nullPointerRedundantCheck symbolName=item */
 		parent = PARENT(item);
 
 		while (child != *rootp && IS_BLACK(child)) {
@@ -2710,6 +2709,7 @@ deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp) {
 
 				INSIST(sibling != NULL);
 
+				/* cppcheck-suppress nullPointerRedundantCheck symbolName=sibling */
 				if (IS_BLACK(LEFT(sibling)) &&
 				    IS_BLACK(RIGHT(sibling))) {
 					MAKE_RED(sibling);
@@ -2749,6 +2749,7 @@ deletefromlevel(dns_rbtnode_t *item, dns_rbtnode_t **rootp) {
 
 				INSIST(sibling != NULL);
 
+				/* cppcheck-suppress nullPointerRedundantCheck symbolName=sibling */
 				if (IS_BLACK(LEFT(sibling)) &&
 				    IS_BLACK(RIGHT(sibling))) {
 					MAKE_RED(sibling);
@@ -2880,6 +2881,7 @@ check_properties_helper(dns_rbtnode_t *node) {
 			return (false);
 	}
 
+	/* cppcheck-suppress nullPointerRedundantCheck symbolName=node */
 	if ((DOWN(node) != NULL) && (!IS_ROOT(DOWN(node))))
 		return (false);
 
@@ -2917,12 +2919,15 @@ check_black_distance_helper(dns_rbtnode_t *node, size_t *distance) {
 		return (true);
 	}
 
+	/* cppcheck-suppress nullPointerRedundantCheck symbolName=node */
 	if (!check_black_distance_helper(LEFT(node), &dl))
 		return (false);
 
+	/* cppcheck-suppress nullPointerRedundantCheck symbolName=node */
 	if (!check_black_distance_helper(RIGHT(node), &dr))
 		return (false);
 
+	/* cppcheck-suppress nullPointerRedundantCheck symbolName=node */
 	if (!check_black_distance_helper(DOWN(node), &dd))
 		return (false);
 
@@ -3207,10 +3212,11 @@ dns_rbtnodechain_current(dns_rbtnodechain_t *chain, dns_name_t *name,
 	}
 
 	if (origin != NULL) {
-		if (chain->level_count > 0)
+		if (chain->level_count > 0) {
 			result = chain_name(chain, origin, false);
-		else
-			result = dns_name_copy(dns_rootname, origin, NULL);
+		} else {
+			dns_name_copynf(dns_rootname, origin);
+		}
 	}
 
 	return (result);

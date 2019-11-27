@@ -1,4 +1,4 @@
-/*	$NetBSD: journal.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: journal.c,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -134,7 +134,7 @@ dns_db_createsoatuple(dns_db_t *db, dns_dbversion_t *ver, isc_mem_t *mctx,
 	dns_name_t *zonename;
 
 	zonename = dns_fixedname_initname(&fixed);
-	dns_name_copy(dns_db_origin(db), zonename, NULL);
+	dns_name_copynf(dns_db_origin(db), zonename);
 
 	node = NULL;
 	result = dns_db_findnode(db, zonename, false, &node);

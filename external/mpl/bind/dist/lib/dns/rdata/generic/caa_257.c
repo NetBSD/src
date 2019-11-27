@@ -1,4 +1,4 @@
-/*	$NetBSD: caa_257.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: caa_257.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -198,7 +198,7 @@ fromstruct_caa(ARGS_FROMSTRUCT) {
 	unsigned int i;
 
 	REQUIRE(type == dns_rdatatype_caa);
-	REQUIRE(source != NULL);
+	REQUIRE(caa != NULL);
 	REQUIRE(caa->common.rdtype == type);
 	REQUIRE(caa->common.rdclass == rdclass);
 	REQUIRE(caa->tag != NULL && caa->tag_len != 0);
@@ -241,7 +241,7 @@ tostruct_caa(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_caa);
-	REQUIRE(target != NULL);
+	REQUIRE(caa != NULL);
 	REQUIRE(rdata->length >= 3U);
 	REQUIRE(rdata->data != NULL);
 
@@ -293,7 +293,7 @@ static inline void
 freestruct_caa(ARGS_FREESTRUCT) {
 	dns_rdata_caa_t *caa = (dns_rdata_caa_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(caa != NULL);
 	REQUIRE(caa->common.rdtype == dns_rdatatype_caa);
 
 	if (caa->mctx == NULL)
