@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.49 2019/11/23 22:35:08 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.50 2019/11/27 20:31:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.49 2019/11/23 22:35:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.50 2019/11/27 20:31:13 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -368,7 +368,7 @@ sched_resched_cpu(struct cpu_info *ci, pri_t pri, bool unlock)
 	 * If the priority level we're evaluating wouldn't cause a new LWP
 	 * to be run on the CPU, then we have nothing to do.
 	 */
-	if (pri <= spc->spc_curpriority) {
+	if (pri <= spc->spc_curpriority || !mp_online) {
 		if (__predict_true(unlock)) {
 			spc_unlock(ci);
 		}
