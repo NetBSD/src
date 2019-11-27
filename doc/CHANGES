@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2616 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2617 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -73,3 +73,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		Atom C2XXX, C3XXX, Xeon D-21XX and D-15XX, C62X chipsets and
 		QuickAssist Adapter 8960/8970.
 		[hikaru 20191120]
+	bind: Import version 9.14.8. [christos 20191127]
