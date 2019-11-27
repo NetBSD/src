@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdevs.c,v 1.39 2019/11/12 07:41:50 mrg Exp $	*/
+/*	$NetBSD: usbdevs.c,v 1.40 2019/11/27 17:56:08 christos Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: usbdevs.c,v 1.39 2019/11/12 07:41:50 mrg Exp $");
+__RCSID("$NetBSD: usbdevs.c,v 1.40 2019/11/27 17:56:08 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __RCSID("$NetBSD: usbdevs.c,v 1.39 2019/11/12 07:41:50 mrg Exp $");
 #include <langinfo.h>
 #include <iconv.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include <dev/usb/usb.h>
 
@@ -367,7 +368,7 @@ getusbcount_device(int fd, const char *dev, int depth)
 int
 main(int argc, char **argv)
 {
-	int ch, i, f;
+	int ch, i, f, error;
 	char buf[50];
 	char *dev = NULL;
 	int addr = -1;
@@ -376,7 +377,13 @@ main(int argc, char **argv)
 	while ((ch = getopt(argc, argv, "a:df:v?")) != -1) {
 		switch(ch) {
 		case 'a':
-			addr = atoi(optarg);
+			addr = strtoi(optarg, NULL, 10, 0, USB_MAX_DEVICES - 1,
+			    &error);
+			if (error) {
+				errc(EXIT_FAILURE, error,
+				    "Bad value for device address: `%s'",
+				    optarg);
+			}
 			break;
 		case 'd':
 			showdevs++;
@@ -429,5 +436,5 @@ main(int argc, char **argv)
 		else
 			err(1, "%s", dev);
 	}
-	exit(EXIT_SUCCESS);
+	return EXIT_SUCCESS;
 }
