@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.44.4.1 2019/11/18 19:33:10 martin Exp $
+# $NetBSD: files.fdt,v 1.44.4.2 2019/11/27 13:46:45 martin Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -81,6 +81,10 @@ device	syscon { } : fdt
 attach	syscon at fdt
 file	dev/fdt/syscon.c			syscon
 
+device	pinctrl
+attach	pinctrl at fdt with pinctrl_single
+file	dev/fdt/pinctrl_single.c		pinctrl_single
+
 device	pwmbacklight
 attach	pwmbacklight at fdt
 file	dev/fdt/pwm_backlight.c			pwmbacklight
@@ -152,3 +156,8 @@ file	dev/fdt/amdccp_fdt.c			amdccp_fdt
 # Arasan SDHCI controller
 attach	sdhc at fdt with arasan_sdhc_fdt
 file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
+
+# Generic USB PHY
+device	usbnopphy
+attach	usbnopphy at fdt
+file	dev/fdt/usbnopphy.c			usbnopphy

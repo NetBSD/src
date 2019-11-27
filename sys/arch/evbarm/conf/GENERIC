@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.48.2.3 2019/10/17 18:47:47 martin Exp $
+#	$NetBSD: GENERIC,v 1.48.2.4 2019/11/27 13:46:44 martin Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -12,10 +12,41 @@ include	"arch/evbarm/conf/GENERIC.common"
 # FDT files supported by this kernel - add to DTSSUBDIR and DTS as
 # appropriate
 #
-makeoptions	DTSARCH="arm aarch64"
-makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner broadcom nvidia rockchip socfpga"
+makeoptions	DTSARCH="arm"
+makeoptions	DTSGNUARCH="arm"
+makeoptions	DTSSUBDIR=""
 makeoptions	DTS="
+	am335x-baltos-ir2110.dts
+	am335x-baltos-ir3220.dts
+	am335x-baltos-ir5221.dts
+	am335x-base0033.dts
+	am335x-bone.dts
+	am335x-boneblack-wireless.dts
+	am335x-boneblack.dts
+	am335x-boneblue.dts
+	am335x-bonegreen-wireless.dts
+	am335x-bonegreen.dts
+	am335x-chiliboard.dts
+	am335x-cm-t335.dts
+	am335x-evm.dts
+	am335x-evmsk.dts
+	am335x-guardian.dts
+	am335x-icev2.dts
+	am335x-lxm.dts
+	am335x-moxa-uc-2101.dts
+	am335x-moxa-uc-8100-me-t.dts
+	am335x-nano.dts
+	am335x-osd3358-sm-red.dts
+	am335x-pdu001.dts
+	am335x-pepper.dts
+	am335x-phycore-rdk.dts
+	am335x-pocketbeagle.dts
+	am335x-sancloud-bbe.dts
+	am335x-sbc-t335.dts
+	am335x-shc.dts
+	am335x-sl50.dts
+	am335x-wega-rdk.dts
+
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-a-plus.dts
 	bcm2837-rpi-3-b.dts
@@ -30,6 +61,57 @@ makeoptions	DTS="
 	meson8b-ec100.dts
 	meson8b-mxq.dts
 	meson8b-odroidc1.dts
+
+	omap3-beagle-xm-ab.dts
+	omap3-beagle-xm.dts
+	omap3-beagle.dts
+	omap3-cm-t3517.dts
+	omap3-cm-t3530.dts
+	omap3-cm-t3730.dts
+	omap3-devkit8000-lcd43.dts
+	omap3-devkit8000-lcd70.dts
+	omap3-devkit8000.dts
+	omap3-evm-37xx.dts
+	omap3-evm.dts
+	omap3-gta04a3.dts
+	omap3-gta04a4.dts
+	omap3-gta04a5.dts
+	omap3-gta04a5one.dts
+	omap3-ha-lcd.dts
+	omap3-ha.dts
+	omap3-igep0020-rev-f.dts
+	omap3-igep0020.dts
+	omap3-igep0030-rev-g.dts
+	omap3-igep0030.dts
+	omap3-ldp.dts
+	omap3-lilly-dbb056.dts
+	omap3-n9.dts
+	omap3-n900.dts
+	omap3-n950.dts
+	omap3-overo-alto35.dts
+	omap3-overo-chestnut43.dts
+	omap3-overo-gallop43.dts
+	omap3-overo-palo35.dts
+	omap3-overo-palo43.dts
+	omap3-overo-storm-alto35.dts
+	omap3-overo-storm-chestnut43.dts
+	omap3-overo-storm-gallop43.dts
+	omap3-overo-storm-palo35.dts
+	omap3-overo-storm-palo43.dts
+	omap3-overo-storm-summit.dts
+	omap3-overo-storm-tobi.dts
+	omap3-overo-storm-tobiduo.dts
+	omap3-overo-summit.dts
+	omap3-overo-tobi.dts
+	omap3-overo-tobiduo.dts
+	omap3-pandora-1ghz.dts
+	omap3-pandora-600mhz.dts
+	omap3-sbc-t3517.dts
+	omap3-sbc-t3530.dts
+	omap3-sbc-t3730.dts
+	omap3-sniper.dts
+	omap3-thunder.dts
+	omap3-zoom3.dts
 
 	socfpga_cyclone5_de0_nano_soc.dts
 
@@ -171,17 +253,13 @@ options 	CPU_CORTEXA8
 options 	CPU_CORTEXA9
 options 	CPU_CORTEXA15
 options 	CPU_CORTEXA17
-
 options 	CPU_CORTEXA53
 
-# Can't add SOC_BCM2835 until interrupt and register issues sorted out
-#options 	SOC_BCM2835
+options 	SOC_AM33XX
 options 	SOC_BCM2836
-
 options 	SOC_EXYNOS5422
-
 options 	SOC_MESON8B
-
+options 	SOC_OMAP3
 options 	SOC_SUN4I_A10
 options 	SOC_SUN5I_A13
 options 	SOC_SUN6I_A31
@@ -189,11 +267,8 @@ options 	SOC_SUN7I_A20
 options 	SOC_SUN8I_A83T
 options 	SOC_SUN8I_H3
 options 	SOC_SUN9I_A80
-
 options 	SOC_TEGRA124
-
 options 	SOC_VIRT
-
 options 	SOC_ZYNQ7000
 
 options 	MULTIPROCESSOR
@@ -210,6 +285,9 @@ options 	MSGBUFSIZE=32768
 #options 	VERBOSE_INIT_ARM # verbose bootstrapping messages
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
+
+#options 	EARLYCONS=am33xx, CONSADDR=0x44e09000
+#options 	EARLYCONS=omap3, CONSADDR=0x49020000
 
 # ODROID-C1
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
@@ -258,12 +336,15 @@ cpufreqdt*	at cpu?
 psci*		at fdt?
 
 # Clock and reset controllers
+am3prcm*	at fdt? pass 1		# TI AM335x PRCM
 cycvclkmgr* 	at fdt? pass 1		# Cyclone V clock manager
 cycvrstmgr* 	at fdt? pass 0		# Cyclone V reset manager
 exy5410clk* 	at fdt? pass 3		# Exynos5410 clock controller
 exy5422clk* 	at fdt? pass 3		# Exynos5422 clock controller
 meson8bclkc* 	at fdt? pass 2		# Amlogic Meson8b clock controller
 mesonresets* 	at fdt? pass 2		# Amlogic Meson misc. clock resets
+omap3cm*	at fdt? pass 1		# TI OMAP3 CM
+omap3prm*	at fdt? pass 1		# TI OMAP3 PRM
 sun4ia10ccu* 	at fdt? pass 2		# Allwinner A10/A20 CCU
 sun5ia13ccu* 	at fdt? pass 2		# Allwinner A13 CCU
 sun6ia31ccu* 	at fdt? pass 2		# Allwinner A31 CCU
@@ -280,6 +361,9 @@ sun9immcclk* 	at fdt? pass 2		# Allwinner A80 SD/MMC-COMM
 sun9iusbclk* 	at fdt? pass 2		# Allwinner A80 USB HCI
 tegra124car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T124)
 tegra210car* 	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
+tidivclk*	at fdt? pass 1		# TI divider clock
+tidpllclk*	at fdt? pass 2		# TI DPLL clock
+timuxclk*	at fdt? pass 1		# TI mux clock
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
@@ -297,6 +381,7 @@ sunxisramc* 	at fdt? pass 4		# SRAM controller
 
 # System Controller
 syscon*		at fdt? pass 1		# Generic System Controller
+tisysc*		at fdt? pass 2		# TI sysc interconnect
 #zynqslcr*	at fdt? pass 1		# Zynq 7000 system Controller
 
 # Timer
@@ -308,6 +393,7 @@ gtmr*		at fdt? pass 1		# ARM Generic Timer
 armgtmr0	at gtmr?
 mct*		at fdt? pass 2		# Exynos Multi Core Timer (MCT)
 armgtmr*	at mct?
+omaptimer*	at fdt?			# TI OMAP Timer
 sunxitimer* 	at fdt?			# Allwinner async timer
 sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
 tegratimer* 	at fdt?			# Timers
@@ -323,6 +409,7 @@ gic*		at fdt? pass 1		# ARM GIC
 armgic0		at gic?
 bcmicu* 	at fdt? pass 1		# Broadcom BCM283x ICU
 exyointr* 	at fdt? pass 1		# Samsung Exynos ICU
+omapintc*	at fdt? pass 2		# TI OMAP INTC
 tegralic* 	at fdt? pass 1		# NVIDIA Tegra LIC
 sunxiintc* 	at fdt? pass 1		# Allwinner INTC
 sunxinmi* 	at fdt? pass 2		# Allwinner NMI / R_INTC
@@ -333,6 +420,7 @@ arml2cc* 	at l2cc?
 
 # Memory controller
 tegramc* 	at fdt?	pass 4		# NVIDIA Tegra MC
+tigpmc*		at fdt? pass 4		# TI OMAP2 GPMC
 
 # Firmware devices
 bcmmbox* 	at fdt?			# Broadcom VideoCore IV mailbox
@@ -344,6 +432,8 @@ bcmdmac* 	at fdt?			# Broadcom BCM283x DMA controller
 sun4idma* 	at fdt? pass 4		# Allwinner DMA controller (sun4i)
 sun6idma* 	at fdt?	pass 4		# Allwinner DMA controller (sun6i)
 tegraapbdma* 	at fdt? pass 4		# NVIDIA Tegra APB DMA
+tiedma*		at fdt? pass 4		# TI EDMA3 (TPCC)
+titptc*		at fdt? pass 3		# TI EDMA3 (TPTC)
 
 # FUSE controller
 tegrafuse* 	at fdt? pass 4		# NVIDIA Tegra FUSE
@@ -366,9 +456,11 @@ mesonpinctrl* 	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio* 	at fdt?			# ARM PrimeCell GPIO
 sunxigpio* 	at fdt? pass 3		# Allwinner GPIO
 tegragpio* 	at fdt? pass 2		# NVIDIA Tegra GPIO
+tigpio*		at fdt? pass 2		# TI GPIO
 gpio* 		at gpiobus?
 
 # MPIO / Pinmux
+pinctrl*	at fdt? pass 2		# Generic pinctrl driver
 tegrapinmux* 	at fdt?			# NVIDIA Tegra MPIO
 
 # PWM controller
@@ -396,6 +488,7 @@ pci* 		at ppb?
 # Ethernet
 awge* 		at fdt?			# Allwinner Gigabit Ethernet (GMAC)
 cemac* 		at fdt?			# Cadence EMAC/GEM ethernet controller
+cpsw*		at fdt?			# TI CPSW 3-port Ethernet Switch
 emac* 		at fdt?			# Allwinner Fast/Gigabit Ethernet (EMAC)
 smsh* 		at fdt?			# SMSC LAN9118
 
@@ -447,6 +540,7 @@ exyoi2c* 	at fdt?			# Samsung Exynos I2C
 sunxirsb* 	at fdt? pass 4		# Allwinner RSB
 sunxitwi* 	at fdt?			# Allwinner TWI
 tegrai2c* 	at fdt? pass 4		# NVIDIA Tegra I2C
+tiiic*		at fdt? pass 4		# TI OMAP I2C
 iic* 		at i2cbus?
 
 # I2C devices
@@ -464,7 +558,11 @@ seeprom* 	at iic?			# AT24Cxx Serial EEPROM
 sy8106a* 	at iic?			# Silergy SY81061 regulator
 tcakp* 		at iic?			# TI TCA8418 Keypad Scan IC
 tcagpio* 	at iic?
+tdahdmi*	at iic? 		# NXP TDA19988 HDMI encoder
 titemp* 	at iic?
+tps65217pmic*	at iic?			# TI TPS65217 Power Management IC
+tps65217reg*	at tps65217pmic?
+twl*		at iic?			# TI TWL4030 Power Management IC
 wskbd* 		at tcakp? console ?
 
 # CAN bus
@@ -479,6 +577,7 @@ spi* 		at spibus?
 # Random number generators
 bcmrng* 	at fdt?			# Broadcom BCM283x RNG
 mesonrng* 	at fdt?			# Amlogic Meson RNG
+tirng*		at fdt?			# TI RNG
 
 # Security ID EFUSE
 sunxisid* 	at fdt? pass 4		# SID
@@ -533,7 +632,8 @@ ld3 		at sdmmc3
 ld* 		at sdmmc?
 
 # NAND Flash
-sunxinand* 	at fdt?			# NAND flash controller
+sunxinand* 	at fdt?			# Allwinner NAND flash controller
+omapnand*	at fdt?			# TI OMAP2 flash controller
 nand* 		at nandbus?
 flash* 		at nand? dynamic 1
 
@@ -562,6 +662,7 @@ hdmicec* 	at hdmicecbus?
 #tegrafb* 	at tegrafbbus?
 genfb* 		at fdt?			# Simple Framebuffer
 mesonfb* 	at fdt?			# Amlogic Meson Framebuffer
+omapfb*		at fdt?			# TI OMAP3 Framebuffer
 wsdisplay* 	at wsemuldisplaydev?
 sunxidebe* 	at fdt? pass 4		# Display Backend
 genfb* 		at sunxidebe?
@@ -571,6 +672,8 @@ connector* 	at fdt? pass 4
 panel* 		at fdt? pass 4
 #sunxidep must be after display pipeline elements but before genfb@fdt
 sunxidep* 	at fdt? pass 5		# Display Engine Pipeline
+tilcdc*		at fdt?			# TI OMAP4 LCDC
+tifb*		at tilcdc?
 
 options 	VCONS_DRAW_INTR
 options 	WSEMUL_VT100
@@ -615,6 +718,10 @@ sun9iusbphy* 	at fdt? pass 9		# Allwinner A80 USB PHY
 sunxiusbphy* 	at fdt? pass 9		# Allwinner USB PHY
 sunxiusb3phy* 	at fdt? pass 9		# Allwinner USB3 PHY
 tegrausbphy* 	at fdt?			# NVIDIA Tegra USB PHY
+usbnopphy*	at fdt? pass 9		# Generic USB PHY
+tiotg*		at fdt?			# TI dual port OTG
+tiusb*		at fdt? pass 9		# TI HS USB host
+tiusbtll*	at fdt? pass 8		# TI HS USB host TLL
 dwctwo* 	at fdt?			# Designware USB DRD
 ehci* 		at fdt?			# EHCI
 motg* 		at fdt?			# Mentor Graphics USB OTG

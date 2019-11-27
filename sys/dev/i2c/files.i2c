@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.100 2019/07/24 05:25:32 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.100.2.1 2019/11/27 13:46:45 martin Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -196,14 +196,11 @@ device	ibmhawk: sysmon_envsys
 attach	ibmhawk at iic
 file	dev/i2c/ibmhawk.c		ibmhawk
 
-# TI TPS65950 OMAP Power Management and System Companion Device
-device	tps65950pm: sysmon_wdog
-attach	tps65950pm at iic
-file	dev/i2c/tps65950.c		tps65950pm
-
 # TI TPS65217
-device	tps65217pmic: sysmon_envsys
+device	tps65217pmic { }: sysmon_envsys
+device	tps65217reg: tps65217pmic
 attach	tps65217pmic at iic
+attach	tps65217reg at tps65217pmic
 file	dev/i2c/tps65217pmic.c 		tps65217pmic	needs-flag
 
 # Microchip MCP980x
@@ -371,3 +368,13 @@ file	dev/i2c/anxedp.c			anxedp
 device	pcapwm: pwm
 attach	pcapwm at iic
 file	dev/i2c/pca9685.c			pcapwm
+
+# TI TWL4030 Power Management IC
+device	twl
+attach	twl at iic
+file	dev/i2c/twl4030.c			twl
+
+# NXP TDA19988 HDMI encoder
+device	tdahdmi: edid, videomode, drmkms, drmkms_i2c
+attach	tdahdmi at iic
+file	dev/i2c/tda19988.c			tdahdmi

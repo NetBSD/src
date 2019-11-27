@@ -1,9 +1,9 @@
-/* $NetBSD: ti_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $ */
+/* $NetBSD: am3_platform.c,v 1.1.2.2 2019/11/27 13:46:44 martin Exp $ */
 
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am3_platform.c,v 1.1.2.2 2019/11/27 13:46:44 martin Exp $");
 
 #include <sys/param.h>
 
@@ -13,6 +13,8 @@ __KERNEL_RCSID(0, "$NetBSD: ti_platform.c,v 1.6 2018/10/30 16:41:52 skrll Exp $"
 #include <uvm/uvm_extern.h>
 
 #include <dev/ic/comreg.h>
+
+#include <arch/evbarm/fdt/platform.h>
 
 extern struct bus_space armv7_generic_bs_tag;
 extern struct bus_space armv7_generic_a4x_bs_tag;
@@ -24,8 +26,10 @@ void
 am33xx_platform_early_putchar(char c)
 {
 #ifdef CONSADDR
-#define CONSADDR_VA ((CONSADDR - 0x44c00000) + 0xe4c00000)
-	volatile uint32_t *uartaddr = (volatile uint32_t *)CONSADDR_VA;
+#define CONSADDR_VA ((CONSADDR - 0x44c00000) + (KERNEL_IO_VBASE | 0x04c00000))
+	volatile uint32_t *uartaddr = cpu_earlydevice_va_p() ?
+	    (volatile uint32_t *)CONSADDR_VA :
+	    (volatile uint32_t *)CONSADDR;
 
 	while ((le32toh(uartaddr[com_lsr]) & LSR_TXRDY) == 0)
 		;
@@ -39,9 +43,9 @@ static const struct pmap_devmap *
 am33xx_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
-		DEVMAP_ENTRY(0xe4c00000, 0x44c00000, 0x00400000),
-		DEVMAP_ENTRY(0xe8000000, 0x48000000, 0x01000000),
-		DEVMAP_ENTRY(0xea000000, 0x4a000000, 0x01000000),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE | 0x04c00000, 0x44c00000, 0x00400000),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE | 0x08000000, 0x48000000, 0x01000000),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE | 0x0a000000, 0x4a000000, 0x01000000),
 		DEVMAP_ENTRY_END
 	};
 
@@ -118,12 +122,20 @@ am33xx_platform_delay(u_int n)
 	prev = bus_space_read_4(bst, bsh, 0x3c);
 	while (ticks > 0) {
 		cur = bus_space_read_4(bst, bsh, 0x3c);
-		if (cur > prev)
+		if (cur >= prev)
 			ticks -= (cur - prev);
 		else
-			ticks -= (UINT32_MAX - prev + 1 - cur);
+			ticks -= (UINT32_MAX - cur + prev);
 		prev = cur;
 	}
+}
+
+static void
+am33xx_platform_reset(void)
+{
+	volatile uint32_t *resetaddr = (volatile uint32_t *)(KERNEL_IO_VBASE | 0x04e00f00);
+
+	*resetaddr = 1;
 }
 
 static const struct arm_platform am33xx_platform = {
@@ -132,14 +144,7 @@ static const struct arm_platform am33xx_platform = {
 	.ap_bootstrap = am33xx_platform_bootstrap,
 	.ap_uart_freq = am33xx_platform_uart_freq,
 	.ap_delay = am33xx_platform_delay,
+	.ap_reset = am33xx_platform_reset,
 };
 
-void dummysetstatclockrate(int);
-void
-dummysetstatclockrate(int newhz)
-{
-}
-__weak_alias(setstatclockrate, dummysetstatclockrate);
-
 ARM_PLATFORM(am33xx, "ti,am33xx", &am33xx_platform);
-
