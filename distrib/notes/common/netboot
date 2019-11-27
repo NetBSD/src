@@ -1,4 +1,4 @@
-.\"	$NetBSD: netboot,v 1.37 2019/11/21 19:23:17 martin Exp $
+.\"	$NetBSD: netboot,v 1.38 2019/11/27 09:29:25 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -40,7 +40,7 @@ Additionally, you may wish to look at the
 manual page and the manual pages for each daemon you'll be configuring.
 If the server(s) are another operating system, you should consult the
 NetBSD Diskless HOW-TO, which will walk you through the steps necessary to
-configure the netboot services on a variety of platforms.
+configure the netboot services on a variety of platforms:
 .Lk https://www.NetBSD.org/docs/network/netboot/
 .if !\n[hppa]:\n[next68k] \{\
 .Pp
@@ -236,8 +236,8 @@ YAMAMORI Takenori's
 package instead of native
 .Xr rbootd 8 .
 Please refer the "Setting up the rbootd server" section
-in the NetBSD Diskless HOW-TO
-.Lk https://www.NetBSD.org/docs/network/netboot/rbootd/
+in the
+.Lk https://www.NetBSD.org/docs/network/netboot/rbootd/ "NetBSD Diskless HOW-TO"
 for details.
 .Pp
 .It
@@ -769,8 +769,7 @@ need to extract and set up the client's installation of
 The Diskless HOW-TO describes how to provide better security and save
 space on the NFS server over the procedure listed here.
 See
-.Lk https://www.NetBSD.org/docs/network/netboot/nfs.html
-for details.
+.Lk https://www.NetBSD.org/docs/network/netboot/nfs.html "for details" .
 .(bullet -compact
 Extracting distribution sets
 .Pp
