@@ -1,4 +1,4 @@
-/* $NetBSD: cpufreq_dt.c,v 1.8.2.1 2019/10/08 16:56:37 martin Exp $ */
+/* $NetBSD: cpufreq_dt.c,v 1.8.2.2 2019/11/27 13:46:45 martin Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.8.2.1 2019/10/08 16:56:37 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufreq_dt.c,v 1.8.2.2 2019/11/27 13:46:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -356,14 +356,57 @@ cpufreq_dt_parse_opp(struct cpufreq_dt_softc *sc)
 	return 0;
 }
 
+static const struct fdt_opp_info *
+cpufreq_dt_lookup_opp_info(const int opp_table)
+{
+	__link_set_decl(fdt_opps, struct fdt_opp_info);
+	struct fdt_opp_info * const *opp;
+	const struct fdt_opp_info *best_opp = NULL;
+	int match, best_match = 0;
+
+	__link_set_foreach(opp, fdt_opps) {
+		const char * const compat[] = { (*opp)->opp_compat, NULL };
+		match = of_match_compatible(opp_table, compat);
+		if (match > best_match) {
+			best_match = match;
+			best_opp = *opp;
+		}
+	}
+
+	return best_opp;
+}
+
+static bool
+cpufreq_dt_opp_v2_supported(const int opp_table, const int opp_node)
+{
+	return true;
+}
+
+FDT_OPP(opp_v2, "operating-points-v2", cpufreq_dt_opp_v2_supported);
+
+static bool
+cpufreq_dt_node_supported(const struct fdt_opp_info *opp_info, const int opp_table, const int opp_node)
+{
+	if (!fdtbus_status_okay(opp_node))
+		return false;
+	if (of_hasprop(opp_node, "opp-suspend"))
+		return false;
+
+	if (opp_info != NULL)
+		return opp_info->opp_supported(opp_table, opp_node);
+
+	return false;
+}
+
 static int
 cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 {
 	const int phandle = sc->sc_phandle;
 	struct cpufreq_dt_table *table;
+	const struct fdt_opp_info *opp_info;
 	const u_int *opp_uv;
 	uint64_t opp_hz;
-	int opp_node, len, i;
+	int opp_node, len, i, index;
 
 	const int opp_table = fdtbus_get_phandle(phandle, "operating-points-v2");
 	if (opp_table < 0)
@@ -378,17 +421,21 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 		TAILQ_INSERT_TAIL(&cpufreq_dt_tables, &sc->sc_table, next);
 	}
 
+	opp_info = cpufreq_dt_lookup_opp_info(opp_table);
+
 	for (opp_node = OF_child(opp_table); opp_node; opp_node = OF_peer(opp_node)) {
-		if (fdtbus_status_okay(opp_node))
-			sc->sc_nopp++;
+		if (!cpufreq_dt_node_supported(opp_info, opp_table, opp_node))
+			continue;
+		sc->sc_nopp++;
 	}
 
 	if (sc->sc_nopp == 0)
 		return EINVAL;
 
 	sc->sc_opp = kmem_zalloc(sizeof(*sc->sc_opp) * sc->sc_nopp, KM_SLEEP);
+	index = sc->sc_nopp - 1;
 	for (opp_node = OF_child(opp_table), i = 0; opp_node; opp_node = OF_peer(opp_node), i++) {
-		if (!fdtbus_status_okay(opp_node))
+		if (!cpufreq_dt_node_supported(opp_info, opp_table, opp_node))
 			continue;
 		if (of_getprop_uint64(opp_node, "opp-hz", &opp_hz) != 0)
 			return EINVAL;
@@ -396,10 +443,10 @@ cpufreq_dt_parse_opp_v2(struct cpufreq_dt_softc *sc)
 		if (opp_uv == NULL || len < 1)
 			return EINVAL;
 		/* Table is in reverse order */
-		const int index = sc->sc_nopp - i - 1;
 		sc->sc_opp[index].freq_khz = (u_int)(opp_hz / 1000);
 		sc->sc_opp[index].voltage_uv = be32toh(opp_uv[0]);
 		of_getprop_uint32(opp_node, "clock-latency-ns", &sc->sc_opp[index].latency_ns);
+		--index;
 	}
 
 	return 0;
