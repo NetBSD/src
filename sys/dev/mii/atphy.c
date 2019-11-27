@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.25 2019/11/20 08:50:59 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.26 2019/11/27 10:19:20 msaitoh Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.25 2019/11/20 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.26 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,11 +190,6 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &atphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	if (atphy_is_gige(mpd))
-		sc->mii_anegticks = MII_ANEGTICKS_GIGE;
-	else
-		sc->mii_anegticks = MII_ANEGTICKS;
-
 	sc->mii_flags |= MIIF_NOLOOP;
 
 	prop_dictionary_get_bool(parent_prop, "tx_internal_delay", &asc->rgmii_tx_internal_delay);
@@ -212,9 +207,7 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	if (atphy_is_gige(mpd) && (sc->mii_capabilities & BMSR_EXTSTAT))
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
-	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
-	aprint_normal("\n");
 }
 
 int
