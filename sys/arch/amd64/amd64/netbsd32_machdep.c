@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.131 2019/11/20 19:37:51 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.132 2019/11/27 09:16:58 rin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.131 2019/11/20 19:37:51 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.132 2019/11/27 09:16:58 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -85,6 +85,9 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.131 2019/11/20 19:37:51 pgoye
 /* Provide a the name of the architecture we're emulating */
 const char machine32[] = "i386";
 const char machine_arch32[] = "i386";
+
+static int netbsd32_process_doxmmregs(struct lwp *, struct lwp *, void *, bool);
+static int netbsd32_process_xmmregio(struct lwp *, struct lwp *, struct uio *);
 
 #ifdef USER_LDT
 static int x86_64_get_ldt32(struct lwp *, void *, register_t *);
@@ -344,8 +347,8 @@ netbsd32_ptrace_translate_request(int req)
 	case PT32_SETREGS:		return PT_SETREGS;
 	case PT32_GETFPREGS:		return PT_GETFPREGS;
 	case PT32_SETFPREGS:		return PT_SETFPREGS;
-	case PT32_GETXMMREGS:		return -1;
-	case PT32_SETXMMREGS:		return -1;
+	case PT32_GETXMMREGS:		return PT_GETXMMREGS;
+	case PT32_SETXMMREGS:		return PT_SETXMMREGS;
 	case PT32_GETDBREGS:		return PT_GETDBREGS;
 	case PT32_SETDBREGS:		return PT_SETDBREGS;
 	case PT32_SETSTEP:		return PT_SETSTEP;
@@ -498,6 +501,77 @@ netbsd32_process_write_dbregs(struct lwp *l, const struct dbreg32 *regs,
 
 	x86_dbregs_write(l, &regs64);
 	return 0;
+}
+
+static int
+netbsd32_process_doxmmregs(struct lwp *curl, struct lwp *l, void *addr,
+    bool write)
+	/* curl:		 tracer */
+	/* l:			 traced */
+{
+	struct uio uio;
+	struct iovec iov;
+	struct vmspace *vm;
+	int error;
+
+	if ((curl->l_proc->p_flag & PK_32) == 0 ||
+	    (l->l_proc->p_flag & PK_32) == 0)
+		return EINVAL;
+
+	if (!process_machdep_validfpu(l->l_proc))
+		return EINVAL;
+
+	error = proc_vmspace_getref(curl->l_proc, &vm);
+	if (error)
+		return error;
+
+	iov.iov_base = addr;
+	iov.iov_len = sizeof(struct xmmregs32);
+	uio.uio_iov = &iov;
+	uio.uio_iovcnt = 1;
+	uio.uio_offset = 0;
+	uio.uio_resid = sizeof(struct xmmregs32);
+	uio.uio_rw = write ? UIO_WRITE : UIO_READ;
+	uio.uio_vmspace = vm;
+
+	error = netbsd32_process_xmmregio(curl, l, &uio);
+	uvmspace_free(vm);
+	return error;
+}
+
+static int
+netbsd32_process_xmmregio(struct lwp *curl, struct lwp *l, struct uio *uio)
+	/* curl:		 tracer */
+	/* l:			 traced */
+{
+	struct xmmregs32 regs;
+	int error;
+	char *kv;
+	size_t kl;
+
+	kl = sizeof(regs);
+	kv = (char *)&regs;
+
+	if (uio->uio_offset < 0 || uio->uio_offset > (off_t)kl)
+		return EINVAL;
+
+	kv += uio->uio_offset;
+	kl -= uio->uio_offset;
+
+	if (kl > uio->uio_resid)
+		kl = uio->uio_resid;
+
+	process_read_fpregs_xmm(l, &regs.fxstate);
+	error = uiomove(kv, kl, uio);
+	if (error == 0 && uio->uio_rw == UIO_WRITE) {
+		if (l->l_proc->p_stat != SSTOP)
+			error = EBUSY;
+		else
+			process_write_fpregs_xmm(l, &regs.fxstate);
+	}
+
+	uio->uio_offset = 0;
+	return error;
 }
 
 int
@@ -959,6 +1033,8 @@ netbsd32_machdep_md_init(void)
 	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
 	MODULE_HOOK_SET(netbsd32_reg_validate_hook,
 	    "mcontext32from64_validate", cpu_mcontext32from64_validate);
+	MODULE_HOOK_SET(netbsd32_process_doxmmregs_hook, "xmm32",
+	    netbsd32_process_doxmmregs);
 }
 
 void
@@ -967,4 +1043,5 @@ netbsd32_machdep_md_fini(void)
 
 	MODULE_HOOK_UNSET(netbsd32_machine32_hook);
 	MODULE_HOOK_UNSET(netbsd32_reg_validate_hook);
+	MODULE_HOOK_UNSET(netbsd32_process_doxmmregs_hook);
 }
