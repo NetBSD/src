@@ -1,4 +1,4 @@
-/*	$NetBSD: key_25.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: key_25.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -322,7 +322,7 @@ generic_tostruct_key(ARGS_TOSTRUCT) {
 	dns_rdata_key_t *key = target;
 	isc_region_t sr;
 
-	REQUIRE(rdata != NULL);
+	REQUIRE(key != NULL);
 	REQUIRE(rdata->length != 0);
 
 	REQUIRE(key != NULL);

@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.h,v 1.3 2019/01/09 16:55:15 christos Exp $	*/
+/*	$NetBSD: stats.h,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -132,6 +132,31 @@ isc_stats_set(isc_stats_t *stats, uint64_t val,
  *
  * Requires:
  *\li	'stats' is a valid isc_stats_t.
+ */
+
+void isc_stats_update_if_greater(isc_stats_t *stats,
+				 isc_statscounter_t counter,
+				 isc_statscounter_t value);
+/*%<
+* Atomically assigns 'value' to 'counter' if value > counter.
+*
+* Requires:
+*\li	'stats' is a valid isc_stats_t.
+*
+*\li	counter is less than the maximum available ID for the stats specified
+*	on creation.
+*/
+
+isc_statscounter_t
+isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter);
+/*%<
+ * Returns value currently stored in counter.
+ *
+ * Requires:
+ *\li	'stats' is a valid isc_stats_t.
+ *
+ *\li	counter is less than the maximum available ID for the stats specified
+ *	on creation.
  */
 
 ISC_LANG_ENDDECLS

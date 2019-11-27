@@ -1,4 +1,4 @@
-/*	$NetBSD: util.h,v 1.6 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: util.h,v 1.7 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -232,6 +232,9 @@ extern void mock_assert(const int result, const char* const expression,
 #define _assert_int_not_equal(a, b, f, l) \
 	(((a) != (b)) ? (void)0 : (_assert_int_not_equal(a, b, f, l), abort()))
 #else /* UNIT_TESTING */
+
+#ifndef CPPCHECK
+
 /*
  * Assertions
  */
@@ -245,6 +248,19 @@ extern void mock_assert(const int result, const char* const expression,
 #define INSIST(e)			ISC_INSIST(e)
 /*% Invariant Assertion */
 #define INVARIANT(e)			ISC_INVARIANT(e)
+
+#else /* CPPCHECK */
+
+/*% Require Assertion */
+#define REQUIRE(e)			if (!(e)) abort()
+/*% Ensure Assertion */
+#define ENSURE(e)			if (!(e)) abort()
+/*% Insist Assertion */
+#define INSIST(e)			if (!(e)) abort()
+/*% Invariant Assertion */
+#define INVARIANT(e)			if (!(e)) abort()
+
+#endif /* CPPCHECK */
 
 #endif /* UNIT_TESTING */
 

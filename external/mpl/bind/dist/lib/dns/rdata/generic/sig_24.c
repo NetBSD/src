@@ -1,4 +1,4 @@
-/*	$NetBSD: sig_24.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: sig_24.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -357,7 +357,7 @@ fromstruct_sig(ARGS_FROMSTRUCT) {
 	dns_rdata_sig_t *sig = source;
 
 	REQUIRE(type == dns_rdatatype_sig);
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == type);
 	REQUIRE(sig->common.rdclass == rdclass);
 	REQUIRE(sig->signature != NULL || sig->siglen == 0);
@@ -418,7 +418,7 @@ tostruct_sig(ARGS_TOSTRUCT) {
 	dns_name_t signer;
 
 	REQUIRE(rdata->type == dns_rdatatype_sig);
-	REQUIRE(target != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(rdata->length != 0);
 
 	sig->common.rdclass = rdata->rdclass;
@@ -497,7 +497,7 @@ static inline void
 freestruct_sig(ARGS_FREESTRUCT) {
 	dns_rdata_sig_t *sig = (dns_rdata_sig_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(sig != NULL);
 	REQUIRE(sig->common.rdtype == dns_rdatatype_sig);
 
 	if (sig->mctx == NULL)
