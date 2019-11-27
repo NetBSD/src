@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.124 2019/11/27 14:06:12 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.125 2019/11/27 14:34:31 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6615,3 +6615,11 @@ sys/dev/pci/esm.c				1.64
 	add missing break.
 	[msaitoh, ticket #493]
 
+istrib/notes/common/main			(edited manually)
+
+	Note sysinst changes.
+
+external/gpl2/groff/tmac/mdoc.local		(edited manually)
+sys/sys/param.h					(edited manually)
+
+	Welcome to 9.0_RC1 !
