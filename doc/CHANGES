@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2617 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2618 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -74,3 +74,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		QuickAssist Adapter 8960/8970.
 		[hikaru 20191120]
 	bind: Import version 9.14.8. [christos 20191127]
+	terminfo: Import 20190609 [christos 20191127]

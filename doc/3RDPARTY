@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1671 2019/11/27 05:50:26 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1672 2019/11/27 19:04:45 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2177,3 +2177,18 @@ Responsible:
 License:	BSD-like (2 and 3-clause)
 Location:	sys/external/bsd/ena-com
 Notes:
+
+Package:	terminfo
+Version:	20190609
+
+Current Vers:	20190609
+Maintainer:	Thomas Dickey (ncurses)
+Archive Site:	ftp://ftp.invisible-island.net/ncurses/current
+Home Page:	https://invisible-island.net/ncurses/
+Date:		2019-11-27
+Mailing List:	bug-ncurses@gnu.org
+Responsible:
+License:	none
+Location:	sys/external/bsd/ena-com
+Notes:
+Use the import script in /usr/src/share/terminfo
