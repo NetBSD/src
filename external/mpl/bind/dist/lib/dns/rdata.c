@@ -1,4 +1,4 @@
-/*	$NetBSD: rdata.c,v 1.5 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: rdata.c,v 1.6 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1204,7 +1204,7 @@ dns_rdata_tostruct(const dns_rdata_t *rdata, void *target, isc_mem_t *mctx) {
 void
 dns_rdata_freestruct(void *source) {
 	dns_rdatacommon_t *common = source;
-	REQUIRE(source != NULL);
+	REQUIRE(common != NULL);
 
 	FREESTRUCTSWITCH
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: rdataset.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: rdataset.c,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -458,7 +458,7 @@ towiresorted(dns_rdataset_t *rdataset, const dns_name_t *owner_name,
 	added = 0;
 
 	name = dns_fixedname_initname(&fixed);
-	dns_name_copy(owner_name, name, NULL);
+	dns_name_copynf(owner_name, name);
 	dns_rdataset_getownercase(rdataset, name);
 	offset = 0xffff;
 

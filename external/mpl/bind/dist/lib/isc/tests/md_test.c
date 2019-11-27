@@ -1,4 +1,4 @@
-/*	$NetBSD: md_test.c,v 1.3 2019/10/17 16:47:01 christos Exp $	*/
+/*	$NetBSD: md_test.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -94,6 +94,7 @@ isc_md_test(isc_md_t *md, isc_md_type_t type, const char *buf, size_t buflen,
 	assert_int_equal(isc_md_init(md, type), ISC_R_SUCCESS);
 
 	int i;
+	isc_result_t res;
 
 	for (i = 0; i < repeats; i++) {
 		assert_int_equal(
@@ -111,7 +112,8 @@ isc_md_test(isc_md_t *md, isc_md_type_t type, const char *buf, size_t buflen,
 	isc_buffer_t b;
 	isc_buffer_init(&b, hexdigest, sizeof(hexdigest));
 
-	assert_return_code(isc_hex_totext(&r, 0, "", &b), ISC_R_SUCCESS);
+	res = isc_hex_totext(&r, 0, "", &b);
+	assert_return_code(res, ISC_R_SUCCESS);
 
 	assert_memory_equal(hexdigest, result, (result?strlen(result):0));
 	assert_int_equal(isc_md_reset(md), ISC_R_SUCCESS);

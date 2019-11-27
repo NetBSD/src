@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tsig.h,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -88,12 +88,20 @@ struct dns_tsigkey {
 	ISC_LINK(dns_tsigkey_t) link;
 };
 
-#define dns_tsigkey_identity(tsigkey) \
-	((tsigkey) == NULL ? NULL : \
-	 (tsigkey)->generated ? ((tsigkey)->creator) : \
-	 (&((tsigkey)->name)))
-
 ISC_LANG_BEGINDECLS
+
+const dns_name_t *
+dns_tsigkey_identity(const dns_tsigkey_t *tsigkey);
+/*%<
+ *	Returns the identity of the provided TSIG key.
+ *
+ *	Requires:
+ *\li		'tsigkey' is a valid TSIG key or NULL
+ *
+ *	Returns:
+ *\li		NULL if 'tsigkey' was NULL
+ *\li		identity of the provided TSIG key
+ */
 
 isc_result_t
 dns_tsigkey_create(const dns_name_t *name, const dns_name_t *algorithm,

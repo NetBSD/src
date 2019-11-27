@@ -1,4 +1,4 @@
-/*	$NetBSD: zone.c,v 1.7 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: zone.c,v 1.8 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -3112,7 +3112,7 @@ integrity_checks(dns_zone_t *zone, dns_db_t *db) {
 		/*
 		 * Remember bottom of zone due to NS.
 		 */
-		dns_name_copy(name, bottom, NULL);
+		dns_name_copynf(name, bottom);
 
 		result = dns_rdataset_first(&rdataset);
 		while (result == ISC_R_SUCCESS) {
@@ -3135,7 +3135,7 @@ integrity_checks(dns_zone_t *zone, dns_db_t *db) {
 			/*
 			 * Remember bottom of zone due to DNAME.
 			 */
-			dns_name_copy(name, bottom, NULL);
+			dns_name_copynf(name, bottom);
 			dns_rdataset_disassociate(&rdataset);
 		}
 
@@ -5509,8 +5509,8 @@ zone_iattach(dns_zone_t *source, dns_zone_t **target) {
 	/*
 	 * 'source' locked by caller.
 	 */
-	REQUIRE(LOCKED_ZONE(source));
 	REQUIRE(DNS_ZONE_VALID(source));
+	REQUIRE(LOCKED_ZONE(source));
 	REQUIRE(target != NULL && *target == NULL);
 	INSIST(source->irefs + isc_refcount_current(&source->erefs) > 0);
 	source->irefs++;
@@ -6677,8 +6677,8 @@ zone_resigninc(dns_zone_t *zone) {
 	dst_key_t *zone_keys[DNS_MAXZONEKEYS];
 	bool check_ksk, keyset_kskonly = false;
 	isc_result_t result;
-	isc_stdtime_t now, inception, soaexpire, expire, stop;
-	uint32_t jitter, sigvalidityinterval;
+	isc_stdtime_t now, inception, soaexpire, expire, fullexpire, stop;
+	uint32_t sigvalidityinterval, expiryinterval;
 	unsigned int i;
 	unsigned int nkeys = 0;
 	unsigned int resign;
@@ -6726,20 +6726,34 @@ zone_resigninc(dns_zone_t *zone) {
 	sigvalidityinterval = zone->sigvalidityinterval;
 	inception = now - 3600;	/* Allow for clock skew. */
 	soaexpire = now + sigvalidityinterval;
+	expiryinterval = dns_zone_getsigresigninginterval(zone);
+	if (expiryinterval > sigvalidityinterval) {
+		expiryinterval = sigvalidityinterval;
+	} else {
+		expiryinterval = sigvalidityinterval - expiryinterval;
+	}
+
 	/*
 	 * Spread out signatures over time if they happen to be
 	 * clumped.  We don't do this for each add_sigs() call as
-	 * we still want some clustering to occur.
+	 * we still want some clustering to occur.  In normal operations
+	 * the records should be re-signed as they fall due and they should
+	 * already be spread out.  However if the server is off for a
+	 * period we need to ensure that the clusters don't become
+	 * synchronised by using the full jitter range.
 	 */
 	if (sigvalidityinterval >= 3600U) {
+		uint32_t normaljitter, fulljitter;
 		if (sigvalidityinterval > 7200U) {
-			jitter = isc_random_uniform(3600);
+			normaljitter = isc_random_uniform(3600);
+			fulljitter = isc_random_uniform(expiryinterval);
 		} else {
-			jitter = isc_random_uniform(1200);
+			normaljitter = fulljitter = isc_random_uniform(1200);
 		}
-		expire = soaexpire - jitter - 1;
+		expire = soaexpire - normaljitter - 1;
+		fullexpire = soaexpire - fulljitter - 1;
 	} else {
-		expire = soaexpire - 1;
+		expire = fullexpire = soaexpire - 1;
 	}
 	stop = now + 5;
 
@@ -6779,9 +6793,17 @@ zone_resigninc(dns_zone_t *zone) {
 			break;
 		}
 
+		/*
+		 * If re-signing is over 5 minutes late use 'fullexpire'
+		 * to redistribute the signature over the complete
+		 * re-signing window, otherwise only add a small amount
+		 * of jitter.
+		 */
 		result = add_sigs(db, version, name, zone, covers,
 				  zonediff.diff, zone_keys, nkeys, zone->mctx,
-				  inception, expire, check_ksk, keyset_kskonly);
+				  inception,
+				  resign > (now - 300) ? expire : fullexpire,
+				  check_ksk, keyset_kskonly);
 		if (result != ISC_R_SUCCESS) {
 			dns_zone_log(zone, ISC_LOG_ERROR,
 				     "zone_resigninc:add_sigs -> %s",
@@ -7741,7 +7763,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 	bool first;
 	isc_result_t result;
 	isc_stdtime_t now, inception, soaexpire, expire;
-	uint32_t jitter, sigvalidityinterval;
+	uint32_t jitter, sigvalidityinterval, expiryinterval;
 	unsigned int i;
 	unsigned int nkeys = 0;
 	uint32_t nodes;
@@ -7813,6 +7835,12 @@ zone_nsec3chain(dns_zone_t *zone) {
 	sigvalidityinterval = dns_zone_getsigvalidityinterval(zone);
 	inception = now - 3600;	/* Allow for clock skew. */
 	soaexpire = now + sigvalidityinterval;
+	expiryinterval = dns_zone_getsigresigninginterval(zone);
+	if (expiryinterval > sigvalidityinterval) {
+		expiryinterval = sigvalidityinterval;
+	} else {
+		expiryinterval = sigvalidityinterval - expiryinterval;
+	}
 
 	/*
 	 * Spread out signatures over time if they happen to be
@@ -7821,7 +7849,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 	 */
 	if (sigvalidityinterval >= 3600U) {
 		if (sigvalidityinterval > 7200U) {
-			jitter = isc_random_uniform(3600);
+			jitter = isc_random_uniform(expiryinterval);
 		} else {
 			jitter = isc_random_uniform(1200);
 		}
@@ -7923,7 +7951,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 				 * Remember the obscuring name so that
 				 * we skip all obscured names.
 				 */
-				dns_name_copy(found, name, NULL);
+				dns_name_copynf(found, name);
 				delegation = true;
 				goto next_addnode;
 			}
@@ -8186,7 +8214,7 @@ zone_nsec3chain(dns_zone_t *zone) {
 				 * Remember the obscuring name so that
 				 * we skip all obscured names.
 				 */
-				dns_name_copy(found, name, NULL);
+				dns_name_copynf(found, name);
 				delegation = true;
 				goto next_removenode;
 			}
@@ -8908,7 +8936,7 @@ zone_sign(dns_zone_t *zone) {
 				 * Remember the obscuring name so that
 				 * we skip all obscured names.
 				 */
-				dns_name_copy(found, name, NULL);
+				dns_name_copynf(found, name);
 				is_bottom_of_zone = true;
 				goto next_node;
 			}
@@ -13736,7 +13764,7 @@ dns_zone_notifyreceive(dns_zone_t *zone, isc_sockaddr_t *from,
 	uint32_t serial = 0;
 	bool have_serial = false;
 	dns_tsigkey_t *tsigkey;
-	dns_name_t *tsig;
+	const dns_name_t *tsig;
 
 	REQUIRE(DNS_ZONE_VALID(zone));
 
@@ -14740,6 +14768,7 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 	dns_update_log_t log = { update_log_cb, NULL };
 	uint32_t newserial = 0, desired = 0;
 	isc_time_t timenow;
+	int level = ISC_LOG_ERROR;
 
 	UNUSED(task);
 
@@ -14773,16 +14802,18 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		 */
 		result = ISC_R_SUCCESS;
 		ZONEDB_LOCK(&zone->dblock, isc_rwlocktype_read);
-		if (zone->db != NULL)
+		if (zone->db != NULL) {
 			dns_db_attach(zone->db, &zone->rss_db);
-		else
+		} else {
 			result = ISC_R_FAILURE;
+		}
 		ZONEDB_UNLOCK(&zone->dblock, isc_rwlocktype_read);
 
-		if (result == ISC_R_SUCCESS && zone->raw != NULL)
+		if (result == ISC_R_SUCCESS && zone->raw != NULL) {
 			dns_zone_attach(zone->raw, &zone->rss_raw);
-		else
+		} else {
 			result = ISC_R_FAILURE;
+		}
 
 		UNLOCK_ZONE(zone);
 
@@ -14803,8 +14834,9 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 
 		result = dns_journal_open(zone->mctx, zone->journal,
 					  DNS_JOURNAL_READ, &sjournal);
-		if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND)
+		if (result != ISC_R_SUCCESS && result != ISC_R_NOTFOUND) {
 			goto failure;
+		}
 
 		if (!dns_journal_get_sourceserial(rjournal, &start)) {
 			start = dns_journal_first_serial(rjournal);
@@ -14835,12 +14867,14 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		result = sync_secure_journal(zone, zone->rss_raw, rjournal,
 					     start, end, &soatuple,
 					     &zone->rss_diff);
-		if (result == DNS_R_UNCHANGED)
+		if (result == DNS_R_UNCHANGED) {
+			level = ISC_LOG_INFO;
 			goto failure;
-		else if (result != ISC_R_SUCCESS)
+		} else if (result != ISC_R_SUCCESS) {
 			CHECK(sync_secure_db(zone, zone->rss_raw, zone->rss_db,
 					     zone->rss_oldver, &soatuple,
 					     &zone->rss_diff));
+		}
 
 		CHECK(dns_diff_apply(&zone->rss_diff, zone->rss_db,
 				     zone->rss_newver));
@@ -14857,18 +14891,20 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 				    dns_soa_getserial(&soatuple->rdata);
 			if (!isc_serial_gt(newserial, oldserial)) {
 				newserial = oldserial + 1;
-				if (newserial == 0)
+				if (newserial == 0) {
 					newserial++;
+				}
 				dns_soa_setserial(newserial, &soatuple->rdata);
 			}
 			CHECK(do_one_tuple(&tuple, zone->rss_db,
 					   zone->rss_newver, &zone->rss_diff));
 			CHECK(do_one_tuple(&soatuple, zone->rss_db,
 					   zone->rss_newver, &zone->rss_diff));
-		} else
+		} else {
 			CHECK(update_soa_serial(zone->rss_db, zone->rss_newver,
 						&zone->rss_diff, zone->mctx,
 						zone->updatemethod));
+		}
 
 	}
 	result = dns_update_signaturesinc(&log, zone, zone->rss_db,
@@ -14877,8 +14913,9 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 					  zone->sigvalidityinterval,
 					  &zone->rss_state);
 	if (result == DNS_R_CONTINUE) {
-		if (rjournal != NULL)
+		if (rjournal != NULL) {
 			dns_journal_destroy(&rjournal);
+		}
 		isc_task_send(task, &event);
 		return;
 	}
@@ -14894,10 +14931,11 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 		goto failure;
 	}
 
-	if (rjournal == NULL)
+	if (rjournal == NULL) {
 		CHECK(dns_journal_open(zone->rss_raw->mctx,
 				       zone->rss_raw->journal,
 				       DNS_JOURNAL_WRITE, &rjournal));
+	}
 	CHECK(zone_journal(zone, &zone->rss_diff, &end,
 			   "receive_secure_serial"));
 
@@ -14927,28 +14965,35 @@ receive_secure_serial(isc_task_t *task, isc_event_t *event) {
 	isc_event_free(&zone->rss_event);
 	event = ISC_LIST_HEAD(zone->rss_events);
 
-	if (zone->rss_raw != NULL)
+	if (zone->rss_raw != NULL) {
 		dns_zone_detach(&zone->rss_raw);
-	if (result != ISC_R_SUCCESS)
-		dns_zone_log(zone, ISC_LOG_ERROR, "receive_secure_serial: %s",
+	}
+	if (result != ISC_R_SUCCESS) {
+		dns_zone_log(zone, level, "receive_secure_serial: %s",
 			     dns_result_totext(result));
-	if (tuple != NULL)
+	}
+	if (tuple != NULL) {
 		dns_difftuple_free(&tuple);
-	if (soatuple != NULL)
+	}
+	if (soatuple != NULL) {
 		dns_difftuple_free(&soatuple);
+	}
 	if (zone->rss_db != NULL) {
-		if (zone->rss_oldver != NULL)
+		if (zone->rss_oldver != NULL) {
 			dns_db_closeversion(zone->rss_db, &zone->rss_oldver,
 					    false);
-		if (zone->rss_newver != NULL)
+		}
+		if (zone->rss_newver != NULL) {
 			dns_db_closeversion(zone->rss_db, &zone->rss_newver,
 					    false);
+		}
 		dns_db_detach(&zone->rss_db);
 	}
 	INSIST(zone->rss_oldver == NULL);
 	INSIST(zone->rss_newver == NULL);
-	if (rjournal != NULL)
+	if (rjournal != NULL) {
 		dns_journal_destroy(&rjournal);
+	}
 	dns_diff_clear(&zone->rss_diff);
 
 	if (event != NULL) {
