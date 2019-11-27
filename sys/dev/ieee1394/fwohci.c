@@ -1,4 +1,4 @@
-/*	$NetBSD: fwohci.c,v 1.142 2019/05/28 08:59:34 msaitoh Exp $	*/
+/*	$NetBSD: fwohci.c,v 1.142.2.1 2019/11/27 14:03:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 Hidetoshi Shimokawa
@@ -37,7 +37,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.142 2019/05/28 08:59:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fwohci.c,v 1.142.2.1 2019/11/27 14:03:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1746,8 +1746,8 @@ fwohci_db_init(struct fwohci_softc *sc, struct fwohci_dbch *dbch)
 	    dbch->ndb, BUS_DMA_WAITOK);
 #else	/* Ooops, debugging now... */
 	    dbch->ndb, BUS_DMA_WAITOK |
-		(dbch->off == OHCI_ARQOFF || dbch->off == OHCI_ARSOFF) ?
-							BUS_DMA_COHERENT : 0);
+		((dbch->off == OHCI_ARQOFF || dbch->off == OHCI_ARSOFF) ?
+							BUS_DMA_COHERENT : 0));
 #endif
 	if (dbch->am == NULL) {
 		aprint_error_dev(fc->dev, "fwdma_malloc_multiseg failed\n");
