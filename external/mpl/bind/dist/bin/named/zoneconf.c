@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneconf.c,v 1.5 2019/10/17 16:46:58 christos Exp $	*/
+/*	$NetBSD: zoneconf.c,v 1.6 2019/11/27 05:48:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -262,16 +262,8 @@ configure_zone_ssutable(const cfg_obj_t *zconfig, dns_zone_t *zone,
 
 		dns_fixedname_init(&fname);
 		if (usezone) {
-			result = dns_name_copy(dns_zone_getorigin(zone),
-					       dns_fixedname_name(&fname),
-					       NULL);
-			if (result != ISC_R_SUCCESS) {
-				cfg_obj_log(identity, named_g_lctx,
-					    ISC_LOG_ERROR,
-					    "error copying origin: %s",
-					    isc_result_totext(result));
-				goto cleanup;
-			}
+			dns_name_copynf(dns_zone_getorigin(zone),
+					   dns_fixedname_name(&fname));
 		} else {
 			str = cfg_obj_asstring(dname);
 			isc_buffer_constinit(&b, str, strlen(str));
@@ -787,7 +779,6 @@ isself(dns_view_t *myview, dns_tsigkey_t *mykey,
 	dns_aclenv_t *env = ns_interfacemgr_getaclenv(interfacemgr);
 	dns_view_t *view;
 	dns_tsigkey_t *key = NULL;
-	dns_name_t *tsig = NULL;
 	isc_netaddr_t netsrc;
 	isc_netaddr_t netdst;
 
@@ -802,7 +793,9 @@ isself(dns_view_t *myview, dns_tsigkey_t *mykey,
 
 	for (view = ISC_LIST_HEAD(named_g_server->viewlist);
 	     view != NULL;
-	     view = ISC_LIST_NEXT(view, link)) {
+	     view = ISC_LIST_NEXT(view, link))
+	{
+		const dns_name_t *tsig = NULL;
 
 		if (view->matchrecursiveonly)
 			continue;

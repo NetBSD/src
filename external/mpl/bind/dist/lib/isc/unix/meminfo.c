@@ -1,4 +1,4 @@
-/*	$NetBSD: meminfo.c,v 1.3 2019/01/09 16:55:17 christos Exp $	*/
+/*	$NetBSD: meminfo.c,v 1.4 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -16,7 +16,7 @@
 #include <isc/meminfo.h>
 #include <inttypes.h>
 #include <unistd.h>
-#ifdef HAVE_SYS_SYSCTL_H
+#if defined(HAVE_SYS_SYSCTL_H) && !defined(__linux__)
 #include <sys/sysctl.h>
 #endif
 

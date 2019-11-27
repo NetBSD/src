@@ -1,4 +1,4 @@
-/*	$NetBSD: rrl.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: rrl.c,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -912,9 +912,8 @@ make_log_buf(dns_rrl_t *rrl, dns_rrl_entry_t *e,
 				e->log_qname = qbuf->index;
 				qbuf->e = e;
 				dns_fixedname_init(&qbuf->qname);
-				dns_name_copy(qname,
-					      dns_fixedname_name(&qbuf->qname),
-					      NULL);
+				dns_name_copynf(qname,
+						   dns_fixedname_name(&qbuf->qname));
 			}
 		}
 		if (qbuf != NULL)
