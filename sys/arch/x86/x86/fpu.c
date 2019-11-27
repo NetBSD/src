@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.59 2019/10/30 16:32:04 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.60 2019/11/27 06:24:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.59 2019/10/30 16:32:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.60 2019/11/27 06:24:33 maxv Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -146,14 +146,9 @@ fpu_lwp_area(struct lwp *l)
 	return area;
 }
 
-/*
- * Bring curlwp's FPU state in memory. It will get installed back in the CPU
- * when returning to userland.
- */
-void
-fpu_save(void)
+static inline void
+fpu_save_lwp(struct lwp *l)
 {
-	struct lwp *l = curlwp;
 	struct pcb *pcb = lwp_getpcb(l);
 	union savefpu *area = &pcb->pcb_savefpu;
 
@@ -164,6 +159,16 @@ fpu_save(void)
 		l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	}
 	kpreempt_enable();
+}
+
+/*
+ * Bring curlwp's FPU state in memory. It will get installed back in the CPU
+ * when returning to userland.
+ */
+void
+fpu_save(void)
+{
+	fpu_save_lwp(curlwp);
 }
 
 void
@@ -334,6 +339,45 @@ fpu_lwp_abandon(struct lwp *l)
 	l->l_md.md_flags &= ~MDL_FPU_IN_CPU;
 	stts();
 	kpreempt_enable();
+}
+
+/* -------------------------------------------------------------------------- */
+
+void
+fpu_kern_enter(void)
+{
+	struct lwp *l = curlwp;
+	struct cpu_info *ci;
+	int s;
+
+	s = splhigh();
+
+	ci = curcpu();
+	KASSERT(ci->ci_kfpu_spl == -1);
+	ci->ci_kfpu_spl = s;
+
+	/*
+	 * If we are in a softint and have a pinned lwp, the fpu state is that
+	 * of the pinned lwp, so save it there.
+	 */
+	if ((l->l_pflag & LP_INTR) && (l->l_switchto != NULL)) {
+		fpu_save_lwp(l->l_switchto);
+	} else {
+		fpu_save_lwp(l);
+	}
+}
+
+void
+fpu_kern_leave(void)
+{
+	struct cpu_info *ci = curcpu();
+	int s;
+
+	KASSERT(ci->ci_ilevel == IPL_HIGH);
+	KASSERT(ci->ci_kfpu_spl != -1);
+	s = ci->ci_kfpu_spl;
+	ci->ci_kfpu_spl = -1;
+	splx(s);
 }
 
 /* -------------------------------------------------------------------------- */

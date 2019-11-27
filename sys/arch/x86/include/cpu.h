@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.113 2019/11/23 19:40:37 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.114 2019/11/27 06:24:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,6 +138,8 @@ struct cpu_info {
 	uint64_t ci_scratch;
 	uintptr_t ci_pmap_data[64 / sizeof(uintptr_t)];
 	struct kcpuset *ci_tlb_cpuset;
+
+	int ci_kfpu_spl;
 
 #ifndef XENPV
 	struct intrsource *ci_isources[MAX_INTR_SOURCES];

@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.h,v 1.19 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: fpu.h,v 1.20 2019/11/27 06:24:33 maxv Exp $	*/
 
 #ifndef	_X86_FPU_H_
 #define	_X86_FPU_H_
@@ -29,6 +29,9 @@ void fpu_sigreset(struct lwp *);
 
 void fpu_lwp_fork(struct lwp *, struct lwp *);
 void fpu_lwp_abandon(struct lwp *l);
+
+void fpu_kern_enter(void);
+void fpu_kern_leave(void);
 
 void process_write_fpregs_xmm(struct lwp *, const struct fxsave *);
 void process_write_fpregs_s87(struct lwp *, const struct save87 *);
