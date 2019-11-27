@@ -1,4 +1,4 @@
-/*	$NetBSD: ipgphy.c,v 1.6 2019/11/21 09:48:57 msaitoh Exp $ */
+/*	$NetBSD: ipgphy.c,v 1.7 2019/11/27 08:53:32 msaitoh Exp $ */
 /*	$OpenBSD: ipgphy.c,v 1.19 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.6 2019/11/21 09:48:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.7 2019/11/27 08:53:32 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -119,6 +119,7 @@ ipgphy_attach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
+	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
 	aprint_normal("\n");
 }
