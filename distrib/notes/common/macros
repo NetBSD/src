@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.44 2019/11/27 09:29:25 martin Exp $
+.\"	$NetBSD: macros,v 1.45 2019/11/27 19:07:31 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -322,13 +322,17 @@
 ..
 .\}
 .de Te
-.ie rHTML <a name="\\$2">\\$2</a>
-.el \\$2
-.if dTOC \.tm .Ti \\$1 \\n% \\$2
+.nr Te-toc-level \\$1
+.shift
+.ie rHTML <a name="\\$*">\\$*</a>
+.el \\$*
+.if dTOC .tm .Ti \\n[Te-toc-level] \\n% "\\$*"
 ..
 .de To
-.if rHTML <a name="\\$2"></a>
-.if dTOC \.tm .Ti \\$1 \\n% \\$2
+.nr To-toc-level \\$1
+.shift
+.if rHTML <a name="\\$*"></a>
+.if dTOC .tm .Ti \\n[To-toc-level] \\n% "\\$*"
 ..
 .de Ti
 .ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
