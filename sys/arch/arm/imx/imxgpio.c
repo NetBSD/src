@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.6 2019/07/24 12:33:18 hkenken Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.7 2019/11/27 07:26:08 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.6 2019/07/24 12:33:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.7 2019/11/27 07:26:08 hkenken Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -288,40 +288,37 @@ imxgpio_pin_ctl(void *arg, int pin, int flags)
 }
 
 static void
-gpio_defer(device_t self)
+imxgpio_attach_ports(struct imxgpio_softc *gpio)
 {
-	struct imxgpio_softc * const gpio = device_private(self);
 	struct gpio_chipset_tag * const gp = &gpio->gpio_chipset;
 	struct gpiobus_attach_args gba;
-	gpio_pin_t *pins;
-	uint32_t mask, dir, value;
-	int pin;
+	uint32_t dir;
+	u_int pin;
 
 	gp->gp_cookie = gpio;
 	gp->gp_pin_read = imxgpio_pin_read;
 	gp->gp_pin_write = imxgpio_pin_write;
 	gp->gp_pin_ctl = imxgpio_pin_ctl;
 
-	gba.gba_gc = gp;
-	gba.gba_pins = gpio->gpio_pins;
-	gba.gba_npins = __arraycount(gpio->gpio_pins);
-
 	dir = GPIO_READ(gpio, GPIO_DIR);
-	value = GPIO_READ(gpio, GPIO_DR);
-	for (pin = 0, mask = 1, pins = gpio->gpio_pins;
-	     pin < 32; pin++, mask <<= 1, pins++) {
+	for (pin = 0; pin < __arraycount(gpio->gpio_pins); pin++) {
+		uint32_t mask = __BIT(pin);
+		gpio_pin_t *pins = &gpio->gpio_pins[pin];
 		pins->pin_num = pin;
 		if ((gpio->gpio_edge_mask | gpio->gpio_level_mask) & mask)
 			pins->pin_caps = GPIO_PIN_INPUT;
 		else
-			pins->pin_caps = GPIO_PIN_INPUT|GPIO_PIN_OUTPUT;
+			pins->pin_caps = GPIO_PIN_INPUT | GPIO_PIN_OUTPUT;
 		pins->pin_flags =
 		    (dir & mask) ? GPIO_PIN_OUTPUT : GPIO_PIN_INPUT;
-		pins->pin_state =
-		    (value & mask) ? GPIO_PIN_HIGH : GPIO_PIN_LOW;
+		pins->pin_state = imxgpio_pin_read(gpio, pin);
 	}
 
-	config_found_ia(self, "gpiobus", &gba, gpiobus_print);
+	memset(&gba, 0, sizeof(gba));
+	gba.gba_gc = gp;
+	gba.gba_pins = gpio->gpio_pins;
+	gba.gba_npins = __arraycount(gpio->gpio_pins);
+	config_found_ia(gpio->gpio_dev, "gpiobus", &gba, gpiobus_print);
 }
 #endif /* NGPIO > 0 */
 
@@ -351,7 +348,7 @@ imxgpio_attach_common(device_t self)
 	imxgpio_handles[gpio->gpio_unit] = gpio;
 
 #if NGPIO > 0
-	config_interrupts(self, gpio_defer);
+	imxgpio_attach_ports(gpio);
 #endif
 }
 
