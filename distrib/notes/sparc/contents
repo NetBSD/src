@@ -1,4 +1,4 @@
-.\"	$NetBSD: contents,v 1.25 2019/11/24 11:15:36 martin Exp $
+.\"	$NetBSD: contents,v 1.26 2019/11/27 20:58:25 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2005 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -240,7 +240,7 @@ kernel, which supports only UltraSPARC systems in 32 bit mode, named
 This set contains a
 .Nx*M
 \*V
-.Li GENERIC-KRUPS
+.Li KRUPS
 kernel, which supports the JavaStation-NC, named
 .Pa /netbsd .
 .It Sy kern-MRCOFFEE
