@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.44 2019/08/06 01:34:29 kamil Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.45 2019/11/27 09:01:59 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.44 2019/08/06 01:34:29 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.45 2019/11/27 09:01:59 rin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -315,15 +315,15 @@ ptrace_machdep_dorequest(
 	struct iovec iov;
 	struct vmspace *vm;
 	int error;
-	int write = 0;
+	bool write = false;
 
 	switch (req) {
 	case PT_SETXSTATE:
-		write = 1;
+		write = true;
 
 		/* FALLTHROUGH */
 	case PT_GETXSTATE:
-		/* write = 0 done above. */
+		/* write = false done above. */
 		if (!process_machdep_validxstate(lt->l_proc))
 			return EINVAL;
 		if (__predict_false(l->l_proc->p_flag & PK_32)) {
