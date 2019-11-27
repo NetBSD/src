@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.121 2019/11/26 18:31:55 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.122 2019/11/27 11:22:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6466,4 +6466,28 @@ sys/dev/pci/if_mcx.c				1.7
 
 	mcx(4): fix IFF_ALLMULTI handling.
 	[jmcneill, ticket #486]
+
+sys/dev/pci/if_bge.c				1.336,1.340-1.342
+
+	- Avoid undefined behavior in bge_setmulti().
+	- Avoid undefined behavior when setting the MAC address in
+	  bge_init().
+	- Fix a bug that SK-9D41 can't detect fiber media.
+	- Use *_FLUSH() more. The main purpose is to wait following 
+	  delay() correctly.
+	- Add missing DELAY(80) after writing BGE_MI_MODE register.
+	- Modify PHY initialization code to fix a bug that SK-9D21
+	  doesn't detect MII PHY.
+	[msaitoh, ticket #487]
+
+sys/arch/amd64/amd64/netbsd32_machdep.c		1.126
+
+	Don't depend on #ifdef USER_LDT in cpu_mcontext32_validate(), but
+	rather on whether the proc uses a user-set LDT.
+	[maxv, ticket #488]
+
+sys/dev/mii/ipgphy.c				1.7
+
+	Print dmesg correctly.
+	[msaitoh, ticket #490]
 
