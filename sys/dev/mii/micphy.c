@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.9 2019/11/06 16:02:53 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.10 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.9 2019/11/06 16:02:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.10 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include "opt_mii.h"
 
@@ -212,7 +212,6 @@ micphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &micphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
 
 	if ((sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8041)
 	    || (sc->mii_mpd_model == MII_MODEL_MICREL_KSZ8041RNLI)
@@ -241,13 +240,8 @@ micphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_phy_add_media(sc);
 }
 
 static void

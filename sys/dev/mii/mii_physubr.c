@@ -1,4 +1,4 @@
-/*	$NetBSD: mii_physubr.c,v 1.88 2019/11/20 08:50:59 msaitoh Exp $	*/
+/*	$NetBSD: mii_physubr.c,v 1.89 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.88 2019/11/20 08:50:59 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mii_physubr.c,v 1.89 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -465,6 +465,19 @@ mii_phy_add_media(struct mii_softc *sc)
 	const char *sep = "";
 	int fdx = 0;
 
+	aprint_normal_dev(self, "");
+	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
+	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0) {
+		aprint_error("no media present\n");
+		goto out;
+	}
+
+	/*
+	 * Set the autonegotiation timer for 10/100 media.  Gigabit media is
+	 * handled below.
+	 */
+	sc->mii_anegticks = MII_ANEGTICKS;
+
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
 #define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
 
@@ -577,9 +590,9 @@ mii_phy_add_media(struct mii_softc *sc)
 	if (fdx != 0 && (sc->mii_flags & MIIF_DOPAUSE))
 		mii->mii_media.ifm_mask |= IFM_ETH_FMASK;
 out:
+	aprint_normal("\n");
 	if (!pmf_device_register(self, NULL, mii_phy_resume)) {
-		aprint_normal("\n");
-		aprint_error_dev(self, "couldn't establish power handler");
+		aprint_error_dev(self, "couldn't establish power handler\n");
 	}
 }
 
