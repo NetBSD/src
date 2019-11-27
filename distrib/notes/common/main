@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.3 2019/11/27 13:36:55 msaitoh Exp $
+.\"	$NetBSD: main,v 1.551.2.4 2019/11/27 14:28:40 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -558,6 +558,19 @@ The complete list of changes can be found in the following files:
 .br
 .Lk \*[RELEASE_URL]/CHANGES.prev CHANGES.prev
 .\} \" !\n[RELEASE_BRANCH]
+.
+.Ss2 Installation and Partitioning Changes
+The sysinst installation program has been reworked for this release.
+.Pp
+It now supports arbitrary big disks and offers GPT partitions as alternative
+to MBR/fdisk partitions on a lot architectures.
+.Pp
+Unfortunately it has not been tested on all hardware supported by
+.Nx .
+If you have problems partitioning the target disk or installing the system,
+please report bugs with as much details as possible.
+See the Administrivia section below on how to report bugs or contact
+other users and ask for support.
 .
 .Ss "Features to be removed in a later release"
 The following features are to be removed from
