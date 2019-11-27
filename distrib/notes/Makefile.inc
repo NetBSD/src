@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43.18.2 2019/11/25 05:50:15 msaitoh Exp $
+#	$NetBSD: Makefile.inc,v 1.43.18.3 2019/11/27 13:36:55 msaitoh Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -51,7 +51,11 @@ PRESET+=	-rnextminor=${nextmin}
 .if defined(BUILDID) && "${BUILDID:M20*Z}" != ""
 curdate!=	env LANG="C" date -d "${BUILDID:C/[0-9][0-9][0-9][0-9]Z$//}" "+%b %d, %Y"
 .else
+.if ${NETBSD_OFFICIAL_RELEASE:Uno} == "yes"
+.error "No release date could be derived from BUILDID"
+.else
 curdate!=	env LANG="C" date "+%b %d, %Y"
+.endif
 .endif
 PRESET+=	-dcur_date="${curdate}"
 
@@ -103,8 +107,7 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 # space taken by the TOC itself.
 #
 
-TOCPROC=	   2>&1 >/dev/null |\
-           ${TOOL_SED} -n '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
+TOCPROC=	   2>&1 >/dev/null | ${TOOL_GREP} -e '^\.Ti '
 
 ${TARG}.PostScript.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
@@ -119,8 +122,6 @@ ${TARG}.ASCII.toc: ${SRCS}
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
-	mv -f $@.tmp $@
 	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
 	mv -f $@.tmp $@
 
