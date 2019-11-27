@@ -1,4 +1,4 @@
-/*	$NetBSD: process_machdep.c,v 1.45 2019/11/27 09:01:59 rin Exp $	*/
+/*	$NetBSD: process_machdep.c,v 1.46 2019/11/27 09:08:14 rin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.45 2019/11/27 09:01:59 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: process_machdep.c,v 1.46 2019/11/27 09:08:14 rin Exp $");
 
 #include "opt_xen.h"
 #include <sys/param.h>
@@ -324,7 +324,7 @@ ptrace_machdep_dorequest(
 		/* FALLTHROUGH */
 	case PT_GETXSTATE:
 		/* write = false done above. */
-		if (!process_machdep_validxstate(lt->l_proc))
+		if (!process_machdep_validfpu(lt->l_proc))
 			return EINVAL;
 		if (__predict_false(l->l_proc->p_flag & PK_32)) {
 			struct netbsd32_iovec user_iov;
@@ -404,7 +404,7 @@ process_machdep_doxstate(struct lwp *curl, struct lwp *l, struct uio *uio)
 }
 
 int
-process_machdep_validxstate(struct proc *p)
+process_machdep_validfpu(struct proc *p)
 {
 
 	if (p->p_flag & PK_SYSTEM)
