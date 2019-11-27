@@ -1,4 +1,4 @@
-/*      $NetBSD: rdcphy.c,v 1.4 2019/03/25 09:20:46 msaitoh Exp $        */
+/*      $NetBSD: rdcphy.c,v 1.5 2019/11/27 10:19:21 msaitoh Exp $        */
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -33,7 +33,7 @@
  * Driver for the RDC Semiconductor R6040 10/100 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.4 2019/03/25 09:20:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.5 2019/11/27 10:19:21 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,7 +109,6 @@ rdcphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &rdcphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 
@@ -117,13 +116,8 @@ rdcphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
+
 	mii_phy_add_media(sc);
-	aprint_normal("\n");
-
-	if (!pmf_device_register(self, NULL, mii_phy_resume))
-		aprint_error_dev(self, "couldn't establish power handler\n");
-
 }
 
 static int

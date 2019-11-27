@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.61 2019/11/26 08:19:51 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.62 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.61 2019/11/26 08:19:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.62 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -180,7 +180,6 @@ makphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &makphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
 
 	switch (model) {
 	case MII_MODEL_xxMARVELL_E1000:
@@ -223,13 +222,7 @@ page0:
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+	mii_phy_add_media(sc);
 }
 
 static void

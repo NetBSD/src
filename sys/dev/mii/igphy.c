@@ -1,4 +1,4 @@
-/*	$NetBSD: igphy.c,v 1.31 2019/03/25 07:34:13 msaitoh Exp $	*/
+/*	$NetBSD: igphy.c,v 1.32 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*
  * The Intel copyright applies to the analog register setup, and the
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.31 2019/03/25 07:34:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: igphy.c,v 1.32 2019/11/27 10:19:20 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mii.h"
@@ -157,7 +157,6 @@ igphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &igphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	PHY_RESET(sc);
 
@@ -165,13 +164,8 @@ igphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_phy_add_media(sc);
 }
 
 typedef struct {

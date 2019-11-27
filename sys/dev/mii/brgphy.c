@@ -1,4 +1,4 @@
-/*	$NetBSD: brgphy.c,v 1.85 2019/11/26 08:21:03 msaitoh Exp $	*/
+/*	$NetBSD: brgphy.c,v 1.86 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.85 2019/11/26 08:21:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: brgphy.c,v 1.86 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,7 +216,6 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_mpd_rev = MII_REV(ma->mii_id2);
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
 
 	if (device_is_a(parent, "bge"))
 		bsc->sc_isbge = true;
@@ -271,7 +270,6 @@ brgphyattach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
-	aprint_normal_dev(self, "");
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 		sc->mii_flags |= MIIF_NOISOLATE | MIIF_NOLOOP;
 
@@ -293,14 +291,12 @@ brgphyattach(device_t parent, device_t self, void *aux)
 			    & BNX_PHY_2_5G_CAPABLE_FLAG) {
 				ADD(IFM_MAKEWORD(IFM_ETHER, IFM_2500_SX,
 					IFM_FDX, sc->mii_inst), 0);
-				aprint_normal("2500baseSX-FDX, ");
+				aprint_normal_dev(self, "2500baseSX-FDX\n");
 #undef ADD
 			}
 		}
 	}
 	mii_phy_add_media(sc);
-
-	aprint_normal("\n");
 }
 
 static int

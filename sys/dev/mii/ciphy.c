@@ -1,4 +1,4 @@
-/* $NetBSD: ciphy.c,v 1.37 2019/10/17 09:22:49 msaitoh Exp $ */
+/* $NetBSD: ciphy.c,v 1.38 2019/11/27 10:19:20 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.37 2019/10/17 09:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ciphy.c,v 1.38 2019/11/27 10:19:20 msaitoh Exp $");
 
 /*
  * Driver for the Cicada CS8201 10/100/1000 copper PHY.
@@ -117,8 +117,6 @@ ciphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &ciphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
-
 	sc->mii_flags |= MIIF_NOISOLATE;
 
 	ciphy_reset(sc);
@@ -127,12 +125,8 @@ ciphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_phy_add_media(sc);
 }
 
 static int
@@ -270,7 +264,7 @@ setit:
 			break;
 
 		/* Only retry autonegotiation every N seconds. */
-		if (sc->mii_ticks <= MII_ANEGTICKS_GIGE)
+		if (sc->mii_ticks <= sc->mii_anegticks)
 			break;
 
 		mii_phy_auto(sc, 0);
