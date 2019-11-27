@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.46 2019/11/27 21:37:27 uwe Exp $
+.\"	$NetBSD: macros,v 1.47 2019/11/27 23:53:01 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -310,15 +310,20 @@
 .\"   .Tc			import the TOC
 .\"   .Ti depth page "item"	(internal) output an entry
 .if dTOC \{\
+.de mktoc
+.nr mktoc-level \\$1
+.shift
+.tm .Ti \\n[toc-level] \\n% "\\$*"
+..
 .rn Ss Ss-toc
 .de Ss
 .Ss-toc \\$@
-.tm .Ti 0 \\n% "\\$*"
+.mktoc 0 \\$@
 ..
 .rn Ss2 Ss2-toc
 .de Ss2
 .Ss2-toc \\$@
-.tm .Ti 1 \\n% "\\$*"
+.mktoc 1 \\$@
 ..
 .\}
 .de Te
@@ -326,13 +331,13 @@
 .shift
 .ie rHTML <a name="\\$*">\\$*</a>
 .el \\$*
-.if dTOC .tm .Ti \\n[Te-toc-level] \\n% "\\$*"
+.if dTOC .mktoc \\n[Te-toc-level] \\$@
 ..
 .de To
 .nr To-toc-level \\$1
 .shift
 .if rHTML <a name="\\$*"></a>
-.if dTOC .tm .Ti \\n[To-toc-level] \\n% "\\$*"
+.if dTOC .mktoc \\n[To-toc-level] \\$@
 ..
 .de Ti
 .ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
