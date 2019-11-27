@@ -1,4 +1,4 @@
-.\"	$NetBSD: postinstall,v 1.85 2019/11/24 11:15:33 martin Exp $
+.\"	$NetBSD: postinstall,v 1.86 2019/11/27 09:29:25 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -288,14 +288,12 @@ if you want to edit the password database.
 The X Window System
 .Pp
 If you installed the X Window System, you may want to read the
-chapter about X in the NetBSD Guide:
-.Lk https://www.NetBSD.org/docs/guide/en/chap-x.html
+chapter about X in the
+.Lk https://www.NetBSD.org/docs/guide/en/chap-x.html "NetBSD Guide" :
 .if \n[hp300] \{\
 Also, you may want to read through the
 .Nx*M
-FAQ entry on X11.
-.br
-.Lk https://www.NetBSD.org/ports/hp300/faq.html#x11
+.Lk https://www.NetBSD.org/ports/hp300/faq.html#x11 "FAQ entry on X11" .
 .\}
 .if \n[mac68k] \{\
 .(tag [Color_X]

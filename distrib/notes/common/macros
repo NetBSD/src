@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.43 2018/01/24 09:04:41 skrll Exp $
+.\"	$NetBSD: macros,v 1.44 2019/11/27 09:29:25 martin Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -312,13 +312,13 @@
 .if dTOC \{
 .rn Ss Ss-toc
 .de Ss
-.Ss-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 0 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.Ss-toc \\$@
+.tm .Ti 0 \\n% "\\$*"
 ..
 .rn Ss2 Ss2-toc
 .de Ss2
-.Ss2-toc \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
-\.tm .Ti 1 \\n% \\$1 \\$2 \\$3 \\$4 \\$5 \\$6 \\$7 \\$8 \\$9
+.Ss2-toc \\$@
+.tm .Ti 1 \\n% "\\$*"
 ..
 .\}
 .de Te

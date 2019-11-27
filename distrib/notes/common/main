@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.556 2019/11/25 15:40:18 pgoyette Exp $
+.\"	$NetBSD: main,v 1.557 2019/11/27 09:29:25 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -145,8 +145,7 @@ on an FTP site near you, usually located in the
 directory.
 Check the list of
 .Nx
-mirrors at
-.Lk https://www.NetBSD.org/mirrors
+.Lk https://www.NetBSD.org/mirrors mirrors
 for details.
 .Pp
 Option 2: bootable CD-ROM images from
@@ -275,12 +274,10 @@ replacing
 .Pa /dev/rsd0d
 with the appropriate device for your system:
 .Dl # Ic "dd if=NetBSD-\*V-\*M-install.img of=/dev/rsd0d bs=32k"
-On Windows, you will need to use a program such as Win32 Disk Imager,
-which can be found at
-.Lk http://sourceforge.net/projects/win32diskimager/
+On Windows, you will need to use a program such as
+.Lk http://sourceforge.net/projects/win32diskimager/ "Win32 Disk Imager" ,
 or
-Rawrite32 which can be found at
-.Lk https://www.NetBSD.org/~martin/rawrite32 .
+.Lk https://www.NetBSD.org/~martin/rawrite32 Rawrite32 .
 .if \n[amd64]:\n[i386] \{\
 If you have problems writing a raw image to a floppy,
 the
@@ -330,8 +327,7 @@ kernel, which contains all the tools required to install
 .It
 Determine your machine's model, quirks, and Open Firmware version from the
 .Nx*M
-Model Support webpage.
-.Lk https://www.NetBSD.org/ports/macppc/models.html
+.Lk https://www.NetBSD.org/ports/macppc/models.html "Model Support webpage" .
 .Pp
 At present,
 .Nx*M
@@ -495,9 +491,8 @@ system architectures, with preliminary support for the others included in
 source form.
 Please see the
 .Nx
-website at
-.Lk https://www.NetBSD.org/
-for information on them.)
+.Lk https://www.NetBSD.org/ website
+for information on them.
 .Pp
 .Nx
 is a completely integrated system.
@@ -519,8 +514,8 @@ would not exist.
 .
 .ie \n[RELEASE_BRANCH] .Ss Changes Between The NetBSD \n[oldvers] \
 and \n[major] Releases
-.el .Ss "Changes Between The NetBSD \n[oldvers] and" \
-\n[major] Releases, and newer.
+.el .Ss Changes Between The NetBSD \n[oldvers] and \
+\n[major] Releases, and newer
 .Pp
 The
 .Nx
@@ -537,35 +532,31 @@ went into the
 \*V release.
 .ie \n[RELEASE_BRANCH] \{\
 The complete list of changes can be found in the following files:
-.(tag
-.It Li CHANGES
-.Lk \*[RELEASE_URL]/CHANGES
+.br
+.Lk "\*[RELEASE_URL]/CHANGES" CHANGES
 .de showdotchanges
 .  nr ominor (\\$1-1)
 .  if \\n[ominor] .showdotchanges \\n[ominor]
 .  nr ominor (\\$1-1)
-.  It Li CHANGES-\\n[major].\\$1
-.  Lk \*[RELEASE_URL]/CHANGES-\n[major].\\$1
+.  br
+.  Lk "\*[RELEASE_URL]/CHANGES-\n[major].\\$1" "CHANGES-\\n[major].\\$1"
 ..
 .showdotchanges \n[minor]
 .if (\n[nextminor] > \n[minor]) \{\
-.  It Li CHANGES-\\n[major].\n[nextminor]
-.  Lk \*[RELEASE_URL]/CHANGES-\n[major].\n[nextminor]
+.  br
+.  Lk "\*[RELEASE_URL]/CHANGES-\n[major].\n[nextminor]" "CHANGES-\\n[major].\n[nextminor]"
 .\}
-.tag)
+.br
 files in the top level directory of the NetBSD \n[major].\n[minor] release tree.
 .Pp
-.\" fill in with changes.mdoc
 .
 .\} \" \n[RELEASE_BRANCH]
 .el \{\
 The complete list of changes can be found in the following files:
-.(tag
-.It Li CHANGES
-.Lk \*[RELEASE_URL]/CHANGES
-.It Li CHANGES.prev
-.Lk \*[RELEASE_URL]/CHANGES.prev
-.tag)
+.br
+.Lk \*[RELEASE_URL]/CHANGES CHANGES
+.br
+.Lk \*[RELEASE_URL]/CHANGES.prev CHANGES.prev
 .\} \" !\n[RELEASE_BRANCH]
 .
 .Ss "Features to be removed in a later release"
@@ -605,7 +596,7 @@ Foundation, its composition, aims, and work can be found at:
 .Pp
 .
 Refer to
-.Lk https://www.NetBSD.org/mirrors/
+.Lk https://www.NetBSD.org/mirrors/ mirrors
 .br_ne 10P
 .
 .Ss "NetBSD \*V Release Contents
@@ -631,7 +622,7 @@ Changes between the initial \n[major].0 branch and final release of \n[major].0.
 .  It Li CHANGES-\\n[major].\\$1
 Changes between the \n[major].\\n[ominor] and the \n[major].\\$1 release.
 ..
-.showdotchanges \n[minor]
+.if \n[minor] .showdotchanges \n[minor]
 .if (\n[nextminor] > \n[minor]) \{\
 .It Li CHANGES-\\n[major].\n[nextminor]
 Changes after the release of \n[major].\n[minor].
