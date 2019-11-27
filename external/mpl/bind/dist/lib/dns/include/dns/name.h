@@ -1,4 +1,4 @@
-/*	$NetBSD: name.h,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: name.h,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1242,16 +1242,19 @@ dns_name_settotextfilter(dns_name_totextfilter_t proc);
 
 isc_result_t
 dns_name_copy(const dns_name_t *source, dns_name_t *dest, isc_buffer_t *target);
+void
+dns_name_copynf(const dns_name_t *source, dns_name_t *dest);
 /*%<
- * Makes 'dest' refer to a copy of the name in 'source'.  The data are
- * either copied to 'target' or the dedicated buffer in 'dest'.
+ * Makes 'dest' refer to a copy of the name in 'source'.  The data are either
+ * copied to 'target' or in case of dns_name_copynf the dedicated buffer in
+ * 'dest'.
  *
  * Requires:
  * \li	'source' is a valid name.
  *
  * \li	'dest' is an initialized name with a dedicated buffer.
  *
- * \li	'target' is NULL or an initialized buffer.
+ * \li	'target' is an initialized buffer.
  *
  * \li	Either dest has a dedicated buffer or target != NULL.
  *

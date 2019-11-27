@@ -1,4 +1,4 @@
-/*	$NetBSD: nsupdate.c,v 1.4 2019/04/28 00:01:13 christos Exp $	*/
+/*	$NetBSD: nsupdate.c,v 1.5 2019/11/27 05:48:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -2636,7 +2636,7 @@ recvsoa(isc_task_t *task, isc_event_t *event) {
 		 * address.
 		 */
 		zname = dns_fixedname_initname(&fzname);
-		dns_name_copy(name, zname, NULL);
+		dns_name_copynf(name, zname);
 	}
 
 	if (debugging) {

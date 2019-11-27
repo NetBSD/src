@@ -1,4 +1,4 @@
-/*	$NetBSD: gssapi_link.c,v 1.3 2019/01/09 16:55:11 christos Exp $	*/
+/*	$NetBSD: gssapi_link.c,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -321,7 +321,7 @@ gssapi_dump(dst_key_t *key, isc_mem_t *mctx, char **buffer, int *length) {
 	major = gss_export_sec_context(&minor, &key->keydata.gssctx,
 				       &gssbuffer);
 	if (major != GSS_S_COMPLETE) {
-		fprintf(stderr, "gss_export_sec_context -> %d, %d\n",
+		fprintf(stderr, "gss_export_sec_context -> %u, %u\n",
 			major, minor);
 		return (ISC_R_FAILURE);
 	}

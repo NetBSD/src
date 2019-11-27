@@ -1,4 +1,4 @@
-/*	$NetBSD: tsig_250.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: tsig_250.c,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -360,7 +360,7 @@ fromstruct_any_tsig(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_tsig);
 	REQUIRE(rdclass == dns_rdataclass_any);
-	REQUIRE(source != NULL);
+	REQUIRE(tsig != NULL);
 	REQUIRE(tsig->common.rdclass == rdclass);
 	REQUIRE(tsig->common.rdtype == type);
 
@@ -525,7 +525,7 @@ static inline void
 freestruct_any_tsig(ARGS_FREESTRUCT) {
 	dns_rdata_any_tsig_t *tsig = (dns_rdata_any_tsig_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(tsig != NULL);
 	REQUIRE(tsig->common.rdtype == dns_rdatatype_tsig);
 	REQUIRE(tsig->common.rdclass == dns_rdataclass_any);
 

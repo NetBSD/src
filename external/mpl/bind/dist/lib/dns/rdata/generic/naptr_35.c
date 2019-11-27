@@ -1,4 +1,4 @@
-/*	$NetBSD: naptr_35.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: naptr_35.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -404,7 +404,7 @@ fromstruct_naptr(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_naptr);
-	REQUIRE(source != NULL);
+	REQUIRE(naptr != NULL);
 	REQUIRE(naptr->common.rdtype == type);
 	REQUIRE(naptr->common.rdclass == rdclass);
 	REQUIRE(naptr->flags != NULL || naptr->flags_len == 0);
@@ -434,7 +434,7 @@ tostruct_naptr(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_naptr);
-	REQUIRE(target != NULL);
+	REQUIRE(naptr != NULL);
 	REQUIRE(rdata->length != 0);
 
 	naptr->common.rdclass = rdata->rdclass;
@@ -500,7 +500,7 @@ static inline void
 freestruct_naptr(ARGS_FREESTRUCT) {
 	dns_rdata_naptr_t *naptr = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(naptr != NULL);
 	REQUIRE(naptr->common.rdtype == dns_rdatatype_naptr);
 
 	if (naptr->mctx == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: cert_37.c,v 1.4 2019/02/24 20:01:30 christos Exp $	*/
+/*	$NetBSD: cert_37.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -164,7 +164,7 @@ fromstruct_cert(ARGS_FROMSTRUCT) {
 	dns_rdata_cert_t *cert = source;
 
 	REQUIRE(type == dns_rdatatype_cert);
-	REQUIRE(source != NULL);
+	REQUIRE(cert != NULL);
 	REQUIRE(cert->common.rdtype == type);
 	REQUIRE(cert->common.rdclass == rdclass);
 
@@ -184,7 +184,7 @@ tostruct_cert(ARGS_TOSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(rdata->type == dns_rdatatype_cert);
-	REQUIRE(target != NULL);
+	REQUIRE(cert != NULL);
 	REQUIRE(rdata->length != 0);
 
 	cert->common.rdclass = rdata->rdclass;

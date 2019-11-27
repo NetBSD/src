@@ -1,4 +1,4 @@
-/*	$NetBSD: ecdb.c,v 1.4 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: ecdb.c,v 1.5 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -773,7 +773,6 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
 	REQUIRE(iteratorp != NULL);
 	REQUIRE(DNS_RDATASETITER_VALID(*iteratorp));
 
-	/* cppcheck-suppress unreadVariable */
 	u.rdatasetiterator = *iteratorp;
 	*iteratorp = NULL;
 
@@ -788,28 +787,30 @@ rdatasetiter_destroy(dns_rdatasetiter_t **iteratorp) {
 
 static isc_result_t
 rdatasetiter_first(dns_rdatasetiter_t *iterator) {
+	REQUIRE(DNS_RDATASETITER_VALID(iterator));
+
 	ecdb_rdatasetiter_t *ecdbiterator = (ecdb_rdatasetiter_t *)iterator;
 	dns_ecdbnode_t *ecdbnode = (dns_ecdbnode_t *)iterator->node;
 
-	REQUIRE(DNS_RDATASETITER_VALID(iterator));
-
-	if (ISC_LIST_EMPTY(ecdbnode->rdatasets))
+	if (ISC_LIST_EMPTY(ecdbnode->rdatasets)) {
 		return (ISC_R_NOMORE);
+	}
 	ecdbiterator->current = ISC_LIST_HEAD(ecdbnode->rdatasets);
 	return (ISC_R_SUCCESS);
 }
 
 static isc_result_t
 rdatasetiter_next(dns_rdatasetiter_t *iterator) {
-	ecdb_rdatasetiter_t *ecdbiterator = (ecdb_rdatasetiter_t *)iterator;
-
 	REQUIRE(DNS_RDATASETITER_VALID(iterator));
 
+	ecdb_rdatasetiter_t *ecdbiterator = (ecdb_rdatasetiter_t *)iterator;
+
 	ecdbiterator->current = ISC_LIST_NEXT(ecdbiterator->current, link);
-	if (ecdbiterator->current == NULL)
+	if (ecdbiterator->current == NULL) {
 		return (ISC_R_NOMORE);
-	else
+	} else {
 		return (ISC_R_SUCCESS);
+	}
 }
 
 static void

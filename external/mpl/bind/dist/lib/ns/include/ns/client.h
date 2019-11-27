@@ -1,4 +1,4 @@
-/*	$NetBSD: client.h,v 1.6 2019/09/05 19:33:00 christos Exp $	*/
+/*	$NetBSD: client.h,v 1.7 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -84,7 +84,10 @@
 
 /*% reference-counted TCP connection object */
 typedef struct ns_tcpconn {
-	isc_refcount_t		refs;
+	isc_refcount_t		clients;	/* Number of clients using
+						 * this connection. Conn can
+						 * be freed if goes to 0
+						 */
 	isc_quota_t		*tcpquota;
 	bool			pipelined;
 } ns_tcpconn_t;

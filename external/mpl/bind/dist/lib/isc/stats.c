@@ -1,4 +1,4 @@
-/*	$NetBSD: stats.c,v 1.5 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: stats.c,v 1.6 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -33,29 +33,31 @@
 #define ISC_STATS_VALID(x)		ISC_MAGIC_VALID(x, ISC_STATS_MAGIC)
 
 #if (defined(_WIN32) && !defined(_WIN64)) || !defined(_LP64)
-typedef atomic_int_fast32_t isc_stat_t;
+	typedef atomic_int_fast32_t isc__atomic_statcounter_t;
 #else
-typedef atomic_int_fast64_t isc_stat_t;
+	typedef atomic_int_fast64_t isc__atomic_statcounter_t;
 #endif
 
 struct isc_stats {
-	unsigned int		magic;
-	isc_mem_t		*mctx;
-	isc_refcount_t		refs;
-	int			ncounters;
-	isc_stat_t		*counters;
+	unsigned int			magic;
+	isc_mem_t			*mctx;
+	isc_refcount_t			refs;
+	int				ncounters;
+	isc__atomic_statcounter_t	*counters;
 };
 
 static isc_result_t
 create_stats(isc_mem_t *mctx, int ncounters, isc_stats_t **statsp) {
 	isc_stats_t *stats;
+	size_t counters_alloc_size;
 
 	REQUIRE(statsp != NULL && *statsp == NULL);
 
 	stats = isc_mem_get(mctx, sizeof(*stats));
-	stats->counters = isc_mem_get(mctx, sizeof(isc_stat_t) * ncounters);
+	counters_alloc_size = sizeof(isc__atomic_statcounter_t) * ncounters;
+	stats->counters = isc_mem_get(mctx, counters_alloc_size);
 	isc_refcount_init(&stats->refs, 1);
-	memset(stats->counters, 0, sizeof(isc_stat_t) * ncounters);
+	memset(stats->counters, 0, counters_alloc_size);
 	stats->mctx = NULL;
 	isc_mem_attach(mctx, &stats->mctx);
 	stats->ncounters = ncounters;
@@ -85,7 +87,8 @@ isc_stats_detach(isc_stats_t **statsp) {
 
 	if (isc_refcount_decrement(&stats->refs) == 1) {
 		isc_mem_put(stats->mctx, stats->counters,
-			    sizeof(isc_stat_t) * stats->ncounters);
+			    sizeof(isc__atomic_statcounter_t) *
+				stats->ncounters);
 		isc_mem_putanddetach(&stats->mctx, stats, sizeof(*stats));
 	}
 }
@@ -149,4 +152,32 @@ isc_stats_set(isc_stats_t *stats, uint64_t val,
 
 	atomic_store_explicit(&stats->counters[counter], val,
 			      memory_order_relaxed);
+}
+
+void isc_stats_update_if_greater(isc_stats_t *stats,
+				 isc_statscounter_t counter,
+				 isc_statscounter_t value)
+{
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+	isc_statscounter_t curr_value =
+		atomic_load_relaxed(&stats->counters[counter]);
+	do {
+		if (curr_value >= value) {
+			break;
+		}
+	} while (!atomic_compare_exchange_strong(&stats->counters[counter],
+						 &curr_value,
+						 value));
+}
+
+isc_statscounter_t
+isc_stats_get_counter(isc_stats_t *stats, isc_statscounter_t counter)
+{
+	REQUIRE(ISC_STATS_VALID(stats));
+	REQUIRE(counter < stats->ncounters);
+
+	return (atomic_load_explicit(&stats->counters[counter],
+				    memory_order_relaxed));
 }

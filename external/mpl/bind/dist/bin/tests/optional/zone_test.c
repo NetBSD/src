@@ -1,4 +1,4 @@
-/*	$NetBSD: zone_test.c,v 1.3 2019/01/09 16:55:00 christos Exp $	*/
+/*	$NetBSD: zone_test.c,v 1.4 2019/11/27 05:48:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -151,12 +151,11 @@ query(void) {
 	dns_fixedname_t name;
 	dns_fixedname_t found;
 	dns_db_t *db;
-	char *s;
 	isc_buffer_t buffer;
 	isc_result_t result;
 	dns_rdataset_t rdataset;
 	dns_rdataset_t sigset;
-	fd_set rfdset;
+	fd_set rfdset = { { 0 } };
 
 	db = NULL;
 	result = dns_zone_getdb(zone, &db);
@@ -171,7 +170,7 @@ query(void) {
 	dns_rdataset_init(&sigset);
 
 	do {
-
+		char *s;
 		fprintf(stdout, "zone_test ");
 		fflush(stdout);
 		FD_ZERO(&rfdset);

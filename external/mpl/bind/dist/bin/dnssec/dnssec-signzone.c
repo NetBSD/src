@@ -1,4 +1,4 @@
-/*	$NetBSD: dnssec-signzone.c,v 1.3 2019/01/09 16:54:59 christos Exp $	*/
+/*	$NetBSD: dnssec-signzone.c,v 1.4 2019/11/27 05:48:39 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -206,7 +206,7 @@ savezonecut(dns_fixedname_t *fzonecut, dns_name_t *name) {
 	dns_name_t *result;
 
 	result = dns_fixedname_initname(fzonecut);
-	dns_name_copy(name, result, NULL);
+	dns_name_copynf(name, result);
 
 	return (result);
 }
@@ -796,7 +796,10 @@ hashlist_comp(const void *a, const void *b) {
 
 static void
 hashlist_sort(hashlist_t *l) {
-	qsort(l->hashbuf, l->entries, l->length, hashlist_comp);
+	INSIST(l->hashbuf != NULL || l->length == 0);
+	if (l->length > 0) {
+		qsort(l->hashbuf, l->entries, l->length, hashlist_comp);
+	}
 }
 
 static bool
@@ -2348,7 +2351,7 @@ nsec3ify(unsigned int hashalg, dns_iterations_t iterations,
 			break;
 		}
 		if (result == ISC_R_NOMORE) {
-			dns_name_copy(gorigin, nextname, NULL);
+			dns_name_copynf(gorigin, nextname);
 			done = true;
 		} else if (result != ISC_R_SUCCESS)
 			fatal("iterating through the database failed: %s",
@@ -2482,7 +2485,7 @@ nsec3ify(unsigned int hashalg, dns_iterations_t iterations,
 			break;
 		}
 		if (result == ISC_R_NOMORE) {
-			dns_name_copy(gorigin, nextname, NULL);
+			dns_name_copynf(gorigin, nextname);
 			done = true;
 		} else if (result != ISC_R_SUCCESS)
 			fatal("iterating through the database failed: %s",

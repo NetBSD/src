@@ -1,4 +1,4 @@
-/*	$NetBSD: kx_36.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: kx_36.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -161,7 +161,7 @@ fromstruct_in_kx(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_kx);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(kx != NULL);
 	REQUIRE(kx->common.rdtype == type);
 	REQUIRE(kx->common.rdclass == rdclass);
 
@@ -181,7 +181,7 @@ tostruct_in_kx(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_kx);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(kx != NULL);
 	REQUIRE(rdata->length != 0);
 
 	kx->common.rdclass = rdata->rdclass;
@@ -205,7 +205,7 @@ static inline void
 freestruct_in_kx(ARGS_FREESTRUCT) {
 	dns_rdata_in_kx_t *kx = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(kx != NULL);
 	REQUIRE(kx->common.rdclass == dns_rdataclass_in);
 	REQUIRE(kx->common.rdtype == dns_rdatatype_kx);
 

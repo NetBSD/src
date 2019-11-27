@@ -1,4 +1,4 @@
-/*	$NetBSD: app.c,v 1.4 2019/02/24 20:01:32 christos Exp $	*/
+/*	$NetBSD: app.c,v 1.5 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -56,10 +56,10 @@ enum {
 };
 
 typedef struct isc__appctx {
-	isc_appctx_t		common;
-	isc_mem_t		*mctx;
-	isc_eventlist_t		on_run;
-	isc_mutex_t		lock;
+	isc_appctx_t	common;
+	isc_mem_t	*mctx;
+	isc_eventlist_t	on_run;
+	isc_mutex_t	lock;
 	bool		shutdown_requested;
 	bool		running;
 	/*
@@ -73,11 +73,11 @@ typedef struct isc__appctx {
 
 	bool		blocked;
 
-	HANDLE			hEvents[NUM_EVENTS];
+	HANDLE		hEvents[NUM_EVENTS];
 
-	isc_taskmgr_t		*taskmgr;
-	isc_socketmgr_t		*socketmgr;
-	isc_timermgr_t		*timermgr;
+	isc_taskmgr_t	*taskmgr;
+	isc_socketmgr_t	*socketmgr;
+	isc_timermgr_t	*timermgr;
 } isc__appctx_t;
 
 static isc__appctx_t isc_g_appctx;
@@ -90,7 +90,6 @@ static isc_thread_t	main_thread;
 isc_result_t
 isc_app_ctxstart(isc_appctx_t *ctx0) {
 	isc__appctx_t *ctx = (isc__appctx_t *)ctx0;
-	isc_result_t result;
 
 	REQUIRE(VALID_APPCTX(ctx));
 

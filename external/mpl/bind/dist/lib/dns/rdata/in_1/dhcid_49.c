@@ -1,4 +1,4 @@
-/*	$NetBSD: dhcid_49.c,v 1.4 2019/02/24 20:01:31 christos Exp $	*/
+/*	$NetBSD: dhcid_49.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -123,7 +123,7 @@ fromstruct_in_dhcid(ARGS_FROMSTRUCT) {
 
 	REQUIRE(type == dns_rdatatype_dhcid);
 	REQUIRE(rdclass == dns_rdataclass_in);
-	REQUIRE(source != NULL);
+	REQUIRE(dhcid != NULL);
 	REQUIRE(dhcid->common.rdtype == type);
 	REQUIRE(dhcid->common.rdclass == rdclass);
 	REQUIRE(dhcid->length != 0);
@@ -141,7 +141,7 @@ tostruct_in_dhcid(ARGS_TOSTRUCT) {
 
 	REQUIRE(rdata->type == dns_rdatatype_dhcid);
 	REQUIRE(rdata->rdclass == dns_rdataclass_in);
-	REQUIRE(target != NULL);
+	REQUIRE(dhcid != NULL);
 	REQUIRE(rdata->length != 0);
 
 	dhcid->common.rdclass = rdata->rdclass;

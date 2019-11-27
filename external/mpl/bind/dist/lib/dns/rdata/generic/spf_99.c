@@ -1,4 +1,4 @@
-/*	$NetBSD: spf_99.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: spf_99.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -91,8 +91,9 @@ static inline isc_result_t
 tostruct_spf(ARGS_TOSTRUCT) {
 	dns_rdata_spf_t *spf = target;
 
+	REQUIRE(spf != NULL);
+	REQUIRE(rdata != NULL);
 	REQUIRE(rdata->type == dns_rdatatype_spf);
-	REQUIRE(target != NULL);
 
 	spf->common.rdclass = rdata->rdclass;
 	spf->common.rdtype = rdata->type;
@@ -103,10 +104,10 @@ tostruct_spf(ARGS_TOSTRUCT) {
 
 static inline void
 freestruct_spf(ARGS_FREESTRUCT) {
-	dns_rdata_spf_t *txt = source;
+	dns_rdata_spf_t *spf = source;
 
-	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == dns_rdatatype_spf);
+	REQUIRE(spf != NULL);
+	REQUIRE(spf->common.rdtype == dns_rdatatype_spf);
 
 	generic_freestruct_txt(source);
 }

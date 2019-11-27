@@ -1,4 +1,4 @@
-/*	$NetBSD: zoneverify.c,v 1.3 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: zoneverify.c,v 1.4 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -1523,7 +1523,7 @@ check_apex_rrsets(vctx_t *vctx) {
  * The variables to update are chosen based on 'is_ksk', which is true when
  * 'dnskey' is a KSK and false otherwise.
  */
-static isc_result_t
+static void
 check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 		  dns_rdata_t *rdata, bool is_ksk)
 {
@@ -1537,25 +1537,26 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	standby_keys = (is_ksk ? vctx->standby_ksk : vctx->standby_zsk);
 	goodkey = (is_ksk ? &vctx->goodksk : &vctx->goodzsk);
 
-	if (dns_dnssec_selfsigns(rdata, vctx->origin, &vctx->keyset,
+	if (!dns_dnssec_selfsigns(rdata, vctx->origin, &vctx->keyset,
 				 &vctx->keysigs, false, vctx->mctx))
 	{
-		if (active_keys[dnskey->algorithm] != 255) {
-			active_keys[dnskey->algorithm]++;
+		if (!is_ksk &&
+		    dns_dnssec_signs(rdata, vctx->origin, &vctx->soaset,
+				     &vctx->soasigs, false, vctx->mctx))
+		{
+			if (active_keys[dnskey->algorithm] != 255) {
+				active_keys[dnskey->algorithm]++;
+			}
+		} else {
+			if (standby_keys[dnskey->algorithm] != 255) {
+				standby_keys[dnskey->algorithm]++;
+			}
 		}
-	} else if (!is_ksk &&
-		   dns_dnssec_signs(rdata, vctx->origin, &vctx->soaset,
-				    &vctx->soasigs, false, vctx->mctx))
-	{
-		if (active_keys[dnskey->algorithm] != 255) {
-			active_keys[dnskey->algorithm]++;
-		}
-		return (ISC_R_SUCCESS);
-	} else {
-		if (standby_keys[dnskey->algorithm] != 255) {
-			standby_keys[dnskey->algorithm]++;
-		}
-		return (ISC_R_SUCCESS);
+		return;
+	}
+
+	if (active_keys[dnskey->algorithm] != 255) {
+		active_keys[dnskey->algorithm]++;
 	}
 
 	/*
@@ -1564,7 +1565,7 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	 */
 	if (vctx->secroots == NULL) {
 		*goodkey = true;
-		return (ISC_R_SUCCESS);
+		return;
 	}
 
 	/*
@@ -1573,7 +1574,7 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	result = dns_dnssec_keyfromrdata(vctx->origin, rdata, vctx->mctx,
 					 &key);
 	if (result != ISC_R_SUCCESS) {
-		return (result);
+		goto cleanup;
 	}
 
 	result = dns_keytable_findkeynode(vctx->secroots, vctx->origin,
@@ -1584,10 +1585,6 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	 * No such trust anchor.
 	 */
 	if (result != ISC_R_SUCCESS) {
-		if (result == DNS_R_PARTIALMATCH || result == ISC_R_NOTFOUND) {
-			result = ISC_R_SUCCESS;
-		}
-
 		goto cleanup;
 	}
 
@@ -1616,7 +1613,6 @@ check_dnskey_sigs(vctx_t *vctx, const dns_rdata_dnskey_t *dnskey,
 	if (key != NULL) {
 		dst_key_free(&key);
 	}
-	return (ISC_R_SUCCESS);
 }
 
 /*%
@@ -1807,11 +1803,11 @@ verify_nodes(vctx_t *vctx, isc_result_t *vresult) {
 		}
 		if (is_delegation(vctx, name, node, NULL)) {
 			zonecut = dns_fixedname_name(&fzonecut);
-			dns_name_copy(name, zonecut, NULL);
+			dns_name_copynf(name, zonecut);
 			isdelegation = true;
 		} else if (has_dname(vctx, node)) {
 			zonecut = dns_fixedname_name(&fzonecut);
-			dns_name_copy(name, zonecut, NULL);
+			dns_name_copynf(name, zonecut);
 		}
 		nextnode = NULL;
 		result = dns_dbiterator_next(dbiter);
@@ -1892,7 +1888,7 @@ verify_nodes(vctx_t *vctx, isc_result_t *vresult) {
 		} else {
 			prevname = dns_fixedname_name(&fprevname);
 		}
-		dns_name_copy(name, prevname, NULL);
+		dns_name_copynf(name, prevname);
 		if (*vresult == ISC_R_SUCCESS) {
 			*vresult = tvresult;
 		}

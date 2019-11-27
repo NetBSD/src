@@ -1,4 +1,4 @@
-/*	$NetBSD: uri_256.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: uri_256.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -173,7 +173,7 @@ fromstruct_uri(ARGS_FROMSTRUCT) {
 	dns_rdata_uri_t *uri = source;
 
 	REQUIRE(type == dns_rdatatype_uri);
-	REQUIRE(source != NULL);
+	REQUIRE(uri != NULL);
 	REQUIRE(uri->common.rdtype == type);
 	REQUIRE(uri->common.rdclass == rdclass);
 	REQUIRE(uri->target != NULL && uri->tgt_len != 0);
@@ -203,7 +203,7 @@ tostruct_uri(ARGS_TOSTRUCT) {
 	isc_region_t sr;
 
 	REQUIRE(rdata->type == dns_rdatatype_uri);
-	REQUIRE(target != NULL);
+	REQUIRE(uri != NULL);
 	REQUIRE(rdata->length != 0);
 
 	uri->common.rdclass = rdata->rdclass;
@@ -244,7 +244,7 @@ static inline void
 freestruct_uri(ARGS_FREESTRUCT) {
 	dns_rdata_uri_t *uri = (dns_rdata_uri_t *) source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(uri != NULL);
 	REQUIRE(uri->common.rdtype == dns_rdatatype_uri);
 
 	if (uri->mctx == NULL)

@@ -1,4 +1,4 @@
-/*	$NetBSD: nsprobe.c,v 1.3 2019/01/09 16:55:19 christos Exp $	*/
+/*	$NetBSD: nsprobe.c,v 1.4 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -937,7 +937,7 @@ resolve_ns(isc_task_t *task, isc_event_t *event) {
 				ISC_LIST_APPEND(trans->nslist, pns, link);
 				ISC_LIST_INIT(pns->servers);
 
-				dns_name_copy(&ns.name, pns->name, NULL);
+				dns_name_copynf(&ns.name, pns->name);
 				dns_rdata_reset(&rdata);
 				dns_rdata_freestruct(&ns);
 			}

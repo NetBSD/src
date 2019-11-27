@@ -1,4 +1,4 @@
-/*	$NetBSD: interfacemgr.c,v 1.5 2019/09/05 19:33:00 christos Exp $	*/
+/*	$NetBSD: interfacemgr.c,v 1.6 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -640,10 +640,12 @@ ns_interface_shutdown(ns_interface_t *ifp) {
 
 static void
 ns_interface_destroy(ns_interface_t *ifp) {
-	isc_mem_t *mctx = ifp->mgr->mctx;
+	isc_mem_t *mctx;
 	int disp;
 
 	REQUIRE(NS_INTERFACE_VALID(ifp));
+
+	mctx = ifp->mgr->mctx;
 
 	ns_interface_shutdown(ifp);
 

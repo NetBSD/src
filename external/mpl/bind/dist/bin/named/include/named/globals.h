@@ -1,4 +1,4 @@
-/*	$NetBSD: globals.h,v 1.5 2019/09/05 19:32:55 christos Exp $	*/
+/*	$NetBSD: globals.h,v 1.6 2019/11/27 05:48:40 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -136,14 +136,6 @@ EXTERN const char *		named_g_defaultpidfile 	INIT(NAMED_LOCALSTATEDIR
 EXTERN const char *		named_g_defaultpidfile 	INIT(NAMED_LOCALSTATEDIR
 							     "/run/named.pid");
 #endif
-
-#ifdef HAVE_DNSTAP
-EXTERN const char *		named_g_defaultdnstap
-					INIT(NAMED_LOCALSTATEDIR "/run/named/"
-							      "dnstap.sock");
-#else
-EXTERN const char *		named_g_defaultdnstap	INIT(NULL);
-#endif /* HAVE_DNSTAP */
 
 EXTERN const char *		named_g_username	INIT(NULL);
 

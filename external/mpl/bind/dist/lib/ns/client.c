@@ -1,4 +1,4 @@
-/*	$NetBSD: client.c,v 1.7 2019/10/17 16:47:02 christos Exp $	*/
+/*	$NetBSD: client.c,v 1.8 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -104,6 +104,13 @@
 #define TCP_BUFFER_SIZE			(65535 + 2)
 #define SEND_BUFFER_SIZE		4096
 #define RECV_BUFFER_SIZE		4096
+
+#define TCP_CLIENTS_PER_CONN		23
+/*%<
+ * Number of simultaneous ns_clients_t (queries in flight) for one
+ * TCP connection.  The number was arbitrarily picked and might be
+ * changed in the future.
+ */
 
 #define NMCTXS				100
 /*%<
@@ -359,7 +366,7 @@ tcpconn_init(ns_client_t *client, bool force) {
 	 */
 	tconn = isc_mem_allocate(client->sctx->mctx, sizeof(*tconn));
 
-	isc_refcount_init(&tconn->refs, 1);
+	isc_refcount_init(&tconn->clients, 1);	/* Current client */
 	tconn->tcpquota = quota;
 	quota = NULL;
 	tconn->pipelined = false;
@@ -376,14 +383,14 @@ tcpconn_init(ns_client_t *client, bool force) {
  */
 static void
 tcpconn_attach(ns_client_t *source, ns_client_t *target) {
-	int old_refs;
+	int old_clients;
 
 	REQUIRE(source->tcpconn != NULL);
 	REQUIRE(target->tcpconn == NULL);
 	REQUIRE(source->tcpconn->pipelined);
 
-	old_refs = isc_refcount_increment(&source->tcpconn->refs);
-	INSIST(old_refs > 0);
+	old_clients = isc_refcount_increment(&source->tcpconn->clients);
+	INSIST(old_clients > 0);
 	target->tcpconn = source->tcpconn;
 }
 
@@ -396,17 +403,17 @@ tcpconn_attach(ns_client_t *source, ns_client_t *target) {
 static void
 tcpconn_detach(ns_client_t *client) {
 	ns_tcpconn_t *tconn = NULL;
-	int old_refs;
+	int old_clients;
 
 	REQUIRE(client->tcpconn != NULL);
 
 	tconn = client->tcpconn;
 	client->tcpconn = NULL;
 
-	old_refs = isc_refcount_decrement(&tconn->refs);
-	INSIST(old_refs > 0);
+	old_clients = isc_refcount_decrement(&tconn->clients);
+	INSIST(old_clients > 0);
 
-	if (old_refs == 1) {
+	if (old_clients == 1) {
 		isc_quota_detach(&tconn->tcpquota);
 		isc_mem_free(client->sctx->mctx, tconn);
 	}
@@ -1206,7 +1213,7 @@ client_send(ns_client_t *client) {
 	unsigned int preferred_glue;
 	bool opt_included = false;
 	size_t respsize;
-	dns_aclenv_t *env = ns_interfacemgr_getaclenv(client->interface->mgr);
+	dns_aclenv_t *env;
 #ifdef HAVE_DNSTAP
 	unsigned char zone[DNS_NAME_MAXWIRE];
 	dns_dtmsgtype_t dtmsgtype;
@@ -1214,6 +1221,8 @@ client_send(ns_client_t *client) {
 #endif /* HAVE_DNSTAP */
 
 	REQUIRE(NS_CLIENT_VALID(client));
+
+	env = ns_interfacemgr_getaclenv(client->interface->mgr);
 
 	CTRACE("send");
 
@@ -1749,12 +1758,13 @@ ns_client_addopt(ns_client_t *client, dns_message_t *message,
 	unsigned int flags;
 	unsigned char expire[4];
 	unsigned char advtimo[2];
-	dns_aclenv_t *env = ns_interfacemgr_getaclenv(client->interface->mgr);
+	dns_aclenv_t *env;
 
 	REQUIRE(NS_CLIENT_VALID(client));
 	REQUIRE(opt != NULL && *opt == NULL);
 	REQUIRE(message != NULL);
 
+	env = ns_interfacemgr_getaclenv(client->interface->mgr);
 	view = client->view;
 	resolver = (view != NULL) ? view->resolver : NULL;
 	if (resolver != NULL)
@@ -2668,27 +2678,38 @@ ns__client_request(isc_task_t *task, isc_event_t *event) {
 	/*
 	 * Pipeline TCP query processing.
 	 */
-	if (TCP_CLIENT(client) &&
-	    client->message->opcode != dns_opcode_query)
-	{
-		client->tcpconn->pipelined = false;
-	}
-	if (TCP_CLIENT(client) && client->tcpconn->pipelined) {
-		/*
-		 * We're pipelining. Replace the client; the
-		 * replacement can read the TCP socket looking
-		 * for new messages and this one can process the
-		 * current message asynchronously.
-		 *
-		 * There will now be at least three clients using this
-		 * TCP socket - one accepting new connections,
-		 * one reading an existing connection to get new
-		 * messages, and one answering the message already
-		 * received.
-		 */
-		result = ns_client_replace(client);
-		if (result != ISC_R_SUCCESS) {
+	if (TCP_CLIENT(client)) {
+		if (client->message->opcode != dns_opcode_query) {
 			client->tcpconn->pipelined = false;
+		}
+
+		/*
+		 * Limit the maximum number of simultaneous pipelined
+		 * queries on TCP connection to TCP_CLIENTS_PER_CONN.
+		 */
+		if ((isc_refcount_current(&client->tcpconn->clients)
+			    > TCP_CLIENTS_PER_CONN))
+		{
+			client->tcpconn->pipelined = false;
+		}
+
+		if (client->tcpconn->pipelined) {
+			/*
+			 * We're pipelining. Replace the client; the
+			 * replacement can read the TCP socket looking
+			 * for new messages and this one can process the
+			 * current message asynchronously.
+			 *
+			 * There will now be at least three clients using this
+			 * TCP socket - one accepting new connections,
+			 * one reading an existing connection to get new
+			 * messages, and one answering the message already
+			 * received.
+			 */
+			result = ns_client_replace(client);
+			if (result != ISC_R_SUCCESS) {
+				client->tcpconn->pipelined = false;
+			}
 		}
 	}
 
@@ -3350,12 +3371,14 @@ client_newconn(isc_task_t *task, isc_event_t *event) {
 	isc_result_t result;
 	ns_client_t *client = event->ev_arg;
 	isc_socket_newconnev_t *nevent = (isc_socket_newconnev_t *)event;
-	dns_aclenv_t *env = ns_interfacemgr_getaclenv(client->interface->mgr);
+	dns_aclenv_t *env;
 	uint32_t old;
 
 	REQUIRE(event->ev_type == ISC_SOCKEVENT_NEWCONN);
 	REQUIRE(NS_CLIENT_VALID(client));
 	REQUIRE(client->task == task);
+
+	env = ns_interfacemgr_getaclenv(client->interface->mgr);
 
 	UNUSED(task);
 
@@ -3462,7 +3485,6 @@ client_accept(ns_client_t *client) {
 	isc_result_t result;
 
 	CTRACE("accept");
-
 	/*
 	 * Set up a new TCP connection. This means try to attach to the
 	 * TCP client quota (tcp-clients), but fail if we're over quota.
@@ -3512,6 +3534,12 @@ client_accept(ns_client_t *client) {
 		result = tcpconn_init(client, true);
 		RUNTIME_CHECK(result == ISC_R_SUCCESS);
 	}
+
+	/* TCP high-water stats update. */
+	unsigned int curr_tcpquota = isc_quota_getused(&client->sctx->tcpquota);
+	ns_stats_update_if_greater(client->sctx->nsstats,
+				   ns_statscounter_tcphighwater,
+				   curr_tcpquota);
 
 	/*
 	 * If this client was set up using get_client() or get_worker(),

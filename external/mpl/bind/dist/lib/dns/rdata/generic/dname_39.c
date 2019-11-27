@@ -1,4 +1,4 @@
-/*	$NetBSD: dname_39.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: dname_39.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -125,7 +125,7 @@ fromstruct_dname(ARGS_FROMSTRUCT) {
 	isc_region_t region;
 
 	REQUIRE(type == dns_rdatatype_dname);
-	REQUIRE(source != NULL);
+	REQUIRE(dname != NULL);
 	REQUIRE(dname->common.rdtype == type);
 	REQUIRE(dname->common.rdclass == rdclass);
 
@@ -143,7 +143,7 @@ tostruct_dname(ARGS_TOSTRUCT) {
 	dns_name_t name;
 
 	REQUIRE(rdata->type == dns_rdatatype_dname);
-	REQUIRE(target != NULL);
+	REQUIRE(dname != NULL);
 	REQUIRE(rdata->length != 0);
 
 	dname->common.rdclass = rdata->rdclass;
@@ -163,7 +163,7 @@ static inline void
 freestruct_dname(ARGS_FREESTRUCT) {
 	dns_rdata_dname_t *dname = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(dname != NULL);
 	REQUIRE(dname->common.rdtype == dns_rdatatype_dname);
 
 	if (dname->mctx == NULL)

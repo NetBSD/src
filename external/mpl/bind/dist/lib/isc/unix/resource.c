@@ -1,4 +1,4 @@
-/*	$NetBSD: resource.c,v 1.4 2019/10/17 16:47:01 christos Exp $	*/
+/*	$NetBSD: resource.c,v 1.5 2019/11/27 05:48:43 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -169,7 +169,6 @@ isc_resource_setlimit(isc_resource_t resource, isc_resourcevalue_t value) {
 			return (ISC_R_SUCCESS);
 	}
 #endif
-	/* cppcheck-suppress duplicateCondition */
 	if (resource == isc_resource_openfiles && rlim_value == RLIM_INFINITY) {
 		if (getrlimit(unixresource, &rl) == 0) {
 			rl.rlim_cur = rl.rlim_max;

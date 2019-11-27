@@ -1,4 +1,4 @@
-/*	$NetBSD: isdn_20.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: isdn_20.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -110,7 +110,7 @@ fromstruct_isdn(ARGS_FROMSTRUCT) {
 	dns_rdata_isdn_t *isdn = source;
 
 	REQUIRE(type == dns_rdatatype_isdn);
-	REQUIRE(source != NULL);
+	REQUIRE(isdn != NULL);
 	REQUIRE(isdn->common.rdtype == type);
 	REQUIRE(isdn->common.rdclass == rdclass);
 
@@ -131,7 +131,7 @@ tostruct_isdn(ARGS_TOSTRUCT) {
 	isc_region_t r;
 
 	REQUIRE(rdata->type == dns_rdatatype_isdn);
-	REQUIRE(target != NULL);
+	REQUIRE(isdn != NULL);
 	REQUIRE(rdata->length != 0);
 
 	isdn->common.rdclass = rdata->rdclass;
@@ -172,7 +172,7 @@ static inline void
 freestruct_isdn(ARGS_FREESTRUCT) {
 	dns_rdata_isdn_t *isdn = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(isdn != NULL);
 
 	if (isdn->mctx == NULL)
 		return;

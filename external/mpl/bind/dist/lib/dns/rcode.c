@@ -1,4 +1,4 @@
-/*	$NetBSD: rcode.c,v 1.5 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: rcode.c,v 1.6 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -366,7 +366,6 @@ dns_secalg_format(dns_secalg_t alg, char *cp, unsigned int size) {
 	isc_buffer_usedregion(&b, &r);
 	r.base[r.length] = 0;
 	if (result != ISC_R_SUCCESS) {
-		/* cppcheck-suppress unreadVariable */
 		r.base[0] = 0;
 	}
 }
@@ -466,7 +465,6 @@ dns_dsdigest_format(dns_dsdigest_t typ, char *cp, unsigned int size) {
 	isc_buffer_usedregion(&b, &r);
 	r.base[r.length] = 0;
 	if (result != ISC_R_SUCCESS) {
-		/* cppcheck-suppress unreadVariable */
 		r.base[0] = 0;
 	}
 }

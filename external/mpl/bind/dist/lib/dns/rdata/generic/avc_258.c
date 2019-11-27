@@ -1,4 +1,4 @@
-/*	$NetBSD: avc_258.c,v 1.3 2019/01/09 16:55:12 christos Exp $	*/
+/*	$NetBSD: avc_258.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -92,7 +92,7 @@ tostruct_avc(ARGS_TOSTRUCT) {
 	dns_rdata_avc_t *avc = target;
 
 	REQUIRE(rdata->type == dns_rdatatype_avc);
-	REQUIRE(target != NULL);
+	REQUIRE(avc != NULL);
 
 	avc->common.rdclass = rdata->rdclass;
 	avc->common.rdtype = rdata->type;
@@ -103,10 +103,10 @@ tostruct_avc(ARGS_TOSTRUCT) {
 
 static inline void
 freestruct_avc(ARGS_FREESTRUCT) {
-	dns_rdata_avc_t *txt = source;
+	dns_rdata_avc_t *avc = source;
 
-	REQUIRE(source != NULL);
-	REQUIRE(txt->common.rdtype == dns_rdatatype_avc);
+	REQUIRE(avc != NULL);
+	REQUIRE(avc->common.rdtype == dns_rdatatype_avc);
 
 	generic_freestruct_txt(source);
 }

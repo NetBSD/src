@@ -1,4 +1,4 @@
-/*	$NetBSD: master_test.c,v 1.4 2019/09/05 19:32:58 christos Exp $	*/
+/*	$NetBSD: master_test.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -69,11 +69,8 @@ _teardown(void **state) {
 
 static void
 nullmsg(dns_rdatacallbacks_t *cb, const char *fmt, ...) {
-	va_list ap;
-
 	UNUSED(cb);
 	UNUSED(fmt);
-	UNUSED(ap);
 }
 
 #define	BUFLEN		255
