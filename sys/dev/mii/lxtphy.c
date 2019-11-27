@@ -1,4 +1,4 @@
-/*	$NetBSD: lxtphy.c,v 1.53 2019/03/25 09:29:08 msaitoh Exp $	*/
+/*	$NetBSD: lxtphy.c,v 1.54 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.53 2019/03/25 09:29:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lxtphy.c,v 1.54 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,30 +137,24 @@ lxtphyattach(device_t parent, device_t self, void *aux)
 		sc->mii_funcs = &lxtphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	aprint_normal_dev(self, "");
 
 	if (sc->mii_flags & MIIF_HAVEFIBER) {
 #define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
+		sc->mii_anegticks = MII_ANEGTICKS;
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, 0, sc->mii_inst),
 		    MII_MEDIA_100_TX);
-		aprint_normal("100baseFX, ");
 		ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_FX, IFM_FDX, sc->mii_inst),
 		    MII_MEDIA_100_TX_FDX);
-		aprint_normal("100baseFX-FDX, ");
+		aprint_normal_dev(self, "100baseFX, 100baseFX-FDX\n");
 #undef ADD
 	}
 
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+	mii_phy_add_media(sc);
 }
 
 static int

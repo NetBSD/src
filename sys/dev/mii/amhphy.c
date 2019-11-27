@@ -1,4 +1,4 @@
-/*	$NetBSD: amhphy.c,v 1.24 2019/11/26 08:21:03 msaitoh Exp $	*/
+/*	$NetBSD: amhphy.c,v 1.25 2019/11/27 10:19:20 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.24 2019/11/26 08:21:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amhphy.c,v 1.25 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,18 +105,13 @@ amhphyattach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &amhphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS;
 
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+
+	mii_phy_add_media(sc);
 }
 
 static int

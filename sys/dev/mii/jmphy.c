@@ -1,4 +1,4 @@
-/*	$NetBSD: jmphy.c,v 1.2 2019/11/26 08:19:51 msaitoh Exp $ */
+/*	$NetBSD: jmphy.c,v 1.3 2019/11/27 10:19:20 msaitoh Exp $ */
 /*	$OpenBSD: jmphy.c,v 1.6 2015/03/14 03:38:48 jsg Exp $	*/
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -110,13 +110,7 @@ jmphy_attach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
-	aprint_normal_dev(self, "");
-	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
-	    (sc->mii_extcapabilities & EXTSR_MEDIAMASK) == 0)
-		aprint_error("no media present");
-	else
-		mii_phy_add_media(sc);
-	aprint_normal("\n");
+	mii_phy_add_media(sc);
 }
 
 static int
