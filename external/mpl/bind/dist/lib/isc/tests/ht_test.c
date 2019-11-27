@@ -1,4 +1,4 @@
-/*	$NetBSD: ht_test.c,v 1.4 2019/09/05 19:32:59 christos Exp $	*/
+/*	$NetBSD: ht_test.c,v 1.5 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -41,6 +41,7 @@ default_memalloc(void *arg, size_t size) {
 	if (size == 0U) {
 		size = 1;
 	}
+	/* cppcheck-suppress leakNoVarFunctionCall */
 	return (malloc(size));
 }
 

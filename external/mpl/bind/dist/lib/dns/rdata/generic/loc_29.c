@@ -1,4 +1,4 @@
-/*	$NetBSD: loc_29.c,v 1.3 2019/01/09 16:55:13 christos Exp $	*/
+/*	$NetBSD: loc_29.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -672,7 +672,7 @@ fromstruct_loc(ARGS_FROMSTRUCT) {
 	uint8_t c;
 
 	REQUIRE(type == dns_rdatatype_loc);
-	REQUIRE(source != NULL);
+	REQUIRE(loc != NULL);
 	REQUIRE(loc->common.rdtype == type);
 	REQUIRE(loc->common.rdclass == rdclass);
 
@@ -717,7 +717,7 @@ tostruct_loc(ARGS_TOSTRUCT) {
 	uint8_t version;
 
 	REQUIRE(rdata->type == dns_rdatatype_loc);
-	REQUIRE(target != NULL);
+	REQUIRE(loc != NULL);
 	REQUIRE(rdata->length != 0);
 
 	UNUSED(mctx);
@@ -752,7 +752,7 @@ static inline void
 freestruct_loc(ARGS_FREESTRUCT) {
 	dns_rdata_loc_t *loc = source;
 
-	REQUIRE(source != NULL);
+	REQUIRE(loc != NULL);
 	REQUIRE(loc->common.rdtype == dns_rdatatype_loc);
 
 	UNUSED(source);

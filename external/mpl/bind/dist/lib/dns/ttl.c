@@ -1,4 +1,4 @@
-/*	$NetBSD: ttl.c,v 1.4 2019/10/17 16:47:00 christos Exp $	*/
+/*	$NetBSD: ttl.c,v 1.5 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -125,7 +125,6 @@ dns_ttl_totext(uint32_t src, bool verbose,
 		 * here because region.base is type unsigned char *.
 		 */
 		isc_buffer_usedregion(target, &region);
-		/* cppcheck-suppress unreadVariable */
 		region.base[region.length - 1] =
 			toupper(region.base[region.length - 1]);
 	}

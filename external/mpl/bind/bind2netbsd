@@ -1,6 +1,6 @@
 #! /bin/sh
 #
-#	$NetBSD: bind2netbsd,v 1.4 2019/10/17 16:46:57 christos Exp $
+#	$NetBSD: bind2netbsd,v 1.5 2019/11/27 05:48:39 christos Exp $
 #
 # Copyright (c) 2000 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -39,7 +39,7 @@
 #	$ cvs -d cvs.netbsd.org:/cvsroot import src/external/mpl/bind/dist ISC bind-9-x-y
 #	Enter the new CHANGES portion as your commit message
 #	$ cd ../../../../../bind-9.x.y
-#	$ run ./configure --enable-dnsrps --enable-querytrace --enable-fixed-rrset
+#	$ run ./configure --enable-dnsrps --enable-querytrace --enable-fixed-rrset --without-python
 #	$ run make
 #	- use the binclude4netbsd to create and import the new headers in
 #	  /usr/src/external/mpl/bind/include

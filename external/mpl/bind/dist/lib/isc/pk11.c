@@ -1,4 +1,4 @@
-/*	$NetBSD: pk11.c,v 1.3 2019/01/09 16:55:14 christos Exp $	*/
+/*	$NetBSD: pk11.c,v 1.4 2019/11/27 05:48:42 christos Exp $	*/
 
 /*
  * Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -804,13 +804,17 @@ push_attribute(pk11_object_t *obj, isc_mem_t *mctx, size_t len) {
 	CK_ATTRIBUTE *attr;
 	CK_BYTE cnt = obj->attrcnt;
 
+	REQUIRE(old != NULL || cnt == 0);
+
 	obj->repr = isc_mem_get(mctx, (cnt + 1) * sizeof(*attr));
 	if (obj->repr == NULL) {
 		obj->repr = old;
 		return (NULL);
 	}
 	memset(obj->repr, 0, (cnt + 1) * sizeof(*attr));
-	memmove(obj->repr, old, cnt * sizeof(*attr));
+	if (old != NULL) {
+		memmove(obj->repr, old, cnt * sizeof(*attr));
+	}
 	attr = obj->repr + cnt;
 	attr->ulValueLen = (CK_ULONG) len;
 	attr->pValue = isc_mem_get(mctx, len);

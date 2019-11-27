@@ -1,4 +1,4 @@
-/*	$NetBSD: sdlz.c,v 1.4 2019/04/28 00:01:14 christos Exp $	*/
+/*	$NetBSD: sdlz.c,v 1.5 2019/11/27 05:48:41 christos Exp $	*/
 
 /*
  * Portions Copyright (C) Internet Systems Consortium, Inc. ("ISC")
@@ -864,7 +864,7 @@ findrdataset(dns_db_t *db, dns_dbnode_t *node, dns_dbversion_t *version,
 	dns_rdatalist_t *list;
 	dns_sdlznode_t *sdlznode = (dns_sdlznode_t *)node;
 
-	REQUIRE(VALID_SDLZNODE(node));
+	REQUIRE(VALID_SDLZNODE(sdlznode));
 
 	UNUSED(db);
 	UNUSED(version);
@@ -1038,16 +1038,7 @@ findext(dns_db_t *db, const dns_name_t *name, dns_dbversion_t *version,
 		dns_rdataset_disassociate(rdataset);
 
 	if (foundname != NULL) {
-		isc_result_t xresult;
-
-		xresult = dns_name_copy(xname, foundname, NULL);
-		if (xresult != ISC_R_SUCCESS) {
-			if (node != NULL)
-				destroynode(node);
-			if (dns_rdataset_isassociated(rdataset))
-				dns_rdataset_disassociate(rdataset);
-			return (DNS_R_BADDB);
-		}
+		dns_name_copynf(xname, foundname);
 	}
 
 	if (nodep != NULL)
@@ -1429,8 +1420,10 @@ dbiterator_current(dns_dbiterator_t *iterator, dns_dbnode_t **nodep,
 	sdlz_dbiterator_t *sdlziter = (sdlz_dbiterator_t *)iterator;
 
 	attachnode(iterator->db, sdlziter->current, nodep);
-	if (name != NULL)
-		return (dns_name_copy(sdlziter->current->name, name, NULL));
+	if (name != NULL) {
+		dns_name_copynf(sdlziter->current->name, name);
+		return (ISC_R_SUCCESS);
+	}
 	return (ISC_R_SUCCESS);
 }
 
@@ -1443,7 +1436,8 @@ dbiterator_pause(dns_dbiterator_t *iterator) {
 static isc_result_t
 dbiterator_origin(dns_dbiterator_t *iterator, dns_name_t *name) {
 	UNUSED(iterator);
-	return (dns_name_copy(dns_rootname, name, NULL));
+	dns_name_copynf(dns_rootname, name);
+	return (ISC_R_SUCCESS);
 }
 
 /*
