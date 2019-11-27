@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.48 2019/11/27 19:07:31 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.49 2019/11/27 22:41:41 uwe Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -105,9 +105,12 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 # Rules to build the table of contents (.toc) files.
 # They are generated twice to take into account the
 # space taken by the TOC itself.
-#
 
-TOCPROC=	   2>&1 >/dev/null | ${TOOL_GREP} -e '^\.Ti'
+# TOC is emitted with .tm on groff's stderr, divert those lines to stdout.
+# NB: /dev/stderr is nawk's internal designation, not /dev/stderr file.
+# TODO: use .open/.write instead.
+TOCPROC = 2>&1 >/dev/null | \
+	${TOOL_AWK} '{ if ($$1 == ".Ti") print; else print > "/dev/stderr"; }'
 
 ${TARG}.PostScript.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
