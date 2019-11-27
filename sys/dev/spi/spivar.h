@@ -1,4 +1,4 @@
-/* $NetBSD: spivar.h,v 1.8 2019/08/13 16:37:15 tnn Exp $ */
+/* $NetBSD: spivar.h,v 1.9 2019/11/27 07:26:08 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -87,6 +87,8 @@ struct spi_attach_args {
 					   ia_compat array */
 	const char **	sa_compat;	/* chip names */
 	prop_dictionary_t sa_prop;	/* dictionary for this device */
+
+	uintptr_t	sa_cookie;	/* OF node in openfirmware machines */
 };
 
 /*

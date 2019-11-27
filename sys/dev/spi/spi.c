@@ -1,4 +1,4 @@
-/* $NetBSD: spi.c,v 1.12 2019/08/13 16:37:15 tnn Exp $ */
+/* $NetBSD: spi.c,v 1.13 2019/11/27 07:26:08 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.12 2019/08/13 16:37:15 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spi.c,v 1.13 2019/11/27 07:26:08 hkenken Exp $");
 
 #include "locators.h"
 
@@ -239,6 +239,8 @@ spi_direct_attach_child_devices(device_t parent, struct spi_softc *sc,
 
 		memset(&sa, 0, sizeof sa);
 		sa.sa_handle = &sc->sc_slaves[i];
+		sa.sa_prop = child;
+		sa.sa_cookie = cookie;
 		if (ISSET(sa.sa_handle->sh_flags, SPIH_ATTACHED))
 			continue;
 		SET(sa.sa_handle->sh_flags, SPIH_ATTACHED);
