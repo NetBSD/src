@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.46 2019/11/27 09:29:25 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.47 2019/11/27 15:58:12 martin Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -107,7 +107,9 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 # space taken by the TOC itself.
 #
 
-TOCPROC=	   2>&1 >/dev/null | ${TOOL_GREP} -e '^\.Ti '
+TOCPROC=	  2>&1 >/dev/null |\
+	   ${TOOL_SED} -n -e 's/"//g' \
+	   -e '/^\.Ti/{s/ \([A-Za-z]\)/ "\1/; s/ *$$/"/; p; }'
 
 ${TARG}.PostScript.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
