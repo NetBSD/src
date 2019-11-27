@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.335 2019/07/09 08:46:58 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.335.2.1 2019/11/27 11:08:24 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.335 2019/07/09 08:46:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.335.2.1 2019/11/27 11:08:24 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1027,10 +1027,10 @@ bge_eeprom_getbyte(struct bge_softc *sc, int addr, uint8_t *dest)
 	 * Enable use of auto EEPROM access so we can avoid
 	 * having to use the bitbang method.
 	 */
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
+	BGE_SETBIT_FLUSH(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
 
 	/* Reset the EEPROM, load the clock period. */
-	CSR_WRITE_4(sc, BGE_EE_ADDR,
+	CSR_WRITE_4_FLUSH(sc, BGE_EE_ADDR,
 	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
 	DELAY(20);
 
@@ -1113,9 +1113,11 @@ bge_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 	if (i == BGE_TIMEOUT) {
 		aprint_error_dev(sc->bge_dev, "PHY read timed out\n");
 		rv = ETIMEDOUT;
-	} else if ((data & BGE_MICOMM_READFAIL) != 0)
-		rv = -1;
-	else
+	} else if ((data & BGE_MICOMM_READFAIL) != 0) {
+		/* XXX This error occurs on some devices while attaching. */
+		aprint_debug_dev(sc->bge_dev, "PHY read I/O error\n");
+		rv = EIO;
+	} else
 		*val = data & BGE_MICOMM_DATA;
 
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
@@ -1133,7 +1135,8 @@ static int
 bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct bge_softc *sc = device_private(dev);
-	uint32_t autopoll;
+	uint32_t data, autopoll;
+	int rv = 0;
 	int i;
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906 &&
@@ -1156,11 +1159,20 @@ bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 
 	for (i = 0; i < BGE_TIMEOUT; i++) {
 		delay(10);
-		if (!(CSR_READ_4(sc, BGE_MI_COMM) & BGE_MICOMM_BUSY)) {
+		data = CSR_READ_4(sc, BGE_MI_COMM);
+		if (!(data & BGE_MICOMM_BUSY)) {
 			delay(5);
-			CSR_READ_4(sc, BGE_MI_COMM);
+			data = CSR_READ_4(sc, BGE_MI_COMM);
 			break;
 		}
+	}
+
+	if (i == BGE_TIMEOUT) {
+		aprint_error_dev(sc->bge_dev, "PHY write timed out\n");
+		rv = ETIMEDOUT;
+	} else if ((data & BGE_MICOMM_READFAIL) != 0) {
+		aprint_error_dev(sc->bge_dev, "PHY write I/O error\n");
+		rv = EIO;
 	}
 
 	if (autopoll & BGE_MIMODE_AUTOPOLL) {
@@ -1176,7 +1188,7 @@ bge_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 		return ETIMEDOUT;
 	}
 
-	return 0;
+	return rv;
 }
 
 static void
@@ -1827,7 +1839,7 @@ bge_setmulti(struct bge_softc *sc)
 		/* Just want the 7 least-significant bits. */
 		h &= 0x7f;
 
-		hashes[(h & 0x60) >> 5] |= 1 << (h & 0x1F);
+		hashes[(h & 0x60) >> 5] |= 1U << (h & 0x1F);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
@@ -2286,7 +2298,7 @@ bge_chipinit(struct bge_softc *sc)
 #endif
 
 	/* Set the timer prescaler (always 66MHz) */
-	CSR_WRITE_4(sc, BGE_MISC_CFG, BGE_32BITTIME_66MHZ);
+	CSR_WRITE_4_FLUSH(sc, BGE_MISC_CFG, BGE_32BITTIME_66MHZ);
 
 	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5906) {
 		DELAY(40);	/* XXX */
@@ -3182,14 +3194,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 	uint32_t		command;
 	struct ifnet		*ifp;
 	struct mii_data * const mii = &sc->bge_mii;
-	uint32_t		misccfg, mimode;
+	uint32_t		misccfg, mimode, macmode;
 	void *			kva;
 	u_char			eaddr[ETHER_ADDR_LEN];
 	pcireg_t		memtype, subid, reg;
 	bus_addr_t		memaddr;
 	uint32_t		pm_ctl;
 	bool			no_seeprom;
-	int			capmask;
+	int			capmask, trys;
 	int			mii_flags;
 	int			map_flags;
 	char intrbuf[PCI_INTRSTR_LEN];
@@ -3433,14 +3445,6 @@ bge_attach(device_t parent, device_t self, void *aux)
 	    BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM57780)
 		sc->bge_flags |= BGEF_CPMU_PRESENT;
 
-	/* Set MI_MODE */
-	mimode = BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
-	if ((sc->bge_flags & BGEF_CPMU_PRESENT) != 0)
-		mimode |= BGE_MIMODE_500KHZ_CONST;
-	else
-		mimode |= BGE_MIMODE_BASE;
-	CSR_WRITE_4(sc, BGE_MI_MODE, mimode);
-
 	/*
 	 * When using the BCM5701 in PCI-X mode, data corruption has
 	 * been observed in the first few bytes of some received packets.
@@ -3636,10 +3640,10 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * Reset NVRAM before bge_reset(). It's required to acquire NVRAM
 	 * lock in bge_reset().
 	 */
-	CSR_WRITE_4(sc, BGE_EE_ADDR,
+	CSR_WRITE_4_FLUSH(sc, BGE_EE_ADDR,
 	    BGE_EEADDR_RESET | BGE_EEHALFCLK(BGE_HALFCLK_384SCL));
 	delay(1000);
-	BGE_SETBIT(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
+	BGE_SETBIT_FLUSH(sc, BGE_MISC_LOCAL_CTL, BGE_MLC_AUTO_EEPROM);
 
 	bge_stop_fw(sc);
 	bge_sig_pre_reset(sc, BGE_RESET_START);
@@ -3684,6 +3688,21 @@ bge_attach(device_t parent, device_t self, void *aux)
 		bge_release_resources(sc);
 		return;
 	}
+
+	if (BGE_ASICREV(sc->bge_chipid) == BGE_ASICREV_BCM5700) {
+		BGE_SETBIT_FLUSH(sc, BGE_MISC_LOCAL_CTL,
+		    BGE_MLC_MISCIO_OUT1 | BGE_MLC_MISCIO_OUTEN1);
+		DELAY(100);
+	}
+
+	/* Set MI_MODE */
+	mimode = BGE_MIMODE_PHYADDR(sc->bge_phy_addr);
+	if ((sc->bge_flags & BGEF_CPMU_PRESENT) != 0)
+		mimode |= BGE_MIMODE_500KHZ_CONST;
+	else
+		mimode |= BGE_MIMODE_BASE;
+	CSR_WRITE_4_FLUSH(sc, BGE_MI_MODE, mimode);
+	DELAY(80);
 
 	/*
 	 * Get station address from the EEPROM.
@@ -3853,7 +3872,7 @@ bge_attach(device_t parent, device_t self, void *aux)
 	 * by its PCI subsystem ID, as we do below for the SysKonnect SK-9D41.
 	 * The SysKonnect SK-9D41 is a 1000baseSX card.
 	 */
-	if (PCI_PRODUCT(pa->pa_id) == SK_SUBSYSID_9D41 ||
+	if (PCI_PRODUCT(subid) == SK_SUBSYSID_9D41 ||
 	    (hwcfg & BGE_HWCFG_MEDIA) == BGE_MEDIA_FIBER) {
 		if (BGE_IS_5705_PLUS(sc)) {
 			sc->bge_flags |= BGEF_FIBER_MII;
@@ -3871,8 +3890,14 @@ bge_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_set_uint32(dict, "phyflags", sc->bge_phy_flags);
 	prop_dictionary_set_uint32(dict, "chipid", sc->bge_chipid);
 
+	macmode = CSR_READ_4(sc, BGE_MAC_MODE);
+	macmode &= ~BGE_MACMODE_PORTMODE;
 	/* Initialize ifmedia structures. */
 	if (sc->bge_flags & BGEF_FIBER_TBI) {
+		CSR_WRITE_4_FLUSH(sc, BGE_MAC_MODE,
+		    macmode | BGE_PORTMODE_TBI);
+		DELAY(40);
+
 		sc->ethercom.ec_ifmedia = &sc->bge_ifmedia;
 		ifmedia_init(&sc->bge_ifmedia, IFM_IMASK, bge_ifmedia_upd,
 		    bge_ifmedia_sts);
@@ -3884,6 +3909,8 @@ bge_attach(device_t parent, device_t self, void *aux)
 		/* Pretend the user requested this setting */
 		sc->bge_ifmedia.ifm_media = sc->bge_ifmedia.ifm_cur->ifm_media;
 	} else {
+		uint16_t phyreg;
+		int rv;
 		/*
 		 * Do transceiver setup and tell the firmware the
 		 * driver is down so we can try to get access the
@@ -3891,17 +3918,52 @@ bge_attach(device_t parent, device_t self, void *aux)
 		 * if we get a conflict with the ASF firmware accessing
 		 * the PHY.
 		 */
-		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
-		bge_asf_driver_up(sc);
+		if (sc->bge_flags & BGEF_FIBER_MII)
+			macmode |= BGE_PORTMODE_GMII;
+		else
+			macmode |= BGE_PORTMODE_MII;
+		CSR_WRITE_4_FLUSH(sc, BGE_MAC_MODE, macmode);
+		DELAY(40);
 
+		/*
+		 * Do transceiver setup and tell the firmware the
+		 * driver is down so we can try to get access the
+		 * probe if ASF is running.  Retry a couple of times
+		 * if we get a conflict with the ASF firmware accessing
+		 * the PHY.
+		 */
+		trys = 0;
+		BGE_CLRBIT(sc, BGE_MODE_CTL, BGE_MODECTL_STACKUP);
 		sc->ethercom.ec_mii = mii;
 		ifmedia_init(&mii->mii_media, 0, bge_ifmedia_upd,
 			     bge_ifmedia_sts);
 		mii_flags = MIIF_DOPAUSE;
 		if (sc->bge_flags & BGEF_FIBER_MII)
 			mii_flags |= MIIF_HAVEFIBER;
+again:
+		bge_asf_driver_up(sc);
+		rv = bge_miibus_readreg(sc->bge_dev, sc->bge_phy_addr,
+		    MII_BMCR, &phyreg);
+		if ((rv != 0) || ((phyreg & BMCR_PDOWN) != 0)) {
+			int i;
+
+			bge_miibus_writereg(sc->bge_dev, sc->bge_phy_addr,
+			    MII_BMCR, BMCR_RESET);
+			/* Wait up to 500ms for it to complete. */
+			for (i = 0; i < 500; i++) {
+				bge_miibus_readreg(sc->bge_dev,
+				    sc->bge_phy_addr, MII_BMCR, &phyreg);
+				if ((phyreg & BMCR_RESET) == 0)
+					break;
+				DELAY(1000);
+			}
+		}
+
 		mii_attach(sc->bge_dev, mii, capmask, sc->bge_phy_addr,
 		    MII_OFFSET_ANY, mii_flags);
+
+		if (LIST_EMPTY(&mii->mii_phys) && (trys++ < 4))
+			goto again;
 
 		if (LIST_EMPTY(&mii->mii_phys)) {
 			aprint_error_dev(sc->bge_dev, "no PHY found!\n");
@@ -5530,7 +5592,8 @@ bge_init(struct ifnet *ifp)
 	/* Load our MAC address. */
 	m = (const uint16_t *)&(CLLADDR(ifp->if_sadl)[0]);
 	CSR_WRITE_4(sc, BGE_MAC_ADDR1_LO, htons(m[0]));
-	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI, (htons(m[1]) << 16) | htons(m[2]));
+	CSR_WRITE_4(sc, BGE_MAC_ADDR1_HI,
+	    ((uint32_t)htons(m[1]) << 16) | htons(m[2]));
 
 	/* Enable or disable promiscuous mode as needed. */
 	if (ifp->if_flags & IFF_PROMISC)
@@ -5676,10 +5739,10 @@ bge_ifmedia_upd(struct ifnet *ifp)
 			break;
 		case IFM_1000_SX:
 			if ((ifm->ifm_media & IFM_FDX) != 0) {
-				BGE_CLRBIT(sc, BGE_MAC_MODE,
+				BGE_CLRBIT_FLUSH(sc, BGE_MAC_MODE,
 				    BGE_MACMODE_HALF_DUPLEX);
 			} else {
-				BGE_SETBIT(sc, BGE_MAC_MODE,
+				BGE_SETBIT_FLUSH(sc, BGE_MAC_MODE,
 				    BGE_MACMODE_HALF_DUPLEX);
 			}
 			DELAY(40);
@@ -6077,7 +6140,7 @@ bge_link_upd(struct bge_softc *sc)
 				BGE_STS_SETBIT(sc, BGE_STS_LINK);
 				if (BGE_ASICREV(sc->bge_chipid)
 				    == BGE_ASICREV_BCM5704) {
-					BGE_CLRBIT(sc, BGE_MAC_MODE,
+					BGE_CLRBIT_FLUSH(sc, BGE_MAC_MODE,
 					    BGE_MACMODE_TBI_SEND_CFGS);
 					DELAY(40);
 				}
