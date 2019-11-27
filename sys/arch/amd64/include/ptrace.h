@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.16 2019/06/26 12:30:12 mgorny Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.17 2019/11/27 08:56:00 rin Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -34,7 +34,7 @@
 
 #ifdef __x86_64__
 /*
- * i386-dependent ptrace definitions
+ * amd64-dependent ptrace definitions
  */
 #define	PT_STEP			(PT_FIRSTMACH + 0)
 #define	PT_GETREGS		(PT_FIRSTMACH + 1)
