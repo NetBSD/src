@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.123 2019/11/27 13:40:18 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.124 2019/11/27 14:06:12 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6510,3 +6510,108 @@ distrib/notes/sparc64/prep			1.16
 	- Add "Oxford comma".
 	- Improve heading a bit.
 	[martin, ticket #489]
+
+distrib/utils/embedded/conf/armv7.conf		1.36,1.37,1.39
+distrib/utils/embedded/files/armv7_boot.cmd	1.15
+distrib/utils/embedded/files/armv7_boot_nonefi.cmd 1.2
+etc/etc.evbarm/Makefile.inc			1.108-1.114
+sys/arch/arm/dts/omap3-beagle-xm.dts		1.1
+sys/arch/arm/dts/omap3-beagle.dts		1.1
+sys/arch/arm/dts/omap3-n900.dts			1.1
+sys/arch/arm/fdt/smsh_fdt.c			1.2
+sys/arch/arm/ti/am3_platform.c			1.1
+sys/arch/arm/ti/am3_prcm.c			1.2-1.10
+sys/arch/arm/ti/files.ti			1.5-1.20
+sys/arch/arm/ti/if_cpsw.c			1.7,1.8
+sys/arch/arm/ti/if_cpswreg.h			1.1
+sys/arch/arm/ti/omap2_gpmcreg.h			1.1
+sys/arch/arm/ti/omap2_nand.c			1.1,1.2
+sys/arch/arm/ti/omap3_cm.c			1.1-1.4
+sys/arch/arm/ti/omap3_dss.c			1.1
+sys/arch/arm/ti/omap3_dssreg.h			1.1
+sys/arch/arm/ti/omap3_platform.c		1.1,1.2
+sys/arch/arm/ti/omap3_prm.c			1.1
+sys/arch/arm/ti/ti_com.c			1.6-1.8
+sys/arch/arm/ti/ti_cpufreq.c			1.1
+sys/arch/arm/ti/ti_cpufreq.c			1.2
+sys/arch/arm/ti/ti_div_clock.c			1.1
+sys/arch/arm/ti/ti_dpll_clock.c			1.1,1.2
+sys/arch/arm/ti/ti_edma.c			1.1
+sys/arch/arm/ti/ti_edma.h			1.1
+sys/arch/arm/ti/ti_ehci.c			1.1
+sys/arch/arm/ti/ti_fb.c				1.1
+sys/arch/arm/ti/ti_gpio.c			1.1-1.3
+sys/arch/arm/ti/ti_gpmc.c			1.1
+sys/arch/arm/ti/ti_iic.c			1.1-1.4
+sys/arch/arm/ti/ti_iicreg.h			1.1-1.3
+sys/arch/arm/ti/ti_lcdc.c			1.1
+sys/arch/arm/ti/ti_lcdc.c			1.2,1.3
+sys/arch/arm/ti/ti_lcdc.h			1.1
+sys/arch/arm/ti/ti_lcdcreg.h			1.1
+sys/arch/arm/ti/ti_motg.c			1.1
+sys/arch/arm/ti/ti_mux_clock.c			1.1
+sys/arch/arm/ti/ti_omapintc.c			1.2
+sys/arch/arm/ti/ti_omaptimer.c			1.2-1.4
+sys/arch/arm/ti/ti_otg.c			1.1
+sys/arch/arm/ti/ti_otgreg.h			1.1
+sys/arch/arm/ti/ti_platform.c			delete
+sys/arch/arm/ti/ti_platform.h			delete
+sys/arch/arm/ti/ti_prcm.c			1.2,1.3
+sys/arch/arm/ti/ti_prcm.h			1.2-1.4
+sys/arch/arm/ti/ti_rng.c			1.1,1.2
+sys/arch/arm/ti/ti_rngreg.h			1.1
+sys/arch/arm/ti/ti_sdhc.c			1.1-1.3
+sys/arch/arm/ti/ti_sdhcreg.h			1.1,1.2
+sys/arch/arm/ti/ti_sysc.c			1.1
+sys/arch/arm/ti/ti_tptc.c			1.1
+sys/arch/arm/ti/ti_usb.c			1.1
+sys/arch/arm/ti/ti_usbtll.c			1.1
+sys/arch/evbarm/conf/BEAGLEBOARD		delete
+sys/arch/evbarm/conf/BEAGLEBOARDXM		delete
+sys/arch/evbarm/conf/BEAGLEBOARDXM_INSTALL	delete
+sys/arch/evbarm/conf/BEAGLEBOARD_INSTALL	delete
+sys/arch/evbarm/conf/BEAGLEBONE			delete
+sys/arch/evbarm/conf/BEAGLEBONE_INSTALL		delete
+sys/arch/evbarm/conf/DEVKIT8000			delete
+sys/arch/evbarm/conf/GENERIC			1.55-1.67
+sys/arch/evbarm/conf/IGEPV2			delete
+sys/arch/evbarm/conf/N900			1.32,1.33
+sys/arch/evbarm/conf/OVERO			delete
+sys/arch/evbarm/conf/OVERO_INSTALL		delete
+sys/arch/evbarm/conf/README.evbarm		1.22-1.27
+sys/arch/evbarm/conf/TI				delete
+sys/arch/evbarm/conf/files.generic		1.9
+sys/arch/evbarm/conf/files.ti			delete
+sys/arch/evbarm/conf/std.igepv2			delete
+sys/arch/evbarm/conf/std.ti			delete
+sys/dev/fdt/cpufreq_dt.c			1.11-1.13
+sys/dev/fdt/fdt_clock.c				1.9
+sys/dev/fdt/fdt_phy.c				1.6
+sys/dev/fdt/fdtvar.h				1.55,1.56
+sys/dev/fdt/files.fdt				1.46
+sys/dev/fdt/files.fdt				1.47
+sys/dev/fdt/pinctrl_single.c			1.1
+sys/dev/fdt/syscon.c				1.4
+sys/dev/fdt/usbnopphy.c				1.1
+sys/dev/i2c/at24cxx.c				1.32
+sys/dev/i2c/files.i2c				1.101-1.104
+sys/dev/i2c/tda19988.c				1.1-1.3
+sys/dev/i2c/tps65217pmic.c			1.13,1.14
+sys/dev/i2c/tps65950.c				delete
+sys/dev/i2c/twl4030.c				1.1-1.3
+
+	arm: switch am335x and omap3 to FDT support.
+	[jmcneill, ticket #491]
+
+sys/dev/ieee1394/fwohci.c			1.144
+sys/dev/pci/eso.c				1.72
+sys/dev/pci/sv.c				1.57
+
+	Fix operand priority of bit op vs ternary operator.
+	[msaitoh, ticket #492]
+
+sys/dev/pci/esm.c				1.64
+
+	add missing break.
+	[msaitoh, ticket #493]
+
