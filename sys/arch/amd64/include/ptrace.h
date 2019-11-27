@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.17 2019/11/27 08:56:00 rin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.18 2019/11/27 09:08:14 rin Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -88,7 +88,7 @@
 	case PT_SETXSTATE:
 
 int process_machdep_doxstate(struct lwp *, struct lwp *, struct uio *);
-int process_machdep_validxstate(struct proc *);
+int process_machdep_validfpu(struct proc *);
 
 #endif /* _KERNEL */
 
