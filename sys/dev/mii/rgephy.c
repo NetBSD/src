@@ -1,4 +1,4 @@
-/*	$NetBSD: rgephy.c,v 1.57 2019/10/11 09:29:04 msaitoh Exp $	*/
+/*	$NetBSD: rgephy.c,v 1.58 2019/11/27 10:19:21 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.57 2019/10/11 09:29:04 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rgephy.c,v 1.58 2019/11/27 10:19:21 msaitoh Exp $");
 
 
 /*
@@ -111,7 +111,6 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
 	int rev;
-	const char *sep = "";
 
 	rev = MII_REV(ma->mii_id2);
 	mpd = mii_phy_match(ma, rgephys);
@@ -134,14 +133,10 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-	sc->mii_anegticks = MII_ANEGTICKS_GIGE;
 
 	sc->mii_funcs = &rgephy_funcs;
 
 	prop_dictionary_get_bool(prop, "no-rx-delay", &rsc->mii_no_rx_delay);
-
-#define	ADD(m, c)	ifmedia_add(&mii->mii_media, (m), (c), NULL)
-#define	PRINT(n)	aprint_normal("%s%s", sep, (n)); sep = ", "
 
 #ifdef __FreeBSD__
 	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_100_TX, IFM_LOOP, sc->mii_inst),
@@ -150,28 +145,19 @@ rgephy_attach(device_t parent, device_t self, void *aux)
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
-	sc->mii_capabilities &= ~BMSR_ANEG;
+	/* RTL8169S does not report auto-sense; add manually.  */
+	sc->mii_capabilities |= BMSR_ANEG;
 
 	/*
 	 * FreeBSD does not check EXSTAT, but instead adds gigabit
 	 * media explicitly. Why?
 	 */
-	aprint_normal_dev(self, "");
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
 	mii_phy_add_media(sc);
 
-	/* rtl8169S does not report auto-sense; add manually.  */
-	ADD(IFM_MAKEWORD(IFM_ETHER, IFM_AUTO, 0, sc->mii_inst), MII_NMEDIA);
-	sep =", ";
-	PRINT("auto");
-
-#undef	ADD
-#undef	PRINT
-
 	rgephy_reset(sc);
-	aprint_normal("\n");
 }
 
 static int
