@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.51 2019/10/10 08:55:08 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.52 2019/11/27 19:21:36 maxv Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.51 2019/10/10 08:55:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.52 2019/11/27 19:21:36 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -340,118 +340,117 @@ typedef enum {
 
 #define vtophys(va) 0		/* XXX ok? */
 
-int vmxnet3_match(device_t, cfdata_t, void *);
-void vmxnet3_attach(device_t, device_t, void *);
-int vmxnet3_detach(device_t, int);
+static int vmxnet3_match(device_t, cfdata_t, void *);
+static void vmxnet3_attach(device_t, device_t, void *);
+static int vmxnet3_detach(device_t, int);
 
-int vmxnet3_alloc_pci_resources(struct vmxnet3_softc *);
-void vmxnet3_free_pci_resources(struct vmxnet3_softc *);
-int vmxnet3_check_version(struct vmxnet3_softc *);
-void vmxnet3_check_multiqueue(struct vmxnet3_softc *);
+static int vmxnet3_alloc_pci_resources(struct vmxnet3_softc *);
+static void vmxnet3_free_pci_resources(struct vmxnet3_softc *);
+static int vmxnet3_check_version(struct vmxnet3_softc *);
+static void vmxnet3_check_multiqueue(struct vmxnet3_softc *);
 
-int vmxnet3_alloc_msix_interrupts(struct vmxnet3_softc *);
-int vmxnet3_alloc_msi_interrupts(struct vmxnet3_softc *);
-int vmxnet3_alloc_legacy_interrupts(struct vmxnet3_softc *);
-int vmxnet3_alloc_interrupts(struct vmxnet3_softc *);
-void vmxnet3_free_interrupts(struct vmxnet3_softc *);
+static int vmxnet3_alloc_msix_interrupts(struct vmxnet3_softc *);
+static int vmxnet3_alloc_msi_interrupts(struct vmxnet3_softc *);
+static int vmxnet3_alloc_legacy_interrupts(struct vmxnet3_softc *);
+static int vmxnet3_alloc_interrupts(struct vmxnet3_softc *);
+static void vmxnet3_free_interrupts(struct vmxnet3_softc *);
 
-int vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *);
-int vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *);
-int vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *);
-void vmxnet3_set_interrupt_idx(struct vmxnet3_softc *);
-int vmxnet3_setup_interrupts(struct vmxnet3_softc *);
-int vmxnet3_setup_sysctl(struct vmxnet3_softc *);
+static int vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *);
+static int vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *);
+static int vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *);
+static void vmxnet3_set_interrupt_idx(struct vmxnet3_softc *);
+static int vmxnet3_setup_interrupts(struct vmxnet3_softc *);
+static int vmxnet3_setup_sysctl(struct vmxnet3_softc *);
 
-int vmxnet3_setup_stats(struct vmxnet3_softc *);
-void vmxnet3_teardown_stats(struct vmxnet3_softc *);
+static int vmxnet3_setup_stats(struct vmxnet3_softc *);
+static void vmxnet3_teardown_stats(struct vmxnet3_softc *);
 
-int vmxnet3_init_rxq(struct vmxnet3_softc *, int);
-int vmxnet3_init_txq(struct vmxnet3_softc *, int);
-int vmxnet3_alloc_rxtx_queues(struct vmxnet3_softc *);
-void vmxnet3_destroy_rxq(struct vmxnet3_rxqueue *);
-void vmxnet3_destroy_txq(struct vmxnet3_txqueue *);
-void vmxnet3_free_rxtx_queues(struct vmxnet3_softc *);
+static int vmxnet3_init_rxq(struct vmxnet3_softc *, int);
+static int vmxnet3_init_txq(struct vmxnet3_softc *, int);
+static int vmxnet3_alloc_rxtx_queues(struct vmxnet3_softc *);
+static void vmxnet3_destroy_rxq(struct vmxnet3_rxqueue *);
+static void vmxnet3_destroy_txq(struct vmxnet3_txqueue *);
+static void vmxnet3_free_rxtx_queues(struct vmxnet3_softc *);
 
-int vmxnet3_alloc_shared_data(struct vmxnet3_softc *);
-void vmxnet3_free_shared_data(struct vmxnet3_softc *);
-int vmxnet3_alloc_txq_data(struct vmxnet3_softc *);
-void vmxnet3_free_txq_data(struct vmxnet3_softc *);
-int vmxnet3_alloc_rxq_data(struct vmxnet3_softc *);
-void vmxnet3_free_rxq_data(struct vmxnet3_softc *);
-int vmxnet3_alloc_queue_data(struct vmxnet3_softc *);
-void vmxnet3_free_queue_data(struct vmxnet3_softc *);
-int vmxnet3_alloc_mcast_table(struct vmxnet3_softc *);
-void vmxnet3_free_mcast_table(struct vmxnet3_softc *);
-void vmxnet3_init_shared_data(struct vmxnet3_softc *);
-void vmxnet3_reinit_rss_shared_data(struct vmxnet3_softc *);
-void vmxnet3_reinit_shared_data(struct vmxnet3_softc *);
-int vmxnet3_alloc_data(struct vmxnet3_softc *);
-void vmxnet3_free_data(struct vmxnet3_softc *);
-int vmxnet3_setup_interface(struct vmxnet3_softc *);
+static int vmxnet3_alloc_shared_data(struct vmxnet3_softc *);
+static void vmxnet3_free_shared_data(struct vmxnet3_softc *);
+static int vmxnet3_alloc_txq_data(struct vmxnet3_softc *);
+static void vmxnet3_free_txq_data(struct vmxnet3_softc *);
+static int vmxnet3_alloc_rxq_data(struct vmxnet3_softc *);
+static void vmxnet3_free_rxq_data(struct vmxnet3_softc *);
+static int vmxnet3_alloc_queue_data(struct vmxnet3_softc *);
+static void vmxnet3_free_queue_data(struct vmxnet3_softc *);
+static int vmxnet3_alloc_mcast_table(struct vmxnet3_softc *);
+static void vmxnet3_free_mcast_table(struct vmxnet3_softc *);
+static void vmxnet3_init_shared_data(struct vmxnet3_softc *);
+static void vmxnet3_reinit_rss_shared_data(struct vmxnet3_softc *);
+static void vmxnet3_reinit_shared_data(struct vmxnet3_softc *);
+static int vmxnet3_alloc_data(struct vmxnet3_softc *);
+static void vmxnet3_free_data(struct vmxnet3_softc *);
+static int vmxnet3_setup_interface(struct vmxnet3_softc *);
 
-void vmxnet3_evintr(struct vmxnet3_softc *);
-bool vmxnet3_txq_eof(struct vmxnet3_txqueue *, u_int);
-int vmxnet3_newbuf(struct vmxnet3_softc *, struct vmxnet3_rxqueue *,
+static void vmxnet3_evintr(struct vmxnet3_softc *);
+static bool vmxnet3_txq_eof(struct vmxnet3_txqueue *, u_int);
+static int vmxnet3_newbuf(struct vmxnet3_softc *, struct vmxnet3_rxqueue *,
     struct vmxnet3_rxring *);
-void vmxnet3_rxq_eof_discard(struct vmxnet3_rxqueue *,
+static void vmxnet3_rxq_eof_discard(struct vmxnet3_rxqueue *,
     struct vmxnet3_rxring *, int);
-void vmxnet3_rxq_discard_chain(struct vmxnet3_rxqueue *);
-void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
-void vmxnet3_rxq_input(struct vmxnet3_rxqueue *,
+static void vmxnet3_rxq_discard_chain(struct vmxnet3_rxqueue *);
+static void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
+static void vmxnet3_rxq_input(struct vmxnet3_rxqueue *,
     struct vmxnet3_rxcompdesc *, struct mbuf *);
-bool vmxnet3_rxq_eof(struct vmxnet3_rxqueue *, u_int);
-int vmxnet3_legacy_intr(void *);
-int vmxnet3_txrxq_intr(void *);
-void vmxnet3_handle_queue(void *);
-void vmxnet3_handle_queue_work(struct work *, void *);
-int vmxnet3_event_intr(void *);
+static bool vmxnet3_rxq_eof(struct vmxnet3_rxqueue *, u_int);
+static int vmxnet3_legacy_intr(void *);
+static int vmxnet3_txrxq_intr(void *);
+static void vmxnet3_handle_queue(void *);
+static void vmxnet3_handle_queue_work(struct work *, void *);
+static int vmxnet3_event_intr(void *);
 
-void vmxnet3_txstop(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
-void vmxnet3_rxstop(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
-void vmxnet3_stop_locked(struct vmxnet3_softc *);
-void vmxnet3_stop_rendezvous(struct vmxnet3_softc *);
-void vmxnet3_stop(struct ifnet *, int);
+static void vmxnet3_txstop(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
+static void vmxnet3_rxstop(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
+static void vmxnet3_stop_locked(struct vmxnet3_softc *);
+static void vmxnet3_stop_rendezvous(struct vmxnet3_softc *);
+static void vmxnet3_stop(struct ifnet *, int);
 
-void vmxnet3_txinit(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
-int vmxnet3_rxinit(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
-int vmxnet3_reinit_queues(struct vmxnet3_softc *);
-int vmxnet3_enable_device(struct vmxnet3_softc *);
-void vmxnet3_reinit_rxfilters(struct vmxnet3_softc *);
-int vmxnet3_reinit(struct vmxnet3_softc *);
+static void vmxnet3_txinit(struct vmxnet3_softc *, struct vmxnet3_txqueue *);
+static int vmxnet3_rxinit(struct vmxnet3_softc *, struct vmxnet3_rxqueue *);
+static int vmxnet3_reinit_queues(struct vmxnet3_softc *);
+static int vmxnet3_enable_device(struct vmxnet3_softc *);
+static void vmxnet3_reinit_rxfilters(struct vmxnet3_softc *);
+static int vmxnet3_reinit(struct vmxnet3_softc *);
 
-void vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *, struct mbuf *);
-int vmxnet3_init_locked(struct vmxnet3_softc *);
-int vmxnet3_init(struct ifnet *);
+static int vmxnet3_init_locked(struct vmxnet3_softc *);
+static int vmxnet3_init(struct ifnet *);
 
-int vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *, struct mbuf *, int *, int *);
-int vmxnet3_txq_load_mbuf(struct vmxnet3_txqueue *, struct mbuf **, bus_dmamap_t);
-void vmxnet3_txq_unload_mbuf(struct vmxnet3_txqueue *, bus_dmamap_t);
-int vmxnet3_txq_encap(struct vmxnet3_txqueue *, struct mbuf **);
-void vmxnet3_start_locked(struct ifnet *);
-void vmxnet3_start(struct ifnet *);
-void vmxnet3_transmit_locked(struct ifnet *, struct vmxnet3_txqueue *);
-int vmxnet3_transmit(struct ifnet *, struct mbuf *);
-void vmxnet3_deferred_transmit(void *);
+static int vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *, struct mbuf *, int *, int *);
+static int vmxnet3_txq_load_mbuf(struct vmxnet3_txqueue *, struct mbuf **, bus_dmamap_t);
+static void vmxnet3_txq_unload_mbuf(struct vmxnet3_txqueue *, bus_dmamap_t);
+static int vmxnet3_txq_encap(struct vmxnet3_txqueue *, struct mbuf **);
+static void vmxnet3_start_locked(struct ifnet *);
+static void vmxnet3_start(struct ifnet *);
+static void vmxnet3_transmit_locked(struct ifnet *, struct vmxnet3_txqueue *);
+static int vmxnet3_transmit(struct ifnet *, struct mbuf *);
+static void vmxnet3_deferred_transmit(void *);
 
-void vmxnet3_set_rxfilter(struct vmxnet3_softc *);
-int vmxnet3_ioctl(struct ifnet *, u_long, void *);
-int vmxnet3_ifflags_cb(struct ethercom *);
+static void vmxnet3_set_rxfilter(struct vmxnet3_softc *);
+static int vmxnet3_ioctl(struct ifnet *, u_long, void *);
+static int vmxnet3_ifflags_cb(struct ethercom *);
 
-int vmxnet3_watchdog(struct vmxnet3_txqueue *);
-void vmxnet3_refresh_host_stats(struct vmxnet3_softc *);
-void vmxnet3_tick(void *);
-void vmxnet3_link_status(struct vmxnet3_softc *);
-void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
-int vmxnet3_media_change(struct ifnet *);
-void vmxnet3_set_lladdr(struct vmxnet3_softc *);
-void vmxnet3_get_lladdr(struct vmxnet3_softc *);
+static int vmxnet3_watchdog(struct vmxnet3_txqueue *);
+static void vmxnet3_refresh_host_stats(struct vmxnet3_softc *);
+static void vmxnet3_tick(void *);
+static void vmxnet3_link_status(struct vmxnet3_softc *);
+static void vmxnet3_media_status(struct ifnet *, struct ifmediareq *);
+static int vmxnet3_media_change(struct ifnet *);
+static void vmxnet3_set_lladdr(struct vmxnet3_softc *);
+static void vmxnet3_get_lladdr(struct vmxnet3_softc *);
 
-void vmxnet3_enable_all_intrs(struct vmxnet3_softc *);
-void vmxnet3_disable_all_intrs(struct vmxnet3_softc *);
+static void vmxnet3_enable_all_intrs(struct vmxnet3_softc *);
+static void vmxnet3_disable_all_intrs(struct vmxnet3_softc *);
 
-int vmxnet3_dma_malloc(struct vmxnet3_softc *, bus_size_t, bus_size_t,
+static int vmxnet3_dma_malloc(struct vmxnet3_softc *, bus_size_t, bus_size_t,
     struct vmxnet3_dma_alloc *);
-void vmxnet3_dma_free(struct vmxnet3_softc *, struct vmxnet3_dma_alloc *);
+static void vmxnet3_dma_free(struct vmxnet3_softc *, struct vmxnet3_dma_alloc *);
 
 CFATTACH_DECL3_NEW(vmx, sizeof(struct vmxnet3_softc),
     vmxnet3_match, vmxnet3_attach, vmxnet3_detach, NULL, NULL, NULL, 0);
@@ -568,7 +567,7 @@ vmxnet3_barrier(struct vmxnet3_softc *sc, vmxnet3_barrier_t type)
 	}
 }
 
-int
+static int
 vmxnet3_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
@@ -580,7 +579,7 @@ vmxnet3_match(device_t parent, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 vmxnet3_attach(device_t parent, device_t self, void *aux)
 {
 	struct vmxnet3_softc *sc = device_private(self);
@@ -655,7 +654,7 @@ vmxnet3_attach(device_t parent, device_t self, void *aux)
 	sc->vmx_flags |= VMXNET3_FLAG_ATTACHED;
 }
 
-int
+static int
 vmxnet3_detach(device_t self, int flags)
 {
 	struct vmxnet3_softc *sc;
@@ -691,7 +690,7 @@ vmxnet3_detach(device_t self, int flags)
 	return (0);
 }
 
-int
+static int
 vmxnet3_alloc_pci_resources(struct vmxnet3_softc *sc)
 {
 	struct pci_attach_args *pa = sc->vmx_pa;
@@ -718,7 +717,7 @@ vmxnet3_alloc_pci_resources(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_free_pci_resources(struct vmxnet3_softc *sc)
 {
 
@@ -733,7 +732,7 @@ vmxnet3_free_pci_resources(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_check_version(struct vmxnet3_softc *sc)
 {
 	u_int ver;
@@ -757,7 +756,7 @@ vmxnet3_check_version(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_check_multiqueue(struct vmxnet3_softc *sc)
 {
 
@@ -778,7 +777,7 @@ out:
 	sc->vmx_nrxqueues = 1;
 }
 
-int
+static int
 vmxnet3_alloc_msix_interrupts(struct vmxnet3_softc *sc)
 {
 	int required;
@@ -801,7 +800,7 @@ vmxnet3_alloc_msix_interrupts(struct vmxnet3_softc *sc)
 	return (1);
 }
 
-int
+static int
 vmxnet3_alloc_msi_interrupts(struct vmxnet3_softc *sc)
 {
 	int nmsi, required;
@@ -821,7 +820,7 @@ vmxnet3_alloc_msi_interrupts(struct vmxnet3_softc *sc)
 	return (1);
 }
 
-int
+static int
 vmxnet3_alloc_legacy_interrupts(struct vmxnet3_softc *sc)
 {
 
@@ -833,7 +832,7 @@ vmxnet3_alloc_legacy_interrupts(struct vmxnet3_softc *sc)
 	return (1);
 }
 
-int
+static int
 vmxnet3_alloc_interrupts(struct vmxnet3_softc *sc)
 {
 	u_int config;
@@ -874,7 +873,7 @@ vmxnet3_alloc_interrupts(struct vmxnet3_softc *sc)
 	return (error);
 }
 
-void
+static void
 vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 {
 	pci_chipset_tag_t pc = sc->vmx_pc;
@@ -893,7 +892,7 @@ vmxnet3_free_interrupts(struct vmxnet3_softc *sc)
 	pci_intr_release(pc, sc->vmx_intrs, sc->vmx_nintrs);
 }
 
-int
+static int
 vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 {
 	pci_chipset_tag_t pc = sc->vmx_pa->pa_pc;
@@ -977,7 +976,7 @@ vmxnet3_setup_msix_interrupts(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-int
+static int
 vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 {
 	pci_chipset_tag_t pc = sc->vmx_pa->pa_pc;
@@ -1021,7 +1020,7 @@ vmxnet3_setup_msi_interrupt(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-int
+static int
 vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 {
 	pci_chipset_tag_t pc = sc->vmx_pa->pa_pc;
@@ -1065,7 +1064,7 @@ vmxnet3_setup_legacy_interrupt(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_set_interrupt_idx(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_queue *vmxq;
@@ -1092,7 +1091,7 @@ vmxnet3_set_interrupt_idx(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_setup_interrupts(struct vmxnet3_softc *sc)
 {
 	int error;
@@ -1118,7 +1117,7 @@ vmxnet3_setup_interrupts(struct vmxnet3_softc *sc)
 	return (error);
 }
 
-int
+static int
 vmxnet3_init_rxq(struct vmxnet3_softc *sc, int q)
 {
 	struct vmxnet3_rxqueue *rxq;
@@ -1146,7 +1145,7 @@ vmxnet3_init_rxq(struct vmxnet3_softc *sc, int q)
 	return (0);
 }
 
-int
+static int
 vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 {
 	struct vmxnet3_txqueue *txq;
@@ -1181,7 +1180,7 @@ vmxnet3_init_txq(struct vmxnet3_softc *sc, int q)
 	return (0);
 }
 
-int
+static int
 vmxnet3_alloc_rxtx_queues(struct vmxnet3_softc *sc)
 {
 	int i, error, max_nqueues;
@@ -1228,7 +1227,7 @@ vmxnet3_alloc_rxtx_queues(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_destroy_rxq(struct vmxnet3_rxqueue *rxq)
 {
 	struct vmxnet3_rxring *rxr;
@@ -1250,7 +1249,7 @@ vmxnet3_destroy_rxq(struct vmxnet3_rxqueue *rxq)
 		mutex_obj_free(rxq->vxrxq_mtx);
 }
 
-void
+static void
 vmxnet3_destroy_txq(struct vmxnet3_txqueue *txq)
 {
 	struct vmxnet3_txring *txr;
@@ -1276,7 +1275,7 @@ vmxnet3_destroy_txq(struct vmxnet3_txqueue *txq)
 		mutex_obj_free(txq->vxtxq_mtx);
 }
 
-void
+static void
 vmxnet3_free_rxtx_queues(struct vmxnet3_softc *sc)
 {
 	int i;
@@ -1296,7 +1295,7 @@ vmxnet3_free_rxtx_queues(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_alloc_shared_data(struct vmxnet3_softc *sc)
 {
 	device_t dev;
@@ -1349,7 +1348,7 @@ vmxnet3_alloc_shared_data(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_free_shared_data(struct vmxnet3_softc *sc)
 {
 
@@ -1369,7 +1368,7 @@ vmxnet3_free_shared_data(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_alloc_txq_data(struct vmxnet3_softc *sc)
 {
 	device_t dev;
@@ -1422,7 +1421,7 @@ vmxnet3_alloc_txq_data(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_free_txq_data(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_txqueue *txq;
@@ -1457,7 +1456,7 @@ vmxnet3_free_txq_data(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_alloc_rxq_data(struct vmxnet3_softc *sc)
 {
 	device_t dev;
@@ -1534,7 +1533,7 @@ vmxnet3_alloc_rxq_data(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_free_rxq_data(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_rxqueue *rxq;
@@ -1582,7 +1581,7 @@ vmxnet3_free_rxq_data(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_alloc_queue_data(struct vmxnet3_softc *sc)
 {
 	int error;
@@ -1598,7 +1597,7 @@ vmxnet3_alloc_queue_data(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_free_queue_data(struct vmxnet3_softc *sc)
 {
 
@@ -1608,7 +1607,7 @@ vmxnet3_free_queue_data(struct vmxnet3_softc *sc)
 	}
 }
 
-int
+static int
 vmxnet3_alloc_mcast_table(struct vmxnet3_softc *sc)
 {
 	int error;
@@ -1623,7 +1622,7 @@ vmxnet3_alloc_mcast_table(struct vmxnet3_softc *sc)
 	return (error);
 }
 
-void
+static void
 vmxnet3_free_mcast_table(struct vmxnet3_softc *sc)
 {
 
@@ -1633,7 +1632,7 @@ vmxnet3_free_mcast_table(struct vmxnet3_softc *sc)
 	}
 }
 
-void
+static void
 vmxnet3_init_shared_data(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_driver_shared *ds;
@@ -1719,7 +1718,7 @@ vmxnet3_init_shared_data(struct vmxnet3_softc *sc)
 	}
 }
 
-void
+static void
 vmxnet3_reinit_rss_shared_data(struct vmxnet3_softc *sc)
 {
 	/*
@@ -1751,7 +1750,7 @@ vmxnet3_reinit_rss_shared_data(struct vmxnet3_softc *sc)
 		rss->ind_table[i] = i % sc->vmx_nrxqueues;
 }
 
-void
+static void
 vmxnet3_reinit_shared_data(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp;
@@ -1782,7 +1781,7 @@ vmxnet3_reinit_shared_data(struct vmxnet3_softc *sc)
 	    (uint64_t) sc->vmx_ds_dma.dma_paddr >> 32);
 }
 
-int
+static int
 vmxnet3_alloc_data(struct vmxnet3_softc *sc)
 {
 	int error;
@@ -1804,7 +1803,7 @@ vmxnet3_alloc_data(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_free_data(struct vmxnet3_softc *sc)
 {
 
@@ -1813,7 +1812,7 @@ vmxnet3_free_data(struct vmxnet3_softc *sc)
 	vmxnet3_free_shared_data(sc);
 }
 
-int
+static int
 vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
@@ -1876,7 +1875,7 @@ vmxnet3_setup_interface(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-int
+static int
 vmxnet3_setup_sysctl(struct vmxnet3_softc *sc)
 {
 	const char *devname;
@@ -1945,7 +1944,7 @@ out:
 	return error;
 }
 
-int
+static int
 vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_queue *vmxq;
@@ -2005,7 +2004,7 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 	return 0;
 }
 
-void
+static void
 vmxnet3_teardown_stats(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_queue *vmxq;
@@ -2044,7 +2043,7 @@ vmxnet3_teardown_stats(struct vmxnet3_softc *sc)
 	evcnt_detach(&sc->vmx_event_debug);
 }
 
-void
+static void
 vmxnet3_evintr(struct vmxnet3_softc *sc)
 {
 	device_t dev;
@@ -2101,7 +2100,7 @@ vmxnet3_evintr(struct vmxnet3_softc *sc)
 	VMXNET3_CORE_UNLOCK(sc);
 }
 
-bool
+static bool
 vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 {
 	struct vmxnet3_softc *sc;
@@ -2162,7 +2161,7 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 	return more;
 }
 
-int
+static int
 vmxnet3_newbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq,
     struct vmxnet3_rxring *rxr)
 {
@@ -2225,9 +2224,7 @@ vmxnet3_newbuf(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq,
 	return (0);
 }
 
-
-
-void
+static void
 vmxnet3_rxq_eof_discard(struct vmxnet3_rxqueue *rxq,
     struct vmxnet3_rxring *rxr, int idx)
 {
@@ -2238,7 +2235,7 @@ vmxnet3_rxq_eof_discard(struct vmxnet3_rxqueue *rxq,
 	vmxnet3_rxr_increment_fill(rxr);
 }
 
-void
+static void
 vmxnet3_rxq_discard_chain(struct vmxnet3_rxqueue *rxq)
 {
 	struct vmxnet3_softc *sc;
@@ -2271,7 +2268,7 @@ vmxnet3_rxq_discard_chain(struct vmxnet3_rxqueue *rxq)
 	} while (!eof);
 }
 
-void
+static void
 vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 {
 	if (rxcd->no_csum)
@@ -2301,7 +2298,7 @@ vmxnet3_rx_csum(struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 	}
 }
 
-void
+static void
 vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
     struct vmxnet3_rxcompdesc *rxcd, struct mbuf *m)
 {
@@ -2328,7 +2325,7 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
 
-bool
+static bool
 vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 {
 	struct vmxnet3_softc *sc;
@@ -2487,7 +2484,7 @@ vmxnet3_sched_handle_queue(struct vmxnet3_softc *sc, struct vmxnet3_queue *vmxq)
 	}
 }
 
-int
+static int
 vmxnet3_legacy_intr(void *xsc)
 {
 	struct vmxnet3_softc *sc;
@@ -2529,7 +2526,7 @@ vmxnet3_legacy_intr(void *xsc)
 	return (1);
 }
 
-int
+static int
 vmxnet3_txrxq_intr(void *xvmxq)
 {
 	struct vmxnet3_softc *sc;
@@ -2574,7 +2571,7 @@ vmxnet3_txrxq_intr(void *xvmxq)
 	return (1);
 }
 
-void
+static void
 vmxnet3_handle_queue(void *xvmxq)
 {
 	struct vmxnet3_softc *sc;
@@ -2615,7 +2612,7 @@ vmxnet3_handle_queue(void *xvmxq)
 		vmxnet3_enable_intr(sc, vmxq->vxq_intr_idx);
 }
 
-void
+static void
 vmxnet3_handle_queue_work(struct work *wk, void *context)
 {
 	struct vmxnet3_queue *vmxq;
@@ -2624,7 +2621,7 @@ vmxnet3_handle_queue_work(struct work *wk, void *context)
 	vmxnet3_handle_queue(vmxq);
 }
 
-int
+static int
 vmxnet3_event_intr(void *xsc)
 {
 	struct vmxnet3_softc *sc;
@@ -2644,7 +2641,7 @@ vmxnet3_event_intr(void *xsc)
 	return (1);
 }
 
-void
+static void
 vmxnet3_txstop(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *txq)
 {
 	struct vmxnet3_txring *txr;
@@ -2668,7 +2665,7 @@ vmxnet3_txstop(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *txq)
 	}
 }
 
-void
+static void
 vmxnet3_rxstop(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 {
 	struct vmxnet3_rxring *rxr;
@@ -2700,7 +2697,7 @@ vmxnet3_rxstop(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 	}
 }
 
-void
+static void
 vmxnet3_stop_rendezvous(struct vmxnet3_softc *sc)
 {
 	struct vmxnet3_rxqueue *rxq;
@@ -2719,7 +2716,7 @@ vmxnet3_stop_rendezvous(struct vmxnet3_softc *sc)
 	}
 }
 
-void
+static void
 vmxnet3_stop_locked(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp;
@@ -2746,7 +2743,7 @@ vmxnet3_stop_locked(struct vmxnet3_softc *sc)
 	vmxnet3_write_cmd(sc, VMXNET3_CMD_RESET);
 }
 
-void
+static void
 vmxnet3_stop(struct ifnet *ifp, int disable)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -2756,7 +2753,7 @@ vmxnet3_stop(struct ifnet *ifp, int disable)
 	VMXNET3_CORE_UNLOCK(sc);
 }
 
-void
+static void
 vmxnet3_txinit(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *txq)
 {
 	struct vmxnet3_txring *txr;
@@ -2776,7 +2773,7 @@ vmxnet3_txinit(struct vmxnet3_softc *sc, struct vmxnet3_txqueue *txq)
 	    txc->vxcr_ndesc * sizeof(struct vmxnet3_txcompdesc));
 }
 
-int
+static int
 vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 {
 	struct vmxnet3_rxring *rxr;
@@ -2817,7 +2814,7 @@ vmxnet3_rxinit(struct vmxnet3_softc *sc, struct vmxnet3_rxqueue *rxq)
 	return (0);
 }
 
-int
+static int
 vmxnet3_reinit_queues(struct vmxnet3_softc *sc)
 {
 	device_t dev;
@@ -2838,7 +2835,7 @@ vmxnet3_reinit_queues(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-int
+static int
 vmxnet3_enable_device(struct vmxnet3_softc *sc)
 {
 	int q;
@@ -2857,7 +2854,7 @@ vmxnet3_enable_device(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-void
+static void
 vmxnet3_reinit_rxfilters(struct vmxnet3_softc *sc)
 {
 
@@ -2867,7 +2864,7 @@ vmxnet3_reinit_rxfilters(struct vmxnet3_softc *sc)
 	vmxnet3_write_cmd(sc, VMXNET3_CMD_VLAN_FILTER);
 }
 
-int
+static int
 vmxnet3_reinit(struct vmxnet3_softc *sc)
 {
 
@@ -2885,11 +2882,7 @@ vmxnet3_reinit(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-
-
-
-
-int
+static int
 vmxnet3_init_locked(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
@@ -2912,7 +2905,7 @@ vmxnet3_init_locked(struct vmxnet3_softc *sc)
 	return (0);
 }
 
-int
+static int
 vmxnet3_init(struct ifnet *ifp)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -2925,7 +2918,7 @@ vmxnet3_init(struct ifnet *ifp)
 	return (error);
 }
 
-int
+static int
 vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
     int *start, int *csum_start)
 {
@@ -3003,7 +2996,7 @@ vmxnet3_txq_offload_ctx(struct vmxnet3_txqueue *txq, struct mbuf *m,
 	return (0);
 }
 
-int
+static int
 vmxnet3_txq_load_mbuf(struct vmxnet3_txqueue *txq, struct mbuf **m0,
     bus_dmamap_t dmap)
 {
@@ -3035,14 +3028,14 @@ vmxnet3_txq_load_mbuf(struct vmxnet3_txqueue *txq, struct mbuf **m0,
 	return (error);
 }
 
-void
+static void
 vmxnet3_txq_unload_mbuf(struct vmxnet3_txqueue *txq, bus_dmamap_t dmap)
 {
 
 	bus_dmamap_unload(txq->vxtxq_sc->vmx_dmat, dmap);
 }
 
-int
+static int
 vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 {
 	struct vmxnet3_softc *sc;
@@ -3058,6 +3051,7 @@ vmxnet3_txq_encap(struct vmxnet3_txqueue *txq, struct mbuf **m0)
 	txd = NULL;
 	txr = &txq->vxtxq_cmd_ring;
 	dmap = txr->vxtxr_txbuf[txr->vxtxr_head].vtxb_dmamap;
+	csum_start = 0; /* GCC */
 
 	error = vmxnet3_txq_load_mbuf(txq, m0, dmap);
 	if (error)
@@ -3197,7 +3191,7 @@ vmxnet3_tx_common_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq, int txt
 		txq->vxtxq_watchdog = VMXNET3_WATCHDOG_TIMEOUT;
 }
 
-void
+static void
 vmxnet3_start_locked(struct ifnet *ifp)
 {
 	struct vmxnet3_softc *sc;
@@ -3208,7 +3202,6 @@ vmxnet3_start_locked(struct ifnet *ifp)
 
 	vmxnet3_tx_common_locked(ifp, txq, VMXNET3_TX_START);
 }
-
 
 void
 vmxnet3_start(struct ifnet *ifp)
@@ -3246,14 +3239,14 @@ vmxnet3_select_txqueue(struct ifnet *ifp, struct mbuf *m __unused)
 	return cpuid % sc->vmx_ntxqueues;
 }
 
-void
+static void
 vmxnet3_transmit_locked(struct ifnet *ifp, struct vmxnet3_txqueue *txq)
 {
 
 	vmxnet3_tx_common_locked(ifp, txq, VMXNET3_TX_TRANSMIT);
 }
 
-int
+static int
 vmxnet3_transmit(struct ifnet *ifp, struct mbuf *m)
 {
 	struct vmxnet3_softc *sc;
@@ -3284,7 +3277,7 @@ vmxnet3_transmit(struct ifnet *ifp, struct mbuf *m)
 	return 0;
 }
 
-void
+static void
 vmxnet3_deferred_transmit(void *arg)
 {
 	struct vmxnet3_txqueue *txq = arg;
@@ -3298,7 +3291,7 @@ vmxnet3_deferred_transmit(void *arg)
 	VMXNET3_TXQ_UNLOCK(txq);
 }
 
-void
+static void
 vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
@@ -3369,7 +3362,7 @@ setit:
 	vmxnet3_write_cmd(sc, VMXNET3_CMD_SET_RXMODE);
 }
 
-int
+static int
 vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -3447,7 +3440,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
-int
+static int
 vmxnet3_ifflags_cb(struct ethercom *ec)
 {
 	struct vmxnet3_softc *sc;
@@ -3461,7 +3454,7 @@ vmxnet3_ifflags_cb(struct ethercom *ec)
 	return 0;
 }
 
-int
+static int
 vmxnet3_watchdog(struct vmxnet3_txqueue *txq)
 {
 	struct vmxnet3_softc *sc;
@@ -3483,14 +3476,14 @@ vmxnet3_watchdog(struct vmxnet3_txqueue *txq)
 	return (1);
 }
 
-void
+static void
 vmxnet3_refresh_host_stats(struct vmxnet3_softc *sc)
 {
 
 	vmxnet3_write_cmd(sc, VMXNET3_CMD_GET_STATS);
 }
 
-void
+static void
 vmxnet3_tick(void *xsc)
 {
 	struct vmxnet3_softc *sc;
@@ -3514,7 +3507,7 @@ vmxnet3_tick(void *xsc)
 	VMXNET3_CORE_UNLOCK(sc);
 }
 
-void
+static void
 vmxnet3_link_status(struct vmxnet3_softc *sc)
 {
 	struct ifnet *ifp = &sc->vmx_ethercom.ec_if;
@@ -3534,7 +3527,7 @@ vmxnet3_link_status(struct vmxnet3_softc *sc)
 	if_link_state_change(ifp, link);
 }
 
-void
+static void
 vmxnet3_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct vmxnet3_softc *sc = ifp->if_softc;
@@ -3557,13 +3550,13 @@ vmxnet3_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 	VMXNET3_CORE_UNLOCK(sc);
 }
 
-int
+static int
 vmxnet3_media_change(struct ifnet *ifp)
 {
 	return 0;
 }
 
-void
+static void
 vmxnet3_set_lladdr(struct vmxnet3_softc *sc)
 {
 	uint32_t ml, mh;
@@ -3579,7 +3572,7 @@ vmxnet3_set_lladdr(struct vmxnet3_softc *sc)
 	vmxnet3_write_bar1(sc, VMXNET3_BAR1_MACH, mh);
 }
 
-void
+static void
 vmxnet3_get_lladdr(struct vmxnet3_softc *sc)
 {
 	uint32_t ml, mh;
@@ -3595,7 +3588,7 @@ vmxnet3_get_lladdr(struct vmxnet3_softc *sc)
 	sc->vmx_lladdr[5] = mh >> 8;
 }
 
-void
+static void
 vmxnet3_enable_all_intrs(struct vmxnet3_softc *sc)
 {
 	int i;
@@ -3605,7 +3598,7 @@ vmxnet3_enable_all_intrs(struct vmxnet3_softc *sc)
 		vmxnet3_enable_intr(sc, i);
 }
 
-void
+static void
 vmxnet3_disable_all_intrs(struct vmxnet3_softc *sc)
 {
 	int i;
@@ -3615,8 +3608,7 @@ vmxnet3_disable_all_intrs(struct vmxnet3_softc *sc)
 		vmxnet3_disable_intr(sc, i);
 }
 
-
-int
+static int
 vmxnet3_dma_malloc(struct vmxnet3_softc *sc, bus_size_t size, bus_size_t align,
     struct vmxnet3_dma_alloc *dma)
 {
@@ -3667,7 +3659,7 @@ fail1:
 	return (error);
 }
 
-void
+static void
 vmxnet3_dma_free(struct vmxnet3_softc *sc, struct vmxnet3_dma_alloc *dma)
 {
 	bus_dma_tag_t t = sc->vmx_dmat;
