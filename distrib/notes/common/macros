@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.49 2019/11/28 00:06:39 uwe Exp $
+.\"	$NetBSD: macros,v 1.50 2019/11/28 19:53:04 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -316,7 +316,7 @@
 .de mktoc
 .nr mktoc-level \\$1
 .shift
-.write toc-tmp .Ti \\n[toc-level] \\n% "\\$*"
+.write toc-tmp .Ti \\n[mktoc-level] \\n% "\\$*"
 ..
 .rn Ss Ss-toc
 .de Ss
