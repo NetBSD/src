@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.7 2019/11/26 10:33:19 jmcneill Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.8 2019/11/28 16:02:07 msaitoh Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -159,8 +159,10 @@
 #define MCX_ETHER_CAP_10G_CX4	(1 << 2)
 #define MCX_ETHER_CAP_10G_KX4	(1 << 3)
 #define MCX_ETHER_CAP_10G_KR	(1 << 4)
+#define MCX_ETHER_CAP_20G_KR2	(1 << 5)
 #define MCX_ETHER_CAP_40G_CR4	(1 << 6)
 #define MCX_ETHER_CAP_40G_KR4	(1 << 7)
+#define MCX_ETHER_CAP_56G_R4	(1 << 8)
 #define MCX_ETHER_CAP_10G_CR	(1 << 12)
 #define MCX_ETHER_CAP_10G_SR	(1 << 13)
 #define MCX_ETHER_CAP_10G_LR	(1 << 14)
@@ -170,6 +172,10 @@
 #define MCX_ETHER_CAP_100G_CR4	(1 << 20)
 #define MCX_ETHER_CAP_100G_SR4	(1 << 21)
 #define MCX_ETHER_CAP_100G_KR4	(1 << 22)
+#define MCX_ETHER_CAP_100G_LR4	(1 << 23)
+#define MCX_ETHER_CAP_100_TX	(1 << 24)
+#define MCX_ETHER_CAP_1000_T	(1 << 25)
+#define MCX_ETHER_CAP_10G_T	(1 << 26)
 #define MCX_ETHER_CAP_25G_CR	(1 << 27)
 #define MCX_ETHER_CAP_25G_KR	(1 << 28)
 #define MCX_ETHER_CAP_25G_SR	(1 << 29)
@@ -2146,14 +2152,14 @@ static const uint64_t mcx_eth_cap_map[] = {
 	IFM_10G_CX4,
 	IFM_10G_KX4,
 	IFM_10G_KR,
-	0,
+	IFM_20G_KR2,
 	IFM_40G_CR4,
 	IFM_40G_KR4,
+	IFM_56G_R4,
 	0,
 	0,
 	0,
-	0,
-	IFM_10G_T,
+	IFM_10G_CR1,
 	IFM_10G_SR,
 	IFM_10G_LR,
 	IFM_40G_SR4,
@@ -2164,10 +2170,10 @@ static const uint64_t mcx_eth_cap_map[] = {
 	IFM_100G_CR4,
 	IFM_100G_SR4,
 	IFM_100G_KR4,
-	0,
-	0,
-	0,
-	0,
+	IFM_100G_LR4,
+	IFM_100_TX,
+	IFM_1000_T,
+	IFM_10G_T,
 	IFM_25G_CR,
 	IFM_25G_KR,
 	IFM_25G_SR,
