@@ -1,4 +1,4 @@
-$NetBSD: README.gcc8,v 1.5 2019/11/18 01:13:39 mrg Exp $
+$NetBSD: README.gcc8,v 1.6 2019/11/28 19:31:27 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -28,20 +28,20 @@ architecture	tools	kernels	libgcc	native-gcc	make release	runs	atf	switched
 ------------	-----	-------	------	----------	------------	----	---	--------
 aarch64		y	y	y	y		y		y	y	y
 alpha		y	y	y	y		y		?	?	?
-earmv4		y	y	y	y		y		y	?	?
-earmv4eb	y	?	y	y		?		?	?	?
-earm		y	?	y	y		?		?	?	?
-earmeb		y	?	y	y		?		?	?	?
-earmhf		y	?	y	y		?		?	?	?
-earmhfeb	y	?	y	y		?		?	?	?
-earmv6		y	?	y	y		?		?	?	?
-earmv6eb	y	?	y	y		?		?	?	?
-earmv6hf	y	?	y	y		?		?	?	?
-earmv6hfeb	y	?	y	y		?		?	?	?
-earmv7		y	?	y	y		?		?	?	?
-earmv7eb	y	?	y	y		?		?	?	?
-earmv7hf	y	y	y	y		y		y	n[3]	n
-earmv7hfeb	y	?	y	y		?		?	?	?
+earmv4		y	y	y	y		y		y	?	y
+earmv4eb	y	?	y	y		?		?	?	y
+earm		y	?	y	y		?		?	?	y
+earmeb		y	?	y	y		?		?	?	y
+earmhf		y	?	y	y		?		?	?	y
+earmhfeb	y	?	y	y		?		?	?	y
+earmv6		y	?	y	y		?		?	?	y
+earmv6eb	y	?	y	y		?		?	?	y
+earmv6hf	y	?	y	y		?		?	?	y
+earmv6hfeb	y	?	y	y		?		?	?	y
+earmv7		y	?	y	y		?		?	?	y
+earmv7eb	y	?	y	y		?		?	?	y
+earmv7hf	y	y	y	y		y		y	n[3]	y
+earmv7hfeb	y	?	y	y		?		?	?	y
 hppa		y	?	y	y		?		?	?	?
 i386		y	y	y	y		y		y	y	y
 ia64		y	y	y	y		y		y	n[4]	y
@@ -59,8 +59,8 @@ sparc		y	y	y	y		y		y	y	y
 sparc64		y	y	y	y		y		y	y	y
 vax		y	?	?	y		?		?	?	?
 x86_64		y	y	y	y		y		y	y	y
-riscv32		y	?	y	y		y		?	?	?	
-riscv64		y	?	y	y		y		?	?	?
+riscv32		y	?	y	y		y		?	?	y	
+riscv64		y	?	y	y		y		?	?	y
 --
 coldfire	?	N/A	?	?		?		N/A	N/A
 ------------	-----	-------	------	----------	------------	----	---
