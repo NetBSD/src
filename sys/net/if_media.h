@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.66 2019/10/03 14:41:14 jmcneill Exp $	*/
+/*	$NetBSD: if_media.h,v 1.67 2019/11/28 14:08:22 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -872,7 +872,7 @@ typedef	void (*ifm_stat_cb_t)(struct ifnet *, struct ifmediareq *);
  */
 struct ifmedia_entry {
 	TAILQ_ENTRY(ifmedia_entry) ifm_list;
-	u_int	ifm_media;	/* description of this media attachment */
+	u_int	ifm_media;	/* IFMWD: description of this media */
 	u_int	ifm_data;	/* for driver-specific use */
 	void	*ifm_aux;	/* for driver-specific use */
 };
@@ -882,9 +882,9 @@ struct ifmedia_entry {
  * It is used to keep general media state.
  */
 struct ifmedia {
-	u_int	ifm_mask;	/* mask of changes we don't care about */
-	u_int	ifm_media;	/* current user-set media word */
-	struct ifmedia_entry *ifm_cur;	/* currently selected media */
+	u_int	ifm_mask;	/* IFMWD: mask of changes we don't care */
+	u_int	ifm_media;	/* IFMWD: current active media word */
+	struct ifmedia_entry *ifm_cur;	/* current user-selected media */
 	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
 	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
