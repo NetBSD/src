@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.27 2019/10/12 06:00:52 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.28 2019/11/28 17:09:10 maxv Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.27 2019/10/12 06:00:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.28 2019/11/28 17:09:10 maxv Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -81,63 +81,62 @@ __KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.27 2019/10/12 06:00:52 msaitoh Exp $");
 
 #include <dev/pci/if_etreg.h>
 
-int	et_match(device_t, cfdata_t, void *);
-void	et_attach(device_t, device_t, void *);
-int	et_detach(device_t, int);
-int	et_shutdown(device_t);
+static int	et_match(device_t, cfdata_t, void *);
+static void	et_attach(device_t, device_t, void *);
+static int	et_detach(device_t, int);
 
-int	et_miibus_readreg(device_t, int, int, uint16_t *);
-int	et_miibus_writereg(device_t, int, int, uint16_t);
-void	et_miibus_statchg(struct ifnet *);
+static int	et_miibus_readreg(device_t, int, int, uint16_t *);
+static int	et_miibus_writereg(device_t, int, int, uint16_t);
+static void	et_miibus_statchg(struct ifnet *);
 
-int	et_init(struct ifnet *);
-int	et_ioctl(struct ifnet *, u_long, void *);
-void	et_start(struct ifnet *);
-void	et_watchdog(struct ifnet *);
+static int	et_init(struct ifnet *);
+static int	et_ioctl(struct ifnet *, u_long, void *);
+static void	et_start(struct ifnet *);
+static void	et_watchdog(struct ifnet *);
 static int	et_ifmedia_upd(struct ifnet *);
 static void	et_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
-int	et_intr(void *);
-void	et_enable_intrs(struct et_softc *, uint32_t);
-void	et_disable_intrs(struct et_softc *);
-void	et_rxeof(struct et_softc *);
-void	et_txeof(struct et_softc *);
-void	et_txtick(void *);
+static int	et_intr(void *);
+static void	et_enable_intrs(struct et_softc *, uint32_t);
+static void	et_disable_intrs(struct et_softc *);
+static void	et_rxeof(struct et_softc *);
+static void	et_txeof(struct et_softc *);
+static void	et_txtick(void *);
 
-int	et_dma_alloc(struct et_softc *);
-void	et_dma_free(struct et_softc *);
-int	et_dma_mem_create(struct et_softc *, bus_size_t,
+static int	et_dma_alloc(struct et_softc *);
+static void	et_dma_free(struct et_softc *);
+static int	et_dma_mem_create(struct et_softc *, bus_size_t,
 	    void **, bus_addr_t *, bus_dmamap_t *, bus_dma_segment_t *);
-void	et_dma_mem_destroy(struct et_softc *, void *, bus_dmamap_t);
-int	et_dma_mbuf_create(struct et_softc *);
-void	et_dma_mbuf_destroy(struct et_softc *, int, const int[]);
+static void	et_dma_mem_destroy(struct et_softc *, void *, bus_dmamap_t);
+static int	et_dma_mbuf_create(struct et_softc *);
+static void	et_dma_mbuf_destroy(struct et_softc *, int, const int[]);
 
-int	et_init_tx_ring(struct et_softc *);
-int	et_init_rx_ring(struct et_softc *);
-void	et_free_tx_ring(struct et_softc *);
-void	et_free_rx_ring(struct et_softc *);
-int	et_encap(struct et_softc *, struct mbuf **);
-int	et_newbuf(struct et_rxbuf_data *, int, int, int);
-int	et_newbuf_cluster(struct et_rxbuf_data *, int, int);
-int	et_newbuf_hdr(struct et_rxbuf_data *, int, int);
+static int	et_init_tx_ring(struct et_softc *);
+static int	et_init_rx_ring(struct et_softc *);
+static void	et_free_tx_ring(struct et_softc *);
+static void	et_free_rx_ring(struct et_softc *);
+static int	et_encap(struct et_softc *, struct mbuf **);
+static int	et_newbuf(struct et_rxbuf_data *, int, int, int);
+static int	et_newbuf_cluster(struct et_rxbuf_data *, int, int);
+static int	et_newbuf_hdr(struct et_rxbuf_data *, int, int);
 
-void	et_stop(struct et_softc *);
-int	et_chip_init(struct et_softc *);
-void	et_chip_attach(struct et_softc *);
-void	et_init_mac(struct et_softc *);
-void	et_init_rxmac(struct et_softc *);
-void	et_init_txmac(struct et_softc *);
-int	et_init_rxdma(struct et_softc *);
-int	et_init_txdma(struct et_softc *);
-int	et_start_rxdma(struct et_softc *);
-int	et_start_txdma(struct et_softc *);
-int	et_stop_rxdma(struct et_softc *);
-int	et_stop_txdma(struct et_softc *);
-void	et_reset(struct et_softc *);
-int	et_bus_config(struct et_softc *);
-void	et_get_eaddr(struct et_softc *, uint8_t[]);
-void	et_setmulti(struct et_softc *);
-void	et_tick(void *);
+static void	et_stop(struct et_softc *);
+static int	et_chip_init(struct et_softc *);
+static void	et_chip_attach(struct et_softc *);
+static void	et_init_mac(struct et_softc *);
+static void	et_init_rxmac(struct et_softc *);
+static void	et_init_txmac(struct et_softc *);
+static int	et_init_rxdma(struct et_softc *);
+static int	et_init_txdma(struct et_softc *);
+static int	et_start_rxdma(struct et_softc *);
+static int	et_start_txdma(struct et_softc *);
+static int	et_stop_rxdma(struct et_softc *);
+static int	et_stop_txdma(struct et_softc *);
+static void	et_reset(struct et_softc *);
+static int	et_bus_config(struct et_softc *);
+static void	et_get_eaddr(struct et_softc *, uint8_t[]);
+static void	et_setmulti(struct et_softc *);
+static void	et_tick(void *);
 
 static int	et_rx_intr_npkts = 32;
 static int	et_rx_intr_delay = 20;		/* x10 usec */
@@ -154,7 +153,7 @@ static const struct et_bsize	et_bufsize[ET_RX_NRING] = {
 	{ .bufsize = 0,	.newbuf = et_newbuf_cluster },
 };
 
-const struct et_product {
+static const struct et_product {
 	pci_vendor_id_t		vendor;
 	pci_product_id_t	product;
 } et_devices[] = {
@@ -165,7 +164,7 @@ const struct et_product {
 CFATTACH_DECL_NEW(et, sizeof(struct et_softc), et_match, et_attach, et_detach,
 	NULL);
 
-int
+static int
 et_match(device_t dev, cfdata_t match, void *aux)
 {
 	struct pci_attach_args *pa = aux;
@@ -181,7 +180,7 @@ et_match(device_t dev, cfdata_t match, void *aux)
 	return 0;
 }
 
-void
+static void
 et_attach(device_t parent, device_t self, void *aux)
 {
 	struct et_softc *sc = device_private(self);
@@ -319,7 +318,7 @@ fail:
 	}
 }
 
-int
+static int
 et_detach(device_t self, int flags)
 {
 	struct et_softc *sc = device_private(self);
@@ -353,7 +352,8 @@ et_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+#if 0 /* XXX XXX XXX UNUSED */
+static int
 et_shutdown(device_t self)
 {
 	struct et_softc *sc = device_private(self);
@@ -365,8 +365,9 @@ et_shutdown(device_t self)
 
 	return 0;
 }
+#endif
 
-int
+static int
 et_miibus_readreg(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct et_softc *sc = device_private(dev);
@@ -410,7 +411,7 @@ back:
 	return ret;
 }
 
-int
+static int
 et_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 {
 	struct et_softc *sc = device_private(dev);
@@ -452,7 +453,7 @@ et_miibus_writereg(device_t dev, int phy, int reg, uint16_t val)
 	return rv;
 }
 
-void
+static void
 et_miibus_statchg(struct ifnet *ifp)
 {
 	struct et_softc *sc = ifp->if_softc;
@@ -570,7 +571,7 @@ et_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_status = mii->mii_media_status;
 }
 
-void
+static void
 et_stop(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -596,7 +597,7 @@ et_stop(struct et_softc *sc)
 	ifp->if_flags &= ~(IFF_RUNNING | IFF_OACTIVE);
 }
 
-int
+static int
 et_bus_config(struct et_softc *sc)
 {
 	uint32_t val; //, max_plsz;
@@ -671,7 +672,7 @@ et_bus_config(struct et_softc *sc)
 	return 0;
 }
 
-void
+static void
 et_get_eaddr(struct et_softc *sc, uint8_t eaddr[])
 {
 	uint32_t r;
@@ -686,7 +687,7 @@ et_get_eaddr(struct et_softc *sc, uint8_t eaddr[])
 	eaddr[5] = (r >> 8) & 0xff;
 }
 
-void
+static void
 et_reset(struct et_softc *sc)
 {
 
@@ -706,19 +707,19 @@ et_reset(struct et_softc *sc)
 	CSR_WRITE_4(sc, ET_MAC_CFG1, 0);
 }
 
-void
+static void
 et_disable_intrs(struct et_softc *sc)
 {
 	CSR_WRITE_4(sc, ET_INTR_MASK, 0xffffffff);
 }
 
-void
+static void
 et_enable_intrs(struct et_softc *sc, uint32_t intrs)
 {
 	CSR_WRITE_4(sc, ET_INTR_MASK, ~intrs);
 }
 
-int
+static int
 et_dma_alloc(struct et_softc *sc)
 {
 	struct et_txdesc_ring *tx_ring = &sc->sc_tx_ring;
@@ -801,7 +802,7 @@ et_dma_alloc(struct et_softc *sc)
 	return 0;
 }
 
-void
+static void
 et_dma_free(struct et_softc *sc)
 {
 	struct et_txdesc_ring *tx_ring = &sc->sc_tx_ring;
@@ -847,7 +848,7 @@ et_dma_free(struct et_softc *sc)
 	et_dma_mbuf_destroy(sc, ET_TX_NDESC, rx_done);
 }
 
-int
+static int
 et_dma_mbuf_create(struct et_softc *sc)
 {
 	struct et_txbuf_data *tbd = &sc->sc_tx_data;
@@ -906,7 +907,7 @@ et_dma_mbuf_create(struct et_softc *sc)
 	return 0;
 }
 
-void
+static void
 et_dma_mbuf_destroy(struct et_softc *sc, int tx_done, const int rx_done[])
 {
 	struct et_txbuf_data *tbd = &sc->sc_tx_data;
@@ -944,7 +945,7 @@ et_dma_mbuf_destroy(struct et_softc *sc, int tx_done, const int rx_done[])
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_mbuf_tmp_dmap);
 }
 
-int
+static int
 et_dma_mem_create(struct et_softc *sc, bus_size_t size,
     void **addr, bus_addr_t *paddr, bus_dmamap_t *dmap, bus_dma_segment_t *seg)
 {
@@ -986,14 +987,14 @@ et_dma_mem_create(struct et_softc *sc, bus_size_t size,
 	return 0;
 }
 
-void
+static void
 et_dma_mem_destroy(struct et_softc *sc, void *addr, bus_dmamap_t dmap)
 {
 	bus_dmamap_unload(sc->sc_dmat, dmap);
 	bus_dmamem_free(sc->sc_dmat, (bus_dma_segment_t *)&addr, 1);
 }
 
-void
+static void
 et_chip_attach(struct et_softc *sc)
 {
 	uint32_t val;
@@ -1033,7 +1034,7 @@ et_chip_attach(struct et_softc *sc)
 	CSR_WRITE_4(sc, ET_MMC_CTRL, ET_MMC_CTRL_ENABLE);
 }
 
-int
+static int
 et_intr(void *xsc)
 {
 	struct et_softc *sc = xsc;
@@ -1064,7 +1065,7 @@ back:
 	return (1);
 }
 
-int
+static int
 et_init(struct ifnet *ifp)
 {
 	struct et_softc *sc = ifp->if_softc;
@@ -1124,7 +1125,7 @@ back:
 	return (0);
 }
 
-int
+static int
 et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct et_softc *sc = ifp->if_softc;
@@ -1171,7 +1172,7 @@ et_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	return error;
 }
 
-void
+static void
 et_start(struct ifnet *ifp)
 {
 	struct et_softc *sc = ifp->if_softc;
@@ -1212,7 +1213,7 @@ et_start(struct ifnet *ifp)
 	}
 }
 
-void
+static void
 et_watchdog(struct ifnet *ifp)
 {
 	struct et_softc *sc = ifp->if_softc;
@@ -1223,7 +1224,7 @@ et_watchdog(struct ifnet *ifp)
 	et_start(ifp);
 }
 
-int
+static int
 et_stop_rxdma(struct et_softc *sc)
 {
 
@@ -1238,7 +1239,7 @@ et_stop_rxdma(struct et_softc *sc)
 	return 0;
 }
 
-int
+static int
 et_stop_txdma(struct et_softc *sc)
 {
 
@@ -1247,7 +1248,7 @@ et_stop_txdma(struct et_softc *sc)
 	return 0;
 }
 
-void
+static void
 et_free_tx_ring(struct et_softc *sc)
 {
 	struct et_txbuf_data *tbd = &sc->sc_tx_data;
@@ -1269,7 +1270,7 @@ et_free_tx_ring(struct et_softc *sc)
 	    tx_ring->tr_dmap->dm_mapsize, BUS_DMASYNC_PREWRITE);
 }
 
-void
+static void
 et_free_rx_ring(struct et_softc *sc)
 {
 	int n;
@@ -1295,7 +1296,7 @@ et_free_rx_ring(struct et_softc *sc)
 	}
 }
 
-void
+static void
 et_setmulti(struct et_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1353,7 +1354,7 @@ back:
 	CSR_WRITE_4(sc, ET_RXMAC_CTRL, rxmac_ctrl);
 }
 
-int
+static int
 et_chip_init(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1408,7 +1409,7 @@ et_chip_init(struct et_softc *sc)
 	return 0;
 }
 
-int
+static int
 et_init_tx_ring(struct et_softc *sc)
 {
 	struct et_txdesc_ring *tx_ring = &sc->sc_tx_ring;
@@ -1429,7 +1430,7 @@ et_init_tx_ring(struct et_softc *sc)
 	return 0;
 }
 
-int
+static int
 et_init_rx_ring(struct et_softc *sc)
 {
 	struct et_rxstatus_data *rxsd = &sc->sc_rx_status;
@@ -1461,7 +1462,7 @@ et_init_rx_ring(struct et_softc *sc)
 	return 0;
 }
 
-int
+static int
 et_init_rxdma(struct et_softc *sc)
 {
 	struct et_rxstatus_data *rxsd = &sc->sc_rx_status;
@@ -1531,7 +1532,7 @@ et_init_rxdma(struct et_softc *sc)
 	return 0;
 }
 
-int
+static int
 et_init_txdma(struct et_softc *sc)
 {
 	struct et_txdesc_ring *tx_ring = &sc->sc_tx_ring;
@@ -1566,7 +1567,7 @@ et_init_txdma(struct et_softc *sc)
 	return 0;
 }
 
-void
+static void
 et_init_mac(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1619,7 +1620,7 @@ et_init_mac(struct et_softc *sc)
 	CSR_WRITE_4(sc, ET_MAC_CFG1, 0);
 }
 
-void
+static void
 et_init_rxmac(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1700,7 +1701,7 @@ et_init_rxmac(struct et_softc *sc)
 	et_setmulti(sc);
 }
 
-void
+static void
 et_init_txmac(struct et_softc *sc)
 {
 
@@ -1715,7 +1716,7 @@ et_init_txmac(struct et_softc *sc)
 		    ET_TXMAC_CTRL_ENABLE | ET_TXMAC_CTRL_FC_DISABLE);
 }
 
-int
+static int
 et_start_rxdma(struct et_softc *sc)
 {
 	uint32_t val = 0;
@@ -1738,7 +1739,7 @@ et_start_rxdma(struct et_softc *sc)
 	return 0;
 }
 
-int
+static int
 et_start_txdma(struct et_softc *sc)
 {
 
@@ -1746,7 +1747,7 @@ et_start_txdma(struct et_softc *sc)
 	return 0;
 }
 
-void
+static void
 et_rxeof(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -1848,7 +1849,7 @@ et_rxeof(struct et_softc *sc)
 	}
 }
 
-int
+static int
 et_encap(struct et_softc *sc, struct mbuf **m0)
 {
 	struct mbuf *m = *m0;
@@ -1983,7 +1984,7 @@ back:
 	return error;
 }
 
-void
+static void
 et_txeof(struct et_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
@@ -2039,7 +2040,7 @@ et_txeof(struct et_softc *sc)
 	if_schedule_deferred_start(ifp);
 }
 
-void
+static void
 et_txtick(void *xsc)
 {
 	struct et_softc *sc = xsc;
@@ -2050,7 +2051,7 @@ et_txtick(void *xsc)
 	splx(s);
 }
 
-void
+static void
 et_tick(void *xsc)
 {
 	struct et_softc *sc = xsc;
@@ -2062,19 +2063,19 @@ et_tick(void *xsc)
 	splx(s);
 }
 
-int
+static int
 et_newbuf_cluster(struct et_rxbuf_data *rbd, int buf_idx, int init)
 {
 	return et_newbuf(rbd, buf_idx, init, MCLBYTES);
 }
 
-int
+static int
 et_newbuf_hdr(struct et_rxbuf_data *rbd, int buf_idx, int init)
 {
 	return et_newbuf(rbd, buf_idx, init, MHLEN);
 }
 
-int
+static int
 et_newbuf(struct et_rxbuf_data *rbd, int buf_idx, int init, int len0)
 {
 	struct et_softc *sc = rbd->rbd_softc;

@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.52 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.53 2019/11/28 17:09:10 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.52 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.53 2019/11/28 17:09:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -156,10 +156,10 @@ static const struct zyd_type {
 #define zyd_lookup(v, p)	\
 	((const struct zyd_type *)usb_lookup(zyd_devs, v, p))
 
-int zyd_match(device_t, cfdata_t, void *);
-void zyd_attach(device_t, device_t, void *);
-int zyd_detach(device_t, int);
-int zyd_activate(device_t, enum devact);
+static int zyd_match(device_t, cfdata_t, void *);
+static void zyd_attach(device_t, device_t, void *);
+static int zyd_detach(device_t, int);
+static int zyd_activate(device_t, enum devact);
 
 
 CFATTACH_DECL_NEW(zyd, sizeof(struct zyd_softc), zyd_match,
@@ -239,7 +239,7 @@ Static void	zyd_iter_func(void *, struct ieee80211_node *);
 Static void	zyd_amrr_timeout(void *);
 Static void	zyd_newassoc(struct ieee80211_node *, int);
 
-int
+static int
 zyd_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -297,7 +297,7 @@ zyd_attachhook(device_t self)
 	return;
 }
 
-void
+static void
 zyd_attach(device_t parent, device_t self, void *aux)
 {
 	struct zyd_softc *sc = device_private(self);
@@ -452,7 +452,7 @@ zyd_complete_attach(struct zyd_softc *sc)
 fail:	return error;
 }
 
-int
+static int
 zyd_detach(device_t self, int flags)
 {
 	struct zyd_softc *sc = device_private(self);
@@ -2650,7 +2650,7 @@ zyd_newassoc(struct ieee80211_node *ni, int isnew)
 	ni->ni_txrate = i;
 }
 
-int
+static int
 zyd_activate(device_t self, enum devact act)
 {
 	struct zyd_softc *sc = device_private(self);
