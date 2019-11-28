@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.48 2019/11/27 23:57:41 uwe Exp $
+.\"	$NetBSD: macros,v 1.49 2019/11/28 00:06:39 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -311,10 +311,12 @@
 .\"   .Ti depth page "item"	(internal) output an entry
 .ds toc-file INSTALL.\*[format].toc
 .if dTOC \{\
+.tm ...writing \*[toc-file].tmp
+.open toc-tmp \*[toc-file].tmp
 .de mktoc
 .nr mktoc-level \\$1
 .shift
-.tm .Ti \\n[toc-level] \\n% "\\$*"
+.write toc-tmp .Ti \\n[toc-level] \\n% "\\$*"
 ..
 .rn Ss Ss-toc
 .de Ss
