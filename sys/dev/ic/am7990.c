@@ -1,4 +1,4 @@
-/*	$NetBSD: am7990.c,v 1.79 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: am7990.c,v 1.80 2019/11/28 05:07:27 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.79 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am7990.c,v 1.80 2019/11/28 05:07:27 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -483,7 +483,7 @@ am7990_start(struct ifnet *ifp)
 		}
 
 		IFQ_DEQUEUE(&ifp->if_snd, m);
-		if (m == 0)
+		if (m == NULL)
 			break;
 
 		/*
