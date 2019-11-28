@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.25 2019/11/28 01:08:06 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.26 2019/11/28 15:35:51 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.25 2019/11/28 01:08:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.26 2019/11/28 15:35:51 thorpej Exp $");
 
 #define _INTR_PRIVATE
 
@@ -473,6 +473,8 @@ bcm2835_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	if (irq == -1)
 		return NULL;
 
+	KASSERT(irq < BCM2835_NIRQ);
+
 	firq = sc->sc_irq[irq];
 	if (firq == NULL) {
 		firq = kmem_alloc(sizeof(*firq), KM_SLEEP);
@@ -517,31 +519,54 @@ bcm2835_icu_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	firqh->ih_irq = firq;
 	firqh->ih_fn = func;
 	firqh->ih_arg = arg;
+
+	firq->intr_refcnt++;
 	TAILQ_INSERT_TAIL(&firq->intr_handlers, firqh, ih_next);
 
-	return firqh;
+	/*
+	 * XXX interrupt_distribute(9) assumes that any interrupt
+	 * handle can be used as an input to the MD interrupt_distribute
+	 * implementationm, so we are forced to return the handle
+	 * we got back from intr_establish().  Upshot is that the
+	 * input to bcm2835_icu_fdt_disestablish() is ambiguous for
+	 * shared IRQs, rendering them un-disestablishable.
+	 */
+
+	return firq->intr_ih;
 }
 
 static void
 bcm2835_icu_fdt_disestablish(device_t dev, void *ih)
 {
 	struct bcm2835icu_softc * const sc = device_private(dev);
-	struct bcm2835icu_irqhandler *firqh = ih;
-	struct bcm2835icu_irq *firq = firqh->ih_irq;
+	struct bcm2835icu_irqhandler *firqh;
+	struct bcm2835icu_irq *firq;
+	u_int n;
 
-	KASSERT(firq->intr_refcnt > 0);
+	for (n = 0; n < BCM2835_NIRQ; n++) {
+		firq = sc->sc_irq[n];
+		if (firq == NULL || firq->intr_ih != ih)
+			continue;
 
-	/* XXX */
-	if (firq->intr_refcnt > 1)
-		panic("%s: cannot disestablish shared irq", __func__);
+		KASSERT(firq->intr_refcnt > 0);
 
-	intr_disestablish(firq->intr_ih);
+		/* XXX see above */
+		if (firq->intr_refcnt > 1)
+			panic("%s: cannot disestablish shared irq", __func__);
 
-	TAILQ_REMOVE(&firq->intr_handlers, firqh, ih_next);
-	kmem_free(firqh, sizeof(*firqh));
+		intr_disestablish(firq->intr_ih);
 
-	sc->sc_irq[firq->intr_irq] = NULL;
-	kmem_free(firq, sizeof(*firq));
+		firqh = TAILQ_FIRST(&firq->intr_handlers);
+		TAILQ_REMOVE(&firq->intr_handlers, firqh, ih_next);
+		kmem_free(firqh, sizeof(*firqh));
+
+		sc->sc_irq[firq->intr_irq] = NULL;
+		kmem_free(firq, sizeof(*firq));
+
+		return;
+	}
+
+	panic("%s: interrupt not established", __func__);
 }
 
 static int
