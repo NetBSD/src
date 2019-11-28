@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.3 2019/11/18 19:54:23 joerg Exp $
+#	$NetBSD: Makefile.inc,v 1.4 2019/11/28 23:01:22 joerg Exp $
 
 .if !defined(LLVM_TOPLEVEL_MK)
 LLVM_TOPLEVEL_MK=
@@ -28,7 +28,7 @@ CLANG_INCLUDE_CONFIG=	${LLVM_TOOLCONF_OBJDIR}/config/tools/clang/include
 LLVM_INCLUDE_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm-include && ${PRINTOBJDIR}
 LLVM_TOOLCONF_OBJDIR!=	cd ${NETBSDSRCDIR}/tools/llvm && ${PRINTOBJDIR}
 HOST_CPPFLAGS+=	${CPPFLAGS}
-HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions 
+HOST_CXXFLAGS+=	-O2 -fno-rtti -fno-exceptions -fno-strict-aliasing
 HOST_CPPFLAGS+=	-std=c++14
 LLVM_TARGETS=	x86,powerpc,sparc,aarch64,arm,mips
 .else
