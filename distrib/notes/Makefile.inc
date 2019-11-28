@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.50 2019/11/27 23:19:13 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.51 2019/11/28 00:06:39 uwe Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -107,32 +107,26 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 # They are generated twice to take into account the
 # space taken by the TOC itself.
 
-# TOC is emitted with .tm on groff's stderr, divert those lines to stdout.
-# NB: /dev/stderr is nawk's internal designation, not /dev/stderr file.
-# TODO: use .open/.write instead.
-TOCPROC = 2>&1 >/dev/null | \
-	${TOOL_AWK} '{ if ($$1 == ".Ti") print; else print > "/dev/stderr"; }'
-
 ${TARG}.PostScript.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.ASCII.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} ${TOCPROC} > $@.tmp
+	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 
