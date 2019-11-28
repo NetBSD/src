@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.91 2019/10/30 10:12:37 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.92 2019/11/28 17:09:10 maxv Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.91 2019/10/30 10:12:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.92 2019/11/28 17:09:10 maxv Exp $");
 
 #include "opt_inet.h"
 
@@ -128,7 +128,7 @@ int xidebug = 0;
 #define DPRINTF(cat, x) (void)0
 #endif
 
-#define STATIC
+#define STATIC static
 
 STATIC int xi_enable(struct xi_softc *);
 STATIC void xi_disable(struct xi_softc *);
