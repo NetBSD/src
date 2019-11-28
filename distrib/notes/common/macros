@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.50 2019/11/28 19:53:04 uwe Exp $
+.\"	$NetBSD: macros,v 1.51 2019/11/28 19:59:48 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -343,8 +343,8 @@
 .if dTOC .mktoc \\n[To-toc-level] \\$@
 ..
 .de Ti
-.ie rHTML \{.ta (\n(.lu+\w'<a href="#\\$3"></a>'u)R
-\h'3n*\\$1u' <a href="#\\$3">\\$3</a>\a\\$2
+.ie rHTML \{\
+\h'3n*\\$1u' <a href="#\\$3">\\$3</a>
 .\}
 .el \h'3n*\\$1u' \\$3\a\\$2
 ..
