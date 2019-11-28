@@ -1,4 +1,4 @@
-/*	$NetBSD: ti_sdhc.c,v 1.4 2019/11/27 23:03:24 jmcneill Exp $	*/
+/*	$NetBSD: ti_sdhc.c,v 1.5 2019/11/28 23:57:09 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.4 2019/11/27 23:03:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ti_sdhc.c,v 1.5 2019/11/28 23:57:09 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -428,15 +428,21 @@ static int
 ti_sdhc_bus_width(struct sdhc_softc *sc, int width)
 {
 	struct ti_sdhc_softc *hmsc = (struct ti_sdhc_softc *)sc;
-	uint32_t con;
+	uint32_t con, hctl;
 
 	con = bus_space_read_4(hmsc->sc_bst, hmsc->sc_bsh, MMCHS_CON);
+	hctl = SDHC_READ(hmsc, SDHC_HOST_CTL);
 	if (width == 8) {
 		con |= CON_DW8;
+	} else if (width == 4) {
+		con &= ~CON_DW8;
+		hctl |= SDHC_4BIT_MODE;
 	} else {
 		con &= ~CON_DW8;
+		hctl &= ~SDHC_4BIT_MODE;
 	}
 	bus_space_write_4(hmsc->sc_bst, hmsc->sc_bsh, MMCHS_CON, con);
+	SDHC_WRITE(hmsc, SDHC_HOST_CTL, hctl);
 
 	return 0;
 }
@@ -487,6 +493,13 @@ ti_sdhc_edma_init(struct ti_sdhc_softc *sc, u_int tx_chan, u_int rx_chan)
 		    error);
 		return error;
 	}
+	error = bus_dmamap_load(sc->sc.sc_dmat, sc->sc_edma_dmamap,
+	    sc->sc_edma_bbuf, MAXPHYS, NULL, BUS_DMA_WAITOK);
+	if (error) {
+		device_printf(sc->sc.sc_dev, "couldn't load dmamap: %d\n",
+		    error);
+		return error;
+	}
 
 	return error;
 }
@@ -496,24 +509,23 @@ ti_sdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 {
 	struct ti_sdhc_softc *sc = device_private(sdhc_sc->sc_dev);
 	const bus_dmamap_t map = cmd->c_dmamap;
-	int seg, error;
 	bool bounce;
+	int error;
 
-	for (bounce = false, seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
-		if ((cmd->c_dmamap->dm_segs[seg].ds_addr & 0x1f) != 0) {
+#if notyet
+	bounce = false;
+	for (int seg = 0; seg < cmd->c_dmamap->dm_nsegs; seg++) {
+		if ((cmd->c_dmamap->dm_segs[seg].ds_addr & 0x1f) != 0 ||
+		    (cmd->c_dmamap->dm_segs[seg].ds_len & 3) != 0) {
 			bounce = true;
 			break;
 		}
 	}
+#else
+	bounce = true;
+#endif
 
 	if (bounce) {
-		error = bus_dmamap_load(sc->sc.sc_dmat, sc->sc_edma_dmamap,
-		    sc->sc_edma_bbuf, MAXPHYS, NULL, BUS_DMA_WAITOK);
-		if (error) {
-			device_printf(sc->sc.sc_dev,
-			    "[bounce] bus_dmamap_load failed: %d\n", error);
-			return error;
-		}
 		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_edma_dmamap, 0,
 			    MAXPHYS, BUS_DMASYNC_PREREAD);
@@ -536,7 +548,6 @@ ti_sdhc_edma_xfer_data(struct sdhc_softc *sdhc_sc, struct sdmmc_command *cmd)
 			bus_dmamap_sync(sc->sc.sc_dmat, sc->sc_edma_dmamap, 0,
 			    MAXPHYS, BUS_DMASYNC_POSTWRITE);
 		}
-		bus_dmamap_unload(sc->sc.sc_dmat, sc->sc_edma_dmamap);
 		if (ISSET(cmd->c_flags, SCF_CMD_READ) && error == 0) {
 			memcpy(cmd->c_data, sc->sc_edma_bbuf, cmd->c_datalen);
 		}
