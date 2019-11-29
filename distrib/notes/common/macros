@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.52 2019/11/29 16:15:09 uwe Exp $
+.\"	$NetBSD: macros,v 1.53 2019/11/29 16:33:44 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -356,7 +356,7 @@
 ..
 .\}
 .\"  .Tc and .Ti for text and postscript
-.ei \{\
+.el \{\
 .de Ti
 \h'3n*\\$1u' \\$3\a\\$2
 ..
