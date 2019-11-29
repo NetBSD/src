@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.231 2019/09/13 06:39:29 maxv Exp $	*/
+/*	$NetBSD: bpf.c,v 1.232 2019/11/29 17:29:31 ryo Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.231 2019/09/13 06:39:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.232 2019/11/29 17:29:31 ryo Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -321,7 +321,7 @@ static int
 bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 	   struct sockaddr *sockp)
 {
-	struct mbuf *m;
+	struct mbuf *m, *m0, *n;
 	int error;
 	size_t len;
 	size_t hlen;
@@ -395,15 +395,7 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 	if (len - hlen > mtu)
 		return (EMSGSIZE);
 
-	/*
-	 * XXX Avoid complicated buffer chaining ---
-	 * bail if it won't fit in a single mbuf.
-	 * (Take into account possible alignment bytes)
-	 */
-	if (len + align > MCLBYTES)
-		return (EIO);
-
-	m = m_gethdr(M_WAIT, MT_DATA);
+	m0 = m = m_gethdr(M_WAIT, MT_DATA);
 	m_reset_rcvif(m);
 	m->m_pkthdr.len = (int)(len - hlen);
 	if (len + align > MHLEN) {
@@ -415,25 +407,39 @@ bpf_movein(struct uio *uio, int linktype, uint64_t mtu, struct mbuf **mp,
 	}
 
 	/* Insure the data is properly aligned */
-	if (align > 0) {
+	if (align > 0)
 		m->m_data += align;
-		m->m_len -= (int)align;
+
+	for (;;) {
+		len = M_TRAILINGSPACE(m);
+		if (len > uio->uio_resid)
+			len = uio->uio_resid;
+		error = uiomove(mtod(m, void *), len, uio);
+		if (error)
+			goto bad;
+		m->m_len = len;
+
+		if (uio->uio_resid == 0)
+			break;
+
+		n = m_get(M_WAIT, MT_DATA);
+		m_clget(n, M_WAIT);	/* if fails, there is no problem */
+		m->m_next = n;
+		m = n;
 	}
 
-	error = uiomove(mtod(m, void *), len, uio);
-	if (error)
-		goto bad;
 	if (hlen != 0) {
-		memcpy(sockp->sa_data, mtod(m, void *), hlen);
-		m->m_data += hlen; /* XXX */
-		len -= hlen;
+		/* move link level header in the top of mbuf to sa_data */
+		memcpy(sockp->sa_data, mtod(m0, void *), hlen);
+		m0->m_data += hlen;
+		m0->m_len -= hlen;
 	}
-	m->m_len = (int)len;
-	*mp = m;
+
+	*mp = m0;
 	return (0);
 
 bad:
-	m_freem(m);
+	m_freem(m0);
 	return (error);
 }
 
