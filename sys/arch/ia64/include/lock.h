@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.7 2019/01/10 17:05:56 scole Exp $	*/
+/*	$NetBSD: lock.h,v 1.8 2019/11/29 20:05:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -114,24 +114,6 @@ __cpu_simple_unlock(__cpu_simple_lock_t *lockp)
 
 	__insn_barrier();
 	*lockp = __SIMPLELOCK_UNLOCKED;
-}
-
-static __inline void
-mb_read(void)
-{
-	__asm __volatile("mf	\n" ::: "memory");
-}
-
-static __inline void
-mb_write(void)
-{
-	__asm __volatile("mf	\n" ::: "memory");
-}
-
-static __inline void
-mb_memory(void)
-{
-	__asm __volatile("mf	\n" ::: "memory");
 }
 
 static __inline void
