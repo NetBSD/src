@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.32 2019/10/27 19:10:38 jmcneill Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.33 2019/11/29 04:59:15 hkenken Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.32 2019/10/27 19:10:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.33 2019/11/29 04:59:15 hkenken Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.32 2019/10/27 19:10:38 jmcneill Exp $"
 #define	AT24CXX_ADDR		0x50
 
 #define	AT24CXX_WRITE_CYCLE_MS	10
-#define	AT24CXX_ADDR_HI(a)	(((a) >> 8) & 0x1f)
+#define	AT24CXX_ADDR_HI(a)	(((a) >> 8) & 0xff)
 #define	AT24CXX_ADDR_LO(a)	((a) & 0xff)
 
 #include "seeprom.h"
