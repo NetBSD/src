@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.7 2008/04/28 20:23:26 martin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.8 2019/11/29 20:05:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -62,8 +62,8 @@ struct kmutex {
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
 
-#define	MUTEX_RECEIVE(mtx)		mb_read()
-#define	MUTEX_GIVE(mtx)			mb_memory()
+#define	MUTEX_RECEIVE(mtx)		__insn_barrier()
+#define	MUTEX_GIVE(mtx)			__insn_barrier()
 
 #define	MUTEX_CAS(p, o, n)		(atomic_cas_uint((p), (o), (n)) == (o))
 
