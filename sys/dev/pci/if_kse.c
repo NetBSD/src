@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.42 2019/11/26 08:37:05 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.43 2019/11/29 05:47:26 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.42 2019/11/26 08:37:05 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.43 2019/11/29 05:47:26 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,6 +567,7 @@ kse_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 
 	if_attach(ifp);
+	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
 
 #ifdef KSE_EVENT_COUNTERS
@@ -1012,7 +1013,8 @@ kse_start(struct ifnet *ifp)
 		bus_dmamap_sync(sc->sc_dmat, dmamap, 0, dmamap->dm_mapsize,
 		    BUS_DMASYNC_PREWRITE);
 
-		lasttx = -1; tdes0 = 0;
+		tdes0 = 0; /* to postpone 1st segment T0_OWN write */
+		lasttx = -1;
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = KSE_NEXTTX(nexttx)) {
@@ -1027,10 +1029,9 @@ kse_start(struct ifnet *ifp)
 			tdes->t1 = sc->sc_t1csum
 			     | (dmamap->dm_segs[seg].ds_len & T1_TBS_MASK);
 			tdes->t0 = tdes0;
-			tdes0 |= T0_OWN;
+			tdes0 = T0_OWN; /* 2nd and other segments */
 			lasttx = nexttx;
 		}
-
 		/*
 		 * Outgoing NFS mbuf must be unloaded when Tx completed.
 		 * Without T1_IC NFS mbuf is left unack'ed for excessive
@@ -1047,7 +1048,7 @@ kse_start(struct ifnet *ifp)
 			}
 		} while ((m = m->m_next) != NULL);
 
-		/* Write last T0_OWN bit of the 1st segment */
+		/* Write deferred 1st segment T0_OWN at the final stage */
 		sc->sc_txdescs[lasttx].t1 |= T1_LS;
 		sc->sc_txdescs[sc->sc_txnext].t1 |= T1_FS;
 		sc->sc_txdescs[sc->sc_txnext].t0 = T0_OWN;
@@ -1188,6 +1189,7 @@ static int
 kse_intr(void *arg)
 {
 	struct kse_softc *sc = arg;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t isr;
 
 	if ((isr = CSR_READ_4(sc, INTST)) == 0)
@@ -1203,6 +1205,10 @@ kse_intr(void *arg)
 		aprint_error_dev(sc->sc_dev, "Rx descriptor full\n");
 
 	CSR_WRITE_4(sc, INTST, isr);
+
+	if (ifp->if_flags & IFF_RUNNING)
+		if_schedule_deferred_start(ifp);
+
 	return 1;
 }
 
