@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2292 2019/11/11 22:44:56 joerg Exp $
+#	$NetBSD: mi,v 1.2293 2019/11/29 20:31:35 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11387,7 +11387,7 @@
 ./usr/share/man/cat9/malloc_type_attach.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc_type_detach.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/malloc_type_setlimit.0	comp-obsolete		obsolete
-./usr/share/man/cat9/mb.0			comp-sys-catman		.cat
+./usr/share/man/cat9/mb.0			comp-obsolete		obsolete
 ./usr/share/man/cat9/mb_memory.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/mb_read.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/mb_write.0			comp-sys-catman		.cat
@@ -19310,7 +19310,7 @@
 ./usr/share/man/html9/malloc_type_attach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/malloc_type_detach.html	comp-sys-htmlman	html
 ./usr/share/man/html9/malloc_type_setlimit.html comp-obsolete	obsolete
-./usr/share/man/html9/mb.html			comp-sys-htmlman	html
+./usr/share/man/html9/mb.html			comp-obsolete	obsolete
 ./usr/share/man/html9/mb_memory.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mb_read.html		comp-sys-htmlman	html
 ./usr/share/man/html9/mb_write.html		comp-sys-htmlman	html
@@ -27386,7 +27386,7 @@
 ./usr/share/man/man9/malloc_type_attach.9	comp-sys-man		.man
 ./usr/share/man/man9/malloc_type_detach.9	comp-sys-man		.man
 ./usr/share/man/man9/malloc_type_setlimit.9	comp-obsolete		obsolete
-./usr/share/man/man9/mb.9			comp-sys-man		.man
+./usr/share/man/man9/mb.9			comp-obsolete		obsolete
 ./usr/share/man/man9/mb_memory.9		comp-sys-man		.man
 ./usr/share/man/man9/mb_read.9			comp-sys-man		.man
 ./usr/share/man/man9/mb_write.9			comp-sys-man		.man
