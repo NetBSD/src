@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.13 2017/10/04 23:04:42 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.14 2019/11/29 20:05:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -99,9 +99,9 @@ MUTEX_OWNED(uintptr_t owner)
 static inline int
 MUTEX_SET_WAITERS(struct kmutex *mtx, uintptr_t owner)
 {
-	mb_write();
+	__sync();		/* formerly mb_read */
 	mtx->mtx_waiters = 1;
-	mb_memory();
+	__sync();		/* formerly mb_memory */
 	return mtx->mtx_owner != MUTEX_ADAPTIVE_UNOWNED;
 }
 
