@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2293 2019/11/29 20:31:35 riastradh Exp $
+#	$NetBSD: mi,v 1.2294 2019/11/29 22:17:23 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -10704,6 +10704,12 @@
 ./usr/share/man/cat9/arp_ifinit.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/arpintr.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/arpresolve.0		comp-sys-catman		.cat
+./usr/share/man/cat9/atomic_load_acquire.0	comp-sys-catman		.cat
+./usr/share/man/cat9/atomic_load_consume.0	comp-sys-catman		.cat
+./usr/share/man/cat9/atomic_load_relaxed.0	comp-sys-catman		.cat
+./usr/share/man/cat9/atomic_loadstore.0		comp-sys-catman		.cat
+./usr/share/man/cat9/atomic_store_relaxed.0	comp-sys-catman		.cat
+./usr/share/man/cat9/atomic_store_release.0	comp-sys-catman		.cat
 ./usr/share/man/cat9/atop.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/audio.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/audio_system.0		comp-sys-catman		obsolete
@@ -18652,6 +18658,12 @@
 ./usr/share/man/html9/arp_ifinit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arpintr.html		comp-sys-htmlman	html
 ./usr/share/man/html9/arpresolve.html		comp-sys-htmlman	html
+./usr/share/man/html9/atomic_load_acquire.html	comp-sys-htmlman	html
+./usr/share/man/html9/atomic_load_consume.html	comp-sys-htmlman	html
+./usr/share/man/html9/atomic_load_relaxed.html	comp-sys-htmlman	html
+./usr/share/man/html9/atomic_loadstore.html	comp-sys-htmlman	html
+./usr/share/man/html9/atomic_store_relaxed.html	comp-sys-htmlman	html
+./usr/share/man/html9/atomic_store_release.html	comp-sys-htmlman	html
 ./usr/share/man/html9/atop.html			comp-sys-htmlman	html
 ./usr/share/man/html9/audio.html		comp-sys-htmlman	html
 ./usr/share/man/html9/audio_system.html		comp-sys-htmlman	obsolete
@@ -26703,6 +26715,12 @@
 ./usr/share/man/man9/arp_ifinit.9		comp-sys-man		.man
 ./usr/share/man/man9/arpintr.9			comp-sys-man		.man
 ./usr/share/man/man9/arpresolve.9		comp-sys-man		.man
+./usr/share/man/man9/atomic_load_acquire.9	comp-sys-man		.man
+./usr/share/man/man9/atomic_load_consume.9	comp-sys-man		.man
+./usr/share/man/man9/atomic_load_relaxed.9	comp-sys-man		.man
+./usr/share/man/man9/atomic_loadstore.9		comp-sys-man		.man
+./usr/share/man/man9/atomic_store_relaxed.9	comp-sys-man		.man
+./usr/share/man/man9/atomic_store_release.9	comp-sys-man		.man
 ./usr/share/man/man9/atop.9			comp-sys-man		.man
 ./usr/share/man/man9/audio.9			comp-sys-man		.man
 ./usr/share/man/man9/audio_system.9		comp-sys-man		obsolete
