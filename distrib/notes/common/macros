@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.51 2019/11/28 19:59:48 uwe Exp $
+.\"	$NetBSD: macros,v 1.52 2019/11/29 16:15:09 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -342,11 +342,23 @@
 .if rHTML <a name="\\$*"></a>
 .if dTOC .mktoc \\n[To-toc-level] \\$@
 ..
-.de Ti
+.\"  .Tc and .Ti for HTML
 .ie rHTML \{\
+.de Ti
 \h'3n*\\$1u' <a href="#\\$3">\\$3</a>
+..
+.de Tc
+.tm ...reading \*[toc-file]
+.nf
+.\" Use so-real here because toc-file is in objdir not .CURDIR
+.so-real \*[toc-file]
+.fi
+..
 .\}
-.el \h'3n*\\$1u' \\$3\a\\$2
+.\"  .Tc and .Ti for text and postscript
+.ei \{\
+.de Ti
+\h'3n*\\$1u' \\$3\a\\$2
 ..
 .de Tc
 .Bd -literal
@@ -357,6 +369,7 @@
 .so-real \*[toc-file]
 .Ed
 ..
+.\}
 .
 .
 .\"	--------------------  MISC  --------------------
