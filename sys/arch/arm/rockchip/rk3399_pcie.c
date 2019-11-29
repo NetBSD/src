@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.6 2019/06/23 16:15:43 jmcneill Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.7 2019/11/29 00:36:22 jmcneill Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.6 2019/06/23 16:15:43 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.7 2019/11/29 00:36:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,8 +241,10 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 
 	struct fdtbus_regulator *regulator;
 	regulator = fdtbus_regulator_acquire(phandle, "vpcie3v3-supply");
-	fdtbus_regulator_enable(regulator);
-	fdtbus_regulator_release(regulator);
+	if (regulator != NULL) {
+		fdtbus_regulator_enable(regulator);
+		fdtbus_regulator_release(regulator);
+	}
 		
 	fdtbus_clock_assign(phandle);
 	clock_enable_all(phandle);
