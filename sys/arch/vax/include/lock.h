@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.31 2017/09/17 00:01:08 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.32 2019/11/29 20:06:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden.
@@ -160,15 +160,4 @@ do {									\
 } while (/*CONSTCOND*/0)
 #endif /* MULTIPROCESSOR */
 
-static __inline void mb_read(void);
-static __inline void
-mb_read(void)
-{
-}
-
-static __inline void mb_write(void);
-static __inline void
-mb_write(void)
-{
-}
 #endif /* _VAX_LOCK_H_ */
