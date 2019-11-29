@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.4 2008/04/28 20:23:37 martin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.5 2019/11/29 20:06:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -55,7 +55,11 @@ struct kmutex {
 #define __HAVE_MUTEX_STUBS		1
 #define	__HAVE_SIMPLE_MUTEXES		1
 
-#define	MUTEX_RECEIVE(mtx)		mb_read()
+/*
+ * XXX Should this be LoadLoad|LoadStore, or does the assumption of a
+ * preceding atomic r/m/w operation obviate the need for that?
+ */
+#define	MUTEX_RECEIVE(mtx) __asm __volatile("membar #LoadLoad" : : : "memory")
 
 /*
  * MUTEX_GIVE: no memory barrier required, as _lock_cas() will take care of it.
