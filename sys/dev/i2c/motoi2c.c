@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.5 2019/08/05 12:21:00 hkenken Exp $ */
+/* $NetBSD: motoi2c.c,v 1.6 2019/11/29 12:42:53 hkenken Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.5 2019/08/05 12:21:00 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.6 2019/11/29 12:42:53 hkenken Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -163,6 +163,24 @@ motoi2c_release_bus(void *v, int flags)
 	mutex_exit(&sc->sc_buslock);
 }
 
+static int
+motoi2c_stop_wait(struct motoi2c_softc *sc)
+{
+	u_int timo;
+	int error = 0;
+
+	timo = 1000;
+	while ((I2C_READ(I2CSR) & SR_MBB) != 0 && --timo)
+		DELAY(1);
+
+	if (timo == 0) {
+		DPRINTF(("%s: timeout (sr=%#x)\n", __func__, I2C_READ(I2CSR)));
+		error = ETIMEDOUT;
+	}
+
+	return error;
+}
+
 /* busy waiting for byte data transfer completion */
 static int
 motoi2c_busy_wait(struct motoi2c_softc *sc, uint8_t cr)
@@ -224,15 +242,9 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 
 	if ((cr & CR_MSTA) == 0 && (sr & SR_MBB) != 0) {
 		/* wait for bus becoming available */
-		u_int timo = 100;
-		do {
-			DELAY(10);
-		} while (--timo > 0 && ((sr = I2C_READ(I2CSR)) & SR_MBB) != 0);
-
-		if (timo == 0) {
-			DPRINTF(("%s: bus is busy (%#x)\n", __func__, sr));
+		error = motoi2c_stop_wait(sc);
+		if (error)
 			return ETIMEDOUT;
-		}
 	}
 
 	/* reset interrupt and arbitration-lost flags (all others are RO) */
@@ -240,12 +252,10 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 	sr = I2C_READ(I2CSR);
 
 	/*
-	 * Generate start (or restart) condition
+	 * Generate start condition
 	 */
-	/* CR_RTSA is write-only and transitory */
-	uint8_t rsta = (cr & CR_MSTA ? CR_RSTA : 0);
 	cr = CR_MEN | CR_MTX | CR_MSTA;
-	I2C_WRITE(I2CCR, cr | rsta);
+	I2C_WRITE(I2CCR, cr);
 
 	DPRINTF(("%s: started: sr=%#x cr=%#x/%#x\n",
 	    __func__, I2C_READ(I2CSR), cr, I2C_READ(I2CCR)));
@@ -339,14 +349,14 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 				cr |= CR_TXAK;
 				I2C_WRITE(I2CCR, cr);
 			} else if (i == datalen - 1 && I2C_OP_STOP_P(op)) {
-				cr = CR_MEN;
+				cr = CR_MEN | CR_TXAK;
 				I2C_WRITE(I2CCR, cr);
 			}
 			*dataptr++ = I2C_READ(I2CDR);
 		}
 		if (datalen == 0) {
 			if (I2C_OP_STOP_P(op)) {
-				cr = CR_MEN;
+				cr = CR_MEN | CR_TXAK;
 				I2C_WRITE(I2CCR, cr);
 			}
 			(void)I2C_READ(I2CDR);	/* dummy read */
@@ -378,6 +388,7 @@ motoi2c_exec(void *v, i2c_op_t op, i2c_addr_t addr,
 	if (error || (cr & CR_TXAK) || ((cr & CR_MSTA) && I2C_OP_STOP_P(op))) {
 		cr = CR_MEN;
 		I2C_WRITE(I2CCR, cr);
+		motoi2c_stop_wait(sc);
 		DPRINTF(("%s: stopping: cr=%#x/%#x\n", __func__,
 		    cr, I2C_READ(I2CCR)));
 	}
