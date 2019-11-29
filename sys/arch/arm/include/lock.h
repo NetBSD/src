@@ -1,4 +1,4 @@
-/*	$NetBSD: lock.h,v 1.33 2017/09/17 00:01:07 christos Exp $	*/
+/*	$NetBSD: lock.h,v 1.34 2019/11/29 20:05:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -66,11 +66,8 @@ __cpu_simple_lock_set(__cpu_simple_lock_t *__ptr)
 }
 
 #ifdef _KERNEL
+/* XXX Formerly included for obsolete mb_* API, maybe no longer needed.  */
 #include <arm/cpufunc.h>
-
-#define	mb_read		drain_writebuf		/* in cpufunc.h */
-#define	mb_write	drain_writebuf		/* in cpufunc.h */
-#define	mb_memory	drain_writebuf		/* in cpufunc.h */
 #endif
 
 #ifdef _ARM_ARCH_6
