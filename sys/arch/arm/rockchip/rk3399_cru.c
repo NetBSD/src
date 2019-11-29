@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.13 2019/11/16 13:23:13 jmcneill Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.14 2019/11/29 15:00:20 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.13 2019/11/16 13:23:13 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.14 2019/11/29 15:00:20 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -349,7 +349,7 @@ static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpl
 static const char * mux_clk_tsadc_parents[] = { "xin24m", "xin32k" };
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
-static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "npll" };
+static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "ppll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
 static const char * mux_pll_src_cpll_gpll_npll_24m_parents[] = { "cpll", "gpll", "npll", "xin24m" };
 static const char * mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents[] = { "cpll", "gpll", "npll", "ppll", "upll", "xin24m" };
