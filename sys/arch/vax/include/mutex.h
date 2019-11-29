@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.14 2014/08/14 11:28:13 martin Exp $	*/
+/*	$NetBSD: mutex.h,v 1.15 2019/11/29 22:55:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -70,17 +70,6 @@ struct kmutex {
 #define	__HAVE_MUTEX_STUBS		1
 #define	__HAVE_SPIN_MUTEX_STUBS		1
 #define	__HAVE_SIMPLE_MUTEXES		1
-
-/*
- * MUTEX_RECEIVE: no memory barrier required; we're synchronizing against
- * interrupts, not multiple processors.
- */
-#define	MUTEX_RECEIVE(mtx)	/* nothing */
-
-/*
- * MUTEX_GIVE: no memory barrier required; same reason.
- */
-#define	MUTEX_GIVE(mtx)		/* nothing */
 
 #define	MUTEX_CAS(p, o, n)	(atomic_cas_ulong((p), (o), (n)) == (o))
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.20 2015/02/25 13:52:42 joerg Exp $	*/
+/*	$NetBSD: mutex.h,v 1.21 2019/11/29 22:55:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -83,30 +83,6 @@ struct kmutex {
 #define	__HAVE_SPIN_MUTEX_STUBS		1
 #endif
 #define	__HAVE_SIMPLE_MUTEXES		1
-
-/*
- * MUTEX_{GIVE,RECEIVE}: no memory barrier is required in the UP case;
- * we're synchronizing against interrupts, not multiple processors.
- */
-#ifdef MULTIPROCESSOR
-#ifdef _ARM_ARCH_7
-#define	MUTEX_RECEIVE(mtx)		__asm __volatile("dmb" ::: "memory")
-#else
-#define	MUTEX_RECEIVE(mtx)		membar_consumer()
-#endif
-#else
-#define	MUTEX_RECEIVE(mtx)		/* nothing */
-#endif
-
-#ifdef MULTIPROCESSOR
-#ifdef _ARM_ARCH_7
-#define	MUTEX_GIVE(mtx)			__asm __volatile("dsb" ::: "memory")
-#else
-#define	MUTEX_GIVE(mtx)			membar_producer()
-#endif
-#else
-#define	MUTEX_GIVE(mtx)			/* nothing */
-#endif
 
 #define	MUTEX_CAS(p, o, n)		\
     (atomic_cas_ulong((volatile unsigned long *)(p), (o), (n)) == (o))

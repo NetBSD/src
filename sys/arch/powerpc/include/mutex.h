@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.5 2019/11/29 20:05:59 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.6 2019/11/29 22:55:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -60,9 +60,6 @@ struct kmutex {
 
 #define	__HAVE_SIMPLE_MUTEXES		1
 #define	__HAVE_MUTEX_STUBS		1
-
-#define	MUTEX_RECEIVE(mtx)		__asm __volatile("isync" ::: "memory")
-#define	MUTEX_GIVE(mtx)			__asm __volatile("sync" ::: "memory")
 
 #define	MUTEX_CAS(p, o, n)		_lock_cas((p), (o), (n))
 
