@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.15 2019/11/29 15:20:28 jakllsch Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.16 2019/11/29 15:24:21 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.15 2019/11/29 15:20:28 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.16 2019/11/29 15:24:21 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -353,6 +353,7 @@ static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "pp
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
 static const char * mux_pll_src_cpll_gpll_npll_24m_parents[] = { "cpll", "gpll", "npll", "xin24m" };
 static const char * mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents[] = { "cpll", "gpll", "npll", "ppll", "upll", "xin24m" };
+static const char * mux_pll_src_npll_cpll_gpll_parents[] = { "npll", "cpll", "gpll" };
 static const char * mux_pll_src_vpll_cpll_gpll_parents[] = { "vpll", "cpll", "gpll" };
 static const char * mux_pll_src_vpll_cpll_gpll_npll_parents[] = { "vpll", "cpll", "gpll", "npll" };
 static const char * mux_aclk_perilp0_parents[] = { "cpll_aclk_perilp0_src", "gpll_aclk_perilp0_src" };
@@ -1004,6 +1005,15 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     0),
 	RK_GATE(RK3399_PCLK_EDP_NOC, "pclk_edp_noc", "pclk_edp", CLKGATE_CON(32), 12),
 	RK_GATE(RK3399_PCLK_EDP_CTRL, "pclk_edp_ctrl", "pclk_edp", CLKGATE_CON(32), 13),
+
+	RK_COMPOSITE(RK3399_SCLK_DP_CORE, "clk_dp_core", mux_pll_src_npll_cpll_gpll_parents,
+		     CLKSEL_CON(46),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(8),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_DP_CTRL, "pclk_dp_ctrl", "pclk_hdcp", CLKGATE_CON(29), 7),
 
 };
 
