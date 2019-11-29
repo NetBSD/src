@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.56 2019/11/29 20:04:54 riastradh Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.57 2019/11/29 20:50:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.56 2019/11/29 20:04:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.57 2019/11/29 20:50:54 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -417,10 +417,11 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 		 * No need for a memory barrier because of context switch.
 		 * If not handed the lock, then spin again.
 		 */
-		if (op == RW_READER || (rw->rw_owner & RW_THREAD) == curthread)
+		if (op == RW_READER)
 			break;
-
 		owner = rw->rw_owner;
+		if ((owner & RW_THREAD) == curthread)
+			break;
 	}
 	KPREEMPT_ENABLE(curlwp);
 
@@ -476,14 +477,13 @@ rw_vector_exit(krwlock_t *rw)
 	 * lock would become unowned.
 	 */
 	RW_MEMBAR_EXIT();
-	for (;;) {
+	for (;; owner = next) {
 		newown = (owner - decr);
 		if ((newown & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
 			break;
 		next = rw_cas(rw, owner, newown);
 		if (__predict_true(next == owner))
 			return;
-		owner = next;
 	}
 
 	/*
@@ -568,15 +568,15 @@ rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 		need_wait = RW_WRITE_LOCKED | RW_THREAD;
 	}
 
-	for (owner = rw->rw_owner;; owner = next) {
-		if (__predict_false((owner & need_wait) != 0))
-			return 0;
+	for (owner = 0;; owner = next) {
 		next = rw_cas(rw, owner, owner + incr);
 		if (__predict_true(next == owner)) {
 			/* Got it! */
 			RW_MEMBAR_ENTER();
 			break;
 		}
+		if (__predict_false((owner & need_wait) != 0))
+			return 0;
 	}
 
 	RW_WANTLOCK(rw, op);
