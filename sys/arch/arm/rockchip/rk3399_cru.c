@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.14 2019/11/29 15:00:20 jakllsch Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.15 2019/11/29 15:20:28 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.14 2019/11/29 15:00:20 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.15 2019/11/29 15:20:28 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -993,6 +993,18 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     CLKGATE_CON(8),	/* gate_reg */
 		     __BIT(12),		/* gate_mask */
 		     RK_COMPOSITE_SET_RATE_PARENT),
+
+	/* eDP */
+	RK_COMPOSITE(RK3399_PCLK_EDP, "pclk_edp", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(44),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(13,8),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(11),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_EDP_NOC, "pclk_edp_noc", "pclk_edp", CLKGATE_CON(32), 12),
+	RK_GATE(RK3399_PCLK_EDP_CTRL, "pclk_edp_ctrl", "pclk_edp", CLKGATE_CON(32), 13),
+
 };
 
 static const struct rk3399_init_param {
