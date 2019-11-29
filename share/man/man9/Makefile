@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.443 2019/11/29 22:17:23 riastradh Exp $
+#       $NetBSD: Makefile,v 1.444 2019/11/29 22:38:28 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -494,7 +494,6 @@ MLINKS+=malloc.9 malloc_type_attach.9
 MLINKS+=malloc.9 malloc_type_detach.9
 MLINKS+=malloc.9 MALLOC_DEFINE.9
 MLINKS+=malloc.9 MALLOC_DECLARE.9
-MLINKS+=mb.9 mb_memory.9 mb.9 mb_read.9 mb.9 mb_write.9
 MLINKS+=mbuf.9 m_get.9 mbuf.9 m_gethdr.9 mbuf.9 m_devget.9 \
 	mbuf.9 m_copym.9 mbuf.9 m_copypacket.9 mbuf.9 m_copydata.9 \
 	mbuf.9 m_copyback.9 mbuf.9 m_cat.9 mbuf.9 m_dup.9 mbuf.9 m_prepend.9 \
