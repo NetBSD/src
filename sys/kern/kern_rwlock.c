@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.55 2019/11/25 20:16:22 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.56 2019/11/29 20:04:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.55 2019/11/25 20:16:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.56 2019/11/29 20:04:54 riastradh Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -55,6 +55,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.55 2019/11/25 20:16:22 ad Exp $");
 #include <sys/pserialize.h>
 
 #include <dev/lockstat.h>
+
+#include <machine/rwlock.h>
 
 /*
  * LOCKDEBUG
