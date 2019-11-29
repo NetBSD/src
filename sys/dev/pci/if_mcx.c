@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.8 2019/11/28 16:02:07 msaitoh Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.9 2019/11/29 15:17:14 msaitoh Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -6653,6 +6653,7 @@ mcx_port_change(struct work *wk, void *xsc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mcx_reg_paos paos;
 	int link_state = LINK_STATE_DOWN;
+	struct ifmediareq ifmr;
 
 	memset(&paos, 0, sizeof(paos));
 	paos.rp_local_port = 1;
@@ -6660,6 +6661,8 @@ mcx_port_change(struct work *wk, void *xsc)
 	    sizeof(paos)) == 0) {
 		if (paos.rp_oper_status == MCX_REG_PAOS_OPER_STATUS_UP)
 			link_state = LINK_STATE_UP;
+		mcx_media_status(ifp, &ifmr);
+		ifp->if_baudrate = ifmedia_baudrate(ifmr.ifm_active);
 	}
 
 	if (link_state != ifp->if_link_state) {
