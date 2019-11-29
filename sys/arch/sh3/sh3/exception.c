@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.68 2019/11/21 19:24:01 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.69 2019/11/29 18:27:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.68 2019/11/21 19:24:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.69 2019/11/29 18:27:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -471,15 +471,5 @@ ast(struct lwp *l, struct trapframe *tf)
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 
-	while (l->l_md.md_astpending) {
-		//curcpu()->ci_data.cpu_nast++;
-		l->l_md.md_astpending = 0;
-
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-
-		userret(l);
-	}
+	userret(l);
 }
