@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.28 2019/11/12 05:09:29 hkenken Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.29 2019/11/29 17:20:30 ryo Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.28 2019/11/12 05:09:29 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.29 2019/11/29 17:20:30 ryo Exp $");
 
 #include "vlan.h"
 
@@ -714,15 +714,14 @@ enet_setmulti(struct enet_softc *sc)
 	struct ifnet *ifp = &ec->ec_if;
 	struct ether_multi *enm;
 	struct ether_multistep step;
-	int promisc;
-	uint32_t crc;
+	uint32_t crc, hashidx;
 	uint32_t gaddr[2];
 
-	promisc = 0;
-	if ((ifp->if_flags & IFF_PROMISC) || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			promisc = 1;
+	if (ifp->if_flags & IFF_PROMISC) {
+		/* receive all unicast packet */
+		ENET_REG_WRITE(sc, ENET_IAUR, 0xffffffff);
+		ENET_REG_WRITE(sc, ENET_IALR, 0xffffffff);
+		/* receive all multicast packet */
 		gaddr[0] = gaddr[1] = 0xffffffff;
 	} else {
 		gaddr[0] = gaddr[1] = 0;
@@ -730,25 +729,38 @@ enet_setmulti(struct enet_softc *sc)
 		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
+			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
+			    ETHER_ADDR_LEN)) {
+				/*
+				 * if specified by range, give up setting hash,
+				 * and fallback to allmulti.
+				 */
+				gaddr[0] = gaddr[1] = 0xffffffff;
+				break;
+			}
+
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-			gaddr[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+			hashidx = __SHIFTOUT(crc, __BITS(30,26));
+			gaddr[__SHIFTOUT(crc, __BIT(31))] |= __BIT(hashidx);
+
 			ETHER_NEXT_MULTI(step, enm);
 		}
 		ETHER_UNLOCK(ec);
-	}
 
-	ENET_REG_WRITE(sc, ENET_GAUR, gaddr[0]);
-	ENET_REG_WRITE(sc, ENET_GALR, gaddr[1]);
-
-	if (promisc) {
-		/* match all packet */
-		ENET_REG_WRITE(sc, ENET_IAUR, 0xffffffff);
-		ENET_REG_WRITE(sc, ENET_IALR, 0xffffffff);
-	} else {
-		/* don't match any packet */
+		/* dont't receive any unicast packet (except own address) */
 		ENET_REG_WRITE(sc, ENET_IAUR, 0);
 		ENET_REG_WRITE(sc, ENET_IALR, 0);
 	}
+
+	if (gaddr[0] == 0xffffffff && gaddr[1] == 0xffffffff)
+		ifp->if_flags |= IFF_ALLMULTI;
+	else
+		ifp->if_flags &= ~IFF_ALLMULTI;
+
+	/* receive multicast packets according to multicast filter */
+	ENET_REG_WRITE(sc, ENET_GAUR, gaddr[1]);
+	ENET_REG_WRITE(sc, ENET_GALR, gaddr[0]);
+
 }
 
 static void
