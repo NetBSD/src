@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.112 2019/11/21 19:24:00 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.113 2019/11/29 18:27:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.112 2019/11/21 19:24:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2019/11/29 18:27:32 ad Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -202,10 +202,11 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	l->l_md.md_astpending = 0;
-	//curcpu()->ci_data.cpu_nast++;
-
-	mi_userret(l);
+	do {
+		l->l_md.md_astpending = 0;
+		//curcpu()->ci_data.cpu_nast++;
+		mi_userret(l);
+	} while (l->l_md.md_astpending);
 
 	/*
 	 * If profiling, charge recent system time to the trapped pc.

@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.71 2019/11/21 19:24:02 ad Exp $ */
+/* $NetBSD: trap.c,v 1.72 2019/11/29 18:27:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2011 Reinoud Zandijk <reinoud@netbsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.71 2019/11/21 19:24:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2019/11/29 18:27:33 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,11 +188,12 @@ ast(struct lwp *l)
 {
 	struct pcb *pcb;
 
-	if (!astpending)
-		return;
-
-	astpending = 0;
 	curcpu()->ci_data.cpu_ntrap++;
+
+	do {
+		astpending = 0;
+		mi_userret(l);
+	} while (astpending);
 
 #if 0
 	/* profiling */
@@ -204,7 +205,6 @@ ast(struct lwp *l)
 
 	KASSERT(l == curlwp); KASSERT(l);
 	pcb = lwp_getpcb(l); KASSERT(pcb);
-	mi_userret(l);
 }
 
 

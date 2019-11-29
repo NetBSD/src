@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.14 2016/11/02 00:11:59 pgoyette Exp $	*/
+/*	$NetBSD: userret.h,v 1.15 2019/11/29 18:27:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -52,7 +52,16 @@ userret(struct lwp *l)
 {
 
 	/* Invoke MI userret code */
-	mi_userret(l);
+	do {
+		//curcpu()->ci_data.cpu_nast++;
+		l->l_md.md_astpending = 0;
+		mi_userret(l);
+	} while (l->l_md.md_astpending);
+
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
+	}
 
 #ifdef PTRACE_HOOKS
 	/* Check if lwp is being PT_STEP'ed */

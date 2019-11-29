@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.10 2019/11/23 16:50:39 ad Exp $ */
+/*	$NetBSD: userret.h,v 1.11 2019/11/29 18:27:33 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -63,13 +63,14 @@ userret(struct lwp *l, int pc, u_quad_t oticks)
 {
 	struct proc *p = l->l_proc;
 
-	while (cpuinfo.ci_want_ast) {
+	do {
 		cpuinfo.ci_want_ast = 0;
 		mi_userret(l);
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
+	} while (cpuinfo.ci_want_ast);
+
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
 	}
 
 	/*
