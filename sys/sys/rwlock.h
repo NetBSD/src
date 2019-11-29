@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.10 2010/02/08 09:54:27 skrll Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.11 2019/11/29 20:04:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -93,7 +93,9 @@ void	rw_vector_exit(krwlock_t *);
 int	rw_vector_tryenter(krwlock_t *, const krw_t);
 #endif	/* __RWLOCK_PRIVATE */
 
-#include <machine/rwlock.h>
+struct krwlock {
+	volatile uintptr_t	rw_owner;
+};
 
 #ifdef _KERNEL
 
