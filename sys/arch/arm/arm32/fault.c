@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.108 2019/04/06 03:06:25 thorpej Exp $	*/
+/*	$NetBSD: fault.c,v 1.109 2019/11/29 17:33:43 ryo Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.108 2019/04/06 03:06:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.109 2019/11/29 17:33:43 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -838,6 +838,9 @@ prefetch_abort_handler(trapframe_t *tf)
 	UVMHIST_LOG(maphist, " (pc=0x%jx, l=0x%#jx, tf=0x%#jx)",
 	    fault_pc, (uintptr_t)l, (uintptr_t)tf, 0);
 
+#ifdef THUMB_CODE
+ recheck:
+#endif
 	/* Ok validate the address, can only execute in USER space */
 	if (__predict_false(fault_pc >= VM_MAXUSER_ADDRESS ||
 	    (fault_pc < VM_MIN_ADDRESS && vector_page == ARM_VECTORS_LOW))) {
@@ -897,6 +900,18 @@ do_trapsignal:
 	call_trapsignal(l, tf, &ksi);
 
 out:
+
+#ifdef THUMB_CODE
+#define THUMB_32BIT(hi) (((hi) & 0xe000) == 0xe000 && ((hi) & 0x1800))
+	/* thumb-32 instruction was located on page boundary? */
+	if ((tf->tf_spsr & PSR_T_bit) &&
+	    ((fault_pc & PAGE_MASK) == (PAGE_SIZE - THUMB_INSN_SIZE)) &&
+	    THUMB_32BIT(*(uint16_t *)tf->tf_pc)) {
+		fault_pc = tf->tf_pc + THUMB_INSN_SIZE;
+		goto recheck;
+	}
+#endif /* THUMB_CODE */
+
 	KASSERT(!TRAP_USERMODE(tf) || VALID_R15_PSR(tf->tf_pc, tf->tf_spsr));
 	userret(l);
 }
