@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.101 2019/06/13 02:02:45 christos Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.102 2019/11/29 08:30:30 hikaru Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.101 2019/06/13 02:02:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.102 2019/11/29 08:30:30 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1643,6 +1643,12 @@ cryptodev_session(struct fcrypt *fcr, struct session_op *sop)
 			DPRINTF("Invalid mackeylen %d\n", sop->mackeylen);
 			return EINVAL;
 		}
+		break;
+	case CRYPTO_SHA2_384_HMAC:
+		thash = &auth_hash_hmac_sha2_384;
+		break;
+	case CRYPTO_SHA2_512_HMAC:
+		thash = &auth_hash_hmac_sha2_512;
 		break;
 	case CRYPTO_RIPEMD160_HMAC:
 		thash = &auth_hash_hmac_ripemd_160;
