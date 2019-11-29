@@ -1,4 +1,4 @@
-#	$NetBSD: files.ti,v 1.20 2019/11/03 22:59:06 jmcneill Exp $
+#	$NetBSD: files.ti,v 1.21 2019/11/29 20:54:00 jmcneill Exp $
 #
 
 file	arch/arm/ti/ti_cpufreq.c	soc_ti
@@ -130,6 +130,11 @@ file	arch/arm/ti/ti_gpmc.c		ti_gpmc
 device	omapnand: nandbus
 attach	omapnand at fdt
 file	arch/arm/ti/omap2_nand.c	omapnand
+
+# Watchdog timer
+device	tiwdt: sysmon_wdog
+attach	tiwdt at fdt with ti_wdt
+file	arch/arm/ti/ti_wdt.c		ti_wdt
 
 # SOC parameters
 defflag	opt_soc.h			SOC_TI
