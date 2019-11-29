@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.37 2019/11/23 22:35:08 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.38 2019/11/29 18:29:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.37 2019/11/23 22:35:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.38 2019/11/29 18:29:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -128,8 +128,12 @@ sched_tick(struct cpu_info *ci)
 		break;
 	case SCHED_RR:
 		/* Force it into mi_switch() to look for other jobs to run. */
+#ifdef __HAVE_PREEMPTION
 		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 		cpu_need_resched(ci, l, RESCHED_KPREEMPT);
+#else
+		cpu_need_resched(ci, l, RESCHED_UPREEMPT);
+#endif
 		break;
 	default:
 		if (spc->spc_flags & SPCF_SHOULDYIELD) {
@@ -138,8 +142,12 @@ sched_tick(struct cpu_info *ci)
 			 * due to buggy or inefficient code.  Force a
 			 * kernel preemption.
 			 */
+#ifdef __HAVE_PREEMPTION
 			atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
 			cpu_need_resched(ci, l, RESCHED_KPREEMPT);
+#else
+			cpu_need_resched(ci, l, RESCHED_UPREEMPT);
+#endif
 		} else if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
