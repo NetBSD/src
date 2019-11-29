@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.442 2019/11/29 20:31:35 riastradh Exp $
+#       $NetBSD: Makefile,v 1.443 2019/11/29 22:17:23 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -66,6 +66,13 @@ MAN=	accept_filter.9 accf_data.9 accf_http.9 \
 	wapbl.9 wdc.9 workqueue.9 \
 	wsbell.9 wscons.9 wsdisplay.9 wsfont.9 wskbd.9 wsmouse.9 \
 	xcall.9
+
+MAN+=	atomic_loadstore.9
+MLINKS+=atomic_loadstore.9 atomic_load_acquire.9 \
+	atomic_loadstore.9 atomic_load_consume.9 \
+	atomic_loadstore.9 atomic_load_relaxed.9 \
+	atomic_loadstore.9 atomic_store_relaxed.9 \
+	atomic_loadstore.9 atomic_store_release.9
 
 MAN+=	boothowto.9
 MLINKS+=boothowto.9 BOOT_FLAG.9
