@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.290 2019/08/11 22:55:03 mrg Exp $	*/
+/*	$NetBSD: ohci.c,v 1.291 2019/11/29 14:13:04 gson Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.290 2019/08/11 22:55:03 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.291 2019/11/29 14:13:04 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1515,8 +1515,9 @@ ohci_softintr(void *v)
 
 			ohci_soft_ed_t *sed = opipe->sed;
 
-			/* clear halt and TD chain */
-			sed->ed.ed_headp = HTOO32(p->physaddr);
+			/* clear halt and TD chain, preserving toggle carry */
+			sed->ed.ed_headp = HTOO32(p->physaddr |
+			    (O32TOH(sed->ed.ed_headp) & OHCI_TOGGLECARRY));
 			usb_syncmem(&sed->dma,
 			    sed->offs + offsetof(ohci_ed_t, ed_headp),
 			    sizeof(sed->ed.ed_headp),
