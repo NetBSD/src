@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.79 2019/05/09 05:00:31 ozaki-r Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.80 2019/11/29 19:44:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.79 2019/05/09 05:00:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.80 2019/11/29 19:44:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -168,6 +168,17 @@ do {									\
 } while (/* CONSTCOND */ 0)
 
 /*
+ * Memory barriers.
+ */
+#ifdef __HAVE_ATOMIC_AS_MEMBAR
+#define	MUTEX_MEMBAR_ENTER()
+#define	MUTEX_MEMBAR_EXIT()
+#else
+#define	MUTEX_MEMBAR_ENTER()		membar_enter()
+#define	MUTEX_MEMBAR_EXIT()		membar_exit()
+#endif
+
+/*
  * For architectures that provide 'simple' mutexes: they provide a
  * CAS function that is either MP-safe, or does not need to be MP
  * safe.  Adaptive mutexes on these architectures do not require an
@@ -225,7 +236,7 @@ MUTEX_ACQUIRE(kmutex_t *mtx, uintptr_t curthread)
 	MUTEX_INHERITDEBUG(oldown, mtx->mtx_owner);
 	MUTEX_INHERITDEBUG(newown, oldown);
 	rv = MUTEX_CAS(&mtx->mtx_owner, oldown, newown);
-	MUTEX_RECEIVE(mtx);
+	MUTEX_MEMBAR_ENTER();
 	return rv;
 }
 
@@ -234,7 +245,7 @@ MUTEX_SET_WAITERS(kmutex_t *mtx, uintptr_t owner)
 {
 	int rv;
 	rv = MUTEX_CAS(&mtx->mtx_owner, owner, owner | MUTEX_BIT_WAITERS);
-	MUTEX_RECEIVE(mtx);
+	MUTEX_MEMBAR_ENTER();
 	return rv;
 }
 
@@ -243,7 +254,7 @@ MUTEX_RELEASE(kmutex_t *mtx)
 {
 	uintptr_t newown;
 
-	MUTEX_GIVE(mtx);
+	MUTEX_MEMBAR_EXIT();
 	newown = 0;
 	MUTEX_INHERITDEBUG(newown, mtx->mtx_owner);
 	mtx->mtx_owner = newown;
