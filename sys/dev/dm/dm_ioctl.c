@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.33 2018/11/11 10:21:11 mlelstv Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.34 2019/11/30 05:35:57 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.33 2018/11/11 10:21:11 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.34 2019/11/30 05:35:57 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -926,6 +926,12 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		/* dm_table_get_cur_actv.table ?? */
 		prop_dictionary_set_int32(target_dict, DM_TABLE_STAT,
 		    dmv->table_head.cur_active_table);
+
+		/*
+		 * Explicitly clear DM_TABLE_PARAMS to prevent dmsetup(8) from
+		 * printing junk when DM_TABLE_PARAMS was never initialized.
+		 */
+		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS, "");
 
 		if (flags & DM_STATUS_TABLE_FLAG) {
 			params = table_en->target->status
