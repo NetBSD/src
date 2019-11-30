@@ -1,5 +1,34 @@
-/*	$NetBSD: onewire.c,v 1.17 2019/10/25 16:25:14 martin Exp $	*/
+/*	$NetBSD: onewire.c,v 1.18 2019/11/30 23:04:12 ad Exp $	*/
 /*	$OpenBSD: onewire.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
+
+/*-
+ * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Andrew Doran.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 2006 Alexander Yurchenko <grange@openbsd.org>
@@ -18,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.17 2019/10/25 16:25:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: onewire.c,v 1.18 2019/11/30 23:04:12 ad Exp $");
 
 /*
  * 1-Wire bus driver.
@@ -202,14 +231,25 @@ onewire_reset(void *arg)
 }
 
 int
-onewire_bit(void *arg, int value)
+onewire_read_bit(void *arg)
 {
 	struct onewire_softc *sc = arg;
 	struct onewire_bus *bus = sc->sc_bus;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	return bus->bus_bit(bus->bus_cookie, value);
+	return bus->bus_read_bit(bus->bus_cookie);
+}
+
+void
+onewire_write_bit(void *arg, int value)
+{
+	struct onewire_softc *sc = arg;
+	struct onewire_bus *bus = sc->sc_bus;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	bus->bus_write_bit(bus->bus_cookie, value);
 }
 
 int
@@ -226,7 +266,7 @@ onewire_read_byte(void *arg)
 		return bus->bus_read_byte(bus->bus_cookie);
 
 	for (i = 0; i < 8; i++)
-		value |= (bus->bus_bit(bus->bus_cookie, 1) << i);
+		value |= (bus->bus_read_bit(bus->bus_cookie) << i);
 
 	return value;
 }
@@ -244,7 +284,7 @@ onewire_write_byte(void *arg, int value)
 		return bus->bus_write_byte(bus->bus_cookie, value);
 
 	for (i = 0; i < 8; i++)
-		bus->bus_bit(bus->bus_cookie, (value >> i) & 0x1);
+		bus->bus_write_bit(bus->bus_cookie, (value >> i) & 0x1);
 }
 
 int
@@ -259,19 +299,19 @@ onewire_triplet(void *arg, int dir)
 	if (bus->bus_triplet != NULL)
 		return bus->bus_triplet(bus->bus_cookie, dir);
 
-	rv = bus->bus_bit(bus->bus_cookie, 1);
+	rv = bus->bus_read_bit(bus->bus_cookie);
 	rv <<= 1;
-	rv |= bus->bus_bit(bus->bus_cookie, 1);
+	rv |= bus->bus_read_bit(bus->bus_cookie);
 
 	switch (rv) {
 	case 0x0:
-		bus->bus_bit(bus->bus_cookie, dir);
+		bus->bus_write_bit(bus->bus_cookie, dir);
 		break;
 	case 0x1:
-		bus->bus_bit(bus->bus_cookie, 0);
+		bus->bus_write_bit(bus->bus_cookie, 0);
 		break;
 	default:
-		bus->bus_bit(bus->bus_cookie, 1);
+		bus->bus_write_bit(bus->bus_cookie, 1);
 	}
 
 	return rv;
@@ -318,6 +358,18 @@ static void
 onewire_thread(void *arg)
 {
 	struct onewire_softc *sc = arg;
+	int unit, dly;
+
+	/*
+	 * There can be many onewire busses, potentially funneled through
+	 * few GPIO controllers.  To avoid a thundering herd of kthreads and
+	 * resulting contention for the GPIO controller, spread the probes
+	 * out across an 8 second window.  The kthreads could converge later
+	 * due to timing effects.
+	 */
+	unit = device_unit(sc->sc_dev);
+	dly = (unit & 0x07) * hz + ((unit >> 3) * hz >> 3) + 1;
+	(void)kpause("owdly", false, dly, NULL);
 
 	mutex_enter(&sc->sc_lock);
 	while (!sc->sc_dying) {
@@ -354,13 +406,17 @@ onewire_scan(struct onewire_softc *sc)
 
 	while (search && count++ < onewire_maxdevs) {
 		/*
-		 * Reset the bus. If there's no presence pulse
-		 * don't search for any devices.
+		 * Reset the bus, allowing for one retry if reset fails.  If
+		 * there's no presence pulse don't search for any devices.
 		 */
 		if (onewire_reset(sc) != 0) {
 			DPRINTF(("%s: scan: no presence pulse\n",
 			    device_xname(sc->sc_dev)));
-			break;
+			if (onewire_reset(sc) != 0) {
+				DPRINTF(("%s: scan: retry failed\n",
+				    device_xname(sc->sc_dev)));
+				break;
+			}
 		}
 
 		/*
@@ -405,6 +461,12 @@ onewire_scan(struct onewire_softc *sc)
 		}
 		lastd = i0;
 
+		/*
+		 * Yield processor, but continue to hold the lock
+		 * so that scan is not interrupted.
+		 */
+		(void)kpause("owscan", false, 1, NULL);
+
 		if (rom == 0)
 			continue;
 
@@ -437,12 +499,6 @@ onewire_scan(struct onewire_softc *sc)
 			nd->d_present = true;
 			TAILQ_INSERT_TAIL(&sc->sc_devs, nd, d_list);
 		}
-
-		/*
-		 * Yield processor, but continue to hold the lock
-		 * so that scan is not interrupted.
-		 */
-		kpause("owscan", false, 1, NULL);
 	}
 
 	/*
