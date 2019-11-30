@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.190 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.191 2019/11/30 17:45:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
@@ -112,8 +112,8 @@ struct lwp {
 	pri_t		l_auxprio;	/* l: max(inherit,protect) priority */
 	int		l_protectdepth;	/* l: for PTHREAD_PRIO_PROTECT */
 	SLIST_HEAD(, turnstile) l_pi_lenders; /* l: ts lending us priority */
-	uint64_t	l_ncsw;		/* l: total context switches */
-	uint64_t	l_nivcsw;	/* l: involuntary context switches */
+	volatile uint64_t l_ncsw;	/* l: total context switches */
+	volatile uint64_t l_nivcsw;	/* l: involuntary context switches */
 	u_int		l_cpticks;	/* (: Ticks of CPU time */
 	fixpt_t		l_pctcpu;	/* p: %cpu during l_swtime */
 	fixpt_t		l_estcpu;	/* l: cpu time for SCHED_4BSD */
