@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.3 2019/11/30 02:55:47 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.4 2019/11/30 03:53:45 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -23,6 +23,18 @@ TESTS+=		M-mixed
 INP.M-mixed=	(paren-brace} (
 MOD.M-mixed=	${INP.M-mixed:M(*}}
 EXP.M-mixed=	(paren-brace}
+
+# After the :M modifier has parsed the pattern, only the closing brace
+# and the colon are unescaped. The other characters are left as-is.
+# To actually see this effect, the backslashes in the :M modifier need
+# to be doubled since single backslashes would simply be unescaped by
+# Str_Match.
+#
+# XXX: This is unexpected. The opening brace should also be unescaped.
+TESTS+=		M-unescape
+INP.M-unescape=	({}): \(\{\}\)\: \(\{}\):
+MOD.M-unescape=	${INP.M-unescape:M\\(\\{\\}\\)\\:}
+EXP.M-unescape=	\(\{}\):
 
 # When the :M and :N modifiers are parsed, the pattern finishes as soon
 # as open_parens + open_braces == closing_parens + closing_braces. This
@@ -75,6 +87,27 @@ INP.M-bsbs=	(} \( \(}
 MOD.M-bsbs=	${INP.M-bsbs:M\\(}}
 EXP.M-bsbs=	\(}
 #EXP.M-bsbs=	(}	# If the first backslash were to escape ...
+
+# The backslash in \( does not escape the parenthesis, therefore it
+# counts for the nesting level and matches with the first closing brace.
+# The second closing brace closes the variable, and the third is copied
+# literally.
+#
+# The second :M in the pattern is nested between ( and }, therefore it
+# does not start a new modifier.
+TESTS+=		M-bs1-par
+INP.M-bs1-par=	( (:M (:M} \( \(:M \(:M}
+MOD.M-bs1-par=	${INP.M-bs1-par:M\(:M*}}}
+EXP.M-bs1-par=	(:M}}
+
+# The double backslash is passed verbatim to the pattern matcher.
+# The Str_Match pattern is \\(:M*}, and there the backslash is unescaped.
+# Again, the ( takes place in the nesting level, and there is no way to
+# prevent this, no matter how many backslashes are used.
+TESTS+=		M-bs2-par
+INP.M-bs2-par=	( (:M (:M} \( \(:M \(:M}
+MOD.M-bs2-par=	${INP.M-bs2-par:M\\(:M*}}}
+EXP.M-bs2-par=	\(:M}}
 
 all:
 .for test in ${TESTS}
