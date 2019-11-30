@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_ptm.c,v 1.40 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: tty_ptm.c,v 1.41 2019/11/30 20:45:49 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.40 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_ptm.c,v 1.41 2019/11/30 20:45:49 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -234,8 +234,7 @@ pty_grant_slave(struct lwp *l, dev_t dev, struct mount *mp)
 		error = VOP_SETATTR(vp, &vattr, lwp0.l_cred);
 		if (error) {
 			DPRINTF(("setattr %d\n", error));
-			VOP_UNLOCK(vp);
-			vrele(vp);
+			vput(vp);
 			return error;
 		}
 	}
