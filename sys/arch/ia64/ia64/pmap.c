@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.38 2019/05/09 15:48:55 scole Exp $ */
+/* $NetBSD: pmap.c,v 1.39 2019/11/30 16:23:46 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -81,9 +81,10 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.38 2019/05/09 15:48:55 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.39 2019/11/30 16:23:46 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/buf.h>
 #include <sys/reboot.h>
