@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.1 2019/11/30 00:38:51 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.2 2019/11/30 02:31:19 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -54,10 +54,25 @@ EXP.M-nest-brk=	[
 # No error is reported though, and the pattern is closed implicitly.
 #
 # XXX: It is unexpected that no error is reported.
+# See str.c, function Str_Match.
 TESTS+=		M-pat-err
 INP.M-pat-err=	[ [[ [[[
 MOD.M-pat-err=	${INP.M-pat-err:M${:U[[}}
 EXP.M-pat-err=	[
+
+# The first backslash does not escape the second backslash.
+# Therefore, the second backslash escapes the parenthesis.
+# This means that the pattern ends there.
+# The final } in the output comes from the end of MOD.M-bsbs.
+#
+# If the first backslash were to escape the second backslash, the first
+# closing brace would match the opening parenthesis (see M-mixed), and
+# the second closing brace would be needed to close the variable.
+TESTS+=		M-bsbs
+INP.M-bsbs=	\( \(}
+MOD.M-bsbs=	${INP.M-bsbs:M\\(}}
+EXP.M-bsbs=	\(}
+#EXP.M-bsbs=	\(	# If the first backslash were to escape ...
 
 all:
 .for test in ${TESTS}
