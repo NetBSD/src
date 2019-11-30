@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.77 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.78 2019/11/30 17:46:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
@@ -154,16 +154,13 @@ __END_DECLS
  * c:	cpu_lock
  */
 struct schedstate_percpu {
-	/* First set of data is likely to be accessed by other CPUs. */
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
-	pri_t		spc_curpriority;/* m: usrpri of curlwp */
+	volatile pri_t	spc_curpriority;/* m: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
 	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
-
-	/* For the most part, this set of data is CPU-private. */
 	void		*spc_sched_info;/* (: scheduler-specific structure */
 	volatile int	spc_flags;	/* s: flags; see below */
 	u_int		spc_schedticks;	/* s: ticks for schedclock() */
