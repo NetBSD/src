@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.2 2019/11/30 02:31:19 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.3 2019/11/30 02:55:47 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -68,11 +68,13 @@ EXP.M-pat-err=	[
 # If the first backslash were to escape the second backslash, the first
 # closing brace would match the opening parenthesis (see M-mixed), and
 # the second closing brace would be needed to close the variable.
+# After that, the remaining backslash would escape the parenthesis in
+# the pattern, therefore (} would match.
 TESTS+=		M-bsbs
-INP.M-bsbs=	\( \(}
+INP.M-bsbs=	(} \( \(}
 MOD.M-bsbs=	${INP.M-bsbs:M\\(}}
 EXP.M-bsbs=	\(}
-#EXP.M-bsbs=	\(	# If the first backslash were to escape ...
+#EXP.M-bsbs=	(}	# If the first backslash were to escape ...
 
 all:
 .for test in ${TESTS}
