@@ -1,4 +1,4 @@
-.\"	$NetBSD: macros,v 1.53 2019/11/29 16:33:44 uwe Exp $
+.\"	$NetBSD: macros,v 1.54 2019/11/30 00:28:27 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -342,11 +342,42 @@
 .if rHTML <a name="\\$*"></a>
 .if dTOC .mktoc \\n[To-toc-level] \\$@
 ..
-.\"  .Tc and .Ti for HTML
-.ie rHTML \{\
+.
+.\" .Tc and .Ti for PostScript
+.
+.ie '\*[format]'PostScript' \{\
 .de Ti
-\h'3n*\\$1u' <a href="#\\$3">\\$3</a>
+.nr Ti-toc-level \\$1
+.nr Ti-page \\$2
+.shift 2
+.nr Ti-indent (\\n[Tc-saved-indent]+(3n*\\n[Ti-toc-level]))
+.in \\n[Ti-indent]u
+\\$* \c
+'nr Ti-eol-pos (\\n(.l-\\n(.i-\\n(.k)
+'ta (\\n[Ti-eol-pos]u-\w'099'u)R (\\n[Ti-eol-pos]u)R
+\a\t\\n[Ti-page]
+.br
 ..
+.
+.de Tc
+.nr Tc-saved-indent \\n(.i
+.tm ...reading \*[toc-file]
+.\" Use so-real here because toc-file is in objdir not .CURDIR
+.so-real \*[toc-file]
+.in \\n[Tc-saved-indent]u
+..
+.\}
+.
+.\"  .Tc and .Ti for HTML
+.
+.el .ie rHTML \{\
+.de Ti
+.nr Ti-toc-level \\$1
+.\"nr Ti-page \\$2
+.shift 2
+\h'3n*\\n[Ti-toc-level]u' <a href="#\\$*">\\$*</a>
+..
+.
 .de Tc
 .tm ...reading \*[toc-file]
 .nf
@@ -355,16 +386,20 @@
 .fi
 ..
 .\}
-.\"  .Tc and .Ti for text and postscript
+.
+.\" .Tc and .Ti for unpaginated text
+.
 .el \{\
 .de Ti
-\h'3n*\\$1u' \\$3\a\\$2
+.nr Ti-toc-level \\$1
+.\"nr Ti-page \\$2
+.shift 2
+\h'3n*\\n[Ti-toc-level]u'\\$*
+.br
 ..
 .de Tc
 .Bd -literal
-.ta (\n(.lu)R
 .tm ...reading \*[toc-file]
-.       Pp
 .\" Use so-real here because toc-file is in objdir not .CURDIR
 .so-real \*[toc-file]
 .Ed
