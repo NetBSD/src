@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.4 2019/06/03 09:51:04 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.5 2019/11/30 05:28:28 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.4 2019/06/03 09:51:04 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.5 2019/11/30 05:28:28 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -70,7 +70,7 @@ __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:1
 #include <x86/efi.h>
 
 #include <dev/wsfb/genfbvar.h>
-#include <arch/x86/include/genfb_machdep.h>
+#include <x86/genfb_machdep.h>
 
 #include <x86/x86/hypervreg.h>
 #include <x86/x86/hypervvar.h>
@@ -1102,6 +1102,9 @@ device_hyperv_register(device_t dev, void *aux)
 		if (memcmp(aa->aa_type, &hyperv_guid_video,
 		    sizeof(*aa->aa_type)) == 0) {
 			prop_dictionary_t dict = device_properties(dev);
+
+			/* Initialize genfb for serial console */
+			x86_genfb_init();
 
 			/*
 			 * framebuffer drivers other than genfb can work
