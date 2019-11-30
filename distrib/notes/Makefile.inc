@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.51 2019/11/28 00:06:39 uwe Exp $
+#	$NetBSD: Makefile.inc,v 1.52 2019/11/30 00:28:27 uwe Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -103,9 +103,9 @@ ${TARG}.more: ${SRCS} ${TOC.more} ${DISTRIBVERDEP}
 	${TOOL_GROFF} ${ARGS_MORE} -mdoc      ${MAIN} > $@
 
 
-# Rules to build the table of contents (.toc) files.
-# They are generated twice to take into account the
-# space taken by the TOC itself.
+# Rules to build the table of contents (.toc) files.  For the
+# PostScript version it's generated twice to take into account the
+# space taken by the TOC itself.  Other versions are not paginated.
 
 ${TARG}.PostScript.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_PS} -mdoc ${MAIN} > /dev/null
@@ -116,16 +116,12 @@ ${TARG}.PostScript.toc: ${SRCS}
 ${TARG}.ASCII.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
-	${TOOL_GROFF} -dTOC=1 ${ARGS_TXT} -mdoc ${MAIN} > /dev/null
-	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
 	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} > /dev/null
-	mv -f $@.tmp $@
 	${TOOL_GROFF} -dTOC=1 ${ARGS_MORE} -mdoc ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
