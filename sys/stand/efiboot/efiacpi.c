@@ -1,4 +1,4 @@
-/* $NetBSD: efiacpi.c,v 1.4 2019/08/01 13:11:16 jmcneill Exp $ */
+/* $NetBSD: efiacpi.c,v 1.5 2019/11/30 13:02:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,6 +32,7 @@
 #include "efiboot.h"
 #include "efiacpi.h"
 #include "efifdt.h"
+#include "smbios.h"
 
 #include <libfdt.h>
 
@@ -77,6 +78,39 @@ efi_acpi_show(void)
 	printf("\n");
 }
 
+static char model_buf[128];
+
+static const char *
+efi_acpi_get_model(void)
+{
+	struct smbtable smbios;
+	struct smbios_sys *psys;
+	const char *s;
+	char *buf;
+
+	memset(model_buf, 0, sizeof(model_buf));
+
+	if (smbios3_table != NULL) {
+		smbios_init(smbios3_table);
+
+		buf = model_buf;
+		smbios.cookie = 0;
+		if (smbios_find_table(SMBIOS_TYPE_SYSTEM, &smbios)) {
+			psys = smbios.tblhdr;
+			if ((s = smbios_get_string(&smbios, psys->vendor, buf, 64)) != NULL) {
+				buf += strlen(s);
+				*buf++ = ' ';
+			}
+			smbios_get_string(&smbios, psys->product, buf, 64);
+		}
+	}
+
+	if (model_buf[0] == '\0')
+		strcpy(model_buf, "ACPI");
+
+	return model_buf;
+}
+
 int
 efi_acpi_create_fdt(void)
 {
@@ -94,8 +128,10 @@ efi_acpi_create_fdt(void)
 	if (error)
 		return EIO;
 
+	const char *model = efi_acpi_get_model();
+
 	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "compatible", "netbsd,generic-acpi");
-	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "model", "ACPI");
+	fdt_setprop_string(fdt, fdt_path_offset(fdt, "/"), "model", model);
 	fdt_setprop_cell(fdt, fdt_path_offset(fdt, "/"), "#address-cells", 2);
 	fdt_setprop_cell(fdt, fdt_path_offset(fdt, "/"), "#size-cells", 2);
 
