@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.15 2017/10/28 04:53:56 riastradh Exp $ */
+/* $NetBSD: gpioow.c,v 1.16 2019/11/30 23:04:12 ad Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.15 2017/10/28 04:53:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.16 2019/11/30 23:04:12 ad Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -57,7 +57,8 @@ int	gpioow_detach(device_t, int);
 int	gpioow_activate(device_t, enum devact);
 
 int	gpioow_ow_reset(void *);
-int	gpioow_ow_bit(void *, int);
+int	gpioow_ow_read_bit(void *);
+void	gpioow_ow_write_bit(void *, int);
 
 void	gpioow_bb_rx(void *);
 void	gpioow_bb_tx(void *);
@@ -143,7 +144,8 @@ gpioow_attach(device_t parent, device_t self, void *aux)
 	/* Attach 1-Wire bus */
 	sc->sc_ow_bus.bus_cookie = sc;
 	sc->sc_ow_bus.bus_reset = gpioow_ow_reset;
-	sc->sc_ow_bus.bus_bit = gpioow_ow_bit;
+	sc->sc_ow_bus.bus_read_bit = gpioow_ow_read_bit;
+	sc->sc_ow_bus.bus_write_bit = gpioow_ow_write_bit;
 
 	memset(&oba, 0, sizeof(oba));
 	oba.oba_bus = &sc->sc_ow_bus;
@@ -193,9 +195,15 @@ gpioow_ow_reset(void *arg)
 }
 
 int
-gpioow_ow_bit(void *arg, int value)
+gpioow_ow_read_bit(void *arg)
 {
-	return (onewire_bb_bit(&gpioow_bbops, arg, value));
+	return (onewire_bb_read_bit(&gpioow_bbops, arg));
+}
+
+void
+gpioow_ow_write_bit(void *arg, int value)
+{
+	onewire_bb_write_bit(&gpioow_bbops, arg, value);
 }
 
 void
