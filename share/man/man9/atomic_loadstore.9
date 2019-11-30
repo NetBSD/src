@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_loadstore.9,v 1.1 2019/11/29 22:17:23 riastradh Exp $
+.\"	$NetBSD: atomic_loadstore.9,v 1.2 2019/11/30 02:38:44 riastradh Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -621,6 +621,60 @@ They do not require
 to be at most the largest size of available atomic loads and stores on
 the host architecture.
 .El
+.Sh MEMORY BARRIERS AND ATOMIC READ/MODIFY/WRITE
+The atomic read/modify/write operations in
+.Xr atomic_ops 3
+have relaxed ordering by default, but can be combined with the memory
+barriers in
+.Xr membar_ops 3
+for the same effect as an acquire operation and a release operation for
+the purposes of pairing with
+.Fn atomic_store_release
+and
+.Fn atomic_load_acquire
+or
+.Fn atomic_load_consume :
+If
+.Fn atomic_r/m/w
+is an atomic read/modify/write operation in
+.Xr atomic_ops 3 ,
+then
+.Bd -literal
+	membar_exit();
+	atomic_r/m/w(obj, ...);
+.Ed
+.Pp
+functions like a release operation on
+.Fa obj ,
+and
+.Bd -literal
+	atomic_r/m/w(obj, ...);
+	membar_enter();
+.Ed
+.Pp
+functions like a acquire operation on
+.Fa obj .
+.Pp
+.Em WARNING :
+The combination of
+.Fn atomic_load_relaxed
+and
+.Xr membar_enter 3
+.Em does not
+make an acquire operation; only read/modify/write atomics may be
+combined with
+.Xr membar_enter 3
+this way.
+.Pp
+On architectures where
+.Dv __HAVE_ATOMIC_AS_MEMBAR
+is defined, all the
+.Xr atomic_ops 3
+imply release and acquire operations, so the
+.Xr membar_enter 3
+and
+.Xr membar_exit 3
+are redundant.
 .Sh EXAMPLES
 Maintaining lossy counters.
 These may lose some counts, because the read/modify/write cycle as a
