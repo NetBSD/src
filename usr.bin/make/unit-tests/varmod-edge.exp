@@ -1,0 +1,7 @@
+make: Unclosed variable specification (expecting '}') for "" (value "*)") modifier U
+ok M-paren
+ok M-mixed
+ok M-nest-mix
+ok M-nest-brk
+ok M-pat-err
+exit status 0
