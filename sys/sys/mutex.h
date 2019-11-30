@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.22 2017/09/16 23:25:35 christos Exp $	*/
+/*	$NetBSD: mutex.h,v 1.23 2019/11/30 15:34:07 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -62,13 +62,6 @@
  *
  *		[additionally:]
  *		volatile integer	mtx_id
- *
- *	MUTEX_RECEIVE(mtx)
- *		Post a load fence after acquiring the mutex, if necessary.
- *
- *	MUTEX_GIVE(mtx)
- *		Post a load/store fence after releasing the mutex, if
- *		necessary.
  *
  * 	MUTEX_CAS(ptr, old, new)
  *		Perform an atomic "compare and swap" operation and
