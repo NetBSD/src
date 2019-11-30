@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.30 2019/11/22 23:38:15 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.31 2019/11/30 17:49:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019 The NetBSD Foundation, Inc.
@@ -100,14 +100,20 @@ mi_userret(struct lwp *l)
 		KPREEMPT_DISABLE(l);
 		ci = l->l_cpu;
 	}
-	l->l_kpriority = false;
 	/*
 	 * lwp_eprio() is too involved to use here unlocked.  At this point
 	 * it only matters for PTHREAD_PRIO_PROTECT; setting a too low value
 	 * is OK because the scheduler will find out the true value if we
 	 * end up in mi_switch().
+	 *
+	 * This is being called on every syscall and trap, and remote CPUs
+	 * regularly look at ci_schedstate.  Keep the cache line in the
+	 * SHARED state by only updating spc_curpriority if it has changed.
 	 */
-	ci->ci_schedstate.spc_curpriority = l->l_priority;
+	l->l_kpriority = false;
+	if (ci->ci_schedstate.spc_curpriority != l->l_priority) {
+		ci->ci_schedstate.spc_curpriority = l->l_priority;
+	}
 	KPREEMPT_ENABLE(l);
 
 	LOCKDEBUG_BARRIER(NULL, 0);
