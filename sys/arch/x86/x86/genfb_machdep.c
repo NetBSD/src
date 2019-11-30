@@ -1,4 +1,4 @@
-/* $NetBSD: genfb_machdep.c,v 1.14 2019/10/01 18:00:08 chs Exp $ */
+/* $NetBSD: genfb_machdep.c,v 1.15 2019/11/30 05:28:28 nonaka Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.14 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb_machdep.c,v 1.15 2019/11/30 05:28:28 nonaka Exp $");
 
 #include "opt_mtrr.h"
 
@@ -136,23 +136,19 @@ x86_genfb_mtrr_init(uint64_t physaddr, uint32_t size)
 }
 
 int
-x86_genfb_cnattach(void)
+x86_genfb_init(void)
 {
-	static int ncalls = 0;
+	static int inited, attached;
 	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
 	const struct btinfo_framebuffer *fbinfo;
 	bus_space_tag_t t = x86_bus_space_mem;
 	bus_space_handle_t h;
 	void *bits;
-	long defattr;
 	int err;
 
-	/* XXX jmcneill
-	 *  Defer console initialization until UVM is initialized
-	 */
-	++ncalls;
-	if (ncalls < 3)
-		return -1;
+	if (inited)
+		return attached;
+	inited = 1;
 
 	memset(&x86_genfb_console_screen, 0, sizeof(x86_genfb_console_screen));
 
@@ -202,12 +198,39 @@ x86_genfb_cnattach(void)
 	x86_genfb_stdscreen.textops = &ri->ri_ops;
 	x86_genfb_stdscreen.capabilities = ri->ri_caps;
 
+	attached = 1;
+	return 1;
+}
+
+int
+x86_genfb_cnattach(void)
+{
+	static int ncalls = 0;
+	struct rasops_info *ri = &x86_genfb_console_screen.scr_ri;
+	long defattr;
+
+	/* XXX jmcneill
+	 *  Defer console initialization until UVM is initialized
+	 */
+	++ncalls;
+	if (ncalls < 3)
+		return -1;
+
+	if (!x86_genfb_init())
+		return 0;
+
 	ri->ri_ops.allocattr(ri, 0, 0, 0, &defattr);
 	wsdisplay_preattach(&x86_genfb_stdscreen, ri, 0, 0, defattr);
 
 	return 1;
 }
 #else	/* NWSDISPLAY > 0 && NGENFB > 0 */
+int
+x86_genfb_init(void)
+{
+	return 0;
+}
+
 int
 x86_genfb_cnattach(void)
 {
