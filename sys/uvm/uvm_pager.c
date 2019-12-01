@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.112 2019/12/01 14:40:31 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.113 2019/12/01 23:14:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.112 2019/12/01 14:40:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.113 2019/12/01 23:14:47 uwe Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.112 2019/12/01 14:40:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/vnode.h>
 #include <sys/buf.h>
 
