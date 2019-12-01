@@ -1,4 +1,4 @@
-/*	$NetBSD: ka6400.c,v 1.19 2017/05/22 16:46:15 ragge Exp $	*/
+/*	$NetBSD: ka6400.c,v 1.20 2019/12/01 15:34:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Ludd, University of Lule}, Sweden. All rights reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.19 2017/05/22 16:46:15 ragge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka6400.c,v 1.20 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -330,7 +330,7 @@ rxchar(void)
 static void
 ka6400_startslave(struct cpu_info *ci)
 {
-	const struct pcb *pcb = lwp_getpcb(ci->ci_data.cpu_onproc);
+	const struct pcb *pcb = lwp_getpcb(ci->ci_onproc);
 	const int id = ci->ci_slotid;
 	int i;
 

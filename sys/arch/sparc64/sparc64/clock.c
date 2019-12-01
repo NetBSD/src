@@ -1,4 +1,4 @@
-/*	$NetBSD: clock.c,v 1.121 2019/02/08 20:14:51 palle Exp $ */
+/*	$NetBSD: clock.c,v 1.122 2019/12/01 15:34:46 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.121 2019/02/08 20:14:51 palle Exp $");
+__KERNEL_RCSID(0, "$NetBSD: clock.c,v 1.122 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -760,7 +760,7 @@ int
 schedintr(void *arg)
 {
 
-	schedclock(curcpu()->ci_data.cpu_onproc);
+	schedclock(curcpu()->ci_onproc);
 	return (1);
 }
 #endif

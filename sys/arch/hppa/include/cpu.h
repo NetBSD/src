@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.5 2019/04/16 12:25:17 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.6 2019/12/01 15:34:44 ad Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -295,6 +295,7 @@ struct cpu_info {
 #define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
 #define	CPUF_RUNNING	0x0002 		/* ... is running. */
 
+	struct lwp	*ci_onproc;	/* current user LWP / kthread */
 	volatile u_long	ci_ipi;		/* IPIs pending */
 
 	struct cpu_softc *ci_softc;

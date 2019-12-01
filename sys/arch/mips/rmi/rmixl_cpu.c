@@ -1,4 +1,4 @@
-/*	$NetBSD: rmixl_cpu.c,v 1.9 2015/06/28 22:14:38 matt Exp $	*/
+/*	$NetBSD: rmixl_cpu.c,v 1.10 2019/12/01 15:34:45 ad Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -38,7 +38,7 @@
 #include "locators.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.9 2015/06/28 22:14:38 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rmixl_cpu.c,v 1.10 2019/12/01 15:34:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_ddb.h"
@@ -419,7 +419,6 @@ rmixl_cpu_data_print(struct cpu_data *dp)
 	printf("&cpu_schedstate %p\n", &dp->cpu_schedstate);	/* TBD */
 	printf("&cpu_xcall %p\n", &dp->cpu_xcall);		/* TBD */
 	printf("cpu_xcall_pending %d\n", dp->cpu_xcall_pending);
-	printf("cpu_onproc %p\n", dp->cpu_onproc);
 	printf("cpu_idlelwp %p\n", dp->cpu_idlelwp);
 	printf("cpu_lockstat %p\n", dp->cpu_lockstat);
 	printf("cpu_index %d\n", dp->cpu_index);
@@ -462,6 +461,7 @@ rmixl_cpuinfo_print(u_int cpuindex)
 		printf("ci_divisor_delay %ld\n", ci->ci_divisor_delay);
 		printf("ci_divisor_recip %ld\n", ci->ci_divisor_recip);
 		printf("ci_curlwp %p\n", ci->ci_curlwp);
+		printf("ci_onproc %p\n", dp->ci_onproc);
 		printf("ci_want_resched %d\n", ci->ci_want_resched);
 		printf("ci_mtx_count %d\n", ci->ci_mtx_count);
 		printf("ci_mtx_oldspl %d\n", ci->ci_mtx_oldspl);
