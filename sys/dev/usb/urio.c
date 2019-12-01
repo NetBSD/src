@@ -1,4 +1,4 @@
-/*	$NetBSD: urio.c,v 1.49 2019/09/14 12:41:32 maxv Exp $	*/
+/*	$NetBSD: urio.c,v 1.50 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.49 2019/09/14 12:41:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: urio.c,v 1.50 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -74,11 +74,11 @@ int	uriodebug = 0;
 #endif
 
 
-dev_type_open(urioopen);
-dev_type_close(urioclose);
-dev_type_read(urioread);
-dev_type_write(uriowrite);
-dev_type_ioctl(urioioctl);
+static dev_type_open(urioopen);
+static dev_type_close(urioclose);
+static dev_type_read(urioread);
+static dev_type_write(uriowrite);
+static dev_type_ioctl(urioioctl);
 
 const struct cdevsw urio_cdevsw = {
 	.d_open = urioopen,
@@ -132,15 +132,15 @@ static const struct usb_devno urio_devs[] = {
 };
 #define urio_lookup(v, p) usb_lookup(urio_devs, v, p)
 
-int	urio_match(device_t, cfdata_t, void *);
-void	urio_attach(device_t, device_t, void *);
-int	urio_detach(device_t, int);
-int	urio_activate(device_t, enum devact);
+static int	urio_match(device_t, cfdata_t, void *);
+static void	urio_attach(device_t, device_t, void *);
+static int	urio_detach(device_t, int);
+static int	urio_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(urio, sizeof(struct urio_softc), urio_match, urio_attach,
     urio_detach, urio_activate);
 
-int
+static int
 urio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -151,7 +151,7 @@ urio_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 urio_attach(device_t parent, device_t self, void *aux)
 {
 	struct urio_softc *sc = device_private(self);
@@ -225,7 +225,7 @@ urio_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 urio_detach(device_t self, int flags)
 {
 	struct urio_softc *sc = device_private(self);
@@ -269,7 +269,7 @@ urio_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 urio_activate(device_t self, enum devact act)
 {
 	struct urio_softc *sc = device_private(self);
@@ -283,7 +283,7 @@ urio_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct urio_softc *sc;
@@ -318,7 +318,7 @@ urioopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 urioclose(dev_t dev, int flag, int mode,
     struct lwp *l)
 {
@@ -342,7 +342,7 @@ urioclose(dev_t dev, int flag, int mode,
 	return 0;
 }
 
-int
+static int
 urioread(dev_t dev, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
@@ -396,7 +396,7 @@ urioread(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uriowrite(dev_t dev, struct uio *uio, int flag)
 {
 	struct urio_softc *sc;
@@ -454,7 +454,7 @@ uriowrite(dev_t dev, struct uio *uio, int flag)
 }
 
 
-int
+static int
 urioioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct urio_softc * sc;
