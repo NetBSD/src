@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.87 2018/05/25 20:11:03 jdolecek Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.88 2019/12/01 14:40:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.87 2018/05/25 20:11:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.88 2019/12/01 14:40:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -837,7 +837,7 @@ fail:
  */
 
 static struct uvm_object uvm_loanzero_object;
-static kmutex_t uvm_loanzero_lock;
+static kmutex_t uvm_loanzero_lock __cacheline_aligned;
 
 static int
 uvm_loanzero(struct uvm_faultinfo *ufi, void ***output, int flags)
