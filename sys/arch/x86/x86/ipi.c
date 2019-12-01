@@ -1,4 +1,4 @@
-/*	$NetBSD: ipi.c,v 1.29 2019/11/23 19:40:37 ad Exp $	*/
+/*	$NetBSD: ipi.c,v 1.30 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.29 2019/11/23 19:40:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.30 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_mtrr.h"
 
@@ -216,7 +216,7 @@ static void
 x86_ipi_ast(struct cpu_info *ci)
 {
 
-	aston(ci->ci_data.cpu_onproc);
+	aston(ci->ci_onproc);
 }
 
 /*
