@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_kcov.c,v 1.9 2019/11/15 09:44:44 maxv Exp $	*/
+/*	$NetBSD: subr_kcov.c,v 1.10 2019/12/01 17:41:11 kamil Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 
 #include <sys/conf.h>
 #include <sys/condvar.h>
+#include <sys/cpu.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/kmem.h>
@@ -342,7 +343,7 @@ out:
 static inline bool __nomsan
 in_interrupt(void)
 {
-	return curcpu()->ci_idepth >= 0;
+	return cpu_intr_p();
 }
 
 void __sanitizer_cov_trace_pc(void);
