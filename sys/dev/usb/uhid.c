@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.108 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.109 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.108 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.109 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -111,13 +111,13 @@ struct uhid_softc {
 #define	UHID_CHUNK	128	/* chunk size for read */
 #define	UHID_BSIZE	1020	/* buffer size */
 
-dev_type_open(uhidopen);
-dev_type_close(uhidclose);
-dev_type_read(uhidread);
-dev_type_write(uhidwrite);
-dev_type_ioctl(uhidioctl);
-dev_type_poll(uhidpoll);
-dev_type_kqfilter(uhidkqfilter);
+static dev_type_open(uhidopen);
+static dev_type_close(uhidclose);
+static dev_type_read(uhidread);
+static dev_type_write(uhidwrite);
+static dev_type_ioctl(uhidioctl);
+static dev_type_poll(uhidpoll);
+static dev_type_kqfilter(uhidkqfilter);
 
 const struct cdevsw uhid_cdevsw = {
 	.d_open = uhidopen,
@@ -141,15 +141,15 @@ Static int uhid_do_read(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_write(struct uhid_softc *, struct uio *, int);
 Static int uhid_do_ioctl(struct uhid_softc*, u_long, void *, int, struct lwp *);
 
-int	uhid_match(device_t, cfdata_t, void *);
-void	uhid_attach(device_t, device_t, void *);
-int	uhid_detach(device_t, int);
-int	uhid_activate(device_t, enum devact);
+static int	uhid_match(device_t, cfdata_t, void *);
+static void	uhid_attach(device_t, device_t, void *);
+static int	uhid_detach(device_t, int);
+static int	uhid_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(uhid, sizeof(struct uhid_softc), uhid_match, uhid_attach,
     uhid_detach, uhid_activate);
 
-int
+static int
 uhid_match(device_t parent, cfdata_t match, void *aux)
 {
 #ifdef UHID_DEBUG
@@ -164,7 +164,7 @@ uhid_match(device_t parent, cfdata_t match, void *aux)
 		return UMATCH_IFACECLASS_GENERIC;
 }
 
-void
+static void
 uhid_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhid_softc *sc = device_private(self);
@@ -200,7 +200,7 @@ uhid_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uhid_activate(device_t self, enum devact act)
 {
 	struct uhid_softc *sc = device_private(self);
@@ -214,7 +214,7 @@ uhid_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 uhid_detach(device_t self, int flags)
 {
 	struct uhid_softc *sc = device_private(self);
@@ -304,7 +304,7 @@ uhid_softintr(void *cookie)
 	mutex_exit(proc_lock);
 }
 
-int
+static int
 uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -357,7 +357,7 @@ uhidopen(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+static int
 uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -444,7 +444,7 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhidread(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhid_softc *sc;
@@ -467,7 +467,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error;
@@ -683,7 +683,7 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	return 0;
 }
 
-int
+static int
 uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -711,7 +711,7 @@ uhidioctl(dev_t dev, u_long cmd, void *addr, int flag, struct lwp *l)
 	return error;
 }
 
-int
+static int
 uhidpoll(dev_t dev, int events, struct lwp *l)
 {
 	struct uhid_softc *sc;
@@ -771,7 +771,7 @@ static const struct filterops uhid_seltrue_filtops = {
 	.f_event = filt_seltrue,
 };
 
-int
+static int
 uhidkqfilter(dev_t dev, struct knote *kn)
 {
 	struct uhid_softc *sc;
