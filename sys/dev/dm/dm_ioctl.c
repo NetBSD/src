@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.34 2019/11/30 05:35:57 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.35 2019/12/01 06:53:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.34 2019/11/30 05:35:57 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.35 2019/12/01 06:53:31 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -246,7 +246,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	dmv->flags = 0;		/* device flags are set when needed */
 	dmv->ref_cnt = 0;
 	dmv->event_nr = 0;
-	dmv->dev_type = 0;
 	dmv->devt = devt;
 
 	dm_table_head_init(&dmv->table_head);
