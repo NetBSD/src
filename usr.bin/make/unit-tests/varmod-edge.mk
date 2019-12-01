@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.4 2019/11/30 03:53:45 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.5 2019/12/01 23:53:49 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -67,6 +67,9 @@ EXP.M-nest-brk=	[
 #
 # XXX: It is unexpected that no error is reported.
 # See str.c, function Str_Match.
+#
+# Before 2019-12-02, this test case triggered an out-of-bounds read
+# in Str_Match.
 TESTS+=		M-pat-err
 INP.M-pat-err=	[ [[ [[[
 MOD.M-pat-err=	${INP.M-pat-err:M${:U[[}}
