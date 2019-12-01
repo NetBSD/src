@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.kmodule.mk,v 1.62 2019/07/05 08:28:16 hannken Exp $
+#	$NetBSD: bsd.kmodule.mk,v 1.63 2019/12/01 20:24:47 jmcneill Exp $
 
 # We are not building this with PIE
 MKPIE=no
@@ -42,7 +42,9 @@ CFLAGS+=	-fno-strict-aliasing -Wno-pointer-sign
 # The real solution to this involves generating trampolines for those
 # relocations inside the loader and removing this workaround, as the
 # resulting code would be much faster.
-.if ${MACHINE_CPU} == "arm"
+.if ${MACHINE_CPU} == "aarch64"
+CFLAGS+=	-march=armv8-a+nofp+nosimd
+.elif ${MACHINE_CPU} == "arm"
 CFLAGS+=	-fno-common -fno-unwind-tables
 .elif ${MACHINE_CPU} == "hppa"
 CFLAGS+=	-mlong-calls
