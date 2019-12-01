@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_csan.c,v 1.5 2019/11/15 08:11:37 maxv Exp $	*/
+/*	$NetBSD: subr_csan.c,v 1.6 2019/12/01 08:15:58 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.5 2019/11/15 08:11:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_csan.c,v 1.6 2019/12/01 08:15:58 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -605,6 +605,28 @@ CSAN_ATOMIC_FUNC_INC(64, uint64_t, uint64_t)
 CSAN_ATOMIC_FUNC_INC(uint, unsigned int, unsigned int);
 CSAN_ATOMIC_FUNC_INC(ulong, unsigned long, unsigned long);
 CSAN_ATOMIC_FUNC_INC(ptr, void *, void);
+
+void
+kcsan_atomic_load(const volatile void *p, void *v, int size)
+{
+	switch (size) {
+	case 1: *(uint8_t *)v = *(const volatile uint8_t *)p; break;
+	case 2: *(uint16_t *)v = *(const volatile uint16_t *)p; break;
+	case 4: *(uint32_t *)v = *(const volatile uint32_t *)p; break;
+	case 8: *(uint64_t *)v = *(const volatile uint64_t *)p; break;
+	}
+}
+
+void
+kcsan_atomic_store(volatile void *p, const void *v, int size)
+{
+	switch (size) {
+	case 1: *(volatile uint8_t *)p = *(const uint8_t *)v; break;
+	case 2: *(volatile uint16_t *)p = *(const uint16_t *)v; break;
+	case 4: *(volatile uint32_t *)p = *(const uint32_t *)v; break;
+	case 8: *(volatile uint64_t *)p = *(const uint64_t *)v; break;
+	}
+}
 
 /* -------------------------------------------------------------------------- */
 
