@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.100 2019/12/01 13:39:53 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.101 2019/12/01 13:46:34 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.43 2019/09/13 13:58:53 christos Exp 
+ *   from: NetBSD: namei.src,v 1.45 2019/12/01 13:45:42 ad Exp 
  */
 
 /*
@@ -227,7 +227,7 @@ struct namecache {
 	struct	vnode *nc_dvp;		/* N vnode of parent of name */
 	struct	vnode *nc_vp;		/* N vnode the name refers to */
 	kmutex_t *nc_lock;		/* - lock on this entry */
-	int	nc_hittime;		/* N last time scored a hit */
+	volatile int nc_hittime;	/* N last time scored a hit */
 	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
 	u_short	nc_nlen;		/* - length of name */
 	char	nc_name[0];		/* - segment name */
