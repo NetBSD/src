@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.128 2019/07/28 05:28:53 msaitoh Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.129 2019/12/01 14:40:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.128 2019/07/28 05:28:53 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.129 2019/12/01 14:40:31 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -1491,10 +1491,8 @@ uao_dropswap_range(struct uvm_object *uobj, voff_t start, voff_t end)
 	 */
 
 	if (swpgonlydelta > 0) {
-		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
-		uvmexp.swpgonly -= swpgonlydelta;
-		mutex_exit(&uvm_swap_data_lock);
+		atomic_add_int(&uvmexp.swpgonly, -swpgonlydelta);
 	}
 }
 

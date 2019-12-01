@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.111 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.112 2019/12/01 14:40:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.111 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.112 2019/12/01 14:40:31 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -77,7 +77,7 @@ const struct uvm_pagerops * const uvmpagerops[] = {
  */
 
 struct vm_map *pager_map;		/* XXX */
-kmutex_t pager_map_wanted_lock;
+kmutex_t pager_map_wanted_lock __cacheline_aligned;
 bool pager_map_wanted;	/* locked by pager map */
 static vaddr_t emergva;
 static int emerg_ncolors;
@@ -467,12 +467,10 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		KASSERT(write);
 
 		/* these pages are now only in swap. */
-		mutex_enter(&uvm_swap_data_lock);
 		if (error != ENOMEM) {
 			KASSERT(uvmexp.swpgonly + npages <= uvmexp.swpginuse);
-			uvmexp.swpgonly += npages;
+			atomic_add_int(&uvmexp.swpgonly, npages);
 		}
-		mutex_exit(&uvm_swap_data_lock);
 		if (error) {
 			if (error != ENOMEM)
 				uvm_swap_markbad(swslot, npages);

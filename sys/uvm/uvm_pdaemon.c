@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.111 2019/10/01 17:40:22 chs Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.112 2019/12/01 14:40:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.111 2019/10/01 17:40:22 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.112 2019/12/01 14:40:31 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -825,15 +825,12 @@ uvmpd_scan_queue(void)
 			} else {
 				slot = uao_find_swslot(uobj, pageidx);
 			}
-			mutex_exit(slock);
-
 			if (slot > 0) {
 				/* this page is now only in swap. */
-				mutex_enter(&uvm_swap_data_lock);
 				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
-				uvmexp.swpgonly++;
-				mutex_exit(&uvm_swap_data_lock);
+				atomic_inc_uint(&uvmexp.swpgonly);
 			}
+			mutex_exit(slock);
 			continue;
 		}
 

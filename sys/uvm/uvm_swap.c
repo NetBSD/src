@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.181 2019/10/06 05:48:00 mlelstv Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.182 2019/12/01 14:40:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.181 2019/10/06 05:48:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.182 2019/12/01 14:40:31 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -190,6 +190,7 @@ LIST_HEAD(swap_priority, swappri);
 static struct swap_priority swap_priority;
 
 /* locks */
+static kmutex_t uvm_swap_data_lock __cacheline_aligned;
 static krwlock_t swap_syscall_lock;
 
 /* workqueue and use counter for swap to regular files */
@@ -1069,7 +1070,7 @@ uvm_swap_shutdown(struct lwp *l)
 	struct vnode *vp;
 	int error;
 
-	printf("turning of swap...");
+	printf("turning off swap...");
 	rw_enter(&swap_syscall_lock, RW_WRITER);
 	mutex_enter(&uvm_swap_data_lock);
 again:
@@ -1663,7 +1664,7 @@ uvm_swap_markbad(int startslot, int nslots)
 	 */
 
 	KASSERT(uvmexp.swpgonly >= nslots);
-	uvmexp.swpgonly -= nslots;
+	atomic_add_int(&uvmexp.swpgonly, -nslots);
 	sdp->swd_npgbad += nslots;
 	UVMHIST_LOG(pdhist, "now %jd bad", sdp->swd_npgbad, 0,0,0);
 	mutex_exit(&uvm_swap_data_lock);
@@ -1750,10 +1751,8 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 		 * this page is no longer only in swap.
 		 */
 
-		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
-		uvmexp.swpgonly--;
-		mutex_exit(&uvm_swap_data_lock);
+		atomic_dec_uint(&uvmexp.swpgonly);
 	}
 	return error;
 }
