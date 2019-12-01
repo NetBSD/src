@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.202 2019/11/10 06:47:30 mlelstv Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.203 2019/12/01 13:56:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.202 2019/11/10 06:47:30 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.203 2019/12/01 13:56:29 ad Exp $");
 
 #include "veriexec.h"
 
@@ -1035,8 +1035,9 @@ vn_lock(struct vnode *vp, int flags)
 #if 0
 	KASSERT(vp->v_usecount > 0 || (vp->v_iflag & VI_ONWORKLST) != 0);
 #endif
-	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY)) == 0);
-	KASSERT(!mutex_owned(vp->v_interlock));
+	KASSERT((flags & ~(LK_SHARED|LK_EXCLUSIVE|LK_NOWAIT|LK_RETRY|
+	    LK_UPGRADE|LK_DOWNGRADE)) == 0);
+	KASSERT((flags & LK_NOWAIT) != 0 || !mutex_owned(vp->v_interlock));
 
 #ifdef DIAGNOSTIC
 	if (wapbl_vphaswapbl(vp))
