@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.209 2019/12/01 08:19:09 maxv Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.210 2019/12/01 10:19:59 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,12 +32,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.209 2019/12/01 08:19:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.210 2019/12/01 10:19:59 martin Exp $");
 
 #include "opt_uvmhist.h"
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/mman.h>
 
