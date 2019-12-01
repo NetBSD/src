@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.19 2019/12/01 08:15:58 maxv Exp $	*/
+/*	$NetBSD: atomic.h,v 1.20 2019/12/01 15:28:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -414,13 +414,18 @@ __END_DECLS
 #ifdef KCSAN
 void kcsan_atomic_load(const volatile void *, void *, int);
 void kcsan_atomic_store(volatile void *, const void *, int);
-#define __DO_ATOMIC_LOAD(p, v) \
-	kcsan_atomic_load(p, __UNVOLATILE(&v), sizeof(v))
+#define __BEGIN_ATOMIC_LOAD(p, v) \
+	union { __typeof__(*(p)) __al_val; char __al_buf[1]; } v; \
+	kcsan_atomic_load(p, v.__al_buf, sizeof(v.__al_val))
+#define __END_ATOMIC_LOAD(v) \
+	(v).__al_val
 #define __DO_ATOMIC_STORE(p, v) \
 	kcsan_atomic_store(p, __UNVOLATILE(&v), sizeof(v))
 #else
-#define __DO_ATOMIC_LOAD(p, v) \
-	v = *p
+#define __BEGIN_ATOMIC_LOAD(p, v) \
+	__typeof__(*(p)) v = *(p)
+#define __END_ATOMIC_LOAD(v) \
+	v
 #define __DO_ATOMIC_STORE(p, v) \
 	*p = v
 #endif
@@ -428,20 +433,18 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 #define	atomic_load_relaxed(p)						      \
 ({									      \
 	const volatile __typeof__(*(p)) *__al_ptr = (p);		      \
-	__typeof__(*(p)) __al_val;					      \
 	__ATOMIC_PTR_CHECK(__al_ptr);					      \
-	__DO_ATOMIC_LOAD(__al_ptr, __al_val);				      \
-	__al_val;							      \
+	__BEGIN_ATOMIC_LOAD(__al_ptr, __al_val);			      \
+	__END_ATOMIC_LOAD(__al_val);					      \
 })
 
 #define	atomic_load_consume(p)						      \
 ({									      \
 	const volatile __typeof__(*(p)) *__al_ptr = (p);		      \
-	__typeof__(*(p)) __al_val;					      \
 	__ATOMIC_PTR_CHECK(__al_ptr);					      \
-	__DO_ATOMIC_LOAD(__al_ptr, __al_val);				      \
+	__BEGIN_ATOMIC_LOAD(__al_ptr, __al_val);			      \
 	membar_datadep_consumer();					      \
-	__al_val;							      \
+	__END_ATOMIC_LOAD(__al_val);					      \
 })
 
 /*
@@ -453,11 +456,10 @@ void kcsan_atomic_store(volatile void *, const void *, int);
 #define	atomic_load_acquire(p)						      \
 ({									      \
 	const volatile __typeof__(*(p)) *__al_ptr = (p);		      \
-	__typeof__(*(p)) __al_val;					      \
 	__ATOMIC_PTR_CHECK(__al_ptr);					      \
-	__DO_ATOMIC_LOAD(__al_ptr, __al_val);				      \
+	__BEGIN_ATOMIC_LOAD(__al_ptr, __al_val);			      \
 	membar_sync();							      \
-	__al_val;							      \
+	__END_ATOMIC_LOAD(__al_val);					      \
 })
 
 #define	atomic_store_relaxed(p,v)					      \
