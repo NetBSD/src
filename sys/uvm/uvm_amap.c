@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.110 2019/12/01 14:24:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.110 2019/12/01 14:24:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -56,7 +56,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.109 2018/08/12 09:29:16 maxv Exp $");
  * we are ok).
  */
 static struct pool_cache uvm_amap_cache;
-static kmutex_t amap_list_lock;
+static kmutex_t amap_list_lock __cacheline_aligned;
 static LIST_HEAD(, vm_amap) amap_list;
 
 /*
@@ -1070,13 +1070,19 @@ ReStart:
 		 * Drop PG_BUSY on new page.  Since its owner was locked all
 		 * this time - it cannot be PG_RELEASED or PG_WANTED.
 		 */
-
-		mutex_enter(&uvm_pageqlock);
-		uvm_pageactivate(npg);
-		mutex_exit(&uvm_pageqlock);
 		npg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(npg, NULL);
 	}
+	/* Activate all pages.  Some may be missing because of retry above. */
+	mutex_enter(&uvm_pageqlock);
+	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
+		anon = amap->am_anon[amap->am_slots[lcv]];
+		KASSERT(anon->an_lock == amap->am_lock);
+		if (anon->an_page != NULL) {
+			uvm_pageactivate(anon->an_page);
+		}
+	}
+	mutex_exit(&uvm_pageqlock);
 	amap_unlock(amap);
 }
 
