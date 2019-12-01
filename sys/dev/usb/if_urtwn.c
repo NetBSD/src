@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.76 2019/12/01 21:01:19 mlelstv Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.77 2019/12/01 21:02:09 mlelstv Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.76 2019/12/01 21:01:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.77 2019/12/01 21:02:09 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -567,8 +567,6 @@ urtwn_detach(device_t self, int flags)
 
 	callout_halt(&sc->sc_scan_to, NULL);
 	callout_halt(&sc->sc_calib_to, NULL);
-
-	pmf_device_deregister(self);
 
 	if (ISSET(sc->sc_flags, URTWN_FLAG_ATTACHED)) {
 		urtwn_stop(ifp, 0);
