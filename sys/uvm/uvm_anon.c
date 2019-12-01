@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.64 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.65 2019/12/01 14:40:31 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.64 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.65 2019/12/01 14:40:31 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -172,10 +172,8 @@ uvm_anon_dispose(struct vm_anon *anon)
 #if defined(VMSWAP)
 	if (pg == NULL && anon->an_swslot > 0) {
 		/* This page is no longer only in swap. */
-		mutex_enter(&uvm_swap_data_lock);
 		KASSERT(uvmexp.swpgonly > 0);
-		uvmexp.swpgonly--;
-		mutex_exit(&uvm_swap_data_lock);
+		atomic_dec_uint(&uvmexp.swpgonly);
 	}
 #endif
 
