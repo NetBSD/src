@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.50 2019/11/27 20:31:13 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.51 2019/12/01 13:20:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.50 2019/11/27 20:31:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.51 2019/12/01 13:20:42 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -381,13 +381,8 @@ sched_resched_cpu(struct cpu_info *ci, pri_t pri, bool unlock)
 	l = ci->ci_data.cpu_onproc;
 	if ((l->l_flag & LW_IDLE) != 0) {
 		f = RESCHED_IDLE | RESCHED_UPREEMPT;
-	} else if ((l->l_pflag & LP_INTR) != 0) {
-		/* We can't currently preempt interrupt LWPs - should do. */
-		if (__predict_true(unlock)) {
-			spc_unlock(ci);
-		}
-		return;
-	} else if (pri >= sched_kpreempt_pri) {
+	} else if (pri >= sched_kpreempt_pri && (l->l_pflag & LP_INTR) == 0) {
+		/* We can't currently preempt softints - should be able to. */
 #ifdef __HAVE_PREEMPTION
 		f = RESCHED_KPREEMPT;
 #else
