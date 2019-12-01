@@ -49,8 +49,6 @@ typedef struct dm_dev {
         uint32_t event_nr;
         uint32_t ref_cnt;
 
-        uint32_t dev_type;
-
         dm_table_head_t table_head;
 
         struct dm_dev_head upcalls;

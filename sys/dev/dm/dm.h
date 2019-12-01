@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.27 2014/10/02 21:58:16 justin Exp $      */
+/*        $NetBSD: dm.h,v 1.28 2019/12/01 06:53:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -139,8 +139,6 @@ typedef struct dm_dev {
 	uint32_t event_nr;
 	uint32_t ref_cnt;
 
-	uint32_t dev_type;
-
 	dm_table_head_t table_head;
 
 	struct dm_dev_head upcalls;
@@ -152,19 +150,6 @@ typedef struct dm_dev {
 
 	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
 } dm_dev_t;
-
-/* Device types used for upcalls */
-#define DM_ZERO_DEV            (1 << 0)
-#define DM_ERROR_DEV           (1 << 1)
-#define DM_LINEAR_DEV          (1 << 2)
-#define DM_MIRROR_DEV          (1 << 3)
-#define DM_STRIPE_DEV          (1 << 4)
-#define DM_SNAPSHOT_DEV        (1 << 5)
-#define DM_SNAPSHOT_ORIG_DEV   (1 << 6)
-#define DM_SPARE_DEV           (1 << 7)
-/* Set this device type only during dev remove ioctl. */
-#define DM_DELETING_DEV        (1 << 8)
-
 
 /* for zero, error : dm_target->target_config == NULL */
 
