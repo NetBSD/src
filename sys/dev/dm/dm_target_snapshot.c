@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.20 2019/10/15 00:13:53 chs Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.21 2019/12/01 06:53:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.20 2019/10/15 00:13:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.21 2019/12/01 06:53:31 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -243,7 +243,6 @@ dm_target_snapshot_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	*target_config = tsc;
 
-	dmv->dev_type = DM_SNAPSHOT_DEV;
 	dmv->sec_size = dmp_snap->dmp_secsize;
 
 	return 0;
@@ -410,8 +409,6 @@ dm_target_snapshot_orig_init(dm_dev_t * dmv, void **target_config, char *params)
 
 	tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_SLEEP);
 	tsoc->tsoc_real_dev = dmp_real;
-
-	dmv->dev_type = DM_SNAPSHOT_ORIG_DEV;
 
 	*target_config = tsoc;
 

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.13 2018/01/05 14:22:26 christos Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.14 2019/12/01 06:53:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.13 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.14 2019/12/01 06:53:31 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -118,8 +118,6 @@ dm_target_zero_init(dm_dev_t * dmv, void **target_config, char *argv)
 {
 
 	printf("Zero target init function called!!\n");
-
-	dmv->dev_type = DM_ZERO_DEV;
 
 	*target_config = NULL;
 
