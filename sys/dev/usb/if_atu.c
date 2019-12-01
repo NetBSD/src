@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.66 2019/11/28 17:09:10 maxv Exp $ */
+/*	$NetBSD: if_atu.c,v 1.67 2019/12/01 12:47:10 maxv Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.66 2019/11/28 17:09:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.67 2019/12/01 12:47:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -266,10 +266,6 @@ static int	atu_tx_list_init(struct atu_softc *);
 static int	atu_rx_list_init(struct atu_softc *);
 static void	atu_xfer_list_free(struct atu_softc *, struct atu_chain *,
 	    int);
-
-#ifdef ATU_DEBUG
-static void	atu_debug_print(struct atu_softc *);
-#endif
 
 static void atu_task(void *);
 static int atu_newstate(struct ieee80211com *, enum ieee80211_state, int);
@@ -2053,7 +2049,8 @@ atu_init(struct ifnet *ifp)
 	return 0;
 }
 
-#ifdef ATU_DEBUG
+#if 0 && defined(ATU_DEBUG) /* XXX XXX XXX UNUSED */
+static void	atu_debug_print(struct atu_softc *);
 static void
 atu_debug_print(struct atu_softc *sc)
 {
