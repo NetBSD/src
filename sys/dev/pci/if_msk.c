@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.95 2019/11/28 17:09:10 maxv Exp $ */
+/* $NetBSD: if_msk.c,v 1.96 2019/12/01 12:47:10 maxv Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.95 2019/11/28 17:09:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.96 2019/12/01 12:47:10 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -139,9 +139,9 @@ static void msk_fill_rx_tick(void *);
 #define DPRINTFN(n, x)	if (mskdebug >= (n)) printf x
 int	mskdebug = MSK_DEBUG;
 
-void msk_dump_txdesc(struct msk_tx_desc *, int);
-void msk_dump_mbuf(struct mbuf *);
-void msk_dump_bytes(const char *, int);
+static void msk_dump_txdesc(struct msk_tx_desc *, int);
+static void msk_dump_mbuf(struct mbuf *);
+static void msk_dump_bytes(const char *, int);
 #else
 #define DPRINTF(x)
 #define DPRINTFN(n, x)

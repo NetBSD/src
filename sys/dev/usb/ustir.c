@@ -1,4 +1,4 @@
-/*	$NetBSD: ustir.c,v 1.43 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: ustir.c,v 1.44 2019/12/01 12:47:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.43 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ustir.c,v 1.44 2019/12/01 12:47:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -146,7 +146,6 @@ struct ustir_softc {
 
 #define USTIR_WR_TIMEOUT 200
 
-Static int ustir_activate(device_t, enum devact);
 Static int ustir_open(void *, int, int, struct lwp *);
 Static int ustir_close(void *, int, int, struct lwp *);
 Static int ustir_read(void *, struct uio *, int);

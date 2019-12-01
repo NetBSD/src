@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.109 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: uhid.c,v 1.110 2019/12/01 12:47:10 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.109 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.110 2019/12/01 12:47:10 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -385,7 +385,7 @@ uhidclose(dev_t dev, int flag, int mode, struct lwp *l)
 	return 0;
 }
 
-int
+Static int
 uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error = 0;
@@ -467,7 +467,7 @@ uhidread(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-static int
+Static int
 uhid_do_write(struct uhid_softc *sc, struct uio *uio, int flag)
 {
 	int error;
