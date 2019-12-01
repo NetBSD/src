@@ -280,6 +280,9 @@ int arc_procfd;
 #ifndef btop
 #define	btop(x)		((x) / PAGE_SIZE)
 #endif
+#ifndef ptob
+#define ptob(x)		((x) * PAGE_SIZE)
+#endif
 //#define	needfree	(uvmexp.free < uvmexp.freetarg ? uvmexp.freetarg : 0)
 #define	buf_init	arc_buf_init
 #define	freemem		uvmexp.free
