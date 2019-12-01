@@ -1,4 +1,4 @@
-/*	$NetBSD: pstat.c,v 1.128 2017/05/04 16:26:09 sevan Exp $	*/
+/*	$NetBSD: pstat.c,v 1.129 2019/12/01 14:04:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1980, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)pstat.c	8.16 (Berkeley) 5/9/95";
 #else
-__RCSID("$NetBSD: pstat.c,v 1.128 2017/05/04 16:26:09 sevan Exp $");
+__RCSID("$NetBSD: pstat.c,v 1.129 2019/12/01 14:04:52 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -85,23 +85,19 @@ __RCSID("$NetBSD: pstat.c,v 1.128 2017/05/04 16:26:09 sevan Exp $");
 #include "swapctl.h"
 
 struct nlist nl[] = {
-#define	V_LRU_FREE_LIST	0
-	{ "_lru_free_list", 0, 0, 0, 0 },	/* address of lru free list. */
-#define	V_LRU_HOLD_LIST	1
-	{ "_lru_hold_list", 0, 0, 0, 0 },	/* address of lru hold list. */
-#define	V_LRU_VRELE_LIST	2
-	{ "_lru_vrele_list", 0, 0, 0, 0 },	/* address of lru vrele list. */
-#define	V_NUMV		3
+#define	V_LRU_LIST	0
+	{ "_lru_list", 0, 0, 0, 0 }	,	/* address of lru lists. */
+#define	V_NUMV		1
 	{ "_numvnodes", 0, 0, 0, 0 },
-#define	V_NEXT_OFFSET	4
+#define	V_NEXT_OFFSET	2
 	{ "_vnode_offset_next_by_lru", 0, 0, 0, 0 },
-#define	FNL_NFILE	5
+#define	FNL_NFILE	3
 	{ "_nfiles", 0, 0, 0, 0 },
-#define FNL_MAXFILE	6
+#define FNL_MAXFILE	4
 	{ "_maxfiles", 0, 0, 0, 0 },
-#define TTY_NTTY	7
+#define TTY_NTTY	5
 	{ "_tty_count", 0, 0, 0, 0 },
-#define TTY_TTYLIST	8
+#define TTY_TTYLIST	6
 	{ "_ttylist", 0, 0, 0, 0 },
 #define NLMANDATORY TTY_TTYLIST	/* names up to here are mandatory */
 	{ "", 0, 0, 0, 0 }
@@ -770,11 +766,12 @@ kinfo_vnodes(int *avnodes)
 	ep = bp + (numvnodes + 20) * (VPTRSZ + VNODESZ);
 	KGET(V_NEXT_OFFSET, next_offset);
 
-	for (i = V_LRU_FREE_LIST; i <= V_LRU_VRELE_LIST; i++) {
+	for (i = 0; i < 3; i++) {
 		TAILQ_HEAD(vnodelst, vnode) lru_head;
 		struct vnode *vp, vnode;
 
-		KGET(i, lru_head);
+		KGET2((nl[V_LRU_LIST].n_value + sizeof(lru_head) * i), &lru_head,
+		    sizeof(lru_head), "lru_list");
 		vp = TAILQ_FIRST(&lru_head);
 		while (vp != NULL) {
 			KGET2(vp, &vnode, sizeof(vnode), "vnode");
