@@ -1,4 +1,4 @@
-/*	$NetBSD: mt.c,v 1.33 2019/11/12 13:17:44 msaitoh Exp $ */
+/*	$NetBSD: mt.c,v 1.34 2019/12/01 16:22:10 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996-2003 The NetBSD Foundation, Inc.
@@ -75,7 +75,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.33 2019/11/12 13:17:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mt.c,v 1.34 2019/12/01 16:22:10 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,6 +729,7 @@ mtstart(struct mt_softc *sc)
 				    mtstart_callout, sc);
 				return;
 			}
+			__unreachable();
 
 		    case MTRESET:
 			/*
