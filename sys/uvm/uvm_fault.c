@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.208 2019/11/10 20:38:33 chs Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.209 2019/12/01 08:19:09 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.208 2019/11/10 20:38:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.209 2019/12/01 08:19:09 maxv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -284,7 +284,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	KASSERT(anon->an_lock == amap->am_lock);
 
 	/* Increment the counters.*/
-	uvmexp.fltanget++;
+	atomic_store_relaxed(&uvmexp.fltanget,
+	    atomic_load_relaxed(&uvmexp.fltanget) + 1);
 	if (anon->an_page) {
 		curlwp->l_ru.ru_minflt++;
 	} else {
@@ -331,7 +332,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				return 0;
 			}
 			pg->flags |= PG_WANTED;
-			uvmexp.fltpgwait++;
+			atomic_store_relaxed(&uvmexp.fltpgwait,
+			    atomic_load_relaxed(&uvmexp.fltpgwait) + 1);
 
 			/*
 			 * The last unlock must be an atomic unlock and wait
@@ -366,7 +368,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if (pg == NULL) {
 				/* Out of memory.  Wait a little. */
 				uvmfault_unlockall(ufi, amap, NULL);
-				uvmexp.fltnoram++;
+				atomic_store_relaxed(&uvmexp.fltnoram,
+				    atomic_load_relaxed(&uvmexp.fltnoram) + 1);
 				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
 				    0,0,0);
 				if (!uvm_reclaimable()) {
@@ -385,7 +388,8 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				 * to read an_swslot here, because we hold
 				 * PG_BUSY on the page.
 				 */
-				uvmexp.pageins++;
+				atomic_store_relaxed(&uvmexp.pageins,
+				    atomic_load_relaxed(&uvmexp.pageins) + 1);
 				error = uvm_swap_get(pg, anon->an_swslot,
 				    PGO_SYNCIO);
 
@@ -526,7 +530,8 @@ released:
 		 * Retry..
 		 */
 
-		uvmexp.fltanretry++;
+		atomic_store_relaxed(&uvmexp.fltanretry,
+		    atomic_load_relaxed(&uvmexp.fltanretry) + 1);
 		continue;
 	}
 	/*NOTREACHED*/
@@ -627,13 +632,15 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		uvmfault_unlockall(ufi, amap, uobj);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist, "out of VM", 0,0,0,0);
-			uvmexp.fltnoanon++;
+			atomic_store_relaxed(&uvmexp.fltnoanon,
+			    atomic_load_relaxed(&uvmexp.fltnoanon) + 1);
 			error = ENOMEM;
 			goto done;
 		}
 
 		UVMHIST_LOG(maphist, "out of RAM, waiting for more", 0,0,0,0);
-		uvmexp.fltnoram++;
+		atomic_store_relaxed(&uvmexp.fltnoram,
+		    atomic_load_relaxed(&uvmexp.fltnoram) + 1);
 		uvm_wait("flt_noram5");
 		error = ERESTART;
 		goto done;
@@ -1026,7 +1033,8 @@ uvm_fault_check(
 			    "  need to clear needs_copy and refault",0,0,0,0);
 			uvmfault_unlockmaps(ufi, false);
 			uvmfault_amapcopy(ufi);
-			uvmexp.fltamcopy++;
+			atomic_store_relaxed(&uvmexp.fltamcopy,
+			    atomic_load_relaxed(&uvmexp.fltamcopy) + 1);
 			return ERESTART;
 
 		} else {
@@ -1269,7 +1277,8 @@ uvm_fault_upper_neighbor(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n anon: pm=%#jx, va=%#jx, pg=%#jx",
 	    (uintptr_t)ufi->orig_map->pmap, currva, (uintptr_t)pg, 0);
-	uvmexp.fltnamap++;
+	atomic_store_relaxed(&uvmexp.fltnamap,
+	    atomic_load_relaxed(&uvmexp.fltnamap) + 1);
 
 	/*
 	 * Since this page isn't the page that's actually faulting,
@@ -1465,7 +1474,8 @@ uvm_fault_upper_promote(
 	UVMHIST_FUNC("uvm_fault_upper_promote"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
-	uvmexp.flt_acow++;
+	atomic_store_relaxed(&uvmexp.flt_acow,
+	    atomic_load_relaxed(&uvmexp.flt_acow) + 1);
 
 	error = uvmfault_promote(ufi, oanon, PGO_DONTCARE, &anon,
 	    &flt->anon_spare);
@@ -1513,7 +1523,8 @@ uvm_fault_upper_direct(
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_fault_upper_direct"); UVMHIST_CALLED(maphist);
 
-	uvmexp.flt_anon++;
+	atomic_store_relaxed(&uvmexp.flt_anon,
+	    atomic_load_relaxed(&uvmexp.flt_anon) + 1);
 	pg = anon->an_page;
 	if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
 		flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
@@ -1782,7 +1793,8 @@ uvm_fault_lower_lookup(
 	mutex_enter(uobj->vmobjlock);
 	/* Locked: maps(read), amap(if there), uobj */
 
-	uvmexp.fltlget++;
+	atomic_store_relaxed(&uvmexp.fltlget,
+	    atomic_load_relaxed(&uvmexp.fltlget) + 1);
 	gotpages = flt->npages;
 	(void) uobj->pgops->pgo_get(uobj,
 	    ufi->entry->offset + flt->startva - ufi->entry->start,
@@ -1856,7 +1868,8 @@ uvm_fault_lower_neighbor(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n obj: pm=%#jx, va=%#jx, pg=%#jx",
 	    (uintptr_t)ufi->orig_map->pmap, currva, (uintptr_t)pg, 0);
-	uvmexp.fltnomap++;
+	atomic_store_relaxed(&uvmexp.fltnomap,
+	    atomic_load_relaxed(&uvmexp.fltnomap) + 1);
 
 	/*
 	 * Since this page isn't the page that's actually faulting,
@@ -1922,7 +1935,8 @@ uvm_fault_lower_io(
 	/* Locked: uobj */
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 
-	uvmexp.fltget++;
+	atomic_store_relaxed(&uvmexp.fltget,
+	    atomic_load_relaxed(&uvmexp.fltget) + 1);
 	gotpages = 1;
 	pg = NULL;
 	error = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
@@ -2005,7 +2019,8 @@ uvm_fault_lower_io(
 			pg->flags &= ~(PG_BUSY | PG_WANTED);
 			UVM_PAGE_OWN(pg, NULL);
 		} else {
-			uvmexp.fltpgrele++;
+			atomic_store_relaxed(&uvmexp.fltpgrele,
+			    atomic_load_relaxed(&uvmexp.fltpgrele) + 1);
 			uvm_pagefree(pg);
 		}
 		mutex_exit(uobj->vmobjlock);
@@ -2049,7 +2064,8 @@ uvm_fault_lower_direct(
 	 * set "pg" to the page we want to map in (uobjpage, usually)
 	 */
 
-	uvmexp.flt_obj++;
+	atomic_store_relaxed(&uvmexp.flt_obj,
+	    atomic_load_relaxed(&uvmexp.flt_obj) + 1);
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 		flt->enter_prot &= ~VM_PROT_WRITE;
@@ -2112,7 +2128,8 @@ uvm_fault_lower_direct_loan(
 			UVMHIST_LOG(maphist,
 			  "  out of RAM breaking loan, waiting",
 			  0,0,0,0);
-			uvmexp.fltnoram++;
+			atomic_store_relaxed(&uvmexp.fltnoram,
+			    atomic_load_relaxed(&uvmexp.fltnoram) + 1);
 			uvm_wait("flt_noram4");
 			return ERESTART;
 		}
