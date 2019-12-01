@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.16 2019/11/30 15:53:36 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.17 2019/12/01 12:19:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -50,6 +50,14 @@
 static __inline void
 userret(struct lwp *l)
 {
+
+	/* This must come first... */
+	l->l_md.md_astpending = 0;
+
+	if (l->l_pflag & LP_OWEUPC) {
+		l->l_pflag &= ~LP_OWEUPC;
+		ADDUPROF(l);
+	}
 
 	/* Invoke MI userret code */
 	mi_userret(l);

@@ -1,7 +1,7 @@
-/*	$NetBSD: exception.c,v 1.70 2019/11/30 15:53:36 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.71 2019/12/01 12:19:28 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
  * Copyright (c) 1990 The Regents of the University of California.
  * All rights reserved.
  *
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.70 2019/11/30 15:53:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.71 2019/12/01 12:19:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -89,6 +89,7 @@ __KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.70 2019/11/30 15:53:36 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/proc.h>
 #include <sys/signal.h>
+#include <sys/intr.h>
 
 #ifdef DDB
 #include <sh3/db_machdep.h>
@@ -295,12 +296,9 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			}				\
 		} while(/*CONSTCOND*/0)
 
-	splx(tf->tf_ssr & PSL_IMASK);
-
 	usermode = !KERNELMODE(tf->tf_ssr);
 	if (usermode) {
 		KDASSERT(l->l_md.md_regs == tf);
-		LWP_CACHE_CREDS(l, l->l_proc);
 	} else {
 #if 0 /* FIXME: probably wrong for yamt-idlelwp */
 		KDASSERT(l == NULL ||		/* idle */
@@ -330,6 +328,8 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 			ksi.ksi_signo = SIGSEGV;
 			ksi.ksi_code = SEGV_ACCERR;
 			ksi.ksi_addr = (void *)va;
+			splx(tf->tf_ssr & PSL_IMASK);
+			LWP_CACHE_CREDS(l, l->l_proc);
 			goto user_fault;
 		} else {
 			TLB_ASSERT(l && onfault != NULL,
@@ -372,12 +372,12 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
 	/* Lookup page table. if entry found, load it. */
 	if (track && __pmap_pte_load(pmap, va, track)) {
-		if (usermode)
-			userret(l);
 		return;
 	}
 
 	/* Page not found. call fault handler */
+	splx(tf->tf_ssr & PSL_IMASK);
+	LWP_CACHE_CREDS(l, l->l_proc);
 	pcb->pcb_onfault = NULL;
 	err = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
@@ -399,10 +399,21 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
-		bool loaded = __pmap_pte_load(pmap, va, track);
+		bool loaded;
+		userret(l);
+		loaded = __pmap_pte_load(pmap, va, track);
+#if 0
+		/*
+		 * XXXAD I don't think you should do this - consider
+		 * a multithreaded program where another thread got
+		 * switched to during UVM fault and it unmapped the
+		 * page. I think you should just let the fault happen
+		 * again.
+		 */
 		TLB_ASSERT(loaded, "page table entry not found");
-		if (usermode)
-			userret(l);
+#else
+		__USE(loaded);
+#endif
 		return;
 	}
 
@@ -441,7 +452,6 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	ksi.ksi_trap = tf->tf_expevt;
 	trapsignal(l, &ksi);
 	userret(l);
-	ast(l, tf);
 	return;
 
  tlb_panic:
@@ -459,27 +469,29 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
  *	tf ... full user context.
  *	This is called when exception return. if return from kernel to user,
  *	handle asynchronous software traps and context switch if needed.
+ *	Interrupts are blocked on entry.
  */
 void
 ast(struct lwp *l, struct trapframe *tf)
 {
+	int s;
 
-	if (KERNELMODE(tf->tf_ssr)) {
+	if (__predict_true(l->l_md.md_astpending == 0)) {
+		return;
+	}
+	if (__predict_false(KERNELMODE(tf->tf_ssr))) {
+		/* should not occur but leave it here to be safe */
 		return;
 	}
 
 	KDASSERT(l != NULL);
 	KDASSERT(l->l_md.md_regs == tf);
 
-	while (l->l_md.md_astpending) {
-		//curcpu()->ci_data.cpu_nast++;
-		l->l_md.md_astpending = 0;
-
-		if (l->l_pflag & LP_OWEUPC) {
-			l->l_pflag &= ~LP_OWEUPC;
-			ADDUPROF(l);
-		}
-
+	s = tf->tf_ssr & PSL_IMASK;
+	do {
+		splx(s);
+		/* userret() clears l_md.md_astpending */
 		userret(l);
-	}
+		s = splhigh();
+	} while (__predict_false(l->l_md.md_astpending));
 }
