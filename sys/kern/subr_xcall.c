@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.31 2019/12/01 17:06:00 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.32 2019/12/01 20:56:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.31 2019/12/01 17:06:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.32 2019/12/01 20:56:39 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -353,7 +353,14 @@ xc_wait(uint64_t where)
 		xc = &xc_low_pri;
 	}
 
-	/* Block until awoken. */
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+	/* Fast path, if already done. */
+	if (atomic_load_acquire(&xc->xc_donep) >= where) {
+		return;
+	}
+#endif
+
+	/* Slow path: block until awoken. */
 	mutex_enter(&xc->xc_lock);
 	while (xc->xc_donep < where) {
 		cv_wait(&xc->xc_busy, &xc->xc_lock);
@@ -436,7 +443,11 @@ xc_thread(void *cookie)
 		(*func)(arg1, arg2);
 
 		mutex_enter(&xc->xc_lock);
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+		atomic_store_release(&xc->xc_donep, xc->xc_donep + 1);
+#else
 		xc->xc_donep++;
+#endif
 	}
 	/* NOTREACHED */
 }
@@ -489,7 +500,12 @@ xc__highpri_intr(void *dummy)
 	 */
 	mutex_enter(&xc->xc_lock);
 	KASSERT(xc->xc_donep < xc->xc_headp);
-	if (++xc->xc_donep == xc->xc_headp) {
+#ifdef __HAVE_ATOMIC64_LOADSTORE
+	atomic_store_release(&xc->xc_donep, xc->xc_donep + 1);
+#else
+	xc->xc_donep++;
+#endif
+	if (xc->xc_donep == xc->xc_headp) {
 		cv_broadcast(&xc->xc_busy);
 	}
 	mutex_exit(&xc->xc_lock);
