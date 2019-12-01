@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.214 2019/11/24 13:23:57 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.215 2019/12/01 15:27:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.214 2019/11/24 13:23:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.215 2019/12/01 15:27:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -771,17 +771,21 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
     lwp_t **rnewlwpp, int sclass, const sigset_t *sigmask,
     const stack_t *sigstk)
 {
-	struct lwp *l2, *isfree;
+	struct lwp *l2;
 	turnstile_t *ts;
 	lwpid_t lid;
 
 	KASSERT(l1 == curlwp || l1->l_proc == &proc0);
 
 	/*
-	 * Enforce limits, excluding the first lwp and kthreads.
+	 * Enforce limits, excluding the first lwp and kthreads.  We must
+	 * use the process credentials here when adjusting the limit, as
+	 * they are what's tied to the accounting entity.  However for
+	 * authorizing the action, we'll use the LWP's credentials.
 	 */
+	mutex_enter(p2->p_lock);
 	if (p2->p_nlwps != 0 && p2 != &proc0) {
-		uid_t uid = kauth_cred_getuid(l1->l_cred);
+		uid_t uid = kauth_cred_getuid(p2->p_cred);
 		int count = chglwpcnt(uid, 1);
 		if (__predict_false(count >
 		    p2->p_rlimit[RLIMIT_NTHR].rlim_cur)) {
@@ -791,6 +795,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 			    &p2->p_rlimit[RLIMIT_NTHR], KAUTH_ARG(RLIMIT_NTHR))
 			    != 0) {
 				(void)chglwpcnt(uid, -1);
+				mutex_exit(p2->p_lock);
 				return EAGAIN;
 			}
 		}
@@ -800,27 +805,21 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	 * First off, reap any detached LWP waiting to be collected.
 	 * We can re-use its LWP structure and turnstile.
 	 */
-	isfree = NULL;
-	if (p2->p_zomblwp != NULL) {
-		mutex_enter(p2->p_lock);
-		if ((isfree = p2->p_zomblwp) != NULL) {
-			p2->p_zomblwp = NULL;
-			lwp_free(isfree, true, false);/* releases proc mutex */
-		} else
-			mutex_exit(p2->p_lock);
-	}
-	if (isfree == NULL) {
-		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
-		memset(l2, 0, sizeof(*l2));
-		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
-		SLIST_INIT(&l2->l_pi_lenders);
-	} else {
-		l2 = isfree;
+	if ((l2 = p2->p_zomblwp) != NULL) {
+		p2->p_zomblwp = NULL;
+		lwp_free(l2, true, false);
+		/* p2 now unlocked by lwp_free() */
 		ts = l2->l_ts;
 		KASSERT(l2->l_inheritedprio == -1);
 		KASSERT(SLIST_EMPTY(&l2->l_pi_lenders));
 		memset(l2, 0, sizeof(*l2));
 		l2->l_ts = ts;
+	} else {
+		mutex_exit(p2->p_lock);
+		l2 = pool_cache_get(lwp_cache, PR_WAITOK);
+		memset(l2, 0, sizeof(*l2));
+		l2->l_ts = pool_cache_get(turnstile_cache, PR_WAITOK);
+		SLIST_INIT(&l2->l_pi_lenders);
 	}
 
 	l2->l_stat = LSIDL;
