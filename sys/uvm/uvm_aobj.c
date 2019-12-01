@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.129 2019/12/01 14:40:31 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.130 2019/12/01 20:31:40 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.129 2019/12/01 14:40:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.130 2019/12/01 20:31:40 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -411,7 +411,7 @@ struct uvm_object *
 uao_create(voff_t size, int flags)
 {
 	static struct uvm_aobj kernel_object_store;
-	static kmutex_t kernel_object_lock;
+	static kmutex_t kernel_object_lock __cacheline_aligned;
 	static int kobj_alloced __diagused = 0;
 	pgoff_t pages = round_page((uint64_t)size) >> PAGE_SHIFT;
 	struct uvm_aobj *aobj;
@@ -614,9 +614,11 @@ uao_detach(struct uvm_object *uobj)
 	 */
 
 	mutex_enter(uobj->vmobjlock);
+	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+		pmap_page_protect(pg, VM_PROT_NONE);
+	}
 	mutex_enter(&uvm_pageqlock);
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
-		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
 			mutex_exit(&uvm_pageqlock);
