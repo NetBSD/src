@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.129 2019/11/23 19:40:37 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.130 2019/12/01 14:52:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.129 2019/11/23 19:40:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.130 2019/12/01 14:52:14 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -349,12 +349,17 @@ cpu_need_proftick(struct lwp *l)
 bool
 cpu_intr_p(void)
 {
+	uint64_t ncsw;
 	int idepth;
+	lwp_t *l;
 
-	kpreempt_disable();
-	idepth = curcpu()->ci_idepth;
-	kpreempt_enable();
-	return (idepth >= 0);
+	l = curlwp;
+	do {
+		ncsw = l->l_ncsw;
+		idepth = l->l_cpu->ci_idepth;
+	} while (__predict_false(ncsw != l->l_ncsw));
+
+	return idepth >= 0;
 }
 
 #ifdef __HAVE_PREEMPTION

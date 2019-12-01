@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.37 2019/11/24 15:37:39 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.38 2019/12/01 14:52:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.37 2019/11/24 15:37:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.38 2019/12/01 14:52:13 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -604,11 +604,17 @@ cpu_idle(void)
 bool
 cpu_intr_p(void)
 {
-	bool rv;
-	kpreempt_disable();
-	rv = (curcpu()->ci_idepth != 0);
-	kpreempt_enable();
-	return rv;
+	uint64_t ncsw;
+	int idepth;
+	lwp_t *l;
+
+	l = curlwp;
+	do {
+		ncsw = l->l_ncsw;
+		idepth = l->l_cpu->ci_idepth;
+	} while (__predict_false(ncsw != l->l_ncsw));
+
+	return idepth != 0;
 }
 
 #ifdef MULTIPROCESSOR
