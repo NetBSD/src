@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.10 2018/01/05 14:22:26 christos Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.11 2019/12/01 16:33:33 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.10 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.11 2019/12/01 16:33:33 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -103,15 +103,17 @@ dm_pdev_insert(const char *dev_name)
 		mutex_exit(&dm_pdev_mutex);
 		return dmp;
 	}
-	mutex_exit(&dm_pdev_mutex);
 
-	if ((dmp = dm_pdev_alloc(dev_name)) == NULL)
+	if ((dmp = dm_pdev_alloc(dev_name)) == NULL) {
+		mutex_exit(&dm_pdev_mutex);
 		return NULL;
+	}
 
 	dev_pb = pathbuf_create(dev_name);
 	if (dev_pb == NULL) {
 		aprint_debug("%s: pathbuf_create on device: %s failed!\n",
 		    __func__, dev_name);
+		mutex_exit(&dm_pdev_mutex);
 		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
 	}
@@ -120,13 +122,13 @@ dm_pdev_insert(const char *dev_name)
 	if (error) {
 		aprint_debug("%s: dk_lookup on device: %s (error %d)\n",
 		    __func__, dev_name, error);
+		mutex_exit(&dm_pdev_mutex);
 		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
 	}
 	getdisksize(dmp->pdev_vnode, &dmp->pdev_numsec, &dmp->pdev_secsize);
 	dmp->ref_cnt = 1;
 
-	mutex_enter(&dm_pdev_mutex);
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
 	mutex_exit(&dm_pdev_mutex);
 
