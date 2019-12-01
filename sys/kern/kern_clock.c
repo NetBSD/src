@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_clock.c,v 1.138 2018/09/03 21:29:30 riastradh Exp $	*/
+/*	$NetBSD: kern_clock.c,v 1.139 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.138 2018/09/03 21:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_clock.c,v 1.139 2019/12/01 15:34:46 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dtrace.h"
@@ -219,7 +219,7 @@ hardclock(struct clockframe *frame)
 	struct cpu_info *ci;
 
 	ci = curcpu();
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 
 	timer_tick(l, CLKF_USERMODE(frame));
 
@@ -340,7 +340,7 @@ statclock(struct clockframe *frame)
 			setstatclockrate(profhz);
 		}
 	}
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 	if ((l->l_flag & LW_IDLE) != 0) {
 		/*
 		 * don't account idle lwps as swapper.

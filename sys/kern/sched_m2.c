@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.35 2019/12/01 13:20:42 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.36 2019/12/01 15:34:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.35 2019/12/01 13:20:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.36 2019/12/01 15:34:46 ad Exp $");
 
 #include <sys/param.h>
 
@@ -288,7 +288,7 @@ void
 sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
-	struct lwp *l = ci->ci_data.cpu_onproc;
+	struct lwp *l = ci->ci_onproc;
 	struct proc *p;
 
 	if (__predict_false(CURCPU_IDLE_P()))

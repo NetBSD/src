@@ -1,4 +1,4 @@
-/* $NetBSD: ipi.c,v 1.13 2019/11/24 15:49:12 ad Exp $ */
+/* $NetBSD: ipi.c,v 1.14 2019/12/01 15:34:45 ad Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.13 2019/11/24 15:49:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipi.c,v 1.14 2019/12/01 15:34:45 ad Exp $");
 
 #include "opt_multiprocessor.h"
 #include "opt_pic.h"
@@ -79,7 +79,7 @@ ipi_intr(void *v)
 		cpu_pause(NULL);
 
 	if (ipi & IPI_AST)
-		ci->ci_data.cpu_onproc->l_md.md_astpending = 1;
+		ci->ci_onproc->l_md.md_astpending = 1;
 
 	if (ipi & IPI_HALT) {
 		struct cpuset_info * const csi = &cpuset_info;

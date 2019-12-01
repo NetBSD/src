@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.326 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.327 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.326 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.327 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -599,12 +599,12 @@ mi_switch(lwp_t *l)
 
 		/*
 		 * ci_curlwp changes when a fast soft interrupt occurs.
-		 * We use cpu_onproc to keep track of which kernel or
+		 * We use ci_onproc to keep track of which kernel or
 		 * user thread is running 'underneath' the software
 		 * interrupt.  This is important for time accounting,
 		 * itimers and forcing user threads to preempt (aston).
 		 */
-		ci->ci_data.cpu_onproc = newl;
+		ci->ci_onproc = newl;
 	}
 
 	/*
@@ -825,12 +825,12 @@ lwp_exit_switchaway(lwp_t *l)
 
 	/*
 	 * ci_curlwp changes when a fast soft interrupt occurs.
-	 * We use cpu_onproc to keep track of which kernel or
+	 * We use ci_onproc to keep track of which kernel or
 	 * user thread is running 'underneath' the software
 	 * interrupt.  This is important for time accounting,
 	 * itimers and forcing user threads to preempt (aston).
 	 */
-	ci->ci_data.cpu_onproc = newl;
+	ci->ci_onproc = newl;
 
 	/* Unlock the run queue. */
 	spc_unlock(ci);
