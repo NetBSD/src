@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.66 2017/10/28 00:37:13 pgoyette Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.67 2019/12/01 16:44:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.66 2017/10/28 00:37:13 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.67 2019/12/01 16:44:11 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -54,7 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.66 2017/10/28 00:37:13 pgoyette Exp
 
 LIST_HEAD(udv_list_struct, uvm_device);
 static struct udv_list_struct udv_list;
-static kmutex_t udv_lock;
+static kmutex_t udv_lock __cacheline_aligned;
 
 /*
  * functions
