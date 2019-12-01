@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.51 2019/12/01 13:20:42 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.52 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.51 2019/12/01 13:20:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.52 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -378,7 +378,7 @@ sched_resched_cpu(struct cpu_info *ci, pri_t pri, bool unlock)
 	/*
 	 * Figure out what kind of preemption we should do.
 	 */	
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 	if ((l->l_flag & LW_IDLE) != 0) {
 		f = RESCHED_IDLE | RESCHED_UPREEMPT;
 	} else if (pri >= sched_kpreempt_pri && (l->l_pflag & LP_INTR) == 0) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: ka820.c,v 1.56 2014/03/26 08:01:21 christos Exp $	*/
+/*	$NetBSD: ka820.c,v 1.57 2019/12/01 15:34:46 ad Exp $	*/
 /*
  * Copyright (c) 1988 Regents of the University of California.
  * All rights reserved.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.56 2014/03/26 08:01:21 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ka820.c,v 1.57 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -530,7 +530,7 @@ ka820_settime(struct timeval *tvp)
 static void
 ka820_startslave(struct cpu_info *ci)
 {
-	const struct pcb *pcb = lwp_getpcb(ci->ci_data.cpu_onproc);
+	const struct pcb *pcb = lwp_getpcb(ci->ci_onproc);
 	const int id = ci->ci_slotid;
 	int i;
 

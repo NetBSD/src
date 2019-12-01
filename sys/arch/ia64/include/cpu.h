@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.19 2019/11/24 15:45:41 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.20 2019/12/01 15:34:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -90,6 +90,7 @@ struct cpu_info {
 	struct cpu_data ci_data;	/* MI per-cpu data */
 	device_t ci_dev;		/* pointer to our device */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct cctr_state ci_cc;	/* cycle counter state */
 	struct cpu_info *ci_next;	/* next cpu_info structure */
 
