@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.149 2019/12/01 14:43:26 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.150 2019/12/01 23:14:47 uwe Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.149 2019/12/01 14:43:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.150 2019/12/01 23:14:47 uwe Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -177,6 +177,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.149 2019/12/01 14:43:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/proc.h>
 #include <sys/pool.h>
 #include <sys/vmem.h>
