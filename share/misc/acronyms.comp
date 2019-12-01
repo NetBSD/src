@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.294 2019/10/20 21:53:42 sevan Exp $
+$NetBSD: acronyms.comp,v 1.295 2019/12/01 23:08:09 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1096,6 +1096,7 @@ OQL	Object Query Language
 ORB	object request broker
 ORM	object-relational mapping
 OS	operating system
+OSD	object-based storage device
 OSD	open source definition
 OSF	open software foundation
 OSI	Open Source Initiative
