@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.46 2019/12/01 18:12:51 ad Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.47 2019/12/01 19:21:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.46 2019/12/01 18:12:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.47 2019/12/01 19:21:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -449,7 +449,7 @@ rump_unschedule_cpu1(struct lwp *l, void *interlock)
 	void *old;
 
 	ci = l->l_cpu;
-	ci->ci_curlwp = ci->ci_data.cpu_onproc = NULL;
+	ci->ci_curlwp = ci->ci_onproc = NULL;
 	rcpu = cpuinfo_to_rumpcpu(ci);
 
 	KASSERT(rcpu->rcpu_ci == ci);
