@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.45 2019/11/23 19:42:52 ad Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.46 2019/12/01 18:12:51 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.45 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.46 2019/12/01 18:12:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -377,7 +377,7 @@ rump_schedule_cpu_interlock(struct lwp *l, void *interlock)
 	 * in the case that an interrupt is scheduled immediately
 	 * after a user proc, but leave that for later.
 	 */
-	ci->ci_curlwp = ci->ci_data.cpu_onproc = l;
+	ci->ci_curlwp = ci->ci_onproc = l;
 }
 
 void
