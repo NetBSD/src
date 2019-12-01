@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.127 2019/11/23 19:40:36 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.128 2019/12/01 15:34:45 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -123,6 +123,7 @@ struct cpu_info {
 
 	/* Most important fields first */
 	struct lwp		*ci_curlwp;
+	struct lwp		*ci_onproc;	/* current user LWP / kthread */
 	struct pcb		*ci_cpcb;
 	struct cpu_info		*ci_next;
 

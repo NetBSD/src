@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.127 2019/11/21 19:24:00 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.128 2019/12/01 15:34:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -95,6 +95,7 @@ struct cpu_info {
 	u_long ci_divisor_delay;	/* for delay/DELAY */
 	u_long ci_divisor_recip;	/* unused, for obsolete microtime(9) */
 	struct lwp *ci_curlwp;		/* currently running lwp */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	volatile int ci_want_resched;	/* user preemption pending */
 	int ci_mtx_count;		/* negative count of held mutexes */
 	int ci_mtx_oldspl;		/* saved SPL value */

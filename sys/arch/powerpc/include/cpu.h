@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.109 2019/11/23 19:40:36 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.110 2019/12/01 15:34:45 ad Exp $	*/
 
 /*
  * Copyright (C) 1999 Wolfgang Solfrank.
@@ -67,7 +67,7 @@ struct cpu_info {
 	device_t ci_dev;		/* device of corresponding cpu */
 	struct cpu_softc *ci_softc;	/* private cpu info */
 	struct lwp *ci_curlwp;		/* current owner of the processor */
-
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 	struct pcb *ci_curpcb;
 	struct pmap *ci_curpm;
 	struct lwp *ci_softlwps[SOFTINT_COUNT];

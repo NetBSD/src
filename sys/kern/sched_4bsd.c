@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.39 2019/12/01 13:20:42 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.40 2019/12/01 15:34:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.39 2019/12/01 13:20:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.40 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -113,7 +113,7 @@ sched_tick(struct cpu_info *ci)
 		    RESCHED_IDLE | RESCHED_UPREEMPT);
 		return;
 	}
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 	if (l == NULL) {
 		return;
 	}

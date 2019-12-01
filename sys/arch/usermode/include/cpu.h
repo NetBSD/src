@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.12 2019/11/23 19:40:37 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.13 2019/12/01 15:34:46 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -58,6 +58,7 @@ struct cpu_info {
 	int		ci_idepth;
 	volatile int	ci_mtx_count;
 	volatile int	ci_mtx_oldspl;
+	lwp_t		*ci_onproc;		/* current user LWP / kthread */
 	lwp_t		*ci_curlwp;
 	lwp_t		*ci_stash;
 };

@@ -1,4 +1,4 @@
-/* $NetBSD: xen_ipi.c,v 1.34 2019/11/23 19:40:38 ad Exp $ */
+/* $NetBSD: xen_ipi.c,v 1.35 2019/12/01 15:34:46 ad Exp $ */
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -33,10 +33,10 @@
 
 /* 
  * Based on: x86/ipi.c
- * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.34 2019/11/23 19:40:38 ad Exp $");
+ * __KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35 2019/12/01 15:34:46 ad Exp $");
  */
 
-__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.34 2019/11/23 19:40:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_ipi.c,v 1.35 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -291,7 +291,7 @@ xen_ipi_ast(struct cpu_info *ci, struct intrframe *intrf)
 	KASSERT(ci != NULL);
 	KASSERT(intrf != NULL);
 
-	aston(ci->ci_data.cpu_onproc);
+	aston(ci->ci_onproc);
 }
 
 void

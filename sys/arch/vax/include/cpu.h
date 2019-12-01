@@ -1,4 +1,4 @@
-/*      $NetBSD: cpu.h,v 1.103 2019/11/23 19:40:37 ad Exp $      */
+/*      $NetBSD: cpu.h,v 1.104 2019/12/01 15:34:46 ad Exp $      */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden
@@ -133,6 +133,7 @@ struct cpu_info {
 	vaddr_t ci_istack;		/* Interrupt stack location */
 	const char *ci_cpustr;
 	int ci_slotid;			/* cpu slot */
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 #if defined(MULTIPROCESSOR)
 	struct lwp *ci_curlwp;		/* current lwp (for other cpus) */
 	volatile int ci_flags;		/* See below */

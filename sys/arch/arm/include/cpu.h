@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.102 2019/11/21 19:23:59 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103 2019/12/01 15:34:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -152,6 +152,7 @@ struct cpu_info {
 			ci_softints;
 
 	lwp_t *		ci_curlwp;	/* current lwp */
+	lwp_t *		ci_onproc;	/* current user LWP / kthread */
 	lwp_t *		ci_lastlwp;	/* last lwp */
 
 	struct evcnt	ci_arm700bugcount;

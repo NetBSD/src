@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.77 2019/11/13 01:31:47 mrg Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.78 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.77 2019/11/13 01:31:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.78 2019/12/01 15:34:46 ad Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -185,9 +185,9 @@ mi_cpu_attach(struct cpu_info *ci)
 	}
 
 	if (ci == curcpu())
-		ci->ci_data.cpu_onproc = curlwp;
+		ci->ci_onproc = curlwp;
 	else
-		ci->ci_data.cpu_onproc = ci->ci_data.cpu_idlelwp;
+		ci->ci_onproc = ci->ci_data.cpu_idlelwp;
 
 	percpu_init_cpu(ci);
 	softint_init(ci);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.26 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.27 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.26 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.27 2019/12/01 15:34:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -51,7 +51,7 @@ idle_loop(void *dummy)
 
 	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
 	spc = &ci->ci_schedstate;
-	ci->ci_data.cpu_onproc = l;
+	ci->ci_onproc = l;
 
 	/* Update start time for this thread. */
 	lwp_lock(l);

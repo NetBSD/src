@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.16 2018/08/22 01:05:22 msaitoh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.17 2019/12/01 15:34:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -177,6 +177,7 @@ struct cpu_info {
 	int	ci_mtx_oldspl;
 	volatile int	ci_want_resched;
 	volatile int	ci_idepth;
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 };
 #endif /* _KERNEL || _KMEMUSER */
 

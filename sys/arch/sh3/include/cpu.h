@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.58 2019/11/23 19:40:36 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.59 2019/12/01 15:34:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -60,6 +60,7 @@ struct cpu_info {
 	int	ci_mtx_oldspl;
 	int	ci_want_resched;
 	int	ci_idepth;
+	struct lwp *ci_onproc;		/* current user LWP / kthread */
 };
 
 extern struct cpu_info cpu_info_store;

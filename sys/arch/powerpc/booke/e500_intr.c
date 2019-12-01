@@ -1,4 +1,4 @@
-/*	$NetBSD: e500_intr.c,v 1.39 2019/11/23 19:40:36 ad Exp $	*/
+/*	$NetBSD: e500_intr.c,v 1.40 2019/12/01 15:34:45 ad Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 #define __INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.39 2019/11/23 19:40:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: e500_intr.c,v 1.40 2019/12/01 15:34:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -1338,7 +1338,7 @@ e500_ipi_suspend(void)
 static void
 e500_ipi_ast(void)
 {
-	curcpu()->ci_data.cpu_onproc->l_md.md_astpending = 1;
+	curcpu()->ci_onproc->l_md.md_astpending = 1;
 }
 
 static const ipifunc_t e500_ipifuncs[] = {

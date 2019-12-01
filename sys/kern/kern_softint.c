@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.51 2019/11/25 17:24:59 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.52 2019/12/01 15:34:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.51 2019/11/25 17:24:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.52 2019/12/01 15:34:46 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -691,7 +691,7 @@ softint_trigger(uintptr_t machdep)
 
 	ci = curcpu();
 	ci->ci_data.cpu_softints |= machdep;
-	l = ci->ci_data.cpu_onproc;
+	l = ci->ci_onproc;
 	if (l == ci->ci_data.cpu_idlelwp) {
 		atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
 	} else {
