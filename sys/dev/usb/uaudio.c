@@ -1,4 +1,4 @@
-/*	$NetBSD: uaudio.c,v 1.162 2019/11/04 05:46:39 isaki Exp $	*/
+/*	$NetBSD: uaudio.c,v 1.163 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.162 2019/11/04 05:46:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uaudio.c,v 1.163 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -367,11 +367,11 @@ Static const struct audio_hw_if uaudio_hw_if = {
 	.get_locks		= uaudio_get_locks,
 };
 
-int uaudio_match(device_t, cfdata_t, void *);
-void uaudio_attach(device_t, device_t, void *);
-int uaudio_detach(device_t, int);
-void uaudio_childdet(device_t, device_t);
-int uaudio_activate(device_t, enum devact);
+static int uaudio_match(device_t, cfdata_t, void *);
+static void uaudio_attach(device_t, device_t, void *);
+static int uaudio_detach(device_t, int);
+static void uaudio_childdet(device_t, device_t);
+static int uaudio_activate(device_t, enum devact);
 
 
 
@@ -379,7 +379,7 @@ CFATTACH_DECL2_NEW(uaudio, sizeof(struct uaudio_softc),
     uaudio_match, uaudio_attach, uaudio_detach, uaudio_activate, NULL,
     uaudio_childdet);
 
-int
+static int
 uaudio_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -393,7 +393,7 @@ uaudio_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS_IFACESUBCLASS;
 }
 
-void
+static void
 uaudio_attach(device_t parent, device_t self, void *aux)
 {
 	struct uaudio_softc *sc = device_private(self);
@@ -490,7 +490,7 @@ uaudio_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uaudio_activate(device_t self, enum devact act)
 {
 	struct uaudio_softc *sc = device_private(self);
@@ -504,7 +504,7 @@ uaudio_activate(device_t self, enum devact act)
 	}
 }
 
-void
+static void
 uaudio_childdet(device_t self, device_t child)
 {
 	struct uaudio_softc *sc = device_private(self);
@@ -513,7 +513,7 @@ uaudio_childdet(device_t self, device_t child)
 	sc->sc_audiodev = NULL;
 }
 
-int
+static int
 uaudio_detach(device_t self, int flags)
 {
 	struct uaudio_softc *sc = device_private(self);

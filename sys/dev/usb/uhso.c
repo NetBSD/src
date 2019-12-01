@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.30 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uhso.c,v 1.31 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.30 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.31 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -333,9 +333,9 @@ struct uhso_softc {
 
 #define UHSO_CONFIG_NO		1
 
-int uhso_match(device_t, cfdata_t, void *);
-void uhso_attach(device_t, device_t, void *);
-int uhso_detach(device_t, int);
+static int uhso_match(device_t, cfdata_t, void *);
+static void uhso_attach(device_t, device_t, void *);
+static int uhso_detach(device_t, int);
 
 
 
@@ -372,14 +372,14 @@ Static void uhso_tty_detach(struct uhso_port *);
 Static void uhso_tty_read_cb(struct usbd_xfer *, void *, usbd_status);
 Static void uhso_tty_write_cb(struct usbd_xfer *, void *, usbd_status);
 
-dev_type_open(uhso_tty_open);
-dev_type_close(uhso_tty_close);
-dev_type_read(uhso_tty_read);
-dev_type_write(uhso_tty_write);
-dev_type_ioctl(uhso_tty_ioctl);
-dev_type_stop(uhso_tty_stop);
-dev_type_tty(uhso_tty_tty);
-dev_type_poll(uhso_tty_poll);
+static dev_type_open(uhso_tty_open);
+static dev_type_close(uhso_tty_close);
+static dev_type_read(uhso_tty_read);
+static dev_type_write(uhso_tty_write);
+static dev_type_ioctl(uhso_tty_ioctl);
+static dev_type_stop(uhso_tty_stop);
+static dev_type_tty(uhso_tty_tty);
+static dev_type_poll(uhso_tty_poll);
 
 const struct cdevsw uhso_cdevsw = {
 	.d_open = uhso_tty_open,
@@ -435,7 +435,7 @@ Static int  uhso_ifnet_output(struct ifnet *, struct mbuf *,
  *
  */
 
-int
+static int
 uhso_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -453,7 +453,7 @@ uhso_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 uhso_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhso_softc *sc = device_private(self);
@@ -528,7 +528,7 @@ uhso_attach(device_t parent, device_t self, void *aux)
 		aprint_error_dev(self, "couldn't establish power handler\n");
 }
 
-int
+static int
 uhso_detach(device_t self, int flags)
 {
 	struct uhso_softc *sc = device_private(self);
@@ -1477,7 +1477,7 @@ uhso_tty_read_cb(struct usbd_xfer *xfer, void * p, usbd_status status)
  *
  */
 
-int
+static int
 uhso_tty_open(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhso_softc *sc;
@@ -1579,7 +1579,7 @@ uhso_tty_init(struct uhso_port *hp)
 	return 0;
 }
 
-int
+static int
 uhso_tty_close(dev_t dev, int flag, int mode, struct lwp *l)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1630,7 +1630,7 @@ uhso_tty_clean(struct uhso_port *hp)
 	}
 }
 
-int
+static int
 uhso_tty_read(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1653,7 +1653,7 @@ uhso_tty_read(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhso_tty_write(dev_t dev, struct uio *uio, int flag)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1676,7 +1676,7 @@ uhso_tty_write(dev_t dev, struct uio *uio, int flag)
 	return error;
 }
 
-int
+static int
 uhso_tty_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1761,7 +1761,7 @@ uhso_tty_do_ioctl(struct uhso_port *hp, u_long cmd, void *data, int flag,
 }
 
 /* this is called with tty_lock held */
-void
+static void
 uhso_tty_stop(struct tty *tp, int flag)
 {
 #if 0
@@ -1771,7 +1771,7 @@ uhso_tty_stop(struct tty *tp, int flag)
 #endif
 }
 
-struct tty *
+static struct tty *
 uhso_tty_tty(dev_t dev)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));
@@ -1780,7 +1780,7 @@ uhso_tty_tty(dev_t dev)
 	return hp->hp_tp;
 }
 
-int
+static int
 uhso_tty_poll(dev_t dev, int events, struct lwp *l)
 {
 	struct uhso_softc *sc = device_lookup_private(&uhso_cd, UHSOUNIT(dev));

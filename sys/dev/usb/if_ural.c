@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.60 2019/09/14 12:42:36 maxv Exp $ */
+/*	$NetBSD: if_ural.c,v 1.61 2019/12/01 08:27:54 maxv Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.60 2019/09/14 12:42:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.61 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -335,15 +335,15 @@ static const struct {
 	{ 161, 0x08808, 0x0242f, 0x00281 }
 };
 
-int	ural_match(device_t, cfdata_t, void *);
-void	ural_attach(device_t, device_t, void *);
-int	ural_detach(device_t, int);
-int	ural_activate(device_t, enum devact);
+static int	ural_match(device_t, cfdata_t, void *);
+static void	ural_attach(device_t, device_t, void *);
+static int	ural_detach(device_t, int);
+static int	ural_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(ural, sizeof(struct ural_softc), ural_match, ural_attach,
     ural_detach, ural_activate);
 
-int
+static int
 ural_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -352,7 +352,7 @@ ural_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 ural_attach(device_t parent, device_t self, void *aux)
 {
 	struct ural_softc *sc = device_private(self);
@@ -524,7 +524,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 ural_detach(device_t self, int flags)
 {
 	struct ural_softc *sc = device_private(self);
@@ -2267,7 +2267,7 @@ ural_stop(struct ifnet *ifp, int disable)
 	}
 }
 
-int
+static int
 ural_activate(device_t self, enum devact act)
 {
 	struct ural_softc *sc = device_private(self);

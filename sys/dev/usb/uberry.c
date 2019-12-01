@@ -1,4 +1,4 @@
-/*	$NetBSD: uberry.c,v 1.14 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uberry.c,v 1.15 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.14 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uberry.c,v 1.15 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -89,10 +89,9 @@ static const struct usb_devno uberry_devs[] = {
 #define uberry_lookup(v, p) usb_lookup(uberry_devs, v, p)
 #define UBERRY_CONFIG_NO 1
 
-int	uberry_match(device_t, cfdata_t, void *);
-void	uberry_attach(device_t, device_t, void *);
-int	uberry_detach(device_t, int);
-int	uberry_activate(device_t, enum devact);
+static int	uberry_match(device_t, cfdata_t, void *);
+static void	uberry_attach(device_t, device_t, void *);
+static int	uberry_detach(device_t, int);
 
 CFATTACH_DECL_NEW(uberry, sizeof(struct uberry_softc), uberry_match,
     uberry_attach, uberry_detach, NULL);
@@ -156,7 +155,7 @@ uberry_dual_mode(struct uberry_softc *sc)
 }
 
 
-int
+static int
 uberry_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -166,7 +165,7 @@ uberry_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE);
 }
 
-void
+static void
 uberry_attach(device_t parent, device_t self, void *aux)
 {
 	struct uberry_softc *sc = device_private(self);
@@ -199,7 +198,7 @@ uberry_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uberry_detach(device_t self, int flags)
 {
 	struct uberry_softc *sc = device_private(self);
