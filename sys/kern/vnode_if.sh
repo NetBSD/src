@@ -29,7 +29,7 @@ copyright="\
  * SUCH DAMAGE.
  */
 "
-SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.67 2019/10/11 08:04:52 hannken Exp $'
+SCRIPT_ID='$NetBSD: vnode_if.sh,v 1.68 2019/12/01 13:56:29 ad Exp $'
 
 # Script to produce VFS front-end sugar.
 #
@@ -481,7 +481,7 @@ function bodynorm() {
 	}
 	if (fstrans == "LOCK")
 		printf("\terror = vop_pre(%s, &mp, &mpsafe, %s);\n",
-			argname[0], "(flags & LK_NOWAIT ? FST_TRY : FST_YES)");
+			argname[0], "(flags & (LK_UPGRADE|LK_DOWNGRADE) ? FST_NO : (flags & LK_NOWAIT ? FST_TRY : FST_YES))");
 	else if (fstrans == "UNLOCK")
 		printf("\terror = vop_pre(%s, &mp, &mpsafe, FST_%s);\n",
 			argname[0], "NO");
@@ -493,7 +493,7 @@ function bodynorm() {
 		argname[0], name);
 	if (fstrans == "LOCK")
 		printf("\tvop_post(%s, mp, mpsafe, %s);\n",
-			argname[0], "(error ? FST_YES : FST_NO)");
+			argname[0], "(flags & (LK_UPGRADE|LK_DOWNGRADE) ? FST_NO : (error ? FST_YES : FST_NO))");
 	else if (fstrans == "UNLOCK")
 		printf("\tvop_post(%s, mp, mpsafe, FST_%s);\n",
 			argname[0], "YES");
