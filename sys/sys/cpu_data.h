@@ -1,7 +1,7 @@
-/*	$NetBSD: cpu_data.h,v 1.39 2019/01/03 09:09:39 skrll Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.40 2019/12/01 15:34:47 ad Exp $	*/
 
 /*-
- * Copyright (c) 2004, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -64,28 +64,18 @@ struct cpu_data {
 	 * The first section is likely to be touched by other CPUs -
 	 * it is cache hot.
 	 */
+	u_int		cpu_index;		/* CPU index */
 	lwp_t		*cpu_biglock_wanted;	/* LWP spinning on biglock */
-	void		*cpu_callout;		/* per-CPU callout state */
-	void		*cpu_unused1;		/* unused */
-	u_int		cpu_unused2;		/* unused */
-	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
-	lwp_t		*cpu_onproc;		/* bottom level LWP */
 	uint32_t	cpu_ipipend[IPI_BITWORDS];	/* pending IPIs */
-
-	cpuid_t		cpu_package_id;
-	cpuid_t		cpu_core_id;
-	cpuid_t		cpu_smt_id;
-
-	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
+	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 
 	/*
 	 * This section is mostly CPU-private.
 	 */
-	lwp_t		*cpu_idlelwp;		/* idle lwp */
+	lwp_t		*cpu_idlelwp __aligned(64);/* idle lwp */
 	void		*cpu_lockstat;		/* lockstat private tables */
-	u_int		cpu_index;		/* CPU index */
 	u_int		cpu_biglock_count;	/* # recursive holds */
 	u_int		cpu_spin_locks;		/* # of spinlockmgr locks */
 	u_int		cpu_simple_locks;	/* # of simple locks held */
@@ -99,6 +89,7 @@ struct cpu_data {
 	uint64_t	cpu_nsoft;		/* soft interrupt count */
 	uint64_t	cpu_nfault;		/* pagefault counter */
 	struct uvm_cpu	*cpu_uvm;		/* uvm per-cpu data */
+	void		*cpu_callout;		/* per-CPU callout state */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
 	percpu_cpu_t	cpu_percpu;		/* per-cpu data */
@@ -110,6 +101,10 @@ struct cpu_data {
 	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 	char		cpu_name[8];		/* eg, "cpu4" */
 	kcpuset_t	*cpu_kcpuset;		/* kcpuset_t of this cpu only */
+	cpuid_t		cpu_package_id;
+	cpuid_t		cpu_core_id;
+	cpuid_t		cpu_smt_id;
+	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
 };
 
 #define	ci_schedstate		ci_data.cpu_schedstate

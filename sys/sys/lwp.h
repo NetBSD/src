@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.191 2019/11/30 17:45:54 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.192 2019/12/01 15:34:47 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
@@ -500,7 +500,7 @@ static __inline bool
 CURCPU_IDLE_P(void)
 {
 	struct cpu_info *ci = curcpu();
-	return ci->ci_data.cpu_onproc == ci->ci_data.cpu_idlelwp;
+	return ci->ci_onproc == ci->ci_data.cpu_idlelwp;
 }
 
 /*

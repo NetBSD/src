@@ -1,4 +1,4 @@
-/* $NetBSD: ipifuncs.c,v 1.49 2019/11/21 19:02:43 ad Exp $ */
+/* $NetBSD: ipifuncs.c,v 1.50 2019/12/01 15:34:44 ad Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.49 2019/11/21 19:02:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.50 2019/12/01 15:34:44 ad Exp $");
 
 /*
  * Interprocessor interrupt handlers.
@@ -263,8 +263,8 @@ static void
 alpha_ipi_ast(struct cpu_info *ci, struct trapframe *framep)
 {
 
-	if (ci->ci_data.cpu_onproc != ci->ci_data.cpu_idlelwp)
-		aston(ci->ci_data.cpu_onproc);
+	if (ci->ci_onproc != ci->ci_data.cpu_idlelwp)
+		aston(ci->ci_onproc);
 }
 
 static void

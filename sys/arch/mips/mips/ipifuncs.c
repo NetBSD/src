@@ -1,4 +1,4 @@
-/*	$NetBSD: ipifuncs.c,v 1.12 2019/11/23 19:40:35 ad Exp $	*/
+/*	$NetBSD: ipifuncs.c,v 1.13 2019/12/01 15:34:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.12 2019/11/23 19:40:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipifuncs.c,v 1.13 2019/12/01 15:34:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -76,7 +76,7 @@ ipi_nop(struct cpu_info *ci)
 static void
 ipi_ast(struct cpu_info *ci)
 {
-	ci->ci_data.cpu_onproc->l_md.md_astpending = 1;
+	ci->ci_onproc->l_md.md_astpending = 1;
 }
 
 static void
