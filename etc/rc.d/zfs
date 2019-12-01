@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zfs,v 1.1 2019/09/15 19:38:09 brad Exp $
+# $NetBSD: zfs,v 1.2 2019/12/01 21:00:43 jmcneill Exp $
 #
 
 # PROVIDE: zfs
@@ -15,7 +15,7 @@ stop_cmd="zfs_stop"
 
 zfs_start()
 {
-	if [ -x /sbin/zfs -a -f /etc/zfs/zpool.cache ]; then
+	if [ -x /sbin/zfs ]; then
 		# Get ZFS module loaded (and thereby, zvols created).
 		/sbin/zfs list > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
