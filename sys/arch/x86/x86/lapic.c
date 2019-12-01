@@ -1,4 +1,4 @@
-/*	$NetBSD: lapic.c,v 1.75 2019/06/14 09:23:42 msaitoh Exp $	*/
+/*	$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2008 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.75 2019/06/14 09:23:42 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lapic.c,v 1.76 2019/12/01 08:23:09 maxv Exp $");
 
 #include "acpica.h"
 #include "ioapic.h"
@@ -204,12 +204,6 @@ lapic_write_tpri(uint32_t val)
 #else
 	lcr8(val >> 4);
 #endif
-}
-
-void
-lapic_eoi(void)
-{
-	lapic_writereg(LAPIC_EOI, 0);
 }
 
 uint32_t
@@ -594,7 +588,7 @@ lapic_initclocks(void)
 	lapic_writereg(LAPIC_ICR_TIMER, lapic_tval);
 	lapic_writereg(LAPIC_LVT_TIMER,
 	    LAPIC_LVT_TMM_PERIODIC | LAPIC_TIMER_VECTOR);
-	lapic_eoi();
+	lapic_writereg(LAPIC_EOI, 0);
 }
 
 extern u_long rtclock_tval; /* XXX put in header file */

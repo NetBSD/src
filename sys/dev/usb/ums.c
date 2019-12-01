@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.94 2019/08/10 06:30:26 yhardy Exp $	*/
+/*	$NetBSD: ums.c,v 1.95 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.94 2019/08/10 06:30:26 yhardy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.95 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,22 +88,22 @@ Static int	ums_enable(void *);
 Static void	ums_disable(void *);
 Static int	ums_ioctl(void *, u_long, void *, int, struct lwp *);
 
-const struct wsmouse_accessops ums_accessops = {
+static const struct wsmouse_accessops ums_accessops = {
 	ums_enable,
 	ums_ioctl,
 	ums_disable,
 };
 
-int ums_match(device_t, cfdata_t, void *);
-void ums_attach(device_t, device_t, void *);
-void ums_childdet(device_t, device_t);
-int ums_detach(device_t, int);
-int ums_activate(device_t, enum devact);
+static int ums_match(device_t, cfdata_t, void *);
+static void ums_attach(device_t, device_t, void *);
+static void ums_childdet(device_t, device_t);
+static int ums_detach(device_t, int);
+static int ums_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(ums, sizeof(struct ums_softc), ums_match, ums_attach,
     ums_detach, ums_activate, NULL, ums_childdet);
 
-int
+static int
 ums_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
@@ -130,7 +130,7 @@ ums_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS;
 }
 
-void
+static void
 ums_attach(device_t parent, device_t self, void *aux)
 {
 	struct ums_softc *sc = device_private(self);
@@ -196,7 +196,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 	hidms_attach(self, &sc->sc_ms, &ums_accessops);
 }
 
-int
+static int
 ums_activate(device_t self, enum devact act)
 {
 	struct ums_softc *sc = device_private(self);
@@ -210,7 +210,7 @@ ums_activate(device_t self, enum devact act)
 	}
 }
 
-void
+static void
 ums_childdet(device_t self, device_t child)
 {
 	struct ums_softc *sc = device_private(self);
@@ -219,7 +219,7 @@ ums_childdet(device_t self, device_t child)
 	sc->sc_ms.hidms_wsmousedev = NULL;
 }
 
-int
+static int
 ums_detach(device_t self, int flags)
 {
 	struct ums_softc *sc = device_private(self);
@@ -236,7 +236,7 @@ ums_detach(device_t self, int flags)
 	return rv;
 }
 
-void
+Static void
 ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct ums_softc *sc = (struct ums_softc *)addr;
