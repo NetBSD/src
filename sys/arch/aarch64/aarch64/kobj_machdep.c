@@ -1,4 +1,4 @@
-/*	$NetBSD: kobj_machdep.c,v 1.2 2018/08/19 20:02:22 ryo Exp $	*/
+/*	$NetBSD: kobj_machdep.c,v 1.3 2019/12/01 20:27:26 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,19 +27,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.2 2018/08/19 20:02:22 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kobj_machdep.c,v 1.3 2019/12/01 20:27:26 jmcneill Exp $");
 
 #define ELFSIZE		ARCH_ELFSIZE
 
 #include "opt_ddb.h"
 
 #include <sys/param.h>
+#include <sys/kernel.h>
 #include <sys/kobj.h>
 #include <sys/exec.h>
 #include <sys/exec_elf.h>
 #include <sys/errno.h>
 #include <sys/queue.h>
 #include <sys/tree.h>
+#include <sys/xcall.h>
 
 #include <aarch64/cpufunc.h>
 
@@ -357,8 +359,26 @@ kobj_reloc(kobj_t ko, uintptr_t relocbase, const void *data,
 	return 0;
 }
 
+static void
+kobj_idcache_wbinv_all(void)
+{
+	cpu_idcache_wbinv_all();
+}
+
 int
 kobj_machdep(kobj_t ko, void *base, size_t size, bool load)
 {
+	uint64_t where;
+
+	if (load) {
+		if (cold) {
+			kobj_idcache_wbinv_all();
+		} else {
+			where = xc_broadcast(0,
+			    (xcfunc_t)kobj_idcache_wbinv_all, NULL, NULL);
+			xc_wait(where);
+		}
+	}
+
 	return 0;
 }
