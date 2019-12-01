@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.52 2019/10/23 01:30:54 maya Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.53 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.52 2019/10/23 01:30:54 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.53 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -260,11 +260,11 @@ struct uvideo_softc {
 	char			sc_businfo[32];
 };
 
-int	uvideo_match(device_t, cfdata_t, void *);
-void	uvideo_attach(device_t, device_t, void *);
-int	uvideo_detach(device_t, int);
-void	uvideo_childdet(device_t, device_t);
-int	uvideo_activate(device_t, enum devact);
+static int	uvideo_match(device_t, cfdata_t, void *);
+static void	uvideo_attach(device_t, device_t, void *);
+static int	uvideo_detach(device_t, int);
+static void	uvideo_childdet(device_t, device_t);
+static int	uvideo_activate(device_t, enum devact);
 
 static int	uvideo_open(void *, int);
 static void	uvideo_close(void *);
@@ -466,7 +466,7 @@ static void print_vs_format_dv_descriptor(
 	} while (0)
 
 
-int
+static int
 uvideo_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -482,7 +482,7 @@ uvideo_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 uvideo_attach(device_t parent, device_t self, void *aux)
 {
 	struct uvideo_softc *sc = device_private(self);
@@ -628,7 +628,7 @@ bad:
 }
 
 
-int
+static int
 uvideo_activate(device_t self, enum devact act)
 {
 	struct uvideo_softc *sc = device_private(self);
@@ -645,7 +645,7 @@ uvideo_activate(device_t self, enum devact act)
 
 
 /* Detach child (video interface) */
-void
+static void
 uvideo_childdet(device_t self, device_t child)
 {
 	struct uvideo_softc *sc = device_private(self);
@@ -655,7 +655,7 @@ uvideo_childdet(device_t self, device_t child)
 }
 
 
-int
+static int
 uvideo_detach(device_t self, int flags)
 {
 	struct uvideo_softc *sc;

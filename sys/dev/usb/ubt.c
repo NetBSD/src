@@ -1,4 +1,4 @@
-/*	$NetBSD: ubt.c,v 1.63 2019/09/22 07:29:16 dsainty Exp $	*/
+/*	$NetBSD: ubt.c,v 1.64 2019/12/01 08:27:54 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.63 2019/09/22 07:29:16 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubt.c,v 1.64 2019/12/01 08:27:54 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -289,10 +289,10 @@ static const struct hci_if ubt_hci = {
  *
  */
 
-int	ubt_match(device_t, cfdata_t, void *);
-void	ubt_attach(device_t, device_t, void *);
-int	ubt_detach(device_t, int);
-int	ubt_activate(device_t, enum devact);
+static int	ubt_match(device_t, cfdata_t, void *);
+static void	ubt_attach(device_t, device_t, void *);
+static int	ubt_detach(device_t, int);
+static int	ubt_activate(device_t, enum devact);
 
 CFATTACH_DECL_NEW(ubt, sizeof(struct ubt_softc), ubt_match, ubt_attach,
     ubt_detach, ubt_activate);
@@ -306,7 +306,7 @@ static void ubt_abortdealloc(struct ubt_softc *);
  * Use value of -1 to indicate a wildcard
  * To override another entry, add details earlier
  */
-const struct ubt_devno {
+static const struct ubt_devno {
 	int			vendor;
 	int			product;
 	int			class;
@@ -444,7 +444,7 @@ const struct ubt_devno {
 	},
 };
 
-int
+static int
 ubt_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -475,7 +475,7 @@ ubt_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 ubt_attach(device_t parent, device_t self, void *aux)
 {
 	struct ubt_softc *sc = device_private(self);
@@ -674,7 +674,7 @@ ubt_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 ubt_detach(device_t self, int flags)
 {
 	struct ubt_softc *sc = device_private(self);
@@ -721,7 +721,7 @@ ubt_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 ubt_activate(device_t self, enum devact act)
 {
 	struct ubt_softc *sc = device_private(self);
