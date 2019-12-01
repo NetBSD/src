@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.18 2019/11/29 22:17:23 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.19 2019/12/01 08:15:58 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -411,18 +411,35 @@ __END_DECLS
 	KASSERT(((uintptr_t)(p) & ilog2(sizeof(*(p)))) == 0);		      \
 } while (0)
 
+#ifdef KCSAN
+void kcsan_atomic_load(const volatile void *, void *, int);
+void kcsan_atomic_store(volatile void *, const void *, int);
+#define __DO_ATOMIC_LOAD(p, v) \
+	kcsan_atomic_load(p, __UNVOLATILE(&v), sizeof(v))
+#define __DO_ATOMIC_STORE(p, v) \
+	kcsan_atomic_store(p, __UNVOLATILE(&v), sizeof(v))
+#else
+#define __DO_ATOMIC_LOAD(p, v) \
+	v = *p
+#define __DO_ATOMIC_STORE(p, v) \
+	*p = v
+#endif
+
 #define	atomic_load_relaxed(p)						      \
 ({									      \
 	const volatile __typeof__(*(p)) *__al_ptr = (p);		      \
+	__typeof__(*(p)) __al_val;					      \
 	__ATOMIC_PTR_CHECK(__al_ptr);					      \
-	*__al_ptr;							      \
+	__DO_ATOMIC_LOAD(__al_ptr, __al_val);				      \
+	__al_val;							      \
 })
 
 #define	atomic_load_consume(p)						      \
 ({									      \
 	const volatile __typeof__(*(p)) *__al_ptr = (p);		      \
+	__typeof__(*(p)) __al_val;					      \
 	__ATOMIC_PTR_CHECK(__al_ptr);					      \
-	__typeof__(*(p)) __al_val = *__al_ptr;				      \
+	__DO_ATOMIC_LOAD(__al_ptr, __al_val);				      \
 	membar_datadep_consumer();					      \
 	__al_val;							      \
 })
@@ -436,8 +453,9 @@ __END_DECLS
 #define	atomic_load_acquire(p)						      \
 ({									      \
 	const volatile __typeof__(*(p)) *__al_ptr = (p);		      \
+	__typeof__(*(p)) __al_val;					      \
 	__ATOMIC_PTR_CHECK(__al_ptr);					      \
-	__typeof__(*(p)) __al_val = *__al_ptr;				      \
+	__DO_ATOMIC_LOAD(__al_ptr, __al_val);				      \
 	membar_sync();							      \
 	__al_val;							      \
 })
@@ -445,8 +463,9 @@ __END_DECLS
 #define	atomic_store_relaxed(p,v)					      \
 ({									      \
 	volatile __typeof__(*(p)) *__as_ptr = (p);			      \
+	__typeof__(*(p)) __as_val = (v);				      \
 	__ATOMIC_PTR_CHECK(__as_ptr);					      \
-	*__as_ptr = (v);						      \
+	__DO_ATOMIC_STORE(__as_ptr, __as_val);				      \
 })
 
 #define	atomic_store_release(p,v)					      \
@@ -455,7 +474,7 @@ __END_DECLS
 	__typeof__(*(p)) __as_val = (v);				      \
 	__ATOMIC_PTR_CHECK(__as_ptr);					      \
 	membar_exit();							      \
-	*__as_ptr = __as_val;						      \
+	__DO_ATOMIC_STORE(__as_ptr, __as_val);				      \
 })
 
 #else  /* __STDC_VERSION__ >= 201112L */
