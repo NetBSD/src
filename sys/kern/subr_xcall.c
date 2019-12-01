@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.29 2019/12/01 14:20:00 ad Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.30 2019/12/01 16:32:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.29 2019/12/01 14:20:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.30 2019/12/01 16:32:01 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -354,15 +354,19 @@ xc_wait(uint64_t where)
 	}
 
 	/* Block until awoken. */
+#ifdef _LP64			/* Needs 64-bit load/store for atomicity. */
 	if (xc->xc_donep < where) {
+#endif
 		mutex_enter(&xc->xc_lock);
 		while (xc->xc_donep < where) {
 			cv_wait(&xc->xc_busy, &xc->xc_lock);
 		}
 		mutex_exit(&xc->xc_lock);
+#ifdef _LP64
 	} else {
 		membar_enter();
 	}
+#endif
 }
 
 /*
