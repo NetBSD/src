@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.22 2015/04/22 17:38:33 pooka Exp $	*/
+/*	$NetBSD: cpu.h,v 1.23 2019/12/01 18:29:26 ad Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -44,6 +44,7 @@ struct cpu_info {
 	struct cpu_data ci_data;
 	cpuid_t ci_cpuid;
 	struct lwp *ci_curlwp;
+	struct lwp *ci_onproc;
 
 	struct cpu_info *ci_next;
 
