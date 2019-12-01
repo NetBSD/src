@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.283 2019/11/10 06:47:30 mlelstv Exp $	*/
+/*	$NetBSD: vnode.h,v 1.284 2019/12/01 13:56:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -206,10 +206,13 @@ typedef struct vnode vnode_t;
 /*
  * vnode lock flags
  */
+#define	LK_NONE		0x00000000	/* no lock - for VOP_ISLOCKED() */
 #define	LK_SHARED	0x00000001	/* shared lock */
 #define	LK_EXCLUSIVE	0x00000002	/* exclusive lock */
-#define	LK_NOWAIT	0x00000010	/* do not sleep to await lock */
-#define	LK_RETRY	0x00020000	/* vn_lock: retry until locked */
+#define	LK_UPGRADE	0x00000010	/* upgrade shared -> exclusive */
+#define	LK_DOWNGRADE	0x00000020	/* downgrade exclusive -> shared */
+#define	LK_NOWAIT	0x00000100	/* do not sleep to await lock */
+#define	LK_RETRY	0x00000200	/* vn_lock: retry until locked */
 
 /*
  * Vnode attributes.  A field value of VNOVAL represents a field whose value
