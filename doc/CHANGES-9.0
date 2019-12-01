@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.126 2019/11/27 16:14:52 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.127 2019/12/01 12:19:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6628,4 +6628,8 @@ distrib/notes/common/Makefile.inc		1.47
 
 	Fix generation of non-HTML ToC.
 	(9.0_RC1 tag moved)
+
+distrib/notes/common/main			(edited manually)
+
+	Add dedication to Matthias Drochner.
 
