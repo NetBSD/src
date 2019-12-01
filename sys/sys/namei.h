@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.h,v 1.99 2019/09/13 13:59:31 christos Exp $	*/
+/*	$NetBSD: namei.h,v 1.100 2019/12/01 13:39:53 ad Exp $	*/
 
 
 /*
@@ -211,6 +211,7 @@ struct nameidata {
  *
  *      -       stable after initialization
  *      L       namecache_lock
+ *      G       namecache_gc_lock
  *      C       struct nchcpu::cpu_lock
  *      L/C     insert needs L, read needs L or any C,
  *              must hold L and all C after (or during) delete before free
@@ -222,10 +223,10 @@ struct namecache {
 	TAILQ_ENTRY(namecache) nc_lru;	/* L pseudo-lru chain */
 	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
 	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
+	SLIST_ENTRY(namecache) nc_gclist;/*G queue for garbage collection */
 	struct	vnode *nc_dvp;		/* N vnode of parent of name */
 	struct	vnode *nc_vp;		/* N vnode the name refers to */
-	void	*nc_gcqueue;		/* N queue for garbage collection */
-	kmutex_t nc_lock;		/*   lock on this entry */
+	kmutex_t *nc_lock;		/* - lock on this entry */
 	int	nc_hittime;		/* N last time scored a hit */
 	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
 	u_short	nc_nlen;		/* - length of name */
