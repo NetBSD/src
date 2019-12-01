@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.10 2018/01/05 14:22:26 christos Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.11 2019/12/01 06:53:31 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.10 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.11 2019/12/01 06:53:31 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -121,8 +121,6 @@ dm_target_mirror_init(dm_dev_t * dmv, void **target_config, char *argv)
 	printf("Mirror target init function called!!\n");
 
 	*target_config = NULL;
-
-	dmv->dev_type = DM_MIRROR_DEV;
 
 	return ENOSYS;
 }
