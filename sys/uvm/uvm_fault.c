@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.210 2019/12/01 10:19:59 martin Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.211 2019/12/01 14:30:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.210 2019/12/01 10:19:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.211 2019/12/01 14:30:01 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -191,19 +191,19 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 	int lcv;
 	struct vm_page *pg;
 
+	mutex_enter(&uvm_pageqlock);
 	for (lcv = 0; lcv < n; lcv++) {
 		if (anons[lcv] == NULL)
 			continue;
 		KASSERT(mutex_owned(anons[lcv]->an_lock));
 		pg = anons[lcv]->an_page;
 		if (pg && (pg->flags & PG_BUSY) == 0) {
-			mutex_enter(&uvm_pageqlock);
 			if (pg->wire_count == 0) {
 				uvm_pagedeactivate(pg);
 			}
-			mutex_exit(&uvm_pageqlock);
 		}
 	}
+	mutex_exit(&uvm_pageqlock);
 }
 
 /*
