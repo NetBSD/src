@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.15 2019/11/21 19:23:58 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.16 2019/12/02 18:35:07 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -73,6 +73,7 @@ struct cpu_info {
 	device_t ci_dev;
 	cpuid_t ci_cpuid;
 	struct lwp *ci_curlwp;
+	struct lwp *ci_onproc;
 	struct lwp *ci_softlwps[SOFTINT_COUNT];
 
 	uint64_t ci_lastintr;
