@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.67 2019/12/01 23:14:47 uwe Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.68 2019/12/02 20:02:02 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.67 2019/12/01 23:14:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.68 2019/12/02 20:02:02 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -208,6 +208,8 @@ uvm_anon_freelst(struct vm_amap *amap, struct vm_anon *anonlst)
 	struct vm_anon *anon;
 	struct vm_anon **anonp = &anonlst;
 	struct vm_page *pg;
+
+	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(mutex_owned(amap->am_lock));
 
