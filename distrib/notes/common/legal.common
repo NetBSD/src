@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.107 2019/12/02 19:48:47 uwe Exp $
+.\" $NetBSD: legal.common,v 1.108 2019/12/02 20:03:33 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -368,8 +368,6 @@ This product includes software developed by Takumi Nakamura.
 .It
 This product includes software developed by Tatoku Ogaito
 for the NetBSD Project.
-.It
-This product includes software developed by Thomas Gerner.
 .It
 This product includes software developed by TooLs GmbH.
 .It
