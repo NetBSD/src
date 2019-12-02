@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.105 2019/12/02 17:28:36 uwe Exp $
+.\" $NetBSD: legal.common,v 1.106 2019/12/02 19:35:00 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -294,9 +294,9 @@ This product includes software developed by Masanobu Saitoh.
 .It
 This product includes software developed by Masaru Oki.
 .It
-This product includes software developed by Matthew Fredette.
-.It
 This product includes software developed by Matt DeBergalis.
+.It
+This product includes software developed by Matthew Fredette.
 .It
 This product includes software developed by Michael Smith.
 .It
