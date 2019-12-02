@@ -1,4 +1,4 @@
-# $NetBSD: varmod-edge.mk,v 1.5 2019/12/01 23:53:49 rillig Exp $
+# $NetBSD: varmod-edge.mk,v 1.6 2019/12/02 01:01:08 rillig Exp $
 #
 # Tests for edge cases in variable modifiers.
 #
@@ -51,6 +51,7 @@ TESTS+=		M-nest-mix
 INP.M-nest-mix=	(parentheses)
 MOD.M-nest-mix=	${INP.M-nest-mix:M${:U*)}}
 EXP.M-nest-mix=	(parentheses)}
+# make: Unclosed variable specification (expecting '}') for "" (value "*)") modifier U
 
 # In contrast to parentheses and braces, the brackets are not counted
 # when the :M modifier is parsed since Makefile variables only take the
@@ -111,6 +112,44 @@ TESTS+=		M-bs2-par
 INP.M-bs2-par=	( (:M (:M} \( \(:M \(:M}
 MOD.M-bs2-par=	${INP.M-bs2-par:M\\(:M*}}}
 EXP.M-bs2-par=	\(:M}}
+
+# Str_Match uses a recursive algorithm for matching the * patterns.
+# Make sure that it survives patterns with 128 asterisks.
+# That should be enough for all practical purposes.
+# To produce a stack overflow, just add more :Qs below.
+TESTS+=		M-128
+INP.M-128=	${:U\\:Q:Q:Q:Q:Q:Q:Q:S,\\,x,g}
+PAT.M-128=	${:U\\:Q:Q:Q:Q:Q:Q:Q:S,\\,*,g}
+MOD.M-128=	${INP.M-128:M${PAT.M-128}}
+EXP.M-128=	${INP.M-128}
+
+# This is the normal SysV substitution. Nothing surprising here.
+TESTS+=		eq-ext
+INP.eq-ext=	file.c file.cc
+MOD.eq-ext=	${INP.eq-ext:%.c=%.o}
+EXP.eq-ext=	file.o file.cc
+
+# The SysV := modifier is greedy and consumes all the modifier text
+# up until the closing brace or parenthesis. The :Q may look like a
+# modifier, but it really isn't, that's why it appears in the output.
+TESTS+=		eq-q
+INP.eq-q=	file.c file.cc
+MOD.eq-q=	${INP.eq-q:%.c=%.o:Q}
+EXP.eq-q=	file.o:Q file.cc
+
+# The = in the := modifier can be escaped.
+TESTS+=		eq-bs
+INP.eq-bs=	file.c file.c=%.o
+MOD.eq-bs=	${INP.eq-bs:%.c\=%.o=.ext}
+EXP.eq-bs=	file.c file.ext
+
+# Having only an escaped = results in a parse error.
+# The call to "pattern.lhs = VarGetPattern" fails.
+TESTS+=		eq-esc
+INP.eq-esc=	file.c file...
+MOD.eq-esc=	${INP.eq-esc:a\=b}
+EXP.eq-esc=	# empty
+# make: Unclosed substitution for INP.eq-esc (= missing)
 
 all:
 .for test in ${TESTS}
