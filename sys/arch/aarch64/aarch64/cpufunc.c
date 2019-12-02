@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.8 2019/11/22 05:21:19 mlelstv Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.9 2019/12/02 23:22:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,13 +29,13 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.8 2019/11/22 05:21:19 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.9 2019/12/02 23:22:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
-#include <aarch64/cpu.h>
 #include <aarch64/cpufunc.h>
 
 u_int cputype;			/* compat arm */
@@ -93,12 +93,15 @@ aarch64_gettopology(struct cpu_info * const ci, uint64_t mpidr)
 {
 
 	if (mpidr & MPIDR_MT) {
-		ci->ci_smt_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
-		ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF2);
+		cpu_topology_set(ci,
+		    __SHIFTOUT(mpidr, MPIDR_AFF2),
+		    __SHIFTOUT(mpidr, MPIDR_AFF1),
+		    __SHIFTOUT(mpidr, MPIDR_AFF0));
 	} else {
-		ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
+		cpu_topology_set(ci,
+		    __SHIFTOUT(mpidr, MPIDR_AFF1),
+		    __SHIFTOUT(mpidr, MPIDR_AFF0),
+		    0);
 	}
 }
 
