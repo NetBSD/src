@@ -303,7 +303,7 @@ while(<>) {
 		    }
 
 		    $copyrights{$msg} = 1;
-		    $lc_copyrights{$lc_msg} = 1;
+		    $lc_copyrights{lc($msg)} = 1;
 		}		 
 
 	    } else {
