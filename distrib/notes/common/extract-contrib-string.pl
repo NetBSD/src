@@ -236,6 +236,9 @@ while(<>) {
 		$msg =~ s/^\"//o;
 		$msg =~ s/\"$//o;
 
+		# Fix ISO-646-SE spelling of Lule\[oa]
+		$msg =~ s/Lule\}/Lulea/g;
+
 		# Collapse multiple spaces between words.  There are a
 		# few entries with "by__Name" that affects sorting.
 		$msg =~ s/(\w)  +(\w)/$1 $2/g;
