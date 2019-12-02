@@ -1,4 +1,4 @@
-/*	$NetBSD: msipic.c,v 1.19 2019/11/13 02:54:59 hikaru Exp $	*/
+/*	$NetBSD: msipic.c,v 1.20 2019/12/02 03:06:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.19 2019/11/13 02:54:59 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msipic.c,v 1.20 2019/12/02 03:06:51 msaitoh Exp $");
 
 #include "opt_intrdebug.h"
 
@@ -659,7 +659,7 @@ msipic_construct_msix_pic(const struct pci_attach_args *pa)
 
 	tbl = pci_conf_read(pc, tag, off + PCI_MSIX_TBLOFFSET);
 	table_offset = tbl & PCI_MSIX_TBLOFFSET_MASK;
-	bir = tbl & PCI_MSIX_PBABIR_MASK;
+	bir = tbl & PCI_MSIX_TBLBIR_MASK;
 	switch (bir) {
 	case 0:
 		bar = PCI_BAR0;
