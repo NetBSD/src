@@ -236,6 +236,10 @@ while(<>) {
 		$msg =~ s/^\"//o;
 		$msg =~ s/\"$//o;
 
+		# Collapse multiple spaces between words.  There are a
+		# few entries with "by__Name" that affects sorting.
+		$msg =~ s/(\w)  +(\w)/$1 $2/g;
+
 		# Split up into separate paragraphs
 		#
 		$msgs=$msg;
