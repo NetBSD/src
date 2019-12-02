@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.113 2019/12/02 23:27:52 uwe Exp $
+.\" $NetBSD: legal.common,v 1.114 2019/12/02 23:30:32 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -255,6 +255,10 @@ This product includes software developed by Jonathan Stone for
 the NetBSD Project.
 .It
 This product includes software developed by Julian Highfield.
+.It
+This product includes software developed by K. Kobayashi
+.It
+This product includes software developed by K. Kobayashi and H. Shimokawa
 .It
 This product includes software developed by Kazuhisa Shimizu.
 .It
