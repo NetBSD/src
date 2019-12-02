@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_cpu.c,v 1.78 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.79 2019/12/02 23:22:43 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009, 2010, 2012 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.78 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.79 2019/12/02 23:22:43 ad Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -119,6 +119,7 @@ kmutex_t	cpu_lock		__cacheline_aligned;
 int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
+static bool	cpu_topology_present	__read_mostly;
 
 /* An array of CPUs.  There are ncpu entries. */
 struct cpu_info **cpu_infos		__read_mostly;
@@ -585,6 +586,117 @@ cpu_softintr_p(void)
 {
 
 	return (curlwp->l_pflag & LP_INTR) != 0;
+}
+
+/*
+ * Collect CPU topology information as each CPU is attached.  This can be
+ * called early during boot, so we need to be careful what we do.
+ */
+void
+cpu_topology_set(struct cpu_info *ci, int package_id, int core_id, int smt_id)
+{
+
+	cpu_topology_present = true;
+	ci->ci_package_id = package_id;
+	ci->ci_core_id = core_id;
+	ci->ci_smt_id = smt_id;
+	ci->ci_package_cpus = ci;
+	ci->ci_npackage_cpus = 1;
+	ci->ci_core_cpus = ci;
+	ci->ci_ncore_cpus = 1;
+}
+
+/*
+ * Fake up toplogy info if we have none, or if what we got was bogus.
+ */
+static void
+cpu_topology_fake(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_package_id = cpu_index(ci);
+		ci->ci_core_id = 0;
+		ci->ci_smt_id = 0;
+		ci->ci_ncore_cpus = 1;
+		ci->ci_core_cpus = ci;
+		ci->ci_package_cpus = ci;
+		ci->ci_npackage_cpus = 1;
+	}
+}
+
+/*
+ * Fix up basic CPU topology info.  Right now that means attach each CPU to
+ * circular lists of its siblings in the same core, and in the same package. 
+ */
+void
+cpu_topology_init(void)
+{
+	CPU_INFO_ITERATOR cii, cii2;
+	struct cpu_info *ci, *ci2, *ci3;
+
+	if (!cpu_topology_present) {
+		cpu_topology_fake();
+		return;
+	}
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_ncore_cpus = 1;
+		ci->ci_core_cpus = ci;
+		ci->ci_package_cpus = ci;
+		ci->ci_npackage_cpus = 1;
+	}
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		for (CPU_INFO_FOREACH(cii2, ci2)) {
+			/* Avoid bad things happening. */
+			if (ci2->ci_package_id == ci->ci_package_id &&
+			    ci2->ci_core_id == ci->ci_core_id &&
+			    ci2->ci_smt_id == ci->ci_smt_id &&
+			    ci2 != ci) {
+			    	printf("cpu_topology_init: info bogus, "
+			    	    "faking it\n");
+			    	cpu_topology_fake();
+			    	return;
+			}
+			if (ci2 == ci ||
+			    ci2->ci_package_id != ci->ci_package_id) {
+				continue;
+			}
+			/*
+			 * Find CPUs in the same core.  Walk to the end of
+			 * the existing circular list and append.
+			 */
+			if (ci->ci_ncore_cpus == 1 &&
+			    ci->ci_core_id == ci2->ci_core_id) {
+				for (ci3 = ci2;; ci3 = ci3->ci_core_cpus) {
+					ci3->ci_ncore_cpus++;
+					if (ci3->ci_core_cpus == ci2) {
+						break;
+					}
+				}
+				ci->ci_core_cpus = ci2;
+				ci3->ci_core_cpus = ci;
+				ci->ci_ncore_cpus = ci3->ci_ncore_cpus;
+			}
+			/* Same, but for package. */
+			if (ci->ci_npackage_cpus == 1) {
+				for (ci3 = ci2;; ci3 = ci3->ci_package_cpus) {
+					ci3->ci_npackage_cpus++;
+					if (ci3->ci_package_cpus == ci2) {
+						break;
+					}
+				}
+				ci->ci_package_cpus = ci2;
+				ci3->ci_package_cpus = ci;
+				ci->ci_npackage_cpus = ci3->ci_npackage_cpus;
+			}
+			if (ci->ci_ncore_cpus > 1 && ci->ci_npackage_cpus > 1) {
+				break;
+			}
+		}
+	}
 }
 
 #ifdef CPU_UCODE

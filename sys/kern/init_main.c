@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.507 2019/12/01 17:08:31 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.508 2019/12/02 23:22:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.507 2019/12/01 17:08:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.508 2019/12/02 23:22:43 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -787,6 +787,9 @@ configure2(void)
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
 	int s;
+
+	/* Fix up CPU topology info, which has all been collected by now. */
+	cpu_topology_init();
 
 	/*
 	 * Now that we've found all the hardware, start the real time
