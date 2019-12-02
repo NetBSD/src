@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.6 2019/12/02 15:02:53 martin Exp $
+.\"	$NetBSD: main,v 1.551.2.7 2019/12/02 15:08:52 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -531,7 +531,7 @@ ancient VME architectures in shape.
 Eric was a long term pkgsrc developer and well known community member.
 .Pp
 Beyond their technical contributions, Eric and Matthias were always
-always helpful and friendly.
+helpful and friendly.
 Their example encouraged users to contribute to the project and share their
 work with the community.
 .Pp
