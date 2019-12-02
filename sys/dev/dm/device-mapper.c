@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.40 2018/10/06 14:59:11 mlelstv Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.41 2019/12/02 15:17:43 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -197,6 +197,7 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		 */
 		if (dm_dev_counter > 0)
 			return EBUSY;
+		/* race window here */
 
 		error = dmdestroy();
 		if (error)
