@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.108 2019/12/02 20:03:33 uwe Exp $
+.\" $NetBSD: legal.common,v 1.109 2019/12/02 20:18:45 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -391,8 +391,6 @@ This product includes software developed by the Alice Group.
 .It
 This product includes software developed by the Computer Systems
 Engineering Group at Lawrence Berkeley Laboratory.
-.It
-This product includes software developed by the David Muir Sharnoff.
 .It
 This product includes software developed by the Harvard
 University and its contributors.
