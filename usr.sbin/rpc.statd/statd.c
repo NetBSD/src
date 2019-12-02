@@ -1,4 +1,4 @@
-/*	$NetBSD: statd.c,v 1.33 2019/08/15 08:34:19 kamil Exp $	*/
+/*	$NetBSD: statd.c,v 1.34 2019/12/02 19:23:53 christos Exp $	*/
 
 /*
  * Copyright (c) 1995
@@ -15,7 +15,6 @@
  * 3. All advertising materials mentioning features or use of this software
  *    must display the following acknowledgement:
  *	This product includes software developed for the FreeBSD project
- *	This product includes software developed by Christos Zoulas.
  * 4. Neither the name of the author nor the names of any co-contributors
  *    may be used to endorse or promote products derived from this software
  *    without specific prior written permission.
@@ -36,7 +35,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: statd.c,v 1.33 2019/08/15 08:34:19 kamil Exp $");
+__RCSID("$NetBSD: statd.c,v 1.34 2019/12/02 19:23:53 christos Exp $");
 #endif
 
 /* main() function for status monitor daemon.  Some of the code in this	*/
