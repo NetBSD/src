@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_map.c,v 1.37 2019/03/01 05:41:56 msaitoh Exp $	*/
+/*	$NetBSD: pci_map.c,v 1.38 2019/12/02 08:33:42 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.37 2019/03/01 05:41:56 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_map.c,v 1.38 2019/12/02 08:33:42 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -328,7 +328,25 @@ pci_mapreg_submap(const struct pci_attach_args *pa, int reg, pcireg_t type,
 	if (realmaxsize < (offset + reqsize))
 		return 1;
 
-	if (bus_space_map(tag, base, reqsize, busflags | flags, &handle))
+	/*
+	 * If the BAR doesn't say prefetchable, assume the mapping
+	 * cannot be prefetchable.  In other words, we will use
+	 * BUS_SPACE_MAP_PREFETCHABLE only if the driver requested it
+	 * _and_ the BAR indicates it is prefetchable.
+	 *
+	 * Drivers that expect prefetchable memory will issue the
+	 * appropriate barriers, whereas drivers that do not expect
+	 * prefetchable memory will be terribly confused if the memory
+	 * is mapped prefetchable.
+	 *
+	 * Drivers that want to override the BAR and map it with
+	 * BUS_SPACE_MAP_PREFETCHABLE anyway can use pci_mapreg_map and
+	 * bus_space_map explicitly.
+	 */
+	if (!ISSET(flags, BUS_SPACE_MAP_PREFETCHABLE))
+		busflags &= ~BUS_SPACE_MAP_PREFETCHABLE;
+
+	if (bus_space_map(tag, base, reqsize, busflags, &handle))
 		return 1;
 
 	if (pci_mapreg_map_enable_decode) {
