@@ -1,4 +1,4 @@
-/*	$NetBSD: flash_ebus.c,v 1.20 2018/03/04 21:41:48 mrg Exp $	*/
+/*	$NetBSD: flash_ebus.c,v 1.21 2019/12/02 19:40:19 bouyer Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
-__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.20 2018/03/04 21:41:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: flash_ebus.c,v 1.21 2019/12/02 19:40:19 bouyer Exp $");
 
 /* Driver for the Intel 28F320/640/128 (J3A150) StrataFlash memory device
  * Extended to include the Intel JS28F256P30T95.
@@ -1313,11 +1313,6 @@ static int eflash_write_at (struct eflash_softc *sc,
  * 2. Redistributions in binary form must reproduce the above copyright
  *	notice, this list of conditions and the following disclaimer in the
  *	documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *	must display the following acknowledgement:
- *  This product includes software developed by Manuel Bouyer.
- * 4. The name of the author may not be used to endorse or promote products
- *	derived from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR
  * IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES
