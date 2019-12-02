@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.111 2019/12/02 20:57:17 uwe Exp $
+.\" $NetBSD: legal.common,v 1.112 2019/12/02 22:14:21 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -413,10 +413,6 @@ This product includes software developed by the RiscBSD team.
 .It
 This product includes software developed by the SMCC Technology
 Development Group at Sun Microsystems, Inc.
-.It
-This product includes software developed by the University of
-California, Berkeley and its contributors, as well as the Trustees of
-Columbia University.
 .It
 This product includes software developed by the University of
 California, Lawrence Berkeley Laboratory and its contributors.
