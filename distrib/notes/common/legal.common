@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.99 2019/11/21 19:23:17 martin Exp $
+.\" $NetBSD: legal.common,v 1.100 2019/12/02 16:35:18 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -54,9 +54,6 @@ Foundation, Inc. and its contributors.
 This product includes software developed for the
 NetBSD Project.  See https://www.NetBSD.org/ for
 information about NetBSD.
-.It
-This product includes software developed by Intel Corporation and
-its contributors.
 .It
 This product includes cryptographic software written by
 Eric Young (eay@cryptsoft.com)
@@ -215,6 +212,9 @@ This product includes software developed by Hubert Feyrer for
 the NetBSD Project.
 .It
 This product includes software developed by Ian W. Dall.
+.It
+This product includes software developed by Intel Corporation and
+its contributors.
 .It
 This product includes software developed by Internet
 Initiative Japan Inc.
