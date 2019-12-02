@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.11 2019/12/02 19:49:12 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.12 2019/12/02 20:59:56 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008-2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.11 2019/12/02 19:49:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.12 2019/12/02 20:59:56 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -435,7 +435,7 @@ pmap_tlb_shootnow(void)
 	/*
 	 * Ownership of the global pointer provides serialization of the
 	 * update to the count and the event counter.  With those values
-	 * upated, start shootdowns on remote CPUs.
+	 * updated, start shootdowns on remote CPUs.
 	 */
 	pmap_tlb_pendcount = rcpucount;
 	pmap_tlb_evcnt.ev_count++;
