@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.110 2019/12/02 20:49:25 uwe Exp $
+.\" $NetBSD: legal.common,v 1.111 2019/12/02 20:57:17 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -381,8 +381,6 @@ its contributors.
 This product includes software developed by Waldi Ravens.
 .It
 This product includes software developed by Winning Strategies, Inc.
-.It
-This product includes software developed by Yasushi Yamasaki.
 .It
 This product includes software developed by Yen Yen Lim and
 North Dakota State University.
