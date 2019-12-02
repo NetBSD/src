@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.109 2019/12/02 20:18:45 uwe Exp $
+.\" $NetBSD: legal.common,v 1.110 2019/12/02 20:49:25 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -268,6 +268,8 @@ This product includes software developed by Klaus Burkert,by Bernd
 Ernesti, by Michael van Elst, and by the University of California,
 Berkeley and its contributors.
 .It
+This product includes software developed by Kyma Systems.
+.It
 This product includes software developed by Lloyd Parkes.
 .It
 This product includes software developed by Lutz Vieweg.
@@ -454,8 +456,6 @@ by Jason R. Thorpe.
 .It
 This product includes software developed for the NetBSD Project
 by John M. Vinopal.
-.It
-This product includes software developed by Kyma Systems.
 .It
 This product includes software developed for the NetBSD Project by
 Kyma Systems LLC.
