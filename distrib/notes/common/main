@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.5 2019/12/01 12:17:16 martin Exp $
+.\"	$NetBSD: main,v 1.551.2.6 2019/12/02 15:02:53 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -518,7 +518,8 @@ would not exist.
 .
 .Nx
 9.0 is dedicated to the memory of Matthias Drochner, who
-passed away in August 2018.
+passed away in August 2018 and Eric Schnoebelen, who
+passed away in March 2019.
 .Pp
 Matthias' technical contributions are too many to list here in full.
 He was a long term contributor and commited more than 3000 changes all
@@ -527,8 +528,11 @@ over the
 source tree and lately was especially active in keeping some of our most weired
 ancient VME architectures in shape.
 .Pp
-Beyond that he was always helpful and friendly. His
-example encouraged users to contribute to the project and share their
+Eric was a long term pkgsrc developer and well known community member.
+.Pp
+Beyond their technical contributions, Eric and Matthias were always
+always helpful and friendly.
+Their example encouraged users to contribute to the project and share their
 work with the community.
 .Pp
 .\} \"  \n[FOR_RELEASE]
