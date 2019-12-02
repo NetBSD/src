@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci_pci.c,v 1.23 2019/11/14 09:15:12 msaitoh Exp $	*/
+/*	$NetBSD: xhci_pci.c,v 1.24 2019/12/02 03:06:51 msaitoh Exp $	*/
 /*	OpenBSD: xhci_pci.c,v 1.4 2014/07/12 17:38:51 yuo Exp	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.23 2019/11/14 09:15:12 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_pci.c,v 1.24 2019/12/02 03:06:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_xhci_pci.h"
@@ -176,7 +176,7 @@ xhci_pci_attach(device_t parent, device_t self, void *aux)
 		msixtbl = pci_conf_read(pa->pa_pc, pa->pa_tag,
 		    msixoff + PCI_MSIX_TBLOFFSET);
 		table_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
-		bir = msixtbl & PCI_MSIX_PBABIR_MASK;
+		bir = msixtbl & PCI_MSIX_TBLBIR_MASK;
 		/* Shrink map area for MSI-X table */
 		if (bir == PCI_MAPREG_NUM(PCI_CBMEM))
 			sc->sc_ios = table_offset;

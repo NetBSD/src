@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.1 2019/11/20 09:37:46 hikaru Exp $	*/
+/*	$NetBSD: qat.c,v 1.2 2019/12/02 03:06:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.1 2019/11/20 09:37:46 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.2 2019/12/02 03:06:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -468,7 +468,7 @@ qat_attach(struct device *parent, struct device *self, void *aux)
 		    msixoff + PCI_MSIX_TBLOFFSET);
 		msixtbl_offset = msixtbl & PCI_MSIX_TBLOFFSET_MASK;
 		msixtbl_bar = PCI_MAPREG_START +
-		    ((msixtbl & PCI_MSIX_PBABIR_MASK) << 2);
+		    ((msixtbl & PCI_MSIX_TBLBIR_MASK) << 2);
 	}
 
 	i = 0;
