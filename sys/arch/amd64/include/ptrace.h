@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.19 2019/11/27 09:16:58 rin Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.20 2019/12/02 19:17:27 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -69,7 +69,9 @@
 	"PT_SETSTEP", \
 	"PT_CLEARSTEP", \
 	"PT_GETXSTATE", \
-	"PT_SETXSTATE"
+	"PT_SETXSTATE", \
+	"PT_GETXMMREGS", \
+	"PT_SETXMMREGS"
 
 #include <machine/reg.h>
 #define PTRACE_REG_PC(r)	(r)->regs[_REG_RIP]
