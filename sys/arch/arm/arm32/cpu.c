@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.134 2019/10/20 14:25:14 jmcneill Exp $	*/
+/*	$NetBSD: cpu.c,v 1.135 2019/12/02 23:22:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.134 2019/10/20 14:25:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.135 2019/12/02 23:22:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -111,12 +111,15 @@ cpu_attach(device_t dv, cpuid_t id)
 		ci->ci_mpidr = mpidr;
 
 		if (mpidr & MPIDR_MT) {
-			ci->ci_smt_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-			ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
-			ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF2);
+			cpu_topology_set(ci,
+			    __SHIFTOUT(mpidr, MPIDR_AFF2),
+			    __SHIFTOUT(mpidr, MPIDR_AFF1),
+			    __SHIFTOUT(mpidr, MPIDR_AFF0));
 		} else {
-			ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-			ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
+			cpu_topology_set(ci,
+			    __SHIFTOUT(mpidr, MPIDR_AFF1),
+			    __SHIFTOUT(mpidr, MPIDR_AFF0),
+			    0);
 		}
 #endif
 	} else {
