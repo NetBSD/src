@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.40 2019/12/01 15:34:47 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.41 2019/12/02 23:22:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -71,6 +71,15 @@ struct cpu_data {
 	uint32_t	cpu_ipipend[IPI_BITWORDS];	/* pending IPIs */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 
+	/* Basic topology information.  May be fake. */
+	cpuid_t		cpu_package_id;
+	cpuid_t		cpu_core_id;
+	cpuid_t		cpu_smt_id;
+	u_int		cpu_npackage_cpus;
+	u_int		cpu_ncore_cpus;
+	struct cpu_info	*cpu_package_cpus;	/* sibling CPUs in package */
+	struct cpu_info	*cpu_core_cpus;		/* sibling CPUs in core */
+
 	/*
 	 * This section is mostly CPU-private.
 	 */
@@ -101,9 +110,7 @@ struct cpu_data {
 	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 	char		cpu_name[8];		/* eg, "cpu4" */
 	kcpuset_t	*cpu_kcpuset;		/* kcpuset_t of this cpu only */
-	cpuid_t		cpu_package_id;
-	cpuid_t		cpu_core_id;
-	cpuid_t		cpu_smt_id;
+
 	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
 };
 
@@ -124,6 +131,10 @@ struct cpu_data {
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
 #define	ci_smt_id		ci_data.cpu_smt_id
+#define	ci_npackage_cpus	ci_data.cpu_npackage_cpus
+#define	ci_ncore_cpus		ci_data.cpu_ncore_cpus
+#define	ci_package_cpus		ci_data.cpu_package_cpus
+#define	ci_core_cpus		ci_data.cpu_core_cpus
 
 void	mi_cpu_init(void);
 int	mi_cpu_attach(struct cpu_info *);

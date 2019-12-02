@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.33 2019/03/16 10:05:40 skrll Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.34 2019/12/02 23:22:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.33 2019/03/16 10:05:40 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.34 2019/12/02 23:22:43 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -358,12 +358,15 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	uint32_t mpidr = armreg_mpidr_read();
 	ci->ci_mpidr = mpidr;
 	if (mpidr & MPIDR_MT) {
-		ci->ci_smt_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
-		ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF2);
+		cpu_topology_set(ci,
+		    __SHIFTOUT(mpidr, MPIDR_AFF2),
+		    __SHIFTOUT(mpidr, MPIDR_AFF1),
+		    __SHIFTOUT(mpidr, MPIDR_AFF0));
 	} else {
-		ci->ci_core_id = __SHIFTOUT(mpidr, MPIDR_AFF0);
-		ci->ci_package_id = __SHIFTOUT(mpidr, MPIDR_AFF1);
+		cpu_topology_set(ci,
+		    __SHIFTOUT(mpidr, MPIDR_AFF1),
+	            __SHIFTOUT(mpidr, MPIDR_AFF0),
+	            0);
 	}
 
 	ci->ci_arm_cpuid = cpu_idnum();
