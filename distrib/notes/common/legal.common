@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.100 2019/12/02 16:35:18 uwe Exp $
+.\" $NetBSD: legal.common,v 1.101 2019/12/02 16:41:35 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -82,8 +82,6 @@ Internet Research Institute, Inc.
 .It
 This product includes software developed by
 Leo Weppelman and Waldi Ravens.
-.It
-This product includes software developed by  Mika Kortelainen
 .It
 This product includes software developed by Aaron Brown and
 Harvard University.
@@ -303,6 +301,8 @@ This product includes software developed by Matt DeBergalis.
 This product includes software developed by Michael Smith.
 .It
 This product includes software developed by Microsoft.
+.It
+This product includes software developed by Mika Kortelainen
 .It
 This product includes software developed by Mike Pritchard.
 .It
