@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.10 2019/11/22 20:04:03 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.11 2019/12/02 19:49:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008-2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.10 2019/11/22 20:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.11 2019/12/02 19:49:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -309,6 +309,8 @@ pmap_tlb_processpacket(volatile pmap_tlb_packet_t *tp, kcpuset_t *target)
 
 	/* Remote CPUs have been synchronously flushed. */
 	pmap_tlb_pendcount = 0;
+	pmap_tlb_packet = NULL;
+	tp->tp_done = 1;
 #endif /* MULTIPROCESSOR */
 }
 
@@ -437,7 +439,7 @@ pmap_tlb_shootnow(void)
 	 */
 	pmap_tlb_pendcount = rcpucount;
 	pmap_tlb_evcnt.ev_count++;
-	pmap_tlb_processpacket(tp, target);
+	pmap_tlb_processpacket(&ts.ts_tp, target);
 
 	/*
 	 * Clear out the local CPU's buffer for the next user.  Once done,
