@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.101 2019/12/02 16:41:35 uwe Exp $
+.\" $NetBSD: legal.common,v 1.102 2019/12/02 16:43:06 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -170,7 +170,7 @@ This product includes software developed by Eric Young (eay@cryptsoft.com)
 .It
 This product includes software developed by Eric Young (eay@mincom.oz.au)
 .It
-This product includes software developed by Ezra Story and  by Kari
+This product includes software developed by Ezra Story and by Kari
 Mettinen.
 .It
 This product includes software developed by Ezra Story, by Kari
