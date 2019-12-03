@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.123 2019/12/03 16:43:16 uwe Exp $
+.\" $NetBSD: legal.common,v 1.124 2019/12/03 16:45:21 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -449,9 +449,6 @@ This product includes software developed by the University of California,
 Lawrence Berkeley Laboratory and its contributors.
 .It
 This product includes software developed by the University of
-Illinois at Urbana and their contributors.
-.It
-This product includes software developed by the University of
 Vermont and State Agricultural College and Garrett A. Wollman.
 .It
 This product includes software developed by the University of Vermont
@@ -502,9 +499,6 @@ by Perry E. Metzger.
 .It
 This product includes software developed for the NetBSD Project by
 Piermont Information Systems Inc.
-.It
-This product includes software developed for the NetBSD Project
-by Scott Bartram and Frank van der Linden
 .It
 This product includes software developed for the NetBSD Project by
 Shigeyuki Fukushima.
