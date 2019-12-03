@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.30 2019/11/06 07:30:59 mrg Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.31 2019/12/03 05:01:45 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.30 2019/11/06 07:30:59 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.31 2019/12/03 05:01:45 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1187,19 +1187,19 @@ usbnet_tick_task(void *arg)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mii_data * const mii = usbnet_mii(un);
 
+	KASSERT(ifp != NULL);	/* embedded member */
+	KASSERT(mii != NULL);	/* only removed after dying=true and wait */
+
 	unp->unp_refcnt++;
 	mutex_exit(&unp->unp_lock);
 
-	if (ifp && unp->unp_timer != 0 && --unp->unp_timer == 0)
+	if (unp->unp_timer != 0 && --unp->unp_timer == 0)
 		usbnet_watchdog(ifp);
 
-	if (mii && ifp) {
-		DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
-		mii_tick(mii);
-
-		if (!unp->unp_link)
-			(*mii->mii_statchg)(ifp);
-	}
+	DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
+	mii_tick(mii);
+	if (!unp->unp_link)
+		(*mii->mii_statchg)(ifp);
 
 	/* Call driver if requested. */
 	uno_tick(un);
@@ -1534,7 +1534,6 @@ usbnet_detach(device_t self, int flags)
 	if (mii) {
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		ifmedia_delete_instance(&mii->mii_media, IFM_INST_ANY);
-		usbnet_ec(un)->ec_mii = NULL;
 	}
 	if (ifp->if_softc) {
 		if (!usbnet_empty_eaddr(un))
@@ -1543,6 +1542,7 @@ usbnet_detach(device_t self, int flags)
 			bpf_detach(ifp);
 		if_detach(ifp);
 	}
+	usbnet_ec(un)->ec_mii = NULL;
 
 	cv_destroy(&unp->unp_detachcv);
 	mutex_destroy(&unp->unp_lock);
