@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.61 2019/12/03 11:25:43 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.62 2019/12/03 13:37:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.61 2019/12/03 11:25:43 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.62 2019/12/03 13:37:50 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.61 2019/12/03 11:25:43 skrll Exp $");
 #include <sys/proc.h>
 #include <sys/queue.h>
 #include <sys/select.h>
+#include <sys/sysctl.h>
 #include <sys/systm.h>
 
 #include <machine/endian.h>
