@@ -49,8 +49,9 @@
 #     -?  display help/usage message
 
 
-$ack_line1="[aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?";
-$ack_line2="display the( following)?( acknowledge?ment)?";
+$ack_line1='([aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?'
+    .      '|\d\. Redistributions of any form whatsoever)';
+$ack_line2='(display the( following)?( acknowledge?ment)?|acknowledge?ment:$)';
 $ack_endline=
       '(\d\.\s*(Neither the name'
     .         '|The name of the company nor the name'	# Wasn't my idea
@@ -64,6 +65,7 @@ $ack_endline=
     . '))'
     .'|(^Neither the name)'
     .'|(THIS SOFTWARE IS PROVIDED)'
+    .'|(ALL WARRANTIES WITH REGARD)'
     .'|(The word \'cryptographic\' can be left out if)'
     .'|(may be used to endorse)'
     .'|(@end cartouche)'
@@ -118,7 +120,7 @@ while(<>) {
 
   line:
     while(<F>) {
-	if (0 and /$ack_line2/i){
+	if (0 and /$ack_line2/in){
 	    print "?> $_" if $debug;
 	    
 	    if ($fn !~ m,$known_bad_clause_3_wording,) {
@@ -132,21 +134,21 @@ while(<>) {
 	# special case perl script generating a license (openssl's
 	# mkerr.pl) - ignore the quoted license, there is another one
 	# inside:
-	if (/^\"\s\*.*$ack_line1.*\\n\"\,/) {
-		while(!/$ack_endline/i) {
+	if (/^\"\s\*.*$ack_line1.*\\n\"\,/n) {
+		while(!/$ack_endline/in) {
 		    print "S> $_" if $debug;
 		    $_ = <F>;
 		}
 	}
 
-	if (/$ack_line1/i
-	    or (/$ack_line2/ and $fn =~ m,$known_bad_clause_3_wording,)) {
+	if (/$ack_line1/in
+	    or (/$ack_line2/n and $fn =~ m,$known_bad_clause_3_wording,)) {
 	    
 	    print "1> $_" if $debug;
 
 	    $_=<F>
 		unless $fn =~ m,$known_bad_clause_3_wording,;
-	    if (/$ack_line2/i or $fn =~ m,$known_bad_clause_3_wording,){
+	    if (/$ack_line2/in or $fn =~ m,$known_bad_clause_3_wording,){
 		
 		print "2> $_" if $debug;
 		
@@ -164,7 +166,7 @@ while(<>) {
 
 		$cnt=0;
 		$_=<F>;
-		while(!/$ack_endline/i) {
+		while(!/$ack_endline/in) {
 		    
 		    print "C> $_" if $debug;
 
