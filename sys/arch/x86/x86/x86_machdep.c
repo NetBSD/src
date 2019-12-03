@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.132 2019/12/03 11:50:45 hannken Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.133 2019/12/03 15:20:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.132 2019/12/03 11:50:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.133 2019/12/03 15:20:59 riastradh Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -350,7 +350,7 @@ bool
 cpu_intr_p(void)
 {
 	uint64_t ncsw;
-	volatile int idepth;
+	int idepth;
 	lwp_t *l;
 
 	l = curlwp;
@@ -360,7 +360,9 @@ cpu_intr_p(void)
 	}
 	do {
 		ncsw = l->l_ncsw;
+		__insn_barrier();
 		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
 	} while (__predict_false(ncsw != l->l_ncsw));
 
 	return idepth >= 0;

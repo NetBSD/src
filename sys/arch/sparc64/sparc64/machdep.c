@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.294 2019/12/01 14:52:14 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.295 2019/12/03 15:20:59 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2019 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.294 2019/12/01 14:52:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.295 2019/12/03 15:20:59 riastradh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -2661,7 +2661,9 @@ cpu_intr_p(void)
 	l = curlwp;
 	do {
 		ncsw = l->l_ncsw;
+		__insn_barrier();
 		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
 	} while (__predict_false(ncsw != l->l_ncsw));
 
 	return idepth >= 0;
