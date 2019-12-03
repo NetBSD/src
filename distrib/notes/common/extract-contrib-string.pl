@@ -151,7 +151,17 @@ while(<>) {
 		print "2> $_" if $debug;
 		
 		$msg="";
-		$msg = $_ if ($fn =~ m,$known_bad_clause_3_wording, and /``/);
+
+		if ($fn =~ m,$known_bad_clause_3_wording, and /``/) {
+		    $msg = $_;
+		}
+		elsif (/:\s+This product/) {
+		    # src/sys/lib/libkern/rngtest.c - bad clause 3 wording
+		    # that is not like others, so special case it here
+		    $msg = $_;
+		    $msg =~ s/^.*:\s+(This product.*)$/$1/;
+		}
+
 		$cnt=0;
 		$_=<F>;
 		while(!/$ack_endline/i) {
