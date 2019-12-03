@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.72 2019/12/03 12:39:00 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.73 2019/12/03 12:42:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.72 2019/12/03 12:39:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.73 2019/12/03 12:42:21 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -378,7 +378,8 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 
 	/* Page not found. call fault handler */
 	splx(tf->tf_ssr & PSL_IMASK);
-	LWP_CACHE_CREDS(l, l->l_proc);
+	if (usermode)
+		LWP_CACHE_CREDS(l, l->l_proc);
 	pcb->pcb_onfault = NULL;
 	err = uvm_fault(map, va, ftype);
 	pcb->pcb_onfault = onfault;
