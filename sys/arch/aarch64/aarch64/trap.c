@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.21 2019/11/24 04:08:36 rin Exp $ */
+/* $NetBSD: trap.c,v 1.22 2019/12/03 22:02:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,10 +31,11 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.21 2019/11/24 04:08:36 rin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.22 2019/12/03 22:02:43 jmcneill Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
+#include "opt_dtrace.h"
 
 #include <sys/param.h>
 #include <sys/kauth.h>
@@ -73,9 +74,18 @@ __KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.21 2019/11/24 04:08:36 rin Exp $");
 #include <ddb/db_output.h>
 #include <machine/db_machdep.h>
 #endif
+#ifdef KDTRACE_HOOKS
+#include <sys/dtrace_bsd.h>
+#endif
 
 #ifdef DDB
 int sigill_debug = 0;
+#endif
+
+#ifdef KDTRACE_HOOKS
+dtrace_doubletrap_func_t	dtrace_doubletrap_func = NULL;
+dtrace_trap_func_t		dtrace_trap_func = NULL;
+int (*dtrace_invop_jump_addr)(struct trapframe *);
 #endif
 
 const char * const trap_names[] = {
@@ -182,16 +192,29 @@ trap_el1h_sync(struct trapframe *tf)
 	else
 		daif_enable(DAIF_D|DAIF_A);
 
+#ifdef KDTRACE_HOOKS
+	if (dtrace_trap_func != NULL && (*dtrace_trap_func)(tf, eclass))
+		return;
+#endif
+
 	switch (eclass) {
 	case ESR_EC_INSN_ABT_EL1:
 	case ESR_EC_DATA_ABT_EL1:
 		data_abort_handler(tf, eclass);
 		break;
 
+	case ESR_EC_BKPT_INSN_A64:
+#ifdef KDTRACE_HOOKS
+		if (__SHIFTOUT(esr, ESR_ISS) == 0x40d &&
+		    dtrace_invop_jump_addr != 0) {
+			(*dtrace_invop_jump_addr)(tf);
+			break;
+		}
+		/* FALLTHROUGH */
+#endif
 	case ESR_EC_BRKPNT_EL1:
 	case ESR_EC_SW_STEP_EL1:
 	case ESR_EC_WTCHPNT_EL1:
-	case ESR_EC_BKPT_INSN_A64:
 #ifdef DDB
 		if (eclass == ESR_EC_BRKPNT_EL1)
 			kdb_trap(DB_TRAP_BREAKPOINT, tf);
