@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.118 2019/12/03 01:56:10 uwe Exp $
+.\" $NetBSD: legal.common,v 1.119 2019/12/03 10:46:40 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -138,6 +138,9 @@ This product includes software developed by Colin Wood.
 .It
 This product includes software developed by Colin Wood
 for the NetBSD Project.
+.It
+This product includes software developed by Computing Services
+at Carnegie Mellon University (http://www.cmu.edu/computing/).
 .It
 This product includes software developed by Daan Vreeken.
 .It
@@ -331,6 +334,12 @@ This product includes software developed by Paul Kranenburg.
 .It
 This product includes software developed by Paul Mackerras.
 .It
+This product includes software developed by Paul Mackerras
+<paulus@samba.org>.
+.It
+This product includes software developed by Pedro Roque Marques
+<pedro_m@yahoo.com>
+.It
 This product includes software developed by Per Fogelstrom.
 .It
 This product includes software developed by Peter Galbavy.
@@ -377,6 +386,9 @@ This product includes software developed by Takumi Nakamura.
 .It
 This product includes software developed by Tatoku Ogaito
 for the NetBSD Project.
+.It
+This product includes software developed by Tommi Komulainen
+<Tommi.Komulainen@iki.fi>.
 .It
 This product includes software developed by TooLs GmbH.
 .It
@@ -513,9 +525,6 @@ systems for research and education, including but not restricted to
 .It
 This software includes software developed by the Computer Systems
 Laboratory at the University of Utah.
-.It
-This product includes software developed by Computing Services
-at Carnegie Mellon University (http://www.cmu.edu/computing/).
 .It
 This product includes software developed or owned by Caldera
 International, Inc.
