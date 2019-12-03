@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.42 2019/12/03 05:07:49 riastradh Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.43 2019/12/03 22:28:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -59,6 +59,13 @@ struct lwp;
 
 struct lockdebug;
 
+enum cpu_rel {
+	CPUREL_CORE,	/* CPUs in the same core */
+	CPUREL_PACKAGE,	/* CPUs in the same package */
+	CPUREL_PEER,	/* peer CPUs in other packages */
+	CPUREL_COUNT
+};
+
 struct cpu_data {
 	/*
 	 * The first section is likely to be touched by other CPUs -
@@ -76,10 +83,8 @@ struct cpu_data {
 	cpuid_t		cpu_package_id;
 	cpuid_t		cpu_core_id;
 	cpuid_t		cpu_smt_id;
-	u_int		cpu_npackage_cpus;
-	u_int		cpu_ncore_cpus;
-	struct cpu_info	*cpu_package_cpus;	/* sibling CPUs in package */
-	struct cpu_info	*cpu_core_cpus;		/* sibling CPUs in core */
+	u_int		cpu_nsibling[CPUREL_COUNT];
+	struct cpu_info	*cpu_sibling[CPUREL_COUNT];
 
 	/*
 	 * This section is mostly CPU-private.
@@ -133,10 +138,8 @@ struct cpu_data {
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
 #define	ci_smt_id		ci_data.cpu_smt_id
-#define	ci_npackage_cpus	ci_data.cpu_npackage_cpus
-#define	ci_ncore_cpus		ci_data.cpu_ncore_cpus
-#define	ci_package_cpus		ci_data.cpu_package_cpus
-#define	ci_core_cpus		ci_data.cpu_core_cpus
+#define	ci_nsibling		ci_data.cpu_nsibling
+#define	ci_sibling		ci_data.cpu_sibling
 
 void	mi_cpu_init(void);
 int	mi_cpu_attach(struct cpu_info *);
