@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.60 2019/12/03 11:22:06 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.61 2019/12/03 11:25:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.60 2019/12/03 11:22:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.61 2019/12/03 11:25:43 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -75,6 +75,33 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.60 2019/12/03 11:22:06 skrll Exp $");
 } while (0)
 #define	DPRINTF(...)	DPRINTFN(1, __VA_ARGS__)
 int dwc2debug = 0;
+
+SYSCTL_SETUP(sysctl_hw_dwc2_setup, "sysctl hw.dwc2 setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "dwc2",
+	    SYSCTL_DESCR("dwc2 global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &dwc2debug, sizeof(dwc2debug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
 #else
 #define	DPRINTF(...) do { } while (0)
 #define	DPRINTFN(...) do { } while (0)
