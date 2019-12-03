@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.30 2019/12/03 15:47:38 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.31 2019/12/03 16:09:13 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -64,11 +64,6 @@
 #define DM_VERSION_PATCHLEVEL	0
 
 /*** Internal device-mapper structures ***/
-
-/*
- * A table entry describes a physical range of the logical volume.
- */
-#define MAX_TARGET_STRING_LEN 32
 
 /*
  * A device mapper table is a list of physical ranges plus the mapping target
