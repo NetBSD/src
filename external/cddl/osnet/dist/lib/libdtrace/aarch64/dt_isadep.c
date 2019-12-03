@@ -29,6 +29,8 @@
 
 #pragma ident	"%Z%%M%	%I%	%E% SMI"
 
+#include <sys/ioctl.h>
+
 #include <stdlib.h>
 #include <assert.h>
 #include <errno.h>

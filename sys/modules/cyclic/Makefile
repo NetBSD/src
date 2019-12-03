@@ -8,6 +8,8 @@ OSNETDIR=${NETBSDSRCDIR}/external/cddl/osnet
 
 .if exists(${OSNETDIR}/dev/cyclic/${MACHINE:S/amd64/i386/})
 ARCH=${MACHINE:S/amd64/i386/}
+.elif exists(${OSNETDIR}/dev/cyclic/${MACHINE_CPU:S/aarch64/arm/})
+ARCH=${MACHINE_CPU:S/aarch64/arm/}
 .elif exists(${OSNETDIR}/dev/cyclic/${MACHINE_CPU})
 ARCH=${MACHINE_CPU}
 .else
