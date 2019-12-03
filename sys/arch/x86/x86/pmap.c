@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.341 2019/11/16 10:19:29 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.342 2019/12/03 15:20:59 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.341 2019/11/16 10:19:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.342 2019/12/03 15:20:59 riastradh Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2893,6 +2893,7 @@ pmap_load(void)
 	}
 	l = ci->ci_curlwp;
 	ncsw = l->l_ncsw;
+	__insn_barrier();
 
 	/* should be able to take ipis. */
 	KASSERT(ci->ci_ilevel < IPL_HIGH);
@@ -2974,6 +2975,7 @@ pmap_load(void)
 	 */
 
 	pmap_destroy(oldpmap);
+	__insn_barrier();
 	if (l->l_ncsw != ncsw) {
 		goto retry;
 	}

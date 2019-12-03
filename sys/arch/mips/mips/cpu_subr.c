@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.39 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.40 2019/12/03 15:20:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.39 2019/12/02 23:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.40 2019/12/03 15:20:59 riastradh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -610,7 +610,9 @@ cpu_intr_p(void)
 	l = curlwp;
 	do {
 		ncsw = l->l_ncsw;
+		__insn_barrier();
 		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
 	} while (__predict_false(ncsw != l->l_ncsw));
 
 	return idepth != 0;
