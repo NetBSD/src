@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.12 2019/12/03 15:47:38 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.13 2019/12/03 16:22:01 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.12 2019/12/03 15:47:38 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.13 2019/12/03 16:22:01 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -45,7 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.12 2019/12/03 15:47:38 tkusumi Exp $")
 
 SLIST_HEAD(dm_pdevs, dm_pdev) dm_pdev_list;
 
-kmutex_t dm_pdev_mutex;
+static kmutex_t dm_pdev_mutex;
 
 static dm_pdev_t *dm_pdev_alloc(const char *);
 static int dm_pdev_rem(dm_pdev_t *);
