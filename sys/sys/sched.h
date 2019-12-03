@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.78 2019/11/30 17:46:27 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.79 2019/12/03 22:28:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
@@ -144,6 +144,7 @@ __END_DECLS
 
 #include <sys/mutex.h>
 #include <sys/time.h>
+#include <sys/evcnt.h>
 
 /*
  * Per-CPU scheduler state.  Field markings and the corresponding locks: 
@@ -157,17 +158,26 @@ struct schedstate_percpu {
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
-	volatile pri_t	spc_curpriority;/* m: usrpri of curlwp */
-	pri_t		spc_maxpriority;/* m: highest priority queued */
 	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
-	void		*spc_sched_info;/* (: scheduler-specific structure */
 	volatile int	spc_flags;	/* s: flags; see below */
 	u_int		spc_schedticks;	/* s: ticks for schedclock() */
 	uint64_t	spc_cp_time[CPUSTATES];/* s: CPU state statistics */
 	int		spc_ticks;	/* s: ticks until sched_tick() */
 	int		spc_pscnt;	/* s: prof/stat counter */
 	int		spc_psdiv;	/* s: prof/stat divisor */
+	/* Run queue */
+	volatile pri_t	spc_curpriority;/* s: usrpri of curlwp */
+	pri_t		spc_maxpriority;/* m: highest priority queued */
+	u_int		spc_count;	/* m: count of the threads */
+	u_int		spc_avgcount;	/* m: average count of threads (* 256) */
+	u_int		spc_mcount;	/* m: count of migratable threads */
+	uint32_t	spc_bitmap[8];	/* m: bitmap of active queues */
+	TAILQ_HEAD(,lwp) *spc_queue;	/* m: queue for each priority */
+	struct evcnt	spc_ev_pull;	/* m: event counters */
+	struct evcnt	spc_ev_push;
+	struct evcnt	spc_ev_stay;
+	struct evcnt	spc_ev_localize;
 };
 
 /* spc_flags */
