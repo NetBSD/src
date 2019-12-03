@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.62 2019/12/03 13:37:50 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.63 2019/12/03 14:35:49 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.62 2019/12/03 13:37:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.63 2019/12/03 14:35:49 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -976,7 +976,6 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	uint32_t off = 0;
 	int retval, err;
 	int alloc_bandwidth = 0;
-	int i;
 
 	DPRINTFN(1, "xfer=%p pipe=%p\n", xfer, xfer->ux_pipe);
 
@@ -1109,8 +1108,9 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	KASSERTMSG(xfer->ux_nframes == 0 || xfertype == UE_ISOCHRONOUS,
 	    "nframes %d xfertype %d\n", xfer->ux_nframes, xfertype);
 
-	for (off = i = 0; i < xfer->ux_nframes; ++i) {
-		DPRINTFN(3, "xfer=%p frame=%d offset=%d length=%d\n", xfer, i,
+	off = 0;
+	for (size_t i = 0; i < xfer->ux_nframes; ++i) {
+		DPRINTFN(3, "xfer=%p frame=%zd offset=%d length=%d\n", xfer, i,
 		    off, xfer->ux_frlengths[i]);
 
 		dwc2_hcd_urb_set_iso_desc_params(dwc2_urb, i, off,
@@ -1499,22 +1499,21 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	DPRINTFN(3, "xfer=%p actlen=%d\n", xfer, xfer->ux_actlen);
 
 	if (xfertype == UE_ISOCHRONOUS) {
-		int i;
-
 		xfer->ux_actlen = 0;
-		for (i = 0; i < xfer->ux_nframes; ++i) {
+		for (size_t i = 0; i < xfer->ux_nframes; ++i) {
 			xfer->ux_frlengths[i] =
 				dwc2_hcd_urb_get_iso_desc_actual_length(
 						urb, i);
+			DPRINTFN(1, "xfer=%p frame=%zu length=%d\n", xfer, i,
+			    xfer->ux_frlengths[i]);
 			xfer->ux_actlen += xfer->ux_frlengths[i];
 		}
+		DPRINTFN(1, "xfer=%p actlen=%d (isoc)\n", xfer, xfer->ux_actlen);
 	}
 
 	if (xfertype == UE_ISOCHRONOUS && dbg_perio()) {
-		int i;
-
-		for (i = 0; i < xfer->ux_nframes; i++)
-			dev_vdbg(hsotg->dev, " ISO Desc %d status %d\n",
+		for (size_t i = 0; i < xfer->ux_nframes; i++)
+			dev_vdbg(hsotg->dev, " ISO Desc %zu status %d\n",
 				 i, urb->iso_descs[i].status);
 	}
 
