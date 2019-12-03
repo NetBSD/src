@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.20 2019/12/01 15:28:02 riastradh Exp $	*/
+/*	$NetBSD: atomic.h,v 1.21 2019/12/03 04:57:38 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
@@ -390,7 +390,6 @@ __END_DECLS
 /* Pre-C11 definitions */
 
 #include <sys/cdefs.h>
-#include <sys/bitops.h>
 
 #ifdef _LP64
 #define	__HAVE_ATOMIC64_LOADSTORE	1
@@ -408,7 +407,7 @@ __END_DECLS
 #define	__ATOMIC_PTR_CHECK(p) do					      \
 {									      \
 	CTASSERT(sizeof(*(p)) <= __ATOMIC_SIZE_MAX);			      \
-	KASSERT(((uintptr_t)(p) & ilog2(sizeof(*(p)))) == 0);		      \
+	KASSERT(((uintptr_t)(p) & (sizeof(*(p)) - 1)) == 0);		      \
 } while (0)
 
 #ifdef KCSAN
