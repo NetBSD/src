@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.29 2019/12/03 15:36:00 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.30 2019/12/03 15:47:38 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -44,6 +44,7 @@
 #include <sys/mutex.h>
 #include <sys/rwlock.h>
 #include <sys/queue.h>
+#include <sys/vnode.h>
 
 #include <sys/device.h>
 #include <sys/disk.h>
