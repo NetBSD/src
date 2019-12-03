@@ -256,6 +256,7 @@ while(<>) {
 	        $msg =~ s/''\s*$//;
 		$msg =~ s/^\"//o;
 		$msg =~ s/\"$//o;
+		$msg =~ s/\"\.$/./o;
 
 		# Fix ISO-646-SE spelling of Lule\[oa]
 		$msg =~ s/Lule\}/Lulea/g;
