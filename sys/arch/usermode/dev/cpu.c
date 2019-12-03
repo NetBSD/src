@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.82 2019/12/01 14:52:14 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.83 2019/12/03 15:20:59 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_hz.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.82 2019/12/01 14:52:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.83 2019/12/03 15:20:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -535,7 +535,9 @@ cpu_intr_p(void)
 	l = curlwp;
 	do {
 		ncsw = l->l_ncsw;
+		__insn_barrier();
 		idepth = l->l_cpu->ci_idepth;
+		__insn_barrier();
 	} while (__predict_false(ncsw != l->l_ncsw));
 
 	return idepth >= 0;
