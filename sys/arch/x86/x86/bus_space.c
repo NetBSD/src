@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.42 2019/12/02 08:33:52 riastradh Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.43 2019/12/03 04:57:25 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.42 2019/12/02 08:33:52 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.43 2019/12/03 04:57:25 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -877,6 +877,10 @@ void
 bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
 		  bus_size_t offset, bus_size_t len, int flags)
 {
+
+	/* I/O instructions always happen in program order.  */
+	if (x86_bus_space_is_io(tag))
+		return;
 
 	/*
 	 * For default mappings, which are mapped with UC-type memory
