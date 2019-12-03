@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.11 2018/01/05 14:22:26 christos Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.12 2019/12/03 16:22:01 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.11 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.12 2019/12/03 16:22:01 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -50,7 +50,7 @@ static dm_dev_t *dm_dev_lookup_minor(int);
 static struct dm_dev_head dm_dev_list =
 TAILQ_HEAD_INITIALIZER(dm_dev_list);
 
-kmutex_t dm_dev_mutex;
+static kmutex_t dm_dev_mutex;
 
 /* dm_dev_mutex must be holdby caller before using disable_dev. */
 __inline static void
