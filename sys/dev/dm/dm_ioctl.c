@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.35 2019/12/01 06:53:31 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.36 2019/12/03 15:47:38 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.35 2019/12/01 06:53:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.36 2019/12/03 15:47:38 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -88,7 +88,6 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.35 2019/12/01 06:53:31 tkusumi Exp $"
 #include <sys/disklabel.h>
 #include <sys/kmem.h>
 #include <sys/malloc.h>
-#include <sys/vnode.h>
 
 #include <machine/int_fmtio.h>
 
