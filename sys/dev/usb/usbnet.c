@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.31 2019/12/03 05:01:45 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.32 2019/12/03 05:01:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.31 2019/12/03 05:01:45 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.32 2019/12/03 05:01:58 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1519,7 +1519,7 @@ usbnet_detach(device_t self, int flags)
 
 	mutex_enter(&unp->unp_lock);
 	unp->unp_refcnt--;
-	while (unp->unp_refcnt > 0) {
+	while (unp->unp_refcnt >= 0) {
 		/* Wait for processes to go away */
 		cv_wait(&unp->unp_detachcv, &unp->unp_lock);
 	}
