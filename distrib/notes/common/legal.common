@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.114 2019/12/02 23:30:32 uwe Exp $
+.\" $NetBSD: legal.common,v 1.115 2019/12/03 00:23:25 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -70,18 +70,6 @@ This product includes software developed at Ludd, University of Lulea.
 .It
 This product includes software developed at the Information
 Technology Division, US Naval Research Laboratory.
-.It
-This product includes software developed by
-David Jones and Gordon Ross
-.It
-This product includes software developed by
-Hellmuth Michaelis and Joerg Wunsch
-.It
-This product includes software developed by
-Internet Research Institute, Inc.
-.It
-This product includes software developed by
-Leo Weppelman and Waldi Ravens.
 .It
 This product includes software developed by Aaron Brown and
 Harvard University.
@@ -160,6 +148,9 @@ and Michael L. Hitch.
 This product includes software developed by Daniel Widenfalk
 for the NetBSD Project.
 .It
+This product includes software developed by
+David Jones and Gordon Ross
+.It
 This product includes software developed by David Miller.
 .It
 This product includes software developed by Dean Huxley.
@@ -204,6 +195,9 @@ its contributors.
 .It
 This product includes software developed by Harvard University.
 .It
+This product includes software developed by
+Hellmuth Michaelis and Joerg Wunsch
+.It
 This product includes software developed by Henrik Vestergaard Draboel.
 .It
 This product includes software developed by Herb Peyerl.
@@ -220,6 +214,9 @@ its contributors.
 .It
 This product includes software developed by Internet
 Initiative Japan Inc.
+.It
+This product includes software developed by
+Internet Research Institute, Inc.
 .It
 This product includes software developed by James R. Maynard III.
 .It
@@ -273,6 +270,9 @@ Ernesti, by Michael van Elst, and by the University of California,
 Berkeley and its contributors.
 .It
 This product includes software developed by Kyma Systems.
+.It
+This product includes software developed by
+Leo Weppelman and Waldi Ravens.
 .It
 This product includes software developed by Lloyd Parkes.
 .It
