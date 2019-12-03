@@ -1,4 +1,4 @@
-/*	$NetBSD: exception.c,v 1.71 2019/12/01 12:19:28 ad Exp $	*/
+/*	$NetBSD: exception.c,v 1.72 2019/12/03 12:39:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2019 The NetBSD Foundation, Inc. All rights reserved.
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.71 2019/12/01 12:19:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exception.c,v 1.72 2019/12/03 12:39:00 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -233,6 +233,7 @@ general_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	return;
 
  trapsignal:
+	KASSERT(usermode);
 	ksi.ksi_trap = tf->tf_expevt;
 	trapsignal(l, &ksi);
 	userret(l);
@@ -400,7 +401,8 @@ tlb_exception(struct lwp *l, struct trapframe *tf, uint32_t va)
 	/* Page in. load PTE to TLB. */
 	if (err == 0) {
 		bool loaded;
-		userret(l);
+		if (usermode)
+			userret(l);
 		loaded = __pmap_pte_load(pmap, va, track);
 #if 0
 		/*
