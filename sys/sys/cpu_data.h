@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.41 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.42 2019/12/03 05:07:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ struct cpu_data {
 	lwp_t		*cpu_biglock_wanted;	/* LWP spinning on biglock */
 	kcondvar_t	cpu_xcall;		/* cross-call support */
 	int		cpu_xcall_pending;	/* cross-call support */
+	u_int		cpu_psz_read_depth;	/* pserialize(9) read depth */
 	uint32_t	cpu_ipipend[IPI_BITWORDS];	/* pending IPIs */
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 
@@ -127,6 +128,7 @@ struct cpu_data {
 #define	ci_pcu_curlwp		ci_data.cpu_pcu_curlwp
 #define	ci_kcpuset		ci_data.cpu_kcpuset
 #define	ci_ipipend		ci_data.cpu_ipipend
+#define	ci_psz_read_depth	ci_data.cpu_psz_read_depth
 
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
