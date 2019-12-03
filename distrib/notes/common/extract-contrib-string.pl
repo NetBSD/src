@@ -31,7 +31,7 @@
 # Extract BSD-mandated copyright messages for NetBSD documentation
 #
 # Usage:
-# 1) find /usr/src -type f -print \
+# 1) find src xsrc -type f -print \
 #    | perl extract-contrib-string.pl
 #    >x
 #
