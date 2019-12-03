@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.43 2019/11/29 05:47:26 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.44 2019/12/03 11:26:12 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.43 2019/11/29 05:47:26 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.44 2019/12/03 11:26:12 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.43 2019/11/29 05:47:26 nisimura Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#define KSE_LINKDEBUG 0
+#define KSE_LINKDEBUG 1
 
 #define CSR_READ_4(sc, off) \
 	    bus_space_read_4(sc->sc_st, sc->sc_sh, off)
@@ -132,8 +132,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.43 2019/11/29 05:47:26 nisimura Exp $")
 #define RXC_ICC		(1U<<16)	/* run IP checksum */
 #define RXC_FCE		(1U<<9)		/* accept PAUSE to throttle Tx */
 #define RXC_RB		(1U<<6)		/* receive broadcast frame */
-#define RXC_RM		(1U<<5)		/* receive multicast frame */
-#define RXC_RU		(1U<<4)		/* receive unicast frame */
+#define RXC_RM		(1U<<5)		/* receive all multicast (inc. RB) */
+#define RXC_RU		(1U<<4)		/* receive 16 additional unicasts */
 #define RXC_RE		(1U<<3)		/* accept error frame */
 #define RXC_RA		(1U<<2)		/* receive all frame */
 #define RXC_MHTE	(1U<<1)		/* use multicast hash table */
@@ -791,11 +791,7 @@ kse_init(struct ifnet *ifp)
 	CSR_WRITE_4(sc, RDLB, KSE_CDRXADDR(sc, 0));
 
 	sc->sc_txc = TXC_TEN | TXC_EP | TXC_AC;
-	sc->sc_rxc = RXC_REN | RXC_RU;
-	if (ifp->if_flags & IFF_PROMISC)
-		sc->sc_rxc |= RXC_RA;
-	if (ifp->if_flags & IFF_BROADCAST)
-		sc->sc_rxc |= RXC_RB;
+	sc->sc_rxc = RXC_REN | RXC_RU | RXC_RB;
 	sc->sc_t1csum = sc->sc_mcsum = 0;
 	if (ifp->if_capenable & IFCAP_CSUM_IPv4_Rx) {
 		sc->sc_rxc |= RXC_ICC;
@@ -1090,21 +1086,25 @@ kse_set_filter(struct kse_softc *sc)
 	struct ether_multi *enm;
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
-	uint32_t h, hashes[2];
+	uint32_t crc, mchash[2];
 
-	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM);
+	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM | RXC_RA);
 	ifp->if_flags &= ~IFF_ALLMULTI;
-	if (ifp->if_flags & IFF_PROMISC)
-		return;
 
+	if ((ifp->if_flags & IFF_PROMISC) || ec->ec_multicnt > 0) {
+		ifp->if_flags |= IFF_ALLMULTI;
+		goto update;
+	}
+
+	mchash[0] = mchash[1] = crc = 0;
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
-	if (enm == NULL) {
-		ETHER_UNLOCK(ec);
-		return;
-	}
-	hashes[0] = hashes[1] = 0;
-	do {
+	while (enm != NULL) {
+#if KSE_MCASTDEBUG == 1
+		printf("%s: addrs %s %s\n", __func__,
+		   ether_sprintf(enm->enm_addrlo),
+		   ether_sprintf(enm->enm_addrhi));
+#endif
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
@@ -1115,20 +1115,29 @@ kse_set_filter(struct kse_softc *sc)
 			 * range is big enough to require all bits set.)
 			 */
 			ETHER_UNLOCK(ec);
-			goto allmulti;
+			ifp->if_flags |= IFF_ALLMULTI;
+			goto update;
 		}
-		h = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN) >> 26;
-		hashes[h >> 5] |= 1 << (h & 0x1f);
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
-	} while (enm != NULL);
+	}
 	ETHER_UNLOCK(ec);
-	sc->sc_rxc |= RXC_MHTE;
-	CSR_WRITE_4(sc, MTR0, hashes[0]);
-	CSR_WRITE_4(sc, MTR1, hashes[1]);
+
+	if (crc) {
+		CSR_WRITE_4(sc, MTR0, mchash[0]);
+		CSR_WRITE_4(sc, MTR1, mchash[1]);
+		sc->sc_rxc |= RXC_MHTE;
+	}
 	return;
- allmulti:
-	sc->sc_rxc |= RXC_RM;
-	ifp->if_flags |= IFF_ALLMULTI;
+
+ update:
+	/* With RA or RM, MHTE/MTR0/MTR1 are never consulted. */
+	if (ifp->if_flags & IFF_PROMISC)
+		sc->sc_rxc |= RXC_RA;
+	else
+		sc->sc_rxc |= RXC_RM;
+	return;
 }
 
 static int
