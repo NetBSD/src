@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.20 2018/01/05 14:22:26 christos Exp $      */
+/*        $NetBSD: dm_target.c,v 1.21 2019/12/03 16:22:01 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.20 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.21 2019/12/03 16:22:01 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -48,7 +48,7 @@ TAILQ_HEAD(dm_target_head, dm_target);
 static struct dm_target_head dm_target_list =
 TAILQ_HEAD_INITIALIZER(dm_target_list);
 
-kmutex_t dm_target_mutex;
+static kmutex_t dm_target_mutex;
 
 /*
  * Called indirectly from dm_table_load_ioctl to mark target as used.
