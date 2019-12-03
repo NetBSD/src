@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.52 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.53 2019/12/03 05:07:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.52 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.53 2019/12/03 05:07:48 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -182,7 +182,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.52 2019/12/01 15:34:46 ad Exp $")
 #include <sys/evcnt.h>
 #include <sys/cpu.h>
 #include <sys/xcall.h>
-#include <sys/pserialize.h>
 
 #include <net/netisr.h>
 
@@ -883,9 +882,6 @@ softint_dispatch(lwp_t *pinned, int s)
 		updatertime(l, &now);
 		l->l_pflag &= ~LP_TIMEINTR;
 	}
-
-	/* Indicate a soft-interrupt switch. */
-	pserialize_switchpoint();
 
 	/*
 	 * If we blocked while handling the interrupt, the pinned LWP is
