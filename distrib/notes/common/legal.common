@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.120 2019/12/03 10:51:46 uwe Exp $
+.\" $NetBSD: legal.common,v 1.121 2019/12/03 16:27:24 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -63,10 +63,10 @@ Eric Young (eay@mincom.oz.au)
 .It
 This product includes software designed by William Allen Simpson.
 .It
-This product includes software developed at Ludd, University of Lulea.
+This product includes software developed at Ludd, University of Lule\(oa.
 .It
 This product includes software developed at Ludd, University of
-Lulea, Sweden and its contributors.
+Lule\(oa, Sweden and its contributors.
 .It
 This product includes software developed at the Information
 Technology Division, US Naval Research Laboratory.
@@ -99,8 +99,7 @@ Inc.
 .It
 This product includes software developed by Bill Paul.
 .It
-This product includes software developed by Bodo Moeller.
-(If available, substitute umlauted o for oe)
+This product includes software developed by Bodo M\(:oller.
 .It
 This product includes software developed by Boris Popov.
 .It
@@ -354,7 +353,7 @@ This product includes software developed by Ravikanth.
 .It
 This product includes software developed by RiscBSD.
 .It
-This product includes software developed by Roar Thronæs.
+This product includes software developed by Roar Thron\(aes.
 .It
 This product includes software developed by Rodney W. Grimes.
 .It
