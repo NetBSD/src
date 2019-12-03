@@ -225,7 +225,7 @@ while(<>) {
 		$msg =~ s/^REM\s*//g;			# BASIC?!?
 		$msg =~ s/\nREM\s*/\n/g;		# BASIC?!?
 		$msg =~ s/^dnl\s*//g;			# m4
-		$msg =~ s/\dnl\s*/\n/g;			# m4
+		$msg =~ s/\ndnl\s*/\n/g;		# m4
 		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
 		$msg =~ s/\n\s+-\s+/ /g;		#
 		$msg =~ s/^[#\\\|";]+\s*//g;		# sh etc.
