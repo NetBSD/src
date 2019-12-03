@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2017/06/09 06:09:02 knakahara Exp $
+# $NetBSD: Makefile,v 1.5 2019/12/03 04:20:45 hikaru Exp $
 
 .include <bsd.own.mk>
 
@@ -24,6 +24,7 @@ PROGS+=		h_md5
 PROGS+=		h_md5hmac
 PROGS+=		h_null
 PROGS+=		h_sha1hmac
+PROGS+=		h_sha2hmac
 PROGS+=		h_xcbcmac
 PROGS+=		h_ioctl
 
