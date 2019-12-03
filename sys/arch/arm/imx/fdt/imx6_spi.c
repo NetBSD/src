@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_spi.c,v 1.2 2019/09/27 02:59:21 hkenken Exp $	*/
+/*	$NetBSD: imx6_spi.c,v 1.3 2019/12/03 10:32:53 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.2 2019/09/27 02:59:21 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_spi.c,v 1.3 2019/12/03 10:32:53 hkenken Exp $");
 
 #include "opt_imxspi.h"
 
@@ -157,7 +157,7 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_VM,
-	    FDT_INTR_MPSAFE, imxspi_intr, &ifsc->sc_imxspi);
+	    0, imxspi_intr, &ifsc->sc_imxspi);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
 		    intrstr);
