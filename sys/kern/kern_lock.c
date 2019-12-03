@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.163 2019/05/09 05:00:31 ozaki-r Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.164 2019/12/03 15:20:59 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.163 2019/05/09 05:00:31 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.164 2019/12/03 15:20:59 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -75,7 +75,9 @@ assert_sleepable(void)
 	 */
 	do {
 		pctr = lwp_pctr();
+		__insn_barrier();
 		idle = CURCPU_IDLE_P();
+		__insn_barrier();
 	} while (pctr != lwp_pctr());
 
 	reason = NULL;
