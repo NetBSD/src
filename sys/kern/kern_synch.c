@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.327 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.328 2019/12/03 05:07:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.327 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.328 2019/12/03 05:07:48 riastradh Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -743,9 +743,6 @@ mi_switch(lwp_t *l)
 			l->l_lwpctl->lc_pctr++;
 		}
 
-		/* Note trip through cpu_switchto(). */
-		pserialize_switchpoint();
-
 		KASSERT(l->l_cpu == ci);
 		splx(oldspl);
 		/*
@@ -755,7 +752,6 @@ mi_switch(lwp_t *l)
 		retval = 1;
 	} else {
 		/* Nothing to do - just unlock and return. */
-		pserialize_switchpoint();
 		mutex_spin_exit(spc->spc_mutex);
 		l->l_pflag &= ~LP_PREEMPTING;
 		lwp_unlock(l);

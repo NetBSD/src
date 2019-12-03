@@ -1,4 +1,4 @@
-/*	$NetBSD: pserialize.h,v 1.2 2017/11/21 08:49:15 ozaki-r Exp $	*/
+/*	$NetBSD: pserialize.h,v 1.3 2019/12/03 05:07:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,6 @@ struct pserialize;
 typedef struct pserialize *pserialize_t;
 
 void		pserialize_init(void);
-void		pserialize_switchpoint(void);
 
 pserialize_t	pserialize_create(void);
 void		pserialize_destroy(pserialize_t);
