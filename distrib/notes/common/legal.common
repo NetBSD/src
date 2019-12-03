@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.122 2019/12/03 16:31:40 uwe Exp $
+.\" $NetBSD: legal.common,v 1.123 2019/12/03 16:43:16 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -412,6 +412,8 @@ This product includes software developed by the Alice Group.
 This product includes software developed by the Computer Systems
 Engineering Group at Lawrence Berkeley Laboratory.
 .It
+.\" Nonstandard formatting of the ad clause in hp300 and hppa code
+.\" e.g. sys/arch/hppa/include/param.h
 This product includes software developed by the Computer Systems
 Laboratory at the University of Utah.
 .It
