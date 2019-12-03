@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.116 2019/12/03 01:19:33 uwe Exp $
+.\" $NetBSD: legal.common,v 1.117 2019/12/03 01:43:11 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -498,10 +498,10 @@ This product includes software developed for the NetBSD Project by
 Wasabi Systems, Inc.
 .It
 This product includes software developed under OpenBSD by
-Per Fogelstrom Opsycon AB for RTMX Inc, North Carolina, USA.
+Per Fogelstrom.
 .It
 This product includes software developed under OpenBSD by
-Per Fogelstrom.
+Per Fogelstrom Opsycon AB for RTMX Inc, North Carolina, USA.
 .It
 This software was developed by Holger Veit and Brian Moore
 for use with "386BSD" and similar operating systems.
