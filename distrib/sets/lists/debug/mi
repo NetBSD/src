@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.289 2019/10/15 18:33:57 christos Exp $
+# $NetBSD: mi,v 1.290 2019/12/03 04:20:45 hikaru Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1617,6 +1617,7 @@
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_md5hmac.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_null.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_sha1hmac.debug	tests-crypto-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/crypto/opencrypto/h_sha2hmac.debug	tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/crypto/opencrypto/h_xcbcmac.debug		tests-crypto-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/dev/audio/h_pad.debug			tests-fs-debug		debug,atf,rump
 ./usr/libdata/debug/usr/tests/dev/cgd/h_img2cgd/h_img2cgd.debug			tests-obsolete	obsolete,compattestfile
