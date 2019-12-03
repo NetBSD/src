@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.63 2019/12/03 14:35:49 skrll Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.64 2019/12/03 14:38:48 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.63 2019/12/03 14:35:49 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.64 2019/12/03 14:38:48 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1015,6 +1015,13 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		DPRINTFN(3, "req = %p dma = %" PRIxBUSADDR " len %d dir %s\n",
 		    KERNADDR(&dpipe->req_dma, 0), DMAADDR(&dpipe->req_dma, 0),
 		    len, dir == UE_DIR_IN ? "in" : "out");
+	} else if (xfertype == UE_ISOCHRONOUS) {
+		DPRINTFN(3, "xfer=%p nframes=%d flags=%d addr=%d endpt=%d,"
+		    " mps=%d dir %s\n", xfer, xfer->ux_nframes, xfer->ux_flags, addr,
+		    epnum, mps, dir == UT_READ ? "in" :"out");
+
+		for (len = i = 0; i < xfer->ux_nframes; i++)
+			len += xfer->ux_frlengths[i];
 	} else {
 		DPRINTFN(3, "xfer=%p len=%d flags=%d addr=%d endpt=%d,"
 		    " mps=%d dir %s\n", xfer, xfer->ux_length, xfer->ux_flags, addr,
