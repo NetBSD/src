@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.19 2019/11/13 02:51:22 ozaki-r Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.20 2019/12/03 03:25:28 msaitoh Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.19 2019/11/13 02:51:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.20 2019/12/03 03:25:28 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -5780,7 +5780,7 @@ sctp_med_chunk_output(struct sctp_inpcb *inp,
 						}
 						return (ENOMEM);
 					}
-					/* upate our MTU size */
+					/* update our MTU size */
 					/* Do clear IP_DF ? */
 					if (chk->flags & CHUNK_FLAGS_FRAGMENT_OK) {
 						no_fragmentflg = 0;
@@ -6679,7 +6679,7 @@ sctp_chunk_retransmission(struct sctp_inpcb *inp,
 			if (m == NULL) {
 				return (ENOMEM);
 			}
-			/* upate our MTU size */
+			/* update our MTU size */
 			/* Do clear IP_DF ? */
 			if (chk->flags & CHUNK_FLAGS_FRAGMENT_OK) {
 				no_fragmentflg = 0;
@@ -6710,7 +6710,7 @@ sctp_chunk_retransmission(struct sctp_inpcb *inp,
 					if (m == NULL) {
 						return (ENOMEM);
 					}
-					/* upate our MTU size */
+					/* update our MTU size */
 					/* Do clear IP_DF ? */
 					if (fwd->flags & CHUNK_FLAGS_FRAGMENT_OK) {
 						no_fragmentflg = 0;
