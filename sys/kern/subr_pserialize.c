@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.14 2019/12/03 05:07:49 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.15 2019/12/03 13:30:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.14 2019/12/03 05:07:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.15 2019/12/03 13:30:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -120,8 +120,10 @@ pserialize_perform(pserialize_t psz)
 
 	KASSERT(psz->psz_owner == curlwp);
 	psz->psz_owner = NULL;
+#ifdef __HAVE_ATOMIC64_LOADSTORE
 	atomic_store_relaxed(&psz_ev_excl.ev_count,
 	    1 + atomic_load_relaxed(&psz_ev_excl.ev_count));
+#endif
 }
 
 int
