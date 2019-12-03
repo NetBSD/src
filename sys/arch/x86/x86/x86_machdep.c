@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.130 2019/12/01 14:52:14 ad Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.131 2019/12/03 11:50:16 hannken Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.130 2019/12/01 14:52:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.131 2019/12/03 11:50:16 hannken Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -354,6 +354,10 @@ cpu_intr_p(void)
 	lwp_t *l;
 
 	l = curlwp;
+	if (__predict_false(l->l_cpu == NULL)) {
+		KASSERT(l == &lwp0);
+		return false;
+	}
 	do {
 		ncsw = l->l_ncsw;
 		idepth = l->l_cpu->ci_idepth;
