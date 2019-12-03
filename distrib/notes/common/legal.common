@@ -1,4 +1,4 @@
-.\" $NetBSD: legal.common,v 1.119 2019/12/03 10:46:40 uwe Exp $
+.\" $NetBSD: legal.common,v 1.120 2019/12/03 10:51:46 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2004 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -413,6 +413,9 @@ This product includes software developed by the Alice Group.
 This product includes software developed by the Computer Systems
 Engineering Group at Lawrence Berkeley Laboratory.
 .It
+This product includes software developed by the Computer Systems
+Laboratory at the University of Utah.
+.It
 This product includes software developed by the Harvard
 University and its contributors.
 .It
@@ -522,9 +525,6 @@ for use with "386BSD" and similar operating systems.
 "Similar operating systems" includes mainly non-profit oriented
 systems for research and education, including but not restricted to
 "NetBSD", "FreeBSD", "Mach" (by CMU).
-.It
-This software includes software developed by the Computer Systems
-Laboratory at the University of Utah.
 .It
 This product includes software developed or owned by Caldera
 International, Inc.
