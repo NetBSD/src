@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.41 2019/12/02 15:17:43 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.42 2019/12/03 15:36:00 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -114,6 +114,13 @@ CFATTACH_DECL3_NEW(dm, 0,
 extern uint32_t dm_dev_counter;
 
 /*
+ * This structure is used to translate command sent to kernel driver in
+ * <key>command</key>
+ * <value></value>
+ * to function which I can call, and if the command is allowed for
+ * non-superusers.
+ */
+/*
  * This array is used to translate cmd to function pointer.
  *
  * Interface between libdevmapper and lvm2tools uses different
@@ -122,7 +129,11 @@ extern uint32_t dm_dev_counter;
  * ioctl to kernel but will do another things in userspace.
  *
  */
-static const struct cmd_function cmd_fn[] = {
+static const struct cmd_function {
+	const char *cmd;
+	int  (*fn)(prop_dictionary_t);
+	int  allowed;
+} cmd_fn[] = {
 	{ .cmd = "version", .fn = dm_get_version_ioctl,	  .allowed = 1 },
 	{ .cmd = "targets", .fn = dm_list_versions_ioctl, .allowed = 1 },
 	{ .cmd = "create",  .fn = dm_dev_create_ioctl,    .allowed = 0 },
