@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.31 2019/12/03 16:09:13 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.32 2019/12/04 16:54:03 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -137,12 +137,12 @@ typedef struct dm_dev {
 
 	dm_table_head_t table_head;
 
-	struct dm_dev_head upcalls;
+	//struct dm_dev_head upcalls;
 
 	struct disk *diskp;
 	kmutex_t diskp_mtx;
 
-	TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
+	//TAILQ_ENTRY(dm_dev) next_upcall; /* LIST of mirrored, snapshoted devices. */
 
 	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
 } dm_dev_t;
