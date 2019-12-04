@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zfs,v 1.2 2019/12/01 21:00:43 jmcneill Exp $
+# $NetBSD: zfs,v 1.3 2019/12/04 16:46:50 jmcneill Exp $
 #
 
 # PROVIDE: zfs
@@ -10,6 +10,7 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="zfs"
+rcvar=$name
 start_cmd="zfs_start"
 stop_cmd="zfs_stop"
 
