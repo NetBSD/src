@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.558 2019/12/04 09:03:34 martin Exp $
+.\"	$NetBSD: main,v 1.559 2019/12/04 09:25:43 wiz Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -527,10 +527,10 @@ The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
 .if !\n[RELEASE_BRANCH] \{ \
-Please note that this build is a developement snapshot, not a formal release.
+Please note that this build is a development snapshot, not a formal release.
 You are testing the bleeding edge of
 .Nx
-developement, and no formal or informal testing may have been done for
+development, and no formal or informal testing may have been done for
 this snapshot (yet).
 .Pp
 .\} \" !\n[RELEASE_BRANCH] \{
@@ -815,7 +815,7 @@ However, new binaries can not be mixed with old libraries, and shared
 libraries are incompatible.
 .Pp
 .Ic sysinst
-does not provide an automatic mechanism to partlially upgrade an old
+does not provide an automatic mechanism to partially upgrade an old
 installation.
 There are two ways to handle the transition:
 .(enum
@@ -909,7 +909,7 @@ where
 is your topic of interest; a list of possibly
 related man pages will be displayed.
 .
-.Ss Administrivia
+.Ss Administrativa
 .Pp
 .
 If you've got something to say, do so!
