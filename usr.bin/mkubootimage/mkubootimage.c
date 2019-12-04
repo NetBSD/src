@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.25 2019/12/04 11:21:34 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.26 2019/12/04 14:09:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.25 2019/12/04 11:21:34 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.26 2019/12/04 14:09:47 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -433,7 +433,7 @@ write_image(void *hdr, size_t hdrlen, int kernel_fd, int image_fd)
 	}
 
 	if (update_image) {
-		if (lseek(kernel_fd, hdrlen, SEEK_SET) != hdrlen) {
+		if (lseek(kernel_fd, hdrlen, SEEK_SET) != (off_t)hdrlen) {
 			perror("seek failed");
 			return errno;
 		}
