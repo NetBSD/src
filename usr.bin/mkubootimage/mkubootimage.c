@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.24 2018/02/04 17:33:34 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.25 2019/12/04 11:21:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.24 2018/02/04 17:33:34 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.25 2019/12/04 11:21:34 jmcneill Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -74,6 +74,7 @@ static uint32_t image_entrypoint = 0;
 static char *image_name;
 static uint32_t image_magic = IH_MAGIC;
 static enum image_format image_format = FMT_UIMG;
+static int update_image = 0;
 
 static const struct uboot_image_format {
 	enum image_format format;
@@ -269,7 +270,7 @@ usage(void)
 	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
 	fprintf(stderr, " -T <standalone|kernel|kernel_noload|ramdisk|fs|script>");
 	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
-	fprintf(stderr, " [-f <uimg|arm64>]");
+	fprintf(stderr, " [-f <uimg|arm64>] [-u]");
 	fprintf(stderr, " <srcfile> <dstfile>\n");
 
 	exit(EXIT_FAILURE);
@@ -431,6 +432,13 @@ write_image(void *hdr, size_t hdrlen, int kernel_fd, int image_fd)
 		}
 	}
 
+	if (update_image) {
+		if (lseek(kernel_fd, hdrlen, SEEK_SET) != hdrlen) {
+			perror("seek failed");
+			return errno;
+		}
+	}
+
 	while ((rlen = read(kernel_fd, buf, sizeof(buf))) > 0) {
 		wlen = write(image_fd, buf, rlen);
 		if (wlen != rlen) {
@@ -453,7 +461,7 @@ main(int argc, char *argv[])
 	int ch;
 	unsigned long long num;
 
-	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:")) != -1) {
+	while ((ch = getopt(argc, argv, "A:C:E:O:T:a:e:f:hm:n:u")) != -1) {
 		switch (ch) {
 		case 'A':	/* arch */
 			image_arch = get_arch(optarg);
@@ -503,6 +511,9 @@ main(int argc, char *argv[])
 			break;
 		case 'n':	/* name */
 			image_name = strdup(optarg);
+			break;
+		case 'u':	/* update image */
+			update_image = 1;
 			break;
 		case 'h':
 		default:
