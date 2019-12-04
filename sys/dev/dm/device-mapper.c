@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.42 2019/12/03 15:36:00 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.43 2019/12/04 15:31:12 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ static const struct cmd_function {
 	{ .cmd = "reload",  .fn = dm_table_load_ioctl,    .allowed = 0 },
 	{ .cmd = "status",  .fn = dm_table_status_ioctl,  .allowed = 1 },
 	{ .cmd = "table",   .fn = dm_table_status_ioctl,  .allowed = 1 },
-	{ .cmd = NULL, 	    .fn = NULL,			  .allowed = 0 }
+	{ .cmd = NULL,      .fn = NULL,			  .allowed = 0 }
 };
 
 #ifdef _MODULE
@@ -194,11 +194,8 @@ dm_modcmd(modcmd_t cmd, void *arg)
 			config_cfdriver_detach(&dm_cd);
 			break;
 		}
-
 		dm_doinit();
-
 		break;
-
 	case MODULE_CMD_FINI:
 		/*
 		 * Disable unloading of dm module if there are any devices
@@ -220,7 +217,6 @@ dm_modcmd(modcmd_t cmd, void *arg)
 		break;
 	case MODULE_CMD_STAT:
 		return ENOTTY;
-
 	default:
 		return ENOTTY;
 	}
@@ -364,7 +360,7 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	aprint_debug("dmioctl called\n");
 	KASSERT(data != NULL);
 
-	if (( r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
+	if ((r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
 		struct plistref *pref = (struct plistref *) data;
 
 		/* Check if we were called with NETBSD_DM_IOCTL ioctl
@@ -429,7 +425,6 @@ dm_ioctl_switch(u_long cmd)
 {
 
 	switch(cmd) {
-
 	case NETBSD_DM_IOCTL:
 		aprint_debug("dm NetBSD_DM_IOCTL called\n");
 		break;
@@ -511,8 +506,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		 * Call sync target routine for all table entries. Target sync
 		 * routine basically call DIOCCACHESYNC on underlying devices.
 		 */
-		SLIST_FOREACH(table_en, tbl, next)
-		{
+		SLIST_FOREACH(table_en, tbl, next) {
 			(void)table_en->target->sync(table_en);
 		}
 		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
@@ -555,7 +549,6 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		dm_dev_unbusy(dmv);
 		break;
 	}
-
 
 	default:
 		aprint_debug("unknown disk_ioctl called\n");
@@ -622,8 +615,7 @@ dmstrategy(struct buf *bp)
 	/*
 	 * Find out what tables I want to select.
 	 */
-	SLIST_FOREACH(table_en, tbl, next)
-	{
+	SLIST_FOREACH(table_en, tbl, next) {
 		/* I need need number of bytes not blocks. */
 		table_start = table_en->start * DEV_BSIZE;
 		/*
@@ -672,8 +664,6 @@ dmstrategy(struct buf *bp)
 
 	dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 	dm_dev_unbusy(dmv);
-
-	return;
 }
 
 
@@ -697,15 +687,13 @@ dmsize(dev_t dev)
 	dm_dev_t *dmv;
 	uint64_t size;
 
-	size = 0;
-
 	if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
-			return -ENOENT;
+		return -ENOENT;
 
 	size = dm_table_size(&dmv->table_head);
 	dm_dev_unbusy(dmv);
 
-  	return size;
+	return size;
 }
 
 static void
