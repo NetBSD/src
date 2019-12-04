@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.121 2019/09/13 07:55:06 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.122 2019/12/04 08:12:03 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.121 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.122 2019/12/04 08:12:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -246,7 +246,7 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	struct mii_data *mii = &sc->sc_mii;
 	bus_space_tag_t t = sc->sc_bustag;
 	bus_space_handle_t h = sc->sc_h1;
-	struct ifmedia_entry *ifm;
+	struct ifmedia_entry *ife;
 	int i, error, phyaddr;
 	uint32_t v;
 	char *nullbuf;
@@ -559,11 +559,11 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 	 * If we support GigE media, we support jumbo frames too.
 	 * Unless we are Apple.
 	 */
-	TAILQ_FOREACH(ifm, &mii->mii_media.ifm_list, ifm_list) {
-		if (IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_T ||
-		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_SX ||
-		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_LX ||
-		    IFM_SUBTYPE(ifm->ifm_media) == IFM_1000_CX) {
+	TAILQ_FOREACH(ife, &mii->mii_media.ifm_list, ifm_list) {
+		if (IFM_SUBTYPE(ife->ifm_media) == IFM_1000_T ||
+		    IFM_SUBTYPE(ife->ifm_media) == IFM_1000_SX ||
+		    IFM_SUBTYPE(ife->ifm_media) == IFM_1000_LX ||
+		    IFM_SUBTYPE(ife->ifm_media) == IFM_1000_CX) {
 			if (!GEM_IS_APPLE(sc))
 				sc->sc_ethercom.ec_capabilities
 				    |= ETHERCAP_JUMBO_MTU;
