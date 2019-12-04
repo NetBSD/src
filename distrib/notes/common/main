@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.557 2019/11/27 09:29:25 martin Exp $
+.\"	$NetBSD: main,v 1.558 2019/12/04 09:03:34 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -526,6 +526,14 @@ numerous userland enhancements.
 The result of these improvements is a stable operating system fit for
 production use that rivals most commercially available systems.
 .Pp
+.if !\n[RELEASE_BRANCH] \{ \
+Please note that this build is a developement snapshot, not a formal release.
+You are testing the bleeding edge of
+.Nx
+developement, and no formal or informal testing may have been done for
+this snapshot (yet).
+.Pp
+.\} \" !\n[RELEASE_BRANCH] \{
 It is impossible to completely summarize the massive development that
 went into the
 .Nx
