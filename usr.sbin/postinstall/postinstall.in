@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.9 2019/11/12 23:54:34 christos Exp $
+# $NetBSD: postinstall.in,v 1.10 2019/12/04 04:45:42 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1462,12 +1462,16 @@ select_set_files()
 # select obsolete files in a sets file
 # $1: directory pattern
 # $2: file pattern
-# $3: filename
+# $3: setname
 select_obsolete_files()
 {
-	${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" $3
+	if $SOURCEMODE; then
+		${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" \
+		    ${SRC_DIR}/distrib/sets/lists/$3/mi
+	else
+		${SED} -n -e "s@\.$1$2\$@\1@p" "${DEST_DIR}/var/db/obsolete/$3"
+	fi
 }
-
 
 getetcsets()
 {
@@ -1504,7 +1508,7 @@ do_rc()
 
 	# obsolete rc file in /etc/rc.d
 	local rc_obsolete_files="$(select_obsolete_files /etc/rc.d/ \
-	    "\([^[:space:]]*\)" ${etcsets})"
+	    "\([^[:space:]]*\)" etc)"
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		${rc_644_files}
