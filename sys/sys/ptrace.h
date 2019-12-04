@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.66 2019/10/09 13:19:43 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.67 2019/12/04 13:52:27 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -85,7 +85,8 @@
 /* 19 */    "PT_SET_SIGINFO", \
 /* 20 */    "PT_GET_SIGINFO", \
 /* 21 */    "PT_RESUME", \
-/* 22 */    "PT_SUSPEND",
+/* 22 */    "PT_SUSPEND", \
+/* 23 */    "PT_STOP",
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
