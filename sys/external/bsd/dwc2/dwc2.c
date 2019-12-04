@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.65 2019/12/03 22:22:36 jmcneill Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.66 2019/12/04 06:28:35 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.65 2019/12/03 22:22:36 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.66 2019/12/04 06:28:35 skrll Exp $");
 
 #include "opt_usb.h"
 
@@ -1021,7 +1021,7 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		    epnum, mps, dir == UT_READ ? "in" :"out");
 
 		len = 0;
-		for (int i = 0; i < xfer->ux_nframes; i++)
+		for (size_t i = 0; i < xfer->ux_nframes; i++)
 			len += xfer->ux_frlengths[i];
 	} else {
 		DPRINTFN(3, "xfer=%p len=%d flags=%d addr=%d endpt=%d,"
