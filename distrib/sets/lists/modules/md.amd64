@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.81 2019/09/22 22:59:37 christos Exp $
+# $NetBSD: md.amd64,v 1.82 2019/12/04 11:47:17 jmcneill Exp $
 #
 # NOTE that there are two sets of files here:
 # @MODULEDIR@ and amd64-xen
@@ -117,6 +117,8 @@
 ./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/drmkms_pci			base-kernel-modules	kmod
 ./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/dtrace_syscall_linux		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall_linux32		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall_linux32/dtrace_syscall_linux32.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall_netbsd32		base-kernel-modules	kmod,dtrace

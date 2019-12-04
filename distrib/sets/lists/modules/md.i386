@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.82 2018/09/19 16:11:53 maxv Exp $
+# $NetBSD: md.i386,v 1.83 2019/12/04 11:47:17 jmcneill Exp $
 #
 # NOTE that there are two sets of files here: @MODULEDIR@ and i386pae-xen
 #
@@ -79,6 +79,8 @@
 ./@MODULEDIR@/drmkms_agp/drmkms_agp.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/drmkms_pci			base-kernel-modules	kmod
 ./@MODULEDIR@/drmkms_pci/drmkms_pci.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/dtrace_syscall_linux		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/emdtv				base-kernel-modules	kmod
 ./@MODULEDIR@/emdtv/emdtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/est				base-kernel-modules	kmod
