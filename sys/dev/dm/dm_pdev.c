@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.13 2019/12/03 16:22:01 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.14 2019/12/04 15:31:12 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.13 2019/12/03 16:22:01 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.14 2019/12/04 15:31:12 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -192,7 +192,6 @@ dm_pdev_destroy(void)
 
 	mutex_enter(&dm_pdev_mutex);
 	while (!SLIST_EMPTY(&dm_pdev_list)) {	/* List Deletion. */
-
 		dm_pdev = SLIST_FIRST(&dm_pdev_list);
 
 		SLIST_REMOVE_HEAD(&dm_pdev_list, next_pdev);

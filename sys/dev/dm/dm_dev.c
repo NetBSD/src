@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.12 2019/12/03 16:22:01 tkusumi Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.13 2019/12/04 15:31:12 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.12 2019/12/03 16:22:01 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.13 2019/12/04 15:31:12 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -133,7 +133,6 @@ dm_dev_lookup_name(const char *dm_dev_name)
 		return NULL;
 
 	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist) {
-
 		dlen = strlen(dmv->name);
 
 		if (slen != dlen)
@@ -162,7 +161,6 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
 		return NULL;
 
 	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist) {
-
 		if (strlen(dmv->uuid) != len)
 			continue;
 
@@ -190,9 +188,7 @@ dm_dev_insert(dm_dev_t * dev)
 	if (((dmv = dm_dev_lookup_uuid(dev->uuid)) == NULL) &&
 	    ((dmv = dm_dev_lookup_name(dev->name)) == NULL) &&
 	    ((dmv = dm_dev_lookup_minor(dev->minor)) == NULL)) {
-
 		TAILQ_INSERT_TAIL(&dm_dev_list, dev, next_devlist);
-
 	} else
 		r = EEXIST;
 
@@ -288,7 +284,6 @@ dm_dev_destroy(void)
 	mutex_enter(&dm_dev_mutex);
 
 	while (TAILQ_FIRST(&dm_dev_list) != NULL) {
-
 		dmv = TAILQ_FIRST(&dm_dev_list);
 
 		TAILQ_REMOVE(&dm_dev_list, TAILQ_FIRST(&dm_dev_list),
@@ -311,7 +306,7 @@ dm_dev_destroy(void)
 		mutex_destroy(&dmv->dev_mtx);
 		cv_destroy(&dmv->dev_cv);
 
-		(void) kmem_free(dmv, sizeof(dm_dev_t));
+		(void)kmem_free(dmv, sizeof(dm_dev_t));
 	}
 	mutex_exit(&dm_dev_mutex);
 
@@ -345,9 +340,9 @@ dm_dev_free(dm_dev_t * dmv)
 	cv_destroy(&dmv->dev_cv);
 
 	if (dmv->diskp != NULL)
-		(void) kmem_free(dmv->diskp, sizeof(struct disk));
+		(void)kmem_free(dmv->diskp, sizeof(struct disk));
 
-	(void) kmem_free(dmv, sizeof(dm_dev_t));
+	(void)kmem_free(dmv, sizeof(dm_dev_t));
 
 	return 0;
 }
