@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.80 2019/12/03 22:28:41 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.81 2019/12/04 09:34:13 wiz Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.80 2019/12/03 22:28:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.81 2019/12/04 09:34:13 wiz Exp $");
 
 #include "opt_cpu_ucode.h"
 
@@ -654,7 +654,7 @@ cpu_topology_peers(void)
 }
 
 /*
- * Print out the toplogy lists.
+ * Print out the topology lists.
  */
 static void
 cpu_topology_print(void)
@@ -686,7 +686,7 @@ cpu_topology_print(void)
 }
 
 /*
- * Fake up toplogy info if we have none, or if what we got was bogus.
+ * Fake up topology info if we have none, or if what we got was bogus.
  * Don't override ci_package_id, etc, if cpu_topology_present is set.
  * MD code also uses these.
  */
