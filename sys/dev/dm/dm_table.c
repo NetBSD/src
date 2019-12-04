@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $      */
+/*        $NetBSD: dm_table.c,v 1.9 2019/12/04 15:31:12 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.8 2018/01/05 14:22:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.9 2019/12/04 15:31:12 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -66,8 +66,6 @@ static int
 dm_table_busy(dm_table_head_t * head, uint8_t table_id)
 {
 	uint8_t id;
-
-	id = 0;
 
 	mutex_enter(&head->table_mtx);
 
@@ -203,7 +201,7 @@ dm_table_size_impl(dm_table_head_t * head, int table)
 	 * if length => rawblkno then we should used that table.
 	 */
 	SLIST_FOREACH(table_en, tbl, next)
-	    length += table_en->length;
+		length += table_en->length;
 
 	dm_table_unbusy(head);
 
@@ -253,10 +251,10 @@ dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
 	 */
 	secsize = 0;
 	SLIST_FOREACH(table_en, tbl, next) {
-	    length += table_en->length;
-	    (void)table_en->target->secsize(table_en, &tsecsize);
-	    if (secsize < tsecsize)
-	    	secsize = tsecsize;
+		length += table_en->length;
+		(void)table_en->target->secsize(table_en, &tsecsize);
+		if (secsize < tsecsize)
+			secsize = tsecsize;
 	}
 	*numsecp = secsize > 0 ? dbtob(length) / secsize : 0;
 	*secsizep = secsize;
@@ -285,7 +283,7 @@ dm_table_get_target_count(dm_table_head_t * head, uint8_t table_id)
 	tbl = &head->tables[id];
 
 	SLIST_FOREACH(table_en, tbl, next)
-	    target_count++;
+		target_count++;
 
 	dm_table_unbusy(head);
 
