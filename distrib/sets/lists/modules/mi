@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.127 2019/10/28 13:19:50 maya Exp $
+# $NetBSD: mi,v 1.128 2019/12/04 11:47:17 jmcneill Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -148,8 +148,6 @@
 ./@MODULEDIR@/dtrace_sdt/dtrace_sdt.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall/dtrace_syscall.kmod	base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/dtrace_syscall_linux			base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtv				base-kernel-modules	kmod
 ./@MODULEDIR@/dtv/dtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/dtv_math				base-kernel-modules	kmod
