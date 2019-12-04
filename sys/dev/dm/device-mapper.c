@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.43 2019/12/04 15:31:12 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.44 2019/12/04 16:55:30 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -616,13 +616,13 @@ dmstrategy(struct buf *bp)
 	 * Find out what tables I want to select.
 	 */
 	SLIST_FOREACH(table_en, tbl, next) {
-		/* I need need number of bytes not blocks. */
+		/* I need number of bytes not blocks. */
 		table_start = table_en->start * DEV_BSIZE;
 		/*
 		 * I have to sub 1 from table_en->length to prevent
 		 * off by one error
 		 */
-		table_end = table_start + (table_en->length)* DEV_BSIZE;
+		table_end = table_start + table_en->length * DEV_BSIZE;
 
 		start = MAX(table_start, buf_start);
 
