@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.122 2019/12/04 08:12:03 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.123 2019/12/04 08:21:43 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.122 2019/12/04 08:12:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.123 2019/12/04 08:21:43 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -770,7 +770,7 @@ gem_reset_rx(struct gem_softc *sc)
 	bus_space_barrier(t, h, GEM_RX_CONFIG, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h, GEM_RX_CONFIG, 1, 0))
-		aprint_error_dev(sc->sc_dev, "cannot disable read dma\n");
+		aprint_error_dev(sc->sc_dev, "cannot disable rx dma\n");
 	/* Wait 5ms extra. */
 	delay(5000);
 
@@ -878,7 +878,7 @@ gem_reset_tx(struct gem_softc *sc)
 	bus_space_barrier(t, h, GEM_TX_CONFIG, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h, GEM_TX_CONFIG, 1, 0))
-		aprint_error_dev(sc->sc_dev, "cannot disable read dma\n");
+		aprint_error_dev(sc->sc_dev, "cannot disable tx dma\n"); /* OpenBSD 1.34 */
 	/* Wait 5ms extra. */
 	delay(5000);
 
@@ -887,7 +887,7 @@ gem_reset_tx(struct gem_softc *sc)
 	bus_space_barrier(t, h, GEM_RESET, 4, BUS_SPACE_BARRIER_WRITE);
 	/* Wait till it finishes */
 	if (!gem_bitwait(sc, h2, GEM_RESET, GEM_RESET_TX, 0)) {
-		aprint_error_dev(sc->sc_dev, "cannot reset receiver\n");
+		aprint_error_dev(sc->sc_dev, "cannot reset transmitter\n"); /* OpenBSD 1.34 */
 		return (1);
 	}
 	return (0);
@@ -1212,7 +1212,6 @@ gem_init(struct ifnet *ifp)
 	/* Call MI initialization function if any */
 	if (sc->sc_hwinit)
 		(*sc->sc_hwinit)(sc);
-
 
 	/* step 15.  Give the receiver a swift kick */
 	bus_space_write_4(t, h, GEM_RX_KICK, GEM_NRXDESC-4);
