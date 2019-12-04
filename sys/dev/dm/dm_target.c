@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.21 2019/12/03 16:22:01 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.22 2019/12/04 15:31:12 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.21 2019/12/03 16:22:01 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.22 2019/12/04 15:31:12 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,7 +87,7 @@ dm_target_autoload(const char *dm_target_name)
 		gen = module_gen;
 
 		/* Try to autoload target module */
-		(void) module_autoload(name, MODULE_CLASS_MISC);
+		(void)module_autoload(name, MODULE_CLASS_MISC);
 	} while (gen != module_gen);
 
 	mutex_enter(&dm_target_mutex);
@@ -106,8 +106,6 @@ dm_target_t *
 dm_target_lookup(const char *dm_target_name)
 {
 	dm_target_t *dmt;
-
-	dmt = NULL;
 
 	if (dm_target_name == NULL)
 		return NULL;
@@ -202,12 +200,11 @@ dm_target_rem(char *dm_target_name)
 		mutex_exit(&dm_target_mutex);
 		return EBUSY;
 	}
-	TAILQ_REMOVE(&dm_target_list,
-	    dmt, dm_target_next);
+	TAILQ_REMOVE(&dm_target_list, dmt, dm_target_next);
 
 	mutex_exit(&dm_target_mutex);
 
-	(void) kmem_free(dmt, sizeof(dm_target_t));
+	(void)kmem_free(dmt, sizeof(dm_target_t));
 
 	return 0;
 }
@@ -224,13 +221,12 @@ dm_target_destroy(void)
 
 	mutex_enter(&dm_target_mutex);
 	while (TAILQ_FIRST(&dm_target_list) != NULL) {
-
 		dm_target = TAILQ_FIRST(&dm_target_list);
 
 		TAILQ_REMOVE(&dm_target_list, TAILQ_FIRST(&dm_target_list),
 		    dm_target_next);
 
-		(void) kmem_free(dm_target, sizeof(dm_target_t));
+		(void)kmem_free(dm_target, sizeof(dm_target_t));
 	}
 	mutex_exit(&dm_target_mutex);
 
@@ -265,7 +261,6 @@ dm_target_prop_list(void)
 	mutex_enter(&dm_target_mutex);
 
 	TAILQ_FOREACH(dm_target, &dm_target_list, dm_target_next) {
-
 		target_dict = prop_dictionary_create();
 		ver = prop_array_create();
 		prop_dictionary_set_cstring(target_dict, DM_TARGETS_NAME,
