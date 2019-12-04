@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.559 2019/12/04 09:25:43 wiz Exp $
+.\"	$NetBSD: main,v 1.560 2019/12/04 13:04:09 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -909,7 +909,7 @@ where
 is your topic of interest; a list of possibly
 related man pages will be displayed.
 .
-.Ss Administrativa
+.Ss Administrivia
 .Pp
 .
 If you've got something to say, do so!
