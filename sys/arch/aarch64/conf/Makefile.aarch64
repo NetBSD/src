@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.aarch64,v 1.15 2019/03/03 07:04:40 maxv Exp $
+#	$NetBSD: Makefile.aarch64,v 1.16 2019/12/04 11:24:31 jmcneill Exp $
 
 # Makefile for NetBSD
 #
@@ -74,7 +74,7 @@ locore.o: ${ARM}/aarch64/locore.S assym.h
 ## (5) link settings
 ##
 KERNLDSCRIPT?=	${ARM}/conf/kern.ldscript
-LOADADDRESS?=	0xffffffc000000040
+LOADADDRESS?=	0xffffffc000000000
 LINKFLAGS_NORMAL=	-X
 
 # Strip AArch64 mapping symbols from the kernel image, as they interfere
