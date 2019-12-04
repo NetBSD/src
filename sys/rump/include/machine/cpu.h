@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.23 2019/12/01 18:29:26 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.24 2019/12/04 03:04:52 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -79,7 +79,7 @@ void __syncicache(void *, size_t);
 #define curlwp rump_curlwp_fast()
 
 #define curcpu() (curlwp->l_cpu)
-#define cpu_number() (cpu_index(curcpu))
+#define cpu_number() (cpu_index(curcpu()))
 
 extern struct cpu_info *rumpcpu_info_list;
 #define CPU_INFO_ITERATOR		int __unused
