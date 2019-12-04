@@ -1,4 +1,4 @@
-# $NetBSD: ad.arm,v 1.13 2019/09/22 22:59:37 christos Exp $
+# $NetBSD: ad.arm,v 1.14 2019/12/04 11:47:17 jmcneill Exp $
 
 ./@MODULEDIR@/compat_netbsd32			base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32/compat_netbsd32.kmod base-kernel-modules	kmod
@@ -46,5 +46,7 @@
 ./@MODULEDIR@/compat_netbsd32_sysvipc_14/compat_netbsd32_sysvipc_14.kmod	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_50	base-kernel-modules	kmod
 ./@MODULEDIR@/compat_netbsd32_sysvipc_50/compat_netbsd32_sysvipc_50.kmod	base-kernel-modules	kmod
+./@MODULEDIR@/dtrace_syscall_linux		base-kernel-modules	kmod,dtrace
+./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/exec_elf32			base-kernel-modules	kmod
 ./@MODULEDIR@/exec_elf32/exec_elf32.kmod	base-kernel-modules	kmod
