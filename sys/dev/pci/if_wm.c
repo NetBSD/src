@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.649 2019/09/26 04:16:03 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.650 2019/12/04 09:03:45 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.649 2019/09/26 04:16:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.650 2019/12/04 09:03:45 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -9284,7 +9284,7 @@ wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t pcs_adv, pcs_lpab, reg;
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
@@ -11409,7 +11409,7 @@ wm_gmii_statchg(struct ifnet *ifp)
 			sc->sc_ctrl |= CTRL_RFCE;
 	}
 
-	if (sc->sc_mii.mii_media_active & IFM_FDX) {
+	if (mii->mii_media_active & IFM_FDX) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: statchg: FDX\n", ifp->if_xname));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
@@ -11424,7 +11424,7 @@ wm_gmii_statchg(struct ifnet *ifp)
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
 	if (sc->sc_type == WM_T_80003) {
-		switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_1000_T:
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_1000_DEFAULT);
@@ -12190,7 +12190,7 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t pcs_adv, pcs_lpab, reg;
 
 	ifmr->ifm_status = IFM_AVALID;
@@ -15459,7 +15459,7 @@ wm_hv_phy_workarounds_ich8lan(struct wm_softc *sc)
 		if ((rv = wm_set_mdio_slow_mode_hv(sc)) != 0)
 			return rv;
 
-	child = LIST_FIRST(&sc->sc_mii.mii_phys);
+	child = LIST_FIRST(&mii->mii_phys);
 	if (child != NULL)
 		phyrev = child->mii_mpd_rev;
 
@@ -15494,8 +15494,7 @@ wm_hv_phy_workarounds_ich8lan(struct wm_softc *sc)
 		 */
 		if ((child != NULL) && (phyrev < 2)) {
 			PHY_RESET(child);
-			rv = sc->sc_mii.mii_writereg(dev, 2, MII_BMCR,
-			    0x3140);
+			rv = mii->mii_writereg(dev, 2, MII_BMCR, 0x3140);
 			if (rv != 0)
 				return rv;
 		}
