@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.2 2019/12/02 03:06:51 msaitoh Exp $	*/
+/*	$NetBSD: qat.c,v 1.3 2019/12/04 01:06:28 hikaru Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.2 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.3 2019/12/04 01:06:28 hikaru Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2126,7 +2126,7 @@ qat_dump_raw(int flag, const char *label, void *d, size_t len)
 
 	printf("dumping %s at %p len %zu\n", label, d, len);
 
-	pc = __RETURN_ADDRESS;
+	pc = (uintptr_t)__builtin_return_address(0);
 	printf("\tcallpc ");
 	qat_print_sym(pc);
 	printf("\n");
