@@ -1,4 +1,4 @@
-/*	$NetBSD: vmwgfx_kms.c,v 1.4 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: vmwgfx_kms.c,v 1.5 2019/12/04 09:34:12 wiz Exp $	*/
 
 /**************************************************************************
  *
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmwgfx_kms.c,v 1.4 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmwgfx_kms.c,v 1.5 2019/12/04 09:34:12 wiz Exp $");
 
 #include "vmwgfx_kms.h"
 
@@ -1671,7 +1671,7 @@ int vmw_kms_update_layout_ioctl(struct drm_device *dev, void *data,
 
 	if (dev_priv->active_display_unit == vmw_du_screen_target) {
 		/*
-		 * For Screen Targets, the limits for a toplogy are:
+		 * For Screen Targets, the limits for a topology are:
 		 *	1. Bounding box (assuming 32bpp) must be < prim_bb_mem
 		 *      2. Total pixels (assuming 32bpp) must be < prim_bb_mem
 		 */
