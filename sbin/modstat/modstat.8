@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.23 2019/01/27 02:08:36 pgoyette Exp $
+.\" $NetBSD: modstat.8,v 1.24 2019/12/04 23:35:36 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd September 8, 2018
+.Dd December 4, 2019
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -90,7 +90,7 @@ indicates that the module was loaded during system bootstrap.
 .Qq Dv filesys
 indicates that the module was loaded from the file system.
 .It Li SIZE
-Size of the module in bytes.
+Size of the module's text section, in bytes.
 .It Li FLAG
 The module flags:
 .Bl -tag -width a -offset indent -compact
