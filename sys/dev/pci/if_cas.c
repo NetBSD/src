@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.26 2016/12/15 09:28:05 ozaki-r Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.26.8.1 2019/12/05 16:50:54 bouyer Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26 2016/12/15 09:28:05 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.26.8.1 2019/12/05 16:50:54 bouyer Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -252,7 +252,7 @@ next:
 	vpdoff += sizeof(*res);
 
 	len = ((res->vpdres_len_msb << 8) + res->vpdres_len_lsb);
-	switch(PCI_VPDRES_LARGE_NAME(res->vpdres_byte0)) {
+	switch (PCI_VPDRES_LARGE_NAME(res->vpdres_byte0)) {
 	case PCI_VPDRES_TYPE_IDENTIFIER_STRING:
 		/* Skip identifier string. */
 		vpdoff += len;
@@ -296,7 +296,7 @@ next:
 			if (strcmp(desc, "local-mac-address") != 0)
 				continue;
 			desc += strlen("local-mac-address") + 1;
-				
+
 			memcpy(enaddr, desc, ETHER_ADDR_LEN);
 			rv = 0;
 		}
@@ -423,7 +423,8 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	    sizeof(struct cas_control_data), 1,
 	    sizeof(struct cas_control_data), 0, 0, &sc->sc_cddmamap)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to create control data DMA map, error = %d\n", error);
+		    "unable to create control data DMA map, error = %d\n",
+		    error);
 		cas_partial_detach(sc, CAS_ATT_2);
 	}
 
@@ -540,7 +541,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	if (sc->sc_mif_config & CAS_MIF_CONFIG_MDI1) {
 		sc->sc_mif_config |= CAS_MIF_CONFIG_PHY_SEL;
 		bus_space_write_4(sc->sc_memt, sc->sc_memh,
-	            CAS_MIF_CONFIG, sc->sc_mif_config);
+		    CAS_MIF_CONFIG, sc->sc_mif_config);
 	}
 
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
@@ -548,7 +549,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL &&
-	    sc->sc_mif_config & (CAS_MIF_CONFIG_MDI0|CAS_MIF_CONFIG_MDI1)) {
+	    sc->sc_mif_config & (CAS_MIF_CONFIG_MDI0 | CAS_MIF_CONFIG_MDI1)) {
 		/*
 		 * Try the external PCS SERDES if we didn't find any
 		 * MII devices.
@@ -569,8 +570,8 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	child = LIST_FIRST(&mii->mii_phys);
 	if (child == NULL) {
 		/* No PHY attached */
-		ifmedia_add(&sc->sc_media, IFM_ETHER|IFM_MANUAL, 0, NULL);
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_MANUAL);
+		ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_MANUAL);
 	} else {
 		/*
 		 * Walk along the list of attached MII devices and
@@ -601,7 +602,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 		 * XXX - we can really do the following ONLY if the
 		 * phy indeed has the auto negotiation capability!!
 		 */
-		ifmedia_set(&sc->sc_media, IFM_ETHER|IFM_AUTO);
+		ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 	}
 
 	/* claim 802.1q capability */
@@ -974,7 +975,7 @@ cas_meminit(struct cas_softc *sc)
 		sc->sc_txdescs[i].cd_addr = 0;
 	}
 	CAS_CDTXSYNC(sc, 0, CAS_NTXDESC,
-	    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Initialize the receive descriptor and receive job
@@ -994,7 +995,7 @@ cas_meminit(struct cas_softc *sc)
 		sc->sc_rxcomps[i].cc_word[2] = 0;
 		sc->sc_rxcomps[i].cc_word[3] = CAS_DMA_WRITE(CAS_RC3_OWN);
 		CAS_CDRXCSYNC(sc, i,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 	}
 
 	return (0);
@@ -1089,23 +1090,23 @@ cas_init(struct ifnet *ifp)
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
 	KASSERT((CAS_CDTXADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_TX_RING_PTR_HI,
-	    (((uint64_t)CAS_CDTXADDR(sc,0)) >> 32));
+	    (((uint64_t)CAS_CDTXADDR(sc, 0)) >> 32));
 	bus_space_write_4(t, h, CAS_TX_RING_PTR_LO, CAS_CDTXADDR(sc, 0));
 
 	KASSERT((CAS_CDRXADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI,
-	    (((uint64_t)CAS_CDRXADDR(sc,0)) >> 32));
+	    (((uint64_t)CAS_CDRXADDR(sc, 0)) >> 32));
 	bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO, CAS_CDRXADDR(sc, 0));
 
 	KASSERT((CAS_CDRXCADDR(sc, 0) & 0x1fff) == 0);
 	bus_space_write_4(t, h, CAS_RX_CRING_PTR_HI,
-	    (((uint64_t)CAS_CDRXCADDR(sc,0)) >> 32));
+	    (((uint64_t)CAS_CDRXCADDR(sc, 0)) >> 32));
 	bus_space_write_4(t, h, CAS_RX_CRING_PTR_LO, CAS_CDRXCADDR(sc, 0));
 
 	if (CAS_PLUS(sc)) {
 		KASSERT((CAS_CDRXADDR2(sc, 0) & 0x1fff) == 0);
 		bus_space_write_4(t, h, CAS_RX_DRING_PTR_HI2,
-		    (((uint64_t)CAS_CDRXADDR2(sc,0)) >> 32));
+		    (((uint64_t)CAS_CDRXADDR2(sc, 0)) >> 32));
 		bus_space_write_4(t, h, CAS_RX_DRING_PTR_LO2,
 		    CAS_CDRXADDR2(sc, 0));
 	}
@@ -1118,7 +1119,7 @@ cas_init(struct ifnet *ifp)
 	/* Enable DMA */
 	v = cas_ringsize(CAS_NTXDESC /*XXX*/) << 10;
 	bus_space_write_4(t, h, CAS_TX_CONFIG,
-	    v|CAS_TX_CONFIG_TXDMA_EN|(1<<24)|(1<<29));
+	    v | CAS_TX_CONFIG_TXDMA_EN | (1 << 24) | (1 << 29));
 	bus_space_write_4(t, h, CAS_TX_KICK, 0);
 
 	/* step 10. ERX Configuration */
@@ -1133,7 +1134,7 @@ cas_init(struct ifnet *ifp)
 
 	/* Enable DMA */
 	bus_space_write_4(t, h, CAS_RX_CONFIG,
-	    v|(2<<CAS_RX_CONFIG_FBOFF_SHFT)|CAS_RX_CONFIG_RXDMA_EN);
+	    v|(2<<CAS_RX_CONFIG_FBOFF_SHFT) | CAS_RX_CONFIG_RXDMA_EN);
 
 	/*
 	 * The following value is for an OFF Threshold of about 3/4 full
@@ -1265,7 +1266,7 @@ cas_rint(struct cas_softc *sc)
 
 	for (i = sc->sc_rxptr;; i = CAS_NEXTRX(i + skip)) {
 		CAS_CDRXCSYNC(sc, i,
-		    BUS_DMASYNC_POSTREAD|BUS_DMASYNC_POSTWRITE);
+		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
 		word[0] = CAS_DMA_READ(sc->sc_rxcomps[i].cc_word[0]);
 		word[1] = CAS_DMA_READ(sc->sc_rxcomps[i].cc_word[1]);
@@ -1290,7 +1291,7 @@ cas_rint(struct cas_softc *sc)
 
 			cp = rxs->rxs_kva + off * 256 + ETHER_ALIGN;
 			m = m_devget(cp, len, 0, ifp, NULL);
-		
+
 			if (word[0] & CAS_RC0_RELEASE_HDR)
 				cas_add_rxbuf(sc, idx);
 
@@ -1349,7 +1350,7 @@ cas_rint(struct cas_softc *sc)
 		sc->sc_rxcomps[sc->sc_rxptr].cc_word[3] =
 		    CAS_DMA_WRITE(CAS_RC3_OWN);
 		CAS_CDRXCSYNC(sc, sc->sc_rxptr,
-		    BUS_DMASYNC_PREREAD|BUS_DMASYNC_PREWRITE);
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		sc->sc_rxptr = CAS_NEXTRX(sc->sc_rxptr);
 	}
@@ -1616,10 +1617,10 @@ cas_mii_statchg(struct ifnet *ifp)
 	/* Set tx full duplex options */
 	bus_space_write_4(t, mac, CAS_MAC_TX_CONFIG, 0);
 	delay(10000); /* reg must be cleared and delay before changing. */
-	v = CAS_MAC_TX_ENA_IPG0|CAS_MAC_TX_NGU|CAS_MAC_TX_NGU_LIMIT|
+	v = CAS_MAC_TX_ENA_IPG0 | CAS_MAC_TX_NGU | CAS_MAC_TX_NGU_LIMIT |
 		CAS_MAC_TX_ENABLE;
 	if ((IFM_OPTIONS(sc->sc_mii.mii_media_active) & IFM_FDX) != 0) {
-		v |= CAS_MAC_TX_IGN_CARRIER|CAS_MAC_TX_IGN_COLLIS;
+		v |= CAS_MAC_TX_IGN_CARRIER | CAS_MAC_TX_IGN_COLLIS;
 	}
 	bus_space_write_4(t, mac, CAS_MAC_TX_CONFIG, v);
 
@@ -1675,7 +1676,7 @@ cas_pcs_readreg(device_t self, int phy, int reg)
 		reg = CAS_MII_ANLPAR;
 		break;
 	case MII_EXTSR:
-		return (EXTSR_1000XFDX|EXTSR_1000XHDX);
+		return (EXTSR_1000XFDX | EXTSR_1000XHDX);
 	default:
 		return (0);
 	}
@@ -1836,15 +1837,15 @@ cas_estintr(struct cas_softc *sc, int what)
 	/* Interrupt register */
 	if (what & CAS_INTR_REG) {
 		bus_space_write_4(t, h, CAS_INTMASK,
-		    ~(CAS_INTR_TX_INTME|CAS_INTR_TX_EMPTY|
-		    CAS_INTR_TX_TAG_ERR|
-		    CAS_INTR_RX_DONE|CAS_INTR_RX_NOBUF|
-		    CAS_INTR_RX_TAG_ERR|
-		    CAS_INTR_RX_COMP_FULL|CAS_INTR_PCS|
-		    CAS_INTR_MAC_CONTROL|CAS_INTR_MIF|
+		    ~(CAS_INTR_TX_INTME | CAS_INTR_TX_EMPTY |
+		    CAS_INTR_TX_TAG_ERR |
+		    CAS_INTR_RX_DONE | CAS_INTR_RX_NOBUF |
+		    CAS_INTR_RX_TAG_ERR |
+		    CAS_INTR_RX_COMP_FULL | CAS_INTR_PCS |
+		    CAS_INTR_MAC_CONTROL | CAS_INTR_MIF |
 		    CAS_INTR_BERR));
 		bus_space_write_4(t, h, CAS_MAC_RX_MASK,
-		    CAS_MAC_RX_DONE|CAS_MAC_RX_FRAME_CNT);
+		    CAS_MAC_RX_DONE | CAS_MAC_RX_FRAME_CNT);
 		bus_space_write_4(t, h, CAS_MAC_TX_MASK, CAS_MAC_TX_XMIT_DONE);
 		bus_space_write_4(t, h, CAS_MAC_CONTROL_MASK, 0); /* XXXX */
 	}
@@ -1879,50 +1880,60 @@ cas_iff(struct cas_softc *sc)
 	    CAS_MAC_RX_PROMISC_GRP);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
-		else
-			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
-        } else {
-		/*
-		 * Set up multicast address filter by passing all multicast
-		 * addresses through a crc generator, and then using the
-		 * high order 8 bits as an index into the 256 bit logical
-		 * address filter.  The high order 4 bits selects the word,
-		 * while the other 4 bits select the bit within the word
-		 * (where bit 0 is the MSB).
-		 */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
 
-		rxcfg |= CAS_MAC_RX_HASH_FILTER;
+	/*
+	 * Set up multicast address filter by passing all multicast
+	 * addresses through a crc generator, and then using the
+	 * high order 8 bits as an index into the 256 bit logical
+	 * address filter.  The high order 4 bits selects the word,
+	 * while the other 4 bits select the bit within the word
+	 * (where bit 0 is the MSB).
+	 */
 
-		/* Clear hash table */
-		for (i = 0; i < 16; i++)
-			hash[i] = 0;
+	/* Clear hash table */
+	for (i = 0; i < 16; i++)
+		hash[i] = 0;
 
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-                        crc = ether_crc32_le(enm->enm_addrlo,
-                            ETHER_ADDR_LEN);
-
-                        /* Just want the 8 most significant bits. */
-                        crc >>= 24;
-
-                        /* Set the corresponding bit in the filter. */
-                        hash[crc >> 4] |= 1 << (15 - (crc & 15));
-
-			ETHER_NEXT_MULTI(step, enm);
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
 		}
 
-		/* Now load the hash table into the chip (if we are using it) */
-		for (i = 0; i < 16; i++) {
-			bus_space_write_4(t, h,
-			    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
-			    hash[i]);
-		}
+		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+
+		/* Just want the 8 most significant bits. */
+		crc >>= 24;
+
+		/* Set the corresponding bit in the filter. */
+		hash[crc >> 4] |= 1 << (15 - (crc & 15));
+
+		ETHER_NEXT_MULTI(step, enm);
 	}
 
+	rxcfg |= CAS_MAC_RX_HASH_FILTER;
+
+	/* Now load the hash table into the chip (if we are using it) */
+	for (i = 0; i < 16; i++) {
+		bus_space_write_4(t, h,
+		    CAS_MAC_HASH0 + i * (CAS_MAC_HASH1 - CAS_MAC_HASH0),
+		    hash[i]);
+	}
+
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
+			rxcfg |= CAS_MAC_RX_PROMISCUOUS;
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
+			rxcfg |= CAS_MAC_RX_PROMISC_GRP;
+	}
 	bus_space_write_4(t, h, CAS_MAC_RX_CONFIG, rxcfg);
 }
 

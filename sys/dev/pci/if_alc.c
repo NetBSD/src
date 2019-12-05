@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.24.8.4 2019/11/06 10:04:47 martin Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.24.8.5 2019/12/05 16:50:54 bouyer Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -744,7 +744,6 @@ alc_get_macaddr_816x(struct alc_softc *sc)
 
 	alc_get_macaddr_par(sc);
 }
-
 
 static void
 alc_get_macaddr_par(struct alc_softc *sc)
@@ -2776,7 +2775,6 @@ alc_init_backend(struct ifnet *ifp, bool init)
 	} else
 		CSR_WRITE_4(sc, ALC_CLK_GATING_CFG, 0);
  
-
 	/* Reprogram the station address. */
 	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
 	CSR_WRITE_4(sc, ALC_PAR0,
@@ -2832,7 +2830,7 @@ alc_init_backend(struct ifnet *ifp, bool init)
 		CSR_WRITE_4(sc, ALC_RRD1_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD2_HEAD_ADDR_LO, 0);
 		CSR_WRITE_4(sc, ALC_RRD3_HEAD_ADDR_LO, 0);
-	}\
+	}
 	/* Set Rx return descriptor counter. */
 	CSR_WRITE_4(sc, ALC_RRD_RING_CNT,
 	    (ALC_RR_RING_CNT << RRD_RING_CNT_SHIFT) & RRD_RING_CNT_MASK);
@@ -3403,25 +3401,35 @@ alc_iff(struct alc_softc *sc)
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxcfg |= MAC_CFG_PROMISC;
-		else
-			rxcfg |= MAC_CFG_ALLMULTI;
-		mchash[0] = mchash[1] = 0xFFFFFFFF;
-	} else {
-		/* Program new filter. */
-		memset(mchash, 0, sizeof(mchash));
+	/* Program new filter. */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
 
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-			ETHER_NEXT_MULTI(step, enm);
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
 		}
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
 	}
 
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
+			rxcfg |= MAC_CFG_PROMISC;
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
+			rxcfg |= MAC_CFG_ALLMULTI;
+		mchash[0] = mchash[1] = 0xFFFFFFFF;
+	}
 	CSR_WRITE_4(sc, ALC_MAR0, mchash[0]);
 	CSR_WRITE_4(sc, ALC_MAR1, mchash[1]);
 	CSR_WRITE_4(sc, ALC_MAC_CFG, rxcfg);
