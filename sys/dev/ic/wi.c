@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.253 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.254 2019/12/05 03:11:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.253 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.254 2019/12/05 03:11:40 msaitoh Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1419,7 +1419,6 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct wi_softc *sc = ifp->if_softc;
 	struct ieee80211com *ic = &sc->sc_ic;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	if (!device_is_active(sc->sc_dev))
@@ -1452,10 +1451,6 @@ wi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				error = wi_init(ifp);
 		} else if (sc->sc_enabled)
 			wi_stop(ifp, 1);
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &ic->ic_media, cmd);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:
