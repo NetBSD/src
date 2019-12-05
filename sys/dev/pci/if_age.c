@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.50.8.2 2019/11/06 10:04:47 martin Exp $ */
+/*	$NetBSD: if_age.c,v 1.50.8.3 2019/12/05 16:47:17 bouyer Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.50.8.2 2019/11/06 10:04:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.50.8.3 2019/12/05 16:47:17 bouyer Exp $");
 
 #include "vlan.h"
 
@@ -572,7 +572,7 @@ age_get_macaddr(struct age_softc *sc, uint8_t eaddr[])
 		 */
 		CSR_WRITE_4(sc, AGE_TWSI_CTRL, CSR_READ_4(sc, AGE_TWSI_CTRL) |
 		    TWSI_CTRL_SW_LD_START);
-		for (i = 100; i > 0; i++) {
+		for (i = 100; i > 0; i--) {
 			DELAY(1000);
 			reg = CSR_READ_4(sc, AGE_TWSI_CTRL);
 			if ((reg & TWSI_CTRL_SW_LD_START) == 0)
@@ -2274,25 +2274,35 @@ age_rxfilter(struct age_softc *sc)
 	 */
 	rxcfg |= MAC_CFG_BCAST;
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
-		ifp->if_flags |= IFF_ALLMULTI;
-		if (ifp->if_flags & IFF_PROMISC)
-			rxcfg |= MAC_CFG_PROMISC;
-		else
-			rxcfg |= MAC_CFG_ALLMULTI;
-		mchash[0] = mchash[1] = 0xFFFFFFFF;
-	} else {
-		/* Program new filter. */
-		memset(mchash, 0, sizeof(mchash));
+	/* Program new filter. */
+	if ((ifp->if_flags & IFF_PROMISC) != 0)
+		goto update;
 
-		ETHER_FIRST_MULTI(step, ec, enm);
-		while (enm != NULL) {
-			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
-			ETHER_NEXT_MULTI(step, enm);
+	memset(mchash, 0, sizeof(mchash));
+
+	ETHER_FIRST_MULTI(step, ec, enm);
+	while (enm != NULL) {
+		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+			ETHER_UNLOCK(ec);
+			goto update;
 		}
+		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
+		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		ETHER_NEXT_MULTI(step, enm);
 	}
 
+update:
+	if ((ifp->if_flags & (IFF_PROMISC | IFF_ALLMULTI)) != 0) {
+		if (ifp->if_flags & IFF_PROMISC) {
+			rxcfg |= MAC_CFG_PROMISC;
+			/* XXX Use ETHER_F_ALLMULTI in future. */
+			ifp->if_flags |= IFF_ALLMULTI;
+		} else
+			rxcfg |= MAC_CFG_ALLMULTI;
+		mchash[0] = mchash[1] = 0xFFFFFFFF;
+	}
 	CSR_WRITE_4(sc, AGE_MAR0, mchash[0]);
 	CSR_WRITE_4(sc, AGE_MAR1, mchash[1]);
 	CSR_WRITE_4(sc, AGE_MAC_CFG, rxcfg);
