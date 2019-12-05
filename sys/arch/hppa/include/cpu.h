@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.8 2019/12/05 03:59:39 riastradh Exp $	*/
+/*	$NetBSD: cpu.h,v 1.9 2019/12/05 08:00:05 skrll Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -47,7 +47,7 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr$
+ * 	Utah $Hdr: cpu.h 1.19 94/12/16$
  */
 
 #ifndef	_MACHINE_CPU_H_
