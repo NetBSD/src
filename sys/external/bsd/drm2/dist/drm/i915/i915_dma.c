@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.27 2018/09/21 11:49:16 kamil Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.28 2019/12/05 20:03:09 maya Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.27 2018/09/21 11:49:16 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.28 2019/12/05 20:03:09 maya Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -139,9 +139,9 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		break;
 	case I915_PARAM_HAS_SECURE_BATCHES:
 #ifdef __NetBSD__
-		value = DRM_SUSER();
+		value = HAS_SECURE_BATCHES(dev_priv) && DRM_SUSER();
 #else
-		value = capable(CAP_SYS_ADMIN);
+		value = HAS_SECURE_BATCHES(dev_priv) && capable(CAP_SYS_ADMIN);
 #endif
 		break;
 	case I915_PARAM_HAS_PINNED_BATCHES:
@@ -154,7 +154,7 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		value = 1;
 		break;
 	case I915_PARAM_CMD_PARSER_VERSION:
-		value = i915_cmd_parser_get_version();
+		value = i915_cmd_parser_get_version(dev_priv);
 		break;
 	case I915_PARAM_HAS_COHERENT_PHYS_GTT:
 		value = 1;
