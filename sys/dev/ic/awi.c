@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.98 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: awi.c,v 1.99 2019/12/05 03:11:40 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.98 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.99 2019/12/05 03:11:40 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -833,7 +833,6 @@ static int
 awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct awi_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error;
 
 	s = splnet();
@@ -857,10 +856,6 @@ awi_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 				error = awi_init(ifp);
 		} else if (sc->sc_enabled)
 			awi_stop(ifp, 1);
-		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_ic.ic_media, cmd);
 		break;
 	case SIOCADDMULTI:
 	case SIOCDELMULTI:

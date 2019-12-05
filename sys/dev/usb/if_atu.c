@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.67 2019/12/01 12:47:10 maxv Exp $ */
+/*	$NetBSD: if_atu.c,v 1.68 2019/12/05 03:11:41 msaitoh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.67 2019/12/01 12:47:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.68 2019/12/05 03:11:41 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2138,17 +2138,11 @@ static int
 atu_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct atu_softc	*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *)data;
 	struct ieee80211com	*ic = &sc->sc_ic;
 	int			err = 0, s;
 
 	s = splnet();
 	switch (command) {
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		err = ifmedia_ioctl(ifp, ifr, &ic->ic_media, command);
-		break;
-
 	default:
 		DPRINTFN(15, ("%s: ieee80211_ioctl (%lu)\n",
 		    device_xname(sc->atu_dev), command));
