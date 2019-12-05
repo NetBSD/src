@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.44 2019/12/04 16:55:30 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.45 2019/12/05 15:52:39 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -134,7 +134,7 @@ static const struct cmd_function {
 	int  (*fn)(prop_dictionary_t);
 	int  allowed;
 } cmd_fn[] = {
-	{ .cmd = "version", .fn = dm_get_version_ioctl,	  .allowed = 1 },
+	{ .cmd = "version", .fn = NULL,                   .allowed = 1 },
 	{ .cmd = "targets", .fn = dm_list_versions_ioctl, .allowed = 1 },
 	{ .cmd = "create",  .fn = dm_dev_create_ioctl,    .allowed = 0 },
 	{ .cmd = "info",    .fn = dm_dev_status_ioctl,    .allowed = 1 },
@@ -413,7 +413,9 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict)
 	if (cmd_fn[i].cmd == NULL)
 		return EINVAL;
 
-	aprint_debug("ioctl %s called\n", cmd_fn[i].cmd);
+	aprint_debug("ioctl %s called %p\n", cmd_fn[i].cmd, cmd_fn[i].fn);
+	if (cmd_fn[i].fn == NULL)
+		return 0;
 	r = cmd_fn[i].fn(dm_dict);
 
 	return r;
