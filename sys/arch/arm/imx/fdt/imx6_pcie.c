@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.5 2019/10/16 11:16:30 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.6 2019/12/05 00:31:14 hkenken Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.5 2019/10/16 11:16:30 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.6 2019/12/05 00:31:14 hkenken Exp $");
 
 #include "opt_pci.h"
 #include "opt_fdt.h"
@@ -203,10 +203,6 @@ imx6_pcie_attach(device_t parent, device_t self, void *aux)
 		sc->sc_clk_pcie_ext = NULL;
 		sc->sc_clk_pcie_ext_src = NULL;
 	}
-
-
-	TAILQ_INIT(&sc->sc_intrs);
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
