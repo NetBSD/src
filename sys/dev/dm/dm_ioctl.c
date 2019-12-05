@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.37 2019/12/04 15:31:12 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.38 2019/12/05 15:52:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.37 2019/12/04 15:31:12 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.38 2019/12/05 15:52:39 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -156,17 +156,6 @@ dm_dbg_print_flags(int flags)
 
 	if (flags & DM_NOFLUSH_FLAG)
 		aprint_debug("dbg_flags: DM_NOFLUSH_FLAG set In\n");
-
-	return 0;
-}
-
-/*
- * Get version ioctl call I do it as default therefore this
- * function is unused now.
- */
-int
-dm_get_version_ioctl(prop_dictionary_t dm_dict)
-{
 
 	return 0;
 }
