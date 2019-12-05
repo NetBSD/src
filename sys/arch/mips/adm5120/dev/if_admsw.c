@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.25 2019/12/04 05:19:10 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.26 2019/12/05 03:15:20 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.25 2019/12/04 05:19:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.26 2019/12/05 03:15:20 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -454,6 +454,7 @@ admsw_attach(device_t parent, device_t self, void *aux)
 	admsw_reset(sc);
 
 	for (i = 0; i < SW_DEVS; i++) {
+		sc->sc_ethercom[i].ec_ifmedia = &sc->sc_ifmedia[i];
 		ifmedia_init(&sc->sc_ifmedia[i], 0, admsw_mediachange, admsw_mediastatus);
 		ifmedia_add(&sc->sc_ifmedia[i], IFM_ETHER|IFM_10_T, 0, NULL);
 		ifmedia_add(&sc->sc_ifmedia[i], IFM_ETHER|IFM_10_T|IFM_FDX, 0, NULL);
@@ -740,6 +741,10 @@ admsw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifdrv *ifd;
 	int s, error, port;
 
+	port = (struct ethercom *)ifp - sc->sc_ethercom; /* XXX */
+	if (port >= SW_DEVS)
+		return EOPNOTSUPP;
+
 	s = splnet();
 
 	switch (cmd) {
@@ -747,16 +752,6 @@ admsw_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		if ((error = ether_ioctl(ifp, cmd, data)) == ENETRESET)
 			error = 0;
 		break;
-	case SIOCSIFMEDIA:
-	case SIOCGIFMEDIA:
-		port = (struct ethercom *)ifp - sc->sc_ethercom; /* XXX */
-		if (port >= SW_DEVS)
-			error = EOPNOTSUPP;
-		else
-			error = ifmedia_ioctl(ifp, (struct ifreq *)data,
-			    &sc->sc_ifmedia[port], cmd);
-		break;
-
 	case SIOCGDRVSPEC:
 	case SIOCSDRVSPEC:
 		ifd = (struct ifdrv *) data;
