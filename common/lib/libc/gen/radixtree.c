@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -185,11 +185,16 @@ entry_match_p(void *p, unsigned int tagmask)
  * radix_tree_node: an intermediate node
  *
  * we don't care the type of leaf nodes.  they are just void *.
+ *
+ * we used to maintain a count of non-NULL nodes in this structure, but it
+ * prevented it from being aligned to a cache line boundary; the performance
+ * benefit from being cache friendly is greater than the benefit of having
+ * a dedicated count value, especially in multi-processor situations where
+ * we need to avoid intra-pool-page false sharing.
  */
 
 struct radix_tree_node {
 	void *n_ptrs[RADIX_TREE_PTR_PER_NODE];
-	unsigned int n_nptrs;	/* # of non-NULL pointers in n_ptrs */
 };
 
 /*
@@ -340,8 +345,8 @@ radix_tree_init(void)
 {
 
 	radix_tree_node_cache = pool_cache_init(sizeof(struct radix_tree_node),
-	    0, 0, 0, "radix_tree_node", NULL, IPL_NONE, radix_tree_node_ctor,
-	    NULL, NULL);
+	    coherency_unit, 0, 0, "radixnode", NULL, IPL_NONE,
+	    radix_tree_node_ctor, NULL, NULL);
 	KASSERT(radix_tree_node_cache != NULL);
 }
 #endif /* defined(_KERNEL) */
@@ -349,17 +354,57 @@ radix_tree_init(void)
 static bool __unused
 radix_tree_node_clean_p(const struct radix_tree_node *n)
 {
+#if RADIX_TREE_PTR_PER_NODE > 16
 	unsigned int i;
 
-	if (n->n_nptrs != 0) {
-		return false;
-	}
 	for (i = 0; i < RADIX_TREE_PTR_PER_NODE; i++) {
 		if (n->n_ptrs[i] != NULL) {
 			return false;
 		}
 	}
 	return true;
+#else /* RADIX_TREE_PTR_PER_NODE > 16 */
+	uintptr_t sum;
+
+	/*
+	 * Unrolling the above is much better than a tight loop with two
+	 * test+branch pairs.  On x86 with gcc 5.5.0 this compiles into 19
+	 * deterministic instructions including the "return" and prologue &
+	 * epilogue.
+	 */
+	sum = (uintptr_t)n->n_ptrs[0];
+	sum |= (uintptr_t)n->n_ptrs[1];
+	sum |= (uintptr_t)n->n_ptrs[2];
+	sum |= (uintptr_t)n->n_ptrs[3];
+#if RADIX_TREE_PTR_PER_NODE > 4
+	sum |= (uintptr_t)n->n_ptrs[4];
+	sum |= (uintptr_t)n->n_ptrs[5];
+	sum |= (uintptr_t)n->n_ptrs[6];
+	sum |= (uintptr_t)n->n_ptrs[7];
+#endif
+#if RADIX_TREE_PTR_PER_NODE > 8
+	sum |= (uintptr_t)n->n_ptrs[8];
+	sum |= (uintptr_t)n->n_ptrs[9];
+	sum |= (uintptr_t)n->n_ptrs[10];
+	sum |= (uintptr_t)n->n_ptrs[11];
+	sum |= (uintptr_t)n->n_ptrs[12];
+	sum |= (uintptr_t)n->n_ptrs[13];
+	sum |= (uintptr_t)n->n_ptrs[14];
+	sum |= (uintptr_t)n->n_ptrs[15];
+#endif
+	return sum == 0;
+#endif /* RADIX_TREE_PTR_PER_NODE > 16 */
+}
+
+static int __unused
+radix_tree_node_count_ptrs(const struct radix_tree_node *n)
+{
+	unsigned int i, c;
+
+	for (i = c = 0; i < RADIX_TREE_PTR_PER_NODE; i++) {
+		c += (n->n_ptrs[i] != NULL);
+	}
+	return c;
 }
 
 static struct radix_tree_node *
@@ -421,7 +466,6 @@ radix_tree_grow(struct radix_tree *t, unsigned int newheight)
 			 */
 			return ENOMEM;
 		}
-		n->n_nptrs = 1;
 		n->n_ptrs[0] = t->t_root;
 		t->t_root = entry_compose(n, tagmask);
 		t->t_height++;
@@ -516,10 +560,6 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 				return NULL;
 			}
 			*vpp = c;
-			if (n != NULL) {
-				KASSERT(n->n_nptrs < RADIX_TREE_PTR_PER_NODE);
-				n->n_nptrs++;
-			}
 		}
 		n = c;
 		vpp = &n->n_ptrs[i];
@@ -531,10 +571,6 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 	}
 	if (alloc) {
 		KASSERT(*vpp == NULL);
-		if (n != NULL) {
-			KASSERT(n->n_nptrs < RADIX_TREE_PTR_PER_NODE);
-			n->n_nptrs++;
-		}
 	}
 	if (path != NULL) {
 		path->p_lastidx = refs - path->p_refs;
@@ -634,9 +670,7 @@ radix_tree_remove_node(struct radix_tree *t, uint64_t idx)
 		entry = *pptr;
 		n = entry_ptr(entry);
 		KASSERT(n != NULL);
-		KASSERT(n->n_nptrs > 0);
-		n->n_nptrs--;
-		if (n->n_nptrs > 0) {
+		if (!radix_tree_node_clean_p(n)) {
 			break;
 		}
 		radix_tree_free_node(n);
@@ -663,7 +697,7 @@ radix_tree_remove_node(struct radix_tree *t, uint64_t idx)
 		entry = *pptr;
 		n = entry_ptr(entry);
 		KASSERT(n != NULL);
-		KASSERT(n->n_nptrs > 0);
+		KASSERT(!radix_tree_node_clean_p(n));
 		newmask = any_children_tagmask(n);
 		if (newmask == entry_tagmask(entry)) {
 			break;
@@ -702,10 +736,7 @@ gang_lookup_init(struct radix_tree *t, uint64_t idx,
 {
 	void **vpp __unused;
 
-#if defined(DIAGNOSTIC)
-	vpp =
-#endif /* defined(DIAGNOSTIC) */
-	radix_tree_lookup_ptr(t, idx, path, false, tagmask);
+	vpp = radix_tree_lookup_ptr(t, idx, path, false, tagmask);
 	KASSERT(vpp == NULL ||
 	    vpp == path_pptr(t, path, path->p_lastidx));
 	KASSERT(&t->t_root == path_pptr(t, path, 0));
@@ -795,7 +826,15 @@ scan_siblings:
 			break;
 		}
 		n = path_node(t, path, lastidx - 1);
-		if (*vpp != NULL && n->n_nptrs == 1) {
+		/*
+		 * we used to have an integer counter in the node, and this
+		 * optimization made sense then, even though marginal.  it
+		 * no longer provides benefit with the structure cache line
+		 * aligned and the counter replaced by an unrolled sequence
+		 * testing the pointers in batch.
+		 */
+#if 0
+		if (*vpp != NULL && radix_tree_node_count_ptrs(n) == 1) {
 			/*
 			 * optimization; if the node has only a single pointer
 			 * and we've already visited it, there's no point to
@@ -803,6 +842,7 @@ scan_siblings:
 			 */
 			goto no_siblings;
 		}
+#endif /* 0 */
 		for (i = vpp - n->n_ptrs + step; i != guard; i += step) {
 			KASSERT(i < RADIX_TREE_PTR_PER_NODE);
 			if (entry_match_p(n->n_ptrs[i], tagmask)) {
@@ -986,10 +1026,7 @@ radix_tree_set_tag(struct radix_tree *t, uint64_t idx, unsigned int tagmask)
 	int i;
 
 	KASSERT(tagmask != 0);
-#if defined(DIAGNOSTIC)
-	vpp =
-#endif /* defined(DIAGNOSTIC) */
-	radix_tree_lookup_ptr(t, idx, &path, false, 0);
+	vpp = radix_tree_lookup_ptr(t, idx, &path, false, 0);
 	KASSERT(vpp != NULL);
 	KASSERT(*vpp != NULL);
 	KASSERT(path.p_lastidx == t->t_height);
@@ -1087,7 +1124,7 @@ radix_tree_dump_node(const struct radix_tree *t, void *vp,
 	}
 	n = entry_ptr(vp);
 	assert(any_children_tagmask(n) == entry_tagmask(vp));
-	printf(" (%u children)\n", n->n_nptrs);
+	printf(" (%u children)\n", radix_tree_node_count_ptrs(n));
 	for (i = 0; i < __arraycount(n->n_ptrs); i++) {
 		void *c;
 
