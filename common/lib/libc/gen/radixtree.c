@@ -1,7 +1,7 @@
-/*	$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $	*/
 
 /*-
- * Copyright (c)2011 YAMAMOTO Takashi,
+ * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -29,46 +29,90 @@
 /*
  * radixtree.c
  *
- * this is an implementation of radix tree, whose keys are uint64_t and leafs
+ * Overview:
+ *
+ * This is an implementation of radix tree, whose keys are uint64_t and leafs
  * are user provided pointers.
  *
- * leaf nodes are just void * and this implementation doesn't care about
- * what they actually point to.  however, this implementation has an assumption
- * about their alignment.  specifically, this implementation assumes that their
- * 2 LSBs are zero and uses them internally.
+ * Leaf nodes are just void * and this implementation doesn't care about
+ * what they actually point to.  However, this implementation has an assumption
+ * about their alignment.  Specifically, this implementation assumes that their
+ * 2 LSBs are always zero and uses them for internal accounting.
  *
- * intermediate nodes are automatically allocated and freed internally and
- * basically users don't need to care about them.  only radix_tree_insert_node
- * function can allocate memory for intermediate nodes and thus can fail for
- * ENOMEM.
+ * Intermediate nodes and memory allocation:
  *
- * efficiency:
- * it's designed to work efficiently with dense index distribution.
- * the memory consumption (number of necessary intermediate nodes)
- * heavily depends on index distribution.  basically, more dense index
- * distribution consumes less nodes per item.
- * approximately,
- * the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
- * the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
+ * Intermediate nodes are automatically allocated and freed internally and
+ * basically users don't need to care about them.  The allocation is done via
+ * pool_cache_get(9) for _KERNEL, malloc(3) for userland, and alloc() for
+ * _STANDALONE environment.  Only radix_tree_insert_node function can allocate
+ * memory for intermediate nodes and thus can fail for ENOMEM.
  *
- * gang lookup:
- * this implementation provides a way to lookup many nodes quickly via
+ * Memory Efficiency:
+ *
+ * It's designed to work efficiently with dense index distribution.
+ * The memory consumption (number of necessary intermediate nodes) heavily
+ * depends on the index distribution.  Basically, more dense index distribution
+ * consumes less nodes per item.  Approximately,
+ *
+ *  - the best case: about RADIX_TREE_PTR_PER_NODE items per intermediate node.
+ *    it would look like the following.
+ *
+ *     root (t_height=1)
+ *      |
+ *      v
+ *      [ | | | ]   (intermediate node.  RADIX_TREE_PTR_PER_NODE=4 in this fig)
+ *       | | | |
+ *       v v v v
+ *       p p p p    (items)
+ *
+ *  - the worst case: RADIX_TREE_MAX_HEIGHT intermediate nodes per item.
+ *    it would look like the following if RADIX_TREE_MAX_HEIGHT=3.
+ *
+ *     root (t_height=3)
+ *      |
+ *      v
+ *      [ | | | ]
+ *           |
+ *           v
+ *           [ | | | ]
+ *                |
+ *                v
+ *                [ | | | ]
+ *                   |
+ *                   v
+ *                   p
+ *
+ * The height of tree (t_height) is dynamic.  It's smaller if only small
+ * index values are used.  As an extreme case, if only index 0 is used,
+ * the corresponding value is directly stored in the root of the tree
+ * (struct radix_tree) without allocating any intermediate nodes.  In that
+ * case, t_height=0.
+ *
+ * Gang lookup:
+ *
+ * This implementation provides a way to scan many nodes quickly via
  * radix_tree_gang_lookup_node function and its varients.
  *
- * tags:
- * this implementation provides tagging functionality to allow quick
- * scanning of a subset of leaf nodes.  leaf nodes are untagged when
- * inserted into the tree and can be tagged by radix_tree_set_tag function.
- * radix_tree_gang_lookup_tagged_node function and its variants returns
- * only leaf nodes with the given tag.  to reduce amount of nodes to visit for
+ * Tags:
+ *
+ * This implementation provides tagging functionality, which allows quick
+ * scanning of a subset of leaf nodes.  Leaf nodes are untagged when inserted
+ * into the tree and can be tagged by radix_tree_set_tag function.
+ * radix_tree_gang_lookup_tagged_node function and its variants returns only
+ * leaf nodes with the given tag.  To reduce amount of nodes to visit for
  * these functions, this implementation keeps tagging information in internal
  * intermediate nodes and quickly skips uninterested parts of a tree.
+ *
+ * A tree has RADIX_TREE_TAG_ID_MAX independent tag spaces, each of which are
+ * identified by an zero-origin numbers, tagid.  For the current implementation,
+ * RADIX_TREE_TAG_ID_MAX is 2.  A set of tags is described as a bitmask tagmask,
+ * which is a bitwise OR of (1 << tagid).
  */
 
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -78,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.17 2011/11/02 13:49:43 yamt Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.18 2019/12/05 18:32:25 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -135,15 +179,6 @@ entry_match_p(void *p, unsigned int tagmask)
 		return true;
 	}
 	return (entry_tagmask(p) & tagmask) != 0;
-}
-
-static inline unsigned int
-tagid_to_mask(radix_tree_tagid_t id)
-{
-
-	KASSERT(id >= 0);
-	KASSERT(id < RADIX_TREE_TAG_ID_MAX);
-	return 1U << id;
 }
 
 /*
@@ -219,7 +254,7 @@ path_node(const struct radix_tree * t, const struct radix_tree_path *p,
 /*
  * radix_tree_init_tree:
  *
- * initialize a tree.
+ * Initialize a tree.
  */
 
 void
@@ -231,9 +266,9 @@ radix_tree_init_tree(struct radix_tree *t)
 }
 
 /*
- * radix_tree_init_tree:
+ * radix_tree_fini_tree:
  *
- * clean up a tree.
+ * Finish using a tree.
  */
 
 void
@@ -244,6 +279,12 @@ radix_tree_fini_tree(struct radix_tree *t)
 	KASSERT(t->t_height == 0);
 }
 
+/*
+ * radix_tree_empty_tree_p:
+ *
+ * Return if the tree is empty.
+ */
+
 bool
 radix_tree_empty_tree_p(struct radix_tree *t)
 {
@@ -251,11 +292,20 @@ radix_tree_empty_tree_p(struct radix_tree *t)
 	return t->t_root == NULL;
 }
 
-bool
-radix_tree_empty_tagged_tree_p(struct radix_tree *t, radix_tree_tagid_t tagid)
-{
-	const unsigned int tagmask = tagid_to_mask(tagid);
+/*
+ * radix_tree_empty_tree_p:
+ *
+ * Return true if the tree has any nodes with the given tag.  Otherwise
+ * return false.
+ *
+ * It's illegal to call this function with tagmask 0.
+ */
 
+bool
+radix_tree_empty_tagged_tree_p(struct radix_tree *t, unsigned int tagmask)
+{
+
+	KASSERT(tagmask != 0);
 	return (entry_tagmask(t->t_root) & tagmask) == 0;
 }
 
@@ -318,6 +368,9 @@ radix_tree_alloc_node(void)
 	struct radix_tree_node *n;
 
 #if defined(_KERNEL)
+	/*
+	 * note that pool_cache_get can block.
+	 */
 	n = pool_cache_get(radix_tree_node_cache, PR_NOWAIT);
 #else /* defined(_KERNEL) */
 #if defined(_STANDALONE)
@@ -492,17 +545,17 @@ radix_tree_lookup_ptr(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_insert_node:
  *
- * insert the node at idx.
- * it's illegal to insert NULL.
- * it's illegal to insert a non-aligned pointer.
+ * Insert the node at the given index.
  *
- * this function returns ENOMEM if necessary memory allocation failed.
- * otherwise, this function returns 0.
+ * It's illegal to insert NULL.  It's illegal to insert a non-aligned pointer.
  *
- * note that inserting a node can involves memory allocation for intermediate
- * nodes.  if _KERNEL, it's done with no-sleep IPL_NONE memory allocation.
+ * This function returns ENOMEM if necessary memory allocation failed.
+ * Otherwise, this function returns 0.
  *
- * for the newly inserted node, all tags are cleared.
+ * Note that inserting a node can involves memory allocation for intermediate
+ * nodes.  If _KERNEL, it's done with no-sleep IPL_NONE memory allocation.
+ *
+ * For the newly inserted node, all tags are cleared.
  */
 
 int
@@ -511,7 +564,7 @@ radix_tree_insert_node(struct radix_tree *t, uint64_t idx, void *p)
 	void **vpp;
 
 	KASSERT(p != NULL);
-	KASSERT(entry_compose(p, 0) == p);
+	KASSERT(entry_tagmask(entry_compose(p, 0)) == 0);
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, true, 0);
 	if (vpp == NULL) {
 		return ENOMEM;
@@ -524,11 +577,12 @@ radix_tree_insert_node(struct radix_tree *t, uint64_t idx, void *p)
 /*
  * radix_tree_replace_node:
  *
- * replace a node at the given index with the given node.
- * return the old node.
- * it's illegal to try to replace a node which has not been inserted.
+ * Replace a node at the given index with the given node and return the
+ * replaced one.
  *
- * this function doesn't change tags.
+ * It's illegal to try to replace a node which has not been inserted.
+ *
+ * This function keeps tags intact.
  */
 
 void *
@@ -538,7 +592,7 @@ radix_tree_replace_node(struct radix_tree *t, uint64_t idx, void *p)
 	void *oldp;
 
 	KASSERT(p != NULL);
-	KASSERT(entry_compose(p, 0) == p);
+	KASSERT(entry_tagmask(entry_compose(p, 0)) == 0);
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, false, 0);
 	KASSERT(vpp != NULL);
 	oldp = *vpp;
@@ -550,8 +604,9 @@ radix_tree_replace_node(struct radix_tree *t, uint64_t idx, void *p)
 /*
  * radix_tree_remove_node:
  *
- * remove the node at idx.
- * it's illegal to try to remove a node which has not been inserted.
+ * Remove the node at the given index.
+ *
+ * It's illegal to try to remove a node which has not been inserted.
  */
 
 void *
@@ -625,8 +680,8 @@ radix_tree_remove_node(struct radix_tree *t, uint64_t idx)
 /*
  * radix_tree_lookup_node:
  *
- * returns the node at idx.
- * returns NULL if nothing is found at idx.
+ * Returns the node at the given index.
+ * Returns NULL if nothing is found at the given index.
  */
 
 void *
@@ -645,9 +700,12 @@ static inline void
 gang_lookup_init(struct radix_tree *t, uint64_t idx,
     struct radix_tree_path *path, const unsigned int tagmask)
 {
-	void **vpp;
+	void **vpp __unused;
 
-	vpp = radix_tree_lookup_ptr(t, idx, path, false, tagmask);
+#if defined(DIAGNOSTIC)
+	vpp =
+#endif /* defined(DIAGNOSTIC) */
+	radix_tree_lookup_ptr(t, idx, path, false, tagmask);
 	KASSERT(vpp == NULL ||
 	    vpp == path_pptr(t, path, path->p_lastidx));
 	KASSERT(&t->t_root == path_pptr(t, path, 0));
@@ -665,8 +723,8 @@ gang_lookup_init(struct radix_tree *t, uint64_t idx,
 static inline unsigned int
 __attribute__((__always_inline__))
 gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
-    void **results, unsigned int maxresults, const unsigned int tagmask,
-    bool reverse)
+    void **results, const unsigned int maxresults, const unsigned int tagmask,
+    const bool reverse, const bool dense)
 {
 
 	/*
@@ -696,7 +754,10 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 	   !entry_match_p(*path_pptr(t, path, lastidx), tagmask));
 	nfound = 0;
 	if (lastidx == RADIX_TREE_INVALID_HEIGHT) {
-		if (reverse) {
+		/*
+		 * requested idx is beyond the right-most node.
+		 */
+		if (reverse && !dense) {
 			lastidx = 0;
 			vpp = path_pptr(t, path, lastidx);
 			goto descend;
@@ -718,6 +779,8 @@ gang_lookup_scan(struct radix_tree *t, struct radix_tree_path *path,
 			if (nfound == maxresults) {
 				return nfound;
 			}
+		} else if (dense) {
+			return nfound;
 		}
 scan_siblings:
 		/*
@@ -779,97 +842,116 @@ descend:
 /*
  * radix_tree_gang_lookup_node:
  *
- * search nodes starting from idx in the ascending order.
+ * Scan the tree starting from the given index in the ascending order and
+ * return found nodes.
+ *
  * results should be an array large enough to hold maxresults pointers.
- * returns the number of nodes found, up to maxresults.
- * returning less than maxresults means there are no more nodes.
+ * This function returns the number of nodes found, up to maxresults.
+ * Returning less than maxresults means there are no more nodes in the tree.
  *
- * the result of this function is semantically equivalent to what could be
+ * If dense == true, this function stops scanning when it founds a hole of
+ * indexes.  I.e. an index for which radix_tree_lookup_node would returns NULL.
+ * If dense == false, this function skips holes and continue scanning until
+ * maxresults nodes are found or it reaches the limit of the index range.
+ *
+ * The result of this function is semantically equivalent to what could be
  * obtained by repeated calls of radix_tree_lookup_node with increasing index.
- * but this function is much faster when node indexes are distributed sparsely.
+ * but this function is expected to be computationally cheaper when looking up
+ * multiple nodes at once.  Especially, it's expected to be much cheaper when
+ * node indexes are distributed sparsely.
  *
- * note that this function doesn't return exact values of node indexes of
- * found nodes.  if they are important for a caller, it's the caller's
- * responsibility to check them, typically by examinining the returned nodes
- * using some caller-specific knowledge about them.
+ * Note that this function doesn't return index values of found nodes.
+ * Thus, in the case of dense == false, if index values are important for
+ * a caller, it's the caller's responsibility to check them, typically
+ * by examinining the returned nodes using some caller-specific knowledge
+ * about them.
+ * In the case of dense == true, a node returned via results[N] is always for
+ * the index (idx + N).
  */
 
 unsigned int
 radix_tree_gang_lookup_node(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults)
+    void **results, unsigned int maxresults, bool dense)
 {
 	struct radix_tree_path path;
 
 	gang_lookup_init(t, idx, &path, 0);
-	return gang_lookup_scan(t, &path, results, maxresults, 0, false);
+	return gang_lookup_scan(t, &path, results, maxresults, 0, false, dense);
 }
 
 /*
  * radix_tree_gang_lookup_node_reverse:
  *
- * same as radix_tree_gang_lookup_node except that this one scans the
- * tree in the reverse order.  ie. descending index values.
+ * Same as radix_tree_gang_lookup_node except that this one scans the
+ * tree in the reverse order.  I.e. descending index values.
  */
 
 unsigned int
 radix_tree_gang_lookup_node_reverse(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults)
+    void **results, unsigned int maxresults, bool dense)
 {
 	struct radix_tree_path path;
 
 	gang_lookup_init(t, idx, &path, 0);
-	return gang_lookup_scan(t, &path, results, maxresults, 0, true);
+	return gang_lookup_scan(t, &path, results, maxresults, 0, true, dense);
 }
 
 /*
  * radix_tree_gang_lookup_tagged_node:
  *
- * same as radix_tree_gang_lookup_node except that this one only returns
+ * Same as radix_tree_gang_lookup_node except that this one only returns
  * nodes tagged with tagid.
+ *
+ * It's illegal to call this function with tagmask 0.
  */
 
 unsigned int
 radix_tree_gang_lookup_tagged_node(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults, radix_tree_tagid_t tagid)
+    void **results, unsigned int maxresults, bool dense, unsigned int tagmask)
 {
 	struct radix_tree_path path;
-	const unsigned int tagmask = tagid_to_mask(tagid);
 
+	KASSERT(tagmask != 0);
 	gang_lookup_init(t, idx, &path, tagmask);
-	return gang_lookup_scan(t, &path, results, maxresults, tagmask, false);
+	return gang_lookup_scan(t, &path, results, maxresults, tagmask, false,
+	    dense);
 }
 
 /*
  * radix_tree_gang_lookup_tagged_node_reverse:
  *
- * same as radix_tree_gang_lookup_tagged_node except that this one scans the
- * tree in the reverse order.  ie. descending index values.
+ * Same as radix_tree_gang_lookup_tagged_node except that this one scans the
+ * tree in the reverse order.  I.e. descending index values.
  */
 
 unsigned int
 radix_tree_gang_lookup_tagged_node_reverse(struct radix_tree *t, uint64_t idx,
-    void **results, unsigned int maxresults, radix_tree_tagid_t tagid)
+    void **results, unsigned int maxresults, bool dense, unsigned int tagmask)
 {
 	struct radix_tree_path path;
-	const unsigned int tagmask = tagid_to_mask(tagid);
 
+	KASSERT(tagmask != 0);
 	gang_lookup_init(t, idx, &path, tagmask);
-	return gang_lookup_scan(t, &path, results, maxresults, tagmask, true);
+	return gang_lookup_scan(t, &path, results, maxresults, tagmask, true,
+	    dense);
 }
 
 /*
  * radix_tree_get_tag:
  *
- * return if the tag is set for the node at the given index.  (true if set)
- * it's illegal to call this function for a node which has not been inserted.
+ * Return the tagmask for the node at the given index.
+ *
+ * It's illegal to call this function for a node which has not been inserted.
  */
 
-bool
-radix_tree_get_tag(struct radix_tree *t, uint64_t idx,
-    radix_tree_tagid_t tagid)
+unsigned int
+radix_tree_get_tag(struct radix_tree *t, uint64_t idx, unsigned int tagmask)
 {
+	/*
+	 * the following two implementations should behave same.
+	 * the former one was chosen because it seems faster.
+	 */
 #if 1
-	const unsigned int tagmask = tagid_to_mask(tagid);
 	void **vpp;
 
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, false, tagmask);
@@ -877,34 +959,37 @@ radix_tree_get_tag(struct radix_tree *t, uint64_t idx,
 		return false;
 	}
 	KASSERT(*vpp != NULL);
-	return (entry_tagmask(*vpp) & tagmask) != 0;
+	return (entry_tagmask(*vpp) & tagmask);
 #else
-	const unsigned int tagmask = tagid_to_mask(tagid);
 	void **vpp;
 
 	vpp = radix_tree_lookup_ptr(t, idx, NULL, false, 0);
 	KASSERT(vpp != NULL);
-	return (entry_tagmask(*vpp) & tagmask) != 0;
+	return (entry_tagmask(*vpp) & tagmask);
 #endif
 }
 
 /*
  * radix_tree_set_tag:
  *
- * set the tag for the node at the given index.
- * it's illegal to call this function for a node which has not been inserted.
+ * Set the tag for the node at the given index.
+ *
+ * It's illegal to call this function for a node which has not been inserted.
+ * It's illegal to call this function with tagmask 0.
  */
 
 void
-radix_tree_set_tag(struct radix_tree *t, uint64_t idx,
-    radix_tree_tagid_t tagid)
+radix_tree_set_tag(struct radix_tree *t, uint64_t idx, unsigned int tagmask)
 {
 	struct radix_tree_path path;
-	const unsigned int tagmask = tagid_to_mask(tagid);
-	void **vpp;
+	void **vpp __unused;
 	int i;
 
-	vpp = radix_tree_lookup_ptr(t, idx, &path, false, 0);
+	KASSERT(tagmask != 0);
+#if defined(DIAGNOSTIC)
+	vpp =
+#endif /* defined(DIAGNOSTIC) */
+	radix_tree_lookup_ptr(t, idx, &path, false, 0);
 	KASSERT(vpp != NULL);
 	KASSERT(*vpp != NULL);
 	KASSERT(path.p_lastidx == t->t_height);
@@ -925,19 +1010,20 @@ radix_tree_set_tag(struct radix_tree *t, uint64_t idx,
 /*
  * radix_tree_clear_tag:
  *
- * clear the tag for the node at the given index.
- * it's illegal to call this function for a node which has not been inserted.
+ * Clear the tag for the node at the given index.
+ *
+ * It's illegal to call this function for a node which has not been inserted.
+ * It's illegal to call this function with tagmask 0.
  */
 
 void
-radix_tree_clear_tag(struct radix_tree *t, uint64_t idx,
-    radix_tree_tagid_t tagid)
+radix_tree_clear_tag(struct radix_tree *t, uint64_t idx, unsigned int tagmask)
 {
 	struct radix_tree_path path;
-	const unsigned int tagmask = tagid_to_mask(tagid);
 	void **vpp;
 	int i;
 
+	KASSERT(tagmask != 0);
 	vpp = radix_tree_lookup_ptr(t, idx, &path, false, 0);
 	KASSERT(vpp != NULL);
 	KASSERT(*vpp != NULL);
@@ -1036,39 +1122,73 @@ test1(void)
 	radix_tree_dump(t);
 	assert(radix_tree_lookup_node(t, 0) == NULL);
 	assert(radix_tree_lookup_node(t, 1000) == NULL);
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 0);
-	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 0);
-	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 0);
-	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0) == 0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, 0) == 0);
-	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, true) == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, false) ==
+	    0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, true) ==
+	    0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, false)
 	    == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, true)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, false, 1)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, true, 1)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, false, 1)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 1000, results, 3, true, 1)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    false, 1) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    true, 1) == 0);
 	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 1000, results, 3,
-	    0) == 0);
+	    false, 1) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 1000, results, 3,
+	    true, 1) == 0);
 	assert(radix_tree_empty_tree_p(t));
-	assert(radix_tree_empty_tagged_tree_p(t, 0));
 	assert(radix_tree_empty_tagged_tree_p(t, 1));
+	assert(radix_tree_empty_tagged_tree_p(t, 2));
 	assert(radix_tree_insert_node(t, 0, (void *)0xdeadbea0) == 0);
 	assert(!radix_tree_empty_tree_p(t));
-	assert(radix_tree_empty_tagged_tree_p(t, 0));
 	assert(radix_tree_empty_tagged_tree_p(t, 1));
+	assert(radix_tree_empty_tagged_tree_p(t, 2));
 	assert(radix_tree_lookup_node(t, 0) == (void *)0xdeadbea0);
 	assert(radix_tree_lookup_node(t, 1000) == NULL);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 1);
-	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 0);
-	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, false) ==
+	    1);
+	assert(results[0] == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, true) ==
+	    1);
+	assert(results[0] == (void *)0xdeadbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, false)
+	    == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, true)
 	    == 0);
-	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, false, 1)
 	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, true, 1)
+	    == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    false, 1) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    true, 1) == 0);
 	assert(radix_tree_insert_node(t, 1000, (void *)0xdeadbea0) == 0);
 	assert(radix_tree_remove_node(t, 0) == (void *)0xdeadbea0);
 	assert(!radix_tree_empty_tree_p(t));
@@ -1076,28 +1196,45 @@ test1(void)
 	assert(radix_tree_lookup_node(t, 0) == NULL);
 	assert(radix_tree_lookup_node(t, 1000) == (void *)0xdeadbea0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 1);
+	assert(results[0] == (void *)0xdeadbea0);
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, false) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node(t, 1000, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 1000, results, 3, true) == 1);
 	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3) == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, false)
+	    == 0);
+	assert(radix_tree_gang_lookup_node_reverse(t, 0, results, 3, true)
+	    == 0);
 	memset(results, 0, sizeof(results));
-	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, false)
+	    == 1);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, 1000, results, 3, true)
+	    == 1);
 	assert(results[0] == (void *)0xdeadbea0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, false, 1)
 	    == 0);
-	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3, 0)
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 3, true, 1)
 	    == 0);
-	assert(!radix_tree_get_tag(t, 1000, 0));
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    false, 1) == 0);
+	assert(radix_tree_gang_lookup_tagged_node_reverse(t, 0, results, 3,
+	    true, 1) == 0);
 	assert(!radix_tree_get_tag(t, 1000, 1));
-	assert(radix_tree_empty_tagged_tree_p(t, 0));
+	assert(!radix_tree_get_tag(t, 1000, 2));
+	assert(radix_tree_get_tag(t, 1000, 2 | 1) == 0);
 	assert(radix_tree_empty_tagged_tree_p(t, 1));
-	radix_tree_set_tag(t, 1000, 1);
-	assert(!radix_tree_get_tag(t, 1000, 0));
-	assert(radix_tree_get_tag(t, 1000, 1));
-	assert(radix_tree_empty_tagged_tree_p(t, 0));
-	assert(!radix_tree_empty_tagged_tree_p(t, 1));
+	assert(radix_tree_empty_tagged_tree_p(t, 2));
+	radix_tree_set_tag(t, 1000, 2);
+	assert(!radix_tree_get_tag(t, 1000, 1));
+	assert(radix_tree_get_tag(t, 1000, 2));
+	assert(radix_tree_get_tag(t, 1000, 2 | 1) == 2);
+	assert(radix_tree_empty_tagged_tree_p(t, 1));
+	assert(!radix_tree_empty_tagged_tree_p(t, 2));
 	radix_tree_dump(t);
 	assert(radix_tree_lookup_node(t, 1000) == (void *)0xdeadbea0);
 	assert(radix_tree_insert_node(t, 0, (void *)0xbea0) == 0);
@@ -1112,47 +1249,89 @@ test1(void)
 	assert(radix_tree_lookup_node(t, UINT64_C(10000000000)) ==
 	    (void *)0xdea0);
 	radix_tree_dump(t);
-	assert(!radix_tree_get_tag(t, 0, 1));
-	assert(radix_tree_get_tag(t, 1000, 1));
+	assert(!radix_tree_get_tag(t, 0, 2));
+	assert(radix_tree_get_tag(t, 1000, 2));
 	assert(!radix_tree_get_tag(t, UINT64_C(10000000000), 1));
-	radix_tree_set_tag(t, 0, 1);;
-	radix_tree_set_tag(t, UINT64_C(10000000000), 1);
+	radix_tree_set_tag(t, 0, 2);;
+	radix_tree_set_tag(t, UINT64_C(10000000000), 2);
 	radix_tree_dump(t);
-	assert(radix_tree_get_tag(t, 0, 1));
-	assert(radix_tree_get_tag(t, 1000, 1));
-	assert(radix_tree_get_tag(t, UINT64_C(10000000000), 1));
-	radix_tree_clear_tag(t, 0, 1);;
-	radix_tree_clear_tag(t, UINT64_C(10000000000), 1);
+	assert(radix_tree_get_tag(t, 0, 2));
+	assert(radix_tree_get_tag(t, 1000, 2));
+	assert(radix_tree_get_tag(t, UINT64_C(10000000000), 2));
+	radix_tree_clear_tag(t, 0, 2);;
+	radix_tree_clear_tag(t, UINT64_C(10000000000), 2);
 	radix_tree_dump(t);
-	assert(!radix_tree_get_tag(t, 0, 1));
-	assert(radix_tree_get_tag(t, 1000, 1));
-	assert(!radix_tree_get_tag(t, UINT64_C(10000000000), 1));
+	assert(!radix_tree_get_tag(t, 0, 2));
+	assert(radix_tree_get_tag(t, 1000, 2));
+	assert(!radix_tree_get_tag(t, UINT64_C(10000000000), 2));
 	radix_tree_dump(t);
 	assert(radix_tree_replace_node(t, 1000, (void *)0x12345678) ==
 	    (void *)0xdeadbea0);
-	assert(!radix_tree_get_tag(t, 1000, 0));
-	assert(radix_tree_get_tag(t, 1000, 1));
-	assert(radix_tree_gang_lookup_node(t, 0, results, 3) == 3);
+	assert(!radix_tree_get_tag(t, 1000, 1));
+	assert(radix_tree_get_tag(t, 1000, 2));
+	assert(radix_tree_get_tag(t, 1000, 2 | 1) == 2);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, false) == 3);
 	assert(results[0] == (void *)0xbea0);
 	assert(results[1] == (void *)0x12345678);
 	assert(results[2] == (void *)0xdea0);
-	assert(radix_tree_gang_lookup_node(t, 1, results, 3) == 2);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 0, results, 3, true) == 1);
+	assert(results[0] == (void *)0xbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1, results, 3, false) == 2);
 	assert(results[0] == (void *)0x12345678);
 	assert(results[1] == (void *)0xdea0);
-	assert(radix_tree_gang_lookup_node(t, 1001, results, 3) == 1);
+	assert(radix_tree_gang_lookup_node(t, 1, results, 3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, 1001, results, 3, false) == 1);
 	assert(results[0] == (void *)0xdea0);
-	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000001), results, 3)
-	    == 0);
+	assert(radix_tree_gang_lookup_node(t, 1001, results, 3, true) == 0);
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000001), results, 3,
+	    false) == 0);
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000001), results, 3,
+	    true) == 0);
 	assert(radix_tree_gang_lookup_node(t, UINT64_C(1000000000000), results,
-	    3) == 0);
-	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 100, 1) == 1);
+	    3, false) == 0);
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(1000000000000), results,
+	    3, true) == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 100, false, 2)
+	    == 1);
 	assert(results[0] == (void *)0x12345678);
+	assert(radix_tree_gang_lookup_tagged_node(t, 0, results, 100, true, 2)
+	    == 0);
 	assert(entry_tagmask(t->t_root) != 0);
 	assert(radix_tree_remove_node(t, 1000) == (void *)0x12345678);
 	assert(entry_tagmask(t->t_root) == 0);
 	radix_tree_dump(t);
+	assert(radix_tree_insert_node(t, UINT64_C(10000000001), (void *)0xfff0)
+	    == 0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000000), results, 3,
+	    false) == 2);
+	assert(results[0] == (void *)0xdea0);
+	assert(results[1] == (void *)0xfff0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node(t, UINT64_C(10000000000), results, 3,
+	    true) == 2);
+	assert(results[0] == (void *)0xdea0);
+	assert(results[1] == (void *)0xfff0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, UINT64_C(10000000001),
+	    results, 3, false) == 3);
+	assert(results[0] == (void *)0xfff0);
+	assert(results[1] == (void *)0xdea0);
+	assert(results[2] == (void *)0xbea0);
+	memset(results, 0, sizeof(results));
+	assert(radix_tree_gang_lookup_node_reverse(t, UINT64_C(10000000001),
+	    results, 3, true) == 2);
+	assert(results[0] == (void *)0xfff0);
+	assert(results[1] == (void *)0xdea0);
 	assert(radix_tree_remove_node(t, UINT64_C(10000000000)) ==
 	    (void *)0xdea0);
+	assert(radix_tree_remove_node(t, UINT64_C(10000000001)) ==
+	    (void *)0xfff0);
 	radix_tree_dump(t);
 	assert(radix_tree_remove_node(t, 0) == (void *)0xbea0);
 	radix_tree_dump(t);
@@ -1180,13 +1359,32 @@ printops(const char *title, const char *name, int tag, unsigned int n,
 #define	TEST2_GANG_LOOKUP_NODES	16
 
 static bool
-test2_should_tag(unsigned int i, radix_tree_tagid_t tagid)
+test2_should_tag(unsigned int i, unsigned int tagid)
 {
 
 	if (tagid == 0) {
-		return (i & 0x3) == 0;	/* 25% */
+		return (i % 4) == 0;	/* 25% */
 	} else {
 		return (i % 7) == 0;	/* 14% */
+	}
+	return 1;
+}
+
+static void
+check_tag_count(const unsigned int *ntagged, unsigned int tagmask,
+    unsigned int count)
+{
+	unsigned int tag;
+
+	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+		if ((tagmask & (1 << tag)) == 0) {
+			continue;
+		}
+		if (((tagmask - 1) & tagmask) == 0) {
+			assert(count == ntagged[tag]);
+		} else {
+			assert(count >= ntagged[tag]);
+		}
 	}
 }
 
@@ -1199,7 +1397,8 @@ test2(const char *title, bool dense)
 	unsigned int i;
 	unsigned int nnodes = 100000;
 	unsigned int removed;
-	radix_tree_tagid_t tag;
+	unsigned int tag;
+	unsigned int tagmask;
 	unsigned int ntagged[RADIX_TREE_TAG_ID_MAX];
 	struct testnode *nodes;
 	struct timeval stv;
@@ -1225,13 +1424,15 @@ test2(const char *title, bool dense)
 		}
 		radix_tree_insert_node(t, n->idx, n);
 		for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+			tagmask = 1 << tag;
+
 			n->tagged[tag] = test2_should_tag(i, tag);
 			if (n->tagged[tag]) {
-				radix_tree_set_tag(t, n->idx, tag);
+				radix_tree_set_tag(t, n->idx, tagmask);
 				ntagged[tag]++;
 			}
-			assert(n->tagged[tag] ==
-			    radix_tree_get_tag(t, n->idx, tag));
+			assert((n->tagged[tag] ? tagmask : 0) ==
+			    radix_tree_get_tag(t, n->idx, tagmask));
 		}
 	}
 
@@ -1243,23 +1444,27 @@ test2(const char *title, bool dense)
 	gettimeofday(&etv, NULL);
 	printops(title, "lookup", 0, nnodes, &stv, &etv);
 
-	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+	for (tagmask = 1; tagmask <= RADIX_TREE_TAG_MASK; tagmask ++) {
 		unsigned int count = 0;
 
 		gettimeofday(&stv, NULL);
 		for (i = 0; i < nnodes; i++) {
-			bool tagged;
+			unsigned int tagged;
 
 			n = &nodes[i];
-			tagged = radix_tree_get_tag(t, n->idx, tag);
-			assert(n->tagged[tag] == tagged);
+			tagged = radix_tree_get_tag(t, n->idx, tagmask);
+			assert((tagged & ~tagmask) == 0);
+			for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+				assert((tagmask & (1 << tag)) == 0 ||
+				    n->tagged[tag] == !!(tagged & (1 << tag)));
+			}
 			if (tagged) {
 				count++;
 			}
 		}
 		gettimeofday(&etv, NULL);
-		assert(ntagged[tag] == count);
-		printops(title, "get_tag", tag, nnodes, &stv, &etv);
+		check_tag_count(ntagged, tagmask, count);
+		printops(title, "get_tag", tagmask, nnodes, &stv, &etv);
 	}
 
 	gettimeofday(&stv, NULL);
@@ -1279,12 +1484,14 @@ test2(const char *title, bool dense)
 	printops(title, "insert", 0, nnodes, &stv, &etv);
 
 	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+		tagmask = 1 << tag;
+
 		ntagged[tag] = 0;
 		gettimeofday(&stv, NULL);
 		for (i = 0; i < nnodes; i++) {
 			n = &nodes[i];
 			if (n->tagged[tag]) {
-				radix_tree_set_tag(t, n->idx, tag);
+				radix_tree_set_tag(t, n->idx, tagmask);
 				ntagged[tag]++;
 			}
 		}
@@ -1302,7 +1509,7 @@ test2(const char *title, bool dense)
 		nextidx = 0;
 		total = 0;
 		while ((nfound = radix_tree_gang_lookup_node(t, nextidx,
-		    (void *)results, __arraycount(results))) > 0) {
+		    (void *)results, __arraycount(results), false)) > 0) {
 			nextidx = results[nfound - 1]->idx + 1;
 			total += nfound;
 			if (nextidx == 0) {
@@ -1324,7 +1531,7 @@ test2(const char *title, bool dense)
 		nextidx = UINT64_MAX;
 		total = 0;
 		while ((nfound = radix_tree_gang_lookup_node_reverse(t, nextidx,
-		    (void *)results, __arraycount(results))) > 0) {
+		    (void *)results, __arraycount(results), false)) > 0) {
 			nextidx = results[nfound - 1]->idx - 1;
 			total += nfound;
 			if (nextidx == UINT64_MAX) {
@@ -1336,53 +1543,54 @@ test2(const char *title, bool dense)
 	gettimeofday(&etv, NULL);
 	printops(title, "ganglookup_reverse", 0, nnodes, &stv, &etv);
 
-	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+	for (tagmask = 1; tagmask <= RADIX_TREE_TAG_MASK; tagmask ++) {
+		unsigned int total = 0;
+
 		gettimeofday(&stv, NULL);
 		{
 			struct testnode *results[TEST2_GANG_LOOKUP_NODES];
 			uint64_t nextidx;
 			unsigned int nfound;
-			unsigned int total;
 
 			nextidx = 0;
-			total = 0;
 			while ((nfound = radix_tree_gang_lookup_tagged_node(t,
 			    nextidx, (void *)results, __arraycount(results),
-			    tag)) > 0) {
+			    false, tagmask)) > 0) {
 				nextidx = results[nfound - 1]->idx + 1;
 				total += nfound;
 			}
-			assert(total == ntagged[tag]);
 		}
 		gettimeofday(&etv, NULL);
-		printops(title, "ganglookup_tag", tag, ntagged[tag], &stv,
-		    &etv);
+		check_tag_count(ntagged, tagmask, total);
+		assert(tagmask != 0 || total == 0);
+		printops(title, "ganglookup_tag", tagmask, total, &stv, &etv);
 	}
 
-	for (tag = 0; tag < RADIX_TREE_TAG_ID_MAX; tag++) {
+	for (tagmask = 1; tagmask <= RADIX_TREE_TAG_MASK; tagmask ++) {
+		unsigned int total = 0;
+
 		gettimeofday(&stv, NULL);
 		{
 			struct testnode *results[TEST2_GANG_LOOKUP_NODES];
 			uint64_t nextidx;
 			unsigned int nfound;
-			unsigned int total;
 
 			nextidx = UINT64_MAX;
-			total = 0;
 			while ((nfound =
 			    radix_tree_gang_lookup_tagged_node_reverse(t,
 			    nextidx, (void *)results, __arraycount(results),
-			    tag)) > 0) {
+			    false, tagmask)) > 0) {
 				nextidx = results[nfound - 1]->idx - 1;
 				total += nfound;
 				if (nextidx == UINT64_MAX) {
 					break;
 				}
 			}
-			assert(total == ntagged[tag]);
 		}
 		gettimeofday(&etv, NULL);
-		printops(title, "ganglookup_tag_reverse", tag, ntagged[tag],
+		check_tag_count(ntagged, tagmask, total);
+		assert(tagmask != 0 || total == 0);
+		printops(title, "ganglookup_tag_reverse", tagmask, total,
 		    &stv, &etv);
 	}
 
@@ -1391,6 +1599,7 @@ test2(const char *title, bool dense)
 		unsigned int total;
 
 		total = 0;
+		tagmask = 1 << tag;
 		gettimeofday(&stv, NULL);
 		{
 			struct testnode *results[TEST2_GANG_LOOKUP_NODES];
@@ -1400,7 +1609,7 @@ test2(const char *title, bool dense)
 			nextidx = 0;
 			while ((nfound = radix_tree_gang_lookup_tagged_node(t,
 			    nextidx, (void *)results, __arraycount(results),
-			    tag)) > 0) {
+			    false, tagmask)) > 0) {
 				for (i = 0; i < nfound; i++) {
 					radix_tree_remove_node(t,
 					    results[i]->idx);
@@ -1411,11 +1620,14 @@ test2(const char *title, bool dense)
 					break;
 				}
 			}
-			assert(tag != 0 || total == ntagged[tag]);
-			assert(total <= ntagged[tag]);
 		}
 		gettimeofday(&etv, NULL);
-		printops(title, "ganglookup_tag+remove", tag, total, &stv,
+		if (tag == 0) {
+			check_tag_count(ntagged, tagmask, total);
+		} else {
+			assert(total <= ntagged[tag]);
+		}
+		printops(title, "ganglookup_tag+remove", tagmask, total, &stv,
 		    &etv);
 		removed += total;
 	}
@@ -1430,7 +1642,7 @@ test2(const char *title, bool dense)
 		nextidx = 0;
 		total = 0;
 		while ((nfound = radix_tree_gang_lookup_node(t, nextidx,
-		    (void *)results, __arraycount(results))) > 0) {
+		    (void *)results, __arraycount(results), false)) > 0) {
 			for (i = 0; i < nfound; i++) {
 				assert(results[i] == radix_tree_remove_node(t,
 				    results[i]->idx));
@@ -1447,8 +1659,9 @@ test2(const char *title, bool dense)
 	printops(title, "ganglookup+remove", 0, nnodes - removed, &stv, &etv);
 
 	assert(radix_tree_empty_tree_p(t));
-	assert(radix_tree_empty_tagged_tree_p(t, 0));
-	assert(radix_tree_empty_tagged_tree_p(t, 1));
+	for (tagmask = 1; tagmask <= RADIX_TREE_TAG_MASK; tagmask ++) {
+		assert(radix_tree_empty_tagged_tree_p(t, tagmask));
+	}
 	radix_tree_fini_tree(t);
 	free(nodes);
 }
