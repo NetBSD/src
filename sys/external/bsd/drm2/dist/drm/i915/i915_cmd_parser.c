@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.19 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.20 2019/12/05 20:25:54 maya Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,10 +28,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.19 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.20 2019/12/05 20:25:54 maya Exp $");
 
 #include "i915_drv.h"
 #include <linux/bitmap.h>
+#include <linux/log2.h>
 
 /**
  * DOC: batch buffer command parser
@@ -1259,7 +1260,7 @@ static void init_whitelist(struct intel_context *ctx, u32 batch_len)
 {
 	const u32 batch_cmds = DIV_ROUND_UP(batch_len, sizeof(u32));
 	const u32 exact_size = BITS_TO_LONGS(batch_cmds);
-	u32 next_size = BITS_TO_LONGS(powerof2(batch_cmds));
+	u32 next_size = BITS_TO_LONGS(roundup_pow_of_two(batch_cmds));
 	unsigned long *next_whitelist;
 
 	if (CMDPARSER_USES_GGTT(ctx->i915))
