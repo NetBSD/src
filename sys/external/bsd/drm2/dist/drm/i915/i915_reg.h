@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.13 2019/10/08 17:41:04 msaitoh Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.14 2019/12/05 20:03:09 maya Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -174,6 +174,8 @@
 #define   ECOCHK_PPGTT_UC_HSW		(0x1<<3)
 #define   ECOCHK_PPGTT_WT_HSW		(0x2<<3)
 #define   ECOCHK_PPGTT_WB_HSW		(0x3<<3)
+
+#define GEN8_RC6_CTX_INFO		0x8504
 
 #define GAC_ECO_BITS			0x14090
 #define   ECOBITS_SNB_BIT		(1<<13)
@@ -515,6 +517,10 @@
  * Registers used only by the command parser
  */
 #define BCS_SWCTRL 0x22200
+
+/* There are 16 GPR registers */
+#define BCS_GPR(n)	(0x22600 + (n) * 8)
+#define BCS_GPR_UDW(n)	(0x22600 + (n) * 8 + 4)
 
 #define GPGPU_THREADS_DISPATCHED        0x2290
 #define HS_INVOCATION_COUNT             0x2300
@@ -1572,6 +1578,7 @@ enum skl_disp_power_wells {
 #define RING_IMR(base)		((base)+0xa8)
 #define RING_HWSTAM(base)	((base)+0x98)
 #define RING_TIMESTAMP(base)	((base)+0x358)
+#define RING_TIMESTAMP_UDW(base) ((base) + 0x358 + 4)
 #define   TAIL_ADDR		0x001FFFF8
 #define   HEAD_WRAP_COUNT	0xFFE00000
 #define   HEAD_WRAP_ONE		0x00200000
@@ -5714,6 +5721,10 @@ enum skl_disp_power_wells {
 #define GAMMA_MODE_MODE_10BIT	(1 << 0)
 #define GAMMA_MODE_MODE_12BIT	(2 << 0)
 #define GAMMA_MODE_MODE_SPLIT	(3 << 0)
+
+/* Display Internal Timeout Register */
+#define RM_TIMEOUT		0x42060
+#define  MMIO_TIMEOUT_US(us)	((us) << 0)
 
 /* interrupts */
 #define DE_MASTER_IRQ_CONTROL   (1UL << 31)

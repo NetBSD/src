@@ -1,4 +1,4 @@
-/*	$NetBSD: bitops.h,v 1.8 2018/08/27 14:46:23 riastradh Exp $	*/
+/*	$NetBSD: bitops.h,v 1.9 2019/12/05 20:03:09 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -102,6 +102,7 @@ hweight64(uint64_t n)
  * turns up.
  */
 
+#define BITS_PER_BYTE 8
 #define	BITS_TO_LONGS(n)						\
 	roundup2((n), (sizeof(unsigned long) * CHAR_BIT))
 
