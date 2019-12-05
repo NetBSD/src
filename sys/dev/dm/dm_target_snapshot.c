@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.22 2019/12/03 15:47:38 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.23 2019/12/05 16:59:43 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.22 2019/12/03 15:47:38 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.23 2019/12/05 16:59:43 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -325,7 +325,6 @@ dm_target_snapshot_destroy(dm_table_entry_t * table_en)
 	printf("Snapshot target destroy function called\n");
 
 	dm_target_snapshot_config_t *tsc = table_en->target_config;
-	table_en->target_config = NULL;
 
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsc->tsc_snap_dev);
@@ -493,7 +492,6 @@ dm_target_snapshot_orig_destroy(dm_table_entry_t * table_en)
 		goto out;
 
 	dm_target_snapshot_origin_config_t *tsoc = table_en->target_config;
-	table_en->target_config = NULL;
 
 	/* Decrement pdev ref counter if 0 remove it */
 	dm_pdev_decr(tsoc->tsoc_real_dev);
