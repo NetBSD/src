@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.16 2019/12/05 03:21:17 riastradh Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.17 2019/12/05 03:21:29 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.16 2019/12/05 03:21:17 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.17 2019/12/05 03:21:29 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,7 +47,9 @@ struct pserialize {
 };
 
 static kmutex_t			psz_lock	__cacheline_aligned;
-static struct evcnt		psz_ev_excl	__cacheline_aligned;
+static struct evcnt		psz_ev_excl	__cacheline_aligned =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "pserialize", "exclusive access");
+EVCNT_ATTACH_STATIC(psz_ev_excl);
 
 /*
  * pserialize_init:
@@ -59,8 +61,6 @@ pserialize_init(void)
 {
 
 	mutex_init(&psz_lock, MUTEX_DEFAULT, IPL_NONE);
-	evcnt_attach_dynamic(&psz_ev_excl, EVCNT_TYPE_MISC, NULL,
-	    "pserialize", "exclusive access");
 }
 
 /*
