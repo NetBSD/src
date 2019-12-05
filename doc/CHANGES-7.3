@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.70 2019/12/05 16:25:17 bouyer Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.71 2019/12/05 16:30:45 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -736,4 +736,11 @@ share/man/man4/rnd.4				1.25 - 1.28
 	Update man page to reflect switch from CTR_DRBG to Hash_DRBG.
 	Update NIST SP800-90A reference.
 	[riastradh, ticket #1715]
+
+sys/external/bsd/dwc2/dwc2.c			1.60 - 1.66
+
+	Make dwc2debug sysctl'able
+	Calulate the right lenght for isoc transfer and the usb_syncmem
+	PR/54696: Kernel panic in bus_dma.c on Raspberry Pi 3B/3B+
+	[skrll, ticket #1716]
 
