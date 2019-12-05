@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.67 2019/11/28 14:08:22 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.68 2019/12/05 05:29:27 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -883,8 +883,15 @@ struct ifmedia_entry {
  */
 struct ifmedia {
 	u_int	ifm_mask;	/* IFMWD: mask of changes we don't care */
-	u_int	ifm_media;	/* IFMWD: current active media word */
-	struct ifmedia_entry *ifm_cur;	/* current user-selected media */
+	u_int	ifm_media;	/*
+				 * IFMWD: current use-set media word.
+				 *
+				 * XXX some drivers misuse this entry as
+				 * current active media word. Don't use this
+				 * entry as this purpose but use driver
+				 * specific entry if you don't use mii(4).
+				 */
+	struct ifmedia_entry *ifm_cur;	/* current user-selected media entry */
 	TAILQ_HEAD(, ifmedia_entry) ifm_list; /* list of all supported media */
 	ifm_change_cb_t	ifm_change;	/* media change driver callback */
 	ifm_stat_cb_t	ifm_status;	/* media status driver callback */
