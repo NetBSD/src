@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.19 2019/12/05 18:50:41 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -851,7 +851,9 @@ scan_siblings:
 			}
 		}
 		if (i == guard) {
+#if 0
 no_siblings:
+#endif /* 0 */
 			/*
 			 * not found.  go to parent.
 			 */
