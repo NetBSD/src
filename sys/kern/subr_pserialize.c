@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pserialize.c,v 1.15 2019/12/03 13:30:52 martin Exp $	*/
+/*	$NetBSD: subr_pserialize.c,v 1.16 2019/12/05 03:21:17 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.15 2019/12/03 13:30:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pserialize.c,v 1.16 2019/12/05 03:21:17 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
 #include <sys/kmem.h>
+#include <sys/mutex.h>
 #include <sys/pserialize.h>
 #include <sys/xcall.h>
 
@@ -45,6 +46,7 @@ struct pserialize {
 	lwp_t *			psz_owner;
 };
 
+static kmutex_t			psz_lock	__cacheline_aligned;
 static struct evcnt		psz_ev_excl	__cacheline_aligned;
 
 /*
@@ -56,6 +58,7 @@ void
 pserialize_init(void)
 {
 
+	mutex_init(&psz_lock, MUTEX_DEFAULT, IPL_NONE);
 	evcnt_attach_dynamic(&psz_ev_excl, EVCNT_TYPE_MISC, NULL,
 	    "pserialize", "exclusive access");
 }
@@ -120,10 +123,9 @@ pserialize_perform(pserialize_t psz)
 
 	KASSERT(psz->psz_owner == curlwp);
 	psz->psz_owner = NULL;
-#ifdef __HAVE_ATOMIC64_LOADSTORE
-	atomic_store_relaxed(&psz_ev_excl.ev_count,
-	    1 + atomic_load_relaxed(&psz_ev_excl.ev_count));
-#endif
+	mutex_enter(&psz_lock);
+	psz_ev_excl.ev_count++;
+	mutex_exit(&psz_lock);
 }
 
 int
