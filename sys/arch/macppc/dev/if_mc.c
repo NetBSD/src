@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.25 2019/12/04 07:03:46 msaitoh Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.26 2019/12/05 06:28:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.25 2019/12/04 07:03:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.26 2019/12/05 06:28:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -362,12 +362,12 @@ mc_select_aui(struct mc_softc *sc)
 int
 mc_mediachange(struct mc_softc *sc)
 {
-	struct ifmedia_entry *ife = sc->sc_media.ifm_cur;
+	struct ifmedia *ifm = &sc->sc_media;
 
-	if (IFM_TYPE(ife->ifm_media) != IFM_ETHER)
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return EINVAL;
 
-	switch (IFM_SUBTYPE(ife->ifm_media)) {
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
 
 	case IFM_10_T:
 		mc_select_utp(sc);
