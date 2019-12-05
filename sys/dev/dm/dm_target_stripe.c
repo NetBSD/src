@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.26 2019/12/03 15:47:38 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.27 2019/12/05 16:59:43 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.26 2019/12/03 15:47:38 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.27 2019/12/05 16:59:43 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -310,7 +310,6 @@ int
 dm_target_stripe_destroy(dm_table_entry_t * table_en)
 {
 	dm_target_stripe_fini(table_en->target_config);
-	table_en->target_config = NULL;
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);

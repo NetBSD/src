@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.13 2019/12/01 06:53:31 tkusumi Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.14 2019/12/05 16:59:43 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.13 2019/12/01 06:53:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.14 2019/12/05 16:59:43 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper error target.
@@ -155,8 +155,6 @@ dm_target_error_sync(dm_table_entry_t * table_en)
 int
 dm_target_error_destroy(dm_table_entry_t * table_en)
 {
-	table_en->target_config = NULL;
-
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
