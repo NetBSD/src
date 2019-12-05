@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.26 2019/12/05 03:15:20 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.27 2019/12/05 06:25:33 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.26 2019/12/05 03:15:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.27 2019/12/05 06:25:33 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1237,21 +1237,21 @@ admsw_mediachange(struct ifnet *ifp)
 {
 	struct admsw_softc *sc = ifp->if_softc;
 	int port = (struct ethercom *)ifp - sc->sc_ethercom;	/* XXX */
-	struct ifmedia_entry *ife = sc->sc_ifmedia[port].ifm_cur;
+	struct ifmedia *ifm = &sc->sc_ifmedia[port];
 	int old, new, val;
 
-	if (IFM_TYPE(ife->ifm_media) != IFM_ETHER)
+	if (IFM_TYPE(ifm->ifm_media) != IFM_ETHER)
 		return EINVAL;
 
-	if (IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO) {
+	if (IFM_SUBTYPE(ifm->ifm_media) == IFM_AUTO) {
 		val = PHY_CNTL2_AUTONEG | PHY_CNTL2_100M | PHY_CNTL2_FDX;
-	} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_100_TX) {
-		if ((ife->ifm_media & IFM_FDX) != 0)
+	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_100_TX) {
+		if ((ifm->ifm_media & IFM_FDX) != 0)
 			val = PHY_CNTL2_100M | PHY_CNTL2_FDX;
 		else
 			val = PHY_CNTL2_100M;
-	} else if (IFM_SUBTYPE(ife->ifm_media) == IFM_10_T) {
-		if ((ife->ifm_media & IFM_FDX) != 0)
+	} else if (IFM_SUBTYPE(ifm->ifm_media) == IFM_10_T) {
+		if ((ifm->ifm_media & IFM_FDX) != 0)
 			val = PHY_CNTL2_FDX;
 		else
 			val = 0;
