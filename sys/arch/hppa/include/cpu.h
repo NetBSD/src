@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.7 2019/12/04 07:49:39 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.8 2019/12/05 03:59:39 riastradh Exp $	*/
 
 /*	$OpenBSD: cpu.h,v 1.55 2008/07/23 17:39:35 kettenis Exp $	*/
 
@@ -47,7 +47,7 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr: cpu.h 1.19 94/12/16$
+ * 	Utah $Hdr$
  */
 
 #ifndef	_MACHINE_CPU_H_
@@ -296,7 +296,6 @@ struct cpu_info {
 #define	CPUF_PRIMARY	0x0001		/* ... is monarch/primary */
 #define	CPUF_RUNNING	0x0002 		/* ... is running. */
 
-	struct lwp	*ci_onproc;	/* current user LWP / kthread */
 	volatile u_long	ci_ipi;		/* IPIs pending */
 
 	struct cpu_softc *ci_softc;
