@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.10 2019/12/05 05:17:55 ryo Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.11 2019/12/05 05:45:52 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.10 2019/12/05 05:17:55 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.11 2019/12/05 05:45:52 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -126,7 +126,7 @@ aarch64_getcacheinfo(int unit)
 
 	/* Need static buffer for the boot CPU */
 	if (unit == 0)
-		cinfo = &aarch64_cacheinfo0;
+		cinfo = aarch64_cacheinfo0;
 	else
 		cinfo = kmem_zalloc(sizeof(struct aarch64_cache_info)
 		    * MAX_CACHE_LEVEL, KM_SLEEP);
