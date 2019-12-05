@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.135 2019/11/22 14:28:46 maxv Exp $	*/
+/*	$NetBSD: libkern.h,v 1.136 2019/12/05 04:17:13 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -545,24 +545,5 @@ int	strnvisx(char *, size_t, const char *, size_t, int);
 #define VIS_OCTAL	0x01
 #define VIS_SAFE	0x20
 #define VIS_TRIM	0x40
-
-#ifdef notyet
-/*
- * LZF hashtable/state size: on uncompressible data and on a system with
- * a sufficiently large d-cache, a larger table produces a considerable
- * speed benefit.  On systems with small memory and caches, however...
- */
-#if defined(__vax__) || defined(__m68k__)
-#define LZF_HLOG 14
-#else
-#define LZF_HLOG 15
-#endif
-typedef const uint8_t *LZF_STATE[1 << LZF_HLOG];
-
-unsigned int lzf_compress_r (const void *const, unsigned int, void *,
-			     unsigned int, LZF_STATE);
-unsigned int lzf_decompress (const void *const, unsigned int, void *,
-			     unsigned int);
-#endif
 
 #endif /* !_LIB_LIBKERN_LIBKERN_H_ */
