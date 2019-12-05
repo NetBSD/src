@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.74 2019/11/26 09:00:55 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.75 2019/12/05 17:00:36 bouyer Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1722,4 +1722,56 @@ share/tmac/doc2html				1.68
 	PR toolchain/54715: Remove duplicate (incorrect) version of
 	the .Lk macro.
 	[kre, ticket #1461]
+
+sys/dev/pci/if_bge.c				1.336, 1.340, 1.341
+
+	- Avoid undefined behavior in bge_setmulti().
+	- Avoid undefined behavior when setting the MAC address in
+	  bge_init(). 
+	- Fix a bug that SK-9D41 can't detect fiber media.
+	- Use *_FLUSH() more. The main purpose is to wait following
+	  delay() correctly.
+	- Add missing DELAY(80) after writing BGE_MI_MODE register.
+	[msaitoh, ticket #1462]
+
+sys/dev/pci/if_age.c                    1.61, 1.63-1.64 
+	- Fix direction of the loop in age_get_macaddr().
+	- Fix multicast handling. All Atheros controllers use big-endian form
+	  when computing multicast hash.
+	- Fix a bug that IFF_ALLMULTI is almost always set.
+	[msaitoh, ticket #1463]
+
+sys/dev/pci/if_alc.c                    1.44 via patch
+sys/dev/pci/if_ale.c                    1.35-1.36 via patch
+sys/dev/pci/if_cas.c                    1.36 via patch
+	- Fix a bug that IFF_ALLMULTI is almost always set.
+	- Whitespace fixes.
+	[msaitoh, ticket #1464]
+
+sys/arch/powerpc/oea/ofw_autoconf.c		1.24
+
+	Add a hack for qemu/macppc. OF_finddevice calls will crash depending on
+	the boot loader and kernel being used. This patch allows using
+	-prom-env qemu_boot_hack=y to disable the lookup.
+	[joerg, ticket #1465]
+
+sys/arch/x86/include/genfb_machdep.h		1.4
+sys/arch/x86/x86/genfb_machdep.c		1.15
+sys/arch/x86/x86/hyperv.c			1.5
+
+	Prevent panic when attaching genfb if using a serial console
+	with Hyper-V Gen.2.
+	[nonaka, ticket #1466]
+
+share/man/man4/rnd.4				1.25 - 1.28
+
+	Update man page to reflect switch from CTR_DRBG to Hash_DRBG.
+	Update NIST SP800-90A reference.
+	[riastradh, ticket #1467]
+
+sys/external/bsd/dwc2/dwc2.c			1.60 - 1.66
+	Make dwc2debug sysctl'able
+	Calulate the right lenght for isoc transfer and the usb_syncmem
+	PR/54696: Kernel panic in bus_dma.c on Raspberry Pi 3B/3B+
+	[skrll, ticket #1468]
 
