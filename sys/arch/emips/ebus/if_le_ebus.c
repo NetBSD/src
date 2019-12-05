@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.20 2019/05/29 10:07:28 msaitoh Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.21 2019/12/05 05:28:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.20 2019/05/29 10:07:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.21 2019/12/05 05:28:09 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -591,42 +591,11 @@ enic_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 int
 enic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct enic_softc *sc = ifp->if_softc;
-	struct ifreq *ifr = (struct ifreq *)data;
 	int s, error = 0;
 
 	s = splnet();
 
 	switch (cmd) {
-	case SIOCSIFMEDIA:
-#if 0 /*DEBUG*/
-	    {
-		extern int ei_drops[];
-		static int flip = 0;
-		if (flip++ == 2) {
-			int i;
-			flip = 0;
-			printf("enic_ioctl(%x) %qd/%qd %qd/%qd %d/%d %d:%d "
-			    "%d+%d %d/%d/%d\n", ifp->if_flags,
-			    ifp->if_ierrors, ifp->if_oerrors,
-			    ifp->if_ipackets, ifp->if_opackets,
-			    sc->sc_no_rd, sc->sc_no_td,
-			    sc->xhit, sc->xmiss,
-			    sc->tfull, sc->tfull2,
-			    sc->brh, sc->rf, sc->bxh);
-			printf(" Ctl %x lt %x tim %d\n",
-			    sc->sc_regs->Control, sc->it, ifp->if_timer);
-
-			for (i = 0; i < 64; i++)
-				if (ei_drops[i])
-					printf(" %d.%d", i, ei_drops[i]);
-			printf("\n");
-		}
-	    }
-#endif
-		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
-		break;
-
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 		if (cmd == SIOCSIFADDR) {
