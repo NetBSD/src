@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.9 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.10 2019/12/05 05:17:55 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.9 2019/12/02 23:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.10 2019/12/05 05:17:55 ryo Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -49,7 +49,7 @@ u_int aarch64_cache_prefer_mask;
 /* cache info per cluster. the same cluster has the same cache configuration? */
 #define MAXCPUPACKAGES	MAXCPUS		/* maximum of ci->ci_package_id */
 static struct aarch64_cache_info *aarch64_cacheinfo[MAXCPUPACKAGES];
-static struct aarch64_cache_info aarch64_cacheinfo0;
+static struct aarch64_cache_info aarch64_cacheinfo0[MAX_CACHE_LEVEL];
 
 
 static void
