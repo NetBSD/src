@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.9 2019/12/04 15:31:12 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.10 2019/12/05 16:59:43 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.9 2019/12/04 15:31:12 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.10 2019/12/05 16:59:43 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -162,11 +162,8 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 
 	while (!SLIST_EMPTY(tbl)) {	/* List Deletion. */
 		table_en = SLIST_FIRST(tbl);
-		/*
-		 * Remove target specific config data. After successfull
-		 * call table_en->target_config must be set to NULL.
-		 */
-		table_en->target->destroy(table_en);
+		if (table_en->target->destroy(table_en) == 0)
+			table_en->target_config = NULL;
 
 		SLIST_REMOVE_HEAD(tbl, next);
 
