@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1244 2019/11/14 16:23:52 maxv Exp $
+#	$NetBSD: files,v 1.1245 2019/12/05 03:22:02 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -191,7 +191,6 @@ defflag	opt_machdep.h		MACHDEP
 # use it.
 
 # Individual crypto transforms
-include "crypto/arc4/files.arc4"
 include "crypto/des/files.des"
 include "crypto/blowfish/files.blowfish"
 include "crypto/cast128/files.cast128"
