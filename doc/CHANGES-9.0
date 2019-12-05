@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.129 2019/12/05 09:40:15 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.130 2019/12/05 10:29:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6636,3 +6636,7 @@ distrib/notes/common/main			(edited manually)
 doc/CHANGES					(edited manually)
 
 	Add macppc powerpc 601 changes.
+
+distrib/cdrom/NetBSD-9.0.mk			1.1
+
+	Add config cloned from -current (for macppc ppc 601 support)
