@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.42 2019/10/01 18:00:08 chs Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.43 2019/12/05 07:03:01 msaitoh Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.42 2019/10/01 18:00:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.43 2019/12/05 07:03:01 msaitoh Exp $");
 
 #include "opt_pci.h"
 
@@ -558,7 +558,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pi = get_io_desc(pb, size);
 			pi->dev = pd;
 			pi->reg = br;
-			pi->size = (uint64_t) size;
+			pi->size = (uint64_t)size;
 			pi->align = 4;
 			if (pb->io_align < pi->size)
 				pb->io_align = pi->size;
@@ -575,15 +575,15 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			switch (PCI_MAPREG_MEM_TYPE(mask)) {
 			case PCI_MAPREG_MEM_TYPE_32BIT:
 			case PCI_MAPREG_MEM_TYPE_32BIT_1M:
-				size = (uint64_t) PCI_MAPREG_MEM_SIZE(mask);
+				size = (uint64_t)PCI_MAPREG_MEM_SIZE(mask);
 				break;
 			case PCI_MAPREG_MEM_TYPE_64BIT:
 				bar64 = pci_conf_read(pb->pc, tag, br + 4);
 				pci_conf_write(pb->pc, tag, br + 4, 0xffffffff);
 				mask64 = pci_conf_read(pb->pc, tag, br + 4);
 				pci_conf_write(pb->pc, tag, br + 4, bar64);
-				size = (uint64_t) PCI_MAPREG_MEM64_SIZE(
-				      (((uint64_t) mask64) << 32) | mask);
+				size = (uint64_t)PCI_MAPREG_MEM64_SIZE(
+				      (((uint64_t)mask64) << 32) | mask);
 				width = 8;
 				break;
 			default:
@@ -608,7 +608,8 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 					printf("MEM%d BAR 0x%x has size %#lx\n",
 					    PCI_MAPREG_MEM_TYPE(mask) ==
 						PCI_MAPREG_MEM_TYPE_64BIT ?
-						64 : 32, br, (unsigned long)size);
+						64 : 32,
+					    br, (unsigned long)size);
 				}
 			}
 
@@ -652,7 +653,7 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 				printf("pciconf: too many memory windows\n");
 				return -1;
 			}
-			size = (uint64_t) PCI_MAPREG_MEM_SIZE(mask);
+			size = (uint64_t)PCI_MAPREG_MEM_SIZE(mask);
 
 			pm = get_mem_desc(pb, size);
 			pm->dev = pd;
@@ -999,8 +1000,8 @@ configure_bus(pciconf_bus_t *pb)
 	def_ltim = (def_ltim + 7) & ~7;
 	max_ltim = (max_ltim + 7) & ~7;
 
-	pb->def_ltim = MIN( def_ltim, 255 );
-	pb->max_ltim = MIN( MAX(max_ltim, def_ltim ), 255 );
+	pb->def_ltim = MIN(def_ltim, 255);
+	pb->max_ltim = MIN(MAX(max_ltim, def_ltim), 255);
 
 	/*
 	 * Now we have what we need to initialize the devices.
@@ -1049,7 +1050,7 @@ configure_bus(pciconf_bus_t *pb)
 			ltim = MIN (pb->def_ltim, pb->max_ltim);
 		}
 		if ((pd->enable &
-		    (PCI_CONF_ENABLE_MEM|PCI_CONF_ENABLE_IO)) == 0) {
+		    (PCI_CONF_ENABLE_MEM | PCI_CONF_ENABLE_IO)) == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf("Disabled due to lack of resources.\n");
 			cmd &= ~(PCI_COMMAND_MASTER_ENABLE |
