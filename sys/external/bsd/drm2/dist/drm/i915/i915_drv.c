@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.16 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.17 2019/12/05 20:03:09 maya Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.16 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.17 2019/12/05 20:03:09 maya Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -765,6 +765,8 @@ int i915_drm_suspend_late(struct drm_device *drm_dev, bool hibernation)
 		return ret;
 	}
 
+	i915_rc6_ctx_wa_suspend(dev_priv);
+
 #ifndef __NetBSD__		/* pmf handles this for us.  */
 	pci_disable_device(drm_dev->pdev);
 	/*
@@ -922,6 +924,8 @@ int i915_drm_resume_early(struct drm_device *dev)
 
 	intel_uncore_sanitize(dev);
 	intel_power_domains_init_hw(dev_priv);
+
+	i915_rc6_ctx_wa_resume(dev_priv);
 
 	return ret;
 }
