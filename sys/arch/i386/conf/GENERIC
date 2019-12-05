@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1215 2019/11/01 02:53:23 msaitoh Exp $
+# $NetBSD: GENERIC,v 1.1216 2019/12/05 22:05:05 sevan Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1215 $"
+#ident		"GENERIC-$Revision: 1.1216 $"
 
 maxusers	64		# estimated number of users
 
@@ -198,7 +198,7 @@ options 	PPP_FILTER	# Active filter support for PPP (requires bpf)
 #options 	ACPIVERBOSE	# verbose ACPI device autoconfig messages
 #options 	EISAVERBOSE	# verbose EISA device autoconfig messages
 #options 	MIIVERBOSE	# verbose PHY autoconfig messages
-#options 	PCIVERBOSE	# verbose PCI device autoconfig messages
+options 	PCIVERBOSE	# verbose PCI device autoconfig messages
 #options 	PCI_CONFIG_DUMP	# verbosely dump PCI config space
 #options 	PCMCIAVERBOSE	# verbose PCMCIA configuration messages
 options 	SCSIVERBOSE	# human readable SCSI error messages
