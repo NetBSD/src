@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.69 2019/11/25 15:47:16 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.70 2019/12/05 16:25:17 bouyer Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -730,4 +730,10 @@ sys/kern/subr_cprng.c				1.33
 
 	Use cprng_strong, not cprng_fast, for sysctl kern.arnd.
 	[riastradh, ticket #1714]
+
+share/man/man4/rnd.4				1.25 - 1.28
+
+	Update man page to reflect switch from CTR_DRBG to Hash_DRBG.
+	Update NIST SP800-90A reference.
+	[riastradh, ticket #1715]
 
