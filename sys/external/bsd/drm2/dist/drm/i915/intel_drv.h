@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_drv.h,v 1.10 2018/08/27 06:18:30 riastradh Exp $	*/
+/*	$NetBSD: intel_drv.h,v 1.11 2019/12/05 20:03:09 maya Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -1451,6 +1451,9 @@ void intel_enable_gt_powersave(struct drm_device *dev);
 void intel_disable_gt_powersave(struct drm_device *dev);
 void intel_suspend_gt_powersave(struct drm_device *dev);
 void intel_reset_gt_powersave(struct drm_device *dev);
+bool i915_rc6_ctx_wa_check(struct drm_i915_private *i915);
+void i915_rc6_ctx_wa_suspend(struct drm_i915_private *i915);
+void i915_rc6_ctx_wa_resume(struct drm_i915_private *i915);
 void gen6_update_ring_freq(struct drm_device *dev);
 void gen6_rps_busy(struct drm_i915_private *dev_priv);
 void gen6_rps_reset_ei(struct drm_i915_private *dev_priv);

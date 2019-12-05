@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.c,v 1.10 2019/09/28 16:14:52 chs Exp $	*/
+/*	$NetBSD: intel_ringbuffer.c,v 1.11 2019/12/05 20:03:09 maya Exp $	*/
 
 /*
  * Copyright © 2008-2010 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.10 2019/09/28 16:14:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.11 2019/12/05 20:03:09 maya Exp $");
 
 #include <asm/param.h>
 #include <drm/drmP.h>
@@ -2162,6 +2162,8 @@ static void intel_destroy_ringbuffer_obj(struct intel_ringbuffer *ringbuf)
 static int intel_alloc_ringbuffer_obj(struct drm_device *dev,
 				      struct intel_ringbuffer *ringbuf)
 {
+	struct drm_i915_private *dev_priv = to_i915(dev);
+	struct i915_address_space *vm = &dev_priv->gtt.base;
 	struct drm_i915_gem_object *obj;
 
 	obj = NULL;
@@ -2172,8 +2174,12 @@ static int intel_alloc_ringbuffer_obj(struct drm_device *dev,
 	if (obj == NULL)
 		return -ENOMEM;
 
-	/* mark ring buffers as read-only from GPU side by default */
-	obj->gt_ro = 1;
+	/*
+	 * Mark ring buffers as read-only from GPU side (so no stray overwrites)
+	 * if supported by the platform's GGTT.
+	 */
+	if (vm->has_read_only)
+		obj->gt_ro = 1;
 
 	ringbuf->obj = obj;
 
