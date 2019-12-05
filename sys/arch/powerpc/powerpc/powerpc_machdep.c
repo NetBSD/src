@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.74 2019/11/23 19:40:36 ad Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.75 2019/12/05 20:55:24 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.74 2019/11/23 19:40:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.75 2019/12/05 20:55:24 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -373,6 +373,8 @@ void
 cpu_ast(struct lwp *l, struct cpu_info *ci)
 {
 	l->l_md.md_astpending = 0;	/* we are about to do it */
+	__insn_barrier();
+	userret(l, l->l_md.md_utf);
 
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
@@ -400,7 +402,7 @@ cpu_need_resched(struct cpu_info *ci, struct lwp *l, int flags)
 		cpu_send_ipi(cpu_index(ci), IPI_AST);
 #endif
 	} else {
-		l->l_md.md_astpending = 1;		/* force call to ast() */
+		l->l_md.md_astpending = 1;	/* force call to cpu_ast() */
 	}
 }
 
