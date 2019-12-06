@@ -1,4 +1,4 @@
-/*	$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $	*/
+/*	$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $");
+__RCSID("$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -51,7 +51,7 @@ __RCSID("$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $");
 #  include <errno.h>
 # else /* ! _KERNEL */
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.21 2019/06/17 17:03:58 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: snprintb.c,v 1.22 2019/12/06 19:36:22 christos Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -81,13 +81,13 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	ch = *bitfmt++;
 	switch (ch != '\177' ? ch : *bitfmt++) {
 	case 8:
-		sbase = "0%" PRIo64;
+		sbase = "%#jo";
 		break;
 	case 10:
-		sbase = "%" PRId64;
+		sbase = "%ju";
 		break;
 	case 16:
-		sbase = "0x%" PRIx64;
+		sbase = "%#jx";
 		break;
 	default:
 		goto internal;
@@ -97,7 +97,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 	if (l_max > 0)
 		buflen--;
 
-	t_len = snprintf(bp, buflen, sbase, val);
+	t_len = snprintf(bp, buflen, sbase, (uintmax_t)val);
 	if (t_len < 0)
 		goto internal;
 
@@ -128,7 +128,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		  }							\
 		  STORE('>'); STORE('\0');				\
 		  if ((size_t)t_len < buflen)				\
-			snprintf(bp, buflen - t_len, sbase, val);	\
+			snprintf(bp, buflen - t_len, sbase, (uintmax_t)val);\
 		  t_len += v_len; l_len = v_len; bp += v_len;		\
 		} while ( /* CONSTCOND */ 0)
 
@@ -168,7 +168,7 @@ snprintb_m(char *buf, size_t buflen, const char *bitfmt, uint64_t val,
 		}
 #define FMTSTR(sb, f) 							\
 	do { 								\
-		f_len = snprintf(bp, buflen - t_len, sb, f);		\
+		f_len = snprintf(bp, buflen - t_len, sb, (uintmax_t)f);	\
 		if (f_len < 0) 						\
 			goto internal; 					\
 		t_len += f_len; 					\
