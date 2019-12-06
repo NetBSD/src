@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.27 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.28 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.27 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.28 2019/12/06 21:36:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -93,6 +93,8 @@ idle_loop(void *dummy)
 		}
 		KASSERT(l->l_mutex == l->l_cpu->ci_schedstate.spc_lwplock);
 		lwp_lock(l);
+		l->l_stat = LSIDL;
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 		KASSERT(curlwp == l);
 		KASSERT(l->l_stat == LSONPROC);

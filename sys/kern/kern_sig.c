@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.380 2019/11/21 18:17:36 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.381 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.380 2019/11/21 18:17:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.381 2019/12/06 21:36:10 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1771,6 +1771,7 @@ sigswitch_unlock_and_switch_away(struct lwp *l)
 
 	mutex_exit(p->p_lock);
 	lwp_lock(l);
+	spc_lock(l->l_cpu);
 	mi_switch(l);
 	KERNEL_LOCK(biglocks, l);
 }

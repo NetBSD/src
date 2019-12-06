@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.54 2019/12/06 18:15:57 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.55 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.54 2019/12/06 18:15:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.55 2019/12/06 21:36:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -729,6 +729,7 @@ softint_thread(void *cookie)
 
 		lwp_lock(l);
 		l->l_stat = LSIDL;
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 	}
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.53 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.54 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.53 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.54 2019/12/06 21:36:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -260,6 +260,7 @@ sleepq_block(int timo, bool catch_p)
 		if (timo) {
 			callout_schedule(&l->l_timeout_ch, timo);
 		}
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 
 		/* The LWP and sleep queue are now unlocked. */

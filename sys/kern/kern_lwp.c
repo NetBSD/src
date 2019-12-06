@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.216 2019/12/03 05:07:48 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.217 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.216 2019/12/03 05:07:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.217 2019/12/06 21:36:10 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1602,6 +1602,7 @@ lwp_userret(struct lwp *l)
 			lwp_unlock(l);
 			mutex_exit(p->p_lock);
 			lwp_lock(l);
+			spc_lock(l->l_cpu);
 			mi_switch(l);
 		}
 
