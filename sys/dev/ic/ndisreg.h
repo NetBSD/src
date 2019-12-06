@@ -1,4 +1,4 @@
-/*	$NetBSD: ndisreg.h,v 1.1 2019/02/15 08:54:02 nonaka Exp $	*/
+/*	$NetBSD: ndisreg.h,v 1.2 2019/12/06 12:39:51 nonaka Exp $	*/
 /*	$OpenBSD: ndis.h,v 1.2 2016/09/23 11:32:13 mikeb Exp $	*/
 
 /*-
@@ -39,6 +39,7 @@
 #define NDIS_VERSION_5_1		0x00050001
 #define NDIS_VERSION_6_0		0x00060000
 #define NDIS_VERSION_6_1		0x00060001
+#define NDIS_VERSION_6_20		0x00060014
 #define NDIS_VERSION_6_30		0x0006001e
 
 #define	NDIS_MEDIA_STATE_CONNECTED	0
