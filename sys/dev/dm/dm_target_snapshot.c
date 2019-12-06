@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.23 2019/12/05 16:59:43 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.24 2019/12/06 16:11:59 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.23 2019/12/05 16:59:43 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.24 2019/12/06 16:11:59 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -141,7 +141,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt->version[0] = 1;
 		dmt->version[1] = 0;
 		dmt->version[2] = 5;
-		strlcpy(dmt->name, "snapshot", DM_MAX_TYPE_NAME);
 		dmt->init = &dm_target_snapshot_init;
 		dmt->status = &dm_target_snapshot_status;
 		dmt->strategy = &dm_target_snapshot_strategy;
@@ -154,7 +153,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt1->version[0] = 1;
 		dmt1->version[1] = 0;
 		dmt1->version[2] = 5;
-		strlcpy(dmt1->name, "snapshot-origin", DM_MAX_TYPE_NAME);
 		dmt1->init = &dm_target_snapshot_orig_init;
 		dmt1->status = &dm_target_snapshot_orig_status;
 		dmt1->strategy = &dm_target_snapshot_orig_strategy;
