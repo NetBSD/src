@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_m2.c,v 1.36 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: sched_m2.c,v 1.37 2019/12/06 18:33:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.36 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_m2.c,v 1.37 2019/12/06 18:33:19 ad Exp $");
 
 #include <sys/param.h>
 
@@ -330,7 +330,9 @@ sched_tick(struct cpu_info *ci)
 	 */
 	if (lwp_eprio(l) <= spc->spc_maxpriority || l->l_target_cpu) {
 		spc->spc_flags |= SPCF_SHOULDYIELD;
-		atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
+		spc_lock(ci);
+		sched_resched_cpu(ci, MAXPRI_KTHREAD, true);
+		/* spc now unlocked */
 	} else
 		spc->spc_ticks = l->l_sched.timeslice; 
 	lwp_unlock(l);
