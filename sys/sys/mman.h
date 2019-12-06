@@ -1,4 +1,4 @@
-/*	$NetBSD: mman.h,v 1.61 2019/04/30 09:23:00 uwe Exp $	*/
+/*	$NetBSD: mman.h,v 1.62 2019/12/06 19:37:43 christos Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1993
@@ -158,7 +158,7 @@ typedef	__off_t		off_t;		/* file offset */
 		":\064" "ALIGN=4PB\0"		\
 		":\070" "ALIGN=64PB\0"		\
 		":\074" "ALIGN=256PB\0"		\
-		"*"	"ALIGN=2^%d\0"
+		"*"	"ALIGN=2^%ju\0"
 #endif
 
 /*
