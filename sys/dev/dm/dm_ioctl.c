@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.38 2019/12/05 15:52:39 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.39 2019/12/06 16:33:47 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.38 2019/12/05 15:52:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.39 2019/12/06 16:33:47 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -131,10 +131,10 @@ dm_dbg_print_flags(int flags)
 		aprint_debug("dbg_flags: DM_READONLY_FLAG set In/Out\n");
 
 	if (flags & DM_SUSPEND_FLAG)
-		aprint_debug("dbg_flags: DM_SUSPEND_FLAG set In/Out \n");
+		aprint_debug("dbg_flags: DM_SUSPEND_FLAG set In/Out\n");
 
 	if (flags & DM_PERSISTENT_DEV_FLAG)
-		aprint_debug("db_flags: DM_PERSISTENT_DEV_FLAG set In\n");
+		aprint_debug("dbg_flags: DM_PERSISTENT_DEV_FLAG set In\n");
 
 	if (flags & DM_STATUS_TABLE_FLAG)
 		aprint_debug("dbg_flags: DM_STATUS_TABLE_FLAG set In\n");

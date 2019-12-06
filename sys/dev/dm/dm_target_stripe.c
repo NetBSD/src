@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.28 2019/12/06 16:11:59 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.29 2019/12/06 16:33:47 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.28 2019/12/06 16:11:59 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.29 2019/12/06 16:33:47 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -241,11 +241,11 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 	blkoff = 0;
 	num_blks = bp->b_resid / DEV_BSIZE;
 	for (;;) {
-		/* blockno to strip piece nr */
+		/* blockno to stripe piece nr */
 		stripe = blkno / tsc->stripe_chunksize;
 		stripe_off = blkno % tsc->stripe_chunksize;
 
-		/* where we are inside the strip */
+		/* where we are inside the stripe */
 		stripe_devnr = stripe % tsc->stripe_num;
 		stripe_blknr = stripe / tsc->stripe_num;
 

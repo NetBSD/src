@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.45 2019/12/05 15:52:39 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.46 2019/12/06 16:33:47 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -428,7 +428,7 @@ dm_ioctl_switch(u_long cmd)
 
 	switch(cmd) {
 	case NETBSD_DM_IOCTL:
-		aprint_debug("dm NetBSD_DM_IOCTL called\n");
+		aprint_debug("dm NETBSD_DM_IOCTL called\n");
 		break;
 	default:
 		 aprint_debug("dm unknown ioctl called\n");
@@ -637,9 +637,9 @@ dmstrategy(struct buf *bp)
 		    PRIu64"\n", buf_start, buf_len);
 		aprint_debug("start-buf_start %010"PRIu64", end %010"
 		    PRIu64"\n", start - buf_start, end);
-		aprint_debug("start %010" PRIu64" , end %010"
+		aprint_debug("start %010" PRIu64", end %010"
                     PRIu64"\n", start, end);
-		aprint_debug("\n----------------------------------------\n");
+		aprint_debug("----------------------------------------\n");
 
 		if (start < end) {
 			/* create nested buffer  */
