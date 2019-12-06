@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.76 2019/12/06 03:45:33 riastradh Exp $	*/
+/*	$NetBSD: cons.c,v 1.77 2019/12/06 04:15:38 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -33,13 +33,13 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * from: Utah $Hdr$
+ * from: Utah $Hdr: cons.c 1.7 92/01/21$
  *
  *	@(#)cons.c	8.2 (Berkeley) 1/12/94
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.76 2019/12/06 03:45:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.77 2019/12/06 04:15:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
