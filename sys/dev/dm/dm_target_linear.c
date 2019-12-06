@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.22 2019/12/05 16:59:43 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.23 2019/12/06 16:46:14 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.22 2019/12/05 16:59:43 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.23 2019/12/06 16:46:14 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -146,9 +146,9 @@ dm_target_linear_sync(dm_table_entry_t * table_en)
 	tlc = table_en->target_config;
 
 	cmd = 1;
-	
+
 	return VOP_IOCTL(tlc->pdev->pdev_vnode,  DIOCCACHESYNC, &cmd,
-	    FREAD|FWRITE, kauth_cred_get());	
+	    FREAD|FWRITE, kauth_cred_get());
 }
 
 /*
