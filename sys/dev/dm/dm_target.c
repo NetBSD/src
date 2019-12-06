@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.22 2019/12/04 15:31:12 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.23 2019/12/06 16:11:59 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.22 2019/12/04 15:31:12 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.23 2019/12/06 16:11:59 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -241,7 +241,16 @@ dm_target_destroy(void)
 dm_target_t *
 dm_target_alloc(const char *name)
 {
-	return kmem_zalloc(sizeof(dm_target_t), KM_SLEEP);
+	dm_target_t *dmt;
+
+	dmt = kmem_zalloc(sizeof(dm_target_t), KM_SLEEP);
+	if (dmt == NULL)
+		return NULL;
+
+	if (name)
+		strlcpy(dmt->name, name, sizeof(dmt->name));
+
+	return dmt;
 }
 
 /*
@@ -298,7 +307,6 @@ dm_target_init(void)
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
-	strlcpy(dmt->name, "linear", DM_MAX_TYPE_NAME);
 	dmt->init = &dm_target_linear_init;
 	dmt->status = &dm_target_linear_status;
 	dmt->strategy = &dm_target_linear_strategy;
@@ -313,7 +321,6 @@ dm_target_init(void)
 	dmt3->version[0] = 1;
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
-	strlcpy(dmt3->name, "striped", DM_MAX_TYPE_NAME);
 	dmt3->init = &dm_target_stripe_init;
 	dmt3->status = &dm_target_stripe_status;
 	dmt3->strategy = &dm_target_stripe_strategy;
