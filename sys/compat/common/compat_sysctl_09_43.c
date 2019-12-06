@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysctl_09_43.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_sysctl_09_43.c,v 1.3 2019/12/06 08:35:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.3 2019/12/06 08:35:21 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -129,20 +129,20 @@ compat_sysctl_vfs(struct sysctllog **clog)
 }
 #endif
 
-static struct sysctllog *clog = NULL;
+static struct sysctllog *compat_09_43_clog = NULL;
 
 int
 compat_sysctl_09_43_init(void)
 {
 
-	return compat_sysctl_vfs(&clog);
+	return compat_sysctl_vfs(&compat_09_43_clog);
 }
 
 int
 compat_sysctl_09_43_fini(void)
 {
 
-	sysctl_teardown(&clog);
+	sysctl_teardown(&compat_09_43_clog);
 	return 0;
 }
 
