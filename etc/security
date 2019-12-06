@@ -1,6 +1,6 @@
 #!/bin/sh -
 #
-#	$NetBSD: security,v 1.125 2019/09/18 22:27:55 uwe Exp $
+#	$NetBSD: security,v 1.126 2019/12/06 14:43:30 riastradh Exp $
 #	from: @(#)security	8.1 (Berkeley) 6/9/93
 #
 
@@ -1047,6 +1047,13 @@ if checkyesno check_changelist ; then
 		esac
 	done >> $CHANGEFILES
 	CHANGELIST="$CHANGEFILES $CHANGELIST"
+fi
+
+# Save entropy to ${random_file} if defined, like
+# /etc/rc.d/random_seed.
+#
+if [ -n "${random_file:-}" ]; then
+	rndctl -S "$random_file"
 fi
 
 # Special case backups, including the master password file and
