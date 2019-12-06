@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.328 2019/12/03 05:07:48 riastradh Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.329 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.328 2019/12/03 05:07:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.329 2019/12/06 21:36:10 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -269,11 +269,14 @@ yield(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
+
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
+
 	/* Voluntary - ditch kpriority boost. */
 	l->l_kpriority = false;
-	(void)mi_switch(l);
+	spc_lock(l->l_cpu);
+	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
@@ -288,11 +291,14 @@ preempt(void)
 
 	KERNEL_UNLOCK_ALL(l, &l->l_biglocks);
 	lwp_lock(l);
+
 	KASSERT(lwp_locked(l, l->l_cpu->ci_schedstate.spc_lwplock));
 	KASSERT(l->l_stat == LSONPROC);
+
 	/* Involuntary - keep kpriority boost. */
 	l->l_pflag |= LP_PREEMPTING;
-	(void)mi_switch(l);
+	spc_lock(l->l_cpu);
+	mi_switch(l);
 	KERNEL_LOCK(l->l_biglocks, l);
 }
 
@@ -372,7 +378,9 @@ kpreempt(uintptr_t where)
 			kpreempt_ev_immed.ev_count++;
 		}
 		lwp_lock(l);
+		/* Involuntary - keep kpriority boost. */
 		l->l_pflag |= LP_PREEMPTING;
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 		l->l_nopreempt++;
 		splx(s);
@@ -501,20 +509,22 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 /*
  * The machine independent parts of context switch.
  *
- * Returns 1 if another LWP was actually run.
+ * NOTE: do not use l->l_cpu in this routine.  The caller may have enqueued
+ * itself onto another CPU's run queue, so l->l_cpu may point elsewhere.
  */
-int
+void
 mi_switch(lwp_t *l)
 {
 	struct cpu_info *ci;
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
-	int retval, oldspl;
+	int oldspl;
 	struct bintime bt;
 	bool returning;
 
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(kpreempt_disabled());
+	KASSERT(mutex_owned(curcpu()->ci_schedstate.spc_mutex));
 	LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
 	kstack_check_magic(l);
@@ -523,8 +533,8 @@ mi_switch(lwp_t *l)
 
 	KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
 	KASSERT((l->l_pflag & LP_RUNNING) != 0);
-	KASSERT(l->l_cpu == curcpu());
-	ci = l->l_cpu;
+	KASSERT(l->l_cpu == curcpu() || l->l_stat == LSRUN);
+	ci = curcpu();
 	spc = &ci->ci_schedstate;
 	returning = false;
 	newl = NULL;
@@ -555,31 +565,24 @@ mi_switch(lwp_t *l)
 	}
 #endif	/* !__HAVE_FAST_SOFTINTS */
 
-	/* Lock the runqueue */
-	KASSERT(l->l_stat != LSRUN);
-	mutex_spin_enter(spc->spc_mutex);
-
 	/*
 	 * If on the CPU and we have gotten this far, then we must yield.
 	 */
 	if (l->l_stat == LSONPROC && l != newl) {
 		KASSERT(lwp_locked(l, spc->spc_lwplock));
-		if ((l->l_flag & LW_IDLE) == 0) {
-			l->l_stat = LSRUN;
-			lwp_setlock(l, spc->spc_mutex);
-			sched_enqueue(l);
-			/*
-			 * Handle migration.  Note that "migrating LWP" may
-			 * be reset here, if interrupt/preemption happens
-			 * early in idle LWP.
-			 */
-			if (l->l_target_cpu != NULL &&
-			    (l->l_pflag & LP_BOUND) == 0) {
-				KASSERT((l->l_pflag & LP_INTR) == 0);
-				spc->spc_migrating = l;
-			}
-		} else
-			l->l_stat = LSIDL;
+		KASSERT((l->l_flag & LW_IDLE) == 0);
+		l->l_stat = LSRUN;
+		lwp_setlock(l, spc->spc_mutex);
+		sched_enqueue(l);
+		/*
+		 * Handle migration.  Note that "migrating LWP" may
+		 * be reset here, if interrupt/preemption happens
+		 * early in idle LWP.
+		 */
+		if (l->l_target_cpu != NULL && (l->l_pflag & LP_BOUND) == 0) {
+			KASSERT((l->l_pflag & LP_INTR) == 0);
+			spc->spc_migrating = l;
+		}
 	}
 
 	/* Pick new LWP to run. */
@@ -694,6 +697,7 @@ mi_switch(lwp_t *l)
 			while (newl->l_ctxswtch)
 				SPINLOCK_BACKOFF(count);
 		}
+		membar_enter();
 
 		/*
 		 * If DTrace has set the active vtime enum to anything
@@ -743,28 +747,25 @@ mi_switch(lwp_t *l)
 			l->l_lwpctl->lc_pctr++;
 		}
 
-		KASSERT(l->l_cpu == ci);
-		splx(oldspl);
 		/*
-		 * note that, unless the caller disabled preemption,
-		 * we can be preempted at any time after the above splx() call.
+		 * Note that, unless the caller disabled preemption, we can
+		 * be preempted at any time after this splx().
 		 */
-		retval = 1;
+		splx(oldspl);
 	} else {
 		/* Nothing to do - just unlock and return. */
 		mutex_spin_exit(spc->spc_mutex);
 		l->l_pflag &= ~LP_PREEMPTING;
 		lwp_unlock(l);
-		retval = 0;
 	}
 
+	/* Only now is it safe to consider l_cpu again. */
 	KASSERT(l == curlwp);
+	KASSERT(l->l_cpu == ci);
 	KASSERT(l->l_stat == LSONPROC);
 
 	SYSCALL_TIME_WAKEUP(l);
 	LOCKDEBUG_BARRIER(NULL, 1);
-
-	return retval;
 }
 
 /*
@@ -848,6 +849,7 @@ lwp_exit_switchaway(lwp_t *l)
 		while (newl->l_ctxswtch)
 			SPINLOCK_BACKOFF(count);
 	}
+	membar_enter();
 
 	/*
 	 * If DTrace has set the active vtime enum to anything
