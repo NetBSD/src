@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.41 2017/06/01 02:45:13 chs Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.42 2019/12/06 08:35:21 maxv Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.41 2017/06/01 02:45:13 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.42 2019/12/06 08:35:21 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,7 +378,7 @@ out:
 	return count;
 }
 
-static int cc;
+static int tty_global_cc;
 
 /*
  * Given a non-NULL pointer into the clist return the pointer
@@ -396,11 +396,11 @@ nextc(struct clist *clp, u_char *cp, int *c)
 		/*
 		 * First time initialization.
 		 */
-		cc = clp->c_cc;
+		tty_global_cc = clp->c_cc;
 	}
-	if (cc == 0 || cp == NULL)
+	if (tty_global_cc == 0 || cp == NULL)
 		return NULL;
-	if (--cc == 0)
+	if (--tty_global_cc == 0)
 		return NULL;
 	if (++cp == clp->c_ce)
 		cp = clp->c_cs;
@@ -432,8 +432,8 @@ firstc(struct clist *clp, int *c)
 {
 	u_char *cp;
 
-	cc = clp->c_cc;
-	if (cc == 0)
+	tty_global_cc = clp->c_cc;
+	if (tty_global_cc == 0)
 		return NULL;
 	cp = clp->c_cf;
 	*c = *cp & 0xff;
