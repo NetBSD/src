@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.141 2019/11/12 18:18:04 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.142 2019/12/06 01:09:50 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.141 2019/11/12 18:18:04 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.142 2019/12/06 01:09:50 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -118,7 +118,8 @@ static int debug = 0;
 
 #define DPRINTF(a, ...)	do  \
 	if (debug) \
-	printf("%s() %s:%d " a, __func__, __FILE__, __LINE__,  ##__VA_ARGS__); \
+	printf("%s() %d.%d %s:%d " a, \
+	__func__, getpid(), _lwp_self(), __FILE__, __LINE__,  ##__VA_ARGS__); \
     while (/*CONSTCOND*/0)
 
 /// ----------------------------------------------------------------------------
