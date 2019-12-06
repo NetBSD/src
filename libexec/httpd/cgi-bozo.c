@@ -1,4 +1,4 @@
-/*	$NetBSD: cgi-bozo.c,v 1.48 2019/03/29 14:46:44 martin Exp $	*/
+/*	$NetBSD: cgi-bozo.c,v 1.49 2019/12/06 05:53:20 mrg Exp $	*/
 
 /*	$eterna: cgi-bozo.c,v 1.40 2011/11/18 09:21:15 mrg Exp $	*/
 
@@ -137,7 +137,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 		 * return it in the response.  If the cgi program does
 		 * not return any `Status:' header then the server should
 		 * respond with 200 OK.
-		 * XXX The CGI 1.1 and 1.2 specification differ slightly on
+		 * The CGI 1.1 and 1.2 specification differ slightly on
 		 * this in that v1.2 says that the script MUST NOT return a
 		 * `Status:' header if it is returning a `Location:' header.
 		 * For compatibility we are going with the CGI 1.1 behavior.
@@ -182,8 +182,7 @@ finish_cgi_output(bozohttpd_t *httpd, bozo_httpreq_t *request, int in, int nph)
 		bozo_flush(httpd, stdout);
 	}
 
-	/* XXX we should have some goo that times us out
-	 */
+	/* CGI programs should perform their own timeouts */
 	while ((rbytes = read(in, buf, sizeof buf)) > 0) {
 		ssize_t wbytes;
 		char *bp = buf;
@@ -645,8 +644,7 @@ bozo_process_cgi(bozo_httpreq_t *request)
 	}
 	close(STDOUT_FILENO);
 
-	/* XXX we should have some goo that times us out
-	 */
+	/* CGI programs should perform their own timeouts */
 	while ((rbytes = bozo_read(httpd, STDIN_FILENO, buf, sizeof buf)) > 0) {
 		ssize_t wbytes;
 		char *bp = buf;
