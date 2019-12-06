@@ -1,4 +1,4 @@
-/*	$NetBSD: sched_4bsd.c,v 1.40 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.41 2019/12/06 18:33:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.40 2019/12/01 15:34:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.41 2019/12/06 18:33:19 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -104,13 +104,15 @@ void
 sched_tick(struct cpu_info *ci)
 {
 	struct schedstate_percpu *spc = &ci->ci_schedstate;
+	pri_t pri = PRI_NONE;
 	lwp_t *l;
 
 	spc->spc_ticks = rrticks;
 
 	if (CURCPU_IDLE_P()) {
-		atomic_or_uint(&ci->ci_want_resched,
-		    RESCHED_IDLE | RESCHED_UPREEMPT);
+		spc_lock(ci);
+		sched_resched_cpu(ci, MAXPRI_KTHREAD, true);
+		/* spc now unlocked */
 		return;
 	}
 	l = ci->ci_onproc;
@@ -128,12 +130,7 @@ sched_tick(struct cpu_info *ci)
 		break;
 	case SCHED_RR:
 		/* Force it into mi_switch() to look for other jobs to run. */
-#ifdef __HAVE_PREEMPTION
-		atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-		atomic_or_uint(&ci->ci_want_resched, RESCHED_KPREEMPT);
-#else
-		atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
-#endif
+		pri = MAXPRI_KERNEL_RT;
 		break;
 	default:
 		if (spc->spc_flags & SPCF_SHOULDYIELD) {
@@ -142,24 +139,24 @@ sched_tick(struct cpu_info *ci)
 			 * due to buggy or inefficient code.  Force a
 			 * kernel preemption.
 			 */
-#ifdef __HAVE_PREEMPTION
-			atomic_or_uint(&l->l_dopreempt, DOPREEMPT_ACTIVE);
-			atomic_or_uint(&ci->ci_want_resched, RESCHED_KPREEMPT);
-#else
-			atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
-#endif
+			pri = MAXPRI_KERNEL_RT;
 		} else if (spc->spc_flags & SPCF_SEENRR) {
 			/*
 			 * The process has already been through a roundrobin
 			 * without switching and may be hogging the CPU.
 			 * Indicate that the process should yield.
 			 */
-			spc->spc_flags |= SPCF_SHOULDYIELD;
-			atomic_or_uint(&ci->ci_want_resched, RESCHED_UPREEMPT);
+			pri = MAXPRI_KTHREAD;
 		} else {
 			spc->spc_flags |= SPCF_SEENRR;
 		}
 		break;
+	}
+
+	if (pri != PRI_NONE) {
+		spc_lock(ci);
+		sched_resched_cpu(ci, pri, true);
+		/* spc now unlocked */
 	}
 }
 
