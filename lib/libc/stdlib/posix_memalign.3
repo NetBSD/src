@@ -1,4 +1,4 @@
-.\"	$NetBSD: posix_memalign.3,v 1.6 2018/07/27 15:15:30 maya Exp $
+.\"	$NetBSD: posix_memalign.3,v 1.7 2019/12/06 16:19:32 nros Exp $
 .\"
 .\" Copyright (C) 2006 Jason Evans <jasone@FreeBSD.org>.
 .\" All rights reserved.
@@ -112,17 +112,6 @@ The
 .Fa alignment
 parameter is not at least as large as
 .Fn sizeof "void *" .
-.El
-.Pp
-The
-.Fn aligned_alloc
-function will also fail if
-.Bl -tag -width Er
-.It Bq Er EINVAL
-The
-.Fa size
-parameter is not an integer multiple of
-.Fa alignment .
 .El
 .Sh SEE ALSO
 .Xr free 3 ,
