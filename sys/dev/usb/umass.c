@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.175 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: umass.c,v 1.176 2019/12/06 07:12:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.175 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.176 2019/12/06 07:12:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -214,11 +214,11 @@ const char *states[TSTATE_STATES+1] = {
 #endif
 
 /* USB device probe/attach/detach functions */
-int umass_match(device_t, cfdata_t, void *);
-void umass_attach(device_t, device_t, void *);
-int umass_detach(device_t, int);
+static int umass_match(device_t, cfdata_t, void *);
+static void umass_attach(device_t, device_t, void *);
+static int umass_detach(device_t, int);
 static void umass_childdet(device_t, device_t);
-int umass_activate(device_t, enum devact);
+static int umass_activate(device_t, enum devact);
 
 CFATTACH_DECL2_NEW(umass, sizeof(struct umass_softc), umass_match,
     umass_attach, umass_detach, umass_activate, NULL, umass_childdet);
@@ -246,7 +246,7 @@ Static void umass_bbb_transfer(struct umass_softc *, int, void *, int, void *,
 Static void umass_bbb_reset(struct umass_softc *, int);
 Static void umass_bbb_state(struct usbd_xfer *, void *, usbd_status);
 
-usbd_status umass_bbb_get_max_lun(struct umass_softc *, uint8_t *);
+static usbd_status umass_bbb_get_max_lun(struct umass_softc *, uint8_t *);
 
 /* CBI related functions */
 Static void umass_cbi_transfer(struct umass_softc *, int, void *, int, void *,
@@ -281,7 +281,7 @@ Static void umass_dump_buffer(struct umass_softc *, uint8_t *, int, int);
  * USB device probe/attach/detach
  */
 
-int
+static int
 umass_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usbif_attach_arg *uiaa = aux;
@@ -319,7 +319,7 @@ umass_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_IFACECLASS_IFACESUBCLASS_IFACEPROTO;
 }
 
-void
+static void
 umass_attach(device_t parent, device_t self, void *aux)
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
@@ -788,7 +788,7 @@ umass_childdet(device_t self, device_t child)
 	sc->bus->sc_child = NULL;
 }
 
-int
+static int
 umass_detach(device_t self, int flags)
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
@@ -876,7 +876,7 @@ umass_detach(device_t self, int flags)
 	return rv;
 }
 
-int
+static int
 umass_activate(device_t dev, enum devact act)
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
@@ -1953,7 +1953,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 	}
 }
 
-usbd_status
+static usbd_status
 umass_bbb_get_max_lun(struct umass_softc *sc, uint8_t *maxlun)
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
