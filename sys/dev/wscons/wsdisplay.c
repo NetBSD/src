@@ -1,4 +1,4 @@
-/* $NetBSD: wsdisplay.c,v 1.159 2019/11/10 21:16:38 chs Exp $ */
+/* $NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $ */
 
 /*
  * Copyright (c) 1996, 1997 Christopher G. Demetriou.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.159 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wsdisplay.c,v 1.160 2019/12/06 07:12:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_wsdisplay_compat.h"
@@ -120,15 +120,15 @@ struct wsscreen {
 #endif
 };
 
-struct wsscreen *wsscreen_attach(struct wsdisplay_softc *, int,
+static struct wsscreen *wsscreen_attach(struct wsdisplay_softc *, int,
 				 const char *,
 				 const struct wsscreen_descr *, void *,
 				 int, int, long);
-void wsscreen_detach(struct wsscreen *);
-int wsdisplay_addscreen(struct wsdisplay_softc *, int, const char *, const char *);
+static void wsscreen_detach(struct wsscreen *);
+static int wsdisplay_addscreen(struct wsdisplay_softc *, int, const char *, const char *);
 static void wsdisplay_addscreen_print(struct wsdisplay_softc *, int, int);
 static void wsdisplay_closescreen(struct wsdisplay_softc *, struct wsscreen *);
-int wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
+static int wsdisplay_delscreen(struct wsdisplay_softc *, int, int);
 
 #define WSDISPLAY_MAXSCREEN 8
 
@@ -311,7 +311,7 @@ wsscreen_getc_poll(void *priv)
 }
 #endif
 
-struct wsscreen *
+static struct wsscreen *
 wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	const struct wsscreen_descr *type, void *cookie, int ccol,
 	int crow, long defattr)
@@ -373,7 +373,7 @@ wsscreen_attach(struct wsdisplay_softc *sc, int console, const char *emul,
 	return (scr);
 }
 
-void
+static void
 wsscreen_detach(struct wsscreen *scr)
 {
 	u_int ccol, crow; /* XXX */
@@ -433,7 +433,7 @@ wsdisplay_addscreen_print(struct wsdisplay_softc *sc, int idx, int count)
 	aprint_verbose(")\n");
 }
 
-int
+static int
 wsdisplay_addscreen(struct wsdisplay_softc *sc, int idx,
 	const char *screentype, const char *emul)
 {
@@ -552,7 +552,7 @@ wsdisplay_scroll(void *arg, int op)
 }
 #endif
 
-int
+static int
 wsdisplay_delscreen(struct wsdisplay_softc *sc, int idx, int flags)
 {
 	struct wsscreen *scr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uirda.c,v 1.44 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uirda.c,v 1.45 2019/12/06 07:12:39 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.44 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uirda.c,v 1.45 2019/12/06 07:12:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -77,7 +77,7 @@ int	uirdadebug = 0;
 #define UR_IRDA_GET_DESC		0x06
 
 #define UIRDA_NEBOFS 8
-static struct {
+static const struct {
 	int count;
 	int mask;
 	int header;
@@ -93,7 +93,7 @@ static struct {
 };
 
 #define UIRDA_NSPEEDS 9
-static struct {
+static const struct {
 	int speed;
 	int mask;
 	int header;
@@ -121,15 +121,15 @@ int uirda_get_turnarounds(void *, int *);
 int uirda_poll(void *, int, struct lwp *);
 int uirda_kqfilter(void *, struct knote *);
 
-struct irframe_methods uirda_methods = {
+static const struct irframe_methods uirda_methods = {
 	uirda_open, uirda_close, uirda_read, uirda_write, uirda_poll,
 	uirda_kqfilter, uirda_set_params, uirda_get_speeds,
 	uirda_get_turnarounds
 };
 
-void uirda_rd_cb(struct usbd_xfer *xfer,	void *priv,
+static void uirda_rd_cb(struct usbd_xfer *xfer,	void *priv,
 		 usbd_status status);
-usbd_status uirda_start_read(struct uirda_softc *sc);
+static usbd_status uirda_start_read(struct uirda_softc *sc);
 
 /*
  * These devices don't quite follow the spec.  Speed changing is broken
@@ -862,7 +862,7 @@ uirda_get_turnarounds(void *h, int *turnarounds)
 	return 0;
 }
 
-void
+static void
 uirda_rd_cb(struct usbd_xfer *xfer, void *priv,
 	    usbd_status status)
 {
@@ -886,7 +886,7 @@ uirda_rd_cb(struct usbd_xfer *xfer, void *priv,
 	selnotify(&sc->sc_rd_sel, 0, 0);
 }
 
-usbd_status
+static usbd_status
 uirda_start_read(struct uirda_softc *sc)
 {
 	usbd_status err;

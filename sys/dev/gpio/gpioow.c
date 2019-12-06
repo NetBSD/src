@@ -1,4 +1,4 @@
-/* $NetBSD: gpioow.c,v 1.16 2019/11/30 23:04:12 ad Exp $ */
+/* $NetBSD: gpioow.c,v 1.17 2019/12/06 07:12:38 maxv Exp $ */
 /*	$OpenBSD: gpioow.c,v 1.1 2006/03/04 16:27:03 grange Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.16 2019/11/30 23:04:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gpioow.c,v 1.17 2019/12/06 07:12:38 maxv Exp $");
 
 /*
  * 1-Wire bus bit-banging through GPIO pin.
@@ -51,19 +51,19 @@ struct gpioow_softc {
 	int			sc_dying;
 };
 
-int	gpioow_match(device_t, cfdata_t, void *);
-void	gpioow_attach(device_t, device_t, void *);
-int	gpioow_detach(device_t, int);
-int	gpioow_activate(device_t, enum devact);
+static int	gpioow_match(device_t, cfdata_t, void *);
+static void	gpioow_attach(device_t, device_t, void *);
+static int	gpioow_detach(device_t, int);
+static int	gpioow_activate(device_t, enum devact);
 
-int	gpioow_ow_reset(void *);
-int	gpioow_ow_read_bit(void *);
-void	gpioow_ow_write_bit(void *, int);
+static int	gpioow_ow_reset(void *);
+static int	gpioow_ow_read_bit(void *);
+static void	gpioow_ow_write_bit(void *, int);
 
-void	gpioow_bb_rx(void *);
-void	gpioow_bb_tx(void *);
-int	gpioow_bb_get(void *);
-void	gpioow_bb_set(void *, int);
+static void	gpioow_bb_rx(void *);
+static void	gpioow_bb_tx(void *);
+static int	gpioow_bb_get(void *);
+static void	gpioow_bb_set(void *, int);
 
 CFATTACH_DECL_NEW(gpioow, sizeof(struct gpioow_softc),
 	gpioow_match, gpioow_attach, gpioow_detach, gpioow_activate);
@@ -75,7 +75,7 @@ static const struct onewire_bbops gpioow_bbops = {
 	gpioow_bb_set
 };
 
-int
+static int
 gpioow_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct gpio_attach_args *ga = aux;
@@ -95,7 +95,7 @@ gpioow_match(device_t parent, cfdata_t cf, void *aux)
 	return 1;
 }
 
-void
+static void
 gpioow_attach(device_t parent, device_t self, void *aux)
 {
 	struct gpioow_softc *sc = device_private(self);
@@ -158,7 +158,7 @@ finish:
 	return;
 }
 
-int
+static int
 gpioow_detach(device_t self, int flags)
 {
 	struct gpioow_softc *sc = device_private(self);
@@ -174,7 +174,7 @@ gpioow_detach(device_t self, int flags)
 	return rv;
 }
 
-int
+static int
 gpioow_activate(device_t self, enum devact act)
 {
 	struct gpioow_softc *sc = device_private(self);
@@ -188,25 +188,25 @@ gpioow_activate(device_t self, enum devact act)
 	}
 }
 
-int
+static int
 gpioow_ow_reset(void *arg)
 {
 	return (onewire_bb_reset(&gpioow_bbops, arg));
 }
 
-int
+static int
 gpioow_ow_read_bit(void *arg)
 {
 	return (onewire_bb_read_bit(&gpioow_bbops, arg));
 }
 
-void
+static void
 gpioow_ow_write_bit(void *arg, int value)
 {
 	onewire_bb_write_bit(&gpioow_bbops, arg, value);
 }
 
-void
+static void
 gpioow_bb_rx(void *arg)
 {
 	struct gpioow_softc *sc = arg;
@@ -223,7 +223,7 @@ gpioow_bb_rx(void *arg)
 	}
 }
 
-void
+static void
 gpioow_bb_tx(void *arg)
 {
 	struct gpioow_softc *sc = arg;
@@ -238,7 +238,7 @@ gpioow_bb_tx(void *arg)
 	}
 }
 
-int
+static int
 gpioow_bb_get(void *arg)
 {
 	struct gpioow_softc *sc = arg;
@@ -247,7 +247,7 @@ gpioow_bb_get(void *arg)
 	    GPIO_PIN_HIGH ? 1 : 0);
 }
 
-void
+static void
 gpioow_bb_set(void *arg, int value)
 {
 	struct gpioow_softc *sc = arg;
