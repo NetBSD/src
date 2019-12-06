@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.236 2019/10/12 10:55:23 kamil Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.237 2019/12/06 17:41:43 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.236 2019/10/12 10:55:23 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.237 2019/12/06 17:41:43 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -2457,7 +2457,7 @@ fill_kproc2(struct proc *p, struct kinfo_proc2 *ki, bool zombie, bool allowaddr)
 			ki->p_estcpu += l->l_estcpu;
 		}
 	}
-	sigplusset(&p->p_sigpend.sp_set, &ss2);
+	sigplusset(&p->p_sigpend.sp_set, &ss1);
 	memcpy(&ki->p_siglist, &ss1, sizeof(ki_sigset_t));
 	memcpy(&ki->p_sigmask, &ss2, sizeof(ki_sigset_t));
 
