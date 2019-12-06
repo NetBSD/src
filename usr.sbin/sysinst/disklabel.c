@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.15 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.16 2019/12/06 19:36:22 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -281,13 +281,10 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	assert(parts->l.d_ncylinders != 0);
 	assert(parts->l.d_secpercyl != 0);
 
-	sprintf(fname, "/tmp/disklabel.%u", getpid());
-	f = fopen(fname, "w");
-	if (f == NULL)
-		return false;
-
 	/* make sure we have a 0 terminated packname */
 	strlcpy(packname, parts->l.d_packname, sizeof packname);
+	if (packname[0] == 0)
+		strcpy(packname, "fictious");
 
 	/* fill typename with disk name prefix, if not already set */
 	if (strlen(parts->l.d_typename) == 0) {
@@ -299,12 +296,23 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 		}
 	}
 	parts->l.d_typename[sizeof(parts->l.d_typename)-1] = 0;
+	for (d = parts->l.d_typename; *d; d++) {
+		if (isalnum((unsigned char)*d) || *d == '-')
+			continue;
+		*d = 0;
+		break;
+	}
 
 	/* we need a valid disk type name, so enforce an arbitrary if
 	 * above did not yield a usable one */
 	if (strlen(parts->l.d_typename) == 0)
 		strncpy(parts->l.d_typename, "SCSI",
 		    sizeof(parts->l.d_typename));
+
+	sprintf(fname, "/tmp/disklabel.%u", getpid());
+	f = fopen(fname, "w");
+	if (f == NULL)
+		return false;
 
 	lp = parts->l.d_partitions;
 	scripting_fprintf(NULL, "cat <<EOF >%s\n", fname);
