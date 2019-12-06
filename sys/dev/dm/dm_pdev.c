@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.15 2019/12/04 16:55:30 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.16 2019/12/06 16:46:14 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.15 2019/12/04 16:55:30 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.16 2019/12/06 16:46:14 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -240,15 +240,14 @@ static int
 dm_pdev_dump_list(void)
 {
 	dm_pdev_t *dmp;
-	
+
 	aprint_verbose("Dumping dm_pdev_list\n");
-	
+
 	SLIST_FOREACH(dmp, &dm_pdev_list, next_pdev) {
 		aprint_verbose("dm_pdev_name %s ref_cnt %d list_rf_cnt %d\n",
 		dmp->name, dmp->ref_cnt, dmp->list_ref_cnt);
 	}
-	
+
 	return 0;
-	
 }
 #endif
