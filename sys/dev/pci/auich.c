@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.157 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: auich.c,v 1.158 2019/12/06 07:27:07 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.157 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.158 2019/12/06 07:27:07 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -215,7 +215,7 @@ struct auich_softc {
 	/* 440MX workaround */
 	int  sc_dmamap_flags;
 	/* flags */
-	int  sc_iose	:1,
+	u_int  sc_iose	:1,
 		     	:31;
 
 	/* sysctl */
