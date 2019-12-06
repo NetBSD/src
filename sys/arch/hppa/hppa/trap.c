@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.113 2019/11/29 18:27:32 ad Exp $	*/
+/*	$NetBSD: trap.c,v 1.114 2019/12/06 08:40:33 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.113 2019/11/29 18:27:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.114 2019/12/06 08:40:33 skrll Exp $");
 
 /* #define INTRDEBUG */
 /* #define TRAPDEBUG */
@@ -198,9 +198,10 @@ u_int rctr_next_iioq;
 #endif
 
 static inline void
-userret(struct lwp *l, register_t pc, u_quad_t oticks)
+userret(struct lwp *l, struct trapframe *tf)
 {
 	struct proc *p = l->l_proc;
+	int oticks = 0; /* XXX why zero? */
 
 	do {
 		l->l_md.md_astpending = 0;
@@ -214,7 +215,8 @@ userret(struct lwp *l, register_t pc, u_quad_t oticks)
 	if (p->p_stflag & PST_PROFIL) {
 		extern int psratio;
 
-		addupc_task(l, pc, (int)(p->p_sticks - oticks) * psratio);
+		addupc_task(l, tf->tf_iioq_head,
+		    (int)(p->p_sticks - oticks) * psratio);
 	}
 }
 
@@ -962,7 +964,7 @@ do_onfault:
 #endif
 
 	if (type & T_USER)
-		userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+		userret(l, l->l_md.md_regs);
 
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, type, frame, l);
@@ -979,7 +981,7 @@ md_child_return(struct lwp *l)
 	 * Return values in the frame set by cpu_lwp_fork().
 	 */
 
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
@@ -992,7 +994,7 @@ void
 cpu_spawn_return(struct lwp *l)
 {
 
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs);
 #ifdef DEBUG
 	frame_sanity_check(__func__, __LINE__, 0, l->l_md.md_regs, l);
 #endif /* DEBUG */
@@ -1264,7 +1266,7 @@ syscall(struct trapframe *frame, int *args)
 		break;
 	}
 
-	userret(l, frame->tf_iioq_head, 0);
+	userret(l, frame);
 
 #ifdef DIAGNOSTIC
 	if (ci->ci_cpl != oldcpl) {
@@ -1294,5 +1296,5 @@ startlwp(void *arg)
 	KASSERT(error == 0);
 
 	kmem_free(uc, sizeof(ucontext_t));
-	userret(l, l->l_md.md_regs->tf_iioq_head, 0);
+	userret(l, l->l_md.md_regs);
 }
