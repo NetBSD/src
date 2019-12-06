@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.277 2019/10/03 22:48:44 kamil Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.278 2019/12/06 21:36:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.277 2019/10/03 22:48:44 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.278 2019/12/06 21:36:10 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -245,6 +245,7 @@ exit1(struct lwp *l, int exitcode, int signo)
 		lwp_unlock(l);
 		mutex_exit(p->p_lock);
 		lwp_lock(l);
+		spc_lock(l->l_cpu);
 		mi_switch(l);
 		KERNEL_LOCK(l->l_biglocks, l);
 		mutex_enter(p->p_lock);
