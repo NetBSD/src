@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_mbuf.c,v 1.235 2019/10/19 06:36:47 tnn Exp $	*/
+/*	$NetBSD: uipc_mbuf.c,v 1.236 2019/12/06 07:27:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1999, 2001, 2018 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.235 2019/10/19 06:36:47 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_mbuf.c,v 1.236 2019/12/06 07:27:07 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mbuftrace.h"
@@ -2205,7 +2205,7 @@ m_verify_packet(struct mbuf *m)
 
 		dat = n->m_data;
 		len = n->m_len;
-		if (__predict_false(dat + len < dat)) {
+		if (__predict_false(len < 0)) {
 			panic("%s: incorrect length (len = %d)", __func__, len);
 		}
 
