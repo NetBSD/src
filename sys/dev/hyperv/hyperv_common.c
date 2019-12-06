@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv_common.c,v 1.2 2019/05/31 04:23:19 nonaka Exp $	*/
+/*	$NetBSD: hyperv_common.c,v 1.3 2019/12/06 12:46:06 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.2 2019/05/31 04:23:19 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.3 2019/12/06 12:46:06 nonaka Exp $");
 
 #include "hyperv.h"
 
@@ -154,6 +154,10 @@ hyperv_dma_alloc(bus_dma_tag_t dmat, struct hyperv_dma *dma, bus_size_t size,
 		    __func__, error);
 		goto fail4;
 	}
+
+	memset(dma->addr, 0, dma->map->dm_mapsize);
+	bus_dmamap_sync(dmat, dma->map, 0, dma->map->dm_mapsize,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	return dma->addr;
 
