@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.3 2019/11/22 14:28:46 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.4 2019/12/06 16:54:47 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define KMSAN_NO_INST
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.3 2019/11/22 14:28:46 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.4 2019/12/06 16:54:47 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1168,7 +1168,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_add_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		atomic_add_##name(ptr, val); \
 	} \
 	tret atomic_add_##name##_nv(volatile targ1 *, targ2); \
@@ -1176,7 +1177,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_add_##name##_nv(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_add_##name##_nv(ptr, val); \
 	}
@@ -1186,7 +1188,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_and_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		atomic_and_##name(ptr, val); \
 	} \
 	tret atomic_and_##name##_nv(volatile targ1 *, targ2); \
@@ -1194,7 +1197,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_and_##name##_nv(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_and_##name##_nv(ptr, val); \
 	}
@@ -1205,7 +1209,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_or_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		atomic_or_##name(ptr, val); \
 	} \
 	tret atomic_or_##name##_nv(volatile targ1 *, targ2); \
@@ -1213,7 +1218,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_or_##name##_nv(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_or_##name##_nv(ptr, val); \
 	}
@@ -1225,7 +1231,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(exp) + sizeof(new), \
 		    __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_cas_##name(ptr, exp, new); \
 	} \
@@ -1235,7 +1242,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(exp) + sizeof(new), \
 		    __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_cas_##name##_ni(ptr, exp, new); \
 	}
@@ -1246,7 +1254,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_swap_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_swap_##name(ptr, val); \
 	}
@@ -1257,7 +1266,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_dec_##name(volatile targ1 *ptr) \
 	{ \
 		kmsan_check_arg(sizeof(ptr), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		atomic_dec_##name(ptr); \
 	} \
 	tret atomic_dec_##name##_nv(volatile targ1 *); \
@@ -1265,7 +1275,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_dec_##name##_nv(volatile targ1 *ptr) \
 	{ \
 		kmsan_check_arg(sizeof(ptr), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_dec_##name##_nv(ptr); \
 	}
@@ -1276,7 +1287,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_inc_##name(volatile targ1 *ptr) \
 	{ \
 		kmsan_check_arg(sizeof(ptr), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		atomic_inc_##name(ptr); \
 	} \
 	tret atomic_inc_##name##_nv(volatile targ1 *); \
@@ -1284,7 +1296,8 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_inc_##name##_nv(volatile targ1 *ptr) \
 	{ \
 		kmsan_check_arg(sizeof(ptr), __func__); \
-		kmsan_shadow_check((uintptr_t)ptr, sizeof(tret), __func__); \
+		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
+		    __func__); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_inc_##name##_nv(ptr); \
 	}
