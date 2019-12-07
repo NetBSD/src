@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.16 2019/12/06 19:36:22 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.17 2019/12/07 13:33:45 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -262,13 +262,32 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	return &parts->dp;
 }
 
+/*
+ * Escape a string for usage as a tag name in a capfile(5),
+ * we really know there is enough space in the destination buffer...
+ */
+static void
+escape_capfile(char *dest, const char *src, size_t len)
+{
+	while (*src && len > 0) {
+		if (*src == ':')
+			*dest++ = ' ';
+		else
+			*dest++ = *src;
+		src++;
+		len--;
+	}
+	*dest = 0;
+}
+
 static bool
 disklabel_write_to_disk(struct disk_partitions *arg)
 {
 	struct disklabel_disk_partitions *parts =
 	    (struct disklabel_disk_partitions*)arg;
 	FILE *f;
-	char fname[PATH_MAX], packname[sizeof(parts->l.d_packname)+1];
+	char fname[PATH_MAX], packname[sizeof(parts->l.d_packname)+1],
+	    disktype[sizeof(parts->l.d_typename)+1];
 	int i, rv = 0;
 	const char *disk = parts->dp.disk, *s;
 	const struct partition *lp;
@@ -295,19 +314,14 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 			*d = *s;
 		}
 	}
-	parts->l.d_typename[sizeof(parts->l.d_typename)-1] = 0;
-	for (d = parts->l.d_typename; *d; d++) {
-		if (isalnum((unsigned char)*d) || *d == '-')
-			continue;
-		*d = 0;
-		break;
-	}
 
 	/* we need a valid disk type name, so enforce an arbitrary if
 	 * above did not yield a usable one */
 	if (strlen(parts->l.d_typename) == 0)
 		strncpy(parts->l.d_typename, "SCSI",
 		    sizeof(parts->l.d_typename));
+	escape_capfile(disktype, parts->l.d_typename,
+	    sizeof(parts->l.d_typename));
 
 	sprintf(fname, "/tmp/disklabel.%u", getpid());
 	f = fopen(fname, "w");
@@ -317,7 +331,7 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	lp = parts->l.d_partitions;
 	scripting_fprintf(NULL, "cat <<EOF >%s\n", fname);
 	scripting_fprintf(f, "%s|NetBSD installation generated:\\\n",
-	    parts->l.d_typename);
+	    disktype);
 	scripting_fprintf(f, "\t:nc#%d:nt#%d:ns#%d:\\\n",
 	    parts->l.d_ncylinders, parts->l.d_ntracks, parts->l.d_nsectors);
 	scripting_fprintf(f, "\t:sc#%d:su#%" PRIu32 ":\\\n",
@@ -359,8 +373,8 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	 */
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	rv = run_program(RUN_DISPLAY, "%s -f %s %s %s %s",
-	    DISKLABEL_CMD, fname, disk, parts->l.d_typename, packname);
+	rv = run_program(RUN_DISPLAY, "%s -f %s %s '%s' '%s'",
+	    DISKLABEL_CMD, fname, disk, disktype, packname);
 #endif
 
 	unlink(fname);
