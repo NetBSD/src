@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.46 2019/12/06 16:33:47 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.47 2019/12/07 16:13:39 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@ static const struct cmd_function {
 	{ .cmd = "reload",  .fn = dm_table_load_ioctl,    .allowed = 0 },
 	{ .cmd = "status",  .fn = dm_table_status_ioctl,  .allowed = 1 },
 	{ .cmd = "table",   .fn = dm_table_status_ioctl,  .allowed = 1 },
-	{ .cmd = NULL,      .fn = NULL,			  .allowed = 0 }
+	{ .cmd = NULL,      .fn = NULL,                   .allowed = 0 },
 };
 
 #ifdef _MODULE
@@ -431,18 +431,17 @@ dm_ioctl_switch(u_long cmd)
 		aprint_debug("dm NETBSD_DM_IOCTL called\n");
 		break;
 	default:
-		 aprint_debug("dm unknown ioctl called\n");
-		 return ENOTTY;
-		 break; /* NOT REACHED */
+		aprint_debug("dm unknown ioctl called\n");
+		return ENOTTY;
+		break; /* NOT REACHED */
 	}
 
-	 return 0;
+	return 0;
 }
 
- /*
-  * Check for disk specific ioctls.
-  */
-
+/*
+ * Check for disk specific ioctls.
+ */
 static int
 disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 {
