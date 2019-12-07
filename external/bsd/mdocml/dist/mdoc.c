@@ -30,9 +30,9 @@
 #include "mandoc_aux.h"
 #include "mandoc.h"
 #include "roff.h"
-#include "roff_int.h"
 #include "mdoc.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libmdoc.h"
 
 const	char *const __mdoc_argnames[MDOC_ARG_MAX] = {
