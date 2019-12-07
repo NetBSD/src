@@ -120,7 +120,7 @@ uint64_t dm_table_size(dm_table_head_t *);
 /*                                                                                                            
  * Return current active table to caller, increment io_cnt reference counter.                                 
  */
-struct dm_table * dm_table_get_entry(dm_table_head_t *, uint8_t);
+struct dm_table *dm_table_get_entry(dm_table_head_t *, uint8_t);
 
 /*                                                                                                            
  * Return > 0 if table is at least one table entry (returns number of entries)                                

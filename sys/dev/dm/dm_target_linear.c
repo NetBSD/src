@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.23 2019/12/06 16:46:14 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.24 2019/12/07 15:28:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.23 2019/12/06 16:46:14 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.24 2019/12/07 15:28:39 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.23 2019/12/06 16:46:14 tkusum
  * @argv[1] is physical data offset.
  */
 int
-dm_target_linear_init(dm_dev_t * dmv, void **target_config, char *params)
+dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
 {
 	dm_target_linear_config_t *tlc;
 	dm_pdev_t *dmp;
@@ -117,7 +117,7 @@ dm_target_linear_status(void *target_config)
  * Do IO operation, called from dmstrategy routine.
  */
 int
-dm_target_linear_strategy(dm_table_entry_t * table_en, struct buf * bp)
+dm_target_linear_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 	dm_target_linear_config_t *tlc;
 
@@ -138,7 +138,7 @@ dm_target_linear_strategy(dm_table_entry_t * table_en, struct buf * bp)
  * Sync underlying disk caches.
  */
 int
-dm_target_linear_sync(dm_table_entry_t * table_en)
+dm_target_linear_sync(dm_table_entry_t *table_en)
 {
 	int cmd;
 	dm_target_linear_config_t *tlc;
@@ -155,7 +155,7 @@ dm_target_linear_sync(dm_table_entry_t * table_en)
  * Destroy target specific data. Decrement table pdevs.
  */
 int
-dm_target_linear_destroy(dm_table_entry_t * table_en)
+dm_target_linear_destroy(dm_table_entry_t *table_en)
 {
 
 	/*
@@ -180,7 +180,7 @@ out:
 
 /* Add this target pdev dependencies to prop_array_t */
 int
-dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
+dm_target_linear_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {
 	dm_target_linear_config_t *tlc;
 
@@ -201,7 +201,7 @@ dm_target_linear_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
  * mirror, snapshot, multipath, stripe will use this functionality.
  */
 int
-dm_target_linear_upcall(dm_table_entry_t * table_en, struct buf * bp)
+dm_target_linear_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }
@@ -211,7 +211,7 @@ dm_target_linear_upcall(dm_table_entry_t * table_en, struct buf * bp)
  * For a linear target this is just the sector size of the underlying device
  */
 int
-dm_target_linear_secsize(dm_table_entry_t * table_en, unsigned *secsizep)
+dm_target_linear_secsize(dm_table_entry_t *table_en, unsigned *secsizep)
 {
 	dm_target_linear_config_t *tlc;
 	unsigned secsize;
