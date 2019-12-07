@@ -27,9 +27,9 @@
 #include "mandoc_aux.h"
 #include "mandoc.h"
 #include "roff.h"
-#include "roff_int.h"
 #include "mdoc.h"
 #include "libmandoc.h"
+#include "roff_int.h"
 #include "libmdoc.h"
 
 #define	MULTI_STEP	 5 /* pre-allocate argument values */
