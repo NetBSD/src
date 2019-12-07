@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbusvar.h,v 1.2 2019/05/24 14:28:48 nonaka Exp $	*/
+/*	$NetBSD: vmbusvar.h,v 1.3 2019/12/07 11:45:45 nonaka Exp $	*/
 /*	$OpenBSD: hypervvar.h,v 1.13 2017/06/23 19:05:42 mikeb Exp $	*/
 
 /*
@@ -146,7 +146,6 @@ SLIST_HEAD(vmbus_devices, vmbus_dev);
 struct vmbus_percpu_data {
 	void			*simp;	/* Synthetic Interrupt Message Page */
 	void			*siep;	/* Synthetic Interrupt Event Flags Page */
-	uint32_t		vcpuid;	/* Virtual cpuid */
 
 	/* Rarely used fields */
 	struct hyperv_dma	simp_dma;

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmbus.c,v 1.6 2019/12/06 12:46:06 nonaka Exp $	*/
+/*	$NetBSD: vmbus.c,v 1.7 2019/12/07 11:45:45 nonaka Exp $	*/
 /*	$OpenBSD: hyperv.c,v 1.43 2017/06/27 13:56:15 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.6 2019/12/06 12:46:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vmbus.c,v 1.7 2019/12/07 11:45:45 nonaka Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1093,7 +1093,7 @@ vmbus_channel_cpu_set(struct vmbus_channel *ch, int cpu)
 	}
 
 	ch->ch_cpuid = cpu;
-	ch->ch_vcpu = sc->sc_percpu[cpu].vcpuid;
+	ch->ch_vcpu = hyperv_get_vcpuid(cpu);
 }
 
 void

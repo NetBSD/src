@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv_common.c,v 1.3 2019/12/06 12:46:06 nonaka Exp $	*/
+/*	$NetBSD: hyperv_common.c,v 1.4 2019/12/07 11:45:45 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.3 2019/12/06 12:46:06 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv_common.c,v 1.4 2019/12/07 11:45:45 nonaka Exp $");
 
 #include "hyperv.h"
 
@@ -56,6 +56,7 @@ __weak_alias(hyperv_set_event_proc, hyperv_voidop);
 __weak_alias(hyperv_set_message_proc, hyperv_voidop);
 __weak_alias(hyperv_send_eom, hyperv_voidop);
 __weak_alias(hyperv_intr, hyperv_voidop);
+__weak_alias(hyperv_get_vcpuid, hyperv_nullop);
 __weak_alias(vmbus_init_interrupts_md, hyperv_voidop);
 __weak_alias(vmbus_deinit_interrupts_md, hyperv_voidop);
 __weak_alias(vmbus_init_synic_md, hyperv_voidop);

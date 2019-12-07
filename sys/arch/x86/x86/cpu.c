@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.177 2019/11/27 06:24:33 maxv Exp $	*/
+/*	$NetBSD: cpu.c,v 1.178 2019/12/07 11:45:45 nonaka Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.177 2019/11/27 06:24:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.178 2019/12/07 11:45:45 nonaka Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -117,6 +117,13 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.177 2019/11/27 06:24:33 maxv Exp $");
 #include <dev/isa/isareg.h>
 
 #include "tsc.h"
+
+#ifndef XEN
+#include "hyperv.h"
+#if NHYPERV > 0
+#include <x86/x86/hypervvar.h>
+#endif
+#endif
 
 static int	cpu_match(device_t, cfdata_t, void *);
 static void	cpu_attach(device_t, device_t, void *);
@@ -863,6 +870,9 @@ cpu_hatch(void *v)
 	cpu_init_msrs(ci, true);
 	cpu_probe(ci);
 	cpu_speculation_init(ci);
+#if NHYPERV > 0
+	hyperv_init_cpu(ci);
+#endif
 
 	ci->ci_data.cpu_cc_freq = cpu_info_primary.ci_data.cpu_cc_freq;
 	/* cpu_get_tsc_freq(ci); */

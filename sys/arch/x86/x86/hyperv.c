@@ -1,4 +1,4 @@
-/*	$NetBSD: hyperv.c,v 1.5 2019/11/30 05:28:28 nonaka Exp $	*/
+/*	$NetBSD: hyperv.c,v 1.6 2019/12/07 11:45:45 nonaka Exp $	*/
 
 /*-
  * Copyright (c) 2009-2012,2016-2017 Microsoft Corp.
@@ -33,7 +33,7 @@
  */
 #include <sys/cdefs.h>
 #ifdef __KERNEL_RCSID
-__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.5 2019/11/30 05:28:28 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hyperv.c,v 1.6 2019/12/07 11:45:45 nonaka Exp $");
 #endif
 #ifdef __FBSDID
 __FBSDID("$FreeBSD: head/sys/dev/hyperv/vmbus/hyperv.c 331757 2018-03-30 02:25:12Z emaste $");
@@ -112,6 +112,8 @@ static char hyperv_pm_features_str[256];
 static char hyperv_features3_str[256];
 
 static int hyperv_idtvec;
+
+uint32_t hyperv_vcpuid[MAXCPUS];
 
 static struct timecounter hyperv_timecounter = {
 	.tc_get_timecount = hyperv_get_timecount,
@@ -495,12 +497,45 @@ hyperv_early_init(void)
 {
 	u_int features, pm_features, features3;
 	u_int maxleaf;
+	int i;
 
 	if (!hyperv_probe(&maxleaf, &features, &pm_features, &features3))
 		return;
 
 	if (features & CPUID_HV_MSR_TIME_REFCNT)
 		x86_delay = delay_func = delay_msr;
+
+	if (features & CPUID_HV_MSR_VP_INDEX) {
+		/* Save virtual processor id. */
+		hyperv_vcpuid[0] = rdmsr(MSR_HV_VP_INDEX);
+	} else {
+		/* Set virtual processor id to 0 for compatibility. */
+		hyperv_vcpuid[0] = 0;
+	}
+	for (i = 1; i < MAXCPUS; i++)
+		hyperv_vcpuid[i] = hyperv_vcpuid[0];
+}
+
+void
+hyperv_init_cpu(struct cpu_info *ci)
+{
+	u_int features, pm_features, features3;
+	u_int maxleaf;
+
+	if (!hyperv_probe(&maxleaf, &features, &pm_features, &features3))
+		return;
+
+	if (features & CPUID_HV_MSR_VP_INDEX)
+		hyperv_vcpuid[ci->ci_index] = rdmsr(MSR_HV_VP_INDEX);
+}
+
+uint32_t
+hyperv_get_vcpuid(cpuid_t cpu)
+{
+
+	if (cpu < MAXCPUS)
+		return hyperv_vcpuid[cpu];
+	return 0;
 }
 
 static bool
@@ -797,14 +832,6 @@ vmbus_init_synic_md(struct vmbus_softc *sc, cpuid_t cpu)
 	uint32_t sint;
 
 	pd = &sc->sc_percpu[cpu];
-
-	if (hyperv_features & CPUID_HV_MSR_VP_INDEX) {
-		/* Save virtual processor id. */
-		pd->vcpuid = rdmsr(MSR_HV_VP_INDEX);
-	} else {
-		/* Set virtual processor id to 0 for compatibility. */
-		pd->vcpuid = 0;
-	}
 
 	/*
 	 * Setup the SynIC message.
