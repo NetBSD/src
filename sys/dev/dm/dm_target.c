@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.24 2019/12/07 06:26:31 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.25 2019/12/07 15:28:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.24 2019/12/07 06:26:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.25 2019/12/07 15:28:39 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ static kmutex_t dm_target_mutex;
  * Called indirectly from dm_table_load_ioctl to mark target as used.
  */
 void
-dm_target_busy(dm_target_t * target)
+dm_target_busy(dm_target_t *target)
 {
 	atomic_inc_32(&target->ref_cnt);
 }
@@ -63,7 +63,7 @@ dm_target_busy(dm_target_t * target)
  * Release reference counter on target.
  */
 void
-dm_target_unbusy(dm_target_t * target)
+dm_target_unbusy(dm_target_t *target)
 {
 	KASSERT(target->ref_cnt > 0);
 	atomic_dec_32(&target->ref_cnt);
@@ -151,7 +151,7 @@ dm_target_lookup_name(const char *dm_target_name)
  *   contains name, version, function pointer to specifif target functions.
  */
 int
-dm_target_insert(dm_target_t * dm_target)
+dm_target_insert(dm_target_t *dm_target)
 {
 	dm_target_t *dmt;
 
