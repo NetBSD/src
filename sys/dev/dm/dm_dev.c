@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.13 2019/12/04 15:31:12 tkusumi Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.14 2019/12/07 15:28:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.13 2019/12/04 15:31:12 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.14 2019/12/07 15:28:39 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,7 +54,7 @@ static kmutex_t dm_dev_mutex;
 
 /* dm_dev_mutex must be holdby caller before using disable_dev. */
 __inline static void
-disable_dev(dm_dev_t * dmv)
+disable_dev(dm_dev_t *dmv)
 {
 	TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist);
 	mutex_enter(&dmv->dev_mtx);
@@ -175,7 +175,7 @@ dm_dev_lookup_uuid(const char *dm_dev_uuid)
  * Insert new device to the global list of devices.
  */
 int
-dm_dev_insert(dm_dev_t * dev)
+dm_dev_insert(dm_dev_t *dev)
 {
 	dm_dev_t *dmv;
 	int r;
@@ -331,7 +331,7 @@ dm_dev_alloc(void)
  * Freed device entry.
  */
 int
-dm_dev_free(dm_dev_t * dmv)
+dm_dev_free(dm_dev_t *dmv)
 {
 	KASSERT(dmv != NULL);
 
@@ -348,7 +348,7 @@ dm_dev_free(dm_dev_t * dmv)
 }
 
 void
-dm_dev_busy(dm_dev_t * dmv)
+dm_dev_busy(dm_dev_t *dmv)
 {
 	mutex_enter(&dmv->dev_mtx);
 	dmv->ref_cnt++;
@@ -356,7 +356,7 @@ dm_dev_busy(dm_dev_t * dmv)
 }
 
 void
-dm_dev_unbusy(dm_dev_t * dmv)
+dm_dev_unbusy(dm_dev_t *dmv)
 {
 	KASSERT(dmv->ref_cnt != 0);
 

@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.13 2019/12/06 16:11:59 tkusumi Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.14 2019/12/07 15:28:39 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.13 2019/12/06 16:11:59 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.14 2019/12/07 15:28:39 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.13 2019/12/06 16:11:59 tkusum
 
 /* dm_target_mirror.c */
 int dm_target_mirror_init(dm_dev_t *, void**, char *);
-char * dm_target_mirror_status(void *);
+char *dm_target_mirror_status(void *);
 int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_mirror_sync(dm_table_entry_t *);
 int dm_target_mirror_deps(dm_table_entry_t *, prop_array_t);
@@ -114,7 +114,7 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
  * 0 52428800 mirror clustered_disk 4 253:2 1024 UUID block_on_error 3 253:3 0 253:4 0 253:5 0
  */
 int
-dm_target_mirror_init(dm_dev_t * dmv, void **target_config, char *argv)
+dm_target_mirror_init(dm_dev_t *dmv, void **target_config, char *argv)
 {
 
 	printf("Mirror target init function called!!\n");
@@ -133,7 +133,7 @@ dm_target_mirror_status(void *target_config)
 
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_mirror_strategy(dm_table_entry_t * table_en, struct buf * bp)
+dm_target_mirror_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 
 	printf("Mirror target read function called!!\n");
@@ -148,7 +148,7 @@ dm_target_mirror_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 /* Sync underlying disk caches. */
 int
-dm_target_mirror_sync(dm_table_entry_t * table_en)
+dm_target_mirror_sync(dm_table_entry_t *table_en)
 {
 
 	return 0;
@@ -156,7 +156,7 @@ dm_target_mirror_sync(dm_table_entry_t * table_en)
 
 /* Doesn't do anything here. */
 int
-dm_target_mirror_destroy(dm_table_entry_t * table_en)
+dm_target_mirror_destroy(dm_table_entry_t *table_en)
 {
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
@@ -166,14 +166,14 @@ dm_target_mirror_destroy(dm_table_entry_t * table_en)
 
 /* Doesn't not need to do anything here. */
 int
-dm_target_mirror_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
+dm_target_mirror_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {
 	return 0;
 }
 
 /* Unsupported for this target. */
 int
-dm_target_mirror_upcall(dm_table_entry_t * table_en, struct buf * bp)
+dm_target_mirror_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }

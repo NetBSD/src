@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.17 2019/12/07 06:26:31 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.18 2019/12/07 15:28:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.17 2019/12/07 06:26:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.18 2019/12/07 15:28:39 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -167,7 +167,7 @@ dm_pdev_alloc(const char *name)
  * Destroy allocated dm_pdev.
  */
 static int
-dm_pdev_rem(dm_pdev_t * dmp)
+dm_pdev_rem(dm_pdev_t *dmp)
 {
 
 	KASSERT(dmp != NULL);
@@ -216,7 +216,7 @@ dm_pdev_destroy(void)
  * Decrement pdev reference counter if 0 remove it.
  */
 int
-dm_pdev_decr(dm_pdev_t * dmp)
+dm_pdev_decr(dm_pdev_t *dmp)
 {
 	KASSERT(dmp != NULL);
 	/*
