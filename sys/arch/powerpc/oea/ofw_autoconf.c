@@ -1,4 +1,4 @@
-/* $NetBSD: ofw_autoconf.c,v 1.20.22.1 2019/12/05 16:53:06 bouyer Exp $ */
+/* $NetBSD: ofw_autoconf.c,v 1.20.22.2 2019/12/07 08:46:48 martin Exp $ */
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
  * Copyright (C) 1995, 1996 TooLs GmbH.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.20.22.1 2019/12/05 16:53:06 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofw_autoconf.c,v 1.20.22.2 2019/12/07 08:46:48 martin Exp $");
 
 #ifdef ofppc
 #include "gtpci.h"
@@ -90,7 +90,7 @@ canonicalize_bootpath(void)
 {
 	int node;
 	char *p, *lastp;
-	char last[32];
+	char last[32], type[32];
 
 	/*
 	 * If the bootpath doesn't start with a / then it isn't
