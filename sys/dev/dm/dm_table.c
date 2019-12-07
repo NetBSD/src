@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.11 2019/12/07 06:26:31 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.12 2019/12/07 15:28:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.11 2019/12/07 06:26:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.12 2019/12/07 15:28:39 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -63,7 +63,7 @@ static void dm_table_unbusy(dm_table_head_t *);
  * DM_TABLE_INACTIVE will return inactive table id.
  */
 static int
-dm_table_busy(dm_table_head_t * head, uint8_t table_id)
+dm_table_busy(dm_table_head_t *head, uint8_t table_id)
 {
 	uint8_t id;
 
@@ -84,7 +84,7 @@ dm_table_busy(dm_table_head_t * head, uint8_t table_id)
  * Function release table lock and eventually wakeup all waiters.
  */
 static void
-dm_table_unbusy(dm_table_head_t * head)
+dm_table_unbusy(dm_table_head_t *head)
 {
 	KASSERT(head->io_cnt != 0);
 
@@ -100,7 +100,7 @@ dm_table_unbusy(dm_table_head_t * head)
  * Return current active table to caller, increment io_cnt reference counter.
  */
 dm_table_t *
-dm_table_get_entry(dm_table_head_t * head, uint8_t table_id)
+dm_table_get_entry(dm_table_head_t *head, uint8_t table_id)
 {
 	uint8_t id;
 
@@ -112,7 +112,7 @@ dm_table_get_entry(dm_table_head_t * head, uint8_t table_id)
  * Decrement io reference counter and wake up all callers, with table_head cv.
  */
 void
-dm_table_release(dm_table_head_t * head, uint8_t table_id)
+dm_table_release(dm_table_head_t *head, uint8_t table_id)
 {
 	dm_table_unbusy(head);
 }
@@ -121,7 +121,7 @@ dm_table_release(dm_table_head_t * head, uint8_t table_id)
  * Switch table from inactive to active mode. Have to wait until io_cnt is 0.
  */
 void
-dm_table_switch_tables(dm_table_head_t * head)
+dm_table_switch_tables(dm_table_head_t *head)
 {
 	mutex_enter(&head->table_mtx);
 
@@ -140,7 +140,7 @@ dm_table_switch_tables(dm_table_head_t * head)
  * XXX Is it ok to call kmem_free and potentialy VOP_CLOSE with held mutex ?xs
  */
 int
-dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
+dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -178,7 +178,7 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
  * Return length of active table in device.
  */
 static inline uint64_t
-dm_table_size_impl(dm_table_head_t * head, int table)
+dm_table_size_impl(dm_table_head_t *head, int table)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -208,7 +208,7 @@ dm_table_size_impl(dm_table_head_t * head, int table)
  * Return length of active table in device.
  */
 uint64_t
-dm_table_size(dm_table_head_t * head)
+dm_table_size(dm_table_head_t *head)
 {
 	return dm_table_size_impl(head, DM_TABLE_ACTIVE);
 }
@@ -217,7 +217,7 @@ dm_table_size(dm_table_head_t * head)
  * Return length of active table in device.
  */
 uint64_t
-dm_inactive_table_size(dm_table_head_t * head)
+dm_inactive_table_size(dm_table_head_t *head)
 {
 	return dm_table_size_impl(head, DM_TABLE_INACTIVE);
 }
@@ -226,7 +226,7 @@ dm_inactive_table_size(dm_table_head_t * head)
  * Return combined disk geometry
  */
 void
-dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
+dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp, unsigned *secsizep)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -265,7 +265,7 @@ dm_table_disksize(dm_table_head_t * head, uint64_t *numsecp, unsigned *secsizep)
  * there can be dm_dev_resume_ioctl), therfore this isonly informative.
  */
 int
-dm_table_get_target_count(dm_table_head_t * head, uint8_t table_id)
+dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 {
 	dm_table_entry_t *table_en;
 	dm_table_t *tbl;
@@ -292,7 +292,7 @@ dm_table_get_target_count(dm_table_head_t * head, uint8_t table_id)
  * opaque as possible.
  */
 void
-dm_table_head_init(dm_table_head_t * head)
+dm_table_head_init(dm_table_head_t *head)
 {
 	head->cur_active_table = 0;
 	head->io_cnt = 0;
@@ -309,7 +309,7 @@ dm_table_head_init(dm_table_head_t * head)
  * Destroy all variables in table_head
  */
 void
-dm_table_head_destroy(dm_table_head_t * head)
+dm_table_head_destroy(dm_table_head_t *head)
 {
 	KASSERT(!mutex_owned(&head->table_mtx));
 	KASSERT(!cv_has_waiters(&head->table_cv));
