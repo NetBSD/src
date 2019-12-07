@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.29 2019/12/06 16:33:47 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.30 2019/12/07 15:28:39 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.29 2019/12/06 16:33:47 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.30 2019/12/07 15:28:39 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -128,7 +128,7 @@ dm_target_stripe_fini(dm_target_stripe_config_t *tsc)
  * 0 65536 striped 2 512 /dev/hda 0 /dev/hdb 0
  */
 int
-dm_target_stripe_init(dm_dev_t * dmv, void **target_config, char *params)
+dm_target_stripe_init(dm_dev_t *dmv, void **target_config, char *params)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
@@ -217,7 +217,7 @@ dm_target_stripe_status(void *target_config)
 
 /* Strategy routine called from dm_strategy. */
 int
-dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
+dm_target_stripe_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
@@ -283,7 +283,7 @@ dm_target_stripe_strategy(dm_table_entry_t * table_en, struct buf * bp)
 
 /* Sync underlying disk caches. */
 int
-dm_target_stripe_sync(dm_table_entry_t * table_en)
+dm_target_stripe_sync(dm_table_entry_t *table_en)
 {
 	int cmd, err;
 	dm_target_stripe_config_t *tsc;
@@ -306,7 +306,7 @@ dm_target_stripe_sync(dm_table_entry_t * table_en)
 
 /* Destroy target specific data. */
 int
-dm_target_stripe_destroy(dm_table_entry_t * table_en)
+dm_target_stripe_destroy(dm_table_entry_t *table_en)
 {
 	dm_target_stripe_fini(table_en->target_config);
 
@@ -318,7 +318,7 @@ dm_target_stripe_destroy(dm_table_entry_t * table_en)
 
 /* Doesn't not need to do anything here. */
 int
-dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
+dm_target_stripe_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {
 	dm_target_stripe_config_t *tsc;
 	dm_target_linear_config_t *tlc;
@@ -338,7 +338,7 @@ dm_target_stripe_deps(dm_table_entry_t * table_en, prop_array_t prop_array)
 
 /* Unsupported for this target. */
 int
-dm_target_stripe_upcall(dm_table_entry_t * table_en, struct buf * bp)
+dm_target_stripe_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 	return 0;
 }
@@ -350,7 +350,7 @@ dm_target_stripe_upcall(dm_table_entry_t * table_en, struct buf * bp)
  * to the least common multiple.
  */
 int
-dm_target_stripe_secsize(dm_table_entry_t * table_en, unsigned *secsizep)
+dm_target_stripe_secsize(dm_table_entry_t *table_en, unsigned *secsizep)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
