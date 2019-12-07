@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.330 2019/12/07 17:36:33 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.331 2019/12/07 21:14:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.330 2019/12/07 17:36:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.331 2019/12/07 21:14:36 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -753,6 +753,7 @@ mi_switch(lwp_t *l)
 		 * Note that, unless the caller disabled preemption, we can
 		 * be preempted at any time after this splx().
 		 */
+		KASSERT(l->l_cpu == ci);
 		splx(oldspl);
 	} else {
 		/* Nothing to do - just unlock and return. */
@@ -763,9 +764,7 @@ mi_switch(lwp_t *l)
 		lwp_unlock(l);
 	}
 
-	/* Only now is it safe to consider l_cpu again. */
 	KASSERT(l == curlwp);
-	KASSERT(l->l_cpu == ci);
 	KASSERT(l->l_stat == LSONPROC);
 
 	SYSCALL_TIME_WAKEUP(l);
