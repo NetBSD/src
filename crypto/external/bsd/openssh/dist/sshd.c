@@ -1,4 +1,4 @@
-/*	$NetBSD: sshd.c,v 1.36 2019/10/12 18:32:22 christos Exp $	*/
+/*	$NetBSD: sshd.c,v 1.37 2019/12/07 16:25:05 christos Exp $	*/
 /* $OpenBSD: sshd.c,v 1.537 2019/06/28 13:35:04 deraadt Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -44,7 +44,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sshd.c,v 1.36 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sshd.c,v 1.37 2019/12/07 16:25:05 christos Exp $");
 #include <sys/types.h>
 #include <sys/param.h>
 #include <sys/ioctl.h>
@@ -370,7 +370,6 @@ grace_alarm_handler(int sig)
 
 	/* XXX pre-format ipaddr/port so we don't need to access active_state */
 	/* Log error and exit. */
-	pfilter_notify(1);
 	sigdie("Timeout before authentication for %s port %d",
 	    ssh_remote_ipaddr(the_active_state),
 	    ssh_remote_port(the_active_state));
