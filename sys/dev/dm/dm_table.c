@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.10 2019/12/05 16:59:43 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.11 2019/12/07 06:26:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.10 2019/12/05 16:59:43 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.11 2019/12/07 06:26:31 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,15 +160,14 @@ dm_table_destroy(dm_table_head_t * head, uint8_t table_id)
 
 	tbl = &head->tables[id];
 
-	while (!SLIST_EMPTY(tbl)) {	/* List Deletion. */
-		table_en = SLIST_FIRST(tbl);
+	while ((table_en = SLIST_FIRST(tbl)) != NULL) {
+		SLIST_REMOVE(tbl, table_en, dm_table_entry, next);
 		if (table_en->target->destroy(table_en) == 0)
 			table_en->target_config = NULL;
 
-		SLIST_REMOVE_HEAD(tbl, next);
-
 		kmem_free(table_en, sizeof(*table_en));
 	}
+	KASSERT(SLIST_EMPTY(tbl));
 
 	mutex_exit(&head->table_mtx);
 

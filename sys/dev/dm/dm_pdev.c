@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.16 2019/12/06 16:46:14 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.17 2019/12/07 06:26:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.16 2019/12/06 16:46:14 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.17 2019/12/07 06:26:31 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -188,16 +188,16 @@ dm_pdev_rem(dm_pdev_t * dmp)
 int
 dm_pdev_destroy(void)
 {
-	dm_pdev_t *dm_pdev;
+	dm_pdev_t *dmp;
 
 	mutex_enter(&dm_pdev_mutex);
-	while (!SLIST_EMPTY(&dm_pdev_list)) {	/* List Deletion. */
-		dm_pdev = SLIST_FIRST(&dm_pdev_list);
 
-		SLIST_REMOVE_HEAD(&dm_pdev_list, next_pdev);
-
-		dm_pdev_rem(dm_pdev);
+	while ((dmp = SLIST_FIRST(&dm_pdev_list)) != NULL) {
+		SLIST_REMOVE(&dm_pdev_list, dmp, dm_pdev, next_pdev);
+		dm_pdev_rem(dmp);
 	}
+	KASSERT(SLIST_EMPTY(&dm_pdev_list));
+
 	mutex_exit(&dm_pdev_mutex);
 
 	mutex_destroy(&dm_pdev_mutex);
