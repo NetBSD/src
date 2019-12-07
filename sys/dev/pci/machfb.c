@@ -1,4 +1,4 @@
-/*	$NetBSD: machfb.c,v 1.97 2019/02/05 06:12:39 mrg Exp $	*/
+/*	$NetBSD: machfb.c,v 1.98 2019/12/07 01:00:40 macallan Exp $	*/
 
 /*
  * Copyright (c) 2002 Bang Jun-Young
@@ -34,7 +34,7 @@
 
 #include <sys/cdefs.h>
 __KERNEL_RCSID(0,
-	"$NetBSD: machfb.c,v 1.97 2019/02/05 06:12:39 mrg Exp $");
+	"$NetBSD: machfb.c,v 1.98 2019/12/07 01:00:40 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -67,6 +67,12 @@ __KERNEL_RCSID(0,
 #include "opt_wsemul.h"
 #include "opt_machfb.h"
 #include "opt_glyphcache.h"
+
+#ifdef MACHFB_DEBUG
+#define DPRINTF printf
+#else
+#define DPRINTF while (0) printf
+#endif
 
 #define MACH64_REG_SIZE		0x800
 #define MACH64_REG_OFF		0x7ff800
@@ -140,6 +146,7 @@ struct mach64_softc {
 	int sc_edid_size;
 	uint8_t sc_edid_data[1024];
     	struct edid_info sc_ei;
+    	int sc_setmode;
 
 	u_char sc_cmap_red[256];
 	u_char sc_cmap_green[256];
@@ -221,7 +228,9 @@ static void	mach64_init(struct mach64_softc *);
 static int	mach64_get_memsize(struct mach64_softc *);
 static int	mach64_get_max_ramdac(struct mach64_softc *);
 
+#if 0
 static void	mach64_get_mode(struct mach64_softc *, struct videomode *);
+#endif
 
 static int	mach64_calc_crtcregs(struct mach64_softc *,
 				     struct mach64_crtcregs *,
@@ -408,7 +417,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	const char **memtype_names;
 	struct wsemuldisplaydev_attach_args aa;
 	long defattr;
-	int setmode = 0, width, height;
+	int width = 1024, height = 768;
 	pcireg_t screg;
 	uint32_t reg;
 	const pcireg_t enables = PCI_COMMAND_MEM_ENABLE;
@@ -426,6 +435,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	sc->sc_iot = pa->pa_iot;
 	sc->sc_accessops.ioctl = mach64_ioctl;
 	sc->sc_accessops.mmap = mach64_mmap;
+	sc->sc_setmode = 0;
 
 	pci_aprint_devinfo(pa, "Graphics processor");
 #ifdef MACHFB_DEBUG
@@ -498,6 +508,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	prop_dictionary_get_uint32(device_properties(self), "width", &width);
 	prop_dictionary_get_uint32(device_properties(self), "height", &height);
 
+	default_mode.hdisplay = width;
+	default_mode.vdisplay = height;
+
 	memset(&sc->sc_ei, 0, sizeof(sc->sc_ei));
 	if ((edid_data = prop_dictionary_get(device_properties(self), "EDID"))
 	    != NULL) {
@@ -513,7 +526,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		edid_print(&sc->sc_ei);
 #endif
 	}
-
 	is_gx = 0;
 	switch(mach64_chip_id) {
 		case PCI_PRODUCT_ATI_MACH64_GX:
@@ -561,9 +573,9 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_debug("using clock %d\n", sc->sc_clock);
 
 	sc->ref_div = regrb_pll(sc, PLL_REF_DIV);
-	aprint_error("ref_div: %d\n", sc->ref_div);
+	DPRINTF("ref_div: %d\n", sc->ref_div);
 	sc->mclk_fb_div = regrb_pll(sc, MCLK_FB_DIV);
-	aprint_error("mclk_fb_div: %d\n", sc->mclk_fb_div);
+	DPRINTF("mclk_fb_div: %d\n", sc->mclk_fb_div);
 	sc->mem_freq = (2 * sc->ref_freq * sc->mclk_fb_div) /
 	    (sc->ref_div * 2);
 	sc->mclk_post_div = (sc->mclk_fb_div * 2 * sc->ref_freq) /
@@ -572,7 +584,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	{
 		sc->minref = sc->ramdac_freq / 510;
 		sc->m = sc->ref_freq / sc->minref;
-		aprint_error("minref: %d m: %d\n", sc->minref, sc->m);
+		DPRINTF("minref: %d m: %d\n", sc->minref, sc->m);
 	}
 	aprint_normal_dev(sc->sc_dev,
 	    "%ld KB %s %d.%d MHz, maximum RAMDAC clock %d MHz\n",
@@ -604,10 +616,10 @@ mach64_attach(device_t parent, device_t self, void *aux)
 	aprint_debug("gen_cntl: %08x\n", regr(sc, CRTC_GEN_CNTL));
 
 #define MODE_IS_VALID(m) ((sc->ramdac_freq >= (m)->dot_clock) && \
-			  ((m)->hdisplay <= 11280))
+			  ((m)->hdisplay <= 1280))
 
 	/* no mode setting support on ancient chips with external clocks */
-	setmode = 0;
+	sc->sc_setmode = 0;
 	if (!is_gx) {
 		/*
 		 * Now pick a mode.
@@ -617,7 +629,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			if (MODE_IS_VALID(m)) {
 				memcpy(&default_mode, m,
 				    sizeof(struct videomode));
-				setmode = 1;
+				sc->sc_setmode = 1;
 			} else {
 				aprint_error_dev(sc->sc_dev,
 				    "unable to use preferred mode\n");
@@ -627,7 +639,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		 * if we can't use the preferred mode go look for the
 		 * best one we can support
 		 */
-		if (setmode == 0) {
+		if (sc->sc_setmode == 0) {
 			struct videomode *m = sc->sc_ei.edid_modes;
 
 			mode = NULL;
@@ -642,31 +654,38 @@ mach64_attach(device_t parent, device_t self, void *aux)
 			if (mode != NULL) {
 				memcpy(&default_mode, mode,
 				    sizeof(struct videomode));
-				setmode = 1;
+				sc->sc_setmode = 1;
 			}
 		}
-		/* got nothing? try to pick one based on firmware parameters */
-		if (setmode == 0 && width > 0 && height > 0) {
-			/* no EDID data? */
-			mode = pick_mode_by_ref(width, height, 60);
-			memcpy(&default_mode, mode, sizeof(struct videomode));
-			setmode = 1;
-		}
-		/* still nothing? Grab the default */
-		if (setmode == 0) {
-			mode = pick_mode_by_ref(1024, 768, 60);
-			memcpy(&default_mode, mode, sizeof(struct videomode));
-			setmode = 1;
-		}
-	} else {
-		/* make sure my_mode points at something sensible */
-		mach64_get_mode(sc, &default_mode);
-		if (default_mode.dot_clock == 0) {
-			memcpy(&default_mode, pick_mode_by_ref(width, height, 60), 
-			    sizeof(default_mode));
-		}
 	}
+
+	/* make sure my_mode points at something sensible if the above fails */
+	if (default_mode.dot_clock == 0) {
+		sc->sc_setmode = 0;
+		mode = pick_mode_by_ref(width, height, 60);
+		if (mode != NULL) {	
+			memcpy(&default_mode, mode, sizeof(default_mode));
+		} else if ((width > 0) && (height > 0)) {
+			default_mode.hdisplay = width;
+			default_mode.vdisplay = height;
+		} else {
+			/*
+			 * if we end up here we're probably dealing with
+			 * uninitialized hardware - try to set 1024x768@60 and
+			 * hope for the best...
+			 */ 
+			mode = pick_mode_by_ref(1024, 768, 60);
+			if (mode == NULL) return; 
+			memcpy(&default_mode, mode, sizeof(default_mode));
+			if (!is_gx) sc->sc_setmode = 1;
+		}			
+	}
+
 	sc->sc_my_mode = &default_mode;
+
+	if ((width == sc->sc_my_mode->hdisplay) &&
+	    (height == sc->sc_my_mode->vdisplay))
+		sc->sc_setmode = 0;
 
 	sc->bits_per_pixel = 8;
 	sc->virt_x = sc->sc_my_mode->hdisplay;
@@ -679,7 +698,7 @@ mach64_attach(device_t parent, device_t self, void *aux)
 
 	mach64_init_engine(sc);
 
-	if (setmode)
+	if (sc->sc_setmode)
 		mach64_modeswitch(sc, sc->sc_my_mode);
 
 	aprint_normal_dev(sc->sc_dev,
@@ -727,7 +746,6 @@ mach64_attach(device_t parent, device_t self, void *aux)
 		 * since we're not the console we can postpone the rest
 		 * until someone actually allocates a screen for us
 		 */
-		mach64_modeswitch(sc, sc->sc_my_mode);
 		if (mach64_console_screen.scr_ri.ri_rows == 0) {
 			/* do some minimal setup to avoid weirdnesses later */
 			vcons_init_screen(&sc->vd, &mach64_console_screen, 1,
@@ -882,6 +900,7 @@ mach64_get_max_ramdac(struct mach64_softc *sc)
 		return 80000;
 }
 
+#if 0
 static void
 mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 {
@@ -908,6 +927,7 @@ mach64_get_mode(struct mach64_softc *sc, struct videomode *mode)
 	    mode->vdisplay, mode->vsync_start, mode->vsync_end, mode->vtotal);
 #endif
 }
+#endif
 
 static int
 mach64_calc_crtcregs(struct mach64_softc *sc, struct mach64_crtcregs *crtc,
@@ -1147,7 +1167,10 @@ mach64_set_dsp(struct mach64_softc *sc)
 
 	xclks_per_qw_m = (sc->mem_freq * 64 << 4) /
 		       (sc->vclk_freq * sc->bits_per_pixel);
-	printf("xclks_per_qw %d %d\n", xclks_per_qw >> 7, xclks_per_qw_m);
+
+	DPRINTF("xclks_per_qw %d %d\n", xclks_per_qw >> 7, xclks_per_qw_m);
+		DPRINTF("mem %dkHz v %dkHz\n", sc->mem_freq, sc->vclk_freq);
+
 	y = (xclks_per_qw * fifo_depth) >> 11;
 		       
 	while (y) {
@@ -1209,11 +1232,14 @@ mach64_set_dsp(struct mach64_softc *sc)
 	    sc->mclk_fb_div, sc->vclk_fb_div,
 	    sc->mclk_post_div, sc->vclk_post_div);
 #endif
-
+	DPRINTF("DSP_ON_OFF %08x\n", regr(sc, DSP_ON_OFF));
+	DPRINTF("DSP_CONFIG %08x\n", regr(sc, DSP_CONFIG));
 	regw(sc, DSP_ON_OFF, ((dsp_on << 16) & DSP_ON) | (dsp_off & DSP_OFF));
 	regw(sc, DSP_CONFIG, ((dsp_precision << 20) & DSP_PRECISION) |
 	    ((dsp_loop_latency << 16) & DSP_LOOP_LATENCY) |
 	    (dsp_xclks_per_qw & DSP_XCLKS_PER_QW));
+	DPRINTF("DSP_ON_OFF %08x\n", regr(sc, DSP_ON_OFF));
+	DPRINTF("DSP_CONFIG %08x\n", regr(sc, DSP_CONFIG));
 }
 
 static void
@@ -1250,7 +1276,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 		sc->log2_vclk_post_div = 3;
 	}
 	sc->vclk_fb_div = q * sc->vclk_post_div / 100;
-	aprint_error("post_div: %d log2_post_div: %d mclk_div: %d\n",
+	DPRINTF("post_div: %d log2_post_div: %d mclk_div: %d\n",
 	    sc->vclk_post_div, sc->log2_vclk_post_div, sc->mclk_fb_div);
 
 	vclk_ctl = regrb_pll(sc, PLL_VCLK_CNTL);
@@ -1258,7 +1284,7 @@ mach64_set_pll(struct mach64_softc *sc, int clock)
 	vclk_ctl |= PLL_VCLK_RESET;
 	regwb_pll(sc, PLL_VCLK_CNTL, vclk_ctl);
 
-	aprint_error("target: %d output: %d\n", clock, 
+	DPRINTF("target: %d output: %d\n", clock, 
 	    (2 * sc->ref_freq * sc->vclk_fb_div) / 
 	    (sc->ref_div * sc->vclk_post_div));
 	
@@ -1851,7 +1877,8 @@ mach64_ioctl(void *v, void *vs, u_long cmd, void *data, int flag,
 				mach64_init(sc);
 				mach64_init_engine(sc);
 				mach64_init_lut(sc);
-				mach64_modeswitch(sc, sc->sc_my_mode);
+				if (sc->sc_setmode)
+					mach64_modeswitch(sc, sc->sc_my_mode);
 				mach64_clearscreen(sc);
 				glyphcache_wipe(&sc->sc_gc);
 				vcons_redraw_screen(ms);
