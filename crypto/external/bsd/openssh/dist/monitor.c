@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.31 2019/12/07 16:32:22 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.32 2019/12/07 16:38:42 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.199 2019/10/07 23:10:38 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.31 2019/12/07 16:32:22 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.32 2019/12/07 16:38:42 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -84,6 +84,8 @@ __RCSID("$NetBSD: monitor.c,v 1.31 2019/12/07 16:32:22 christos Exp $");
 #include "authfd.h"
 #include "match.h"
 #include "ssherr.h"
+
+#include "pfilter.h"
 
 #ifdef GSSAPI
 static Gssctxt *gsscontext = NULL;
