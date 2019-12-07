@@ -224,42 +224,50 @@ proc_read(struct proc_handle *phdl, void *buf, size_t size, size_t addr)
 const lwpstatus_t *
 proc_getlwpstatus(struct proc_handle *phdl)
 {
-	struct ptrace_lwpinfo lwpinfo;
 	lwpstatus_t *psp = &phdl->lwps;
 	siginfo_t *siginfo;
+
+#ifdef PT_GET_SIGINFO
+	struct ptrace_siginfo si;
+
+	if (ptrace(PT_GET_SIGINFO, phdl->pid, (void *)&si,
+		   sizeof(si)) < 0)
+		return (NULL);
+
+	siginfo = &si.psi_siginfo;
+	if (siginfo->si_signo == SIGTRAP &&
+	    (siginfo->si_code == TRAP_BRKPT ||
+	    siginfo->si_code == TRAP_TRACE)) {
+		psp->pr_why = PR_FAULTED;
+		psp->pr_what = FLTBPT;
+	} else if (siginfo->si_signo == SIGTRAP &&
+	    (siginfo->si_code == TRAP_SCE)) {
+		psp->pr_why = PR_SYSENTRY;
+	} else if (siginfo->si_signo == SIGTRAP &&
+	    (siginfo->si_code == TRAP_SCX)) {
+		psp->pr_why = PR_SYSEXIT;
+	} else {
+		psp->pr_why = PR_SIGNALLED;
+		psp->pr_what = siginfo->si_signo;
+	}
+#else
+	struct ptrace_lwpinfo lwpinfo;
 	bool have_siginfo, sysentry, sysexit;
 
 	if (phdl == NULL)
 		return (NULL);
+
 	lwpinfo.pl_lwpid = 0;
 	if (ptrace(PT_LWPINFO, phdl->pid, (void *)&lwpinfo,
 	    sizeof(lwpinfo)) < 0)
 		return (NULL);
 
-#ifdef PL_FLAG_SI
 	have_siginfo = (lwpinfo.pl_flags & PL_FLAG_SI) != 0;
 	sysentry = (lwpinfo.pl_flags & PL_FLAG_SCE) != 0;
 	sysexit = (lwpinfo.pl_flags & PL_FLAG_SCX) != 0;
-#endif
-#ifdef PT_GET_SIGINFO
-	have_siginfo = 1;
-	sysentry = 0;
-	sysexit = 0;
-#endif
 
 	if (lwpinfo.pl_event == PL_EVENT_SIGNAL && have_siginfo) {
-#ifdef PL_FLAG_SI
 		siginfo = &lwpinfo.pl_siginfo;
-#endif
-#ifdef PT_GET_SIGINFO
-		struct ptrace_siginfo si;
-
-		if (ptrace(PT_GET_SIGINFO, phdl->pid, (void *)&si,
-			   sizeof(si)) < 0)
-			return (NULL);
-
-		siginfo = &si.psi_siginfo;
-#endif
 		if (siginfo->si_signo == SIGTRAP &&
 		    (siginfo->si_code == TRAP_BRKPT ||
 		    siginfo->si_code == TRAP_TRACE)) {
@@ -274,5 +282,6 @@ proc_getlwpstatus(struct proc_handle *phdl)
 	} else if (sysexit) {
 		psp->pr_why = PR_SYSEXIT;
 	}
+#endif
 	return (psp);
 }
