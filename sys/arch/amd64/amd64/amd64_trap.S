@@ -1,4 +1,4 @@
-/*	$NetBSD: amd64_trap.S,v 1.50 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: amd64_trap.S,v 1.51 2019/12/07 10:19:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008, 2017 The NetBSD Foundation, Inc.
@@ -694,13 +694,8 @@ calltrap:
 	STI(si)
 	movabsq	$4f,%rdi
 	movl	CPUVAR(ILEVEL),%esi
-	movl	%ebx,%edx
-	xorq	%rax,%rax
-	call	_C_LABEL(printf)
-	movl	%ebx,%edi
-	call	_C_LABEL(spllower)
-	jmp	.Lalltraps_checkast
-4:	.asciz	"WARNING: SPL NOT LOWERED ON TRAP EXIT %x %x\n"
+	call	_C_LABEL(panic)
+4:	.asciz	"spl not lowered on trap exit, ilevel=%x"
 #endif
 END(alltraps)
 
