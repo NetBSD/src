@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.26 2019/12/04 14:09:47 jmcneill Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.27 2019/12/07 12:34:17 wiz Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.26 2019/12/04 14:09:47 jmcneill Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.27 2019/12/07 12:34:17 wiz Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -264,14 +264,12 @@ get_comp_name(enum uboot_image_comp comp)
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: mkubootimage -A "
-	    "<arm|arm64|i386|mips|mips64|or1k|powerpc|sh>");
-	fprintf(stderr, " -C <none|bz2|gz|lzma|lzo>");
-	fprintf(stderr, " -O <openbsd|netbsd|freebsd|linux>");
-	fprintf(stderr, " -T <standalone|kernel|kernel_noload|ramdisk|fs|script>");
-	fprintf(stderr, " -a <addr> [-e <ep>] [-m <magic>] -n <name>");
-	fprintf(stderr, " [-f <uimg|arm64>] [-u]");
-	fprintf(stderr, " <srcfile> <dstfile>\n");
+	fprintf(stderr, "usage: mkubootimage [-hu] -A "
+	    "<arm|arm64|i386|mips|mips64|or1k|powerpc|sh> -a address\n");
+	fprintf(stderr, "\t-C <bz2|gz|lzma|lzo|none> [-E address] [-e address]\n");
+	fprintf(stderr, "\t[-f <arm64|uimg>] [-m magic] -n image -O <freebsd|linux|netbsd|openbsd>\n");
+	fprintf(stderr, "\t-T <fs|kernel|kernel_noload|ramdisk|script|standalone>\n");
+	fprintf(stderr, "\tsource destination\n");
 
 	exit(EXIT_FAILURE);
 }
