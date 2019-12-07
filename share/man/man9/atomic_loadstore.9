@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_loadstore.9,v 1.3 2019/11/30 02:47:14 riastradh Exp $
+.\"	$NetBSD: atomic_loadstore.9,v 1.4 2019/12/07 12:22:19 wiz Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -144,9 +144,9 @@ atomic memory operation is issued either all at once or not at all.
 For example, if a 32-bit word
 .Fa w
 is written with
-.Li atomic_store_relaxed(& Ns Fa w Ns Li "," 0x00010002) ,
+.Li atomic_store_relaxed ( & Ns Fa w , 0x00010002 ) ,
 then an interrupt, other thread, or other CPU reading it with
-.Li atomic_load_relaxed(& Ns Fa w Ns Li ")"
+.Li atomic_load_relaxed ( & Ns Fa w )
 will never witness it partially written, whereas
 .Fa w Li = 0x00010002
 might be compiled into a pair of separate 16-bit store instructions
@@ -600,9 +600,9 @@ The Linux kernel provides two macros
 and
 .Fn WRITE_ONCE x v
 which are similar to
-.Li atomic_load_consume(& Ns Fa x Ns Li ")"
+.Li atomic_load_consume ( & Ns Fa x )
 and
-.Li atomic_store_relaxed(& Ns Fa x Ns Li "," Fa v Ns Li ")" ,
+.Li atomic_store_relaxed ( & Ns Fa x , Fa v ) ,
 respectively.
 However, while Linux's
 .Fn READ_ONCE
@@ -617,7 +617,7 @@ They do not require the address
 to be aligned.
 .It
 They do not require
-.Li sizeof( Ns Fa x Ns Li ")"
+.Li sizeof ( Fa x )
 to be at most the largest size of available atomic loads and stores on
 the host architecture.
 .El
@@ -766,7 +766,7 @@ C11 formally specifies that all subexpressions, except the left
 operands of the
 .Li "&&" , "||" , "?:" ,
 and
-.Li ","
+.Li \&,
 operators and the
 .Fn kill_dependency
 macro, carry dependencies for which
