@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2295 2019/11/30 00:02:15 riastradh Exp $
+#	$NetBSD: mi,v 1.2296 2019/12/07 15:13:59 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -8430,6 +8430,7 @@
 ./usr/share/man/cat3/mdc2.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/mdoc.0			comp-obsolete		obsolete
 ./usr/share/man/cat3/membar_consumer.0		comp-c-catman		.cat
+./usr/share/man/cat3/membar_datadep_consumer.0	comp-c-catman		.cat
 ./usr/share/man/cat3/membar_enter.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_exit.0		comp-c-catman		.cat
 ./usr/share/man/cat3/membar_ops.0		comp-c-catman		.cat
@@ -16423,6 +16424,7 @@
 ./usr/share/man/html3/md5.html			comp-c-htmlman		html
 ./usr/share/man/html3/mdoc.html			comp-obsolete		obsolete
 ./usr/share/man/html3/membar_consumer.html	comp-c-htmlman		html
+./usr/share/man/html3/membar_datadep_consumer.html	comp-c-htmlman		html
 ./usr/share/man/html3/membar_enter.html		comp-c-htmlman		html
 ./usr/share/man/html3/membar_exit.html		comp-c-htmlman		html
 ./usr/share/man/html3/membar_ops.html		comp-c-htmlman		html
@@ -24423,6 +24425,7 @@
 ./usr/share/man/man3/mdc2.3			comp-obsolete		obsolete
 ./usr/share/man/man3/mdoc.3			comp-obsolete		obsolete
 ./usr/share/man/man3/membar_consumer.3		comp-c-man		.man
+./usr/share/man/man3/membar_datadep_consumer.3	comp-c-man		.man
 ./usr/share/man/man3/membar_enter.3		comp-c-man		.man
 ./usr/share/man/man3/membar_exit.3		comp-c-man		.man
 ./usr/share/man/man3/membar_ops.3		comp-c-man		.man
