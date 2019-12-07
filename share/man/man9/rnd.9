@@ -1,4 +1,4 @@
-.\"	$NetBSD: rnd.9,v 1.26 2019/12/04 03:04:43 riastradh Exp $
+.\"	$NetBSD: rnd.9,v 1.27 2019/12/07 12:26:05 wiz Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -78,7 +78,6 @@ to each
 .Fa rnd_source ,
 for example with
 .Xr mutex 9 .
-.Pp
 .Bl -tag -width 8n
 .It Fn rndsource_setcb "krndsource_t *rnd_source" "void (*callback)(size_t, void *)" "void *cookie"
 This function sets a callback to be invoked when the kernel entropy
@@ -92,7 +91,7 @@ to
 .Fn rnd_attach_source
 in order for the callback to be used.
 The callback is invoked as
-.Fa callback Ns Li "(" Ns Fa nbytes Ns Li "," Fa cookie Ns Li ")" ,
+.Fa callback ( Fa nbytes , Fa cookie ) ,
 where
 .Fa nbytes
 is the number of bytes requested for the entropy pool, and
@@ -167,7 +166,7 @@ the pool estimate)
 towards the pool estimate)
 .Dv RND_FLAG_HASCB
 (caller specified a callback with
-.Fn rndsource_setcb Ns ).
+.Fn rndsource_setcb ) .
 For many devices,
 .Dv RND_FLAG_DEFAULT
 .Dv ( RND_FLAG_COLLECT_VALUE | RND_FLAG_COLLECT_TIME | RND_FLAG_ESTIMATE_TIME )
