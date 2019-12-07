@@ -1,4 +1,4 @@
-/*	$NetBSD: monitor.c,v 1.30 2019/10/12 18:32:22 christos Exp $	*/
+/*	$NetBSD: monitor.c,v 1.31 2019/12/07 16:32:22 christos Exp $	*/
 /* $OpenBSD: monitor.c,v 1.199 2019/10/07 23:10:38 djm Exp $ */
 /*
  * Copyright 2002 Niels Provos <provos@citi.umich.edu>
@@ -27,7 +27,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: monitor.c,v 1.30 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: monitor.c,v 1.31 2019/12/07 16:32:22 christos Exp $");
 #include <sys/types.h>
 #include <sys/wait.h>
 #include <sys/socket.h>
@@ -320,8 +320,10 @@ monitor_child_preauth(struct ssh *ssh, struct monitor *pmonitor)
 		if (ent->flags & (MON_AUTHDECIDE|MON_ALOG)) {
 			auth_log(ssh, authenticated, partial,
 			    auth_method, auth_submethod);
-			if (!partial && !authenticated)
+			if (!partial && !authenticated) {
+				pfilter_notify(1);
 				authctxt->failures++;
+			}
 			if (authenticated || partial) {
 				auth2_update_session_info(authctxt,
 				    auth_method, auth_submethod);
@@ -1223,6 +1225,7 @@ mm_answer_keyallowed(struct ssh *ssh, int sock, struct sshbuf *m)
 	} else {
 		/* Log failed attempt */
 		auth_log(ssh, 0, 0, auth_method, NULL);
+		pfilter_notify(1);
 		free(cuser);
 		free(chost);
 	}

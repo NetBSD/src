@@ -1,4 +1,4 @@
-/*	$NetBSD: auth2.c,v 1.20 2019/10/12 18:32:22 christos Exp $	*/
+/*	$NetBSD: auth2.c,v 1.21 2019/12/07 16:32:22 christos Exp $	*/
 /* $OpenBSD: auth2.c,v 1.157 2019/09/06 04:53:27 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2.c,v 1.20 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: auth2.c,v 1.21 2019/12/07 16:32:22 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -440,8 +440,10 @@ userauth_finish(struct ssh *ssh, int authenticated, const char *method,
 	} else {
 		/* Allow initial try of "none" auth without failure penalty */
 		if (!partial && !authctxt->server_caused_failure &&
-		    (authctxt->attempt > 1 || strcmp(method, "none") != 0))
+		    (authctxt->attempt > 1 || strcmp(method, "none") != 0)) {
 			authctxt->failures++;
+			pfilter_notify(1);
+		}
 		if (authctxt->failures >= options.max_authtries)
 			auth_maxtries_exceeded(ssh);
 		methods = authmethods_get(authctxt);
