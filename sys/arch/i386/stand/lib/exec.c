@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.c,v 1.74 2019/09/13 02:19:46 manu Exp $	 */
+/*	$NetBSD: exec.c,v 1.75 2019/12/07 02:29:03 christos Exp $	 */
 
 /*
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -321,7 +321,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	/* Load the prekern (static) */
 	flags = LOAD_KERNEL & ~(LOAD_HDR|LOAD_SYM);
 	if ((fd = loadfile(prekernpath, marks, flags)) == -1)
-		return EIO;
+		return errno;
 	close(fd);
 
 	prekern_start = marks[MARK_START];
@@ -334,7 +334,7 @@ common_load_prekern(const char *file, u_long *basemem, u_long *extmem,
 	/* Load the kernel (dynamic) */
 	flags = (LOAD_KERNEL | LOAD_DYN) & ~(floppy ? LOAD_BACKWARDS : 0);
 	if ((fd = loadfile(file, marks, flags)) == -1)
-		return EIO;
+		return errno;
 	close(fd);
 
 	kernpa_end = marks[MARK_END] - loadaddr;
@@ -399,7 +399,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 		 */
 		marks[MARK_START] = loadaddr;
 		if ((fd = loadfile(file, marks, COUNT_KERNEL)) == -1)
-			return EIO;
+			return errno;
 		close(fd);
 
 		kernsize = marks[MARK_END];
@@ -413,7 +413,7 @@ common_load_kernel(const char *file, u_long *basemem, u_long *extmem,
 	marks[MARK_START] = loadaddr;
 	if ((fd = loadfile(file, marks,
 	    LOAD_KERNEL & ~(floppy ? LOAD_BACKWARDS : 0))) == -1)
-		return EIO;
+		return errno;
 
 	close(fd);
 
