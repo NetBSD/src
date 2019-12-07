@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.23 2019/12/06 16:11:59 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.24 2019/12/07 06:26:31 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.23 2019/12/06 16:11:59 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.24 2019/12/07 06:26:31 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -220,14 +220,13 @@ dm_target_destroy(void)
 	dm_target_t *dm_target;
 
 	mutex_enter(&dm_target_mutex);
-	while (TAILQ_FIRST(&dm_target_list) != NULL) {
-		dm_target = TAILQ_FIRST(&dm_target_list);
 
-		TAILQ_REMOVE(&dm_target_list, TAILQ_FIRST(&dm_target_list),
-		    dm_target_next);
-
+	while ((dm_target = TAILQ_FIRST(&dm_target_list)) != NULL) {
+		TAILQ_REMOVE(&dm_target_list, dm_target, dm_target_next);
 		(void)kmem_free(dm_target, sizeof(dm_target_t));
 	}
+	KASSERT(TAILQ_EMPTY(&dm_target_list));
+
 	mutex_exit(&dm_target_mutex);
 
 	mutex_destroy(&dm_target_mutex);
