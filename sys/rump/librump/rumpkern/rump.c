@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.336 2019/12/03 05:07:49 riastradh Exp $	*/
+/*	$NetBSD: rump.c,v 1.337 2019/12/07 14:55:58 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.336 2019/12/03 05:07:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.337 2019/12/07 14:55:58 riastradh Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.336 2019/12/03 05:07:49 riastradh Exp $")
 #include <sys/cprng.h>
 #include <sys/rnd.h>
 #include <sys/ktrace.h>
+#include <sys/pserialize.h>
 #include <sys/psref.h>
 
 #include <rump-sys/kern.h>
@@ -305,6 +306,7 @@ rump_init(void)
 
 	kprintf_init();
 	percpu_init();
+	pserialize_init();
 
 	kauth_init();
 
