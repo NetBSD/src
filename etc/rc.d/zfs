@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zfs,v 1.1.2.2 2019/09/27 09:18:37 martin Exp $
+# $NetBSD: zfs,v 1.1.2.3 2019/12/08 14:42:01 martin Exp $
 #
 
 # PROVIDE: zfs
@@ -10,12 +10,13 @@
 $_rc_subr_loaded . /etc/rc.subr
 
 name="zfs"
+rcvar=$name
 start_cmd="zfs_start"
 stop_cmd="zfs_stop"
 
 zfs_start()
 {
-	if [ -x /sbin/zfs -a -f /etc/zfs/zpool.cache ]; then
+	if [ -x /sbin/zfs ]; then
 		# Get ZFS module loaded (and thereby, zvols created).
 		/sbin/zfs list > /dev/null 2>&1
 		if [ $? -ne 0 ]; then
