@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.15 2019/12/08 04:41:02 tkusumi Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.16 2019/12/08 10:50:21 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.15 2019/12/08 04:41:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.16 2019/12/08 10:50:21 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -49,6 +49,18 @@ int dm_target_mirror_sync(dm_table_entry_t *);
 int dm_target_mirror_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_mirror_destroy(dm_table_entry_t *);
 int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
+
+typedef struct target_mirror_config {
+#define MAX_MIRROR_COPIES 4
+	dm_pdev_t *orig;
+	dm_pdev_t *copies[MAX_MIRROR_COPIES];
+
+	/* copied blocks bitmaps administration etc*/
+	dm_pdev_t *log_pdev;	/* for administration */
+	uint64_t log_regionsize;	/* blocksize of mirror */
+
+	/* list of parts that still need copied etc.; run length encoded? */
+} dm_target_mirror_config_t;
 
 #ifdef DM_TARGET_MODULE
 /*
