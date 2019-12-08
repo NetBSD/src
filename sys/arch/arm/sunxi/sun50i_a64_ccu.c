@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i_a64_ccu.c,v 1.21 2019/12/08 00:12:20 jmcneill Exp $ */
+/* $NetBSD: sun50i_a64_ccu.c,v 1.22 2019/12/08 18:13:24 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.21 2019/12/08 00:12:20 jmcneill Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun50i_a64_ccu.c,v 1.22 2019/12/08 18:13:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -157,7 +157,7 @@ static const char *ahb1_parents[] = { "losc", "hosc", "axi", "pll_periph0" };
 static const char *ahb2_parents[] = { "ahb1", "pll_periph0" };
 static const char *apb1_parents[] = { "ahb1" };
 static const char *apb2_parents[] = { "losc", "hosc", "pll_periph0" };
-static const char *ce_parents[] = { "hosc", "pll_periph0", "pll_periph1", NULL };
+static const char *ce_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *mmc_parents[] = { "hosc", "pll_periph0_2x", "pll_periph1_2x" };
 static const char *ths_parents[] = { "hosc", NULL, NULL, NULL };
 static const char *de_parents[] = { "pll_periph0_2x", "pll_de" };
@@ -405,7 +405,7 @@ static struct sunxi_ccu_clk sun50i_a64_ccu_clks[] = {
 	    __BITS(3,0),	/* m */
 	    __BITS(25,24),	/* sel */
 	    __BIT(31),		/* enable */
-	    SUNXI_CCU_NM_POWER_OF_TWO),
+	    SUNXI_CCU_NM_POWER_OF_TWO|SUNXI_CCU_NM_ROUND_DOWN),
 
 	SUNXI_CCU_DIV_GATE(A64_CLK_THS, "ths", ths_parents,
 	    THS_CLK_REG,	/* reg */
