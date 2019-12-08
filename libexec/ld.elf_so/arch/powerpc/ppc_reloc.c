@@ -1,4 +1,4 @@
-/*	$NetBSD: ppc_reloc.c,v 1.59 2019/12/08 22:57:51 uwe Exp $	*/
+/*	$NetBSD: ppc_reloc.c,v 1.60 2019/12/08 23:49:16 uwe Exp $	*/
 
 /*-
  * Copyright (C) 1998	Tsubai Masanari
@@ -30,7 +30,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: ppc_reloc.c,v 1.59 2019/12/08 22:57:51 uwe Exp $");
+__RCSID("$NetBSD: ppc_reloc.c,v 1.60 2019/12/08 23:49:16 uwe Exp $");
 #endif /* not lint */
 
 #include <stdarg.h>
@@ -246,7 +246,7 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
 
-			uint16_t tmp16 = (uint16_t)(tmp & 0xffff);
+			uint16_t tmp16 = lo(tmp);
 
 			uint16_t *where16 = (uint16_t *)where;
 			if (*where16 != tmp16)
@@ -262,10 +262,10 @@ _rtld_relocate_nonplt_objects(Obj_Entry *obj)
 			tmp = (Elf_Addr)(defobj->relocbase + def->st_value +
 			    rela->r_addend);
 
-			uint16_t tmp16 = (uint16_t)((tmp >> 16) & 0xffff);
+			uint16_t tmp16 = hi(tmp);
 			if (ELF_R_TYPE(rela->r_info) == R_TYPE(ADDR16_HA)
-			    && (tmp & 0x8000))
-				++tmp16;
+			    && (tmp & __ha16))
+				++tmp16; /* adjust to ha(tmp) */
 
 			uint16_t *where16 = (uint16_t *)where;
 			if (*where16 != tmp16)
