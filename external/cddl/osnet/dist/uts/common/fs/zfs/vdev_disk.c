@@ -244,6 +244,7 @@ vdev_disk_open(vdev_t *vd, uint64_t *psize, uint64_t *max_psize,
 			} else {
 				pdk = NULL;
 			}
+			buf.b_dev = vp->v_rdev;
 		}
 		if (pdk && pdk->dk_driver && pdk->dk_driver->d_minphys)
 			(*pdk->dk_driver->d_minphys)(&buf);
