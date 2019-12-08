@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.28 2019/12/08 10:50:21 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.29 2019/12/08 14:59:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.28 2019/12/08 10:50:21 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.29 2019/12/08 14:59:42 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -90,6 +90,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.28 2019/12/08 10:50:21 tkus
 int dm_target_snapshot_init(dm_table_entry_t *, char *);
 char *dm_target_snapshot_status(void *);
 int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_snapshot_sync(dm_table_entry_t *);
 int dm_target_snapshot_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_snapshot_destroy(dm_table_entry_t *);
 int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
@@ -158,9 +159,11 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_snapshot_init;
 		dmt->status = &dm_target_snapshot_status;
 		dmt->strategy = &dm_target_snapshot_strategy;
+		dmt->sync = &dm_target_snapshot_sync;
 		dmt->deps = &dm_target_snapshot_deps;
 		dmt->destroy = &dm_target_snapshot_destroy;
 		dmt->upcall = &dm_target_snapshot_upcall;
+		dmt->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt);
 
@@ -174,6 +177,7 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt1->deps = &dm_target_snapshot_orig_deps;
 		dmt1->destroy = &dm_target_snapshot_orig_destroy;
 		dmt1->upcall = &dm_target_snapshot_orig_upcall;
+		dmt1->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt1);
 		break;
@@ -316,6 +320,13 @@ dm_target_snapshot_strategy(dm_table_entry_t *table_en, struct buf *bp)
 
 	biodone(bp);
 
+	return 0;
+}
+
+/* XXX dummy */
+int
+dm_target_snapshot_sync(dm_table_entry_t *table_en)
+{
 	return 0;
 }
 
