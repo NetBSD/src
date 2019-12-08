@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.342 2019/12/03 15:20:59 riastradh Exp $	*/
+/*	$NetBSD: pmap.c,v 1.343 2019/12/08 20:42:48 ad Exp $	*/
 
 /*
- * Copyright (c) 2008, 2010, 2016, 2017 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.342 2019/12/03 15:20:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.343 2019/12/08 20:42:48 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -259,24 +259,6 @@ kmutex_t pmaps_lock;
 struct pcpu_area *pcpuarea __read_mostly;
 
 static vaddr_t pmap_maxkvaddr;
-
-/*
- * XXX kludge: dummy locking to make KASSERTs in uvm_page.c comfortable.
- * actual locking is done by pm_lock.
- */
-#if defined(DIAGNOSTIC)
-#define	PMAP_SUBOBJ_LOCK(pm, idx) \
-	KASSERT(mutex_owned((pm)->pm_lock)); \
-	if ((idx) != 0) \
-		mutex_enter((pm)->pm_obj[(idx)].vmobjlock)
-#define	PMAP_SUBOBJ_UNLOCK(pm, idx) \
-	KASSERT(mutex_owned((pm)->pm_lock)); \
-	if ((idx) != 0) \
-		mutex_exit((pm)->pm_obj[(idx)].vmobjlock)
-#else /* defined(DIAGNOSTIC) */
-#define	PMAP_SUBOBJ_LOCK(pm, idx)	/* nothing */
-#define	PMAP_SUBOBJ_UNLOCK(pm, idx)	/* nothing */
-#endif /* defined(DIAGNOSTIC) */
 
 /*
  * Misc. event counters.
@@ -475,8 +457,8 @@ static void pmap_init_lapic(void);
 static void pmap_remap_largepages(void);
 #endif
 
-static struct vm_page *pmap_get_ptp(struct pmap *, vaddr_t,
-    pd_entry_t * const *, int);
+static int pmap_get_ptp(struct pmap *, vaddr_t,
+    pd_entry_t * const *, int, struct vm_page **);
 static struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
 static void pmap_freepage(struct pmap *, struct vm_page *, int);
 static void pmap_free_ptp(struct pmap *, struct vm_page *, vaddr_t,
@@ -502,7 +484,7 @@ pmap_stats_update(struct pmap *pmap, int resid_diff, int wired_diff)
 		atomic_add_long(&pmap->pm_stats.resident_count, resid_diff);
 		atomic_add_long(&pmap->pm_stats.wired_count, wired_diff);
 	} else {
-		KASSERT(mutex_owned(pmap->pm_lock));
+		KASSERT(mutex_owned(&pmap->pm_lock));
 		pmap->pm_stats.resident_count += resid_diff;
 		pmap->pm_stats.wired_count += wired_diff;
 	}
@@ -640,13 +622,13 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
 
 	l = curlwp;
  retry:
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 	ci = curcpu();
 	curpmap = ci->ci_pmap;
 	if (vm_map_pmap(&l->l_proc->p_vmspace->vm_map) == pmap) {
 		/* Our own pmap so just load it: easy. */
 		if (__predict_false(ci->ci_want_pmapload)) {
-			mutex_exit(pmap->pm_lock);
+			mutex_exit(&pmap->pm_lock);
 			pmap_load();
 			goto retry;
 		}
@@ -670,6 +652,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
 		kcpuset_atomic_clear(curpmap->pm_kernel_cpus, cid);
 		ci->ci_pmap = pmap;
 		ci->ci_tlbstate = TLBSTATE_VALID;
+		ci->ci_want_pmapload = 0;
 		kcpuset_atomic_set(pmap->pm_cpus, cid);
 		kcpuset_atomic_set(pmap->pm_kernel_cpus, cid);
 		cpu_load_pmap(pmap, curpmap);
@@ -717,7 +700,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	KASSERT(pmap->pm_ncsw == curlwp->l_ncsw);
 	mypmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
 	if (pmap == mypmap) {
-		mutex_exit(pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		return;
 	}
 
@@ -725,9 +708,15 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	 * Mark whatever's on the CPU now as lazy and unlock.
 	 * If the pmap was already installed, we are done.
 	 */
-	ci->ci_tlbstate = TLBSTATE_LAZY;
-	ci->ci_want_pmapload = (mypmap != pmap_kernel());
-	mutex_exit(pmap->pm_lock);
+	if (ci->ci_tlbstate == TLBSTATE_VALID) {
+		ci->ci_tlbstate = TLBSTATE_LAZY;
+		ci->ci_want_pmapload = (mypmap != pmap_kernel());
+	} else {
+		/*
+		 * This can happen when undoing after pmap_get_ptp blocked.
+		 */ 
+	}
+	mutex_exit(&pmap->pm_lock);
 	if (pmap == pmap2) {
 		return;
 	}
@@ -1089,10 +1078,10 @@ pmap_bootstrap(vaddr_t kva_start)
 	 * tables (fast user-level vtophys?). This may or may not be useful.
 	 */
 	kpm = pmap_kernel();
+	mutex_init(&kpm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		mutex_init(&kpm->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
 		uvm_obj_init(&kpm->pm_obj[i], NULL, false, 1);
-		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_obj_lock[i]);
+		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_lock);
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
@@ -1992,15 +1981,13 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	int lidx = level - 1;
 	struct vm_page *pg;
 
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 
 	if (pa != (paddr_t)-1 && pmap->pm_ptphint[lidx] &&
 	    pa == VM_PAGE_TO_PHYS(pmap->pm_ptphint[lidx])) {
 		return (pmap->pm_ptphint[lidx]);
 	}
-	PMAP_SUBOBJ_LOCK(pmap, lidx);
 	pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
-	PMAP_SUBOBJ_UNLOCK(pmap, lidx);
 
 	KASSERT(pg == NULL || pg->wire_count >= 1);
 	return pg;
@@ -2019,8 +2006,6 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 
 	obj = &pmap->pm_obj[lidx];
 	pmap_stats_update(pmap, -1, 0);
-	if (lidx != 0)
-		mutex_enter(obj->vmobjlock);
 	if (pmap->pm_ptphint[lidx] == ptp)
 		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
 	ptp->wire_count = 0;
@@ -2029,8 +2014,6 @@ pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 	KASSERT((l->l_pflag & LP_INTR) == 0);
 	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
 	l->l_md.md_gc_ptp = ptp;
-	if (lidx != 0)
-		mutex_exit(obj->vmobjlock);
 }
 
 static void
@@ -2043,7 +2026,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 	pd_entry_t opde;
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	level = 1;
@@ -2092,23 +2075,26 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
  * => pmap should be locked
  * => preemption should be disabled
  */
-static struct vm_page *
-pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
+static int
+pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags,
+	     struct vm_page **resultp)
 {
 	struct vm_page *ptp;
 	struct {
 		struct vm_page *pg;
 		bool new;
 	} pt[PTP_LEVELS + 1];
-	int i, aflags;
+	int i, aflags, error;
 	unsigned long index;
 	pd_entry_t *pva;
 	paddr_t pa;
 	struct uvm_object *obj;
 	voff_t off;
+	lwp_t *l;
+	uint64_t ncsw;
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	/*
@@ -2122,16 +2108,24 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 		obj = &pmap->pm_obj[i - 2];
 		off = ptp_va2o(va, i - 1);
 
-		PMAP_SUBOBJ_LOCK(pmap, i - 2);
 		pt[i].pg = uvm_pagelookup(obj, off);
 		if (pt[i].pg == NULL) {
+			l = curlwp;
+			ncsw = l->l_ncsw;
 			pt[i].pg = uvm_pagealloc(obj, off, NULL, aflags);
 			pt[i].new = true;
+			if (__predict_false(ncsw != l->l_ncsw)) {
+				/* uvm_pagealloc can block. */
+				/* XXX silence assertion in pmap_unmap_ptes */
+				pmap->pm_ncsw = l->l_ncsw;
+				error = EAGAIN;
+				goto fail;
+			}
 		}
-		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
-
-		if (pt[i].pg == NULL)
+		if (pt[i].pg == NULL) {
+			error = ENOMEM;
 			goto fail;
+		}
 	}
 
 	/*
@@ -2183,7 +2177,8 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags)
 	ptp = pt[2].pg;
 	KASSERT(ptp != NULL);
 	pmap->pm_ptphint[0] = ptp;
-	return ptp;
+	*resultp = ptp;
+	return 0;
 
 	/*
 	 * Allocation of a PTP failed, free any others that we just allocated.
@@ -2197,11 +2192,9 @@ fail:
 			continue;
 		}
 		obj = &pmap->pm_obj[i - 2];
-		PMAP_SUBOBJ_LOCK(pmap, i - 2);
 		uvm_pagefree(pt[i].pg);
-		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
 	}
-	return NULL;
+	return error;
 }
 
 /*
@@ -2384,10 +2377,10 @@ pmap_create(void)
 	pmap = pool_cache_get(&pmap_cache, PR_WAITOK);
 
 	/* init uvm_object */
+	mutex_init(&pmap->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		mutex_init(&pmap->pm_obj_lock[i], MUTEX_DEFAULT, IPL_NONE);
 		uvm_obj_init(&pmap->pm_obj[i], NULL, false, 1);
-		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_obj_lock[i]);
+		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_lock);
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;
@@ -2585,8 +2578,8 @@ pmap_destroy(struct pmap *pmap)
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		uvm_obj_destroy(&pmap->pm_obj[i], false);
-		mutex_destroy(&pmap->pm_obj_lock[i]);
 	}
+	mutex_destroy(&pmap->pm_lock);
 	kcpuset_destroy(pmap->pm_cpus);
 	kcpuset_destroy(pmap->pm_kernel_cpus);
 #ifdef XENPV
@@ -3418,7 +3411,7 @@ pmap_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 {
 	pt_entry_t *pte = (pt_entry_t *)ptpva;
 
-	KASSERT(pmap == pmap_kernel() || mutex_owned(pmap->pm_lock));
+	KASSERT(pmap == pmap_kernel() || mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	/*
@@ -3480,7 +3473,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	struct pmap_page *pp;
 	pt_entry_t opte;
 
-	KASSERT(pmap == pmap_kernel() || mutex_owned(pmap->pm_lock));
+	KASSERT(pmap == pmap_kernel() || mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	if (!pmap_valid_entry(*pte)) {
@@ -4257,15 +4250,18 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 	kpreempt_disable();
+ retry:
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);	/* locks pmap */
-	if (pmap == pmap_kernel()) {
-		ptp = NULL;
-	} else {
-		ptp = pmap_get_ptp(pmap, va, pdes, flags);
-		if (ptp == NULL) {
+	ptp = NULL;
+	if (pmap != pmap_kernel()) {
+		error = pmap_get_ptp(pmap, va, pdes, flags, &ptp);
+		if (error == EAGAIN) {
+			pmap_unmap_ptes(pmap, pmap2);
+			goto retry;
+		}
+		if (error == ENOMEM) {
 			pmap_unmap_ptes(pmap, pmap2);
 			if (flags & PMAP_CANFAIL) {
-				error = ENOMEM;
 				goto out;
 			}
 			panic("%s: get ptp failed", __func__);
@@ -4540,10 +4536,10 @@ pmap_growkernel(vaddr_t maxkvaddr)
 	bool invalidate = false;
 
 	s = splvm();	/* to be safe */
-	mutex_enter(kpm->pm_lock);
+	mutex_enter(&kpm->pm_lock);
 
 	if (maxkvaddr <= pmap_maxkvaddr) {
-		mutex_exit(kpm->pm_lock);
+		mutex_exit(&kpm->pm_lock);
 		splx(s);
 		return pmap_maxkvaddr;
 	}
@@ -4632,7 +4628,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		invalidate = true;
 	}
 	pmap_maxkvaddr = maxkvaddr;
-	mutex_exit(kpm->pm_lock);
+	mutex_exit(&kpm->pm_lock);
 	splx(s);
 
 	if (invalidate && pmap_initialized) {
@@ -4999,7 +4995,7 @@ pmap_ept_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va)
 	int level;
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	pmap_ept_get_tree(pmap, va, tree);
@@ -5036,7 +5032,7 @@ pmap_ept_get_ptp(struct pmap *pmap, vaddr_t va, int flags)
 	voff_t off;
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	memset(pt, 0, sizeof(pt));
@@ -5051,13 +5047,11 @@ pmap_ept_get_ptp(struct pmap *pmap, vaddr_t va, int flags)
 		obj = &pmap->pm_obj[i - 2];
 		off = ptp_va2o(va, i - 1);
 
-		PMAP_SUBOBJ_LOCK(pmap, i - 2);
 		pt[i].pg = uvm_pagelookup(obj, off);
 		if (pt[i].pg == NULL) {
 			pt[i].pg = uvm_pagealloc(obj, off, NULL, aflags);
 			pt[i].new = true;
 		}
-		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
 
 		if (pt[i].pg == NULL)
 			goto fail;
@@ -5113,9 +5107,7 @@ fail:
 			continue;
 		}
 		obj = &pmap->pm_obj[i - 2];
-		PMAP_SUBOBJ_LOCK(pmap, i - 2);
 		uvm_pagefree(pt[i].pg);
-		PMAP_SUBOBJ_UNLOCK(pmap, i - 2);
 	}
 	return NULL;
 }
@@ -5181,11 +5173,11 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 
 	kpreempt_disable();
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	ptp = pmap_ept_get_ptp(pmap, va, flags);
 	if (ptp == NULL) {
-		mutex_exit(pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		if (flags & PMAP_CANFAIL) {
 			error = ENOMEM;
 			goto out;
@@ -5207,7 +5199,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	if (needpves && (!have_oldpa || oldpa != pa) &&
 	    (new_pve == NULL || new_sparepve == NULL)) {
-		mutex_exit(pmap->pm_lock);
+		mutex_exit(&pmap->pm_lock);
 		if (flags & PMAP_CANFAIL) {
 			error = ENOMEM;
 			goto out;
@@ -5272,7 +5264,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	}
 
 same_pa:
-	mutex_exit(pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 
 	if (pmap_ept_has_ad) {
 		accessed = (~opte & (EPT_R | EPT_A)) == 0;
@@ -5307,7 +5299,7 @@ pmap_ept_pdes_invalid(struct pmap *pmap, vaddr_t va, pd_entry_t *lastpde)
 	paddr_t ptepa;
 	int i, index;
 
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 
 	ptepa = pmap->pm_pdirpa[0];
 	for (i = PTP_LEVELS; i > 1; i--) {
@@ -5345,7 +5337,7 @@ pmap_ept_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	pa = 0;
 
 	kpreempt_disable();
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	if (!pmap_ept_pdes_invalid(pmap, va, &pde)) {
 		ptppa = pmap_pte2pa(pde);
@@ -5357,7 +5349,7 @@ pmap_ept_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		}
 	}
 
-	mutex_exit(pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 	kpreempt_enable();
 
 	if (pap != NULL) {
@@ -5377,7 +5369,7 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	bool accessed;
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	if (!pmap_ept_valid_entry(*pte)) {
@@ -5451,7 +5443,7 @@ pmap_ept_remove_ptes(struct pmap *pmap, struct vm_page *ptp, vaddr_t ptpva,
 	pt_entry_t *pte = (pt_entry_t *)ptpva;
 
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 
 	/*
@@ -5480,7 +5472,7 @@ pmap_ept_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	struct vm_page *ptp;
 
 	kpreempt_disable();
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	for (/* null */ ; va < eva ; va = blkendva) {
 		int lvl;
@@ -5515,7 +5507,7 @@ pmap_ept_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		}
 	}
 
-	mutex_exit(pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 	kpreempt_enable();
 
 	/* Now we free unused PVs */
@@ -5613,13 +5605,13 @@ static void
 pmap_ept_pp_remove_ent(struct pmap *pmap, struct vm_page *ptp, pt_entry_t opte,
     vaddr_t va)
 {
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 	pmap_ept_stats_update_bypte(pmap, 0, opte);
 	ptp->wire_count--;
 	if (ptp->wire_count <= 1) {
 		pmap_ept_free_ptp(pmap, ptp, va);
 	}
-	mutex_exit(pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 }
 
 static void
@@ -5643,7 +5635,7 @@ pmap_ept_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t pr
 	/* Acquire pmap. */
 	kpreempt_disable();
 
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	for (va = sva; va < eva; va += PAGE_SIZE) {
 		if (pmap_ept_pdes_invalid(pmap, va, &pde)) {
@@ -5675,7 +5667,7 @@ pmap_ept_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t pr
 next:;
 	}
 
-	mutex_exit(pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 	kpreempt_enable();
 }
 
@@ -5688,7 +5680,7 @@ pmap_ept_unwire(struct pmap *pmap, vaddr_t va)
 
 	/* Acquire pmap. */
 	kpreempt_disable();
-	mutex_enter(pmap->pm_lock);
+	mutex_enter(&pmap->pm_lock);
 
 	if (pmap_ept_pdes_invalid(pmap, va, &pde)) {
 		panic("%s: invalid PDE va=%#" PRIxVADDR, __func__, va);
@@ -5711,7 +5703,7 @@ pmap_ept_unwire(struct pmap *pmap, vaddr_t va)
 	}
 
 	/* Release pmap. */
-	mutex_exit(pmap->pm_lock);
+	mutex_exit(&pmap->pm_lock);
 	kpreempt_enable();
 }
 
