@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.34 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.35 2019/12/08 04:41:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -213,7 +213,7 @@ typedef struct target_snapshot_origin_config {
 typedef struct dm_target {
 	char name[DM_MAX_TYPE_NAME];
 	/* Initialize target_config area */
-	int (*init)(dm_dev_t *, void **, char *);
+	int (*init)(dm_table_entry_t *, char *);
 
 	/* Destroy target_config area */
 	int (*destroy)(dm_table_entry_t *);
@@ -275,7 +275,7 @@ int dm_target_init(void);
 #define DM_MAX_PARAMS_SIZE 1024
 
 /* dm_target_linear.c */
-int dm_target_linear_init(dm_dev_t *, void**, char *);
+int dm_target_linear_init(dm_table_entry_t *, char *);
 char *dm_target_linear_status(void *);
 int dm_target_linear_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_linear_sync(dm_table_entry_t *);
@@ -288,7 +288,7 @@ int dm_target_linear_secsize(dm_table_entry_t *, unsigned *);
 uint64_t atoi(const char *);
 
 /* dm_target_stripe.c */
-int dm_target_stripe_init(dm_dev_t *, void**, char *);
+int dm_target_stripe_init(dm_table_entry_t *, char *);
 char *dm_target_stripe_status(void *);
 int dm_target_stripe_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_sync(dm_table_entry_t *);
