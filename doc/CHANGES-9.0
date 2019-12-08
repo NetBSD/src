@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.130 2019/12/05 10:29:13 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.131 2019/12/08 15:05:44 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6640,3 +6640,170 @@ doc/CHANGES					(edited manually)
 distrib/cdrom/NetBSD-9.0.mk			1.1
 
 	Add config cloned from -current (for macppc ppc 601 support)
+
+sys/arch/powerpc/oea/ofw_autoconf.c		1.24
+
+	Add a hack for qemu/macppc. OF_finddevice calls will crash
+	depending on the boot loader and kernel being used.
+	This patch allows using -prom-env qemu_boot_hack=y to disable
+	the lookup.
+	[joerg, ticket #494]
+
+distrib/notes/sparc/contents			1.26
+
+	Fix KRUPS kernel name.
+	[uwe, ticket #495]
+
+sys/arch/arm/ti/am3_prcm.c			1.11
+sys/arch/arm/ti/ti_sdhc.c			1.4,1.5
+
+	Fix mmc and timer indexes.
+	Fix inverted ti,needs-special-hs-handling property logic and
+	enable EDMA support.
+	Support 1-bit mode and force all xfers to bounce
+	to workaround a transfer error issue for now.
+	[jmcneill, ticket #497]
+
+sys/arch/arm/rockchip/rk3399_pcie.c		1.7
+
+	Do not crash if the optional vpcie3v3-supply property is missing
+	or the regulator can not be found.
+	[jmcneill, ticket #498]
+
+sys/arch/arm/ti/am3_prcm.c			1.12
+sys/arch/arm/ti/files.ti			1.21
+sys/arch/arm/ti/ti_wdt.c			1.1
+sys/arch/evbarm/conf/GENERIC			1.68
+
+	Add TI OMAP watchdog timer driver.
+	[jmcneill, ticket #499]
+
+usr.bin/calendar/calendars/calendar.birthday	1.30-1.35
+usr.bin/calendar/calendars/calendar.computer	1.8,1.9
+usr.bin/calendar/calendars/calendar.music	1.20
+usr.bin/calendar/calendars/calendar.netbsd	1.41-1.43
+usr.bin/calendar/calendars/calendar.usholiday	1.9
+
+	Various calendar updates.
+	[sevan, ticket #500]
+
+games/fortune/datfiles/fortunes			1.83-1.86
+games/fortune/datfiles/netbsd			1.29
+
+	Various additions.
+	[sevan, ticket #501]
+
+sys/arch/x86/include/genfb_machdep.h		1.4
+sys/arch/x86/x86/genfb_machdep.c		1.15
+sys/arch/x86/x86/hyperv.c			1.5
+
+	Prevent panic when attaching genfb if using a serial console
+	with Hyper-V Gen.2.
+	[nonaka, ticket #502]
+
+sys/stand/efiboot/Makefile.efiboot		1.9
+sys/stand/efiboot/efiacpi.c			1.5
+sys/stand/efiboot/smbios.c			1.1
+sys/stand/efiboot/smbios.h			1.1
+sys/stand/efiboot/version			1.13
+
+	Use SMBIOS system vendor and product strings to create a "model"
+	string for the root node in the fabricated ACPI device tree.
+	[jmcneill, ticket #503]
+
+share/man/man4/rnd.4				1.25-1.28
+
+	Update man page to reflect switch from CTR_DRBG to Hash_DRBG.
+	Update NIST SP800-90A reference. Various small fixes.
+	[riastradh, ticket #504]
+
+common/lib/libc/hash/murmurhash/murmurhash.c	1.7
+common/lib/libc/hash/murmurhash/murmurhash.c	1.8
+sys/arch/amd64/include/param.h			1.31
+sys/arch/i386/include/param.h			1.85
+sys/sys/param.h					1.610
+
+	New macro ALIGNED_POINTER_LOAD.
+	Fix byte order bug in murmurhash and pacify sanitizers.
+	[riastradh, ticket #505]
+
+lib/libc/gdtoa/Makefile.inc			1.11
+lib/libc/gdtoa/gdtoa_fltrnds.h			1.2
+lib/libc/gdtoa/gdtoaimp.h			1.15,1.17
+
+	Honour the floating-point rounding mode in floating-point formatting.
+	[riastradh, ticket #506]
+
+lib/libm/arch/aarch64/fenv.c			1.5,1.6
+
+	Fix fesetenv, feupdateenv, and feraiseexcept.
+	[riastradh, ticket #507]
+
+distrib/sets/lists/comp/mi			1.2294
+share/man/man9/Makefile				1.443
+share/man/man9/atomic_loadstore.9		1.1,1.2
+sys/sys/atomic.h				1.18
+
+	New atomic load/store operations for the kernel, intended
+	to match C11 semantics.
+	[riastradh, ticket #508]
+
+sys/arch/arm/imx/if_enet.c			1.29
+
+	Set the multicast filter properly.
+	[ryo, ticket #509]
+
+sys/arch/arm/arm32/fault.c			1.109
+
+	PR/54720: if a Thumb-32 bit instruction is located on a page boundariy,
+	also need to consider the pc + 2 address.
+	[ryo, ticket #510]
+
+distrib/utils/embedded/conf/evbarm.conf		1.34
+
+	Remove the pretty much useless 128MB swap partition from the arm
+	images.
+	[jmcneill, ticket #511]
+
+share/mk/bsd.kmodule.mk				1.63
+
+	Build aarch64 modules without fp or simd instructions.
+	[jmcneill, ticket #512]
+
+sys/arch/aarch64/aarch64/kobj_machdep.c		1.3
+
+	Flush insn / data caches after loading modules.
+	[jmcneill, ticket #513]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/vdev_disk.c 1.13
+
+	zfs: avoid crash when creating a zpool on ld(4).
+	[jmcneill, ticket #514]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/arc.c 1.15
+external/cddl/osnet/dist/uts/common/os/fm.c	1.2
+share/mk/bsd.own.mk				1.1167
+
+	Provide a default ptob() implementation.
+	Enable ZFS support on aarch64.
+	[jmcneill, ticket #515]
+
+etc/rc.d/zfs					1.2,1.3
+
+	Attempt to load the zfs module even if /etc/zfs/zpool.cache is absent.
+	Add missing rcvar=$name
+	[jmcneill, ticket #516]
+
+sys/arch/emips/ebus/ace_ebus.c			1.21
+sys/arch/emips/ebus/flash_ebus.c		1.21
+
+	Drop advertisement clause from my licenses.
+	[bouyer, ticket #517]
+
+xsrc/external/mit/MesaLib/dist/src/gallium/winsys/sw/dri/dri_sw_winsys.c 1.2
+xsrc/external/mit/MesaLib/dist/src/gallium/winsys/sw/xlib/xlib_sw_winsys.c 1.2
+xsrc/external/mit/MesaLib/dist/src/mesa/drivers/x11/xm_buffer.c 1.2
+
+	CVE-2019-5068: use permission 0600 for shmget(2).
+	[maya, ticket #518]
+
