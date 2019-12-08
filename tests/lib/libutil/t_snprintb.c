@@ -1,4 +1,4 @@
-/* $NetBSD: t_snprintb.c,v 1.7 2019/12/06 19:28:11 christos Exp $ */
+/* $NetBSD: t_snprintb.c,v 1.8 2019/12/08 17:37:16 christos Exp $ */
 
 /*
  * Copyright (c) 2002, 2004, 2008, 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2008, 2010\
  The NetBSD Foundation, inc. All rights reserved.");
-__RCSID("$NetBSD: t_snprintb.c,v 1.7 2019/12/06 19:28:11 christos Exp $");
+__RCSID("$NetBSD: t_snprintb.c,v 1.8 2019/12/08 17:37:16 christos Exp $");
 
 #include <string.h>
 #include <util.h>
@@ -39,16 +39,17 @@ __RCSID("$NetBSD: t_snprintb.c,v 1.7 2019/12/06 19:28:11 christos Exp $");
 #include <atf-c.h>
 
 static void
-h_snprintb(const char *fmt, uint64_t val, const char *res)
+h_snprintb(const char *fmt, uint64_t val, const char *expected)
 {
-	char buf[1024];
-	int len, slen;
+	char actual[1024];
+	int len, rlen;
 
-	len = snprintb(buf, sizeof(buf), fmt, val);
-	slen = (int) strlen(res);
+	len = snprintb(actual, sizeof(actual), fmt, val);
+	rlen = (int)strlen(actual);
 
-	ATF_REQUIRE_STREQ(res, buf);
-	ATF_REQUIRE_EQ(len, slen);
+	ATF_REQUIRE_STREQ_MSG(expected, actual, "format=%s val=%" PRIu64,
+	    fmt, val);
+	ATF_REQUIRE_EQ_MSG(rlen, len, "expected=%d actual=%d", rlen, len);
 }
 
 ATF_TC(snprintb);
@@ -59,7 +60,7 @@ ATF_TC_HEAD(snprintb, tc)
 ATF_TC_BODY(snprintb, tc)
 {
 	h_snprintb("\10\2BITTWO\1BITONE", 3, "03<BITTWO,BITONE>");
-	h_snprintb("\177\20b\0A\0\0", 0, "0x0");
+	h_snprintb("\177\20b\0A\0\0", 0, "0");
 
 	h_snprintb("\177\20b\05NOTBOOT\0b\06FPP\0b\013SDVMA\0b\015VIDEO\0"
 		"b\020LORES\0b\021FPA\0b\022DIAG\0b\016CACHE\0"
@@ -101,15 +102,27 @@ ATF_TC_BODY(snprintb, tc)
 
 static void
 h_snprintb_m(const char *fmt, uint64_t val, int line_max, const char *res,
-	     int res_len)
+     int rlen)
 {
 	char buf[1024];
 	int len;
 
 	len = snprintb_m(buf, sizeof(buf), fmt, val, line_max);
 
-	ATF_REQUIRE_EQ(len, res_len);
-	ATF_REQUIRE_EQ(0, memcmp(res, buf, res_len + 1));
+	const char *expected = res;
+	char *actual = buf;
+	int l = 0;
+	for (size_t i = 0; l < rlen; i++) {
+		l = (int)strlen(actual);
+		if (l == 0)
+			break;
+		ATF_REQUIRE_STREQ_MSG(expected, actual,
+		    "%zu: fmt=%s val=%" PRIu64, i, fmt, val);
+		actual += l;
+		expected += l;
+	}
+		
+	ATF_REQUIRE_EQ_MSG(rlen, len, "expected=%d actual=%d", rlen, len);
 }
 
 ATF_TC(snprintb_m);
@@ -124,19 +137,19 @@ ATF_TC_BODY(snprintb_m, tc)
 			"b\x1fMSB\0\0",
                      0x800f0701,
 		     33,
-		     "0x800f0701<LSB,NIBBLE2=0x0>\0"
+		     "0x800f0701<LSB,NIBBLE2=0>\0"
 			"0x800f0701<BURST=0xf=SIXTEEN,MSB>\0\0",
-		     62);
+		     60);
 
 	h_snprintb_m("\177\020b\0LSB\0b\1_BITONE\0f\4\4NIBBLE2\0"
 			"f\x10\4BURST\0=\4FOUR\0=\xfSIXTEEN\0"
 			"b\x1fMSB\0\0",
                      0x800f0701,
 		     32,
-		     "0x800f0701<LSB,NIBBLE2=0x0>\0"
+		     "0x800f0701<LSB,NIBBLE2=0>\0"
 			"0x800f0701<BURST=0xf=SIXTEEN>\0"
 			"0x800f0701<MSB>\0\0",
-		     74);
+		     72);
 }
 
 ATF_TP_ADD_TCS(tp)
