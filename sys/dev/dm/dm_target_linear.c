@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.24 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.25 2019/12/08 04:41:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.24 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.25 2019/12/08 04:41:02 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -55,7 +55,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.24 2019/12/07 15:28:39 tkusum
  * @argv[1] is physical data offset.
  */
 int
-dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_linear_init(dm_table_entry_t *table_en, char *params)
 {
 	dm_target_linear_config_t *tlc;
 	dm_pdev_t *dmp;
@@ -86,7 +86,7 @@ dm_target_linear_init(dm_dev_t *dmv, void **target_config, char *params)
 	tlc->pdev = dmp;
 	tlc->offset = atoi(argv[1]);
 
-	*target_config = tlc;
+	table_en->target_config = tlc;
 
 	return 0;
 }
