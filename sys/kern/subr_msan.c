@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.4 2019/12/06 16:54:47 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.5 2019/12/08 11:53:54 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,10 +29,8 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#define KMSAN_NO_INST
-
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.4 2019/12/06 16:54:47 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.5 2019/12/08 11:53:54 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
