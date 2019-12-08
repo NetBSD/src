@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.77 2019/12/08 10:31:02 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.78 2019/12/08 10:33:35 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1779,4 +1779,9 @@ sys/dev/cons.c					1.76,1.77
 
 	Fix reference count leak in cons(4).
 	[riastradh, ticket #1469]
+
+include/monetary.h				1.4
+
+	PR lib/54744: add missing __END_DECLS for C++ compiles.
+	[kre, ticket #1470]
 
