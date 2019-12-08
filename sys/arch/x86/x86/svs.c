@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.30 2019/08/07 06:23:48 maxv Exp $	*/
+/*	$NetBSD: svs.c,v 1.31 2019/12/08 20:42:48 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.30 2019/08/07 06:23:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.31 2019/12/08 20:42:48 ad Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -488,7 +488,7 @@ svs_pmap_sync(struct pmap *pmap, int index)
 
 	KASSERT(pmap != NULL);
 	KASSERT(pmap != pmap_kernel());
-	KASSERT(mutex_owned(pmap->pm_lock));
+	KASSERT(mutex_owned(&pmap->pm_lock));
 	KASSERT(kpreempt_disabled());
 	KASSERT(index < PDIR_SLOT_USERLIM);
 
