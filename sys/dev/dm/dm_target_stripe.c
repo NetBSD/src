@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.30 2019/12/07 15:28:39 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.31 2019/12/08 04:41:02 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.30 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.31 2019/12/08 04:41:02 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -128,7 +128,7 @@ dm_target_stripe_fini(dm_target_stripe_config_t *tsc)
  * 0 65536 striped 2 512 /dev/hda 0 /dev/hdb 0
  */
 int
-dm_target_stripe_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_stripe_init(dm_table_entry_t *table_en, char *params)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
@@ -183,7 +183,7 @@ dm_target_stripe_init(dm_dev_t *dmv, void **target_config, char *params)
 		TAILQ_INSERT_TAIL(&tsc->stripe_devs, tlc, entries);
 	}
 
-	*target_config = tsc;
+	table_en->target_config = tsc;
 
 	return 0;
 }
