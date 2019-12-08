@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_physio.c,v 1.96 2019/12/08 19:23:51 ad Exp $	*/
+/*	$NetBSD: kern_physio.c,v 1.97 2019/12/08 19:52:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.96 2019/12/08 19:23:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_physio.c,v 1.97 2019/12/08 19:52:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,7 +432,7 @@ done_locked:
 		obp->b_cflags &= ~(BC_BUSY | BC_WANTED);
 		obp->b_flags &= ~(B_PHYS | B_RAW);
 		obp->b_iodone = NULL;
-		cv_signal(&obp->b_busy);
+		cv_broadcast(&obp->b_busy);
 		mutex_exit(&bufcache_lock);
 	}
 
