@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.280 2019/12/08 19:26:05 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.281 2019/12/08 19:49:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.280 2019/12/08 19:26:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.281 2019/12/08 19:49:25 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1107,7 +1107,8 @@ brelsel(buf_t *bp, int set)
 			KASSERT(bp->b_objlock == &buffer_lock);
 			mutex_exit(bp->b_objlock);
 		}
-
+		/* We want to dispose of the buffer, so wake everybody. */
+		cv_broadcast(&bp->b_busy);
 		if (bp->b_bufsize <= 0)
 			/* no data */
 			goto already_queued;
