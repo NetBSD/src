@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.281 2019/12/08 19:49:25 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.282 2019/12/08 20:35:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.281 2019/12/08 19:49:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.282 2019/12/08 20:35:23 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -896,6 +896,8 @@ bwrite(buf_t *bp)
 		mutex_enter(bp->b_objlock);
 		CLR(bp->b_oflags, BO_DONE | BO_DELWRI);
 		reassignbuf(bp, bp->b_vp);
+		/* Wake anyone trying to busy the buffer via vnode's lists. */
+		cv_broadcast(&bp->b_busy);
 		mutex_exit(&bufcache_lock);
 	} else {
 		curlwp->l_ru.ru_oublock++;
@@ -988,6 +990,8 @@ bdwrite(buf_t *bp)
 		SET(bp->b_oflags, BO_DELWRI);
 		curlwp->l_ru.ru_oublock++;
 		reassignbuf(bp, bp->b_vp);
+		/* Wake anyone trying to busy the buffer via vnode's lists. */
+		cv_broadcast(&bp->b_busy);
 		mutex_exit(&bufcache_lock);
 	} else {
 		mutex_enter(bp->b_objlock);
@@ -1411,6 +1415,9 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 
 		/* Buffer is no longer on free lists. */
 		SET(bp->b_cflags, BC_BUSY);
+
+		/* Wake anyone trying to lock the old identity. */
+		cv_broadcast(&bp->b_busy);
 	} else {
 		/*
 		 * XXX: !from_bufq should be removed.
