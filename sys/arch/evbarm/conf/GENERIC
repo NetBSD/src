@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.48.2.4 2019/11/27 13:46:44 martin Exp $
+#	$NetBSD: GENERIC,v 1.48.2.5 2019/12/08 12:57:21 martin Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -399,10 +399,11 @@ sunxihstimer* 	at fdt?			# Allwinner High-Speed timer
 tegratimer* 	at fdt?			# Timers
 
 # Watchdog
+bcmpmwdog* 	at fdt?			# Broadcom BCM283x watchdog
 dwcwdt* 	at fdt?			# DesignWare watchdog
 mesonwdt* 	at fdt?			# Amlogic Meson watchdog
 sunxiwdt* 	at fdt?			# Allwinner watchdog
-bcmpmwdog* 	at fdt?			# Broadcom BCM283x watchdog
+tiwdt*		at fdt?			# TI OMAP watchdog
 
 # Interrupt controller
 gic*		at fdt? pass 1		# ARM GIC
