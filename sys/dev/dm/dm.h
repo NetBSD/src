@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.37 2019/12/08 10:50:21 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.38 2019/12/08 14:59:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -292,6 +292,13 @@ int dm_pdev_decr(dm_pdev_t *);
 int dm_pdev_destroy(void);
 int dm_pdev_init(void);
 dm_pdev_t* dm_pdev_insert(const char *);
+
+/* XXX dummy */
+static __inline int
+dm_target_dummy_secsize(dm_table_entry_t *table_en, unsigned *secsizep)
+{
+	return 0;
+}
 
 #endif /*_KERNEL*/
 
