@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.27 2019/12/08 10:35:53 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.28 2019/12/08 10:50:21 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.27 2019/12/08 10:35:53 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.28 2019/12/08 10:50:21 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -102,6 +102,20 @@ int dm_target_snapshot_orig_sync(dm_table_entry_t *);
 int dm_target_snapshot_orig_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_snapshot_orig_destroy(dm_table_entry_t *);
 int dm_target_snapshot_orig_upcall(dm_table_entry_t *, struct buf *);
+
+typedef struct target_snapshot_config {
+	dm_pdev_t *tsc_snap_dev;
+	/* cow dev is set only for persistent snapshot devices */
+	dm_pdev_t *tsc_cow_dev;
+
+	uint64_t tsc_chunk_size;
+	uint32_t tsc_persistent_dev;
+} dm_target_snapshot_config_t;
+
+typedef struct target_snapshot_origin_config {
+	dm_pdev_t *tsoc_real_dev;
+	/* list of snapshots ? */
+} dm_target_snapshot_origin_config_t;
 
 #ifdef DM_TARGET_MODULE
 /*
