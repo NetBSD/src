@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.105 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.106 2019/12/08 20:42:48 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -249,8 +249,7 @@ extern struct pool_cache pmap_pdp_cache;
 
 struct pmap {
 	struct uvm_object pm_obj[PTP_LEVELS-1]; /* objects for lvl >= 1) */
-#define	pm_lock	pm_obj[0].vmobjlock
-	kmutex_t pm_obj_lock[PTP_LEVELS-1];	/* locks for pm_objs */
+	kmutex_t pm_lock;		/* locks for pm_objs */
 	LIST_ENTRY(pmap) pm_list;	/* list (lck by pm_list lock) */
 	pd_entry_t *pm_pdir;		/* VA of PD (lck by object lock) */
 	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
