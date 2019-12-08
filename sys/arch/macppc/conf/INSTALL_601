@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_601,v 1.2 2019/01/07 01:44:59 scole Exp $
+#	$NetBSD: INSTALL_601,v 1.3 2019/12/08 21:30:00 scole Exp $
 #
 # config file for INSTALL
 #
@@ -84,7 +84,7 @@ ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 # untested with OF 1.0.5
 # this will take over the console if output-device is set to 'screen' or
 # 'platinum'. It will provide a NetBSD console, but still won't work with OF
-#platinumfb0 	at mainbus?
+platinumfb0 	at mainbus?
 
 #gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
 #machfb*		at pci? function ?	# ATI Mach 64, Rage, Rage Pro
