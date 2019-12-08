@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.19 2019/12/08 04:41:02 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.20 2019/12/08 14:59:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.19 2019/12/08 04:41:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.20 2019/12/08 14:59:42 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -88,6 +88,7 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 		dmt->deps = &dm_target_zero_deps;
 		dmt->destroy = &dm_target_zero_destroy;
 		dmt->upcall = &dm_target_zero_upcall;
+		dmt->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt);
 		break;

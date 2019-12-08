@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.16 2019/12/08 10:50:21 tkusumi Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.17 2019/12/08 14:59:42 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.16 2019/12/08 10:50:21 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.17 2019/12/08 14:59:42 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -100,6 +100,7 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 		dmt->deps = &dm_target_mirror_deps;
 		dmt->destroy = &dm_target_mirror_destroy;
 		dmt->upcall = &dm_target_mirror_upcall;
+		dmt->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt);
 
