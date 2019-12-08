@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.116 2018/01/23 22:42:29 pgoyette Exp $ */
+/* $NetBSD: cgd.c,v 1.117 2019/12/08 12:14:40 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.116 2018/01/23 22:42:29 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.117 2019/12/08 12:14:40 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -782,7 +782,7 @@ cgd_ioctl_set(struct cgd_softc *cs, void *data, struct lwp *l)
 	if (ret != 0) {
 		return ret;
 	}
-	ret = dk_lookup(pb, l, &vp);
+	ret = vn_bdev_openpath(pb, &vp, l);
 	pathbuf_destroy(pb);
 	if (ret != 0) {
 		return ret;

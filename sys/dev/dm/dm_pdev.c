@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.18 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.19 2019/12/08 12:14:40 mlelstv Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.18 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.19 2019/12/08 12:14:40 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -116,10 +116,10 @@ dm_pdev_insert(const char *dev_name)
 		kmem_free(dmp, sizeof(dm_pdev_t));
 		return NULL;
 	}
-	error = dk_lookup(dev_pb, curlwp, &dmp->pdev_vnode);
+	error = vn_bdev_openpath(dev_pb, &dmp->pdev_vnode, curlwp);
 	pathbuf_destroy(dev_pb);
 	if (error) {
-		aprint_debug("%s: dk_lookup on device: %s (error %d)\n",
+		aprint_debug("%s: lookup on device: %s (error %d)\n",
 		    __func__, dev_name, error);
 		mutex_exit(&dm_pdev_mutex);
 		kmem_free(dmp, sizeof(dm_pdev_t));
