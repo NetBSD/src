@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.76 2019/12/07 08:47:39 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.77 2019/12/08 10:31:02 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1774,4 +1774,9 @@ sys/external/bsd/dwc2/dwc2.c			1.60 - 1.66
 	Calulate the right lenght for isoc transfer and the usb_syncmem
 	PR/54696: Kernel panic in bus_dma.c on Raspberry Pi 3B/3B+
 	[skrll, ticket #1468]
+
+sys/dev/cons.c					1.76,1.77
+
+	Fix reference count leak in cons(4).
+	[riastradh, ticket #1469]
 
