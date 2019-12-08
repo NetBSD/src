@@ -1,4 +1,4 @@
-/* $NetBSD: TODO.modules,v 1.20 2019/09/29 00:57:11 pgoyette Exp $ */
+/* $NetBSD: TODO.modules,v 1.21 2019/12/08 15:51:49 pgoyette Exp $ */
 
 Some notes on the limitations of our current (as of 7.99.35) module
 subsystem.  This list was triggered by an Email exchange between
@@ -228,3 +228,11 @@ christos and pgoyette.
     have any way to identify which module is needed for which image (ie,
     we can't determine that an image needs compat_linux vs some other
     module).
+
+24. Details are no longer remembered, but there are some issues with
+    building xen-variant modules (on amd4, and likely i386).  In some
+    cases, wrong headers are included (because a XEN-related #define
+    is missing), but even if you add the definition some headers get
+    included in the wrong order.  On particular fallout from this is
+    the inability to have a compat version of x86_64 cpu-microcode
+    module.
