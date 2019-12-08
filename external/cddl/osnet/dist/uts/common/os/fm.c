@@ -65,6 +65,7 @@
 #include <sys/kstat.h>
 #include <sys/processor.h>
 #ifdef __NetBSD__
+#include <sys/atomic.h>
 #include <sys/cpu.h>
 #else
 #include <sys/pcpu.h>
