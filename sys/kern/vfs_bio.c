@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_bio.c,v 1.279 2019/08/26 10:24:39 msaitoh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.280 2019/12/08 19:26:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.279 2019/08/26 10:24:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.280 2019/12/08 19:26:05 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -184,7 +184,7 @@ struct bqueue {
 	uint64_t bq_bytes;
 	buf_t *bq_marker;
 };
-static struct bqueue bufqueues[BQUEUES];
+static struct bqueue bufqueues[BQUEUES] __cacheline_aligned;
 
 /* Function prototypes */
 static void buf_setwm(void);
@@ -237,8 +237,8 @@ static kcondvar_t needbuffer_cv;
 /*
  * Buffer queue lock.
  */
-kmutex_t bufcache_lock;
-kmutex_t buffer_lock;
+kmutex_t bufcache_lock __cacheline_aligned;
+kmutex_t buffer_lock __cacheline_aligned;
 
 /* Software ISR for completed transfers. */
 static void *biodone_sih;
@@ -1140,7 +1140,7 @@ already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_cflags, BC_AGE|BC_BUSY|BC_NOCACHE);
 	CLR(bp->b_flags, B_ASYNC);
-	cv_broadcast(&bp->b_busy);
+	cv_signal(&bp->b_busy);
 
 	if (bp->b_bufsize <= 0)
 		brele(bp);
