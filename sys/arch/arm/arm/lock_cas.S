@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_cas.S,v 1.13 2019/04/06 03:06:24 thorpej Exp $	*/
+/*	$NetBSD: lock_cas.S,v 1.14 2019/12/08 10:12:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -127,7 +127,7 @@ ENTRY(_ucas_32_mp)
 	bne	1b
 2:
 	str	r5, [r3]
-	mov	r0, #0			/* return value in case if miscompare */
+	mov	r0, #0			/* return value in case of miscompare */
 .Lucasfault:
 	movs	r3, #0
 	str	r3, [r4, #PCB_ONFAULT]
