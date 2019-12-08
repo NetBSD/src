@@ -1,4 +1,4 @@
-.\"	$NetBSD: atomic_loadstore.9,v 1.4 2019/12/07 12:22:19 wiz Exp $
+.\"	$NetBSD: atomic_loadstore.9,v 1.5 2019/12/08 00:00:59 uwe Exp $
 .\"
 .\" Copyright (c) 2019 The NetBSD Foundation
 .\" All rights reserved.
@@ -77,7 +77,7 @@ or
 is combining multiple memory operations on a single object into one
 memory operation, such as replacing
 .Bd -literal -compact
-        *p = v;
+	*p = v;
 	x = *p;
 .Ed
 by
@@ -86,11 +86,11 @@ by
 	x = v;
 .Ed
 since the compiler can prove that
-.Li * Ns Fa p
+.Li \&*p
 will yield
-.Fa v
+.Li v
 after
-.Li * Ns Fa p Li = Fa v .
+.Li \&*p\ =\ v .
 For
 .Em atomic
 memory operations, the implementation
@@ -142,13 +142,17 @@ Thus, as far as any interrupt, other thread, or other CPU can tell, an
 atomic memory operation is issued either all at once or not at all.
 .Pp
 For example, if a 32-bit word
-.Fa w
+.Va w
 is written with
-.Li atomic_store_relaxed ( & Ns Fa w , 0x00010002 ) ,
+.Pp
+.Dl atomic_store_relaxed(&w,\ 0x00010002);
+.Pp
 then an interrupt, other thread, or other CPU reading it with
-.Li atomic_load_relaxed ( & Ns Fa w )
+.Li atomic_load_relaxed(&w)
 will never witness it partially written, whereas
-.Fa w Li = 0x00010002
+.Pp
+.Dl w\ =\ 0x00010002;
+.Pp
 might be compiled into a pair of separate 16-bit store instructions
 instead of one single word-sized store instruction, in which case other
 threads may see the intermediate state with only one of the halves
@@ -178,9 +182,9 @@ No ordering relative to memory operations on any other objects is
 guaranteed.
 Relaxed ordering is the default for ordinary non-atomic memory
 operations like
-.Li * Ns Fa p
+.Li "*p"
 and
-.Li * Ns Fa p Li = Fa v .
+.Li "*p = v" .
 .Pp
 Atomic operations with relaxed ordering are cheap: they are not
 read/modify/write atomic operations, and they do not involve any kind
@@ -403,7 +407,7 @@ between the memory operations in steps\~1 and\~4.
 In fact, without
 .Em both
 release and acquire/consume, even the assignment
-.Li m->z = m->x + m->y
+.Li m->z\ =\ m->x\ +\ m->y
 in step\~1 might read values of
 .Li m->x
 and
@@ -527,9 +531,13 @@ usually implies an expensive memory barrier.
 The pointer
 .Fa p
 must be aligned \(em that is, if the object it points to is
-.No 2^ Ns Fa n
+.\"
+2\c
+.ie t \s-2\v'-0.4m'n\v'+0.4m'\s+2
+.el ^n
+.\"
 bytes long, then the low-order
-.Fa n
+.Ar n
 bits of
 .Fa p
 must be zero.
@@ -583,9 +591,9 @@ must be conditional on
 These macros are meant to follow
 .Tn C11
 semantics, in terms of
-.Fn atomic_load_explicit
+.Li atomic_load_explicit()
 and
-.Fn atomic_store_explicit
+.Li atomic_store_explicit()
 with the appropriate memory order specifiers, and are meant to make
 future adoption of the
 .Tn C11
@@ -596,28 +604,28 @@ Eventually it may be mandatory to use the
 type qualifier or equivalent for the operands.
 .Sh LINUX ANALOGUES
 The Linux kernel provides two macros
-.Fn READ_ONCE x
+.Li READ_ONCE(x)
 and
-.Fn WRITE_ONCE x v
+.Li WRITE_ONCE(x,\ v)
 which are similar to
-.Li atomic_load_consume ( & Ns Fa x )
+.Li atomic_load_consume(&x)
 and
-.Li atomic_store_relaxed ( & Ns Fa x , Fa v ) ,
+.Li atomic_store_relaxed(&x,\ v) ,
 respectively.
 However, while Linux's
-.Fn READ_ONCE
+.Li READ_ONCE
 and
-.Fn WRITE_ONCE
+.Li WRITE_ONCE
 prevent fusing, they may in some cases be torn \(em and therefore fail
 to guarantee atomicity \(em because:
 .Bl -bullet
 .It
 They do not require the address
-.Li & Ns Fa x
+.Li "&x"
 to be aligned.
 .It
 They do not require
-.Li sizeof ( Fa x )
+.Li sizeof(x)
 to be at most the largest size of available atomic loads and stores on
 the host architecture.
 .El
@@ -633,9 +641,9 @@ the purposes of pairing with
 and
 .Fn atomic_load_acquire
 or
-.Fn atomic_load_consume :
+.Fn atomic_load_consume .
 If
-.Fn atomic_r/m/w
+.Li atomic_r/m/w()
 is an atomic read/modify/write operation in
 .Xr atomic_ops 3 ,
 then
@@ -645,7 +653,7 @@ then
 .Ed
 .Pp
 functions like a release operation on
-.Fa obj ,
+.Va obj ,
 and
 .Bd -literal
 	atomic_r/m/w(obj, ...);
@@ -653,7 +661,7 @@ and
 .Ed
 .Pp
 functions like a acquire operation on
-.Fa obj .
+.Va obj .
 .Pp
 .Sy WARNING :
 The combination of
@@ -700,7 +708,6 @@ practice.)
 	unsigned
 	read_event_count(void)
 	{
-
 		return atomic_load_relaxed(&count);
 	}
 .Ed
@@ -713,7 +720,6 @@ Initialization barrier.
 	void
 	setup_and_notify(void)
 	{
-
 		setup_data(&d.things);
 		atomic_store_release(&ready, 1);
 	}
@@ -721,14 +727,15 @@ Initialization barrier.
 	void
 	try_if_ready(void)
 	{
-
 		if (atomic_load_acquire(&ready))
 			do_stuff(d.things);
 	}
 .Ed
 .Pp
 Publishing a pointer to the current snapshot of data.
-(Caller must arrange that only one call to take_snapshot happens at any
+(Caller must arrange that only one call to
+.Li take_snapshot()
+happens at any
 given time; generally this should be done in coordination with
 .Xr pserialize 9
 or similar to enable resource reclamation.)
@@ -748,7 +755,6 @@ or similar to enable resource reclamation.)
 	struct data *
 	get_snapshot(void)
 	{
-
 		return atomic_load_consume(&current_d);
 	}
 .Ed
@@ -764,11 +770,13 @@ These atomic operations first appeared in
 .Sh CAVEATS
 C11 formally specifies that all subexpressions, except the left
 operands of the
-.Li "&&" , "||" , "?:" ,
+.Ql && ,
+.Ql || ,
+.Ql ?: ,
 and
-.Li \&,
+.Ql \&,
 operators and the
-.Fn kill_dependency
+.Li kill_dependency()
 macro, carry dependencies for which
 .Dv memory_order_consume
 guarantees ordering, but most or all implementations to date simply
