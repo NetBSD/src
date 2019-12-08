@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.18 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.19 2019/12/08 04:41:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.18 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.19 2019/12/08 04:41:02 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.18 2019/12/07 15:28:39 tkusumi 
 #include "dm.h"
 
 /* dm_target_zero.c */
-int dm_target_zero_init(dm_dev_t *, void**,  char *);
+int dm_target_zero_init(dm_table_entry_t *, char *);
 char *dm_target_zero_status(void *);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_zero_sync(dm_table_entry_t *);
@@ -113,12 +113,12 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
  * target specific config area.
  */
 int
-dm_target_zero_init(dm_dev_t *dmv, void **target_config, char *argv)
+dm_target_zero_init(dm_table_entry_t *table_en, char *params)
 {
 
 	printf("Zero target init function called!!\n");
 
-	*target_config = NULL;
+	table_en->target_config = NULL;
 
 	return 0;
 }

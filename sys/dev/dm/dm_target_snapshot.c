@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.25 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.26 2019/12/08 04:41:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.25 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.26 2019/12/08 04:41:02 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -87,7 +87,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.25 2019/12/07 15:28:39 tkus
 #include "dm.h"
 
 /* dm_target_snapshot.c */
-int dm_target_snapshot_init(dm_dev_t *, void**, char *);
+int dm_target_snapshot_init(dm_table_entry_t *, char *);
 char *dm_target_snapshot_status(void *);
 int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_deps(dm_table_entry_t *, prop_array_t);
@@ -95,7 +95,7 @@ int dm_target_snapshot_destroy(dm_table_entry_t *);
 int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm snapshot origin driver */
-int dm_target_snapshot_orig_init(dm_dev_t *, void**, char *);
+int dm_target_snapshot_orig_init(dm_table_entry_t *, char *);
 char *dm_target_snapshot_orig_status(void *);
 int dm_target_snapshot_orig_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_orig_sync(dm_table_entry_t *);
@@ -192,7 +192,7 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
  *        snapshot_origin device, cow device, persistent flag, chunk size
  */
 int
-dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_snapshot_init(dm_table_entry_t *table_en, char *params)
 {
 	dm_target_snapshot_config_t *tsc;
 	dm_pdev_t *dmp_snap, *dmp_cow;
@@ -238,7 +238,7 @@ dm_target_snapshot_init(dm_dev_t *dmv, void **target_config, char *params)
 	tsc->tsc_snap_dev = dmp_snap;
 	tsc->tsc_cow_dev = dmp_cow;
 
-	*target_config = tsc;
+	table_en->target_config = tsc;
 
 	dmv->sec_size = dmp_snap->dmp_secsize;
 
@@ -387,7 +387,7 @@ dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
  * argv: /dev/mapper/my_data_real
  */
 int
-dm_target_snapshot_orig_init(dm_dev_t *dmv, void **target_config, char *params)
+dm_target_snapshot_orig_init(dm_table_entry_t *table_en, char *params)
 {
 	dm_target_snapshot_origin_config_t *tsoc;
 	dm_pdev_t *dmp_real;
@@ -405,7 +405,7 @@ dm_target_snapshot_orig_init(dm_dev_t *dmv, void **target_config, char *params)
 	tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_SLEEP);
 	tsoc->tsoc_real_dev = dmp_real;
 
-	*target_config = tsoc;
+	table_en->target_config = tsoc;
 
 	return 0;
 }
