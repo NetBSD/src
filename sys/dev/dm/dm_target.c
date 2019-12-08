@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.25 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.26 2019/12/08 10:35:53 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.25 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.26 2019/12/08 10:35:53 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,7 +183,7 @@ dm_target_insert(dm_target_t *dm_target)
  * Remove target from TAIL, target is selected with its name.
  */
 int
-dm_target_rem(char *dm_target_name)
+dm_target_rem(const char *dm_target_name)
 {
 	dm_target_t *dmt;
 

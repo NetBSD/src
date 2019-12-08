@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.35 2019/12/08 04:41:02 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.36 2019/12/08 10:35:53 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -265,7 +265,7 @@ int dm_target_destroy(void);
 int dm_target_insert(dm_target_t *);
 prop_array_t dm_target_prop_list(void);
 dm_target_t* dm_target_lookup(const char *);
-int dm_target_rem(char *);
+int dm_target_rem(const char *);
 void dm_target_unbusy(dm_target_t *);
 void dm_target_busy(dm_target_t *);
 
