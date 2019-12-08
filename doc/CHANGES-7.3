@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.71 2019/12/05 16:30:45 bouyer Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.72 2019/12/08 10:26:08 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -743,4 +743,9 @@ sys/external/bsd/dwc2/dwc2.c			1.60 - 1.66
 	Calulate the right lenght for isoc transfer and the usb_syncmem
 	PR/54696: Kernel panic in bus_dma.c on Raspberry Pi 3B/3B+
 	[skrll, ticket #1716]
+
+sys/dev/cons.c					1.76,1.77
+
+	Fix reference count leak in cons(4).
+	[riastradh, ticket #1717]
 
