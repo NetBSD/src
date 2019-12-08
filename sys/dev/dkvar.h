@@ -1,4 +1,4 @@
-/* $NetBSD: dkvar.h,v 1.30 2017/11/01 19:15:31 mlelstv Exp $ */
+/* $NetBSD: dkvar.h,v 1.31 2019/12/08 12:15:24 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -109,7 +109,5 @@ int	dk_dump(struct dk_softc *, dev_t,
 		daddr_t, void *, size_t);
 void	dk_getdisklabel(struct dk_softc *, dev_t);
 void	dk_getdefaultlabel(struct dk_softc *, struct disklabel *);
-
-int	dk_lookup(struct pathbuf *, struct lwp *, struct vnode **);
 
 #endif /* ! _DEV_DKVAR_H_ */   
