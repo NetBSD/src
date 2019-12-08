@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.36 2019/12/08 10:35:53 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.37 2019/12/08 10:50:21 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -169,45 +169,6 @@ typedef struct target_linear_config {
 TAILQ_HEAD(target_linear_devs, target_linear_config);
 
 typedef struct target_linear_devs dm_target_linear_devs_t;
-
-/* for stripe : */
-typedef struct target_stripe_config {
-#define DM_STRIPE_DEV_OFFSET 2
-	struct target_linear_devs stripe_devs;
-	uint8_t stripe_num;
-	uint64_t stripe_chunksize;
-	size_t params_len;
-} dm_target_stripe_config_t;
-
-/* for mirror : */
-typedef struct target_mirror_config {
-#define MAX_MIRROR_COPIES 4
-	dm_pdev_t *orig;
-	dm_pdev_t *copies[MAX_MIRROR_COPIES];
-
-	/* copied blocks bitmaps administration etc*/
-	dm_pdev_t *log_pdev;	/* for administration */
-	uint64_t log_regionsize;	/* blocksize of mirror */
-
-	/* list of parts that still need copied etc.; run length encoded? */
-} dm_target_mirror_config_t;
-
-
-/* for snapshot : */
-typedef struct target_snapshot_config {
-	dm_pdev_t *tsc_snap_dev;
-	/* cow dev is set only for persistent snapshot devices */
-	dm_pdev_t *tsc_cow_dev;
-
-	uint64_t tsc_chunk_size;
-	uint32_t tsc_persistent_dev;
-} dm_target_snapshot_config_t;
-
-/* for snapshot-origin devices */
-typedef struct target_snapshot_origin_config {
-	dm_pdev_t *tsoc_real_dev;
-	/* list of snapshots ? */
-} dm_target_snapshot_origin_config_t;
 
 /* constant dm_target structures for error, zero, linear, stripes etc. */
 typedef struct dm_target {
