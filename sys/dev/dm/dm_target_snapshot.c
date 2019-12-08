@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.26 2019/12/08 04:41:02 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.27 2019/12/08 10:35:53 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.26 2019/12/08 04:41:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.27 2019/12/08 10:35:53 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -240,8 +240,6 @@ dm_target_snapshot_init(dm_table_entry_t *table_en, char *params)
 
 	table_en->target_config = tsc;
 
-	dmv->sec_size = dmp_snap->dmp_secsize;
-
 	return 0;
 }
 
@@ -258,14 +256,13 @@ dm_target_snapshot_status(void *target_config)
 	uint32_t i;
 	uint32_t count;
 	size_t prm_len, cow_len;
-	char *params, *cow_name;
+	char *params;
 
 	tsc = target_config;
 
 	prm_len = 0;
 	cow_len = 0;
 	count = 0;
-	cow_name = NULL;
 
 	printf("Snapshot target status function called\n");
 
