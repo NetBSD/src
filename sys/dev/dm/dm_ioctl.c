@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.39 2019/12/06 16:33:47 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.40 2019/12/08 04:41:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.39 2019/12/06 16:33:47 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.40 2019/12/08 04:41:02 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -780,8 +780,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		 * routine and parse parameters there.
 		 */
 
-		if ((ret = target->init(dmv, &table_en->target_config,
-			    str)) != 0) {
+		if ((ret = target->init(table_en, str)) != 0) {
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
 			free(str, M_TEMP);
