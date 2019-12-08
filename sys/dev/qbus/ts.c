@@ -1,4 +1,4 @@
-/*	$NetBSD: ts.c,v 1.31 2014/07/25 08:10:38 dholland Exp $ */
+/*	$NetBSD: ts.c,v 1.32 2019/12/08 19:23:51 ad Exp $ */
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.31 2014/07/25 08:10:38 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ts.c,v 1.32 2019/12/08 19:23:51 ad Exp $");
 
 #undef	TSDEBUG
 
@@ -390,7 +390,7 @@ tscommand(struct ts_softc *sc, dev_t dev, int cmd, int count)
 		return;
 	biowait(bp);
 	mutex_enter(&bufcache_lock);
-	cv_broadcast(&bp->b_busy);
+	cv_signal(&bp->b_busy);
 	bp->b_cflags = 0;
 	mutex_exit(&bufcache_lock);
 }
