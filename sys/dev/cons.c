@@ -1,4 +1,4 @@
-/*	$NetBSD: cons.c,v 1.72.2.1 2015/03/09 08:00:46 snj Exp $	*/
+/*	$NetBSD: cons.c,v 1.72.2.1.6.1 2019/12/08 10:26:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.72.2.1 2015/03/09 08:00:46 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cons.c,v 1.72.2.1.6.1 2019/12/08 10:26:36 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -150,6 +150,7 @@ cnclose(dev_t dev, int flag, int mode, struct lwp *l)
 	if (error == 0) {
 		error = VOP_CLOSE(vp, flag, kauth_cred_get());
 		VOP_UNLOCK(vp);
+		vrele(vp);
 	}
 	return error;
 }
