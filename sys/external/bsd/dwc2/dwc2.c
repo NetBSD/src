@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.59 2019/03/19 08:17:46 ryo Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.59.4.1 2019/12/09 13:06:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,19 +30,21 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59 2019/03/19 08:17:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59.4.1 2019/12/09 13:06:38 martin Exp $");
 
 #include "opt_usb.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/kmem.h>
-#include <sys/kernel.h>
+
+#include <sys/cpu.h>
 #include <sys/device.h>
-#include <sys/select.h>
+#include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
-#include <sys/cpu.h>
+#include <sys/select.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <machine/endian.h>
 
@@ -74,6 +76,33 @@ __KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59 2019/03/19 08:17:46 ryo Exp $");
 } while (0)
 #define	DPRINTF(...)	DPRINTFN(1, __VA_ARGS__)
 int dwc2debug = 0;
+
+SYSCTL_SETUP(sysctl_hw_dwc2_setup, "sysctl hw.dwc2 setup")
+{
+	int err;
+	const struct sysctlnode *rnode;
+	const struct sysctlnode *cnode;
+
+	err = sysctl_createv(clog, 0, NULL, &rnode,
+	    CTLFLAG_PERMANENT, CTLTYPE_NODE, "dwc2",
+	    SYSCTL_DESCR("dwc2 global controls"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+
+	if (err)
+		goto fail;
+
+	/* control debugging printfs */
+	err = sysctl_createv(clog, 0, &rnode, &cnode,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE, CTLTYPE_INT,
+	    "debug", SYSCTL_DESCR("Enable debugging output"),
+	    NULL, 0, &dwc2debug, sizeof(dwc2debug), CTL_CREATE, CTL_EOL);
+	if (err)
+		goto fail;
+
+	return;
+fail:
+	aprint_error("%s: sysctl_createv failed (err = %d)\n", __func__, err);
+}
 #else
 #define	DPRINTF(...) do { } while (0)
 #define	DPRINTFN(...) do { } while (0)
@@ -947,7 +976,6 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	uint32_t off = 0;
 	int retval, err;
 	int alloc_bandwidth = 0;
-	int i;
 
 	DPRINTFN(1, "xfer=%p pipe=%p\n", xfer, xfer->ux_pipe);
 
@@ -987,6 +1015,14 @@ dwc2_device_start(struct usbd_xfer *xfer)
 		DPRINTFN(3, "req = %p dma = %" PRIxBUSADDR " len %d dir %s\n",
 		    KERNADDR(&dpipe->req_dma, 0), DMAADDR(&dpipe->req_dma, 0),
 		    len, dir == UE_DIR_IN ? "in" : "out");
+	} else if (xfertype == UE_ISOCHRONOUS) {
+		DPRINTFN(3, "xfer=%p nframes=%d flags=%d addr=%d endpt=%d,"
+		    " mps=%d dir %s\n", xfer, xfer->ux_nframes, xfer->ux_flags, addr,
+		    epnum, mps, dir == UT_READ ? "in" :"out");
+
+		len = 0;
+		for (size_t i = 0; i < xfer->ux_nframes; i++)
+			len += xfer->ux_frlengths[i];
 	} else {
 		DPRINTFN(3, "xfer=%p len=%d flags=%d addr=%d endpt=%d,"
 		    " mps=%d dir %s\n", xfer, xfer->ux_length, xfer->ux_flags, addr,
@@ -1080,8 +1116,9 @@ dwc2_device_start(struct usbd_xfer *xfer)
 	KASSERTMSG(xfer->ux_nframes == 0 || xfertype == UE_ISOCHRONOUS,
 	    "nframes %d xfertype %d\n", xfer->ux_nframes, xfertype);
 
-	for (off = i = 0; i < xfer->ux_nframes; ++i) {
-		DPRINTFN(3, "xfer=%p frame=%d offset=%d length=%d\n", xfer, i,
+	off = 0;
+	for (size_t i = 0; i < xfer->ux_nframes; ++i) {
+		DPRINTFN(3, "xfer=%p frame=%zd offset=%d length=%d\n", xfer, i,
 		    off, xfer->ux_frlengths[i]);
 
 		dwc2_hcd_urb_set_iso_desc_params(dwc2_urb, i, off,
@@ -1470,22 +1507,21 @@ void dwc2_host_complete(struct dwc2_hsotg *hsotg, struct dwc2_qtd *qtd,
 	DPRINTFN(3, "xfer=%p actlen=%d\n", xfer, xfer->ux_actlen);
 
 	if (xfertype == UE_ISOCHRONOUS) {
-		int i;
-
 		xfer->ux_actlen = 0;
-		for (i = 0; i < xfer->ux_nframes; ++i) {
+		for (size_t i = 0; i < xfer->ux_nframes; ++i) {
 			xfer->ux_frlengths[i] =
 				dwc2_hcd_urb_get_iso_desc_actual_length(
 						urb, i);
+			DPRINTFN(1, "xfer=%p frame=%zu length=%d\n", xfer, i,
+			    xfer->ux_frlengths[i]);
 			xfer->ux_actlen += xfer->ux_frlengths[i];
 		}
+		DPRINTFN(1, "xfer=%p actlen=%d (isoc)\n", xfer, xfer->ux_actlen);
 	}
 
 	if (xfertype == UE_ISOCHRONOUS && dbg_perio()) {
-		int i;
-
-		for (i = 0; i < xfer->ux_nframes; i++)
-			dev_vdbg(hsotg->dev, " ISO Desc %d status %d\n",
+		for (size_t i = 0; i < xfer->ux_nframes; i++)
+			dev_vdbg(hsotg->dev, " ISO Desc %zu status %d\n",
 				 i, urb->iso_descs[i].status);
 	}
 
