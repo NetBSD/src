@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.5 2019/12/09 14:56:30 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.6 2019/12/09 14:56:44 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.5 2019/12/09 14:56:30 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.6 2019/12/09 14:56:44 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -731,14 +731,17 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 
 	/* Process the channels.  */
 	for (i = 0; i < SUN8I_CRYPTO_NCHAN; i++) {
+		/* Check whether the channel is done.  */
 		if (!ISSET(done, SUN8I_CRYPTO_ISR_DONE_CHAN(i))) {
-			/* Check to see if we have a task that timed out.  */
+			/* Nope.  Do we have a task to time out?  */
 			if ((sc->sc_chan[i].cc_task != NULL) &&
 			    ((now - sc->sc_chan[i].cc_starttime) >=
 				SUN8I_CRYPTO_TIMEOUT))
 				sun8i_crypto_chan_done(sc, i, ETIMEDOUT);
 			continue;
 		}
+
+		/* Channel is done.  Interpret the error if any.  */
 		esr_chan = __SHIFTOUT(esr, SUN8I_CRYPTO_ESR_CHAN(i));
 		if (esr_chan & SUN8I_CRYPTO_ESR_CHAN_ALGNOTSUP) {
 			device_printf(sc->sc_dev, "channel %u:"
@@ -758,7 +761,10 @@ sun8i_crypto_worker(struct work *wk, void *cookie)
 			error = 0;
 		}
 
-		/* May release the lock to invoke a callback.  */
+		/*
+		 * Notify the task of completion.  May release the lock
+		 * to invoke a callback.
+		 */
 		sun8i_crypto_chan_done(sc, i, error);
 	}
 
@@ -1152,6 +1158,7 @@ sun8i_crypto_sysctl_attach(struct sun8i_crypto_softc *sc)
 	struct sun8i_crypto_sysctl *cy = &sc->sc_sysctl;
 	int error;
 
+	/* hw.sun8icryptoN (node) */
 	error = sysctl_createv(&cy->cy_log, 0, NULL, &cy->cy_root_node,
 	    CTLFLAG_PERMANENT, CTLTYPE_NODE, device_xname(sc->sc_dev),
 	    SYSCTL_DESCR("sun8i crypto engine knobs"),
@@ -1164,6 +1171,7 @@ sun8i_crypto_sysctl_attach(struct sun8i_crypto_softc *sc)
 		return;
 	}
 
+	/* hw.sun8icryptoN.rng (`struct', 1024-byte array) */
 	sysctl_createv(&cy->cy_log, 0, &cy->cy_root_node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_STRUCT,
 	    "rng", SYSCTL_DESCR("Read up to 1024 bytes out of the TRNG"),
