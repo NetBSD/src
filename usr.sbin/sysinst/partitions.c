@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.5 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.6 2019/12/09 19:16:53 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -128,6 +128,20 @@ static bool have_only_disklabel_boot_support(const char *disk)
 #endif
 }
 #endif
+
+bool
+only_have_disklabel(void)
+{
+
+	if (num_available_part_schemes > 1)
+		return false;
+
+#if RAW_PART != 2
+	if (available_part_schemes[0] == &only_disklabel_parts)
+		return true;
+#endif
+	return available_part_schemes[0] == &disklabel_parts;
+}
 
 /*
  * One time initialization
