@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.197.2.1 2019/09/18 16:09:07 martin Exp $	 */
+/*	$NetBSD: rtld.c,v 1.197.2.2 2019/12/09 16:12:16 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.197.2.1 2019/09/18 16:09:07 martin Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.197.2.2 2019/12/09 16:12:16 martin Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1776,7 +1776,7 @@ _rtld_relro(const Obj_Entry *obj, bool wantmain)
 	if (wantmain != (obj ==_rtld_objmain))
 		return 0;
 
-	dbg(("RELRO %s %p %lx\n", obj->path, obj->relro_page, obj->relro_size));
+	dbg(("RELRO %s %p %zx\n", obj->path, obj->relro_page, obj->relro_size));
 	if (mprotect(obj->relro_page, obj->relro_size, PROT_READ) == -1) {
 		_rtld_error("%s: Cannot enforce relro " "protection: %s",
 		    obj->path, xstrerror(errno));
