@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.1 2019/12/09 04:51:03 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.2 2019/12/09 14:55:52 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.1 2019/12/09 04:51:03 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.2 2019/12/09 14:55:52 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -115,10 +115,7 @@ struct sun8i_crypto_softc {
 };
 
 struct sun8i_crypto_task {
-	bus_dma_segment_t	ct_desc_seg[1];
-	int			ct_desc_nseg;
-	bus_dmamap_t		ct_desc_map;
-	void			*ct_desc_kva;
+	struct sun8i_crypto_buf	ct_buf;
 	struct sun8i_crypto_taskdesc *ct_desc;
 	void			(*ct_callback)(struct sun8i_crypto_softc *,
 				    struct sun8i_crypto_task *, void *, int);
@@ -329,48 +326,25 @@ sun8i_crypto_task_get(struct sun8i_crypto_softc *sc,
     void *cookie)
 {
 	struct sun8i_crypto_task *task;
-	const size_t desc_size = sizeof(*task->ct_desc);
 	int error;
 
+	/* Allocate a task.  */
 	task = kmem_zalloc(sizeof(*task), KM_SLEEP);
 
-	/* Allocate DMA-safe memory for the descriptor.  */
-	error = bus_dmamem_alloc(sc->sc_dmat, desc_size, 0, 0,
-	    task->ct_desc_seg, __arraycount(task->ct_desc_seg),
-	    &task->ct_desc_nseg, BUS_DMA_NOWAIT);
+	/* Allocate a buffer for the descriptor.  */
+	error = sun8i_crypto_allocbuf(sc, sizeof(*task->ct_desc),
+	    &task->ct_buf);
 	if (error)
 		goto fail0;
 
-	/* Map the descriptor into kernel virtual address space.  */
-	error = bus_dmamem_map(sc->sc_dmat, task->ct_desc_seg,
-	    task->ct_desc_nseg, desc_size, &task->ct_desc_kva, BUS_DMA_NOWAIT);
-	if (error)
-		goto fail1;
-	task->ct_desc = task->ct_desc_kva;
-
-	/* Create a map for exposing the descriptor to DMA.  */
-	error = bus_dmamap_create(sc->sc_dmat, desc_size, 1, desc_size, 0,
-	    BUS_DMA_NOWAIT, &task->ct_desc_map);
-	if (error)
-		goto fail2;
-
-	/* Load the descriptor into the DMA map.  */
-	error = bus_dmamap_load(sc->sc_dmat, task->ct_desc_map,
-	    task->ct_desc_kva, desc_size, NULL, BUS_DMA_NOWAIT);
-	if (error)
-		goto fail3;
-
+	/* Initialize the task object and return it.  */
+	task->ct_desc = task->ct_buf.cb_kva;
 	task->ct_callback = callback;
 	task->ct_cookie = cookie;
-
 	return task;
 
-fail4: __unused
-	bus_dmamap_unload(sc->sc_dmat, task->ct_desc_map);
-fail3:	bus_dmamap_destroy(sc->sc_dmat, task->ct_desc_map);
-fail2:	bus_dmamem_unmap(sc->sc_dmat, task->ct_desc_kva,
-	    sizeof(*task->ct_desc));
-fail1:	bus_dmamem_free(sc->sc_dmat, task->ct_desc_seg, task->ct_desc_nseg);
+fail1: __unused
+	sun8i_crypto_freebuf(sc, sizeof(*task->ct_desc), &task->ct_buf);
 fail0:	kmem_free(task, sizeof(*task));
 	return NULL;
 }
@@ -380,11 +354,7 @@ sun8i_crypto_task_put(struct sun8i_crypto_softc *sc,
     struct sun8i_crypto_task *task)
 {
 
-	bus_dmamap_unload(sc->sc_dmat, task->ct_desc_map);
-	bus_dmamap_destroy(sc->sc_dmat, task->ct_desc_map);
-	bus_dmamem_unmap(sc->sc_dmat, task->ct_desc_kva,
-	    sizeof(*task->ct_desc));
-	bus_dmamem_free(sc->sc_dmat, task->ct_desc_seg, task->ct_desc_nseg);
+	sun8i_crypto_freebuf(sc, sizeof(*task->ct_desc), &task->ct_buf);
 	kmem_free(task, sizeof(*task));
 }
 
@@ -604,7 +574,7 @@ sun8i_crypto_submit(struct sun8i_crypto_softc *sc,
 	task->ct_desc->td_cid = htole32(i);
 
 	/* Prepare to send the descriptor to the device by DMA.  */
-	bus_dmamap_sync(sc->sc_dmat, task->ct_desc_map, 0,
+	bus_dmamap_sync(sc->sc_dmat, task->ct_buf.cb_map, 0,
 	    sizeof(*task->ct_desc), BUS_DMASYNC_PREWRITE);
 
 	/* Confirm we're ready to go.  */
@@ -622,7 +592,7 @@ sun8i_crypto_submit(struct sun8i_crypto_softc *sc,
 
 	/* Set the task descriptor queue address.  */
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_TDQ,
-	    task->ct_desc_map->dm_segs[0].ds_addr);
+	    task->ct_buf.cb_map->dm_segs[0].ds_addr);
 
 	/* Notify the engine to load it, and wait for acknowledgement.  */
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_TLR, SUN8I_CRYPTO_TLR_LOAD);
@@ -819,7 +789,7 @@ sun8i_crypto_chan_done(struct sun8i_crypto_softc *sc, unsigned i, int error)
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_ICR, icr);
 
 	/* Finished sending the descriptor to the device by DMA.  */
-	bus_dmamap_sync(sc->sc_dmat, task->ct_desc_map, 0,
+	bus_dmamap_sync(sc->sc_dmat, task->ct_buf.cb_map, 0,
 	    sizeof(*task->ct_desc), BUS_DMASYNC_POSTWRITE);
 
 	/* Temporarily release the lock to invoke the callback.  */
