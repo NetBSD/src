@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.132 2019/12/09 16:23:19 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.133 2019/12/09 19:33:56 bouyer Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6921,4 +6921,16 @@ distrib/notes/common/legal.common		upto 1.124 (adapted)
 
 	Sync with reality and sort.
 	[uwe, ticket #536]
+
+usr.sbin/sysinst/disklabel.c			1.16, 1.17
+
+	Fix installation when using existing disklabel partitions with
+	disk pack names containing spaces.    
+	[martin, ticket #537]
+
+usr.sbin/sysinst/bsddisklabel.c			1.32
+
+	PR install/54745: fix confusion about absolut and NetBSD-partition
+	relative offsets.
+	[martin, ticket #538]
 
