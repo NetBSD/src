@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.23.2.6 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.23.2.7 2019/12/09 19:33:25 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1342,7 +1342,8 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 	/*
 	 * Now add new inner partitions (and cloned partitions)
 	 */
-	for (i = 0; i < wanted->num && from < wanted->parts->disk_size; i++) {
+	for (i = 0; i < wanted->num && from < 
+	    (wanted->parts->disk_size + wanted->parts->disk_start); i++) {
 		struct part_usage_info *want = &wanted->infos[i];
 
 		if (want->cur_part_id != NO_PART)
