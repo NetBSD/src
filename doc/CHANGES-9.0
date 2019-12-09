@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.131 2019/12/08 15:05:44 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.132 2019/12/09 16:23:19 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6806,4 +6806,119 @@ xsrc/external/mit/MesaLib/dist/src/mesa/drivers/x11/xm_buffer.c 1.2
 
 	CVE-2019-5068: use permission 0600 for shmget(2).
 	[maya, ticket #518]
+
+share/tmac/doc2html				1.69
+
+	Use groff -Tencoding argument to emit <meta charset="..."/>
+	[uwe, ticket #519]
+
+usr.bin/menuc/testm/main.c			1.8
+usr.bin/menuc/testm/menus.mc			1.13
+
+	Fix typo in ad clause.
+	[uwe, ticket #520]
+
+sys/dev/mii/devlist2h.awk			1.10
+
+	Fix s/product/model/ search-and-destroy accident that affected license.
+	[uwe, ticket #521]
+
+distrib/notes/common/extract-contrib-string.pl	upto 1.24
+
+	Various fixes and some more special cases.
+	[uwe, ticket #522]
+
+distrib/notes/Makefile.inc                      up to 1.52
+distrib/notes/common/macros                     up to 1.54
+
+	Improve the table of contents in the release notes.
+	[uwe, ticket #523]
+
+sys/external/bsd/dwc2/dwc2.c			1.60-1.66
+
+	PR/54696: calulate the right lenght for isoc transfer and the
+	usb_syncmem.
+	[skrll, ticket #524]
+
+distrib/sets/lists/modules/ad.arm		1.14
+distrib/sets/lists/modules/md.amd64		1.82
+distrib/sets/lists/modules/md.i386		1.83
+distrib/sets/lists/modules/mi			1.128
+external/cddl/osnet/dev/dtrace/aarch64/dtrace_asm.S 1.1
+external/cddl/osnet/dev/dtrace/aarch64/dtrace_isa.c 1.1
+external/cddl/osnet/dev/dtrace/aarch64/dtrace_subr.c 1.1
+external/cddl/osnet/dev/dtrace/aarch64/regset.h	1.1
+external/cddl/osnet/dev/fbt/aarch64/fbt_isa.c	1.1
+external/cddl/osnet/dev/fbt/aarch64/fbt_isa.h	1.1
+external/cddl/osnet/dist/lib/libdtrace/aarch64/dt_isadep.c 1.2
+external/cddl/osnet/dist/lib/libdtrace/common/dt_link.c 1.12
+external/cddl/osnet/lib/libdtrace/Makefile	1.26
+share/mk/bsd.own.mk				1.1168
+sys/arch/aarch64/aarch64/start.S		1.3
+sys/arch/aarch64/aarch64/trap.c			1.22
+sys/arch/aarch64/conf/Makefile.aarch64		1.16
+sys/arch/aarch64/include/frame.h		1.3
+sys/arch/evbarm/conf/mk.generic64		1.4
+sys/modules/cyclic/Makefile			1.4
+sys/modules/dtrace/Makefile			1.7,1.8
+usr.bin/mkubootimage/mkubootimage.1		1.13
+usr.bin/mkubootimage/mkubootimage.c		1.25,1.26
+
+	dtrace: add aarch64 support
+	[jmcneill, ticket #525]
+
+lib/libc/sys/modctl.2				1.16
+sbin/modstat/modstat.8				1.24,1.26
+
+	PR kern/54737: note that the size returned by modctl(2)
+	and displayed by modstat(8) is only for the module's text section.
+	[pgoyette, ticket #527]
+
+sys/dev/cons.c					1.76,1.77
+
+	Fix reference count leak in cons(4).
+	[riastradh, ticket #528]
+
+sys/arch/arm/rockchip/rk3399_pcie.c		1.8
+sys/arch/evbarm/conf/std.generic64		1.12
+
+	arm: rk3399: fix a PCIe crash.
+	[jmcneill, ticket #529]
+
+crypto/external/bsd/openssl/dist/crypto/engine/eng_devcrypto.c 1.5
+
+	PR/54740: Izumi Tsutsui: Disable cryptoengine unavailable message when
+	device is not configured (ENXIO).
+	[tsutsui, ticket #530]
+
+include/monetary.h				1.4
+
+	PR lib/54744: add missing __END_DECLS for C++ compiles.
+	[kre, ticket #531]
+
+sys/arch/aarch64/aarch64/locore.S		1.46
+
+	Mark FDT as non-exec and create KVA=VA mapping of same size as
+	identity mapping.
+	[skrll, ticket #532]
+
+sys/arch/macppc/conf/INSTALL_601		1.3
+
+	Add platinumfb.
+	[scole, ticket #533]
+
+libexec/ld.elf_so/rtld.c			1.201
+
+	Fix debug printf format for a size_t argument.
+	[uwe, ticket #534]
+
+libexec/ld.elf_so/arch/powerpc/ppc_reloc.c	1.59,1.60
+
+	Resolve ADDR16_LO, ADDR16_HI, and ADDR16_HA relocs.
+	[uwe, ticket #535]
+
+distrib/notes/common/legal.common		upto 1.124 (adapted)
+
+	Sync with reality and sort.
+	[uwe, ticket #536]
 
