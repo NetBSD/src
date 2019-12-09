@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.47 2019/12/07 16:13:39 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.48 2019/12/09 15:54:59 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -355,20 +355,18 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 	int r;
 	prop_dictionary_t dm_dict_in;
 
-	r = 0;
-
 	aprint_debug("dmioctl called\n");
 	KASSERT(data != NULL);
 
 	if ((r = disk_ioctl_switch(dev, cmd, data)) == ENOTTY) {
-		struct plistref *pref = (struct plistref *) data;
+		struct plistref *pref = (struct plistref *)data;
 
 		/* Check if we were called with NETBSD_DM_IOCTL ioctl
 		   otherwise quit. */
 		if ((r = dm_ioctl_switch(cmd)) != 0)
 			return r;
 
-		if((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in))
+		if ((r = prop_dictionary_copyin_ioctl(pref, cmd, &dm_dict_in))
 		    != 0)
 			return r;
 
@@ -379,8 +377,8 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0)
 			goto cleanup_exit;
 
-cleanup_exit:
 		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
+cleanup_exit:
 		prop_object_release(dm_dict_in);
 	}
 
