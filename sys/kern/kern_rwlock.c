@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.58 2019/11/30 14:21:16 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.59 2019/12/09 21:02:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.58 2019/11/30 14:21:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59 2019/12/09 21:02:10 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -357,10 +357,6 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 			owner = next;
 			continue;
 		}
-		if (__predict_false(panicstr != NULL)) {
-			KPREEMPT_ENABLE(curlwp);
-			return;
-		}
 		if (__predict_false(RW_OWNER(rw) == curthread)) {
 			rw_abort(__func__, __LINE__, rw,
 			    "locking against myself");
@@ -449,9 +445,6 @@ rw_vector_exit(krwlock_t *rw)
 
 	curthread = (uintptr_t)curlwp;
 	RW_ASSERT(rw, curthread != 0);
-
-	if (__predict_false(panicstr != NULL))
-		return;
 
 	/*
 	 * Again, we use a trick.  Since we used an add operation to
@@ -729,8 +722,6 @@ rw_read_held(krwlock_t *rw)
 {
 	uintptr_t owner;
 
-	if (panicstr != NULL)
-		return 1;
 	if (rw == NULL)
 		return 0;
 	owner = rw->rw_owner;
@@ -748,8 +739,6 @@ int
 rw_write_held(krwlock_t *rw)
 {
 
-	if (panicstr != NULL)
-		return 1;
 	if (rw == NULL)
 		return 0;
 	return (rw->rw_owner & (RW_WRITE_LOCKED | RW_THREAD)) ==
@@ -767,8 +756,6 @@ int
 rw_lock_held(krwlock_t *rw)
 {
 
-	if (panicstr != NULL)
-		return 1;
 	if (rw == NULL)
 		return 0;
 	return (rw->rw_owner & RW_THREAD) != 0;
