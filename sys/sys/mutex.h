@@ -1,7 +1,7 @@
-/*	$NetBSD: mutex.h,v 1.23 2019/11/30 15:34:07 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.24 2019/12/09 21:08:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -199,6 +199,7 @@ int	mutex_tryenter(kmutex_t *);
 int	mutex_owned(const kmutex_t *);
 int	mutex_ownable(const kmutex_t *);
 lwp_t	*mutex_owner(const kmutex_t *);
+bool	mutex_owner_running(const kmutex_t *);
 
 void	mutex_obj_init(void);
 kmutex_t *mutex_obj_alloc(kmutex_type_t, int);
