@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.650 2019/12/04 09:03:45 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.651 2019/12/09 02:30:30 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.650 2019/12/04 09:03:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.651 2019/12/09 02:30:30 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -11626,7 +11626,7 @@ wm_sgmii_readreg_locked(device_t dev, int phy, int reg, uint16_t *val)
 {
 	struct wm_softc *sc = device_private(dev);
 	uint32_t i2ccmd;
-	int i, rv;
+	int i, rv = 0;
 
 	i2ccmd = (reg << I2CCMD_REG_ADDR_SHIFT)
 	    | (phy << I2CCMD_PHY_ADDR_SHIFT) | I2CCMD_OPCODE_READ;
