@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.32 2019/12/08 10:50:21 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.33 2019/12/09 15:30:42 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.32 2019/12/08 10:50:21 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.33 2019/12/09 15:30:42 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -73,11 +73,11 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		if ((dmt = dm_target_lookup("stripe")) != NULL) {
+		if ((dmt = dm_target_lookup("striped")) != NULL) {
 			dm_target_unbusy(dmt);
 			return EEXIST;
 		}
-		dmt = dm_target_alloc("stripe");
+		dmt = dm_target_alloc("striped");
 
 		dmt->version[0] = 1;
 		dmt->version[1] = 0;
@@ -96,7 +96,7 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		break;
 
 	case MODULE_CMD_FINI:
-		r = dm_target_rem("stripe");
+		r = dm_target_rem("striped");
 		break;
 
 	case MODULE_CMD_STAT:
