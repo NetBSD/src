@@ -1,4 +1,4 @@
-/* $NetBSD: README.md_defs,v 1.1 2019/08/14 12:49:37 martin Exp $ */
+/* $NetBSD: README.md_defs,v 1.2 2019/12/09 19:16:53 martin Exp $ */
 
 The following is trying to document the most important machine dependent
 defines used in the sysinst code.
@@ -83,3 +83,10 @@ used like:
 returns true if the disk could be made bootable with only a disklabel
 (and no MBR).
 
+
+DISKLABEL_NO_ONDISK_VERIFY	usually undefined
+
+If defined, do not verify the presence of on-disk disklabels before
+offering the disklabel partitioning scheme. This allows ports to use
+kernel translation for the disklabel ioctls (e.g. x86k uses Human68k
+partitions this way).
