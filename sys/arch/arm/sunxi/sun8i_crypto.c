@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.2 2019/12/09 14:55:52 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.3 2019/12/09 14:56:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.2 2019/12/09 14:55:52 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.3 2019/12/09 14:56:06 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -981,9 +981,9 @@ out:	/* Done -- clear the RNG-pending flag.  */
  * Self-test
  */
 
-static uint8_t selftest_input[16];
-static uint8_t selftest_key[16];
-static uint8_t selftest_output[16] = {
+static const uint8_t selftest_input[16];
+static const uint8_t selftest_key[16];
+static const uint8_t selftest_output[16] = {
 	0x66,0xe9,0x4b,0xd4,0xef,0x8a,0x2c,0x3b,
 	0x88,0x4c,0xfa,0x59,0xca,0x34,0x2b,0x2e,
 };
@@ -1061,70 +1061,65 @@ fail1:	sun8i_crypto_freebuf(sc, sizeof selftest_input, &selftest->cs_in);
 fail0:	aprint_error_dev(self, "failed to run self-test, error=%d\n", error);
 }
 
+static bool
+sun8i_crypto_selftest_check(struct sun8i_crypto_softc *sc, const char *title,
+    size_t n, const void *expected, const void *actual)
+{
+	const uint8_t *e = expected;
+	const uint8_t *a = actual;
+	size_t i;
+
+	if (memcmp(e, a, n) == 0)
+		return true;
+
+	device_printf(sc->sc_dev, "self-test: %s\n", title);
+	printf("expected: ");
+	for (i = 0; i < n; i++)
+		printf("%02hhx", e[i]);
+	printf("\n");
+	printf("actual:   ");
+	for (i = 0; i < n; i++)
+		printf("%02hhx", a[i]);
+	printf("\n");
+	return false;
+}
+
 static void
 sun8i_crypto_selftest_done(struct sun8i_crypto_softc *sc,
     struct sun8i_crypto_task *task, void *cookie, int error)
 {
 	struct sun8i_crypto_selftest *selftest = cookie;
-	unsigned i;
 	bool ok = true;
 
 	KASSERT(selftest == &sc->sc_selftest);
 
+	/*
+	 * Finished the DMA read into the output buffer, and finished
+	 * the DMA writes from the key buffer and input buffer.
+	 */
 	bus_dmamap_sync(sc->sc_dmat, selftest->cs_out.cb_map, 0,
 	    sizeof selftest_output, BUS_DMASYNC_POSTREAD);
+	bus_dmamap_sync(sc->sc_dmat, selftest->cs_key.cb_map, 0,
+	    sizeof selftest_key, BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_sync(sc->sc_dmat, selftest->cs_in.cb_map, 0,
 	    sizeof selftest_input, BUS_DMASYNC_POSTWRITE);
 
+	/* If anything went wrong, fail now.  */
 	if (error) {
 		device_printf(sc->sc_dev, "self-test error=%d\n", error);
 		goto out;
 	}
 
-	if (memcmp(selftest_input, selftest->cs_in.cb_kva,
-		sizeof selftest_input) != 0) {
-		device_printf(sc->sc_dev, "self-test: input clobbered\n");
-		printf("expected: ");
-		for (i = 0; i < sizeof selftest_input; i++)
-			printf("%02hhx", selftest_input[i]);
-		printf("\n");
-		printf("actual:   ");
-		for (i = 0; i < sizeof selftest_input; i++)
-			printf("%02hhx",
-			    ((const uint8_t *)selftest->cs_in.cb_kva)[i]);
-		printf("\n");
-		ok = false;
-	}
-
-	if (memcmp(selftest_key, selftest->cs_key.cb_kva,
-		sizeof selftest_key) != 0) {
-		device_printf(sc->sc_dev, "self-test: key clobbered\n");
-		printf("expected: ");
-		for (i = 0; i < sizeof selftest_key; i++)
-			printf("%02hhx", selftest_key[i]);
-		printf("\n");
-		printf("actual:   ");
-		for (i = 0; i < sizeof selftest_key; i++)
-			printf("%02hhx",
-			    ((const uint8_t *)selftest->cs_key.cb_kva)[i]);
-		printf("\n");
-		ok = false;
-	}
-
-	if (memcmp(selftest_output, selftest->cs_out.cb_kva,
-		sizeof selftest_output) != 0) {
-		device_printf(sc->sc_dev, "self-test: output mismatch\n");
-		printf("expected: ");
-		for (i = 0; i < sizeof selftest_output; i++)
-			printf("%02hhx", selftest_output[i]);
-		printf("\n");
-		printf("actual:   ");
-		for (i = 0; i < sizeof selftest_output; i++)
-			printf("%02hhx",
-			    ((const uint8_t *)selftest->cs_out.cb_kva)[i]);
-		printf("\n");
-		ok = false;
-	}
+	/*
+	 * Verify the input and key weren't clobbered, and verify the
+	 * output matches what we expect.
+	 */
+	ok &= sun8i_crypto_selftest_check(sc, "input clobbered",
+	    sizeof selftest_input, selftest_input, selftest->cs_in.cb_kva);
+	ok &= sun8i_crypto_selftest_check(sc, "key clobbered",
+	    sizeof selftest_key, selftest_key, selftest->cs_key.cb_kva);
+	ok &= sun8i_crypto_selftest_check(sc, "output mismatch",
+	    sizeof selftest_output, selftest_output, selftest->cs_out.cb_kva);
 
 	/* XXX Disable the RNG and other stuff if this fails...  */
 	if (ok)
