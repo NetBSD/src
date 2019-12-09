@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.175 2019/05/04 02:52:55 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.176 2019/12/09 00:14:24 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.175 2019/05/04 02:52:55 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.176 2019/12/09 00:14:24 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1061,13 +1061,18 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		free_traps();
 
 	/* Fork off a child process if necessary. */
-	if (cmd->ncmd.backgnd || (have_traps() && (flags & EV_EXIT) != 0)
-	 || ((cmdentry.cmdtype == CMDNORMAL || cmdentry.cmdtype == CMDUNKNOWN)
-	     && (flags & EV_EXIT) == 0)
-	 || ((flags & EV_BACKCMD) != 0 &&
-	    ((cmdentry.cmdtype != CMDBUILTIN && cmdentry.cmdtype != CMDSPLBLTIN)
-		 || cmdentry.u.bltin == dotcmd
-		 || cmdentry.u.bltin == evalcmd))) {
+	if (cmd->ncmd.backgnd
+	  || ((cmdentry.cmdtype == CMDNORMAL || cmdentry.cmdtype == CMDUNKNOWN)
+	     && (have_traps() || (flags & EV_EXIT) == 0))
+#ifdef notyet			/* EV_BACKCMD is never set currently */
+			/* this will need more work if/when it gets used */
+	  || ((flags & EV_BACKCMD) != 0
+	     && (cmdentry.cmdtype != CMDBUILTIN
+	         && cmdentry.cmdtype != CMDSPLBLTIN)
+	       || cmdentry.u.bltin == dotcmd
+	       || cmdentry.u.bltin == evalcmd)
+#endif
+	 ) {
 		INTOFF;
 		jp = makejob(cmd, 1);
 		mode = cmd->ncmd.backgnd;
