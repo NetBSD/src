@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zfs,v 1.4 2019/12/08 00:58:16 sevan Exp $
+# $NetBSD: zfs,v 1.5 2019/12/09 00:11:32 sevan Exp $
 #
 
 # PROVIDE: zfs
@@ -29,7 +29,6 @@ zfs_start()
 zfs_stop()
 {
 	if [ -x /sbin/zfs ]; then
-		zfs unmount -a
 		modunload zfs
 	fi
 	return 0;
