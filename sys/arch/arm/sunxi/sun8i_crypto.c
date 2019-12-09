@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.4 2019/12/09 14:56:18 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.5 2019/12/09 14:56:30 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.4 2019/12/09 14:56:18 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.5 2019/12/09 14:56:30 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1244,10 +1244,15 @@ sun8i_crypto_sysctl_rng(SYSCTLFN_ARGS)
 		error = cv_wait_sig(&req->cu_cv, &req->cu_lock);
 		if (error) {
 			/*
-			 * Never mind -- notify the callback that it
-			 * has to clean up after itself.
+			 * If we finished while waiting to acquire the
+			 * lock, ignore the error and just return now.
+			 * Otherwise, notify the callback that it has
+			 * to clean up after us.
 			 */
-			req->cu_cancel = true;
+			if (req->cu_done)
+				error = 0;
+			else
+				req->cu_cancel = true;
 			break;
 		}
 	}
@@ -1277,6 +1282,7 @@ sun8i_crypto_sysctl_rng(SYSCTLFN_ARGS)
 	/* Clear the buffer.  */
 	explicit_memset(req->cu_buf.cb_kva, 0, size);
 
+	/* Clean up.  */
 out2:	sun8i_crypto_task_put(sc, req->cu_task);
 out1:	sun8i_crypto_freebuf(sc, req->cu_size, &req->cu_buf);
 out0:	cv_destroy(&req->cu_cv);
@@ -1309,7 +1315,7 @@ sun8i_crypto_sysctl_rng_done(struct sun8i_crypto_softc *sc,
 	if (!cancel)
 		return;
 
-	/* Clean up.  */
+	/* Clean up after the main thread cancelled.  */
 	sun8i_crypto_task_put(sc, req->cu_task);
 	sun8i_crypto_freebuf(sc, req->cu_size, &req->cu_buf);
 	cv_destroy(&req->cu_cv);
