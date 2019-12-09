@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_mutex.c,v 1.80 2019/11/29 19:44:59 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.81 2019/12/09 21:05:23 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.80 2019/11/29 19:44:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.81 2019/12/09 21:05:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -60,9 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.80 2019/11/29 19:44:59 ad Exp $");
 #include <dev/lockstat.h>
 
 #include <machine/lock.h>
-
-#define MUTEX_PANIC_SKIP_SPIN 1
-#define MUTEX_PANIC_SKIP_ADAPTIVE 1
 
 /*
  * When not running a debug kernel, spin mutexes are not much
@@ -348,46 +345,23 @@ void
 _mutex_init(kmutex_t *mtx, kmutex_type_t type, int ipl,
     uintptr_t return_address)
 {
+	lockops_t *lockops __unused;
 	bool dodebug;
 
 	memset(mtx, 0, sizeof(*mtx));
 
-	switch (type) {
-	case MUTEX_ADAPTIVE:
-		KASSERT(ipl == IPL_NONE);
-		break;
-	case MUTEX_DEFAULT:
-	case MUTEX_DRIVER:
-		if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
-		    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
-		    ipl == IPL_SOFTSERIAL) {
-			type = MUTEX_ADAPTIVE;
-		} else {
-			type = MUTEX_SPIN;
-		}
-		break;
-	default:
-		break;
-	}
-
-	switch (type) {
-	case MUTEX_NODEBUG:
-		dodebug = LOCKDEBUG_ALLOC(mtx, NULL, return_address);
-		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
-		break;
-	case MUTEX_ADAPTIVE:
-		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_adaptive_lockops,
-		    return_address);
+	if (ipl == IPL_NONE || ipl == IPL_SOFTCLOCK ||
+	    ipl == IPL_SOFTBIO || ipl == IPL_SOFTNET ||
+	    ipl == IPL_SOFTSERIAL) {
+		lockops = (type == MUTEX_NODEBUG ?
+		    NULL : &mutex_adaptive_lockops);
+		dodebug = LOCKDEBUG_ALLOC(mtx, lockops, return_address);
 		MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug);
-		break;
-	case MUTEX_SPIN:
-		dodebug = LOCKDEBUG_ALLOC(mtx, &mutex_spin_lockops,
-		    return_address);
+	} else {
+		lockops = (type == MUTEX_NODEBUG ?
+		    NULL : &mutex_spin_lockops);
+		dodebug = LOCKDEBUG_ALLOC(mtx, lockops, return_address);
 		MUTEX_INITIALIZE_SPIN(mtx, dodebug, ipl);
-		break;
-	default:
-		panic("mutex_init: impossible type");
-		break;
 	}
 }
 
@@ -504,10 +478,6 @@ mutex_vector_enter(kmutex_t *mtx)
 		 * to reduce cache line ping-ponging between CPUs.
 		 */
 		do {
-#if MUTEX_PANIC_SKIP_SPIN
-			if (panicstr != NULL)
-				break;
-#endif
 			while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
 				SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
@@ -565,12 +535,6 @@ mutex_vector_enter(kmutex_t *mtx)
 			owner = mtx->mtx_owner;
 			continue;
 		}
-#if MUTEX_PANIC_SKIP_ADAPTIVE
-		if (__predict_false(panicstr != NULL)) {
-			KPREEMPT_ENABLE(curlwp);
-			return;
-		}
-#endif
 		if (__predict_false(MUTEX_OWNER(owner) == curthread)) {
 			MUTEX_ABORT(mtx, "locking against myself");
 		}
@@ -746,10 +710,6 @@ mutex_vector_exit(kmutex_t *mtx)
 	if (MUTEX_SPIN_P(mtx)) {
 #ifdef FULL
 		if (__predict_false(!MUTEX_SPINBIT_LOCKED_P(mtx))) {
-#if MUTEX_PANIC_SKIP_SPIN
-			if (panicstr != NULL)
-				return;
-#endif
 			MUTEX_ABORT(mtx, "exiting unheld spin mutex");
 		}
 		MUTEX_UNLOCKED(mtx);
@@ -758,14 +718,6 @@ mutex_vector_exit(kmutex_t *mtx)
 		MUTEX_SPIN_SPLRESTORE(mtx);
 		return;
 	}
-
-#ifdef MUTEX_PANIC_SKIP_ADAPTIVE
-	if (__predict_false((uintptr_t)panicstr | cold)) {
-		MUTEX_UNLOCKED(mtx);
-		MUTEX_RELEASE(mtx);
-		return;
-	}
-#endif
 
 	curthread = (uintptr_t)curlwp;
 	MUTEX_DASSERT(mtx, curthread != 0);
@@ -869,6 +821,24 @@ mutex_owner(const kmutex_t *mtx)
 }
 
 /*
+ * mutex_owner_running:
+ *
+ *	Return true if an adaptive mutex is held and the owner is running
+ *	on a CPU.  For the pagedaemon.
+ */
+bool
+mutex_owner_running(const kmutex_t *mtx)
+{
+	bool rv;
+
+	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
+	kpreempt_disable();
+	rv = mutex_oncpu(MUTEX_OWNER(mtx->mtx_owner));
+	kpreempt_enable();
+	return rv;
+}
+
+/*
  * mutex_ownable:
  *
  *	When compiled with DEBUG and LOCKDEBUG defined, ensure that
@@ -956,10 +926,6 @@ mutex_spin_retry(kmutex_t *mtx)
 	 * to reduce cache line ping-ponging between CPUs.
 	 */
 	do {
-#if MUTEX_PANIC_SKIP_SPIN
-		if (panicstr != NULL)
-			break;
-#endif
 		while (MUTEX_SPINBIT_LOCKED_P(mtx)) {
 			SPINLOCK_BACKOFF(count);
 #ifdef LOCKDEBUG
