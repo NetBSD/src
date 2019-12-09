@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64.dtsi,v 1.13 2019/11/17 17:35:10 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64.dtsi,v 1.14 2019/12/09 04:40:50 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -49,6 +49,15 @@
 			clock-names = "ahb", "ths";
 			resets = <&ccu RST_BUS_THS>;
 			#thermal-sensor-cells = <0>;
+		};
+
+		crypto: crypto@1c15000 {
+			compatible = "allwinner,sun50i-a64-crypto";
+			reg = <0x01c15000 0x1000>;
+			interrupts = <GIC_SPI 94 IRQ_TYPE_LEVEL_HIGH>;
+			clocks = <&ccu CLK_BUS_CE>, <&ccu CLK_CE>;
+			clock-names = "bus", "mod";
+			resets = <&ccu RST_BUS_CE>;
 		};
 	};
 
