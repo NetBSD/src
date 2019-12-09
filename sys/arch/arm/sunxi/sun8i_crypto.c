@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.3 2019/12/09 14:56:06 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.4 2019/12/09 14:56:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.3 2019/12/09 14:56:06 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.4 2019/12/09 14:56:18 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1232,8 +1232,11 @@ sun8i_crypto_sysctl_rng(SYSCTLFN_ARGS)
 
 	/* Submit the TRNG task.  */
 	error = sun8i_crypto_submit_trng(sc, req->cu_task, size);
-	if (error)
+	if (error) {
+		if (error == ERESTART)
+			error = EBUSY;
 		goto out2;
+	}
 
 	/* Wait for the request to complete.  */
 	mutex_enter(&req->cu_lock);
