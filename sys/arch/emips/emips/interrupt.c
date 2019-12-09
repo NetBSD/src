@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.6 2016/07/11 16:18:56 matt Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.7 2019/12/09 16:19:11 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.6 2016/07/11 16:18:56 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2019/12/09 16:19:11 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -95,7 +95,7 @@ intr_init(void)
  * emips uses one line for all I/O interrupts (0x8000).
  */
 void
-cpu_intr(int ppl, uint32_t status, vaddr_t pc)
+cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 {
 	uint32_t ipending;
 	int ipl;
