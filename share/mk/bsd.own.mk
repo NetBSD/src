@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1149.2.2 2019/12/08 15:54:34 martin Exp $
+#	$NetBSD: bsd.own.mk,v 1.1149.2.3 2019/12/09 15:19:30 martin Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1009,6 +1009,7 @@ MKZFS?=		yes
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE_ARCH} == "aarch64" || \
     !empty(MACHINE_ARCH:Mearm*)
 MKDTRACE?=	yes
 MKCTF?=		yes

@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.122.2.2 2019/10/28 16:37:55 martin Exp $
+# $NetBSD: mi,v 1.122.2.3 2019/12/09 15:19:30 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -146,8 +146,6 @@
 ./@MODULEDIR@/dtrace_sdt/dtrace_sdt.kmod		base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall				base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtrace_syscall/dtrace_syscall.kmod	base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/dtrace_syscall_linux			base-kernel-modules	kmod,dtrace
-./@MODULEDIR@/dtrace_syscall_linux/dtrace_syscall_linux.kmod	base-kernel-modules	kmod,dtrace
 ./@MODULEDIR@/dtv				base-kernel-modules	kmod
 ./@MODULEDIR@/dtv/dtv.kmod			base-kernel-modules	kmod
 ./@MODULEDIR@/dtv_math				base-kernel-modules	kmod
