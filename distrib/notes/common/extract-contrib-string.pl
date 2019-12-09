@@ -31,7 +31,7 @@
 # Extract BSD-mandated copyright messages for NetBSD documentation
 #
 # Usage:
-# 1) find /usr/src -type f -print \
+# 1) find src xsrc -type f -print \
 #    | perl extract-contrib-string.pl
 #    >x
 #
@@ -49,8 +49,9 @@
 #     -?  display help/usage message
 
 
-$ack_line1="[aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?";
-$ack_line2="display the following( acknowledge?ment)?";
+$ack_line1='([aA]ll( commercial)?( marketing or)? advertising materials mentioning( features)?'
+    .      '|\d\. Redistributions of any form whatsoever)';
+$ack_line2='(display the( following)?( acknowledge?ment)?|acknowledge?ment:$)';
 $ack_endline=
       '(\d\.\s*(Neither the name'
     .         '|The name of the company nor the name'	# Wasn't my idea
@@ -59,11 +60,16 @@ $ack_endline=
     .         '|The names? (of )?.* nor the names? of'
     .         '|The names? (of )?.* or any of it\'?s members'
     .         '|Redistributions of any form whatsoever'
-    .         '|The names .*"OpenSSL Toolkit.*" and .*"OpenSSL Project.*" must not be used))'
+    .         '|The names .*"OpenSSL Toolkit.*" and .*"OpenSSL Project.*" must not be used'
+    .         "|Urbana-Champaign Independent Media Center's name"
+    . '))'
+    .'|(^Neither the name)'
     .'|(THIS SOFTWARE IS PROVIDED)'
+    .'|(ALL WARRANTIES WITH REGARD)'
     .'|(The word \'cryptographic\' can be left out if)'
     .'|(may be used to endorse)'
     .'|(@end cartouche)'
+    .'|(</para>)'
     .'|(Redistribution and use in source and binary forms)'
     .'|(may not be used to endorse)'
     .'|(\.IP 4)'
@@ -114,7 +120,7 @@ while(<>) {
 
   line:
     while(<F>) {
-	if (0 and /$ack_line2/i){
+	if (0 and /$ack_line2/in){
 	    print "?> $_" if $debug;
 	    
 	    if ($fn !~ m,$known_bad_clause_3_wording,) {
@@ -128,29 +134,39 @@ while(<>) {
 	# special case perl script generating a license (openssl's
 	# mkerr.pl) - ignore the quoted license, there is another one
 	# inside:
-	if (/^\"\s\*.*$ack_line1.*\\n\"\,/) {
-		while(!/$ack_endline/i) {
+	if (/^\"\s\*.*$ack_line1.*\\n\"\,/n) {
+		while(!/$ack_endline/in) {
 		    print "S> $_" if $debug;
 		    $_ = <F>;
 		}
 	}
 
-	if (/$ack_line1/i
-	    or (/$ack_line2/ and $fn =~ m,$known_bad_clause_3_wording,)) {
+	if (/$ack_line1/in
+	    or (/$ack_line2/n and $fn =~ m,$known_bad_clause_3_wording,)) {
 	    
 	    print "1> $_" if $debug;
 
 	    $_=<F>
 		unless $fn =~ m,$known_bad_clause_3_wording,;
-	    if (/$ack_line2/i or $fn =~ m,$known_bad_clause_3_wording,){
+	    if (/$ack_line2/in or $fn =~ m,$known_bad_clause_3_wording,){
 		
 		print "2> $_" if $debug;
 		
 		$msg="";
-		$msg = $_ if ($fn =~ m,$known_bad_clause_3_wording, and /``/);
+
+		if ($fn =~ m,$known_bad_clause_3_wording, and /``/) {
+		    $msg = $_;
+		}
+		elsif (/:\s+This product/) {
+		    # src/sys/lib/libkern/rngtest.c - bad clause 3 wording
+		    # that is not like others, so special case it here
+		    $msg = $_;
+		    $msg =~ s/^.*:\s+(This product.*)$/$1/;
+		}
+
 		$cnt=0;
 		$_=<F>;
-		while(!/$ack_endline/i) {
+		while(!/$ack_endline/in) {
 		    
 		    print "C> $_" if $debug;
 
@@ -176,6 +192,11 @@ while(<>) {
 			$msg =~ s/\n.*``//o;
 			$msg =~ s/''.*$//o;
 		}
+
+		# XXX: pcap &c - add to known_bad_clause_3_wording but
+		# that code seems to have problems.  Easier to add a
+		# hack here, shouldn't affect good clause 3.
+		$msg =~ s/''\s+Neither the name.*$//;
 
 		# *roff
 		while ($msg =~ /^\.\\"\s*/) {
@@ -216,7 +237,7 @@ while(<>) {
 		$msg =~ s/^REM\s*//g;			# BASIC?!?
 		$msg =~ s/\nREM\s*/\n/g;		# BASIC?!?
 		$msg =~ s/^dnl\s*//g;			# m4
-		$msg =~ s/\dnl\s*/\n/g;			# m4
+		$msg =~ s/\ndnl\s*/\n/g;		# m4
 		$msg =~ s/^\s+-\s+//g;			# seen in docbook files
 		$msg =~ s/\n\s+-\s+/ /g;		#
 		$msg =~ s/^[#\\\|";]+\s*//g;		# sh etc.
@@ -235,6 +256,14 @@ while(<>) {
 	        $msg =~ s/''\s*$//;
 		$msg =~ s/^\"//o;
 		$msg =~ s/\"$//o;
+		$msg =~ s/\"\.$/./o;
+
+		# Fix ISO-646-SE spelling of Lule\(oa
+		$msg =~ s/Lule\}/Lule\\(oa/g;
+
+		# Collapse multiple spaces between words.  There are a
+		# few entries with "by__Name" that affects sorting.
+		$msg =~ s/(\w)  +(\w)/$1 $2/g;
 
 		# Split up into separate paragraphs
 		#
@@ -252,52 +281,27 @@ while(<>) {
 			print "$msg";
 			print "\n\n";
 		    }
-		    
-		    # Figure out if there's a version w/ or w/o trailing dot
-		    # 
-		    if ($msg =~ /\.$/) {
-			# check if there's a version of the same msg
-			# w/o a trailing dot
-			$msg2=$msg;
-			$msg2=~s,\.$,,;
-			if ($copyrights{"$msg2"}) {
-			    # already there - skip
-			    print "already there, w/o dot - skipping!\n"
-				if $debug;
-			    next msg;
+
+		    my $key = lc($msg);	# ignore difference in case
+		    $key =~ s/\n/ /g;	# ignore difference in line breaks
+		    $key =~ s/\.$//g;	# drop the final dot
+
+		    # push organizations ("by the") to the end of the
+		    # sorting order
+		    $key =~ s/(developed by) the/$1 ~the/;
+
+		    if (defined $copyrights{$key}) {
+			if ($copyrights{$key} !~ /\.$/ && $msg =~ /\.$/) {
+			    print "already there, without dot - overriding!\n"
+				if 1 || $debug;
 			}
-			
-			# ... maybe with other case?
-			$lc_msg2=lc($msg2);
-			if ($lc_copyrights{$lc_msg2}) {
-			    print "already there, in different case - skipping\n"
-				if $debug;
-			    next msg;
-			}
-		    } else {
-			# check if there's a version of the same msg
-			# with a trailing dot
-			$msg2=$msg;
-			$msg2.=".";
-			if ($copyrights{"$msg2"}) {
-			    # already there - skip
-			    print "already there, w/ dot - skipping!\n"
-				if $debug;
-			    next msg;
-			}
-			
-			# ... maybe with other case?
-			$lc_msg2=lc($msg2);
-			if ($lc_copyrights{$lc_msg2}) {
-			    print "already there, in different case - skipping\n"
-				if $debug;
+			else {
 			    next msg;
 			}
 		    }
 
-		    $copyrights{$msg} = 1;
-		    $lc_copyrights{$lc_msg} = 1;
-		}		 
+		    $copyrights{$key} = $msg;
+		}
 
 	    } else {
 		print "?> $_" if $debug;
@@ -315,19 +319,22 @@ while(<>) {
 
 if ($html) {
     print "<ul>\n";
-    foreach $msg (sort keys %copyrights) {
+    foreach $key (sort keys %copyrights) {
+	my $msg = $copyrights{$key};
 	print "<li>$msg</li>\n";
     }
     print "</ul>\n";
 } elsif ($xml) {
-    foreach $msg (sort keys %copyrights) {
+    foreach $key (sort keys %copyrights) {
+	my $msg = $copyrights{$key};
 	print "<listitem>$msg</listitem>\n";
     }
 } else {
     print "------------------------------------------------------------\n";
 
     $firsttime=1;
-    foreach $msg (sort keys %copyrights) {
+    foreach $key (sort keys %copyrights) {
+	my $msg = $copyrights{$key};
 	if ($firsttime) {
 	    $firsttime=0;
 	} else {
