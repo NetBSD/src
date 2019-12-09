@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pvt.c,v 1.4 2019/12/07 17:56:08 jmcneill Exp $	*/
+/*	$NetBSD: pmap_pvt.c,v 1.5 2019/12/09 04:39:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pmap_pvt.c,v 1.4 2019/12/07 17:56:08 jmcneill Exp $");
+__RCSID("$NetBSD: pmap_pvt.c,v 1.5 2019/12/09 04:39:58 riastradh Exp $");
 
 #include <sys/kmem.h>
 #include <sys/pserialize.h>
@@ -92,8 +92,7 @@ pmap_pv_track(paddr_t start, psize_t size)
 
 	mutex_enter(&pv_unmanaged.lock);
 	pvt->pvt_next = pv_unmanaged.list;
-	membar_producer();
-	pv_unmanaged.list = pvt;
+	atomic_store_release(&pv_unmanaged.list, pvt);
 	mutex_exit(&pv_unmanaged.lock);
 }
 
@@ -119,9 +118,21 @@ pmap_pv_untrack(paddr_t start, psize_t size)
 			panic("pmap_pv_untrack: pv-tracking at 0x%"PRIxPADDR
 			    ": 0x%"PRIxPSIZE" bytes, not 0x%"PRIxPSIZE" bytes",
 			    pvt->pvt_start, pvt->pvt_size, size);
-		*pvtp = pvt->pvt_next;
+
+		/*
+		 * Remove from list.  Readers can safely see the old
+		 * and new states of the list.
+		 */
+		atomic_store_relaxed(pvtp, pvt->pvt_next);
+
+		/* Wait for readers who can see the old state to finish.  */
 		pserialize_perform(pv_unmanaged.psz);
-		pvt->pvt_next = NULL;
+
+		/*
+		 * We now have exclusive access to pvt and can destroy
+		 * it.  Poison it to catch bugs.
+		 */
+		explicit_memset(&pvt->pvt_next, 0x1a, sizeof pvt->pvt_next);
 		goto out;
 	}
 	panic("pmap_pv_untrack: pages not pv-tracked at 0x%"PRIxPADDR
@@ -143,8 +154,9 @@ pmap_pv_tracked(paddr_t pa)
 	KASSERT(pa == trunc_page(pa));
 
 	s = pserialize_read_enter();
-	for (pvt = pv_unmanaged.list; pvt != NULL; pvt = pvt->pvt_next) {
-		membar_datadep_consumer();
+	for (pvt = atomic_load_consume(&pv_unmanaged.list);
+	     pvt != NULL;
+	     pvt = pvt->pvt_next) {
 		if ((pvt->pvt_start <= pa) &&
 		    ((pa - pvt->pvt_start) < pvt->pvt_size))
 			break;
