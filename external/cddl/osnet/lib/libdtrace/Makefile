@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.21 2019/02/11 17:49:37 tnn Exp $
+#	$NetBSD: Makefile,v 1.21.2.1 2019/12/09 15:19:32 martin Exp $
 
 # $FreeBSD: head/cddl/lib/libdtrace/Makefile 314654 2017-03-04 11:30:04Z ngie $
 
@@ -101,6 +101,9 @@ COPTS.dis_tables.c	+= -Wno-parentheses
 COPTS.dis_tables.c	+= ${${ACTIVE_CC} == "gcc" :? -Wno-maybe-uninitialized :}
 .elif ${MACHINE_ARCH} == "sparc64"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/sparc
+.elif ${MACHINE_ARCH} == "aarch64"
+CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/aarch64
+.PATH:		${.CURDIR}/../../dist/lib/libdtrace/aarch64
 .elif ${MACHINE_CPU} == "arm"
 CPPFLAGS+=	-I${OPENSOLARIS_SYS_DISTDIR}/uts/arm
 .PATH:		${.CURDIR}/../../dist/lib/libdtrace/arm
