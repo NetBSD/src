@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.17 2019/12/07 13:33:45 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.18 2019/12/09 19:16:53 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -171,9 +171,17 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	char diskpath[MAXPATHLEN];
 	uint flags;
 
-	if (run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "disklabel -r %s", disk) != 0)
-		return NULL;
+#ifndef DISKLABEL_NO_ONDISK_VERIFY
+	if (!only_have_disklabel()) {
+		/*
+		 * If there are alternative partitioning schemes,
+		 * verify we really have a disklabel.
+		 */
+		if (run_program(RUN_SILENT | RUN_ERROR_OK,
+		    "disklabel -r %s", disk) != 0)
+			return NULL;
+	}
+#endif
 
 	/* read partitions */
 
