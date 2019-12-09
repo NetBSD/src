@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.61 2019/11/21 17:47:23 ad Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.62 2019/12/09 21:00:48 ad Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.61 2019/11/21 17:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.62 2019/12/09 21:00:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,6 +163,7 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 
 	pci_aprint_devinfo(pa, NULL);
+	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
@@ -208,7 +209,6 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_i2c_device = NULL;
 	flags = 0;
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	ichsmb_rescan(self, "i2cbus", &flags);
 
 out:	if (!pmf_device_register(self, NULL, NULL))
