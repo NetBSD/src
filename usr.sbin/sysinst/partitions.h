@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.8 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.9 2019/12/09 19:16:53 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -579,3 +579,5 @@ bool generic_adapt_foreign_part_info(
  */
 void partitions_init(void);
 void partitions_cleanup(void);
+bool only_have_disklabel(void);
+
