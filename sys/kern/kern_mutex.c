@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.81 2019/12/09 21:05:23 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.82 2019/12/10 11:12:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.81 2019/12/09 21:05:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.82 2019/12/10 11:12:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -823,19 +823,25 @@ mutex_owner(const kmutex_t *mtx)
 /*
  * mutex_owner_running:
  *
- *	Return true if an adaptive mutex is held and the owner is running
- *	on a CPU.  For the pagedaemon.
+ *	Return true if an adaptive mutex is unheld, or held and the owner is
+ *	running on a CPU.  For the pagedaemon.
  */
 bool
 mutex_owner_running(const kmutex_t *mtx)
 {
+#ifdef MULTIPROCESSOR
+	uintptr_t owner;
 	bool rv;
 
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	kpreempt_disable();
-	rv = mutex_oncpu(MUTEX_OWNER(mtx->mtx_owner));
+	owner = mtx->mtx_owner;
+	rv = (MUTEX_OWNED(owner) && mutex_oncpu(MUTEX_OWNER(owner));
 	kpreempt_enable();
 	return rv;
+#else
+	return mutex_owner(mtx) == curlwp;
+#endif
 }
 
 /*
