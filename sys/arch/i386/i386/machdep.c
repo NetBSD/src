@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.823 2019/10/18 01:38:28 manu Exp $	*/
+/*	$NetBSD: machdep.c,v 1.824 2019/12/10 18:04:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.823 2019/10/18 01:38:28 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.824 2019/12/10 18:04:54 ad Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -1680,7 +1680,7 @@ cpu_alloc_l3_page(struct cpu_info *ci)
 		panic("%s: failed to allocate L3 pglist for CPU %d (ret %d)\n",
 			__func__, cpu_index(ci), ret);
 
-	ci->ci_pae_l3_pdirpa = vmap->phys_addr;
+	ci->ci_pae_l3_pdirpa = VM_PAGE_TO_PHYS(vmap);
 
 	ci->ci_pae_l3_pdir = (paddr_t *)uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
 		UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
