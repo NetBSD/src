@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.54 2019/11/20 10:26:56 maxv Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.55 2019/12/10 18:06:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.54 2019/11/20 10:26:56 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.55 2019/12/10 18:06:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1489,7 +1489,7 @@ svm_memalloc(paddr_t *pa, vaddr_t *va, size_t npages)
 	    &pglist, 1, 0);
 	if (ret != 0)
 		return ENOMEM;
-	_pa = TAILQ_FIRST(&pglist)->phys_addr;
+	_pa = VM_PAGE_TO_PHYS(TAILQ_FIRST(&pglist));
 	_va = uvm_km_alloc(kernel_map, npages * PAGE_SIZE, 0,
 	    UVM_KMF_VAONLY | UVM_KMF_NOWAIT);
 	if (_va == 0)
