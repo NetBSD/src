@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.230 2019/10/28 16:03:55 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.231 2019/12/10 12:08:52 yamaguchi Exp $
 
 .include <bsd.own.mk>
 
@@ -439,6 +439,7 @@ SUBDIR+=	ataraid
 SUBDIR+=	cac
 SUBDIR+=	cac_eisa
 SUBDIR+=	cac_pci
+SUBDIR+=	if_ixl
 SUBDIR+=	if_vioif
 SUBDIR+=	ld
 SUBDIR+=	ld_aac
