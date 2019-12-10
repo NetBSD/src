@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.6 2019/12/09 14:56:44 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.7 2019/12/10 22:30:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.6 2019/12/09 14:56:44 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.7 2019/12/10 22:30:34 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1295,6 +1295,7 @@ out2:	sun8i_crypto_task_put(sc, req->cu_task);
 out1:	sun8i_crypto_freebuf(sc, req->cu_size, &req->cu_buf);
 out0:	cv_destroy(&req->cu_cv);
 	mutex_destroy(&req->cu_lock);
+	kmem_free(req, sizeof(*req));
 	return error;
 }
 
@@ -1328,4 +1329,5 @@ sun8i_crypto_sysctl_rng_done(struct sun8i_crypto_softc *sc,
 	sun8i_crypto_freebuf(sc, req->cu_size, &req->cu_buf);
 	cv_destroy(&req->cu_cv);
 	mutex_destroy(&req->cu_lock);
+	kmem_free(req, sizeof(*req));
 }
