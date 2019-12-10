@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.61 2019/10/09 14:31:07 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.62 2019/12/10 19:42:09 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.61 2019/10/09 14:31:07 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.62 2019/12/10 19:42:09 christos Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -703,106 +703,109 @@ fn_complete(EditLine *el,
 	if (over != NULL)
 		*over = 0;
 
-	if (matches) {
-		int i;
-		size_t matches_num, maxlen, match_len, match_display=1;
-		int single_match = matches[2] == NULL &&
-			(matches[1] == NULL || strcmp(matches[0], matches[1]) == 0);
-
-		retval = CC_REFRESH;
-
-		if (matches[0][0] != '\0') {
-			el_deletestr(el, (int)len);
-			if (!attempted_completion_function)
-				completion = escape_filename(el, matches[0],
-				    single_match, app_func);
-			else
-				completion = strdup(matches[0]);
-			if (completion == NULL)
-				goto out;
-			if (single_match) {
-				/* We found exact match. Add a space after it,
-				 * unless we do filename completion and the
-				 * object is a directory. Also do necessary
-				 * escape quoting
-				 */
-				el_winsertstr(el,
-				    ct_decode_string(completion, &el->el_scratch));
-			} else {
-				/* Only replace the completed string with
-				 * common part of possible matches if there is
-				 * possible completion.
-				 */
-				el_winsertstr(el,
-				    ct_decode_string(completion, &el->el_scratch));
-			}
-			free(completion);
-		}
-
-
-		if (!single_match && (what_to_do == '!' || what_to_do == '?')) {
-			/*
-			 * More than one match and requested to list possible
-			 * matches.
-			 */
-
-			for(i = 1, maxlen = 0; matches[i]; i++) {
-				match_len = strlen(matches[i]);
-				if (match_len > maxlen)
-					maxlen = match_len;
-			}
-			/* matches[1] through matches[i-1] are available */
-			matches_num = (size_t)(i - 1);
-
-			/* newline to get on next line from command line */
-			(void)fprintf(el->el_outfile, "\n");
-
-			/*
-			 * If there are too many items, ask user for display
-			 * confirmation.
-			 */
-			if (matches_num > query_items) {
-				(void)fprintf(el->el_outfile,
-				    "Display all %zu possibilities? (y or n) ",
-				    matches_num);
-				(void)fflush(el->el_outfile);
-				if (getc(stdin) != 'y')
-					match_display = 0;
-				(void)fprintf(el->el_outfile, "\n");
-			}
-
-			if (match_display) {
-				/*
-				 * Interface of this function requires the
-				 * strings be matches[1..num-1] for compat.
-				 * We have matches_num strings not counting
-				 * the prefix in matches[0], so we need to
-				 * add 1 to matches_num for the call.
-				 */
-				fn_display_match_list(el, matches,
-				    matches_num+1, maxlen, app_func);
-			}
-			retval = CC_REDISPLAY;
-		} else if (matches[0][0]) {
-			/*
-			 * There was some common match, but the name was
-			 * not complete enough. Next tab will print possible
-			 * completions.
-			 */
-			el_beep(el);
-		} else {
-			/* lcd is not a valid object - further specification */
-			/* is needed */
-			el_beep(el);
-			retval = CC_NORM;
-		}
-
-		/* free elements of array and the array itself */
-		for (i = 0; matches[i]; i++)
-			el_free(matches[i]);
-		el_free(matches);
-		matches = NULL;
+	if (matches == NULL) {
+		goto out;
 	}
+	int i;
+	size_t matches_num, maxlen, match_len, match_display=1;
+	int single_match = matches[2] == NULL &&
+		(matches[1] == NULL || strcmp(matches[0], matches[1]) == 0);
+
+	retval = CC_REFRESH;
+
+	if (matches[0][0] != '\0') {
+		el_deletestr(el, (int)len);
+		if (!attempted_completion_function)
+			completion = escape_filename(el, matches[0],
+			    single_match, app_func);
+		else
+			completion = strdup(matches[0]);
+		if (completion == NULL)
+			goto out;
+
+		/*
+		 * Replace the completed string with the common part of
+		 * all possible matches if there is a possible completion.
+		 */
+		el_winsertstr(el,
+		    ct_decode_string(completion, &el->el_scratch));
+
+		if (single_match && attempted_completion_function) {
+			/*
+			 * We found an exact match. Add a space after
+			 * it, unless we do filename completion and the
+			 * object is a directory. Also do necessary
+			 * escape quoting
+			 */
+			el_winsertstr(el, ct_decode_string(
+			    (*app_func)(completion), &el->el_scratch));
+		}
+		free(completion);
+	}
+
+
+	if (!single_match && (what_to_do == '!' || what_to_do == '?')) {
+		/*
+		 * More than one match and requested to list possible
+		 * matches.
+		 */
+
+		for(i = 1, maxlen = 0; matches[i]; i++) {
+			match_len = strlen(matches[i]);
+			if (match_len > maxlen)
+				maxlen = match_len;
+		}
+		/* matches[1] through matches[i-1] are available */
+		matches_num = (size_t)(i - 1);
+
+		/* newline to get on next line from command line */
+		(void)fprintf(el->el_outfile, "\n");
+
+		/*
+		 * If there are too many items, ask user for display
+		 * confirmation.
+		 */
+		if (matches_num > query_items) {
+			(void)fprintf(el->el_outfile,
+			    "Display all %zu possibilities? (y or n) ",
+			    matches_num);
+			(void)fflush(el->el_outfile);
+			if (getc(stdin) != 'y')
+				match_display = 0;
+			(void)fprintf(el->el_outfile, "\n");
+		}
+
+		if (match_display) {
+			/*
+			 * Interface of this function requires the
+			 * strings be matches[1..num-1] for compat.
+			 * We have matches_num strings not counting
+			 * the prefix in matches[0], so we need to
+			 * add 1 to matches_num for the call.
+			 */
+			fn_display_match_list(el, matches,
+			    matches_num+1, maxlen, app_func);
+		}
+		retval = CC_REDISPLAY;
+	} else if (matches[0][0]) {
+		/*
+		 * There was some common match, but the name was
+		 * not complete enough. Next tab will print possible
+		 * completions.
+		 */
+		el_beep(el);
+	} else {
+		/* lcd is not a valid object - further specification */
+		/* is needed */
+		el_beep(el);
+		retval = CC_NORM;
+	}
+
+	/* free elements of array and the array itself */
+	for (i = 0; matches[i]; i++)
+		el_free(matches[i]);
+	el_free(matches);
+	matches = NULL;
 
 out:
 	el_free(temp);
