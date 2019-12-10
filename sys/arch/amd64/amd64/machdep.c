@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.342 2019/12/06 08:35:21 maxv Exp $	*/
+/*	$NetBSD: machdep.c,v 1.343 2019/12/10 02:06:07 manu Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,9 +110,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2019/12/06 08:35:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2019/12/10 02:06:07 manu Exp $");
 
 #include "opt_modular.h"
+#include "opt_multiboot.h"
 #include "opt_user_ldt.h"
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -183,6 +184,8 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.342 2019/12/06 08:35:21 maxv Exp $");
 #include <x86/cputypes.h>
 #include <x86/cpuvar.h>
 #include <x86/machdep.h>
+
+#include <arch/i386/include/multiboot.h>
 
 #include <x86/x86/tsc.h>
 
@@ -370,6 +373,10 @@ cpu_startup(void)
 	pmap_update(pmap_kernel());
 
 	initmsgbuf((void *)msgbuf_vaddr, round_page(sz));
+
+#ifdef MULTIBOOT
+	multiboot2_print_info();
+#endif
 
 	minaddr = 0;
 
@@ -1502,6 +1509,11 @@ init_x86_64_ksyms(void)
 
 #ifdef DDB
 	db_machine_init();
+#endif
+
+#if defined(MULTIBOOT)
+	if (multiboot2_ksyms_addsyms_elf())
+		return;
 #endif
 
 #ifndef XENPV

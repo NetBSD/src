@@ -1,4 +1,4 @@
-/*	$NetBSD: efi.c,v 1.20 2019/10/18 00:56:25 manu Exp $	*/
+/*	$NetBSD: efi.c,v 1.21 2019/12/10 02:06:07 manu Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.20 2019/10/18 00:56:25 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: efi.c,v 1.21 2019/12/10 02:06:07 manu Exp $");
 
 #include <sys/kmem.h>
 #include <sys/param.h>
@@ -77,11 +77,6 @@ efi_getva(paddr_t pa)
 	vaddr_t va;
 	int rv;
 
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	if (mm_md_direct_mapped_phys(pa, &va))
-		return va;
-#endif
-
 	rv = _x86_memio_map(x86_bus_space_mem, pa,     
 	    PAGE_SIZE, 0, (bus_space_handle_t *)&va);   
 	if (rv != 0) {
@@ -98,15 +93,6 @@ efi_getva(paddr_t pa)
 static void
 efi_relva(paddr_t pa, vaddr_t va)
 {
-
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	vaddr_t va0 __diagused;
-	if (mm_md_direct_mapped_phys(pa, &va0)) {
-		KASSERT(va0 == va);
-		return;
-	}
-#endif
-
 	(void)_x86_memio_unmap(x86_bus_space_mem, (bus_space_handle_t)va,
 	    PAGE_SIZE, NULL);
 }
