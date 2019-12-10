@@ -1,0 +1,10 @@
+#       $NetBSD: if_ixl.ioconf,v 1.1 2019/12/10 12:08:53 yamaguchi Exp $
+
+ioconf if_ixl
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+ixl* at pci? dev ? function ?

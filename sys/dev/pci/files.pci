@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.417 2019/11/26 08:37:05 nisimura Exp $
+#	$NetBSD: files.pci,v 1.418 2019/12/10 12:08:52 yamaguchi Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -1174,3 +1174,8 @@ file	dev/pci/qat/qat_c2xxx.c		qat
 file	dev/pci/qat/qat_c3xxx.c		qat
 file	dev/pci/qat/qat_c62x.c		qat
 file	dev/pci/qat/qat_d15xx.c		qat
+
+# Intel Ethernet 700 Series
+device	ixl: ether, ifnet, arp
+attach	ixl at pci
+file	dev/pci/if_ixl.c	ixl
