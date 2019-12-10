@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.156 2018/10/18 09:01:52 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.157 2019/12/10 18:02:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -1158,7 +1158,7 @@ struct vm_page_md {
  */
 #if ARM_MMU_V6 > 0
 #define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
-	(pg)->mdpage.pvh_attrs = (pg)->phys_addr & arm_cache_prefer_mask
+	(pg)->mdpage.pvh_attrs = VM_PAGE_TO_PHYS(pg) & arm_cache_prefer_mask
 #else
 #define	VM_MDPAGE_PVH_ATTRS_INIT(pg) \
 	(pg)->mdpage.pvh_attrs = 0
