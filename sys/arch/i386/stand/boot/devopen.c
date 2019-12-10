@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.9 2019/08/18 02:18:24 manu Exp $	 */
+/*	$NetBSD: devopen.c,v 1.10 2019/12/10 02:02:47 manu Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -156,7 +156,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 	if (strstr(devname, "raid") == devname) {
 		f->f_dev = &devsw[0];		/* must be biosdisk */
 
-		return biosdisk_open_name(f, devname);
+		return biosdisk_open_name(f, fname);
 	}
 #endif
 
