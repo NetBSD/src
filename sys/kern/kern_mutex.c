@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.83 2019/12/10 11:35:29 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.84 2019/12/10 13:36:44 kre Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.83 2019/12/10 11:35:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.84 2019/12/10 13:36:44 kre Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -836,7 +836,7 @@ mutex_owner_running(const kmutex_t *mtx)
 	MUTEX_ASSERT(mtx, MUTEX_ADAPTIVE_P(mtx));
 	kpreempt_disable();
 	owner = mtx->mtx_owner;
-	rv = (!MUTEX_OWNED(owner) || mutex_oncpu(MUTEX_OWNER(owner));
+	rv = !MUTEX_OWNED(owner) || mutex_oncpu(MUTEX_OWNER(owner));
 	kpreempt_enable();
 	return rv;
 #else
