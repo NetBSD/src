@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.11 2019/11/26 01:46:31 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.12 2019/12/10 11:19:25 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.11 2019/11/26 01:46:31 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.12 2019/12/10 11:19:25 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1038,6 +1038,16 @@ hvn_nvs_intr(void *arg)
 				device_printf(sc->sc_dev,
 				    "unhandled NVSP packet type %u "
 				    "on receive\n", nvs->nvs_type);
+				break;
+			}
+		} else if (cph->cph_type == VMBUS_CHANPKT_TYPE_INBAND) {
+			switch (nvs->nvs_type) {
+			case HVN_NVS_TYPE_TXTBL_NOTE:
+				/* Useless; ignore */
+				break;
+			default:
+				device_printf(sc->sc_dev,
+				    "got notify, nvs type %u\n", nvs->nvs_type);
 				break;
 			}
 		} else
