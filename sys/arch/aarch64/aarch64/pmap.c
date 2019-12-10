@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.50 2019/11/14 17:09:22 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.51 2019/12/10 18:08:32 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.50 2019/11/14 17:09:22 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2019/12/10 18:08:32 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1034,7 +1034,7 @@ pg_dump(struct vm_page *pg, void (*pr)(const char *, ...) __printflike(1, 2))
 	pr(" pg->loan_count = %u\n", pg->loan_count);
 	pr(" pg->wire_count = %u\n", pg->wire_count);
 	pr(" pg->pqflags    = %u\n", pg->pqflags);
-	pr(" pg->phys_addr  = %016lx\n", pg->phys_addr);
+	pr(" pg->phys_addr  = %016lx\n", VM_PAGE_TO_PHYS(pg));
 }
 
 static void
