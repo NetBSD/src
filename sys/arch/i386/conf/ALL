@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.474 2019/11/01 02:53:23 msaitoh Exp $
+# $NetBSD: ALL,v 1.475 2019/12/10 12:08:52 yamaguchi Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.474 $"
+#ident		"ALL-$Revision: 1.475 $"
 
 maxusers	64		# estimated number of users
 
@@ -1068,6 +1068,7 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
+ixl*	at pci? dev ? function ?	# Intel Ethernet 700 Series
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
