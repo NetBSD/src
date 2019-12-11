@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.9 2019/08/14 12:55:36 martin Exp $ */
+/*	$NetBSD: md.c,v 1.10 2019/12/11 15:08:45 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -48,18 +48,20 @@
 #include "msg_defs.h"
 #include "menu_defs.h"
 
-int boardtype = 0;
-
-void
-md_prelim_menu(void)
-{
-	/* get the boardtype from the user */
-	process_menu(MENU_prelim, NULL);
-}
+int boardtype = BOARD_TYPE_NORMAL;
 
 void
 md_init(void)
 {
+	int rv;
+
+	rv =run_program(RUN_SILENT|RUN_ERROR_OK, "sh -c 'ofctl -p / model | "
+	    "fgrep \"Raspberry Pi\"'");
+	if (rv != 0)
+		return;
+
+	/* this is some kind of Raspberry Pi */
+	boardtype = BOARD_TYPE_RPI;
 }
 
 void
