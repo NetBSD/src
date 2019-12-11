@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.5 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.6 2019/12/11 21:00:11 jdc Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,11 +99,11 @@ struct adm1026_softc {
 };
 
 static int adm1026_match(device_t, cfdata_t, void *);
-static int adm1026_ident(struct adm1026_softc *sc);
+static int adm1026_ident(struct adm1026_softc *, int);
 static void adm1026_attach(device_t, device_t, void *);
 static int adm1026_detach(device_t, int);
-bool adm1026_pmf_suspend(device_t dev, const pmf_qual_t *qual);
-bool adm1026_pmf_resume(device_t dev, const pmf_qual_t *qual);
+bool adm1026_pmf_suspend(device_t, const pmf_qual_t *);
+bool adm1026_pmf_resume(device_t, const pmf_qual_t *);
 
 static void adm1026_setup_fans(struct adm1026_softc *sc, int div2_val);
 static void adm1026_setup_temps(struct adm1026_softc *sc);
@@ -141,15 +141,14 @@ adm1026_match(device_t parent, cfdata_t cf, void *aux)
 	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
 
-	if ((ia->ia_addr & ADM1026_ADDRMASK) == ADM1026_ADDR &&
-	    adm1026_ident(&sc))
+	if (ia->ia_addr == ADM1026_ADDR1 && adm1026_ident(&sc, 1))
 		return I2C_MATCH_ADDRESS_AND_PROBE;
 
 	return 0;
 }
 
 static int
-adm1026_ident(struct adm1026_softc *sc)
+adm1026_ident(struct adm1026_softc *sc, int probe_only)
 {
 	uint8_t val;
 	int err;
@@ -157,14 +156,16 @@ adm1026_ident(struct adm1026_softc *sc)
 	/* Manufacturer ID and revision/stepping */
 	err = adm1026_read_reg(sc, ADM1026_ID, &val);
 	if (err || val != ADM1026_MANF_ID) {
-		aprint_verbose("adm1026_ident: "
-		    "manufacturer ID invalid or missing\n");
+		if (!probe_only)
+			aprint_verbose("adm1026_ident: "
+			    "manufacturer ID invalid or missing\n");
 		return 0;
 	}
 	err = adm1026_read_reg(sc, ADM1026_REV, &sc->sc_rev);
 	if (err || ADM1026_REVISION(sc->sc_rev) != ADM1026_MANF_REV) {
-		aprint_verbose("adm1026_ident: "
-		    "manufacturer revision invalid or missing\n");
+		if (!probe_only)
+			aprint_verbose("adm1026_ident: "
+			    "manufacturer revision invalid or missing\n");
 		return 0;
 	}
 	return 1;
@@ -191,7 +192,7 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	else
 		div2_val = -1;
 
-	(void) adm1026_ident(sc);
+	(void) adm1026_ident(sc, 0);
 	aprint_normal(": ADM1026 hardware monitor: rev. 0x%x, step. 0x%x\n",
 	    ADM1026_REVISION(sc->sc_rev), ADM1026_STEPPING(sc->sc_rev));
 
