@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.217 2019/09/20 10:04:45 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.218 2019/12/11 07:33:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.217 2019/09/20 10:04:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.218 2019/12/11 07:33:55 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -3531,7 +3531,7 @@ pci_conf_print_page_req_cap(const pcireg_t *regs, int extcapoff)
 	ctl = reg & 0xffff;
 	sta = reg >> 16;
 	printf("    Control Register: 0x%04x\n", ctl);
-	onoff("Enalbe", reg, PCI_PAGE_REQ_CTL_E);
+	onoff("Enable", reg, PCI_PAGE_REQ_CTL_E);
 	onoff("Reset", reg, PCI_PAGE_REQ_CTL_R);
 
 	printf("    Status Register: 0x%04x\n", sta);
