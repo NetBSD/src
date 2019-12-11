@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.3 2016/09/16 17:32:36 scole Exp $");
+__KERNEL_RCSID(0, "$NetBSD: platinumfb.c,v 1.4 2019/12/11 21:04:47 scole Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -569,8 +569,8 @@ platinumfb_init(device_t self)
 	int i;
 
 	/*
-	 * become console if OF variable "output-device" is "screen" or
-	 * contains "platinum", since normal OF video variables are unavailable
+	 * become console if OF variable "output-device" contains "platinum",
+	 * since normal OF video variables are unavailable
 	 */
 	int options;
 	char output_device[128];
@@ -582,8 +582,7 @@ platinumfb_init(device_t self)
 		aprint_error_dev(sc->sc_dev,
 		    "could not get output-device prop, assuming not console\n");
 	} else {
-		if (strstr(output_device,"platinum") ||
-		    strcmp(output_device,"screen") == 0 ) {
+		if (strstr(output_device,"platinum")) {
 			is_console = TRUE;
 		}
 	}	
