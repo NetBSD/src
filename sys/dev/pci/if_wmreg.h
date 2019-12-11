@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.117 2019/12/11 09:48:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.118 2019/12/11 10:28:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -694,7 +694,7 @@ struct livengood_tcpip_ctxdesc {
 #define	ICR_RXT0	(1U << 7)	/* Rx ring 0 timer */
 #define	ICR_MDAC	(1U << 9)	/* MDIO access complete */
 #define	ICR_RXCFG	(1U << 10)	/* Receiving /C/ */
-#define	ICR_GPI(x)	(1U << (x))	/* general purpose interrupts */
+#define	ICR_GPI(x)	__BIT(11+(x))	/* general purpose interrupts */
 #define	ICR_RXQ(x)	__BIT(20+(x))	/* 82574: Rx queue x interrupt x=0,1 */
 #define	ICR_TXQ(x)	__BIT(22+(x))	/* 82574: Tx queue x interrupt x=0,1 */
 #define	ICR_OTHER	__BIT(24)	/* 82574: Other interrupt */
@@ -1475,6 +1475,7 @@ struct livengood_tcpip_ctxdesc {
 #define	NVM_CFG2_MNGM_NCSI	1
 #define	NVM_CFG2_MNGM_PT	2
 
+#define	NVM_COMPAT_MAS_EN(x)		__BIT(x) /* Media Auto Sense Enable */
 #define	NVM_COMPAT_SERDES_FORCE_MODE	__BIT(14) /* Don't use autonego */
 
 #define NVM_FUTURE_INIT_WORD1_VALID_CHECKSUM	0x0040
