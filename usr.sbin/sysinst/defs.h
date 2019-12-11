@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.48 2019/11/14 13:58:22 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.49 2019/12/11 15:08:45 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -583,7 +583,6 @@ void remove_gpt_options(void);
 
 /* Machine dependent functions .... */
 void	md_init(void);
-void	md_prelim_menu(void);
 void	md_init_set_status(int); /* SFLAG_foo */
 
  /* MD functions if user selects install - in order called */
