@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmvar.h,v 1.44 2019/02/19 07:59:17 msaitoh Exp $	*/
+/*	$NetBSD: if_wmvar.h,v 1.45 2019/12/11 10:28:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -97,6 +97,8 @@
 #define	WM_F_PCS_DIS_AUTONEGO	0x02000000 /* PCS Disable Autonego */
 #define	WM_F_PLL_WA_I210	0x04000000 /* I21[01] PLL workaround */
 #define	WM_F_WA_I210_CLSEM	0x08000000 /* I21[01] Semaphore workaround */
+#define	WM_F_SFP		0x10000000 /* SFP */
+#define	WM_F_MAS		0x20000000 /* Media Auto Sense */
 
 #define WM_FLAGS "\20" \
 	"\1" "HAS_MII"	"\2" "LOCK_EECD" "\3" "_B02"	"\4" "_B03"	\
@@ -105,7 +107,8 @@
 	"\15" "PCIX"	"\16" "CSA"	"\17" "PCIE"	"\20" "SGMII"	\
 	"\21" "NEWQUEUE" "\22" "ASF_FIRM" "\23" "ARC_SUBSYS" "\24" "AMT" \
 	"\25" "MANAGE"	"\26" "WOL"	"\27" "EEE"	"\30" "ATTACHED" \
-	"\31" "MDIC_WA"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA" "\34" "CLSEMWA"
+	"\31" "MDIC_WA"	"\32" "PCS_DIS_AUTONEGO" "\33" "PLLWA" "\34" "CLSEMWA" \
+	"\35" "SFP"	"\36" "MAS"
 
 /*
  * Variations of Intel gigabit Ethernet controller:

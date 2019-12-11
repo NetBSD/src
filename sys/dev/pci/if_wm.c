@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.654 2019/12/11 09:48:16 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.655 2019/12/11 10:28:19 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.654 2019/12/11 09:48:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.655 2019/12/11 10:28:19 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -507,6 +507,7 @@ struct wm_softc {
 	wm_chip_type sc_type;		/* MAC type */
 	int sc_rev;			/* MAC revision */
 	wm_phy_type sc_phytype;		/* PHY type */
+	uint8_t sc_sfptype;		/* SFP type */
 	uint32_t sc_mediatype;		/* Media type (Copper, Fiber, SERDES)*/
 #define	WM_MEDIATYPE_UNKNOWN		0x00
 #define	WM_MEDIATYPE_FIBER		0x01
@@ -2604,11 +2605,20 @@ alloc_retry:
 		break;
 	}
 
-	if ((sc->sc_type == WM_T_82575) || (sc->sc_type == WM_T_82576)) {
-		/* Check NVM for autonegotiation */
+	if (sc->sc_type >= WM_T_82575) {
 		if (wm_nvm_read(sc, NVM_OFF_COMPAT, 1, &nvmword) == 0) {
-			if ((nvmword & NVM_COMPAT_SERDES_FORCE_MODE) != 0)
-				sc->sc_flags |= WM_F_PCS_DIS_AUTONEGO;
+			if ((sc->sc_type == WM_T_82575) ||
+			    (sc->sc_type == WM_T_82576)) {
+				/* Check NVM for autonegotiation */
+				if ((nvmword & NVM_COMPAT_SERDES_FORCE_MODE)
+				    != 0)
+					sc->sc_flags |= WM_F_PCS_DIS_AUTONEGO;
+			}
+			if ((sc->sc_type == WM_T_82575) ||
+			    (sc->sc_type == WM_T_I350)) {
+				if (nvmword & NVM_COMPAT_MAS_EN(sc->sc_funcid))
+					sc->sc_flags |= WM_F_MAS;
+			}
 		}
 	}
 
@@ -2716,12 +2726,12 @@ alloc_retry:
 		link_mode = reg & CTRL_EXT_LINK_MODE_MASK;
 		switch (link_mode) {
 		case CTRL_EXT_LINK_MODE_1000KX:
-			aprint_verbose_dev(sc->sc_dev, "1000KX\n");
+			aprint_normal_dev(sc->sc_dev, "1000KX\n");
 			sc->sc_mediatype = WM_MEDIATYPE_SERDES;
 			break;
 		case CTRL_EXT_LINK_MODE_SGMII:
 			if (wm_sgmii_uses_mdio(sc)) {
-				aprint_verbose_dev(sc->sc_dev,
+				aprint_normal_dev(sc->sc_dev,
 				    "SGMII(MDIO)\n");
 				sc->sc_flags |= WM_F_SGMII;
 				sc->sc_mediatype = WM_MEDIATYPE_COPPER;
@@ -2736,6 +2746,8 @@ alloc_retry:
 				    == CTRL_EXT_LINK_MODE_SGMII) {
 					sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 					sc->sc_flags |= WM_F_SGMII;
+					aprint_verbose_dev(sc->sc_dev,
+					    "SGMII\n");
 				} else {
 					sc->sc_mediatype = WM_MEDIATYPE_SERDES;
 					aprint_verbose_dev(sc->sc_dev,
@@ -2744,25 +2756,26 @@ alloc_retry:
 				break;
 			}
 			if (sc->sc_mediatype == WM_MEDIATYPE_SERDES)
-				aprint_verbose_dev(sc->sc_dev, "SERDES\n");
+				aprint_normal_dev(sc->sc_dev, "SERDES(SFP)\n");
+			else if (sc->sc_mediatype == WM_MEDIATYPE_COPPER) {
+				aprint_normal_dev(sc->sc_dev, "SGMII(SFP)\n");
+				sc->sc_flags |= WM_F_SGMII;
+			}
+			/* Do not change link mode for 100BaseFX */
+			if (sc->sc_sfptype == SFF_SFP_ETH_FLAGS_100FX)
+				break;
 
 			/* Change current link mode setting */
 			reg &= ~CTRL_EXT_LINK_MODE_MASK;
-			switch (sc->sc_mediatype) {
-			case WM_MEDIATYPE_COPPER:
+			if (sc->sc_mediatype == WM_MEDIATYPE_COPPER)
 				reg |= CTRL_EXT_LINK_MODE_SGMII;
-				break;
-			case WM_MEDIATYPE_SERDES:
+			else
 				reg |= CTRL_EXT_LINK_MODE_PCIE_SERDES;
-				break;
-			default:
-				break;
-			}
 			CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
 			break;
 		case CTRL_EXT_LINK_MODE_GMII:
 		default:
-			aprint_verbose_dev(sc->sc_dev, "Copper\n");
+			aprint_normal_dev(sc->sc_dev, "Copper\n");
 			sc->sc_mediatype = WM_MEDIATYPE_COPPER;
 			break;
 		}
@@ -5695,7 +5708,7 @@ wm_init_locked(struct ifnet *ifp)
 	struct wm_softc *sc = ifp->if_softc;
 	struct ethercom *ec = &sc->sc_ethercom;
 	int i, j, trynum, error = 0;
-	uint32_t reg;
+	uint32_t reg, sfp_mask = 0;
 
 	DPRINTF(WM_DEBUG_INIT, ("%s: %s called\n",
 		device_xname(sc->sc_dev), __func__));
@@ -6047,6 +6060,13 @@ wm_init_locked(struct ifnet *ifp)
 	/* Set up the interrupt registers. */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
 
+	/* Enable SFP module insertion interrupt if it's required */
+	if ((sc->sc_flags & WM_F_SFP) != 0) {
+		sc->sc_ctrl |= CTRL_EXTLINK_EN;
+		CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
+		sfp_mask = ICR_GPI(0);
+	}
+
 	if (wm_is_using_msix(sc)) {
 		uint32_t mask;
 		struct wm_queue *wmq;
@@ -6083,12 +6103,14 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_EIAC, mask);
 			CSR_WRITE(sc, WMREG_EIAM, mask);
 			CSR_WRITE(sc, WMREG_EIMS, mask);
-			CSR_WRITE(sc, WMREG_IMS, ICR_LSC);
+
+			/* For other interrupts */
+			CSR_WRITE(sc, WMREG_IMS, ICR_LSC | sfp_mask);
 			break;
 		}
 	} else {
 		sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
-		    ICR_RXO | ICR_RXT0;
+		    ICR_RXO | ICR_RXT0 | sfp_mask;
 		CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
 	}
 
@@ -9456,6 +9478,8 @@ wm_intr_legacy(void *arg)
 			WM_EVCNT_INCR(&sc->sc_ev_linkintr);
 			wm_linkintr(sc, icr);
 		}
+		if ((icr & ICR_GPI(0)) != 0)
+			device_printf(sc->sc_dev, "got module interrupt\n");
 
 		WM_CORE_UNLOCK(sc);
 
@@ -9643,6 +9667,8 @@ wm_linkintr_msix(void *arg)
 		WM_EVCNT_INCR(&sc->sc_ev_linkintr);
 		wm_linkintr(sc, ICR_LSC);
 	}
+	if ((reg & ICR_GPI(0)) != 0)
+		device_printf(sc->sc_dev, "got module interrupt\n");
 
 	/*
 	 * XXX 82574 MSI-X mode workaround
@@ -11804,6 +11830,31 @@ do {									\
 		/* Only 82545 is LX (XXX except SFP) */
 		ADD("1000baseLX", IFM_1000_LX, ANAR_X_HD);
 		ADD("1000baseLX-FDX", IFM_1000_LX | IFM_FDX, ANAR_X_FD);
+	} else if (sc->sc_sfptype != 0) {
+		/* XXX wm(4) fiber/serdes don't use ifm_data */
+		switch (sc->sc_sfptype) {
+		default:
+		case SFF_SFP_ETH_FLAGS_1000SX:
+			ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
+			ADD("1000baseSX-FDX", IFM_1000_SX | IFM_FDX, ANAR_X_FD);
+			break;
+		case SFF_SFP_ETH_FLAGS_1000LX:
+			ADD("1000baseLX", IFM_1000_LX, ANAR_X_HD);
+			ADD("1000baseLX-FDX", IFM_1000_LX | IFM_FDX, ANAR_X_FD);
+			break;
+		case SFF_SFP_ETH_FLAGS_1000CX:
+			ADD("1000baseCX", IFM_1000_CX, ANAR_X_HD);
+			ADD("1000baseCX-FDX", IFM_1000_CX | IFM_FDX, ANAR_X_FD);
+			break;
+		case SFF_SFP_ETH_FLAGS_1000T:
+			ADD("1000baseT", IFM_1000_T, 0);
+			ADD("1000baseT-FDX", IFM_1000_T | IFM_FDX, 0);
+			break;
+		case SFF_SFP_ETH_FLAGS_100FX:
+			ADD("100baseFX", IFM_100_FX, ANAR_TX);
+			ADD("100baseFX-FDX", IFM_100_FX | IFM_FDX, ANAR_TX_FD);
+			break;
+		}
 	} else {
 		ADD("1000baseSX", IFM_1000_SX, ANAR_X_HD);
 		ADD("1000baseSX-FDX", IFM_1000_SX | IFM_FDX, ANAR_X_FD);
@@ -12122,13 +12173,17 @@ wm_serdes_power_up_link_82575(struct wm_softc *sc)
 	    && ((sc->sc_flags & WM_F_SGMII) == 0))
 		return;
 
+	/* Enable PCS to turn on link */
 	reg = CSR_READ(sc, WMREG_PCS_CFG);
 	reg |= PCS_CFG_PCS_EN;
 	CSR_WRITE(sc, WMREG_PCS_CFG, reg);
 
+	/* Power up the laser */
 	reg = CSR_READ(sc, WMREG_CTRL_EXT);
 	reg &= ~CTRL_EXT_SWDPIN(3);
 	CSR_WRITE(sc, WMREG_CTRL_EXT, reg);
+
+	/* Flush the write to verify completion */
 	CSR_WRITE_FLUSH(sc);
 }
 
@@ -12155,7 +12210,9 @@ wm_serdes_mediachange(struct ifnet *ifp)
 	pcs_lctl = CSR_READ(sc, WMREG_PCS_LCTL);
 	switch (ctrl_ext & CTRL_EXT_LINK_MODE_MASK) {
 	case CTRL_EXT_LINK_MODE_SGMII:
+		/* SGMII mode lets the phy handle forcing speed/duplex */
 		pcs_autoneg = true;
+		/* Autoneg time out should be disabled for SGMII mode */
 		pcs_lctl &= ~PCS_LCTL_AN_TIMEOUT;
 		break;
 	case CTRL_EXT_LINK_MODE_1000KX:
@@ -12169,14 +12226,20 @@ wm_serdes_mediachange(struct ifnet *ifp)
 		}
 		sc->sc_ctrl |= CTRL_SPEED_1000 | CTRL_FRCSPD | CTRL_FD
 		    | CTRL_FRCFDX;
+
+		/* Set speed of 1000/Full if speed/duplex is forced */
 		pcs_lctl |= PCS_LCTL_FSV_1000 | PCS_LCTL_FDV_FULL;
 	}
 	CSR_WRITE(sc, WMREG_CTRL, sc->sc_ctrl);
 
 	if (pcs_autoneg) {
+		/* Set PCS register for autoneg */
 		pcs_lctl |= PCS_LCTL_AN_ENABLE | PCS_LCTL_AN_RESTART;
+
+		/* Disable force flow control for autoneg */
 		pcs_lctl &= ~PCS_LCTL_FORCE_FC;
 
+		/* Configure flow control advertisement for autoneg */
 		reg = CSR_READ(sc, WMREG_PCS_ANADV);
 		reg &= ~(TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE);
 		reg |= TXCW_ASYM_PAUSE | TXCW_SYM_PAUSE;
@@ -12383,6 +12446,7 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 		    "Module/Connector soldered to board\n");
 		break;
 	case SFF_SFP_ID_SFP:
+		sc->sc_flags |= WM_F_SFP;
 		aprint_normal_dev(sc->sc_dev, "SFP\n");
 		break;
 	case SFF_SFP_ID_UNKNOWN:
@@ -12395,6 +12459,7 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	if (rv != 0)
 		goto out;
 
+	sc->sc_sfptype = val;
 	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
 		mediatype = WM_MEDIATYPE_SERDES;
 	else if ((val & SFF_SFP_ETH_FLAGS_1000T) != 0) {
@@ -12403,6 +12468,10 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	} else if ((val & SFF_SFP_ETH_FLAGS_100FX) != 0) {
 		sc->sc_flags |= WM_F_SGMII;
 		mediatype = WM_MEDIATYPE_SERDES;
+	} else {
+		device_printf(sc->sc_dev, "%s: unknown media type? (0x%hhx)\n",
+		    __func__, sc->sc_sfptype);
+		sc->sc_sfptype = 0; /* XXX unknown */
 	}
 
 out:
