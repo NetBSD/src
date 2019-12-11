@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.133 2019/12/09 19:33:56 bouyer Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.134 2019/12/11 14:58:03 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6933,4 +6933,37 @@ usr.sbin/sysinst/bsddisklabel.c			1.32
 	PR install/54745: fix confusion about absolut and NetBSD-partition
 	relative offsets.
 	[martin, ticket #538]
+
+etc/rc.d/zfs					1.4,1.5
+
+	Fix unload, remove all mount/unmount actions (let mountall
+	or the operator deal with those).
+	[sevan, ticket #539]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/arc.c 1.16
+
+	Avoid a warning not applicable for NetBSD.
+	[sevan, ticket #540]
+
+sys/dev/pci/if_wm.c				1.651
+
+	Fix a bug that wm_sgmii_readreg_locked() may return an error even
+	if no error occurred.
+	[msaitoh, ticket #541]
+
+bin/sh/eval.c					1.176
+bin/sh/trap.c					1.53
+
+	PR bin/54743: avoid unnecessary fork and trap handling.
+	[kre, ticket #542]
+
+sys/dev/mii/files.mii				1.54
+
+	Make kernels with ipgphy(4) but wihtout ukphy(4) buildable.
+	[msaitoh, ticket #543]
+
+sys/dev/usb/ugen.c				1.148
+
+	Avoid NULL pointer dereference.
+	[bouyer, ticket #544]
 
