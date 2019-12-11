@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.146 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: ugen.c,v 1.146.2.1 2019/12/11 14:56:36 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.146 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.146.2.1 2019/12/11 14:56:36 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1406,6 +1406,8 @@ ugen_get_cdesc(struct ugen_softc *sc, int index, int *lenp)
 
 	if (index == USB_CURRENT_CONFIG_INDEX) {
 		tdesc = usbd_get_config_descriptor(sc->sc_udev);
+		if (tdesc == NULL)
+			return NULL;
 		len = UGETW(tdesc->wTotalLength);
 		if (lenp)
 			*lenp = len;
