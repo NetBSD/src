@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.85 2019/12/11 20:34:06 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.86 2019/12/11 20:46:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.85 2019/12/11 20:34:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.86 2019/12/11 20:46:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -720,6 +720,11 @@ mutex_vector_exit(kmutex_t *mtx)
 	}
 
 #ifndef __HAVE_MUTEX_STUBS
+	/*
+	 * On some architectures without mutex stubs, we can enter here to
+	 * release mutexes before interrupts and whatnot are up and running. 
+	 * We need this hack to keep them sweet.
+	 */
 	if (__predict_false(cold)) {
 		MUTEX_UNLOCKED(mtx);
 		MUTEX_RELEASE(mtx);
