@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.2 2019/12/11 01:51:22 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.3 2019/12/11 05:50:03 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -807,14 +807,17 @@ static const struct ixl_aq_regs ixl_pf_aq_regs = {
 static inline uint32_t
 ixl_dmamem_hi(struct ixl_dmamem *ixm)
 {
-	uint32_t val;
+	uint32_t retval;
+	uint64_t val;
 
-	if (sizeof(IXL_DMA_DVA(ixm)) > 4)
-		val = (uint32_t)(IXL_DMA_DVA(ixm) >> 32);
-	else
-		val = 0;
+	if (sizeof(bus_addr_t) > 4) {
+		val = (intptr_t)IXL_DMA_DVA(ixm);
+		retval = (uint32_t)(val >> 32);
+	} else {
+		retval = 0;
+	}
 
-	return val;
+	return retval;
 }
 
 static inline uint32_t
@@ -827,11 +830,14 @@ ixl_dmamem_lo(struct ixl_dmamem *ixm)
 static inline void
 ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 {
+	uint64_t val;
 
-	if (sizeof(addr) > 4)
-		iaq->iaq_param[2] = htole32(addr >> 32);
-	else
+	if (sizeof(bus_addr_t) > 4) {
+		val = (intptr_t)addr;
+		iaq->iaq_param[2] = htole32(val >> 32);
+	} else {
 		iaq->iaq_param[2] = htole32(0);
+	}
 
 	iaq->iaq_param[3] = htole32(addr);
 }
