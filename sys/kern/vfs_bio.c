@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.282 2019/12/08 20:35:23 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.283 2019/12/11 20:50:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.282 2019/12/08 20:35:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.283 2019/12/11 20:50:32 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -1145,6 +1145,16 @@ already_queued:
 	/* Unlock the buffer. */
 	CLR(bp->b_cflags, BC_AGE|BC_BUSY|BC_NOCACHE);
 	CLR(bp->b_flags, B_ASYNC);
+
+	/*
+	 * Wake only the highest priority waiter on the lock, in order to
+	 * prevent a thundering herd: many LWPs simultaneously awakening and
+	 * competing for the buffer's lock.  Testing in 2019 revealed this
+	 * to reduce contention on bufcache_lock tenfold during a kernel
+	 * compile.  Elsewhere, when the buffer is changing identity, being
+	 * disposed of, or moving from one list to another, we wake all lock
+	 * requestors.
+	 */
 	cv_signal(&bp->b_busy);
 
 	if (bp->b_bufsize <= 0)
