@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_601,v 1.3 2019/12/08 21:30:00 scole Exp $
+#	$NetBSD: INSTALL_601,v 1.4 2019/12/11 21:04:47 scole Exp $
 #
 # config file for INSTALL
 #
@@ -82,8 +82,8 @@ ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 # The only cards known to work ( so far ) are PCI Voodoo3s flashed with the
 # official Macintosh firmware from 3Dfx. The others should work but are
 # untested with OF 1.0.5
-# this will take over the console if output-device is set to 'screen' or
-# 'platinum'. It will provide a NetBSD console, but still won't work with OF
+# this will take over the console if output-device is set to 'platinum'.
+# It will provide a NetBSD console, but still won't work with OF
 platinumfb0 	at mainbus?
 
 #gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
