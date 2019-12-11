@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.48 2019/12/09 15:54:59 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.49 2019/12/11 14:03:37 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -377,8 +377,8 @@ dmioctl(dev_t dev, const u_long cmd, void *data, int flag, struct lwp *l)
 		if ((r = dm_cmd_to_fun(dm_dict_in)) != 0)
 			goto cleanup_exit;
 
-		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
 cleanup_exit:
+		r = prop_dictionary_copyout_ioctl(pref, cmd, dm_dict_in);
 		prop_object_release(dm_dict_in);
 	}
 
