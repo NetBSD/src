@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC_601,v 1.24 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: GENERIC_601,v 1.25 2019/12/11 21:04:47 scole Exp $
 #
 # GENERIC machine description file
 # 
@@ -28,7 +28,7 @@ include 	"arch/macppc/conf/std.macppc.601"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident 		"GENERIC-$Revision: 1.24 $"
+ident 		"GENERIC-$Revision: 1.25 $"
 
 maxusers	32
 
@@ -217,8 +217,8 @@ ahc*	at pci? dev ? function ?	# Adaptec 294x, aic78x0 SCSI
 # official Macintosh firmware from 3Dfx. The others should work but are
 # untested with OF 1.0.5
 
-# this will take over the console if output-device is set to 'screen' or
-# 'platinum'. It will provide a NetBSD console, but still won't work with OF
+# this will take over the console if output-device is set to 'platinum'.
+# It will provide a NetBSD console, but still won't work with OF
 platinumfb0 	at mainbus?
 
 #gffb*		at pci?	function ?	# NVIDIA GeForce2 MX
