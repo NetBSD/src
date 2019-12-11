@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.1 2019/12/10 12:08:52 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.2 2019/12/11 01:51:22 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -803,21 +803,36 @@ static const struct ixl_aq_regs ixl_pf_aq_regs = {
     bus_space_barrier((_s)->sc_memt, (_s)->sc_memh, (_r), (_l), (_o))
 #define ixl_flush(_s)	(void)ixl_rd((_s), I40E_GLGEN_STAT)
 #define ixl_nqueues(_sc)	(1 << ((_sc)->sc_nqueue_pairs - 1))
-#ifdef _LP64
-#define ixl_dmamem_hi(_ixm)	(uint32_t)(IXL_DMA_DVA(_ixm) >> 32)
-#else
-#define ixl_dmamem_hi(_ixm)	0
-#endif
-#define ixl_dmamem_lo(_ixm)	(uint32_t)IXL_DMA_DVA(_ixm)
+
+static inline uint32_t
+ixl_dmamem_hi(struct ixl_dmamem *ixm)
+{
+	uint32_t val;
+
+	if (sizeof(IXL_DMA_DVA(ixm)) > 4)
+		val = (uint32_t)(IXL_DMA_DVA(ixm) >> 32);
+	else
+		val = 0;
+
+	return val;
+}
+
+static inline uint32_t
+ixl_dmamem_lo(struct ixl_dmamem *ixm)
+{
+
+	return (uint32_t)IXL_DMA_DVA(ixm);
+}
 
 static inline void
 ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 {
-#ifdef _LP64
-	iaq->iaq_param[2] = htole32(addr >> 32);
-#else
-	iaq->iaq_param[2] = htole32(0);
-#endif
+
+	if (sizeof(addr) > 4)
+		iaq->iaq_param[2] = htole32(addr >> 32);
+	else
+		iaq->iaq_param[2] = htole32(0);
+
 	iaq->iaq_param[3] = htole32(addr);
 }
 
