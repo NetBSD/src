@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: zfs,v 1.1.2.3 2019/12/08 14:42:01 martin Exp $
+# $NetBSD: zfs,v 1.1.2.4 2019/12/11 14:13:40 martin Exp $
 #
 
 # PROVIDE: zfs
@@ -28,8 +28,7 @@ zfs_start()
 
 zfs_stop()
 {
-	if [ -x /sbin/zfs -a -f /etc/zfs/zpool.cache ]; then
-		zfs unmount -a
+	if [ -x /sbin/zfs ]; then
 		modunload zfs
 	fi
 	return 0;
