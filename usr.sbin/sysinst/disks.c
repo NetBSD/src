@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.57 2019/11/16 20:26:59 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.58 2019/12/11 19:23:37 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -113,6 +113,8 @@ getfslabelname(uint f, uint f_version)
 	else if (f == FS_BSDFFS && f_version > 0)
 		return f_version == 2 ?
 		    msg_string(MSG_fs_type_ffsv2) : msg_string(MSG_fs_type_ffs);
+	else if (f == FS_EX2FS && f_version == 1)
+		return msg_string(MSG_fs_type_ext2old);
 	else if (f >= __arraycount(fstypenames) || fstypenames[f] == NULL)
 		return "invalid";
 	return fstypenames[f];
@@ -1177,7 +1179,10 @@ make_filesystems(struct install_partition_desc *install)
 			fsname = "v7fs";
 			break;
 		case FS_EX2FS:
-			asprintf(&newfs, "/sbin/newfs_ext2fs");
+			asprintf(&newfs,
+			    ptn->fs_version == 1 ?
+				"/sbin/newfs_ext2fs -O 0" :
+				"/sbin/newfs_ext2fs");
 			mnt_opts = "-text2fs";
 			fsname = "ext2fs";
 			break;
