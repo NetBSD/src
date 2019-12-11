@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.116 2019/12/11 09:12:29 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.117 2019/12/11 09:48:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1487,9 +1487,10 @@ struct livengood_tcpip_ctxdesc {
 
 #define NVM_3GIO_3_ASPM_MASK	(0x3 << 2)	/* Active State PM Support */
 
-#define NVM_CFG3_APME		(1U << 10)	
-#define NVM_CFG3_PORTA_EXT_MDIO	(1U << 2)	/* External MDIO Interface */
-#define NVM_CFG3_PORTA_COM_MDIO	(1U << 3)	/* MDIO Interface is shared */
+#define NVM_CFG3_PORTA_EXT_MDIO	__BIT(2)	/* External MDIO Interface */
+#define NVM_CFG3_PORTA_COM_MDIO	__BIT(3)	/* MDIO Interface is shared */
+#define NVM_CFG3_APME		__BIT(10)	/* APM Enable */
+#define NVM_CFG3_ILOS		__BIT(13)	/* Invert loss of signal */
 
 #define	NVM_OFF_MACADDR_82571(x)	(3 * (x))
 
