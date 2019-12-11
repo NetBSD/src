@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.653 2019/12/11 09:27:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.654 2019/12/11 09:48:16 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.653 2019/12/11 09:27:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.654 2019/12/11 09:48:16 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2656,10 +2656,11 @@ alloc_retry:
 		}
 	}
 
-	/* XXX For other than 82580? */
-	if (sc->sc_type == WM_T_82580) {
-		wm_nvm_read(sc, NVM_OFF_CFG3_PORTA, 1, &nvmword);
-		if (nvmword & __BIT(13))
+	if ((sc->sc_type >= WM_T_82580) && (sc->sc_type <= WM_T_I211)) {
+		wm_nvm_read(sc,
+		    NVM_OFF_LAN_FUNC_82580(sc->sc_funcid) + NVM_OFF_CFG3_PORTA,
+		    1, &nvmword);
+		if (nvmword & NVM_CFG3_ILOS)
 			sc->sc_ctrl |= CTRL_ILOS;
 	}
 
