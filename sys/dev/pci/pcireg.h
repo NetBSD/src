@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.147 2019/03/01 09:26:00 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.148 2019/12/11 07:33:55 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1886,7 +1886,7 @@ struct pci_rom {
  * Page Request
  */
 #define	PCI_PAGE_REQ_CTL	0x04	/* Control Register */
-#define	PCI_PAGE_REQ_CTL_E	__BIT(0)	/* Enalbe */
+#define	PCI_PAGE_REQ_CTL_E	__BIT(0)	/* Enable */
 #define	PCI_PAGE_REQ_CTL_R	__BIT(1)	/* Reset */
 #define	PCI_PAGE_REQ_STA	0x04	/* Status Register */
 #define	PCI_PAGE_REQ_STA_RF	__BIT(0+16)	/* Response Failure */
