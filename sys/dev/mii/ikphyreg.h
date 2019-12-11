@@ -1,4 +1,4 @@
-/*	$NetBSD: ikphyreg.h,v 1.3 2016/10/28 05:50:18 msaitoh Exp $	*/
+/*	$NetBSD: ikphyreg.h,v 1.4 2019/12/11 07:33:55 msaitoh Exp $	*/
 /*******************************************************************************
 Copyright (c) 2001-2005, Intel Corporation 
 All rights reserved.
@@ -57,7 +57,7 @@ POSSIBILITY OF SUCH DAMAGE.
 #define GG82563_PSCR_CROSSOVER_MODE_MDI         0x0000 /* 00=Manual MDI configuration */
 #define GG82563_PSCR_CROSSOVER_MODE_MDIX        0x0020 /* 01=Manual MDIX configuration */
 #define GG82563_PSCR_CROSSOVER_MODE_AUTO        0x0060 /* 11=Automatic crossover */
-#define GG82563_PSCR_ENALBE_EXTENDED_DISTANCE   0x0080 /* 1=Enable Extended Distance */
+#define GG82563_PSCR_ENABLE_EXTENDED_DISTANCE   0x0080 /* 1=Enable Extended Distance */
 #define GG82563_PSCR_ENERGY_DETECT_MASK         0x0300
 #define GG82563_PSCR_ENERGY_DETECT_OFF          0x0000 /* 00,01=Off */
 #define GG82563_PSCR_ENERGY_DETECT_RX           0x0200 /* 10=Sense on Rx only (Energy Detect) */
