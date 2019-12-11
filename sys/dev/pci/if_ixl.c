@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.3 2019/12/11 05:50:03 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.4 2019/12/11 10:03:08 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -475,7 +475,8 @@ struct ixl_queue_pair {
 
 struct ixl_atq {
 	struct ixl_aq_desc	 iatq_desc;
-	void			(*iatq_fn)(struct ixl_softc *);
+	void			(*iatq_fn)(struct ixl_softc *,
+				    const struct ixl_aq_desc *);
 };
 SIMPLEQ_HEAD(ixl_atq_list, ixl_atq);
 
@@ -616,7 +617,8 @@ static void	ixl_arq_unfill(struct ixl_softc *);
 
 static int	ixl_atq_poll(struct ixl_softc *, struct ixl_aq_desc *,
 		    unsigned int);
-static void	ixl_atq_set(struct ixl_atq *, void (*)(struct ixl_softc *));
+static void	ixl_atq_set(struct ixl_atq *,
+		    void (*)(struct ixl_softc *, const struct ixl_aq_desc *));
 static int	ixl_atq_post(struct ixl_softc *, struct ixl_atq *);
 static int	ixl_atq_post_locked(struct ixl_softc *, struct ixl_atq *);
 static void	ixl_atq_done(struct ixl_softc *);
@@ -635,7 +637,8 @@ static void	ixl_hmc_free(struct ixl_softc *);
 static int	ixl_get_vsi(struct ixl_softc *);
 static int	ixl_set_vsi(struct ixl_softc *);
 static void	ixl_set_filter_control(struct ixl_softc *);
-static int	ixl_get_link_status(struct ixl_softc *);
+static void	ixl_get_link_status(void *);
+static int	ixl_get_link_status_poll(struct ixl_softc *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
 static void	ixl_config_rss(struct ixl_softc *);
@@ -644,7 +647,6 @@ static int	ixl_add_macvlan(struct ixl_softc *, const uint8_t *,
 static int	ixl_remove_macvlan(struct ixl_softc *, uint8_t *, uint16_t,
 		    uint16_t);
 static void	ixl_arq(void *);
-static void	ixl_link_state_update(void *);
 static void	ixl_hmc_pack(void *, const void *,
 		    const struct ixl_hmc_pack *, unsigned int);
 static uint32_t	ixl_rd_rx_csr(struct ixl_softc *, uint32_t);
@@ -719,7 +721,8 @@ static void	ixl_work_wait(struct workqueue *, struct ixl_work *);
 static void	ixl_workq_work(struct work *, void *);
 static const struct ixl_product *
 		ixl_lookup(const struct pci_attach_args *pa);
-static void	ixl_link_status(struct ixl_softc *);
+static void	ixl_link_state_update(struct ixl_softc *,
+		    const struct ixl_aq_desc *);
 static int	ixl_set_macvlan(struct ixl_softc *);
 static int	ixl_setup_interrupts(struct ixl_softc *);;
 static void	ixl_teardown_interrupts(struct ixl_softc *);
@@ -1109,7 +1112,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto free_hmc;
 	}
 
-	rv = ixl_get_link_status(sc);
+	rv = ixl_get_link_status_poll(sc);
 	if (rv != 0) {
 		aprint_error_dev(self, "GET LINK STATUS %s\n",
 		    rv == ETIMEDOUT ? "timeout" : "error");
@@ -1204,7 +1207,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ether_set_ifflags_cb(&sc->sc_ec, ixl_ifflags_cb);
 	(void)ixl_get_link_status(sc);
 
-	ixl_work_set(&sc->sc_link_state_task, ixl_link_state_update, sc);
+	ixl_work_set(&sc->sc_link_state_task, ixl_get_link_status, sc);
 
 	ixl_config_other_intr(sc);
 
@@ -1787,7 +1790,8 @@ ixl_init_locked(struct ixl_softc *sc)
 
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
-	ixl_link_status(sc);
+
+	(void)ixl_get_link_status_poll(sc);
 
 	ixl_config_rss(sc);
 	ixl_config_queue_intr(sc);
@@ -3128,14 +3132,15 @@ ixl_other_intr(void *xsc)
 }
 
 static void
-ixl_link_state_update_done(struct ixl_softc *sc)
+ixl_get_link_status_done(struct ixl_softc *sc,
+    const struct ixl_aq_desc *iaq)
 {
 
-	/* IXL_AQ_OP_PHY_LINK_STATUS already posted to admin reply queue */
+	ixl_link_state_update(sc, iaq);
 }
 
 static void
-ixl_link_state_update(void *xsc)
+ixl_get_link_status(void *xsc)
 {
 	struct ixl_softc *sc = xsc;
 	struct ixl_aq_desc *iaq;
@@ -3147,12 +3152,12 @@ ixl_link_state_update(void *xsc)
 	param = (struct ixl_aq_link_param *)iaq->iaq_param;
 	param->notify = IXL_AQ_LINK_NOTIFY;
 
-	ixl_atq_set(&sc->sc_link_state_atq, ixl_link_state_update_done);
+	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
 	(void)ixl_atq_post(sc, &sc->sc_link_state_atq);
 }
 
 static void
-ixl_arq_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
+ixl_link_state_update(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int link_state;
@@ -3168,7 +3173,8 @@ ixl_arq_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 }
 
 static void
-ixl_aq_dump(const struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
+ixl_aq_dump(const struct ixl_softc *sc, const struct ixl_aq_desc *iaq,
+    const char *msg)
 {
 	char	 buf[512];
 	size_t	 len;
@@ -3176,6 +3182,7 @@ ixl_aq_dump(const struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	len = sizeof(buf);
 	buf[--len] = '\0';
 
+	device_printf(sc->sc_dev, "%s\n", msg);
 	snprintb(buf, len, IXL_AQ_FLAGS_FMT, le16toh(iaq->iaq_flags));
 	device_printf(sc->sc_dev, "flags %s opcode %04x\n",
 	    buf, le16toh(iaq->iaq_opcode));
@@ -3219,11 +3226,11 @@ ixl_arq(void *xsc)
 		    BUS_DMASYNC_POSTREAD);
 
 		if (ISSET(sc->sc_ec.ec_if.if_flags, IFF_DEBUG))
-			ixl_aq_dump(sc, iaq);
+			ixl_aq_dump(sc, iaq, "arq event");
 
 		switch (iaq->iaq_opcode) {
 		case htole16(IXL_AQ_OP_PHY_LINK_STATUS):
-			ixl_arq_link_status(sc, iaq);
+			ixl_link_state_update(sc, iaq);
 			break;
 		}
 
@@ -3250,8 +3257,10 @@ done:
 }
 
 static void
-ixl_atq_set(struct ixl_atq *iatq, void (*fn)(struct ixl_softc *))
+ixl_atq_set(struct ixl_atq *iatq,
+    void (*fn)(struct ixl_softc *, const struct ixl_aq_desc *))
 {
+
 	iatq->iatq_fn = fn;
 }
 
@@ -3281,7 +3290,7 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	slot->iaq_cookie = (uint64_t)((intptr_t)iatq);
 
 	if (ISSET(sc->sc_ec.ec_if.if_flags, IFF_DEBUG))
-		ixl_aq_dump(sc, slot);
+		ixl_aq_dump(sc, slot, "atq command");
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
 	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_PREWRITE);
@@ -3336,7 +3345,10 @@ ixl_atq_done_locked(struct ixl_softc *sc)
 
 		memset(slot, 0, sizeof(*slot));
 
-		(*iatq->iatq_fn)(sc);
+		if (ISSET(sc->sc_ec.ec_if.if_flags, IFF_DEBUG))
+			ixl_aq_dump(sc, &iatq->iatq_desc, "atq response");
+
+		(*iatq->iatq_fn)(sc, &iatq->iatq_desc);
 
 		cons++;
 		cons &= IXL_AQ_MASK;
@@ -3359,7 +3371,7 @@ ixl_atq_done(struct ixl_softc *sc)
 }
 
 static void
-ixl_wakeup(struct ixl_softc *sc)
+ixl_wakeup(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 {
 
 	KASSERT(mutex_owned(&sc->sc_atq_lock));
@@ -3845,7 +3857,7 @@ done:
 }
 
 static int
-ixl_get_link_status(struct ixl_softc *sc)
+ixl_get_link_status_poll(struct ixl_softc *sc)
 {
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_link_param *param;
@@ -4768,13 +4780,6 @@ ixl_set_macvlan(struct ixl_softc *sc)
 	}
 
 	return rv;
-}
-
-static void
-ixl_link_status(struct ixl_softc *sc)
-{
-
-	(void)ixl_get_link_status(sc);
 }
 
 static int
