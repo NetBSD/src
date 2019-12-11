@@ -1,4 +1,4 @@
-/*	$NetBSD: kvm_proc.c,v 1.93 2019/12/10 18:13:07 ad Exp $	*/
+/*	$NetBSD: kvm_proc.c,v 1.94 2019/12/11 20:19:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 #if 0
 static char sccsid[] = "@(#)kvm_proc.c	8.3 (Berkeley) 9/23/93";
 #else
-__RCSID("$NetBSD: kvm_proc.c,v 1.93 2019/12/10 18:13:07 ad Exp $");
+__RCSID("$NetBSD: kvm_proc.c,v 1.94 2019/12/11 20:19:27 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -260,7 +260,7 @@ _kvm_ureadm(kvm_t *kd, const struct miniproc *p, u_long va, u_long *cnt)
 			return (NULL);
 
 		if (_kvm_pread(kd, kd->pmfd, kd->swapspc, (size_t)kd->nbpg,
-		    (off_t)pg.phys_addr & -kd->nbpg) != kd->nbpg)
+		    (off_t)pg.phys_addr & ~(kd->nbpg - 1)) != kd->nbpg)
 			return (NULL);
 	} else {
 		if (kd->swfd < 0 ||
