@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.651 2019/12/09 02:30:30 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.652 2019/12/11 09:12:29 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.651 2019/12/09 02:30:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.652 2019/12/11 09:12:29 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -12370,6 +12370,7 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	}
 	if (rv != 0)
 		goto out;
+
 	switch (val) {
 	case SFF_SFP_ID_SFF:
 		aprint_normal_dev(sc->sc_dev,
@@ -12385,9 +12386,8 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	}
 
 	rv = wm_sfp_read_data_byte(sc, SFF_SFP_ETH_FLAGS_OFF, &val);
-	if (rv != 0) {
+	if (rv != 0)
 		goto out;
-	}
 
 	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
 		mediatype = WM_MEDIATYPE_SERDES;
