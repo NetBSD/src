@@ -1,4 +1,4 @@
-/*	$NetBSD: interrupt.c,v 1.7 2019/12/09 16:19:11 tsutsui Exp $	*/
+/*	$NetBSD: interrupt.c,v 1.8 2019/12/11 16:16:13 tsutsui Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.7 2019/12/09 16:19:11 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: interrupt.c,v 1.8 2019/12/11 16:16:13 tsutsui Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -102,6 +102,19 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 
 	curcpu()->ci_data.cpu_nintr++;
 
+#if 0
+	/*
+	 * According to Giano simulator sources (Cpus/mips_cpu.cpp),
+	 * interrupt register bits in CAUSE register are updated
+	 * only when the exception is triggered. This means checking
+	 * CAUSE register via splintr() in a while loop in this
+	 * interrupt handler doesn't work as expected on Giano.
+	 *
+	 * I don't know whether the real FPGA eMIPS has the same
+	 * design as the Giano simulator, but for now I'd like to
+	 * choose 'call only one handler per each interrupt' strategy,
+	 * as the original NetBSD/emips implementation.
+	 */
 	while (ppl < (ipl = splintr(&ipending))) {
 		splx(ipl);
 		/* device interrupts */
@@ -110,6 +123,14 @@ cpu_intr(int ppl, vaddr_t pc, uint32_t status)
 		}
 		(void)splhigh();
 	}
+#else
+	ipl = splintr(&ipending);
+	__USE(ipl);
+	/* device interrupts */
+	if (ipending & MIPS_INT_MASK_5) {
+		(*platform.iointr)(status, pc, ipending);
+	}
+#endif
 }
 
 /*
