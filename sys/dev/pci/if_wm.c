@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.652 2019/12/11 09:12:29 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.653 2019/12/11 09:27:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.652 2019/12/11 09:12:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.653 2019/12/11 09:27:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -6045,8 +6045,7 @@ wm_init_locked(struct ifnet *ifp)
 
 	/* Set up the interrupt registers. */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
-	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
-	    ICR_RXO | ICR_RXT0;
+
 	if (wm_is_using_msix(sc)) {
 		uint32_t mask;
 		struct wm_queue *wmq;
@@ -6086,8 +6085,11 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_IMS, ICR_LSC);
 			break;
 		}
-	} else
+	} else {
+		sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
+		    ICR_RXO | ICR_RXT0;
 		CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
+	}
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
@@ -9627,11 +9629,12 @@ wm_linkintr_msix(void *arg)
 	uint32_t reg;
 	bool has_rxo;
 
-	DPRINTF(WM_DEBUG_LINK,
-	    ("%s: LINK: got link intr\n", device_xname(sc->sc_dev)));
-
 	reg = CSR_READ(sc, WMREG_ICR);
 	WM_CORE_LOCK(sc);
+	DPRINTF(WM_DEBUG_LINK,
+	    ("%s: LINK: got link intr. ICR = %08x\n",
+		device_xname(sc->sc_dev), reg));
+
 	if (sc->sc_core_stopping)
 		goto out;
 
@@ -12083,7 +12086,8 @@ wm_tbi_tick(struct wm_softc *sc)
 		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
 		    && (++sc->sc_tbi_serdes_ticks
 			>= sc->sc_tbi_serdes_anegticks)) {
-			DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+			DPRINTF(WM_DEBUG_LINK, ("%s: %s: EXPIRE\n",
+				device_xname(sc->sc_dev), __func__));
 			sc->sc_tbi_serdes_ticks = 0;
 			/*
 			 * Reset the link, and let autonegotiation do
@@ -12308,7 +12312,8 @@ wm_serdes_tick(struct wm_softc *sc)
 		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
 		    && (++sc->sc_tbi_serdes_ticks
 			>= sc->sc_tbi_serdes_anegticks)) {
-			DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+			DPRINTF(WM_DEBUG_LINK, ("%s: %s: EXPIRE\n",
+				device_xname(sc->sc_dev), __func__));
 			sc->sc_tbi_serdes_ticks = 0;
 			/* XXX */
 			wm_serdes_mediachange(ifp);
