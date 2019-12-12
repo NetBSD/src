@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.40 2019/12/08 04:41:02 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.41 2019/12/12 16:28:24 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.40 2019/12/08 04:41:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.41 2019/12/12 16:28:24 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -118,6 +118,7 @@ static struct cfdata dm_cfdata = {
 } while (/*CONSTCOND*/0)
 
 static int dm_dbg_print_flags(int);
+static int dm_table_init(dm_target_t *, dm_table_entry_t *, char *);
 
 /*
  * Print flags sent to the kernel from libevmapper.
@@ -774,13 +775,7 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 		else
 			SLIST_INSERT_AFTER(last_table, table_en, next);
 
-		/*
-		 * Params string is different for every target,
-		 * therfore I have to pass it to target init
-		 * routine and parse parameters there.
-		 */
-
-		if ((ret = target->init(table_en, str)) != 0) {
+		if ((ret = dm_table_init(target, table_en, str)) != 0) {
 			dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 			dm_table_destroy(&dmv->table_head, DM_TABLE_INACTIVE);
 			free(str, M_TEMP);
@@ -800,6 +795,41 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	dm_table_release(&dmv->table_head, DM_TABLE_INACTIVE);
 	dm_dev_unbusy(dmv);
 	return 0;
+}
+
+static int
+dm_table_init(dm_target_t *target, dm_table_entry_t *table_en, char *params)
+{
+	int i, n, ret, argc;
+	char **ap, **argv;
+
+	if (params == NULL)
+		return EINVAL;
+
+	n = target->max_argc;
+	if (n)
+		aprint_debug("Max argc %d for %s target\n", n, target->name);
+	else
+		n = 32; /* large enough for most targets */
+
+	argv = kmem_alloc(sizeof(*argv) * n, KM_SLEEP);
+
+	for (ap = argv;
+	     ap < &argv[n] && (*ap = strsep(&params, " \t")) != NULL;) {
+		if (**ap != '\0')
+			ap++;
+	}
+	argc = ap - argv;
+
+	for (i = 0; i < argc; i++)
+		aprint_debug("DM: argv[%d] = \"%s\"\n", i, argv[i]);
+
+	KASSERT(target->init);
+	ret = target->init(table_en, argc, argv);
+
+	kmem_free(argv, sizeof(*argv) * n);
+
+	return ret;
 }
 
 /*
