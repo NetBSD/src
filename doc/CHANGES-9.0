@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.136 2019/12/12 12:27:13 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.137 2019/12/12 21:02:18 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6984,4 +6984,35 @@ sys/dev/fdt/dwc3_fdt.c				1.8
 
 	Enable USB3 support on RK3328.
 	[jmcneill, ticket #545]
+
+sys/kern/kern_resource.c			1.183
+sys/kern/kern_softint.c				1.49
+
+	calcru: ignore running softints, unless softint_timing is on.
+	Fixes crazy times reported for proc0.
+	[ad, ticket #546]
+
+external/mit/lua/dist/src/lapi.c		1.12
+
+	Apply upstream fix for a use-after-free.
+	[sevan, ticket #547]
+
+sys/external/bsd/common/include/linux/bitops.h	1.9
+sys/external/bsd/drm2/dist/drm/i915/i915_cmd_parser.c 1.19,1.20
+sys/external/bsd/drm2/dist/drm/i915/i915_dma.c	1.28
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.c	1.17
+sys/external/bsd/drm2/dist/drm/i915/i915_drv.h	1.30
+sys/external/bsd/drm2/dist/drm/i915/i915_gem_context.c 1.10
+sys/external/bsd/drm2/dist/drm/i915/i915_gem_execbuffer.c 1.9
+sys/external/bsd/drm2/dist/drm/i915/i915_gem_gtt.c 1.16
+sys/external/bsd/drm2/dist/drm/i915/i915_gem_gtt.h 1.8
+sys/external/bsd/drm2/dist/drm/i915/i915_reg.h	1.14
+sys/external/bsd/drm2/dist/drm/i915/intel_display.c 1.28
+sys/external/bsd/drm2/dist/drm/i915/intel_drv.h	1.11
+sys/external/bsd/drm2/dist/drm/i915/intel_pm.c	1.20
+sys/external/bsd/drm2/dist/drm/i915/intel_ringbuffer.c 1.11
+sys/external/bsd/drm2/dist/drm/i915/intel_ringbuffer.h 1.7
+
+	Fix CVE-2019-0154 and CVE-2019-0155.
+	[maya, ticket #548]
 
