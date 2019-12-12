@@ -1,4 +1,4 @@
-/* $NetBSD: dwc3_fdt.c,v 1.7 2019/04/19 19:05:56 jmcneill Exp $ */
+/* $NetBSD: dwc3_fdt.c,v 1.8 2019/12/12 00:45:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.7 2019/04/19 19:05:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.8 2019/12/12 00:45:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,6 +51,9 @@ __KERNEL_RCSID(0, "$NetBSD: dwc3_fdt.c,v 1.7 2019/04/19 19:05:56 jmcneill Exp $"
 #define	  GCTL_PRTCAP_DEVICE		2
 #define	  GCTL_PRTCAP_OTG		3
 #define	 GCTL_CORESOFTRESET		__BIT(11)
+
+#define	DWC3_GUCTL1			0xc11c
+#define	 GUCTL1_TX_IPGAP_LINECHECK_DIS	__BIT(28)
 
 #define	DWC3_SNPSID			0xc120
 #define	 DWC3_SNPSID_REV		__BITS(15,0)
@@ -120,7 +123,7 @@ dwc3_fdt_soft_reset(struct xhci_softc *sc)
 }
 
 static void
-dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle)
+dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle, u_int rev)
 {
 	const char *max_speed, *phy_type;
 	u_int phyif_utmi_bits;
@@ -161,6 +164,13 @@ dwc3_fdt_enable_phy(struct xhci_softc *sc, const int phandle)
 	if (of_hasprop(phandle, "snps,dis-del-phy-power-chg-quirk"))
 		val &= ~GUSB3PIPECTL_DEPOCHANGE;
 	WR4(sc, DWC3_GUSB3PIPECTL(0), val);
+
+	if (rev >= 0x250a) {
+		val = RD4(sc, DWC3_GUCTL1);
+		if (of_hasprop(phandle, "snps,dis-tx-ipgap-linecheck-quirk"))
+			val |= GUCTL1_TX_IPGAP_LINECHECK_DIS;
+		WR4(sc, DWC3_GUCTL1, val);
+	}
 
 	max_speed = fdtbus_get_string(phandle, "maximum-speed");
 	if (max_speed == NULL)
@@ -279,7 +289,7 @@ dwc3_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 
 	dwc3_fdt_soft_reset(sc);
-	dwc3_fdt_enable_phy(sc, dwc3_phandle);
+	dwc3_fdt_enable_phy(sc, dwc3_phandle, rev);
 	dwc3_fdt_set_mode(sc, GCTL_PRTCAP_HOST);
 
 	if (!fdtbus_intr_str(dwc3_phandle, 0, intrstr, sizeof(intrstr))) {
