@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.5 2019/12/12 02:15:43 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.6 2019/12/12 22:55:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -33,11 +33,14 @@
 #define _SYS_MODULE_HOOK_H
 
 #include <sys/param.h>	/* for COHERENCY_UNIT, for __cacheline_aligned */
-#include <sys/mutex.h>
 #include <sys/localcount.h>
-#include <sys/condvar.h>
-#include <sys/pserialize.h>
-#include <sys/atomic.h>
+#include <sys/stdbool.h>
+
+void module_hook_init(void);
+void module_hook_set(bool *, struct localcount *);
+void module_hook_unset(bool *, struct localcount *);
+bool module_hook_tryenter(bool *, struct localcount *);
+void module_hook_exit(struct localcount *); 
 
 /*
  * Macros for creating MP-safe vectored function calls, where
@@ -48,13 +51,9 @@
 #define MODULE_HOOK(hook, type, args)				\
 extern struct hook ## _t {					\
 	struct localcount	lc;				\
-        bool			hooked;				\
 	type			(*f)args;			\
+	bool			hooked;				\
 } hook __cacheline_aligned;
-
-extern kmutex_t		module_hook_mtx;
-extern kcondvar_t	module_hook_cv;
-extern pserialize_t	module_hook_psz;
 
 /*
  * We use pserialize_perform() to issue a memory barrier on the current
@@ -69,85 +68,32 @@ extern pserialize_t	module_hook_psz;
 
 #define MODULE_HOOK_SET(hook, func)				\
 do {								\
-								\
-	KASSERT(kernconfig_is_held());				\
-	KASSERT(!hook.hooked);					\
-								\
-	localcount_init(&hook.lc);				\
-	hook.f = func;						\
-								\
-	/* Make sure it's initialized before anyone uses it */	\
-	pserialize_perform(module_hook_psz);			\
-								\
-	/* Let them use it */					\
-	atomic_store_relaxed(&hook.hooked, true);		\
+	(hook).f = func;					\
+	module_hook_set(&(hook).hooked, &(hook).lc);		\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_UNSET(hook)					\
 do {								\
-								\
-	KASSERT(kernconfig_is_held());				\
-	KASSERT(hook.hooked);					\
-	KASSERT(hook.f);					\
-								\
-	/* Grab the mutex */					\
-	mutex_enter(&module_hook_mtx);				\
-								\
-	/* Prevent new localcount_acquire calls.  */		\
-	atomic_store_relaxed(&hook.hooked, false);		\
-								\
-	/*							\
-	 * Wait for localcount_acquire calls already under way	\
-	 * to finish.						\
-	 */							\
-	pserialize_perform(module_hook_psz);			\
-								\
-	/* Wait for existing localcount references to drain.  */\
-	localcount_drain(&hook.lc, &module_hook_cv,		\
-	     &module_hook_mtx);					\
-								\
-	/* Release the mutex and clean up all resources */	\
-	mutex_exit(&module_hook_mtx);				\
-	localcount_fini(&hook.lc);				\
+	KASSERT((hook).f);					\
+	module_hook_unset(&(hook).hooked, &(hook).lc);		\
+	(hook).f = NULL;	/* paranoia */			\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_CALL(hook, args, default, retval)		\
 do {								\
-	bool __hooked;						\
-	int __hook_s;						\
-								\
-	__hook_s = pserialize_read_enter();			\
-	__hooked = atomic_load_relaxed(&hook.hooked);		\
-	if (__hooked) {						\
-		localcount_acquire(&hook.lc);			\
-	}							\
-	pserialize_read_exit(__hook_s);				\
-								\
-	if (__hooked) {						\
-		retval = (*hook.f)args;				\
-		localcount_release(&hook.lc, &module_hook_cv,	\
-		    &module_hook_mtx);				\
+	if (module_hook_tryenter(&(hook).hooked, &(hook).lc)) {	\
+		(retval) = (*(hook).f)args;			\
+		module_hook_exit(&(hook).lc);			\
 	} else {						\
-		retval = default;				\
+		(retval) = (default);				\
 	}							\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_CALL_VOID(hook, args, default)		\
 do {								\
-	bool __hooked;						\
-	int __hook_s;						\
-								\
-	__hook_s = pserialize_read_enter();			\
-	__hooked = atomic_load_relaxed(&hook.hooked);		\
-	if (__hooked) {						\
-		localcount_acquire(&hook.lc);			\
-	}							\
-	pserialize_read_exit(__hook_s);				\
-								\
-	if (__hooked) {						\
-		(*hook.f)args;					\
-		localcount_release(&hook.lc, &module_hook_cv,	\
-		    &module_hook_mtx);				\
+	if (module_hook_tryenter(&(hook).hooked, &(hook).lc)) {	\
+		(*(hook).f)args;				\
+		module_hook_exit(&(hook).lc);			\
 	} else {						\
 		default;					\
 	}							\
