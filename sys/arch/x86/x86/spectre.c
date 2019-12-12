@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.31 2019/11/12 18:00:13 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.32 2019/12/12 16:49:20 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.31 2019/11/12 18:00:13 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.32 2019/12/12 16:49:20 maxv Exp $");
 
 #include "opt_spectre.h"
 
@@ -126,20 +126,20 @@ v2_detect_method(void)
 		if (cpuid_level >= 7) {
 			x86_cpuid(7, descs);
 
-			if (descs[3] & CPUID_SEF_ARCH_CAP) {
-				msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
-				if (msr & IA32_ARCH_IBRS_ALL) {
-					v2_mitigation_method =
-					    V2_MITIGATION_INTEL_ENHANCED_IBRS;
-					return;
-				}
-			}
-#ifdef __x86_64__
 			if (descs[3] & CPUID_SEF_IBRS) {
+				if (descs[3] & CPUID_SEF_ARCH_CAP) {
+					msr = rdmsr(MSR_IA32_ARCH_CAPABILITIES);
+					if (msr & IA32_ARCH_IBRS_ALL) {
+						v2_mitigation_method =
+						    V2_MITIGATION_INTEL_ENHANCED_IBRS;
+						return;
+					}
+				}
+#ifdef __x86_64__
 				v2_mitigation_method = V2_MITIGATION_INTEL_IBRS;
 				return;
-			}
 #endif
+			}
 		}
 		v2_mitigation_method = V2_MITIGATION_NONE;
 	} else if (cpu_vendor == CPUVENDOR_AMD) {
