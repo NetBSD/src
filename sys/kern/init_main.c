@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.508 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.509 2019/12/12 22:55:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.508 2019/12/02 23:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.509 2019/12/12 22:55:20 pgoyette Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -170,6 +170,7 @@ extern void *_binary_splash_image_end;
 #include <sys/disk.h>
 #include <sys/msgbuf.h>
 #include <sys/module.h>
+#include <sys/module_hook.h>
 #include <sys/event.h>
 #include <sys/lockf.h>
 #include <sys/once.h>
@@ -354,6 +355,7 @@ main(void)
 
 	/* Start module system. */
 	module_init();
+	module_hook_init();
 
 	/*
 	 * Initialize the kernel authorization subsystem and start the
