@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_core.c,v 1.28 2019/11/20 19:37:53 pgoyette Exp $	*/
+/*	$NetBSD: kern_core.c,v 1.29 2019/12/12 02:15:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.28 2019/11/20 19:37:53 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_core.c,v 1.29 2019/12/12 02:15:43 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/vnode.h>
@@ -73,16 +73,13 @@ coredump_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		MODULE_HOOK_SET(coredump_hook, "coredump", coredump);
-		MODULE_HOOK_SET(coredump_write_hook, "coredump",
-		    coredump_write);
-		MODULE_HOOK_SET(coredump_offset_hook, "coredump",
-		    coredump_offset);
-		MODULE_HOOK_SET(coredump_netbsd_hook, "coredump",
-		    real_coredump_netbsd);
-		MODULE_HOOK_SET(uvm_coredump_walkmap_hook, "coredump",
+		MODULE_HOOK_SET(coredump_hook, coredump);
+		MODULE_HOOK_SET(coredump_write_hook, coredump_write);
+		MODULE_HOOK_SET(coredump_offset_hook, coredump_offset);
+		MODULE_HOOK_SET(coredump_netbsd_hook, real_coredump_netbsd);
+		MODULE_HOOK_SET(uvm_coredump_walkmap_hook,
 		    uvm_coredump_walkmap);
-		MODULE_HOOK_SET(uvm_coredump_count_segs_hook, "coredump",
+		MODULE_HOOK_SET(uvm_coredump_count_segs_hook,
 		    uvm_coredump_count_segs);
 		return 0;
 	case MODULE_CMD_FINI:
