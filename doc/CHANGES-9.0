@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.135 2019/12/12 11:41:52 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.136 2019/12/12 12:27:13 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6971,6 +6971,9 @@ external/mit/MesaLib/dist/src/intel/dev/gen_device_info.c 1.5 (patch)
 external/mit/MesaLib/dist/src/loader/loader.c	1.2 (patch)
 external/mit/MesaLib/dist/src/mesa/main/context.c 1.8 (patch)
 external/mit/MesaLib/dist/src/util/disk_cache.c	1.4 (patch)
+external/mit/MesaLib/dist/src/egl/drivers/dri2/egl_dri2.c (apply patch)
+external/mit/MesaLib/dist/src/gbm/backends/dri/gbm_dri.c (apply patch)
+external/mit/MesaLib/dist/src/glx/dri_common.c (apply patch)
 
 	Wherever we test for setuid, also test for setgid.
 	[maya, ticket #526]
