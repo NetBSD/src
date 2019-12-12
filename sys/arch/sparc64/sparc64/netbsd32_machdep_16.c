@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep_16.c,v 1.3 2019/03/01 11:06:55 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep_16.c,v 1.4 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.3 2019/03/01 11:06:55 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep_16.c,v 1.4 2019/12/12 02:15:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -352,7 +352,7 @@ void
 netbsd32_machdep_md_16_init(void)
 {
 
-	MODULE_HOOK_SET(netbsd32_sendsig_hook, "nb32_16", netbsd32_sendsig_16);
+	MODULE_HOOK_SET(netbsd32_sendsig_hook, netbsd32_sendsig_16);
 }
  
 void    

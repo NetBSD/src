@@ -1,4 +1,4 @@
-/*	$NetBSD: sunos_mod.c,v 1.6 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: sunos_mod.c,v 1.7 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunos_mod.c,v 1.6 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunos_mod.c,v 1.7 2019/12/12 02:15:42 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -74,8 +74,7 @@ compat_sunos_modcmd(modcmd_t cmd, void *arg)
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
-		MODULE_HOOK_SET(get_emul_sunos_hook, "sun_emul",
-		    get_sunos_emul);
+		MODULE_HOOK_SET(get_emul_sunos_hook, get_sunos_emul);
 		return exec_add(&sunos_execsw, 1);
 
 	case MODULE_CMD_FINI:
