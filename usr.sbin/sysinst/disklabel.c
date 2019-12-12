@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.18 2019/12/09 19:16:53 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.19 2019/12/12 12:19:39 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -170,17 +170,16 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	int fd;
 	char diskpath[MAXPATHLEN];
 	uint flags;
+	bool only_dl = only_have_disklabel();
+	bool have_raw_label = false;
 
 #ifndef DISKLABEL_NO_ONDISK_VERIFY
-	if (!only_have_disklabel()) {
-		/*
-		 * If there are alternative partitioning schemes,
-		 * verify we really have a disklabel.
-		 */
-		if (run_program(RUN_SILENT | RUN_ERROR_OK,
-		    "disklabel -r %s", disk) != 0)
-			return NULL;
-	}
+	/*
+	 * Verify we really have a disklabel.
+	 */
+	if (run_program(RUN_SILENT | RUN_ERROR_OK,
+	    "disklabel -r %s", disk) == 0)
+		have_raw_label = true;
 #endif
 
 	/* read partitions */
@@ -266,6 +265,29 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 			    parts->l.d_partitions[part].p_size;
 	}
 	close(fd);
+
+	if (!have_raw_label && only_dl) {
+		bool found_real_part = false;
+
+		/*
+		 * Check if kernel translation gave us "something" besides
+		 * the raw or the whole-disk partition.
+		 * If not: report missing disklabel.
+		 */
+		for (int part = 0; part < parts->l.d_npartitions; part++) {
+			if (parts->l.d_partitions[part].p_fstype == FS_UNUSED)
+				continue;
+			if (part == RAW_PART)
+				continue;
+			found_real_part = true;
+			break;
+		}
+		if (!found_real_part) {
+			/* no partion there yet */
+			free(parts);
+			return NULL;
+		}
+	}
 
 	return &parts->dp;
 }
