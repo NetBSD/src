@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.33 2019/12/09 15:30:42 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.34 2019/12/12 16:28:24 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.33 2019/12/09 15:30:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.34 2019/12/12 16:28:24 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -48,7 +48,6 @@ typedef struct target_stripe_config {
 	struct target_linear_devs stripe_devs;
 	uint8_t stripe_num;
 	uint64_t stripe_chunksize;
-	size_t params_len;
 } dm_target_stripe_config_t;
 
 #ifdef DM_TARGET_MODULE
@@ -136,31 +135,20 @@ dm_target_stripe_fini(dm_target_stripe_config_t *tsc)
  * 0 65536 striped 2 512 /dev/hda 0 /dev/hdb 0
  */
 int
-dm_target_stripe_init(dm_table_entry_t *table_en, char *params)
+dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
-	size_t len;
-	char **ap, *argv[10];
 	int strpc, strpi;
 
-	if (params == NULL)
-		return EINVAL;
-
-	len = strlen(params) + 1;
-
 	/*
-	 * Parse a string, containing tokens delimited by white space,
-	 * into an argument vector
-	 */
-	for (ap = argv; ap <= &argv[9] &&
-	    (*ap = strsep(&params, " \t")) != NULL;) {
-		if (**ap != '\0')
-			ap++;
+	if (argc < 4) {
+		printf("Stripe target takes 4 or more args\n");
+		return EINVAL;
 	}
+	*/
 
 	printf("Stripe target init function called!!\n");
-
 	printf("Stripe target chunk size %s number of stripes %s\n",
 	    argv[1], argv[0]);
 
@@ -170,7 +158,6 @@ dm_target_stripe_init(dm_table_entry_t *table_en, char *params)
 	TAILQ_INIT(&tsc->stripe_devs);
 
 	/* Save length of param string */
-	tsc->params_len = len;
 	tsc->stripe_chunksize = atoi(argv[1]);
 	tsc->stripe_num = (uint8_t) atoi(argv[0]);
 

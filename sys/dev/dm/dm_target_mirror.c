@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.17 2019/12/08 14:59:42 tkusumi Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.18 2019/12/12 16:28:24 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.17 2019/12/08 14:59:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.18 2019/12/12 16:28:24 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.17 2019/12/08 14:59:42 tkusum
 #include "dm.h"
 
 /* dm_target_mirror.c */
-int dm_target_mirror_init(dm_table_entry_t *, char *);
+int dm_target_mirror_init(dm_table_entry_t *, int, char **);
 char *dm_target_mirror_status(void *);
 int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_mirror_sync(dm_table_entry_t *);
@@ -127,7 +127,7 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
  * 0 52428800 mirror clustered_disk 4 253:2 1024 UUID block_on_error 3 253:3 0 253:4 0 253:5 0
  */
 int
-dm_target_mirror_init(dm_table_entry_t *table_en, char *params)
+dm_target_mirror_init(dm_table_entry_t *table_en, int argc, char **argv)
 {
 
 	printf("Mirror target init function called!!\n");
