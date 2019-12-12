@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media_80.c,v 1.2 2019/09/26 01:28:27 christos Exp $	*/
+/*	$NetBSD: if_media_80.c,v 1.3 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -177,10 +177,8 @@ void
 ifmedia_80_init(void)
 {
 
-	MODULE_HOOK_SET(ifmedia_80_pre_hook, "ifmedia80",
-	    compat_ifmediareq_pre);
-	MODULE_HOOK_SET(ifmedia_80_post_hook, "ifmedia80",
-	    compat_ifmediareq_post);
+	MODULE_HOOK_SET(ifmedia_80_pre_hook, compat_ifmediareq_pre);
+	MODULE_HOOK_SET(ifmedia_80_post_hook, compat_ifmediareq_post);
 }
 
 void

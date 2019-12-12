@@ -1,4 +1,4 @@
-/* $NetBSD: module_hook.h,v 1.4 2019/12/03 13:48:25 pgoyette Exp $	*/
+/* $NetBSD: module_hook.h,v 1.5 2019/12/12 02:15:43 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -47,13 +47,14 @@
 
 #define MODULE_HOOK(hook, type, args)				\
 extern struct hook ## _t {					\
-	kmutex_t		mtx;				\
-	kcondvar_t		cv;				\
 	struct localcount	lc;				\
-	pserialize_t		psz;				\
         bool			hooked;				\
 	type			(*f)args;			\
 } hook __cacheline_aligned;
+
+extern kmutex_t		module_hook_mtx;
+extern kcondvar_t	module_hook_cv;
+extern pserialize_t	module_hook_psz;
 
 /*
  * We use pserialize_perform() to issue a memory barrier on the current
@@ -66,19 +67,17 @@ extern struct hook ## _t {					\
  * work without any other memory barriers.
  */
 
-#define MODULE_HOOK_SET(hook, waitchan, func)			\
+#define MODULE_HOOK_SET(hook, func)				\
 do {								\
 								\
+	KASSERT(kernconfig_is_held());				\
 	KASSERT(!hook.hooked);					\
 								\
-	hook.psz = pserialize_create();				\
-	mutex_init(&hook.mtx, MUTEX_DEFAULT, IPL_NONE);		\
-	cv_init(&hook.cv, waitchan);				\
 	localcount_init(&hook.lc);				\
 	hook.f = func;						\
 								\
 	/* Make sure it's initialized before anyone uses it */	\
-	pserialize_perform(hook.psz);				\
+	pserialize_perform(module_hook_psz);			\
 								\
 	/* Let them use it */					\
 	atomic_store_relaxed(&hook.hooked, true);		\
@@ -92,7 +91,7 @@ do {								\
 	KASSERT(hook.f);					\
 								\
 	/* Grab the mutex */					\
-	mutex_enter(&hook.mtx);					\
+	mutex_enter(&module_hook_mtx);				\
 								\
 	/* Prevent new localcount_acquire calls.  */		\
 	atomic_store_relaxed(&hook.hooked, false);		\
@@ -101,17 +100,15 @@ do {								\
 	 * Wait for localcount_acquire calls already under way	\
 	 * to finish.						\
 	 */							\
-	pserialize_perform(hook.psz);				\
+	pserialize_perform(module_hook_psz);			\
 								\
 	/* Wait for existing localcount references to drain.  */\
-	localcount_drain(&hook.lc, &hook.cv, &hook.mtx);	\
+	localcount_drain(&hook.lc, &module_hook_cv,		\
+	     &module_hook_mtx);					\
 								\
 	/* Release the mutex and clean up all resources */	\
-	mutex_exit(&hook.mtx);					\
+	mutex_exit(&module_hook_mtx);				\
 	localcount_fini(&hook.lc);				\
-	cv_destroy(&hook.cv);					\
-	mutex_destroy(&hook.mtx);				\
-	pserialize_destroy(hook.psz);				\
 } while /* CONSTCOND */ (0)
 
 #define MODULE_HOOK_CALL(hook, args, default, retval)		\
@@ -128,8 +125,8 @@ do {								\
 								\
 	if (__hooked) {						\
 		retval = (*hook.f)args;				\
-		localcount_release(&hook.lc, &hook.cv,		\
-		    &hook.mtx);					\
+		localcount_release(&hook.lc, &module_hook_cv,	\
+		    &module_hook_mtx);				\
 	} else {						\
 		retval = default;				\
 	}							\
@@ -149,8 +146,8 @@ do {								\
 								\
 	if (__hooked) {						\
 		(*hook.f)args;					\
-		localcount_release(&hook.lc, &hook.cv,		\
-		    &hook.mtx);					\
+		localcount_release(&hook.lc, &module_hook_cv,	\
+		    &module_hook_mtx);				\
 	} else {						\
 		default;					\
 	}							\
