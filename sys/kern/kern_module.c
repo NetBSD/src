@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.140 2019/12/12 16:36:25 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.141 2019/12/12 22:55:20 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.140 2019/12/12 16:36:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.141 2019/12/12 22:55:20 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -127,12 +127,6 @@ static int	sysctl_module_autotime(SYSCTLFN_PROTO);
 
 static void	module_callback_load(struct module *);
 static void	module_callback_unload(struct module *);
-
-/* Locking/synchronization stuff for module hooks */
-
-kmutex_t	module_hook_mtx;
-kcondvar_t	module_hook_cv;
-pserialize_t	module_hook_psz;
 
 #define MODULE_CLASS_MATCH(mi, modclass) \
 	((modclass) == MODULE_CLASS_ANY || (modclass) == (mi)->mi_class)
@@ -451,10 +445,6 @@ module_init(void)
 	module_netbsd = module_newmodule(MODULE_SOURCE_KERNEL);
 	module_netbsd->mod_refcnt = 1;
 	module_netbsd->mod_info = &module_netbsd_modinfo;
-
-	mutex_init(&module_hook_mtx, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&module_hook_cv, "mod_hook");
-	module_hook_psz = pserialize_create();
 }
 
 /*
