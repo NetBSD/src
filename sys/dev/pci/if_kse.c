@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.44 2019/12/03 11:26:12 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.45 2019/12/12 12:00:06 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.44 2019/12/03 11:26:12 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.45 2019/12/12 12:00:06 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,6 +84,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.44 2019/12/03 11:26:12 nisimura Exp $")
 #define MTR1	0x024	/* multicast table 63:32 */
 #define INTEN	0x028	/* interrupt enable */
 #define INTST	0x02c	/* interrupt status */
+#define MAAL0	0x080	/* additional MAC address 0 low */
+#define MAAH0	0x084	/* additional MAC address 0 high */
 #define MARL	0x200	/* MAC address low */
 #define MARM	0x202	/* MAC address middle */
 #define MARH	0x204	/* MAC address high */
@@ -1087,6 +1089,7 @@ kse_set_filter(struct kse_softc *sc)
 	struct ethercom *ec = &sc->sc_ethercom;
 	struct ifnet *ifp = &ec->ec_if;
 	uint32_t crc, mchash[2];
+	int i;
 
 	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM | RXC_RA);
 	ifp->if_flags &= ~IFF_ALLMULTI;
@@ -1096,9 +1099,12 @@ kse_set_filter(struct kse_softc *sc)
 		goto update;
 	}
 
-	mchash[0] = mchash[1] = crc = 0;
+	for (i = 0; i < 16; i++)
+		 CSR_WRITE_4(sc, MAAH0 + i*8, 0);
+	crc = mchash[0] = mchash[1] = 0;
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
+	i = 0;
 	while (enm != NULL) {
 #if KSE_MCASTDEBUG == 1
 		printf("%s: addrs %s %s\n", __func__,
@@ -1118,9 +1124,22 @@ kse_set_filter(struct kse_softc *sc)
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto update;
 		}
-		crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
-		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		if (i < 16) {
+			/* use 16 additional MAC addr to accept mcast */
+			uint32_t addr;
+			uint8_t *ep = enm->enm_addrlo;
+			addr = (ep[3] << 24) | (ep[2] << 16)
+			     | (ep[1] << 8)  |  ep[0];
+			CSR_WRITE_4(sc, MAAL0 + i*8, addr);
+			addr = (ep[5] << 8) | ep[4] | (1U<<31);
+			CSR_WRITE_4(sc, MAAH0 + i*8, addr);
+		} else {
+			/* use hash table when too many */
+			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
+			mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		}
 		ETHER_NEXT_MULTI(step, enm);
+		i++;
 	}
 	ETHER_UNLOCK(ec);
 
