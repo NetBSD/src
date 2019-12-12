@@ -1,4 +1,4 @@
-.\"	$NetBSD: condvar.9,v 1.20 2019/04/12 11:02:22 abhinav Exp $
+.\"	$NetBSD: condvar.9,v 1.21 2019/12/12 02:34:55 pgoyette Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd November 12, 2017
+.Dd December 12, 2019
 .Dt CONDVAR 9
 .Os
 .Sh NAME
@@ -144,6 +144,13 @@ as available until the calling LWP has begun to wait for it.
 .Pp
 Non-interruptable waits have the potential to deadlock the system, and so must
 be kept short (typically, under one second).
+.Pp
+Upon being awakened, the calling LWP should verify the availability
+of the resource (or other condition).
+It should not blindly assume that the resource is now available.
+If the resource is still not available, the calling LWP may call
+.Fn cv_wait
+again to continue waiting.
 .It Fn cv_wait_sig "cv" "mtx"
 .Pp
 As per
