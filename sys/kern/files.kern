@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.38 2019/11/20 19:37:53 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.39 2019/12/12 22:55:20 pgoyette Exp $
 
 #
 # kernel sources
@@ -54,6 +54,7 @@ file	kern/kern_lock.c		kern
 file	kern/kern_lwp.c			kern
 file	kern/kern_malloc.c		kern
 file	kern/kern_module.c		kern
+file	kern/kern_module_hook.c		kern
 file	kern/kern_module_vfs.c		kern
 file	kern/kern_mutex.c		kern
 file	kern/kern_mutex_obj.c		kern
