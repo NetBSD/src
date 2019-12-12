@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.132 2019/11/27 09:16:58 rin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.133 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.132 2019/11/27 09:16:58 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.133 2019/12/12 02:15:42 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1030,10 +1030,10 @@ void
 netbsd32_machdep_md_init(void)
 {
 
-	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+	MODULE_HOOK_SET(netbsd32_machine32_hook, netbsd32_machine32);
 	MODULE_HOOK_SET(netbsd32_reg_validate_hook,
-	    "mcontext32from64_validate", cpu_mcontext32from64_validate);
-	MODULE_HOOK_SET(netbsd32_process_doxmmregs_hook, "xmm32",
+	    cpu_mcontext32from64_validate);
+	MODULE_HOOK_SET(netbsd32_process_doxmmregs_hook,
 	    netbsd32_process_doxmmregs);
 }
 

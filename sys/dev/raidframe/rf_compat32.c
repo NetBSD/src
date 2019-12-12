@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.6 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.7 2019/12/12 02:15:43 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -166,7 +166,7 @@ static void
 raidframe_netbsd32_init(void)
 {
   
-	MODULE_HOOK_SET(raidframe_netbsd32_ioctl_hook, "raid32",
+	MODULE_HOOK_SET(raidframe_netbsd32_ioctl_hook,
 	    raidframe_netbsd32_ioctl);
 }
  

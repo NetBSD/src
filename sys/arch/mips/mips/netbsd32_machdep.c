@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.19 2019/11/20 19:37:52 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.20 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.19 2019/11/20 19:37:52 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.20 2019/12/12 02:15:42 pgoyette Exp $");
 
 #include "opt_compat_netbsd.h"
 
@@ -328,7 +328,7 @@ void
 netbsd32_machdep_md_init(void) 
 {
 
-	MODULE_HOOK_SET(netbsd32_machine32_hook, "mach32", netbsd32_machine32);
+	MODULE_HOOK_SET(netbsd32_machine32_hook, netbsd32_machine32);
 }
 
 void
