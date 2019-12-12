@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.139 2019/12/12 02:15:43 pgoyette Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.140 2019/12/12 16:36:25 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.139 2019/12/12 02:15:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.140 2019/12/12 16:36:25 pgoyette Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.139 2019/12/12 02:15:43 pgoyette E
 #include <sys/kobj.h>
 #include <sys/kmem.h>
 #include <sys/module.h>
+#include <sys/module_hook.h>
 #include <sys/kthread.h>
 #include <sys/sysctl.h>
 #include <sys/lock.h>
