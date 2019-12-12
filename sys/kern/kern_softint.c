@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_softint.c,v 1.47 2019/05/17 03:34:26 ozaki-r Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.47.2.1 2019/12/12 20:43:08 martin Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.47 2019/05/17 03:34:26 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.47.2.1 2019/12/12 20:43:08 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -868,14 +868,16 @@ softint_dispatch(lwp_t *pinned, int s)
 	timing = (softint_timing ? LP_TIMEINTR : 0);
 	l->l_switchto = pinned;
 	l->l_stat = LSONPROC;
-	l->l_pflag |= (LP_RUNNING | timing);
 
 	/*
 	 * Dispatch the interrupt.  If softints are being timed, charge
 	 * for it.
 	 */
-	if (timing)
+	if (timing) {
 		binuptime(&l->l_stime);
+		membar_producer();	/* for calcru */
+	}
+	l->l_pflag |= (LP_RUNNING | timing);
 	softint_execute(si, l, s);
 	if (timing) {
 		binuptime(&now);
