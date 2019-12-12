@@ -1,4 +1,4 @@
-/*	$NetBSD: rndpseudo_50.c,v 1.5 2019/09/26 01:28:27 christos Exp $	*/
+/*	$NetBSD: rndpseudo_50.c,v 1.6 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.5 2019/09/26 01:28:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rndpseudo_50.c,v 1.6 2019/12/12 02:15:42 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -125,7 +125,7 @@ void
 rndpseudo_50_init(void)
 {
 
-	MODULE_HOOK_SET(rnd_ioctl_50_hook, "rnd_50", compat_50_rnd_ioctl);
+	MODULE_HOOK_SET(rnd_ioctl_50_hook, compat_50_rnd_ioctl);
 }
 
 void

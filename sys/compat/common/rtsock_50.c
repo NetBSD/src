@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.14 2019/10/04 05:48:11 msaitoh Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.15 2019/12/12 02:15:42 pgoyette Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.14 2019/10/04 05:48:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.15 2019/12/12 02:15:42 pgoyette Exp $");
 
 #define	COMPAT_RTSOCK	/* Use the COMPATNAME/COMPATCALL macros and the
 			 * various other compat definitions - see
@@ -155,20 +155,17 @@ void
 rtsock_50_init(void)
 {
  
-	MODULE_HOOK_SET(rtsock_iflist_50_hook, "rts_50", compat_50_iflist);
-	MODULE_HOOK_SET(rtsock_oifmsg_50_hook, "rts_50", compat_50_rt_oifmsg);
-	MODULE_HOOK_SET(rtsock_rt_missmsg_50_hook, "rts_50",
-	    compat_50_rt_missmsg);
-	MODULE_HOOK_SET(rtsock_rt_ifmsg_50_hook, "rts_50", compat_50_rt_ifmsg);
-	MODULE_HOOK_SET(rtsock_rt_addrmsg_rt_50_hook, "rts_50",
-	    compat_50_rt_addrmsg_rt);
-	MODULE_HOOK_SET(rtsock_rt_addrmsg_src_50_hook, "rts_50",
+	MODULE_HOOK_SET(rtsock_iflist_50_hook, compat_50_iflist);
+	MODULE_HOOK_SET(rtsock_oifmsg_50_hook, compat_50_rt_oifmsg);
+	MODULE_HOOK_SET(rtsock_rt_missmsg_50_hook, compat_50_rt_missmsg);
+	MODULE_HOOK_SET(rtsock_rt_ifmsg_50_hook, compat_50_rt_ifmsg);
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_rt_50_hook, compat_50_rt_addrmsg_rt);
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_src_50_hook,
 	    compat_50_rt_addrmsg_src);
-	MODULE_HOOK_SET(rtsock_rt_addrmsg_50_hook, "rts_50",
-	    compat_50_rt_addrmsg);
-	MODULE_HOOK_SET(rtsock_rt_ifannouncemsg_50_hook, "rts_50",
+	MODULE_HOOK_SET(rtsock_rt_addrmsg_50_hook, compat_50_rt_addrmsg);
+	MODULE_HOOK_SET(rtsock_rt_ifannouncemsg_50_hook,
 	    compat_50_rt_ifannouncemsg);
-	MODULE_HOOK_SET(rtsock_rt_ieee80211msg_50_hook, "rts_50",
+	MODULE_HOOK_SET(rtsock_rt_ieee80211msg_50_hook,
 	    compat_50_rt_ieee80211msg);
 	sysctl_net_route_setup(&clog, PF_OROUTE, "ortable");
 }
