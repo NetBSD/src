@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.78 2019/12/08 10:33:35 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.79 2019/12/12 20:49:15 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1784,4 +1784,9 @@ include/monetary.h				1.4
 
 	PR lib/54744: add missing __END_DECLS for C++ compiles.
 	[kre, ticket #1470]
+
+external/mit/lua/dist/src/lapi.c		1.12
+
+	Apply upstream fix for a use-after-free.
+	[sevan, ticket #1471]
 
