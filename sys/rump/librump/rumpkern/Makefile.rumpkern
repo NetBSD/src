@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.177 2019/10/13 07:28:14 mrg Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.178 2019/12/12 22:55:20 pgoyette Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -75,6 +75,7 @@ SRCS+=	init_sysctl_base.c	\
 	kern_ksyms.c		\
 	kern_malloc.c		\
 	kern_module.c		\
+	kern_module_hook.c	\
 	kern_mutex_obj.c	\
 	kern_ntptime.c		\
 	kern_proc.c		\
