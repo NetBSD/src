@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.134 2019/12/11 14:58:03 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.135 2019/12/12 11:41:52 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -6966,4 +6966,19 @@ sys/dev/usb/ugen.c				1.148
 
 	Avoid NULL pointer dereference.
 	[bouyer, ticket #544]
+
+external/mit/MesaLib/dist/src/intel/dev/gen_device_info.c 1.5 (patch)
+external/mit/MesaLib/dist/src/loader/loader.c	1.2 (patch)
+external/mit/MesaLib/dist/src/mesa/main/context.c 1.8 (patch)
+external/mit/MesaLib/dist/src/util/disk_cache.c	1.4 (patch)
+
+	Wherever we test for setuid, also test for setgid.
+	[maya, ticket #526]
+
+sys/arch/arm/dts/rk3328-rock64.dts		1.5
+sys/arch/arm/dts/rk3328.dtsi			1.2
+sys/dev/fdt/dwc3_fdt.c				1.8
+
+	Enable USB3 support on RK3328.
+	[jmcneill, ticket #545]
 
