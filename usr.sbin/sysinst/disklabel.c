@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.19 2019/12/12 12:19:39 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.20 2019/12/12 19:29:05 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -170,10 +170,10 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	int fd;
 	char diskpath[MAXPATHLEN];
 	uint flags;
+#ifndef DISKLABEL_NO_ONDISK_VERIFY
 	bool only_dl = only_have_disklabel();
 	bool have_raw_label = false;
 
-#ifndef DISKLABEL_NO_ONDISK_VERIFY
 	/*
 	 * Verify we really have a disklabel.
 	 */
@@ -266,6 +266,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	}
 	close(fd);
 
+#ifndef DISKLABEL_NO_ONDISK_VERIFY
 	if (!have_raw_label && only_dl) {
 		bool found_real_part = false;
 
@@ -288,6 +289,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 			return NULL;
 		}
 	}
+#endif
 
 	return &parts->dp;
 }
