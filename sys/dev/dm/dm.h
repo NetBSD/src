@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.38 2019/12/08 14:59:42 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.39 2019/12/12 16:28:24 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -174,7 +174,7 @@ typedef struct target_linear_devs dm_target_linear_devs_t;
 typedef struct dm_target {
 	char name[DM_MAX_TYPE_NAME];
 	/* Initialize target_config area */
-	int (*init)(dm_table_entry_t *, char *);
+	int (*init)(dm_table_entry_t *, int, char **);
 
 	/* Destroy target_config area */
 	int (*destroy)(dm_table_entry_t *);
@@ -193,6 +193,7 @@ typedef struct dm_target {
 
 	uint32_t version[3];
 	uint32_t ref_cnt;
+	int max_argc;
 
 	TAILQ_ENTRY(dm_target) dm_target_next;
 } dm_target_t;
@@ -236,7 +237,7 @@ int dm_target_init(void);
 #define DM_MAX_PARAMS_SIZE 1024
 
 /* dm_target_linear.c */
-int dm_target_linear_init(dm_table_entry_t *, char *);
+int dm_target_linear_init(dm_table_entry_t *, int, char **);
 char *dm_target_linear_status(void *);
 int dm_target_linear_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_linear_sync(dm_table_entry_t *);
@@ -249,7 +250,7 @@ int dm_target_linear_secsize(dm_table_entry_t *, unsigned *);
 uint64_t atoi(const char *);
 
 /* dm_target_stripe.c */
-int dm_target_stripe_init(dm_table_entry_t *, char *);
+int dm_target_stripe_init(dm_table_entry_t *, int, char **);
 char *dm_target_stripe_status(void *);
 int dm_target_stripe_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_sync(dm_table_entry_t *);
