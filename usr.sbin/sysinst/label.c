@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.15 2019/12/11 19:23:37 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.16 2019/12/13 22:12:41 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.15 2019/12/11 19:23:37 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.16 2019/12/13 22:12:41 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -487,6 +487,7 @@ set_fstype_ext(menudesc *menu, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
 	size_t i, ndx, max = menu->numopts;
+	enum part_type pt;
 
 	if (menu->cursel == 0 || menu->cursel == 1) {
 		edit->info.fs_type = FS_BSDFFS;
@@ -516,8 +517,9 @@ set_fstype_ext(menudesc *menu, void *arg)
 	return 1;
 
 found_type:
+	pt = edit->info.nat_type ? edit->info.nat_type->generic_ptype : PT_root;
 	edit->info.nat_type = edit->pset->parts->pscheme->
-	    get_fs_part_type(edit->info.fs_type, edit->info.fs_sub_type);
+	    get_fs_part_type(pt, edit->info.fs_type, edit->info.fs_sub_type);
 	if (edit->info.nat_type == NULL)
 		edit->info.nat_type = edit->pset->parts->pscheme->
 		    get_generic_part_type(PT_root);
@@ -603,13 +605,15 @@ static int
 set_fstype(menudesc *menu, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
+	enum part_type pt;
 	int ndx;
 
+	pt = edit->info.nat_type ? edit->info.nat_type->generic_ptype : PT_root;
 	if (menu->cursel < 2) {
 		edit->info.fs_type = FS_BSDFFS;
 		edit->info.fs_sub_type = menu->cursel == 0 ? 2 : 1;
 		edit->info.nat_type = edit->pset->parts->pscheme->
-		    get_fs_part_type(FS_BSDFFS, 2);
+		    get_fs_part_type(pt, FS_BSDFFS, 2);
 		if (edit->info.nat_type == NULL)
 			edit->info.nat_type = edit->pset->parts->
 			    pscheme->get_generic_part_type(PT_root);
@@ -627,7 +631,7 @@ set_fstype(menudesc *menu, void *arg)
 	edit->info.fs_type = edit_fs_common_types[ndx];
 	edit->info.fs_sub_type = 0;
 	edit->info.nat_type = edit->pset->parts->pscheme->
-	    get_fs_part_type(edit->info.fs_type, 0);
+	    get_fs_part_type(pt, edit->info.fs_type, 0);
 	if (edit->info.nat_type == NULL)
 		edit->info.nat_type = edit->pset->parts->
 		    pscheme->get_generic_part_type(PT_root);
@@ -800,7 +804,7 @@ edit_ptn(menudesc *menu, void *arg)
 			edit.info.fs_type = FS_BSDFFS;
 			edit.info.fs_sub_type = 2;
 			edit.info.nat_type = pset->parts->pscheme->
-			    get_fs_part_type(edit.info.fs_type,
+			    get_fs_part_type(PT_root, edit.info.fs_type,
 			    edit.info.fs_sub_type);
 			edit.wanted->instflags = PUIINST_NEWFS;
 		}
