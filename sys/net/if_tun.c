@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.156 2019/04/26 08:38:25 pgoyette Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.157 2019/12/13 14:13:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.156 2019/04/26 08:38:25 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.157 2019/12/13 14:13:55 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -609,6 +609,7 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		}
 		/* FALLTHROUGH */
 	case AF_UNSPEC:
+		mlen = m0->m_pkthdr.len;
 		IFQ_ENQUEUE(&ifp->if_snd, m0, error);
 		if (error) {
 			ifp->if_collisions++;
@@ -616,7 +617,6 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 			m0 = NULL;
 			goto out;
 		}
-		mlen = m0->m_pkthdr.len;
 		ifp->if_opackets++;
 		ifp->if_obytes += mlen;
 		break;
