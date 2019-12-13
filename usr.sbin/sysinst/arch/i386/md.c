@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.26 2019/11/18 16:05:55 martin Exp $ */
+/*	$NetBSD: md.c,v 1.27 2019/12/13 22:10:21 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -836,8 +836,6 @@ md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
     bool root_is_new, part_id efi_id, bool efi_is_new)
 {
 	struct disk_part_info info;
-
-	assert(efi_id == NO_PART);	/* XXX EFI support still missing */
 
 	if (root_id != NO_PART) {
 		/* we always update the gpt boot record for now */
