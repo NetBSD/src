@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.191 2015/07/15 03:28:55 manu Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.192 2019/12/13 20:10:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.191 2015/07/15 03:28:55 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.192 2019/12/13 20:10:21 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1340,9 +1340,7 @@ nfs_getpages(void *v)
 				 * available and put back original pgs array.
 				 */
 
-				mutex_enter(&uvm_pageqlock);
 				uvm_page_unbusy(pgs, npages);
-				mutex_exit(&uvm_pageqlock);
 				*ap->a_count = 0;
 				memcpy(pgs, opgs,
 				    npages * sizeof(struct vm_pages *));
