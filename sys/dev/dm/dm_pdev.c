@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.19 2019/12/08 12:14:40 mlelstv Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.20 2019/12/13 15:49:22 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.19 2019/12/08 12:14:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.20 2019/12/13 15:49:22 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -174,8 +174,10 @@ dm_pdev_rem(dm_pdev_t *dmp)
 
 	if (dmp->pdev_vnode != NULL) {
 		int error = vn_close(dmp->pdev_vnode, FREAD | FWRITE, FSCRED);
-		if (error != 0)
+		if (error != 0) {
+			kmem_free(dmp, sizeof(*dmp));
 			return error;
+		}
 	}
 	kmem_free(dmp, sizeof(*dmp));
 
