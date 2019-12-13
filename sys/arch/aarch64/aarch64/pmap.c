@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.51 2019/12/10 18:08:32 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.52 2019/12/13 08:11:12 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.51 2019/12/10 18:08:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2019/12/13 08:11:12 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -698,6 +698,9 @@ pmap_growkernel(vaddr_t maxkvaddr)
 
 	UVMHIST_LOG(pmaphist, "maxkvaddr=%llx, pmap_maxkvaddr=%llx",
 	    maxkvaddr, pmap_maxkvaddr, 0, 0);
+
+        kasan_shadow_map((void *)pmap_maxkvaddr,
+          (size_t)(maxkvaddr - pmap_maxkvaddr));
 
 	pmap_maxkvaddr = maxkvaddr;
 
