@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.22 2019/12/13 21:46:59 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.23 2019/12/13 22:12:41 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -636,7 +636,7 @@ disklabel_create_custom_part_type(const char *custom, const char **err_msg)
 }
 
 static const struct part_type_desc *
-disklabel_get_fs_part_type(unsigned fstype, unsigned subtype)
+disklabel_get_fs_part_type(enum part_type pt, unsigned fstype, unsigned subtype)
 {
 	return disklabel_find_type(fstype, false);
 }

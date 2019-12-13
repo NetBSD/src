@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.12 2019/11/12 16:33:14 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.13 2019/12/13 22:12:41 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -874,10 +874,17 @@ gpt_find_type(const char *desc)
 }
 
 static const struct part_type_desc *
-gpt_get_fs_part_type(unsigned fstype, unsigned fs_sub_type)
+gpt_get_fs_part_type(enum part_type pt, unsigned fstype, unsigned fs_sub_type)
 {
 	size_t i;
 
+	/* Try with complet match (including part_type) first */
+	for (i = 0; i < __arraycount(gpt_fs_types); i++)
+		if (fstype == gpt_fs_types[i].fstype &&
+		    pt == gpt_fs_types[i].ptype)
+			return gpt_find_type(gpt_fs_types[i].name);
+
+	/* If that did not work, ignore part_type */
 	for (i = 0; i < __arraycount(gpt_fs_types); i++)
 		if (fstype == gpt_fs_types[i].fstype)
 			return gpt_find_type(gpt_fs_types[i].name);
