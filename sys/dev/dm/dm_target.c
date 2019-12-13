@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.26 2019/12/08 10:35:53 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.27 2019/12/13 16:15:54 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.26 2019/12/08 10:35:53 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.27 2019/12/13 16:15:54 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -156,14 +156,38 @@ dm_target_insert(dm_target_t *dm_target)
 	dm_target_t *dmt;
 
 	/* Sanity check for any missing function */
-	KASSERT(dm_target->init != NULL);
-	KASSERT(dm_target->status != NULL);
-	KASSERT(dm_target->strategy != NULL);
-	KASSERT(dm_target->deps != NULL);
-	KASSERT(dm_target->destroy != NULL);
-	KASSERT(dm_target->upcall != NULL);
-	KASSERT(dm_target->sync != NULL);
-	KASSERT(dm_target->secsize != NULL);
+	if (dm_target->init == NULL) {
+		printf("%s missing init\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->status == NULL) {
+		printf("%s missing status\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->strategy == NULL) {
+		printf("%s missing strategy\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->deps == NULL) {
+		printf("%s missing deps\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->destroy == NULL) {
+		printf("%s missing destroy\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->upcall == NULL) {
+		printf("%s missing upcall\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->sync == NULL) {
+		printf("%s missing sync\n", dm_target->name);
+		return EINVAL;
+	}
+	if (dm_target->secsize == NULL) {
+		printf("%s missing secsize\n", dm_target->name);
+		return EINVAL;
+	}
 
 	mutex_enter(&dm_target_mutex);
 
