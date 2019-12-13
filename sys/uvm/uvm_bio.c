@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.100 2019/11/07 07:45:14 skrll Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.101 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.100 2019/11/07 07:45:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.101 2019/12/13 20:10:22 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -243,9 +243,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	}
 	KASSERT((pg->flags & PG_FAKE) == 0);
 	if (pg->flags & PG_RELEASED) {
-		mutex_enter(&uvm_pageqlock);
 		uvm_pagefree(pg);
-		mutex_exit(&uvm_pageqlock);
 		return 0;
 	}
 	if (pg->loan_count != 0) {
@@ -287,9 +285,7 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 	    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
-	mutex_enter(&uvm_pageqlock);
 	uvm_pageactivate(pg);
-	mutex_exit(&uvm_pageqlock);
 	pg->flags &= ~(PG_BUSY|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 
@@ -659,7 +655,6 @@ ubc_release(void *va, int flags)
 		}
 		umap->flags &= ~UMAP_PAGES_LOCKED;
 		mutex_enter(uobj->vmobjlock);
-		mutex_enter(&uvm_pageqlock);
 		for (u_int i = 0; i < npages; i++) {
 			paddr_t pa;
 			bool rv __diagused;
@@ -672,7 +667,6 @@ ubc_release(void *va, int flags)
 			KASSERT(pgs[i]->loan_count == 0);
 			uvm_pageactivate(pgs[i]);
 		}
-		mutex_exit(&uvm_pageqlock);
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
 		uvm_page_unbusy(pgs, npages);
@@ -891,7 +885,6 @@ ubc_direct_release(struct uvm_object *uobj,
 	int flags, struct vm_page **pgs, int npages)
 {
 	mutex_enter(uobj->vmobjlock);
-	mutex_enter(&uvm_pageqlock);
 	for (int i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 
@@ -901,8 +894,6 @@ ubc_direct_release(struct uvm_object *uobj,
 		if (flags & UBC_WRITE)
 			pg->flags &= ~(PG_FAKE|PG_CLEAN);
 	}
-	mutex_exit(&uvm_pageqlock);
-
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(uobj->vmobjlock);
 }

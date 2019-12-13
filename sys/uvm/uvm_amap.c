@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.110 2019/12/01 14:24:43 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.111 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.110 2019/12/01 14:24:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.111 2019/12/13 20:10:22 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -966,7 +966,6 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
  *	map change until we are done copying all the map entrys.
  * => XXXCDC: out of memory should cause fork to fail, but there is
  *	currently no easy way to do this (needs fix)
- * => page queues must be unlocked (we may lock them)
  */
 
 void
@@ -1070,19 +1069,10 @@ ReStart:
 		 * Drop PG_BUSY on new page.  Since its owner was locked all
 		 * this time - it cannot be PG_RELEASED or PG_WANTED.
 		 */
+		uvm_pageactivate(npg);
 		npg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(npg, NULL);
 	}
-	/* Activate all pages.  Some may be missing because of retry above. */
-	mutex_enter(&uvm_pageqlock);
-	for (lcv = 0 ; lcv < amap->am_nused ; lcv++) {
-		anon = amap->am_anon[amap->am_slots[lcv]];
-		KASSERT(anon->an_lock == amap->am_lock);
-		if (anon->an_page != NULL) {
-			uvm_pageactivate(anon->an_page);
-		}
-	}
-	mutex_exit(&uvm_pageqlock);
 	amap_unlock(amap);
 }
 

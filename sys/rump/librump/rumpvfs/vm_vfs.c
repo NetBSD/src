@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.34 2013/10/18 19:56:11 christos Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.35 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.34 2013/10/18 19:56:11 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.35 2019/12/13 20:10:22 ad Exp $");
 
 #include <sys/param.h>
 
@@ -73,9 +73,7 @@ uvm_aio_aiodone(struct buf *bp)
 	}
 	KASSERT(mutex_owned(uobj->vmobjlock));
 
-	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pgs, npages);
-	mutex_exit(&uvm_pageqlock);
 	mutex_exit(uobj->vmobjlock);
 
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);

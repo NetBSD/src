@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.76 2019/10/06 05:48:00 mlelstv Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.77 2019/12/13 20:10:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.76 2019/10/06 05:48:00 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.77 2019/12/13 20:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -79,9 +79,7 @@ genfs_rel_pages(struct vm_page **pgs, unsigned int npages)
 			pg->flags |= PG_RELEASED;
 		}
 	}
-	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pgs, npages);
-	mutex_exit(&uvm_pageqlock);
 }
 
 static void
@@ -466,7 +464,6 @@ startover:
 out:
 	UVMHIST_LOG(ubchist, "succeeding, npages %jd", npages,0,0,0);
 	error = 0;
-	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 		if (pg == NULL) {
@@ -498,7 +495,6 @@ out:
 			UVM_PAGE_OWN(pg, NULL);
 		}
 	}
-	mutex_exit(&uvm_pageqlock);
 	if (memwrite) {
 		genfs_markdirty(vp);
 	}
@@ -1201,9 +1197,6 @@ retry:
 		 * apply FREE or DEACTIVATE options if requested.
 		 */
 
-		if (flags & (PGO_DEACTIVATE|PGO_FREE)) {
-			mutex_enter(&uvm_pageqlock);
-		}
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
@@ -1235,9 +1228,6 @@ retry:
 						uvmexp.pdfreed++;
 				}
 			}
-		}
-		if (flags & (PGO_DEACTIVATE|PGO_FREE)) {
-			mutex_exit(&uvm_pageqlock);
 		}
 		if (needs_clean) {
 			modified = true;
@@ -1646,7 +1636,6 @@ genfs_compat_getpages(void *v)
 	}
 	uvm_pagermapout(kva, npages);
 	mutex_enter(uobj->vmobjlock);
-	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 		if (error && (pg->flags & PG_FAKE) != 0) {
@@ -1659,7 +1648,6 @@ genfs_compat_getpages(void *v)
 	if (error) {
 		uvm_page_unbusy(pgs, npages);
 	}
-	mutex_exit(&uvm_pageqlock);
 	if (error == 0 && memwrite) {
 		genfs_markdirty(vp);
 	}

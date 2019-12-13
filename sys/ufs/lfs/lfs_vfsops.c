@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.365 2019/05/28 08:59:35 msaitoh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.366 2019/12/13 20:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.365 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.366 2019/12/13 20:10:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2054,9 +2054,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			pgs[i]->flags |= PG_PAGEOUT;
 			uvm_pageout_start(1);
 			mutex_enter(vp->v_interlock);
-			mutex_enter(&uvm_pageqlock);
 			uvm_pageunwire(pgs[i]);
-			mutex_exit(&uvm_pageqlock);
 			mutex_exit(vp->v_interlock);
 		}
 	}
@@ -2238,7 +2236,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
  		      pgs[0]->offset, eof, npages));
 	}
 
-	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		pg = pgs[i];
 
@@ -2262,7 +2259,6 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	}
 	/* uvm_pageunbusy takes care of PG_BUSY, PG_WANTED */
 	uvm_page_unbusy(pgs, npages);
-	mutex_exit(&uvm_pageqlock);
 	mutex_exit(vp->v_interlock);
 	return EAGAIN;
 }

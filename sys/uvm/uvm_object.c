@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.15 2015/10/26 09:02:49 mrg Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.16 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.15 2015/10/26 09:02:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.16 2019/12/13 20:10:22 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -173,20 +173,18 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 				pgs[i] = pg;
 			}
 
-			if (pgs[i]->pqflags & PQ_AOBJ) {
+			if (pgs[i]->flags & PG_AOBJ) {
 				pgs[i]->flags &= ~(PG_CLEAN);
 				uao_dropswap(uobj, i);
 			}
 		}
 
 		/* Wire the pages */
-		mutex_enter(&uvm_pageqlock);
 		for (i = 0; i < npages; i++) {
 			uvm_pagewire(pgs[i]);
 			if (list != NULL)
 				TAILQ_INSERT_TAIL(list, pgs[i], pageq.queue);
 		}
-		mutex_exit(&uvm_pageqlock);
 
 		/* Unbusy the pages */
 		uvm_page_unbusy(pgs, npages);
@@ -219,7 +217,6 @@ uvm_obj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 	off_t offset;
 
 	mutex_enter(uobj->vmobjlock);
-	mutex_enter(&uvm_pageqlock);
 	for (offset = start; offset < end; offset += PAGE_SIZE) {
 		pg = uvm_pagelookup(uobj, offset);
 
@@ -228,7 +225,6 @@ uvm_obj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 
 		uvm_pageunwire(pg);
 	}
-	mutex_exit(&uvm_pageqlock);
 	mutex_exit(uobj->vmobjlock);
 }
 

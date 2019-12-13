@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $	*/
+/*	$NetBSD: vm.c,v 1.174 2019/12/13 20:10:21 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.174 2019/12/13 20:10:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -67,7 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.173 2017/05/14 13:49:55 nat Exp $");
 
 #include <rump/rumpuser.h>
 
-kmutex_t uvm_pageqlock; /* non-free page lock */
+kmutex_t vmpage_lruqueue_lock; /* non-free page lock */
 kmutex_t uvm_fpageqlock; /* free page lock, non-gpl license */
 kmutex_t uvm_swap_data_lock;
 
@@ -213,9 +213,9 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	 */
 	if (!UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_inc_uint(&vmpage_onqueue);
-		mutex_enter(&uvm_pageqlock);
+		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
-		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&vmpage_lruqueue_lock);
 	}
 
 	uobj->uo_npages++;
@@ -233,7 +233,6 @@ uvm_pagefree(struct vm_page *pg)
 {
 	struct uvm_object *uobj = pg->uobject;
 
-	KASSERT(mutex_owned(&uvm_pageqlock));
 	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	if (pg->flags & PG_WANTED)
@@ -245,7 +244,9 @@ uvm_pagefree(struct vm_page *pg)
 	rb_tree_remove_node(&uobj->rb_tree, pg);
 
 	if (!UVM_OBJ_IS_AOBJ(uobj)) {
+		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
+		mutex_exit(&vmpage_lruqueue_lock);
 		atomic_dec_uint(&vmpage_onqueue);
 	}
 
@@ -366,7 +367,7 @@ uvm_init(void)
 #endif
 
 	mutex_init(&pagermtx, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&uvm_pageqlock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&vmpage_lruqueue_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&uvm_swap_data_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* just to appease linkage */
@@ -619,10 +620,10 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 
 	pg = rb_tree_find_node(&uobj->rb_tree, &off);
 	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject) && !ispagedaemon) {
-		mutex_enter(&uvm_pageqlock);
+		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
 		TAILQ_INSERT_TAIL(&vmpage_lruqueue, pg, pageq.queue);
-		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&vmpage_lruqueue_lock);
 	}
 
 	return pg;
@@ -1052,7 +1053,7 @@ processpage(struct vm_page *pg, bool *lockrunning)
 	uobj = pg->uobject;
 	if (mutex_tryenter(uobj->vmobjlock)) {
 		if ((pg->flags & PG_BUSY) == 0) {
-			mutex_exit(&uvm_pageqlock);
+			mutex_exit(&vmpage_lruqueue_lock);
 			uobj->pgops->pgo_put(uobj, pg->offset,
 			    pg->offset + PAGE_SIZE,
 			    PGO_CLEANIT|PGO_FREE);
@@ -1130,7 +1131,7 @@ uvm_pageout(void *arg)
 		skip = 0;
 		lockrunning = false;
  again:
-		mutex_enter(&uvm_pageqlock);
+		mutex_enter(&vmpage_lruqueue_lock);
 		while (cleaned < PAGEDAEMON_OBJCHUNK) {
 			skipped = 0;
 			TAILQ_FOREACH(pg, &vmpage_lruqueue, pageq.queue) {
@@ -1153,7 +1154,7 @@ uvm_pageout(void *arg)
 			}
 			break;
 		}
-		mutex_exit(&uvm_pageqlock);
+		mutex_exit(&vmpage_lruqueue_lock);
 
 		/*
 		 * Ok, someone is running with an object lock held.

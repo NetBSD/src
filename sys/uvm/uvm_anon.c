@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.68 2019/12/02 20:02:02 chs Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.69 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.68 2019/12/02 20:02:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.69 2019/12/13 20:10:22 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -95,7 +95,7 @@ uvm_analloc(void)
 }
 
 /*
- * uvm_anon_dispose: break loans and remove pmap mapping
+ * uvm_anon_dispose: free any resident page or swap resources of anon.
  *
  * => anon must be removed from the amap (if anon was in an amap).
  * => amap must be locked; we may drop and re-acquire the lock here.
@@ -134,11 +134,11 @@ uvm_anon_dispose(struct vm_anon *anon)
 		 */
 
 		if (pg->uobject) {
-			mutex_enter(&uvm_pageqlock);
+			mutex_enter(&pg->interlock);
 			KASSERT(pg->loan_count > 0);
 			pg->loan_count--;
 			pg->uanon = NULL;
-			mutex_exit(&uvm_pageqlock);
+			mutex_exit(&pg->interlock);
 			mutex_exit(pg->uobject->vmobjlock);
 		} else {
 
@@ -160,6 +160,10 @@ uvm_anon_dispose(struct vm_anon *anon)
 				mutex_obj_hold(anon->an_lock);
 				return false;
 			}
+			uvm_pagefree(pg);
+			UVMHIST_LOG(maphist, "anon 0x%#jx, page 0x%#jx: "
+			    "freed now!", (uintptr_t)anon, (uintptr_t)pg,
+			    0, 0);
 		}
 	}
 
@@ -171,6 +175,12 @@ uvm_anon_dispose(struct vm_anon *anon)
 	}
 #endif
 
+	/*
+	 * Free any swap resources, leave a page replacement hint.
+	 */
+
+	uvm_anon_dropswap(anon);
+	uvmpdpol_anfree(anon);
 	UVMHIST_LOG(maphist,"<- done!",0,0,0,0);
 	return true;
 }
@@ -184,10 +194,6 @@ void
 uvm_anon_free(struct vm_anon *anon)
 {
 
-#if defined(VMSWAP)
-	/* Free any dangling swap slot. */
-	uvm_anon_dropswap(anon);
-#endif
 	KASSERT(anon->an_ref == 0);
 	KASSERT(anon->an_lock == NULL);
 	KASSERT(anon->an_page == NULL);
@@ -205,54 +211,22 @@ uvm_anon_free(struct vm_anon *anon)
 void
 uvm_anon_freelst(struct vm_amap *amap, struct vm_anon *anonlst)
 {
-	struct vm_anon *anon;
-	struct vm_anon **anonp = &anonlst;
-	struct vm_page *pg;
+	struct vm_anon *next;
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
 	KASSERT(mutex_owned(amap->am_lock));
 
-	if (anonlst == NULL) {
-		amap_unlock(amap);
-		return;
-	}
-
-	/* Break loans and hardware mappings.  Defer release of busy pages. */
-	while ((anon = *anonp) != NULL) {
-		if (!uvm_anon_dispose(anon)) {
-			/* Do not free this anon. */
-			*anonp = anon->an_link;
-			/* Note: clears an_ref as well. */
-			anon->an_link = NULL;
-		} else {
-			anonp = &anon->an_link;
-		}
-	}
-
-	/* Free pages and leave a page replacement hint. */
-	mutex_enter(&uvm_pageqlock);
-	for (anon = anonlst; anon != NULL; anon = anon->an_link) {
-		UVMHIST_LOG(maphist, "anon 0x%#jx, page 0x%#jx: "
-		    "releasing now!", (uintptr_t)anon,
-		    (uintptr_t)anon->an_page, 0, 0);
-		if ((pg = anon->an_page) != NULL) {
-			uvm_pagefree(pg);
-		}
-		uvmpdpol_anfree(anon);
-	}
-	mutex_exit(&uvm_pageqlock);
-	amap_unlock(amap);
-
-	/* Free swap space, pages and vm_anon. */
-	while (anonlst) {
-		anon = anonlst->an_link;
+	for (; anonlst != NULL; anonlst = next) {
+		next = anonlst->an_link;
 		/* Note: clears an_ref as well. */
 		anonlst->an_link = NULL;
-		anonlst->an_lock = NULL;
-		uvm_anon_free(anonlst);
-		anonlst = anon;
+		if (uvm_anon_dispose(anonlst)) {
+			anonlst->an_lock = NULL;
+			uvm_anon_free(anonlst);
+		}
 	}
+	amap_unlock(amap);
 }
 
 /*
@@ -276,7 +250,6 @@ struct vm_page *
 uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
-	bool locked = false;
 
 	KASSERT(mutex_owned(anon->an_lock));
 
@@ -290,37 +263,21 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 	 */
 
 	while (((pg = anon->an_page) != NULL) && pg->loan_count != 0) {
-
-		/*
-		 * quickly check to see if the page has an object before
-		 * bothering to lock the page queues.   this may also produce
-		 * a false positive result, but that's ok because we do a real
-		 * check after that.
-		 */
-
+		mutex_enter(&pg->interlock);
 		if (pg->uobject) {
-			mutex_enter(&uvm_pageqlock);
-			if (pg->uobject) {
-				locked =
-				    mutex_tryenter(pg->uobject->vmobjlock);
-			} else {
-				/* object disowned before we got PQ lock */
-				locked = true;
-			}
-			mutex_exit(&uvm_pageqlock);
-
 			/*
 			 * if we didn't get a lock (try lock failed), then we
 			 * toggle our anon lock and try again
 			 */
 
-			if (!locked) {
+			if (!mutex_tryenter(pg->uobject->vmobjlock)) {
 				/*
 				 * someone locking the object has a chance to
 				 * lock us right now
 				 * 
 				 * XXX Better than yielding but inadequate.
 				 */
+				mutex_exit(&pg->interlock);
 				kpause("livelock", false, 1, anon->an_lock);
 				continue;
 			}
@@ -331,12 +288,11 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 		 * then we have to take the ownership.
 		 */
 
-		if (pg->uobject == NULL && (pg->pqflags & PQ_ANON) == 0) {
-			mutex_enter(&uvm_pageqlock);
-			pg->pqflags |= PQ_ANON;
+		if (pg->uobject == NULL && (pg->flags & PG_ANON) == 0) {
+			pg->flags |= PG_ANON;
 			pg->loan_count--;
-			mutex_exit(&uvm_pageqlock);
 		}
+		mutex_exit(&pg->interlock);
 		break;
 	}
 	return pg;
@@ -396,12 +352,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	 * Deactivate the page (to put it on a page queue).
 	 */
 
-	mutex_enter(&uvm_pageqlock);
-	if (pg->wire_count == 0) {
-		uvm_pagedeactivate(pg);
-	}
-	mutex_exit(&uvm_pageqlock);
-
+	uvm_pagedeactivate(pg);
 	if (pg->flags & PG_WANTED) {
 		pg->flags &= ~PG_WANTED;
 		wakeup(pg);
@@ -457,9 +408,7 @@ uvm_anon_release(struct vm_anon *anon)
 	KASSERT(pg->loan_count == 0);
 	KASSERT(anon->an_ref == 0);
 
-	mutex_enter(&uvm_pageqlock);
 	uvm_pagefree(pg);
-	mutex_exit(&uvm_pageqlock);
 	KASSERT(anon->an_page == NULL);
 	/* dispose should succeed as no one can reach this anon anymore. */
 	success = uvm_anon_dispose(anon);

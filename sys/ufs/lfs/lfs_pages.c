@@ -1,7 +1,7 @@
-/*	$NetBSD: lfs_pages.c,v 1.15 2017/08/19 14:22:49 maya Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.16 2019/12/13 20:10:22 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.15 2017/08/19 14:22:49 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.16 2019/12/13 20:10:22 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -375,9 +375,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 					 * Wire the page so that
 					 * pdaemon doesn't see it again.
 					 */
-					mutex_enter(&uvm_pageqlock);
 					uvm_pagewire(pg);
-					mutex_exit(&uvm_pageqlock);
 
 					/* Suspended write flag */
 					pg->flags |= PG_DELWRI;
@@ -539,9 +537,7 @@ retry:
 						    "lfsput2", 0);
 				mutex_enter(vp->v_interlock);
 			}
-			mutex_enter(&uvm_pageqlock);
 			uvm_pageactivate(pg);
-			mutex_exit(&uvm_pageqlock);
 		}
 		ap->a_offlo = blkeof;
 		if (ap->a_offhi > 0 && ap->a_offhi <= ap->a_offlo) {
@@ -817,7 +813,6 @@ retry:
 		}
 	
 		busypg = NULL;
-		KASSERT(!mutex_owned(&uvm_pageqlock));
 		oreclaim = (ap->a_flags & PGO_RECLAIM);
 		ap->a_flags &= ~PGO_RECLAIM;
 		error = genfs_do_putpages(vp, startoffset, endoffset,

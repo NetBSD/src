@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.366 2019/11/01 13:04:22 rin Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.367 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.366 2019/11/01 13:04:22 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.367 2019/12/13 20:10:22 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3944,15 +3944,12 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 				 * at all in these cases.
 				 */
 
-				mutex_enter(&uvm_pageqlock);
 				if (pg->loan_count != 0 ||
 				    pg->wire_count != 0) {
-					mutex_exit(&uvm_pageqlock);
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
 				uvm_pagedeactivate(pg);
-				mutex_exit(&uvm_pageqlock);
 				continue;
 
 			case PGO_FREE:

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy.h,v 1.3 2007/02/21 23:00:14 thorpej Exp $	*/
+/*	$NetBSD: uvm_pdpolicy.h,v 1.4 2019/12/13 20:10:22 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -51,7 +51,7 @@ void uvmpdpol_anfree(struct vm_anon *);
 
 void uvmpdpol_tune(void);
 void uvmpdpol_scaninit(void);
-struct vm_page *uvmpdpol_selectvictim(void);
+struct vm_page *uvmpdpol_selectvictim(kmutex_t **lock);
 void uvmpdpol_balancequeue(int);
 
 void uvmpdpol_sysctlsetup(void);

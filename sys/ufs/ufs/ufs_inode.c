@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.105 2018/12/10 20:48:34 jdolecek Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.106 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.105 2018/12/10 20:48:34 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.106 2019/12/13 20:10:22 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -270,7 +270,6 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 
 	GOP_SIZE(vp, off + len, &eob, 0);
 	mutex_enter(uobj->vmobjlock);
-	mutex_enter(&uvm_pageqlock);
 	for (i = 0; i < npages; i++) {
 		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
 		if (!error) {
@@ -282,7 +281,6 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		}
 		uvm_pageactivate(pgs[i]);
 	}
-	mutex_exit(&uvm_pageqlock);
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(uobj->vmobjlock);
 

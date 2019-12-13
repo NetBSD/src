@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.10 2019/09/20 11:09:43 maxv Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.11 2019/12/13 20:10:22 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1087,6 +1087,7 @@ uvm_physseg_init_seg(uvm_physseg_t upm, struct vm_page *pgs)
 	psize_t n;
 	paddr_t paddr;
 	struct uvm_physseg *seg;
+	struct vm_page *pg;
 
 	KASSERT(upm != UVM_PHYSSEG_TYPE_INVALID && pgs != NULL);
 
@@ -1107,10 +1108,11 @@ uvm_physseg_init_seg(uvm_physseg_t upm, struct vm_page *pgs)
 		if (atop(paddr) >= seg->avail_start &&
 		    atop(paddr) < seg->avail_end) {
 			uvmexp.npages++;
-			mutex_enter(&uvm_pageqlock);
 			/* add page to free pool */
-			uvm_pagefree(&seg->pgs[i]);
-			mutex_exit(&uvm_pageqlock);
+			pg = &seg->pgs[i];
+			/* Disable LOCKDEBUG: too many and too early. */
+			mutex_init(&pg->interlock, MUTEX_NODEBUG, IPL_NONE);
+			uvm_pagefree(pg);
 		}
 	}
 }
