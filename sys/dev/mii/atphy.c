@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.26 2019/11/27 10:19:20 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.27 2019/12/13 08:30:26 msaitoh Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.26 2019/11/27 10:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.27 2019/12/13 08:30:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ CFATTACH_DECL_NEW(atphy, sizeof(struct atphy_softc),
 	atphy_match, atphy_attach, mii_phy_detach, mii_phy_activate);
 
 const struct mii_phy_funcs atphy_funcs = {
-        atphy_service, atphy_status, atphy_reset,
+	atphy_service, atphy_status, atphy_reset,
 };
 
 static const struct mii_phydesc atphys[] = {
@@ -192,8 +192,10 @@ atphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_flags = ma->mii_flags;
 	sc->mii_flags |= MIIF_NOLOOP;
 
-	prop_dictionary_get_bool(parent_prop, "tx_internal_delay", &asc->rgmii_tx_internal_delay);
-	prop_dictionary_get_bool(parent_prop, "rx_internal_delay", &asc->rgmii_rx_internal_delay);
+	prop_dictionary_get_bool(parent_prop, "tx_internal_delay",
+	    &asc->rgmii_tx_internal_delay);
+	prop_dictionary_get_bool(parent_prop, "rx_internal_delay",
+	    &asc->rgmii_rx_internal_delay);
 
 	prop_dictionary_get_uint32(prop, "clk_25m", &asc->mii_clk_25m);
 	if (asc->mii_clk_25m != 0)
