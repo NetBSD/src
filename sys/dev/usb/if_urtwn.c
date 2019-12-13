@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.77 2019/12/01 21:02:09 mlelstv Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.78 2019/12/13 14:10:32 maxv Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.77 2019/12/01 21:02:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.78 2019/12/13 14:10:32 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -868,7 +868,6 @@ urtwn_task(void *arg)
 		}
 
 		if (urtwn_tx_beacon(sc, m, ic->ic_bss) != 0) {
-			m_freem(m);
 			aprint_error_dev(sc->sc_dev, "could not send beacon");
 		}
 
