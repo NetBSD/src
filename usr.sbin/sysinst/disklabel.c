@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.21 2019/12/12 20:14:21 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.22 2019/12/13 21:46:59 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -277,6 +277,12 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 		 */
 		for (int part = 0; part < parts->l.d_npartitions; part++) {
 			if (parts->l.d_partitions[part].p_fstype == FS_UNUSED)
+				continue;
+			if (part == 0 &&
+			    parts->l.d_partitions[part].p_offset ==
+			     parts->l.d_partitions[RAW_PART].p_offset &&
+			    parts->l.d_partitions[part].p_size ==
+			     parts->l.d_partitions[RAW_PART].p_size)
 				continue;
 			if (part == RAW_PART)
 				continue;
