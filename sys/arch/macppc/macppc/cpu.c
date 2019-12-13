@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $	*/
+/*	$NetBSD: cpu.c,v 1.68 2019/12/13 23:01:41 macallan Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.68 2019/12/13 23:01:41 macallan Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.67 2018/05/17 19:08:51 macallan Exp $");
 #include <sys/device.h>
 #include <sys/types.h>
 #include <sys/lwp.h>
+#include <sys/cpu.h>
 
 #include <dev/ofw/openfirm.h>
 #include <powerpc/oea/hid.h>
@@ -159,11 +160,22 @@ cpuattach(device_t parent, device_t self, void *aux)
 {
 	struct cpu_info *ci;
 	struct confargs *ca = aux;
-	int id = ca->ca_reg[0];
+	int id = ca->ca_reg[0], vers, package, core;
 
 	ci = cpu_attach_common(self, id);
 	if (ci == NULL)
 		return;
+
+	package = id;
+	core = 0;
+
+	vers = (mfpvr() >> 16) & 0xffff;
+	
+	if (vers == IBM970MP) {
+		core = package & 1;
+		package >>= 1;
+	}
+	cpu_topology_set(ci, package, core, 0);
 
 	if (ci->ci_khz == 0) {
 		cpu_OFgetspeed(self, ci);
