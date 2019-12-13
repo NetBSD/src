@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_hook.c,v 1.3 2019/12/13 08:01:26 skrll Exp $ */
+/*	$NetBSD: kern_module_hook.c,v 1.4 2019/12/13 08:02:53 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_hook.c,v 1.3 2019/12/13 08:01:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_hook.c,v 1.4 2019/12/13 08:02:53 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -51,12 +51,12 @@ static struct {
 	pserialize_t	psz;
 } module_hook __cacheline_aligned;
 
-/* 
+/*
  * We use pserialize_perform() to issue a memory barrier on the current
- * CPU and on all other CPUs so that all prior memory operations on the  
- * current CPU globally happen before all subsequent memory operations 
+ * CPU and on all other CPUs so that all prior memory operations on the
+ * current CPU globally happen before all subsequent memory operations
  * on the current CPU, as perceived by any other CPU.
- * 
+ *
  * pserialize_perform() might be rather heavy-weight here, but it only
  * happens during module loading, and it allows MODULE_HOOK_CALL() to
  * work without any other memory barriers.
