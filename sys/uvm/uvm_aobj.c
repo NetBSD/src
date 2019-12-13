@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.130 2019/12/01 20:31:40 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.131 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.130 2019/12/01 20:31:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.131 2019/12/13 20:10:22 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -612,26 +612,19 @@ uao_detach(struct uvm_object *uobj)
 	 * involved in is complete), release any swap resources and free
 	 * the page itself.
 	 */
-
 	mutex_enter(uobj->vmobjlock);
-	TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
-		pmap_page_protect(pg, VM_PROT_NONE);
-	}
-	mutex_enter(&uvm_pageqlock);
 	while ((pg = TAILQ_FIRST(&uobj->memq)) != NULL) {
+		pmap_page_protect(pg, VM_PROT_NONE);
 		if (pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
-			mutex_exit(&uvm_pageqlock);
 			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, false,
 			    "uao_det", 0);
 			mutex_enter(uobj->vmobjlock);
-			mutex_enter(&uvm_pageqlock);
 			continue;
 		}
 		uao_dropswap(&aobj->u_obj, pg->offset >> PAGE_SHIFT);
 		uvm_pagefree(pg);
 	}
-	mutex_exit(&uvm_pageqlock);
 
 	/*
 	 * Finally, free the anonymous UVM object itself.
@@ -658,9 +651,6 @@ uao_detach(struct uvm_object *uobj)
  *	we can make a complete pass through the object in one go by starting
  *	at the head and working towards the tail (new pages are put in
  *	front of us).
- * => NOTE: we are allowed to lock the page queues, so the caller
- *	must not be holding the lock on them [e.g. pagedaemon had
- *	better not call us with the queues locked]
  * => we return 0 unless we encountered some sort of I/O error
  *	XXXJRT currently never happens, as we never directly initiate
  *	XXXJRT I/O
@@ -803,12 +793,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		case PGO_CLEANIT|PGO_DEACTIVATE:
 		case PGO_DEACTIVATE:
  deactivate_it:
-			mutex_enter(&uvm_pageqlock);
-			/* skip the page if it's wired */
-			if (pg->wire_count == 0) {
-				uvm_pagedeactivate(pg);
-			}
-			mutex_exit(&uvm_pageqlock);
+			uvm_pagedeactivate(pg);
 			break;
 
 		case PGO_FREE:
@@ -833,9 +818,7 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 			 */
 
 			uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
-			mutex_enter(&uvm_pageqlock);
 			uvm_pagefree(pg);
-			mutex_exit(&uvm_pageqlock);
 			break;
 
 		default:
@@ -921,7 +904,7 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_FAKE);
-					ptmp->pqflags |= PQ_AOBJ;
+					ptmp->flags |= PG_AOBJ;
 					goto gotpage;
 				}
 			}
@@ -1023,12 +1006,7 @@ gotpage:
 					continue;
 				}
 
-				/*
-				 * safe with PQ's unlocked: because we just
-				 * alloc'd the page
-				 */
-
-				ptmp->pqflags |= PQ_AOBJ;
+				ptmp->flags |= PG_AOBJ;
 
 				/*
 				 * got new page ready for I/O.  break pps while
@@ -1128,9 +1106,7 @@ gotpage:
 					uvm_swap_markbad(swslot, 1);
 				}
 
-				mutex_enter(&uvm_pageqlock);
 				uvm_pagefree(ptmp);
-				mutex_exit(&uvm_pageqlock);
 				mutex_exit(uobj->vmobjlock);
 				return error;
 			}
@@ -1380,10 +1356,7 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	/*
 	 * make sure it's on a page queue.
 	 */
-	mutex_enter(&uvm_pageqlock);
-	if (pg->wire_count == 0)
-		uvm_pageenqueue(pg);
-	mutex_exit(&uvm_pageqlock);
+	uvm_pageenqueue(pg);
 
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
