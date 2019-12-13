@@ -1,4 +1,4 @@
-/*	$NetBSD: stdio.h,v 1.97 2016/03/17 00:42:49 christos Exp $	*/
+/*	$NetBSD: stdio.h,v 1.98 2019/12/13 20:25:16 mrg Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -193,7 +193,7 @@ __END_DECLS
 
 /* System V/ANSI C; this is the wrong way to do this, do *not* use these. */
 #if defined(_XOPEN_SOURCE) || defined(_NETBSD_SOURCE)
-#define	P_tmpdir	"/var/tmp/"
+#define	P_tmpdir	"/tmp/"
 #endif
 #define	L_tmpnam	1024	/* XXX must be == PATH_MAX */
 /* Always ensure that this is consistent with <limits.h> */
