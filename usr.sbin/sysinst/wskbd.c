@@ -1,4 +1,4 @@
-/*	$NetBSD: wskbd.c,v 1.3 2019/06/22 20:46:07 christos Exp $	*/
+/*	$NetBSD: wskbd.c,v 1.4 2019/12/13 12:05:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: wskbd.c,v 1.3 2019/06/22 20:46:07 christos Exp $");
+__RCSID("$NetBSD: wskbd.c,v 1.4 2019/12/13 12:05:11 martin Exp $");
 
 #include <unistd.h>
 #include <stdlib.h>
@@ -92,6 +92,13 @@ get_kb_encoding(void)
 	kbd_t kbdencoding;
 	menu_ent opt[__arraycount(kb_types)];
 	const char *dflt = msg_string(MSG_kb_default);
+
+	/*
+	 * Check if we are running on a wscons keyboard at all,
+	 * do not bother to try changing the layout if not.
+	 */
+	if (ioctl(0, WSKBDIO_GTYPE,  &i) == -1)
+		return;
 
 	memset(opt, 0, sizeof(opt));
 	fd = open("/dev/wskbd0", O_WRONLY);
