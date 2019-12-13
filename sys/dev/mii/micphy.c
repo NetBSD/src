@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.10 2019/11/27 10:19:20 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.11 2019/12/13 08:30:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.10 2019/11/27 10:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.11 2019/12/13 08:30:26 msaitoh Exp $");
 
 #include "opt_mii.h"
 
@@ -113,7 +113,7 @@ static const struct mii_phydesc micphys[] = {
 };
 
 /*
- * Model Rev. Media  LSTYPE Devices	   
+ * Model Rev. Media  LSTYPE Devices
  *
  * 0x11	      100    1F_42  KSZ8041
  * 0x13	      100    1F_42? KSZ8041RNLI
@@ -129,10 +129,10 @@ static const struct mii_phydesc micphys[] = {
  * 	 0x9  100    none?  KSZ8721CL
  * 	 0xa  100    1F_42  KSZ8001
  * 0x22	      giga   GIGA   KSZ9031
- * 0x23	   1? gigasw GIGA   KSZ9477 (No master/slave bit) 
+ * 0x23	   1? gigasw GIGA   KSZ9477 (No master/slave bit)
  * 	   5? giga   GIGA   LAN7430internal
- * 0x24	      giga   GIGA   KSZ9131	   
- * 0x32	      100    1F_42  KS8737	   
+ * 0x24	      giga   GIGA   KSZ9131
+ * 0x32	      100    1F_42  KS8737
  */
 
 /* Type of link status register */
