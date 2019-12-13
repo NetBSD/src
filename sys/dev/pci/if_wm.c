@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.657 2019/12/12 11:47:30 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.658 2019/12/13 02:03:46 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.657 2019/12/12 11:47:30 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.658 2019/12/13 02:03:46 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1185,23 +1185,23 @@ static const struct wm_product {
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571GB_QUAD_COPPER,
 	  "Intel PRO/1000 PT Quad Port Server Adapter",
-	  WM_T_82571,		WMP_F_COPPER, },
+	  WM_T_82571,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571PT_QUAD_COPPER,
 	  "Intel Gigabit PT Quad Port Server ExpressModule",
-	  WM_T_82571,		WMP_F_COPPER, },
+	  WM_T_82571,		WMP_F_COPPER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_DUAL_SERDES,
 	  "Intel 82571EB Dual Gigabit Ethernet (SERDES)",
-	  WM_T_82571,		WMP_F_SERDES, },
+	  WM_T_82571,		WMP_F_SERDES },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_SERDES,
 	  "Intel 82571EB Quad Gigabit Ethernet (SERDES)",
-	  WM_T_82571,		WMP_F_SERDES, },
+	  WM_T_82571,		WMP_F_SERDES },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82571EB_QUAD_FIBER,
 	  "Intel 82571EB Quad 1000baseX Ethernet",
-	  WM_T_82571,		WMP_F_FIBER, },
+	  WM_T_82571,		WMP_F_FIBER },
 
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_82572EI_COPPER,
 	  "Intel i82572EI 1000baseT Ethernet",
@@ -8324,7 +8324,7 @@ retry:
 			    htole64(dmamap->dm_segs[0].ds_addr);
 			KASSERT((dmamap->dm_segs[0].ds_len & cmdlen) == 0);
 			txq->txq_nq_descs[nexttx].nqtx_data.nqtxd_cmdlen =
-			    htole32(dmamap->dm_segs[0].ds_len | cmdlen );
+			    htole32(dmamap->dm_segs[0].ds_len | cmdlen);
 			txq->txq_nq_descs[nexttx].nqtx_data.nqtxd_fields =
 			    htole32(fields);
 			DPRINTF(WM_DEBUG_TX,
@@ -10091,7 +10091,7 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 			    && (sc->sc_phytype != new_phytype)) {
 				aprint_error_dev(dev, "Previously assumed PHY "
 				    "type(%u) was incorrect. PHY type from PHY"
-				     "ID = %u\n", sc->sc_phytype, new_phytype);
+				    "ID = %u\n", sc->sc_phytype, new_phytype);
 			}
 		}
 	}
@@ -10167,7 +10167,7 @@ wm_gmii_setup_phytype(struct wm_softc *sc, uint32_t phy_oui,
 			    "incorrect. old = %u, new = %u\n", sc->sc_phytype,
 			    new_phytype);
 		else if ((sc->sc_phytype != WMPHY_UNKNOWN)
-		    && (sc->sc_phytype != new_phytype ))
+		    && (sc->sc_phytype != new_phytype))
 			aprint_error_dev(dev, "Previously assumed PHY type(%u)"
 			    "was incorrect. New PHY type = %u\n",
 			    sc->sc_phytype, new_phytype);
@@ -10447,7 +10447,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 	if ((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211))
 		wm_serdes_mediachange(ifp);
 
-	if (sc->sc_type <= WM_T_82543) 
+	if (sc->sc_type <= WM_T_82543)
 		wm_gmii_reset(sc);
 	else if ((sc->sc_type >= WM_T_82575) && (sc->sc_type <= WM_T_I211)
 	    && ((sc->sc_flags & WM_F_SGMII) != 0)) {
@@ -10455,7 +10455,7 @@ wm_gmii_mediachange(struct ifnet *ifp)
 		delay(300 * 1000);
 		wm_gmii_reset(sc);
 	}
-		
+
 	if ((rc = mii_mediachg(&sc->sc_mii)) == ENXIO)
 		return 0;
 	return rc;
