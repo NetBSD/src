@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.211 2019/12/01 14:30:01 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.212 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.211 2019/12/01 14:30:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.212 2019/12/13 20:10:22 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -191,19 +191,15 @@ uvmfault_anonflush(struct vm_anon **anons, int n)
 	int lcv;
 	struct vm_page *pg;
 
-	mutex_enter(&uvm_pageqlock);
 	for (lcv = 0; lcv < n; lcv++) {
 		if (anons[lcv] == NULL)
 			continue;
 		KASSERT(mutex_owned(anons[lcv]->an_lock));
 		pg = anons[lcv]->an_page;
 		if (pg && (pg->flags & PG_BUSY) == 0) {
-			if (pg->wire_count == 0) {
-				uvm_pagedeactivate(pg);
-			}
+			uvm_pagedeactivate(pg);
 		}
 	}
-	mutex_exit(&uvm_pageqlock);
 }
 
 /*
@@ -453,9 +449,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				 * pmap_page_protect() it.
 				 */
 
-				mutex_enter(&uvm_pageqlock);
 				uvm_pagefree(pg);
-				mutex_exit(&uvm_pageqlock);
 
 				if (locked) {
 					uvmfault_unlockall(ufi, NULL, NULL);
@@ -492,9 +486,7 @@ released:
 			 * We have successfully read the page, activate it.
 			 */
 
-			mutex_enter(&uvm_pageqlock);
 			uvm_pageactivate(pg);
-			mutex_exit(&uvm_pageqlock);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
 #else
@@ -1272,9 +1264,7 @@ uvm_fault_upper_neighbor(
 
 	/* locked: amap, anon */
 
-	mutex_enter(&uvm_pageqlock);
 	uvm_pageenqueue(pg);
-	mutex_exit(&uvm_pageqlock);
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n anon: pm=%#jx, va=%#jx, pg=%#jx",
 	    (uintptr_t)ufi->orig_map->pmap, currva, (uintptr_t)pg, 0);
@@ -1492,9 +1482,8 @@ uvm_fault_upper_promote(
 	KASSERT(anon == NULL || anon->an_lock == oanon->an_lock);
 
 	pg = anon->an_page;
-	mutex_enter(&uvm_pageqlock);
-	uvm_pageenqueue(pg); /* uvm_fault_upper_done will activate the page */
-	mutex_exit(&uvm_pageqlock);
+	/* uvm_fault_upper_done will activate the page */
+	uvm_pageenqueue(pg);
 	pg->flags &= ~(PG_BUSY|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
 
@@ -1627,7 +1616,6 @@ uvm_fault_upper_done(
 	 * ... update the page queues.
 	 */
 
-	mutex_enter(&uvm_pageqlock);
 	if (wire_paging) {
 		uvm_pagewire(pg);
 
@@ -1639,11 +1627,9 @@ uvm_fault_upper_done(
 		 */
 
 		pg->flags &= ~(PG_CLEAN);
-
 	} else {
 		uvm_pageactivate(pg);
 	}
-	mutex_exit(&uvm_pageqlock);
 
 	if (wire_paging) {
 		uvm_anon_dropswap(anon);
@@ -1863,9 +1849,7 @@ uvm_fault_lower_neighbor(
 	 * for this.  we can just directly enter the pages.
 	 */
 
-	mutex_enter(&uvm_pageqlock);
 	uvm_pageenqueue(pg);
-	mutex_exit(&uvm_pageqlock);
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n obj: pm=%#jx, va=%#jx, pg=%#jx",
 	    (uintptr_t)ufi->orig_map->pmap, currva, (uintptr_t)pg, 0);
@@ -1984,9 +1968,7 @@ uvm_fault_lower_io(
 	mutex_enter(uobj->vmobjlock);
 	KASSERT((pg->flags & PG_BUSY) != 0);
 
-	mutex_enter(&uvm_pageqlock);
 	uvm_pageactivate(pg);
-	mutex_exit(&uvm_pageqlock);
 
 	/* locked(locked): maps(read), amap(if !null), uobj, pg */
 	/* locked(!locked): uobj, pg */
@@ -2288,9 +2270,7 @@ uvm_fault_lower_enter(
 		 * we just promoted the page.
 		 */
 
-		mutex_enter(&uvm_pageqlock);
 		uvm_pageenqueue(pg);
-		mutex_exit(&uvm_pageqlock);
 
 		if (pg->flags & PG_WANTED)
 			wakeup(pg);
@@ -2349,10 +2329,9 @@ uvm_fault_lower_done(
 
 	UVMHIST_FUNC("uvm_fault_lower_done"); UVMHIST_CALLED(maphist);
 
-	mutex_enter(&uvm_pageqlock);
 	if (flt->wire_paging) {
 		uvm_pagewire(pg);
-		if (pg->pqflags & PQ_AOBJ) {
+		if (pg->flags & PG_AOBJ) {
 
 			/*
 			 * since the now-wired page cannot be paged out,
@@ -2368,7 +2347,6 @@ uvm_fault_lower_done(
 	} else {
 		uvm_pageactivate(pg);
 	}
-	mutex_exit(&uvm_pageqlock);
 
 	if (dropswap) {
 		uao_dropswap(uobj, pg->offset >> PAGE_SHIFT);
@@ -2481,11 +2459,9 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 
 		if (entry != oentry) {
 			if (oentry != NULL) {
-				mutex_exit(&uvm_pageqlock);
 				uvm_map_unlock_entry(oentry);
 			}
 			uvm_map_lock_entry(entry);
-			mutex_enter(&uvm_pageqlock);
 			oentry = entry;
 		}
 
@@ -2505,7 +2481,6 @@ uvm_fault_unwire_locked(struct vm_map *map, vaddr_t start, vaddr_t end)
 	}
 
 	if (oentry != NULL) {
-		mutex_exit(&uvm_pageqlock);
 		uvm_map_unlock_entry(entry);
 	}
 }

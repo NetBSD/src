@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.17 2012/01/30 17:21:52 para Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.18 2019/12/13 20:10:22 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.17 2012/01/30 17:21:52 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.18 2019/12/13 20:10:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -79,18 +79,23 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.17 2012/01/30 17:21:52 para
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_pdpolicy_impl.h>
+#include <uvm/uvm_stat.h>
 
 #endif /* defined(PDSIM) */
 
-#define PQ_INACTIVE	PQ_PRIVATE1	/* page is in inactive list */
-#define PQ_ACTIVE	PQ_PRIVATE2	/* page is in active list */
+#define	PQ_TIME		0x3fffffff	/* time of last activation */
+#define PQ_INACTIVE	0x40000000	/* page is in inactive list */
+#define PQ_ACTIVE	0x80000000	/* page is in active list */
 
 #if !defined(CLOCK_INACTIVEPCT)
 #define	CLOCK_INACTIVEPCT	33
 #endif /* !defined(CLOCK_INACTIVEPCT) */
 
 struct uvmpdpol_globalstate {
-	struct pglist s_activeq;	/* allocated pages, in use */
+	kmutex_t lock;			/* lock on state */
+					/* <= compiler pads here */
+	struct pglist s_activeq		/* allocated pages, in use */
+	    __aligned(COHERENCY_UNIT);
 	struct pglist s_inactiveq;	/* pages between the clock hands */
 	int s_active;
 	int s_inactive;
@@ -110,7 +115,11 @@ struct uvmpdpol_scanstate {
 	struct vm_page *ss_nextpg;
 };
 
-static struct uvmpdpol_globalstate pdpol_state;
+static void	uvmpdpol_pageactivate_locked(struct vm_page *);
+static void	uvmpdpol_pagedeactivate_locked(struct vm_page *);
+static void	uvmpdpol_pagedequeue_locked(struct vm_page *);
+
+static struct uvmpdpol_globalstate pdpol_state __cacheline_aligned;
 static struct uvmpdpol_scanstate pdpol_scanstate;
 
 PDPOL_EVCNT_DEFINE(reactexec)
@@ -144,6 +153,7 @@ uvmpdpol_scaninit(void)
 	 * to keep usage within the minimum and maximum usage limits.
 	 */
 
+	mutex_enter(&s->lock);
 	t = s->s_active + s->s_inactive + uvmexp.free;
 	anonunder = uvmexp.anonpages <= UVM_PCTPARAM_APPLY(&s->s_anonmin, t);
 	fileunder = uvmexp.filepages <= UVM_PCTPARAM_APPLY(&s->s_filemin, t);
@@ -162,17 +172,18 @@ uvmpdpol_scaninit(void)
 	ss->ss_execreact = execreact;
 
 	ss->ss_first = true;
+	mutex_exit(&s->lock);
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(void)
+uvmpdpol_selectvictim(kmutex_t **plock)
 {
+	struct uvmpdpol_globalstate *s = &pdpol_state;
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	struct vm_page *pg;
 	kmutex_t *lock;
 
-	KASSERT(mutex_owned(&uvm_pageqlock));
-
+	mutex_enter(&s->lock);
 	while (/* CONSTCOND */ 1) {
 		struct vm_anon *anon;
 		struct uvm_object *uobj;
@@ -190,27 +201,23 @@ uvmpdpol_selectvictim(void)
 			break;
 		}
 		ss->ss_nextpg = TAILQ_NEXT(pg, pageq.queue);
+		KASSERT(pg->wire_count == 0);
 
 		uvmexp.pdscans++;
 
 		/*
-		 * move referenced pages back to active queue and
-		 * skip to next page.
+		 * acquire interlock to stablize page identity.
+		 * if we have caught the page in a state of flux
+		 * and it should be dequeued, do it now and then
+		 * move on to the next.
 		 */
-
-		lock = uvmpd_trylockowner(pg);
-		if (lock != NULL) {
-			if (pmap_is_referenced(pg)) {
-				uvmpdpol_pageactivate(pg);
-				uvmexp.pdreact++;
-				mutex_exit(lock);
-				continue;
-			}
-			mutex_exit(lock);
+		mutex_enter(&pg->interlock);
+	        if ((pg->uobject == NULL && pg->uanon == NULL) ||
+	            pg->wire_count > 0) {
+	            	mutex_exit(&pg->interlock);
+	            	uvmpdpol_pagedequeue_locked(pg);
+	            	continue;
 		}
-
-		anon = pg->uanon;
-		uobj = pg->uobject;
 
 		/*
 		 * enforce the minimum thresholds on different
@@ -219,33 +226,74 @@ uvmpdpol_selectvictim(void)
 		 * minimum, reactivate the page instead and move
 		 * on to the next page.
 		 */
-
+		anon = pg->uanon;
+		uobj = pg->uobject;
 		if (uobj && UVM_OBJ_IS_VTEXT(uobj) && ss->ss_execreact) {
-			uvmpdpol_pageactivate(pg);
+			mutex_exit(&pg->interlock);
+			uvmpdpol_pageactivate_locked(pg);
 			PDPOL_EVCNT_INCR(reactexec);
 			continue;
 		}
 		if (uobj && UVM_OBJ_IS_VNODE(uobj) &&
 		    !UVM_OBJ_IS_VTEXT(uobj) && ss->ss_filereact) {
-			uvmpdpol_pageactivate(pg);
+			mutex_exit(&pg->interlock);
+			uvmpdpol_pageactivate_locked(pg);
 			PDPOL_EVCNT_INCR(reactfile);
 			continue;
 		}
 		if ((anon || UVM_OBJ_IS_AOBJ(uobj)) && ss->ss_anonreact) {
-			uvmpdpol_pageactivate(pg);
+			mutex_exit(&pg->interlock);
+			uvmpdpol_pageactivate_locked(pg);
 			PDPOL_EVCNT_INCR(reactanon);
 			continue;
 		}
 
+		/*
+		 * try to lock the object that owns the page.
+		 *
+		 * with the page interlock held, we can drop s->lock, which
+		 * could otherwise serve as a barrier to us getting the
+		 * object locked, because the owner of the object's lock may
+		 * be blocked on s->lock (i.e. a deadlock).
+		 *
+		 * whatever happens, uvmpd_trylockowner() will release the
+		 * interlock.  with the interlock dropped we can then
+		 * re-acquire our own lock.  the order is:
+		 *
+		 *	object -> pdpol -> interlock.
+	         */
+	        mutex_exit(&s->lock);
+        	lock = uvmpd_trylockowner(pg);
+        	/* pg->interlock now released */
+        	mutex_enter(&s->lock);
+		if (lock == NULL) {
+			/* didn't get it - try the next page. */
+			continue;
+		}
+
+		/*
+		 * move referenced pages back to active queue and skip to
+		 * next page.
+		 */
+		if (pmap_is_referenced(pg)) {
+			uvmpdpol_pageactivate_locked(pg);
+			uvmexp.pdreact++;
+			mutex_exit(lock);
+			continue;
+		}
+
+		/* we have a potential victim. */
+		*plock = lock;
 		break;
 	}
-
+	mutex_exit(&s->lock);
 	return pg;
 }
 
 void
 uvmpdpol_balancequeue(int swap_shortage)
 {
+	struct uvmpdpol_globalstate *s = &pdpol_state;
 	int inactive_shortage;
 	struct vm_page *p, *nextpg;
 	kmutex_t *lock;
@@ -255,6 +303,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 	 * our inactive target.
 	 */
 
+	mutex_enter(&s->lock);
 	inactive_shortage = pdpol_state.s_inactarg - pdpol_state.s_inactive;
 	for (p = TAILQ_FIRST(&pdpol_state.s_activeq);
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
@@ -265,10 +314,14 @@ uvmpdpol_balancequeue(int swap_shortage)
 		 * if there's a shortage of swap slots, try to free it.
 		 */
 
-		if (swap_shortage > 0 && (p->pqflags & PQ_SWAPBACKED) != 0) {
+		if (swap_shortage > 0 && (p->flags & PG_SWAPBACKED) != 0) {
+			mutex_enter(&p->interlock);
+			mutex_exit(&s->lock);
 			if (uvmpd_trydropswap(p)) {
 				swap_shortage--;
 			}
+			/* p->interlock now released */
+			mutex_enter(&s->lock);
 		}
 
 		/*
@@ -279,27 +332,42 @@ uvmpdpol_balancequeue(int swap_shortage)
 			continue;
 		}
 
-		/* no need to check wire_count as pg is "active" */
+		/*
+		 * acquire interlock to stablize page identity.
+		 * if we have caught the page in a state of flux
+		 * and it should be dequeued, do it now and then
+		 * move on to the next.
+		 */
+		mutex_enter(&p->interlock);
+	        if ((p->uobject == NULL && p->uanon == NULL) ||
+	            p->wire_count > 0) {
+	            	mutex_exit(&p->interlock);
+	            	uvmpdpol_pagedequeue_locked(p);
+	            	continue;
+		}
+		mutex_exit(&s->lock);
 		lock = uvmpd_trylockowner(p);
+		/* p->interlock now released */
+		mutex_enter(&s->lock);
 		if (lock != NULL) {
-			uvmpdpol_pagedeactivate(p);
+			uvmpdpol_pagedeactivate_locked(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
 			mutex_exit(lock);
 		}
 	}
+	mutex_exit(&s->lock);
 }
 
-void
-uvmpdpol_pagedeactivate(struct vm_page *pg)
+static void
+uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
 {
 
 	KASSERT(uvm_page_locked_p(pg));
-	KASSERT(mutex_owned(&uvm_pageqlock));
 
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
-		pg->pqflags &= ~PQ_ACTIVE;
+		pg->pqflags &= ~(PQ_ACTIVE | PQ_TIME);
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
 	}
@@ -313,27 +381,49 @@ uvmpdpol_pagedeactivate(struct vm_page *pg)
 }
 
 void
-uvmpdpol_pageactivate(struct vm_page *pg)
+uvmpdpol_pagedeactivate(struct vm_page *pg)
+{
+	struct uvmpdpol_globalstate *s = &pdpol_state;
+
+	mutex_enter(&s->lock);
+	uvmpdpol_pagedeactivate_locked(pg);
+	mutex_exit(&s->lock);
+}
+
+static void
+uvmpdpol_pageactivate_locked(struct vm_page *pg)
 {
 
-	uvmpdpol_pagedequeue(pg);
+	uvmpdpol_pagedequeue_locked(pg);
 	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pageq.queue);
-	pg->pqflags |= PQ_ACTIVE;
+	pg->pqflags = PQ_ACTIVE | (hardclock_ticks & PQ_TIME);
 	pdpol_state.s_active++;
 }
 
 void
-uvmpdpol_pagedequeue(struct vm_page *pg)
+uvmpdpol_pageactivate(struct vm_page *pg)
+{
+	struct uvmpdpol_globalstate *s = &pdpol_state;
+
+	/* Safety: PQ_ACTIVE clear also tells us if it is not enqueued. */
+	if ((pg->pqflags & PQ_ACTIVE) == 0 ||
+	    ((hardclock_ticks & PQ_TIME) - (pg->pqflags & PQ_TIME)) > hz) {
+		mutex_enter(&s->lock);
+		uvmpdpol_pageactivate_locked(pg);
+		mutex_exit(&s->lock);
+	}
+}
+
+static void
+uvmpdpol_pagedequeue_locked(struct vm_page *pg)
 {
 
 	if (pg->pqflags & PQ_ACTIVE) {
-		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
-		pg->pqflags &= ~PQ_ACTIVE;
+		pg->pqflags &= ~(PQ_ACTIVE | PQ_TIME);
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
 	} else if (pg->pqflags & PQ_INACTIVE) {
-		KASSERT(mutex_owned(&uvm_pageqlock));
 		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq.queue);
 		pg->pqflags &= ~PQ_INACTIVE;
 		KASSERT(pdpol_state.s_inactive > 0);
@@ -342,10 +432,23 @@ uvmpdpol_pagedequeue(struct vm_page *pg)
 }
 
 void
+uvmpdpol_pagedequeue(struct vm_page *pg)
+{
+	struct uvmpdpol_globalstate *s = &pdpol_state;
+
+	mutex_enter(&s->lock);
+	uvmpdpol_pagedequeue_locked(pg);
+	mutex_exit(&s->lock);
+}
+
+void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
+	struct uvmpdpol_globalstate *s = &pdpol_state;
 
-	uvmpdpol_pageactivate(pg);
+	mutex_enter(&s->lock);
+	uvmpdpol_pageactivate_locked(pg);
+	mutex_exit(&s->lock);
 }
 
 void
@@ -357,19 +460,23 @@ bool
 uvmpdpol_pageisqueued_p(struct vm_page *pg)
 {
 
+	/* Safe to test unlocked due to page life-cycle. */
 	return (pg->pqflags & (PQ_ACTIVE | PQ_INACTIVE)) != 0;
 }
 
 void
 uvmpdpol_estimatepageable(int *active, int *inactive)
 {
+	struct uvmpdpol_globalstate *s = &pdpol_state;
 
+	mutex_enter(&s->lock);
 	if (active) {
 		*active = pdpol_state.s_active;
 	}
 	if (inactive) {
 		*inactive = pdpol_state.s_inactive;
 	}
+	mutex_exit(&s->lock);
 }
 
 #if !defined(PDSIM)
@@ -400,6 +507,7 @@ uvmpdpol_init(void)
 {
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 
+	mutex_init(&s->lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&s->s_activeq);
 	TAILQ_INIT(&s->s_inactiveq);
 	uvm_pctparam_init(&s->s_inactivepct, CLOCK_INACTIVEPCT, NULL);
@@ -420,14 +528,18 @@ bool
 uvmpdpol_needsscan_p(void)
 {
 
+	/* This must be an unlocked check: can be called from interrupt. */
 	return pdpol_state.s_inactive < pdpol_state.s_inactarg;
 }
 
 void
 uvmpdpol_tune(void)
 {
+	struct uvmpdpol_globalstate *s = &pdpol_state;
 
+	mutex_enter(&s->lock);
 	clock_tune();
+	mutex_exit(&s->lock);
 }
 
 #if !defined(PDSIM)

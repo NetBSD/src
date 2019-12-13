@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.84 2019/01/07 22:48:01 jdolecek Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.85 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -100,13 +100,19 @@
  *
  * f:	free page queue lock, uvm_fpageqlock
  * o:	page owner (uvm_object::vmobjlock, vm_amap::am_lock, vm_anon::an_lock)
- * p:	page queue lock, uvm_pageqlock
- * o,p:	o|p for read, o&p for write
+ * i:	vm_page::interlock
+ *        => flags set and cleared only with o&i held can
+ *           safely be tested for with only o held.
+ * o,i:	o|i for read, o&i for write (depends on context - if could be loaned)
+ *	  => see uvm_loan.c
  * w:	wired page queue or uvm_pglistalloc:
- *	  => wired page queue: o&p to change, stable from wire to unwire
+ *	  => wired page queue: o&i to change, stable from wire to unwire
  *		XXX What about concurrent or nested wire?
  *	  => uvm_pglistalloc: owned by caller
  * ?:	locked by pmap or assumed page owner's lock
+ * p:	locked by pagedaemon policy module (pdpolicy)
+ * c:	cpu private
+ * s:	stable, does not change
  *
  * UVM and pmap(9) may use uvm_page_locked_p() to assert whether the
  * page owner's lock is acquired.
@@ -118,7 +124,7 @@
  *   => listq.list is entry on per-CPU free page queue
  *   => uanon is unused (or (void *)0xdeadbeef for DEBUG)
  *   => uobject is unused (or (void *)0xdeadbeef for DEBUG)
- *   => PQ_FREE is set in pqflags
+ *   => PG_FREE is set in flags
  * o owned by a uvm_object
  *   => pageq.queue is entry on wired page queue, if any
  *   => listq.queue is entry on list of pages in object
@@ -129,7 +135,7 @@
  *   => listq is unused (XXX correct?)
  *   => uanon is owner
  *   => uobject is NULL
- *   => PQ_ANON is set in pqflags
+ *   => PG_ANON is set in flags
  * o allocated by uvm_pglistalloc
  *   => pageq.queue is entry on resulting pglist, owned by caller
  *   => listq is unused (XXX correct?)
@@ -158,14 +164,16 @@ struct vm_page {
 		LIST_ENTRY(vm_page) list;	/* f: CPU free page queue */
 	} listq;
 
-	struct vm_anon		*uanon;		/* o,p: anon */
-	struct uvm_object	*uobject;	/* o,p: object */
-	voff_t			offset;		/* o,p: offset into object */
+	struct vm_anon		*uanon;		/* o,i: anon */
+	struct uvm_object	*uobject;	/* o,i: object */
+	voff_t			offset;		/* o: offset into object */
 	uint16_t		flags;		/* o: object flags */
-	uint16_t		loan_count;	/* o,p: num. active loans */
-	uint16_t		wire_count;	/* p: wired down map refs */
-	uint16_t		pqflags;	/* p: page queue flags */
-	paddr_t			phys_addr;	/* physical address of page */
+	uint16_t		spare;		/*  : spare for now */
+	uint32_t		pqflags;	/* p: pdpolicy queue flags */
+	uint32_t		loan_count;	/* o,i: num. active loans */
+	uint32_t		wire_count;	/* o,i: wired down map refs */
+	paddr_t			phys_addr;	/* o: physical address of pg */
+	kmutex_t		interlock;	/* s: lock on identity */
 
 #ifdef __HAVE_VM_PAGE_MD
 	struct vm_page_md	mdpage;		/* ?: pmap-specific data */
@@ -185,8 +193,10 @@ struct vm_page {
  * Locking notes:
  *
  * PG_, struct vm_page::flags	=> locked by owner
- * PQ_, struct vm_page::pqflags	=> locked by uvm_pageqlock
- * PQ_FREE			=> additionally locked by uvm_fpageqlock
+ * PG_AOBJ			=> additionally locked by vm_page::interlock
+ * PG_ANON			=> additionally locked by vm_page::interlock
+ * PG_FREE			=> additionally locked by uvm_fpageqlock
+ *				   for uvm_pglistalloc()
  *
  * Flag descriptions:
  *
@@ -246,36 +256,20 @@ struct vm_page {
 #define	PG_RELEASED	0x0020
 #define	PG_FAKE		0x0040
 #define	PG_RDONLY	0x0080
-#define	PG_ZERO		0x0100
-#define	PG_MARKER	0x0200
-
-#define PG_PAGER1	0x1000		/* pager-specific flag */
+#define PG_AOBJ		0x0100		/* page is part of an anonymous
+					   uvm_object */
+#define PG_ANON		0x0200		/* page is part of an anon, rather
+					   than an uvm_object */
+#define PG_SWAPBACKED	(PG_ANON|PG_AOBJ)
+#define PG_READAHEAD	0x0400		/* read-ahead but not "hit" yet */
+#define PG_FREE		0x0800		/* page is on free list */
+#define	PG_MARKER	0x1000
+#define PG_PAGER1	0x2000		/* pager-specific flag */
+#define PG_ZERO		0x4000
 
 #define	UVM_PGFLAGBITS \
 	"\20\1BUSY\2WANTED\3TABLED\4CLEAN\5PAGEOUT\6RELEASED\7FAKE\10RDONLY" \
-	"\11ZERO\12MARKER\15PAGER1"
-
-#define PQ_FREE		0x0001		/* page is on free list */
-#define PQ_ANON		0x0002		/* page is part of an anon, rather
-					   than an uvm_object */
-#define PQ_AOBJ		0x0004		/* page is part of an anonymous
-					   uvm_object */
-#define PQ_SWAPBACKED	(PQ_ANON|PQ_AOBJ)
-#define PQ_READAHEAD	0x0008	/* read-ahead but has not been "hit" yet */
-
-#define PQ_PRIVATE1	0x0100
-#define PQ_PRIVATE2	0x0200
-#define PQ_PRIVATE3	0x0400
-#define PQ_PRIVATE4	0x0800
-#define PQ_PRIVATE5	0x1000
-#define PQ_PRIVATE6	0x2000
-#define PQ_PRIVATE7	0x4000
-#define PQ_PRIVATE8	0x8000
-
-#define	UVM_PQFLAGBITS \
-	"\20\1FREE\2ANON\3AOBJ\4READAHEAD" \
-	"\11PRIVATE1\12PRIVATE2\13PRIVATE3\14PRIVATE4" \
-	"\15PRIVATE5\16PRIVATE6\17PRIVATE7\20PRIVATE8"
+	"\11AOBJ\12AOBJ\13READAHEAD\14FREE\15MARKER\16PAGER1\17ZERO"
 
 /*
  * physical memory layout structure
@@ -362,7 +356,7 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
 
 #define	PHYS_TO_VM_PAGE(pa)	uvm_phys_to_vm_page(pa)
 
-#define VM_PAGE_IS_FREE(entry)  ((entry)->pqflags & PQ_FREE)
+#define VM_PAGE_IS_FREE(entry)  ((entry)->flags & PG_FREE)
 #define	VM_FREE_PAGE_TO_CPU(pg)	((struct uvm_cpu *)((uintptr_t)pg->offset))
 
 #ifdef DEBUG

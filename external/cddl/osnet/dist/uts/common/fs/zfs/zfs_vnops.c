@@ -6081,9 +6081,7 @@ zfs_putapage(vnode_t *vp, page_t **pp, int count, int flags)
 
 out_unbusy:
 	mutex_enter(mtx);
-	mutex_enter(&uvm_pageqlock);
 	uvm_page_unbusy(pp, count);
-	mutex_exit(&uvm_pageqlock);
 	mutex_exit(mtx);
 
 out:
