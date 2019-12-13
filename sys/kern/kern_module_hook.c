@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module_hook.c,v 1.2 2019/12/13 07:59:36 skrll Exp $ */
+/*	$NetBSD: kern_module_hook.c,v 1.3 2019/12/13 08:01:26 skrll Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module_hook.c,v 1.2 2019/12/13 07:59:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module_hook.c,v 1.3 2019/12/13 08:01:26 skrll Exp $");
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
+#include <sys/condvar.h>
 #include <sys/module_hook.h>
 #include <sys/mutex.h>
-#include <sys/condvar.h>
 #include <sys/pserialize.h>
 
 #include <uvm/uvm_extern.h>
