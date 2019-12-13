@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.343 2019/12/10 02:06:07 manu Exp $	*/
+/*	$NetBSD: machdep.c,v 1.344 2019/12/13 20:14:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.343 2019/12/10 02:06:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.344 2019/12/13 20:14:25 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_multiboot.h"
@@ -865,7 +865,7 @@ sparse_dump_mark(void)
 		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 
-			if (pg->uanon || (pg->pqflags & PQ_FREE) ||
+			if (pg->uanon || (pg->flags & PG_FREE) ||
 			    (pg->uobject && pg->uobject->pgops)) {
 				p = VM_PAGE_TO_PHYS(pg) / PAGE_SIZE;
 				clrbit(sparse_dump_physmap, p);

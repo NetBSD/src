@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.113 2019/12/01 23:14:47 uwe Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.114 2019/12/13 20:10:22 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.113 2019/12/01 23:14:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.114 2019/12/13 20:10:22 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -318,12 +318,11 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	uobj = NULL;
 	pg = pgs[0];
 	swap = (pg->uanon != NULL && pg->uobject == NULL) ||
-		(pg->pqflags & PQ_AOBJ) != 0;
+		(pg->flags & PG_AOBJ) != 0;
 	if (!swap) {
 		uobj = pg->uobject;
 		slock = uobj->vmobjlock;
 		mutex_enter(slock);
-		mutex_enter(&uvm_pageqlock);
 	} else {
 #if defined(VMSWAP)
 		if (error) {
@@ -362,7 +361,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 				slock = pg->uanon->an_lock;
 			}
 			mutex_enter(slock);
-			mutex_enter(&uvm_pageqlock);
 			anon_disposed = (pg->flags & PG_RELEASED) != 0;
 			KASSERT(!anon_disposed || pg->uobject != NULL ||
 			    pg->uanon->an_ref == 0);
@@ -421,7 +419,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			KASSERT(!write);
 			pg->flags &= ~PG_FAKE;
 #if defined(READAHEAD_STATS)
-			pg->pqflags |= PQ_READAHEAD;
+			pg->flags |= PG_READAHEAD;
 			uvm_ra_total.ev_count++;
 #endif /* defined(READAHEAD_STATS) */
 			KASSERT((pg->flags & PG_CLEAN) != 0);
@@ -437,7 +435,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 		if (pg->flags & PG_PAGEOUT) {
 			pg->flags &= ~PG_PAGEOUT;
 			pageout_done++;
-			uvmexp.pdfreed++;
+			atomic_inc_uint(&uvmexp.pdfreed);
 			pg->flags |= PG_RELEASED;
 		}
 
@@ -448,11 +446,9 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 
 		if (swap) {
 			if (pg->uobject == NULL && anon_disposed) {
-				mutex_exit(&uvm_pageqlock);
 				uvm_anon_release(pg->uanon);
 			} else {
 				uvm_page_unbusy(&pg, 1);
-				mutex_exit(&uvm_pageqlock);
 				mutex_exit(slock);
 			}
 		}
@@ -461,7 +457,6 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 	uvm_pageout_done(pageout_done);
 	if (!swap) {
 		uvm_page_unbusy(pgs, npages);
-		mutex_exit(&uvm_pageqlock);
 		mutex_exit(slock);
 	} else {
 #if defined(VMSWAP)
@@ -478,7 +473,7 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			else
 				uvm_swap_free(swslot, npages);
 		}
-		uvmexp.pdpending--;
+		atomic_dec_uint(&uvmexp.pdpending);
 #endif /* defined(VMSWAP) */
 	}
 }
