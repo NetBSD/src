@@ -1,4 +1,4 @@
-/*	$NetBSD: libkern.h,v 1.136 2019/12/05 04:17:13 riastradh Exp $	*/
+/*	$NetBSD: libkern.h,v 1.137 2019/12/14 17:23:47 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -356,14 +356,6 @@ tolower(int ch)
     ((const TYPE *)(((const char *)(PTR)) - offsetof(TYPE, FIELD))	\
 	+ __validate_const_container_of(PTR, TYPE, FIELD))
 
-#define	MTPRNG_RLEN		624
-struct mtprng_state {
-	unsigned int mt_idx;
-	uint32_t mt_elem[MTPRNG_RLEN];
-	uint32_t mt_count;
-	uint32_t mt_sparse[3];
-};
-
 /* Prototypes for which GCC built-ins exist. */
 void	*memcpy(void *, const void *, size_t);
 int	 memcmp(const void *, const void *, size_t);
@@ -497,10 +489,6 @@ char	*setstate(char *);
 long	 random(void);
 void	 mi_vector_hash(const void * __restrict, size_t, uint32_t,
 	    uint32_t[3]);
-void	 mtprng_init32(struct mtprng_state *, uint32_t);
-void	 mtprng_initarray(struct mtprng_state *, const uint32_t *, size_t);
-uint32_t mtprng_rawrandom(struct mtprng_state *);
-uint32_t mtprng_random(struct mtprng_state *);
 int	 scanc(u_int, const u_char *, const u_char *, int);
 int	 skpc(int, size_t, u_char *);
 int	 strcasecmp(const char *, const char *);
