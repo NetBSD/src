@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.138 2019/12/14 12:32:11 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.139 2019/12/14 12:36:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7045,4 +7045,10 @@ sys/dev/usb/ohci.c				1.291
 	PR kern/54070: preserve the toggleCarry bit in the Endpoint
 	Descriptor when handling a DataUnderrun condition.
 	[gson, ticket #553]
+
+sys/dev/usb/ohci.c				1.292
+
+	PR kern/50278: preserve the toggleCarry bit in the Endpoint
+	Descriptor in ohci_abort_xfer().
+	[gson, ticket #554]
 
