@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.53.2.5 2018/12/18 18:32:00 martin Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.53.2.6 2019/12/14 12:33:47 martin Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.53.2.5 2018/12/18 18:32:00 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.53.2.6 2019/12/14 12:33:47 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -3412,6 +3412,8 @@ urtwn_load_firmware(struct urtwn_softc *sc)
 	}
 
 	if (urtwn_read_1(sc, R92C_MCUFWDL) & R92C_MCUFWDL_RAM_DL_SEL) {
+		/* Reset MCU ready status */
+		urtwn_write_1(sc, R92C_MCUFWDL, 0);
 		if (ISSET(sc->chip, URTWN_CHIP_88E) ||
 		    ISSET(sc->chip, URTWN_CHIP_92EU))
 			urtwn_r88e_fw_reset(sc);
