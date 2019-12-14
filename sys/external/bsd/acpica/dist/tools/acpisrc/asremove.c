@@ -156,7 +156,6 @@ AsRemoveConditionalCompile (
 
 
     KeywordLength = strlen (Keyword);
-    SubBuffer = Buffer;
     SubString = Buffer;
 
     while (SubString)
@@ -293,7 +292,7 @@ AsRemoveConditionalCompile (
 
         /* Remove the lines */
 
-        SubBuffer = AsRemoveData (SubString, SubBuffer);
+        (void) AsRemoveData (SubString, SubBuffer);
     }
 }
 
@@ -483,7 +482,7 @@ AsReduceTypedefs (
                 /* Remove the typedef itself */
 
                 SubBuffer = SubString + strlen ("typedef") + 1;
-                SubBuffer = AsRemoveData (SubString, SubBuffer);
+                (void) AsRemoveData (SubString, SubBuffer);
 
                 /* Find the opening brace of the struct or union */
 
