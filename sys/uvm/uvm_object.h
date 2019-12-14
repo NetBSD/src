@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.33 2012/09/14 22:20:50 rmind Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.34 2019/12/14 17:28:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -31,7 +31,7 @@
 #define _UVM_UVM_OBJECT_H_
 
 #include <sys/queue.h>
-#include <sys/rbtree.h>
+#include <sys/radixtree.h>
 #include <uvm/uvm_pglist.h>
 
 /*
@@ -54,12 +54,12 @@
  */
 
 struct uvm_object {
-	kmutex_t *		vmobjlock;	/* lock on memq */
+	kmutex_t *		vmobjlock;	/* lock on object */
 	const struct uvm_pagerops *pgops;	/* pager ops */
 	struct pglist		memq;		/* pages in this object */
-	int			uo_npages;	/* # of pages in memq */
+	int			uo_npages;	/* # of pages in uo_pages */
 	unsigned		uo_refs;	/* reference count */
-	struct rb_tree		rb_tree;	/* tree of pages */
+	struct radix_tree	uo_pages;	/* tree of pages */
 	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */
 };
 
@@ -111,8 +111,6 @@ extern const struct uvm_pagerops aobj_pager;
 
 #define	UVM_OBJ_IS_AOBJ(uobj)						\
 	((uobj)->pgops == &aobj_pager)
-
-extern const rb_tree_ops_t uvm_page_tree_ops;
 
 #endif /* _KERNEL */
 
