@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.41 2019/12/12 16:28:24 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.42 2019/12/14 11:20:51 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.41 2019/12/12 16:28:24 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.42 2019/12/14 11:20:51 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -95,7 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.41 2019/12/12 16:28:24 tkusumi Exp $"
 #include "dm.h"
 
 static uint32_t sc_minor_num;
-extern const struct dkdriver dmdkdriver;
 uint32_t dm_dev_counter;
 
 /* Generic cf_data for device-mapper driver */
