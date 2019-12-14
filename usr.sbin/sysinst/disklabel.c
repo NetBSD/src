@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.24 2019/12/14 19:26:17 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.25 2019/12/14 20:41:58 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -226,7 +226,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	parts->dp.disk = strdup(disk);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;
-	disklabel_init_default_alignment(parts, 0);
+	disklabel_init_default_alignment(parts, parts->l.d_secpercyl);
 
 	for (int part = 0; part < parts->l.d_npartitions; part++) {
 		if (parts->l.d_partitions[part].p_fstype == FS_UNUSED
