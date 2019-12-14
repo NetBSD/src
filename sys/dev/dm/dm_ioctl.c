@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.42 2019/12/14 11:20:51 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.43 2019/12/14 14:43:38 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.42 2019/12/14 11:20:51 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.43 2019/12/14 14:43:38 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -116,14 +116,14 @@ static struct cfdata dm_cfdata = {
 		prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag); \
 } while (/*CONSTCOND*/0)
 
-static int dm_dbg_print_flags(int);
+static int dm_dbg_print_flags(uint32_t);
 static int dm_table_init(dm_target_t *, dm_table_entry_t *, char *);
 
 /*
  * Print flags sent to the kernel from libevmapper.
  */
 static int
-dm_dbg_print_flags(int flags)
+dm_dbg_print_flags(uint32_t flags)
 {
 	aprint_debug("dbg_print --- %d\n", flags);
 
