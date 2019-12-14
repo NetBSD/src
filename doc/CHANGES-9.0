@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.137 2019/12/12 21:02:18 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.138 2019/12/14 12:32:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7015,4 +7015,34 @@ sys/external/bsd/drm2/dist/drm/i915/intel_ringbuffer.h 1.7
 
 	Fix CVE-2019-0154 and CVE-2019-0155.
 	[maya, ticket #548]
+
+sys/arch/emips/emips/interrupt.c		1.7,1.8
+
+	Fix incorrect argument order of cpu_intr().
+	PR/45080: fix a longstanding freeze.
+	[tsutsui, ticket #549]
+
+sys/arch/x86/x86/spectre.c			1.32
+
+	Check CPUID.IBRS in addition to ARCH_CAP.IBRS_ALL to
+	fix booting on VirtualBox.
+	[maxv, ticket #550]
+
+sys/dev/usb/if_urtwn.c				1.76,1.77
+
+	Reset MCU ready status before resetting the MCU.
+	Do not deregister twice with pmf.
+	[mlelstv, ticket #551]
+
+sys/dev/i2c/i2c.c				1.70
+
+	Revert previous. Indirect matches are not wanted on platforms that
+	use external configuration data (FDT or OF).
+	[mlelstev, ticket #552]
+
+sys/dev/usb/ohci.c				1.291
+
+	PR kern/54070: preserve the toggleCarry bit in the Endpoint
+	Descriptor when handling a DataUnderrun condition.
+	[gson, ticket #553]
 
