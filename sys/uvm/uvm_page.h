@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.85 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.86 2019/12/14 17:31:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,8 +66,6 @@
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_pglist.h>
-
-#include <sys/rbtree.h>
 
 /*
  * Management of resident (logical) pages.
@@ -151,8 +149,6 @@
  */
 
 struct vm_page {
-	struct rb_node		rb_node;	/* o: tree of pages in obj */
-
 	union {
 		TAILQ_ENTRY(vm_page) queue;	/* w: wired page queue
 						 * or uvm_pglistalloc output */
