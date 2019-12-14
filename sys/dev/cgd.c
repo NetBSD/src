@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.117 2019/12/08 12:14:40 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.118 2019/12/14 16:58:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.117 2019/12/08 12:14:40 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.118 2019/12/14 16:58:38 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -260,14 +260,6 @@ static void	hexprint(const char *, void *, int);
 #define IFDEBUG(x,y)
 #define DPRINTF(x,y)
 #define DPRINTF_FOLLOW(y)
-#endif
-
-#ifdef DIAGNOSTIC
-#define DIAGPANIC(x)		panic x
-#define DIAGCONDPANIC(x,y)	if (x) panic y
-#else
-#define DIAGPANIC(x)
-#define DIAGCONDPANIC(x,y)
 #endif
 
 /* Global variables */
@@ -1047,15 +1039,15 @@ cgd_cipher(struct cgd_softc *cs, void *dstv, void *srcv,
 
 	DPRINTF_FOLLOW(("cgd_cipher() dir=%d\n", dir));
 
-	DIAGCONDPANIC(len % blocksize != 0,
-	    ("cgd_cipher: len %% blocksize != 0"));
+	KASSERTMSG(len % blocksize == 0,
+	    "cgd_cipher: len %% blocksize != 0");
 
 	/* ensure that sizeof(daddr_t) <= blocksize (for encblkno IVing) */
-	DIAGCONDPANIC(sizeof(daddr_t) > blocksize,
-	    ("cgd_cipher: sizeof(daddr_t) > blocksize"));
+	KASSERTMSG(sizeof(daddr_t) <= blocksize,
+	    "cgd_cipher: sizeof(daddr_t) > blocksize");
 
-	DIAGCONDPANIC(blocksize > CGD_MAXBLOCKSIZE,
-	    ("cgd_cipher: blocksize > CGD_MAXBLOCKSIZE"));
+	KASSERTMSG(blocksize <= CGD_MAXBLOCKSIZE,
+	    "cgd_cipher: blocksize > CGD_MAXBLOCKSIZE");
 
 	dstuio.uio_iov = dstiov;
 	dstuio.uio_iovcnt = 1;
@@ -1098,7 +1090,7 @@ hexprint(const char *start, void *buf, int len)
 {
 	char	*c = buf;
 
-	DIAGCONDPANIC(len < 0, ("hexprint: called with len < 0"));
+	KASSERTMSG(len >= 0, "hexprint: called with len < 0");
 	printf("%s: len=%06d 0x", start, len);
 	while (len--)
 		printf("%02x", (unsigned char) *c++);

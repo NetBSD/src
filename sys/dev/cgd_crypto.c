@@ -1,4 +1,4 @@
-/* $NetBSD: cgd_crypto.c,v 1.16 2019/09/26 11:47:38 gutteridge Exp $ */
+/* $NetBSD: cgd_crypto.c,v 1.17 2019/12/14 16:58:38 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.16 2019/09/26 11:47:38 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.17 2019/12/14 16:58:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,12 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: cgd_crypto.c,v 1.16 2019/09/26 11:47:38 gutteridge E
 #include <crypto/rijndael/rijndael-api-fst.h>
 #include <crypto/des/des.h>
 #include <crypto/blowfish/blowfish.h>
-
-#ifdef DIAGNOSTIC
-#define DIAGPANIC(x)	panic x
-#else
-#define DIAGPANIC(x)
-#endif
 
 /*
  * The general framework provides only one generic function.
@@ -296,7 +290,7 @@ cgd_cipher_aes_cbc(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio(&encd, aes_cbc_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
+		panic("%s: unrecognised direction %d", __func__, dir);
 	}
 }
 
@@ -396,7 +390,7 @@ cgd_cipher_aes_xts(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio(&encd, aes_xts_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
+		panic("%s: unrecognised direction %d", __func__, dir);
 	}
 }
 
@@ -511,7 +505,7 @@ cgd_cipher_3des_cbc(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio(&ce, c3des_cbc_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
+		panic("%s: unrecognised direction %d", __func__, dir);
 	}
 }
 
@@ -609,7 +603,7 @@ cgd_cipher_bf_cbc(void *privdata, struct uio *dstuio,
 		cgd_cipher_uio(&be, bf_cbc_dec_int, dstuio, srcuio);
 		break;
 	default:
-		DIAGPANIC(("%s: unrecognised direction %d", __func__, dir));
+		panic("%s: unrecognised direction %d", __func__, dir);
 	}
 
 }
