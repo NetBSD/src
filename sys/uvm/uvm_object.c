@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_object.c,v 1.16 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.17 2019/12/14 17:28:58 ad Exp $	*/
 
 /*
- * Copyright (c) 2006, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.16 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.17 2019/12/14 17:28:58 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.16 2019/12/13 20:10:22 ad Exp $");
 #include <sys/param.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
-#include <sys/rbtree.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_ddb.h>
@@ -77,7 +76,7 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
 	LIST_INIT(&uo->uo_ubc);
 	uo->uo_npages = 0;
 	uo->uo_refs = refs;
-	rb_tree_init(&uo->rb_tree, &uvm_page_tree_ops);
+	radix_tree_init_tree(&uo->uo_pages);
 }
 
 /*
@@ -87,7 +86,7 @@ void
 uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 {
 
-	KASSERT(rb_tree_iterate(&uo->rb_tree, NULL, RB_DIR_LEFT) == NULL);
+	KASSERT(radix_tree_empty_tree_p(&uo->uo_pages));
 
 	/* Purge any UBC entries associated with this object. */
 	ubc_purge(uo);
@@ -96,6 +95,7 @@ uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 	if (dlock) {
 		mutex_obj_free(uo->vmobjlock);
 	}
+	radix_tree_fini_tree(&uo->uo_pages);
 }
 
 /*
