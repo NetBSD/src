@@ -504,7 +504,7 @@ AcpiGetObjectInfo (
 
     if (Cls)
     {
-        NextIdString = AcpiNsCopyDeviceId (&Info->ClassCode,
+       (void) AcpiNsCopyDeviceId (&Info->ClassCode,
             Cls, NextIdString);
     }
 

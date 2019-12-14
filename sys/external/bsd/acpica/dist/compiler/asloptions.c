@@ -111,7 +111,7 @@ AslCommandLine (
         {
             exit (-1);
         }
-        exit (1);
+        exit (0);
     }
 
     /* Next parameter must be the input filename */
