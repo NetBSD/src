@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.89 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.90 2019/12/14 15:08:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.89 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.90 2019/12/14 15:08:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1149,6 +1149,7 @@ uvm_loanbreak(struct vm_page *uobjpage)
 
 	mutex_enter(&uobjpage->interlock);
 	uvm_pagereplace(uobjpage, pg);
+	mutex_exit(&uobjpage->interlock);
 
 	/*
 	 * if the page is no longer referenced by
@@ -1157,7 +1158,6 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	 */
 	if (uobjpage->uanon == NULL)
 		uvm_pagedequeue(uobjpage);
-	mutex_exit(&uobjpage->interlock);
 
 	/*
 	 * at this point we have absolutely no
@@ -1177,7 +1177,7 @@ uvm_loanbreak(struct vm_page *uobjpage)
 int
 uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 {
-	struct vm_page *pg;
+	struct vm_page *pg, *dequeuepg;
 
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
@@ -1207,12 +1207,13 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 	if (uobj) {
 		/* if we were receiver of loan */
 		anon->an_page->loan_count--;
+		dequeuepg = NULL;
 	} else {
 		/*
 		 * we were the lender (A->K); need to remove the page from
 		 * pageq's.
 		 */
-		uvm_pagedequeue(anon->an_page);
+		dequeuepg = anon->an_page;
 	}
 
 	/* install new page in anon */
@@ -1223,6 +1224,9 @@ uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 	mutex_exit(&pg->interlock);
 	mutex_exit(&anon->an_page->interlock);
 	uvm_pageactivate(pg);
+	if (dequeuepg != NULL) {
+		uvm_pagedequeue(anon->an_page);
+	}
 
 	pg->flags &= ~(PG_BUSY|PG_FAKE);
 	UVM_PAGE_OWN(pg, NULL);
