@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.30 2019/12/12 16:28:24 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.31 2019/12/14 10:02:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.30 2019/12/12 16:28:24 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.31 2019/12/14 10:02:35 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -300,8 +300,6 @@ int
 dm_target_snapshot_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
 
-	printf("Snapshot target read function called!!\n");
-
 	bp->b_error = EIO;
 	bp->b_resid = 0;
 
@@ -453,8 +451,6 @@ dm_target_snapshot_orig_status(void *target_config)
 int
 dm_target_snapshot_orig_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
-
-	printf("Snapshot_Orig target read function called!!\n");
 
 	bp->b_error = EIO;
 	bp->b_resid = 0;

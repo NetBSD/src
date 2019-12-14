@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.21 2019/12/12 16:28:24 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.22 2019/12/14 10:02:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.21 2019/12/12 16:28:24 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.22 2019/12/14 10:02:35 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -138,8 +138,6 @@ dm_target_zero_status(void *target_config)
 int
 dm_target_zero_strategy(dm_table_entry_t *table_en, struct buf *bp)
 {
-
-	/* printf("Zero target read function called %d!!\n", bp->b_bcount); */
 
 	memset(bp->b_data, 0, bp->b_bcount);
 	bp->b_resid = 0;	/* nestiobuf_done wants b_resid = 0 to be sure
