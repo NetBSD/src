@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.34 2019/12/12 16:28:24 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.35 2019/12/14 10:02:35 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.34 2019/12/12 16:28:24 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.35 2019/12/14 10:02:35 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -225,9 +225,6 @@ dm_target_stripe_strategy(dm_table_entry_t *table_en, struct buf *bp)
 	tsc = table_en->target_config;
 	if (tsc == NULL)
 		return 0;
-
-/*	printf("Stripe target read function called %" PRIu64 "!!\n",
-	tlc->offset);*/
 
 	/* calculate extent of request */
 	KASSERT(bp->b_resid % DEV_BSIZE == 0);
