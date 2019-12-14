@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.79 2019/12/12 20:49:15 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.80 2019/12/14 12:34:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1789,4 +1789,9 @@ external/mit/lua/dist/src/lapi.c		1.12
 
 	Apply upstream fix for a use-after-free.
 	[sevan, ticket #1471]
+
+sys/dev/usb/if_urtwn.c				1.76
+
+	PR kern/54728: reset MCU ready status before resetting the MCU.
+	[mlelstv, ticket #1472]
 
