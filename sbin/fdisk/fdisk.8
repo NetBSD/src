@@ -1,6 +1,6 @@
-.\"	$NetBSD: fdisk.8,v 1.88 2019/04/09 09:03:41 tnn Exp $
+.\"	$NetBSD: fdisk.8,v 1.89 2019/12/14 20:46:13 christos Exp $
 .\"
-.Dd April 9, 2019
+.Dd December 14, 2019
 .Dt FDISK 8
 .Os
 .Sh NAME
@@ -13,7 +13,7 @@
 .Fl 0 | 1 | 2 | 3 | E Ar number
 .Op Fl s Oo Ar id Oc Ns Oo / Ns Oo Ar start Oc Ns Oo / Ns Oo Ar size Oc Ns Oo / Ns Oo Ar bootmenu Oc Oc Oc Oc
 .Oc
-.Op Fl r Ar file | Fl w Ar file
+.Op Fl r Ar bootfile | Fl w Ar bootfile
 .Op Fl A Ar ptn_alignment Ns Bq Ar /ptn_0_offset
 .Op Fl b Ar cylinders/heads/sectors
 .Op Fl c Ar bootcode
@@ -282,9 +282,9 @@ The partition table is left alone by this (but see above).
 Lists known
 .Em sysid
 values and exit.
-.It Fl r Ar file
+.It Fl r Ar bootfile
 Read the boot record from file
-.Ar file
+.Ar bootfile
 instead of the specified disk.
 The geometry information used is still that of the disk volume.
 Any changes are written back to the file.
@@ -386,9 +386,9 @@ Using
 with
 .Fl u
 allows the user to change more parameters than normally permitted.
-.It Fl w Ar file
+.It Fl w Ar bootfile
 Write the modified partition table to file
-.Ar file
+.Ar bootfile
 instead of the disk.
 .It Fl z Ar sectorsize
 Specify a sector size other than 512, for devices that only
@@ -585,9 +585,9 @@ lose all the data in that partition.
 You should run this program interactively once or twice to see how it works.
 This is completely safe as long as you answer the last question in the negative.
 You can also specify
-.Fl w Ar file
+.Fl w Ar bootfile
 to write the output to a file and later specify
-.Fl r Ar file
+.Fl r Ar bootfile
 to read back the updated information.
 This can be done without having write access to the disk volume.
 .Sh FILES
