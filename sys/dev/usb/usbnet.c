@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.32 2019/12/03 05:01:58 riastradh Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.33 2019/12/14 15:40:43 maya Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.32 2019/12/03 05:01:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.33 2019/12/14 15:40:43 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1188,7 +1188,6 @@ usbnet_tick_task(void *arg)
 	struct mii_data * const mii = usbnet_mii(un);
 
 	KASSERT(ifp != NULL);	/* embedded member */
-	KASSERT(mii != NULL);	/* only removed after dying=true and wait */
 
 	unp->unp_refcnt++;
 	mutex_exit(&unp->unp_lock);
@@ -1197,9 +1196,11 @@ usbnet_tick_task(void *arg)
 		usbnet_watchdog(ifp);
 
 	DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
-	mii_tick(mii);
-	if (!unp->unp_link)
-		(*mii->mii_statchg)(ifp);
+	if (mii) {
+		mii_tick(mii);
+		if (!unp->unp_link)
+			(*mii->mii_statchg)(ifp);
+	}
 
 	/* Call driver if requested. */
 	uno_tick(un);
