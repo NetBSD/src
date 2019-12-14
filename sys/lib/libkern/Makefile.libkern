@@ -1,7 +1,7 @@
-#	$NetBSD: Makefile.libkern,v 1.46 2019/12/14 17:23:47 riastradh Exp $
+#	$NetBSD: Makefile.libkern,v 1.47 2019/12/14 17:24:43 riastradh Exp $
 
-# 
-# Variable definitions for libkern.  
+#
+# Variable definitions for libkern.
 #
 # Before including this, you _must_ set
 #   KERNDIR: location of sys/lib/libkern
@@ -68,7 +68,7 @@ SRCS+=	memcmp.c memmem.c
 
 SRCS+=	memcpy.c
 .if empty(SRCS:Mmemset2.*)
-SRCS+=	memset.c 
+SRCS+=	memset.c
 .endif
 
 SRCS+=	popcount32.c popcount64.c
