@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.183 2019/12/01 23:14:47 uwe Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.184 2019/12/14 15:34:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.183 2019/12/01 23:14:47 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.184 2019/12/14 15:34:18 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1738,7 +1738,7 @@ uvm_swap_get(struct vm_page *page, int swslot, int flags)
 {
 	int error;
 
-	uvmexp.nswget++;
+	atomic_inc_uint(&uvmexp.nswget);
 	KASSERT(flags & PGO_SYNCIO);
 	if (swslot == SWSLOT_BAD) {
 		return EIO;
