@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.113 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.114 2019/12/14 15:04:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.113 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.114 2019/12/14 15:04:47 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -368,6 +368,7 @@ void
 uvm_pageout_start(int npages)
 {
 
+	atomic_inc_uint(&uvmexp.pdpending);
 	atomic_add_int(&uvmexp.paging, npages);
 }
 
@@ -376,6 +377,7 @@ uvm_pageout_done(int npages)
 {
 
 	KASSERT(uvmexp.paging >= npages);
+	atomic_dec_uint(&uvmexp.pdpending);
 	atomic_add_int(&uvmexp.paging, -npages);
 
 	/*
@@ -899,14 +901,12 @@ uvmpd_scan_queue(void)
 		}
 		mutex_exit(slock);
 
-		swapcluster_flush(&swc, false);
-
 		/*
-		 * the pageout is in progress.  bump counters and set up
+		 * set the pageout in progress.  bump counters and set up
 		 * for the next loop.
 		 */
 
-		atomic_inc_uint(&uvmexp.pdpending);
+		swapcluster_flush(&swc, false);
 
 #else /* defined(VMSWAP) */
 		uvm_pageactivate(p);
