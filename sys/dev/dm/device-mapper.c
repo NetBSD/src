@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.50 2019/12/14 10:49:30 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.51 2019/12/14 11:20:51 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -110,8 +110,6 @@ const struct dkdriver dmdkdriver = {
 CFATTACH_DECL3_NEW(dm, 0,
      dm_match, dm_attach, dm_detach, NULL, NULL, NULL,
      DVF_DETACH_SHUTDOWN);
-
-extern uint32_t dm_dev_counter;
 
 /*
  * This structure is used to translate command sent to kernel driver in
