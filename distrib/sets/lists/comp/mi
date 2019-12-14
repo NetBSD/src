@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2296 2019/12/07 15:13:59 riastradh Exp $
+#	$NetBSD: mi,v 1.2297 2019/12/14 15:30:37 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -3102,6 +3102,7 @@
 ./usr/include/sys/quota.h			comp-c-include
 ./usr/include/sys/quotactl.h			comp-c-include
 ./usr/include/sys/radioio.h			comp-c-include
+./usr/include/sys/radixtree.h			comp-c-include
 ./usr/include/sys/ras.h				comp-c-include
 ./usr/include/sys/rb.h				comp-obsolete		obsolete
 ./usr/include/sys/rbtree.h			comp-c-include
