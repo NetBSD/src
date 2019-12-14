@@ -605,7 +605,6 @@ AcpiDbDisplayResults (
         return;
     }
 
-    ObjDesc = WalkState->MethodDesc;
     Node  = WalkState->MethodNode;
 
     if (WalkState->Results)
@@ -665,7 +664,6 @@ AcpiDbDisplayCallingTree (
         return;
     }
 
-    Node = WalkState->MethodNode;
     AcpiOsPrintf ("Current Control Method Call Tree\n");
 
     while (WalkState)

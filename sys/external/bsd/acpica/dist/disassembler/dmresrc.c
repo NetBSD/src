@@ -333,7 +333,6 @@ AcpiDmResourceTemplate (
                  * missing EndDependentDescriptor.
                  */
                 Level--;
-                DependentFns = FALSE;
 
                 /* Go ahead and insert EndDependentFn() */
 

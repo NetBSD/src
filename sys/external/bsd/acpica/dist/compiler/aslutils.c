@@ -115,7 +115,7 @@ UtQueryForOverwrite (
     char                    *Pathname)
 {
     struct stat             StatInfo;
-    int                     InChar = 0x34;
+    int                     InChar;
 
 
     if (!stat (Pathname, &StatInfo))
@@ -459,11 +459,6 @@ UtDisplayOneSummary (
     /* Summary of main input and output files */
 
     FileNode = FlGetCurrentFileNode ();
-    if (!FileNode)
-    {
-        fprintf (stderr, "Summary could not be generated");
-        return;
-    }
 
     if (FileNode->ParserErrorDetected)
     {

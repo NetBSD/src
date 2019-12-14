@@ -3334,7 +3334,7 @@ AddressKeyword
     ;
 
 AddressSpaceKeyword
-    : ByteConst                             {$$ = UtCheckIntegerRange ($1, 0x0A, 0xFF);}
+    : ByteConst                             {$$ = UtCheckIntegerRange ($1, ACPI_NUM_PREDEFINED_REGIONS, 0xFF);}
     | RegionSpaceKeyword                    {}
     ;
 
@@ -4735,7 +4735,6 @@ OptionalXferSize
 /* Local support functions in C */
 
 
-
 /******************************************************************************
  *
  * Local support functions
@@ -4810,4 +4809,3 @@ UtGetOpName (
     return ("[Unknown parser generator]");
 #endif
 }
-
