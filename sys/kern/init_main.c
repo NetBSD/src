@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.509 2019/12/12 22:55:20 pgoyette Exp $	*/
+/*	$NetBSD: init_main.c,v 1.510 2019/12/14 15:30:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.509 2019/12/12 22:55:20 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.510 2019/12/14 15:30:37 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -197,6 +197,7 @@ extern void *_binary_splash_image_end;
 #include <net80211/ieee80211_netbsd.h>
 #include <sys/cprng.h>
 #include <sys/psref.h>
+#include <sys/radixtree.h>
 
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
@@ -476,6 +477,7 @@ main(void)
 	/* Initialize fstrans. */
 	fstrans_init();
 
+	radix_tree_init(); /* used for page cache */
 	vfsinit();
 	lf_init();
 
