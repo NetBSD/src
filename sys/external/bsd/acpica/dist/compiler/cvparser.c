@@ -804,7 +804,6 @@ CvCaptureCommentsOnly (
 
                     /* Not a valid comment option. Revert the AML */
 
-                    Aml -= 2;
                     goto DefBlock;
 
             } /* End switch statement */

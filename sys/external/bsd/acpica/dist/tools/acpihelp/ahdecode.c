@@ -194,7 +194,7 @@ AhFindPredefinedNames (
 
     if (!NamePrefix || (*NamePrefix == '*'))
     {
-        Found = AhDisplayPredefinedName (NULL, 0);
+        (void) AhDisplayPredefinedName (NULL, 0);
         return;
     }
 

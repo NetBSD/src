@@ -349,10 +349,6 @@ AslDoOneFile (
     }
 
     FileNode = FlGetCurrentFileNode();
-    if (!FileNode)
-    {
-        return (AE_ERROR);
-    }
 
     FileNode->OriginalInputFileSize = FlGetFileSize (ASL_FILE_INPUT);
 
