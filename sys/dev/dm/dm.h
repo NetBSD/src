@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.40 2019/12/14 11:20:51 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.41 2019/12/14 17:15:54 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -184,10 +184,11 @@ typedef struct dm_target {
 
 	int (*deps) (dm_table_entry_t *, prop_array_t);
 	/*
-	 * Status routine is called to get params string, which is target
+	 * Info/status routine are called to get params string, which is target
 	 * specific. When dm_table_status_ioctl is called with flag
 	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
 	 */
+	char *(*info)(void *);
 	char * (*status)(void *);
 	int (*strategy)(dm_table_entry_t *, struct buf *);
 	int (*sync)(dm_table_entry_t *);
