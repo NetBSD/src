@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.45 2019/12/12 12:00:06 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.46 2019/12/14 04:12:49 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.45 2019/12/12 12:00:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.46 2019/12/14 04:12:49 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -91,6 +91,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.45 2019/12/12 12:00:06 nisimura Exp $")
 #define MARH	0x204	/* MAC address high */
 #define GRR	0x216	/* global reset */
 #define SIDER	0x400	/* switch ID and function enable */
+#define SGCR3	0x406	/* switch function control 3 */
+#define  CR3_USEHDX	(1U<<6)	/* use half-duplex 8842 host port */
+#define  CR3_USEFC	(1U<<5) /* use flowcontrol 8842 host port */
 #define IACR	0x4a0	/* indirect access control */
 #define IADR1	0x4a2	/* indirect access data 66:63 */
 #define IADR2	0x4a4	/* indirect access data 47:32 */
@@ -145,6 +148,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.45 2019/12/12 12:00:06 nisimura Exp $")
 #define INT_DMTS	(1U<<30)	/* sending desc. has posted Tx done */
 #define INT_DMRS	(1U<<29)	/* frame was received */
 #define INT_DMRBUS	(1U<<27)	/* Rx descriptor pool is full */
+#define INT_DMxPSS	(3U<<25)	/* 26:25 DMA Tx/Rx have stopped */
 
 #define T0_OWN		(1U<<31)	/* desc is ready to Tx */
 
@@ -825,6 +829,8 @@ kse_init(struct ifnet *ifp)
 	if (sc->sc_chip == 0x8842) {
 		sc->sc_txc |= TXC_FCE;
 		sc->sc_rxc |= RXC_FCE;
+		CSR_WRITE_2(sc, SGCR3,
+		    CSR_READ_2(sc, SGCR3) | CR3_USEFC);
 	}
 
 	/* build multicast hash filter if necessary */
