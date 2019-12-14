@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.39 2019/12/12 16:28:24 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.40 2019/12/14 11:20:51 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -64,6 +64,9 @@
 #define DM_VERSION_PATCHLEVEL	0
 
 /*** Internal device-mapper structures ***/
+
+extern const struct dkdriver dmdkdriver;
+extern uint32_t dm_dev_counter;
 
 /*
  * A device mapper table is a list of physical ranges plus the mapping target
