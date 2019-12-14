@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.289.4.2 2019/12/14 12:30:57 martin Exp $	*/
+/*	$NetBSD: ohci.c,v 1.289.4.3 2019/12/14 12:35:58 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.289.4.2 2019/12/14 12:30:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.289.4.3 2019/12/14 12:35:58 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2349,7 +2349,9 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	if (hit) {
 		DPRINTFN(1, "set hd=0x%08jx, tl=0x%08jx",  (int)p->physaddr,
 		    (int)O32TOH(sed->ed.ed_tailp), 0, 0);
-		sed->ed.ed_headp = HTOO32(p->physaddr); /* unlink TDs */
+		/* unlink TDs, preserving toggle carry */
+		sed->ed.ed_headp = HTOO32(p->physaddr |
+		    (O32TOH(sed->ed.ed_headp) & OHCI_TOGGLECARRY));
 		usb_syncmem(&sed->dma,
 		    sed->offs + offsetof(ohci_ed_t, ed_headp),
 		    sizeof(sed->ed.ed_headp),
