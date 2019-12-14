@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.295 2019/12/01 23:08:09 sevan Exp $
+$NetBSD: acronyms.comp,v 1.296 2019/12/14 13:36:14 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -1135,6 +1135,7 @@ PC	program counter
 PCB	printed circuit board
 PCB	process control block
 PCB	Protocol Control Block
+PCBC	propagating cipher block chaining
 PCC	Portable C Compiler
 PCD	page-level cache disable
 PCE	path computation element
