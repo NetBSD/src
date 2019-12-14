@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.201 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.202 2019/12/14 17:28:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.201 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.202 2019/12/14 17:28:58 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -79,6 +79,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.201 2019/12/13 20:10:22 ad Exp $");
 #include <sys/kernel.h>
 #include <sys/vnode.h>
 #include <sys/proc.h>
+#include <sys/radixtree.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/extent.h>
@@ -150,48 +151,8 @@ struct vm_page *uvm_physseg_seg_alloc_from_slab(uvm_physseg_t, size_t);
  * local prototypes
  */
 
-static void uvm_pageinsert(struct uvm_object *, struct vm_page *);
+static int uvm_pageinsert(struct uvm_object *, struct vm_page *);
 static void uvm_pageremove(struct uvm_object *, struct vm_page *);
-
-/*
- * per-object tree of pages
- */
-
-static signed int
-uvm_page_compare_nodes(void *ctx, const void *n1, const void *n2)
-{
-	const struct vm_page *pg1 = n1;
-	const struct vm_page *pg2 = n2;
-	const voff_t a = pg1->offset;
-	const voff_t b = pg2->offset;
-
-	if (a < b)
-		return -1;
-	if (a > b)
-		return 1;
-	return 0;
-}
-
-static signed int
-uvm_page_compare_key(void *ctx, const void *n, const void *key)
-{
-	const struct vm_page *pg = n;
-	const voff_t a = pg->offset;
-	const voff_t b = *(const voff_t *)key;
-
-	if (a < b)
-		return -1;
-	if (a > b)
-		return 1;
-	return 0;
-}
-
-const rb_tree_ops_t uvm_page_tree_ops = {
-	.rbto_compare_nodes = uvm_page_compare_nodes,
-	.rbto_compare_key = uvm_page_compare_key,
-	.rbto_node_offset = offsetof(struct vm_page, rb_node),
-	.rbto_context = NULL
-};
 
 /*
  * inline functions
@@ -239,24 +200,33 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 	uobj->uo_npages++;
 }
 
-
-static inline void
+static inline int
 uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
-	struct vm_page *ret __diagused;
+	const uint64_t idx = pg->offset >> PAGE_SHIFT;
+	int error;
 
-	KASSERT(uobj == pg->uobject);
-	ret = rb_tree_insert_node(&uobj->rb_tree, pg);
-	KASSERT(ret == pg);
+	error = radix_tree_insert_node(&uobj->uo_pages, idx, pg);
+	if (error != 0) {
+		return error;
+	}
+	return 0;
 }
 
-static inline void
+static inline int
 uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 {
+	int error;
 
 	KDASSERT(uobj != NULL);
-	uvm_pageinsert_tree(uobj, pg);
+	KDASSERT(uobj == pg->uobject);
+	error = uvm_pageinsert_tree(uobj, pg);
+	if (error != 0) {
+		KASSERT(error == ENOMEM);
+		return error;
+	}
 	uvm_pageinsert_list(uobj, pg, NULL);
+	return error;
 }
 
 /*
@@ -298,9 +268,10 @@ uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 static inline void
 uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 {
+	struct vm_page *opg __unused;
 
-	KASSERT(uobj == pg->uobject);
-	rb_tree_remove_node(&uobj->rb_tree, pg);
+	opg = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
+	KASSERT(pg == opg);
 }
 
 static inline void
@@ -308,8 +279,9 @@ uvm_pageremove(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KDASSERT(uobj != NULL);
-	uvm_pageremove_tree(uobj, pg);
+	KASSERT(uobj == pg->uobject);
 	uvm_pageremove_list(uobj, pg);
+	uvm_pageremove_tree(uobj, pg);
 }
 
 static void
@@ -925,7 +897,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
     int flags, int strat, int free_list)
 {
 	int try1, try2, zeroit = 0, color;
-	int lcv;
+	int lcv, error;
 	struct uvm_cpu *ucpu;
 	struct vm_page *pg;
 	lwp_t *l;
@@ -1074,14 +1046,19 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	pg->uanon = anon;
 	KASSERT(uvm_page_locked_p(pg));
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
+	mutex_spin_exit(&uvm_fpageqlock);
 	if (anon) {
 		anon->an_page = pg;
 		pg->flags |= PG_ANON;
 		atomic_inc_uint(&uvmexp.anonpages);
 	} else if (obj) {
-		uvm_pageinsert(obj, pg);
+		error = uvm_pageinsert(obj, pg);
+		if (error != 0) {
+			pg->uobject = NULL;
+			uvm_pagefree(pg);
+			return NULL;
+		}
 	}
-	mutex_spin_exit(&uvm_fpageqlock);
 
 #if defined(UVM_PAGE_TRKOWN)
 	pg->owner_tag = NULL;
@@ -1567,7 +1544,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 
 	KASSERT(mutex_owned(obj->vmobjlock));
 
-	pg = rb_tree_find_node(&obj->rb_tree, &off);
+	pg = radix_tree_lookup_node(&obj->uo_pages, off >> PAGE_SHIFT);
 
 	KASSERT(pg == NULL || obj->uo_npages != 0);
 	KASSERT(pg == NULL || (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
