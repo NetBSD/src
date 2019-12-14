@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.69 2019/03/26 09:20:38 mlelstv Exp $	*/
+/*	$NetBSD: i2c.c,v 1.69.4.1 2019/12/14 12:29:13 martin Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.69 2019/03/26 09:20:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.69.4.1 2019/12/14 12:29:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -719,8 +719,6 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 		     const struct device_compatible_entry *compats,
 		     int *match_resultp)
 {
-	int res;
-
 	KASSERT(match_resultp != NULL);
 
 	if (ia->ia_name != NULL &&
@@ -730,11 +728,8 @@ iic_use_direct_match(const struct i2c_attach_args *ia, const cfdata_t cf,
 	}
 
 	if (ia->ia_ncompat > 0 && ia->ia_compat != NULL) {
-		res = iic_compatible_match(ia, compats, NULL);
-		if (res) {
-			*match_resultp = res;
-			return true;
-		}
+		*match_resultp = iic_compatible_match(ia, compats, NULL);
+		return true;
 	}
 
 	return false;
