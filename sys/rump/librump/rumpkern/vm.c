@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.174 2019/12/13 20:10:21 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.175 2019/12/14 17:28:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.174 2019/12/13 20:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.175 2019/12/14 17:28:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.174 2019/12/13 20:10:21 ad Exp $");
 #include <sys/mman.h>
 #include <sys/null.h>
 #include <sys/vnode.h>
+#include <sys/radixtree.h>
 
 #include <machine/pmap.h>
 
@@ -125,34 +126,6 @@ static unsigned long dddlim;		/* 90% of memory limit used */
 static struct pglist vmpage_lruqueue;
 static unsigned vmpage_onqueue;
 
-static int
-pg_compare_key(void *ctx, const void *n, const void *key)
-{
-	voff_t a = ((const struct vm_page *)n)->offset;
-	voff_t b = *(const voff_t *)key;
-
-	if (a < b)
-		return -1;
-	else if (a > b)
-		return 1;
-	else
-		return 0;
-}
-
-static int
-pg_compare_nodes(void *ctx, const void *n1, const void *n2)
-{
-
-	return pg_compare_key(ctx, n1, &((const struct vm_page *)n2)->offset);
-}
-
-const rb_tree_ops_t uvm_page_tree_ops = {
-	.rbto_compare_nodes = pg_compare_nodes,
-	.rbto_compare_key = pg_compare_key,
-	.rbto_node_offset = offsetof(struct vm_page, rb_node),
-	.rbto_context = NULL
-};
-
 /*
  * vm pages 
  */
@@ -204,7 +177,11 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	}
 
 	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
-	(void)rb_tree_insert_node(&uobj->rb_tree, pg);
+	if (radix_tree_insert_node(&uobj->uo_pages, off >> PAGE_SHIFT,
+	    pg) != 0) {
+		pool_cache_put(&pagecache, pg);
+		return NULL;
+	}
 
 	/*
 	 * Don't put anons on the LRU page queue.  We can't flush them
@@ -232,6 +209,7 @@ void
 uvm_pagefree(struct vm_page *pg)
 {
 	struct uvm_object *uobj = pg->uobject;
+	struct vm_page *pg2 __unused;
 
 	KASSERT(mutex_owned(uobj->vmobjlock));
 
@@ -241,7 +219,8 @@ uvm_pagefree(struct vm_page *pg)
 	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 
 	uobj->uo_npages--;
-	rb_tree_remove_node(&uobj->rb_tree, pg);
+	pg2 = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
+	KASSERT(pg == pg2);
 
 	if (!UVM_OBJ_IS_AOBJ(uobj)) {
 		mutex_enter(&vmpage_lruqueue_lock);
@@ -395,6 +374,8 @@ uvm_init(void)
 
 	pool_cache_bootstrap(&pagecache, sizeof(struct vm_page), 0, 0, 0,
 	    "page$", NULL, IPL_NONE, pgctor, pgdtor, NULL);
+
+	radix_tree_init();
 
 	/* create vmspace used by local clients */
 	rump_vmspace_local = kmem_zalloc(sizeof(*rump_vmspace_local), KM_SLEEP);
@@ -618,7 +599,7 @@ uvm_pagelookup(struct uvm_object *uobj, voff_t off)
 	struct vm_page *pg;
 	bool ispagedaemon = curlwp == uvm.pagedaemon_lwp;
 
-	pg = rb_tree_find_node(&uobj->rb_tree, &off);
+	pg = radix_tree_lookup_node(&uobj->uo_pages, off >> PAGE_SHIFT);
 	if (pg && !UVM_OBJ_IS_AOBJ(pg->uobject) && !ispagedaemon) {
 		mutex_enter(&vmpage_lruqueue_lock);
 		TAILQ_REMOVE(&vmpage_lruqueue, pg, pageq.queue);
