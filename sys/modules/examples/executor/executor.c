@@ -1,4 +1,4 @@
-/*	$NetBSD: executor.c,v 1.1 2018/04/13 20:30:09 kamil Exp $	*/
+/*	$NetBSD: executor.c,v 1.2 2019/12/14 15:36:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: executor.c,v 1.1 2018/04/13 20:30:09 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: executor.c,v 1.2 2019/12/14 15:36:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/module.h>
@@ -93,12 +93,12 @@ executor_modcmd(modcmd_t cmd, void *arg)
 	switch(cmd) {
 	case MODULE_CMD_INIT:
 		printf("executor module inserted\n");
-		callout_init(&sc, 0);
+		callout_init(&sc, CALLOUT_MPSAFE);
 		callout_reset(&sc, mstohz(1000), callout_example, NULL);
 		break;
 	case MODULE_CMD_FINI:
 		printf("executor module unloaded\n");
-		callout_stop(&sc);
+		callout_halt(&sc, NULL);
 		callout_destroy(&sc);
 		break;
 	default:
