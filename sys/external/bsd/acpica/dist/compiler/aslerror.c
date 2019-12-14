@@ -227,7 +227,7 @@ AeAddToErrorLog (
  * PARAMETERS:  OutputFile      - Output file
  *              Enode           - Error node to print
  *              PrematureEOF    - True = PrematureEOF has been reached
- *              Total           - Total legth of line
+ *              Total           - Total length of line
  *
  * RETURN:      None
  *
@@ -337,7 +337,7 @@ AeDecodeErrorMessageId (
  * PARAMETERS:  OutputFile      - Output file
  *              Enode           - Error node to print
  *              PrematureEOF    - True = PrematureEOF has been reached
- *              Total           - amount of characters printed so far
+ *              Total           - Number of characters printed so far
  *
  *
  * RETURN:      Status
@@ -419,6 +419,7 @@ AePrintErrorSourceLine (
                 fprintf (OutputFile, "\n");
                 return AE_OK;
             }
+
             /*
              * Seek to the offset in the combined source file,
              * read the source line, and write it to the output.
@@ -442,7 +443,8 @@ AePrintErrorSourceLine (
                     AslGbl_Files[ASL_FILE_SOURCE_OUTPUT].Filename);
                 return AE_IO_ERROR;
             }
-                /* Read/write the source line, up to the maximum line length */
+
+            /* Read/write the source line, up to the maximum line length */
 
             while (RActual && SourceByte && (SourceByte != '\n'))
             {
@@ -624,7 +626,7 @@ AePrintException (
  *
  * RETURN:      None
  *
- * DESCRIPTION: Print the contents of an error nodes. This function is tailored
+ * DESCRIPTION: Print the contents of an error node. This function is tailored
  *              to print error nodes that are SubErrors within ASL_ERROR_MSG
  *
  ******************************************************************************/
@@ -687,8 +689,8 @@ AePrintErrorLog (
  *              LogicalLineNumber   - Cumulative line number
  *              LogicalByteOffset   - Byte offset in source file
  *              Column              - Column in current line
- *              Filename            - source filename
- *              ExtraMessage        - additional error message
+ *              Filename            - Source filename
+ *              ExtraMessage        - Additional error message
  *              SourceLine          - Line of error source code
  *              SubError            - SubError of this InputEnode
  *
@@ -755,10 +757,17 @@ static void AslInitEnode (
             Enode->FilenameLength = 6;
         }
 
-        FileNode = FlGetCurrentFileNode ();
+        /*
+         * Attempt to get the file node of the filename listed in the parse
+         * node. If the name doesn't exist in the global file node, it is
+         * because the file is included by #include or ASL include. In this
+         * case, get the current file node. The source output of the current
+         * file will contain the contents of the file listed in the parse node.
+         */
+        FileNode = FlGetFileNode (ASL_FILE_INPUT, Filename);
         if (!FileNode)
         {
-            return;
+            FileNode = FlGetCurrentFileNode ();
         }
 
         Enode->SourceFilename =
@@ -776,8 +785,8 @@ static void AslInitEnode (
  *              LineNumber          - Actual file line number
  *              Column              - Column in current line
  *              SourceLine          - Actual source code line
- *              Filename            - source filename
- *              ExtraMessage        - additional error message
+ *              Filename            - Source filename
+ *              ExtraMessage        - Additional error message
  *
  * RETURN:      None
  *
@@ -810,8 +819,8 @@ AslCommonError2 (
  *              LogicalLineNumber   - Cumulative line number
  *              LogicalByteOffset   - Byte offset in source file
  *              Column              - Column in current line
- *              Filename            - source filename
- *              ExtraMessage        - additional error message
+ *              Filename            - Source filename
+ *              ExtraMessage        - Additional error message
  *
  * RETURN:      None
  *
@@ -853,8 +862,8 @@ AslCommonError (
  *              LogicalLineNumber   - Cumulative line number
  *              LogicalByteOffset   - Byte offset in source file
  *              Column              - Column in current line
- *              Filename            - source filename
- *              Message             - additional error message
+ *              Filename            - Source filename
+ *              Message             - Additional error message
  *              SourceLine          - Actual line of source code
  *              SubError            - Sub-error associated with this error
  *
@@ -917,7 +926,7 @@ AslLogNewError (
  * PARAMETERS:  Level           - Seriousness (Warning/error, etc.)
  *              MessageId       - Index into global message buffer
  *
- * RETURN:      UINT8           - modified level
+ * RETURN:      UINT8           - Modified level
  *
  * DESCRIPTION: Get the modified level of exception codes that are reported as
  *              errors from the -ww option.
@@ -1261,7 +1270,7 @@ AslIsExceptionDisabled (
  *              MainMsg         - Message pertaining to the MainOp
  *              SubMsgId        - Index into global message buffer
  *              SubOp           - Additional parse node for better message
- *              SubMsg          - Message pertainint to SubOp
+ *              SubMsg          - Message pertaining to SubOp
  *
  *
  * RETURN:      None
@@ -1313,7 +1322,7 @@ AslDualParseOpError (
  * PARAMETERS:  Level               - Seriousness (Warning/error, etc.)
  *              MessageId           - Index into global message buffer
  *              Op                  - Parse node where error happened
- *              ExtraMessage        - additional error message
+ *              ExtraMessage        - Additional error message
  *
  * RETURN:      None
  *
@@ -1351,7 +1360,7 @@ AslError (
  *
  * PARAMETERS:  Op                  - Parse node where error happened
  *              Status              - The ACPICA Exception
- *              ExtraMessage        - additional error message
+ *              ExtraMessage        - Additional error message
  *              Abort               - TRUE -> Abort compilation
  *
  * RETURN:      None

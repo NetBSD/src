@@ -249,7 +249,7 @@ LdLoadFieldElements (
                      * The name already exists in this scope
                      * But continue processing the elements
                      */
-                    AslDualParseOpError (ASL_WARNING, ASL_MSG_NAME_EXISTS, Child,
+                    AslDualParseOpError (ASL_ERROR, ASL_MSG_NAME_EXISTS, Child,
                         Child->Asl.Value.String, ASL_MSG_FOUND_HERE, Node->Op,
                         Node->Op->Asl.ExternalName);
                 }
@@ -418,13 +418,12 @@ LdNamespace1Begin (
 
     case AML_INT_CONNECTION_OP:
 
-
         if (Op->Asl.Child->Asl.AmlOpcode != AML_INT_NAMEPATH_OP)
         {
             break;
         }
-        Arg = Op->Asl.Child;
 
+        Arg = Op->Asl.Child;
         Status = AcpiNsLookup (WalkState->ScopeInfo, Arg->Asl.ExternalName,
             ACPI_TYPE_ANY, ACPI_IMODE_EXECUTE, ACPI_NS_SEARCH_PARENT,
             WalkState, &Node);
@@ -433,15 +432,6 @@ LdNamespace1Begin (
             break;
         }
 
-        if (Node->Type == ACPI_TYPE_BUFFER)
-        {
-            Arg->Asl.Node = Node;
-
-            Arg = Node->Op->Asl.Child;  /* Get namepath */
-            Arg = Arg->Asl.Next;        /* Get actual buffer */
-            Arg = Arg->Asl.Child;       /* Buffer length */
-            Arg = Arg->Asl.Next;        /* RAW_DATA buffer */
-        }
         break;
 
     default:
@@ -468,7 +458,6 @@ LdNamespace1Begin (
          * These opcodes are guaranteed to have a parent.
          * Examine the parent opcode.
          */
-        Status = AE_OK;
         ParentOp = Op->Asl.Parent;
         OpInfo = AcpiPsGetOpcodeInfo (ParentOp->Asl.AmlOpcode);
 
@@ -889,12 +878,19 @@ FinishNode:
     Op->Asl.Node = Node;
     Node->Op = Op;
 
-    /* Set the actual data type if appropriate (EXTERNAL term only) */
-
+    /*
+     * Set the actual data type if appropriate (EXTERNAL term only)
+     * As of 11/19/2019, ASL External() does not support parameter
+     * counts. When an External method is loaded, the parameter count is
+     * unknown setting Node->Value to ASL_EXTERNAL_METHOD_UNKNOWN_PARAMS
+     * indicates that the parameter count for this method is unknown.
+     * This information is used in ASL cross reference to help determine the
+     * parameter count through method calls.
+     */
     if (ActualObjectType != ACPI_TYPE_ANY)
     {
         Node->Type = (UINT8) ActualObjectType;
-        Node->Value = ASL_EXTERNAL_METHOD;
+        Node->Value = ASL_EXTERNAL_METHOD_UNKNOWN_PARAMS;
     }
 
     if (Op->Asl.ParseOpcode == PARSEOP_METHOD)
