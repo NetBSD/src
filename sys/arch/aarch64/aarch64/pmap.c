@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.52 2019/12/13 08:11:12 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.53 2019/12/14 13:48:09 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.52 2019/12/13 08:11:12 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.53 2019/12/14 13:48:09 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -655,7 +655,7 @@ _pmap_sweep_pdp(struct pmap *pm)
 		/* unlink from parent */
 		opte = atomic_swap_64(ptep_in_parent, 0);
 		KASSERT(lxpde_valid(opte));
-		wirecount = atomic_add_16_nv(&pg->wire_count, -1); /* 1 -> 0 */
+		wirecount = atomic_add_32_nv(&pg->wire_count, -1); /* 1 -> 0 */
 		KASSERT(wirecount == 0);
 		pmap_free_pdp(pm, pg);
 		nsweep++;
@@ -670,7 +670,7 @@ _pmap_sweep_pdp(struct pmap *pm)
 		KASSERTMSG(pg->wire_count >= 1,
 		    "wire_count=%d", pg->wire_count);
 		/* decrement wire_count of parent */
-		wirecount = atomic_add_16_nv(&pg->wire_count, -1);
+		wirecount = atomic_add_32_nv(&pg->wire_count, -1);
 		KASSERTMSG(pg->wire_count <= (Ln_ENTRIES + 1),
 		    "pm=%p[%d], pg=%p, wire_count=%d",
 		    pm, pm->pm_asid, pg, pg->wire_count);
@@ -1443,8 +1443,8 @@ _pmap_pdp_addref(struct pmap *pm, paddr_t pdppa, struct vm_page *pdppg_hint)
 		pg = PHYS_TO_VM_PAGE(pdppa);
 	KASSERT(pg != NULL);
 
-	CTASSERT(sizeof(pg->wire_count) == sizeof(uint16_t));
-	atomic_add_16(&pg->wire_count, 1);
+	CTASSERT(sizeof(pg->wire_count) == sizeof(uint32_t));
+	atomic_add_32(&pg->wire_count, 1);
 
 	KASSERTMSG(pg->wire_count <= (Ln_ENTRIES + 1),
 	    "pg=%p, wire_count=%d", pg, pg->wire_count);
@@ -1473,7 +1473,7 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 	pg = PHYS_TO_VM_PAGE(pdppa);
 	KASSERT(pg != NULL);
 
-	wirecount = atomic_add_16_nv(&pg->wire_count, -1);
+	wirecount = atomic_add_32_nv(&pg->wire_count, -1);
 
 	if (!do_free_pdp) {
 		/*
@@ -1501,7 +1501,7 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 		/* unlink from parent */
 		opte = atomic_swap_64(ptep_in_parent, 0);
 		KASSERT(lxpde_valid(opte));
-		wirecount = atomic_add_16_nv(&pg->wire_count, -1); /* 1 -> 0 */
+		wirecount = atomic_add_32_nv(&pg->wire_count, -1); /* 1 -> 0 */
 		KASSERT(wirecount == 0);
 		pmap_free_pdp(pm, pg);
 		removed = true;
@@ -1516,7 +1516,7 @@ _pmap_pdp_delref(struct pmap *pm, paddr_t pdppa, bool do_free_pdp)
 		KASSERTMSG(pg->wire_count >= 1,
 		    "wire_count=%d", pg->wire_count);
 		/* decrement wire_count of parent */
-		wirecount = atomic_add_16_nv(&pg->wire_count, -1);
+		wirecount = atomic_add_32_nv(&pg->wire_count, -1);
 		KASSERTMSG(pg->wire_count <= (Ln_ENTRIES + 1),
 		    "pm=%p[%d], pg=%p, wire_count=%d",
 		    pm, pm->pm_asid, pg, pg->wire_count);
