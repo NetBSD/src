@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.27 2019/12/13 16:15:54 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.28 2019/12/14 10:49:30 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.27 2019/12/13 16:15:54 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.28 2019/12/14 10:49:30 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -87,7 +87,7 @@ dm_target_autoload(const char *dm_target_name)
 		gen = module_gen;
 
 		/* Try to autoload target module */
-		(void)module_autoload(name, MODULE_CLASS_MISC);
+		module_autoload(name, MODULE_CLASS_MISC);
 	} while (gen != module_gen);
 
 	mutex_enter(&dm_target_mutex);
@@ -228,7 +228,7 @@ dm_target_rem(const char *dm_target_name)
 
 	mutex_exit(&dm_target_mutex);
 
-	(void)kmem_free(dmt, sizeof(dm_target_t));
+	kmem_free(dmt, sizeof(dm_target_t));
 
 	return 0;
 }
@@ -247,7 +247,7 @@ dm_target_destroy(void)
 
 	while ((dm_target = TAILQ_FIRST(&dm_target_list)) != NULL) {
 		TAILQ_REMOVE(&dm_target_list, dm_target, dm_target_next);
-		(void)kmem_free(dm_target, sizeof(dm_target_t));
+		kmem_free(dm_target, sizeof(dm_target_t));
 	}
 	KASSERT(TAILQ_EMPTY(&dm_target_list));
 

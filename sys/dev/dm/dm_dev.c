@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.14 2019/12/07 15:28:39 tkusumi Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.15 2019/12/14 10:49:30 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.14 2019/12/07 15:28:39 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.15 2019/12/14 10:49:30 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -306,7 +306,7 @@ dm_dev_destroy(void)
 		mutex_destroy(&dmv->dev_mtx);
 		cv_destroy(&dmv->dev_cv);
 
-		(void)kmem_free(dmv, sizeof(dm_dev_t));
+		kmem_free(dmv, sizeof(dm_dev_t));
 	}
 	mutex_exit(&dm_dev_mutex);
 
@@ -340,9 +340,9 @@ dm_dev_free(dm_dev_t *dmv)
 	cv_destroy(&dmv->dev_cv);
 
 	if (dmv->diskp != NULL)
-		(void)kmem_free(dmv->diskp, sizeof(struct disk));
+		kmem_free(dmv->diskp, sizeof(struct disk));
 
-	(void)kmem_free(dmv, sizeof(dm_dev_t));
+	kmem_free(dmv, sizeof(dm_dev_t));
 
 	return 0;
 }
