@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.libkern,v 1.43 2018/09/03 16:54:54 riastradh Exp $
+#	$NetBSD: Makefile.libkern,v 1.44 2019/12/14 15:30:37 ad Exp $
 
 # 
 # Variable definitions for libkern.  
@@ -87,7 +87,7 @@ SRCS+=	strcasecmp.c strncasecmp.c
 
 SRCS+=	xlat_mbr_fstype.c
 
-SRCS+=	heapsort.c ptree.c rb.c
+SRCS+=	heapsort.c ptree.c radixtree.c rb.c rpst.c
 
 SRCS+=	hexdump.c
 
