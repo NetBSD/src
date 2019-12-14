@@ -366,7 +366,6 @@ AnFormatBtype (
             strcat (Buffer, "|");
         }
 
-        First = FALSE;
         strcat (Buffer, "Resource");
     }
 }
