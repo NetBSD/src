@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.23 2019/12/13 22:12:41 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.24 2019/12/14 19:26:17 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -270,6 +270,10 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	if (!have_raw_label && !only_dl) {
 		bool found_real_part = false;
 
+		if (parts->l.d_npartitions <= RAW_PART ||
+		    parts->l.d_partitions[RAW_PART].p_size == 0)
+			goto no_valid_label;
+
 		/*
 		 * Check if kernel translation gave us "something" besides
 		 * the raw or the whole-disk partition.
@@ -291,6 +295,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 		}
 		if (!found_real_part) {
 			/* no partion there yet */
+no_valid_label:
 			free(parts);
 			return NULL;
 		}
