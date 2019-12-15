@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.343 2019/12/08 20:42:48 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.344 2019/12/15 19:24:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.343 2019/12/08 20:42:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.344 2019/12/15 19:24:11 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -460,9 +460,9 @@ static void pmap_remap_largepages(void);
 static int pmap_get_ptp(struct pmap *, vaddr_t,
     pd_entry_t * const *, int, struct vm_page **);
 static struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
-static void pmap_freepage(struct pmap *, struct vm_page *, int);
+static void pmap_freepages(struct pmap *, struct vm_page *);
 static void pmap_free_ptp(struct pmap *, struct vm_page *, vaddr_t,
-    pt_entry_t *, pd_entry_t * const *);
+    pt_entry_t *, pd_entry_t * const *, struct vm_page **);
 static bool pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
     vaddr_t, struct pv_entry **);
 static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
@@ -476,7 +476,7 @@ static void pmap_reactivate(struct pmap *);
  * p m a p   h e l p e r   f u n c t i o n s
  */
 
-static inline void
+static void
 pmap_stats_update(struct pmap *pmap, int resid_diff, int wired_diff)
 {
 
@@ -490,7 +490,7 @@ pmap_stats_update(struct pmap *pmap, int resid_diff, int wired_diff)
 	}
 }
 
-static inline void
+static void
 pmap_stats_update_bypte(struct pmap *pmap, pt_entry_t npte, pt_entry_t opte)
 {
 	int resid_diff = ((npte & PTE_P) ? 1 : 0) - ((opte & PTE_P) ? 1 : 0);
@@ -657,7 +657,7 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
 		kcpuset_atomic_set(pmap->pm_kernel_cpus, cid);
 		cpu_load_pmap(pmap, curpmap);
 	}
-	pmap->pm_ncsw = l->l_ncsw;
+	pmap->pm_ncsw = lwp_pctr();
 	*pmap2 = curpmap;
 	*ptepp = PTE_BASE;
 
@@ -674,7 +674,8 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
  * pmap_unmap_ptes: unlock the PTE mapping of "pmap"
  */
 void
-pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
+pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2,
+    struct vm_page *ptp_tofree)
 {
 	struct cpu_info *ci;
 	struct pmap *mypmap;
@@ -683,6 +684,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 
 	/* The kernel's pmap is always accessible. */
 	if (pmap == pmap_kernel()) {
+		KASSERT(ptp_tofree == NULL);
 		return;
 	}
 
@@ -697,9 +699,13 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 	 * We cannot tolerate context switches while mapped in.
 	 * If it is our own pmap all we have to do is unlock.
 	 */
-	KASSERT(pmap->pm_ncsw == curlwp->l_ncsw);
+	KASSERT(pmap->pm_ncsw == lwp_pctr());
 	mypmap = vm_map_pmap(&curproc->p_vmspace->vm_map);
 	if (pmap == mypmap) {
+		/* Now safe to free PTPs, with the pmap still locked. */
+		if (ptp_tofree != NULL) {
+			pmap_freepages(pmap, ptp_tofree);
+		}
 		mutex_exit(&pmap->pm_lock);
 		return;
 	}
@@ -715,6 +721,10 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2)
 		/*
 		 * This can happen when undoing after pmap_get_ptp blocked.
 		 */ 
+	}
+	/* Now safe to free PTPs, with the pmap still locked. */
+	if (ptp_tofree != NULL) {
+		pmap_freepages(pmap, ptp_tofree);
 	}
 	mutex_exit(&pmap->pm_lock);
 	if (pmap == pmap2) {
@@ -946,7 +956,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
  *    checking the valid bit before doing TLB flushing
  * => must be followed by call to pmap_update() before reuse of page
  */
-static inline void
+static void
 pmap_kremove1(vaddr_t sva, vsize_t len, bool localonly)
 {
 	pt_entry_t *pte, opte;
@@ -1975,7 +1985,7 @@ pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
  * p t p   f u n c t i o n s
  */
 
-static inline struct vm_page *
+static struct vm_page *
 pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 {
 	int lidx = level - 1;
@@ -1993,32 +2003,35 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	return pg;
 }
 
-static inline void
-pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
+static void
+pmap_freepages(struct pmap *pmap, struct vm_page *ptp_tofree)
 {
+	struct vm_page *ptp;
 	lwp_t *l;
 	int lidx;
-	struct uvm_object *obj;
 
-	KASSERT(ptp->wire_count == 1);
-
-	lidx = level - 1;
-
-	obj = &pmap->pm_obj[lidx];
-	pmap_stats_update(pmap, -1, 0);
-	if (pmap->pm_ptphint[lidx] == ptp)
-		pmap->pm_ptphint[lidx] = TAILQ_FIRST(&obj->memq);
-	ptp->wire_count = 0;
-	uvm_pagerealloc(ptp, NULL, 0);
-	l = curlwp;
-	KASSERT((l->l_pflag & LP_INTR) == 0);
-	VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
-	l->l_md.md_gc_ptp = ptp;
+	while ((ptp = ptp_tofree) != NULL) {
+		KASSERT(ptp->wire_count == 1);
+		for (lidx = 0; lidx < __arraycount(pmap->pm_obj); lidx++) {
+			if (pmap->pm_ptphint[lidx] == ptp) {
+				pmap->pm_ptphint[lidx] = NULL;
+			}
+		}
+		pmap_stats_update(pmap, -1, 0);
+		ptp->wire_count = 0;
+		uvm_pagerealloc(ptp, NULL, 0);
+		l = curlwp;
+		KASSERT((l->l_pflag & LP_INTR) == 0);
+		ptp_tofree = VM_PAGE_TO_PP(ptp)->pp_link;
+		VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
+		l->l_md.md_gc_ptp = ptp;
+	}
 }
 
 static void
 pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
-	      pt_entry_t *ptes, pd_entry_t * const *pdes)
+	      pt_entry_t *ptes, pd_entry_t * const *pdes,
+	      struct vm_page **ptp_tofree)
 {
 	unsigned long index;
 	int level;
@@ -2057,7 +2070,8 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		pmap_tlb_shootnow();
 #endif
 
-		pmap_freepage(pmap, ptp, level);
+		VM_PAGE_TO_PP(ptp)->pp_link = *ptp_tofree;
+		*ptp_tofree = ptp;
 		if (level < PTP_LEVELS - 1) {
 			ptp = pmap_find_ptp(pmap, va, (paddr_t)-1, level + 1);
 			ptp->wire_count--;
@@ -2090,7 +2104,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags,
 	paddr_t pa;
 	struct uvm_object *obj;
 	voff_t off;
-	lwp_t *l;
 	uint64_t ncsw;
 
 	KASSERT(pmap != pmap_kernel());
@@ -2110,14 +2123,13 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags,
 
 		pt[i].pg = uvm_pagelookup(obj, off);
 		if (pt[i].pg == NULL) {
-			l = curlwp;
-			ncsw = l->l_ncsw;
+			ncsw = lwp_pctr();
 			pt[i].pg = uvm_pagealloc(obj, off, NULL, aflags);
 			pt[i].new = true;
-			if (__predict_false(ncsw != l->l_ncsw)) {
+			if (__predict_false(ncsw != lwp_pctr())) {
 				/* uvm_pagealloc can block. */
 				/* XXX silence assertion in pmap_unmap_ptes */
-				pmap->pm_ncsw = l->l_ncsw;
+				pmap->pm_ncsw = lwp_pctr();
 				error = EAGAIN;
 				goto fail;
 			}
@@ -2464,11 +2476,10 @@ pmap_check_ptps(struct pmap *pmap)
 
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		KASSERT(pmap->pm_obj[i].uo_npages == 0);
-		KASSERT(TAILQ_EMPTY(&pmap->pm_obj[i].memq));
 	}
 }
 
-static inline void
+static void
 pmap_check_inuse(struct pmap *pmap)
 {
 #ifdef DIAGNOSTIC
@@ -3136,7 +3147,7 @@ pmap_extract(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 		}
 	}
 	if (__predict_false(hard)) {
-		pmap_unmap_ptes(pmap, pmap2);
+		pmap_unmap_ptes(pmap, pmap2, NULL);
 	}
 	kpreempt_enable();
 	if (pap != NULL) {
@@ -3550,6 +3561,7 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pv_entry *pv_tofree = NULL;
+	struct vm_page *ptp_tofree = NULL;
 	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva;
@@ -3594,8 +3606,10 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			 * being used, free it!
 			 */
 
-			if (result && ptp && ptp->wire_count <= 1)
-				pmap_free_ptp(pmap, ptp, va, ptes, pdes);
+			if (result && ptp && ptp->wire_count <= 1) {
+				pmap_free_ptp(pmap, ptp, va, ptes, pdes,
+				    &ptp_tofree);
+			}
 		}
 	} else for (/* null */ ; va < eva ; va = blkendva) {
 		/* determine range of block */
@@ -3626,12 +3640,22 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[pl1_i(va)], va,
 		    blkendva, &pv_tofree);
 
-		/* If PTP is no longer being used, free it. */
-		if (ptp && ptp->wire_count <= 1) {
-			pmap_free_ptp(pmap, ptp, va, ptes, pdes);
+		/*
+		 * If PTP is no longer being used, free it.  We need to unmap
+		 * and re-map to do this, then continue on at the next VA,
+		 * because we can't tolerate blocking with the PTEs mapped in.
+		 */
+		if (ptp == NULL || ptp->wire_count > 1) {
+			continue;
+		}
+		pmap_free_ptp(pmap, ptp, va, ptes, pdes, &ptp_tofree);
+		if (ptp_tofree != NULL) {
+			pmap_unmap_ptes(pmap, pmap2, ptp_tofree);
+			ptp_tofree = NULL;
+			pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 		}
 	}
-	pmap_unmap_ptes(pmap, pmap2);		/* unlock pmap */
+	pmap_unmap_ptes(pmap, pmap2, ptp_tofree);	/* unlock pmap */
 	kpreempt_enable();
 
 	/* Now we free unused PVs */
@@ -3742,10 +3766,11 @@ pmap_sync_pv(struct pv_pte *pvpte, paddr_t pa, int clearbits, uint8_t *oattrs,
 	return 0;
 }
 
-static inline void
+static void
 pmap_pp_remove_ent(struct pmap *pmap, struct vm_page *ptp, pt_entry_t opte,
     vaddr_t va)
 {
+	struct vm_page *ptp_tofree = NULL;
 	struct pmap *pmap2;
 	pt_entry_t *ptes;
 	pd_entry_t * const *pdes;
@@ -3754,9 +3779,9 @@ pmap_pp_remove_ent(struct pmap *pmap, struct vm_page *ptp, pt_entry_t opte,
 	pmap_stats_update_bypte(pmap, 0, opte);
 	ptp->wire_count--;
 	if (ptp->wire_count <= 1) {
-		pmap_free_ptp(pmap, ptp, va, ptes, pdes);
+		pmap_free_ptp(pmap, ptp, va, ptes, pdes, &ptp_tofree);
 	}
-	pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2, ptp_tofree);
 }
 
 static void
@@ -4089,7 +4114,7 @@ next:;
 	}
 
 	/* Release pmap. */
-	pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2, NULL);
 	kpreempt_enable();
 }
 
@@ -4135,7 +4160,7 @@ pmap_unwire(struct pmap *pmap, vaddr_t va)
 	}
 
 	/* Release pmap. */
-	pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2, NULL);
 	kpreempt_enable();
 }
 
@@ -4256,11 +4281,11 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	if (pmap != pmap_kernel()) {
 		error = pmap_get_ptp(pmap, va, pdes, flags, &ptp);
 		if (error == EAGAIN) {
-			pmap_unmap_ptes(pmap, pmap2);
+			pmap_unmap_ptes(pmap, pmap2, NULL);
 			goto retry;
 		}
 		if (error == ENOMEM) {
-			pmap_unmap_ptes(pmap, pmap2);
+			pmap_unmap_ptes(pmap, pmap2, NULL);
 			if (flags & PMAP_CANFAIL) {
 				goto out;
 			}
@@ -4281,7 +4306,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 
 	if (needpves && (!have_oldpa || oldpa != pa) &&
 	    (new_pve == NULL || new_sparepve == NULL)) {
-		pmap_unmap_ptes(pmap, pmap2);
+		pmap_unmap_ptes(pmap, pmap2, NULL);
 		if (flags & PMAP_CANFAIL) {
 			error = ENOMEM;
 			goto out;
@@ -4313,10 +4338,12 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 			    vtomach((vaddr_t)ptep), npte, domid);
 			splx(s);
 			if (error) {
+				struct vm_page *ptp_tofree = NULL;
 				if (ptp != NULL && ptp->wire_count <= 1) {
-					pmap_free_ptp(pmap, ptp, va, ptes, pdes);
+					pmap_free_ptp(pmap, ptp, va,
+					    ptes, pdes, &ptp_tofree);
 				}
-				pmap_unmap_ptes(pmap, pmap2);
+				pmap_unmap_ptes(pmap, pmap2, ptp_tofree);
 				goto out;
 			}
 			break;
@@ -4367,7 +4394,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	}
 
 same_pa:
-	pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2, NULL);
 
 	/*
 	 * shootdown tlb if necessary.
@@ -4696,7 +4723,7 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			    sva, (paddr_t)pmap_pte2pa(*pte), (paddr_t)*pte);
 		}
 	}
-	pmap_unmap_ptes(pmap, pmap2);
+	pmap_unmap_ptes(pmap, pmap2, NULL);
 	kpreempt_enable();
 }
 #endif
@@ -5004,7 +5031,7 @@ pmap_ept_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va)
 	do {
 		(void)pmap_pte_testset(tree[level - 1], 0);
 
-		pmap_freepage(pmap, ptp, level);
+		pmap_freepages(pmap, ptp);
 		if (level < PTP_LEVELS - 1) {
 			ptp = pmap_find_ptp(pmap, va, (paddr_t)-1, level + 1);
 			ptp->wire_count--;
