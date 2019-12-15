@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.34 2019/12/14 17:28:58 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.35 2019/12/15 21:11:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -56,7 +56,6 @@
 struct uvm_object {
 	kmutex_t *		vmobjlock;	/* lock on object */
 	const struct uvm_pagerops *pgops;	/* pager ops */
-	struct pglist		memq;		/* pages in this object */
 	int			uo_npages;	/* # of pages in uo_pages */
 	unsigned		uo_refs;	/* reference count */
 	struct radix_tree	uo_pages;	/* tree of pages */

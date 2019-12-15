@@ -1,4 +1,4 @@
-#	$NetBSD: files.uvm,v 1.30 2019/11/20 19:37:54 pgoyette Exp $
+#	$NetBSD: files.uvm,v 1.31 2019/12/15 21:11:35 ad Exp $
 
 #
 # UVM options
@@ -37,6 +37,7 @@ file	uvm/uvm_mmap.c			uvm
 file	uvm/uvm_mremap.c		uvm
 file	uvm/uvm_object.c		uvm
 file	uvm/uvm_page.c			uvm
+file	uvm/uvm_page_array.c		uvm
 file	uvm/uvm_pager.c			uvm
 file	uvm/uvm_pdaemon.c		uvm
 file	uvm/uvm_pdpolicy_clock.c	!pdpolicy_clockpro

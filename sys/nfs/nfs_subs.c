@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_subs.c,v 1.235 2018/12/22 14:28:57 maxv Exp $	*/
+/*	$NetBSD: nfs_subs.c,v 1.236 2019/12/15 21:11:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.235 2018/12/22 14:28:57 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.236 2019/12/15 21:11:34 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -101,6 +101,7 @@ __KERNEL_RCSID(0, "$NetBSD: nfs_subs.c,v 1.235 2018/12/22 14:28:57 maxv Exp $");
 #include <sys/cprng.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_page_array.h>
 
 #include <nfs/rpcv2.h>
 #include <nfs/nfsproto.h>
@@ -1751,6 +1752,8 @@ nfs_clearcommit_selector(void *cl, struct vnode *vp)
 	struct nfs_clearcommit_ctx *c = cl;
 	struct nfsnode *np;
 	struct vm_page *pg;
+	struct uvm_page_array a;
+	voff_t off;
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
@@ -1761,9 +1764,15 @@ nfs_clearcommit_selector(void *cl, struct vnode *vp)
 	    np->n_pushedhi = 0;
 	np->n_commitflags &=
 	    ~(NFS_COMMIT_PUSH_VALID | NFS_COMMIT_PUSHED_VALID);
-	TAILQ_FOREACH(pg, &vp->v_uobj.memq, listq.queue) {
+	uvm_page_array_init(&a);
+	off = 0;
+	while ((pg = uvm_page_array_fill_and_peek(&a, &vp->v_uobj, off,
+	    0, 0)) != NULL) {
 		pg->flags &= ~PG_NEEDCOMMIT;
+		uvm_page_array_advance(&a);
+		off = pg->offset + PAGE_SIZE;
 	}
+	uvm_page_array_fini(&a);
 	return false;
 }
 
