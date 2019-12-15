@@ -1,4 +1,4 @@
-/*	$NetBSD: ntlm.c,v 1.2 2018/02/05 16:00:53 christos Exp $	*/
+/*	$NetBSD: ntlm.c,v 1.3 2019/12/15 22:50:51 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -1204,7 +1204,7 @@ splitandenc(unsigned char *hash,
 #else
     EVP_CIPHER_CTX_free(ctx);
 #endif
-    memset(key, 0, sizeof(key));
+    memset_s(key, sizeof(key), 0, sizeof(key));
 }
 
 /**
