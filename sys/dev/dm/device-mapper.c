@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.52 2019/12/15 09:22:28 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.53 2019/12/15 10:12:45 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -504,7 +504,8 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 		 * routine basically call DIOCCACHESYNC on underlying devices.
 		 */
 		SLIST_FOREACH(table_en, tbl, next)
-			table_en->target->sync(table_en);
+			if (table_en->target->sync)
+				table_en->target->sync(table_en);
 		dm_table_release(&dmv->table_head, DM_TABLE_ACTIVE);
 		dm_dev_unbusy(dmv);
 		break;

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.24 2019/12/15 09:42:29 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.25 2019/12/15 10:12:45 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.24 2019/12/15 09:42:29 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.25 2019/12/15 10:12:45 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -45,7 +45,6 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.24 2019/12/15 09:42:29 tkusumi 
 int dm_target_zero_init(dm_table_entry_t *, int, char **);
 char *dm_target_zero_table(void *);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
-int dm_target_zero_sync(dm_table_entry_t *);
 int dm_target_zero_destroy(dm_table_entry_t *);
 int dm_target_zero_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
@@ -84,7 +83,6 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_zero_init;
 		dmt->table = &dm_target_zero_table;
 		dmt->strategy = &dm_target_zero_strategy;
-		dmt->sync = &dm_target_zero_sync;
 		dmt->deps = &dm_target_zero_deps;
 		dmt->destroy = &dm_target_zero_destroy;
 		dmt->upcall = &dm_target_zero_upcall;
@@ -143,14 +141,6 @@ dm_target_zero_strategy(dm_table_entry_t *table_en, struct buf *bp)
 				 * that there is no other io to done  */
 
 	biodone(bp);
-
-	return 0;
-}
-
-/* Sync underlying disk caches. */
-int
-dm_target_zero_sync(dm_table_entry_t *table_en)
-{
 
 	return 0;
 }
