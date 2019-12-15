@@ -1,8 +1,8 @@
-/*	$NetBSD: pam_getenv.c,v 1.3 2017/05/06 19:50:10 christos Exp $	*/
+/*	$NetBSD: pam_getenv.c,v 1.4 2019/12/15 17:08:21 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2003 Networks Associates Technology, Inc.
- * Copyright (c) 2004-2017 Dag-Erling Smørgrav
+ * Copyright (c) 2004-2019 Dag-Erling Smørgrav
  * All rights reserved.
  *
  * This software was developed for the FreeBSD Project by ThinkSec AS and
@@ -34,7 +34,7 @@
  * OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
  * SUCH DAMAGE.
  *
- * $OpenPAM: pam_getenv.c 938 2017-04-30 21:34:42Z des $
+ * $OpenPAM: pam_getenv.c 944 2019-02-22 09:49:12Z des $
  */
 
 #ifdef HAVE_CONFIG_H
@@ -42,7 +42,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pam_getenv.c,v 1.3 2017/05/06 19:50:10 christos Exp $");
+__RCSID("$NetBSD: pam_getenv.c,v 1.4 2019/12/15 17:08:21 christos Exp $");
 
 #include <errno.h>
 #include <stdlib.h>
@@ -63,19 +63,20 @@ const char *
 pam_getenv(pam_handle_t *pamh,
 	const char *name)
 {
-	char *str;
+	size_t len;
 	int i;
 
 	ENTERS(name);
-	if (strchr(name, '=') != NULL) {
-		errno = EINVAL;
-		RETURNS(NULL);
+	for (len = 0; name[len] != '\0'; ++len) {
+		if (name[len] == '=') {
+			errno = EINVAL;
+			RETURNS(NULL);
+		}
 	}
-	if ((i = openpam_findenv(pamh, name, strlen(name))) < 0)
+	if ((i = openpam_findenv(pamh, name, len)) < 0)
 		RETURNS(NULL);
-	if ((str = strchr(pamh->env[i], '=')) == NULL)
-		RETURNS("");
-	RETURNS(str);
+	/* assert(pamh->env[i][len] == '='); */
+	RETURNS(pamh->env[i] + len + 1);
 }
 
 /**
