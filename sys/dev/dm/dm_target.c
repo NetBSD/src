@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.30 2019/12/15 09:42:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.30 2019/12/15 09:42:29 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -182,10 +182,6 @@ dm_target_insert(dm_target_t *dm_target)
 	}
 	if (dm_target->sync == NULL) {
 		printf("%s missing sync\n", dm_target->name);
-		return EINVAL;
-	}
-	if (dm_target->secsize == NULL) {
-		printf("%s missing secsize\n", dm_target->name);
 		return EINVAL;
 	}
 
