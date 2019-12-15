@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.36 2019/12/15 05:56:02 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.37 2019/12/15 09:22:28 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.36 2019/12/15 05:56:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.37 2019/12/15 09:22:28 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -342,11 +342,11 @@ dm_target_stripe_upcall(dm_table_entry_t *table_en, struct buf *bp)
  * to the least common multiple.
  */
 int
-dm_target_stripe_secsize(dm_table_entry_t *table_en, unsigned *secsizep)
+dm_target_stripe_secsize(dm_table_entry_t *table_en, unsigned int *secsizep)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
-	unsigned secsize;
+	unsigned int secsize;
 
 	secsize = 0;
 

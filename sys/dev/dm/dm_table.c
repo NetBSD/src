@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.13 2019/12/14 10:49:30 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.14 2019/12/15 09:22:28 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.13 2019/12/14 10:49:30 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.14 2019/12/15 09:22:28 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -226,12 +226,12 @@ dm_inactive_table_size(dm_table_head_t *head)
  * Return combined disk geometry
  */
 void
-dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp, unsigned *secsizep)
+dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp, unsigned int *secsizep)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
 	uint64_t length;
-	unsigned secsize, tsecsize;
+	unsigned int secsize, tsecsize;
 	uint8_t id;
 
 	length = 0;
