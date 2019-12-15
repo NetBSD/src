@@ -2,8 +2,7 @@
 
 set -e
 
-# For now, avoid going past the 2038 32-bit clock rollover
-DAYS=$(( ( 0x7fffffff - $(date +%s) ) / 86400 - 1 ))
+DAYS=182500
 
 key() {
     local key=$1; shift
