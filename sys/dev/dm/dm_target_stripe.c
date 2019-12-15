@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.37 2019/12/15 09:22:28 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.38 2019/12/15 14:39:42 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,14 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.37 2019/12/15 09:22:28 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.38 2019/12/15 14:39:42 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
  */
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/buf.h>
 #include <sys/kmem.h>
 #include <sys/lwp.h>
@@ -68,7 +67,6 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 {
 	dm_target_t *dmt;
 	int r;
-	dmt = NULL;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -300,6 +298,7 @@ dm_target_stripe_sync(dm_table_entry_t *table_en)
 int
 dm_target_stripe_destroy(dm_table_entry_t *table_en)
 {
+
 	dm_target_stripe_fini(table_en->target_config);
 
 	/* Unbusy target so we can unload it */
@@ -332,6 +331,7 @@ dm_target_stripe_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 int
 dm_target_stripe_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
+
 	return 0;
 }
 
