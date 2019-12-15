@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.194 2019/12/15 02:56:40 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.195 2019/12/15 02:58:21 manu Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -544,7 +544,7 @@ next:	pop	%r8
 	mov	$(KERNTEXTOFF - KERNBASE), %rdi			/* dest */
 	mov	%r8, %rsi		
 	sub	$(start - kernel_text), %rsi			/* src */
-	mov	$(__kernel_end - kernel_text), %rcx		/* size *.
+	mov	$(__kernel_end - kernel_text), %rcx		/* size */
 	mov	%rcx, %r12		
 	movq	%rdi, %r11		/* for misaligned check */
 
