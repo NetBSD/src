@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.55 2019/03/01 03:03:19 christos Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.56 2019/12/15 20:25:25 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.55 2019/03/01 03:03:19 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.56 2019/12/15 20:25:25 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -92,7 +92,6 @@ MODULE(MODULE_CLASS_MISC, ksem, NULL);
 
 #define	SEM_MAX_NAMELEN		NAME_MAX
 
-#define	SEM_NSEMS_MAX		256
 #define	KS_UNLINKED		0x01
 
 static kmutex_t		ksem_lock	__cacheline_aligned;
@@ -468,14 +467,7 @@ ksem_create(lwp_t *l, const char *name, ksem_t **ksret, mode_t mode, u_int val)
 		len = 0;
 	}
 
-	u_int cnt;
-	uid_t uid = kauth_cred_getuid(l->l_cred);
-	if ((cnt = chgsemcnt(uid, 1)) > SEM_NSEMS_MAX) {
-		chgsemcnt(uid, -1);
-		if (kname != NULL)
-			kmem_free(kname, len);
-		return ENOSPC;
-	}
+	chgsemcnt(kauth_cred_getuid(l->l_cred), 1);
 
 	ks = kmem_zalloc(sizeof(ksem_t), KM_SLEEP);
 	mutex_init(&ks->ks_lock, MUTEX_DEFAULT, IPL_NONE);
