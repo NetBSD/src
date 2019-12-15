@@ -1,5 +1,5 @@
 /*	$OpenBSD: db_machdep.h,v 1.2 1997/03/21 00:48:48 niklas Exp $	*/
-/*	$NetBSD: db_machdep.h,v 1.26 2017/11/06 03:47:48 christos Exp $	*/
+/*	$NetBSD: db_machdep.h,v 1.27 2019/12/15 06:05:00 rin Exp $	*/
 
 /* 
  * Mach Operating System
@@ -98,7 +98,7 @@ extern	db_regs_t	ddb_regs;		/* register state */
 #define M_B		0xfc000001
 #define I_B		0x48000000
 #define I_BL		0x48000001
-#define	M_BCTR		0xfc0007fe
+#define	M_BCTR		0xfc0007ff
 #define	I_BCTR		0x4c000420
 #define	I_BCTRL		0x4c000421
 #define	M_RFI		0xfc0007fe
