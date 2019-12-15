@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5_locl.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: krb5_locl.h,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2016 Kungliga Tekniska Högskolan
@@ -210,6 +210,8 @@ struct _krb5_get_init_creds_opt_private {
 #define KRB5_INIT_CREDS_CANONICALIZE		1
 #define KRB5_INIT_CREDS_NO_C_CANON_CHECK	2
 #define KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK	4
+#define KRB5_INIT_CREDS_PKINIT_KX_VALID		32
+#define KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK    64
     struct {
         krb5_gic_process_last_req func;
         void *ctx;
@@ -294,6 +296,7 @@ typedef struct krb5_context_data {
 #define EXTRACT_TICKET_MATCH_REALM			4
 #define EXTRACT_TICKET_AS_REQ				8
 #define EXTRACT_TICKET_TIMESYNC				16
+#define EXTRACT_TICKET_MATCH_ANON			32
 
 /*
  * Configurable options

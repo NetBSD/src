@@ -291,7 +291,7 @@ typedef int ssize_t;
 #endif  /* SSIZE_T_DEFINED */
 #endif  /* HAVE_SSIZE_T */
 
-#include <roken-common.h>
+#include <krb5/roken-common.h>
 
 ROKEN_CPP_START
 

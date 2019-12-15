@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-mitdb.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: hdb-mitdb.c,v 1.3 2019/12/15 22:50:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2001 Kungliga Tekniska Högskolan
@@ -92,6 +92,11 @@ salt:
 */
 
 #include "hdb_locl.h"
+
+typedef struct MITDB {
+    HDB db;         /* Generic */
+    int do_sync;    /* MITDB-specific */
+} MITDB;
 
 static void
 attr_to_flags(unsigned attr, HDBFlags *flags)
@@ -700,6 +705,18 @@ mdb_destroy(krb5_context context, HDB *db)
 }
 
 static krb5_error_code
+mdb_set_sync(krb5_context context, HDB *db, int on)
+{
+    MITDB *mdb = (MITDB *)db;
+    DB *d = (DB*)db->hdb_db;
+
+    mdb->do_sync = on;
+    if (on)
+        return fsync((*d->fd)(d));
+    return 0;
+}
+
+static krb5_error_code
 mdb_lock(krb5_context context, HDB *db, int operation)
 {
     DB *d = (DB*)db->hdb_db;
@@ -863,6 +880,7 @@ static krb5_error_code
 mdb__put(krb5_context context, HDB *db, int replace,
 	krb5_data key, krb5_data value)
 {
+    MITDB *mdb = (MITDB *)db;
     DB *d = (DB*)db->hdb_db;
     DBT k, v;
     int code;
@@ -875,6 +893,11 @@ mdb__put(krb5_context context, HDB *db, int replace,
     if(code)
 	return code;
     code = (*d->put)(d, &k, &v, replace ? 0 : R_NOOVERWRITE);
+    if (code == 0) {
+        code = mdb_set_sync(context, db, mdb->do_sync);
+        db->hdb_unlock(context, db);
+        return code;
+    }
     db->hdb_unlock(context, db);
     if(code < 0) {
 	code = errno;
@@ -882,16 +905,14 @@ mdb__put(krb5_context context, HDB *db, int replace,
 			       db->hdb_name, strerror(code));
 	return code;
     }
-    if(code == 1) {
-	krb5_clear_error_message(context);
-	return HDB_ERR_EXISTS;
-    }
-    return 0;
+    krb5_clear_error_message(context);
+    return HDB_ERR_EXISTS;
 }
 
 static krb5_error_code
 mdb__del(krb5_context context, HDB *db, krb5_data key)
 {
+    MITDB *mdb = (MITDB *)db;
     DB *d = (DB*)db->hdb_db;
     DBT k;
     krb5_error_code code;
@@ -901,6 +922,11 @@ mdb__del(krb5_context context, HDB *db, krb5_data key)
     if(code)
 	return code;
     code = (*d->del)(d, &k, 0);
+    if (code == 0) {
+        code = mdb_set_sync(context, db, mdb->do_sync);
+        db->hdb_unlock(context, db);
+        return code;
+    }
     db->hdb_unlock(context, db);
     if(code == 1) {
 	code = errno;
@@ -1092,8 +1118,9 @@ krb5_error_code
 hdb_mitdb_create(krb5_context context, HDB **db,
 		 const char *filename)
 {
-    *db = calloc(1, sizeof(**db));
-    if (*db == NULL) {
+    MITDB **mdb = (MITDB **)db;
+    *mdb = calloc(1, sizeof(**mdb));
+    if (*mdb == NULL) {
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
@@ -1106,6 +1133,7 @@ hdb_mitdb_create(krb5_context context, HDB **db,
 	krb5_set_error_message(context, ENOMEM, "malloc: out of memory");
 	return ENOMEM;
     }
+    (*mdb)->do_sync = 1;
     (*db)->hdb_master_key_set = 0;
     (*db)->hdb_openp = 0;
     (*db)->hdb_capability_flags = 0;
@@ -1123,6 +1151,7 @@ hdb_mitdb_create(krb5_context context, HDB **db,
     (*db)->hdb__put = mdb__put;
     (*db)->hdb__del = mdb__del;
     (*db)->hdb_destroy = mdb_destroy;
+    (*db)->hdb_set_sync = mdb_set_sync;
     return 0;
 }
 

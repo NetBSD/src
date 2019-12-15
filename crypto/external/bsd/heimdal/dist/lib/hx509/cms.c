@@ -1,4 +1,4 @@
-/*	$NetBSD: cms.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: cms.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2007 Kungliga Tekniska Högskolan
@@ -539,7 +539,7 @@ out:
  *
  * @param context A hx509 context.
  * @param flags flags to control the behavior.
- *    - HX509_CMS_EV_NO_KU_CHECK - Dont check KU on certificate
+ *    - HX509_CMS_EV_NO_KU_CHECK - Don't check KU on certificate
  *    - HX509_CMS_EV_ALLOW_WEAK - Allow weak crytpo
  *    - HX509_CMS_EV_ID_NAME - prefer issuer name and serial number
  * @param cert Certificate to encrypt the EnvelopedData encryption key

@@ -1,4 +1,4 @@
-/*	$NetBSD: cert.c,v 1.4 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: cert.c,v 1.5 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
