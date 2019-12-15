@@ -1,4 +1,4 @@
-.\"	$NetBSD: fdisk.8,v 1.89 2019/12/14 20:46:13 christos Exp $
+.\"	$NetBSD: fdisk.8,v 1.90 2019/12/15 11:49:28 wiz Exp $
 .\"
 .Dd December 14, 2019
 .Dt FDISK 8
@@ -175,7 +175,7 @@ On an i386 or amd64 system, interactively update the boot selector settings.
 These include the default boot partition and the timeout value for the prompt.
 (The boot selector permits the user to interactively select the boot
 partition, and thus which operating system is run, at system boot time; see
-.Xr mbr 8
+.Xr x86/mbr 8
 for more information.)
 .It Fl b Ar cylinders/heads/sectors
 Specify the BIOS geometry parameters for
@@ -651,8 +651,8 @@ partition using whole disk without prompt against 1GB disk image file
 .Xr disklabel 8 ,
 .Xr gpt 8 ,
 .Xr installboot 8 ,
-.Xr mbr 8 ,
-.Xr mbrlabel 8
+.Xr mbrlabel 8 ,
+.Xr x86/mbr 8
 .Sh HISTORY
 A version of
 .Nm
