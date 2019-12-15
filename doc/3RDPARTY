@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1676 2019/12/15 17:10:00 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1677 2019/12/15 22:57:26 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -517,10 +517,10 @@ Only double-precision addressed at this time.
 
 
 Package:	heimdal
-Version:	7.1.0 (HEAD-2017-01-28)
-Current Vers:	7.5.0
+Version:	7.7.0
+Current Vers:	7.7.0
 Maintainer:	Heimdal <heimdal@h5l.org>
-Archive Site:	ftp://ftp.h5l.org/pub/heimdal/src/
+Archive Site:	https://github.com/heimdal/heimdal/releases/download/
 Home Page:	http://www.h5l.org/
 Date:		2019-01-09
 Mailing List:	heimdal-discuss@sics.se
