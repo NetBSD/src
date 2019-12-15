@@ -1,4 +1,4 @@
-/*	$NetBSD: ntlm.c,v 1.1.1.3 2017/01/28 20:46:52 christos Exp $	*/
+/*	$NetBSD: ntlm.c,v 1.1.1.4 2019/12/15 22:45:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 - 2008 Kungliga Tekniska Högskolan
@@ -1194,7 +1194,7 @@ splitandenc(unsigned char *hash,
     EVP_CipherInit_ex(&ctx, EVP_des_cbc(), NULL, key, NULL, 1);
     EVP_Cipher(&ctx, answer, challenge, 8);
     EVP_CIPHER_CTX_cleanup(&ctx);
-    memset(key, 0, sizeof(key));
+    memset_s(key, sizeof(key), 0, sizeof(key));
 }
 
 /**

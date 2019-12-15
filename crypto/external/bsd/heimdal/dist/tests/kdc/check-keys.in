@@ -39,7 +39,7 @@ objdir="."
 
 srcdir="${top_srcdir}/tests/kdc"
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
 
 R=TEST.H5L.SE
@@ -91,12 +91,14 @@ sed -e 's/@keys@/des:pw-salt:/' \
 	${sedvars} < ${CIN} > ${COUT}
 ${kadmin} cpw -p foo ${principal} || exit 1
 
-sed -e 's/@keys@/des-cbc-crc:afs3-salt:test.h5l.se/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
+if [ 'X@ENABLE_AFS_STRING_TO_KEY@' = "X1" ]; then
+    sed -e 's/@keys@/des-cbc-crc:afs3-salt:test.h5l.se/' \
+            ${sedvars} < ${CIN} > ${COUT}
+    ${kadmin} cpw -p foo ${principal} || exit 1
 
-sed -e 's/@keys@/des:afs3-salt:test.h5l.se/' \
-	${sedvars} < ${CIN} > ${COUT}
-${kadmin} cpw -p foo ${principal} || exit 1
+    sed -e 's/@keys@/des:afs3-salt:test.h5l.se/' \
+            ${sedvars} < ${CIN} > ${COUT}
+    ${kadmin} cpw -p foo ${principal} || exit 1
+fi
 
 exit 0

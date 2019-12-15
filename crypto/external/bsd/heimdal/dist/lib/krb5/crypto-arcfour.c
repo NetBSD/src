@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto-arcfour.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: crypto-arcfour.c,v 1.1.1.4 2019/12/15 22:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -182,9 +182,9 @@ ARCFOUR_subencrypt(krb5_context context,
     EVP_Cipher(&ctx, cdata + 16, cdata + 16, len - 16);
     EVP_CIPHER_CTX_cleanup(&ctx);
 
-    memset (k1_c_data, 0, sizeof(k1_c_data));
-    memset (k2_c_data, 0, sizeof(k2_c_data));
-    memset (k3_c_data, 0, sizeof(k3_c_data));
+    memset_s(k1_c_data, sizeof(k1_c_data), 0, sizeof(k1_c_data));
+    memset_s(k2_c_data, sizeof(k2_c_data), 0, sizeof(k2_c_data));
+    memset_s(k3_c_data, sizeof(k3_c_data), 0, sizeof(k3_c_data));
     return 0;
 }
 
@@ -249,9 +249,9 @@ ARCFOUR_subdecrypt(krb5_context context,
     if (ret)
 	krb5_abortx(context, "hmac failed");
 
-    memset (k1_c_data, 0, sizeof(k1_c_data));
-    memset (k2_c_data, 0, sizeof(k2_c_data));
-    memset (k3_c_data, 0, sizeof(k3_c_data));
+    memset_s(k1_c_data, sizeof(k1_c_data), 0, sizeof(k1_c_data));
+    memset_s(k2_c_data, sizeof(k2_c_data), 0, sizeof(k2_c_data));
+    memset_s(k3_c_data, sizeof(k3_c_data), 0, sizeof(k3_c_data));
 
     if (ct_memcmp (cksum.checksum.data, data, 16) != 0) {
 	krb5_clear_error_message (context);

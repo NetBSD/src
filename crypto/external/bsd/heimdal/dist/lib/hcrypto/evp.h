@@ -1,4 +1,4 @@
-/*	$NetBSD: evp.h,v 1.1.1.4 2017/01/28 20:46:45 christos Exp $	*/
+/*	$NetBSD: evp.h,v 1.1.1.5 2019/12/15 22:45:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2005 - 2016 Kungliga Tekniska Högskolan
@@ -166,7 +166,7 @@ struct hc_CIPHER {
 #define hc_EVP_CTRL_INIT                        0x0
 
 #define hc_EVP_CIPH_VARIABLE_LENGTH     0x008 /* variable key length */
-#define hc_EVP_CIPH_ALWAYS_CALL_INIT    0x020
+#define hc_EVP_CIPH_ALWAYS_CALL_INIT    0x020 /* backend maintains own cipherstate */
 #define hc_EVP_CIPH_RAND_KEY            0x200
 
     int (*init)(EVP_CIPHER_CTX*,const unsigned char*,const unsigned char*,int);

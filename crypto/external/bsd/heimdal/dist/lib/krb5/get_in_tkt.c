@@ -1,4 +1,4 @@
-/*	$NetBSD: get_in_tkt.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: get_in_tkt.c,v 1.1.1.4 2019/12/15 22:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -494,7 +494,7 @@ krb5_get_in_cred(krb5_context context,
     {
 	unsigned flags = EXTRACT_TICKET_TIMESYNC;
 	if (opts.request_anonymous)
-	    flags |= EXTRACT_TICKET_ALLOW_SERVER_MISMATCH;
+	    flags |= EXTRACT_TICKET_ALLOW_SERVER_MISMATCH | EXTRACT_TICKET_MATCH_ANON;
 
 	ret = _krb5_extract_ticket(context,
 				   &rep,

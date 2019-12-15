@@ -1,4 +1,4 @@
-/*	$NetBSD: cert.c,v 1.1.1.3 2017/01/28 20:46:48 christos Exp $	*/
+/*	$NetBSD: cert.c,v 1.1.1.4 2019/12/15 22:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2007 Kungliga Tekniska Högskolan
@@ -3406,7 +3406,7 @@ hx509_cert_binary(hx509_context context, hx509_cert c, heim_octet_string *os)
 
 void
 _hx509_abort(const char *fmt, ...)
-     __attribute__ ((noreturn, format (printf, 1, 2)))
+     __attribute__ ((__noreturn__, __format__ (__printf__, 1, 2)))
 {
     va_list ap;
     va_start(ap, fmt);

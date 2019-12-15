@@ -1,4 +1,4 @@
-/*	$NetBSD: arcfour.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: arcfour.c,v 1.1.1.4 2019/12/15 22:45:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 - 2006 Kungliga Tekniska Högskolan
@@ -306,7 +306,7 @@ _gssapi_get_mic_arcfour(OM_uint32 * minor_status,
     EVP_Cipher(&rc4_key, p, p, 8);
     EVP_CIPHER_CTX_cleanup(&rc4_key);
 
-    memset(k6_data, 0, sizeof(k6_data));
+    memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
 
     *minor_status = 0;
     return GSS_S_COMPLETE;
@@ -391,7 +391,7 @@ _gssapi_verify_mic_arcfour(OM_uint32 * minor_status,
     else
 	cmp = memcmp(&SND_SEQ[4], "\x00\x00\x00\x00", 4);
 
-    memset(SND_SEQ, 0, sizeof(SND_SEQ));
+    memset_s(SND_SEQ, sizeof(SND_SEQ), 0, sizeof(SND_SEQ));
     if (cmp != 0) {
 	*minor_status = 0;
 	return GSS_S_BAD_MIC;
@@ -518,7 +518,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
     ret = arcfour_mic_key(context, &Klocal,
 			  p0 + 8, 4, /* SND_SEQ */
 			  k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (ret) {
 	_gsskrb5_release_buffer(minor_status, output_message_buffer);
 	*minor_status = ret;
@@ -552,7 +552,7 @@ _gssapi_wrap_arcfour(OM_uint32 * minor_status,
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 	EVP_Cipher(&rc4_key, p0 + 8, p0 + 8 /* SND_SEQ */, 8);
 	EVP_CIPHER_CTX_cleanup(&rc4_key);
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     if (conf_state)
@@ -652,7 +652,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
 	EVP_CipherInit_ex(&rc4_key, EVP_rc4(), NULL, k6_data, NULL, 1);
 	EVP_Cipher(&rc4_key, SND_SEQ, p0 + 8, 8);
 	EVP_CIPHER_CTX_cleanup(&rc4_key);
-	memset(k6_data, 0, sizeof(k6_data));
+	memset_s(k6_data, sizeof(k6_data), 0, sizeof(k6_data));
     }
 
     _gsskrb5_decode_be_om_uint32(SND_SEQ, &seq_number);
@@ -680,7 +680,7 @@ OM_uint32 _gssapi_unwrap_arcfour(OM_uint32 *minor_status,
     ret = arcfour_mic_key(context, &Klocal,
 			  SND_SEQ, 4,
 			  k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (ret) {
 	*minor_status = ret;
 	return GSS_S_FAILURE;
@@ -1071,7 +1071,7 @@ _gssapi_wrap_iov_arcfour(OM_uint32 *minor_status,
     kret = arcfour_mic_key(context, &Klocal,
 			   p0 + 8, 4, /* SND_SEQ */
 			   k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (kret) {
 	*minor_status = kret;
 	major_status = GSS_S_FAILURE;
@@ -1302,7 +1302,7 @@ _gssapi_unwrap_iov_arcfour(OM_uint32 *minor_status,
 			   snd_seq,
 			   4,
 			   k6_data, sizeof(k6_data));
-    memset(Klocaldata, 0, sizeof(Klocaldata));
+    memset_s(Klocaldata, sizeof(Klocaldata), 0, sizeof(Klocaldata));
     if (kret) {
 	*minor_status = kret;
 	return GSS_S_FAILURE;

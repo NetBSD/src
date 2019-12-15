@@ -1,4 +1,4 @@
-/*	$NetBSD: kimpersonate.c,v 1.1.1.3 2017/01/28 20:46:42 christos Exp $	*/
+/*	$NetBSD: kimpersonate.c,v 1.1.1.4 2019/12/15 22:45:39 christos Exp $	*/
 
 /*
  * Copyright (c) 2000 - 2007 Kungliga Tekniska Högskolan
@@ -84,7 +84,9 @@ encode_ticket(krb5_context context,
     et.flags = cred->flags.b;
     et.key = cred->session;
     et.crealm = cred->client->realm;
-    copy_PrincipalName(&cred->client->name, &et.cname);
+    ret = copy_PrincipalName(&cred->client->name, &et.cname);
+    if (ret)
+	krb5_err(context, 1, ret, "copy_PrincipalName");
     {
 	krb5_data empty_string;
 
@@ -129,7 +131,9 @@ encode_ticket(krb5_context context,
 
     ticket.tkt_vno = 5;
     ticket.realm = cred->server->realm;
-    copy_PrincipalName(&cred->server->name, &ticket.sname);
+    ret = copy_PrincipalName(&cred->server->name, &ticket.sname);
+    if (ret)
+	krb5_err(context, 1, ret, "copy_PrincipalName");
 
     ASN1_MALLOC_ENCODE(Ticket, buf, len, &ticket, &size, ret);
     if(ret)

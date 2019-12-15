@@ -1,4 +1,4 @@
-/*	$NetBSD: deprecated.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: deprecated.c,v 1.1.1.4 2019/12/15 22:45:42 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2009 Kungliga Tekniska Högskolan
@@ -209,7 +209,7 @@ krb5_password_key_proc (krb5_context context,
 	password = buf;
     }
     ret = krb5_string_to_key_salt (context, type, password, salt, *key);
-    memset (buf, 0, sizeof(buf));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
     return ret;
 }
 
@@ -472,7 +472,7 @@ krb5_free_error_string(krb5_context context, char *str)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_set_error_string(krb5_context context, const char *fmt, ...)
-    __attribute__((format (printf, 2, 3)))
+    __attribute__ ((__format__ (__printf__, 2, 3)))
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     va_list ap;
@@ -500,7 +500,7 @@ krb5_set_error_string(krb5_context context, const char *fmt, ...)
 
 KRB5_LIB_FUNCTION krb5_error_code KRB5_LIB_CALL
 krb5_vset_error_string(krb5_context context, const char *fmt, va_list args)
-    __attribute__ ((format (printf, 2, 0)))
+    __attribute__ ((__format__ (__printf__, 2, 0)))
     KRB5_DEPRECATED_FUNCTION("Use X instead")
 {
     krb5_vset_error_message(context, 0, fmt, args);

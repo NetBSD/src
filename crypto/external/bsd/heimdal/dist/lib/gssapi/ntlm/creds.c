@@ -1,4 +1,4 @@
-/*	$NetBSD: creds.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: creds.c,v 1.1.1.4 2019/12/15 22:45:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2006 Kungliga Tekniska Högskolan
@@ -62,9 +62,11 @@ _gss_ntlm_inquire_cred
 	    n->domain = strdup(c->domain);
 	}
 	if (n == NULL || n->user == NULL || n->domain == NULL) {
-	    if (n)
+	    if (n) {
 		free(n->user);
-            free(n);
+		free(n->domain);
+		free(n);
+	    }
 	    *minor_status = ENOMEM;
 	    return GSS_S_FAILURE;
 	}

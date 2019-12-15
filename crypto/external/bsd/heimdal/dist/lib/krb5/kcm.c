@@ -1,4 +1,4 @@
-/*	$NetBSD: kcm.c,v 1.1.1.3 2017/01/28 20:46:51 christos Exp $	*/
+/*	$NetBSD: kcm.c,v 1.1.1.4 2019/12/15 22:45:43 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.
@@ -226,7 +226,7 @@ kcm_free(krb5_context context, krb5_ccache *id)
     if (k != NULL) {
 	if (k->name != NULL)
 	    free(k->name);
-	memset(k, 0, sizeof(*k));
+	memset_s(k, sizeof(*k), 0, sizeof(*k));
 	krb5_data_free(&(*id)->data);
     }
 }

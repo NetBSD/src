@@ -1,4 +1,4 @@
-/*	$NetBSD: verify_mic.c,v 1.1.1.3 2017/01/28 20:46:44 christos Exp $	*/
+/*	$NetBSD: verify_mic.c,v 1.1.1.4 2019/12/15 22:45:45 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -91,8 +91,8 @@ verify_mic_des
   DES_cbc_cksum ((void *)hash, (void *)hash, sizeof(hash),
 		 &schedule, &zero);
   if (ct_memcmp (p - 8, hash, 8) != 0) {
-    memset (deskey, 0, sizeof(deskey));
-    memset (&schedule, 0, sizeof(schedule));
+    memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
+    memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
     return GSS_S_BAD_MIC;
   }
 
@@ -107,8 +107,8 @@ verify_mic_des
   EVP_Cipher(&des_ctx, p, p, 8);
   EVP_CIPHER_CTX_cleanup(&des_ctx);
 
-  memset (deskey, 0, sizeof(deskey));
-  memset (&schedule, 0, sizeof(schedule));
+  memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
+  memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
 
   seq = p;
   _gsskrb5_decode_om_uint32(seq, &seq_number);
