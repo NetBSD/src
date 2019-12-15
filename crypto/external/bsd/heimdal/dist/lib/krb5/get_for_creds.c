@@ -1,4 +1,4 @@
-/*	$NetBSD: get_for_creds.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: get_for_creds.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -357,11 +357,17 @@ krb5_get_forwarded_creds (krb5_context	    context,
 
     krb_cred_info = enc_krb_cred_part.ticket_info.val;
 
-    copy_EncryptionKey (&out_creds->session, &krb_cred_info->key);
+    ret = copy_EncryptionKey (&out_creds->session, &krb_cred_info->key);
+    if (ret)
+	goto out4;
     ALLOC(krb_cred_info->prealm, 1);
-    copy_Realm (&out_creds->client->realm, krb_cred_info->prealm);
+    ret = copy_Realm (&out_creds->client->realm, krb_cred_info->prealm);
+    if (ret)
+	goto out4;
     ALLOC(krb_cred_info->pname, 1);
-    copy_PrincipalName(&out_creds->client->name, krb_cred_info->pname);
+    ret = copy_PrincipalName(&out_creds->client->name, krb_cred_info->pname);
+    if (ret)
+	goto out4;
     ALLOC(krb_cred_info->flags, 1);
     *krb_cred_info->flags          = out_creds->flags.b;
     ALLOC(krb_cred_info->authtime, 1);
@@ -373,11 +379,17 @@ krb5_get_forwarded_creds (krb5_context	    context,
     ALLOC(krb_cred_info->renew_till, 1);
     *krb_cred_info->renew_till = out_creds->times.renew_till;
     ALLOC(krb_cred_info->srealm, 1);
-    copy_Realm (&out_creds->server->realm, krb_cred_info->srealm);
+    ret = copy_Realm (&out_creds->server->realm, krb_cred_info->srealm);
+    if (ret)
+	goto out4;
     ALLOC(krb_cred_info->sname, 1);
-    copy_PrincipalName (&out_creds->server->name, krb_cred_info->sname);
+    ret = copy_PrincipalName (&out_creds->server->name, krb_cred_info->sname);
+    if (ret)
+	goto out4;
     ALLOC(krb_cred_info->caddr, 1);
-    copy_HostAddresses (&out_creds->addresses, krb_cred_info->caddr);
+    ret = copy_HostAddresses (&out_creds->addresses, krb_cred_info->caddr);
+    if (ret)
+	goto out4;
 
     krb5_free_creds (context, out_creds);
 

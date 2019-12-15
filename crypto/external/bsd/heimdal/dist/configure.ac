@@ -1,8 +1,8 @@
 dnl Process this file with autoconf to produce a configure script.
-AC_REVISION($Revision: 1.3 $)
+AC_REVISION($Revision: 1.4 $)
 AC_PREREQ(2.62)
 test -z "$CFLAGS" && CFLAGS="-g"
-AC_INIT([Heimdal],[7.99.1],[https://github.com/heimdal/heimdal/issues])
+AC_INIT([Heimdal],[7.7.0],[https://github.com/heimdal/heimdal/issues])
 AC_CONFIG_SRCDIR([kuser/kinit.c])
 AC_CONFIG_HEADERS(include/config.h)
 AC_CONFIG_MACRO_DIR([cf])
@@ -282,7 +282,9 @@ AC_ARG_ENABLE(afs-string-to-key,
 
 if test "$enable_afs_string_to_key" = "yes"; then
 	AC_DEFINE(ENABLE_AFS_STRING_TO_KEY, 1, [Define if want to use the weak AFS string to key functions.])
+	ENABLE_AFS_STRING_TO_KEY=1
 fi
+AC_SUBST(ENABLE_AFS_STRING_TO_KEY)dnl
 
 
 rk_CHECK_MAN

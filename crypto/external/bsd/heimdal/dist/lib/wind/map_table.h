@@ -1,4 +1,4 @@
-/*	$NetBSD: map_table.h,v 1.1.1.1 2019/12/15 22:45:42 christos Exp $	*/
+/*	$NetBSD: map_table.h,v 1.2 2019/12/15 22:50:51 christos Exp $	*/
 
 /* ./map_table.h */
 /* Automatically generated at 2019-06-07T02:26:41.397498 */

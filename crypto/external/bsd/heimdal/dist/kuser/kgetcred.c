@@ -1,4 +1,4 @@
-/*	$NetBSD: kgetcred.c,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: kgetcred.c,v 1.3 2019/12/15 22:50:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -48,6 +48,7 @@ static char *impersonate_str;
 static char *nametype_str;
 static int store_flag = 1;
 static int cached_only_flag;
+static int anonymous_flag;
 static int debug_flag;
 static int version_flag;
 static int help_flag;
@@ -78,6 +79,8 @@ struct getargs args[] = {
       NP_("don't store the tickets obtained in the cache", ""), NULL },
     { "cached-only", 	        0,   arg_flag, &cached_only_flag,
       NP_("don't talk to the KDC, just search the cache", ""), NULL },
+    { "anonymous",      'n',   arg_flag, &anonymous_flag,
+      NP_("request an anonymous ticket", ""), NULL },
     { "debug", 	        0,   arg_flag, &debug_flag, NULL, NULL },
     { "version", 	0,   arg_flag, &version_flag, NULL, NULL },
     { "help",		0,   arg_flag, &help_flag, NULL, NULL }
@@ -178,6 +181,8 @@ main(int argc, char **argv)
 	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_NO_STORE);
     if (cached_only_flag)
 	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_CACHED);
+    if (anonymous_flag)
+	krb5_get_creds_opt_add_options(context, opt, KRB5_GC_ANONYMOUS);
 
     if (delegation_cred_str) {
 	krb5_ccache id;
