@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.202 2019/12/14 17:28:58 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.203 2019/12/15 21:11:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.202 2019/12/14 17:28:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.203 2019/12/15 21:11:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -167,15 +167,12 @@ static void uvm_pageremove(struct uvm_object *, struct vm_page *);
  */
 
 static inline void
-uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
-    struct vm_page *where)
+uvm_pageinsert_object(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KASSERT(uobj == pg->uobject);
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
-	KASSERT(where == NULL || (where->flags & PG_TABLED));
-	KASSERT(where == NULL || (where->uobject == uobj));
 
 	if (UVM_OBJ_IS_VNODE(uobj)) {
 		if (uobj->uo_npages == 0) {
@@ -191,11 +188,6 @@ uvm_pageinsert_list(struct uvm_object *uobj, struct vm_page *pg,
 	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
 		atomic_inc_uint(&uvmexp.anonpages);
 	}
-
-	if (where)
-		TAILQ_INSERT_AFTER(&uobj->memq, where, pg, listq.queue);
-	else
-		TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
 }
@@ -225,7 +217,7 @@ uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
 		KASSERT(error == ENOMEM);
 		return error;
 	}
-	uvm_pageinsert_list(uobj, pg, NULL);
+	uvm_pageinsert_object(uobj, pg);
 	return error;
 }
 
@@ -236,7 +228,7 @@ uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
  */
 
 static inline void
-uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
+uvm_pageremove_object(struct uvm_object *uobj, struct vm_page *pg)
 {
 
 	KASSERT(uobj == pg->uobject);
@@ -260,7 +252,6 @@ uvm_pageremove_list(struct uvm_object *uobj, struct vm_page *pg)
 
 	/* object should be locked */
 	uobj->uo_npages--;
-	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 	pg->flags &= ~PG_TABLED;
 	pg->uobject = NULL;
 }
@@ -280,7 +271,7 @@ uvm_pageremove(struct uvm_object *uobj, struct vm_page *pg)
 
 	KDASSERT(uobj != NULL);
 	KASSERT(uobj == pg->uobject);
-	uvm_pageremove_list(uobj, pg);
+	uvm_pageremove_object(uobj, pg);
 	uvm_pageremove_tree(uobj, pg);
 }
 
@@ -1105,8 +1096,8 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 
 	uvm_pageremove_tree(uobj, oldpg);
 	uvm_pageinsert_tree(uobj, newpg);
-	uvm_pageinsert_list(uobj, newpg, oldpg);
-	uvm_pageremove_list(uobj, oldpg);
+	uvm_pageinsert_object(uobj, newpg);
+	uvm_pageremove_object(uobj, oldpg);
 }
 
 /*
@@ -1542,7 +1533,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 
-	KASSERT(mutex_owned(obj->vmobjlock));
+	/* No - used from DDB. KASSERT(mutex_owned(obj->vmobjlock)); */
 
 	pg = radix_tree_lookup_node(&obj->uo_pages, off >> PAGE_SHIFT);
 
@@ -1841,11 +1832,7 @@ uvm_page_printit(struct vm_page *pg, bool full,
 			uobj = pg->uobject;
 			if (uobj) {
 				(*pr)("  checking object list\n");
-				TAILQ_FOREACH(tpg, &uobj->memq, listq.queue) {
-					if (tpg == pg) {
-						break;
-					}
-				}
+				tpg = uvm_pagelookup(uobj, pg->offset);
 				if (tpg)
 					(*pr)("  page found on object list\n");
 				else

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.77 2019/12/13 20:10:21 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.78 2019/12/15 21:11:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.77 2019/12/13 20:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.78 2019/12/15 21:11:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.77 2019/12/13 20:10:21 ad Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pager.h>
+#include <uvm/uvm_page_array.h>
 
 static int genfs_do_directio(struct vmspace *, vaddr_t, size_t, struct vnode *,
     off_t, enum uio_rw);
@@ -785,13 +786,6 @@ loopdone:
  *	(e.g. vm_map) before calling flush.
  * => if neither PGO_CLEANIT nor PGO_SYNCIO is set, we will not block
  * => if PGO_ALLPAGES is set, then all pages in the object will be processed.
- * => NOTE: we rely on the fact that the object's memq is a TAILQ and
- *	that new pages are inserted on the tail end of the list.   thus,
- *	we can make a complete pass through the object in one go by starting
- *	at the head and working towards the tail (new pages are put in
- *	front of us).
- * => NOTE: we are allowed to lock the page queues, so the caller
- *	must not be holding the page queue lock.
  *
  * note on "cleaning" object and PG_BUSY pages:
  *	this routine is holding the lock on the object.   the only time
@@ -806,19 +800,6 @@ loopdone:
  *	object we need to wait for the other PG_BUSY pages to clear
  *	off (i.e. we need to do an iosync).   also note that once a
  *	page is PG_BUSY it must stay in its object until it is un-busyed.
- *
- * note on page traversal:
- *	we can traverse the pages in an object either by going down the
- *	linked list in "uobj->memq", or we can go over the address range
- *	by page doing hash table lookups for each address.    depending
- *	on how many pages are in the object it may be cheaper to do one
- *	or the other.   we set "by_list" to true if we are using memq.
- *	if the cost of a hash lookup was equal to the cost of the list
- *	traversal we could compare the number of pages in the start->stop
- *	range to the total number of pages in the object.   however, it
- *	seems that a hash table lookup is more expensive than the linked
- *	list traversal, so we multiply the number of pages in the
- *	range by an estimate of the relatively higher cost of the hash lookup.
  */
 
 int
@@ -841,7 +822,7 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 {
 	struct uvm_object * const uobj = &vp->v_uobj;
 	kmutex_t * const slock = uobj->vmobjlock;
-	off_t off;
+	off_t nextoff;
 	int i, error, npages, nback;
 	int freeflag;
 	/*
@@ -850,8 +831,9 @@ genfs_do_putpages(struct vnode *vp, off_t startoff, off_t endoff,
 	 */
 	struct vm_page *pgs[MAXPHYS / MIN_PAGE_SIZE];
 #define MAXPAGES (MAXPHYS / PAGE_SIZE)
-	struct vm_page *pg, *nextpg, *tpg, curmp, endmp;
-	bool wasclean, by_list, needs_clean, yld;
+	struct vm_page *pg, *tpg;
+	struct uvm_page_array a;
+	bool wasclean, needs_clean;
 	bool async = (origflags & PGO_SYNCIO) == 0;
 	bool pagedaemon = curlwp == uvm.pagedaemon_lwp;
 	struct lwp * const l = curlwp ? curlwp : &lwp0;
@@ -944,12 +926,10 @@ retry:
 
 	error = 0;
 	wasclean = (vp->v_numoutput == 0);
-	off = startoff;
+	nextoff = startoff;
 	if (endoff == 0 || flags & PGO_ALLPAGES) {
 		endoff = trunc_page(LLONG_MAX);
 	}
-	by_list = (uobj->uo_npages <=
-	    ((endoff - startoff) >> PAGE_SHIFT) * UVM_PAGE_TREE_PENALTY);
 
 	/*
 	 * if this vnode is known not to have dirty pages,
@@ -966,10 +946,7 @@ retry:
 	}
 
 	/*
-	 * start the loop.  when scanning by list, hold the last page
-	 * in the list before we start.  pages allocated after we start
-	 * will be added to the end of the list, so we can stop at the
-	 * current last page.
+	 * start the loop to scan pages.
 	 */
 
 	cleanall = (flags & PGO_CLEANIT) != 0 && wasclean &&
@@ -977,51 +954,48 @@ retry:
 	    (vp->v_iflag & VI_ONWORKLST) != 0;
 	dirtygen = gp->g_dirtygen;
 	freeflag = pagedaemon ? PG_PAGEOUT : PG_RELEASED;
-	if (by_list) {
-		curmp.flags = PG_MARKER;
-		endmp.flags = PG_MARKER;
-		pg = TAILQ_FIRST(&uobj->memq);
-		TAILQ_INSERT_TAIL(&uobj->memq, &endmp, listq.queue);
-	} else {
-		pg = uvm_pagelookup(uobj, off);
-	}
-	nextpg = NULL;
-	while (by_list || off < endoff) {
-
+	uvm_page_array_init(&a);
+	for (;;) {
 		/*
 		 * if the current page is not interesting, move on to the next.
 		 */
 
-		KASSERT(pg == NULL || (pg->flags & PG_MARKER) != 0 ||
-		    pg->uobject == uobj);
-		KASSERT(pg == NULL ||
-		    (pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
-		    (pg->flags & (PG_BUSY|PG_MARKER)) != 0);
-		if (by_list) {
-			if (pg == &endmp) {
-				break;
-			}
-			if (pg->flags & PG_MARKER) {
-				pg = TAILQ_NEXT(pg, listq.queue);
-				continue;
-			}
-			if (pg->offset < startoff || pg->offset >= endoff ||
-			    pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
-				if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
-					wasclean = false;
-				}
-				pg = TAILQ_NEXT(pg, listq.queue);
-				continue;
-			}
-			off = pg->offset;
-		} else if (pg == NULL || pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
-			if (pg != NULL) {
-				wasclean = false;
-			}
-			off += PAGE_SIZE;
-			if (off < endoff) {
-				pg = uvm_pagelookup(uobj, off);
-			}
+		pg = uvm_page_array_fill_and_peek(&a, uobj, nextoff, 0, 0);
+		if (pg == NULL) {
+			break;
+		}
+
+		KASSERT(pg->uobject == uobj);
+		KASSERT((pg->flags & (PG_RELEASED|PG_PAGEOUT)) == 0 ||
+		    (pg->flags & (PG_BUSY)) != 0);
+		KASSERT(pg->offset >= startoff);
+		KASSERT(pg->offset >= nextoff);
+
+		if (pg->offset >= endoff) {
+			break;
+		}
+
+		if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
+			wasclean = false;
+			nextoff = pg->offset + PAGE_SIZE;
+			continue;
+		}
+
+		/*
+		 * a preempt point.
+		 */
+
+		if ((l->l_cpu->ci_schedstate.spc_flags & SPCF_SHOULDYIELD)
+		    != 0) {
+			nextoff = pg->offset; /* visit this page again */
+			mutex_exit(slock);
+			preempt();
+			/*
+			 * as we dropped the object lock, our cached pages can
+			 * be stale.
+			 */
+			uvm_page_array_clear(&a);
+			mutex_enter(slock);
 			continue;
 		}
 
@@ -1030,9 +1004,7 @@ retry:
 		 * wait for it to become unbusy.
 		 */
 
-		yld = (l->l_cpu->ci_schedstate.spc_flags &
-		    SPCF_SHOULDYIELD) && !pagedaemon;
-		if (pg->flags & PG_BUSY || yld) {
+		if (pg->flags & PG_BUSY) {
 			UVMHIST_LOG(ubchist, "busy %#jx", (uintptr_t)pg,
 			   0, 0, 0);
 			if (flags & PGO_BUSYFAIL && pg->flags & PG_BUSY) {
@@ -1050,32 +1022,20 @@ retry:
 				 */
 				break;
 			}
-			if (by_list) {
-				TAILQ_INSERT_BEFORE(pg, &curmp, listq.queue);
-				UVMHIST_LOG(ubchist, "curmp next %#jx",
-				    (uintptr_t)TAILQ_NEXT(&curmp, listq.queue),
-				    0, 0, 0);
-			}
-			if (yld) {
-				mutex_exit(slock);
-				preempt();
-				mutex_enter(slock);
-			} else {
-				pg->flags |= PG_WANTED;
-				UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
-				mutex_enter(slock);
-			}
-			if (by_list) {
-				UVMHIST_LOG(ubchist, "after next %#jx",
-				    (uintptr_t)TAILQ_NEXT(&curmp, listq.queue),
-				    0, 0, 0);
-				pg = TAILQ_NEXT(&curmp, listq.queue);
-				TAILQ_REMOVE(&uobj->memq, &curmp, listq.queue);
-			} else {
-				pg = uvm_pagelookup(uobj, off);
-			}
+			nextoff = pg->offset; /* visit this page again */
+			pg->flags |= PG_WANTED;
+			UVM_UNLOCK_AND_WAIT(pg, slock, 0, "genput", 0);
+			/*
+			 * as we dropped the object lock, our cached pages can
+			 * be stale.
+			 */
+			uvm_page_array_clear(&a);
+			mutex_enter(slock);
 			continue;
 		}
+
+		nextoff = pg->offset + PAGE_SIZE;
+		uvm_page_array_advance(&a);
 
 		/*
 		 * if we're freeing, remove all mappings of the page now.
@@ -1136,7 +1096,7 @@ retry:
 			 * it fits in the "pgs" pages array.
 			 */
 
-			off_t fslo, fshi, genlo, lo;
+			off_t fslo, fshi, genlo, lo, off = pg->offset;
 			GOP_PUTRANGE(vp, off, &fslo, &fshi);
 			KASSERT(fslo == trunc_page(fslo));
 			KASSERT(fslo <= off);
@@ -1200,8 +1160,6 @@ retry:
 		for (i = 0; i < npages; i++) {
 			tpg = pgs[i];
 			KASSERT(tpg->uobject == uobj);
-			if (by_list && tpg == TAILQ_NEXT(pg, listq.queue))
-				pg = tpg;
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
@@ -1222,7 +1180,11 @@ retry:
 					 * and needs_clean is false.
 					 */
 
-					nextpg = TAILQ_NEXT(tpg, listq.queue);
+					KASSERT(npages == 1);
+					KASSERT(!needs_clean);
+					KASSERT(pg == tpg);
+					KASSERT(nextoff ==
+					    tpg->offset + PAGE_SIZE);
 					uvm_pagefree(tpg);
 					if (pagedaemon)
 						uvmexp.pdfreed++;
@@ -1231,52 +1193,29 @@ retry:
 		}
 		if (needs_clean) {
 			modified = true;
+			KASSERT(nextoff == pg->offset + PAGE_SIZE);
+			KASSERT(nback < npages);
+			nextoff = pg->offset + ((npages - nback) << PAGE_SHIFT);
+			KASSERT(pgs[nback] == pg);
+			KASSERT(nextoff == pgs[npages - 1]->offset + PAGE_SIZE);
 
 			/*
-			 * start the i/o.  if we're traversing by list,
-			 * keep our place in the list with a marker page.
+			 * start the i/o.
 			 */
-
-			if (by_list) {
-				TAILQ_INSERT_AFTER(&uobj->memq, pg, &curmp,
-				    listq.queue);
-			}
 			mutex_exit(slock);
 			error = GOP_WRITE(vp, pgs, npages, flags);
+			/*
+			 * as we dropped the object lock, our cached pages can
+			 * be stale.
+			 */
+			uvm_page_array_clear(&a);
 			mutex_enter(slock);
-			if (by_list) {
-				pg = TAILQ_NEXT(&curmp, listq.queue);
-				TAILQ_REMOVE(&uobj->memq, &curmp, listq.queue);
-			}
 			if (error) {
 				break;
 			}
-			if (by_list) {
-				continue;
-			}
-		}
-
-		/*
-		 * find the next page and continue if there was no error.
-		 */
-
-		if (by_list) {
-			if (nextpg) {
-				pg = nextpg;
-				nextpg = NULL;
-			} else {
-				pg = TAILQ_NEXT(pg, listq.queue);
-			}
-		} else {
-			off += (npages - nback) << PAGE_SHIFT;
-			if (off < endoff) {
-				pg = uvm_pagelookup(uobj, off);
-			}
 		}
 	}
-	if (by_list) {
-		TAILQ_REMOVE(&uobj->memq, &endmp, listq.queue);
-	}
+	uvm_page_array_fini(&a);
 
 	if (modified && (vp->v_iflag & VI_WRMAPDIRTY) != 0 &&
 	    (vp->v_type != VBLK ||
@@ -1377,8 +1316,17 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	return error;
 }
 
+/*
+ * genfs_gop_write_rwmap:
+ *
+ * a variant of genfs_gop_write.  it's used by UDF for its directory buffers.
+ * this maps pages with PROT_WRITE so that VOP_STRATEGY can modifies
+ * the contents before writing it out to the underlying storage.
+ */
+
 int
-genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
+genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages,
+    int flags)
 {
 	off_t off;
 	vaddr_t kva;
@@ -1441,6 +1389,10 @@ genfs_do_io(struct vnode *vp, off_t off, vaddr_t kva, size_t len, int flags,
 	KASSERT(bytes != 0);
 
 	if (iowrite) {
+		/*
+		 * why += 2?
+		 * 1 for biodone, 1 for uvm_aio_aiodone.
+		 */
 		mutex_enter(vp->v_interlock);
 		vp->v_numoutput += 2;
 		mutex_exit(vp->v_interlock);

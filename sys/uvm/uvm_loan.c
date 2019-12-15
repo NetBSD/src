@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.90 2019/12/14 15:08:45 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.91 2019/12/15 21:11:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.90 2019/12/14 15:08:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.91 2019/12/15 21:11:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -844,8 +844,8 @@ again:
 	 * first, get ahold of our single zero page.
 	 */
 
-	if (__predict_false((pg =
-			     TAILQ_FIRST(&uvm_loanzero_object.memq)) == NULL)) {
+	pg = uvm_pagelookup(&uvm_loanzero_object, 0);
+	if (__predict_false(pg == NULL)) {
 		while ((pg = uvm_pagealloc(&uvm_loanzero_object, 0, NULL,
 					   UVM_PGA_ZERO)) == NULL) {
 			mutex_exit(uvm_loanzero_object.vmobjlock);
@@ -1060,13 +1060,12 @@ ulz_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 	 * just reactivate or dequeue it.
 	 */
 
-	pg = TAILQ_FIRST(&uobj->memq);
+	pg = uvm_pagelookup(uobj, 0);
 	KASSERT(pg != NULL);
-	KASSERT(TAILQ_NEXT(pg, listq.queue) == NULL);
 
-	if (pg->uanon)
+	if (pg->uanon) {
 		uvm_pageactivate(pg);
-	else {
+	} else {
 		uvm_pagedequeue(pg);
 	}
 

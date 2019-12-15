@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.310 2019/01/10 10:33:49 mrg Exp $	*/
+/*	$NetBSD: pmap.c,v 1.311 2019/12/15 21:11:34 ad Exp $	*/
 /*
  *
  * Copyright (C) 1996-1999 Eduardo Horvath.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.310 2019/01/10 10:33:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.311 2019/12/15 21:11:34 ad Exp $");
 
 #undef	NO_VCACHE /* Don't forget the locked TLB in dostart */
 #define	HWREF
@@ -1473,10 +1473,8 @@ pmap_create(void)
 	memset(pm, 0, sizeof *pm);
 	DPRINTF(PDB_CREATE, ("pmap_create(): created %p\n", pm));
 
-	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
-	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
-	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
-
+	pm->pm_refs = 1;
+	TAILQ_INIT(&pm->pm_ptps);
 	if (pm != pmap_kernel()) {
 		while (!pmap_get_page(&pm->pm_physaddr)) {
 			uvm_wait("pmap_create");
@@ -1510,7 +1508,7 @@ pmap_destroy(struct pmap *pm)
 #else
 #define pmap_cpus_active 0
 #endif
-	struct vm_page *pg, *nextpg;
+	struct vm_page *pg;
 
 	if ((int)atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 		return;
@@ -1538,22 +1536,18 @@ pmap_destroy(struct pmap *pm)
 #endif
 
 	/* we could be a little smarter and leave pages zeroed */
-	for (pg = TAILQ_FIRST(&pm->pm_obj.memq); pg != NULL; pg = nextpg) {
+	while ((pg = TAILQ_FIRST(&pm->pm_ptps)) != NULL) {
 #ifdef DIAGNOSTIC
 		struct vm_page_md *md = VM_PAGE_TO_MD(pg);
 #endif
 
-		KASSERT((pg->flags & PG_MARKER) == 0);
-		nextpg = TAILQ_NEXT(pg, listq.queue);
-		TAILQ_REMOVE(&pm->pm_obj.memq, pg, listq.queue);
+		TAILQ_REMOVE(&pm->pm_ptps, pg, pageq.queue);
 		KASSERT(md->mdpg_pvh.pv_pmap == NULL);
 		dcache_flush_page_cpuset(VM_PAGE_TO_PHYS(pg), pmap_cpus_active);
 		uvm_pagefree(pg);
 	}
 	pmap_free_page((paddr_t)(u_long)pm->pm_segs, pmap_cpus_active);
 
-	uvm_obj_destroy(&pm->pm_obj, false);
-	mutex_destroy(&pm->pm_obj_lock);
 	pool_cache_put(&pmap_cache, pm);
 }
 
@@ -1904,7 +1898,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		ptpg = PHYS_TO_VM_PAGE(ptp);
 		if (ptpg) {
 			ptpg->offset = (uint64_t)va & (0xfffffLL << 23);
-			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq.queue);
+			TAILQ_INSERT_TAIL(&pm->pm_ptps, ptpg, pageq.queue);
 		} else {
 			KASSERT(pm == pmap_kernel());
 		}
@@ -1916,7 +1910,7 @@ pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		ptpg = PHYS_TO_VM_PAGE(ptp);
 		if (ptpg) {
 			ptpg->offset = (((uint64_t)va >> 43) & 0x3ffLL) << 13;
-			TAILQ_INSERT_TAIL(&pm->pm_obj.memq, ptpg, listq.queue);
+			TAILQ_INSERT_TAIL(&pm->pm_ptps, ptpg, pageq.queue);
 		} else {
 			KASSERT(pm == pmap_kernel());
 		}

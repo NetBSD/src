@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.16 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.17 2019/12/15 21:11:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.16 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.17 2019/12/15 21:11:35 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -242,8 +242,6 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	    off_t startoffset, off_t endoffset, off_t blkeof,
 	    int flags, int checkfirst, struct vm_page **pgp)
 {
-	int by_list;
-	struct vm_page *curpg = NULL; /* XXX: gcc */
 	struct vm_page *pgs[MAXBSIZE / MIN_PAGE_SIZE], *pg;
 	off_t soff = 0; /* XXX: gcc */
 	voff_t off;
@@ -258,39 +256,11 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 	KASSERT(mutex_owned(vp->v_interlock));
 	ASSERT_MAYBE_SEGLOCK(fs);
   top:
-	by_list = (vp->v_uobj.uo_npages <=
-		   ((endoffset - startoffset) >> PAGE_SHIFT) *
-		   UVM_PAGE_TREE_PENALTY);
 	any_dirty = 0;
 
-	if (by_list) {
-		curpg = TAILQ_FIRST(&vp->v_uobj.memq);
-	} else {
-		soff = startoffset;
-	}
-	while (by_list || soff < MIN(blkeof, endoffset)) {
-		if (by_list) {
-			/*
-			 * Find the first page in a block.  Skip
-			 * blocks outside our area of interest or beyond
-			 * the end of file.
-			 */
-			KASSERT(curpg == NULL
-			    || (curpg->flags & PG_MARKER) == 0);
-			if (pages_per_block > 1) {
-				while (curpg &&
-				    ((curpg->offset & lfs_sb_getbmask(fs)) ||
-				    curpg->offset >= vp->v_size ||
-				    curpg->offset >= endoffset)) {
-					curpg = TAILQ_NEXT(curpg, listq.queue);
-					KASSERT(curpg == NULL ||
-					    (curpg->flags & PG_MARKER) == 0);
-				}
-			}
-			if (curpg == NULL)
-				break;
-			soff = curpg->offset;
-		}
+	soff = startoffset;
+	KASSERT((soff & (lfs_sb_getbsize(fs) - 1)) == 0);
+	while (soff < MIN(blkeof, endoffset)) {
 
 		/*
 		 * Mark all pages in extended range busy; find out if any
@@ -299,15 +269,11 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		nonexistent = dirty = 0;
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
 			KASSERT(mutex_owned(vp->v_interlock));
-			if (by_list && pages_per_block <= 1) {
-				pgs[i] = pg = curpg;
-			} else {
-				off = soff + (i << PAGE_SHIFT);
-				pgs[i] = pg = uvm_pagelookup(&vp->v_uobj, off);
-				if (pg == NULL) {
-					++nonexistent;
-					continue;
-				}
+			off = soff + (i << PAGE_SHIFT);
+			pgs[i] = pg = uvm_pagelookup(&vp->v_uobj, off);
+			if (pg == NULL) {
+				++nonexistent;
+				continue;
 			}
 			KASSERT(pg != NULL);
 
@@ -344,12 +310,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				  (pg->flags & PG_CLEAN) == 0);
 			dirty += tdirty;
 		}
-		if (pages_per_block > 0 && nonexistent >= pages_per_block) {
-			if (by_list) {
-				curpg = TAILQ_NEXT(curpg, listq.queue);
-			} else {
-				soff += lfs_sb_getbsize(fs);
-			}
+		if (nonexistent >= pages_per_block) {
+			soff += MAX(PAGE_SIZE, lfs_sb_getbsize(fs));
 			continue;
 		}
 
@@ -390,11 +352,7 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		if (checkfirst && any_dirty)
 			break;
 
-		if (by_list) {
-			curpg = TAILQ_NEXT(curpg, listq.queue);
-		} else {
-			soff += MAX(PAGE_SIZE, lfs_sb_getbsize(fs));
-		}
+		soff += MAX(PAGE_SIZE, lfs_sb_getbsize(fs));
 	}
 
 	KASSERT(mutex_owned(vp->v_interlock));
@@ -492,8 +450,7 @@ retry:
 	 * If there are no pages, don't do anything.
 	 */
 	if (vp->v_uobj.uo_npages == 0) {
-		if (TAILQ_EMPTY(&vp->v_uobj.memq) &&
-		    (vp->v_iflag & VI_ONWORKLST) &&
+		if ((vp->v_iflag & VI_ONWORKLST) &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
