@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.4 2019/11/24 09:34:38 skrll Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.5 2019/12/15 14:18:16 jakllsch Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.4 2019/11/24 09:34:38 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.5 2019/12/15 14:18:16 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,8 +190,8 @@ fdt_endpoint_activate(struct fdt_endpoint *ep, bool activate)
 		return EBUSY;
 
 	rdp = rep->ep_port->port_dp;
-device_printf(rdp->dp_dev, "activating port %d endpoint %d\n",
-    fdt_endpoint_port_index(rep), fdt_endpoint_index(rep));
+	device_printf(rdp->dp_dev, "activating port %d endpoint %d\n",
+	    fdt_endpoint_port_index(rep), fdt_endpoint_index(rep));
 	if (rdp->dp_ep_activate)
 		error = rdp->dp_ep_activate(rdp->dp_dev, rep, activate);
 
