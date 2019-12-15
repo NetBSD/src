@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1221 2019/11/20 09:37:44 hikaru Exp $
+# $NetBSD: mi,v 1.1222 2019/12/15 03:55:56 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -957,6 +957,9 @@
 ./usr/bin/setextattr				base-util-bin
 ./usr/bin/sftp					base-secsh-bin
 ./usr/bin/sha1					base-util-bin
+./usr/bin/sha256				base-util-bin
+./usr/bin/sha384				base-util-bin
+./usr/bin/sha512				base-util-bin
 ./usr/bin/shar					base-util-bin
 ./usr/bin/shlock				base-util-bin
 ./usr/bin/shmif_dumpbus				base-util-bin		rump
