@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.86 2019/12/14 17:31:53 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.87 2019/12/15 21:11:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -125,7 +125,6 @@
  *   => PG_FREE is set in flags
  * o owned by a uvm_object
  *   => pageq.queue is entry on wired page queue, if any
- *   => listq.queue is entry on list of pages in object
  *   => uanon is NULL or the vm_anon to which it has been O->A loaned
  *   => uobject is owner
  * o owned by a vm_anon
@@ -156,7 +155,6 @@ struct vm_page {
 	} pageq;
 
 	union {
-		TAILQ_ENTRY(vm_page) queue;	/* o: pages in same object */
 		LIST_ENTRY(vm_page) list;	/* f: CPU free page queue */
 	} listq;
 
