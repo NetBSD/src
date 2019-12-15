@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.16 2019/12/13 22:12:41 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.17 2019/12/15 11:22:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.16 2019/12/13 22:12:41 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.17 2019/12/15 11:22:46 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,8 +60,7 @@ __RCSID("$NetBSD: label.c,v 1.16 2019/12/13 22:12:41 martin Exp $");
  * local prototypes
  */
 static bool boringpart(const struct disk_part_info *info);
-static bool checklabel(struct disk_partitions*, char[MENUSTRSIZE],
-    char[MENUSTRSIZE]);
+static bool checklabel(struct disk_partitions*, char *, char *);
 static void show_partition_adder(menudesc *, struct partition_usage_set*);
 
 /*
@@ -107,7 +106,7 @@ real_partition(const struct partition_usage_set *pset, int index)
  */
 static bool
 checklabel(struct disk_partitions *parts,
-    char ovl1[MENUSTRSIZE], char ovl2[MENUSTRSIZE])
+    char *ovl1, char *ovl2)
 {
 	part_id i, j;
 	struct disk_part_info info;
@@ -124,7 +123,7 @@ checklabel(struct disk_partitions *parts,
 
 		/*
 		 * check succeeding partitions for overlap.
-		 * O(n^2), but n is small (currently <= 16).
+		 * O(n^2), but n is small.
 		 */
 		istart = info.start;
 		iend = istart + info.size;
@@ -146,12 +145,12 @@ checklabel(struct disk_partitions *parts,
 			/* overlap? */
 			if ((istart <= jstart && jstart < iend) ||
 			    (jstart <= istart && istart < jend)) {
-				snprintf(ovl1, sizeof(*ovl1),
+				snprintf(ovl1, MENUSTRSIZE,
 				    "%" PRIu64 " - %" PRIu64 " %s, %s",
 				    istart / sizemult, iend / sizemult,
 				    multname,
 				    getfslabelname(fs_type, fs_sub_type));
-				snprintf(ovl2, sizeof(*ovl2),
+				snprintf(ovl2, MENUSTRSIZE,
 				    "%" PRIu64 " - %" PRIu64 " %s, %s",
 				    jstart / sizemult, jend / sizemult,
 				    multname,
