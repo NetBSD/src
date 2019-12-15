@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.34 2016/07/03 14:24:58 christos Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.35 2019/12/15 23:13:33 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.34 2016/07/03 14:24:58 christos Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.35 2019/12/15 23:13:33 uwe Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
 
+#include <assert.h>
 #include <time.h>
 #include <errno.h>
 #include <stddef.h>
@@ -275,6 +276,7 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	int error;
 
 	self = pthread__self();
+	_DIAGASSERT(((uintptr_t)self & RW_FLAGMASK) == 0);
 
 #ifdef ERRORCHECK
 	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
@@ -373,6 +375,7 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 #endif
 
 	self = pthread__self();
+	_DIAGASSERT(((uintptr_t)self & RW_FLAGMASK) == 0);
 
 	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
 		if (owner != 0)
@@ -509,6 +512,7 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		 */
 		self = pthread__self();
 		if ((thread = PTQ_FIRST(&ptr->ptr_wblocked)) != NULL) {
+			_DIAGASSERT(((uintptr_t)thread & RW_FLAGMASK) == 0);
 			new = (uintptr_t)thread | RW_WRITE_LOCKED;
 
 			if (PTQ_NEXT(thread, pt_sleep) != NULL)
