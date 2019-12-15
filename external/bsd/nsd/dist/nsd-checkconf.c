@@ -366,11 +366,14 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_BIN(do_ip6, o);
 		SERV_GET_BIN(reuseport, o);
 		SERV_GET_BIN(hide_version, o);
+		SERV_GET_BIN(hide_identity, o);
 		SERV_GET_BIN(zonefiles_check, o);
 		SERV_GET_BIN(log_time_ascii, o);
 		SERV_GET_BIN(round_robin, o);
 		SERV_GET_BIN(minimal_responses, o);
+		SERV_GET_BIN(confine_to_zone, o);
 		SERV_GET_BIN(refuse_any, o);
+		SERV_GET_BIN(tcp_reject_overflow, o);
 		/* str */
 		SERV_GET_PATH(final, database, o);
 		SERV_GET_STR(identity, o);
@@ -385,6 +388,10 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_PATH(final, xfrdir, o);
 		SERV_GET_PATH(final, zonelistfile, o);
 		SERV_GET_STR(port, o);
+		SERV_GET_STR(tls_service_key, o);
+		SERV_GET_STR(tls_service_ocsp, o);
+		SERV_GET_STR(tls_service_pem, o);
+		SERV_GET_STR(tls_port, o);
 		/* int */
 		SERV_GET_INT(server_count, o);
 		SERV_GET_INT(tcp_count, o);
@@ -397,6 +404,8 @@ config_print_zone(nsd_options_type* opt, const char* k, int s, const char *o,
 		SERV_GET_INT(statistics, o);
 		SERV_GET_INT(xfrd_reload_timeout, o);
 		SERV_GET_INT(verbosity, o);
+		SERV_GET_INT(send_buffer_size, o);
+		SERV_GET_INT(receive_buffer_size, o);
 #ifdef RATELIMIT
 		SERV_GET_INT(rrl_size, o);
 		SERV_GET_INT(rrl_ratelimit, o);
@@ -493,7 +502,12 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\treuseport: %s\n", opt->reuseport?"yes":"no");
 	printf("\tdo-ip4: %s\n", opt->do_ip4?"yes":"no");
 	printf("\tdo-ip6: %s\n", opt->do_ip6?"yes":"no");
+	printf("\tsend-buffer-size: %d\n", opt->send_buffer_size);
+	printf("\treceive-buffer-size: %d\n", opt->receive_buffer_size);
 	printf("\thide-version: %s\n", opt->hide_version?"yes":"no");
+	printf("\thide-identity: %s\n", opt->hide_identity?"yes":"no");
+	printf("\ttcp-reject-overflow: %s\n",
+		opt->tcp_reject_overflow ? "yes" : "no");
 	print_string_var("database:", opt->database);
 	print_string_var("identity:", opt->identity);
 	print_string_var("version:", opt->version);
@@ -520,6 +534,8 @@ config_test_print_server(nsd_options_type* opt)
 	printf("\tlog-time-ascii: %s\n", opt->log_time_ascii?"yes":"no");
 	printf("\tround-robin: %s\n", opt->round_robin?"yes":"no");
 	printf("\tminimal-responses: %s\n", opt->minimal_responses?"yes":"no");
+	printf("\tconfine-to-zone: %s\n",
+		opt->confine_to_zone ? "yes" : "no");
 	printf("\trefuse-any: %s\n", opt->refuse_any?"yes":"no");
 	printf("\tverbosity: %d\n", opt->verbosity);
 	for(ip = opt->ip_addresses; ip; ip=ip->next)
@@ -536,6 +552,10 @@ config_test_print_server(nsd_options_type* opt)
 #endif
 	printf("\tzonefiles-check: %s\n", opt->zonefiles_check?"yes":"no");
 	printf("\tzonefiles-write: %d\n", opt->zonefiles_write);
+	print_string_var("tls-service-key:", opt->tls_service_key);
+	print_string_var("tls-service-pem:", opt->tls_service_pem);
+	print_string_var("tls-service-ocsp:", opt->tls_service_ocsp);
+	print_string_var("tls-port:", opt->tls_port);
 
 #ifdef USE_DNSTAP
 	printf("\ndnstap:\n");
@@ -581,7 +601,6 @@ config_test_print_server(nsd_options_type* opt)
 		print_string_var("name:", zone->name);
 		print_zone_content_elems(zone->pattern);
 	}
-
 }
 
 static int
@@ -720,7 +739,7 @@ main(int argc, char* argv[])
 	log_init("nsd-checkconf");
 
 	/* Parse the command line... */
-	while ((c = getopt(argc, argv, "vfo:a:p:s:z:")) != -1) {
+	while ((c = getopt(argc, argv, "vfho:a:p:s:z:")) != -1) {
 		switch (c) {
 		case 'v':
 			verbose = 1;
@@ -753,6 +772,7 @@ main(int argc, char* argv[])
 		case 'z':
 			conf_zone = optarg;
 			break;
+		case 'h':
 		default:
 			usage();
 		};
