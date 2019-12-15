@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.106 2019/12/08 20:42:48 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.107 2019/12/15 19:24:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -374,7 +374,7 @@ void		pmap_pv_untrack(paddr_t, psize_t);
 
 void		pmap_map_ptes(struct pmap *, struct pmap **, pd_entry_t **,
 		    pd_entry_t * const **);
-void		pmap_unmap_ptes(struct pmap *, struct pmap *);
+void		pmap_unmap_ptes(struct pmap *, struct pmap *, struct vm_page *);
 
 bool		pmap_pdes_valid(vaddr_t, pd_entry_t * const *, pd_entry_t *,
 		    int *lastlvl);
