@@ -68,7 +68,8 @@ PROJECTS = base hdb hx509 gssapi krb5 ntlm wind
 PROJECTS += hcrypto
 
 doxyout doxygen: base.dxy hdb.dxy hx509.dxy hcrypto.dxy gssapi.dxy krb5.dxy ntlm.dxy wind.dxy
-	@find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \
+	@test -d $(srcdir)/doxyout && \
+	find $(srcdir)/doxyout -type d ! -perm -200 -exec chmod u+w {} ';' ; \
 	rm -rf $(srcdir)/doxyout ; \
 	mkdir $(srcdir)/doxyout ; \
 	for a in $(PROJECTS) ; do \

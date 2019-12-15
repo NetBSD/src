@@ -59,7 +59,7 @@ testfailed="echo test failed; exit 1"
 KRB5_CONFIG="${objdir}/krb5.conf"
 export KRB5_CONFIG
 
-# If there is no ldap support compile in, disable test
+# If there is no ldap support compiled in, disable test
 if ${kdc} --builtin-hdb | grep ldap > /dev/null ; then
    :
 else

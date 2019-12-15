@@ -1,4 +1,7 @@
 #!/bin/sh
+
+cat <<'EOM'
+#!/bin/sh
 #
 # Copyright (c) 2000 - 2008 Kungliga Tekniska Högskolan
 # (Royal Institute of Technology, Stockholm, Sweden). 
@@ -181,6 +184,8 @@ fi
 # option...  And MIT's krb5-config does include rpath flags.
 #
 # Compatibility with MIT is the winning consideration for now.
+EOM
+
 case "@CANONICAL_HOST@" in
 alpha*-dec-osf*)
   rpath_flag='-Wl,-rpath -Wl,';;
@@ -197,6 +202,10 @@ alpha*-dec-osf*)
 *)
 rpath_flag=;;
 esac
+
+echo "rpath_flag='$rpath_flag'"
+
+cat <<'EOM'
 
 if test "$do_libs" = "yes"; then
     deplibs=""
@@ -254,3 +263,4 @@ if test "$do_cflags" = "yes"; then
 fi
 
 exit 0
+EOM

@@ -392,7 +392,8 @@ EXTRA_DIST = \
 	data/ocsp-resp2.der \
 	data/ocsp-responder.crt \
 	data/ocsp-responder.key \
-	data/openssl.cnf \
+	data/openssl.1.0.cnf \
+	data/openssl.1.1.cnf \
 	data/pkinit-proxy-chain.crt \
 	data/pkinit-proxy.crt \
 	data/pkinit-proxy.key \

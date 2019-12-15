@@ -355,7 +355,7 @@ KDCOptions ::= BIT STRING {
 	allow-postdate(5),
 	postdated(6),
 	renewable(8),
-	constrained-delegation(14), -- ms extension (aka cname-in-addl-tkt)
+	cname-in-addl-tkt(14), -- ms extension
 	canonicalize(15),
 	request-anonymous(16),
 	disable-transited-check(26),

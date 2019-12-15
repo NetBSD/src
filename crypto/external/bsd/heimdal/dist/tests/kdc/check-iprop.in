@@ -39,11 +39,11 @@ db_type=@db_type@
 
 . ${env_setup}
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
 
 
-# Dont run this test in AFS, since it lacks support for AF_UNIX
+# Don't run this test in AFS, since it lacks support for AF_UNIX
 expr "X`/bin/pwd || pwd`" : "X/afs/.*" > /dev/null 2>/dev/null && exit 77
 
 R=TEST.H5L.SE
@@ -221,19 +221,28 @@ ${EGREP} 'up-to-date with version' iprop-slave-status >/dev/null || { echo "slav
 
 # ----------------- checking: pushing lives changes
 
+slave_get() { KRB5_CONFIG="${objdir}/krb5-slave.conf" ${kadmin} -l get "$@"; }
+slave_check_exists() {
+    # Creation with a random key is not atomic, there are at present
+    # 3 log entries to create a random key principal, the entry is
+    # "invalid" for the first two of these.  We wait for the entry to
+    # exist and not be invalid
+    #
+    attrs=`slave_get -o attributes "$@" 2>/dev/null` || return 1
+    echo $attrs | egrep 'Attributes:' | egrep -v invalid >/dev/null || return 1
+    get_iprop_ver 0
+}
+
 echo "Add host"
 ${kadmin} -l add --random-key --use-defaults host/foo@${R} || exit 1
-wait_for_slave
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${kadmin} -l get host/foo@${R} > /dev/null || exit 1
+wait_for "Slave sees new host" slave_check_exists "host/foo@${R}"
 
 echo "Rollover host keys"
 ${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
 ${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
 ${kadmin} -l cpw -r --keepold host/foo@${R} || exit 1
 wait_for_slave 3
-KRB5_CONFIG="${objdir}/krb5-slave.conf" \
-${kadmin} -l get host/foo@${R} | \
+slave_get host/foo@${R} | \
     ${EGREP} Keytypes: | cut -d: -f2 | tr ' ' '
 ' | sed 's/^.*[[]\(.*\)[]].*$/\1/' | grep '[0-9]' | sort -nu | tr -d '
 ' | ${EGREP} 1234 > /dev/null || exit 1
@@ -274,6 +283,7 @@ ${kadmin} -l get host/bar@${R} > /dev/null 2>/dev/null && exit 1
 echo "Re-add host"
 ${kadmin} -l add --random-key --use-defaults host/foo@${R} || exit 1
 ${kadmin} -l add --random-key --use-defaults host/bar@${R} || exit 1
+wait_for "Slave sees re-added host" slave_check_exists "host/bar@${R}"
 
 echo "kill slave and remove log and database"
 > iprop-stats
@@ -291,7 +301,7 @@ echo "doing changes while slave is down"
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
 ${kadmin} -l cpw --random-password user@${R} > /dev/null || exit 1
 
-echo "Makeing a copy of the master log file"
+echo "Making a copy of the master log file"
 cp ${objdir}/current.log ${objdir}/current.log.tmp
 
 # ----------------- checking: checking that master and slaves resyncs
@@ -446,17 +456,18 @@ ${iprop_log} last-version > slave-last.tmp
 ${iprop_log} last-version > master-last.tmp
 cmp master-last.tmp slave-last.tmp || exit 1
 
-if [ "$db_type" = lmdb ]; then
+if [ "$db_type" = lmdb ] && type mdb_stat > /dev/null 2>&1; then
     # Sanity check that we have the same number of principals at the HDB
     # and LMDB levels.
     #
     # We should also do this for the sqlite backend, but that would
     # require a sqlite3(1) shell that is capable of opening our HDB
-    # files.  W
+    # files.
     echo "checking that principals in DB == entries in LMDB"
-    princs=`${kadmin} -l list '*' | wc -l`
+    # Add one to match lmdb overhead
+    princs=`(echo; ${kadmin} -l list '*') | wc -l`
     entries=`mdb_stat -n current-db.mdb | grep 'Entries:' | awk '{print $2}'`
-    [ "`expr 1 + "$princs"`" -eq "$entries" ] || exit 1
+    [ "$princs" -eq "$entries" ] || exit 1
 fi
 
 exit 0
