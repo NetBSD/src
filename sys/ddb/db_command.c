@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.164 2019/09/29 02:49:59 uwe Exp $	*/
+/*	$NetBSD: db_command.c,v 1.165 2019/12/15 20:29:08 joerg Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.164 2019/09/29 02:49:59 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.165 2019/12/15 20:29:08 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -194,6 +194,7 @@ static void	db_lock_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_all_locks(db_expr_t, bool, db_expr_t, const char *);
 static void	db_show_lockstats(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mount_print_cmd(db_expr_t, bool, db_expr_t, const char *);
+static void	db_show_all_mount(db_expr_t, bool, db_expr_t, const char *);
 static void	db_mbuf_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_map_print_cmd(db_expr_t, bool, db_expr_t, const char *);
 static void	db_namecache_print_cmd(db_expr_t, bool, db_expr_t,
@@ -231,6 +232,8 @@ static const struct db_command db_show_cmds[] = {
 	    0 ,"Show all pools",NULL,NULL) },
 	{ DDB_ADD_CMD("locks",	db_show_all_locks,
 	    0 ,"Show all held locks", "[/t]", NULL) },
+	{ DDB_ADD_CMD("mount",	db_show_all_mount,	0,
+	    "Print all mount structures.", "[/f]", NULL) },
 #ifdef AIO
 	/*added from all sub cmds*/
 	{ DDB_ADD_CMD("aio_jobs",	db_show_aio_jobs,	0,
@@ -1175,6 +1178,19 @@ db_mount_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	vfs_mount_print((struct mount *)(uintptr_t) addr, full, db_printf);
+#endif
+}
+
+static void
+db_show_all_mount(db_expr_t addr, bool have_addr, db_expr_t count, const char *modif)
+{
+#ifdef _KERNEL	/* XXX CRASH(8) */
+	bool full = false;
+
+	if (modif[0] == 'f')
+		full = true;
+
+	vfs_mount_print_all(full, db_printf);
 #endif
 }
 
