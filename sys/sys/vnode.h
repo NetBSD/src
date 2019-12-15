@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.284 2019/12/01 13:56:29 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.285 2019/12/15 21:56:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -595,6 +595,8 @@ void	vfs_vnode_print(struct vnode *, int, void (*)(const char *, ...)
 void	vfs_vnode_lock_print(void *, int, void (*)(const char *, ...)
     __printflike(1, 2));
 void	vfs_mount_print(struct mount *, int, void (*)(const char *, ...)
+    __printflike(1, 2));
+void	vfs_mount_print_all(int, void (*)(const char *, ...)
     __printflike(1, 2));
 #endif /* DDB */
 
