@@ -42,7 +42,7 @@ export KRB5_CONFIG
 
 testfailed="echo test failed; cat messages.log; exit 1"
 
-# If there is no useful db support compile in, disable test
+# If there is no useful db support compiled in, disable test
 ${have_db} || exit 77
 
 R=TEST.H5L.SE
@@ -53,6 +53,7 @@ R4=TEST4.H5L.SE
 R5=SOME-REALM5.FR
 R6=SOME-REALM6.US
 R7=SOME-REALM7.UK
+R8=SOME-REALM8.UK
 
 H1=H1.$R
 H2=H2.$R
@@ -152,6 +153,12 @@ ${kadmin} \
     init \
     --realm-max-ticket-life=1day \
     --realm-max-renewable-life=1month \
+    ${R8} || exit 1
+
+${kadmin} \
+    init \
+    --realm-max-ticket-life=1day \
+    --realm-max-renewable-life=1month \
     ${H1} || exit 1
 
 ${kadmin} \
@@ -191,6 +198,7 @@ ${kadmin} add -p foo --use-defaults foo@${R4} || exit 1
 ${kadmin5} add -p foo --use-defaults foo@${R5} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R6} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${R7} || exit 1
+${kadmin} add -p foo --use-defaults foo@${R8} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${H1} || exit 1
 ${kadmin} add -p foo --use-defaults foo/host.${h1}@${H1} || exit 1
 ${kadmin} add -p foo --use-defaults foo@${H2} || exit 1
@@ -249,6 +257,9 @@ ${kadmin} add -p cross2 --use-defaults krbtgt/${R5}@${R6} || exit 1
 ${kadmin} add -p cross1 --use-defaults krbtgt/${R7}@${R6} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R6}@${R7} || exit 1
 
+${kadmin} add -p cross1 --use-defaults krbtgt/${R8}@${R6} || exit 1
+${kadmin} add -p cross2 --use-defaults krbtgt/${R6}@${R8} || exit 1
+
 ${kadmin} add -p cross1 --use-defaults krbtgt/${H1}@${R} || exit 1
 ${kadmin} add -p cross2 --use-defaults krbtgt/${R}@${H1} || exit 1
 
@@ -284,6 +295,7 @@ ${kadmin} check ${R4} || exit 1
 ${kadmin5} check ${R5} || exit 1
 ${kadmin} check ${R6} || exit 1
 ${kadmin} check ${R7} || exit 1
+${kadmin} check ${R8} || exit 1
 ${kadmin} check ${H1} || exit 1
 ${kadmin} check ${H2} || exit 1
 ${kadmin} check ${H3} || exit 1
@@ -388,6 +400,8 @@ echo "Getting x-realm tickets with capaths for $R -> $R6"
 ${kgetcred} foo@${R6} || { ec=1 ; eval "${testfailed}"; }
 echo "Getting x-realm tickets with capaths for $R -> $R7"
 ${kgetcred} foo@${R7} || { ec=1 ; eval "${testfailed}"; }
+echo "Should not get x-realm tickets with capaths for $R -> $R8"
+${kgetcred} foo@${R8} && { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Testing capaths logic (reverse order)"
@@ -418,10 +432,13 @@ ${kinit} --password-file=${objdir}/foopassword \
 
 echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $H1"
 ${kgetcred} --hostbased --canonicalize foo host.${h1} || { ec=1 ; eval "${testfailed}"; }
+fgrep "cross-realm ${H3} -> ${H1} via [${H2}, ${R}]" messages.log > /dev/null || { ec=1 ; eval "${testfailed}"; }
 echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $R"
 ${kgetcred} --hostbased --canonicalize foo host.${r} || { ec=1 ; eval "${testfailed}"; }
+fgrep "cross-realm ${H3} -> ${R} via [${H2}]" messages.log > /dev/null || { ec=1 ; eval "${testfailed}"; }
 echo "Getting x-realm tickets with hierarchical referrals for $H3 -> $H2"
 ${kgetcred} --hostbased --canonicalize foo host.${h2} || { ec=1 ; eval "${testfailed}"; }
+fgrep "cross-realm ${H3} -> ${H2}" messages.log > /dev/null || { ec=1 ; eval "${testfailed}"; }
 ${kdestroy}
 
 echo "Testing multi-hop [capaths] referral logic"
@@ -464,6 +481,30 @@ ${kinit} --password-file=${objdir}/foopassword foo@$R || \
 for a in $enctypes; do
 	echo "Getting tickets ($a)"; > messages.log
 	${kgetcred} -e $a ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+	${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
+		{ ec=1 ; eval "${testfailed}"; }
+	${kdestroy} --credential=${server}@${R}
+done
+${kdestroy}
+
+echo "Getting client authenticated anonymous initial tickets"; > messages.log
+${kinit} -n --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+for a in $enctypes; do
+	echo "Getting tickets ($a)"; > messages.log
+	${kgetcred} -e $a ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+	${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
+		{ ec=1 ; eval "${testfailed}"; }
+	${kdestroy} --credential=${server}@${R}
+done
+${kdestroy}
+
+echo "Getting client anonymous service tickets"; > messages.log
+${kinit} --password-file=${objdir}/foopassword foo@$R || \
+	{ ec=1 ; eval "${testfailed}"; }
+for a in $enctypes; do
+	echo "Getting tickets ($a)"; > messages.log
+	${kgetcred} -n -e $a ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
 	${test_ap_req} ${server}@${R} ${keytab} ${cache} || \
 		{ ec=1 ; eval "${testfailed}"; }
 	${kdestroy} --credential=${server}@${R}
@@ -696,9 +737,10 @@ fi
 if test "$pkinit" = yes -a "$rsa" = yes ; then
 
     echo "try anonymous pkinit"; > messages.log
-    ${kinit} --anonymous ${R} || \
+    ${kinit} --renewable -n @${R} || \
 	{ ec=1 ; eval "${testfailed}"; }
     ${kgetcred} ${server}@${R} || { ec=1 ; eval "${testfailed}"; }
+    ${kinit} --renew || { ec=1 ; eval "${testfailed}"; }
     ${kdestroy}
 
     for type in "" "--pk-use-enckey"; do
@@ -743,6 +785,14 @@ if test "$pkinit" = yes -a "$rsa" = yes ; then
 else
 	echo "no pkinit (pkinit: $pkinit, rsa: $rsa)"; > messages.log
 fi
+
+echo "test impersonate using rc4 based tgt"; > messages.log
+${kinit} -e arcfour-hmac-md5 --forwardable --password-file=${objdir}/foopassword ${ps} || \
+        { ec=1 ; eval "${testfailed}"; }
+${kgetcred_imp} --impersonate=bar@${R} ${ps} || \
+        { ec=1 ; eval "${testfailed}"; }
+${test_ap_req} ${ps} ${keytab} ${ocache} || \
+        { ec=1 ; eval "${testfailed}"; }
 
 echo "tickets for impersonate test case"; > messages.log
 ${kinit} --forwardable --password-file=${objdir}/foopassword ${ps} || \

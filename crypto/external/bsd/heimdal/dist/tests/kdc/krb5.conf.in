@@ -40,6 +40,9 @@
 	SOME-REALM7.UK = {
 		kdc = localhost:@port@
 	}
+	SOME-REALM8.UK = {
+		kdc = localhost:@port@
+	}
 	TEST-HTTP.H5L.SE = {
 		kdc = http/localhost:@port@
 	}
@@ -147,6 +150,7 @@
 		SOME-REALM6.US = SOME-REALM5.FR
 		SOME-REALM7.UK = SOME-REALM6.US
 		SOME-REALM7.UK = SOME-REALM5.FR
+		SOME-REALM8.UK = SOME-REALM6.US
 	}
         H4.H2.TEST.H5L.SE = {
                 H1.TEST.H5L.SE = H3.H2.TEST.H5L.SE
