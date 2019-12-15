@@ -1,4 +1,4 @@
-.\"	$NetBSD: kinit.1,v 1.4 2017/01/28 21:31:45 christos Exp $
+.\"	$NetBSD: kinit.1,v 1.5 2019/12/15 22:50:46 christos Exp $
 .\"
 .\" Copyright (c) 1998 - 2003, 2006 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -84,7 +84,7 @@
 .Op Fl Fl password-file= Ns Ar filename
 .Op Fl Fl fcache-version= Ns Ar version-number
 .Op Fl A | Fl Fl no-addresses
-.Op Fl Fl anonymous
+.Op Fl n | Fl Fl anonymous
 .Op Fl Fl enterprise
 .Op Fl Fl version
 .Op Fl Fl help
@@ -167,10 +167,12 @@ in
 .Xr krb5.conf 5 .
 .It Fl A , Fl Fl no-addresses
 Request a ticket with no addresses.
-.It Fl Fl anonymous
-Request an anonymous ticket (which means that the ticket will be
-issued to an anonymous principal, typically
-.Dq anonymous@REALM ) .
+.It Fl n , Fl Fl anonymous
+Request an anonymous ticket. If the principal is specified as @REALM, then
+anonymous PKINIT will be used to acquire an unauthenticated anonymous ticket
+and both the client name and realm in the returned ticket will be anonymized.
+Otherwise, authentication proceeds as normal and the anonymous ticket will have
+only the client name anonymized.
 .It Fl Fl enterprise
 Parse principal as a enterprise (KRB5-NT-ENTERPRISE) name. Enterprise
 names are email like principals that are stored in the name part of

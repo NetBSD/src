@@ -1,4 +1,4 @@
-/*	$NetBSD: send_to_kdc.c,v 1.7 2017/01/30 00:25:15 christos Exp $	*/
+/*	$NetBSD: send_to_kdc.c,v 1.8 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2002 Kungliga Tekniska Högskolan
@@ -316,6 +316,7 @@ static void
 debug_host(krb5_context context, int level, struct host *host, const char *fmt, ...)
 {
     const char *proto = "unknown";
+    const char *state;
     char name[NI_MAXHOST], port[NI_MAXSERV];
     char *text = NULL;
     va_list ap;
@@ -341,8 +342,17 @@ debug_host(krb5_context context, int level, struct host *host, const char *fmt, 
 		    name, sizeof(name), port, sizeof(port), NI_NUMERICHOST) != 0)
 	name[0] = '\0';
 
-    _krb5_debug(context, level, "%s: %s %s:%s (%s) tid: %08x", text,
-		proto, name, port, host->hi->hostname, host->tid);
+    switch (host->state) {
+    case CONNECT:	state = "CONNECT";		break;
+    case CONNECTING:	state = "CONNECTING";		break;
+    case CONNECTED:	state = "CONNECTED";		break;
+    case WAITING_REPLY:	state = "WAITING_REPLY";	break;
+    case DEAD:		state = "DEAD";			break;
+    default:		state = "unknown";		break;
+    }
+
+    _krb5_debug(context, level, "%s: %s %s:%s (%s) state=%s tid: %08x", text,
+		proto, name, port, host->hi->hostname, state, host->tid);
     free(text);
 }
 
@@ -883,11 +893,18 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	host->tries = host->fun->ntries;
 
 	/*
-	 * Connect directly next host, wait a host_timeout for each next address
+	 * Connect directly next host, wait a host_timeout for each next address.
+	 * We try host_connect() here, checking the return code because as we do
+	 * non-blocking connects, any error here indicates that the address is just
+	 * offline.  That is, it's something like "No route to host" which is not
+	 * worth retrying.  And so, we fail directly and immediately to the next
+	 * address for this host without enqueueing the address for retries.
 	 */
-	if (submitted_host == 0)
+	if (submitted_host == 0) {
 	    host_connect(context, ctx, host);
-	else {
+	    if (host->state == DEAD)
+		continue;
+	} else {
 	    debug_host(context, 5, host,
 		       "Queuing host in future (in %ds), its the %lu address on the same name",
 		       (int)(context->host_timeout * submitted_host), submitted_host + 1);
@@ -895,16 +912,14 @@ submit_request(krb5_context context, krb5_sendto_ctx ctx, krb5_krbhst_info *hi)
 	}
 
 	heim_array_append_value(ctx->hosts, host);
-
 	heim_release(host);
-
 	submitted_host++;
     }
 
     if (freeai)
 	freeaddrinfo(ai);
 
-    if (!submitted_host)
+    if (submitted_host == 0)
 	return KRB5_KDC_UNREACH;
 
     return 0;
@@ -915,7 +930,7 @@ struct wait_ctx {
     krb5_sendto_ctx ctx;
     fd_set rfds;
     fd_set wfds;
-    unsigned max_fd;
+    rk_socket_t max_fd;
     int got_reply;
     time_t timenow;
 };
@@ -926,15 +941,15 @@ wait_setup(heim_object_t obj, void *iter_ctx, int *stop)
     struct wait_ctx *wait_ctx = iter_ctx;
     struct host *h = (struct host *)obj;
 
+    if (h->state == CONNECT) {
+	if (h->timeout >= wait_ctx->timenow)
+	    return;
+	host_connect(wait_ctx->context, wait_ctx->ctx, h);
+    }
+
     /* skip dead hosts */
     if (h->state == DEAD)
 	return;
-
-    if (h->state == CONNECT) {
-	if (h->timeout < wait_ctx->timenow)
-	    host_connect(wait_ctx->context, wait_ctx->ctx, h);
-	return;
-    }
 
     /* if host timed out, dec tries and (retry or kill host) */
     if (h->timeout < wait_ctx->timenow) {
@@ -963,9 +978,10 @@ wait_setup(heim_object_t obj, void *iter_ctx, int *stop)
 	FD_SET(h->fd, &wait_ctx->wfds);
 	break;
     default:
+	debug_host(wait_ctx->context, 5, h, "invalid sendto host state");
 	heim_abort("invalid sendto host state");
     }
-    if (h->fd > wait_ctx->max_fd)
+    if (h->fd > wait_ctx->max_fd || wait_ctx->max_fd == rk_INVALID_SOCKET)
 	wait_ctx->max_fd = h->fd;
 }
 
@@ -974,6 +990,15 @@ wait_filter_dead(heim_object_t obj, void *ctx)
 {
     struct host *h = (struct host *)obj;
     return (int)((h->state == DEAD) ? true : false);
+}
+
+static void
+wait_accelerate(heim_object_t obj, void *ctx, int *stop)
+{
+    struct host *h = (struct host *)obj;
+
+    if (h->state == CONNECT && h->timeout > 0)
+	h->timeout--;
 }
 
 static void
@@ -1009,7 +1034,7 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
     wait_ctx.ctx = ctx;
     FD_ZERO(&wait_ctx.rfds);
     FD_ZERO(&wait_ctx.wfds);
-    wait_ctx.max_fd = 0;
+    wait_ctx.max_fd = rk_INVALID_SOCKET;
 
     /* oh, we have a reply, it must be a plugin that got it for us */
     if (ctx->response.length) {
@@ -1032,6 +1057,17 @@ wait_response(krb5_context context, int *action, krb5_sendto_ctx ctx)
 			 "and no more hosts -> failure");
 	    *action = KRB5_SENDTO_TIMEOUT;
 	}
+	return 0;
+    }
+
+    if (wait_ctx.max_fd == rk_INVALID_SOCKET) {
+	/*
+	 * If we don't find a host which can make progress, then
+	 * we accelerate the process by moving all of the contestants
+	 * up by 1s.
+	 */
+	_krb5_debug(context, 5, "wait_response: moving the contestants forward");
+	heim_array_iterate_f(ctx->hosts, &wait_ctx, wait_accelerate);
 	return 0;
     }
 
@@ -1175,7 +1211,7 @@ krb5_sendto_context(krb5_context context,
 
 	    action = KRB5_SENDTO_CONTINUE;
 	    if (ret == 0) {
-		_krb5_debug(context, 5, "submissing new requests to new host");
+		_krb5_debug(context, 5, "submitting new requests to new host");
 		if (submit_request(context, ctx, hi) != 0)
 		    action = KRB5_SENDTO_TIMEOUT;
 	    } else {
@@ -1247,16 +1283,15 @@ out:
 
     _krb5_debug(context, 1,
 		"%s %s done: %d hosts %lu packets %lu:"
-		" wc: %jd.%06ld nr: %jd.%06ld kh: %jd.%06ld tid: %08x",
+		" wc: %jd.%06lu nr: %jd.%06lu kh: %jd.%06lu tid: %08x",
 		__func__, realm, ret,
 		ctx->stats.num_hosts, ctx->stats.sent_packets,
 		(intmax_t)stop_time.tv_sec,
-		(long)stop_time.tv_usec,
+		(unsigned long)stop_time.tv_usec,
 		(intmax_t)ctx->stats.name_resolution.tv_sec,
-		(long)ctx->stats.name_resolution.tv_usec,
+		(unsigned long)ctx->stats.name_resolution.tv_usec,
 		(intmax_t)ctx->stats.krbhst.tv_sec,
-		(long)ctx->stats.krbhst.tv_usec, ctx->stid);
-
+		(unsigned long)ctx->stats.krbhst.tv_usec, ctx->stid);
 
     if (freectx)
 	krb5_sendto_ctx_free(context, ctx);
