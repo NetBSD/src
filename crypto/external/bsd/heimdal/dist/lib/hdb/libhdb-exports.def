@@ -41,6 +41,7 @@ EXPORTS
 	hdb_free_master_key
 	hdb_generate_key_set
 	hdb_generate_key_set_password
+	hdb_generate_key_set_password_with_ks_tuple
 	hdb_get_dbinfo
 	hdb_init_db
         hdb_interface_version   DATA
