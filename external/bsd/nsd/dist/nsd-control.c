@@ -42,8 +42,8 @@
  */
 
 #include "config.h"
+#include <stdio.h>
 #ifdef HAVE_SSL
-
 #include <sys/types.h>
 #include <unistd.h>
 #include <string.h>
@@ -163,6 +163,12 @@ setup_ctx(struct nsd_options* cfg)
         if((SSL_CTX_set_options(ctx, SSL_OP_NO_SSLv3) & SSL_OP_NO_SSLv3)
 		!= SSL_OP_NO_SSLv3)
 		ssl_err("could not set SSL_OP_NO_SSLv3");
+#if defined(SSL_OP_NO_RENEGOTIATION)
+	/* disable client renegotiation */
+	if((SSL_CTX_set_options(ctx, SSL_OP_NO_RENEGOTIATION) &
+		SSL_OP_NO_RENEGOTIATION) != SSL_OP_NO_RENEGOTIATION)
+		ssl_err("could not set SSL_OP_NO_RENEGOTIATION");
+#endif
 	if(!SSL_CTX_use_certificate_file(ctx,c_cert,SSL_FILETYPE_PEM))
 		ssl_path_err("Error setting up SSL_CTX client cert", c_cert);
 	if(!SSL_CTX_use_PrivateKey_file(ctx,c_key,SSL_FILETYPE_PEM))
@@ -229,6 +235,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		addrfamily = AF_LOCAL;
 		port = 0;
 #endif
+#ifdef INET6
 	} else if(strchr(svr, ':')) {
 		struct sockaddr_in6 sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in6);
@@ -241,6 +248,7 @@ contact_server(const char* svr, struct nsd_options* cfg, int statuscmd)
 		}
 		memcpy(&addr, &sa, addrlen);
 		addrfamily = AF_INET6;
+#endif
 	} else { /* ip4 */
 		struct sockaddr_in sa;
 		addrlen = (socklen_t)sizeof(struct sockaddr_in);
