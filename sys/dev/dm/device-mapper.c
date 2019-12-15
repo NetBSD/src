@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.54 2019/12/15 14:39:42 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.55 2019/12/15 16:14:27 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -699,4 +699,24 @@ dmgetproperties(struct disk *disk, dm_table_head_t *head)
 	dg->dg_ntracks = 64;
 
 	disk_set_info(NULL, disk, "ESDI");
+}
+
+/*
+ * Transform char s to uint64_t offset number.
+ */
+uint64_t
+atoi64(const char *s)
+{
+	uint64_t n;
+	n = 0;
+
+	while (*s != '\0') {
+		if (!isdigit(*s))
+			break;
+
+		n = (10 * n) + (*s - '0');
+		s++;
+	}
+
+	return n;
 }
