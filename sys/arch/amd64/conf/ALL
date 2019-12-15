@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.131 2019/12/10 12:08:52 yamaguchi Exp $
+# $NetBSD: ALL,v 1.132 2019/12/15 17:17:16 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.131 $"
+#ident		"ALL-$Revision: 1.132 $"
 
 maxusers	64		# estimated number of users
 
@@ -1128,6 +1128,9 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # USB Controller and Devices
 
+# Virtual USB controller
+pseudo-device	vhci
+
 # PCI USB controllers
 xhci*	at pci?	dev ? function ?	# eXtensible Host Controller
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
@@ -1152,6 +1155,7 @@ usb*	at ehci?
 usb*	at ohci?
 usb*	at slhci?
 usb*	at uhci?
+usb*	at vhci?
 usb*	at xhci?
 
 # USB Hubs
