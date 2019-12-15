@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.7 2019/12/10 22:30:34 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.8 2019/12/15 01:16:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.7 2019/12/10 22:30:34 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.8 2019/12/15 01:16:33 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -671,7 +671,7 @@ sun8i_crypto_intr(void *cookie)
 	isr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ISR);
 	esr = sun8i_crypto_read(sc, SUN8I_CRYPTO_ESR);
 	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, isr);
-	sun8i_crypto_write(sc, SUN8I_CRYPTO_ISR, esr);
+	sun8i_crypto_write(sc, SUN8I_CRYPTO_ESR, esr);
 
 	/* Start the worker if necessary.  */
 	sun8i_crypto_schedule_worker(sc);
