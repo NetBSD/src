@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1664 2019/12/10 12:08:52 yamaguchi Exp $
+# $NetBSD: mi,v 1.1665 2019/12/15 03:55:56 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -518,6 +518,9 @@
 ./usr/share/man/cat1/sftp.0			man-secsh-catman	.cat
 ./usr/share/man/cat1/sh.0			man-util-catman		.cat
 ./usr/share/man/cat1/sha1.0			man-util-catman		.cat
+./usr/share/man/cat1/sha256.0			man-util-catman		.cat
+./usr/share/man/cat1/sha384.0			man-util-catman		.cat
+./usr/share/man/cat1/sha512.0			man-util-catman		.cat
 ./usr/share/man/cat1/shar.0			man-util-catman		.cat
 ./usr/share/man/cat1/shlock.0			man-util-catman		.cat
 ./usr/share/man/cat1/shmif_dumpbus.0		man-util-catman		rump,.cat
@@ -3759,6 +3762,9 @@
 ./usr/share/man/html1/sftp.html			man-secsh-htmlman	html
 ./usr/share/man/html1/sh.html			man-util-htmlman	html
 ./usr/share/man/html1/sha1.html			man-util-htmlman	html
+./usr/share/man/html1/sha256.html		man-util-htmlman	html
+./usr/share/man/html1/sha384.html		man-util-htmlman	html
+./usr/share/man/html1/sha512.html		man-util-htmlman	html
 ./usr/share/man/html1/shar.html			man-util-htmlman	html
 ./usr/share/man/html1/shlock.html		man-util-htmlman	html
 ./usr/share/man/html1/shmif_dumpbus.html	man-util-htmlman	rump,html
@@ -6652,6 +6658,9 @@
 ./usr/share/man/man1/sftp.1			man-secsh-man		.man
 ./usr/share/man/man1/sh.1			man-util-man		.man
 ./usr/share/man/man1/sha1.1			man-util-man		.man
+./usr/share/man/man1/sha256.1			man-util-man		.man
+./usr/share/man/man1/sha384.1			man-util-man		.man
+./usr/share/man/man1/sha512.1			man-util-man		.man
 ./usr/share/man/man1/shar.1			man-util-man		.man
 ./usr/share/man/man1/shlock.1			man-util-man		.man
 ./usr/share/man/man1/shmif_dumpbus.1		man-util-man		rump,.man
