@@ -1,6 +1,6 @@
-.\"	$NetBSD: ddb.4,v 1.187 2019/09/10 09:32:04 ryo Exp $
+.\"	$NetBSD: ddb.4,v 1.188 2019/12/15 20:29:08 joerg Exp $
 .\"
-.\" Copyright (c) 1997 - 2009 The NetBSD Foundation, Inc.
+.\" Copyright (c) 1997 - 2019 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
 .\" any improvements or extensions that they make and grant Carnegie Mellon
 .\" the rights to redistribute these changes.
 .\"
-.Dd September 10, 2019
+.Dd December 15, 2019
 .Dt DDB 4
 .Os
 .Sh NAME
@@ -575,6 +575,11 @@ If
 is specified, stack traces of LWPs holding locks are also printed.
 This command is only useful if a kernel is compiled with
 .Cd options LOCKDEBUG .
+.It Ic show all mount Ns Op Cm /f
+Display all mount points.
+If
+.Cm /f
+is specified, the complete vnode list is printed.
 .It Ic show all pages
 Display basic information about all physical pages managed by the VM system.
 For more detailed information about a single page, use
