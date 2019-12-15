@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.35 2019/12/14 10:02:35 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.36 2019/12/15 05:56:02 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.35 2019/12/14 10:02:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.36 2019/12/15 05:56:02 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -82,7 +82,7 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		dmt->version[1] = 0;
 		dmt->version[2] = 0;
 		dmt->init = &dm_target_stripe_init;
-		dmt->status = &dm_target_stripe_status;
+		dmt->table = &dm_target_stripe_table;
 		dmt->strategy = &dm_target_stripe_strategy;
 		dmt->sync = &dm_target_stripe_sync;
 		dmt->deps = &dm_target_stripe_deps;
@@ -183,9 +183,9 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 	return 0;
 }
 
-/* Status routine called to get params string. */
+/* Table routine called to get params string. */
 char *
-dm_target_stripe_status(void *target_config)
+dm_target_stripe_table(void *target_config)
 {
 	dm_target_linear_config_t *tlc;
 	dm_target_stripe_config_t *tsc;
