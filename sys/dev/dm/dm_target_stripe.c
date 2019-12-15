@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.38 2019/12/15 14:39:42 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.39 2019/12/15 16:14:27 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.38 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.39 2019/12/15 16:14:27 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -156,8 +156,8 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 	TAILQ_INIT(&tsc->stripe_devs);
 
 	/* Save length of param string */
-	tsc->stripe_chunksize = atoi(argv[1]);
-	tsc->stripe_num = (uint8_t) atoi(argv[0]);
+	tsc->stripe_chunksize = atoi64(argv[1]);
+	tsc->stripe_num = (uint8_t) atoi64(argv[0]);
 
 	strpc = DM_STRIPE_DEV_OFFSET + (tsc->stripe_num * 2);
 	for (strpi = DM_STRIPE_DEV_OFFSET; strpi < strpc; strpi += 2) {
@@ -170,7 +170,7 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 			dm_target_stripe_fini(tsc);
 			return ENOENT;
 		}
-		tlc->offset = atoi(argv[strpi+1]);
+		tlc->offset = atoi64(argv[strpi+1]);
 
 		/* Insert striping device to linked list. */
 		TAILQ_INSERT_TAIL(&tsc->stripe_devs, tlc, entries);
