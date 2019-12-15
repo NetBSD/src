@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1674 2019/12/14 16:57:48 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1675 2019/12/15 16:27:43 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -139,12 +139,12 @@ Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.
 
 Package:	unbound
-Version:	1.9.1
-Current Vers:	1.9.4
+Version:	1.9.6
+Current Vers:	1.9.6
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2019-10-09
+Date:		2019-12-15
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like
@@ -154,12 +154,12 @@ Use cleantags to import
 run configure and update config files in include
 
 Package:	nsd
-Version:	4.1.27
-Current Vers:	4.2.2
+Version:	4.2.4
+Current Vers:	4.2.4
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.nlnetlabs.nl/svn/nsd/
 Home Page:	https://www.nlnetlabs.nl/projects/nsd/
-Date:		2019-10-09
+Date:		2019-12-15
 Mailing List:	https://open.nlnetlabs.nl/mailman/listinfo/nsd-users/
 Responsible:	christos
 License:	BSD-like
