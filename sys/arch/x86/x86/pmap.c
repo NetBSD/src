@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.344 2019/12/15 19:24:11 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.345 2019/12/15 20:33:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.344 2019/12/15 19:24:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.345 2019/12/15 20:33:22 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -470,6 +470,7 @@ static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
 
 static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
+static void pmap_load1(struct lwp *, struct pmap *, struct pmap *);
 static void pmap_reactivate(struct pmap *);
 
 /*
@@ -642,20 +643,12 @@ pmap_map_ptes(struct pmap *pmap, struct pmap **pmap2, pd_entry_t **ptepp,
 		pmap_reactivate(pmap);
 	} else {
 		/*
-		 * Toss current pmap from CPU, but keep a reference to it.
-		 * The reference will be dropped by pmap_unmap_ptes().
-		 * Can happen if we block during exit().
+		 * Toss current pmap from CPU and install new pmap, but keep
+		 * a reference to the old one - dropping the reference can
+		 * block, so we'll defer to pmap_unmap_ptes().
 		 */
-		const cpuid_t cid = cpu_index(ci);
-
-		kcpuset_atomic_clear(curpmap->pm_cpus, cid);
-		kcpuset_atomic_clear(curpmap->pm_kernel_cpus, cid);
-		ci->ci_pmap = pmap;
-		ci->ci_tlbstate = TLBSTATE_VALID;
-		ci->ci_want_pmapload = 0;
-		kcpuset_atomic_set(pmap->pm_cpus, cid);
-		kcpuset_atomic_set(pmap->pm_kernel_cpus, cid);
-		cpu_load_pmap(pmap, curpmap);
+		pmap_reference(pmap);
+		pmap_load1(l, pmap, curpmap);
 	}
 	pmap->pm_ncsw = lwp_pctr();
 	*pmap2 = curpmap;
@@ -714,7 +707,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2,
 	 * Mark whatever's on the CPU now as lazy and unlock.
 	 * If the pmap was already installed, we are done.
 	 */
-	if (ci->ci_tlbstate == TLBSTATE_VALID) {
+	if (ci->ci_pmap != mypmap && ci->ci_tlbstate == TLBSTATE_VALID) {
 		ci->ci_tlbstate = TLBSTATE_LAZY;
 		ci->ci_want_pmapload = (mypmap != pmap_kernel());
 	} else {
@@ -722,21 +715,17 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2,
 		 * This can happen when undoing after pmap_get_ptp blocked.
 		 */ 
 	}
+
 	/* Now safe to free PTPs, with the pmap still locked. */
 	if (ptp_tofree != NULL) {
 		pmap_freepages(pmap, ptp_tofree);
 	}
 	mutex_exit(&pmap->pm_lock);
-	if (pmap == pmap2) {
-		return;
-	}
 
-	/*
-	 * We installed another pmap on the CPU.  Grab a reference to
-	 * it and leave in place.  Toss the evicted pmap (can block).
-	 */
-	pmap_reference(pmap);
-	pmap_destroy(pmap2);
+	/* Toss the pmap we evicted earlier (can block). */
+	if (pmap != pmap2) {
+		pmap_destroy(pmap2);
+	}
 }
 
 inline static void
@@ -2884,8 +2873,6 @@ pmap_load(void)
 	struct cpu_info *ci;
 	struct pmap *pmap, *oldpmap;
 	struct lwp *l;
-	struct pcb *pcb;
-	cpuid_t cid;
 	uint64_t ncsw;
 
 	kpreempt_disable();
@@ -2912,7 +2899,6 @@ pmap_load(void)
 	pmap = vm_map_pmap(&l->l_proc->p_vmspace->vm_map);
 	KASSERT(pmap != pmap_kernel());
 	oldpmap = ci->ci_pmap;
-	pcb = lwp_getpcb(l);
 
 	if (pmap == oldpmap) {
 		pmap_reactivate(pmap);
@@ -2926,8 +2912,41 @@ pmap_load(void)
 	 */
 
 	pmap_reference(pmap);
+	pmap_load1(l, pmap, oldpmap);
+	ci->ci_want_pmapload = 0;
 
+	/*
+	 * we're now running with the new pmap.  drop the reference
+	 * to the old pmap.  if we block, we need to go around again.
+	 */
+
+	pmap_destroy(oldpmap);
+	__insn_barrier();
+	if (l->l_ncsw != ncsw) {
+		goto retry;
+	}
+
+	kpreempt_enable();
+}
+
+/*
+ * pmap_load1: the guts of pmap load, shared by pmap_map_ptes() and
+ * pmap_load().  It's critically important that this function does not
+ * block.
+ */
+static void
+pmap_load1(struct lwp *l, struct pmap *pmap, struct pmap *oldpmap)
+{
+	struct cpu_info *ci;
+	struct pcb *pcb;
+	cpuid_t cid;
+
+	KASSERT(kpreempt_disabled());
+
+	pcb = lwp_getpcb(l);
+	ci = l->l_cpu;
 	cid = cpu_index(ci);
+
 	kcpuset_atomic_clear(oldpmap->pm_cpus, cid);
 	kcpuset_atomic_clear(oldpmap->pm_kernel_cpus, cid);
 
@@ -2970,21 +2989,6 @@ pmap_load(void)
 	lldt(pmap->pm_ldt_sel);
 
 	cpu_load_pmap(pmap, oldpmap);
-
-	ci->ci_want_pmapload = 0;
-
-	/*
-	 * we're now running with the new pmap.  drop the reference
-	 * to the old pmap.  if we block, we need to go around again.
-	 */
-
-	pmap_destroy(oldpmap);
-	__insn_barrier();
-	if (l->l_ncsw != ncsw) {
-		goto retry;
-	}
-
-	kpreempt_enable();
 }
 
 /*
