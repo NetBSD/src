@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.26 2019/12/15 12:01:05 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.27 2019/12/15 12:09:55 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -415,7 +415,7 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	 */
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	rv = run_program(RUN_DISPLAY, "%s -f %s %s '%s' '%s'",
+	rv = run_program(0, "%s -f %s %s '%s' '%s'",
 	    DISKLABEL_CMD, fname, disk, disktype, packname);
 #endif
 
