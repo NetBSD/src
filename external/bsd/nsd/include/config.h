@@ -74,11 +74,25 @@
 /* Define to 1 if you have the `clock_gettime' function. */
 #define HAVE_CLOCK_GETTIME 1
 
+/* Define to 1 if you have the `CRYPTO_memcmp' function. */
+#define HAVE_CRYPTO_MEMCMP 1
+
 /* if time.h provides ctime_r prototype */
 #define HAVE_CTIME_R_PROTO 1
 
+/* Define to 1 if you have the declaration of `SSL_CTX_set_ecdh_auto', and to
+   0 if you don't. */
+#define HAVE_DECL_SSL_CTX_SET_ECDH_AUTO 1
+
+/* Define to 1 if you have the declaration of `SSL_CTX_set_tmp_ecdh', and to 0
+   if you don't. */
+#define HAVE_DECL_SSL_CTX_SET_TMP_ECDH 1
+
 /* Define to 1 if you have the `dup2' function. */
 #define HAVE_DUP2 1
+
+/* Define to 1 if you have the `EC_KEY_new_by_curve_name' function. */
+#define HAVE_EC_KEY_NEW_BY_CURVE_NAME 1
 
 /* Define to 1 if you have the <endian.h> header file. */
 #define HAVE_ENDIAN_H 1
@@ -201,6 +215,9 @@
 /* Define to 1 if you have the `mmap' function. */
 #define HAVE_MMAP 1
 
+/* If sys/socket.h has a struct mmsghdr. */
+#define HAVE_MMSGHDR 1
+
 /* Define to 1 if you have the `munmap' function. */
 /* #undef HAVE_MUNMAP */
 
@@ -222,6 +239,9 @@
 /* Define to 1 if you have the `OPENSSL_init_ssl' function. */
 #define HAVE_OPENSSL_INIT_SSL 1
 
+/* Define to 1 if you have the <openssl/ocsp.h> header file. */
+#define HAVE_OPENSSL_OCSP_H 1
+
 /* Define to 1 if you have the <openssl/rand.h> header file. */
 #define HAVE_OPENSSL_RAND_H 1
 
@@ -240,7 +260,7 @@
 /* Define to 1 if you have the `pwrite' function. */
 #define HAVE_PWRITE 1
 
-/* Define to 1 if you have the `reallocarray' function. */
+/* If we have reallocarray(3) */
 #define HAVE_REALLOCARRAY 1
 
 /* Define if recvmmsg is implemented */
@@ -281,6 +301,9 @@
 
 /* Define if you have the SSL libraries installed. */
 #define HAVE_SSL /**/
+
+/* Define to 1 if you have the `SSL_CTX_set_security_level' function. */
+/* #undef HAVE_SSL_CTX_SET_SECURITY_LEVEL */
 
 /* Define to 1 if you have the <stdarg.h> header file. */
 #define HAVE_STDARG_H 1
@@ -405,7 +428,8 @@
 /* Define to the default nsd identity. */
 #define IDENTITY "NetBSD server"
 
-#ifdef notdef
+#if 0
+/* Makefile tunable */
 /* Define this to enable IPv6 support. */
 #define INET6 /**/
 #endif
@@ -454,7 +478,7 @@
 #define PACKAGE_NAME "NSD"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "NSD 4.1.27"
+#define PACKAGE_STRING "NSD 4.2.4"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "nsd"
@@ -463,7 +487,7 @@
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "4.1.27"
+#define PACKAGE_VERSION "4.2.4"
 
 /* Define this to use packed structure alignment. */
 /* #undef PACKED_STRUCTS */
@@ -510,6 +534,9 @@
 /* Define to the default tcp timeout. */
 #define TCP_TIMEOUT 120
 
+/* Define to the default DNS over TLS port. */
+#define TLS_PORT "853"
+
 /* Define to the default maximum udp message length. */
 #define UDP_MAX_MESSAGE_LEN 512
 
@@ -552,6 +579,9 @@
 # define __EXTENSIONS__ 1
 #endif
 
+
+/* Define this to enable TCP fast open. */
+/* #undef USE_TCP_FASTOPEN */
 
 /* Define this to enable per-zone statistics gathering. */
 /* #undef USE_ZONE_STATS */
@@ -690,6 +720,9 @@
 #  endif
 #  ifndef _BSD_SOURCE
 #    define _BSD_SOURCE 1
+#  endif
+#  ifndef _OPENBSD_SOURCE
+#    define _OPENBSD_SOURCE 1
 #  endif
 #  ifndef _DEFAULT_SOURCE
 #    define _DEFAULT_SOURCE 1
@@ -870,3 +903,4 @@ int memcmp(const void *x, const void *y, size_t n);
 #else
 #define ATTR_PACKED
 #endif
+
