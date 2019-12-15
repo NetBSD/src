@@ -1,4 +1,4 @@
-/*	$NetBSD: tss.c,v 1.1 2019/04/24 11:43:19 kamil Exp $	*/
+/*	$NetBSD: tss.c,v 1.2 2019/12/15 22:32:29 uwe Exp $	*/
 
 /*-
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: tss.c,v 1.1 2019/04/24 11:43:19 kamil Exp $");
+__RCSID("$NetBSD: tss.c,v 1.2 2019/12/15 22:32:29 uwe Exp $");
 
 #include <assert.h>
 #include <errno.h>
@@ -53,8 +53,6 @@ void
 tss_delete(tss_t key)
 {
 
-	_DIAGASSERT(key != NULL);
-
 	/*
 	 * The tss_delete(3) function that conforms to C11 returns no value.
 	 */
@@ -65,16 +63,12 @@ void *
 tss_get(tss_t key)
 {
 
-	_DIAGASSERT(key != NULL);
-
 	return pthread_getspecific(key);
 }
 
 int
 tss_set(tss_t key, void *val)
 {
-
-	_DIAGASSERT(key != NULL);
 
 	if (pthread_setspecific(key, val) == 0)
 		return thrd_success;
