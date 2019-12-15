@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.193 2019/12/10 02:06:07 manu Exp $	*/
+/*	$NetBSD: locore.S,v 1.194 2019/12/15 02:56:40 manu Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -432,7 +432,7 @@ END(farjmp64)
 	.space	512
 tmpstk:
 
-.section multiboot,"ax",@progbits
+.section multiboot,"a"
 #if defined(MULTIBOOT)
 	.align	8
 	.globl	Multiboot2_Header

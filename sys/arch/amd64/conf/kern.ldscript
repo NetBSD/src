@@ -1,4 +1,4 @@
-/*	$NetBSD: kern.ldscript,v 1.29 2019/12/11 02:31:44 manu Exp $	*/
+/*	$NetBSD: kern.ldscript,v 1.30 2019/12/15 02:56:40 manu Exp $	*/
 
 #include "assym.h"
 
@@ -13,7 +13,17 @@ __LARGE_PAGE_SIZE = 0x200000 ;
 ENTRY(_start)
 SECTIONS
 {
-	.text : AT (ADDR(.text) & 0x0fffffff)
+	/*
+	 * multiboot (file_offset) : AT (load_address) 
+	 * file_offset must be below 32k for multiboot 2 specification
+	 * BIOS boot requires load_address above 0x200000
+	 */
+	multiboot 0x1000 : AT (0x200000)
+	{
+		. = ALIGN(8);
+		KEEP(*(multiboot));
+	}
+	.text : AT (0x200000 + SIZEOF(multiboot))
 	{
 		. = ALIGN(__PAGE_SIZE);
 		__text_user_start = . ;
