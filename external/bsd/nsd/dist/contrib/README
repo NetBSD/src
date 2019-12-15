@@ -30,3 +30,7 @@ USE AT YOUR OWN RISK.
 
 * nsd.socket and nsd.service : example systemd service scripts for NSD.
   They are copies from Unbound's service files, edited for NSD.
+
+* patch_for_s6_startup_and_other_service_supervisors.diff : patch to
+  use -r option for nsd to signal readiness with READY_FD, from Cameron Nemo.
+  Apply with patch -p0 < contrib/patch_for_s6_startup_and_other_service_supervisors.diff

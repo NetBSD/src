@@ -530,13 +530,17 @@ answer_chaos(struct nsd *nsd, query_type *q)
 		    (q->qname->name_size ==  15
 		     && memcmp(dname_name(q->qname), "\010hostname\004bind", 15) == 0))
 		{
-			/* Add ID */
-			query_addtxt(q,
+			if(!nsd->options->hide_identity) {
+				/* Add ID */
+				query_addtxt(q,
 				     buffer_begin(q->packet) + QHEADERSZ,
 				     CLASS_CH,
 				     0,
 				     nsd->identity);
-			ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
+				ANCOUNT_SET(q->packet, ANCOUNT(q->packet) + 1);
+			} else {
+				RCODE_SET(q->packet, RCODE_REFUSE);
+			}
 		} else if ((q->qname->name_size == 16
 			    && memcmp(dname_name(q->qname), "\007version\006server", 16) == 0) ||
 			   (q->qname->name_size == 14
@@ -1215,6 +1219,7 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 	size_t domain_number, int exact, domain_type *closest_match,
 	domain_type *closest_encloser, const dname_type *qname)
 {
+	zone_type* origzone = q->zone;
 	q->zone = domain_find_zone(nsd->db, closest_encloser);
 	if (!q->zone) {
 		/* no zone for this */
@@ -1229,6 +1234,16 @@ answer_lookup_zone(struct nsd *nsd, struct query *q, answer_type *answer,
 			RCODE_SET(q->packet, RCODE_SERVFAIL);
 		return;
 	}
+
+	/*
+	 * If confine-to-zone is set to yes do not return additional
+	 * information for a zone with a different apex from the query zone.
+	*/
+	if (nsd->options->confine_to_zone &&
+	   (origzone != NULL && dname_compare(domain_dname(origzone->apex), domain_dname(q->zone->apex)) != 0)) {
+		return;
+	}
+
 	/* now move up the closest encloser until it exists, previous
 	 * (possibly empty) closest encloser was useful to finding the zone
 	 * (for empty zones too), but now we want actual data nodes */
