@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.22 2019/12/14 10:02:35 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.23 2019/12/15 05:56:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.22 2019/12/14 10:02:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.23 2019/12/15 05:56:02 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -43,7 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.22 2019/12/14 10:02:35 tkusumi 
 
 /* dm_target_zero.c */
 int dm_target_zero_init(dm_table_entry_t *, int, char **);
-char *dm_target_zero_status(void *);
+char *dm_target_zero_table(void *);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_zero_sync(dm_table_entry_t *);
 int dm_target_zero_destroy(dm_table_entry_t *);
@@ -82,7 +82,7 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 		dmt->version[1] = 0;
 		dmt->version[2] = 0;
 		dmt->init = &dm_target_zero_init;
-		dmt->status = &dm_target_zero_status;
+		dmt->table = &dm_target_zero_table;
 		dmt->strategy = &dm_target_zero_strategy;
 		dmt->sync = &dm_target_zero_sync;
 		dmt->deps = &dm_target_zero_deps;
@@ -124,9 +124,9 @@ dm_target_zero_init(dm_table_entry_t *table_en, int argc, char **argv)
 	return 0;
 }
 
-/* Status routine called to get params string. */
+/* Table routine called to get params string. */
 char *
-dm_target_zero_status(void *target_config)
+dm_target_zero_table(void *target_config)
 {
 	return NULL;
 }

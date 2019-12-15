@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.28 2019/12/14 10:49:30 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.28 2019/12/14 10:49:30 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -160,8 +160,8 @@ dm_target_insert(dm_target_t *dm_target)
 		printf("%s missing init\n", dm_target->name);
 		return EINVAL;
 	}
-	if (dm_target->status == NULL) {
-		printf("%s missing status\n", dm_target->name);
+	if (dm_target->table == NULL) {
+		printf("%s missing table\n", dm_target->name);
 		return EINVAL;
 	}
 	if (dm_target->strategy == NULL) {
@@ -331,7 +331,7 @@ dm_target_init(void)
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
 	dmt->init = &dm_target_linear_init;
-	dmt->status = &dm_target_linear_status;
+	dmt->table = &dm_target_linear_table;
 	dmt->strategy = &dm_target_linear_strategy;
 	dmt->sync = &dm_target_linear_sync;
 	dmt->deps = &dm_target_linear_deps;
@@ -345,7 +345,7 @@ dm_target_init(void)
 	dmt3->version[1] = 0;
 	dmt3->version[2] = 3;
 	dmt3->init = &dm_target_stripe_init;
-	dmt3->status = &dm_target_stripe_status;
+	dmt3->table = &dm_target_stripe_table;
 	dmt3->strategy = &dm_target_stripe_strategy;
 	dmt3->sync = &dm_target_stripe_sync;
 	dmt3->deps = &dm_target_stripe_deps;

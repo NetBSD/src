@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.28 2019/12/14 10:02:35 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.28 2019/12/14 10:02:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -84,18 +84,18 @@ dm_target_linear_init(dm_table_entry_t *table_en, int argc, char **argv)
 }
 
 /*
- * Status routine is called to get params string, which is target
+ * Table routine is called to get params string, which is target
  * specific. When dm_table_status_ioctl is called with flag
  * DM_STATUS_TABLE_FLAG I have to sent params string back.
  */
 char *
-dm_target_linear_status(void *target_config)
+dm_target_linear_table(void *target_config)
 {
 	dm_target_linear_config_t *tlc;
 	char *params;
 	tlc = target_config;
 
-	aprint_debug("Linear target status function called\n");
+	aprint_debug("Linear target table function called\n");
 
 	params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP);
 	snprintf(params, DM_MAX_PARAMS_SIZE, "%s %" PRIu64,
