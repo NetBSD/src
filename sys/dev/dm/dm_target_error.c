@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.21 2019/12/15 05:56:02 tkusumi Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.22 2019/12/15 09:42:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.21 2019/12/15 05:56:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.22 2019/12/15 09:42:29 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper error target.
@@ -88,7 +88,6 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 		dmt->deps = &dm_target_error_deps;
 		dmt->destroy = &dm_target_error_destroy;
 		dmt->upcall = &dm_target_error_upcall;
-		dmt->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt);
 

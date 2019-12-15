@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.32 2019/12/15 05:56:02 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.33 2019/12/15 09:42:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.32 2019/12/15 05:56:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.33 2019/12/15 09:42:29 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -163,7 +163,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt->deps = &dm_target_snapshot_deps;
 		dmt->destroy = &dm_target_snapshot_destroy;
 		dmt->upcall = &dm_target_snapshot_upcall;
-		dmt->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt);
 
@@ -177,7 +176,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt1->deps = &dm_target_snapshot_orig_deps;
 		dmt1->destroy = &dm_target_snapshot_orig_destroy;
 		dmt1->upcall = &dm_target_snapshot_orig_upcall;
-		dmt1->secsize = dm_target_dummy_secsize;
 
 		r = dm_target_insert(dmt1);
 		break;

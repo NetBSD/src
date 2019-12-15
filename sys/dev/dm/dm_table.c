@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.14 2019/12/15 09:22:28 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.15 2019/12/15 09:42:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.14 2019/12/15 09:22:28 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.15 2019/12/15 09:42:29 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -248,7 +248,10 @@ dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp, unsigned int *secsiz
 	secsize = 0;
 	SLIST_FOREACH(table_en, tbl, next) {
 		length += table_en->length;
-		table_en->target->secsize(table_en, &tsecsize);
+		if (table_en->target->secsize)
+			table_en->target->secsize(table_en, &tsecsize);
+		else
+			tsecsize = 0;
 		if (secsize < tsecsize)
 			secsize = tsecsize;
 	}

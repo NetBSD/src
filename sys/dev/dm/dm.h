@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.43 2019/12/15 09:22:28 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.44 2019/12/15 09:42:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -193,6 +193,9 @@ typedef struct dm_target {
 	int (*strategy)(dm_table_entry_t *, struct buf *);
 	int (*sync)(dm_table_entry_t *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
+	/*
+	 * Optional routines.
+	 */
 	int (*secsize)(dm_table_entry_t *, unsigned int *);
 
 	uint32_t version[3];
@@ -297,13 +300,6 @@ int dm_pdev_decr(dm_pdev_t *);
 int dm_pdev_destroy(void);
 int dm_pdev_init(void);
 dm_pdev_t* dm_pdev_insert(const char *);
-
-/* XXX dummy */
-static __inline int
-dm_target_dummy_secsize(dm_table_entry_t *table_en, unsigned int *secsizep)
-{
-	return 0;
-}
 
 #endif /*_KERNEL*/
 
