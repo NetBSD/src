@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.30 2019/12/15 09:22:28 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.29 2019/12/15 05:56:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.30 2019/12/15 09:22:28 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -198,10 +198,10 @@ dm_target_linear_upcall(dm_table_entry_t *table_en, struct buf *bp)
  * For a linear target this is just the sector size of the underlying device
  */
 int
-dm_target_linear_secsize(dm_table_entry_t *table_en, unsigned *secsizep)
+dm_target_linear_secsize(dm_table_entry_t *table_en, unsigned int *secsizep)
 {
 	dm_target_linear_config_t *tlc;
-	unsigned secsize;
+	unsigned int secsize;
 
 	secsize = 0;
 
