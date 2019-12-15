@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.31 2019/12/15 14:39:42 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.32 2019/12/15 16:14:27 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.31 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.32 2019/12/15 16:14:27 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -75,7 +75,7 @@ dm_target_linear_init(dm_table_entry_t *table_en, int argc, char **argv)
 
 	tlc = kmem_alloc(sizeof(dm_target_linear_config_t), KM_SLEEP);
 	tlc->pdev = dmp;
-	tlc->offset = atoi(argv[1]);
+	tlc->offset = atoi64(argv[1]);
 
 	table_en->target_config = tlc;
 
@@ -212,24 +212,4 @@ dm_target_linear_secsize(dm_table_entry_t *table_en, unsigned int *secsizep)
 	*secsizep = secsize;
 
 	return 0;
-}
-
-/*
- * Transform char s to uint64_t offset number.
- */
-uint64_t
-atoi(const char *s)
-{
-	uint64_t n;
-	n = 0;
-
-	while (*s != '\0') {
-		if (!isdigit(*s))
-			break;
-
-		n = (10 * n) + (*s - '0');
-		s++;
-	}
-
-	return n;
 }
