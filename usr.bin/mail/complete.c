@@ -1,4 +1,4 @@
-/*	$NetBSD: complete.c,v 1.21 2019/12/14 20:28:02 christos Exp $	*/
+/*	$NetBSD: complete.c,v 1.22 2019/12/15 04:17:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 1997-2000,2005,2006 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: complete.c,v 1.21 2019/12/14 20:28:02 christos Exp $");
+__RCSID("$NetBSD: complete.c,v 1.22 2019/12/15 04:17:38 christos Exp $");
 #endif /* not lint */
 
 /*
@@ -339,7 +339,8 @@ complete_filename(EditLine *el, char *word, int dolist)
 	size_t len;
 
 	if ((fname = strrchr(word, '/')) == NULL) {
-		if (word[0] == '+' && (mf = value(ENAME_FOLDER)) != NULL) {
+		if (word[0] == '+' && (mf = value(ENAME_FOLDER)) != NULL && *mf)
+		{
 			if (mf[0] == '/') {
 				(void)estrlcpy(dir, mf, sizeof(dir));
 			} else {
