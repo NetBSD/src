@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.45 2019/12/15 10:12:45 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.46 2019/12/15 16:14:27 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -210,6 +210,9 @@ typedef struct dm_target {
 /* device-mapper */
 void dmgetproperties(struct disk *, dm_table_head_t *);
 
+/* Generic function used to convert char to string */
+uint64_t atoi64(const char *);
+
 /* dm_ioctl.c */
 int dm_dev_create_ioctl(prop_dictionary_t);
 int dm_dev_list_ioctl(prop_dictionary_t);
@@ -252,9 +255,6 @@ int dm_target_linear_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_linear_destroy(dm_table_entry_t *);
 int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_linear_secsize(dm_table_entry_t *, unsigned int *);
-
-/* Generic function used to convert char to string */
-uint64_t atoi(const char *);
 
 /* dm_target_stripe.c */
 int dm_target_stripe_init(dm_table_entry_t *, int, char **);
