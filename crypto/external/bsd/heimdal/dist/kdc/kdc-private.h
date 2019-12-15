@@ -1,4 +1,4 @@
-/*	$NetBSD: kdc-private.h,v 1.1.1.1 2019/12/15 22:45:39 christos Exp $	*/
+/*	$NetBSD: kdc-private.h,v 1.2 2019/12/15 22:50:46 christos Exp $	*/
 
 /* This is a generated file */
 #ifndef __kdc_private_h__

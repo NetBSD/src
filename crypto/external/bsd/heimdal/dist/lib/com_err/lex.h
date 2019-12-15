@@ -1,4 +1,4 @@
-/*	$NetBSD: lex.h,v 1.2 2017/01/28 21:31:45 christos Exp $	*/
+/*	$NetBSD: lex.h,v 1.3 2019/12/15 22:50:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan

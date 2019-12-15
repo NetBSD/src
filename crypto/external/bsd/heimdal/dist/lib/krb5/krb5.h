@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5.h,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: krb5.h,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2007 Kungliga Tekniska Högskolan
@@ -450,6 +450,7 @@ typedef union {
 #define KRB5_GC_NO_TRANSIT_CHECK	(1U << 5)
 #define KRB5_GC_CONSTRAINED_DELEGATION	(1U << 6)
 #define KRB5_GC_CANONICALIZE		(1U << 7)
+#define KRB5_GC_ANONYMOUS		(1U << 8)
 
 /* constants for compare_creds (and cc_retrieve_cred) */
 #define KRB5_TC_DONT_MATCH_REALM	(1U << 31)
@@ -941,6 +942,23 @@ typedef enum krb5_name_canon_rule_options {
 typedef struct krb5_name_canon_rule_data *krb5_name_canon_rule;
 typedef const struct krb5_name_canon_rule_data *krb5_const_name_canon_rule;
 typedef struct krb5_name_canon_iterator_data *krb5_name_canon_iterator;
+
+/*
+ * krb5_get_init_creds_opt_set_pkinit flags
+ */
+
+#define KRB5_GIC_OPT_PKINIT_USE_ENCKEY	    2 /* use RSA, not DH */
+#define KRB5_GIC_OPT_PKINIT_ANONYMOUS	    4 /* anonymous PKINIT */
+#define KRB5_GIC_OPT_PKINIT_BTMM	    8 /* reserved by Apple */
+#define KRB5_GIC_OPT_PKINIT_NO_KDC_ANCHOR   16 /* do not authenticate KDC */
+
+/*
+ * _krb5_principal_is_anonymous() flags 
+ */
+#define KRB5_ANON_MATCH_AUTHENTICATED	1 /* authenticated with anon flag */
+#define KRB5_ANON_MATCH_UNAUTHENTICATED	2 /* anonymous PKINIT */
+#define KRB5_ANON_MATCH_ANY		( KRB5_ANON_MATCH_AUTHENTICATED | KRB5_ANON_MATCH_UNAUTHENTICATED )
+
 
 /*
  *

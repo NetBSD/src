@@ -1,4 +1,4 @@
-/*	$NetBSD: salt-des3.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: salt-des3.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2008 Kungliga Tekniska Högskolan
@@ -63,7 +63,7 @@ DES3_string_to_key(krb5_context context,
 
 	ret = _krb5_n_fold(str, len, tmp, 24);
 	if (ret) {
-	    memset(str, 0, len);
+	    memset_s(str, len, 0, len);
 	    free(str);
 	    krb5_set_error_message(context, ret, N_("malloc: out of memory", ""));
 	    return ret;
@@ -76,24 +76,24 @@ DES3_string_to_key(krb5_context context,
 		_krb5_xor8(*(keys + i), (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 	    DES_set_key_unchecked(keys + i, &s[i]);
 	}
-	memset(&ivec, 0, sizeof(ivec));
+	memset_s(&ivec, sizeof(ivec), 0, sizeof(ivec));
 	DES_ede3_cbc_encrypt(tmp,
 			     tmp, sizeof(tmp),
 			     &s[0], &s[1], &s[2], &ivec, DES_ENCRYPT);
-	memset(s, 0, sizeof(s));
-	memset(&ivec, 0, sizeof(ivec));
+	memset_s(s, sizeof(s), 0, sizeof(s));
+	memset_s(&ivec, sizeof(ivec), 0, sizeof(ivec));
 	for(i = 0; i < 3; i++){
 	    memcpy(keys + i, tmp + i * 8, sizeof(keys[i]));
 	    DES_set_odd_parity(keys + i);
 	    if(DES_is_weak_key(keys + i))
 		_krb5_xor8(*(keys + i), (const unsigned char*)"\0\0\0\0\0\0\0\xf0");
 	}
-	memset(tmp, 0, sizeof(tmp));
+	memset_s(tmp, sizeof(tmp), 0, sizeof(tmp));
     }
     key->keytype = enctype;
     krb5_data_copy(&key->keyvalue, keys, sizeof(keys));
-    memset(keys, 0, sizeof(keys));
-    memset(str, 0, len);
+    memset_s(keys, sizeof(keys), 0, sizeof(keys));
+    memset_s(str, len, 0, len);
     free(str);
     return 0;
 }
@@ -121,7 +121,7 @@ DES3_string_to_key_derived(krb5_context context,
 				     len,
 				     enctype,
 				     key);
-    memset(s, 0, len);
+    memset_s(s, len, 0, len);
     free(s);
     return ret;
 }

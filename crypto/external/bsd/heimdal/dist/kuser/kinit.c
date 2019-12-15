@@ -1,4 +1,4 @@
-/*	$NetBSD: kinit.c,v 1.3 2019/10/19 15:55:50 christos Exp $	*/
+/*	$NetBSD: kinit.c,v 1.4 2019/12/15 22:50:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2007 Kungliga Tekniska Högskolan
@@ -157,7 +157,7 @@ static struct getargs args[] = {
     { "extra-addresses",'a', arg_strings,	&extra_addresses,
       NP_("include these extra addresses", ""), "addresses" },
 
-    { "anonymous",	0,   arg_flag,	&anonymous_flag,
+    { "anonymous",	'n',   arg_flag,	&anonymous_flag,
       NP_("request an anonymous ticket", ""), NULL },
 
     { "request-pac",	0,   arg_flag,	&pac_flag,
@@ -208,6 +208,9 @@ static struct getargs args[] = {
     { "help",		0,   arg_flag, &help_flag, NULL, NULL }
 };
 
+static char *
+get_default_realm(krb5_context context);
+
 static void
 usage(int ret)
 {
@@ -238,7 +241,7 @@ copy_configs(krb5_context context,
 	     krb5_principal start_ticket_server)
 {
     krb5_error_code ret;
-    const char *cfg_names[] = {"realm-config", "FriendlyName", NULL};
+    const char *cfg_names[] = {"realm-config", "FriendlyName", "anon_pkinit_realm", NULL};
     const char *cfg_names_w_pname[] = {"fast_avail", NULL};
     krb5_data cfg_data;
     size_t i;
@@ -279,6 +282,34 @@ copy_configs(krb5_context context,
 }
 
 static krb5_error_code
+get_anon_pkinit_tgs_name(krb5_context context,
+			 krb5_ccache ccache,
+			 krb5_principal *tgs_name)
+{
+    krb5_error_code ret;
+    krb5_data data;
+    char *realm;
+
+    ret = krb5_cc_get_config(context, ccache, NULL, "anon_pkinit_realm", &data);
+    if (ret == 0)
+	realm = strndup(data.data, data.length);
+    else
+	realm = get_default_realm(context);
+
+    krb5_data_free(&data);
+
+    if (realm == NULL)
+	return krb5_enomem(context);
+
+    ret = krb5_make_principal(context, tgs_name, realm,
+			      KRB5_TGS_NAME, realm, NULL);
+
+    free(realm);
+
+    return ret;
+}
+
+static krb5_error_code
 renew_validate(krb5_context context,
 	       int renew,
 	       int validate,
@@ -298,7 +329,13 @@ renew_validate(krb5_context context,
 	krb5_warn(context, ret, "krb5_cc_get_principal");
 	return ret;
     }
-    ret = get_server(context, in.client, server, &in.server);
+
+    if (server == NULL &&
+	krb5_principal_is_anonymous(context, in.client,
+				    KRB5_ANON_MATCH_UNAUTHENTICATED))
+	ret = get_anon_pkinit_tgs_name(context, cache, &in.server);
+    else
+	ret = get_server(context, in.client, server, &in.server);
     if (ret) {
 	krb5_warn(context, ret, "get_server");
 	goto out;
@@ -385,7 +422,7 @@ renew_validate(krb5_context context,
 
 out:
     if (tempccache)
-	krb5_cc_close(context, tempccache);
+	krb5_cc_destroy(context, tempccache);
     if (out)
 	krb5_free_creds(context, out);
     krb5_free_cred_contents(context, &in);
@@ -432,7 +469,8 @@ get_new_tickets(krb5_context context,
 		krb5_principal principal,
 		krb5_ccache ccache,
 		krb5_deltat ticket_life,
-		int interactive)
+		int interactive,
+		int anonymous_pkinit)
 {
     krb5_error_code ret;
     krb5_creds cred;
@@ -530,15 +568,15 @@ get_new_tickets(krb5_context context,
 	krb5_get_init_creds_opt_set_canonicalize(context, opt, TRUE);
     if (pk_enterprise_flag || enterprise_flag || canonicalize_flag || windows_flag)
 	krb5_get_init_creds_opt_set_win2k(context, opt, TRUE);
-    if (pk_user_id || ent_user_id || anonymous_flag) {
+    if (pk_user_id || ent_user_id || anonymous_pkinit) {
 	ret = krb5_get_init_creds_opt_set_pkinit(context, opt,
 						 principal,
 						 pk_user_id,
 						 pk_x509_anchors,
 						 NULL,
 						 NULL,
-						 pk_use_enckey ? 2 : 0 |
-						 anonymous_flag ? 4 : 0,
+						 pk_use_enckey ? KRB5_GIC_OPT_PKINIT_USE_ENCKEY : 0 |
+						 anonymous_pkinit ? KRB5_GIC_OPT_PKINIT_ANONYMOUS : 0,
 						 prompter,
 						 NULL,
 						 passwd);
@@ -630,7 +668,8 @@ get_new_tickets(krb5_context context,
 	    krb5_warn(context, ret, "krb5_init_creds_set_keytab");
 	    goto out;
 	}
-    } else if (pk_user_id || ent_user_id || anonymous_flag) {
+    } else if (pk_user_id || ent_user_id ||
+	       krb5_principal_is_anonymous(context, principal, KRB5_ANON_MATCH_ANY)) {
 
     } else if (!interactive && passwd[0] == '\0') {
 	static int already_warned = 0;
@@ -678,7 +717,7 @@ get_new_tickets(krb5_context context,
     if (ntlm_domain && passwd[0])
 	heim_ntlm_nt_key(passwd, &ntlmkey);
 #endif
-    memset(passwd, 0, sizeof(passwd));
+    memset_s(passwd, sizeof(passwd), 0, sizeof(passwd));
 
     switch(ret){
     case 0:
@@ -776,12 +815,21 @@ get_new_tickets(krb5_context context,
 	krb5_cc_set_config(context, ccache, NULL, "realm-config", &data);
     }
 
+    if (anonymous_pkinit) {
+	krb5_data data;
+
+	data.length = strlen(principal->realm);
+	data.data = principal->realm;
+
+	krb5_cc_set_config(context, ccache, NULL, "anon_pkinit_realm", &data);
+    }
+
 out:
     krb5_get_init_creds_opt_free(context, opt);
     if (ctx)
 	krb5_init_creds_free(context, ctx);
     if (tempccache)
-	krb5_cc_close(context, tempccache);
+	krb5_cc_destroy(context, tempccache);
 
     if (enctype)
 	free(enctype);
@@ -925,7 +973,7 @@ renew_func(void *ptr)
 		       server_str, ctx->ticket_life);
     } else {
 	ret = get_new_tickets(ctx->context, ctx->principal, ctx->ccache,
-			      ctx->ticket_life, 0);
+			      ctx->ticket_life, 0, 0);
     }
     expire = ticket_lifetime(ctx->context, ctx->ccache, ctx->principal,
 			     server_str, &renew_expire);
@@ -1224,6 +1272,8 @@ main(int argc, char **argv)
 #ifdef HAVE_SIGACTION
     struct sigaction sa;
 #endif
+    krb5_boolean unique_ccache = FALSE;
+    int anonymous_pkinit = FALSE;
 
     setprogname(argv[0]);
 
@@ -1273,15 +1323,16 @@ main(int argc, char **argv)
 
 	pk_user_id = NULL;
 
-    } else if (anonymous_flag) {
+    } else if (anonymous_flag && argc && argv[0][0] == '@') {
+	/* If principal argument as @REALM, try anonymous PKINIT */
 
-	ret = krb5_make_principal(context, &principal, argv[0],
+	ret = krb5_make_principal(context, &principal, &argv[0][1],
 				  KRB5_WELLKNOWN_NAME, KRB5_ANON_NAME,
 				  NULL);
 	if (ret)
 	    krb5_err(context, 1, ret, "krb5_make_principal");
 	krb5_principal_set_type(context, principal, KRB5_NT_WELLKNOWN);
-
+	anonymous_pkinit = TRUE;
     } else if (use_keytab || keytab_str) {
 	get_princ_kt(context, &principal, argv[0]);
     } else {
@@ -1313,6 +1364,7 @@ main(int argc, char **argv)
 		     krb5_cc_get_type(context, ccache),
 		     krb5_cc_get_name(context, ccache));
 	    setenv("KRB5CCNAME", s, 1);
+	    unique_ccache = TRUE;
 	} else {
 	    ret = krb5_cc_cache_match(context, principal, &ccache);
 	    if (ret) {
@@ -1332,6 +1384,8 @@ main(int argc, char **argv)
 		    krb5_cc_close(context, ccache);
 		    ret = get_switched_ccache(context, type, principal,
 					      &ccache);
+		    if (ret == 0)
+			unique_ccache = TRUE;
 		}
 	    }
 	}
@@ -1380,12 +1434,18 @@ main(int argc, char **argv)
 	    krb5_afslog(context, ccache, NULL, NULL);
 #endif
 
+	if (unique_ccache)
+	    krb5_cc_destroy(context, ccache);
 	exit(ret != 0);
     }
 
-    ret = get_new_tickets(context, principal, ccache, ticket_life, 1);
-    if (ret)
+    ret = get_new_tickets(context, principal, ccache, ticket_life,
+			  1, anonymous_pkinit);
+    if (ret) {
+	if (unique_ccache)
+	    krb5_cc_destroy(context, ccache);
 	exit(1);
+    }
 
 #ifndef NO_AFS
     if (ret == 0 && server_str == NULL && do_afslog && k_hasafs())

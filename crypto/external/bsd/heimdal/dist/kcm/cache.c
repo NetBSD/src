@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.4 2018/04/06 19:56:43 christos Exp $	*/
+/*	$NetBSD: cache.c,v 1.5 2019/12/15 22:50:46 christos Exp $	*/
 
 /*
  * Copyright (c) 2005, PADL Software Pty Ltd.

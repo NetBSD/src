@@ -1,4 +1,4 @@
-/*	$NetBSD: roken-common.h,v 1.2 2017/01/28 21:31:50 christos Exp $	*/
+/*	$NetBSD: roken-common.h,v 1.3 2019/12/15 22:50:51 christos Exp $	*/
 
 /*
  * Copyright (c) 1995 - 2005 Kungliga Tekniska Högskolan

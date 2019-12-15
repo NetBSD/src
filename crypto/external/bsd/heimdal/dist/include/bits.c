@@ -1,4 +1,4 @@
-/*	$NetBSD: bits.c,v 1.2 2017/01/28 21:31:44 christos Exp $	*/
+/*	$NetBSD: bits.c,v 1.3 2019/12/15 22:50:46 christos Exp $	*/
 
 /*
  * Copyright (c) 1997-2002 Kungliga Tekniska Högskolan
@@ -37,7 +37,7 @@
 
 #ifdef HAVE_CONFIG_H
 #include <config.h>
-__RCSID("$NetBSD: bits.c,v 1.2 2017/01/28 21:31:44 christos Exp $");
+__RCSID("$NetBSD: bits.c,v 1.3 2019/12/15 22:50:46 christos Exp $");
 #endif
 #include <stdio.h>
 #include <string.h>

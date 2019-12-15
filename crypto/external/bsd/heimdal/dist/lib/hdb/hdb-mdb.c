@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-mdb.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: hdb-mdb.c,v 1.3 2019/12/15 22:50:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2006 Kungliga Tekniska Högskolan
@@ -75,6 +75,15 @@ DB_destroy(krb5_context context, HDB *db)
     free(db->hdb_db);
     free(db);
     return ret;
+}
+
+static krb5_error_code
+DB_set_sync(krb5_context context, HDB *db, int on)
+{
+    mdb_info *mi = (mdb_info *)db->hdb_db;
+
+    mdb_env_set_flags(mi->e, MDB_NOSYNC, !on);
+    return mdb_env_sync(mi->e, 0);
 }
 
 static krb5_error_code
@@ -242,6 +251,10 @@ DB__put(krb5_context context, HDB *db, int replace,
 	mdb_txn_abort(txn);
     else
 	code = mdb_txn_commit(txn);
+    /*
+     * No need to call mdb_env_sync(); it's done automatically if MDB_NOSYNC is
+     * not set.
+     */
     if(code == MDB_KEYEXIST)
 	return HDB_ERR_EXISTS;
     return code;
@@ -267,6 +280,10 @@ DB__del(krb5_context context, HDB *db, krb5_data key)
 	mdb_txn_abort(txn);
     else
 	code = mdb_txn_commit(txn);
+    /*
+     * No need to call mdb_env_sync(); it's done automatically if MDB_NOSYNC is
+     * not set.
+     */
     if(code == MDB_NOTFOUND)
 	return HDB_ERR_NOENTRY;
     return code;
@@ -396,6 +413,7 @@ hdb_mdb_create(krb5_context context, HDB **db,
     (*db)->hdb__put = DB__put;
     (*db)->hdb__del = DB__del;
     (*db)->hdb_destroy = DB_destroy;
+    (*db)->hdb_set_sync = DB_set_sync;
     return 0;
 }
 #endif /* HAVE_LMDB */

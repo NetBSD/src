@@ -1,4 +1,4 @@
-/*	$NetBSD: hdb-ldap.c,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: hdb-ldap.c,v 1.3 2019/12/15 22:50:49 christos Exp $	*/
 
 /*
  * Copyright (c) 1999-2001, 2003, PADL Software Pty Ltd.
@@ -1889,6 +1889,13 @@ LDAP_destroy(krb5_context context, HDB * db)
 }
 
 static krb5_error_code
+LDAP_set_sync(krb5_context context, HDB * db, int on)
+{
+    (void)on;
+    return 0;
+}
+
+static krb5_error_code
 hdb_ldap_common(krb5_context context,
 		HDB ** db,
 		const char *search_base,
@@ -2022,6 +2029,7 @@ hdb_ldap_common(krb5_context context,
     (*db)->hdb__put = NULL;
     (*db)->hdb__del = NULL;
     (*db)->hdb_destroy = LDAP_destroy;
+    (*db)->hdb_set_sync = LDAP_set_sync;
 
     return 0;
 }

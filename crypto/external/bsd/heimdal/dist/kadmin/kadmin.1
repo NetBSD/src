@@ -1,4 +1,4 @@
-.\"	$NetBSD: kadmin.1,v 1.2 2017/01/28 21:31:44 christos Exp $
+.\"	$NetBSD: kadmin.1,v 1.3 2019/12/15 22:50:46 christos Exp $
 .\"
 .\" Copyright (c) 2000 - 2007 Kungliga Tekniska Högskolan
 .\" (Royal Institute of Technology, Stockholm, Sweden).
@@ -252,7 +252,7 @@ kadmin -l modify -a -disallow-proxiable user
 Changes the password of an existing principal.
 .Ed
 .Pp
-.Nm password-quality
+.Nm verify-password-quality
 .Ar principal
 .Ar password
 .Bd -ragged -offset indent
@@ -260,7 +260,13 @@ Run the password quality check function locally.
 You can run this on the host that is configured to run the kadmind
 process to verify that your configuration file is correct.
 The verification is done locally, if kadmin is run in remote mode,
-no rpc call is done to the server.
+no rpc call is done to the server. NOTE: if the environment has
+verify-password-quality configured to use a back-end that stores
+password history (such as heimdal-history), running
+verify-quality-password will cause an update to the password
+database meaning that merely verifying the quality of the password
+using verify-quality-password invalidates the use of that
+principal/password in the future.
 .Ed
 .Pp
 .Nm privileges

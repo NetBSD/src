@@ -1,4 +1,4 @@
-/*	$NetBSD: build_auth.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: build_auth.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -119,8 +119,12 @@ _krb5_build_authenticator (krb5_context context,
     memset(&auth, 0, sizeof(auth));
 
     auth.authenticator_vno = 5;
-    copy_Realm(&cred->client->realm, &auth.crealm);
-    copy_PrincipalName(&cred->client->name, &auth.cname);
+    ret = copy_Realm(&cred->client->realm, &auth.crealm);
+    if (ret)
+	goto fail;
+    ret = copy_PrincipalName(&cred->client->name, &auth.cname);
+    if (ret)
+	goto fail;
 
     krb5_us_timeofday (context, &auth.ctime, &auth.cusec);
 

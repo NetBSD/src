@@ -6483,6 +6483,18 @@ krb5_principal_get_type (
 	krb5_const_principal /*principal*/);
 
 /**
+ * Returns true iff name is WELLKNOWN/ANONYMOUS
+ *
+ * @ingroup krb5_principal
+ */
+
+KRB5_LIB_FUNCTION krb5_boolean KRB5_LIB_CALL
+krb5_principal_is_anonymous (
+	krb5_context /*context*/,
+	krb5_const_principal /*p*/,
+	unsigned int /*flags*/);
+
+/**
  * Returns true iff name is an WELLKNOWN:ORG.H5L.HOSTBASED-SERVICE
  *
  * @ingroup krb5_principal

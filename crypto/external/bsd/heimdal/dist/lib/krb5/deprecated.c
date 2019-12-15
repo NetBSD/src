@@ -1,4 +1,4 @@
-/*	$NetBSD: deprecated.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: deprecated.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2009 Kungliga Tekniska Högskolan
@@ -209,7 +209,7 @@ krb5_password_key_proc (krb5_context context,
 	password = buf;
     }
     ret = krb5_string_to_key_salt (context, type, password, salt, *key);
-    memset (buf, 0, sizeof(buf));
+    memset_s(buf, sizeof(buf), 0, sizeof(buf));
     return ret;
 }
 

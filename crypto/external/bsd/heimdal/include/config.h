@@ -333,9 +333,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* Define if you have the function `ecalloc'. */
 #define HAVE_ECALLOC 1
 
-/* Define to 1 if you have the <editline/readline.h> header file. */
-/* #undef HAVE_EDITLINE_READLINE_H */
-
 /* Define to 1 if you have the <editline/readline.h > header file. */
 /* #undef HAVE_EDITLINE_READLINE_H_ */
 
@@ -573,9 +570,6 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to 1 if you have the `kill' function. */
 #define HAVE_KILL 1
-
-/* Define to 1 if you have the `util' library (-lutil). */
-#define HAVE_LIBUTIL 1
 
 /* Define to 1 if you have the <libutil.h> header file. */
 /* #undef HAVE_LIBUTIL_H */
@@ -1324,8 +1318,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* path to localstate */
 #define LOCALSTATEDIR "/var/heimdal"
 
-/* Define to the sub-directory in which libtool stores uninstalled libraries.
-   */
+/* Define to the sub-directory where libtool stores uninstalled libraries. */
 #define LT_OBJDIR ".libs/"
 
 /* define if the system is missing a prototype for asnprintf() */
@@ -1450,7 +1443,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_NAME "Heimdal"
 
 /* Define to the full name and version of this package. */
-#define PACKAGE_STRING "Heimdal 7.1.0"
+#define PACKAGE_STRING "Heimdal 7.7.0"
 
 /* Define to the one symbol short name of this package. */
 #define PACKAGE_TARNAME "heimdal"
@@ -1459,7 +1452,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 #define PACKAGE_URL ""
 
 /* Define to the version of this package. */
-#define PACKAGE_VERSION "7.1.0"
+#define PACKAGE_VERSION "7.7.0"
 
 /* path to PKCS11 module */
 /* #undef PKCS11_MODULE_PATH */
@@ -1517,7 +1510,7 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 /* #undef TM_IN_SYS_TIME */
 
 /* Version number of package */
-#define VERSION "7.1.0"
+#define VERSION "7.7.0"
 
 /* Define if signal handlers return void. */
 #define VOID_RETSIGTYPE 1
@@ -1548,6 +1541,9 @@ static /**/const char *const rcsid[] = { (const char *)rcsid, "@(#)" msg }
 
 /* Define to get POSIX getpwnam_r in some systems. */
 /* #undef _POSIX_PTHREAD_SEMANTICS */
+
+/* Enable C11 prototypes for memset_s and friends */
+/* #undef _STDC_C11_BCI */
 
 /* Enable general extensions on Solaris. */
 /* #undef __EXTENSIONS__ */

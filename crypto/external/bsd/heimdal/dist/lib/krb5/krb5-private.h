@@ -1,4 +1,4 @@
-/*	$NetBSD: krb5-private.h,v 1.1.1.1 2019/12/15 22:45:43 christos Exp $	*/
+/*	$NetBSD: krb5-private.h,v 1.2 2019/12/15 22:50:50 christos Exp $	*/
 
 /* This is a generated file */
 #ifndef __krb5_private_h__

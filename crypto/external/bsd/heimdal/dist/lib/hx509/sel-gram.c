@@ -1,4 +1,4 @@
-/*	$NetBSD: sel-gram.c,v 1.1.1.1 2019/12/15 22:45:43 christos Exp $	*/
+/*	$NetBSD: sel-gram.c,v 1.2 2019/12/15 22:50:50 christos Exp $	*/
 
 /* A Bison parser, made by GNU Bison 2.3.  */
 

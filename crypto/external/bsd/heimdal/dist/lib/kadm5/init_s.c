@@ -1,4 +1,4 @@
-/*	$NetBSD: init_s.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: init_s.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2000 Kungliga Tekniska Högskolan
@@ -105,7 +105,7 @@ kadm5_s_init_with_context(krb5_context context,
         kadm5_s_destroy(ctx);
     else
         *server_handle = ctx;
-    return 0;
+    return ret;
 }
 
 kadm5_ret_t
