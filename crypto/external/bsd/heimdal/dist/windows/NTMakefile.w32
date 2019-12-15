@@ -513,7 +513,7 @@ SIGNTOOL=signtool.exe
 SIGNTOOL_T=http://timestamp.verisign.com/scripts/timstamp.dll
 !endif
 !ifndef SIGNTOOL_T_SHA256
-SIGNTOOL_T_SHA256=http://timestamp.geotrust.com/tsa
+SIGNTOOL_T_SHA256=http://sha256timestamp.ws.symantec.com/sha256/timestamp
 !endif
 
 _CODESIGN=( $(SIGNTOOL) sign /fd sha1 $(SIGNTOOL_O) /t $(SIGNTOOL_T) $(SIGNTOOL_C) /v $@ )
