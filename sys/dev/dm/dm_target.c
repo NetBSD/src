@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.31 2019/12/15 10:12:45 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.32 2019/12/15 14:39:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,14 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.31 2019/12/15 10:12:45 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.32 2019/12/15 14:39:42 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/kmem.h>
 #include <sys/module.h>
-
 
 #include "netbsd-dm.h"
 #include "dm.h"
@@ -56,6 +54,7 @@ static kmutex_t dm_target_mutex;
 void
 dm_target_busy(dm_target_t *target)
 {
+
 	atomic_inc_32(&target->ref_cnt);
 }
 
@@ -65,6 +64,7 @@ dm_target_busy(dm_target_t *target)
 void
 dm_target_unbusy(dm_target_t *target)
 {
+
 	KASSERT(target->ref_cnt > 0);
 	atomic_dec_32(&target->ref_cnt);
 }
@@ -274,17 +274,18 @@ dm_target_alloc(const char *name)
 prop_array_t
 dm_target_prop_list(void)
 {
-	prop_array_t target_array, ver;
-	prop_dictionary_t target_dict;
+	prop_array_t target_array;
 	dm_target_t *dm_target;
-
-	size_t i;
 
 	target_array = prop_array_create();
 
 	mutex_enter(&dm_target_mutex);
 
 	TAILQ_FOREACH(dm_target, &dm_target_list, dm_target_next) {
+		prop_array_t ver;
+		prop_dictionary_t target_dict;
+		int i;
+
 		target_dict = prop_dictionary_create();
 		ver = prop_array_create();
 		prop_dictionary_set_cstring(target_dict, DM_TARGETS_NAME,
@@ -305,14 +306,14 @@ dm_target_prop_list(void)
 	return target_array;
 }
 
-/* Initialize dm_target subsystem. */
+/*
+ * Initialize dm_target subsystem.
+ */
 int
 dm_target_init(void)
 {
 	dm_target_t *dmt, *dmt3;
 	int r;
-
-	r = 0;
 
 	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 
