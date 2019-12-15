@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1675 2019/12/15 16:27:43 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1676 2019/12/15 17:10:00 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1004,12 +1004,12 @@ Location:	external/bsd/openldap/dist
 Notes:
 
 Package:	OpenPAM
-Version:	20170430 (Resedacea)
+Version:	20190224 (Tabebuia)
 Current Vers:	20190224 (Tabebuia)
 Maintainer:	Dag-Erling Smørgrav <des@FreeBSD.org>
 Archive Site:	http://www.openpam.org/
 Home Page:	http://www.openpam.org/
-Date:		2019-10-09
+Date:		2019-12-15
 Mailing List:
 Responsible:	christos
 License:	BSD (3-clause)
