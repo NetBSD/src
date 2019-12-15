@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.15 2019/12/15 09:42:29 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.15 2019/12/15 09:42:29 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/kmem.h>
 
 #include "dm.h"
@@ -86,6 +85,7 @@ dm_table_busy(dm_table_head_t *head, uint8_t table_id)
 static void
 dm_table_unbusy(dm_table_head_t *head)
 {
+
 	KASSERT(head->io_cnt != 0);
 
 	mutex_enter(&head->table_mtx);
@@ -114,6 +114,7 @@ dm_table_get_entry(dm_table_head_t *head, uint8_t table_id)
 void
 dm_table_release(dm_table_head_t *head, uint8_t table_id)
 {
+
 	dm_table_unbusy(head);
 }
 
@@ -123,6 +124,7 @@ dm_table_release(dm_table_head_t *head, uint8_t table_id)
 void
 dm_table_switch_tables(dm_table_head_t *head)
 {
+
 	mutex_enter(&head->table_mtx);
 
 	while (head->io_cnt != 0)
@@ -164,7 +166,6 @@ dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 		SLIST_REMOVE(tbl, table_en, dm_table_entry, next);
 		if (table_en->target->destroy(table_en) == 0)
 			table_en->target_config = NULL;
-
 		kmem_free(table_en, sizeof(*table_en));
 	}
 	KASSERT(SLIST_EMPTY(tbl));
@@ -210,6 +211,7 @@ dm_table_size_impl(dm_table_head_t *head, int table)
 uint64_t
 dm_table_size(dm_table_head_t *head)
 {
+
 	return dm_table_size_impl(head, DM_TABLE_ACTIVE);
 }
 
@@ -219,6 +221,7 @@ dm_table_size(dm_table_head_t *head)
 uint64_t
 dm_inactive_table_size(dm_table_head_t *head)
 {
+
 	return dm_table_size_impl(head, DM_TABLE_INACTIVE);
 }
 
@@ -226,7 +229,8 @@ dm_inactive_table_size(dm_table_head_t *head)
  * Return combined disk geometry
  */
 void
-dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp, unsigned int *secsizep)
+dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp,
+    unsigned int *secsizep)
 {
 	dm_table_t *tbl;
 	dm_table_entry_t *table_en;
@@ -278,7 +282,6 @@ dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 	target_count = 0;
 
 	id = dm_table_busy(head, table_id);
-
 	tbl = &head->tables[id];
 
 	SLIST_FOREACH(table_en, tbl, next)
@@ -289,7 +292,6 @@ dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 	return target_count;
 }
 
-
 /*
  * Initialize table_head structures, I'm trying to keep this structure as
  * opaque as possible.
@@ -297,6 +299,7 @@ dm_table_get_target_count(dm_table_head_t *head, uint8_t table_id)
 void
 dm_table_head_init(dm_table_head_t *head)
 {
+
 	head->cur_active_table = 0;
 	head->io_cnt = 0;
 
@@ -314,6 +317,7 @@ dm_table_head_init(dm_table_head_t *head)
 void
 dm_table_head_destroy(dm_table_head_t *head)
 {
+
 	KASSERT(!mutex_owned(&head->table_mtx));
 	KASSERT(!cv_has_waiters(&head->table_cv));
 	/* tables doens't exists when I call this routine, therefore it

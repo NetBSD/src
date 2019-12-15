@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.15 2019/12/14 10:49:30 tkusumi Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.15 2019/12/14 10:49:30 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/disk.h>
 #include <sys/disklabel.h>
 #include <sys/ioctl.h>
@@ -47,8 +46,7 @@ static dm_dev_t *dm_dev_lookup_name(const char *);
 static dm_dev_t *dm_dev_lookup_uuid(const char *);
 static dm_dev_t *dm_dev_lookup_minor(int);
 
-static struct dm_dev_head dm_dev_list =
-TAILQ_HEAD_INITIALIZER(dm_dev_list);
+static struct dm_dev_head dm_dev_list = TAILQ_HEAD_INITIALIZER(dm_dev_list);
 
 static kmutex_t dm_dev_mutex;
 
@@ -56,6 +54,7 @@ static kmutex_t dm_dev_mutex;
 __inline static void
 disable_dev(dm_dev_t *dmv)
 {
+
 	TAILQ_REMOVE(&dm_dev_list, dmv, next_devlist);
 	mutex_enter(&dmv->dev_mtx);
 	mutex_exit(&dm_dev_mutex);
@@ -74,9 +73,7 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 {
 	dm_dev_t *dmv;
 
-	dmv = NULL;
 	mutex_enter(&dm_dev_mutex);
-
 	/* KASSERT(dm_dev_name != NULL && dm_dev_uuid != NULL && dm_dev_minor
 	 * > 0); */
 	if (dm_dev_minor > 0)
@@ -98,6 +95,7 @@ dm_dev_lookup(const char *dm_dev_name, const char *dm_dev_uuid,
 			return dmv;
 		}
 	mutex_exit(&dm_dev_mutex);
+
 	return NULL;
 }
 
@@ -109,10 +107,9 @@ dm_dev_lookup_minor(int dm_dev_minor)
 {
 	dm_dev_t *dmv;
 
-	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist) {
+	TAILQ_FOREACH(dmv, &dm_dev_list, next_devlist)
 		if (dm_dev_minor == dmv->minor)
 			return dmv;
-	}
 
 	return NULL;
 }
@@ -191,8 +188,8 @@ dm_dev_insert(dm_dev_t *dev)
 		TAILQ_INSERT_TAIL(&dm_dev_list, dev, next_devlist);
 	} else
 		r = EEXIST;
-
 	mutex_exit(&dm_dev_mutex);
+
 	return r;
 }
 
@@ -249,10 +246,8 @@ dm_dev_rem(const char *dm_dev_name, const char *dm_dev_uuid,
     int dm_dev_minor)
 {
 	dm_dev_t *dmv;
-	dmv = NULL;
 
 	mutex_enter(&dm_dev_mutex);
-
 	if (dm_dev_minor > 0)
 		if ((dmv = dm_dev_lookup_minor(dm_dev_minor)) != NULL) {
 			disable_dev(dmv);
@@ -281,8 +276,8 @@ int
 dm_dev_destroy(void)
 {
 	dm_dev_t *dmv;
-	mutex_enter(&dm_dev_mutex);
 
+	mutex_enter(&dm_dev_mutex);
 	while (TAILQ_FIRST(&dm_dev_list) != NULL) {
 		dmv = TAILQ_FIRST(&dm_dev_list);
 
@@ -333,6 +328,7 @@ dm_dev_alloc(void)
 int
 dm_dev_free(dm_dev_t *dmv)
 {
+
 	KASSERT(dmv != NULL);
 
 	mutex_destroy(&dmv->dev_mtx);
@@ -350,6 +346,7 @@ dm_dev_free(dm_dev_t *dmv)
 void
 dm_dev_busy(dm_dev_t *dmv)
 {
+
 	mutex_enter(&dmv->dev_mtx);
 	dmv->ref_cnt++;
 	mutex_exit(&dmv->dev_mtx);
@@ -358,6 +355,7 @@ dm_dev_busy(dm_dev_t *dmv)
 void
 dm_dev_unbusy(dm_dev_t *dmv)
 {
+
 	KASSERT(dmv->ref_cnt != 0);
 
 	mutex_enter(&dmv->dev_mtx);
@@ -400,6 +398,7 @@ dm_dev_prop_list(void)
 int
 dm_dev_init(void)
 {
+
 	TAILQ_INIT(&dm_dev_list);	/* initialize global dev list */
 	mutex_init(&dm_dev_mutex, MUTEX_DEFAULT, IPL_NONE);
 	return 0;

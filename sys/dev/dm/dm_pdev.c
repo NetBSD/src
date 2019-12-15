@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.20 2019/12/13 15:49:22 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.21 2019/12/15 14:39:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,11 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.20 2019/12/13 15:49:22 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.21 2019/12/15 14:39:42 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/disk.h>
 #include <sys/fcntl.h>
 #include <sys/kmem.h>
@@ -140,6 +139,7 @@ dm_pdev_insert(const char *dev_name)
 int
 dm_pdev_init(void)
 {
+
 	SLIST_INIT(&dm_pdev_list);	/* initialize global pdev list */
 	mutex_init(&dm_pdev_mutex, MUTEX_DEFAULT, IPL_NONE);
 
@@ -220,6 +220,7 @@ dm_pdev_destroy(void)
 int
 dm_pdev_decr(dm_pdev_t *dmp)
 {
+
 	KASSERT(dmp != NULL);
 	/*
 	 * If this was last reference remove dmp from
@@ -233,6 +234,7 @@ dm_pdev_decr(dm_pdev_t *dmp)
 		dm_pdev_rem(dmp);
 		return 0;
 	}
+
 	mutex_exit(&dm_pdev_mutex);
 	return 0;
 }

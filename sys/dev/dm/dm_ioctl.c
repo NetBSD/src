@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.45 2019/12/15 05:56:02 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.46 2019/12/15 14:39:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.45 2019/12/15 05:56:02 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.46 2019/12/15 14:39:42 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.45 2019/12/15 05:56:02 tkusumi Exp $"
 
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -125,6 +124,7 @@ static int dm_table_init(dm_target_t *, dm_table_entry_t *, char *);
 static int
 dm_dbg_print_flags(uint32_t flags)
 {
+
 	aprint_debug("dbg_print --- %d\n", flags);
 
 	if (flags & DM_READONLY_FLAG)
@@ -186,7 +186,6 @@ dm_list_versions_ioctl(prop_dictionary_t dm_dict)
 /*
  * Create in-kernel entry for device. Device attributes such as name, uuid are
  * taken from proplib dictionary.
- *
  */
 int
 dm_dev_create_ioctl(prop_dictionary_t dm_dict)
@@ -197,7 +196,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
 	uint32_t flags;
 	device_t devt;
 
-	r = 0;
 	flags = 0;
 	name = NULL;
 	uuid = NULL;
@@ -280,7 +278,6 @@ dm_dev_create_ioctl(prop_dictionary_t dm_dict)
  *    <integer>...</integer>
  *   </dict>
  *  </array>
- *
  */
 int
 dm_dev_list_ioctl(prop_dictionary_t dm_dict)
@@ -416,7 +413,6 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 	name = NULL;
 	uuid = NULL;
 	flags = 0;
-	j = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_UUID, &uuid);
@@ -460,7 +456,6 @@ dm_dev_status_ioctl(prop_dictionary_t dm_dict)
 /*
  * Set only flag to suggest that device is suspended. This call is
  * not supported in NetBSD.
- *
  */
 int
 dm_dev_suspend_ioctl(prop_dictionary_t dm_dict)
@@ -561,7 +556,6 @@ dm_dev_resume_ioctl(prop_dictionary_t dm_dict)
 /*
  * Remove inactive table from device. Routines which work's with inactive tables
  * doesn't need to synchronise with dmstrategy. They can synchronise themselves with mutex?.
- *
  */
 int
 dm_table_clear_ioctl(prop_dictionary_t dm_dict)
@@ -570,7 +564,6 @@ dm_table_clear_ioctl(prop_dictionary_t dm_dict)
 	const char *name, *uuid;
 	uint32_t flags, minor;
 
-	dmv = NULL;
 	name = NULL;
 	uuid = NULL;
 	flags = 0;
@@ -615,12 +608,10 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
 	prop_array_t cmd_array;
 	const char *name, *uuid;
 	uint32_t flags, minor;
-
 	int table_type;
 
 	name = NULL;
 	uuid = NULL;
-	dmv = NULL;
 	flags = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
@@ -687,16 +678,12 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_t target_dict;
 
 	const char *name, *uuid, *type;
-	uint32_t flags, ret, minor;
-	char *str;
+	uint32_t flags, minor;
 
-	ret = 0;
 	flags = 0;
 	name = NULL;
 	uuid = NULL;
-	dmv = NULL;
 	last_table = NULL;
-	str = NULL;
 
 	/*
 	 * char *xml; xml = prop_dictionary_externalize(dm_dict);
@@ -735,6 +722,9 @@ dm_table_load_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_set_uint32(dm_dict, DM_IOCTL_MINOR, dmv->minor);
 
 	while ((target_dict = prop_object_iterator_next(iter)) != NULL) {
+		int ret;
+		char *str = NULL;
+
 		prop_dictionary_get_cstring_nocopy(target_dict,
 		    DM_TABLE_TYPE, &type);
 		/*
@@ -853,7 +843,6 @@ dm_table_init(dm_target_t *target, dm_table_entry_t *table_en, char *params)
  *    <string>...</string>
  *   </dict>
  * </array>
- *
  */
 int
 dm_table_status_ioctl(prop_dictionary_t dm_dict)
@@ -866,15 +855,11 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	prop_dictionary_t target_dict;
 
 	uint32_t minor, flags;
-
 	const char *name, *uuid;
-	char *params;
 	int table_type;
 
-	dmv = NULL;
 	uuid = NULL;
 	name = NULL;
-	params = NULL;
 	flags = 0;
 
 	prop_dictionary_get_cstring_nocopy(dm_dict, DM_IOCTL_NAME, &name);
@@ -919,6 +904,8 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 	tbl = dm_table_get_entry(&dmv->table_head, table_type);
 
 	SLIST_FOREACH(table_en, tbl, next) {
+		char *params;
+
 		target_dict = prop_dictionary_create();
 		aprint_debug("%016" PRIu64 ", length %016" PRIu64
 		    ", target %s\n", table_en->start, table_en->length,
