@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.78 2019/12/15 21:11:34 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.79 2019/12/15 21:43:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.78 2019/12/15 21:11:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.79 2019/12/15 21:43:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1232,7 +1232,13 @@ retry:
 	if (cleanall && wasclean && gp->g_dirtygen == dirtygen &&
 	    (vp->v_iflag & VI_ONWORKLST) != 0) {
 #if defined(DEBUG)
-		TAILQ_FOREACH(pg, &uobj->memq, listq.queue) {
+		uvm_page_array_init(&a);
+		for (nextoff = 0;; nextoff = pg->offset + PAGE_SIZE) {
+			pg = uvm_page_array_fill_and_peek(&a, uobj, nextoff,
+			    0, 0);
+			if (pg == NULL) {
+				break;
+			}
 			if ((pg->flags & (PG_FAKE | PG_MARKER)) != 0) {
 				continue;
 			}
@@ -1243,6 +1249,7 @@ retry:
 				printf("%s: %p: modified\n", __func__, pg);
 			}
 		}
+		uvm_page_array_fini(&a);
 #endif /* defined(DEBUG) */
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		if (LIST_FIRST(&vp->v_dirtyblkhd) == NULL)
