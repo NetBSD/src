@@ -1,4 +1,4 @@
-/* $NetBSD: vbe.c,v 1.9 2017/01/24 11:09:14 nonaka Exp $ */
+/* $NetBSD: vbe.c,v 1.10 2019/12/15 03:38:17 christos Exp $ */
 
 /*-
  * Copyright (c) 2009 Jared D. McNeill <jmcneill@invisible.ca>
@@ -45,19 +45,57 @@ static struct _vbestate {
 	int		modenum;
 } vbestate;
 
+/*
+ * https://pdos.csail.mit.edu/6.828/2018/readings/hardware/vbe3.pdf
+ * p32
+ */
+#define	VBE_MODEATTR_MODE_HARDWARE_SUPPORTED		0x0001u
+#define	VBE_MODEATTR_RESERVED_1				0x0002u
+#define	VBE_MODEATTR_TTY_OUTPUT_FUNCTIONS_SUPPORTED	0x0004u
+#define	VBE_MODEATTR_COLOR_MODE				0x0008u
+#define	VBE_MODEATTR_GRAPHICS_MODE			0x0010u
+#define	VBE_MODEATTR_VGA_COMPATIBLE_MODE		0x0020u
+#define	VBE_MODEATTR_VGA_COMPATIBLE_WINDOWD_MEMORY_MODE	0x0040u
+#define	VBE_MODEATTR_LINEAR_FRAME_BUFFER_MODE		0x0080u
+#define	VBE_MODEATTR_DOUBLE_SCAN_MODE			0x0100u
+#define	VBE_MODEATTR_INTERLACED_MODE			0x0200u
+#define	VBE_MODEATTR_HARDWARE_TRIPPLE_BUFFERING_SUPPORT	0x0400u
+#define	VBE_MODEATTR_HARDWARE_STEREOSCOPIC_SUPPORT	0x0800u
+#define	VBE_MODEATTR_DUAL_DISPLAY_START_ADDRESS_SUPPORT	0x1000u
+#define	VBE_MODEATTR_RESERVED_2				0x2000u
+#define	VBE_MODEATTR_RESERVED_3				0x4000u
+#define	VBE_MODEATTR_RESERVED_4				0x8000u
+
+/*
+ * p36
+ */
+#define VBE_MEMMODEL_TEXT		0x00u
+#define	VBE_MEMMODEL_CGA		0x01u
+#define	VBE_MEMMODEL_HERCULES		0x02u
+#define	VBE_MEMMODEL_PLANAR		0x03u
+#define	VBE_MEMMODEL_PACKED_PIXEL	0x04u
+#define	VBE_MEMMODEL_NON_CHAIN_4_256	0x05u
+#define	VBE_MEMMODEL_DIRECT_COLOR	0x06u
+#define	VBE_MEMMODEL_YUV		0x07u
+/* VESA Reserved 			0x08u-0x0fu */
+/* OEM Reserved				0x10u-0xffU */
+
+
 static int
 vbe_mode_is_supported(struct modeinfoblock *mi)
 {
-	if ((mi->ModeAttributes & 0x01) == 0)
+	if ((mi->ModeAttributes & VBE_MODEATTR_MODE_HARDWARE_SUPPORTED) == 0)
 		return 0;	/* mode not supported by hardware */
-	if ((mi->ModeAttributes & 0x08) == 0)
-		return 0;	/* linear fb not available */
-	if ((mi->ModeAttributes & 0x10) == 0)
+	if ((mi->ModeAttributes & VBE_MODEATTR_COLOR_MODE) == 0)
+		return 0;	/* only color modes are supported */
+	if ((mi->ModeAttributes & VBE_MODEATTR_GRAPHICS_MODE) == 0)
 		return 0;	/* text mode */
+	if ((mi->ModeAttributes & VBE_MODEATTR_LINEAR_FRAME_BUFFER_MODE) == 0)
+		return 0;	/* linear fb not available */
 	if (mi->NumberOfPlanes != 1)
 		return 0;	/* planar mode not supported */
-	if (mi->MemoryModel != 0x04 /* Packed pixel */ &&
-	    mi->MemoryModel != 0x06 /* Direct Color */)
+	if (mi->MemoryModel != VBE_MEMMODEL_PACKED_PIXEL /* Packed pixel */ &&
+	    mi->MemoryModel != VBE_MEMMODEL_DIRECT_COLOR /* Direct Color */)
 		return 0;	/* unsupported pixel format */
 	return 1;
 }
