@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.175 2019/12/14 17:28:58 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.176 2019/12/15 21:11:35 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.175 2019/12/14 17:28:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.176 2019/12/15 21:11:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -176,7 +176,6 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 		uvm_pagezero(pg);
 	}
 
-	TAILQ_INSERT_TAIL(&uobj->memq, pg, listq.queue);
 	if (radix_tree_insert_node(&uobj->uo_pages, off >> PAGE_SHIFT,
 	    pg) != 0) {
 		pool_cache_put(&pagecache, pg);
@@ -215,8 +214,6 @@ uvm_pagefree(struct vm_page *pg)
 
 	if (pg->flags & PG_WANTED)
 		wakeup(pg);
-
-	TAILQ_REMOVE(&uobj->memq, pg, listq.queue);
 
 	uobj->uo_npages--;
 	pg2 = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
