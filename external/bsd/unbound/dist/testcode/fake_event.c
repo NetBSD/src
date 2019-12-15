@@ -100,7 +100,7 @@ timeval_add(struct timeval* d, const struct timeval* add)
 #ifndef S_SPLINT_S
 	d->tv_sec += add->tv_sec;
 	d->tv_usec += add->tv_usec;
-	if(d->tv_usec > 1000000) {
+	if(d->tv_usec >= 1000000) {
 		d->tv_usec -= 1000000;
 		d->tv_sec++;
 	}
@@ -1629,7 +1629,8 @@ struct comm_point* outnet_comm_point_for_udp(struct outside_network* outnet,
 struct comm_point* outnet_comm_point_for_tcp(struct outside_network* outnet,
 	comm_point_callback_type* cb, void* cb_arg,
 	struct sockaddr_storage* to_addr, socklen_t to_addrlen,
-	struct sldns_buffer* query, int timeout)
+	struct sldns_buffer* query, int timeout, int ATTR_UNUSED(ssl),
+	char* ATTR_UNUSED(host))
 {
 	struct replay_runtime* runtime = (struct replay_runtime*)
 		outnet->base;
