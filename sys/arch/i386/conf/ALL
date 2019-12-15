@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.475 2019/12/10 12:08:52 yamaguchi Exp $
+# $NetBSD: ALL,v 1.476 2019/12/15 17:17:16 riastradh Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.475 $"
+#ident		"ALL-$Revision: 1.476 $"
 
 maxusers	64		# estimated number of users
 
@@ -1231,6 +1231,9 @@ urlphy* at mii? phy ?			# Realtek RTL8150L internal PHYs
 
 # USB Controller and Devices
 
+# Virtual USB controller
+pseudo-device	vhci
+
 # PCI USB controllers
 ehci*	at pci?	dev ? function ?	# Enhanced Host Controller
 gcscehci* at pci? dev ? function ?	# Enhanced Host Controller (Geode CSC)
@@ -1255,6 +1258,7 @@ usb*	at gcscehci?
 usb*	at ohci?
 usb*	at slhci?
 usb*	at uhci?
+usb*	at vhci?
 usb*	at xhci?
 
 # USB Hubs
