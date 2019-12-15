@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.44 2019/12/15 09:42:29 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.45 2019/12/15 10:12:45 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -191,11 +191,11 @@ typedef struct dm_target {
 	char *(*info)(void *);
 	char *(*table)(void *);
 	int (*strategy)(dm_table_entry_t *, struct buf *);
-	int (*sync)(dm_table_entry_t *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
 	/*
 	 * Optional routines.
 	 */
+	int (*sync)(dm_table_entry_t *);
 	int (*secsize)(dm_table_entry_t *, unsigned int *);
 
 	uint32_t version[3];
