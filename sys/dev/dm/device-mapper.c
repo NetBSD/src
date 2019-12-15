@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.51 2019/12/14 11:20:51 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.52 2019/12/15 09:22:28 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -451,7 +451,7 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
-		unsigned secsize;
+		unsigned int secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -703,7 +703,7 @@ void
 dmgetproperties(struct disk *disk, dm_table_head_t *head)
 {
 	uint64_t numsec;
-	unsigned secsize;
+	unsigned int secsize;
 
 	dm_table_disksize(head, &numsec, &secsize);
 
