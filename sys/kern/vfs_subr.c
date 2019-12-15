@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.475 2019/12/01 13:56:29 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.476 2019/12/15 20:29:09 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.475 2019/12/01 13:56:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.476 2019/12/15 20:29:09 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1548,6 +1548,14 @@ vfs_vnode_lock_print(void *vlock, int full, void (*pr)(const char *, ...))
 			vfs_vnode_print(VIMPL_TO_VNODE(vip), full, pr);
 		}
 	}
+}
+
+void
+vfs_mount_print_all(int full, void (*pr)(const char *, ...))
+{
+	struct mount *mp;
+	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp))
+		vfs_mount_print(mp, full, pr);
 }
 
 void
