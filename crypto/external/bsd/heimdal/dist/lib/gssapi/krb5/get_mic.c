@@ -1,4 +1,4 @@
-/*	$NetBSD: get_mic.c,v 1.3 2018/02/05 16:00:52 christos Exp $	*/
+/*	$NetBSD: get_mic.c,v 1.4 2019/12/15 22:50:47 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2003 Kungliga Tekniska Högskolan
@@ -135,8 +135,8 @@ mic_des
 			       ++seq_number);
   HEIMDAL_MUTEX_unlock(&ctx->ctx_id_mutex);
 
-  memset (deskey, 0, sizeof(deskey));
-  memset (&schedule, 0, sizeof(schedule));
+  memset_s(deskey, sizeof(deskey), 0, sizeof(deskey));
+  memset_s(&schedule, sizeof(schedule), 0, sizeof(schedule));
 
   *minor_status = 0;
   return GSS_S_COMPLETE;

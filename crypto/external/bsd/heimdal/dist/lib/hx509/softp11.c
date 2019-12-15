@@ -1,4 +1,4 @@
-/*	$NetBSD: softp11.c,v 1.3 2017/09/08 15:29:43 christos Exp $	*/
+/*	$NetBSD: softp11.c,v 1.4 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2004 - 2008 Kungliga Tekniska Högskolan
@@ -1091,7 +1091,7 @@ C_GetMechanismList(CK_SLOT_ID slotID,
     *pulCount = 1;
     if (pMechanismList == NULL_PTR)
 	return CKR_OK;
-    pMechanismList[1] = CKM_RSA_PKCS;
+    pMechanismList[0] = CKM_RSA_PKCS;
 
     return CKR_OK;
 }

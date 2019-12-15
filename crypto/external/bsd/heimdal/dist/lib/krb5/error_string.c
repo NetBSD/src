@@ -1,4 +1,4 @@
-/*	$NetBSD: error_string.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: error_string.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2003, 2005 - 2006 Kungliga Tekniska Högskolan

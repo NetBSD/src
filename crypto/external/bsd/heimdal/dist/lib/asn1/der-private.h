@@ -1,4 +1,4 @@
-/*	$NetBSD: der-private.h,v 1.1.1.1 2019/12/15 22:45:40 christos Exp $	*/
+/*	$NetBSD: der-private.h,v 1.2 2019/12/15 22:50:47 christos Exp $	*/
 
 /* This is a generated file */
 #ifndef __der_private_h__

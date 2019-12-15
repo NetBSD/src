@@ -1,4 +1,4 @@
-/*	$NetBSD: init_creds.c,v 1.2 2017/01/28 21:31:49 christos Exp $	*/
+/*	$NetBSD: init_creds.c,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
  * Copyright (c) 1997 - 2004 Kungliga Tekniska Högskolan
@@ -368,9 +368,11 @@ krb5_get_init_creds_opt_set_win2k(krb5_context context,
     if (req) {
 	opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_CANON_CHECK;
 	opt->opt_private->flags |= KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
+	opt->opt_private->flags |= KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK;
     } else {
 	opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_CANON_CHECK;
 	opt->opt_private->flags &= ~KRB5_INIT_CREDS_NO_C_NO_EKU_CHECK;
+	opt->opt_private->flags &= ~KRB5_INIT_CREDS_PKINIT_NO_KRBTGT_OTHERNAME_CHECK;
     }
     return 0;
 }

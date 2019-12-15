@@ -1,7 +1,7 @@
-/*	$NetBSD: sel-gram.y,v 1.2 2017/01/28 21:31:48 christos Exp $	*/
+/*	$NetBSD: sel-gram.y,v 1.3 2019/12/15 22:50:50 christos Exp $	*/
 
 /*
- * Copyright (c) 2008 Kungliga Tekniska Högskolan
+ * Copyright (c) 2017 Kungliga Tekniska Högskolan
  * (Royal Institute of Technology, Stockholm, Sweden).
  * All rights reserved.
  *
@@ -41,6 +41,18 @@
 #include <stdlib.h>
 #include <hx_locl.h>
 
+#if !defined(yylex)
+#define yylex   _hx509_sel_yylex
+#define yywrap  _hx509_sel_yywrap
+#endif
+#if !defined(yyparse)
+#define yyparse _hx509_sel_yyparse
+#define yyerror _hx509_sel_yyerror
+#define yylval  _hx509_sel_yylval
+#define yychar  _hx509_sel_yychar
+#define yydebug _hx509_sel_yydebug
+#define yynerrs _hx509_sel_yynerrs
+#endif
 
 %}
 
