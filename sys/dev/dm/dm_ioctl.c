@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.44 2019/12/14 17:15:54 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.45 2019/12/15 05:56:02 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.44 2019/12/14 17:15:54 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.45 2019/12/15 05:56:02 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -943,7 +943,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS, "");
 
 		if (flags & DM_STATUS_TABLE_FLAG)
-			params = table_en->target->status(
+			params = table_en->target->table(
 			    table_en->target_config);
 		else if (table_en->target->info)
 			params = table_en->target->info(
