@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.25 2019/12/15 10:12:45 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.26 2019/12/15 14:39:42 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,14 +29,13 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.25 2019/12/15 10:12:45 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.26 2019/12/15 14:39:42 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
  */
 #include <sys/types.h>
 #include <sys/param.h>
-
 #include <sys/buf.h>
 
 #include "dm.h"
@@ -67,7 +66,6 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 {
 	dm_target_t *dmt;
 	int r;
-	dmt = NULL;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:
@@ -125,9 +123,9 @@ dm_target_zero_init(dm_table_entry_t *table_en, int argc, char **argv)
 char *
 dm_target_zero_table(void *target_config)
 {
+
 	return NULL;
 }
-
 
 /*
  * This routine does IO operations.
@@ -139,7 +137,6 @@ dm_target_zero_strategy(dm_table_entry_t *table_en, struct buf *bp)
 	memset(bp->b_data, 0, bp->b_bcount);
 	bp->b_resid = 0;	/* nestiobuf_done wants b_resid = 0 to be sure
 				 * that there is no other io to done  */
-
 	biodone(bp);
 
 	return 0;
@@ -149,6 +146,7 @@ dm_target_zero_strategy(dm_table_entry_t *table_en, struct buf *bp)
 int
 dm_target_zero_destroy(dm_table_entry_t *table_en)
 {
+
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
 
@@ -159,6 +157,7 @@ dm_target_zero_destroy(dm_table_entry_t *table_en)
 int
 dm_target_zero_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 {
+
 	return 0;
 }
 
@@ -166,5 +165,6 @@ dm_target_zero_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
 int
 dm_target_zero_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
+
 	return 0;
 }
