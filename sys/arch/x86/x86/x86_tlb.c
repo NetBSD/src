@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.12 2019/12/02 20:59:56 pgoyette Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.13 2019/12/16 19:17:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008-2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.12 2019/12/02 20:59:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.13 2019/12/16 19:17:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,10 +66,10 @@ __KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.12 2019/12/02 20:59:56 pgoyette Exp $"
  * until the request is completed.  This keeps the cache line in the shared
  * state, and bus traffic to a minimum.
  *
- * On i386 the packet is 28 bytes in size.  On amd64 it's 52 bytes.
+ * On i386 the packet is 32 bytes in size.  On amd64 it's 60 bytes.
  */
 typedef struct {
-	uintptr_t		tp_va[6];
+	uintptr_t		tp_va[7];
 	uint8_t			tp_count;
 	uint8_t			tp_userpmap;
 	uint8_t			tp_global;
@@ -77,23 +77,14 @@ typedef struct {
 } pmap_tlb_packet_t;
 
 /*
- * Padded packet stored on the initiator's stack.
- */
-typedef struct {
-	uint8_t			ts_pad1[COHERENCY_UNIT];
-	pmap_tlb_packet_t	ts_tp;
-	uint8_t			ts_pad2[COHERENCY_UNIT];
-} pmap_tlb_stackbuf_t;
-
-/*
  * No more than N separate invlpg.
  *
- * Statistically, a value of six is big enough to cover the requested number
+ * Statistically, a value of 7 is big enough to cover the requested number
  * of pages in ~ 95% of the TLB shootdowns we are getting. We therefore rarely
  * reach the limit, and increasing it can actually reduce the performance due
  * to the high cost of invlpg.
  */
-#define	TP_MAXVA		6	/* for individual mappings */
+#define	TP_MAXVA		7	/* for individual mappings */
 #define	TP_ALLVA		255	/* special: shoot all mappings */
 
 /*
@@ -355,8 +346,8 @@ pmap_tlb_processpacket(volatile pmap_tlb_packet_t *tp, kcpuset_t *target)
 void
 pmap_tlb_shootnow(void)
 {
-	volatile pmap_tlb_packet_t *tp;
-	volatile pmap_tlb_stackbuf_t ts;
+	volatile pmap_tlb_packet_t *tp, *ts;
+	volatile uint8_t stackbuf[128];
 	struct cpu_info *ci;
 	kcpuset_t *target;
 	u_int local, rcpucount;
@@ -405,11 +396,13 @@ pmap_tlb_shootnow(void)
 	 * against an interrupt on the current CPU trying the same.
 	 */
 	KASSERT(rcpucount < ncpu);
-	ts.ts_tp = *tp;
-	KASSERT(!ts.ts_tp.tp_done);
+	KASSERT(sizeof(*ts) <= (sizeof(stackbuf) / 2));
+	ts = (void *)roundup2((uintptr_t)stackbuf, (sizeof(stackbuf) / 2));
+	*ts = *tp;
+	KASSERT(!ts->tp_done);
 	while (atomic_cas_ptr(&pmap_tlb_packet, NULL,
-	    __UNVOLATILE(&ts.ts_tp)) != NULL) {
-		KASSERT(pmap_tlb_packet != &ts.ts_tp);
+	    __UNVOLATILE(ts)) != NULL) {
+		KASSERT(pmap_tlb_packet != ts);
 		/*
 		 * Don't bother with exponentional backoff, as the pointer
 		 * is in a dedicated cache line and only updated twice per
@@ -439,7 +432,7 @@ pmap_tlb_shootnow(void)
 	 */
 	pmap_tlb_pendcount = rcpucount;
 	pmap_tlb_evcnt.ev_count++;
-	pmap_tlb_processpacket(&ts.ts_tp, target);
+	pmap_tlb_processpacket(ts, target);
 
 	/*
 	 * Clear out the local CPU's buffer for the next user.  Once done,
@@ -461,7 +454,7 @@ pmap_tlb_shootnow(void)
 	 * perform local shootdown if needed, using our copy of the packet.
 	 */
 	if (local) {
-		pmap_tlb_invalidate(&ts.ts_tp);
+		pmap_tlb_invalidate(ts);
 	}
 
 	/*
@@ -470,7 +463,7 @@ pmap_tlb_shootnow(void)
 	 * CPU out will update it and only we are reading it).  No memory
 	 * barrier required due to prior stores - yay x86.
 	 */
-	while (!ts.ts_tp.tp_done) {
+	while (!ts->tp_done) {
 		x86_pause();
 	}
 }
