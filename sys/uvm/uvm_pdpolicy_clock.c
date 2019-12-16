@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.18 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.19 2019/12/16 19:18:26 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.18 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.19 2019/12/16 19:18:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -83,9 +83,9 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.18 2019/12/13 20:10:22 ad E
 
 #endif /* defined(PDSIM) */
 
-#define	PQ_TIME		0x3fffffff	/* time of last activation */
-#define PQ_INACTIVE	0x40000000	/* page is in inactive list */
-#define PQ_ACTIVE	0x80000000	/* page is in active list */
+#define	PQ_TIME		0xfffffffc	/* time of last activation */
+#define PQ_INACTIVE	0x00000001	/* page is in inactive list */
+#define PQ_ACTIVE	0x00000002	/* page is in active list */
 
 #if !defined(CLOCK_INACTIVEPCT)
 #define	CLOCK_INACTIVEPCT	33
@@ -407,7 +407,7 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 
 	/* Safety: PQ_ACTIVE clear also tells us if it is not enqueued. */
 	if ((pg->pqflags & PQ_ACTIVE) == 0 ||
-	    ((hardclock_ticks & PQ_TIME) - (pg->pqflags & PQ_TIME)) > hz) {
+	    ((hardclock_ticks & PQ_TIME) - (pg->pqflags & PQ_TIME)) >= hz) {
 		mutex_enter(&s->lock);
 		uvmpdpol_pageactivate_locked(pg);
 		mutex_exit(&s->lock);
