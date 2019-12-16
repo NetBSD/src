@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.80 2019/12/16 08:50:42 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.81 2019/12/16 18:17:32 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.80 2019/12/16 08:50:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.81 2019/12/16 18:17:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -978,6 +978,7 @@ retry:
 		if (pg->flags & (PG_RELEASED|PG_PAGEOUT)) {
 			wasclean = false;
 			nextoff = pg->offset + PAGE_SIZE;
+			uvm_page_array_advance(&a);
 			continue;
 		}
 
