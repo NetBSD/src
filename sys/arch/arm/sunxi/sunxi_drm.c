@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.10 2019/12/15 01:00:58 mrg Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.11 2019/12/16 12:40:17 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.10 2019/12/15 01:00:58 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.11 2019/12/16 12:40:17 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,14 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.10 2019/12/15 01:00:58 mrg Exp $");
 
 #define	SUNXI_DRM_MAX_WIDTH	3840
 #define	SUNXI_DRM_MAX_HEIGHT	2160
+
+/*
+ * The DRM headers break trunc_page/round_page macros with a redefinition
+ * of PAGE_MASK. Use our own macros instead.
+ */
+#define	SUNXI_PAGE_MASK		(PAGE_SIZE - 1)
+#define	SUNXI_TRUNC_PAGE(x)	((x) & ~SUNXI_PAGE_MASK)
+#define	SUNXI_ROUND_PAGE(x)	(((x) + SUNXI_PAGE_MASK) & ~SUNXI_PAGE_MASK)
 
 static TAILQ_HEAD(, sunxi_drm_endpoint) sunxi_drm_endpoints =
     TAILQ_HEAD_INITIALIZER(sunxi_drm_endpoints);
@@ -299,7 +307,8 @@ static int
 sunxi_drm_simplefb_lookup(bus_addr_t *paddr, bus_size_t *psize)
 {
 	static const char * compat[] = { "simple-framebuffer", NULL };
-	int chosen, child;
+	int chosen, child, error;
+	bus_addr_t addr_end;
 
 	chosen = OF_finddevice("/chosen");
 	if (chosen == -1)
@@ -310,7 +319,15 @@ sunxi_drm_simplefb_lookup(bus_addr_t *paddr, bus_size_t *psize)
 			continue;
 		if (!of_match_compatible(child, compat))
 			continue;
-		return fdtbus_get_reg(child, 0, paddr, psize);
+		error = fdtbus_get_reg(child, 0, paddr, psize);
+		if (error != 0)
+			return error;
+
+		/* Reclaim entire pages used by the simplefb */
+		addr_end = *paddr + *psize;
+		*paddr = SUNXI_TRUNC_PAGE(*paddr);
+		*psize = SUNXI_ROUND_PAGE(addr_end - *paddr);
+		return 0;
 	}
 
 	return ENOENT;
