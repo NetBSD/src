@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.19 2019/12/16 19:18:26 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.20 2019/12/16 22:47:55 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.19 2019/12/16 19:18:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.20 2019/12/16 22:47:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -147,20 +147,27 @@ uvmpdpol_scaninit(void)
 	bool anonunder, fileunder, execunder;
 	bool anonover, fileover, execover;
 	bool anonreact, filereact, execreact;
+	int64_t freepg, anonpg, filepg, execpg;
 
 	/*
 	 * decide which types of pages we want to reactivate instead of freeing
 	 * to keep usage within the minimum and maximum usage limits.
 	 */
 
+	cpu_count_sync_all();
+	freepg = uvmexp.free;
+	anonpg = cpu_count_get(CPU_COUNT_ANONPAGES);
+	filepg = cpu_count_get(CPU_COUNT_FILEPAGES);
+	execpg = cpu_count_get(CPU_COUNT_EXECPAGES);
+
 	mutex_enter(&s->lock);
-	t = s->s_active + s->s_inactive + uvmexp.free;
-	anonunder = uvmexp.anonpages <= UVM_PCTPARAM_APPLY(&s->s_anonmin, t);
-	fileunder = uvmexp.filepages <= UVM_PCTPARAM_APPLY(&s->s_filemin, t);
-	execunder = uvmexp.execpages <= UVM_PCTPARAM_APPLY(&s->s_execmin, t);
-	anonover = uvmexp.anonpages > UVM_PCTPARAM_APPLY(&s->s_anonmax, t);
-	fileover = uvmexp.filepages > UVM_PCTPARAM_APPLY(&s->s_filemax, t);
-	execover = uvmexp.execpages > UVM_PCTPARAM_APPLY(&s->s_execmax, t);
+	t = s->s_active + s->s_inactive + freepg;
+	anonunder = anonpg <= UVM_PCTPARAM_APPLY(&s->s_anonmin, t);
+	fileunder = filepg <= UVM_PCTPARAM_APPLY(&s->s_filemin, t);
+	execunder = execpg <= UVM_PCTPARAM_APPLY(&s->s_execmin, t);
+	anonover = anonpg > UVM_PCTPARAM_APPLY(&s->s_anonmax, t);
+	fileover = filepg > UVM_PCTPARAM_APPLY(&s->s_filemax, t);
+	execover = execpg > UVM_PCTPARAM_APPLY(&s->s_execmax, t);
 	anonreact = anonunder || (!anonover && (fileover || execover));
 	filereact = fileunder || (!fileover && (anonover || execover));
 	execreact = execunder || (!execover && (anonover || fileover));

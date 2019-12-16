@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.104 2019/12/01 13:56:29 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.105 2019/12/16 22:47:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.104 2019/12/01 13:56:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105 2019/12/16 22:47:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -792,10 +792,8 @@ vrelel(vnode_t *vp, int flags)
 		/* Take care of space accounting. */
 		if ((vp->v_iflag & VI_EXECMAP) != 0 &&
 		    vp->v_uobj.uo_npages != 0) {
-			atomic_add_int(&uvmexp.execpages,
-			    -vp->v_uobj.uo_npages);
-			atomic_add_int(&uvmexp.filepages,
-			    vp->v_uobj.uo_npages);
+			cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
+			cpu_count(CPU_COUNT_FILEPAGES, vp->v_uobj.uo_npages);
 		}
 		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
 		vp->v_vflag &= ~VV_MAPPED;
@@ -1565,8 +1563,8 @@ vcache_reclaim(vnode_t *vp)
 	 */
 	VSTATE_CHANGE(vp, VS_LOADED, VS_RECLAIMING);
 	if ((vp->v_iflag & VI_EXECMAP) != 0 && vp->v_uobj.uo_npages != 0) {
-		atomic_add_int(&uvmexp.execpages, -vp->v_uobj.uo_npages);
-		atomic_add_int(&uvmexp.filepages, vp->v_uobj.uo_npages);
+		cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
+		cpu_count(CPU_COUNT_FILEPAGES, vp->v_uobj.uo_npages);
 	}
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 	mutex_exit(vp->v_interlock);
