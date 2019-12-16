@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.203 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.204 2019/12/16 18:30:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.203 2019/12/15 21:11:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.204 2019/12/16 18:30:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1123,9 +1123,10 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	 */
 
 	if (newobj) {
-		pg->uobject = newobj;
-		pg->offset = newoff;
-		uvm_pageinsert(newobj, pg);
+		/*
+		 * XXX we have no in-tree users of this functionality
+		 */
+		panic("uvm_pagerealloc: no impl");
 	}
 }
 
