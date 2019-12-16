@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.18 2018/12/06 13:25:02 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.19 2019/12/16 02:50:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -876,7 +876,7 @@ s32 ixgbe_setup_phy_link_generic(struct ixgbe_hw *hw)
 		hw->phy.ops.read_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
 			     IXGBE_MDIO_AUTO_NEG_DEV_TYPE, &autoneg_reg);
 
-		autoneg_reg &= ~AN_CTRL1_AUTOEN;	
+		autoneg_reg &= ~AN_CTRL1_AUTOEN;
 
 		hw->phy.ops.write_reg(hw, IXGBE_MDIO_AUTO_NEG_CONTROL,
 			      IXGBE_MDIO_AUTO_NEG_DEV_TYPE, autoneg_reg);
