@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.345 2019/12/15 20:33:22 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.346 2019/12/16 19:20:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.345 2019/12/15 20:33:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.346 2019/12/16 19:20:45 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -707,13 +707,16 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap *pmap2,
 	 * Mark whatever's on the CPU now as lazy and unlock.
 	 * If the pmap was already installed, we are done.
 	 */
-	if (ci->ci_pmap != mypmap && ci->ci_tlbstate == TLBSTATE_VALID) {
-		ci->ci_tlbstate = TLBSTATE_LAZY;
+	if (ci->ci_pmap != mypmap) {
 		ci->ci_want_pmapload = (mypmap != pmap_kernel());
-	} else {
-		/*
-		 * This can happen when undoing after pmap_get_ptp blocked.
-		 */ 
+		if (ci->ci_tlbstate == TLBSTATE_VALID) {
+			ci->ci_tlbstate = TLBSTATE_LAZY;
+		} else {
+			/*
+			 * This can happen when undoing after pmap_get_ptp
+			 * blocked.
+			 */
+		}
 	}
 
 	/* Now safe to free PTPs, with the pmap still locked. */
