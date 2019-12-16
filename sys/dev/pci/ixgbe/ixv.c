@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.141 2019/11/18 03:17:51 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.142 2019/12/16 02:50:54 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -765,19 +765,6 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Configure RX settings */
 	ixv_initialize_receive_units(adapter);
-
-#if 0 /* XXX isn't it required? -- msaitoh  */
-	/* Set the various hardware offload abilities */
-	ifp->if_hwassist = 0;
-	if (ifp->if_capenable & IFCAP_TSO4)
-		ifp->if_hwassist |= CSUM_TSO;
-	if (ifp->if_capenable & IFCAP_TXCSUM) {
-		ifp->if_hwassist |= (CSUM_TCP | CSUM_UDP);
-#if __FreeBSD_version >= 800000
-		ifp->if_hwassist |= CSUM_SCTP;
-#endif
-	}
-#endif
 
 	/* Set up VLAN offload and filter */
 	ixv_setup_vlan_support(adapter);
@@ -2101,7 +2088,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 		adapter->shadow_vfta[idx] |= (u32)1 << (vlanidp->vid % 32);
 	}
 	ETHER_UNLOCK(ec);
-	
+
 	/*
 	 * A soft reset zero's out the VFTA, so
 	 * we need to repopulate it now.
@@ -2120,7 +2107,7 @@ ixv_setup_vlan_support(struct adapter *adapter)
 			if ((vfta & ((u32)1 << j)) == 0)
 				continue;
 			vid = (i * 32) + j;
-			
+
 			/* Call the shared code mailbox routine */
 			while ((rv = hw->mac.ops.set_vfta(hw, vid, 0, TRUE,
 			    FALSE)) != 0) {
@@ -2209,7 +2196,7 @@ ixv_unregister_vlan(struct adapter *adapter, u16 vtag)
 {
 	struct ixgbe_hw *hw = &adapter->hw;
 	u16		index, bit;
-	int 		error;
+	int		error;
 
 	if ((vtag == 0) || (vtag > 4095))  /* Invalid */
 		return EINVAL;
