@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.32 2019/12/15 14:39:42 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.33 2019/12/16 14:26:23 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.32 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.33 2019/12/16 14:26:23 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -312,14 +312,11 @@ dm_target_prop_list(void)
 int
 dm_target_init(void)
 {
-	dm_target_t *dmt, *dmt3;
-	int r;
+	dm_target_t *dmt;
 
 	mutex_init(&dm_target_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	dmt = dm_target_alloc("linear");
-	dmt3 = dm_target_alloc("striped");
-
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
 	dmt->version[2] = 2;
@@ -331,22 +328,49 @@ dm_target_init(void)
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
 	dmt->secsize = &dm_target_linear_secsize;
+	if (dm_target_insert(dmt))
+		printf("Failed to insert linear\n");
 
-	r = dm_target_insert(dmt);
+	dmt = dm_target_alloc("striped");
+	dmt->version[0] = 1;
+	dmt->version[1] = 0;
+	dmt->version[2] = 3;
+	dmt->init = &dm_target_stripe_init;
+	dmt->table = &dm_target_stripe_table;
+	dmt->strategy = &dm_target_stripe_strategy;
+	dmt->sync = &dm_target_stripe_sync;
+	dmt->deps = &dm_target_stripe_deps;
+	dmt->destroy = &dm_target_stripe_destroy;
+	dmt->upcall = &dm_target_stripe_upcall;
+	dmt->secsize = &dm_target_stripe_secsize;
+	if (dm_target_insert(dmt))
+		printf("Failed to insert striped\n");
 
-	dmt3->version[0] = 1;
-	dmt3->version[1] = 0;
-	dmt3->version[2] = 3;
-	dmt3->init = &dm_target_stripe_init;
-	dmt3->table = &dm_target_stripe_table;
-	dmt3->strategy = &dm_target_stripe_strategy;
-	dmt3->sync = &dm_target_stripe_sync;
-	dmt3->deps = &dm_target_stripe_deps;
-	dmt3->destroy = &dm_target_stripe_destroy;
-	dmt3->upcall = &dm_target_stripe_upcall;
-	dmt3->secsize = &dm_target_stripe_secsize;
+	dmt = dm_target_alloc("error");
+	dmt->version[0] = 1;
+	dmt->version[1] = 0;
+	dmt->version[2] = 0;
+	dmt->init = &dm_target_error_init;
+	dmt->table = &dm_target_error_table;
+	dmt->strategy = &dm_target_error_strategy;
+	dmt->deps = &dm_target_error_deps;
+	dmt->destroy = &dm_target_error_destroy;
+	dmt->upcall = &dm_target_error_upcall;
+	if (dm_target_insert(dmt))
+		printf("Failed to insert error\n");
 
-	r = dm_target_insert(dmt3);
+	dmt = dm_target_alloc("zero");
+	dmt->version[0] = 1;
+	dmt->version[1] = 0;
+	dmt->version[2] = 0;
+	dmt->init = &dm_target_zero_init;
+	dmt->table = &dm_target_zero_table;
+	dmt->strategy = &dm_target_zero_strategy;
+	dmt->deps = &dm_target_zero_deps;
+	dmt->destroy = &dm_target_zero_destroy;
+	dmt->upcall = &dm_target_zero_upcall;
+	if (dm_target_insert(dmt))
+		printf("Failed to insert zero\n");
 
-	return r;
+	return 0;
 }
