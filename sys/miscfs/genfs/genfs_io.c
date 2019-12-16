@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.79 2019/12/15 21:43:42 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.80 2019/12/16 08:50:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.79 2019/12/15 21:43:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.80 2019/12/16 08:50:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1239,6 +1239,7 @@ retry:
 			if (pg == NULL) {
 				break;
 			}
+			uvm_page_array_advance(&a);
 			if ((pg->flags & (PG_FAKE | PG_MARKER)) != 0) {
 				continue;
 			}
