@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.54 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.55 2019/12/16 19:43:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.54 2019/12/06 21:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.55 2019/12/16 19:43:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,7 +66,7 @@ static int	sleepq_sigtoerror(lwp_t *, int);
 
 /* General purpose sleep table, used by mtsleep() and condition variables. */
 sleeptab_t	sleeptab __cacheline_aligned;
-kmutex_t	*sleepq_locks[SLEEPTAB_HASH_SIZE] __read_mostly;
+sleepqlock_t	sleepq_locks[SLEEPTAB_HASH_SIZE] __cacheline_aligned;
 
 /*
  * sleeptab_init:
@@ -79,7 +79,7 @@ sleeptab_init(sleeptab_t *st)
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-		sleepq_locks[i] = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+		mutex_init(&sleepq_locks[i].lock, MUTEX_DEFAULT, IPL_SCHED);
 		sleepq_init(&st->st_queue[i]);
 	}
 }
