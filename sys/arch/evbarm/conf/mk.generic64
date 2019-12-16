@@ -1,4 +1,4 @@
-#	$NetBSD: mk.generic64,v 1.4 2019/12/04 11:25:04 jmcneill Exp $
+#	$NetBSD: mk.generic64,v 1.5 2019/12/16 11:00:30 skrll Exp $
 
 SYSTEM_FIRST_OBJ=	start.o
 SYSTEM_FIRST_SFILE=	${ARM}/aarch64/start.S
@@ -8,14 +8,11 @@ _OSRELEASE!=		${HOST_SH} $S/conf/osrelease.sh
 BOARDTYPE=		evbarm64
 
 MKUBOOTIMAGEARGS=	-f arm64 -u -a 0x200000
-MKKNLIMG=		${THISARM}/compile/rpi-mkknlimg.sh
 
 SYSTEM_LD_TAIL_EXTRA+= && \
 	echo ${OBJCOPY} -S -O binary $@ $@.bin && \
 	${OBJCOPY} -S -O binary $@ $@.bin && \
-	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.ub && \
-	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.ub && \
-	echo ${MKKNLIMG} $@.ub $@.img && \
-	${HOST_SH} ${MKKNLIMG} $@.ub $@.img
+	echo ${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.img && \
+	${TOOL_MKUBOOTIMAGE} ${MKUBOOTIMAGEARGS} $@.bin $@.img
 
 EXTRA_KERNELS+= ${KERNELS:@.KERNEL.@${.KERNEL.}.img@}

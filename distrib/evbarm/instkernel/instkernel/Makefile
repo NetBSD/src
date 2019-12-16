@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2019/08/12 08:04:28 martin Exp $
+#	$NetBSD: Makefile,v 1.33 2019/12/16 11:00:30 skrll Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -14,8 +14,7 @@ MDSETTARGETS=
 .for i in ${BUILD_KERNELS:M*_INSTALL}
 .if ${i} == "RPI_INSTALL"
 MDSETTARGETS+=		${i}	${SSHRAMDISK}	netbsd-${i}
-MDSET_SUFFIXES.netbsd-${i}=	bin create-bin  img create-img
-MDSET_.RPI_INSTALL.netbsd-RPI_INSTALL.img.deps=	netbsd-RPI_INSTALL.bin
+MDSET_SUFFIXES.netbsd-${i}=	img create-img
 .else
 MDSETTARGETS+=		${i}	${RAMDISK}	-
 .endif
@@ -23,12 +22,9 @@ MDSETTARGETS+=		${i}	${RAMDISK}	-
 
 MDSET_RELEASEDIR=	installation/instkernel
 
-MDSET_SUFFIXES.-=	srec create-srec  bin create-bin
+MDSET_SUFFIXES.-=	srec create-srec  img create-img
 create-srec=		${OBJCOPY} -O srec ${.TARGET:R} ${.TARGET}
-create-bin=		${OBJCOPY} -O binary ${.TARGET:R} ${.TARGET}
-create-img=	\
-	${HOST_SH} ${NETBSDSRCDIR}/sys/arch/evbarm/compile/rpi-mkknlimg.sh \
-	${.TARGET:R}.bin ${.TARGET}
+create-img=		${OBJCOPY} -O binary ${.TARGET:R} ${.TARGET}
 
 .include "${DISTRIBDIR}/common/Makefile.mdset"
 
