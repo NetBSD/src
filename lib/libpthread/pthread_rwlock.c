@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.35 2019/12/15 23:13:33 uwe Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.36 2019/12/16 22:22:11 uwe Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.35 2019/12/15 23:13:33 uwe Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.36 2019/12/16 22:22:11 uwe Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -134,12 +134,15 @@ pthread__rwlock_spin(uintptr_t owner)
 	pthread_t thread;
 	unsigned int i;
 
-	thread = (pthread_t)(owner & RW_THREAD);
-	if (thread == NULL || (owner & ~RW_THREAD) != RW_WRITE_LOCKED)
+	if ((owner & ~RW_THREAD) != RW_WRITE_LOCKED)
 		return 0;
-	if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE ||
+
+	thread = (pthread_t)(owner & RW_THREAD);
+	if (__predict_false(thread == NULL) ||
+	    thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE ||
 	    thread->pt_blocking)
 		return 0;
+
 	for (i = 128; i != 0; i--)
 		pthread__rwlock_pause();
 	return 1;
