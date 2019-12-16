@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.30 2019/11/14 13:58:22 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.31 2019/12/16 13:48:44 martin Exp $
 #
 # Makefile for sysinst
 
@@ -96,10 +96,10 @@ CPPFLAGS+= -DSYSINST_HTTP_HOST=\"nycdn.NetBSD.org\"
 CPPFLAGS+= -DREL_PATH=\"HEAD\"
 CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/\.99\.[0-9]*[_A-Z]*$//}.0\""
 .elif (${DISTRIBVER:M*.[0-9].[0-9]*})
-CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//:S/./-/}\"
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*[0-9]*$//:S/./-/}\"
 CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .elif (${DISTRIBVER:M*.[0-9]*})
-CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*$//}\"
+CPPFLAGS+= -DREL_PATH=\"netbsd-${DISTRIBVER:C/\.[0-9][_A-Z]*[0-9]*$//}\"
 CPPFLAGS+= -DPKG_SUBDIR="\"${DISTRIBVER:C/_.*$//}\""
 .endif
 .endif
