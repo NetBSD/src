@@ -1,4 +1,4 @@
-/*	$NetBSD: sleepq.h,v 1.26 2019/11/21 18:56:55 ad Exp $	*/
+/*	$NetBSD: sleepq.h,v 1.27 2019/12/16 19:43:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -38,6 +38,7 @@
 #include <sys/queue.h>
 #include <sys/sched.h>
 #include <sys/syncobj.h>
+#include <sys/param.h>
 
 /*
  * Generic sleep queues.
@@ -72,6 +73,11 @@ void	sleeptab_init(sleeptab_t *);
 extern sleeptab_t	sleeptab;
 
 #ifdef _KERNEL
+typedef union {
+	kmutex_t	lock;
+	uint8_t		pad[COHERENCY_UNIT];
+} sleepqlock_t;
+
 /*
  * Return non-zero if it is unsafe to sleep.
  *
@@ -92,13 +98,13 @@ sleepq_dontsleep(lwp_t *l)
 static __inline sleepq_t *
 sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 {
-	extern kmutex_t *sleepq_locks[SLEEPTAB_HASH_SIZE];
+	extern sleepqlock_t sleepq_locks[SLEEPTAB_HASH_SIZE];
 	sleepq_t *sq;
 	u_int hash;
 
 	hash = SLEEPTAB_HASH(wchan);
 	sq = &st->st_queue[hash];
-	*mp = sleepq_locks[hash];
+	*mp = &sleepq_locks[hash].lock;
 	mutex_spin_enter(*mp);
 	return sq;
 }
@@ -106,10 +112,10 @@ sleeptab_lookup(sleeptab_t *st, wchan_t wchan, kmutex_t **mp)
 static __inline kmutex_t *
 sleepq_hashlock(wchan_t wchan)
 {
-	extern kmutex_t *sleepq_locks[SLEEPTAB_HASH_SIZE];
+	extern sleepqlock_t sleepq_locks[SLEEPTAB_HASH_SIZE];
 	kmutex_t *mp;
 
-	mp = sleepq_locks[SLEEPTAB_HASH(wchan)];
+	mp = &sleepq_locks[SLEEPTAB_HASH(wchan)].lock;
 	mutex_spin_enter(mp);
 	return mp;
 }
