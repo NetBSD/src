@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.34 2019/11/24 13:14:23 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.35 2019/12/16 19:22:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.34 2019/11/24 13:14:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.35 2019/12/16 19:22:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -78,11 +78,14 @@ __KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.34 2019/11/24 13:14:23 ad Exp $
 #define	TS_HASH_MASK	(TS_HASH_SIZE - 1)
 #define	TS_HASH(obj)	(((uintptr_t)(obj) >> 6) & TS_HASH_MASK)
 
-/* Keep the chains and mutex pointers apart to prevent false sharing. */
 static tschain_t	turnstile_chains[TS_HASH_SIZE] __cacheline_aligned;
-static kmutex_t		*turnstile_locks[TS_HASH_SIZE] __read_mostly;
 pool_cache_t		turnstile_cache __read_mostly;
 extern turnstile_t	turnstile0;
+
+static union {
+	kmutex_t	lock;
+	uint8_t		pad[COHERENCY_UNIT];
+} turnstile_locks[TS_HASH_SIZE] __cacheline_aligned;
 
 static int		turnstile_ctor(void *, void *, int);
 
@@ -98,7 +101,7 @@ turnstile_init(void)
 
 	for (i = 0; i < TS_HASH_SIZE; i++) {
 		LIST_INIT(&turnstile_chains[i]);
-		turnstile_locks[i] = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
+		mutex_init(&turnstile_locks[i].lock, MUTEX_DEFAULT, IPL_SCHED);
 	}
 
 	turnstile_cache = pool_cache_init(sizeof(turnstile_t), coherency_unit,
@@ -173,7 +176,7 @@ turnstile_lookup(wchan_t obj)
 
 	hash = TS_HASH(obj);
 	tc = &turnstile_chains[hash];
-	mutex_spin_enter(turnstile_locks[hash]);
+	mutex_spin_enter(&turnstile_locks[hash].lock);
 
 	LIST_FOREACH(ts, tc, ts_chain)
 		if (ts->ts_obj == obj)
@@ -195,7 +198,7 @@ void
 turnstile_exit(wchan_t obj)
 {
 
-	mutex_spin_exit(turnstile_locks[TS_HASH(obj)]);
+	mutex_spin_exit(&turnstile_locks[TS_HASH(obj)].lock);
 }
 
 /*
@@ -381,7 +384,7 @@ turnstile_block(turnstile_t *ts, int q, wchan_t obj, syncobj_t *sobj)
 
 	hash = TS_HASH(obj);
 	tc = &turnstile_chains[hash];
-	lock = turnstile_locks[hash];
+	lock = &turnstile_locks[hash].lock;
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
 	KASSERT(mutex_owned(lock));
@@ -455,7 +458,7 @@ turnstile_wakeup(turnstile_t *ts, int q, int count, lwp_t *nl)
 	lwp_t *l;
 
 	hash = TS_HASH(ts->ts_obj);
-	lock = turnstile_locks[hash];
+	lock = &turnstile_locks[hash].lock;
 	sq = &ts->ts_sleepq[q];
 
 	KASSERT(q == TS_READER_Q || q == TS_WRITER_Q);
@@ -539,7 +542,7 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 
 	hash = TS_HASH(obj);
 	tc = &turnstile_chains[hash];
-	lock = turnstile_locks[hash];
+	lock = &turnstile_locks[hash].lock;
 
 	LIST_FOREACH(ts, tc, ts_chain)
 		if (ts->ts_obj == obj)
