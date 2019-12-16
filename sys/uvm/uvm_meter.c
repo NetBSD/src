@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.69 2019/01/07 22:48:01 jdolecek Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.70 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.69 2019/01/07 22:48:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.70 2019/12/16 22:47:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -81,6 +81,8 @@ sysctl_vm_uvmexp(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 
+	uvm_update_uvmexp();
+
 	node = *rnode;
 	if (oldlenp)
 		node.sysctl_size = uimin(*oldlenp, node.sysctl_size);
@@ -94,9 +96,8 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	struct sysctlnode node;
 	struct uvmexp_sysctl u;
 	int active, inactive;
-	CPU_INFO_ITERATOR cii;
-	struct cpu_info *ci;
 
+	cpu_count_sync_all();
 	uvm_estimatepageable(&active, &inactive);
 
 	memset(&u, 0, sizeof(u));
@@ -111,7 +112,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.inactive = inactive;
 	u.paging = uvmexp.paging;
 	u.wired = uvmexp.wired;
-	u.zeropages = uvmexp.zeropages;
+	u.zeropages = cpu_count_get(CPU_COUNT_ZEROPAGES);
 	u.reserve_pagedaemon = uvmexp.reserve_pagedaemon;
 	u.reserve_kernel = uvmexp.reserve_kernel;
 	u.freemin = uvmexp.freemin;
@@ -123,43 +124,41 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.swpginuse = uvmexp.swpginuse;
 	u.swpgonly = uvmexp.swpgonly;
 	u.nswget = uvmexp.nswget;
-	u.cpuhit = uvmexp.cpuhit;
-	u.cpumiss = uvmexp.cpumiss;
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		u.faults += ci->ci_data.cpu_nfault;
-		u.traps += ci->ci_data.cpu_ntrap;
-		u.intrs += ci->ci_data.cpu_nintr;
-		u.swtch += ci->ci_data.cpu_nswtch;
-		u.softs += ci->ci_data.cpu_nsoft;
-		u.syscalls += ci->ci_data.cpu_nsyscall;
-	}
-	u.pageins = uvmexp.pageins;
-	u.pgswapin = uvmexp.pgswapin;
+	u.cpuhit = cpu_count_get(CPU_COUNT_CPUHIT);
+	u.cpumiss = cpu_count_get(CPU_COUNT_CPUMISS);
+	u.faults = cpu_count_get(CPU_COUNT_NFAULT);
+	u.traps = cpu_count_get(CPU_COUNT_NTRAP);
+	u.intrs = cpu_count_get(CPU_COUNT_NINTR);
+	u.swtch = cpu_count_get(CPU_COUNT_NSWTCH);
+	u.softs = cpu_count_get(CPU_COUNT_NSOFT);
+	u.syscalls = cpu_count_get(CPU_COUNT_NSYSCALL);
+	u.pageins = cpu_count_get(CPU_COUNT_PAGEINS);
+	u.pgswapin = 0; /* unused */
 	u.pgswapout = uvmexp.pgswapout;
-	u.forks = uvmexp.forks;
-	u.forks_ppwait = uvmexp.forks_ppwait;
-	u.forks_sharevm = uvmexp.forks_sharevm;
-	u.pga_zerohit = uvmexp.pga_zerohit;
-	u.pga_zeromiss = uvmexp.pga_zeromiss;
-	u.zeroaborts = uvmexp.zeroaborts;
-	u.fltnoram = uvmexp.fltnoram;
-	u.fltnoanon = uvmexp.fltnoanon;
-	u.fltpgwait = uvmexp.fltpgwait;
-	u.fltpgrele = uvmexp.fltpgrele;
-	u.fltrelck = uvmexp.fltrelck;
-	u.fltrelckok = uvmexp.fltrelckok;
-	u.fltanget = uvmexp.fltanget;
-	u.fltanretry = uvmexp.fltanretry;
-	u.fltamcopy = uvmexp.fltamcopy;
-	u.fltnamap = uvmexp.fltnamap;
-	u.fltnomap = uvmexp.fltnomap;
-	u.fltlget = uvmexp.fltlget;
-	u.fltget = uvmexp.fltget;
-	u.flt_anon = uvmexp.flt_anon;
-	u.flt_acow = uvmexp.flt_acow;
-	u.flt_obj = uvmexp.flt_obj;
-	u.flt_prcopy = uvmexp.flt_prcopy;
-	u.flt_przero = uvmexp.flt_przero;
+	u.forks = cpu_count_get(CPU_COUNT_FORKS);
+	u.forks_ppwait = cpu_count_get(CPU_COUNT_FORKS_PPWAIT);
+	u.forks_sharevm = cpu_count_get(CPU_COUNT_FORKS_SHAREVM);
+	u.pga_zerohit = cpu_count_get(CPU_COUNT_PGA_ZEROHIT);
+	u.pga_zeromiss = cpu_count_get(CPU_COUNT_PGA_ZEROMISS);
+	u.zeroaborts = cpu_count_get(CPU_COUNT_ZEROABORTS);
+	u.fltnoram = cpu_count_get(CPU_COUNT_FLTNORAM);
+	u.fltnoanon = cpu_count_get(CPU_COUNT_FLTNOANON);
+	u.fltpgwait = cpu_count_get(CPU_COUNT_FLTPGWAIT);
+	u.fltpgrele = cpu_count_get(CPU_COUNT_FLTPGRELE);
+	u.fltrelck = cpu_count_get(CPU_COUNT_FLTRELCK);
+	u.fltrelckok = cpu_count_get(CPU_COUNT_FLTRELCKOK);
+	u.fltanget = cpu_count_get(CPU_COUNT_FLTANGET);
+	u.fltanretry = cpu_count_get(CPU_COUNT_FLTANRETRY);
+	u.fltamcopy = cpu_count_get(CPU_COUNT_FLTAMCOPY);
+	u.fltnamap = cpu_count_get(CPU_COUNT_FLTNAMAP);
+	u.fltnomap = cpu_count_get(CPU_COUNT_FLTNOMAP);
+	u.fltlget = cpu_count_get(CPU_COUNT_FLTLGET);
+	u.fltget = cpu_count_get(CPU_COUNT_FLTGET);
+	u.flt_anon = cpu_count_get(CPU_COUNT_FLT_ANON);
+	u.flt_acow = cpu_count_get(CPU_COUNT_FLT_ACOW);
+	u.flt_obj = cpu_count_get(CPU_COUNT_FLT_OBJ);
+	u.flt_prcopy = cpu_count_get(CPU_COUNT_FLT_PRCOPY);
+	u.flt_przero = cpu_count_get(CPU_COUNT_FLT_PRZERO);
 	u.pdwoke = uvmexp.pdwoke;
 	u.pdrevs = uvmexp.pdrevs;
 	u.pdfreed = uvmexp.pdfreed;
@@ -171,14 +170,16 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.pdpageouts = uvmexp.pdpageouts;
 	u.pdpending = uvmexp.pdpending;
 	u.pddeact = uvmexp.pddeact;
-	u.anonpages = uvmexp.anonpages;
-	u.filepages = uvmexp.filepages;
-	u.execpages = uvmexp.execpages;
-	u.colorhit = uvmexp.colorhit;
-	u.colormiss = uvmexp.colormiss;
+	u.anonpages = cpu_count_get(CPU_COUNT_ANONPAGES);
+	u.filepages = cpu_count_get(CPU_COUNT_FILEPAGES);
+	u.execpages = cpu_count_get(CPU_COUNT_EXECPAGES);
+	u.colorhit = cpu_count_get(CPU_COUNT_COLORHIT);
+	u.colormiss = cpu_count_get(CPU_COUNT_COLORMISS);
 	u.ncolors = uvmexp.ncolors;
 	u.bootpages = uvmexp.bootpages;
 	u.poolpages = pool_totalpages();
+	u.countsyncone = cpu_count_get(CPU_COUNT_SYNC_ONE);
+	u.countsyncall = cpu_count_get(CPU_COUNT_SYNC_ALL);
 
 	node = *rnode;
 	node.sysctl_data = &u;
@@ -435,4 +436,55 @@ uvm_pctparam_createsysctlnode(struct uvm_pctparam *pct, const char *name,
 	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 	    CTLTYPE_INT, name, SYSCTL_DESCR(desc),
 	    uvm_sysctlpctparam, 0, (void *)pct, 0, CTL_VM, CTL_CREATE, CTL_EOL);
+}
+
+/*
+ * Update uvmexp with aggregate values from the per-CPU counters.
+ */
+void
+uvm_update_uvmexp(void)
+{
+
+	cpu_count_sync_all();
+
+	/* uvmexp.free = (int)cpu_count_get(CPU_COUNT_FREE); */
+	uvmexp.zeropages = (int)cpu_count_get(CPU_COUNT_ZEROPAGES);
+	uvmexp.cpuhit = (int)cpu_count_get(CPU_COUNT_CPUHIT);
+	uvmexp.cpumiss = (int)cpu_count_get(CPU_COUNT_CPUMISS);
+	uvmexp.faults = (int)cpu_count_get(CPU_COUNT_NFAULT);
+	uvmexp.traps = (int)cpu_count_get(CPU_COUNT_NTRAP);
+	uvmexp.intrs = (int)cpu_count_get(CPU_COUNT_NINTR);
+	uvmexp.swtch = (int)cpu_count_get(CPU_COUNT_NSWTCH);
+	uvmexp.softs = (int)cpu_count_get(CPU_COUNT_NSOFT);
+	uvmexp.syscalls = (int)cpu_count_get(CPU_COUNT_NSYSCALL);
+	uvmexp.pageins = (int)cpu_count_get(CPU_COUNT_PAGEINS);
+	uvmexp.forks = (int)cpu_count_get(CPU_COUNT_FORKS);
+	uvmexp.forks_ppwait = (int)cpu_count_get(CPU_COUNT_FORKS_PPWAIT);
+	uvmexp.forks_sharevm = (int)cpu_count_get(CPU_COUNT_FORKS_SHAREVM);
+	uvmexp.pga_zerohit = (int)cpu_count_get(CPU_COUNT_PGA_ZEROHIT);
+	uvmexp.pga_zeromiss = (int)cpu_count_get(CPU_COUNT_PGA_ZEROMISS);
+	uvmexp.fltnoram = (int)cpu_count_get(CPU_COUNT_FLTNORAM);
+	uvmexp.fltnoanon = (int)cpu_count_get(CPU_COUNT_FLTNOANON);
+	uvmexp.fltpgwait = (int)cpu_count_get(CPU_COUNT_FLTPGWAIT);
+	uvmexp.fltpgrele = (int)cpu_count_get(CPU_COUNT_FLTPGRELE);
+	uvmexp.fltrelck = (int)cpu_count_get(CPU_COUNT_FLTRELCK);
+	uvmexp.fltrelckok = (int)cpu_count_get(CPU_COUNT_FLTRELCKOK);
+	uvmexp.fltanget = (int)cpu_count_get(CPU_COUNT_FLTANGET);
+	uvmexp.fltanretry = (int)cpu_count_get(CPU_COUNT_FLTANRETRY);
+	uvmexp.fltamcopy = (int)cpu_count_get(CPU_COUNT_FLTAMCOPY);
+	uvmexp.fltnamap = (int)cpu_count_get(CPU_COUNT_FLTNAMAP);
+	uvmexp.fltnomap = (int)cpu_count_get(CPU_COUNT_FLTNOMAP);
+	uvmexp.fltlget = (int)cpu_count_get(CPU_COUNT_FLTLGET);
+	uvmexp.fltget = (int)cpu_count_get(CPU_COUNT_FLTGET);
+	uvmexp.flt_anon = (int)cpu_count_get(CPU_COUNT_FLT_ANON);
+	uvmexp.flt_acow = (int)cpu_count_get(CPU_COUNT_FLT_ACOW);
+	uvmexp.flt_obj = (int)cpu_count_get(CPU_COUNT_FLT_OBJ);
+	uvmexp.flt_prcopy = (int)cpu_count_get(CPU_COUNT_FLT_PRCOPY);
+	uvmexp.flt_przero = (int)cpu_count_get(CPU_COUNT_FLT_PRZERO);
+	uvmexp.anonpages = (int)cpu_count_get(CPU_COUNT_ANONPAGES);
+	uvmexp.filepages = (int)cpu_count_get(CPU_COUNT_FILEPAGES);
+	uvmexp.execpages = (int)cpu_count_get(CPU_COUNT_EXECPAGES);
+	uvmexp.colorhit = (int)cpu_count_get(CPU_COUNT_COLORHIT);
+	uvmexp.colormiss = (int)cpu_count_get(CPU_COUNT_COLORMISS);
+	uvmexp.zeroaborts = (int)cpu_count_get(CPU_COUNT_ZEROABORTS);
 }

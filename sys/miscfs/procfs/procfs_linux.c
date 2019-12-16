@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.76 2019/09/07 19:08:28 chs Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.77 2019/12/16 22:47:55 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.76 2019/09/07 19:08:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.77 2019/12/16 22:47:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -137,8 +137,15 @@ procfs_domeminfo(struct lwp *curl, struct proc *p,
 	char *bf;
 	int len;
 	int error = 0;
+	long filepg, anonpg, execpg, freepg;
 
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
+
+	cpu_count_sync_all();
+	freepg = uvmexp.free;
+	filepg = (long)cpu_count_get(CPU_COUNT_FILEPAGES);
+	anonpg = (long)cpu_count_get(CPU_COUNT_ANONPAGES);
+	execpg = (long)cpu_count_get(CPU_COUNT_EXECPAGES);
 
 	len = snprintf(bf, LBFSZ,
 		"        total:    used:    free:  shared: buffers: cached:\n"
@@ -152,19 +159,19 @@ procfs_domeminfo(struct lwp *curl, struct proc *p,
 		"SwapTotal: %8lu kB\n"
 		"SwapFree:  %8lu kB\n",
 		PGTOB(uvmexp.npages),
-		PGTOB(uvmexp.npages - uvmexp.free),
-		PGTOB(uvmexp.free),
+		PGTOB(uvmexp.npages - freepg),
+		PGTOB(freepg),
 		0L,
-		PGTOB(uvmexp.filepages),
-		PGTOB(uvmexp.anonpages + uvmexp.filepages + uvmexp.execpages),
+		PGTOB(filepg),
+		PGTOB(anonpg + filepg + execpg),
 		PGTOB(uvmexp.swpages),
 		PGTOB(uvmexp.swpginuse),
 		PGTOB(uvmexp.swpages - uvmexp.swpginuse),
 		PGTOKB(uvmexp.npages),
-		PGTOKB(uvmexp.free),
+		PGTOKB(freepg),
 		0L,
-		PGTOKB(uvmexp.filepages),
-		PGTOKB(uvmexp.anonpages + uvmexp.filepages + uvmexp.execpages),
+		PGTOKB(freepg),
+		PGTOKB(anonpg + filepg + execpg),
 		PGTOKB(uvmexp.swpages),
 		PGTOKB(uvmexp.swpages - uvmexp.swpginuse));
 
@@ -253,8 +260,6 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
         CPU_INFO_ITERATOR cii;
 #endif
 	int	 	 i;
-	uint64_t	nintr;
-	uint64_t	nswtch;
 
 	error = ENAMETOOLONG;
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
@@ -277,8 +282,6 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 #endif
 
 	i = 0;
-	nintr = 0;
-	nswtch = 0;
 	for (ALLCPUS) {
 		len += snprintf(&bf[len], LBFSZ - len, 
 			"cpu%d %" PRIu64 " %" PRIu64 " %" PRIu64 " %" PRIu64
@@ -290,21 +293,21 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 		if (len >= LBFSZ)
 			goto out;
 		i += 1;
-		nintr += CPUNAME->ci_data.cpu_nintr;
-		nswtch += CPUNAME->ci_data.cpu_nswtch;
 	}
+
+	cpu_count_sync_all();
 
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
 			"swap %u %u\n"
-			"intr %"PRIu64"\n"
-			"ctxt %"PRIu64"\n"
+			"intr %"PRId64"\n"
+			"ctxt %"PRId64"\n"
 			"btime %"PRId64"\n",
 			uvmexp.pageins, uvmexp.pdpageouts,
 			uvmexp.pgswapin, uvmexp.pgswapout,
-			nintr,
-			nswtch,
+			cpu_count_get(CPU_COUNT_NINTR),
+			cpu_count_get(CPU_COUNT_NSWTCH),
 			boottime.tv_sec);
 	if (len >= LBFSZ)
 		goto out;
