@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.213 2018/05/28 21:04:35 chs Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.214 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -346,12 +346,12 @@ struct uvmexp {
 	int nswget;	/* number of times fault calls uvm_swap_get() */
 
 	/* stat counters.  XXX: should be 64-bit counters */
-	int _unused_faults;	/* page fault count */
-	int _unused_traps;	/* trap count */
-	int _unused_intrs;	/* interrupt count */
-	int _unused_swtch;	/* context switch count */
-	int _unused_softs;	/* software interrupt count */
-	int _unused_syscalls;	/* system calls */
+	int faults;		/* page fault count */
+	int traps;		/* trap count */
+	int intrs;		/* interrupt count */
+	int swtch;		/* context switch count */
+	int softs;		/* software interrupt count */
+	int syscalls;		/* system calls */
 	int pageins;		/* pagein operation count */
 				/* pageouts are in pdpageouts below */
 	int _unused1;
@@ -451,7 +451,7 @@ struct uvmexp_sysctl {
 	int64_t	pageins;
 	int64_t	swapins;		/* unused */
 	int64_t	swapouts;		/* unused */
-	int64_t	pgswapin;
+	int64_t	pgswapin;		/* unused */
 	int64_t	pgswapout;
 	int64_t	forks;
 	int64_t	forks_ppwait;
@@ -497,6 +497,8 @@ struct uvmexp_sysctl {
 	int64_t ncolors;
 	int64_t bootpages;
 	int64_t poolpages;
+	int64_t countsyncone;
+	int64_t countsyncall;
 };
 
 #ifdef _KERNEL
@@ -709,6 +711,7 @@ void			uvm_pctparam_init(struct uvm_pctparam *, int,
 			    int (*)(struct uvm_pctparam *, int));
 int			uvm_pctparam_createsysctlnode(struct uvm_pctparam *,
 			    const char *, const char *);
+void			uvm_update_uvmexp(void);
 
 /* uvm_mmap.c */
 int			uvm_mmap_dev(struct proc *, void **, size_t, dev_t,

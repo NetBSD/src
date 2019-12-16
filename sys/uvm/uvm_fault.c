@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.212 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.213 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.212 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.213 2019/12/16 22:47:55 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -281,8 +281,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 	KASSERT(anon->an_lock == amap->am_lock);
 
 	/* Increment the counters.*/
-	atomic_store_relaxed(&uvmexp.fltanget,
-	    atomic_load_relaxed(&uvmexp.fltanget) + 1);
+	cpu_count(CPU_COUNT_FLTANGET, 1);
 	if (anon->an_page) {
 		curlwp->l_ru.ru_minflt++;
 	} else {
@@ -329,8 +328,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				return 0;
 			}
 			pg->flags |= PG_WANTED;
-			atomic_store_relaxed(&uvmexp.fltpgwait,
-			    atomic_load_relaxed(&uvmexp.fltpgwait) + 1);
+			cpu_count(CPU_COUNT_FLTPGWAIT, 1);
 
 			/*
 			 * The last unlock must be an atomic unlock and wait
@@ -365,8 +363,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 			if (pg == NULL) {
 				/* Out of memory.  Wait a little. */
 				uvmfault_unlockall(ufi, amap, NULL);
-				atomic_store_relaxed(&uvmexp.fltnoram,
-				    atomic_load_relaxed(&uvmexp.fltnoram) + 1);
+				cpu_count(CPU_COUNT_FLTNORAM, 1);
 				UVMHIST_LOG(maphist, "  noram -- UVM_WAIT",0,
 				    0,0,0);
 				if (!uvm_reclaimable()) {
@@ -385,8 +382,7 @@ uvmfault_anonget(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 				 * to read an_swslot here, because we hold
 				 * PG_BUSY on the page.
 				 */
-				atomic_store_relaxed(&uvmexp.pageins,
-				    atomic_load_relaxed(&uvmexp.pageins) + 1);
+				cpu_count(CPU_COUNT_PAGEINS, 1);
 				error = uvm_swap_get(pg, anon->an_swslot,
 				    PGO_SYNCIO);
 
@@ -523,8 +519,7 @@ released:
 		 * Retry..
 		 */
 
-		atomic_store_relaxed(&uvmexp.fltanretry,
-		    atomic_load_relaxed(&uvmexp.fltanretry) + 1);
+		cpu_count(CPU_COUNT_FLTANRETRY, 1);
 		continue;
 	}
 	/*NOTREACHED*/
@@ -625,15 +620,13 @@ uvmfault_promote(struct uvm_faultinfo *ufi,
 		uvmfault_unlockall(ufi, amap, uobj);
 		if (!uvm_reclaimable()) {
 			UVMHIST_LOG(maphist, "out of VM", 0,0,0,0);
-			atomic_store_relaxed(&uvmexp.fltnoanon,
-			    atomic_load_relaxed(&uvmexp.fltnoanon) + 1);
+			cpu_count(CPU_COUNT_FLTNOANON, 1);
 			error = ENOMEM;
 			goto done;
 		}
 
 		UVMHIST_LOG(maphist, "out of RAM, waiting for more", 0,0,0,0);
-		atomic_store_relaxed(&uvmexp.fltnoram,
-		    atomic_load_relaxed(&uvmexp.fltnoram) + 1);
+		cpu_count(CPU_COUNT_FLTNORAM, 1);
 		uvm_wait("flt_noram5");
 		error = ERESTART;
 		goto done;
@@ -811,8 +804,6 @@ int
 uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
     vm_prot_t access_type, int fault_flag)
 {
-	struct cpu_data *cd;
-	struct uvm_cpu *ucpu;
 	struct uvm_faultinfo ufi;
 	struct uvm_faultctx flt = {
 		.access_type = access_type,
@@ -834,26 +825,24 @@ uvm_fault_internal(struct vm_map *orig_map, vaddr_t vaddr,
 	UVMHIST_LOG(maphist, "(map=%#jx, vaddr=%#jx, at=%jd, ff=%jd)",
 	      (uintptr_t)orig_map, vaddr, access_type, fault_flag);
 
-	cd = &(curcpu()->ci_data);
-	cd->cpu_nfault++;
-	ucpu = cd->cpu_uvm;
-
-	/* Don't flood RNG subsystem with samples. */
-	if (cd->cpu_nfault % 503)
-		goto norng;
-
 	/* Don't count anything until user interaction is possible */
+	kpreempt_disable();
 	if (__predict_true(start_init_exec)) {
-		kpreempt_disable();
-		rnd_add_uint32(&ucpu->rs,
-			       sizeof(vaddr_t) == sizeof(uint32_t) ?
-			       (uint32_t)vaddr : sizeof(vaddr_t) ==
-			       sizeof(uint64_t) ?
-			       (uint32_t)(vaddr & 0x00000000ffffffff) :
-			       (uint32_t)(cd->cpu_nfault & 0x00000000ffffffff));
-		kpreempt_enable();
+		struct cpu_info *ci = curcpu();
+		CPU_COUNT(CPU_COUNT_NFAULT, 1);
+		/* Don't flood RNG subsystem with samples. */
+		if (++(ci->ci_faultrng) == 503) {
+			ci->ci_faultrng = 0;
+			rnd_add_uint32(&curcpu()->ci_data.cpu_uvm->rs,
+			    sizeof(vaddr_t) == sizeof(uint32_t) ?
+			    (uint32_t)vaddr : sizeof(vaddr_t) ==
+			    sizeof(uint64_t) ?
+			    (uint32_t)vaddr :
+			    (uint32_t)ci->ci_counts[CPU_COUNT_NFAULT]);
+		}
 	}
-norng:
+	kpreempt_enable();
+
 	/*
 	 * init the IN parameters in the ufi
 	 */
@@ -1026,8 +1015,7 @@ uvm_fault_check(
 			    "  need to clear needs_copy and refault",0,0,0,0);
 			uvmfault_unlockmaps(ufi, false);
 			uvmfault_amapcopy(ufi);
-			atomic_store_relaxed(&uvmexp.fltamcopy,
-			    atomic_load_relaxed(&uvmexp.fltamcopy) + 1);
+			cpu_count(CPU_COUNT_FLTAMCOPY, 1);
 			return ERESTART;
 
 		} else {
@@ -1268,8 +1256,7 @@ uvm_fault_upper_neighbor(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n anon: pm=%#jx, va=%#jx, pg=%#jx",
 	    (uintptr_t)ufi->orig_map->pmap, currva, (uintptr_t)pg, 0);
-	atomic_store_relaxed(&uvmexp.fltnamap,
-	    atomic_load_relaxed(&uvmexp.fltnamap) + 1);
+	cpu_count(CPU_COUNT_FLTNAMAP, 1);
 
 	/*
 	 * Since this page isn't the page that's actually faulting,
@@ -1465,8 +1452,7 @@ uvm_fault_upper_promote(
 	UVMHIST_FUNC("uvm_fault_upper_promote"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist, "  case 1B: COW fault",0,0,0,0);
-	atomic_store_relaxed(&uvmexp.flt_acow,
-	    atomic_load_relaxed(&uvmexp.flt_acow) + 1);
+	cpu_count(CPU_COUNT_FLT_ACOW, 1);
 
 	error = uvmfault_promote(ufi, oanon, PGO_DONTCARE, &anon,
 	    &flt->anon_spare);
@@ -1513,8 +1499,7 @@ uvm_fault_upper_direct(
 	struct vm_page *pg;
 	UVMHIST_FUNC("uvm_fault_upper_direct"); UVMHIST_CALLED(maphist);
 
-	atomic_store_relaxed(&uvmexp.flt_anon,
-	    atomic_load_relaxed(&uvmexp.flt_anon) + 1);
+	cpu_count(CPU_COUNT_FLT_ANON, 1);
 	pg = anon->an_page;
 	if (anon->an_ref > 1)     /* disallow writes to ref > 1 anons */
 		flt->enter_prot = flt->enter_prot & ~VM_PROT_WRITE;
@@ -1780,8 +1765,7 @@ uvm_fault_lower_lookup(
 	mutex_enter(uobj->vmobjlock);
 	/* Locked: maps(read), amap(if there), uobj */
 
-	atomic_store_relaxed(&uvmexp.fltlget,
-	    atomic_load_relaxed(&uvmexp.fltlget) + 1);
+	cpu_count(CPU_COUNT_FLTLGET, 1);
 	gotpages = flt->npages;
 	(void) uobj->pgops->pgo_get(uobj,
 	    ufi->entry->offset + flt->startva - ufi->entry->start,
@@ -1853,8 +1837,7 @@ uvm_fault_lower_neighbor(
 	UVMHIST_LOG(maphist,
 	    "  MAPPING: n obj: pm=%#jx, va=%#jx, pg=%#jx",
 	    (uintptr_t)ufi->orig_map->pmap, currva, (uintptr_t)pg, 0);
-	atomic_store_relaxed(&uvmexp.fltnomap,
-	    atomic_load_relaxed(&uvmexp.fltnomap) + 1);
+	cpu_count(CPU_COUNT_FLTNOMAP, 1);
 
 	/*
 	 * Since this page isn't the page that's actually faulting,
@@ -1920,8 +1903,7 @@ uvm_fault_lower_io(
 	/* Locked: uobj */
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 
-	atomic_store_relaxed(&uvmexp.fltget,
-	    atomic_load_relaxed(&uvmexp.fltget) + 1);
+	cpu_count(CPU_COUNT_FLTGET, 1);
 	gotpages = 1;
 	pg = NULL;
 	error = uobj->pgops->pgo_get(uobj, uoff, &pg, &gotpages,
@@ -2002,8 +1984,7 @@ uvm_fault_lower_io(
 			pg->flags &= ~(PG_BUSY | PG_WANTED);
 			UVM_PAGE_OWN(pg, NULL);
 		} else {
-			atomic_store_relaxed(&uvmexp.fltpgrele,
-			    atomic_load_relaxed(&uvmexp.fltpgrele) + 1);
+			cpu_count(CPU_COUNT_FLTPGRELE, 1);
 			uvm_pagefree(pg);
 		}
 		mutex_exit(uobj->vmobjlock);
@@ -2047,8 +2028,7 @@ uvm_fault_lower_direct(
 	 * set "pg" to the page we want to map in (uobjpage, usually)
 	 */
 
-	atomic_store_relaxed(&uvmexp.flt_obj,
-	    atomic_load_relaxed(&uvmexp.flt_obj) + 1);
+	cpu_count(CPU_COUNT_FLT_OBJ, 1);
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry) ||
 	    UVM_OBJ_NEEDS_WRITEFAULT(uobjpage->uobject))
 		flt->enter_prot &= ~VM_PROT_WRITE;
@@ -2111,8 +2091,7 @@ uvm_fault_lower_direct_loan(
 			UVMHIST_LOG(maphist,
 			  "  out of RAM breaking loan, waiting",
 			  0,0,0,0);
-			atomic_store_relaxed(&uvmexp.fltnoram,
-			    atomic_load_relaxed(&uvmexp.fltnoram) + 1);
+			cpu_count(CPU_COUNT_FLTNORAM, 1);
 			uvm_wait("flt_noram4");
 			return ERESTART;
 		}
@@ -2166,7 +2145,7 @@ uvm_fault_lower_promote(
 	KASSERT(uobj == NULL || (uobjpage->flags & PG_BUSY) != 0);
 
 	if (uobjpage != PGO_DONTCARE) {
-		uvmexp.flt_prcopy++;
+		cpu_count(CPU_COUNT_FLT_PRCOPY, 1);
 
 		/*
 		 * promote to shared amap?  make sure all sharing
@@ -2197,7 +2176,7 @@ uvm_fault_lower_promote(
 		    (uintptr_t)uobjpage, (uintptr_t)anon, (uintptr_t)pg, 0);
 
 	} else {
-		uvmexp.flt_przero++;
+		cpu_count(CPU_COUNT_FLT_PRZERO, 1);
 
 		/*
 		 * Page is zero'd and marked dirty by

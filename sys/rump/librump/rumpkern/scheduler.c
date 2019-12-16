@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.47 2019/12/01 19:21:13 ad Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.48 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.47 2019/12/01 19:21:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.48 2019/12/16 22:47:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -76,11 +76,6 @@ cpuinfo_to_rumpcpu(struct cpu_info *ci)
 }
 
 struct cpu_info rump_bootcpu;
-kcpuset_t *kcpuset_attached = NULL;
-kcpuset_t *kcpuset_running = NULL;
-int ncpu, ncpuonline;
-
-kmutex_t cpu_lock;
 
 #define RCPULWP_BUSY	((void *)-1)
 #define RCPULWP_WANTED	((void *)-2)
@@ -143,10 +138,9 @@ rump_cpus_bootstrap(int *nump)
 		num = MAXCPUS;
 	}
 
-	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
+	cpu_setmodel("rumpcore (virtual)");
 
-	kcpuset_create(&kcpuset_attached, true);
-	kcpuset_create(&kcpuset_running, true);
+	mi_cpu_init();
 
 	/* attach first cpu for bootstrap */
 	rump_cpu_attach(&rump_bootcpu);

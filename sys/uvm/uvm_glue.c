@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.170 2019/11/21 17:47:53 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.171 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.170 2019/11/21 17:47:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.171 2019/12/16 22:47:55 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -501,6 +501,8 @@ uvm_scheduler(void)
 	lwp_unlock(l);
 
 	for (;;) {
+		/* Update legacy stats for post-mortem debugging. */
+		uvm_update_uvmexp();
 		sched_pstats();
 		(void)kpause("uvm", false, hz, NULL);
 	}

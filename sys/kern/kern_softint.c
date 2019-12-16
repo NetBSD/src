@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.55 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.56 2019/12/16 22:47:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.55 2019/12/06 21:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.56 2019/12/16 22:47:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -607,11 +607,7 @@ softint_execute(softint_t *si, lwp_t *l, int s)
 		KERNEL_UNLOCK_ONE(l);
 	}
 
-	/*
-	 * Unlocked, but only for statistics.
-	 * Should be per-CPU to prevent cache ping-pong.
-	 */
-	curcpu()->ci_data.cpu_nsoft++;
+	CPU_COUNT(CPU_COUNT_NSOFT, 1);
 
 	KASSERT(si->si_cpu == curcpu());
 	KASSERT(si->si_lwp->l_wchan == NULL);

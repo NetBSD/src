@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.43 2019/12/03 22:28:41 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.44 2019/12/16 22:47:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -44,6 +44,59 @@ struct lwp;
 #include <sys/queue.h>
 #include <sys/kcpuset.h>
 #include <sys/ipi.h>
+
+/* Per-CPU counters.  New elements must be added in blocks of 8. */
+enum cpu_count {
+	CPU_COUNT_NFAULT,		/* 0 */
+	CPU_COUNT_NSWTCH,
+	CPU_COUNT_NSYSCALL,
+	CPU_COUNT_NTRAP,
+	CPU_COUNT_NINTR,
+	CPU_COUNT_NSOFT,
+	CPU_COUNT_FORKS,
+	CPU_COUNT_FORKS_PPWAIT,
+	CPU_COUNT_FORKS_SHAREVM,	/* 8 */
+	CPU_COUNT_ANONPAGES,
+	CPU_COUNT_COLORHIT,
+	CPU_COUNT_COLORMISS,
+	CPU_COUNT_CPUHIT,
+	CPU_COUNT_CPUMISS,
+	CPU_COUNT_BUCKETMISS,
+	CPU_COUNT_EXECPAGES,
+	CPU_COUNT_FILEPAGES,		/* 16 */
+	CPU_COUNT_PGA_ZEROHIT,
+	CPU_COUNT_PGA_ZEROMISS,
+	CPU_COUNT_ZEROPAGES,
+	CPU_COUNT_ZEROABORTS,
+	CPU_COUNT_FREE,
+	CPU_COUNT_SYNC_ONE,
+	CPU_COUNT_SYNC_ALL,
+	CPU_COUNT_FLT_ACOW,		/* 24 */
+	CPU_COUNT_FLT_ANON,
+	CPU_COUNT_FLT_OBJ,
+	CPU_COUNT_FLT_PRCOPY,
+	CPU_COUNT_FLT_PRZERO,
+	CPU_COUNT_FLTAMCOPY,
+	CPU_COUNT_FLTANGET,
+	CPU_COUNT_FLTANRETRY,
+	CPU_COUNT_FLTGET,		/* 32 */
+	CPU_COUNT_FLTLGET,
+	CPU_COUNT_FLTNAMAP,
+	CPU_COUNT_FLTNOMAP,
+	CPU_COUNT_FLTNOANON,
+	CPU_COUNT_FLTNORAM,
+	CPU_COUNT_FLTPGRELE,
+	CPU_COUNT_FLTPGWAIT,
+	CPU_COUNT_FLTRELCK,		/* 40 */
+	CPU_COUNT_FLTRELCKOK,
+	CPU_COUNT_PAGEINS,
+	CPU_COUNT__SPARE1,
+	CPU_COUNT__SPARE2,
+	CPU_COUNT__SPARE3,
+	CPU_COUNT__SPARE4,
+	CPU_COUNT__SPARE5,
+	CPU_COUNT_MAX			/* 48 */
+};
 
 /*
  * MI per-cpu data
@@ -97,13 +150,8 @@ struct cpu_data {
 	u_int		cpu_spin_locks2;	/* # of spin locks held XXX */
 	u_int		cpu_lkdebug_recurse;	/* LOCKDEBUG recursion */
 	u_int		cpu_softints;		/* pending (slow) softints */
-	uint64_t	cpu_nsyscall;		/* syscall counter */
-	uint64_t	cpu_ntrap;		/* trap counter */
-	uint64_t	cpu_nswtch;		/* context switch counter */
-	uint64_t	cpu_nintr;		/* interrupt count */
-	uint64_t	cpu_nsoft;		/* soft interrupt count */
-	uint64_t	cpu_nfault;		/* pagefault counter */
 	struct uvm_cpu	*cpu_uvm;		/* uvm per-cpu data */
+	u_int		cpu_faultrng;		/* counter for fault rng */
 	void		*cpu_callout;		/* per-CPU callout state */
 	void		*cpu_softcpu;		/* soft interrupt table */
 	TAILQ_HEAD(,buf) cpu_biodone;		/* finished block xfers */
@@ -116,8 +164,8 @@ struct cpu_data {
 	int64_t		cpu_cc_skew;		/* counter skew vs cpu0 */
 	char		cpu_name[8];		/* eg, "cpu4" */
 	kcpuset_t	*cpu_kcpuset;		/* kcpuset_t of this cpu only */
-
 	struct lwp * volatile cpu_pcu_curlwp[PCU_UNIT_COUNT];
+	int64_t		cpu_counts[CPU_COUNT_MAX];/* per-CPU counts */
 };
 
 #define	ci_schedstate		ci_data.cpu_schedstate
@@ -140,8 +188,44 @@ struct cpu_data {
 #define	ci_smt_id		ci_data.cpu_smt_id
 #define	ci_nsibling		ci_data.cpu_nsibling
 #define	ci_sibling		ci_data.cpu_sibling
+#define	ci_faultrng		ci_data.cpu_faultrng
+#define	ci_counts		ci_data.cpu_counts
+
+#define	cpu_nsyscall		cpu_counts[CPU_COUNT_NSYSCALL]
+#define	cpu_ntrap		cpu_counts[CPU_COUNT_NTRAP]
+#define	cpu_nswtch		cpu_counts[CPU_COUNT_NSWTCH]
+#define	cpu_nintr		cpu_counts[CPU_COUNT_NINTR]
+#define	cpu_nsoft		cpu_counts[CPU_COUNT_NSOFT]
+#define	cpu_nfault		cpu_counts[CPU_COUNT_NFAULT]
 
 void	mi_cpu_init(void);
 int	mi_cpu_attach(struct cpu_info *);
+
+/*
+ * Adjust a count with preemption already disabled.  If the counter being
+ * adjusted can be updated from interrupt context, SPL must be raised.
+ */
+#define	CPU_COUNT(idx, d)					\
+do {								\
+	extern bool kpreempt_disabled(void);			\
+	KASSERT(kpreempt_disabled());				\
+	KASSERT((unsigned)idx < CPU_COUNT_MAX);			\
+	curcpu()->ci_counts[(idx)] += (d);			\
+} while (/* CONSTCOND */ 0)
+
+/*
+ * Fetch a potentially stale count - cheap, use as often as you like.
+ */
+static inline int64_t
+cpu_count_get(enum cpu_count idx)
+{
+	extern int64_t cpu_counts[];
+	return cpu_counts[idx];
+}
+
+void	cpu_count(enum cpu_count, int64_t);
+int64_t	cpu_count_get(enum cpu_count);
+int64_t	cpu_count_sync(enum cpu_count);
+void	cpu_count_sync_all(void);
 
 #endif /* _SYS_CPU_DATA_H_ */

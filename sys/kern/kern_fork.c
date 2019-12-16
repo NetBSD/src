@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.216 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.217 2019/12/16 22:47:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.216 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.217 2019/12/16 22:47:54 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -95,8 +95,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.216 2019/11/23 19:42:52 ad Exp $");
 #include <sys/uidinfo.h>
 #include <sys/sdt.h>
 #include <sys/ptrace.h>
-
-#include <uvm/uvm_extern.h>
 
 /*
  * DTrace SDT provider definitions
@@ -525,11 +523,13 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	/*
 	 * Update stats now that we know the fork was successful.
 	 */
-	uvmexp.forks++;
+	KPREEMPT_DISABLE(l1);
+	CPU_COUNT(CPU_COUNT_FORKS, 1);
 	if (flags & FORK_PPWAIT)
-		uvmexp.forks_ppwait++;
+		CPU_COUNT(CPU_COUNT_FORKS_PPWAIT, 1);
 	if (flags & FORK_SHAREVM)
-		uvmexp.forks_sharevm++;
+		CPU_COUNT(CPU_COUNT_FORKS_SHAREVM, 1);
+	KPREEMPT_ENABLE(l1);
 
 	if (ktrpoint(KTR_EMUL))
 		p2->p_traceflag |= KTRFAC_TRC_EMUL;

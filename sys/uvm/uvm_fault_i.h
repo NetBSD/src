@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.31 2018/05/08 19:33:57 christos Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.32 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -183,7 +183,7 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 		return true;
 	}
 
-	uvmexp.fltrelck++;
+	cpu_count(CPU_COUNT_FLTRELCK, 1);
 
 	/*
 	 * relock map.   fail if version mismatch (in which case nothing
@@ -196,7 +196,7 @@ uvmfault_relock(struct uvm_faultinfo *ufi)
 		return(false);
 	}
 
-	uvmexp.fltrelckok++;
+	cpu_count(CPU_COUNT_FLTRELCKOK, 1);
 	return(true);
 }
 

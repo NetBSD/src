@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.81 2019/12/04 09:34:13 wiz Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.82 2019/12/16 22:47:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -56,9 +56,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.81 2019/12/04 09:34:13 wiz Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.82 2019/12/16 22:47:54 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +122,7 @@ int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
 static bool	cpu_topology_present	__read_mostly;
+int64_t		cpu_counts[CPU_COUNT_MAX];
 
 /* An array of CPUs.  There are ncpu entries. */
 struct cpu_info **cpu_infos		__read_mostly;
@@ -305,6 +308,7 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	return error;
 }
 
+#ifndef _RUMPKERNEL
 struct cpu_info *
 cpu_lookup(u_int idx)
 {
@@ -327,6 +331,7 @@ cpu_lookup(u_int idx)
 
 	return ci;
 }
+#endif
 
 static void
 cpu_xc_offline(struct cpu_info *ci, void *unused)
@@ -830,3 +835,86 @@ err0:
 	return error;
 }
 #endif
+
+/*
+ * Adjust one count, for a counter that's NOT updated from interrupt
+ * context.  Hardly worth making an inline due to preemption stuff.
+ */
+void
+cpu_count(enum cpu_count idx, int64_t delta)
+{
+	lwp_t *l = curlwp;
+	KPREEMPT_DISABLE(l);
+	l->l_cpu->ci_counts[idx] += delta;
+	KPREEMPT_ENABLE(l);
+}
+
+/*
+ * Fetch fresh sum total for all counts.  Expensive - don't call often.
+ */
+void
+cpu_count_sync_all(void)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int64_t sum[CPU_COUNT_MAX], *ptr;
+	enum cpu_count i;
+	int s;
+
+	KASSERT(sizeof(ci->ci_counts) == sizeof(cpu_counts));
+
+	if (__predict_true(mp_online)) {
+		memset(sum, 0, sizeof(sum));
+		/*
+		 * We want this to be reasonably quick, so any value we get
+		 * isn't totally out of whack, so don't let the current LWP
+		 * get preempted.
+		 */
+		s = splvm();
+		curcpu()->ci_counts[CPU_COUNT_SYNC_ALL]++;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			ptr = ci->ci_counts;
+			for (i = 0; i < CPU_COUNT_MAX; i += 8) {
+				sum[i+0] += ptr[i+0];
+				sum[i+1] += ptr[i+1];
+				sum[i+2] += ptr[i+2];
+				sum[i+3] += ptr[i+3];
+				sum[i+4] += ptr[i+4];
+				sum[i+5] += ptr[i+5];
+				sum[i+6] += ptr[i+6];
+				sum[i+7] += ptr[i+7];
+			}
+			KASSERT(i == CPU_COUNT_MAX);
+		}
+		memcpy(cpu_counts, sum, sizeof(cpu_counts));
+		splx(s);
+	} else {
+		memcpy(cpu_counts, curcpu()->ci_counts, sizeof(cpu_counts));
+	}
+}
+
+/*
+ * Fetch a fresh sum total for one single count.  Expensive - don't call often.
+ */
+int64_t
+cpu_count_sync(enum cpu_count count)
+{
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+	int64_t sum;
+	int s;
+
+	if (__predict_true(mp_online)) {
+		s = splvm();
+		curcpu()->ci_counts[CPU_COUNT_SYNC_ONE]++;
+		sum = 0;
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			sum += ci->ci_counts[count];
+		}
+		splx(s);
+	} else {
+		/* XXX Early boot, iterator might not be available. */
+		sum = curcpu()->ci_counts[count];
+	}
+	return cpu_counts[count] = sum;
+}
