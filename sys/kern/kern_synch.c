@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.331 2019/12/07 21:14:36 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.332 2019/12/16 20:59:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.331 2019/12/07 21:14:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.332 2019/12/16 20:59:39 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -422,7 +422,8 @@ kpreempt_disabled(void)
 	const lwp_t *l = curlwp;
 
 	return l->l_nopreempt != 0 || l->l_stat == LSZOMB ||
-	    (l->l_flag & LW_IDLE) != 0 || cpu_kpreempt_disabled();
+	    (l->l_flag & LW_IDLE) != 0 || (l->l_pflag & LP_INTR) != 0 ||
+	    cpu_kpreempt_disabled();
 }
 
 /*
