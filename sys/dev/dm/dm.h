@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.47 2019/12/16 14:26:23 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.48 2019/12/16 15:59:04 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,14 +29,12 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DM_DEV_H_
-#define _DM_DEV_H_
-
+#ifndef _DM_H_
+#define _DM_H_
 
 #ifdef _KERNEL
 
 #include <sys/errno.h>
-
 #include <sys/atomic.h>
 #include <sys/fcntl.h>
 #include <sys/condvar.h>
@@ -45,7 +43,6 @@
 #include <sys/rwlock.h>
 #include <sys/queue.h>
 #include <sys/vnode.h>
-
 #include <sys/device.h>
 #include <sys/disk.h>
 #include <sys/disklabel.h>
@@ -72,7 +69,6 @@ extern uint32_t dm_dev_counter;
  * A device mapper table is a list of physical ranges plus the mapping target
  * applied to them.
  */
-
 typedef struct dm_table_entry {
 	struct dm_dev *dm_dev;		/* backlink */
 	uint64_t start;
@@ -90,10 +86,10 @@ typedef struct dm_table dm_table_t;
 typedef struct dm_table_head {
 	/* Current active table is selected with this. */
 	int cur_active_table;
-	struct dm_table tables[2];
+	dm_table_t tables[2];
 
 	kmutex_t   table_mtx;
-	kcondvar_t table_cv; /*IO waiting cv */
+	kcondvar_t table_cv; /* I/O waiting cv */
 
 	uint32_t io_cnt;
 } dm_table_head_t;
@@ -105,7 +101,6 @@ typedef struct dm_table_head {
  * I need this because devices can be opened only once, but I can
  * have more than one device on one partition.
  */
-
 typedef struct dm_pdev {
 	char name[MAX_DEV_NAME];
 
@@ -150,13 +145,7 @@ typedef struct dm_dev {
 	TAILQ_ENTRY(dm_dev) next_devlist; /* Major device list. */
 } dm_dev_t;
 
-/* for zero, error : dm_target->target_config == NULL */
-
-/*
- * Target config is initiated with target_init function.
- */
-
-/* for linear : */
+/* For linear target. */
 typedef struct target_linear_config {
 	dm_pdev_t *pdev;
 	uint64_t offset;
@@ -182,7 +171,7 @@ typedef struct dm_target {
 	/* Destroy target_config area */
 	int (*destroy)(dm_table_entry_t *);
 
-	int (*deps) (dm_table_entry_t *, prop_array_t);
+	int (*deps)(dm_table_entry_t *, prop_array_t);
 	/*
 	 * Info/table routine are called to get params string, which is target
 	 * specific. When dm_table_status_ioctl is called with flag
@@ -204,8 +193,6 @@ typedef struct dm_target {
 
 	TAILQ_ENTRY(dm_target) dm_target_next;
 } dm_target_t;
-
-/* Interface structures */
 
 /* device-mapper */
 void dmgetproperties(struct disk *, dm_table_head_t *);
@@ -240,8 +227,6 @@ dm_target_t* dm_target_lookup(const char *);
 int dm_target_rem(const char *);
 void dm_target_unbusy(dm_target_t *);
 void dm_target_busy(dm_target_t *);
-
-/* XXX temporally add */
 int dm_target_init(void);
 
 #define DM_MAX_PARAMS_SIZE 1024
@@ -319,4 +304,4 @@ dm_pdev_t* dm_pdev_insert(const char *);
 
 #endif /*_KERNEL*/
 
-#endif /*_DM_DEV_H_*/
+#endif /*_DM_H_*/
