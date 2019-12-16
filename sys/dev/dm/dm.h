@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.46 2019/12/15 16:14:27 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.47 2019/12/16 14:26:23 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -265,6 +265,22 @@ int dm_target_stripe_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_stripe_destroy(dm_table_entry_t *);
 int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_secsize(dm_table_entry_t *, unsigned int *);
+
+/* dm_target_error.c */
+int dm_target_error_init(dm_table_entry_t*, int, char **);
+char *dm_target_error_table(void *);
+int dm_target_error_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_error_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_error_destroy(dm_table_entry_t *);
+int dm_target_error_upcall(dm_table_entry_t *, struct buf *);
+
+/* dm_target_zero.c */
+int dm_target_zero_init(dm_table_entry_t *, int, char **);
+char *dm_target_zero_table(void *);
+int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_zero_destroy(dm_table_entry_t *);
+int dm_target_zero_deps(dm_table_entry_t *, prop_array_t);
+int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_table.c  */
 #define DM_TABLE_ACTIVE 0
