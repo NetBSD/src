@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.54 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: intr.c,v 1.55 2019/12/16 22:47:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2008-2010, 2015 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.54 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.55 2019/12/16 22:47:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -473,11 +473,4 @@ cpu_intr_p(void)
 {
 
 	return false;
-}
-
-bool
-cpu_softintr_p(void)
-{
-
-	return curlwp->l_pflag & LP_INTR;
 }

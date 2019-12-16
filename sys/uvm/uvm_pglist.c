@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.73 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.74 2019/12/16 22:47:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.73 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.74 2019/12/16 22:47:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 	LIST_REMOVE(pg, listq.list);	/* cpu */
 	uvmexp.free--;
 	if (pg->flags & PG_ZERO)
-		uvmexp.zeropages--;
+		CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
 	VM_FREE_PAGE_TO_CPU(pg)->pages[pgflidx]--;
 	pg->flags = PG_CLEAN;
 	pg->uobject = NULL;
@@ -592,7 +592,7 @@ uvm_pglistfree(struct pglist *list)
 		    pgfl_queues[queue], pg, listq.list);
 		uvmexp.free++;
 		if (iszero)
-			uvmexp.zeropages++;
+			CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
 		ucpu->pages[queue]++;
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
