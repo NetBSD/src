@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.59 2019/10/30 07:27:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.60 2019/12/16 02:50:54 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -134,9 +134,9 @@
  * RxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
  * number of receive descriptors allocated for each RX queue. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
- * is 16 bytes.  A receive buffer is also allocated for each descriptor. 
- * 
- * Note: with 8 rings and a dual port card, it is possible to bump up 
+ * is 16 bytes.  A receive buffer is also allocated for each descriptor.
+ *
+ * Note: with 8 rings and a dual port card, it is possible to bump up
  *	against the system mbuf pool limit, you can tune nmbclusters
  *	to adjust for this.
  */

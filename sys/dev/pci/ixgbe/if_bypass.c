@@ -101,7 +101,7 @@ ixgbe_get_bypass_time(u32 *year, u32 *sec)
 	nanotime(&current);
 	*sec = current.tv_sec;
 
-	while(*sec > SEC_THIS_YEAR(*year)) {
+	while (*sec > SEC_THIS_YEAR(*year)) {
 		*sec -= SEC_THIS_YEAR(*year);
 		(*year)++;
 	}

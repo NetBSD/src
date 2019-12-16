@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.57 2019/11/10 21:16:36 chs Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.58 2019/12/16 02:50:54 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -148,7 +148,7 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		return (ENETDOWN);
 	if (txr->txr_no_space)
 		return (ENETDOWN);
-	
+
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		if (txr->tx_avail <= IXGBE_QUEUE_MIN_FREE)
 			break;
