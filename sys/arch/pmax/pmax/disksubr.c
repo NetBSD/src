@@ -1,4 +1,4 @@
-/*	$NetBSD: disksubr.c,v 1.55 2019/04/03 22:10:51 christos Exp $	*/
+/*	$NetBSD: disksubr.c,v 1.55.4.1 2019/12/17 09:38:07 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1988 Regents of the University of California.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.55 2019/04/03 22:10:51 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: disksubr.c,v 1.55.4.1 2019/12/17 09:38:07 msaitoh Exp $");
 
 #include "opt_compat_ultrix.h"
 
@@ -146,7 +146,9 @@ compat_label(dev_t dev, void (*strat)(struct buf *bp), struct disklabel *lp,
 		int part;
 
 		if (dlp->magic != DEC_LABEL_MAGIC) {
+#if 0
 			printf("label: %x\n",dlp->magic);
+#endif
 			msg = ((msg != NULL) ? msg: "no disk label");
 			goto done;
 		}
