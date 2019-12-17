@@ -1,4 +1,4 @@
-/*	$NetBSD: file.h,v 1.23 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: file.h,v 1.24 2019/12/17 02:31:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -29,7 +29,7 @@
  */
 /*
  * file.h - definitions for file(1) program
- * @(#)$File: file.h,v 1.206 2019/05/07 02:27:11 christos Exp $
+ * @(#)$File: file.h,v 1.208 2019/06/26 20:31:31 christos Exp $
  */
 
 #ifndef __file_h__
@@ -481,6 +481,7 @@ protected int file_ascmagic_with_encoding(struct magic_set *,
 protected int file_encoding(struct magic_set *, const struct buffer *,
     unichar **, size_t *, const char **, const char **, const char **);
 protected int file_is_json(struct magic_set *, const struct buffer *);
+protected int file_is_csv(struct magic_set *, const struct buffer *, int);
 protected int file_is_tar(struct magic_set *, const struct buffer *);
 protected int file_softmagic(struct magic_set *, const struct buffer *,
     uint16_t *, uint16_t *, int, int);
