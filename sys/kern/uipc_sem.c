@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.56 2019/12/15 20:25:25 joerg Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.57 2019/12/17 18:10:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.56 2019/12/15 20:25:25 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.57 2019/12/17 18:10:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -143,7 +143,7 @@ static const struct syscall_package ksem_syscalls[] = {
 };
 
 struct sysctllog *ksem_clog;
-int ksem_max;
+int ksem_max = KSEM_MAX;
 
 static int
 name_copyin(const char *uname, char **name)
@@ -214,7 +214,6 @@ ksem_sysinit(void)
 
 	/* Define module-specific sysctl tree */
 
-	ksem_max = KSEM_MAX;
 	ksem_clog = NULL;
 
 	sysctl_createv(&ksem_clog, 0, NULL, &rnode,
