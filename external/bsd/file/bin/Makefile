@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2014/01/16 01:15:33 christos Exp $
+#	$NetBSD: Makefile,v 1.4 2019/12/17 18:59:39 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -10,8 +10,9 @@ FILES=		${MFILES}
 .endif
 
 PROG=		file
-LDADD+=		-lmagic -lz
-DPADD+=		${LIBMAGIC} ${LIBZ}
+LDADD+=		-lmagic
+DPADD+=		${LIBMAGIC} 
+PROGDPLIBS	+= ${DPLIBS}
 MAN=		file.1 magic.5
 
 CLEANFILES+=	magic.mgc
