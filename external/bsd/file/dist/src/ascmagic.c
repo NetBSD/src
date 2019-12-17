@@ -1,4 +1,4 @@
-/*	$NetBSD: ascmagic.c,v 1.1.1.11 2019/05/22 17:19:56 christos Exp $	*/
+/*	$NetBSD: ascmagic.c,v 1.1.1.12 2019/12/17 02:23:53 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -38,15 +38,14 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: ascmagic.c,v 1.104 2019/05/07 02:27:11 christos Exp $")
+FILE_RCSID("@(#)$File: ascmagic.c,v 1.105 2019/06/08 20:49:14 christos Exp $")
 #else
-__RCSID("$NetBSD: ascmagic.c,v 1.1.1.11 2019/05/22 17:19:56 christos Exp $");
+__RCSID("$NetBSD: ascmagic.c,v 1.1.1.12 2019/12/17 02:23:53 christos Exp $");
 #endif
 #endif	/* lint */
 
 #include "magic.h"
 #include <string.h>
-#include <memory.h>
 #include <ctype.h>
 #include <stdlib.h>
 #ifdef HAVE_UNISTD_H
