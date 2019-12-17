@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.49.6.2 2019/09/17 19:31:59 martin Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.49.6.3 2019/12/17 12:59:52 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -1401,9 +1401,9 @@ next_disk:
 				continue;
 			if (d->part[part].fstype == FS_UNUSED)
 				continue;
-			if (d->part[part].part_name == NULL)
-				continue;
-			if (strcmp(d->part[part].part_name, name) == 0) {
+
+			if (d->part[part].part_name != NULL &&
+			    strcmp(d->part[part].part_name, name) == 0) {
 				*biosdev = raidframe[i].biosdev;
 				*offset = raidframe[i].offset
 					+ RF_PROTECTED_SECTORS
