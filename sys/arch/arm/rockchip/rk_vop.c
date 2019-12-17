@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
+/* $NetBSD: rk_vop.c,v 1.5 2019/12/17 18:30:51 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.5 2019/12/17 18:30:51 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -236,7 +236,14 @@ rk_vop_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
 
+	paddr += y * sfb->base.pitches[0];
+	paddr += x * drm_format_plane_cpp(sfb->base.pixel_format, 0);
+
 	KASSERT((paddr & ~0xffffffff) == 0);
+
+	const uint32_t vir = __SHIFTIN(sfb->base.pitches[0] / 4,
+	    WIN0_VIR_STRIDE);
+	WR4(sc, VOP_WIN0_VIR, vir);
 
 	/* Framebuffer start address */
 	WR4(sc, VOP_WIN0_YRGB_MST, (uint32_t)paddr);
@@ -308,9 +315,6 @@ rk_vop_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	WR4(sc, VOP_WIN0_DSP_ST, val);
 
 	WR4(sc, VOP_WIN0_COLOR_KEY, 0);
-
-	val = __SHIFTIN(hactive, WIN0_VIR_STRIDE);
-	WR4(sc, VOP_WIN0_VIR, val);
 
 	if (adjusted_mode->hdisplay > 2560)
 		lb_mode = WIN0_LB_MODE_RGB_3840X2;
