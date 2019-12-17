@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.10.2.3 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: label.c,v 1.10.2.4 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.10.2.3 2019/11/17 13:45:26 msaitoh Exp $");
+__RCSID("$NetBSD: label.c,v 1.10.2.4 2019/12/17 09:44:50 msaitoh Exp $");
 #endif
 
 #include <sys/types.h>
@@ -60,8 +60,7 @@ __RCSID("$NetBSD: label.c,v 1.10.2.3 2019/11/17 13:45:26 msaitoh Exp $");
  * local prototypes
  */
 static bool boringpart(const struct disk_part_info *info);
-static bool checklabel(struct disk_partitions*, char[MENUSTRSIZE],
-    char[MENUSTRSIZE]);
+static bool checklabel(struct disk_partitions*, char *, char *);
 static void show_partition_adder(menudesc *, struct partition_usage_set*);
 
 /*
@@ -107,7 +106,7 @@ real_partition(const struct partition_usage_set *pset, int index)
  */
 static bool
 checklabel(struct disk_partitions *parts,
-    char ovl1[MENUSTRSIZE], char ovl2[MENUSTRSIZE])
+    char *ovl1, char *ovl2)
 {
 	part_id i, j;
 	struct disk_part_info info;
@@ -124,7 +123,7 @@ checklabel(struct disk_partitions *parts,
 
 		/*
 		 * check succeeding partitions for overlap.
-		 * O(n^2), but n is small (currently <= 16).
+		 * O(n^2), but n is small.
 		 */
 		istart = info.start;
 		iend = istart + info.size;
@@ -146,12 +145,12 @@ checklabel(struct disk_partitions *parts,
 			/* overlap? */
 			if ((istart <= jstart && jstart < iend) ||
 			    (jstart <= istart && istart < jend)) {
-				snprintf(ovl1, sizeof(*ovl1),
+				snprintf(ovl1, MENUSTRSIZE,
 				    "%" PRIu64 " - %" PRIu64 " %s, %s",
 				    istart / sizemult, iend / sizemult,
 				    multname,
 				    getfslabelname(fs_type, fs_sub_type));
-				snprintf(ovl2, sizeof(*ovl2),
+				snprintf(ovl2, MENUSTRSIZE,
 				    "%" PRIu64 " - %" PRIu64 " %s, %s",
 				    jstart / sizemult, jend / sizemult,
 				    multname,
@@ -461,6 +460,9 @@ init_fs_type_ext(menudesc *menu, void *arg)
 		else
 			menu->cursel = 1;
 		return;
+	} else if (t == FS_EX2FS && edit->info.fs_sub_type == 1) {
+		menu->cursel = FSMAXTYPES;
+		return;
 	}
 	/* skip the two FFS entries, and do not add FFS later again */
 	for (ndx = 2, i = 0; i < FSMAXTYPES && ndx < max; i++) {
@@ -484,17 +486,16 @@ set_fstype_ext(menudesc *menu, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
 	size_t i, ndx, max = menu->numopts;
+	enum part_type pt;
 
 	if (menu->cursel == 0 || menu->cursel == 1) {
 		edit->info.fs_type = FS_BSDFFS;
 		edit->info.fs_sub_type = menu->cursel == 0 ? 2 : 1;
-		edit->info.nat_type = edit->pset->parts->pscheme->
-		    get_fs_part_type(edit->info.fs_type,
-		    edit->info.fs_sub_type);
-		edit->wanted->type = edit->info.nat_type->generic_ptype;
-		edit->wanted->fs_type = edit->info.fs_type;
-		edit->wanted->fs_version = edit->info.fs_sub_type;
-		return 1;
+		goto found_type;
+	} else if (menu->cursel == FSMAXTYPES) {
+		edit->info.fs_type = FS_EX2FS;
+		edit->info.fs_sub_type = 1;
+		goto found_type;
 	}
 
 	for (ndx = 2, i = 0; i < FSMAXTYPES && ndx < max; i++) {
@@ -508,18 +509,22 @@ set_fstype_ext(menudesc *menu, void *arg)
 		if (ndx == (size_t)menu->cursel) {
 			edit->info.fs_type = i;
 			edit->info.fs_sub_type = 0;
-			edit->info.nat_type = edit->pset->parts->pscheme->
-			    get_fs_part_type(i, 0);
-			if (edit->info.nat_type == NULL)
-				edit->info.nat_type = edit->pset->parts->
-				    pscheme->get_generic_part_type(PT_root);
-			edit->wanted->type = edit->info.nat_type->generic_ptype;
-			edit->wanted->fs_type = edit->info.fs_type;
-			edit->wanted->fs_version = edit->info.fs_sub_type;
-			break;
+			goto found_type;
 		}
 		ndx++;
 	}
+	return 1;
+
+found_type:
+	pt = edit->info.nat_type ? edit->info.nat_type->generic_ptype : PT_root;
+	edit->info.nat_type = edit->pset->parts->pscheme->
+	    get_fs_part_type(pt, edit->info.fs_type, edit->info.fs_sub_type);
+	if (edit->info.nat_type == NULL)
+		edit->info.nat_type = edit->pset->parts->pscheme->
+		    get_generic_part_type(PT_root);
+	edit->wanted->type = edit->info.nat_type->generic_ptype;
+	edit->wanted->fs_type = edit->info.fs_type;
+	edit->wanted->fs_version = edit->info.fs_sub_type;
 	return 1;
 }
 
@@ -534,7 +539,7 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 	int m;
 	size_t i, ndx, cnt;
 
-	cnt = __arraycount(fstypenames)-1;
+	cnt = __arraycount(fstypenames);
 	opts = calloc(cnt, sizeof(*opts));
 	if (opts == NULL)
 		return 1;
@@ -557,6 +562,9 @@ edit_fs_type_ext(menudesc *menu, void *arg)
 		opts[ndx].opt_action = set_fstype_ext;
 		ndx++;
 	}
+	opts[ndx].opt_name = msg_string(MSG_fs_type_ext2old);
+	opts[ndx].opt_action = set_fstype_ext;
+	ndx++;
 	assert(ndx == cnt);
 	m = new_menu(MSG_Select_the_type, opts, ndx,
 		30, 6, 10, 0, MC_SUBMENU | MC_SCROLL,
@@ -596,13 +604,15 @@ static int
 set_fstype(menudesc *menu, void *arg)
 {
 	struct single_part_fs_edit *edit = arg;
+	enum part_type pt;
 	int ndx;
 
+	pt = edit->info.nat_type ? edit->info.nat_type->generic_ptype : PT_root;
 	if (menu->cursel < 2) {
 		edit->info.fs_type = FS_BSDFFS;
 		edit->info.fs_sub_type = menu->cursel == 0 ? 2 : 1;
 		edit->info.nat_type = edit->pset->parts->pscheme->
-		    get_fs_part_type(FS_BSDFFS, 2);
+		    get_fs_part_type(pt, FS_BSDFFS, 2);
 		if (edit->info.nat_type == NULL)
 			edit->info.nat_type = edit->pset->parts->
 			    pscheme->get_generic_part_type(PT_root);
@@ -620,7 +630,7 @@ set_fstype(menudesc *menu, void *arg)
 	edit->info.fs_type = edit_fs_common_types[ndx];
 	edit->info.fs_sub_type = 0;
 	edit->info.nat_type = edit->pset->parts->pscheme->
-	    get_fs_part_type(edit->info.fs_type, 0);
+	    get_fs_part_type(pt, edit->info.fs_type, 0);
 	if (edit->info.nat_type == NULL)
 		edit->info.nat_type = edit->pset->parts->
 		    pscheme->get_generic_part_type(PT_root);
@@ -644,6 +654,10 @@ edit_fs_type(menudesc *menu, void *arg)
 	/*
 	 * Shortcut to full menu if we have an exotic value
 	 */
+	if (edit->info.fs_type == FS_EX2FS && edit->info.fs_sub_type == 1) {
+		edit_fs_type_ext(menu, arg);
+		return 0;
+	}
 	for (i = 0; i < __arraycount(edit_fs_common_types); i++)
 		if (edit->info.fs_type == edit_fs_common_types[i])
 			break;
@@ -789,7 +803,7 @@ edit_ptn(menudesc *menu, void *arg)
 			edit.info.fs_type = FS_BSDFFS;
 			edit.info.fs_sub_type = 2;
 			edit.info.nat_type = pset->parts->pscheme->
-			    get_fs_part_type(edit.info.fs_type,
+			    get_fs_part_type(PT_root, edit.info.fs_type,
 			    edit.info.fs_sub_type);
 			edit.wanted->instflags = PUIINST_NEWFS;
 		}

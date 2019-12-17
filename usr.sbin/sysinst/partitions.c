@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.1.2.3 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: partitions.c,v 1.1.2.4 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -79,7 +79,9 @@ generic_adapt_foreign_part_info(const struct disk_partitions *myself,
 		return false;
 
 	/* slightly simplistic, enhance when needed */
-	dest->nat_type = myself->pscheme->get_fs_part_type(dest->fs_type,
+	dest->nat_type = myself->pscheme->get_fs_part_type(
+	    dest->nat_type ? dest->nat_type->generic_ptype : PT_root,
+	    dest->fs_type,
 	    dest->fs_sub_type);
 	if (dest->nat_type == NULL)
 		dest->nat_type = myself->pscheme->get_generic_part_type(

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.23.2.7 2019/12/09 19:33:25 bouyer Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.23.2.8 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1320,7 +1320,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			infos[i].size = min(want->size, space.size);
 			infos[i].nat_type =
 			    ps->pscheme->get_fs_part_type(
-			        want->fs_type, want->fs_version);
+			        want->type, want->fs_type, want->fs_version);
 			infos[i].last_mounted = want->mount;
 			infos[i].fs_type = want->fs_type;
 			infos[i].fs_sub_type = want->fs_version;
@@ -1400,7 +1400,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 			infos[i].size = min(want->size, space.size);
 			infos[i].nat_type =
 			    wanted->parts->pscheme->get_fs_part_type(
-			    want->fs_type, want->fs_version);
+			    want->type, want->fs_type, want->fs_version);
 			infos[i].last_mounted = want->mount;
 			infos[i].fs_type = want->fs_type;
 			infos[i].fs_sub_type = want->fs_version;
@@ -1444,7 +1444,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		infos[i].start = want->cur_start;
 		infos[i].size = want->size;
 		infos[i].nat_type = wanted->parts->pscheme->get_fs_part_type(
-		    want->fs_type, want->fs_version);
+		    want->type, want->fs_type, want->fs_version);
 		infos[i].last_mounted = want->mount;
 		infos[i].fs_type = want->fs_type;
 		infos[i].fs_sub_type = want->fs_version;

@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.4.2.4 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: partitions.h,v 1.4.2.5 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -222,7 +222,8 @@ struct disk_partitioning_scheme {
 	 * Get the prefered native partition type for a specific file system
 	 * type (FS_*) and subtype (fs specific value)
 	 */
-	const struct part_type_desc * (*get_fs_part_type)(unsigned, unsigned);
+	const struct part_type_desc * (*get_fs_part_type)(
+	    enum part_type, unsigned, unsigned);
 	/*
 	 * Create a custom partition type. If the type already exists
 	 * (or there is a collision), the old existing type will be
@@ -579,3 +580,4 @@ bool generic_adapt_foreign_part_info(
  */
 void partitions_init(void);
 void partitions_cleanup(void);
+
