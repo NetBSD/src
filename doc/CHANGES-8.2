@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.80 2019/12/14 12:34:19 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.81 2019/12/17 12:22:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1794,4 +1794,17 @@ sys/dev/usb/if_urtwn.c				1.76
 
 	PR kern/54728: reset MCU ready status before resetting the MCU.
 	[mlelstv, ticket #1472]
+
+sys/arch/i386/stand/boot/devopen.c		1.10
+sys/arch/i386/stand/efiboot/devopen.c		1.9
+sys/arch/i386/stand/lib/biosdisk.c		1.53
+
+	In-RAID partitions with no name can be candidate for booting.
+	[manu, ticket #1473]
+
+sys/arch/i386/stand/efiboot/efidisk.c		1.9
+sys/arch/i386/stand/lib/biosdisk.c		1.54
+
+	Do not use NAME=label syntax when label are empty.
+	[manu, ticket #1474]
 
