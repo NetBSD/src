@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.28 2018/02/25 21:43:03 jdolecek Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.29 2019/12/17 13:25:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.28 2018/02/25 21:43:03 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.29 2019/12/17 13:25:50 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -734,7 +734,7 @@ pmap_tlb_update_addr(pmap_t pm, vaddr_t va, pt_entry_t pte, u_int flags)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,
-	    " (pm=%#jx va=%#j, pte=%#jx flags=%#jx)",
+	    " (pm=%#jx va=%#jx, pte=%#jx flags=%#jx)",
 	    (uintptr_t)pm, va, pte_value(pte), flags);
 
 	KASSERT(kpreempt_disabled());
