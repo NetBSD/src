@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.2.2.2 2019/11/16 16:48:25 martin Exp $ */
+/* $NetBSD: rk_vop.c,v 1.2.2.3 2019/12/17 12:32:52 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2.2.2 2019/11/16 16:48:25 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2.2.3 2019/12/17 12:32:52 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -542,11 +542,6 @@ rk_vop_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	}
 
 	const u_int ep_index = fdt_endpoint_index(ep);
-	if (ep_index >= VOP_NEP) {
-		DRM_ERROR("endpoint index %d out of range\n", ep_index);
-		return ENXIO;
-	}
-
 	switch (ep_index) {
 	case VOP_EP_MIPI:
 	case VOP_EP_MIPI1:
@@ -557,6 +552,9 @@ rk_vop_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	case VOP_EP_DP:
 		encoder_type = DRM_MODE_ENCODER_TMDS;
 		break;
+	default:
+		DRM_ERROR("endpoint index %d out of range\n", ep_index);
+		return ENXIO;
 	}
 
 	sc->sc_encoder[ep_index].sc = sc;
