@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.128 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: ath.c,v 1.129 2019/12/17 04:54:36 christos Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.128 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.129 2019/12/17 04:54:36 christos Exp $");
 #endif
 
 /*
@@ -69,6 +69,7 @@ __KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.128 2019/11/10 21:16:35 chs Exp $");
 #include <sys/callout.h>
 #include <sys/bus.h>
 #include <sys/endian.h>
+#include <sys/kauth.h>
 
 #include <net/if.h>
 #include <net/if_dl.h>
@@ -5422,6 +5423,12 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		return copyout(&sc->sc_stats,
 				ifr->ifr_data, sizeof (sc->sc_stats));
 	case SIOCGATHDIAG:
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
+		if (error)
+			break;
 		error = ath_ioctl_diag(sc, (struct ath_diag *) ifr);
 		break;
 	default:
