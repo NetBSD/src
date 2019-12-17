@@ -1,28 +1,5 @@
-.\"	$NetBSD: awk.1,v 1.5 2017/05/23 14:11:08 abhinav Exp $
-.\"
-.\" Copyright (C) Lucent Technologies 1997
-.\" All Rights Reserved
-.\"
-.\" Permission to use, copy, modify, and distribute this software and
-.\" its documentation for any purpose and without fee is hereby
-.\" granted, provided that the above copyright notice appear in all
-.\" copies and that both that the copyright notice and this
-.\" permission notice and warranty disclaimer appear in supporting
-.\" documentation, and that the name Lucent Technologies or any of
-.\" its entities not be used in advertising or publicity pertaining
-.\" to distribution of the software without specific, written prior
-.\" permission.
-.\"
-.\" LUCENT DISCLAIMS ALL WARRANTIES WITH REGARD TO THIS SOFTWARE,
-.\" INCLUDING ALL IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS.
-.\" IN NO EVENT SHALL LUCENT OR ANY OF ITS ENTITIES BE LIABLE FOR ANY
-.\" SPECIAL, INDIRECT OR CONSEQUENTIAL DAMAGES OR ANY DAMAGES
-.\" WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR PROFITS, WHETHER
-.\" IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION,
-.\" ARISING OUT OF OR IN CONNECTION WITH THE USE OR PERFORMANCE OF
-.\" THIS SOFTWARE.
-.\"
-.Dd May 18, 2017
+.\"	$NetBSD: awk.1,v 1.6 2019/12/17 18:35:57 christos Exp $
+.Dd December 19, 2019
 .Dt AWK 1
 .Os
 .Sh NAME
@@ -34,7 +11,7 @@
 .Op Fl v Ar var=value
 .Op Fl safe
 .Op Fl d Ns Op Ar N
-.Op Ar prog | Fl f Ar filename
+.Op Ar prog | Fl f Ar progfile
 .Ar
 .Nm
 .Fl version
@@ -53,7 +30,7 @@ for lines that match any of a set of patterns specified literally in
 .Ar prog
 or in one or more files
 specified as
-.Fl f Ar filename .
+.Fl f Ar progfile .
 With each pattern
 there can be an associated action that will be performed
 when a line of a
@@ -71,6 +48,19 @@ of the form
 .Ar var=value
 is treated as an assignment, not a filename,
 and is executed at the time it would have been opened if it were a filename.
+The option
+.Fl v
+followed by
+.Ar var=value
+is an assignment to be done before
+.Ar prog
+is executed; any number of
+.Fl v
+options may be present.
+The
+.Fl F Ar fs
+option defines the input field separator to be the regular expression
+.Ar fs .
 .Pp
 The options are as follows:
 .Bl -tag -width indent
@@ -223,7 +213,7 @@ Assignment and Operator-Assignment
 .Ss Control Statements
 The control statements are as follows:
 .Pp
-.Bl -hang -offset indent -width indent -compact
+.Bl -tag -width indent
 .It Ic if \&( Ar expression Ic \&) Ar statement Bq Ic else Ar statement
 .It Ic while \&( Ar expression Ic \&) Ar statement
 .It Ic for \&( Ar expression Ic \&; Ar expression Ic \&; \
@@ -232,12 +222,21 @@ Ar expression Ic \&) Ar statement
 .It Ic do Ar statement Ic while \&( Ar expression Ic \&)
 .It Ic break
 .It Ic continue
-.It Ic delete Va array Bq Ar expression
-.It Ic delete Va array
-.It Ic exit Bq Ar expression
-.Ar expression
-.It Ic return Bq Ar expression
 .It Ic \&{ Ar [ statement ... ] Ic \&}
+.It Ic Ar expression
+Commonly var = expression
+.It Ic return Bq Ar expression
+.It Ic next
+Skip remaining patterns on this input line
+.It Ic nextfile
+Skip rest of this file, open next, start at top
+.It Ic delete Va array Bq Ar expression
+Delete an array element
+.It Ic delete Va array
+Delete all elements of an array
+.It Ic exit Bq Ar expression
+Exit immediately; status is 
+.Ar expression
 .El
 .Ss I/O Statements
 The input/output statements are as follows:
@@ -280,10 +279,6 @@ each call of
 .Ic getline
 returns the next line of output from
 .Ar expr .
-.It Ic next
-Skip remaining patterns on this input line.
-.It Ic nextfile
-Skip rest of this file, open next, start at top.
 .It Ic print Bo Ar expr-list Bc Bq Ic \*[Gt] Ar file
 The
 .Ic print
@@ -743,3 +738,5 @@ to force it to be treated as a string concatenate
 .Pp
 The scope rules for variables in functions are a botch;
 the syntax is worse.
+.Pp
+Only eight-bit characters sets are handled correctly.
