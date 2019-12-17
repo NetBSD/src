@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.83 2019/12/17 00:33:47 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.84 2019/12/17 00:51:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.83 2019/12/17 00:33:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.84 2019/12/17 00:51:28 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -100,7 +100,6 @@ CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #ifndef _RUMPKERNEL /* XXX temporary */
 static void	cpu_xc_online(struct cpu_info *, void *);
 static void	cpu_xc_offline(struct cpu_info *, void *);
-#endif /* ifndef _RUMPKERNEL XXX */
 
 dev_type_ioctl(cpuctl_ioctl);
 
@@ -118,6 +117,7 @@ const struct cdevsw cpuctl_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER | D_MPSAFE
 };
+#endif /* ifndef _RUMPKERNEL XXX */
 
 kmutex_t	cpu_lock		__cacheline_aligned;
 int		ncpu			__read_mostly;
