@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.84 2019/12/17 00:51:28 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.85 2019/12/17 00:59:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.84 2019/12/17 00:51:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.85 2019/12/17 00:59:14 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -495,7 +495,7 @@ cpu_getmodel(void)
 	return cpu_model;
 }
 
-#ifdef __HAVE_INTR_CONTROL
+#if defined(__HAVE_INTR_CONTROL) && !defined(_RUMPKERNEL) /* XXX */
 static void
 cpu_xc_intr(struct cpu_info *ci, void *unused)
 {
