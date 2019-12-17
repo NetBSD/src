@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.143 2019/12/17 13:03:05 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.144 2019/12/17 16:14:25 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7183,4 +7183,11 @@ sys/arch/i386/stand/lib/biosdisk.c		1.54
 
 	Do not use NAME=label syntax when label are empty.
 	[manu, ticket #568]
+
+sys/dev/ic/ath.c				1.129
+sys/dev/usb/if_umb.c				1.10
+sys/net/if.c					1.466
+
+	Protect network ioctls from non-authorized users.
+	[christos, ticket #569]
 
