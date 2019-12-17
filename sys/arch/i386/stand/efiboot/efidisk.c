@@ -1,4 +1,4 @@
-/*	$NetBSD: efidisk.c,v 1.7.4.1 2019/09/13 07:00:13 martin Exp $	*/
+/*	$NetBSD: efidisk.c,v 1.7.4.2 2019/12/17 13:01:39 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -253,7 +253,7 @@ efi_disk_show(void)
 				printf(" ");
 				first = false;
 			}
-			if (part[i].part_name != NULL)
+			if (part[i].part_name && part[i].part_name[0])
 				printf(" NAME=%s(", part[i].part_name);
 			else
 				printf(" hd%d%c(", edi->dev & 0x7f, i + 'a');
@@ -308,7 +308,7 @@ efi_disk_show(void)
 				printf(" ");
 				first = 0;
 			}
-			if (part[j].part_name != NULL)
+			if (part[j].part_name && part[j].part_name[0])
 				printf(" NAME=%s(", part[j].part_name);
 			else
 				printf(" raid%d%c(",
