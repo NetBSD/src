@@ -1,4 +1,4 @@
-/*	$NetBSD: cdf.c,v 1.18 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: cdf.c,v 1.19 2019/12/17 02:31:05 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 Christos Zoulas
@@ -38,9 +38,9 @@
 
 #ifndef lint
 #if 0
-FILE_RCSID("@(#)$File: cdf.c,v 1.114 2019/02/20 02:35:27 christos Exp $")
+FILE_RCSID("@(#)$File: cdf.c,v 1.116 2019/08/26 14:31:39 christos Exp $")
 #else
-__RCSID("$NetBSD: cdf.c,v 1.18 2019/05/22 17:26:05 christos Exp $");
+__RCSID("$NetBSD: cdf.c,v 1.19 2019/12/17 02:31:05 christos Exp $");
 #endif
 #endif
 
@@ -57,6 +57,10 @@ __RCSID("$NetBSD: cdf.c,v 1.18 2019/05/22 17:26:05 christos Exp $");
 
 #ifndef EFTYPE
 #define EFTYPE EINVAL
+#endif
+
+#ifndef SIZE_T_MAX
+#define SIZE_T_MAX CAST(size_t, ~0ULL)
 #endif
 
 #include "cdf.h"
@@ -411,7 +415,12 @@ cdf_read_sector(const cdf_info_t *info, void *buf, size_t offs, size_t len,
     const cdf_header_t *h, cdf_secid_t id)
 {
 	size_t ss = CDF_SEC_SIZE(h);
-	size_t pos = CDF_SEC_POS(h, id);
+	size_t pos;
+
+	if (SIZE_T_MAX / ss < CAST(size_t, id))
+		return -1;
+
+	pos = CDF_SEC_POS(h, id);
 	assert(ss == len);
 	return cdf_read(info, CAST(off_t, pos), RCAST(char *, buf) + offs, len);
 }
@@ -421,7 +430,12 @@ cdf_read_short_sector(const cdf_stream_t *sst, void *buf, size_t offs,
     size_t len, const cdf_header_t *h, cdf_secid_t id)
 {
 	size_t ss = CDF_SHORT_SEC_SIZE(h);
-	size_t pos = CDF_SHORT_SEC_POS(h, id);
+	size_t pos;
+
+	if (SIZE_T_MAX / ss < CAST(size_t, id))
+		return -1;
+
+	pos = CDF_SHORT_SEC_POS(h, id);
 	assert(ss == len);
 	if (pos + len > CDF_SEC_SIZE(h) * sst->sst_len) {
 		DPRINTF(("Out of bounds read %" SIZE_T_FORMAT "u > %"
@@ -1019,8 +1033,9 @@ cdf_read_property_info(const cdf_stream_t *sst, const cdf_header_t *h,
 				goto out;
 			}
 			nelements = CDF_GETUINT32(q, 1);
-			if (nelements == 0) {
-				DPRINTF(("CDF_VECTOR with nelements == 0\n"));
+			if (nelements > CDF_ELEMENT_LIMIT || nelements == 0) {
+				DPRINTF(("CDF_VECTOR with nelements == %"
+				    SIZE_T_FORMAT "u\n", nelements));
 				goto out;
 			}
 			slen = 2;
@@ -1062,8 +1077,6 @@ cdf_read_property_info(const cdf_stream_t *sst, const cdf_header_t *h,
 					goto out;
 				inp += nelem;
 			}
-			DPRINTF(("nelements = %" SIZE_T_FORMAT "u\n",
-			    nelements));
 			for (j = 0; j < nelements && i < sh.sh_properties;
 			    j++, i++)
 			{

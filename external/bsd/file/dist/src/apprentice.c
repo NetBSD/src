@@ -1,4 +1,4 @@
-/*	$NetBSD: apprentice.c,v 1.23 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: apprentice.c,v 1.24 2019/12/17 02:31:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: apprentice.c,v 1.283 2019/02/20 02:35:27 christos Exp $")
+FILE_RCSID("@(#)$File: apprentice.c,v 1.284 2019/06/29 22:31:04 christos Exp $")
 #else
-__RCSID("$NetBSD: apprentice.c,v 1.23 2019/05/22 17:26:05 christos Exp $");
+__RCSID("$NetBSD: apprentice.c,v 1.24 2019/12/17 02:31:05 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -1932,17 +1932,7 @@ parse(struct magic_set *ms, struct magic_entry *me, const char *line,
 			file_magwarn(ms, "offset `%s' invalid", l);
 		return -1;
 	}
-#if 0
-        if (m->offset < 0 && cont_level != 0 &&
-	    (m->flag & (OFFADD | INDIROFFADD)) == 0) {
-		if (ms->flags & MAGIC_CHECK) {
-			file_magwarn(ms,
-			    "negative direct offset `%s' at level %u",
-			    l, cont_level);
-		}
-		return -1;
-	}
-#endif
+
         l = t;
 
 	if (m->flag & INDIR) {
