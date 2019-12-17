@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space.c,v 1.41 2019/02/11 14:59:33 cherry Exp $	*/
+/*	$NetBSD: bus_space.c,v 1.41.4.1 2019/12/17 12:56:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.41 2019/02/11 14:59:33 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_space.c,v 1.41.4.1 2019/12/17 12:56:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -878,7 +878,43 @@ bus_space_barrier(bus_space_tag_t tag, bus_space_handle_t bsh,
 		  bus_size_t offset, bus_size_t len, int flags)
 {
 
-	/* Function call is enough to prevent reordering of loads. */
+	/* I/O instructions always happen in program order.  */
+	if (x86_bus_space_is_io(tag))
+		return;
+
+	/*
+	 * For default mappings, which are mapped with UC-type memory
+	 * regions, all loads and stores are issued in program order.
+	 *
+	 * For BUS_SPACE_MAP_PREFETCHABLE mappings, which are mapped
+	 * with WC-type memory regions, loads and stores may be issued
+	 * out of order, potentially requiring any of the three x86
+	 * fences -- LFENCE, SFENCE, MFENCE.
+	 *
+	 * For BUS_SPACE_MAP_CACHEABLE mappings, which are mapped with
+	 * WB-type memory regions (like normal memory), store/load may
+	 * be reordered to load/store, potentially requiring MFENCE.
+	 *
+	 * We can't easily tell here how the region was mapped (without
+	 * consulting the page tables), so just issue the fence
+	 * unconditionally.  Chances are either it's necessary or the
+	 * cost is small in comparison to device register I/O.
+	 */
+	switch (flags) {
+	case 0:
+		break;
+	case BUS_SPACE_BARRIER_READ:
+		x86_lfence();
+		break;
+	case BUS_SPACE_BARRIER_WRITE:
+		x86_sfence();
+		break;
+	case BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE:
+		x86_mfence();
+		break;
+	default:
+		panic("unknown bus space barrier: 0x%x", (unsigned)flags);
+	}
 }
 
 void *
