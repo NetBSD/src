@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.16 2019/11/29 15:24:21 jakllsch Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.17 2019/12/17 17:51:12 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.16 2019/11/29 15:24:21 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.17 2019/12/17 17:51:12 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -879,6 +879,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     RK_COMPOSITE_SET_RATE_PARENT),
 	RK_GATE(RK3399_ACLK_VOP0, "aclk_vop0", "aclk_vop0_pre", CLKGATE_CON(28), 3),
 	RK_GATE(RK3399_HCLK_VOP0, "hclk_vop0", "hclk_vop0_pre", CLKGATE_CON(28), 2),
+	RK_COMPOSITE_FRAC(RK3399_DCLK_VOP0_FRAC, "dclk_vop0_frac", "dclk_vop0_div",
+			  CLKSEL_CON(106),	/* frac_reg */
+			  0),
 	RK_MUX(RK3399_DCLK_VOP0, "dclk_vop0", mux_dclk_vop0_parents, CLKSEL_CON(49), __BIT(11)),
 
 	/* VOP1 */
@@ -904,6 +907,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     RK_COMPOSITE_SET_RATE_PARENT),
 	RK_GATE(RK3399_ACLK_VOP1, "aclk_vop1", "aclk_vop1_pre", CLKGATE_CON(28), 7),
 	RK_GATE(RK3399_HCLK_VOP1, "hclk_vop1", "hclk_vop1_pre", CLKGATE_CON(28), 6),
+	RK_COMPOSITE_FRAC(RK3399_DCLK_VOP1_FRAC, "dclk_vop1_frac", "dclk_vop1_div",
+			  CLKSEL_CON(107),	/* frac_reg */
+			  0),
 	RK_MUX(RK3399_DCLK_VOP1, "dclk_vop1", mux_dclk_vop1_parents, CLKSEL_CON(50), __BIT(11)),
 
 	/* VIO */
