@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.142 2019/12/17 12:38:16 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.143 2019/12/17 13:03:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7142,4 +7142,45 @@ sys/arch/arm/arm/efi_runtime.h			1.3
 
 	Enable FP access for EFI RT and improve error handling.
 	[jmcneill, ticket #558]
+
+sys/arch/arm/sunxi/sunxi_drm.c			1.11
+
+	Make sure memory stolen from simplefb is page aligned.
+	[jmcneill, ticket #562]
+
+sbin/rndctl/Makefile				1.4 (adapted)
+sbin/rndctl/namespace.h				1.1
+sbin/rndctl/rndctl.8				1.23
+sbin/rndctl/rndctl.c				1.31
+
+	Teach `rndctl -L' to update the seed file, not just delete it.
+	[riastradh, ticket #563]
+
+external/cddl/osnet/sys/sys/opentypes.h		1.5
+
+	Avoid redefining uint_t &c. if compat_defs.h already defines them.
+	[riastradh, ticket #564]
+
+sys/dev/usb/usbnet.c				1.31-1.33
+
+	Fix null pointer dereferences in usbnet detach logic.
+	[riastradh, ticket #565]
+
+sys/arch/x86/x86/bus_space.c			1.42,1.43
+
+	Use LFENCE/SFENCE/MFENCE in x86 bus_space_barrier.
+	[riastradh, ticket #566]
+
+sys/arch/i386/stand/boot/devopen.c		1.10
+sys/arch/i386/stand/efiboot/devopen.c		1.9
+sys/arch/i386/stand/lib/biosdisk.c		1.53
+
+	In-RAID partitions with no name can be candidate for booting.
+	[manu, ticket #567]
+
+sys/arch/i386/stand/efiboot/efidisk.c		1.9
+sys/arch/i386/stand/lib/biosdisk.c		1.54
+
+	Do not use NAME=label syntax when label are empty.
+	[manu, ticket #568]
 
