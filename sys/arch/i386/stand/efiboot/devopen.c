@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.5.6.2 2019/09/27 09:32:22 martin Exp $	 */
+/*	$NetBSD: devopen.c,v 1.5.6.3 2019/12/17 12:59:52 martin Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ int
 devopen(struct open_file *f, const char *fname, char **file)
 {
 	char *fsname, *devname;
+	const char *xname = NULL;
 	int unit, partition;
 	int biosdev;
 	int i, error;
@@ -172,8 +173,12 @@ devopen(struct open_file *f, const char *fname, char **file)
 	nfsys = nfsys_disk;
 
 	/* Search by GPT label or raidframe name */
-	if ((strstr(devname, "NAME=") == devname) ||
-	    (strstr(devname, "raid") == devname)) {
+	if (strstr(devname, "NAME=") == devname)
+		xname = devname;
+	if (strstr(devname, "raid") == devname)
+		xname = fname;
+
+	if (xname != NULL) {
 		f->f_dev = &devsw[0];		/* must be biosdisk */
 
 		if (!kernel_loaded) {
@@ -181,7 +186,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 			BI_ADD(&bibp, BTINFO_BOOTPATH, sizeof(bibp));
 		}
 
-		error = biosdisk_open_name(f, devname);
+		error = biosdisk_open_name(f, xname);
 		return error;
 	}
 
