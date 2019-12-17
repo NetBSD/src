@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2019/12/17 13:35:43 christos Exp $
+#	$NetBSD: Makefile,v 1.15 2019/12/17 18:59:39 christos Exp $
 #
 
 USE_FORT?= yes	# data driven bugs?
@@ -8,9 +8,7 @@ USE_FORT?= yes	# data driven bugs?
 .include "../Makefile.inc"
 
 LIB=		magic
-LIBDPLIBS+=	lzma	${NETBSDSRCDIR}/external/public-domain/xz/lib
-LIBDPLIBS+=	bz2	${NETBSDSRCDIR}/lib/libbz2
-LIBDPLIBS+=	z	${NETBSDSRCDIR}/lib/libz
+LIBDPLIBS+=	${DPLIBS}
 CPPFLAGS+=-I.
 
 .if ${MACHINE_ARCH} == "i386"
