@@ -1,4 +1,4 @@
-/* $NetBSD: rk_dwhdmi.c,v 1.3 2019/11/16 13:25:33 jmcneill Exp $ */
+/* $NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.3 2019/11/16 13:25:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.4 2019/12/17 18:26:36 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -38,6 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: rk_dwhdmi.c,v 1.3 2019/11/16 13:25:33 jmcneill Exp $
 #include <sys/conf.h>
 
 #include <drm/drmP.h>
+#include <drm/drm_crtc_helper.h>
 
 #include <dev/fdt/fdtvar.h>
 #include <dev/fdt/fdt_port.h>
@@ -85,12 +86,14 @@ struct rk_dwhdmi_softc {
 
 	struct fdt_device_ports	sc_ports;
 	struct drm_display_mode	sc_curmode;
+	struct drm_encoder	sc_encoder;
 	struct syscon		*sc_grf;
 
 	bool			sc_activated;
 };
 
 #define	to_rk_dwhdmi_softc(x)	container_of(x, struct rk_dwhdmi_softc, sc_base)
+#define	to_rk_dwhdmi_encoder(x)	container_of(x, struct rk_dwhdmi_softc, sc_encoder)
 
 static void
 rk_dwhdmi_select_input(struct rk_dwhdmi_softc *sc, u_int crtc_index)
@@ -103,15 +106,68 @@ rk_dwhdmi_select_input(struct rk_dwhdmi_softc *sc, u_int crtc_index)
 	syscon_unlock(sc->sc_grf);
 }
 
+static bool
+rk_dwhdmi_encoder_mode_fixup(struct drm_encoder *encoder,
+    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
+{
+	return true;
+}
+
+static void
+rk_dwhdmi_encoder_mode_set(struct drm_encoder *encoder,
+    struct drm_display_mode *mode, struct drm_display_mode *adjusted)
+{
+}
+
+static void
+rk_dwhdmi_encoder_enable(struct drm_encoder *encoder)
+{
+}
+
+static void
+rk_dwhdmi_encoder_disable(struct drm_encoder *encoder)
+{
+}
+
+static void
+rk_dwhdmi_encoder_prepare(struct drm_encoder *encoder)
+{
+	struct rk_dwhdmi_softc * const sc = to_rk_dwhdmi_encoder(encoder);
+	const u_int crtc_index = drm_crtc_index(encoder->crtc);
+
+	rk_dwhdmi_select_input(sc, crtc_index);
+}
+
+static void
+rk_dwhdmi_encoder_commit(struct drm_encoder *encoder)
+{
+}
+
+static const struct drm_encoder_funcs rk_dwhdmi_encoder_funcs = {
+	.destroy = drm_encoder_cleanup,
+};
+
+static const struct drm_encoder_helper_funcs rk_dwhdmi_encoder_helper_funcs = {
+	.prepare = rk_dwhdmi_encoder_prepare,
+	.mode_fixup = rk_dwhdmi_encoder_mode_fixup,
+	.mode_set = rk_dwhdmi_encoder_mode_set,
+	.enable = rk_dwhdmi_encoder_enable,
+	.disable = rk_dwhdmi_encoder_disable,
+	.commit = rk_dwhdmi_encoder_commit,
+};
+
 static int
 rk_dwhdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
 	struct rk_dwhdmi_softc * const sc = device_private(dev);
 	struct fdt_endpoint *in_ep = fdt_endpoint_remote(ep);
 	struct fdt_endpoint *out_ep, *out_rep;
-	struct drm_encoder *encoder;
-	struct drm_bridge *bridge;
+	struct drm_crtc *crtc;
 	int error;
+
+	if (sc->sc_activated != false) {
+		return 0;
+	}
 
 	if (!activate)
 		return EINVAL;
@@ -120,27 +176,27 @@ rk_dwhdmi_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 		return EINVAL;
 
 	switch (fdt_endpoint_type(in_ep)) {
-	case EP_DRM_ENCODER:
-		encoder = fdt_endpoint_get_data(in_ep);
-		break;
-	case EP_DRM_BRIDGE:
-		bridge = fdt_endpoint_get_data(in_ep);
-		encoder = bridge->encoder;
+	case EP_DRM_CRTC:
+		crtc = fdt_endpoint_get_data(in_ep);
 		break;
 	default:
-		encoder = NULL;
+		crtc = NULL;
 		break;
 	}
 
-	if (encoder == NULL)
+	if (crtc == NULL)
 		return EINVAL;
 
-	if (sc->sc_activated == false) {
-		error = dwhdmi_bind(&sc->sc_base, encoder);
-		if (error != 0)
-			return error;
-		sc->sc_activated = true;
-	}
+	sc->sc_encoder.possible_crtcs = 3; // 1U << drm_crtc_index(crtc); /* XXX */
+	drm_encoder_init(crtc->dev, &sc->sc_encoder, &rk_dwhdmi_encoder_funcs,
+	    DRM_MODE_ENCODER_TMDS);
+	drm_encoder_helper_add(&sc->sc_encoder, &rk_dwhdmi_encoder_helper_funcs);
+
+	sc->sc_base.sc_connector.base.connector_type = DRM_MODE_CONNECTOR_HDMIA;
+	error = dwhdmi_bind(&sc->sc_base, &sc->sc_encoder);
+	if (error != 0)
+		return error;
+	sc->sc_activated = true;
 
 	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports, DWHDMI_PORT_OUTPUT, 0);
 	if (out_ep != NULL) {
@@ -162,17 +218,12 @@ rk_dwhdmi_ep_get_data(device_t dev, struct fdt_endpoint *ep)
 {
 	struct rk_dwhdmi_softc * const sc = device_private(dev);
 
-	return &sc->sc_base.sc_bridge;
+	return &sc->sc_encoder;
 }
 
 static void
 rk_dwhdmi_enable(struct dwhdmi_softc *dsc)
 {
-	struct rk_dwhdmi_softc * const sc = to_rk_dwhdmi_softc(dsc);
-
-	const u_int crtc_index = drm_crtc_index(dsc->sc_bridge.encoder->crtc);
-
-	rk_dwhdmi_select_input(sc, crtc_index);
 
 	dwhdmi_phy_enable(dsc);
 }
@@ -301,7 +352,7 @@ rk_dwhdmi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ports.dp_ep_activate = rk_dwhdmi_ep_activate;
 	sc->sc_ports.dp_ep_get_data = rk_dwhdmi_ep_get_data;
-	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_BRIDGE);
+	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_ENCODER);
 
 	fdtbus_register_dai_controller(self, phandle, &rk_dwhdmi_dai_funcs);
 }
