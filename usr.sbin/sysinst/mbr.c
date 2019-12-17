@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.19.2.3 2019/11/17 13:45:26 msaitoh Exp $ */
+/*	$NetBSD: mbr.c,v 1.19.2.4 2019/12/17 09:44:50 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1046,7 +1046,7 @@ mbr_get_part_type_count(void)
 }
 
 static const struct part_type_desc *
-mbr_get_fs_part_type(unsigned fs_type, unsigned sub_type)
+mbr_get_fs_part_type(enum part_type pt, unsigned fs_type, unsigned sub_type)
 {
 	if (known_part_types == 0)
 		map_mbr_part_types();

@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.13.2.4 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.13.2.5 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1346,6 +1346,7 @@ message free_space_line {Speicherplatz bei $0..$1 $3 (Größe $2 $3)\n}
 
 message	fs_type_ffsv2	{FFSv2}
 message	fs_type_ffs	{FFS}
+message fs_type_ext2old	{Linux Ext2 (old)}
 message	other_fs_type	{Anderer Typ}
 
 message	editpack	{Namen der Festplatte festlegen}

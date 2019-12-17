@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.41.2.2 2019/11/17 13:45:26 msaitoh Exp $ */
+/*	$NetBSD: partman.c,v 1.41.2.3 2019/12/17 09:44:50 msaitoh Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2138,7 +2138,8 @@ pm_setfstype(struct pm_devs *pm_cur, part_id id, int fstype, int fs_subtype)
 	if (!pm_cur->parts->pscheme->get_part_info(pm_cur->parts, id, &info))
 		return;
 
-	info.nat_type = pm_cur->parts->pscheme->get_fs_part_type(fstype, fs_subtype);
+	info.nat_type = pm_cur->parts->pscheme->get_fs_part_type(PT_root,
+	    fstype, fs_subtype);
 	if (info.nat_type == NULL)
 		return;
 	info.fs_type = fstype;

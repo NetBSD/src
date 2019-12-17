@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.1 2019/08/18 13:19:53 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.8.2.2 2019/12/17 09:44:51 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -286,7 +286,7 @@ md_parts_use_wholedisk(struct disk_partitions *parts)
 	};
 
 	boot_part.nat_type = parts->pscheme->get_fs_part_type(
-	    boot_part.fs_type, boot_part.fs_sub_type);
+	    PT_root, boot_part.fs_type, boot_part.fs_sub_type);
 
 	return parts_use_wholedisk(parts, 1, &boot_part);
 }

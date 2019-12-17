@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.2.2.1 2019/11/17 07:04:35 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.2.2.2 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -89,3 +89,10 @@
  * On x68k, do what the 1.2 install scripts did.
  */
 #define DISKLABEL_CMD "disklabel -w"
+
+/*
+ * We rely on kernel support to translate Human68k partitions
+ * to in-core disklabels, so we can not check for existance of "real"
+ * disklabels on-disk before offering disklabel partitions.
+ */
+#define	DISKLABEL_NO_ONDISK_VERIFY	1

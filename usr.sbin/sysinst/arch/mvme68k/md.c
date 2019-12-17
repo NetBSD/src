@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2019/07/13 17:13:39 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.8.2.1 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -190,6 +190,12 @@ md_post_newfs(struct install_partition_desc *install)
 	    target_expand("/.bootsd"), pm->diskdev))
 		process_menu(MENU_ok,
 			__UNCONST("Warning: disk is probably not bootable"));
+
+	wclear(stdscr);
+	touchwin(stdscr);
+	clearok(stdscr, 1);
+	refresh();
+
 	return 0;
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10.2.6 2019/12/09 19:31:18 bouyer Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10.2.7 2019/12/17 09:44:50 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -170,10 +170,16 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	int fd;
 	char diskpath[MAXPATHLEN];
 	uint flags;
+#ifndef DISKLABEL_NO_ONDISK_VERIFY
+	bool have_raw_label = false;
 
+	/*
+	 * Verify we really have a disklabel.
+	 */
 	if (run_program(RUN_SILENT | RUN_ERROR_OK,
-	    "disklabel -r %s", disk) != 0)
-		return NULL;
+	    "disklabel -r %s", disk) == 0)
+		have_raw_label = true;
+#endif
 
 	/* read partitions */
 
@@ -219,7 +225,7 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	parts->dp.disk = strdup(disk);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;
-	disklabel_init_default_alignment(parts, 0);
+	disklabel_init_default_alignment(parts, parts->l.d_secpercyl);
 
 	for (int part = 0; part < parts->l.d_npartitions; part++) {
 		if (parts->l.d_partitions[part].p_fstype == FS_UNUSED
@@ -258,6 +264,42 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 			    parts->l.d_partitions[part].p_size;
 	}
 	close(fd);
+
+#ifndef DISKLABEL_NO_ONDISK_VERIFY
+	if (!have_raw_label) {
+		bool found_real_part = false;
+
+		if (parts->l.d_npartitions <= RAW_PART ||
+		    parts->l.d_partitions[RAW_PART].p_size == 0)
+			goto no_valid_label;
+
+		/*
+		 * Check if kernel translation gave us "something" besides
+		 * the raw or the whole-disk partition.
+		 * If not: report missing disklabel.
+		 */
+		for (int part = 0; part < parts->l.d_npartitions; part++) {
+			if (parts->l.d_partitions[part].p_fstype == FS_UNUSED)
+				continue;
+			if (part == 0 &&
+			    parts->l.d_partitions[part].p_offset ==
+			     parts->l.d_partitions[RAW_PART].p_offset &&
+			    parts->l.d_partitions[part].p_size ==
+			     parts->l.d_partitions[RAW_PART].p_size)
+				continue;
+			if (part == RAW_PART)
+				continue;
+			found_real_part = true;
+			break;
+		}
+		if (!found_real_part) {
+			/* no partion there yet */
+no_valid_label:
+			free(parts);
+			return NULL;
+		}
+	}
+#endif
 
 	return &parts->dp;
 }
@@ -373,7 +415,7 @@ disklabel_write_to_disk(struct disk_partitions *arg)
 	 */
 #ifdef DISKLABEL_CMD
 	/* disklabel the disk */
-	rv = run_program(RUN_DISPLAY, "%s -f %s %s '%s' '%s'",
+	rv = run_program(0, "%s -f %s %s '%s' '%s'",
 	    DISKLABEL_CMD, fname, disk, disktype, packname);
 #endif
 
@@ -598,7 +640,7 @@ disklabel_create_custom_part_type(const char *custom, const char **err_msg)
 }
 
 static const struct part_type_desc *
-disklabel_get_fs_part_type(unsigned fstype, unsigned subtype)
+disklabel_get_fs_part_type(enum part_type pt, unsigned fstype, unsigned subtype)
 {
 	return disklabel_find_type(fstype, false);
 }

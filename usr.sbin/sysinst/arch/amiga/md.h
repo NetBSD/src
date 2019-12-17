@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3.2.1 2019/11/17 07:04:36 martin Exp $	*/
+/*	$NetBSD: md.h,v 1.3.2.2 2019/12/17 09:44:51 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -69,6 +69,13 @@
  */
 /* #define DISKLABEL_CMD "disklabel -w -r" */
 
+
+/*
+ * We rely on kernel support to translate native RDB partitions
+ * to in-core disklabels, so we can not check for existance of "real"
+ * disklabels on-disk before offering disklabel partitions.
+ */
+#define	DISKLABEL_NO_ONDISK_VERIFY	1
 
 /*
  *  prototypes for MD code.

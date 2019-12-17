@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2019/07/13 17:13:37 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.7.2.1 2019/12/17 09:44:51 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -175,6 +175,11 @@ md_post_extract(struct install_partition_desc *install)
 		    "/bin/dd if=%s of=/dev/reflash0c bs=512", ldr_path))
 			process_menu(MENU_ok, __UNCONST("Warning: the system "
 			    "is probably not bootable"));
+
+		wclear(stdscr);
+		touchwin(stdscr);
+		clearok(stdscr, 1);
+		refresh();
 	}
 
 	return 0;

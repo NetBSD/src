@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20.2.5 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20.2.6 2019/12/17 09:44:50 msaitoh Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1275,6 +1275,7 @@ message free_space_line {Miejsce od $0..$1 $3 (rozmiar $2 $3)\n}
 
 message	fs_type_ffsv2	{FFSv2}
 message	fs_type_ffs	{FFS}
+message fs_type_ext2old	{Linux Ext2 (old)}
 message	other_fs_type	{Inny typ}
 
 message	editpack	{Edytuj nazwe dysku}
