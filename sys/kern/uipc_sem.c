@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_sem.c,v 1.57 2019/12/17 18:10:36 ad Exp $	*/
+/*	$NetBSD: uipc_sem.c,v 1.58 2019/12/17 18:16:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2011, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.57 2019/12/17 18:10:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_sem.c,v 1.58 2019/12/17 18:16:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -204,11 +204,6 @@ ksem_sysinit(void)
 	    true, &ksem_pshared_hashmask);
 	KASSERT(ksem_pshared_hashtab != NULL);
 
-	error = syscall_establish(NULL, ksem_syscalls);
-	if (error) {
-		(void)ksem_sysfini(false);
-	}
-
 	ksem_listener = kauth_listen_scope(KAUTH_SCOPE_SYSTEM,
 	    ksem_listener_cb, NULL);
 
@@ -234,6 +229,11 @@ ksem_sysinit(void)
 			SYSCTL_DESCR("Current number of semaphores"),
 			NULL, 0, &nsems, 0,
 			CTL_CREATE, CTL_EOL);
+
+	error = syscall_establish(NULL, ksem_syscalls);
+	if (error) {
+		(void)ksem_sysfini(false);
+	}
 
 	return error;
 }
