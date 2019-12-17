@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.457.2.2 2019/09/24 03:10:35 martin Exp $	*/
+/*	$NetBSD: if.c,v 1.457.2.3 2019/12/17 16:12:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.457.2.2 2019/09/24 03:10:35 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.457.2.3 2019/12/17 16:12:54 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2971,7 +2971,9 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 	struct ifreq *ifr;
 	struct ifcapreq *ifcr;
 	struct ifdatareq *ifdr;
-
+	char *descr;
+	int error;
+ 
 	switch (cmd) {
 	case SIOCSIFCAP:
 		ifcr = data;
@@ -3120,55 +3122,53 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 #endif
 		return ENETRESET;
 	case SIOCSIFDESCR:
-		{
-			char *descrbuf;
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
+		if (error)
+			return error;
 
- 			ifr = data;
+		ifr = data;
 
- 			if (ifr->ifr_buflen > IFDESCRSIZE)
-				return ENAMETOOLONG;
+		if (ifr->ifr_buflen > IFDESCRSIZE)
+			return ENAMETOOLONG;
 
- 			if (ifr->ifr_buf == NULL || ifr->ifr_buflen == 0) {
-				/* unset description */
-				descrbuf = NULL;
-			} else {
-				int error;
-
- 				descrbuf = kmem_zalloc(IFDESCRSIZE, KM_SLEEP);
-				/* copy (IFDESCRSIZE - 1) bytes to ensure terminating nul */
-				error = copyin(ifr->ifr_buf, descrbuf, IFDESCRSIZE - 1);
-				if (error) {
-					kmem_free(descrbuf, IFDESCRSIZE);
-					return error;
-				}
+		if (ifr->ifr_buf == NULL || ifr->ifr_buflen == 0) {
+			/* unset description */
+			descr = NULL;
+		} else {
+			descr = kmem_zalloc(IFDESCRSIZE, KM_SLEEP);
+			/*
+			 * copy (IFDESCRSIZE - 1) bytes to ensure
+			 * terminating nul
+			 */
+			error = copyin(ifr->ifr_buf, descr, IFDESCRSIZE - 1);
+			if (error) {
+				kmem_free(descr, IFDESCRSIZE);
+				return error;
 			}
-
- 			if (ifp->if_description != NULL)
-				kmem_free(ifp->if_description, IFDESCRSIZE);
-
- 			ifp->if_description = descrbuf;
 		}
+
+		if (ifp->if_description != NULL)
+			kmem_free(ifp->if_description, IFDESCRSIZE);
+
+		ifp->if_description = descr;
 		break;
 
  	case SIOCGIFDESCR:
-		{
-			char *descr;
+		ifr = data;
+		descr = ifp->if_description;
 
- 			ifr = data;
-			descr = ifp->if_description;
+		if (descr == NULL)
+			return ENOMSG;
 
- 			if (descr == NULL)
-				return ENOMSG;
+		if (ifr->ifr_buflen < IFDESCRSIZE)
+			return EINVAL;
 
- 			if (ifr->ifr_buflen < IFDESCRSIZE)
-				return EINVAL;
-			else {
-				int error;
-				error = copyout(descr, ifr->ifr_buf, IFDESCRSIZE);
-				if (error)
-					return error;
-			}
-		}
+		error = copyout(descr, ifr->ifr_buf, IFDESCRSIZE);
+		if (error)
+			return error;
  		break;
 
 	default:
@@ -3191,10 +3191,13 @@ ifaddrpref_ioctl(struct socket *so, u_long cmd, void *data, struct ifnet *ifp)
 
 	switch (cmd) {
 	case SIOCSIFADDRPREF:
-		if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_INTERFACE,
-		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, (void *)cmd,
-		    NULL) != 0)
-			return EPERM;
+		error = kauth_authorize_network(curlwp->l_cred,
+		    KAUTH_NETWORK_INTERFACE,
+		    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp, KAUTH_ARG(cmd),
+		    NULL);
+		if (error)
+			return error;
+		break;
 	case SIOCGIFADDRPREF:
 		break;
 	default:
@@ -3305,7 +3308,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
-			    (void *)cmd, NULL);
+			    KAUTH_ARG(cmd), NULL);
 			if (ifp != NULL)
 				if_put(ifp, &psref);
 			if (error != 0) {
@@ -3370,7 +3373,7 @@ doifioctl(struct socket *so, u_long cmd, void *data, struct lwp *l)
 			error = kauth_authorize_network(l->l_cred,
 			    KAUTH_NETWORK_INTERFACE,
 			    KAUTH_REQ_NETWORK_INTERFACE_SETPRIV, ifp,
-			    (void *)cmd, NULL);
+			    KAUTH_ARG(cmd), NULL);
 			if (error != 0)
 				goto out;
 		}
