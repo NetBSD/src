@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.140 2019/12/17 09:49:52 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.141 2019/12/17 10:25:42 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -2482,7 +2482,7 @@ sys/modules/usbnet/Makefile			1.1
 	and includes locking clean up, detach safety when being
 	used or not, separate rx/tx locks to improve performance,
 	porting to NET_MPSAFE, many edge/error case bugs in
-	drivers fixed, as well as resovling PRs 54303 and 54308.
+	drivers fixed, as well as resolving PRs 54303 and 54308.
 	These drivers are converted: axe(4), axen(4), aue(4),
 	cdce(4), cue(4), kue(4), mue(4), smsc(4), udav(4),
 	upl(4), ure(4), url(4), and urndis(4).
@@ -2666,7 +2666,7 @@ usr.sbin/puffs/rump_lfs/rump_lfs.c		1.19
 	Use getdiskrawname to find the device name.
 	Teach getdiskrawname and getdiskcookedname about zvols.
 	Also supply rope for rump based tests and use that to make the
-	lfs cleaner work properly in the test envrionment.
+	lfs cleaner work properly in the test environment.
 	[brad, ticket #110]
 
 share/man/man1/man1.atari/edahdi.1		1.12
@@ -2783,7 +2783,7 @@ sys/netinet/if_arp.c				1.287
 
 sbin/route/route.c				1.163
 
-	route(8): Show addres for RTM_LOSING.
+	route(8): Show address for RTM_LOSING.
 	[roy, ticket #172]
 
 tests/net/arp/t_arp.sh				1.39
@@ -4246,7 +4246,7 @@ sys/dev/i2c/axppmic.c				1.26
 sys/arch/i386/stand/pxeboot/Makefile		1.28
 sys/arch/i386/stand/pxeboot/start_pxe.S		1.7
 
-	Incrase pxeboot code size limit from 64k to 128k.
+	Increase pxeboot code size limit from 64k to 128k.
 	[manu, ticket #277]
 
 external/bsd/jemalloc/dist/src/jemalloc.c	1.8
@@ -5552,7 +5552,7 @@ usr.sbin/postinstall/postinstall.in		1.8
 	Various fixes in NVMM (requires updating kernel, modules,
 	userland and qemu).
 	Add a nvmm group to allow better configuration of access rights
-	to controll guests.
+	to control guests.
 	Add nvmmctl(8).
 	[maxv, ticket #405]
 
@@ -5606,7 +5606,7 @@ sys/sys/signalvar.h				1.98,1.99
 	Convert the sendsig_sigcontext_16 and the coredump_vec
 	function pointers to use the new compat_hook mechanism.
 	This breaks the kernel/module ABI; kernel and modules should
-	be updated together. No practical problems expected in commmon
+	be updated together. No practical problems expected in common
 	setups.
 	[pgoyette, ticket #413]
 
@@ -5639,7 +5639,7 @@ usr.sbin/rtadvd/rtadvd.h			1.20
 
 sys/external/bsd/ipf/netinet/ip_fil.h		1.8
 
-	ipf(8): fix binary compatibility (accidently broken in rev. 1.7).
+	ipf(8): fix binary compatibility (accidentally broken in rev. 1.7).
 	[chs, ticket #418]
 
 sys/arch/x86/include/specialreg.h		1.157
@@ -5651,7 +5651,7 @@ sys/arch/x86/x86/spectre.c			1.31
 sys/net/if_vlan.c				1.148
 tests/net/if_vlan/t_vlan.sh			1.16
 
-	Fix a bug that vlan(4) fragments IPv6 packets unecessarily.
+	Fix a bug that vlan(4) fragments IPv6 packets unnecessarily.
 	Add a test case for this.
 	[yamaguchi, ticket #420]
 
@@ -5667,7 +5667,7 @@ sys/dev/pci/ixgbe/ixv.c				1.140
 
 sys/netipsec/key.c				1.268,1.269
 
-	Fix SA can be expaired wrongly when there are many SPs.
+	Fix SA can be expired wrongly when there are many SPs.
 	Reduce load for IKE negotiations when the system has many IPv6
 	addresses.
 	[knakahara, ticket #423]
@@ -6836,7 +6836,7 @@ distrib/notes/common/macros                     up to 1.54
 
 sys/external/bsd/dwc2/dwc2.c			1.60-1.66
 
-	PR/54696: calulate the right lenght for isoc transfer and the
+	PR/54696: calculate the right length for isoc transfer and the
 	usb_syncmem.
 	[skrll, ticket #524]
 
@@ -6930,7 +6930,7 @@ usr.sbin/sysinst/disklabel.c			1.16, 1.17
 
 usr.sbin/sysinst/bsddisklabel.c			1.32
 
-	PR install/54745: fix confusion about absolut and NetBSD-partition
+	PR install/54745: fix confusion about absolute and NetBSD-partition
 	relative offsets.
 	[martin, ticket #538]
 
@@ -6959,7 +6959,7 @@ bin/sh/trap.c					1.53
 
 sys/dev/mii/files.mii				1.54
 
-	Make kernels with ipgphy(4) but wihtout ukphy(4) buildable.
+	Make kernels with ipgphy(4) but without ukphy(4) buildable.
 	[msaitoh, ticket #543]
 
 sys/dev/usb/ugen.c				1.148
@@ -7055,7 +7055,7 @@ sys/dev/usb/ohci.c				1.292
 sys/arch/pmax/pmax/disksubr.c			1.56
 
 	Disable (pretty useless and obscure) message when checking for Ultrix
-	comaptible labels.
+	compatible labels.
 	[martin, ticket #559]
 
 usr.sbin/sysinst/arch/alpha/md.c		1.7
