@@ -1,4 +1,4 @@
-/*	$NetBSD: readelf.c,v 1.22 2019/12/17 02:31:05 christos Exp $	*/
+/*	$NetBSD: readelf.c,v 1.23 2019/12/17 08:02:00 martin Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2003.
@@ -32,7 +32,7 @@
 #if 0
 FILE_RCSID("@(#)$File: readelf.c,v 1.168 2019/12/16 03:49:19 christos Exp $")
 #else
-__RCSID("$NetBSD: readelf.c,v 1.22 2019/12/17 02:31:05 christos Exp $");
+__RCSID("$NetBSD: readelf.c,v 1.23 2019/12/17 08:02:00 martin Exp $");
 #endif
 #endif
 
@@ -1355,8 +1355,8 @@ doshn(struct magic_set *ms, int clazz, int swap, int fd, off_t off, int num,
 	name_off = xsh_offset;
 
 	if (fsize != SIZE_UNKNOWN && fsize < name_off) {
-		if (file_printf(ms, ", too large section header offset %td",
-		    name_off) == -1)
+		if (file_printf(ms, ", too large section header offset %jd",
+		    (intmax_t)name_off) == -1)
 			return -1;
 		return 0;
 	}
