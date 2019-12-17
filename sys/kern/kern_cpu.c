@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.82 2019/12/16 22:47:54 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.83 2019/12/17 00:33:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.82 2019/12/16 22:47:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.83 2019/12/17 00:33:47 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -97,8 +97,10 @@ CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
 CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #endif
 
+#ifndef _RUMPKERNEL /* XXX temporary */
 static void	cpu_xc_online(struct cpu_info *, void *);
 static void	cpu_xc_offline(struct cpu_info *, void *);
+#endif /* ifndef _RUMPKERNEL XXX */
 
 dev_type_ioctl(cpuctl_ioctl);
 
@@ -151,6 +153,7 @@ mi_cpu_init(void)
 	kcpuset_set(kcpuset_running, 0);
 }
 
+#ifndef _RUMPKERNEL /* XXX temporary */
 int
 mi_cpu_attach(struct cpu_info *ci)
 {
@@ -308,7 +311,6 @@ cpuctl_ioctl(dev_t dev, u_long cmd, void *data, int flag, lwp_t *l)
 	return error;
 }
 
-#ifndef _RUMPKERNEL
 struct cpu_info *
 cpu_lookup(u_int idx)
 {
@@ -331,7 +333,6 @@ cpu_lookup(u_int idx)
 
 	return ci;
 }
-#endif
 
 static void
 cpu_xc_offline(struct cpu_info *ci, void *unused)
@@ -474,6 +475,7 @@ cpu_setstate(struct cpu_info *ci, bool online)
 	spc->spc_lastmod = time_second;
 	return 0;
 }
+#endif	/* ifndef _RUMPKERNEL XXX */
 
 int
 cpu_setmodel(const char *fmt, ...)
