@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.216 2019/11/18 03:17:51 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.217 2019/12/17 05:49:01 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4016,7 +4016,7 @@ ixgbe_init_locked(struct adapter *adapter)
 			else
 				msec_delay(1);
 		}
-		wmb();
+		IXGBE_WRITE_BARRIER(hw);
 
 		/*
 		 * In netmap mode, we must preserve the buffers made

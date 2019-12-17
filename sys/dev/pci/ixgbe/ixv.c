@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.142 2019/12/16 02:50:54 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.143 2019/12/17 05:49:01 msaitoh Exp $*/
 
 /******************************************************************************
 
@@ -1844,7 +1844,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 			else
 				break;
 		}
-		wmb();
+		IXGBE_WRITE_BARRIER(hw);
 		/* Setup the Base and Length of the Rx Descriptor Ring */
 		IXGBE_WRITE_REG(hw, IXGBE_VFRDBAL(j),
 		    (rdba & 0x00000000ffffffffULL));
@@ -1876,7 +1876,7 @@ ixv_initialize_receive_units(struct adapter *adapter)
 				break;
 			msec_delay(1);
 		}
-		wmb();
+		IXGBE_WRITE_BARRIER(hw);
 
 		/* Set the Tail Pointer */
 #ifdef DEV_NETMAP
