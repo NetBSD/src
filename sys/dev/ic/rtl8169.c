@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.160 2019/09/22 16:41:19 ryo Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.161 2019/12/17 10:42:06 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.160 2019/09/22 16:41:19 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.161 2019/12/17 10:42:06 msaitoh Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -613,15 +613,18 @@ re_attach(struct rtk_softc *sc)
 			    RTKQ_NOJUMBO;
 			break;
 		case RTK_HWREV_8168H:
+		case RTK_HWREV_8168FP:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_PHYWAKE_PM |
 			    RTKQ_NOJUMBO | RTKQ_RXDV_GATED | RTKQ_TXRXEN_LATER;
 			break;
 		case RTK_HWREV_8168E_VL:
 		case RTK_HWREV_8168F:
+		case RTK_HWREV_8411:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
 			break;
+		case RTK_HWREV_8168EP:
 		case RTK_HWREV_8168G:
 		case RTK_HWREV_8168G_SPIN1:
 		case RTK_HWREV_8168G_SPIN2:
@@ -637,9 +640,26 @@ re_attach(struct rtk_softc *sc)
 			break;
 		case RTK_HWREV_8102E:
 		case RTK_HWREV_8102EL:
-		case RTK_HWREV_8103E:
+		case RTK_HWREV_8102EL_SPIN1:
 			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
 			    RTKQ_MACSTAT | RTKQ_CMDSTOP | RTKQ_NOJUMBO;
+			break;
+		case RTK_HWREV_8103E:
+			sc->sc_quirk |= RTKQ_DESCV2 | RTKQ_NOEECMD |
+			    RTKQ_MACSTAT | RTKQ_CMDSTOP;
+			break;
+		case RTK_HWREV_8401E:
+		case RTK_HWREV_8105E:
+		case RTK_HWREV_8105E_SPIN1:
+		case RTK_HWREV_8106E:
+			sc->sc_quirk |= RTKQ_PHYWAKE_PM |
+			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_MACSTAT |
+			    RTKQ_CMDSTOP;
+			break;
+		case RTK_HWREV_8402:
+			sc->sc_quirk |= RTKQ_PHYWAKE_PM |
+			    RTKQ_DESCV2 | RTKQ_NOEECMD | RTKQ_MACSTAT |
+			    RTKQ_CMDSTOP; /* CMDSTOP_WAIT_TXQ */
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
