@@ -1,4 +1,4 @@
-/*	$NetBSD: buffer.c,v 1.1.1.2 2019/05/22 17:19:56 christos Exp $	*/
+/*	$NetBSD: buffer.c,v 1.1.1.3 2019/12/17 02:23:53 christos Exp $	*/
 
 /*
  * Copyright (c) Christos Zoulas 2017.
@@ -30,9 +30,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: buffer.c,v 1.6 2019/05/07 02:27:11 christos Exp $")
+FILE_RCSID("@(#)$File: buffer.c,v 1.7 2019/06/10 21:35:26 christos Exp $")
 #else
-__RCSID("$NetBSD: buffer.c,v 1.1.1.2 2019/05/22 17:19:56 christos Exp $");
+__RCSID("$NetBSD: buffer.c,v 1.1.1.3 2019/12/17 02:23:53 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -83,6 +83,7 @@ buffer_fill(const struct buffer *bb)
 	b->eoff = b->st.st_size - b->elen;
 	if (pread(b->fd, b->ebuf, b->elen, b->eoff) == -1) {
 		free(b->ebuf);
+		b->ebuf = NULL;
 		goto out;
 	}
 
