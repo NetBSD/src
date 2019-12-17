@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.141 2019/12/17 10:25:42 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.142 2019/12/17 12:38:16 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7114,3 +7114,32 @@ usr.sbin/sysinst/Makefile.inc			1.31
 	Fix the pattern creating the relative path for distribution sets
 	on branches: we missed the potential numbers in suffixes, like _RC1.
 	[martin, ticket #561]
+
+usr.bin/mail/complete.c				1.21
+usr.bin/mail/mail.1				1.68
+usr.bin/mail/mime_child.c			1.10
+
+	PR/54766: broken mime-hooks handling in mail(1)
+	PR/54765: fix truncated description for -F in the mail(1) man page.
+	PR/54764: incorrect '+file' filename completion in mail(1).
+	[christos, ticket #555]
+
+sys/arch/arm/rockchip/rk_vop.c			1.3
+
+	Avoid gcc warnings.
+	[mrg, ticket #556]
+
+sys/arch/arm/rockchip/rk_drm.c			1.3
+sys/arch/arm/sunxi/sunxi_drm.c			1.10
+sys/arch/arm/ti/ti_lcdc.c			1.4
+
+	Ensure to call drm_mode_config_cleanup() when erroring.
+	[mrg, ticket #557]
+
+sys/arch/aarch64/aarch64/efi_machdep.c		1.5
+sys/arch/arm/arm/efi_runtime.c			1.3
+sys/arch/arm/arm/efi_runtime.h			1.3
+
+	Enable FP access for EFI RT and improve error handling.
+	[jmcneill, ticket #558]
+
