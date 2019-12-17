@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.55 2019/12/16 19:43:36 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.56 2019/12/17 18:08:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.55 2019/12/16 19:43:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.56 2019/12/17 18:08:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -76,12 +76,17 @@ sleepqlock_t	sleepq_locks[SLEEPTAB_HASH_SIZE] __cacheline_aligned;
 void
 sleeptab_init(sleeptab_t *st)
 {
+	static bool again;
 	int i;
 
 	for (i = 0; i < SLEEPTAB_HASH_SIZE; i++) {
-		mutex_init(&sleepq_locks[i].lock, MUTEX_DEFAULT, IPL_SCHED);
+		if (!again) {
+			mutex_init(&sleepq_locks[i].lock, MUTEX_DEFAULT,
+			    IPL_SCHED);
+		}
 		sleepq_init(&st->st_queue[i]);
 	}
+	again = true;
 }
 
 /*
