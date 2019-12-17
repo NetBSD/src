@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.25.2.3 2019/09/13 06:51:58 martin Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.25.2.4 2019/12/17 12:55:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.25.2.3 2019/09/13 06:51:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.25.2.4 2019/12/17 12:55:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1185,16 +1185,17 @@ usbnet_tick_task(void *arg)
 	struct ifnet * const ifp = usbnet_ifp(un);
 	struct mii_data * const mii = usbnet_mii(un);
 
+	KASSERT(ifp != NULL);	/* embedded member */
+
 	unp->unp_refcnt++;
 	mutex_exit(&unp->unp_lock);
 
-	if (ifp && unp->unp_timer != 0 && --unp->unp_timer == 0)
+	if (unp->unp_timer != 0 && --unp->unp_timer == 0)
 		usbnet_watchdog(ifp);
 
-	if (mii && ifp) {
-		DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
+	DPRINTFN(8, "mii %jx ifp %jx", (uintptr_t)mii, (uintptr_t)ifp, 0, 0);
+	if (mii) {
 		mii_tick(mii);
-
 		if (!unp->unp_link)
 			(*mii->mii_statchg)(ifp);
 	}
@@ -1517,7 +1518,7 @@ usbnet_detach(device_t self, int flags)
 
 	mutex_enter(&unp->unp_lock);
 	unp->unp_refcnt--;
-	while (unp->unp_refcnt > 0) {
+	while (unp->unp_refcnt >= 0) {
 		/* Wait for processes to go away */
 		cv_wait(&unp->unp_detachcv, &unp->unp_lock);
 	}
@@ -1532,7 +1533,6 @@ usbnet_detach(device_t self, int flags)
 	if (mii) {
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
 		ifmedia_delete_instance(&mii->mii_media, IFM_INST_ANY);
-		usbnet_ec(un)->ec_mii = NULL;
 	}
 	if (ifp->if_softc) {
 		if (!usbnet_empty_eaddr(un))
@@ -1541,6 +1541,7 @@ usbnet_detach(device_t self, int flags)
 			bpf_detach(ifp);
 		if_detach(ifp);
 	}
+	usbnet_ec(un)->ec_mii = NULL;
 
 	cv_destroy(&unp->unp_detachcv);
 	mutex_destroy(&unp->unp_lock);
