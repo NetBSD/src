@@ -1,4 +1,4 @@
-/*	$NetBSD: biosdisk.c,v 1.46.6.6 2019/12/17 12:19:49 martin Exp $	*/
+/*	$NetBSD: biosdisk.c,v 1.46.6.7 2019/12/17 12:21:34 martin Exp $	*/
 
 /*
  * Copyright (c) 1996, 1998
@@ -908,7 +908,8 @@ biosdisk_probe(void)
 				first = 0;
 			}
 #ifndef NO_GPT
-			if (d->part[part].part_name != NULL)
+			if (d->part[part].part_name &&
+			    d->part[part].part_name[0])
 				printf(" NAME=%s(", d->part[part].part_name);
 			else
 #endif
@@ -987,7 +988,8 @@ next_disk:
 				first = 0;
 			}
 #ifndef NO_GPT
-			if (d->part[part].part_name != NULL)
+			if (d->part[part].part_name &&
+			    d->part[part].part_name[0])
 				printf(" NAME=%s(", d->part[part].part_name);
 			else
 #endif
@@ -1095,7 +1097,9 @@ biosdisk_findpartition(int biosdev, daddr_t sector,
 
 		*partition = boot_part;
 #ifndef NO_GPT
-		if (part_name && d->part[boot_part].part_name) {
+		if (part_name &&
+		    d->part[boot_part].part_name &&
+		    d->part[boot_part].part_name[0]) {
 			strlcpy(namebuf, d->part[boot_part].part_name,
 				BIOSDISK_PART_NAME_LEN);
 			*part_name = namebuf;
