@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_drm.c,v 1.7.6.2 2019/11/25 16:20:41 martin Exp $ */
+/* $NetBSD: sunxi_drm.c,v 1.7.6.3 2019/12/17 12:35:12 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.7.6.2 2019/11/25 16:20:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_drm.c,v 1.7.6.3 2019/12/17 12:35:12 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -440,7 +440,8 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 
 	if (num_crtc == 0) {
 		aprint_error_dev(sc->sc_dev, "no pipelines configured\n");
-		return ENXIO;
+		error = ENXIO;
+		goto drmerr;
 	}
 
 	fbdev = kmem_zalloc(sizeof(*fbdev), KM_SLEEP);
@@ -449,7 +450,7 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 
 	error = drm_fb_helper_init(ddev, &fbdev->helper, num_crtc, num_crtc);
 	if (error)
-		goto drmerr;
+		goto allocerr;
 
 	fbdev->helper.fb = kmem_zalloc(sizeof(struct sunxi_drm_framebuffer), KM_SLEEP);
 
@@ -465,9 +466,10 @@ sunxi_drm_load(struct drm_device *ddev, unsigned long flags)
 
 	return 0;
 
+allocerr:
+	kmem_free(fbdev, sizeof(*fbdev));
 drmerr:
 	drm_mode_config_cleanup(ddev);
-	kmem_free(fbdev, sizeof(*fbdev));
 
 	return error;
 }
