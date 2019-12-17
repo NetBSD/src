@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.0.3,v 1.1.2.157 2019/12/08 10:27:54 martin Exp $
+# $NetBSD: CHANGES-7.0.3,v 1.1.2.158 2019/12/17 16:35:52 martin Exp $
 
 A complete list of changes from the NetBSD 7.0.2 release to the NetBSD 7.0.3
 release:
@@ -5930,4 +5930,9 @@ sys/dev/cons.c					1.76,1.77
 
 	Fix reference count leak in cons(4).
 	[riastradh, ticket #1717]
+
+sys/dev/ic/ath.c				1.129
+
+	Protect network ioctls from non-authorized users.
+	[christos, ticket #1718]
 
