@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.139 2019/12/14 12:36:33 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.140 2019/12/17 09:49:52 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7052,3 +7052,65 @@ sys/dev/usb/ohci.c				1.292
 	Descriptor in ohci_abort_xfer().
 	[gson, ticket #554]
 
+sys/arch/pmax/pmax/disksubr.c			1.56
+
+	Disable (pretty useless and obscure) message when checking for Ultrix
+	comaptible labels.
+	[martin, ticket #559]
+
+usr.sbin/sysinst/arch/alpha/md.c		1.7
+usr.sbin/sysinst/arch/amiga/md.h		1.5
+usr.sbin/sysinst/arch/arc/md.c			1.10
+usr.sbin/sysinst/arch/cobalt/md.c		1.10
+usr.sbin/sysinst/arch/cobalt/md.h		1.5
+usr.sbin/sysinst/arch/emips/md.c		1.8
+usr.sbin/sysinst/arch/evbarm/md.c		1.10
+usr.sbin/sysinst/arch/evbarm/menus.md.en	1.2
+usr.sbin/sysinst/arch/evbarm/menus.md.es	1.2
+usr.sbin/sysinst/arch/evbarm/menus.md.fr	1.2
+usr.sbin/sysinst/arch/evbarm/menus.md.pl	1.2
+usr.sbin/sysinst/arch/ews4800mips/md.c		1.5
+usr.sbin/sysinst/arch/hp300/md.c		1.9
+usr.sbin/sysinst/arch/i386/md.c			1.27
+usr.sbin/sysinst/arch/mipsco/md.c		1.7
+usr.sbin/sysinst/arch/mvme68k/md.c		1.9
+usr.sbin/sysinst/arch/pmax/md.c			1.7
+usr.sbin/sysinst/arch/prep/md.c			1.10
+usr.sbin/sysinst/arch/x68k/md.c			1.9
+usr.sbin/sysinst/arch/x68k/md.h			1.4
+usr.sbin/sysinst/bsddisklabel.c			1.33
+usr.sbin/sysinst/defs.h				1.49
+usr.sbin/sysinst/disklabel.c			1.18-1.27
+usr.sbin/sysinst/disks.c			1.58
+usr.sbin/sysinst/gpt.c				1.13
+usr.sbin/sysinst/label.c			1.15-1.17
+usr.sbin/sysinst/main.c				1.19
+usr.sbin/sysinst/mbr.c				1.23
+usr.sbin/sysinst/msg.mi.de			1.19
+usr.sbin/sysinst/msg.mi.en			1.26
+usr.sbin/sysinst/msg.mi.es			1.20
+usr.sbin/sysinst/msg.mi.fr			1.24
+usr.sbin/sysinst/msg.mi.pl			1.27
+usr.sbin/sysinst/partitions.c			1.6-1.8
+usr.sbin/sysinst/partitions.h			1.9-1.11
+usr.sbin/sysinst/partman.c			1.45
+usr.sbin/sysinst/wskbd.c			1.4
+
+	Various sysinst fixes:
+	- On some architectures allow kernel based magic to map foreign
+	  partitioning schemes to disklabel.
+	- Allow using old (compat) versions of ext2fs for old boot loaders and
+	  default to that on cobalt.
+	- Do not offer to switch the keyboard layout when using a serial
+	  console (or network).
+	- Fix EFI installations on x86.
+	- Fix disklabel partition alignment.
+	- Fix overlapping partitions error display.
+	- Fix screen corruption.
+	[martin, ticket #560]
+
+usr.sbin/sysinst/Makefile.inc			1.31
+
+	Fix the pattern creating the relative path for distribution sets
+	on branches: we missed the potential numbers in suffixes, like _RC1.
+	[martin, ticket #561]
