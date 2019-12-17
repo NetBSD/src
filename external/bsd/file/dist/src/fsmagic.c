@@ -1,4 +1,4 @@
-/*	$NetBSD: fsmagic.c,v 1.15 2019/05/22 17:26:05 christos Exp $	*/
+/*	$NetBSD: fsmagic.c,v 1.16 2019/12/17 02:31:05 christos Exp $	*/
 
 /*
  * Copyright (c) Ian F. Darwin 1986-1995.
@@ -35,9 +35,9 @@
 
 #ifndef	lint
 #if 0
-FILE_RCSID("@(#)$File: fsmagic.c,v 1.80 2019/04/23 18:59:27 christos Exp $")
+FILE_RCSID("@(#)$File: fsmagic.c,v 1.81 2019/07/16 13:30:32 christos Exp $")
 #else
-__RCSID("$NetBSD: fsmagic.c,v 1.15 2019/05/22 17:26:05 christos Exp $");
+__RCSID("$NetBSD: fsmagic.c,v 1.16 2019/12/17 02:31:05 christos Exp $");
 #endif
 #endif	/* lint */
 
@@ -431,5 +431,11 @@ file_fsmagic(struct magic_set *ms, const char *fn, struct stat *sb)
 	    if (file_printf(ms, " ") == -1)
 		    return -1;
 	}
+	/*
+	 * If we were looking for extensions or apple (silent) it is not our
+	 * job to print here, so don't count this as a match.
+	 */
+	if (ret == 1 && silent)
+		return 0;
 	return ret;
 }

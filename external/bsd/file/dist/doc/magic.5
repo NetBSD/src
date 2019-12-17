@@ -1,6 +1,6 @@
-.\"	$NetBSD: magic.5,v 1.20 2019/05/22 17:26:05 christos Exp $
+.\"	$NetBSD: magic.5,v 1.21 2019/12/17 02:31:05 christos Exp $
 .\"
-.\" $File: magic.man,v 1.96 2019/01/21 14:56:53 christos Exp $
+.\" $File: magic.man,v 1.97 2019/11/15 21:03:14 christos Exp $
 .Dd January 21, 2019
 .Dt MAGIC 5
 .Os
@@ -12,7 +12,7 @@
 This manual page documents the format of magic files as
 used by the
 .Xr file 1
-command, version 5.37.
+command, version 5.38.
 The
 .Xr file 1
 command identifies the type of a file using,
@@ -46,7 +46,7 @@ This offset can be a negative number if it is:
 The first direct offset of the magic entry (at continuation level 0),
 in which case it is interpreted an offset from end end of the file
 going backwards.
-This works only when a file descriptor to the file is a available and it
+This works only when a file descriptor to the file is available and it
 is a regular file.
 .It
 A continuation offset relative to the end of the last up-level field
@@ -138,7 +138,7 @@ format.
 .It Dv date
 A four-byte value interpreted as a UNIX date.
 .It Dv qdate
-A eight-byte value interpreted as a UNIX date.
+An eight-byte value interpreted as a UNIX date.
 .It Dv ldate
 A four-byte value interpreted as a UNIX-style date, but interpreted as
 local time rather than UTC.
