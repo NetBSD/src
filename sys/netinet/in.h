@@ -1,4 +1,4 @@
-/*	$NetBSD: in.h,v 1.108 2018/11/09 11:46:28 maya Exp $	*/
+/*	$NetBSD: in.h,v 1.109 2019/12/18 00:49:16 roy Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -234,6 +234,8 @@ struct in_addr {
 #define	INADDR_MAX_LOCAL_GROUP	__IPADDR(0xe00000ff)	/* 224.0.0.255 */
 
 #define	IN_LOOPBACKNET		127			/* official! */
+
+#define	IN_RFC3021_MASK		__IPADDR(0xfffffffe)
 
 /*
  * Socket address, internet style.
