@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.92 2019/02/14 12:22:06 mrg Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.93 2019/12/18 02:16:04 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.92 2019/02/14 12:22:06 mrg Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.93 2019/12/18 02:16:04 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -104,6 +104,7 @@ static const char *pname = "crunchgen";
 
 /* options */
 static int verbose, readcache, useobjs, oneobj, pie, libcsanitizer, sanitizer;
+static int ssp, fortify;
 
 static int reading_cache;
 static char *machine;
@@ -159,10 +160,12 @@ main(int argc, char **argv)
     if (argc > 0)
 	pname = argv[0];
 
-    while ((optc = getopt(argc, argv, "m:c:d:e:fopqsD:L:Ov:")) != -1) {
+    while ((optc = getopt(argc, argv, "m:c:d:e:FfopPqsD:L:Ov:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
+	case 'F':	fortify = 1; break;
 	case 'p':	pie = 1; break;
+	case 'P':	ssp = 1; break;
 	case 'q':	verbose = 0; break;
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
@@ -225,7 +228,7 @@ void
 usage(void)
 {
     fprintf(stderr, 
-	"%s [-fOopqSs] [-c c-file-name] [-D src-root] [-d build-options]\n"
+	"%s [-FfOoPpqSs] [-c c-file-name] [-D src-root] [-d build-options]\n"
 	"\t  [-e exec-file-name] [-L lib-dir] [-m makefile-name]\n"
 	"\t  [-v var-spec] conf-file\n", pname);
     exit(1);
@@ -557,7 +560,7 @@ static void gen_output_cfile(void);
 static void fillin_program_objs(prog_t *p, char *path);
 static void top_makefile_rules(FILE *outmk);
 static void bottom_makefile_rules(FILE *outmk);
-static void prog_makefile_rules(FILE *outmk, prog_t *p);
+static void prog_makefile_rules(FILE *outmk, prog_t *p, const char *);
 static void output_strlst(FILE *outf, strlst_t *lst);
 static char *genident(char *str);
 static char *dir_search(char *progname);
@@ -804,10 +807,36 @@ gen_specials_cache(void)
 
 
 static void
+addno(char *str, size_t len, const char *stem)
+{
+	char buf[128];
+	snprintf(buf, sizeof(buf), "NO%s=\n", stem);
+	strlcat(str, buf, len);
+}
+
+
+static void
 gen_output_makefile(void)
 {
     prog_t *p;
     FILE *outmk;
+    char noes[1024], *ptr;
+
+    noes[0] = '\0';
+
+    if (!pie)
+	    addno(noes, sizeof(noes), "PIE");
+    if (!ssp)
+	    addno(noes, sizeof(noes), "SSP");
+    if (!fortify)
+	    addno(noes, sizeof(noes), "FORT");
+    if (!libcsanitizer)
+	    addno(noes, sizeof(noes), "LIBCSANITIZER");
+    if (!sanitizer)
+	    addno(noes, sizeof(noes), "SANITIZER");
+
+    addno(noes, sizeof(noes), "MAN");
+
 
     (void)snprintf(line, sizeof(line), "generating %s", outmkname);
     status(line);
@@ -821,10 +850,14 @@ gen_output_makefile(void)
     fprintf(outmk, "# %s - generated from %s by crunchgen %s\n\n",
 	    outmkname, infilename, CRUNCH_VERSION);
 
+    fprintf(outmk, "%s\n", noes);
+    while ((ptr = strchr(noes, '\n')) != NULL)
+	    *ptr = ' ';
+
     top_makefile_rules(outmk);
 
     for (p = progs; p != NULL; p = p->next)
-	prog_makefile_rules(outmk, p); 
+	prog_makefile_rules(outmk, p, noes); 
 
     fprintf(outmk, "\n.include <bsd.prog.mk>\n");
     fprintf(outmk, "\n# ========\n");
@@ -924,14 +957,6 @@ top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
 
-    if (!pie)
-	    fprintf(outmk, "NOPIE=\n");
-    if (!libcsanitizer)
-	    fprintf(outmk, "NOLIBCSANITIZER=\n");
-    if (!sanitizer)
-	    fprintf(outmk, "NOSANITIZER=\n");
-    fprintf(outmk, "NOMAN=\n\n");
-
     fprintf(outmk, "DBG=%s\n", dbg);
     fprintf(outmk, "MAKE?=make\n");
 #ifdef NEW_TOOLCHAIN
@@ -985,6 +1010,7 @@ top_makefile_rules(FILE *outmk)
 	    execfname);
 }
 
+
 static void
 bottom_makefile_rules(FILE *outmk)
 {
@@ -992,7 +1018,7 @@ bottom_makefile_rules(FILE *outmk)
 
 
 static void
-prog_makefile_rules(FILE *outmk, prog_t *p)
+prog_makefile_rules(FILE *outmk, prog_t *p, const char *noes)
 {
     strlst_t *lst;
 
@@ -1022,8 +1048,8 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
 #define MAKECMD \
-    "\t| ${MAKE} -f- CRUNCHEDPROG=1 DBG=${DBG:Q} LDSTATIC=${LDSTATIC:Q} "
-	fprintf(outmk, MAKECMD "depend");
+    "\t| ${MAKE} -f- CRUNCHEDPROG=1 %sDBG=${DBG:Q} LDSTATIC=${LDSTATIC:Q} "
+	fprintf(outmk, MAKECMD "depend", noes);
 	fprintf(outmk, " )\n");
 	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
 	    ".CURDIR:= ${%s_SRCDIR}\\n"
@@ -1032,7 +1058,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, MAKECMD "%s %s ", libcsanitizer ? "" : "NOLIBCSANITIZER=", sanitizer ? "" : "NOSANITIZER=");
+	fprintf(outmk, MAKECMD, noes);
 	if (p->objs)
 	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else

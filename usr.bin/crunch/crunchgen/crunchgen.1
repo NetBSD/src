@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.37 2018/07/26 08:57:26 wiz Exp $
+.\"	$NetBSD: crunchgen.1,v 1.38 2019/12/18 02:16:04 christos Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -32,7 +32,7 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm
-.Op Fl fOopqSs
+.Op Fl FfOoPpqSs
 .Op Fl c Ar c-file-name
 .Op Fl D Ar src-root
 .Op Fl d Ar build-options
@@ -101,6 +101,8 @@ Set crunched binary executable file name to
 .Ar exec-file-name .
 The default name is
 .Dq Aq Mt conf-name .
+.It Fl F
+Enable fortify.
 .It Fl f
 Flush cache.
 Forces the recalculation of cached parameters.
@@ -124,6 +126,8 @@ the program objects into a single relocatable.
 Use existing object files.
 Rather than rebuilding object files via reach-over
 makefiles, instead search for and use existing object files.
+.It Fl P
+Enable stack protector.
 .It Fl p
 Produce static pie (position independent executables).
 .It Fl q
