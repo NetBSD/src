@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.20.20.1 2019/12/08 14:43:16 martin Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.20.20.2 2019/12/18 20:04:33 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.20.20.1 2019/12/08 14:43:16 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.20.20.2 2019/12/18 20:04:33 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1501,13 +1501,6 @@ sysace_send_config(struct ace_softc *sc, uint32_t *Data, unsigned int nBytes)
  * 2. Redistributions in binary form must reproduce the above copyright
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
- * 3. All advertising materials mentioning features or use of this software
- *    must display the following acknowledgement:
- *        This product includes software developed by the NetBSD
- *        Foundation, Inc. and its contributors.
- * 4. Neither the name of The NetBSD Foundation nor the names of its
- *    contributors may be used to endorse or promote products derived
- *    from this software without specific prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
  * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
