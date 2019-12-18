@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.29 2019/07/16 14:41:43 skrll Exp $ */
+/* $NetBSD: machdep.h,v 1.30 2019/12/18 21:45:44 riastradh Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -72,6 +72,9 @@ void dumpsys(void);
 vaddr_t initarm(void *);
 struct pmap_devmap;
 struct boot_physmem;
+
+void cpu_startup_hook(void);
+void cpu_startup_default(void);
 
 static inline paddr_t
 aarch32_kern_vtophys(vaddr_t va)
