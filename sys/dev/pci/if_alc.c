@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.45 2019/12/01 08:16:49 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.46 2019/12/18 13:25:00 msaitoh Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -2815,8 +2815,8 @@ alc_init_backend(struct ifnet *ifp, bool init)
 
 	/* Reprogram the station address. */
 	memcpy(eaddr, CLLADDR(ifp->if_sadl), sizeof(eaddr));
-	CSR_WRITE_4(sc, ALC_PAR0,
-	    eaddr[2] << 24 | eaddr[3] << 16 | eaddr[4] << 8 | eaddr[5]);
+	CSR_WRITE_4(sc, ALC_PAR0, (uint32_t)eaddr[2] << 24
+	    | eaddr[3] << 16 | eaddr[4] << 8 | eaddr[5]);
 	CSR_WRITE_4(sc, ALC_PAR1, eaddr[0] << 8 | eaddr[1]);
 	/*
 	 * Clear WOL status and disable all WOL feature as WOL
