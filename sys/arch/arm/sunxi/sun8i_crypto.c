@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.8 2019/12/15 01:16:33 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.9 2019/12/18 02:26:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.8 2019/12/15 01:16:33 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.9 2019/12/18 02:26:48 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -65,9 +65,8 @@ __KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.8 2019/12/15 01:16:33 riastradh E
 #include <arm/sunxi/sun8i_crypto.h>
 
 #define	SUN8I_CRYPTO_TIMEOUT	hz
-#define	SUN8I_CRYPTO_RNGENTROPY	8 /* estimated bits per bit of entropy */
-#define	SUN8I_CRYPTO_RNGBYTES						      \
-	(SUN8I_CRYPTO_RNGENTROPY*howmany(RND_POOLBITS, NBBY))
+#define	SUN8I_CRYPTO_RNGENTROPY	100 /* estimated bits per bit of entropy */
+#define	SUN8I_CRYPTO_RNGBYTES	PAGE_SIZE
 
 struct sun8i_crypto_task;
 
@@ -964,8 +963,8 @@ sun8i_crypto_rng_done(struct sun8i_crypto_softc *sc,
 	 * This TRNG has quite low entropy at best.  But if it fails a
 	 * repeated output test, then assume it's busted.
 	 */
-	CTASSERT((SUN8I_CRYPTO_RNGBYTES % SUN8I_CRYPTO_RNGENTROPY) == 0);
-	entropybits = NBBY * (SUN8I_CRYPTO_RNGBYTES/SUN8I_CRYPTO_RNGENTROPY);
+	CTASSERT(SUN8I_CRYPTO_RNGBYTES <= UINT32_MAX/NBBY);
+	entropybits = (NBBY*SUN8I_CRYPTO_RNGBYTES)/SUN8I_CRYPTO_RNGENTROPY;
 	if (consttime_memequal(buf, buf + SUN8I_CRYPTO_RNGBYTES/2,
 		SUN8I_CRYPTO_RNGBYTES/2)) {
 		device_printf(sc->sc_dev, "failed repeated output test\n");
@@ -1171,10 +1170,10 @@ sun8i_crypto_sysctl_attach(struct sun8i_crypto_softc *sc)
 		return;
 	}
 
-	/* hw.sun8icryptoN.rng (`struct', 1024-byte array) */
+	/* hw.sun8icryptoN.rng (`struct', 4096-byte array) */
 	sysctl_createv(&cy->cy_log, 0, &cy->cy_root_node, NULL,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_STRUCT,
-	    "rng", SYSCTL_DESCR("Read up to 1024 bytes out of the TRNG"),
+	    "rng", SYSCTL_DESCR("Read up to 4096 bytes out of the TRNG"),
 	    &sun8i_crypto_sysctl_rng, 0, sc, 0, CTL_CREATE, CTL_EOL);
 	if (error) {
 		aprint_error_dev(sc->sc_dev,
@@ -1195,13 +1194,13 @@ sun8i_crypto_sysctl_rng(SYSCTLFN_ARGS)
 
 	/* If oldp == NULL, the caller wants to learn the size.  */
 	if (oldp == NULL) {
-		*oldlenp = 1024;
+		*oldlenp = 4096;
 		return 0;
 	}
 
 	/* Verify the output buffer size is reasonable.  */
 	size = *oldlenp;
-	if (size > 1024)	/* size_t, so never negative */
+	if (size > 4096)	/* size_t, so never negative */
 		return E2BIG;
 	if (size == 0)
 		return 0;	/* nothing to do */
