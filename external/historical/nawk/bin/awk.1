@@ -1,4 +1,4 @@
-.\"	$NetBSD: awk.1,v 1.6 2019/12/17 18:35:57 christos Exp $
+.\"	$NetBSD: awk.1,v 1.7 2019/12/18 10:17:48 wiz Exp $
 .Dd December 19, 2019
 .Dt AWK 1
 .Os
@@ -194,7 +194,7 @@ Logical OR
 .It Ic ?:
 C conditional expression.
 This is used as
-.Ar expr1 Ic \&? Ar expr2 Ic \&: Ar expr3 No .
+.Ar expr1 Ic \&? Ar expr2 Ic \&: Ar expr3 .
 If
 .Ar expr1
 is true, the result value is
@@ -212,7 +212,6 @@ Assignment and Operator-Assignment
 .El
 .Ss Control Statements
 The control statements are as follows:
-.Pp
 .Bl -tag -width indent
 .It Ic if \&( Ar expression Ic \&) Ar statement Bq Ic else Ar statement
 .It Ic while \&( Ar expression Ic \&) Ar statement
@@ -223,7 +222,7 @@ Ar expression Ic \&) Ar statement
 .It Ic break
 .It Ic continue
 .It Ic \&{ Ar [ statement ... ] Ic \&}
-.It Ic Ar expression
+.It Ar expression
 Commonly var = expression
 .It Ic return Bq Ar expression
 .It Ic next
@@ -235,12 +234,11 @@ Delete an array element
 .It Ic delete Va array
 Delete all elements of an array
 .It Ic exit Bq Ar expression
-Exit immediately; status is 
+Exit immediately; status is
 .Ar expression
 .El
 .Ss I/O Statements
 The input/output statements are as follows:
-.Pp
 .Bl -tag -width indent
 .It Fn close expr
 Closes the file or pipe
@@ -286,7 +284,7 @@ statement prints its arguments on the standard output (or to a file
 if
 .Ic \*[Gt] file
 or to a pipe if
-.Ic | Ar expr
+.Ic \&| Ar expr
 is present),
 separated by the current output field separator
 .Va OFS ,
@@ -308,7 +306,6 @@ for list of supported formats and their meaning.
 .El
 .Ss Mathematical and Numeric Functions
 AWK has the following mathematical and numerical functions built-in:
-.Pp
 .Bl -tag -width indent
 .It Fn atan2 x y
 Returns the arctangent of
@@ -356,7 +353,6 @@ and returns the previous seed.
 .El
 .Ss String Functions
 AWK has the following string functions built-in:
-.Pp
 .Bl -tag -width indent
 .It Fn gensub r s h [t]
 Search the target string
