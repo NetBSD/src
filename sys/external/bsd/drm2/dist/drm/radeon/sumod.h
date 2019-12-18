@@ -1,4 +1,4 @@
-/*	$NetBSD: sumod.h,v 1.2 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: sumod.h,v 1.3 2019/12/18 13:25:58 msaitoh Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -197,7 +197,7 @@
 #       define SCLK_FSTATE_3_DIV(x)                     ((x) << 24)
 #       define SCLK_FSTATE_3_DIV_MASK                   (0x7f << 24)
 #       define SCLK_FSTATE_3_DIV_SHIFT                  24
-#       define SCLK_FSTATE_3_VLD                        (1 << 31)
+#       define SCLK_FSTATE_3_VLD                        (1U << 31)
 #define CG_SCLK_DPM_CTRL_2                              0x688
 #define CG_GCOOR                                        0x68c
 #       define PHC(x)                                   ((x) << 0)
@@ -243,7 +243,7 @@
 #       define DPM_SCLK_ENABLE                          (1 << 18)
 #       define GNB_SLOW_FSTATE_0_MASK                   (1 << 23)
 #       define GNB_SLOW_FSTATE_0_SHIFT                  23
-#       define FORCE_NB_PSTATE_1                        (1 << 31)
+#       define FORCE_NB_PSTATE_1                        (1U << 31)
 
 #define CG_SSP                                          0x6e8
 #       define SST(x)                                   ((x) << 0)
@@ -263,7 +263,7 @@
 #       define DC_HDC_MASK                              (0x3fff << 14)
 #       define DC_HDC_SHIFT                             14
 #       define DC_HU(x)                                 ((x) << 28)
-#       define DC_HU_MASK                               (0xf << 28)
+#       define DC_HU_MASK                               (0xfU << 28)
 #       define DC_HU_SHIFT                              28
 #define CG_SCLK_DPM_CTRL_5                              0x720
 #       define SCLK_FSTATE_BOOTUP(x)                    ((x) << 0)
@@ -281,7 +281,7 @@
 #       define CG_R_MASK                                (0xffff << 0)
 #       define CG_R_SHIFT                               0
 #       define CG_L(x)                                  ((x) << 16)
-#       define CG_L_MASK                                (0xffff << 16)
+#       define CG_L_MASK                                (0xffffU << 16)
 #       define CG_L_SHIFT                               16
 #define CG_AT_1                                         0x72c
 #define CG_AT_2                                         0x730
@@ -351,7 +351,7 @@
 #       define HS(x)                                    ((x) << 4)
 #       define HS_MASK                                  (0xfff << 4)
 #       define HS_SHIFT                                 4
-#       define ENABLE_DS                                (1 << 31)
+#       define ENABLE_DS                                (1U << 31)
 #define DEEP_SLEEP_CNTL2                                0x81c
 #       define LB_UFP_EN                                (1 << 0)
 #       define INOUT_C(x)                               ((x) << 4)
@@ -363,7 +363,7 @@
 #define CG_SCLK_DPM_CTRL_11                             0x830
 
 #define HW_REV   					0x5564
-#       define ATI_REV_ID_MASK                          (0xf << 28)
+#       define ATI_REV_ID_MASK                          (0xfU << 28)
 #       define ATI_REV_ID_SHIFT                         28
 /* 0 = A0, 1 = A1, 2 = B0, 3 = C0, etc. */
 
