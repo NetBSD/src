@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.206 2019/12/18 07:37:17 maxv Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.207 2019/12/18 14:44:16 kamil Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -411,7 +411,6 @@
 ./usr/share/examples/rtadvd
 ./usr/share/examples/slip
 ./usr/share/examples/smbfs
-./usr/share/examples/supfiles
 ./usr/share/examples/syslogd
 ./usr/share/examples/tmux
 ./usr/share/examples/wpa_supplicant
