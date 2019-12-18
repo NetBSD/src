@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.205 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.206 2019/12/18 20:38:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.205 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.206 2019/12/18 20:38:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -148,13 +148,6 @@ void uvm_physseg_seg_chomp_slab(uvm_physseg_t, struct vm_page *, size_t);
 struct vm_page *uvm_physseg_seg_alloc_from_slab(uvm_physseg_t, size_t);
 
 /*
- * local prototypes
- */
-
-static int uvm_pageinsert(struct uvm_object *, struct vm_page *);
-static void uvm_pageremove(struct uvm_object *, struct vm_page *);
-
-/*
  * inline functions
  */
 
@@ -205,22 +198,6 @@ uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 	return 0;
 }
 
-static inline int
-uvm_pageinsert(struct uvm_object *uobj, struct vm_page *pg)
-{
-	int error;
-
-	KDASSERT(uobj != NULL);
-	KDASSERT(uobj == pg->uobject);
-	error = uvm_pageinsert_tree(uobj, pg);
-	if (error != 0) {
-		KASSERT(error == ENOMEM);
-		return error;
-	}
-	uvm_pageinsert_object(uobj, pg);
-	return error;
-}
-
 /*
  * uvm_page_remove: remove page from object.
  *
@@ -263,16 +240,6 @@ uvm_pageremove_tree(struct uvm_object *uobj, struct vm_page *pg)
 
 	opg = radix_tree_remove_node(&uobj->uo_pages, pg->offset >> PAGE_SHIFT);
 	KASSERT(pg == opg);
-}
-
-static inline void
-uvm_pageremove(struct uvm_object *uobj, struct vm_page *pg)
-{
-
-	KDASSERT(uobj != NULL);
-	KASSERT(uobj == pg->uobject);
-	uvm_pageremove_object(uobj, pg);
-	uvm_pageremove_tree(uobj, pg);
 }
 
 static void
@@ -1043,9 +1010,10 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		pg->flags |= PG_ANON;
 		cpu_count(CPU_COUNT_ANONPAGES, 1);
 	} else if (obj) {
-		error = uvm_pageinsert(obj, pg);
+		uvm_pageinsert_object(obj, pg);
+		error = uvm_pageinsert_tree(obj, pg);
 		if (error != 0) {
-			pg->uobject = NULL;
+			uvm_pageremove_object(obj, pg);
 			uvm_pagefree(pg);
 			return NULL;
 		}
@@ -1077,7 +1045,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
  * uvm_pagereplace: replace a page with another
  *
  * => object must be locked
- * => interlock must be held
  */
 
 void
@@ -1091,13 +1058,23 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(newpg->uobject == NULL);
 	KASSERT(mutex_owned(uobj->vmobjlock));
 
-	newpg->uobject = uobj;
 	newpg->offset = oldpg->offset;
-
 	uvm_pageremove_tree(uobj, oldpg);
 	uvm_pageinsert_tree(uobj, newpg);
+
+	/* take page interlocks during rename */
+	if (oldpg < newpg) {
+		mutex_enter(&oldpg->interlock);
+		mutex_enter(&newpg->interlock);
+	} else {
+		mutex_enter(&newpg->interlock);
+		mutex_enter(&oldpg->interlock);
+	}
+	newpg->uobject = uobj;
 	uvm_pageinsert_object(uobj, newpg);
 	uvm_pageremove_object(uobj, oldpg);
+	mutex_exit(&oldpg->interlock);
+	mutex_exit(&newpg->interlock);
 }
 
 /*
@@ -1115,7 +1092,8 @@ uvm_pagerealloc(struct vm_page *pg, struct uvm_object *newobj, voff_t newoff)
 	 */
 
 	if (pg->uobject) {
-		uvm_pageremove(pg->uobject, pg);
+		uvm_pageremove_tree(pg->uobject, pg);
+		uvm_pageremove_object(pg->uobject, pg);
 	}
 
 	/*
@@ -1197,6 +1175,14 @@ uvm_pagefree(struct vm_page *pg)
 		mutex_owned(pg->uanon->an_lock));
 
 	/*
+	 * remove the page from the object's tree beore acquiring any page
+	 * interlocks: this can acquire locks to free radixtree nodes.
+	 */
+	if (pg->uobject != NULL) {
+		uvm_pageremove_tree(pg->uobject, pg);
+	}
+
+	/*
 	 * if the page is loaned, resolve the loan instead of freeing.
 	 */
 
@@ -1217,7 +1203,7 @@ uvm_pagefree(struct vm_page *pg)
 		mutex_enter(&pg->interlock);
 		locked = true;
 		if (pg->uobject != NULL) {
-			uvm_pageremove(pg->uobject, pg);
+			uvm_pageremove_object(pg->uobject, pg);
 			pg->flags &= ~PG_CLEAN;
 		} else if (pg->uanon != NULL) {
 			if ((pg->flags & PG_ANON) == 0) {
@@ -1256,7 +1242,7 @@ uvm_pagefree(struct vm_page *pg)
 	 * remove page from its object or anon.
 	 */
 	if (pg->uobject != NULL) {
-		uvm_pageremove(pg->uobject, pg);
+		uvm_pageremove_object(pg->uobject, pg);
 	} else if (pg->uanon != NULL) {
 		pg->uanon->an_page = NULL;
 		pg->uanon = NULL;

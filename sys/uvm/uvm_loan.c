@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.91 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.92 2019/12/18 20:38:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.91 2019/12/15 21:11:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.92 2019/12/18 20:38:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1121,7 +1121,7 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	 * force a reload of the old page by clearing it from all
 	 * pmaps.
 	 * transfer dirtiness of the old page to the new page.
-	 * then lock pg->interlock to rename the pages.
+	 * then rename the pages.
 	 */
 
 	uvm_pagecopy(uobjpage, pg);	/* old -> new */
@@ -1143,20 +1143,18 @@ uvm_loanbreak(struct vm_page *uobjpage)
 	UVM_PAGE_OWN(uobjpage, NULL);
 
 	/*
-	 * replace uobjpage with new page.
-	 */
-
-	mutex_enter(&uobjpage->interlock);
-	uvm_pagereplace(uobjpage, pg);
-	mutex_exit(&uobjpage->interlock);
-
-	/*
 	 * if the page is no longer referenced by
 	 * an anon (i.e. we are breaking an O->K
 	 * loan), then remove it from any pageq's.
 	 */
 	if (uobjpage->uanon == NULL)
 		uvm_pagedequeue(uobjpage);
+
+	/*
+	 * replace uobjpage with new page.
+	 */
+
+	uvm_pagereplace(uobjpage, pg);
 
 	/*
 	 * at this point we have absolutely no
@@ -1176,59 +1174,58 @@ uvm_loanbreak(struct vm_page *uobjpage)
 int
 uvm_loanbreak_anon(struct vm_anon *anon, struct uvm_object *uobj)
 {
-	struct vm_page *pg, *dequeuepg;
+	struct vm_page *newpg, *oldpg;
 
 	KASSERT(mutex_owned(anon->an_lock));
 	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
 
 	/* get new un-owned replacement page */
-	pg = uvm_pagealloc(NULL, 0, NULL, 0);
-	if (pg == NULL) {
+	newpg = uvm_pagealloc(NULL, 0, NULL, 0);
+	if (newpg == NULL) {
 		return ENOMEM;
 	}
 
-	/* copy old -> new */
-	uvm_pagecopy(anon->an_page, pg);
-
-	/* force reload */
-	pmap_page_protect(anon->an_page, VM_PROT_NONE);
-	if (pg < anon->an_page) {
-		mutex_enter(&pg->interlock);
-		mutex_enter(&anon->an_page->interlock);
-	} else {
-		mutex_enter(&anon->an_page->interlock);
-		mutex_enter(&pg->interlock);
-	}
-	anon->an_page->uanon = NULL;
-	/* in case we owned */
-	anon->an_page->flags &= ~PG_ANON;
-
-	if (uobj) {
-		/* if we were receiver of loan */
-		anon->an_page->loan_count--;
-		dequeuepg = NULL;
-	} else {
+	oldpg = anon->an_page;
+	if (uobj == NULL) {
 		/*
 		 * we were the lender (A->K); need to remove the page from
 		 * pageq's.
 		 */
-		dequeuepg = anon->an_page;
+		uvm_pagedequeue(oldpg);
+	}
+
+	/* copy old -> new */
+	uvm_pagecopy(oldpg, newpg);
+
+	/* force reload */
+	pmap_page_protect(oldpg, VM_PROT_NONE);
+	if (newpg < oldpg) {
+		mutex_enter(&newpg->interlock);
+		mutex_enter(&oldpg->interlock);
+	} else {
+		mutex_enter(&oldpg->interlock);
+		mutex_enter(&newpg->interlock);
+	}
+	oldpg->uanon = NULL;
+	/* in case we owned */
+	oldpg->flags &= ~PG_ANON;
+
+	if (uobj) {
+		/* if we were receiver of loan */
+		oldpg->loan_count--;
 	}
 
 	/* install new page in anon */
-	anon->an_page = pg;
-	pg->uanon = anon;
-	pg->flags |= PG_ANON;
+	anon->an_page = newpg;
+	newpg->uanon = anon;
+	newpg->flags |= PG_ANON;
 
-	mutex_exit(&pg->interlock);
-	mutex_exit(&anon->an_page->interlock);
-	uvm_pageactivate(pg);
-	if (dequeuepg != NULL) {
-		uvm_pagedequeue(anon->an_page);
-	}
+	mutex_exit(&newpg->interlock);
+	mutex_exit(&oldpg->interlock);
+	uvm_pageactivate(newpg);
 
-	pg->flags &= ~(PG_BUSY|PG_FAKE);
-	UVM_PAGE_OWN(pg, NULL);
+	newpg->flags &= ~(PG_BUSY|PG_FAKE);
+	UVM_PAGE_OWN(newpg, NULL);
 
 	if (uobj) {
 		mutex_exit(uobj->vmobjlock);
