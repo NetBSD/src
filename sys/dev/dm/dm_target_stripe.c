@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.39 2019/12/15 16:14:27 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.40 2019/12/18 14:31:35 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.39 2019/12/15 16:14:27 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.40 2019/12/18 14:31:35 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -139,12 +139,10 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 	dm_target_stripe_config_t *tsc;
 	int strpc, strpi;
 
-	/*
-	if (argc < 4) {
-		printf("Stripe target takes 4 or more args\n");
+	if (argc < 2) {
+		printf("Stripe target takes at least 2 args, %d given\n", argc);
 		return EINVAL;
 	}
-	*/
 
 	printf("Stripe target init function called!!\n");
 	printf("Stripe target chunk size %s number of stripes %s\n",
