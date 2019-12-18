@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.17 2019/12/17 17:51:12 jakllsch Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.18 2019/12/18 18:40:19 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.17 2019/12/17 17:51:12 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.18 2019/12/18 18:40:19 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1030,6 +1030,10 @@ static const struct rk3399_init_param {
 	{ .clk = "clk_i2s0_mux",	.parent = "clk_i2s0_frac" },
 	{ .clk = "clk_i2s1_mux",	.parent = "clk_i2s1_frac" },
 	{ .clk = "clk_i2s2_mux",	.parent = "clk_i2s2_frac" },
+	{ .clk = "dclk_vop0_div",	.parent = "gpll" },
+	{ .clk = "dclk_vop1_div",	.parent = "gpll" },
+	{ .clk = "dclk_vop0",		.parent = "dclk_vop0_frac" },
+	{ .clk = "dclk_vop1",		.parent = "dclk_vop1_frac" },
 };
 
 static void
