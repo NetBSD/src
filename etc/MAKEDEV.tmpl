@@ -1,5 +1,5 @@
 #!/bin/sh -
-#	$NetBSD: MAKEDEV.tmpl,v 1.210 2019/11/01 02:58:50 ozaki-r Exp $
+#	$NetBSD: MAKEDEV.tmpl,v 1.211 2019/12/18 07:37:17 maxv Exp $
 #
 # Copyright (c) 2003,2007,2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -816,7 +816,6 @@ all)
 	makedev dk24 dk25 dk26 dk27 dk28 dk29 dk30 dk31
 	makedev ccd0 ccd1 ccd2 ccd3
 	makedev cgd0 cgd1 cgd2 cgd3
-	makedev filemon
 	makedev fss0 fss1 fss2 fss3
 	makedev md0 md1
 	makedev raid0 raid1 raid2 raid3 raid4 raid5 raid6 raid7
@@ -2180,10 +2179,6 @@ tpm)
 dtrace)
 	makedir dtrace 755
 	mkdev dtrace/dtrace c %dtrace_chr% 0 600
-	;;
-
-filemon)
-	mkdev filemon c %filemon_chr% 0 666
 	;;
 
 fw[0-9]*)

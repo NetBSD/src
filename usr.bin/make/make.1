@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.274 2019/02/16 07:41:12 gutteridge Exp $
+.\"	$NetBSD: make.1,v 1.275 2019/12/18 07:37:19 maxv Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -29,7 +29,7 @@
 .\"
 .\"	from: @(#)make.1	8.4 (Berkeley) 3/19/94
 .\"
-.Dd February 16, 2019
+.Dd December 17, 2019
 .Dt MAKE 1
 .Os
 .Sh NAME
@@ -883,10 +883,7 @@ into "compat" mode.
 Puts
 .Nm
 into "meta" mode, where meta files are created for each target
-to capture the command run, the output generated and if
-.Xr filemon 4
-is available, the system calls which are of interest to
-.Nm .
+to capture the command run.
 The captured output can be very useful when diagnosing errors.
 .It Pa curdirOk= Ar bf
 Normally
@@ -974,13 +971,6 @@ by appending their names to
 is re-exported whenever
 .Ql Va .MAKEOVERRIDES
 is modified.
-.It Va .MAKE.PATH_FILEMON
-If
-.Nm
-was built with
-.Xr filemon 4
-support, this is set to the path of the device node.
-This allows makefiles to test for this support.
 .It Va .MAKE.PID
 The process-id of
 .Nm .
