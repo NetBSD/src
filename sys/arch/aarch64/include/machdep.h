@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.8 2019/07/16 16:18:56 skrll Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9 2019/12/18 21:45:43 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -82,6 +82,9 @@ void uartputc(int);
 
 void parse_mi_bootargs(char *);
 void dumpsys(void);
+
+void cpu_startup_hook(void);
+void cpu_startup_default(void);
 
 struct trapframe;
 
