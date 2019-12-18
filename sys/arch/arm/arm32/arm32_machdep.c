@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.128 2019/05/10 16:43:09 skrll Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.129 2019/12/18 21:45:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.128 2019/05/10 16:43:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.129 2019/12/18 21:45:44 riastradh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -353,6 +353,14 @@ cpu_startup(void)
 #else
  	tf->tf_spsr = PSR_USR32_MODE;
 #endif
+
+	cpu_startup_hook();
+}
+
+__weak_alias(cpu_startup_hook,cpu_startup_default)
+void
+cpu_startup_default(void)
+{
 }
 
 /*
