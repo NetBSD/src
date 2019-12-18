@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1392 2019/11/27 03:45:54 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1393 2019/12/18 01:13:55 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1030,6 +1030,11 @@ product AMD F17_7X_IOMMU	0x1481	Family17h/7xh IOMMU
 product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
 product AMD F14_RC		0x1510	Family14h Root Complex
+product AMD F14_PCIE_1		0x1512	Family14h PCIe
+product AMD F14_PCIE_2		0x1513	Family14h PCIe
+product AMD F14_PCIE_3		0x1514	Family14h PCIe
+product AMD F14_PCIE_4		0x1515	Family14h PCIe
+product AMD F14_PCIE_5		0x1516	Family14h PCIe
 product AMD F16_HT		0x1530	Family16h HyperTransport Configuration
 product AMD F16_ADDR		0x1531	Family16h Address Map Configuration
 product AMD F16_DRAM		0x1532	Family16h DRAM Configuration
