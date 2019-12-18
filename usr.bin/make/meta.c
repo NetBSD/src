@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.71 2019/12/18 07:37:19 maxv Exp $ */
+/*      $NetBSD: meta.c,v 1.72 2019/12/18 10:30:23 martin Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -653,7 +653,7 @@ meta_cmd_finish(void *pbmp)
     if (!pbm)
 	pbm = &Mybm;
 
-	fprintf(pbm->mfp, "\n");	/* ensure end with newline */
+    fprintf(pbm->mfp, "\n");	/* ensure end with newline */
     return error;
 }
 
