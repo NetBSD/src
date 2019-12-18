@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_tlb.c,v 1.29 2019/12/17 13:25:50 skrll Exp $	*/
+/*	$NetBSD: pmap_tlb.c,v 1.30 2019/12/18 11:27:56 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.29 2019/12/17 13:25:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.30 2019/12/18 11:27:56 skrll Exp $");
 
 /*
  * Manages address spaces in a TLB.
@@ -127,12 +127,13 @@ __KERNEL_RCSID(0, "$NetBSD: pmap_tlb.c,v 1.29 2019/12/17 13:25:50 skrll Exp $");
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
-#include <sys/proc.h>
-#include <sys/mutex.h>
+
 #include <sys/atomic.h>
-#include <sys/kernel.h>			/* for cold */
 #include <sys/cpu.h>
+#include <sys/kernel.h>			/* for cold */
+#include <sys/mutex.h>
+#include <sys/proc.h>
+#include <sys/systm.h>
 
 #include <uvm/uvm.h>
 
