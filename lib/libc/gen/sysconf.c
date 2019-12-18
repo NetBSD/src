@@ -1,4 +1,4 @@
-/*	$NetBSD: sysconf.c,v 1.41 2016/08/04 06:43:43 christos Exp $	*/
+/*	$NetBSD: sysconf.c,v 1.41.16.1 2019/12/18 20:20:17 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)sysconf.c	8.2 (Berkeley) 3/20/94";
 #else
-__RCSID("$NetBSD: sysconf.c,v 1.41 2016/08/04 06:43:43 christos Exp $");
+__RCSID("$NetBSD: sysconf.c,v 1.41.16.1 2019/12/18 20:20:17 martin Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -422,7 +422,7 @@ yesno:		if (sysctl(mib, mib_len, &value, &len, NULL, 0) == -1)
 	case _SC_TIMER_MAX:
 		return _POSIX_TIMER_MAX;
 	case _SC_SEM_NSEMS_MAX:
-		return _POSIX_SEM_NSEMS_MAX;
+		return LONG_MAX;
 	case _SC_CPUTIME:
 		return _POSIX_CPUTIME;
 	case _SC_THREAD_CPUTIME:
