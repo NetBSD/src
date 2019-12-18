@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.144 2019/12/17 16:14:25 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.145 2019/12/18 20:21:11 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7190,4 +7190,68 @@ sys/net/if.c					1.466
 
 	Protect network ioctls from non-authorized users.
 	[christos, ticket #569]
+
+sys/arch/amigappc/include/intr.h		1.27
+sys/arch/arm/at91/at91dbgu.c			1.17
+sys/arch/emips/ebus/ace_ebus.c			1.22
+sys/arch/emips/ebus/flash_ebus.c		1.22
+sys/arch/emips/emips/bus_space.c		1.3
+sys/arch/emips/include/loadfile_machdep.h	1.3
+sys/arch/emips/stand/common/bootinfo.c		1.2
+sys/arch/emips/stand/common/bootinfo.h		1.2
+sys/arch/emips/stand/common/bootxx.c		1.2
+sys/arch/emips/stand/common/prom_iface.c	1.7
+sys/arch/hpc/stand/hpcboot/arm/arm_pxa2x0_asm.asm 1.2
+sys/arch/hpc/stand/hpcboot/arm/arm_sa1100_asm.asm 1.2
+sys/arch/hpcarm/include/kloader.h		1.3
+sys/arch/ia64/ia64/bus_space.c			1.2
+sys/arch/ia64/include/bus.h			1.4
+sys/arch/mips/cavium/octeon_dma.c		1.3
+sys/arch/x68k/dev/intiovar.h			1.15
+sys/arch/x68k/dev/mfp.c				1.27
+sys/arch/zaurus/include/kloader.h		1.3
+sys/compat/common/kern_time_30.c		1.8
+sys/compat/common/sysv_msg_50.c			1.5
+sys/compat/common/sysv_sem_50.c			1.5
+sys/compat/common/sysv_shm_50.c			1.5
+sys/compat/common/uipc_syscalls_50.c		1.10
+sys/compat/common/vfs_syscalls_50.c		1.24
+sys/compat/net/if.h				1.5
+sys/compat/netbsd32/netbsd32_compat_16.c	1.3
+sys/compat/netbsd32/netbsd32_compat_50.c	1.43
+sys/compat/netbsd32/netbsd32_compat_50_sysv.c	1.3
+sys/compat/netbsd32/netbsd32_compat_60.c	1.5
+sys/compat/netinet6/in6_var.h			1.5
+sys/compat/ultrix/ultrix_exec.h			1.7
+sys/dev/ic/adv.c				1.50
+sys/dev/ic/adv.h				1.15
+sys/dev/ic/advlib.c				1.29
+sys/dev/ic/advlib.h				1.21
+sys/dev/ic/advmcode.c				1.10
+sys/dev/ic/advmcode.h				1.7
+sys/dev/ic/adw.c				1.56
+sys/dev/ic/adw.h				1.15
+sys/dev/ic/adwlib.c				1.44
+sys/dev/ic/adwlib.h				1.23
+sys/dev/ic/adwmcode.c				1.18
+sys/dev/ic/adwmcode.h				1.12
+sys/dev/raidframe/rf_compat50.c			1.13
+sys/dev/raidframe/rf_compat50.h			1.6
+sys/dev/usb/uberry.c				1.16
+sys/dev/usb/uipad.c				1.8
+
+	Remove clause 3 and 4 from TNF licenses.
+	[tsutsui, ticket #570]
+
+lib/libpthread/pthread_int.h			1.97
+
+	Bump PTHREAD__UNPARK_MAX to 128 as bandaid for locking related hangs.
+	[joerg, ticket #571]
+
+lib/libc/gen/sysconf.c				1.43
+sys/kern/uipc_sem.c				1.56
+
+	PR 54619: Remove semaphore limit. Report no limit for getconf(3).
+	The ressource is naturally limited by the backing file descriptor.
+	[joerg, ticket #572]
 
