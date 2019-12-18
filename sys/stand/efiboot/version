@@ -1,4 +1,4 @@
-$NetBSD: version,v 1.13 2019/11/30 13:02:18 jmcneill Exp $
+$NetBSD: version,v 1.14 2019/12/18 21:46:03 riastradh Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE EFI BOOTLOADER HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
@@ -17,3 +17,4 @@ is taken as the current.
 1.10:	Add support for EFI GOP framebuffers in ACPI mode.
 1.11:	Add full UEFI memory map to /chosen node.
 1.12:	Derive ACPI model string from SMBIOS.
+1.13:	Add rndseed support.
