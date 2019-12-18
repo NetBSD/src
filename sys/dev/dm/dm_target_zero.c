@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.27 2019/12/16 14:26:23 tkusumi Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.28 2019/12/18 14:31:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.27 2019/12/16 14:26:23 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.28 2019/12/18 14:31:35 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -103,6 +103,11 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 int
 dm_target_zero_init(dm_table_entry_t *table_en, int argc, char **argv)
 {
+
+	if (argc != 0) {
+		printf("Zero target takes 0 args, %d given\n", argc);
+		return EINVAL;
+	}
 
 	printf("Zero target init function called!!\n");
 

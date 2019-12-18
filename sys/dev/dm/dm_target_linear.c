@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.32 2019/12/15 16:14:27 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.33 2019/12/18 14:31:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.32 2019/12/15 16:14:27 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.33 2019/12/18 14:31:35 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -59,12 +59,10 @@ dm_target_linear_init(dm_table_entry_t *table_en, int argc, char **argv)
 	dm_target_linear_config_t *tlc;
 	dm_pdev_t *dmp;
 
-	/*
 	if (argc != 2) {
-		printf("Linear target takes 2 args\n");
+		printf("Linear target takes 2 args, %d given\n", argc);
 		return EINVAL;
 	}
-	*/
 
 	aprint_debug("Linear target init function called %s--%s!!\n",
 	    argv[0], argv[1]);
