@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.96 2019/12/16 20:45:40 uwe Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.97 2019/12/18 15:11:57 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
 #define	PTHREAD_HIDE	/* nothing */
 #endif
 
-#define	PTHREAD__UNPARK_MAX	32
+#define	PTHREAD__UNPARK_MAX	128
 
 /*
  * The size of this structure needs to be no larger than struct
