@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.44 2019/10/20 08:29:38 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.45 2019/12/18 10:55:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2019/10/20 08:29:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.45 2019/12/18 10:55:50 skrll Exp $");
 
 /*
  *	Manages physical address maps.
@@ -102,14 +102,12 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.44 2019/10/20 08:29:38 skrll Exp $");
 #define __PMAP_PRIVATE
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
 #include <sys/buf.h>
 #include <sys/cpu.h>
 #include <sys/mutex.h>
 #include <sys/pool.h>
-#include <sys/atomic.h>
-#include <sys/mutex.h>
-#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_physseg.h>
