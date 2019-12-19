@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.76 2019/11/10 21:16:38 chs Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.77 2019/12/19 15:27:07 jakllsch Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.76 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.77 2019/12/19 15:27:07 jakllsch Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -542,6 +542,9 @@ ieee80211_match_bss(struct ieee80211com *ic, struct ieee80211_node *ni)
 
 	if (ni->ni_fails >= STA_FAILS_MAX)
 		fail |= 0x40;
+
+	if (ic->ic_des_esslen == 0)
+		fail |= 0x80;
 
 #ifdef IEEE80211_DEBUG
 	if (ieee80211_msg_scan(ic)) {
