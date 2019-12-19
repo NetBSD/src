@@ -1,4 +1,4 @@
-/*	$NetBSD: compat.c,v 1.108 2019/12/18 07:37:19 maxv Exp $	*/
+/*	$NetBSD: compat.c,v 1.109 2019/12/19 07:14:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: compat.c,v 1.108 2019/12/18 07:37:19 maxv Exp $";
+static char rcsid[] = "$NetBSD: compat.c,v 1.109 2019/12/19 07:14:07 maxv Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)compat.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: compat.c,v 1.108 2019/12/18 07:37:19 maxv Exp $");
+__RCSID("$NetBSD: compat.c,v 1.109 2019/12/19 07:14:07 maxv Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -426,6 +426,11 @@ again:
 		status = WSTOPSIG(reason);		/* stopped */
 	    } else if (WIFEXITED(reason)) {
 		status = WEXITSTATUS(reason);		/* exited */
+#if defined(USE_META) && defined(USE_FILEMON_ONCE)
+		if (useMeta) {
+		    meta_cmd_finish(NULL);
+		}
+#endif
 		if (status != 0) {
 		    if (DEBUG(ERROR)) {
 		        fprintf(debug_file, "\n*** Failed target:  %s\n*** Failed command: ",

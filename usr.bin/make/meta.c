@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.72 2019/12/18 10:30:23 martin Exp $ */
+/*      $NetBSD: meta.c,v 1.73 2019/12/19 07:14:07 maxv Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -46,6 +46,13 @@
 #include "make.h"
 #include "job.h"
 
+#ifdef HAVE_FILEMON_H
+# include <filemon.h>
+#endif
+#if !defined(USE_FILEMON) && defined(FILEMON_SET_FD)
+# define USE_FILEMON
+#endif
+
 static BuildMon Mybm;			/* for compat */
 static Lst metaBailiwick;		/* our scope of control */
 static char *metaBailiwickStr;		/* string storage for the list */
@@ -90,6 +97,100 @@ extern char    **environ;
 
 #if !defined(HAVE_STRSEP)
 # define strsep(s, d) stresep((s), (d), 0)
+#endif
+
+/*
+ * Filemon is a kernel module which snoops certain syscalls.
+ *
+ * C chdir
+ * E exec
+ * F [v]fork
+ * L [sym]link
+ * M rename
+ * R read
+ * W write
+ * S stat
+ *
+ * See meta_oodate below - we mainly care about 'E' and 'R'.
+ *
+ * We can still use meta mode without filemon, but 
+ * the benefits are more limited.
+ */
+#ifdef USE_FILEMON
+# ifndef _PATH_FILEMON
+#   define _PATH_FILEMON "/dev/filemon"
+# endif
+
+/*
+ * Open the filemon device.
+ */
+static void
+filemon_open(BuildMon *pbm)
+{
+    int retry;
+    
+    pbm->mon_fd = pbm->filemon_fd = -1;
+    if (!useFilemon)
+	return;
+
+    for (retry = 5; retry >= 0; retry--) {
+	if ((pbm->filemon_fd = open(_PATH_FILEMON, O_RDWR)) >= 0)
+	    break;
+    }
+
+    if (pbm->filemon_fd < 0) {
+	useFilemon = FALSE;
+	warn("Could not open %s", _PATH_FILEMON);
+	return;
+    }
+
+    /*
+     * We use a file outside of '.'
+     * to avoid a FreeBSD kernel bug where unlink invalidates
+     * cwd causing getcwd to do a lot more work.
+     * We only care about the descriptor.
+     */
+    pbm->mon_fd = mkTempFile("filemon.XXXXXX", NULL);
+    if (ioctl(pbm->filemon_fd, FILEMON_SET_FD, &pbm->mon_fd) < 0) {
+	err(1, "Could not set filemon file descriptor!");
+    }
+    /* we don't need these once we exec */
+    (void)fcntl(pbm->mon_fd, F_SETFD, FD_CLOEXEC);
+    (void)fcntl(pbm->filemon_fd, F_SETFD, FD_CLOEXEC);
+}
+
+/*
+ * Read the build monitor output file and write records to the target's
+ * metadata file.
+ */
+static int
+filemon_read(FILE *mfp, int fd)
+{
+    char buf[BUFSIZ];
+    int n;
+    int error;
+
+    /* Check if we're not writing to a meta data file.*/
+    if (mfp == NULL) {
+	if (fd >= 0)
+	    close(fd);			/* not interested */
+	return 0;
+    }
+    /* rewind */
+    (void)lseek(fd, (off_t)0, SEEK_SET);
+
+    error = 0;
+    fprintf(mfp, "\n-- filemon acquired metadata --\n");
+
+    while ((n = read(fd, buf, sizeof(buf))) > 0) {
+	if ((int)fwrite(buf, 1, n, mfp) < n)
+	    error = EIO;
+    }
+    fflush(mfp);
+    if (close(fd) < 0)
+	error = errno;
+    return error;
+}
 #endif
 
 /*
@@ -467,6 +568,10 @@ boolValue(char *s)
 void
 meta_init(void)
 {
+#ifdef USE_FILEMON
+	/* this allows makefiles to test if we have filemon support */
+	Var_Set(".MAKE.PATH_FILEMON", _PATH_FILEMON, VAR_GLOBAL, 0);
+#endif
 }
 
 
@@ -568,6 +673,18 @@ meta_job_start(Job *job, GNode *gn)
 	pbm = &Mybm;
     }
     pbm->mfp = meta_create(pbm, gn);
+#ifdef USE_FILEMON_ONCE
+    /* compat mode we open the filemon dev once per command */
+    if (job == NULL)
+	return;
+#endif
+#ifdef USE_FILEMON
+    if (pbm->mfp != NULL && useFilemon) {
+	filemon_open(pbm);
+    } else {
+	pbm->mon_fd = pbm->filemon_fd = -1;
+    }
+#endif
 }
 
 /*
@@ -577,6 +694,26 @@ meta_job_start(Job *job, GNode *gn)
 void
 meta_job_child(Job *job)
 {
+#ifdef USE_FILEMON
+    BuildMon *pbm;
+
+    if (job != NULL) {
+	pbm = &job->bm;
+    } else {
+	pbm = &Mybm;
+    }
+    if (pbm->mfp != NULL) {
+	close(fileno(pbm->mfp));
+	if (useFilemon) {
+	    pid_t pid;
+
+	    pid = getpid();
+	    if (ioctl(pbm->filemon_fd, FILEMON_SET_PID, &pid) < 0) {
+		err(1, "Could not set filemon pid!");
+	    }
+	}
+    }
+#endif
 }
 
 void
@@ -649,11 +786,24 @@ meta_cmd_finish(void *pbmp)
 {
     int error = 0;
     BuildMon *pbm = pbmp;
+#ifdef USE_FILEMON
+    int x;
+#endif
 
     if (!pbm)
 	pbm = &Mybm;
 
-    fprintf(pbm->mfp, "\n");	/* ensure end with newline */
+#ifdef USE_FILEMON
+    if (pbm->filemon_fd >= 0) {
+	if (close(pbm->filemon_fd) < 0)
+	    error = errno;
+	x = filemon_read(pbm->mfp, pbm->mon_fd);
+	if (error == 0 && x != 0)
+	    error = x;
+	pbm->filemon_fd = pbm->mon_fd = -1;
+    } else
+#endif
+	fprintf(pbm->mfp, "\n");	/* ensure end with newline */
     return error;
 }
 
@@ -1442,6 +1592,18 @@ static int childPipe[2];
 void
 meta_compat_start(void)
 {
+#ifdef USE_FILEMON_ONCE
+    /*
+     * We need to re-open filemon for each cmd.
+     */
+    BuildMon *pbm = &Mybm;
+    
+    if (pbm->mfp != NULL && useFilemon) {
+	filemon_open(pbm);
+    } else {
+	pbm->mon_fd = pbm->filemon_fd = -1;
+    }
+#endif
     if (pipe(childPipe) < 0)
 	Punt("Cannot create pipe: %s", strerror(errno));
     /* Set close-on-exec flag for both */
