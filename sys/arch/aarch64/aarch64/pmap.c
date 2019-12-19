@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.55 2019/12/18 11:10:24 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.56 2019/12/19 07:44:56 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.55 2019/12/18 11:10:24 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2019/12/19 07:44:56 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1680,10 +1680,6 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 
 	opte = atomic_swap_64(ptep, 0);
 	need_sync_icache = (prot & VM_PROT_EXECUTE);
-
-	if (!user) {
-		kasan_shadow_map((void *)va, PAGE_SIZE);
-	}
 
 	/* for lock ordering for pg and opg */
 	pgs[0] = pg;
