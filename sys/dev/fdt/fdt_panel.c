@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_panel.c,v 1.1 2019/12/19 00:35:01 jakllsch Exp $ */
+/* $NetBSD: fdt_panel.c,v 1.2 2019/12/19 16:00:52 jakllsch Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.1 2019/12/19 00:35:01 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_panel.c,v 1.2 2019/12/19 16:00:52 jakllsch Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -144,6 +144,10 @@ panel_fdt_attach(device_t parent, device_t self, void *aux)
 
 	/* required for "simple-panel" */
         sc->sc_regulator = fdtbus_regulator_acquire(phandle, "power-supply");
+        if (sc->sc_regulator == NULL) {
+		aprint_error_dev(self, "regulator not found\n");
+		return;
+	}
 
 	/* optional for "simple-panel" */
 	sc->sc_enable = fdtbus_gpio_acquire_index(phandle,
