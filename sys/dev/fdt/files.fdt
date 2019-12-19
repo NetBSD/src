@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.48 2019/11/17 19:30:42 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.49 2019/12/19 00:35:01 jakllsch Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -44,6 +44,9 @@ file	dev/fdt/connector_fdt.c			fdt_connector
 device	panel: fdt_port
 attach	panel at fdt with fdt_panel
 file	dev/fdt/panel_fdt.c			fdt_panel
+
+attach	panel at fdt with panel_fdt: drmkms
+file	dev/fdt/fdt_panel.c			panel_fdt
 
 device	dispcon: fdt_port, drmkms, ddc_read_edid
 attach	dispcon at fdt with dispcon_hdmi
