@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.46 2019/12/15 14:39:42 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.47 2019/12/19 16:27:39 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.46 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.47 2019/12/19 16:27:39 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -103,23 +103,23 @@ static struct cfdata dm_cfdata = {
 	.cf_fstate = FSTATE_STAR,
 	.cf_unit = 0
 };
+
 #define DM_REMOVE_FLAG(flag, name) do {					\
-		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
-		flag &= ~name;						\
-		prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag); \
+	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag);	\
+	flag &= ~name;							\
+	prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag);	\
 } while (/*CONSTCOND*/0)
 
 #define DM_ADD_FLAG(flag, name) do {					\
-		prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag); \
-		flag |= name;						\
-		prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag); \
+	prop_dictionary_get_uint32(dm_dict,DM_IOCTL_FLAGS,&flag);	\
+	flag |= name;							\
+	prop_dictionary_set_uint32(dm_dict,DM_IOCTL_FLAGS,flag);	\
 } while (/*CONSTCOND*/0)
 
-static int dm_dbg_print_flags(uint32_t);
 static int dm_table_init(dm_target_t *, dm_table_entry_t *, char *);
 
 /*
- * Print flags sent to the kernel from libevmapper.
+ * Print flags sent to the kernel from libdevmapper.
  */
 static int
 dm_dbg_print_flags(uint32_t flags)
@@ -663,7 +663,6 @@ dm_table_deps_ioctl(prop_dictionary_t dm_dict)
  *
  * Load table to inactive slot table are switched in dm_device_resume_ioctl.
  * This simulates Linux behaviour better there should not be any difference.
- *
  */
 int
 dm_table_load_ioctl(prop_dictionary_t dm_dict)
@@ -967,7 +966,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 int
 dm_check_version(prop_dictionary_t dm_dict)
 {
-	size_t i;
+	int i;
 	uint32_t dm_version[3];
 	prop_array_t ver;
 
