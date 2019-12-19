@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_xcall.c,v 1.32 2019/12/01 20:56:39 riastradh Exp $	*/
+/*	$NetBSD: subr_xcall.c,v 1.33 2019/12/19 10:51:54 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007-2010, 2019 The NetBSD Foundation, Inc.
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.32 2019/12/01 20:56:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_xcall.c,v 1.33 2019/12/19 10:51:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -273,14 +273,12 @@ xc_broadcast(unsigned int flags, xcfunc_t func, void *arg1, void *arg2)
 	}
 }
 
-
 static void
 xc_nop(void *arg1, void *arg2)
 {
 
-    return;
+	return;
 }
-
 
 /*
  * xc_barrier:
@@ -295,7 +293,6 @@ xc_barrier(unsigned int flags)
 	where = xc_broadcast(flags, xc_nop, NULL, NULL);
 	xc_wait(where);
 }
-
 
 /*
  * xc_unicast:
