@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.33 2019/10/08 07:30:58 mlelstv Exp $	*/
+/*	$NetBSD: if_run.c,v 1.34 2019/12/19 15:17:30 gson Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.33 2019/10/08 07:30:58 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.34 2019/12/19 15:17:30 gson Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1070,7 +1070,7 @@ run_write_region_1(struct run_softc *sc, uint16_t reg, const uint8_t *buf,
 	USETW(req.wValue, 0);
 	USETW(req.wIndex, reg);
 	USETW(req.wLength, len);
-	return usbd_do_request(sc->sc_udev, &req, buf);
+	return usbd_do_request(sc->sc_udev, &req, __UNCONST(buf));
 #endif
 }
 
