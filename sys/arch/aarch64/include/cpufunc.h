@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.8 2019/11/22 05:21:19 mlelstv Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.9 2019/12/19 09:47:42 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -64,7 +64,6 @@ struct aarch64_cache_info {
 };
 
 #define MAX_CACHE_LEVEL	8		/* ARMv8 has maximum 8 level cache */
-extern struct aarch64_cache_info aarch64_cache_info[MAX_CACHE_LEVEL];
 extern u_int aarch64_cache_vindexsize;	/* cachesize/way (VIVT/VIPT) */
 extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
