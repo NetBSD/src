@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: ieee80211_crypto_tkip.c,v 1.16 2019/12/19 16:29:50 kamil Exp $	*/
 
 /*
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_crypto_tkip.c,v 1.10 2005/08/08 18:46:35 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.15 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_crypto_tkip.c,v 1.16 2019/12/19 16:29:50 kamil Exp $");
 #endif
 
 /*
@@ -231,7 +231,7 @@ tkip_enmic(struct ieee80211_key *k, struct mbuf *m, int force)
 static __inline uint64_t
 READ_6(uint8_t b0, uint8_t b1, uint8_t b2, uint8_t b3, uint8_t b4, uint8_t b5)
 {
-	uint32_t iv32 = (b0 << 0) | (b1 << 8) | (b2 << 16) | (b3 << 24);
+	uint32_t iv32 = (b0 << 0) | (b1 << 8) | (b2 << 16) | ((u32)b3 << 24);
 	uint16_t iv16 = (b4 << 0) | (b5 << 8);
 	return (((uint64_t)iv16) << 32) | iv32;
 }
@@ -733,7 +733,7 @@ do {				\
 
 static __inline u32 get_le32_split(u8 b0, u8 b1, u8 b2, u8 b3)
 {
-	return b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+	return b0 | (b1 << 8) | (b2 << 16) | ((u32)b3 << 24);
 }
 
 static __inline u32 get_le32(const u8 *p)
