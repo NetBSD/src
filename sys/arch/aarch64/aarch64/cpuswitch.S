@@ -269,6 +269,8 @@ ENTRY_NP(el1_trap_exit)
 	ldr	x0, [x0, #TF_X0]
 
 	eret
+	dsb nsh
+	isb
 END(el1_trap_exit)
 #ifdef DDB
 END(el1_trap)
@@ -340,6 +342,8 @@ ENTRY_NP(el0_trap_exit)
 
 	/* leave sp at l_md.md_utf, return back to EL0 user process */
 	eret
+	dsb nsh
+	isb
 END(el0_trap_exit)
 #ifdef DDB
 END(el0_trap)
