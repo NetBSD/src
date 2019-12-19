@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.117 2019/12/19 00:28:34 jakllsch Exp $
+#	$NetBSD: GENERIC64,v 1.118 2019/12/19 00:36:26 jakllsch Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -440,6 +440,7 @@ hdmicec*	at hdmicecbus?
 anxdp*		at fdt?			# Analogix-based (e)DP
 anxedp*		at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
+panel*		at fdt?			# Display panels
 dwhdmi* 	at fdt?			# Designware HDMI TX
 rkdrm*		at fdt? pass 5		# Rockchip DRM master
 rkfb*		at rkdrm?		# Rockchip DRM framebuffer
