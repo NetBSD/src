@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.55 2019/12/15 16:14:27 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.56 2019/12/19 15:34:54 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -66,8 +66,8 @@ static int dmdestroy(void);
 static void dm_doinit(void);
 
 static int dm_cmd_to_fun(prop_dictionary_t);
-static int disk_ioctl_switch(dev_t, u_long, void *);
-static int dm_ioctl_switch(u_long);
+static int disk_ioctl_switch(dev_t, unsigned long, void *);
+static int dm_ioctl_switch(unsigned long);
 static void dmminphys(struct buf *);
 
 /* CF attach/detach functions used for power management */
@@ -413,7 +413,7 @@ dm_cmd_to_fun(prop_dictionary_t dm_dict)
 
 /* Call apropriate ioctl handler function. */
 static int
-dm_ioctl_switch(u_long cmd)
+dm_ioctl_switch(unsigned long cmd)
 {
 
 	switch(cmd) {
@@ -433,7 +433,7 @@ dm_ioctl_switch(u_long cmd)
  * Check for disk specific ioctls.
  */
 static int
-disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
+disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 {
 	dm_dev_t *dmv;
 
@@ -504,9 +504,8 @@ disk_ioctl_switch(dev_t dev, u_long cmd, void *data)
 	}
 	case DIOCGSECTORSIZE:
 	{
-		u_int *valp = data;
 		uint64_t numsec;
-		unsigned int secsize;
+		unsigned int secsize, *valp = data;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
