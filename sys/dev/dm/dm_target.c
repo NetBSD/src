@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.33 2019/12/16 14:26:23 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.34 2019/12/19 15:34:54 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.33 2019/12/16 14:26:23 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.34 2019/12/19 15:34:54 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ dm_target_t *
 dm_target_autoload(const char *dm_target_name)
 {
 	char name[30];
-	u_int gen;
+	unsigned int gen;
 	dm_target_t *dmt;
 
 	snprintf(name, sizeof(name), "dm_target_%s", dm_target_name);
