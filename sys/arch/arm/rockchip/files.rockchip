@@ -1,4 +1,4 @@
-#	$NetBSD: files.rockchip,v 1.22 2019/11/16 13:24:03 jmcneill Exp $
+#	$NetBSD: files.rockchip,v 1.23 2019/12/19 00:25:58 jakllsch Exp $
 #
 # Configuration info for Rockchip family SoCs
 #
@@ -102,6 +102,10 @@ file	arch/arm/rockchip/rk_vop.c		rk_vop
 # HDMI TX (Designware based)
 attach	dwhdmi at fdt with rk_dwhdmi
 file	arch/arm/rockchip/rk_dwhdmi.c		rk_dwhdmi
+
+# DP/eDP (Analogix-based)
+attach	anxdp at fdt with rk_anxdp
+file	arch/arm/rockchip/rk_anxdp.c		rk_anxdp
 
 # I2S/PCM controller
 device	rki2s	
