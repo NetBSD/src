@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_ioreg.h,v 1.5 2019/10/28 06:26:19 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_ioreg.h,v 1.6 2019/12/19 17:24:45 kamil Exp $	*/
 /*	$OpenBSD: sdmmc_ioreg.h,v 1.4 2007/06/02 01:48:37 uwe Exp $	*/
 
 /*
@@ -39,7 +39,7 @@
 
 /* CMD53 arguments */
 #define SD_ARG_CMD53_READ		(0<<31)
-#define SD_ARG_CMD53_WRITE		(1<<31)
+#define SD_ARG_CMD53_WRITE		(1U<<31)
 #define SD_ARG_CMD53_FUNC_SHIFT		28
 #define SD_ARG_CMD53_FUNC_MASK		0x7
 #define SD_ARG_CMD53_BLOCK_MODE		(1<<27)
@@ -55,7 +55,7 @@
 #define MMC_R5(resp)			((resp)[0])
 
 /* SD R4 response (IO OCR) */
-#define SD_IO_OCR_MEM_READY		(1<<31)
+#define SD_IO_OCR_MEM_READY		(1U<<31)
 #define SD_IO_OCR_NUM_FUNCTIONS(ocr)	(((ocr) >> 28) & 0x7)
 #define SD_IO_OCR_MEM_PRESENT		(1<<27)
 #define SD_IO_OCR_MASK			0x00fffff0
