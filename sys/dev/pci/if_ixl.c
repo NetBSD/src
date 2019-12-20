@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.6 2019/12/20 01:18:53 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.7 2019/12/20 01:45:20 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1448,16 +1448,13 @@ ixl_add_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 	rv = ixl_add_macvlan(sc, addrlo, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
 
-	if (rv == IXL_AQ_RC_ENOSPC) {
+	if (rv == ENOSPC) {
 		ixl_del_all_multiaddr(sc);
 		SET(ifp->if_flags, IFF_ALLMULTI);
 		return 0;
 	}
 
-	if (rv != IXL_AQ_RC_OK)
-		return EIO;
-
-	return 0;
+	return rv;
 }
 
 static void
@@ -1489,7 +1486,7 @@ ixl_del_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 	    ETHER_NEXT_MULTI(step, enm)) {
 		rv = ixl_add_macvlan(sc, enm->enm_addrlo, 0,
 		    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
-		if (rv != IXL_AQ_RC_OK)
+		if (rv != 0)
 			break;
 	}
 
@@ -4180,7 +4177,24 @@ ixl_add_macvlan(struct ixl_softc *sc, const uint8_t *macaddr,
 		return IXL_AQ_RC_EINVAL;
 	}
 
-	return le16toh(iaq.iaq_retval);
+	switch (le16toh(iaq.iaq_retval)) {
+	case IXL_AQ_RC_OK:
+		break;
+	case IXL_AQ_RC_ENOSPC:
+		return ENOSPC;
+	case IXL_AQ_RC_ENOENT:
+		return ENOENT;
+	case IXL_AQ_RC_EACCES:
+		return EACCES;
+	case IXL_AQ_RC_EEXIST:
+		return EEXIST;
+	case IXL_AQ_RC_EINVAL:
+		return EINVAL;
+	default:
+		return EIO;
+	}
+
+	return 0;
 }
 
 static int
@@ -4210,10 +4224,23 @@ ixl_remove_macvlan(struct ixl_softc *sc, uint8_t *macaddr,
 	elem->vlan = htole16(vlan);
 
 	if (ixl_atq_poll(sc, &iaq, 250) != 0) {
-		return IXL_AQ_RC_EINVAL;
+		return EINVAL;
 	}
 
-	return le16toh(iaq.iaq_retval);
+	switch (le16toh(iaq.iaq_retval)) {
+	case IXL_AQ_RC_OK:
+		break;
+	case IXL_AQ_RC_ENOENT:
+		return ENOENT;
+	case IXL_AQ_RC_EACCES:
+		return EACCES;
+	case IXL_AQ_RC_EINVAL:
+		return EINVAL;
+	default:
+		return EIO;
+	}
+
+	return 0;
 }
 
 static int
@@ -4756,14 +4783,14 @@ ixl_set_macvlan(struct ixl_softc *sc)
 	/* remove default mac filter and replace it so we can see vlans */
 
 	error = ixl_remove_macvlan(sc, sc->sc_enaddr, 0, 0);
-	if (error != IXL_AQ_RC_OK) {
+	if (error != 0 && error != ENOENT) {
 		aprint_debug_dev(sc->sc_dev, "unable to remove macvlan\n");
 		rv = -1;
 	}
 
 	error = ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
 	    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
-	if (error != IXL_AQ_RC_OK && error != IXL_AQ_RC_ENOENT) {
+	if (error != 0 && error != ENOENT) {
 		aprint_debug_dev(sc->sc_dev,
 		    "unable to remove macvlan(IGNORE_VLAN)\n");
 		rv = -1;
@@ -4771,14 +4798,14 @@ ixl_set_macvlan(struct ixl_softc *sc)
 
 	error = ixl_add_macvlan(sc, sc->sc_enaddr, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
-	if (error != IXL_AQ_RC_OK) {
+	if (error != 0) {
 		aprint_debug_dev(sc->sc_dev, "unable to add mac address\n");
 		rv = -1;
 	}
 
 	error = ixl_add_macvlan(sc, etherbroadcastaddr, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
-	if (error != IXL_AQ_RC_OK) {
+	if (error != 0) {
 		aprint_debug_dev(sc->sc_dev,
 		    "unable to add broadcast mac address\n");
 		rv = -1;
