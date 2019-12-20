@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.86 2019/12/18 19:40:34 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.87 2019/12/20 21:05:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.86 2019/12/18 19:40:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.87 2019/12/20 21:05:34 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -600,7 +600,8 @@ cpu_softintr_p(void)
  * called early during boot, so we need to be careful what we do.
  */
 void
-cpu_topology_set(struct cpu_info *ci, int package_id, int core_id, int smt_id)
+cpu_topology_set(struct cpu_info *ci, u_int package_id, u_int core_id,
+    u_int smt_id, u_int numa_id)
 {
 	enum cpu_rel rel;
 
@@ -608,6 +609,7 @@ cpu_topology_set(struct cpu_info *ci, int package_id, int core_id, int smt_id)
 	ci->ci_package_id = package_id;
 	ci->ci_core_id = core_id;
 	ci->ci_smt_id = smt_id;
+	ci->ci_numa_id = numa_id;
 	for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 		ci->ci_sibling[rel] = ci;
 		ci->ci_nsibling[rel] = 1;
@@ -635,47 +637,21 @@ cpu_topology_link(struct cpu_info *ci, struct cpu_info *ci2, enum cpu_rel rel)
 }
 
 /*
- * Find peer CPUs in other packages.
- */
-static void
-cpu_topology_peers(void)
-{
-	CPU_INFO_ITERATOR cii, cii2;
-	struct cpu_info *ci, *ci2;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_nsibling[CPUREL_PEER] > 1) {
-			/* Already linked. */
-			continue;
-		}
-		for (CPU_INFO_FOREACH(cii2, ci2)) {
-			if (ci != ci2 &&
-			    ci->ci_package_id != ci2->ci_package_id &&
-			    ci->ci_core_id == ci2->ci_core_id &&
-			    ci->ci_smt_id == ci2->ci_smt_id) {
-				cpu_topology_link(ci, ci2, CPUREL_PEER);
-				break;
-			}
-		}
-	}
-}
-
-/*
  * Print out the topology lists.
  */
 static void
-cpu_topology_print(void)
+cpu_topology_dump(void)
 {
-#ifdef DEBUG
+#if DEBUG 
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *ci2;
-	const char *names[] = { "core", "package", "peer" };
+	const char *names[] = { "core", "package", "peer", "smt" };
 	enum cpu_rel rel;
 	int i;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
-			printf("%s has %dx %s siblings: ", cpu_name(ci),
+			printf("%s has %d %s siblings:", cpu_name(ci),
 			    ci->ci_nsibling[rel], names[rel]);
 			ci2 = ci->ci_sibling[rel];
 			i = 0;
@@ -712,8 +688,10 @@ cpu_topology_fake(void)
 		if (!cpu_topology_present) {
 			ci->ci_package_id = cpu_index(ci);
 		}
+		ci->ci_smt_primary = ci;
+		ci->ci_schedstate.spc_flags |= SPCF_SMTPRIMARY;
 	}
-	cpu_topology_print();
+	cpu_topology_dump();
 }
 
 /*
@@ -724,8 +702,8 @@ void
 cpu_topology_init(void)
 {
 	CPU_INFO_ITERATOR cii, cii2;
-	struct cpu_info *ci, *ci2;
-	int ncore, npackage, npeer;
+	struct cpu_info *ci, *ci2, *ci3;
+	u_int ncore, npackage, npeer, minsmt;
 	bool symmetric;
 
 	if (!cpu_topology_present) {
@@ -766,8 +744,33 @@ cpu_topology_init(void)
 		}
 	}
 
-	/* Find peers in other packages. */
-	cpu_topology_peers();
+	/* Find peers in other packages, and peer SMTs in same package. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (ci->ci_nsibling[CPUREL_PEER] <= 1) {
+			for (CPU_INFO_FOREACH(cii2, ci2)) {
+				if (ci != ci2 &&
+				    ci->ci_package_id != ci2->ci_package_id &&
+				    ci->ci_core_id == ci2->ci_core_id &&
+				    ci->ci_smt_id == ci2->ci_smt_id) {
+					cpu_topology_link(ci, ci2,
+					    CPUREL_PEER);
+					break;
+				}
+			}
+		}
+		if (ci->ci_nsibling[CPUREL_SMT] <= 1) {
+			for (CPU_INFO_FOREACH(cii2, ci2)) {
+				if (ci != ci2 &&
+				    ci->ci_package_id == ci2->ci_package_id &&
+				    ci->ci_core_id != ci2->ci_core_id &&
+				    ci->ci_smt_id == ci2->ci_smt_id) {
+					cpu_topology_link(ci, ci2,
+					    CPUREL_SMT);
+					break;
+				}
+			}
+		}
+	}
 
 	/* Determine whether the topology is bogus/symmetric. */
 	npackage = curcpu()->ci_nsibling[CPUREL_PACKAGE];
@@ -781,11 +784,47 @@ cpu_topology_init(void)
 			symmetric = false;
 		}
 	}
-	cpu_topology_print();
+	cpu_topology_dump();
 	if (symmetric == false) {
 		printf("cpu_topology_init: not symmetric, faking it\n");
 		cpu_topology_fake();
+		return;
 	}
+
+	/* Identify SMT primary in each core. */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci2 = ci3 = ci;
+		minsmt = ci->ci_smt_id;
+		do {
+			if (ci2->ci_smt_id < minsmt) {
+				ci3 = ci2;
+				minsmt = ci2->ci_smt_id;
+			}
+			ci2 = ci2->ci_sibling[CPUREL_CORE];
+		} while (ci2 != ci);
+
+		/*
+		 * Mark the SMT primary, and walk back over the list
+		 * pointing secondaries to the primary.
+		 */
+		ci3->ci_schedstate.spc_flags |= SPCF_SMTPRIMARY;
+		ci2 = ci;
+		do {
+			ci2->ci_smt_primary = ci3;
+			ci2 = ci2->ci_sibling[CPUREL_CORE];
+		} while (ci2 != ci);
+	}
+}
+
+/*
+ * Print basic topology info.
+ */
+void
+cpu_topology_print(struct cpu_info *ci)
+{
+
+	aprint_normal_dev(ci->ci_dev, "numa %u, package %u, core %u, smt %u\n",
+	    ci->ci_numa_id, ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
 }
 
 #ifdef CPU_UCODE

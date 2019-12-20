@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.15 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.16 2019/12/20 21:05:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.15 2019/12/02 23:22:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.16 2019/12/20 21:05:34 ad Exp $");
+
+#include "acpica.h"
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -44,9 +46,32 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.15 2019/12/02 23:22:43 ad Exp $")
 
 #include <machine/specialreg.h>
 
+#include <dev/acpi/acpi_srat.h>
+
 #include <x86/cpufunc.h>
 #include <x86/cputypes.h>
 #include <x86/cpuvar.h>
+
+static uint32_t
+x86_cpu_get_numa_node(uint32_t apic_id)
+{
+#if NACPICA > 0
+	uint32_t i, j, nn, nc;
+	struct acpisrat_cpu c;
+
+	nn = acpisrat_nodes();
+	for (i = 0; i < nn; i++) {
+		nc = acpisrat_node_cpus(i);
+		for (j = 0; j < nc; j++) {
+			acpisrat_cpu(i, j, &c);
+			if (c.apicid == apic_id) {
+				return c.nodeid;
+			}
+		}
+	}
+#endif
+	return 0;
+}
 
 void
 x86_cpu_topology(struct cpu_info *ci)
@@ -55,7 +80,7 @@ x86_cpu_topology(struct cpu_info *ci)
 	u_int core_max;		/* Core per package */
 	int n, cpu_family, apic_id, smt_bits, core_bits = 0;
 	uint32_t descs[4];
-	int package_id, core_id, smt_id;
+	u_int package_id, core_id, smt_id, numa_id;
 
 	apic_id = ci->ci_initapicid;
 	cpu_family = CPUID_TO_FAMILY(ci->ci_signature);
@@ -64,17 +89,20 @@ x86_cpu_topology(struct cpu_info *ci)
 	package_id = apic_id;
 	core_id = 0;
 	smt_id = 0;
+	numa_id = x86_cpu_get_numa_node(apic_id);
 
 	switch (cpu_vendor) {
 	case CPUVENDOR_INTEL:
 		if (cpu_family < 6) {
-			cpu_topology_set(ci, package_id, core_id, smt_id);
+			cpu_topology_set(ci, package_id, core_id, smt_id,
+			    numa_id);
 			return;
 		}
 		break;
 	case CPUVENDOR_AMD:
 		if (cpu_family < 0xf) {
-			cpu_topology_set(ci, package_id, core_id, smt_id);
+			cpu_topology_set(ci, package_id, core_id, smt_id,
+			    numa_id);
 			return;
 		}
 		break;
@@ -182,5 +210,5 @@ x86_cpu_topology(struct cpu_info *ci)
 		smt_id = __SHIFTOUT(apic_id, smt_mask);
 	}
 
-	cpu_topology_set(ci, package_id, core_id, smt_id);
+	cpu_topology_set(ci, package_id, core_id, smt_id, numa_id);
 }
