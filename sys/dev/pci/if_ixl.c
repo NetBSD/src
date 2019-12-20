@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.5 2019/12/20 01:12:51 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.6 2019/12/20 01:18:53 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2001,6 +2001,8 @@ ixl_queue_pairs_alloc(struct ixl_softc *sc)
 
 		qp->qp_si = softint_establish(SOFTINT_NET | SOFTINT_MPSAFE,
 		    ixl_handle_queue, qp);
+		if (qp->qp_si == NULL)
+			goto free;
 
 		qp->qp_txr = ixl_txr_alloc(sc, i);
 		if (qp->qp_txr == NULL)
@@ -2026,6 +2028,8 @@ free:
 				ixl_txr_free(sc, qp->qp_txr);
 			if (qp->qp_rxr != NULL)
 				ixl_rxr_free(sc, qp->qp_rxr);
+			if (qp->qp_si != NULL)
+				softint_disestablish(qp->qp_si);
 		}
 
 		sz = sizeof(sc->sc_qps[0]) * sc->sc_nqueue_pairs_max;
@@ -2047,6 +2051,7 @@ ixl_queue_pairs_free(struct ixl_softc *sc)
 		qp = &sc->sc_qps[i];
 		ixl_txr_free(sc, qp->qp_txr);
 		ixl_rxr_free(sc, qp->qp_rxr);
+		softint_disestablish(qp->qp_si);
 	}
 
 	sz = sizeof(sc->sc_qps[0]) * sc->sc_nqueue_pairs_max;
