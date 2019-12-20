@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.12 2019/09/15 07:13:37 skrll Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.13 2019/12/20 07:16:43 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.12 2019/09/15 07:13:37 skrll Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.13 2019/12/20 07:16:43 ryo Exp $")
 
 /*
  * At IPL_SCHED:
@@ -268,7 +268,7 @@ ENTRY_NP(el1_trap_exit)
 	ldp	x1, x2, [x0, #TF_X1]
 	ldr	x0, [x0, #TF_X0]
 
-	eret
+	ERET
 END(el1_trap_exit)
 #ifdef DDB
 END(el1_trap)
@@ -339,7 +339,7 @@ ENTRY_NP(el0_trap_exit)
 	unwind_x0_x2
 
 	/* leave sp at l_md.md_utf, return back to EL0 user process */
-	eret
+	ERET
 END(el0_trap_exit)
 #ifdef DDB
 END(el0_trap)
