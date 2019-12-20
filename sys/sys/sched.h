@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.80 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.81 2019/12/20 21:05:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
@@ -186,6 +186,7 @@ struct schedstate_percpu {
 #define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
 #define	SPCF_RUNNING		0x0008	/* CPU is running */
 #define	SPCF_NOINTR		0x0010	/* shielded from interrupts */
+#define	SPCF_SMTPRIMARY		0x0020	/* CPU is first thread in core */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 

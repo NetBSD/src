@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.178 2019/12/07 11:45:45 nonaka Exp $	*/
+/*	$NetBSD: cpu.c,v 1.179 2019/12/20 21:05:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.178 2019/12/07 11:45:45 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.179 2019/12/20 21:05:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -72,6 +72,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.178 2019/12/07 11:45:45 nonaka Exp $");
 
 #include "lapic.h"
 #include "ioapic.h"
+#include "acpica.h"
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -105,6 +106,10 @@ __KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.178 2019/12/07 11:45:45 nonaka Exp $");
 #include <machine/cpu_counter.h>
 
 #include <x86/fpu.h>
+
+#if NACPICA > 0
+#include <dev/acpi/acpi_srat.h>
+#endif
 
 #if NLAPIC > 0
 #include <machine/apicvar.h>
@@ -404,6 +409,10 @@ cpu_attach(device_t parent, device_t self, void *aux)
 		cpu_init_tss(ci);
 	} else {
 		KASSERT(ci->ci_data.cpu_idlelwp != NULL);
+#if NACPICA > 0
+		/* Parse out NUMA info for cpu_identify(). */
+		acpisrat_init();
+#endif
 	}
 
 #ifdef SVS
@@ -704,6 +713,11 @@ cpu_boot_secondary_processors(void)
 #ifndef XEN
 	/* Now that we know the number of CPUs, patch the text segment. */
 	x86_patch(false);
+#endif
+
+#if NACPICA > 0
+	/* Finished with NUMA info for now. */
+	acpisrat_exit();
 #endif
 
 	kcpuset_create(&cpus, true);
