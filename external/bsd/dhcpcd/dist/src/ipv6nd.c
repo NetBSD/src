@@ -652,7 +652,7 @@ ipv6nd_neighbour(struct dhcpcd_ctx *ctx, struct in6_addr *addr, bool reachable)
 			break;
 	}
 
-	if (rap == NULL || rap->expired || rap->reachable == reachable)
+	if (rap == NULL || rap->expired || rap->isreachable == reachable)
 		return;
 
 	rap->isreachable = reachable;

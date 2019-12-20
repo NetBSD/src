@@ -992,7 +992,7 @@ run_preinit(struct interface *ifp)
 		return;
 
 	script_runreason(ifp, "PREINIT");
-	if (ifp->wireless)
+	if (ifp->wireless && ifp->carrier == LINK_UP)
 		dhcpcd_reportssid(ifp);
 	if (ifp->options->options & DHCPCD_LINK && ifp->carrier != LINK_UNKNOWN)
 		script_runreason(ifp,
