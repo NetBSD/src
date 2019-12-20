@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.8 2019/12/20 01:49:30 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.9 2019/12/20 01:54:39 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3414,6 +3414,8 @@ ixl_atq_poll(struct ixl_softc *sc, struct ixl_aq_desc *iaq, unsigned int tm)
 	unsigned int prod;
 	unsigned int t = 0;
 
+	mutex_enter(&sc->sc_atq_lock);
+
 	atq = IXL_DMA_KVA(&sc->sc_atq);
 	prod = sc->sc_atq_prod;
 	slot = atq + prod;
@@ -3435,8 +3437,10 @@ ixl_atq_poll(struct ixl_softc *sc, struct ixl_aq_desc *iaq, unsigned int tm)
 	while (ixl_rd(sc, sc->sc_aq_regs->atq_head) != prod) {
 		delaymsec(1);
 
-		if (t++ > tm)
+		if (t++ > tm) {
+			mutex_exit(&sc->sc_atq_lock);
 			return ETIMEDOUT;
+		}
 	}
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
@@ -3447,6 +3451,8 @@ ixl_atq_poll(struct ixl_softc *sc, struct ixl_aq_desc *iaq, unsigned int tm)
 	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_PREREAD);
 
 	sc->sc_atq_cons = prod;
+
+	mutex_exit(&sc->sc_atq_lock);
 
 	return 0;
 }
@@ -4820,8 +4826,15 @@ ixl_set_macvlan(struct ixl_softc *sc)
 static int
 ixl_ifflags_cb(struct ethercom *ec)
 {
+	struct ifnet *ifp = &ec->ec_if;
+	struct ixl_softc *sc = ifp->if_softc;
+	int rv;
 
-	return 0;
+	mutex_enter(&sc->sc_cfg_lock);
+	rv = ixl_iff(sc);
+	mutex_exit(&sc->sc_cfg_lock);
+
+	return rv;
 }
 
 static int
