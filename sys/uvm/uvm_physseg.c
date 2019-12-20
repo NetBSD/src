@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.11 2019/12/13 20:10:22 ad Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.12 2019/12/20 19:03:17 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -1015,7 +1015,9 @@ uvm_physseg_set_avail_start(uvm_physseg_t upm, paddr_t avail_start)
 
 	ps->avail_start = avail_start;
 }
-void uvm_physseg_set_avail_end(uvm_physseg_t upm, paddr_t avail_end)
+
+void
+uvm_physseg_set_avail_end(uvm_physseg_t upm, paddr_t avail_end)
 {
 	struct uvm_physseg *ps = HANDLE_TO_PHYSSEG_NODE(upm);
 
