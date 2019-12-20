@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.17 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.18 2019/12/20 20:54:48 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.17 2019/12/15 21:11:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.18 2019/12/20 20:54:48 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -310,7 +310,8 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 				  (pg->flags & PG_CLEAN) == 0);
 			dirty += tdirty;
 		}
-		if (nonexistent >= pages_per_block) {
+		if ((pages_per_block > 0 && nonexistent >= pages_per_block) ||
+		    (pages_per_block == 0 && nonexistent > 0)) {
 			soff += MAX(PAGE_SIZE, lfs_sb_getbsize(fs));
 			continue;
 		}
@@ -755,9 +756,6 @@ retry:
 		KASSERT(mutex_owned(vp->v_interlock));
 		if (check_dirty(fs, vp, startoffset, endoffset, blkeof,
 				ap->a_flags, 0, &busypg) < 0) {
-			mutex_exit(vp->v_interlock);
-			/* XXX why? --ks */
-			mutex_enter(vp->v_interlock);
 			write_and_wait(fs, vp, busypg, seglocked, NULL);
 			if (!seglocked) {
 				mutex_exit(vp->v_interlock);
