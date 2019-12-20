@@ -413,7 +413,7 @@ const char * const dhcpcd_embedded_conf[] = {
 "define6 56 encap ntp_server",
 "encap 1 ip6address addr",
 "encap 2 ip6address mcast_addr",
-"encap 3 ip6address fqdn",
+"encap 3 domain fqdn",
 "define6 57 domain access_domain",
 "define6 58 array domain sip_ua_cs_list",
 "define6 59 string bootfile_url",
