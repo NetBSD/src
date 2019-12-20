@@ -1,4 +1,4 @@
-#	$NetBSD: sys.mk,v 1.139 2019/04/07 19:32:24 christos Exp $
+#	$NetBSD: sys.mk,v 1.140 2019/12/20 04:04:25 christos Exp $
 #	@(#)sys.mk	8.2 (Berkeley) 3/21/94
 #
 # This file contains the basic rules for make(1) and is read first
@@ -14,6 +14,7 @@ unix?=		We run NetBSD.
 AR?=		ar
 ARFLAGS?=	rl
 RANLIB?=	ranlib
+MV?=		mv -f
 
 AS?=		as
 AFLAGS?=
