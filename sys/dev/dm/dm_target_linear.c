@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.33 2019/12/18 14:31:35 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.34 2019/12/20 16:16:36 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.33 2019/12/18 14:31:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.34 2019/12/20 16:16:36 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -96,7 +96,7 @@ dm_target_linear_table(void *target_config)
 
 	params = kmem_alloc(DM_MAX_PARAMS_SIZE, KM_SLEEP);
 	snprintf(params, DM_MAX_PARAMS_SIZE, "%s %" PRIu64,
-	    tlc->pdev->name, tlc->offset);
+	    tlc->pdev->udev_name, tlc->offset);
 
 	return params;
 }

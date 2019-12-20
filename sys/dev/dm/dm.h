@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.48 2019/12/16 15:59:04 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.49 2019/12/20 16:16:36 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ typedef struct dm_table_head {
  */
 typedef struct dm_pdev {
 	char name[MAX_DEV_NAME];
+	char udev_name[MAX_DEV_NAME];
 
 	struct vnode *pdev_vnode;
 	uint64_t pdev_numsec;
