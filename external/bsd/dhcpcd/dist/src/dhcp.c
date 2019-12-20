@@ -176,6 +176,11 @@ get_option(struct dhcpcd_ctx *ctx,
 	const uint8_t *op;
 	size_t bl;
 
+	if (bootp == NULL || bootp_len < DHCP_MIN_LEN) {
+		errno = EINVAL;
+		return NULL;
+	}
+
 	/* Check we have the magic cookie */
 	if (!IS_DHCP(bootp)) {
 		errno = ENOTSUP;
@@ -484,7 +489,7 @@ print_rfc3361(FILE *fp, const uint8_t *data, size_t dl)
 			return -1;
 		break;
 	case 1:
-		if (dl == 0 || dl % 4 != 0) {
+		if (dl % 4 != 0) {
 			errno = EINVAL;
 			break;
 		}
@@ -1179,7 +1184,7 @@ read_lease(struct interface *ifp, struct bootp **bootp)
 	 * (it should be more, and our read packet enforces this so this
 	 * code should not be needed, but of course people could
 	 * scribble whatever in the stored lease file. */
-	if (bytes < offsetof(struct bootp, vend) + 4) {
+	if (bytes < DHCP_MIN_LEN) {
 		free(lease);
 		logerrx("%s: %s: truncated lease", ifp->name, __func__);
 		return 0;
@@ -1540,7 +1545,7 @@ dhcp_close(struct interface *ifp)
 }
 
 static int
-dhcp_openudp(struct interface *ifp)
+dhcp_openudp(struct in_addr *ia)
 {
 	int s;
 	struct sockaddr_in sin;
@@ -1551,29 +1556,25 @@ dhcp_openudp(struct interface *ifp)
 
 	n = 1;
 	if (setsockopt(s, SOL_SOCKET, SO_REUSEADDR, &n, sizeof(n)) == -1)
-		goto eexit;
+		goto errexit;
 #ifdef IP_RECVIF
 	if (setsockopt(s, IPPROTO_IP, IP_RECVIF, &n, sizeof(n)) == -1)
-		goto eexit;
+		goto errexit;
 #else
 	if (setsockopt(s, IPPROTO_IP, IP_RECVPKTINFO, &n, sizeof(n)) == -1)
-		goto eexit;
+		goto errexit;
 #endif
 	memset(&sin, 0, sizeof(sin));
 	sin.sin_family = AF_INET;
 	sin.sin_port = htons(BOOTPC);
-	if (ifp) {
-		const struct dhcp_state *state = D_CSTATE(ifp);
-
-		if (state->addr)
-			sin.sin_addr.s_addr = state->addr->addr.s_addr;
-	}
+	if (ia != NULL)
+		sin.sin_addr = *ia;
 	if (bind(s, (struct sockaddr *)&sin, sizeof(sin)) == -1)
-		goto eexit;
+		goto errexit;
 
 	return s;
 
-eexit:
+errexit:
 	close(s);
 	return -1;
 }
@@ -1675,7 +1676,7 @@ dhcp_sendudp(struct interface *ifp, struct in_addr *to, void *data, size_t len)
 
 	fd = state->udp_fd;
 	if (fd == -1) {
-		fd = dhcp_openudp(ifp);
+		fd = dhcp_openudp(state->addr != NULL ?&state->addr->addr:NULL);
 		if (fd == -1)
 			return -1;
 	}
@@ -1734,7 +1735,9 @@ send_message(struct interface *ifp, uint8_t type,
 		goto fail;
 	len = (size_t)r;
 
-	if (ipv4_iffindaddr(ifp, &state->lease.addr, NULL) != NULL)
+	if (!(state->added & STATE_FAKE) &&
+	    state->addr != NULL &&
+	    ipv4_iffindaddr(ifp, &state->lease.addr, NULL) != NULL)
 		from.s_addr = state->lease.addr.s_addr;
 	else
 		from.s_addr = INADDR_ANY;
@@ -1751,7 +1754,7 @@ send_message(struct interface *ifp, uint8_t type,
 	 * even if they are setup to send them.
 	 * Broadcasting from UDP is only an optimisation for rebinding
 	 * and on BSD, at least, is reliant on the subnet route being
-	 * correctly configured to recieve the unicast reply.
+	 * correctly configured to receive the unicast reply.
 	 * As such, we always broadcast and receive the reply to it via BPF.
 	 * This also guarantees we have a DHCP server attached to the
 	 * interface we want to configure because we can't dictate the
@@ -2266,10 +2269,11 @@ dhcp_bind(struct interface *ifp)
 		return;
 	dhcp_close(ifp);
 
+
 	/* If not in master mode, open an address specific socket. */
 	if (ctx->udp_fd != -1)
 		return;
-	state->udp_fd = dhcp_openudp(ifp);
+	state->udp_fd = dhcp_openudp(&state->addr->addr);
 	if (state->udp_fd == -1) {
 		logerr(__func__);
 		/* Address sharing without master mode is not supported.
@@ -2352,6 +2356,7 @@ dhcp_arp_new(struct interface *ifp, struct in_addr *addr)
 #ifdef KERNEL_RFC5227
 	astate->announced_cb = dhcp_arp_announced;
 #else
+	astate->announced_cb = NULL;
 	astate->defend_failed_cb = dhcp_arp_defend_failed;
 #endif
 	return astate;
@@ -2501,7 +2506,7 @@ dhcp_inform(struct interface *ifp)
 			state->offer_len = dhcp_message_new(&state->offer,
 			    &ifo->req_addr, &ifo->req_mask);
 #ifdef ARP
-			if (dhcp_arp_address(ifp) == 0)
+			if (dhcp_arp_address(ifp) != 1)
 				return;
 #endif
 			ia = ipv4_iffindaddr(ifp,
@@ -3390,7 +3395,7 @@ dhcp_handlebootp(struct interface *ifp, struct bootp *bootp, size_t len,
 }
 
 static void
-dhcp_handlebpf(struct interface *ifp, uint8_t *data, size_t len)
+dhcp_packet(struct interface *ifp, uint8_t *data, size_t len)
 {
 	struct bootp *bootp;
 	struct in_addr from;
@@ -3445,7 +3450,7 @@ dhcp_readbpf(void *arg)
 			}
 			break;
 		}
-		dhcp_handlebpf(ifp, buf, (size_t)bytes);
+		dhcp_packet(ifp, buf, (size_t)bytes);
 		/* Check we still have a state after processing. */
 		if ((state = D_STATE(ifp)) == NULL)
 			break;
