@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.7 2019/12/20 01:45:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.8 2019/12/20 01:49:30 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1442,7 +1442,7 @@ ixl_add_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 	if (memcmp(addrlo, addrhi, ETHER_ADDR_LEN) != 0) {
 		ixl_del_all_multiaddr(sc);
 		SET(ifp->if_flags, IFF_ALLMULTI);
-		return 0;
+		return ENETRESET;
 	}
 
 	rv = ixl_add_macvlan(sc, addrlo, 0,
@@ -1451,25 +1451,25 @@ ixl_add_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 	if (rv == ENOSPC) {
 		ixl_del_all_multiaddr(sc);
 		SET(ifp->if_flags, IFF_ALLMULTI);
-		return 0;
+		return ENETRESET;
 	}
 
 	return rv;
 }
 
-static void
+static int
 ixl_del_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct ethercom *ec = &sc->sc_ec;
 	struct ether_multi *enm, *enm_last;
 	struct ether_multistep step;
-	int rv;
+	int error, rv = 0;
 
 	if (!ISSET(ifp->if_flags, IFF_ALLMULTI)) {
 		ixl_remove_macvlan(sc, addrlo, 0,
 		    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
-		return;
+		return 0;
 	}
 
 	ETHER_LOCK(ec);
@@ -1477,16 +1477,15 @@ ixl_del_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 	    ETHER_NEXT_MULTI(step, enm)) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0) {
-			ETHER_UNLOCK(ec);
-			return;
+			goto out;
 		}
 	}
 
 	for (ETHER_FIRST_MULTI(step, ec, enm); enm != NULL;
 	    ETHER_NEXT_MULTI(step, enm)) {
-		rv = ixl_add_macvlan(sc, enm->enm_addrlo, 0,
+		error = ixl_add_macvlan(sc, enm->enm_addrlo, 0,
 		    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
-		if (rv != 0)
+		if (error != 0)
 			break;
 	}
 
@@ -1502,9 +1501,12 @@ ixl_del_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 		}
 	} else {
 		CLR(ifp->if_flags, IFF_ALLMULTI);
+		rv = ENETRESET;
 	}
 
+out:
 	ETHER_UNLOCK(ec);
+	return rv;
 }
 
 static int
@@ -1527,7 +1529,8 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if (error != 0)
 				return error;
 
-			if (ixl_add_multi(sc, addrlo, addrhi) != 0) {
+			error = ixl_add_multi(sc, addrlo, addrhi);
+			if (error != 0 && error != ENETRESET) {
 				ether_delmulti(sa, &sc->sc_ec);
 				error = EIO;
 			}
@@ -1541,7 +1544,7 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			if (error != 0)
 				return error;
 
-			ixl_del_multi(sc, addrlo, addrhi);
+			error = ixl_del_multi(sc, addrlo, addrhi);
 		}
 		break;
 
