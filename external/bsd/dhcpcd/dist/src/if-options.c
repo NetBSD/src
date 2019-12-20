@@ -393,8 +393,16 @@ parse_str(char *sbuf, size_t slen, const char *str, int flags)
 			str++;
 		}
 	}
-	if (flags == PARSE_STRING_NULL && sbuf)
-		*sbuf = '\0';
+	if (flags == PARSE_STRING_NULL) {
+		l++;
+		if (sbuf != NULL) {
+			if (l > slen) {
+				errno = ENOBUFS;
+				return -1;
+			}
+			*sbuf = '\0';
+		}
+	}
 	return (ssize_t)l;
 }
 
