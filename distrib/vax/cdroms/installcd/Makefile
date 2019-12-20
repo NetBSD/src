@@ -1,6 +1,7 @@
-#	$NetBSD: Makefile,v 1.18 2019/09/23 13:42:35 christos Exp $
+#	$NetBSD: Makefile,v 1.19 2019/12/20 19:46:51 martin Exp $
 CDBASE=		vaxcd			# gives ${CDBASE}.iso
 CDRELEASE=	true			# include $RELEASEDIR/$RELEASEMACHINEDIR
+CDDEV_POPULATE=	true			# populate /dev on the CD
 CDRELEASE_NODEBUG=	true
 CDKERNELS=	${RELEASEDIR}/${RELEASEMACHINEDIR}/binary/kernel/netbsd-GENERIC.gz	netbsd.gz
 CDRELEASE_NOISOS=true
