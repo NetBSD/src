@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.45 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.46 2019/12/20 21:05:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -90,8 +90,9 @@ bool	cpu_kpreempt_disabled(void);
 int	cpu_lwp_setprivate(struct lwp *, void *);
 void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
-void	cpu_topology_set(struct cpu_info *, int, int, int);
+void	cpu_topology_set(struct cpu_info *, u_int, u_int, u_int, u_int);
 void	cpu_topology_init(void);
+void	cpu_topology_print(struct cpu_info *);
 #endif
 
 #ifdef _KERNEL

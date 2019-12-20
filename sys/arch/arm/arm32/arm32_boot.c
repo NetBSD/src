@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.34 2019/12/02 23:22:43 ad Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.35 2019/12/20 21:05:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.34 2019/12/02 23:22:43 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.35 2019/12/20 21:05:33 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -361,11 +361,13 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 		cpu_topology_set(ci,
 		    __SHIFTOUT(mpidr, MPIDR_AFF2),
 		    __SHIFTOUT(mpidr, MPIDR_AFF1),
-		    __SHIFTOUT(mpidr, MPIDR_AFF0));
+		    __SHIFTOUT(mpidr, MPIDR_AFF0),
+		    0);
 	} else {
 		cpu_topology_set(ci,
 		    __SHIFTOUT(mpidr, MPIDR_AFF1),
 	            __SHIFTOUT(mpidr, MPIDR_AFF0),
+	            0,
 	            0);
 	}
 
