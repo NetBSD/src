@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.4 2019/12/11 10:03:08 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.5 2019/12/20 01:12:51 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -813,7 +813,7 @@ ixl_dmamem_hi(struct ixl_dmamem *ixm)
 	uint32_t retval;
 	uint64_t val;
 
-	if (sizeof(bus_addr_t) > 4) {
+	if (sizeof(IXL_DMA_DVA(ixm)) > 4) {
 		val = (intptr_t)IXL_DMA_DVA(ixm);
 		retval = (uint32_t)(val >> 32);
 	} else {
@@ -835,7 +835,7 @@ ixl_aq_dva(struct ixl_aq_desc *iaq, bus_addr_t addr)
 {
 	uint64_t val;
 
-	if (sizeof(bus_addr_t) > 4) {
+	if (sizeof(addr) > 4) {
 		val = (intptr_t)addr;
 		iaq->iaq_param[2] = htole32(val >> 32);
 	} else {
