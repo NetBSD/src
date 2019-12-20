@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.11 2019/12/20 02:12:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.12 2019/12/20 02:19:27 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -646,8 +646,8 @@ static int	ixl_set_link_status(struct ixl_softc *,
 static void	ixl_config_rss(struct ixl_softc *);
 static int	ixl_add_macvlan(struct ixl_softc *, const uint8_t *,
 		    uint16_t, uint16_t);
-static int	ixl_remove_macvlan(struct ixl_softc *, uint8_t *, uint16_t,
-		    uint16_t);
+static int	ixl_remove_macvlan(struct ixl_softc *, const uint8_t *,
+		    uint16_t, uint16_t);
 static void	ixl_arq(void *);
 static void	ixl_hmc_pack(void *, const void *,
 		    const struct ixl_hmc_pack *, unsigned int);
@@ -725,7 +725,10 @@ static const struct ixl_product *
 		ixl_lookup(const struct pci_attach_args *pa);
 static void	ixl_link_state_update(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
-static int	ixl_set_macvlan(struct ixl_softc *);
+static int	ixl_vlan_cb(struct ethercom *, uint16_t, bool);
+static int	ixl_setup_vlan_hwfilter(struct ixl_softc *);
+static void	ixl_teardown_vlan_hwfilter(struct ixl_softc *);
+static int	ixl_update_macvlan(struct ixl_softc *);
 static int	ixl_setup_interrupts(struct ixl_softc *);;
 static void	ixl_teardown_interrupts(struct ixl_softc *);
 static int	ixl_setup_stats(struct ixl_softc *);
@@ -1194,10 +1197,15 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
+	ether_set_vlan_cb(&sc->sc_ec, ixl_vlan_cb);
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
+	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 
 	sc->sc_ec.ec_capenable = sc->sc_ec.ec_capabilities;
+	/* Disable VLAN_HWFILTER by default */
+	CLR(sc->sc_ec.ec_capenable, ETHERCAP_VLAN_HWFILTER);
+
 	sc->sc_cur_ec_capenable = sc->sc_ec.ec_capenable;
 
 	sc->sc_ec.ec_ifmedia = &sc->sc_media;
@@ -1219,7 +1227,25 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ixl_config_other_intr(sc);
 	ixl_enable_other_intr(sc);
 
-	ixl_set_macvlan(sc);
+	/* remove default mac filter and replace it so we can see vlans */
+	rv = ixl_remove_macvlan(sc, sc->sc_enaddr, 0, 0);
+	if (rv != ENOENT) {
+		aprint_debug_dev(self,
+		    "unable to remove macvlan %u\n", rv);
+	}
+	rv = ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
+	    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
+	if (rv != ENOENT) {
+		aprint_debug_dev(self,
+		    "unable to remove macvlan, ignore vlan %u\n", rv);
+	}
+
+	if (ixl_update_macvlan(sc) != 0) {
+		aprint_debug_dev(self,
+		    "couldn't enable vlan hardware filter\n");
+		CLR(sc->sc_ec.ec_capenable, ETHERCAP_VLAN_HWFILTER);
+		CLR(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWFILTER);
+	}
 
 	sc->sc_txrx_workqueue = true;
 	sc->sc_tx_process_limit = IXL_TX_PROCESS_LIMIT;
@@ -1380,6 +1406,34 @@ ixl_workqs_teardown(device_t self)
 	return 0;
 }
 
+static int
+ixl_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct ixl_softc *sc = ifp->if_softc;
+	int rv;
+
+	if (!ISSET(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWFILTER)) {
+		return 0;
+	}
+
+	if (set) {
+		rv = ixl_add_macvlan(sc, sc->sc_enaddr, vid,
+		    IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH);
+		if (rv == 0) {
+			rv = ixl_add_macvlan(sc, etherbroadcastaddr,
+			    vid, IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH);
+		}
+	} else {
+		rv = ixl_remove_macvlan(sc, sc->sc_enaddr, vid,
+		    IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH);
+		(void)ixl_remove_macvlan(sc, etherbroadcastaddr, vid,
+		    IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH);
+	}
+
+	return rv;
+}
+
 static void
 ixl_media_add(struct ixl_softc *sc, uint64_t phy_types)
 {
@@ -1460,6 +1514,7 @@ ixl_add_multi(struct ixl_softc *sc, uint8_t *addrlo, uint8_t *addrhi)
 		return ENETRESET;
 	}
 
+	/* multicast address can not use VLAN HWFILTER */
 	rv = ixl_add_macvlan(sc, addrlo, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
 
@@ -1726,7 +1781,6 @@ ixl_reinit(struct ixl_softc *sc)
 	if (ixl_set_vsi(sc) != 0)
 		return EIO;
 
-
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
@@ -1751,7 +1805,6 @@ ixl_reinit(struct ixl_softc *sc)
 
 		ixl_wr(sc, txr->txr_tail, txr->txr_prod);
 		ixl_wr(sc, rxr->rxr_tail, rxr->rxr_prod);
-
 
 		/* ixl_rxfill() needs lock held */
 		mutex_enter(&rxr->rxr_lock);
@@ -1791,7 +1844,7 @@ ixl_init_locked(struct ixl_softc *sc)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	unsigned int i;
-	int error;
+	int error, eccap_change;
 
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
@@ -1802,7 +1855,18 @@ ixl_init_locked(struct ixl_softc *sc)
 		return ENXIO;
 	}
 
-	sc->sc_cur_ec_capenable = sc->sc_ec.ec_capenable;
+	eccap_change = sc->sc_ec.ec_capenable ^ sc->sc_cur_ec_capenable;
+	if (ISSET(eccap_change, ETHERCAP_VLAN_HWTAGGING))
+		sc->sc_cur_ec_capenable ^= ETHERCAP_VLAN_HWTAGGING;
+
+	if (ISSET(eccap_change, ETHERCAP_VLAN_HWFILTER)) {
+		if (ixl_update_macvlan(sc) == 0) {
+			sc->sc_cur_ec_capenable ^= ETHERCAP_VLAN_HWFILTER;
+		} else {
+			CLR(sc->sc_ec.ec_capenable, ETHERCAP_VLAN_HWFILTER);
+			CLR(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWFILTER);
+		}
+	}
 
 	if (sc->sc_intrtype != PCI_INTR_TYPE_MSIX)
 		sc->sc_nqueue_pairs = 1;
@@ -1856,6 +1920,7 @@ ixl_iff(struct ixl_softc *sc)
 	struct ixl_atq iatq;
 	struct ixl_aq_desc *iaq;
 	struct ixl_aq_vsi_promisc_param *param;
+	uint16_t flag_add, flag_del;
 	int error;
 
 	if (!ISSET(ifp->if_flags, IFF_RUNNING))
@@ -1867,8 +1932,14 @@ ixl_iff(struct ixl_softc *sc)
 	iaq->iaq_opcode = htole16(IXL_AQ_OP_SET_VSI_PROMISC);
 
 	param = (struct ixl_aq_vsi_promisc_param *)&iaq->iaq_param;
-	param->flags = htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST |
-	    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
+	param->flags = htole16(0);
+
+	if (!ISSET(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWFILTER)
+	    || ISSET(ifp->if_flags, IFF_PROMISC)) {
+		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_BCAST |
+		    IXL_AQ_VSI_PROMISC_FLAG_VLAN);
+	}
+
 	if (ISSET(ifp->if_flags, IFF_PROMISC)) {
 		param->flags |= htole16(IXL_AQ_VSI_PROMISC_FLAG_UCAST |
 		    IXL_AQ_VSI_PROMISC_FLAG_MCAST);
@@ -1888,12 +1959,18 @@ ixl_iff(struct ixl_softc *sc)
 		return EIO;
 
 	if (memcmp(sc->sc_enaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN) != 0) {
-		ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
-		    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
+		if (ISSET(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWFILTER)) {
+			flag_add = IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH;
+			flag_del = IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH;
+		} else {
+			flag_add = IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN;
+			flag_del = IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN;
+		}
+
+		ixl_remove_macvlan(sc, sc->sc_enaddr, 0, flag_del);
 
 		memcpy(sc->sc_enaddr, CLLADDR(ifp->if_sadl), ETHER_ADDR_LEN);
-		ixl_add_macvlan(sc, sc->sc_enaddr, 0,
-		    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+		ixl_add_macvlan(sc, sc->sc_enaddr, 0, flag_add);
 	}
 	return 0;
 }
@@ -3959,7 +4036,14 @@ ixl_get_vsi(struct ixl_softc *sc)
 		return ETIMEDOUT;
 	}
 
-	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
+	switch (le16toh(iaq.iaq_retval)) {
+	case IXL_AQ_RC_OK:
+		break;
+	case IXL_AQ_RC_ENOENT:
+		return ENOENT;
+	case IXL_AQ_RC_EACCES:
+		return EACCES;
+	default:
 		return EIO;
 	}
 
@@ -4027,7 +4111,14 @@ ixl_set_vsi(struct ixl_softc *sc)
 		return ETIMEDOUT;
 	}
 
-	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
+	switch (le16toh(iaq.iaq_retval)) {
+	case IXL_AQ_RC_OK:
+		break;
+	case IXL_AQ_RC_ENOENT:
+		return ENOENT;
+	case IXL_AQ_RC_EACCES:
+		return EACCES;
+	default:
 		return EIO;
 	}
 
@@ -4243,7 +4334,7 @@ ixl_add_macvlan(struct ixl_softc *sc, const uint8_t *macaddr,
 }
 
 static int
-ixl_remove_macvlan(struct ixl_softc *sc, uint8_t *macaddr,
+ixl_remove_macvlan(struct ixl_softc *sc, const uint8_t *macaddr,
     uint16_t vlan, uint16_t flags)
 {
 	struct ixl_aq_desc iaq;
@@ -4821,39 +4912,80 @@ ixl_dmamem_free(struct ixl_softc *sc, struct ixl_dmamem *ixm)
 }
 
 static int
-ixl_set_macvlan(struct ixl_softc *sc)
+ixl_setup_vlan_hwfilter(struct ixl_softc *sc)
 {
-	int	 error, rv = 0;
+	struct ethercom *ec = &sc->sc_ec;
+	struct vlanid_list *vlanidp;
+	int rv;
 
-	/* remove default mac filter and replace it so we can see vlans */
-
-	error = ixl_remove_macvlan(sc, sc->sc_enaddr, 0, 0);
-	if (error != 0 && error != ENOENT) {
-		aprint_debug_dev(sc->sc_dev, "unable to remove macvlan\n");
-		rv = -1;
-	}
-
-	error = ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
+	ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
 	    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
-	if (error != 0 && error != ENOENT) {
-		aprint_debug_dev(sc->sc_dev,
-		    "unable to remove macvlan(IGNORE_VLAN)\n");
-		rv = -1;
-	}
+	ixl_remove_macvlan(sc, etherbroadcastaddr, 0,
+	    IXL_AQ_OP_REMOVE_MACVLAN_IGNORE_VLAN);
 
-	error = ixl_add_macvlan(sc, sc->sc_enaddr, 0,
-	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
-	if (error != 0) {
-		aprint_debug_dev(sc->sc_dev, "unable to add mac address\n");
-		rv = -1;
-	}
+	rv = ixl_add_macvlan(sc, sc->sc_enaddr, 0,
+	    IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH);
+	if (rv != 0)
+		return rv;
+	rv = ixl_add_macvlan(sc, etherbroadcastaddr, 0,
+	    IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH);
+	if (rv != 0)
+		return rv;
 
-	error = ixl_add_macvlan(sc, etherbroadcastaddr, 0,
+	ETHER_LOCK(ec);
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
+		rv = ixl_add_macvlan(sc, sc->sc_enaddr,
+		    vlanidp->vid, IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH);
+		if (rv != 0)
+			break;
+		rv = ixl_add_macvlan(sc, etherbroadcastaddr,
+		    vlanidp->vid, IXL_AQ_OP_ADD_MACVLAN_PERFECT_MATCH);
+		if (rv != 0)
+			break;
+	}
+	ETHER_UNLOCK(ec);
+
+	return rv;
+}
+
+static void
+ixl_teardown_vlan_hwfilter(struct ixl_softc *sc)
+{
+	struct vlanid_list *vlanidp;
+	struct ethercom *ec = &sc->sc_ec;
+
+	ixl_remove_macvlan(sc, sc->sc_enaddr, 0,
+	    IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH);
+	ixl_remove_macvlan(sc, etherbroadcastaddr, 0,
+	    IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH);
+
+	ETHER_LOCK(ec);
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
+		ixl_remove_macvlan(sc, sc->sc_enaddr,
+		    vlanidp->vid, IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH);
+		ixl_remove_macvlan(sc, etherbroadcastaddr,
+		    vlanidp->vid, IXL_AQ_OP_REMOVE_MACVLAN_PERFECT_MATCH);
+	}
+	ETHER_UNLOCK(ec);
+
+	ixl_add_macvlan(sc, sc->sc_enaddr, 0,
 	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
-	if (error != 0) {
-		aprint_debug_dev(sc->sc_dev,
-		    "unable to add broadcast mac address\n");
-		rv = -1;
+	ixl_add_macvlan(sc, etherbroadcastaddr, 0,
+	    IXL_AQ_OP_ADD_MACVLAN_IGNORE_VLAN);
+}
+
+static int
+ixl_update_macvlan(struct ixl_softc *sc)
+{
+	int rv = 0;
+	int next_ec_capenable = sc->sc_ec.ec_capenable;
+
+	if (ISSET(next_ec_capenable, ETHERCAP_VLAN_HWFILTER)) {
+		rv = ixl_setup_vlan_hwfilter(sc);
+		if (rv != 0)
+			ixl_teardown_vlan_hwfilter(sc);
+	} else {
+		ixl_teardown_vlan_hwfilter(sc);
 	}
 
 	return rv;
@@ -4871,8 +5003,19 @@ ixl_ifflags_cb(struct ethercom *ec)
 	change = ec->ec_capenable ^ sc->sc_cur_ec_capenable;
 
 	if (ISSET(change, ETHERCAP_VLAN_HWTAGGING)) {
+		sc->sc_cur_ec_capenable ^= ETHERCAP_VLAN_HWTAGGING;
 		rv = ENETRESET;
 		goto out;
+	}
+
+	if (ISSET(change, ETHERCAP_VLAN_HWFILTER)) {
+		rv = ixl_update_macvlan(sc);
+		if (rv == 0) {
+			sc->sc_cur_ec_capenable ^= ETHERCAP_VLAN_HWFILTER;
+		} else {
+			CLR(ec->ec_capenable, ETHERCAP_VLAN_HWFILTER);
+			CLR(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWFILTER);
+		}
 	}
 
 	rv = ixl_iff(sc);
@@ -5495,8 +5638,6 @@ ixl_rx_ctl_read(struct ixl_softc *sc, uint32_t reg, uint32_t *rv)
 	*rv = htole32(iaq.iaq_param[3]);
 	return 0;
 }
-
-
 
 static uint32_t
 ixl_rd_rx_csr(struct ixl_softc *sc, uint32_t reg)
