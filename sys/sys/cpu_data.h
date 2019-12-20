@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.44 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.45 2019/12/20 21:05:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -116,6 +116,7 @@ enum cpu_rel {
 	CPUREL_CORE,	/* CPUs in the same core */
 	CPUREL_PACKAGE,	/* CPUs in the same package */
 	CPUREL_PEER,	/* peer CPUs in other packages */
+	CPUREL_SMT,	/* peer SMTs in same package */
 	CPUREL_COUNT
 };
 
@@ -133,11 +134,13 @@ struct cpu_data {
 	struct schedstate_percpu cpu_schedstate; /* scheduler state */
 
 	/* Basic topology information.  May be fake. */
-	cpuid_t		cpu_package_id;
-	cpuid_t		cpu_core_id;
-	cpuid_t		cpu_smt_id;
+	u_int		cpu_package_id;
+	u_int		cpu_core_id;
+	u_int		cpu_smt_id;
+	u_int		cpu_numa_id;
 	u_int		cpu_nsibling[CPUREL_COUNT];
 	struct cpu_info	*cpu_sibling[CPUREL_COUNT];
+	struct cpu_info	*cpu_smt_primary;
 
 	/*
 	 * This section is mostly CPU-private.
@@ -186,8 +189,10 @@ struct cpu_data {
 #define	ci_package_id		ci_data.cpu_package_id
 #define	ci_core_id		ci_data.cpu_core_id
 #define	ci_smt_id		ci_data.cpu_smt_id
+#define	ci_numa_id		ci_data.cpu_numa_id
 #define	ci_nsibling		ci_data.cpu_nsibling
 #define	ci_sibling		ci_data.cpu_sibling
+#define	ci_smt_primary		ci_data.cpu_smt_primary
 #define	ci_faultrng		ci_data.cpu_faultrng
 #define	ci_counts		ci_data.cpu_counts
 
