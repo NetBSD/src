@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.332 2019/12/16 20:59:39 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.333 2019/12/20 21:52:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.332 2019/12/16 20:59:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.333 2019/12/20 21:52:51 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -677,7 +677,7 @@ mi_switch(lwp_t *l)
 		lwp_unlock(l);
 
 		/* Count the context switch on this CPU. */
-		ci->ci_data.cpu_nswtch++;
+		CPU_COUNT(CPU_COUNT_NSWTCH, 1);
 
 		/* Update status for lwpctl, if present. */
 		if (l->l_lwpctl != NULL)
@@ -837,7 +837,7 @@ lwp_exit_switchaway(lwp_t *l)
 	spc_unlock(ci);
 
 	/* Count the context switch on this CPU. */
-	ci->ci_data.cpu_nswtch++;
+	CPU_COUNT(CPU_COUNT_NSWTCH, 1);
 
 	/* Update status for lwpctl, if present. */
 	if (l->l_lwpctl != NULL)
