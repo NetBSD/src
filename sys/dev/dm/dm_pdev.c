@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_pdev.c,v 1.21 2019/12/15 14:39:42 tkusumi Exp $      */
+/*        $NetBSD: dm_pdev.c,v 1.22 2019/12/20 16:16:36 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.21 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_pdev.c,v 1.22 2019/12/20 16:16:36 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -126,6 +126,10 @@ dm_pdev_insert(const char *dev_name)
 	}
 	getdisksize(dmp->pdev_vnode, &dmp->pdev_numsec, &dmp->pdev_secsize);
 	dmp->ref_cnt = 1;
+
+	snprintf(dmp->udev_name, sizeof(dmp->udev_name), "%d:%d",
+	    major(dmp->pdev_vnode->v_rdev), minor(dmp->pdev_vnode->v_rdev));
+	aprint_debug("%s: %s %s\n", __func__, dev_name, dmp->udev_name);
 
 	SLIST_INSERT_HEAD(&dm_pdev_list, dmp, next_pdev);
 	mutex_exit(&dm_pdev_mutex);

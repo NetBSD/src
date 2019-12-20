@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.40 2019/12/18 14:31:35 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.41 2019/12/20 16:16:36 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.40 2019/12/18 14:31:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.41 2019/12/20 16:16:36 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -197,7 +197,7 @@ dm_target_stripe_table(void *target_config)
 
 	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
 		snprintf(tmp, DM_MAX_PARAMS_SIZE, " %s %" PRIu64,
-		    tlc->pdev->name, tlc->offset);
+		    tlc->pdev->udev_name, tlc->offset);
 		strcat(params, tmp);
 	}
 
