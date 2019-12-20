@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.39 2019/12/12 22:55:20 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.40 2019/12/20 21:20:09 ad Exp $
 
 #
 # kernel sources
@@ -104,6 +104,7 @@ file	kern/subr_blist.c		vmswap
 file	kern/subr_bufq.c		kern
 file	kern/subr_callback.c		kern
 file	kern/subr_cprng.c		kern
+file	kern/subr_cpu.c			kern
 file	kern/subr_cpufreq.c		kern
 file	kern/subr_copy.c		kern
 file	kern/subr_csan.c		kcsan
