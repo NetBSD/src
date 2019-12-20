@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.10 2019/12/20 02:04:26 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.11 2019/12/20 02:12:31 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -524,6 +524,8 @@ struct ixl_softc {
 	u_int			 sc_rx_process_limit;
 	u_int			 sc_tx_intr_process_limit;
 	u_int			 sc_rx_intr_process_limit;
+
+	int			 sc_cur_ec_capenable;
 
 	struct pci_attach_args	 sc_pa;
 	pci_intr_handle_t	*sc_ihp;
@@ -1125,13 +1127,17 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto free_hmc;
 	}
 
-	if (ixl_get_vsi(sc) != 0) {
-		/* error printed by ixl_get_vsi */
+	rv = ixl_get_vsi(sc);
+	if (rv != 0) {
+		aprint_error_dev(self, "GET VSI %s %d\n",
+		    rv == ETIMEDOUT ? "timeout" : "error", rv);
 		goto free_scratch;
 	}
 
-	if (ixl_set_vsi(sc) != 0) {
-		/* error printed by ixl_set_vsi */
+	rv = ixl_set_vsi(sc);
+	if (rv != 0) {
+		aprint_error_dev(self, "UPDATE VSI error %s %d\n",
+		    rv == ETIMEDOUT ? "timeout" : "error", rv);
 		goto free_scratch;
 	}
 
@@ -1189,9 +1195,10 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
 #endif
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
-#if 0
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
-#endif
+
+	sc->sc_ec.ec_capenable = sc->sc_ec.ec_capabilities;
+	sc->sc_cur_ec_capenable = sc->sc_ec.ec_capenable;
 
 	sc->sc_ec.ec_ifmedia = &sc->sc_media;
 	ifmedia_init(&sc->sc_media, IFM_IMASK, ixl_media_change,
@@ -1713,6 +1720,13 @@ ixl_reinit(struct ixl_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
+	if (ixl_get_vsi(sc) != 0)
+		return EIO;
+
+	if (ixl_set_vsi(sc) != 0)
+		return EIO;
+
+
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
@@ -1781,9 +1795,14 @@ ixl_init_locked(struct ixl_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
+	if (ISSET(ifp->if_flags, IFF_RUNNING))
+		ixl_stop_locked(sc);
+
 	if (sc->sc_dead) {
 		return ENXIO;
 	}
+
+	sc->sc_cur_ec_capenable = sc->sc_ec.ec_capenable;
 
 	if (sc->sc_intrtype != PCI_INTR_TYPE_MSIX)
 		sc->sc_nqueue_pairs = 1;
@@ -2304,7 +2323,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 	struct ixl_tx_map *txm;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	uint64_t cmd;
+	uint64_t cmd, cmd_vlan;
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
@@ -2358,6 +2377,14 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 			continue;
 		}
 
+		if (vlan_has_tag(m)) {
+			cmd_vlan = (uint64_t)vlan_get_tag(m) <<
+			    IXL_TX_DESC_L2TAG1_SHIFT;
+			cmd_vlan |= IXL_TX_DESC_CMD_IL2TAG1;
+		} else {
+			cmd_vlan = 0;
+		}
+
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
 		    map->dm_mapsize, BUS_DMASYNC_PREWRITE);
 
@@ -2367,6 +2394,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IXL_TX_DESC_BSIZE_SHIFT;
 			cmd |= IXL_TX_DESC_DTYPE_DATA | IXL_TX_DESC_CMD_ICRC;
+			cmd |= cmd_vlan;
 
 			txd->addr = htole64(map->dm_segs[i].ds_addr);
 			txd->cmd = htole64(cmd);
@@ -2558,7 +2586,7 @@ ixl_rxr_alloc(struct ixl_softc *sc, unsigned int qid)
 	    KM_SLEEP);
 
 	if (ixl_dmamem_alloc(sc, &rxr->rxr_mem,
-	    sizeof(struct ixl_rx_rd_desc_16) * sc->sc_rx_ring_ndescs,
+	    sizeof(struct ixl_rx_rd_desc_32) * sc->sc_rx_ring_ndescs,
 	    IXL_RX_QUEUE_ALIGN) != 0)
 		goto free;
 
@@ -2684,10 +2712,10 @@ ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	rxq.dbuff = htole16(MCLBYTES / IXL_HMC_RXQ_DBUFF_UNIT);
 	rxq.hbuff = 0;
 	rxq.dtype = IXL_HMC_RXQ_DTYPE_NOSPLIT;
-	rxq.dsize = IXL_HMC_RXQ_DSIZE_16;
+	rxq.dsize = IXL_HMC_RXQ_DSIZE_32;
 	rxq.crcstrip = 1;
-	rxq.l2sel = 0;
-	rxq.showiv = 0;
+	rxq.l2sel = 1;
+	rxq.showiv = 1;
 	rxq.rxmax = htole16(IXL_HARDMTU);
 	rxq.tphrdesc_ena = 0;
 	rxq.tphwdesc_ena = 0;
@@ -2734,12 +2762,12 @@ static int
 ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 {
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
-	struct ixl_rx_wb_desc_16 *ring, *rxd;
+	struct ixl_rx_wb_desc_32 *ring, *rxd;
 	struct ixl_rx_map *rxm;
 	bus_dmamap_t map;
 	unsigned int cons, prod;
 	struct mbuf *m;
-	uint64_t word;
+	uint64_t word, word0;
 	unsigned int len;
 	unsigned int mask;
 	int done = 0, more = 0;
@@ -2799,6 +2827,13 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 		m->m_pkthdr.len += len;
 
 		if (ISSET(word, IXL_RX_DESC_EOP)) {
+			word0 = le64toh(rxd->qword0);
+
+			if (ISSET(word, IXL_RX_DESC_L2TAG1P)) {
+				vlan_set_tag(m,
+				    __SHIFTOUT(word0, IXL_RX_DESC_L2TAG1_MASK));
+			}
+
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
 				m_set_rcvif(m, ifp);
@@ -2836,7 +2871,7 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 static int
 ixl_rxfill(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 {
-	struct ixl_rx_rd_desc_16 *ring, *rxd;
+	struct ixl_rx_rd_desc_32 *ring, *rxd;
 	struct ixl_rx_map *rxm;
 	bus_dmamap_t map;
 	struct mbuf *m;
@@ -3921,14 +3956,11 @@ ixl_get_vsi(struct ixl_softc *sc)
 	    BUS_DMASYNC_POSTREAD);
 
 	if (rv != 0) {
-		aprint_error_dev(sc->sc_dev, "GET VSI timeout\n");
-		return -1;
+		return ETIMEDOUT;
 	}
 
 	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
-		aprint_error_dev(sc->sc_dev, "GET VSI error %u\n",
-		    le16toh(iaq.iaq_retval));
-		return -1;
+		return EIO;
 	}
 
 	reply = (struct ixl_aq_vsi_reply *)iaq.iaq_param;
@@ -3945,6 +3977,7 @@ ixl_set_vsi(struct ixl_softc *sc)
 	struct ixl_aq_vsi_param *param;
 	struct ixl_aq_vsi_data *data = IXL_DMA_KVA(vsi);
 	unsigned int qnum;
+	uint16_t val;
 	int rv;
 
 	qnum = sc->sc_nqueue_pairs - 1;
@@ -3958,10 +3991,17 @@ ixl_set_vsi(struct ixl_softc *sc)
 	data->tc_mapping[0] = htole16((0 << IXL_AQ_VSI_TC_Q_OFFSET_SHIFT) |
 	    (qnum << IXL_AQ_VSI_TC_Q_NUMBER_SHIFT));
 
-	CLR(data->port_vlan_flags,
-	    htole16(IXL_AQ_VSI_PVLAN_MODE_MASK | IXL_AQ_VSI_PVLAN_EMOD_MASK));
-	SET(data->port_vlan_flags,
-	    htole16(IXL_AQ_VSI_PVLAN_MODE_ALL | IXL_AQ_VSI_PVLAN_EMOD_NOTHING));
+	val = le16toh(data->port_vlan_flags);
+	CLR(val, IXL_AQ_VSI_PVLAN_MODE_MASK | IXL_AQ_VSI_PVLAN_EMOD_MASK);
+	SET(val, IXL_AQ_VSI_PVLAN_MODE_ALL);
+
+	if (ISSET(sc->sc_cur_ec_capenable, ETHERCAP_VLAN_HWTAGGING)) {
+		SET(val, IXL_AQ_VSI_PVLAN_EMOD_STR_BOTH);
+	} else {
+		SET(val, IXL_AQ_VSI_PVLAN_EMOD_NOTHING);
+	}
+
+	data->port_vlan_flags = htole16(val);
 
 	/* grumble, vsi info isn't "known" at compile time */
 
@@ -3984,14 +4024,11 @@ ixl_set_vsi(struct ixl_softc *sc)
 	    BUS_DMASYNC_POSTWRITE);
 
 	if (rv != 0) {
-		aprint_error_dev(sc->sc_dev, "UPDATE VSI timeout\n");
-		return -1;
+		return ETIMEDOUT;
 	}
 
 	if (iaq.iaq_retval != htole16(IXL_AQ_RC_OK)) {
-		aprint_error_dev(sc->sc_dev, "UPDATE VSI error %u\n",
-		    le16toh(iaq.iaq_retval));
-		return -1;
+		return EIO;
 	}
 
 	return 0;
@@ -4827,10 +4864,19 @@ ixl_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
 	struct ixl_softc *sc = ifp->if_softc;
-	int rv;
+	int rv, change;
 
 	mutex_enter(&sc->sc_cfg_lock);
+
+	change = ec->ec_capenable ^ sc->sc_cur_ec_capenable;
+
+	if (ISSET(change, ETHERCAP_VLAN_HWTAGGING)) {
+		rv = ENETRESET;
+		goto out;
+	}
+
 	rv = ixl_iff(sc);
+out:
 	mutex_exit(&sc->sc_cfg_lock);
 
 	return rv;
