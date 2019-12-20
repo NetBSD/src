@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.1 2019/12/10 12:08:52 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.2 2019/12/20 02:12:31 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -729,6 +729,7 @@ struct ixl_tx_desc {
 #define IXL_TX_DESC_BSIZE_MAX		0x3fffULL
 #define IXL_TX_DESC_BSIZE_MASK		\
 	(IXL_TX_DESC_BSIZE_MAX << IXL_TX_DESC_BSIZE_SHIFT)
+#define IXL_TX_DESC_L2TAG1_SHIFT	48
 } __packed __aligned(16);
 
 struct ixl_rx_rd_desc_16 {
@@ -745,6 +746,8 @@ struct ixl_rx_rd_desc_32 {
 
 struct ixl_rx_wb_desc_16 {
 	uint64_t		qword0;
+#define IXL_RX_DESC_L2TAG1_SHIFT	16
+#define IXL_RX_DESC_L2TAG1_MASK		(0xffffULL << IXL_RX_DESC_L2TAG1_SHIFT)
 	uint64_t		qword1;
 #define IXL_RX_DESC_DD			(1 << 0)
 #define IXL_RX_DESC_EOP			(1 << 1)
