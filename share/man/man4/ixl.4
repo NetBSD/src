@@ -1,4 +1,4 @@
-.\"	$NetBSD: ixl.4,v 1.1 2019/12/10 13:07:28 yamaguchi Exp $
+.\"	$NetBSD: ixl.4,v 1.2 2019/12/20 02:24:02 yamaguchi Exp $
 .\"
 .\" Copyright (c) 2019 Internet Initiative Japan, Inc.
 .\" All rights reserved.
@@ -63,3 +63,7 @@ into
 .Nx
 by
 .An Shoichi Yamaguchi Aq Mt yamaguchi@NetBSD.org .
+.Sh BUGS
+VLAN hardware filter doesn't work while the interface is promiscuous mode.
+If a register of VLAN tag is failed due to lack of resources, the interface
+don't send and receive packets containing the tag.
