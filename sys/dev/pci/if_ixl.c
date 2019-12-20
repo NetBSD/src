@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.9 2019/12/20 01:54:39 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.10 2019/12/20 02:04:26 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1205,15 +1205,14 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ec, ixl_ifflags_cb);
-	(void)ixl_get_link_status(sc);
 
+	(void)ixl_get_link_status_poll(sc);
 	ixl_work_set(&sc->sc_link_state_task, ixl_get_link_status, sc);
 
 	ixl_config_other_intr(sc);
+	ixl_enable_other_intr(sc);
 
 	ixl_set_macvlan(sc);
-
-	ixl_enable_other_intr(sc);
 
 	sc->sc_txrx_workqueue = true;
 	sc->sc_tx_process_limit = IXL_TX_PROCESS_LIMIT;
@@ -1285,6 +1284,15 @@ ixl_detach(device_t self, int flags)
 		return 0;
 
 	ixl_stop(ifp, 1);
+
+	ixl_disable_other_intr(sc);
+
+	/* wait for ATQ handler */
+	mutex_enter(&sc->sc_atq_lock);
+	mutex_exit(&sc->sc_atq_lock);
+
+	ixl_work_wait(sc->sc_workq, &sc->sc_arq_task);
+	ixl_work_wait(sc->sc_workq, &sc->sc_link_state_task);
 
 	if (sc->sc_workq != NULL) {
 		ixl_workq_destroy(sc->sc_workq);
@@ -1791,12 +1799,11 @@ ixl_init_locked(struct ixl_softc *sc)
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
-	(void)ixl_get_link_status_poll(sc);
+	(void)ixl_get_link_status(sc);
 
 	ixl_config_rss(sc);
 	ixl_config_queue_intr(sc);
 
-	ixl_enable_other_intr(sc);
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		ixl_enable_queue_intr(sc, &sc->sc_qps[i]);
 	}
@@ -1892,13 +1899,6 @@ ixl_stop_rendezvous(struct ixl_softc *sc)
 		ixl_work_wait(sc->sc_workq_txrx,
 		    &sc->sc_qps[i].qp_task);
 	}
-
-	mutex_enter(&sc->sc_atq_lock);
-	mutex_exit(&sc->sc_atq_lock);
-
-	ixl_work_wait(sc->sc_workq, &sc->sc_arq_task);
-	ixl_work_wait(sc->sc_workq, &sc->sc_link_state_task);
-
 }
 
 static void
@@ -1914,7 +1914,6 @@ ixl_stop_locked(struct ixl_softc *sc)
 
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
 
-	ixl_disable_other_intr(sc);
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
