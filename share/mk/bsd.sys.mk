@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.297 2019/12/01 17:25:47 kamil Exp $
+#	$NetBSD: bsd.sys.mk,v 1.298 2019/12/20 04:04:25 christos Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -270,7 +270,6 @@ OBJCOPY?=	objcopy
 OBJDUMP?=	objdump
 PAXCTL?=	paxctl
 STRIP?=		strip
-MV?=		mv -f
 
 .SUFFIXES:	.o .ln .lo .c .cc .cpp .cxx .C .m ${YHEADER:D.h}
 
