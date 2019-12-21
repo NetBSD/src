@@ -1,4 +1,4 @@
-/*	$NetBSD: linux32_sysinfo.c,v 1.8 2019/08/23 08:01:43 maxv Exp $ */
+/*	$NetBSD: linux32_sysinfo.c,v 1.9 2019/12/21 13:00:24 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.8 2019/08/23 08:01:43 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux32_sysinfo.c,v 1.9 2019/12/21 13:00:24 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -77,7 +77,7 @@ linux32_sys_sysinfo(struct lwp *l, const struct linux32_sys_sysinfo_args *uap, r
 	si.loads[1] = la->ldavg[1] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.loads[2] = la->ldavg[2] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;
 	si.totalram = ctob((u_long)physmem);
-	si.freeram = (u_long)uvmexp.free * uvmexp.pagesize;
+	si.freeram = (u_long)uvm_free() * uvmexp.pagesize;
 	si.sharedram = 0;	/* XXX */
 	si.bufferram = (u_long)uvmexp.filepages * uvmexp.pagesize;
 	si.totalswap = (u_long)uvmexp.swpages * uvmexp.pagesize;

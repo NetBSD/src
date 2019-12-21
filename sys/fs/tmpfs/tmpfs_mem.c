@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_mem.c,v 1.10 2019/07/13 14:24:37 maxv Exp $	*/
+/*	$NetBSD: tmpfs_mem.c,v 1.11 2019/12/21 13:00:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.10 2019/07/13 14:24:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_mem.c,v 1.11 2019/12/21 13:00:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -102,7 +102,7 @@ tmpfs_mem_info(bool total)
 	if (!total) {
 		size -= uvmexp.swpgonly;
 	}
-	size += uvmexp.free;
+	size += uvm_free();
 	size += uvmexp.filepages;
 	if (size > uvmexp.wired) {
 		size -= uvmexp.wired;

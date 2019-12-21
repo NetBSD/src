@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.26 2019/04/07 05:25:55 thorpej Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.27 2019/12/21 13:00:22 ad Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.26 2019/04/07 05:25:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.27 2019/12/21 13:00:22 ad Exp $");
 
 #include "opt_modular.h"
 
@@ -191,7 +191,7 @@ booke_cpu_startup(const char *model)
 	 * pool pages.
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
 	printf("avail memory = %s\n", pbuf);
 
 	/*
