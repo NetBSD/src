@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.283 2019/12/11 20:50:32 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.284 2019/12/21 13:00:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.283 2019/12/11 20:50:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.284 2019/12/21 13:00:24 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -614,7 +614,7 @@ buf_canrelease(void)
 
 	ninvalid += bufqueues[BQ_AGE].bq_bytes;
 
-	pagedemand = uvmexp.freetarg - uvmexp.free;
+	pagedemand = uvmexp.freetarg - uvm_free();
 	if (pagedemand < 0)
 		return ninvalid;
 	return MAX(ninvalid, MIN(2 * MAXBSIZE,
