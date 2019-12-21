@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.17 2019/12/21 11:59:03 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.17 2019/12/21 11:59:03 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -54,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $"
 
 static int dm_table_busy(dm_table_head_t *, uint8_t);
 static void dm_table_unbusy(dm_table_head_t *);
+static void dm_table_free_deps(dm_table_entry_t *);
+
 
 /*
  * Function to increment table user reference counter. Return id
@@ -166,6 +168,7 @@ dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 		SLIST_REMOVE(tbl, table_en, dm_table_entry, next);
 		if (table_en->target->destroy(table_en) == 0)
 			table_en->target_config = NULL;
+		dm_table_free_deps(table_en);
 		kmem_free(table_en, sizeof(*table_en));
 	}
 	KASSERT(SLIST_EMPTY(tbl));
@@ -326,4 +329,48 @@ dm_table_head_destroy(dm_table_head_t *head)
 
 	cv_destroy(&head->table_cv);
 	mutex_destroy(&head->table_mtx);
+}
+
+int
+dm_table_add_deps(dm_table_entry_t *table_en, dm_pdev_t *pdev)
+{
+	dm_table_head_t *head;
+	dm_mapping_t *map;
+
+	if (!pdev)
+		return -1;
+
+	head = &table_en->dm_dev->table_head;
+	mutex_enter(&head->table_mtx);
+
+	TAILQ_FOREACH(map, &table_en->pdev_maps, next) {
+		if (map->data.pdev->pdev_vnode->v_rdev ==
+		    pdev->pdev_vnode->v_rdev) {
+			mutex_exit(&head->table_mtx);
+			return -1;
+		}
+	}
+
+	map = kmem_alloc(sizeof(*map), KM_SLEEP);
+	map->data.pdev = pdev;
+	aprint_debug("%s: %s\n", __func__, pdev->name);
+	TAILQ_INSERT_TAIL(&table_en->pdev_maps, map, next);
+
+	mutex_exit(&head->table_mtx);
+
+	return 0;
+}
+
+/* caller must hold ->table_mtx */
+static void
+dm_table_free_deps(dm_table_entry_t *table_en)
+{
+	dm_mapping_t *map;
+
+	while ((map = TAILQ_FIRST(&table_en->pdev_maps)) != NULL) {
+		TAILQ_REMOVE(&table_en->pdev_maps, map, next);
+		aprint_debug("%s: %s\n", __func__, map->data.pdev->name);
+		kmem_free(map, sizeof(*map));
+	}
+	KASSERT(TAILQ_EMPTY(&table_en->pdev_maps));
 }

@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.22 2019/12/15 14:39:42 tkusumi Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.23 2019/12/21 11:59:03 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.22 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.23 2019/12/21 11:59:03 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -45,7 +45,6 @@ int dm_target_mirror_init(dm_table_entry_t *, int, char **);
 char *dm_target_mirror_table(void *);
 int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_mirror_sync(dm_table_entry_t *);
-int dm_target_mirror_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_mirror_destroy(dm_table_entry_t *);
 int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
 
@@ -95,7 +94,6 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 		dmt->table = &dm_target_mirror_table;
 		dmt->strategy = &dm_target_mirror_strategy;
 		dmt->sync = &dm_target_mirror_sync;
-		dmt->deps = &dm_target_mirror_deps;
 		dmt->destroy = &dm_target_mirror_destroy;
 		dmt->upcall = &dm_target_mirror_upcall;
 
@@ -170,14 +168,6 @@ dm_target_mirror_destroy(dm_table_entry_t *table_en)
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-
-	return 0;
-}
-
-/* Doesn't not need to do anything here. */
-int
-dm_target_mirror_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
-{
 
 	return 0;
 }

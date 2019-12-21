@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.41 2019/12/20 16:16:36 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.42 2019/12/21 11:59:03 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.41 2019/12/20 16:16:36 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.42 2019/12/21 11:59:03 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -83,7 +83,6 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		dmt->table = &dm_target_stripe_table;
 		dmt->strategy = &dm_target_stripe_strategy;
 		dmt->sync = &dm_target_stripe_sync;
-		dmt->deps = &dm_target_stripe_deps;
 		dmt->destroy = &dm_target_stripe_destroy;
 		dmt->upcall = &dm_target_stripe_upcall;
 		dmt->secsize = &dm_target_stripe_secsize;
@@ -169,6 +168,7 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 			return ENOENT;
 		}
 		tlc->offset = atoi64(argv[strpi+1]);
+		dm_table_add_deps(table_en, tlc->pdev);
 
 		/* Insert striping device to linked list. */
 		TAILQ_INSERT_TAIL(&tsc->stripe_devs, tlc, entries);
@@ -301,26 +301,6 @@ dm_target_stripe_destroy(dm_table_entry_t *table_en)
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-
-	return 0;
-}
-
-/* Doesn't not need to do anything here. */
-int
-dm_target_stripe_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
-{
-	dm_target_stripe_config_t *tsc;
-	dm_target_linear_config_t *tlc;
-
-	if (table_en->target_config == NULL)
-		return ENOENT;
-
-	tsc = table_en->target_config;
-
-	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
-		prop_array_add_uint64(prop_array,
-		    (uint64_t) tlc->pdev->pdev_vnode->v_rdev);
-	}
 
 	return 0;
 }
