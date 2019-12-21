@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.1 2019/12/20 21:20:09 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.2 2019/12/21 11:35:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.1 2019/12/20 21:20:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.2 2019/12/21 11:35:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -84,8 +84,6 @@ struct cpu_info **cpu_infos		__read_mostly;
 /* Note: set on mi_cpu_attach() and idle_loop(). */
 kcpuset_t *	kcpuset_attached	__read_mostly	= NULL;
 kcpuset_t *	kcpuset_running		__read_mostly	= NULL;
-
-int (*compat_cpuctl_ioctl)(struct lwp *, u_long, void *) = (void *)enosys;
 
 static char cpu_model[128];
 
