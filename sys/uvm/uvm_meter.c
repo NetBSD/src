@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.70 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.71 2019/12/21 13:00:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.70 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.71 2019/12/21 13:00:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,7 +107,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.pagemask = uvmexp.pagemask;
 	u.pageshift = uvmexp.pageshift;
 	u.npages = uvmexp.npages;
-	u.free = uvmexp.free;
+	u.free = uvm_free();
 	u.active = active;
 	u.inactive = inactive;
 	u.paging = uvmexp.paging;
@@ -320,6 +320,7 @@ uvm_total(struct vmtotal *totalp)
 	struct vm_map *map;
 	int paging;
 #endif
+	int freepg;
 	int active;
 
 	memset(totalp, 0, sizeof *totalp);
@@ -381,11 +382,12 @@ uvm_total(struct vmtotal *totalp)
 	/*
 	 * Calculate object memory usage statistics.
 	 */
+	freepg = uvm_free();
 	uvm_estimatepageable(&active, NULL);
-	totalp->t_free = uvmexp.free;
-	totalp->t_vm = uvmexp.npages - uvmexp.free + uvmexp.swpginuse;
+	totalp->t_free = freepg;
+	totalp->t_vm = uvmexp.npages - freepg + uvmexp.swpginuse;
 	totalp->t_avm = active + uvmexp.swpginuse;	/* XXX */
-	totalp->t_rm = uvmexp.npages - uvmexp.free;
+	totalp->t_rm = uvmexp.npages - freepg;
 	totalp->t_arm = active;
 	totalp->t_vmshr = 0;		/* XXX */
 	totalp->t_avmshr = 0;		/* XXX */
@@ -447,7 +449,7 @@ uvm_update_uvmexp(void)
 
 	cpu_count_sync_all();
 
-	/* uvmexp.free = (int)cpu_count_get(CPU_COUNT_FREE); */
+	uvmexp.free = (int)uvm_free();
 	uvmexp.zeropages = (int)cpu_count_get(CPU_COUNT_ZEROPAGES);
 	uvmexp.cpuhit = (int)cpu_count_get(CPU_COUNT_CPUHIT);
 	uvmexp.cpumiss = (int)cpu_count_get(CPU_COUNT_CPUMISS);

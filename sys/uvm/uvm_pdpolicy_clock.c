@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.20 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.21 2019/12/21 13:00:25 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.20 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.21 2019/12/21 13:00:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -155,7 +155,7 @@ uvmpdpol_scaninit(void)
 	 */
 
 	cpu_count_sync_all();
-	freepg = uvmexp.free;
+	freepg = uvm_free();
 	anonpg = cpu_count_get(CPU_COUNT_ANONPAGES);
 	filepg = cpu_count_get(CPU_COUNT_FILEPAGES);
 	execpg = cpu_count_get(CPU_COUNT_EXECPAGES);

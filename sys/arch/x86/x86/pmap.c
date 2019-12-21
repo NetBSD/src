@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.346 2019/12/16 19:20:45 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.347 2019/12/21 13:00:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.346 2019/12/16 19:20:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347 2019/12/21 13:00:24 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2513,21 +2513,16 @@ pmap_destroy(struct pmap *pmap)
 
 	/*
 	 * If we have torn down this pmap, process deferred frees and
-	 * invalidations.  Free now if the system is low on memory.
-	 * Otherwise, free when the pmap is destroyed thus avoiding a
-	 * TLB shootdown.
+	 * invalidations.  Free when the pmap is destroyed thus avoiding
+	 * TLB shootdowns.
 	 */
 	l = curlwp;
 	if (__predict_false(l->l_md.md_gc_pmap == pmap)) {
 		pmap_check_ptps(pmap);
-		if (uvmexp.free < uvmexp.freetarg) {
-			pmap_update(pmap);
-		} else {
-			KASSERT(pmap->pm_gc_ptp == NULL);
-			pmap->pm_gc_ptp = l->l_md.md_gc_ptp;
-			l->l_md.md_gc_ptp = NULL;
-			l->l_md.md_gc_pmap = NULL;
-		}
+		KASSERT(pmap->pm_gc_ptp == NULL);
+		pmap->pm_gc_ptp = l->l_md.md_gc_ptp;
+		l->l_md.md_gc_ptp = NULL;
+		l->l_md.md_gc_pmap = NULL;
 	}
 
 	/*

@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.77 2019/12/16 22:47:55 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.78 2019/12/21 13:00:24 ad Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.77 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.78 2019/12/21 13:00:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,7 @@ procfs_domeminfo(struct lwp *curl, struct proc *p,
 	bf = malloc(LBFSZ, M_TEMP, M_WAITOK);
 
 	cpu_count_sync_all();
-	freepg = uvmexp.free;
+	freepg = (long)uvm_free();
 	filepg = (long)cpu_count_get(CPU_COUNT_FILEPAGES);
 	anonpg = (long)cpu_count_get(CPU_COUNT_ANONPAGES);
 	execpg = (long)cpu_count_get(CPU_COUNT_EXECPAGES);
