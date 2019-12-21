@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_meter.c,v 1.71 2019/12/21 13:00:25 ad Exp $	*/
+/*	$NetBSD: uvm_meter.c,v 1.72 2019/12/21 14:33:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.71 2019/12/21 13:00:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_meter.c,v 1.72 2019/12/21 14:33:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -140,7 +140,7 @@ sysctl_vm_uvmexp2(SYSCTLFN_ARGS)
 	u.forks_sharevm = cpu_count_get(CPU_COUNT_FORKS_SHAREVM);
 	u.pga_zerohit = cpu_count_get(CPU_COUNT_PGA_ZEROHIT);
 	u.pga_zeromiss = cpu_count_get(CPU_COUNT_PGA_ZEROMISS);
-	u.zeroaborts = cpu_count_get(CPU_COUNT_ZEROABORTS);
+	u.zeroaborts = uvmexp.zeroaborts;
 	u.fltnoram = cpu_count_get(CPU_COUNT_FLTNORAM);
 	u.fltnoanon = cpu_count_get(CPU_COUNT_FLTNOANON);
 	u.fltpgwait = cpu_count_get(CPU_COUNT_FLTPGWAIT);
@@ -488,5 +488,4 @@ uvm_update_uvmexp(void)
 	uvmexp.execpages = (int)cpu_count_get(CPU_COUNT_EXECPAGES);
 	uvmexp.colorhit = (int)cpu_count_get(CPU_COUNT_COLORHIT);
 	uvmexp.colormiss = (int)cpu_count_get(CPU_COUNT_COLORMISS);
-	uvmexp.zeroaborts = (int)cpu_count_get(CPU_COUNT_ZEROABORTS);
 }

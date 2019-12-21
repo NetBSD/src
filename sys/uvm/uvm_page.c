@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.207 2019/12/21 12:58:26 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.208 2019/12/21 14:33:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.207 2019/12/21 12:58:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.208 2019/12/21 14:33:18 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1485,7 +1485,7 @@ uvm_pageidlezero(void)
 					    PGFL_UNKNOWN], pg, listq.list);
 					ucpu->pages[PGFL_UNKNOWN]++;
 					uvmexp.free++;
-				    	CPU_COUNT(CPU_COUNT_ZEROABORTS, 1);
+				    	uvmexp.zeroaborts++;
 					goto quit;
 				}
 #else
