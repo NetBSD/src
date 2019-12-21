@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.115 2019/12/14 21:36:00 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.116 2019/12/21 11:41:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.115 2019/12/14 21:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.116 2019/12/21 11:41:18 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -1002,7 +1002,9 @@ uvm_reclaimable(void)
 	 * XXX ie. pools, traditional buffer cache.
 	 */
 
-	filepages = uvmexp.filepages + uvmexp.execpages - uvmexp.wired;
+	cpu_count_sync_all();
+	filepages = (int)cpu_count_get(CPU_COUNT_FILEPAGES) +
+	    (int)cpu_count_get(CPU_COUNT_EXECPAGES) - uvmexp.wired;
 	uvm_estimatepageable(&active, &inactive);
 	if (filepages >= MIN((active + inactive) >> 4,
 	    5 * 1024 * 1024 >> PAGE_SHIFT)) {
