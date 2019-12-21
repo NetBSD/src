@@ -283,9 +283,9 @@ int arc_procfd;
 #ifndef ptob
 #define ptob(x)		((x) * PAGE_SIZE)
 #endif
-//#define	needfree	(uvmexp.free < uvmexp.freetarg ? uvmexp.freetarg : 0)
+//#define	needfree	(uvm_free() < uvmexp.freetarg ? uvmexp.freetarg : 0)
 #define	buf_init	arc_buf_init
-#define	freemem		uvmexp.free
+#define	freemem		uvm_free()
 #define	minfree		uvmexp.freemin
 #define	desfree		uvmexp.freetarg
 #define	lotsfree	(desfree * 2)

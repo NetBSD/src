@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.200 2019/04/04 04:31:01 isaki Exp $	*/
+/*	$NetBSD: machdep.c,v 1.201 2019/12/21 13:00:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.200 2019/04/04 04:31:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.201 2019/12/21 13:00:24 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -299,7 +299,7 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvmexp.free));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
 	printf("avail memory = %s\n", pbuf);
 
 	/*

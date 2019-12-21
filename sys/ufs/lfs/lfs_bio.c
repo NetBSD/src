@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.142 2018/06/09 18:48:31 zafer Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.143 2019/12/21 13:00:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.142 2018/06/09 18:48:31 zafer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.143 2019/12/21 13:00:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,7 @@ lfs_wait_pages(void)
 	int active, inactive;
 
 	uvm_estimatepageable(&active, &inactive);
-	return LFS_WAIT_RESOURCE(active + inactive + uvmexp.free, 1);
+	return LFS_WAIT_RESOURCE(active + inactive + uvm_free(), 1);
 }
 
 int
@@ -776,5 +776,5 @@ lfs_max_pages(void)
 	int active, inactive;
 
 	uvm_estimatepageable(&active, &inactive);
-	return LFS_MAX_RESOURCE(active + inactive + uvmexp.free, 1);
+	return LFS_MAX_RESOURCE(active + inactive + uvm_free(), 1);
 }
