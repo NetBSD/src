@@ -1,4 +1,4 @@
-/* $NetBSD: uvm_physseg.c,v 1.12 2019/12/20 19:03:17 ad Exp $ */
+/* $NetBSD: uvm_physseg.c,v 1.13 2019/12/21 14:41:44 ad Exp $ */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -96,7 +96,6 @@ struct uvm_physseg {
 	struct  extent *ext;		/* extent(9) structure to manage pgs[] */
 	int	free_list;		/* which free list they belong on */
 	u_int	start_hint;		/* start looking for free pages here */
-					/* protected by uvm_fpageqlock */
 #ifdef __HAVE_PMAP_PHYSSEG
 	struct	pmap_physseg pmseg;	/* pmap specific (MD) data */
 #endif
@@ -1103,15 +1102,17 @@ uvm_physseg_init_seg(uvm_physseg_t upm, struct vm_page *pgs)
 	/* init and free vm_pages (we've already zeroed them) */
 	paddr = ctob(seg->start);
 	for (i = 0 ; i < n ; i++, paddr += PAGE_SIZE) {
-		seg->pgs[i].phys_addr = paddr;
+		pg = &seg->pgs[i];
+		pg->phys_addr = paddr;
 #ifdef __HAVE_VM_PAGE_MD
-		VM_MDPAGE_INIT(&seg->pgs[i]);
+		VM_MDPAGE_INIT(pg);
 #endif
 		if (atop(paddr) >= seg->avail_start &&
 		    atop(paddr) < seg->avail_end) {
 			uvmexp.npages++;
 			/* add page to free pool */
-			pg = &seg->pgs[i];
+			uvm_page_set_freelist(pg,
+			    uvm_page_lookup_freelist(pg));
 			/* Disable LOCKDEBUG: too many and too early. */
 			mutex_init(&pg->interlock, MUTEX_NODEBUG, IPL_NONE);
 			uvm_pagefree(pg);

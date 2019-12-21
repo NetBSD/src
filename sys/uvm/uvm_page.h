@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.87 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.88 2019/12/21 14:41:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -343,15 +343,58 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
 #endif
 
 /*
- * Compute the page color bucket for a given page.
+ * Compute the page color for a given page.
  */
-#define	VM_PGCOLOR_BUCKET(pg) \
+#define	VM_PGCOLOR(pg) \
 	(atop(VM_PAGE_TO_PHYS((pg))) & uvmexp.colormask)
-
 #define	PHYS_TO_VM_PAGE(pa)	uvm_phys_to_vm_page(pa)
-
 #define VM_PAGE_IS_FREE(entry)  ((entry)->flags & PG_FREE)
 #define	VM_FREE_PAGE_TO_CPU(pg)	((struct uvm_cpu *)((uintptr_t)pg->offset))
+
+/*
+ * Use the lower 10 bits of pg->phys_addr to cache some some locators for
+ * the page.  This implies that the smallest possible page size is 1kB, and
+ * that nobody should use pg->phys_addr directly (use VM_PAGE_TO_PHYS()).
+ * 
+ * - 5 bits for the freelist index, because uvm_page_lookup_freelist()
+ *   traverses an rbtree and therefore features prominently in traces
+ *   captured during performance test.  It would probably be more useful to
+ *   cache physseg index here because freelist can be inferred from physseg,
+ *   but it requires changes to allocation for UVM_HOTPLUG, so for now we'll
+ *   go with freelist.
+ *
+ * - 5 bits for "bucket", a way for us to categorise pages further as
+ *   needed (e.g. NUMA node).
+ *
+ * None of this is set in stone; it can be adjusted as needed.
+ */
+static inline unsigned
+uvm_page_get_freelist(struct vm_page *pg)
+{
+	unsigned fl = pg->phys_addr & 0x1f;
+	KASSERT(fl == (unsigned)uvm_page_lookup_freelist(pg));
+	return fl;
+}
+
+static inline unsigned
+uvm_page_get_bucket(struct vm_page *pg)
+{
+	return (pg->phys_addr & 0x3e0) >> 5;
+}
+
+static inline void
+uvm_page_set_freelist(struct vm_page *pg, unsigned fl)
+{
+	KASSERT(fl < 32);
+	pg->phys_addr = (pg->phys_addr & ~0x1f) | fl;
+}
+
+static inline void
+uvm_page_set_bucket(struct vm_page *pg, unsigned b)
+{
+	KASSERT(b < 32);
+	pg->phys_addr = (pg->phys_addr & ~0x3e0) | (b << 5);
+}
 
 #ifdef DEBUG
 void uvm_pagezerocheck(struct vm_page *);

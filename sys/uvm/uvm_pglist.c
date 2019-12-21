@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.75 2019/12/21 13:00:25 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.76 2019/12/21 14:41:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.75 2019/12/21 13:00:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.76 2019/12/21 14:41:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,8 +87,8 @@ uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 #error uvm_pglistalloc needs to be updated
 #endif
 
-	free_list = uvm_page_lookup_freelist(pg);
-	color = VM_PGCOLOR_BUCKET(pg);
+	free_list = uvm_page_get_freelist(pg);
+	color = VM_PGCOLOR(pg);
 	pgflidx = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifdef UVMDEBUG
 	struct vm_page *tp;
@@ -582,8 +582,8 @@ uvm_pglistfree(struct pglist *list)
 		if (iszero)
 			uvm_pagezerocheck(pg);
 #endif /* DEBUG */
-		index = uvm_page_lookup_freelist(pg);
-		color = VM_PGCOLOR_BUCKET(pg);
+		index = uvm_page_get_freelist(pg);
+		color = VM_PGCOLOR(pg);
 		queue = iszero ? PGFL_ZEROS : PGFL_UNKNOWN;
 		pg->offset = (uintptr_t)ucpu;
 		LIST_INSERT_HEAD(&uvm.page_free[index].pgfl_buckets[color].

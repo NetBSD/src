@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.208 2019/12/21 14:33:18 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.209 2019/12/21 14:41:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.208 2019/12/21 14:33:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.209 2019/12/21 14:41:44 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -672,10 +672,10 @@ uvm_page_recolor(int newncolors)
 					LIST_REMOVE(pg, pageq.list); /* global */
 					LIST_REMOVE(pg, listq.list); /* cpu */
 					LIST_INSERT_HEAD(&gpgfl.pgfl_buckets[
-					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
+					    VM_PGCOLOR(pg)].pgfl_queues[
 					    i], pg, pageq.list);
 					LIST_INSERT_HEAD(&pgfl.pgfl_buckets[
-					    VM_PGCOLOR_BUCKET(pg)].pgfl_queues[
+					    VM_PGCOLOR(pg)].pgfl_queues[
 					    i], pg, listq.list);
 				}
 			}
@@ -1282,8 +1282,8 @@ uvm_pagefree(struct vm_page *pg)
 	 */
 
 	iszero = (pg->flags & PG_ZERO);
-	index = uvm_page_lookup_freelist(pg);
-	color = VM_PGCOLOR_BUCKET(pg);
+	index = uvm_page_get_freelist(pg);
+	color = VM_PGCOLOR(pg);
 	queue = (iszero ? PGFL_ZEROS : PGFL_UNKNOWN);
 
 #ifdef DEBUG
@@ -1805,6 +1805,8 @@ uvm_page_printit(struct vm_page *pg, bool full,
 	    pgbuf, pg->pqflags, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
 	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
+	(*pr)("  bucket=%d freelist=%d\n",
+	    uvm_page_get_bucket(pg), uvm_page_get_freelist(pg));
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",
@@ -1841,8 +1843,8 @@ uvm_page_printit(struct vm_page *pg, bool full,
 
 	/* cross-verify page queue */
 	if (pg->flags & PG_FREE) {
-		int fl = uvm_page_lookup_freelist(pg);
-		int color = VM_PGCOLOR_BUCKET(pg);
+		int fl = uvm_page_get_freelist(pg);
+		int color = VM_PGCOLOR(pg);
 		pgl = &uvm.page_free[fl].pgfl_buckets[color].pgfl_queues[
 		    ((pg)->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN];
 	} else {
