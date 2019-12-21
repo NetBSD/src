@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.27 2019/12/20 21:05:33 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.28 2019/12/21 12:53:54 ad Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.27 2019/12/20 21:05:33 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.28 2019/12/21 12:53:54 ad Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -230,7 +230,8 @@ cpu_identify(device_t self, struct cpu_info *ci)
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", model);
-	cpu_topology_print(ci);
+	aprint_normal_dev(ci->ci_dev, "package %u, core %u, smt %u\n",
+	    ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
 }
 
 static void
