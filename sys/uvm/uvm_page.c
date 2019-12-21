@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.206 2019/12/18 20:38:14 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.207 2019/12/21 12:58:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.206 2019/12/18 20:38:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.207 2019/12/21 12:58:26 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -743,6 +743,17 @@ attachrnd:
 			  RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
 			  RND_FLAG_ESTIMATE_VALUE);
 
+}
+
+/*
+ * uvm_free: return total number of free pages in system.
+ */
+
+int
+uvm_free(void)
+{
+
+	return uvmexp.free;
 }
 
 /*
