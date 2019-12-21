@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.210 2019/12/21 14:50:34 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.211 2019/12/21 15:16:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.210 2019/12/21 14:50:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.211 2019/12/21 15:16:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -608,7 +608,7 @@ paddr_t
 uvm_vm_page_to_phys(const struct vm_page *pg)
 {
 
-	return pg->phys_addr;
+	return pg->phys_addr & ~(PAGE_SIZE - 1);
 }
 
 /*
