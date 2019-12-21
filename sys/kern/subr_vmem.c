@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_vmem.c,v 1.99 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: subr_vmem.c,v 1.100 2019/12/21 14:50:34 ad Exp $	*/
 
 /*-
  * Copyright (c)2006,2007,2008,2009 YAMAMOTO Takashi,
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.99 2019/10/16 18:29:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_vmem.c,v 1.100 2019/12/21 14:50:34 ad Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -198,9 +198,7 @@ static void
 vmem_kick_pdaemon(void)
 {
 #if defined(_KERNEL)
-	mutex_spin_enter(&uvm_fpageqlock);
 	uvm_kick_pdaemon();
-	mutex_spin_exit(&uvm_fpageqlock);
 #endif
 }
 
