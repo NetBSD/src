@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.46 2019/12/20 21:05:34 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47 2019/12/21 12:53:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -92,7 +92,6 @@ void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
 void	cpu_topology_set(struct cpu_info *, u_int, u_int, u_int, u_int);
 void	cpu_topology_init(void);
-void	cpu_topology_print(struct cpu_info *);
 #endif
 
 #ifdef _KERNEL

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.2 2019/12/21 11:35:25 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.3 2019/12/21 12:53:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.2 2019/12/21 11:35:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.3 2019/12/21 12:53:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -347,17 +347,6 @@ cpu_topology_init(void)
 			ci2 = ci2->ci_sibling[CPUREL_CORE];
 		} while (ci2 != ci);
 	}
-}
-
-/*
- * Print basic topology info.
- */
-void
-cpu_topology_print(struct cpu_info *ci)
-{
-
-	aprint_normal_dev(ci->ci_dev, "numa %u, package %u, core %u, smt %u\n",
-	    ci->ci_numa_id, ci->ci_package_id, ci->ci_core_id, ci->ci_smt_id);
 }
 
 /*
