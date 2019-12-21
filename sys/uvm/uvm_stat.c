@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_stat.c,v 1.41 2019/12/16 22:47:55 ad Exp $	 */
+/*	$NetBSD: uvm_stat.c,v 1.42 2019/12/21 13:00:25 ad Exp $	 */
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.41 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_stat.c,v 1.42 2019/12/21 13:00:25 ad Exp $");
 
 #include "opt_readahead.h"
 #include "opt_ddb.h"
@@ -67,7 +67,7 @@ uvmexp_print(void (*pr)(const char *, ...)
 	    uvmexp.pagesize, uvmexp.pagesize, uvmexp.pagemask,
 	    uvmexp.pageshift, uvmexp.ncolors);
 	(*pr)("  %d VM pages: %d active, %d inactive, %d wired, %d free\n",
-	    uvmexp.npages, active, inactive, uvmexp.wired, uvmexp.free);
+	    uvmexp.npages, active, inactive, uvmexp.wired, uvm_free());
 	(*pr)("  pages  %" PRId64 " anon, %" PRId64 " file, %" PRId64 " exec\n",
 	    cpu_count_get(CPU_COUNT_ANONPAGES),
 	    cpu_count_get(CPU_COUNT_FILEPAGES),
