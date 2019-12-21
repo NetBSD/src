@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.116 2019/12/14 21:36:00 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.117 2019/12/21 14:41:44 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.116 2019/12/14 21:36:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.117 2019/12/21 14:41:44 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -176,7 +176,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	struct vm_page *pp;
 	vm_prot_t prot;
 	const bool pdaemon = (curlwp == uvm.pagedaemon_lwp);
-	const u_int first_color = VM_PGCOLOR_BUCKET(*pps);
+	const u_int first_color = VM_PGCOLOR(*pps);
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(pps=0x%#jx, npages=%jd, first_color=%ju)",
