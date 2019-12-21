@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.34 2019/12/20 16:16:36 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.34 2019/12/20 16:16:36 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper dklinear target.
@@ -75,6 +75,7 @@ dm_target_linear_init(dm_table_entry_t *table_en, int argc, char **argv)
 	tlc->pdev = dmp;
 	tlc->offset = atoi64(argv[1]);
 
+	dm_table_add_deps(table_en, dmp);
 	table_en->target_config = tlc;
 
 	return 0;
@@ -159,23 +160,6 @@ dm_target_linear_destroy(dm_table_entry_t *table_en)
 out:
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-	return 0;
-}
-
-/* Add this target pdev dependencies to prop_array_t */
-int
-dm_target_linear_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
-{
-	dm_target_linear_config_t *tlc;
-
-	if (table_en->target_config == NULL)
-		return ENOENT;
-
-	tlc = table_en->target_config;
-
-	prop_array_add_uint64(prop_array,
-	    (uint64_t) tlc->pdev->pdev_vnode->v_rdev);
-
 	return 0;
 }
 
