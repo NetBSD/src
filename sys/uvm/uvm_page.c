@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.209 2019/12/21 14:41:44 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.210 2019/12/21 14:50:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.209 2019/12/21 14:41:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.210 2019/12/21 14:50:34 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -878,8 +878,6 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	KASSERT(anon == NULL || anon->an_lock == NULL ||
 	    mutex_owned(anon->an_lock));
 
-	mutex_spin_enter(&uvm_fpageqlock);
-
 	/*
 	 * This implements a global round-robin page coloring
 	 * algorithm.
@@ -909,6 +907,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	 * we make kernel reserve pages available if called by a
 	 * kernel thread or a realtime thread.
 	 */
+	mutex_spin_enter(&uvm_fpageqlock);
 	l = curlwp;
 	if (__predict_true(l != NULL) && lwp_eprio(l) >= PRI_KTHREAD) {
 		flags |= UVM_PGA_USERESERVE;

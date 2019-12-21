@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.76 2019/12/21 14:41:44 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.77 2019/12/21 14:50:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.76 2019/12/21 14:41:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.77 2019/12/21 14:50:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -352,8 +352,8 @@ out:
 	 * the pagedaemon.
 	 */
 
-	uvm_kick_pdaemon();
 	mutex_spin_exit(&uvm_fpageqlock);
+	uvm_kick_pdaemon();
 	return (error);
 }
 
@@ -493,8 +493,8 @@ out:
 	 * the pagedaemon.
 	 */
 
-	uvm_kick_pdaemon();
 	mutex_spin_exit(&uvm_fpageqlock);
+	uvm_kick_pdaemon();
 
 	if (error) {
 		if (waitok) {
