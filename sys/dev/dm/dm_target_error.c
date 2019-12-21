@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.26 2019/12/18 14:31:35 tkusumi Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.27 2019/12/21 11:59:03 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.26 2019/12/18 14:31:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.27 2019/12/21 11:59:03 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper error target.
@@ -73,7 +73,6 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_error_init;
 		dmt->table = &dm_target_error_table;
 		dmt->strategy = &dm_target_error_strategy;
-		dmt->deps = &dm_target_error_deps;
 		dmt->destroy = &dm_target_error_destroy;
 		dmt->upcall = &dm_target_error_upcall;
 
@@ -141,14 +140,6 @@ dm_target_error_destroy(dm_table_entry_t *table_en)
 
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-
-	return 0;
-}
-
-/* Doesn't not need to do anything here. */
-int
-dm_target_error_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
-{
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.36 2019/12/15 16:14:27 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.37 2019/12/21 11:59:03 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.36 2019/12/15 16:14:27 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.37 2019/12/21 11:59:03 tkusumi Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -90,7 +90,6 @@ int dm_target_snapshot_init(dm_table_entry_t *, int, char **);
 char *dm_target_snapshot_table(void *);
 int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_sync(dm_table_entry_t *);
-int dm_target_snapshot_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_snapshot_destroy(dm_table_entry_t *);
 int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
 
@@ -99,7 +98,6 @@ int dm_target_snapshot_orig_init(dm_table_entry_t *, int, char **);
 char *dm_target_snapshot_orig_table(void *);
 int dm_target_snapshot_orig_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_orig_sync(dm_table_entry_t *);
-int dm_target_snapshot_orig_deps(dm_table_entry_t *, prop_array_t);
 int dm_target_snapshot_orig_destroy(dm_table_entry_t *);
 int dm_target_snapshot_orig_upcall(dm_table_entry_t *, struct buf *);
 
@@ -156,7 +154,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt->table = &dm_target_snapshot_table;
 		dmt->strategy = &dm_target_snapshot_strategy;
 		dmt->sync = &dm_target_snapshot_sync;
-		dmt->deps = &dm_target_snapshot_deps;
 		dmt->destroy = &dm_target_snapshot_destroy;
 		dmt->upcall = &dm_target_snapshot_upcall;
 
@@ -169,7 +166,6 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt1->table = &dm_target_snapshot_orig_table;
 		dmt1->strategy = &dm_target_snapshot_orig_strategy;
 		dmt1->sync = &dm_target_snapshot_orig_sync;
-		dmt1->deps = &dm_target_snapshot_orig_deps;
 		dmt1->destroy = &dm_target_snapshot_orig_destroy;
 		dmt1->upcall = &dm_target_snapshot_orig_upcall;
 
@@ -237,6 +233,8 @@ dm_target_snapshot_init(dm_table_entry_t *table_en, int argc, char **argv)
 	tsc->tsc_snap_dev = dmp_snap;
 	tsc->tsc_cow_dev = dmp_cow;
 
+	dm_table_add_deps(table_en, dmp_snap);
+	dm_table_add_deps(table_en, dmp_cow);
 	table_en->target_config = tsc;
 
 	return 0;
@@ -338,28 +336,6 @@ out:
 	return 0;
 }
 
-/* Add this target dependencies to prop_array_t */
-int
-dm_target_snapshot_deps(dm_table_entry_t *table_en, prop_array_t prop_array)
-{
-	dm_target_snapshot_config_t *tsc;
-
-	if (table_en->target_config == NULL)
-		return 0;
-
-	tsc = table_en->target_config;
-
-	prop_array_add_uint64(prop_array,
-	    (uint64_t) tsc->tsc_snap_dev->pdev_vnode->v_rdev);
-
-	if (tsc->tsc_persistent_dev) {
-		prop_array_add_uint64(prop_array,
-		    (uint64_t) tsc->tsc_cow_dev->pdev_vnode->v_rdev);
-
-	}
-	return 0;
-}
-
 /* Upcall is used to inform other depended devices about IO. */
 int
 dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -404,6 +380,7 @@ dm_target_snapshot_orig_init(dm_table_entry_t *table_en, int argc, char **argv)
 	tsoc = kmem_alloc(sizeof(dm_target_snapshot_origin_config_t), KM_SLEEP);
 	tsoc->tsoc_real_dev = dmp_real;
 
+	dm_table_add_deps(table_en, dmp_real);
 	table_en->target_config = tsoc;
 
 	return 0;
@@ -494,35 +471,6 @@ dm_target_snapshot_orig_destroy(dm_table_entry_t *table_en)
 out:
 	/* Unbusy target so we can unload it */
 	dm_target_unbusy(table_en->target);
-
-	return 0;
-}
-
-/*
- * Get target deps and add them to prop_array_t.
- */
-int
-dm_target_snapshot_orig_deps(dm_table_entry_t *table_en,
-    prop_array_t prop_array)
-{
-	dm_target_snapshot_origin_config_t *tsoc;
-	struct vattr va;
-
-	int error;
-
-	if (table_en->target_config == NULL)
-		return 0;
-
-	tsoc = table_en->target_config;
-
-	vn_lock(tsoc->tsoc_real_dev->pdev_vnode, LK_SHARED | LK_RETRY);
-	error = VOP_GETATTR(tsoc->tsoc_real_dev->pdev_vnode, &va,
-	    curlwp->l_cred);
-	VOP_UNLOCK(tsoc->tsoc_real_dev->pdev_vnode);
-	if (error != 0)
-		return error;
-
-	prop_array_add_uint64(prop_array, (uint64_t) va.va_rdev);
 
 	return 0;
 }
