@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.333 2019/12/20 21:52:51 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.334 2019/12/21 11:54:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.333 2019/12/20 21:52:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334 2019/12/21 11:54:04 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -487,10 +487,13 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		newl->l_stat = LSONPROC;
 		newl->l_pflag |= LP_RUNNING;
 		lwp_setlock(newl, spc->spc_lwplock);
+		spc->spc_flags &= ~(SPCF_SWITCHCLEAR | SPCF_IDLE);
 	} else {
 		newl = ci->ci_data.cpu_idlelwp;
 		newl->l_stat = LSONPROC;
 		newl->l_pflag |= LP_RUNNING;
+		spc->spc_flags = (spc->spc_flags & ~SPCF_SWITCHCLEAR) |
+		    SPCF_IDLE;
 	}
 
 	/*
@@ -501,7 +504,6 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	 * the release of spc_mutex becomes globally visible.
 	 */
 	ci->ci_want_resched = ci->ci_data.cpu_softints;
-	spc->spc_flags &= ~SPCF_SWITCHCLEAR;
 	spc->spc_curpriority = lwp_eprio(newl);
 
 	return newl;
