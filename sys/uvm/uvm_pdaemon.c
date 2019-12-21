@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.117 2019/12/21 14:50:34 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.118 2019/12/21 16:10:20 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.117 2019/12/21 14:50:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.118 2019/12/21 16:10:20 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -246,7 +246,6 @@ uvm_pageout(void *arg)
 
 	UVMHIST_LOG(pdhist,"<starting uvm pagedaemon>", 0, 0, 0, 0);
 
-	mutex_init(&uvmpd_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&uvmpd_lock, MUTEX_DEFAULT, IPL_VM);
 	cv_init(&uvmpd_pool_drain_cv, "pooldrain");
 
