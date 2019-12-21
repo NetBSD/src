@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.34 2019/12/19 15:34:54 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.34 2019/12/19 15:34:54 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -166,10 +166,6 @@ dm_target_insert(dm_target_t *dm_target)
 	}
 	if (dm_target->strategy == NULL) {
 		printf("%s missing strategy\n", dm_target->name);
-		return EINVAL;
-	}
-	if (dm_target->deps == NULL) {
-		printf("%s missing deps\n", dm_target->name);
 		return EINVAL;
 	}
 	if (dm_target->destroy == NULL) {
@@ -324,7 +320,6 @@ dm_target_init(void)
 	dmt->table = &dm_target_linear_table;
 	dmt->strategy = &dm_target_linear_strategy;
 	dmt->sync = &dm_target_linear_sync;
-	dmt->deps = &dm_target_linear_deps;
 	dmt->destroy = &dm_target_linear_destroy;
 	dmt->upcall = &dm_target_linear_upcall;
 	dmt->secsize = &dm_target_linear_secsize;
@@ -339,7 +334,6 @@ dm_target_init(void)
 	dmt->table = &dm_target_stripe_table;
 	dmt->strategy = &dm_target_stripe_strategy;
 	dmt->sync = &dm_target_stripe_sync;
-	dmt->deps = &dm_target_stripe_deps;
 	dmt->destroy = &dm_target_stripe_destroy;
 	dmt->upcall = &dm_target_stripe_upcall;
 	dmt->secsize = &dm_target_stripe_secsize;
@@ -353,7 +347,6 @@ dm_target_init(void)
 	dmt->init = &dm_target_error_init;
 	dmt->table = &dm_target_error_table;
 	dmt->strategy = &dm_target_error_strategy;
-	dmt->deps = &dm_target_error_deps;
 	dmt->destroy = &dm_target_error_destroy;
 	dmt->upcall = &dm_target_error_upcall;
 	if (dm_target_insert(dmt))
@@ -366,7 +359,6 @@ dm_target_init(void)
 	dmt->init = &dm_target_zero_init;
 	dmt->table = &dm_target_zero_table;
 	dmt->strategy = &dm_target_zero_strategy;
-	dmt->deps = &dm_target_zero_deps;
 	dmt->destroy = &dm_target_zero_destroy;
 	dmt->upcall = &dm_target_zero_upcall;
 	if (dm_target_insert(dmt))
