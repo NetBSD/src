@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_cpu.c,v 1.88 2019/12/20 21:20:09 ad Exp $	*/
+/*	$NetBSD: kern_cpu.c,v 1.89 2019/12/21 11:35:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.88 2019/12/20 21:20:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_cpu.c,v 1.89 2019/12/21 11:35:25 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_cpu_ucode.h"
@@ -100,6 +100,8 @@ CTASSERT(offsetof(struct cpu_info, ci_data) == 0);
 #else
 CTASSERT(offsetof(struct cpu_info, ci_data) != 0);
 #endif
+
+int (*compat_cpuctl_ioctl)(struct lwp *, u_long, void *) = (void *)enosys;
 
 static void	cpu_xc_online(struct cpu_info *, void *);
 static void	cpu_xc_offline(struct cpu_info *, void *);
