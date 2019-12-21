@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.36 2019/12/21 16:00:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.36 2019/12/21 16:00:29 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -331,6 +331,7 @@ dm_target_init(void)
 	dmt->version[1] = 0;
 	dmt->version[2] = 3;
 	dmt->init = &dm_target_stripe_init;
+	dmt->info = &dm_target_stripe_info;
 	dmt->table = &dm_target_stripe_table;
 	dmt->strategy = &dm_target_stripe_strategy;
 	dmt->sync = &dm_target_stripe_sync;

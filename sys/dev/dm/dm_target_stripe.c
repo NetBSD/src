@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.42 2019/12/21 11:59:03 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.43 2019/12/21 16:00:29 tkusumi Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.42 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.43 2019/12/21 16:00:29 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -80,6 +80,7 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		dmt->version[1] = 0;
 		dmt->version[2] = 0;
 		dmt->init = &dm_target_stripe_init;
+		dmt->info = &dm_target_stripe_info;
 		dmt->table = &dm_target_stripe_table;
 		dmt->strategy = &dm_target_stripe_strategy;
 		dmt->sync = &dm_target_stripe_sync;
@@ -177,6 +178,45 @@ dm_target_stripe_init(dm_table_entry_t *table_en, int argc, char **argv)
 	table_en->target_config = tsc;
 
 	return 0;
+}
+
+/* Info routine called to get params string. */
+char *
+dm_target_stripe_info(void *target_config)
+{
+	dm_target_linear_config_t *tlc;
+	dm_target_stripe_config_t *tsc;
+	char *params, *ptr, buf[256];
+	int ret, i = 0;
+	size_t len;
+
+	tsc = target_config;
+
+	len = DM_MAX_PARAMS_SIZE;
+	params = kmem_alloc(len, KM_SLEEP);
+	ptr = params;
+
+	ret = snprintf(ptr, len, "%d ", tsc->stripe_num);
+	ptr += ret;
+	len -= ret;
+
+	memset(buf, 0, sizeof(buf));
+	TAILQ_FOREACH(tlc, &tsc->stripe_devs, entries) {
+		ret = snprintf(ptr, len, "%s ", tlc->pdev->udev_name);
+		if (0 /*tlc->num_error*/)
+			buf[i] = 'D';
+		else
+			buf[i] = 'A';
+		i++;
+		ptr += ret;
+		len -= ret;
+	}
+
+	ret = snprintf(ptr, len, "1 %s", buf);
+	ptr += ret;
+	len -= ret;
+
+	return params;
 }
 
 /* Table routine called to get params string. */

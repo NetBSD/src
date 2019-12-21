@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.50 2019/12/21 11:59:03 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.51 2019/12/21 16:00:29 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -186,13 +186,14 @@ typedef struct dm_target {
 	 * specific. When dm_table_status_ioctl is called with flag
 	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
 	 */
-	char *(*info)(void *);
 	char *(*table)(void *);
 	int (*strategy)(dm_table_entry_t *, struct buf *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
+
 	/*
 	 * Optional routines.
 	 */
+	char *(*info)(void *);
 	int (*sync)(dm_table_entry_t *);
 	int (*secsize)(dm_table_entry_t *, unsigned int *);
 
@@ -251,6 +252,7 @@ int dm_target_linear_secsize(dm_table_entry_t *, unsigned int *);
 
 /* dm_target_stripe.c */
 int dm_target_stripe_init(dm_table_entry_t *, int, char **);
+char *dm_target_stripe_info(void *);
 char *dm_target_stripe_table(void *);
 int dm_target_stripe_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_sync(dm_table_entry_t *);
