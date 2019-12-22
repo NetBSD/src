@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos_i2c.c,v 1.17 2019/10/18 06:13:38 skrll Exp $ */
+/*	$NetBSD: exynos_i2c.c,v 1.18 2019/12/22 23:50:43 thorpej Exp $ */
 
 /*
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_arm_debug.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.17 2019/10/18 06:13:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exynos_i2c.c,v 1.18 2019/12/22 23:50:43 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -65,14 +65,11 @@ struct exynos_i2c_softc {
 	bool			sc_sda_is_output;
 
 	struct i2c_controller 	sc_ic;
-	kmutex_t		sc_lock;
-	kcondvar_t		sc_cv;
+	kmutex_t		sc_intr_lock;
+	kcondvar_t		sc_intr_wait;
 };
 
 static int	exynos_i2c_intr(void *);
-
-static int	exynos_i2c_acquire_bus(void *, int);
-static void	exynos_i2c_release_bus(void *, int);
 
 static int	exynos_i2c_send_start(void *, int);
 static int	exynos_i2c_send_stop(void *, int);
@@ -155,8 +152,8 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_VM);
-	cv_init(&sc->sc_cv, device_xname(self));
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
+	cv_init(&sc->sc_intr_wait, device_xname(self));
 	aprint_normal(" @ 0x%08x\n", (uint)addr);
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
@@ -173,9 +170,8 @@ exynos_i2c_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 	
+	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = exynos_i2c_acquire_bus;
-	sc->sc_ic.ic_release_bus = exynos_i2c_release_bus;
 	sc->sc_ic.ic_send_start  = exynos_i2c_send_start;
 	sc->sc_ic.ic_send_stop   = exynos_i2c_send_stop;
 	sc->sc_ic.ic_initiate_xfer = exynos_i2c_initiate_xfer;
@@ -206,28 +202,11 @@ exynos_i2c_intr(void *priv)
 	istatus &= ~IRQPEND;
 	I2C_WRITE(sc, IICCON, istatus);
 
-	mutex_enter(&sc->sc_lock);
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_lock);
+	mutex_enter(&sc->sc_intr_lock);
+	cv_broadcast(&sc->sc_intr_wait);
+	mutex_exit(&sc->sc_intr_lock);
 
 	return 1;
-}
-
-static int
-exynos_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct exynos_i2c_softc *i2c_sc = cookie;
-
-	mutex_enter(&i2c_sc->sc_lock);
-	return 0;
-}
-
-static void
-exynos_i2c_release_bus(void *cookie, int flags)
-{
-	struct exynos_i2c_softc *i2c_sc = cookie;
-
-	mutex_exit(&i2c_sc->sc_lock);
 }
 
 static int
@@ -240,8 +219,9 @@ exynos_i2c_wait(struct exynos_i2c_softc *sc, int flags)
 
 	while (--retry > 0) {
 		if ((flags & I2C_F_POLL) == 0) {
-			error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_lock,
-			    uimax(mstohz(10), 1));
+			error = cv_timedwait_sig(&sc->sc_intr_wait,
+						 &sc->sc_intr_lock,
+						 uimax(mstohz(10), 1));
 			if (error) {
 				return error;
 			}
@@ -265,19 +245,51 @@ exynos_i2c_wait(struct exynos_i2c_softc *sc, int flags)
 
 
 static int
+exynos_i2c_send_start_locked(struct exynos_i2c_softc *sc, int flags)
+{
+	I2C_WRITE(sc, IICSTAT, 0xF0);
+	return 0;
+}
+
+static int
+exynos_i2c_send_stop_locked(struct exynos_i2c_softc *sc, int flags)
+{
+	I2C_WRITE(sc, IICSTAT, 0xD0);
+	return 0;
+}
+
+static int
+exynos_i2c_write_byte_locked(struct exynos_i2c_softc *sc, uint8_t byte,
+    int flags)
+{
+	int error = exynos_i2c_wait(sc, flags);
+	if (error) {
+		return error;
+	}
+	I2C_WRITE(sc, IICDS, byte);
+	return 0;
+}
+
+static int
 exynos_i2c_send_start(void *cookie, int flags)
 {
 	struct exynos_i2c_softc *sc = cookie;
-	I2C_WRITE(sc, IICSTAT, 0xF0);
-	return 0;
+
+	mutex_enter(&sc->sc_intr_lock);
+	int error = exynos_i2c_send_start_locked(sc, flags);
+	mutex_exit(&sc->sc_intr_lock);
+	return error;
 }
 
 static int
 exynos_i2c_send_stop(void *cookie, int flags)
 {
 	struct exynos_i2c_softc *sc = cookie;
-	I2C_WRITE(sc, IICSTAT, 0xD0);
-	return 0;
+
+	mutex_enter(&sc->sc_intr_lock);
+	int error = exynos_i2c_send_stop_locked(sc, flags);
+	mutex_exit(&sc->sc_intr_lock);
+	return error;
 }
 
 static int
@@ -285,26 +297,38 @@ exynos_i2c_initiate_xfer(void *cookie, i2c_addr_t addr, int flags)
 {
 	struct exynos_i2c_softc *sc = cookie;
 	uint8_t byte = addr & 0x7f;
+	int error;
+
 	if (flags & I2C_F_READ)
 		byte |= READBIT;
 	else
 		byte &= ~READBIT;
+
+	mutex_enter(&sc->sc_intr_lock);
 	I2C_WRITE(sc, IICADD, addr);
-	exynos_i2c_send_start(cookie, flags);
-	exynos_i2c_write_byte(cookie, byte, flags);
-	return exynos_i2c_wait(cookie, flags);
+	exynos_i2c_send_start_locked(sc, flags);
+	exynos_i2c_write_byte_locked(sc, byte, flags);
+	error = exynos_i2c_wait(cookie, flags);
+	mutex_exit(&sc->sc_intr_lock);
+
+	return error;
 }
 
 static int
 exynos_i2c_read_byte(void *cookie, uint8_t *bytep, int flags)
 {
 	struct exynos_i2c_softc *sc = cookie;
+
+	mutex_enter(&sc->sc_intr_lock);
 	int error = exynos_i2c_wait(sc, flags);
-	if (error)
+	if (error) {
+		mutex_exit(&sc->sc_intr_lock);
 		return error;
+	}
 	*bytep = I2C_READ(sc, IICDS) & 0xff;
 	if (flags & I2C_F_STOP)
-		exynos_i2c_send_stop(cookie, flags);
+		exynos_i2c_send_stop_locked(sc, flags);
+	mutex_exit(&sc->sc_intr_lock);
 	return 0;
 }
 
@@ -312,9 +336,9 @@ static int
 exynos_i2c_write_byte(void *cookie, uint8_t byte, int flags)
 {
 	struct exynos_i2c_softc *sc = cookie;
-	int error = exynos_i2c_wait(sc, flags);
-	if (error)
-		return error;
-	I2C_WRITE(sc, IICDS, byte);
-	return 0;
+
+	mutex_enter(&sc->sc_intr_lock);
+	int error = exynos_i2c_write_byte_locked(sc, byte, flags);
+	mutex_exit(&sc->sc_intr_lock);
+	return error;
 }
