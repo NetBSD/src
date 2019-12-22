@@ -33,4 +33,9 @@
 		linux,phandle = <&n5>;
 		phandle = <&n5>;
 	};
+
+	node6 {
+		linux,phandle = <0xfffffffe>;
+		phandle = <0xfffffffe>;
+	};
 };

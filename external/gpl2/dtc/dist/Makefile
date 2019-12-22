@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: GPL-2.0-or-later
 #
 # Device Tree Compiler
 #
@@ -9,8 +10,8 @@
 # CONFIG_LOCALVERSION from some future config system.
 #
 VERSION = 1
-PATCHLEVEL = 4
-SUBLEVEL = 4
+PATCHLEVEL = 5
+SUBLEVEL = 0
 EXTRAVERSION =
 LOCAL_VERSION =
 CONFIG_LOCALVERSION =
@@ -18,12 +19,19 @@ CONFIG_LOCALVERSION =
 CPPFLAGS = -I libfdt -I .
 WARNINGS = -Wall -Wpointer-arith -Wcast-qual -Wnested-externs \
 	-Wstrict-prototypes -Wmissing-prototypes -Wredundant-decls -Wshadow
-CFLAGS = -g -Os -fPIC -Werror $(WARNINGS)
+CFLAGS = -g -Os $(SHAREDLIB_CFLAGS) -Werror $(WARNINGS) $(EXTRA_CFLAGS)
 
 BISON = bison
 LEX = flex
+SWIG = swig
+PKG_CONFIG ?= pkg-config
+PYTHON ?= python3
 
 INSTALL = /usr/bin/install
+INSTALL_PROGRAM = $(INSTALL)
+INSTALL_LIB = $(INSTALL)
+INSTALL_DATA = $(INSTALL) -m 644
+INSTALL_SCRIPT = $(INSTALL)
 DESTDIR =
 PREFIX = $(HOME)
 BINDIR = $(PREFIX)/bin
@@ -31,14 +39,34 @@ LIBDIR = $(PREFIX)/lib
 INCLUDEDIR = $(PREFIX)/include
 
 HOSTOS := $(shell uname -s | tr '[:upper:]' '[:lower:]' | \
-	    sed -e 's/\(cygwin\).*/cygwin/')
+	    sed -e 's/\(cygwin\|msys\).*/\1/')
+
+NO_VALGRIND := $(shell $(PKG_CONFIG) --exists valgrind; echo $$?)
+ifeq ($(NO_VALGRIND),1)
+	CFLAGS += -DNO_VALGRIND
+else
+	CFLAGS += $(shell $(PKG_CONFIG) --cflags valgrind)
+endif
+
+NO_YAML := $(shell $(PKG_CONFIG) --exists yaml-0.1; echo $$?)
+ifeq ($(NO_YAML),1)
+	CFLAGS += -DNO_YAML
+else
+	LDLIBS_dtc += $(shell $(PKG_CONFIG) --libs yaml-0.1)
+endif
 
 ifeq ($(HOSTOS),darwin)
-SHAREDLIB_EXT=dylib
-SHAREDLIB_LINK_OPTIONS=-dynamiclib -Wl,-install_name -Wl,
+SHAREDLIB_EXT     = dylib
+SHAREDLIB_CFLAGS  = -fPIC
+SHAREDLIB_LDFLAGS = -fPIC -dynamiclib -Wl,-install_name -Wl,
+else ifeq ($(HOSTOS),$(filter $(HOSTOS),msys cygwin))
+SHAREDLIB_EXT     = so
+SHAREDLIB_CFLAGS  =
+SHAREDLIB_LDFLAGS = -shared -Wl,--version-script=$(LIBFDT_version) -Wl,-soname,
 else
-SHAREDLIB_EXT=so
-SHAREDLIB_LINK_OPTIONS=-shared -Wl,--version-script=$(LIBFDT_version) -Wl,-soname,
+SHAREDLIB_EXT     = so
+SHAREDLIB_CFLAGS  = -fPIC
+SHAREDLIB_LDFLAGS = -fPIC -shared -Wl,--version-script=$(LIBFDT_version) -Wl,-soname,
 endif
 
 #
@@ -112,10 +140,33 @@ BIN += dtc
 BIN += fdtdump
 BIN += fdtget
 BIN += fdtput
+BIN += fdtoverlay
 
 SCRIPTS = dtdiff
 
 all: $(BIN) libfdt
+
+# We need both Python and swig to build/install pylibfdt.
+# This builds the given make ${target} if those deps are found.
+check_python_deps = \
+	if $(PKG_CONFIG) --cflags $(PYTHON) >/dev/null 2>&1; then \
+		if which swig >/dev/null 2>&1; then \
+			can_build=yes; \
+		fi; \
+	fi; \
+	if [ "$${can_build}" = "yes" ]; then \
+		$(MAKE) $${target}; \
+	else \
+		echo "\#\# Skipping pylibfdt (install python dev and swig to build)"; \
+	fi ;
+
+.PHONY: maybe_pylibfdt
+maybe_pylibfdt: FORCE
+	target=pylibfdt; $(check_python_deps)
+
+ifeq ($(NO_PYTHON),)
+all: maybe_pylibfdt
+endif
 
 
 ifneq ($(DEPTARGETS),)
@@ -124,6 +175,7 @@ ifneq ($(DEPTARGETS),)
 -include $(FDTDUMP_OBJS:%.o=%.d)
 -include $(FDTGET_OBJS:%.o=%.d)
 -include $(FDTPUT_OBJS:%.o=%.d)
+-include $(FDTOVERLAY_OBJS:%.o=%.d)
 endif
 
 
@@ -131,28 +183,27 @@ endif
 #
 # Rules for libfdt
 #
-LIBFDT_objdir = libfdt
-LIBFDT_srcdir = libfdt
-LIBFDT_archive = $(LIBFDT_objdir)/libfdt.a
-LIBFDT_lib = $(LIBFDT_objdir)/libfdt-$(DTC_VERSION).$(SHAREDLIB_EXT)
-LIBFDT_include = $(addprefix $(LIBFDT_srcdir)/,$(LIBFDT_INCLUDES))
-LIBFDT_version = $(addprefix $(LIBFDT_srcdir)/,$(LIBFDT_VERSION))
+LIBFDT_dir = libfdt
+LIBFDT_archive = $(LIBFDT_dir)/libfdt.a
+LIBFDT_lib = $(LIBFDT_dir)/$(LIBFDT_LIB)
+LIBFDT_include = $(addprefix $(LIBFDT_dir)/,$(LIBFDT_INCLUDES))
+LIBFDT_version = $(addprefix $(LIBFDT_dir)/,$(LIBFDT_VERSION))
 
-include $(LIBFDT_srcdir)/Makefile.libfdt
+include $(LIBFDT_dir)/Makefile.libfdt
 
 .PHONY: libfdt
 libfdt: $(LIBFDT_archive) $(LIBFDT_lib)
 
-$(LIBFDT_archive): $(addprefix $(LIBFDT_objdir)/,$(LIBFDT_OBJS))
-$(LIBFDT_lib): $(addprefix $(LIBFDT_objdir)/,$(LIBFDT_OBJS))
+$(LIBFDT_archive): $(addprefix $(LIBFDT_dir)/,$(LIBFDT_OBJS))
 
-libfdt_clean:
-	@$(VECHO) CLEAN "(libfdt)"
-	rm -f $(addprefix $(LIBFDT_objdir)/,$(STD_CLEANFILES))
-	rm -f $(LIBFDT_objdir)/*.so
+$(LIBFDT_lib): $(addprefix $(LIBFDT_dir)/,$(LIBFDT_OBJS)) $(LIBFDT_version)
+	@$(VECHO) LD $@
+	$(CC) $(LDFLAGS) $(SHAREDLIB_LDFLAGS)$(LIBFDT_soname) -o $(LIBFDT_lib) \
+		$(addprefix $(LIBFDT_dir)/,$(LIBFDT_OBJS))
+	ln -sf $(LIBFDT_LIB) $(LIBFDT_dir)/$(LIBFDT_soname)
 
 ifneq ($(DEPTARGETS),)
--include $(LIBFDT_OBJS:%.o=$(LIBFDT_objdir)/%.d)
+-include $(LIBFDT_OBJS:%.o=$(LIBFDT_dir)/%.d)
 endif
 
 # This stops make from generating the lex and bison output during
@@ -163,22 +214,31 @@ endif
 install-bin: all $(SCRIPTS)
 	@$(VECHO) INSTALL-BIN
 	$(INSTALL) -d $(DESTDIR)$(BINDIR)
-	$(INSTALL) $(BIN) $(SCRIPTS) $(DESTDIR)$(BINDIR)
+	$(INSTALL_PROGRAM) $(BIN) $(DESTDIR)$(BINDIR)
+	$(INSTALL_SCRIPT) $(SCRIPTS) $(DESTDIR)$(BINDIR)
 
 install-lib: all
 	@$(VECHO) INSTALL-LIB
 	$(INSTALL) -d $(DESTDIR)$(LIBDIR)
-	$(INSTALL) $(LIBFDT_lib) $(DESTDIR)$(LIBDIR)
+	$(INSTALL_LIB) $(LIBFDT_lib) $(DESTDIR)$(LIBDIR)
 	ln -sf $(notdir $(LIBFDT_lib)) $(DESTDIR)$(LIBDIR)/$(LIBFDT_soname)
 	ln -sf $(LIBFDT_soname) $(DESTDIR)$(LIBDIR)/libfdt.$(SHAREDLIB_EXT)
-	$(INSTALL) -m 644 $(LIBFDT_archive) $(DESTDIR)$(LIBDIR)
+	$(INSTALL_DATA) $(LIBFDT_archive) $(DESTDIR)$(LIBDIR)
 
 install-includes:
 	@$(VECHO) INSTALL-INC
 	$(INSTALL) -d $(DESTDIR)$(INCLUDEDIR)
-	$(INSTALL) -m 644 $(LIBFDT_include) $(DESTDIR)$(INCLUDEDIR)
+	$(INSTALL_DATA) $(LIBFDT_include) $(DESTDIR)$(INCLUDEDIR)
 
 install: install-bin install-lib install-includes
+
+.PHONY: maybe_install_pylibfdt
+maybe_install_pylibfdt: FORCE
+	target=install_pylibfdt; $(check_python_deps)
+
+ifeq ($(NO_PYTHON),)
+install: maybe_install_pylibfdt
+endif
 
 $(VERSION_FILE): Makefile FORCE
 	$(call filechk,version)
@@ -192,15 +252,28 @@ convert-dtsv0: $(CONVERT_OBJS)
 
 fdtdump:	$(FDTDUMP_OBJS)
 
-fdtget:	$(FDTGET_OBJS) $(LIBFDT_archive)
+fdtget:	$(FDTGET_OBJS) $(LIBFDT_lib)
 
-fdtput:	$(FDTPUT_OBJS) $(LIBFDT_archive)
+fdtput:	$(FDTPUT_OBJS) $(LIBFDT_lib)
+
+fdtoverlay: $(FDTOVERLAY_OBJS) $(LIBFDT_lib)
 
 dist:
 	git archive --format=tar --prefix=dtc-$(dtc_version)/ HEAD \
 		> ../dtc-$(dtc_version).tar
 	cat ../dtc-$(dtc_version).tar | \
 		gzip -9 > ../dtc-$(dtc_version).tar.gz
+
+
+#
+# Rules for pylibfdt
+#
+PYLIBFDT_dir = pylibfdt
+
+include $(PYLIBFDT_dir)/Makefile.pylibfdt
+
+.PHONY: pylibfdt
+pylibfdt: $(PYLIBFDT_dir)/_libfdt.so
 
 #
 # Release signing and uploading
@@ -234,6 +307,10 @@ TESTS_BIN += convert-dtsv0
 TESTS_BIN += fdtput
 TESTS_BIN += fdtget
 TESTS_BIN += fdtdump
+TESTS_BIN += fdtoverlay
+ifeq ($(NO_PYTHON),)
+TESTS_PYLIBFDT += maybe_pylibfdt
+endif
 
 include tests/Makefile.tests
 
@@ -243,7 +320,7 @@ include tests/Makefile.tests
 STD_CLEANFILES = *~ *.o *.$(SHAREDLIB_EXT) *.d *.a *.i *.s core a.out vgcore.* \
 	*.tab.[ch] *.lex.c *.output
 
-clean: libfdt_clean tests_clean
+clean: libfdt_clean pylibfdt_clean tests_clean
 	@$(VECHO) CLEAN
 	rm -f $(STD_CLEANFILES)
 	rm -f $(VERSION_FILE)
@@ -255,7 +332,7 @@ clean: libfdt_clean tests_clean
 #
 %: %.o
 	@$(VECHO) LD $@
-	$(LINK.c) -o $@ $^
+	$(LINK.c) -o $@ $^ $(LDLIBS_$*)
 
 %.o: %.c
 	@$(VECHO) CC $@
@@ -284,10 +361,6 @@ clean: libfdt_clean tests_clean
 %.a:
 	@$(VECHO) AR $@
 	$(AR) $(ARFLAGS) $@ $^
-
-$(LIBFDT_lib):
-	@$(VECHO) LD $@
-	$(CC) $(LDFLAGS) -fPIC $(SHAREDLIB_LINK_OPTIONS)$(LIBFDT_soname) -o $(LIBFDT_lib) $^
 
 %.lex.c: %.l
 	@$(VECHO) LEX $@
