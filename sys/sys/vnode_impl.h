@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.18 2019/12/01 13:56:29 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.19 2019/12/22 19:47:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@ struct vcache_key {
  *	c	vcache_lock
  *	d	vdrain_lock
  *	i	v_interlock
- *	m	mntvnode_lock
+ *	m	mnt_vnodelock
  *	n	namecache_lock
  *	s	syncer_data_lock
  */

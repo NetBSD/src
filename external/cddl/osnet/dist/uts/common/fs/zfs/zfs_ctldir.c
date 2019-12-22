@@ -1329,7 +1329,7 @@ sfs_snapshot_mount(vnode_t *vp, const char *snapname)
 	vfsp->mnt_stat.f_owner = 0;
 	vfsp->mnt_flag = MNT_RDONLY | MNT_NOSUID | MNT_IGNORE;
 
-	mutex_enter(&vfsp->mnt_updating);
+	mutex_enter(vfsp->mnt_updating);
 
 	error = zfs_domount(vfsp, osname);
 	if (error)
@@ -1349,12 +1349,12 @@ sfs_snapshot_mount(vnode_t *vp, const char *snapname)
 	vref(vp);
 	vp->v_mountedhere = vfsp;
 
-	mutex_exit(&vfsp->mnt_updating);
+	mutex_exit(vfsp->mnt_updating);
 	(void) VFS_STATVFS(vfsp, &vfsp->mnt_stat);
 
 out:;
 	if (error && vfsp) {
-		mutex_exit(&vfsp->mnt_updating);
+		mutex_exit(vfsp->mnt_updating);
 		vfs_rele(vfsp);
 	}
 	PNBUF_PUT(osname);
