@@ -1,7 +1,7 @@
-/*	$NetBSD: genfs_vfsops.c,v 1.9 2019/02/20 10:07:27 hannken Exp $	*/
+/*	$NetBSD: genfs_vfsops.c,v 1.10 2019/12/22 19:47:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.9 2019/02/20 10:07:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vfsops.c,v 1.10 2019/12/22 19:47:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/mount.h>
@@ -61,7 +61,7 @@ genfs_statvfs(struct mount *mp, struct statvfs *sbp)
 int
 genfs_renamelock_enter(struct mount *mp)
 {
-	mutex_enter(&mp->mnt_renamelock);
+	mutex_enter(mp->mnt_renamelock);
 	/* Preserve possible error return in case we become interruptible. */
 	return 0;
 }
@@ -69,7 +69,7 @@ genfs_renamelock_enter(struct mount *mp)
 void
 genfs_renamelock_exit(struct mount *mp)
 {
-	mutex_exit(&mp->mnt_renamelock);
+	mutex_exit(mp->mnt_renamelock);
 }
 
 int

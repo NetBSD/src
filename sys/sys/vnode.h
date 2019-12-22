@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.285 2019/12/15 21:56:13 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.286 2019/12/22 19:47:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -416,11 +416,6 @@ struct vnodeop_desc {
 };
 
 #ifdef _KERNEL
-
-/*
- * Interlock for scanning list of vnodes attached to a mountpoint
- */
-extern kmutex_t		mntvnode_lock;
 
 /*
  * Union filesystem hook for vn_readdir().

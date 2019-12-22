@@ -1,7 +1,8 @@
-/*	$NetBSD: vfs_subr.c,v 1.477 2019/12/15 20:30:03 joerg Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.478 2019/12/22 19:47:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -68,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.477 2019/12/15 20:30:03 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478 2019/12/22 19:47:34 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -667,13 +668,13 @@ vn_syncer_remove_from_worklist(struct vnode *vp)
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	mutex_enter(&syncer_data_lock);
 	if (vp->v_iflag & VI_ONWORKLST) {
+		mutex_enter(&syncer_data_lock);
 		vp->v_iflag &= ~VI_ONWORKLST;
 		slp = &syncer_workitem_pending[vip->vi_synclist_slot];
 		TAILQ_REMOVE(slp, vip, vi_synclist);
+		mutex_exit(&syncer_data_lock);
 	}
-	mutex_exit(&syncer_data_lock);
 }
 
 /*
@@ -685,7 +686,7 @@ vfs_syncer_add_to_worklist(struct mount *mp)
 	static int start, incr, next;
 	int vdelay;
 
-	KASSERT(mutex_owned(&mp->mnt_updating));
+	KASSERT(mutex_owned(mp->mnt_updating));
 	KASSERT((mp->mnt_iflag & IMNT_ONWORKLIST) == 0);
 
 	/*
@@ -716,7 +717,7 @@ void
 vfs_syncer_remove_from_worklist(struct mount *mp)
 {
 
-	KASSERT(mutex_owned(&mp->mnt_updating));
+	KASSERT(mutex_owned(mp->mnt_updating));
 	KASSERT((mp->mnt_iflag & IMNT_ONWORKLIST) != 0);
 
 	mp->mnt_iflag &= ~IMNT_ONWORKLIST;
@@ -1575,7 +1576,7 @@ vfs_mount_print(struct mount *mp, int full, void (*pr)(const char *, ...))
 	snprintb(sbuf, sizeof(sbuf), __IMNT_FLAG_BITS, mp->mnt_iflag);
 	(*pr)("iflag = %s\n", sbuf);
 
-	(*pr)("refcnt = %d updating @ %p\n", mp->mnt_refcnt, &mp->mnt_updating);
+	(*pr)("refcnt = %d updating @ %p\n", mp->mnt_refcnt, mp->mnt_updating);
 
 	(*pr)("statvfs cache:\n");
 	(*pr)("\tbsize = %lu\n",mp->mnt_stat.f_bsize);

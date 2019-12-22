@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.537 2019/09/26 01:34:16 christos Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.538 2019/12/22 19:47:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.537 2019/09/26 01:34:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.538 2019/12/22 19:47:34 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -296,7 +296,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (error)
 		goto out;
 
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= flags & MNT_OP_FLAGS;
@@ -348,7 +348,7 @@ mount_update(struct lwp *l, struct vnode *vp, const char *path, int flags,
 		if ((mp->mnt_iflag & IMNT_ONWORKLIST) != 0)
 			vfs_syncer_remove_from_worklist(mp);
 	}
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_resume(mp);
 
 	if ((error == 0) && !(saved_flags & MNT_EXTATTR) && 
@@ -445,12 +445,12 @@ mount_getargs(struct lwp *l, struct vnode *vp, const char *path, int flags,
 	if (vfs_busy(mp))
 		return EPERM;
 
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
 	mp->mnt_flag |= MNT_GETARGS;
 	error = VFS_MOUNT(mp, path, data, data_len);
 	mp->mnt_flag &= ~MNT_OP_FLAGS;
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 
 	vfs_unbusy(mp);
 	return (error);
@@ -655,7 +655,7 @@ do_sys_sync(struct lwp *l)
 
 	mountlist_iterator_init(&iter);
 	while ((mp = mountlist_iterator_next(iter)) != NULL) {
-		mutex_enter(&mp->mnt_updating);
+		mutex_enter(mp->mnt_updating);
 		if ((mp->mnt_flag & MNT_RDONLY) == 0) {
 			asyncflag = mp->mnt_flag & MNT_ASYNC;
 			mp->mnt_flag &= ~MNT_ASYNC;
@@ -663,7 +663,7 @@ do_sys_sync(struct lwp *l)
 			if (asyncflag)
 				 mp->mnt_flag |= MNT_ASYNC;
 		}
-		mutex_exit(&mp->mnt_updating);
+		mutex_exit(mp->mnt_updating);
 	}
 	mountlist_iterator_destroy(iter);
 #ifdef DEBUG
