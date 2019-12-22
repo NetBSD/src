@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.45 2018/03/17 13:14:27 jmcneill Exp $ */
+/* $NetBSD: crmfb.c,v 1.46 2019/12/22 23:23:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.45 2018/03/17 13:14:27 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.46 2019/12/22 23:23:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -204,8 +204,6 @@ static void	crmfb_putchar(void *, int, int, u_int, long);
 static void	crmfb_putchar_aa(void *, int, int, u_int, long);
 
 /* I2C glue */
-static int crmfb_i2c_acquire_bus(void *, int);
-static void crmfb_i2c_release_bus(void *, int);
 static int crmfb_i2c_send_start(void *, int);
 static int crmfb_i2c_send_stop(void *, int);
 static int crmfb_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -1617,15 +1615,13 @@ crmfb_setup_ddc(struct crmfb_softc *sc)
 	int i;
 
 	memset(sc->sc_edid_data, 0, 128);
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = crmfb_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = crmfb_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = crmfb_i2c_send_start;
 	sc->sc_i2c.ic_send_stop = crmfb_i2c_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = crmfb_i2c_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = crmfb_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = crmfb_i2c_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 	i = 0;
 	while (sc->sc_edid_data[1] == 0 && i++ < 10)
 		ddc_read_edid(&sc->sc_i2c, sc->sc_edid_data, 128);
@@ -1660,22 +1656,6 @@ crmfb_i2cbb_read(void *cookie)
 	struct crmfb_softc *sc = cookie;
 
 	return bus_space_read_4(sc->sc_iot, sc->sc_ioh, CRMFB_I2C_VGA) ^ 3;
-}
-
-/* higher level I2C stuff */
-static int
-crmfb_i2c_acquire_bus(void *cookie, int flags)
-{
-
-	/* private bus */
-	return 0;
-}
-
-static void
-crmfb_i2c_release_bus(void *cookie, int flags)
-{
-
-	/* private bus */
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ziic.c,v 1.3 2016/02/14 19:54:21 chs Exp $	*/
+/*	$NetBSD: ziic.c,v 1.4 2019/12/22 23:23:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.3 2016/02/14 19:54:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ziic.c,v 1.4 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,6 @@ struct pxaiic_softc {
 	void *			sc_ih;
 
 	struct i2c_controller	sc_i2c;
-	kmutex_t		sc_buslock;
 };
 
 static int pxaiic_match(device_t, cfdata_t, void *);
@@ -106,9 +105,9 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_TTY);
-
 #if 0
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_TTY);
+
 	sc->sc_ih = pxa2x0_intr_establish(PXA2X0_INT_I2C, IPL_TTY,
 	    pxa2x0_i2c_intr, &psc);
 	if (sc->sc_ih == NULL) {
@@ -118,6 +117,7 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 #endif
 
 	/* Initialize i2c_controller */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
 	sc->sc_i2c.ic_acquire_bus = pxaiic_acquire_bus;
 	sc->sc_i2c.ic_release_bus = pxaiic_release_bus;
@@ -126,7 +126,6 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c.ic_initiate_xfer = pxaiic_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = pxaiic_read_byte;
 	sc->sc_i2c.ic_write_byte = pxaiic_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
@@ -139,7 +138,6 @@ pxaiic_acquire_bus(void *cookie, int flags)
 	struct pxaiic_softc *sc = cookie;
 	struct pxa2x0_i2c_softc *psc = &sc->sc_pxa_i2c;
 
-	mutex_enter(&sc->sc_buslock);
 	pxa2x0_i2c_open(psc);
 
 	return 0;
@@ -152,7 +150,6 @@ pxaiic_release_bus(void *cookie, int flags)
 	struct pxa2x0_i2c_softc *psc = &sc->sc_pxa_i2c;
 
 	pxa2x0_i2c_close(psc);
-	mutex_exit(&sc->sc_buslock);
 }
 
 static int

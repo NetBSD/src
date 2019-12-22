@@ -1,4 +1,4 @@
-/* $NetBSD: dw_hdmi.c,v 1.6 2019/11/23 20:27:39 jmcneill Exp $ */
+/* $NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.6 2019/11/23 20:27:39 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dw_hdmi.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -253,24 +253,6 @@ enum dwhdmi_dai_mixer_ctrl {
 };
 
 static int
-dwhdmi_ddc_acquire_bus(void *priv, int flags)
-{
-	struct dwhdmi_softc * const sc = priv;
-
-	mutex_enter(&sc->sc_ic_lock);
-
-	return 0;
-}
-
-static void
-dwhdmi_ddc_release_bus(void *priv, int flags)
-{
-	struct dwhdmi_softc * const sc = priv;
-
-	mutex_exit(&sc->sc_ic_lock);
-}
-
-static int
 dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
     const void *cmdbuf, size_t cmdlen, void *buf, size_t len, int flags)
 {
@@ -278,8 +260,6 @@ dwhdmi_ddc_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	uint8_t block, operation, val;
 	uint8_t *pbuf = buf;
 	int off, n, retry;
-
-	KASSERT(mutex_owned(&sc->sc_ic_lock));
 
 	if (addr != DDC_ADDR || op != I2C_OP_READ_WITH_STOP || cmdlen == 0 || buf == NULL) {
 		printf("dwhdmi_ddc_exec: bad args addr=%#x op=%#x cmdlen=%d buf=%p\n",
@@ -883,8 +863,6 @@ dwhdmi_attach(struct dwhdmi_softc *sc)
 		return EINVAL;
 	}
 
-	mutex_init(&sc->sc_ic_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	sc->sc_version = dwhdmi_read(sc, HDMI_DESIGN_ID);
 	sc->sc_version <<= 8;
 	sc->sc_version |= dwhdmi_read(sc, HDMI_REVISION_ID);
@@ -903,9 +881,8 @@ dwhdmi_attach(struct dwhdmi_softc *sc)
 	 */
 	if (sc->sc_ic == NULL) {
 		struct i2c_controller *ic = &sc->sc_ic_builtin;
+		iic_tag_init(ic);
 		ic->ic_cookie = sc;
-		ic->ic_acquire_bus = dwhdmi_ddc_acquire_bus;
-		ic->ic_release_bus = dwhdmi_ddc_release_bus;
 		ic->ic_exec = dwhdmi_ddc_exec;
 		sc->sc_ic = ic;
 	}

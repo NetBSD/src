@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.15 2016/01/11 18:24:56 jdc Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.16 2019/12/22 23:23:32 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -22,7 +22,6 @@
 #include <sys/device.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
-#include <sys/rwlock.h>
 #include <sys/proc.h>
 #include <sys/bus.h>
 
@@ -94,10 +93,8 @@ pcfiic_attach(struct pcfiic_softc *sc, i2c_addr_t addr, u_int8_t clock,
 	if (sc->sc_master)
 		pcfiic_choose_bus(sc, 0);
 
-	rw_init(&sc->sc_lock);
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = pcfiic_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = pcfiic_i2c_release_bus;
 	sc->sc_i2c.ic_exec = pcfiic_i2c_exec;
 
 	bzero(&iba, sizeof(iba));
@@ -109,23 +106,6 @@ int
 pcfiic_intr(void *arg)
 {
 	return (0);
-}
-
-int
-pcfiic_i2c_acquire_bus(void *arg, int flags)
-{
-	struct pcfiic_softc	*sc = arg;
-
-	rw_enter(&sc->sc_lock, RW_WRITER);
-	return 0;
-}
-
-void
-pcfiic_i2c_release_bus(void *arg, int flags)
-{
-	struct pcfiic_softc	*sc = arg;
-
-	rw_exit(&sc->sc_lock);
 }
 
 int

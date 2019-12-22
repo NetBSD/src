@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv_i2c.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $ */
+/* $NetBSD: emdtv_i2c.c,v 1.2 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008, 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv_i2c.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv_i2c.c,v 1.2 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: emdtv_i2c.c,v 1.1 2011/07/11 18:02:04 jmcneill Exp $
 #include <dev/usb/emdtvvar.h>
 #include <dev/usb/emdtvreg.h>
 
-static int	emdtv_i2c_acquire_bus(void *, int);
-static void	emdtv_i2c_release_bus(void *, int);
 static int	emdtv_i2c_exec(void *, i2c_op_t, i2c_addr_t,
 			       const void *, size_t, void *, size_t, int);
 
@@ -58,10 +56,8 @@ static int	emdtv_i2c_send(struct emdtv_softc *, i2c_addr_t,
 int
 emdtv_i2c_attach(struct emdtv_softc *sc)
 {
-	mutex_init(&sc->sc_i2c_lock, MUTEX_DEFAULT, IPL_VM);
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = emdtv_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = emdtv_i2c_release_bus;
 	sc->sc_i2c.ic_exec = emdtv_i2c_exec;
 
 	return 0;
@@ -70,17 +66,7 @@ emdtv_i2c_attach(struct emdtv_softc *sc)
 int
 emdtv_i2c_detach(struct emdtv_softc *sc, int flags)
 {
-	mutex_destroy(&sc->sc_i2c_lock);
-
-	return 0;
-}
-
-static int
-emdtv_i2c_acquire_bus(void *opaque, int flags)
-{
-	struct emdtv_softc *sc = opaque;
-
-	mutex_enter(&sc->sc_i2c_lock);
+	iic_tag_fini(&sc->sc_i2c);
 
 	return 0;
 }
@@ -104,14 +90,6 @@ emdtv_i2c_exec(void *opaque, i2c_op_t op, i2c_addr_t addr,
 	}
 
 	return error;
-}
-
-static void
-emdtv_i2c_release_bus(void *opaque, int flags)
-{
-	struct emdtv_softc *sc = opaque;
-
-	mutex_exit(&sc->sc_i2c_lock);
 }
 
 static int

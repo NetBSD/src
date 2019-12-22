@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2cvar.h,v 1.5 2019/08/05 12:21:00 hkenken Exp $ */
+/* $NetBSD: motoi2cvar.h,v 1.6 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -48,7 +48,6 @@ struct motoi2c_softc {
 	bus_space_tag_t		sc_iot;
 	bus_space_handle_t	sc_ioh;
 	struct i2c_controller	sc_i2c;
-	kmutex_t		sc_buslock;
 	motoi2c_iord_t		sc_iord;
 	motoi2c_iowr_t		sc_iowr;
 	int			sc_phandle;
