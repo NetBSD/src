@@ -1,11 +1,11 @@
-/*	$NetBSD: intr.c,v 1.147 2019/11/08 04:15:02 msaitoh Exp $	*/
+/*	$NetBSD: intr.c,v 1.148 2019/12/22 15:09:39 thorpej Exp $	*/
 
 /*
- * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Andrew Doran.
+ * by Andrew Doran, and by Jason R. Thorpe.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.147 2019/11/08 04:15:02 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.148 2019/12/22 15:09:39 thorpej Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -743,6 +743,34 @@ intr_append_intrsource_xname(struct intrsource *isp, const char *xname)
 }
 
 /*
+ * Called on bound CPU to handle calling pic_hwunmask from contexts
+ * that are not already running on the bound CPU.
+ *
+ * => caller (on initiating CPU) holds cpu_lock on our behalf
+ * => arg1: struct intrhand *ih
+ */
+static void
+intr_hwunmask_xcall(void *arg1, void *arg2)
+{
+	struct intrhand * const ih = arg1;
+	struct cpu_info * const ci = ih->ih_cpu;
+
+	KASSERT(ci == curcpu() || !mp_online);
+
+	const u_long psl = x86_read_psl();
+	x86_disable_intr();
+
+	struct intrsource * const source = ci->ci_isources[ih->ih_slot];
+	struct pic * const pic = source->is_pic;
+
+	if (source->is_mask_count == 0) {
+		(*pic->pic_hwunmask)(pic, ih->ih_pin);
+	}
+
+	x86_write_psl(psl);
+}
+
+/*
  * Handle per-CPU component of interrupt establish.
  *
  * => caller (on initiating CPU) holds cpu_lock on our behalf
@@ -958,7 +986,12 @@ intr_establish_xname(int legacy_irq, struct pic *pic, int pin, int type,
 
 	/* All set up, so add a route for the interrupt and unmask it. */
 	(*pic->pic_addroute)(pic, ci, pin, idt_vec, type);
-	(*pic->pic_hwunmask)(pic, pin);
+	if (ci == curcpu() || !mp_online) {
+		intr_hwunmask_xcall(ih, NULL);
+	} else {
+		where = xc_unicast(0, intr_hwunmask_xcall, ih, NULL, ci);
+		xc_wait(where);
+	}
 	mutex_exit(&cpu_lock);
 
 	if (bootverbose || cpu_index(ci) != 0)
@@ -977,6 +1010,118 @@ intr_establish(int legacy_irq, struct pic *pic, int pin, int type, int level,
 
 	return intr_establish_xname(legacy_irq, pic, pin, type,
 	    level, handler, arg, known_mpsafe, "unknown");
+}
+
+/*
+ * Called on bound CPU to handle intr_mask() / intr_unmask().
+ *
+ * => caller (on initiating CPU) holds cpu_lock on our behalf
+ * => arg1: struct intrhand *ih
+ * => arg2: true -> mask, false -> unmask.
+ */
+static void
+intr_mask_xcall(void *arg1, void *arg2)
+{
+	struct intrhand * const ih = arg1;
+	const uintptr_t mask = (uintptr_t)arg2;
+	struct cpu_info * const ci = ih->ih_cpu;
+	bool force_pending = false;
+
+	KASSERT(ci == curcpu() || !mp_online);
+
+	/*
+	 * We need to disable interrupts to hold off the interrupt
+	 * vectors.
+	 */
+	const u_long psl = x86_read_psl();
+	x86_disable_intr();
+
+	struct intrsource * const source = ci->ci_isources[ih->ih_slot];
+	struct pic * const pic = source->is_pic;
+
+	if (mask) {
+		source->is_mask_count++;
+		KASSERT(source->is_mask_count != 0);
+		if (source->is_mask_count == 1) {
+			(*pic->pic_hwmask)(pic, ih->ih_pin);
+		}
+	} else {
+		KASSERT(source->is_mask_count != 0);
+		if (--source->is_mask_count == 0) {
+			/*
+			 * If this interrupt source is being moved, don't
+			 * unmask it at the hw.
+			 */
+			if (! source->is_distribute_pending)
+				(*pic->pic_hwunmask)(pic, ih->ih_pin);
+			force_pending = true;
+		}
+	}
+
+	/* Re-enable interrupts. */
+	x86_write_psl(psl);
+
+	if (force_pending) {
+		/* Force processing of any pending interrupts. */
+		splx(splhigh());
+	}
+}
+
+static void
+intr_mask_internal(struct intrhand * const ih, const bool mask)
+{
+
+	/*
+	 * Call out to the remote CPU to update its interrupt state.
+	 * Only make RPCs if the APs are up and running.
+	 */
+	mutex_enter(&cpu_lock);
+	struct cpu_info * const ci = ih->ih_cpu;
+	void * const mask_arg = (void *)(uintptr_t)mask;
+	if (ci == curcpu() || !mp_online) {
+		intr_mask_xcall(ih, mask_arg);
+	} else {
+		const uint64_t where =
+		    xc_unicast(0, intr_mask_xcall, ih, mask_arg, ci);
+		xc_wait(where);
+	}
+	mutex_exit(&cpu_lock);
+}
+
+void
+intr_mask(struct intrhand *ih)
+{
+
+	if (cpu_intr_p()) {
+		/*
+		 * Special case of calling intr_mask() from an interrupt
+		 * handler: we MUST be called from the bound CPU for this
+		 * interrupt (presumably from a handler we're about to
+		 * mask).
+		 *
+		 * We can't take the cpu_lock in this case, and we must
+		 * therefore be extra careful.
+		 */
+		struct cpu_info * const ci = ih->ih_cpu;
+		KASSERT(ci == curcpu() || !mp_online);
+		intr_mask_xcall(ih, (void *)(uintptr_t)true);
+		return;
+	}
+
+	intr_mask_internal(ih, true);
+}
+
+void
+intr_unmask(struct intrhand *ih)
+{
+
+	/*
+	 * This is not safe to call from an interrupt context because
+	 * we don't want to accidentally unmask an interrupt source
+	 * that's masked because it's being serviced.
+	 */
+	KASSERT(!cpu_intr_p());
+	intr_mask_internal(ih, false);
 }
 
 /*
@@ -1039,7 +1184,7 @@ intr_disestablish_xcall(void *arg1, void *arg2)
 	if (source->is_handlers == NULL)
 		(*pic->pic_delroute)(pic, ci, ih->ih_pin, idtvec,
 		    source->is_type);
-	else
+	else if (source->is_mask_count == 0)
 		(*pic->pic_hwunmask)(pic, ih->ih_pin);
 
 	/* Re-enable interrupts. */
@@ -1854,10 +1999,14 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 		return err;
 	}
 
+	/* Prevent intr_unmask() from reenabling the source at the hw. */
+	isp->is_distribute_pending = true;
+
 	pin = isp->is_pin;
 	(*pic->pic_hwmask)(pic, pin); /* for ci_ipending check */
-	while (oldci->ci_ipending & (1 << oldslot))
+	while (oldci->ci_ipending & (1 << oldslot)) {
 		(void)kpause("intrdist", false, 1, &cpu_lock);
+	}
 
 	kpreempt_disable();
 
@@ -1892,9 +2041,16 @@ intr_set_affinity(struct intrsource *isp, const kcpuset_t *cpuset)
 	isp->is_active_cpu = newci->ci_cpuid;
 	(*pic->pic_addroute)(pic, newci, pin, idt_vec, isp->is_type);
 
-	kpreempt_enable();
+	isp->is_distribute_pending = false;
+	if (newci == curcpu() || !mp_online) {
+		intr_hwunmask_xcall(ih, NULL);
+	} else {
+		uint64_t where;
+		where = xc_unicast(0, intr_hwunmask_xcall, ih, NULL, newci);
+		xc_wait(where);
+	}
 
-	(*pic->pic_hwunmask)(pic, pin);
+	kpreempt_enable();
 
 	return err;
 }
