@@ -1,23 +1,8 @@
-/*	$NetBSD: dtc-lexer.l,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+/*	$NetBSD: dtc-lexer.l,v 1.4 2019/12/22 12:38:24 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * (C) Copyright David Gibson <dwg@au1.ibm.com>, IBM Corporation.  2005.
- *
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of the
- * License, or (at your option) any later version.
- *
- *  This program is distributed in the hope that it will be useful,
- *  but WITHOUT ANY WARRANTY; without even the implied warranty of
- *  MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- *  General Public License for more details.
- *
- *  You should have received a copy of the GNU General Public License
- *  along with this program; if not, write to the Free Software
- *  Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307
- *                                                                   USA
  */
 
 %option noyywrap nounput noinput never-interactive
@@ -155,6 +140,13 @@ static void PRINTF(1, 2) lexical_error(const char *fmt, ...);
 			return DT_DEL_NODE;
 		}
 
+<*>"/omit-if-no-ref/"	{
+			DPRINT("Keyword: /omit-if-no-ref/\n");
+			DPRINT("<PROPNODENAME>\n");
+			BEGIN(PROPNODENAME);
+			return DT_OMIT_NO_REF;
+		}
+
 <*>{LABEL}:	{
 			DPRINT("Label: %s\n", yytext);
 			yylval.labelref = xstrdup(yytext);
@@ -208,14 +200,14 @@ static void PRINTF(1, 2) lexical_error(const char *fmt, ...);
 <*>\&{LABEL}	{	/* label reference */
 			DPRINT("Ref: %s\n", yytext+1);
 			yylval.labelref = xstrdup(yytext+1);
-			return DT_REF;
+			return DT_LABEL_REF;
 		}
 
 <*>"&{/"{PATHCHAR}*\}	{	/* new-style path reference */
 			yytext[yyleng-1] = '\0';
 			DPRINT("Ref: %s\n", yytext+2);
 			yylval.labelref = xstrdup(yytext+2);
-			return DT_REF;
+			return DT_PATH_REF;
 		}
 
 <BYTESTRING>[0-9a-fA-F]{2} {
