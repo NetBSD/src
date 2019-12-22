@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.71 2019/11/17 14:07:00 maxv Exp $	*/
+/*	$NetBSD: vector.S,v 1.72 2019/12/22 15:09:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -391,6 +391,8 @@ IDTVEC(handle_ ## name ## num)						;\
 	sti								;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
+	cmpl	$0,IS_MASK_COUNT(%r14)	/* source currently masked? */	;\
+	jne	7f			/* yes, hold it */		;\
 6:									\
 	movl	IH_LEVEL(%rbx),%r12d					;\
 	cmpl	%r13d,%r12d						;\
@@ -403,6 +405,8 @@ IDTVEC(handle_ ## name ## num)						;\
 	testq	%rbx,%rbx						;\
 	jnz	6b							;\
 5:									\
+	cmpl	$0,IS_MASK_COUNT(%r14)	/* source now masked? */	;\
+	jne	7f			/* yes, deal */			;\
 	cli								;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
