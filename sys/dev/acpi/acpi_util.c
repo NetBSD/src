@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.15 2018/12/21 14:51:12 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.16 2019/12/22 15:57:07 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.15 2018/12/21 14:51:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.16 2019/12/22 15:57:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -588,6 +588,22 @@ acpi_intr_establish(device_t dev, uint64_t c, int ipl, bool mpsafe,
 end:
 	acpi_resource_cleanup(&res);
 	return aih;
+}
+
+void
+acpi_intr_mask(void *c)
+{
+	struct acpi_irq_handler * const aih = c;
+
+	acpi_md_intr_mask(aih->aih_ih);
+}
+
+void
+acpi_intr_unmask(void *c)
+{
+	struct acpi_irq_handler * const aih = c;
+
+	acpi_md_intr_unmask(aih->aih_ih);
 }
 
 void

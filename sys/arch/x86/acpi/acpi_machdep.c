@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.28 2019/09/12 14:28:08 martin Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.29 2019/12/22 15:57:07 thorpej Exp $ */
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.28 2019/09/12 14:28:08 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.29 2019/12/22 15:57:07 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,6 +350,18 @@ acpi_md_intr_establish(uint32_t InterruptNumber, int ipl, int type,
 #endif
 
 	return ih;
+}
+
+void
+acpi_md_intr_mask(void *ih)
+{
+	intr_mask(ih);
+}
+
+void
+acpi_md_intr_unmask(void *ih)
+{
+	intr_unmask(ih);
 }
 
 void
