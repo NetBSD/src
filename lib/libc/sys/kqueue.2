@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.48 2019/04/12 10:57:27 abhinav Exp $
+.\"	$NetBSD: kqueue.2,v 1.49 2019/12/22 17:01:15 kamil Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" $FreeBSD: src/lib/libc/sys/kqueue.2,v 1.22 2001/06/27 19:55:57 dd Exp $
 .\"
-.Dd January 8, 2018
+.Dd December 22, 2019
 .Dt KQUEUE 2
 .Os
 .Sh NAME
@@ -168,7 +168,7 @@ struct kevent {
 	uint32_t  flags;	/* action flags for kqueue */
 	uint32_t  fflags;	/* filter flag value */
 	int64_t   data;		/* filter data value */
-	intptr_t  udata;	/* opaque user data identifier */
+	void     *udata;	/* opaque user data identifier */
 };
 .Ed
 .Pp
@@ -677,3 +677,8 @@ The
 .Fn EV_SET
 macro was protected from evaluating multiple times the first argument in
 .Nx 8.0 .
+.Pp
+The
+.Va udata
+type was changed from intptr_t to void * in
+.Nx 10.0 .
