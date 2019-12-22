@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.511 2019/12/21 13:00:24 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.512 2019/12/22 15:00:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.511 2019/12/21 13:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.512 2019/12/22 15:00:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -1174,6 +1174,6 @@ banner(void)
 	(*pr)("%s%s", copyright, version);
 	format_bytes(pbuf, MEM_PBUFSIZE, ctob((uint64_t)physmem));
 	(*pr)("total memory = %s\n", pbuf);
-	format_bytes(pbuf, MEM_PBUFSIZE, ctob(uvm_free()));
+	format_bytes(pbuf, MEM_PBUFSIZE, ctob((uint64_t)uvm_free()));
 	(*pr)("avail memory = %s\n", pbuf);
 }
