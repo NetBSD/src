@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.57 2019/12/19 15:57:46 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.58 2019/12/22 12:28:54 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -456,6 +456,8 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
 
+		aprint_debug("DIOCGDISKINFO ioctl called\n");
+
 		if (dmv->diskp->dk_info == NULL) {
 			dm_dev_unbusy(dmv);
 			return ENOTSUP;
@@ -473,6 +475,8 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
+
+		aprint_debug("DIOCCACHESYNC ioctl called\n");
 
 		/* Select active table */
 		tbl = dm_table_get_entry(&dmv->table_head, DM_TABLE_ACTIVE);
