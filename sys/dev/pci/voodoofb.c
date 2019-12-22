@@ -1,4 +1,4 @@
-/*	$NetBSD: voodoofb.c,v 1.52 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: voodoofb.c,v 1.53 2019/12/22 23:23:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2012 Michael Lorenz
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.52 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: voodoofb.c,v 1.53 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -224,8 +224,6 @@ struct wsdisplay_accessops voodoofb_accessops = {
 };
 
 /* I2C glue */
-static int voodoofb_i2c_acquire_bus(void *, int);
-static void voodoofb_i2c_release_bus(void *, int);
 static int voodoofb_i2c_send_start(void *, int);
 static int voodoofb_i2c_send_stop(void *, int);
 static int voodoofb_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -1720,15 +1718,13 @@ voodoofb_setup_i2c(struct voodoofb_softc *sc)
 	int i;
 
 	/* Fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = voodoofb_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = voodoofb_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = voodoofb_i2c_send_start;
 	sc->sc_i2c.ic_send_stop = voodoofb_i2c_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = voodoofb_i2c_initiate_xfer;
 	sc->sc_i2c.ic_read_byte = voodoofb_i2c_read_byte;
 	sc->sc_i2c.ic_write_byte = voodoofb_i2c_write_byte;
-	sc->sc_i2c.ic_exec = NULL;
 
 	sc->sc_i2creg = voodoo3_read32(sc, VIDSERPARPORT);
 #ifdef VOODOOFB_DEBUG
@@ -1819,19 +1815,6 @@ static uint32_t voodoofb_i2cbb_read(void *cookie)
 }
 
 /* higher level I2C stuff */
-static int
-voodoofb_i2c_acquire_bus(void *cookie, int flags)
-{
-	/* private bus */
-	return (0);
-}
-
-static void
-voodoofb_i2c_release_bus(void *cookie, int flags)
-{
-	/* private bus */
-}
-
 static int
 voodoofb_i2c_send_start(void *cookie, int flags)
 {

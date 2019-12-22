@@ -1,4 +1,4 @@
-/*	$NetBSD: nbpiic.c,v 1.2 2016/02/14 19:54:20 chs Exp $ */
+/*	$NetBSD: nbpiic.c,v 1.3 2019/12/22 23:23:30 thorpej Exp $ */
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.2 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nbpiic.c,v 1.3 2019/12/22 23:23:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -64,8 +64,6 @@ static int nbpiic_intr(void *);
 int nbpiic_poll(void *, int, char *);
 
 /* fuctions for i2c_controller */
-static int nbpiic_acquire_bus(void *, int);
-static void nbpiic_release_bus(void *, int);
 static int nbpiic_exec(void *cookie, i2c_op_t, i2c_addr_t, const void *, size_t,
     void *, size_t, int);
 
@@ -110,7 +108,11 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	/* Initialize mutex with IPL_HIGH.  Keyboard was connected to us. */
+	/*
+	 * Initialize mutex with IPL_HIGH.  Keyboard was connected to us.
+	 * This is orthogonal to the lock held at the i2c layer; this
+	 * is just to interlock us with the keyboard interrupt.
+	 */
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_HIGH);
 
 	ih = pxa2x0_intr_establish(pxa->pxa_intr, IPL_HIGH, nbpiic_intr, sc);
@@ -120,14 +122,8 @@ pxaiic_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* Initialize i2c_controller  */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = nbpiic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = nbpiic_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = nbpiic_exec;
 
 	memset(&iba, 0, sizeof(iba));
@@ -184,32 +180,14 @@ nbpiic_poll(void *cookie, int buflen, char *buf)
 }
 
 static int
-nbpiic_acquire_bus(void *cookie, int flags)
-{
-	struct nbpiic_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_lock);
-
-	return 0;
-}
-
-static void
-nbpiic_release_bus(void *cookie, int flags)
-{
-	struct nbpiic_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_lock);
-
-	return;
-}
-
-static int
 nbpiic_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	    size_t cmdlen, void *vbuf, size_t buflen, int flags)
 {
 	struct nbpiic_softc *sc = cookie;
 	int rv = -1;
 	const u_char cmd = *(const u_char *)vcmd; 
+
+	mutex_enter(&sc->sc_lock);
 
 	if (I2C_OP_READ_P(op) && (cmdlen == 0) && (buflen == 1))
 		rv = pxa2x0_i2c_read(&sc->sc_pxa_i2c, addr, (u_char *)vbuf);
@@ -256,6 +234,8 @@ printf("%s: write cmdlen=1, buflen=2: Ooops, maybe error...\n", __func__);
 	if ((cmdlen == 0) && (buflen == 0))
 		rv = pxa2x0_i2c_quick(&sc->sc_pxa_i2c, addr,
 			I2C_OP_READ_P(op) ? 1 : 0);
+
+	mutex_exit(&sc->sc_lock);
 
 	return rv;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: tsvar.h,v 1.12 2014/02/21 12:23:30 jdc Exp $ */
+/* $NetBSD: tsvar.h,v 1.13 2019/12/22 23:23:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1999 by Ross Harvey.  All rights reserved.
@@ -72,7 +72,6 @@ struct tsp_attach_args {
 struct tsciic_softc {
 	device_t	sc_dev;
 	struct		i2c_controller sc_i2c;
-	kmutex_t	sc_buslock;
 };
 
 struct tsciic_attach_args {

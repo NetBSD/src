@@ -1,4 +1,4 @@
-/*	$NetBSD: i80321_i2c.c,v 1.5 2012/01/10 18:55:37 jakllsch Exp $	*/
+/*	$NetBSD: i80321_i2c.c,v 1.6 2019/12/22 23:23:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i80321_i2c.c,v 1.5 2012/01/10 18:55:37 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i80321_i2c.c,v 1.6 2019/12/22 23:23:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mutex.h>
@@ -97,8 +97,6 @@ iic321_attach(device_t parent, device_t self, void *aux)
 	i80321_gpio_set_direction(gpio_bits, 0);
 
 	/* XXX Reset the I2C unit? */
-
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* XXX We don't currently use interrupts.  Fix this some day. */
 #if 0

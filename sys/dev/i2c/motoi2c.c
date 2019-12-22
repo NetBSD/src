@@ -1,4 +1,4 @@
-/* $NetBSD: motoi2c.c,v 1.6 2019/11/29 12:42:53 hkenken Exp $ */
+/* $NetBSD: motoi2c.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2007, 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.6 2019/11/29 12:42:53 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motoi2c.c,v 1.7 2019/12/22 23:23:32 thorpej Exp $");
 
 #if defined(__arm__) || defined(__aarch64__)
 #include "opt_fdt.h"
@@ -78,12 +78,6 @@ static int  motoi2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		void *, size_t, int);
 static int  motoi2c_busy_wait(struct motoi2c_softc *, uint8_t);
 
-static const struct i2c_controller motoi2c = {
-	.ic_acquire_bus = motoi2c_acquire_bus,
-	.ic_release_bus = motoi2c_release_bus,
-	.ic_exec	= motoi2c_exec,
-};
-
 static const struct motoi2c_settings motoi2c_default_settings = {
 	.i2c_adr	= MOTOI2C_ADR_DEFAULT,
 	.i2c_fdr	= MOTOI2C_FDR_DEFAULT,
@@ -113,13 +107,14 @@ motoi2c_attach_common(device_t self, struct motoi2c_softc *sc,
 {
 	struct i2cbus_attach_args iba;
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
-
 	if (i2c == NULL)
 		i2c = &motoi2c_default_settings;
 
-	sc->sc_i2c = motoi2c;
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
+	sc->sc_i2c.ic_acquire_bus = motoi2c_acquire_bus;
+	sc->sc_i2c.ic_release_bus = motoi2c_release_bus;
+	sc->sc_i2c.ic_exec = motoi2c_exec;
 	if (sc->sc_iord == NULL)
 		sc->sc_iord = motoi2c_iord1;
 	if (sc->sc_iowr == NULL)
@@ -148,7 +143,6 @@ motoi2c_acquire_bus(void *v, int flags)
 {
 	struct motoi2c_softc * const sc = v;
 
-	mutex_enter(&sc->sc_buslock);
 	I2C_WRITE(I2CCR, CR_MEN);	/* enable the I2C module */
 
 	return 0;
@@ -160,7 +154,6 @@ motoi2c_release_bus(void *v, int flags)
 	struct motoi2c_softc * const sc = v;
 
 	I2C_WRITE(I2CCR, 0);		/* reset before changing anything */
-	mutex_exit(&sc->sc_buslock);
 }
 
 static int

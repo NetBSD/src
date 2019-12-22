@@ -1,4 +1,4 @@
-/*	$NetBSD: amdpm_smbus.c,v 1.22 2016/02/14 19:54:21 chs Exp $ */
+/*	$NetBSD: amdpm_smbus.c,v 1.23 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 2005 Anil Gopinath (anil_public@yahoo.com)
@@ -32,13 +32,12 @@
  * AMD-8111 HyperTransport I/O Hub
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.22 2016/02/14 19:54:21 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.23 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
-#include <sys/mutex.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -52,8 +51,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdpm_smbus.c,v 1.22 2016/02/14 19:54:21 chs Exp $")
 
 #include <dev/pci/amdpm_smbusreg.h>
 
-static int       amdpm_smbus_acquire_bus(void *, int);
-static void      amdpm_smbus_release_bus(void *, int);
 static int       amdpm_smbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 				  size_t, void *, size_t, int);
 static int       amdpm_smbus_check_done(struct amdpm_softc *, i2c_op_t);
@@ -72,36 +69,13 @@ amdpm_smbus_attach(struct amdpm_softc *sc)
         struct i2cbus_attach_args iba;
 	
 	/* register with iic */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc; 
-	sc->sc_i2c.ic_acquire_bus = amdpm_smbus_acquire_bus; 
-	sc->sc_i2c.ic_release_bus = amdpm_smbus_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = amdpm_smbus_exec;
 
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void)config_found_ia(sc->sc_dev, "i2cbus", &iba, iicbus_print);
-}
-
-static int
-amdpm_smbus_acquire_bus(void *cookie, int flags)
-{
-	struct amdpm_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_mutex);
-	return 0;
-}
-
-static void
-amdpm_smbus_release_bus(void *cookie, int flags)
-{
-	struct amdpm_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_mutex);
 }
 
 static int

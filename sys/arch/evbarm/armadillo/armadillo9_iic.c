@@ -1,4 +1,4 @@
-/*	$NetBSD: armadillo9_iic.c,v 1.8 2016/02/14 19:54:20 chs Exp $	*/
+/*	$NetBSD: armadillo9_iic.c,v 1.9 2019/12/22 23:23:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2005 HAMAJIMA Katsuomi. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.8 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.9 2019/12/22 23:23:30 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: armadillo9_iic.c,v 1.8 2016/02/14 19:54:20 chs Exp $
 
 struct armadillo9iic_softc {
 	struct i2c_controller	sc_i2c;
-	kmutex_t		sc_buslock;
 	int			sc_port;
 	int			sc_sda;
 	int			sc_scl;
@@ -58,8 +57,6 @@ struct armadillo9iic_softc {
 static int armadillo9iic_match(device_t, cfdata_t, void *);
 static void armadillo9iic_attach(device_t, device_t, void *);
 
-static int armadillo9iic_acquire_bus(void *, int);
-static void armadillo9iic_release_bus(void *, int);
 static int armadillo9iic_send_start(void *, int);
 static int armadillo9iic_send_stop(void *, int);
 static int armadillo9iic_initiate_xfer(void *, uint16_t, int);
@@ -94,7 +91,6 @@ armadillo9iic_attach(device_t parent, device_t self, void *aux)
 #if NSEEPROM > 0
 	struct epgpio_attach_args *ga = aux;
 #endif
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_port = ga->ga_port;
 	sc->sc_sda = ga->ga_bit1;
@@ -106,9 +102,8 @@ armadillo9iic_attach(device_t parent, device_t self, void *aux)
 	armadillo9iic_bbops.ibo_bits[I2C_BIT_OUTPUT] = sc->sc_sda;
 	armadillo9iic_bbops.ibo_bits[I2C_BIT_INPUT] = 0;
 
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = armadillo9iic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = armadillo9iic_release_bus;
 	sc->sc_i2c.ic_send_start = armadillo9iic_send_start;
 	sc->sc_i2c.ic_send_stop = armadillo9iic_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = armadillo9iic_initiate_xfer;
@@ -135,31 +130,6 @@ armadillo9iic_attach(device_t parent, device_t self, void *aux)
 		    device_xname(self));
 	}
 #endif
-}
-
-int
-armadillo9iic_acquire_bus(void *cookie, int flags)
-{
-	struct armadillo9iic_softc *sc = cookie;
-
-	/* XXX What should we do for the polling case? */
-	if (flags & I2C_F_POLL)
-		return 0;
-
-	mutex_enter(&sc->sc_buslock);
-	return 0;
-}
-
-void
-armadillo9iic_release_bus(void *cookie, int flags)
-{
-	struct armadillo9iic_softc *sc = cookie;
-
-	/* XXX See above. */
-	if (flags & I2C_F_POLL)
-		return;
-
-	mutex_exit(&sc->sc_buslock);
 }
 
 int

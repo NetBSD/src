@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.16 2018/12/09 11:14:01 jdolecek Exp $ */
+/* $NetBSD: coram.c,v 1.17 2019/12/22 23:23:32 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.16 2018/12/09 11:14:01 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.17 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,8 +69,6 @@ static const struct coram_board * coram_board_lookup(uint16_t, uint16_t);
 
 static int coram_iic_exec(void *, i2c_op_t, i2c_addr_t,
     const void *, size_t, void *, size_t, int);
-static int coram_iic_acquire_bus(void *, int);
-static void coram_iic_release_bus(void *, int);
 static int coram_iic_read(struct coram_iic_softc *, i2c_op_t, i2c_addr_t,
     const void *, size_t, void *, size_t, int);
 static int coram_iic_write(struct coram_iic_softc *, i2c_op_t, i2c_addr_t,
@@ -219,17 +217,14 @@ coram_attach(device_t parent, device_t self, void *aux)
 		    I2C_BASE + (I2C_SIZE * i), I2C_SIZE, &cic->cic_regh))
 			panic("failed to subregion i2c");
 
-		mutex_init(&cic->cic_busmutex, MUTEX_DRIVER, IPL_NONE);
+		iic_tag_init(&cic->cic_i2c);
 		cic->cic_i2c.ic_cookie = cic;
-		cic->cic_i2c.ic_acquire_bus = coram_iic_acquire_bus;
-		cic->cic_i2c.ic_release_bus = coram_iic_release_bus;
 		cic->cic_i2c.ic_exec = coram_iic_exec;
 
 #ifdef CORAM_ATTACH_I2C
 		/* attach iic(4) */
 		memset(&iba, 0, sizeof(iba));
 		iba.iba_tag = &cic->cic_i2c;
-		iba.iba_type = I2C_TYPE_SMBUS;
 		cic->cic_i2cdev = config_found_ia(self, "i2cbus", &iba,
 		    iicbus_print);
 #endif
@@ -307,7 +302,7 @@ coram_detach(device_t self, int flags)
 		cic = &sc->sc_iic[i];
 		if (cic->cic_i2cdev)
 			config_detach(cic->cic_i2cdev, flags);
-		mutex_destroy(&cic->cic_busmutex);
+		iic_tag_fini(&cic->cic_i2c);
 	}
 	pmf_device_deregister(self);
 
@@ -453,36 +448,6 @@ static bool
 coram_resume(device_t dv, const pmf_qual_t *qual)
 {
 	return true;
-}
-
-static int
-coram_iic_acquire_bus(void *cookie, int flags)
-{
-	struct coram_iic_softc *cic;
-
-	cic = cookie;
-
-	if (flags & I2C_F_POLL) {
-		while (mutex_tryenter(&cic->cic_busmutex) == 0)
-			delay(50);
-		return 0;
-	}
-
-	mutex_enter(&cic->cic_busmutex);
-
-	return 0;
-}
-
-static void
-coram_iic_release_bus(void *cookie, int flags)
-{
-	struct coram_iic_softc *cic;
-
-	cic = cookie;
-
-	mutex_exit(&cic->cic_busmutex);
-
-	return;
 }
 
 /* I2C Bus */

@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.70 2019/12/05 06:28:09 mlelstv Exp $	*/
+/*	$NetBSD: i2c.c,v 1.71 2019/12/22 23:23:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.70 2019/12/05 06:28:09 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.71 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.70 2019/12/05 06:28:09 mlelstv Exp $");
 struct iic_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
-	int sc_type;
 	device_t sc_devices[I2C_MAX_ADDR + 1];
 };
 
@@ -285,7 +284,6 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 	}
 
 	ia.ia_tag = sc->sc_tag;
-	ia.ia_type = sc->sc_type;
 
 	ia.ia_name = NULL;
 	ia.ia_ncompat = 0;
@@ -409,7 +407,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	sc->sc_tag = iba->iba_tag;
-	sc->sc_type = iba->iba_type;
 	ic = sc->sc_tag;
 	ic->ic_devname = device_xname(self);
 
@@ -464,7 +461,6 @@ iic_attach(device_t parent, device_t self, void *aux)
 
 			memset(&ia, 0, sizeof ia);
 			ia.ia_addr = addr;
-			ia.ia_type = sc->sc_type;
 			ia.ia_tag = ic;
 			ia.ia_name = name;
 			ia.ia_cookie = cookie;

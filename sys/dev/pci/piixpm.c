@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.54 2019/07/13 09:24:17 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.55 2019/12/22 23:23:32 thorpej Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.54 2019/07/13 09:24:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.55 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,7 +97,6 @@ struct piixpm_softc {
 	struct piixpm_smbus	sc_busses[4];
 	struct i2c_controller	sc_i2c_tags[4];
 
-	kmutex_t		sc_i2c_mutex;
 	struct {
 		i2c_op_t	op;
 		void *		buf;
@@ -297,7 +296,6 @@ setintr:
 		sc->sc_i2c_device[i] = NULL;
 
 	flags = 0;
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 	piixpm_rescan(self, "i2cbus", &flags);
 }
 
@@ -332,12 +330,12 @@ piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 			continue;
 		sc->sc_busses[i].sda = i;
 		sc->sc_busses[i].softc = sc;
+		iic_tag_init(&sc->sc_i2c_tags[i]);
 		sc->sc_i2c_tags[i].ic_cookie = &sc->sc_busses[i];
 		sc->sc_i2c_tags[i].ic_acquire_bus = piixpm_i2c_acquire_bus;
 		sc->sc_i2c_tags[i].ic_release_bus = piixpm_i2c_release_bus;
 		sc->sc_i2c_tags[i].ic_exec = piixpm_i2c_exec;
 		memset(&iba, 0, sizeof(iba));
-		iba.iba_type = I2C_TYPE_SMBUS;
 		iba.iba_tag = &sc->sc_i2c_tags[i];
 		sc->sc_i2c_device[i] = config_found_ia(self, ifattr, &iba,
 		    piixpm_iicbus_print);
@@ -477,9 +475,6 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
 
-	if (!cold)
-		mutex_enter(&sc->sc_i2c_mutex);
-
 	if (PIIXPM_IS_KERNCZ(sc)) {
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
 		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
@@ -516,9 +511,6 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
 		    SB800_INDIRECTIO_DATA, 0);
 	}
-
-	if (!cold)
-		mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int

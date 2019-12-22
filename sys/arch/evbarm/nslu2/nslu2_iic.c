@@ -1,4 +1,4 @@
-/*	$NetBSD: nslu2_iic.c,v 1.9 2016/02/14 19:54:20 chs Exp $	*/
+/*	$NetBSD: nslu2_iic.c,v 1.10 2019/12/22 23:23:30 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -47,32 +47,8 @@
 struct slugiic_softc {
 	struct i2c_controller sc_ic;
 	struct i2c_bitbang_ops sc_ibo;
-	kmutex_t sc_lock;
 	uint32_t sc_dirout;
 };
-
-static int
-slugiic_acquire_bus(void *arg, int flags)
-{
-	struct slugiic_softc *sc = arg;
-
-	if (flags & I2C_F_POLL)
-		return (0);
-
-	mutex_enter(&sc->sc_lock);
-	return (0);
-}
-
-static void
-slugiic_release_bus(void *arg, int flags)
-{
-	struct slugiic_softc *sc = arg;
-
-	if (flags & I2C_F_POLL)
-		return;
-
-	mutex_exit(&sc->sc_lock);
-}
 
 static int
 slugiic_send_start(void *arg, int flags)
@@ -230,10 +206,8 @@ slugiic_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": I2C bus\n");
 
+	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = slugiic_acquire_bus;
-	sc->sc_ic.ic_release_bus = slugiic_release_bus;
-	sc->sc_ic.ic_exec = NULL;
 	sc->sc_ic.ic_send_start = slugiic_send_start;
 	sc->sc_ic.ic_send_stop = slugiic_send_stop;
 	sc->sc_ic.ic_initiate_xfer = slugiic_initiate_xfer;
@@ -247,8 +221,6 @@ slugiic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ibo.ibo_bits[I2C_BIT_SCL] = GPIO_I2C_SCL_BIT;
 	sc->sc_ibo.ibo_bits[I2C_BIT_OUTPUT] = 1;
 	sc->sc_ibo.ibo_bits[I2C_BIT_INPUT] = 0;
-
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	sc->sc_dirout = 0;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: gpiic_opb.c,v 1.9 2011/06/18 06:41:42 matt Exp $	*/
+/*	$NetBSD: gpiic_opb.c,v 1.10 2019/12/22 23:23:31 thorpej Exp $	*/
 
 /*
  * Copyright 2002, 2003 Wasabi Systems, Inc.
@@ -59,7 +59,6 @@ struct gpiic_softc {
 	uint8_t sc_tx;
 	struct i2c_controller sc_i2c;
 	struct i2c_bitbang_ops sc_bops;
-	kmutex_t sc_buslock;
 };
 
 static int	gpiic_match(device_t, cfdata_t, void *);
@@ -68,8 +67,6 @@ static void	gpiic_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(gpiic, sizeof(struct gpiic_softc),
     gpiic_match, gpiic_attach, NULL, NULL);
 
-static int	gpiic_acquire_bus(void *, int);
-static void	gpiic_release_bus(void *, int);
 static int	gpiic_send_start(void *, int);
 static int	gpiic_send_stop(void *, int);
 static int	gpiic_initiate_xfer(void *, i2c_addr_t, int);
@@ -105,14 +102,10 @@ gpiic_attach(device_t parent, device_t self, void *args)
 
 	bus_space_map(sc->sc_bust, oaa->opb_addr, IIC_NREG, 0, &sc->sc_bush);
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
-
 	sc->sc_txen = 0;
 	sc->sc_tx = IIC_DIRECTCNTL_SCC | IIC_DIRECTCNTL_SDAC;
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = gpiic_acquire_bus;
-	sc->sc_i2c.ic_release_bus = gpiic_release_bus;
-	sc->sc_i2c.ic_exec = NULL;
 	sc->sc_i2c.ic_send_start = gpiic_send_start;
 	sc->sc_i2c.ic_send_stop = gpiic_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = gpiic_initiate_xfer;
@@ -140,29 +133,6 @@ gpiic_attach(device_t parent, device_t self, void *args)
 	memset(&iba, 0, sizeof(iba));
 	iba.iba_tag = &sc->sc_i2c;
 	(void) config_found_ia(self, "i2cbus", &iba, iicbus_print);
-}
-
-static int
-gpiic_acquire_bus(void *arg, int flags)
-{
-	struct gpiic_softc * const sc = arg;
-
-	if (flags & I2C_F_POLL)
-		return (0);
-
-	mutex_enter(&sc->sc_buslock);
-	return (0);
-}
-
-static void
-gpiic_release_bus(void *arg, int flags)
-{
-	struct gpiic_softc * const sc = arg;
-
-	if (flags & I2C_F_POLL)
-		return;
-
-	mutex_exit(&sc->sc_buslock);
 }
 
 static int

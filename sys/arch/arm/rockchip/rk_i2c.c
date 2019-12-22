@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2c.c,v 1.6 2019/11/08 00:35:16 jmcneill Exp $ */
+/* $NetBSD: rk_i2c.c,v 1.7 2019/12/22 23:23:29 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.6 2019/11/08 00:35:16 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2c.c,v 1.7 2019/12/22 23:23:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -115,8 +115,6 @@ struct rk_i2c_softc {
 	u_int			sc_clkfreq;
 
 	struct i2c_controller	sc_ic;
-	kmutex_t		sc_lock;
-	kcondvar_t		sc_cv;
 };
 
 #define	RD4(sc, reg)				\
@@ -159,24 +157,6 @@ rk_i2c_init(struct rk_i2c_softc *sc)
 	WR4(sc, RKI2C_CON, 0);
 	WR4(sc, RKI2C_IEN, 0);
 	WR4(sc, RKI2C_IPD, RD4(sc, RKI2C_IPD));
-}
-
-static int
-rk_i2c_acquire_bus(void *priv, int flags)
-{
-	struct rk_i2c_softc * const sc = priv;
-
-	mutex_enter(&sc->sc_lock);
-
-	return 0;
-}
-
-static void
-rk_i2c_release_bus(void *priv, int flags)
-{
-	struct rk_i2c_softc * const sc = priv;
-
-	mutex_exit(&sc->sc_lock);
 }
 
 static int
@@ -345,8 +325,6 @@ rk_i2c_exec(void *priv, i2c_op_t op, i2c_addr_t addr,
 	bool send_start = true;
 	int error;
 
-	KASSERT(mutex_owned(&sc->sc_lock));
-
 	if (I2C_OP_READ_P(op)) {
 		uint8_t *databuf = buf;
 		while (buflen > 0) {
@@ -430,9 +408,6 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SCHED);
-	cv_init(&sc->sc_cv, "rkiic");
-
 	aprint_naive("\n");
 	aprint_normal(": Rockchip I2C (%u Hz)\n", sc->sc_clkfreq);
 
@@ -440,9 +415,8 @@ rk_i2c_attach(device_t parent, device_t self, void *aux)
 
 	rk_i2c_init(sc);
 
+	iic_tag_init(&sc->sc_ic);
 	sc->sc_ic.ic_cookie = sc;
-	sc->sc_ic.ic_acquire_bus = rk_i2c_acquire_bus;
-	sc->sc_ic.ic_release_bus = rk_i2c_release_bus;
 	sc->sc_ic.ic_exec = rk_i2c_exec;
 
 	fdtbus_register_i2c_controller(self, phandle, &rk_i2c_funcs);

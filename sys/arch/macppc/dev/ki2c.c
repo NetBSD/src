@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.26 2019/08/15 22:35:39 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.27 2019/12/22 23:23:30 thorpej Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -58,8 +58,6 @@ int ki2c_read(struct ki2c_softc *, int, int, void *, int);
 int ki2c_write(struct ki2c_softc *, int, int, void *, int);
 
 /* I2C glue */
-static int ki2c_i2c_acquire_bus(void *, int);
-static void ki2c_i2c_release_bus(void *, int);
 static int ki2c_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
@@ -126,7 +124,6 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	ki2c_setmode(sc, I2C_STDSUBMODE);
 	ki2c_setspeed(sc, I2C_100kHz);		/* XXX rate */
 	
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	ki2c_writereg(sc, IER,I2C_INT_DATA|I2C_INT_ADDR|I2C_INT_STOP);
 	
 	cfg = prop_array_create();
@@ -197,14 +194,8 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	}
 
 	/* fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = ki2c_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = ki2c_i2c_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = ki2c_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
@@ -387,23 +378,6 @@ ki2c_write(struct ki2c_softc *sc, int addr, int subaddr, void *data, int len)
 	sc->sc_flags = 0;
 	DPRINTF("ki2c_write: %02x %d\n",addr,len);
 	return ki2c_start(sc, addr, subaddr, data, len);
-}
-
-static int
-ki2c_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct ki2c_softc *sc = cookie;
-
-	mutex_enter(&sc->sc_buslock);
-	return 0;
-}
-
-static void
-ki2c_i2c_release_bus(void *cookie, int flags)
-{
-	struct ki2c_softc *sc = cookie;
-
-	mutex_exit(&sc->sc_buslock);
 }
 
 int
