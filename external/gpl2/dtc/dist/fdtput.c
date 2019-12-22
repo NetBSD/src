@@ -1,22 +1,8 @@
-/*	$NetBSD: fdtput.c,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+/*	$NetBSD: fdtput.c,v 1.4 2019/12/22 12:38:24 skrll Exp $	*/
 
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * Copyright (c) 2011 The Chromium OS Authors. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License as
- * published by the Free Software Foundation; either version 2 of
- * the License, or (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program; if not, write to the Free Software
- * Foundation, Inc., 59 Temple Place, Suite 330, Boston,
- * MA 02111-1307 USA
  */
 
 #include <assert.h>
@@ -132,7 +118,7 @@ static int encode_value(struct display_info *disp, char **arg, int arg_count,
 
 #define FDTALIGN(x)		(((x) + (FDT_TAGSIZE) - 1) & ~((FDT_TAGSIZE) - 1))
 
-static char *_realloc_fdt(char *fdt, int delta)
+static char *realloc_fdt(char *fdt, int delta)
 {
 	int new_sz = fdt_totalsize(fdt) + delta;
 	fdt = xrealloc(fdt, new_sz);
@@ -146,7 +132,7 @@ static char *realloc_node(char *fdt, const char *name)
 	/* FDT_BEGIN_NODE, node name in off_struct and FDT_END_NODE */
 	delta = sizeof(struct fdt_node_header) + FDTALIGN(strlen(name) + 1)
 			+ FDT_TAGSIZE;
-	return _realloc_fdt(fdt, delta);
+	return realloc_fdt(fdt, delta);
 }
 
 static char *realloc_property(char *fdt, int nodeoffset,
@@ -163,7 +149,7 @@ static char *realloc_property(char *fdt, int nodeoffset,
 		/* actual value in off_struct */
 		delta += FDTALIGN(newlen) - FDTALIGN(oldlen);
 
-	return _realloc_fdt(fdt, delta);
+	return realloc_fdt(fdt, delta);
 }
 
 static int store_key_value(char **blob, const char *node_name,
@@ -335,7 +321,7 @@ static int do_fdtput(struct display_info *disp, const char *filename,
 	char *node;
 	int len, ret = 0;
 
-	blob = utilfdt_read(filename);
+	blob = utilfdt_read(filename, NULL);
 	if (!blob)
 		return -1;
 
