@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.49 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.50 2019/12/22 20:54:00 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.49 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.50 2019/12/22 20:54:00 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -198,7 +198,7 @@ static uint32_t mvsata_softreset(struct mvsata_port *, int);
 #ifndef MVSATA_WITHOUTDMA
 static void mvsata_edma_reset_qptr(struct mvsata_port *);
 static inline void mvsata_edma_enable(struct mvsata_port *);
-static int mvsata_edma_disable(struct mvsata_port *, int, int);
+static void mvsata_edma_disable(struct mvsata_port *, int, int);
 static void mvsata_edma_config(struct mvsata_port *, enum mvsata_edmamode);
 
 static void mvsata_edma_setup_crqb(struct mvsata_port *, int,
@@ -3425,54 +3425,32 @@ mvsata_edma_enable(struct mvsata_port *mvport)
 	MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EENEDMA);
 }
 
-static int
+static void
 mvsata_edma_disable(struct mvsata_port *mvport, int timeout, int wflags)
 {
 	struct ata_channel *chp = &mvport->port_ata_channel;
-	uint32_t status, command;
-	uint32_t idlestatus = EDMA_S_EDMAIDLE | EDMA_S_ECACHEEMPTY;
+	uint32_t command;
 	int t;
 
 	ata_channel_lock_owned(chp);
 
-	if (MVSATA_EDMA_READ_4(mvport, EDMA_CMD) & EDMA_CMD_EENEDMA) {
+	/* The disable bit (eDsEDMA) is self negated. */
+	MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EDSEDMA);
 
-		timeout = mstohz(timeout + hztoms(1) - 1);
+	timeout = mstohz(timeout + hztoms(1) - 1);
 
-		for (t = 0; ; ++t) {
-			status = MVSATA_EDMA_READ_4(mvport, EDMA_S);
-			if ((status & idlestatus) == idlestatus)
-				break;
-			if (t >= timeout)
-				break;
-			ata_delay(chp, hztoms(1), "mvsata_edma1", wflags);
-		}
-		if (t >= timeout) {
-			aprint_error("%s:%d:%d: unable to stop EDMA\n",
-			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port);
-			return EBUSY;
-		}
-
-		/* The disable bit (eDsEDMA) is self negated. */
-		MVSATA_EDMA_WRITE_4(mvport, EDMA_CMD, EDMA_CMD_EDSEDMA);
-
-		for (t = 0; ; ++t) {
-			command = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
-			if (!(command & EDMA_CMD_EENEDMA))
-				break;
-			if (t >= timeout)
-				break;
-			ata_delay(chp, hztoms(1), "mvsata_edma2", wflags);
-		}
-		if (t >= timeout) {
-			aprint_error("%s:%d:%d: unable to re-enable EDMA\n",
-			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port);
-			return EBUSY;
-		}
+	for (t = 0; ; ++t) {
+		command = MVSATA_EDMA_READ_4(mvport, EDMA_CMD);
+		if (!(command & EDMA_CMD_EENEDMA))
+			return;
+		if (t >= timeout)
+			break;
+		ata_delay(chp, hztoms(1), "mvsata_edma2", wflags);
 	}
-	return 0;
+
+	aprint_error("%s:%d:%d: unable to disable EDMA\n",
+	    device_xname(MVSATA_DEV2(mvport)),
+	    mvport->port_hc->hc, mvport->port);
 }
 
 /*
