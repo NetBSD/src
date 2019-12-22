@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt.c,v 1.1.1.3 2019/12/22 12:30:36 skrll Exp $	*/
+/*	$NetBSD: fdt.c,v 1.2 2019/12/22 12:41:33 skrll Exp $	*/
 
 // SPDX-License-Identifier: (GPL-2.0-or-later OR BSD-2-Clause)
 /*
@@ -58,15 +58,15 @@ static int check_block_(uint32_t hdrsize, uint32_t totalsize,
 	return 1;
 }
 
-size_t fdt_header_size_(uint32_t version)
+size_t fdt_header_size_(uint32_t vers)
 {
-	if (version <= 1)
+	if (vers <= 1)
 		return FDT_V1_SIZE;
-	else if (version <= 2)
+	else if (vers <= 2)
 		return FDT_V2_SIZE;
-	else if (version <= 3)
+	else if (vers <= 3)
 		return FDT_V3_SIZE;
-	else if (version <= 16)
+	else if (vers <= 16)
 		return FDT_V16_SIZE;
 	else
 		return FDT_V17_SIZE;
