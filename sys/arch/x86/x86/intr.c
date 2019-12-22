@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.148 2019/12/22 15:09:39 thorpej Exp $	*/
+/*	$NetBSD: intr.c,v 1.149 2019/12/22 16:50:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.148 2019/12/22 15:09:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.149 2019/12/22 16:50:03 ad Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1102,8 +1102,7 @@ intr_mask(struct intrhand *ih)
 		 * We can't take the cpu_lock in this case, and we must
 		 * therefore be extra careful.
 		 */
-		struct cpu_info * const ci = ih->ih_cpu;
-		KASSERT(ci == curcpu() || !mp_online);
+		KASSERT(ih->ih_cpu == curcpu() || !mp_online);
 		intr_mask_xcall(ih, (void *)(uintptr_t)true);
 		return;
 	}
