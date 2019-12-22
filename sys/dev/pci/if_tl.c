@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.117 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.118 2019/12/22 23:23:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.117 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.118 2019/12/22 23:23:32 thorpej Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -141,8 +141,6 @@ int tl_mii_write(device_t, int, int, uint16_t);
 void tl_statchg(struct ifnet *);
 
 	/* I2C glue */
-static int tl_i2c_acquire_bus(void *, int);
-static void tl_i2c_release_bus(void *, int);
 static int tl_i2c_send_start(void *, int);
 static int tl_i2c_send_stop(void *, int);
 static int tl_i2c_initiate_xfer(void *, i2c_addr_t, int);
@@ -361,9 +359,8 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	tl_reset(sc);
 
 	/* fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = tl_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = tl_i2c_release_bus;
 	sc->sc_i2c.ic_send_start = tl_i2c_send_start;
 	sc->sc_i2c.ic_send_stop = tl_i2c_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = tl_i2c_initiate_xfer;
@@ -916,21 +913,6 @@ tl_statchg(struct ifnet *ifp)
 }
 
 /********** I2C glue **********/
-
-static int
-tl_i2c_acquire_bus(void *cookie, int flags)
-{
-
-	/* private bus */
-	return 0;
-}
-
-static void
-tl_i2c_release_bus(void *cookie, int flags)
-{
-
-	/* private bus */
-}
 
 static int
 tl_i2c_send_start(void *cookie, int flags)
