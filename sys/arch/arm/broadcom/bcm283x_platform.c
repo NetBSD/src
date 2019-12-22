@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.26 2019/09/28 07:39:30 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.27 2019/12/22 12:21:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.26 2019/09/28 07:39:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.27 2019/12/22 12:21:45 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1516,4 +1516,5 @@ static const struct arm_platform bcm2838_platform = {
 ARM_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
 ARM_PLATFORM(bcm2837, "brcm,bcm2837", &bcm2837_platform);
 ARM_PLATFORM(bcm2838, "brcm,bcm2838", &bcm2838_platform);
+ARM_PLATFORM(bcm2711, "brcm,bcm2711", &bcm2838_platform);
 #endif
