@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.58 2019/12/22 12:28:54 tkusumi Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.59 2019/12/22 13:16:09 tkusumi Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -431,7 +431,6 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) data;
-		unsigned int secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
@@ -443,7 +442,7 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 		strlcpy(dkw->dkw_parent, dmv->name, 16);
 
 		dkw->dkw_offset = 0;
-		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, &secsize);
+		dm_table_disksize(&dmv->table_head, &dkw->dkw_size, NULL);
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
 
 		dm_dev_unbusy(dmv);
@@ -494,7 +493,6 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 	}
 	case DIOCGSECTORSIZE:
 	{
-		uint64_t numsec;
 		unsigned int secsize, *valp = data;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
@@ -502,7 +500,7 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 
 		aprint_debug("DIOCGSECTORSIZE ioctl called\n");
 
-		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		dm_table_disksize(&dmv->table_head, NULL, &secsize);
 		*valp = secsize;
 
 		dm_dev_unbusy(dmv);
@@ -512,14 +510,13 @@ disk_ioctl_switch(dev_t dev, unsigned long cmd, void *data)
 	{
 		off_t *valp = data;
 		uint64_t numsec;
-		unsigned int secsize;
 
 		if ((dmv = dm_dev_lookup(NULL, NULL, minor(dev))) == NULL)
 			return ENODEV;
 
 		aprint_debug("DIOCGMEDIASIZE ioctl called\n");
 
-		dm_table_disksize(&dmv->table_head, &numsec, &secsize);
+		dm_table_disksize(&dmv->table_head, &numsec, NULL);
 		*valp = numsec;
 
 		dm_dev_unbusy(dmv);
