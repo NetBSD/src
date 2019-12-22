@@ -1,5 +1,6 @@
-/*	$NetBSD: fdtdump.c,v 1.3 2017/06/08 16:00:40 skrll Exp $	*/
+/*	$NetBSD: fdtdump.c,v 1.4 2019/12/22 12:38:24 skrll Exp $	*/
 
+// SPDX-License-Identifier: GPL-2.0-or-later
 /*
  * fdtdump.c - Contributed by Pantelis Antoniou <pantelis.antoniou AT gmail.com>
  */
@@ -10,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ctype.h>
+#include <inttypes.h>
 
 #include <libfdt.h>
 #include <libfdt_env.h>
@@ -65,23 +67,24 @@ static void dump_blob(void *blob, bool debug)
 	shift = 4;
 
 	printf("/dts-v1/;\n");
-	printf("// magic:\t\t0x%x\n", fdt32_to_cpu(bph->magic));
-	printf("// totalsize:\t\t0x%x (%d)\n", totalsize, totalsize);
-	printf("// off_dt_struct:\t0x%x\n", off_dt);
-	printf("// off_dt_strings:\t0x%x\n", off_str);
-	printf("// off_mem_rsvmap:\t0x%x\n", off_mem_rsvmap);
-	printf("// version:\t\t%d\n", version);
-	printf("// last_comp_version:\t%d\n",
+	printf("// magic:\t\t0x%"PRIx32"\n", fdt32_to_cpu(bph->magic));
+	printf("// totalsize:\t\t0x%"PRIx32" (%"PRIu32")\n",
+	       totalsize, totalsize);
+	printf("// off_dt_struct:\t0x%"PRIx32"\n", off_dt);
+	printf("// off_dt_strings:\t0x%"PRIx32"\n", off_str);
+	printf("// off_mem_rsvmap:\t0x%"PRIx32"\n", off_mem_rsvmap);
+	printf("// version:\t\t%"PRIu32"\n", version);
+	printf("// last_comp_version:\t%"PRIu32"\n",
 	       fdt32_to_cpu(bph->last_comp_version));
 	if (version >= 2)
-		printf("// boot_cpuid_phys:\t0x%x\n",
+		printf("// boot_cpuid_phys:\t0x%"PRIx32"\n",
 		       fdt32_to_cpu(bph->boot_cpuid_phys));
 
 	if (version >= 3)
-		printf("// size_dt_strings:\t0x%x\n",
+		printf("// size_dt_strings:\t0x%"PRIx32"\n",
 		       fdt32_to_cpu(bph->size_dt_strings));
 	if (version >= 17)
-		printf("// size_dt_struct:\t0x%x\n",
+		printf("// size_dt_struct:\t0x%"PRIx32"\n",
 		       fdt32_to_cpu(bph->size_dt_struct));
 	printf("\n");
 
@@ -91,14 +94,14 @@ static void dump_blob(void *blob, bool debug)
 		if (addr == 0 && size == 0)
 			break;
 
-		printf("/memreserve/ %#llx %#llx;\n",
-		       (unsigned long long)addr, (unsigned long long)size);
+		printf("/memreserve/ %#"PRIx64" %#"PRIx64";\n",
+		       addr, size);
 	}
 
 	p = p_struct;
 	while ((tag = fdt32_to_cpu(GET_CELL(p))) != FDT_END) {
 
-		dumpf("%04zx: tag: 0x%08x (%s)\n",
+		dumpf("%04"PRIxPTR": tag: 0x%08"PRIx32" (%s)\n",
 		        (uintptr_t)p - blob_off - 4, tag, tagname(tag));
 
 		if (tag == FDT_BEGIN_NODE) {
@@ -127,7 +130,7 @@ static void dump_blob(void *blob, bool debug)
 		}
 
 		if (tag != FDT_PROP) {
-			fprintf(stderr, "%*s ** Unknown tag 0x%08x\n", depth * shift, "", tag);
+			fprintf(stderr, "%*s ** Unknown tag 0x%08"PRIx32"\n", depth * shift, "", tag);
 			break;
 		}
 		sz = fdt32_to_cpu(GET_CELL(p));
@@ -138,8 +141,8 @@ static void dump_blob(void *blob, bool debug)
 
 		p = PALIGN(p + sz, 4);
 
-		dumpf("%04zx: string: %s\n", (uintptr_t)s - blob_off, s);
-		dumpf("%04zx: value\n", (uintptr_t)t - blob_off);
+		dumpf("%04"PRIxPTR": string: %s\n", (uintptr_t)s - blob_off, s);
+		dumpf("%04"PRIxPTR": value\n", (uintptr_t)t - blob_off);
 		printf("%*s%s", depth * shift, "", s);
 		utilfdt_print_data(t, sz);
 		printf(";\n");
@@ -165,7 +168,7 @@ static bool valid_header(char *p, off_t len)
 	if (len < sizeof(struct fdt_header) ||
 	    fdt_magic(p) != FDT_MAGIC ||
 	    fdt_version(p) > MAX_VERSION ||
-	    fdt_last_comp_version(p) >= MAX_VERSION ||
+	    fdt_last_comp_version(p) > MAX_VERSION ||
 	    fdt_totalsize(p) >= len ||
 	    fdt_off_dt_struct(p) >= len ||
 	    fdt_off_dt_strings(p) >= len)
@@ -181,8 +184,13 @@ int main(int argc, char *argv[])
 	char *buf;
 	bool debug = false;
 	bool scan = false;
-	off_t len;
+	size_t len;
 
+	fprintf(stderr, "\n"
+"**** fdtdump is a low-level debugging tool, not meant for general use.\n"
+"**** If you want to decompile a dtb, you probably want\n"
+"****     dtc -I dtb -O dts <filename>\n\n"
+		);
 	while ((opt = util_getopt_long()) != EOF) {
 		switch (opt) {
 		case_USAGE_COMMON_FLAGS
@@ -199,7 +207,7 @@ int main(int argc, char *argv[])
 		usage("missing input filename");
 	file = argv[optind];
 
-	buf = utilfdt_read_len(file, &len);
+	buf = utilfdt_read(file, &len);
 	if (!buf)
 		die("could not read: %s\n", file);
 
@@ -222,14 +230,14 @@ int main(int argc, char *argv[])
 				if (valid_header(p, this_len))
 					break;
 				if (debug)
-					printf("%s: skipping fdt magic at offset %#zx\n",
+					printf("%s: skipping fdt magic at offset %#tx\n",
 						file, p - buf);
 			}
 			++p;
 		}
 		if (!p || endp - p < sizeof(struct fdt_header))
 			die("%s: could not locate fdt magic\n", file);
-		printf("%s: found fdt at offset %#zx\n", file, p - buf);
+		printf("%s: found fdt at offset %#tx\n", file, p - buf);
 		buf = p;
 	} else if (!valid_header(buf, len))
 		die("%s: header is not valid\n", file);
