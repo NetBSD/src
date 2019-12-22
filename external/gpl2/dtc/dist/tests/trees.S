@@ -7,20 +7,9 @@
 	.byte	((val) >> 8) & 0xff ; \
 	.byte	(val) & 0xff	;
 
-#define FDTQUAD(val) \
-	.byte	((val) >> 56) & 0xff ; \
-	.byte	((val) >> 48) & 0xff ; \
-	.byte	((val) >> 40) & 0xff ; \
-	.byte	((val) >> 32) & 0xff ; \
-	.byte	((val) >> 24) & 0xff ; \
-	.byte	((val) >> 16) & 0xff ; \
-	.byte	((val) >> 8) & 0xff ; \
-	.byte	(val) & 0xff	;
-
 #define TREE_HDR(tree) \
 	.balign	8		; \
-	.globl	_##tree		; \
-_##tree:	\
+	.globl	tree		; \
 tree:	\
 	FDTLONG(FDT_MAGIC)	; \
 	FDTLONG(tree##_end - tree) ; \
@@ -33,14 +22,16 @@ tree:	\
 	FDTLONG(tree##_strings_end - tree##_strings) ; \
 	FDTLONG(tree##_struct_end - tree##_struct) ;
 
-#define RSVMAP_ENTRY(addr, len) \
-	FDTQUAD(addr)		; \
-	FDTQUAD(len)		; \
+#define RSVMAP_ENTRY(addrh, addrl, lenh, lenl) \
+	FDTLONG(addrh)		; \
+	FDTLONG(addrl)		; \
+	FDTLONG(lenh)		; \
+	FDTLONG(lenl)
 
 #define EMPTY_RSVMAP(tree) \
 	.balign	8		; \
 tree##_rsvmap:			; \
-	RSVMAP_ENTRY(0, 0) \
+	RSVMAP_ENTRY(0, 0, 0, 0) \
 tree##_rsvmap_end:		;
 
 #define PROPHDR(tree, name, len) \
@@ -48,13 +39,17 @@ tree##_rsvmap_end:		;
 	FDTLONG(len)		; \
 	FDTLONG(tree##_##name - tree##_strings) ;
 
+#define PROP_EMPTY(tree, name) \
+	PROPHDR(tree, name, 0)	;
+
 #define PROP_INT(tree, name, val) \
 	PROPHDR(tree, name, 4) \
 	FDTLONG(val)		;
 
-#define PROP_INT64(tree, name, val) \
+#define PROP_INT64(tree, name, valh, vall) \
 	PROPHDR(tree, name, 8) \
-	FDTQUAD(val)		;
+	FDTLONG(valh)		; \
+	FDTLONG(vall)		;
 
 #define PROP_STR(tree, name, str) \
 	PROPHDR(tree, name, 55f - 54f) \
@@ -81,16 +76,16 @@ tree##_##name:			; \
 
 	.balign	8
 test_tree1_rsvmap:
-	RSVMAP_ENTRY(TEST_ADDR_1, TEST_SIZE_1)
-	RSVMAP_ENTRY(TEST_ADDR_2, TEST_SIZE_2)
-	RSVMAP_ENTRY(0, 0)
+	RSVMAP_ENTRY(TEST_ADDR_1H, TEST_ADDR_1L, TEST_SIZE_1H, TEST_SIZE_1L)
+	RSVMAP_ENTRY(TEST_ADDR_2H, TEST_ADDR_2L, TEST_SIZE_2H, TEST_SIZE_2L)
+	RSVMAP_ENTRY(0, 0, 0, 0)
 test_tree1_rsvmap_end:
 
 test_tree1_struct:
 	BEGIN_NODE("")
 	PROP_STR(test_tree1, compatible, "test_tree1")
 	PROP_INT(test_tree1, prop_int, TEST_VALUE_1)
-	PROP_INT64(test_tree1, prop_int64, TEST_VALUE64_1)
+	PROP_INT64(test_tree1, prop_int64, TEST_VALUE64_1H, TEST_VALUE64_1L)
 	PROP_STR(test_tree1, prop_str, TEST_STRING_1)
 	PROP_INT(test_tree1, address_cells, 1)
 	PROP_INT(test_tree1, size_cells, 0)
@@ -102,6 +97,7 @@ test_tree1_struct:
 
 	BEGIN_NODE("subsubnode")
 	PROP_STR(test_tree1, compatible, "subsubnode1\0subsubnode")
+	PROP_STR(test_tree1, placeholder, "this is a placeholder string\0string2")
 	PROP_INT(test_tree1, prop_int, TEST_VALUE_1)
 	END_NODE
 
@@ -141,6 +137,7 @@ test_tree1_strings:
 	STRING(test_tree1, linux_phandle, "linux,phandle")
 	STRING(test_tree1, phandle, "phandle")
 	STRING(test_tree1, reg, "reg")
+	STRING(test_tree1, placeholder, "placeholder")
 	STRING(test_tree1, address_cells, "#address-cells")
 	STRING(test_tree1, size_cells, "#size-cells")
 test_tree1_strings_end:
@@ -213,8 +210,7 @@ bad_prop_char_end:
 
 	/* overflow_size_strings */
 	.balign	8
-	.globl	_ovf_size_strings
-_ovf_size_strings:
+	.globl	ovf_size_strings
 ovf_size_strings:
 	FDTLONG(FDT_MAGIC)
 	FDTLONG(ovf_size_strings_end - ovf_size_strings)
@@ -240,3 +236,46 @@ ovf_size_strings_strings:
 	ovf_size_strings_bad_string = ovf_size_strings_strings + 0x10000000
 ovf_size_strings_strings_end:
 ovf_size_strings_end:
+
+
+	/* truncated_string */
+	TREE_HDR(truncated_string)
+	EMPTY_RSVMAP(truncated_string)
+
+truncated_string_struct:
+	BEGIN_NODE("")
+	PROP_EMPTY(truncated_string, good_string)
+	PROP_EMPTY(truncated_string, bad_string)
+	END_NODE
+	FDTLONG(FDT_END)
+truncated_string_struct_end:
+
+truncated_string_strings:
+	STRING(truncated_string, good_string, "good")
+truncated_string_bad_string:
+	.byte	'b'
+	.byte	'a'
+	.byte	'd'
+	/* NOTE: terminating \0 deliberately missing */
+truncated_string_strings_end:
+truncated_string_end:
+
+
+	/* truncated_memrsv */
+	TREE_HDR(truncated_memrsv)
+
+truncated_memrsv_struct:
+	BEGIN_NODE("")
+	END_NODE
+	FDTLONG(FDT_END)
+truncated_memrsv_struct_end:
+
+truncated_memrsv_strings:
+truncated_memrsv_strings_end:
+
+	.balign	8
+truncated_memrsv_rsvmap:
+	RSVMAP_ENTRY(TEST_ADDR_1H, TEST_ADDR_1L, TEST_SIZE_1H, TEST_SIZE_1L)
+truncated_memrsv_rsvmap_end:
+
+truncated_memrsv_end:

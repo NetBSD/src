@@ -1,6 +1,6 @@
 #! /bin/sh
 
-. ./tests.sh
+. ./testutils.sh
 
 if [ "$1" = "-n" ]; then
     NEG="$1"
