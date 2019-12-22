@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb_i2c.c,v 1.2 2007/10/19 12:00:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb_i2c.c,v 1.3 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -205,6 +205,7 @@ radeonfb_i2c_init(struct radeonfb_softc *sc)
 		struct i2c_controller	*icc = &sc->sc_i2c[i].ric_controller;
 
 		sc->sc_i2c[i].ric_softc = sc;
+		iic_tag_init(icc);
 		icc->ic_cookie = &sc->sc_i2c[i];
 		icc->ic_acquire_bus = radeonfb_i2c_acquire_bus;
 		icc->ic_release_bus = radeonfb_i2c_release_bus;

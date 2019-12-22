@@ -1,5 +1,5 @@
-/*	$Id: at91twi.c,v 1.7 2016/02/14 19:54:20 chs Exp $	*/
-/*	$NetBSD: at91twi.c,v 1.7 2016/02/14 19:54:20 chs Exp $	*/
+/*	$Id: at91twi.c,v 1.8 2019/12/22 23:23:29 thorpej Exp $	*/
+/*	$NetBSD: at91twi.c,v 1.8 2019/12/22 23:23:29 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2007 Embedtronics Oy. All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.7 2016/02/14 19:54:20 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91twi.c,v 1.8 2019/12/22 23:23:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -58,8 +58,6 @@ int at91twi_read(struct at91twi_softc *, int, void *, int, int);
 int at91twi_write(struct at91twi_softc *, int, void *, int, int);
 
 /* I2C glue */
-static int at91twi_i2c_acquire_bus(void *, int);
-static void at91twi_i2c_release_bus(void *, int);
 static int at91twi_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 		    void *, size_t, int);
 
@@ -119,19 +117,12 @@ found_ckdiv:
 //#endif
 
 	/* initialize rest */
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_NONE);
 	sc->sc_ih = at91_intr_establish(sc->sc_pid, IPL_SERIAL, INTR_HIGH_LEVEL,
 					at91twi_intr, sc);
 
 	/* fill in the i2c tag */
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = at91twi_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = at91twi_i2c_release_bus;
-	sc->sc_i2c.ic_send_start = NULL;
-	sc->sc_i2c.ic_send_stop = NULL;
-	sc->sc_i2c.ic_initiate_xfer = NULL;
-	sc->sc_i2c.ic_read_byte = NULL;
-	sc->sc_i2c.ic_write_byte = NULL;
 	sc->sc_i2c.ic_exec = at91twi_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
@@ -292,29 +283,6 @@ at91twi_write(struct at91twi_softc *sc, int addr, void *data, int len, int flags
 		printf("at91twi_write: %02x %d\n", addr, len);
 	#endif
 	return at91twi_start(sc, addr, data, len, flags);
-}
-
-static int
-at91twi_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct at91twi_softc *sc = cookie;
-
-	if (flags & I2C_F_POLL)
-		return 0;
-
-	mutex_enter(&sc->sc_buslock);
-	return 0;
-}
-
-static void
-at91twi_i2c_release_bus(void *cookie, int flags)
-{
-	struct at91twi_softc *sc = cookie;
-
-	if (flags & I2C_F_POLL)
-		return;
-
-	mutex_exit(&sc->sc_buslock);
 }
 
 int

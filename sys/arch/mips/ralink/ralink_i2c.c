@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_i2c.c,v 1.3 2012/10/27 17:18:02 chs Exp $	*/
+/*	$NetBSD: ralink_i2c.c,v 1.4 2019/12/22 23:23:31 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ra_i2c.c - Ralink i2c 3052 driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.3 2012/10/27 17:18:02 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_i2c.c,v 1.4 2019/12/22 23:23:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -86,8 +86,6 @@ static void i2c_read_stop(ra_i2c_softc_t *, u_long, u_char *);
 #endif
 
 /* i2c driver functions */
-int  ra_i2c_acquire_bus(void *, int);
-void ra_i2c_release_bus(void *, int);
 int  ra_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *, size_t,
 	void *, size_t, int);
 void ra_i2c_reset(ra_i2c_softc_t *);
@@ -155,13 +153,11 @@ ra_i2c_attach(device_t parent, device_t self, void *aux)
 	bus_space_write_4(sc->sc_memt, sc->sc_sy_memh,
 		RA_SYSCTL_GPIOMODE, r);
 
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = ra_i2c_acquire_bus;
-	sc->sc_i2c.ic_release_bus = ra_i2c_release_bus;
 	sc->sc_i2c.ic_exec = ra_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c;
 	config_found(self, &iba, iicbus_print);
 }
@@ -171,23 +167,6 @@ ra_i2c_attach(device_t parent, device_t self, void *aux)
 /*
  * I2C API
  */
-
-/* Might not be needed.  JCL. */
-int
-ra_i2c_acquire_bus(void *cookie, int flags)
-{
-	/* nothing */
-	return 0;
-}
-
-
-
-/* Might not be needed.  JCL. */
-void
-ra_i2c_release_bus(void *cookie, int flags)
-{
-	/* nothing */
-}
 
 int
 ra_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,

@@ -113,7 +113,6 @@ struct smu_softc {
 	int sc_num_fans;
 	struct smu_fan sc_fans[SMU_MAX_FANS];
 
-	kmutex_t sc_iicbus_lock;
 	int sc_num_iicbus;
 	struct smu_iicbus sc_iicbus[SMU_MAX_IICBUS];
 
@@ -166,8 +165,6 @@ static int smu_todr_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 static int smu_fan_update_rpm(struct smu_fan *);
 static int smu_fan_get_rpm(struct smu_fan *, int *);
 static int smu_fan_set_rpm(struct smu_fan *, int);
-static int smu_iicbus_acquire_bus(void *, int);
-static void smu_iicbus_release_bus(void *, int);
 static int smu_iicbus_exec(void *, i2c_op_t, i2c_addr_t, const void *,
     size_t, void *, size_t, int);
 static int smu_sysctl_fan_rpm(SYSCTLFN_ARGS);
@@ -434,8 +431,6 @@ smu_setup_iicbus(struct smu_softc *sc)
 	int node;
 	char name[32];
 
-	mutex_init(&sc->sc_iicbus_lock, MUTEX_DEFAULT, IPL_NONE);
-
 	node = of_getnode_byname(sc->sc_node, "smu-i2c-control");
 	for (node = OF_child(node);
 	    (node != 0) && (sc->sc_num_iicbus < SMU_MAX_IICBUS);
@@ -454,14 +449,8 @@ smu_setup_iicbus(struct smu_softc *sc)
 
 		DPRINTF("iicbus: reg %x\n", iicbus->reg);
 
+		iic_tag_init(i2c);
 		i2c->ic_cookie = iicbus;
-		i2c->ic_acquire_bus = smu_iicbus_acquire_bus;
-		i2c->ic_release_bus = smu_iicbus_release_bus;
-		i2c->ic_send_start = NULL;
-		i2c->ic_send_stop = NULL;
-		i2c->ic_initiate_xfer = NULL;
-		i2c->ic_read_byte = NULL;
-		i2c->ic_write_byte = NULL;
 		i2c->ic_exec = smu_iicbus_exec;
 
 		ca.ca_name = name;
@@ -770,26 +759,6 @@ smu_fan_set_rpm(struct smu_fan *fan, int rpm)
 	}
 
 	return ret;
-}
-
-static int
-smu_iicbus_acquire_bus(void *cookie, int flags)
-{
-	struct smu_iicbus *iicbus = cookie;
-	struct smu_softc *sc = iicbus->sc;
-
-	mutex_enter(&sc->sc_iicbus_lock);
-
-	return 0;
-}
-
-static void
-smu_iicbus_release_bus(void *cookie, int flags)
-{
-	struct smu_iicbus *iicbus = cookie;
-	struct smu_softc *sc = iicbus->sc;
-
-	mutex_exit(&sc->sc_iicbus_lock);
 }
 
 static int
