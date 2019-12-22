@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.8 2018/10/01 09:39:20 bouyer Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.9 2019/12/22 23:23:32 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.8 2018/10/01 09:39:20 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.9 2019/12/22 23:23:32 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -83,8 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.8 2018/10/01 09:39:20 bouyer Exp $
 #include <dev/i2c/gttwsireg.h>
 #include <dev/i2c/gttwsivar.h>
 
-static int	gttwsi_acquire_bus(void *, int);
-static void	gttwsi_release_bus(void *, int);
 static int	gttwsi_send_start(void *v, int flags);
 static int	gttwsi_send_stop(void *v, int flags);
 static int	gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags);
@@ -149,17 +147,14 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	if (sc->sc_reg_write == NULL)
 		sc->sc_reg_write = gttwsi_default_write_4;
 
-	mutex_init(&sc->sc_buslock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, device_xname(self));
 
 	prop_dictionary_get_bool(cfg, "iflg-rwc", &sc->sc_iflg_rwc);
 
 	sc->sc_started = false;
+	iic_tag_init(&sc->sc_i2c);
 	sc->sc_i2c.ic_cookie = sc;
-	sc->sc_i2c.ic_acquire_bus = gttwsi_acquire_bus;
-	sc->sc_i2c.ic_release_bus = gttwsi_release_bus;
-	sc->sc_i2c.ic_exec = NULL;
 	sc->sc_i2c.ic_send_start = gttwsi_send_start;
 	sc->sc_i2c.ic_send_stop = gttwsi_send_stop;
 	sc->sc_i2c.ic_initiate_xfer = gttwsi_initiate_xfer;
@@ -202,33 +197,6 @@ gttwsi_intr(void *arg)
 	}
 	mutex_exit(&sc->sc_mtx);
 	return 0;
-}
-
-/* ARGSUSED */
-static int
-gttwsi_acquire_bus(void *arg, int flags)
-{
-	struct gttwsi_softc *sc = arg;
-
-	mutex_enter(&sc->sc_buslock);
-	while (sc->sc_inuse)
-		cv_wait(&sc->sc_cv, &sc->sc_buslock);
-	sc->sc_inuse = true;
-	mutex_exit(&sc->sc_buslock);
-
-	return 0;
-}
-
-/* ARGSUSED */
-static void
-gttwsi_release_bus(void *arg, int flags)
-{
-	struct gttwsi_softc *sc = arg;
-
-	mutex_enter(&sc->sc_buslock);
-	sc->sc_inuse = false;
-	cv_broadcast(&sc->sc_cv);
-	mutex_exit(&sc->sc_buslock);
 }
 
 static int

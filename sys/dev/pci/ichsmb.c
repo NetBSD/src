@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.62 2019/12/09 21:00:48 ad Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.63 2019/12/22 23:23:32 thorpej Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.62 2019/12/09 21:00:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.63 2019/12/22 23:23:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -63,7 +63,6 @@ struct ichsmb_softc {
 	pci_intr_handle_t	*sc_pihp;
 
 	struct i2c_controller	sc_i2c_tag;
-	kmutex_t 		sc_i2c_mutex;
 	struct {
 		i2c_op_t     op;
 		void *       buf;
@@ -80,8 +79,6 @@ static int	ichsmb_detach(device_t, int);
 static int	ichsmb_rescan(device_t, const char *, const int *);
 static void	ichsmb_chdet(device_t, device_t);
 
-static int	ichsmb_i2c_acquire_bus(void *, int);
-static void	ichsmb_i2c_release_bus(void *, int);
 static int	ichsmb_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
 		    size_t, void *, size_t, int);
 
@@ -163,7 +160,6 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 	sc->sc_pc = pa->pa_pc;
 
 	pci_aprint_devinfo(pa, NULL);
-	mutex_init(&sc->sc_i2c_mutex, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
@@ -228,13 +224,11 @@ ichsmb_rescan(device_t self, const char *ifattr, const int *flags)
 		return 0;
 
 	/* Attach I2C bus */
+	iic_tag_init(&sc->sc_i2c_tag);
 	sc->sc_i2c_tag.ic_cookie = sc;
-	sc->sc_i2c_tag.ic_acquire_bus = ichsmb_i2c_acquire_bus;
-	sc->sc_i2c_tag.ic_release_bus = ichsmb_i2c_release_bus;
 	sc->sc_i2c_tag.ic_exec = ichsmb_i2c_exec;
 
 	memset(&iba, 0, sizeof(iba));
-	iba.iba_type = I2C_TYPE_SMBUS;
 	iba.iba_tag = &sc->sc_i2c_tag;
 	sc->sc_i2c_device = config_found_ia(self, ifattr, &iba, iicbus_print);
 
@@ -253,7 +247,7 @@ ichsmb_detach(device_t self, int flags)
 			return error;
 	}
 
-	mutex_destroy(&sc->sc_i2c_mutex);
+	iic_tag_fini(&sc->sc_i2c_tag);
 
 	if (sc->sc_ih) {
 		pci_intr_disestablish(sc->sc_pc, sc->sc_ih);
@@ -278,29 +272,6 @@ ichsmb_chdet(device_t self, device_t child)
 
 	if (sc->sc_i2c_device == child)
 		sc->sc_i2c_device = NULL;
-}
-
-static int
-ichsmb_i2c_acquire_bus(void *cookie, int flags)
-{
-	struct ichsmb_softc *sc = cookie;
-
-	if (cold)
-		return 0;
-
-	mutex_enter(&sc->sc_i2c_mutex);
-	return 0;
-}
-
-static void
-ichsmb_i2c_release_bus(void *cookie, int flags)
-{
-	struct ichsmb_softc *sc = cookie;
-
-	if (cold)
-		return;
-
-	mutex_exit(&sc->sc_i2c_mutex);
 }
 
 static int
