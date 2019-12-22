@@ -37,7 +37,7 @@ The upstream repository is here:
     git://git.kernel.org/pub/scm/utils/dtc/dtc.git
     https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 
-The gitweb interface for the upstream respository is:
+The gitweb interface for the upstream repository is:
 
     https://git.kernel.org/cgit/utils/dtc/dtc.git/
 
@@ -77,6 +77,9 @@ The currently supported Output Formats are:
         by gas to generate a device-tree "blob".  That file can
         then simply be added to your Makefile.  Additionally, the
         assembly file exports some symbols that can be used.
+
+     - "yaml": DT encoded in YAML format. This representation is an
+       intermediate format used for validation tools.
 
 
 3) Command Line
@@ -231,7 +234,7 @@ For example:
       "childnode at address".  It in turn has a string property
       called "childprop".
 
-	childnode@addresss {
+	childnode@address {
 	    childprop = "hello\n";
 	};
 
@@ -250,7 +253,7 @@ Labels may be applied to nodes or properties.  Labels appear
 before a node name, and are referenced using an ampersand: &label.
 Absolute node path names are also allowed in node references.
 
-In this exmaple, a node is labled "mpic" and then referenced:
+In this example, a node is labeled "mpic" and then referenced:
 
     mpic:  interrupt-controller@40000 {
 	...
@@ -261,7 +264,7 @@ In this exmaple, a node is labled "mpic" and then referenced:
 	...
     };
 
-And used in properties, lables may appear before or after any value:
+And used in properties, labels may appear before or after any value:
 
     randomnode {
 	prop: string = data: "mystring\n" data_end: ;
@@ -415,7 +418,7 @@ value of r3.
      among others, by kexec. If you are on an SMP system, this value
      should match the content of the "reg" property of the CPU node in
      the device-tree corresponding to the CPU calling the kernel entry
-     point (see further chapters for more informations on the required
+     point (see further chapters for more information on the required
      device-tree contents)
 
    - size_dt_strings
@@ -581,7 +584,7 @@ looks like in practice.
 
 This tree is almost a minimal tree. It pretty much contains the
 minimal set of required nodes and properties to boot a linux kernel;
-that is, some basic model informations at the root, the CPUs, and the
+that is, some basic model information at the root, the CPUs, and the
 physical memory layout.  It also includes misc information passed
 through /chosen, like in this example, the platform type (mandatory)
 and the kernel command line arguments (optional).
@@ -674,4 +677,86 @@ The fdtdump program prints a readable version of a flat device tree file.
 
 The syntax of the fdtdump command line is:
 
-    fdtdump <DTB-file-name>
+    fdtdump [options] <DTB-file-name>
+
+Where options are:
+    -d,--debug          Dump debug information while decoding the file
+    -s,--scan           Scan for an embedded fdt in given file
+
+3) fdtoverlay -- Flat Device Tree overlay applicator
+
+The fdtoverlay applies an arbitrary number of FDT overlays to a base FDT blob
+to a given output file.
+
+The syntax of the fdtoverlay command line is:
+
+    fdtoverlay -i <base-blob> -o <output-blob> <overlay-blob0> [<overlay-blob1> ...]
+
+Where options are:
+    -i, --input         Input base DT blob
+    -o, --output        Output DT blob
+    -v, --verbose       Verbose message output
+
+4 ) fdtget -- Read properties from device tree
+
+This command can be used to obtain individual values from the device tree in a
+nicely formatted way. You can specify multiple nodes to display (when using -p)
+or multiple node/property pairs (when not using -p). For the latter, each
+property is displayed on its own line, with a space between each cell within
+the property.
+
+The syntax of the fdtget command is:
+
+    fdtget <options> <dt file> [<node> <property>]...
+    fdtget -p <options> <dt file> [<node> ]...
+
+where options are:
+
+    <type>    s=string, i=int, u=unsigned, x=hex
+        Optional modifier prefix:
+            hh or b=byte, h=2 byte, l=4 byte (default)
+
+    Options: -[t:pld:hV]
+    -t, --type <arg>    Type of data
+    -p, --properties    List properties for each node
+    -l, --list          List subnodes for each node
+    -d, --default <arg> Default value to display when the property is missing
+    -h, --help          Print this help and exit
+    -V, --version       Print version and exit
+
+If -t is not provided, fdtget will try to figure out the type, trying to detect
+strings, string lists and the size of each value in the property. This is
+similar to how fdtdump works, and uses the same heuristics.
+
+
+5 ) fdtput - Write properties to a device tree
+
+The syntax of the fdtput command is:
+
+    fdtput <options> <dt file> <node> <property> [<value>...]
+    fdtput -c <options> <dt file> [<node>...]
+    fdtput -r <options> <dt file> [<node>...]
+    fdtput -d <options> <dt file> <node> [<property>...]
+
+Options are:
+
+    <type>    s=string, i=int, u=unsigned, x=hex
+        Optional modifier prefix:
+            hh or b=byte, h=2 byte, l=4 byte (default)
+
+    -c, --create     Create nodes if they don't already exist
+    -r, --remove     Delete nodes (and any subnodes) if they already exist
+    -d, --delete     Delete properties if they already exist
+    -p, --auto-path  Automatically create nodes as needed for the node path
+    -t, --type <arg> Type of data
+    -v, --verbose    Display each value decoded from command line
+    -h, --help       Print this help and exit
+    -V, --version    Print version and exit
+
+The option determines which usage is selected and therefore the operation that
+is performed. The first usage adds or updates properties; the rest are used to
+create/delete nodes and delete properties.
+
+For the first usage, the command line arguments are joined together into a
+single value which is written to the property. The -t option is required so
+that fdtput knows how to decode its arguments.

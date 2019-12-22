@@ -1,23 +1,10 @@
-/*	$NetBSD: sw_tree1.c,v 1.1.1.2 2017/06/08 15:59:27 skrll Exp $	*/
+/*	$NetBSD: sw_tree1.c,v 1.1.1.3 2019/12/22 12:34:06 skrll Exp $	*/
 
+// SPDX-License-Identifier: LGPL-2.1-or-later
 /*
  * libfdt - Flat Device Tree manipulation
  *	Testcase for fdt_nop_node()
  * Copyright (C) 2006 David Gibson, IBM Corporation.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include <stdlib.h>
@@ -37,10 +24,13 @@ static enum {
 	FIXED = 0,
 	RESIZE,
 	REALLOC,
+	NEWALLOC,
 } alloc_mode;
 
 static void realloc_fdt(void **fdt, size_t *size, bool created)
 {
+	int err;
+
 	switch (alloc_mode) {
 	case FIXED:
 		if (!(*fdt))
@@ -54,7 +44,10 @@ static void realloc_fdt(void **fdt, size_t *size, bool created)
 			*fdt = xmalloc(SPACE);
 		} else if (*size < SPACE) {
 			*size += 1;
-			fdt_resize(*fdt, *fdt, *size);
+			err = fdt_resize(*fdt, *fdt, *size);
+			if (err < 0)
+				FAIL("fdt_resize() failed: %s",
+				     fdt_strerror(err));
 		} else {
 			FAIL("Ran out of space");
 		}		
@@ -63,9 +56,29 @@ static void realloc_fdt(void **fdt, size_t *size, bool created)
 	case REALLOC:
 		*size += 1;
 		*fdt = xrealloc(*fdt, *size);
-		if (created)
-			fdt_resize(*fdt, *fdt, *size);
+		if (created) {
+			err = fdt_resize(*fdt, *fdt, *size);
+			if (err < 0)
+				FAIL("fdt_resize() failed: %s",
+				     fdt_strerror(err));
+		}
 		return;
+
+	case NEWALLOC: {
+		void *buf;
+
+		*size += 1;
+		buf = xmalloc(*size);
+		if (created) {
+			err = fdt_resize(*fdt, buf, *size);
+			if (err < 0)
+				FAIL("fdt_resize() failed: %s",
+				     fdt_strerror(err));
+		}
+		free(*fdt);
+		*fdt = buf;
+		return;
+	}
 
 	default:
 		CONFIG("Bad allocation mode");
@@ -87,18 +100,29 @@ int main(int argc, char *argv[])
 	size_t size;
 	int err;
 	bool created = false;
+	void *place;
+	const char place_str[] = "this is a placeholder string\0string2";
+	int place_len = sizeof(place_str);
+	int create_flags;
 
 	test_init(argc, argv);
 
-	if (argc == 1) {
-		alloc_mode = FIXED;
-		size = SPACE;
-	} else if (argc == 2) {
-		if (streq(argv[1], "resize")) {
+	alloc_mode = FIXED;
+	size = SPACE;
+	create_flags = 0;
+
+	if (argc == 2 || argc == 3) {
+		if (streq(argv[1], "fixed")) {
+			alloc_mode = FIXED;
+			size = SPACE;
+		} else if (streq(argv[1], "resize")) {
 			alloc_mode = REALLOC;
 			size = 0;
 		} else if (streq(argv[1], "realloc")) {
 			alloc_mode = REALLOC;
+			size = 0;
+		} else if (streq(argv[1], "newalloc")) {
+			alloc_mode = NEWALLOC;
 			size = 0;
 		} else {
 			char *endp;
@@ -111,9 +135,35 @@ int main(int argc, char *argv[])
 				       argv[1]);
 		}
 	}
+	if (argc == 3) {
+		char *str = argv[2], *saveptr, *tok;
+		bool default_flag = false;
+
+		while ((tok = strtok_r(str, ",", &saveptr)) != NULL) {
+			str = NULL;
+			if (streq(tok, "default")) {
+				default_flag = true;
+			} else if (streq(tok, "no_name_dedup")) {
+				create_flags |= FDT_CREATE_FLAG_NO_NAME_DEDUP;
+			} else if (streq(tok, "bad")) {
+				create_flags |= 0xffffffff;
+			} else {
+				CONFIG("Bad creation flags \"%s\" specified",
+				       argv[2]);
+			}
+		}
+
+		if (default_flag && create_flags != 0)
+			CONFIG("Bad creation flags \"%s\" specified",
+			       argv[2]);
+	}
+
+	if (argc > 3) {
+		CONFIG("sw_tree1 [<allocation mode>] [<create flags>]");
+	}
 
 	fdt = xmalloc(size);
-	CHECK(fdt_create(fdt, size));
+	CHECK(fdt_create_with_flags(fdt, size, create_flags));
 
 	created = true;
 
@@ -137,6 +187,8 @@ int main(int argc, char *argv[])
 	CHECK(fdt_begin_node(fdt, "subsubnode"));
 	CHECK(fdt_property(fdt, "compatible", "subsubnode1\0subsubnode",
 			   23));
+	CHECK(fdt_property_placeholder(fdt, "placeholder", place_len, &place));
+	memcpy(place, place_str, place_len);
 	CHECK(fdt_property_cell(fdt, "prop-int", TEST_VALUE_1));
 	CHECK(fdt_end_node(fdt));
 	CHECK(fdt_begin_node(fdt, "ss1"));

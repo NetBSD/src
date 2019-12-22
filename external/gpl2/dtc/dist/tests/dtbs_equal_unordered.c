@@ -1,23 +1,10 @@
-/*	$NetBSD: dtbs_equal_unordered.c,v 1.1.1.2 2017/06/08 15:59:26 skrll Exp $	*/
+/*	$NetBSD: dtbs_equal_unordered.c,v 1.1.1.3 2019/12/22 12:34:06 skrll Exp $	*/
 
+// SPDX-License-Identifier: LGPL-2.1-or-later
 /*
  * libfdt - Flat Device Tree manipulation
  *	Tests if two given dtbs are structurally equal (including order)
  * Copyright (C) 2007 David Gibson, IBM Corporation.
- *
- * This library is free software; you can redistribute it and/or
- * modify it under the terms of the GNU Lesser General Public License
- * as published by the Free Software Foundation; either version 2.1 of
- * the License, or (at your option) any later version.
- *
- * This library is distributed in the hope that it will be useful, but
- * WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
- * Lesser General Public License for more details.
- *
- * You should have received a copy of the GNU Lesser General Public
- * License along with this library; if not, write to the Free Software
- * Foundation, Inc., 51 Franklin St, Fifth Floor, Boston, MA 02110-1301 USA
  */
 
 #include <stdlib.h>
@@ -32,6 +19,7 @@
 #include "testdata.h"
 
 static int notequal; /* = 0 */
+static int ignore_memrsv; /* = 0 */
 
 #define MISMATCH(fmt, ...)			\
 	do { \
@@ -197,22 +185,41 @@ static void compare_node(const void *fdt1, int offset1,
 	compare_subnodes(fdt2, offset2, fdt1, offset1, 0);
 }
 
+static void badargs(char **argv)
+{
+	CONFIG("Usage: %s [-n] [-m] <dtb file> <dtb file>", argv[0]);
+}
+
 int main(int argc, char *argv[])
 {
 	void *fdt1, *fdt2;
 	uint32_t cpuid1, cpuid2;
+	char **args;
+	int argsleft;
 
 	test_init(argc, argv);
-	if ((argc != 3)
-	    && ((argc != 4) || !streq(argv[1], "-n")))
-		CONFIG("Usage: %s [-n] <dtb file> <dtb file>", argv[0]);
-	if (argc == 4)
-		notequal = 1;
 
-	fdt1 = load_blob(argv[argc-2]);
-	fdt2 = load_blob(argv[argc-1]);
+	args = &argv[1];
+	argsleft = argc - 1;
 
-	compare_mem_rsv(fdt1, fdt2);
+	while (argsleft > 2) {
+		if (streq(args[0], "-n"))
+			notequal = 1;
+		else if (streq(args[0], "-m"))
+			ignore_memrsv = 1;
+		else
+			badargs(argv);
+		args++;
+		argsleft--;
+	}
+	if (argsleft != 2)
+		badargs(argv);
+
+	fdt1 = load_blob(args[0]);
+	fdt2 = load_blob(args[1]);
+
+	if (!ignore_memrsv)
+		compare_mem_rsv(fdt1, fdt2);
 	compare_node(fdt1, 0, fdt2, 0);
 
 	cpuid1 = fdt_boot_cpuid_phys(fdt1);
