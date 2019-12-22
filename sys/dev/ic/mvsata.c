@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.50 2019/12/22 20:54:00 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.51 2019/12/22 20:59:42 jdolecek Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.50 2019/12/22 20:54:00 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.51 2019/12/22 20:59:42 jdolecek Exp $");
 
 #include "opt_mvsata.h"
 
@@ -525,10 +525,10 @@ mvsata_error(struct mvsata_port *mvport)
 
 		case nodma:
 		default:
-			aprint_error(
-			    "%s:%d:%d: EDMA self disable happen 0x%x\n",
+			DPRINTF(DEBUG_INTR,
+			    ("%s:%d:%d: EDMA self disable happen 0x%x\n",
 			    device_xname(MVSATA_DEV2(mvport)),
-			    mvport->port_hc->hc, mvport->port, cause);
+			    mvport->port_hc->hc, mvport->port, cause));
 			break;
 		}
 	}
