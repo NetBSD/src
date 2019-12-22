@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.14 2018/12/10 14:46:25 maxv Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.15 2019/12/22 19:47:35 ad Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.54 2015/03/17 09:39:29 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.14 2018/12/10 14:46:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.15 2019/12/22 19:47:35 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -116,11 +116,11 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	if (error) {
 		return (error);
 	}
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 
 	error = lfsquota_handle_cmd(mp, l, args);
 
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
@@ -172,7 +172,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 		return (error);
 	}
 
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 	switch (cmd) {
 
 	case Q_QUOTAON:
@@ -202,7 +202,7 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
 	default:
 		error = EINVAL;
 	}
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
