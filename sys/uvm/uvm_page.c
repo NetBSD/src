@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.211 2019/12/21 15:16:14 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.212 2019/12/22 16:37:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.211 2019/12/21 15:16:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.212 2019/12/22 16:37:36 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -829,10 +829,6 @@ uvm_pagealloc_pgfl(struct uvm_cpu *ucpu, int flist, int try1, int try2,
 	LIST_REMOVE(pg, listq.list);	/* per-cpu list */
 	uvmexp.free--;
 
-	/* update zero'd page count */
-	if (pg->flags & PG_ZERO)
-	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
-
 	if (color == trycolor)
 	    	CPU_COUNT(CPU_COUNT_COLORHIT, 1);
 	else {
@@ -996,34 +992,43 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 			ucpu->page_idle_zero = vm_page_zero_enable;
 		}
 	}
+	if (pg->flags & PG_ZERO) {
+	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
+	}
+	if (anon) {
+		CPU_COUNT(CPU_COUNT_ANONPAGES, 1);
+	}
 	KASSERT((pg->flags & ~(PG_ZERO|PG_FREE)) == 0);
 
-	/*
-	 * For now check this - later on we may do lazy dequeue, but need
-	 * to get page.queue used only by the pagedaemon policy first.
-	 */
-	KASSERT(!uvmpdpol_pageisqueued_p(pg));
+	/* mark the page as allocated and then drop uvm_fpageqlock. */
+	pg->flags &= ~PG_FREE;
+	mutex_spin_exit(&uvm_fpageqlock);
 
 	/*
-	 * assign the page to the object.  we don't need to lock the page's
-	 * identity to do this, as the caller holds the objects locked, and
-	 * the page is not on any paging queues at this time.
+	 * assign the page to the object.  as the page was free, we know
+	 * that pg->uobject and pg->uanon are NULL.  we only need to take
+	 * the page's interlock if we are changing the values.
 	 */
+	if (anon != NULL || obj != NULL) {
+		mutex_enter(&pg->interlock);
+	}
 	pg->offset = off;
 	pg->uobject = obj;
 	pg->uanon = anon;
 	KASSERT(uvm_page_locked_p(pg));
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
-	mutex_spin_exit(&uvm_fpageqlock);
 	if (anon) {
 		anon->an_page = pg;
 		pg->flags |= PG_ANON;
-		cpu_count(CPU_COUNT_ANONPAGES, 1);
+		mutex_exit(&pg->interlock);
 	} else if (obj) {
 		uvm_pageinsert_object(obj, pg);
+		mutex_exit(&pg->interlock);
 		error = uvm_pageinsert_tree(obj, pg);
 		if (error != 0) {
+			mutex_enter(&pg->interlock);
 			uvm_pageremove_object(obj, pg);
+			mutex_exit(&pg->interlock);
 			uvm_pagefree(pg);
 			return NULL;
 		}
