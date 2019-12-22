@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1680 2019/12/20 22:26:16 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1681 2019/12/22 12:59:12 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -1682,9 +1682,9 @@ Location:	usr.bin/dc
 Notes:
 		Uses OpenSSL's bignum
 
-Package:	dtc,libfdt
-Version:	1.4.4
-Current Vers:	1.4.7
+Package:	dtc, libfdt
+Version:	1.5.1
+Current Vers:	1.5.1
 Maintainer:	David Gibson <david@gibson.dropbear.id.au>, Jon Loeliger <jdl@jdl.com>
 Archive Site:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
 Home Page:	https://git.kernel.org/pub/scm/utils/dtc/dtc.git
