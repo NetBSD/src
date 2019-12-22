@@ -1,4 +1,4 @@
-/*  $NetBSD: ufs_wapbl.c,v 1.24 2017/03/01 10:42:45 hannken Exp $ */
+/*  $NetBSD: ufs_wapbl.c,v 1.25 2019/12/22 19:47:35 ad Exp $ */
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.24 2017/03/01 10:42:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_wapbl.c,v 1.25 2019/12/22 19:47:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,7 +108,7 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 	struct inode *ip;
 	struct buf *bp, *nbp;
 
-	mutex_enter(&mntvnode_lock);
+	mutex_enter(mp->mnt_vnodelock);
  loop:
 	TAILQ_FOREACH_REVERSE(vp, &mp->mnt_vnodelist, vnodelst, v_mntvnodes) {
 		/*
@@ -117,11 +117,11 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 		 */
 		if (vp->v_mount != mp)
 			goto loop;
-		mutex_enter(&vp->v_interlock);
+		mutex_enter(vp->v_interlock);
 		nvp = TAILQ_NEXT(vp, v_mntvnodes);
 		ip = VTOI(vp);
 		if (vp->v_type == VNON) {
-			mutex_exit(&vp->v_interlock);
+			mutex_exit(vp->v_interlock);
 			continue;
 		}
 		/* verify that update has been called on all inodes */
@@ -129,7 +129,7 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 			panic("wapbl_verify: mp %p: dirty vnode %p (inode %p): 0x%x\n",
 				mp, vp, ip, ip->i_flag);
 		}
-		mutex_exit(&mntvnode_lock);
+		mutex_exit(mp->mnt_vnodelock);
 
 		mutex_enter(&bufcache_lock);
 		for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
@@ -141,14 +141,14 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 			KASSERT((bp->b_flags & B_LOCKED) != 0);
 		}
 		mutex_exit(&bufcache_lock);
-		mutex_exit(&vp->v_interlock);
+		mutex_exit(vp->v_interlock);
 
-		mutex_enter(&mntvnode_lock);
+		mutex_enter(mp->mnt_vnodelock);
 	}
-	mutex_exit(&mntvnode_lock);
+	mutex_exit(mp->mnt_vnodelock);
 
 	vp = VFSTOUFS(mp)->um_devvp;
-	mutex_enter(&vp->v_interlock);
+	mutex_enter(vp->v_interlock);
 	mutex_enter(&bufcache_lock);
 	for (bp = LIST_FIRST(&vp->v_dirtyblkhd); bp; bp = nbp) {
 		nbp = LIST_NEXT(bp, b_vnbufs);
@@ -159,6 +159,6 @@ ufs_wapbl_verify_inodes(struct mount *mp, const char *str)
 		KASSERT((bp->b_flags & B_LOCKED) != 0);
 	}
 	mutex_exit(&bufcache_lock);
-	mutex_exit(&vp->v_interlock);
+	mutex_exit(vp->v_interlock);
 }
 #endif /* WAPBL_DEBUG_INODES */
