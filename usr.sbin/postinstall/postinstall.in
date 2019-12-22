@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.10 2019/12/04 04:45:42 christos Exp $
+# $NetBSD: postinstall.in,v 1.11 2019/12/22 18:41:36 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1468,9 +1468,21 @@ select_obsolete_files()
 	if $SOURCEMODE; then
 		${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" \
 		    ${SRC_DIR}/distrib/sets/lists/$3/mi
-	else
-		${SED} -n -e "s@\.$1$2\$@\1@p" "${DEST_DIR}/var/db/obsolete/$3"
+		return
 	fi
+
+	# On upgrade builds we don't extract the "etc" set so we
+	# try to use the source set instead. See PR/54730 for
+	# ways to better handle this.
+
+	local obsolete_dir
+
+	if [ $3 = "etc" ] ;then
+		obsolete_dir=${SRC_DIR}/var/db/obsolete
+	else
+		obsolete_dir=${DEST_DIR}/var/db/obsolete
+	fi
+	${SED} -n -e "s@\.$1$2\$@\1@p" "${obsolete_dir}/$3"
 }
 
 getetcsets()
