@@ -1,7 +1,7 @@
-/* $NetBSD: vmstat.c,v 1.228 2019/09/13 13:56:05 christos Exp $ */
+/* $NetBSD: vmstat.c,v 1.229 2019/12/22 17:27:53 ad Exp $ */
 
 /*-
- * Copyright (c) 1998, 2000, 2001, 2007 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2001, 2007, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation by:
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.228 2019/09/13 13:56:05 christos Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.229 2019/12/22 17:27:53 ad Exp $");
 #endif
 #endif /* not lint */
 
@@ -96,6 +96,8 @@ __RCSID("$NetBSD: vmstat.c,v 1.228 2019/09/13 13:56:05 christos Exp $");
 #include <sys/time.h>
 #include <sys/queue.h>
 #include <sys/kernhist.h>
+#include <sys/vnode.h>
+#include <sys/vnode_impl.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm_stat.h>
@@ -223,7 +225,11 @@ struct nlist hashnl[] =
 	{ .n_name = "_ncvhash" },
 #define	X_NCVHASHTBL	13
 	{ .n_name = "_ncvhashtbl" },
-#define X_HASHNL_SIZE	14	/* must be last */
+#define	X_NCVCACHEHASH	14
+	{ .n_name = "_vcache_hashmask" },
+#define	X_NCVCACHETBL	15
+	{ .n_name = "_vcache_hashtab" },
+#define X_HASHNL_SIZE	16	/* must be last */
 	{ .n_name = NULL },
 };
 
@@ -1842,7 +1848,9 @@ dopoolcache(int verbose)
 
 enum hashtype {			/* from <sys/systm.h> */
 	HASH_LIST,
-	HASH_TAILQ
+	HASH_SLIST,
+	HASH_TAILQ,
+	HASH_PSLIST
 };
 
 struct uidinfo {		/* XXX: no kernel header file */
@@ -1880,6 +1888,10 @@ struct kernel_hash {
 		X_UIHASH, X_UIHASHTBL,
 		HASH_LIST, offsetof(struct uidinfo, ui_hash),
 	}, {
+		"vnode cache hash",
+		X_NCVCACHEHASH, X_NCVCACHETBL,
+		HASH_SLIST, offsetof(struct vnode_impl, vi_hash),
+	}, {
 		NULL, -1, -1, 0, 0,
 	}
 };
@@ -1888,6 +1900,7 @@ void
 dohashstat(int verbose, int todo, const char *hashname)
 {
 	LIST_HEAD(, generic)	*hashtbl_list;
+	SLIST_HEAD(, generic)	*hashtbl_slist;
 	TAILQ_HEAD(, generic)	*hashtbl_tailq;
 	struct kernel_hash	*curhash;
 	void	*hashaddr, *hashbuf, *nhashbuf, *nextaddr;
@@ -1969,14 +1982,22 @@ dohashstat(int verbose, int todo, const char *hashname)
 		items = maxchain = 0;
 		if (curhash->type == HASH_LIST) {
 			hashtbl_list = hashbuf;
+			hashtbl_slist = NULL;
+			hashtbl_tailq = NULL;
+		} else if (curhash->type == HASH_SLIST) {
+			hashtbl_list = NULL;
+			hashtbl_slist = hashbuf;
 			hashtbl_tailq = NULL;
 		} else {
 			hashtbl_list = NULL;
+			hashtbl_slist = NULL;
 			hashtbl_tailq = hashbuf;
 		}
 		for (i = 0; i < hashsize; i++) {
 			if (curhash->type == HASH_LIST)
 				nextaddr = LIST_FIRST(&hashtbl_list[i]);
+			else if (curhash->type == HASH_SLIST)
+				nextaddr = SLIST_FIRST(&hashtbl_slist[i]);
 			else
 				nextaddr = TAILQ_FIRST(&hashtbl_tailq[i]);
 			if (nextaddr == NULL)
