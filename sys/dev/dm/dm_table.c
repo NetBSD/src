@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.17 2019/12/21 11:59:03 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.18 2019/12/22 13:16:09 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.17 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.18 2019/12/22 13:16:09 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -262,8 +262,11 @@ dm_table_disksize(dm_table_head_t *head, uint64_t *numsecp,
 		if (secsize < tsecsize)
 			secsize = tsecsize;
 	}
-	*numsecp = secsize > 0 ? dbtob(length) / secsize : 0;
-	*secsizep = secsize;
+
+	if (numsecp)
+		*numsecp = secsize > 0 ? dbtob(length) / secsize : 0;
+	if (secsizep)
+		*secsizep = secsize;
 
 	dm_table_unbusy(head);
 }
