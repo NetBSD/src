@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.78 2019/11/21 19:27:54 ad Exp $
+#	$NetBSD: genassym.cf,v 1.79 2019/12/22 15:09:39 thorpej Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -321,7 +321,8 @@ define	IS_FLAGS	offsetof(struct intrsource, is_flags)
 define	IS_PIN		offsetof(struct intrsource, is_pin)
 define	IS_TYPE		offsetof(struct intrsource, is_type)
 define	IS_MAXLEVEL	offsetof(struct intrsource, is_maxlevel)
-define	IS_LWP			offsetof(struct intrsource, is_lwp)
+define	IS_LWP		offsetof(struct intrsource, is_lwp)
+define	IS_MASK_COUNT	offsetof(struct intrsource, is_mask_count)
 
 define	IPL_NONE		IPL_NONE
 define	IPL_PREEMPT		IPL_PREEMPT
