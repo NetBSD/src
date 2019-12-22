@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.347 2019/12/21 13:00:24 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.348 2019/12/22 15:15:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.347 2019/12/21 13:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.348 2019/12/22 15:15:20 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -2120,8 +2120,6 @@ pmap_get_ptp(struct pmap *pmap, vaddr_t va, pd_entry_t * const *pdes, int flags,
 			pt[i].new = true;
 			if (__predict_false(ncsw != lwp_pctr())) {
 				/* uvm_pagealloc can block. */
-				/* XXX silence assertion in pmap_unmap_ptes */
-				pmap->pm_ncsw = lwp_pctr();
 				error = EAGAIN;
 				goto fail;
 			}
@@ -2195,9 +2193,10 @@ fail:
 		if (!pt[i].new) {
 			continue;
 		}
-		obj = &pmap->pm_obj[i - 2];
 		uvm_pagefree(pt[i].pg);
 	}
+	/* XXX silence assertion in pmap_unmap_ptes */
+	pmap->pm_ncsw = lwp_pctr();
 	return error;
 }
 
