@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.234 2019/01/01 10:06:54 hannken Exp $	*/
+/*	$NetBSD: mount.h,v 1.235 2019/12/22 19:47:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -133,29 +133,38 @@ struct vattr;
  * array of operations and an instance record.
  */
 struct mount {
-	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
+	/*
+	 * Mostly stable data.
+	 */
+	kmutex_t	*mnt_vnodelock;		/* lock on mnt_vnodelist */
 	struct vfsops	*mnt_op;		/* operations on fs */
 	struct vnode	*mnt_vnodecovered;	/* vnode we mounted on */
 	struct mount	*mnt_lower;		/* fs mounted on */
-	int		mnt_synclist_slot;	/* synclist slot index */
 	void		*mnt_transinfo;		/* for FS-internal use */
 	void		*mnt_data;		/* private data */
-	kmutex_t	mnt_renamelock;		/* per-fs rename lock */
-	int		mnt_refcnt;		/* ref count on this structure */
+	kmutex_t	*mnt_renamelock;	/* per-fs rename lock */
 	int		mnt_flag;		/* flags */
 	int		mnt_iflag;		/* internal flags */
 	int		mnt_fs_bshift;		/* offset shift for lblkno */
 	int		mnt_dev_bshift;		/* shift for device sectors */
-	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 	specificdata_reference
 			mnt_specdataref;	/* subsystem specific data */
-	kmutex_t	mnt_updating;		/* to serialize updates */
+	kmutex_t	*mnt_updating;		/* to serialize updates */
 	const struct wapbl_ops
 			*mnt_wapbl_op;		/* logging ops */
 	struct wapbl	*mnt_wapbl;		/* log info */
 	struct wapbl_replay
 			*mnt_wapbl_replay;	/* replay support XXX: what? */
 	uint64_t	mnt_gen;
+
+	/*
+	 * Volatile data: pad to keep away from the stable items.
+	 */
+	int		mnt_refcnt		/* ref count on this structure */
+	    __aligned(COHERENCY_UNIT);
+	int		mnt_synclist_slot;	/* synclist slot index */
+	TAILQ_HEAD(, vnode_impl) mnt_vnodelist;	/* list of vnodes this mount */
+	struct statvfs	mnt_stat;		/* cache of filesystem stats */
 };
 
 #endif /* defined(_KERNEL) || defined(__EXPOSE_MOUNT) */

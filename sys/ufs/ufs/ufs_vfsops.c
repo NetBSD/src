@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.57 2019/06/20 03:31:30 pgoyette Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.58 2019/12/22 19:47:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.57 2019/06/20 03:31:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.58 2019/12/22 19:47:35 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -137,11 +137,11 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	if (error) {
 		return (error);
 	}
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 
 	error = quota_handle_cmd(mp, l, args);
 
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
@@ -193,7 +193,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 		return (error);
 	}
 
-	mutex_enter(&mp->mnt_updating);
+	mutex_enter(mp->mnt_updating);
 	switch (cmd) {
 
 	case Q_QUOTAON:
@@ -223,7 +223,7 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
 	default:
 		error = EINVAL;
 	}
-	mutex_exit(&mp->mnt_updating);
+	mutex_exit(mp->mnt_updating);
 	vfs_unbusy(mp);
 	return (error);
 #endif
