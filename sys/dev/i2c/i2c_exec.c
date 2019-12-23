@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.13 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.14 2019/12/23 14:26:19 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.13 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.14 2019/12/23 14:26:19 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,7 +98,9 @@ int
 iic_acquire_bus(i2c_tag_t tag, int flags)
 {
 
+#if 0	/* XXX Not quite ready for this yet. */
 	KASSERT(!cpu_intr_p());
+#endif
 
 	flags = iic_op_flags(flags);
 
@@ -151,7 +153,9 @@ void
 iic_release_bus(i2c_tag_t tag, int flags)
 {
 
+#if 0	/* XXX Not quite ready for this yet. */
 	KASSERT(!cpu_intr_p());
+#endif
 
 	flags = iic_op_flags(flags);
 
@@ -181,7 +185,9 @@ iic_exec(i2c_tag_t tag, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 	int error;
 	size_t len;
 
+#if 0	/* XXX Not quite ready for this yet. */
 	KASSERT(!cpu_intr_p());
+#endif
 
 	flags = iic_op_flags(flags);
 
