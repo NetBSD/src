@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.48 2018/11/16 15:06:22 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.49 2019/12/23 15:34:23 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.48 2018/11/16 15:06:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.49 2019/12/23 15:34:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -900,6 +900,26 @@ intr_disestablish(void *ih)
 	KASSERT(!cpu_softintr_p());
 
 	pic_disestablish_source(is);
+}
+
+void
+intr_mask(void *ih)
+{
+	struct intrsource * const is = ih;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	(*pic->pic_ops->pic_block_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
+}
+
+void
+intr_unmask(void *ih)
+{
+	struct intrsource * const is = ih;
+	struct pic_softc * const pic = is->is_pic;
+	const int irq = is->is_irq;
+
+	(*pic->pic_ops->pic_unblock_irqs)(pic, irq & ~0x1f, __BIT(irq & 0x1f));
 }
 
 const char *

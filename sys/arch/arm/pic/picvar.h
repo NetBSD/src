@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.23 2019/03/27 07:29:29 ryo Exp $	*/
+/*	$NetBSD: picvar.h,v 1.24 2019/12/23 15:34:23 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -90,6 +90,8 @@ void	*intr_establish(int irq, int ipl, int type, int (*func)(void *),
 void	*intr_establish_xname(int irq, int ipl, int type, int (*func)(void *),
 	    void *arg, const char *xname);
 void	intr_disestablish(void *);
+void	intr_mask(void *);
+void	intr_unmask(void *);
 const char *intr_string(intr_handle_t, char *, size_t);
 #ifdef MULTIPROCESSOR
 void	intr_cpu_init(struct cpu_info *);
