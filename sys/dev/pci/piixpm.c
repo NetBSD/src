@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.57 2019/12/23 23:31:23 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.58 2019/12/23 23:41:43 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.57 2019/12/23 23:31:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.58 2019/12/23 23:41:43 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -231,12 +231,9 @@ nopowermanagement:
 	if (PIIXPM_IS_FCHGRP(sc) || PIIXPM_IS_SB800GRP(sc)) {
 		if (piixpm_sb800_init(sc) == 0) {
 			/* Read configuration */
-			conf = pci_conf_read(pa->pa_pc, pa->pa_tag,
-			    SB800_SMB_HOSTC);
-			DPRINTF(("%s: conf 0x%08x\n", device_xname(self),
-				conf));
-
-			usesmi = conf & SB800_SMB_HOSTC_SMI;
+			conf = bus_space_read_1(sc->sc_iot,
+			    sc->sc_smb_ioh, SB800_SMB_HOSTC);
+			usesmi = ((conf & SB800_SMB_HOSTC_IRQ) == 0);
 			goto setintr;
 		}
 		aprint_normal_dev(self, "SMBus initialization failed\n");
@@ -444,7 +441,7 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 	aprint_debug_dev(sc->sc_dev, "SMBus @ 0x%04x\n", base_addr);
 
 	if (bus_space_map(iot, PCI_MAPREG_IO_ADDR(base_addr),
-	    PIIX_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
+	    SB800_SMB_SIZE, 0, &sc->sc_smb_ioh)) {
 		aprint_error_dev(sc->sc_dev, "can't map smbus I/O space\n");
 		return EBUSY;
 	}

@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.8 2019/07/13 09:24:17 msaitoh Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.9 2019/12/23 23:41:43 msaitoh Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*-
@@ -66,7 +66,7 @@
 #define PIIX_SMB_HOSTC	0xd0		/* SMBus host configuration */
 #define PIIX_SMB_HOSTC_HSTEN	(1 << 16)	/* enable host controller */
 #define PIIX_SMB_HOSTC_SMI	(0 << 17)	/* SMI */
-#define PIIX_SMB_HOSTC_IRQ	(4 << 17)	/* IRQ */
+#define PIIX_SMB_HOSTC_IRQ	(4 << 17)	/* IRQ 9 */
 #define PIIX_SMB_HOSTC_INTMASK	(7 << 17)
 
 /* SMBus I/O registers */
@@ -113,18 +113,21 @@
 #define SB800_INDIRECTIO_SIZE	2 
 #define SB800_INDIRECTIO_INDEX	0
 #define SB800_INDIRECTIO_DATA	1
- 
+
 #define SB800_PM_SMBUS0EN_LO	0x2c
 #define SB800_PM_SMBUS0EN_HI	0x2d
 #define SB800_PM_SMBUS0SEL	0x2e 
 #define SB800_PM_SMBUS0SELEN	0x2f 
-                                      
+
 #define SB800_PM_SMBUS0EN_ENABLE 0x0001
 #define SB800_PM_SMBUS0EN_BADDR	0xffe0
 
-/* In the PCI config space */
+/* In the SMBus I/O space */
 #define SB800_SMB_HOSTC		0x10	/* I2C bus configuration */
-#define SB800_SMB_HOSTC_SMI	(1 << 0)	/* SMI */
+#define SB800_SMB_HOSTC_IRQ	(1 << 0)	/* 0:SMI 1:IRQ */
+
+/* Misc */
+#define SB800_SMB_SIZE	0x11		/* SMBus I/O space size */
 
 /*
  * Newer FCH registers in the PMIO space.
