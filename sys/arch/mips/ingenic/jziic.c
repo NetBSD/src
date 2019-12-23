@@ -1,4 +1,4 @@
-/*	$NetBSD: jziic.c,v 1.6 2019/12/22 23:23:31 thorpej Exp $ */
+/*	$NetBSD: jziic.c,v 1.7 2019/12/23 02:16:43 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.6 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: jziic.c,v 1.7 2019/12/23 02:16:43 thorpej Exp $");
 
 /*
  * a preliminary driver for JZ4780's on-chip SMBus controllers
@@ -266,7 +266,7 @@ jziic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 {
 	struct jziic_softc *sc = cookie;
 
-	if (cold || (flags & I2C_F_POLL)) {
+	if (flags & I2C_F_POLL) {
 		return jziic_i2c_exec_poll(sc, op, addr, vcmd, cmdlen, vbuf,
 		    buflen, flags);
 	} else {
