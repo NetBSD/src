@@ -1,4 +1,4 @@
-/* $NetBSD: cx24227.c,v 1.9 2019/12/23 18:03:14 thorpej Exp $ */
+/* $NetBSD: cx24227.c,v 1.10 2019/12/23 18:09:05 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.9 2019/12/23 18:03:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cx24227.c,v 1.10 2019/12/23 18:09:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,16 +108,16 @@ cx24227_writereg(struct cx24227 *sc, uint8_t reg, uint16_t data)
 	int error;
 	uint8_t r[3];
 
-	if ((error = iic_acquire_bus(sc->tag, I2C_F_POLL) != 0))
+	if ((error = iic_acquire_bus(sc->tag, 0) != 0))
 		return error;
 
 	r[0] = reg;
 	r[1] = (data >> 8) & 0xff;
 	r[2] = data & 0xff;
 	error = iic_exec(sc->tag, I2C_OP_WRITE_WITH_STOP, sc->addr,
-	    r, 3, NULL, 0, I2C_F_POLL);
+	    r, 3, NULL, 0, 0);
 	
-	iic_release_bus(sc->tag, I2C_F_POLL);
+	iic_release_bus(sc->tag, 0);
 
 	return error;
 }
@@ -130,13 +130,13 @@ cx24227_readreg(struct cx24227 *sc, uint8_t reg, uint16_t *data)
 
 	*data = 0x0000;
 
-	if ((error = iic_acquire_bus(sc->tag, I2C_F_POLL) != 0))
+	if ((error = iic_acquire_bus(sc->tag, 0) != 0))
 		return error;
 
 	error = iic_exec(sc->tag, I2C_OP_READ_WITH_STOP, sc->addr,
-			 &reg, 1, r, 2, I2C_F_POLL);
+			 &reg, 1, r, 2, 0);
 
-	iic_release_bus(sc->tag, I2C_F_POLL);
+	iic_release_bus(sc->tag, 0);
 
 	*data |= r[0] << 8;
 	*data |= r[1];
