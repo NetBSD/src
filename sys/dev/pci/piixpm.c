@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.55 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: piixpm.c,v 1.56 2019/12/23 15:41:34 thorpej Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.55 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.56 2019/12/23 15:41:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -546,7 +546,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (st & PIIX_SMB_HS_BUSY)
 		return (1);
 
-	if (cold || sc->sc_poll)
+	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
