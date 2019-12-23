@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.51 2019/12/21 16:00:29 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.52 2019/12/23 16:17:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -181,19 +181,19 @@ typedef struct dm_target {
 	/* Destroy target_config area */
 	int (*destroy)(dm_table_entry_t *);
 
-	/*
-	 * Info/table routine are called to get params string, which is target
-	 * specific. When dm_table_status_ioctl is called with flag
-	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
-	 */
-	char *(*table)(void *);
 	int (*strategy)(dm_table_entry_t *, struct buf *);
 	int (*upcall)(dm_table_entry_t *, struct buf *);
 
 	/*
 	 * Optional routines.
 	 */
+	/*
+	 * Info/table routine are called to get params string, which is target
+	 * specific. When dm_table_status_ioctl is called with flag
+	 * DM_STATUS_TABLE_FLAG I have to sent params string back.
+	 */
 	char *(*info)(void *);
+	char *(*table)(void *);
 	int (*sync)(dm_table_entry_t *);
 	int (*secsize)(dm_table_entry_t *, unsigned int *);
 
@@ -262,14 +262,12 @@ int dm_target_stripe_secsize(dm_table_entry_t *, unsigned int *);
 
 /* dm_target_error.c */
 int dm_target_error_init(dm_table_entry_t*, int, char **);
-char *dm_target_error_table(void *);
 int dm_target_error_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_error_destroy(dm_table_entry_t *);
 int dm_target_error_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_zero.c */
 int dm_target_zero_init(dm_table_entry_t *, int, char **);
-char *dm_target_zero_table(void *);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_zero_destroy(dm_table_entry_t *);
 int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);

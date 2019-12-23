@@ -1,4 +1,4 @@
-/* $NetBSD: dm_ioctl.c,v 1.48 2019/12/21 11:59:03 tkusumi Exp $      */
+/* $NetBSD: dm_ioctl.c,v 1.49 2019/12/23 16:17:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.48 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_ioctl.c,v 1.49 2019/12/23 16:17:35 tkusumi Exp $");
 
 /*
  * Locking is used to synchronise between ioctl calls and between dm_table's
@@ -936,6 +936,7 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 
 	SLIST_FOREACH(table_en, tbl, next) {
 		char *params;
+		int is_table;
 
 		target_dict = prop_dictionary_create();
 		aprint_debug("%016" PRIu64 ", length %016" PRIu64
@@ -960,10 +961,11 @@ dm_table_status_ioctl(prop_dictionary_t dm_dict)
 		 */
 		prop_dictionary_set_cstring(target_dict, DM_TABLE_PARAMS, "");
 
-		if (flags & DM_STATUS_TABLE_FLAG)
+		is_table = (flags & DM_STATUS_TABLE_FLAG) ? 1 : 0;
+		if (is_table && table_en->target->table)
 			params = table_en->target->table(
 			    table_en->target_config);
-		else if (table_en->target->info)
+		else if (!is_table && table_en->target->info)
 			params = table_en->target->info(
 			    table_en->target_config);
 		else
