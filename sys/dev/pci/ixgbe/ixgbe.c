@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.217 2019/12/17 05:49:01 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.218 2019/12/23 09:19:40 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -4608,6 +4608,7 @@ ixgbe_handle_mod(void *context)
 	device_t	dev = adapter->dev;
 	u32		err, cage_full = 0;
 
+	IXGBE_CORE_LOCK(adapter);
 	++adapter->mod_sicount.ev_count;
 	if (adapter->hw.need_crosstalk_fix) {
 		switch (hw->mac.type) {
@@ -4625,14 +4626,14 @@ ixgbe_handle_mod(void *context)
 		}
 
 		if (!cage_full)
-			return;
+			goto out;
 	}
 
 	err = hw->phy.ops.identify_sfp(hw);
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Unsupported SFP+ module type was detected.\n");
-		return;
+		goto out;
 	}
 
 	if (hw->mac.type == ixgbe_mac_82598EB)
@@ -4643,9 +4644,11 @@ ixgbe_handle_mod(void *context)
 	if (err == IXGBE_ERR_SFP_NOT_SUPPORTED) {
 		device_printf(dev,
 		    "Setup failure - unsupported SFP+ module type.\n");
-		return;
+		goto out;
 	}
 	softint_schedule(adapter->msf_si);
+out:
+	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_mod */
 
 
