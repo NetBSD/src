@@ -1,4 +1,4 @@
-/* $NetBSD: fan53555.c,v 1.4 2019/11/12 07:40:04 mrg Exp $ */
+/* $NetBSD: fan53555.c,v 1.5 2019/12/23 19:22:46 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.4 2019/11/12 07:40:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fan53555.c,v 1.5 2019/12/23 19:22:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -124,10 +124,10 @@ fan53555_write(struct fan53555_softc *sc, uint8_t reg, uint8_t val, int flags)
 		aprint_error_dev(sc->sc_dev, "error writing reg %#x: %d\n", reg, error);
 }
 
-#define	I2C_READ(sc, reg)	fan53555_read((sc), (reg), I2C_F_POLL)
-#define	I2C_WRITE(sc, reg, val)	fan53555_write((sc), (reg), (val), I2C_F_POLL)
-#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, I2C_F_POLL)
-#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, I2C_F_POLL)
+#define	I2C_READ(sc, reg)	fan53555_read((sc), (reg), 0)
+#define	I2C_WRITE(sc, reg, val)	fan53555_write((sc), (reg), (val), 0)
+#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, 0)
+#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, 0)
 
 static int
 fan53555_acquire(device_t dev)
