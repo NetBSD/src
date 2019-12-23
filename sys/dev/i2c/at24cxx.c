@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.34 2019/12/23 02:39:47 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.35 2019/12/23 15:51:50 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.34 2019/12/23 02:39:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.35 2019/12/23 15:51:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -431,7 +431,7 @@ seeprom_bootstrap_read(i2c_tag_t tag, int i2caddr, int offset, int devsize,
 
 		/* Read a single byte. */
 		if (iic_exec(tag, I2C_OP_READ_WITH_STOP, addr,
-			     cmdbuf, cmdlen, rvp, 1, I2C_F_POLL)) {
+			     cmdbuf, cmdlen, rvp, 1, 0)) {
 			iic_release_bus(tag, 0);
 			return (-1);
 		}
