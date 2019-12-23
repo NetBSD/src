@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.56 2019/12/23 15:41:34 thorpej Exp $ */
+/* $NetBSD: piixpm.c,v 1.57 2019/12/23 23:31:23 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.56 2019/12/23 15:41:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.57 2019/12/23 23:31:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -230,8 +230,6 @@ nopowermanagement:
 	/* SB800 rev 0x40+, AMD HUDSON and newer need special initialization */
 	if (PIIXPM_IS_FCHGRP(sc) || PIIXPM_IS_SB800GRP(sc)) {
 		if (piixpm_sb800_init(sc) == 0) {
-			sc->sc_numbusses = 4;
-
 			/* Read configuration */
 			conf = pci_conf_read(pa->pa_pc, pa->pa_tag,
 			    SB800_SMB_HOSTC);
@@ -398,6 +396,12 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 	bus_space_handle_t ioh;	/* indirect I/O handle */
 	uint16_t val, base_addr;
 	bool enabled;
+
+	if (PIIXPM_IS_KERNCZ(sc) ||
+	    (PIIXPM_IS_HUDSON(sc) && (sc->sc_rev >= 0x1f)))
+		sc->sc_numbusses = 2;
+	else
+		sc->sc_numbusses = 4;
 
 	/* Fetch SMB base address */
 	if (bus_space_map(iot,
