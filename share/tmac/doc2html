@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.69 2019/12/03 14:41:00 uwe Exp $
+.\" $NetBSD: doc2html,v 1.70 2019/12/23 20:17:33 uwe Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -265,10 +265,11 @@ TODO:
 .em end-macro
 .
 .\" map groff -Tencoding argument to the charset name
-.ie     '\*(.T'ascii'  .ds html-charset US-ASCII
-.el .ie '\*(.T'latin1' .ds html-charset ISO-8859-1
-.el .ie '\*(.T'utf8'   .ds html-charset UTF-8
-.el .ab unsupported encoding \*(.T
+.       ie '\*(.T'ascii'  .ds html-charset US-ASCII
+.el \{ .ie '\*(.T'latin1' .ds html-charset ISO-8859-1
+.el \{ .ie '\*(.T'utf8'   .ds html-charset UTF-8
+.el    .ab unsupported encoding \*(.T
+.\}\}
 .
 .de init-html
 <html>
