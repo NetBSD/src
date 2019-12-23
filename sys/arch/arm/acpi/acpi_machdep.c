@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.11 2019/12/22 15:57:06 thorpej Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.12 2019/12/23 15:34:23 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.11 2019/12/22 15:57:06 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.12 2019/12/23 15:34:23 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,15 +259,13 @@ acpi_md_intr_establish(uint32_t irq, int ipl, int type, int (*handler)(void *), 
 void
 acpi_md_intr_mask(void *ih)
 {
-	/* XXX */
-	panic("acpi_md_intr_mask(%p): not implemented", ih);
+	intr_mask(ih);
 }
 
 void
 acpi_md_intr_unmask(void *ih)
 {
-	/* XXX */
-	panic("acpi_md_intr_unmask(%p): not implemented", ih);
+	intr_unmask(ih);
 }
 
 void
