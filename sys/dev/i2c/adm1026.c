@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.6 2019/12/11 21:00:11 jdc Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adm1026.c,v 1.7 2019/12/23 02:25:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,6 @@ struct adm1026_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
-	int sc_iic_flags;
 	bool sc_multi_read;
 
 	uint8_t sc_rev, sc_cfg[2];
@@ -136,7 +135,6 @@ adm1026_match(device_t parent, cfdata_t cf, void *aux)
 
 	sc.sc_tag = ia->ia_tag;
 	sc.sc_address = ia->ia_addr;
-	sc.sc_iic_flags = 0;
 
 	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
@@ -183,7 +181,6 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
 	sc->sc_dev = self;
-	sc->sc_iic_flags = I2C_F_POLL;	/* Use polling during autoconf */
 
 	sc->sc_multi_read = false;
 	prop_dictionary_get_bool(props, "multi_read", &sc->sc_multi_read);
@@ -238,8 +235,6 @@ adm1026_attach(device_t parent, device_t self, void *aux)
 
 	if (!pmf_device_register(self, adm1026_pmf_suspend, adm1026_pmf_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
-
-	sc->sc_iic_flags = 0;	/* Drop polling flag */
 
 	return;
 }
@@ -493,7 +488,7 @@ adm1026_read_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t *val)
 	int i, j, err = 0;
 	uint8_t creg, cval, tmp[ADM1026_READ_RETRIES + 1];
 
-	if ((err = iic_acquire_bus(sc->sc_tag, sc->sc_iic_flags)) != 0)
+	if ((err = iic_acquire_bus(sc->sc_tag, 0)) != 0)
 		return err;
 	/* Standard ADM1026 */
 	if (sc->sc_multi_read == false) {
@@ -512,7 +507,7 @@ adm1026_read_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t *val)
 			creg = ADM1026_CONF1;
 		if ((err = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 		    sc->sc_address, &reg, 1, &tmp[0], 1, 0)) != 0) {
-			iic_release_bus(sc->sc_tag, sc->sc_iic_flags);
+			iic_release_bus(sc->sc_tag, 0);
 			return err;
 		}
 		for (i = 1; i <= ADM1026_READ_RETRIES; i++) {
@@ -522,8 +517,7 @@ adm1026_read_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t *val)
 			for (j = 0; j < i; j++)
 				if (abs(tmp[j] - tmp[i]) < 3) {
 					*val = tmp[i];
-					iic_release_bus(sc->sc_tag,
-					    sc->sc_iic_flags);
+					iic_release_bus(sc->sc_tag, 0);
 					return 0;
 				}
 			if ((err = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
@@ -532,7 +526,7 @@ adm1026_read_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t *val)
 			err = -1;	/* Return error if we don't match. */
 		}
 	}
-	iic_release_bus(sc->sc_tag, sc->sc_iic_flags);
+	iic_release_bus(sc->sc_tag, 0);
 	return err;
 }
 
@@ -541,10 +535,10 @@ adm1026_write_reg(struct adm1026_softc *sc, uint8_t reg, uint8_t val)
 {
 	int err = 0;
 
-	if ((err = iic_acquire_bus(sc->sc_tag, sc->sc_iic_flags)) != 0)
+	if ((err = iic_acquire_bus(sc->sc_tag, 0)) != 0)
 		return err;
 	err = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
 	    &reg, 1, &val, 1, 0);
-	iic_release_bus(sc->sc_tag, sc->sc_iic_flags);
+	iic_release_bus(sc->sc_tag, 0);
 	return err;
 }
