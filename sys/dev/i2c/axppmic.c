@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.27 2019/12/23 02:57:32 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.28 2019/12/23 14:34:23 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.27 2019/12/23 02:57:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.28 2019/12/23 14:34:23 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,12 +557,20 @@ static void
 axppmic_power_poweroff(device_t dev)
 {
 	struct axppmic_softc *sc = device_private(dev);
+	int error;
 
 	delay(1000000);
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_POWER_DISABLE_REG, AXP_POWER_DISABLE_CTRL, I2C_F_POLL);
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	error = iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	if (error == 0) {
+		error = axppmic_write(sc->sc_i2c, sc->sc_addr,
+		    AXP_POWER_DISABLE_REG, AXP_POWER_DISABLE_CTRL, I2C_F_POLL);
+		iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	}
+	if (error) {
+		device_printf(dev, "WARNING: unable to power off, error %d\n",
+		    error);
+	}
 }
 
 static struct fdtbus_power_controller_func axppmic_power_funcs = {
