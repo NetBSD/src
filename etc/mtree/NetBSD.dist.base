@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.207 2019/12/18 14:44:16 kamil Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.208 2019/12/23 06:45:37 maxv Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -121,6 +121,7 @@
 ./usr/include/dev/dm
 ./usr/include/dev/dmover
 ./usr/include/dev/dtv
+./usr/include/dev/filemon
 ./usr/include/dev/hdaudio
 ./usr/include/dev/hdmicec
 ./usr/include/dev/hid
