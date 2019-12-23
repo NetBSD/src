@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.14 2019/12/23 02:50:50 thorpej Exp $ */
+/* $NetBSD: axp20x.c,v 1.15 2019/12/23 19:12:22 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.14 2019/12/23 02:50:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.15 2019/12/23 19:12:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -567,10 +567,14 @@ axp20x_read(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len,
     int flags)
 {
 	int ret;
-	iic_acquire_bus(sc->sc_i2c, flags);
-	ret = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
-	    &reg, 1, val, len, flags);
-	iic_release_bus(sc->sc_i2c, flags);
+
+	ret = iic_acquire_bus(sc->sc_i2c, flags);
+	if (ret == 0) {
+		ret = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+		    &reg, 1, val, len, flags);
+		iic_release_bus(sc->sc_i2c, flags);
+	}
+
 	return ret;
 
 }
@@ -580,10 +584,14 @@ axp20x_write(struct axp20x_softc *sc, uint8_t reg, uint8_t *val, size_t len,
     int flags)
 {
 	int ret;
-	iic_acquire_bus(sc->sc_i2c, flags);
-	ret = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
-	    &reg, 1, val, len, flags);
-	iic_release_bus(sc->sc_i2c, flags);
+
+	ret = iic_acquire_bus(sc->sc_i2c, flags);
+	if (ret == 0) {
+		ret = iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, sc->sc_addr,
+		    &reg, 1, val, len, flags);
+		iic_release_bus(sc->sc_i2c, flags);
+	}
+
 	return ret;
 }
 
@@ -667,9 +675,13 @@ axp20x_poweroff(device_t dev)
 {
 	struct axp20x_softc * const sc = device_private(dev);
 	uint8_t reg = AXP_SHUTDOWN_CTRL;
+	int error;
 
-	if (axp20x_write(sc, AXP_SHUTDOWN, &reg, 1, I2C_F_POLL) != 0)
-		device_printf(dev, "WARNING: poweroff failed\n");
+	error = axp20x_write(sc, AXP_SHUTDOWN, &reg, 1, I2C_F_POLL);
+	if (error) {
+		device_printf(dev, "WARNING: unable to power off, error %d\n",
+		    error);
+	}
 }
 
 #ifdef FDT
@@ -714,7 +726,7 @@ axp20xreg_set_voltage(device_t dev, u_int min_uvol, u_int max_uvol)
 {
 	struct axp20xreg_softc * const sc = device_private(dev);
 	
-	return axp20x_set_dcdc(device_parent(dev), sc->sc_regdef->dcdc, min_uvol / 1000, true);
+	return axp20x_set_dcdc(device_parent(dev), sc->sc_regdef->dcdc, min_uvol / 1000, false);
 }
 
 static int
@@ -723,7 +735,7 @@ axp20xreg_get_voltage(device_t dev, u_int *puvol)
 	struct axp20xreg_softc * const sc = device_private(dev);
 	int mvol, error;
 
-	error = axp20x_get_dcdc(device_parent(dev), sc->sc_regdef->dcdc, &mvol, true);
+	error = axp20x_get_dcdc(device_parent(dev), sc->sc_regdef->dcdc, &mvol, false);
 	if (error != 0)
 		return error;
 
