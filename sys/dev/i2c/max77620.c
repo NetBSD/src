@@ -1,4 +1,4 @@
-/* $NetBSD: max77620.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: max77620.c,v 1.7 2019/12/23 18:49:13 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,10 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.6 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max77620.c,v 1.7 2019/12/23 18:49:13 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/device.h>
 #include <sys/conf.h>
@@ -57,6 +58,13 @@ struct max77620_softc {
 	i2c_tag_t	sc_i2c;
 	i2c_addr_t	sc_addr;
 	int		sc_phandle;
+
+	/*
+	 * Locking order:
+	 *
+	 *	max77620 -> i2c
+	 */
+	kmutex_t	sc_lock;
 };
 
 struct max77620_pin {
@@ -96,10 +104,10 @@ max77620_write(struct max77620_softc *sc, uint8_t reg, uint8_t val, int flags)
 		aprint_error_dev(sc->sc_dev, "error writing reg %#x: %d\n", reg, error);
 }
 
-#define	I2C_READ(sc, reg)	max77620_read((sc), (reg), I2C_F_POLL)
-#define	I2C_WRITE(sc, reg, val)	max77620_write((sc), (reg), (val), I2C_F_POLL)
-#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, I2C_F_POLL)
-#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, I2C_F_POLL)
+#define	I2C_READ(sc, reg)	max77620_read((sc), (reg), 0)
+#define	I2C_WRITE(sc, reg, val)	max77620_write((sc), (reg), (val), 0)
+#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, 0)
+#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, 0)
 
 static int
 max77620_gpio_config(struct max77620_softc *sc, int pin, int flags)
@@ -107,6 +115,7 @@ max77620_gpio_config(struct max77620_softc *sc, int pin, int flags)
 	uint32_t gpio;
 
 	KASSERT(pin >= 0 && pin < MAX_GPIO_COUNT);
+	KASSERT(mutex_owned(&sc->sc_lock));
 
 	gpio = I2C_READ(sc, MAX_GPIO_REG(pin));
 
@@ -161,9 +170,11 @@ max77620_gpio_acquire(device_t dev, const void *data, size_t len, int flags)
 	if (pin >= MAX_GPIO_COUNT)
 		return NULL;
 
+	mutex_enter(&sc->sc_lock);
 	I2C_LOCK(sc);
 	error = max77620_gpio_config(sc, pin, flags);
 	I2C_UNLOCK(sc);
+	mutex_exit(&sc->sc_lock);
 
 	if (error != 0) {
 		device_printf(dev, "bad pin %d config %#x\n", pin, flags);
@@ -185,9 +196,11 @@ max77620_gpio_release(device_t dev, void *priv)
 	struct max77620_softc * const sc = device_private(dev);
 	struct max77620_pin *gpin = priv;
 
+	mutex_enter(&sc->sc_lock);
 	I2C_LOCK(sc);
 	max77620_gpio_config(sc, gpin->pin_num, GPIO_PIN_INPUT|GPIO_PIN_OPENDRAIN);
 	I2C_UNLOCK(sc);
+	mutex_exit(&sc->sc_lock);
 
 	kmem_free(gpin, sizeof(*gpin));
 }
@@ -199,6 +212,11 @@ max77620_gpio_read(device_t dev, void *priv, bool raw)
 	struct max77620_pin *gpin = priv;
 	uint8_t gpio;
 	int val;
+
+	/*
+	 * Performing a register read only; no need to acquire
+	 * the max77620 lock.
+	 */
 
 	I2C_LOCK(sc);
 	gpio = I2C_READ(sc, MAX_GPIO_REG(gpin->pin_num));
@@ -227,6 +245,7 @@ max77620_gpio_write(device_t dev, void *priv, int val, bool raw)
 	if (!raw && gpin->pin_actlo)
 		val = !val;
 
+	mutex_enter(&sc->sc_lock);
 	I2C_LOCK(sc);
 	gpio = I2C_READ(sc, MAX_GPIO_REG(gpin->pin_num));
 	gpio &= ~MAX_GPIO_OUTPUT_VAL;
@@ -238,6 +257,7 @@ max77620_gpio_write(device_t dev, void *priv, int val, bool raw)
 #endif
 	I2C_WRITE(sc, MAX_GPIO_REG(gpin->pin_num), gpio);
 	I2C_UNLOCK(sc);
+	mutex_exit(&sc->sc_lock);
 }
 
 static struct fdtbus_gpio_controller_func max77620_gpio_funcs = {
@@ -276,6 +296,8 @@ max77620_attach(device_t parent, device_t self, void *aux)
 	sc->sc_i2c = ia->ia_tag;
 	sc->sc_addr = ia->ia_addr;
 	sc->sc_phandle = ia->ia_cookie;
+
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	aprint_naive("\n");
 	aprint_normal(": MAX77620 Power Management IC\n");
