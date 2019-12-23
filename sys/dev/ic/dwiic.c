@@ -1,4 +1,4 @@
-/* $NetBSD: dwiic.c,v 1.6 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: dwiic.c,v 1.7 2019/12/23 15:28:08 thorpej Exp $ */
 
 /* $OpenBSD: dwiic.c,v 1.4 2018/05/23 22:08:00 kettenis Exp $ */
 
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.6 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwiic.c,v 1.7 2019/12/23 15:28:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -335,7 +335,7 @@ dwiic_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *cmdbuf,
 	const uint8_t *bcmd;
 	uint8_t *bdata;
 
-	if (cold || sc->sc_poll)
+	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	DPRINTF(("%s: %s: op %d, addr 0x%02x, cmdlen %zu, len %zu, "
