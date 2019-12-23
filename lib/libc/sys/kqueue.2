@@ -1,4 +1,4 @@
-.\"	$NetBSD: kqueue.2,v 1.49 2019/12/22 17:01:15 kamil Exp $
+.\"	$NetBSD: kqueue.2,v 1.50 2019/12/23 01:46:09 kamil Exp $
 .\"
 .\" Copyright (c) 2000 Jonathan Lemon
 .\" All rights reserved.
@@ -621,6 +621,9 @@ structure.
 .It Bq Er EINTR
 A signal was delivered before the timeout expired and before any
 events were placed on the kqueue for return.
+All changes contained in the
+.Fa changelist
+are applied before returning this error.
 .It Bq Er EINVAL
 The specified time limit or filter is invalid.
 .It Bq Er ENOENT
