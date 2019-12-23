@@ -1,4 +1,4 @@
-/* $NetBSD: as3722.c,v 1.17 2019/12/23 02:35:18 thorpej Exp $ */
+/* $NetBSD: as3722.c,v 1.18 2019/12/23 15:48:51 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.17 2019/12/23 02:35:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: as3722.c,v 1.18 2019/12/23 15:48:51 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -852,10 +852,16 @@ as3722_poweroff(device_t dev)
 
 	const int flags = I2C_F_POLL;
 
-	iic_acquire_bus(sc->sc_i2c, flags);
-	error = as3722_write(sc, AS3722_RESET_CTRL_REG,
-	    AS3722_RESET_CTRL_POWER_OFF, flags);
-	iic_release_bus(sc->sc_i2c, flags);
+	error = iic_acquire_bus(sc->sc_i2c, flags);
+	if (error == 0) {
+		error = as3722_write(sc, AS3722_RESET_CTRL_REG,
+		    AS3722_RESET_CTRL_POWER_OFF, flags);
+		iic_release_bus(sc->sc_i2c, flags);
+	}
+	if (error) {
+		device_printf(dev, "WARNING: unable to power off, error %d\n",
+		    error);
+	}
 
 	return error;
 }
@@ -868,10 +874,16 @@ as3722_reboot(device_t dev)
 
 	const int flags = I2C_F_POLL;
 
-	iic_acquire_bus(sc->sc_i2c, flags);
-	error = as3722_write(sc, AS3722_RESET_CTRL_REG,
-	    AS3722_RESET_CTRL_FORCE_RESET, flags);
-	iic_release_bus(sc->sc_i2c, flags);
+	error = iic_acquire_bus(sc->sc_i2c, flags);
+	if (error == 0) {
+		error = as3722_write(sc, AS3722_RESET_CTRL_REG,
+		    AS3722_RESET_CTRL_FORCE_RESET, flags);
+		iic_release_bus(sc->sc_i2c, flags);
+	}
+	if (error) {
+		device_printf(dev, "WARNING: unable to reboot, error %d\n",
+		    error);
+	}
 
 	return error;
 }
