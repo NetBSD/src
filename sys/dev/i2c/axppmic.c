@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.26 2019/10/01 23:32:52 jmcneill Exp $ */
+/* $NetBSD: axppmic.c,v 1.27 2019/12/23 02:57:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.26 2019/10/01 23:32:52 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.27 2019/12/23 02:57:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -779,12 +779,12 @@ axppmic_attach_battery(struct axppmic_softc *sc)
 	envsys_data_t *e;
 	uint8_t val;
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_i2c, 0);
 	if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_WARN_REG, &val, I2C_F_POLL) == 0) {
 		sc->sc_warn_thres = __SHIFTOUT(val, AXP_BATT_CAP_WARN_LV1) + 5;
 		sc->sc_shut_thres = __SHIFTOUT(val, AXP_BATT_CAP_WARN_LV2);
 	}
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_release_bus(sc->sc_i2c, 0);
 
 	e = &sc->sc_sensor[AXP_SENSOR_BATT_PRESENT];
 	e->private = AXP_SENSOR_BATT_PRESENT;
@@ -928,15 +928,15 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 		const bool master_mode = of_hasprop(sc->sc_phandle, "x-powers,self-working-mode") ||
 		    of_hasprop(sc->sc_phandle, "x-powers,master-mode");
 
-		iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+		iic_acquire_bus(sc->sc_i2c, 0);
 		axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_ADDR_EXT_REG,
-		    master_mode ? AXP_ADDR_EXT_MASTER : AXP_ADDR_EXT_SLAVE, I2C_F_POLL);
-		iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+		    master_mode ? AXP_ADDR_EXT_MASTER : AXP_ADDR_EXT_SLAVE, 0);
+		iic_release_bus(sc->sc_i2c, 0);
 	}
 
-	iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
-	error = axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_CHIP_ID_REG, &val, I2C_F_POLL);
-	iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(sc->sc_i2c, 0);
+	error = axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_CHIP_ID_REG, &val, 0);
+	iic_release_bus(sc->sc_i2c, 0);
 	if (error != 0) {
 		aprint_error_dev(self, "couldn't read chipid\n");
 		return;
@@ -948,7 +948,7 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	sysmon_pswitch_register(&sc->sc_smpsw);
 
 	if (c->irq_regs > 0) {
-		iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+		iic_acquire_bus(sc->sc_i2c, 0);
 		for (i = 1; i <= c->irq_regs; i++) {
 			irq_mask = 0;
 			if (i == c->poklirq.reg)
@@ -963,9 +963,9 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 				irq_mask |= c->chargeirq.mask;
 			if (i == c->chargestirq.reg)
 				irq_mask |= c->chargestirq.mask;
-			axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE_REG(i), irq_mask, I2C_F_POLL);
+			axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE_REG(i), irq_mask, 0);
 		}
-		iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+		iic_release_bus(sc->sc_i2c, 0);
 
 		ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
 		    axppmic_intr, sc);
