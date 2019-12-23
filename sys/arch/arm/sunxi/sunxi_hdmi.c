@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.9 2019/12/23 00:24:02 thorpej Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.10 2019/12/23 18:20:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.9 2019/12/23 00:24:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.10 2019/12/23 18:20:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -637,14 +637,14 @@ sunxi_hdmi_read_edid_block(struct sunxi_hdmi_softc *sc, uint8_t *data,
 	uint8_t wbuf[2];
 	int error;
 
-	if ((error = iic_acquire_bus(tag, I2C_F_POLL)) != 0)
+	if ((error = iic_acquire_bus(tag, 0)) != 0)
 		return error;
 
 	wbuf[0] = block;	/* start address */
 
 	error = iic_exec(tag, I2C_OP_READ_WITH_STOP, DDC_ADDR, wbuf, 1,
-	    data, EDID_BLOCK_SIZE, I2C_F_POLL);
-	iic_release_bus(tag, I2C_F_POLL);
+	    data, EDID_BLOCK_SIZE, 0);
+	iic_release_bus(tag, 0);
 	return error;
 }
 
