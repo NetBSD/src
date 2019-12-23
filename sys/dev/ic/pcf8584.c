@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8584.c,v 1.16 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: pcf8584.c,v 1.17 2019/12/23 15:29:36 thorpej Exp $	*/
 /*	$OpenBSD: pcf8584.c,v 1.9 2007/10/20 18:46:21 kettenis Exp $ */
 
 /*
@@ -120,7 +120,7 @@ pcfiic_i2c_exec(void *arg, i2c_op_t op, i2c_addr_t addr,
             device_xname(sc->sc_dev), op, addr, (int)cmdlen, (int)len, flags);
 #endif
 
-	if (cold || sc->sc_poll)
+	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (sc->sc_master)
