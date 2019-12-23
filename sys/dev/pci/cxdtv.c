@@ -1,4 +1,4 @@
-/* $NetBSD: cxdtv.c,v 1.17 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: cxdtv.c,v 1.18 2019/12/23 15:32:29 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.17 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxdtv.c,v 1.18 2019/12/23 15:32:29 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1084,13 +1084,13 @@ cxdtv_card_init_hdtvwonder(struct cxdtv_softc *sc)
 	na = 0x0a; /* Nxt2004 address */
  	x = 0;
 
-	iic_acquire_bus(&sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(&sc->sc_i2c, 0);
 
 	for(i = 0; i < 5; i++)
 		x |= iic_exec(&sc->sc_i2c, I2C_OP_WRITE_WITH_STOP, na,
-		    nb[i], 2, NULL, 0, I2C_F_POLL);
+		    nb[i], 2, NULL, 0, 0);
 
-	iic_release_bus(&sc->sc_i2c, I2C_F_POLL);
+	iic_release_bus(&sc->sc_i2c, 0);
 
 	if (x)
 		aprint_error_dev(sc->sc_dev, "HDTV Wonder tuner init failed");
