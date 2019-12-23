@@ -1,4 +1,4 @@
-/* $NetBSD: axp20x.c,v 1.13 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: axp20x.c,v 1.14 2019/12/23 02:50:50 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.13 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axp20x.c,v 1.14 2019/12/23 02:50:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -248,13 +248,13 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	sc->sc_phandle = ia->ia_cookie;
 
 	error = axp20x_read(sc, AXP_INPUT_STATUS,
-	    &sc->sc_inputstatus, 1, I2C_F_POLL);
+	    &sc->sc_inputstatus, 1, 0);
 	if (error) {
 		aprint_error(": can't read status: %d\n", error);
 		return;
 	}
 	error = axp20x_read(sc, AXP_POWER_MODE,
-	    &sc->sc_powermode, 1, I2C_F_POLL);
+	    &sc->sc_powermode, 1, 0);
 	if (error) {
 		aprint_error(": can't read power mode: %d\n", error);
 		return;
@@ -262,18 +262,18 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 	value = AXP_ADC_EN1_ACV | AXP_ADC_EN1_ACI | AXP_ADC_EN1_VBUSV | AXP_ADC_EN1_VBUSI | AXP_ADC_EN1_APSV | AXP_ADC_EN1_TS;
 	if (sc->sc_powermode & AXP_POWER_MODE_BATTOK)
 		value |= AXP_ADC_EN1_BATTV | AXP_ADC_EN1_BATTI;
-	error = axp20x_write(sc, AXP_ADC_EN1, &value, 1, I2C_F_POLL);
+	error = axp20x_write(sc, AXP_ADC_EN1, &value, 1, 0);
 	if (error) {
 		aprint_error(": can't set AXP_ADC_EN1\n");
 		return;
 	}
-	error = axp20x_read(sc, AXP_ADC_EN2, &value, 1, I2C_F_POLL);
+	error = axp20x_read(sc, AXP_ADC_EN2, &value, 1, 0);
 	if (error) {
 		aprint_error(": can't read AXP_ADC_EN2\n");
 		return;
 	}
 	value |= AXP_ADC_EN2_TEMP;
-	error = axp20x_write(sc, AXP_ADC_EN2, &value, 1, I2C_F_POLL);
+	error = axp20x_write(sc, AXP_ADC_EN2, &value, 1, 0);
 	if (error) {
 		aprint_error(": can't set AXP_ADC_EN2\n");
 		return;
@@ -381,22 +381,22 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 
 	sysmon_envsys_register(sc->sc_sme);
 
-	if (axp20x_read(sc, AXP_DCDC2, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_DCDC2, &value, 1, 0) == 0) {
 		aprint_verbose_dev(sc->sc_dev, "DCDC2 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC2_VOLT_MASK) * 25));
 	}
-	if (axp20x_read(sc, AXP_DCDC3, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_DCDC3, &value, 1, 0) == 0) {
 		aprint_verbose_dev(sc->sc_dev, "DCDC3 %dmV\n",
 		    (int)(700 + (value & AXP_DCDC3_VOLT_MASK) * 25));
 	}
-	if (axp20x_read(sc, AXP_LDO2_4, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_LDO2_4, &value, 1, 0) == 0) {
 		aprint_verbose_dev(sc->sc_dev, "LDO2 %dmV, LDO4 %dmV\n",
 		    (int)(1800 +
 		    ((value & AXP_LDO2_VOLT_MASK) >> AXP_LDO2_VOLT_SHIFT) * 100
 		    ),
 		    ldo4_mvV[(value & AXP_LDO4_VOLT_MASK) >> AXP_LDO4_VOLT_SHIFT]);
 	}
-	if (axp20x_read(sc, AXP_LDO3, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_LDO3, &value, 1, 0) == 0) {
 		if (value & AXP_LDO3_TRACK) {
 			aprint_verbose_dev(sc->sc_dev, "LDO3: tracking\n");
 		} else {
@@ -405,7 +405,7 @@ axp20x_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	if (axp20x_read(sc, AXP_BKUP_CTRL, &value, 1, I2C_F_POLL) == 0) {
+	if (axp20x_read(sc, AXP_BKUP_CTRL, &value, 1, 0) == 0) {
 		if (value & AXP_BKUP_CTRL_ENABLE) {
 			aprint_verbose_dev(sc->sc_dev,
 			    "RTC supercap charger enabled: %dmV at %duA\n",
