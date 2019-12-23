@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.63 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.64 2019/12/23 15:34:40 thorpej Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.63 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.64 2019/12/23 15:34:40 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -309,7 +309,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	if (st & LPCIB_SMB_HS_BUSY)
 		return (1);
 
-	if (cold || sc->sc_poll)
+	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
