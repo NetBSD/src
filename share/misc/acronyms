@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.290 2019/11/11 04:11:53 pgoyette Exp $
+$NetBSD: acronyms,v 1.291 2019/12/23 23:31:18 sevan Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -44,6 +44,7 @@ ATEOTD	at the end of the day
 ATM	at the moment
 ATM	{automated,automatic} teller machine
 ATW	around the world
+AVB	alcohol by volume
 AVI	automatic vehicle identification
 AWK	Aho, Weinberger, [and] Kernighan
 AWOL	absent without official leave
