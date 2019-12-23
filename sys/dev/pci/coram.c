@@ -1,4 +1,4 @@
-/* $NetBSD: coram.c,v 1.17 2019/12/22 23:23:32 thorpej Exp $ */
+/* $NetBSD: coram.c,v 1.18 2019/12/23 15:31:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.17 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coram.c,v 1.18 2019/12/23 15:31:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -247,10 +247,10 @@ coram_attach(device_t parent, device_t self, void *aux)
 	bar = 0;
 //	seeprom_bootstrap_read(&sc->sc_i2c, 0x50, 0, 256, foo, 256);
 
-	iic_acquire_bus(&sc->sc_i2c, I2C_F_POLL);
+	iic_acquire_bus(&sc->sc_i2c, 0);
 	iic_exec(&sc->sc_i2c, I2C_OP_READ_WITH_STOP, 0x50, &bar, 1, foo, 256,
-	    I2C_F_POLL);
-	iic_release_bus(&sc->sc_i2c, I2C_F_POLL);
+	    0);
+	iic_release_bus(&sc->sc_i2c, 0);
 
 	printf("\n");
 	for ( i = 0; i < 256; i++) {
