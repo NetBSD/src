@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_phy.c,v 1.19 2019/12/16 02:50:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe_phy.c,v 1.20 2019/12/23 09:36:18 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -1585,6 +1585,8 @@ s32 ixgbe_identify_sfp_module_generic(struct ixgbe_hw *hw)
 	}
 
 out:
+	if (hw->phy.type == ixgbe_phy_sfp_unsupported)
+		hw->need_unsupported_sfp_recovery = true;
 	return status;
 
 err_read_i2c_eeprom:
@@ -1838,6 +1840,8 @@ s32 ixgbe_identify_qsfp_module_generic(struct ixgbe_hw *hw)
 	}
 
 out:
+	if (hw->phy.type == ixgbe_phy_sfp_unsupported)
+		hw->need_unsupported_sfp_recovery = true;
 	return status;
 
 err_read_i2c_eeprom:

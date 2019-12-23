@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_82598.c,v 1.12 2018/04/04 08:59:22 msaitoh Exp $ */
+/* $NetBSD: ixgbe_82598.c,v 1.13 2019/12/23 09:36:17 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -866,9 +866,8 @@ static s32 ixgbe_reset_hw_82598(struct ixgbe_hw *hw)
 
 		/* Init PHY and function pointers, perform SFP setup */
 		phy_status = hw->phy.ops.init(hw);
-		if (phy_status == IXGBE_ERR_SFP_NOT_SUPPORTED)
-			goto reset_hw_out;
-		if (phy_status == IXGBE_ERR_SFP_NOT_PRESENT)
+		if ((phy_status == IXGBE_ERR_SFP_NOT_SUPPORTED) ||
+		    (phy_status == IXGBE_ERR_SFP_NOT_PRESENT))
 			goto mac_reset_top;
 
 		hw->phy.ops.reset(hw);
