@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.36 2019/12/21 16:00:29 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.37 2019/12/23 16:17:35 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.36 2019/12/21 16:00:29 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.37 2019/12/23 16:17:35 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -158,10 +158,6 @@ dm_target_insert(dm_target_t *dm_target)
 	/* Sanity check for any missing function */
 	if (dm_target->init == NULL) {
 		printf("%s missing init\n", dm_target->name);
-		return EINVAL;
-	}
-	if (dm_target->table == NULL) {
-		printf("%s missing table\n", dm_target->name);
 		return EINVAL;
 	}
 	if (dm_target->strategy == NULL) {
@@ -346,7 +342,6 @@ dm_target_init(void)
 	dmt->version[1] = 0;
 	dmt->version[2] = 0;
 	dmt->init = &dm_target_error_init;
-	dmt->table = &dm_target_error_table;
 	dmt->strategy = &dm_target_error_strategy;
 	dmt->destroy = &dm_target_error_destroy;
 	dmt->upcall = &dm_target_error_upcall;
@@ -358,7 +353,6 @@ dm_target_init(void)
 	dmt->version[1] = 0;
 	dmt->version[2] = 0;
 	dmt->init = &dm_target_zero_init;
-	dmt->table = &dm_target_zero_table;
 	dmt->strategy = &dm_target_zero_strategy;
 	dmt->destroy = &dm_target_zero_destroy;
 	dmt->upcall = &dm_target_zero_upcall;
