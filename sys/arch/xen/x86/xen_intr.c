@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_intr.c,v 1.17 2019/06/07 12:43:52 cherry Exp $	*/
+/*	$NetBSD: xen_intr.c,v 1.18 2019/12/23 13:35:37 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.17 2019/06/07 12:43:52 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_intr.c,v 1.18 2019/12/23 13:35:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -238,6 +238,26 @@ xen_intr_establish_xname(int legacy_irq, struct pic *pic, int pin,
 
 	/* FALLTHROUGH */
 	return NULL;
+}
+
+/*
+ * Mask an interrupt source.
+ */
+void
+xen_intr_mask(struct intrhand *ih)
+{
+	/* XXX */
+	panic("xen_intr_mask: not yet implemented.");
+}
+
+/*
+ * Unmask an interrupt source.
+ */
+void
+xen_intr_unmask(struct intrhand *ih)
+{
+	/* XXX */
+	panic("xen_intr_unmask: not yet implemented.");
 }
 
 /*
@@ -510,6 +530,8 @@ __strong_alias(intr_string, xintr_string);
 __strong_alias(intr_create_intrid, xen_intr_create_intrid);
 __strong_alias(intr_establish, xen_intr_establish);
 __strong_alias(intr_establish_xname, xen_intr_establish_xname);
+__strong_alias(intr_mask, xen_intr_mask);
+__strong_alias(intr_unmask, xen_intr_unmask);
 __strong_alias(intr_disestablish, xen_intr_disestablish);
 __strong_alias(cpu_intr_redistribute, xen_cpu_intr_redistribute);
 __strong_alias(cpu_intr_count, xen_cpu_intr_count);
