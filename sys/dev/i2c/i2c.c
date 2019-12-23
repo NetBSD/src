@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c.c,v 1.71 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: i2c.c,v 1.72 2019/12/23 18:27:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.71 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c.c,v 1.72 2019/12/23 18:27:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -353,7 +353,7 @@ iic_search(device_t parent, cfdata_t cf, const int *ldesc, void *aux)
 		 * to see if it looks like something is really there.
 		 */
 		if (match_result == I2C_MATCH_ADDRESS_ONLY &&
-		    (error = (*probe_func)(sc, &ia, I2C_F_POLL)) != 0)
+		    (error = (*probe_func)(sc, &ia, 0)) != 0)
 			continue;
 
 		sc->sc_devices[ia.ia_addr] =
