@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_hdmi.c,v 1.8 2019/12/22 23:23:30 thorpej Exp $ */
+/* $NetBSD: sunxi_hdmi.c,v 1.9 2019/12/23 00:24:02 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2014 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.8 2019/12/22 23:23:30 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_hdmi.c,v 1.9 2019/12/23 00:24:02 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -408,7 +408,7 @@ sunxi_hdmi_i2c_xfer_1_4(void *priv, i2c_addr_t addr, uint8_t block, uint8_t reg,
 		val = HDMI_READ(sc, SUNXI_A31_HDMI_DDC_CTRL_REG);
 		if ((val & SUNXI_A31_HDMI_DDC_CTRL_ACCESS_CMD_START) == 0)
 			break;
-		if (cold)
+		if (flags & I2C_F_POLL)
 			delay(1000);
 		else
 			kpause("hdmiddc", false, mstohz(10), &sc->sc_exec_lock);
