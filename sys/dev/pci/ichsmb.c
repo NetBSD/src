@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.64 2019/12/23 15:34:40 thorpej Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.65 2019/12/24 06:27:17 thorpej Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,13 +22,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.64 2019/12/23 15:34:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.65 2019/12/24 06:27:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
 #include <sys/errno.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/proc.h>
 #include <sys/module.h>
 
@@ -62,13 +63,17 @@ struct ichsmb_softc {
 	int			sc_poll;
 	pci_intr_handle_t	*sc_pihp;
 
+	kmutex_t		sc_exec_lock;
+	kcondvar_t		sc_exec_wait;
+
 	struct i2c_controller	sc_i2c_tag;
 	struct {
 		i2c_op_t     op;
 		void *       buf;
 		size_t       len;
 		int          flags;
-		volatile int error;
+		int          error;
+		bool         done;
 	}			sc_i2c_xfer;
 	device_t		sc_i2c_device;
 };
@@ -161,6 +166,9 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
+	mutex_init(&sc->sc_exec_lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_exec_wait, device_xname(self));
+
 	/* Read configuration */
 	conf = pci_conf_read(pa->pa_pc, pa->pa_tag, LPCIB_SMB_HOSTC);
 	DPRINTF(("%s: conf 0x%08x\n", device_xname(sc->sc_dev), conf));
@@ -187,6 +195,8 @@ ichsmb_attach(device_t parent, device_t self, void *aux)
 		if (pci_intr_alloc(pa, &sc->sc_pihp, NULL, 0) == 0) {
 			intrstr = pci_intr_string(pa->pa_pc, sc->sc_pihp[0],
 			    intrbuf, sizeof(intrbuf));
+			pci_intr_setattr(pa->pa_pc, &sc->sc_pihp[0],
+			    PCI_INTR_MPSAFE, true);
 			sc->sc_ih = pci_intr_establish_xname(pa->pa_pc,
 			    sc->sc_pihp[0], IPL_BIO, ichsmb_intr, sc,
 			    device_xname(sc->sc_dev));
@@ -262,6 +272,9 @@ ichsmb_detach(device_t self, int flags)
 	if (sc->sc_size != 0)
 		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 
+	mutex_destroy(&sc->sc_exec_lock);
+	cv_destroy(&sc->sc_exec_wait);
+
 	return 0;
 }
 
@@ -288,6 +301,8 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	    "flags 0x%02x\n", device_xname(sc->sc_dev), op, addr, cmdlen,
 	    len, flags));
 
+	mutex_enter(&sc->sc_exec_lock);
+
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS,
 	    LPCIB_SMB_HS_INTR | LPCIB_SMB_HS_DEVERR |
@@ -306,15 +321,19 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	snprintb(fbuf, sizeof(fbuf), LPCIB_SMB_HS_BITS, st);
 	printf("%s: exec: st %s\n", device_xname(sc->sc_dev), fbuf);
 #endif
-	if (st & LPCIB_SMB_HS_BUSY)
-		return (1);
+	if (st & LPCIB_SMB_HS_BUSY) {
+		mutex_exit(&sc->sc_exec_lock);
+		return (EBUSY);
+	}
 
 	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
-	    (cmdlen == 0 && len > 1))
-		return (1);
+	    (cmdlen == 0 && len > 1)) {
+		mutex_exit(&sc->sc_exec_lock);
+		return (EINVAL);
+	}
 
 	/* Setup transfer */
 	sc->sc_i2c_xfer.op = op;
@@ -322,6 +341,7 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.len = len;
 	sc->sc_i2c_xfer.flags = flags;
 	sc->sc_i2c_xfer.error = 0;
+	sc->sc_i2c_xfer.done = false;
 
 	/* Set slave address and transfer direction */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_TXSLVA,
@@ -380,14 +400,17 @@ ichsmb_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		ichsmb_intr(sc);
 	} else {
 		/* Wait for interrupt */
-		if (tsleep(sc, PRIBIO, "iicexec", ICHIIC_TIMEOUT * hz))
-			goto timeout;
+		while (! sc->sc_i2c_xfer.done) {
+			if (cv_timedwait(&sc->sc_exec_wait, &sc->sc_exec_lock,
+					 ICHIIC_TIMEOUT * hz))
+				goto timeout;
+		}
 	}
 
-	if (sc->sc_i2c_xfer.error)
-		return (1);
+	int error = sc->sc_i2c_xfer.error;
+	mutex_exit(&sc->sc_exec_lock);
 
-	return (0);
+	return (error);
 
 timeout:
 	/*
@@ -408,7 +431,8 @@ timeout:
 		    fbuf);
 	}
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, st);
-	return (1);
+	mutex_exit(&sc->sc_exec_lock);
+	return (ETIMEDOUT);
 }
 
 static int
@@ -435,12 +459,15 @@ ichsmb_intr(void *arg)
 	printf("%s: intr st %s\n", device_xname(sc->sc_dev), fbuf);
 #endif
 
+	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0)
+		mutex_enter(&sc->sc_exec_lock);
+
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_iot, sc->sc_ioh, LPCIB_SMB_HS, st);
 
 	/* Check for errors */
 	if (st & (LPCIB_SMB_HS_DEVERR | LPCIB_SMB_HS_BUSERR | LPCIB_SMB_HS_FAILED)) {
-		sc->sc_i2c_xfer.error = 1;
+		sc->sc_i2c_xfer.error = EIO;
 		goto done;
 	}
 
@@ -460,8 +487,11 @@ ichsmb_intr(void *arg)
 	}
 
 done:
-	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0)
-		wakeup(sc);
+	sc->sc_i2c_xfer.done = true;
+	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0) {
+		cv_signal(&sc->sc_exec_wait);
+		mutex_exit(&sc->sc_exec_lock);
+	}
 	return (1);
 }
 
