@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.c,v 1.4 2018/04/04 08:13:07 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.c,v 1.4.8.1 2019/12/24 17:44:22 martin Exp $ */
 
 /******************************************************************************
 
@@ -115,4 +115,13 @@ ixgbe_write_reg_array(struct ixgbe_hw *hw, u32 reg, u32 offset, u32 val)
 	bus_space_write_4(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
 	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
 	    reg + (offset << 2), val);
+}
+
+inline void
+ixgbe_write_barrier(struct ixgbe_hw *hw)
+{
+	bus_space_barrier(((struct adapter *)hw->back)->osdep.mem_bus_space_tag,
+	    ((struct adapter *)hw->back)->osdep.mem_bus_space_handle,
+	    0, ((struct adapter *)hw->back)->osdep.mem_size,
+	    BUS_SPACE_BARRIER_WRITE);
 }
