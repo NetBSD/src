@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.59 2019/12/24 03:43:34 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.60 2019/12/24 06:27:17 thorpej Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,13 +22,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.59 2019/12/24 03:43:34 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.60 2019/12/24 06:27:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/mutex.h>
+#include <sys/condvar.h>
 #include <sys/proc.h>
 
 #include <sys/bus.h>
@@ -98,12 +99,16 @@ struct piixpm_softc {
 	struct piixpm_smbus	sc_busses[4];
 	struct i2c_controller	sc_i2c_tags[4];
 
+	kmutex_t		sc_exec_lock;
+	kcondvar_t		sc_exec_wait;
+
 	struct {
 		i2c_op_t	op;
 		void *		buf;
 		size_t		len;
 		int		flags;
-		volatile int	error;
+		int             error;
+		bool            done;
 	}			sc_i2c_xfer;
 
 	pcireg_t		sc_devact[2];
@@ -197,6 +202,9 @@ piixpm_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, NULL);
 
+	mutex_init(&sc->sc_exec_lock, MUTEX_DEFAULT, IPL_BIO);
+	cv_init(&sc->sc_exec_wait, device_xname(self));
+
 	if (!pmf_device_register(self, piixpm_suspend, piixpm_resume))
 		aprint_error_dev(self, "couldn't establish power handler\n");
 
@@ -272,6 +280,8 @@ setintr:
 			if (pci_intr_map(pa, &ih) == 0) {
 				intrstr = pci_intr_string(pa->pa_pc, ih,
 				    intrbuf, sizeof(intrbuf));
+				pci_intr_setattr(pa->pa_pc, &ih,
+				    PCI_INTR_MPSAFE, true);
 				sc->sc_smb_ih = pci_intr_establish_xname(
 					pa->pa_pc, ih, IPL_BIO, piixpm_intr,
 					sc, device_xname(sc->sc_dev));
@@ -557,6 +567,8 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		"flags 0x%x\n",
 		device_xname(sc->sc_dev), op, addr, cmdlen, len, flags));
 
+	mutex_enter(&sc->sc_exec_lock);
+
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS,
 	    PIIX_SMB_HS_INTR | PIIX_SMB_HS_DEVERR |
@@ -573,15 +585,19 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		DELAY(PIIXPM_DELAY);
 	}
 	DPRINTF(("%s: exec: st %#x\n", device_xname(sc->sc_dev), st & 0xff));
-	if (st & PIIX_SMB_HS_BUSY)
-		return (1);
+	if (st & PIIX_SMB_HS_BUSY) {
+		mutex_exit(&sc->sc_exec_lock);
+		return (EBUSY);
+	}
 
 	if (sc->sc_poll)
 		flags |= I2C_F_POLL;
 
 	if (!I2C_OP_STOP_P(op) || cmdlen > 1 || len > 2 ||
-	    (cmdlen == 0 && len > 1))
-		return (1);
+	    (cmdlen == 0 && len > 1)) {
+		mutex_exit(&sc->sc_exec_lock);
+		return (EINVAL);
+	}
 
 	/* Setup transfer */
 	sc->sc_i2c_xfer.op = op;
@@ -589,6 +605,7 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 	sc->sc_i2c_xfer.len = len;
 	sc->sc_i2c_xfer.flags = flags;
 	sc->sc_i2c_xfer.error = 0;
+	sc->sc_i2c_xfer.done = false;
 
 	/* Set slave address and transfer direction */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_TXSLVA,
@@ -653,14 +670,17 @@ piixpm_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr,
 		piixpm_intr(sc);
 	} else {
 		/* Wait for interrupt */
-		if (tsleep(sc, PRIBIO, "piixpm", PIIXPM_TIMEOUT * hz))
-			goto timeout;
+		while (! sc->sc_i2c_xfer.done) {
+			if (cv_timedwait(&sc->sc_exec_wait, &sc->sc_exec_lock,
+					 PIIXPM_TIMEOUT * hz))
+				goto timeout;
+		}
 	}
 
-	if (sc->sc_i2c_xfer.error)
-		return (1);
+	int error = sc->sc_i2c_xfer.error;
+	mutex_exit(&sc->sc_exec_lock);
 
-	return (0);
+	return (error);
 
 timeout:
 	/*
@@ -680,7 +700,8 @@ timeout:
 	 */
 	if (PIIXPM_IS_CSB5(sc))
 		piixpm_csb5_reset(sc);
-	return (1);
+	mutex_exit(&sc->sc_exec_lock);
+	return (ETIMEDOUT);
 }
 
 static int
@@ -701,13 +722,16 @@ piixpm_intr(void *arg)
 
 	DPRINTF(("%s: intr st %#x\n", device_xname(sc->sc_dev), st & 0xff));
 
+	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0)
+		mutex_enter(&sc->sc_exec_lock);
+
 	/* Clear status bits */
 	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_HS, st);
 
 	/* Check for errors */
 	if (st & (PIIX_SMB_HS_DEVERR | PIIX_SMB_HS_BUSERR |
 	    PIIX_SMB_HS_FAILED)) {
-		sc->sc_i2c_xfer.error = 1;
+		sc->sc_i2c_xfer.error = EIO;
 		goto done;
 	}
 
@@ -727,7 +751,10 @@ piixpm_intr(void *arg)
 	}
 
 done:
-	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0)
-		wakeup(sc);
+	sc->sc_i2c_xfer.done = true;
+	if ((sc->sc_i2c_xfer.flags & I2C_F_POLL) == 0) {
+		cv_signal(&sc->sc_exec_wait);
+		mutex_exit(&sc->sc_exec_lock);
+	}
 	return (1);
 }
