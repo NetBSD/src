@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.145 2019/12/18 20:21:11 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.146 2019/12/24 17:47:14 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7254,4 +7254,59 @@ sys/kern/uipc_sem.c				1.56
 	PR 54619: Remove semaphore limit. Report no limit for getconf(3).
 	The ressource is naturally limited by the backing file descriptor.
 	[joerg, ticket #572]
+
+sys/arch/aarch64/aarch64/cpuswitch.S		1.13
+sys/arch/aarch64/include/asm.h			1.5
+
+	Add a speculation barrier after the 'eret' to help mitigate
+	potential side-channel attacks.
+	[ryo, ticket #574]
+
+share/mk/bsd.sys.mk				1.298
+share/mk/sys.mk					1.140
+
+	Move MV to sys.mk because it is used there.
+	[christos, ticket #575]
+
+sys/dev/ic/ahcisata_core.c			1.79
+
+	Avoid a KASSERT on DIAGNOSTIC kernels when a drive does not
+	support CLO.
+	[jmcneill, ticket #576]
+
+usr.bin/calendar/calendars/calendar.christian	1.8
+usr.bin/calendar/calendars/calendar.holiday	1.30
+usr.bin/calendar/calendars/calendar.judaic	1.8,1.9
+usr.bin/calendar/calendars/calendar.usholiday	1.10
+
+	Update to 2020 dates.
+	Add regional holidays: Sigd (Beta Israel), Mimouna (Morrocan).
+	Transliterate some things in an Israeli Hebrew accent.
+	Avoid the risk of being wrong and don't expand meaning of holiday.
+	[sevan, ticket #577]
+
+share/misc/bsd-family-tree			1.76,1.77
+
+	Sync with FreeBSD rev 355063.
+	[sevan, ticket #578]
+
+share/misc/acronyms				1.288-1.291
+share/misc/acronyms.comp			1.284-1.294
+
+	Add various acronyms.
+	[sevan, ticket #579]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.217,1.218
+sys/dev/pci/ixgbe/ixgbe_osdep.c			1.6
+sys/dev/pci/ixgbe/ixgbe_osdep.h			1.25
+sys/dev/pci/ixgbe/ixv.c				1.143
+
+	Use bus_space_barrier() instead of x86 specific *fence instruction.
+	Add missing core lock in ixgbe_handle_mod().
+	[msaitoh, ticket #580]
+
+sys/miscfs/nullfs/null_vfsops.c			1.96
+
+	Fix MPSAFE flag for the root vnode.
+	[hannken, ticket #581]
 
