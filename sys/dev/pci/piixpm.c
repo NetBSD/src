@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.58 2019/12/23 23:41:43 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.59 2019/12/24 03:43:34 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.58 2019/12/23 23:41:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.59 2019/12/24 03:43:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,6 +86,7 @@ struct piixpm_softc {
 	bus_space_handle_t	sc_smb_ioh;
 	void *			sc_smb_ih;
 	int			sc_poll;
+	bool			sc_sb800_selen; /* Use SMBUS0SEL */
 
 	pci_chipset_tag_t	sc_pc;
 	pcitag_t		sc_pcitag;
@@ -419,6 +420,8 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA) << 8;
 		base_addr = val;
 	} else {
+		uint8_t data;
+
 		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
 		    SB800_PM_SMBUS0EN_LO);
 		val = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
@@ -433,8 +436,9 @@ piixpm_sb800_init(struct piixpm_softc *sc)
 
 		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_INDEX,
 		    SB800_PM_SMBUS0SELEN);
-		bus_space_write_1(iot, ioh, SB800_INDIRECTIO_DATA,
-		    SB800_PM_SMBUS0EN_ENABLE);
+		data = bus_space_read_1(iot, ioh, SB800_INDIRECTIO_DATA);
+		if ((data & SB800_PM_USE_SMBUS0SEL) != 0)
+			sc->sc_sb800_selen = true;
 	}
 
 	sc->sc_sb800_ioh = ioh;
@@ -482,10 +486,23 @@ piixpm_i2c_acquire_bus(void *cookie, int flags)
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
 		    SB800_INDIRECTIO_DATA, smbus->sda << 3);
 	} else if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_HUDSON(sc)) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, smbus->sda << 1);
+		if (sc->sc_sb800_selen) {
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_DATA,
+			    __SHIFTIN(smbus->sda, SB800_PM_SMBUS0_MASK_E));
+		} else {
+			uint8_t data;
+
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0EN_LO);
+			data = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_DATA) & ~SB800_PM_SMBUS0_MASK_C;
+			data |= __SHIFTIN(smbus->sda, SB800_PM_SMBUS0_MASK_C);
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_DATA, data);
+		}
 	}
 
 	return 0;
@@ -500,17 +517,29 @@ piixpm_i2c_release_bus(void *cookie, int flags)
 	if (PIIXPM_IS_KERNCZ(sc)) {
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
 		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
+		/* Set to port 0 */
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
 		    SB800_INDIRECTIO_DATA, 0);
 	} else if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_HUDSON(sc)) {
-		/*
-		 * HP Microserver hangs after reboot if not set to SDA0.
-		 * Also add shutdown hook?
-		 */
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, 0);
+		if (sc->sc_sb800_selen) {
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
+
+			/* Set to port 0 */
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_DATA, 0);
+		} else {
+			uint8_t data;
+
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0EN_LO);
+
+			/* Set to port 0 */
+			data = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_DATA) & ~SB800_PM_SMBUS0_MASK_C;
+			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+			    SB800_INDIRECTIO_DATA, data);
+		}
 	}
 }
 
