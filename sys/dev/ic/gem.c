@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.123 2019/12/04 08:21:43 msaitoh Exp $ */
+/*	$NetBSD: gem.c,v 1.124 2019/12/24 05:00:19 msaitoh Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.123 2019/12/04 08:21:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.124 2019/12/24 05:00:19 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1388,6 +1388,7 @@ gem_start(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
+next:
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
 	    sc->sc_txfree != 0) {
 		/*
@@ -1497,16 +1498,9 @@ gem_start(struct ifnet *ifp)
 			 * and the checksum stuff if we want the hardware
 			 * to do it.
 			 */
-			sc->sc_txdescs[nexttx].gd_addr =
-			    GEM_DMA_WRITE(sc, dmamap->dm_segs[seg].ds_addr);
 			flags = dmamap->dm_segs[seg].ds_len & GEM_TD_BUFSIZE;
 			if (nexttx == firsttx) {
 				flags |= GEM_TD_START_OF_PACKET;
-				if (++sc->sc_txwin > GEM_NTXSEGS * 2 / 3) {
-					sc->sc_txwin = 0;
-					flags |= GEM_TD_INTERRUPT_ME;
-				}
-
 #ifdef INET
 				/* h/w checksum */
 				if (ifp->if_csum_flags_tx & M_CSUM_TCPv4 &&
@@ -1525,8 +1519,10 @@ gem_start(struct ifnet *ifp)
 						break;
 					default:
 						/* unsupported, drop it */
-						m_free(m0);
-						continue;
+						bus_dmamap_unload(sc->sc_dmatag,
+							dmamap);
+						m_freem(m0);
+						goto next;
 					}
 					start += M_CSUM_DATA_IPv4_IPHL(m0->m_pkthdr.csum_data);
 					offset = M_CSUM_DATA_IPv4_OFFSET(m0->m_pkthdr.csum_data) + start;
@@ -1537,7 +1533,13 @@ gem_start(struct ifnet *ifp)
 						 GEM_TD_CXSUM_ENABLE;
 				}
 #endif
+				if (++sc->sc_txwin > GEM_NTXSEGS * 2 / 3) {
+					sc->sc_txwin = 0;
+					flags |= GEM_TD_INTERRUPT_ME;
+				}
 			}
+			sc->sc_txdescs[nexttx].gd_addr =
+			    GEM_DMA_WRITE(sc, dmamap->dm_segs[seg].ds_addr);
 			if (seg == dmamap->dm_nsegs - 1) {
 				flags |= GEM_TD_END_OF_PACKET;
 			} else {
