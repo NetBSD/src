@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.283 2019/07/28 21:43:39 sevan Exp $
+$NetBSD: acronyms.comp,v 1.283.2.1 2019/12/24 17:42:18 martin Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -109,12 +109,15 @@ AT	advanced technology
 ATA	advanced technology attachment
 ATAPI	advanced technology attachment packet interface
 ATC	address translation cache
+ATF	ARM trusted firmware
+ATF	automated testing framework
 ATM	asynchronous transfer mode
 ATX	advanced technology extended
 AV	anti virus
 AVB	audio video bridging
 AVL	Adelson-Velsky-Landis
 AVX	advanced vector extensions
+AWDL	Apple wireless direct link
 BA	byte align
 BAL	basic assembly language
 BAR	base address register
@@ -148,6 +151,7 @@ BIU	bus interface unit
 BKDG	BIOS and kernel developer's guide
 BLAS	basic linear algebra subprograms
 BLC	back light control
+BLE	Bluetooth low energy
 BLOB	binary large object
 BM	bus master
 BMC	baseboard management controller
@@ -237,6 +241,7 @@ CHFS	chip file system
 CHS	cylinder/head/sector
 CI	continuous integration
 CI	{common,component} interface
+CIA	confidentiality, integrity, availability
 CIDR	Classless Inter-Domain Routing
 CIF	common intermediate format
 CIFS	Common Internet File System
@@ -296,6 +301,7 @@ CR	carriage return
 CRC	cyclic redundancy check
 CRL	carrier recovery loop
 CRLF	carriage return line feed
+CSU	C start up
 CRT	cathode ray tube
 CRUD	create, read, update, and delete
 CS	cable select
@@ -329,6 +335,7 @@ CVE	common vulnerabilities and exposures
 CVS	Concurrent Versions System
 DA	destination address
 DAA	distributed application architecture
+DAAP	digital audio access protocol
 DAB	digital audio broadcasting
 DAC	digital [to] analog converter
 DAC	discretionary access control
@@ -398,6 +405,7 @@ DL	download
 DLCI	data link connection identifier
 DLE	data link escape
 DLL	dynamic link library
+DLNA	digital living network alliance
 DLP	discrete logarithm problem
 DMA	direct memory access
 DMI	desktop management interface
@@ -603,6 +611,7 @@ GCM	Galois counter mode
 GCR	group-coded recording
 GDI	Graphics Device Interface
 GDT	global descriptor table
+GECOS	general comprehensive operating supervisor
 GEM	graphics environment manager
 GEM	graphics execution manager
 GENA	general event notification architecture
@@ -724,6 +733,7 @@ IMR	interrupt mask register
 IMS	information management system
 IMSI	international mobile subscriber identity
 INCITS	InterNational Committee for Information Technology Standards
+INODE	index node
 IO	input/output
 IOCTL	input/output control
 IOM	input/output managers
@@ -760,6 +770,7 @@ ISDN	integrated services digital network
 ISI	inter-symbol interference
 ISL	initial system load
 ISM	industrial, scientific, [and] medical
+ISMS	information system management system
 ISN	initial serial number
 ISO	International Standards Organization
 ISOC	Internet Society
@@ -1000,6 +1011,7 @@ MWE	module width encoding
 MX	mail exchange
 NACK	negative acknowledgement
 NAK	negative acknowledgement
+NAN	neighbor awareness networking
 NAN	not a number
 NAPT	Network Address Port Translation
 NAS	network attached storage
@@ -1044,6 +1056,7 @@ NSA	National Security Agency
 NTM	non-deterministic Turing machine
 NTP	Network Time Protocol
 NUMA	non-uniform memory access
+NURBS	non-uniform rational basis spline
 NVMM	NetBSD Virtual Machine Monitor
 NVMM	non-volatile main memory
 NVRAM	non-volatile random access memory
@@ -1211,6 +1224,8 @@ PPP	Point-to-Point Protocol
 PPPOA	Point-to-Point Protocol over ATM
 PPPOE	Point-to-Point Protocol over Ethernet
 PPR	processor programming reference
+PPT	powerpoint
+PPT	punched paper tape
 PPU	physics processing unit
 PRAM	Parameter RAM
 PRBS	pseudorandom bit sequence
@@ -1281,11 +1296,13 @@ RDBMS	relational database management system
 RDF	Resource Description Framework
 RDM	relational data model
 RDMA	remote direct memory access
+RDP	remote desktop protocol
 RDRAM	Rambus DRAM
 RE	regular expression
 REPL	read, evaluate, print, loop
 REST	representational state transfer
 RF	radio frequency
+RFB	remote frame buffer
 RFI	radio frequency interference
 RFO	request for ownership
 RFU	reserved for future use
@@ -1396,6 +1413,7 @@ SDL	Simple Direct-media Layer
 SDLC	{software,system,systems} development life cycle
 SDN	software defined networking
 SDP	Session Description Protocol
+SDR	software defined radio
 SDRAM	synchronous dynamic random access memory
 SDS	software defined storage
 SDT	syntax-directed translation
@@ -1418,6 +1436,7 @@ SGMII	serial gigabit media independent interface
 SGPIO	serial general purpose input/output
 SGRAM	synchronous graphics random access memory
 SHA	secure hash algorithm
+SICP	structure and interpretation of computer programs
 SIDH	supersingular isogeny Diffie-Hellman
 SIEM	security information and event management
 SIF	source input format
@@ -1510,6 +1529,7 @@ SSL	secure sockets layer
 SSP	stack smashing protection
 STC	software thermal control
 STD	state transition diagram
+STM	software transactional memory
 STOMP	Streaming Text Oriented Messaging Protocol
 STP	Spanning Tree Protocol
 STP	shielded twisted pair
@@ -1651,6 +1671,7 @@ UT	unit test
 UTC	coordinated universal time
 UTF	unicode transformation formats
 UTP	unshielded twisted pair
+UTS	UNIX time-sharing
 UUCP	Unix-to-Unix Copy Protocol
 UUID	universally unique identifier
 UUOC	useless use of cat
@@ -1690,6 +1711,7 @@ VM	virtual {machine,memory}
 VME	virtual mode extension
 VMX	vector multimedia extensions
 VMX	virtual machine extensions
+VNC	virtual network computing
 VOD	video on demand
 VPD	vital product data
 VPN	virtual private network
