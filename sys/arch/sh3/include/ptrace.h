@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.16 2019/10/04 15:25:30 maya Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.17 2019/12/24 14:50:59 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993 Christopher G. Demetriou
@@ -98,5 +98,6 @@
 int ptrace_machdep_dorequest(struct lwp *, struct lwp *, int, void *, int);
 #endif
 
+#define PTRACE_LWP_GETPRIVATE(l) (l)->l_md.md_regs->tf_gbr
 #endif /* _KERNEL */
 #endif /* !_SH3_PTRACE_H_ */
