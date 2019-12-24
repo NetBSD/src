@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.23 2018/07/31 09:19:34 msaitoh Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.23.6.1 2019/12/24 17:44:22 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -157,18 +157,6 @@ typedef uint64_t	u64;
 /* This device driver's max interrupt numbers. */
 #define IXG_MAX_NINTR		64
 
-#if __FreeBSD_version < 800000
-#if defined(__i386__) || defined(__amd64__)
-#define mb()	__asm volatile("mfence" ::: "memory")
-#define wmb()	__asm volatile("sfence" ::: "memory")
-#define rmb()	__asm volatile("lfence" ::: "memory")
-#else
-#define mb()
-#define rmb()
-#define wmb()
-#endif
-#endif
-
 #if defined(__i386__) || defined(__amd64__)
 static __inline
 void prefetch(void *x)
@@ -240,5 +228,9 @@ extern u32 ixgbe_read_reg_array(struct ixgbe_hw *, u32, u32);
 extern void ixgbe_write_reg_array(struct ixgbe_hw *, u32, u32, u32);
 #define IXGBE_WRITE_REG_ARRAY(a, reg, offset, val) \
     ixgbe_write_reg_array(a, reg, offset, val)
+
+extern void ixgbe_write_barrier(struct ixgbe_hw *);
+#define IXGBE_WRITE_BARRIER(a) \
+    ixgbe_write_barrier(a)
 
 #endif /* _IXGBE_OSDEP_H_ */
