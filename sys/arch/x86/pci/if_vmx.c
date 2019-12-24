@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.52 2019/11/27 19:21:36 maxv Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.53 2019/12/24 10:21:08 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.52 2019/11/27 19:21:36 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.53 2019/12/24 10:21:08 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -3378,7 +3378,9 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			break;
 		}
 		if (ifp->if_mtu != nmtu) {
+			s = splnet();
 			error = ether_ioctl(ifp, cmd, data);
+			splx(s);
 			if (error == ENETRESET)
 				error = vmxnet3_init(ifp);
 		}
