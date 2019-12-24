@@ -1,4 +1,4 @@
-/*	$NetBSD: picvar.h,v 1.25 2019/12/23 15:51:47 jmcneill Exp $	*/
+/*	$NetBSD: picvar.h,v 1.26 2019/12/24 20:40:09 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -186,7 +186,9 @@ void	pic_set_priority(struct cpu_info *, int);
 #define	pic_set_priority(ci, newipl)	((void)((ci)->ci_cpl = (newipl)))
 #endif
 
-void	pic_add(struct pic_softc *, int);
+#define	PIC_IRQBASE_ALLOC	(-2)
+
+int	pic_add(struct pic_softc *, int);
 void	pic_do_pending_int(void);
 #ifdef MULTIPROCESSOR
 int	pic_ipi_ast(void *);

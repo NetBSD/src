@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.51 2019/12/24 20:37:44 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.52 2019/12/24 20:40:09 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.51 2019/12/24 20:37:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.52 2019/12/24 20:40:09 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -99,6 +99,7 @@ size_t pic_ipl_offset[NIPL+1];
 
 static kmutex_t pic_lock;
 static size_t pic_sourcebase;
+static int pic_lastbase;
 static struct evcnt pic_deferral_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "deferred", "intr");
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
@@ -633,7 +634,7 @@ pic_init(void)
 	return 0;
 }
 
-void
+int
 pic_add(struct pic_softc *pic, int irqbase)
 {
 	int slot, maybe_slot = -1;
@@ -656,6 +657,9 @@ pic_add(struct pic_softc *pic, int irqbase)
 #endif /* __HAVE_PIC_PENDING_INTRS && MULTIPROCESSOR */
 
 	mutex_enter(&pic_lock);
+	if (irqbase == PIC_IRQBASE_ALLOC) {
+		irqbase = pic_lastbase;
+	}
 	for (slot = 0; slot < PIC_MAXPICS; slot++) {
 		struct pic_softc * const xpic = pic_list[slot];
 		if (xpic == NULL) {
@@ -686,7 +690,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT(pic_sourcebase + pic->pic_maxsources <= PIC_MAXMAXSOURCES);
 	sourcebase = pic_sourcebase;
 	pic_sourcebase += pic->pic_maxsources;
-
+        if (pic_lastbase < irqbase + pic->pic_maxsources)
+                pic_lastbase = irqbase + pic->pic_maxsources;
 	mutex_exit(&pic_lock);
 
 	/*
@@ -714,6 +719,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT((pic->pic_cpus != NULL) == (pic->pic_ops->pic_ipi_send != NULL));
 #endif
 	pic_list[slot] = pic;
+	
+	return irqbase;
 }
 
 int
