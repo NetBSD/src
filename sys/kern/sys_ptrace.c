@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $	*/
+/*	$NetBSD: sys_ptrace.c,v 1.6 2019/12/24 14:50:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.5 2017/12/17 20:59:27 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace.c,v 1.6 2019/12/24 14:50:59 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -185,11 +185,20 @@ ptrace_copyout_siginfo(const struct ptrace_siginfo *psi, void *addr, size_t len)
 	return copyout(psi, addr, sizeof(*psi));
 }
 
+static int
+ptrace_copyout_lwpstatus(const struct ptrace_lwpstatus *pls, void *addr,
+    size_t len)
+{
+
+	return copyout(pls, addr, len);
+}
+
 static struct ptrace_methods native_ptm = {
 	.ptm_copyin_piod = ptrace_copyin_piod,
 	.ptm_copyout_piod = ptrace_copyout_piod,
 	.ptm_copyin_siginfo = ptrace_copyin_siginfo,
 	.ptm_copyout_siginfo = ptrace_copyout_siginfo,
+	.ptm_copyout_lwpstatus = ptrace_copyout_lwpstatus,
 	.ptm_doregs = process_doregs,
 	.ptm_dofpregs = process_dofpregs,
 	.ptm_dodbregs = process_dodbregs,

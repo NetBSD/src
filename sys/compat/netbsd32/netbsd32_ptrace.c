@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ptrace.c,v 1.7 2019/06/04 16:29:53 mgorny Exp $	*/
+/*	$NetBSD: netbsd32_ptrace.c,v 1.8 2019/12/24 14:50:59 kamil Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.7 2019/06/04 16:29:53 mgorny Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.8 2019/12/24 14:50:59 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ptrace.h"
@@ -50,6 +50,27 @@ __KERNEL_RCSID(0, "$NetBSD: netbsd32_ptrace.c,v 1.7 2019/06/04 16:29:53 mgorny E
 #ifndef PTRACE_TRANSLATE_REQUEST32
 #define PTRACE_TRANSLATE_REQUEST32(x) x
 #endif
+
+static void
+netbsd32_lwpstatus_to_lwpstatus32(struct netbsd32_ptrace_lwpstatus *pls32,
+    const struct ptrace_lwpstatus *pls)
+{
+	pls32->pl_lwpid = pls->pl_lwpid;
+	pls32->pl_sigpend = pls->pl_sigpend;
+	pls32->pl_sigmask = pls->pl_sigmask;
+	memcpy(&pls32->pl_name, &pls->pl_name, PL_LNAMELEN);
+	NETBSD32PTR32(pls32->pl_private, pls->pl_private);
+}
+
+void
+netbsd32_read_lwpstatus(struct lwp *l, struct netbsd32_ptrace_lwpstatus *pls32)
+{
+	struct ptrace_lwpstatus pls;
+
+	process_read_lwpstatus(l, &pls);
+
+	netbsd32_lwpstatus_to_lwpstatus32(pls32, &pls);
+}
 
 /*
  * PTRACE methods
@@ -116,6 +137,19 @@ netbsd32_copyout_siginfo(const struct ptrace_siginfo *psi, void *addr, size_t le
 	psi32.psi_lwpid = psi->psi_lwpid;
 	netbsd32_si_to_si32(&psi32.psi_siginfo, &psi->psi_siginfo);
 	return copyout(&psi32, addr, sizeof(psi32));
+}
+
+static int
+netbsd32_copyout_lwpstatus(const struct ptrace_lwpstatus *pls, void *addr, size_t len)
+{
+	struct netbsd32_ptrace_lwpstatus pls32;
+
+	if (len > sizeof(pls32))
+		return EINVAL;
+
+	netbsd32_lwpstatus_to_lwpstatus32(&pls32, pls);
+
+	return copyout(&pls32, addr, MIN(len, sizeof(pls32)));
 }
 
 static int
@@ -237,6 +271,7 @@ static struct ptrace_methods netbsd32_ptm = {
 	.ptm_copyout_piod = netbsd32_copyout_piod,
 	.ptm_copyin_siginfo = netbsd32_copyin_siginfo,
 	.ptm_copyout_siginfo = netbsd32_copyout_siginfo,
+	.ptm_copyout_lwpstatus = netbsd32_copyout_lwpstatus,
 	.ptm_doregs = netbsd32_doregs,
 	.ptm_dofpregs = netbsd32_dofpregs,
 	.ptm_dodbregs = netbsd32_dodbregs
