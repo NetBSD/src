@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.50 2019/12/23 15:51:47 jmcneill Exp $	*/
+/*	$NetBSD: pic.c,v 1.51 2019/12/24 20:37:44 skrll Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.50 2019/12/23 15:51:47 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.51 2019/12/24 20:37:44 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -98,7 +98,7 @@ struct intrsource **pic_iplsource[NIPL] = {
 size_t pic_ipl_offset[NIPL+1];
 
 static kmutex_t pic_lock;
-size_t pic_sourcebase;
+static size_t pic_sourcebase;
 static struct evcnt pic_deferral_ev =
     EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "deferred", "intr");
 EVCNT_ATTACH_STATIC(pic_deferral_ev);
