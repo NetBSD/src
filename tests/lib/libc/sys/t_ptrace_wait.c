@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.143 2019/12/24 14:50:59 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.144 2019/12/24 21:09:38 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.143 2019/12/24 14:50:59 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.144 2019/12/24 21:09:38 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
+#define _RTLD_SOURCE
 
 #include <sys/param.h>
 #include <sys/types.h>
