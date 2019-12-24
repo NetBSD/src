@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.82 2019/12/17 16:20:28 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.83 2019/12/24 17:16:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1812,4 +1812,9 @@ sys/dev/ic/ath.c				1.129
 
 	Protect network ioctls from non-authorized users.
 	[christos, ticket #1475]
+
+sys/miscfs/nullfs/null_vfsops.c			1.96
+
+	Fix MPSAFE flag for the root vnode.
+	[hannken, ticket #1476]
 
