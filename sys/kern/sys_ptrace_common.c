@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.73 2019/11/22 05:01:44 rin Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.74 2019/12/24 14:50:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.73 2019/11/22 05:01:44 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.74 2019/12/24 14:50:59 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -288,6 +288,8 @@ ptrace_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case PT_RESUME:
 	case PT_SUSPEND:
 	case PT_STOP:
+	case PT_LWPSTATUS:
+	case PT_LWPNEXT:
 		result = KAUTH_RESULT_ALLOW;
 		break;
 
@@ -496,6 +498,8 @@ ptrace_allowed(struct lwp *l, int req, struct proc *t, struct proc *p,
 	case PT_RESUME:
 	case PT_SUSPEND:
 	case PT_STOP:
+	case PT_LWPSTATUS:
+	case PT_LWPNEXT:
 		/*
 		 * You can't do what you want to the process if:
 		 *	(1) It's not being traced at all,
@@ -784,6 +788,104 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 	    pl.pl_lwpid, pl.pl_event));
 
 	return copyout(&pl, addr, sizeof(pl));
+}
+
+static void
+ptrace_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
+{
+
+	KASSERT(l->l_lid == pls->pl_lwpid);
+
+	memcpy(&pls->pl_sigmask, &l->l_sigmask, sizeof(pls->pl_sigmask));
+	memcpy(&pls->pl_sigpend, &l->l_sigpend.sp_set, sizeof(pls->pl_sigpend));
+
+	if (l->l_name == NULL)
+		memset(&pls->pl_name, 0, PL_LNAMELEN);
+	else {
+		KASSERT(strlen(l->l_name) < PL_LNAMELEN);
+		strncpy(pls->pl_name, l->l_name, PL_LNAMELEN);
+	}
+
+#ifdef PTRACE_LWP_GETPRIVATE
+	pls->pl_private = PTRACE_LWP_GETPRIVATE(l);
+#else
+	pls->pl_private = l->l_private;
+#endif
+}
+
+void
+process_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
+{
+
+	pls->pl_lwpid = l->l_lid;
+
+	ptrace_read_lwpstatus(l, pls);
+}
+
+static int
+ptrace_lwpstatus(struct proc *t, struct ptrace_methods *ptm, struct lwp **lt,
+    void *addr, size_t data, bool next)
+{
+	struct ptrace_lwpstatus pls;
+	struct lwp *l;
+	int error;
+
+	if (data > sizeof(pls) || data < sizeof(lwpid_t)) {
+		DPRINTF(("%s: invalid data: %zu < %zu < %zu\n",
+		        __func__, sizeof(lwpid_t), data, sizeof(pls)));
+		return EINVAL;
+	}
+	error = copyin(addr, &pls, sizeof(lwpid_t));
+	if (error)
+		return error;
+
+	if (next) {
+		lwp_delref(*lt);
+		lwpid_t tmp = pls.pl_lwpid;
+		mutex_enter(t->p_lock);
+		if (tmp == 0)
+			*lt = lwp_find_first(t);
+		else {
+			*lt = lwp_find(t, tmp);
+			if (*lt == NULL) {
+				mutex_exit(t->p_lock);
+				return ESRCH;
+			}
+			*lt = LIST_NEXT(*lt, l_sibling);
+		}
+
+		while (*lt != NULL && !lwp_alive(*lt) &&
+		       ((*lt)->l_flag & LW_SYSTEM) != 0)
+			*lt = LIST_NEXT(*lt, l_sibling);
+
+		if (*lt == NULL) {
+			memset(&pls, 0, sizeof(pls));
+			mutex_exit(t->p_lock);
+			goto out;
+		}
+		lwp_addref(*lt);
+		mutex_exit(t->p_lock);
+
+		pls.pl_lwpid = (*lt)->l_lid;
+	} else {
+		if ((error = ptrace_update_lwp(t, lt, pls.pl_lwpid)) != 0)
+			return error;
+	}
+
+	l = *lt;
+
+	ptrace_read_lwpstatus(l, &pls);
+
+out:
+	DPRINTF(("%s: lwp=%d sigpend=%02x%02x%02x%02x sigmask=%02x%02x%02x%02x "
+	   "name='%s' private=%p\n", __func__, pls.pl_lwpid,
+	    pls.pl_sigpend.__bits[0], pls.pl_sigpend.__bits[1],
+	    pls.pl_sigpend.__bits[2], pls.pl_sigpend.__bits[3],
+	    pls.pl_sigmask.__bits[0], pls.pl_sigmask.__bits[1],
+	    pls.pl_sigmask.__bits[2], pls.pl_sigmask.__bits[3],
+	    pls.pl_name, pls.pl_private));
+
+	return ptm->ptm_copyout_lwpstatus(&pls, addr, data);
 }
 
 static int
@@ -1417,6 +1519,14 @@ do_ptrace(struct ptrace_methods *ptm, struct lwp *l, int req, pid_t pid,
 	case PT_RESUME:
 	case PT_SUSPEND:
 		error = ptrace_startstop(t, &lt, req, addr, data);
+		break;
+
+	case PT_LWPSTATUS:
+		error = ptrace_lwpstatus(t, ptm, &lt, addr, data, false);
+		break;
+
+	case PT_LWPNEXT:
+		error = ptrace_lwpstatus(t, ptm, &lt, addr, data, true);
 		break;
 
 #ifdef PT_REGISTERS

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.14 2019/06/18 21:18:13 kamil Exp $ */
+/*	$NetBSD: ptrace.h,v 1.15 2019/12/24 14:50:59 kamil Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -69,3 +69,7 @@
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x91, 0xd0, 0x20, 0x01 })
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile("ta 1")
 #define PTRACE_BREAKPOINT_SIZE	4
+
+#ifdef _KERNEL
+#define PTRACE_LWP_GETPRIVATE(l) (l)->l_md.md_tf->tf_global[7]
+#endif
