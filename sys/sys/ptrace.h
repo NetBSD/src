@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.67 2019/12/04 13:52:27 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.68 2019/12/24 14:50:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -35,6 +35,7 @@
 #define	_SYS_PTRACE_H_
 
 #include <sys/siginfo.h>
+#include <sys/signal.h>
 
 #define	PT_TRACE_ME		0	/* child declares it's being traced */
 #define	PT_READ_I		1	/* read word in child's I space */
@@ -47,7 +48,9 @@
 #define	PT_DETACH		10	/* detach from running process */
 #define	PT_IO			11	/* do I/O to/from the stopped process */
 #define	PT_DUMPCORE		12	/* make child generate a core dump */
-#define	PT_LWPINFO		13	/* get info about the LWP */
+#if defined(__LEGACY_PT_LWPINFO) || defined(_KERNEL)
+#define	PT_LWPINFO		13	/* OBSOLETE: get info about the LWP */
+#endif
 #define	PT_SYSCALL		14	/* stop on syscall entry/exit */
 #define	PT_SYSCALLEMU		15	/* cancel syscall, tracer emulates it */
 #define	PT_SET_EVENT_MASK	16	/* set the event mask, defined below */
@@ -58,6 +61,8 @@
 #define	PT_RESUME		21	/* allow execution of the LWP */
 #define	PT_SUSPEND		22	/* prevent execution of the LWP */
 #define	PT_STOP			23	/* stop the child process */
+#define	PT_LWPSTATUS		24	/* get info about the LWP */
+#define	PT_LWPNEXT		25	/* get info about next LWP */
 
 #define	PT_FIRSTMACH		32	/* for machine-specific requests */
 #include <machine/ptrace.h>		/* machine-specific requests, if any */
@@ -86,7 +91,9 @@
 /* 20 */    "PT_GET_SIGINFO", \
 /* 21 */    "PT_RESUME", \
 /* 22 */    "PT_SUSPEND", \
-/* 23 */    "PT_STOP",
+/* 23 */    "PT_STOP", \
+/* 24 */    "PT_LWPSTATUS", \
+/* 25 */    "PT_LWPNEXT"
 
 /* PT_{G,S}EVENT_MASK */
 typedef struct ptrace_event {
@@ -129,18 +136,36 @@ struct ptrace_io_desc {
 #define	PIOD_WRITE_I	4	/* write to I space */
 #define PIOD_READ_AUXV	5	/* Read from aux array */
 
+#if defined(__LEGACY_PT_LWPINFO) || defined(_KERNEL)
 /*
  * Argument structure for PT_LWPINFO.
+ *
+ * DEPRECATED: Use ptrace_lwpstatus.
  */
 struct ptrace_lwpinfo {
 	lwpid_t	pl_lwpid;	/* LWP described */
 	int	pl_event;	/* Event that stopped the LWP */
-	/* Add fields at the end */
 };
 
 #define PL_EVENT_NONE		0
 #define PL_EVENT_SIGNAL		1
 #define PL_EVENT_SUSPENDED	2
+#endif
+
+/*
+ * Argument structure for PT_LWPSTATUS.
+ */
+
+#define PL_LNAMELEN	20	/* extra 4 for alignment */
+
+struct ptrace_lwpstatus {
+	lwpid_t		pl_lwpid;		/* LWP described */
+	sigset_t	pl_sigpend;		/* LWP signals pending */
+	sigset_t	pl_sigmask;		/* LWP signal mask */
+	char		pl_name[PL_LNAMELEN];	/* LWP name, may be empty */
+	void		*pl_private;		/* LWP private data */
+	/* Add fields at the end */
+};
 
 /*
  * Signal Information structure
@@ -153,6 +178,23 @@ typedef struct ptrace_siginfo {
 } ptrace_siginfo_t;
 
 #ifdef _KERNEL
+
+#ifdef _KERNEL_OPT
+#include "opt_compat_netbsd32.h"
+#endif
+
+#ifdef COMPAT_NETBSD32
+#include <compat/netbsd32/netbsd32.h>
+#define process_read_lwpstatus32	netbsd32_read_lwpstatus
+#define process_lwpstatus32		struct netbsd32_ptrace_lwpstatus
+#endif
+
+#ifndef process_lwpstatus32
+#define process_lwpstatus32 struct ptrace_lwpstatus
+#endif
+#ifndef process_lwpstatus64
+#define process_lwpstatus64 struct ptrace_lwpstatus
+#endif
 
 #if defined(PT_GETREGS) || defined(PT_SETREGS)
 struct reg;
@@ -189,6 +231,7 @@ struct ptrace_methods {
 	int (*ptm_copyout_piod)(const struct ptrace_io_desc *, void *, size_t);
 	int (*ptm_copyin_siginfo)(struct ptrace_siginfo *, const void *, size_t);
 	int (*ptm_copyout_siginfo)(const struct ptrace_siginfo *, void *, size_t);
+	int (*ptm_copyout_lwpstatus)(const struct ptrace_lwpstatus *, void *, size_t);
 	int (*ptm_doregs)(struct lwp *, struct lwp *, struct uio *);
 	int (*ptm_dofpregs)(struct lwp *, struct lwp *, struct uio *);
 	int (*ptm_dodbregs)(struct lwp *, struct lwp *, struct uio *);
@@ -217,11 +260,20 @@ void	proc_changeparent(struct proc *, struct proc *);
 int	do_ptrace(struct ptrace_methods *, struct lwp *, int, pid_t, void *,
 	    int, register_t *);
 
+void	process_read_lwpstatus(struct lwp *, struct ptrace_lwpstatus *);
+#ifndef process_read_lwpstatus32
+#define process_read_lwpstatus32 process_read_lwpstatus
+#endif
+#ifndef process_read_lwpstatus64
+#define process_read_lwpstatus64 process_read_lwpstatus
+#endif
+
 /*
  * 64bit architectures that support 32bit emulation (amd64 and sparc64)
  * will #define process_read_regs32 to netbsd32_process_read_regs (etc).
  * In all other cases these #defines drop the size suffix.
  */
+
 #ifdef PT_GETDBREGS
 int	process_read_dbregs(struct lwp *, struct dbreg *, size_t *);
 #ifndef process_read_dbregs32

@@ -1,4 +1,4 @@
-/* $NetBSD: ptrace.h,v 1.10 2019/06/18 21:18:11 kamil Exp $ */
+/* $NetBSD: ptrace.h,v 1.11 2019/12/24 14:50:59 kamil Exp $ */
 
 /*
  * Copyright (c) 1994 Christopher G. Demetriou
@@ -56,3 +56,7 @@
 #define PTRACE_BREAKPOINT	((const uint8_t[]) { 0x80, 0x00, 0x00, 0x00 })
 #define PTRACE_BREAKPOINT_ASM	__asm __volatile("bpt" ::: "memory")
 #define PTRACE_BREAKPOINT_SIZE	4
+
+#ifdef _KERNEL
+#define PTRACE_LWP_GETPRIVATE(l) ((struct pcb *)lwp_getpcb(l))->pcb_hw.apcb_unique
+#endif
