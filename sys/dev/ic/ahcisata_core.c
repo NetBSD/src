@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.75.4.1 2019/10/23 18:06:46 martin Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.75.4.2 2019/12/24 17:34:33 martin Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75.4.1 2019/10/23 18:06:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.75.4.2 2019/12/24 17:34:33 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -807,7 +807,7 @@ ahci_do_reset_drive(struct ata_channel *chp, int drive, int flags,
 	struct ahci_cmd_tbl *cmd_tbl;
 	struct ahci_cmd_header *cmd_h;
 	int i, error = 0;
-	uint32_t sig;
+	uint32_t sig, cmd;
 	int noclo_retry = 0;
 
 	ata_channel_lock_owned(chp);
@@ -825,6 +825,19 @@ again:
 		ahci_channel_start(sc, chp, flags, 1);
 	} else {
 		/* Can't handle command still running without CLO */
+		cmd = AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel));
+		if ((cmd & AHCI_P_CMD_CR) != 0) {
+			ahci_channel_stop(sc, chp, flags);
+			cmd = AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel));
+			if ((cmd & AHCI_P_CMD_CR) != 0) {
+				aprint_error("%s port %d: DMA engine busy "
+				    "for drive %d\n", AHCINAME(sc),
+				    chp->ch_channel, drive);
+				error = EBUSY;
+				goto end;
+			}
+		}
+
 		KASSERT((AHCI_READ(sc, AHCI_P_CMD(chp->ch_channel)) & AHCI_P_CMD_CR) == 0);
 
 		ahci_channel_start(sc, chp, flags, 0);
