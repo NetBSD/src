@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.27 2019/12/22 12:21:45 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.28 2019/12/24 14:10:51 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.27 2019/12/22 12:21:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.28 2019/12/24 14:10:51 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -113,7 +113,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.27 2019/12/22 12:21:45 skrll 
 void bcm2835_platform_early_putchar(char c);
 void bcm2836_platform_early_putchar(char c);
 void bcm2837_platform_early_putchar(char c);
-void bcm2838_platform_early_putchar(char c);
+void bcm2711_platform_early_putchar(char c);
 
 extern void bcmgenfb_set_console_dev(device_t dev);
 void bcmgenfb_set_ioctl(int(*)(void *, void *, u_long, void *, int, struct lwp *));
@@ -130,19 +130,19 @@ bs_protos(bcm2835);
 bs_protos(bcm2835_a4x);
 bs_protos(bcm2836);
 bs_protos(bcm2836_a4x);
-bs_protos(bcm2838);
-bs_protos(bcm2838_a4x);
+bs_protos(bcm2711);
+bs_protos(bcm2711_a4x);
 
 struct bus_space bcm2835_bs_tag;
 struct bus_space bcm2835_a4x_bs_tag;
 struct bus_space bcm2836_bs_tag;
 struct bus_space bcm2836_a4x_bs_tag;
-struct bus_space bcm2838_bs_tag;
-struct bus_space bcm2838_a4x_bs_tag;
+struct bus_space bcm2711_bs_tag;
+struct bus_space bcm2711_a4x_bs_tag;
 
 static paddr_t bcm2835_bus_to_phys(bus_addr_t);
 static paddr_t bcm2836_bus_to_phys(bus_addr_t);
-static paddr_t bcm2838_bus_to_phys(bus_addr_t);
+static paddr_t bcm2711_bus_to_phys(bus_addr_t);
 
 #ifdef VERBOSE_INIT_ARM
 #define VPRINTF(...)	printf(__VA_ARGS__)
@@ -179,16 +179,16 @@ bcm2836_bus_to_phys(bus_addr_t ba)
 }
 
 static paddr_t
-bcm2838_bus_to_phys(bus_addr_t ba)
+bcm2711_bus_to_phys(bus_addr_t ba)
 {
 
 	/* Attempt to find the PA device mapping */
 	if (ba >= BCM283X_PERIPHERALS_BASE_BUS &&
 	    ba < BCM283X_PERIPHERALS_BASE_BUS + BCM283X_PERIPHERALS_SIZE)
-		return BCM2838_PERIPHERALS_BUS_TO_PHYS(ba);
+		return BCM2711_PERIPHERALS_BUS_TO_PHYS(ba);
 
-	if (ba >= BCM2838_ARM_LOCAL_BASE &&
-	    ba < BCM2838_ARM_LOCAL_BASE + BCM2838_ARM_LOCAL_SIZE)
+	if (ba >= BCM2711_ARM_LOCAL_BASE &&
+	    ba < BCM2711_ARM_LOCAL_BASE + BCM2711_ARM_LOCAL_SIZE)
 		return ba;
 
 	return ba & ~BCM2835_BUSADDR_CACHE_MASK;
@@ -243,27 +243,27 @@ bcm2836_a4x_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
 }
 
 int
-bcm2838_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
+bcm2711_bs_map(void *t, bus_addr_t ba, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
-	const paddr_t pa = bcm2838_bus_to_phys(ba);
+	const paddr_t pa = bcm2711_bus_to_phys(ba);
 
 	return bus_space_map(&arm_generic_bs_tag, pa, size, flag, bshp);
 }
 
 paddr_t
-bcm2838_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+bcm2711_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
 {
-	const paddr_t pa = bcm2838_bus_to_phys(ba);
+	const paddr_t pa = bcm2711_bus_to_phys(ba);
 
 	return bus_space_mmap(&arm_generic_bs_tag, pa, offset, prot, flags);
 }
 
 paddr_t
-bcm2838_a4x_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
+bcm2711_a4x_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
 {
 
-	return bcm2838_bs_mmap(t, ba, 4 * offset, prot, flags);
+	return bcm2711_bs_mmap(t, ba, 4 * offset, prot, flags);
 }
 
 struct arm32_dma_range bcm2835_dma_ranges[] = {
@@ -280,7 +280,7 @@ struct arm32_dma_range bcm2836_dma_ranges[] = {
 	}
 };
 
-struct arm32_dma_range bcm2838_dma_ranges[] = {
+struct arm32_dma_range bcm2711_dma_ranges[] = {
 	[0] = {
 		.dr_sysbase = 0,
 		.dr_busbase = BCM2835_BUSADDR_CACHE_DIRECT,
@@ -324,13 +324,13 @@ bcm2836_platform_devmap(void)
 }
 
 static const struct pmap_devmap *
-bcm2838_platform_devmap(void)
+bcm2711_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap[] = {
-		DEVMAP_ENTRY(BCM2838_PERIPHERALS_VBASE, BCM2838_PERIPHERALS_BASE,
+		DEVMAP_ENTRY(BCM2711_PERIPHERALS_VBASE, BCM2711_PERIPHERALS_BASE,
 		    BCM283X_PERIPHERALS_SIZE),	/* 16Mb */
-		DEVMAP_ENTRY(BCM2838_ARM_LOCAL_VBASE, BCM2838_ARM_LOCAL_BASE,
-		    BCM2838_ARM_LOCAL_SIZE),
+		DEVMAP_ENTRY(BCM2711_ARM_LOCAL_VBASE, BCM2711_ARM_LOCAL_BASE,
+		    BCM2711_ARM_LOCAL_SIZE),
 #if defined(MULTIPROCESSOR) && defined(__aarch64__)
 		/* for fdt cpu spin-table */
 		DEVMAP_ENTRY(BCM2836_ARM_SMP_VBASE, BCM2836_ARM_SMP_BASE,
@@ -681,11 +681,11 @@ bcm2836_uartinit(void)
 }
 
 static void
-bcm2838_uartinit(void)
+bcm2711_uartinit(void)
 {
-	const paddr_t pa = BCM2838_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
-	const bus_space_tag_t iot = &bcm2838_bs_tag;
-	const bus_space_handle_t ioh = BCM2838_IOPHYSTOVIRT(pa);
+	const paddr_t pa = BCM2711_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2711_bs_tag;
+	const bus_space_handle_t ioh = BCM2711_IOPHYSTOVIRT(pa);
 
 	bcm283x_uartinit(iot, ioh);
 }
@@ -807,11 +807,11 @@ bcm2836_bootparams(void)
 }
 
 static void
-bcm2838_bootparams(void)
+bcm2711_bootparams(void)
 {
-	const paddr_t pa = BCM2838_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
-	const bus_space_tag_t iot = &bcm2838_bs_tag;
-	const bus_space_handle_t ioh = BCM2838_IOPHYSTOVIRT(pa);
+	const paddr_t pa = BCM2711_PERIPHERALS_BUS_TO_PHYS(BCM2835_ARMMBOX_BASE);
+	const bus_space_tag_t iot = &bcm2711_bs_tag;
+	const bus_space_handle_t ioh = BCM2711_IOPHYSTOVIRT(pa);
 
 	bcm283x_bootparams(iot, ioh);
 }
@@ -1246,22 +1246,22 @@ bcm2836_platform_bootstrap(void)
 }
 
 static void
-bcm2838_platform_bootstrap(void)
+bcm2711_platform_bootstrap(void)
 {
 
-	bcm2838_bs_tag = arm_generic_bs_tag;
-	bcm2838_a4x_bs_tag = arm_generic_a4x_bs_tag;
+	bcm2711_bs_tag = arm_generic_bs_tag;
+	bcm2711_a4x_bs_tag = arm_generic_a4x_bs_tag;
 
-	bcm2838_bs_tag.bs_map = bcm2838_bs_map;
-	bcm2838_bs_tag.bs_mmap = bcm2838_bs_mmap;
-	bcm2838_a4x_bs_tag.bs_map = bcm2838_bs_map;
-	bcm2838_a4x_bs_tag.bs_mmap = bcm2838_a4x_bs_mmap;
+	bcm2711_bs_tag.bs_map = bcm2711_bs_map;
+	bcm2711_bs_tag.bs_mmap = bcm2711_bs_mmap;
+	bcm2711_a4x_bs_tag.bs_map = bcm2711_bs_map;
+	bcm2711_a4x_bs_tag.bs_mmap = bcm2711_a4x_bs_mmap;
 
 	fdtbus_set_decoderegprop(false);
 
-	bcm2838_uartinit();
+	bcm2711_uartinit();
 
-	bcm2838_bootparams();
+	bcm2711_bootparams();
 
 #ifdef MULTIPROCESSOR
 	arm_cpu_max = RPI_CPU_MAX;
@@ -1300,16 +1300,16 @@ bcm2836_platform_init_attach_args(struct fdt_attach_args *faa)
 }
 
 static void
-bcm2838_platform_init_attach_args(struct fdt_attach_args *faa)
+bcm2711_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 
-	faa->faa_bst = &bcm2838_bs_tag;
-	faa->faa_a4x_bst = &bcm2838_a4x_bs_tag;
+	faa->faa_bst = &bcm2711_bs_tag;
+	faa->faa_a4x_bst = &bcm2711_a4x_bs_tag;
 	faa->faa_dmat = &bcm2835_bus_dma_tag;
 
-	bcm2835_bus_dma_tag._ranges = bcm2838_dma_ranges;
-	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2838_dma_ranges);
-	bcm2838_dma_ranges[0].dr_len = bcm283x_memorysize;
+	bcm2835_bus_dma_tag._ranges = bcm2711_dma_ranges;
+	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2711_dma_ranges);
+	bcm2711_dma_ranges[0].dr_len = bcm283x_memorysize;
 }
 #endif
 
@@ -1368,10 +1368,10 @@ bcm2837_platform_early_putchar(char c)
 }
 
 void
-bcm2838_platform_early_putchar(char c)
+bcm2711_platform_early_putchar(char c)
 {
-#define AUCONSADDR_PA	BCM2838_PERIPHERALS_BUS_TO_PHYS(BCM2835_AUX_UART_BASE)
-#define AUCONSADDR_VA	BCM2838_IOPHYSTOVIRT(AUCONSADDR_PA)
+#define AUCONSADDR_PA	BCM2711_PERIPHERALS_BUS_TO_PHYS(BCM2835_AUX_UART_BASE)
+#define AUCONSADDR_VA	BCM2711_IOPHYSTOVIRT(AUCONSADDR_PA)
 	volatile uint32_t *uartaddr =
 	    cpu_earlydevice_va_p() ?
 		(volatile uint32_t *)AUCONSADDR_VA :
@@ -1502,10 +1502,10 @@ static const struct arm_platform bcm2837_platform = {
 	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
-static const struct arm_platform bcm2838_platform = {
-	.ap_devmap = bcm2838_platform_devmap,
-	.ap_bootstrap = bcm2838_platform_bootstrap,
-	.ap_init_attach_args = bcm2838_platform_init_attach_args,
+static const struct arm_platform bcm2711_platform = {
+	.ap_devmap = bcm2711_platform_devmap,
+	.ap_bootstrap = bcm2711_platform_bootstrap,
+	.ap_init_attach_args = bcm2711_platform_init_attach_args,
 	.ap_device_register = bcm283x_platform_device_register,
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,
@@ -1515,6 +1515,5 @@ static const struct arm_platform bcm2838_platform = {
 
 ARM_PLATFORM(bcm2836, "brcm,bcm2836", &bcm2836_platform);
 ARM_PLATFORM(bcm2837, "brcm,bcm2837", &bcm2837_platform);
-ARM_PLATFORM(bcm2838, "brcm,bcm2838", &bcm2838_platform);
-ARM_PLATFORM(bcm2711, "brcm,bcm2711", &bcm2838_platform);
+ARM_PLATFORM(bcm2711, "brcm,bcm2711", &bcm2711_platform);
 #endif
