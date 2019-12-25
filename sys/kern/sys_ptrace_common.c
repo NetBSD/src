@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.74 2019/12/24 14:50:59 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.75 2019/12/25 15:54:02 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.74 2019/12/24 14:50:59 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.75 2019/12/25 15:54:02 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -807,7 +807,7 @@ ptrace_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
 	}
 
 #ifdef PTRACE_LWP_GETPRIVATE
-	pls->pl_private = PTRACE_LWP_GETPRIVATE(l);
+	pls->pl_private = (void *)(intptr_t)PTRACE_LWP_GETPRIVATE(l);
 #else
 	pls->pl_private = l->l_private;
 #endif
