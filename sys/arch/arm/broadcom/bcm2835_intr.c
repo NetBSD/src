@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.27 2019/11/29 17:44:27 thorpej Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.28 2019/12/25 10:49:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.27 2019/11/29 17:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.28 2019/12/25 10:49:29 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -97,6 +97,9 @@ static bool bcm2836mp_icu_fdt_intrstr(device_t, u_int *, char *, size_t);
 
 static int  bcm2835_icu_match(device_t, cfdata_t, void *);
 static void bcm2835_icu_attach(device_t, device_t, void *);
+
+static int bcm2835_int_base;
+static int bcm2836mp_int_base;
 
 static void
 bcm2835_set_priority(struct pic_softc *pic, int ipl)
@@ -314,7 +317,7 @@ bcm2835_icu_attach(device_t parent, device_t self, void *aux)
 		bcmicu_sc = sc;
 		sc->sc_ioh = ioh;
 		sc->sc_phandle = phandle;
-		pic_add(&bcm2835_pic, BCM2835_INT_BASE);
+		bcm2835_int_base = pic_add(&bcm2835_pic, PIC_IRQBASE_ALLOC);
 		ifuncs = &bcm2835icu_fdt_funcs;
 	}
 
@@ -827,7 +830,11 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 	snprintf(suffix, sizeof(suffix), "#%lu", cpuid);
 	strlcat(pic->pic_name, suffix, sizeof(pic->pic_name));
 #endif
-	pic_add(pic, BCM2836_INT_BASECPUN(cpuid));
+	if (cpuid == 0) {
+		bcm2836mp_int_base = pic_add(pic, PIC_IRQBASE_ALLOC);
+	} else {
+		pic_add(pic, BCM2836_INT_BASECPUN(cpuid));
+	}
 
 #if defined(MULTIPROCESSOR)
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
