@@ -1,4 +1,4 @@
-.\" $NetBSD: cas.4,v 1.3 2010/01/15 19:24:49 joerg Exp $
+.\" $NetBSD: cas.4,v 1.4 2019/12/25 15:56:35 msaitoh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -24,7 +24,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 7, 2010
+.Dd December 25, 2019
 .Dt CAS 4
 .Os
 .Sh NAME
@@ -44,13 +44,22 @@ National Semiconductor Saturn Ethernet hardware found in Sun UltraSPARC machines
 and Sun GigaSwift PCI cards.
 .Pp
 Cards supported by this driver include:
-.Bl -bullet -compact -offset indent
+.Bl -bullet -compact
 .It
-Sun Gigaswift Ethernet (SX fibre variants)
+Sun GigaSwift Ethernet 1.0 MMF (Cassini Kuheen)
+(part no.\& 501-5524)
 .It
-Sun Gigaswift Ethernet (UTP variants)
+Sun GigaSwift Ethernet 1.0 UTP (Cassini)
+(part no.\& 501-5902)
 .It
-Sun quad Gigaswift Ethernet
+Sun GigaSwift Ethernet UTP (GCS)
+(part no.\& 501-6719)
+.It
+Sun Quad GigaSwift Ethernet UTP (QGE)
+(part no.\& 501-6522)
+.It
+Sun Quad GigaSwift Ethernet PCI-X (QGE-X)
+(part no.\& 501-6738)
 .El
 .Sh SEE ALSO
 .Xr brgphy 4 ,
