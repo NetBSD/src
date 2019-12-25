@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.9 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.10 2019/12/25 14:08:47 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.9 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.10 2019/12/25 14:08:47 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -205,8 +205,6 @@ gttwsi_send_start(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int expect;
 
-	KASSERT(sc->sc_inuse);
-
 	if (sc->sc_started)
 		expect = STAT_RSCT;
 	else
@@ -221,8 +219,6 @@ gttwsi_send_stop(void *v, int flags)
 	struct gttwsi_softc *sc = v;
 	int retry = TWSI_RETRY_COUNT;
 	uint32_t control;
-
-	KASSERT(sc->sc_inuse);
 
 	sc->sc_started = false;
 
@@ -248,8 +244,6 @@ gttwsi_initiate_xfer(void *v, i2c_addr_t addr, int flags)
 	struct gttwsi_softc *sc = v;
 	uint32_t data, expect, alt;
 	int error, read;
-
-	KASSERT(sc->sc_inuse);
 
 	error = gttwsi_send_start(v, flags);
 	if (error)
@@ -303,8 +297,6 @@ gttwsi_read_byte(void *v, uint8_t *valp, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
-	KASSERT(sc->sc_inuse);
-
 	if (flags & I2C_F_LAST)
 		error = gttwsi_wait(sc, 0, STAT_MRRD_ANT, 0, flags);
 	else
@@ -322,8 +314,6 @@ gttwsi_write_byte(void *v, uint8_t val, int flags)
 	struct gttwsi_softc *sc = v;
 	int error;
 
-	KASSERT(sc->sc_inuse);
-
 	gttwsi_write_4(sc, TWSI_DATA, val);
 	error = gttwsi_wait(sc, 0, STAT_MTDB_AR, 0, flags);
 	if (flags & I2C_F_STOP)
@@ -337,8 +327,6 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 {
 	uint32_t status;
 	int timo, error = 0;
-
-	KASSERT(sc->sc_inuse);
 
 	DELAY(5);
 	if (!(flags & I2C_F_POLL))
