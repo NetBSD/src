@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.118 2019/12/19 00:36:26 jakllsch Exp $
+#	$NetBSD: GENERIC64,v 1.119 2019/12/25 10:51:20 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -129,6 +129,7 @@ options 	INCLUDE_CONFIG_FILE
 
 # EARLYCONS is required for early init messages from VERBOSE_INIT_ARM.
 #options 	EARLYCONS=bcm2837
+#options 	EARLYCONS=bcm2711
 #options 	EARLYCONS=meson, CONSADDR=0xc81004c0
 #options 	EARLYCONS=rk3328, CONSADDR=0xff130000
 #options 	EARLYCONS=rk3399, CONSADDR=0xff1a0000
