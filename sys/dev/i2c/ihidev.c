@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.c,v 1.10 2019/12/22 16:44:35 thorpej Exp $ */
+/* $NetBSD: ihidev.c,v 1.11 2019/12/25 01:19:56 thorpej Exp $ */
 /* $OpenBSD ihidev.c,v 1.13 2017/04/08 02:57:23 deraadt Exp $ */
 
 /*-
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.10 2019/12/22 16:44:35 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.11 2019/12/25 01:19:56 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,6 @@ __KERNEL_RCSID(0, "$NetBSD: ihidev.c,v 1.10 2019/12/22 16:44:35 thorpej Exp $");
 #  include "acpica.h"
 #endif
 #if NACPICA > 0
-#include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_intr.h>
 #endif
 
@@ -110,14 +109,10 @@ static int	ihidev_detach(device_t, int);
 CFATTACH_DECL_NEW(ihidev, sizeof(struct ihidev_softc),
     ihidev_match, ihidev_attach, ihidev_detach, NULL);
 
-static bool	ihiddev_intr_init(struct ihidev_softc *);
-static void	ihiddev_intr_fini(struct ihidev_softc *);
-
 static bool	ihidev_suspend(device_t, const pmf_qual_t *);
 static bool	ihidev_resume(device_t, const pmf_qual_t *);
 static int	ihidev_hid_command(struct ihidev_softc *, int, void *, bool);
 static int	ihidev_intr(void *);
-static void	ihidev_softintr(void *);
 static int	ihidev_reset(struct ihidev_softc *, bool);
 static int	ihidev_hid_desc_parse(struct ihidev_softc *);
 
@@ -205,9 +200,20 @@ ihidev_attach(device_t parent, device_t self, void *aux)
 		    repsz));
 	}
 	sc->sc_ibuf = kmem_zalloc(sc->sc_isize, KM_SLEEP);
-	if (! ihiddev_intr_init(sc)) {
-		return;
+#if NACPICA > 0
+	{
+		char buf[100];
+
+		sc->sc_ih = acpi_intr_establish(self, sc->sc_phandle, IPL_TTY,
+		    false, ihidev_intr, sc, device_xname(self));
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(self, "can't establish interrupt\n");
+			return;
+		}
+		aprint_normal_dev(self, "interrupting at %s\n",
+		    acpi_intr_string(sc->sc_ih, buf, sizeof(buf)));
 	}
+#endif
 
 	iha.iaa = ia;
 	iha.parent = sc;
@@ -254,7 +260,10 @@ ihidev_detach(device_t self, int flags)
 	struct ihidev_softc *sc = device_private(self);
 
 	mutex_enter(&sc->sc_intr_lock);
-	ihiddev_intr_fini(sc);
+#if NACPICA > 0
+	if (sc->sc_ih != NULL)
+		acpi_intr_disestablish(sc->sc_ih);
+#endif
 	if (ihidev_hid_command(sc, I2C_HID_CMD_SET_POWER,
 	    &I2C_HID_POWER_OFF, true))
 	aprint_error_dev(sc->sc_dev, "failed to power down\n");
@@ -640,110 +649,31 @@ ihidev_hid_desc_parse(struct ihidev_softc *sc)
 	return (0);
 }
 
-static bool
-ihiddev_intr_init(struct ihidev_softc *sc)
-{
-#if NACPICA > 0
-	ACPI_HANDLE hdl = (void *)(uintptr_t)sc->sc_phandle;
-	struct acpi_resources res;
-	ACPI_STATUS rv;
-	char buf[100];
-
-	rv = acpi_resource_parse(sc->sc_dev, hdl, "_CRS", &res,
-	    &acpi_resource_parse_ops_quiet);
-	if (ACPI_FAILURE(rv)) {
-		aprint_error_dev(sc->sc_dev, "can't parse '_CRS'\n");
-		return false;
-	}
-
-	const struct acpi_irq * const irq = acpi_res_irq(&res, 0);
-	if (irq == NULL) {
-		aprint_error_dev(sc->sc_dev, "no IRQ resource\n");
-		acpi_resource_cleanup(&res);
-		return false;
-	}
-
-	sc->sc_intr_type =
-	    irq->ar_type == ACPI_EDGE_SENSITIVE ? IST_EDGE : IST_LEVEL;
-
-	acpi_resource_cleanup(&res);
-
-	sc->sc_ih = acpi_intr_establish(sc->sc_dev, sc->sc_phandle, IPL_TTY,
-	    false, ihidev_intr, sc, device_xname(sc->sc_dev));
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(sc->sc_dev, "can't establish interrupt\n");
-		return false;
-	}
-	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n",
-	    acpi_intr_string(sc->sc_ih, buf, sizeof(buf)));
-
-	sc->sc_sih = softint_establish(SOFTINT_SERIAL, ihidev_softintr, sc);
-	if (sc->sc_sih == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "can't establish soft interrupt\n");
-		return false;
-	}
-
-	return true;
-#else
-	aprint_error_dev(sc->sc_dev, "can't establish interrupt\n");
-	return false;
-#endif
-}
-
-static void
-ihiddev_intr_fini(struct ihidev_softc *sc)
-{
-#if NACPICA > 0
-	if (sc->sc_ih != NULL) {
-		acpi_intr_disestablish(sc->sc_ih);
-	}
-	if (sc->sc_sih != NULL) {
-		softint_disestablish(sc->sc_sih);
-	}
-#endif
-}
-
 static int
 ihidev_intr(void *arg)
 {
-	struct ihidev_softc * const sc = arg;
-
-	mutex_enter(&sc->sc_intr_lock);
-
-	/*
-	 * Schedule our soft interrupt handler.  If we're using a level-
-	 * triggered interrupt, we have to mask it off while we wait
-	 * for service.
-	 */
-	softint_schedule(sc->sc_sih);
-	if (sc->sc_intr_type == IST_LEVEL) {
-#if NACPICA > 0
-		acpi_intr_mask(sc->sc_ih);
-#endif
-	}
-
-	mutex_exit(&sc->sc_intr_lock);
-
-	return 1;
-}
-
-static void
-ihidev_softintr(void *arg)
-{
-	struct ihidev_softc * const sc = arg;
+	struct ihidev_softc *sc = arg;
 	struct ihidev *scd;
 	u_int psize;
 	int res, i;
 	u_char *p;
 	u_int rep = 0;
 
-	iic_acquire_bus(sc->sc_tag, 0);
+	/*
+	 * XXX: force I2C_F_POLL for now to avoid dwiic interrupting
+	 * while we are interrupting
+	 */
+
+	mutex_enter(&sc->sc_intr_lock);
+	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
+
 	res = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, NULL, 0,
-	    sc->sc_ibuf, sc->sc_isize, 0);
-	iic_release_bus(sc->sc_tag, 0);
+	    sc->sc_ibuf, sc->sc_isize, I2C_F_POLL);
+
+	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	mutex_exit(&sc->sc_intr_lock);
 	if (res != 0)
-		goto out;
+		return 1;
 
 	/*
 	 * 6.1.1 - First two bytes are the packet length, which must be less
@@ -753,7 +683,7 @@ ihidev_softintr(void *arg)
 	if (!psize || psize > sc->sc_isize) {
 		DPRINTF(("%s: %s: invalid packet size (%d vs. %d)\n",
 		    sc->sc_dev.dv_xname, __func__, psize, sc->sc_isize));
-		goto out;
+		return (1);
 	}
 
 	/* 3rd byte is the report id */
@@ -765,30 +695,22 @@ ihidev_softintr(void *arg)
 	if (rep >= sc->sc_nrepid) {
 		aprint_error_dev(sc->sc_dev, "%s: bad report id %d\n",
 		    __func__, rep);
-		goto out;
+		return (1);
 	}
 
-	DPRINTF(("%s: %s: hid input (rep %d):", sc->sc_dev.dv_xname,
-	    __func__, rep));
+	DPRINTF(("%s: ihidev_intr: hid input (rep %d):", sc->sc_dev.dv_xname,
+	    rep));
 	for (i = 0; i < sc->sc_isize; i++)
 		DPRINTF((" %.2x", sc->sc_ibuf[i]));
 	DPRINTF(("\n"));
 
 	scd = sc->sc_subdevs[rep];
 	if (scd == NULL || !(scd->sc_state & IHIDEV_OPEN))
-		goto out;
+		return (1);
 
 	scd->sc_intr(scd, p, psize);
 
- out:
-	/*
-	 * If our interrupt is level-triggered, re-enable it now.
-	 */
-	if (sc->sc_intr_type == IST_LEVEL) {
-#if NACPICA > 0
-		acpi_intr_unmask(sc->sc_ih);
-#endif
-	}
+	return 1;
 }
 
 static int
