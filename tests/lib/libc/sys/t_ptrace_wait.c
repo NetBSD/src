@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.144 2019/12/24 21:09:38 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.145 2019/12/25 02:23:37 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,10 +27,9 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.144 2019/12/24 21:09:38 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.145 2019/12/25 02:23:37 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
-#define _RTLD_SOURCE
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -4804,19 +4803,6 @@ PTRACE_KILL(kill3, "killpg(SIGKILL)")
 
 /// ----------------------------------------------------------------------------
 
-static void *
-get_private(void)
-{
-
-#ifdef __HAVE___LWP_GETTCB_FAST
-	return __lwp_gettcb_fast();
-#elif defined(__HAVE___LWP_GETPRIVATE_FAST)
-	return __lwp_getprivate_fast();
-#else
-#error Unknown code path!
-#endif
-}
-
 static int lwpinfo_thread_sigmask[] = {SIGXCPU, SIGPIPE, SIGALRM, SIGURG};
 
 static pthread_mutex_t lwpinfo_thread_mtx = PTHREAD_MUTEX_INITIALIZER;
@@ -4831,7 +4817,7 @@ lwpinfo_thread(void *arg)
 
 	tcb = (volatile void **)arg;
 
-	*tcb = get_private();
+	*tcb = _lwp_getprivate();
 	DPRINTF("Storing tcb[] = %p from thread %d\n", *tcb, _lwp_self());
 
 	pthread_setname_np(pthread_self(), "thread %d",
@@ -4885,7 +4871,7 @@ traceme_lwpinfo(const size_t threads, const char *iter)
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
-		tcb[0] = get_private();
+		tcb[0] = _lwp_getprivate();
 		DPRINTF("Storing tcb[0] = %p\n", tcb[0]);
 
 		pthread_setname_np(pthread_self(), "thread %d",
