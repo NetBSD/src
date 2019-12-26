@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.61 2019/05/30 02:32:17 msaitoh Exp $ */
+/* $NetBSD: if_mec.c,v 1.62 2019/12/26 04:53:11 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.61 2019/05/30 02:32:17 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.62 2019/12/26 04:53:11 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -1174,7 +1174,7 @@ mec_start(struct ifnet *ifp)
 				nptr = 1;
 
 				/*
-				 * Set lenght of unaligned part which will be
+				 * Set length of unaligned part which will be
 				 * copied into txdesc buffer.
 				 */
 				buflen = MEC_TXD_ALIGN - MEC_ETHER_ALIGN;

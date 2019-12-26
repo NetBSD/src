@@ -1,4 +1,4 @@
-/*      $NetBSD: rumpuser_dl.c,v 1.30 2014/11/04 19:05:17 pooka Exp $	*/
+/*      $NetBSD: rumpuser_dl.c,v 1.31 2019/12/26 04:53:11 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -40,7 +40,7 @@
 #include "rumpuser_port.h"
 
 #if !defined(lint)
-__RCSID("$NetBSD: rumpuser_dl.c,v 1.30 2014/11/04 19:05:17 pooka Exp $");
+__RCSID("$NetBSD: rumpuser_dl.c,v 1.31 2019/12/26 04:53:11 msaitoh Exp $");
 #endif /* !lint */
 
 #include <sys/types.h>
@@ -225,7 +225,7 @@ getsymbols(struct link_map *map, int ismainobj)
 		 * DT_GNU_HASH is a bit more complicated than DT_HASH
 		 * in this regard since apparently there is no field
 		 * telling us the total symbol count.  Instead, we look
-		 * for the last valid hash bucket and add its chain lenght
+		 * for the last valid hash bucket and add its chain length
 		 * to the bucket's base index.
 		 */
 		case DT_GNU_HASH: {
