@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_intr.c,v 1.28 2019/12/25 10:49:29 skrll Exp $	*/
+/*	$NetBSD: bcm2835_intr.c,v 1.29 2019/12/26 11:09:11 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012, 2015, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.28 2019/12/25 10:49:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_intr.c,v 1.29 2019/12/26 11:09:11 skrll Exp $");
 
 #define _INTR_PRIVATE
 
@@ -99,7 +99,10 @@ static int  bcm2835_icu_match(device_t, cfdata_t, void *);
 static void bcm2835_icu_attach(device_t, device_t, void *);
 
 static int bcm2835_int_base;
-static int bcm2836mp_int_base;
+static int bcm2836mp_int_base[BCM2836_NCPUS];
+
+#define	BCM2835_INT_BASE		bcm2835_int_base
+#define	BCM2836_INT_BASECPUN(n)		bcm2836mp_int_base[(n)]
 
 static void
 bcm2835_set_priority(struct pic_softc *pic, int ipl)
@@ -710,9 +713,9 @@ bcm2836mp_pic_find_pending_irqs(struct pic_softc *pic)
 	    BCM2836_LOCAL_INTC_IRQPENDINGN(cpuid));
 
 	lpending &= ~BCM2836_INTBIT_GPUPENDING;
-	if (lpending & BCM2836MP_ALL_IRQS) {
-		ipl |= pic_mark_pending_sources(pic, 0 /* BCM2836_INT_LOCALBASE */,
-		    lpending & BCM2836MP_ALL_IRQS);
+	const uint32_t allirqs = lpending & BCM2836MP_ALL_IRQS;
+	if (allirqs) {
+		ipl |= pic_mark_pending_sources(pic, 0, allirqs);
 	}
 
 	return ipl;
@@ -830,11 +833,7 @@ bcm2836mp_intr_init(void *priv, struct cpu_info *ci)
 	snprintf(suffix, sizeof(suffix), "#%lu", cpuid);
 	strlcat(pic->pic_name, suffix, sizeof(pic->pic_name));
 #endif
-	if (cpuid == 0) {
-		bcm2836mp_int_base = pic_add(pic, PIC_IRQBASE_ALLOC);
-	} else {
-		pic_add(pic, BCM2836_INT_BASECPUN(cpuid));
-	}
+	bcm2836mp_int_base[cpuid] = pic_add(pic, PIC_IRQBASE_ALLOC);
 
 #if defined(MULTIPROCESSOR)
 	intr_establish(BCM2836_INT_MAILBOX0_CPUN(cpuid), IPL_HIGH,
