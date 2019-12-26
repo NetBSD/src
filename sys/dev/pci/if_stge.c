@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.74 2019/12/26 15:26:58 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.75 2019/12/26 15:32:37 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.74 2019/12/26 15:26:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.75 2019/12/26 15:32:37 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1498,11 +1498,11 @@ stge_init(struct ifnet *ifp)
 
 	/*
 	 * Send a PAUSE frame when we reach 29,696 bytes in the Rx
-	 * FIFO, and send an un-PAUSE frame when the FIFO is totally
-	 * empty again.
+	 * FIFO, and send an un-PAUSE frame when we reach 3056 bytes
+	 * in the Rx FIFO.
 	 */
 	bus_space_write_2(st, sh, STGE_FlowOnTresh, 29696 / 16);
-	bus_space_write_2(st, sh, STGE_FlowOffThresh, 0);
+	bus_space_write_2(st, sh, STGE_FlowOffThresh, 3056 / 16);
 
 	/*
 	 * Set the maximum frame size.
@@ -1857,12 +1857,15 @@ stge_mii_statchg(struct ifnet *ifp)
 {
 	struct stge_softc *sc = ifp->if_softc;
 
+	sc->sc_MACCtrl &= ~(MC_DuplexSelect | MC_RxFlowControlEnable |
+	    MC_TxFlowControlEnable);
+
 	if (sc->sc_mii.mii_media_active & IFM_FDX)
 		sc->sc_MACCtrl |= MC_DuplexSelect;
-	else
-		sc->sc_MACCtrl &= ~MC_DuplexSelect;
-
-	/* XXX 802.1x flow-control? */
+	if ((sc->sc_mii.mii_media_active & IFM_ETH_RXPAUSE) != 0)
+		sc->sc_MACCtrl |= MC_RxFlowControlEnable;
+	if ((sc->sc_mii.mii_media_active & IFM_ETH_TXPAUSE) != 0)
+		sc->sc_MACCtrl |= MC_TxFlowControlEnable;
 
 	bus_space_write_4(sc->sc_st, sc->sc_sh, STGE_MACCtrl, sc->sc_MACCtrl);
 }
