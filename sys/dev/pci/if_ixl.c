@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.12 2019/12/20 02:19:27 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.13 2019/12/26 03:08:19 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -594,11 +594,14 @@ struct ixl_softc {
 
 #define delaymsec(_x)	DELAY(1000 * (_x))
 #ifdef IXL_DEBUG
-#define DDPRINTF(sc, fmt, args...)	\
-do {					\
-	if (sc != NULL)				\
-		device_printf(sc->sc_dev, "");	\
-	printf("%s:\t" fmt, __func__, ##args);	\
+#define DDPRINTF(sc, fmt, args...)			\
+do {							\
+	if ((sc) != NULL) {				\
+		device_printf(				\
+		    ((struct ixl_softc *)(sc))->sc_dev,	\
+		    "");				\
+	}						\
+	printf("%s:\t" fmt, __func__, ##args);		\
 } while (0)
 #else
 #define DDPRINTF(sc, fmt, args...)	__nothing
