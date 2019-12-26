@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.75 2019/12/25 15:54:02 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.76 2019/12/26 08:52:38 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.75 2019/12/25 15:54:02 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.76 2019/12/26 08:52:38 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -788,38 +788,6 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 	    pl.pl_lwpid, pl.pl_event));
 
 	return copyout(&pl, addr, sizeof(pl));
-}
-
-static void
-ptrace_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
-{
-
-	KASSERT(l->l_lid == pls->pl_lwpid);
-
-	memcpy(&pls->pl_sigmask, &l->l_sigmask, sizeof(pls->pl_sigmask));
-	memcpy(&pls->pl_sigpend, &l->l_sigpend.sp_set, sizeof(pls->pl_sigpend));
-
-	if (l->l_name == NULL)
-		memset(&pls->pl_name, 0, PL_LNAMELEN);
-	else {
-		KASSERT(strlen(l->l_name) < PL_LNAMELEN);
-		strncpy(pls->pl_name, l->l_name, PL_LNAMELEN);
-	}
-
-#ifdef PTRACE_LWP_GETPRIVATE
-	pls->pl_private = (void *)(intptr_t)PTRACE_LWP_GETPRIVATE(l);
-#else
-	pls->pl_private = l->l_private;
-#endif
-}
-
-void
-process_read_lwpstatus(struct lwp *l, struct ptrace_lwpstatus *pls)
-{
-
-	pls->pl_lwpid = l->l_lid;
-
-	ptrace_read_lwpstatus(l, pls);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.68 2019/12/24 14:50:59 kamil Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.69 2019/12/26 08:52:38 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1984, 1993
@@ -259,6 +259,8 @@ void	proc_changeparent(struct proc *, struct proc *);
 
 int	do_ptrace(struct ptrace_methods *, struct lwp *, int, pid_t, void *,
 	    int, register_t *);
+
+void	ptrace_read_lwpstatus(struct lwp *, struct ptrace_lwpstatus *);
 
 void	process_read_lwpstatus(struct lwp *, struct ptrace_lwpstatus *);
 #ifndef process_read_lwpstatus32
