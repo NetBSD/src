@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.46 2019/12/08 10:37:19 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.47 2019/12/26 08:48:53 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.46 2019/12/08 10:37:19 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.47 2019/12/26 08:48:53 skrll Exp $")
 
 
 /*#define DEBUG_LOCORE			/* debug print */
@@ -119,7 +119,6 @@ ASENTRY_NP(aarch64_start)
 	DPRINTSREG("ID_AA64MMFR0_EL1 = ", id_aa64mmfr0_el1)
 	DPRINTSREG("ID_AA64MMFR1_EL1 = ", id_aa64mmfr1_el1)
 
-
 #ifdef LOCORE_EL2
 	VPRINT("Drop to EL1...")
 # include <aarch64/aarch64/locore_el2.S>
@@ -152,7 +151,6 @@ aarch64_fatal:
 	mov	lr, x27
 	mov	sp, x28
 	ret
-
 
 /*
  * vstart is in kernel virtual address
@@ -402,7 +400,6 @@ ENTRY_NP(cpu_mpstart)
 	CPU_DPRINTSREG("SCTLR_EL1        = ", sctlr_el1)
 	CPU_DPRINTSREG("MIDR_EL1         = ", midr_el1)
 	CPU_DPRINTSREG("MPIDR_EL1        = ", mpidr_el1)
-
 
 #ifdef LOCORE_EL2
 	CPU_DPRINT("Drop to EL1...\n")
