@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.26 2019/12/24 14:10:51 skrll Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.27 2019/12/26 08:27:43 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -139,18 +139,13 @@
 #define	BCM2835_INTC_ENABLEBASE		(BCM2835_INTC_BASE + 0x10)
 #define	BCM2835_INTC_DISABLEBASE	(BCM2835_INTC_BASE + 0x1c)
 
-#if defined(SOC_BCM2836)
-#define	BCM2835_INT_BASE		BCM2836_NIRQ
-#else
-#define	BCM2835_INT_BASE		0
-#endif /* !BCM2836 */
+#define BCM2835_INT_BASE		bcm2835_int_base
 
 #define	BCM2836_NCPUS			4
 #define	BCM2836_NIRQPERCPU		32
 
-#define	BCM2836_INT_LOCALBASE		0
+#define	BCM2836_INT_LOCALBASE		bcm2836mp_int_base
 #define	BCM2836_INT_BASECPUN(n)		(BCM2836_INT_LOCALBASE + ((n) * BCM2836_NIRQPERCPU))
-#define	BCM2836_NIRQ			(BCM2836_NIRQPERCPU * BCM2836_NCPUS)
 
 #define	BCM2836_INT_CNTPSIRQ		0
 #define	BCM2836_INT_CNTPNSIRQ		1
