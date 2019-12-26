@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.73 2019/11/10 13:34:52 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.74 2019/12/26 15:26:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.73 2019/11/10 13:34:52 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.74 2019/12/26 15:26:58 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1463,6 +1463,13 @@ stge_init(struct ifnet *ifp)
 	/* RX DMA thresholds, from linux */
 	bus_space_write_1(st, sh, STGE_RxDMABurstThresh, 0x30);
 	bus_space_write_1(st, sh, STGE_RxDMAUrgentThresh, 0x30);
+
+	/* Rx early threhold, from Linux */
+	bus_space_write_2(st, sh, STGE_RxEarlyThresh, 0x7ff);
+
+	/* Tx DMA thresholds, from Linux */
+	bus_space_write_1(st, sh, STGE_TxDMABurstThresh, 0x30);
+	bus_space_write_1(st, sh, STGE_TxDMAUrgentThresh, 0x04);
 
 	/*
 	 * Initialize the Rx DMA interrupt control register.  We
