@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.40 2019/12/20 21:20:09 ad Exp $
+#	$NetBSD: files.kern,v 1.41 2019/12/26 08:52:38 kamil Exp $
 
 #
 # kernel sources
@@ -163,6 +163,7 @@ file	kern/sys_pipe.c			!pipe_socketpair
 file	kern/sys_process.c		ptrace_hooks | ktrace
 file	kern/sys_ptrace.c		ptrace
 file	kern/sys_ptrace_common.c	ptrace
+file	kern/sys_ptrace_lwpstatus.c	kern
 file	kern/sys_pset.c			kern
 file	kern/sys_select.c		kern
 file	kern/sys_sig.c			kern
