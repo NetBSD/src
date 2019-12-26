@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.33 2019/11/06 13:37:27 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.34 2019/12/26 11:24:55 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.33 2019/11/06 13:37:27 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.34 2019/12/26 11:24:55 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -3070,14 +3070,14 @@ audio_realloc(void *memblock, size_t bytes)
 
 	if (memblock != NULL) {
 		if (bytes != 0) {
-			return kern_realloc(memblock, bytes, M_NOWAIT);
+			return kern_realloc(memblock, bytes, M_WAITOK);
 		} else {
 			kern_free(memblock);
 			return NULL;
 		}
 	} else {
 		if (bytes != 0) {
-			return kern_malloc(bytes, M_NOWAIT);
+			return kern_malloc(bytes, M_WAITOK);
 		} else {
 			return NULL;
 		}
