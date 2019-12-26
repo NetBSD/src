@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casreg.h,v 1.1 2010/01/07 09:19:55 jdc Exp $ */
+/*	$NetBSD: if_casreg.h,v 1.2 2019/12/26 17:51:08 msaitoh Exp $ */
 /*	$OpenBSD: if_casreg.h,v 1.10 2008/05/31 22:49:03 kettenis Exp $	*/
 
 /*
@@ -55,6 +55,7 @@
 #define	CAS_BIF_CONFIG		0x0008  /* BIF config reg */
 #define	CAS_BIF_DIAG		0x000c
 #define	CAS_RESET		0x1010  /* Software reset register */
+#define	CAS_SATURN_PCFG		0x106c	/* internal MACPHY pin configuration */
 
 /* Bits in CAS_SEB register */
 #define	CAS_SEB_ARB		0x000000002	/* Arbitration status */
@@ -113,6 +114,18 @@
 #define	CAS_RESET_RX		0x000000002	/* Reset RX half */
 #define	CAS_RESET_RSTOUT	0x000000004	/* Force PCI RSTOUT# */
 #define	CAS_RESET_BLOCK_PCS	0x00000008	/* Block PCS reset */
+
+/* CAS_SATURN_PCFG register bits */
+#define	CAS_SATURN_PCFG_TLA	0x00000001	/* PHY activity LED */
+#define	CAS_SATURN_PCFG_FLA	0x00000002	/* PHY 10MBit/sec LED */
+#define	CAS_SATURN_PCFG_CLA	0x00000004	/* PHY 100MBit/sec LED */
+#define	CAS_SATURN_PCFG_LLA	0x00000008	/* PHY 1000MBit/sec LED */
+#define	CAS_SATURN_PCFG_RLA	0x00000010	/* PHY full-duplex LED */
+#define	CAS_SATURN_PCFG_PDS	0x00000020	/* PHY debug mode */
+#define	CAS_SATURN_PCFG_MTP	0x00000080	/* test point select */
+#define	CAS_SATURN_PCFG_GMO	0x00000100	/* GMII observe */
+#define	CAS_SATURN_PCFG_FSI	0x00000200	/* freeze GMII/SERDES */
+#define	CAS_SATURN_PCFG_LAD	0x00000800	/* MAC LED control active low */
 
 /* TX DMA registers */
 #define	CAS_TX_CONFIG		0x2004
