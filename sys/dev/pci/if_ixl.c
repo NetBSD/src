@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.14 2019/12/26 03:17:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.15 2019/12/26 03:55:00 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1351,6 +1351,7 @@ ixl_detach(device_t self, int flags)
 
 	ixl_teardown_interrupts(sc);
 	ixl_teardown_stats(sc);
+	ixl_teardown_sysctls(sc);
 
 	ixl_queue_pairs_free(sc);
 
