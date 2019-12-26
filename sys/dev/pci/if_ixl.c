@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.13 2019/12/26 03:08:19 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.14 2019/12/26 03:17:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -591,6 +591,12 @@ struct ixl_softc {
 #define IXL_RX_PROCESS_LIMIT		256
 #define IXL_TX_INTR_PROCESS_LIMIT	256
 #define IXL_RX_INTR_PROCESS_LIMIT	0U
+
+#define IXL_IFCAP_RXCSUM	(IFCAP_CSUM_IPv4_Rx|	\
+				 IFCAP_CSUM_TCPv4_Rx|	\
+				 IFCAP_CSUM_UDPv4_Rx|	\
+				 IFCAP_CSUM_TCPv6_Rx|	\
+				 IFCAP_CSUM_UDPv6_Rx)
 
 #define delaymsec(_x)	DELAY(1000 * (_x))
 #ifdef IXL_DEBUG
@@ -1195,10 +1201,9 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifp->if_stop = ixl_stop;
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 	IFQ_SET_READY(&ifp->if_snd);
+	ifp->if_capabilities |= IXL_IFCAP_RXCSUM;
 #if 0
-	ifp->if_capabilities |= IFCAP_CSUM_IPv4_Rx |
-	    IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_TCPv4_Rx |
-	    IFCAP_CSUM_UDPv4_Tx | IFCAP_CSUM_UDPv4_Rx;
+	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
 #endif
 	ether_set_vlan_cb(&sc->sc_ec, ixl_vlan_cb);
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -2838,6 +2843,53 @@ ixl_rxr_free(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 	kmem_free(rxr, sizeof(*rxr));
 }
 
+static inline void
+ixl_rx_csum(struct mbuf *m, uint64_t qword)
+{
+	int flags_mask;
+
+	if (!ISSET(qword, IXL_RX_DESC_L3L4P)) {
+		/* No L3 or L4 checksum was calculated */
+		return;
+	}
+
+	switch (__SHIFTOUT(qword, IXL_RX_DESC_PTYPE_MASK)) {
+	case IXL_RX_DESC_PTYPE_IPV4FRAG:
+	case IXL_RX_DESC_PTYPE_IPV4:
+	case IXL_RX_DESC_PTYPE_SCTPV4:
+	case IXL_RX_DESC_PTYPE_ICMPV4:
+		flags_mask = M_CSUM_IPv4 | M_CSUM_IPv4_BAD;
+		break;
+	case IXL_RX_DESC_PTYPE_TCPV4:
+		flags_mask = M_CSUM_IPv4 | M_CSUM_IPv4_BAD;
+		flags_mask |= M_CSUM_TCPv4 | M_CSUM_TCP_UDP_BAD;
+		break;
+	case IXL_RX_DESC_PTYPE_UDPV4:
+		flags_mask = M_CSUM_IPv4 | M_CSUM_IPv4_BAD;
+		flags_mask |= M_CSUM_UDPv4 | M_CSUM_TCP_UDP_BAD;
+		break;
+	case IXL_RX_DESC_PTYPE_TCPV6:
+		flags_mask = M_CSUM_TCPv6 | M_CSUM_TCP_UDP_BAD;
+		break;
+	case IXL_RX_DESC_PTYPE_UDPV6:
+		flags_mask = M_CSUM_UDPv6 | M_CSUM_TCP_UDP_BAD;
+		break;
+	default:
+		flags_mask = 0;
+	}
+
+	m->m_pkthdr.csum_flags |= (flags_mask & (M_CSUM_IPv4 |
+	    M_CSUM_TCPv4 | M_CSUM_TCPv6 | M_CSUM_UDPv4 | M_CSUM_UDPv6));
+
+	if (ISSET(qword, IXL_RX_DESC_IPE)) {
+		m->m_pkthdr.csum_flags |= (flags_mask & M_CSUM_IPv4_BAD);
+	}
+
+	if (ISSET(qword, IXL_RX_DESC_L4E)) {
+		m->m_pkthdr.csum_flags |= (flags_mask & M_CSUM_TCP_UDP_BAD);
+	}
+}
+
 static int
 ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 {
@@ -2913,6 +2965,9 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 				vlan_set_tag(m,
 				    __SHIFTOUT(word0, IXL_RX_DESC_L2TAG1_MASK));
 			}
+
+			if ((ifp->if_capenable & IXL_IFCAP_RXCSUM) != 0)
+				ixl_rx_csum(m, word);
 
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
