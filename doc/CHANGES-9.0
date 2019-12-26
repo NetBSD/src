@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.146 2019/12/24 17:47:14 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.147 2019/12/26 20:20:27 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7309,4 +7309,15 @@ sys/miscfs/nullfs/null_vfsops.c			1.96
 
 	Fix MPSAFE flag for the root vnode.
 	[hannken, ticket #581]
+
+bin/sh/eval.c					1.177
+
+	Use fork() rather than vfork() when forking to run a background
+	process with redirects.
+	[kre, ticket #582]
+
+sys/arch/x86/pci/if_vmx.c			1.53
+
+	Add missing splnet() for ether_ioctl().
+	[knakahara, ticket #583]
 
