@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.175.2.1 2019/12/11 14:52:50 martin Exp $	*/
+/*	$NetBSD: eval.c,v 1.175.2.2 2019/12/26 20:16:47 martin Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.175.2.1 2019/12/11 14:52:50 martin Exp $");
+__RCSID("$NetBSD: eval.c,v 1.175.2.2 2019/12/26 20:16:47 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -552,8 +552,8 @@ evalsubshell(union node *n, int flags)
 	    forkshell(jp = makejob(n, 1), n, backgnd?FORK_BG:FORK_FG) == 0) {
 		if (backgnd)
 			flags &=~ EV_TESTED;
-		redirect(n->nredir.redirect, REDIR_KEEP);
 		INTON;
+		redirect(n->nredir.redirect, REDIR_KEEP);
 		evaltree(n->nredir.n, flags | EV_EXIT);   /* never returns */
 	} else if (backgnd)
 		exitstatus = 0;
@@ -1086,7 +1086,8 @@ evalcommand(union node *cmd, int flgs, struct backcmd *backcmd)
 		 * child's address space is actually shared with the parent as
 		 * we rely on this.
 		 */
-		if (usefork == 0 && cmdentry.cmdtype == CMDNORMAL) {
+		if (usefork == 0 && cmdentry.cmdtype == CMDNORMAL &&
+		    (!cmd->ncmd.backgnd || cmd->ncmd.redirect == NULL)) {
 			pid_t	pid;
 			int serrno;
 
