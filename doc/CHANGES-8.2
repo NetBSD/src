@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.83 2019/12/24 17:16:23 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.84 2019/12/26 20:25:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1817,4 +1817,14 @@ sys/miscfs/nullfs/null_vfsops.c			1.96
 
 	Fix MPSAFE flag for the root vnode.
 	[hannken, ticket #1476]
+
+sys/arch/x86/pci/if_vmx.c			1.53
+
+	Add missing splnet() for ether_ioctl().
+	[knakahara, ticket #1477]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.218
+
+	Add missing core lock in ixgbe_handle_mod().
+	[msaitoh, ticket #1478]
 
