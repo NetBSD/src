@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stgereg.h,v 1.6 2019/10/07 11:53:40 msaitoh Exp $	*/
+/*	$NetBSD: if_stgereg.h,v 1.7 2019/12/26 15:23:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -323,7 +323,7 @@ struct stge_rfd {
 
 #define	STGE_VLANId			0x80
 
-#define	STGE_MaxFrameSize		0x84
+#define	STGE_MaxFrameSize		0x86
 
 #define	STGE_ReceiveMode		0x88	/* 16-bit */
 #define	RM_ReceiveUnicast		(1U << 0)
