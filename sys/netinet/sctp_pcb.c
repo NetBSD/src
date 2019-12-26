@@ -1,5 +1,5 @@
 /* $KAME: sctp_pcb.c,v 1.39 2005/06/16 18:29:25 jinmei Exp $ */
-/* $NetBSD: sctp_pcb.c,v 1.18 2018/12/11 14:38:45 christos Exp $ */
+/* $NetBSD: sctp_pcb.c,v 1.19 2019/12/26 04:44:10 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -33,7 +33,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.18 2018/12/11 14:38:45 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_pcb.c,v 1.19 2019/12/26 04:44:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -212,7 +212,7 @@ sctp_fill_pcbinfo(struct sctp_pcbinfo *spcb)
  * Notes on locks for FreeBSD 5 and up. All association
  * lookups that have a definte ep, the INP structure is
  * assumed to be locked for reading. If we need to go
- * find the INP (ususally when a **inp is passed) then
+ * find the INP (usually when a **inp is passed) then
  * we must lock the INFO structure first and if needed
  * lock the INP too. Note that if we lock it we must
  *
