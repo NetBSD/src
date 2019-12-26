@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.551 2019/12/14 07:45:20 maxv Exp $
+# $NetBSD: GENERIC,v 1.552 2019/12/26 17:52:49 msaitoh Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.551 $"
+#ident		"GENERIC-$Revision: 1.552 $"
 
 maxusers	64		# estimated number of users
 
@@ -788,6 +788,7 @@ bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 bnx*	at pci? dev ? function ?	# Broadcom NetXtremeII gigabit Ethernet
 bwi*	at pci? dev ? function ?	# Broadcom BCM43xx wireless
 bwfm*	at pci? dev ? function ?	# Broadcom FullMAC
+cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 ena*	at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 ep*	at pci? dev ? function ?	# 3Com 3c59x
