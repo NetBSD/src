@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.2 2019/12/20 02:12:31 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.3 2019/12/26 03:17:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -787,6 +787,22 @@ struct ixl_rx_wb_desc_16 {
 #define IXL_RX_DESC_HLEN_SHIFT		42
 #define IXL_RX_DESC_HLEN_MASK		(0x7ffULL << IXL_RX_DESC_HLEN_SHIFT)
 } __packed __aligned(16);
+
+enum ixl_rx_desc_ptype {
+	IXL_RX_DESC_PTYPE_IPV4FRAG	= 22,
+	IXL_RX_DESC_PTYPE_IPV4		= 23,
+	IXL_RX_DESC_PTYPE_UDPV4		= 24,
+	IXL_RX_DESC_PTYPE_TCPV4		= 26,
+	IXL_RX_DESC_PTYPE_SCTPV4	= 27,
+	IXL_RX_DESC_PTYPE_ICMPV4	= 28,
+
+	IXL_RX_DESC_PTYPE_IPV6FRAG	= 88,
+	IXL_RX_DESC_PTYPE_IPV6		= 89,
+	IXL_RX_DESC_PTYPE_UDPV6		= 90,
+	IXL_RX_DESC_PTYPE_TCPV6		= 92,
+	IXL_RX_DESC_PTYPE_SCTPV6	= 93,
+	IXL_RX_DESC_PTYPE_ICMPV6	= 94,
+};
 
 struct ixl_rx_wb_desc_32 {
 	uint64_t		qword0;
