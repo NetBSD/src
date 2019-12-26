@@ -1,4 +1,4 @@
-/*	$NetBSD: sctp_output.c,v 1.20 2019/12/03 03:25:28 msaitoh Exp $ */
+/*	$NetBSD: sctp_output.c,v 1.21 2019/12/26 04:44:10 msaitoh Exp $ */
 /*	$KAME: sctp_output.c,v 1.48 2005/06/16 18:29:24 jinmei Exp $	*/
 
 /*
@@ -30,7 +30,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.20 2019/12/03 03:25:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctp_output.c,v 1.21 2019/12/26 04:44:10 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ipsec.h"
@@ -1761,7 +1761,7 @@ sctp_choose_v6_boundall(struct sctp_inpcb *inp,
 			/* by definition the scope (from to->sin6_scopeid)
 			 * must match that of the interface. If not then
 			 * we could pick a wrong scope for the address.
-			 * Ususally we don't hit plan-b since the route
+			 * Usually we don't hit plan-b since the route
 			 * handles this. However we can hit plan-b when
 			 * we send to local-host so the route is the
 			 * loopback interface, but the destination is a
