@@ -1,4 +1,4 @@
-/*	$NetBSD: onfi.h,v 1.1 2011/02/26 18:07:31 ahoka Exp $	*/
+/*	$NetBSD: onfi.h,v 1.2 2019/12/26 04:53:12 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -117,7 +117,7 @@ struct onfi_parameter_page {
 	uint16_t param_features;  /* M: features supported */
 	uint16_t param_optional_cmds; /* M: optional commands */
 	uint16_t param_reserved_1;    /* R: reserved */
-	uint16_t param_extended_len;  /* O: extended parameter page lenght */
+	uint16_t param_extended_len;  /* O: extended parameter page length */
 	uint8_t param_num_param_pg;  /* O: number of parameter pages */
 	uint8_t param_reserved_2[17]; /* R: reserved */
 	/* Manufacturer information block */

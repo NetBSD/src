@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.11 2019/12/15 12:01:05 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.12 2019/12/26 04:53:12 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
 #endif
 
 #define	MAX_LABEL_LEN		128	/* max. length of a partition label */
-#define	MAX_SHORTCUT_LEN	8	/* max. lenght of a shortcut ("a:") */
+#define	MAX_SHORTCUT_LEN	8	/* max. length of a shortcut ("a:") */
 
 /*
  * A partition index / handle, identifies a singlepartition within

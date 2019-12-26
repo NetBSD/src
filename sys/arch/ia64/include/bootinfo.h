@@ -1,4 +1,4 @@
-/*	$NetBSD: bootinfo.h,v 1.1 2006/04/07 14:21:18 cherry Exp $	*/
+/*	$NetBSD: bootinfo.h,v 1.2 2019/12/26 04:53:11 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994, 1995, 1996 Carnegie-Mellon University.
@@ -42,7 +42,7 @@ struct bootinfo {
 	uint32_t	bi_memdesc_version;	/* EFI memory desc version */
 	uint32_t	bi_spare2;
 	uint64_t	bi_unwindtab;		/* start of ia64 unwind table */
-	uint64_t	bi_unwindtablen;	/* lenght of the table, in bytes */
+	uint64_t	bi_unwindtablen;	/* length of the table, in bytes */
 	uint64_t	bi_symtab;		/* start of kernel sym table */
 	uint64_t	bi_esymtab;		/* end of kernel sym table */
 	uint64_t	bi_kernend;		/* end of kernel space */

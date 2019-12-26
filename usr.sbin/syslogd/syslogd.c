@@ -1,4 +1,4 @@
-/*	$NetBSD: syslogd.c,v 1.131 2019/02/03 03:19:31 mrg Exp $	*/
+/*	$NetBSD: syslogd.c,v 1.132 2019/12/26 04:53:12 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1988, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)syslogd.c	8.3 (Berkeley) 4/4/94";
 #else
-__RCSID("$NetBSD: syslogd.c,v 1.131 2019/02/03 03:19:31 mrg Exp $");
+__RCSID("$NetBSD: syslogd.c,v 1.132 2019/12/26 04:53:12 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2001,7 +2001,7 @@ logmsg(struct buf_msg *buffer)
  * format one buffer into output format given by flag BSDOutputFormat
  * line is allocated and has to be free()d by caller
  * size_t pointers are optional, if not NULL then they will return
- *   different lenghts used for formatting and output
+ *   different lengths used for formatting and output
  */
 #define OUT(x) ((x)?(x):"-")
 bool

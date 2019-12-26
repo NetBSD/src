@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci_mv.c,v 1.7 2018/04/09 16:21:10 jakllsch Exp $	*/
+/*	$NetBSD: ehci_mv.c,v 1.8 2019/12/26 04:53:12 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.7 2018/04/09 16:21:10 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci_mv.c,v 1.8 2019/12/26 04:53:12 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -324,7 +324,7 @@ mvusb_init(struct mvusb_softc *sc, enum marvell_tags *tags)
 		reg &= ~(1 << 21);
 		/* bits[27:26]=0 (EDGE_DET_SEL=0) */
 		reg &= ~(3 << 26);
-		/* bits[31:30]=3 (RXDATA_BLOCK_LENGHT=3) */
+		/* bits[31:30]=3 (RXDATA_BLOCK_LENGTH=3) */
 		reg |= (3 << 30);
 		/* bits[7:4]=1 (SQ_THRESH=1) */
 		reg &= ~(0xf << 4);
