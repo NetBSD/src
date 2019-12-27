@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.71 2019/12/27 12:51:57 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.72 2019/12/27 13:19:24 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -78,11 +78,14 @@ struct pgflcache;
  */
 
 struct uvm_cpu {
+	/* allocator */
 	struct pgflcache *pgflcache[VM_NFREELIST];/* cpu-local cached pages */
 	void		*pgflcachemem;		/* pointer to allocated mem */
 	size_t		pgflcachememsz;		/* size of allocated memory */
 	u_int		pgflcolor;		/* next color to allocate */
 	u_int		pgflbucket;		/* where to send our pages */
+
+	/* entropy */
 	krndsource_t 	rs;			/* entropy source */
 };
 
@@ -109,9 +112,6 @@ struct uvm {
 
 	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
 	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
-
-	/* per-cpu data */
-	struct uvm_cpu *cpus[MAXCPUS];
 };
 
 /*
