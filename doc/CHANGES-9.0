@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.147 2019/12/26 20:20:27 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.148 2019/12/27 06:59:45 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7320,4 +7320,9 @@ sys/arch/x86/pci/if_vmx.c			1.53
 
 	Add missing splnet() for ether_ioctl().
 	[knakahara, ticket #583]
+
+sys/uvm/uvm_pager.c				1.118
+
+	PR kern/48044: remove no longer valid assertion.
+	[ad, ticket #584]
 
