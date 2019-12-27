@@ -1,4 +1,4 @@
-.\"	$NetBSD: puffs.3,v 1.63 2017/07/03 21:32:51 wiz Exp $
+.\"	$NetBSD: puffs.3,v 1.64 2019/12/27 10:13:59 msaitoh Exp $
 .\"
 .\" Copyright (c) 2006, 2007, 2008 Antti Kantee.  All rights reserved.
 .\"
@@ -107,7 +107,7 @@ takes execution context away from the caller and automatically handles
 all requests by using the callbacks.
 By using
 .Xr puffs_framebuf 3
-in conjuction with
+in conjunction with
 .Fn puffs_mainloop ,
 it is possible to handle I/O to and from file descriptors.
 This is suited e.g. for distributed file servers.
