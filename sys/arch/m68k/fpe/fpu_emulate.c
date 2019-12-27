@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu_emulate.c,v 1.39 2019/04/06 03:06:26 thorpej Exp $	*/
+/*	$NetBSD: fpu_emulate.c,v 1.40 2019/12/27 07:41:23 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995 Gordon W. Ross
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.39 2019/04/06 03:06:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu_emulate.c,v 1.40 2019/12/27 07:41:23 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -548,7 +548,7 @@ fpu_cmp(struct fpemu *fe)
 }
 
 /*
- * arithmetic oprations
+ * arithmetic operations
  */
 static int
 fpu_emul_arith(struct fpemu *fe, struct instruction *insn)
