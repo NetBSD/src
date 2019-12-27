@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.13 2019/12/10 12:20:20 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.14 2019/12/27 05:56:42 nonaka Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.13 2019/12/10 12:20:20 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.14 2019/12/27 05:56:42 nonaka Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -577,13 +577,14 @@ hvn_encap(struct hvn_softc *sc, struct mbuf *m, struct hvn_tx_desc **txd0)
 	}
 	txd->txd_buf = m;
 
-	if (m->m_flags & M_VLANTAG) {
+	if (vlan_has_tag(m)) {
 		uint32_t vlan;
 		char *cp;
+		uint16_t tag;
 
-		vlan = NDIS_VLAN_INFO_MAKE(
-		    EVL_VLANOFTAG(m->m_pkthdr.ether_vtag),
-		    EVL_PRIOFTAG(m->m_pkthdr.ether_vtag), 0);
+		tag = vlan_get_tag(m);
+		vlan = NDIS_VLAN_INFO_MAKE(EVL_VLANOFTAG(tag),
+		    EVL_PRIOFTAG(tag), 0);
 		cp = hvn_rndis_pktinfo_append(pkt, HVN_RNDIS_PKT_LEN,
 		    NDIS_VLAN_INFO_SIZE, NDIS_PKTINFO_TYPE_VLAN);
 		memcpy(cp, &vlan, NDIS_VLAN_INFO_SIZE);
@@ -1590,10 +1591,9 @@ hvn_rxeof(struct hvn_softc *sc, uint8_t *buf, uint32_t len)
 		case NDIS_PKTINFO_TYPE_VLAN:
 			memcpy(&vlan, pi->rm_data, sizeof(vlan));
 			if (vlan != 0xffffffff) {
-				m->m_pkthdr.ether_vtag =
-				    NDIS_VLAN_INFO_ID(vlan) |
-				    (NDIS_VLAN_INFO_PRI(vlan) << EVL_PRIO_BITS);
-				m->m_flags |= M_VLANTAG;
+				uint16_t t = NDIS_VLAN_INFO_ID(vlan);
+				t |= NDIS_VLAN_INFO_PRI(vlan) << EVL_PRIO_BITS;
+				vlan_set_tag(m, t);
 			}
 			break;
 		default:
