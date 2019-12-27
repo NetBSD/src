@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pgflcache.c,v 1.1 2019/12/27 12:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_pgflcache.c,v 1.2 2019/12/27 13:24:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.1 2019/12/27 12:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.2 2019/12/27 13:24:52 ad Exp $");
 
 #include "opt_uvm.h"
 #include "opt_multiprocessor.h"
@@ -400,7 +400,7 @@ uvm_pgflcache_start(void)
 		return;
 	}
 
-	/* Create each CPU's buckets. */
+	/* Create data structures for each CPU. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		uvm_pgflcache_init_cpu(ci);
 	}
