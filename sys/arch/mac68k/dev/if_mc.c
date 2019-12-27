@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.51 2019/05/28 07:41:46 msaitoh Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.52 2019/12/27 09:32:09 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.51 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.52 2019/12/27 09:32:09 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -117,7 +117,7 @@ ether_cmp(void *one, void *two)
 	diff |= *a++ - *b++;
 #else
 	/*
-	 * Most modern CPUs do better with a single expresion.
+	 * Most modern CPUs do better with a single expression.
 	 * Note that short-cut evaluation is NOT helpful here,
 	 * because it just makes the code longer, not faster!
 	 */

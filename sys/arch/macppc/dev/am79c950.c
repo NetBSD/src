@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.46 2019/05/29 10:07:28 msaitoh Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.47 2019/12/27 09:32:10 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.46 2019/05/29 10:07:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.47 2019/12/27 09:32:10 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -116,7 +116,7 @@ ether_cmp(void *one, void *two)
 	diff |= *a++ - *b++;
 #else
 	/*
-	 * Most modern CPUs do better with a single expresion.
+	 * Most modern CPUs do better with a single expression.
 	 * Note that short-cut evaluation is NOT helpful here,
 	 * because it just makes the code longer, not faster!
 	 */
