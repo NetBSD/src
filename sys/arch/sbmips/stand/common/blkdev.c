@@ -1,4 +1,4 @@
-/* $NetBSD: blkdev.c,v 1.6 2009/03/14 21:04:15 dsl Exp $ */
+/* $NetBSD: blkdev.c,v 1.7 2019/12/27 09:41:49 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1999 Christopher G. Demetriou.  All rights reserved.
@@ -151,7 +151,7 @@ devopen(struct open_file *f, const char *fname, char **file)
 
 int
 blkdevstrategy(void *devdata, int rw, daddr_t bn, size_t reqcnt, void *addrvoid, size_t *cnt)
-	/* cnt:	 out: number of bytes transfered */
+	/* cnt:	 out: number of bytes transferred */
 {
 	unsigned char *addr = addrvoid;
 	int res;

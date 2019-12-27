@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.79 2019/12/22 19:19:43 jmcneill Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.80 2019/12/27 09:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.79 2019/12/22 19:19:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.80 2019/12/27 09:41:50 msaitoh Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -1556,10 +1556,10 @@ ahci_bio_complete(struct ata_channel *chp, struct ata_xfer *xfer, int tfd)
 	AHCIDEBUG_PRINT(("ahci_bio_complete bcount %ld",
 	    ata_bio->bcount), DEBUG_XFERS);
 	/* 
-	 * If it was a write, complete data buffer may have been transfered
+	 * If it was a write, complete data buffer may have been transferred
 	 * before error detection; in this case don't use cmdh_prdbc
 	 * as it won't reflect what was written to media. Assume nothing
-	 * was transfered and leave bcount as-is.
+	 * was transferred and leave bcount as-is.
 	 * For queued commands, PRD Byte Count should not be used, and is
 	 * not required to be valid; in that case underflow is always illegal.
 	 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.284 2019/12/21 13:00:24 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.285 2019/12/27 09:41:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.284 2019/12/21 13:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.285 2019/12/27 09:41:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -2057,7 +2057,7 @@ nestiobuf_iodone(buf_t *bp)
 	if (bp->b_error == 0 &&
 	    (bp->b_bcount < bp->b_bufsize || bp->b_resid > 0)) {
 		/*
-		 * Not all got transfered, raise an error. We have no way to
+		 * Not all got transferred, raise an error. We have no way to
 		 * propagate these conditions to mbp.
 		 */
 		error = EIO;

@@ -1,4 +1,4 @@
-/*	$NetBSD: recvjob.c,v 1.24 2015/10/14 16:02:03 christos Exp $	*/
+/*	$NetBSD: recvjob.c,v 1.25 2019/12/27 09:41:52 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1993\
 #if 0
 static char sccsid[] = "@(#)recvjob.c	8.2 (Berkeley) 4/27/95";
 #else
-__RCSID("$NetBSD: recvjob.c,v 1.24 2015/10/14 16:02:03 christos Exp $");
+__RCSID("$NetBSD: recvjob.c,v 1.25 2019/12/27 09:41:52 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -120,7 +120,7 @@ recvjob(void)
 
 /*
  * Read printer jobs sent by lpd and copy them to the spooling directory.
- * Return the number of jobs successfully transfered.
+ * Return the number of jobs successfully transferred.
  */
 static int
 readjob(void)

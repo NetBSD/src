@@ -1,4 +1,4 @@
-/*	$NetBSD: mvxpsec.c,v 1.4 2019/12/27 07:41:23 msaitoh Exp $	*/
+/*	$NetBSD: mvxpsec.c,v 1.5 2019/12/27 09:41:51 msaitoh Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -1310,7 +1310,7 @@ mvxpsec_intr_cnt(struct mvxpsec_softc *sc, int cause)
  * the header contains descriptor of security accelerator,
  * key material of chiphers, iv of ciphers and macs, ...
  *
- * the header is transfered to MVXPSEC Internal SRAM by TDMA,
+ * the header is transferred to MVXPSEC Internal SRAM by TDMA,
  * and parsed by MVXPSEC H/W.
  */
 STATIC int

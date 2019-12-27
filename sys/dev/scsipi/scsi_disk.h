@@ -1,4 +1,4 @@
-/*	$NetBSD: scsi_disk.h,v 1.32 2016/11/19 08:43:40 flxd Exp $	*/
+/*	$NetBSD: scsi_disk.h,v 1.33 2019/12/27 09:41:51 msaitoh Exp $	*/
 
 /*
  * SCSI-specific interface description
@@ -71,7 +71,7 @@ struct scsi_format_unit {
 };
 
 /*
- * If the FmtData bit is set, a FORMAT UNIT parameter list is transfered
+ * If the FmtData bit is set, a FORMAT UNIT parameter list is transferred
  * to the target during the DATA OUT phase.  The parameter list includes
  *
  *	Defect list header

@@ -1,4 +1,4 @@
-/*	$NetBSD: sfas.c,v 1.27 2016/08/17 22:03:57 skrll Exp $	*/
+/*	$NetBSD: sfas.c,v 1.28 2019/12/27 09:41:48 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.27 2016/08/17 22:03:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sfas.c,v 1.28 2019/12/27 09:41:48 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1101,12 +1101,12 @@ sfas_midaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 
 	case SFAS_NS_DATA_IN:
 	case SFAS_NS_DATA_OUT:
-		/* We have transfered data. */
+		/* We have transferred data. */
 		if (dev->sc_dma_len)
 			if (dev->sc_cur_link < dev->sc_max_link) {
 				/*
 				 * Clean up DMA and at the same time get how
-				 * many bytes that were NOT transfered.
+				 * many bytes that were NOT transferred.
 				 */
 			  left = dev->sc_setup_dma(dev, 0, 0, SFAS_DMA_CLEAR);
 			  len  = dev->sc_dma_len;
@@ -1133,7 +1133,7 @@ sfas_midaction(struct sfas_softc *dev, sfas_regmap_p rp, struct nexus *nexus)
 			  }
 
 			  /*
-			   * Update pointers/length to reflect the transfered
+			   * Update pointers/length to reflect the transferred
 			   * data.
 			   */
 			  dev->sc_len -= len-left;

@@ -1,4 +1,4 @@
-/*	$NetBSD: tty_subr.c,v 1.42 2019/12/06 08:35:21 maxv Exp $	*/
+/*	$NetBSD: tty_subr.c,v 1.43 2019/12/27 09:41:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994 Theo de Raadt
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.42 2019/12/06 08:35:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty_subr.c,v 1.43 2019/12/27 09:41:51 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -324,7 +324,7 @@ clrbits(u_char *cp, unsigned int off, unsigned int len)
 
 /*
  * Copy buffer to clist.
- * Return number of bytes not transfered.
+ * Return number of bytes not transferred.
  */
 int
 b_to_q(const u_char *cp, int count, struct clist *clp)

@@ -1,4 +1,4 @@
-/*	$NetBSD: wd33c93var.h,v 1.11 2012/07/28 23:04:45 matt Exp $	*/
+/*	$NetBSD: wd33c93var.h,v 1.12 2019/12/27 09:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -138,7 +138,7 @@ struct wd33c93_softc {
 	/* Data about the current nexus (updated for every cmd switch) */
 	void *	sc_daddr;		/* Current data pointer */
 	size_t	sc_dleft;		/* Data left to transfer */
-	ssize_t	sc_tcnt;		/* number of bytes transfered */
+	ssize_t	sc_tcnt;		/* number of bytes transferred */
 
 	/* Lists of command blocks */
 	TAILQ_HEAD(acb_list, wd33c93_acb) ready_list;

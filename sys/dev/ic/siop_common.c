@@ -1,4 +1,4 @@
-/*	$NetBSD: siop_common.c,v 1.54 2013/09/15 13:56:27 martin Exp $	*/
+/*	$NetBSD: siop_common.c,v 1.55 2019/12/27 09:41:50 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2002 Manuel Bouyer.
@@ -28,7 +28,7 @@
 /* SYM53c7/8xx PCI-SCSI I/O Processors driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.54 2013/09/15 13:56:27 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: siop_common.c,v 1.55 2019/12/27 09:41:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -815,24 +815,24 @@ siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 #endif
 	/*
 	 * Save data pointer. We do this by adjusting the tables to point
-	 * at the begginning of the data not yet transfered.
-	 * offset points to the first table with untransfered data.
+	 * at the begginning of the data not yet transferred.
+	 * offset points to the first table with untransferred data.
 	 */
 
 	/*
 	 * before doing that we decrease resid from the ammount of data which
-	 * has been transfered.
+	 * has been transferred.
 	 */
 	siop_update_resid(siop_cmd, offset);
 
 	/*
 	 * First let see if we have a resid from a phase mismatch. If so,
-	 * we have to adjst the table at offset to remove transfered data.
+	 * we have to adjst the table at offset to remove transferred data.
 	 */
 	if (siop_cmd->flags & CMDFL_RESID) {
 		siop_cmd->flags &= ~CMDFL_RESID;
 		table = &siop_cmd->siop_tables->data[offset];
-		/* "cut" already transfered data from this table */
+		/* "cut" already transferred data from this table */
 		table->addr =
 		    siop_htoc32(sc, siop_ctoh32(sc, table->addr) +
 		    siop_ctoh32(sc, table->count) - siop_cmd->resid);
@@ -840,7 +840,7 @@ siop_sdp(struct siop_common_cmd *siop_cmd, int offset)
 	}
 
 	/*
-	 * now we can remove entries which have been transfered.
+	 * now we can remove entries which have been transferred.
 	 * We just move the entries with data left at the beggining of the
 	 * tables
 	 */

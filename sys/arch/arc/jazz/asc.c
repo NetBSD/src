@@ -1,4 +1,4 @@
-/*	$NetBSD: asc.c,v 1.25 2012/10/27 17:17:35 chs Exp $	*/
+/*	$NetBSD: asc.c,v 1.26 2019/12/27 09:41:49 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.25 2012/10/27 17:17:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: asc.c,v 1.26 2019/12/27 09:41:49 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -350,7 +350,7 @@ asc_dma_intr(struct ncr53c9x_softc *sc)
 
 	trans = asc->sc_dmasize - resid;
 
-	if (trans < 0) {		/* transfered < 0 ? */
+	if (trans < 0) {		/* transferred < 0 ? */
 #if 0
 		/*
 		 * This situation can happen in perfectly normal operation

@@ -1,4 +1,4 @@
-/* $NetBSD: video.c,v 1.35 2018/09/03 16:29:30 riastradh Exp $ */
+/* $NetBSD: video.c,v 1.36 2019/12/27 09:41:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2008 Patrick Mahoney <pat@polycrystal.org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.35 2018/09/03 16:29:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: video.c,v 1.36 2019/12/27 09:41:50 msaitoh Exp $");
 
 #include "video.h"
 #if NVIDEO > 0
@@ -2707,7 +2707,7 @@ scatter_io_init(struct scatter_buf *sb,
 }
 
 /* Store the pointer and size of the next contiguous segment.  Returns
- * true if the segment is valid, or false if all has been transfered.
+ * true if the segment is valid, or false if all has been transferred.
  * Does not check for overflow. */
 static bool
 scatter_io_next(struct scatter_io *sio, void **p, size_t *sz)

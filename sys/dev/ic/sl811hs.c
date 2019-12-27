@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.101 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.102 2019/12/27 09:41:50 msaitoh Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.101 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.102 2019/12/27 09:41:50 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -2003,7 +2003,7 @@ slhci_abdone(struct slhci_softc *sc, int ab)
 	 * 200MB file).
 	 *
 	 * Overflow can indicate that the device and host disagree about how
-	 * much data has been transfered.  This may indicate a problem at any
+	 * much data has been transferred.  This may indicate a problem at any
 	 * point during the transfer, not just when the error occurs.  It may
 	 * indicate data corruption.  A warning message is printed.
 	 *
