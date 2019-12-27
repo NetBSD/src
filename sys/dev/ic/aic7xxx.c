@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.138 2019/12/27 09:18:00 msaitoh Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.139 2019/12/27 09:45:26 msaitoh Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.138 2019/12/27 09:18:00 msaitoh Exp $
+ * $Id: aic7xxx.c,v 1.139 2019/12/27 09:45:26 msaitoh Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.138 2019/12/27 09:18:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.139 2019/12/27 09:45:26 msaitoh Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -1165,7 +1165,7 @@ ahc_handle_scsiint(struct ahc_softc *ahc, u_int intstat)
 		/*
 		 * Although the driver does not care about the
 		 * 'Selection in Progress' status bit, the busy
-		 * LED does.  SELINGO is only cleared by a sucessfull
+		 * LED does.  SELINGO is only cleared by a successful
 		 * selection, so we must manually clear it to insure
 		 * the LED turns off just incase no future successful
 		 * selections occur (e.g. no devices on the bus).
