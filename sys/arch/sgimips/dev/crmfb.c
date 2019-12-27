@@ -1,4 +1,4 @@
-/* $NetBSD: crmfb.c,v 1.46 2019/12/22 23:23:31 thorpej Exp $ */
+/* $NetBSD: crmfb.c,v 1.47 2019/12/27 09:22:20 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.46 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crmfb.c,v 1.47 2019/12/27 09:22:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1148,7 +1148,7 @@ crmfb_setup_video(struct crmfb_softc *sc, int depth)
 		sc->sc_mte_x_shift = 2;
 		break;
 	default:
-		panic("%s: unsuported colour depth %d\n", __func__,
+		panic("%s: unsupported colour depth %d\n", __func__,
 		    depth);
 	}
 	sc->sc_needs_sync = 0;

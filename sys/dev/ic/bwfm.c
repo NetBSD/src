@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.18 2019/10/28 06:37:51 mlelstv Exp $ */
+/* $NetBSD: bwfm.c,v 1.19 2019/12/27 09:22:20 msaitoh Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -186,7 +186,7 @@ bwfm_attach(struct bwfm_softc *sc)
 	    IEEE80211_C_AES |
 	    IEEE80211_C_AES_CCM |
 #if notyet
-	    IEEE80211_C_MONITOR |		/* monitor mode suported */
+	    IEEE80211_C_MONITOR |		/* monitor mode supported */
 	    IEEE80211_C_IBSS |
 	    IEEE80211_C_TXPMGT |
 	    IEEE80211_C_WME |

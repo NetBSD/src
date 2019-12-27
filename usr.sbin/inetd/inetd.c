@@ -1,4 +1,4 @@
-/*	$NetBSD: inetd.c,v 1.125 2017/11/28 11:51:11 martin Exp $	*/
+/*	$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2003 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)inetd.c	8.4 (Berkeley) 4/13/94";
 #else
-__RCSID("$NetBSD: inetd.c,v 1.125 2017/11/28 11:51:11 martin Exp $");
+__RCSID("$NetBSD: inetd.c,v 1.126 2019/12/27 09:22:20 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -1557,7 +1557,7 @@ do { \
 					goto badafterall;
 			}
 #else
-			syslog(LOG_ERR, "%s: rpc services not suported",
+			syslog(LOG_ERR, "%s: rpc services not supported",
 			    sep->se_service);
 			goto more;
 #endif /* RPC */
