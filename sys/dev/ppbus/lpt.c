@@ -1,4 +1,4 @@
-/* $NetBSD: lpt.c,v 1.31 2018/09/03 16:29:33 riastradh Exp $ */
+/* $NetBSD: lpt.c,v 1.32 2019/12/27 09:28:41 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1990 William F. Jolitz, TeleMuse
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.31 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lpt.c,v 1.32 2019/12/27 09:28:41 msaitoh Exp $");
 
 #include "opt_ppbus_lpt.h"
 
@@ -305,7 +305,7 @@ lpt_release_ppbus(struct lpt_softc * lpt, int how)
  *
  *	2) You should be able to write to and read back the same value
  *	   to the control port lower 5 bits, the upper 3 bits are reserved
- *	   per the IBM PC technical reference manauls and different boards
+ *	   per the IBM PC technical reference manuals and different boards
  *	   do different things with them.  Do an alternating zeros, alternating
  *	   ones, walking zero, and walking one test to check for stuck bits.
  *
