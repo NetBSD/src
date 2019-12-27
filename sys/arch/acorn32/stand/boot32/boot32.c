@@ -1,4 +1,4 @@
-/*	$NetBSD: boot32.c,v 1.46 2019/01/23 14:52:49 sborrill Exp $	*/
+/*	$NetBSD: boot32.c,v 1.47 2019/12/27 09:22:19 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2002 Reinoud Zandijk
@@ -26,7 +26,7 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  *
- * Thanks a bunch for Ben's framework for the bootloader and its suporting
+ * Thanks a bunch for Ben's framework for the bootloader and its supporting
  * libs. This file tries to actually boot NetBSD/acorn32 !
  *
  */
