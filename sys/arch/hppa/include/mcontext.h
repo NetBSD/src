@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.10 2018/02/27 11:26:39 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.11 2019/12/27 00:32:17 kamil Exp $	*/
 
 #ifndef _HPPA_MCONTEXT_H_
 #define	_HPPA_MCONTEXT_H_
@@ -59,6 +59,11 @@ do {									\
 } while (/*CONSTCOND*/0)
 #define	_UC_MACHINE_INTRV(uc) 	((uc)->uc_mcontext.__gregs[_REG_RET0])
 
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
+    defined(__LIBPTHREAD_SOURCE__)
+#include <sys/tls.h>
+
+__BEGIN_DECLS
 static __inline void *
 __lwp_getprivate_fast(void)
 {
@@ -68,6 +73,9 @@ __lwp_getprivate_fast(void)
 
 	return __tmp;
 }
+__END_DECLS
+
+#endif
 
 #endif /* !__ASSEMBLER__ */
 
