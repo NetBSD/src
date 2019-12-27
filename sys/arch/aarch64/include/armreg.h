@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.28 2019/09/15 15:16:30 tnn Exp $ */
+/* $NetBSD: armreg.h,v 1.29 2019/12/27 18:56:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -523,6 +523,7 @@ AARCH64REG_WRITE_INLINE(mair_el1)
 #define	MAIR_ATTR6		 __BITS(55,48)
 #define	MAIR_ATTR7		 __BITS(63,56)
 #define	MAIR_DEVICE_nGnRnE	 0x00	// NoGathering,NoReordering,NoEarlyWriteAck.
+#define	MAIR_DEVICE_nGnRE	 0x04	// NoGathering,NoReordering,EarlyWriteAck.
 #define	MAIR_NORMAL_NC		 0x44
 #define	MAIR_NORMAL_WT		 0xbb
 #define	MAIR_NORMAL_WB		 0xff
