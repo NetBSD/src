@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.102 2019/11/28 17:09:10 maxv Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.103 2019/12/27 07:02:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.102 2019/11/28 17:09:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.103 2019/12/27 07:02:26 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2513,7 +2513,7 @@ sk_init_xmac(struct sk_if_softc *sc_if)
 	SK_XM_SETBIT_2(sc_if, XM_TXCMD, XM_TXCMD_AUTOPAD);
 
 	/*
-	 * Enable the reception of all error frames. This is is
+	 * Enable the reception of all error frames. This is
 	 * a necessary evil due to the design of the XMAC. The
 	 * XMAC's receive FIFO is only 8K in size, however jumbo
 	 * frames can be up to 9000 bytes in length. When bad
