@@ -1,4 +1,4 @@
-/*	$NetBSD: cache.c,v 1.60 2018/09/03 16:29:26 riastradh Exp $	*/
+/*	$NetBSD: cache.c,v 1.61 2019/12/27 09:47:18 msaitoh Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.60 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cache.c,v 1.61 2019/12/27 09:47:18 msaitoh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_mips_cache.h"
@@ -1406,7 +1406,7 @@ mips_config_cache_modern(uint32_t cpu_id)
 		}
 	} else if (MIPS_PRID_CID(cpu_id) == MIPS_PRID_CID_MTI) {
 		/*
-		 * All MTI cores share a (mostly) common config7 defintion.
+		 * All MTI cores share a (mostly) common config7 definition.
 		 * Use it to determine if the caches have virtual aliases.
 		 * If the core doesn't have a config7 register, its caches
 		 * are too small or have too many ways to have aliases.
