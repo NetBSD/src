@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.89 2019/12/27 12:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.90 2019/12/27 13:13:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -150,12 +150,13 @@ struct vm_page {
 						 * or uvm_pglistalloc output */
 		LIST_ENTRY(vm_page) list;	/* f: global free page queue */
 	} pageq;
+	TAILQ_ENTRY(vm_page)	pdqueue;	/* p: pagedaemon queue */
 	struct vm_anon		*uanon;		/* o,i: anon */
 	struct uvm_object	*uobject;	/* o,i: object */
 	voff_t			offset;		/* o: offset into object */
 	uint16_t		flags;		/* o: object flags */
 	uint16_t		spare;		/*  : spare for now */
-	uint32_t		pqflags;	/* p: pdpolicy queue flags */
+	uint32_t		pqflags;	/* p: pagedaemon flags */
 	uint32_t		loan_count;	/* o,i: num. active loans */
 	uint32_t		wire_count;	/* o,i: wired down map refs */
 	paddr_t			phys_addr;	/* o: physical address of pg */
