@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.51 2019/12/22 20:59:42 jdolecek Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.52 2019/12/27 09:41:50 msaitoh Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.51 2019/12/22 20:59:42 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.52 2019/12/27 09:41:50 msaitoh Exp $");
 
 #include "opt_mvsata.h"
 
@@ -1740,7 +1740,7 @@ mvsata_wdc_cmd_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 		    chp->ch_drive[xfer->c_drive].drive_flags;
 	else
 		/*
-		 * Other data structure are opaque and should be transfered
+		 * Other data structure are opaque and should be transferred
 		 * as is.
 		 */
 		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;
