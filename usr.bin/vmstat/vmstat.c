@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.229 2019/12/22 17:27:53 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.230 2019/12/27 09:45:27 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.229 2019/12/22 17:27:53 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.230 2019/12/27 09:45:27 msaitoh Exp $");
 #endif
 #endif /* not lint */
 
@@ -2029,7 +2029,7 @@ dohashstat(int verbose, int todo, const char *hashname)
 }
 
 /*
- * kreadc like kread but returns 1 if sucessful, 0 otherwise
+ * kreadc like kread but returns 1 if successful, 0 otherwise
  */
 int
 kreadc(struct nlist *nl, int nlx, void *addr, size_t size)
