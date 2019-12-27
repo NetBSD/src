@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.88 2019/12/21 14:41:44 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.89 2019/12/27 12:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -119,7 +119,6 @@
  *
  * o free
  *   => pageq.list is entry on global free page queue
- *   => listq.list is entry on per-CPU free page queue
  *   => uanon is unused (or (void *)0xdeadbeef for DEBUG)
  *   => uobject is unused (or (void *)0xdeadbeef for DEBUG)
  *   => PG_FREE is set in flags
@@ -129,13 +128,11 @@
  *   => uobject is owner
  * o owned by a vm_anon
  *   => pageq is unused (XXX correct?)
- *   => listq is unused (XXX correct?)
  *   => uanon is owner
  *   => uobject is NULL
  *   => PG_ANON is set in flags
  * o allocated by uvm_pglistalloc
  *   => pageq.queue is entry on resulting pglist, owned by caller
- *   => listq is unused (XXX correct?)
  *   => uanon is unused
  *   => uobject is unused
  *
@@ -153,11 +150,6 @@ struct vm_page {
 						 * or uvm_pglistalloc output */
 		LIST_ENTRY(vm_page) list;	/* f: global free page queue */
 	} pageq;
-
-	union {
-		LIST_ENTRY(vm_page) list;	/* f: CPU free page queue */
-	} listq;
-
 	struct vm_anon		*uanon;		/* o,i: anon */
 	struct uvm_object	*uobject;	/* o,i: object */
 	voff_t			offset;		/* o: offset into object */
@@ -302,6 +294,7 @@ void uvm_page_own(struct vm_page *, const char *);
 bool uvm_page_physget(paddr_t *);
 #endif
 void uvm_page_recolor(int);
+void uvm_page_rebucket(void);
 void uvm_pageidlezero(void);
 
 void uvm_pageactivate(struct vm_page *);
@@ -318,6 +311,8 @@ void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
 bool uvm_page_locked_p(struct vm_page *);
+void uvm_pgfl_lock(void);
+void uvm_pgfl_unlock(void);
 
 int uvm_page_lookup_freelist(struct vm_page *);
 
@@ -348,8 +343,12 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
 #define	VM_PGCOLOR(pg) \
 	(atop(VM_PAGE_TO_PHYS((pg))) & uvmexp.colormask)
 #define	PHYS_TO_VM_PAGE(pa)	uvm_phys_to_vm_page(pa)
+
+/*
+ * VM_PAGE_IS_FREE() can't tell if the page is on global free list, or a
+ * per-CPU cache.  If you need to be certain, pause caching.
+ */
 #define VM_PAGE_IS_FREE(entry)  ((entry)->flags & PG_FREE)
-#define	VM_FREE_PAGE_TO_CPU(pg)	((struct uvm_cpu *)((uintptr_t)pg->offset))
 
 /*
  * Use the lower 10 bits of pg->phys_addr to cache some some locators for
