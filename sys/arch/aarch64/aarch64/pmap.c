@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.56 2019/12/19 07:44:56 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.57 2019/12/27 18:56:47 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.56 2019/12/19 07:44:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.57 2019/12/27 18:56:47 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -953,7 +953,7 @@ _pmap_pte_adjust_cacheflags(pt_entry_t pte, u_int flags)
 
 	switch (flags & (PMAP_CACHE_MASK|PMAP_DEV)) {
 	case PMAP_DEV ... PMAP_DEV | PMAP_CACHE_MASK:
-		pte |= LX_BLKPAG_ATTR_DEVICE_MEM;	/* nGnRnE */
+		pte |= LX_BLKPAG_ATTR_DEVICE_MEM;	/* Device-nGnRE */
 		break;
 	case PMAP_NOCACHE:
 	case PMAP_NOCACHE_OVR:
