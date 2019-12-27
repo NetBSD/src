@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.43 2019/11/10 21:16:24 chs Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.44 2019/12/27 08:22:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.43 2019/11/10 21:16:24 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.44 2019/12/27 08:22:49 msaitoh Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -1112,7 +1112,7 @@ npeinit_macreg(struct npe_softc *sc)
 	/* Configure MAC to generate MDC clock */
 	WR4(sc, NPE_MAC_CORE_CNTRL, NPE_CORE_MDC_EN);
 
-	/* Disable transmitter and reciver in the MAC */
+	/* Disable transmitter and receiver in the MAC */
 	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) &~ NPE_RX_CNTRL1_RX_EN);
 	WR4(sc, NPE_MAC_TX_CNTRL1,
@@ -1188,7 +1188,7 @@ npeinit_locked(void *xsc)
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;		/* just in case */
 
-	/* Enable transmitter and reciver in the MAC */
+	/* Enable transmitter and receiver in the MAC */
 	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) | NPE_RX_CNTRL1_RX_EN);
 	WR4(sc, NPE_MAC_TX_CNTRL1,
@@ -1367,7 +1367,7 @@ npestop(struct ifnet *ifp, int disable)
 {
 	struct npe_softc *sc = ifp->if_softc;
 
-	/* Disable transmitter and reciver in the MAC */
+	/* Disable transmitter and receiver in the MAC */
 	WR4(sc, NPE_MAC_RX_CNTRL1,
 	    RD4(sc, NPE_MAC_RX_CNTRL1) &~ NPE_RX_CNTRL1_RX_EN);
 	WR4(sc, NPE_MAC_TX_CNTRL1,

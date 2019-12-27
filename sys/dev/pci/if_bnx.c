@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.88 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.89 2019/12/27 08:22:50 msaitoh Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.88 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.89 2019/12/27 08:22:50 msaitoh Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -1327,7 +1327,7 @@ bnx_miibus_statchg(struct ifnet *ifp)
 		BNX_CLRBIT(sc, BNX_EMAC_TX_MODE, BNX_EMAC_TX_MODE_FLOW_EN);
 	}
 
-	/* Only make changes if the recive mode has actually changed. */
+	/* Only make changes if the receive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n",
 		    rx_mode);
@@ -5638,7 +5638,7 @@ allmulti:
 		sort_mode |= BNX_RPM_SORT_USER0_MC_HSH_EN;
 	}
 
-	/* Only make changes if the recive mode has actually changed. */
+	/* Only make changes if the receive mode has actually changed. */
 	if (rx_mode != sc->rx_mode) {
 		DBPRINT(sc, BNX_VERBOSE, "Enabling new receive mode: 0x%08X\n",
 		    rx_mode);
