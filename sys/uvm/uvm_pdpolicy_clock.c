@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.22 2019/12/23 19:29:03 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.23 2019/12/27 13:13:17 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.22 2019/12/23 19:29:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.23 2019/12/27 13:13:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -207,7 +207,7 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 		if (pg == NULL) {
 			break;
 		}
-		ss->ss_nextpg = TAILQ_NEXT(pg, pageq.queue);
+		ss->ss_nextpg = TAILQ_NEXT(pg, pdqueue);
 		uvmexp.pdscans++;
 
 		/*
@@ -313,7 +313,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 	for (p = TAILQ_FIRST(&pdpol_state.s_activeq);
 	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
 	     p = nextpg) {
-		nextpg = TAILQ_NEXT(p, pageq.queue);
+		nextpg = TAILQ_NEXT(p, pdqueue);
 
 		/*
 		 * if there's a shortage of swap slots, try to free it.
@@ -371,7 +371,7 @@ uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
 	KASSERT(uvm_page_locked_p(pg));
 
 	if (pg->pqflags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
+		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pdqueue);
 		pg->pqflags &= ~(PQ_ACTIVE | PQ_TIME);
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
@@ -379,7 +379,7 @@ uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
 	if ((pg->pqflags & PQ_INACTIVE) == 0) {
 		KASSERT(pg->wire_count == 0);
 		pmap_clear_reference(pg);
-		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pageq.queue);
+		TAILQ_INSERT_TAIL(&pdpol_state.s_inactiveq, pg, pdqueue);
 		pg->pqflags |= PQ_INACTIVE;
 		pdpol_state.s_inactive++;
 	}
@@ -400,7 +400,7 @@ uvmpdpol_pageactivate_locked(struct vm_page *pg)
 {
 
 	uvmpdpol_pagedequeue_locked(pg);
-	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pageq.queue);
+	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pdqueue);
 	pg->pqflags = PQ_ACTIVE | (hardclock_ticks & PQ_TIME);
 	pdpol_state.s_active++;
 }
@@ -424,12 +424,12 @@ uvmpdpol_pagedequeue_locked(struct vm_page *pg)
 {
 
 	if (pg->pqflags & PQ_ACTIVE) {
-		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pageq.queue);
+		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pdqueue);
 		pg->pqflags &= ~(PQ_ACTIVE | PQ_TIME);
 		KASSERT(pdpol_state.s_active > 0);
 		pdpol_state.s_active--;
 	} else if (pg->pqflags & PQ_INACTIVE) {
-		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pageq.queue);
+		TAILQ_REMOVE(&pdpol_state.s_inactiveq, pg, pdqueue);
 		pg->pqflags &= ~PQ_INACTIVE;
 		KASSERT(pdpol_state.s_inactive > 0);
 		pdpol_state.s_inactive--;

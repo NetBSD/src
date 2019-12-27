@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.18 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.19 2019/12/27 13:13:17 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.18 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.19 2019/12/27 13:13:17 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -234,7 +234,7 @@ static void
 pageq_insert_tail(pageq_t *q, struct vm_page *pg)
 {
 
-	TAILQ_INSERT_TAIL(&q->q_q, pg, pageq.queue);
+	TAILQ_INSERT_TAIL(&q->q_q, pg, pdqueue);
 	q->q_len++;
 }
 
@@ -243,7 +243,7 @@ static void
 pageq_insert_head(pageq_t *q, struct vm_page *pg)
 {
 
-	TAILQ_INSERT_HEAD(&q->q_q, pg, pageq.queue);
+	TAILQ_INSERT_HEAD(&q->q_q, pg, pdqueue);
 	q->q_len++;
 }
 #endif
@@ -256,7 +256,7 @@ pageq_remove(pageq_t *q, struct vm_page *pg)
 	KASSERT(clockpro_queue(&clockpro, clockpro_getq(pg)) == q);
 #endif
 	KASSERT(q->q_len > 0);
-	TAILQ_REMOVE(&q->q_q, pg, pageq.queue);
+	TAILQ_REMOVE(&q->q_q, pg, pdqueue);
 	q->q_len--;
 }
 
@@ -1308,7 +1308,7 @@ clockpro_dropswap(pageq_t *q, int *todo)
 
 	KASSERT(mutex_owned(&clockpro.lock));
 
-	TAILQ_FOREACH_REVERSE(pg, &q->q_q, pglist, pageq.queue) {
+	TAILQ_FOREACH_REVERSE(pg, &q->q_q, pglist, pdqueue) {
 		if (*todo <= 0) {
 			break;
 		}
@@ -1439,7 +1439,7 @@ clockpro_dump(void)
 	    (name), nhot, ncold, ntest, nspeculative, ninitialref, nref)
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_NEWQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_NEWQ)->q_q, pdqueue) {
 		if (clockpro_getq(pg) != CLOCKPRO_NEWQ) {
 			printf("newq corrupt %p\n", pg);
 		}
@@ -1449,7 +1449,7 @@ clockpro_dump(void)
 	PRINTCOUNT("newq");
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_COLDQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_COLDQ)->q_q, pdqueue) {
 		if (clockpro_getq(pg) != CLOCKPRO_COLDQ) {
 			printf("coldq corrupt %p\n", pg);
 		}
@@ -1459,7 +1459,7 @@ clockpro_dump(void)
 	PRINTCOUNT("coldq");
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_HOTQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_HOTQ)->q_q, pdqueue) {
 		if (clockpro_getq(pg) != CLOCKPRO_HOTQ) {
 			printf("hotq corrupt %p\n", pg);
 		}
@@ -1474,7 +1474,7 @@ clockpro_dump(void)
 	PRINTCOUNT("hotq");
 
 	INITCOUNT();
-	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_LISTQ)->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &clockpro_queue(s, CLOCKPRO_LISTQ)->q_q, pdqueue) {
 #if !defined(LISTQ)
 		printf("listq %p\n", pg);
 #endif /* !defined(LISTQ) */
@@ -1504,7 +1504,7 @@ pdsim_dumpq(int qidx)
 	pageq_t *q = clockpro_queue(s, qidx);
 	struct vm_page *pg;
 
-	TAILQ_FOREACH(pg, &q->q_q, pageq.queue) {
+	TAILQ_FOREACH(pg, &q->q_q, pdqueue) {
 		DPRINTF(" %" PRIu64 "%s%s%s%s%s%s",
 		    pg->offset >> PAGE_SHIFT,
 		    (pg->pqflags & PQ_HOT) ? "H" : "",
