@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.215 2019/12/21 12:58:26 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.216 2019/12/27 12:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -210,6 +210,7 @@ b\32UNMAP\0\
 #define	UVM_PGA_STRAT_NORMAL	0	/* priority (low id to high) walk */
 #define	UVM_PGA_STRAT_ONLY	1	/* only specified free list */
 #define	UVM_PGA_STRAT_FALLBACK	2	/* ONLY falls back on NORMAL */
+#define	UVM_PGA_STRAT_NUMA	3	/* strongly prefer ideal bucket */
 
 /*
  * flags for uvm_pagealloc_strat()
@@ -736,6 +737,7 @@ void			uvm_obj_unwirepages(struct uvm_object *, off_t, off_t);
 
 /* uvm_page.c */
 int			uvm_free(void);
+void			uvm_page_numa_load(paddr_t, paddr_t, u_int);
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,
 			    voff_t, struct vm_anon *, int, int, int);
 #define	uvm_pagealloc(obj, off, anon, flags) \
