@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.452 2019/06/06 20:55:43 mlelstv Exp $ */
+/*	$NetBSD: wd.c,v 1.453 2019/12/27 09:41:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.452 2019/06/06 20:55:43 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.453 2019/12/27 09:41:50 msaitoh Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -983,7 +983,7 @@ noerror:	if ((xfer->c_bio.flags & ATA_CORR) || xfer->c_retries > 0)
 		/*
 		 * the disk or controller sometimes report a complete
 		 * xfer, when there has been an error. This is wrong,
-		 * assume nothing got transfered in this case
+		 * assume nothing got transferred in this case
 		 */
 		bp->b_resid = bp->b_bcount;
 	}

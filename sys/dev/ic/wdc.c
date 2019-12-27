@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.295 2019/11/04 15:12:10 prlw1 Exp $ */
+/*	$NetBSD: wdc.c,v 1.296 2019/12/27 09:41:50 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.295 2019/11/04 15:12:10 prlw1 Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.296 2019/12/27 09:41:50 msaitoh Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -1528,7 +1528,7 @@ __wdccommand_intr(struct ata_channel *chp, struct ata_xfer *xfer, int irq)
 				chp->ch_drive[xfer->c_drive].drive_flags;
 	} else {
 		/*
-		 * Other data structure are opaque and should be transfered
+		 * Other data structure are opaque and should be transferred
 		 * as is.
 		 */
 		drive_flags = chp->ch_drive[xfer->c_drive].drive_flags;

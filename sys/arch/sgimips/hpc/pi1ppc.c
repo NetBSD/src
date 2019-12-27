@@ -1,4 +1,4 @@
-/* $NetBSD: pi1ppc.c,v 1.12 2014/07/13 17:12:23 dholland Exp $ */
+/* $NetBSD: pi1ppc.c,v 1.13 2019/12/27 09:41:49 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2001 Alcove - Nicolas Souchu
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.12 2014/07/13 17:12:23 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pi1ppc.c,v 1.13 2019/12/27 09:41:49 msaitoh Exp $");
 
 #include "opt_pi1ppc.h"
 
@@ -1228,7 +1228,7 @@ pi1ppc_nibble_read(struct pi1ppc_softc *pi1ppc)
 				return;
 		}
 
-		/* Store byte transfered */
+		/* Store byte transferred */
 		*(pi1ppc->sc_inbstart) = ((nibble2char(nibble[1]) << 4) & 0xf0) |
 			(nibble2char(nibble[0]) & 0x0f);
 		pi1ppc->sc_inbstart++;
@@ -1283,7 +1283,7 @@ pi1ppc_byte_read(struct pi1ppc_softc * const pi1ppc)
 		if (pi1ppc->sc_inerr)
 			return;
 
-		/* Store byte transfered */
+		/* Store byte transferred */
 		*(pi1ppc->sc_inbstart) = pi1ppc_r_dtr(pi1ppc);
 		pi1ppc_barrier_r(pi1ppc);
 
