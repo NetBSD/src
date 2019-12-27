@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.172 2019/12/21 13:00:25 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.173 2019/12/27 12:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.172 2019/12/21 13:00:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.173 2019/12/27 12:51:57 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.172 2019/12/21 13:00:25 ad Exp $");
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pgflcache.h>
 
 /*
  * uvm_kernacc: test if kernel can access a memory region.
@@ -500,9 +501,17 @@ uvm_scheduler(void)
 	lwp_changepri(l, PRI_VM);
 	lwp_unlock(l);
 
+	/* Start the freelist cache. */
+	uvm_pgflcache_start();
+
 	for (;;) {
 		/* Update legacy stats for post-mortem debugging. */
 		uvm_update_uvmexp();
+
+		/* See if the pagedaemon needs to generate some free pages. */
+		uvm_kick_pdaemon();
+
+		/* Calculate process statistics. */
 		sched_pstats();
 		(void)kpause("uvm", false, hz, NULL);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_ddb.h,v 1.15 2011/05/17 04:18:07 mrg Exp $	*/
+/*	$NetBSD: uvm_ddb.h,v 1.16 2019/12/27 12:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -40,6 +40,7 @@ void	uvm_object_printit(struct uvm_object *, bool,
 void	uvm_page_printit(struct vm_page *, bool,
 	    void (*)(const char *, ...));
 void	uvm_page_printall(void (*)(const char *, ...));
+void	uvm_page_print_freelists(void (*)(const char *, ...));
 void	uvmexp_print(void (*)(const char *, ...));
 #endif /* DDB || DEBUGPRINT */
 

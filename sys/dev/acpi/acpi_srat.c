@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.c,v 1.7 2019/12/22 22:18:04 ad Exp $ */
+/* $NetBSD: acpi_srat.c,v 1.8 2019/12/27 12:51:57 ad Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.7 2019/12/22 22:18:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.8 2019/12/27 12:51:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -38,6 +38,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_srat.c,v 1.7 2019/12/22 22:18:04 ad Exp $");
 
 #include <dev/acpi/acpivar.h>
 #include <dev/acpi/acpi_srat.h>
+
+#include <uvm/uvm_extern.h>
 
 static ACPI_TABLE_SRAT *srat;
 
@@ -468,6 +470,28 @@ acpisrat_dump(void)
 			    PRIx64" - 0x%"PRIx64" flags %u)\n",
 			    m.nodeid, j, m.baseaddress,
 			    m.baseaddress + m.length, m.flags);
+		}
+	}
+}
+
+void
+acpisrat_load_uvm(void)
+{
+	uint32_t i, j, nn, nm;
+	struct acpisrat_mem m;
+
+	nn = acpisrat_nodes();
+	aprint_debug("SRAT: %u NUMA nodes\n", nn);
+	for (i = 0; i < nn; i++) {
+		nm = acpisrat_node_memoryranges(i);
+		for (j = 0; j < nm; j++) {
+			acpisrat_mem(i, j, &m);
+			aprint_debug("SRAT: node %u memory range %u (0x%"
+			    PRIx64" - 0x%"PRIx64" flags %u)\n",
+			    m.nodeid, j, m.baseaddress,
+			    m.baseaddress + m.length, m.flags);
+			uvm_page_numa_load(trunc_page(m.baseaddress),
+			    trunc_page(m.length), m.nodeid);
 		}
 	}
 }

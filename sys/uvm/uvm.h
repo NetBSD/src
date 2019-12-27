@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.70 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.71 2019/12/27 12:51:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -71,21 +71,19 @@
 #include <machine/vmparam.h>
 
 struct workqueue;
+struct pgflcache;
 
 /*
  * per-cpu data
  */
 
 struct uvm_cpu {
-	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
-	int page_free_nextcolor;	/* next color to allocate from */
-	int page_idlezero_next;		/* which color to zero next */
-	bool page_idle_zero;		/* TRUE if we should try to zero
-					   pages in the idle loop */
-	int pages[PGFL_NQUEUES];	/* total of pages in page_free */
-	u_int emap_gen;			/* emap generation number */
-
-	krndsource_t rs;		/* entropy source */
+	struct pgflcache *pgflcache[VM_NFREELIST];/* cpu-local cached pages */
+	void		*pgflcachemem;		/* pointer to allocated mem */
+	size_t		pgflcachememsz;		/* size of allocated memory */
+	u_int		pgflcolor;		/* next color to allocate */
+	u_int		pgflbucket;		/* where to send our pages */
+	krndsource_t 	rs;			/* entropy source */
 };
 
 /*
@@ -98,7 +96,9 @@ struct uvm {
 
 		/* vm_page queues */
 	struct pgfreelist page_free[VM_NFREELIST]; /* unallocated pages */
-	bool page_init_done;		/* TRUE if uvm_page_init() finished */
+	u_int	bucketcount;
+	bool	page_init_done;		/* true if uvm_page_init() finished */
+	bool	numa_alloc;		/* use NUMA page allocation strategy */
 
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
@@ -123,7 +123,6 @@ extern struct uvm_object *uvm_kernel_object;
  * locks (made globals for lockstat).
  */
 
-extern kmutex_t uvm_fpageqlock;		/* lock for free page q */
 extern kmutex_t uvm_kentry_lock;
 
 #endif /* _KERNEL */

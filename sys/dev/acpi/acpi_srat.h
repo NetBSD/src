@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_srat.h,v 1.4 2017/12/28 08:49:28 maxv Exp $ */
+/* $NetBSD: acpi_srat.h,v 1.5 2019/12/27 12:51:57 ad Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -68,6 +68,7 @@ int acpisrat_init(void);
 int acpisrat_refresh(void);
 int acpisrat_exit(void);
 void acpisrat_dump(void);
+void acpisrat_load_uvm(void);
 uint32_t acpisrat_nodes(void);
 uint32_t acpisrat_node_cpus(acpisrat_nodeid_t);
 uint32_t acpisrat_node_memoryranges(acpisrat_nodeid_t);

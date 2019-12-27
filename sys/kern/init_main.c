@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.512 2019/12/22 15:00:42 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.513 2019/12/27 12:51:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.512 2019/12/22 15:00:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.513 2019/12/27 12:51:57 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -814,6 +814,10 @@ configure2(void)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		uvm_cpu_attach(ci);
 	}
+
+	/* Decide how to partition free memory. */
+	uvm_page_rebucket();
+
 	mp_online = true;
 #if defined(MULTIPROCESSOR)
 	cpu_boot_secondary_processors();
