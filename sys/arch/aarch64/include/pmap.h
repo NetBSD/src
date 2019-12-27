@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.26 2019/10/29 20:01:22 maya Exp $ */
+/* $NetBSD: pmap.h,v 1.27 2019/12/27 18:56:47 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -240,7 +240,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	 *  WriteBack      - write back cache
 	 *  WriteThru      - wite through cache
 	 *  NoCache        - no cache
-	 *  Device(nGnRnE) - no Gathering, no Reordering, no Early write ack
+	 *  Device(nGnRE)  - no Gathering, no Reordering, Early write ack
 	 *
 	 * but pmap has PMAP_{NOCACHE,WRITE_COMBINE,WRITE_BACK} flags.
 	 */
