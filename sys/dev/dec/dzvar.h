@@ -1,4 +1,4 @@
-/*	$NetBSD: dzvar.h,v 1.11 2009/05/12 14:18:16 cegger Exp $	*/
+/*	$NetBSD: dzvar.h,v 1.12 2019/12/27 06:52:43 msaitoh Exp $	*/
 /*
  * Copyright (c) 1992, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -83,7 +83,7 @@
 
 struct	dz_softc {
 	device_t	sc_dev;		/* Autoconf blaha */
-	struct	evcnt	sc_rintrcnt;	/* recevive interrupt counts */
+	struct	evcnt	sc_rintrcnt;	/* receive interrupt counts */
 	struct	evcnt	sc_tintrcnt;	/* transmit interrupt counts */
 	struct	dz_regs	sc_dr;		/* reg pointers */
 	bus_space_tag_t	sc_iot;
