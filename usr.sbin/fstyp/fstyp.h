@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.3 2019/12/27 11:06:23 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.4 2019/12/27 11:15:06 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ void	*read_buf(FILE *, off_t, size_t);
 char	*checked_strdup(const char *);
 void	rtrim(char *, size_t);
 
+int	fstyp_apfs(FILE *fp, char *label, size_t size);
 int	fstyp_cd9660(FILE *, char *, size_t);
 int	fstyp_exfat(FILE *fp, char *label, size_t size);
 int	fstyp_ext2fs(FILE *, char *, size_t);
