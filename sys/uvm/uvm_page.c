@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.213 2019/12/27 12:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.214 2019/12/27 13:19:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.213 2019/12/27 12:51:57 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.214 2019/12/27 13:19:24 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -328,7 +328,6 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 * structures).
 	 */
 
-	uvm.cpus[0] = &boot_cpu;
 	curcpu()->ci_data.cpu_uvm = &boot_cpu;
 	uvmpdpol_init();
 	for (b = 0; b < __arraycount(uvm_freelist_locks); b++) {
@@ -979,17 +978,17 @@ uvm_cpu_attach(struct cpu_info *ci)
 		    KM_SLEEP);
 		ucpu = (struct uvm_cpu *)roundup2((uintptr_t)ucpu,
 		    coherency_unit);
-		uvm.cpus[cpu_index(ci)] = ucpu;
 		ci->ci_data.cpu_uvm = ucpu;
+	} else {
+		ucpu = ci->ci_data.cpu_uvm;
 	}
 
 	/*
 	 * Attach RNG source for this CPU's VM events
 	 */
-        rnd_attach_source(&uvm.cpus[cpu_index(ci)]->rs,
-			  ci->ci_data.cpu_name, RND_TYPE_VM,
-			  RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
-			  RND_FLAG_ESTIMATE_VALUE);
+        rnd_attach_source(&ucpu->rs, ci->ci_data.cpu_name, RND_TYPE_VM,
+	    RND_FLAG_COLLECT_TIME|RND_FLAG_COLLECT_VALUE|
+	    RND_FLAG_ESTIMATE_VALUE);
 }
 
 /*
