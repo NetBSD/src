@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_output.c,v 1.314 2019/06/05 01:31:04 knakahara Exp $	*/
+/*	$NetBSD: ip_output.c,v 1.315 2019/12/27 10:17:56 msaitoh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.314 2019/06/05 01:31:04 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_output.c,v 1.315 2019/12/27 10:17:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2037,7 +2037,7 @@ ip_getmoptions(struct ip_moptions *imo, struct sockopt *sopt)
 	uint8_t optval;
 	int error = 0;
 
-	/* imo is protected by solock or refereced only by the caller */
+	/* imo is protected by solock or referenced only by the caller */
 
 	switch (sopt->sopt_name) {
 	case IP_MULTICAST_IF:

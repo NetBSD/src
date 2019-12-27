@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_rtr.c,v 1.146 2019/09/25 09:53:38 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_rtr.c,v 1.147 2019/12/27 10:17:56 msaitoh Exp $	*/
 /*	$KAME: nd6_rtr.c,v 1.95 2001/02/07 08:09:47 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.146 2019/09/25 09:53:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_rtr.c,v 1.147 2019/12/27 10:17:56 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -821,7 +821,7 @@ insert:
 	/*
 	 * Insert the new router in the Default Router List;
 	 * The Default Router List should be in the descending order
-	 * of router-preferece.  Routers with the same preference are
+	 * of router-preference.  Routers with the same preference are
 	 * sorted in the arriving time order.
 	 */
 
