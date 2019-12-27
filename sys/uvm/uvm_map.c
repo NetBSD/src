@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.367 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.368 2019/12/27 10:17:57 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.367 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.368 2019/12/27 10:17:57 msaitoh Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -4246,7 +4246,7 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 }
 
 /*
- * uvmspace_addref: add a referece to a vmspace.
+ * uvmspace_addref: add a reference to a vmspace.
  */
 
 void
