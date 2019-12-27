@@ -1,4 +1,4 @@
-/*	$NetBSD: booke_machdep.c,v 1.27 2019/12/21 13:00:22 ad Exp $	*/
+/*	$NetBSD: booke_machdep.c,v 1.28 2019/12/27 09:45:26 msaitoh Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -38,7 +38,7 @@
 #define	_POWERPC_BUS_DMA_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.27 2019/12/21 13:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: booke_machdep.c,v 1.28 2019/12/27 09:45:26 msaitoh Exp $");
 
 #include "opt_modular.h"
 
@@ -515,7 +515,7 @@ cpu_boot_secondary_processors(void)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		/*
-		 * Skip this CPU if it didn't sucessfully hatch.
+		 * Skip this CPU if it didn't successfully hatch.
 		 */
 		if (!kcpuset_isset(csi->cpus_hatched, cpu_index(ci)))
 			continue;

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.129 2019/12/18 21:45:44 riastradh Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.129 2019/12/18 21:45:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -734,7 +734,7 @@ cpu_uarea_alloc_idlelwp(struct cpu_info *ci)
 void
 cpu_init_secondary_processor(int cpuindex)
 {
-	// pmap_kernel has been sucessfully built and we can switch to it
+	// pmap_kernel has been successfully built and we can switch to it
 
 	cpu_domains(DOMAIN_DEFAULT);
 	cpu_idcache_wbinv_all();

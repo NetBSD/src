@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.35 2019/12/26 11:27:03 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.36 2019/12/27 09:45:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.35 2019/12/26 11:27:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.36 2019/12/27 09:45:26 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4525,7 +4525,7 @@ audio_mixer_calc_blktime(struct audio_softc *sc, audio_trackmixer_t *mixer)
  * Initialize the mixer corresponding to the mode.
  * Set AUMODE_PLAY to the 'mode' for playback or AUMODE_RECORD for recording.
  * sc->sc_[pr]mixer (corresponding to the 'mode') must be zero-filled.
- * This function returns 0 on sucessful.  Otherwise returns errno.
+ * This function returns 0 on successful.  Otherwise returns errno.
  * Must be called with sc_lock held.
  */
 static int

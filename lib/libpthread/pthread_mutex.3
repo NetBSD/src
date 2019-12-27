@@ -1,4 +1,4 @@
-.\" $NetBSD: pthread_mutex.3,v 1.10 2017/10/22 16:37:24 abhinav Exp $
+.\" $NetBSD: pthread_mutex.3,v 1.11 2019/12/27 09:45:26 msaitoh Exp $
 .\"
 .\" Copyright (c) 2002, 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -176,7 +176,7 @@ function shall return the current priority ceiling of the mutex.
 The
 .Fn pthread_mutex_setprioceiling
 function shall either lock the mutex if it is unlocked, or block until
-it can sucessfully lock the mutex, then it shall change the mutex's priority
+it can successfully lock the mutex, then it shall change the mutex's priority
 ceiling and release the mutex.
 When the change is successful, the previous value of the priority ceiling
 shall be returned
