@@ -1,4 +1,4 @@
-/* $NetBSD: tlp.c,v 1.1 2011/01/23 01:05:30 nisimura Exp $ */
+/* $NetBSD: tlp.c,v 1.2 2019/12/27 09:41:49 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -186,7 +186,7 @@ tlp_init(unsigned tag, void *data)
 	rxd[1].xd2 = htole32(VTOPHYS(l->rxstore[1]));
 	l->tx = l->rx = 0;
 
-	/* make sure the entire descriptors transfered to memory */
+	/* make sure the entire descriptors transferred to memory */
 	wbinv(l, sizeof(struct local));
 
 	CSR_WRITE(l, TDB_CSR4, VTOPHYS(txd));

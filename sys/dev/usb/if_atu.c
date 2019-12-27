@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.68 2019/12/05 03:11:41 msaitoh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.69 2019/12/27 09:41:51 msaitoh Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.68 2019/12/05 03:11:41 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.69 2019/12/27 09:41:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -325,7 +325,7 @@ atu_usb_request(struct atu_softc *sc, uint8_t type,
 #ifdef ATU_DEBUG
 	if (atudebug) {
 		if (type & UT_READ) {
-			DPRINTFN(20, ("%s: transfered 0x%x bytes in\n",
+			DPRINTFN(20, ("%s: transferred 0x%x bytes in\n",
 			    device_xname(sc->atu_dev), total_len));
 		} else {
 			if (total_len != length)
