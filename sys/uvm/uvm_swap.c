@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.184 2019/12/14 15:34:18 ad Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.185 2019/12/27 09:41:51 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.184 2019/12/14 15:34:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.185 2019/12/27 09:41:51 msaitoh Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1290,7 +1290,7 @@ sw_reg_strategy(struct swapdev *sdp, struct buf *bp, int bn)
 	 * our buffer.
 	 */
 	error = 0;
-	bp->b_resid = bp->b_bcount;	/* nothing transfered yet! */
+	bp->b_resid = bp->b_bcount;	/* nothing transferred yet! */
 	addr = bp->b_data;		/* current position in buffer */
 	byteoff = dbtob((uint64_t)bn);
 

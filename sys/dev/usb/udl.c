@@ -1,4 +1,4 @@
-/*	$NetBSD: udl.c,v 1.23 2019/09/14 15:24:23 maxv Exp $	*/
+/*	$NetBSD: udl.c,v 1.24 2019/12/27 09:41:51 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2009 FUKAUMI Naoki.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.23 2019/09/14 15:24:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udl.c,v 1.24 2019/12/27 09:41:51 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -647,7 +647,7 @@ udl_ioctl(void *v, void *vs, u_long cmd, void *data, int flag, struct lwp *l)
 	 * UDLIO_DAMAGE for the damage extension ops of X servers.
 	 * Before blindly pulling such interfaces, probably we should
 	 * discuss how such devices should be handled which have
-	 * in-direct framebuffer memories that should be transfered
+	 * in-direct framebuffer memories that should be transferred
 	 * per updated rectangle regions via MI wscons APIs.
 	 */
 	case UDLIO_DAMAGE:

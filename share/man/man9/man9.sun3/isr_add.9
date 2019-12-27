@@ -1,4 +1,4 @@
-.\"     $NetBSD: isr_add.9,v 1.9 2008/04/30 13:10:59 martin Exp $
+.\"     $NetBSD: isr_add.9,v 1.10 2019/12/27 09:41:48 msaitoh Exp $
 .\"
 .\" Copyright (c) 1997 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -69,7 +69,7 @@ it provides an 8-bit interrupt vector number to the CPU and a
 .Sy vectored
 interrupt occurs.
 This vector number points to a vector entry within the interrupt
-vector table to which instruction execution is immediately transfered.
+vector table to which instruction execution is immediately transferred.
 .Pp
 If the interrupting device cannot provide a vector number,
 it asserts a specialized bus line and an

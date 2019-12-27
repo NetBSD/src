@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.106 2017/05/26 14:34:20 riastradh Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.107 2019/12/27 09:41:51 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.106 2017/05/26 14:34:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.107 2019/12/27 09:41:51 msaitoh Exp $");
 #endif /* not lint */
 
 
@@ -609,7 +609,7 @@ udf_readdir(void *v)
 			if (uio->uio_resid < _DIRENT_SIZE(dirent))
 				break;
 
-			/* remember the last entry we transfered */
+			/* remember the last entry we transferred */
 			transoffset = diroffset;
 
 			/* skip deleted entries */
