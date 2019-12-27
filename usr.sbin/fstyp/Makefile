@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.6 2019/11/18 14:53:34 tkusumi Exp $
+#	$NetBSD: Makefile,v 1.7 2019/12/27 11:06:23 tkusumi Exp $
 
 .include <bsd.own.mk>
 
 PROG=	fstyp
-SRCS=	cd9660.c exfat.c ext2fs.c fstyp.c msdosfs.c ntfs.c ufs.c
+SRCS=	cd9660.c exfat.c ext2fs.c fstyp.c hfsplus.c msdosfs.c ntfs.c ufs.c
 
 .if (${MKZFS} != "no")
 SRCS+=	zfs.c
