@@ -1,4 +1,4 @@
-/*	$NetBSD: rtciic.c,v 1.2 2019/12/22 23:23:31 thorpej Exp $	*/
+/*	$NetBSD: rtciic.c,v 1.3 2019/12/27 08:22:50 msaitoh Exp $	*/
 /*
  * Copyright (c) 2011 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.2 2019/12/22 23:23:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.3 2019/12/27 08:22:50 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtciic.c,v 1.2 2019/12/22 23:23:31 thorpej Exp $");
 #define DPRINTF(x)
 #endif
 
-#define RTCIIC_SDAR	(1 << 3)	/* recived serial data */
+#define RTCIIC_SDAR	(1 << 3)	/* received serial data */
 #define RTCIIC_SDAW	(1 << 2)	/* sended serial data */
 #define RTCIIC_SCL	(1 << 1)	/* serial clock */
 #define RTCIIC_RW	(1 << 0)	/* data direction (0:write, 1:read) */
