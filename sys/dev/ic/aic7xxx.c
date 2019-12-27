@@ -1,4 +1,4 @@
-/*	$NetBSD: aic7xxx.c,v 1.137 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: aic7xxx.c,v 1.138 2019/12/27 09:18:00 msaitoh Exp $	*/
 
 /*
  * Core routines and tables shareable across OS platforms.
@@ -39,7 +39,7 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
  * POSSIBILITY OF SUCH DAMAGES.
  *
- * $Id: aic7xxx.c,v 1.137 2019/11/10 21:16:35 chs Exp $
+ * $Id: aic7xxx.c,v 1.138 2019/12/27 09:18:00 msaitoh Exp $
  *
  * //depot/aic7xxx/aic7xxx/aic7xxx.c#112 $
  *
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.137 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic7xxx.c,v 1.138 2019/12/27 09:18:00 msaitoh Exp $");
 
 #include <dev/ic/aic7xxx_osm.h>
 #include <dev/ic/aic7xxx_inline.h>
@@ -922,7 +922,7 @@ ahc_handle_seqint(struct ahc_softc *ahc, u_int intstat)
 		       scbptr, ahc_inb(ahc, ARG_1),
 		       ahc->scb_data->hscbs[scbptr].tag);
 		ahc_dump_card_state(ahc);
-		panic("for saftey");
+		panic("for safety");
 		break;
 	}
 	case OUT_OF_RANGE:
