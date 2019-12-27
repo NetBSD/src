@@ -1,4 +1,4 @@
-/*	$NetBSD: pas.c,v 1.72 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: pas.c,v 1.73 2019/12/27 09:22:20 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1991-1993 Regents of the University of California.
@@ -42,7 +42,7 @@
  */
 /*
  * Todo:
- *	- look at other PAS drivers (for PAS native suport)
+ *	- look at other PAS drivers (for PAS native support)
  *	- use common sb.c once emulation is setup
  */
 /*
@@ -57,7 +57,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.72 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pas.c,v 1.73 2019/12/27 09:22:20 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
