@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.15 2019/12/27 08:22:50 msaitoh Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.16 2019/12/27 08:53:30 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -82,7 +82,7 @@
 #define	 URL_TCR_TXRR1		(1<<7) /* TX Retry Count */
 #define	 URL_TCR_TXRR0		(1<<6) /* TX Retry Count */
 #define	 URL_TCR_IFG1		(1<<4) /* Interframe Gap Time */
-#define	 URL_TCR_IFG0		(1<<4) /* Interframe Gap Time */
+#define	 URL_TCR_IFG0		(1<<3) /* Interframe Gap Time */
 #define	 URL_TCR_NOCRC		(1<<0) /* no CRC Append */
 
 #define	URL_RCR			0x0130 /* Receive Configuration Register */
