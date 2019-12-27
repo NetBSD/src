@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.42 2019/12/21 13:00:22 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.43 2019/12/27 09:45:26 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.42 2019/12/21 13:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.43 2019/12/27 09:45:26 msaitoh Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -962,7 +962,7 @@ cpu_boot_secondary_processors(void)
 		KASSERT(ci->ci_data.cpu_idlelwp);
 
 		/*
-		 * Skip this CPU if it didn't sucessfully hatch.
+		 * Skip this CPU if it didn't successfully hatch.
 		 */
 		if (!kcpuset_isset(cpus_hatched, cpu_index(ci)))
 			continue;
