@@ -1,4 +1,4 @@
-/*	$NetBSD: mcontext.h,v 1.11 2018/02/15 15:53:57 kamil Exp $	*/
+/*	$NetBSD: mcontext.h,v 1.12 2019/12/27 00:32:17 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -95,6 +95,11 @@ typedef struct {
 #define	_UC_CLRSTACK		0x20000
 #define	_UC_TLSBASE		0x80000
 
+#if defined(_RTLD_SOURCE) || defined(_LIBC_SOURCE) || \
+    defined(__LIBPTHREAD_SOURCE__)
+#include <sys/tls.h>
+
+__BEGIN_DECLS
 static __inline void *
 __lwp_getprivate_fast(void)
 {
@@ -104,5 +109,8 @@ __lwp_getprivate_fast(void)
 
 	return __gbr;
 }
+__END_DECLS
+
+#endif
 
 #endif /* !_SH3_MCONTEXT_H_ */
