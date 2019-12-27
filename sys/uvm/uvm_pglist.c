@@ -1,12 +1,12 @@
-/*	$NetBSD: uvm_pglist.c,v 1.77 2019/12/21 14:50:34 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.78 2019/12/27 12:51:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997 The NetBSD Foundation, Inc.
+ * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Jason R. Thorpe of the Numerical Aerospace Simulation Facility,
- * NASA Ames Research Center.
+ * NASA Ames Research Center, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -35,13 +35,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.77 2019/12/21 14:50:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.78 2019/12/27 12:51:57 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_pgflcache.h>
 
 #ifdef VM_PAGE_ALLOC_MEMORY_STATS
 #define	STAT_INCR(v)	(v)++
@@ -79,34 +80,25 @@ u_long	uvm_pglistalloc_npages;
 static void
 uvm_pglist_add(struct vm_page *pg, struct pglist *rlist)
 {
-	int free_list __unused, color __unused, pgflidx;
+	struct pgfreelist *pgfl;
+	struct pgflbucket *pgb;
 
-	KASSERT(mutex_owned(&uvm_fpageqlock));
+	pgfl = &uvm.page_free[uvm_page_get_freelist(pg)];
+	pgb = pgfl->pgfl_buckets[uvm_page_get_bucket(pg)];
 
-#if PGFL_NQUEUES != 2
-#error uvm_pglistalloc needs to be updated
-#endif
-
-	free_list = uvm_page_get_freelist(pg);
-	color = VM_PGCOLOR(pg);
-	pgflidx = (pg->flags & PG_ZERO) ? PGFL_ZEROS : PGFL_UNKNOWN;
 #ifdef UVMDEBUG
 	struct vm_page *tp;
-	LIST_FOREACH(tp,
-	    &uvm.page_free[free_list].pgfl_buckets[color].pgfl_queues[pgflidx],
-	    pageq.list) {
+	LIST_FOREACH(tp, &pgb->pgb_colors[VM_PGCOLOR(pg)], pageq.list) {
 		if (tp == pg)
 			break;
 	}
 	if (tp == NULL)
 		panic("uvm_pglistalloc: page not on freelist");
 #endif
-	LIST_REMOVE(pg, pageq.list);	/* global */
-	LIST_REMOVE(pg, listq.list);	/* cpu */
-	uvmexp.free--;
+	LIST_REMOVE(pg, pageq.list);
+	pgb->pgb_nfree--;
 	if (pg->flags & PG_ZERO)
 		CPU_COUNT(CPU_COUNT_ZEROPAGES, -1);
-	VM_FREE_PAGE_TO_CPU(pg)->pages[pgflidx]--;
 	pg->flags = PG_CLEAN;
 	pg->uobject = NULL;
 	pg->uanon = NULL;
@@ -128,8 +120,6 @@ uvm_pglistalloc_c_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 #ifdef PGALLOC_VERBOSE
 	printf("pgalloc: contig %d pgs from psi %zd\n", num, ps - vm_physmem);
 #endif
-
-	KASSERT(mutex_owned(&uvm_fpageqlock));
 
 	low = atop(low);
 	high = atop(high);
@@ -316,7 +306,7 @@ uvm_pglistalloc_contig(int num, paddr_t low, paddr_t high, paddr_t alignment,
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	mutex_spin_enter(&uvm_fpageqlock);
+	uvm_pgfl_lock();
 
 	/* Are there even any free pages? */
 	if (uvm_free() <= (uvmexp.reserve_pagedaemon + uvmexp.reserve_kernel))
@@ -352,7 +342,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	mutex_spin_exit(&uvm_fpageqlock);
+	uvm_pgfl_unlock();
 	uvm_kick_pdaemon();
 	return (error);
 }
@@ -368,7 +358,6 @@ uvm_pglistalloc_s_ps(uvm_physseg_t psi, int num, paddr_t low, paddr_t high,
 	printf("pgalloc: simple %d pgs from psi %zd\n", num, psi);
 #endif
 
-	KASSERT(mutex_owned(&uvm_fpageqlock));
 	KASSERT(uvm_physseg_get_start(psi) <= uvm_physseg_get_avail_start(psi));
 	KASSERT(uvm_physseg_get_start(psi) <= uvm_physseg_get_avail_end(psi));
 	KASSERT(uvm_physseg_get_avail_start(psi) <= uvm_physseg_get_end(psi));
@@ -461,7 +450,7 @@ again:
 	/*
 	 * Block all memory allocation and lock the free list.
 	 */
-	mutex_spin_enter(&uvm_fpageqlock);
+	uvm_pgfl_lock();
 	count++;
 
 	/* Are there even any free pages? */
@@ -493,7 +482,7 @@ out:
 	 * the pagedaemon.
 	 */
 
-	mutex_spin_exit(&uvm_fpageqlock);
+	uvm_pgfl_unlock();
 	uvm_kick_pdaemon();
 
 	if (error) {
@@ -539,12 +528,20 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 
 	TAILQ_INIT(rlist);
 
+	/*
+	 * Turn off the caching of free pages - we need everything to be on
+	 * the global freelists.
+	 */
+	uvm_pgflcache_pause();
+
 	if ((nsegs < size >> PAGE_SHIFT) || (alignment != PAGE_SIZE) ||
 	    (boundary != 0))
 		res = uvm_pglistalloc_contig(num, low, high, alignment,
 					     boundary, rlist);
 	else
 		res = uvm_pglistalloc_simple(num, low, high, rlist, waitok);
+
+	uvm_pgflcache_resume();
 
 	return (res);
 }
@@ -558,45 +555,34 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 void
 uvm_pglistfree(struct pglist *list)
 {
-	struct uvm_cpu *ucpu;
+	struct pgfreelist *pgfl;
+	struct pgflbucket *pgb;
 	struct vm_page *pg;
-	int index, color, queue;
-	bool iszero;
+	int c, b;
 
 	/*
 	 * Lock the free list and free each page.
 	 */
 
-	mutex_spin_enter(&uvm_fpageqlock);
-	ucpu = curcpu()->ci_data.cpu_uvm;
+	uvm_pgfl_lock();
 	while ((pg = TAILQ_FIRST(list)) != NULL) {
-		KASSERT(!uvmpdpol_pageisqueued_p(pg));
 		TAILQ_REMOVE(list, pg, pageq.queue);
-		iszero = (pg->flags & PG_ZERO);
 		pg->flags = (pg->flags & PG_ZERO) | PG_FREE;
 #ifdef DEBUG
 		pg->uobject = (void *)0xdeadbeef;
 		pg->uanon = (void *)0xdeadbeef;
-#endif /* DEBUG */
-#ifdef DEBUG
-		if (iszero)
+		if (pg->flags & PG_ZERO)
 			uvm_pagezerocheck(pg);
 #endif /* DEBUG */
-		index = uvm_page_get_freelist(pg);
-		color = VM_PGCOLOR(pg);
-		queue = iszero ? PGFL_ZEROS : PGFL_UNKNOWN;
-		pg->offset = (uintptr_t)ucpu;
-		LIST_INSERT_HEAD(&uvm.page_free[index].pgfl_buckets[color].
-		    pgfl_queues[queue], pg, pageq.list);
-		LIST_INSERT_HEAD(&ucpu->page_free[index].pgfl_buckets[color].
-		    pgfl_queues[queue], pg, listq.list);
-		uvmexp.free++;
-		if (iszero)
+		c = VM_PGCOLOR(pg);
+		b = uvm_page_get_bucket(pg);
+		pgfl = &uvm.page_free[uvm_page_get_freelist(pg)];
+		pgb = pgfl->pgfl_buckets[b];
+		if (pg->flags & PG_ZERO)
 			CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
-		ucpu->pages[queue]++;
+		pgb->pgb_nfree++;
+		LIST_INSERT_HEAD(&pgb->pgb_colors[c], pg, pageq.list);
 		STAT_DECR(uvm_pglistalloc_npages);
 	}
-	if (ucpu->pages[PGFL_ZEROS] < ucpu->pages[PGFL_UNKNOWN])
-		ucpu->page_idle_zero = vm_page_zero_enable;
-	mutex_spin_exit(&uvm_fpageqlock);
+	uvm_pgfl_unlock();
 }

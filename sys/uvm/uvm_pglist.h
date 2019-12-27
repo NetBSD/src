@@ -1,11 +1,11 @@
-/*	$NetBSD: uvm_pglist.h,v 1.8 2010/11/06 15:48:00 uebayasi Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.9 2019/12/27 12:51:57 ad Exp $	*/
 
 /*-
- * Copyright (c) 2000, 2001, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2000, 2001, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Jason R. Thorpe.
+ * by Jason R. Thorpe, and by Andrew Doran.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -41,19 +41,51 @@ TAILQ_HEAD(pglist, vm_page);
 LIST_HEAD(pgflist, vm_page);
 
 /*
- * A page free list consists of free pages of unknown contents and free
- * pages of all zeros.
+ * The global uvm.page_free list (uvm_page.c, uvm_pglist.c).  Free pages are
+ * stored according to freelist, bucket, and cache colour.
+ *
+ * pglist = &uvm.page_free[freelist].pgfl_buckets[bucket].pgb_color[color];
+ *
+ * Freelists provide a priority ordering of pages for allocation, based upon
+ * how valuable they are for special uses (e.g. device driver DMA).
+ *
+ * Pages are then grouped in buckets according to some common factor, for
+ * example L2/L3 cache locality.  Each bucket has its own lock, and the
+ * locks are shared among freelists for the same numbered buckets.
+ *
+ * Inside each bucket, pages are further distributed by cache color.
+ *
+ * We want these data structures to occupy as few cache lines as possible,
+ * as they will be highly contended.
  */
-#define	PGFL_UNKNOWN	0
-#define	PGFL_ZEROS	1
-#define	PGFL_NQUEUES	2
-
 struct pgflbucket {
-	struct pgflist pgfl_queues[PGFL_NQUEUES];
+	uintptr_t	pgb_nfree;	/* total # free pages, all colors */
+	struct pgflist	pgb_colors[1];	/* variable size array */
 };
 
+/*
+ * At the root, the freelists.  MD code decides the number and structure of
+ * these.  They are always arranged in descending order of allocation
+ * priority.
+ *
+ * 8 buckets should be enough to cover most all current x86 systems (2019),
+ * given the way package/core/smt IDs are structured on x86.  For systems
+ * that report high package counts despite having a single physical CPU
+ * package (e.g. Ampere eMAG) a little bit of sharing isn't going to hurt
+ * in the least.
+ */
+#define	PGFL_MAX_BUCKETS	8
 struct pgfreelist {
-	struct pgflbucket *pgfl_buckets;
+	struct pgflbucket	*pgfl_buckets[PGFL_MAX_BUCKETS];
 };
+
+/*
+ * Lock for each bucket.
+ */
+union uvm_freelist_lock {
+        kmutex_t        lock;
+        uint8_t         padding[COHERENCY_UNIT];
+};
+extern union uvm_freelist_lock	uvm_freelist_locks[PGFL_MAX_BUCKETS];
 
 #endif /* _UVM_UVM_PGLIST_H_ */
