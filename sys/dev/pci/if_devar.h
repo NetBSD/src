@@ -1,4 +1,4 @@
-/*	$NetBSD: if_devar.h,v 1.62 2019/02/05 06:17:03 msaitoh Exp $	*/
+/*	$NetBSD: if_devar.h,v 1.63 2019/12/27 06:52:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -153,7 +153,7 @@ typedef struct {
  *
  * The receive space MUST ALWAYS be a multiple of the page size.
  * And the number of receive descriptors multiplied by the size
- * of the receive buffers must equal the recevive space.  This
+ * of the receive buffers must equal the receive space.  This
  * is so that we can manipulate the page tables so that even if a
  * packet wraps around the end of the receive space, we can
  * treat it as virtually contiguous.

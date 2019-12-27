@@ -1,4 +1,4 @@
-/*	$NetBSD: dz_ebus.c,v 1.9 2018/03/04 21:41:48 mrg Exp $	*/
+/*	$NetBSD: dz_ebus.c,v 1.10 2019/12/27 06:52:43 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.9 2018/03/04 21:41:48 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.10 2019/12/27 06:52:43 msaitoh Exp $");
 
 #include "opt_ddb.h"
 
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: dz_ebus.c,v 1.9 2018/03/04 21:41:48 mrg Exp $");
 
 struct	dz_softc {
 	device_t	sc_dev;		/* Autoconf blaha */
-	struct	evcnt	sc_rintrcnt;	/* recevive interrupt counts */
+	struct	evcnt	sc_rintrcnt;	/* receive interrupt counts */
 	struct	evcnt	sc_tintrcnt;	/* transmit interrupt counts */
 	struct	_Usart	*sc_dr;		/* reg pointers */
 	bus_space_tag_t	sc_iot;
