@@ -1,5 +1,5 @@
 /*	$KAME: dccp_tfrc.c,v 1.16 2006/03/01 17:34:08 nishida Exp $	*/
-/*	$NetBSD: dccp_tfrc.c,v 1.5 2019/06/04 10:15:22 msaitoh Exp $ */
+/*	$NetBSD: dccp_tfrc.c,v 1.6 2019/12/27 09:25:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2003  Nils-Erik Mattsson
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.5 2019/06/04 10:15:22 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dccp_tfrc.c,v 1.6 2019/12/27 09:25:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_dccp.h"
@@ -1744,7 +1744,7 @@ tfrc_recv_packet_recv(void *ccb, char *options, int optlen)
 
 		switch (cb->state) {
 		case TFRC_RSTATE_NO_DATA:
-			TFRC_DEBUG((LOG_INFO, "TFRC - Send an inital feedback packet (tfrc_recv_packet_recv)\n"));
+			TFRC_DEBUG((LOG_INFO, "TFRC - Send an initial feedback packet (tfrc_recv_packet_recv)\n"));
 			tfrc_recv_send_feedback(cb);
 			cb->state = TFRC_RSTATE_DATA;
 			break;

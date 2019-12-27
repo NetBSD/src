@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.19 2019/06/20 03:31:30 pgoyette Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.20 2019/12/27 09:25:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -640,7 +640,7 @@ chfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	}
 
-	/* Finish inode initalization. */
+	/* Finish inode initialization. */
 	ip->ch_type = VTTOCHT(vp->v_type);
 	ip->devvp = ump->um_devvp;
 	vref(ip->devvp);

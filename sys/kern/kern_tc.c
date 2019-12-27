@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.52 2019/10/06 15:11:17 uwe Exp $ */
+/* $NetBSD: kern_tc.c,v 1.53 2019/12/27 09:25:58 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.52 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.53 2019/12/27 09:25:58 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -1329,7 +1329,7 @@ inittimecounter(void)
 	 * Set the initial timeout to
 	 * max(1, <approx. number of hardclock ticks in a millisecond>).
 	 * People should probably not use the sysctl to set the timeout
-	 * to smaller than its inital value, since that value is the
+	 * to smaller than its initial value, since that value is the
 	 * smallest reasonable one.  If they want better timestamps they
 	 * should use the non-"get"* functions.
 	 */
