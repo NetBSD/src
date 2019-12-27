@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.77 2019/11/21 02:59:43 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.78 2019/12/27 07:41:23 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.77 2019/11/21 02:59:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.78 2019/12/27 07:41:23 msaitoh Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1116,7 +1116,7 @@ vge_newbuf(struct vge_softc *sc, int idx, struct mbuf *m)
 
 	/*
 	 * Note: the manual fails to document the fact that for
-	 * proper opration, the driver needs to replentish the RX
+	 * proper operation, the driver needs to replentish the RX
 	 * DMA ring 4 descriptors at a time (rather than one at a
 	 * time, like most chips). We can allocate the new buffers
 	 * but we should not set the OWN bits until we're ready
