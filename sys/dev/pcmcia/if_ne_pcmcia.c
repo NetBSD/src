@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ne_pcmcia.c,v 1.160 2013/10/17 21:06:47 christos Exp $	*/
+/*	$NetBSD: if_ne_pcmcia.c,v 1.161 2019/12/27 08:01:58 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.160 2013/10/17 21:06:47 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ne_pcmcia.c,v 1.161 2019/12/27 08:01:58 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -256,7 +256,7 @@ static const struct ne2000dev {
      *
      * While the 1st and the 2nd types should use the "D-Link DE-650" entry,
      * the 3rd and the 4th types should use the "Linksys EtherCard" entry.
-     * Therefore, this enty must be below the LINKSYS_ECARD_1.  --itohy
+     * Therefore, this entry must be below the LINKSYS_ECARD_1.  --itohy
      */
     { PCMCIA_VENDOR_INVALID, PCMCIA_PRODUCT_INVALID,
       PCMCIA_CIS_DLINK_DE650,
