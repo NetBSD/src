@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urlreg.h,v 1.14 2019/08/15 08:02:32 mrg Exp $	*/
+/*	$NetBSD: if_urlreg.h,v 1.15 2019/12/27 08:22:50 msaitoh Exp $	*/
 /*
  * Copyright (c) 2001, 2002
  *     Shingo WATANABE <nabe@nabechan.org>.  All rights reserved.
@@ -120,7 +120,7 @@
 #define	URL_ANLP		0x146 /* Auto-negotiation link partner ability register */
 
 
-typedef	uWord url_rxhdr_t;	/* Recive Header */
+typedef	uWord url_rxhdr_t;	/* Receive Header */
 #define	URL_RXHDR_BYTEC_MASK	(0x0fff) /* RX bytes count */
 #define	URL_RXHDR_VALID_MASK	(0x1000) /* Valid packet */
 #define	URL_RXHDR_RUNTPKT_MASK	(0x2000) /* Runt packet */
