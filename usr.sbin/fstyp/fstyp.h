@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.4 2019/12/27 11:15:06 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.5 2019/12/28 08:00:08 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -38,6 +38,13 @@
 
 #ifndef FSTYP_H
 #define	FSTYP_H
+
+#include <stdbool.h>
+
+/* The spec doesn't seem to permit UTF-16 surrogates; definitely LE. */
+#define	EXFAT_ENC	"UCS-2LE"
+
+extern bool	show_label;	/* -l flag */
 
 void	*read_buf(FILE *, off_t, size_t);
 char	*checked_strdup(const char *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.5 2019/12/27 11:15:06 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.6 2019/12/28 08:00:08 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.5 2019/12/27 11:15:06 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.6 2019/12/28 08:00:08 tkusumi Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -43,6 +43,8 @@ __RCSID("$NetBSD: fstyp.c,v 1.5 2019/12/27 11:15:06 tkusumi Exp $");
 #include <sys/stat.h>
 #include <err.h>
 #include <errno.h>
+#include <iconv.h>
+#include <locale.h>
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdio.h>
@@ -55,6 +57,8 @@ __RCSID("$NetBSD: fstyp.c,v 1.5 2019/12/27 11:15:06 tkusumi Exp $");
 
 #define	LABEL_LEN	256
 
+bool show_label = false;
+
 typedef int (*fstyp_function)(FILE *, char *, size_t);
 typedef int (*fsvtyp_function)(const char *, char *, size_t);
 
@@ -62,19 +66,20 @@ static struct {
 	const char	*name;
 	fstyp_function	function;
 	bool		unmountable;
+	const char	*precache_encoding;
 } fstypes[] = {
-	{ "apfs", &fstyp_apfs, true },
-	{ "cd9660", &fstyp_cd9660, false },
-	{ "exfat", &fstyp_exfat, false },
-	{ "ext2fs", &fstyp_ext2fs, false },
-	{ "hfs+", &fstyp_hfsp, false },
-	{ "msdosfs", &fstyp_msdosfs, false },
-	{ "ntfs", &fstyp_ntfs, false },
-	{ "ufs", &fstyp_ufs, false },
+	{ "apfs", &fstyp_apfs, true, NULL },
+	{ "cd9660", &fstyp_cd9660, false, NULL },
+	{ "exfat", &fstyp_exfat, false, EXFAT_ENC },
+	{ "ext2fs", &fstyp_ext2fs, false, NULL },
+	{ "hfs+", &fstyp_hfsp, false, NULL },
+	{ "msdosfs", &fstyp_msdosfs, false, NULL },
+	{ "ntfs", &fstyp_ntfs, false, NULL },
+	{ "ufs", &fstyp_ufs, false, NULL },
 #ifdef HAVE_ZFS
-	{ "zfs", &fstyp_zfs, true },
+	{ "zfs", &fstyp_zfs, true, NULL },
 #endif
-	{ NULL, NULL, NULL }
+	{ NULL, NULL, NULL, NULL }
 };
 
 static struct {
@@ -173,7 +178,7 @@ int
 main(int argc, char **argv)
 {
 	int ch, error, i, nbytes;
-	bool ignore_type = false, show_label = false, show_unmountable = false;
+	bool ignore_type = false, show_unmountable = false;
 	char label[LABEL_LEN + 1], strvised[LABEL_LEN * 4 + 1];
 	char *path;
 	const char *name = NULL;
@@ -203,6 +208,25 @@ main(int argc, char **argv)
 		usage();
 
 	path = argv[0];
+
+	if (setlocale(LC_CTYPE, "") == NULL)
+		err(1, "setlocale");
+
+	/* Cache iconv conversion data before entering capability mode. */
+	if (show_label) {
+		for (i = 0; i < (int)__arraycount(fstypes); i++) {
+			iconv_t cd;
+
+			if (fstypes[i].precache_encoding == NULL)
+				continue;
+			cd = iconv_open("", fstypes[i].precache_encoding);
+			if (cd == (iconv_t)-1)
+				err(1, "%s: iconv_open %s", fstypes[i].name,
+				    fstypes[i].precache_encoding);
+			/* Iconv keeps a small cache of unused encodings. */
+			iconv_close(cd);
+		}
+	}
 
 	fp = fopen(path, "r");
 	if (fp == NULL)
