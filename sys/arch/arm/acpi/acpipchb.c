@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.13 2019/10/15 13:27:50 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.14 2019/12/28 17:19:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.13 2019/10/15 13:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.14 2019/12/28 17:19:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -75,6 +75,8 @@ struct acpipchb_bus_space {
 
 	int			(*map)(void *, bus_addr_t, bus_size_t,
 				       int, bus_space_handle_t *);
+
+	int			flags;
 };
 
 struct acpipchb_softc {
@@ -157,7 +159,8 @@ acpipchb_amazon_graviton_map(ACPI_HANDLE handle, UINT32 level, void *ctx, void *
 		return AE_NOT_FOUND;
 	}
 
-	error = bus_space_map(ap->ap_bst, mem->ar_base, mem->ar_length, 0, &ap->ap_conf_bsh);
+	error = bus_space_map(ap->ap_bst, mem->ar_base, mem->ar_length,
+	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &ap->ap_conf_bsh);
 	if (error != 0)
 		return AE_NO_MEMORY;
 
@@ -309,6 +312,11 @@ acpipchb_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 	if (size == 0)
 		return ERANGE;
 
+	if ((abs->flags & PCI_FLAGS_IO_OKAY) != 0) {
+		/* Force strongly ordered mapping for all I/O space */
+		flag = _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+	}
+
 	for (i = 0; i < abs->nrange; i++) {
 		struct acpipchb_bus_range * const range = &abs->range[i];
 		if (bpa >= range->min && bpa + size - 1 <= range->max) 
@@ -377,6 +385,7 @@ acpipchb_setup_ranges_cb(ACPI_RESOURCE *res, void *ctx)
 		abs->bs = *sc->sc_memt;
 		abs->bs.bs_cookie = abs;
 		abs->map = abs->bs.bs_map;
+		abs->flags = pci_flags;
 		abs->bs.bs_map = acpipchb_bus_space_map;
 		if ((pci_flags & PCI_FLAGS_IO_OKAY) != 0)
 			pba->pba_iot = &abs->bs;

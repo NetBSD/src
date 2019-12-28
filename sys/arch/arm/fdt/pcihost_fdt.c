@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.11 2019/06/23 22:06:03 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.12 2019/12/28 17:19:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.11 2019/06/23 22:06:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.12 2019/12/28 17:19:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -126,7 +126,8 @@ pcihost_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = faa->faa_dmat;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_phandle = faa->faa_phandle;
-	error = bus_space_map(sc->sc_bst, cs_addr, cs_size, 0, &sc->sc_bsh);
+	error = bus_space_map(sc->sc_bst, cs_addr, cs_size,
+	    _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, &sc->sc_bsh);
 	if (error) {
 		aprint_error(": couldn't map registers: %d\n", error);
 		return;
@@ -231,12 +232,14 @@ pcihost_config(struct pcihost_softc *sc)
 	pibs->bst = *sc->sc_bst;
 	pibs->bst.bs_cookie = pibs;
 	pibs->map = pibs->bst.bs_map;
+	pibs->flags = PCI_FLAGS_IO_OKAY;
 	pibs->bst.bs_map = pcihost_bus_space_map;
 
 	struct pcih_bus_space * const pmbs = &sc->sc_mem;
 	pmbs->bst = *sc->sc_bst;
 	pmbs->bst.bs_cookie = pmbs;
 	pmbs->map = pmbs->bst.bs_map;
+	pmbs->flags = PCI_FLAGS_MEM_OKAY;
 	pmbs->bst.bs_map = pcihost_bus_space_map;
 
 	/*
@@ -633,6 +636,11 @@ pcihost_bus_space_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
     bus_space_handle_t *bshp)
 {
 	struct pcih_bus_space * const pbs = t;
+
+	if ((pbs->flags & PCI_FLAGS_IO_OKAY) != 0) {
+		/* Force strongly ordered mapping for all I/O space */
+		flag = _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+	}
 
 	for (size_t i = 0; i < pbs->nranges; i++) {
 		const bus_addr_t rmin = pbs->ranges[i].bpci;
