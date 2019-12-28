@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.215 2019/12/28 08:49:41 martin Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.216 2019/12/28 16:07:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.215 2019/12/28 08:49:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.216 2019/12/28 16:07:41 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -778,6 +778,7 @@ uvm_page_redim(int newncolors, int newnbuckets)
 	if (newncolors <= uvmexp.ncolors &&
 	    newnbuckets == uvm.bucketcount) {
 		uvm_pgfl_unlock();
+		uvm_pgflcache_resume();
 		kmem_free(bucketmem, bucketmemsize);
 		return;
 	}
@@ -838,13 +839,13 @@ uvm_page_redim(int newncolors, int newnbuckets)
 	oldbucketmem = recolored_pages_mem;
 	recolored_pages_memsize = bucketmemsize;
 	recolored_pages_mem = bucketmem;
+
 	uvm_pgfl_unlock();
+	uvm_pgflcache_resume();
 
 	if (oldbucketmemsize) {
 		kmem_free(oldbucketmem, oldbucketmemsize);
 	}
-
-	uvm_pgflcache_resume();
 
 	/*
 	 * this calls uvm_km_alloc() which may want to hold
