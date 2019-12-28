@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.5 2019/12/28 08:00:08 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.6 2019/12/28 08:22:30 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -43,6 +43,11 @@
 
 /* The spec doesn't seem to permit UTF-16 surrogates; definitely LE. */
 #define	EXFAT_ENC	"UCS-2LE"
+/*
+ * NTFS itself is agnostic to encoding; it just stores 255 u16 wchars.  In
+ * practice, UTF-16 seems expected for NTFS.  (Maybe also for exFAT.)
+ */
+#define	NTFS_ENC	"UTF-16LE"
 
 extern bool	show_label;	/* -l flag */
 
