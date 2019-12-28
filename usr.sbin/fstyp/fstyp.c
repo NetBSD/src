@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.6 2019/12/28 08:00:08 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.7 2019/12/28 08:22:30 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.6 2019/12/28 08:00:08 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.7 2019/12/28 08:22:30 tkusumi Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -74,7 +74,7 @@ static struct {
 	{ "ext2fs", &fstyp_ext2fs, false, NULL },
 	{ "hfs+", &fstyp_hfsp, false, NULL },
 	{ "msdosfs", &fstyp_msdosfs, false, NULL },
-	{ "ntfs", &fstyp_ntfs, false, NULL },
+	{ "ntfs", &fstyp_ntfs, false, NTFS_ENC },
 	{ "ufs", &fstyp_ufs, false, NULL },
 #ifdef HAVE_ZFS
 	{ "zfs", &fstyp_zfs, true, NULL },
