@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.h,v 1.9 2019/12/27 12:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_pglist.h,v 1.10 2019/12/28 08:33:35 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2001, 2008, 2019 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _UVM_UVM_PGLIST_H_
 #define _UVM_UVM_PGLIST_H_
+
+#include <sys/param.h>
 
 /*
  * This defines the type of a page queue, e.g. active list, inactive
