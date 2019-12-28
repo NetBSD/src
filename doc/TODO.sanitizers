@@ -1,8 +1,6 @@
 Sanitizer and related tasks.
 
 Short term:
- - compiler-rt sanitizers integration with base
- - merge TSan, MSan and libFuzzer ATF tests
  - prepare MKSANITIZER readme
 
 Long term:
@@ -12,20 +10,16 @@ Long term:
  - improve the framework for ioctl(2) database and handle special cases when a
    part of a struct can be uninitialized and passed to the kernel (MSan)
  - port or finish the port of:
-   * LSan,
    * shadowcallstack,
    * cfi,
    * scudo,
    * DFSan.
- - finish the research of a new syscall for StopTheWorld() operation
-   ptrace(2) style for self-introspection and debugging (LSan)
  - port HWASan -- aarch64 specific, needs hardware or emulator
  - make MKSANITIZER usable with any supported by a compiler combination of
    sanitizers
  - pkgsrc integration with sanitizers and MKSANITIZER (PKGSANITIZER?)
  - port what possible to !amd64
  - fixes with the signal code
- - attach a NetBSD buildbot testing build of compiler-rt and executing tests
  - make compiler-rt buildable with GCC
  - finish the support of float128 for Clang/LLVM/libstdc++/libgcc
  - merge of the libFuzzer integration with the basesystem
@@ -36,7 +30,6 @@ Long term:
 
 
 Unspecified:
- - kernel-msan https://github.com/google/kmsan
  - kernel-tsan? upstream development is stalled with patches for Linux 4.2
    https://github.com/google/ktsan
  - kernel-safestack? implemented in Fuchsia/Magenta
