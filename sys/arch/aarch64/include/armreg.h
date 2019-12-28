@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.29 2019/12/27 18:56:47 jmcneill Exp $ */
+/* $NetBSD: armreg.h,v 1.30 2019/12/28 00:22:08 rjs Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -1297,9 +1297,9 @@ struct aarch64_sysctl_cpu_id {
 	uint64_t ac_aa64isar0;	/* A64 Instruction Set Attribute Register 0 */
 	uint64_t ac_aa64isar1;	/* A64 Instruction Set Attribute Register 1 */
 
-	uint64_t ac_aa64mmfr0;	/* A64 Memroy Model Feature Register 0 */
-	uint64_t ac_aa64mmfr1;	/* A64 Memroy Model Feature Register 1 */
-	uint64_t ac_aa64mmfr2;	/* A64 Memroy Model Feature Register 2 */
+	uint64_t ac_aa64mmfr0;	/* A64 Memory Model Feature Register 0 */
+	uint64_t ac_aa64mmfr1;	/* A64 Memory Model Feature Register 1 */
+	uint64_t ac_aa64mmfr2;	/* A64 Memory Model Feature Register 2 */
 
 	uint64_t ac_aa64pfr0;	/* A64 Processor Feature Register 0 */
 	uint64_t ac_aa64pfr1;	/* A64 Processor Feature Register 1 */
