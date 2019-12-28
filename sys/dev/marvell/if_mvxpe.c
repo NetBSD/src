@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.30 2019/10/15 00:13:53 chs Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.31 2019/12/28 03:07:18 gutteridge Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.30 2019/10/15 00:13:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.31 2019/12/28 03:07:18 gutteridge Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -558,11 +558,11 @@ mvxpe_evcnt_attach(struct mvxpe_softc *sc)
 	evcnt_attach_dynamic(&sc->sc_ev.ev_misc_srse, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "MISC SERDES sync error");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_misc_txreq, EVCNT_TYPE_INTR,
-	    NULL, device_xname(sc->sc_dev), "MISC Tx resource erorr");
+	    NULL, device_xname(sc->sc_dev), "MISC Tx resource error");
 
 	/* RxTx Interrupt */
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rreq, EVCNT_TYPE_INTR,
-	    NULL, device_xname(sc->sc_dev), "RxTx Rx resource erorr");
+	    NULL, device_xname(sc->sc_dev), "RxTx Rx resource error");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_rpq, EVCNT_TYPE_INTR,
 	    NULL, device_xname(sc->sc_dev), "RxTx Rx packet");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_rxtx_tbrq, EVCNT_TYPE_INTR,
@@ -600,7 +600,7 @@ mvxpe_evcnt_attach(struct mvxpe_softc *sc)
 	evcnt_attach_dynamic(&sc->sc_ev.ev_txd_ur, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Tx FIFO underrun counter");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_txd_oth, EVCNT_TYPE_MISC,
-	    NULL, device_xname(sc->sc_dev), "Tx unkonwn erorr counter");
+	    NULL, device_xname(sc->sc_dev), "Tx unknown error counter");
 
 	/* Status Registers */
 	evcnt_attach_dynamic(&sc->sc_ev.ev_reg_pdfc, EVCNT_TYPE_MISC,
@@ -610,7 +610,7 @@ mvxpe_evcnt_attach(struct mvxpe_softc *sc)
 	evcnt_attach_dynamic(&sc->sc_ev.ev_reg_txbadfcs, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Tx bad FCS counter");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_reg_txdropped, EVCNT_TYPE_MISC,
-	    NULL, device_xname(sc->sc_dev), "Tx dorpped counter");
+	    NULL, device_xname(sc->sc_dev), "Tx dropped counter");
 	evcnt_attach_dynamic(&sc->sc_ev.ev_reg_lpic, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "LP_IDLE counter");
 
