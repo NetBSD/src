@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.30 2019/12/27 21:55:51 mlelstv Exp $ */
+/* $NetBSD: cpu.c,v 1.31 2019/12/28 19:18:31 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.30 2019/12/27 21:55:51 mlelstv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.31 2019/12/28 19:18:31 jmcneill Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -190,6 +190,8 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Cortex", "V8.2-A+" },
 	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Cortex", "V8.2-A+" },
 	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "Ampere eMAG", "Skylark", "V8-A" },
+	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Neoverse", "V8.2-A+" },
+	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Neoverse", "V8.2-A+" },
 	{ CPU_ID_THUNDERXRX, "Cavium ThunderX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX81XXRX, "Cavium ThunderX CN81XX", "Cavium", "V8-A" },
 	{ CPU_ID_THUNDERX83XXRX, "Cavium ThunderX CN83XX", "Cavium", "V8-A" },
