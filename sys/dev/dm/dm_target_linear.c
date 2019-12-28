@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.36 2019/12/28 15:38:16 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,10 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.35 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.36 2019/12/28 15:38:16 tkusumi Exp $");
 
 /*
- * This file implements initial version of device-mapper dklinear target.
+ * This file implements initial version of device-mapper linear target.
  */
 
 #include <sys/types.h>
