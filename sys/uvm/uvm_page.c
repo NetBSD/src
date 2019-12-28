@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.214 2019/12/27 13:19:24 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.215 2019/12/28 08:49:41 martin Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.214 2019/12/27 13:19:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.215 2019/12/28 08:49:41 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -725,8 +725,8 @@ uvm_page_numa_lookup(struct vm_page *pg)
 	}
 
 	if (!warned) {
-		printf("uvm_page_numa_lookup: failed, first pg=%p pa=%p\n",
-		    pg, (void *)VM_PAGE_TO_PHYS(pg));
+		printf("uvm_page_numa_lookup: failed, first pg=%p pa=%#"
+		    PRIxPADDR "\n", pg, VM_PAGE_TO_PHYS(pg));
 		warned = true;
 	}
 
