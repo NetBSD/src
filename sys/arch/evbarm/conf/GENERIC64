@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.119 2019/12/25 10:51:20 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.120 2019/12/29 12:49:03 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -385,6 +385,7 @@ mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
 mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
 rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
+sdhc*		at acpi?
 sunximmc*	at fdt?			# Allwinner SD/MMC
 sdmmc*		at sdmmcbus?
 ld0		at sdmmc0
