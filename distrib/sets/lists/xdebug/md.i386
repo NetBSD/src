@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.45 2019/11/03 01:35:47 uki Exp $
+# $NetBSD: md.i386,v 1.46 2019/12/29 03:00:35 uki Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib
@@ -101,8 +101,8 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_alpine.so.1.debug	xdebug-xf86-video-cirrus_alpine-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_drv.so.1.debug	xdebug-xf86-video-cirrus-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/cirrus_laguna.so.1.debug	xdebug-xf86-video-cirrus_laguna-debug	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/elographics_drv.so.1.debug	-unknown-	xorg,debug
-./usr/libdata/debug/usr/X11R7/lib/modules/drivers/geode_drv.so.2.debug	-unknown-		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/elographics_drv.so.1.debug	xdegub-xf86-input-elographics-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/geode_drv.so.2.debug	xdebug-xf86-video-geode-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-xf86-video-glint-debug		xorg,debug,xorg_server_ver=110
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/glint_drv.so.1.debug	xdebug-obsolete		xorg,obsolete,xorg_server_ver=120
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/i128_drv.so.1.debug	xdebug-xf86-video-i128-debug		xorg,debug
