@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_pcie.c,v 1.6.2.2 2019/12/09 16:01:12 martin Exp $ */
+/* $NetBSD: rk3399_pcie.c,v 1.6.2.3 2019/12/29 09:27:10 martin Exp $ */
 /*
  * Copyright (c) 2018 Mark Kettenis <kettenis@openbsd.org>
  *
@@ -17,7 +17,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.6.2.2 2019/12/09 16:01:12 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_pcie.c,v 1.6.2.3 2019/12/29 09:27:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -228,8 +228,9 @@ rkpcie_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, sc->sc_apb_addr, sc->sc_apb_size, 0, &sc->sc_ioh) != 0 ||
-	    bus_space_map(sc->sc_iot, sc->sc_axi_addr, sc->sc_axi_size, 0, &sc->sc_axi_ioh) != 0) {
+	const int mapflags = _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED;
+	if (bus_space_map(sc->sc_iot, sc->sc_apb_addr, sc->sc_apb_size, mapflags, &sc->sc_ioh) != 0 ||
+	    bus_space_map(sc->sc_iot, sc->sc_axi_addr, sc->sc_axi_size, mapflags, &sc->sc_axi_ioh) != 0) {
 		printf(": can't map registers\n");
 		sc->sc_axi_size = 0;
 		sc->sc_apb_size = 0;

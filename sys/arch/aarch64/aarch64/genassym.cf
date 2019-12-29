@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.13 2019/07/13 09:47:14 skrll Exp $
+# $NetBSD: genassym.cf,v 1.13.2.1 2019/12/29 09:27:09 martin Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -334,7 +334,9 @@ define	MAIR_ATTR0		MAIR_ATTR0
 define	MAIR_ATTR1		MAIR_ATTR1
 define	MAIR_ATTR2		MAIR_ATTR2
 define	MAIR_ATTR3		MAIR_ATTR3
+define	MAIR_ATTR4		MAIR_ATTR4
 define	MAIR_DEVICE_nGnRnE	MAIR_DEVICE_nGnRnE
+define	MAIR_DEVICE_nGnRE	MAIR_DEVICE_nGnRE
 define	MAIR_NORMAL_NC		MAIR_NORMAL_NC
 define	MAIR_NORMAL_WT		MAIR_NORMAL_WT
 define	MAIR_NORMAL_WB		MAIR_NORMAL_WB

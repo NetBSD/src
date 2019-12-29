@@ -1,4 +1,4 @@
-/* $NetBSD: bus_space.c,v 1.8 2019/01/27 02:08:36 pgoyette Exp $ */
+/* $NetBSD: bus_space.c,v 1.8.4.1 2019/12/29 09:27:09 martin Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.8 2019/01/27 02:08:36 pgoyette Exp $");
+__KERNEL_RCSID(1, "$NetBSD: bus_space.c,v 1.8.4.1 2019/12/29 09:27:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,6 +561,8 @@ generic_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
 		pmapflags = PMAP_WRITE_COMBINE;
 	else if ((flag & BUS_SPACE_MAP_CACHEABLE) != 0)
 		pmapflags = PMAP_WRITE_BACK;
+	else if ((flag & _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED) != 0)
+		pmapflags = PMAP_DEV_SO;
 	else
 		pmapflags = PMAP_DEV;
 

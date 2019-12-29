@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.39.2.3 2019/12/09 16:08:57 martin Exp $	*/
+/*	$NetBSD: locore.S,v 1.39.2.4 2019/12/29 09:27:09 martin Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,8 +38,14 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.39.2.3 2019/12/09 16:08:57 martin Exp $")
+RCSID("$NetBSD: locore.S,v 1.39.2.4 2019/12/29 09:27:09 martin Exp $")
 
+#ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
+#define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
+#else
+#define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRE
+#endif
+#define	MAIR_DEVICE_MEM_SO	MAIR_DEVICE_nGnRnE
 
 /*#define DEBUG_LOCORE			/* debug print */
 /*#define DEBUG_LOCORE_PRINT_LOCK	/* avoid mixing AP's output */
@@ -944,7 +950,8 @@ mair_setting:
 	    __SHIFTIN(MAIR_NORMAL_WB, MAIR_ATTR0) |	\
 	    __SHIFTIN(MAIR_NORMAL_NC, MAIR_ATTR1) |	\
 	    __SHIFTIN(MAIR_NORMAL_WT, MAIR_ATTR2) |	\
-	    __SHIFTIN(MAIR_DEVICE_nGnRnE, MAIR_ATTR3))
+	    __SHIFTIN(MAIR_DEVICE_MEM, MAIR_ATTR3) |	\
+	    __SHIFTIN(MAIR_DEVICE_MEM_SO, MAIR_ATTR4))
 
 #define VIRT_BIT	48
 

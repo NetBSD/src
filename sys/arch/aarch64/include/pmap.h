@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.24.4.1 2019/11/04 14:08:18 martin Exp $ */
+/* $NetBSD: pmap.h,v 1.24.4.2 2019/12/29 09:27:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -114,6 +114,7 @@ struct vm_page_md {
 #define LX_BLKPAG_ATTR_NORMAL_NC	__SHIFTIN(1, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_NORMAL_WT	__SHIFTIN(2, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_DEVICE_MEM	__SHIFTIN(3, LX_BLKPAG_ATTR_INDX)
+#define LX_BLKPAG_ATTR_DEVICE_MEM_SO	__SHIFTIN(4, LX_BLKPAG_ATTR_INDX)
 #define LX_BLKPAG_ATTR_MASK		LX_BLKPAG_ATTR_INDX
 
 #define lxpde_pa(pde)		((paddr_t)((pde) & LX_TBL_PA))
@@ -228,6 +229,8 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 
 #define	PMAP_PTE			0x10000000 /* kenter_pa */
 #define	PMAP_DEV			0x20000000 /* kenter_pa */
+#define	PMAP_DEV_SO			0x40000000 /* kenter_pa */
+#define	PMAP_DEV_MASK			(PMAP_DEV | PMAP_DEV_SO)
 
 static inline u_int
 aarch64_mmap_flags(paddr_t mdpgno)
@@ -235,11 +238,12 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	u_int nflag, pflag;
 
 	/*
-	 * aarch64 arch has 4 memory attribute:
+	 * aarch64 arch has 5 memory attribute:
 	 *
 	 *  WriteBack      - write back cache
 	 *  WriteThru      - wite through cache
 	 *  NoCache        - no cache
+	 *  Device(nGnRE)  - no Gathering, no Reordering, Early write ack
 	 *  Device(nGnRnE) - no Gathering, no Reordering, no Early write ack
 	 *
 	 * but pmap has PMAP_{NOCACHE,WRITE_COMBINE,WRITE_BACK} flags.
