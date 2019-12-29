@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.84 2019/12/26 20:25:56 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.85 2019/12/29 09:21:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1827,4 +1827,9 @@ sys/dev/pci/ixgbe/ixgbe.c			1.218
 
 	Add missing core lock in ixgbe_handle_mod().
 	[msaitoh, ticket #1478]
+
+xsrc/external/mit/xf86-video-wsfb/dist/src/wsfb_driver.c 1.36
+
+	PR xsrc/54167: fix Xorg wsfb server "Rotate" corruption problem.
+	[tsutsui, ticket #1479]
 
