@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.16 2019/12/22 15:57:07 thorpej Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.17 2019/12/29 13:45:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.16 2019/12/22 15:57:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.17 2019/12/29 13:45:11 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -633,23 +633,19 @@ static UINT8 acpi_dsd_uuid[ACPI_UUID_LENGTH] = {
 	0x8a, 0x91, 0xbc, 0x9b, 0xbf, 0x4a, 0xa3, 0x01
 };
 
-ACPI_STATUS
-acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
+static ACPI_STATUS
+acpi_dsd_property(ACPI_HANDLE handle, const char *prop, ACPI_BUFFER *pbuf, ACPI_OBJECT_TYPE type, ACPI_OBJECT **ret)
 {
 	ACPI_OBJECT *obj, *uuid, *props, *pobj, *propkey, *propval;
 	ACPI_STATUS rv;
-	ACPI_BUFFER buf;
 	int n;
 
-	buf.Pointer = NULL;
-	buf.Length = ACPI_ALLOCATE_BUFFER;
-
-	rv = AcpiEvaluateObjectTyped(handle, "_DSD", NULL, &buf, ACPI_TYPE_PACKAGE);
+	rv = AcpiEvaluateObjectTyped(handle, "_DSD", NULL, pbuf, ACPI_TYPE_PACKAGE);
 	if (ACPI_FAILURE(rv))
 		return rv;
 
 	props = NULL;
-	obj = (ACPI_OBJECT *)buf.Pointer;
+	obj = (ACPI_OBJECT *)pbuf->Pointer;
 	for (n = 0; (n + 1) < obj->Package.Count; n += 2) {
 		uuid = &obj->Package.Elements[n];
 		if (uuid->Buffer.Length == ACPI_UUID_LENGTH &&
@@ -658,10 +654,8 @@ acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
 			break;
 		}
 	}
-	if (props == NULL) {
-		rv = AE_NOT_FOUND;
-		goto done;
-	}
+	if (props == NULL)
+		return AE_NOT_FOUND;
 
 	for (n = 0; n < props->Package.Count; n++) {
 		pobj = &props->Package.Elements[n];
@@ -674,16 +668,50 @@ acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
 		if (strcmp(propkey->String.Pointer, prop) != 0)
 			continue;
 
-		if (propval->Type != ACPI_TYPE_INTEGER) {
-			rv = AE_TYPE;
+		if (propval->Type != type) {
+			return AE_TYPE;
 		} else {
-			*val = propval->Integer.Value;
-			rv = AE_OK;
+			*ret = propval;
+			return AE_OK;
 		}
 		break;
 	}
 
-done:
+	return AE_NOT_FOUND;
+}
+
+ACPI_STATUS
+acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
+{
+	ACPI_OBJECT *propval;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	rv = acpi_dsd_property(handle, prop, &buf, ACPI_TYPE_INTEGER, &propval);
+	if (ACPI_SUCCESS(rv))
+		*val = propval->Integer.Value;
+
+	ACPI_FREE(buf.Pointer);
+	return rv;
+}
+
+ACPI_STATUS
+acpi_dsd_string(ACPI_HANDLE handle, const char *prop, char **val)
+{
+	ACPI_OBJECT *propval;
+	ACPI_STATUS rv;
+	ACPI_BUFFER buf;
+
+	buf.Pointer = NULL;
+	buf.Length = ACPI_ALLOCATE_BUFFER;
+
+	rv = acpi_dsd_property(handle, prop, &buf, ACPI_TYPE_STRING, &propval);
+	if (ACPI_SUCCESS(rv))
+		*val = kmem_strdup(propval->String.Pointer, KM_SLEEP);
+
 	ACPI_FREE(buf.Pointer);
 	return rv;
 }
