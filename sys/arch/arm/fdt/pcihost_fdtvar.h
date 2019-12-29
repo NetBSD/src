@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdtvar.h,v 1.2 2019/06/12 10:13:44 jmcneill Exp $ */
+/* $NetBSD: pcihost_fdtvar.h,v 1.2.2.1 2019/12/29 09:27:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -52,6 +52,8 @@ struct pcih_bus_space {
 
 	int		(*map)(void *, bus_addr_t, bus_size_t,
 			      int, bus_space_handle_t *);
+	int			flags;
+
 	struct space_range {
 		bus_addr_t	bpci;
 		bus_addr_t	bbus;

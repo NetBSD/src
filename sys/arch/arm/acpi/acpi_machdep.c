@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.6.6.2 2019/08/12 17:32:09 martin Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.6.6.3 2019/12/29 09:27:10 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.6.2 2019/08/12 17:32:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.6.6.3 2019/12/29 09:27:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -313,13 +313,27 @@ acpi_md_gtdt_probe(ACPI_GTDT_HEADER *hdrp, void *aux)
 	return AE_OK;
 }
 
+#if NPCI > 0
+static struct bus_space acpi_md_mcfg_bs_tag;
+
+static int
+acpi_md_mcfg_bs_map(void *t, bus_addr_t bpa, bus_size_t size, int flag,
+    bus_space_handle_t *bshp)
+{
+	return arm_generic_bs_tag.bs_map(t, bpa, size,
+	    flag | _ARM_BUS_SPACE_MAP_STRONGLY_ORDERED, bshp);
+}
+#endif
+
 void
 acpi_md_callback(struct acpi_softc *sc)
 {
 	ACPI_TABLE_HEADER *hdrp;
 
 #if NPCI > 0
-	acpimcfg_init(&arm_generic_bs_tag, NULL);
+	acpi_md_mcfg_bs_tag = arm_generic_bs_tag;
+	acpi_md_mcfg_bs_tag.bs_map = acpi_md_mcfg_bs_map;
+	acpimcfg_init(&acpi_md_mcfg_bs_tag, NULL);
 #endif
 
 	if (acpi_madt_map() != AE_OK)
