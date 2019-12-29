@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_30_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: compat_30_mod.c,v 1.2.6.1 2019/12/29 09:36:27 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_30_mod.c,v 1.2 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_30_mod.c,v 1.2.6.1 2019/12/29 09:36:27 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -66,6 +66,12 @@ compat_30_init(void)
 		vfs_syscalls_30_fini();
 		return error;
 	}
+	error = uipc_syscalls_30_init();
+	if (error != 0) {
+		kern_time_30_fini();
+		vfs_syscalls_30_fini();
+		return error;
+	}
 	bio_30_init();
 	vnd_30_init();
 	usb_30_init();
@@ -82,18 +88,24 @@ compat_30_fini(void)
 	vnd_30_fini();
 	bio_30_fini();
 
-	error = kern_time_30_fini();
+	error = uipc_syscalls_30_fini();
 	if (error != 0)
 		goto err1;
 
-	error = vfs_syscalls_30_fini();
+	error = kern_time_30_fini();
 	if (error != 0)
 		goto err2;
 
+	error = vfs_syscalls_30_fini();
+	if (error != 0)
+		goto err3;
+
 	return 0;
 
- err2:
+ err3:
 	kern_time_30_init();
+ err2:
+	uipc_syscalls_30_init();
  err1:
 	bio_30_init();
 	vnd_30_init();
