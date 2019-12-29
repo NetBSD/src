@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.127 2019/10/26 07:31:39 uki Exp $
+# $NetBSD: md.i386,v 1.128 2019/12/29 03:00:35 uki Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -54,8 +54,8 @@
 ./usr/X11R7/lib/modules/dri/trident_dri.so.0		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/unichrome_dri.so.0		xserver-obsolete	obsolete
-./usr/X11R7/lib/modules/drivers/amdgpu_drv.so		-unknown-	xorg,xorg_server_ver=120
-./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19	-unknown-	xorg,xorg_server_ver=120
+./usr/X11R7/lib/modules/drivers/amdgpu_drv.so		xserver-xf86-video-amdgpu-drivers	xorg,xorg_server_ver=120
+./usr/X11R7/lib/modules/drivers/amdgpu_drv.so.19	xserver-xf86-video-amdgpu-drivers	xorg,xorg_server_ver=120
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/apm_drv.so		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/apm_drv.so.1		-unknown-	xorg,xorg_server_ver=110
@@ -90,10 +90,10 @@
 ./usr/X11R7/lib/modules/drivers/cirrus_laguna_drv.so.1	xdebug-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/drivers/cyrix_drv.so.1		xserver-obsolete	obsolete
-./usr/X11R7/lib/modules/drivers/elographics_drv.so	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/elographics_drv.so.1	-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/geode_drv.so		-unknown-	xorg
-./usr/X11R7/lib/modules/drivers/geode_drv.so.2		-unknown-	xorg
+./usr/X11R7/lib/modules/drivers/elographics_drv.so	xserver-xf86-input-elographics-drivers	xorg
+./usr/X11R7/lib/modules/drivers/elographics_drv.so.1	xserver-xf86-input-elographics-drivers	xorg
+./usr/X11R7/lib/modules/drivers/geode_drv.so		xserver-xf86-video-geode-drivers	xorg
+./usr/X11R7/lib/modules/drivers/geode_drv.so.2		xserver-xf86-video-geode-drivers	xorg
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/drivers/glint_drv.so		xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/drivers/glint_drv.so.1		-unknown-	xorg,xorg_server_ver=110
@@ -318,14 +318,14 @@
 ./usr/X11R7/man/cat1/pcitweak.0				xserver-obsolete	obsolete
 ./usr/X11R7/man/cat1/scanpci.0				xserver-obsolete	obsolete
 ./usr/X11R7/man/cat1/xorgconfig.0			xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/amdgpu.0				-unknown-	.cat,xorg,xorg_server_ver=120
+./usr/X11R7/man/cat4/amdgpu.0				xserver-xf86-video-amdgpu-catman	.cat,xorg,xorg_server_ver=120
 ./usr/X11R7/man/cat4/apm.0				-unknown-	.cat,xorg,xorg_server_ver=110
 ./usr/X11R7/man/cat4/apm.0				xserver-obsolete	.cat,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/man/cat4/ati.0				xserver-xf86-video-ati-catman	.cat,xorg
 ./usr/X11R7/man/cat4/chips.0				xserver-xf86-video-chips-catman	.cat,xorg
 ./usr/X11R7/man/cat4/cirrus.0				xserver-xf86-video-cirrus-catman	.cat,xorg
 ./usr/X11R7/man/cat4/cyrix.0				xserver-obsolete	obsolete
-./usr/X11R7/man/cat4/elographics.0			-unknown-	.cat,xorg
+./usr/X11R7/man/cat4/elographics.0			xserver-xf86-input-elographics-catman	.cat,xorg
 ./usr/X11R7/man/cat4/exa.0				xserver-xf86-video-exa-catman	.cat,xorg
 ./usr/X11R7/man/cat4/glint.0				-unknown-	.cat,xorg,xorg_server_ver=110
 ./usr/X11R7/man/cat4/glint.0				xserver-obsolete	.cat,xorg,xorg_server_ver=120,obsolete
@@ -374,14 +374,14 @@
 ./usr/X11R7/man/html1/pcitweak.html			xserver-obsolete	obsolete
 ./usr/X11R7/man/html1/scanpci.html			xserver-obsolete	obsolete
 ./usr/X11R7/man/html1/xorgconfig.html			xserver-obsolete	obsolete
-./usr/X11R7/man/html4/amdgpu.html			-unknown-	html,xorg,xorg_server_ver=120
+./usr/X11R7/man/html4/amdgpu.html			xserver-xf86-video-amdgpu-htmlman	html,xorg,xorg_server_ver=120
 ./usr/X11R7/man/html4/apm.html				-unknown-	html,xorg,xorg_server_ver=110
 ./usr/X11R7/man/html4/apm.html				xserver-obsolete	html,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/man/html4/ati.html				xserver-xf86-video-ati-htmlman	html,xorg
 ./usr/X11R7/man/html4/chips.html			xserver-xf86-video-chips-htmlman	html,xorg
 ./usr/X11R7/man/html4/cirrus.html			xserver-xf86-video-cirrus-htmlman	html,xorg
 ./usr/X11R7/man/html4/cyrix.html			xserver-obsolete	obsolete
-./usr/X11R7/man/html4/elographics.html			-unknown-	html,xorg
+./usr/X11R7/man/html4/elographics.html			xserver-xf86-input-elographics-htmlman	html,xorg
 ./usr/X11R7/man/html4/exa.html				xserver-xf86-video-exa-htmlman	html,xorg
 ./usr/X11R7/man/html4/glint.html			-unknown-	html,xorg,xorg_server_ver=110
 ./usr/X11R7/man/html4/glint.html			xserver-obsolete	html,xorg,xorg_server_ver=120,obsolete
@@ -430,14 +430,14 @@
 ./usr/X11R7/man/man1/pcitweak.1				xserver-obsolete	obsolete
 ./usr/X11R7/man/man1/scanpci.1				xserver-obsolete	obsolete
 ./usr/X11R7/man/man1/xorgconfig.1			xserver-obsolete	obsolete
-./usr/X11R7/man/man4/amdgpu.4				-unknown-	.man,xorg,xorg_server_ver=120
+./usr/X11R7/man/man4/amdgpu.4				xserver-xf86-video-amdgpu-man	.man,xorg,xorg_server_ver=120
 ./usr/X11R7/man/man4/apm.4				-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/apm.4				xserver-obsolete	.man,xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/man/man4/ati.4				xserver-xf86-video-ati-man	.man,xorg
 ./usr/X11R7/man/man4/chips.4				xserver-xf86-video-chips-man	.man,xorg
 ./usr/X11R7/man/man4/cirrus.4				xserver-xf86-video-cirrus-man	.man,xorg
 ./usr/X11R7/man/man4/cyrix.4				xserver-obsolete	obsolete
-./usr/X11R7/man/man4/elographics.4			-unknown-	.man,xorg
+./usr/X11R7/man/man4/elographics.4			xserver-xf86-input-elographics-man	.man,xorg
 ./usr/X11R7/man/man4/exa.4				xserver-xf86-video-exa-man	.man,xorg
 ./usr/X11R7/man/man4/glint.4				-unknown-	.man,xorg,xorg_server_ver=110
 ./usr/X11R7/man/man4/glint.4				xserver-obsolete	.man,xorg,xorg_server_ver=120,obsolete
