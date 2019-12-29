@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.47 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.47.2.1 2019/12/29 11:13:48 martin Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.47 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.47.2.1 2019/12/29 11:13:48 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -989,6 +989,9 @@ static usbd_status
 uvideo_unit_alloc_controls(struct uvideo_unit *vu, uint8_t size,
 			   const uint8_t *controls)
 {
+	if (size == 0)
+		return USBD_INVAL;
+
 	vu->vu_controls = kmem_alloc(sizeof(*vu->vu_controls) * size, KM_SLEEP);
 	vu->vu_control_size = size;
 	memcpy(vu->vu_controls, controls, size);
