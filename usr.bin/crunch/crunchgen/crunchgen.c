@@ -1,4 +1,4 @@
-/*	$NetBSD: crunchgen.c,v 1.93 2019/12/18 02:16:04 christos Exp $	*/
+/*	$NetBSD: crunchgen.c,v 1.94 2019/12/29 18:26:16 christos Exp $	*/
 /*
  * Copyright (c) 1994 University of Maryland
  * All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: crunchgen.c,v 1.93 2019/12/18 02:16:04 christos Exp $");
+__RCSID("$NetBSD: crunchgen.c,v 1.94 2019/12/29 18:26:16 christos Exp $");
 #endif
 
 #include <stdlib.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: crunchgen.c,v 1.93 2019/12/18 02:16:04 christos Exp $");
 #include <sys/param.h>
 #include <sys/utsname.h>
 
-#define CRUNCH_VERSION	"20180508"
+#define CRUNCH_VERSION	"20191223"
 
 #define MAXLINELEN	16384
 #define MAXFIELDS 	 2048
@@ -80,6 +80,12 @@ typedef struct prog {
     int goterror;
 } prog_t;
 
+typedef struct var {
+    struct var *next;
+    char *name;
+    const char *value;
+    size_t len;
+} var_t;
 
 /* global state */
 
@@ -87,6 +93,8 @@ static strlst_t *srcdirs = NULL;
 static strlst_t *libs    = NULL;
 static strlst_t *vars	  = NULL;
 static prog_t   *progs   = NULL;
+static var_t *mvars = NULL;
+static var_t *evars = NULL;
 
 static char line[MAXLINELEN];
 
@@ -96,15 +104,13 @@ static char cachename[MAXPATHLEN], curfilename[MAXPATHLEN];
 static char curdir[MAXPATHLEN];
 static char topdir[MAXPATHLEN];
 static char libdir[MAXPATHLEN] = "/usr/lib";
-static char dbg[MAXPATHLEN] = "-Os";
 static int linenum = -1;
 static int goterror = 0;
 
 static const char *pname = "crunchgen";
 
 /* options */
-static int verbose, readcache, useobjs, oneobj, pie, libcsanitizer, sanitizer;
-static int ssp, fortify;
+static int verbose, readcache, useobjs, oneobj;
 
 static int reading_cache;
 static char *machine;
@@ -115,10 +121,10 @@ static char *makeflags;
 /* general library routines */
 
 static void status(const char *str);
-__dead static void out_of_memory(void);
 static void add_string(strlst_t **listp, char *str);
 static int is_dir(const char *pathname);
 static int is_nonempty_file(const char *pathname);
+static void addvar(const char *cstr);
 
 /* helper routines for main() */
 
@@ -154,32 +160,26 @@ main(int argc, char **argv)
     readcache = 1;
     useobjs = 0;
     oneobj = 1;
-    pie = 0;
     *outmkname = *outcfname = *execfname = '\0';
     
     if (argc > 0)
 	pname = argv[0];
 
-    while ((optc = getopt(argc, argv, "m:c:d:e:FfopPqsD:L:Ov:")) != -1) {
+    while ((optc = getopt(argc, argv, "m:c:e:foqsD:L:OV:v:")) != -1) {
 	switch(optc) {
 	case 'f':	readcache = 0; break;
-	case 'F':	fortify = 1; break;
-	case 'p':	pie = 1; break;
-	case 'P':	ssp = 1; break;
 	case 'q':	verbose = 0; break;
 	case 'O':	oneobj = 0; break;
 	case 'o':       useobjs = 1, oneobj = 0; break;
-	case 's':       sanitizer = 1; break;
-	case 'S':       libcsanitizer = 1; break;
 
 	case 'm':	(void)estrlcpy(outmkname, optarg, sizeof(outmkname)); break;
 	case 'c':	(void)estrlcpy(outcfname, optarg, sizeof(outcfname)); break;
 	case 'e':	(void)estrlcpy(execfname, optarg, sizeof(execfname)); break;
-	case 'd':       (void)estrlcpy(dbg, optarg, sizeof(dbg)); break;
 
 	case 'D':	(void)estrlcpy(topdir, optarg, sizeof(topdir)); break;
 	case 'L':	(void)estrlcpy(libdir, optarg, sizeof(libdir)); break;
 	case 'v':	add_string(&vars, optarg); break;
+	case 'V':	addvar(optarg); break;
 
 	case '?':
 	default:	usage();
@@ -399,11 +399,8 @@ add_prog(char *progname)
 	if (!strcmp(p2->name, progname))
 	    return;
 
-    p2 = malloc(sizeof(prog_t));
-    if (p2)
-	p2->name = strdup(progname);
-    if (!p2 || !p2->name) 
-	out_of_memory();
+    p2 = emalloc(sizeof(*p2));
+    p2->name = estrdup(progname);
 
     p2->next = NULL;
     if (p1 == NULL)
@@ -464,8 +461,7 @@ add_special(int argc, char **argv)
     if (!strcmp(argv[2], "ident")) {
 	if (argc != 4)
 	    goto argcount;
-	if ((p->ident = strdup(argv[3])) == NULL)
-	    out_of_memory();
+	p->ident = estrdup(argv[3]);
 	return;
     }
 
@@ -473,8 +469,7 @@ add_special(int argc, char **argv)
 	if (argc != 4)
 	    goto argcount;
 	if (argv[3][0] == '/') {
-	    if ((p->srcdir = strdup(argv[3])) == NULL)
-		out_of_memory();
+	    p->srcdir = estrdup(argv[3]);
 	} else {
 	    char tmppath[MAXPATHLEN];
 	    if (topdir[0] == '\0')
@@ -483,8 +478,7 @@ add_special(int argc, char **argv)
 	        (void)estrlcpy(tmppath, topdir, sizeof(tmppath));
 	    (void)estrlcat(tmppath, "/", sizeof(tmppath));
 	    (void)estrlcat(tmppath, argv[3], sizeof(tmppath));
-	    if ((p->srcdir = strdup(tmppath)) == NULL)
-		out_of_memory();
+	    p->srcdir = estrdup(tmppath);
 	}
 	return;
     }
@@ -492,8 +486,7 @@ add_special(int argc, char **argv)
     if (!strcmp(argv[2], "objdir")) {
 	if (argc != 4)
 	    goto argcount;
-	if ((p->objdir = strdup(argv[3])) == NULL)
-	    out_of_memory();
+	p->objdir = estrdup(argv[3]);
 	return;
     }
 
@@ -603,8 +596,7 @@ fillin_program(prog_t *p)
 	    (void)snprintf(path, sizeof(path), "%s/%s", srcparent, p->name);
 	    if (is_dir(path)) {
 		if (path[0] == '/') {
-                    if ((p->srcdir = strdup(path)) == NULL)
-			out_of_memory();
+                    p->srcdir = estrdup(path);
 		} else {
 		    char tmppath[MAXPATHLEN];
 		    if (topdir[0] == '\0')
@@ -613,8 +605,7 @@ fillin_program(prog_t *p)
 			(void)estrlcpy(tmppath, topdir, sizeof(tmppath));
 		    (void)estrlcat(tmppath, "/", sizeof(tmppath));
 		    (void)estrlcat(tmppath, path, sizeof(tmppath));
-		    if ((p->srcdir = strdup(tmppath)) == NULL)
-			out_of_memory();
+		    p->srcdir = estrdup(tmppath);
 		}
 	    }
 	}
@@ -805,13 +796,28 @@ gen_specials_cache(void)
     fclose(cachef);
 }
 
-
 static void
-addno(char *str, size_t len, const char *stem)
+addvar(const char *cstr)
 {
-	char buf[128];
-	snprintf(buf, sizeof(buf), "NO%s=\n", stem);
-	strlcat(str, buf, len);
+	char *str = estrdup(cstr), *p;
+	var_t *v = emalloc(sizeof(*v));
+
+	if ((p = strchr(str, '=')) == NULL) {
+		v->value = "";
+	} else {
+		*p++ = '\0';
+		v->value = p;
+	}
+	v->name = str;
+	// "%s=${%s:Q} "
+	v->len = 2 * strlen(v->name) + 7;
+	v->next = NULL;
+	if (mvars == NULL) {
+		mvars = evars = v;
+	} else {
+		evars->next = v;
+		evars = v;
+	}
 }
 
 
@@ -819,24 +825,10 @@ static void
 gen_output_makefile(void)
 {
     prog_t *p;
+    var_t *v;
     FILE *outmk;
-    char noes[1024], *ptr;
-
-    noes[0] = '\0';
-
-    if (!pie)
-	    addno(noes, sizeof(noes), "PIE");
-    if (!ssp)
-	    addno(noes, sizeof(noes), "SSP");
-    if (!fortify)
-	    addno(noes, sizeof(noes), "FORT");
-    if (!libcsanitizer)
-	    addno(noes, sizeof(noes), "LIBCSANITIZER");
-    if (!sanitizer)
-	    addno(noes, sizeof(noes), "SANITIZER");
-
-    addno(noes, sizeof(noes), "MAN");
-
+    size_t len;
+    char *linevars, *ptr;
 
     (void)snprintf(line, sizeof(line), "generating %s", outmkname);
     status(line);
@@ -850,14 +842,24 @@ gen_output_makefile(void)
     fprintf(outmk, "# %s - generated from %s by crunchgen %s\n\n",
 	    outmkname, infilename, CRUNCH_VERSION);
 
-    fprintf(outmk, "%s\n", noes);
-    while ((ptr = strchr(noes, '\n')) != NULL)
-	    *ptr = ' ';
-
     top_makefile_rules(outmk);
 
+	
+    len = 0;
+    for (v = mvars; v != NULL; v = v->next) {
+	len += v->len;
+    }
+
+    linevars = emalloc(len + 1);
+
+    ptr = linevars;
+    for (v = mvars; v != NULL; v = v->next) {
+	    int rl = snprintf(ptr, v->len + 1, "%s=${%s:Q} ", v->name, v->name);
+	    ptr += rl;
+    }
+
     for (p = progs; p != NULL; p = p->next)
-	prog_makefile_rules(outmk, p, noes); 
+	prog_makefile_rules(outmk, p, linevars); 
 
     fprintf(outmk, "\n.include <bsd.prog.mk>\n");
     fprintf(outmk, "\n# ========\n");
@@ -956,8 +958,11 @@ static void
 top_makefile_rules(FILE *outmk)
 {
     prog_t *p;
+    var_t *v;
 
-    fprintf(outmk, "DBG=%s\n", dbg);
+    for (v = mvars; v != NULL; v = v->next) {
+	fprintf(outmk, "%s=%s\n", v->name, v->value);
+    }
     fprintf(outmk, "MAKE?=make\n");
 #ifdef NEW_TOOLCHAIN
     fprintf(outmk, "OBJCOPY?=objcopy\n");
@@ -984,7 +989,6 @@ top_makefile_rules(FILE *outmk)
 	fprintf(outmk, " %s_make", p->ident);
     fprintf(outmk, "\n\n");
 
-    fprintf(outmk, "LDSTATIC=-static%s\n\n", pie ? " -pie" : "");
     fprintf(outmk, "PROG=%s\n\n", execfname);
 
     fprintf(outmk, "OBJCOPY_REMOVE_FLAGS=-R .eh_frame_hdr -R .note -R .note.netbsd.pax -R .ident -R .comment -R .copyright\n\n");
@@ -1018,7 +1022,7 @@ bottom_makefile_rules(FILE *outmk)
 
 
 static void
-prog_makefile_rules(FILE *outmk, prog_t *p, const char *noes)
+prog_makefile_rules(FILE *outmk, prog_t *p, const char *linevars)
 {
     strlst_t *lst;
 
@@ -1048,8 +1052,8 @@ prog_makefile_rules(FILE *outmk, prog_t *p, const char *noes)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
 #define MAKECMD \
-    "\t| ${MAKE} -f- CRUNCHEDPROG=1 %sDBG=${DBG:Q} LDSTATIC=${LDSTATIC:Q} "
-	fprintf(outmk, MAKECMD "depend", noes);
+    "\t| ${MAKE} -f- CRUNCHEDPROG=1 %s"
+	fprintf(outmk, MAKECMD "depend", linevars);
 	fprintf(outmk, " )\n");
 	fprintf(outmk, "\t( cd %s; printf '.PATH: ${%s_SRCDIR}\\n"
 	    ".CURDIR:= ${%s_SRCDIR}\\n"
@@ -1058,7 +1062,7 @@ prog_makefile_rules(FILE *outmk, prog_t *p, const char *noes)
 	for (lst = vars; lst != NULL; lst = lst->next)
 	    fprintf(outmk, "%s\\n", lst->str);
 	fprintf(outmk, "'\\\n");
-	fprintf(outmk, MAKECMD, noes);
+	fprintf(outmk, MAKECMD, linevars);
 	if (p->objs)
 	    fprintf(outmk, "${%s_OBJS} ) \n\n", p->ident);
 	else
@@ -1141,14 +1145,6 @@ status(const char *str)
 
 
 static void
-out_of_memory(void)
-{
-    fprintf(stderr, "%s: %d: out of memory, stopping.\n", infilename, linenum);
-    exit(1);
-}
-
-
-static void
 add_string(strlst_t **listp, char *str)
 {
     strlst_t *p1, *p2;
@@ -1159,11 +1155,8 @@ add_string(strlst_t **listp, char *str)
 	if (!strcmp(p2->str, str))
 	    return;
 
-    p2 = malloc(sizeof(strlst_t));
-    if (p2)
-	p2->str = strdup(str);
-    if (!p2 || !p2->str)
-	out_of_memory();
+    p2 = emalloc(sizeof(*p2));
+    p2->str = estrdup(str);
 
     p2->next = NULL;
     if (p1 == NULL)

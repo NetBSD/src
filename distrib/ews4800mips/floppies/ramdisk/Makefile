@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/09/04 12:10:00 martin Exp $
+#	$NetBSD: Makefile,v 1.14 2019/12/29 18:26:17 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -11,7 +11,6 @@ WARNS=		1
 DBG=		-Os -mmemcpy -fno-unwind-tables
 
 CRUNCHBIN=	ramdiskbin
-CRUNCHGEN_FLAGS= -d "${DBG}"
 LISTS=		${.CURDIR}/list ${DISTRIBDIR}/common/list.sysinst.en
 MTREECONF=	${DISTRIBDIR}/common/mtree.common
 IMAGEENDIAN=	be

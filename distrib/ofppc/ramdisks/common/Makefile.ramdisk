@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.ramdisk,v 1.9 2018/12/24 20:11:22 mrg Exp $
+#	$NetBSD: Makefile.ramdisk,v 1.10 2019/12/29 18:26:18 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -9,7 +9,6 @@ OFPPCCOMMON=	${.CURDIR}/../common
 
 WARNS=		1
 DBG=		-Os -fno-asynchronous-unwind-tables
-CRUNCHGEN_FLAGS= -d "${DBG}"
 
 CRUNCHBIN=	ramdiskbin
 
