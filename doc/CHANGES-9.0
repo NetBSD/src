@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.149 2019/12/29 09:42:40 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.150 2019/12/29 11:14:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7364,4 +7364,9 @@ sys/arch/arm/include/cputypes.h			1.11
 
 	Identify Arm Neoverse E1 and N1 CPUs.
 	[jmcneill, ticket #589]
+
+sys/dev/usb/uvideo.c				1.50-1.52
+
+	PR kern/53734: avoid zero sized allocations.
+	[mlelstv, ticket #590]
 
