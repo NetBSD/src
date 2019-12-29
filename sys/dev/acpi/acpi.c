@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.278 2018/10/21 13:41:15 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.279 2019/12/29 23:47:56 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.278 2018/10/21 13:41:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.279 2019/12/29 23:47:56 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -236,6 +236,9 @@ ACPI_STATUS		acpi_allocate_resources(ACPI_HANDLE);
 
 void (*acpi_print_verbose)(struct acpi_softc *) = acpi_print_verbose_stub;
 void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
+
+bus_dma_tag_t		acpi_default_dma_tag(struct acpi_softc *, struct acpi_devnode *);
+bus_dma_tag_t		acpi_default_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
     acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
@@ -808,6 +811,20 @@ acpi_make_name(struct acpi_devnode *ad, uint32_t name)
 		ad->ad_name[0] = '_';
 }
 
+bus_dma_tag_t
+acpi_default_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	return sc->sc_dmat;
+}
+__weak_alias(acpi_get_dma_tag,acpi_default_dma_tag);
+
+bus_dma_tag_t
+acpi_default_dma64_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	return sc->sc_dmat64;
+}
+__weak_alias(acpi_get_dma64_tag,acpi_default_dma64_tag);
+
 /*
  * Device attachment.
  */
@@ -877,8 +894,8 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
-		aa.aa_dmat = sc->sc_dmat;
-		aa.aa_dmat64 = sc->sc_dmat64;
+		aa.aa_dmat = acpi_get_dma_tag(sc, ad);
+		aa.aa_dmat64 = acpi_get_dma64_tag(sc, ad);
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
@@ -939,8 +956,8 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
-		aa.aa_dmat = sc->sc_dmat;
-		aa.aa_dmat64 = sc->sc_dmat64;
+		aa.aa_dmat = acpi_get_dma_tag(sc, ad);
+		aa.aa_dmat64 = acpi_get_dma64_tag(sc, ad);
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
