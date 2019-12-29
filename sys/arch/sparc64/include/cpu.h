@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.128 2019/12/01 15:34:45 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.129 2019/12/29 21:09:27 martin Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -256,18 +256,21 @@ extern int sparc_ncpus;
 extern struct cpu_info *cpus;
 extern struct pool_cache *fpstate_cache;
 
-#define	curcpu()	(((struct cpu_info *)CPUINFO_VA)->ci_self)
+/* CURCPU_INT() a local (per CPU) view of our cpu_info */
+#define	CURCPU_INT()	((struct cpu_info *)CPUINFO_VA)
+/* in general we prefer the globaly visible pointer */
+#define	curcpu()	(CURCPU_INT()->ci_self)
 #define	cpu_number()	(curcpu()->ci_index)
 #define	CPU_IS_PRIMARY(ci)	((ci)->ci_flags & CPUF_PRIMARY)
 
 #define CPU_INFO_ITERATOR		int __unused
 #define CPU_INFO_FOREACH(cii, ci)	ci = cpus; ci != NULL; ci = ci->ci_next
 
-#define curlwp		curcpu()->ci_curlwp
-#define fplwp		curcpu()->ci_fplwp
-#define curpcb		curcpu()->ci_cpcb
-
-#define want_ast	curcpu()->ci_want_ast
+/* these are only valid on the local cpu */
+#define curlwp		CURCPU_INT()->ci_curlwp
+#define fplwp		CURCPU_INT()->ci_fplwp
+#define curpcb		CURCPU_INT()->ci_cpcb
+#define want_ast	CURCPU_INT()->ci_want_ast
 
 /*
  * definitions of cpu-dependent requirements
