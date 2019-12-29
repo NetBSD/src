@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1393 2019/12/18 01:13:55 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1394 2019/12/29 01:42:45 sevan Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -7042,6 +7042,7 @@ product RDC	R6060_OHCI	0x6060	R6060 USB OHCI
 product RDC	R6061_EHCI	0x6061	R6061 USB EHCI
 
 /* Realtek products */
+product REALTEK E3000 		0x3000	Killer E3000
 product REALTEK RTS5208		0x5208	RTS5208 PCI-E Card Reader
 product REALTEK RTS5209		0x5209	RTS5209 PCI-E Card Reader
 product REALTEK RTS5227		0x5227	RTS5227 PCI-E Card Reader
