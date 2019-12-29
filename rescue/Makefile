@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.38 2019/10/02 09:45:10 maya Exp $
+#	$NetBSD: Makefile,v 1.39 2019/12/29 18:26:16 christos Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -12,12 +12,16 @@ WARNS=		1
 DBG+=		-Os
 .endif
 
-CRUNCHGEN_FLAGS=-d "${DBG}"
+CRUNCHGEN_FLAGS+=-V DBG="${DBG}"
 
 .if ${MKSTATICPIE:Uno} == "yes"
-CRUNCHGEN_FLAGS+=-p
 CFLAGS+=-fPIE
+CRUNCHGEN_FLAGS+=-V LDSTATIC="-static -pie"
+.else
+CRUNCHGEN_FLAGS+=-V LDSTATIC="-static" -V NOPIE=
 .endif
+
+CRUNCHGEN_FLAGS+=-V NOLIBCSANITIZER= -V NOSANITIZER= -V NOMAN=
 
 RESCUEDIR=	/rescue
 CRUNCHBIN=	rescue
