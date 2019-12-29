@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.127 2019/05/29 16:54:41 maxv Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.127.2.1 2019/12/29 09:33:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.127 2019/05/29 16:54:41 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.127.2.1 2019/12/29 09:33:43 martin Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
 #include "opt_splash.h"
 #include "opt_kaslr.h"
 #include "opt_svs.h"
+#include "opt_xen.h"
 
 #include <sys/types.h>
 #include <sys/param.h>
