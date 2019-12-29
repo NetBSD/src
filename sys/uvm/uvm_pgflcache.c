@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pgflcache.c,v 1.2 2019/12/27 13:24:52 ad Exp $	*/
+/*	$NetBSD: uvm_pgflcache.c,v 1.3 2019/12/29 15:45:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.2 2019/12/27 13:24:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.3 2019/12/29 15:45:28 ad Exp $");
 
 #include "opt_uvm.h"
 #include "opt_multiprocessor.h"
@@ -406,7 +406,7 @@ uvm_pgflcache_start(void)
 	}
 
 	/* Kick it into action. */
-	uvm_pgflcache_resume();
+	/* uvm_pgflcache_resume(); */
 }
 
 /*
