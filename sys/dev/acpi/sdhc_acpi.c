@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.8 2019/10/15 00:13:52 chs Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.8 2019/10/15 00:13:52 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -135,6 +135,7 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	struct acpi_mem *mem;
 	struct acpi_irq *irq;
 	ACPI_STATUS rv;
+	ACPI_INTEGER clock_freq;
 
 	sc->sc.sc_dev = self;
 	sc->sc.sc_dmat = aa->aa_dmat;
@@ -192,6 +193,12 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 
 	/* Enable DMA transfer */
 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
+
+	/* Read clock frequency from device properties */
+	rv = acpi_dsd_integer(aa->aa_node->ad_handle, "clock-frequency",
+	    &clock_freq);
+	if (ACPI_SUCCESS(rv))
+		sc->sc.sc_clkbase = clock_freq / 1000;
 
 	if (sdhc_host_found(&sc->sc, sc->sc_memt, sc->sc_memh,
 	    sc->sc_memsize) != 0) {
