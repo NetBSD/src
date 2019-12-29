@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.11 2019/12/22 18:41:36 christos Exp $
+# $NetBSD: postinstall.in,v 1.12 2019/12/29 22:19:13 tsutsui Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1415,6 +1415,14 @@ do_pwd_mkdb()
 #	rc
 #
 
+# There is no info in src/distrib or /etc/mtree which rc* files
+# can be overwritten unconditionally on upgrade. See PR/54741.
+rc_644_files="
+rc
+rc.subr
+rc.shutdown
+"
+
 rc_obsolete_vars="
 amd amd_master
 btcontrol btcontrol_devices
@@ -1510,8 +1518,9 @@ do_rc()
 	local rc_external_files="blacklist nsd unbound"
 
 	# rc* files in /etc/
-	local rc_444_files="$(select_set_files /etc/rc \
-	    "/etc/\(rc[^[:space:]/]*\)" ${etcsets})"
+	# XXX: at least rc.conf and rc.local shouldn't be updated. PR/54741
+	#local rc_644_files="$(select_set_files /etc/rc \
+	#    "/etc/\(rc[^[:space:]/]*\)" ${etcsets})"
 
 	# no-obsolete rc files in /etc/rc.d
 	local rc_555_files="$(select_set_files /etc/rc.d/ \
