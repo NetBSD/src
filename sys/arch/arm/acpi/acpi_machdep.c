@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.13 2019/12/28 17:19:43 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.14 2019/12/29 23:47:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13 2019/12/28 17:19:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.14 2019/12/29 23:47:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,6 +59,10 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.13 2019/12/28 17:19:43 jmcneill E
 #include <machine/acpi_machdep.h>
 
 extern struct bus_space arm_generic_bs_tag;
+extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
+extern struct arm32_bus_dma_tag arm_generic_dma_tag;
+
+bus_dma_tag_t	arm_acpi_dma_tag(struct acpi_softc *, struct acpi_devnode *);
 
 static int
 acpi_md_pmapflags(paddr_t pa)
@@ -362,3 +366,19 @@ acpi_md_callback(struct acpi_softc *sc)
 	if (ACPI_SUCCESS(AcpiGetTable(ACPI_SIG_GTDT, 0, &hdrp)))
 		config_found_ia(sc->sc_dev, "acpisdtbus", hdrp, NULL);
 }
+
+bus_dma_tag_t
+arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	ACPI_INTEGER cca;
+
+	if (ACPI_FAILURE(acpi_eval_integer(ad->ad_handle, "_CCA", &cca)))
+		cca = 1;
+
+	if (cca)
+		return &acpi_coherent_dma_tag;
+	else
+		return &arm_generic_dma_tag;
+}
+__strong_alias(acpi_get_dma_tag,arm_acpi_dma_tag);
+__strong_alias(acpi_get_dma64_tag,arm_acpi_dma_tag);

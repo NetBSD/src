@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.77 2018/10/25 10:38:57 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.78 2019/12/29 23:47:56 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -383,6 +383,9 @@ int	acpi_quirks_osi_del(const char *);
 #ifdef ACPI_DEBUG
 void	acpi_debug_init(void);
 #endif
+
+bus_dma_tag_t	acpi_get_dma_tag(struct acpi_softc *, struct acpi_devnode *);
+bus_dma_tag_t	acpi_get_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
 
 /*
  * Misc routines with vectors updated by acpiverbose module.

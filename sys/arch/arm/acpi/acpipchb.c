@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.14 2019/12/28 17:19:43 jmcneill Exp $ */
+/* $NetBSD: acpipchb.c,v 1.15 2019/12/29 23:47:56 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.14 2019/12/28 17:19:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.15 2019/12/29 23:47:56 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -242,7 +242,7 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	struct acpi_attach_args *aa = aux;
 	struct pcibus_attach_args pba;
 	const struct acpipchb_quirk *q;
-	ACPI_INTEGER cca, seg;
+	ACPI_INTEGER seg;
 
 	sc->sc_dev = self;
 	sc->sc_memt = aa->aa_memt;
@@ -254,15 +254,10 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	if (ACPI_FAILURE(acpi_eval_integer(sc->sc_handle, "_SEG", &seg)))
 		seg = 0;
 
-	if (ACPI_FAILURE(acpi_eval_integer(sc->sc_handle, "_CCA", &cca)))
-		cca = 1;
-
 	aprint_naive("\n");
 	aprint_normal(": PCI Express Host Bridge\n");
 
 	sc->sc_dmat = *aa->aa_dmat;
-	if (cca == 0)
-		sc->sc_dmat._nranges = 0;
 
 	sc->sc_ap.ap_dev = self;
 	sc->sc_ap.ap_pc = *aa->aa_pc;
