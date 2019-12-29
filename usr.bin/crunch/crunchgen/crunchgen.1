@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.38 2019/12/18 02:16:04 christos Exp $
+.\"	$NetBSD: crunchgen.1,v 1.39 2019/12/29 18:26:16 christos Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -24,7 +24,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd June 21, 2018
+.Dd December 23, 2019
 .Dt CRUNCHGEN 1
 .Os
 .Sh NAME
@@ -32,14 +32,14 @@
 .Nd generates build environment for a crunched binary
 .Sh SYNOPSIS
 .Nm
-.Op Fl FfOoPpqSs
+.Op Fl FfOoq
 .Op Fl c Ar c-file-name
 .Op Fl D Ar src-root
-.Op Fl d Ar build-options
 .Op Fl e Ar exec-file-name
 .Op Fl L Ar lib-dir
 .Op Fl m Ar makefile-name
 .Op Fl v Ar var-spec
+.Op Fl V Ar var-spec
 .Ar conf-file
 .Sh DESCRIPTION
 A crunched binary is a program made up of many other programs linked
@@ -92,10 +92,6 @@ The default name is
 .It Fl D Ar src-root
 Assume that relative source directory specifications begin with
 .Ar src-root .
-.It Fl d Ar build-options
-Set the DBG variable in the generated makefile to
-.Ar build-options .
-The default flags are -Os.
 .It Fl e Ar exec-file-name
 Set crunched binary executable file name to
 .Ar exec-file-name .
@@ -126,19 +122,15 @@ the program objects into a single relocatable.
 Use existing object files.
 Rather than rebuilding object files via reach-over
 makefiles, instead search for and use existing object files.
-.It Fl P
-Enable stack protector.
-.It Fl p
-Produce static pie (position independent executables).
 .It Fl q
 Quiet operation.
 Status messages are suppressed.
-.It Fl S
-Enable sanitization with a sanitizer in libc.
-.It Fl s
-Enable sanitization.
 .It Fl v Ar varspec
-Append a variable specification to the on-the fly generated Makefile.
+Append a variable specification to the on-the fly generated Makefiles
+for the individual programs.
+.It Fl V ar varspec
+Set the variable in the top level Makefile, and pass it in the command
+line of all sub-makes, so that it cannot be overwriten.
 .El
 .Sh CRUNCHGEN CONFIGURATION FILE COMMANDS
 .Nm
