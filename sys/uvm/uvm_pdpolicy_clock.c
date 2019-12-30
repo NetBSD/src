@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.24 2019/12/30 18:08:38 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.25 2019/12/30 18:18:03 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.24 2019/12/30 18:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.25 2019/12/30 18:18:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -353,7 +353,6 @@ uvmpdpol_balancequeue(int swap_shortage)
 		/*
 		 * now prepare to move on to the next page.
 		 */
-
 		TAILQ_REMOVE(&pdpol_state.s_activeq, &marker, pdqueue);
 		TAILQ_INSERT_AFTER(&pdpol_state.s_activeq, p, &marker,
 		    pdqueue);
@@ -384,7 +383,6 @@ uvmpdpol_balancequeue(int swap_shortage)
 		/*
 		 * if there's a shortage of inactive pages, deactivate.
 		 */
-
 		if (inactive_shortage > 0) {
 			uvmpdpol_pagedeactivate_locked(p);
 			uvmexp.pddeact++;
