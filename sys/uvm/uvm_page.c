@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.216 2019/12/28 16:07:41 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.217 2019/12/30 17:45:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.216 2019/12/28 16:07:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.217 2019/12/30 17:45:53 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1028,6 +1028,7 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 	struct pgflbucket *pgb;
 	struct vm_page *pg;
 	kmutex_t *lock;
+	bool fill;
 
 	/*
 	 * Skip the bucket if empty, no lock needed.  There could be many
@@ -1048,6 +1049,9 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 			mutex_spin_exit(lock);
 		     	return NULL;
 		}
+		fill = false;
+	} else {
+		fill = true;
 	}
 
 	/* Try all page colors as needed. */
@@ -1073,7 +1077,7 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 			 * so if we found pages in this CPU's preferred
 			 * bucket.
 			 */
-			if (__predict_true(b == ucpu->pgflbucket)) {
+			if (__predict_true(b == ucpu->pgflbucket && fill)) {
 				uvm_pgflcache_fill(ucpu, f, b, c);
 			}
 			mutex_spin_exit(lock);
@@ -1347,6 +1351,7 @@ void
 uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 {
 	struct uvm_object *uobj = oldpg->uobject;
+	struct vm_page *pg __diagused;
 
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
 	KASSERT(uobj != NULL);
@@ -1355,8 +1360,9 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(mutex_owned(uobj->vmobjlock));
 
 	newpg->offset = oldpg->offset;
-	uvm_pageremove_tree(uobj, oldpg);
-	uvm_pageinsert_tree(uobj, newpg);
+	pg = radix_tree_replace_node(&uobj->uo_pages,
+	    newpg->offset >> PAGE_SHIFT, newpg);
+	KASSERT(pg == oldpg);
 
 	/* take page interlocks during rename */
 	if (oldpg < newpg) {
