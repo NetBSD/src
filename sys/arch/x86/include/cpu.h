@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.115 2019/12/01 15:34:46 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.116 2019/12/30 23:32:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -149,9 +149,11 @@ struct cpu_info {
 	struct {
 		uint32_t	ipending;
 		int		ilevel;
+		uint32_t	imasked;
 	} ci_istate __aligned(8);
 #define ci_ipending	ci_istate.ipending
 #define	ci_ilevel	ci_istate.ilevel
+#define	ci_imasked	ci_istate.imasked
 	int		ci_idepth;
 	void *		ci_intrstack;
 	uint32_t	ci_imask[NIPL];

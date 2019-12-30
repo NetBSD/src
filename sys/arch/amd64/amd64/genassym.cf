@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.79 2019/12/22 15:09:39 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.80 2019/12/30 23:32:29 thorpej Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -252,6 +252,7 @@ define	CPU_INFO_ILEVEL		offsetof(struct cpu_info, ci_ilevel)
 define	CPU_INFO_IDEPTH		offsetof(struct cpu_info, ci_idepth)
 if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
+define	CPU_INFO_IMASKED	offsetof(struct cpu_info, ci_imasked)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
