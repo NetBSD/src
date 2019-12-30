@@ -1,4 +1,4 @@
-/* $NetBSD: bcm2835_cprman.c,v 1.3 2019/12/24 13:40:56 skrll Exp $ */
+/* $NetBSD: bcm2835_cprman.c,v 1.4 2019/12/30 15:36:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.3 2019/12/24 13:40:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_cprman.c,v 1.4 2019/12/30 15:36:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,6 +56,7 @@ enum {
 	CPRMAN_CLOCK_PERIIMAGE = 29,
 	CPRMAN_CLOCK_PWM = 30,
 	CPRMAN_CLOCK_PCM = 31,
+	CPRMAN_CLOCK_EMMC2 = 51,
 	CPRMAN_NCLOCK
 };
 
@@ -133,6 +134,8 @@ cprman_get_rate(void *priv, struct clk *baseclk)
 		return bcm283x_clk_get_rate_vpu();
 	case CPRMAN_CLOCK_EMMC:
 		return bcm283x_clk_get_rate_emmc();
+	case CPRMAN_CLOCK_EMMC2:
+		return bcm283x_clk_get_rate_emmc2();
 	default:
 		panic("unsupported clock id %d\n", clk->id);
 	}
@@ -179,6 +182,7 @@ cprman_attach(device_t parent, device_t self, void *aux)
 	cprman_add_clock(sc, CPRMAN_CLOCK_UART, "uart");
 	cprman_add_clock(sc, CPRMAN_CLOCK_VPU, "vpu");
 	cprman_add_clock(sc, CPRMAN_CLOCK_EMMC, "emmc");
+	cprman_add_clock(sc, CPRMAN_CLOCK_EMMC2, "emmc2");
 
 	aprint_naive("\n");
 	aprint_normal(": BCM283x Clock Controller\n");
