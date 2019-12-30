@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.s,v 1.12 2008/05/25 15:56:12 chs Exp $	*/
+/*	$NetBSD: lock_stubs.s,v 1.13 2019/12/30 22:13:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -122,10 +122,10 @@ ENTRY(mutex_exit)
  * void mutex_spin_enter(kmutex_t *);
  */
 ENTRY(mutex_spin_enter)
-	sethi	%hi(CPUINFO_VA), %o4
-	ld	[ %o4 + CPUINFO_MTX_COUNT ], %o5
+	sethi	%hi(CPUINFO_VA+CPUINFO_MTX_COUNT), %o4
+	ld	[ %o4 + %lo(CPUINFO_VA+CPUINFO_MTX_COUNT) ], %o5
 	sub	%o5, 1, %o1
-	st	%o1, [ %o4 + CPUINFO_MTX_COUNT ]
+	st	%o1, [ %o4 + %lo(CPUINFO_VA+CPUINFO_MTX_COUNT) ]
 	ldub	[ %o0 + MTX_IPL ], %o2
 	rd	%psr, %o1
 	sll	%o2, 8, %o2
@@ -140,8 +140,9 @@ ENTRY(mutex_spin_enter)
 	nop
 	tst	%o5
 1:
+	sethi	%hi(CPUINFO_VA+CPUINFO_MTX_OLDSPL), %o4
 	bz,a	2f
-	 st	%o3, [ %o4 + CPUINFO_MTX_OLDSPL ]
+	 st	%o3, [ %o4 + %lo(CPUINFO_VA+CPUINFO_MTX_OLDSPL) ]
 2:
 #if defined(MULTIPROCESSOR) || defined(DIAGNOSTIC)
 	ldstub  [ %o0 + MTX_LOCK ], %o2
@@ -166,12 +167,13 @@ ENTRY(mutex_spin_exit)
 #elif defined(MULTIPROCESSOR)
 	clrb	[ %o0 + MTX_LOCK ]
 #endif
-	sethi	 %hi(CPUINFO_VA), %o2
-	ld	[ %o2 + CPUINFO_MTX_OLDSPL ], %o3
-	ld	[ %o2 + CPUINFO_MTX_COUNT ], %o1
+	sethi	 %hi(CPUINFO_VA+CPUINFO_MTX_OLDSPL), %o2
+	ld	[ %o2 + %lo(CPUINFO_VA+CPUINFO_MTX_OLDSPL) ], %o3
+	sethi	 %hi(CPUINFO_VA+CPUINFO_MTX_COUNT), %o2
+	ld	[ %o2 + %lo(CPUINFO_VA+CPUINFO_MTX_COUNT) ], %o1
 	addcc	%o1, 1, %o4
 	bnz	1f
-	 st	%o4, [ %o2 + CPUINFO_MTX_COUNT ]
+	 st	%o4, [ %o2 + %lo(CPUINFO_VA+CPUINFO_MTX_COUNT) ]
 	rd	%psr, %o1
 	andn	%o1, PSR_PIL, %o1
 	wr	%o3, %o1, %psr
