@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.19 2019/12/27 13:13:17 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.20 2019/12/30 18:08:38 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.19 2019/12/27 13:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.20 2019/12/30 18:08:38 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1258,6 +1258,12 @@ uvmpdpol_scaninit(void)
 	mutex_exit(&s->lock);
 }
 
+void
+uvmpdpol_scanfini(void)
+{
+
+}
+
 struct vm_page *
 uvmpdpol_selectvictim(kmutex_t **plock)
 {
@@ -1305,6 +1311,7 @@ static void
 clockpro_dropswap(pageq_t *q, int *todo)
 {
 	struct vm_page *pg;
+	kmutex_t *lock;
 
 	KASSERT(mutex_owned(&clockpro.lock));
 
@@ -1320,10 +1327,30 @@ clockpro_dropswap(pageq_t *q, int *todo)
 			mutex_exit(&pg->interlock);
 			continue;
 		}
-		if (uvmpd_trydropswap(pg)) {
-			(*todo)--;
+
+		/*
+		 * try to lock the object that owns the page.
+	         */
+	        mutex_exit(&clockpro.lock);
+        	lock = uvmpd_trylockowner(pg);
+        	/* pg->interlock now released */
+        	mutex_enter(&clockpro.lock);
+		if (lock == NULL) {
+			/* didn't get it - try the next page. */
+			/* XXXAD lost position in queue */
+			continue;
 		}
-		/* pg->interlock now dropped */
+
+		/*
+		 * if there's a shortage of swap slots, try to free it.
+		 */
+		if ((pg->flags & PG_SWAPBACKED) != 0 &&
+		    (pg->flags & PG_BUSY) == 0) {
+			if (uvmpd_dropswap(pg)) {
+				(*todo)--;
+			}
+		}
+		mutex_exit(lock);
 	}
 }
 
