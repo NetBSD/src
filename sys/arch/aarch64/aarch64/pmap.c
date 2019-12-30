@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.58 2019/12/28 17:19:43 jmcneill Exp $	*/
+/*	$NetBSD: pmap.c,v 1.59 2019/12/30 15:42:39 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.58 2019/12/28 17:19:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2019/12/30 15:42:39 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -323,8 +323,7 @@ pmap_devmap_bootstrap(vaddr_t l0pt, const struct pmap_devmap *table)
 		    (va < (VM_KERNEL_IO_ADDRESS + VM_KERNEL_IO_SIZE)));
 
 		/* update and check virtual_devmap_addr */
-		if ((virtual_devmap_addr == 0) ||
-		    (virtual_devmap_addr > va)) {
+		if (virtual_devmap_addr == 0 || virtual_devmap_addr > va) {
 			virtual_devmap_addr = va;
 		}
 
@@ -423,7 +422,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 #endif
 
 	/* devmap already uses last of va? */
-	if ((virtual_devmap_addr != 0) && (virtual_devmap_addr < vend))
+	if (virtual_devmap_addr != 0 && virtual_devmap_addr < vend)
 		vend = virtual_devmap_addr;
 
 	virtual_avail = vstart;
