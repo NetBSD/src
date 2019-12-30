@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_emmc.c,v 1.34 2019/12/30 15:31:15 skrll Exp $	*/
+/*	$NetBSD: bcm2835_emmc.c,v 1.35 2019/12/30 16:41:38 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.34 2019/12/30 15:31:15 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_emmc.c,v 1.35 2019/12/30 16:41:38 skrll Exp $");
 
 #include "bcmdmac.h"
 
@@ -97,7 +97,6 @@ bcmemmc_match(device_t parent, struct cfdata *match, void *aux)
 {
 	const char * const compatible[] = {
 	    "brcm,bcm2835-sdhci",
-	    "brcm,bcm2711-emmc2",
 	    NULL
 	};
 	struct fdt_attach_args * const faa = aux;
