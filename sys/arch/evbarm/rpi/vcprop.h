@@ -1,4 +1,4 @@
-/*	$NetBSD: vcprop.h,v 1.16 2017/06/17 17:03:40 jmcneill Exp $	*/
+/*	$NetBSD: vcprop.h,v 1.17 2019/12/30 15:58:12 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -179,6 +179,7 @@ struct vcprop_tag_boardserial {
 #define	VCPROP_CLK_SDRAM	8
 #define	VCPROP_CLK_PIXEL	9
 #define	VCPROP_CLK_PWM		10
+#define	VCPROP_CLK_EMMC2	12
 
 struct vcprop_clock {
 	uint32_t pclk;
