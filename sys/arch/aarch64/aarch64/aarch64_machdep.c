@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.35 2019/12/18 21:45:43 riastradh Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.36 2019/12/30 15:54:55 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.35 2019/12/18 21:45:43 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.36 2019/12/30 15:54:55 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -205,6 +205,13 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 			left -= mapsize;
 		}
 	}
+	aarch64_dcache_wbinv_all();
+
+	/* Disable translation table walks using TTBR0 */
+	uint64_t tcr = reg_tcr_el1_read();
+	reg_tcr_el1_write(tcr | TCR_EPD0);
+	__asm __volatile("isb" ::: "memory");
+
 	aarch64_tlbi_all();
 
 	/*
