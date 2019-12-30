@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.35 2019/09/04 05:10:38 mlelstv Exp $
+#	$NetBSD: files.bcm2835,v 1.36 2019/12/30 18:43:38 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -16,8 +16,11 @@ file	arch/arm/broadcom/bcm2835_intr.c	bcmicu
 
 # VC Mailbox (BCM2835_ARMMBOX_BASE)
 device	bcmmbox: bcmmboxbus
-attach	bcmmbox at fdt with bcmmbox
 file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
+attach	bcmmbox at fdt with bcmmbox_fdt
+file    arch/arm/broadcom/bcm2835_mbox_fdt.c	bcmmbox_fdt
+attach  bcmmbox at acpinodebus with bcmmbox_acpi
+file	arch/arm/broadcom/bcm2835_mbox_acpi.c	bcmmbox_acpi
 
 # System Timer (BCM2835_TIMER_BASE)
 device	bcmtmr
