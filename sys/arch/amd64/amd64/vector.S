@@ -1,4 +1,4 @@
-/*	$NetBSD: vector.S,v 1.72 2019/12/22 15:09:39 thorpej Exp $	*/
+/*	$NetBSD: vector.S,v 1.73 2019/12/30 23:32:29 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2007, 2008 The NetBSD Foundation, Inc.
@@ -392,7 +392,7 @@ IDTVEC(handle_ ## name ## num)						;\
 	incl	CPUVAR(IDEPTH)						;\
 	movq	IS_HANDLERS(%r14),%rbx					;\
 	cmpl	$0,IS_MASK_COUNT(%r14)	/* source currently masked? */	;\
-	jne	7f			/* yes, hold it */		;\
+	jne	12f			/* yes, hold it */		;\
 6:									\
 	movl	IH_LEVEL(%rbx),%r12d					;\
 	cmpl	%r13d,%r12d						;\
@@ -406,7 +406,7 @@ IDTVEC(handle_ ## name ## num)						;\
 	jnz	6b							;\
 5:									\
 	cmpl	$0,IS_MASK_COUNT(%r14)	/* source now masked? */	;\
-	jne	7f			/* yes, deal */			;\
+	jne	12f			/* yes, deal */			;\
 	cli								;\
 	unmask(num)			/* unmask it in hardware */	;\
 	late_ack(num)							;\
@@ -415,10 +415,15 @@ IDTVEC(handle_ ## name ## num)						;\
 7:									\
 	cli								;\
 	orl	$(1 << num),CPUVAR(IPENDING)				;\
-	level_mask(num)							;\
+8:	level_mask(num)							;\
 	late_ack(num)							;\
 	sti								;\
 	jmp	_C_LABEL(Xdoreti)	/* lower spl and do ASTs */	;\
+12:									\
+	cli								;\
+	orl	$(1 << num),CPUVAR(IMASKED)				;\
+	btrl	$(num),CPUVAR(IPENDING)					;\
+	jmp	8b							;\
 10:									\
 	cli								;\
 	orl	$(1 << num),CPUVAR(IPENDING)				;\

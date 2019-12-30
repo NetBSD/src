@@ -1,4 +1,4 @@
-/*	$NetBSD: intr.c,v 1.149 2019/12/22 16:50:03 ad Exp $	*/
+/*	$NetBSD: intr.c,v 1.150 2019/12/30 23:32:30 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -133,7 +133,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.149 2019/12/22 16:50:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intr.c,v 1.150 2019/12/30 23:32:30 thorpej Exp $");
 
 #include "opt_intrdebug.h"
 #include "opt_multiprocessor.h"
@@ -1052,9 +1052,24 @@ intr_mask_xcall(void *arg1, void *arg2)
 			 * If this interrupt source is being moved, don't
 			 * unmask it at the hw.
 			 */
-			if (! source->is_distribute_pending)
+			if (! source->is_distribute_pending) {
 				(*pic->pic_hwunmask)(pic, ih->ih_pin);
-			force_pending = true;
+			}
+
+			/*
+			 * For level-sensitive interrupts, the hardware
+			 * will let us know.  For everything else, we
+			 * need to explicitly handle interrupts that
+			 * happened when when the source was masked.
+			 */
+			const uint32_t bit = (1U << ih->ih_slot);
+			if (ci->ci_imasked & bit) {
+				ci->ci_imasked &= ~bit;
+				if (source->is_type != IST_LEVEL) {
+					ci->ci_ipending |= bit;
+					force_pending = true;
+				}
+			}
 		}
 	}
 
