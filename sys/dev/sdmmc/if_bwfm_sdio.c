@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.9 2019/10/28 06:37:52 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.10 2019/12/30 16:28:14 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -116,6 +116,7 @@ static void	bwfm_sdio_attach(device_t, device_t, void *);
 static int	bwfm_sdio_detach(device_t, int);
 static void	bwfm_sdio_attachhook(device_t);
 static int	bwfm_fdt_find_phandle(device_t, device_t);
+static const char *bwfm_fdt_get_model(void);
 
 static void	bwfm_sdio_backplane(struct bwfm_sdio_softc *, uint32_t);
 static uint8_t	bwfm_sdio_read_1(struct bwfm_sdio_softc *, uint32_t);
@@ -377,7 +378,8 @@ bwfm_sdio_attachhook(device_t self)
 	struct bwfm_sdio_softc *sc = device_private(self);
 	struct bwfm_softc *bwfm = &sc->sc_sc;
 	firmware_handle_t fwh;
-	const char *name, *nvname;
+	const char *name, *nvname, *model;
+	char *nvnamebuf;
 	u_char *ucode, *nvram;
 	size_t size, nvlen, nvsize;
 	uint32_t reg, clk;
@@ -435,6 +437,21 @@ bwfm_sdio_attachhook(device_t self)
 		goto err;
 	}
 
+	/* compute a model specific filename for the NV config */
+	nvnamebuf = NULL;
+	model = bwfm_fdt_get_model();
+	if (model != NULL) {
+		/* assume nvname ends in ".txt" */
+		nvnamebuf = kmem_asprintf("%.*s.%s.txt",
+		    (int)(strlen(nvname) - 4),
+		    nvname, model);
+	}
+
+	aprint_verbose_dev(self, "Firmware       %s\n", name);
+	aprint_verbose_dev(self, "Default Config %s\n", nvname);
+	if (nvnamebuf != NULL)
+		aprint_verbose_dev(self, "Model Config   %s\n", nvnamebuf);
+
 	if (firmware_open("if_bwfm", name, &fwh) != 0) {
 		printf("%s: failed firmware_open of file %s\n",
 		    DEVNAME(sc), name);
@@ -456,7 +473,8 @@ bwfm_sdio_attachhook(device_t self)
 		goto err1;
 	}
 
-	if (firmware_open("if_bwfm", nvname, &fwh) != 0) {
+	if ((nvnamebuf == NULL || firmware_open("if_bwfm", nvnamebuf, &fwh) != 0)
+	    && firmware_open("if_bwfm", nvname, &fwh) != 0) {
 		printf("%s: failed firmware_open of file %s\n",
 		    DEVNAME(sc), nvname);
 		goto err1;
@@ -492,6 +510,8 @@ bwfm_sdio_attachhook(device_t self)
 
 	firmware_free(nvram, nvlen);
 	firmware_free(ucode, size);
+	if (nvnamebuf != NULL)
+		kmem_free(nvnamebuf, strlen(nvnamebuf)+1);
 
 	sdmmc_pause(hztoms(1)*1000, NULL);
 
@@ -565,6 +585,8 @@ err2:
 	firmware_free(nvram, nvlen);
 err1:
 	firmware_free(ucode, size);
+	if (nvnamebuf != NULL)
+		kmem_free(nvnamebuf, strlen(nvnamebuf)+1);
 err:
 	return;
 }
@@ -601,6 +623,15 @@ bwfm_fdt_find_phandle(device_t self, device_t parent)
 		return -1;
 
 	return phandle;
+}
+
+static const char *
+bwfm_fdt_get_model(void)
+{
+	int phandle;
+
+	phandle = OF_finddevice("/");
+	return fdtbus_get_string_index(phandle, "compatible", 0);
 }
 
 static int
