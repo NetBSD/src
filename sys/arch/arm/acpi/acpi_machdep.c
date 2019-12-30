@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.14 2019/12/29 23:47:56 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.15 2019/12/30 19:50:29 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.14 2019/12/29 23:47:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.15 2019/12/30 19:50:29 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -367,18 +367,74 @@ acpi_md_callback(struct acpi_softc *sc)
 		config_found_ia(sc->sc_dev, "acpisdtbus", hdrp, NULL);
 }
 
+static const char * const module_hid[] = {
+	"ACPI0004",	/* Module device */
+	NULL
+};
+
+static bus_dma_tag_t
+arm_acpi_dma_tag_subregion(struct acpi_softc *sc, bus_dma_tag_t dmat,
+    ACPI_HANDLE handle)
+{
+	struct acpi_resources res;
+	struct acpi_mem *mem;
+	bus_dma_tag_t newtag;
+	ACPI_STATUS rv;
+	int error;
+
+	rv = acpi_resource_parse(sc->sc_dev, handle, "_DMA", &res,
+	    &acpi_resource_parse_ops_quiet);
+	if (ACPI_FAILURE(rv))
+		return dmat;	/* no translation required */
+
+	mem = acpi_res_mem(&res, 0);
+	if (mem == NULL)
+		goto done;
+
+	aprint_debug_dev(sc->sc_dev, "_DMA range %#lx-%#lx\n",
+	    mem->ar_base, mem->ar_base + mem->ar_length - 1);
+
+	error = bus_dmatag_subregion(dmat,
+	    mem->ar_base, mem->ar_base + mem->ar_length - 1,
+	    &newtag, BUS_DMA_WAITOK);
+	if (error != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "_DMA subregion failed: %d\n", error);
+		goto done;
+	}
+	dmat = newtag;
+
+done:
+	acpi_resource_cleanup(&res);
+
+	return dmat;
+}
+
 bus_dma_tag_t
 arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 {
 	ACPI_INTEGER cca;
+	bus_dma_tag_t dmat;
 
 	if (ACPI_FAILURE(acpi_eval_integer(ad->ad_handle, "_CCA", &cca)))
 		cca = 1;
 
 	if (cca)
-		return &acpi_coherent_dma_tag;
+		dmat = &acpi_coherent_dma_tag;
 	else
-		return &arm_generic_dma_tag;
+		dmat = &arm_generic_dma_tag;
+
+	/*
+	 * If the parent device is a bus, it may define valid DMA ranges
+	 * and translations for child nodes.
+	 */
+	if (ad->ad_parent != NULL &&
+	    acpi_match_hid(ad->ad_parent->ad_devinfo, module_hid)) {
+		dmat = arm_acpi_dma_tag_subregion(sc, dmat,
+		    ad->ad_parent->ad_handle);
+	}
+
+	return dmat;
 }
 __strong_alias(acpi_get_dma_tag,arm_acpi_dma_tag);
 __strong_alias(acpi_get_dma64_tag,arm_acpi_dma_tag);
