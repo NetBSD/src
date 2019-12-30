@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.116 2019/12/22 15:09:39 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.117 2019/12/30 23:32:29 thorpej Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -274,6 +274,7 @@ define	CPU_INFO_SIGNATURE	offsetof(struct cpu_info, ci_signature)
 define	CPU_INFO_GDT		offsetof(struct cpu_info, ci_gdt)
 if !defined(XENPV)
 define	CPU_INFO_IPENDING	offsetof(struct cpu_info, ci_ipending)
+define	CPU_INFO_IMASKED	offsetof(struct cpu_info, ci_imasked)
 define	CPU_INFO_IMASK		offsetof(struct cpu_info, ci_imask)
 define	CPU_INFO_ISOURCES	offsetof(struct cpu_info, ci_isources)
 define	CPU_INFO_IUNMASK	offsetof(struct cpu_info, ci_iunmask)
