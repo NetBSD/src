@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.36 2019/12/30 18:43:38 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.37 2019/12/30 18:53:34 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -55,6 +55,9 @@ file	arch/arm/broadcom/bcm2835_com.c		bcmcom
 # External Mass Media Controller (BCM2835_EMMC_BASE)
 attach	sdhc at fdt with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
+
+attach	sdhc at acpinodebus with bcmemmc_acpi
+file	arch/arm/broadcom/bcm2835_emmc_acpi.c	bcmemmc_acpi
 
 # SD Host Controller (BCM2835_SDHOST_BASE)
 device	bcmsdhost: sdmmcbus
