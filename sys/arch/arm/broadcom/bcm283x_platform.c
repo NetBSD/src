@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.29 2019/12/30 15:36:37 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.30 2019/12/30 16:06:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.29 2019/12/30 15:36:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.30 2019/12/30 16:06:29 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -743,6 +743,13 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 	    KERN_VTOPHYS((vaddr_t)&vb));
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
+
+	/*
+	 * RPI4 has Cortex A72 processors which do speculation, so
+	 * we need to invalidate the cache for an updates done by
+	 * the firmware
+	 */
+	cpu_dcache_inv_range((vaddr_t)&vb, sizeof(vb));
 
 	if (!vcprop_buffer_success_p(&vb.vb_hdr)) {
 		bootconfig.dramblocks = 1;
