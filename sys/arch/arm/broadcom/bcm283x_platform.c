@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.30 2019/12/30 16:06:29 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.31 2019/12/30 16:19:27 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.30 2019/12/30 16:06:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.31 2019/12/30 16:19:27 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -187,9 +187,9 @@ bcm2711_bus_to_phys(bus_addr_t ba)
 	    ba < BCM283X_PERIPHERALS_BASE_BUS + BCM283X_PERIPHERALS_SIZE)
 		return BCM2711_PERIPHERALS_BUS_TO_PHYS(ba);
 
-	if (ba >= BCM2711_ARM_LOCAL_BASE &&
-	    ba < BCM2711_ARM_LOCAL_BASE + BCM2711_ARM_LOCAL_SIZE)
-		return ba;
+	if (ba >= BCM2711_ARM_LOCAL_BASE_BUS &&
+	    ba < BCM2711_ARM_LOCAL_BASE_BUS + BCM2711_ARM_LOCAL_SIZE)
+		return BCM2711_ARM_LOCAL_BUS_TO_PHYS(ba);
 
 	return ba & ~BCM2835_BUSADDR_CACHE_MASK;
 }
@@ -333,7 +333,7 @@ bcm2711_platform_devmap(void)
 		    BCM2711_ARM_LOCAL_SIZE),
 #if defined(MULTIPROCESSOR) && defined(__aarch64__)
 		/* for fdt cpu spin-table */
-		DEVMAP_ENTRY(BCM2836_ARM_SMP_VBASE, BCM2836_ARM_SMP_BASE,
+		DEVMAP_ENTRY(BCM2711_ARM_SMP_VBASE, BCM2836_ARM_SMP_BASE,
 		    BCM2836_ARM_SMP_SIZE),
 #endif
 		DEVMAP_ENTRY_END
