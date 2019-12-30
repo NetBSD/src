@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.28 2019/12/28 17:19:43 jmcneill Exp $ */
+/* $NetBSD: pmap.h,v 1.29 2019/12/30 16:05:15 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -198,10 +198,11 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 #define L1_ROUND_BLOCK(x)	L1_TRUNC_BLOCK((x) + L1_SIZE - 1)
 #define L2_TRUNC_BLOCK(x)	((x) & L2_FRAME)
 #define L2_ROUND_BLOCK(x)	L2_TRUNC_BLOCK((x) + L2_SIZE - 1)
+#define L3_TRUNC_BLOCK(x)	((x) & L3_FRAME)
+#define L3_ROUND_BLOCK(x)	L3_TRUNC_BLOCK((x) + L3_SIZE - 1)
 
-/* devmap use L2 blocks. (2Mbyte) */
-#define DEVMAP_TRUNC_ADDR(x)	L2_TRUNC_BLOCK((x))
-#define DEVMAP_ROUND_SIZE(x)	L2_ROUND_BLOCK((x))
+#define DEVMAP_TRUNC_ADDR(x)	L3_TRUNC_BLOCK((x))
+#define DEVMAP_ROUND_SIZE(x)	L3_ROUND_BLOCK((x))
 
 #define	DEVMAP_ENTRY(va, pa, sz)			\
 	{						\
