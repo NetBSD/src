@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pgflcache.c,v 1.3 2019/12/29 15:45:28 ad Exp $	*/
+/*	$NetBSD: uvm_pgflcache.c,v 1.4 2019/12/30 17:47:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.3 2019/12/29 15:45:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pgflcache.c,v 1.4 2019/12/30 17:47:06 ad Exp $");
 
 #include "opt_uvm.h"
 #include "opt_multiprocessor.h"
@@ -99,9 +99,7 @@ struct pgflcache {
 };
 
 static kmutex_t		uvm_pgflcache_lock;
-static kcondvar_t	uvm_pgflcache_cv;
 static int		uvm_pgflcache_sem;
-static bool		uvm_pgflcache_draining;
 
 /*
  * uvm_pgflcache_fill: fill specified freelist/color from global list
@@ -318,17 +316,9 @@ uvm_pgflcache_pause(void)
 	/* First one in starts draining.  Everyone else waits. */
 	mutex_enter(&uvm_pgflcache_lock);
 	if (uvm_pgflcache_sem++ == 0) {
-		uvm_pgflcache_draining = true;
-		mutex_exit(&uvm_pgflcache_lock);
-		where = xc_broadcast(0, uvm_pgflcache_fini_cpu, NULL, NULL);
+		where = xc_broadcast(XC_HIGHPRI, uvm_pgflcache_fini_cpu,
+		    (void *)1, NULL);
 		xc_wait(where);
-		mutex_enter(&uvm_pgflcache_lock);
-		uvm_pgflcache_draining = false;
-		cv_broadcast(&uvm_pgflcache_cv);
-	} else {
-		while (uvm_pgflcache_draining) {
-			cv_wait(&uvm_pgflcache_cv, &uvm_pgflcache_lock);
-		}
 	}
 	mutex_exit(&uvm_pgflcache_lock);
 }
@@ -349,7 +339,6 @@ uvm_pgflcache_resume(void)
 
 	/* Last guy out takes care of business. */
 	mutex_enter(&uvm_pgflcache_lock);
-	KASSERT(!uvm_pgflcache_draining);
 	KASSERT(uvm_pgflcache_sem > 0);
 	if (uvm_pgflcache_sem-- > 1) {
 		mutex_exit(&uvm_pgflcache_lock);
@@ -406,7 +395,7 @@ uvm_pgflcache_start(void)
 	}
 
 	/* Kick it into action. */
-	/* uvm_pgflcache_resume(); */
+	uvm_pgflcache_resume();
 }
 
 /*
@@ -419,7 +408,6 @@ uvm_pgflcache_init(void)
 
 	uvm_pgflcache_sem = 1;
 	mutex_init(&uvm_pgflcache_lock, MUTEX_DEFAULT, IPL_NONE);
-	cv_init(&uvm_pgflcache_cv, "flcache");
 }
 
 #else	/* MULTIPROCESSOR */
