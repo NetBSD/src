@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.118 2019/12/21 16:10:20 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.119 2019/12/30 18:08:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.118 2019/12/21 16:10:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.119 2019/12/30 18:08:37 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.118 2019/12/21 16:10:20 ad Exp $")
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
+#include <uvm/uvm_pgflcache.h>
 
 #ifdef UVMHIST
 UVMHIST_DEFINE(pdhist);
@@ -598,7 +599,7 @@ swapcluster_nused(struct swapcluster *swc)
  * => return true if a page had an associated slot.
  */
 
-static bool
+bool
 uvmpd_dropswap(struct vm_page *pg)
 {
 	bool result = false;
@@ -618,50 +619,6 @@ uvmpd_dropswap(struct vm_page *pg)
 			result = true;
 		}
 	}
-
-	return result;
-}
-
-/*
- * uvmpd_trydropswap: try to free any swap allocated to this page.
- *
- * => return true if a slot is successfully freed.
- * => page interlock must be held, and will be dropped.
- */
-
-bool
-uvmpd_trydropswap(struct vm_page *pg)
-{
-	kmutex_t *slock;
-	bool result;
-
-	if ((pg->flags & PG_BUSY) != 0) {
-		mutex_exit(&pg->interlock);
-		return false;
-	}
-
-	/*
-	 * lock the page's owner.
-	 * this will drop pg->interlock.
-	 */
-
-	slock = uvmpd_trylockowner(pg);
-	if (slock == NULL) {
-		return false;
-	}
-
-	/*
-	 * skip this page if it's busy.
-	 */
-
-	if ((pg->flags & PG_BUSY) != 0) {
-		mutex_exit(slock);
-		return false;
-	}
-
-	result = uvmpd_dropswap(pg);
-
-	mutex_exit(slock);
 
 	return result;
 }
@@ -909,6 +866,8 @@ uvmpd_scan_queue(void)
 #endif /* defined(VMSWAP) */
 	}
 
+	uvmpdpol_scanfini();
+
 #if defined(VMSWAP)
 	swapcluster_flush(&swc, true);
 #endif /* defined(VMSWAP) */
@@ -1031,15 +990,42 @@ uvm_estimatepageable(int *active, int *inactive)
 static void
 uvmpd_pool_drain_thread(void *arg)
 {
-	int bufcnt;
+	struct pool *firstpool, *curpool;
+	int bufcnt, lastslept;
+	bool cycled;
 
+	firstpool = NULL;
+	cycled = true;
 	for (;;) {
+		/*
+		 * sleep until awoken by the pagedaemon.
+		 */
 		mutex_enter(&uvmpd_lock);
 		if (!uvmpd_pool_drain_run) {
+			lastslept = hardclock_ticks;
 			cv_wait(&uvmpd_pool_drain_cv, &uvmpd_lock);
+			if (hardclock_ticks != lastslept) {
+				cycled = false;
+				firstpool = NULL;
+			}
 		}
 		uvmpd_pool_drain_run = false;
 		mutex_exit(&uvmpd_lock);
+
+		/*
+		 * rate limit draining, otherwise in desperate circumstances
+		 * this can totally saturate the system with xcall activity.
+		 */
+		if (cycled) {
+			kpause("uvmpdlmt", false, 1, NULL);
+			cycled = false;
+			firstpool = NULL;
+		}
+
+		/*
+		 * drain and temporarily disable the freelist cache.
+		 */
+		uvm_pgflcache_pause();
 
 		/*
 		 * kill unused metadata buffers.
@@ -1053,9 +1039,16 @@ uvmpd_pool_drain_thread(void *arg)
 		mutex_exit(&bufcache_lock);
 
 		/*
-		 * drain a pool.
+		 * drain a pool, and then re-enable the freelist cache. 
 		 */
-		pool_drain(NULL);
+		(void)pool_drain(&curpool);
+		KASSERT(curpool != NULL);
+		if (firstpool == NULL) {
+			firstpool = curpool;
+		} else if (firstpool == curpool) {
+			cycled = true;
+		}
+		uvm_pgflcache_resume();
 	}
 	/*NOTREACHED*/
 }
