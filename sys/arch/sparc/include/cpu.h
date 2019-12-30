@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2019/12/01 15:34:45 ad Exp $ */
+/*	$NetBSD: cpu.h,v 1.104 2019/12/30 22:13:47 ad Exp $ */
 
 /*
  * Copyright (c) 1992, 1993
@@ -374,7 +374,7 @@ struct cpu_info {
 	 * unrecoverable faults end up here.
 	 */
 	void		(*memerr)(unsigned, u_int, u_int, struct trapframe *);
-	void		(*idlespin)(struct cpu_info *);
+	void		(*idlespin)(void);
 	/* Module Control Registers */
 	/*bus_space_handle_t*/ long ci_mbusport;
 	/*bus_space_handle_t*/ long ci_mxccregs;
