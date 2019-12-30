@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.59 2019/12/30 15:42:39 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60 2019/12/30 16:03:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.59 2019/12/30 15:42:39 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2019/12/30 16:03:48 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -268,6 +268,12 @@ pm_unlock(struct pmap *pm)
 
 static const struct pmap_devmap *pmap_devmap_table;
 
+#define	L1_BLK_MAPPABLE_P(va, pa, size)					\
+    ((((va) | (pa)) & L1_OFFSET) == 0 && (size) >= L1_SIZE)
+
+#define	L2_BLK_MAPPABLE_P(va, pa, size)					\
+    ((((va) | (pa)) & L2_OFFSET) == 0 && (size) >= L2_SIZE)
+
 static vsize_t
 pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
     vm_prot_t prot, u_int flags)
@@ -276,25 +282,40 @@ pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
 	psize_t blocksize;
 	int rc;
 
-	/* devmap always use L2 mapping */
-	blocksize = L2_SIZE;
+	vsize_t resid = round_page(size);
+	vsize_t mapped = 0;
 
-	attr = _pmap_pte_adjust_prot(L2_BLOCK, prot, VM_PROT_ALL, false);
-	attr = _pmap_pte_adjust_cacheflags(attr, flags);
-	/* user cannot execute, and kernel follows the prot */
-	attr |= (LX_BLKPAG_UXN|LX_BLKPAG_PXN);
-	if (prot & VM_PROT_EXECUTE)
-		attr &= ~LX_BLKPAG_PXN;
+	while (resid > 0) {
+		if (L1_BLK_MAPPABLE_P(va, pa, resid)) {
+			blocksize = L1_SIZE;
+			attr = L1_BLOCK;
+		} else if (L2_BLK_MAPPABLE_P(va, pa, resid)) {
+			blocksize = L2_SIZE;
+			attr = L2_BLOCK;
+		} else {
+			blocksize = L3_SIZE;
+			attr = L3_PAGE;
+		}
 
-	rc = pmapboot_enter(va, pa, size, blocksize, attr,
-	    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
-	if (rc != 0)
-		panic("%s: pmapboot_enter failed. %lx is already mapped?\n",
-		    __func__, va);
+		attr = _pmap_pte_adjust_prot(attr, prot, VM_PROT_ALL, false);
+		attr = _pmap_pte_adjust_cacheflags(attr, flags);
 
-	aarch64_tlbi_by_va(va);
+		rc = pmapboot_enter(va, pa, blocksize, blocksize, attr,
+		    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
+		if (rc != 0) {
+			panic("%s: pmapboot_enter failed. %lx is already mapped?\n",
+			    __func__, va);
+		}
 
-	return ((va + size + blocksize - 1) & ~(blocksize - 1)) - va;
+		va += blocksize;
+		pa += blocksize;
+		resid -= blocksize;
+		mapped += blocksize;
+
+		aarch64_tlbi_by_va(va);
+	}
+
+	return mapped;
 }
 
 void
