@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.274 2019/06/07 00:18:26 mrg Exp $	*/
+/*	$NetBSD: locore.s,v 1.275 2019/12/30 22:13:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -1954,10 +1954,11 @@ memfault_sun4c:
 #if defined(SUN4M)
 _ENTRY(memfault_sun4m)
 memfault_sun4m:
-	sethi	%hi(CPUINFO_VA), %l4
+	sethi	%hi(CPUINFO_VA+CPUINFO_GETSYNCFLT), %l4
 	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %l5
+	sethi	%hi(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %l4
 	jmpl	%l5, %l7
-	 or	%l4, %lo(CPUINFO_SYNCFLTDUMP), %l4
+	 or	%l4, %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %l4
 	TRAP_SETUP(-CCFSZ-80)
 	! tally fault (curcpu()->cpu_data.cpu_nfault++) (clobbers %o0,%o1,%o2)
 	INCR64(CPUINFO_VA + CPUINFO_NFAULT)
@@ -2519,10 +2520,10 @@ softintr_common:
 	set	_C_LABEL(sintrhand), %l4! %l4 = sintrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
-	sethi	%hi(CPUINFO_VA), %o2
-	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	sethi	%hi(CPUINFO_VA+CPUINFO_IDEPTH), %o2
+	ld	[ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ], %o3
 	inc	%o3
-	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+	st	%o3, [ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ]
 
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
@@ -2543,10 +2544,10 @@ softintr_common:
 	bnz	1b
 	 nop
 
-	sethi	%hi(CPUINFO_VA), %o2
-	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	sethi	%hi(CPUINFO_VA+CPUINFO_IDEPTH), %o2
+	ld	[ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ], %o3
 	dec	%o3
-	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+	st	%o3, [ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ]
 
 	mov	%l7, %g1
 	wr	%l6, 0, %y
@@ -2563,8 +2564,8 @@ softintr_common:
 #if defined(SUN4M)
 _ENTRY(_C_LABEL(sparc_interrupt4m))
 #if !defined(MSIIEP)	/* "normal" sun4m */
-	sethi	%hi(CPUINFO_VA), %l6
-	ld	[%l6 + CPUINFO_INTREG], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_INTREG), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_INTREG)], %l7
 	mov	1, %l4
 	ld	[%l7 + ICR_PI_PEND_OFFSET], %l5	! get pending interrupts
 	sll	%l4, %l3, %l4	! hw intr bits are in the lower halfword
@@ -2704,10 +2705,10 @@ sparc_interrupt_common:
 	set	_C_LABEL(intrhand), %l4	! %l4 = intrhand[intlev];
 	ld	[%l4 + %l5], %l4
 
-	sethi	%hi(CPUINFO_VA), %o2
-	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	sethi	%hi(CPUINFO_VA+CPUINFO_IDEPTH), %o2
+	ld	[ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ], %o3
 	inc	%o3
-	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+	st	%o3, [ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ]
 
 	b	3f
 	 st	%fp, [%sp + CCFSZ + 16]
@@ -2742,10 +2743,10 @@ sparc_interrupt_common:
 	 add	%sp, CCFSZ, %o0
 	/* all done: restore registers and go return */
 4:
-	sethi	%hi(CPUINFO_VA), %o2
-	ld	[ %o2 + CPUINFO_IDEPTH ], %o3
+	sethi	%hi(CPUINFO_VA+CPUINFO_IDEPTH), %o2
+	ld	[ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ], %o3
 	dec	%o3
-	st	%o3, [ %o2 + CPUINFO_IDEPTH ]
+	st	%o3, [ %o2 + %lo(CPUINFO_VA+CPUINFO_IDEPTH) ]
 
 	mov	%l7, %g1
 	wr	%l6, 0, %y
@@ -2763,8 +2764,8 @@ sparc_interrupt_common:
  * %l6 = &cpuinfo
  */
 lev14_softint:
-	sethi	%hi(CPUINFO_VA), %l7
-	ldd	[%l7 + CPUINFO_LEV14], %l4
+	sethi	%hi(CPUINFO_VA+CPUINFO_LEV14), %l7
+	ldd	[%l7 + %lo(CPUINFO_VA+CPUINFO_LEV14)], %l4
 	inccc	%l5
 	addx	%l4, %g0, %l4
 	std	%l4, [%l7 + CPUINFO_LEV14]
@@ -4961,13 +4962,13 @@ Lsw_noras:
  * Call the idlespin() function if it exists, otherwise just return.
  */
 ENTRY(cpu_idle)
-	sethi	%hi(CPUINFO_VA), %o0
-	ld	[%o0 + CPUINFO_IDLESPIN], %o1
+	sethi	%hi(CPUINFO_VA+CPUINFO_IDLESPIN), %o0
+	ld	[%o0 + %lo(CPUINFO_VA+CPUINFO_IDLESPIN)], %o1
 	tst	%o1
 	bz	1f
 	 nop
 	jmp	%o1
-	 nop	! CPUINFO_VA is already in %o0
+	 nop
 1:
 	retl
 	 nop
@@ -5641,8 +5642,8 @@ Lpanic_savefpstate:
 	_ALIGN
 
 ENTRY(ipi_savefpstate)
-	sethi	%hi(CPUINFO_VA), %o5
-	ldd	[%o5 + CPUINFO_SAVEFPSTATE], %o2
+	sethi	%hi(CPUINFO_VA+CPUINFO_SAVEFPSTATE), %o5
+	ldd	[%o5 + %lo(CPUINFO_VA+CPUINFO_SAVEFPSTATE)], %o2
 	inccc   %o3
 	addx    %o2, 0, %o2
 	std	%o2, [%o5 + CPUINFO_SAVEFPSTATE]
@@ -5855,14 +5856,16 @@ _ENTRY(_C_LABEL(cypress_get_syncflt))
 _ENTRY(_C_LABEL(smp_get_syncflt))
 	save    %sp, -CCFSZ, %sp
 
-	sethi	%hi(CPUINFO_VA), %o4
+	sethi	%hi(CPUINFO_VA+CPUINFO_GETSYNCFLT), %o4
 	ld	[%l4 + %lo(CPUINFO_VA+CPUINFO_GETSYNCFLT)], %o5
 	clr	%l1
 	clr	%l3
+	sethi	%hi(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %o4
 	jmpl	%o5, %l7
-	 or	%o4, %lo(CPUINFO_SYNCFLTDUMP), %l4
+	 or	%o4, %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %l4
 
 	! load values out of the dump
+	sethi	%hi(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %o4
 	ld	[%o4 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP)], %o5
 	st	%o5, [%i0]
 	ld	[%o4 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP+4)], %o5
