@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.279 2019/12/29 23:47:56 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.280 2019/12/30 19:49:38 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.279 2019/12/29 23:47:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.280 2019/12/30 19:49:38 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -899,6 +899,13 @@ acpi_rescan_early(struct acpi_softc *sc)
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
+
+		if (ad->ad_device == NULL) {
+			if (aa.aa_dmat != NULL)
+				bus_dmatag_destroy(aa.aa_dmat);
+			if (aa.aa_dmat64 != NULL)
+				bus_dmatag_destroy(aa.aa_dmat64);
+		}
 	}
 }
 
@@ -961,6 +968,13 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
+
+		if (ad->ad_device == NULL) {
+			if (aa.aa_dmat != NULL)
+				bus_dmatag_destroy(aa.aa_dmat);
+			if (aa.aa_dmat64 != NULL)
+				bus_dmatag_destroy(aa.aa_dmat64);
+		}
 	}
 }
 
