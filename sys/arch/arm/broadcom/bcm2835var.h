@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835var.h,v 1.4 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: bcm2835var.h,v 1.5 2019/12/30 15:36:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -49,5 +49,6 @@ void bcm2836_cpu_hatch(struct cpu_info *);
 u_int bcm283x_clk_get_rate_uart(void);
 u_int bcm283x_clk_get_rate_vpu(void);
 u_int bcm283x_clk_get_rate_emmc(void);
+u_int bcm283x_clk_get_rate_emmc2(void);
 
 #endif	/* _ARM_BROADCOM_BCM2835_VAR_H_ */

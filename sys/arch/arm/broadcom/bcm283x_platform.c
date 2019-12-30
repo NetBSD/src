@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.28 2019/12/24 14:10:51 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.29 2019/12/30 15:36:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.28 2019/12/24 14:10:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.29 2019/12/30 15:36:37 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -402,6 +402,7 @@ static struct {
 	struct vcprop_tag_clockrate	vbt_emmcclockrate;
 	struct vcprop_tag_clockrate	vbt_armclockrate;
 	struct vcprop_tag_clockrate	vbt_vpuclockrate;
+	struct vcprop_tag_clockrate	vbt_emmc2clockrate;
 	struct vcprop_tag end;
 } vb __cacheline_aligned = {
 	.vb_hdr = {
@@ -487,6 +488,14 @@ static struct {
 			.vpt_rcode = VCPROPTAG_REQUEST
 		},
 		.id = VCPROP_CLK_CORE
+	},
+	.vbt_emmc2clockrate = {
+		.tag = {
+			.vpt_tag = VCPROPTAG_GET_CLOCKRATE,
+			.vpt_len = VCPROPTAG_LEN(vb.vbt_emmc2clockrate),
+			.vpt_rcode = VCPROPTAG_REQUEST
+		},
+		.id = VCPROP_CLK_EMMC2
 	},
 	.end = {
 		.vpt_tag = VCPROPTAG_NULL
@@ -639,6 +648,17 @@ bcm283x_clk_get_rate_emmc(void)
 	return 0;
 }
 
+u_int
+bcm283x_clk_get_rate_emmc2(void)
+{
+
+	if (vcprop_tag_success_p(&vb.vbt_emmc2clockrate.tag) &&
+	    vb.vbt_emmc2clockrate.rate > 0) {
+		return vb.vbt_emmc2clockrate.rate;
+	}
+	return 0;
+}
+
 
 
 static void
@@ -758,6 +778,15 @@ bcm283x_bootparams(bus_space_tag_t iot, bus_space_handle_t ioh)
 	if (vcprop_tag_success_p(&vb.vbt_armclockrate.tag))
 		printf("%s: arm clock    %d\n", __func__,
 		    vb.vbt_armclockrate.rate);
+	if (vcprop_tag_success_p(&vb.vbt_vpuclockrate.tag))
+		printf("%s: vpu clock    %d\n", __func__,
+		    vb.vbt_vpuclockrate.rate);
+	if (vcprop_tag_success_p(&vb.vbt_emmcclockrate.tag))
+		printf("%s: emmc clock   %d\n", __func__,
+		    vb.vbt_emmcclockrate.rate);
+	if (vcprop_tag_success_p(&vb.vbt_emmc2clockrate.tag))
+		printf("%s: emmc2 clock  %d\n", __func__,
+		    vb.vbt_emmcclockrate.rate);
 	if (vcprop_tag_success_p(&vb.vbt_fwrev.tag))
 		printf("%s: firmware rev %x\n", __func__,
 		    vb.vbt_fwrev.rev);
