@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.23 2019/12/27 13:13:17 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.24 2019/12/30 18:08:38 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.23 2019/12/27 13:13:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.24 2019/12/30 18:08:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -110,9 +110,8 @@ struct uvmpdpol_globalstate {
 };
 
 struct uvmpdpol_scanstate {
-	bool ss_first;
 	bool ss_anonreact, ss_filereact, ss_execreact;
-	struct vm_page *ss_nextpg;
+	struct vm_page ss_marker;
 };
 
 static void	uvmpdpol_pageactivate_locked(struct vm_page *);
@@ -177,8 +176,20 @@ uvmpdpol_scaninit(void)
 	ss->ss_anonreact = anonreact;
 	ss->ss_filereact = filereact;
 	ss->ss_execreact = execreact;
+	memset(&ss->ss_marker, 0, sizeof(ss->ss_marker));
+	ss->ss_marker.flags = PG_MARKER;
+	TAILQ_INSERT_HEAD(&pdpol_state.s_inactiveq, &ss->ss_marker, pdqueue);
+	mutex_exit(&s->lock);
+}
 
-	ss->ss_first = true;
+void
+uvmpdpol_scanfini(void)
+{
+	struct uvmpdpol_globalstate *s = &pdpol_state;
+	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
+
+	mutex_enter(&s->lock);
+	TAILQ_REMOVE(&pdpol_state.s_inactiveq, &ss->ss_marker, pdqueue);
 	mutex_exit(&s->lock);
 }
 
@@ -195,19 +206,11 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 		struct vm_anon *anon;
 		struct uvm_object *uobj;
 
-		if (ss->ss_first) {
-			pg = TAILQ_FIRST(&pdpol_state.s_inactiveq);
-			ss->ss_first = false;
-		} else {
-			pg = ss->ss_nextpg;
-			if (pg != NULL && (pg->pqflags & PQ_INACTIVE) == 0) {
-				pg = TAILQ_FIRST(&pdpol_state.s_inactiveq);
-			}
-		}
+		pg = TAILQ_NEXT(&ss->ss_marker, pdqueue);
 		if (pg == NULL) {
 			break;
 		}
-		ss->ss_nextpg = TAILQ_NEXT(pg, pdqueue);
+		KASSERT((pg->flags & PG_MARKER) == 0);
 		uvmexp.pdscans++;
 
 		/*
@@ -223,6 +226,14 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 	            	uvmpdpol_pagedequeue_locked(pg);
 	            	continue;
 		}
+
+		/*
+		 * now prepare to move on to the next page.
+		 */
+		TAILQ_REMOVE(&pdpol_state.s_inactiveq, &ss->ss_marker,
+		    pdqueue);
+		TAILQ_INSERT_AFTER(&pdpol_state.s_inactiveq, pg,
+		    &ss->ss_marker, pdqueue);
 
 		/*
 		 * enforce the minimum thresholds on different
@@ -300,7 +311,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 {
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 	int inactive_shortage;
-	struct vm_page *p, *nextpg;
+	struct vm_page *p, marker;
 	kmutex_t *lock;
 
 	/*
@@ -308,34 +319,22 @@ uvmpdpol_balancequeue(int swap_shortage)
 	 * our inactive target.
 	 */
 
+	memset(&marker, 0, sizeof(marker));
+	marker.flags = PG_MARKER;
+
 	mutex_enter(&s->lock);
-	inactive_shortage = pdpol_state.s_inactarg - pdpol_state.s_inactive;
-	for (p = TAILQ_FIRST(&pdpol_state.s_activeq);
-	     p != NULL && (inactive_shortage > 0 || swap_shortage > 0);
-	     p = nextpg) {
-		nextpg = TAILQ_NEXT(p, pdqueue);
-
-		/*
-		 * if there's a shortage of swap slots, try to free it.
-		 */
-
-		if (swap_shortage > 0 && (p->flags & PG_SWAPBACKED) != 0) {
-			mutex_enter(&p->interlock);
-			mutex_exit(&s->lock);
-			if (uvmpd_trydropswap(p)) {
-				swap_shortage--;
-			}
-			/* p->interlock now released */
-			mutex_enter(&s->lock);
+	TAILQ_INSERT_HEAD(&pdpol_state.s_activeq, &marker, pdqueue);
+	for (;;) {
+		inactive_shortage =
+		    pdpol_state.s_inactarg - pdpol_state.s_inactive;
+		if (inactive_shortage <= 0 && swap_shortage <= 0) {
+			break;
 		}
-
-		/*
-		 * if there's a shortage of inactive pages, deactivate.
-		 */
-
-		if (inactive_shortage <= 0) {
-			continue;
+		p = TAILQ_NEXT(&marker, pdqueue);
+		if (p == NULL) {
+			break;
 		}
+		KASSERT((p->flags & PG_MARKER) == 0);
 
 		/*
 		 * acquire interlock to stablize page identity.
@@ -350,17 +349,50 @@ uvmpdpol_balancequeue(int swap_shortage)
 	            	uvmpdpol_pagedequeue_locked(p);
 	            	continue;
 		}
-		mutex_exit(&s->lock);
-		lock = uvmpd_trylockowner(p);
-		/* p->interlock now released */
-		mutex_enter(&s->lock);
-		if (lock != NULL) {
+
+		/*
+		 * now prepare to move on to the next page.
+		 */
+
+		TAILQ_REMOVE(&pdpol_state.s_activeq, &marker, pdqueue);
+		TAILQ_INSERT_AFTER(&pdpol_state.s_activeq, p, &marker,
+		    pdqueue);
+
+		/*
+		 * try to lock the object that owns the page.  see comments
+		 * in uvmpdol_selectvictim().
+	         */
+	        mutex_exit(&s->lock);
+        	lock = uvmpd_trylockowner(p);
+        	/* p->interlock now released */
+        	mutex_enter(&s->lock);
+		if (lock == NULL) {
+			/* didn't get it - try the next page. */
+			continue;
+		}
+
+		/*
+		 * if there's a shortage of swap slots, try to free it.
+		 */
+		if (swap_shortage > 0 && (p->flags & PG_SWAPBACKED) != 0 &&
+		    (p->flags & PG_BUSY) == 0) {
+			if (uvmpd_dropswap(p)) {
+				swap_shortage--;
+			}
+		}
+
+		/*
+		 * if there's a shortage of inactive pages, deactivate.
+		 */
+
+		if (inactive_shortage > 0) {
 			uvmpdpol_pagedeactivate_locked(p);
 			uvmexp.pddeact++;
 			inactive_shortage--;
-			mutex_exit(lock);
 		}
+		mutex_exit(lock);
 	}
+	TAILQ_REMOVE(&pdpol_state.s_activeq, &marker, pdqueue);
 	mutex_exit(&s->lock);
 }
 
