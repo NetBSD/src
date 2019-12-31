@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.119 2019/12/30 18:08:37 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.120 2019/12/31 12:40:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.119 2019/12/30 18:08:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.120 2019/12/31 12:40:27 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -699,7 +699,7 @@ uvmpd_scan_queue(void)
 			break;
 		}
 		KASSERT(uvmpdpol_pageisqueued_p(p));
-		KASSERT(uvm_page_locked_p(p));
+		KASSERT(uvm_page_owner_locked_p(p));
 		KASSERT(p->wire_count == 0);
 
 		/*
