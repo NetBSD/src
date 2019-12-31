@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.179 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.180 2019/12/31 23:32:05 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.179 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.180 2019/12/31 23:32:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -414,6 +414,41 @@ uvm_availmem(void)
 {
 
 	return uvmexp.free;
+}
+
+void
+uvm_pagelock(struct vm_page *pg)
+{
+
+	mutex_enter(&pg->interlock);
+}
+
+void
+uvm_pagelock2(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	if (pg1 < pg2) {
+		mutex_enter(&pg1->interlock);
+		mutex_enter(&pg2->interlock);
+	} else {
+		mutex_enter(&pg2->interlock);
+		mutex_enter(&pg1->interlock);
+	}
+}
+
+void
+uvm_pageunlock(struct vm_page *pg)
+{
+
+	mutex_exit(&pg->interlock);
+}
+
+void
+uvm_pageunlock2(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	mutex_exit(&pg1->interlock);
+	mutex_exit(&pg2->interlock);
 }
 
 /* where's your schmonz now? */
