@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.12 2019/06/17 03:31:57 christos Exp $
+# $NetBSD: MODULAR,v 1.13 2019/12/31 15:07:22 pgoyette Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -22,8 +22,9 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no options 	COMPAT_40	# NetBSD 4.0,
 -no options 	COMPAT_50	# NetBSD 5.0,
 -no options 	COMPAT_60	# NetBSD 6.0,
--no options 	COMPAT_70	# NetBSD 7.0, and
--no options 	COMPAT_80	# NetBSD 8.0 binary compatibility.
+-no options 	COMPAT_70	# NetBSD 7.0,
+-no options 	COMPAT_80	# NetBSD 8.0, and
+-no options 	COMPAT_90	# NetBSD 9.0 binary compatibility.
 -no options 	COMPAT_43	# and 4.3BSD
 #options 	COMPAT_386BSD_MBRPART # recognize old partition ID
 
