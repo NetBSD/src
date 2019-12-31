@@ -1,4 +1,4 @@
-/*	$NetBSD: ibm4xx_machdep.c,v 1.27 2019/12/21 13:00:22 ad Exp $	*/
+/*	$NetBSD: ibm4xx_machdep.c,v 1.28 2019/12/31 13:07:11 ad Exp $	*/
 /*	Original: ibm40x_machdep.c,v 1.3 2005/01/17 17:19:36 shige Exp $ */
 
 /*
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.27 2019/12/21 13:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ibm4xx_machdep.c,v 1.28 2019/12/31 13:07:11 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_ddb.h"
@@ -307,7 +307,7 @@ ibm4xx_cpu_startup(const char *model)
 	 * pool pages.
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 }
 

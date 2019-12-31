@@ -1,4 +1,4 @@
-/*	$NetBSD: ccd.c,v 1.182 2019/12/21 13:00:24 ad Exp $	*/
+/*	$NetBSD: ccd.c,v 1.183 2019/12/31 13:07:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2007, 2009 The NetBSD Foundation, Inc.
@@ -88,7 +88,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.182 2019/12/21 13:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ccd.c,v 1.183 2019/12/31 13:07:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -702,7 +702,7 @@ ccdbackoff(struct ccd_softc *cs)
 {
 
 	/* XXX Arbitrary, should be a uvm call. */
-	return uvm_free() < (uvmexp.freemin >> 1) &&
+	return uvm_availmem() < (uvmexp.freemin >> 1) &&
 	    disk_isbusy(&cs->sc_dkdev);
 }
 

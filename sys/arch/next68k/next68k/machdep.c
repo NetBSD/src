@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.113 2019/12/21 13:00:22 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.114 2019/12/31 13:07:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Darrin B. Jewell
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.113 2019/12/21 13:00:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.114 2019/12/31 13:07:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -303,7 +303,7 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 	/*
