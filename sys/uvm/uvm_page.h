@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.90 2019/12/27 13:13:17 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.91 2019/12/31 12:40:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,7 +112,7 @@
  * c:	cpu private
  * s:	stable, does not change
  *
- * UVM and pmap(9) may use uvm_page_locked_p() to assert whether the
+ * UVM and pmap(9) may use uvm_page_owner_locked_p() to assert whether the
  * page owner's lock is acquired.
  *
  * A page can have one of four identities:
@@ -311,7 +311,7 @@ void uvm_pageunwire(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
-bool uvm_page_locked_p(struct vm_page *);
+bool uvm_page_owner_locked_p(struct vm_page *);
 void uvm_pgfl_lock(void);
 void uvm_pgfl_unlock(void);
 
