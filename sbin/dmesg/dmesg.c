@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.43 2019/06/04 11:59:05 kre Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.44 2019/12/31 19:58:56 tsutsui Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.43 2019/06/04 11:59:05 kre Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.44 2019/12/31 19:58:56 tsutsui Exp $");
 #endif
 #endif /* not lint */
 
@@ -157,7 +157,7 @@ main(int argc, char *argv[])
 	long nsec, fsec;
 	int scale;
 	int deltas, quiet, humantime;
-	bool frac;
+	bool frac, postts;
 
 	static const int bmib[] = { CTL_KERN, KERN_BOOTTIME };
 	size = sizeof(boottime);
@@ -262,6 +262,7 @@ main(int argc, char *argv[])
 	 */
 #ifndef SMALL
 	frac = false;
+	postts = false;
 	scale = 0;
 #endif
 	for (tstamp = 0, newl = 1, log = i = 0, p = bufdata + cur.msg_bufx;
@@ -310,6 +311,7 @@ main(int argc, char *argv[])
 				ADDC(ch);
 				ADDC('\0');
 				tstamp = 0;
+				postts = true;
 				sec = fsec = 0;
 				switch (sscanf(tbuf, "[%jd.%ld]", &sec, &fsec)){
 				case EOF:
@@ -375,8 +377,10 @@ main(int argc, char *argv[])
 				continue;
 #endif
 			case ' ':
-				if (!tstamp)
+				if (!tstamp && postts) {
+					postts = false;
 					continue;
+				}
 				/*FALLTHROUGH*/
 			default:
 #ifndef SMALL
