@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.538 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.539 2019/12/31 11:49:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.538 2019/12/22 19:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539 2019/12/31 11:49:08 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1344,7 +1344,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	vp = fp->f_vnode;
 
 	vref(vp);
-	vn_lock(vp,  LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
