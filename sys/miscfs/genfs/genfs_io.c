@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.81 2019/12/16 18:17:32 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.82 2019/12/31 12:40:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.81 2019/12/16 18:17:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.82 2019/12/31 12:40:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,7 +75,7 @@ genfs_rel_pages(struct vm_page **pgs, unsigned int npages)
 
 		if (pg == NULL || pg == PGO_DONTCARE)
 			continue;
-		KASSERT(uvm_page_locked_p(pg));
+		KASSERT(uvm_page_owner_locked_p(pg));
 		if (pg->flags & PG_FAKE) {
 			pg->flags |= PG_RELEASED;
 		}

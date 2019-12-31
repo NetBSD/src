@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.177 2019/12/21 12:59:12 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.178 2019/12/31 12:40:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.177 2019/12/21 12:59:12 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.178 2019/12/31 12:40:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -238,12 +238,12 @@ uvm_pagezero(struct vm_page *pg)
 }
 
 /*
- * uvm_page_locked_p: return true if object associated with page is
+ * uvm_page_owner_locked_p: return true if object associated with page is
  * locked.  this is a weak check for runtime assertions only.
  */
 
 bool
-uvm_page_locked_p(struct vm_page *pg)
+uvm_page_owner_locked_p(struct vm_page *pg)
 {
 
 	return mutex_owned(pg->uobject->vmobjlock);

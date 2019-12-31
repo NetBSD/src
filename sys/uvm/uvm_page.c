@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.217 2019/12/30 17:45:53 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.218 2019/12/31 12:40:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.217 2019/12/30 17:45:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.218 2019/12/31 12:40:27 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1304,7 +1304,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	pg->offset = off;
 	pg->uobject = obj;
 	pg->uanon = anon;
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 	pg->flags = PG_BUSY|PG_CLEAN|PG_FAKE;
 	if (anon) {
 		anon->an_page = pg;
@@ -1636,7 +1636,7 @@ uvm_page_unbusy(struct vm_page **pgs, int npgs)
 			continue;
 		}
 
-		KASSERT(uvm_page_locked_p(pg));
+		KASSERT(uvm_page_owner_locked_p(pg));
 		KASSERT(pg->flags & PG_BUSY);
 		KASSERT((pg->flags & PG_PAGEOUT) == 0);
 		if (pg->flags & PG_WANTED) {
@@ -1676,7 +1676,7 @@ uvm_page_own(struct vm_page *pg, const char *tag)
 
 	KASSERT((pg->flags & (PG_PAGEOUT|PG_RELEASED)) == 0);
 	KASSERT((pg->flags & PG_WANTED) == 0);
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 
 	/* gain ownership? */
 	if (tag) {
@@ -1750,7 +1750,7 @@ void
 uvm_pagewire(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 #if defined(READAHEAD_STATS)
 	if ((pg->flags & PG_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1778,7 +1778,7 @@ void
 uvm_pageunwire(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 	KASSERT(pg->wire_count != 0);
 	KASSERT(!uvmpdpol_pageisqueued_p(pg));
 	mutex_enter(&pg->interlock);
@@ -1804,7 +1804,7 @@ void
 uvm_pagedeactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 	if (pg->wire_count == 0) {
 		KASSERT(uvmpdpol_pageisqueued_p(pg));
 		uvmpdpol_pagedeactivate(pg);
@@ -1821,7 +1821,7 @@ void
 uvm_pageactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 #if defined(READAHEAD_STATS)
 	if ((pg->flags & PG_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1842,7 +1842,7 @@ void
 uvm_pagedequeue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 	if (uvmpdpol_pageisqueued_p(pg)) {
 		uvmpdpol_pagedequeue(pg);
 	}
@@ -1858,7 +1858,7 @@ void
 uvm_pageenqueue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 	if (pg->wire_count == 0 && !uvmpdpol_pageisqueued_p(pg)) {
 		uvmpdpol_pageenqueue(pg);
 	}
@@ -1919,12 +1919,12 @@ uvm_page_lookup_freelist(struct vm_page *pg)
 }
 
 /*
- * uvm_page_locked_p: return true if object associated with page is
+ * uvm_page_owner_locked_p: return true if object associated with page is
  * locked.  this is a weak check for runtime assertions only.
  */
 
 bool
-uvm_page_locked_p(struct vm_page *pg)
+uvm_page_owner_locked_p(struct vm_page *pg)
 {
 
 	if (pg->uobject != NULL) {

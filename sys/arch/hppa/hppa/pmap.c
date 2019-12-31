@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.101 2019/12/15 21:11:34 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.102 2019/12/31 12:40:27 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.101 2019/12/15 21:11:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.102 2019/12/31 12:40:27 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -579,7 +579,7 @@ pmap_pv_enter(struct vm_page *pg, struct pv_entry *pve, pmap_t pm,
 	DPRINTF(PDB_FOLLOW|PDB_PV, ("%s(%p, %p, %p, 0x%lx, %p, 0x%x)\n",
 	    __func__, pg, pve, pm, va, pdep, flags));
 
-	KASSERT(pm == pmap_kernel() || uvm_page_locked_p(pg));
+	KASSERT(pm == pmap_kernel() || uvm_page_owner_locked_p(pg));
 
 	pve->pv_pmap = pm;
 	pve->pv_va = va | flags;
@@ -594,7 +594,7 @@ pmap_pv_remove(struct vm_page *pg, pmap_t pmap, vaddr_t va)
 	struct vm_page_md * const md = VM_PAGE_TO_MD(pg);
 	struct pv_entry **pve, *pv;
 
-	KASSERT(pmap == pmap_kernel() || uvm_page_locked_p(pg));
+	KASSERT(pmap == pmap_kernel() || uvm_page_owner_locked_p(pg));
 
 	for (pv = *(pve = &md->pvh_list);
 	    pv; pv = *(pve = &(*pve)->pv_next)) {

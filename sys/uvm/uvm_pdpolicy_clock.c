@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.25 2019/12/30 18:18:03 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.26 2019/12/31 12:40:27 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*
@@ -69,7 +69,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.25 2019/12/30 18:18:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.26 2019/12/31 12:40:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -398,7 +398,7 @@ static void
 uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg));
 
 	if (pg->pqflags & PQ_ACTIVE) {
 		TAILQ_REMOVE(&pdpol_state.s_activeq, pg, pdqueue);
