@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.219 2019/12/31 13:07:14 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.220 2019/12/31 22:42:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.219 2019/12/31 13:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.220 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -984,6 +984,8 @@ uvm_cpu_attach(struct cpu_info *ci)
 		ucpu = ci->ci_data.cpu_uvm;
 	}
 
+	uvmpdpol_init_cpu(ucpu);
+
 	/*
 	 * Attach RNG source for this CPU's VM events
 	 */
@@ -1345,6 +1347,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
  * uvm_pagereplace: replace a page with another
  *
  * => object must be locked
+ * => page interlocks must be held
  */
 
 void
@@ -1358,25 +1361,17 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT((newpg->flags & PG_TABLED) == 0);
 	KASSERT(newpg->uobject == NULL);
 	KASSERT(mutex_owned(uobj->vmobjlock));
+	KASSERT(mutex_owned(&oldpg->interlock));
+	KASSERT(mutex_owned(&newpg->interlock));
 
 	newpg->offset = oldpg->offset;
 	pg = radix_tree_replace_node(&uobj->uo_pages,
 	    newpg->offset >> PAGE_SHIFT, newpg);
 	KASSERT(pg == oldpg);
 
-	/* take page interlocks during rename */
-	if (oldpg < newpg) {
-		mutex_enter(&oldpg->interlock);
-		mutex_enter(&newpg->interlock);
-	} else {
-		mutex_enter(&newpg->interlock);
-		mutex_enter(&oldpg->interlock);
-	}
 	newpg->uobject = uobj;
 	uvm_pageinsert_object(uobj, newpg);
 	uvm_pageremove_object(uobj, oldpg);
-	mutex_exit(&oldpg->interlock);
-	mutex_exit(&newpg->interlock);
 }
 
 /*
@@ -1502,7 +1497,7 @@ uvm_pagefree(struct vm_page *pg)
 		 * unbusy the page, and we're done.
 		 */
 
-		mutex_enter(&pg->interlock);
+		uvm_pagelock(pg);
 		locked = true;
 		if (pg->uobject != NULL) {
 			uvm_pageremove_object(pg->uobject, pg);
@@ -1526,15 +1521,15 @@ uvm_pagefree(struct vm_page *pg)
 #endif
 		if (pg->loan_count) {
 			KASSERT(pg->uobject == NULL);
-			mutex_exit(&pg->interlock);
 			if (pg->uanon == NULL) {
 				uvm_pagedequeue(pg);
 			}
+			uvm_pageunlock(pg);
 			return;
 		}
 	} else if (pg->uobject != NULL || pg->uanon != NULL ||
 	           pg->wire_count != 0) {
-		mutex_enter(&pg->interlock);
+		uvm_pagelock(pg);
 		locked = true;
 	} else {
 		locked = false;
@@ -1560,13 +1555,14 @@ uvm_pagefree(struct vm_page *pg)
 		atomic_dec_uint(&uvmexp.wired);
 	}
 	if (locked) {
-		mutex_exit(&pg->interlock);
+		/*
+		 * now remove the page from the queues.
+		 */
+		uvm_pagedequeue(pg);
+		uvm_pageunlock(pg);
+	} else {
+		KASSERT(!uvmpdpol_pageisqueued_p(pg));
 	}
-
-	/*
-	 * now remove the page from the queues.
-	 */
-	uvm_pagedequeue(pg);
 
 	/*
 	 * and put on free queue
@@ -1744,6 +1740,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
  * uvm_pagewire: wire the page, thus removing it from the daemon's grasp
  *
  * => caller must lock objects
+ * => caller must hold pg->interlock
  */
 
 void
@@ -1751,6 +1748,7 @@ uvm_pagewire(struct vm_page *pg)
 {
 
 	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(mutex_owned(&pg->interlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->flags & PG_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1761,9 +1759,7 @@ uvm_pagewire(struct vm_page *pg)
 		uvm_pagedequeue(pg);
 		atomic_inc_uint(&uvmexp.wired);
 	}
-	mutex_enter(&pg->interlock);
 	pg->wire_count++;
-	mutex_exit(&pg->interlock);
 	KASSERT(pg->wire_count > 0);	/* detect wraparound */
 }
 
@@ -1772,6 +1768,7 @@ uvm_pagewire(struct vm_page *pg)
  *
  * => activate if wire count goes to zero.
  * => caller must lock objects
+ * => caller must hold pg->interlock
  */
 
 void
@@ -1781,9 +1778,8 @@ uvm_pageunwire(struct vm_page *pg)
 	KASSERT(uvm_page_owner_locked_p(pg));
 	KASSERT(pg->wire_count != 0);
 	KASSERT(!uvmpdpol_pageisqueued_p(pg));
-	mutex_enter(&pg->interlock);
+	KASSERT(mutex_owned(&pg->interlock));
 	pg->wire_count--;
-	mutex_exit(&pg->interlock);
 	if (pg->wire_count == 0) {
 		uvm_pageactivate(pg);
 		KASSERT(uvmexp.wired != 0);
@@ -1798,6 +1794,7 @@ uvm_pageunwire(struct vm_page *pg)
  * => caller must check to make sure page is not wired
  * => object that page belongs to must be locked (so we can adjust pg->flags)
  * => caller must clear the reference on the page before calling
+ * => caller must hold pg->interlock
  */
 
 void
@@ -1805,6 +1802,7 @@ uvm_pagedeactivate(struct vm_page *pg)
 {
 
 	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(mutex_owned(&pg->interlock));
 	if (pg->wire_count == 0) {
 		KASSERT(uvmpdpol_pageisqueued_p(pg));
 		uvmpdpol_pagedeactivate(pg);
@@ -1815,6 +1813,7 @@ uvm_pagedeactivate(struct vm_page *pg)
  * uvm_pageactivate: activate page
  *
  * => caller must lock objects
+ * => caller must hold pg->interlock
  */
 
 void
@@ -1822,6 +1821,7 @@ uvm_pageactivate(struct vm_page *pg)
 {
 
 	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(mutex_owned(&pg->interlock));
 #if defined(READAHEAD_STATS)
 	if ((pg->flags & PG_READAHEAD) != 0) {
 		uvm_ra_hit.ev_count++;
@@ -1837,12 +1837,14 @@ uvm_pageactivate(struct vm_page *pg)
  * uvm_pagedequeue: remove a page from any paging queue
  * 
  * => caller must lock objects
+ * => caller must hold pg->interlock
  */
 void
 uvm_pagedequeue(struct vm_page *pg)
 {
 
 	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(mutex_owned(&pg->interlock));
 	if (uvmpdpol_pageisqueued_p(pg)) {
 		uvmpdpol_pagedequeue(pg);
 	}
@@ -1853,14 +1855,99 @@ uvm_pagedequeue(struct vm_page *pg)
  * used where a page is not really demanded (yet).  eg. read-ahead
  *
  * => caller must lock objects
+ * => caller must hold pg->interlock
  */
 void
 uvm_pageenqueue(struct vm_page *pg)
 {
 
 	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(mutex_owned(&pg->interlock));
 	if (pg->wire_count == 0 && !uvmpdpol_pageisqueued_p(pg)) {
 		uvmpdpol_pageenqueue(pg);
+	}
+}
+
+/*
+ * uvm_pagelock: acquire page interlock
+ */
+void
+uvm_pagelock(struct vm_page *pg)
+{
+
+	mutex_enter(&pg->interlock);
+}
+
+/*
+ * uvm_pagelock2: acquire two page interlocks
+ */
+void
+uvm_pagelock2(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	if (pg1 < pg2) {
+		mutex_enter(&pg1->interlock);
+		mutex_enter(&pg2->interlock);
+	} else {
+		mutex_enter(&pg2->interlock);
+		mutex_enter(&pg1->interlock);
+	}
+}
+
+/*
+ * uvm_pageunlock: release page interlock, and if a page replacement intent
+ * is set on the page, pass it to uvmpdpol to make real.
+ * 
+ * => caller must hold pg->interlock
+ */
+void
+uvm_pageunlock(struct vm_page *pg)
+{
+
+	if ((pg->pqflags & PQ_INTENT_SET) == 0 ||
+	    (pg->pqflags & PQ_INTENT_QUEUED) != 0) {
+	    	mutex_exit(&pg->interlock);
+	    	return;
+	}
+	pg->pqflags |= PQ_INTENT_QUEUED;
+	mutex_exit(&pg->interlock);
+	uvmpdpol_pagerealize(pg);
+}
+
+/*
+ * uvm_pageunlock2: release two page interlocks, and for both pages if a
+ * page replacement intent is set on the page, pass it to uvmpdpol to make
+ * real.
+ * 
+ * => caller must hold pg->interlock
+ */
+void
+uvm_pageunlock2(struct vm_page *pg1, struct vm_page *pg2)
+{
+
+	if ((pg1->pqflags & PQ_INTENT_SET) == 0 ||
+	    (pg1->pqflags & PQ_INTENT_QUEUED) != 0) {
+	    	mutex_exit(&pg1->interlock);
+	    	pg1 = NULL;
+	} else {
+		pg1->pqflags |= PQ_INTENT_QUEUED;
+		mutex_exit(&pg1->interlock);
+	}
+
+	if ((pg2->pqflags & PQ_INTENT_SET) == 0 ||
+	    (pg2->pqflags & PQ_INTENT_QUEUED) != 0) {
+	    	mutex_exit(&pg2->interlock);
+	    	pg2 = NULL;
+	} else {
+		pg2->pqflags |= PQ_INTENT_QUEUED;
+		mutex_exit(&pg2->interlock);
+	}
+
+	if (pg1 != NULL) {
+		uvmpdpol_pagerealize(pg1);
+	}
+	if (pg2 != NULL) {
+		uvmpdpol_pagerealize(pg2);
 	}
 }
 
