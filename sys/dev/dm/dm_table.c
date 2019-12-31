@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_table.c,v 1.18 2019/12/22 13:16:09 tkusumi Exp $      */
+/*        $NetBSD: dm_table.c,v 1.19 2019/12/31 10:30:30 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.18 2019/12/22 13:16:09 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_table.c,v 1.19 2019/12/31 10:30:30 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -181,7 +181,7 @@ dm_table_destroy(dm_table_head_t *head, uint8_t table_id)
 /*
  * Return length of active table in device.
  */
-static inline uint64_t
+static uint64_t
 dm_table_size_impl(dm_table_head_t *head, int table)
 {
 	dm_table_t *tbl;
