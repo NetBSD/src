@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.69 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.70 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.69 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.70 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -352,7 +352,9 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	 * Deactivate the page (to put it on a page queue).
 	 */
 
+	uvm_pagelock(pg);
 	uvm_pagedeactivate(pg);
+	uvm_pageunlock(pg);
 	if (pg->flags & PG_WANTED) {
 		pg->flags &= ~PG_WANTED;
 		wakeup(pg);
