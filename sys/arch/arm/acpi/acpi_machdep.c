@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.16 2019/12/31 11:42:46 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.17 2019/12/31 13:54:22 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,13 +32,14 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.16 2019/12/31 11:42:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.17 2019/12/31 13:54:22 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/bus.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
+#include <sys/kmem.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -372,44 +373,6 @@ static const char * const module_hid[] = {
 	NULL
 };
 
-static bus_dma_tag_t
-arm_acpi_dma_tag_subregion(struct acpi_softc *sc, bus_dma_tag_t dmat,
-    ACPI_HANDLE handle)
-{
-	struct acpi_resources res;
-	struct acpi_mem *mem;
-	bus_dma_tag_t newtag;
-	ACPI_STATUS rv;
-	int error;
-
-	rv = acpi_resource_parse(sc->sc_dev, handle, "_DMA", &res,
-	    &acpi_resource_parse_ops_quiet);
-	if (ACPI_FAILURE(rv))
-		return dmat;	/* no translation required */
-
-	mem = acpi_res_mem(&res, 0);
-	if (mem == NULL)
-		goto done;
-
-	aprint_debug_dev(sc->sc_dev, "_DMA range %#lx-%#lx\n",
-	    mem->ar_base, mem->ar_base + mem->ar_length - 1);
-
-	error = bus_dmatag_subregion(dmat,
-	    mem->ar_base, mem->ar_base + mem->ar_length - 1,
-	    &newtag, BUS_DMA_WAITOK);
-	if (error != 0) {
-		aprint_error_dev(sc->sc_dev,
-		    "_DMA subregion failed: %d\n", error);
-		goto done;
-	}
-	dmat = newtag;
-
-done:
-	acpi_resource_cleanup(&res);
-
-	return dmat;
-}
-
 static ACPI_HANDLE
 arm_acpi_dma_module(struct acpi_softc *sc, struct acpi_devnode *ad)
 {
@@ -432,28 +395,101 @@ arm_acpi_dma_module(struct acpi_softc *sc, struct acpi_devnode *ad)
 	return NULL;
 }
 
+static void
+arm_acpi_dma_init_ranges(struct acpi_softc *sc, struct acpi_devnode *ad,
+    struct arm32_bus_dma_tag *dmat, uint32_t flags)
+{
+	struct acpi_resources res;
+	struct acpi_mem *mem;
+	ACPI_HANDLE module;
+	ACPI_STATUS rv;
+	int n;
+
+	module = arm_acpi_dma_module(sc, ad->ad_parent);
+	if (module == NULL) {
+default_tag:
+		/* No translation required */
+		dmat->_nranges = 1;
+		dmat->_ranges = kmem_zalloc(sizeof(*dmat->_ranges), KM_SLEEP);
+		dmat->_ranges[0].dr_sysbase = 0;
+		dmat->_ranges[0].dr_busbase = 0;
+		dmat->_ranges[0].dr_len = UINTPTR_MAX;
+		dmat->_ranges[0].dr_flags = flags;
+		return;
+	}
+
+	rv = acpi_resource_parse(sc->sc_dev, module, "_DMA", &res,
+	    &acpi_resource_parse_ops_quiet);
+	if (ACPI_FAILURE(rv)) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to parse _DMA on %s: %s\n",
+		    acpi_name(module), AcpiFormatException(rv));
+		goto default_tag;
+	}
+	if (res.ar_nmem == 0) {
+		acpi_resource_cleanup(&res);
+		goto default_tag;
+	}
+
+	dmat->_nranges = res.ar_nmem;
+	dmat->_ranges = kmem_zalloc(sizeof(*dmat->_ranges) * res.ar_nmem,
+	    KM_SLEEP);
+
+	for (n = 0; n < res.ar_nmem; n++) {
+		mem = acpi_res_mem(&res, n);
+		dmat->_ranges[n].dr_busbase = mem->ar_base;
+		dmat->_ranges[n].dr_sysbase = mem->ar_base;
+		if (mem->ar_decode == ACPI_POS_DECODE)
+		 	dmat->_ranges[n].dr_sysbase += mem->ar_offset;
+		else
+			dmat->_ranges[n].dr_sysbase -= mem->ar_offset;
+		dmat->_ranges[n].dr_len = mem->ar_length;
+		dmat->_ranges[n].dr_flags = flags;
+
+		aprint_debug_dev(sc->sc_dev,
+		    "%s: DMA sysbase %#lx busbase %#lx len %#lx%s\n",
+		    acpi_name(ad->ad_handle),
+		    dmat->_ranges[n].dr_sysbase,
+		    dmat->_ranges[n].dr_busbase,
+		    dmat->_ranges[n].dr_len,
+		    flags ? " (coherent)" : "");
+	}
+
+	acpi_resource_cleanup(&res);
+}
+
+static uint32_t
+arm_acpi_dma_flags(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	ACPI_INTEGER cca = 1;	/* default cache coherent */
+	ACPI_STATUS rv;
+
+	for (; ad != NULL; ad = ad->ad_parent) {
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		rv = acpi_eval_integer(ad->ad_handle, "_CCA", &cca);
+		if (ACPI_SUCCESS(rv))
+			break;
+	}
+
+	return cca ? _BUS_DMAMAP_COHERENT : 0;
+}
+
+
 bus_dma_tag_t
 arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 {
-	ACPI_HANDLE module;
-	ACPI_INTEGER cca;
-	bus_dma_tag_t dmat;
+	struct arm32_bus_dma_tag *dmat;
 
-	if (ACPI_FAILURE(acpi_eval_integer(ad->ad_handle, "_CCA", &cca)))
-		cca = 1;
+	if (ad->ad_dmat != NULL)
+		return ad->ad_dmat;
+		
+	dmat = kmem_alloc(sizeof(*dmat), KM_SLEEP);
+	*dmat = arm_generic_dma_tag;
 
-	if (cca)
-		dmat = &acpi_coherent_dma_tag;
-	else
-		dmat = &arm_generic_dma_tag;
-
-	/*
-	 * If a parent device is a bus, it may define valid DMA ranges
-	 * and translations for child nodes.
-	 */
-	module = arm_acpi_dma_module(sc, ad);
-	if (module != NULL)
-		dmat = arm_acpi_dma_tag_subregion(sc, dmat, module);
+	const uint32_t flags = arm_acpi_dma_flags(sc, ad);
+	arm_acpi_dma_init_ranges(sc, ad, dmat, flags);
 
 	return dmat;
 }
