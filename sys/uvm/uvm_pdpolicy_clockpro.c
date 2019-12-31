@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.20 2019/12/30 18:08:38 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.21 2019/12/31 12:40:27 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.20 2019/12/30 18:08:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.21 2019/12/31 12:40:27 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -643,7 +643,7 @@ clockpro_movereferencebit(struct vm_page *pg, bool locked)
 	bool referenced;
 
 	KASSERT(mutex_owned(&clockpro.lock));
-	KASSERT(!locked || uvm_page_locked_p(pg));
+	KASSERT(!locked || uvm_page_owner_locked_p(pg));
 	if (!locked) {
 		/*
 		 * acquire interlock to stablize page identity.
