@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.7 2019/12/21 13:00:23 ad Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.8 2019/12/31 13:07:12 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -326,7 +326,7 @@ cpu_startup(void)
 	phys_map = uvm_km_suballoc(kernel_map, &minaddr, &maxaddr,
 	    VM_PHYS_SIZE, 0, FALSE, NULL);
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 }
 

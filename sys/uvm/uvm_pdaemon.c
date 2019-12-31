@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.120 2019/12/31 12:40:27 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.121 2019/12/31 13:07:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.120 2019/12/31 12:40:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.121 2019/12/31 13:07:14 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -182,7 +182,7 @@ uvm_wait(const char *wmsg)
 void
 uvm_kick_pdaemon(void)
 {
-	int fpages = uvm_free();
+	int fpages = uvm_availmem();
 
 	if (fpages + uvmexp.paging < uvmexp.freemin ||
 	    (fpages + uvmexp.paging < uvmexp.freetarg &&
@@ -300,7 +300,7 @@ uvm_pageout(void *arg)
 		 * Estimate a hint.  Note that bufmem are returned to
 		 * system only when entire pool page is empty.
 		 */
-		fpages = uvm_free();
+		fpages = uvm_availmem();
 		UVMHIST_LOG(pdhist,"  free/ftarg=%jd/%jd",
 		    fpages, uvmexp.freetarg, 0,0);
 
@@ -318,7 +318,8 @@ uvm_pageout(void *arg)
 		 * if there's any free memory to be had,
 		 * wake up any waiters.
 		 */
-		if (uvm_free() > uvmexp.reserve_kernel || uvmexp.paging == 0) {
+		if (uvm_availmem() > uvmexp.reserve_kernel ||
+		    uvmexp.paging == 0) {
 			mutex_spin_enter(&uvmpd_lock);
 			wakeup(&uvmexp.free);
 			uvm_pagedaemon_waiters = 0;
@@ -379,7 +380,7 @@ uvm_pageout_done(int npages)
 	 */
 
 	mutex_spin_enter(&uvmpd_lock);
-	if (uvm_free() <= uvmexp.reserve_kernel) {
+	if (uvm_availmem() <= uvmexp.reserve_kernel) {
 		wakeup(&uvm.pagedaemon);
 	} else if (uvm_pagedaemon_waiters != 0) {
 		wakeup(&uvmexp.free);
@@ -666,7 +667,7 @@ uvmpd_scan_queue(void)
 		 * see if we've met the free target.
 		 */
 
-		if (uvm_free() + uvmexp.paging
+		if (uvm_availmem() + uvmexp.paging
 #if defined(VMSWAP)
 		    + swapcluster_nused(&swc)
 #endif /* defined(VMSWAP) */
@@ -795,7 +796,7 @@ uvmpd_scan_queue(void)
 		 * free target when all the current pageouts complete.
 		 */
 
-		if (uvm_free() + uvmexp.paging > uvmexp.freetarg << 2) {
+		if (uvm_availmem() + uvmexp.paging > uvmexp.freetarg << 2) {
 			mutex_exit(slock);
 			continue;
 		}
@@ -904,7 +905,7 @@ uvmpd_scan(void)
 	 */
 
 	swap_shortage = 0;
-	fpages = uvm_free();
+	fpages = uvm_availmem();
 	if (fpages < uvmexp.freetarg &&
 	    uvmexp.swpginuse >= uvmexp.swpgavail &&
 	    !uvm_swapisfull() &&
@@ -919,7 +920,7 @@ uvmpd_scan(void)
 	 * modules.
 	 */
 
-	if (uvm_free() < uvmexp.freemin) {
+	if (uvm_availmem() < uvmexp.freemin) {
 		module_thread_kick();
 	}
 }
@@ -1030,7 +1031,7 @@ uvmpd_pool_drain_thread(void *arg)
 		/*
 		 * kill unused metadata buffers.
 		 */
-		bufcnt = uvmexp.freetarg - uvm_free();
+		bufcnt = uvmexp.freetarg - uvm_availmem();
 		if (bufcnt < 0)
 			bufcnt = 0;
 

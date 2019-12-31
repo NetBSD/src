@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.43 2019/12/27 09:45:26 msaitoh Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.44 2019/12/31 13:07:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.43 2019/12/27 09:45:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.44 2019/12/31 13:07:11 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -337,7 +337,7 @@ cpu_startup_common(void)
 	 * map those pages.)
 	 */
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 #if defined(__mips_n32)
