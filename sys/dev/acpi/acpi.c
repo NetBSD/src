@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.281 2019/12/30 19:52:11 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.282 2019/12/31 12:27:50 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.281 2019/12/30 19:52:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.282 2019/12/31 12:27:50 jmcneill Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -200,6 +200,7 @@ static bool		acpi_resume(device_t, const pmf_qual_t *);
 
 static void		acpi_build_tree(struct acpi_softc *);
 static void		acpi_config_tree(struct acpi_softc *);
+static void		acpi_config_dma(struct acpi_softc *);
 static ACPI_STATUS	acpi_make_devnode(ACPI_HANDLE, uint32_t,
 					  void *, void **);
 static ACPI_STATUS	acpi_make_devnode_post(ACPI_HANDLE, uint32_t,
@@ -687,6 +688,10 @@ acpi_build_tree(struct acpi_softc *sc)
 static void
 acpi_config_tree(struct acpi_softc *sc)
 {
+	/*
+	 * Assign bus_dma resources
+	 */
+	acpi_config_dma(sc);
 
 	/*
 	 * Configure all everything found "at acpi?".
@@ -705,6 +710,24 @@ acpi_config_tree(struct acpi_softc *sc)
 	 * Defer rest of the configuration.
 	 */
 	(void)config_defer(sc->sc_dev, acpi_rescan_capabilities);
+}
+
+static void
+acpi_config_dma(struct acpi_softc *sc)
+{
+	struct acpi_devnode *ad;
+
+	SIMPLEQ_FOREACH(ad, &sc->ad_head, ad_list) {
+
+		if (ad->ad_device != NULL)
+			continue;
+
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+
+		ad->ad_dmat = acpi_get_dma_tag(sc, ad);
+		ad->ad_dmat64 = acpi_get_dma64_tag(sc, ad);
+	}
 }
 
 static ACPI_STATUS
@@ -895,18 +918,11 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
-		aa.aa_dmat = acpi_get_dma_tag(sc, ad);
-		aa.aa_dmat64 = acpi_get_dma64_tag(sc, ad);
+		aa.aa_dmat = ad->ad_dmat;
+		aa.aa_dmat64 = ad->ad_dmat64;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
-
-		if (ad->ad_device == NULL) {
-			if (aa.aa_dmat != NULL)
-				bus_dmatag_destroy(aa.aa_dmat);
-			if (aa.aa_dmat64 != NULL)
-				bus_dmatag_destroy(aa.aa_dmat64);
-		}
 	}
 }
 
@@ -964,18 +980,11 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_pc = sc->sc_pc;
 		aa.aa_pciflags = sc->sc_pciflags;
 		aa.aa_ic = sc->sc_ic;
-		aa.aa_dmat = acpi_get_dma_tag(sc, ad);
-		aa.aa_dmat64 = acpi_get_dma64_tag(sc, ad);
+		aa.aa_dmat = ad->ad_dmat;
+		aa.aa_dmat64 = ad->ad_dmat64;
 
 		ad->ad_device = config_found_ia(sc->sc_dev,
 		    "acpinodebus", &aa, acpi_print);
-
-		if (ad->ad_device == NULL) {
-			if (aa.aa_dmat != NULL)
-				bus_dmatag_destroy(aa.aa_dmat);
-			if (aa.aa_dmat64 != NULL)
-				bus_dmatag_destroy(aa.aa_dmat64);
-		}
 	}
 }
 
