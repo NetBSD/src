@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.23 2019/11/16 21:53:38 mlelstv Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.24 2019/12/31 20:47:05 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.23 2019/11/16 21:53:38 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.24 2019/12/31 20:47:05 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -138,10 +138,8 @@ fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
 	int ihandle;
 
 	specifier = get_specifier_by_index(phandle, index, &ihandle);
-	if (specifier == NULL) {
-		printf("%s: handle not found %u@%x\n",__func__,index,phandle);
+	if (specifier == NULL)
 		return NULL;
-	}
 
 	return fdtbus_intr_establish_raw(ihandle, specifier, ipl,
 	    flags, func, arg);
