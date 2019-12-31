@@ -1,4 +1,4 @@
-#	$NetBSD: files.vchiq,v 1.3 2017/12/10 21:38:27 skrll Exp $
+#	$NetBSD: files.vchiq,v 1.4 2019/12/31 01:00:22 jmcneill Exp $
 #
 # Broadcom VideoCore IV
 #
@@ -6,7 +6,6 @@
 define	vchiqbus { }
 
 device	vchiq: vchiqbus
-attach	vchiq at fdt
 file	external/bsd/vchiq/dist/interface/compat/vchi_bsd.c		vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_2835_arm.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_arm.c		vchiq
@@ -16,5 +15,13 @@ file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_shim.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_util.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kern_lib.c	vchiq
 file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_kmod_netbsd.c	vchiq
+
+attach	vchiq at fdt with vchiq_fdt
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_netbsd_fdt.c	vchiq_fdt
+
+ifdef acpinodebus
+attach	vchiq at acpinodebus with vchiq_acpi
+file	external/bsd/vchiq/dist/interface/vchiq_arm/vchiq_netbsd_acpi.c	vchiq_acpi
+endif
 
 makeoptions	vchiq	CPPFLAGS+="-I$S/external/bsd/vchiq/dist -I$S/external/bsd/common/include -DVCOS_VERIFY_BKPTS=1 -DUSE_VCHIQ_ARM -D__VCCOREVER__=0x04000000 -DVCHIQ_ENABLE_DEBUG=1 -DVCHIQ_LOG_DEFAULT=5"
