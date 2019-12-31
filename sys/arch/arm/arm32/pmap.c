@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.374 2019/09/25 16:37:54 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.375 2019/12/31 18:09:21 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.374 2019/09/25 16:37:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375 2019/12/31 18:09:21 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3633,8 +3633,8 @@ pmap_kremove_pg(struct vm_page *pg, vaddr_t va)
 	KASSERT(PV_IS_KENTRY_P(pv->pv_flags));
 
 	/*
-	 * If we are removing a writeable mapping to a cached exec page,
-	 * if it's the last mapping then clear it execness other sync
+	 * We are removing a writeable mapping to a cached exec page, if
+	 * it's the last mapping then clear its execness otherwise sync
 	 * the page to the icache.
 	 */
 	if ((md->pvh_attrs & (PVF_NC|PVF_EXEC)) == PVF_EXEC
