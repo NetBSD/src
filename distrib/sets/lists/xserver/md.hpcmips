@@ -1,10 +1,10 @@
-# $NetBSD: md.hpcmips,v 1.32 2019/10/26 07:31:39 uki Exp $
-./etc/X11/xorg.conf.640x240-jp				-unknown	xorg
-./etc/X11/xorg.conf.640x240-us				-unknown	xorg
-./etc/X11/xorg.conf.640x480-jp				-unknown	xorg
-./etc/X11/xorg.conf.640x480-us				-unknown	xorg
-./etc/X11/xorg.conf.800x600-jp				-unknown	xorg
-./etc/X11/xorg.conf.800x600-us				-unknown	xorg
+# $NetBSD: md.hpcmips,v 1.33 2019/12/31 05:01:49 uki Exp $
+./etc/X11/xorg.conf.640x240-jp				xserver-xorg-server-etc	xorg
+./etc/X11/xorg.conf.640x240-us				xserver-xorg-server-etc	xorg
+./etc/X11/xorg.conf.640x480-jp				xserver-xorg-server-etc	xorg
+./etc/X11/xorg.conf.640x480-us				xserver-xorg-server-etc	xorg
+./etc/X11/xorg.conf.800x600-jp				xserver-xorg-server-etc	xorg
+./etc/X11/xorg.conf.800x600-us				xserver-xorg-server-etc	xorg
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg

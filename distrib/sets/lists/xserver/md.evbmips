@@ -79,7 +79,7 @@
 ./usr/X11R7/lib/modules/libxaa.so.0			-unknown-	xorg,xorg_server_ver=110
 ./usr/X11R7/lib/modules/libxaa.so.0			xserver-obsolete	xorg,xorg_server_ver=120,obsolete
 ./usr/X11R7/lib/modules/libxaa_pic.a			xserver-obsolete	xorg,picinstall,obsolete
-./usr/X11R7/lib/xorg/protocol.txt			-unknown-	xorg
+./usr/X11R7/lib/xorg/protocol.txt			xserver-xorg-server-lib	xorg
 ./usr/X11R7/man/cat1/Xorg.0				xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat1/cvt.0				xserver-xorg-server-catman	.cat,xorg
 ./usr/X11R7/man/cat1/gtf.0				xserver-xorg-server-catman	.cat,xorg

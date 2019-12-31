@@ -1,6 +1,6 @@
-#	$NetBSD: md.dreamcast,v 1.27 2019/10/26 07:31:39 uki Exp $
-./etc/X11/xorg.conf.jpkbd				-unknown-	xorg
-./etc/X11/xorg.conf.uskbd				-unknown-	xorg
+#	$NetBSD: md.dreamcast,v 1.28 2019/12/31 05:01:49 uki Exp $
+./etc/X11/xorg.conf.jpkbd				xserver-xorg-server-etc	xorg
+./etc/X11/xorg.conf.uskbd				xserver-xorg-server-etc	xorg
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
