@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_dev.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $      */
+/*        $NetBSD: dm_dev.c,v 1.17 2019/12/31 10:30:30 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.16 2019/12/15 14:39:42 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_dev.c,v 1.17 2019/12/31 10:30:30 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -51,7 +51,7 @@ static struct dm_dev_head dm_dev_list = TAILQ_HEAD_INITIALIZER(dm_dev_list);
 static kmutex_t dm_dev_mutex;
 
 /* dm_dev_mutex must be holdby caller before using disable_dev. */
-__inline static void
+static void
 disable_dev(dm_dev_t *dmv)
 {
 
