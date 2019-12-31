@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.17 2019/12/31 13:54:22 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.18 2019/12/31 17:26:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.17 2019/12/31 13:54:22 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18 2019/12/31 17:26:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,20 +438,17 @@ default_tag:
 	for (n = 0; n < res.ar_nmem; n++) {
 		mem = acpi_res_mem(&res, n);
 		dmat->_ranges[n].dr_busbase = mem->ar_base;
-		dmat->_ranges[n].dr_sysbase = mem->ar_base;
-		if (mem->ar_decode == ACPI_POS_DECODE)
-		 	dmat->_ranges[n].dr_sysbase += mem->ar_offset;
-		else
-			dmat->_ranges[n].dr_sysbase -= mem->ar_offset;
+		dmat->_ranges[n].dr_sysbase = mem->ar_xbase;
 		dmat->_ranges[n].dr_len = mem->ar_length;
 		dmat->_ranges[n].dr_flags = flags;
 
 		aprint_debug_dev(sc->sc_dev,
-		    "%s: DMA sysbase %#lx busbase %#lx len %#lx%s\n",
+		    "%s: DMA sys %#lx-%#lx bus %#lx-%#lx%s\n",
 		    acpi_name(ad->ad_handle),
 		    dmat->_ranges[n].dr_sysbase,
+		    dmat->_ranges[n].dr_sysbase + dmat->_ranges[n].dr_len - 1,
 		    dmat->_ranges[n].dr_busbase,
-		    dmat->_ranges[n].dr_len,
+		    dmat->_ranges[n].dr_busbase + dmat->_ranges[n].dr_len - 1,
 		    flags ? " (coherent)" : "");
 	}
 
