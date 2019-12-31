@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.31 2019/12/30 16:19:27 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.32 2019/12/31 08:01:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.31 2019/12/30 16:19:27 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.32 2019/12/31 08:01:19 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -670,6 +670,13 @@ bcm283x_uartinit(bus_space_tag_t iot, bus_space_handle_t ioh)
 	    KERN_VTOPHYS((vaddr_t)&vb_uart));
 
 	bcm2835_mbox_read(iot, ioh, BCMMBOX_CHANARM2VC, &res);
+
+	/*
+	 * RPI4 has Cortex A72 processors which do speculation, so
+	 * we need to invalidate the cache for an updates done by
+	 * the firmware
+	 */
+	cpu_dcache_inv_range((vaddr_t)&vb_uart, sizeof(vb_uart));
 
 	if (vcprop_tag_success_p(&vb_uart.vbt_uartclockrate.tag))
 		uart_clk = vb_uart.vbt_uartclockrate.rate;
