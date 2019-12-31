@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_bio.c,v 1.101 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_bio.c,v 1.102 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.101 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_bio.c,v 1.102 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_ubc.h"
@@ -285,7 +285,9 @@ ubc_fault_page(const struct uvm_faultinfo *ufi, const struct ubc_map *umap,
 	error = pmap_enter(ufi->orig_map->pmap, va, VM_PAGE_TO_PHYS(pg),
 	    prot & mask, PMAP_CANFAIL | (access_type & mask));
 
+	uvm_pagelock(pg);
 	uvm_pageactivate(pg);
+	uvm_pageunlock(pg);
 	pg->flags &= ~(PG_BUSY|PG_WANTED);
 	UVM_PAGE_OWN(pg, NULL);
 
@@ -665,7 +667,9 @@ ubc_release(void *va, int flags)
 			pgs[i] = PHYS_TO_VM_PAGE(pa);
 			pgs[i]->flags &= ~(PG_FAKE|PG_CLEAN);
 			KASSERT(pgs[i]->loan_count == 0);
+			uvm_pagelock(pgs[i]);
 			uvm_pageactivate(pgs[i]);
+			uvm_pageunlock(pgs[i]);
 		}
 		pmap_kremove(umapva, ubc_winsize);
 		pmap_update(pmap_kernel());
@@ -888,7 +892,9 @@ ubc_direct_release(struct uvm_object *uobj,
 	for (int i = 0; i < npages; i++) {
 		struct vm_page *pg = pgs[i];
 
+		uvm_pagelock(pg);
 		uvm_pageactivate(pg);
+		uvm_pageunlock(pg);
 
 		/* Page was changed, no longer fake and neither clean */
 		if (flags & UBC_WRITE)

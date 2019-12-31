@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.21 2019/12/31 12:40:27 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.22 2019/12/31 22:42:51 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.21 2019/12/31 12:40:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.22 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -121,13 +121,13 @@ PDPOL_EVCNT_DEFINE(speculativemiss)
 PDPOL_EVCNT_DEFINE(locksuccess)
 PDPOL_EVCNT_DEFINE(lockfail)
 
-#define	PQ_REFERENCED	0x000000001
-#define	PQ_HOT		0x000000002
-#define	PQ_TEST		0x000000004
-#define	PQ_INITIALREF	0x000000008
-#define	PQ_QMASK	0x000000070
-#define	PQ_QFACTOR	0x000000010
-#define	PQ_SPECULATIVE	0x000000080
+#define	PQ_REFERENCED	0x000000010
+#define	PQ_HOT		0x000000020
+#define	PQ_TEST		0x000000040
+#define	PQ_INITIALREF	0x000000080
+#define	PQ_QMASK	0x000000700
+#define	PQ_QFACTOR	0x000000100
+#define	PQ_SPECULATIVE	0x000000800
 
 #define	CLOCKPRO_NOQUEUE	0
 #define	CLOCKPRO_NEWQ		1	/* small queue to clear initial ref. */
@@ -140,6 +140,8 @@ PDPOL_EVCNT_DEFINE(lockfail)
 #endif /* defined(LISTQ) */
 #define	CLOCKPRO_LISTQ		4
 #define	CLOCKPRO_NQUEUE		4
+
+static bool	uvmpdpol_pagerealize_locked(struct vm_page *);
 
 static inline void
 clockpro_setq(struct vm_page *pg, int qidx)
@@ -1129,12 +1131,10 @@ done:;
 	return pg;
 }
 
-void
-uvmpdpol_pageactivate(struct vm_page *pg)
+static void
+uvmpdpol_pageactivate_locked(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
 
-	mutex_enter(&s->lock);
 	if (!uvmpdpol_pageisqueued_p(pg)) {
 		KASSERT((pg->pqflags & PQ_SPECULATIVE) == 0);
 		pg->pqflags |= PQ_INITIALREF;
@@ -1147,51 +1147,108 @@ uvmpdpol_pageactivate(struct vm_page *pg)
 		clockpro_pageenqueue(pg);
 	}
 	pg->pqflags |= PQ_REFERENCED;
-	mutex_exit(&s->lock);
+}
+
+void
+uvmpdpol_pageactivate(struct vm_page *pg)
+{
+
+	uvmpdpol_set_intent(pg, PQ_INTENT_A);
+}
+
+static void
+uvmpdpol_pagedeactivate_locked(struct vm_page *pg)
+{
+
+	clockpro_clearreferencebit(pg, true);
 }
 
 void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
 
-	mutex_enter(&s->lock);
-	clockpro_clearreferencebit(pg, true);
-	mutex_exit(&s->lock);
+	uvmpdpol_set_intent(pg, PQ_INTENT_I);
+}
+
+static void
+uvmpdpol_pagedequeue_locked(struct vm_page *pg)
+{
+
+	if (!uvmpdpol_pageisqueued_p(pg)) {
+		return;
+	}
+	clockpro_pagedequeue(pg);
+	pg->pqflags &= ~(PQ_INITIALREF|PQ_SPECULATIVE);
 }
 
 void
 uvmpdpol_pagedequeue(struct vm_page *pg)
 {
-	struct clockpro_state * const s = &clockpro;
 
-	if (!uvmpdpol_pageisqueued_p(pg)) {
+	uvmpdpol_set_intent(pg, PQ_INTENT_D);
+}
+
+static void
+uvmpdpol_pageenqueue_locked(struct vm_page *pg)
+{
+
+#if 1
+	if (uvmpdpol_pageisqueued_p(pg)) {
 		return;
 	}
-	mutex_enter(&s->lock);
-	clockpro_pagedequeue(pg);
-	pg->pqflags &= ~(PQ_INITIALREF|PQ_SPECULATIVE);
-	mutex_exit(&s->lock);
+	clockpro_clearreferencebit(pg, true);
+	pg->pqflags |= PQ_SPECULATIVE;
+	clockpro_pageenqueue(pg);
+#else
+	uvmpdpol_pageactivate_locked(pg);
+#endif
 }
 
 void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
 
-#if 1
+	uvmpdpol_set_intent(pg, PQ_INTENT_D);
+}
+
+static bool
+uvmpdpol_pagerealize_locked(struct vm_page *pg)
+{
+	uint32_t pqflags;
+
+	KASSERT(mutex_owned(&clockpro.lock));
+	KASSERT(mutex_owned(&pg->interlock));
+
+	/* XXX this needs to be called from elsewhere, like uvmpdpol_clock. */
+
+	pqflags = pg->pqflags;
+	pq->pqflags &= ~(PQ_INTENT_SET | PQ_INTENT_QUEUED);
+	switch (pqflags & (PQ_INTENT_MASK | PQ_INTENT_SET)) {
+	case PQ_INTENT_A | PQ_INTENT_SET:
+		uvmpdpol_pageactivate_locked(pg);
+		return true;
+	case PQ_INTENT_E | PQ_INTENT_SET:
+		uvmpdpol_pageenqueue_locked(pg);
+		return true;
+	case PQ_INTENT_I | PQ_INTENT_SET:
+		uvmpdpol_pagedeactivate_locked(pg);
+		return true;
+	case PQ_INTENT_D | PQ_INTENT_SET:
+		uvmpdpol_pagedequeue_locked(pg);
+		return true;
+	default:
+		return false;
+	}
+}
+
+void
+uvmpdpol_pagerealize(struct vm_page *pg)
+{
 	struct clockpro_state * const s = &clockpro;
 
-	if (uvmpdpol_pageisqueued_p(pg)) {
-		return;
-	}
 	mutex_enter(&s->lock);
-	clockpro_clearreferencebit(pg, true);
-	pg->pqflags |= PQ_SPECULATIVE;
-	clockpro_pageenqueue(pg);
+	uvmpdpol_pagerealize_locked(pg);
 	mutex_exit(&s->lock);
-#else
-	uvmpdpol_pageactivate(pg);
-#endif
 }
 
 void
@@ -1396,6 +1453,12 @@ uvmpdpol_tune(void)
 	mutex_enter(&s->lock);
 	clockpro_tune();
 	mutex_exit(&s->lock);
+}
+
+void
+uvmpdpol_idle(void)
+{
+
 }
 
 #if !defined(PDSIM)

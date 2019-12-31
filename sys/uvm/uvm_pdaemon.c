@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.121 2019/12/31 13:07:14 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.122 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.121 2019/12/31 13:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.122 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -818,7 +818,9 @@ uvmpd_scan_queue(void)
 
 		if (swapcluster_allocslots(&swc)) {
 			dirtyreacts++;
+			uvm_pagelock(p);
 			uvm_pageactivate(p);
+			uvm_pageunlock(p);
 			mutex_exit(slock);
 			continue;
 		}
@@ -836,7 +838,9 @@ uvmpd_scan_queue(void)
 		p->flags |= PG_PAGEOUT;
 		uvmexp.pgswapout++;
 
+		uvm_pagelock(p);
 		uvm_pagedequeue(p);
+		uvm_pageunlock(p);
 
 		/*
 		 * add the new page to the cluster.
@@ -846,7 +850,9 @@ uvmpd_scan_queue(void)
 			p->flags &= ~(PG_BUSY|PG_PAGEOUT);
 			UVM_PAGE_OWN(p, NULL);
 			dirtyreacts++;
+			uvm_pagelock(p);
 			uvm_pageactivate(p);
+			uvm_pageunlock(p);
 			mutex_exit(slock);
 			continue;
 		}
@@ -862,7 +868,9 @@ uvmpd_scan_queue(void)
 		atomic_inc_uint(&uvmexp.pdpending);
 
 #else /* defined(VMSWAP) */
+		uvm_pagelock(p);
 		uvm_pageactivate(p);
+		uvm_pageunlock(p);
 		mutex_exit(slock);
 #endif /* defined(VMSWAP) */
 	}

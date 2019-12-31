@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.72 2019/12/27 13:19:24 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.73 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -87,6 +87,12 @@ struct uvm_cpu {
 
 	/* entropy */
 	krndsource_t 	rs;			/* entropy source */
+
+	/* uvmpdpol: queue of intended page status changes. */
+	struct vm_page	**pdq;			/* queue entries */
+	u_int		pdqhead;		/* current queue head */
+	u_int		pdqtail;		/* maximum number entries */
+	int		pdqtime;		/* last time queue cleared */
 };
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.132 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.133 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.132 2019/12/15 21:11:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.133 2019/12/31 22:42:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -738,7 +738,9 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		case PGO_CLEANIT|PGO_DEACTIVATE:
 		case PGO_DEACTIVATE:
  deactivate_it:
+ 			uvm_pagelock(pg);
 			uvm_pagedeactivate(pg);
+ 			uvm_pageunlock(pg);
 			break;
 
 		case PGO_FREE:
@@ -1299,7 +1301,9 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	/*
 	 * make sure it's on a page queue.
 	 */
+	uvm_pagelock(pg);
 	uvm_pageenqueue(pg);
+	uvm_pageunlock(pg);
 
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);

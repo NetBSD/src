@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.118 2019/12/27 00:46:38 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.119 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.118 2019/12/27 00:46:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.119 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -387,7 +387,9 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 					pageout_done++;
 				}
 				pg->flags &= ~PG_CLEAN;
+				uvm_pagelock(pg);
 				uvm_pageactivate(pg);
+				uvm_pageunlock(pg);
 				slot = 0;
 			} else
 				slot = SWSLOT_BAD;
@@ -423,7 +425,9 @@ uvm_aio_aiodone_pages(struct vm_page **pgs, int npages, bool write, int error)
 			uvm_ra_total.ev_count++;
 #endif /* defined(READAHEAD_STATS) */
 			KASSERT((pg->flags & PG_CLEAN) != 0);
+			uvm_pagelock(pg);
 			uvm_pageenqueue(pg);
+			uvm_pageunlock(pg);
 			pmap_clear_modify(pg);
 		}
 

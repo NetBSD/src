@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.92 2019/12/31 17:56:16 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.93 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -266,6 +266,24 @@ struct vm_page {
 	"\11AOBJ\12AOBJ\13READAHEAD\14FREE\15MARKER\16PAGER1\17ZERO"
 
 /*
+ * uvmpdpol state flags.
+ *
+ * => may only be changed with pg->interlock held.
+ * => changing them is the responsibility of uvmpdpol ..
+ * => .. but uvm_page needs to know about them in order to purge updates.
+ * => PQ_PRIVATE is private to the individual uvmpdpol implementation.
+ */
+
+#define	PQ_INTENT_A		0x00000000	/* intend activation */
+#define	PQ_INTENT_I		0x00000001	/* intend deactivation */
+#define	PQ_INTENT_E		0x00000002	/* intend enqueue */
+#define	PQ_INTENT_D		0x00000003	/* intend dequeue */
+#define	PQ_INTENT_MASK		0x00000003	/* mask of intended state */
+#define	PQ_INTENT_SET		0x00000004	/* not realized yet */
+#define	PQ_INTENT_QUEUED	0x00000008	/* queued for processing */
+#define	PQ_PRIVATE		0xfffffff0
+
+/*
  * physical memory layout structure
  *
  * MD vmparam.h must #define:
@@ -312,6 +330,10 @@ void uvm_pagedeactivate(struct vm_page *);
 void uvm_pagedequeue(struct vm_page *);
 void uvm_pageenqueue(struct vm_page *);
 void uvm_pagefree(struct vm_page *);
+void uvm_pagelock(struct vm_page *);
+void uvm_pagelock2(struct vm_page *, struct vm_page *);
+void uvm_pageunlock(struct vm_page *);
+void uvm_pageunlock2(struct vm_page *, struct vm_page *);
 void uvm_page_unbusy(struct vm_page **, int);
 struct vm_page *uvm_pagelookup(struct uvm_object *, voff_t);
 void uvm_pageunwire(struct vm_page *);

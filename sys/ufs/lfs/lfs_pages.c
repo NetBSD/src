@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.18 2019/12/20 20:54:48 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.19 2019/12/31 22:42:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.18 2019/12/20 20:54:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.19 2019/12/31 22:42:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -338,7 +338,9 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 					 * Wire the page so that
 					 * pdaemon doesn't see it again.
 					 */
+					uvm_pagelock(pg);
 					uvm_pagewire(pg);
+					uvm_pageunlock(pg);
 
 					/* Suspended write flag */
 					pg->flags |= PG_DELWRI;
@@ -495,7 +497,9 @@ retry:
 						    "lfsput2", 0);
 				mutex_enter(vp->v_interlock);
 			}
+			uvm_pagelock(pg);
 			uvm_pageactivate(pg);
+			uvm_pageunlock(pg);
 		}
 		ap->a_offlo = blkeof;
 		if (ap->a_offhi > 0 && ap->a_offhi <= ap->a_offlo) {
