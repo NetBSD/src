@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.332 2019/12/21 13:00:23 ad Exp $ */
+/*	$NetBSD: machdep.c,v 1.333 2019/12/31 13:07:12 ad Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.332 2019/12/21 13:00:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.333 2019/12/31 13:07:12 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_compat_sunos.h"
@@ -322,7 +322,7 @@ cpu_startup(void)
 #ifdef DEBUG
 	pmapdebug = opmapdebug;
 #endif
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 	pmap_redzone();
