@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_util.c,v 1.17 2019/12/29 13:45:11 jmcneill Exp $ */
+/*	$NetBSD: acpi_util.c,v 1.18 2019/12/31 09:10:15 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.17 2019/12/29 13:45:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_util.c,v 1.18 2019/12/31 09:10:15 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -694,7 +694,8 @@ acpi_dsd_integer(ACPI_HANDLE handle, const char *prop, ACPI_INTEGER *val)
 	if (ACPI_SUCCESS(rv))
 		*val = propval->Integer.Value;
 
-	ACPI_FREE(buf.Pointer);
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
 	return rv;
 }
 
@@ -712,6 +713,7 @@ acpi_dsd_string(ACPI_HANDLE handle, const char *prop, char **val)
 	if (ACPI_SUCCESS(rv))
 		*val = kmem_strdup(propval->String.Pointer, KM_SLEEP);
 
-	ACPI_FREE(buf.Pointer);
+	if (buf.Pointer != NULL)
+		ACPI_FREE(buf.Pointer);
 	return rv;
 }
