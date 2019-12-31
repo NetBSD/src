@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.267 2019/06/13 17:20:25 maxv Exp $ */
+/*	$NetBSD: ehci.c,v 1.268 2019/12/31 18:11:18 skrll Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.267 2019/06/13 17:20:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.268 2019/12/31 18:11:18 skrll Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2609,7 +2609,7 @@ ehci_roothub_ctrl(struct usbd_bus *bus, usb_device_request_t *req,
  * for RB_SINGLE, but the same basic issue exists.
  *
  * The way ehci hand-off works, the companion controller does not get the
- * device until after its' initial bus explore, so the reference dropped
+ * device until after its initial bus explore, so the reference dropped
  * after the first explore is not enough.  5 seconds should be enough,
  * and EHCI_DISOWN_DELAY_SECONDS can be set to another value.
  *
