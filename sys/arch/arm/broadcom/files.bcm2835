@@ -1,4 +1,4 @@
-#	$NetBSD: files.bcm2835,v 1.37 2019/12/30 18:53:34 jmcneill Exp $
+#	$NetBSD: files.bcm2835,v 1.38 2019/12/31 00:59:26 jmcneill Exp $
 #
 # Configuration info for Broadcom BCM2835 ARM Peripherals
 #
@@ -19,8 +19,11 @@ device	bcmmbox: bcmmboxbus
 file	arch/arm/broadcom/bcm2835_mbox.c	bcmmbox
 attach	bcmmbox at fdt with bcmmbox_fdt
 file    arch/arm/broadcom/bcm2835_mbox_fdt.c	bcmmbox_fdt
+
+ifdef acpinodebus
 attach  bcmmbox at acpinodebus with bcmmbox_acpi
 file	arch/arm/broadcom/bcm2835_mbox_acpi.c	bcmmbox_acpi
+endif
 
 # System Timer (BCM2835_TIMER_BASE)
 device	bcmtmr
@@ -56,8 +59,10 @@ file	arch/arm/broadcom/bcm2835_com.c		bcmcom
 attach	sdhc at fdt with bcmemmc
 file	arch/arm/broadcom/bcm2835_emmc.c	bcmemmc
 
+ifdef acpinodebus
 attach	sdhc at acpinodebus with bcmemmc_acpi
 file	arch/arm/broadcom/bcm2835_emmc_acpi.c	bcmemmc_acpi
+endif
 
 # SD Host Controller (BCM2835_SDHOST_BASE)
 device	bcmsdhost: sdmmcbus
