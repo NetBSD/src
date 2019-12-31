@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.80 2019/12/31 13:39:15 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.81 2019/12/31 17:26:04 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -226,8 +226,7 @@ struct acpi_mem {
 	int		ar_index;
 	bus_addr_t	ar_base;
 	bus_size_t	ar_length;
-	bus_addr_t	ar_offset;
-	uint8_t		ar_decode;
+	bus_addr_t	ar_xbase;	/* translated base address */
 };
 
 struct acpi_memrange {
@@ -286,8 +285,7 @@ struct acpi_resource_parse_ops {
 	void	(*iorange)(device_t, void *, uint32_t, uint32_t,
 		    uint32_t, uint32_t);
 
-	void	(*memory)(device_t, void *, uint64_t, uint64_t,
-		    uint64_t, uint8_t);
+	void	(*memory)(device_t, void *, uint64_t, uint64_t, uint64_t);
 	void	(*memrange)(device_t, void *, uint64_t, uint64_t,
 		    uint64_t, uint64_t);
 
