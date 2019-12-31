@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_inode.c,v 1.22 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: ulfs_inode.c,v 1.23 2019/12/31 22:42:51 ad Exp $	*/
 /*  from NetBSD: ufs_inode.c,v 1.95 2015/06/13 14:56:45 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.22 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_inode.c,v 1.23 2019/12/31 22:42:51 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -243,7 +243,9 @@ ulfs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 			}
 			pgs[i]->flags &= ~PG_CLEAN;
 		}
+		uvm_pagelock(pgs[i]);
 		uvm_pageactivate(pgs[i]);
+		uvm_pageunlock(pgs[i]);
 	}
 	uvm_page_unbusy(pgs, npages);
 	mutex_exit(uobj->vmobjlock);
