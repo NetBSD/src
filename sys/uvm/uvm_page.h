@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.91 2019/12/31 12:40:27 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.92 2019/12/31 17:56:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -142,6 +142,13 @@
  * - uvm_pagefree: owned by a uvm_object/vm_anon -> free
  * - uvm_pglistalloc: free -> allocated by uvm_pglistalloc
  * - uvm_pglistfree: allocated by uvm_pglistalloc -> free
+ *
+ * On the ordering of fields:
+ *
+ * The fields most heavily used by the page allocator and uvmpdpol are
+ * clustered together at the start of the structure, so that while under
+ * global lock it's more likely that only one cache line for each page need
+ * be touched.
  */
 
 struct vm_page {
@@ -151,16 +158,16 @@ struct vm_page {
 		LIST_ENTRY(vm_page) list;	/* f: global free page queue */
 	} pageq;
 	TAILQ_ENTRY(vm_page)	pdqueue;	/* p: pagedaemon queue */
+	kmutex_t		interlock;	/* s: lock on identity */
+	uint32_t		pqflags;	/* i: pagedaemon flags */
+	uint16_t		flags;		/* o: object flags */
+	uint16_t		spare;		/*  : spare for now */
+	paddr_t			phys_addr;	/* o: physical address of pg */
+	uint32_t		loan_count;	/* o,i: num. active loans */
+	uint32_t		wire_count;	/* o,i: wired down map refs */
 	struct vm_anon		*uanon;		/* o,i: anon */
 	struct uvm_object	*uobject;	/* o,i: object */
 	voff_t			offset;		/* o: offset into object */
-	uint16_t		flags;		/* o: object flags */
-	uint16_t		spare;		/*  : spare for now */
-	uint32_t		pqflags;	/* p: pagedaemon flags */
-	uint32_t		loan_count;	/* o,i: num. active loans */
-	uint32_t		wire_count;	/* o,i: wired down map refs */
-	paddr_t			phys_addr;	/* o: physical address of pg */
-	kmutex_t		interlock;	/* s: lock on identity */
 
 #ifdef __HAVE_VM_PAGE_MD
 	struct vm_page_md	mdpage;		/* ?: pmap-specific data */
