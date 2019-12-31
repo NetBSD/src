@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.194 2019/12/21 13:00:24 ad Exp $	 */
+/* $NetBSD: machdep.c,v 1.195 2019/12/31 13:07:12 ad Exp $	 */
 
 /*
  * Copyright (c) 1982, 1986, 1990 The Regents of the University of California.
@@ -83,7 +83,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.194 2019/12/21 13:00:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.195 2019/12/31 13:07:12 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -205,7 +205,7 @@ cpu_startup(void)
 				   VM_PHYS_SIZE, 0, false, NULL);
 #endif
 
-	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_free()));
+	format_bytes(pbuf, sizeof(pbuf), ptoa(uvm_availmem()));
 	printf("avail memory = %s\n", pbuf);
 
 #ifdef DDB

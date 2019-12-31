@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.216 2019/12/27 12:51:57 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.217 2019/12/31 13:07:14 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -736,7 +736,7 @@ int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t,
 void			uvm_obj_unwirepages(struct uvm_object *, off_t, off_t);
 
 /* uvm_page.c */
-int			uvm_free(void);
+int			uvm_availmem(void);
 void			uvm_page_numa_load(paddr_t, paddr_t, u_int);
 struct vm_page		*uvm_pagealloc_strat(struct uvm_object *,
 			    voff_t, struct vm_anon *, int, int, int);

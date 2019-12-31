@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.218 2019/12/31 12:40:27 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.219 2019/12/31 13:07:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.218 2019/12/31 12:40:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.219 2019/12/31 13:07:14 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -993,13 +993,13 @@ uvm_cpu_attach(struct cpu_info *ci)
 }
 
 /*
- * uvm_free: fetch the total amount of free memory in pages.  This can have a
- * detrimental effect on performance due to false sharing; don't call unless
- * needed.
+ * uvm_availmem: fetch the total amount of free memory in pages.  this can
+ * have a detrimental effect on performance due to false sharing; don't call
+ * unless needed.
  */
 
 int
-uvm_free(void)
+uvm_availmem(void)
 {
 	struct pgfreelist *pgfl;
 	int fl, b, fpages;
