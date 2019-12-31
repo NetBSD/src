@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.15 2019/12/30 19:50:29 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.16 2019/12/31 11:42:46 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.15 2019/12/30 19:50:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.16 2019/12/31 11:42:46 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -410,9 +410,32 @@ done:
 	return dmat;
 }
 
+static ACPI_HANDLE
+arm_acpi_dma_module(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	ACPI_HANDLE tmp;
+	ACPI_STATUS rv;
+
+	/*
+	 * Search up the tree for a module device with a _DMA method.
+	 */
+	for (; ad != NULL; ad = ad->ad_parent) {
+		if (ad->ad_devinfo->Type != ACPI_TYPE_DEVICE)
+			continue;
+		if (!acpi_match_hid(ad->ad_devinfo, module_hid))
+			continue;
+		rv = AcpiGetHandle(ad->ad_handle, "_DMA", &tmp);
+		if (ACPI_SUCCESS(rv))
+			return ad->ad_handle;
+	}
+
+	return NULL;
+}
+
 bus_dma_tag_t
 arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 {
+	ACPI_HANDLE module;
 	ACPI_INTEGER cca;
 	bus_dma_tag_t dmat;
 
@@ -425,14 +448,12 @@ arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 		dmat = &arm_generic_dma_tag;
 
 	/*
-	 * If the parent device is a bus, it may define valid DMA ranges
+	 * If a parent device is a bus, it may define valid DMA ranges
 	 * and translations for child nodes.
 	 */
-	if (ad->ad_parent != NULL &&
-	    acpi_match_hid(ad->ad_parent->ad_devinfo, module_hid)) {
-		dmat = arm_acpi_dma_tag_subregion(sc, dmat,
-		    ad->ad_parent->ad_handle);
-	}
+	module = arm_acpi_dma_module(sc, ad);
+	if (module != NULL)
+		dmat = arm_acpi_dma_tag_subregion(sc, dmat, module);
 
 	return dmat;
 }
