@@ -1,4 +1,4 @@
-/* $NetBSD: nxt2k.c,v 1.6 2019/12/23 19:00:59 thorpej Exp $ */
+/* $NetBSD: nxt2k.c,v 1.7 2019/12/31 14:27:50 thorpej Exp $ */
 
 /*
  * Copyright (c) 2008, 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.6 2019/12/23 19:00:59 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nxt2k.c,v 1.7 2019/12/31 14:27:50 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -74,7 +74,7 @@ nxt2k_writedata(struct nxt2k *nxt, uint8_t reg, uint8_t *data, size_t len)
 
 	KASSERT((len + 1) <= 384);
 
-	if ((error = iic_acquire_bus(nxt->tag, 0) != 0))
+	if ((error = iic_acquire_bus(nxt->tag, 0)) != 0)
 		return error;
 
 	buffer[0] = reg;
@@ -93,7 +93,7 @@ nxt2k_readdata(struct nxt2k *nxt, uint8_t reg, uint8_t *data, size_t len)
 {
 	int error;
 
-	if ((error = iic_acquire_bus(nxt->tag, 0) != 0))
+	if ((error = iic_acquire_bus(nxt->tag, 0)) != 0)
 		return error;
 
 	error = iic_exec(nxt->tag, I2C_OP_READ_WITH_STOP, nxt->addr,
