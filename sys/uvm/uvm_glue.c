@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.174 2019/12/31 13:07:14 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.175 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.174 2019/12/31 13:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.175 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -86,6 +86,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.174 2019/12/31 13:07:14 ad Exp $");
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
+#include <uvm/uvm_pdpolicy.h>
 #include <uvm/uvm_pgflcache.h>
 
 /*
@@ -515,4 +516,23 @@ uvm_scheduler(void)
 		sched_pstats();
 		(void)kpause("uvm", false, hz, NULL);
 	}
+}
+
+/*
+ * uvm_idle: called from the idle loop.
+ */
+
+void
+uvm_idle(void)
+{
+	struct cpu_info *ci = curcpu();
+	struct uvm_cpu *ucpu = ci->ci_data.cpu_uvm;
+
+	KASSERT(kpreempt_disabled());
+
+	if (!ci->ci_want_resched)
+		uvmpdpol_idle(ucpu);
+	if (!ci->ci_want_resched)
+		uvm_pageidlezero();
+
 }

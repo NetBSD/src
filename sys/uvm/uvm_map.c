@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.368 2019/12/27 10:17:57 msaitoh Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.369 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.368 2019/12/27 10:17:57 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.369 2019/12/31 22:42:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -3949,7 +3949,9 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 					continue;
 				}
 				KASSERT(pg->uanon == anon);
+				uvm_pagelock(pg);
 				uvm_pagedeactivate(pg);
+				uvm_pageunlock(pg);
 				continue;
 
 			case PGO_FREE:

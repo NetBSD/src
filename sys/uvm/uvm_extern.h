@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.217 2019/12/31 13:07:14 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.218 2019/12/31 22:42:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -639,6 +639,7 @@ int			uvm_coredump_walkmap(struct proc *,
 int			uvm_coredump_count_segs(struct proc *);
 void			uvm_proc_exit(struct proc *);
 void			uvm_lwp_exit(struct lwp *);
+void			uvm_idle(void);
 void			uvm_init_limits(struct proc *);
 bool			uvm_kernacc(void *, size_t, vm_prot_t);
 __dead void		uvm_scheduler(void);

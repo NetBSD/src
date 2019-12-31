@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.82 2019/12/31 12:40:27 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.83 2019/12/31 22:42:50 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.82 2019/12/31 12:40:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.83 2019/12/31 22:42:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -491,7 +491,9 @@ out:
 				uvm_pagefree(pg);
 				continue;
 			}
+			uvm_pagelock(pg);
 			uvm_pageenqueue(pg);
+			uvm_pageunlock(pg);
 			pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
 			UVM_PAGE_OWN(pg, NULL);
 		}
@@ -1164,14 +1166,18 @@ retry:
 			if (tpg->offset < startoff || tpg->offset >= endoff)
 				continue;
 			if (flags & PGO_DEACTIVATE && tpg->wire_count == 0) {
+				uvm_pagelock(tpg);
 				uvm_pagedeactivate(tpg);
+				uvm_pageunlock(tpg);
 			} else if (flags & PGO_FREE) {
 				pmap_page_protect(tpg, VM_PROT_NONE);
 				if (tpg->flags & PG_BUSY) {
 					tpg->flags |= freeflag;
 					if (pagedaemon) {
 						uvm_pageout_start(1);
+						uvm_pagelock(tpg);
 						uvm_pagedequeue(tpg);
+						uvm_pageunlock(tpg);
 					}
 				} else {
 
@@ -1603,7 +1609,9 @@ genfs_compat_getpages(void *v)
 			pg->flags |= PG_RELEASED;
 		} else {
 			pmap_clear_modify(pg);
+			uvm_pagelock(pg);
 			uvm_pageactivate(pg);
+			uvm_pageunlock(pg);
 		}
 	}
 	if (error) {
