@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.42 2020/01/01 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.43 2020/01/01 19:24:03 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.42 2020/01/01 18:08:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.43 2020/01/01 19:24:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -239,13 +239,45 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 #endif	/* TODR_DEBUG */
 
 static int
+todr_wenable(todr_chip_handle_t todr, int onoff)
+{
+
+	if (todr->todr_setwen != NULL)
+		return todr->todr_setwen(todr, onoff);
+	
+	return 0;
+}
+
+#define	ENABLE_TODR_WRITES()						\
+do {									\
+	if ((rv = todr_wenable(tch, 1)) != 0) {				\
+		printf("%s: cannot enable TODR writes\n", __func__);	\
+		return rv;						\
+	}								\
+} while (/*CONSTCOND*/0)
+
+#define	DISABLE_TODR_WRITES()						\
+do {									\
+	if (todr_wenable(tch, 0) != 0)					\
+		printf("%s: WARNING: cannot disable TODR writes\n",	\
+		    __func__);						\
+} while (/*CONSTCOND*/0)
+
+static int
 todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
 	int			rv;
 
+	/*
+	 * Write-enable is used even when reading the TODR because
+	 * writing to registers may be required in order to do so.
+	 */
+
 	if (tch->todr_gettime) {
+		ENABLE_TODR_WRITES();
 		rv = tch->todr_gettime(tch, tvp);
+		DISABLE_TODR_WRITES();
 		/*
 		 * Some unconverted ports have their own references to
 		 * rtc_offset.   A converted port must not do that.
@@ -255,7 +287,9 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		todr_debug("TODR-GET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_gettime_ymdhms) {
+		ENABLE_TODR_WRITES();
 		rv = tch->todr_gettime_ymdhms(tch, &dt);
+		DISABLE_TODR_WRITES();
 		todr_debug("TODR-GET-YMDHMS", rv, &dt, NULL);
 		if (rv)
 			return rv;
@@ -297,7 +331,9 @@ todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 		/* See comments above in gettime why this is ifdef'd */
 		struct timeval	copy = *tvp;
 		copy.tv_sec -= rtc_offset * 60;
+		ENABLE_TODR_WRITES();
 		rv = tch->todr_settime(tch, &copy);
+		DISABLE_TODR_WRITES();
 		todr_debug("TODR-SET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_settime_ymdhms) {
@@ -305,7 +341,9 @@ todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 		if (tvp->tv_usec >= 500000)
 			sec++;
 		clock_secs_to_ymdhms(sec, &dt);
+		ENABLE_TODR_WRITES();
 		rv = tch->todr_settime_ymdhms(tch, &dt);
+		DISABLE_TODR_WRITES();
 		todr_debug("TODR-SET-YMDHMS", rv, &dt, NULL);
 		return rv;
 	} else {
