@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.291 2019/11/15 12:18:46 maxv Exp $	*/
+/*	$NetBSD: systm.h,v 1.292 2020/01/01 09:33:19 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -383,7 +383,7 @@ int	ustore_ptr(void **, void *);
 
 #ifdef __UCAS_PRIVATE
 
-#if defined(KASAN)
+#if defined(__HAVE_UCAS_FULL) && defined(KASAN)
 int	kasan__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
 #ifdef __HAVE_UCAS_MP
 int	kasan__ucas_32_mp(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
@@ -398,7 +398,7 @@ int	kasan__ucas_64_mp(volatile uint64_t *, uint64_t, uint64_t, uint64_t *);
 #define _ucas_32_mp	kasan__ucas_32_mp
 #define _ucas_64	kasan__ucas_64
 #define _ucas_64_mp	kasan__ucas_64_mp
-#elif defined(KMSAN)
+#elif defined(__HAVE_UCAS_FULL) && defined(KMSAN)
 int	kmsan__ucas_32(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
 #ifdef __HAVE_UCAS_MP
 int	kmsan__ucas_32_mp(volatile uint32_t *, uint32_t, uint32_t, uint32_t *);
