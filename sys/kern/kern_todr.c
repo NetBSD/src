@@ -1,4 +1,33 @@
-/*	$NetBSD: kern_todr.c,v 1.43 2020/01/01 19:24:03 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.44 2020/01/01 21:09:11 thorpej Exp $	*/
+
+/*-
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * All rights reserved.
+ *
+ * This code is derived from software contributed to The NetBSD Foundation
+ * by Jason R. Thorpe.
+ *
+ * Redistribution and use in source and binary forms, with or without
+ * modification, are permitted provided that the following conditions
+ * are met:
+ * 1. Redistributions of source code must retain the above copyright
+ *    notice, this list of conditions and the following disclaimer.
+ * 2. Redistributions in binary form must reproduce the above copyright
+ *    notice, this list of conditions and the following disclaimer in the
+ *    documentation and/or other materials provided with the distribution.
+ *
+ * THIS SOFTWARE IS PROVIDED BY THE NETBSD FOUNDATION, INC. AND CONTRIBUTORS
+ * ``AS IS'' AND ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED
+ * TO, THE IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR
+ * PURPOSE ARE DISCLAIMED.  IN NO EVENT SHALL THE FOUNDATION OR CONTRIBUTORS
+ * BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR
+ * CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF
+ * SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
+ * INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
+ * CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE)
+ * ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+ * POSSIBILITY OF SUCH DAMAGE.
+ */
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.43 2020/01/01 19:24:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.44 2020/01/01 21:09:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -50,35 +79,98 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.43 2020/01/01 19:24:03 thorpej Exp $
 #include <sys/timetc.h>
 #include <sys/intr.h>
 #include <sys/rndsource.h>
+#include <sys/mutex.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
 
 static int todr_gettime(todr_chip_handle_t, struct timeval *);
 static int todr_settime(todr_chip_handle_t, struct timeval *);
 
-static todr_chip_handle_t todr_handle = NULL;
+static kmutex_t todr_mutex;
+static todr_chip_handle_t todr_handle;
+static bool todr_initialized;
 
 /*
- * Attach the clock device to todr_handle.
+ * todr_init:
+ *	Initialize TOD clock data.
+ */
+void
+todr_init(void)
+{
+
+	mutex_init(&todr_mutex, MUTEX_DEFAULT, IPL_NONE);
+	todr_initialized = true;
+}
+
+/*
+ * todr_lock:
+ *	Acquire the TODR lock.
+ */
+void
+todr_lock(void)
+{
+
+	mutex_enter(&todr_mutex);
+}
+
+/*
+ * todr_unlock:
+ *	Release the TODR lock.
+ */
+void
+todr_unlock(void)
+{
+
+	mutex_exit(&todr_mutex);
+}
+
+/*
+ * todr_lock_owned:
+ *	Return true if the current thread owns the TODR lock.
+ *	This is to be used by diagnostic assertions only.
+ */
+bool
+todr_lock_owned(void)
+{
+
+	return mutex_owned(&todr_mutex) ? true : false;
+}
+
+/*
+ * todr_attach:
+ *	Attach the clock device to todr_handle.
  */
 void
 todr_attach(todr_chip_handle_t todr)
 {
 
+	/*
+	 * todr_init() is called very early in main(), but this is
+	 * here to catch a case where todr_attach() is called before
+	 * main().
+	 */
+	KASSERT(todr_initialized);
+
+	todr_lock();
 	if (todr_handle) {
+		todr_unlock();
 		printf("todr_attach: TOD already configured\n");
 		return;
 	}
 	todr_handle = todr;
+	todr_unlock();
 }
 
 static bool timeset = false;
 
 /*
- * Set up the system's time, given a `reasonable' time value.
+ * todr_set_systime:
+ *	Set up the system's time.  The "base" argument is a best-guess
+ *	close-enough value to use if the TOD clock is unavailable or
+ *	contains garbage.  Must be called with the TODR lock held.
  */
 void
-inittodr(time_t base)
+todr_set_systime(time_t base)
 {
 	bool badbase = false;
 	bool waszero = (base == 0);
@@ -86,6 +178,8 @@ inittodr(time_t base)
 	bool badrtc = false;
 	struct timespec ts;
 	struct timeval tv;
+
+	KASSERT(todr_lock_owned());
 
 	rnd_add_data(NULL, &base, sizeof(base), 0);
 
@@ -180,16 +274,18 @@ inittodr(time_t base)
 }
 
 /*
- * Reset the TODR based on the time value; used when the TODR
- * has a preposterous value and also when the time is reset
- * by the stime system call.  Also called when the TODR goes past
- * TODRZERO + 100*(SECS_PER_COMMON_YEAR+2*SECS_PER_DAY)
- * (e.g. on Jan 2 just after midnight) to wrap the TODR around.
+ * todr_save_systime:
+ *	Save the current system time back to the TOD clock.
+ *	Must be called with the TODR lock held.
  */
 void
-resettodr(void)
+todr_save_systime(void)
 {
 	struct timeval tv;
+
+#if notyet
+	KASSERT(todr_lock_owned());
+#endif
 
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -207,6 +303,47 @@ resettodr(void)
 	if (todr_handle)
 		if (todr_settime(todr_handle, &tv) != 0)
 			printf("Cannot set TOD clock time\n");
+}
+
+/*
+ * inittodr:
+ *	Legacy wrapper around todr_set_systime().
+ */
+void
+inittodr(time_t base)
+{
+
+	todr_lock();
+	todr_set_systime(base);
+	todr_unlock();
+}
+
+/*
+ * resettodr:
+ *	Legacy wrapper around todr_save_systime().
+ */
+void
+resettodr(void)
+{
+
+#if notyet
+	/*
+	 * If we're shutting down, we don't want to get stuck in case
+	 * someone was already fiddling with the TOD clock.
+	 */
+	if (shutting_down) {
+		if (mutex_tryenter(&todr_mutex) == 0) {
+			printf("WARNING: Cannot set TOD clock time (busy)\n");
+			return;
+		}
+	} else {
+		todr_lock();
+	}
+#endif
+	todr_save_systime();
+#if notyet
+	todr_unlock();
+#endif
 }
 
 #ifdef	TODR_DEBUG
