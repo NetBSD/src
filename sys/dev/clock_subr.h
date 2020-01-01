@@ -1,7 +1,7 @@
-/*	$NetBSD: clock_subr.h,v 1.28 2020/01/01 19:24:03 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.29 2020/01/01 21:09:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 1996 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -93,10 +93,13 @@ struct todr_chip_handle {
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
 
-/*
- * Machine-dependent function that machine-independent RTC drivers can
- * use to register their todr_chip_handle_t with inittodr()/resettodr().
- */
+void	todr_init(void);
 void	todr_attach(todr_chip_handle_t);
+void	todr_lock(void);
+void	todr_unlock(void);
+bool	todr_lock_owned(void);
+
+void	todr_set_systime(time_t base);
+void	todr_save_systime(void);
 
 #endif /* _DEV_CLOCK_SUBR_H_ */
