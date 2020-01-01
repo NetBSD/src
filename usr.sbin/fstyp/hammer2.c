@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer2.c,v 1.1 2020/01/01 08:56:41 tkusumi Exp $      */
+/*        $NetBSD: hammer2.c,v 1.2 2020/01/01 11:46:43 tkusumi Exp $      */
 
 /*-
  * Copyright (c) 2017-2019 The DragonFly Project
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.1 2020/01/01 08:56:41 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.2 2020/01/01 11:46:43 tkusumi Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -80,7 +80,7 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 
 	io_off = bref->data_off & ~HAMMER2_OFF_MASK_RADIX;
 	io_base = io_off & ~(hammer2_off_t)(HAMMER2_MINIOSIZE - 1);
-	boff = io_off - io_base;
+	boff = (size_t)(io_off - io_base);
 
 	io_bytes = HAMMER2_MINIOSIZE;
 	while (io_bytes + boff < bytes)
