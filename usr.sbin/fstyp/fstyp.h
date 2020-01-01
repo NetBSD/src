@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.7 2020/01/01 08:56:41 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.8 2020/01/01 09:08:52 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -58,11 +58,11 @@ void	*read_buf(FILE *, off_t, size_t);
 char	*checked_strdup(const char *);
 void	rtrim(char *, size_t);
 
-int	fstyp_apfs(FILE *fp, char *label, size_t size);
+int	fstyp_apfs(FILE *, char *, size_t);
 int	fstyp_cd9660(FILE *, char *, size_t);
-int	fstyp_exfat(FILE *fp, char *label, size_t size);
+int	fstyp_exfat(FILE *, char *, size_t);
 int	fstyp_ext2fs(FILE *, char *, size_t);
-int	fstyp_hfsp(FILE *fp, char *label, size_t size);
+int	fstyp_hfsp(FILE *, char *, size_t);
 int	fstyp_msdosfs(FILE *, char *, size_t);
 int	fstyp_ntfs(FILE *, char *, size_t);
 int	fstyp_ufs(FILE *, char *, size_t);
@@ -72,7 +72,7 @@ int	fstyp_hammer2(FILE *, char *, size_t);
 int	fstyp_zfs(FILE *, char *, size_t);
 #endif
 
-int	fsvtyp_hammer(const char *blkdevs, char *label, size_t size);
-int	fsvtyp_hammer_partial(const char *blkdevs, char *label, size_t size);
+int	fsvtyp_hammer(const char *, char *, size_t);
+int	fsvtyp_hammer_partial(const char *, char *, size_t);
 
 #endif /* !FSTYP_H */
