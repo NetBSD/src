@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.h,v 1.6 2019/12/28 08:22:30 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.h,v 1.7 2020/01/01 08:56:41 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -41,6 +41,9 @@
 
 #include <stdbool.h>
 
+/* Undefine this on FreeBSD and NetBSD. */
+//#define HAS_DEVPATH
+
 /* The spec doesn't seem to permit UTF-16 surrogates; definitely LE. */
 #define	EXFAT_ENC	"UCS-2LE"
 /*
@@ -63,8 +66,13 @@ int	fstyp_hfsp(FILE *fp, char *label, size_t size);
 int	fstyp_msdosfs(FILE *, char *, size_t);
 int	fstyp_ntfs(FILE *, char *, size_t);
 int	fstyp_ufs(FILE *, char *, size_t);
+int	fstyp_hammer(FILE *, char *, size_t);
+int	fstyp_hammer2(FILE *, char *, size_t);
 #ifdef HAVE_ZFS
 int	fstyp_zfs(FILE *, char *, size_t);
 #endif
+
+int	fsvtyp_hammer(const char *blkdevs, char *label, size_t size);
+int	fsvtyp_hammer_partial(const char *blkdevs, char *label, size_t size);
 
 #endif /* !FSTYP_H */
