@@ -1,4 +1,4 @@
-/*	$NetBSD: dmesg.c,v 1.44 2019/12/31 19:58:56 tsutsui Exp $	*/
+/*	$NetBSD: dmesg.c,v 1.45 2020/01/01 00:24:52 kre Exp $	*/
 /*-
  * Copyright (c) 1991, 1993
  *	The Regents of the University of California.  All rights reserved.
@@ -38,7 +38,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)dmesg.c	8.1 (Berkeley) 6/5/93";
 #else
-__RCSID("$NetBSD: dmesg.c,v 1.44 2019/12/31 19:58:56 tsutsui Exp $");
+__RCSID("$NetBSD: dmesg.c,v 1.45 2020/01/01 00:24:52 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -377,8 +377,12 @@ main(int argc, char *argv[])
 				continue;
 #endif
 			case ' ':
+#ifndef SMALL
 				if (!tstamp && postts) {
 					postts = false;
+#else
+				if (!tstamp) {
+#endif
 					continue;
 				}
 				/*FALLTHROUGH*/
