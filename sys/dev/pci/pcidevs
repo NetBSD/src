@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1394 2019/12/29 01:42:45 sevan Exp $
+$NetBSD: pcidevs,v 1.1395 2020/01/01 10:05:55 ryo Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -651,6 +651,7 @@ vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor HGST		0x1c58	HGST, Inc.
 vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
 vendor AMAZON		0x1d0f	Amazon.com, Inc.
+vendor AQUANTIA		0x1d6a	Aquantia
 vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -1286,6 +1287,21 @@ product APPLE INTREPID2_ATA	0x0069	Intrepid 2 ATA
 product APPLE INTREPID2_FW	0x006a	Intrepid 2 FireWire
 product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
 product APPLE BCM5701		0x1645	BCM5701
+
+/* Aquantia Corp. */
+product AQUANTIA AQC107		0x07b1	AQC107 10 Gigabit Network Adapter
+product AQUANTIA AQC108		0x08b1	AQC108 5 Gigabit Network Adapter
+product AQUANTIA AQC109		0x09b1	AQC109 2.5 Gigabit Network Adapter
+product AQUANTIA AQC111		0x11b1	AQC111 5 Gigabit Network Adapter
+product AQUANTIA AQC112		0x12b1	AQC112 2.5 Gigabit Network Adapter
+product AQUANTIA AQC107S	0x87b1	AQC107S 10 Gigabit Network Adapter
+product AQUANTIA AQC108S	0x88b1	AQC108S 5 Gigabit Network Adapter
+product AQUANTIA AQC109S	0x89b1	AQC109S 2.5 Gigabit Network Adapter
+product AQUANTIA AQC111S	0x91b1	AQC111S 5 Gigabit Network Adapter
+product AQUANTIA AQC112S	0x92b1	AQC112S 2.5 Gigabit Network Adapter
+product AQUANTIA D107		0xd107	D107 10 Gigabit Network Adapter
+product AQUANTIA D108		0xd108	D108 5 Gigabit Network Adapter
+product AQUANTIA D109		0xd109	D109 2.5 Gigabit Network Adapter
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
