@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.28 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.29 2020/01/01 01:18:34 mlelstv Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,13 +98,14 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.28 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.29 2020/01/01 01:18:34 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/atomic.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
