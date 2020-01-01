@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.8 2020/01/01 08:56:41 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.9 2020/01/01 09:08:52 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.8 2020/01/01 08:56:41 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.9 2020/01/01 09:08:52 tkusumi Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -88,8 +88,9 @@ static struct {
 	const char	*name;
 	fsvtyp_function	function;
 	bool		unmountable;
+	const char	*precache_encoding;
 } fsvtypes[] = {
-	{ NULL, NULL, NULL }
+	{ NULL, NULL, NULL, NULL }
 };
 
 void *
