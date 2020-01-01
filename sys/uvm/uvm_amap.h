@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.37 2011/06/12 03:36:02 rmind Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.38 2020/01/01 22:01:13 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -147,6 +147,27 @@ bool		amap_swap_off
 #define UVM_AMAP_PPREF		/* track partial references */
 
 /*
+ * for amaps with fewer than UVM_AMAP_TINY slots, we allocate storage
+ * directly in vm_amap.  this should reduce pressure on the allocator and on
+ * the CPU cache.  on _LP64, the chosen value of 3 sizes the structure at
+ * 128 bytes, a multiple of the typical cache line size, which helps us to
+ * avoid false sharing on MULTIPROCESSOR.
+ *
+ * for amaps with fewer than UVM_AMAP_SMALL slots, anons are stored directly
+ * in the vm_amap but slots and backpointers are externally allocated.
+ */
+
+#define UVM_AMAP_TINY	3	/* # of slots in "tiny" amap */
+#ifdef _LP64
+#define UVM_AMAP_SMALL	3*2	/* # of slots if 1/2 external allocation */
+#else
+#define UVM_AMAP_SMALL	3*3	/* # of slots in 1/2 external allocation */
+#endif
+
+#define	AMAP_TINY_ANON(am)	((struct vm_anon **)&(am)->am_storage[0])
+#define	AMAP_TINY_SLOTS(am)	((int *)&((am)->am_storage[UVM_AMAP_TINY]))
+
+/*
  * here is the definition of the vm_amap structure for this implementation.
  */
 
@@ -164,6 +185,7 @@ struct vm_amap {
 	int *am_ppref;		/* per page reference count (if !NULL) */
 #endif
 	LIST_ENTRY(vm_amap) am_list;
+	uintptr_t am_storage[UVM_AMAP_SMALL];
 };
 
 /*
