@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.121 2019/12/30 18:53:54 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.122 2020/01/01 11:17:45 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -60,6 +60,7 @@ makeoptions	DTS="
 	rk3399-gru-scarlet-kd.dts
 	rk3399-nanopc-t4.dts
 	rk3399-nanopi-m4.dts
+	rk3399-pinebook-pro.dts
 	rk3399-puma-haikou.dts
 	rk3399-roc-pc.dts
 	rk3399-rock-pi-4.dts
