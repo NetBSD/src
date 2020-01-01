@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.201 2019/10/05 12:57:40 kamil Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.202 2020/01/01 17:28:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.201 2019/10/05 12:57:40 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.202 2020/01/01 17:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -136,23 +136,19 @@ static int
 settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 {
 	struct timespec delta, now;
-	int s;
 
 	/* WHAT DO WE DO ABOUT PENDING REAL-TIME TIMEOUTS??? */
-	s = splclock();
 	nanotime(&now);
 	timespecsub(ts, &now, &delta);
 
 	if (check_kauth && kauth_authorize_system(kauth_cred_get(),
 	    KAUTH_SYSTEM_TIME, KAUTH_REQ_SYSTEM_TIME_SYSTEM, __UNCONST(ts),
 	    &delta, KAUTH_ARG(check_kauth ? false : true)) != 0) {
-		splx(s);
 		return (EPERM);
 	}
 
 #ifdef notyet
 	if ((delta.tv_sec < 86400) && securelevel > 0) { /* XXX elad - notyet */
-		splx(s);
 		return (EPERM);
 	}
 #endif
@@ -162,7 +158,6 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 	timespecadd(&boottime, &delta, &boottime);
 
 	resettodr();
-	splx(s);
 
 	return (0);
 }
