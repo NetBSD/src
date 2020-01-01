@@ -1,7 +1,7 @@
-/*	$NetBSD: init_main.c,v 1.514 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.515 2020/01/01 21:09:11 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019, The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.514 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.515 2020/01/01 21:09:11 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -204,6 +204,8 @@ extern void *_binary_splash_image_end;
 
 #include <sys/pax.h>
 
+#include <dev/clock_subr.h>
+
 #include <secmodel/secmodel.h>
 
 #include <ufs/ufs/quota.h>
@@ -298,6 +300,7 @@ main(void)
 
 	kernel_lock_init();
 	once_init();
+	todr_init();
 
 	mi_cpu_init();
 	kernconfig_lock_init();
