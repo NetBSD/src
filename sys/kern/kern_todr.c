@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.41 2020/01/01 17:28:17 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.42 2020/01/01 18:08:11 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.41 2020/01/01 17:28:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.42 2020/01/01 18:08:11 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -52,6 +52,9 @@ __KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.41 2020/01/01 17:28:17 thorpej Exp $
 #include <sys/rndsource.h>
 
 #include <dev/clock_subr.h>	/* hmm.. this should probably move to sys */
+
+static int todr_gettime(todr_chip_handle_t, struct timeval *);
+static int todr_settime(todr_chip_handle_t, struct timeval *);
 
 static todr_chip_handle_t todr_handle = NULL;
 
@@ -235,8 +238,7 @@ todr_debug(const char *prefix, int rv, struct clock_ymdhms *dt,
 #define	todr_debug(prefix, rv, dt, tvp)
 #endif	/* TODR_DEBUG */
 
-
-int
+static int
 todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
@@ -285,7 +287,7 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 	return ENXIO;
 }
 
-int
+static int
 todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
 	struct clock_ymdhms	dt;
