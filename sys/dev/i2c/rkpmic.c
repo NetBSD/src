@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.5 2019/09/18 15:12:37 tnn Exp $ */
+/* $NetBSD: rkpmic.c,v 1.6 2020/01/01 00:38:30 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.5 2019/09/18 15:12:37 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.6 2020/01/01 00:38:30 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.5 2019/09/18 15:12:37 tnn Exp $");
 #include <dev/clock_subr.h>
 
 #include <dev/i2c/i2cvar.h>
+
+#include <dev/clk/clk_backend.h>
 
 #include <dev/fdt/fdtvar.h>
 
@@ -66,6 +68,9 @@ __KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.5 2019/09/18 15:12:37 tnn Exp $");
 #define	RTC_COMP_MSB_REG	0x14
 #define	CHIP_NAME_REG		0x17
 #define	CHIP_VER_REG		0x18
+
+#define	CLK32OUT_REG		0x20
+#define	CLK32OUT_CLKOUT2_EN	__BIT(0)
 
 struct rkpmic_ctrl {
 	const char *	name;
@@ -187,6 +192,12 @@ static const struct rkpmic_config rk808_config = {
 	.nctrl = __arraycount(rk808_ctrls),
 };
 
+struct rkpmic_softc;
+
+struct rkpmic_clk {
+	struct clk	base;
+};
+
 struct rkpmic_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
@@ -194,6 +205,8 @@ struct rkpmic_softc {
 	int		sc_phandle;
 	struct todr_chip_handle sc_todr;
 	struct rkpmic_config *sc_conf;
+	struct clk_domain sc_clkdom;
+	struct rkpmic_clk sc_clk[2];
 };
 
 struct rkreg_softc {
@@ -316,6 +329,87 @@ rkpmic_todr_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 	return 0;
 }
 
+static struct clk *
+rkpmic_clk_decode(device_t dev, int cc_phandle, const void *data, size_t len)
+{
+	struct rkpmic_softc * const sc = device_private(dev);
+
+	if (len != 4)
+		return NULL;
+
+	const u_int id = be32dec(data);
+	if (id >= __arraycount(sc->sc_clk))
+		return NULL;
+
+	return &sc->sc_clk[id].base;
+}
+
+static const struct fdtbus_clock_controller_func rkpmic_clk_fdt_funcs = {
+	.decode = rkpmic_clk_decode
+};
+
+static struct clk *
+rkpmic_clk_get(void *priv, const char *name)
+{
+	struct rkpmic_softc * const sc = priv;
+	u_int n;
+
+	for (n = 0; n < __arraycount(sc->sc_clk); n++) {
+		if (strcmp(name, sc->sc_clk[n].base.name) == 0)
+			return &sc->sc_clk[n].base;
+	}
+
+	return NULL;
+}
+
+static u_int
+rkpmic_clk_get_rate(void *priv, struct clk *clk)
+{
+	return 32768;
+}
+
+static int
+rkpmic_clk_enable(void *priv, struct clk *clk)
+{
+	struct rkpmic_softc * const sc = priv;
+	uint8_t val;
+
+	if (clk != &sc->sc_clk[1].base)
+		return 0;
+
+	I2C_LOCK(sc);
+	val = I2C_READ(sc, CLK32OUT_REG);
+	val |= CLK32OUT_CLKOUT2_EN;
+	I2C_WRITE(sc, CLK32OUT_REG, val);
+	I2C_UNLOCK(sc);
+
+	return 0;
+}
+
+static int
+rkpmic_clk_disable(void *priv, struct clk *clk)
+{
+	struct rkpmic_softc * const sc = priv;
+	uint8_t val;
+
+	if (clk != &sc->sc_clk[1].base)
+		return EIO;
+
+	I2C_LOCK(sc);
+	val = I2C_READ(sc, CLK32OUT_REG);
+	val &= ~CLK32OUT_CLKOUT2_EN;
+	I2C_WRITE(sc, CLK32OUT_REG, val);
+	I2C_UNLOCK(sc);
+
+	return 0;
+}
+
+static const struct clk_funcs rkpmic_clk_funcs = {
+	.get = rkpmic_clk_get,
+	.get_rate = rkpmic_clk_get_rate,
+	.enable = rkpmic_clk_enable,
+	.disable = rkpmic_clk_disable,
+};
 
 static int
 rkpmic_match(device_t parent, cfdata_t match, void *aux)
@@ -366,6 +460,21 @@ rkpmic_attach(device_t parent, device_t self, void *aux)
 	I2C_UNLOCK(sc);
 
 	fdtbus_todr_attach(self, sc->sc_phandle, &sc->sc_todr);
+
+	sc->sc_clkdom.name = device_xname(self);
+	sc->sc_clkdom.funcs = &rkpmic_clk_funcs;
+	sc->sc_clkdom.priv = sc;
+
+	sc->sc_clk[0].base.domain = &sc->sc_clkdom;
+	sc->sc_clk[0].base.name = "xin32k";
+	clk_attach(&sc->sc_clk[0].base);
+
+	sc->sc_clk[1].base.domain = &sc->sc_clkdom;
+	sc->sc_clk[1].base.name = "clkout2";
+	clk_attach(&sc->sc_clk[1].base);
+
+	fdtbus_register_clock_controller(self, sc->sc_phandle,
+	    &rkpmic_clk_fdt_funcs);
 
 	regulators = of_find_firstchild_byname(sc->sc_phandle, "regulators");
 	if (regulators < 0)
