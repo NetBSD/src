@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.28 2020/01/01 10:35:10 skrll Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.29 2020/01/01 11:48:36 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.28 2020/01/01 10:35:10 skrll Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.29 2020/01/01 11:48:36 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -335,7 +335,7 @@ generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
 		crc = crc32v(iov, 3);
 	} else {
 		dsize = update_image ?
-		    st.st_size - sizeof(*hdr) : st.st_size;
+		    (uint32_t)st.st_size - sizeof(*hdr) : (uint32_t)st.st_size;
 		crc = crc32(p, st.st_size);
 	}
 	munmap(p, st.st_size);
@@ -389,7 +389,7 @@ generate_header_arm64(struct arm64_image_header *hdr, int kernel_fd)
 #endif
 
 	const uint64_t dsize = update_image ?
-	   st.st_size - sizeof(*hdr) : st.st_size;
+	   (uint64_t)st.st_size - sizeof(*hdr) : (uint64_t)st.st_size;
 
 	memset(hdr, 0, sizeof(*hdr));
 	hdr->code0 = htole32(ARM64_CODE0);
