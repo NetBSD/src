@@ -1057,7 +1057,8 @@
 };
 
 &spi1 {
-	status = "okay";
+	// XXXJDM disable until rkspi issues are sorted out
+	status = "disabled";
 	max-freq = <10000000>;
 
 	spiflash: spi-flash@0 {
