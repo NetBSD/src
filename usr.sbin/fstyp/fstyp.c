@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.10 2020/01/01 09:17:27 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.11 2020/01/01 12:47:19 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,8 +35,9 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.10 2020/01/01 09:17:27 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.11 2020/01/01 12:47:19 tkusumi Exp $");
 
+#include <sys/param.h>
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
 #include <sys/ioctl.h>
@@ -185,7 +186,9 @@ main(int argc, char **argv)
 	int ch, error, i, nbytes;
 	bool ignore_type = false, show_unmountable = false;
 	char label[LABEL_LEN + 1], strvised[LABEL_LEN * 4 + 1];
-	char *path;
+	char fdpath[MAXPATHLEN];
+	char *p;
+	const char *path;
 	const char *name = NULL;
 	FILE *fp;
 	fstyp_function fstyp_f;
@@ -233,12 +236,28 @@ main(int argc, char **argv)
 		}
 	}
 
-	fp = fopen(path, "r");
-	if (fp == NULL)
-		goto fsvtyp; /* DragonFly */
+	/*
+	 * DragonFly: Filesystems may have syntax to decorate path.
+	 * Make a wild guess.
+	 * XXX devpath is unsupported in NetBSD, but at least parse '@' for fp.
+	 */
+	strlcpy(fdpath, path, sizeof(fdpath));
+	p = strchr(fdpath, '@');
+	if (p)
+		*p = '\0';
+
+	fp = fopen(fdpath, "r");
+	if (fp == NULL) {
+		if (strcmp(path, fdpath))
+			fp = fopen(path, "r");
+		if (fp == NULL)
+			goto fsvtyp; /* DragonFly */
+		else
+			strlcpy(fdpath, path, sizeof(fdpath));
+	}
 
 	if (ignore_type == false)
-		type_check(path, fp);
+		type_check(fdpath, fp);
 
 	memset(label, '\0', sizeof(label));
 
