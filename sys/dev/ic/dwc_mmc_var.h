@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.10 2020/01/01 11:21:15 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.11 2020/01/01 12:18:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -51,6 +51,8 @@ struct dwc_mmc_softc {
 
 	int sc_mmc_width;
 	int sc_mmc_port;
+
+	u_int sc_ciu_div;
 
 	device_t sc_sdmmc_dev;
 
