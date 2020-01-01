@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.9 2020/01/01 11:21:15 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.10 2020/01/01 12:18:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.9 2020/01/01 11:21:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.10 2020/01/01 12:18:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -156,6 +156,7 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		sc->sc_bus_width = 4;
 
 	sc->sc_fifo_depth = fifo_depth;
+	sc->sc_ciu_div = esc->sc_conf->ciu_div;
 	sc->sc_flags = esc->sc_conf->flags;
 	sc->sc_pre_power_on = dwcmmc_fdt_pre_power_on;
 	sc->sc_post_power_on = dwcmmc_fdt_post_power_on;
@@ -220,7 +221,7 @@ static int
 dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *sc, int rate)
 {
 	struct dwcmmc_fdt_softc *esc = device_private(sc->sc_dev);
-        const u_int ciu_div = esc->sc_conf->ciu_div > 0 ? esc->sc_conf->ciu_div : 1;
+        const u_int ciu_div = sc->sc_ciu_div > 0 ? sc->sc_ciu_div : 1;
 	int error;
 
 	error = clk_set_rate(esc->sc_clk_ciu, 1000 * rate * ciu_div);
