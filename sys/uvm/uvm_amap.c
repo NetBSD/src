@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.111 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.112 2020/01/01 13:11:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.111 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.112 2020/01/01 13:11:51 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -1069,7 +1069,9 @@ ReStart:
 		 * Drop PG_BUSY on new page.  Since its owner was locked all
 		 * this time - it cannot be PG_RELEASED or PG_WANTED.
 		 */
+		uvm_pagelock(npg);
 		uvm_pageactivate(npg);
+		uvm_pageunlock(npg);
 		npg->flags &= ~(PG_BUSY|PG_FAKE);
 		UVM_PAGE_OWN(npg, NULL);
 	}
