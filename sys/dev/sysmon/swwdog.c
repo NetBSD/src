@@ -1,4 +1,4 @@
-/*	$NetBSD: swwdog.c,v 1.20 2019/03/27 09:52:16 pgoyette Exp $	*/
+/*	$NetBSD: swwdog.c,v 1.21 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004, 2005 Steven M. Bellovin
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.20 2019/03/27 09:52:16 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: swwdog.c,v 1.21 2020/01/01 22:57:17 thorpej Exp $");
 
 /*
  *
@@ -107,7 +107,7 @@ static void
 doreboot(struct work *wrkwrkwrk, void *p)
 {
 
-	cpu_reboot(0, NULL);
+	kern_reboot(0, NULL);
 }
 
 int
