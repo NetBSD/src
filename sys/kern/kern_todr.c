@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.40 2019/07/07 15:12:59 maxv Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.41 2020/01/01 17:28:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -41,7 +41,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.40 2019/07/07 15:12:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.41 2020/01/01 17:28:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -81,7 +81,6 @@ inittodr(time_t base)
 	bool waszero = (base == 0);
 	bool goodtime = false;
 	bool badrtc = false;
-	int s;
 	struct timespec ts;
 	struct timeval tv;
 
@@ -169,9 +168,7 @@ inittodr(time_t base)
 
 	ts.tv_sec = tv.tv_sec;
 	ts.tv_nsec = tv.tv_usec * 1000;
-	s = splclock();
 	tc_setclock(&ts);
-	splx(s);
 
 	if (waszero || goodtime)
 		return;
