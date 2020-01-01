@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_reboot.c,v 1.1 2018/09/14 01:55:19 mrg Exp $	*/
+/*	$NetBSD: kern_reboot.c,v 1.2 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.1 2018/09/14 01:55:19 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.2 2020/01/01 22:57:17 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,7 +41,25 @@ __KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.1 2018/09/14 01:55:19 mrg Exp $");
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/syscallargs.h>
+#include <sys/kernel.h>
 #include <sys/kauth.h>
+
+/*
+ * Reboot / shutdown the system.
+ */
+void
+kern_reboot(int howto, char *bootstr)
+{
+
+	shutting_down = 1;
+
+	/*
+	 * XXX We should re-factor out all of the common stuff
+	 * that each and every cpu_reboot() does and put it here.
+	 */
+
+	cpu_reboot(howto, bootstr);
+}
 
 /* ARGSUSED */
 int
@@ -70,7 +88,7 @@ sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 	 * Not all ports use the bootstr currently.
 	 */
 	KERNEL_LOCK(1, NULL);
-	cpu_reboot(SCARG(uap, opt), bootstr);
+	kern_reboot(SCARG(uap, opt), bootstr);
 	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }

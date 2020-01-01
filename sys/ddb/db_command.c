@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.166 2019/12/27 12:51:56 ad Exp $	*/
+/*	$NetBSD: db_command.c,v 1.167 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.166 2019/12/27 12:51:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.167 2020/01/01 22:57:17 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -1397,7 +1397,7 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	panicstr = "reboot forced via kernel debugger";
 	/* Make it possible to break into the debugger again */
 	spl0();
-	cpu_reboot((int)bootflags, NULL);
+	kern_reboot((int)bootflags, NULL);
 #else	/* _KERNEL */
 	db_printf("This command can only be used in-kernel.\n");
 #endif	/* _KERNEL */
@@ -1464,7 +1464,7 @@ db_sync_cmd(db_expr_t addr, bool have_addr,
 	 */
 	db_recover = 0;
 	panicstr = "dump forced via kernel debugger";
-	cpu_reboot(RB_DUMP, NULL);
+	kern_reboot(RB_DUMP, NULL);
 #else	/* _KERNEL */
 	db_printf("This command can only be used in-kernel.\n");
 #endif	/* _KERNEL */

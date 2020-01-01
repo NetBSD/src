@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_thermal.c,v 1.7 2019/01/02 19:32:41 jmcneill Exp $ */
+/* $NetBSD: sunxi_thermal.c,v 1.8 2020/01/01 22:57:16 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.7 2019/01/02 19:32:41 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_thermal.c,v 1.8 2020/01/01 22:57:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -445,7 +445,7 @@ sunxi_thermal_task_shut(void *arg)
 	device_printf(sc->dev,
 	    "WARNING - current temperature exceeds safe limits\n");
 
-	cpu_reboot(RB_POWERDOWN, NULL);
+	kern_reboot(RB_POWERDOWN, NULL);
 }
 
 static void

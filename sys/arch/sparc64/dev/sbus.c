@@ -1,4 +1,4 @@
-/*	$NetBSD: sbus.c,v 1.97 2019/11/10 21:16:33 chs Exp $ */
+/*	$NetBSD: sbus.c,v 1.98 2020/01/01 22:57:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 1999-2002 Eduardo Horvath
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.97 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sbus.c,v 1.98 2020/01/01 22:57:16 thorpej Exp $");
 
 #include "opt_ddb.h"
 
@@ -426,7 +426,7 @@ sbus_overtemp(void *arg)
 	/* Should try a clean shutdown first */
 	printf("DANGER: OVER TEMPERATURE detected\nShutting down...\n");
 	delay(20);
-	cpu_reboot(RB_POWERDOWN|RB_HALT, NULL);
+	kern_reboot(RB_POWERDOWN|RB_HALT, NULL);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: reboot.h,v 1.5 2018/08/27 13:41:24 riastradh Exp $	*/
+/*	$NetBSD: reboot.h,v 1.6 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@ static inline int
 orderly_poweroff(bool force __unused)
 {
 
-	cpu_reboot(RB_POWERDOWN, NULL);
+	kern_reboot(RB_POWERDOWN, NULL);
 
 	return 0;
 }
