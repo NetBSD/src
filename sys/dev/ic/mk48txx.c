@@ -1,4 +1,4 @@
-/*	$NetBSD: mk48txx.c,v 1.27 2014/11/20 16:34:26 christos Exp $ */
+/*	$NetBSD: mk48txx.c,v 1.28 2020/01/01 19:24:03 thorpej Exp $ */
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.27 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mk48txx.c,v 1.28 2020/01/01 19:24:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,8 +113,6 @@ mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	sc = handle->cookie;
 	clkoff = sc->sc_clkoffset;
 
-	todr_wenable(handle, 1);
-
 	/* enable read (stop time) */
 	csr = (*sc->sc_nvrd)(sc, clkoff + MK48TXX_ICSR);
 	csr |= MK48TXX_CSR_READ;
@@ -143,7 +141,6 @@ mk48txx_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	csr = (*sc->sc_nvrd)(sc, clkoff + MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_READ;
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
-	todr_wenable(handle, 0);
 
 	return 0;
 }
@@ -175,7 +172,6 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		year = dt->dt_year % 100;
 	}
 
-	todr_wenable(handle, 1);
 	/* enable write */
 	csr = (*sc->sc_nvrd)(sc, clkoff + MK48TXX_ICSR);
 	csr |= MK48TXX_CSR_WRITE;
@@ -204,7 +200,7 @@ mk48txx_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	csr = (*sc->sc_nvrd)(sc, clkoff + MK48TXX_ICSR);
 	csr &= ~MK48TXX_CSR_WRITE;
 	(*sc->sc_nvwr)(sc, clkoff + MK48TXX_ICSR, csr);
-	todr_wenable(handle, 0);
+
 	return 0;
 }
 
