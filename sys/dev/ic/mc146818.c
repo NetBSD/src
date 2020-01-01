@@ -1,4 +1,4 @@
-/*	$NetBSD: mc146818.c,v 1.19 2014/11/20 16:34:26 christos Exp $	*/
+/*	$NetBSD: mc146818.c,v 1.20 2020/01/01 19:24:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2003 Izumi Tsutsui.  All rights reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.19 2014/11/20 16:34:26 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mc146818.c,v 1.20 2020/01/01 19:24:03 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -85,8 +85,6 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 
 	s = splclock();		/* XXX really needed? */
 
-	todr_wenable(handle, 1);
-
 	timeout = 1000000;	/* XXX how long should we wait? */
 	for (;;) {
 		if (((*sc->sc_mcread)(sc, MC_REGA) & MC_REGA_UIP) == 0)
@@ -119,8 +117,6 @@ mc146818_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 		year += 100;
 	dt->dt_year = year;
 
-	todr_wenable(handle, 0);
-
 	splx(s);
 
 	return 0;
@@ -140,8 +136,6 @@ mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 	sc = handle->cookie;
 
 	s = splclock();		/* XXX really needed? */
-
-	todr_wenable(handle, 1);
 
 	/*
 	 * Disable RTC updates during clock updates
@@ -178,8 +172,6 @@ mc146818_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 
 	(*sc->sc_mcwrite)(sc, MC_REGB,
 	    (*sc->sc_mcread)(sc, MC_REGB) & ~MC_REGB_SET);
-
-	todr_wenable(handle, 0);
 
 	splx(s);
 
