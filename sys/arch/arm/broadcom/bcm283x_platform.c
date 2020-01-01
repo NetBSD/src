@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.33 2020/01/01 09:35:50 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.34 2020/01/01 13:54:32 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.33 2020/01/01 09:35:50 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.34 2020/01/01 13:54:32 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -1499,6 +1499,20 @@ static u_int
 bcm283x_platform_uart_freq(void)
 {
 
+	/*
+	 * We are safe to access stdout phandle - consinit did before
+	 * calling ap_uart_freq
+	 */
+	const int phandle = fdtbus_get_stdout_phandle();
+
+	static const char * const aux_compatible[] = {
+		"brcm,bcm2835-aux-uart",
+		NULL
+	};
+
+	if (of_match_compatible(phandle, aux_compatible))
+		return core_clk * 2;
+
 	return uart_clk;
 }
 
@@ -1517,12 +1531,6 @@ ARM_PLATFORM(bcm2835, "brcm,bcm2835", &bcm2835_platform);
 #endif
 
 #if defined(SOC_BCM2836)
-static u_int
-bcm2837_platform_uart_freq(void)
-{
-
-	return core_clk * 2;
-}
 
 static const struct arm_platform bcm2836_platform = {
 	.ap_devmap = bcm2836_platform_devmap,
@@ -1542,7 +1550,7 @@ static const struct arm_platform bcm2837_platform = {
 	.ap_device_register = bcm283x_platform_device_register,
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,
-	.ap_uart_freq = bcm2837_platform_uart_freq,
+	.ap_uart_freq = bcm283x_platform_uart_freq,
 	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
@@ -1553,7 +1561,7 @@ static const struct arm_platform bcm2711_platform = {
 	.ap_device_register = bcm283x_platform_device_register,
 	.ap_reset = bcm2835_system_reset,
 	.ap_delay = gtmr_delay,
-	.ap_uart_freq = bcm2837_platform_uart_freq,
+	.ap_uart_freq = bcm283x_platform_uart_freq,
 	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
