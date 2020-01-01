@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.32 2019/12/31 08:01:19 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.33 2020/01/01 09:35:50 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.32 2019/12/31 08:01:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.33 2020/01/01 09:35:50 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -109,6 +109,7 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.32 2019/12/31 08:01:19 skrll 
 #endif
 
 #define RPI_CPU_MAX	4
+#define BCM2711_DMA_SIZE	0x3c000000
 
 void bcm2835_platform_early_putchar(char c);
 void bcm2836_platform_early_putchar(char c);
@@ -1352,7 +1353,7 @@ bcm2711_platform_init_attach_args(struct fdt_attach_args *faa)
 
 	bcm2835_bus_dma_tag._ranges = bcm2711_dma_ranges;
 	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2711_dma_ranges);
-	bcm2711_dma_ranges[0].dr_len = bcm283x_memorysize;
+	bcm2711_dma_ranges[0].dr_len = BCM2711_DMA_SIZE;
 }
 #endif
 
