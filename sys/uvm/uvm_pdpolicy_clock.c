@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.29 2020/01/01 01:18:34 mlelstv Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.30 2020/01/01 14:33:48 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.29 2020/01/01 01:18:34 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.30 2020/01/01 14:33:48 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -667,8 +667,8 @@ uvmpdpol_tune(void)
 }
 
 /*
- * uvmpdpol_pagerealize_locked: take the intended state set on an indivdual
- * page and make it real.  return true if any work was done.
+ * uvmpdpol_pagerealize_locked: take the intended state set on a page and
+ * make it real.  return true if any work was done.
  */
 static bool
 uvmpdpol_pagerealize_locked(struct vm_page *pg)
