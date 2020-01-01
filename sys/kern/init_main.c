@@ -1,7 +1,7 @@
-/*	$NetBSD: init_main.c,v 1.515 2020/01/01 21:09:11 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.516 2020/01/01 22:57:17 thorpej Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009, 2019, The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.515 2020/01/01 21:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.516 2020/01/01 22:57:17 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -241,6 +241,7 @@ struct	proc *initproc;
 struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold __read_mostly = 1;		/* still working on startup */
+int	shutting_down __read_mostly;	/* system is shutting down */
 struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
 
 int	start_init_exec;		/* semaphore for start_init() */
@@ -1015,9 +1016,9 @@ start_init(void *arg)
 			printf(": ");
 			len = cngetsn(ipath, sizeof(ipath)-1);
 			if (len == 4 && strcmp(ipath, "halt") == 0) {
-				cpu_reboot(RB_HALT, NULL);
+				kern_reboot(RB_HALT, NULL);
 			} else if (len == 6 && strcmp(ipath, "reboot") == 0) {
-				cpu_reboot(0, NULL);
+				kern_reboot(0, NULL);
 #if defined(DDB)
 			} else if (len == 3 && strcmp(ipath, "ddb") == 0) {
 				console_debugger();
