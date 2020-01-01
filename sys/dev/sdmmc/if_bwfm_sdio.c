@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.10 2019/12/30 16:28:14 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.11 2020/01/01 12:17:13 jmcneill Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -234,6 +234,11 @@ static const struct bwfm_sdio_product {
 		SDMMC_PRODUCT_BROADCOM_BCM43430, 
 		SDMMC_CIS_BROADCOM_BCM43430
 	},
+	{
+		SDMMC_VENDOR_BROADCOM,
+		SDMMC_PRODUCT_BROADCOM_BCM43455, 
+		SDMMC_CIS_BROADCOM_BCM43455
+	},
 };
 
 static const char *compatible[] = {
@@ -397,8 +402,13 @@ bwfm_sdio_attachhook(device_t self)
 		nvname = "brcmfmac4334-sdio.txt";
 		break;
 	case BRCM_CC_4345_CHIP_ID:
-		name = "brcmfmac43455-sdio.bin";
-		nvname = "brcmfmac43455-sdio.txt";
+		if ((0x200 & __BIT(bwfm->sc_chip.ch_chiprev)) != 0) {
+			name = "brcmfmac43456-sdio.bin";
+			nvname = "brcmfmac43456-sdio.txt";
+		} else {
+			name = "brcmfmac43455-sdio.bin";
+			nvname = "brcmfmac43455-sdio.txt";
+		}
 		break;
 	case BRCM_CC_43340_CHIP_ID:
 		name = "brcmfmac43340-sdio.bin";
