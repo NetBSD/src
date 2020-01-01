@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.169 2019/08/21 12:16:07 maxv Exp $
+# $NetBSD: XEN3_DOM0,v 1.170 2020/01/01 10:36:43 ryo Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.169 $"
+#ident		"XEN3_DOM0-$Revision: 1.170 $"
 
 maxusers	32		# estimated number of users
 
@@ -331,6 +331,7 @@ age*	at pci? dev ? function ?	# Attansic/Atheros L1 Gigabit Ethernet
 alc*	at pci? dev ? function ?	# Attansic/Atheros L1C/L2C Ethernet
 ale*	at pci? dev ? function ?	# Attansic/Atheros L1E Ethernet
 an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
+aq*	at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ath*	at pci? dev ? function ?	# Atheros 5210/5211/5212 802.11
 atw*	at pci? dev ? function ?	# ADMtek ADM8211 (802.11)
 bce*	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
