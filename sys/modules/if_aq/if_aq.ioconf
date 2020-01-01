@@ -1,0 +1,10 @@
+#	$NetBSD: if_aq.ioconf,v 1.1 2020/01/01 10:13:16 ryo Exp $
+
+ioconf if_aq
+
+include "conf/files"
+include "dev/pci/files.pci"
+
+pseudo-root pci*
+
+aq* at pci? dev ? function ?
