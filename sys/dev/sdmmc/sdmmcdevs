@@ -1,4 +1,4 @@
-	$NetBSD: sdmmcdevs,v 1.7 2019/10/28 06:31:39 mlelstv Exp $
+	$NetBSD: sdmmcdevs,v 1.8 2020/01/01 12:15:53 jmcneill Exp $
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
 /*
@@ -59,6 +59,7 @@ product BROADCOM BCM43340	0xa94c	BCM 43140
 product BROADCOM BCM43341	0xa94d	BCM 43141
 product BROADCOM BCM43362	0xa962	BCM 43362
 product BROADCOM BCM43430	0xa9a6	BCM 43430
+product BROADCOM BCM43455	0xa9bf	BCM 43455 
 
 /* C-guys, Inc. */
 product CGUYS TIACX100		0x0001	TI ACX100 SD-Link11b WiFi Card
