@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.19 2020/01/01 11:21:15 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.20 2020/01/01 12:18:18 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.19 2020/01/01 11:21:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.20 2020/01/01 12:18:18 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -366,10 +366,12 @@ static int
 dwc_mmc_set_clock(struct dwc_mmc_softc *sc, u_int freq)
 {
 	const u_int pll_freq = sc->sc_clock_freq / 1000;
-	u_int clk_div;
+	u_int clk_div, ciu_div;
+
+	ciu_div = sc->sc_ciu_div > 0 ? sc->sc_ciu_div : 1;
 
 	if (freq != pll_freq)
-		clk_div = howmany(pll_freq, freq);
+		clk_div = howmany(pll_freq, freq * ciu_div);
 	else
 		clk_div = 0;
 
