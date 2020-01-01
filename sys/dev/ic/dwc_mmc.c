@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.18 2019/10/05 12:27:14 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.19 2020/01/01 11:21:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.18 2019/10/05 12:27:14 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.19 2020/01/01 11:21:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -54,6 +54,7 @@ static int	dwc_mmc_bus_power(sdmmc_chipset_handle_t, uint32_t);
 static int	dwc_mmc_bus_clock(sdmmc_chipset_handle_t, int);
 static int	dwc_mmc_bus_width(sdmmc_chipset_handle_t, int);
 static int	dwc_mmc_bus_rod(sdmmc_chipset_handle_t, int);
+static int	dwc_mmc_signal_voltage(sdmmc_chipset_handle_t, int);
 static void	dwc_mmc_exec_command(sdmmc_chipset_handle_t,
 				      struct sdmmc_command *);
 static void	dwc_mmc_card_enable_intr(sdmmc_chipset_handle_t, int);
@@ -69,6 +70,7 @@ static struct sdmmc_chip_functions dwc_mmc_chip_functions = {
 	.bus_clock = dwc_mmc_bus_clock,
 	.bus_width = dwc_mmc_bus_width,
 	.bus_rod = dwc_mmc_bus_rod,
+	.signal_voltage = dwc_mmc_signal_voltage,
 	.exec_command = dwc_mmc_exec_command,
 	.card_enable_intr = dwc_mmc_card_enable_intr,
 	.card_intr_ack = dwc_mmc_card_intr_ack,
@@ -160,8 +162,15 @@ dwc_mmc_attach_i(device_t self)
 	struct dwc_mmc_softc *sc = device_private(self);
 	struct sdmmcbus_attach_args saa;
 
+	if (sc->sc_pre_power_on)
+		sc->sc_pre_power_on(sc);
+
+	dwc_mmc_signal_voltage(sc, SDMMC_SIGNAL_VOLTAGE_330);
 	dwc_mmc_host_reset(sc);
 	dwc_mmc_bus_width(sc, 1);
+
+	if (sc->sc_post_power_on)
+		sc->sc_post_power_on(sc);
 
 	memset(&saa, 0, sizeof(saa));
 	saa.saa_busname = "sdmmc";
@@ -170,13 +179,15 @@ dwc_mmc_attach_i(device_t self)
 	saa.saa_clkmin = 400;
 	saa.saa_clkmax = sc->sc_clock_freq / 1000;
 	saa.saa_dmat = sc->sc_dmat;
-	saa.saa_caps = SMC_CAPS_4BIT_MODE|
-		       SMC_CAPS_8BIT_MODE|
-		       SMC_CAPS_SD_HIGHSPEED|
-		       SMC_CAPS_MMC_HIGHSPEED|
+	saa.saa_caps = SMC_CAPS_SD_HIGHSPEED |
+		       SMC_CAPS_MMC_HIGHSPEED |
 		       SMC_CAPS_AUTO_STOP |
 		       SMC_CAPS_DMA |
 		       SMC_CAPS_MULTI_SEG_DMA;
+	if (sc->sc_bus_width == 8)
+		saa.saa_caps |= SMC_CAPS_8BIT_MODE;
+	else
+		saa.saa_caps |= SMC_CAPS_4BIT_MODE;
 	if (sc->sc_card_detect)
 		saa.saa_caps |= SMC_CAPS_POLL_CARD_DET;
 
@@ -201,7 +212,16 @@ dwc_mmc_host_reset(sdmmc_chipset_handle_t sch)
 	aprint_normal_dev(sc->sc_dev, "host reset\n");
 #endif
 
-	MMC_WRITE(sc, DWC_MMC_PWREN, 1);
+	if (ISSET(sc->sc_flags, DWC_MMC_F_PWREN_INV))
+		MMC_WRITE(sc, DWC_MMC_PWREN, 0);
+	else
+		MMC_WRITE(sc, DWC_MMC_PWREN, 1);
+
+	ctrl = MMC_READ(sc, DWC_MMC_GCTRL);
+	ctrl &= ~DWC_MMC_GCTRL_USE_INTERNAL_DMAC;
+	MMC_WRITE(sc, DWC_MMC_GCTRL, ctrl);
+
+	MMC_WRITE(sc, DWC_MMC_DMAC, DWC_MMC_DMAC_SOFTRESET);
 
 	MMC_WRITE(sc, DWC_MMC_GCTRL,
 	    MMC_READ(sc, DWC_MMC_GCTRL) | DWC_MMC_GCTRL_RESET);
@@ -277,6 +297,17 @@ static int
 dwc_mmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
 	return 0;
+}
+
+static int
+dwc_mmc_signal_voltage(sdmmc_chipset_handle_t sch, int signal_voltage)
+{
+	struct dwc_mmc_softc *sc = sch;
+
+	if (sc->sc_signal_voltage == NULL)
+		return 0;
+
+	return sc->sc_signal_voltage(sc, signal_voltage);
 }
 
 static int
