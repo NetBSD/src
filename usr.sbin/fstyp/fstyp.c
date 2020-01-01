@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.9 2020/01/01 09:08:52 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.10 2020/01/01 09:17:27 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.9 2020/01/01 09:08:52 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.10 2020/01/01 09:17:27 tkusumi Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -90,6 +90,8 @@ static struct {
 	bool		unmountable;
 	const char	*precache_encoding;
 } fsvtypes[] = {
+	{ "hammer", &fsvtyp_hammer, false, NULL }, /* Must be before partial */
+	{ "hammer(partial)", &fsvtyp_hammer_partial, true, NULL },
 	{ NULL, NULL, NULL, NULL }
 };
 
