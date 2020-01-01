@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_43.c,v 1.58 2019/08/23 13:59:45 maxv Exp $	*/
+/*	$NetBSD: netbsd32_compat_43.c,v 1.59 2020/01/01 09:17:45 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.58 2019/08/23 13:59:45 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_43.c,v 1.59 2020/01/01 09:17:45 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_43.h"
@@ -433,7 +433,7 @@ compat_43_netbsd32_orecvmsg(struct lwp *l, const struct compat_43_netbsd32_orecv
 	struct iovec *iov, aiov[UIO_SMALLIOV];
 	int error;
 
-	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof (struct omsghdr));
+	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof(omsg));
 	if (error)
 		return (error);
 
@@ -518,7 +518,7 @@ compat_43_netbsd32_osendmsg(struct lwp *l, const struct compat_43_netbsd32_osend
 	struct sockaddr *sa;
 	int error;
 
-	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof (struct omsghdr));
+	error = copyin(SCARG_P32(uap, msg), &omsg, sizeof(omsg));
 	if (error != 0)
 		return (error);
 
