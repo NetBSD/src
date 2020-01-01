@@ -1,4 +1,4 @@
-/*	$NetBSD: ucycom.c,v 1.48 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: ucycom.c,v 1.49 2020/01/01 09:08:28 maxv Exp $	*/
 
 /*
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.48 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucycom.c,v 1.49 2020/01/01 09:08:28 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -121,11 +121,15 @@ struct ucycom_softc {
 
 	struct tty		*sc_tty;
 
+	enum {
+		UCYCOM_INIT_NONE,
+		UCYCOM_INIT_INITED
+	} sc_init_state;
+
 	kmutex_t sc_lock;	/* protects refcnt, others */
 
 	/* uhidev parameters */
 	size_t			sc_flen; /* feature report length */
-	size_t			sc_ilen; /* input report length */
 	size_t			sc_olen; /* output report length */
 
 	uint8_t			*sc_obuf;
@@ -219,12 +223,17 @@ ucycom_attach(device_t parent, device_t self, void *aux)
 	sc->sc_hdev.sc_intr = ucycom_intr;
 	sc->sc_hdev.sc_parent = uha->parent;
 	sc->sc_hdev.sc_report_id = uha->reportid;
+	sc->sc_init_state = UCYCOM_INIT_NONE;
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
-	sc->sc_ilen = hid_report_size(desc, size, hid_input, repid);
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
+
+	if (sc->sc_olen != 8 && sc->sc_olen != 32)
+		return;
+	if (sc->sc_flen != 5)
+		return;
 
 	sc->sc_msr = sc->sc_mcr = 0;
 
@@ -238,6 +247,8 @@ ucycom_attach(device_t parent, device_t self, void *aux)
 
 	/* Nothing interesting to report */
 	aprint_normal("\n");
+
+	sc->sc_init_state = UCYCOM_INIT_INITED;
 }
 
 
@@ -334,10 +345,10 @@ ucycomopen(dev_t dev, int flag, int mode, struct lwp *l)
 
 	if (sc == NULL)
 		return ENXIO;
-
 	if (sc->sc_dying)
 		return EIO;
-
+	if (sc->sc_init_state != UCYCOM_INIT_INITED)
+		return ENXIO;
 	if (!device_is_active(sc->sc_hdev.sc_dev))
 		return ENXIO;
 
