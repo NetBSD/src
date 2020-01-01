@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.44 2020/01/01 21:09:11 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.45 2020/01/01 23:15:24 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.44 2020/01/01 21:09:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.45 2020/01/01 23:15:24 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -283,9 +283,7 @@ todr_save_systime(void)
 {
 	struct timeval tv;
 
-#if notyet
 	KASSERT(todr_lock_owned());
-#endif
 
 	/*
 	 * We might have been called by boot() due to a crash early
@@ -326,7 +324,6 @@ void
 resettodr(void)
 {
 
-#if notyet
 	/*
 	 * If we're shutting down, we don't want to get stuck in case
 	 * someone was already fiddling with the TOD clock.
@@ -339,11 +336,8 @@ resettodr(void)
 	} else {
 		todr_lock();
 	}
-#endif
 	todr_save_systime();
-#if notyet
 	todr_unlock();
-#endif
 }
 
 #ifdef	TODR_DEBUG
