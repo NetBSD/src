@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.7 2019/12/28 08:22:30 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.8 2020/01/01 08:56:41 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.7 2019/12/28 08:22:30 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.8 2020/01/01 08:56:41 tkusumi Exp $");
 
 #include <sys/disklabel.h>
 #include <sys/dkio.h>
@@ -55,7 +55,7 @@ __RCSID("$NetBSD: fstyp.c,v 1.7 2019/12/28 08:22:30 tkusumi Exp $");
 
 #include "fstyp.h"
 
-#define	LABEL_LEN	256
+#define	LABEL_LEN	512
 
 bool show_label = false;
 
@@ -76,6 +76,8 @@ static struct {
 	{ "msdosfs", &fstyp_msdosfs, false, NULL },
 	{ "ntfs", &fstyp_ntfs, false, NTFS_ENC },
 	{ "ufs", &fstyp_ufs, false, NULL },
+	{ "hammer", &fstyp_hammer, false, NULL },
+	{ "hammer2", &fstyp_hammer2, false, NULL },
 #ifdef HAVE_ZFS
 	{ "zfs", &fstyp_zfs, true, NULL },
 #endif
