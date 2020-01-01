@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.h,v 1.11 2019/11/29 20:04:54 riastradh Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.12 2020/01/01 21:34:39 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -117,6 +117,8 @@ void	rw_obj_init(void);
 krwlock_t *rw_obj_alloc(void);
 void	rw_obj_hold(krwlock_t *);
 bool	rw_obj_free(krwlock_t *);
+u_int	rw_obj_refcnt(krwlock_t *);
+krwlock_t *rw_obj_tryalloc(void);
 
 #endif	/* _KERNEL */
 
