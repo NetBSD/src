@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.29 2020/01/01 21:09:11 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.30 2020/01/01 23:07:38 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996, 2020 The NetBSD Foundation, Inc.
@@ -33,6 +33,7 @@
 #define _DEV_CLOCK_SUBR_H_
 
 #include <sys/clock.h>
+#include <sys/stdbool.h>
 
 /*
  * "POSIX time" to/from "YY/MM/DD/hh/mm/ss"
