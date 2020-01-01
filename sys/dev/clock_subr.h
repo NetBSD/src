@@ -1,4 +1,4 @@
-/*	$NetBSD: clock_subr.h,v 1.27 2020/01/01 18:08:11 thorpej Exp $	*/
+/*	$NetBSD: clock_subr.h,v 1.28 2020/01/01 19:24:03 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -92,9 +92,6 @@ struct todr_chip_handle {
 
 };
 typedef struct todr_chip_handle *todr_chip_handle_t;
-
-#define todr_wenable(ct, v)	if ((ct)->todr_setwen) \
-					((*(ct)->todr_setwen)(ct, v))
 
 /*
  * Machine-dependent function that machine-independent RTC drivers can
