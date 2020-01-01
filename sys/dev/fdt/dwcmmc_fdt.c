@@ -1,4 +1,4 @@
-/* $NetBSD: dwcmmc_fdt.c,v 1.8 2019/04/30 23:10:33 jmcneill Exp $ */
+/* $NetBSD: dwcmmc_fdt.c,v 1.9 2020/01/01 11:21:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.8 2019/04/30 23:10:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.9 2020/01/01 11:21:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -40,20 +40,28 @@ __KERNEL_RCSID(0, "$NetBSD: dwcmmc_fdt.c,v 1.8 2019/04/30 23:10:33 jmcneill Exp 
 #include <sys/gpio.h>
 
 #include <dev/ic/dwc_mmc_var.h>
+#include <dev/sdmmc/sdmmcchip.h>
 #include <dev/fdt/fdtvar.h>
 
 static int	dwcmmc_fdt_match(device_t, cfdata_t, void *);
 static void	dwcmmc_fdt_attach(device_t, device_t, void *);
 
+static void	dwcmmc_fdt_pre_power_on(struct dwc_mmc_softc *);
+static void	dwcmmc_fdt_post_power_on(struct dwc_mmc_softc *);
+
 static int	dwcmmc_fdt_card_detect(struct dwc_mmc_softc *);
 static int	dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *, int);
+static int	dwcmmc_fdt_signal_voltage(struct dwc_mmc_softc *, int);
 
 struct dwcmmc_fdt_config {
 	u_int		ciu_div;
+	u_int		flags;
 };
 
 static const struct dwcmmc_fdt_config dwcmmc_rk3288_config = {
 	.ciu_div = 2,
+	.flags = DWC_MMC_F_USE_HOLD_REG |
+		 DWC_MMC_F_DMA,
 };
 
 static const struct of_compat_data compat_data[] = {
@@ -68,6 +76,8 @@ struct dwcmmc_fdt_softc {
 	struct fdtbus_gpio_pin	*sc_pin_cd;
 	const struct dwcmmc_fdt_config *sc_conf;
 	u_int			sc_ciu_div;
+	struct fdtbus_regulator	*sc_vqmmc;
+	struct fdtbus_mmc_pwrseq *sc_pwrseq;
 };
 
 CFATTACH_DECL_NEW(dwcmmc_fdt, sizeof(struct dwcmmc_fdt_softc),
@@ -126,6 +136,9 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	esc->sc_vqmmc = fdtbus_regulator_acquire(phandle, "vqmmc-supply");
+	esc->sc_pwrseq = fdtbus_mmc_pwrseq_get(phandle);
+
 	sc->sc_dev = self;
 	sc->sc_bst = faa->faa_bst;
 	sc->sc_dmat = faa->faa_dmat;
@@ -137,13 +150,17 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	}
 	esc->sc_conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
-
 	if (of_getprop_uint32(phandle, "max-frequency", &sc->sc_clock_freq) != 0)
 		sc->sc_clock_freq = UINT_MAX;
+	if (of_getprop_uint32(phandle, "bus-width", &sc->sc_bus_width) != 0)
+		sc->sc_bus_width = 4;
 
 	sc->sc_fifo_depth = fifo_depth;
-	sc->sc_flags = DWC_MMC_F_USE_HOLD_REG | DWC_MMC_F_DMA;
+	sc->sc_flags = esc->sc_conf->flags;
+	sc->sc_pre_power_on = dwcmmc_fdt_pre_power_on;
+	sc->sc_post_power_on = dwcmmc_fdt_post_power_on;
 	sc->sc_bus_clock = dwcmmc_fdt_bus_clock;
+	sc->sc_signal_voltage = dwcmmc_fdt_signal_voltage;
 
 	esc->sc_pin_cd = fdtbus_gpio_acquire(phandle, "cd-gpios",
 	    GPIO_PIN_INPUT);
@@ -171,6 +188,24 @@ dwcmmc_fdt_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 }
 
+static void
+dwcmmc_fdt_pre_power_on(struct dwc_mmc_softc *sc)
+{
+	struct dwcmmc_fdt_softc *esc = device_private(sc->sc_dev);
+
+	if (esc->sc_pwrseq != NULL)
+		fdtbus_mmc_pwrseq_pre_power_on(esc->sc_pwrseq);
+}
+
+static void
+dwcmmc_fdt_post_power_on(struct dwc_mmc_softc *sc)
+{
+	struct dwcmmc_fdt_softc *esc = device_private(sc->sc_dev);
+
+	if (esc->sc_pwrseq != NULL)
+		fdtbus_mmc_pwrseq_post_power_on(esc->sc_pwrseq);
+}
+
 static int
 dwcmmc_fdt_card_detect(struct dwc_mmc_softc *sc)
 {
@@ -195,10 +230,42 @@ dwcmmc_fdt_bus_clock(struct dwc_mmc_softc *sc, int rate)
 		return error;
 	}
 
-	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu) / ciu_div;
+	sc->sc_clock_freq = clk_get_rate(esc->sc_clk_ciu);
 
 	aprint_debug_dev(sc->sc_dev, "set clock rate to %u kHz (target %u kHz)\n",
 	    sc->sc_clock_freq, rate);
 
 	return 0;
+}
+
+static int
+dwcmmc_fdt_signal_voltage(struct dwc_mmc_softc *sc, int signal_voltage)
+{
+	struct dwcmmc_fdt_softc *esc = device_private(sc->sc_dev);
+	u_int uvol;
+	int error;
+
+	if (esc->sc_vqmmc == NULL)
+		return 0;
+
+	switch (signal_voltage) {
+	case SDMMC_SIGNAL_VOLTAGE_180:
+		uvol = 1800000;
+		break;
+	case SDMMC_SIGNAL_VOLTAGE_330:
+		uvol = 3300000;
+		break;
+	default:
+		return EINVAL;
+	}
+
+	error = fdtbus_regulator_supports_voltage(esc->sc_vqmmc, uvol, uvol);
+	if (error != 0)
+		return 0;
+
+	error = fdtbus_regulator_set_voltage(esc->sc_vqmmc, uvol, uvol);
+	if (error != 0)
+		return error;
+
+	return fdtbus_regulator_enable(esc->sc_vqmmc);
 }
