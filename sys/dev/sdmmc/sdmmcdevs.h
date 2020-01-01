@@ -1,10 +1,10 @@
-/*	$NetBSD: sdmmcdevs.h,v 1.7 2019/10/28 06:32:10 mlelstv Exp $	*/
+/*	$NetBSD: sdmmcdevs.h,v 1.8 2020/01/01 12:16:14 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *		NetBSD: sdmmcdevs,v 1.7 2019/10/28 06:31:39 mlelstv Exp 
+ *		NetBSD: sdmmcdevs,v 1.8 2020/01/01 12:15:53 jmcneill Exp 
  */
 /*	$OpenBSD: sdmmcdevs,v 1.8 2007/05/11 17:16:16 mglocker Exp $	*/
 
@@ -83,6 +83,8 @@
 #define	SDMMC_PRODUCT_BROADCOM_BCM43362	0xa962
 #define	SDMMC_CIS_BROADCOM_BCM43430	{ NULL, NULL, NULL, NULL }
 #define	SDMMC_PRODUCT_BROADCOM_BCM43430	0xa9a6
+#define	SDMMC_CIS_BROADCOM_BCM43455	{ NULL, NULL, NULL, NULL }
+#define	SDMMC_PRODUCT_BROADCOM_BCM43455	0xa9bf
 
 /* C-guys, Inc. */
 #define	SDMMC_CIS_CGUYS_TIACX100	{ NULL, NULL, NULL, NULL }
