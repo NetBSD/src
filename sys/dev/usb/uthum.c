@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.17 2019/12/01 08:27:54 maxv Exp $   */
+/*	$NetBSD: uthum.c,v 1.18 2020/01/01 09:03:00 maxv Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.17 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.18 2020/01/01 09:03:00 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -82,7 +82,6 @@ struct uthum_softc {
 
 	/* uhidev parameters */
 	size_t			 sc_flen;	/* feature report length */
-	size_t			 sc_ilen;	/* input report length */
 	size_t			 sc_olen;	/* output report length */
 
 	/* sensor framework */
@@ -147,7 +146,6 @@ uthum_attach(device_t parent, device_t self, void *aux)
 
 	uhidev_get_report_desc(uha->parent, &desc, &size);
 	repid = uha->reportid;
-	sc->sc_ilen = hid_report_size(desc, size, hid_input, repid);
 	sc->sc_olen = hid_report_size(desc, size, hid_output, repid);
 	sc->sc_flen = hid_report_size(desc, size, hid_feature, repid);
 
@@ -262,33 +260,36 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 {
 	int i;
 	uint8_t cmdbuf[32], report[256];
+	size_t olen, flen;
 
 	/* if return buffer is null, do nothing */
 	if ((buf == NULL) || len == 0)
 		return 0;
 
+	olen = uimin(sc->sc_olen, sizeof(cmdbuf));
+
 	/* issue query */
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	memcpy(cmdbuf, cmd_start, sizeof(cmd_start));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    cmdbuf, olen))
 		return EIO;
 
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	cmdbuf[0] = target_cmd;
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    cmdbuf, olen))
 		return EIO;
 
 	memset(cmdbuf, 0, sizeof(cmdbuf));
 	for (i = 0; i < 7; i++) {
 		if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-		    cmdbuf, sc->sc_olen))
+		    cmdbuf, olen))
 			return EIO;
 	}
 	memcpy(cmdbuf, cmd_end, sizeof(cmd_end));
 	if (uhidev_set_report(&sc->sc_hdev, UHID_OUTPUT_REPORT,
-	    cmdbuf, sc->sc_olen))
+	    cmdbuf, olen))
 		return EIO;
 
 	/* wait if required */
@@ -296,8 +297,9 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 		kpause("uthum", false, (need_delay*hz+999)/1000 + 1, NULL);
 
 	/* get answer */
+	flen = uimin(sc->sc_flen, sizeof(report));
 	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
-	    report, sc->sc_flen))
+	    report, flen))
 		return EIO;
 	memcpy(buf, report, len);
 	return 0;
