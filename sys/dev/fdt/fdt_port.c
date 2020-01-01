@@ -1,4 +1,4 @@
-/*	$NetBSD: fdt_port.c,v 1.5 2019/12/15 14:18:16 jakllsch Exp $	*/
+/*	$NetBSD: fdt_port.c,v 1.6 2020/01/01 12:46:44 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.5 2019/12/15 14:18:16 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: fdt_port.c,v 1.6 2020/01/01 12:46:44 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -190,7 +190,7 @@ fdt_endpoint_activate(struct fdt_endpoint *ep, bool activate)
 		return EBUSY;
 
 	rdp = rep->ep_port->port_dp;
-	device_printf(rdp->dp_dev, "activating port %d endpoint %d\n",
+	aprint_debug_dev(rdp->dp_dev, "activating port %d endpoint %d\n",
 	    fdt_endpoint_port_index(rep), fdt_endpoint_index(rep));
 	if (rdp->dp_ep_activate)
 		error = rdp->dp_ep_activate(rdp->dp_dev, rep, activate);
@@ -207,8 +207,8 @@ fdt_endpoint_activate_direct(struct fdt_endpoint *ep, bool activate)
 	int error = 0;
 
 	dp = ep->ep_port->port_dp;
-device_printf(dp->dp_dev, "activating port %d endpoint %d (direct)\n",
-    fdt_endpoint_port_index(ep), fdt_endpoint_index(ep));
+	aprint_debug_dev(dp->dp_dev, "activating port %d endpoint %d (direct)\n",
+	    fdt_endpoint_port_index(ep), fdt_endpoint_index(ep));
 	if (dp->dp_ep_activate)
 		error = dp->dp_ep_activate(dp->dp_dev, ep, activate);
 
@@ -372,8 +372,8 @@ fdt_endpoints_register(int phandle, struct fdt_port *port,
 		} else if (rep != NULL) {
 			rep->ep_rep = ep;
 			rep->ep_rphandle = child;
-			aprint_verbose("%s ", ep_name(ep, buf, sizeof(buf)));
-			aprint_verbose("connected to %s\n",
+			aprint_debug("%s ", ep_name(ep, buf, sizeof(buf)));
+			aprint_debug("connected to %s\n",
 			    ep_name(rep, buf, sizeof(buf)));
 			if (rep->ep_type == EP_OTHER)
 				rep->ep_type = ep->ep_type;
