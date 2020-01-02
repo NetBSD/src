@@ -1,4 +1,4 @@
-/*	$NetBSD: max6900.c,v 1.16 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: max6900.c,v 1.17 2020/01/02 16:33:08 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.16 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: max6900.c,v 1.17 2020/01/02 16:33:08 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -310,7 +310,7 @@ maxrtc_clock_read(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 	u_int8_t bcd[MAX6900_BURST_LEN], cmdbuf[1];
 	int i;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_read: failed to acquire I2C bus\n");
 		return (0);
@@ -322,8 +322,8 @@ maxrtc_clock_read(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     &bcd[i], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "maxrtc_clock_read: failed to read rtc "
 			    "at 0x%x\n",
@@ -333,7 +333,7 @@ maxrtc_clock_read(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 	}
 
 	/* Done with I2C */
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/*
 	 * Convert the MAX6900's register values into something useable
@@ -381,7 +381,7 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 		/* century in control slot */
 	bcd[MAX6900_BURST_CONTROL] = bintobcd(dt->dt_year / 100);
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_write: failed to acquire I2C bus\n");
 		return (0);
@@ -392,8 +392,8 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 	cmdbuf[1] = 0;
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_write: failed to clear WP bit\n");
 		return (0);
@@ -414,8 +414,8 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
  again:
 	cmdbuf[0] = MAX6900_REG_SECOND | MAX6900_CMD_WRITE;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-		     cmdbuf, 1, &bcd[MAX6900_BURST_SECOND], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &bcd[MAX6900_BURST_SECOND], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_write: failed to write SECONDS\n");
 		return (0);
@@ -423,8 +423,8 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 
 	cmdbuf[0] = MAX6900_REG_SECOND | MAX6900_CMD_READ;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-		     cmdbuf, 1, &init_seconds, 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &init_seconds, 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_write: failed to read "
 		    "INITIAL SECONDS\n");
@@ -436,8 +436,8 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 		if (iic_exec(sc->sc_tag,
 			     i != MAX6900_BURST_LEN - 1 ? I2C_OP_WRITE :
 			     I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-			     cmdbuf, 1, &bcd[i], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     cmdbuf, 1, &bcd[i], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "maxrtc_clock_write: failed to write rtc "
 			    " at 0x%x\n",
@@ -448,8 +448,8 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 
 	cmdbuf[0] = MAX6900_REG_SECOND | MAX6900_CMD_READ;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
-		     cmdbuf, 1, &final_seconds, 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &final_seconds, 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_write: failed to read "
 		    "FINAL SECONDS\n");
@@ -470,14 +470,14 @@ maxrtc_clock_write(struct maxrtc_softc *sc, struct clock_ymdhms *dt)
 	cmdbuf[1] = MAX6900_CONTROL_WP;
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "maxrtc_clock_write: failed to set WP bit\n");
 		return (0);
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return (1);
 }

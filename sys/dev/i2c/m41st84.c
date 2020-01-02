@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.24 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.25 2020/01/02 16:28:02 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.24 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.25 2020/01/02 16:28:02 thorpej Exp $");
 
 #include "opt_strtc.h"
 
@@ -294,7 +294,7 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	u_int8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[2];
 	int i;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_read: failed to acquire I2C bus\n");
 		return (0);
@@ -307,8 +307,8 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	 */
 	cmdbuf[0] = M41ST84_REG_AL_HOUR;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_read: failed to read HT\n");
 		return (0);
@@ -316,8 +316,8 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
 		cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-			     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_read: failed to reset HT\n");
 			return (0);
@@ -330,8 +330,8 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     &bcd[i], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_read: failed to read rtc "
 			    "at 0x%x\n", i);
@@ -340,7 +340,7 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	}
 
 	/* Done with I2C */
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/*
 	 * Convert the M41ST84's register values into something useable
@@ -376,7 +376,7 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[M41ST84_REG_MONTH] = bintobcd(dt->dt_mon);
 	bcd[M41ST84_REG_YEAR] = bintobcd((dt->dt_year - POSIX_BASE_YEAR) % 100);
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_write: failed to acquire I2C bus\n");
 		return (0);
@@ -387,8 +387,8 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	cmdbuf[1] = M41ST84_SEC_ST;
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_write: failed to Hold Clock\n");
 		return (0);
@@ -401,8 +401,8 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	 */
 	cmdbuf[0] = M41ST84_REG_AL_HOUR;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_write: failed to read HT\n");
 		return (0);
@@ -410,8 +410,8 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
 		cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
 		if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-			     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_write: failed to reset HT\n");
 			return (0);
@@ -426,9 +426,8 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 		cmdbuf[0] = i;
 		if (iic_exec(sc->sc_tag,
 			     i ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
-			     sc->sc_address, cmdbuf, 1, &bcd[i], 1,
-			     I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     sc->sc_address, cmdbuf, 1, &bcd[i], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_write: failed to write rtc "
 			    " at 0x%x\n", i);
@@ -437,7 +436,7 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 		}
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return (1);
 }
@@ -449,7 +448,7 @@ strtc_wdog_config(void *arg, uint8_t wd)
 	struct strtc_softc *sc = arg;
 	uint8_t	cmdbuf[2];
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_wdog_config: failed to acquire I2C bus\n");
 		return;
@@ -459,12 +458,12 @@ strtc_wdog_config(void *arg, uint8_t wd)
 	cmdbuf[1] = wd;
 
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_wdog_config: failed to write watchdog\n");
 		return;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 }
 #endif	/* STRTC_NO_WATCHDOG */

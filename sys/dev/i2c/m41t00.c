@@ -1,4 +1,4 @@
-/*	$NetBSD: m41t00.c,v 1.21 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: m41t00.c,v 1.22 2020/01/02 16:31:09 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.21 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41t00.c,v 1.22 2020/01/02 16:31:09 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,7 +283,7 @@ m41t00_clock_read(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 	u_int8_t bcd[M41T00_NBYTES], cmdbuf[1];
 	int i, n;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "m41t00_clock_read: failed to acquire I2C bus\n");
 		return 0;
@@ -296,8 +296,8 @@ m41t00_clock_read(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 
 		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     &bcd[i], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "m41t00_clock_read: failed to read rtc "
 			    "at 0x%x\n",
@@ -307,7 +307,7 @@ m41t00_clock_read(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 	}
 
 	/* Done with I2C */
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/*
 	 * Convert the M41T00's register values into something useable
@@ -348,7 +348,7 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 	bcd[M41T00_MONTH] = bintobcd(dt->dt_mon);
 	bcd[M41T00_YEAR] = bintobcd(dt->dt_year % 100);
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
 		    "m41t00_clock_write: failed to acquire I2C bus\n");
 		return 0;
@@ -371,8 +371,8 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
  again:
 	cmdbuf[0] = M41T00_SEC;
 	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-		     cmdbuf, 1, &bcd[M41T00_SEC], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &bcd[M41T00_SEC], 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "m41t00_clock_write: failed to write SECONDS\n");
 		return 0;
@@ -380,8 +380,8 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 
 	cmdbuf[0] = M41T00_SEC;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
-		     cmdbuf, 1, &init_seconds, 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &init_seconds, 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "m41t00_clock_write: failed to read "
 		    "INITIAL SECONDS\n");
@@ -393,8 +393,8 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 		cmdbuf[0] = m41t00_rtc_offset[i];
 		if (iic_exec(sc->sc_tag,
 			     I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-			     cmdbuf, 1, &bcd[i], 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+			     cmdbuf, 1, &bcd[i], 1, 0)) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "m41t00_clock_write: failed to write rtc "
 			    " at 0x%x\n",
@@ -405,8 +405,8 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 
 	cmdbuf[0] = M41T00_SEC;
 	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
-		     cmdbuf, 1, &final_seconds, 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		     cmdbuf, 1, &final_seconds, 1, 0)) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "m41t00_clock_write: failed to read "
 		    "FINAL SECONDS\n");
@@ -423,7 +423,7 @@ m41t00_clock_write(struct m41t00_softc *sc, struct clock_ymdhms *dt)
 		goto again;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return 1;
 }
