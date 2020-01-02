@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.151 2019/12/30 09:44:46 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.152 2020/01/02 10:02:26 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7374,4 +7374,51 @@ external/mpl/bind/dist/lib/isc/unix/app.c	1.5
 
 	Only ignore signals if we are bind (not dhcpd).
 	[maya, ticket #591]
+
+usr.sbin/postinstall/postinstall.in		1.9-1.12
+
+	PR 54730 and 54741: fix "obsolete" handling in postinstall
+	when not working from sources.
+	[tsutsui, ticket #592]
+
+sys/dev/audio/audio.c				1.34,1.35
+
+	PR kern/54796: allow memory allocations to wait. Simplify.
+	[isaki, ticket #593]
+
+sys/arch/x68k/include/param.h			1.29
+
+	Bump MSGBUFSIZE to accomodate timestamps.
+	[isaki, ticket #594]
+
+sys/dev/usb/ucycom.c				1.49
+sys/dev/usb/uhid.c				1.111
+sys/dev/usb/uthum.c				1.18
+
+	Fix buffer overflows. Add missing mutex_exit.
+	[maxv, ticket #595]
+
+usr.bin/mkubootimage/mkubootimage.c		1.28,1.29
+
+	Adjust image size appropriately when using update_image.
+	[skrll, ticket #596]
+
+sys/compat/common/kern_sig_43.c			1.36
+sys/compat/netbsd32/netbsd32_compat_20.c	1.39
+sys/compat/netbsd32/netbsd32_compat_43.c	1.59
+sys/compat/netbsd32/netbsd32_compat_50.c	1.44
+
+	Fix sizeof mismatch in copyin.
+	Fix three stack info leaks.
+	[maxv, ticket #597]
+
+sys/conf/copyright				1.18
+
+	Welcome to 2020.
+	[mlelstv, ticket #598]
+
+sys/arch/arm/broadcom/bcm283x_platform.c	1.34 (patch)
+
+	Fix early console output on the rpi0w.
+	[skrll, ticket #599]
 
