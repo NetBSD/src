@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.282 2020/01/02 16:51:54 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.283 2020/01/02 16:52:55 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.282 2020/01/02 16:51:54 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.283 2020/01/02 16:52:55 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2981,7 +2981,7 @@ ttysigintr(void *cookie)
 		pgrp = tp->t_pgrp;
 		sess = tp->t_session;
 		lflag = tp->t_lflag;
-		if  (sig == SIGINFO) {
+		if (sig == SIGINFO) {
 			if (ISSET(tp->t_state, TS_SIGINFO)) {
 				/* Via ioctl: ignore tty option. */
 				tp->t_state &= ~TS_SIGINFO;
