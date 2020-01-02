@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.281 2019/03/01 11:06:57 pgoyette Exp $	*/
+/*	$NetBSD: tty.c,v 1.282 2020/01/02 16:51:54 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.281 2019/03/01 11:06:57 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.282 2020/01/02 16:51:54 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -226,7 +226,7 @@ int tty_qsize = TTY_MINQSIZE;
 static int
 tty_get_qsize(int *qsize, int newsize)
 {
-	newsize = 1 << ilog2(newsize);	/* Make it a power of two */ 
+	newsize = 1 << ilog2(newsize);	/* Make it a power of two */
 
 	if (newsize < TTY_MINQSIZE || newsize > TTY_MAXQSIZE)
 		return EINVAL;
@@ -2615,7 +2615,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 		default:
 			lp = l->l_wchan ? l->l_wmesg : "iowait";
 			break;
-		} 
+		}
 		strlcat(buf, lp, bufsz);
 		strlcat(buf, LIST_NEXT(l, l_sibling) != NULL ? " " : "] ",
 		    bufsz);
@@ -2840,7 +2840,7 @@ tty_free(struct tty *tp)
 
 	mutex_enter(proc_lock);
 	mutex_enter(&tty_lock);
-	for (i = 0; i < TTYSIG_COUNT; i++) 
+	for (i = 0; i < TTYSIG_COUNT; i++)
 		sigemptyset(&tp->t_sigs[i]);
 	if (tp->t_sigcount != 0)
 		TAILQ_REMOVE(&tty_sigqueue, tp, t_sigqueue);
