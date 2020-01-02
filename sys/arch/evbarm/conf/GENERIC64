@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.124 2020/01/02 22:07:21 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.125 2020/01/02 23:01:54 ryo Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -295,6 +295,7 @@ pci*		at ppb?
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
