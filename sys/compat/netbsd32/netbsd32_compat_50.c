@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.39.2.1 2019/12/18 20:04:32 martin Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.39.2.2 2020/01/02 09:50:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.39.2.1 2019/12/18 20:04:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.39.2.2 2020/01/02 09:50:34 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -795,9 +795,9 @@ compat_50_netbsd32___fhstat40(struct lwp *l, const struct compat_50_netbsd32___f
 	int error;
 
 	error = do_fhstat(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), &sb);
-	if (error != 0) {
+	if (error == 0) {
 		netbsd32_from___stat50(&sb, &sb32);
-		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
 	return error;
 }
