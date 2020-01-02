@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.350 2020/01/02 19:20:02 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.351 2020/01/02 21:17:13 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.350 2020/01/02 19:20:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.351 2020/01/02 21:17:13 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1972,8 +1972,7 @@ pmap_enter_pv(struct pmap_page *pp, struct pv_entry *pve,
  * => we return the removed pve
  */
 static struct pv_entry *
-pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
-    vaddr_t va)
+pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
 {
 	struct pv_entry **hh;
 	struct pv_entry *pve;
