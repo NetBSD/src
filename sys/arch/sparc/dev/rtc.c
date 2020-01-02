@@ -1,4 +1,4 @@
-/*	$NetBSD: rtc.c,v 1.19 2019/11/10 21:16:32 chs Exp $ */
+/*	$NetBSD: rtc.c,v 1.20 2020/01/02 22:32:20 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Valeriy E. Ushakov
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19 2019/11/10 21:16:32 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.20 2020/01/02 22:32:20 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -57,6 +57,7 @@ __KERNEL_RCSID(0, "$NetBSD: rtc.c,v 1.19 2019/11/10 21:16:32 chs Exp $");
 struct rtc_ebus_softc {
 	bus_space_tag_t		sc_bt;	/* parent bus tag */
 	bus_space_handle_t	sc_bh;	/* handle for registers */
+	struct todr_chip_handle	sc_todr;/* TODR handle */
 };
 
 static int	rtcmatch_ebus(device_t, cfdata_t, void *);
@@ -65,15 +66,11 @@ static void	rtcattach_ebus(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rtc_ebus, sizeof(struct rtc_ebus_softc),
     rtcmatch_ebus, rtcattach_ebus, NULL, NULL);
 
-/* XXX: global TOD clock handle (sparc/clock.c) */
-extern todr_chip_handle_t todr_handle;
-
 /* todr(9) methods */
-static int rtc_gettime(todr_chip_handle_t, struct timeval *);
-static int rtc_settime(todr_chip_handle_t, struct timeval *);
+static int rtc_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
+static int rtc_settime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
 
 int rtc_auto_century_adjust = 1; /* XXX: do we ever want not to? */
-
 
 /*
  * MD read/write functions declared in mc146818reg.h
@@ -134,27 +131,23 @@ rtcattach_ebus(device_t parent, device_t self, void *aux)
 	mc146818_write(sc, MC_REGB, MC_REGB_BINARY | MC_REGB_24HR);
 
 	/* setup our todr_handle */
-	handle = malloc(ALIGN(sizeof(struct todr_chip_handle)),
-			M_DEVBUF, M_WAITOK);
+	handle = &sc->sc_todr;
 	handle->cookie = sc;
 	handle->bus_cookie = NULL; /* unused */
-	handle->todr_gettime = rtc_gettime;
-	handle->todr_settime = rtc_settime;
+	handle->todr_gettime = NULL;
+	handle->todr_settime = NULL;
+	handle->todr_gettime_ymdhms = rtc_gettime_ymdhms;
+	handle->todr_settime_ymdhms = rtc_settime_ymdhms;
 	handle->todr_setwen = NULL; /* not necessary, no idprom to protect */
 
 	todr_attach(handle);
 }
 
 
-/*
- * Get time-of-day and convert to a `struct timeval'
- * Return 0 on success; an error number otherwise.
- */
 static int
-rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
+rtc_gettime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct rtc_ebus_softc *sc = handle->cookie;
-	struct clock_ymdhms dt;
 	u_int year;
 
 	/* update in progress; spin loop */
@@ -166,12 +159,12 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 		       (mc146818_read(sc, MC_REGB) | MC_REGB_SET));
 
 	/* read time */
-	dt.dt_sec  = mc146818_read(sc, MC_SEC);
-	dt.dt_min  = mc146818_read(sc, MC_MIN);
-	dt.dt_hour = mc146818_read(sc, MC_HOUR);
-	dt.dt_day  = mc146818_read(sc, MC_DOM);
-	dt.dt_mon  = mc146818_read(sc, MC_MONTH);
-	year       = mc146818_read(sc, MC_YEAR);
+	dt->dt_sec  = mc146818_read(sc, MC_SEC);
+	dt->dt_min  = mc146818_read(sc, MC_MIN);
+	dt->dt_hour = mc146818_read(sc, MC_HOUR);
+	dt->dt_day  = mc146818_read(sc, MC_DOM);
+	dt->dt_mon  = mc146818_read(sc, MC_MONTH);
+	year        = mc146818_read(sc, MC_YEAR);
 
 	/* reenable updates */
 	mc146818_write(sc, MC_REGB,
@@ -181,32 +174,18 @@ rtc_gettime(todr_chip_handle_t handle, struct timeval *tv)
 	year += 1900;
 	if (year < POSIX_BASE_YEAR && rtc_auto_century_adjust != 0)
 		year += 100;
-	dt.dt_year = year;
+	dt->dt_year = year;
 
-	/* simple sanity checks */
-	if (dt.dt_mon > 12 || dt.dt_day > 31
-	    || dt.dt_hour >= 24 || dt.dt_min >= 60 || dt.dt_sec >= 60)
-		return (ERANGE);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 	return (0);
 }
 
-/*
- * Set the time-of-day clock based on the value of the `struct timeval' arg.
- * Return 0 on success; an error number otherwise.
- */
 static int
-rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
+rtc_settime_ymdhms(todr_chip_handle_t handle, struct clock_ymdhms *dt)
 {
 	struct rtc_ebus_softc *sc = handle->cookie;
-	struct clock_ymdhms dt;
 	u_int year;
 
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	year = dt.dt_year - 1900;
+	year = dt->dt_year - 1900;
 	if (year >= 100 && rtc_auto_century_adjust != 0)
 		year -= 100;
 
@@ -214,12 +193,12 @@ rtc_settime(todr_chip_handle_t handle, struct timeval *tv)
 	mc146818_write(sc, MC_REGB,
 		       (mc146818_read(sc, MC_REGB) | MC_REGB_SET));
 
-	mc146818_write(sc, MC_SEC,   dt.dt_sec);
-	mc146818_write(sc, MC_MIN,   dt.dt_min);
-	mc146818_write(sc, MC_HOUR,  dt.dt_hour);
-	mc146818_write(sc, MC_DOW,   dt.dt_wday + 1);
-	mc146818_write(sc, MC_DOM,   dt.dt_day);
-	mc146818_write(sc, MC_MONTH, dt.dt_mon);
+	mc146818_write(sc, MC_SEC,   dt->dt_sec);
+	mc146818_write(sc, MC_MIN,   dt->dt_min);
+	mc146818_write(sc, MC_HOUR,  dt->dt_hour);
+	mc146818_write(sc, MC_DOW,   dt->dt_wday + 1);
+	mc146818_write(sc, MC_DOM,   dt->dt_day);
+	mc146818_write(sc, MC_MONTH, dt->dt_mon);
 	mc146818_write(sc, MC_YEAR,  year);
 
 	/* reenable updates */
