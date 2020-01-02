@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.40 2020/01/02 19:02:41 christos Exp $
+.\"	$NetBSD: crunchgen.1,v 1.41 2020/01/02 23:21:14 wiz Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -387,7 +387,7 @@ NOSSP=
 To set those defaults again, use:
 .Bd -literal -offset indent
 -V DBG=-Os \e
--V LDSTATIC=-static -V NOPIE \e
+-V LDSTATIC=-static -V NOPIE= \e
 -V NOMAN= \e
 -V NOFORT= -V NOLIBCSANITIZER= -V NOSANITIZER= -V NOSSP=
 .Ed
@@ -405,10 +405,10 @@ NOPIE=
 .Ed
 .Pp
 The remaining flags just disabled setting the variables that turned off various
-sanitizers, fortify, and stack protector. The mapping of those variables to
-the old options is:
+sanitizers, fortify, and stack protector.
+The mapping of those variables to the old options is:
 .Bl -tag -width XX -offset indent
-.It Fl F 
+.It Fl F
 .Dv NOFORT
 .It Fl P
 .Dv NOSSP
