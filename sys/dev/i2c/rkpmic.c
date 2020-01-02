@@ -1,4 +1,4 @@
-/* $NetBSD: rkpmic.c,v 1.6 2020/01/01 00:38:30 jmcneill Exp $ */
+/* $NetBSD: rkpmic.c,v 1.7 2020/01/02 17:09:59 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.6 2020/01/01 00:38:30 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rkpmic.c,v 1.7 2020/01/02 17:09:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,24 +249,27 @@ rkpmic_write(struct rkpmic_softc *sc, uint8_t reg, uint8_t val, int flags)
 		device_printf(sc->sc_dev, "error writing reg %#x: %d\n", reg, error);
 }
 
-#define	I2C_READ(sc, reg)	rkpmic_read((sc), (reg), I2C_F_POLL)
-#define	I2C_WRITE(sc, reg, val)	rkpmic_write((sc), (reg), (val), I2C_F_POLL)
-#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, I2C_F_POLL)
-#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, I2C_F_POLL)
+#define	I2C_READ(sc, reg)	rkpmic_read((sc), (reg), 0)
+#define	I2C_WRITE(sc, reg, val)	rkpmic_write((sc), (reg), (val), 0)
+#define	I2C_LOCK(sc)		iic_acquire_bus((sc)->sc_i2c, 0)
+#define	I2C_UNLOCK(sc)		iic_release_bus((sc)->sc_i2c, 0)
 
 static int
 rkpmic_todr_settime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
 	struct rkpmic_softc * const sc = ch->cookie;
 	uint8_t val;
+	int error;
 
 	if (dt->dt_year < 2000 || dt->dt_year >= 2100) {
 		device_printf(sc->sc_dev, "year out of range\n");
 		return EINVAL;
 	}
 
-	if (I2C_LOCK(sc))
-		return EBUSY;
+	if ((error = I2C_LOCK(sc)) != 0)
+		return error;
+
+	/* XXX Fix error reporting. */
 
 	val = I2C_READ(sc, RTC_CTRL_REG);
 	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_STOP_RTC);
@@ -288,9 +291,12 @@ rkpmic_todr_gettime(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
 	struct rkpmic_softc * const sc = ch->cookie;
 	uint8_t val;
+	int error;
 
-	if (I2C_LOCK(sc))
-		return EBUSY;
+	if ((error = I2C_LOCK(sc)) != 0)
+		return error;
+
+	/* XXX Fix error reporting. */
 
 	val = I2C_READ(sc, RTC_CTRL_REG);
 	I2C_WRITE(sc, RTC_CTRL_REG, val | RTC_CTRL_GET_TIME | RTC_CTRL_READSEL);
