@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.3 2019/12/21 12:53:53 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.4 2020/01/02 01:31:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.3 2019/12/21 12:53:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.4 2020/01/02 01:31:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -95,12 +95,16 @@ static char cpu_model[128];
 void
 mi_cpu_init(void)
 {
+	struct cpu_info *ci;
 
 	mutex_init(&cpu_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	kcpuset_create(&kcpuset_attached, true);
 	kcpuset_create(&kcpuset_running, true);
 	kcpuset_set(kcpuset_running, 0);
+
+	ci = curcpu();
+	ci->ci_smt_primary = ci;
 }
 
 int
