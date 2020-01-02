@@ -1,4 +1,4 @@
-/*	$NetBSD: timevar.h,v 1.39 2019/08/06 15:47:55 riastradh Exp $	*/
+/*	$NetBSD: timevar.h,v 1.40 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2008 The NetBSD Foundation.
@@ -145,6 +145,10 @@ void	getmicrouptime(struct timeval *);
 void	getbintime(struct bintime *);
 void	getnanotime(struct timespec *);
 void	getmicrotime(struct timeval *);
+
+void	getbinboottime(struct bintime *);
+void	getnanoboottime(struct timespec *);
+void	getmicroboottime(struct timeval *);
 
 /* Other functions */
 int	ts2timo(clockid_t, int, struct timespec *, int *, struct timespec *);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.37 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.38 2020/01/02 15:42:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.37 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.38 2020/01/02 15:42:26 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -283,7 +283,7 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 			ksi.open_max = OPEN_MAX;
 			ksi.child_max = CHILD_MAX;
 
-			TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+			getmicroboottime(&tv);
 			timeval_to_timeval50(&tv, &ksi.boottime);
 			COPY(hostname);
 

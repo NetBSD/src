@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.338 2019/12/15 14:21:34 pgoyette Exp $	*/
+/*	$NetBSD: rump.c,v 1.339 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.338 2019/12/15 14:21:34 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.339 2020/01/02 15:42:27 thorpej Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -229,7 +229,7 @@ int
 rump_init(void)
 {
 	char buf[256];
-	struct timespec ts;
+	struct timespec bts;
 	int64_t sec;
 	long nsec;
 	struct lwp *l, *initlwp;
@@ -276,8 +276,8 @@ rump_init(void)
 	rump_cpus_bootstrap(&numcpu);
 
 	rumpuser_clock_gettime(RUMPUSER_CLOCK_RELWALL, &sec, &nsec);
-	boottime.tv_sec = sec;
-	boottime.tv_nsec = nsec;
+	bts.tv_sec = sec;
+	bts.tv_nsec = nsec;
 
 	initmsgbuf(rump_msgbuf, sizeof(rump_msgbuf));
 	aprint_verbose("%s%s", copyright, version);
@@ -369,8 +369,7 @@ rump_init(void)
 	ktrinit();
 #endif
 
-	ts = boottime;
-	tc_setclock(&ts);
+	tc_setclock(&bts);
 
 	extern krwlock_t exec_lock;
 	rw_init(&exec_lock);
