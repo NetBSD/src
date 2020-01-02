@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time_50.c,v 1.33 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: kern_time_50.c,v 1.34 2020/01/02 15:42:26 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.33 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time_50.c,v 1.34 2020/01/02 15:42:26 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -585,7 +585,7 @@ compat_sysctl_time(struct sysctllog **clog)
 {
 	struct timeval tv;
 
-	TIMESPEC_TO_TIMEVAL(&tv, &boottime);
+	getmicroboottime(&tv);
 	timeval_to_timeval50(&tv, &boottime50);
 
 	sysctl_createv(clog, 0, NULL, NULL,

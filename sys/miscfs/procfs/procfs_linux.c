@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.79 2019/12/31 13:07:13 ad Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.80 2020/01/02 15:42:27 thorpej Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.79 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.80 2020/01/02 15:42:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -297,6 +297,9 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 
 	cpu_count_sync_all();
 
+	struct timeval btv;
+	getmicroboottime(&btv);
+
 	len += snprintf(&bf[len], LBFSZ - len,
 			"disk 0 0 0 0\n"
 			"page %u %u\n"
@@ -308,7 +311,7 @@ procfs_docpustat(struct lwp *curl, struct proc *p,
 			uvmexp.pgswapin, uvmexp.pgswapout,
 			cpu_count_get(CPU_COUNT_NINTR),
 			cpu_count_get(CPU_COUNT_NSWTCH),
-			boottime.tv_sec);
+			btv.tv_sec);
 	if (len >= LBFSZ)
 		goto out;
 
