@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.11 2020/01/01 12:47:19 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.12 2020/01/02 08:52:42 tkusumi Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.11 2020/01/01 12:47:19 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.12 2020/01/02 08:52:42 tkusumi Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
@@ -219,22 +219,6 @@ main(int argc, char **argv)
 
 	if (setlocale(LC_CTYPE, "") == NULL)
 		err(1, "setlocale");
-
-	/* Cache iconv conversion data before entering capability mode. */
-	if (show_label) {
-		for (i = 0; i < (int)__arraycount(fstypes); i++) {
-			iconv_t cd;
-
-			if (fstypes[i].precache_encoding == NULL)
-				continue;
-			cd = iconv_open("", fstypes[i].precache_encoding);
-			if (cd == (iconv_t)-1)
-				err(1, "%s: iconv_open %s", fstypes[i].name,
-				    fstypes[i].precache_encoding);
-			/* Iconv keeps a small cache of unused encodings. */
-			iconv_close(cd);
-		}
-	}
 
 	/*
 	 * DragonFly: Filesystems may have syntax to decorate path.
