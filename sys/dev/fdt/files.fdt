@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.49 2019/12/19 00:35:01 jakllsch Exp $
+# $NetBSD: files.fdt,v 1.50 2020/01/02 00:57:10 jmcneill Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -165,3 +165,9 @@ file	dev/fdt/arasan_sdhc_fdt.c		arasan_sdhc_fdt
 device	usbnopphy
 attach	usbnopphy at fdt
 file	dev/fdt/usbnopphy.c			usbnopphy
+
+# Simple Amplifier Audio Driver
+device	simpleamp
+attach	simpleamp at fdt
+file	dev/fdt/simple_amplifier.c		simpleamp
+
