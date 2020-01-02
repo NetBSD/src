@@ -1,4 +1,4 @@
-/*	$NetBSD: emul.c,v 1.193 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: emul.c,v 1.194 2020/01/02 08:49:10 martin Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.193 2019/12/16 22:47:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emul.c,v 1.194 2020/01/02 08:49:10 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -64,6 +64,7 @@ struct vnode *rootvp;
 dev_t rootdev = NODEV;
 
 const int schedppq = 1;
+int	shutting_down __read_mostly;	/* system is shutting down */
 struct timespec boottime;
 int cold = 1;
 int boothowto = AB_SILENT;
