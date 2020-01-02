@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.6 2019/11/13 12:55:10 maxv Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.7 2020/01/02 19:20:01 ad Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -56,7 +56,7 @@ struct pv_pte {
 struct pv_entry {
 	struct pv_pte pve_pte;		/* should be the first member */
 	LIST_ENTRY(pv_entry) pve_list;	/* on pv_head::pvh_list */
-	SLIST_ENTRY(pv_entry) pve_hash;
+	struct pv_entry *pve_hash;	/* hash table link */
 };
 #define	pve_next	pve_list.le_next
 

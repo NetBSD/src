@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.349 2019/12/31 12:40:27 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.350 2020/01/02 19:20:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.349 2019/12/31 12:40:27 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.350 2020/01/02 19:20:02 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -302,16 +302,8 @@ paddr_t pmap_pa_end;   /* PA of last physical page for this domain */
 #define	VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mp_pp)
 
 #define	PV_HASH_SIZE		32768
-#define	PV_HASH_LOCK_CNT	32
 
-struct pv_hash_lock {
-	kmutex_t lock;
-} __aligned(CACHE_LINE_SIZE) pv_hash_locks[PV_HASH_LOCK_CNT]
-    __aligned(CACHE_LINE_SIZE);
-
-struct pv_hash_head {
-	SLIST_HEAD(, pv_entry) hh_list;
-} pv_hash_heads[PV_HASH_SIZE];
+struct pv_entry	*pv_hash_heads[PV_HASH_SIZE];
 
 static u_int
 pvhash_hash(struct vm_page *ptp, vaddr_t va)
@@ -320,39 +312,78 @@ pvhash_hash(struct vm_page *ptp, vaddr_t va)
 	return (uintptr_t)ptp / sizeof(*ptp) + (va >> PAGE_SHIFT);
 }
 
-static struct pv_hash_head *
+static struct pv_entry **
 pvhash_head(u_int hash)
 {
 
-	return &pv_hash_heads[hash % PV_HASH_SIZE];
-}
-
-static kmutex_t *
-pvhash_lock(u_int hash)
-{
-
-	return &pv_hash_locks[hash % PV_HASH_LOCK_CNT].lock;
+	return &pv_hash_heads[hash & (PV_HASH_SIZE - 1)];
 }
 
 static struct pv_entry *
-pvhash_remove(struct pv_hash_head *hh, struct vm_page *ptp, vaddr_t va)
+pvhash_remove(struct pv_entry **hh, struct vm_page *ptp, vaddr_t va)
 {
-	struct pv_entry *pve;
-	struct pv_entry *prev;
+	struct pv_entry *pve, *first, *unlocked, *locked, *prev;
+	int s, count;
+
+	count = SPINLOCK_BACKOFF_MIN;
+	for (;;) {
+	 	/*
+ 		 * Entries can't be added behind us, only in front of us, so
+ 		 * if this is the first entry in the bucket we can remove
+ 		 * the entry and observe that nobody has the bucket locked
+ 		 * in one pass.
+ 		 *
+ 		 * Otherwise we have to lock the bucket - use the low bit in
+ 		 * the hash head to indicate this.  Go to splvm() while in
+ 		 * possetion of the lock as we don't want to be interrupted
+		 * while holding it, and we can't context switch.
+ 		 */
+	 	unlocked = (struct pv_entry *)((uintptr_t)*hh & ~1L);
+	 	KASSERT(unlocked != NULL);
+		if (unlocked->pve_pte.pte_ptp == ptp &&
+	 	    unlocked->pve_pte.pte_va == va) {
+			first = atomic_cas_ptr(hh, unlocked, unlocked->pve_hash);
+ 			if (__predict_true(first == unlocked)) {
+				/* Easy case - entry removed. */
+ 		    		return first;
+			}
+		} else {
+		 	s = splvm();
+		 	locked = (struct pv_entry *)((uintptr_t)unlocked | 1L);
+			first = atomic_cas_ptr(hh, unlocked, locked);
+			if (first == unlocked) {
+				/* Got it! */
+				break;
+			}
+			splx(s);
+		}
+		SPINLOCK_BACKOFF(count);
+	}
+
+	KASSERT(((uintptr_t)first & 1L) == 0);
+	KASSERT(((uintptr_t)*hh & 1L) == 1);
 
 	prev = NULL;
-	SLIST_FOREACH(pve, &hh->hh_list, pve_hash) {
+	for (pve = first; pve != NULL; pve = pve->pve_hash) {
 		if (pve->pve_pte.pte_ptp == ptp &&
 		    pve->pve_pte.pte_va == va) {
 			if (prev != NULL) {
-				SLIST_REMOVE_AFTER(prev, pve_hash);
+				/* Remove, then unlock below. */
+				prev->pve_hash = pve->pve_hash;
+				break;
 			} else {
-				SLIST_REMOVE_HEAD(&hh->hh_list, pve_hash);
+				/* Remove AND unlock below. */
+				first = pve->pve_hash;
+				break;
 			}
-			break;
 		}
 		prev = pve;
 	}
+
+	/* Lock release and SPL drop must be last, and in order. */
+	__insn_barrier();
+	*hh = first;
+	splx(s);
 	return pve;
 }
 
@@ -1709,14 +1740,7 @@ pmap_remap_largepages(void)
 void
 pmap_init(void)
 {
-	int i, flags;
-
-	for (i = 0; i < PV_HASH_SIZE; i++) {
-		SLIST_INIT(&pv_hash_heads[i].hh_list);
-	}
-	for (i = 0; i < PV_HASH_LOCK_CNT; i++) {
-		mutex_init(&pv_hash_locks[i].lock, MUTEX_NODEBUG, IPL_VM);
-	}
+	int flags;
 
 	/*
 	 * initialize caches.
@@ -1868,8 +1892,8 @@ pmap_free_pvs(struct pv_entry *pve)
  *   pmap_enter_pv: enter a mapping onto a pv_head list
  *   pmap_remove_pv: remove a mapping from a pv_head list
  *
- * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to lock
- *       the pvh before calling
+ * NOTE: Both pmap_enter_pv and pmap_remove_pv expect the caller to have
+ *	 locked object that owns the page before calling
  */
 
 /*
@@ -1878,16 +1902,23 @@ pmap_free_pvs(struct pv_entry *pve)
 static void
 insert_pv(struct pmap_page *pp, struct pv_entry *pve)
 {
-	struct pv_hash_head *hh;
-	kmutex_t *lock;
-	u_int hash;
+	struct pv_entry **hh, *o, *v;
+	u_int hash, count;
 
 	hash = pvhash_hash(pve->pve_pte.pte_ptp, pve->pve_pte.pte_va);
-	lock = pvhash_lock(hash);
 	hh = pvhash_head(hash);
-	mutex_spin_enter(lock);
-	SLIST_INSERT_HEAD(&hh->hh_list, pve, pve_hash);
-	mutex_spin_exit(lock);
+
+	/* Observe the bucket unlocked and insert in one pass. */
+	count = SPINLOCK_BACKOFF_MIN;
+	for (v = *hh;;) {
+		o = (struct pv_entry *)((uintptr_t)v & ~1L);
+		pve->pve_hash = o;
+		v = atomic_cas_ptr(hh, o, pve);
+		if (o == v) {
+			break;
+		}
+		SPINLOCK_BACKOFF(count);
+	}
 
 	LIST_INSERT_HEAD(&pp->pp_head.pvh_list, pve, pve_list);
 }
@@ -1941,11 +1972,11 @@ pmap_enter_pv(struct pmap_page *pp, struct pv_entry *pve,
  * => we return the removed pve
  */
 static struct pv_entry *
-pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
+pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
+    vaddr_t va)
 {
-	struct pv_hash_head *hh;
+	struct pv_entry **hh;
 	struct pv_entry *pve;
-	kmutex_t *lock;
 	u_int hash;
 
 	KASSERT(ptp == NULL || ptp->uobject != NULL);
@@ -1962,11 +1993,8 @@ pmap_remove_pv(struct pmap_page *pp, struct vm_page *ptp, vaddr_t va)
 	}
 
 	hash = pvhash_hash(ptp, va);
-	lock = pvhash_lock(hash);
 	hh = pvhash_head(hash);
-	mutex_spin_enter(lock);
 	pve = pvhash_remove(hh, ptp, va);
-	mutex_spin_exit(lock);
 
 	LIST_REMOVE(pve, pve_list);
 
