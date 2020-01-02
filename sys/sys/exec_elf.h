@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.161 2019/06/07 23:35:52 christos Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.162 2020/01/02 04:28:51 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -308,7 +308,7 @@ typedef struct {
 #define EM_TILE64	187	/* Tilera TILE64 multicore architecture family */
 #define EM_TILEPRO	188	/* Tilera TILEPro multicore architecture family */
 #define EM_MICROBLAZE	189	/* Xilinx MicroBlaze 32-bit RISC soft processor core */
-#define EM_TILEGX	192	/* Tilera TILE-GX multicore architecture family */
+#define EM_TILEGX	191	/* Tilera TILE-GX multicore architecture family */
 #define EM_Z80		220	/* Zilog Z80 */
 #define EM_RISCV	243	/* RISC-V */
 
