@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.104 2019/11/03 22:57:52 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.105 2020/01/02 22:06:59 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -378,3 +378,8 @@ file	dev/i2c/twl4030.c			twl
 device	tdahdmi: edid, videomode, drmkms, drmkms_i2c
 attach	tdahdmi at iic
 file	dev/i2c/tda19988.c			tdahdmi
+
+# Everest Semi ES8316 Low Power Audio CODEC
+device	es8316ac
+attach	es8316ac at iic
+file	dev/i2c/es8316ac.c			es8316ac
