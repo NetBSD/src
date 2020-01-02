@@ -1,4 +1,4 @@
-/*	$NetBSD: uhid.c,v 1.108 2019/05/05 03:17:54 mrg Exp $	*/
+/*	$NetBSD: uhid.c,v 1.108.2.1 2020/01/02 09:42:06 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2008, 2012 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.108 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhid.c,v 1.108.2.1 2020/01/02 09:42:06 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -398,6 +398,8 @@ uhid_do_read(struct uhid_softc *sc, struct uio *uio, int flag)
 	if (sc->sc_state & UHID_IMMED) {
 		DPRINTFN(1, ("uhidread immed\n"));
 		extra = sc->sc_hdev.sc_report_id != 0;
+		if (sc->sc_isize + extra > sizeof(buffer))
+			return ENOBUFS;
 		err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
 					buffer, sc->sc_isize + extra);
 		if (err)
@@ -541,8 +543,10 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	case FIOASYNC:
 		mutex_enter(proc_lock);
 		if (*(int *)addr) {
-			if (sc->sc_async != NULL)
+			if (sc->sc_async != NULL) {
+				mutex_exit(proc_lock);
 				return EBUSY;
+			}
 			sc->sc_async = l->l_proc;
 			DPRINTF(("uhid_do_ioctl: FIOASYNC %p\n", l->l_proc));
 		} else
@@ -589,6 +593,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 	case USB_SET_IMMED:
 		if (*(int *)addr) {
 			extra = sc->sc_hdev.sc_report_id != 0;
+			if (sc->sc_isize + extra > sizeof(buffer))
+				return ENOBUFS;
 			err = uhidev_get_report(&sc->sc_hdev, UHID_INPUT_REPORT,
 						buffer, sc->sc_isize + extra);
 			if (err)
@@ -615,6 +621,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 			return EINVAL;
 		}
 		extra = sc->sc_hdev.sc_report_id != 0;
+		if (size + extra > sizeof(re->ucr_data))
+			return ENOBUFS;
 		err = uhidev_get_report(&sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size + extra);
 		if (extra)
@@ -638,6 +646,8 @@ uhid_do_ioctl(struct uhid_softc *sc, u_long cmd, void *addr,
 		default:
 			return EINVAL;
 		}
+		if (size > sizeof(re->ucr_data))
+			return ENOBUFS;
 		err = uhidev_set_report(&sc->sc_hdev, re->ucr_report,
 		    re->ucr_data, size);
 		if (err)
