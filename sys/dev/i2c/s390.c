@@ -1,4 +1,4 @@
-/*	$NetBSD: s390.c,v 1.5 2020/01/02 17:26:37 thorpej Exp $	*/
+/*	$NetBSD: s390.c,v 1.6 2020/01/02 19:00:34 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2011 Frank Wille.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.5 2020/01/02 17:26:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: s390.c,v 1.6 2020/01/02 19:00:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -54,10 +54,10 @@ static void s390rtc_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(s390rtc, sizeof(struct s390rtc_softc),
     s390rtc_match, s390rtc_attach, NULL, NULL);
 
-static int s390rtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int s390rtc_settime(struct todr_chip_handle *, struct timeval *);
-static int s390rtc_clock_read(struct s390rtc_softc *, struct clock_ymdhms *);
-static int s390rtc_clock_write(struct s390rtc_softc *, struct clock_ymdhms *);
+static int s390rtc_gettime_ymdhms(struct todr_chip_handle *,
+				  struct clock_ymdhms *);
+static int s390rtc_settime_ymdhms(struct todr_chip_handle *,
+				  struct clock_ymdhms *);
 static int s390rtc_read(struct s390rtc_softc *, int, uint8_t *, size_t);
 static int s390rtc_write(struct s390rtc_softc *, int, uint8_t *, size_t);
 static uint8_t bitreverse(uint8_t);
@@ -111,48 +111,18 @@ s390rtc_attach(device_t parent, device_t self, void *arg)
 	}
 
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = s390rtc_gettime;
-	sc->sc_todr.todr_settime = s390rtc_settime;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = s390rtc_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = s390rtc_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 	todr_attach(&sc->sc_todr);
 }
 
 static int
-s390rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+s390rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct s390rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-	int error;
-
-	memset(&dt, 0, sizeof(dt));
-
-	if ((error = s390rtc_clock_read(sc, &dt)) != 0)
-		return error;
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
-
-	return 0;
-}
-
-static int
-s390rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
-{
-	struct s390rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-	int error;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	if ((error = s390rtc_clock_write(sc, &dt)) != 0)
-		return error;
-
-	return 0;
-}
-
-static int
-s390rtc_clock_read(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
-{
 	uint8_t bcd[S390_RT1_NBYTES];
 	int error;
 
@@ -174,8 +144,9 @@ s390rtc_clock_read(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
 }
 
 static int
-s390rtc_clock_write(struct s390rtc_softc *sc, struct clock_ymdhms *dt)
+s390rtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
+	struct s390rtc_softc *sc = ch->cookie;
 	uint8_t bcd[S390_RT1_NBYTES];
 
 	/*
