@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.180 2019/12/31 23:32:05 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.181 2020/01/02 16:56:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.180 2019/12/31 23:32:05 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.181 2020/01/02 16:56:58 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -167,6 +167,7 @@ uvm_pagealloc_strat(struct uvm_object *uobj, voff_t off, struct vm_anon *anon,
 	if (__predict_false(pg == NULL)) {
 		return NULL;
 	}
+	mutex_init(&pg->interlock, MUTEX_DEFAULT, IPL_NONE);
 
 	pg->offset = off;
 	pg->uobject = uobj;
@@ -226,6 +227,7 @@ uvm_pagefree(struct vm_page *pg)
 		atomic_dec_uint(&vmpage_onqueue);
 	}
 
+	mutex_destroy(&pg->interlock);
 	pool_cache_put(&pagecache, pg);
 }
 
