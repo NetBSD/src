@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.8 2018/06/16 21:22:13 thorpej Exp $ */
+/* $NetBSD: r2025.c,v 1.9 2020/01/02 17:03:05 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.8 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.9 2020/01/02 17:03:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -109,20 +109,21 @@ r2025rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 	uint8_t rctrl;
 	uint8_t bcd[R2025_CLK_SIZE];
 	int hour;
+	int error;
 
 	memset(&dt, 0, sizeof(dt));
 
-	if (r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {
+	if ((error = r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_gettime: failed to read registers.\n");
-		return -1;
+		return error;
 	}
 
-	if (r2025rtc_reg_read(sc, R2025_REG_SEC, &bcd[0], R2025_CLK_SIZE)
-		!= 0) {
+	if ((error = r2025rtc_reg_read(sc, R2025_REG_SEC, &bcd[0],
+				       R2025_CLK_SIZE)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_gettime: failed to read registers.\n");
-		return -1;
+		return error;
 	}
 
 	dt.dt_sec = bcdtobin(bcd[R2025_REG_SEC] & R2025_REG_SEC_MASK);
@@ -160,6 +161,7 @@ r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	struct clock_ymdhms dt;
 	uint8_t rctrl;
 	uint8_t bcd[R2025_CLK_SIZE];
+	int error;
 
 	clock_secs_to_ymdhms(tv->tv_sec, &dt);
 
@@ -168,13 +170,13 @@ r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_settime: "
 		    "RTC does not support year 3000 or over.\n");
-		return -1;
+		return EINVAL;
 	}
 
-	if (r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {
+	if ((error = r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_settime: failed to read register.\n");
-		return -1;
+		return error;
 	}
 	rctrl |= R2025_REG_CTRL1_H1224;
 
@@ -189,15 +191,16 @@ r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	bcd[R2025_REG_YEAR] = bintobcd(dt.dt_year % 100) & R2025_REG_YEAR_MASK;
 
 	/* Write RTC register */
-	if (r2025rtc_reg_write(sc, R2025_REG_CTRL1, &rctrl, 1) != 0) {
+	if ((error = r2025rtc_reg_write(sc, R2025_REG_CTRL1, &rctrl, 1)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_settime: failed to write registers.\n");
-		return -1;
+		return error;
 	}
-	if (r2025rtc_reg_write(sc, R2025_REG_SEC, bcd, R2025_CLK_SIZE) != 0) {
+	if ((error = r2025rtc_reg_write(sc, R2025_REG_SEC, bcd,
+					R2025_CLK_SIZE)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_settime: failed to write registers.\n");
-		return -1;
+		return error;
 	}
 
 	return 0;
@@ -209,26 +212,28 @@ r2025rtc_reg_write(struct r2025rtc_softc *sc, int reg, uint8_t *val, int len)
 	int i;
 	uint8_t buf[1];
 	uint8_t cmdbuf[1];
+	int error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "r2025rtc_clock_write: failed to acquire I2C bus\n");
-		return -1;
+		    "r2025rtc_reg_write: failed to acquire I2C bus\n");
+		return error;
 	}
 
 	for (i = 0 ; i < len ; i++) {
 		cmdbuf[0] = (((reg + i) << 4) & 0xf0);
 		buf[0] = val[i];
-		if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-				cmdbuf, 1, buf, 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+				      sc->sc_address, cmdbuf, 1, buf, 1,
+				      0)) != 0) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev, "r2025rtc_reg_write: "
 				"failed to write registers\n");
-			return -1;
+			return error;
 		}
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return 0;
 }
@@ -239,28 +244,30 @@ r2025rtc_reg_read(struct r2025rtc_softc *sc, int reg, uint8_t *val, int len)
 	int i;
 	uint8_t buf[1];
 	uint8_t cmdbuf[1];
+	int error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "r2025rtc_clock_read: failed to acquire I2C bus\n");
-		return -1;
+		    "r2025rtc_reg_read: failed to acquire I2C bus\n");
+		return error;
 	}
 
 	for (i = 0 ; i < len ; i++) {
 		cmdbuf[0] = (((reg + i) << 4) & 0xf0);
 		buf[0] = 0;
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
-				cmdbuf, 1, buf, 1, I2C_F_POLL)) {
-			iic_release_bus(sc->sc_tag, I2C_F_POLL);
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+				      sc->sc_address, cmdbuf, 1, buf, 1,
+				      0)) != 0) {
+			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev, "r2025rtc_reg_read: "
-				"failed to write registers\n");
-			return -1;
+				"failed to read registers\n");
+			return error;
 		}
 
 		*(val + i) = buf[0];
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	return 0;
 }
