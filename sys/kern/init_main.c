@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.516 2020/01/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.517 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.516 2020/01/01 22:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.517 2020/01/02 15:42:27 thorpej Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -242,7 +242,6 @@ struct	vnode *rootvp, *swapdev_vp;
 int	boothowto;
 int	cold __read_mostly = 1;		/* still working on startup */
 int	shutting_down __read_mostly;	/* system is shutting down */
-struct timespec boottime;	        /* time at system startup - will only follow settime deltas */
 
 int	start_init_exec;		/* semaphore for start_init() */
 
@@ -688,16 +687,6 @@ main(void)
 	 * munched in mi_switch() after the time got set.
 	 */
 	getnanotime(&time);
-	{
-		struct timespec ut;
-		/*
-		 * was:
-		 *	boottime = time;
-		 * but we can do better
-		 */
-		nanouptime(&ut);
-		timespecsub(&time, &ut, &boottime);
-	}
 
 	mutex_enter(proc_lock);
 	LIST_FOREACH(p, &allproc, p_list) {

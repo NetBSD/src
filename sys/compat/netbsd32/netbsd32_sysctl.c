@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_sysctl.c,v 1.40 2018/05/26 21:07:47 kamil Exp $	*/
+/*	$NetBSD: netbsd32_sysctl.c,v 1.41 2020/01/02 15:42:26 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.40 2018/05/26 21:07:47 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_sysctl.c,v 1.41 2020/01/02 15:42:26 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ddb.h"
@@ -80,8 +80,10 @@ netbsd32_sysctl_kern_boottime(SYSCTLFN_ARGS)
 {
 	struct sysctlnode node;
 	struct netbsd32_timespec bt32;
+	struct timespec ts;
 
-	netbsd32_from_timespec(&boottime, &bt32);
+	getnanoboottime(&ts);
+	netbsd32_from_timespec(&ts, &bt32);
 
 	node = *rnode;
 	node.sysctl_data = &bt32;

@@ -1,4 +1,4 @@
-/* $NetBSD: kern_tc.c,v 1.53 2019/12/27 09:25:58 msaitoh Exp $ */
+/* $NetBSD: kern_tc.c,v 1.54 2020/01/02 15:42:27 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 /* __FBSDID("$FreeBSD: src/sys/kern/kern_tc.c,v 1.166 2005/09/19 22:16:31 andre Exp $"); */
-__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.53 2019/12/27 09:25:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_tc.c,v 1.54 2020/01/02 15:42:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ntp.h"
@@ -517,6 +517,35 @@ getmicrotime(struct timeval *tvp)
 		gen = th->th_generation;
 		*tvp = th->th_microtime;
 	} while (gen == 0 || gen != th->th_generation);
+}
+
+void
+getnanoboottime(struct timespec *tsp)
+{
+	struct bintime bt;
+
+	getbinboottime(&bt);
+	bintime2timespec(&bt, tsp);
+}
+
+void
+getmicroboottime(struct timeval *tvp)
+{
+	struct bintime bt;
+
+	getbinboottime(&bt);
+	bintime2timeval(&bt, tvp);
+}
+
+void
+getbinboottime(struct bintime *bt)
+{
+
+	/*
+	 * XXX Need lockless read synchronization around timebasebin
+	 * (and not just here).
+	 */
+	*bt = timebasebin;
 }
 
 /*

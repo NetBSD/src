@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.177 2019/02/20 10:05:20 hannken Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.178 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.177 2019/02/20 10:05:20 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.178 2020/01/02 15:42:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1003,8 +1003,10 @@ nfsrv_write(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *lw
 		 * but it may make the values more human readable,
 		 * for debugging purposes.
 		 */
-		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_nsec / 1000);
+		struct timeval btv;
+		getmicroboottime(&btv);
+		*tl++ = txdr_unsigned(btv.tv_sec);
+		*tl = txdr_unsigned(btv.tv_usec);
 	} else {
 		nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 		nfsm_srvfillattr(&va, fp);
@@ -1304,8 +1306,10 @@ loop1:
 			     * but it may make the values more human readable,
 			     * for debugging purposes.
 			     */
-			    *tl++ = txdr_unsigned(boottime.tv_sec);
-			    *tl = txdr_unsigned(boottime.tv_nsec / 1000);
+			    struct timeval btv;
+			    getmicroboottime(&btv);
+			    *tl++ = txdr_unsigned(btv.tv_sec);
+			    *tl = txdr_unsigned(btv.tv_usec);
 			} else {
 			    nfsm_build(fp, struct nfs_fattr *, NFSX_V2FATTR);
 			    nfsm_srvfillattr(&va, fp);
@@ -3319,8 +3323,10 @@ nfsrv_commit(struct nfsrv_descript *nfsd, struct nfssvc_sock *slp, struct lwp *l
 	nfsm_srvwcc_data(for_ret, &bfor, aft_ret, &aft);
 	if (!error) {
 		nfsm_build(tl, u_int32_t *, NFSX_V3WRITEVERF);
-		*tl++ = txdr_unsigned(boottime.tv_sec);
-		*tl = txdr_unsigned(boottime.tv_nsec / 1000);
+		struct timeval btv;
+		getmicroboottime(&btv);
+		*tl++ = txdr_unsigned(btv.tv_sec);
+		*tl = txdr_unsigned(btv.tv_usec);
 	} else {
 		return (0);
 	}

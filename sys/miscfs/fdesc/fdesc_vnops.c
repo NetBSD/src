@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.130 2018/09/03 16:29:35 riastradh Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.131 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,13 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.130 2018/09/03 16:29:35 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.131 2020/01/02 15:42:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/proc.h>
-#include <sys/kernel.h>	/* boottime */
 #include <sys/resourcevar.h>
 #include <sys/socketvar.h>
 #include <sys/filedesc.h>
@@ -412,6 +411,7 @@ fdesc_getattr(void *v)
 	struct vattr *vap = ap->a_vap;
 	unsigned fd;
 	int error = 0;
+	struct timeval tv;
 
 	switch (VTOFDESC(vp)->fd_type) {
 	case Froot:
@@ -454,7 +454,8 @@ fdesc_getattr(void *v)
 		vap->va_gid = 0;
 		vap->va_fsid = vp->v_mount->mnt_stat.f_fsidx.__fsid_val[0];
 		vap->va_blocksize = DEV_BSIZE;
-		vap->va_atime.tv_sec = boottime.tv_sec;
+		getmicroboottime(&tv);
+		vap->va_atime.tv_sec = tv.tv_sec;
 		vap->va_atime.tv_nsec = 0;
 		vap->va_mtime = vap->va_atime;
 		vap->va_ctime = vap->va_mtime;

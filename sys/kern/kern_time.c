@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_time.c,v 1.202 2020/01/01 17:28:17 thorpej Exp $	*/
+/*	$NetBSD: kern_time.c,v 1.203 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.202 2020/01/01 17:28:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_time.c,v 1.203 2020/01/02 15:42:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/resourcevar.h>
@@ -154,8 +154,6 @@ settime1(struct proc *p, const struct timespec *ts, bool check_kauth)
 #endif
 
 	tc_setclock(ts);
-
-	timespecadd(&boottime, &delta, &boottime);
 
 	resettodr();
 
