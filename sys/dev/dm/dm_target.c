@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.37 2019/12/23 16:17:35 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.38 2020/01/02 06:22:23 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.37 2019/12/23 16:17:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.38 2020/01/02 06:22:23 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -358,6 +358,20 @@ dm_target_init(void)
 	dmt->upcall = &dm_target_zero_upcall;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert zero\n");
-
+#if 0
+	dmt = dm_target_alloc("flakey");
+	dmt->version[0] = 1;
+	dmt->version[1] = 0;
+	dmt->version[2] = 0;
+	dmt->init = &dm_target_flakey_init;
+	dmt->table = &dm_target_flakey_table;
+	dmt->strategy = &dm_target_flakey_strategy;
+	dmt->sync = &dm_target_flakey_sync;
+	dmt->destroy = &dm_target_flakey_destroy;
+	dmt->upcall = &dm_target_flakey_upcall;
+	dmt->secsize = &dm_target_flakey_secsize;
+	if (dm_target_insert(dmt))
+		printf("Failed to insert flakey\n");
+#endif
 	return 0;
 }
