@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.24.6.1 2019/12/09 15:19:30 martin Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.24.6.2 2020/01/02 09:47:05 martin Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.24.6.1 2019/12/09 15:19:30 martin Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.24.6.2 2020/01/02 09:47:05 martin Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -336,7 +336,8 @@ generate_header_uimg(struct uboot_image_header *hdr, int kernel_fd)
 		iov[2].iov_len = st.st_size;
 		crc = crc32v(iov, 3);
 	} else {
-		dsize = st.st_size;
+		dsize = update_image ?
+		    (uint32_t)st.st_size - sizeof(*hdr) : (uint32_t)st.st_size;
 		crc = crc32(p, st.st_size);
 	}
 	munmap(p, st.st_size);
@@ -389,10 +390,13 @@ generate_header_arm64(struct arm64_image_header *hdr, int kernel_fd)
 	flags |= ARM64_FLAGS_PHYS_PLACEMENT_ANY;
 #endif
 
+	const uint64_t dsize = update_image ?
+	   (uint64_t)st.st_size - sizeof(*hdr) : (uint64_t)st.st_size;
+
 	memset(hdr, 0, sizeof(*hdr));
 	hdr->code0 = htole32(ARM64_CODE0);
 	hdr->text_offset = htole64(image_entrypoint);
-	hdr->image_size = htole64(st.st_size + sizeof(*hdr));
+	hdr->image_size = htole64(dsize);
 	hdr->flags = htole32(flags);
 	hdr->magic = htole32(ARM64_MAGIC);
 
