@@ -1,4 +1,4 @@
-/*	$NetBSD: rs5c372.c,v 1.15 2018/06/16 21:22:13 thorpej Exp $	*/
+/*	$NetBSD: rs5c372.c,v 1.16 2020/01/02 17:17:36 thorpej Exp $	*/
 
 /*-
  * Copyright (C) 2005 NONAKA Kimihiro <nonaka@netbsd.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.15 2018/06/16 21:22:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rs5c372.c,v 1.16 2020/01/02 17:17:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,7 +55,7 @@ static void rs5c372rtc_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(rs5c372rtc, sizeof(struct rs5c372rtc_softc),
     rs5c372rtc_match, rs5c372rtc_attach, NULL, NULL);
 
-static void rs5c372rtc_reg_write(struct rs5c372rtc_softc *, int, uint8_t);
+static int rs5c372rtc_reg_write(struct rs5c372rtc_softc *, int, uint8_t);
 static int rs5c372rtc_clock_read(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_clock_write(struct rs5c372rtc_softc *, struct clock_ymdhms *);
 static int rs5c372rtc_gettime_ymdhms(todr_chip_handle_t, struct clock_ymdhms *);
@@ -106,10 +106,7 @@ rs5c372rtc_gettime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
 
-	if (rs5c372rtc_clock_read(sc, dt) == 0)
-		return (-1);
-
-	return (0);
+	return rs5c372rtc_clock_read(sc, dt);
 }
 
 static int
@@ -117,35 +114,36 @@ rs5c372rtc_settime_ymdhms(todr_chip_handle_t ch, struct clock_ymdhms *dt)
 {
 	struct rs5c372rtc_softc *sc = ch->cookie;
 
-	if (rs5c372rtc_clock_write(sc, dt) == 0)
-		return (-1);
-
-	return (0);
+	return rs5c372rtc_clock_write(sc, dt);
 }
 
-static void
+static int
 rs5c372rtc_reg_write(struct rs5c372rtc_softc *sc, int reg, uint8_t val)
 {
 	uint8_t cmdbuf[2];
+	int error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "rs5c372rtc_reg_write: failed to acquire I2C bus\n");
-		return;
+		return error;
 	}
 
 	reg &= 0xf;
 	cmdbuf[0] = (reg << 4);
 	cmdbuf[1] = val;
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-	             cmdbuf, 1, &cmdbuf[1], 1, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			      sc->sc_address, cmdbuf, 1, &cmdbuf[1], 1,
+			      0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "rs5c372rtc_reg_write: failed to write reg%d\n", reg);
-		return;
+		return error;
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
+
+	return 0;
 }
 
 static int
@@ -153,23 +151,24 @@ rs5c372rtc_clock_read(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[RS5C372_NRTC_REGS];
 	uint8_t cmdbuf[1];
+	int error;
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "rs5c372rtc_clock_read: failed to acquire I2C bus\n");
-		return (0);
+		return (error);
 	}
 
 	cmdbuf[0] = (RS5C372_SECONDS << 4);
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
-	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_address,
+	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "rs5c372rtc_clock_read: failed to read rtc\n");
-		return (0);
+		return (error);
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
 	/*
 	 * Convert the RS5C372's register values into something useable
@@ -181,7 +180,7 @@ rs5c372rtc_clock_read(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_mon = bcdtobin(bcd[RS5C372_MONTH] & RS5C372_MONTH_MASK);
 	dt->dt_year = bcdtobin(bcd[RS5C372_YEAR]) + 2000;
 
-	return (1);
+	return (0);
 }
 
 static int
@@ -189,6 +188,7 @@ rs5c372rtc_clock_write(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[RS5C372_NRTC_REGS];
 	uint8_t cmdbuf[1];
+	int error;
 
 	/*
 	 * Convert our time representation into something the RS5C372
@@ -202,22 +202,23 @@ rs5c372rtc_clock_write(struct rs5c372rtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[RS5C372_MONTH] = bintobcd(dt->dt_mon);
 	bcd[RS5C372_YEAR] = bintobcd(dt->dt_year % 100);
 
-	if (iic_acquire_bus(sc->sc_tag, I2C_F_POLL)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev, "rs5c372rtc_clock_write: failed to "
 		    "acquire I2C bus\n");
-		return (0);
+		return (error);
 	}
 
 	cmdbuf[0] = (RS5C372_SECONDS << 4);
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_address,
-	             cmdbuf, 1, bcd, RS5C372_NRTC_REGS, I2C_F_POLL)) {
-		iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP,
+			      sc->sc_address, cmdbuf, 1, bcd,
+			      RS5C372_NRTC_REGS, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "rs5c372rtc_clock_write: failed to write rtc\n");
-		return (0);
+		return (error);
 	}
 
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	iic_release_bus(sc->sc_tag, 0);
 
-	return (1);
+	return (0);
 }
