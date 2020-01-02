@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.25 2020/01/02 16:28:02 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.26 2020/01/02 19:24:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.25 2020/01/02 16:28:02 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.26 2020/01/02 19:24:48 thorpej Exp $");
 
 #include "opt_strtc.h"
 
@@ -93,10 +93,11 @@ const struct cdevsw strtc_cdevsw = {
 };
 #endif
 
-static int strtc_clock_read(struct strtc_softc *, struct clock_ymdhms *);
-static int strtc_clock_write(struct strtc_softc *, struct clock_ymdhms *);
-static int strtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int strtc_settime(struct todr_chip_handle *, struct timeval *);
+static int strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *);
+static int strtc_gettime_ymdhms(struct todr_chip_handle *,
+				struct clock_ymdhms *);
+static int strtc_settime_ymdhms(struct todr_chip_handle *,
+				struct clock_ymdhms *);
 
 static int
 strtc_match(device_t parent, cfdata_t cf, void *arg)
@@ -132,8 +133,10 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = strtc_gettime;
-	sc->sc_todr.todr_settime = strtc_settime;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = strtc_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = strtc_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -249,13 +252,13 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 #endif	/* STRTC_NO_USERRAM */
 
 static int
-strtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+strtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct strtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt, check;
-	int retries;
+	struct clock_ymdhms check;
+	int retries, error;
 
-	memset(&dt, 0, sizeof(dt));
+	memset(dt, 0, sizeof(*dt));
 	memset(&check, 0, sizeof(check));
 
 	/*
@@ -264,26 +267,11 @@ strtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 	 */
 	retries = 5;
 	do {
-		strtc_clock_read(sc, &dt);
-		strtc_clock_read(sc, &check);
-	} while (memcmp(&dt, &check, sizeof(check)) != 0 && --retries);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
-
-	return (0);
-}
-
-static int
-strtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
-{
-	struct strtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	if (strtc_clock_write(sc, &dt) == 0)
-		return (-1);
+		if ((error = strtc_clock_read(sc, dt)) == 0)
+			error = strtc_clock_read(sc, &check);
+		if (error)
+			return error;
+	} while (memcmp(dt, &check, sizeof(check)) != 0 && --retries);
 
 	return (0);
 }
@@ -292,12 +280,12 @@ static int
 strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 {
 	u_int8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[2];
-	int i;
+	int i, error;
 
-	if (iic_acquire_bus(sc->sc_tag, 0)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_read: failed to acquire I2C bus\n");
-		return (0);
+		return (error);
 	}
 
 	/*
@@ -306,21 +294,21 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	 * a chance to run again.
 	 */
 	cmdbuf[0] = M41ST84_REG_AL_HOUR;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_read: failed to read HT\n");
-		return (0);
+		return (error);
 	}
 	if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
 		cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
-		if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-			     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+			     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_read: failed to reset HT\n");
-			return (0);
+			return (error);
 		}
 	}
 
@@ -328,14 +316,14 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	for (i = M41ST84_REG_CSEC; i < M41ST84_REG_DATE_BYTES; i++) {
 		cmdbuf[0] = i;
 
-		if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 			     sc->sc_address, cmdbuf, 1,
-			     &bcd[i], 1, 0)) {
+			     &bcd[i], 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_read: failed to read rtc "
 			    "at 0x%x\n", i);
-			return (0);
+			return (error);
 		}
 	}
 
@@ -352,16 +340,18 @@ strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	dt->dt_mon = bcdtobin(bcd[M41ST84_REG_MONTH] & M41ST84_MONTH_MASK);
 
 	/* XXX: Should be an MD way to specify EPOCH used by BIOS/Firmware */
+	/* XXX: Wait, isn't that what rtc_offset in todr_gettime() is for? */
 	dt->dt_year = bcdtobin(bcd[M41ST84_REG_YEAR]) + POSIX_BASE_YEAR;
 
-	return (1);
+	return (0);
 }
 
 static int
-strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
+strtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
+	struct strtc_softc *sc = ch->cookie;
 	uint8_t bcd[M41ST84_REG_DATE_BYTES], cmdbuf[2];
-	int i;
+	int i, error;
 
 	/*
 	 * Convert our time representation into something the M41ST84
@@ -376,22 +366,22 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	bcd[M41ST84_REG_MONTH] = bintobcd(dt->dt_mon);
 	bcd[M41ST84_REG_YEAR] = bintobcd((dt->dt_year - POSIX_BASE_YEAR) % 100);
 
-	if (iic_acquire_bus(sc->sc_tag, 0)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_write: failed to acquire I2C bus\n");
-		return (0);
+		return (error);
 	}
 
 	/* Stop the clock */
 	cmdbuf[0] = M41ST84_REG_SEC;
 	cmdbuf[1] = M41ST84_SEC_ST;
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_write: failed to Hold Clock\n");
-		return (0);
+		return (error);
 	}
 
 	/*
@@ -400,21 +390,21 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	 * a chance to run again.
 	 */
 	cmdbuf[0] = M41ST84_REG_AL_HOUR;
-	if (iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
-		     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ, sc->sc_address,
+		     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 		iic_release_bus(sc->sc_tag, 0);
 		aprint_error_dev(sc->sc_dev,
 		    "strtc_clock_write: failed to read HT\n");
-		return (0);
+		return (error);
 	}
 	if (cmdbuf[1] & M41ST84_AL_HOUR_HT) {
 		cmdbuf[1] &= ~M41ST84_AL_HOUR_HT;
-		if (iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
-			     cmdbuf, 1, &cmdbuf[1], 1, 0)) {
+		if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE, sc->sc_address,
+			     cmdbuf, 1, &cmdbuf[1], 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_write: failed to reset HT\n");
-			return (0);
+			return (error);
 		}
 	}
 
@@ -424,21 +414,21 @@ strtc_clock_write(struct strtc_softc *sc, struct clock_ymdhms *dt)
 	 */
 	for (i = M41ST84_REG_DATE_BYTES - 1; i >= 0; i--) {
 		cmdbuf[0] = i;
-		if (iic_exec(sc->sc_tag,
+		if ((error = iic_exec(sc->sc_tag,
 			     i ? I2C_OP_WRITE : I2C_OP_WRITE_WITH_STOP,
-			     sc->sc_address, cmdbuf, 1, &bcd[i], 1, 0)) {
+			     sc->sc_address, cmdbuf, 1, &bcd[i], 1, 0)) != 0) {
 			iic_release_bus(sc->sc_tag, 0);
 			aprint_error_dev(sc->sc_dev,
 			    "strtc_clock_write: failed to write rtc "
 			    " at 0x%x\n", i);
 			/* XXX: Clock Hold is likely still asserted! */
-			return (0);
+			return (error);
 		}
 	}
 
 	iic_release_bus(sc->sc_tag, 0);
 
-	return (1);
+	return (0);
 }
 
 #ifndef STRTC_NO_WATCHDOG
