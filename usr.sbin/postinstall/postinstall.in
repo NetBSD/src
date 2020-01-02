@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.5.2.2 2019/11/10 12:58:30 martin Exp $
+# $NetBSD: postinstall.in,v 1.5.2.3 2020/01/02 09:09:01 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1415,6 +1415,14 @@ do_pwd_mkdb()
 #	rc
 #
 
+# There is no info in src/distrib or /etc/mtree which rc* files
+# can be overwritten unconditionally on upgrade. See PR/54741.
+rc_644_files="
+rc
+rc.subr
+rc.shutdown
+"
+
 rc_obsolete_vars="
 amd amd_master
 btcontrol btcontrol_devices
@@ -1462,12 +1470,28 @@ select_set_files()
 # select obsolete files in a sets file
 # $1: directory pattern
 # $2: file pattern
-# $3: filename
+# $3: setname
 select_obsolete_files()
 {
-	${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" $3
-}
+	if $SOURCEMODE; then
+		${SED} -n -e "/obsolete/s@\.$1$2[[:space:]].*@\1@p" \
+		    ${SRC_DIR}/distrib/sets/lists/$3/mi
+		return
+	fi
 
+	# On upgrade builds we don't extract the "etc" set so we
+	# try to use the source set instead. See PR/54730 for
+	# ways to better handle this.
+
+	local obsolete_dir
+
+	if [ $3 = "etc" ] ;then
+		obsolete_dir=${SRC_DIR}/var/db/obsolete
+	else
+		obsolete_dir=${DEST_DIR}/var/db/obsolete
+	fi
+	${SED} -n -e "s@\.$1$2\$@\1@p" "${obsolete_dir}/$3"
+}
 
 getetcsets()
 {
@@ -1494,8 +1518,9 @@ do_rc()
 	local rc_external_files="blacklist nsd unbound"
 
 	# rc* files in /etc/
-	local rc_444_files="$(select_set_files /etc/rc \
-	    "/etc/\(rc[^[:space:]/]*\)" ${etcsets})"
+	# XXX: at least rc.conf and rc.local shouldn't be updated. PR/54741
+	#local rc_644_files="$(select_set_files /etc/rc \
+	#    "/etc/\(rc[^[:space:]/]*\)" ${etcsets})"
 
 	# no-obsolete rc files in /etc/rc.d
 	local rc_555_files="$(select_set_files /etc/rc.d/ \
@@ -1504,7 +1529,7 @@ do_rc()
 
 	# obsolete rc file in /etc/rc.d
 	local rc_obsolete_files="$(select_obsolete_files /etc/rc.d/ \
-	    "\([^[:space:]]*\)" ${etcsets})"
+	    "\([^[:space:]]*\)" etc)"
 
 	compare_dir "${op}" "${SRC_DIR}/etc" "${DEST_DIR}/etc" 644 \
 		${rc_644_files}
@@ -2253,7 +2278,6 @@ getarchsubdirs() {
 
 getcompatlibdirs() {
 	for i in $(getarchsubdirs); do
-		echo $i 1>&2
 		if [ -d "${DEST_DIR}/usr/lib/$i" ]; then
 			echo /usr/lib/$i
 		fi
