@@ -1,4 +1,4 @@
-/*	$NetBSD: i2c_exec.c,v 1.14 2019/12/23 14:26:19 thorpej Exp $	*/
+/*	$NetBSD: i2c_exec.c,v 1.15 2020/01/02 16:18:37 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.14 2019/12/23 14:26:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i2c_exec.c,v 1.15 2020/01/02 16:18:37 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -59,7 +59,7 @@ static inline int
 iic_op_flags(int flags)
 {
 
-	return flags | (cold ? I2C_F_POLL : 0);
+	return flags | ((cold || shutting_down) ? I2C_F_POLL : 0);
 }
 
 /*
