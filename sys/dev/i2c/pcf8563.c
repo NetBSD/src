@@ -1,4 +1,4 @@
-/*	$NetBSD: pcf8563.c,v 1.11 2018/06/26 06:03:57 thorpej Exp $	*/
+/*	$NetBSD: pcf8563.c,v 1.12 2020/01/02 16:48:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.11 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcf8563.c,v 1.12 2020/01/02 16:48:05 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -93,6 +93,7 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 {
 	struct pcf8563rtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = aux;
+	int error;
 
 	aprint_naive(": Real-time Clock\n");
 	aprint_normal(": NXP PCF8563 Real-time Clock\n");
@@ -105,12 +106,21 @@ pcf8563rtc_attach(device_t parent, device_t self, void *aux)
 	sc->sc_todr.todr_settime_ymdhms = pcf8563rtc_settime;
 	sc->sc_todr.todr_setwen = NULL;
 
-	iic_acquire_bus(sc->sc_tag, I2C_F_POLL);
-	iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, PCF8563_R_CS1, 0,
-	    I2C_F_POLL);
-	iic_smbus_write_byte(sc->sc_tag, sc->sc_addr, PCF8563_R_CS2, 0,
-	    I2C_F_POLL);
-	iic_release_bus(sc->sc_tag, I2C_F_POLL);
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "failed to acquire bus for attach\n");
+		return;
+	}
+	if ((error = iic_smbus_write_byte(sc->sc_tag, sc->sc_addr,
+					  PCF8563_R_CS1, 0, 0)) == 0) {
+		error = iic_smbus_write_byte(sc->sc_tag, sc->sc_addr,
+					     PCF8563_R_CS2, 0, 0);
+	}
+	iic_release_bus(sc->sc_tag, 0);
+	if (error) {
+		aprint_error_dev(sc->sc_dev, "failed to initialize RTC\n");
+		return;
+	}
 
 #ifdef FDT
 	fdtbus_todr_attach(self, ia->ia_cookie, &sc->sc_todr);
@@ -123,11 +133,8 @@ static int
 pcf8563rtc_gettime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct pcf8563rtc_softc *sc = ch->cookie;
-	
-	if (pcf8563rtc_clock_read(sc, dt) == 0)
-		return -1;
 
-	return 0;
+	return pcf8563rtc_clock_read(sc, dt);
 }
 
 static int
@@ -135,10 +142,7 @@ pcf8563rtc_settime(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
         struct pcf8563rtc_softc *sc = ch->cookie;
 
-	if (pcf8563rtc_clock_write(sc, dt) == 0)
-		return -1;
-
-	return 0;
+	return pcf8563rtc_clock_write(sc, dt);
 }
 
 static int
@@ -146,24 +150,25 @@ pcf8563rtc_clock_read(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[PCF8563_NREGS];
 	uint8_t reg = PCF8563_R_SECOND;
-	const int flags = I2C_F_POLL;
+	int error;
 
-	if (iic_acquire_bus(sc->sc_tag, flags)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		device_printf(sc->sc_dev, "acquire bus for read failed\n");
-		return 0;
+		return error;
 	}
 
-	if (iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr, &reg, 1,
-		     &bcd[reg], PCF8563_R_YEAR - reg + 1, flags)) {
-		iic_release_bus(sc->sc_tag, flags);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP, sc->sc_addr,
+			      &reg, 1, &bcd[reg], PCF8563_R_YEAR - reg + 1,
+			      0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		device_printf(sc->sc_dev, "read failed\n");
-		return 0;
+		return error;
 	}
 
-	iic_release_bus(sc->sc_tag, flags);
+	iic_release_bus(sc->sc_tag, 0);
 
 	if (bcd[PCF8563_R_SECOND] & PCF8563_M_VL)
-		return 0;
+		return EIO;
 
 	dt->dt_sec = bcdtobin(bcd[PCF8563_R_SECOND] & PCF8563_M_SECOND);
 	dt->dt_min = bcdtobin(bcd[PCF8563_R_MINUTE] & PCF8563_M_MINUTE);
@@ -176,7 +181,7 @@ pcf8563rtc_clock_read(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 	if ((bcd[PCF8563_R_MONTH] & PCF8563_M_CENTURY) == 0)
 		dt->dt_year += 100;
 
-	return 1;
+	return error;
 }
 
 static int
@@ -184,7 +189,7 @@ pcf8563rtc_clock_write(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 {
 	uint8_t bcd[PCF8563_NREGS];
 	uint8_t reg = PCF8563_R_SECOND;
-	const int flags = I2C_F_POLL;
+	int error;
 
 	bcd[PCF8563_R_SECOND] = bintobcd(dt->dt_sec);
 	bcd[PCF8563_R_MINUTE] = bintobcd(dt->dt_min);
@@ -196,19 +201,18 @@ pcf8563rtc_clock_write(struct pcf8563rtc_softc *sc, struct clock_ymdhms *dt)
 	if (dt->dt_year < 2000)
 		bcd[PCF8563_R_MONTH] |= PCF8563_M_CENTURY;
 
-	if (iic_acquire_bus(sc->sc_tag, flags)) {
+	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0) {
 		device_printf(sc->sc_dev, "acquire bus for write failed\n");
-		return 0;
+		return error;
 	}
 
-	if (iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, &reg, 1,
-		     &bcd[reg], PCF8563_R_YEAR - reg + 1, flags)) {
-		iic_release_bus(sc->sc_tag, flags);
+	if ((error = iic_exec(sc->sc_tag, I2C_OP_WRITE_WITH_STOP, sc->sc_addr, &reg, 1, &bcd[reg], PCF8563_R_YEAR - reg + 1, 0)) != 0) {
+		iic_release_bus(sc->sc_tag, 0);
 		device_printf(sc->sc_dev, "write failed\n");
-		return 0;
+		return error;
 	}
 
-	iic_release_bus(sc->sc_tag, flags);
+	iic_release_bus(sc->sc_tag, 0);
 
-	return 1;
+	return error;
 }
