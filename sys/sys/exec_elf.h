@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.163 2020/01/02 04:58:07 kamil Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.164 2020/01/02 05:18:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -169,11 +169,11 @@ typedef struct {
 #define ELFOSABI_SYSV		0	/* UNIX System V ABI */
 #define ELFOSABI_HPUX		1	/* HP-UX operating system */
 #define ELFOSABI_NETBSD		2	/* NetBSD */
-#define ELFOSABI_LINUX		3	/* GNU/Linux */
-#define ELFOSABI_HURD		4	/* GNU/Hurd */
-#define ELFOSABI_86OPEN		5	/* 86Open */
+#define ELFOSABI_GNU		3	/* GNU/Linux */
+#define ELFOSABI_HURD		4	/* GNU/Hurd - historical */
+#define ELFOSABI_86OPEN		5	/* 86Open - historical */
 #define ELFOSABI_SOLARIS	6	/* Solaris */
-#define ELFOSABI_MONTEREY	7	/* Monterey */
+#define ELFOSABI_AIX		7	/* AIX */
 #define ELFOSABI_IRIX		8	/* IRIX */
 #define ELFOSABI_FREEBSD	9	/* FreeBSD */
 #define ELFOSABI_TRU64		10	/* TRU64 UNIX */
@@ -182,12 +182,18 @@ typedef struct {
 #define ELFOSABI_OPENVMS	13	/* OpenVMS */
 #define ELFOSABI_NSK		14	/* HP Non-Stop Kernel */
 #define ELFOSABI_AROS		15	/* Amiga Research OS */
+#define ELFOSABI_FENIXOS	16	/* The FenixOS highly scalable multi-core OS */
+#define ELFOSABI_CLOUDABI	17	/* Nuxi CloudABI */
+#define ELFOSABI_OPENVOS	18	/* Stratus Technologies OpenVOS */
 /* Unofficial OSABIs follow */
 #define ELFOSABI_ARM		97	/* ARM */
 #define ELFOSABI_STANDALONE	255	/* Standalone (embedded) application */
 
 #define ELFOSABI_NONE		ELFOSABI_SYSV
-#define ELFOSABI_AIX		ELFOSABI_MONTEREY
+
+/* Historical aliases. */
+#define ELFOSABI_LINUX		ELFOSABI_GNU
+#define ELFOSABI_MONTEREY	ELFOSABI_AIX
 
 /* e_type */
 #define ET_NONE		0	/* No file type */
