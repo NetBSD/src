@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.161 2019/08/29 06:43:13 hannken Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.162 2020/01/02 15:42:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.161 2019/08/29 06:43:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.162 2020/01/02 15:42:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,7 +78,7 @@ const struct kern_target kern_targets[] = {
      /*        name            data          tag           type  ro/rw */
      { DT_DIR, N("."),         0,            KFSkern,        VDIR, DIR_MODE   },
      { DT_DIR, N(".."),        0,            KFSroot,        VDIR, DIR_MODE   },
-     { DT_REG, N("boottime"),  &boottime.tv_sec, KFSint,     VREG, READ_MODE  },
+     { DT_REG, N("boottime"),  0,            KFSboottime,    VREG, READ_MODE  },
 			/* XXXUNCONST */
      { DT_REG, N("copyright"), __UNCONST(copyright),
      					     KFSstring,      VREG, READ_MODE  },
@@ -362,6 +362,17 @@ kernfs_xread(struct kernfs_node *kfs, int off, char **bufp, size_t len, size_t *
 		break;
 	}
 
+	case KFSboottime: {
+		struct timeval tv;
+
+		/*
+		 * Historically, /kern/boottime only contained seconds.
+		 */
+		getmicroboottime(&tv);
+		snprintf(*bufp, len, "%lld\n", (long long)tv.tv_sec);
+		break;
+	}
+
 	case KFSint: {
 		int *ip = kt->kt_data;
 
@@ -639,7 +650,7 @@ kernfs_getattr(void *v)
 	/* Make all times be current TOD, except for the "boottime" node. */
 	if (kfs->kfs_kt->kt_namlen == 8 &&
 	    !memcmp(kfs->kfs_kt->kt_name, "boottime", 8)) {
-		vap->va_ctime = boottime;
+		getnanoboottime(&vap->va_ctime);
 	} else {
 		getnanotime(&vap->va_ctime);
 	}
@@ -673,6 +684,7 @@ kernfs_getattr(void *v)
 
 	case KFSnull:
 	case KFStime:
+	case KFSboottime:
 	case KFSint:
 	case KFSstring:
 	case KFShostname:
