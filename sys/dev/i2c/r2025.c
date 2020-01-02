@@ -1,4 +1,4 @@
-/* $NetBSD: r2025.c,v 1.9 2020/01/02 17:03:05 thorpej Exp $ */
+/* $NetBSD: r2025.c,v 1.10 2020/01/02 19:00:34 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Shigeyuki Fukushima.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.9 2020/01/02 17:03:05 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: r2025.c,v 1.10 2020/01/02 19:00:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,8 +63,10 @@ static int	r2025rtc_match(device_t, cfdata_t, void *);
 CFATTACH_DECL_NEW(r2025rtc, sizeof(struct r2025rtc_softc),
 	r2025rtc_match, r2025rtc_attach, NULL, NULL);
 
-static int	r2025rtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int	r2025rtc_settime(struct todr_chip_handle *, struct timeval *);
+static int	r2025rtc_gettime_ymdhms(struct todr_chip_handle *,
+					struct clock_ymdhms *);
+static int	r2025rtc_settime_ymdhms(struct todr_chip_handle *,
+					struct clock_ymdhms *);
 static int	r2025rtc_reg_write(struct r2025rtc_softc *, int, uint8_t*, int);
 static int	r2025rtc_reg_read(struct r2025rtc_softc *, int, uint8_t*, int);
 
@@ -94,24 +96,25 @@ r2025rtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = r2025rtc_gettime;
-	sc->sc_todr.todr_settime = r2025rtc_settime;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = r2025rtc_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = r2025rtc_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
 }
 
 static int
-r2025rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+r2025rtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct r2025rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
 	uint8_t rctrl;
 	uint8_t bcd[R2025_CLK_SIZE];
 	int hour;
 	int error;
 
-	memset(&dt, 0, sizeof(dt));
+	memset(dt, 0, sizeof(*dt));
 
 	if ((error = r2025rtc_reg_read(sc, R2025_REG_CTRL1, &rctrl, 1)) != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -126,47 +129,41 @@ r2025rtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
 		return error;
 	}
 
-	dt.dt_sec = bcdtobin(bcd[R2025_REG_SEC] & R2025_REG_SEC_MASK);
-	dt.dt_min = bcdtobin(bcd[R2025_REG_MIN] & R2025_REG_MIN_MASK);
+	dt->dt_sec = bcdtobin(bcd[R2025_REG_SEC] & R2025_REG_SEC_MASK);
+	dt->dt_min = bcdtobin(bcd[R2025_REG_MIN] & R2025_REG_MIN_MASK);
 	hour = bcdtobin(bcd[R2025_REG_HOUR] & R2025_REG_HOUR_MASK);
 	if (rctrl & R2025_REG_CTRL1_H1224) {
-		dt.dt_hour = hour;
+		dt->dt_hour = hour;
 	} else {
 		if (hour == 12) {
-			dt.dt_hour = 0;
+			dt->dt_hour = 0;
 		} else if (hour == 32) {
-			dt.dt_hour = 12;
+			dt->dt_hour = 12;
 		} else if (hour > 13) {
-			dt.dt_hour = (hour - 8);
+			dt->dt_hour = (hour - 8);
 		} else { /* (hour < 12) */
-			dt.dt_hour = hour;
+			dt->dt_hour = hour;
 		}
 	}
-	dt.dt_wday = bcdtobin(bcd[R2025_REG_WDAY] & R2025_REG_WDAY_MASK);
-	dt.dt_day = bcdtobin(bcd[R2025_REG_DAY] & R2025_REG_DAY_MASK);
-	dt.dt_mon = bcdtobin(bcd[R2025_REG_MON] & R2025_REG_MON_MASK);
-	dt.dt_year = bcdtobin(bcd[R2025_REG_YEAR] & R2025_REG_YEAR_MASK)
+	dt->dt_wday = bcdtobin(bcd[R2025_REG_WDAY] & R2025_REG_WDAY_MASK);
+	dt->dt_day = bcdtobin(bcd[R2025_REG_DAY] & R2025_REG_DAY_MASK);
+	dt->dt_mon = bcdtobin(bcd[R2025_REG_MON] & R2025_REG_MON_MASK);
+	dt->dt_year = bcdtobin(bcd[R2025_REG_YEAR] & R2025_REG_YEAR_MASK)
 		+ ((bcd[R2025_REG_MON] & R2025_REG_MON_Y1920) ? 2000 : 1900);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
 
 	return 0;
 }
 
 static int
-r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
+r2025rtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct r2025rtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
 	uint8_t rctrl;
 	uint8_t bcd[R2025_CLK_SIZE];
 	int error;
 
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
 	/* Y3K problem */
-	if (dt.dt_year >= 3000) {
+	if (dt->dt_year >= 3000) {
 		aprint_error_dev(sc->sc_dev,
 		    "r2025rtc_settime: "
 		    "RTC does not support year 3000 or over.\n");
@@ -181,14 +178,14 @@ r2025rtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
 	rctrl |= R2025_REG_CTRL1_H1224;
 
 	/* setup registers 0x00-0x06 (7 byte) */
-	bcd[R2025_REG_SEC] = bintobcd(dt.dt_sec) & R2025_REG_SEC_MASK;
-	bcd[R2025_REG_MIN] = bintobcd(dt.dt_min) & R2025_REG_MIN_MASK;
-	bcd[R2025_REG_HOUR] = bintobcd(dt.dt_hour) & R2025_REG_HOUR_MASK;
-	bcd[R2025_REG_WDAY] = bintobcd(dt.dt_wday) & R2025_REG_WDAY_MASK;
-	bcd[R2025_REG_DAY] = bintobcd(dt.dt_day) & R2025_REG_DAY_MASK;
-	bcd[R2025_REG_MON] = (bintobcd(dt.dt_mon) & R2025_REG_MON_MASK)
-		| ((dt.dt_year >= 2000) ? R2025_REG_MON_Y1920 : 0);
-	bcd[R2025_REG_YEAR] = bintobcd(dt.dt_year % 100) & R2025_REG_YEAR_MASK;
+	bcd[R2025_REG_SEC] = bintobcd(dt->dt_sec) & R2025_REG_SEC_MASK;
+	bcd[R2025_REG_MIN] = bintobcd(dt->dt_min) & R2025_REG_MIN_MASK;
+	bcd[R2025_REG_HOUR] = bintobcd(dt->dt_hour) & R2025_REG_HOUR_MASK;
+	bcd[R2025_REG_WDAY] = bintobcd(dt->dt_wday) & R2025_REG_WDAY_MASK;
+	bcd[R2025_REG_DAY] = bintobcd(dt->dt_day) & R2025_REG_DAY_MASK;
+	bcd[R2025_REG_MON] = (bintobcd(dt->dt_mon) & R2025_REG_MON_MASK)
+		| ((dt->dt_year >= 2000) ? R2025_REG_MON_Y1920 : 0);
+	bcd[R2025_REG_YEAR] = bintobcd(dt->dt_year % 100) & R2025_REG_YEAR_MASK;
 
 	/* Write RTC register */
 	if ((error = r2025rtc_reg_write(sc, R2025_REG_CTRL1, &rctrl, 1)) != 0) {
