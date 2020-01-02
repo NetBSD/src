@@ -1,4 +1,4 @@
-.\"	$NetBSD: crunchgen.1,v 1.39 2019/12/29 18:26:16 christos Exp $
+.\"	$NetBSD: crunchgen.1,v 1.40 2020/01/02 19:02:41 christos Exp $
 .\"
 .\" Copyright (c) 1994 University of Maryland
 .\" All Rights Reserved.
@@ -24,7 +24,7 @@
 .\"			   Computer Science Department
 .\"			   University of Maryland at College Park
 .\"
-.Dd December 23, 2019
+.Dd January 2, 2020
 .Dt CRUNCHGEN 1
 .Os
 .Sh NAME
@@ -369,6 +369,54 @@ At this point the binary
 .Dq kcopy
 can be copied onto an install floppy
 and hard-linked to the names of the component programs.
+.Sh MIGRATION GUIDE
+.Nm
+used to have builtin entries for some Makefile variables, namely it
+set by default:
+.Bd -literal -offset indent
+DBG=-Os
+LDSTATIC=-static
+NOPIE=
+NOMAN=
+NOFORT=
+NOLIBCSANITIZER=
+NOSANITIZER=
+NOSSP=
+.Ed
+.Pp
+To set those defaults again, use:
+.Bd -literal -offset indent
+-V DBG=-Os \e
+-V LDSTATIC=-static -V NOPIE \e
+-V NOMAN= \e
+-V NOFORT= -V NOLIBCSANITIZER= -V NOSANITIZER= -V NOSSP=
+.Ed
+.Pp
+The
+.Fl p
+flag that set pic mode internally set:
+.Bd -literal -offset indent
+LDSTATIC="-static -pie"
+.Ed
+.Pp
+and did not set:
+.Bd -literal -offset indent
+NOPIE=
+.Ed
+.Pp
+The remaining flags just disabled setting the variables that turned off various
+sanitizers, fortify, and stack protector. The mapping of those variables to
+the old options is:
+.Bl -tag -width XX -offset indent
+.It Fl F 
+.Dv NOFORT
+.It Fl P
+.Dv NOSSP
+.It Fl S
+.Dv NOLIBCSANITIZER
+.It Fl s
+.Dv NOSANITIZER
+.El
 .Sh SEE ALSO
 .Xr crunchide 1 ,
 .Xr make 1
