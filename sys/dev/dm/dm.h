@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.52 2019/12/23 16:17:35 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.53 2020/01/02 06:22:23 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -271,6 +271,17 @@ int dm_target_zero_init(dm_table_entry_t *, int, char **);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_zero_destroy(dm_table_entry_t *);
 int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
+
+#if 0
+/* dm_target_flakey.c */
+int dm_target_flakey_init(dm_table_entry_t *, int, char **);
+char *dm_target_flakey_table(void *);
+int dm_target_flakey_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_flakey_sync(dm_table_entry_t *);
+int dm_target_flakey_destroy(dm_table_entry_t *);
+int dm_target_flakey_upcall(dm_table_entry_t *, struct buf *);
+int dm_target_flakey_secsize(dm_table_entry_t *, unsigned int *);
+#endif
 
 /* dm_table.c  */
 #define DM_TABLE_ACTIVE 0
