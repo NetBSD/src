@@ -1,4 +1,4 @@
-/*	$NetBSD: x1226.c,v 1.22 2020/01/02 17:40:27 thorpej Exp $	*/
+/*	$NetBSD: x1226.c,v 1.23 2020/01/02 19:00:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Shigeyuki Fukushima.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.22 2020/01/02 17:40:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x1226.c,v 1.23 2020/01/02 19:00:34 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,9 +89,10 @@ const struct cdevsw xrtc_cdevsw = {
 };
 
 static int xrtc_clock_read(struct xrtc_softc *, struct clock_ymdhms *);
-static int xrtc_clock_write(struct xrtc_softc *, struct clock_ymdhms *);
-static int xrtc_gettime(struct todr_chip_handle *, struct timeval *);
-static int xrtc_settime(struct todr_chip_handle *, struct timeval *);
+static int xrtc_gettime_ymdhms(struct todr_chip_handle *,
+			       struct clock_ymdhms *);
+static int xrtc_settime_ymdhms(struct todr_chip_handle *,
+			       struct clock_ymdhms *);
 
 /*
  * xrtc_match()
@@ -125,8 +126,10 @@ xrtc_attach(device_t parent, device_t self, void *arg)
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
-	sc->sc_todr.todr_gettime = xrtc_gettime;
-	sc->sc_todr.todr_settime = xrtc_settime;
+	sc->sc_todr.todr_gettime = NULL;
+	sc->sc_todr.todr_settime = NULL;
+	sc->sc_todr.todr_gettime_ymdhms = xrtc_gettime_ymdhms;
+	sc->sc_todr.todr_settime_ymdhms = xrtc_settime_ymdhms;
 	sc->sc_todr.todr_setwen = NULL;
 
 	todr_attach(&sc->sc_todr);
@@ -247,39 +250,25 @@ xrtc_write(dev_t dev, struct uio *uio, int flags)
 
 
 static int
-xrtc_gettime(struct todr_chip_handle *ch, struct timeval *tv)
+xrtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
 	struct xrtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt, check;
+	struct clock_ymdhms check;
 	int retries;
 	int error;
 
-	memset(&dt, 0, sizeof(dt));
+	memset(dt, 0, sizeof(*dt));
 	memset(&check, 0, sizeof(check));
 
 	retries = 5;
 	do {
-		if ((error = xrtc_clock_read(sc, &dt)) == 0)
+		if ((error = xrtc_clock_read(sc, dt)) == 0)
 			error = xrtc_clock_read(sc, &check);
 		if (error)
 			return error;
-	} while (memcmp(&dt, &check, sizeof(check)) != 0 && --retries);
-
-	tv->tv_sec = clock_ymdhms_to_secs(&dt);
-	tv->tv_usec = 0;
+	} while (memcmp(dt, &check, sizeof(check)) != 0 && --retries);
 
 	return (0);
-}
-
-static int
-xrtc_settime(struct todr_chip_handle *ch, struct timeval *tv)
-{
-	struct xrtc_softc *sc = ch->cookie;
-	struct clock_ymdhms dt;
-
-	clock_secs_to_ymdhms(tv->tv_sec, &dt);
-
-	return xrtc_clock_write(sc, &dt);
 }
 
 static int
@@ -348,8 +337,9 @@ xrtc_clock_read(struct xrtc_softc *sc, struct clock_ymdhms *dt)
 }
 
 static int
-xrtc_clock_write(struct xrtc_softc *sc, struct clock_ymdhms *dt)
+xrtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 {
+	struct xrtc_softc *sc = ch->cookie;
 	int i = 0, addr;
 	u_int8_t bcd[X1226_REG_RTC_SIZE], cmdbuf[3];
 	int error, error2;
