@@ -1,4 +1,4 @@
-/*	$NetBSD: stm32-pinfunc.h,v 1.3 2019/01/27 05:07:46 kre Exp $	*/
+/*	$NetBSD: stm32-pinfunc.h,v 1.4 2020/01/03 15:04:34 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
@@ -33,6 +33,12 @@
 #define PIN_NO(port, line)	(((port) - 'A') * 0x10 + (line))
 
 #define STM32_PINMUX(port, line, mode) (((PIN_NO(port, line)) << 8) | (mode))
+
+/*  package information */
+#define STM32MP_PKG_AA	0x1
+#define STM32MP_PKG_AB	0x2
+#define STM32MP_PKG_AC	0x4
+#define STM32MP_PKG_AD	0x8
 
 #endif /* _DT_BINDINGS_STM32_PINFUNC_H */
 
