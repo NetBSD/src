@@ -1,4 +1,4 @@
-/* $NetBSD: es8316ac.c,v 1.1 2020/01/02 22:06:59 jmcneill Exp $ */
+/* $NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.1 2020/01/02 22:06:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: es8316ac.c,v 1.2 2020/01/03 01:00:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -137,7 +137,7 @@ escodec_read(struct escodec_softc *sc, uint8_t reg)
 {
 	uint8_t val;
 
-	if (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, &val, I2C_F_POLL) != 0)
+	if (iic_smbus_read_byte(sc->sc_i2c, sc->sc_addr, reg, &val, 0) != 0)
 		val = 0xff;
 
 	return val;
@@ -146,7 +146,7 @@ escodec_read(struct escodec_softc *sc, uint8_t reg)
 static void
 escodec_write(struct escodec_softc *sc, uint8_t reg, uint8_t val)
 {
-	(void)iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, I2C_F_POLL);
+	(void)iic_smbus_write_byte(sc->sc_i2c, sc->sc_addr, reg, val, 0);
 }
 
 enum escodec_mixer_ctrl {
@@ -322,40 +322,6 @@ escodec_get_mixer(u_int index)
 }
 
 static int
-escodec_trigger_output(void *priv, void *start, void *end, int blksize,
-    void (*intr)(void *), void *intarg, const audio_params_t *params)
-{
-	struct escodec_softc * const sc = priv;
-	uint8_t val;
-
-	escodec_lock(sc);
-
-	/* Enable HP output */
-	val = HPOUTEN_EN_HPL | HPOUTEN_EN_HPR |
-	    HPOUTEN_HPL_OUTEN | HPOUTEN_HPR_OUTEN;
-	escodec_write(sc, ESCODEC_HPOUTEN_REG, val);
-
-	escodec_unlock(sc);
-
-	return 0;
-}
-
-static int
-escodec_halt_output(void *priv)
-{
-	struct escodec_softc * const sc = priv;
-
-	escodec_lock(sc);
-
-	/* Disable HP output */
-	escodec_write(sc, ESCODEC_HPOUTEN_REG, 0);
-
-	escodec_unlock(sc);
-
-	return 0;
-}
-
-static int
 escodec_set_format(void *priv, int setmode,
     const audio_params_t *play, const audio_params_t *rec,
     audio_filter_reg_t *pfil, audio_filter_reg_t *rfil)
@@ -514,8 +480,6 @@ escodec_query_devinfo(void *priv, mixer_devinfo_t *di)
 }
 
 static const struct audio_hw_if escodec_hw_if = {
-	.trigger_output = escodec_trigger_output,
-	.halt_output = escodec_halt_output,
 	.set_format = escodec_set_format,
 	.set_port = escodec_set_port,
 	.get_port = escodec_get_port,
@@ -698,6 +662,11 @@ escodec_init(struct escodec_softc *sc)
 	/* Set DAC to 0dB */
 	escodec_write(sc, ESCODEC_DACVOL_L_REG, 0);
 	escodec_write(sc, ESCODEC_DACVOL_R_REG, 0);
+
+	/* Enable HP output */
+	val = HPOUTEN_EN_HPL | HPOUTEN_EN_HPR |
+	    HPOUTEN_HPL_OUTEN | HPOUTEN_HPR_OUTEN;
+	escodec_write(sc, ESCODEC_HPOUTEN_REG, val);
 
 	escodec_unlock(sc);
 }
