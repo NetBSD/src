@@ -1,4 +1,4 @@
-/*	$NetBSD: tegra124-car-common.h,v 1.1.1.3 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: tegra124-car-common.h,v 1.1.1.4 2020/01/03 14:33:06 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -339,7 +339,8 @@
 #define TEGRA124_CLK_CLK_OUT_3_MUX 308
 /* 309 */
 /* 310 */
-#define TEGRA124_CLK_SOR0_LVDS 311
+#define TEGRA124_CLK_SOR0_LVDS 311 /* deprecated */
+#define TEGRA124_CLK_SOR0_OUT 311
 #define TEGRA124_CLK_XUSB_SS_DIV2 312
 
 #define TEGRA124_CLK_PLL_M_UD 313

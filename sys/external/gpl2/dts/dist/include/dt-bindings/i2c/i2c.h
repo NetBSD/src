@@ -1,5 +1,6 @@
-/*	$NetBSD: i2c.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: i2c.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This header provides constants for I2C bindings
  *
@@ -7,8 +8,6 @@
  * Copyright (C) 2015 by Renesas Electronics Corporation
  *
  * Wolfram Sang <wsa@sang-engineering.com>
- *
- * GPLv2 only
  */
 
 #ifndef _DT_BINDINGS_I2C_I2C_H

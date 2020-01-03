@@ -1,11 +1,11 @@
-/*	$NetBSD: stm32fx-clock.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: stm32fx-clock.h,v 1.1.1.3 2020/01/03 14:33:05 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * stm32fx-clock.h
  *
  * Copyright (C) 2016 STMicroelectronics
  * Author: Gabriel Fernandez for STMicroelectronics.
- * License terms:  GNU General Public License (GPL), version 2
  */
 
 /*
@@ -56,7 +56,10 @@
 #define CLK_I2C3		28
 #define CLK_I2C4		29
 #define CLK_LPTIMER		30
-
-#define END_PRIMARY_CLK_F7	31
+#define CLK_PLL_SRC		31
+#define CLK_DFSDM1		32
+#define CLK_ADFSDM1		33
+#define CLK_F769_DSI		34
+#define END_PRIMARY_CLK_F7	35
 
 #endif
