@@ -103,6 +103,11 @@
 			#size-cells = <1>;
 			ranges = <0 MBUS_ID(0xf0, 0x01) 0 0x100000>;
 
+			sdramc: sdramc@1400 {
+				compatible = "marvell,armada-xp-sdram-controller";
+				reg = <0x1400 0x500>;
+			};
+
 			L2: cache-controller@8000 {
 				compatible = "arm,pl310-cache";
 				reg = <0x8000 0x1000>;
@@ -415,6 +420,8 @@
 				reg = <0x20300 0x34>, <0x20704 0x4>, <0x18260 0x4>;
 				clocks = <&coreclk 2>, <&refclk>;
 				clock-names = "nbclk", "fixed";
+				interrupts-extended = <&gic GIC_SPI 64 IRQ_TYPE_LEVEL_HIGH>,
+						      <&gic GIC_SPI  9 IRQ_TYPE_LEVEL_HIGH>;
 			};
 
 			cpurst: cpurst@20800 {
