@@ -1,4 +1,4 @@
-# $NetBSD: LOONGSON,v 1.42 2019/04/26 21:40:29 sevan Exp $
+# $NetBSD: LOONGSON,v 1.43 2020/01/03 03:44:42 thorpej Exp $
 #
 # LOONGSON machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.loongson"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"LOONGSON-$Revision: 1.42 $"
+#ident 		"LOONGSON-$Revision: 1.43 $"
 
 maxusers	16
 
@@ -165,8 +165,7 @@ voyager0	at pci0 dev ? function ?	# SM502 on GDIUM
 voyagerfb0	at voyager0			# framebuffer portion
 pwmclock0	at voyager0			# clock and CPU freq scaling
 iic*		at voyager0
-strtc*		at iic? addr 0x68		# GDIUM's real time clock
-options 	STRTC_NO_USERRAM
+strtc*		at iic? addr 0x68		# GDIUM's real time clock (M41T80/81 ?)
 lmtemp*		at iic? addr 0x48		# GDIUM's temperature sensor
 stvii*		at iic? addr 0x40		# GDIUM's onboard microcontroller
 lynxfb0		at pci0 dev ? function ?	# SM712 on Yeeloong Notebook
