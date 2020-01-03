@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_todr.c,v 1.45 2020/01/01 23:15:24 thorpej Exp $	*/
+/*	$NetBSD: kern_todr.c,v 1.46 2020/01/03 01:24:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
 #include "opt_todr.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.45 2020/01/01 23:15:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_todr.c,v 1.46 2020/01/03 01:24:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -397,8 +397,7 @@ do {									\
 static int
 todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct clock_ymdhms	dt;
-	int			rv;
+	int rv;
 
 	/*
 	 * Write-enable is used even when reading the TODR because
@@ -418,6 +417,7 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 		todr_debug("TODR-GET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_gettime_ymdhms) {
+		struct clock_ymdhms dt = { 0 };
 		ENABLE_TODR_WRITES();
 		rv = tch->todr_gettime_ymdhms(tch, &dt);
 		DISABLE_TODR_WRITES();
@@ -455,12 +455,10 @@ todr_gettime(todr_chip_handle_t tch, struct timeval *tvp)
 static int
 todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 {
-	struct clock_ymdhms	dt;
-	int			rv;
+	int rv;
 
 	if (tch->todr_settime) {
-		/* See comments above in gettime why this is ifdef'd */
-		struct timeval	copy = *tvp;
+		struct timeval copy = *tvp;
 		copy.tv_sec -= rtc_offset * 60;
 		ENABLE_TODR_WRITES();
 		rv = tch->todr_settime(tch, &copy);
@@ -468,7 +466,8 @@ todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 		todr_debug("TODR-SET-SECS", rv, NULL, tvp);
 		return rv;
 	} else if (tch->todr_settime_ymdhms) {
-		time_t	sec = tvp->tv_sec - rtc_offset * 60;
+		struct clock_ymdhms dt;
+		time_t sec = tvp->tv_sec - rtc_offset * 60;
 		if (tvp->tv_usec >= 500000)
 			sec++;
 		clock_secs_to_ymdhms(sec, &dt);
@@ -477,7 +476,7 @@ todr_settime(todr_chip_handle_t tch, struct timeval *tvp)
 		DISABLE_TODR_WRITES();
 		todr_debug("TODR-SET-YMDHMS", rv, &dt, NULL);
 		return rv;
-	} else {
-		return ENXIO;
 	}
+
+	return ENXIO;
 }
