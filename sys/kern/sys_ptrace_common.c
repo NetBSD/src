@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.76 2019/12/26 08:52:38 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.77 2020/01/03 00:37:29 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.76 2019/12/26 08:52:38 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.77 2020/01/03 00:37:29 kamil Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -757,7 +757,8 @@ ptrace_lwpinfo(struct proc *t, struct lwp **lt, void *addr, size_t data)
 		*lt = LIST_NEXT(*lt, l_sibling);
 	}
 
-	while (*lt != NULL && !lwp_alive(*lt))
+	while (*lt != NULL && (!lwp_alive(*lt) ||
+	       ((*lt)->l_flag & LW_SYSTEM) != 0))
 		*lt = LIST_NEXT(*lt, l_sibling);
 
 	pl.pl_lwpid = 0;
@@ -822,8 +823,8 @@ ptrace_lwpstatus(struct proc *t, struct ptrace_methods *ptm, struct lwp **lt,
 			*lt = LIST_NEXT(*lt, l_sibling);
 		}
 
-		while (*lt != NULL && !lwp_alive(*lt) &&
-		       ((*lt)->l_flag & LW_SYSTEM) != 0)
+		while (*lt != NULL && (!lwp_alive(*lt) ||
+		       ((*lt)->l_flag & LW_SYSTEM) != 0))
 			*lt = LIST_NEXT(*lt, l_sibling);
 
 		if (*lt == NULL) {
