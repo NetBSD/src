@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i-v3s-ccu.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: sun8i-v3s-ccu.h,v 1.1.1.2 2020/01/03 14:33:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2016 Icenowy Zheng <icenowy@aosc.xyz>
@@ -105,5 +105,9 @@
 #define CLK_AVS			71
 
 #define CLK_MIPI_CSI		73
+
+/* Clocks not available on V3s */
+#define CLK_BUS_I2S0		75
+#define CLK_I2S0		76
 
 #endif /* _DT_BINDINGS_CLK_SUN8I_V3S_H_ */

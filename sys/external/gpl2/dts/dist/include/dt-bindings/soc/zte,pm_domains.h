@@ -1,10 +1,10 @@
-/*	$NetBSD: zte,pm_domains.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: zte,pm_domains.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2017 Linaro Ltd.
  *
  * Author: Baoyou Xie <baoyou.xie@linaro.org>
- * License terms: GNU General Public License (GPL) version 2
  */
 
 #ifndef _DT_BINDINGS_SOC_ZTE_PM_DOMAINS_H
