@@ -1,4 +1,4 @@
-/* $NetBSD: sun50i-a64-pinebook.dts,v 1.17 2019/11/24 02:06:16 jmcneill Exp $ */
+/* $NetBSD: sun50i-a64-pinebook.dts,v 1.18 2020/01/03 15:50:13 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017-2019 Jared McNeill <jmcneill@invisible.ca>
@@ -108,17 +108,6 @@
 
 &mixer0 {
 	status = "okay";
-};
-
-&pio {
-	lcd_rgb666_pins: lcd-rgb666 {
-		pins = "PD0", "PD1", "PD2", "PD3", "PD4",
-		       "PD5", "PD6", "PD7", "PD8", "PD9",
-		       "PD10", "PD11", "PD12", "PD13",
-		       "PD14", "PD15", "PD16", "PD17",
-		       "PD18", "PD19", "PD20", "PD21";
-		function = "lcd0";
-	};
 };
 
 &tcon0 {
