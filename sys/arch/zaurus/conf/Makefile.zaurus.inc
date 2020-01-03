@@ -1,7 +1,8 @@
-#	$NetBSD: Makefile.zaurus.inc,v 1.10 2019/10/26 09:49:13 tsutsui Exp $
+#	$NetBSD: Makefile.zaurus.inc,v 1.11 2020/01/03 10:01:07 martin Exp $
 
 MACHINE_ARCH?=		arm
 CPPFLAGS+=		-D${MACHINE}
+COPTS?=			-O2
 
 SYSTEM_FIRST_OBJ=	zaurus_start.o
 SYSTEM_FIRST_SFILE=	${THISARM}/zaurus/zaurus_start.S
