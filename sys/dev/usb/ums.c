@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.95 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: ums.c,v 1.96 2020/01/03 12:39:39 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.95 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.96 2020/01/03 12:39:39 jmcneill Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -77,6 +77,8 @@ int	umsdebug = 0;
 struct ums_softc {
 	struct uhidev sc_hdev;
 	struct hidms sc_ms;
+
+	bool	sc_alwayson;
 
 	int	sc_enabled;
 	char	sc_dying;
@@ -135,7 +137,7 @@ ums_attach(device_t parent, device_t self, void *aux)
 {
 	struct ums_softc *sc = device_private(self);
 	struct uhidev_attach_arg *uha = aux;
-	int size;
+	int size, error;
 	void *desc;
 	uint32_t quirks;
 
@@ -192,8 +194,26 @@ ums_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
+	if (uha->uiaa->uiaa_vendor == USB_VENDOR_HAILUCK &&
+	    uha->uiaa->uiaa_product == USB_PRODUCT_HAILUCK_KEYBOARD) {
+		/*
+		 * The HAILUCK USB Keyboard has a built-in touchpad, which
+		 * needs to be active for the keyboard to function properly.
+		 */
+		sc->sc_alwayson = true;
+	}
+
 	tpcalib_init(&sc->sc_ms.sc_tpcalib);
 	hidms_attach(self, &sc->sc_ms, &ums_accessops);
+
+	if (sc->sc_alwayson) {
+		error = uhidev_open(&sc->sc_hdev);
+		if (error != 0) {
+			aprint_error_dev(self,
+			    "WARNING: couldn't open always-on device\n");
+			sc->sc_alwayson = false;
+		}
+	}
 }
 
 static int
@@ -227,6 +247,9 @@ ums_detach(device_t self, int flags)
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
 
+	if (sc->sc_alwayson)
+		uhidev_close(&sc->sc_hdev);
+
 	/* No need to do reference counting of ums, wsmouse has all the goo. */
 	if (sc->sc_ms.hidms_wsmousedev != NULL)
 		rv = config_detach(sc->sc_ms.hidms_wsmousedev, flags);
@@ -240,14 +263,16 @@ Static void
 ums_intr(struct uhidev *addr, void *ibuf, u_int len)
 {
 	struct ums_softc *sc = (struct ums_softc *)addr;
-	hidms_intr(&sc->sc_ms, ibuf, len);
+
+	if (sc->sc_enabled)
+		hidms_intr(&sc->sc_ms, ibuf, len);
 }
 
 Static int
 ums_enable(void *v)
 {
 	struct ums_softc *sc = v;
-	int error;
+	int error = 0;
 
 	DPRINTFN(1,("ums_enable: sc=%p\n", sc));
 
@@ -260,9 +285,11 @@ ums_enable(void *v)
 	sc->sc_enabled = 1;
 	sc->sc_ms.hidms_buttons = 0;
 
-	error = uhidev_open(&sc->sc_hdev);
-	if (error)
-		sc->sc_enabled = 0;
+	if (!sc->sc_alwayson) {
+		error = uhidev_open(&sc->sc_hdev);
+		if (error)
+			sc->sc_enabled = 0;
+	}
 
 	return error;
 }
@@ -282,7 +309,8 @@ ums_disable(void *v)
 
 	if (sc->sc_enabled) {
 		sc->sc_enabled = 0;
-		uhidev_close(&sc->sc_hdev);
+		if (!sc->sc_alwayson)
+			uhidev_close(&sc->sc_hdev);
 	}
 }
 
