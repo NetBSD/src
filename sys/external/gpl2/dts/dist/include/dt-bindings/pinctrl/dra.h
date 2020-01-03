@@ -1,14 +1,11 @@
-/*	$NetBSD: dra.h,v 1.1.1.2 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: dra.h,v 1.1.1.3 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This header provides constants for DRA pinctrl bindings.
  *
  * Copyright (C) 2013 Texas Instruments Incorporated - http://www.ti.com/
  * Author: Rajendra Nayak <rnayak@ti.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #ifndef _DT_BINDINGS_PINCTRL_DRA_H

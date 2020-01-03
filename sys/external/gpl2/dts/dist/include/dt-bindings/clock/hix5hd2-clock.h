@@ -1,12 +1,9 @@
-/*	$NetBSD: hix5hd2-clock.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: hix5hd2-clock.h,v 1.1.1.2 2020/01/03 14:33:04 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2014 Linaro Ltd.
  * Copyright (c) 2014 Hisilicon Limited.
- *
- * This program is free software; you can redistribute it and/or modify it
- * under the terms and conditions of the GNU General Public License,
- * version 2, as published by the Free Software Foundation.
  */
 
 #ifndef __DTS_HIX5HD2_CLOCK_H

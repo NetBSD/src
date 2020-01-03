@@ -1,11 +1,8 @@
-/*	$NetBSD: r8a7795-sysc.h,v 1.1.1.2 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: r8a7795-sysc.h,v 1.1.1.3 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 Glider bvba
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; version 2 of the License.
  */
 #ifndef __DT_BINDINGS_POWER_R8A7795_SYSC_H__
 #define __DT_BINDINGS_POWER_R8A7795_SYSC_H__

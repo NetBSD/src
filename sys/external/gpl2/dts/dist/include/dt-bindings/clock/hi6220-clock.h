@@ -1,13 +1,10 @@
-/*	$NetBSD: hi6220-clock.h,v 1.1.1.3 2017/10/28 10:30:32 jmcneill Exp $	*/
+/*	$NetBSD: hi6220-clock.h,v 1.1.1.4 2020/01/03 14:33:04 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2015 Hisilicon Limited.
  *
  * Author: Bintian Wang <bintian.wang@huawei.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 
 #ifndef __DT_BINDINGS_CLOCK_HI6220_H

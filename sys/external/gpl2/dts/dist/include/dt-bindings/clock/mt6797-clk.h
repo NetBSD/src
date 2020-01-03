@@ -1,17 +1,9 @@
-/*	$NetBSD: mt6797-clk.h,v 1.1.1.1 2017/07/27 18:10:50 jmcneill Exp $	*/
+/*	$NetBSD: mt6797-clk.h,v 1.1.1.2 2020/01/03 14:33:05 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (c) 2017 MediaTek Inc.
  * Author: Kevin Chen <kevin-cw.chen@mediatek.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  */
 
 #ifndef _DT_BINDINGS_CLK_MT6797_H

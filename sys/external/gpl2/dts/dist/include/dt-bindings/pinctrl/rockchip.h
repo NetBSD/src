@@ -1,20 +1,11 @@
-/*	$NetBSD: rockchip.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: rockchip.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Header providing constants for Rockchip pinctrl bindings.
  *
  * Copyright (c) 2013 MundoReader S.L.
  * Author: Heiko Stuebner <heiko@sntech.de>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
- *
- * This program is distributed in the hope that it will be useful,
- * but WITHOUT ANY WARRANTY; without even the implied warranty of
- * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
- * GNU General Public License for more details.
  */
 
 #ifndef __DT_BINDINGS_ROCKCHIP_PINCTRL_H__
@@ -61,9 +52,9 @@
 #define RK_PD7		31
 
 #define RK_FUNC_GPIO	0
-#define RK_FUNC_1	1
-#define RK_FUNC_2	2
-#define RK_FUNC_3	3
-#define RK_FUNC_4	4
+#define RK_FUNC_1	1 /* deprecated */
+#define RK_FUNC_2	2 /* deprecated */
+#define RK_FUNC_3	3 /* deprecated */
+#define RK_FUNC_4	4 /* deprecated */
 
 #endif

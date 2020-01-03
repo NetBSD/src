@@ -1,4 +1,4 @@
-/*	$NetBSD: jz4740-cgu.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: jz4740-cgu.h,v 1.1.1.3 2020/01/03 14:33:06 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -36,5 +36,6 @@
 #define JZ4740_CLK_ADC		19
 #define JZ4740_CLK_I2C		20
 #define JZ4740_CLK_AIC		21
+#define JZ4740_CLK_TCU		22
 
 #endif /* __DT_BINDINGS_CLOCK_JZ4740_CGU_H__ */

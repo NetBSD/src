@@ -1,12 +1,8 @@
-/*	$NetBSD: maxim,max9485.h,v 1.1.1.1 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: maxim,max9485.h,v 1.1.1.2 2020/01/03 14:33:04 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2018 Daniel Mack
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DT_BINDINGS_MAX9485_CLK_H

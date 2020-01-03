@@ -1,12 +1,12 @@
-/*	$NetBSD: phy.h,v 1.1.1.2 2017/11/30 19:40:51 jmcneill Exp $	*/
+/*	$NetBSD: phy.h,v 1.1.1.3 2020/01/03 14:33:02 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  *
  * This header provides constants for the phy framework
  *
  * Copyright (C) 2014 STMicroelectronics
  * Author: Gabriel Fernandez <gabriel.fernandez@st.com>
- * License terms:  GNU General Public License (GPL), version 2
  */
 
 #ifndef _DT_BINDINGS_PHY

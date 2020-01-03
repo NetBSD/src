@@ -1,11 +1,8 @@
-/*	$NetBSD: maxim,max77620.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: maxim,max77620.h,v 1.1.1.2 2020/01/03 14:33:05 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2016 NVIDIA CORPORATION. All rights reserved.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  *
  * Device Tree binding constants clocks for the Maxim 77620 PMIC.
  */

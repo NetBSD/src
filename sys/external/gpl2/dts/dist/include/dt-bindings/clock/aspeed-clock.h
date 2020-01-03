@@ -1,4 +1,4 @@
-/*	$NetBSD: aspeed-clock.h,v 1.1.1.3 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: aspeed-clock.h,v 1.1.1.4 2020/01/03 14:33:05 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR MIT) */
 
@@ -41,6 +41,8 @@
 #define ASPEED_CLK_BCLK			33
 #define ASPEED_CLK_MPLL			34
 #define ASPEED_CLK_24M			35
+#define ASPEED_CLK_MAC1RCLK		36
+#define ASPEED_CLK_MAC2RCLK		37
 
 #define ASPEED_RESET_XDMA		0
 #define ASPEED_RESET_MCTP		1

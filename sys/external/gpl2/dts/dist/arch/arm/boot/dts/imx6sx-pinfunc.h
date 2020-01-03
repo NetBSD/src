@@ -1,12 +1,8 @@
-/*	$NetBSD: imx6sx-pinfunc.h,v 1.1.1.1 2017/06/15 20:14:24 jmcneill Exp $	*/
+/*	$NetBSD: imx6sx-pinfunc.h,v 1.1.1.2 2020/01/03 14:33:32 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2014 Freescale Semiconductor, Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DTS_IMX6SX_PINFUNC_H

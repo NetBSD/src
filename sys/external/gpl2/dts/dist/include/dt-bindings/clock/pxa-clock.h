@@ -1,13 +1,9 @@
-/*	$NetBSD: pxa-clock.h,v 1.1.1.2 2019/01/22 14:57:01 jmcneill Exp $	*/
+/*	$NetBSD: pxa-clock.h,v 1.1.1.3 2020/01/03 14:33:04 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Inspired by original work from pxa2xx-regs.h by Nicolas Pitre
  * Copyright (C) 2014 Robert Jarzmik
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License as published by
- * the Free Software Foundation; either version 2 of the License, or
- * (at your option) any later version.
  */
 
 #ifndef __DT_BINDINGS_CLOCK_PXA2XX_H__

@@ -1,11 +1,8 @@
-/*	$NetBSD: r8a77970-sysc.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: r8a77970-sysc.h,v 1.1.1.3 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2017 Cogent Embedded Inc.
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
  */
 #ifndef __DT_BINDINGS_POWER_R8A77970_SYSC_H__
 #define __DT_BINDINGS_POWER_R8A77970_SYSC_H__

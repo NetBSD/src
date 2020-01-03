@@ -1,4 +1,4 @@
-/*	$NetBSD: ingenic,adc.h,v 1.1.1.1 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: ingenic,adc.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 
@@ -8,5 +8,6 @@
 /* ADC channel idx. */
 #define INGENIC_ADC_AUX		0
 #define INGENIC_ADC_BATTERY	1
+#define INGENIC_ADC_AUX2	2
 
 #endif
