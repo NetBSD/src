@@ -1,4 +1,4 @@
-# $NetBSD: GDIUM,v 1.36 2019/04/26 21:40:29 sevan Exp $
+# $NetBSD: GDIUM,v 1.37 2020/01/03 03:44:42 thorpej Exp $
 #
 # GDIUM machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/evbmips/conf/std.gdium"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GDIUM-$Revision: 1.36 $"
+#ident 		"GDIUM-$Revision: 1.37 $"
 
 maxusers	16
 
@@ -149,8 +149,7 @@ pci0		at bonito0
 voyager0	at pci0 dev ? function ?
 voyagerfb0	at voyager0
 iic*		at voyager0
-strtc*	at iic? addr 0x68
-options	STRTC_NO_USERRAM
+strtc*	at iic? addr 0x68 			# ST M41T80/81?
 lmtemp*	at iic? addr 0x48
 #stvii*	at iic? addr 0x40
 #genfb0		at pci0 dev ? function ?

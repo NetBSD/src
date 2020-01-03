@@ -1,4 +1,4 @@
-/*	$NetBSD: m41st84.c,v 1.26 2020/01/02 19:24:48 thorpej Exp $	*/
+/*	$NetBSD: m41st84.c,v 1.27 2020/01/03 03:44:42 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,9 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.26 2020/01/02 19:24:48 thorpej Exp $");
-
-#include "opt_strtc.h"
+__KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.27 2020/01/03 03:44:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -57,11 +55,44 @@ __KERNEL_RCSID(0, "$NetBSD: m41st84.c,v 1.26 2020/01/02 19:24:48 thorpej Exp $")
 
 #include "ioconf.h"
 
+struct strtc_model {
+	uint16_t	sm_model;
+	uint8_t		sm_nvram_start;
+	uint8_t		sm_nvram_size;
+	uint32_t	sm_flags;
+};
+
+#define	STRTC_F_HAS_WDOG	__BIT(0)
+
+static const struct strtc_model m41t80_model = {
+	.sm_model =		80,
+};
+
+static const struct strtc_model m41t81_model = {
+	.sm_model =		81,
+	.sm_flags =		STRTC_F_HAS_WDOG,
+};
+
+static const struct strtc_model m48t84_model = {
+	.sm_model =		84,
+	.sm_nvram_start =	M41ST84_USER_RAM,
+	.sm_nvram_size =	M41ST84_USER_RAM_SIZE,
+	.sm_flags =		STRTC_F_HAS_WDOG,
+};
+
+static const struct device_compatible_entry compat_data[] = {
+	{ "st,m41t80",		(uintptr_t)&m41t80_model },
+	{ "st,m41t81",		(uintptr_t)&m41t81_model },
+	{ "st,m41t84",		(uintptr_t)&m48t84_model },
+	{ NULL,			0 },
+};
+
 struct strtc_softc {
 	device_t sc_dev;
 	i2c_tag_t sc_tag;
 	int sc_address;
 	int sc_open;
+	const struct strtc_model *sc_model;
 	struct todr_chip_handle sc_todr;
 };
 
@@ -71,7 +102,6 @@ static int	strtc_match(device_t, cfdata_t, void *);
 CFATTACH_DECL_NEW(strtc, sizeof(struct strtc_softc),
     strtc_match, strtc_attach, NULL, NULL);
 
-#ifndef STRTC_NO_USERRAM
 dev_type_open(strtc_open);
 dev_type_close(strtc_close);
 dev_type_read(strtc_read);
@@ -91,7 +121,6 @@ const struct cdevsw strtc_cdevsw = {
 	.d_discard = nodiscard,
 	.d_flag = D_OTHER
 };
-#endif
 
 static int strtc_clock_read(struct strtc_softc *sc, struct clock_ymdhms *);
 static int strtc_gettime_ymdhms(struct todr_chip_handle *,
@@ -99,14 +128,47 @@ static int strtc_gettime_ymdhms(struct todr_chip_handle *,
 static int strtc_settime_ymdhms(struct todr_chip_handle *,
 				struct clock_ymdhms *);
 
+static const struct strtc_model *
+strtc_model_by_number(u_int model)
+{
+	const struct device_compatible_entry *dce;
+	const struct strtc_model *sm;
+
+	/* no model given; assume it's a 41T80 */
+	if (model == 0)
+		return &m41t80_model;
+	
+	for (dce = compat_data; dce->compat != NULL; dce++) {
+		sm = (void *)dce->data;
+		if (sm->sm_model == model)
+			return sm;
+	}
+	return NULL;
+}
+
+static const struct strtc_model *
+strtc_model_by_compat(const struct i2c_attach_args *ia)
+{
+	const struct device_compatible_entry *dce;
+	const struct strtc_model *sm = NULL;
+
+	if (iic_compatible_match(ia, compat_data, &dce))
+		sm = (void *)dce->data;
+	
+	return sm;
+}
+
 static int
 strtc_match(device_t parent, cfdata_t cf, void *arg)
 {
 	struct i2c_attach_args *ia = arg;
 	int match_result;
 
-	if (iic_use_direct_match(ia, cf, NULL, &match_result))
+	if (iic_use_direct_match(ia, cf, compat_data, &match_result))
 		return match_result;
+
+	if (strtc_model_by_number(cf->cf_flags & 0xffff) == NULL)
+		return 0;
 
 	/* indirect config - check typical address */
 	if (ia->ia_addr == M41ST84_ADDR)
@@ -120,16 +182,24 @@ strtc_attach(device_t parent, device_t self, void *arg)
 {
 	struct strtc_softc *sc = device_private(self);
 	struct i2c_attach_args *ia = arg;
+	const struct strtc_model *sm;
 
-#ifndef STRTC_NO_USERRAM
-	aprint_naive(": Real-time Clock/NVRAM\n");
-	aprint_normal(": M41ST84 Real-time Clock/NVRAM\n");
-#else
-	aprint_naive(": Real-time Clock\n");
-	aprint_normal(": M41T8x Real-time Clock\n");
-#endif
+	if ((sm = strtc_model_by_compat(ia)) == NULL)
+		sm = strtc_model_by_number(device_cfdata(self)->cf_flags);
+	
+	if (sm == NULL) {
+		aprint_error(": unable to determine model!\n");
+		return;
+	}
+
+	aprint_naive(": Real-time Clock%s\n",
+	    sm->sm_nvram_size ? "/NVRAM" : "");
+	aprint_normal(": M41T%d Real-time Clock%s", sm->sm_model,
+	    sm->sm_nvram_size ? "/NVRAM" : "");
+
 	sc->sc_tag = ia->ia_tag;
 	sc->sc_address = ia->ia_addr;
+	sc->sc_model = sm;
 	sc->sc_dev = self;
 	sc->sc_open = 0;
 	sc->sc_todr.cookie = sc;
@@ -142,7 +212,6 @@ strtc_attach(device_t parent, device_t self, void *arg)
 	todr_attach(&sc->sc_todr);
 }
 
-#ifndef STRTC_NO_USERRAM
 /*ARGSUSED*/
 int
 strtc_open(dev_t dev, int flag, int fmt, struct lwp *l)
@@ -185,15 +254,17 @@ strtc_read(dev_t dev, struct uio *uio, int flags)
 	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
-	if (uio->uio_offset >= M41ST84_USER_RAM_SIZE)
+	const struct strtc_model * const sm = sc->sc_model;
+
+	if (uio->uio_offset >= sm->sm_nvram_size)
 		return (EINVAL);
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
 		return (error);
 
-	while (uio->uio_resid && uio->uio_offset < M41ST84_USER_RAM_SIZE) {
+	while (uio->uio_resid && uio->uio_offset < sm->sm_nvram_size) {
 		a = (int)uio->uio_offset;
-		cmdbuf[0] = a + M41ST84_USER_RAM;
+		cmdbuf[0] = a + sm->sm_nvram_start;
 		if ((error = iic_exec(sc->sc_tag, I2C_OP_READ_WITH_STOP,
 				      sc->sc_address, cmdbuf, 1,
 				      &ch, 1, 0)) != 0) {
@@ -224,15 +295,17 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 	if ((sc = device_lookup_private(&strtc_cd, minor(dev))) == NULL)
 		return (ENXIO);
 
-	if (uio->uio_offset >= M41ST84_USER_RAM_SIZE)
+	const struct strtc_model * const sm = sc->sc_model;
+
+	if (uio->uio_offset >= sm->sm_nvram_size)
 		return (EINVAL);
 
 	if ((error = iic_acquire_bus(sc->sc_tag, 0)) != 0)
 		return (error);
 
-	while (uio->uio_resid && uio->uio_offset < M41ST84_USER_RAM_SIZE) {
+	while (uio->uio_resid && uio->uio_offset < sm->sm_nvram_size) {
 		a = (int)uio->uio_offset;
-		cmdbuf[0] = a + M41ST84_USER_RAM;
+		cmdbuf[0] = a + sm->sm_nvram_start;
 		if ((error = uiomove(&cmdbuf[1], 1, uio)) != 0)
 			break;
 
@@ -249,7 +322,6 @@ strtc_write(dev_t dev, struct uio *uio, int flags)
 
 	return (error);
 }
-#endif	/* STRTC_NO_USERRAM */
 
 static int
 strtc_gettime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
@@ -431,12 +503,17 @@ strtc_settime_ymdhms(struct todr_chip_handle *ch, struct clock_ymdhms *dt)
 	return (0);
 }
 
-#ifndef STRTC_NO_WATCHDOG
 void
 strtc_wdog_config(void *arg, uint8_t wd)
 {
 	struct strtc_softc *sc = arg;
 	uint8_t	cmdbuf[2];
+
+	if ((sc->sc_model->sm_flags & STRTC_F_HAS_WDOG) == 0) {
+		aprint_error_dev(sc->sc_dev,
+		    "strtc_wdog_config: watchdog timer not present\n");
+		return;
+	}
 
 	if (iic_acquire_bus(sc->sc_tag, 0)) {
 		aprint_error_dev(sc->sc_dev,
@@ -456,4 +533,3 @@ strtc_wdog_config(void *arg, uint8_t wd)
 
 	iic_release_bus(sc->sc_tag, 0);
 }
-#endif	/* STRTC_NO_WATCHDOG */

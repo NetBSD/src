@@ -1,4 +1,4 @@
-#	$NetBSD: IQ31244,v 1.74 2018/07/12 10:46:43 maxv Exp $
+#	$NetBSD: IQ31244,v 1.75 2020/01/03 03:44:42 thorpej Exp $
 #
 #	IQ31244 -- Intel IQ31244 Evaluation Board Kernel
 #
@@ -151,7 +151,7 @@ lmtemp0  	at iic0	addr 0x48	# LM75 temperature sensor
 lmtemp1  	at iic0	addr 0x49	# LM75 temperature sensor
 
 # RTC
-strtc0		at iic0 addr 0x68	# M41ST84 RTC & watchdog
+strtc0		at iic0 addr 0x68 flags 84 # M41ST84 RTC & watchdog
 
 # PCI-PCI bridges
 ppb*		at pci? dev ? function ?
