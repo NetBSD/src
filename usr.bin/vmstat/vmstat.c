@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.230 2019/12/27 09:45:27 msaitoh Exp $ */
+/* $NetBSD: vmstat.c,v 1.231 2020/01/03 19:13:54 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.230 2019/12/27 09:45:27 msaitoh Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.231 2020/01/03 19:13:54 thorpej Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,8 +150,8 @@ struct cpu_info {
  */
 struct nlist namelist[] =
 {
-#define	X_BOOTTIME	0
-	{ .n_name = "_boottime" },
+#define	X_TIMEBASEBIN	0
+	{ .n_name = "_timebasebin" },
 #define	X_HZ		1
 	{ .n_name = "_hz" },
 #define	X_STATHZ	2
@@ -642,9 +642,13 @@ getuptime(void)
 		}
 		clock_gettime(CLOCK_REALTIME, &now);
 	} else {
-		if (boottime.tv_sec == 0)
-			kread(namelist, X_BOOTTIME, &boottime,
-			    sizeof(boottime));
+		if (boottime.tv_sec == 0) {
+			struct bintime bt;
+
+			kread(namelist, X_TIMEBASEBIN, &bt,
+			    sizeof(bt));
+			bintime2timespec(&bt, &boottime);
+		}
 		if (kreadc(namelist, X_TIME_SECOND, &nowsec, sizeof(nowsec))) {
 			/*
 			 * XXX this assignment dance can be removed once
