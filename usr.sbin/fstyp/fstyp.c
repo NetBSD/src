@@ -1,4 +1,4 @@
-/*	$NetBSD: fstyp.c,v 1.12 2020/01/02 08:52:42 tkusumi Exp $	*/
+/*	$NetBSD: fstyp.c,v 1.13 2020/01/03 07:50:58 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
@@ -35,11 +35,11 @@
  *
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: fstyp.c,v 1.12 2020/01/02 08:52:42 tkusumi Exp $");
+__RCSID("$NetBSD: fstyp.c,v 1.13 2020/01/03 07:50:58 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/disklabel.h>
-#include <sys/dkio.h>
+#include <sys/disk.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <err.h>
@@ -165,6 +165,7 @@ type_check(const char *path, FILE *fp)
 	int error, fd;
 	struct stat sb;
 	struct disklabel dl;
+	struct dkwedge_info dkw;
 
 	fd = fileno(fp);
 
@@ -176,6 +177,8 @@ type_check(const char *path, FILE *fp)
 		return;
 
 	error = ioctl(fd, DIOCGDINFO, &dl);
+	if (error != 0)
+		error = ioctl(fd, DIOCGWEDGEINFO, &dkw);
 	if (error != 0)
 		errx(EXIT_FAILURE, "%s: not a disk", path);
 }
