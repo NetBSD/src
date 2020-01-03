@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.106 2020/01/03 03:44:42 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.107 2020/01/03 18:00:05 jmcneill Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -381,3 +381,8 @@ file	dev/i2c/tda19988.c			tdahdmi
 device	es8316ac
 attach	es8316ac at iic
 file	dev/i2c/es8316ac.c			es8316ac
+
+# CellWise CW2015 Fuel Gauge IC
+device	cwfg: sysmon_envsys
+attach	cwfg at iic
+file	dev/i2c/cwfg.c				cwfg
