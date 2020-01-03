@@ -1,4 +1,4 @@
-#	$NetBSD: DNS323,v 1.12 2018/07/12 10:46:43 maxv Exp $
+#	$NetBSD: DNS323,v 1.13 2020/01/03 03:44:42 thorpej Exp $
 #
 #  DNS323 -- D-Link. DNS-323 platform kernel
 #
@@ -32,5 +32,3 @@ makeoptions	COPY_SYMTAB=1
 g760a*	at iic? addr 0x3e		# G760a fan speed controller
 lmtemp*	at iic? addr 0x48		# LM75 temperature sensor
 strtc* at iic? addr 0x68		# ST M41T80 Real-Time Clock
-options 	STRTC_NO_USERRAM
-options 	STRTC_NO_WATCHDOG
