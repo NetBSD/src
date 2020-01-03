@@ -280,10 +280,6 @@
 	status = "okay";
 };
 
-&usb3 {
-	status = "okay";
-};
-
 &usb3phy {
 	phy-supply = <&reg_usb_vbus>;
 	status = "okay";
