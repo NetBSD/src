@@ -622,7 +622,7 @@ ipv6nd_applyra(struct dhcpcd_ctx *ctx, struct interface *ifp)
 		return;
 
 	state->retrans = rap->retrans;
-	if (if_applyra(rap) == -1)
+	if (if_applyra(rap) == -1 && errno != ENOENT)
 		logerr(__func__);
 }
 
