@@ -1,4 +1,4 @@
-/*	$NetBSD: g12a-aoclkc.h,v 1.1.1.1 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: g12a-aoclkc.h,v 1.1.1.2 2020/01/03 14:33:05 skrll Exp $	*/
 
 /* SPDX-License-Identifier: (GPL-2.0+ OR BSD-3-Clause) */
 /*
@@ -28,7 +28,9 @@
 #define CLKID_AO_M4_FCLK	13
 #define CLKID_AO_M4_HCLK	14
 #define CLKID_AO_CLK81		15
+#define CLKID_AO_SAR_ADC_SEL	16
 #define CLKID_AO_SAR_ADC_CLK	18
+#define CLKID_AO_CTS_OSCIN	19
 #define CLKID_AO_32K		23
 #define CLKID_AO_CEC		27
 #define CLKID_AO_CTS_RTC_OSCIN	28

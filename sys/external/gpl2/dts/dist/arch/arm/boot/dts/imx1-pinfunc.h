@@ -1,14 +1,8 @@
-/*	$NetBSD: imx1-pinfunc.h,v 1.1.1.1 2017/06/15 20:14:24 jmcneill Exp $	*/
+/*	$NetBSD: imx1-pinfunc.h,v 1.1.1.2 2020/01/03 14:33:06 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-or-later */
 /*
  * Copyright (C) 2014 Alexander Shiyan <shc_work@mail.ru>
- *
- * The code contained herein is licensed under the GNU General Public
- * License. You may obtain a copy of the GNU General Public License
- * Version 2 or later at the following locations:
- *
- * http://www.opensource.org/licenses/gpl-license.html
- * http://www.gnu.org/copyleft/gpl.html
  */
 
 #ifndef __DTS_IMX1_PINFUNC_H
