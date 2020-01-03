@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.774 2019/10/06 17:22:29 martin Exp $
+$NetBSD: usbdevs,v 1.775 2020/01/03 12:35:33 jmcneill Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -577,6 +577,7 @@ vendor ARDUINO		0x2341	Arduino SA
 vendor TPLINK		0x2357	TP-Link
 vendor WMR		0x2405	West Mountain Radio
 vendor TRIPPLITE	0x2478	Tripp-Lite
+vendor HAILUCK		0x258a	HAILUCK Co., Ltd
 vendor HIROSE		0x2631	Hirose Electric
 vendor NHJ		0x2770	NHJ
 vendor PLANEX		0x2c02	Planex Communications
@@ -1731,6 +1732,9 @@ product GUILLEMOT RTL8192CU	0xe035	RTL8192CU
 product HAGIWARA FGSM		0x0002	FlashGate SmartMedia Card Reader
 product HAGIWARA FGCF		0x0003	FlashGate CompactFlash Card Reader
 product HAGIWARA FG		0x0005	FlashGate
+
+/* HAILUCK Co., Ltd products */
+product HAILUCK KEYBOARD	0x001e	Keyboard
 
 /* HAL Corporation products */
 product HAL IMR001		0x0011	Crossam2+USB IR commander
