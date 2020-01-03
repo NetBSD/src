@@ -1,11 +1,10 @@
-/*	$NetBSD: at91.h,v 1.1.1.1 2017/06/15 20:14:23 jmcneill Exp $	*/
+/*	$NetBSD: at91.h,v 1.1.1.2 2020/01/03 14:33:03 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * This header provides macros for at91 dma bindings.
  *
  * Copyright (C) 2013 Ludovic Desroches <ludovic.desroches@atmel.com>
- *
- * GPLv2 only
  */
 
 #ifndef __DT_BINDINGS_AT91_DMA_H__

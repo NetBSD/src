@@ -1,12 +1,8 @@
-/*	$NetBSD: ath79-clk.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: ath79-clk.h,v 1.1.1.3 2020/01/03 14:33:04 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright (C) 2014, 2016 Antony Pavlov <antonynpavlov@gmail.com>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DT_BINDINGS_ATH79_CLK_H

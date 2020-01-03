@@ -1,6 +1,6 @@
-/*	$NetBSD: mt2712-pinfunc.h,v 1.1.1.1 2018/06/27 16:27:08 jmcneill Exp $	*/
+/*	$NetBSD: mt2712-pinfunc.h,v 1.1.1.2 2020/01/03 14:33:38 skrll Exp $	*/
 
-// SPDX-License-Identifier: GPL-2.0
+/* SPDX-License-Identifier: GPL-2.0 */
 /*
  * Copyright (C) 2018 MediaTek Inc.
  * Author: Zhiyong Tao <zhiyong.tao@mediatek.com>

@@ -1,12 +1,8 @@
-/*	$NetBSD: imx5-clock.h,v 1.1.1.2 2019/05/25 11:29:13 jmcneill Exp $	*/
+/*	$NetBSD: imx5-clock.h,v 1.1.1.3 2020/01/03 14:33:05 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * Copyright 2013 Lucas Stach, Pengutronix <l.stach@pengutronix.de>
- *
- * This program is free software; you can redistribute it and/or modify
- * it under the terms of the GNU General Public License version 2 as
- * published by the Free Software Foundation.
- *
  */
 
 #ifndef __DT_BINDINGS_CLOCK_IMX5_H

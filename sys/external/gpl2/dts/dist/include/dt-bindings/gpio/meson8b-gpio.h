@@ -1,17 +1,11 @@
-/*	$NetBSD: meson8b-gpio.h,v 1.1.1.2 2018/04/28 18:25:53 jmcneill Exp $	*/
+/*	$NetBSD: meson8b-gpio.h,v 1.1.1.3 2020/01/03 14:33:02 skrll Exp $	*/
 
+/* SPDX-License-Identifier: GPL-2.0-only */
 /*
  * GPIO definitions for Amlogic Meson8b SoCs
  *
  * Copyright (C) 2015 Endless Mobile, Inc.
  * Author: Carlo Caione <carlo@endlessm.com>
- *
- * This program is free software; you can redistribute it and/or
- * modify it under the terms of the GNU General Public License
- * version 2 as published by the Free Software Foundation.
- *
- * You should have received a copy of the GNU General Public License
- * along with this program. If not, see <http://www.gnu.org/licenses/>.
  */
 
 #ifndef _DT_BINDINGS_MESON8B_GPIO_H

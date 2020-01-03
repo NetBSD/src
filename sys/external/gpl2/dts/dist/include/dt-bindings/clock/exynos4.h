@@ -1,4 +1,4 @@
-/*	$NetBSD: exynos4.h,v 1.1.1.3 2019/01/22 14:57:02 jmcneill Exp $	*/
+/*	$NetBSD: exynos4.h,v 1.1.1.4 2020/01/03 14:33:04 skrll Exp $	*/
 
 /* SPDX-License-Identifier: GPL-2.0 */
 /*
@@ -189,6 +189,7 @@
 #define CLK_MIPI_HSI		349 /* Exynos4210 only */
 #define CLK_PIXELASYNCM0	351
 #define CLK_PIXELASYNCM1	352
+#define CLK_ASYNC_G3D		353 /* Exynos4x12 only */
 #define CLK_PWM_ISP_SCLK	379 /* Exynos4x12 only */
 #define CLK_SPI0_ISP_SCLK	380 /* Exynos4x12 only */
 #define CLK_SPI1_ISP_SCLK	381 /* Exynos4x12 only */
