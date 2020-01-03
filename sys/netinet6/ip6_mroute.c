@@ -1,4 +1,4 @@
-/*	$NetBSD: ip6_mroute.c,v 1.130 2019/07/24 02:38:29 msaitoh Exp $	*/
+/*	$NetBSD: ip6_mroute.c,v 1.131 2020/01/03 08:53:14 maxv Exp $	*/
 /*	$KAME: ip6_mroute.c,v 1.49 2001/07/25 09:21:18 jinmei Exp $	*/
 
 /*
@@ -117,7 +117,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.130 2019/07/24 02:38:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip6_mroute.c,v 1.131 2020/01/03 08:53:14 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -540,9 +540,8 @@ ip6_mrouter_done(void)
 		for (mifi = 0; mifi < nummifs; mifi++) {
 			if (mif6table[mifi].m6_ifp &&
 			    !(mif6table[mifi].m6_flags & MIFF_REGISTER)) {
-				sin6.sin6_family = AF_INET6;
-				sin6.sin6_addr = in6addr_any;
 				ifp = mif6table[mifi].m6_ifp;
+				sockaddr_in6_init(&sin6, &in6addr_any, 0, 0, 0);
 				if_mcast_op(ifp, SIOCDELMULTI,
 				    sin6tocsa(&sin6));
 			}
@@ -674,8 +673,7 @@ add_m6if(struct mif6ctl *mifcp)
 		 * Enable promiscuous reception of all IPv6 multicasts
 		 * from the interface.
 		 */
-		sin6.sin6_family = AF_INET6;
-		sin6.sin6_addr = in6addr_any;
+		sockaddr_in6_init(&sin6, &in6addr_any, 0, 0, 0);
 		error = if_mcast_op(ifp, SIOCADDMULTI, sin6tosa(&sin6));
 		splx(s);
 		if (error)
@@ -732,8 +730,7 @@ del_m6if(mifi_t *mifip)
 		 */
 		ifp = mifp->m6_ifp;
 
-		sin6.sin6_family = AF_INET6;
-		sin6.sin6_addr = in6addr_any;
+		sockaddr_in6_init(&sin6, &in6addr_any, 0, 0, 0);
 		if_mcast_op(ifp, SIOCDELMULTI, sin6tosa(&sin6));
 	} else {
 		if (reg_mif_num != (mifi_t)-1) {
