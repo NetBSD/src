@@ -1,4 +1,4 @@
-/* $NetBSD: anx_dp.h,v 1.1 2019/12/19 00:23:57 jakllsch Exp $ */
+/* $NetBSD: anx_dp.h,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -73,5 +73,7 @@ struct anxdp_softc {
 
 int		anxdp_attach(struct anxdp_softc *);
 int		anxdp_bind(struct anxdp_softc *, struct drm_encoder *);
+
+void		anxdp_dpms(struct anxdp_softc *, int);
 
 #endif /* !_DEV_IC_ANXDP_H */
