@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_90_mod.c,v 1.2 2019/10/28 23:32:15 christos Exp $	*/
+/*	$NetBSD: compat_90_mod.c,v 1.3 2020/01/04 02:40:22 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.2 2019/10/28 23:32:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_90_mod.c,v 1.3 2020/01/04 02:40:22 pgoyette Exp $");
 
 #include <sys/systm.h>
 #include <sys/module.h>
@@ -77,3 +77,5 @@ compat_90_modcmd(modcmd_t cmd, void *arg)
 		return ENOTTY;
 	}
 }
+
+struct timespec boottime;	/* For access by older vmstat */
