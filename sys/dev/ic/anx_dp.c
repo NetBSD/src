@@ -1,4 +1,4 @@
-/* $NetBSD: anx_dp.c,v 1.1 2019/12/19 00:23:57 jakllsch Exp $ */
+/* $NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.1 2019/12/19 00:23:57 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: anx_dp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -989,6 +989,21 @@ out:
 		anxdp_init_aux(sc);
 
 	return ret;
+}
+
+void
+anxdp_dpms(struct anxdp_softc *sc, int mode)
+{
+	switch (mode) {
+	case DRM_MODE_DPMS_ON:
+		pmf_event_inject(NULL, PMFE_DISPLAY_ON);
+		break;
+	case DRM_MODE_DPMS_STANDBY:
+	case DRM_MODE_DPMS_SUSPEND:
+	case DRM_MODE_DPMS_OFF:
+		pmf_event_inject(NULL, PMFE_DISPLAY_OFF);
+		break;
+	}
 }
 
 int
