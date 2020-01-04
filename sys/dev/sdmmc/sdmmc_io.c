@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc_io.c,v 1.18 2019/10/28 06:20:01 mlelstv Exp $	*/
+/*	$NetBSD: sdmmc_io.c,v 1.19 2020/01/04 22:28:26 mlelstv Exp $	*/
 /*	$OpenBSD: sdmmc_io.c,v 1.10 2007/09/17 01:33:33 krw Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Routines for SD I/O cards. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.18 2019/10/28 06:20:01 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc_io.c,v 1.19 2020/01/04 22:28:26 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -52,7 +52,7 @@ struct sdmmc_intr_handler {
 };
 
 static int	sdmmc_io_rw_direct(struct sdmmc_softc *,
-		    struct sdmmc_function *, int, u_char *, int);
+		    struct sdmmc_function *, int, u_char *, int, bool);
 static int	sdmmc_io_rw_extended(struct sdmmc_softc *,
 		    struct sdmmc_function *, int, u_char *, int, int);
 #if 0
@@ -341,7 +341,7 @@ sdmmc_io_function_disable(struct sdmmc_function *sf)
 
 static int
 sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
-    int reg, u_char *datap, int arg)
+    int reg, u_char *datap, int arg, bool toutok)
 {
 	struct sdmmc_command cmd;
 	int error;
@@ -364,12 +364,14 @@ sdmmc_io_rw_direct(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	cmd.c_opcode = SD_IO_RW_DIRECT;
 	cmd.c_arg = arg;
 	cmd.c_flags = SCF_CMD_AC | SCF_RSP_R5;
+	if (toutok)
+		cmd.c_flags |= SCF_TOUT_OK;
 
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error == 0)
 		*datap = SD_R5_DATA(cmd.c_resp);
 
-	if (error) {
+	if (error && error != ETIMEDOUT) {
 		device_printf(sc->sc_dev,
 		    "direct I/O error %d, r=%d p=%p %s\n",
 		    error, reg, datap,
@@ -439,7 +441,7 @@ sdmmc_io_read_1(struct sdmmc_function *sf, int reg)
 	/* Don't lock */
 
 	(void)sdmmc_io_rw_direct(sf->sc, sf, reg, (u_char *)&data,
-	    SD_ARG_CMD52_READ);
+	    SD_ARG_CMD52_READ, false);
 	return data;
 }
 
@@ -450,7 +452,7 @@ sdmmc_io_write_1(struct sdmmc_function *sf, int reg, uint8_t data)
 	/* Don't lock */
 
 	(void)sdmmc_io_rw_direct(sf->sc, sf, reg, (u_char *)&data,
-	    SD_ARG_CMD52_WRITE);
+	    SD_ARG_CMD52_WRITE, false);
 }
 
 uint16_t
@@ -622,7 +624,7 @@ sdmmc_io_xchg(struct sdmmc_softc *sc, struct sdmmc_function *sf,
 	/* Don't lock */
 
 	return sdmmc_io_rw_direct(sc, sf, reg, datap,
-	    SD_ARG_CMD52_WRITE|SD_ARG_CMD52_EXCHANGE);
+	    SD_ARG_CMD52_WRITE|SD_ARG_CMD52_EXCHANGE, false);
 }
 #endif
 
@@ -635,7 +637,7 @@ sdmmc_io_function_abort(struct sdmmc_function *sf)
 	u_char data = CCCR_CTL_AS(sf->number);
 
 	return sdmmc_io_rw_direct(sf->sc, NULL, SD_IO_CCCR_CTL, &data,
-	    SD_ARG_CMD52_WRITE);
+	    SD_ARG_CMD52_WRITE, true);
 }
 
 /*
@@ -647,7 +649,7 @@ sdmmc_io_reset(struct sdmmc_softc *sc)
 	u_char data = CCCR_CTL_RES;
 
 	if (sdmmc_io_rw_direct(sc, NULL, SD_IO_CCCR_CTL, &data,
-	    SD_ARG_CMD52_WRITE) == 0)
+	    SD_ARG_CMD52_WRITE, true) == 0)
 		sdmmc_pause(100000, NULL); /* XXX SDMMC_LOCK */
 }
 
