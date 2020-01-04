@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.44 2019/09/22 22:59:40 christos Exp $	*/
+/*	$NetBSD: dump.c,v 1.45 2020/01/04 22:05:52 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.44 2019/09/22 22:59:40 christos Exp $");
+__RCSID("$NetBSD: dump.c,v 1.45 2020/01/04 22:05:52 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -558,7 +558,10 @@ syscallprint(struct ktr_header *kth)
 		break;
 
 	case SYS_compat_16___sigaction14 :
-		xwprintf("(%s", signals[(int)*ap].name);
+		if ((int)*ap < 0 || (int)*ap >= MAXSIGNALS)
+			xwprintf("(%s", signals[(int)*ap].name);
+		else
+			xwprintf("(%d", (int)*ap);
 		ap++;
 		argsize -= sizeof(register_t);
 		break;
@@ -630,7 +633,7 @@ sysretprint(struct ktr_header *kth)
 		xwprintf(" RESTART");
 	else if (error) {
 		xwprintf(" Err#%d", error);
-		if (error < MAXERRNOS && error >= -2)
+		if (error < MAXERRNOS && error >= 0)
 			xwprintf(" %s", errnos[error].name);
 	} else
 		switch (ktr->ktr_code) {
