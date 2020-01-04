@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer2.c,v 1.2 2020/01/01 11:46:43 tkusumi Exp $      */
+/*        $NetBSD: hammer2.c,v 1.3 2020/01/04 03:43:18 tkusumi Exp $      */
 
 /*-
  * Copyright (c) 2017-2019 The DragonFly Project
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.2 2020/01/01 11:46:43 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.3 2020/01/04 03:43:18 tkusumi Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -74,7 +74,7 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 	*media_bytes = bytes;
 
 	if (!bytes) {
-		warnx("Blockref has no data");
+		warnx("blockref has no data");
 		return (NULL);
 	}
 
@@ -87,17 +87,17 @@ read_media(FILE *fp, const hammer2_blockref_t *bref, size_t *media_bytes)
 		io_bytes <<= 1;
 
 	if (io_bytes > sizeof(hammer2_media_data_t)) {
-		warnx("Invalid I/O bytes");
+		warnx("invalid I/O bytes");
 		return (NULL);
 	}
 
 	if (fseek(fp, (long int)io_base, SEEK_SET) == -1) {
-		warnx("Failed to seek media");
+		warnx("failed to seek media");
 		return (NULL);
 	}
 	media = read_buf(fp, (off_t)io_base, io_bytes);
 	if (media == NULL) {
-		warnx("Failed to read media");
+		warnx("failed to read media");
 		return (NULL);
 	}
 	if (boff)
@@ -204,7 +204,7 @@ read_label(FILE *fp, char *label, size_t size)
 	hammer2_media_data_t *vols[HAMMER2_NUM_VOLHDRS], *media;
 	size_t bytes;
 	bool res = false;
-	int i, best_i, error = 0;
+	int i, best_i, error = 1;
 	const char *pfs;
 	char *devname;
 
@@ -226,22 +226,19 @@ read_label(FILE *fp, char *label, size_t size)
 		}
 	}
 	if (best_i == -1) {
-		warnx("Failed to find best zone");
-		error = 1;
-		goto done;
+		warnx("failed to find best zone");
+		goto fail;
 	}
 
 	bref = &vols[best_i]->voldata.sroot_blockset.blockref[0];
 	if (bref->type != HAMMER2_BREF_TYPE_INODE) {
-		warnx("Blockref type is not inode");
-		error = 1;
-		goto done;
+		warnx("blockref type is not inode");
+		goto fail;
 	}
 
 	media = read_media(fp, bref, &bytes);
 	if (media == NULL) {
-		error = 1;
-		goto done;
+		goto fail;
 	}
 
 	/*
@@ -267,8 +264,7 @@ read_label(FILE *fp, char *label, size_t size)
 		pfs++;
 
 	if (strlen(pfs) > HAMMER2_INODE_MAXNAME) {
-		error = 1;
-		goto done;
+		goto fail;
 	}
 	devname = extract_device_name(devpath);
 #else
@@ -295,7 +291,8 @@ read_label(FILE *fp, char *label, size_t size)
 	if (devname)
 		free(devname);
 	free(media);
-done:
+	error = 0;
+fail:
 	for (i = 0; i < HAMMER2_NUM_VOLHDRS; i++)
 		free(vols[i]);
 
@@ -310,10 +307,10 @@ fstyp_hammer2(FILE *fp, char *label, size_t size)
 
 	voldata = read_voldata(fp);
 	if (test_voldata(voldata))
-		goto done;
+		goto fail;
 
 	error = read_label(fp, label, size);
-done:
+fail:
 	free(voldata);
 	return (error);
 }
