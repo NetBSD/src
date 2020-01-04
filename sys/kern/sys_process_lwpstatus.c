@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_lwpstatus.c,v 1.1 2019/12/26 08:52:38 kamil Exp $	*/
+/*	$NetBSD: sys_process_lwpstatus.c,v 1.1 2020/01/04 03:46:19 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,19 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_lwpstatus.c,v 1.1 2019/12/26 08:52:38 kamil Exp $");
-
-#ifdef _KERNEL_OPT
-#include "opt_ptrace.h"
-#include "opt_ktrace.h"
-#include "opt_pax.h"
-#include "opt_compat_netbsd32.h"
-#endif
-
-#if defined(__HAVE_COMPAT_NETBSD32) && !defined(COMPAT_NETBSD32) \
-    && !defined(_RUMPKERNEL)
-#define COMPAT_NETBSD32
-#endif
+__KERNEL_RCSID(0, "$NetBSD: sys_process_lwpstatus.c,v 1.1 2020/01/04 03:46:19 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
