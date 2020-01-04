@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.128 2020/01/04 12:21:55 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.129 2020/01/04 14:14:35 skrll Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -20,8 +20,8 @@ makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
 makeoptions	DTS="
 	bcm2711-rpi-4-b.dts
 	bcm2837-rpi-3-a-plus.dts
-	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-cm3-io3.dts
 
 	meson-gxbb-nanopi-k2.dts
