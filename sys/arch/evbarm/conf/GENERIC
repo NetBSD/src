@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.68 2019/11/29 20:54:17 jmcneill Exp $
+#	$NetBSD: GENERIC,v 1.69 2020/01/04 14:24:51 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -49,8 +49,8 @@ makeoptions	DTS="
 
 	bcm2836-rpi-2-b.dts
 	bcm2837-rpi-3-a-plus.dts
-	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-3-b-plus.dts
+	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-cm3-io3.dts
 
 	exynos5422-odroidhc1.dts
@@ -148,8 +148,8 @@ makeoptions	DTS="
 	sun5i-a13-q8-tablet.dts
 	sun5i-a13-utoo-p66.dts
 
-	sun5i-gr8-evb.dts
 	sun5i-gr8-chip-pro.dts
+	sun5i-gr8-evb.dts
 
 	sun5i-r8-chip.dts
 	sun5i-r8-pocketchip.dts
@@ -209,9 +209,9 @@ makeoptions	DTS="
 	sun8i-h3-nanopi-duo2.dts
 	sun8i-h3-nanopi-m1-plus.dts
 	sun8i-h3-nanopi-m1.dts
-	sun8i-h3-nanopi-r1.dts
-	sun8i-h3-nanopi-neo.dts
 	sun8i-h3-nanopi-neo-air.dts
+	sun8i-h3-nanopi-neo.dts
+	sun8i-h3-nanopi-r1.dts
 	sun8i-h3-orangepi-2.dts
 	sun8i-h3-orangepi-lite.dts
 	sun8i-h3-orangepi-one.dts
@@ -244,8 +244,8 @@ makeoptions	DTS="
 	zynq-zc770-xm013.dts
 	zynq-zed.dts
 	zynq-zturn.dts
-	zynq-zybo.dts
 	zynq-zybo-z7.dts
+	zynq-zybo.dts
 "
 
 options 	CPU_CORTEXA5
