@@ -1,4 +1,4 @@
-/*	$NetBSD: xen_pmap.c,v 1.34 2019/12/15 19:24:11 ad Exp $	*/
+/*	$NetBSD: xen_pmap.c,v 1.35 2020/01/04 22:49:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Manuel Bouyer.
@@ -101,7 +101,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.34 2019/12/15 19:24:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xen_pmap.c,v 1.35 2020/01/04 22:49:20 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -214,18 +214,18 @@ pmap_extract_ma(struct pmap *pmap, vaddr_t va, paddr_t *pap)
 	struct pmap *pmap2;
 	int lvl;
 
-	kpreempt_disable();
+	mutex_enter(&pmap->pm_lock);
 	pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
 	if (!pmap_pdes_valid(va, pdes, &pde, &lvl)) {
-		pmap_unmap_ptes(pmap, pmap2, NULL);
-		kpreempt_enable();
+		pmap_unmap_ptes(pmap, pmap2);
+		mutex_exit(&pmap->pm_lock);
 		return false;
 	}
 
 	KASSERT(lvl == 1);
 	pte = ptes[pl1_i(va)];
-	pmap_unmap_ptes(pmap, pmap2, NULL);
-	kpreempt_enable();
+	pmap_unmap_ptes(pmap, pmap2);
+	mutex_exit(&pmap->pm_lock);
 
 	if (__predict_true((pte & PTE_P) != 0)) {
 		if (pap != NULL)
@@ -305,7 +305,7 @@ pmap_unmap_recursive_entries(void)
 	 * XXX jym@ : find a way to drain per-CPU caches to. pool_cache_inv
 	 * does not do that.
 	 */
-	pool_cache_invalidate(&pmap_pdp_cache);
+	pool_cache_invalidate(&pmap_cache);
 
 	mutex_enter(&pmaps_lock);
 	LIST_FOREACH(pm, &pmaps, pm_list) {

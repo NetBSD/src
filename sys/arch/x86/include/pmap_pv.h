@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.8 2020/01/02 21:39:42 ad Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.9 2020/01/04 22:49:20 ad Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -55,8 +55,7 @@ struct pv_pte {
 
 struct pv_entry {
 	struct pv_pte pve_pte;		/* should be the first member */
-	LIST_ENTRY(pv_entry) pve_list;	/* on pv_head::pvh_list */
-	SLIST_ENTRY(pv_entry) pve_hash;
+	LIST_ENTRY(pv_entry) pve_list;	/* on pmap_page::pp_pvlist */
 };
 #define	pve_next	pve_list.le_next
 
@@ -69,16 +68,11 @@ struct pmap_page {
 		/* PP_EMBEDDED */
 		struct pv_pte u_pte;
 
-		/* !PP_EMBEDDED */
-		struct pv_head {
-			LIST_HEAD(, pv_entry) pvh_list;
-		} u_head;
-
 		/* PTPs */
 		struct vm_page *u_link;
 	} pp_u;
+	LIST_HEAD(, pv_entry) pp_pvlist;
 #define	pp_pte	pp_u.u_pte
-#define	pp_head	pp_u.u_head
 #define	pp_link	pp_u.u_link
 	uint8_t pp_flags;
 	uint8_t pp_attrs;
@@ -90,6 +84,6 @@ struct pmap_page {
 /* pp_flags */
 #define	PP_EMBEDDED	1
 
-#define	PMAP_PAGE_INIT(pp)	/* none */
+#define	PMAP_PAGE_INIT(pp)	LIST_INIT(&(pp)->pp_pvlist)
 
 #endif /* !_X86_PMAP_PV_H_ */
