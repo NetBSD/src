@@ -1,4 +1,4 @@
-/* $NetBSD: pwm_backlight.c,v 1.5 2020/01/01 12:55:03 jmcneill Exp $ */
+/* $NetBSD: pwm_backlight.c,v 1.6 2020/01/04 12:09:54 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.5 2020/01/01 12:55:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pwm_backlight.c,v 1.6 2020/01/04 12:09:54 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -48,6 +48,7 @@ struct pwm_backlight_softc {
 
 	u_int			*sc_levels;
 	u_int			sc_nlevels;
+	u_int			sc_curlevel;
 
 	char			*sc_levelstr;
 
@@ -130,6 +131,8 @@ pwm_backlight_attach(device_t parent, device_t self, void *aux)
 		/* set the default level now */
 		pwm_backlight_set(sc, default_level);
 	}
+
+	sc->sc_curlevel = pwm_backlight_get(sc);
 
 	pwm_backlight_sysctl_init(sc);
 	pwm_backlight_pmf_init(sc);
@@ -247,12 +250,21 @@ failed:
 }
 
 static void
+pwm_backlight_enable(struct pwm_backlight_softc *sc, int enable)
+{
+	if (sc->sc_pin)
+		fdtbus_gpio_write(sc->sc_pin, enable);
+	else
+		pwm_backlight_set(sc, enable ? sc->sc_curlevel : 0);
+}
+
+static void
 pwm_backlight_display_on(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	if (sc->sc_pin && sc->sc_lid_state)
-		fdtbus_gpio_write(sc->sc_pin, 1);
+	if (sc->sc_lid_state)
+		pwm_backlight_enable(sc, 1);
 }
 
 static void
@@ -260,8 +272,7 @@ pwm_backlight_display_off(device_t dev)
 {
 	struct pwm_backlight_softc * const sc = device_private(dev);
 
-	if (sc->sc_pin)
-		fdtbus_gpio_write(sc->sc_pin, 0);
+	pwm_backlight_enable(sc, 0);
 }
 
 static void
@@ -271,8 +282,7 @@ pwm_backlight_chassis_lid_open(device_t dev)
 
 	sc->sc_lid_state = true;
 
-	if (sc->sc_pin)
-		fdtbus_gpio_write(sc->sc_pin, 1);
+	pwm_backlight_enable(sc, 1);
 }
 
 static void
@@ -282,8 +292,7 @@ pwm_backlight_chassis_lid_close(device_t dev)
 
 	sc->sc_lid_state = false;
 
-	if (sc->sc_pin)
-		fdtbus_gpio_write(sc->sc_pin, 0);
+	pwm_backlight_enable(sc, 0);
 }
 
 static void
