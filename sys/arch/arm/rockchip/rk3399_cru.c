@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.18 2019/12/18 18:40:19 jakllsch Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.19 2020/01/04 13:32:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.18 2019/12/18 18:40:19 jakllsch Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.19 2020/01/04 13:32:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,6 +181,7 @@ static const struct rk_cru_cpu_rate armclkb_rates[] = {
         RK3399_CPUB_RATE(2088000000, 1, 10, 10),
         RK3399_CPUB_RATE(2040000000, 1, 10, 10),
         RK3399_CPUB_RATE(2016000000, 1, 9, 9),
+        RK3399_CPUB_RATE(2000000000, 1, 9, 9),
         RK3399_CPUB_RATE(1992000000, 1, 9, 9),
         RK3399_CPUB_RATE(1896000000, 1, 9, 9),
         RK3399_CPUB_RATE(1800000000, 1, 8, 8),
