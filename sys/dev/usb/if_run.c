@@ -1,4 +1,4 @@
-/*	$NetBSD: if_run.c,v 1.34 2019/12/19 15:17:30 gson Exp $	*/
+/*	$NetBSD: if_run.c,v 1.35 2020/01/04 22:30:06 mlelstv Exp $	*/
 /*	$OpenBSD: if_run.c,v 1.90 2012/03/24 15:11:04 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.34 2019/12/19 15:17:30 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.35 2020/01/04 22:30:06 mlelstv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_run.c,v 1.34 2019/12/19 15:17:30 gson Exp $");
 #include <sys/module.h>
 #include <sys/conf.h>
 #include <sys/device.h>
+#include <sys/atomic.h>
 
 #include <sys/bus.h>
 #include <machine/endian.h>
@@ -1784,10 +1785,11 @@ run_task(void *arg)
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
 		splx(s);
+		membar_consumer();
 		/* callback */
 		cmd->cb(sc, cmd->data);
 		s = splusb();
-		ring->queued--;
+		atomic_dec_uint(&ring->queued);
 		ring->next = (ring->next + 1) % RUN_HOST_CMD_RING_COUNT;
 	}
 	wakeup(ring);
@@ -1810,10 +1812,11 @@ run_do_async(struct run_softc *sc, void (*cb)(struct run_softc *, void *),
 	cmd->cb = cb;
 	KASSERT(len <= sizeof(cmd->data));
 	memcpy(cmd->data, arg, len);
+	membar_producer();
 	ring->cur = (ring->cur + 1) % RUN_HOST_CMD_RING_COUNT;
 
 	/* if there is no pending command already, schedule a task */
-	if (++ring->queued == 1)
+	if (atomic_inc_uint_nv(&ring->queued) == 1)
 		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 	splx(s);
 }
