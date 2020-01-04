@@ -1,4 +1,4 @@
-/*	$NetBSD: if_runvar.h,v 1.6 2019/10/08 07:30:58 mlelstv Exp $	*/
+/*	$NetBSD: if_runvar.h,v 1.7 2020/01/04 22:30:06 mlelstv Exp $	*/
 /*	$OpenBSD: if_runvar.h,v 1.8 2010/02/08 18:46:47 damien Exp $	*/
 
 /*-
@@ -93,7 +93,7 @@ struct run_tx_ring {
 	struct run_tx_data	data[RUN_TX_RING_COUNT];
 	struct usbd_pipe *	pipeh;
 	int			cur;
-	int			queued;
+	volatile unsigned	queued;
 	uint8_t			pipe_no;
 };
 
