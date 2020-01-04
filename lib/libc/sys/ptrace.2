@@ -1,7 +1,7 @@
-.\"	$NetBSD: ptrace.2,v 1.82 2019/10/09 14:20:47 wiz Exp $
+.\"	$NetBSD: ptrace.2,v 1.83 2020/01/04 04:40:17 kamil Exp $
 .\"
 .\" This file is in the public domain.
-.Dd October 9, 2019
+.Dd January 4, 2019
 .Dt PTRACE 2
 .Os
 .Sh NAME
@@ -399,7 +399,7 @@ argument should contain the name of the core file to be generated
 and the
 .Fa data
 argument should contain the length of the core filename.
-.It Dv PT_LWPINFO
+.It Dv PT_LWPSTATUS
 Returns information about a thread from the list of threads for the
 process specified in the
 .Fa pid
@@ -407,41 +407,50 @@ argument.
 The
 .Fa addr
 argument should contain a
-.Vt struct ptrace_lwpinfo
+.Vt struct ptrace_lwpstatus
 defined as:
 .Bd -literal -offset indent
-struct ptrace_lwpinfo {
+struct ptrace_lwpstatus {
 	lwpid_t pl_lwpid;
-	int pl_event;
+	sigset_t pl_sigpend;
+	sigset_t pl_sigmask;
+	char pl_name[20];
+	void *pl_private;
 };
 .Ed
 .Pp
 where
 .Fa pl_lwpid
 contains a thread LWP ID.
-Information is returned for the thread following the one with the
-specified ID in the process thread list, or for the first thread
-if
-.Fa pl_lwpid
-is 0.
-Upon return
-.Fa pl_lwpid
-contains the LWP ID of the thread that was found, or 0 if there is
-no thread after the one whose LWP ID was supplied in the call.
-.Fa pl_event
-contains the event that stopped the thread.
-Possible values are:
-.Pp
-.Bl -tag -width 30n -offset indent -compact
-.It Dv PL_EVENT_NONE
-.It Dv PL_EVENT_SIGNAL
-.It Dv PL_EVENT_SUSPENDED
-.El
+Information is returned for the thread specified in
+.Fa pl_lwpid .
+.Fa pl_sigpend
+contains the signals pending on that LWP.
+.Fa pl_sigmask
+contains the signals masked on that LWP.
+.Fa pl_name
+contains printable name of the LWP.
+The string is always NUL terminated.
+.Fa pl_private
+contains the pointer to TLS base.
 .Pp
 The
 .Fa data
 argument should contain
 .Dq Li sizeof(struct ptrace_lwpinfo) .
+.It Dv PT_LWPNEXT
+Is the same as
+.Dv PT_LWPSTATUS ,
+except that information is returned for the thread following the one with the
+specified ID in the process thread list, or for the first thread
+if
+.Fa pl_lwpid
+is 0.
+.Pp
+Upon return
+.Fa pl_lwpid
+contains the LWP ID of the thread that was found, or 0 if there is
+no thread after the one whose LWP ID was supplied in the call.
 .It Dv PT_SYSCALL
 Stops a process before and after executing each system call.
 Otherwise this operation is the same as
@@ -987,10 +996,3 @@ to
 .Fn ptrace
 .Ec ,
 should be able to sidestep this.
-.Pp
-.Dv PT_SET_SIGINFO ,
-.Dv PT_RESUME
-and
-.Dv PT_SUSPEND
-can change the image of process returned by
-.Dv PT_LWPINFO .
