@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.231 2020/01/03 19:13:54 thorpej Exp $ */
+/* $NetBSD: vmstat.c,v 1.232 2020/01/04 03:09:55 mrg Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.231 2020/01/03 19:13:54 thorpej Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.232 2020/01/04 03:09:55 mrg Exp $");
 #endif
 #endif /* not lint */
 
@@ -150,27 +150,36 @@ struct cpu_info {
  */
 struct nlist namelist[] =
 {
+#define	X_HZ		0
+	{ .n_name = "_hz" },
+#define	X_STATHZ	1
+	{ .n_name = "_stathz" },
+#define	X_NCHSTATS	2
+	{ .n_name = "_nchstats" },
+#define	X_ALLEVENTS	3
+	{ .n_name = "_allevents" },
+#define	X_POOLHEAD	4
+	{ .n_name = "_pool_head" },
+#define	X_UVMEXP	5
+	{ .n_name = "_uvmexp" },
+#define X_CPU_INFOS	6
+	{ .n_name = "_cpu_infos" },
+#define	X_NL_SIZE	7
+	{ .n_name = NULL },
+};
+
+/*
+ * Namelist for time data.
+ */
+struct nlist timenl[] =
+{
 #define	X_TIMEBASEBIN	0
 	{ .n_name = "_timebasebin" },
-#define	X_HZ		1
-	{ .n_name = "_hz" },
-#define	X_STATHZ	2
-	{ .n_name = "_stathz" },
-#define	X_NCHSTATS	3
-	{ .n_name = "_nchstats" },
-#define	X_ALLEVENTS	4
-	{ .n_name = "_allevents" },
-#define	X_POOLHEAD	5
-	{ .n_name = "_pool_head" },
-#define	X_UVMEXP	6
-	{ .n_name = "_uvmexp" },
-#define	X_TIME_SECOND	7
+#define	X_TIME_SECOND	1
 	{ .n_name = "_time_second" },
-#define X_TIME		8
+#define X_TIME		2
 	{ .n_name = "_time" },
-#define X_CPU_INFOS	9
-	{ .n_name = "_cpu_infos" },
-#define	X_NL_SIZE	10
+#define	X_TIMENL_SIZE	3
 	{ .n_name = NULL },
 };
 
@@ -559,9 +568,7 @@ getnlist(int todo)
 				errx(1, "kvm_nlist: %s %s",
 				    "namelist", kvm_geterr(kd));
 			for (i = 0; i < __arraycount(namelist)-1; i++)
-				if (namelist[i].n_type == 0 &&
-				    i != X_TIME_SECOND &&
-				    i != X_TIME) {
+				if (namelist[i].n_type == 0) {
 					if (doexit++ == 0)
 						(void)fprintf(stderr,
 						    "%s: undefined symbols:",
@@ -574,6 +581,11 @@ getnlist(int todo)
 				exit(1);
 			}
 		}
+	}
+	if ((todo & (VMSTAT|INTRSTAT)) && !(done & (VMSTAT))) {
+		done |= VMSTAT;
+		if ((c = kvm_nlist(kd, timenl)) == -1 || c == X_TIMENL_SIZE)
+			errx(1, "kvm_nlist: %s %s", "timenl", kvm_geterr(kd));
 	}
 	if ((todo & (SUMSTAT|INTRSTAT)) && !(done & (SUMSTAT|INTRSTAT))) {
 		done |= SUMSTAT|INTRSTAT;
@@ -645,11 +657,10 @@ getuptime(void)
 		if (boottime.tv_sec == 0) {
 			struct bintime bt;
 
-			kread(namelist, X_TIMEBASEBIN, &bt,
-			    sizeof(bt));
+			kread(timenl, X_TIMEBASEBIN, &bt, sizeof(bt));
 			bintime2timespec(&bt, &boottime);
 		}
-		if (kreadc(namelist, X_TIME_SECOND, &nowsec, sizeof(nowsec))) {
+		if (kreadc(timenl, X_TIME_SECOND, &nowsec, sizeof(nowsec))) {
 			/*
 			 * XXX this assignment dance can be removed once
 			 * timeval tv_sec is SUS mandated time_t
@@ -657,7 +668,7 @@ getuptime(void)
 			now.tv_sec = nowsec;
 			now.tv_nsec = 0;
 		} else {
-			kread(namelist, X_TIME, &now, sizeof(now));
+			kread(timenl, X_TIME, &now, sizeof(now));
 		}
 	}
 	uptime = now.tv_sec - boottime.tv_sec;
