@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.45 2020/01/04 22:05:52 mlelstv Exp $	*/
+/*	$NetBSD: dump.c,v 1.46 2020/01/04 22:22:34 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.45 2020/01/04 22:05:52 mlelstv Exp $");
+__RCSID("$NetBSD: dump.c,v 1.46 2020/01/04 22:22:34 mlelstv Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -559,9 +559,9 @@ syscallprint(struct ktr_header *kth)
 
 	case SYS_compat_16___sigaction14 :
 		if ((int)*ap < 0 || (int)*ap >= MAXSIGNALS)
-			xwprintf("(%s", signals[(int)*ap].name);
-		else
 			xwprintf("(%d", (int)*ap);
+		else
+			xwprintf("(%s", signals[(int)*ap].name);
 		ap++;
 		argsize -= sizeof(register_t);
 		break;
