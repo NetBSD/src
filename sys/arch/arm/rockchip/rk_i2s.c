@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.1 2019/11/16 13:24:03 jmcneill Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.2 2020/01/04 13:54:04 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.1 2019/11/16 13:24:03 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.2 2020/01/04 13:54:04 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -182,7 +182,6 @@ rk_i2s_set_format(void *priv, int setmode,
 	ckr = RD4(sc, I2S_CKR);
 	if ((ckr & CKR_MSS) == 0) {
 		const u_int mclk_rate = clk_get_rate(sc->sc_clk);
-		device_printf(sc->sc_dev, "%s: sysclk rate %u Hz\n", __func__, mclk_rate);
 		const u_int bclk_rate = 2 * 32 * RK_I2S_SAMPLE_RATE;
 		const u_int bclk_div = mclk_rate / bclk_rate;
 		const u_int lrck_div = bclk_rate / RK_I2S_SAMPLE_RATE;
@@ -430,7 +429,6 @@ rk_i2s_dai_set_sysclk(audio_dai_tag_t dai, u_int rate, int dir)
 	struct rk_i2s_softc * const sc = audio_dai_private(dai);
 	int error;
 
-	device_printf(sc->sc_dev, "set sysclk %u Hz\n", rate);
 	error = clk_set_rate(sc->sc_clk, rate);
 	if (error != 0) {
 		device_printf(sc->sc_dev, "failed to set sysclk to %u Hz: %d\n",
