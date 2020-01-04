@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.11 2020/01/01 12:17:13 jmcneill Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.12 2020/01/04 14:52:52 mlelstv Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1728,7 +1728,7 @@ bwfm_sdio_rxctl(struct bwfm_softc *bwfm, char *buf, size_t *lenp)
 	if (err)
 		return 1;
 
-	if (m->m_len < *lenp) {
+	if (m->m_len > *lenp) {
 		m_freem(m);
 		return 1;
 	}
