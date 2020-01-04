@@ -1,4 +1,4 @@
-/* $NetBSD: rk_anxdp.c,v 1.1 2019/12/19 00:25:59 jakllsch Exp $ */
+/* $NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2019 Jonathan A. Kollasch <jakllsch@kollasch.net>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.1 2019/12/19 00:25:59 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_anxdp.c,v 1.2 2020/01/04 12:08:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -122,6 +122,14 @@ rk_anxdp_encoder_commit(struct drm_encoder *encoder)
 {
 }
 
+static void
+rk_anxdp_encoder_dpms(struct drm_encoder *encoder, int mode)
+{
+	struct rk_anxdp_softc * const sc = to_rk_anxdp_encoder(encoder);
+
+	anxdp_dpms(&sc->sc_base, mode);
+}
+
 static const struct drm_encoder_funcs rk_anxdp_encoder_funcs = {
 	.destroy = drm_encoder_cleanup,
 };
@@ -133,6 +141,7 @@ static const struct drm_encoder_helper_funcs rk_anxdp_encoder_helper_funcs = {
 	.enable = rk_anxdp_encoder_enable,
 	.disable = rk_anxdp_encoder_disable,
 	.commit = rk_anxdp_encoder_commit,
+	.dpms = rk_anxdp_encoder_dpms,
 };
 
 static int
