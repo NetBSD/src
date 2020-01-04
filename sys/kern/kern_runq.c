@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.53 2019/12/03 22:28:41 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.54 2020/01/04 22:46:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.53 2019/12/03 22:28:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.54 2020/01/04 22:46:01 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -70,6 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.53 2019/12/03 22:28:41 ad Exp $");
 #include <sys/lwp.h>
 #include <sys/mutex.h>
 #include <sys/proc.h>
+#include <sys/pset.h>
 #include <sys/sched.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
@@ -473,6 +474,18 @@ sched_takecpu(struct lwp *l)
 	spc = &ci->ci_schedstate;
 	eprio = lwp_eprio(l);
 
+	/* If SMT primary is idle, send it back there. */
+	tci = ci->ci_smt_primary;
+	if ((tci->ci_schedstate.spc_flags & SPCF_IDLE) != 0 &&
+	    sched_migratable(l, tci)) {
+	    	if (tci != ci) {
+			spc->spc_ev_push.ev_count++;
+		} else {
+			spc->spc_ev_stay.ev_count++;
+		}
+		return tci;
+	}
+
 	/* Make sure that thread is in appropriate processor-set */
 	if (__predict_true(spc->spc_psid == l->l_psid)) {
 		/* If CPU of this thread is idling - run there */
@@ -520,16 +533,24 @@ sched_takecpu(struct lwp *l)
 			/* Reached the end, start from the beginning. */
 			next = cpu_lookup(0);
 		}
+		if (!sched_migratable(l, ci))
+			continue;
+
 		ici_spc = &ci->ci_schedstate;
 		pri = MAX(ici_spc->spc_curpriority, ici_spc->spc_maxpriority);
 		if (pri > lpri)
 			continue;
 
-		if (pri == lpri && spc->spc_count < ici_spc->spc_count)
-			continue;
+		if (pri == lpri) {
+			/* Pick the least busy CPU. */
+			if (spc->spc_count < ici_spc->spc_count)
+				continue;
 
-		if (!sched_migratable(l, ci))
-			continue;
+			/* Prefer SMT primaries over secondaries. */
+			if ((ici_spc->spc_flags & SPCF_SMTPRIMARY) == 0 &&
+			    (spc->spc_flags & SPCF_SMTPRIMARY) != 0)
+			    	continue;
+		}
 
 		lpri = pri;
 		tci = ci;
@@ -552,12 +573,19 @@ sched_catchlwp(struct cpu_info *ci)
 	struct schedstate_percpu *spc, *curspc;
 	TAILQ_HEAD(, lwp) *q_head;
 	struct lwp *l;
+	bool smt;
 
 	curspc = &curci->ci_schedstate;
 	spc = &ci->ci_schedstate;
-	KASSERT(curspc->spc_psid == spc->spc_psid);
 
-	if (spc->spc_mcount < min_catch) {
+	/*
+	 * Determine if the other CPU is our SMT twin.  If it is, we'll be
+	 * more aggressive.
+	 */
+	smt = (curci->ci_package_id == ci->ci_package_id &&
+	    curci->ci_core_id == ci->ci_core_id);
+	if ((!smt && spc->spc_mcount < min_catch) ||
+	    curspc->spc_psid != spc->spc_psid) {
 		spc_unlock(ci);
 		return NULL;
 	}
@@ -576,9 +604,11 @@ sched_catchlwp(struct cpu_info *ci)
 		    l, (l->l_name ? l->l_name : l->l_proc->p_comm), l->l_stat);
 
 		/* Look for threads, whose are allowed to migrate */
-		if ((l->l_pflag & LP_BOUND) || lwp_cache_hot(l) ||
+		if ((l->l_pflag & LP_BOUND) ||
+		    (!smt && lwp_cache_hot(l)) ||
 		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
+			/* XXX Gap: could walk down priority list. */
 			continue;
 		}
 
@@ -612,11 +642,25 @@ sched_catchlwp(struct cpu_info *ci)
 static void
 sched_balance(void *nocallout)
 {
+	static int last __cacheline_aligned;
 	struct cpu_info *ci, *hci;
 	struct schedstate_percpu *spc;
 	CPU_INFO_ITERATOR cii;
 	u_int highest;
 	u_int weight;
+	int now;
+
+	/*
+	 * Only one CPU at a time, no more than hz times per second.  This
+	 * causes tremendous amount of cache misses otherwise.
+	 */
+	now = hardclock_ticks;
+	if (atomic_load_relaxed(&last) == now) {
+		return;
+	}
+	if (atomic_swap_uint(&last, now) == now) {
+		return;
+	}
 
 	/* sanitize sysctl value */
 	weight = MIN(average_weight, 100);
@@ -653,20 +697,16 @@ sched_balance(void *nocallout)
 }
 
 /*
- * Called from each CPU's idle loop.
+ * Called from sched_idle() to handle migration.
  */
-void
-sched_idle(void)
+static void
+sched_idle_migrate(void)
 {
 	struct cpu_info *ci = curcpu(), *tci = NULL;
 	struct schedstate_percpu *spc, *tspc;
 	bool dlock = false;
 
-	/* Check if there is a migrating LWP */
 	spc = &ci->ci_schedstate;
-	if (spc->spc_migrating == NULL)
-		goto no_migration;
-
 	spc_lock(ci);
 	for (;;) {
 		struct lwp *l;
@@ -725,26 +765,67 @@ sched_idle(void)
 		sched_resched_lwp(l, true);
 		/* tci now unlocked */
 		spc_unlock(ci);
-		goto no_migration;
+		return;
 	}
 	if (dlock == true) {
 		KASSERT(tci != NULL);
 		spc_unlock(tci);
 	}
 	spc_unlock(ci);
+}
 
-no_migration:
+/*
+ * Called from each CPU's idle loop.
+ */
+void
+sched_idle(void)
+{
+	struct cpu_info *ci = curcpu(), *tci = NULL;
+	struct schedstate_percpu *spc, *tspc;
+	lwp_t *l;
+
+
+	spc = &ci->ci_schedstate;
+	if (spc->spc_migrating != NULL) {
+		sched_idle_migrate();
+	}
+
+	/* If this CPU is offline, or we have an LWP to run, we're done. */
 	if ((spc->spc_flags & SPCF_OFFLINE) != 0 || spc->spc_count != 0) {
 		return;
 	}
 
-	/* Reset the counter, and call the balancer */
+	/* If we have SMT then help our siblings out. */
+	tci = ci->ci_sibling[CPUREL_CORE];
+	while (tci != ci) {
+		tspc = &tci->ci_schedstate;
+		if (tspc->spc_mcount != 0 && spc->spc_psid == tspc->spc_psid) {
+			spc_dlock(ci, tci);
+			l = sched_catchlwp(tci);
+			spc_unlock(ci);
+			if (l != NULL) {
+				return;
+			}
+		}
+		tci = tci->ci_sibling[CPUREL_CORE];
+	}
+
+	/* Reset the counter. */
 	spc->spc_avgcount = 0;
+
+	/* If an SMT secondary and in the default processor set, we're done. */
+	if ((spc->spc_flags & SPCF_SMTPRIMARY) == 0 &&
+	    spc->spc_psid == PS_NONE) {
+		return;
+	}
+
+	/* Call the balancer. */
 	sched_balance(ci);
 	tci = worker_ci;
 	tspc = &tci->ci_schedstate;
 	if (ci == tci || spc->spc_psid != tspc->spc_psid)
 		return;
+
 	/* Don't hit the locks unless there's something to do. */
 	if (tspc->spc_mcount >= min_catch) {
 		spc_dlock(ci, tci);
