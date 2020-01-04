@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.69 2020/01/04 14:24:51 skrll Exp $
+#	$NetBSD: GENERIC,v 1.70 2020/01/04 14:53:11 skrll Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -112,6 +112,8 @@ makeoptions	DTS="
 	omap3-sniper.dts
 	omap3-thunder.dts
 	omap3-zoom3.dts
+
+	omap3430-sdp.dts
 
 	socfpga_cyclone5_de0_nano_soc.dts
 
@@ -232,6 +234,9 @@ makeoptions	DTS="
 	tegra124-venice2.dts
 
 	vexpress-v2p-ca15-tc1.dts
+	vexpress-v2p-ca15_a7.dts
+	vexpress-v2p-ca5s.dts
+	vexpress-v2p-ca9.dts
 
 	zynq-cc108.dts
 	zynq-microzed.dts
