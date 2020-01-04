@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.127 2020/01/04 09:50:20 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.128 2020/01/04 12:21:55 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -183,7 +183,7 @@ pseudo-device	tprof
 cpufreqdt*	at cpu?
 
 # Power State Coordination Interface (PSCI)
-psci*		at fdt?
+psci*		at fdt? pass 0
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
