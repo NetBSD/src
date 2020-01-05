@@ -429,7 +429,10 @@ inet_routerhostroute(rb_tree_t *routes, struct interface *ifp)
 		in.s_addr = INADDR_ANY;
 		sa_in_init(&rth->rt_gateway, &in);
 		rth->rt_mtu = dhcp_get_mtu(ifp);
-		sa_in_init(&rth->rt_ifa, &state->addr->addr);
+		if (state->addr != NULL)
+			sa_in_init(&rth->rt_ifa, &state->addr->addr);
+		else
+			rth->rt_ifa.sa_family = AF_UNSPEC;
 
 		/* We need to insert the host route just before the router. */
 		while ((rtp = RB_TREE_MAX(routes)) != NULL) {

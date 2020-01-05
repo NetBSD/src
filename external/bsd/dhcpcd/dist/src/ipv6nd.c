@@ -622,7 +622,7 @@ ipv6nd_applyra(struct dhcpcd_ctx *ctx, struct interface *ifp)
 		return;
 
 	state->retrans = rap->retrans;
-	if (if_applyra(rap) == -1)
+	if (if_applyra(rap) == -1 && errno != ENOENT)
 		logerr(__func__);
 }
 
@@ -652,7 +652,7 @@ ipv6nd_neighbour(struct dhcpcd_ctx *ctx, struct in6_addr *addr, bool reachable)
 			break;
 	}
 
-	if (rap == NULL || rap->expired || rap->reachable == reachable)
+	if (rap == NULL || rap->expired || rap->isreachable == reachable)
 		return;
 
 	rap->isreachable = reachable;

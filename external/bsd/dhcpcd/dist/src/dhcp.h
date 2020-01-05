@@ -164,6 +164,8 @@ struct bootp {
 	/* DHCP allows a variable length vendor area */
 };
 
+#define	DHCP_MIN_LEN		(offsetof(struct bootp, vend) + 4)
+
 struct bootp_pkt
 {
 	struct ip ip;

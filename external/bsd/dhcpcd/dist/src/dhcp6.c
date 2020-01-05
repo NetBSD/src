@@ -171,7 +171,7 @@ static const char * const dhcp6_statuses[] = {
 
 static void dhcp6_bind(struct interface *, const char *, const char *);
 static void dhcp6_failinform(void *);
-static int dhcp6_listen(struct dhcpcd_ctx *, struct ipv6_addr *);
+static int dhcp6_openudp(unsigned int, struct in6_addr *);
 static void dhcp6_recvaddr(void *);
 
 void
@@ -2132,13 +2132,10 @@ dhcp6_findpd(struct interface *ifp, const uint8_t *iaid,
 			a->dadcallback = dhcp6_dadcallback;
 			a->ia_type = D6_OPTION_IA_PD;
 			memcpy(a->iaid, iaid, sizeof(a->iaid));
-			TAILQ_INIT(&a->pd_pfxs);
 			TAILQ_INSERT_TAIL(&state->addrs, a, next);
 		} else {
-			if (!(a->flags & IPV6_AF_DELEGATEDPFX)) {
+			if (!(a->flags & IPV6_AF_DELEGATEDPFX))
 				a->flags |= IPV6_AF_NEW | IPV6_AF_DELEGATEDPFX;
-				TAILQ_INIT(&a->pd_pfxs);
-			}
 			a->flags &= ~(IPV6_AF_STALE |
 			              IPV6_AF_EXTENDED |
 			              IPV6_AF_REQUEST);
@@ -2341,6 +2338,46 @@ dhcp6_findia(struct interface *ifp, struct dhcp6_message *m, size_t l,
 	return i;
 }
 
+#ifndef SMALL
+static void
+dhcp6_deprecatedele(struct ipv6_addr *ia)
+{
+	struct ipv6_addr *da, *dan, *dda;
+	struct timespec now;
+	struct dhcp6_state *state;
+
+	timespecclear(&now);
+	TAILQ_FOREACH_SAFE(da, &ia->pd_pfxs, pd_next, dan) {
+		if (ia->prefix_vltime == 0) {
+			if (da->prefix_vltime != 0)
+				da->prefix_vltime = 0;
+			else
+				continue;
+		} else if (da->prefix_pltime != 0)
+			da->prefix_pltime = 0;
+		else
+			continue;
+
+		if (ipv6_doaddr(da, &now) != -1)
+			continue;
+
+		/* Delegation deleted, forget it. */
+		TAILQ_REMOVE(&ia->pd_pfxs, da, pd_next);
+
+		/* Delete it from the interface. */
+		state = D6_STATE(da->iface);
+		TAILQ_FOREACH(dda, &state->addrs, next) {
+			if (IN6_ARE_ADDR_EQUAL(&dda->addr, &da->addr))
+				break;
+		}
+		if (dda != NULL) {
+			TAILQ_REMOVE(&state->addrs, dda, next);
+			ipv6_freeaddr(dda);
+		}
+	}
+}
+#endif
+
 static void
 dhcp6_deprecateaddrs(struct ipv6_addrhead *addrs)
 {
@@ -2363,24 +2400,8 @@ dhcp6_deprecateaddrs(struct ipv6_addrhead *addrs)
 #ifndef SMALL
 		/* If we delegated from this prefix, deprecate or remove
 		 * the delegations. */
-		if (ia->flags & IPV6_AF_DELEGATEDPFX) {
-			struct ipv6_addr *da;
-			bool touched = false;
-
-			TAILQ_FOREACH(da, &ia->pd_pfxs, pd_next) {
-				if (ia->prefix_vltime == 0) {
-					if (da->prefix_vltime != 0) {
-						da->prefix_vltime = 0;
-						touched = true;
-					}
-				} else if (da->prefix_pltime != 0) {
-					da->prefix_pltime = 0;
-					touched = true;
-				}
-			}
-			if (touched)
-				ipv6_addaddrs(&ia->pd_pfxs);
-		}
+		if (ia->flags & IPV6_AF_DELEGATEDPFX)
+			dhcp6_deprecatedele(ia);
 #endif
 
 		if (ia->flags & IPV6_AF_REQUEST) {
@@ -2988,8 +3009,9 @@ dhcp6_bind(struct interface *ifp, const char *op, const char *sfrom)
 			TAILQ_FOREACH(ia, &state->addrs, next) {
 				if (ia->flags & IPV6_AF_STALE)
 					continue;
-				if (!(state->renew == ND6_INFINITE_LIFETIME &&
-				    ia->prefix_vltime == ND6_INFINITE_LIFETIME)
+				if (!(state->renew == ND6_INFINITE_LIFETIME
+				    && ia->prefix_vltime == ND6_INFINITE_LIFETIME)
+				    && ia->prefix_vltime != 0
 				    && ia->prefix_vltime <= state->renew)
 					logwarnx(
 					    "%s: %s will expire before renewal",
@@ -3557,6 +3579,42 @@ dhcp6_recvmsg(struct dhcpcd_ctx *ctx, struct msghdr *msg, struct ipv6_addr *ia)
 		ifp = ifp1;
 	}
 
+#if 0
+	/*
+	 * Handy code to inject raw DHCPv6 packets over responses
+	 * from our server.
+	 * This allows me to take a 3rd party wireshark trace and
+	 * replay it in my code.
+	 */
+	static int replyn = 0;
+	char fname[PATH_MAX], tbuf[64 * 1024];
+	int fd;
+	ssize_t tlen;
+	uint8_t *si1, *si2;
+	uint16_t si_len1, si_len2;
+
+	snprintf(fname, sizeof(fname),
+	    "/tmp/dhcp6.reply%d.raw", replyn++);
+	fd = open(fname, O_RDONLY, 0);
+	if (fd == -1) {
+		logerr("%s: open `%s'", __func__, fname);
+		return;
+	}
+	tlen = read(fd, tbuf, sizeof(tbuf));
+	if (tlen == -1)
+		logerr("%s: read `%s'", __func__, fname);
+	close(fd);
+
+	/* Copy across ServerID so we can work with our own server. */
+	si1 = dhcp6_findmoption(r, len, D6_OPTION_SERVERID, &si_len1);
+	si2 = dhcp6_findmoption(tbuf, (size_t)tlen,
+	    D6_OPTION_SERVERID, &si_len2);
+	if (si1 != NULL && si2 != NULL && si_len1 == si_len2)
+		memcpy(si2, si1, si_len2);
+	r = (struct dhcp6_message *)tbuf;
+	len = (size_t)tlen;
+#endif
+
 	dhcp6_recvif(ifp, sfrom, r, len);
 }
 
@@ -3606,7 +3664,7 @@ dhcp6_recvctx(void *arg)
 }
 
 static int
-dhcp6_listen(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
+dhcp6_openudp(unsigned int ifindex, struct in6_addr *ia)
 {
 	struct sockaddr_in6 sa;
 	int n, s;
@@ -3629,8 +3687,8 @@ dhcp6_listen(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 #endif
 
 	if (ia != NULL) {
-		memcpy(&sa.sin6_addr, &ia->addr, sizeof(sa.sin6_addr));
-		sa.sin6_scope_id = ia->iface->index;
+		memcpy(&sa.sin6_addr, ia, sizeof(sa.sin6_addr));
+		sa.sin6_scope_id = ifindex;
 	}
 
 	if (bind(s, (struct sockaddr *)&sa, sizeof(sa)) == -1)
@@ -3639,11 +3697,6 @@ dhcp6_listen(struct dhcpcd_ctx *ctx, struct ipv6_addr *ia)
 	n = 1;
 	if (setsockopt(s, IPPROTO_IPV6, IPV6_RECVPKTINFO, &n, sizeof(n)) == -1)
 		goto errexit;
-
-	if (ia != NULL) {
-		ia->dhcp6_fd = s;
-		eloop_event_add(ctx->eloop, s, dhcp6_recvaddr, ia);
-	}
 
 	return s;
 
@@ -3686,18 +3739,6 @@ dhcp6_activateinterfaces(struct interface *ifp)
 }
 #endif
 
-static int
-dhcp6_open(struct dhcpcd_ctx *ctx)
-{
-
-	if (ctx->dhcp6_fd != -1 ||
-	    (ctx->dhcp6_fd = dhcp6_listen(ctx, NULL)) == -1)
-		return ctx->dhcp6_fd;
-
-	eloop_event_add(ctx->eloop, ctx->dhcp6_fd, dhcp6_recvctx, ctx);
-	return ctx->dhcp6_fd;
-}
-
 static void
 dhcp6_start1(void *arg)
 {
@@ -3708,9 +3749,13 @@ dhcp6_start1(void *arg)
 	size_t i;
 	const struct dhcp_compat *dhc;
 
-	if (ctx->options & DHCPCD_MASTER) {
-		if (dhcp6_open(ctx) == -1)
+	if (ctx->options & DHCPCD_MASTER && ctx->dhcp6_fd == -1) {
+		ctx->dhcp6_fd = dhcp6_openudp(0, NULL);
+		if (ctx->dhcp6_fd == -1) {
+			logerr(__func__);
 			return;
+		}
+		eloop_event_add(ctx->eloop, ctx->dhcp6_fd, dhcp6_recvctx, ctx);
 	}
 
 	state = D6_STATE(ifp);
@@ -3974,7 +4019,13 @@ dhcp6_handleifa(int cmd, struct ipv6_addr *ia, pid_t pid)
 	    !(ifp->ctx->options & DHCPCD_MASTER) &&
 	    ifp->options->options & DHCPCD_DHCP6 &&
 	    ia->dhcp6_fd == -1)
-		dhcp6_listen(ia->iface->ctx, ia);
+	{
+		ia->dhcp6_fd = dhcp6_openudp(ia->iface->index, &ia->addr);
+		if (ia->dhcp6_fd != -1)
+			eloop_event_add(ia->iface->ctx->eloop, ia->dhcp6_fd,
+			    dhcp6_recvaddr, ia);
+	}
+
 
 	if ((state = D6_STATE(ifp)) != NULL)
 		ipv6_handleifa_addrs(cmd, &state->addrs, ia, pid);

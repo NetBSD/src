@@ -467,25 +467,11 @@ configure_interface1(struct interface *ifp)
 		if (!(ifo->options & (DHCPCD_INFORM | DHCPCD_WANTDHCP)))
 			ifo->options |= DHCPCD_STATIC;
 	}
-	if (!(ifo->options & DHCPCD_ARP) ||
-	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
-		ifo->options &= ~DHCPCD_IPV4LL;
 
 	if (ifo->metric != -1)
 		ifp->metric = (unsigned int)ifo->metric;
 
-	if (!(ifo->options & DHCPCD_IPV4))
-		ifo->options &= ~(DHCPCD_DHCP | DHCPCD_IPV4LL | DHCPCD_WAITIP4);
-
 #ifdef INET6
-	if (!(ifo->options & DHCPCD_IPV6))
-		ifo->options &=
-		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
-
-	if (!(ifo->options & DHCPCD_IPV6RS))
-		ifo->options &=
-		    ~(DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS);
-
 	/* We want to setup INET6 on the interface as soon as possible. */
 	if (ifp->active == IF_ACTIVE_USER &&
 	    ifo->options & DHCPCD_IPV6 &&
@@ -992,7 +978,7 @@ run_preinit(struct interface *ifp)
 		return;
 
 	script_runreason(ifp, "PREINIT");
-	if (ifp->wireless)
+	if (ifp->wireless && ifp->carrier == LINK_UP)
 		dhcpcd_reportssid(ifp);
 	if (ifp->options->options & DHCPCD_LINK && ifp->carrier != LINK_UNKNOWN)
 		script_runreason(ifp,
