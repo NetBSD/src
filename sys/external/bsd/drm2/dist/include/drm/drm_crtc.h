@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.h,v 1.7 2018/08/27 06:46:02 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.h,v 1.7.4.1 2020/01/05 09:42:05 martin Exp $	*/
 
 /*
  * Copyright © 2006 Keith Packard
@@ -1223,6 +1223,11 @@ extern void drm_connector_cleanup(struct drm_connector *connector);
 extern unsigned int drm_connector_index(struct drm_connector *connector);
 /* helper to unplug all connectors from sysfs for device */
 extern void drm_connector_unplug_all(struct drm_device *dev);
+
+#ifdef __NetBSD__
+extern void drm_bridge_init_lock(void);
+extern void drm_bridge_fini_lock(void);
+#endif
 
 extern int drm_bridge_add(struct drm_bridge *bridge);
 extern void drm_bridge_remove(struct drm_bridge *bridge);

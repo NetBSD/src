@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_panel.h,v 1.2 2018/08/27 04:58:38 riastradh Exp $	*/
+/*	$NetBSD: drm_panel.h,v 1.2.4.1 2020/01/05 09:42:05 martin Exp $	*/
 
 /*
  * Copyright (C) 2013, NVIDIA Corporation.  All rights reserved.
@@ -126,6 +126,11 @@ static inline int drm_panel_get_modes(struct drm_panel *panel)
 
 	return panel ? -ENOSYS : -EINVAL;
 }
+
+#ifdef __NetBSD__
+void drm_panel_init_lock(void);
+void drm_panel_fini_lock(void);
+#endif
 
 void drm_panel_init(struct drm_panel *panel);
 

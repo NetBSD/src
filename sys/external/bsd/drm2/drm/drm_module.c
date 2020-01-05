@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_module.c,v 1.15 2018/08/28 03:41:39 riastradh Exp $	*/
+/*	$NetBSD: drm_module.c,v 1.15.4.1 2020/01/05 09:42:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.15 2018/08/28 03:41:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.15.4.1 2020/01/05 09:42:05 martin Exp $");
 
 #include <sys/types.h>
 #include <sys/condvar.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_module.c,v 1.15 2018/08/28 03:41:39 riastradh Ex
 #include <drm/drm_encoder_slave.h>
 #include <drm/drm_internal.h>
 #include <drm/drm_sysctl.h>
+#include <drm/drm_panel.h>
 
 /*
  * XXX This is stupid.
@@ -122,6 +123,8 @@ drm_init(void)
 	linux_mutex_init(&drm_global_mutex);
 	drm_connector_ida_init();
 	drm_global_init();
+	drm_panel_init_lock();
+	drm_bridge_init_lock();
 	drm_sysctl_init(&drm_def);
 	drm_i2c_encoders_init();
 
@@ -146,6 +149,8 @@ drm_fini(void)
 
 	drm_i2c_encoders_fini();
 	drm_sysctl_fini(&drm_def);
+	drm_bridge_fini_lock();
+	drm_panel_fini_lock();
 	drm_global_release();
 	drm_connector_ida_destroy();
 	linux_mutex_destroy(&drm_global_mutex);
