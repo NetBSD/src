@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.220 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.221 2020/01/05 22:01:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.220 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.221 2020/01/05 22:01:09 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -806,9 +806,12 @@ uvm_page_redim(int newncolors, int newnbuckets)
 					 * Here we decide on the NEW color &
 					 * bucket for the page.  For NUMA
 					 * we'll use the info that the
-					 * hardware gave us.  Otherwise we
-					 * just do a round-robin among the
-					 * buckets.
+					 * hardware gave us.  For non-NUMA
+					 * assign take physical page frame
+					 * number and cache color into
+					 * account.  We do this to try and
+					 * avoid defeating any memory
+					 * interleaving in the hardware.
 					 */
 					KASSERT(
 					    uvm_page_get_bucket(pg) == ob);
@@ -816,10 +819,10 @@ uvm_page_redim(int newncolors, int newnbuckets)
 					    uvm_page_get_freelist(pg));
 					if (uvm.numa_alloc) {
 						nb = uvm_page_numa_lookup(pg);
-					} else if (nb + 1 < newnbuckets) {
-						nb = nb + 1;
 					} else {
-						nb = 0;
+						nb = atop(VM_PAGE_TO_PHYS(pg))
+						    / uvmexp.ncolors / 8
+						    % newnbuckets;
 					}
 					uvm_page_set_bucket(pg, nb);
 					npgb = npgfl.pgfl_buckets[nb];
@@ -1575,22 +1578,10 @@ uvm_pagefree(struct vm_page *pg)
 		uvm_pagezerocheck(pg);
 #endif /* DEBUG */
 
+	/* Try to send the page to the per-CPU cache. */
 	s = splvm();
 	ucpu = curcpu()->ci_data.cpu_uvm;
-
-	/*
-	 * If we're using the NUMA strategy, we'll only cache this page if
-	 * it came from the local CPU's NUMA node.  Otherwise we're using
-	 * the L2/L3 cache locality strategy and we'll cache anything.
-	 */
-	if (uvm.numa_alloc) {
-		bucket = uvm_page_get_bucket(pg);
-	} else {
-		bucket = ucpu->pgflbucket;
-		uvm_page_set_bucket(pg, bucket);
-	}
-
-	/* Try to send the page to the per-CPU cache. */
+	bucket = uvm_page_get_bucket(pg);
 	if (bucket == ucpu->pgflbucket && uvm_pgflcache_free(ucpu, pg)) {
 		splx(s);
 		return;
