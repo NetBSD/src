@@ -1,4 +1,4 @@
-/* $NetBSD: arm64_platform.c,v 1.1 2020/01/05 17:16:07 jmcneill Exp $ */
+/* $NetBSD: arm64_platform.c,v 1.2 2020/01/05 17:20:01 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #include "opt_console.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm64_platform.c,v 1.1 2020/01/05 17:16:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm64_platform.c,v 1.2 2020/01/05 17:20:01 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -73,11 +73,6 @@ arm64_platform_device_register(device_t self, void *aux)
 {
 }
 
-static void
-arm64_platform_bootstrap(void)
-{
-}
-
 static const struct pmap_devmap *
 arm64_platform_devmap(void)
 {
@@ -110,7 +105,7 @@ arm64_platform_uart_freq(void)
 
 static const struct arm_platform arm64_platform = {
 	.ap_devmap = arm64_platform_devmap,
-	.ap_bootstrap = arm64_platform_bootstrap,
+	.ap_bootstrap = arm_fdt_cpu_bootstrap,
 	.ap_init_attach_args = arm64_platform_init_attach_args,
 	.ap_device_register = arm64_platform_device_register,
 	.ap_reset = psci_fdt_reset,
