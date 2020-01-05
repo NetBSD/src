@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.38 2020/01/02 06:22:23 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.39 2020/01/05 08:08:26 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.38 2020/01/02 06:22:23 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.39 2020/01/05 08:08:26 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -238,7 +238,10 @@ dm_target_destroy(void)
 	mutex_exit(&dm_target_mutex);
 
 	mutex_destroy(&dm_target_mutex);
-
+#if 0
+	/* Target specific module destroy routine. */
+	dm_target_delay_pool_destroy();
+#endif
 	return 0;
 }
 
@@ -359,6 +362,22 @@ dm_target_init(void)
 	if (dm_target_insert(dmt))
 		printf("Failed to insert zero\n");
 #if 0
+	dmt = dm_target_alloc("delay");
+	dmt->version[0] = 1;
+	dmt->version[1] = 0;
+	dmt->version[2] = 0;
+	dmt->init = &dm_target_delay_init;
+	dmt->info = &dm_target_delay_info;
+	dmt->table = &dm_target_delay_table;
+	dmt->strategy = &dm_target_delay_strategy;
+	dmt->sync = &dm_target_delay_sync;
+	dmt->destroy = &dm_target_delay_destroy;
+	dmt->upcall = &dm_target_delay_upcall;
+	dmt->secsize = &dm_target_delay_secsize;
+	if (dm_target_insert(dmt))
+		printf("Failed to insert delay\n");
+	dm_target_delay_pool_create();
+
 	dmt = dm_target_alloc("flakey");
 	dmt->version[0] = 1;
 	dmt->version[1] = 0;
