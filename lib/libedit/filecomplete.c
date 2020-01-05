@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.62 2019/12/10 19:42:09 christos Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.63 2020/01/05 00:03:27 tih Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.62 2019/12/10 19:42:09 christos Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.63 2020/01/05 00:03:27 tih Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -611,12 +611,8 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 			if (ctemp - buffer >= 2 && ctemp[-2] == '\\') {
 				ctemp -= 2;
 				continue;
-			} else if (ctemp - buffer >= 2 &&
-			    (ctemp[-2] == '\'' || ctemp[-2] == '"')) {
-				ctemp--;
-				continue;
-			} else
-				break;
+			}
+			break;
 		}
 		if (special_prefixes && wcschr(special_prefixes, ctemp[-1]))
 			break;
