@@ -15,6 +15,9 @@
 /* Do sha512 definitions in config.h */
 #undef COMPAT_SHA512
 
+/* Command line arguments used with configure */
+#undef CONFCMDLINE
+
 /* Pathname to the Unbound configuration file */
 #undef CONFIGFILE
 
@@ -85,6 +88,10 @@
 /* Define to 1 if you have the declaration of `arc4random_uniform', and to 0
    if you don't. */
 #undef HAVE_DECL_ARC4RANDOM_UNIFORM
+
+/* Define to 1 if you have the declaration of `evsignal_assign', and to 0 if
+   you don't. */
+#undef HAVE_DECL_EVSIGNAL_ASSIGN
 
 /* Define to 1 if you have the declaration of `inet_ntop', and to 0 if you
    don't. */
@@ -165,6 +172,9 @@
 
 /* Define to 1 if you have the `ERR_load_crypto_strings' function. */
 #undef HAVE_ERR_LOAD_CRYPTO_STRINGS
+
+/* Define to 1 if you have the `event_assign' function. */
+#undef HAVE_EVENT_ASSIGN
 
 /* Define to 1 if you have the `event_base_free' function. */
 #undef HAVE_EVENT_BASE_FREE
@@ -406,7 +416,7 @@
 /* Define to 1 if you have the `RAND_cleanup' function. */
 #undef HAVE_RAND_CLEANUP
 
-/* Define to 1 if you have the `reallocarray' function. */
+/* If we have reallocarray(3) */
 #undef HAVE_REALLOCARRAY
 
 /* Define to 1 if you have the `recvmsg' function. */
@@ -610,6 +620,9 @@
 /* Define to 1 if you have the `_beginthreadex' function. */
 #undef HAVE__BEGINTHREADEX
 
+/* If HMAC_Init_ex() returns void */
+#undef HMAC_INIT_EX_RETURNS_VOID
+
 /* if lex has yylex_destroy */
 #undef LEX_HAS_YYLEX_DESTROY
 
@@ -702,6 +715,9 @@
 /* Shared data */
 #undef SHARE_DIR
 
+/* The size of `size_t', as computed by sizeof. */
+#undef SIZEOF_SIZE_T
+
 /* The size of `time_t', as computed by sizeof. */
 #undef SIZEOF_TIME_T
 
@@ -719,6 +735,9 @@
 
 /* Use win32 resources and API */
 #undef UB_ON_WINDOWS
+
+/* the SYSLOG_FACILITY to use, default LOG_DAEMON */
+#undef UB_SYSLOG_FACILITY
 
 /* default username */
 #undef UB_USERNAME
@@ -767,6 +786,9 @@
 
 /* Define to 1 to use ipsecmod support. */
 #undef USE_IPSECMOD
+
+/* Define to 1 to use ipset support */
+#undef USE_IPSET
 
 /* Define if you want to use internal select based events */
 #undef USE_MINI_EVENT
@@ -965,8 +987,14 @@
 
 
 
+#ifndef _OPENBSD_SOURCE
+#define _OPENBSD_SOURCE 1
+#endif
+
 #ifndef UNBOUND_DEBUG
+# ifndef NDEBUG
 #  define NDEBUG
+# endif
 #endif
 
 /** Use small-ldns codebase */
@@ -1199,6 +1227,10 @@ struct tm;
 char *strptime(const char *s, const char *format, struct tm *tm);
 #endif
 
+#if !HAVE_DECL_REALLOCARRAY
+void *reallocarray(void *ptr, size_t nmemb, size_t size);
+#endif
+
 #ifdef HAVE_LIBRESSL
 #  if !HAVE_DECL_STRLCPY
 size_t strlcpy(char *dst, const char *src, size_t siz);
@@ -1211,9 +1243,6 @@ uint32_t arc4random(void);
 #  endif
 #  if !HAVE_DECL_ARC4RANDOM_UNIFORM && defined(HAVE_ARC4RANDOM_UNIFORM)
 uint32_t arc4random_uniform(uint32_t upper_bound);
-#  endif
-#  if !HAVE_DECL_REALLOCARRAY
-void *reallocarray(void *ptr, size_t nmemb, size_t size);
 #  endif
 #endif /* HAVE_LIBRESSL */
 #ifndef HAVE_ARC4RANDOM

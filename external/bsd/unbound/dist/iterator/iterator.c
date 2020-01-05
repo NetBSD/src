@@ -409,6 +409,8 @@ iter_prepend(struct iter_qstate* iq, struct dns_msg* msg,
 	num_an = 0;
 	for(p = iq->an_prepend_list; p; p = p->next) {
 		sets[num_an++] = p->rrset;
+		if(ub_packed_rrset_ttl(p->rrset) < msg->rep->ttl)
+			msg->rep->ttl = ub_packed_rrset_ttl(p->rrset);
 	}
 	memcpy(sets+num_an, msg->rep->rrsets, msg->rep->an_numrrsets *
 		sizeof(struct ub_packed_rrset_key*));
@@ -421,6 +423,8 @@ iter_prepend(struct iter_qstate* iq, struct dns_msg* msg,
 			msg->rep->ns_numrrsets, p->rrset))
 			continue;
 		sets[msg->rep->an_numrrsets + num_an + num_ns++] = p->rrset;
+		if(ub_packed_rrset_ttl(p->rrset) < msg->rep->ttl)
+			msg->rep->ttl = ub_packed_rrset_ttl(p->rrset);
 	}
 	memcpy(sets + num_an + msg->rep->an_numrrsets + num_ns, 
 		msg->rep->rrsets + msg->rep->an_numrrsets, 
@@ -2718,8 +2722,15 @@ processQueryResponse(struct module_qstate* qstate, struct iter_qstate* iq,
 			&& !(iq->chase_flags & BIT_RD)) {
 			if(FLAGS_GET_RCODE(iq->response->rep->flags) != 
 				LDNS_RCODE_NOERROR) {
-				if(qstate->env->cfg->qname_minimisation_strict)
-					return final_state(iq);
+				if(qstate->env->cfg->qname_minimisation_strict) {
+					if(FLAGS_GET_RCODE(iq->response->rep->flags) ==
+						LDNS_RCODE_NXDOMAIN) {
+						iter_scrub_nxdomain(iq->response);
+						return final_state(iq);
+					}
+					return error_response(qstate, id,
+						LDNS_RCODE_SERVFAIL);
+				}
 				/* Best effort qname-minimisation. 
 				 * Stop minimising and send full query when
 				 * RCODE is not NOERROR. */
