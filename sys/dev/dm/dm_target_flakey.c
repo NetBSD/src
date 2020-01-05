@@ -1,7 +1,8 @@
-/*        $NetBSD: dm_target_flakey.c,v 1.1 2020/01/02 06:22:23 tkusumi Exp $      */
+/*        $NetBSD: dm_target_flakey.c,v 1.2 2020/01/05 08:11:10 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015 The DragonFly Project.  All rights reserved.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_flakey.c,v 1.1 2020/01/02 06:22:23 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_flakey.c,v 1.2 2020/01/05 08:11:10 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
