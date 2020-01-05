@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_panel.c,v 1.2.4.1 2020/01/05 09:42:05 martin Exp $	*/
+/*	$NetBSD: drm_panel.c,v 1.2.4.2 2020/01/05 11:05:53 martin Exp $	*/
 
 /*
  * Copyright (C) 2013, NVIDIA Corporation.  All rights reserved.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_panel.c,v 1.2.4.1 2020/01/05 09:42:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_panel.c,v 1.2.4.2 2020/01/05 11:05:53 martin Exp $");
 
 #include <linux/err.h>
 #include <linux/module.h>
@@ -32,8 +32,13 @@ __KERNEL_RCSID(0, "$NetBSD: drm_panel.c,v 1.2.4.1 2020/01/05 09:42:05 martin Exp
 #include <drm/drm_crtc.h>
 #include <drm/drm_panel.h>
 
+#ifdef __NetBSD__
+static struct mutex panel_lock;
+static struct list_head panel_list = LIST_HEAD_INIT(panel_list);
+#else
 static DEFINE_MUTEX(panel_lock);
 static LIST_HEAD(panel_list);
+#endif
 
 #ifdef __NetBSD__
 void drm_panel_init_lock(void)
