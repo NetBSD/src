@@ -1,4 +1,4 @@
-/*	$NetBSD: uthum.c,v 1.13.8.1 2020/01/02 09:43:56 martin Exp $   */
+/*	$NetBSD: uthum.c,v 1.13.8.2 2020/01/05 15:11:29 martin Exp $   */
 /*	$OpenBSD: uthum.c,v 1.6 2010/01/03 18:43:02 deraadt Exp $   */
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.13.8.1 2020/01/02 09:43:56 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uthum.c,v 1.13.8.2 2020/01/05 15:11:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -267,7 +267,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 	if ((buf == NULL) || len == 0)
 		return 0;
 
-	olen = uimin(sc->sc_olen, sizeof(cmdbuf));
+	olen = min(sc->sc_olen, sizeof(cmdbuf));
 
 	/* issue query */
 	memset(cmdbuf, 0, sizeof(cmdbuf));
@@ -298,7 +298,7 @@ uthum_read_data(struct uthum_softc *sc, uint8_t target_cmd, uint8_t *buf,
 		tsleep(&sc->sc_sme, 0, "uthum", (need_delay*hz+999)/1000 + 1);
 
 	/* get answer */
-	flen = uimin(sc->sc_flen, sizeof(report));
+	flen = min(sc->sc_flen, sizeof(report));
 	if (uhidev_get_report(&sc->sc_hdev, UHID_FEATURE_REPORT,
 	    report, flen))
 		return EIO;
