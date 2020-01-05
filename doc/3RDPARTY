@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1640.2.9 2020/01/05 09:38:28 martin Exp $
+#	$NetBSD: 3RDPARTY,v 1.1640.2.10 2020/01/05 09:51:45 martin Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -139,12 +139,12 @@ Then binclude4netbsd script to import into src/external/bsd/bind/include.
 The libc and include parts of the resolver are now part of libbind.
 
 Package:	unbound
-Version:	1.9.1
-Current Vers:	1.9.1
+Version:	1.9.6
+Current Vers:	1.9.6
 Maintainer:	Nlnetlabs
 Archive Site:	https://www.unbound.net/downloads/unbound-latest.tar.gz
 Home Page:	https://www.unbound.net/
-Date:		2019-05-23
+Date:		2019-12-15
 Mailing List:	https://unbound.nlnetlabs.nl/mailman/listinfo/unbound-users
 Responsible:	christos
 License:	BSD-like

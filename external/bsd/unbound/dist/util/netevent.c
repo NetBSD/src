@@ -178,7 +178,7 @@ comm_base_create(int sigs)
 	}
 	ub_comm_base_now(b);
 	ub_get_event_sys(b->eb->base, &evnm, &evsys, &evmethod);
-	verbose(VERB_ALGO, "%s %s user %s method.", evnm, evsys, evmethod);
+	verbose(VERB_ALGO, "%s %s uses %s method.", evnm, evsys, evmethod);
 	return b;
 }
 
@@ -926,6 +926,14 @@ comm_point_tcp_accept_callback(int fd, short event, void* arg)
 	}
 	/* accept incoming connection. */
 	c_hdl = c->tcp_free;
+	/* clear leftover flags from previous use, and then set the
+	 * correct event base for the event structure for libevent */
+	ub_event_free(c_hdl->ev->ev);
+	c_hdl->ev->ev = ub_event_new(c_hdl->ev->base->eb->base, -1, UB_EV_PERSIST | UB_EV_READ | UB_EV_TIMEOUT, comm_point_tcp_handle_callback, c_hdl);
+	if(!c_hdl->ev->ev) {
+		log_warn("could not ub_event_new, dropped tcp");
+		return;
+	}
 	log_assert(fd != -1);
 	(void)fd;
 	new_fd = comm_point_perform_accept(c, &c_hdl->repinfo.addr,
@@ -993,7 +1001,7 @@ tcp_callback_writer(struct comm_point* c)
 		tcp_req_info_handle_writedone(c->tcp_req_info);
 	} else {
 		comm_point_stop_listening(c);
-		comm_point_start_listening(c, -1, -1);
+		comm_point_start_listening(c, -1, c->tcp_timeout_msec);
 	}
 }
 
@@ -1044,6 +1052,35 @@ log_cert(unsigned level, const char* str, X509* cert)
 }
 #endif /* HAVE_SSL */
 
+#ifdef HAVE_SSL
+/** true if the ssl handshake error has to be squelched from the logs */
+static int
+squelch_err_ssl_handshake(unsigned long err)
+{
+	if(verbosity >= VERB_QUERY)
+		return 0; /* only squelch on low verbosity */
+	/* this is very specific, we could filter on ERR_GET_REASON()
+	 * (the third element in ERR_PACK) */
+	if(err == ERR_PACK(ERR_LIB_SSL, SSL_F_SSL3_GET_RECORD, SSL_R_HTTPS_PROXY_REQUEST) ||
+		err == ERR_PACK(ERR_LIB_SSL, SSL_F_SSL3_GET_RECORD, SSL_R_HTTP_REQUEST) ||
+		err == ERR_PACK(ERR_LIB_SSL, SSL_F_SSL3_GET_RECORD, SSL_R_WRONG_VERSION_NUMBER) ||
+		err == ERR_PACK(ERR_LIB_SSL, SSL_F_SSL3_READ_BYTES, SSL_R_SSLV3_ALERT_BAD_CERTIFICATE)
+#ifdef SSL_F_TLS_POST_PROCESS_CLIENT_HELLO
+		|| err == ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_POST_PROCESS_CLIENT_HELLO, SSL_R_NO_SHARED_CIPHER)
+#endif
+#ifdef SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO
+		|| err == ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_UNKNOWN_PROTOCOL)
+		|| err == ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_UNSUPPORTED_PROTOCOL)
+#  ifdef SSL_R_VERSION_TOO_LOW
+		|| err == ERR_PACK(ERR_LIB_SSL, SSL_F_TLS_EARLY_POST_PROCESS_CLIENT_HELLO, SSL_R_VERSION_TOO_LOW)
+#  endif
+#endif
+		)
+		return 1;
+	return 0;
+}
+#endif /* HAVE_SSL */
+
 /** continue ssl handshake */
 #ifdef HAVE_SSL
 static int
@@ -1088,9 +1125,12 @@ ssl_handshake(struct comm_point* c)
 					strerror(errno));
 			return 0;
 		} else {
-			log_crypto_err("ssl handshake failed");
-			log_addr(1, "ssl handshake failed", &c->repinfo.addr,
-				c->repinfo.addrlen);
+			unsigned long err = ERR_get_error();
+			if(!squelch_err_ssl_handshake(err)) {
+				log_crypto_err_code("ssl handshake failed", err);
+				log_addr(VERB_OPS, "ssl handshake failed", &c->repinfo.addr,
+					c->repinfo.addrlen);
+			}
 			return 0;
 		}
 	}
@@ -1184,6 +1224,10 @@ ssl_handle_read(struct comm_point* c)
 				comm_point_listen_for_rw(c, 0, 1);
 				return 1;
 			} else if(want == SSL_ERROR_SYSCALL) {
+#ifdef ECONNRESET
+				if(errno == ECONNRESET && verbosity < 2)
+					return 0; /* silence reset by peer */
+#endif
 				if(errno != 0)
 					log_err("SSL_read syscall: %s",
 						strerror(errno));
@@ -1228,6 +1272,10 @@ ssl_handle_read(struct comm_point* c)
 				comm_point_listen_for_rw(c, 0, 1);
 				return 1;
 			} else if(want == SSL_ERROR_SYSCALL) {
+#ifdef ECONNRESET
+				if(errno == ECONNRESET && verbosity < 2)
+					return 0; /* silence reset by peer */
+#endif
 				if(errno != 0)
 					log_err("SSL_read syscall: %s",
 						strerror(errno));
@@ -1261,7 +1309,7 @@ ssl_handle_write(struct comm_point* c)
 			return 1;
 	}
 	/* ignore return, if fails we may simply block */
-	(void)SSL_set_mode(c->ssl, SSL_MODE_ENABLE_PARTIAL_WRITE);
+	(void)SSL_set_mode(c->ssl, (long)SSL_MODE_ENABLE_PARTIAL_WRITE);
 	if(c->tcp_byte_count < sizeof(uint16_t)) {
 		uint16_t len = htons(sldns_buffer_limit(c->buffer));
 		ERR_clear_error();
@@ -1288,13 +1336,17 @@ ssl_handle_write(struct comm_point* c)
 			if(want == SSL_ERROR_ZERO_RETURN) {
 				return 0; /* closed */
 			} else if(want == SSL_ERROR_WANT_READ) {
-				c->ssl_shake_state = comm_ssl_shake_read;
+				c->ssl_shake_state = comm_ssl_shake_hs_read;
 				comm_point_listen_for_rw(c, 1, 0);
 				return 1; /* wait for read condition */
 			} else if(want == SSL_ERROR_WANT_WRITE) {
 				ub_winsock_tcp_wouldblock(c->ev->ev, UB_EV_WRITE);
 				return 1; /* write more later */
 			} else if(want == SSL_ERROR_SYSCALL) {
+#ifdef EPIPE
+				if(errno == EPIPE && verbosity < 2)
+					return 0; /* silence 'broken pipe' */
+#endif
 				if(errno != 0)
 					log_err("SSL_write syscall: %s",
 						strerror(errno));
@@ -1322,13 +1374,17 @@ ssl_handle_write(struct comm_point* c)
 		if(want == SSL_ERROR_ZERO_RETURN) {
 			return 0; /* closed */
 		} else if(want == SSL_ERROR_WANT_READ) {
-			c->ssl_shake_state = comm_ssl_shake_read;
+			c->ssl_shake_state = comm_ssl_shake_hs_read;
 			comm_point_listen_for_rw(c, 1, 0);
 			return 1; /* wait for read condition */
 		} else if(want == SSL_ERROR_WANT_WRITE) {
 			ub_winsock_tcp_wouldblock(c->ev->ev, UB_EV_WRITE);
 			return 1; /* write more later */
 		} else if(want == SSL_ERROR_SYSCALL) {
+#ifdef EPIPE
+			if(errno == EPIPE && verbosity < 2)
+				return 0; /* silence 'broken pipe' */
+#endif
 			if(errno != 0)
 				log_err("SSL_write syscall: %s",
 					strerror(errno));
@@ -1543,7 +1599,6 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 		iov[1].iov_base = sldns_buffer_begin(buffer);
 		iov[1].iov_len = sldns_buffer_limit(buffer);
 		log_assert(iov[0].iov_len > 0);
-		log_assert(iov[1].iov_len > 0);
 		msg.msg_name = &c->repinfo.addr;
 		msg.msg_namelen = c->repinfo.addrlen;
 		msg.msg_iov = iov;
@@ -1610,7 +1665,6 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 		iov[1].iov_base = sldns_buffer_begin(buffer);
 		iov[1].iov_len = sldns_buffer_limit(buffer);
 		log_assert(iov[0].iov_len > 0);
-		log_assert(iov[1].iov_len > 0);
 		r = writev(fd, iov, 2);
 #else /* HAVE_WRITEV */
 		r = send(fd, (void*)(((uint8_t*)&len)+c->tcp_byte_count),
@@ -1624,6 +1678,10 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
   #endif
 			if(errno == EINTR || errno == EAGAIN)
 				return 1;
+#ifdef ECONNRESET
+			if(errno == ECONNRESET && verbosity < 2)
+				return 0; /* silence reset by peer */
+#endif
 #  ifdef HAVE_WRITEV
 			log_err_addr("tcp writev", strerror(errno),
 				&c->repinfo.addr, c->repinfo.addrlen);
@@ -1641,6 +1699,8 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 					UB_EV_WRITE);
 				return 1; 
 			}
+			if(WSAGetLastError() == WSAECONNRESET && verbosity < 2)
+				return 0; /* silence reset by peer */
 			log_err_addr("tcp send s",
 				wsa_strerror(WSAGetLastError()),
 				&c->repinfo.addr, c->repinfo.addrlen);
@@ -1664,6 +1724,10 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 #ifndef USE_WINSOCK
 		if(errno == EINTR || errno == EAGAIN)
 			return 1;
+#ifdef ECONNRESET
+		if(errno == ECONNRESET && verbosity < 2)
+			return 0; /* silence reset by peer */
+#endif
 		log_err_addr("tcp send r", strerror(errno),
 			&c->repinfo.addr, c->repinfo.addrlen);
 #else
@@ -1673,6 +1737,8 @@ comm_point_tcp_handle_write(int fd, struct comm_point* c)
 			ub_winsock_tcp_wouldblock(c->ev->ev, UB_EV_WRITE);
 			return 1; 
 		}
+		if(WSAGetLastError() == WSAECONNRESET && verbosity < 2)
+			return 0; /* silence reset by peer */
 		log_err_addr("tcp send r", wsa_strerror(WSAGetLastError()),
 			&c->repinfo.addr, c->repinfo.addrlen);
 #endif
@@ -1738,6 +1804,16 @@ comm_point_tcp_handle_callback(int fd, short event, void* arg)
 	}
 #endif
 
+	if(event&UB_EV_TIMEOUT) {
+		verbose(VERB_QUERY, "tcp took too long, dropped");
+		reclaim_tcp_handler(c);
+		if(!c->tcp_do_close) {
+			fptr_ok(fptr_whitelist_comm_point(c->callback));
+			(void)(*c->callback)(c, c->cb_arg,
+				NETEVENT_TIMEOUT, NULL);
+		}
+		return;
+	}
 	if(event&UB_EV_READ) {
 		int has_tcpq = (c->tcp_req_info != NULL);
 		if(!comm_point_tcp_handle_read(fd, c, 0)) {
@@ -1766,16 +1842,6 @@ comm_point_tcp_handle_callback(int fd, short event, void* arg)
 		}
 		if(has_tcpq && c->tcp_req_info && c->tcp_req_info->read_again)
 			tcp_req_info_read_again(fd, c);
-		return;
-	}
-	if(event&UB_EV_TIMEOUT) {
-		verbose(VERB_QUERY, "tcp took too long, dropped");
-		reclaim_tcp_handler(c);
-		if(!c->tcp_do_close) {
-			fptr_ok(fptr_whitelist_comm_point(c->callback));
-			(void)(*c->callback)(c, c->cb_arg,
-				NETEVENT_TIMEOUT, NULL);
-		}
 		return;
 	}
 	log_err("Ignored event %d for tcphdl.", event);
@@ -1826,6 +1892,10 @@ ssl_http_read_more(struct comm_point* c)
 			comm_point_listen_for_rw(c, 0, 1);
 			return 1;
 		} else if(want == SSL_ERROR_SYSCALL) {
+#ifdef ECONNRESET
+			if(errno == ECONNRESET && verbosity < 2)
+				return 0; /* silence reset by peer */
+#endif
 			if(errno != 0)
 				log_err("SSL_read syscall: %s",
 					strerror(errno));
@@ -2268,12 +2338,16 @@ ssl_http_write_more(struct comm_point* c)
 		if(want == SSL_ERROR_ZERO_RETURN) {
 			return 0; /* closed */
 		} else if(want == SSL_ERROR_WANT_READ) {
-			c->ssl_shake_state = comm_ssl_shake_read;
+			c->ssl_shake_state = comm_ssl_shake_hs_read;
 			comm_point_listen_for_rw(c, 1, 0);
 			return 1; /* wait for read condition */
 		} else if(want == SSL_ERROR_WANT_WRITE) {
 			return 1; /* write more later */
 		} else if(want == SSL_ERROR_SYSCALL) {
+#ifdef EPIPE
+			if(errno == EPIPE && verbosity < 2)
+				return 0; /* silence 'broken pipe' */
+#endif
 			if(errno != 0)
 				log_err("SSL_write syscall: %s",
 					strerror(errno));
@@ -2382,6 +2456,16 @@ comm_point_http_handle_callback(int fd, short event, void* arg)
 	log_assert(c->type == comm_http);
 	ub_comm_base_now(c->ev->base);
 
+	if(event&UB_EV_TIMEOUT) {
+		verbose(VERB_QUERY, "http took too long, dropped");
+		reclaim_http_handler(c);
+		if(!c->tcp_do_close) {
+			fptr_ok(fptr_whitelist_comm_point(c->callback));
+			(void)(*c->callback)(c, c->cb_arg,
+				NETEVENT_TIMEOUT, NULL);
+		}
+		return;
+	}
 	if(event&UB_EV_READ) {
 		if(!comm_point_http_handle_read(fd, c)) {
 			reclaim_http_handler(c);
@@ -2403,16 +2487,6 @@ comm_point_http_handle_callback(int fd, short event, void* arg)
 				(void)(*c->callback)(c, c->cb_arg, 
 					NETEVENT_CLOSED, NULL);
 			}
-		}
-		return;
-	}
-	if(event&UB_EV_TIMEOUT) {
-		verbose(VERB_QUERY, "http took too long, dropped");
-		reclaim_http_handler(c);
-		if(!c->tcp_do_close) {
-			fptr_ok(fptr_whitelist_comm_point(c->callback));
-			(void)(*c->callback)(c, c->cb_arg,
-				NETEVENT_TIMEOUT, NULL);
 		}
 		return;
 	}
@@ -3117,7 +3191,7 @@ comm_point_drop_reply(struct comm_reply* repinfo)
 {
 	if(!repinfo)
 		return;
-	log_assert(repinfo && repinfo->c);
+	log_assert(repinfo->c);
 	log_assert(repinfo->c->type != comm_tcp_accept);
 	if(repinfo->c->type == comm_udp)
 		return;
@@ -3138,8 +3212,8 @@ comm_point_stop_listening(struct comm_point* c)
 void 
 comm_point_start_listening(struct comm_point* c, int newfd, int msec)
 {
-	verbose(VERB_ALGO, "comm point start listening %d", 
-		c->fd==-1?newfd:c->fd);
+	verbose(VERB_ALGO, "comm point start listening %d (%d msec)", 
+		c->fd==-1?newfd:c->fd, msec);
 	if(c->type == comm_tcp_accept && !c->tcp_free) {
 		/* no use to start listening no free slots. */
 		return;
