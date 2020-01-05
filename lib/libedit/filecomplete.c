@@ -1,4 +1,4 @@
-/*	$NetBSD: filecomplete.c,v 1.63 2020/01/05 00:03:27 tih Exp $	*/
+/*	$NetBSD: filecomplete.c,v 1.64 2020/01/05 07:12:05 abhinav Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include "config.h"
 #if !defined(lint) && !defined(SCCSID)
-__RCSID("$NetBSD: filecomplete.c,v 1.63 2020/01/05 00:03:27 tih Exp $");
+__RCSID("$NetBSD: filecomplete.c,v 1.64 2020/01/05 07:12:05 abhinav Exp $");
 #endif /* not lint && not SCCSID */
 
 #include <sys/types.h>
@@ -583,10 +583,12 @@ fn_display_match_list(EditLine * el, char **matches, size_t num, size_t width,
 
 static wchar_t *
 find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
-    const wchar_t * word_break, const wchar_t * special_prefixes, size_t * length)
+    const wchar_t * word_break, const wchar_t * special_prefixes, size_t * length,
+	int do_unescape)
 {
 	/* We now look backwards for the start of a filename/variable word */
 	const wchar_t *ctemp = cursor;
+	wchar_t *temp;
 	size_t len;
 
 	/* if the cursor is placed at a slash or a quote, we need to find the
@@ -625,10 +627,16 @@ find_word_to_complete(const wchar_t * cursor, const wchar_t * buffer,
 		ctemp++;
 	}
 	*length = len;
-	wchar_t *unescaped_word = unescape_string(ctemp, len);
-	if (unescaped_word == NULL)
-		return NULL;
-	return unescaped_word;
+	if (do_unescape) {
+		wchar_t *unescaped_word = unescape_string(ctemp, len);
+		if (unescaped_word == NULL)
+			return NULL;
+		return unescaped_word;
+	}
+	temp = el_malloc((len + 1) * sizeof(*temp));
+	(void) wcsncpy(temp, ctemp, len);
+	temp[len] = '\0';
+	return temp;
 }
 
 /*
@@ -658,6 +666,7 @@ fn_complete(EditLine *el,
 	size_t len;
 	int what_to_do = '\t';
 	int retval = CC_NORM;
+	int do_unescape = attempted_completion_function == NULL? 1: 0;
 
 	if (el->el_state.lastcmd == el->el_state.thiscmd)
 		what_to_do = '?';
@@ -673,7 +682,7 @@ fn_complete(EditLine *el,
 
 	li = el_wline(el);
 	temp = find_word_to_complete(li->cursor,
-	    li->buffer, word_break, special_prefixes, &len);
+	    li->buffer, word_break, special_prefixes, &len, do_unescape);
 	if (temp == NULL)
 		goto out;
 
