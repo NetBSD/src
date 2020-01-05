@@ -920,43 +920,54 @@ ipv6_findaddr(struct dhcpcd_ctx *ctx, const struct in6_addr *addr, unsigned int 
 #endif
 }
 
-ssize_t
-ipv6_addaddrs(struct ipv6_addrhead *addrs)
+int
+ipv6_doaddr(struct ipv6_addr *ia, struct timespec *now)
 {
-	struct ipv6_addr *ap, *apn;
-	ssize_t i;
+
+	/* A delegated prefix is not an address. */
+	if (ia->flags & IPV6_AF_DELEGATEDPFX)
+		return 0;
+
+	if (ia->prefix_vltime == 0) {
+		if (ia->flags & IPV6_AF_ADDED)
+			ipv6_deleteaddr(ia);
+		eloop_q_timeout_delete(ia->iface->ctx->eloop,
+		    0, NULL, ia);
+		if (ia->flags & IPV6_AF_REQUEST) {
+			ia->flags &= ~IPV6_AF_ADDED;
+			return 0;
+		}
+		return -1;
+	}
+
+	if (ia->flags & IPV6_AF_STALE ||
+	    IN6_IS_ADDR_UNSPECIFIED(&ia->addr))
+		return 0;
+
+	if (!timespecisset(now))
+		clock_gettime(CLOCK_MONOTONIC, now);
+	ipv6_addaddr(ia, now);
+	return ia->flags & IPV6_AF_NEW ? 1 : 0;
+}
+
+ssize_t
+ipv6_addaddrs(struct ipv6_addrhead *iaddrs)
+{
 	struct timespec now;
+	struct ipv6_addr *ia, *ian;
+	ssize_t i, r;
 
 	i = 0;
 	timespecclear(&now);
-	TAILQ_FOREACH_SAFE(ap, addrs, next, apn) {
-		/* A delegated prefix is not an address. */
-		if (ap->flags & IPV6_AF_DELEGATEDPFX)
-			continue;
-		if (ap->prefix_vltime == 0) {
-			if (ap->flags & IPV6_AF_ADDED) {
-				ipv6_deleteaddr(ap);
-				i++;
-			}
-			eloop_q_timeout_delete(ap->iface->ctx->eloop,
-			    0, NULL, ap);
-			if (ap->flags & IPV6_AF_REQUEST) {
-				ap->flags &= ~IPV6_AF_ADDED;
-			} else {
-				TAILQ_REMOVE(addrs, ap, next);
-				ipv6_freeaddr(ap);
-			}
-		} else if (!(ap->flags & IPV6_AF_STALE) &&
-		    !IN6_IS_ADDR_UNSPECIFIED(&ap->addr))
-		{
-			if (ap->flags & IPV6_AF_NEW)
-				i++;
-			if (!timespecisset(&now))
-				clock_gettime(CLOCK_MONOTONIC, &now);
-			ipv6_addaddr(ap, &now);
+	TAILQ_FOREACH_SAFE(ia, iaddrs, next, ian) {
+		r = ipv6_doaddr(ia, &now);
+		if (r != 0)
+			i++;
+		if (r == -1) {
+			TAILQ_REMOVE(iaddrs, ia, next);
+			ipv6_freeaddr(ia);
 		}
 	}
-
 	return i;
 }
 
@@ -1543,6 +1554,10 @@ ipv6_newaddr(struct interface *ifp, const struct in6_addr *addr,
 		ia->flags |= IPV6_AF_DADCOMPLETED;
 	ia->prefix_len = prefix_len;
 	ia->dhcp6_fd = -1;
+
+#ifndef SMALL
+	TAILQ_INIT(&ia->pd_pfxs);
+#endif
 
 #ifdef IPV6_AF_TEMPORARY
 	tempaddr = ia->flags & IPV6_AF_TEMPORARY;

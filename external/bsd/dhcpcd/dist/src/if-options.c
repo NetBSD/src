@@ -393,8 +393,16 @@ parse_str(char *sbuf, size_t slen, const char *str, int flags)
 			str++;
 		}
 	}
-	if (flags == PARSE_STRING_NULL && sbuf)
-		*sbuf = '\0';
+	if (flags == PARSE_STRING_NULL) {
+		l++;
+		if (sbuf != NULL) {
+			if (l > slen) {
+				errno = ENOBUFS;
+				return -1;
+			}
+			*sbuf = '\0';
+		}
+	}
 	return (ssize_t)l;
 }
 
@@ -2223,6 +2231,21 @@ finish_config(struct if_options *ifo)
 		 * guard should suffice */
 		ifo->options |= DHCPCD_VENDORRAW;
 	}
+
+	if (!(ifo->options & DHCPCD_ARP) ||
+	    ifo->options & (DHCPCD_INFORM | DHCPCD_STATIC))
+		ifo->options &= ~DHCPCD_IPV4LL;
+
+	if (!(ifo->options & DHCPCD_IPV4))
+		ifo->options &= ~(DHCPCD_DHCP | DHCPCD_IPV4LL | DHCPCD_WAITIP4);
+
+	if (!(ifo->options & DHCPCD_IPV6))
+		ifo->options &=
+		    ~(DHCPCD_IPV6RS | DHCPCD_DHCP6 | DHCPCD_WAITIP6);
+
+	if (!(ifo->options & DHCPCD_IPV6RS))
+		ifo->options &=
+		    ~(DHCPCD_IPV6RA_AUTOCONF | DHCPCD_IPV6RA_REQRDNSS);
 }
 
 /* Handy routine to read very long lines in text files.

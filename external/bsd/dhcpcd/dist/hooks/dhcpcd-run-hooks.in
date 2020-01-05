@@ -212,7 +212,7 @@ valid_domainname_list()
 
 # With the advent of alternative init systems, it's possible to have
 # more than one installed. So we need to try and guess what one we're
-# using unless overriden by configure.
+# using unless overridden by configure.
 detect_init()
 {
 	_service_exists="@SERVICEEXISTS@"
