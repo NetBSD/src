@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.c,v 1.3 2018/11/15 23:01:45 jakllsch Exp $	*/
+/*	$NetBSD: hid.c,v 1.3.4.1 2020/01/05 09:53:18 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.c,v 1.11 1999/11/17 22:33:39 n_hibma Exp $ */
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.3 2018/11/15 23:01:45 jakllsch Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hid.c,v 1.3.4.1 2020/01/05 09:53:18 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -149,27 +149,33 @@ hid_get_item(struct hid_data *s, struct hid_item *h)
 	}
 	for (;;) {
 		p = s->p;
-		if (p >= s->end)
-			return 0;
 
+		if (p + 1 > s->end)
+			return 0;
 		bSize = *p++;
+
 		if (bSize == 0xfe) {
 			/* long item */
+			if (p + 3 > s->end)
+				return 0;
 			bSize = *p++;
 			bSize |= *p++ << 8;
 			bTag = *p++;
-			data = p;
-			p += bSize;
 			bType = 0xff; /* XXX what should it be */
 		} else {
 			/* short item */
 			bTag = bSize >> 4;
 			bType = (bSize >> 2) & 3;
 			bSize &= 3;
-			if (bSize == 3) bSize = 4;
-			data = p;
-			p += bSize;
+			if (bSize == 3)
+				bSize = 4;
 		}
+
+		data = p;
+		if (p + bSize > s->end)
+			return 0;
+		p += bSize;
+
 		s->p = p;
 		switch(bSize) {
 		case 0:
