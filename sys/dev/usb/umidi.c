@@ -1,4 +1,4 @@
-/*	$NetBSD: umidi.c,v 1.78 2019/05/08 13:40:19 isaki Exp $	*/
+/*	$NetBSD: umidi.c,v 1.78.2.1 2020/01/05 09:30:04 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2012, 2014 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.78 2019/05/08 13:40:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umidi.c,v 1.78.2.1 2020/01/05 09:30:04 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -414,7 +414,6 @@ out_free_endpoints:
 out:
 	aprint_error_dev(self, "disabled.\n");
 	sc->sc_dying = 1;
-	KERNEL_UNLOCK_ONE(curlwp);
 	return;
 }
 
