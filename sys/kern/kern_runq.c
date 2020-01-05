@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.54 2020/01/04 22:46:01 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.55 2020/01/05 20:26:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.54 2020/01/04 22:46:01 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.55 2020/01/05 20:26:56 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -178,15 +178,6 @@ sched_cpuattach(struct cpu_info *ci)
 	spc->spc_mutex = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
 	for (i = 0; i < PRI_COUNT; i++)
 		TAILQ_INIT(&spc->spc_queue[i]);
-
-	evcnt_attach_dynamic(&spc->spc_ev_pull, EVCNT_TYPE_MISC, NULL,
-	   cpu_name(ci), "runqueue pull");
-	evcnt_attach_dynamic(&spc->spc_ev_push, EVCNT_TYPE_MISC, NULL,
-	   cpu_name(ci), "runqueue push");
-	evcnt_attach_dynamic(&spc->spc_ev_stay, EVCNT_TYPE_MISC, NULL,
-	   cpu_name(ci), "runqueue stay");
-	evcnt_attach_dynamic(&spc->spc_ev_localize, EVCNT_TYPE_MISC, NULL,
-	   cpu_name(ci), "runqueue localize");
 }
 
 /*
@@ -235,6 +226,7 @@ sched_enqueue(struct lwp *l)
 	} else {
 		TAILQ_INSERT_TAIL(q_head, l, l_runq);
 	}
+	spc->spc_flags &= ~SPCF_IDLE;
 	spc->spc_count++;
 	if ((l->l_pflag & LP_BOUND) == 0)
 		spc->spc_mcount++;
@@ -474,15 +466,33 @@ sched_takecpu(struct lwp *l)
 	spc = &ci->ci_schedstate;
 	eprio = lwp_eprio(l);
 
+	/*
+	 * For new LWPs (LSIDL), l_cpu was inherited from the parent when
+	 * the LWP was created (and is probably still curcpu at this point).
+	 * The child will initially be in close communication with the
+	 * parent and share VM context and cache state.  Look for an idle
+	 * SMT sibling to run it, and failing that run on the same CPU as
+	 * the parent.
+	 */
+	if (l->l_stat == LSIDL) {
+		tci = ci->ci_sibling[CPUREL_CORE];
+		while (tci != ci) {
+			ici_spc = &tci->ci_schedstate;
+			if (l->l_psid == ici_spc->spc_psid &&
+			    (ici_spc->spc_flags & SPCF_IDLE) != 0) {
+				return tci;
+			}
+			tci = tci->ci_sibling[CPUREL_CORE];
+		}
+		if (spc->spc_psid == l->l_psid) {
+			return ci;
+		}
+	}
+
 	/* If SMT primary is idle, send it back there. */
 	tci = ci->ci_smt_primary;
 	if ((tci->ci_schedstate.spc_flags & SPCF_IDLE) != 0 &&
 	    sched_migratable(l, tci)) {
-	    	if (tci != ci) {
-			spc->spc_ev_push.ev_count++;
-		} else {
-			spc->spc_ev_stay.ev_count++;
-		}
 		return tci;
 	}
 
@@ -490,23 +500,11 @@ sched_takecpu(struct lwp *l)
 	if (__predict_true(spc->spc_psid == l->l_psid)) {
 		/* If CPU of this thread is idling - run there */
 		if (spc->spc_count == 0) {
-			spc->spc_ev_stay.ev_count++;
 			return ci;
 		}
-		/*
-		 * New LWPs must start on the same CPU as the parent (l_cpu
-		 * was inherited when the LWP was created).  Doing otherwise
-		 * is bad for performance and repeatability, and agitates
-		 * buggy programs.  Also, we want the child to have a good
-		 * chance of reusing the VM context from the parent.
-		 */
-		if (l->l_stat == LSIDL) {
-			spc->spc_ev_stay.ev_count++;
-			return ci;
-		}		 
+
 		/* Stay if thread is cache-hot */
 		if (lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
-			spc->spc_ev_stay.ev_count++;
 			return ci;
 		}
 	}
@@ -515,8 +513,6 @@ sched_takecpu(struct lwp *l)
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
 	if (eprio > spc->spc_curpriority && sched_migratable(l, ci)) {
-		/* XXXAD foreign CPU not locked */
-		spc->spc_ev_localize.ev_count++;
 		return ci;
 	}
 
@@ -543,7 +539,7 @@ sched_takecpu(struct lwp *l)
 
 		if (pri == lpri) {
 			/* Pick the least busy CPU. */
-			if (spc->spc_count < ici_spc->spc_count)
+			if (spc->spc_count <= ici_spc->spc_count)
 				continue;
 
 			/* Prefer SMT primaries over secondaries. */
@@ -555,11 +551,13 @@ sched_takecpu(struct lwp *l)
 		lpri = pri;
 		tci = ci;
 		spc = ici_spc;
+
+		/* If this CPU is idle and an SMT primary, we're done. */
+		if ((spc->spc_flags & (SPCF_IDLE | SPCF_SMTPRIMARY)) ==
+		    (SPCF_IDLE | SPCF_SMTPRIMARY)) {
+			break;
+		}
 	} while (ci = next, ci != pivot);
-
-	/* XXXAD remote CPU, unlocked */
-	tci->ci_schedstate.spc_ev_push.ev_count++;
-
 	return tci;
 }
 
@@ -626,7 +624,6 @@ sched_catchlwp(struct cpu_info *ci)
 				SPINLOCK_BACKOFF(count);
 		}
 		l->l_cpu = curci;
-		spc->spc_ev_pull.ev_count++;
 		lwp_unlock_to(l, curspc->spc_mutex);
 		sched_enqueue(l);
 		return l;

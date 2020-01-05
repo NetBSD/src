@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.82 2019/12/21 11:54:04 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.83 2020/01/05 20:26:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
@@ -144,7 +144,6 @@ __END_DECLS
 
 #include <sys/mutex.h>
 #include <sys/time.h>
-#include <sys/evcnt.h>
 
 /*
  * Per-CPU scheduler state.  Field markings and the corresponding locks: 
@@ -174,10 +173,6 @@ struct schedstate_percpu {
 	u_int		spc_mcount;	/* m: count of migratable threads */
 	uint32_t	spc_bitmap[8];	/* m: bitmap of active queues */
 	TAILQ_HEAD(,lwp) *spc_queue;	/* m: queue for each priority */
-	struct evcnt	spc_ev_pull;	/* m: event counters */
-	struct evcnt	spc_ev_push;
-	struct evcnt	spc_ev_stay;
-	struct evcnt	spc_ev_localize;
 };
 
 /* spc_flags */
