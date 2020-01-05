@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.181 2020/01/02 16:56:58 ad Exp $	*/
+/*	$NetBSD: vm.c,v 1.182 2020/01/05 15:57:15 para Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.181 2020/01/02 16:56:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.182 2020/01/05 15:57:15 para Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -682,16 +682,6 @@ uvm_estimatepageable(int *active, int *inactive)
 	/* XXX: guessing game */
 	*active = 1024;
 	*inactive = 1024;
-}
-
-bool
-vm_map_starved_p(struct vm_map *map)
-{
-
-	if (map->flags & VM_MAP_WANTVA)
-		return true;
-
-	return false;
 }
 
 int
