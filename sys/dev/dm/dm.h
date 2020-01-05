@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.53 2020/01/02 06:22:23 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.54 2020/01/05 08:08:26 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -273,6 +273,18 @@ int dm_target_zero_destroy(dm_table_entry_t *);
 int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
 
 #if 0
+/* dm_target_delay.c */
+void dm_target_delay_pool_create(void);
+void dm_target_delay_pool_destroy(void);
+int dm_target_delay_init(dm_table_entry_t *, int, char **);
+char *dm_target_delay_info(void *);
+char *dm_target_delay_table(void *);
+int dm_target_delay_strategy(dm_table_entry_t *, struct buf *);
+int dm_target_delay_sync(dm_table_entry_t *);
+int dm_target_delay_destroy(dm_table_entry_t *);
+int dm_target_delay_upcall(dm_table_entry_t *, struct buf *);
+int dm_target_delay_secsize(dm_table_entry_t *, unsigned int *);
+
 /* dm_target_flakey.c */
 int dm_target_flakey_init(dm_table_entry_t *, int, char **);
 char *dm_target_flakey_table(void *);
