@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.152 2020/01/02 10:02:26 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.153 2020/01/05 09:56:59 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7421,4 +7421,199 @@ sys/arch/arm/broadcom/bcm283x_platform.c	1.34 (patch)
 
 	Fix early console output on the rpi0w.
 	[skrll, ticket #599]
+
+sys/dev/usb/umidi.c				1.82
+
+	Fix locking mistake.
+	[maxv, ticket #600]
+
+sbin/dmesg/dmesg.c				1.44,1.45
+
+	PR/54729: fix dmesg(8) to preserve leading whitespaces of kernel
+	messages.
+	[tsutsui, ticket #601]
+
+external/bsd/dhcpcd/dist/hooks/dhcpcd-run-hooks.in up to 1.4
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.36
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.31
+external/bsd/dhcpcd/dist/src/dhcp.h             up to 1.1.1.14
+external/bsd/dhcpcd/dist/src/dhcp6.c            up to 1.15
+external/bsd/dhcpcd/dist/src/dhcpcd-embedded.c  up to 1.1.1.3
+external/bsd/dhcpcd/dist/src/dhcpcd.c           up to 1.31
+external/bsd/dhcpcd/dist/src/dhcpcd.conf.5.in   up to 1.1.1.16
+external/bsd/dhcpcd/dist/src/if-options.c       up to 1.20
+external/bsd/dhcpcd/dist/src/ipv4.c             up to 1.1.1.20
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.7
+external/bsd/dhcpcd/dist/src/ipv6.h             up to 1.7
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.15
+doc/3RDPARTY					(manually edited)
+
+	Import dhcpcd 8.1.5.
+	[roy, ticket #602]
+
+sys/external/bsd/drm2/dist/drm/drm_bridge.c	1.4
+sys/external/bsd/drm2/dist/drm/drm_panel.c	1.4
+sys/external/bsd/drm2/dist/include/drm/drm_crtc.h 1.8
+sys/external/bsd/drm2/dist/include/drm/drm_panel.h 1.3
+sys/external/bsd/drm2/drm/drm_module.c		1.17
+
+	Initialize drm_bridge and drm_panel locks.
+	[jmcneill, ticket #603]
+
+external/bsd/unbound/dist/ipset/ipset.c         up to 1.1.1.1
+external/bsd/unbound/dist/ipset/ipset.h         up to 1.1.1.1
+external/bsd/unbound/dist/compat/getentropy_freebsd.c up to 1.1.1.1
+external/bsd/unbound/dist/contrib/drop-tld.diff up to 1.1.1.1
+external/bsd/unbound/dist/contrib/unbound-fuzzers.tar.bz2 up to 1.1.1.1
+external/bsd/unbound/dist/doc/README.ipset.md   up to 1.1.1.1
+external/bsd/unbound/dist/pythonmod/examples/avahi-resolver.py up to 1.1.1.1
+external/bsd/unbound/dist/testdata/auth_nsec3_ent.rpl up to 1.1.1.1
+external/bsd/unbound/dist/testdata/fwd_minimal.rpl up to 1.1.1.1
+external/bsd/unbound/dist/.travis.yml           up to 1.1.1.1
+external/bsd/unbound/dist/README.md             up to 1.1.1.1
+external/bsd/unbound/dist/.gitattributes        delete
+external/bsd/unbound/dist/.gitignore            delete
+external/bsd/unbound/dist/Makefile.in           up to 1.1.1.5
+external/bsd/unbound/dist/aclocal.m4            up to 1.1.1.4
+external/bsd/unbound/dist/config.guess          up to 1.4
+external/bsd/unbound/dist/config.h.in           up to 1.1.1.5
+external/bsd/unbound/dist/config.sub            up to 1.4
+external/bsd/unbound/dist/configure             up to 1.1.1.5
+external/bsd/unbound/dist/configure.ac          up to 1.1.1.5
+external/bsd/unbound/dist/install-sh            up to 1.1.1.3
+external/bsd/unbound/dist/cachedb/cachedb.c     up to 1.1.1.5
+external/bsd/unbound/dist/compat/getentropy_linux.c up to 1.1.1.3
+external/bsd/unbound/dist/compat/getentropy_osx.c up to 1.1.1.2
+external/bsd/unbound/dist/compat/getentropy_solaris.c up to 1.1.1.2
+external/bsd/unbound/dist/compat/getentropy_win.c up to 1.1.1.2
+external/bsd/unbound/dist/compat/malloc.c       up to 1.1.1.2
+external/bsd/unbound/dist/compat/sha512.c       up to 1.1.1.3
+external/bsd/unbound/dist/compat/snprintf.c     up to 1.1.1.2
+external/bsd/unbound/dist/contrib/README        up to 1.1.1.5
+external/bsd/unbound/dist/contrib/create_unbound_ad_servers.sh up to 1.1.1.2
+external/bsd/unbound/dist/contrib/fastrpz.patch up to 1.1.1.4
+external/bsd/unbound/dist/contrib/unbound.init  up to 1.1.1.3
+external/bsd/unbound/dist/contrib/unbound.init_fedora up to 1.1.1.2
+external/bsd/unbound/dist/contrib/unbound.service.in up to 1.1.1.3
+external/bsd/unbound/dist/daemon/daemon.c       up to 1.1.1.5
+external/bsd/unbound/dist/daemon/remote.c       up to 1.1.1.5
+external/bsd/unbound/dist/daemon/stats.c        up to 1.1.1.5
+external/bsd/unbound/dist/daemon/unbound.c      up to 1.1.1.5
+external/bsd/unbound/dist/daemon/worker.c       up to 1.1.1.5
+external/bsd/unbound/dist/dns64/dns64.c         up to 1.1.1.4
+external/bsd/unbound/dist/dnscrypt/dnscrypt.c   up to 1.1.1.4
+external/bsd/unbound/dist/doc/Changelog         up to 1.1.1.5
+external/bsd/unbound/dist/doc/README            up to 1.1.1.5
+external/bsd/unbound/dist/doc/TODO              up to 1.1.1.2
+external/bsd/unbound/dist/doc/example.conf.in   up to 1.1.1.5
+external/bsd/unbound/dist/doc/libunbound.3.in   up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound-anchor.8.in up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound-checkconf.8.in up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound-control.8.in up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound-host.1.in up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound.8.in      up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound.conf.5.in up to 1.1.1.5
+external/bsd/unbound/dist/doc/unbound.doxygen   up to 1.1.1.4
+external/bsd/unbound/dist/edns-subnet/subnetmod.c up to 1.1.1.4
+external/bsd/unbound/dist/ipsecmod/ipsecmod.c   up to 1.1.1.3
+external/bsd/unbound/dist/iterator/iter_scrub.c up to 1.1.1.5
+external/bsd/unbound/dist/iterator/iter_utils.c up to 1.1.1.5
+external/bsd/unbound/dist/iterator/iter_utils.h up to 1.1.1.5
+external/bsd/unbound/dist/iterator/iterator.c   up to 1.1.1.5
+external/bsd/unbound/dist/libunbound/context.c  up to 1.1.1.5
+external/bsd/unbound/dist/libunbound/context.h  up to 1.1.1.4
+external/bsd/unbound/dist/libunbound/libunbound.c up to 1.1.1.5
+external/bsd/unbound/dist/libunbound/libworker.c up to 1.1.1.5
+external/bsd/unbound/dist/libunbound/python/libunbound.i up to 1.1.1.3
+external/bsd/unbound/dist/pythonmod/interface.i up to 1.1.1.5
+external/bsd/unbound/dist/pythonmod/pythonmod.c up to 1.1.1.4
+external/bsd/unbound/dist/pythonmod/doc/examples/example0-1.py up to 1.1.1.3
+external/bsd/unbound/dist/pythonmod/doc/examples/example0.rst up to 1.1.1.3
+external/bsd/unbound/dist/pythonmod/examples/calc.py up to 1.1.1.2
+external/bsd/unbound/dist/pythonmod/examples/edns.py up to 1.1.1.2
+external/bsd/unbound/dist/pythonmod/examples/inplace_callbacks.py up to 1.1.1.3
+external/bsd/unbound/dist/respip/respip.c       up to 1.1.1.3
+external/bsd/unbound/dist/services/authzone.c   up to 1.1.1.4
+external/bsd/unbound/dist/services/authzone.h   up to 1.1.1.4
+external/bsd/unbound/dist/services/listen_dnsport.c up to 1.1.1.5
+external/bsd/unbound/dist/services/localzone.c  up to 1.1.1.5
+external/bsd/unbound/dist/services/mesh.c       up to 1.1.1.5
+external/bsd/unbound/dist/services/modstack.c   up to 1.1.1.4
+external/bsd/unbound/dist/services/outside_network.c up to 1.1.1.5
+external/bsd/unbound/dist/services/outside_network.h up to 1.1.1.5
+external/bsd/unbound/dist/services/cache/dns.c  up to 1.1.1.5
+external/bsd/unbound/dist/sldns/parse.c         up to 1.1.1.3
+external/bsd/unbound/dist/sldns/rrdef.c         up to 1.1.1.4
+external/bsd/unbound/dist/sldns/sbuffer.c       up to 1.1.1.3
+external/bsd/unbound/dist/sldns/sbuffer.h       up to 1.1.1.4
+external/bsd/unbound/dist/sldns/str2wire.c      up to 1.1.1.4
+external/bsd/unbound/dist/sldns/wire2str.c      up to 1.1.1.5
+external/bsd/unbound/dist/sldns/wire2str.h      up to 1.1.1.4
+external/bsd/unbound/dist/smallapp/unbound-anchor.c up to 1.1.1.4
+external/bsd/unbound/dist/smallapp/unbound-checkconf.c up to 1.1.1.5
+external/bsd/unbound/dist/smallapp/unbound-control.c up to 1.1.1.5
+external/bsd/unbound/dist/smallapp/unbound-host.c up to 1.1.1.5
+external/bsd/unbound/dist/testcode/asynclook.c  up to 1.1.1.5
+external/bsd/unbound/dist/testcode/delayer.c    up to 1.1.1.3
+external/bsd/unbound/dist/testcode/fake_event.c up to 1.1.1.5
+external/bsd/unbound/dist/testcode/memstats.c   up to 1.1.1.3
+external/bsd/unbound/dist/testcode/mini_tdir.sh up to 1.1.1.2
+external/bsd/unbound/dist/testcode/perf.c       up to 1.1.1.4
+external/bsd/unbound/dist/testcode/petal.c      up to 1.1.1.4
+external/bsd/unbound/dist/testcode/streamtcp.c  up to 1.1.1.5
+external/bsd/unbound/dist/testcode/testbound.c  up to 1.1.1.5
+external/bsd/unbound/dist/testcode/testpkts.c   up to 1.1.1.5
+external/bsd/unbound/dist/testcode/unitmain.c   up to 1.1.1.5
+external/bsd/unbound/dist/testcode/unitmsgparse.c up to 1.1.1.3
+external/bsd/unbound/dist/testcode/unitregional.c up to 1.1.1.2
+external/bsd/unbound/dist/testdata/auth_nsec3_wild.rpl up to 1.1.1.2
+external/bsd/unbound/dist/util/alloc.c          up to 1.1.1.4
+external/bsd/unbound/dist/util/config_file.c    up to 1.1.1.5
+external/bsd/unbound/dist/util/config_file.h    up to 1.1.1.5
+external/bsd/unbound/dist/util/configlexer.c    up to 1.1.1.5
+external/bsd/unbound/dist/util/configlexer.lex  up to 1.1.1.5
+external/bsd/unbound/dist/util/configparser.c   up to 1.1.1.5
+external/bsd/unbound/dist/util/configparser.h   up to 1.1.1.5
+external/bsd/unbound/dist/util/configparser.y   up to 1.1.1.5
+external/bsd/unbound/dist/util/fptr_wlist.c     up to 1.1.1.5
+external/bsd/unbound/dist/util/iana_ports.inc   up to 1.1.1.5
+external/bsd/unbound/dist/util/log.c            up to 1.1.1.5
+external/bsd/unbound/dist/util/mini_event.c     up to 1.3
+external/bsd/unbound/dist/util/net_help.c       up to 1.1.1.5
+external/bsd/unbound/dist/util/net_help.h       up to 1.1.1.5
+external/bsd/unbound/dist/util/netevent.c       up to 1.3
+external/bsd/unbound/dist/util/random.c         up to 1.1.1.2
+external/bsd/unbound/dist/util/random.h         up to 1.1.1.2
+external/bsd/unbound/dist/util/regional.c       up to 1.1.1.2
+external/bsd/unbound/dist/util/ub_event.c       up to 1.1.1.4
+external/bsd/unbound/dist/util/ub_event_pluggable.c up to 1.1.1.3
+external/bsd/unbound/dist/util/winsock_event.c  up to 1.1.1.3
+external/bsd/unbound/dist/util/data/dname.c     up to 1.1.1.4
+external/bsd/unbound/dist/util/data/msgencode.c up to 1.1.1.4
+external/bsd/unbound/dist/util/data/msgencode.h up to 1.1.1.2
+external/bsd/unbound/dist/util/data/msgparse.c  up to 1.1.1.4
+external/bsd/unbound/dist/util/data/msgreply.c  up to 1.1.1.5
+external/bsd/unbound/dist/util/data/msgreply.h  up to 1.1.1.5
+external/bsd/unbound/dist/util/shm_side/shm_main.c up to 1.1.1.2
+external/bsd/unbound/dist/util/storage/lookup3.c up to 1.1.1.3
+external/bsd/unbound/dist/validator/autotrust.c up to 1.1.1.4
+external/bsd/unbound/dist/validator/val_anchor.c up to 1.1.1.4
+external/bsd/unbound/dist/validator/val_secalgo.c up to 1.1.1.5
+external/bsd/unbound/dist/validator/val_sigcrypt.c up to 1.1.1.4
+external/bsd/unbound/dist/validator/validator.c up to 1.1.1.5
+external/bsd/unbound/include/config.h           up to 1.7
+doc/3RDPARTY					(manually edited)
+
+	Import unbound 1.9.6.
+	[christos, ticket #604]
+
+sys/dev/hid/hid.c				1.4
+
+	Fix small read overflows when parsing HID tables.
+	[maxv, ticket #605]
+
+sys/netinet6/ip6_mroute.c			1.131
+
+	Don't forget to initialize 'sin6_len'.
+	[maxv, ticket #606]
 
