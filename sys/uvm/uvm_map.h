@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.75 2019/08/01 02:28:55 riastradh Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.76 2020/01/05 15:57:15 para Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -315,8 +315,6 @@ int		uvm_map_enter(struct vm_map *, const struct uvm_map_args *,
 int		uvm_mapent_trymerge(struct vm_map *,
 		    struct vm_map_entry *, int);
 #define	UVM_MERGE_COPYING	1
-
-bool		vm_map_starved_p(struct vm_map *);
 
 /*
  * VM map locking operations.
