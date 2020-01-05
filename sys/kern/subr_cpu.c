@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.4 2020/01/02 01:31:17 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.5 2020/01/05 20:27:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.4 2020/01/02 01:31:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.5 2020/01/05 20:27:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,6 +70,8 @@ __KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.4 2020/01/02 01:31:17 ad Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+
+static void	cpu_topology_fake1(struct cpu_info *);
 
 kmutex_t	cpu_lock		__cacheline_aligned;
 int		ncpu			__read_mostly;
@@ -104,7 +106,7 @@ mi_cpu_init(void)
 	kcpuset_set(kcpuset_running, 0);
 
 	ci = curcpu();
-	ci->ci_smt_primary = ci;
+	cpu_topology_fake1(ci);
 }
 
 int
@@ -207,6 +209,27 @@ cpu_topology_dump(void)
 
 /*
  * Fake up topology info if we have none, or if what we got was bogus.
+ * Used early in boot, and by cpu_topology_fake().
+ */
+static void
+cpu_topology_fake1(struct cpu_info *ci)
+{
+	enum cpu_rel rel;
+
+	for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
+		ci->ci_sibling[rel] = ci;
+		ci->ci_nsibling[rel] = 1;
+	}
+	if (!cpu_topology_present) {
+		ci->ci_package_id = cpu_index(ci);
+	}
+	ci->ci_smt_primary = ci;
+	ci->ci_schedstate.spc_flags |= SPCF_SMTPRIMARY;
+	cpu_topology_dump();
+}
+
+/*
+ * Fake up topology info if we have none, or if what we got was bogus.
  * Don't override ci_package_id, etc, if cpu_topology_present is set.
  * MD code also uses these.
  */
@@ -215,18 +238,9 @@ cpu_topology_fake(void)
 {
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci;
-	enum cpu_rel rel;
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
-			ci->ci_sibling[rel] = ci;
-			ci->ci_nsibling[rel] = 1;
-		}
-		if (!cpu_topology_present) {
-			ci->ci_package_id = cpu_index(ci);
-		}
-		ci->ci_smt_primary = ci;
-		ci->ci_schedstate.spc_flags |= SPCF_SMTPRIMARY;
+		cpu_topology_fake1(ci);
 	}
 	cpu_topology_dump();
 }
