@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdtvar.h,v 1.15 2019/01/31 13:06:10 skrll Exp $ */
+/* $NetBSD: arm_fdtvar.h,v 1.16 2020/01/05 17:16:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -51,6 +51,8 @@ struct arm_platform_info {
 	const char *			api_compat;
 	const struct arm_platform *	api_ops;
 };
+
+#define ARM_PLATFORM_DEFAULT		""
 
 #define _ARM_PLATFORM_REGISTER(name)	\
 	__link_set_add_rodata(arm_platforms, __CONCAT(name,_platinfo));

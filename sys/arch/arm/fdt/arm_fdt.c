@@ -1,4 +1,4 @@
-/* $NetBSD: arm_fdt.c,v 1.9 2019/01/03 12:54:25 jmcneill Exp $ */
+/* $NetBSD: arm_fdt.c,v 1.10 2020/01/05 17:16:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_arm_timer.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.9 2019/01/03 12:54:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_fdt.c,v 1.10 2020/01/05 17:16:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,10 +87,10 @@ const struct arm_platform *
 arm_fdt_platform(void)
 {
 	static const struct arm_platform_info *booted_platform = NULL;
+	__link_set_decl(arm_platforms, struct arm_platform_info);
+	struct arm_platform_info * const *info;
 
 	if (booted_platform == NULL) {
-		__link_set_decl(arm_platforms, struct arm_platform_info);
-		struct arm_platform_info * const *info;
 		const struct arm_platform_info *best_info = NULL;
 		const int phandle = OF_peer(0);
 		int match, best_match = 0;
@@ -105,6 +105,19 @@ arm_fdt_platform(void)
 		}
 
 		booted_platform = best_info;
+	}
+
+	/*
+	 * No SoC specific platform was found. Try to find a generic
+	 * platform definition and use that if available.
+	 */
+	if (booted_platform == NULL) {
+		__link_set_foreach(info, arm_platforms) {
+			if (strcmp((*info)->api_compat, ARM_PLATFORM_DEFAULT) == 0) {
+				booted_platform = *info;
+				break;
+			}
+		}
 	}
 
 	return booted_platform == NULL ? NULL : booted_platform->api_ops;
