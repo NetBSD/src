@@ -1,4 +1,4 @@
-#	$NetBSD: files.generic64,v 1.13 2020/01/05 17:16:07 jmcneill Exp $
+#	$NetBSD: files.generic64,v 1.14 2020/01/05 17:26:31 jmcneill Exp $
 #
 # A generic (aarch64) kernel configuration info
 #
@@ -7,8 +7,6 @@ include "arch/arm/pic/files.pic"
 include "arch/arm/cortex/files.cortex"
 
 include "arch/evbarm/conf/files.fdt"
-
-file	arch/arm/fdt/arm64_platform.c
 
 # Add other board files here
 #

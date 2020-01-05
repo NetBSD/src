@@ -1,4 +1,4 @@
-/* $NetBSD: arm64_platform.c,v 1.2 2020/01/05 17:20:01 jmcneill Exp $ */
+/* $NetBSD: arm_platform.c,v 1.1 2020/01/05 17:26:31 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -26,12 +26,17 @@
  * SUCH DAMAGE.
  */
 
-#include "opt_soc.h"
-#include "opt_multiprocessor.h"
-#include "opt_console.h"
+/*
+ * This is the default Arm FDT platform implementation. It assumes the
+ * following:
+ *
+ *  - Generic timer
+ *  - PSCI support
+ *  - Console UART is pre-configured by firmware
+ */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm64_platform.c,v 1.2 2020/01/05 17:20:01 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.1 2020/01/05 17:26:31 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -61,7 +66,7 @@ extern struct bus_space arm_generic_bs_tag;
 extern struct bus_space arm_generic_a4x_bs_tag;
 
 static void
-arm64_platform_init_attach_args(struct fdt_attach_args *faa)
+arm_platform_init_attach_args(struct fdt_attach_args *faa)
 {
 	faa->faa_bst = &arm_generic_bs_tag;
 	faa->faa_a4x_bst = &arm_generic_a4x_bs_tag;
@@ -69,12 +74,12 @@ arm64_platform_init_attach_args(struct fdt_attach_args *faa)
 }
 
 static void
-arm64_platform_device_register(device_t self, void *aux)
+arm_platform_device_register(device_t self, void *aux)
 {
 }
 
 static const struct pmap_devmap *
-arm64_platform_devmap(void)
+arm_platform_devmap(void)
 {
 	static const struct pmap_devmap devmap_empty[] = {
 		DEVMAP_ENTRY_END
@@ -98,20 +103,20 @@ arm64_platform_devmap(void)
 }
 
 static u_int
-arm64_platform_uart_freq(void)
+arm_platform_uart_freq(void)
 {
 	return 0;
 }
 
-static const struct arm_platform arm64_platform = {
-	.ap_devmap = arm64_platform_devmap,
+static const struct arm_platform arm_platform = {
+	.ap_devmap = arm_platform_devmap,
 	.ap_bootstrap = arm_fdt_cpu_bootstrap,
-	.ap_init_attach_args = arm64_platform_init_attach_args,
-	.ap_device_register = arm64_platform_device_register,
+	.ap_init_attach_args = arm_platform_init_attach_args,
+	.ap_device_register = arm_platform_device_register,
 	.ap_reset = psci_fdt_reset,
 	.ap_delay = gtmr_delay,
-	.ap_uart_freq = arm64_platform_uart_freq,
+	.ap_uart_freq = arm_platform_uart_freq,
 	.ap_mpstart = arm_fdt_cpu_mpstart,
 };
 
-ARM_PLATFORM(arm64, ARM_PLATFORM_DEFAULT, &arm64_platform);
+ARM_PLATFORM(arm, ARM_PLATFORM_DEFAULT, &arm_platform);
