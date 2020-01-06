@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.1 2011/10/21 02:09:00 christos Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: proc_compare.c,v 1.1 2011/10/21 02:09:00 christos Exp $");
+__RCSID("$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: proc_compare.c,v 1.1 2011/10/21 02:09:00 christos Exp $");
 #  define P_RTIME_USEC	p_rtime_usec
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: proc_compare.c,v 1.1 2011/10/21 02:09:00 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -89,6 +89,17 @@ int
 proc_compare(const PROC *p1, const LWP *l1, const PROC *p2, const LWP *l2)
 {
 	/*
+ 	 * weed out zombies
+	 */
+	switch (TESTAB(P_ZOMBIE(p1), P_ZOMBIE(p2))) {
+	case ONLYA:
+		return 1;
+	case ONLYB:
+		return 0;
+	case BOTH:
+		goto out;
+	}
+	/*
 	 * see if at least one of them is runnable
 	 */
 	switch (TESTAB(ISRUN(p1), ISRUN(p2))) {
@@ -102,17 +113,6 @@ proc_compare(const PROC *p1, const LWP *l1, const PROC *p2, const LWP *l2)
 		 */
 		if (l2->l_pctcpu > l1->l_pctcpu)
 			return 1;
-		goto out;
-	}
-	/*
- 	 * weed out zombies
-	 */
-	switch (TESTAB(P_ZOMBIE(p1), P_ZOMBIE(p2))) {
-	case ONLYA:
-		return 1;
-	case ONLYB:
-		return 0;
-	case BOTH:
 		goto out;
 	}
 	/*
