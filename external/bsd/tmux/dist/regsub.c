@@ -24,7 +24,7 @@
 #include "tmux.h"
 
 static void
-regsub_copy(char **buf, size_t *len, const char *text, size_t start,
+regsub_copy(char **buf, ssize_t *len, const char *text, size_t start,
     size_t end)
 {
 	size_t	add = end - start;
@@ -35,7 +35,7 @@ regsub_copy(char **buf, size_t *len, const char *text, size_t start,
 }
 
 static void
-regsub_expand(char **buf, size_t *len, const char *with, const char *text,
+regsub_expand(char **buf, ssize_t *len, const char *with, const char *text,
     regmatch_t *m, u_int n)
 {
 	const char	*cp;
