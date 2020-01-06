@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.84 2020/01/06 01:37:57 oster Exp $	*/
+/*	$NetBSD: sched.h,v 1.85 2020/01/06 10:21:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
@@ -71,7 +71,6 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
-#include <sys/queue.h>
 #include <sys/types.h>
 
 #if defined(_KERNEL_OPT)
@@ -145,6 +144,7 @@ __END_DECLS
 
 #include <sys/mutex.h>
 #include <sys/time.h>
+#include <sys/queue.h>
 
 /*
  * Per-CPU scheduler state.  Field markings and the corresponding locks: 
