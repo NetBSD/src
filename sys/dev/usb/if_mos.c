@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.1 2019/09/20 10:34:54 mrg Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.2 2020/01/06 15:19:00 msaitoh Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.1 2019/09/20 10:34:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.2 2020/01/06 15:19:00 msaitoh Exp $");
 
 #include <sys/param.h>
 
@@ -472,17 +472,15 @@ mos_setiff_locked(struct usbnet *un)
 	rxmode = mos_reg_read_1(un, MOS_CTL);
 	rxmode &= ~(MOS_CTL_ALLMULTI | MOS_CTL_RX_PROMISC);
 
-	if (ifp->if_flags & IFF_PROMISC || ec->ec_multicnt > 0) {
+	ETHER_LOCK(ec);
+	if (ifp->if_flags & IFF_PROMISC) {
 allmulti:
-		ETHER_LOCK(ec);
 		ec->ec_flags |= ETHER_F_ALLMULTI;
-		ETHER_UNLOCK(ec);
 		rxmode |= MOS_CTL_ALLMULTI;
 		if (ifp->if_flags & IFF_PROMISC)
 			rxmode |= MOS_CTL_RX_PROMISC;
 	} else {
 		/* now program new ones */
-		ETHER_LOCK(ec);
 		ec->ec_flags &= ~ETHER_F_ALLMULTI;
 
 		ETHER_FIRST_MULTI(step, ec, enm);
@@ -490,7 +488,6 @@ allmulti:
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 			    ETHER_ADDR_LEN)) {
 				memset(hashtbl, 0, sizeof(hashtbl));
-				ETHER_UNLOCK(ec);
 				goto allmulti;
 			}
 			h = ether_crc32_be(enm->enm_addrlo,
@@ -499,8 +496,8 @@ allmulti:
 
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* 
 	 * The datasheet claims broadcast frames were always accepted
