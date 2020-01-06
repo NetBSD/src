@@ -1236,7 +1236,7 @@ unicode:
 		yyerror("invalid \\%c argument", type);
 		return (0);
 	}
-	yylex_append(buf, len, ud.data, ud.size);
+	yylex_append(buf, len, (char *)ud.data, ud.size);
 	return (1);
 }
 
