@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iy.c,v 1.111 2019/11/12 13:17:44 msaitoh Exp $	*/
+/*	$NetBSD: if_iy.c,v 1.112 2020/01/06 07:15:03 msaitoh Exp $	*/
 /* #define IYDEBUG */
 /* #define IYMEMDEBUG */
 
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.111 2019/11/12 13:17:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iy.c,v 1.112 2020/01/06 07:15:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -1305,6 +1305,7 @@ iy_mc_setup(struct iy_softc *sc)
 	iot = sc->sc_iot;
 	ioh = sc->sc_ioh;
 
+	ETHER_LOCK(ecp);
 	len = 6 * ecp->ec_multicnt;
 
 	avail = sc->tx_start - sc->tx_end;
@@ -1330,7 +1331,6 @@ iy_mc_setup(struct iy_softc *sc)
 	bus_space_write_2(iot, ioh, MEM_PORT_REG, 0);
 	bus_space_write_stream_2(iot, ioh, MEM_PORT_REG, htole16(len));
 
-	ETHER_LOCK(ecp);
 	ETHER_FIRST_MULTI(step, ecp, enm);
 	while (enm) {
 		/*

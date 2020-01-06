@@ -1,4 +1,4 @@
-/*	$NetBSD: if_de.c,v 1.164 2019/11/10 21:16:36 chs Exp $	*/
+/*	$NetBSD: if_de.c,v 1.165 2020/01/06 07:15:03 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1994-1997 Matt Thomas (matt@3am-software.com)
@@ -37,7 +37,7 @@
  *   board which support 21040, 21041, or 21140 (mostly).
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.164 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_de.c,v 1.165 2020/01/06 07:15:03 msaitoh Exp $");
 
 #define	TULIP_HDR_DATA
 
@@ -3218,6 +3218,7 @@ tulip_addr_filter(tulip_softc_t * const sc)
 	sc->tulip_if.if_flags &= ~IFF_ALLMULTI;
 #endif
 	sc->tulip_if.if_start = tulip_ifstart;	/* so the setup packet gets queued */
+	ETHER_LOCK(ec);
 	if (sc->tulip_multicnt > 14) {
 		uint32_t *sp = sc->tulip_setupdata;
 		unsigned hash;
@@ -3238,7 +3239,6 @@ tulip_addr_filter(tulip_softc_t * const sc)
 		 * hardware).
 		 */
 		memset(sc->tulip_setupdata, 0, sizeof(sc->tulip_setupdata));
-		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm != NULL) {
 			if (memcmp(enm->enm_addrlo, enm->enm_addrhi, 6) == 0) {
@@ -3256,7 +3256,6 @@ tulip_addr_filter(tulip_softc_t * const sc)
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
 		/*
 		 * No reason to use a hash if we are going to be
 		 * receiving every multicast.
@@ -3288,6 +3287,7 @@ tulip_addr_filter(tulip_softc_t * const sc)
 			}
 		}
 	}
+	ETHER_UNLOCK(ec);
 	if ((sc->tulip_flags & (TULIP_WANTHASHPERFECT | TULIP_WANTHASHONLY))
 	    == 0) {
 		uint32_t *sp = sc->tulip_setupdata;

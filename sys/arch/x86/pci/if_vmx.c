@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.53 2019/12/24 10:21:08 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.54 2020/01/06 07:15:03 msaitoh Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.53 2019/12/24 10:21:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.54 2020/01/06 07:15:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -3313,16 +3313,15 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 	 */
 	mode = VMXNET3_RXMODE_BCAST | VMXNET3_RXMODE_UCAST;
 
+	ETHER_LOCK(ec);
 	if (ISSET(ifp->if_flags, IFF_PROMISC) ||
 	    ec->ec_multicnt > VMXNET3_MULTICAST_MAX)
 		goto allmulti;
 
 	p = sc->vmx_mcast;
-	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	while (enm != NULL) {
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
-			ETHER_UNLOCK(ec);
 			/*
 			 * We must listen to a range of multicast addresses.
 			 * For now, just accept all multicasts, rather than
@@ -3339,17 +3338,16 @@ vmxnet3_set_rxfilter(struct vmxnet3_softc *sc)
 
 		ETHER_NEXT_MULTI(step, enm);
 	}
-	ETHER_UNLOCK(ec);
 
 	if (ec->ec_multicnt > 0) {
 		SET(mode, VMXNET3_RXMODE_MCAST);
 		ds->mcast_tablelen = p - sc->vmx_mcast;
 	}
+	ETHER_UNLOCK(ec);
 
 	goto setit;
 
 allmulti:
-	ETHER_LOCK(ec);
 	SET(ec->ec_flags, ETHER_F_ALLMULTI);
 	ETHER_UNLOCK(ec);
 	SET(mode, (VMXNET3_RXMODE_ALLMULTI | VMXNET3_RXMODE_MCAST));
