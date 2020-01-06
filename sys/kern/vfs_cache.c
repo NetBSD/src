@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.125 2019/12/01 18:31:19 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126 2020/01/06 11:22:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.125 2019/12/01 18:31:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126 2020/01/06 11:22:33 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -84,7 +84,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.125 2019/12/01 18:31:19 ad Exp $");
 #include <sys/time.h>
 #include <sys/vnode_impl.h>
 
-#define NAMECACHE_ENTER_REVERSE
 /*
  * Name caching works as follows:
  *
@@ -159,7 +158,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.125 2019/12/01 18:31:19 ad Exp $");
  * All use serialized by namecache_lock:
  *
  *	nclruhead / struct namecache::nc_lru
- *	ncvhashtbl / struct namecache::nc_vhash
  *	struct vnode_impl::vi_dnclist / struct namecache::nc_dvlist
  *	struct vnode_impl::vi_nclist / struct namecache::nc_vlist
  *	nchstats
@@ -266,11 +264,6 @@ static u_long	nchash __read_mostly;
 
 #define	NCHASH2(hash, dvp)	\
 	(((hash) ^ ((uintptr_t)(dvp) >> 3)) & nchash)
-
-static LIST_HEAD(ncvhashhead, namecache) *ncvhashtbl __read_mostly;
-static u_long	ncvhash __read_mostly;
-
-#define	NCVHASH(vp)		(((uintptr_t)(vp) >> 3) & ncvhash)
 
 /* Number of cache entries allocated. */
 static long	numcache __cacheline_aligned;
@@ -407,10 +400,6 @@ cache_disassociate(struct namecache *ncp)
 	if (ncp->nc_lru.tqe_prev != NULL) {
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 		ncp->nc_lru.tqe_prev = NULL;
-	}
-	if (ncp->nc_vhash.le_prev != NULL) {
-		LIST_REMOVE(ncp, nc_vhash);
-		ncp->nc_vhash.le_prev = NULL;
 	}
 	if (ncp->nc_vlist.le_prev != NULL) {
 		LIST_REMOVE(ncp, nc_vlist);
@@ -771,15 +760,14 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 {
 	struct namecache *ncp;
 	struct vnode *dvp;
-	struct ncvhashhead *nvcpp;
 	struct nchcpu *cpup;
 	char *bp;
 	int error, nlen;
 
+	KASSERT(vp != NULL);
+
 	if (!doingcache)
 		goto out;
-
-	nvcpp = &ncvhashtbl[NCVHASH(vp)];
 
 	/*
 	 * We increment counters in the local CPU's per-cpu stats.
@@ -789,22 +777,22 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 	 */
 	cpup = curcpu()->ci_data.cpu_nch;
 	mutex_enter(namecache_lock);
-	LIST_FOREACH(ncp, nvcpp, nc_vhash) {
+	LIST_FOREACH(ncp, &VNODE_TO_VIMPL(vp)->vi_nclist, nc_vlist) {
 		mutex_enter(&ncp->nc_lock);
 		if (ncp->nc_vp == vp &&
 		    (dvp = ncp->nc_dvp) != NULL &&
 		    dvp != vp) { 		/* avoid pesky . entries.. */
-
-#ifdef DIAGNOSTIC
 			if (ncp->nc_nlen == 1 &&
-			    ncp->nc_name[0] == '.')
-				panic("cache_revlookup: found entry for .");
-
+			    ncp->nc_name[0] == '.') {
+			    	mutex_exit(&ncp->nc_lock);
+			    	continue;
+			}
 			if (ncp->nc_nlen == 2 &&
 			    ncp->nc_name[0] == '.' &&
-			    ncp->nc_name[1] == '.')
-				panic("cache_revlookup: found entry for ..");
-#endif
+			    ncp->nc_name[1] == '.') {
+			    	mutex_exit(&ncp->nc_lock);
+			    	continue;
+			}
 			COUNT(cpup, ncs_revhits);
 			nlen = ncp->nc_nlen;
 
@@ -860,7 +848,6 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	struct namecache *ncp;
 	struct namecache *oncp;
 	struct nchashhead *ncpp;
-	struct ncvhashhead *nvcpp;
 	nchash_t hash;
 
 	/* First, check whether we can/should add a cache entry. */
@@ -940,25 +927,6 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	ncp->nc_hash.le_prev = &ncpp->lh_first;
 	membar_producer();
 	ncpp->lh_first = ncp;
-
-	ncp->nc_vhash.le_prev = NULL;
-	ncp->nc_vhash.le_next = NULL;
-
-	/*
-	 * Create reverse-cache entries (used in getcwd) for directories.
-	 * (and in linux procfs exe node)
-	 */
-	if (vp != NULL &&
-	    vp != dvp &&
-#ifndef NAMECACHE_ENTER_REVERSE
-	    vp->v_type == VDIR &&
-#endif
-	    (ncp->nc_nlen > 2 ||
-	    (ncp->nc_nlen > 1 && ncp->nc_name[1] != '.') ||
-	    (/* ncp->nc_nlen > 0 && */ ncp->nc_name[0] != '.'))) {
-		nvcpp = &ncvhashtbl[NCVHASH(vp)];
-		LIST_INSERT_HEAD(nvcpp, ncp, nc_vhash);
-	}
 	mutex_exit(&ncp->nc_lock);
 	mutex_exit(namecache_lock);
 }
@@ -978,14 +946,7 @@ nchinit(void)
 	KASSERT(namecache_cache != NULL);
 
 	namecache_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
-
 	nchashtbl = hashinit(desiredvnodes, HASH_LIST, true, &nchash);
-	ncvhashtbl =
-#ifdef NAMECACHE_ENTER_REVERSE
-	    hashinit(desiredvnodes, HASH_LIST, true, &ncvhash);
-#else
-	    hashinit(desiredvnodes/8, HASH_LIST, true, &ncvhash);
-#endif
 
 	error = kthread_create(PRI_VM, KTHREAD_MPSAFE, NULL, cache_thread,
 	    NULL, NULL, "cachegc");
@@ -1049,43 +1010,25 @@ void
 nchreinit(void)
 {
 	struct namecache *ncp;
-	struct nchashhead *oldhash1, *hash1;
-	struct ncvhashhead *oldhash2, *hash2;
-	u_long i, oldmask1, oldmask2, mask1, mask2;
+	struct nchashhead *oldhash, *hash;
+	u_long i, oldmask, mask;
 
-	hash1 = hashinit(desiredvnodes, HASH_LIST, true, &mask1);
-	hash2 =
-#ifdef NAMECACHE_ENTER_REVERSE
-	    hashinit(desiredvnodes, HASH_LIST, true, &mask2);
-#else
-	    hashinit(desiredvnodes/8, HASH_LIST, true, &mask2);
-#endif
+	hash = hashinit(desiredvnodes, HASH_LIST, true, &mask);
 	mutex_enter(namecache_lock);
 	cache_lock_cpus();
-	oldhash1 = nchashtbl;
-	oldmask1 = nchash;
-	nchashtbl = hash1;
-	nchash = mask1;
-	oldhash2 = ncvhashtbl;
-	oldmask2 = ncvhash;
-	ncvhashtbl = hash2;
-	ncvhash = mask2;
-	for (i = 0; i <= oldmask1; i++) {
-		while ((ncp = LIST_FIRST(&oldhash1[i])) != NULL) {
+	oldhash = nchashtbl;
+	oldmask = nchash;
+	nchashtbl = hash;
+	nchash = mask;
+	for (i = 0; i <= oldmask; i++) {
+		while ((ncp = LIST_FIRST(&oldhash[i])) != NULL) {
 			LIST_REMOVE(ncp, nc_hash);
 			ncp->nc_hash.le_prev = NULL;
 		}
 	}
-	for (i = 0; i <= oldmask2; i++) {
-		while ((ncp = LIST_FIRST(&oldhash2[i])) != NULL) {
-			LIST_REMOVE(ncp, nc_vhash);
-			ncp->nc_vhash.le_prev = NULL;
-		}
-	}
 	cache_unlock_cpus();
 	mutex_exit(namecache_lock);
-	hashdone(oldhash1, HASH_LIST, oldmask1);
-	hashdone(oldhash2, HASH_LIST, oldmask2);
+	hashdone(oldhash, HASH_LIST, oldmask);
 }
 
 /*
