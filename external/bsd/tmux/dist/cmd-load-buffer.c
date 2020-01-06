@@ -93,7 +93,7 @@ cmd_load_buffer_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_WAIT);
 	}
 
-	file = server_client_get_path(c, path);
+	file = server_client_get_path(item->client, path);
 	free(path);
 
 	f = fopen(file, "rb");
@@ -176,7 +176,7 @@ cmd_load_buffer_callback(struct client *c, int closed, void *data)
 		free(cause);
 	}
 out:
-	cdata->item->flags &= ~CMDQ_WAITING;
+	cmdq_continue(cdata->item);
 
 	free(cdata->bufname);
 	free(cdata);
