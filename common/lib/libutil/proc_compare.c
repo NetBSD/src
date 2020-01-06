@@ -1,4 +1,4 @@
-/*	$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $	*/
+/*	$NetBSD: proc_compare.c,v 1.3 2020/01/06 13:21:18 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -37,7 +37,7 @@
 
 #  include <sys/cdefs.h>
 #  if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $");
+__RCSID("$NetBSD: proc_compare.c,v 1.3 2020/01/06 13:21:18 skrll Exp $");
 #  endif
 
 #  include <sys/types.h>
@@ -52,7 +52,7 @@ __RCSID("$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $");
 #  define P_RTIME_USEC	p_rtime_usec
 # else
 #  include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: proc_compare.c,v 1.2 2020/01/06 11:16:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: proc_compare.c,v 1.3 2020/01/06 13:21:18 skrll Exp $");
 #  include <sys/param.h>
 #  include <sys/inttypes.h>
 #  include <sys/systm.h>
@@ -140,7 +140,7 @@ out:
 		return 0;
 	if (p2->P_RTIME_USEC < p1->P_RTIME_USEC)
 		return 1;
-		
+
 	return p2->p_pid > p1->p_pid;	/* Nonsense */
 }
 #endif /* STANDALONE */
