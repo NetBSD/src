@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.29 2019/12/30 16:05:15 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.30 2020/01/06 08:29:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -201,14 +201,14 @@ paddr_t pmap_alloc_pdp(struct pmap *, struct vm_page **, int, bool);
 #define L3_TRUNC_BLOCK(x)	((x) & L3_FRAME)
 #define L3_ROUND_BLOCK(x)	L3_TRUNC_BLOCK((x) + L3_SIZE - 1)
 
-#define DEVMAP_TRUNC_ADDR(x)	L3_TRUNC_BLOCK((x))
-#define DEVMAP_ROUND_SIZE(x)	L3_ROUND_BLOCK((x))
+#define DEVMAP_ALIGN(x)		L3_TRUNC_BLOCK((x))
+#define DEVMAP_SIZE(x)		L3_ROUND_BLOCK((x))
 
 #define	DEVMAP_ENTRY(va, pa, sz)			\
 	{						\
-		.pd_va = DEVMAP_TRUNC_ADDR(va),		\
-		.pd_pa = DEVMAP_TRUNC_ADDR(pa),		\
-		.pd_size = DEVMAP_ROUND_SIZE(sz),	\
+		.pd_va = DEVMAP_ALIGN(va),		\
+		.pd_pa = DEVMAP_ALIGN(pa),		\
+		.pd_size = DEVMAP_SIZE(sz),			\
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
 		.pd_flags = PMAP_DEV			\
 	}
