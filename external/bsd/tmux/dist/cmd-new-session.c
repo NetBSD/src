@@ -39,8 +39,8 @@ const struct cmd_entry cmd_new_session_entry = {
 	.name = "new-session",
 	.alias = "new",
 
-	.args = { "Ac:dDEF:n:Ps:t:x:y:", 0, -1 },
-	.usage = "[-AdDEP] [-c start-directory] [-F format] [-n window-name] "
+	.args = { "Ac:dDEF:n:Ps:t:x:Xy:", 0, -1 },
+	.usage = "[-AdDEPX] [-c start-directory] [-F format] [-n window-name] "
 		 "[-s session-name] " CMD_TARGET_SESSION_USAGE " [-x width] "
 		 "[-y height] [command]",
 
@@ -69,20 +69,17 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	struct args		*args = self->args;
 	struct client		*c = item->client;
 	struct session		*s, *as, *groupwith;
-	struct window		*w;
 	struct environ		*env;
 	struct options		*oo;
 	struct termios		 tio, *tiop;
 	struct session_group	*sg;
-	const char		*errstr, *template, *group, *prefix;
-	const char		*path, *cmd, *tmp, *value;
-	char		       **argv, *cause, *cp, *newname, *cwd = NULL;
-	int			 detached, already_attached, idx, argc;
-	int			 is_control = 0;
+	const char		*errstr, *template, *group, *prefix, *tmp;
+	char			*cause, *cwd = NULL, *cp, *newname = NULL;
+	int			 detached, already_attached, is_control = 0;
 	u_int			 sx, sy, dsx = 80, dsy = 24;
-	struct environ_entry	*envent;
-	struct cmd_find_state	 fs;
+	struct spawn_context	 sc;
 	enum cmd_retval		 retval;
+	struct cmd_find_state    fs;
 
 	if (self->entry == &cmd_has_session_entry) {
 		/*
@@ -97,24 +94,24 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		return (CMD_RETURN_ERROR);
 	}
 
-	newname = NULL;
 	if (args_has(args, 's')) {
 		newname = format_single(item, args_get(args, 's'), c, NULL,
 		    NULL, NULL);
 		if (!session_check_name(newname)) {
 			cmdq_error(item, "bad session name: %s", newname);
-			goto error;
+			goto fail;
 		}
 		if ((as = session_find(newname)) != NULL) {
 			if (args_has(args, 'A')) {
 				retval = cmd_attach_session(item,
 				    newname, args_has(args, 'D'),
-				    0, NULL, args_has(args, 'E'));
+				    args_has(args, 'X'), 0, NULL,
+				    args_has(args, 'E'));
 				free(newname);
 				return (retval);
 			}
 			cmdq_error(item, "duplicate session: %s", newname);
-			goto error;
+			goto fail;
 		}
 	}
 
@@ -125,7 +122,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (groupwith == NULL) {
 			if (!session_check_name(group)) {
 				cmdq_error(item, "bad group name: %s", group);
-				goto error;
+				goto fail;
 			}
 			sg = session_group_find(group);
 		} else
@@ -173,7 +170,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (server_client_check_nested(item->client)) {
 			cmdq_error(item, "sessions should be nested with care, "
 			    "unset $TMUX to force");
-			return (CMD_RETURN_ERROR);
+			goto fail;
 		}
 		if (tcgetattr(c->tty.fd, &tio) != 0)
 			fatal("tcgetattr failed");
@@ -186,7 +183,7 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (server_client_open(c, &cause) != 0) {
 			cmdq_error(item, "open terminal failed: %s", cause);
 			free(cause);
-			goto error;
+			goto fail;
 		}
 	}
 
@@ -196,11 +193,13 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (strcmp(tmp, "-") == 0) {
 			if (c != NULL)
 				dsx = c->tty.sx;
+			else
+				dsx = 80;
 		} else {
 			dsx = strtonum(tmp, 1, USHRT_MAX, &errstr);
 			if (errstr != NULL) {
 				cmdq_error(item, "width %s", errstr);
-				goto error;
+				goto fail;
 			}
 		}
 	}
@@ -209,11 +208,13 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (strcmp(tmp, "-") == 0) {
 			if (c != NULL)
 				dsy = c->tty.sy;
+			else
+				dsy = 24;
 		} else {
 			dsy = strtonum(tmp, 1, USHRT_MAX, &errstr);
 			if (errstr != NULL) {
 				cmdq_error(item, "height %s", errstr);
-				goto error;
+				goto fail;
 			}
 		}
 	}
@@ -225,8 +226,8 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 		if (sy > 0 && options_get_number(global_s_options, "status"))
 			sy--;
 	} else {
-		value = options_get_string(global_s_options, "default-size");
-		if (sscanf(value, "%ux%u", &sx, &sy) != 2) {
+		tmp = options_get_string(global_s_options, "default-size");
+		if (sscanf(tmp, "%ux%u", &sx, &sy) != 2) {
 			sx = 80;
 			sy = 24;
 		}
@@ -240,59 +241,39 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	if (sy == 0)
 		sy = 1;
 
-	/* Figure out the command for the new window. */
-	argc = -1;
-	argv = NULL;
-	if (!args_has(args, 't') && args->argc != 0) {
-		argc = args->argc;
-		argv = args->argv;
-	} else if (sg == NULL && groupwith == NULL) {
-		cmd = options_get_string(global_s_options, "default-command");
-		if (cmd != NULL && *cmd != '\0') {
-			argc = 1;
-			argv = __UNCONST(&cmd);
-		} else {
-			argc = 0;
-			argv = NULL;
-		}
+	/* Create the new session. */
+	oo = options_create(global_s_options);
+	if (args_has(args, 'x') || args_has(args, 'y')) {
+		if (!args_has(args, 'x'))
+			dsx = sx;
+		if (!args_has(args, 'y'))
+			dsy = sy;
+		options_set_string(oo, "default-size", 0, "%ux%u", dsx, dsy);
 	}
-
-	path = NULL;
-	if (c != NULL && c->session == NULL)
-		envent = environ_find(c->environ, "PATH");
-	else
-		envent = environ_find(global_environ, "PATH");
-	if (envent != NULL)
-		path = envent->value;
-
-	/* Construct the environment. */
 	env = environ_create();
 	if (c != NULL && !args_has(args, 'E'))
 		environ_update(global_s_options, c->environ, env);
+	s = session_create(prefix, newname, cwd, env, oo, tiop);
 
-	/* Set up the options. */
-	oo = options_create(global_s_options);
-	if (args_has(args, 'x') || args_has(args, 'y'))
-		options_set_string(oo, "default-size", 0, "%ux%u", dsx, dsy);
+	/* Spawn the initial window. */
+	memset(&sc, 0, sizeof sc);
+	sc.item = item;
+	sc.s = s;
 
-	/* Create the new session. */
-	idx = -1 - options_get_number(global_s_options, "base-index");
-	s = session_create(prefix, newname, argc, argv, path, cwd, env, oo,
-	    tiop, idx, &cause);
-	environ_free(env);
-	if (s == NULL) {
-		cmdq_error(item, "create session failed: %s", cause);
+	sc.name = args_get(args, 'n');
+	sc.argc = args->argc;
+	sc.argv = args->argv;
+
+	sc.idx = -1;
+	sc.cwd = args_get(args, 'c');
+
+	sc.flags = 0;
+
+	if (spawn_window(&sc, &cause) == NULL) {
+		session_destroy(s, 0, __func__);
+		cmdq_error(item, "create window failed: %s", cause);
 		free(cause);
-		goto error;
-	}
-
-	/* Set the initial window name if one given. */
-	if (argc >= 0 && (tmp = args_get(args, 'n')) != NULL) {
-		cp = format_single(item, tmp, c, s, NULL, NULL);
-		w = s->curw->window;
-		window_set_name(w, cp);
-		options_set_number(w->options, "automatic-rename", 0);
-		free(cp);
+		goto fail;
 	}
 
 	/*
@@ -358,13 +339,13 @@ cmd_new_session_exec(struct cmd *self, struct cmdq_item *item)
 	}
 
 	cmd_find_from_session(&fs, s, 0);
-	hooks_insert(s->hooks, item, &fs, "after-new-session");
+	cmdq_insert_hook(s, item, &fs, "after-new-session");
 
 	free(cwd);
 	free(newname);
 	return (CMD_RETURN_NORMAL);
 
-error:
+fail:
 	free(cwd);
 	free(newname);
 	return (CMD_RETURN_ERROR);
