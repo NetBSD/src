@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.52 2020/01/02 14:33:55 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.53 2020/01/06 07:40:45 skrll Exp $
 
 # Makefile for NetBSD
 #
@@ -78,7 +78,7 @@ CFLAGS+=	-mno-unaligned-access
 
 OPT_DDB=	%DDB%
 .if !empty(OPT_DDB) && ${HAVE_GCC:U0} > 0
-COPTS+=		-mapcs-frame
+CFLAGS+=	-mapcs-frame
 .endif
 
 ##
