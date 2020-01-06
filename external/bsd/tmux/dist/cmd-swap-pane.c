@@ -90,7 +90,11 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 	src_wp->layout_cell = dst_lc;
 
 	src_wp->window = dst_w;
+	options_set_parent(src_wp->options, dst_w->options);
+	src_wp->flags |= PANE_STYLECHANGED;
 	dst_wp->window = src_w;
+	options_set_parent(dst_wp->options, src_w->options);
+	dst_wp->flags |= PANE_STYLECHANGED;
 
 	sx = src_wp->sx; sy = src_wp->sy;
 	xoff = src_wp->xoff; yoff = src_wp->yoff;
@@ -101,17 +105,17 @@ cmd_swap_pane_exec(struct cmd *self, struct cmdq_item *item)
 
 	if (!args_has(self->args, 'd')) {
 		if (src_w != dst_w) {
-			window_set_active_pane(src_w, dst_wp);
-			window_set_active_pane(dst_w, src_wp);
+			window_set_active_pane(src_w, dst_wp, 1);
+			window_set_active_pane(dst_w, src_wp, 1);
 		} else {
 			tmp_wp = dst_wp;
-			window_set_active_pane(src_w, tmp_wp);
+			window_set_active_pane(src_w, tmp_wp, 1);
 		}
 	} else {
 		if (src_w->active == src_wp)
-			window_set_active_pane(src_w, dst_wp);
+			window_set_active_pane(src_w, dst_wp, 1);
 		if (dst_w->active == dst_wp)
-			window_set_active_pane(dst_w, src_wp);
+			window_set_active_pane(dst_w, src_wp, 1);
 	}
 	if (src_w != dst_w) {
 		if (src_w->last == src_wp)
