@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.114 2019/10/16 06:53:34 knakahara Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.115 2020/01/06 20:31:35 christos Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.114 2019/10/16 06:53:34 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.115 2020/01/06 20:31:35 christos Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -525,6 +525,7 @@ tap_start(struct ifnet *ifp)
 				goto done;
 
 			ifp->if_opackets++;
+			ifp->if_obytes += m0->m_len;
 			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			m_freem(m0);
@@ -893,6 +894,7 @@ tap_dev_close(struct tap_softc *sc)
 				break;
 
 			ifp->if_opackets++;
+			ifp->if_obytes += m->m_len;
 			bpf_mtap(ifp, m, BPF_D_OUT);
 			m_freem(m);
 		}
@@ -979,7 +981,12 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 	}
 
 	ifp->if_opackets++;
+	ifp->if_obytes += m->m_len; // XXX: only first in chain
 	bpf_mtap(ifp, m, BPF_D_OUT);
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
+		goto out;
+	if (m == NULL)
+		goto out;
 
 	/*
 	 * One read is one packet.
@@ -1050,6 +1057,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	    device_lookup_private(&tap_cd, unit);
 	struct ifnet *ifp;
 	struct mbuf *m, **mp;
+	size_t len = 0;
 	int error = 0;
 
 	if (sc == NULL)
@@ -1076,6 +1084,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 			}
 		}
 		(*mp)->m_len = uimin(MHLEN, uio->uio_resid);
+		len += (*mp)->m_len;
 		error = uiomove(mtod(*mp, void *), (*mp)->m_len, uio);
 		mp = &(*mp)->m_next;
 	}
@@ -1086,6 +1095,14 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	}
 
 	m_set_rcvif(m, ifp);
+
+	ifp->if_ipackets++;
+	ifp->if_ibytes += len;
+	bpf_mtap(ifp, m, BPF_D_IN);
+	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN)) != 0)
+		return error;
+	if (m == NULL)
+		return 0;
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 
