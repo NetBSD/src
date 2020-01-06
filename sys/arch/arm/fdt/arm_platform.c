@@ -1,4 +1,4 @@
-/* $NetBSD: arm_platform.c,v 1.1 2020/01/05 17:26:31 jmcneill Exp $ */
+/* $NetBSD: arm_platform.c,v 1.2 2020/01/06 08:29:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.1 2020/01/05 17:26:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.2 2020/01/06 08:29:08 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_platform.c,v 1.1 2020/01/05 17:26:31 jmcneill Ex
 #include <uvm/uvm_extern.h>
 
 #include <machine/bootconfig.h>
+
 #include <arm/cpufunc.h>
 
 #include <arm/cortex/gtmr_var.h>
@@ -85,7 +86,7 @@ arm_platform_devmap(void)
 		DEVMAP_ENTRY_END
 	};
 	static struct pmap_devmap devmap_uart[] = {
-		DEVMAP_ENTRY(KERNEL_IO_VBASE, 0, L3_SIZE),
+		DEVMAP_ENTRY(KERNEL_IO_VBASE, 0, PAGE_SIZE),
 		DEVMAP_ENTRY_END
 	};
 	bus_addr_t uart_base;
@@ -97,7 +98,7 @@ arm_platform_devmap(void)
 	if (fdtbus_get_reg(phandle, 0, &uart_base, NULL) != 0)
 		return devmap_empty;
 
-	devmap_uart[0].pd_pa = DEVMAP_TRUNC_ADDR(uart_base);
+	devmap_uart[0].pd_pa = DEVMAP_ALIGN(uart_base);
 
 	return devmap_uart;
 }
