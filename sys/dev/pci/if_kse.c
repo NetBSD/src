@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.46 2019/12/14 04:12:49 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.46 2019/12/14 04:12:49 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.46 2019/12/14 04:12:49 nisimura Exp $")
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
 
-#define KSE_LINKDEBUG 1
+#define KSE_LINKDEBUG 0
 
 #define CSR_READ_4(sc, off) \
 	    bus_space_read_4(sc->sc_st, sc->sc_sh, off)
@@ -1100,7 +1100,7 @@ kse_set_filter(struct kse_softc *sc)
 	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM | RXC_RA);
 	ifp->if_flags &= ~IFF_ALLMULTI;
 
-	if ((ifp->if_flags & IFF_PROMISC) || ec->ec_multicnt > 0) {
+	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		goto update;
 	}
