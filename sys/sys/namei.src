@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.46 2019/12/01 18:31:19 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.47 2020/01/06 11:22:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -210,7 +210,6 @@ NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
  */
 struct namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
-	LIST_ENTRY(namecache) nc_vhash;	/* L directory hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* L pseudo-lru chain */
 	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
 	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
