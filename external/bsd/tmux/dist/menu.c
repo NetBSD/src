@@ -121,12 +121,12 @@ menu_free(struct menu *menu)
 	u_int	i;
 
 	for (i = 0; i < menu->count; i++) {
-		free((void *)menu->items[i].name);
-		free((void *)menu->items[i].command);
+		free(__UNCONST(menu->items[i].name));
+		free(__UNCONST(menu->items[i].command));
 	}
 	free(menu->items);
 
-	free((void *)menu->title);
+	free(__UNCONST(menu->title));
 	free(menu);
 }
 

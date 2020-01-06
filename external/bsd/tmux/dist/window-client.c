@@ -40,6 +40,19 @@ static void		 window_client_key(struct window_mode_entry *,
 	"session #{session_name} " \
 	"(#{client_width}x#{client_height}, #{t:client_activity})"
 
+static const struct menu_item window_client_menu_items[] = {
+	{ "Detach", 'd', NULL },
+	{ "Detach Tagged", 'D', NULL },
+	{ "", KEYC_NONE, NULL },
+	{ "Tag", 't', NULL },
+	{ "Tag All", '\024', NULL },
+	{ "Tag None", 'T', NULL },
+	{ "", KEYC_NONE, NULL },
+	{ "Cancel", 'q', NULL },
+
+	{ NULL, KEYC_NONE, NULL }
+};
+
 const struct window_mode window_client_mode = {
 	.name = "client-mode",
 	.default_format = WINDOW_CLIENT_DEFAULT_FORMAT,
@@ -68,6 +81,8 @@ struct window_client_itemdata {
 };
 
 struct window_client_modedata {
+	struct window_pane		 *wp;
+
 	struct mode_tree_data		 *data;
 	char				 *format;
 	char				 *command;
@@ -249,6 +264,19 @@ window_client_draw(__unused void *modedata, void *itemdata,
 	screen_write_fast_copy(ctx, &c->status.screen, 0, 0, sx, lines);
 }
 
+static void
+window_client_menu(void *modedata, struct client *c, key_code key)
+{
+	struct window_client_modedata	*data = modedata;
+	struct window_pane		*wp = data->wp;
+	struct window_mode_entry	*wme;
+
+	wme = TAILQ_FIRST(&wp->modes);
+	if (wme == NULL || wme->data != modedata)
+		return;
+	window_client_key(wme, c, NULL, NULL, key, NULL);
+}
+
 static struct screen *
 window_client_init(struct window_mode_entry *wme,
     __unused struct cmd_find_state *fs, struct args *args)
@@ -258,6 +286,7 @@ window_client_init(struct window_mode_entry *wme,
 	struct screen			*s;
 
 	wme->data = data = xcalloc(1, sizeof *data);
+	data->wp = wp;
 
 	if (args == NULL || !args_has(args, 'F'))
 		data->format = xstrdup(WINDOW_CLIENT_DEFAULT_FORMAT);
@@ -269,7 +298,8 @@ window_client_init(struct window_mode_entry *wme,
 		data->command = xstrdup(args->argv[0]);
 
 	data->data = mode_tree_start(wp, args, window_client_build,
-	    window_client_draw, NULL, data, window_client_sort_list,
+	    window_client_draw, NULL, window_client_menu, data,
+	    window_client_menu_items, window_client_sort_list,
 	    nitems(window_client_sort_list), &s);
 	mode_tree_zoom(data->data, args);
 

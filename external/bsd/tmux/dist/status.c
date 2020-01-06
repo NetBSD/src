@@ -203,7 +203,7 @@ status_at_line(struct client *c)
 {
 	struct session	*s = c->session;
 
-	if (c->flags & CLIENT_STATUSOFF)
+	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (-1);
 	if (s->statusat != 1)
 		return (s->statusat);
@@ -216,7 +216,7 @@ status_line_size(struct client *c)
 {
 	struct session	*s = c->session;
 
-	if (c->flags & CLIENT_STATUSOFF)
+	if (c->flags & (CLIENT_STATUSOFF|CLIENT_CONTROL))
 		return (0);
 	return (s->statuslines);
 }
@@ -320,11 +320,11 @@ status_redraw(struct client *c)
 	struct session			*s = c->session;
 	struct screen_write_ctx		 ctx;
 	struct grid_cell		 gc;
-	u_int				 lines, i, width = c->tty.sx;
+	u_int				 lines, i, n, width = c->tty.sx;
 	int				 flags, force = 0, changed = 0;
 	struct options_entry		*o;
+	union options_value		*ov;
 	struct format_tree		*ft;
-	const char			*fmt;
 	char				*expanded;
 
 	log_debug("%s enter", __func__);
@@ -348,10 +348,8 @@ status_redraw(struct client *c)
 	/* Resize the target screen. */
 	if (screen_size_x(&sl->screen) != width ||
 	    screen_size_y(&sl->screen) != lines) {
-		if (screen_size_x(&sl->screen) != width)
-			force = 1;
 		screen_resize(&sl->screen, width, lines, 0);
-		changed = 1;
+		changed = force = 1;
 	}
 	screen_write_start(&ctx, NULL, &sl->screen);
 
@@ -364,20 +362,22 @@ status_redraw(struct client *c)
 
 	/* Write the status lines. */
 	o = options_get(s->options, "status-format");
-	if (o == NULL)
-		screen_write_clearscreen(&ctx, gc.bg);
-	else {
+	if (o == NULL) {
+		for (n = 0; n < width * lines; n++)
+			screen_write_putc(&ctx, &gc, ' ');
+	} else {
 		for (i = 0; i < lines; i++) {
 			screen_write_cursormove(&ctx, 0, i, 0);
 
-			fmt = options_array_get(o, i);
-			if (fmt == NULL) {
-				screen_write_clearline(&ctx, gc.bg);
+			ov = options_array_get(o, i);
+			if (ov == NULL) {
+				for (n = 0; n < width; n++)
+					screen_write_putc(&ctx, &gc, ' ');
 				continue;
 			}
 			sle = &sl->entries[i];
 
-			expanded = format_expand_time(ft, fmt);
+			expanded = format_expand_time(ft, ov->string);
 			if (!force &&
 			    sle->expanded != NULL &&
 			    strcmp(expanded, sle->expanded) == 0) {
@@ -386,7 +386,10 @@ status_redraw(struct client *c)
 			}
 			changed = 1;
 
-			screen_write_clearline(&ctx, gc.bg);
+			for (n = 0; n < width; n++)
+				screen_write_putc(&ctx, &gc, ' ');
+			screen_write_cursormove(&ctx, 0, i, 0);
+
 			status_free_ranges(&sle->ranges);
 			format_draw(&ctx, &gc, width, expanded, &sle->ranges);
 
@@ -841,16 +844,79 @@ status_prompt_translate_key(struct client *c, key_code key, key_code *new_key)
 	return (0);
 }
 
+/* Paste into prompt. */
+static int
+status_prompt_paste(struct client *c)
+{
+	struct paste_buffer	*pb;
+	const char		*bufdata;
+	size_t			 size, n, bufsize;
+	u_int			 i;
+	struct utf8_data	*ud, *udp;
+	enum utf8_state		 more;
+
+	size = utf8_strlen(c->prompt_buffer);
+	if (c->prompt_saved != NULL) {
+		ud = c->prompt_saved;
+		n = utf8_strlen(c->prompt_saved);
+	} else {
+		if ((pb = paste_get_top(NULL)) == NULL)
+			return (0);
+		bufdata = paste_buffer_data(pb, &bufsize);
+		ud = xreallocarray(NULL, bufsize + 1, sizeof *ud);
+		udp = ud;
+		for (i = 0; i != bufsize; /* nothing */) {
+			more = utf8_open(udp, bufdata[i]);
+			if (more == UTF8_MORE) {
+				while (++i != bufsize && more == UTF8_MORE)
+					more = utf8_append(udp, bufdata[i]);
+				if (more == UTF8_DONE) {
+					udp++;
+					continue;
+				}
+				i -= udp->have;
+			}
+			if (bufdata[i] <= 31 || bufdata[i] >= 127)
+				break;
+			utf8_set(udp, bufdata[i]);
+			udp++;
+			i++;
+		}
+		udp->size = 0;
+		n = udp - ud;
+	}
+	if (n == 0)
+		return (0);
+
+	c->prompt_buffer = xreallocarray(c->prompt_buffer, size + n + 1,
+	    sizeof *c->prompt_buffer);
+	if (c->prompt_index == size) {
+		memcpy(c->prompt_buffer + c->prompt_index, ud,
+		    n * sizeof *c->prompt_buffer);
+		c->prompt_index += n;
+		c->prompt_buffer[c->prompt_index].size = 0;
+	} else {
+		memmove(c->prompt_buffer + c->prompt_index + n,
+		    c->prompt_buffer + c->prompt_index,
+		    (size + 1 - c->prompt_index) * sizeof *c->prompt_buffer);
+		memcpy(c->prompt_buffer + c->prompt_index, ud,
+		    n * sizeof *c->prompt_buffer);
+		c->prompt_index += n;
+	}
+
+	if (ud != c->prompt_saved)
+		free(ud);
+	return (1);
+}
+
 /* Handle keys in prompt. */
 int
 status_prompt_key(struct client *c, key_code key)
 {
 	struct options		*oo = c->session->options;
-	struct paste_buffer	*pb;
 	char			*s, *cp, word[64], prefix = '=';
-	const char		*histstr, *bufdata, *ws = NULL;
-	u_char			 ch;
-	size_t			 size, n, off, idx, bufsize, used;
+	const char		*histstr, *ws = NULL;
+	size_t			 size, n, off, idx, used;
 	struct utf8_data	 tmp, *first, *last, *ud;
 	int			 keys;
 
@@ -1102,43 +1168,9 @@ process_key:
 		c->prompt_index = utf8_strlen(c->prompt_buffer);
 		goto changed;
 	case '\031': /* C-y */
-		if (c->prompt_saved != NULL) {
-			ud = c->prompt_saved;
-			n = utf8_strlen(c->prompt_saved);
-		} else {
-			if ((pb = paste_get_top(NULL)) == NULL)
-				break;
-			bufdata = paste_buffer_data(pb, &bufsize);
-			for (n = 0; n < bufsize; n++) {
-				ch = (u_char)bufdata[n];
-				if (ch < 32 || ch >= 127)
-					break;
-			}
-			ud = xreallocarray(NULL, n, sizeof *ud);
-			for (idx = 0; idx < n; idx++)
-				utf8_set(&ud[idx], bufdata[idx]);
-		}
-
-		c->prompt_buffer = xreallocarray(c->prompt_buffer, size + n + 1,
-		    sizeof *c->prompt_buffer);
-		if (c->prompt_index == size) {
-			memcpy(c->prompt_buffer + c->prompt_index, ud,
-			    n * sizeof *c->prompt_buffer);
-			c->prompt_index += n;
-			c->prompt_buffer[c->prompt_index].size = 0;
-		} else {
-			memmove(c->prompt_buffer + c->prompt_index + n,
-			    c->prompt_buffer + c->prompt_index,
-			    (size + 1 - c->prompt_index) *
-			    sizeof *c->prompt_buffer);
-			memcpy(c->prompt_buffer + c->prompt_index, ud,
-			    n * sizeof *c->prompt_buffer);
-			c->prompt_index += n;
-		}
-
-		if (ud != c->prompt_saved)
-			free(ud);
-		goto changed;
+		if (status_prompt_paste(c))
+			goto changed;
+		break;
 	case '\024': /* C-t */
 		idx = c->prompt_index;
 		if (idx < size)
@@ -1321,10 +1353,9 @@ status_prompt_complete_list(u_int *size, const char *s)
 	if (o != NULL) {
 		a = options_array_first(o);
 		while (a != NULL) {
-			value = options_array_item_value(a);;
-			if (value == NULL || (cp = strchr(value, '=')) == NULL)
+			value = options_array_item_value(a)->string;
+			if ((cp = strchr(value, '=')) == NULL)
 				goto next;
-
 			valuelen = cp - value;
 			if (slen > valuelen || strncmp(value, s, slen) != 0)
 				goto next;

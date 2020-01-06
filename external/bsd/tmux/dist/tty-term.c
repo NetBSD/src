@@ -242,6 +242,7 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_REV] = { TTYCODE_STRING, "rev" },
 	[TTYC_RGB] = { TTYCODE_FLAG, "RGB" },
 	[TTYC_RI] = { TTYCODE_STRING, "ri" },
+	[TTYC_RIN] = { TTYCODE_STRING, "rin" },
 	[TTYC_RMACS] = { TTYCODE_STRING, "rmacs" },
 	[TTYC_RMCUP] = { TTYCODE_STRING, "rmcup" },
 	[TTYC_RMKX] = { TTYCODE_STRING, "rmkx" },
@@ -249,12 +250,14 @@ static const struct tty_term_code_entry tty_term_codes[] = {
 	[TTYC_SETAF] = { TTYCODE_STRING, "setaf" },
 	[TTYC_SETRGBB] = { TTYCODE_STRING, "setrgbb" },
 	[TTYC_SETRGBF] = { TTYCODE_STRING, "setrgbf" },
+	[TTYC_SETULC] = { TTYCODE_STRING, "Setulc" },
 	[TTYC_SE] = { TTYCODE_STRING, "Se" },
 	[TTYC_SGR0] = { TTYCODE_STRING, "sgr0" },
 	[TTYC_SITM] = { TTYCODE_STRING, "sitm" },
 	[TTYC_SMACS] = { TTYCODE_STRING, "smacs" },
 	[TTYC_SMCUP] = { TTYCODE_STRING, "smcup" },
 	[TTYC_SMKX] = { TTYCODE_STRING, "smkx" },
+	[TTYC_SMOL] = { TTYCODE_STRING, "Smol" },
 	[TTYC_SMSO] = { TTYCODE_STRING, "smso" },
 	[TTYC_SMULX] = { TTYCODE_STRING, "Smulx" },
 	[TTYC_SMUL] = { TTYCODE_STRING, "smul" },
@@ -278,7 +281,7 @@ static char *
 tty_term_strip(const char *s)
 {
 	const char     *ptr;
-	static char	buf[BUFSIZ];
+	static char	buf[8192];
 	size_t		len;
 
 	/* Ignore strings with no padding. */
@@ -306,7 +309,7 @@ tty_term_strip(const char *s)
 static char *
 tty_term_override_next(const char *s, size_t *offset)
 {
-	static char	value[BUFSIZ];
+	static char	value[8192];
 	size_t		n = 0, at = *offset;
 
 	if (s[at] == '\0')
@@ -420,6 +423,7 @@ tty_term_find(char *name, int fd, char **cause)
 	struct tty_code				*code;
 	struct options_entry			*o;
 	struct options_array_item		*a;
+	union options_value			*ov;
 	u_int					 i;
 	int		 			 n, error;
 	const char				*s, *acs;
@@ -497,9 +501,8 @@ tty_term_find(char *name, int fd, char **cause)
 	o = options_get_only(global_options, "terminal-overrides");
 	a = options_array_first(o);
 	while (a != NULL) {
-		s = options_array_item_value(a);
-		if (s != NULL)
-			tty_term_override(term, s);
+		ov = options_array_item_value(a);
+		tty_term_override(term, ov->string);
 		a = options_array_next(a);
 	}
 
@@ -690,7 +693,7 @@ tty_term_describe(struct tty_term *term, enum tty_code_code code)
 		break;
 	case TTYCODE_STRING:
 		strnvis(out, sizeof out, term->codes[code].value.string,
-		    VIS_OCTAL|VIS_TAB|VIS_NL);
+		    VIS_OCTAL|VIS_CSTYLE|VIS_TAB|VIS_NL);
 		xsnprintf(s, sizeof s, "%4u: %s: (string) %s",
 		    code, tty_term_codes[code].name,
 		    out);

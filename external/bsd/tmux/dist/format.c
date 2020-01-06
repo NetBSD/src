@@ -23,6 +23,7 @@
 #include <errno.h>
 #include <fnmatch.h>
 #include <libgen.h>
+#include <regex.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <string.h>
@@ -126,6 +127,8 @@ struct format_tree {
 	int			 flags;
 	time_t			 time;
 	u_int			 loop;
+
+	struct mouse_event	 m;
 
 	RB_HEAD(format_entry_tree, format_entry) tree;
 };
@@ -715,6 +718,125 @@ format_cb_cursor_character(struct format_tree *ft, struct format_entry *fe)
 		xasprintf(&fe->value, "%.*s", (int)gc.data.size, gc.data.data);
 }
 
+/* Callback for mouse_word. */
+static void
+format_cb_mouse_word(struct format_tree *ft, struct format_entry *fe)
+{
+	struct window_pane	*wp;
+	u_int			 x, y, end;
+	struct grid		*gd;
+	struct grid_line	*gl;
+	struct grid_cell	 gc;
+	const char		*ws;
+	struct utf8_data	*ud = NULL;
+	size_t			 size = 0;
+	int			 found = 0;
+
+	if (!ft->m.valid)
+		return;
+	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
+	if (wp == NULL)
+		return;
+	if (!TAILQ_EMPTY (&wp->modes))
+		return;
+	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
+		return;
+	gd = wp->base.grid;
+	ws = options_get_string(global_s_options, "word-separators");
+
+	y = gd->hsize + y;
+	for (;;) {
+		grid_get_cell(gd, x, y, &gc);
+		if (gc.flags & GRID_FLAG_PADDING)
+			break;
+		if (utf8_cstrhas(ws, &gc.data)) {
+			found = 1;
+			break;
+		}
+
+		if (x == 0) {
+			if (y == 0)
+				break;
+			gl = &gd->linedata[y - 1];
+			if (~gl->flags & GRID_LINE_WRAPPED)
+				break;
+			y--;
+			x = grid_line_length(gd, y);
+			if (x == 0)
+				break;
+		}
+		x--;
+	}
+	for (;;) {
+		if (found) {
+			end = grid_line_length(gd, y);
+			if (end == 0 || x == end - 1) {
+				if (y == gd->hsize + gd->sy - 1)
+					break;
+				gl = &gd->linedata[y];
+				if (~gl->flags & GRID_LINE_WRAPPED)
+					break;
+				y++;
+				x = 0;
+			} else
+				x++;
+		}
+		found = 1;
+
+		grid_get_cell(gd, x, y, &gc);
+		if (gc.flags & GRID_FLAG_PADDING)
+			break;
+		if (utf8_cstrhas(ws, &gc.data))
+			break;
+
+		ud = xreallocarray(ud, size + 2, sizeof *ud);
+		memcpy(&ud[size++], &gc.data, sizeof *ud);
+	}
+	if (size != 0) {
+		ud[size].size = 0;
+		fe->value = utf8_tocstr(ud);
+		free(ud);
+	}
+}
+
+/* Callback for mouse_line. */
+static void
+format_cb_mouse_line(struct format_tree *ft, struct format_entry *fe)
+{
+	struct window_pane	*wp;
+	u_int			 x, y;
+	struct grid		*gd;
+	struct grid_cell	 gc;
+	struct utf8_data	*ud = NULL;
+	size_t			 size = 0;
+
+	if (!ft->m.valid)
+		return;
+	wp = cmd_mouse_pane(&ft->m, NULL, NULL);
+	if (wp == NULL)
+		return;
+	if (!TAILQ_EMPTY (&wp->modes))
+		return;
+	if (cmd_mouse_at(wp, &ft->m, &x, &y, 0) != 0)
+		return;
+	gd = wp->base.grid;
+
+	y = gd->hsize + y;
+	for (x = 0; x < grid_line_length(gd, y); x++) {
+		grid_get_cell(gd, x, y, &gc);
+		if (gc.flags & GRID_FLAG_PADDING)
+			break;
+
+		ud = xreallocarray(ud, size + 2, sizeof *ud);
+		memcpy(&ud[size++], &gc.data, sizeof *ud);
+	}
+	if (size != 0) {
+		ud[size].size = 0;
+		fe->value = utf8_tocstr(ud);
+		free(ud);
+	}
+}
+
 /* Merge a format tree. */
 static void
 format_merge(struct format_tree *ft, struct format_tree *from)
@@ -725,6 +847,35 @@ format_merge(struct format_tree *ft, struct format_tree *from)
 		if (fe->value != NULL)
 			format_add(ft, fe->key, "%s", fe->value);
 	}
+}
+
+/* Add item bits to tree. */
+static void
+format_create_add_item(struct format_tree *ft, struct cmdq_item *item)
+{
+	struct mouse_event	*m;
+	struct window_pane	*wp;
+	u_int			 x, y;
+
+	if (item->cmd != NULL)
+		format_add(ft, "command", "%s", item->cmd->entry->name);
+
+	if (item->shared == NULL)
+		return;
+	if (item->shared->formats != NULL)
+		format_merge(ft, item->shared->formats);
+
+	m = &item->shared->mouse;
+	if (m->valid && ((wp = cmd_mouse_pane(m, NULL, NULL)) != NULL)) {
+		format_add(ft, "mouse_pane", "%%%u", wp->id);
+		if (cmd_mouse_at(wp, m, &x, &y, 0) == 0) {
+			format_add(ft, "mouse_x", "%u", x);
+			format_add(ft, "mouse_y", "%u", y);
+			format_add_cb(ft, "mouse_word", format_cb_mouse_word);
+			format_add_cb(ft, "mouse_line", format_cb_mouse_line);
+		}
+	}
+	memcpy(&ft->m, m, sizeof ft->m);
 }
 
 /* Create a new tree. */
@@ -768,12 +919,8 @@ format_create(struct client *c, struct cmdq_item *item, int tag, int flags)
 		}
 	}
 
-	if (item != NULL) {
-		if (item->cmd != NULL)
-			format_add(ft, "command", "%s", item->cmd->entry->name);
-		if (item->shared != NULL && item->shared->formats != NULL)
-			format_merge(ft, item->shared->formats);
-	}
+	if (item != NULL)
+		format_create_add_item(ft, item);
 
 	return (ft);
 }
@@ -920,12 +1067,13 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 	struct environ_entry	*envent;
 	static char		 s[64];
 	struct options_entry	*o;
-	const char		*found;
 	int			 idx;
-	char			*copy, *saved;
+	char			*found, *saved;
 
 	if (~modifiers & FORMAT_TIMESTRING) {
 		o = options_parse_get(global_options, key, &idx, 0);
+		if (o == NULL && ft->wp != NULL)
+			o = options_parse_get(ft->wp->options, key, &idx, 0);
 		if (o == NULL && ft->w != NULL)
 			o = options_parse_get(ft->w->options, key, &idx, 0);
 		if (o == NULL)
@@ -949,20 +1097,18 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 				return (NULL);
 			ctime_r(&fe->t, s);
 			s[strcspn(s, "\n")] = '\0';
-			found = s;
+			found = xstrdup(s);
 			goto found;
 		}
 		if (fe->t != 0) {
-			xsnprintf(s, sizeof s, "%lld", (long long)fe->t);
-			found = s;
+			xasprintf(&found, "%lld", (long long)fe->t);
 			goto found;
 		}
-		if (fe->value == NULL && fe->cb != NULL) {
+		if (fe->value == NULL && fe->cb != NULL)
 			fe->cb(ft, fe);
-			if (fe->value == NULL)
-				fe->value = xstrdup("");
-		}
-		found = fe->value;
+		if (fe->value == NULL)
+			fe->value = xstrdup("");
+		found = xstrdup(fe->value);
 		goto found;
 	}
 
@@ -972,8 +1118,8 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 			envent = environ_find(ft->s->environ, key);
 		if (envent == NULL)
 			envent = environ_find(global_environ, key);
-		if (envent != NULL) {
-			found = envent->value;
+		if (envent != NULL && envent->value != NULL) {
+			found = xstrdup(envent->value);
 			goto found;
 		}
 	}
@@ -983,23 +1129,22 @@ format_find(struct format_tree *ft, const char *key, int modifiers)
 found:
 	if (found == NULL)
 		return (NULL);
-	copy = xstrdup(found);
 	if (modifiers & FORMAT_BASENAME) {
-		saved = copy;
-		copy = xstrdup(basename(saved));
+		saved = found;
+		found = xstrdup(basename(saved));
 		free(saved);
 	}
 	if (modifiers & FORMAT_DIRNAME) {
-		saved = copy;
-		copy = xstrdup(dirname(saved));
+		saved = found;
+		found = xstrdup(dirname(saved));
 		free(saved);
 	}
 	if (modifiers & FORMAT_QUOTE) {
-		saved = copy;
-		copy = xstrdup(format_quote(saved));
+		saved = found;
+		found = xstrdup(format_quote(saved));
 		free(saved);
 	}
-	return (copy);
+	return (found);
 }
 
 /* Skip until end. */
@@ -1107,13 +1252,13 @@ format_build_modifiers(struct format_tree *ft, const char **s, u_int *count)
 
 	/*
 	 * Modifiers are a ; separated list of the forms:
-	 *      l,m,C,b,d,t,q,E,T,S,W,P
+	 *      l,m,C,b,d,t,q,E,T,S,W,P,<,>
 	 *	=a
 	 *	=/a
 	 *      =/a/
 	 *	s/a/b/
 	 *	s/a/b
-	 *	||,&&,!=,==
+	 *	||,&&,!=,==,<=,>=
 	 */
 
 	*count = 0;
@@ -1124,7 +1269,7 @@ format_build_modifiers(struct format_tree *ft, const char **s, u_int *count)
 			cp++;
 
 		/* Check single character modifiers with no arguments. */
-		if (strchr("lmCbdtqETSWP", cp[0]) != NULL &&
+		if (strchr("lbdtqETSWP<>", cp[0]) != NULL &&
 		    format_is_end(cp[1])) {
 			format_add_modifier(&list, count, cp, 1, NULL, 0);
 			cp++;
@@ -1135,7 +1280,9 @@ format_build_modifiers(struct format_tree *ft, const char **s, u_int *count)
 		if ((memcmp("||", cp, 2) == 0 ||
 		    memcmp("&&", cp, 2) == 0 ||
 		    memcmp("!=", cp, 2) == 0 ||
-		    memcmp("==", cp, 2) == 0) &&
+		    memcmp("==", cp, 2) == 0 ||
+		    memcmp("<=", cp, 2) == 0 ||
+		    memcmp(">=", cp, 2) == 0) &&
 		    format_is_end(cp[2])) {
 			format_add_modifier(&list, count, cp, 2, NULL, 0);
 			cp += 2;
@@ -1143,7 +1290,7 @@ format_build_modifiers(struct format_tree *ft, const char **s, u_int *count)
 		}
 
 		/* Now try single character with arguments. */
-		if (strchr("s=", cp[0]) == NULL)
+		if (strchr("mCs=", cp[0]) == NULL)
 			break;
 		c = cp[0];
 
@@ -1204,39 +1351,67 @@ format_build_modifiers(struct format_tree *ft, const char **s, u_int *count)
 	return list;
 }
 
+/* Match against an fnmatch(3) pattern or regular expression. */
+static char *
+format_match(struct format_modifier *fm, const char *pattern, const char *text)
+{
+	const char	*s = "";
+	regex_t		 r;
+	int		 flags = 0;
+
+	if (fm->argc >= 1)
+		s = fm->argv[0];
+	if (strchr(s, 'r') == NULL) {
+		if (strchr(s, 'i') != NULL)
+			flags |= FNM_CASEFOLD;
+		if (fnmatch(pattern, text, flags) != 0)
+			return (xstrdup("0"));
+	} else {
+		flags = REG_EXTENDED|REG_NOSUB;
+		if (strchr(s, 'i') != NULL)
+			flags |= REG_ICASE;
+		if (regcomp(&r, pattern, flags) != 0)
+			return (xstrdup("0"));
+		if (regexec(&r, text, 0, NULL, 0) != 0) {
+			regfree(&r);
+			return (xstrdup("0"));
+		}
+		regfree(&r);
+	}
+	return (xstrdup("1"));
+}
+
 /* Perform substitution in string. */
 static char *
-format_substitute(const char *source, const char *from, const char *to)
+format_sub(struct format_modifier *fm, const char *text, const char *pattern,
+    const char *with)
 {
-	char		*copy, *new;
-	const char	*cp;
-	size_t		 fromlen, tolen, newlen, used;
+	char	*value;
+	int	 flags = REG_EXTENDED;
 
-	fromlen = strlen(from);
-	tolen = strlen(to);
+	if (fm->argc >= 3 && strchr(fm->argv[2], 'i') != NULL)
+		flags |= REG_ICASE;
+	value = regsub(pattern, with, text, flags);
+	if (value == NULL)
+		return (xstrdup(text));
+	return (value);
+}
 
-	newlen = strlen(source) + 1;
-	copy = new = xmalloc(newlen);
+/* Search inside pane. */
+static char *
+format_search(struct format_modifier *fm, struct window_pane *wp, const char *s)
+{
+	int	 ignore = 0, regex = 0;
+	char	*value;
 
-	for (cp = source; *cp != '\0'; /* nothing */) {
-		if (strncmp(cp, from, fromlen) != 0) {
-			*new++ = *cp++;
-			continue;
-		}
-		used = new - copy;
-
-		newlen += tolen;
-		copy = xrealloc(copy, newlen);
-
-		new = copy + used;
-		memcpy(new, to, tolen);
-
-		new += tolen;
-		cp += fromlen;
+	if (fm->argc >= 1) {
+		if (strchr(fm->argv[0], 'i') != NULL)
+			ignore = 1;
+		if (strchr(fm->argv[0], 'r') != NULL)
+			regex = 1;
 	}
-
-	*new = '\0';
-	return (copy);
+	xasprintf(&value, "%u", window_pane_search(wp, s, regex, ignore));
+	return (value);
 }
 
 /* Loop over sessions. */
@@ -1377,15 +1552,14 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
     char **buf, size_t *len, size_t *off)
 {
 	struct window_pane	*wp = ft->wp;
-	const char		*errptr, *copy, *cp;
+	const char		*errptr, *copy, *cp, *marker = NULL;
 	char			*copy0, *condition, *found, *new;
 	char			*value, *left, *right;
 	size_t			 valuelen;
-	int			 modifiers = 0, limit = 0;
+	int			 modifiers = 0, limit = 0, j;
 	struct format_modifier  *list, *fm, *cmp = NULL, *search = NULL;
 	struct format_modifier  *sub = NULL;
 	u_int			 i, count;
-	int			 j;
 
 	/* Make a copy of the key. */
 	copy = copy0 = xstrndup(key, keylen);
@@ -1404,23 +1578,27 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 		if (fm->size == 1) {
 			switch (fm->modifier[0]) {
 			case 'm':
+			case '<':
+			case '>':
 				cmp = fm;
 				break;
 			case 'C':
 				search = fm;
 				break;
 			case 's':
-				if (fm->argc != 2)
+				if (fm->argc < 2)
 					break;
 				sub = fm;
 				break;
 			case '=':
-				if (fm->argc != 1)
+				if (fm->argc < 1)
 					break;
 				limit = strtonum(fm->argv[0], INT_MIN, INT_MAX,
 				    &errptr);
 				if (errptr != NULL)
 					limit = 0;
+				if (fm->argc >= 2 && fm->argv[1] != NULL)
+					marker = fm->argv[1];
 				break;
 			case 'l':
 				modifiers |= FORMAT_LITERAL;
@@ -1457,7 +1635,9 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 			if (strcmp(fm->modifier, "||") == 0 ||
 			    strcmp(fm->modifier, "&&") == 0 ||
 			    strcmp(fm->modifier, "==") == 0 ||
-			    strcmp(fm->modifier, "!=") == 0)
+			    strcmp(fm->modifier, "!=") == 0 ||
+			    strcmp(fm->modifier, ">=") == 0 ||
+			    strcmp(fm->modifier, "<=") == 0)
 				cmp = fm;
 		}
 	}
@@ -1483,13 +1663,15 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 			goto fail;
 	} else if (search != NULL) {
 		/* Search in pane. */
+		new = format_expand(ft, copy);
 		if (wp == NULL) {
-			format_log(ft, "search '%s' but no pane", copy);
+			format_log(ft, "search '%s' but no pane", new);
 			value = xstrdup("0");
 		} else {
-			format_log(ft, "search '%s' pane %%%u", copy,  wp->id);
-			xasprintf(&value, "%u", window_pane_search(wp, copy));
+			format_log(ft, "search '%s' pane %%%u", new,  wp->id);
+			value = format_search(fm, wp, new);
 		}
+		free(new);
 	} else if (cmp != NULL) {
 		/* Comparison of left and right. */
 		if (format_choose(ft, copy, &left, &right, 1) != 0) {
@@ -1520,13 +1702,28 @@ format_replace(struct format_tree *ft, const char *key, size_t keylen,
 				value = xstrdup("1");
 			else
 				value = xstrdup("0");
-		}
-		else if (strcmp(cmp->modifier, "m") == 0) {
-			if (fnmatch(left, right, 0) == 0)
+		} else if (strcmp(cmp->modifier, "<") == 0) {
+			if (strcmp(left, right) < 0)
 				value = xstrdup("1");
 			else
 				value = xstrdup("0");
-		}
+		} else if (strcmp(cmp->modifier, ">") == 0) {
+			if (strcmp(left, right) > 0)
+				value = xstrdup("1");
+			else
+				value = xstrdup("0");
+		} else if (strcmp(cmp->modifier, "<=") == 0) {
+			if (strcmp(left, right) <= 0)
+				value = xstrdup("1");
+			else
+				value = xstrdup("0");
+		} else if (strcmp(cmp->modifier, ">=") == 0) {
+			if (strcmp(left, right) >= 0)
+				value = xstrdup("1");
+			else
+				value = xstrdup("0");
+		} else if (strcmp(cmp->modifier, "m") == 0)
+			value = format_match(cmp, left, right);
 
 		free(right);
 		free(left);
@@ -1604,24 +1801,37 @@ done:
 
 	/* Perform substitution if any. */
 	if (sub != NULL) {
-		new = format_substitute(value, sub->argv[0], sub->argv[1]);
-		format_log(ft, "substituted '%s' to '%s: %s", sub->argv[0],
-		    sub->argv[1], new);
+		left = format_expand(ft, sub->argv[0]);
+		right = format_expand(ft, sub->argv[1]);
+		new = format_sub(sub, value, left, right);
+		format_log(ft, "substitute '%s' to '%s': %s", left, right, new);
 		free(value);
 		value = new;
+		free(right);
+		free(left);
 	}
 
 	/* Truncate the value if needed. */
 	if (limit > 0) {
 		new = format_trim_left(value, limit);
-		format_log(ft, "applied length limit %d: %s", limit, new);
-		free(value);
-		value = new;
+		if (marker != NULL && strcmp(new, value) != 0) {
+			free(value);
+			xasprintf(&value, "%s%s", new, marker);
+		} else {
+			free(value);
+			value = new;
+		}
+		format_log(ft, "applied length limit %d: %s", limit, value);
 	} else if (limit < 0) {
 		new = format_trim_right(value, -limit);
-		format_log(ft, "applied length limit %d: %s", limit, new);
-		free(value);
-		value = new;
+		if (marker != NULL && strcmp(new, value) != 0) {
+			free(value);
+			xasprintf(&value, "%s%s", marker, new);
+		} else {
+			free(value);
+			value = new;
+		}
+		format_log(ft, "applied length limit %d: %s", limit, value);
 	}
 
 	/* Expand the buffer and copy in the value. */
@@ -1822,6 +2032,23 @@ void
 format_defaults(struct format_tree *ft, struct client *c, struct session *s,
     struct winlink *wl, struct window_pane *wp)
 {
+	if (c != NULL && c->name != NULL)
+		log_debug("%s: c=%s", __func__, c->name);
+	else
+		log_debug("%s: c=none", __func__);
+	if (s != NULL)
+		log_debug("%s: s=$%u", __func__, s->id);
+	else
+		log_debug("%s: s=none", __func__);
+	if (wl != NULL)
+		log_debug("%s: wl=%u w=@%u", __func__, wl->idx, wl->window->id);
+	else
+		log_debug("%s: wl=none", __func__);
+	if (wp != NULL)
+		log_debug("%s: wp=%%%u", __func__, wp->id);
+	else
+		log_debug("%s: wp=none", __func__);
+
 	if (c != NULL && s != NULL && c->session != s)
 		log_debug("%s: session does not match", __func__);
 
@@ -2033,7 +2260,16 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 
 	if ((wp->flags & PANE_STATUSREADY) && WIFEXITED(status))
 		format_add(ft, "pane_dead_status", "%d", WEXITSTATUS(status));
-	format_add(ft, "pane_dead", "%d", wp->fd == -1);
+	if (~wp->flags & PANE_EMPTY)
+		format_add(ft, "pane_dead", "%d", wp->fd == -1);
+	else
+		format_add(ft, "pane_dead", "0");
+
+	if (server_check_marked() && marked_pane.wp == wp)
+		format_add(ft, "pane_marked", "1");
+	else
+		format_add(ft, "pane_marked", "0");
+	format_add(ft, "pane_marked_set", "%d", server_check_marked());
 
 	format_add(ft, "pane_left", "%u", wp->xoff);
 	format_add(ft, "pane_top", "%u", wp->yoff);
@@ -2084,6 +2320,8 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	    !!(wp->base.mode & MODE_KKEYPAD));
 	format_add(ft, "wrap_flag", "%d",
 	    !!(wp->base.mode & MODE_WRAP));
+	format_add(ft, "origin_flag", "%d",
+	    !!(wp->base.mode & MODE_ORIGIN));
 
 	format_add(ft, "mouse_any_flag", "%d",
 	    !!(wp->base.mode & ALL_MOUSE_MODES));
@@ -2093,6 +2331,10 @@ format_defaults_pane(struct format_tree *ft, struct window_pane *wp)
 	    !!(wp->base.mode & MODE_MOUSE_BUTTON));
 	format_add(ft, "mouse_all_flag", "%d",
 	    !!(wp->base.mode & MODE_MOUSE_ALL));
+	format_add(ft, "mouse_utf8_flag", "%d",
+	    !!(wp->base.mode & MODE_MOUSE_UTF8));
+	format_add(ft, "mouse_sgr_flag", "%d",
+	    !!(wp->base.mode & MODE_MOUSE_SGR));
 
 	format_add_cb(ft, "pane_tabs", format_cb_pane_tabs);
 }

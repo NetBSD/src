@@ -254,7 +254,7 @@ spawn_pane(struct spawn_context *sc, char **cause)
 		cmd = options_get_string(s->options, "default-command");
 		if (cmd != NULL && *cmd != '\0') {
 			argc = 1;
-			argv = (char **)&cmd;
+			argv = __UNCONST(&cmd);
 		} else {
 			argc = 0;
 			argv = NULL;
