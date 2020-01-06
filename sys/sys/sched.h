@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.83 2020/01/05 20:26:56 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.84 2020/01/06 01:37:57 oster Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
@@ -71,6 +71,7 @@
 #define	_SYS_SCHED_H_
 
 #include <sys/featuretest.h>
+#include <sys/queue.h>
 #include <sys/types.h>
 
 #if defined(_KERNEL_OPT)
