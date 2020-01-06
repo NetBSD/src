@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.23 2020/01/05 20:17:43 ad Exp $ */
+/* $NetBSD: trap.c,v 1.24 2020/01/06 08:36:08 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.23 2020/01/05 20:17:43 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.24 2020/01/06 08:36:08 skrll Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -641,7 +641,7 @@ cpu_intr_p(void)
 	do {
 		ncsw = l->l_ncsw;
 		__insn_barrier();
-		idepth = l->l_cpu->ci_idepth;
+		idepth = l->l_cpu->ci_intr_depth;
 		__insn_barrier();
 	} while (__predict_false(ncsw != l->l_ncsw));
 
