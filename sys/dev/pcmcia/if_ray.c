@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.95 2019/10/21 08:22:06 msaitoh Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.96 2020/01/06 07:15:03 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.95 2019/10/21 08:22:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.96 2020/01/06 07:15:03 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2824,9 +2824,9 @@ ray_update_mcast(struct ray_softc *sc)
 	ec = &sc->sc_ec;
 	ray_cmd_cancel(sc, SCP_UPD_MCAST);
 
+	ETHER_LOCK(ec);
 	/* see if we have any ranges */
 	if ((count = sc->sc_ec.ec_multicnt) < 17) {
-		ETHER_LOCK(ec);
 		ETHER_FIRST_MULTI(step, ec, enm);
 		while (enm) {
 			/* see if this is a range */
@@ -2837,8 +2837,8 @@ ray_update_mcast(struct ray_softc *sc)
 			}
 			ETHER_NEXT_MULTI(step, enm);
 		}
-		ETHER_UNLOCK(ec);
 	}
+	ETHER_UNLOCK(ec);
 
 	/* track this stuff even when not running */
 	if (count > 16) {
