@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.283 2020/01/02 16:52:55 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.284 2020/01/06 11:18:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.283 2020/01/02 16:52:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.284 2020/01/06 11:18:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2533,11 +2533,13 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	const char	*msg;
 	char		lmsg[100];
 	long		rss;
+	bool		again = false;
 
 	KASSERT(mutex_owned(proc_lock));
 
 	*buf = '\0';
 
+ retry:
 	if (tp->t_session == NULL)
 		msg = "not a controlling terminal\n";
 	else if (tp->t_pgrp == NULL)
@@ -2568,11 +2570,26 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 			if (p->p_lock != oldpick->p_lock)
 				mutex_exit(oldpick->p_lock);
 		}
-		if (fromsig &&
-		    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
-		    SA_NOKERNINFO))
-			return;
-		msg = NULL;
+
+		if (pick != NULL) {
+			mutex_enter(pick->p_lock);
+			if (P_ZOMBIE(pick)) {
+				mutex_exit(pick->p_lock);
+				pick = NULL;
+				if (!again) {
+					again = true;
+					goto retry;
+				}
+				msg = "found only zombie processes\n";
+			}
+			if (fromsig &&
+			    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
+			    SA_NOKERNINFO)) {
+				mutex_exit(pick->p_lock);
+				return;
+			}
+			msg = NULL;
+		}
 	}
 
 	/* Print load average. */
@@ -2589,7 +2606,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	    pick->p_pid);
 	strlcat(buf, lmsg, bufsz);
 
-	mutex_enter(pick->p_lock);
+	KASSERT(mutex_owned(pick->p_lock));
 	LIST_FOREACH(l, &pick->p_lwps, l_sibling) {
 		const char *lp;
 		lwp_lock(l);
@@ -2679,11 +2696,8 @@ proc_compare_wrapper(struct proc *p1, struct proc *p2)
 	KASSERT(mutex_owned(p1->p_lock));
 	KASSERT(mutex_owned(p2->p_lock));
 
-	if ((l1 = LIST_FIRST(&p1->p_lwps)) == NULL)
-		return 1;
-
-	if ((l2 = LIST_FIRST(&p2->p_lwps)) == NULL)
-		return 0;
+	l1 = LIST_FIRST(&p1->p_lwps);
+	l2 = LIST_FIRST(&p2->p_lwps);
 
 	return proc_compare(p1, l1, p2, l2);
 }
