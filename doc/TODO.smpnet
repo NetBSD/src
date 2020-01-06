@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.30 2020/01/06 05:38:59 msaitoh Exp $
+$NetBSD: TODO.smpnet,v 1.31 2020/01/06 15:21:29 msaitoh Exp $
 
 MP-safe components
 ==================
@@ -174,15 +174,6 @@ Scalability
    is O(n)
  - opencrypto(9)'s crypto_newsession()/crypto_freesession() aren't scalable
    as they are serialized by one mutex
-
-ec_multi* of ethercom
----------------------
-
-ec_multiaddrs and ec_multicnt of struct ethercom and items listed in
-ec_multiaddrs must be protected by ec_lock.  The core of ethernet subsystem is
-already MP-safe, however, device drivers that use the data should also be fixed.
-A typical change should be to protect manipulations of the data via ETHER_*
-macros such as ETHER_FIRST_MULTI by ETHER_LOCK and ETHER_UNLOCK.
 
 ALTQ
 ----
