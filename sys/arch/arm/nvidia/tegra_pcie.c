@@ -1,4 +1,4 @@
-/* $NetBSD: tegra_pcie.c,v 1.28 2020/01/07 09:57:11 skrll Exp $ */
+/* $NetBSD: tegra_pcie.c,v 1.29 2020/01/07 10:20:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.28 2020/01/07 09:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.29 2020/01/07 10:20:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: tegra_pcie.c,v 1.28 2020/01/07 09:57:11 skrll Exp $"
 #include <sys/intr.h>
 #include <sys/kmem.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/systm.h>
