@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/03/19 06:19:44 mrg Exp $
+#	$NetBSD: Makefile,v 1.14 2020/01/07 07:27:50 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -74,10 +74,5 @@ X11EXTRAMANTRANSFORMS+= \
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
-
-# XXX
-.if defined(HAVE_GCC)
-COPTS.XawIm.c+=	-Wno-error
-.endif
 
 CWARNFLAGS.clang+=	-Wno-format

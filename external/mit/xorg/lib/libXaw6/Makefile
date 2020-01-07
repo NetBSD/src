@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2015/07/19 07:55:07 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2020/01/07 07:27:50 mrg Exp $
 
 NOCHECKVER=	yes	# we want to install an older version ...
 MKLINKLIB=	no
@@ -37,8 +37,3 @@ PKGDIST=	${LIBOLD}
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
-
-# XXX
-.if defined(HAVE_GCC)
-COPTS.XawIm.c+= -Wno-error
-.endif
