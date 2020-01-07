@@ -1,4 +1,4 @@
-/*	$NetBSD: userret.h,v 1.17 2019/12/01 12:19:28 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.18 2020/01/07 07:41:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -75,7 +75,7 @@ userret(struct lwp *l)
 		if (CPU_IS_SH3) {
 			tf->tf_ubc = UBC_CYCLE_INSN | UBC_CYCLE_READ
 				| SH3_UBC_CYCLE_CPU;
-	}
+		}
 #endif
 #ifdef SH4
 		if (CPU_IS_SH4) {
