@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.154 2020/01/05 11:07:04 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.155 2020/01/07 11:56:10 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7623,4 +7623,11 @@ sys/external/bsd/drm2/drm/files.drmkms		1.33
 	Workaround netbsd incompatible LIST_HEAD.
 	Build drm_panel.c with drmkms.
 	[jmcneill, ticket #607]
+
+sys/kern/kern_ksyms.c				1.88
+
+	Better deal with symbols removed by unloaded modules when
+	/dev/ksyms has been opened.
+	[pgoyette, ticket #609]
+
 
