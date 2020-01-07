@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.54 2013/11/26 13:44:41 joerg Exp $	*/
+/*	$NetBSD: util.c,v 1.55 2020/01/07 21:24:16 rillig Exp $	*/
 
 /*
  * Missing stuff from OS's
@@ -8,11 +8,11 @@
 #endif
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: util.c,v 1.54 2013/11/26 13:44:41 joerg Exp $";
+static char rcsid[] = "$NetBSD: util.c,v 1.55 2020/01/07 21:24:16 rillig Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: util.c,v 1.54 2013/11/26 13:44:41 joerg Exp $");
+__RCSID("$NetBSD: util.c,v 1.55 2020/01/07 21:24:16 rillig Exp $");
 #endif
 #endif
 
@@ -228,32 +228,6 @@ killpg(int pid, int sig)
 {
     return kill(-pid, sig);
 }
-
-#if !defined(__hpux__) && !defined(__hpux)
-void
-srandom(long seed)
-{
-    srand48(seed);
-}
-
-long
-random(void)
-{
-    return lrand48();
-}
-#endif
-
-#if !defined(__hpux__) && !defined(__hpux)
-int
-utimes(char *file, struct timeval tvp[2])
-{
-    struct utimbuf t;
-
-    t.actime  = tvp[0].tv_sec;
-    t.modtime = tvp[1].tv_sec;
-    return(utime(file, &t));
-}
-#endif
 
 #if !defined(BSD) && !defined(d_fileno)
 # define d_fileno d_ino
