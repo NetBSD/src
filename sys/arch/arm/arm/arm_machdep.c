@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.59 2020/01/07 09:55:30 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.60 2020/01/07 09:57:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,17 +80,17 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.59 2020/01/07 09:55:30 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.60 2020/01/07 09:57:10 skrll Exp $");
 
+#include <sys/atomic.h>
+#include <sys/cpu.h>
+#include <sys/evcnt.h>
 #include <sys/exec.h>
+#include <sys/kcpuset.h>
+#include <sys/kmem.h>
 #include <sys/proc.h>
 #include <sys/systm.h>
-#include <sys/kmem.h>
 #include <sys/ucontext.h>
-#include <sys/evcnt.h>
-#include <sys/cpu.h>
-#include <sys/atomic.h>
-#include <sys/kcpuset.h>
 
 #ifdef EXEC_AOUT
 #include <sys/exec_aout.h>
