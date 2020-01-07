@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.67 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.68 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.67 2019/08/23 04:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.68 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,7 +88,7 @@ static unsigned	axen_tx_prepare(struct usbnet *, struct mbuf *,
 			        struct usbnet_chain *);
 static int	axen_init(struct ifnet *);
 
-static struct usbnet_ops axen_ops = {
+static const struct usbnet_ops axen_ops = {
 	.uno_stop = axen_stop_cb,
 	.uno_ioctl = axen_ioctl_cb,
 	.uno_read_reg = axen_mii_read_reg,

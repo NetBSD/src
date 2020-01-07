@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.h,v 1.15 2019/09/09 07:20:16 mrg Exp $	*/
+/*	$NetBSD: usbnet.h,v 1.16 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -225,7 +225,7 @@ struct usbnet {
 	device_t		un_dev;
 	struct usbd_interface	*un_iface;
 	struct usbd_device	*un_udev;
-	struct usbnet_ops	*un_ops;
+	const struct usbnet_ops	*un_ops;
 	struct usbnet_intr	*un_intr;
 
 	/* Inputs for rx/tx chain control. */

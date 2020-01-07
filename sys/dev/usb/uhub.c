@@ -1,4 +1,4 @@
-/*	$NetBSD: uhub.c,v 1.143 2019/08/21 10:48:37 mrg Exp $	*/
+/*	$NetBSD: uhub.c,v 1.144 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/uhub.c,v 1.18 1999/11/17 22:33:43 n_hibma Exp $	*/
 /*	$OpenBSD: uhub.c,v 1.86 2015/06/29 18:27:40 mpi Exp $ */
 
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.143 2019/08/21 10:48:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhub.c,v 1.144 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -137,11 +137,11 @@ Static void uhub_intr(struct usbd_xfer *, void *, usbd_status);
  * Every other driver only connects to hubs
  */
 
-int uhub_match(device_t, cfdata_t, void *);
-void uhub_attach(device_t, device_t, void *);
-int uhub_rescan(device_t, const char *, const int *);
-void uhub_childdet(device_t, device_t);
-int uhub_detach(device_t, int);
+static int uhub_match(device_t, cfdata_t, void *);
+static void uhub_attach(device_t, device_t, void *);
+static int uhub_rescan(device_t, const char *, const int *);
+static void uhub_childdet(device_t, device_t);
+static int uhub_detach(device_t, int);
 
 CFATTACH_DECL3_NEW(uhub, sizeof(struct uhub_softc), uhub_match,
     uhub_attach, uhub_detach, NULL, uhub_rescan, uhub_childdet,
@@ -227,7 +227,7 @@ usbd_set_hub_depth(struct usbd_device *dev, int depth)
 	return usbd_do_request(dev, &req, 0);
 }
 
-int
+static int
 uhub_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -250,7 +250,7 @@ uhub_match(device_t parent, cfdata_t match, void *aux)
 	return UMATCH_NONE;
 }
 
-void
+static void
 uhub_attach(device_t parent, device_t self, void *aux)
 {
 	struct uhub_softc *sc = device_private(self);
@@ -805,7 +805,7 @@ uhub_explore(struct usbd_device *dev)
  * Called from process context when the hub is gone.
  * Detach all devices on active ports.
  */
-int
+static int
 uhub_detach(device_t self, int flags)
 {
 	struct uhub_softc *sc = device_private(self);
@@ -864,7 +864,7 @@ uhub_detach(device_t self, int flags)
 	return 0;
 }
 
-int
+static int
 uhub_rescan(device_t self, const char *ifattr, const int *locators)
 {
 	struct uhub_softc *sc = device_private(self);
@@ -882,7 +882,7 @@ uhub_rescan(device_t self, const char *ifattr, const int *locators)
 }
 
 /* Called when a device has been detached from it */
-void
+static void
 uhub_childdet(device_t self, device_t child)
 {
 	struct uhub_softc *sc = device_private(self);
