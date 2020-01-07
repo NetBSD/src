@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.14 2019/11/29 20:05:29 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.15 2020/01/07 13:44:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -141,15 +141,15 @@ MUTEX_DEBUG_P(const volatile struct kmutex *mtx)
 }
 
 static inline int
-MUTEX_SPIN_P(const volatile struct kmutex *mtx)
+MUTEX_SPIN_P(const uintptr_t owner)
 {
-	return mtx->mtx_owner == MUTEX_SPIN_FLAG;
+	return owner == MUTEX_SPIN_FLAG;
 }
 
 static inline int
-MUTEX_ADAPTIVE_P(const volatile struct kmutex *mtx)
+MUTEX_ADAPTIVE_P(const uintptr_t owner)
 {
-	return mtx->mtx_owner != MUTEX_SPIN_FLAG;
+	return owner != MUTEX_SPIN_FLAG;
 }
 
 /* Acquire an adaptive mutex */

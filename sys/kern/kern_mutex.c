@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.87 2020/01/06 11:12:55 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.88 2020/01/07 13:44:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.87 2020/01/06 11:12:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.88 2020/01/07 13:44:23 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -186,8 +186,8 @@ do {									\
 
 #define	MUTEX_OWNER(owner)						\
 	(owner & MUTEX_THREAD)
-#define	MUTEX_HAS_WAITERS(owner)					\
-	((owner & MUTEX_BIT_WAITERS) != 0)
+#define	MUTEX_HAS_WAITERS(mtx)						\
+	(((int)(mtx)->mtx_owner & MUTEX_BIT_WAITERS) != 0)
 
 #define	MUTEX_INITIALIZE_ADAPTIVE(mtx, dodebug)				\
 do {									\
@@ -313,7 +313,7 @@ mutex_dump(const volatile void *cookie, lockop_printer_t pr)
 	uintptr_t owner = mtx->mtx_owner;
 
 	pr("owner field  : %#018lx wait/spin: %16d/%d\n",
-	    (long)MUTEX_OWNER(owner), MUTEX_HAS_WAITERS(owner),
+	    (long)MUTEX_OWNER(owner), MUTEX_HAS_WAITERS(mtx),
 	    MUTEX_SPIN_P(owner));
 }
 
@@ -385,7 +385,7 @@ mutex_destroy(kmutex_t *mtx)
 
 	if (MUTEX_ADAPTIVE_P(owner)) {
 		MUTEX_ASSERT(mtx, !MUTEX_OWNED(owner) &&
-		    !MUTEX_HAS_WAITERS(owner));
+		    !MUTEX_HAS_WAITERS(mtx));
 	} else {
 		MUTEX_ASSERT(mtx, !MUTEX_SPINBIT_LOCKED_P(mtx));
 	}
@@ -677,9 +677,9 @@ mutex_vector_enter(kmutex_t *mtx)
 			continue;
 		}
 		membar_consumer();
-		owner = mtx->mtx_owner;
-		if (!MUTEX_HAS_WAITERS(owner)) {
+		if (!MUTEX_HAS_WAITERS(mtx)) {
 			turnstile_exit(mtx);
+			owner = mtx->mtx_owner;
 			continue;
 		}
 #endif	/* MULTIPROCESSOR */
@@ -757,7 +757,7 @@ mutex_vector_exit(kmutex_t *mtx)
 	 */
 	{
 		int s = splhigh();
-		if (!MUTEX_HAS_WAITERS(mtx->mtx_owner)) {
+		if (!MUTEX_HAS_WAITERS(mtx)) {
 			MUTEX_RELEASE(mtx);
 			splx(s);
 			return;
