@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_atombios_dp.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_atombios_dp.c,v 1.2 2020/01/07 13:51:38 msaitoh Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -27,7 +27,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_dp.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_atombios_dp.c,v 1.2 2020/01/07 13:51:38 msaitoh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -196,9 +196,10 @@ radeon_dp_aux_transfer_atom(struct drm_dp_aux *aux, struct drm_dp_aux_msg *msg)
 		tx_size = HEADER_SIZE + msg->size;
 		if (msg->size == 0)
 			tx_buf[3] |= BARE_ADDRESS_SIZE << 4;
-		else
+		else {
 			tx_buf[3] |= tx_size << 4;
-		memcpy(tx_buf + HEADER_SIZE, msg->buffer, msg->size);
+			memcpy(tx_buf + HEADER_SIZE, msg->buffer, msg->size);
+		}
 		ret = radeon_process_aux_ch(chan,
 					    tx_buf, tx_size, NULL, 0, delay, &ack);
 		if (ret >= 0)
