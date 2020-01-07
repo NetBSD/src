@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.284 2020/01/06 11:18:51 ad Exp $	*/
+/*	$NetBSD: tty.c,v 1.285 2020/01/07 08:52:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.284 2020/01/06 11:18:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.285 2020/01/07 08:52:47 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2530,7 +2530,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 	struct timeval	utime, stime;
 	int		tmp;
 	fixpt_t		pctcpu = 0;
-	const char	*msg;
+	const char	*msg = NULL;
 	char		lmsg[100];
 	long		rss;
 	bool		again = false;
@@ -2588,7 +2588,6 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 				mutex_exit(pick->p_lock);
 				return;
 			}
-			msg = NULL;
 		}
 	}
 
