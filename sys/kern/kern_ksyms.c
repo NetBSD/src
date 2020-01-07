@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_ksyms.c,v 1.84 2016/07/07 06:55:43 msaitoh Exp $	*/
+/*	$NetBSD: kern_ksyms.c,v 1.84.10.1 2020/01/07 11:59:48 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.84 2016/07/07 06:55:43 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_ksyms.c,v 1.84.10.1 2020/01/07 11:59:48 martin Exp $");
 
 #if defined(_KERNEL) && defined(_KERNEL_OPT)
 #include "opt_copy_symtab.h"
@@ -754,9 +754,9 @@ ksyms_modunload(const char *name)
 		if (strcmp(name, st->sd_name) != 0)
 			continue;
 		st->sd_gone = true;
+		ksyms_sizes_calc();
 		if (!ksyms_isopen) {
 			TAILQ_REMOVE(&ksyms_symtabs, st, sd_queue);
-			ksyms_sizes_calc();
 			kmem_free(st, sizeof(*st));
 		}
 		break;
@@ -843,6 +843,8 @@ ksyms_sizes_calc(void)
 
 	ksyms_symsz = ksyms_strsz = 0;
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		delta = ksyms_strsz - st->sd_usroffset;
 		if (delta != 0) {
 			for (i = 0; i < st->sd_symsize/sizeof(Elf_Sym); i++)
@@ -1019,6 +1021,8 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	 */
 	filepos = sizeof(struct ksyms_hdr);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (uio->uio_resid == 0)
 			return 0;
 		if (uio->uio_offset <= st->sd_symsize + filepos) {
@@ -1037,6 +1041,8 @@ ksymsread(dev_t dev, struct uio *uio, int ioflag)
 	KASSERT(filepos == sizeof(struct ksyms_hdr) +
 	    ksyms_hdr.kh_shdr[SYMTAB].sh_size);
 	TAILQ_FOREACH(st, &ksyms_symtabs, sd_queue) {
+		if (__predict_false(st->sd_gone))
+			continue;
 		if (uio->uio_resid == 0)
 			return 0;
 		if (uio->uio_offset <= st->sd_strsize + filepos) {
