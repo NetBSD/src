@@ -1,4 +1,4 @@
-/* $NetBSD: umcs.c,v 1.14 2019/09/14 12:38:40 maxv Exp $ */
+/* $NetBSD: umcs.c,v 1.15 2020/01/07 06:42:26 maxv Exp $ */
 /* $FreeBSD: head/sys/dev/usb/serial/umcs.c 260559 2014-01-12 11:44:28Z hselasky $ */
 
 /*-
@@ -41,7 +41,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.14 2019/09/14 12:38:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umcs.c,v 1.15 2020/01/07 06:42:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -125,7 +125,7 @@ static int umcs7840_param(void *, int, struct termios *);
 static int umcs7840_port_open(void *, int);
 static void umcs7840_port_close(void *, int);
 
-struct ucom_methods umcs7840_methods = {
+static const struct ucom_methods umcs7840_methods = {
 	.ucom_get_status = umcs7840_get_status,
 	.ucom_set = umcs7840_set,
 	.ucom_param = umcs7840_param,

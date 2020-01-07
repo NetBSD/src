@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.72 2019/10/07 09:37:16 skrll Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.73 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.72 2019/10/07 09:37:16 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.73 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -57,8 +57,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.72 2019/10/07 09:37:16 skrll Exp $");
 #include <dev/usb/if_udavreg.h>
 
 /* Function declarations */
-int	udav_match(device_t, cfdata_t, void *);
-void	udav_attach(device_t, device_t, void *);
+static int	udav_match(device_t, cfdata_t, void *);
+static void	udav_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(udav, sizeof(struct usbnet), udav_match, udav_attach,
     usbnet_detach, usbnet_activate);
@@ -131,7 +131,7 @@ static const struct udav_type {
 };
 #define udav_lookup(v, p) ((const struct udav_type *)usb_lookup(udav_devs, v, p))
 
-static struct usbnet_ops udav_ops = {
+static const struct usbnet_ops udav_ops = {
 	.uno_stop = udav_stop_cb,
 	.uno_ioctl = udav_ioctl_cb,
 	.uno_read_reg = udav_mii_read_reg,
@@ -143,7 +143,7 @@ static struct usbnet_ops udav_ops = {
 };
 
 /* Probe */
-int
+static int
 udav_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -153,7 +153,7 @@ udav_match(device_t parent, cfdata_t match, void *aux)
 }
 
 /* Attach */
-void
+static void
 udav_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);

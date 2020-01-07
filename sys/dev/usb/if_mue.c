@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.55 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.56 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.55 2019/08/23 04:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.56 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -60,7 +60,7 @@ struct mue_type {
 #define LAN7850		0x0008	/* LAN7850 */
 };
 
-const struct mue_type mue_devs[] = {
+static const struct mue_type mue_devs[] = {
 	{ { USB_VENDOR_SMSC, USB_PRODUCT_SMSC_LAN7500 }, LAN7500 },
 	{ { USB_VENDOR_SMSC, USB_PRODUCT_SMSC_LAN7505 }, LAN7500 },
 	{ { USB_VENDOR_SMSC, USB_PRODUCT_SMSC_LAN7800 }, LAN7800 },
@@ -107,7 +107,7 @@ static unsigned	mue_tx_prepare(struct usbnet *, struct mbuf *,
 			       struct usbnet_chain *);
 static int	mue_init(struct ifnet *);
 
-static struct usbnet_ops mue_ops = {
+static const struct usbnet_ops mue_ops = {
 	.uno_stop = mue_stop_cb,
 	.uno_ioctl = mue_ioctl_cb,
 	.uno_read_reg = mue_mii_read_reg,

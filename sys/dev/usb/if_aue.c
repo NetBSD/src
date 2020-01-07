@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.161 2019/08/23 04:34:51 mrg Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.162 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.161 2019/08/23 04:34:51 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.162 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -231,8 +231,8 @@ static const struct aue_type aue_devs[] = {
 };
 #define aue_lookup(v, p) ((const struct aue_type *)usb_lookup(aue_devs, v, p))
 
-int aue_match(device_t, cfdata_t, void *);
-void aue_attach(device_t, device_t, void *);
+static int aue_match(device_t, cfdata_t, void *);
+static void aue_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(aue, sizeof(struct aue_softc), aue_match, aue_attach,
     usbnet_detach, usbnet_activate);
@@ -250,7 +250,7 @@ static void aue_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 static int aue_init(struct ifnet *);
 static void aue_intr(struct usbnet *, usbd_status);
 
-static struct usbnet_ops aue_ops = {
+static const struct usbnet_ops aue_ops = {
 	.uno_stop = aue_stop_cb,
 	.uno_ioctl = aue_ioctl_cb,
 	.uno_read_reg = aue_mii_read_reg,
@@ -742,7 +742,7 @@ aue_reset(struct aue_softc *sc)
 /*
  * Probe for a Pegasus chip.
  */
-int
+static int
 aue_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -775,7 +775,7 @@ aue_match(device_t parent, cfdata_t match, void *aux)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void
+static void
 aue_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);

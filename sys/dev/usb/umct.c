@@ -1,4 +1,4 @@
-/*	$NetBSD: umct.c,v 1.39 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: umct.c,v 1.40 2020/01/07 06:42:26 maxv Exp $	*/
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.39 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umct.c,v 1.40 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -127,7 +127,7 @@ static	int  umct_param(void *, int, struct termios *);
 static	int  umct_open(void *, int);
 static	void umct_close(void *, int);
 
-struct	ucom_methods umct_methods = {
+static const struct	ucom_methods umct_methods = {
 	.ucom_get_status = umct_get_status,
 	.ucom_set = umct_set,
 	.ucom_param = umct_param,
