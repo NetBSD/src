@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_smb.c,v 1.34 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: smb_smb.c,v 1.35 2020/01/07 06:14:42 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000-2001 Boris Popov
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.34 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_smb.c,v 1.35 2020/01/07 06:14:42 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	struct smb_rq *rqp;
 	struct mbchain *mbp;
 	const smb_unichar *unipp;
-	smb_uniptr ntencpass = NULL;
+	smb_uniptr ntencpass;
 	char *up, *pbuf, *encpass;
 	const char *pp;
 	int error, plen, uniplen, ulen, upper;
@@ -272,7 +272,7 @@ smb_smb_ssnsetup(struct smb_vc *vcp, struct smb_cred *scred)
 	upper = 0;
 
 again:
-
+	ntencpass = NULL;
 	vcp->vc_smbuid = SMB_UID_UNKNOWN;
 
 	error = smb_rq_alloc(VCTOCP(vcp), SMB_COM_SESSION_SETUP_ANDX, scred, &rqp);
