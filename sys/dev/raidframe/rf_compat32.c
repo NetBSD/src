@@ -1,4 +1,4 @@
-/*	$NetBSD: rf_compat32.c,v 1.7 2019/12/12 02:15:43 pgoyette Exp $	*/
+/*	$NetBSD: rf_compat32.c,v 1.8 2020/01/07 06:10:18 maxv Exp $	*/
 
 /*
  * Copyright (c) 2017 Matthew R. Green
@@ -101,7 +101,7 @@ rf_config_netbsd32(struct raid_softc *rs, void *data)
 	k_cfg = RF_Malloc(sizeof(*k_cfg));
 	if (k_cfg == NULL) {
 		RF_Free(k_cfg32, sizeof(RF_Config_t32));
-		RF_Free(k_cfg, sizeof(RF_Config_t));
+		return ENOMEM;
 	}
 	k_cfg->numCol = k_cfg32->numCol;
 	k_cfg->numSpare = k_cfg32->numSpare;
