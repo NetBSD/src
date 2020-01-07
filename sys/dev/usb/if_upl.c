@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.68 2019/09/13 07:47:39 msaitoh Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.69 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.68 2019/09/13 07:47:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.69 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -90,7 +90,7 @@ int	upldebug = 0;
 /*
  * Various supported device vendors/products.
  */
-static struct usb_devno sc_devs[] = {
+static const struct usb_devno sc_devs[] = {
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2301 },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL2302 },
 	{ USB_VENDOR_PROLIFIC, USB_PRODUCT_PROLIFIC_PL25A1 },
@@ -98,8 +98,8 @@ static struct usb_devno sc_devs[] = {
 	{ USB_VENDOR_NI, USB_PRODUCT_NI_HTOH_7825 }
 };
 
-int	upl_match(device_t, cfdata_t, void *);
-void	upl_attach(device_t, device_t, void *);
+static int	upl_match(device_t, cfdata_t, void *);
+static void	upl_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(upl, sizeof(struct usbnet), upl_match, upl_attach,
     usbnet_detach, usbnet_activate);
@@ -113,7 +113,7 @@ static unsigned upl_tx_prepare(struct usbnet *, struct mbuf *,
 static int upl_ioctl_cb(struct ifnet *, u_long, void *);
 static int upl_init(struct ifnet *);
 
-static struct usbnet_ops upl_ops = {
+static const struct usbnet_ops upl_ops = {
 	.uno_init = upl_init,
 	.uno_tx_prepare = upl_tx_prepare,
 	.uno_rx_loop = upl_rx_loop,
@@ -130,7 +130,7 @@ static void upl_input(struct ifnet *, struct mbuf *);
 /*
  * Probe for a Prolific chip.
  */
-int
+static int
 upl_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -139,7 +139,7 @@ upl_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 upl_attach(device_t parent, device_t self, void *aux)
 {
 	struct usbnet * const	un = device_private(self);

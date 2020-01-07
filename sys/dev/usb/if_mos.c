@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.2 2020/01/06 15:19:00 msaitoh Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.3 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.2 2020/01/06 15:19:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.3 2020/01/07 06:42:26 maxv Exp $");
 
 #include <sys/param.h>
 
@@ -128,7 +128,7 @@ int     mosdebug = 0;
 /*
  * Various supported device vendors/products.
  */
-const struct mos_type mos_devs[] = {
+static const struct mos_type mos_devs[] = {
 	{ { USB_VENDOR_MOSCHIP, USB_PRODUCT_MOSCHIP_MCS7730 }, MCS7730 },
 	{ { USB_VENDOR_MOSCHIP, USB_PRODUCT_MOSCHIP_MCS7830 }, MCS7830 },
 	{ { USB_VENDOR_MOSCHIP, USB_PRODUCT_MOSCHIP_MCS7832 }, MCS7832 },
@@ -162,7 +162,7 @@ static int mos_readmac(struct usbnet *);
 static int mos_writemac(struct usbnet *);
 static int mos_write_mcast(struct usbnet *, uint8_t *);
 
-static struct usbnet_ops mos_ops = {
+static const struct usbnet_ops mos_ops = {
 	.uno_stop = mos_stop,
 	.uno_ioctl = mos_ioctl,
 	.uno_read_reg = mos_mii_read_reg,

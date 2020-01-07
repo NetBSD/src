@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.120 2019/08/26 17:26:33 rin Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.121 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.120 2019/08/26 17:26:33 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.121 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -250,8 +250,8 @@ static const struct ax88772b_mfb ax88772b_mfb_table[] = {
 	{ 0x8700, 0x8A3D, 32768 }
 };
 
-int	axe_match(device_t, cfdata_t, void *);
-void	axe_attach(device_t, device_t, void *);
+static int	axe_match(device_t, cfdata_t, void *);
+static void	axe_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(axe, sizeof(struct axe_softc),
 	axe_match, axe_attach, usbnet_detach, usbnet_activate);
@@ -271,7 +271,7 @@ static void	axe_ax88772_init(struct axe_softc *);
 static void	axe_ax88772a_init(struct axe_softc *);
 static void	axe_ax88772b_init(struct axe_softc *);
 
-static struct usbnet_ops axe_ops = {
+static const struct usbnet_ops axe_ops = {
 	.uno_stop = axe_stop,
 	.uno_ioctl = axe_ioctl,
 	.uno_read_reg = axe_mii_read_reg,
@@ -846,7 +846,7 @@ axe_ax88772b_init(struct axe_softc *sc)
 /*
  * Probe for a AX88172 chip.
  */
-int
+static int
 axe_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -859,7 +859,7 @@ axe_match(device_t parent, cfdata_t match, void *aux)
  * Attach the interface. Allocate softc structures, do ifmedia
  * setup and ethernet/BPF attach.
  */
-void
+static void
 axe_attach(device_t parent, device_t self, void *aux)
 {
 	AXEHIST_FUNC(); AXEHIST_CALLED();

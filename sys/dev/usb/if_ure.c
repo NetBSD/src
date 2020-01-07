@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.33 2019/10/16 13:11:16 bad Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.34 2020/01/07 06:42:26 maxv Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.33 2019/10/16 13:11:16 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.34 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -101,7 +101,7 @@ static void	ure_attach(device_t, device_t, void *);
 CFATTACH_DECL_NEW(ure, sizeof(struct usbnet), ure_match, ure_attach,
     usbnet_detach, usbnet_activate);
 
-static struct usbnet_ops ure_ops = {
+static const struct usbnet_ops ure_ops = {
 	.uno_stop = ure_stop_cb,
 	.uno_ioctl = ure_ioctl_cb,
 	.uno_read_reg = ure_mii_read_reg,

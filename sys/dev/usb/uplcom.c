@@ -1,4 +1,4 @@
-/*	$NetBSD: uplcom.c,v 1.85 2019/05/09 14:50:38 skrll Exp $	*/
+/*	$NetBSD: uplcom.c,v 1.86 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.85 2019/05/09 14:50:38 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uplcom.c,v 1.86 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -177,7 +177,7 @@ static	void uplcom_close(void *, int);
 static usbd_status uplcom_vendor_control_write(struct usbd_device *, uint16_t, uint16_t);
 static void uplcom_close_pipe(struct uplcom_softc *);
 
-struct	ucom_methods uplcom_methods = {
+static const struct	ucom_methods uplcom_methods = {
 	.ucom_get_status = uplcom_get_status,
 	.ucom_set = uplcom_set,
 	.ucom_param = uplcom_param,
@@ -236,15 +236,15 @@ static const struct usb_devno uplcom_devs[] = {
 };
 #define uplcom_lookup(v, p) usb_lookup(uplcom_devs, v, p)
 
-int uplcom_match(device_t, cfdata_t, void *);
-void uplcom_attach(device_t, device_t, void *);
-void uplcom_childdet(device_t, device_t);
-int uplcom_detach(device_t, int);
+static int uplcom_match(device_t, cfdata_t, void *);
+static void uplcom_attach(device_t, device_t, void *);
+static void uplcom_childdet(device_t, device_t);
+static int uplcom_detach(device_t, int);
 
 CFATTACH_DECL2_NEW(uplcom, sizeof(struct uplcom_softc), uplcom_match,
     uplcom_attach, uplcom_detach, NULL, NULL, uplcom_childdet);
 
-int
+static int
 uplcom_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -253,7 +253,7 @@ uplcom_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uplcom_attach(device_t parent, device_t self, void *aux)
 {
 	struct uplcom_softc *sc = device_private(self);
@@ -464,7 +464,7 @@ uplcom_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-void
+static void
 uplcom_childdet(device_t self, device_t child)
 {
 	struct uplcom_softc *sc = device_private(self);
@@ -490,7 +490,7 @@ uplcom_close_pipe(struct uplcom_softc *sc)
 	}
 }
 
-int
+static int
 uplcom_detach(device_t self, int flags)
 {
 	struct uplcom_softc *sc = device_private(self);

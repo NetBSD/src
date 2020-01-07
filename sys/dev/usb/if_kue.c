@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kue.c,v 1.100 2019/08/20 06:37:06 mrg Exp $	*/
+/*	$NetBSD: if_kue.c,v 1.101 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.100 2019/08/20 06:37:06 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kue.c,v 1.101 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -164,9 +164,9 @@ static const struct usb_devno kue_devs[] = {
 };
 #define kue_lookup(v, p) (usb_lookup(kue_devs, v, p))
 
-int kue_match(device_t, cfdata_t, void *);
-void kue_attach(device_t, device_t, void *);
-int kue_detach(device_t, int);
+static int kue_match(device_t, cfdata_t, void *);
+static void kue_attach(device_t, device_t, void *);
+static int kue_detach(device_t, int);
 
 CFATTACH_DECL_NEW(kue, sizeof(struct kue_softc), kue_match, kue_attach,
     kue_detach, usbnet_activate);
@@ -177,7 +177,7 @@ static unsigned kue_tx_prepare(struct usbnet *, struct mbuf *,
 static int kue_ioctl_cb(struct ifnet *, u_long, void *);
 static int kue_init(struct ifnet *);
 
-static struct usbnet_ops kue_ops = {
+static const struct usbnet_ops kue_ops = {
 	.uno_ioctl = kue_ioctl_cb,
 	.uno_tx_prepare = kue_tx_prepare,
 	.uno_rx_loop = kue_rx_loop,
@@ -395,7 +395,7 @@ kue_reset(struct usbnet *un)
 /*
  * Probe for a KLSI chip.
  */
-int
+static int
 kue_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -410,7 +410,7 @@ kue_match(device_t parent, cfdata_t match, void *aux)
  * Attach the interface. Allocate softc structures, do
  * setup and ethernet/BPF attach.
  */
-void
+static void
 kue_attach(device_t parent, device_t self, void *aux)
 {
 	struct kue_softc *sc = device_private(self);
@@ -513,7 +513,7 @@ kue_attach(device_t parent, device_t self, void *aux)
 	    0, NULL);
 }
 
-int
+static int
 kue_detach(device_t self, int flags)
 {
 	struct kue_softc *sc = device_private(self);

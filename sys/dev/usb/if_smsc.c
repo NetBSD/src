@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.61 2019/08/23 04:32:57 mrg Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.62 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.61 2019/08/23 04:32:57 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.62 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -164,26 +164,25 @@ fail:
 	printf("%s: error: " fmt, device_xname((un)->un_dev), ##args)
 
 /* Function declarations */
-int		 smsc_match(device_t, cfdata_t, void *);
-void		 smsc_attach(device_t, device_t, void *);
+static int	 smsc_match(device_t, cfdata_t, void *);
+static void	 smsc_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(usmsc, sizeof(struct smsc_softc),
     smsc_match, smsc_attach, usbnet_detach, usbnet_activate);
 
-int		 smsc_chip_init(struct usbnet *);
-int		 smsc_setmacaddress(struct usbnet *, const uint8_t *);
+static int	 smsc_chip_init(struct usbnet *);
+static int	 smsc_setmacaddress(struct usbnet *, const uint8_t *);
 
-int		 smsc_init(struct ifnet *);
-int		 smsc_init_locked(struct ifnet *);
-int		 smsc_ioctl(struct ifnet *, u_long, void *);
-void		 smsc_stop_cb(struct ifnet *, int);
+static int	 smsc_init(struct ifnet *);
+static int	 smsc_init_locked(struct ifnet *);
+static void	 smsc_stop_cb(struct ifnet *, int);
 
-void		 smsc_reset(struct smsc_softc *);
+static void	 smsc_reset(struct smsc_softc *);
 
 static void	 smsc_miibus_statchg(struct ifnet *);
-int		 smsc_readreg(struct usbnet *, uint32_t, uint32_t *);
-int		 smsc_writereg(struct usbnet *, uint32_t, uint32_t);
-int		 smsc_wait_for_bits(struct usbnet *, uint32_t, uint32_t);
+static int	 smsc_readreg(struct usbnet *, uint32_t, uint32_t *);
+static int	 smsc_writereg(struct usbnet *, uint32_t, uint32_t);
+static int	 smsc_wait_for_bits(struct usbnet *, uint32_t, uint32_t);
 static int	 smsc_miibus_readreg(struct usbnet *, int, int, uint16_t *);
 static int	 smsc_miibus_writereg(struct usbnet *, int, int, uint16_t);
 
@@ -192,7 +191,7 @@ static unsigned	 smsc_tx_prepare(struct usbnet *, struct mbuf *,
 		     struct usbnet_chain *);
 static void	 smsc_rx_loop(struct usbnet *, struct usbnet_chain *, uint32_t);
 
-static struct usbnet_ops smsc_ops = {
+static const struct usbnet_ops smsc_ops = {
 	.uno_stop = smsc_stop_cb,
 	.uno_ioctl = smsc_ioctl_cb,
 	.uno_read_reg = smsc_miibus_readreg,
@@ -203,7 +202,7 @@ static struct usbnet_ops smsc_ops = {
 	.uno_init = smsc_init,
 };
 
-int
+static int
 smsc_readreg(struct usbnet *un, uint32_t off, uint32_t *data)
 {
 	usb_device_request_t req;
@@ -230,7 +229,7 @@ smsc_readreg(struct usbnet *un, uint32_t off, uint32_t *data)
 	return err;
 }
 
-int
+static int
 smsc_writereg(struct usbnet *un, uint32_t off, uint32_t data)
 {
 	usb_device_request_t req;
@@ -257,7 +256,7 @@ smsc_writereg(struct usbnet *un, uint32_t off, uint32_t data)
 	return err;
 }
 
-int
+static int
 smsc_wait_for_bits(struct usbnet *un, uint32_t reg, uint32_t bits)
 {
 	uint32_t val;
@@ -332,7 +331,7 @@ smsc_miibus_writereg(struct usbnet *un, int phy, int reg, uint16_t val)
 	return 0;
 }
 
-void
+static void
 smsc_miibus_statchg(struct ifnet *ifp)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();
@@ -533,7 +532,7 @@ smsc_setoe(struct usbnet *un)
 }
 
 
-int
+static int
 smsc_setmacaddress(struct usbnet *un, const uint8_t *addr)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();
@@ -556,7 +555,7 @@ done:
 	return err;
 }
 
-void
+static void
 smsc_reset(struct smsc_softc *sc)
 {
 	struct usbnet * const un = &sc->smsc_un;
@@ -572,7 +571,7 @@ smsc_reset(struct smsc_softc *sc)
 	smsc_chip_init(un);
 }
 
-int
+static int
 smsc_init(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
@@ -584,7 +583,7 @@ smsc_init(struct ifnet *ifp)
 	return ret;
 }
 
-int
+static int
 smsc_init_locked(struct ifnet *ifp)
 {
 	struct usbnet * const un = ifp->if_softc;
@@ -612,7 +611,7 @@ smsc_init_locked(struct ifnet *ifp)
 	return usbnet_init_rx_tx(un);
 }
 
-void
+static void
 smsc_stop_cb(struct ifnet *ifp, int disable)
 {
 	struct usbnet * const un = ifp->if_softc;
@@ -622,7 +621,7 @@ smsc_stop_cb(struct ifnet *ifp, int disable)
 	smsc_reset(sc);
 }
 
-int
+static int
 smsc_chip_init(struct usbnet *un)
 {
 	struct smsc_softc * const sc = usbnet_softc(un);
@@ -797,7 +796,7 @@ smsc_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 	return 0;
 }
 
-int
+static int
 smsc_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -806,7 +805,7 @@ smsc_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 smsc_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);
@@ -936,7 +935,7 @@ smsc_attach(device_t parent, device_t self, void *aux)
 	    0, &unm);
 }
 
-void
+static void
 smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 {
 	USMSCHIST_FUNC(); USMSCHIST_CALLED();

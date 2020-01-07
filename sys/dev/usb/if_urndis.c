@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.34 2019/10/31 11:59:40 maya Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.35 2020/01/07 06:42:26 maxv Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.34 2019/10/31 11:59:40 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.35 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,7 +88,7 @@ static uint32_t urndis_ctrl_set(struct usbnet *, uint32_t, void *,
 static int urndis_match(device_t, cfdata_t, void *);
 static void urndis_attach(device_t, device_t, void *);
 
-static struct usbnet_ops urndis_ops = {
+static const struct usbnet_ops urndis_ops = {
 	.uno_init = urndis_init,
 	.uno_tx_prepare = urndis_tx_prepare,
 	.uno_rx_loop = urndis_rx_loop,

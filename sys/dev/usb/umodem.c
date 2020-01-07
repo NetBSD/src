@@ -1,4 +1,4 @@
-/*	$NetBSD: umodem.c,v 1.72 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: umodem.c,v 1.73 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.72 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.73 2020/01/07 06:42:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,7 +70,7 @@ __KERNEL_RCSID(0, "$NetBSD: umodem.c,v 1.72 2019/05/09 02:43:35 mrg Exp $");
 #include <dev/usb/ucomvar.h>
 #include <dev/usb/umodemvar.h>
 
-Static struct ucom_methods umodem_methods = {
+Static const struct ucom_methods umodem_methods = {
 	.ucom_get_status = umodem_get_status,
 	.ucom_set = umodem_set,
 	.ucom_param = umodem_param,

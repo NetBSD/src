@@ -1,4 +1,4 @@
-/*	$NetBSD: uvisor.c,v 1.53 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: uvisor.c,v 1.54 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.53 2019/12/27 09:41:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvisor.c,v 1.54 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -152,7 +152,7 @@ static usbd_status uvisor_init(struct uvisor_softc *,
 static int uvisor_open(void *, int);
 static void uvisor_close(void *, int);
 
-struct ucom_methods uvisor_methods = {
+static const struct ucom_methods uvisor_methods = {
 	.ucom_open = uvisor_open,
 	.ucom_close = uvisor_close,
 };

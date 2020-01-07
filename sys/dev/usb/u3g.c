@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.37 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: u3g.c,v 1.38 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.37 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.38 2020/01/07 06:42:26 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -162,7 +162,7 @@ static void u3g_close(void *, int);
 static void u3g_read(void *, int, u_char **, uint32_t *);
 static void u3g_write(void *, int, u_char *, u_char *, uint32_t *);
 
-struct ucom_methods u3g_methods = {
+static const struct ucom_methods u3g_methods = {
 	.ucom_get_status = u3g_get_status,
 	.ucom_set = u3g_set,
 	.ucom_open = u3g_open,

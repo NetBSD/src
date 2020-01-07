@@ -1,4 +1,4 @@
-/*	$NetBSD: uftdi.c,v 1.71 2019/09/13 20:50:45 ryo Exp $	*/
+/*	$NetBSD: uftdi.c,v 1.72 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.71 2019/09/13 20:50:45 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uftdi.c,v 1.72 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -110,7 +110,7 @@ static void	uftdi_read(void *, int, u_char **, uint32_t *);
 static void	uftdi_write(void *, int, u_char *, u_char *, uint32_t *);
 static void	uftdi_break(void *, int, int);
 
-struct ucom_methods uftdi_methods = {
+static const struct ucom_methods uftdi_methods = {
 	.ucom_get_status = uftdi_get_status,
 	.ucom_set = uftdi_set,
 	.ucom_param = uftdi_param,
