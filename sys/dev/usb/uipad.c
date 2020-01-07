@@ -1,4 +1,4 @@
-/*	$NetBSD: uipad.c,v 1.8 2019/12/15 16:48:27 tsutsui Exp $	*/
+/*	$NetBSD: uipad.c,v 1.9 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.8 2019/12/15 16:48:27 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipad.c,v 1.9 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -88,11 +88,9 @@ static const struct usb_devno uipad_devs[] = {
 
 #define uipad_lookup(v, p) usb_lookup(uipad_devs, v, p)
 
-int	uipad_match(device_t, cfdata_t, void *);
-void	uipad_attach(device_t, device_t, void *);
-int	uipad_detach(device_t, int);
-int	uipad_activate(device_t, enum devact);
-
+static int	uipad_match(device_t, cfdata_t, void *);
+static void	uipad_attach(device_t, device_t, void *);
+static int	uipad_detach(device_t, int);
 
 CFATTACH_DECL_NEW(uipad, sizeof(struct uipad_softc), uipad_match,
     uipad_attach, uipad_detach, NULL);
@@ -124,7 +122,7 @@ uipad_charge(struct uipad_softc *sc)
 		uipad_cmd(sc, UT_VENDOR | UT_WRITE, 0x40, 0x6400, 0x6400);
 }
 
-int
+static int
 uipad_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -134,7 +132,7 @@ uipad_match(device_t parent, cfdata_t match, void *aux)
 	    UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 
-void
+static void
 uipad_attach(device_t parent, device_t self, void *aux)
 {
 	struct uipad_softc *sc = device_private(self);
@@ -165,7 +163,7 @@ uipad_attach(device_t parent, device_t self, void *aux)
 	return;
 }
 
-int
+static int
 uipad_detach(device_t self, int flags)
 {
 	struct uipad_softc *sc = device_private(self);
