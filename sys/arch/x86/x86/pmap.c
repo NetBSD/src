@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.353 2020/01/04 22:49:20 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.354 2020/01/07 21:18:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.353 2020/01/04 22:49:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354 2020/01/07 21:18:24 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -5281,7 +5281,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 	if (((opte ^ npte) & (PTE_FRAME | EPT_R)) == 0) {
 		KASSERT(((opte ^ npte) & EPT_PVLIST) == 0);
-		if ((opte & PTE_PVLIST) != 0 && pve != NULL) {
+		if ((opte & EPT_PVLIST) != 0 && pve != NULL) {
 			KASSERT(pve->pve_pte.pte_ptp == ptp);
 			KASSERT(pve->pve_pte.pte_va == va);
 		}
@@ -5304,7 +5304,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		}
 
 		(void)pmap_remove_pv(pmap, old_pp, ptp, va, pve);
-		old_pp->pp_attrs |= pmap_pte_to_pp_attrs(opte);
+		old_pp->pp_attrs |= pmap_ept_to_pp_attrs(opte);
 	}
 
 	/*
