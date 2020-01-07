@@ -1,4 +1,4 @@
-/* $NetBSD: pcihost_fdt.c,v 1.14 2020/01/07 10:01:09 skrll Exp $ */
+/* $NetBSD: pcihost_fdt.c,v 1.15 2020/01/07 10:20:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.14 2020/01/07 10:01:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.15 2020/01/07 10:20:07 skrll Exp $");
 
 #include <sys/param.h>
 
@@ -37,6 +37,7 @@ __KERNEL_RCSID(0, "$NetBSD: pcihost_fdt.c,v 1.14 2020/01/07 10:01:09 skrll Exp $
 #include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
+#include <sys/lwp.h>
 #include <sys/mutex.h>
 #include <sys/queue.h>
 #include <sys/systm.h>

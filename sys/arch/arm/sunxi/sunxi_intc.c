@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_intc.c,v 1.4 2020/01/07 09:57:11 skrll Exp $ */
+/* $NetBSD: sunxi_intc.c,v 1.5 2020/01/07 10:20:07 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,13 +29,14 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.4 2020/01/07 09:57:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_intc.c,v 1.5 2020/01/07 10:20:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/intr.h>
 #include <sys/kernel.h>
+#include <sys/lwp.h>
 #include <sys/systm.h>
 
 #include <dev/fdt/fdtvar.h>
