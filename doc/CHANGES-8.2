@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.87 2020/01/05 15:12:40 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.88 2020/01/07 12:01:32 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1844,4 +1844,10 @@ sys/conf/copyright				1.18
 
 	Welcome to 2020.
 	[mlelstv, ticket #1481]
+
+sys/kern/kern_ksyms.c				1.88 (patch)
+
+	Better deal with symbols removed by unloaded modules when
+	/dev/ksyms has been opened.
+	[pgoyette, ticket #1482]
 
