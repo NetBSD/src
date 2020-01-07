@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.71 2019/08/30 05:59:17 mrg Exp $	*/
+/*	$NetBSD: if_url.c,v 1.72 2020/01/07 06:42:26 maxv Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.71 2019/08/30 05:59:17 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.72 2020/01/07 06:42:26 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -66,8 +66,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.71 2019/08/30 05:59:17 mrg Exp $");
 #include <dev/usb/if_urlreg.h>
 
 /* Function declarations */
-int	url_match(device_t, cfdata_t, void *);
-void	url_attach(device_t, device_t, void *);
+static int	url_match(device_t, cfdata_t, void *);
+static void	url_attach(device_t, device_t, void *);
 
 CFATTACH_DECL_NEW(url, sizeof(struct usbnet), url_match, url_attach,
     usbnet_detach, usbnet_activate);
@@ -92,7 +92,7 @@ static int url_csr_write_2(struct usbnet *, int, int);
 static int url_csr_write_4(struct usbnet *, int, int);
 static int url_mem(struct usbnet *, int, int, void *, int);
 
-static struct usbnet_ops url_ops = {
+static const struct usbnet_ops url_ops = {
 	.uno_stop = url_stop_cb,
 	.uno_ioctl = url_ioctl_cb,
 	.uno_read_reg = url_int_mii_read_reg,
@@ -145,7 +145,7 @@ static const struct url_type {
 
 
 /* Probe */
-int
+static int
 url_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct usb_attach_arg *uaa = aux;
@@ -154,7 +154,7 @@ url_match(device_t parent, cfdata_t match, void *aux)
 		UMATCH_VENDOR_PRODUCT : UMATCH_NONE;
 }
 /* Attach */
-void
+static void
 url_attach(device_t parent, device_t self, void *aux)
 {
 	USBNET_MII_DECL_DEFAULT(unm);
