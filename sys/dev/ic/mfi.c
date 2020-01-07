@@ -1,4 +1,4 @@
-/* $NetBSD: mfi.c,v 1.62 2019/11/10 21:16:35 chs Exp $ */
+/* $NetBSD: mfi.c,v 1.63 2020/01/07 06:12:09 maxv Exp $ */
 /* $OpenBSD: mfi.c,v 1.66 2006/11/28 23:59:45 dlg Exp $ */
 
 /*
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.62 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mfi.c,v 1.63 2020/01/07 06:12:09 maxv Exp $");
 
 #include "bio.h"
 
@@ -3378,12 +3378,13 @@ mfi_tbolt_sync_map_info(struct work *w, void *v)
 	int i;
 	struct mfi_ccb *ccb = NULL;
 	uint8_t mbox[MFI_MBOX_SIZE];
-	struct mfi_ld *ld_sync = NULL;
+	struct mfi_ld *ld_sync;
 	size_t ld_size;
 	int s;
 
 	DNPRINTF(MFI_D_SYNC, "%s: mfi_tbolt_sync_map_info\n", DEVNAME(sc));
 again:
+	ld_sync = NULL;
 	s = splbio();
 	if (sc->sc_ldsync_ccb != NULL) {
 		splx(s);
