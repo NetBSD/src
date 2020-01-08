@@ -1,2 +1,0 @@
-./postconf: warning: unmatched request: "bar/inet"
-./postconf: warning: unmatched request: "foo/unix"

@@ -1,8 +1,0 @@
-foo/unix/service
-foo/unix/type
-foo/unix/private
-foo/unix/unprivileged
-foo/unix/chroot
-foo/unix/wakeup
-foo/unix/process_limit
-foo/unix/command

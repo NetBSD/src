@@ -1,7 +1,0 @@
-include start
-call OK move 5 10
-call OK hline `\000A` 15
-call OK move 7 10
-call OK hline `\004B` 15
-call OK refresh
-compare hline.chk

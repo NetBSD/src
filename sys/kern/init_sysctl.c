@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.223 2020/01/02 15:42:27 thorpej Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.223.2.1 2020/01/08 11:02:16 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.223 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.223.2.1 2020/01/08 11:02:16 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -732,7 +732,6 @@ sysctl_kern_maxvnodes(SYSCTLFN_ARGS)
 		return (error);
 	}
 	vfs_reinit();
-	nchreinit();
 
 	return (0);
 }

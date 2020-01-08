@@ -1,4 +1,0 @@
-$NetBSD: PROTOCOL.agent,v 1.9 2017/10/07 19:39:19 christos Exp $
-This file used to contain a description of the SSH agent protocol
-implemented by OpenSSH. It has since been superseded by
-https://tools.ietf.org/html/draft-miller-ssh-agent-00

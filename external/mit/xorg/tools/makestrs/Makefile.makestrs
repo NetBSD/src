@@ -1,3 +1,0 @@
-#	$NetBSD: Makefile.makestrs,v 1.2 2015/06/24 22:20:26 matt Exp $
-
-MAKESTRS=	${TOOL_MAKESTRS}

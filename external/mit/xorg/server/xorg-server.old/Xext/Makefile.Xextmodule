@@ -1,6 +1,0 @@
-#	$NetBSD: Makefile.Xextmodule,v 1.1.1.1 2016/06/10 03:42:13 mrg Exp $
-
-SRCS.Xextmodule=	xvmain.c xvdisp.c xvmc.c
-SRCS.Xextmodule+=	xres.c
-SRCS.Xextmodule+=	saver.c
-SRCS.Xextmodule+=	dpms.c

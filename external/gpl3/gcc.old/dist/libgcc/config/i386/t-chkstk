@@ -1,2 +1,0 @@
-LIB1ASMSRC = i386/cygwin.S
-LIB1ASMFUNCS = _chkstk _chkstk_ms

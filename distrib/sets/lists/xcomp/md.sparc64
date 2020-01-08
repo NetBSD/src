@@ -1,6 +1,0 @@
-#	$NetBSD: md.sparc64,v 1.15 2019/09/12 09:45:43 uki Exp $
-./usr/X11R7/include/X11/extensions/xf86dga.h		xcomp-extensions-include	xorg
-./usr/X11R7/include/X11/extensions/xf86dga1.h		xcomp-extensions-include	xorg
-./usr/X11R7/include/X11/extensions/xf86dga1str.h	xcomp-extensions-include	xorg
-./usr/X11R7/include/X11/extensions/xf86dgastr.h		xcomp-extensions-include	xorg
-./usr/X11R7/lib/libXxf86dga.a				xcomp-libXxf86dga-lib	xorg

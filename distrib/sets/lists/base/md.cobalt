@@ -1,3 +1,0 @@
-# $NetBSD: md.cobalt,v 1.11 2013/08/11 22:29:02 joerg Exp $
-./usr/mdec/boot					base-sysutil-bin
-./usr/mdec/installkernel			base-sysutil-bin

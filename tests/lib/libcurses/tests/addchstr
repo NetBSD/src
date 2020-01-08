@@ -1,9 +1,0 @@
-include start
-call OK addchstr `\004a\004b\004c\004d\004e`
-call OK refresh
-compare addchstr.chk
-call OK move 0 5
-call OK bkgdset `\002\000`
-call OK addchstr `\004f\004g\004\h`
-call OK refresh
-compare addchstr2.chk

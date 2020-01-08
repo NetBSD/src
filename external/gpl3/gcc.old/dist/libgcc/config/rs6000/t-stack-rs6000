@@ -1,2 +1,0 @@
-# Makefile fragment to support -fsplit-stack for powerpc.
-LIB2ADD_ST += $(srcdir)/config/rs6000/morestack.S

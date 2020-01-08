@@ -1,3 +1,0 @@
-config_directory = .
-smtpd_client_connection_limit_exceptions = yyy
-virtual_maps = xxx

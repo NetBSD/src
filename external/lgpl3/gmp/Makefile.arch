@@ -1,3 +1,0 @@
-#	$NetBSD: Makefile.arch,v 1.2 2017/08/22 09:59:37 mrg Exp $
-
-GMP_MACHINE_ARCH?=	${MACHINE_ARCH:C/e?arm(v[4567])?(hf)?/arm/}

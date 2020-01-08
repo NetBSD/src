@@ -1,5 +1,0 @@
-include start
-call OK addstr "hello world"
-call OK wnoutrefresh STDSCR
-call OK doupdate
-compare doupdate.chk

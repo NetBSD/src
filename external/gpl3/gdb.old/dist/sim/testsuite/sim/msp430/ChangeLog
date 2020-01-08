@@ -1,9 +1,0 @@
-2016-01-05  Nick Clifton  <nickc@redhat.com>
-
-	* testutils.inc (__pass): Use the LMA addresses of the _passmsg
-	symbol.
-	(__fail): Likewise.
-
-2014-03-10  Mike Frysinger  <vapier@gentoo.org>
-
-	* add.s, allinsn.exp, testutils.inc: New files.
