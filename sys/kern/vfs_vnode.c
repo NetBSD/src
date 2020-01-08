@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.105 2019/12/16 22:47:54 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.106 2020/01/08 12:04:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105 2019/12/16 22:47:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.106 2020/01/08 12:04:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1127,7 +1127,7 @@ vcache_alloc(void)
 
 	vip->vi_lock = rw_obj_alloc();
 	/* SLIST_INIT(&vip->vi_hash); */
-	/* LIST_INIT(&vip->vi_nclist); */
+	TAILQ_INIT(&vip->vi_nclist);
 	/* LIST_INIT(&vip->vi_dnclist); */
 
 	vp = VIMPL_TO_VNODE(vip);
