@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.156 2020/01/08 07:58:48 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.157 2020/01/08 11:52:24 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7635,3 +7635,9 @@ distrib/notes/Makefile.inc			1.53
 	PR install/54836: Fix broken conditional, passing the wrong set name
 	suffix to groff.
 	[martin, ticket #608]
+
+sys/dev/ic/gem.c				1.124
+
+	Fix error path in gem(4)'s TX checksum offload.
+	[msaitoh, ticket #610]
+
