@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.103 2020/01/06 11:23:31 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.103.2.1 2020/01/08 11:02:35 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.47 2020/01/06 11:22:33 ad Exp 
+ *   from: NetBSD: namei.src,v 1.47.2.1 2020/01/08 11:02:16 ad Exp 
  */
 
 /*
@@ -196,42 +196,38 @@ struct nameidata {
 #endif
 
 #ifdef __NAMECACHE_PRIVATE
+#include <sys/rbtree.h>
+
 /*
  * For simplicity (and economy of storage), names longer than
  * a maximum length of NCHNAMLEN are stored in non-pooled storage.
  */
-#define	NCHNAMLEN	32	/* up to this size gets stored in pool */
+#define	NCHNAMLEN	sizeof(((struct namecache *)NULL)->nc_name)
 
 /*
  * Namecache entry.  
- * This structure describes the elements in the cache of recent
- * names looked up by namei.
  *
- * Locking rules:
+ * This structure describes the elements in the cache of recent names looked
+ * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
+ * good use of space and the CPU caches.
  *
- *      -       stable after initialization
- *      L       namecache_lock
- *      C       struct nchcpu::cpu_lock
- *      L/C     insert needs L, read needs L or any C,
- *              must hold L and all C after (or during) delete before free
- *      N       struct namecache::nc_lock
+ * Field markings and their corresponding locks:
+ *
+ * -  stable throught the lifetime of the namecache entry
+ * d  protected by nc_dvp->vi_nclock
+ * l  protected by cache_list_lock
  */
 struct namecache {
-	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
-	TAILQ_ENTRY(namecache) nc_lru;	/* L pseudo-lru chain */
-	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
-	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
-	struct	vnode *nc_dvp;		/* N vnode of parent of name */
-	struct	vnode *nc_vp;		/* N vnode the name refers to */
-	void	*nc_gcqueue;		/* N queue for garbage collection */
-	kmutex_t nc_lock;		/*   lock on this entry */
-	int	nc_hittime;		/* N last time scored a hit */
-	int	nc_flags;		/* - copy of componentname ISWHITEOUT */
-	u_short	nc_nlen;		/* - length of name */
-	char	nc_name[0];		/* - segment name */
+	struct rb_node nc_node;		/* d  red-black tree node */
+	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
+	TAILQ_ENTRY(namecache) nc_vlist;/* l  vp's list of cache entries */
+	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
+	struct	vnode *nc_vp;		/* -  vnode the name refers to */
+	int	nc_hittime;		/* d  approx time of last hit */
+	u_short	nc_nlen;		/* -  length of name */
+	bool	nc_whiteout;		/* -  true if a whiteout */
+	char	nc_name[49];		/* -  segment name */
 };
-__CTASSERT((sizeof(struct namecache) + NCHNAMLEN)
-    % __alignof(struct namecache) == 0);
 #endif
 
 #ifdef _KERNEL
@@ -297,11 +293,13 @@ bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
+void	cache_vnode_init(struct vnode * );
+void	cache_vnode_fini(struct vnode * );
+void	cache_cpu_init(struct cpu_info *);
+
 void	nchinit(void);
-void	nchreinit(void);
 void	namecache_count_pass2(void);
 void	namecache_count_2passes(void);
-void	cache_cpu_init(struct cpu_info *);
 void	cache_purgevfs(struct mount *);
 void	namecache_print(struct vnode *, void (*)(const char *, ...)
     __printflike(1, 2));
