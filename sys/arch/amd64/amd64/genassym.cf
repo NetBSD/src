@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.80 2019/12/30 23:32:29 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.81 2020/01/08 17:38:41 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -150,7 +150,6 @@ define	VM_MAXUSER_ADDRESS	(unsigned long long)VM_MAXUSER_ADDRESS
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_NCSW			offsetof(struct lwp, l_ncsw)
 define	L_NOPREEMPT		offsetof(struct lwp, l_nopreempt)
 define	L_DOPREEMPT		offsetof(struct lwp, l_dopreempt)

@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.13 2019/12/20 07:16:43 ryo Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.14 2020/01/08 17:38:41 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.13 2019/12/20 07:16:43 ryo Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.14 2020/01/08 17:38:41 ad Exp $")
 
 /*
  * At IPL_SCHED:
@@ -178,7 +178,6 @@ END(cpu_switchto_softint)
  *	cpu_switchto() bottom half arranges to start this when softlwp.
  *	kernel thread is to yield CPU for the pinned_lwp in the above.
  *	curcpu()->ci_mtx_count += 1;
- *	softlwp->l_ctxswtch = 0;
  *	this returns as if cpu_switchto_softint finished normally.
  * }
  */
@@ -189,7 +188,6 @@ ENTRY_NP(softint_cleanup)
 	ldr	w2, [x3, #CI_MTX_COUNT]	/* ->ci_mtx_count */
 	add	w2, w2, #1
 	str	w2, [x3, #CI_MTX_COUNT]
-	str	wzr, [x0, #L_CTXSWTCH]	/* softlwp->l_ctxswtch = 0 */
 
 	msr	daif, x19		/* restore interrupt mask */
 	ldp	x19, x20, [sp], #16	/* restore */

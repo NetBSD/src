@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.421 2019/07/18 18:21:45 palle Exp $	*/
+/*	$NetBSD: locore.s,v 1.422 2020/01/08 17:38:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6693,7 +6693,6 @@ softint_fastintr_ret:
 	ld	[%l0 + CI_MTX_COUNT], %o1
 	inc	%o1				! ci_mtx_count++
 	st	%o1, [%l0 + CI_MTX_COUNT]
-	st	%g0, [%o0 + L_CTXSWTCH]		! prev->l_ctxswtch = 0
 
 	STPTR	%l6, [%l0 + CI_EINTSTACK]	! restore ci_eintstack
 	wrpr	%g0, %l7, %pil			! restore ipl

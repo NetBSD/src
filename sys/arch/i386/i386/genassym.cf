@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.117 2019/12/30 23:32:29 thorpej Exp $
+#	$NetBSD: genassym.cf,v 1.118 2020/01/08 17:38:41 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -166,7 +166,6 @@ define	L_FLAG			offsetof(struct lwp, l_flag)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_MD_ASTPENDING		offsetof(struct lwp, l_md.md_astpending)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_NCSW			offsetof(struct lwp, l_ncsw)

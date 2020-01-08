@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.95 2019/10/29 16:18:23 joerg Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.96 2020/01/08 17:38:41 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.95 2019/10/29 16:18:23 joerg Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.96 2020/01/08 17:38:41 ad Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -459,9 +459,6 @@ ENTRY_NP(softint_tramp)
 	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readjust after mi_switch */
 	add	r3, r3, #1
 	str	r3, [r7, #(CI_MTX_COUNT)]
-
-	mov	r3, #0				/* tell softint_dispatch */
-	str	r3, [r0, #(L_CTXSWTCH)]		/*    the soft lwp blocked */
 
 	msr	cpsr_c, r6			/* restore interrupts */
 	pop	{r4, r6, r7, pc}		/* pop stack and return */

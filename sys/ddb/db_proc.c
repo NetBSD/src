@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.8 2018/11/02 11:59:59 maxv Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.9 2020/01/08 17:38:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.8 2018/11/02 11:59:59 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.9 2020/01/08 17:38:42 ad Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -196,7 +196,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 					    sizeof(db_nbuf));
 				}
 				run = (l.l_stat == LSONPROC ||
-				    (l.l_pflag & LP_RUNNING) != 0);
+				    (l.l_flag & LW_RUNNING) != 0);
 				if (l.l_cpu != NULL) {
 					db_read_bytes((db_addr_t)
 					    &l.l_cpu->ci_data.cpu_index,
@@ -254,7 +254,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 					wbuf[0] = '\0';
 				}
 				run = (l.l_stat == LSONPROC ||
-				    (l.l_pflag & LP_RUNNING) != 0);
+				    (l.l_flag & LW_RUNNING) != 0);
 				db_read_bytes((db_addr_t)&p.p_emul->e_name,
 				    sizeof(ename), (char *)&ename);
 
@@ -332,7 +332,7 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 		db_read_bytes((db_addr_t)lp, sizeof(l), (char *)&l);
 
 		run = (l.l_stat == LSONPROC ||
-		    (l.l_pflag & LP_RUNNING) != 0);
+		    (l.l_flag & LW_RUNNING) != 0);
 
 		db_printf("%slwp %d", (run ? "> " : "  "), l.l_lid);
 		if (l.l_name != NULL) {

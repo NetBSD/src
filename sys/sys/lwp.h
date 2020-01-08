@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.192 2019/12/01 15:34:47 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.193 2020/01/08 17:38:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
@@ -90,7 +90,6 @@ struct lwp {
 	} l_sched;
 	struct cpu_info *volatile l_cpu;/* s: CPU we're on if LSONPROC */
 	kmutex_t * volatile l_mutex;	/* l: ptr to mutex on sched state */
-	int		l_ctxswtch;	/* l: performing a context switch */
 	void		*l_addr;	/* l: PCB address; use lwp_getpcb() */
 	struct mdlwp	l_md;		/* l: machine-dependent fields. */
 	int		l_flag;		/* l: misc flag values */
@@ -252,6 +251,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
+#define	LW_RUNNING	0x20000000 /* Active on a CPU */
 #define	LW_RUMP_CLEAR	0x40000000 /* Clear curlwp in RUMP scheduler */
 #define	LW_RUMP_QEXIT	0x80000000 /* LWP should exit ASAP */
 
@@ -268,7 +268,6 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_SINGLESTEP	0x00000400 /* Single step thread in ptrace(2) */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_PREEMPTING	0x00020000 /* mi_switch called involuntarily */
-#define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The third set is kept in l_prflag. */
@@ -341,7 +340,6 @@ void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
 void	lwp_unstop(lwp_t *);
 void	lwp_exit(lwp_t *);
-void	lwp_exit_switchaway(lwp_t *) __dead;
 int	lwp_suspend(lwp_t *, lwp_t *);
 int	lwp_create1(lwp_t *, const void *, size_t, u_long, lwpid_t *);
 void	lwp_start(lwp_t *, int);

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.278 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.279 2020/01/08 17:38:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.278 2019/12/06 21:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.279 2020/01/08 17:38:42 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -204,6 +204,8 @@ exit1(struct lwp *l, int exitcode, int signo)
 
 	p = l->l_proc;
 
+	/* Verify that we hold no locks other than p->p_lock. */
+	LOCKDEBUG_BARRIER(p->p_lock, 0);
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(p->p_vmspace != NULL);
 
@@ -247,7 +249,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 		lwp_lock(l);
 		spc_lock(l->l_cpu);
 		mi_switch(l);
-		KERNEL_LOCK(l->l_biglocks, l);
 		mutex_enter(p->p_lock);
 	}
 
@@ -569,9 +570,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 	rw_exit(&p->p_reflock);
 	mutex_exit(proc_lock);
 
-	/* Verify that we hold no locks other than the kernel lock. */
-	LOCKDEBUG_BARRIER(&kernel_lock, 0);
-
 	/*
 	 * NOTE: WE ARE NO LONGER ALLOWED TO SLEEP!
 	 */
@@ -583,17 +581,14 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 */
 	cpu_lwp_free(l, 1);
 
-	pmap_deactivate(l);
+	/* For the LW_RUNNING check in lwp_free(). */
+	membar_exit();
 
-	/* This process no longer needs to hold the kernel lock. */
-#ifdef notyet
-	/* XXXSMP hold in lwp_userret() */
-	KERNEL_UNLOCK_LAST(l);
-#else
-	KERNEL_UNLOCK_ALL(l, NULL);
-#endif
-
-	lwp_exit_switchaway(l);
+	/* Switch away into oblivion. */
+	lwp_lock(l);
+	spc_lock(l->l_cpu);
+	mi_switch(l);
+	panic("exit1");
 }
 
 void
@@ -601,9 +596,7 @@ exit_lwps(struct lwp *l)
 {
 	proc_t *p = l->l_proc;
 	lwp_t *l2;
-	int nlocks;
 
-	KERNEL_UNLOCK_ALL(l, &nlocks);
 retry:
 	KASSERT(mutex_owned(p->p_lock));
 
@@ -637,7 +630,6 @@ retry:
 		}
 	}
 
-	KERNEL_LOCK(nlocks, l);
 	KASSERT(p->p_nlwps == 1);
 }
 
