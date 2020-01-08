@@ -1,8 +1,0 @@
-static_library("GlobalISel") {
-  deps = [
-    "//llvm/lib/Support",
-  ]
-  sources = [
-    "CodeExpander.cpp",
-  ]
-}

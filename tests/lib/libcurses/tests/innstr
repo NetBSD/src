@@ -1,8 +1,0 @@
-include addchstr
-call OK move 0 2
-call2 5 "cdefg" innstr 6
-call OK move 0 76
-call OK addstr "123"
-call ok move 0 75
-call2 5 " 123 " innstr 10
-call2 OK " 123 " instr
