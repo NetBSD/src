@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.37 2020/01/08 08:10:15 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.38 2020/01/08 13:05:02 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.37 2020/01/08 08:10:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.38 2020/01/08 13:05:02 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1797,11 +1797,6 @@ audiobellclose(audio_file_t *file)
 
 	device_active(sc->sc_dev, DVA_SYSTEM);
 	error = audio_close(sc, file);
-
-	/*
-	 * Since file has already been destructed,
-	 * audio_file_release() is not necessary.
-	 */
 
 	return error;
 }
