@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.155 2020/01/07 11:56:10 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.156 2020/01/08 07:58:48 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7630,4 +7630,8 @@ sys/kern/kern_ksyms.c				1.88
 	/dev/ksyms has been opened.
 	[pgoyette, ticket #609]
 
+distrib/notes/Makefile.inc			1.53
 
+	PR install/54836: Fix broken conditional, passing the wrong set name
+	suffix to groff.
+	[martin, ticket #608]
