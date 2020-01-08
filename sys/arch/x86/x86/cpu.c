@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.179 2019/12/20 21:05:34 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.180 2020/01/08 15:47:50 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.179 2019/12/20 21:05:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.180 2020/01/08 15:47:50 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -1014,14 +1014,14 @@ cpu_debug_dump(void)
 #endif
 			   "";
 
-	db_printf("addr		%sdev	id	flags	ipis	curlwp 		"
+	db_printf("addr		%sdev	id	flags	ipis	spl curlwp 		"
 		  "\n", sixtyfour64space);
 	for (CPU_INFO_FOREACH(cii, ci)) {
-		db_printf("%p	%s	%ld	%x	%x	%10p\n",
+		db_printf("%p	%s	%ld	%x	%x	%d  %10p\n",
 		    ci,
 		    ci->ci_dev == NULL ? "BOOT" : device_xname(ci->ci_dev),
 		    (long)ci->ci_cpuid,
-		    ci->ci_flags, ci->ci_ipis,
+		    ci->ci_flags, ci->ci_ipis, ci->ci_ilevel,
 		    ci->ci_curlwp);
 	}
 }
