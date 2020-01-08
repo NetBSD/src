@@ -1,4 +1,4 @@
-/*	$NetBSD: core_elf32.c,v 1.61 2019/12/24 14:50:59 kamil Exp $	*/
+/*	$NetBSD: core_elf32.c,v 1.62 2020/01/08 17:21:38 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.61 2019/12/24 14:50:59 kamil Exp $");
+__KERNEL_RCSID(1, "$NetBSD: core_elf32.c,v 1.62 2020/01/08 17:21:38 mgorny Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd32.h"
@@ -513,7 +513,11 @@ ELFNAMEEND(coredump_note)(struct lwp *l, struct note_state *ns)
 
 	ELFNAMEEND(coredump_savenote)(ns, PT_GETFPREGS, name, &freg, freglen);
 #endif
-	/* XXX Add hook for machdep per-LWP notes. */
+
+#ifdef COREDUMP_MACHDEP_LWP_NOTES
+	COREDUMP_MACHDEP_LWP_NOTES(l, ns, name);
+#endif
+
 	return (0);
 }
 
