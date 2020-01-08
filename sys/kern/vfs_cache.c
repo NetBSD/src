@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.1 2020/01/08 11:02:16 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.2 2020/01/08 11:44:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.1 2020/01/08 11:02:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.2 2020/01/08 11:44:30 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -730,8 +730,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 		ncp->nc_whiteout = false;
 		vi = VNODE_TO_VIMPL(vp);
 		/* Partially sort the per-vnode list: dots go to back. */
-		if ((name[0] == '.' && namelen == 1) ||
-		    (name[0] == '.' && name[1] == '.' && namelen == 2)) {
+		if ((namelen == 1 && name[0] == '.') ||
+		    (namelen == 2 && name[0] == '.' && name[1] == '.')) {
 			TAILQ_INSERT_TAIL(&vi->vi_nclist, ncp, nc_vlist);
 		} else {
 			TAILQ_INSERT_HEAD(&vi->vi_nclist, ncp, nc_vlist);
