@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.2 2020/01/08 11:44:30 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.3 2020/01/08 21:55:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.2 2020/01/08 11:44:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.3 2020/01/08 21:55:10 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -333,7 +333,7 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen)
 		KASSERT(ncp->nc_dvp == dvp);
 		/*
 		 * Avoid false sharing: don't write back to nc_hittime
-		 * unless it has changed within the last 32 ticks.
+		 * unless changed significantly.
 		 */
 		if (((ncp->nc_hittime ^ hardclock_ticks) & ~31) != 0) {
 			ncp->nc_hittime = hardclock_ticks;
