@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.57 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.58 2020/01/08 17:38:42 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -319,8 +319,6 @@ _ENTRY(softint_cleanup)
 	ldint	%r5, CI_MTX_COUNT(%r7)
 	addi	%r5, %r5, 1
 	stint	%r5, CI_MTX_COUNT(%r7)
-	li	%r0, 0
-	stptr	%r0, L_CTXSWTCH(%r3)	/* clear ctxswitch of old lwp */
 	ldreg	%r0, CFRAME_R31(%r1)	/* get saved MSR */
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	wrtee	%r0			/* restore EE */

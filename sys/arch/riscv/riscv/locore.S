@@ -1,4 +1,4 @@
-/* $NetBSD: locore.S,v 1.9 2019/06/16 07:42:52 maxv Exp $ */
+/* $NetBSD: locore.S,v 1.10 2020/01/08 17:38:42 ad Exp $ */
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -239,7 +239,6 @@ ENTRY_NP(cpu_fast_switchto_cleanup)
 	REG_L	a0, CALLFRAME_S0(sp)	// get pinned LWP
 	addi	t0, t0, 1		// increment mutex count
 	INT_S	t0, CI_MTX_COUNT(a1)	// save it
-	PTR_S	zero, L_CTXSWTCH(a0)	// clear l_ctxswitch
 	addi	sp, sp, CALLFRAME_SIZ	// remove callframe
 #if IPL_SCHED != IPL_HIGH
 	tail	_C_LABEL(splhigh)	// go back to IPL HIGH
