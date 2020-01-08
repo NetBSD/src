@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.275 2019/12/30 22:13:47 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.276 2020/01/08 20:59:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -4863,9 +4863,7 @@ ENTRY(cpu_switchto)
 
 	sethi	%hi(cpcb), %l6
 
-	tst	%i0				! if (oldlwp == NULL)
-	bz	Lnosaveoldlwp
-	 rd	%psr, %l1			! psr = %psr;
+	rd	%psr, %l1			! psr = %psr;
 
 	ld	[%l6 + %lo(cpcb)], %o0
 
@@ -4881,7 +4879,6 @@ ENTRY(cpu_switchto)
 Lwb1:	SAVE; SAVE; SAVE; SAVE; SAVE; SAVE;	/* 6 of each: */
 	restore; restore; restore; restore; restore; restore
 
-Lnosaveoldlwp:
 	andn	%l1, PSR_PIL, %l1		! oldpsr &= ~PSR_PIL;
 
 	/*
