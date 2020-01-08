@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wmreg.h,v 1.118 2019/12/11 10:28:19 msaitoh Exp $	*/
+/*	$NetBSD: if_wmreg.h,v 1.119 2020/01/08 03:51:37 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -1620,7 +1620,8 @@ struct livengood_tcpip_ctxdesc {
 #define SFF_SFP_ETH_FLAGS_1000LX	0x02
 #define SFF_SFP_ETH_FLAGS_1000CX	0x04
 #define SFF_SFP_ETH_FLAGS_1000T		0x08
-#define SFF_SFP_ETH_FLAGS_100FX		0x10
+#define SFF_SFP_ETH_FLAGS_100LX		0x10
+#define SFF_SFP_ETH_FLAGS_100FX		0x20
 
 /* I21[01] PHY related definitions */
 #define GS40G_PAGE_SELECT	0x16
