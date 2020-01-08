@@ -1,4 +1,4 @@
-/* $NetBSD: cpuswitch.S,v 1.14 2020/01/08 17:38:41 ad Exp $ */
+/* $NetBSD: cpuswitch.S,v 1.15 2020/01/08 20:59:18 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -37,18 +37,16 @@
 #include "opt_ddb.h"
 #include "opt_kasan.h"
 
-RCSID("$NetBSD: cpuswitch.S,v 1.14 2020/01/08 17:38:41 ad Exp $")
+RCSID("$NetBSD: cpuswitch.S,v 1.15 2020/01/08 20:59:18 skrll Exp $")
 
 /*
  * At IPL_SCHED:
- *	x0 = oldlwp (maybe be NULL)
+ *	x0 = oldlwp
  *	x1 = newlwp
  *	x2 = returning
  * returns x0-x2 unchanged
  */
 ENTRY_NP(cpu_switchto)
-	cbz	x0, .Lrestore_lwp
-
 	/*
 	 * Store the callee saved register on the stack.
 	 */
@@ -72,7 +70,6 @@ ENTRY_NP(cpu_switchto)
 
 	/* We are done with the old lwp */
 
-.Lrestore_lwp:
 	DISABLE_INTERRUPT
 	ldr	x6, [x1, #L_PCB]	/* x6 = lwp_getpcb(newlwp) */
 	ldr	x4, [x6, #PCB_TF]	/* get trapframe ptr (aka SP) */

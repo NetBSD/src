@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.58 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.59 2020/01/08 20:59:19 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -156,7 +156,7 @@ GLOBAL(powersave)
  * struct lwp *
  * cpu_switchto(struct lwp *current, struct lwp *new)
  * switch to the indicated new LWP.
- * 	r3 - current LWP (maybe NULL, if so don't save state)
+ * 	r3 - current LWP
  * 	r4 - LWP to switch to
  *	scheduler lock held
  *	SPL is IPL_SCHED.
@@ -179,12 +179,6 @@ ENTRY(cpu_switchto)
 	tweqi	%r0,0	
 #endif
 
-	/* 
-	 * If the oldlwp was null, don't bother saving the switch state.
-	 */
-	cmpwi	%r30,0
-	beq	switchto_restore
-
 #if defined (PPC_OEA) || defined (PPC_OEA64_BRIDGE)
 	mfsr	%r10,USER_SR		/* save USER_SR for copyin/copyout */
 #else
@@ -202,7 +196,6 @@ ENTRY(cpu_switchto)
 	streg	%r9,PCB_USPRG0(%r4)	/* save in PCB, not switchframe. */
 #endif
 
-switchto_restore:
 /* Lock the scheduler. */
 #if defined(PPC_IBM4XX) || defined(PPC_BOOKE)
 	wrteei	0			/* disable interrupts while
