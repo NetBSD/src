@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.49 2019/12/28 17:19:43 jmcneill Exp $	*/
+/*	$NetBSD: locore.S,v 1.50 2020/01/08 05:41:07 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.49 2019/12/28 17:19:43 jmcneill Exp $")
+RCSID("$NetBSD: locore.S,v 1.50 2020/01/08 05:41:07 ryo Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -848,7 +848,6 @@ init_mmutable:
 	adr	x1, start			/* pa = start */
 	ADDR	x2, _end
 	sub	x2, x2, x1			/* size = _end - start */
-	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for bootpage_alloc() */
 	ldr	x0, =start			/* va */
 	bl	pmapboot_enter
 	cbnz	x0, init_mmutable_error
