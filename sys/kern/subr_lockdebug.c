@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.72 2019/05/28 07:39:16 ryo Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.73 2020/01/08 16:21:34 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.72 2019/05/28 07:39:16 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.73 2020/01/08 16:21:34 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -647,11 +647,11 @@ lockdebug_wakeup(const char *func, size_t line, volatile void *lock,
 /*
  * lockdebug_barrier:
  *	
- *	Panic if we hold more than one specified spin lock, and optionally,
- *	if we hold sleep locks.
+ *	Panic if we hold more than one specified lock, and optionally, if we
+ *	hold any sleep locks.
  */
 void
-lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
+lockdebug_barrier(const char *func, size_t line, volatile void *onelock,
     int slplocks)
 {
 	struct lwp *l = curlwp;
@@ -664,7 +664,7 @@ lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
 	s = splhigh();
 	if ((l->l_pflag & LP_INTR) == 0) {
 		TAILQ_FOREACH(ld, &curcpu()->ci_data.cpu_ld_locks, ld_chain) {
-			if (ld->ld_lock == spinlock) {
+			if (ld->ld_lock == onelock) {
 				continue;
 			}
 			__cpu_simple_lock(&ld->ld_spinlock);
@@ -678,7 +678,7 @@ lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
 		return;
 	}
 	ld = TAILQ_FIRST(&l->l_ld_locks);
-	if (__predict_false(ld != NULL)) {
+	if (__predict_false(ld != NULL && ld->ld_lock != onelock)) {
 		__cpu_simple_lock(&ld->ld_spinlock);
 		lockdebug_abort1(func, line, ld, s, "sleep lock held", true);
 		return;
@@ -686,6 +686,9 @@ lockdebug_barrier(const char *func, size_t line, volatile void *spinlock,
 	splx(s);
 	if (l->l_shlocks != 0) {
 		TAILQ_FOREACH(ld, &ld_all, ld_achain) {
+			if (ld->ld_lock == onelock) {
+				continue;
+			}
 			if (ld->ld_lockops->lo_type == LOCKOPS_CV)
 				continue;
 			if (ld->ld_lwp == l)
