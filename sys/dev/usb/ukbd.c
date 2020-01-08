@@ -1,4 +1,4 @@
-/*      $NetBSD: ukbd.c,v 1.142 2019/05/05 03:17:54 mrg Exp $        */
+/*      $NetBSD: ukbd.c,v 1.143 2020/01/08 23:28:56 macallan Exp $        */
 
 /*
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.142 2019/05/05 03:17:54 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ukbd.c,v 1.143 2020/01/08 23:28:56 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -121,16 +121,16 @@ Static const struct ukbd_keycodetrans trtab_apple_fn[] = {
 	{ 0x33, 0x56 },	/* ; -> KP - */
 	{ 0x37, 0x63 },	/* . -> KP . */
 	{ 0x38, 0x57 },	/* / -> KP + */
-	{ 0x3a, 0xd1 },	/* F1..F12 mapped to reserved codes 0xd1..0xdc */
-	{ 0x3b, 0xd2 },
-	{ 0x3c, 0xd3 },
-	{ 0x3d, 0xd4 },
-	{ 0x3e, 0xd5 },
-	{ 0x3f, 0xd6 },
+	{ 0x3a, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_DOWN },
+	{ 0x3b, IS_PMF | PMFE_DISPLAY_BRIGHTNESS_UP },
+	{ 0x3c, IS_PMF | PMFE_AUDIO_VOLUME_TOGGLE },
+	{ 0x3d, IS_PMF | PMFE_AUDIO_VOLUME_DOWN },
+	{ 0x3e, IS_PMF | PMFE_AUDIO_VOLUME_UP },
+	{ 0x3f, 0xd6 },	/* num lock */
 	{ 0x40, 0xd7 },
 	{ 0x41, 0xd8 },
-	{ 0x42, 0xd9 },
-	{ 0x43, 0xda },
+	{ 0x42, 0xd9 },	/* kbd light down */
+	{ 0x43, 0xda },	/* kbd light up */
 	{ 0x44, 0xdb },
 	{ 0x45, 0xdc },
 	{ 0x4f, 0x4d },	/* Right -> End */
