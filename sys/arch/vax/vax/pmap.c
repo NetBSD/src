@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.187 2019/11/10 21:16:33 chs Exp $	   */
+/*	$NetBSD: pmap.c,v 1.188 2020/01/08 17:38:42 ad Exp $	   */
 /*
  * Copyright (c) 1994, 1998, 1999, 2003 Ludd, University of Lule}, Sweden.
  * All rights reserved.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.187 2019/11/10 21:16:33 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.188 2020/01/08 17:38:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_cputype.h"
@@ -699,7 +699,7 @@ pmap_vax_swappable(struct lwp *l, struct pmap *pm)
 		return false;
 	if (l->l_proc->p_vmspace->vm_map.pmap == pm)
 		return false;
-	if ((l->l_pflag & LP_RUNNING) != 0)
+	if ((l->l_flag & LW_RUNNING) != 0)
 		return false;
 	if (l->l_class != SCHED_OTHER)
 		return false;
