@@ -1,4 +1,4 @@
-#	$NetBSD: BRANCHES,v 1.351 2019/07/30 15:56:53 martin Exp $
+#	$NetBSD: BRANCHES,v 1.352 2020/01/08 11:05:39 ad Exp $
 #
 # This file contains a list of branches that exist in the NetBSD CVS
 # tree and their current state.
@@ -380,6 +380,26 @@ Base Tag:	ad-audiomp2-base
 Maintainer:	Andrew Doran <ad@NetBSD.org>
 Scope:		kernel
 Notes:		Ressurect ad-audiomp, make the audio drivers MP safe.
+
+Branch:		ad-namecache
+Description:	Redo the namecache
+Status:		Active
+Start Date:	8 January 2020
+End Date:
+Base Tag:	ad-namecache-base
+Maintainer:	Andrew Doran <ad@NetBSD.org>
+Scope:		src/sys src/common
+Notes:		1) Redo the namecache to focus on per-directory data
+		structures, removing the huge hashtable and nasty locking
+		scheme.
+
+		Initially this uses rbtrees (because that's what's there). 
+		The intent is that ultimately some other data structure
+		will be used.
+
+		2) Experiment with having namei() traverse the cache and
+		avoid vnode locks except for the leaf in the totally
+		in-cache case.
 
 Branch:		agc-netpgp-standalone
 Description:	Remove dependency on openssl libraries in netpgp
