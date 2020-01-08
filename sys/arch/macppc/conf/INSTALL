@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.129 2019/01/07 01:44:59 scole Exp $
+#	$NetBSD: INSTALL,v 1.130 2020/01/08 13:28:14 macallan Exp $
 #
 # config file for INSTALL FLOPPY
 #
@@ -123,6 +123,7 @@ icsphy*	at mii? phy ?			# Integrated Circuit Systems ICS189x
 inphy*	at mii? phy ?			# Intel 82555 PHYs
 iophy*	at mii? phy ?			# Intel 82553 PHYs
 lxtphy*	at mii? phy ?			# Level One LXT-970 PHYs
+makphy* at mii? phy ?			# Marvell Semiconductor 88E1000 PHYs
 nsphy*	at mii? phy ?			# NS83840 PHYs
 nsphyter* at mii? phy ?			# NS83843 PHYs
 qsphy*	at mii? phy ?			# Quality Semiconductor QS6612 PHYs
