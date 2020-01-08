@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.422 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: locore.s,v 1.423 2020/01/08 20:59:20 skrll Exp $	*/
 
 /*
  * Copyright (c) 2006-2010 Matthew R. Green
@@ -6536,8 +6536,7 @@ ENTRY(cpu_switchto)
 	wrpr	%g0, PSTATE_KERN, %pstate	! make sure we're on normal globals
 						! with traps turned off
 
-	brz,pn	%i0, 1f
-	 sethi	%hi(CPCB), %l6
+	sethi	%hi(CPCB), %l6
 
 	rdpr	%pstate, %o1			! oldpstate = %pstate;
 	LDPTR	[%i0 + L_PCB], %l5
@@ -6549,7 +6548,6 @@ ENTRY(cpu_switchto)
 	rdpr	%cwp, %o2		! Useless
 	stb	%o2, [%l5 + PCB_CWP]
 
-1:
 	sethi	%hi(CURLWP), %l7
 
 	LDPTR   [%i1 + L_PCB], %l1	! newpcb = l->l_pcb;
