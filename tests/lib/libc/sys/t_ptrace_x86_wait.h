@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.17 2020/01/08 17:23:15 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.18 2020/01/08 17:23:34 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -2225,7 +2225,8 @@ enum x86_test_registers {
 
 enum x86_test_regmode {
 	TEST_GETREGS,
-	TEST_SETREGS
+	TEST_SETREGS,
+	TEST_COREDUMP
 };
 
 static __inline void get_gp32_regs(union x86_test_register out[])
@@ -2687,8 +2688,10 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 #endif
 	struct xstate xst;
 	struct iovec iov;
-	struct fxsave* fxs;
+	struct fxsave* fxs = NULL;
 	uint64_t xst_flags = 0;
+	char core_path[] = "/tmp/core.XXXXXX";
+	int core_fd;
 
 	const union x86_test_register expected[] __aligned(32) = {
 		{{ 0x0706050403020100, 0x0F0E0D0C0B0A0908,
@@ -2796,6 +2799,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 		DPRINTF("Before running assembly from child\n");
 		switch (regmode) {
 		case TEST_GETREGS:
+		case TEST_COREDUMP:
 			switch (regs) {
 			case GPREGS_32:
 				set_gp32_regs(expected);
@@ -2969,40 +2973,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 
 	validate_status_stopped(status, sigval);
 
-	switch (regset) {
-	case TEST_GPREGS:
-		ATF_REQUIRE(regs < FPREGS_MM);
-		DPRINTF("Call GETREGS for the child process\n");
-		SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &gpr, 0) != -1);
-		break;
-	case TEST_XMMREGS:
-#if defined(__i386__)
-		ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
-		DPRINTF("Call GETXMMREGS for the child process\n");
-		SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &xmm, 0) != -1);
-		fxs = &xmm.fxstate;
-		break;
-#else
-		/*FALLTHROUGH*/
-#endif
-	case TEST_FPREGS:
-#if defined(__x86_64__)
-		ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
-		fxs = &fpr.fxstate;
-#else
-		ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
-#endif
-		DPRINTF("Call GETFPREGS for the child process\n");
-		SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0) != -1);
-		break;
-	case TEST_XSTATE:
-		ATF_REQUIRE(regs >= FPREGS_MM);
-		iov.iov_base = &xst;
-		iov.iov_len = sizeof(xst);
-
-		DPRINTF("Call GETXSTATE for the child process\n");
-		SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0) != -1);
-
+	if (regset == TEST_XSTATE) {
 		switch (regs) {
 		case FPREGS_MM:
 			xst_flags |= XCR0_X87;
@@ -3020,21 +2991,117 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 			__unreachable();
 			break;
 		}
+	}
 
-		ATF_REQUIRE((xst.xs_rfbm & xst_flags) == xst_flags);
-		switch (regmode) {
-		case TEST_SETREGS:
-			xst.xs_rfbm = xst_flags;
-			xst.xs_xstate_bv = xst_flags;
+	switch (regmode) {
+	case TEST_GETREGS:
+	case TEST_SETREGS:
+		switch (regset) {
+		case TEST_GPREGS:
+			ATF_REQUIRE(regs < FPREGS_MM);
+			DPRINTF("Call GETREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETREGS, child, &gpr, 0)
+			    != -1);
 			break;
-		case TEST_GETREGS:
-			ATF_REQUIRE((xst.xs_xstate_bv & xst_flags)
-			    == xst_flags);
+		case TEST_XMMREGS:
+#if defined(__i386__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			DPRINTF("Call GETXMMREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETXMMREGS, child, &xmm, 0)
+			    != -1);
+			fxs = &xmm.fxstate;
+			break;
+#else
+			/*FALLTHROUGH*/
+#endif
+		case TEST_FPREGS:
+#if defined(__x86_64__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			fxs = &fpr.fxstate;
+#else
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
+#endif
+			DPRINTF("Call GETFPREGS for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETFPREGS, child, &fpr, 0)
+			    != -1);
+			break;
+		case TEST_XSTATE:
+			ATF_REQUIRE(regs >= FPREGS_MM);
+			iov.iov_base = &xst;
+			iov.iov_len = sizeof(xst);
+
+			DPRINTF("Call GETXSTATE for the child process\n");
+			SYSCALL_REQUIRE(ptrace(PT_GETXSTATE, child, &iov, 0)
+			    != -1);
+
+			ATF_REQUIRE((xst.xs_rfbm & xst_flags) == xst_flags);
+			switch (regmode) {
+			case TEST_SETREGS:
+				xst.xs_rfbm = xst_flags;
+				xst.xs_xstate_bv = xst_flags;
+				break;
+			case TEST_GETREGS:
+				ATF_REQUIRE((xst.xs_xstate_bv & xst_flags)
+				    == xst_flags);
+				break;
+			case TEST_COREDUMP:
+				__unreachable();
+				break;
+			}
+
+			fxs = &xst.xs_fxsave;
 			break;
 		}
-
-		fxs = &xst.xs_fxsave;
 		break;
+	case TEST_COREDUMP:
+		SYSCALL_REQUIRE((core_fd = mkstemp(core_path)) != -1);
+		close(core_fd);
+
+		DPRINTF("Call DUMPCORE for the child process\n");
+		SYSCALL_REQUIRE(ptrace(PT_DUMPCORE, child, core_path,
+		    strlen(core_path)) != -1);
+
+		switch (regset) {
+		case TEST_GPREGS:
+			ATF_REQUIRE(regs < FPREGS_MM);
+			DPRINTF("Parse core file for PT_GETREGS\n");
+			ATF_REQUIRE_EQ(core_find_note(core_path,
+			    "NetBSD-CORE@1", PT_GETREGS, &gpr, sizeof(gpr)),
+			    sizeof(gpr));
+			break;
+		case TEST_XMMREGS:
+#if defined(__i386__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			unlink(core_path);
+			atf_tc_skip("XMMREGS not supported in core dumps");
+			break;
+#else
+			/*FALLTHROUGH*/
+#endif
+		case TEST_FPREGS:
+#if defined(__x86_64__)
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_YMM);
+			fxs = &fpr.fxstate;
+#else
+			ATF_REQUIRE(regs >= FPREGS_MM && regs < FPREGS_XMM);
+#endif
+			DPRINTF("Parse core file for PT_GETFPREGS\n");
+			ATF_REQUIRE_EQ(core_find_note(core_path,
+			    "NetBSD-CORE@1", PT_GETFPREGS, &fpr, sizeof(fpr)),
+			    sizeof(fpr));
+			break;
+		case TEST_XSTATE:
+			ATF_REQUIRE(regs >= FPREGS_MM);
+			DPRINTF("Parse core file for PT_GETXSTATE\n");
+			ATF_REQUIRE_EQ(core_find_note(core_path,
+			    "NetBSD-CORE@1", PT_GETXSTATE, &xst, sizeof(xst)),
+			    sizeof(xst));
+			ATF_REQUIRE((xst.xs_xstate_bv & xst_flags)
+			    == xst_flags);
+			fxs = &xst.xs_fxsave;
+			break;
+		}
+		unlink(core_path);
 	}
 
 #if defined(__x86_64__)
@@ -3045,6 +3112,7 @@ x86_register_test(enum x86_test_regset regset, enum x86_test_registers regs,
 
 	switch (regmode) {
 	case TEST_GETREGS:
+	case TEST_COREDUMP:
 		switch (regs) {
 		case GPREGS_32:
 #if defined(__i386__)
@@ -3412,12 +3480,16 @@ X86_REGISTER_TEST(x86_gpregs32_read, TEST_GPREGS, GPREGS_32, TEST_GETREGS,
 X86_REGISTER_TEST(x86_gpregs32_write, TEST_GPREGS, GPREGS_32, TEST_SETREGS,
     "Test writing basic 32-bit gp registers into debugged program "
     "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs32_core, TEST_GPREGS, GPREGS_32, TEST_COREDUMP,
+    "Test reading basic 32-bit gp registers from core dump.");
 X86_REGISTER_TEST(x86_gpregs32_ebp_esp_read, TEST_GPREGS, GPREGS_32_EBP_ESP,
     TEST_GETREGS, "Test reading ebp & esp registers from debugged program "
     "via PT_GETREGS.");
 X86_REGISTER_TEST(x86_gpregs32_ebp_esp_write, TEST_GPREGS, GPREGS_32_EBP_ESP,
     TEST_SETREGS, "Test writing ebp & esp registers into debugged program "
     "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs32_ebp_esp_core, TEST_GPREGS, GPREGS_32_EBP_ESP,
+    TEST_COREDUMP, "Test reading ebp & esp registers from core dump.");
 
 X86_REGISTER_TEST(x86_gpregs64_read, TEST_GPREGS, GPREGS_64, TEST_GETREGS,
     "Test reading basic 64-bit gp registers from debugged program "
@@ -3425,11 +3497,15 @@ X86_REGISTER_TEST(x86_gpregs64_read, TEST_GPREGS, GPREGS_64, TEST_GETREGS,
 X86_REGISTER_TEST(x86_gpregs64_write, TEST_GPREGS, GPREGS_64, TEST_SETREGS,
     "Test writing basic 64-bit gp registers into debugged program "
     "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs64_core, TEST_GPREGS, GPREGS_64, TEST_COREDUMP,
+    "Test reading basic 64-bit gp registers from core dump.");
 X86_REGISTER_TEST(x86_gpregs64_r8_read, TEST_GPREGS, GPREGS_64_R8, TEST_GETREGS,
     "Test reading r8..r15 registers from debugged program via PT_GETREGS.");
 X86_REGISTER_TEST(x86_gpregs64_r8_write, TEST_GPREGS, GPREGS_64_R8,
     TEST_SETREGS, "Test writing r8..r15 registers into debugged program "
     "via PT_SETREGS.");
+X86_REGISTER_TEST(x86_gpregs64_r8_core, TEST_GPREGS, GPREGS_64_R8,
+    TEST_COREDUMP, "Test reading r8..r15 registers from core dump.");
 
 X86_REGISTER_TEST(x86_fpregs_mm_read, TEST_FPREGS, FPREGS_MM, TEST_GETREGS,
     "Test reading mm0..mm7 registers from debugged program "
@@ -3437,12 +3513,16 @@ X86_REGISTER_TEST(x86_fpregs_mm_read, TEST_FPREGS, FPREGS_MM, TEST_GETREGS,
 X86_REGISTER_TEST(x86_fpregs_mm_write, TEST_FPREGS, FPREGS_MM, TEST_SETREGS,
     "Test writing mm0..mm7 registers into debugged program "
     "via PT_SETFPREGS.");
+X86_REGISTER_TEST(x86_fpregs_mm_core, TEST_FPREGS, FPREGS_MM, TEST_COREDUMP,
+    "Test reading mm0..mm7 registers from coredump.");
 X86_REGISTER_TEST(x86_fpregs_xmm_read, TEST_XMMREGS, FPREGS_XMM, TEST_GETREGS,
     "Test reading xmm0..xmm15 (..xmm7 on i386) from debugged program "
     "via PT_GETFPREGS (PT_GETXMMREGS on i386).");
 X86_REGISTER_TEST(x86_fpregs_xmm_write, TEST_XMMREGS, FPREGS_XMM, TEST_SETREGS,
     "Test writing xmm0..xmm15 (..xmm7 on i386) into debugged program "
     "via PT_SETFPREGS (PT_SETXMMREGS on i386).");
+X86_REGISTER_TEST(x86_fpregs_xmm_core, TEST_XMMREGS, FPREGS_XMM, TEST_COREDUMP,
+    "Test reading xmm0..xmm15 (..xmm7 on i386) from coredump.");
 
 X86_REGISTER_TEST(x86_xstate_mm_read, TEST_XSTATE, FPREGS_MM, TEST_GETREGS,
     "Test reading mm0..mm7 registers from debugged program "
@@ -3450,18 +3530,24 @@ X86_REGISTER_TEST(x86_xstate_mm_read, TEST_XSTATE, FPREGS_MM, TEST_GETREGS,
 X86_REGISTER_TEST(x86_xstate_mm_write, TEST_XSTATE, FPREGS_MM, TEST_SETREGS,
     "Test writing mm0..mm7 registers into debugged program "
     "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_mm_core, TEST_XSTATE, FPREGS_MM, TEST_COREDUMP,
+    "Test reading mm0..mm7 registers from core dump via XSTATE note.");
 X86_REGISTER_TEST(x86_xstate_xmm_read, TEST_XSTATE, FPREGS_XMM, TEST_GETREGS,
     "Test reading xmm0..xmm15 (..xmm7 on i386) from debugged program "
     "via PT_GETXSTATE.");
 X86_REGISTER_TEST(x86_xstate_xmm_write, TEST_XSTATE, FPREGS_XMM, TEST_SETREGS,
     "Test writing xmm0..xmm15 (..xmm7 on i386) into debugged program "
     "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_xmm_core, TEST_XSTATE, FPREGS_XMM, TEST_COREDUMP,
+    "Test reading xmm0..xmm15 (..xmm7 on i386) from coredump via XSTATE note.");
 X86_REGISTER_TEST(x86_xstate_ymm_read, TEST_XSTATE, FPREGS_YMM, TEST_GETREGS,
     "Test reading ymm0..ymm15 (..ymm7 on i386) from debugged program "
     "via PT_GETXSTATE.");
 X86_REGISTER_TEST(x86_xstate_ymm_write, TEST_XSTATE, FPREGS_YMM, TEST_SETREGS,
     "Test writing ymm0..ymm15 (..ymm7 on i386) into debugged program "
     "via PT_SETXSTATE.");
+X86_REGISTER_TEST(x86_xstate_ymm_core, TEST_XSTATE, FPREGS_YMM, TEST_COREDUMP,
+    "Test reading ymm0..ymm15 (..ymm7 on i386) from coredump via XSTATE note.");
 
 /// ----------------------------------------------------------------------------
 
@@ -3530,22 +3616,31 @@ X86_REGISTER_TEST(x86_xstate_ymm_write, TEST_XSTATE, FPREGS_YMM, TEST_SETREGS,
 	ATF_TP_ADD_TC_HAVE_DBREGS(tp, x86_cve_2018_8897); \
 	ATF_TP_ADD_TC(tp, x86_gpregs32_read); \
 	ATF_TP_ADD_TC(tp, x86_gpregs32_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_core); \
 	ATF_TP_ADD_TC(tp, x86_gpregs32_ebp_esp_read); \
 	ATF_TP_ADD_TC(tp, x86_gpregs32_ebp_esp_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs32_ebp_esp_core); \
 	ATF_TP_ADD_TC(tp, x86_gpregs64_read); \
 	ATF_TP_ADD_TC(tp, x86_gpregs64_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_core); \
 	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_read); \
 	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_write); \
+	ATF_TP_ADD_TC(tp, x86_gpregs64_r8_core); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_mm_read); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_mm_write); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_mm_core); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_read); \
 	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_write); \
+	ATF_TP_ADD_TC(tp, x86_fpregs_xmm_core); \
 	ATF_TP_ADD_TC(tp, x86_xstate_mm_read); \
 	ATF_TP_ADD_TC(tp, x86_xstate_mm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_mm_core); \
 	ATF_TP_ADD_TC(tp, x86_xstate_xmm_read); \
 	ATF_TP_ADD_TC(tp, x86_xstate_xmm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_xmm_core); \
 	ATF_TP_ADD_TC(tp, x86_xstate_ymm_read); \
-	ATF_TP_ADD_TC(tp, x86_xstate_ymm_write);
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_write); \
+	ATF_TP_ADD_TC(tp, x86_xstate_ymm_core);
 #else
 #define ATF_TP_ADD_TCS_PTRACE_WAIT_X86()
 #endif
