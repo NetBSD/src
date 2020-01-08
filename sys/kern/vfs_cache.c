@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126 2020/01/06 11:22:33 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.127 2020/01/08 12:04:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,13 +58,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126 2020/01/06 11:22:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.127 2020/01/08 12:04:56 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_dtrace.h"
-#include "opt_revcache.h"
 #endif
 
 #include <sys/param.h>
@@ -129,7 +128,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126 2020/01/06 11:22:33 ad Exp $");
  * - Invalidate: active--->queued
  *
  *   Done by cache_invalidate.  If not already invalidated, nullify
- *   ncp->nc_dvp and ncp->nc_vp, and add to cache_gcqueue.  Called,
+ *   ncp->nc_dvp and and add to cache_gcqueue.  Called,
  *   among various other places, in cache_lookup(dvp, name, namelen,
  *   nameiop, cnflags, &iswht, &vp) when MAKEENTRY is missing from
  *   cnflags.
@@ -376,7 +375,6 @@ cache_invalidate(struct namecache *ncp)
 		SDT_PROBE(vfs, namecache, invalidate, done, ncp->nc_dvp,
 		    0, 0, 0, 0);
 
-		ncp->nc_vp = NULL;
 		ncp->nc_dvp = NULL;
 		do {
 			head = cache_gcqueue;
@@ -401,9 +399,11 @@ cache_disassociate(struct namecache *ncp)
 		TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
 		ncp->nc_lru.tqe_prev = NULL;
 	}
-	if (ncp->nc_vlist.le_prev != NULL) {
-		LIST_REMOVE(ncp, nc_vlist);
-		ncp->nc_vlist.le_prev = NULL;
+	if (ncp->nc_vlist.tqe_prev != NULL) {
+		KASSERT(ncp->nc_vp != NULL);
+		TAILQ_REMOVE(&VNODE_TO_VIMPL(ncp->nc_vp)->vi_nclist, ncp,
+		    nc_vlist);
+		ncp->nc_vlist.tqe_prev = NULL;
 	}
 	if (ncp->nc_dvlist.le_prev != NULL) {
 		LIST_REMOVE(ncp, nc_dvlist);
@@ -777,59 +777,61 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 	 */
 	cpup = curcpu()->ci_data.cpu_nch;
 	mutex_enter(namecache_lock);
-	LIST_FOREACH(ncp, &VNODE_TO_VIMPL(vp)->vi_nclist, nc_vlist) {
+	TAILQ_FOREACH(ncp, &VNODE_TO_VIMPL(vp)->vi_nclist, nc_vlist) {
 		mutex_enter(&ncp->nc_lock);
-		if (ncp->nc_vp == vp &&
-		    (dvp = ncp->nc_dvp) != NULL &&
-		    dvp != vp) { 		/* avoid pesky . entries.. */
-			if (ncp->nc_nlen == 1 &&
-			    ncp->nc_name[0] == '.') {
-			    	mutex_exit(&ncp->nc_lock);
-			    	continue;
-			}
-			if (ncp->nc_nlen == 2 &&
-			    ncp->nc_name[0] == '.' &&
-			    ncp->nc_name[1] == '.') {
-			    	mutex_exit(&ncp->nc_lock);
-			    	continue;
-			}
-			COUNT(cpup, ncs_revhits);
-			nlen = ncp->nc_nlen;
-
-			if (bufp) {
-				bp = *bpp;
-				bp -= nlen;
-				if (bp <= bufp) {
-					*dvpp = NULL;
-					mutex_exit(&ncp->nc_lock);
-					mutex_exit(namecache_lock);
-					SDT_PROBE(vfs, namecache, revlookup,
-					    fail, vp, ERANGE, 0, 0, 0);
-					return (ERANGE);
-				}
-				memcpy(bp, ncp->nc_name, nlen);
-				*bpp = bp;
-			}
-
-			mutex_enter(dvp->v_interlock);
+		/* Ignore invalidated entries. */
+		dvp = ncp->nc_dvp;
+		if (dvp == NULL) {
 			mutex_exit(&ncp->nc_lock);
-			mutex_exit(namecache_lock);
-			error = vcache_tryvget(dvp);
-			if (error) {
-				KASSERT(error == EBUSY);
-				if (bufp)
-					(*bpp) += nlen;
-				*dvpp = NULL;
-				SDT_PROBE(vfs, namecache, revlookup, fail, vp,
-				    error, 0, 0, 0);
-				return -1;
-			}
-			*dvpp = dvp;
-			SDT_PROBE(vfs, namecache, revlookup, success, vp, dvp,
-			    0, 0, 0);
-			return (0);
+			continue;
 		}
+		
+		/*
+		 * The list is partially sorted.  Once we hit dot or dotdot
+		 * it's only more dots from there on in.
+		 */
+		nlen = ncp->nc_nlen;
+		if (ncp->nc_name[0] == '.') {
+			if (nlen == 1 ||
+			    (nlen == 2 && ncp->nc_name[1] == '.')) {
+				mutex_exit(&ncp->nc_lock);
+				break;
+			}
+		}
+		COUNT(cpup, ncs_revhits);
+
+		if (bufp) {
+			bp = *bpp;
+			bp -= nlen;
+			if (bp <= bufp) {
+				*dvpp = NULL;
+				mutex_exit(&ncp->nc_lock);
+				mutex_exit(namecache_lock);
+				SDT_PROBE(vfs, namecache, revlookup,
+				    fail, vp, ERANGE, 0, 0, 0);
+				return (ERANGE);
+			}
+			memcpy(bp, ncp->nc_name, nlen);
+			*bpp = bp;
+		}
+
+		mutex_enter(dvp->v_interlock);
 		mutex_exit(&ncp->nc_lock);
+		mutex_exit(namecache_lock);
+		error = vcache_tryvget(dvp);
+		if (error) {
+			KASSERT(error == EBUSY);
+			if (bufp)
+				(*bpp) += nlen;
+			*dvpp = NULL;
+			SDT_PROBE(vfs, namecache, revlookup, fail, vp,
+			    error, 0, 0, 0);
+			return -1;
+		}
+		*dvpp = dvp;
+		SDT_PROBE(vfs, namecache, revlookup, success, vp, dvp,
+		    0, 0, 0);
+		return (0);
 	}
 	COUNT(cpup, ncs_revmiss);
 	mutex_exit(namecache_lock);
@@ -902,11 +904,19 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	/* Fill in cache info. */
 	ncp->nc_dvp = dvp;
 	LIST_INSERT_HEAD(&VNODE_TO_VIMPL(dvp)->vi_dnclist, ncp, nc_dvlist);
-	if (vp)
-		LIST_INSERT_HEAD(&VNODE_TO_VIMPL(vp)->vi_nclist, ncp, nc_vlist);
-	else {
-		ncp->nc_vlist.le_prev = NULL;
-		ncp->nc_vlist.le_next = NULL;
+	if (vp) {
+		/* Partially sort the per-vnode list: dots go to back. */
+		if ((namelen == 1 && name[0] == '.') ||
+		    (namelen == 2 && name[0] == '.' && name[1] == '.')) {
+			TAILQ_INSERT_TAIL(&VNODE_TO_VIMPL(vp)->vi_nclist, ncp,
+			    nc_vlist);
+		} else {
+			TAILQ_INSERT_HEAD(&VNODE_TO_VIMPL(vp)->vi_nclist, ncp,
+			    nc_vlist);
+		}
+	} else {
+		ncp->nc_vlist.tqe_prev = NULL;
+		ncp->nc_vlist.tqe_next = NULL;
 	}
 	KASSERT(namelen <= USHRT_MAX);
 	ncp->nc_nlen = namelen;
@@ -1044,9 +1054,9 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 	if (flags & PURGE_PARENTS) {
 		SDT_PROBE(vfs, namecache, purge, parents, vp, 0, 0, 0, 0);
 
-		for (ncp = LIST_FIRST(&VNODE_TO_VIMPL(vp)->vi_nclist);
+		for (ncp = TAILQ_FIRST(&VNODE_TO_VIMPL(vp)->vi_nclist);
 		    ncp != NULL; ncp = ncnext) {
-			ncnext = LIST_NEXT(ncp, nc_vlist);
+			ncnext = TAILQ_NEXT(ncp, nc_vlist);
 			mutex_enter(&ncp->nc_lock);
 			cache_invalidate(ncp);
 			mutex_exit(&ncp->nc_lock);
@@ -1242,7 +1252,7 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 	}
 	vp = dvp;
 	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
-		if (ncp->nc_vp == vp) {
+		if (ncp->nc_vp == vp && ncp->nc_dvp != NULL) {
 			(*pr)("parent %.*s\n", ncp->nc_nlen, ncp->nc_name);
 		}
 	}
