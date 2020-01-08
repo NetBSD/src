@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.485 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.486 2020/01/08 17:38:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485 2019/12/06 21:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.486 2020/01/08 17:38:42 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1366,7 +1366,6 @@ execve_runproc(struct lwp *l, struct execve_data * restrict data,
 		spc_lock(l->l_cpu);
 		mi_switch(l);
 		ksiginfo_queue_drain(&kq);
-		KERNEL_LOCK(l->l_biglocks, l);
 	} else {
 		mutex_exit(proc_lock);
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: t_lwproc.c,v 1.9 2017/01/13 21:30:43 christos Exp $	*/
+/*	$NetBSD: t_lwproc.c,v 1.10 2020/01/08 17:38:43 ad Exp $	*/
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -239,7 +239,7 @@ ATF_TC_BODY(nullswitch, tc)
 	RZ(rump_pub_lwproc_newlwp(0));
 	l = rump_pub_lwproc_curlwp();
 	rump_pub_lwproc_switch(NULL);
-	/* if remains LP_RUNNING, next call will panic */
+	/* if remains LW_RUNNING, next call will panic */
 	rump_pub_lwproc_switch(l);
 }
 
