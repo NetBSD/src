@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43.18.5 2019/12/09 13:00:22 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.43.18.6 2020/01/08 07:53:30 msaitoh Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -29,7 +29,7 @@ whatis: .OPTIONAL
 
 PRESET=	${GFLAGS} -U -dM=${M} -dV=${DISTRIBVER} -d.CURDIR=${.CURDIR} -r${M}=1
 PRESET+=	-rmajor=${DISTRIBVER:C/\..*$//}
-.if ${USE_XZ_SETS}
+.if ${USE_XZ_SETS:Uno} == "yes"
 PRESET+=	-dsetsuffix=tar.xz
 .else
 PRESET+=	-dsetsuffix=tgz
