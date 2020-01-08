@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.15 2019/12/26 03:55:00 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.16 2020/01/08 09:12:11 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3337,6 +3337,8 @@ ixl_link_state_update(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int link_state;
 
+	KASSERT(kpreempt_disabled());
+
 	link_state = ixl_set_link_status(sc, iaq);
 
 	if (ifp->if_link_state != link_state)
@@ -3405,7 +3407,9 @@ ixl_arq(void *xsc)
 
 		switch (iaq->iaq_opcode) {
 		case htole16(IXL_AQ_OP_PHY_LINK_STATUS):
+			kpreempt_disable();
 			ixl_link_state_update(sc, iaq);
+			kpreempt_enable();
 			break;
 		}
 
@@ -5665,9 +5669,7 @@ ixl_workq_work(struct work *wk, void *context)
 	work = container_of(wk, struct ixl_work, ixw_cookie);
 
 	atomic_swap_uint(&work->ixw_added, 0);
-	kpreempt_disable();
 	work->ixw_func(work->ixw_arg);
-	kpreempt_enable();
 }
 
 static int
