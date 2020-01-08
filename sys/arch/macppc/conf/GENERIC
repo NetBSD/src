@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.358 2019/11/01 17:55:12 macallan Exp $
+# $NetBSD: GENERIC,v 1.359 2020/01/08 14:21:12 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.358 $"
+#ident 		"GENERIC-$Revision: 1.359 $"
 
 maxusers	32
 
@@ -371,6 +371,7 @@ iic*	at ki2c?
 
 # I2C devices
 dbcool* 	at iic?		# dbCool thermal monitor & fan control
+lmtemp* 	at iic?		# temperature sensor, found in PowerBook5,6
 deq* 		at iic?		# mixer/equalizer, used by snapper
 admtemp* 	at iic?		# temperature sensor found in Mini, G5
 psoc* 		at iic?		# fan controller found in TiBooks
