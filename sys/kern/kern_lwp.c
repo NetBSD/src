@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.217 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.218 2020/01/08 17:38:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -79,7 +79,7 @@
  *	LWP.  The LWP may in fact be executing on a processor, may be
  *	sleeping or idle. It is expected to take the necessary action to
  *	stop executing or become "running" again within a short timeframe.
- *	The LP_RUNNING flag in lwp::l_pflag indicates that an LWP is running.
+ *	The LW_RUNNING flag in lwp::l_flag indicates that an LWP is running.
  *	Importantly, it indicates that its state is tied to a CPU.
  *
  *	LSZOMB:
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.217 2019/12/06 21:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.218 2020/01/08 17:38:42 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1015,29 +1015,33 @@ lwp_start(lwp_t *l, int flags)
 void
 lwp_startup(struct lwp *prev, struct lwp *new_lwp)
 {
+
 	KASSERTMSG(new_lwp == curlwp, "l %p curlwp %p prevlwp %p", new_lwp, curlwp, prev);
-
-	SDT_PROBE(proc, kernel, , lwp__start, new_lwp, 0, 0, 0, 0);
-
 	KASSERT(kpreempt_disabled());
-	if (prev != NULL) {
-		/*
-		 * Normalize the count of the spin-mutexes, it was
-		 * increased in mi_switch().  Unmark the state of
-		 * context switch - it is finished for previous LWP.
-		 */
-		curcpu()->ci_mtx_count++;
-		membar_exit();
-		prev->l_ctxswtch = 0;
-	}
-	KPREEMPT_DISABLE(new_lwp);
-	if (__predict_true(new_lwp->l_proc->p_vmspace))
+	KASSERT(prev != NULL);
+	KASSERT((prev->l_flag & LW_RUNNING) != 0);
+	KASSERT(curcpu()->ci_mtx_count == -2);
+
+	/* Immediately mark previous LWP as no longer running, and unlock. */
+	prev->l_flag &= ~LW_RUNNING;
+	lwp_unlock(prev);
+
+	/* Correct spin mutex count after mi_switch(). */
+	curcpu()->ci_mtx_count = 0;
+
+	/* Install new VM context. */
+	if (__predict_true(new_lwp->l_proc->p_vmspace)) {
 		pmap_activate(new_lwp);
+	}
+
+	/* We remain at IPL_SCHED from mi_switch() - reset it. */
 	spl0();
 
 	LOCKDEBUG_BARRIER(NULL, 0);
-	KPREEMPT_ENABLE(new_lwp);
-	if ((new_lwp->l_pflag & LP_MPSAFE) == 0) {
+	SDT_PROBE(proc, kernel, , lwp__start, new_lwp, 0, 0, 0, 0);
+
+	/* For kthreads, acquire kernel lock if not MPSAFE. */
+	if (__predict_false((new_lwp->l_pflag & LP_MPSAFE) == 0)) {
 		KERNEL_LOCK(1, new_lwp);
 	}
 }
@@ -1059,10 +1063,8 @@ lwp_exit(struct lwp *l)
 
 	SDT_PROBE(proc, kernel, , lwp__exit, l, 0, 0, 0, 0);
 
-	/*
-	 * Verify that we hold no locks other than the kernel lock.
-	 */
-	LOCKDEBUG_BARRIER(&kernel_lock, 0);
+	/* Verify that we hold no locks */
+	LOCKDEBUG_BARRIER(NULL, 0);
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
@@ -1193,19 +1195,13 @@ lwp_exit(struct lwp *l)
 	cpu_lwp_free(l, 0);
 
 	if (current) {
-		pmap_deactivate(l);
-
-		/*
-		 * Release the kernel lock, and switch away into
-		 * oblivion.
-		 */
-#ifdef notyet
-		/* XXXSMP hold in lwp_userret() */
-		KERNEL_UNLOCK_LAST(l);
-#else
-		KERNEL_UNLOCK_ALL(l, NULL);
-#endif
-		lwp_exit_switchaway(l);
+		/* For the LW_RUNNING check in lwp_free(). */
+		membar_exit();
+		/* Switch away into oblivion. */
+		lwp_lock(l);
+		spc_lock(l->l_cpu);
+		mi_switch(l);
+		panic("lwp_exit");
 	}
 }
 
@@ -1232,6 +1228,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 */
 	if (p != &proc0 && p->p_nlwps != 1)
 		(void)chglwpcnt(kauth_cred_getuid(p->p_cred), -1);
+
 	/*
 	 * If this was not the last LWP in the process, then adjust
 	 * counters and unlock.
@@ -1268,11 +1265,12 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * all locks to avoid deadlock against interrupt handlers on
 	 * the target CPU.
 	 */
-	if ((l->l_pflag & LP_RUNNING) != 0 || l->l_cpu->ci_curlwp == l) {
+	membar_enter();
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		int count;
 		(void)count; /* XXXgcc */
 		KERNEL_UNLOCK_ALL(curlwp, &count);
-		while ((l->l_pflag & LP_RUNNING) != 0 ||
+		while ((l->l_flag & LW_RUNNING) != 0 ||
 		    l->l_cpu->ci_curlwp == l)
 			SPINLOCK_BACKOFF_HOOK;
 		KERNEL_LOCK(count, curlwp);
@@ -1340,7 +1338,7 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	KASSERT(tci != NULL);
 
 	/* If LWP is still on the CPU, it must be handled like LSONPROC */
-	if ((l->l_pflag & LP_RUNNING) != 0) {
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		lstat = LSONPROC;
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.220 2019/09/05 15:48:13 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.221 2020/01/08 17:38:42 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.220 2019/09/05 15:48:13 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.221 2020/01/08 17:38:42 ad Exp $")
 
 #include "assym.h"
 
@@ -377,7 +377,6 @@ softint_cleanup:
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
 	NOP_L					# load delay
-	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
 #if IPL_SCHED != IPL_HIGH
 	j	_C_LABEL(splhigh_noprof)
 #else

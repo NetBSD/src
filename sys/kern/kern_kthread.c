@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_kthread.c,v 1.44 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: kern_kthread.c,v 1.45 2020/01/08 17:38:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2007, 2009, 2019 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.44 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_kthread.c,v 1.45 2020/01/08 17:38:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,11 @@ kthread_exit(int ecode)
 		kthread_jtarget = NULL;
 		cv_broadcast(&kthread_cv);
 		mutex_exit(&kthread_lock);
+	}
+
+	/* If the kernel lock is held, we need to drop it now. */
+	if ((l->l_pflag & LP_MPSAFE) == 0) {
+		KERNEL_UNLOCK_LAST(l);
 	}
 
 	/* And exit.. */
