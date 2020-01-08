@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.145 2019/12/25 02:23:37 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.146 2020/01/08 17:22:40 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.145 2019/12/25 02:23:37 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.146 2020/01/08 17:22:40 mgorny Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7837,8 +7837,7 @@ static ssize_t core_find_note(const char *core_path,
 
 			offset += note_hdr.n_namesz;
 			/* fix to alignment */
-			offset = ((offset + core_hdr.p_align - 1)
-			    / core_hdr.p_align) * core_hdr.p_align;
+			offset = roundup(offset, core_hdr.p_align);
 
 			/* if name & type matched above */
 			if (ret != -1) {
@@ -7850,6 +7849,8 @@ static ssize_t core_find_note(const char *core_path,
 			}
 
 			offset += note_hdr.n_descsz;
+			/* fix to alignment */
+			offset = roundup(offset, core_hdr.p_align);
 		}
 	}
 
