@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.23 2019/06/26 12:30:12 mgorny Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.24 2020/01/08 17:21:38 mgorny Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -158,6 +158,18 @@
 #define	PROCFS_MACHDEP_NODETYPE_DEFNS					\
 	{ DT_REG, N("xmmregs"), Pmachdep_xmmregs,			\
 	  procfs_machdep_validxmmregs },
+
+#define COREDUMP_MACHDEP_LWP_NOTES(l, ns, name)				\
+{									\
+	struct xstate xstate;						\
+	memset(&xstate, 0, sizeof(xstate));				\
+	if (!process_read_xstate(l, &xstate))				\
+	{								\
+		ELFNAMEEND(coredump_savenote)(ns,			\
+		    CONCAT(CONCAT(PT, ELFSIZE), _GETXSTATE), name,	\
+		    &xstate, sizeof(xstate));				\
+	}								\
+}
 
 struct xmmregs;
 
