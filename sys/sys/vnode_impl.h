@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode_impl.h,v 1.19 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.20 2020/01/08 12:04:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2019 The NetBSD Foundation, Inc.
@@ -69,7 +69,7 @@ struct vnode_impl {
 	struct vnodelst *vi_lrulisthd;		/* d: current lru list head */
 	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
 	LIST_HEAD(, namecache) vi_dnclist;	/* n: namecaches (children) */
-	LIST_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
+	TAILQ_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
 	int vi_synclist_slot;			/* s: synclist slot index */
 	int vi_lrulisttm;			/* i: time of lru enqueue */
 	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */

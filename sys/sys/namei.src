@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.47 2020/01/06 11:22:33 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.48 2020/01/08 12:04:56 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -212,7 +212,7 @@ struct namecache {
 	LIST_ENTRY(namecache) nc_hash;	/* L/C hash chain */
 	TAILQ_ENTRY(namecache) nc_lru;	/* L pseudo-lru chain */
 	LIST_ENTRY(namecache) nc_dvlist;/* L dvp's list of cache entries */
-	LIST_ENTRY(namecache) nc_vlist; /* L vp's list of cache entries */
+	TAILQ_ENTRY(namecache) nc_vlist;/* L vp's list of cache entries */
 	struct	vnode *nc_dvp;		/* N vnode of parent of name */
 	struct	vnode *nc_vp;		/* N vnode the name refers to */
 	void	*nc_gcqueue;		/* N queue for garbage collection */
