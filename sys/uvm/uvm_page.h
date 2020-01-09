@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.93 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.94 2020/01/09 10:43:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -397,10 +397,14 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
  *
  * None of this is set in stone; it can be adjusted as needed.
  */
+
+#define	UVM_PHYSADDR_FREELIST	__BITS(0,4)
+#define	UVM_PHYSADDR_BUCKET	__BITS(5,9)
+
 static inline unsigned
 uvm_page_get_freelist(struct vm_page *pg)
 {
-	unsigned fl = pg->phys_addr & 0x1f;
+	unsigned fl = __SHIFTOUT(pg->phys_addr, UVM_PHYSADDR_FREELIST);
 	KASSERT(fl == (unsigned)uvm_page_lookup_freelist(pg));
 	return fl;
 }
@@ -408,21 +412,23 @@ uvm_page_get_freelist(struct vm_page *pg)
 static inline unsigned
 uvm_page_get_bucket(struct vm_page *pg)
 {
-	return (pg->phys_addr & 0x3e0) >> 5;
+	return __SHIFTOUT(pg->phys_addr, UVM_PHYSADDR_BUCKET);
 }
 
 static inline void
 uvm_page_set_freelist(struct vm_page *pg, unsigned fl)
 {
 	KASSERT(fl < 32);
-	pg->phys_addr = (pg->phys_addr & ~0x1f) | fl;
+	pg->phys_addr &= ~UVM_PHYSADDR_FREELIST;
+	pg->phys_addr |= __SHIFTIN(fl, UVM_PHYSADDR_FREELIST);
 }
 
 static inline void
 uvm_page_set_bucket(struct vm_page *pg, unsigned b)
 {
 	KASSERT(b < 32);
-	pg->phys_addr = (pg->phys_addr & ~0x3e0) | (b << 5);
+	pg->phys_addr &= ~UVM_PHYSADDR_BUCKET;
+	pg->phys_addr |= __SHIFTIN(b, UVM_PHYSADDR_BUCKET);
 }
 
 #ifdef DEBUG
