@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.33 2019/12/13 22:12:41 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.34 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1547,7 +1547,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 		if (pscheme == NULL)
 			return false;
 		parts = pscheme->create_new_for_disk(pm->diskdev,
-		    0, pm->dlsize, pm->dlsize, true);
+		    0, pm->dlsize, pm->dlsize, true, NULL);
 		if (parts == NULL)
 			return false;
 		pm->parts = parts;
@@ -1630,7 +1630,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 	 * edit it and verify it's OK, or abort altogether.
 	 */
  	for (;;) {
-		int rv = edit_and_check_label(pm, &wanted);
+		int rv = edit_and_check_label(pm, &wanted, true);
 		if (rv == 0) {
 			msg_display(MSG_abort_part);
 			free_usage_set(&wanted);

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8 2019/08/14 12:55:37 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.9 2020/01/09 13:22:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -93,7 +93,7 @@ md_get_info(struct install_partition_desc *install)
 
 		struct disk_partitions *parts =
 		   (*ps->create_new_for_disk)(pm->diskdev,
-		   0, pm->dlsize, pm->dlsize, true);
+		   0, pm->dlsize, pm->dlsize, true, NULL);
 		if (!parts)
 			return false;
 
@@ -447,18 +447,18 @@ md_post_extract(struct install_partition_desc *install)
 			parts = parts->parent;		/* MBR */
 
 		parts->pscheme->get_part_device(parts, bootpart_prep,
-		    bootdev, sizeof bootdev, NULL, raw_dev_name, true);
+		    bootdev, sizeof bootdev, NULL, raw_dev_name, true, true);
 		parts->pscheme->get_part_device(parts, bootpart_prep,
-		    bootbdev, sizeof bootbdev, NULL, plain_name, true);
+		    bootbdev, sizeof bootbdev, NULL, plain_name, true, true);
 		run_program(RUN_DISPLAY, "/bin/dd if=/dev/zero of=%s bs=512",
 		    bootdev);
 		run_program(RUN_DISPLAY, "/bin/dd if=/usr/mdec/ofwboot "
 		    "of=%s bs=512", bootbdev);
 
 		parts->pscheme->get_part_device(parts, bootpart_binfo,
-		    bootdev, sizeof bootdev, NULL, raw_dev_name, true);
+		    bootdev, sizeof bootdev, NULL, raw_dev_name, true, true);
 		parts->pscheme->get_part_device(parts, bootpart_binfo,
-		    bootbdev, sizeof bootbdev, NULL, plain_name, true);
+		    bootbdev, sizeof bootbdev, NULL, plain_name, true, true);
 		run_program(RUN_DISPLAY, "/bin/dd if=/dev/zero of=%s bs=512",
 		    bootdev);
 		run_program(RUN_DISPLAY, "/bin/dd if=/tmp/bootinfo.txt "

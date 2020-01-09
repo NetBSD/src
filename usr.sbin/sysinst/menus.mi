@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.19 2019/07/23 16:02:32 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.20 2020/01/09 13:22:30 martin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -192,16 +192,6 @@ remove_lvm_options()
 	 */
 	remove_menu_option(MENU_pmdiskentry, MSG_fmtaslvm);
 	remove_menu_option(MENU_pmpartentry, MSG_fmtaslvm);
-}
-
-void
-remove_gpt_options()
-{
-	/*
-	 * No GPT available, remove the following menu entries:
-	 */
-	remove_menu_option(MENU_pmdiskentry, MSG_switchgpt);
-	remove_menu_option(MENU_pmpartentry, MSG_switchgpt);
 }
 
 void

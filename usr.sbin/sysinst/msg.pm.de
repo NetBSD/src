@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.pm.de,v 1.1 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: msg.pm.de,v 1.2 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -34,9 +34,8 @@
 
 /* extended partition manager message catalog -- German, machine independent */
 
-message fillzeros {Füllen von Nullen}
-message fillrandom {Füllen von zufälligen Daten}
-message fillcrypto {Füllen von Crypto-Daten}
+message fillzeros {Füllen mit Nullen}
+message fillrandom {Füllen mit zufälligen Daten}
 message raid0 {0 - Keine Parität, nur einfache Striping.}
 message raid1 {1 - Mirroring. Die Parität ist der Spiegel.}
 message raid4 {4 - Striping mit Parität auf die letzte Komponente gespeichert.}
@@ -45,15 +44,14 @@ message raid5 {5 - Striping mit Parität an den alle Komponenten.}
 message wannaunblock {Das Gerät ist gespert. Wollen Sie es zwangsweise entsperren und fortsetzen?}
 message wannatry {Wollen Sie probieren?}
 message create_cgd {Erstellen eines kryptographische Datenträgers (CGD)}
-message create_cnd {Erstellen eines virtuelle Disk-Images (VND)}
+message create_vnd {Erstellen eines virtuelle Disk-Images (VND)}
 message create_vg {Erstellen einer Volume-Gruppe (LVM VG)}
 message create_lv {Erstellen eines logischen Volumes}
 message create_raid {Erstellen eines Software-RAID}
 message updpmlist {Aktualisieren der Geräte-Liste}
 message savepm {Speichern der Änderungen}
 message pmblocked {GESPERRT}
-message pmunchanged {NICHTS}
-message pmsetboot {BOOTEN}
+message pmunchanged {UNVERÄNDERT}
 message pmused {BENUTZT}
 message pmmounted {(montiert)}
 message pmunused {(unbenutzt)}

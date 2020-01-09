@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.49 2019/12/11 15:08:45 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.50 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -368,7 +368,7 @@ daddr_t tmp_ramdisk_size;
 
 daddr_t root_limit;    /* BIOS (etc) read limit */
 
-enum SHRED_T { SHRED_NONE=0, SHRED_ZEROS, SHRED_RANDOM, SHRED_CRYPTO };
+enum SHRED_T { SHRED_NONE=0, SHRED_ZEROS, SHRED_RANDOM };
 
 /* All information that is unique for each drive */
 SLIST_HEAD(pm_head_t, pm_devs) pm_head;
@@ -430,7 +430,6 @@ struct pm_devs {
 	 */
 	char **mounted;
 
-	bool bootable;	/* This device is bootable */
 	bool unsaved;	/* Flag indicating to partman that device need saving */
 	bool found;	/* Flag to delete unplugged and unconfigured devices */
 	int blocked;	/* Device is busy and cannot be changed */
@@ -442,11 +441,10 @@ struct pm_devs *pm_new; /* Pointer for next allocating device in find_disks() */
 
 /* Generic structure for partman */
 struct part_entry {
-	int retvalue;
 	part_id id;
 	struct disk_partitions *parts;
 	void *dev_ptr;
-	size_t index;
+	size_t index;	/* e.g. if PM_RAID: this is raids[index] */
 	int dev_ptr_delta;
 	char fullname[SSTRSIZE];
 	enum {PM_DISK=1, PM_PART, PM_SPEC,
@@ -579,7 +577,6 @@ void remove_color_options(void);
 void remove_raid_options(void);
 void remove_lvm_options(void);
 void remove_cgd_options(void);
-void remove_gpt_options(void);
 
 /* Machine dependent functions .... */
 void	md_init(void);
@@ -697,7 +694,7 @@ int	fs_is_lfs(void *);
 const char *get_last_mounted(int fd, daddr_t offset, uint *fs_type,
      uint *fs_sub_type, uint flags);
 void	canonicalize_last_mounted(char*);
-int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset);
+int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset, bool install);
 int edit_ptn(menudesc *, void *);
 int checkoverlap(struct disk_partitions *parts);
 daddr_t getpartsize(struct disk_partitions *parts, daddr_t partstart,
@@ -869,15 +866,23 @@ static inline int partman(void) { return -1; }
 static inline int pm_getrefdev(struct pm_devs *x __unused) { return -1; }
 #define update_wedges(x) __nothing
 #endif
+void pmdiskentry_enable(menudesc*, struct part_entry *);
 int pm_partusage(struct pm_devs *, int, int);
 void pm_setfstype(struct pm_devs *, part_id, int, int);
+void pm_set_lvmpv(struct pm_devs *, part_id, bool);
+bool pm_is_lvmpv(struct pm_devs *, part_id, const struct disk_part_info*);
 int pm_editpart(int);
 void pm_rename(struct pm_devs *);
-int pm_shred(struct pm_devs *, int, int);
+void pm_shred(struct part_entry *, int);
 void pm_umount(struct pm_devs *, int);
 int pm_unconfigure(struct pm_devs *);
-int pm_cgd_edit(void *, struct part_entry *);
+int pm_cgd_edit_new(struct pm_devs *pm, part_id id);
+int pm_cgd_edit_old(struct part_entry *);
 void pm_wedges_fill(struct pm_devs *);
+void pm_edit_partitions(struct part_entry *);
+part_id pm_whole_disk(struct part_entry *, int);
+struct pm_devs * pm_from_pe(struct part_entry *);
+bool pm_force_parts(struct pm_devs *);
 
 /*
  * Parse a file system position or size in a common way, return

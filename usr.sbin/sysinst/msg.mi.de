@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.de,v 1.19 2019/12/11 19:23:37 martin Exp $	*/
+/*	$NetBSD: msg.mi.de,v 1.20 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1220,15 +1220,12 @@ message failed {Fehlgeschlagen}
 message notsupported {Operation wird nicht unterstützt!}
 message askfsmountadv {Mountpoint oder 'raid' oder 'cgd' oder 'lvm'?}
 message partman {Erweiterte Partitionierung}
-message editbsdpart {NetBSD Partitionen bearbeiten}
+message edit_parts {Partitionen bearbeiten}
 message editpart {Partitionen bearbeiten}
-message editmbr {MBR bearbeiten und speichern}
-message switchgpt {Wechseln zu GPT}
-message switchmbr {Wechseln zu MBR}
-message renamedisk {Festplatten-Namen festlegen}
-message fmtasraid {Format als RAID}
-message fmtaslvm {Format als LVM-PV}
-message encrypt {Verschlüsseln}
+message switch_parts {Switch partitioning scheme}
+message fmtasraid {Als RAID Komponente formatieren}
+message fmtaslvm {Als LVM-PV formatieren}
+message encrypt {Verschlüsseln (CGD)}
 message setbootable {Boot-Flag}
 message erase {Safe Erase}
 message undo {Rückgängigmachen von Änderungen}

@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.7 2019/07/13 17:13:38 martin Exp $	*/
+/*	$NetBSD: md.c,v 1.8 2020/01/09 13:22:32 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,11 +193,11 @@ md_post_newfs(struct install_partition_desc *install)
 
 	if (!install->infos[0].parts->pscheme->get_part_device(
 	    install->infos[0].parts, install->infos[0].cur_part_id,
- 	    rdisk, sizeof rdisk, NULL, raw_dev_name, true))
+ 	    rdisk, sizeof rdisk, NULL, raw_dev_name, true, true))
 		return 1;
 	if (!install->infos[0].parts->pscheme->get_part_device(
 	    install->infos[0].parts, install->infos[0].cur_part_id,
-	    disk, sizeof disk, NULL, plain_name, true))
+	    disk, sizeof disk, NULL, plain_name, true, true))
 		return 1;
 
 	if (run_program(RUN_DISPLAY | RUN_PROGRESS,
@@ -246,7 +246,7 @@ md_update(struct install_partition_desc *install)
 
 	if (!install->infos[0].parts->pscheme->get_part_device(
 	    install->infos[0].parts, install->infos[0].cur_part_id,
- 	    disk, sizeof disk, NULL, plain_name, true))
+ 	    disk, sizeof disk, NULL, plain_name, true, true))
 		return 0;
 
 	/*

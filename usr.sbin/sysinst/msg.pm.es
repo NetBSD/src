@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.pm.es,v 1.1 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: msg.pm.es,v 1.2 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,6 @@
 
 message fillzeros {Llenar con ceros}
 message fillrandom {Llene los datos al azar}
-message fillcrypto {Rellene los datos de cifrado}
 message raid0 {0 - Sin paridad, creación de bandas sólo es simple.}
 message raid1 {1 - Creación de reflejos. La paridad es el espejo.}
 message raid4 {4 - Striping con paridad almacenada en el último componente. component.}
@@ -45,7 +44,7 @@ message raid5 {5 - Striping con paridad en los componentes de todos. components.
 message wannaunblock {El dispositivo está bloqueado. ¿Quiere forzar a desbloquear y continuar? unblock it and continue?}
 message wannatry {¿Quieres probar?}
 message create_cgd {Crear cifrado de volumen (CGD)}
-message create_cnd {Crear imagen de disco virtual (VND)}
+message create_vnd {Crear imagen de disco virtual (VND)}
 message create_vg {Crear grupo de volúmenes (LVM VG)}
 message create_lv {Crear volúmenes lógicos}
 message create_raid {Crear RAID por software}
@@ -53,7 +52,6 @@ message updpmlist {Actualizar lista de dispositivos}
 message savepm {Guardar los cambios}
 message pmblocked {BLOQUEADO}
 message pmunchanged {SIN USO}
-message pmsetboot {ARRANCAR}
 message pmused {UTILIZA}
 message pmmounted {(montado)}
 message pmunused {(sin usar)}
