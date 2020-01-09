@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.17 2020/01/09 02:43:45 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.18 2020/01/09 02:55:41 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -559,6 +559,26 @@ struct ixl_stats_counters {
 	uint64_t	 isc_link_xoff_rx_offset;
 	struct evcnt	 isc_link_xoff_tx;
 	uint64_t	 isc_link_xoff_tx_offset;
+	struct evcnt	 isc_vsi_rx_discards;
+	uint64_t	 isc_vsi_rx_discards_offset;
+	struct evcnt	 isc_vsi_rx_bytes;
+	uint64_t	 isc_vsi_rx_bytes_offset;
+	struct evcnt	 isc_vsi_rx_unicast;
+	uint64_t	 isc_vsi_rx_unicast_offset;
+	struct evcnt	 isc_vsi_rx_multicast;
+	uint64_t	 isc_vsi_rx_multicast_offset;
+	struct evcnt	 isc_vsi_rx_broadcast;
+	uint64_t	 isc_vsi_rx_broadcast_offset;
+	struct evcnt	 isc_vsi_tx_errors;
+	uint64_t	 isc_vsi_tx_errors_offset;
+	struct evcnt	 isc_vsi_tx_bytes;
+	uint64_t	 isc_vsi_tx_bytes_offset;
+	struct evcnt	 isc_vsi_tx_unicast;
+	uint64_t	 isc_vsi_tx_unicast_offset;
+	struct evcnt	 isc_vsi_tx_multicast;
+	uint64_t	 isc_vsi_tx_multicast_offset;
+	struct evcnt	 isc_vsi_tx_broadcast;
+	uint64_t	 isc_vsi_tx_broadcast_offset;
 };
 
 /*
@@ -623,6 +643,7 @@ struct ixl_softc {
 	uint16_t		 sc_uplink_seid;	/* le */
 	uint16_t		 sc_downlink_seid;	/* le */
 	uint16_t		 sc_vsi_number;		/* le */
+	uint16_t		 sc_vsi_stat_counter_idx;
 	uint16_t		 sc_seid;
 	unsigned int		 sc_base_queue;
 
@@ -4168,6 +4189,7 @@ ixl_get_vsi(struct ixl_softc *sc)
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_vsi_param *param;
 	struct ixl_aq_vsi_reply *reply;
+	struct ixl_aq_vsi_data *data;
 	int rv;
 
 	/* grumble, vsi info isn't "known" at compile time */
@@ -4207,6 +4229,8 @@ ixl_get_vsi(struct ixl_softc *sc)
 
 	reply = (struct ixl_aq_vsi_reply *)iaq.iaq_param;
 	sc->sc_vsi_number = reply->vsi_number;
+	data = IXL_DMA_KVA(vsi);
+	sc->sc_vsi_stat_counter_idx = le16toh(data->stat_counter_idx);
 
 	return 0;
 }
@@ -5639,6 +5663,17 @@ ixl_setup_stats(struct ixl_softc *sc)
 	evcnt_attach_dynamic(&isc->isc_rx_broadcast, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Rx broadcast / port");
 
+	evcnt_attach_dynamic(&isc->isc_vsi_rx_bytes, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx bytes / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_rx_discards, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx discard / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_rx_unicast, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx unicast / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_rx_multicast, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx multicast / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_rx_broadcast, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Rx broadcast / vsi");
+
 	evcnt_attach_dynamic(&isc->isc_tx_size_64, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Tx size 64");
 	evcnt_attach_dynamic(&isc->isc_tx_size_127, EVCNT_TYPE_MISC,
@@ -5665,6 +5700,17 @@ ixl_setup_stats(struct ixl_softc *sc)
 	    NULL, device_xname(sc->sc_dev), "Tx multicast / port");
 	evcnt_attach_dynamic(&isc->isc_tx_broadcast, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Tx broadcast / port");
+
+	evcnt_attach_dynamic(&isc->isc_vsi_tx_bytes, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Tx bytes / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_tx_errors, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Tx errors / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_tx_unicast, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Tx unicast / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_tx_multicast, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Tx multicast / vsi");
+	evcnt_attach_dynamic(&isc->isc_vsi_tx_broadcast, EVCNT_TYPE_MISC,
+	    NULL, device_xname(sc->sc_dev), "Tx broadcast / vsi");
 
 	sc->sc_stats_intval = IXL_STATS_INTERVAL_MSEC;
 	callout_init(&sc->sc_stats_callout, CALLOUT_MPSAFE);
@@ -5737,6 +5783,16 @@ ixl_teardown_stats(struct ixl_softc *sc)
 	evcnt_detach(&isc->isc_tx_size_1023);
 	evcnt_detach(&isc->isc_tx_size_1522);
 	evcnt_detach(&isc->isc_tx_size_big);
+	evcnt_detach(&isc->isc_vsi_rx_discards);
+	evcnt_detach(&isc->isc_vsi_rx_bytes);
+	evcnt_detach(&isc->isc_vsi_rx_unicast);
+	evcnt_detach(&isc->isc_vsi_rx_multicast);
+	evcnt_detach(&isc->isc_vsi_rx_broadcast);
+	evcnt_detach(&isc->isc_vsi_tx_errors);
+	evcnt_detach(&isc->isc_vsi_tx_bytes);
+	evcnt_detach(&isc->isc_vsi_tx_unicast);
+	evcnt_detach(&isc->isc_vsi_tx_multicast);
+	evcnt_detach(&isc->isc_vsi_tx_broadcast);
 
 	evcnt_detach(&sc->sc_event_atq);
 	evcnt_detach(&sc->sc_event_link);
@@ -5980,6 +6036,66 @@ ixl_stats_update(void *xsc)
 	    0, I40E_GLPRT_RJC(sc->sc_port),
 	    &isc->isc_rx_jabber_offset, isc->isc_has_offset);
 	atomic_add_64(&isc->isc_rx_jabber.ev_count, delta);
+
+	/* VSI rx counters */
+	delta = ixl_stat_delta(sc,
+	    0, I40E_GLV_RDPC(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_rx_discards_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_rx_discards.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_GORCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_GORCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_rx_bytes_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_rx_bytes.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_UPRCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_UPRCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_rx_unicast_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_rx_unicast.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_MPRCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_MPRCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_rx_multicast_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_rx_multicast.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_BPRCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_BPRCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_rx_broadcast_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_rx_broadcast.ev_count, delta);
+
+	/* VSI tx counters */
+	delta = ixl_stat_delta(sc,
+	    0, I40E_GLV_TEPC(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_tx_errors_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_tx_errors.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_GOTCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_GOTCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_tx_bytes_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_tx_bytes.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_UPTCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_UPTCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_tx_unicast_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_tx_unicast.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_MPTCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_MPTCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_tx_multicast_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_tx_multicast.ev_count, delta);
+
+	delta = ixl_stat_delta(sc,
+	    I40E_GLV_BPTCH(sc->sc_vsi_stat_counter_idx),
+	    I40E_GLV_BPTCL(sc->sc_vsi_stat_counter_idx),
+	    &isc->isc_vsi_tx_broadcast_offset, isc->isc_has_offset);
+	atomic_add_64(&isc->isc_vsi_tx_broadcast.ev_count, delta);
 }
 
 static int
