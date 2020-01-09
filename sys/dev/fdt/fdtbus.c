@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.29.2.1 2019/10/03 17:23:11 martin Exp $ */
+/* $NetBSD: fdtbus.c,v 1.29.2.2 2020/01/09 17:16:47 snj Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,12 +27,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.29.2.1 2019/10/03 17:23:11 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.29.2.2 2020/01/09 17:16:47 snj Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/device.h>
 #include <sys/kmem.h>
+#include <sys/cpu.h>
 
 #include <sys/bus.h>
 
@@ -120,7 +121,7 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	struct fdt_softc *sc = device_private(self);
 	const struct fdt_attach_args *faa = aux;
 	const int phandle = faa->faa_phandle;
-	const char *descr;
+	const char *descr, *model;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
@@ -140,6 +141,13 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	/* Only the root bus should scan for devices */
 	if (OF_finddevice("/") != faa->faa_phandle)
 		return;
+
+	/* Set hw.model if available */
+	model = fdtbus_get_string(phandle, "compatible");
+	if (model)
+		cpu_setmodel(model);
+	else if (descr)
+		cpu_setmodel(descr);
 
 	/* Scan devices */
 	fdt_rescan(self, NULL, NULL);

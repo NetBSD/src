@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.20.2.2 2019/12/29 09:40:59 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.20.2.3 2020/01/09 17:16:47 snj Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.20.2.2 2019/12/29 09:40:59 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.20.2.3 2020/01/09 17:16:47 snj Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -231,10 +231,14 @@ static void
 cpu_identify(device_t self, struct cpu_info *ci)
 {
 	char model[128];
+	const char *m;
 
 	identify_aarch64_model(ci->ci_id.ac_midr, model, sizeof(model));
-	if (ci->ci_index == 0)
-		cpu_setmodel("%s", model);
+	if (ci->ci_index == 0) { 
+		m = cpu_getmodel();
+		if (m == NULL || *m == 0)
+			cpu_setmodel("%s", model);
+	}
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", model);
