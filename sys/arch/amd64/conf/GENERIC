@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.553 2020/01/01 10:36:43 ryo Exp $
+# $NetBSD: GENERIC,v 1.554 2020/01/09 00:42:24 manu Exp $
 #
 # GENERIC machine description file
 #
@@ -22,11 +22,9 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.553 $"
+#ident		"GENERIC-$Revision: 1.554 $"
 
 maxusers	64		# estimated number of users
-
-#options 	MULTIBOOT	# Multiboot support (see multiboot(8)) 
 
 # delay between "rebooting ..." message and hardware reset, in milliseconds
 #options 	CPURESET_DELAY=2000
