@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.18 2020/01/09 02:55:41 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.19 2020/01/09 08:54:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -108,6 +108,8 @@
 
 #include <dev/pci/if_ixlreg.h>
 #include <dev/pci/if_ixlvar.h>
+
+#include <prop/proplib.h>
 
 struct ixl_softc; /* defined */
 
@@ -715,10 +717,18 @@ do {							\
 #else
 #define DDPRINTF(sc, fmt, args...)	__nothing
 #endif
-#define IXL_NOMSIX	false
 #ifndef IXL_STATS_INTERVAL_MSEC
 #define IXL_STATS_INTERVAL_MSEC	10000
 #endif
+#ifndef IXL_QUEUE_NUM
+#define IXL_QUEUE_NUM		0
+#endif
+
+static bool		 ixl_param_nomsix = false;
+static int		 ixl_param_stats_interval = IXL_STATS_INTERVAL_MSEC;
+static int		 ixl_param_nqps_limit = IXL_QUEUE_NUM;
+static unsigned int	 ixl_param_tx_ndescs = 1024;
+static unsigned int	 ixl_param_rx_ndescs = 1024;
 
 static enum i40e_mac_type
     ixl_mactype(pci_product_id_t);
@@ -1178,10 +1188,15 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto shutdown;
 	}
 
-	sc->sc_nqueue_pairs = sc->sc_nqueue_pairs_max =
-	    MIN((int)sc->sc_nqueue_pairs_device, ncpu);
-	sc->sc_tx_ring_ndescs = 1024;
-	sc->sc_rx_ring_ndescs = 1024;
+	sc->sc_nqueue_pairs_max = MIN((int)sc->sc_nqueue_pairs_device, ncpu);
+	if (ixl_param_nqps_limit > 0) {
+		sc->sc_nqueue_pairs_max = MIN((int)sc->sc_nqueue_pairs_max,
+		    ixl_param_nqps_limit);
+	}
+
+	sc->sc_nqueue_pairs = sc->sc_nqueue_pairs_max;
+	sc->sc_tx_ring_ndescs = ixl_param_tx_ndescs;
+	sc->sc_rx_ring_ndescs = ixl_param_rx_ndescs;
 
 	KASSERT(IXL_TXRX_PROCESS_UNLIMIT > sc->sc_rx_ring_ndescs);
 	KASSERT(IXL_TXRX_PROCESS_UNLIMIT > sc->sc_tx_ring_ndescs);
@@ -5486,7 +5501,7 @@ ixl_setup_interrupts(struct ixl_softc *sc)
 	int counts[PCI_INTR_TYPE_SIZE];
 	int error;
 	unsigned int i;
-	bool retry, nomsix = IXL_NOMSIX;
+	bool retry;
 
 	memset(counts, 0, sizeof(counts));
 	max_type = PCI_INTR_TYPE_MSIX;
@@ -5494,7 +5509,7 @@ ixl_setup_interrupts(struct ixl_softc *sc)
 	counts[PCI_INTR_TYPE_MSIX] = sc->sc_nqueue_pairs_max + 1;
 	counts[PCI_INTR_TYPE_INTX] = 1;
 
-	if (nomsix)
+	if (ixl_param_nomsix)
 		counts[PCI_INTR_TYPE_MSIX] = 0;
 
 	do {
@@ -5712,7 +5727,7 @@ ixl_setup_stats(struct ixl_softc *sc)
 	evcnt_attach_dynamic(&isc->isc_vsi_tx_broadcast, EVCNT_TYPE_MISC,
 	    NULL, device_xname(sc->sc_dev), "Tx broadcast / vsi");
 
-	sc->sc_stats_intval = IXL_STATS_INTERVAL_MSEC;
+	sc->sc_stats_intval = ixl_param_stats_interval;
 	callout_init(&sc->sc_stats_callout, CALLOUT_MPSAFE);
 	callout_setfunc(&sc->sc_stats_callout, ixl_stats_callout, sc);
 	ixl_work_set(&sc->sc_stats_task, ixl_stats_update, sc);
@@ -6354,6 +6369,59 @@ MODULE(MODULE_CLASS_DRIVER, if_ixl, "pci");
 #include "ioconf.c"
 #endif
 
+#ifdef _MODULE
+static void
+ixl_parse_modprop(prop_dictionary_t dict)
+{
+	prop_object_t obj;
+	int64_t val;
+	uint64_t uval;
+
+	if (dict == NULL)
+		return;
+
+	obj = prop_dictionary_get(dict, "nomsix");
+	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_BOOL) {
+		ixl_param_nomsix = prop_bool_true((prop_bool_t)obj);
+	}
+
+	obj = prop_dictionary_get(dict, "stats_interval");
+	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
+		val = prop_number_integer_value((prop_number_t)obj);
+
+		/* the range has no reason */
+		if (100 < val || val < 180000) {
+			ixl_param_stats_interval = val;
+		}
+	}
+
+	obj = prop_dictionary_get(dict, "nqps_limit");
+	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
+		val = prop_number_integer_value((prop_number_t)obj);
+
+		if (val <= INT32_MAX)
+			ixl_param_nqps_limit = val;
+	}
+
+	obj = prop_dictionary_get(dict, "rx_ndescs");
+	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
+		uval = prop_number_unsigned_integer_value((prop_number_t)obj);
+
+		if (uval > 8)
+			ixl_param_rx_ndescs = uval;
+	}
+
+	obj = prop_dictionary_get(dict, "tx_ndescs");
+	if (obj != NULL && prop_object_type(obj) == PROP_TYPE_NUMBER) {
+		uval = prop_number_unsigned_integer_value((prop_number_t)obj);
+
+		if (uval > IXL_TX_PKT_DESCS)
+			ixl_param_tx_ndescs = uval;
+	}
+
+}
+#endif
+
 static int
 if_ixl_modcmd(modcmd_t cmd, void *opaque)
 {
@@ -6362,6 +6430,7 @@ if_ixl_modcmd(modcmd_t cmd, void *opaque)
 #ifdef _MODULE
 	switch (cmd) {
 	case MODULE_CMD_INIT:
+		ixl_parse_modprop((prop_dictionary_t)opaque);
 		error = config_init_component(cfdriver_ioconf_if_ixl,
 		    cfattach_ioconf_if_ixl, cfdata_ioconf_if_ixl);
 		break;
