@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.27 2019/12/11 19:23:37 martin Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.28 2020/01/09 13:22:30 martin Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1152,15 +1152,12 @@ message failed {Nie powiodlo sie}
 message notsupported {Operacja nie jest obslugiwana!}
 message askfsmountadv {Punkt montowania (lub "raid", "cgd" albo "lvm")?}
 message partman {Partycje rozszerzone}
-message editbsdpart {Edytuj partycje NetBSD}
+message edit_parts {Edytuj partycje}
 message editpart {Edytuj partycje}
-message editmbr {Edytuj i zapisz MBR}
-message switchgpt {Przelacz na GPT}
-message switchmbr {Przelacz na MBR}
-message renamedisk {Ustaw nazwe dysku}
+message switch_parts {Switch partitioning scheme}
 message fmtasraid {Formatuj jako RAID}
 message fmtaslvm {Formatuj jak LVM PV}
-message encrypt {Szyfrowanie}
+message encrypt {Szyfrowanie (CGD)}
 message setbootable {Rozruchowy}
 message erase {Bezpieczne kasowanie}
 message undo {Cofanie zmian}

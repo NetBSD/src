@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.12 2019/12/26 04:53:12 msaitoh Exp $	*/
+/*	$NetBSD: partitions.h,v 1.13 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -225,6 +225,12 @@ struct disk_partitioning_scheme {
 	const struct part_type_desc * (*get_fs_part_type)(
 	    enum part_type, unsigned, unsigned);
 	/*
+	 * Optional: inverse to above: given a part_type_desc, set default
+	 * fstype and subtype.
+	 */
+	bool (*get_default_fstype)(const struct part_type_desc *,
+	    unsigned *fstype, unsigned *fs_sub_type);
+	/*
 	 * Create a custom partition type. If the type already exists
 	 * (or there is a collision), the old existing type will be
 	 * returned and no new type created. This is not considered
@@ -322,10 +328,14 @@ struct disk_partitioning_scheme {
 	 * If with_path is true (and the returned value is a device
 	 * node), include the /dev/ prefix in the result string
 	 * (this is ignored when returning NAME= syntax for /etc/fstab).
+	 * If life is true, the device must be made available under
+	 * that name (only makes a difference for NAME=syntax if
+	 * no wedge has been created yet,) - implied for all variants
+	 * where dev_name_usage != logical_name.
 	 */
 	bool (*get_part_device)(const struct disk_partitions*,
 	    part_id, char *devname, size_t max_devname_len, int *part,
-	    enum dev_name_usage, bool with_path);
+	    enum dev_name_usage, bool with_path, bool life);
 
 	/*
 	 * How big could we resize the given position (start of existing
@@ -433,7 +443,7 @@ struct disk_partitioning_scheme {
 	 */
 	struct disk_partitions * (*create_new_for_disk)(const char *,
 	    daddr_t start, daddr_t len, daddr_t disk_total_size,
-	    bool is_boot_drive);
+	    bool is_boot_drive, struct disk_partitions *parent);
 
 	/*
 	 * Optional: this scheme may be used to boot from the given disk

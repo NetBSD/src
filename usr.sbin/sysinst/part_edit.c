@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.13 2019/11/16 15:50:45 joerg Exp $ */
+/*	$NetBSD: part_edit.c,v 1.14 2020/01/09 13:22:30 martin Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -1376,7 +1376,12 @@ select_part_scheme(
 
 	for (used = 0, ndx = 0; ndx < num_available_part_schemes; ndx++) {
 		p = available_part_schemes[ndx];
-		if (skip != NULL && p == skip)
+		/*
+		 * Do not match exactly, we want to skip all lookalikes
+		 * too (only_disklabel_parts vs. disklabel_parts)
+		 */
+		if (skip != NULL &&
+		    p->create_new_for_disk == skip->create_new_for_disk)
 			continue;
 		if (bootable && p->have_boot_support != NULL &&
 		    !p->have_boot_support(dev->diskdev))
