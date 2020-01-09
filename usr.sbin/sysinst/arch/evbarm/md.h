@@ -1,4 +1,4 @@
-/*	$NetBSD: md.h,v 1.3 2019/10/02 11:16:02 maya Exp $	*/
+/*	$NetBSD: md.h,v 1.4 2020/01/09 17:06:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -76,8 +76,9 @@
 #define DISKLABEL_CMD "disklabel -w -r"
 
 /* Special board type routines need a switch */
-#define BOARD_TYPE_NORMAL	0
-#define BOARD_TYPE_RPI		1
+#define BOARD_TYPE_NORMAL	0	/* assume u-boot */
+#define BOARD_TYPE_RPI		1	/* RPi firmware booted us */
+#define	BOARD_TYPE_ACPI		2	/* generic SBSA machine */
 int boardtype;
 
 /*
