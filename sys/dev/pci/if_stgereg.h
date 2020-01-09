@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stgereg.h,v 1.7 2019/12/26 15:23:11 msaitoh Exp $	*/
+/*	$NetBSD: if_stgereg.h,v 1.8 2020/01/09 10:54:16 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -43,6 +43,23 @@
  * Note that while DMA addresses are all in 64-bit fields, only
  * the lower 40 bits of a DMA address are valid.
  */
+
+/*
+ * Register access macros
+ */
+#define CSR_WRITE_4(_sc, reg, val)	\
+	bus_space_write_4((_sc)->sc_st, (_sc)->sc_sh, (reg), (val))
+#define CSR_WRITE_2(_sc, reg, val)	\
+	bus_space_write_2((_sc)->sc_st, (_sc)->sc_sh, (reg), (val))
+#define CSR_WRITE_1(_sc, reg, val)	\
+	bus_space_write_1((_sc)->sc_st, (_sc)->sc_sh, (reg), (val))
+
+#define CSR_READ_4(_sc, reg)		\
+	bus_space_read_4((_sc)->sc_st, (_sc)->sc_sh, (reg))
+#define CSR_READ_2(_sc, reg)		\
+	bus_space_read_2((_sc)->sc_st, (_sc)->sc_sh, (reg))
+#define CSR_READ_1(_sc, reg)		\
+	bus_space_read_1((_sc)->sc_st, (_sc)->sc_sh, (reg))
 
 /*
  * TC9021 buffer fragment descriptor.
@@ -490,6 +507,10 @@ struct stge_control_data {
 	struct stge_rfd scd_rxdescs[STGE_NRXDESC];
 };
 
+#define	STGE_CDOFF(x)	offsetof(struct stge_control_data, x)
+#define	STGE_CDTXOFF(x)	STGE_CDOFF(scd_txdescs[(x)])
+#define	STGE_CDRXOFF(x)	STGE_CDOFF(scd_rxdescs[(x)])
+
 /*
  * Software state for transmit and receive jobs.
  */
@@ -577,5 +598,20 @@ struct stge_softc {
 	uint16_t sc_ReceiveMode;	/* prototype ReceiveMode register */
 	uint8_t sc_PhyCtrl;		/* prototype PhyCtrl register */
 };
+
+#define	STGE_RXCHAIN_RESET(sc)						\
+do {									\
+	(sc)->sc_rxtailp = &(sc)->sc_rxhead;				\
+	*(sc)->sc_rxtailp = NULL;					\
+	(sc)->sc_rxlen = 0;						\
+} while (/*CONSTCOND*/0)
+
+#define	STGE_RXCHAIN_LINK(sc, m)					\
+do {									\
+	*(sc)->sc_rxtailp = (sc)->sc_rxtail = (m);			\
+	(sc)->sc_rxtailp = &(m)->m_next;				\
+} while (/*CONSTCOND*/0)
+
+#define STGE_TIMEOUT	1000
 
 #endif /* _DEV_PCI_IF_STGEREG_H_ */
