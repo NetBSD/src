@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.2.2.3 2019/12/17 12:32:52 martin Exp $ */
+/* $NetBSD: rk_vop.c,v 1.2.2.4 2020/01/09 11:16:53 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2.2.3 2019/12/17 12:32:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2.2.4 2020/01/09 11:16:53 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -266,6 +266,27 @@ static const struct drm_crtc_funcs rk_vop_crtc_funcs = {
 static void
 rk_vop_dpms(struct drm_crtc *crtc, int mode)
 {
+	struct rk_vop_crtc *mixer_crtc = to_rk_vop_crtc(crtc);
+	struct rk_vop_softc * const sc = mixer_crtc->sc;
+	uint32_t val;
+
+	val = RD4(sc, VOP_SYS_CTRL);
+
+	switch (mode) {
+	case DRM_MODE_DPMS_ON:
+		val &= ~VOP_STANDBY_EN;
+		break;
+	case DRM_MODE_DPMS_STANDBY:
+	case DRM_MODE_DPMS_SUSPEND:
+	case DRM_MODE_DPMS_OFF:
+		val |= VOP_STANDBY_EN;
+		break;
+	}
+
+	WR4(sc, VOP_SYS_CTRL, val);
+
+	/* Commit settings */
+	WR4(sc, VOP_REG_CFG_DONE, REG_LOAD_EN);
 }
 
 static bool
