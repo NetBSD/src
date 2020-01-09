@@ -1,4 +1,4 @@
-/*	$NetBSD: ptrace.h,v 1.24 2020/01/08 17:21:38 mgorny Exp $	*/
+/*	$NetBSD: ptrace.h,v 1.25 2020/01/09 10:46:31 kamil Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -159,6 +159,7 @@
 	{ DT_REG, N("xmmregs"), Pmachdep_xmmregs,			\
 	  procfs_machdep_validxmmregs },
 
+#define PT32_GETXSTATE		PT_GETXSTATE
 #define COREDUMP_MACHDEP_LWP_NOTES(l, ns, name)				\
 {									\
 	struct xstate xstate;						\
