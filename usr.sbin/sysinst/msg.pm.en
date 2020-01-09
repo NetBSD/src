@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.pm.en,v 1.1 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: msg.pm.en,v 1.2 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,6 @@
 
 message fillzeros {Fill with zeros}
 message fillrandom {Fill with random data}
-message fillcrypto {Fill with crypto data}
 message raid0 {0 - No parity, simple striping.}
 message raid1 {1 - Mirroring.  The parity is the mirror.}
 message raid4 {4 - Striping with parity stored on the last component.}
@@ -47,7 +46,7 @@ Device is blocked.  Editing it may cause problems.
 Do you want to force unblock it and continue?}
 message wannatry {Do you want to try?}
 message create_cgd {Create cryptographic volume (CGD)}
-message create_cnd {Create virtual disk image (VND)}
+message create_vnd {Create virtual disk image (VND)}
 message create_vg {Create volume group (LVM VG)}
 message create_lv {Create logical volume}
 message create_raid {Create software RAID}
@@ -55,7 +54,6 @@ message updpmlist {Update device list}
 message savepm {Save changes}
 message pmblocked {BLOCKED}
 message pmunchanged {UNCHANGED}
-message pmsetboot {BOOT}
 message pmused {USED}
 message pmmounted {(mounted)}
 message pmunused {(unused)}
