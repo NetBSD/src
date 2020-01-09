@@ -16,4 +16,4 @@ export PATH
 		fi
 	done
 
-	sysinst
+	sysinst || stty sane
