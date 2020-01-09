@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.8 2003/07/26 17:06:50 salo Exp $
+# $NetBSD: dot.profile,v 1.9 2020/01/09 19:17:43 martin Exp $
 #
 # Copyright (c) 1995 Jason R. Thorpe
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -82,7 +82,7 @@ EOF
 			i*|I*|u*|U*)
 				# setup a writable /tmp directory
 				mount_mfs swap /tmp || continue
-				/sysinst
+				/sysinst || stty sane
 				;;
 
 			oi*|OI*)
