@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.11 2020/01/09 13:22:31 martin Exp $ */
+/*	$NetBSD: md.c,v 1.12 2020/01/09 17:06:46 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include "defs.h"
 #include "md.h"
@@ -50,18 +51,31 @@
 
 int boardtype = BOARD_TYPE_NORMAL;
 
+#define	SBSA_MODEL_STR	"netbsd,generic-acpi"
+#define	RPI_MODEL_STR	"raspberrypi,"
+
 void
 md_init(void)
 {
-	int rv;
+	static const int mib[2] = {CTL_HW, HW_MODEL};
+	size_t len;
+	char *cpu_model;
 
-	rv =run_program(RUN_SILENT|RUN_ERROR_OK, "sh -c 'ofctl -p / model | "
-	    "fgrep \"Raspberry Pi\"'");
-	if (rv != 0)
-		return;
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	cpu_model = malloc(len);
+	sysctl(mib, 2, cpu_model, &len, NULL, 0);
 
-	/* this is some kind of Raspberry Pi */
-	boardtype = BOARD_TYPE_RPI;
+	if (strstr(cpu_model, RPI_MODEL_STR) != NULL)
+		/* this is some kind of Raspberry Pi */
+		boardtype = BOARD_TYPE_RPI;
+	else if (strstr(cpu_model, SBSA_MODEL_STR) != NULL)
+		/* some SBSA compatible machine */
+		boardtype = BOARD_TYPE_ACPI;
+	else
+		/* unknown, assume u-boot + dtb */
+		boardtype = BOARD_TYPE_NORMAL;
+
+	free(cpu_model);
 }
 
 void
