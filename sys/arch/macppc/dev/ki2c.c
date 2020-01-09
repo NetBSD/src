@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.28 2020/01/09 18:47:46 macallan Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.29 2020/01/09 18:49:06 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -35,6 +35,7 @@
 #include <dev/ofw/openfirm.h>
 #include <machine/autoconf.h>
 
+#include "opt_ki2c.h"
 #include <macppc/dev/ki2cvar.h>
 
 #ifdef KI2C_DEBUG

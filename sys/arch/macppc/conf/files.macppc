@@ -1,4 +1,4 @@
-#	$NetBSD: files.macppc,v 1.112 2019/11/01 17:51:56 macallan Exp $
+#	$NetBSD: files.macppc,v 1.113 2020/01/09 18:49:06 macallan Exp $
 #
 # macppc-specific configuration info
 
@@ -287,6 +287,7 @@ file arch/macppc/macppc/rbus_machdep.c		cardbus
 device ki2c: i2cbus, ki2c
 attach ki2c at obio, uni_n
 file arch/macppc/dev/ki2c.c			ki2c
+defflag opt_ki2c.h	KI2C_DEBUG
 
 # snapper audio
 device snapper: audiobus
