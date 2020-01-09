@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.24 2020/01/09 13:22:30 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.25 2020/01/09 19:51:49 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1743,10 +1743,13 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 				return NULL;
 		}
 
-		if (!force_empty)
+		if (!force_empty) {
 			myparts->dlabel = disklabel_parts.read_from_disk(
 			    myparts->dp.disk, part.start, part.size,
 			    &disklabel_parts);
+			if (myparts->dlabel != NULL)
+				myparts->dlabel->parent = &myparts->dp;
+		}
 
 		if (myparts->dlabel == NULL && part.size > 0) {
 			/* we just created the outer partitions? */
