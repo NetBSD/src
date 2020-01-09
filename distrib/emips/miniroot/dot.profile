@@ -1,4 +1,4 @@
-#	$NetBSD: dot.profile,v 1.1 2011/01/26 01:18:44 pooka Exp $
+#	$NetBSD: dot.profile,v 1.2 2020/01/09 19:17:41 martin Exp $
 PATH=/sbin:/bin:/usr/bin:/usr/sbin:/
 export PATH
 
@@ -17,4 +17,4 @@ export PATH
 		fi
 	done
 
-	sysinst
+	sysinst || stty sane

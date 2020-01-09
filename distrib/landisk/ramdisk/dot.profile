@@ -59,5 +59,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -u $ROOTDEV /
 
 	# run the installation program
-	sysinst
+	sysinst || stty sane
 fi
