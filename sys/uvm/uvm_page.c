@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.221 2020/01/05 22:01:09 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.222 2020/01/09 16:35:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.221 2020/01/05 22:01:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.222 2020/01/09 16:35:03 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -921,13 +921,7 @@ uvm_page_rebucket(void)
 	 * packages evenly.  uvm_pagefree() will reassign pages to the
 	 * freeing CPU's preferred bucket on free.
 	 */
-	npackage = 0;
-	ci = curcpu();
-	ci2 = ci;
-	do {
-		npackage++;
-		ci2 = ci2->ci_sibling[CPUREL_PEER];
-	} while (ci2 != ci);
+	npackage = curcpu()->ci_nsibling[CPUREL_PACKAGE1ST];
 	
 	/*
 	 * Figure out how to arrange the packages & buckets, and the total
@@ -944,7 +938,7 @@ uvm_page_rebucket(void)
  	 */
  	npackage = 0;
 	ci = curcpu();
-	ci2 = ci;
+	ci2 = ci->ci_sibling[CPUREL_PACKAGE1ST];
 	do {
 		/*
 		 * In the inner loop, scroll through all CPUs in the package
@@ -956,8 +950,8 @@ uvm_page_rebucket(void)
 			ci3 = ci3->ci_sibling[CPUREL_PACKAGE];
 		} while (ci3 != ci2);
 		npackage++;
-		ci2 = ci2->ci_sibling[CPUREL_PEER];
-	} while (ci2 != ci);
+		ci2 = ci2->ci_sibling[CPUREL_PACKAGE1ST];
+	} while (ci2 != ci->ci_sibling[CPUREL_PACKAGE1ST]);
 
 	aprint_debug("UVM: using package allocation scheme, "
 	    "%d package(s) per bucket\n", 1 << shift);
