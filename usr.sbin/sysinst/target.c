@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.10 2019/08/07 10:08:04 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.11 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.10 2019/08/07 10:08:04 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.11 2020/01/09 13:22:30 martin Exp $");
 #endif
 
 /*
@@ -192,7 +192,7 @@ target_already_root(void)
 		if (!is_root_part_mount(info.last_mounted))
 			continue;
 		if (!parts->pscheme->get_part_device(parts, ptn,
-		    dev, sizeof dev, &rootpart, plain_name, false))
+		    dev, sizeof dev, &rootpart, plain_name, false, true))
 			continue;
 
 		last_res = is_active_rootpart(dev, rootpart);

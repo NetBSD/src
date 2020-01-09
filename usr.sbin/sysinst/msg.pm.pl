@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.pm.pl,v 1.1 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: msg.pm.pl,v 1.2 2020/01/09 13:22:30 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -36,7 +36,6 @@
 
 message fillzeros {Wype³nij zerami}
 message fillrandom {Wype³nij losowymi danymi}
-message fillcrypto {Wype³nij przez crypto danych}
 message raid0 {0 - brak parzysto¶ci, tylko proste rozk³adanie.}
 message raid1 {1 - Mirroring. Parytet jest lustro.}
 message raid4 {4 - Malowanie z parytetu przechowywanych w ostatniej czê¶ci.}
@@ -45,7 +44,7 @@ message raid5 {5 - Malowanie z parytetu w tych wszystkich elementów.}
 message wannaunblock {Urz±dzenie jest zablokowane. Czy chcesz, aby zmusiæ go odblokowaæ i kontynuowaæ?}
 message wannatry {Czy chcesz spróbowaæ?}
 message create_cgd {Utwórz wolumen kryptograficznych (CGD)}
-message create_cnd {Utwórz wirtualnego obraz dysku (VND)}
+message create_vnd {Utwórz wirtualnego obraz dysku (VND)}
 message create_vg {Utwórz grupê woluminów (LVM VG)}
 message create_lv {Utwórz wolumin logiczny}
 message create_raid {Utwórz oprogramowania RAID}
@@ -53,7 +52,6 @@ message updpmlist {Aktualizuj listê urz±dzeñ}
 message savepm {Zapisz zmiany}
 message pmblocked {ZABLOK.}
 message pmunchanged {BEZ ZMIAN}
-message pmsetboot {BOOT}
 message pmused {U¯YWANE}
 message pmmounted {(zamontowany)}
 message pmunused {(nieu¿ywany)}
