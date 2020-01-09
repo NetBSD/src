@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_subr.c,v 1.44 2019/12/31 13:07:11 ad Exp $	*/
+/*	$NetBSD: cpu_subr.c,v 1.45 2020/01/09 16:35:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.44 2019/12/31 13:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_subr.c,v 1.45 2020/01/09 16:35:03 ad Exp $");
 
 #include "opt_cputype.h"
 #include "opt_ddb.h"
@@ -189,7 +189,7 @@ cpu_info_alloc(struct pmap_tlb_info *ti, cpuid_t cpu_id, cpuid_t cpu_package_id,
 	ci->ci_divisor_recip = cpu_info_store.ci_divisor_recip;
 	ci->ci_cpuwatch_count = cpu_info_store.ci_cpuwatch_count;
 
-	cpu_topology_set(ci, cpu_package_id, cpu_core_id, cpu_smt_id, 0);
+	cpu_topology_set(ci, cpu_package_id, cpu_core_id, cpu_smt_id, 0, false);
 
 	pmap_md_alloc_ephemeral_address_space(ci);
 
