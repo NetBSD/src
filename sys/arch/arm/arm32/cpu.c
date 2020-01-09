@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.137 2020/01/08 18:47:43 jmcneill Exp $	*/
+/*	$NetBSD: cpu.c,v 1.138 2020/01/09 16:23:42 martin Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.137 2020/01/08 18:47:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2020/01/09 16:23:42 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -679,6 +679,7 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	const uint32_t arm_cpuid = ci->ci_arm_cpuid;
 	const char * const xname = device_xname(dv);
 	char model[128];
+	const char *m;
 
 	if (arm_cpuid == 0) {
 		aprint_error("Processor failed probe - no CPU ID\n");
@@ -688,7 +689,9 @@ identify_arm_cpu(device_t dv, struct cpu_info *ci)
 	const enum cpu_class cpu_class = identify_arm_model(arm_cpuid,
 	     model, sizeof(model));
 	if (ci->ci_cpuid == 0) {
-		cpu_setmodel("%s", model);
+		m = cpu_getmodel();
+		if (m == NULL || *m == 0)
+			cpu_setmodel("%s", model);
 	}
 
 	if (ci->ci_data.cpu_cc_freq != 0) {
