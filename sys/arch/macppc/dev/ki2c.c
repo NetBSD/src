@@ -1,4 +1,4 @@
-/*	$NetBSD: ki2c.c,v 1.27 2019/12/22 23:23:30 thorpej Exp $	*/
+/*	$NetBSD: ki2c.c,v 1.28 2020/01/09 18:47:46 macallan Exp $	*/
 /*	Id: ki2c.c,v 1.7 2002/10/05 09:56:05 tsubai Exp	*/
 
 /*-
@@ -83,7 +83,7 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	struct confargs *ca = aux;
 	int node = ca->ca_node;
 	uint32_t addr, channel, reg;
-	int rate, child, /*namelen,*/ i2cbus;
+	int rate, child, /*namelen,*/ i2cbus[2] = {0, 0};
 	struct i2cbus_attach_args iba;
 	prop_dictionary_t dict = device_properties(self);
 	prop_array_t cfg;
@@ -138,59 +138,63 @@ ki2c_attach(device_t parent, device_t self, void *aux)
 	 * XXX
 	 * should probably check for multiple i2c-bus children
 	 */
-	i2cbus = 0;
+
+	int found_busnode = 0;
 	channel = 0;
 	child = OF_child(node);
-	while ((child != 0) && (i2cbus == 0)) {
+	while (child != 0) {
 		OF_getprop(child, "name", name, sizeof(name));
 		if (strcmp(name, "i2c-bus") == 0) {
 			OF_getprop(child, "reg", &channel, sizeof(channel));
-			i2cbus = child;
+			i2cbus[channel] = child;
 			DPRINTF("found channel %x\n", channel);
+			found_busnode = 1;
 		}
 		child = OF_peer(child);
 	}
-	if (i2cbus == 0) 
-		i2cbus = node;
+	if (found_busnode == 0) 
+		i2cbus[0] = node;
 
-	devs = OF_child(i2cbus);
-	while (devs != 0) {
-		if (OF_getprop(devs, "name", name, 32) <= 0)
-			goto skip;
-		if (OF_getprop(devs, "compatible", compat, 256) <= 0) {
-			/* some i2c device nodes don't have 'compatible' */
-			memset(compat, 0, 256);
-			strncpy(compat, name, 256);
-		} 
-		if (OF_getprop(devs, "reg", &addr, 4) <= 0)
-			if (OF_getprop(devs, "i2c-address", &addr, 4) <= 0)
+	for (channel = 0; channel < 2; channel++) {
+		devs = OF_child(i2cbus[channel]);
+		while (devs != 0) {
+			if (OF_getprop(devs, "name", name, 32) <= 0)
 				goto skip;
-		addr |= channel << 8;
-		addr = addr >> 1;
-		DPRINTF("-> %s@%x\n", name, addr);
-		dev = prop_dictionary_create();
-		prop_dictionary_set_cstring(dev, "name", name);
-		data = prop_data_create_data(compat, strlen(compat)+1);
-		prop_dictionary_set(dev, "compatible", data);
-		prop_object_release(data);
-		prop_dictionary_set_uint32(dev, "addr", addr);
-		prop_dictionary_set_uint64(dev, "cookie", devs);
-		/* look for location info for sensors */
-		devc = OF_child(devs);
-		while (devc != 0) {
-			if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
-			if (OF_getprop(devc, "location", descr, 32) <= 0)
-				goto nope;
-			DPRINTF("found '%s' at %02x\n", descr, reg);
-			snprintf(num, 7, "s%02x", reg);
-			prop_dictionary_set_cstring(dev, num, descr);
-		nope:
-			devc = OF_peer(devc);
+			if (OF_getprop(devs, "compatible", compat, 256) <= 0) {
+				/* some i2c device nodes don't have 'compatible' */
+				memset(compat, 0, 256);
+				strncpy(compat, name, 256);
+			} 
+			if (OF_getprop(devs, "reg", &addr, 4) <= 0)
+				if (OF_getprop(devs, "i2c-address", &addr, 4) <= 0)
+					goto skip;
+			addr |= channel << 8;
+			addr = addr >> 1;
+			DPRINTF("-> %s@%x\n", name, addr);
+			dev = prop_dictionary_create();
+			prop_dictionary_set_cstring(dev, "name", name);
+			data = prop_data_create_data(compat, strlen(compat)+1);
+			prop_dictionary_set(dev, "compatible", data);
+			prop_object_release(data);
+			prop_dictionary_set_uint32(dev, "addr", addr);
+			prop_dictionary_set_uint64(dev, "cookie", devs);
+			/* look for location info for sensors */
+			devc = OF_child(devs);
+			while (devc != 0) {
+				if (OF_getprop(devc, "reg", &reg, 4) < 4) goto nope;
+				if (OF_getprop(devc, "location", descr, 32) <= 0)
+					goto nope;
+				DPRINTF("found '%s' at %02x\n", descr, reg);
+				snprintf(num, 7, "s%02x", reg);
+				prop_dictionary_set_cstring(dev, num, descr);
+			nope:
+				devc = OF_peer(devc);
+			}
+			prop_array_add(cfg, dev);
+			prop_object_release(dev);
+		skip:
+			devs = OF_peer(devs);
 		}
-		prop_array_add(cfg, dev);
-		prop_object_release(dev);
-	skip:
-		devs = OF_peer(devs);
 	}
 
 	/* fill in the i2c tag */
@@ -405,6 +409,7 @@ ki2c_i2c_exec(void *cookie, i2c_op_t op, i2c_addr_t addr, const void *vcmd,
 
 	/* we handle the subaddress stuff ourselves */
 	ki2c_setmode(sc, channel | I2C_STDMODE);	
+	ki2c_setspeed(sc, I2C_50kHz);
 
 	/* Write-buffer defaults to vcmd */
 	wp = (uint8_t *)(__UNCONST(vcmd));
