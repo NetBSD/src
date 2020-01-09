@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.335 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.336 2020/01/09 16:35:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.335 2020/01/08 17:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.336 2020/01/09 16:35:03 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -579,6 +579,8 @@ mi_switch(lwp_t *l)
 		l->l_stat = LSRUN;
 		lwp_setlock(l, spc->spc_mutex);
 		sched_enqueue(l);
+		sched_preempted(l);
+
 		/*
 		 * Handle migration.  Note that "migrating LWP" may
 		 * be reset here, if interrupt/preemption happens

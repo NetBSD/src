@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.12 2019/12/20 21:05:33 ad Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.13 2020/01/09 16:35:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.12 2019/12/20 21:05:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.13 2020/01/09 16:35:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -97,13 +97,15 @@ aarch64_gettopology(struct cpu_info * const ci, uint64_t mpidr)
 		    __SHIFTOUT(mpidr, MPIDR_AFF2),
 		    __SHIFTOUT(mpidr, MPIDR_AFF1),
 		    __SHIFTOUT(mpidr, MPIDR_AFF0),
-		    0);
+		    0,
+		    false);
 	} else {
 		cpu_topology_set(ci,
 		    __SHIFTOUT(mpidr, MPIDR_AFF1),
 		    __SHIFTOUT(mpidr, MPIDR_AFF0),
 		    0,
-		    0);
+		    0,
+		    false);
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.138 2020/01/09 16:23:42 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.139 2020/01/09 16:35:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -46,7 +46,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.138 2020/01/09 16:23:42 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.139 2020/01/09 16:35:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -143,13 +143,15 @@ cpu_attach(device_t dv, cpuid_t id)
 		    __SHIFTOUT(id, MPIDR_AFF2),
 		    __SHIFTOUT(id, MPIDR_AFF1),
 		    __SHIFTOUT(id, MPIDR_AFF0),
-		    0);
+		    0,
+		    false);
 	} else {
 		cpu_topology_set(ci,
 		    __SHIFTOUT(id, MPIDR_AFF1),
 		    __SHIFTOUT(id, MPIDR_AFF0),
 		    0,
-		    0);
+		    0,
+		    false);
 	}
 
 	evcnt_attach_dynamic(&ci->ci_arm700bugcount, EVCNT_TYPE_MISC,

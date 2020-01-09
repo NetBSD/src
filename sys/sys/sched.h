@@ -1,7 +1,7 @@
-/*	$NetBSD: sched.h,v 1.85 2020/01/06 10:21:21 martin Exp $	*/
+/*	$NetBSD: sched.h,v 1.86 2020/01/09 16:35:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
+ * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -182,8 +182,10 @@ struct schedstate_percpu {
 #define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
 #define	SPCF_RUNNING		0x0008	/* CPU is running */
 #define	SPCF_NOINTR		0x0010	/* shielded from interrupts */
-#define	SPCF_SMTPRIMARY		0x0020	/* CPU is first thread in core */
-#define	SPCF_IDLE		0x0040	/* CPU is currently idle */
+#define	SPCF_IDLE		0x0020	/* CPU is currently idle */
+#define	SPCF_1STCLASS		0x0040	/* first class scheduling entity */
+#define	SPCF_CORE1ST		0x0100	/* first CPU in core */
+#define	SPCF_PACKAGE1ST		0x0200	/* first CPU in package */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
@@ -235,6 +237,7 @@ void		sched_pstats_hook(struct lwp *, int);
 bool		sched_curcpu_runnable_p(void);
 void		sched_dequeue(struct lwp *);
 void		sched_enqueue(struct lwp *);
+void		sched_preempted(struct lwp *);
 void		sched_resched_cpu(struct cpu_info *, pri_t, bool);
 void		sched_resched_lwp(struct lwp *, bool);
 struct lwp *	sched_nextlwp(void);
