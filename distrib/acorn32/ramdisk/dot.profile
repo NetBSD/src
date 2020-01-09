@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.3 2003/07/26 17:06:25 salo Exp $
+# $NetBSD: dot.profile,v 1.4 2020/01/09 19:17:40 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -60,5 +60,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t kernfs /kern /kern
 
 	# run the installation or upgrade script.
-	sysinst
+	sysinst || stty sane
 fi
