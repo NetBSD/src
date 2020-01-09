@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.157 2020/01/08 11:52:24 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.158 2020/01/09 11:17:46 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7640,4 +7640,9 @@ sys/dev/ic/gem.c				1.124
 
 	Fix error path in gem(4)'s TX checksum offload.
 	[msaitoh, ticket #610]
+
+sys/arch/arm/rockchip/rk_vop.c			1.6
+
+	Fix pinebook pro display backlight dpms off.
+	[mrg, ticket #613]
 
