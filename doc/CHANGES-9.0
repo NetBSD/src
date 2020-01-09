@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.158 2020/01/09 11:17:46 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.159 2020/01/09 17:18:43 snj Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7645,4 +7645,14 @@ sys/arch/arm/rockchip/rk_vop.c			1.6
 
 	Fix pinebook pro display backlight dpms off.
 	[mrg, ticket #613]
+
+sys/arch/aarch64/aarch64/cpu.c			1.32
+sys/arch/arm/arm32/cpu.c			1.138
+sys/dev/fdt/fdtbus.c				1.31
+
+	When attaching the first fdtbus, use the root "comptabile" (or
+	failing that: "model") property to set the cpu model (in userland
+	aka sysctl hw.model).  When attaching the first cpu, do not
+	overwrite a cpu model if it already had been set.
+	[martin, ticket #614]
 
