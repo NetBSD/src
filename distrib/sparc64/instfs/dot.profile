@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.7 2012/06/03 21:42:45 joerg Exp $
+# $NetBSD: dot.profile,v 1.8 2020/01/09 19:17:45 martin Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -98,7 +98,7 @@ EOM
 	mount -t ffs -u /kern/rootdev /
 
 	# run the installation or upgrade script.
-	sysinst
+	sysinst || stty sane
 	if [ $? = 4 ]; then
 		echo "Oops, something went wrong - we will try again"
 		exit
