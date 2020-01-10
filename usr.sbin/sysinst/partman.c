@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.46 2020/01/09 13:22:30 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.47 2020/01/10 12:55:14 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -3299,6 +3299,7 @@ pm_whole_disk(struct part_entry *pe, int t)
 		break;
 	default:
 		assert(false); 
+		return NO_PART;
 	}
 	info.nat_type = parts->pscheme->get_fs_part_type(PT_root, fst, 0);
 	if (info.nat_type != NULL && parts->pscheme->get_default_fstype != NULL)
