@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.94 2020/01/09 10:43:45 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.95 2020/01/10 21:32:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -358,8 +358,6 @@ int uvm_direct_process(struct vm_page **, u_int, voff_t, vsize_t,
 /*
  * macros
  */
-
-#define UVM_PAGE_TREE_PENALTY	4	/* XXX: a guess */
 
 #define VM_PAGE_TO_PHYS(entry)	uvm_vm_page_to_phys(entry)
 
