@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.28 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.29 2020/01/10 10:47:35 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -797,8 +797,8 @@ disklabel_get_free_spaces_internal(const struct
 	size_t cnt = 0, i;
 	daddr_t s, e, from, size, end_of_disk;
 
-	if (start <= parts->dp.disk_start+LABELSECTOR)
-		start = parts->dp.disk_start+LABELSECTOR+1;
+	if (start < parts->dp.disk_start)
+		start = parts->dp.disk_start;
 	if (min_space_size < 1)
 		min_space_size = 1;
 	if (align > 1 && (start % align) != 0)
@@ -965,6 +965,24 @@ disklabel_get_part_device(const struct disk_partitions *arg,
 	return false;
 }
 
+/*
+ * If the requested partition file system type internally skips
+ * the disk label sector, we can allow it to start at the beginning
+ * of the disk. In most cases though we have to move the partition
+ * to start past the label sector.
+ */
+static bool
+need_to_skip_past_label(const struct disk_part_info *info)
+{
+	switch (info->fs_type) {
+	case FS_BSDFFS:
+	case FS_RAID:
+		return false;
+	}
+
+	return true;
+}
+
 static part_id
 disklabel_add_partition(struct disk_partitions *arg,
     const struct disk_part_info *info, const char **err_msg)
@@ -981,6 +999,14 @@ disklabel_add_partition(struct disk_partitions *arg,
 		if (err_msg)
 			*err_msg = msg_string(MSG_No_free_space);
 		return NO_PART;
+	}
+	if (space.start <= (parts->dp.disk_start + LABELSECTOR) &&
+	    need_to_skip_past_label(info)) {
+		daddr_t new_start = roundup(parts->dp.disk_start + LABELSECTOR,
+		    parts->ptn_alignment);
+		daddr_t off = new_start - space.start;
+		space.start += off;
+		space.size -= off;
 	}
 	if (data.size > space.size)
 		data.size = space.size;
