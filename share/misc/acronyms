@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.291 2019/12/23 23:31:18 sevan Exp $
+$NetBSD: acronyms,v 1.292 2020/01/10 16:18:21 leot Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -601,6 +601,7 @@ WIBNI	wouldn't it be nice if
 WIP	work in progress
 WMNC	watch me not care
 WOMBAT	waste of money, brain, and time
+WP	well played
 WRR	weighted round robin
 WRT	with respect to
 WTB	{waiting,want,willing} to buy
