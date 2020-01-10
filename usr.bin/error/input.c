@@ -1,4 +1,4 @@
-/*	$NetBSD: input.c,v 1.17 2011/07/18 21:46:15 christos Exp $	*/
+/*	$NetBSD: input.c,v 1.18 2020/01/10 18:35:29 christos Exp $	*/
 
 /*
  * Copyright (c) 1980, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)input.c	8.1 (Berkeley) 6/6/93";
 #endif
-__RCSID("$NetBSD: input.c,v 1.17 2011/07/18 21:46:15 christos Exp $");
+__RCSID("$NetBSD: input.c,v 1.18 2020/01/10 18:35:29 christos Exp $");
 #endif /* not lint */
 
 #include <stdio.h>
@@ -71,15 +71,13 @@ eaterrors(int *r_errorc, Eptr **r_errorv)
 {
 	Errorclass errorclass = C_SYNC;
 	char *line;
-	const char *inbuffer;
 	size_t inbuflen;
 
     for (;;) {
-	if ((inbuffer = fgetln(errorfile, &inbuflen)) == NULL)
+	line = NULL;
+	inbuflen = 0;
+	if (getline(&line, &inbuflen, errorfile) == -1)
 		break;
-	line = Calloc(inbuflen + 1, sizeof(char));
-	memcpy(line, inbuffer, inbuflen);
-	line[inbuflen] = '\0';
 	wordvbuild(line, &cur_wordc, &cur_wordv);
 
 	/*
