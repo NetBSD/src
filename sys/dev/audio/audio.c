@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.40 2020/01/11 04:06:13 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.41 2020/01/11 04:53:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.40 2020/01/11 04:06:13 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.41 2020/01/11 04:53:10 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -463,6 +463,9 @@ audio_track_bufstat(audio_track_t *track, struct audio_track_debugbuf *buf)
 int audio_idle_timeout = 30;
 #endif
 
+/* Number of elements of async mixer's pid */
+#define AM_CAPACITY	(4)
+
 struct portname {
 	const char *name;
 	int mask;
@@ -604,7 +607,8 @@ static void mixer_init(struct audio_softc *);
 static int mixer_open(dev_t, struct audio_softc *, int, int, struct lwp *);
 static int mixer_close(struct audio_softc *, audio_file_t *);
 static int mixer_ioctl(struct audio_softc *, u_long, void *, int, struct lwp *);
-static void mixer_remove(struct audio_softc *);
+static void mixer_async_add(struct audio_softc *, pid_t);
+static void mixer_async_remove(struct audio_softc *, pid_t);
 static void mixer_signal(struct audio_softc *);
 
 static int au_portof(struct audio_softc *, char *, int);
@@ -878,6 +882,9 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_blk_ms = AUDIO_BLK_MS;
 	SLIST_INIT(&sc->sc_files);
 	cv_init(&sc->sc_exlockcv, "audiolk");
+	sc->sc_am_capacity = 0;
+	sc->sc_am_used = 0;
+	sc->sc_am = NULL;
 
 	mutex_enter(sc->sc_lock);
 	sc->sc_props = hw_if->get_props(sc->hw_hdl);
@@ -1283,6 +1290,8 @@ audiodetach(device_t self, int flags)
 		kmem_free(sc->sc_rmixer, sizeof(*sc->sc_rmixer));
 	}
 	mutex_exit(sc->sc_lock);
+	if (sc->sc_am)
+		kern_free(sc->sc_am);
 
 	seldestroy(&sc->sc_wsel);
 	seldestroy(&sc->sc_rsel);
@@ -7604,23 +7613,60 @@ mixer_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 }
 
 /*
- * Remove a process from those to be signalled on mixer activity.
+ * Add a process to those to be signalled on mixer activity.
+ * If the process has already been added, do nothing.
  * Must be called with sc_lock held.
  */
 static void
-mixer_remove(struct audio_softc *sc)
+mixer_async_add(struct audio_softc *sc, pid_t pid)
 {
-	struct mixer_asyncs **pm, *m;
-	pid_t pid;
+	int i;
 
 	KASSERT(mutex_owned(sc->sc_lock));
 
-	pid = curproc->p_pid;
-	for (pm = &sc->sc_async_mixer; *pm; pm = &(*pm)->next) {
-		if ((*pm)->pid == pid) {
-			m = *pm;
-			*pm = m->next;
-			kmem_free(m, sizeof(*m));
+	/* If already exists, returns without doing anything. */
+	for (i = 0; i < sc->sc_am_used; i++) {
+		if (sc->sc_am[i] == pid)
+			return;
+	}
+
+	/* Extend array if necessary. */
+	if (sc->sc_am_used >= sc->sc_am_capacity) {
+		sc->sc_am_capacity += AM_CAPACITY;
+		sc->sc_am = kern_realloc(sc->sc_am,
+		    sc->sc_am_capacity * sizeof(pid_t), M_WAITOK);
+		TRACE(2, "realloc am_capacity=%d", sc->sc_am_capacity);
+	}
+
+	TRACE(2, "am[%d]=%d", sc->sc_am_used, (int)pid);
+	sc->sc_am[sc->sc_am_used++] = pid;
+}
+
+/*
+ * Remove a process from those to be signalled on mixer activity.
+ * If the process has not been added, do nothing.
+ * Must be called with sc_lock held.
+ */
+static void
+mixer_async_remove(struct audio_softc *sc, pid_t pid)
+{
+	int i;
+
+	KASSERT(mutex_owned(sc->sc_lock));
+
+	for (i = 0; i < sc->sc_am_used; i++) {
+		if (sc->sc_am[i] == pid) {
+			sc->sc_am[i] = sc->sc_am[--sc->sc_am_used];
+			TRACE(2, "am[%d](%d) removed, used=%d",
+			    i, (int)pid, sc->sc_am_used);
+
+			/* Empty array if no longer necessary. */
+			if (sc->sc_am_used == 0) {
+				kern_free(sc->sc_am);
+				sc->sc_am = NULL;
+				sc->sc_am_capacity = 0;
+				TRACE(2, "released");
+			}
 			return;
 		}
 	}
@@ -7633,12 +7679,15 @@ mixer_remove(struct audio_softc *sc)
 static void
 mixer_signal(struct audio_softc *sc)
 {
-	struct mixer_asyncs *m;
 	proc_t *p;
+	int i;
 
-	for (m = sc->sc_async_mixer; m; m = m->next) {
+	KASSERT(mutex_owned(sc->sc_lock));
+
+	for (i = 0; i < sc->sc_am_used; i++) {
 		mutex_enter(proc_lock);
-		if ((p = proc_find(m->pid)) != NULL)
+		p = proc_find(sc->sc_am[i]);
+		if (p)
 			psignal(p, SIGIO);
 		mutex_exit(proc_lock);
 	}
@@ -7653,7 +7702,7 @@ mixer_close(struct audio_softc *sc, audio_file_t *file)
 
 	mutex_enter(sc->sc_lock);
 	TRACE(1, "");
-	mixer_remove(sc);
+	mixer_async_remove(sc, curproc->p_pid);
 	mutex_exit(sc->sc_lock);
 
 	kmem_free(file, sizeof(*file));
@@ -7664,7 +7713,6 @@ int
 mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 	struct lwp *l)
 {
-	struct mixer_asyncs *ma;
 	mixer_devinfo_t *mi;
 	mixer_ctrl_t *mc;
 	int error;
@@ -7684,17 +7732,11 @@ mixer_ioctl(struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	switch (cmd) {
 	case FIOASYNC:
-		if (*(int *)addr) {
-			ma = kmem_alloc(sizeof(struct mixer_asyncs), KM_SLEEP);
-		} else {
-			ma = NULL;
-		}
 		mutex_enter(sc->sc_lock);
-		mixer_remove(sc);	/* remove old entry */
-		if (ma != NULL) {
-			ma->next = sc->sc_async_mixer;
-			ma->pid = curproc->p_pid;
-			sc->sc_async_mixer = ma;
+		if (*(int *)addr) {
+			mixer_async_add(sc, curproc->p_pid);
+		} else {
+			mixer_async_remove(sc, curproc->p_pid);
 		}
 		mutex_exit(sc->sc_lock);
 		error = 0;
