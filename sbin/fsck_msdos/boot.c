@@ -27,7 +27,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: boot.c,v 1.21 2018/02/08 09:05:17 dholland Exp $");
+__RCSID("$NetBSD: boot.c,v 1.22 2020/01/11 16:29:07 christos Exp $");
 #endif /* not lint */
 
 #include <stdlib.h>
@@ -210,8 +210,12 @@ readboot(int dosfs, struct bootblock *boot)
 		return FSFATAL;
 	}
 
-	boot->NumClusters = (boot->NumSectors - boot->FirstCluster) / boot->SecPerClust
-			    + CLUST_FIRST;
+	/*
+	 * The number of clusters is derived from available data sectors,
+	 * divided by sectors per cluster.
+	 */
+	boot->NumClusters =
+	    (boot->NumSectors - boot->FirstCluster) / boot->SecPerClust;
 
 	if (boot->flags&FAT32)
 		boot->ClustMask = CLUST32_MASK;
@@ -237,11 +241,19 @@ readboot(int dosfs, struct bootblock *boot)
 		break;
 	}
 
-	if (boot->NumFatEntries < boot->NumClusters - CLUST_FIRST) {
+	if (boot->NumFatEntries < boot->NumClusters) {
 		pfatal("FAT size too small, %u entries won't fit into %u sectors\n",
 		       boot->NumClusters, boot->FATsecs);
 		return FSFATAL;
 	}
+
+	/*
+	 * There are two reserved clusters. To avoid adding CLUST_FIRST every
+	 * time we perform boundary checks, we increment the NumClusters by 2,
+	 * which is CLUST_FIRST to denote the first out-of-range cluster number.
+	 */
+	boot->NumClusters += CLUST_FIRST;
+
 	boot->ClusterSize = boot->BytesPerSec * boot->SecPerClust;
 
 	boot->NumFiles = 1;
