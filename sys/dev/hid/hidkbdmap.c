@@ -1,4 +1,4 @@
-/*	$NetBSD: hidkbdmap.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $	*/
+/*	$NetBSD: hidkbdmap.c,v 1.2 2020/01/11 21:43:10 nia Exp $	*/
 
 /*
  * Copyright (c) 1999,2001 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.1 2017/12/10 17:03:07 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hidkbdmap.c,v 1.2 2020/01/11 21:43:10 nia Exp $");
 
 #include <sys/types.h>
 #include <dev/wscons/wsksymdef.h>
@@ -640,6 +640,7 @@ const struct wscons_keydesc hidkbd_keydesctab[] = {
 	KBD_MAP(KB_DK | KB_NODEAD,	KB_DK,	hidkbd_keydesc_dk_nodead),
 	KBD_MAP(KB_IT,			KB_US,	hidkbd_keydesc_it),
 	KBD_MAP(KB_UK,			KB_US,	hidkbd_keydesc_uk),
+	KBD_MAP(KB_UK | KB_SWAPCTRLCAPS,KB_UK,	hidkbd_keydesc_swapctrlcaps),
 	KBD_MAP(KB_SV,			KB_DK,	hidkbd_keydesc_sv),
 	KBD_MAP(KB_SV | KB_NODEAD,	KB_SV,	hidkbd_keydesc_sv_nodead),
 	KBD_MAP(KB_NO,			KB_DK,	hidkbd_keydesc_no),
