@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.10 2019/12/25 14:08:47 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.11 2020/01/11 22:21:25 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.10 2019/12/25 14:08:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.11 2020/01/11 22:21:25 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -342,7 +342,7 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 		if (control & CONTROL_IFLG)
 			break;
 		if (!(flags & I2C_F_POLL)) {
-			error = cv_timedwait_sig(&sc->sc_cv, &sc->sc_mtx, hz);
+			error = cv_timedwait(&sc->sc_cv, &sc->sc_mtx, hz);
 			if (error)
 				break;
 		} else {
