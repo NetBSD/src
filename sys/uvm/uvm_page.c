@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.222 2020/01/09 16:35:03 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.223 2020/01/11 19:51:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.222 2020/01/09 16:35:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.223 2020/01/11 19:51:01 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -181,6 +181,7 @@ static struct uvm_page_numa_region {
 } *uvm_page_numa_region;
 
 #ifdef DEBUG
+kmutex_t uvm_zerochecklock __cacheline_aligned;
 vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
 
@@ -439,6 +440,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 	uvm_zerocheckkva = *kvm_startp;
 	*kvm_startp += PAGE_SIZE;
+	mutex_init(&uvm_zerochecklock, MUTEX_DEFAULT, IPL_VM);
 #endif /* DEBUG */
 
 	/*
@@ -1419,6 +1421,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	 *
 	 * it might be better to have "CPU-local temporary map" pmap interface.
 	 */
+	mutex_spin_enter(&uvm_zerochecklock);
 	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
 	p = (int *)uvm_zerocheckkva;
 	ep = (int *)((char *)p + PAGE_SIZE);
@@ -1429,6 +1432,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 		p++;
 	}
 	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
+	mutex_spin_exit(&uvm_zerochecklock);
 	/*
 	 * pmap_update() is not necessary here because no one except us
 	 * uses this VA.
@@ -1574,6 +1578,9 @@ uvm_pagefree(struct vm_page *pg)
 
 	/* Try to send the page to the per-CPU cache. */
 	s = splvm();
+	if (pg->flags & PG_ZERO) {
+	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
+	}
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	bucket = uvm_page_get_bucket(pg);
 	if (bucket == ucpu->pgflbucket && uvm_pgflcache_free(ucpu, pg)) {
