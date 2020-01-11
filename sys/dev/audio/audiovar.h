@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.5 2019/08/29 13:01:07 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.6 2020/01/11 04:06:13 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -67,20 +67,12 @@
 #ifndef _SYS_DEV_AUDIO_AUDIOVAR_H_
 #define _SYS_DEV_AUDIO_AUDIOVAR_H_
 
-#if defined(_KERNEL)
 #include <sys/condvar.h>
 #include <sys/proc.h>
 #include <sys/queue.h>
 
 #include <dev/audio/audio_if.h>
 #include <dev/audio/audiofil.h>
-#else
-#include <stdint.h>
-#include <stdbool.h>
-#include "compat.h"
-#include "userland.h"
-#include "audiofil.h"
-#endif /* _KERNEL */
 
 /*
  * Whether supports [US]LINEAR24/24 as userland format.
