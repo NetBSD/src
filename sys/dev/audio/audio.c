@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.39 2020/01/08 13:30:15 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.40 2020/01/11 04:06:13 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.39 2020/01/08 13:30:15 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.40 2020/01/11 04:06:13 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -150,8 +150,6 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.39 2020/01/08 13:30:15 isaki Exp $");
 #endif
 
 #if NAUDIO > 0
-
-#ifdef _KERNEL
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -193,7 +191,6 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.39 2020/01/08 13:30:15 isaki Exp $");
 #include <uvm/uvm.h>
 
 #include "ioconf.h"
-#endif /* _KERNEL */
 
 /*
  * 0: No debug logs
@@ -5219,11 +5216,6 @@ audio_pintr(void *arg)
 	    "HW_INT ++hwseq=%" PRIu64 " cmplcnt=%" PRIu64 " hwbuf=%d/%d/%d",
 	    mixer->hwseq, mixer->hw_complete_counter,
 	    mixer->hwbuf.head, mixer->hwbuf.used, mixer->hwbuf.capacity);
-
-#if !defined(_KERNEL)
-	/* This is a debug code for userland test. */
-	return;
-#endif
 
 #if defined(AUDIO_HW_SINGLE_BUFFER)
 	/*
