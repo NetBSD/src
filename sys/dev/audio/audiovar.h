@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.6 2020/01/11 04:06:13 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.7 2020/01/11 04:53:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -194,13 +194,15 @@ struct audio_softc {
 	struct selinfo sc_rsel;
 
 	/*
-	 * processes who want mixer SIGIO.
+	 * Processes who want mixer SIGIO.
+	 * sc_am is an array of pids, or NULL if empty.
+	 * sc_am_capacity is the number of allocated elements.
+	 * sc_am_used is the number of elements actually used.
 	 * Must be protected by sc_lock.
 	 */
-	struct	mixer_asyncs {
-		struct mixer_asyncs *next;
-		pid_t	pid;
-	} *sc_async_mixer;
+	pid_t *sc_am;
+	int sc_am_capacity;
+	int sc_am_used;
 
 	/*
 	 * Thread lock and interrupt lock obtained by get_locks().
