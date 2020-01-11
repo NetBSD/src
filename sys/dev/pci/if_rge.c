@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.1 2020/01/11 20:56:51 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.2 2020/01/11 21:05:45 sevan Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -17,8 +17,13 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 
-#include "bpfilter.h"
-#include "vlan.h"
+#include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.2 2020/01/11 21:05:45 sevan Exp $");
+
+/* #include "bpfilter.h" Sevan */
+/* #include "vlan.h" Sevan */
+
+#include <sys/types.h>
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -31,16 +36,20 @@
 #include <sys/endian.h>
 
 #include <net/if.h>
+
+#include <net/if_dl.h>
+#include <net/if_ether.h>
+
 #include <net/if_media.h>
 
 #include <netinet/in.h>
-#include <netinet/if_ether.h>
+#include <net/if_ether.h>
 
 #if NBPFILTER > 0
 #include <net/bpf.h>
 #endif
 
-#include <machine/bus.h>
+#include <sys/bus.h>
 #include <machine/intr.h>
 
 #include <dev/mii/mii.h>
@@ -51,12 +60,23 @@
 
 #include <dev/pci/if_rgereg.h>
 
-int		rge_match(struct device *, void *, void *);
-void		rge_attach(struct device *, struct device *, void *);
+#ifdef __NetBSD__
+#define letoh32 	htole32
+#define nitems(x) 	__arraycount(x)
+#define MBUF_LIST_INITIALIZER() 	{ NULL, NULL, 0 }
+struct mbuf_list {
+	struct mbuf 	*ml_head;
+	struct mbuf 	*ml_tail;
+	u_int 	ml_len;
+};
+#endif
+
+static int		rge_match(device_t, cfdata_t, void *);
+static void		rge_attach(device_t, device_t, void *); 
 int		rge_intr(void *);
 int		rge_encap(struct rge_softc *, struct mbuf *, int);
-int		rge_ioctl(struct ifnet *, u_long, caddr_t);
-void		rge_start(struct ifqueue *);
+int		rge_ioctl(struct ifnet *, u_long, void *);
+void		rge_start(struct ifnet *);
 void		rge_watchdog(struct ifnet *);
 int		rge_init(struct ifnet *);
 void		rge_stop(struct ifnet *);
@@ -112,33 +132,42 @@ static const struct {
 	RTL8125_MAC_CFG3_MCU
 };
 
-struct cfattach rge_ca = {
-	sizeof(struct rge_softc), rge_match, rge_attach
-};
+CFATTACH_DECL_NEW(rge, sizeof(struct rge_softc), rge_match, rge_attach,
+		NULL, NULL); /* Sevan - detach function? */
 
-struct cfdriver rge_cd = {
-	NULL, "rge", DV_IFNET
-};
+extern struct cfdriver rge_cd;
 
-const struct pci_matchid rge_devices[] = {
+static const struct {
+	pci_vendor_id_t 	vendor;
+	pci_product_id_t 	product;
+}rge_devices[] = {
 	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_E3000 },
-	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RTL8125 }
+	{ PCI_VENDOR_REALTEK, PCI_PRODUCT_REALTEK_RT8125 },
 };
 
-int
-rge_match(struct device *parent, void *match, void *aux)
+static int
+rge_match(device_t parent, cfdata_t match, void *aux)
 {
-	return (pci_matchbyid((struct pci_attach_args *)aux, rge_devices,
-	    nitems(rge_devices)));
+	struct pci_attach_args *pa =aux;
+	int n;
+
+	for (n =0; n < __arraycount(rge_devices); n++) {
+		if (PCI_VENDOR(pa->pa_id) == rge_devices[n].vendor &&
+		    PCI_PRODUCT(pa->pa_id) == rge_devices[n].product)
+			return 1;
+	}
+
+	return 0;
 }
 
 void
-rge_attach(struct device *parent, struct device *self, void *aux)
+rge_attach(device_t parent, device_t self, void *aux)
 {
 	struct rge_softc *sc = (struct rge_softc *)self;
 	struct pci_attach_args *pa = aux;
 	pci_chipset_tag_t pc = pa->pa_pc;
 	pci_intr_handle_t ih;
+	char intrbuf[PCI_INTRSTR_LEN];
 	const char *intrstr = NULL;
 	struct ifnet *ifp;
 	pcireg_t reg;
@@ -153,13 +182,13 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_mapreg_map(pa, RGE_PCI_BAR2, PCI_MAPREG_TYPE_MEM |
 	    PCI_MAPREG_MEM_TYPE_64BIT, 0, &sc->rge_btag, &sc->rge_bhandle,
-	    NULL, &sc->rge_bsize, 0)) {
+	    NULL, &sc->rge_bsize)) {
 		if (pci_mapreg_map(pa, RGE_PCI_BAR1, PCI_MAPREG_TYPE_MEM |
 		    PCI_MAPREG_MEM_TYPE_32BIT, 0, &sc->rge_btag,
-		    &sc->rge_bhandle, NULL, &sc->rge_bsize, 0)) {
+		    &sc->rge_bhandle, NULL, &sc->rge_bsize)) {
 			if (pci_mapreg_map(pa, RGE_PCI_BAR0, PCI_MAPREG_TYPE_IO,
 			    0, &sc->rge_btag, &sc->rge_bhandle, NULL,
-			    &sc->rge_bsize, 0)) {
+			    &sc->rge_bsize)) {
 				printf(": can't map mem or i/o space\n");
 				return;
 			}
@@ -169,14 +198,14 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	/* 
 	 * Allocate interrupt.
 	 */
-	if (pci_intr_map_msi(pa, &ih) == 0)
+	if (pci_intr_map(pa, &ih) == 0)
 		sc->rge_flags |= RGE_FLAG_MSI;
 	else if (pci_intr_map(pa, &ih) != 0) {
 		printf(": couldn't map interrupt\n");
 		return;
 	}
-	intrstr = pci_intr_string(pc, ih);
-	sc->sc_ih = pci_intr_establish(pc, ih, IPL_NET | IPL_MPSAFE, rge_intr,
+	intrstr = pci_intr_string(pc, ih, intrbuf, sizeof(intrbuf));
+	sc->sc_ih = pci_intr_establish_xname(pc, ih, IPL_NET, rge_intr,
 	    sc, sc->sc_dev.dv_xname);
 	if (sc->sc_ih == NULL) {
 		printf(": couldn't establish interrupt");
@@ -212,12 +241,11 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	 */
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
 	    &offset, NULL)) {
-		/* Disable PCIe ASPM and ECPM. */
+		/* Disable PCIe ASPM. */
 		reg = pci_conf_read(pa->pa_pc, pa->pa_tag,
-		    offset + PCI_PCIE_LCSR);
-		reg &= ~(PCI_PCIE_LCSR_ASPM_L0S | PCI_PCIE_LCSR_ASPM_L1 |
-		    PCI_PCIE_LCSR_ECPM);
-		pci_conf_write(pa->pa_pc, pa->pa_tag, offset + PCI_PCIE_LCSR,
+		    offset + PCIE_LCSR);
+		reg &= ~(PCIE_LCSR_ASPM_L0S | PCIE_LCSR_ASPM_L1 );
+		pci_conf_write(pa->pa_pc, pa->pa_tag, offset + PCIE_LCSR,
 		    reg);
 	}
 
@@ -227,7 +255,7 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	rge_get_macaddr(sc, eaddr);
 	printf(", address %s\n", ether_sprintf(eaddr));
 
-	memcpy(sc->sc_arpcom.ac_enaddr, eaddr, ETHER_ADDR_LEN);
+	memcpy(sc->sc_enaddr, eaddr, ETHER_ADDR_LEN);
 
 	rge_set_phy_power(sc, 1);
 	rge_phy_config(sc);
@@ -235,19 +263,22 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	if (rge_allocmem(sc))
 		return;
 
-	ifp = &sc->sc_arpcom.ac_if;
+	ifp = &sc->sc_ec.ec_if;
 	ifp->if_softc = sc;
 	strlcpy(ifp->if_xname, sc->sc_dev.dv_xname, IFNAMSIZ);
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
-	ifp->if_xflags = IFXF_MPSAFE;
+#ifdef RGE_MPSAFE
+	ifp->if_xflags = IFEF_MPSAFE;
+#endif
 	ifp->if_ioctl = rge_ioctl;
-	ifp->if_qstart = rge_start;
+	ifp->if_start = rge_start;
 	ifp->if_watchdog = rge_watchdog;
 	IFQ_SET_MAXLEN(&ifp->if_snd, RGE_TX_LIST_CNT);
-	ifp->if_hardmtu = RGE_JUMBO_MTU;
+	ifp->if_mtu = RGE_JUMBO_MTU;
 
-	ifp->if_capabilities = IFCAP_VLAN_MTU | IFCAP_CSUM_IPv4 |
-	    IFCAP_CSUM_TCPv4 | IFCAP_CSUM_UDPv4;
+	ifp->if_capabilities = ETHERCAP_VLAN_MTU | IFCAP_CSUM_IPv4_Rx |
+	    IFCAP_CSUM_IPv4_Tx |IFCAP_CSUM_TCPv4_Rx | IFCAP_CSUM_TCPv4_Tx|
+	    IFCAP_CSUM_UDPv4_Rx | IFCAP_CSUM_UDPv4_Tx;
 
 #if NVLAN > 0
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
@@ -265,14 +296,14 @@ rge_attach(struct device *parent, struct device *self, void *aux)
 	sc->sc_media.ifm_media = sc->sc_media.ifm_cur->ifm_media;
 
 	if_attach(ifp);
-	ether_ifattach(ifp);
+	ether_ifattach(ifp, eaddr);
 }
 
 int
 rge_intr(void *arg)
 {
 	struct rge_softc *sc = arg;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	uint32_t status;
 	int claimed = 0, rx, tx;
 
@@ -307,9 +338,9 @@ rge_intr(void *arg)
 		}
 
 		if (status & RGE_ISR_SYSTEM_ERR) {
-			KERNEL_LOCK();
+			KERNEL_LOCK(1, NULL);
 			rge_init(ifp);
-			KERNEL_UNLOCK();
+			KERNEL_UNLOCK_ONE(NULL);
 			claimed = 1;
 		}
 	}
@@ -360,7 +391,7 @@ rge_encap(struct rge_softc *sc, struct mbuf *m, int idx)
 	 * take affect.
 	 */
 	if ((m->m_pkthdr.csum_flags &
-	    (M_IPV4_CSUM_OUT | M_TCP_CSUM_OUT | M_UDP_CSUM_OUT)) != 0) {
+	    (M_CSUM_IPv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) != 0) {
 		cflags |= RGE_TDEXTSTS_IPCSUM;
 		if (m->m_pkthdr.csum_flags & M_TCP_CSUM_OUT)
 			cflags |= RGE_TDEXTSTS_TCPCSUM;
@@ -439,7 +470,7 @@ rge_encap(struct rge_softc *sc, struct mbuf *m, int idx)
 }
 
 int
-rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
+rge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct rge_softc *sc = ifp->if_softc;
 	struct ifreq *ifr = (struct ifreq *)data;
@@ -469,14 +500,14 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_media, cmd);
 		break;
 	case SIOCSIFMTU:
-		if (ifr->ifr_mtu > ifp->if_hardmtu) {
+		if (ifr->ifr_mtu > ifp->if_mtu) {
 			error = EINVAL;
 			break;
 		}
 		ifp->if_mtu = ifr->ifr_mtu;
 		break;
 	default:
-		error = ether_ioctl(ifp, &sc->sc_arpcom, cmd, data);
+		error = ether_ioctl(ifp, cmd, data);
 	}
 
 	if (error == ENETRESET) {
@@ -490,13 +521,16 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, caddr_t data)
 }
 
 void
-rge_start(struct ifqueue *ifq)
+rge_start(struct ifnet *ifq)
 {
 	struct ifnet *ifp = ifq->ifq_if;
 	struct rge_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	int free, idx, used;
 	int queued = 0;
+
+#define LINK_STATE_IS_UP(_s)    \
+	((_s) >= LINK_STATE_UP || (_s) == LINK_STATE_UNKNOWN)
 
 	if (!LINK_STATE_IS_UP(ifp->if_link_state)) {
 		ifq_purge(ifq);
@@ -573,7 +607,7 @@ rge_init(struct ifnet *ifp)
 	rge_stop(ifp);
 
 	/* Set MAC address. */
-	rge_set_macaddr(sc, sc->sc_arpcom.ac_enaddr);
+	rge_set_macaddr(sc, sc->sc_enaddr);
 
 	/* Set Maximum frame size but don't let MTU be lass than ETHER_MTU. */
 	if (ifp->if_mtu < ETHERMTU)
@@ -697,7 +731,7 @@ rge_init(struct ifnet *ifp)
 
 	rge_write_mac_ocp(sc, 0xe098, 0xc302);
 
-	if (ifp->if_capabilities & IFCAP_VLAN_HWTAGGING)
+	if (ifp->if_capabilities & ETHERCAP_VLAN_HWTAGGING)
 		RGE_SETBIT_4(sc, RGE_RXCFG, RGE_RXCFG_VLANSTRIP);
 
 	RGE_SETBIT_2(sc, RGE_CPLUSCMD, RGE_CPLUSCMD_RXCSUM);
@@ -762,7 +796,7 @@ rge_stop(struct ifnet *ifp)
 
 	intr_barrier(sc->sc_ih);
 	ifq_barrier(&ifp->if_snd);
-	ifq_clr_oactive(&ifp->if_snd);
+/*	ifq_clr_oactive(&ifp->if_snd); Sevan - OpenBSD queue API */
 
 	if (sc->rge_head != NULL) {
 		m_freem(sc->rge_head);
@@ -899,7 +933,7 @@ rge_allocmem(struct rge_softc *sc)
 	}
 	error = bus_dmamem_alloc(sc->sc_dmat, RGE_TX_LIST_SZ, RGE_ALIGN, 0,
 	    &sc->rge_ldata.rge_tx_listseg, 1, &sc->rge_ldata.rge_tx_listnseg,
-	    BUS_DMA_NOWAIT| BUS_DMA_ZERO);
+	    BUS_DMA_NOWAIT); /* XXX OpenBSD adds BUS_DMA_ZERO */
 	if (error) {
 		printf("%s: can't alloc TX list\n", sc->sc_dev.dv_xname);
 		return (error);
@@ -908,8 +942,8 @@ rge_allocmem(struct rge_softc *sc)
 	/* Load the map for the TX ring. */
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rge_ldata.rge_tx_listseg,
 	    sc->rge_ldata.rge_tx_listnseg, RGE_TX_LIST_SZ,
-	    (caddr_t *)&sc->rge_ldata.rge_tx_list,
-	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    &sc->rge_ldata.rge_tx_list,
+	    BUS_DMA_NOWAIT); /* XXX OpenBSD adds BUS_DMA_COHERENT */
 	if (error) {
 		printf("%s: can't map TX dma buffers\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &sc->rge_ldata.rge_tx_listseg,
@@ -922,7 +956,7 @@ rge_allocmem(struct rge_softc *sc)
 		printf("%s: can't load TX dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamap_destroy(sc->sc_dmat, sc->rge_ldata.rge_tx_list_map);
 		bus_dmamem_unmap(sc->sc_dmat,
-		    (caddr_t)sc->rge_ldata.rge_tx_list, RGE_TX_LIST_SZ);
+		    sc->rge_ldata.rge_tx_list, RGE_TX_LIST_SZ);
 		bus_dmamem_free(sc->sc_dmat, &sc->rge_ldata.rge_tx_listseg,
 		    sc->rge_ldata.rge_tx_listnseg);
 		return (error);
@@ -949,7 +983,7 @@ rge_allocmem(struct rge_softc *sc)
 	}
 	error = bus_dmamem_alloc(sc->sc_dmat, RGE_RX_LIST_SZ, RGE_ALIGN, 0,
 	    &sc->rge_ldata.rge_rx_listseg, 1, &sc->rge_ldata.rge_rx_listnseg,
-	    BUS_DMA_NOWAIT| BUS_DMA_ZERO);
+	    BUS_DMA_NOWAIT);  /* XXX OpenBSD adds BUS_DMA_ZERO */
 	if (error) {
 		printf("%s: can't alloc RX list\n", sc->sc_dev.dv_xname);
 		return (error);
@@ -958,8 +992,8 @@ rge_allocmem(struct rge_softc *sc)
 	/* Load the map for the RX ring. */
 	error = bus_dmamem_map(sc->sc_dmat, &sc->rge_ldata.rge_rx_listseg,
 	    sc->rge_ldata.rge_rx_listnseg, RGE_RX_LIST_SZ,
-	    (caddr_t *)&sc->rge_ldata.rge_rx_list,
-	    BUS_DMA_NOWAIT | BUS_DMA_COHERENT);
+	    &sc->rge_ldata.rge_rx_list,
+	    BUS_DMA_NOWAIT);  /* XXX OpenBSD adds BUS_DMA_COHERENT */
 	if (error) {
 		printf("%s: can't map RX dma buffers\n", sc->sc_dev.dv_xname);
 		bus_dmamem_free(sc->sc_dmat, &sc->rge_ldata.rge_rx_listseg,
@@ -972,7 +1006,7 @@ rge_allocmem(struct rge_softc *sc)
 		printf("%s: can't load RX dma map\n", sc->sc_dev.dv_xname);
 		bus_dmamap_destroy(sc->sc_dmat, sc->rge_ldata.rge_rx_list_map);
 		bus_dmamem_unmap(sc->sc_dmat,
-		    (caddr_t)sc->rge_ldata.rge_rx_list, RGE_RX_LIST_SZ);
+		    sc->rge_ldata.rge_rx_list, RGE_RX_LIST_SZ);
 		bus_dmamem_free(sc->sc_dmat, &sc->rge_ldata.rge_rx_listseg,
 		    sc->rge_ldata.rge_rx_listnseg);
 		return (error);
@@ -1110,7 +1144,7 @@ rge_rxeof(struct rge_softc *sc)
 {
 	struct mbuf_list ml = MBUF_LIST_INITIALIZER();
 	struct mbuf *m;
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct rge_rx_desc *cur_rx;
 	struct rge_rxq *rxq;
 	uint32_t rxstat, extsts;
@@ -1233,7 +1267,7 @@ rge_rxeof(struct rge_softc *sc)
 int
 rge_txeof(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct rge_txq *txq;
 	uint32_t txstat;
 	int cons, idx, prod;
@@ -1325,8 +1359,8 @@ rge_reset(struct rge_softc *sc)
 void
 rge_iff(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
-	struct arpcom *ac = &sc->sc_arpcom;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	struct ethercom *ac = &sc->sc_ec;
 	struct ether_multi *enm;
 	struct ether_multistep step;
 	uint32_t hashes[2];
@@ -1369,8 +1403,8 @@ rge_iff(struct rge_softc *sc)
 	}
 
 	RGE_WRITE_4(sc, RGE_RXCFG, rxfilt);
-	RGE_WRITE_4(sc, RGE_MAR0, swap32(hashes[1]));
-	RGE_WRITE_4(sc, RGE_MAR4, swap32(hashes[0]));
+	RGE_WRITE_4(sc, RGE_MAR0, bswap32(hashes[1]));
+	RGE_WRITE_4(sc, RGE_MAR4, bswap32(hashes[0]));
 }
 
 void
@@ -1993,7 +2027,7 @@ rge_tick(void *arg)
 void
 rge_link_state(struct rge_softc *sc)
 {
-	struct ifnet *ifp = &sc->sc_arpcom.ac_if;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int link = LINK_STATE_DOWN;
 
 	if (rge_get_link_status(sc))
@@ -2001,6 +2035,6 @@ rge_link_state(struct rge_softc *sc)
 
 	if (ifp->if_link_state != link) {
 		ifp->if_link_state = link;
-		if_link_state_change(ifp);
+		if_link_state_change(ifp, LINK_STATE_DOWN);
 	}
 }
