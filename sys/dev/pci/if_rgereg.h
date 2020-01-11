@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rgereg.h,v 1.1 2020/01/11 20:56:51 sevan Exp $	*/
+/*	$NetBSD: if_rgereg.h,v 1.2 2020/01/11 21:05:45 sevan Exp $	*/
 /*	$OpenBSD: if_rgereg.h,v 1.1 2019/11/18 03:03:37 kevlo Exp $	*/
 
 /*
@@ -273,7 +273,7 @@ enum rge_mac_type {
 
 struct rge_softc {
 	struct device		sc_dev;
-	struct arpcom		sc_arpcom;	/* Ethernet common data */
+	struct ethercom		sc_ec; 		/* Ethernet common data */
 	void			*sc_ih;		/* interrupt vectoring */
 	bus_space_handle_t	rge_bhandle;	/* bus space handle */
 	bus_space_tag_t		rge_btag;	/* bus space tag */
@@ -283,6 +283,7 @@ struct rge_softc {
 	pcitag_t		sc_tag;
 	bus_dma_segment_t 	sc_rx_seg;
 	bus_dmamap_t		sc_rx_dmamap;
+	uint8_t 		sc_enaddr[ETHER_ADDR_LEN];
 	struct ifmedia		sc_media;	/* media info */
 	enum rge_mac_type	rge_type;
 	struct mbuf		*rge_head;
@@ -290,9 +291,9 @@ struct rge_softc {
 
 	struct rge_list_data	rge_ldata;
 
-	struct task		sc_task;
+/*	struct task		sc_task; Sevan */
 
-	struct timeout		sc_timeout;	/* tick timeout */
+	callout_t		sc_timeout;	/* tick timeout */
 
 	uint32_t		rge_flags;
 #define RGE_FLAG_MSI		0x00000001
