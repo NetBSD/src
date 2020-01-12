@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.15 2019/12/31 13:07:10 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.16 2020/01/12 13:15:10 tsutsui Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.15 2019/12/31 13:07:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.16 2020/01/12 13:15:10 tsutsui Exp $");
 
 #include "opt_ddb.h"
 
@@ -352,8 +352,10 @@ consinit(void)
 
 	(*platform.cons_init)();
 
-	/* Do NOT call cninit(); It will clobber cn_tab using constab[] which we do not use
-     */
+	/*
+	 * Do NOT call cninit(); It will clobber cn_tab using constab[]
+	 * which we do not use
+	 */
 }
 
 /*
@@ -735,5 +737,5 @@ void
 delay(int n)
 {
 
-        DELAY(n);
+	DELAY(n);
 }
