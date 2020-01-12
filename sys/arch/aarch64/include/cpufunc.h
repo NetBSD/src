@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.h,v 1.9 2019/12/19 09:47:42 ryo Exp $	*/
+/*	$NetBSD: cpufunc.h,v 1.10 2020/01/12 09:29:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -69,7 +69,7 @@ extern u_int aarch64_cache_prefer_mask;
 extern u_int cputype;			/* compat arm */
 
 int set_cpufuncs(void);
-void aarch64_gettopology(struct cpu_info *, uint64_t);
+void aarch64_set_topology(struct cpu_info *, uint64_t, bool);
 void aarch64_getcacheinfo(int);
 void aarch64_printcacheinfo(device_t);
 
