@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.57 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.58 2020/01/12 13:08:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.57 2020/01/08 17:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.58 2020/01/12 13:08:32 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -215,7 +215,6 @@ sleepq_enqueue(sleepq_t *sq, wchan_t wchan, const char *wmesg, syncobj_t *sobj)
 	l->l_wmesg = wmesg;
 	l->l_slptime = 0;
 	l->l_stat = LSSLEEP;
-	l->l_sleeperr = 0;
 
 	sleepq_insert(sq, l, sobj);
 
