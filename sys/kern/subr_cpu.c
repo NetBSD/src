@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.7 2020/01/12 09:29:18 mrg Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.8 2020/01/12 13:29:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.7 2020/01/12 09:29:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.8 2020/01/12 13:29:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -207,6 +207,8 @@ cpu_topology_dump(void)
 			}
 			printf("\n");
 		}
+		printf("%s first in package: %s\n", cpu_name(ci),
+		    cpu_name(ci->ci_package1st));
 	}
 #endif	/* DEBUG */
 }
@@ -229,6 +231,7 @@ cpu_topology_fake1(struct cpu_info *ci)
 	}
 	ci->ci_schedstate.spc_flags |=
 	    (SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
+	ci->ci_package1st = ci;
 }
 
 /*
@@ -338,8 +341,9 @@ cpu_topology_init(void)
 		ci3->ci_schedstate.spc_flags |= SPCF_PACKAGE1ST;
 
 		/* Walk through all CPUs in package and point to first. */
-		ci2 = ci;
+		ci2 = ci3;
 		do {
+			ci2->ci_package1st = ci3;
 			ci2->ci_sibling[CPUREL_PACKAGE1ST] = ci3;
 			ci2 = ci2->ci_sibling[CPUREL_PACKAGE];
 		} while (ci2 != ci);
@@ -376,7 +380,7 @@ cpu_topology_init(void)
 		 * others, mark first class CPUs for the scheduler.  This
 		 * conflicts with SMT right now so whinge if observed.
 		 */
-		if (curcpu()->ci_nsibling[CPUREL_CORE] == 1) {
+		if (curcpu()->ci_nsibling[CPUREL_CORE] > 1) {
 			printf("cpu_topology_init: asymmetric & SMT??\n");
 		}
 		for (CPU_INFO_FOREACH(cii, ci)) {
