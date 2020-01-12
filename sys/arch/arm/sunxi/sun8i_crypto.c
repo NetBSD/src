@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.9 2019/12/18 02:26:48 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.10 2020/01/12 21:52:36 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.9 2019/12/18 02:26:48 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.10 2020/01/12 21:52:36 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -970,6 +970,12 @@ sun8i_crypto_rng_done(struct sun8i_crypto_softc *sc,
 		device_printf(sc->sc_dev, "failed repeated output test\n");
 		entropybits = 0;
 	}
+
+	/*
+	 * Actually we don't believe in any of the entropy until this
+	 * device has had more scrutiny.
+	 */
+	entropybits = 0;
 
 	/* Success!  Enter and erase the data.  */
 	rnd_add_data(&rng->cr_rndsource, buf, SUN8I_CRYPTO_RNGBYTES,
