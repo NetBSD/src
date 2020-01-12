@@ -1,7 +1,7 @@
-/*	$NetBSD: pmap.c,v 1.354 2020/01/07 21:18:24 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.355 2020/01/12 13:01:11 ad Exp $	*/
 
 /*
- * Copyright (c) 2008, 2010, 2016, 2017, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354 2020/01/07 21:18:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.355 2020/01/12 13:01:11 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -419,9 +419,9 @@ static void pmap_unget_ptp(struct pmap *, struct pmap_ptparray *);
 static void pmap_install_ptp(struct pmap *, struct pmap_ptparray *, vaddr_t,
     pd_entry_t * const *);
 static struct vm_page *pmap_find_ptp(struct pmap *, vaddr_t, paddr_t, int);
-static void pmap_freepages(struct pmap *, struct vm_page *);
+static void pmap_freepage(struct pmap *, struct vm_page *, int);
 static void pmap_free_ptp(struct pmap *, struct vm_page *, vaddr_t,
-    pt_entry_t *, pd_entry_t * const *, struct vm_page **);
+    pt_entry_t *, pd_entry_t * const *);
 static bool pmap_remove_pte(struct pmap *, struct vm_page *, pt_entry_t *,
     vaddr_t, struct pv_entry **);
 static void pmap_remove_ptes(struct pmap *, struct vm_page *, vaddr_t, vaddr_t,
@@ -435,6 +435,7 @@ static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
 static void pmap_load1(struct lwp *, struct pmap *, struct pmap *);
 static void pmap_reactivate(struct pmap *);
+static void pmap_dropref(struct pmap *);
 
 /*
  * p m a p   h e l p e r   f u n c t i o n s
@@ -667,7 +668,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap * pmap2)
 
 	/* Toss reference to other pmap taken earlier. */
 	if (pmap2 != NULL) {
-		pmap_destroy(pmap2);
+		pmap_dropref(pmap2);
 	}
 }
 
@@ -1953,40 +1954,51 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 		return (pmap->pm_ptphint[lidx]);
 	}
 	pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
-
-	KASSERT(pg == NULL || pg->wire_count >= 1);
+	if (pg != NULL) {
+		if (__predict_false(pg->wire_count == 0)) {
+			/* This page is queued to be freed - ignore. */
+			KASSERT((VM_PAGE_TO_PP(pg)->pp_flags &
+			    PP_FREEING) != 0);
+			pg = NULL;
+		} else {
+			KASSERT((VM_PAGE_TO_PP(pg)->pp_flags &
+			    PP_FREEING) == 0);
+		}
+	}
 	return pg;
 }
 
-static void
-pmap_freepages(struct pmap *pmap, struct vm_page *ptp_tofree)
+static inline void
+pmap_freepage(struct pmap *pmap, struct vm_page *ptp, int level)
 {
-	struct vm_page *ptp;
-	lwp_t *l;
+	struct pmap_page *pp;
 	int lidx;
 
-	while ((ptp = ptp_tofree) != NULL) {
-		KASSERT(ptp->wire_count == 1);
-		for (lidx = 0; lidx < __arraycount(pmap->pm_obj); lidx++) {
-			if (pmap->pm_ptphint[lidx] == ptp) {
-				pmap->pm_ptphint[lidx] = NULL;
-			}
-		}
-		pmap_stats_update(pmap, -1, 0);
-		ptp->wire_count = 0;
-		uvm_pagerealloc(ptp, NULL, 0);
-		l = curlwp;
-		KASSERT((l->l_pflag & LP_INTR) == 0);
-		ptp_tofree = VM_PAGE_TO_PP(ptp)->pp_link;
-		VM_PAGE_TO_PP(ptp)->pp_link = l->l_md.md_gc_ptp;
-		l->l_md.md_gc_ptp = ptp;
-	}
+	KASSERT(ptp->wire_count == 1);
+
+	lidx = level - 1;
+	pmap_stats_update(pmap, -1, 0);
+	if (pmap->pm_ptphint[lidx] == ptp)
+		pmap->pm_ptphint[lidx] = NULL;
+	ptp->wire_count = 0;
+
+	/*
+	 * Enqueue the PTP to be freed by pmap_update().  We can't remove
+	 * the page from the uvm_object, as that can take further locks
+	 * (intolerable right now because the PTEs are likely mapped in). 
+	 * Instead mark the PTP as free and if we bump into it again, we'll
+	 * either ignore or reuse (depending on what's tolerable at the
+	 * time).
+	 */
+	pp = VM_PAGE_TO_PP(ptp);
+	KASSERT((pp->pp_flags & PP_FREEING) == 0);
+	pp->pp_flags |= PP_FREEING;
+	LIST_INSERT_HEAD(&pmap->pm_gc_ptp, ptp, mdpage.mp_pp.pp_link);
 }
 
 static void
 pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
-	      pt_entry_t *ptes, pd_entry_t * const *pdes,
-	      struct vm_page **ptp_tofree)
+	      pt_entry_t *ptes, pd_entry_t * const *pdes)
 {
 	unsigned long index;
 	int level;
@@ -2025,8 +2037,7 @@ pmap_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va,
 		pmap_tlb_shootnow();
 #endif
 
-		VM_PAGE_TO_PP(ptp)->pp_link = *ptp_tofree;
-		*ptp_tofree = ptp;
+		pmap_freepage(pmap, ptp, level);
 		if (level < PTP_LEVELS - 1) {
 			ptp = pmap_find_ptp(pmap, va, (paddr_t)-1, level + 1);
 			ptp->wire_count--;
@@ -2071,6 +2082,15 @@ pmap_get_ptp(struct pmap *pmap, struct pmap_ptparray *pt, vaddr_t va,
 		if (pt->pg[i] == NULL) {
 			pt->pg[i] = uvm_pagealloc(obj, off, NULL, aflags);
 			pt->alloced[i] = true;
+		} else if (pt->pg[i]->wire_count == 0) {
+			/* This page was queued to be freed; dequeue it. */
+			KASSERT((VM_PAGE_TO_PP(pt->pg[i])->pp_flags &
+			    PP_FREEING) != 0);
+			VM_PAGE_TO_PP(pt->pg[i])->pp_flags &= ~PP_FREEING;
+			LIST_REMOVE(pt->pg[i], mdpage.mp_pp.pp_link);
+		} else {		
+			KASSERT((VM_PAGE_TO_PP(pt->pg[i])->pp_flags &
+			    PP_FREEING) == 0);
 		}
 		if (pt->pg[i] == NULL) {
 			pmap_unget_ptp(pmap, pt);
@@ -2175,6 +2195,11 @@ pmap_unget_ptp(struct pmap *pmap, struct pmap_ptparray *pt)
 		if (!pt->alloced[i]) {
 			continue;
 		}
+		KASSERT((VM_PAGE_TO_PP(pt->pg[i])->pp_flags &
+		    PP_FREEING) == 0);
+		KASSERT(pt->pg[i]->wire_count == 0);
+		/* pmap zeros all pages before freeing. */
+		pt->pg[i]->flags |= PG_ZERO; 
 		uvm_pagefree(pt->pg[i]);
 		pt->pg[i] = NULL;
 		pmap->pm_ptphint[0] = NULL;
@@ -2366,6 +2391,8 @@ pmap_ctor(void *arg, void *obj, int flags)
 #ifdef XENPV
 	kcpuset_create(&pmap->pm_xen_ptp_cpus, true);
 #endif
+	LIST_INIT(&pmap->pm_gc_ptp);
+	pmap->pm_remove_all = NULL;
 
 	/* allocate and init PDP */
 	pmap->pm_pdir = pool_get(&pmap_pdp_pool, PR_WAITOK);
@@ -2436,8 +2463,6 @@ pmap_create(void)
 #if !defined(__x86_64__)
 	pmap->pm_hiexec = 0;
 #endif
-	pmap->pm_flags = 0;
-	pmap->pm_gc_ptp = NULL;
 
 	/* Used by NVMM. */
 	pmap->pm_enter = NULL;
@@ -2456,23 +2481,6 @@ pmap_create(void)
 	pmap->pm_ldt_sel = GSYSSEL(GLDT_SEL, SEL_KPL);
 
 	return (pmap);
-}
-
-/*
- * pmap_free_ptps: put a list of ptps back to the freelist.
- */
-void
-pmap_free_ptps(struct vm_page *empty_ptps)
-{
-	struct vm_page *ptp;
-	struct pmap_page *pp;
-
-	while ((ptp = empty_ptps) != NULL) {
-		pp = VM_PAGE_TO_PP(ptp);
-		empty_ptps = pp->pp_link;
-		LIST_INIT(&pp->pp_pvlist);
-		uvm_pagefree(ptp);
-	}
 }
 
 /*
@@ -2503,7 +2511,7 @@ pmap_check_inuse(struct pmap *pmap)
 		for (int i = 0; i < PDIR_SLOT_USERLIM; i++) {
 			if (pmap->pm_pdir[i] != 0 &&
 			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
-				printf("pmap_destroy(%p) pmap_kernel %p "
+				printf("pmap_dropref(%p) pmap_kernel %p "
 				    "curcpu %d cpu %d ci_pmap %p "
 				    "ci->ci_kpm_pdir[%d]=%" PRIx64
 				    " pmap->pm_pdir[%d]=%" PRIx64 "\n",
@@ -2520,31 +2528,28 @@ pmap_check_inuse(struct pmap *pmap)
 }
 
 /*
- * pmap_destroy: drop reference count on pmap.   free pmap if
- * reference count goes to zero.
- *
- * => we can be called from pmap_unmap_ptes() with a different, unrelated
- *    pmap's lock held.  be careful!
+ * pmap_destroy:  pmap is being destroyed by UVM.
  */
 void
 pmap_destroy(struct pmap *pmap)
 {
-	lwp_t *l;
-	int i;
 
-	/*
-	 * If we have torn down this pmap, process deferred frees and
-	 * invalidations.  Free when the pmap is destroyed thus avoiding
-	 * TLB shootdowns.
-	 */
-	l = curlwp;
-	if (__predict_false(l->l_md.md_gc_pmap == pmap)) {
-		pmap_check_ptps(pmap);
-		KASSERT(pmap->pm_gc_ptp == NULL);
-		pmap->pm_gc_ptp = l->l_md.md_gc_ptp;
-		l->l_md.md_gc_ptp = NULL;
-		l->l_md.md_gc_pmap = NULL;
-	}
+	/* Undo pmap_remove_all(), then drop the reference. */
+	pmap_update(pmap);
+	pmap_dropref(pmap);
+}
+
+/*
+ * pmap_dropref:  drop reference count on pmap.  free pmap if reference
+ * count goes to zero.
+ *
+ * => we can be called from pmap_unmap_ptes() with a different, unrelated
+ *    pmap's lock held.  be careful!
+ */
+static void
+pmap_dropref(struct pmap *pmap)
+{
+	int i;
 
 	/*
 	 * drop reference count
@@ -2560,12 +2565,9 @@ pmap_destroy(struct pmap *pmap)
 	 * Reference count is zero, free pmap resources and then free pmap.
 	 */
 
-	/*
-	 * Process deferred PTP frees.  No TLB shootdown required, as the
-	 * PTP pages are no longer visible to any CPU.
-	 */
-
-	pmap_free_ptps(pmap->pm_gc_ptp);
+	KASSERT(pmap->pm_remove_all == NULL);
+	pmap_check_ptps(pmap);
+	KASSERT(LIST_EMPTY(&pmap->pm_gc_ptp));
 
 #ifdef USER_LDT
 	if (pmap->pm_ldt != NULL) {
@@ -2576,6 +2578,7 @@ pmap_destroy(struct pmap *pmap)
 		 * No need to lock the pmap for ldt_free (or anything else),
 		 * we're the last one to use it.
 		 */
+		/* XXXAD can't take cpu_lock here - fix soon. */
 		mutex_enter(&cpu_lock);
 		ldt_free(pmap->pm_ldt_sel);
 		mutex_exit(&cpu_lock);
@@ -2610,11 +2613,13 @@ pmap_destroy(struct pmap *pmap)
 void
 pmap_remove_all(struct pmap *pmap)
 {
-	lwp_t *l = curlwp;
 
-	KASSERT(l->l_md.md_gc_pmap == NULL);
-
-	l->l_md.md_gc_pmap = pmap;
+	/*
+	 * No locking needed; at this point it should only ever be checked
+	 * by curlwp.
+	 */
+	KASSERT(pmap->pm_remove_all == NULL);
+	pmap->pm_remove_all = curlwp;
 }
 
 #if defined(PMAP_FORK)
@@ -2933,7 +2938,7 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
-	pmap_destroy(oldpmap);
+	pmap_dropref(oldpmap);
 	__insn_barrier();
 	if (l->l_ncsw != ncsw) {
 		goto retry;
@@ -3581,7 +3586,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	pd_entry_t pde;
 	pd_entry_t * const *pdes;
 	struct pv_entry *pv_tofree = NULL;
-	struct vm_page *ptp_tofree = NULL;
 	bool result;
 	paddr_t ptppa;
 	vaddr_t blkendva, va = sva;
@@ -3626,10 +3630,8 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 			 * being used, free it!
 			 */
 
-			if (result && ptp && ptp->wire_count <= 1) {
-				pmap_free_ptp(pmap, ptp, va, ptes, pdes,
-				    &ptp_tofree);
-			}
+			if (result && ptp && ptp->wire_count <= 1)
+				pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 		}
 	} else for (/* null */ ; va < eva ; va = blkendva) {
 		/* determine range of block */
@@ -3660,25 +3662,9 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 		pmap_remove_ptes(pmap, ptp, (vaddr_t)&ptes[pl1_i(va)], va,
 		    blkendva, &pv_tofree);
 
-		/*
-		 * If PTP is no longer being used, free it.  We need to unmap
-		 * and re-map to do this, then continue on at the next VA,
-		 * because we can't tolerate blocking with the PTEs mapped in.
-		 */
-		if (ptp == NULL || ptp->wire_count > 1) {
-			continue;
-		}
-		pmap_free_ptp(pmap, ptp, va, ptes, pdes, &ptp_tofree);
-		if (ptp_tofree != NULL) {
-			pmap_unmap_ptes(pmap, pmap2);
-			/* Now safe to free, with the pmap still locked. */
-			pmap_freepages(pmap, ptp_tofree);
-			ptp_tofree = NULL;
-			if (pv_tofree != NULL) {
-				pmap_free_pvs(pmap, pv_tofree);
-				pv_tofree = NULL;
-			}
-			pmap_map_ptes(pmap, &pmap2, &ptes, &pdes);
+		/* If PTP is no longer being used, free it. */
+		if (ptp && ptp->wire_count <= 1) {
+			pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 		}
 	}
 	pmap_unmap_ptes(pmap, pmap2);
@@ -3687,9 +3673,6 @@ pmap_remove(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 	 * block again.  Radix tree nodes are removed here, so we need to
 	 * continue holding the pmap locked until complete.
 	 */
-	if (ptp_tofree != NULL) {
-		pmap_freepages(pmap, ptp_tofree);
-	}
 	if (pv_tofree != NULL) {
 		pmap_free_pvs(pmap, pv_tofree);
 	}
@@ -3803,7 +3786,6 @@ static void
 pmap_pp_remove_ent(struct pmap *pmap, struct vm_page *ptp, pt_entry_t opte,
     vaddr_t va)
 {
-	struct vm_page *ptp_tofree = NULL;
 	struct pmap *pmap2;
 	pt_entry_t *ptes;
 	pd_entry_t * const *pdes;
@@ -3814,13 +3796,9 @@ pmap_pp_remove_ent(struct pmap *pmap, struct vm_page *ptp, pt_entry_t opte,
 	pmap_stats_update_bypte(pmap, 0, opte);
 	ptp->wire_count--;
 	if (ptp->wire_count <= 1) {
-		pmap_free_ptp(pmap, ptp, va, ptes, pdes, &ptp_tofree);
+		pmap_free_ptp(pmap, ptp, va, ptes, pdes);
 	}
 	pmap_unmap_ptes(pmap, pmap2);
-	/* Now safe to free PTPs, with the pmap still locked. */
-	if (ptp_tofree != NULL) {
-		pmap_freepages(pmap, ptp_tofree);
-	}
 }
 
 static void
@@ -3857,7 +3835,7 @@ startover:
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			mutex_exit(&pmap->pm_lock);
 			if (ptp != NULL) {
-				pmap_destroy(pmap);
+				pmap_dropref(pmap);
 			}
 			SPINLOCK_BACKOFF(count);
 			KERNEL_LOCK(hold_count, curlwp);
@@ -3891,7 +3869,7 @@ startover:
 		}
 		mutex_exit(&pmap->pm_lock);
 		if (ptp != NULL) {
-			pmap_destroy(pmap);
+			pmap_dropref(pmap);
 		}
 	}
 	pmap_tlb_shootnow();
@@ -4096,7 +4074,7 @@ pmap_write_protect(struct pmap *pmap, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	vaddr_t blockend, va;
 	int lvl, i;
 
-	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+	KASSERT(pmap->pm_remove_all == NULL);
 
 	if (__predict_false(pmap->pm_write_protect != NULL)) {
 		(*pmap->pm_write_protect)(pmap, sva, eva, prot);
@@ -4262,7 +4240,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	struct pmap_ptparray pt;
 
 	KASSERT(pmap_initialized);
-	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+	KASSERT(pmap->pm_remove_all == NULL);
 	KASSERT(va < VM_MAX_KERNEL_ADDRESS);
 	KASSERTMSG(va != (vaddr_t)PDP_BASE, "%s: trying to map va=%#"
 	    PRIxVADDR " over PDP!", __func__, va);
@@ -4394,10 +4372,9 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 			    vtomach((vaddr_t)ptep), npte, domid);
 			splx(s);
 			if (error) {
-				struct vm_page *ptp_tofree = NULL;
 				if (ptp != NULL && ptp->wire_count <= 1) {
-					pmap_free_ptp(pmap, ptp, va,
-					    ptes, pdes, &ptp_tofree);
+					pmap_free_ptp(pmap, ptp, va, ptes,
+					    pdes);
 				}
 				goto out;
 			}
@@ -4785,16 +4762,18 @@ pmap_dump(struct pmap *pmap, vaddr_t sva, vaddr_t eva)
 void
 pmap_update(struct pmap *pmap)
 {
-	struct vm_page *empty_ptps;
-	lwp_t *l = curlwp;
+	struct pmap_page *pp;
+	struct vm_page *ptp;
 
 	/*
-	 * If we have torn down this pmap, invalidate non-global TLB
-	 * entries on any processors using it.
+	 * If pmap_remove_all() was in effect, re-enable invalidations from
+	 * this point on; issue a shootdown for all the mappings just
+	 * removed.
 	 */
 	kpreempt_disable();
-	if (__predict_false(l->l_md.md_gc_pmap == pmap)) {
-		l->l_md.md_gc_pmap = NULL;
+	if (pmap->pm_remove_all != NULL) {
+		KASSERT(pmap->pm_remove_all == curlwp);
+		pmap->pm_remove_all = NULL;
 		pmap_tlb_shootdown(pmap, (vaddr_t)-1LL, 0, TLBSHOOT_UPDATE);
 	}
 
@@ -4806,17 +4785,32 @@ pmap_update(struct pmap *pmap)
 	kpreempt_enable();
 
 	/*
-	 * Now that shootdowns are complete, process deferred frees,
-	 * but not from interrupt context.
+	 * Now that shootdowns are complete, process deferred frees.  This
+	 * is an unlocked check, but is safe as we're only interested in
+	 * work done in this LWP - we won't get a false negative.
 	 */
-	if (l->l_md.md_gc_ptp != NULL) {
-		KASSERT((l->l_pflag & LP_INTR) == 0);
-		if (cpu_intr_p()) {
-			return;
+	if (!LIST_EMPTY(&pmap->pm_gc_ptp)) {
+		mutex_enter(&pmap->pm_lock);
+		while ((ptp = LIST_FIRST(&pmap->pm_gc_ptp)) != NULL) {
+			LIST_REMOVE(ptp, mdpage.mp_pp.pp_link);
+			pp = VM_PAGE_TO_PP(ptp);
+			LIST_INIT(&pp->pp_pvlist);
+			KASSERT((pp->pp_flags & PP_FREEING) != 0);
+			KASSERT(ptp->wire_count == 0);
+			pp->pp_flags &= ~PP_FREEING;
+	
+			/*
+			 * XXX Hack to avoid extra locking, and lock
+			 * assertions in uvm_pagefree().  Despite uobject
+			 * being set, this isn't a managed page.
+			 */
+			uvm_pagerealloc(ptp, NULL, 0);
+
+			/* pmap zeros all pages before freeing */
+			ptp->flags |= PG_ZERO;
+			uvm_pagefree(ptp);
 		}
-		empty_ptps = l->l_md.md_gc_ptp;
-		l->l_md.md_gc_ptp = NULL;
-		pmap_free_ptps(empty_ptps);
+		mutex_exit(&pmap->pm_lock);
 	}
 }
 
@@ -5082,7 +5076,7 @@ pmap_ept_free_ptp(struct pmap *pmap, struct vm_page *ptp, vaddr_t va)
 	do {
 		(void)pmap_pte_testset(tree[level - 1], 0);
 
-		pmap_freepages(pmap, ptp);
+		pmap_freepage(pmap, ptp, level);
 		if (level < PTP_LEVELS - 1) {
 			ptp = pmap_find_ptp(pmap, va, (paddr_t)-1, level + 1);
 			ptp->wire_count--;
@@ -5158,7 +5152,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	int error;
 
 	KASSERT(pmap_initialized);
-	KASSERT(curlwp->l_md.md_gc_pmap != pmap);
+	KASSERT(pmap->pm_remove_all == NULL);
 	KASSERT(va < VM_MAXUSER_ADDRESS);
 
 	npte = pa | pmap_ept_prot(prot) | pmap_ept_type(flags);
