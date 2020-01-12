@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.637 2020/01/10 09:47:19 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.638 2020/01/12 13:19:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -196,6 +196,7 @@
 #define	dbtob(x)	((x) << DEV_BSHIFT)
 #define	btodb(x)	((x) >> DEV_BSHIFT)
 
+/* Coherency unit: assumed cache line size.  See also MIN_LWP_ALIGNMENT. */
 #ifndef COHERENCY_UNIT
 #define	COHERENCY_UNIT		64
 #endif
@@ -528,10 +529,11 @@ extern size_t coherency_unit;
 /*
  * Minimum alignment of "struct lwp" needed by the architecture.
  * This counts when packing a lock byte into a word alongside a
- * pointer to an LWP.
+ * pointer to an LWP.  We need a minimum of 32, but go with 64
+ * to match the cache line size.
  */
 #ifndef MIN_LWP_ALIGNMENT
-#define	MIN_LWP_ALIGNMENT	32
+#define	MIN_LWP_ALIGNMENT	64
 #endif
 #endif /* !__ASSEMBLER__ */
 
