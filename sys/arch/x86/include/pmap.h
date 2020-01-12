@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.108 2020/01/04 22:49:20 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.109 2020/01/12 13:01:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -262,7 +262,7 @@ struct pmap {
 #if !defined(__x86_64__)
 	vaddr_t pm_hiexec;		/* highest executable mapping */
 #endif /* !defined(__x86_64__) */
-	int pm_flags;			/* see below */
+	struct lwp *pm_remove_all;	/* who's emptying the pmap */
 
 	union descriptor *pm_ldt;	/* user-set LDT */
 	size_t pm_ldt_len;		/* size of LDT in bytes */
@@ -273,7 +273,7 @@ struct pmap {
 	kcpuset_t *pm_xen_ptp_cpus;	/* mask of CPUs which have this pmap's
 					 ptp mapped */
 	uint64_t pm_ncsw;		/* for assertions */
-	struct vm_page *pm_gc_ptp;	/* pages from pmap g/c */
+	LIST_HEAD(,vm_page) pm_gc_ptp;	/* PTPs queued for free */
 
 	/* Used by NVMM. */
 	int (*pm_enter)(struct pmap *, vaddr_t, paddr_t, vm_prot_t, u_int);
@@ -580,7 +580,6 @@ void	pmap_kenter_ma(vaddr_t, paddr_t, vm_prot_t, u_int);
 int	pmap_enter_ma(struct pmap *, vaddr_t, paddr_t, paddr_t,
 	    vm_prot_t, u_int, int);
 bool	pmap_extract_ma(pmap_t, vaddr_t, paddr_t *);
-void	pmap_free_ptps(struct vm_page *);
 
 paddr_t pmap_get_physpage(void);
 
