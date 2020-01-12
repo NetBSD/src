@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.50 2020/01/12 03:37:10 tsutsui Exp $
+#	$NetBSD: install.sub,v 1.51 2020/01/12 03:56:14 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1531,7 +1531,7 @@ unmount_fs()
 		_fstab=$1
 	fi
 
-	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
+	if ! [ -f "${_fstab}" ] || ! [ -s "${_fstab}" ]; then
 		echo "fstab empty" > /dev/tty
 		return
 	fi
