@@ -389,28 +389,33 @@ get_tempdir(struct archive_string *temppath)
  */
 
 int
-__archive_mktemp(const char *tmpdir)
+__archive_mktempx(const char *tmpdir, struct archive_string *template)
 {
 	struct archive_string temp_name;
 	int fd = -1;
 
-	archive_string_init(&temp_name);
-	if (tmpdir == NULL) {
-		if (get_tempdir(&temp_name) != ARCHIVE_OK)
-			goto exit_tmpfile;
-	} else {
-		archive_strcpy(&temp_name, tmpdir);
-		if (temp_name.s[temp_name.length-1] != '/')
-			archive_strappend_char(&temp_name, '/');
+	if (template == NULL) {
+		archive_string_init(template = &temp_name);
+		if (tmpdir == NULL) {
+			if (get_tempdir(&temp_name) != ARCHIVE_OK)
+				goto exit_tmpfile;
+		} else {
+			archive_strcpy(&temp_name, tmpdir);
+			if (temp_name.s[temp_name.length-1] != '/')
+				archive_strappend_char(&temp_name, '/');
+		}
+		archive_strcat(&temp_name, "libarchive_XXXXXX");
 	}
-	archive_strcat(&temp_name, "libarchive_XXXXXX");
-	fd = mkstemp(temp_name.s);
+	fd = mkstemp(template->s);
 	if (fd < 0)
 		goto exit_tmpfile;
 	__archive_ensure_cloexec_flag(fd);
-	unlink(temp_name.s);
+
+	if (template == &temp_name)
+		unlink(temp_name.s);
 exit_tmpfile:
-	archive_string_free(&temp_name);
+	if (template == &temp_name)
+		archive_string_free(&temp_name);
 	return (fd);
 }
 
@@ -421,7 +426,7 @@ exit_tmpfile:
  */
 
 int
-__archive_mktemp(const char *tmpdir)
+__archive_mktempx(const char *tmpdir, struct archive_string *template)
 {
         static const char num[] = {
 		'0', '1', '2', '3', '4', '5', '6', '7',
@@ -439,26 +444,36 @@ __archive_mktemp(const char *tmpdir)
 	char *tp, *ep;
 
 	fd = -1;
-	archive_string_init(&temp_name);
-	if (tmpdir == NULL) {
-		if (get_tempdir(&temp_name) != ARCHIVE_OK)
+	if (template == NULL) {
+		archive_string_init(template = &temp_name);
+		if (tmpdir == NULL) {
+			if (get_tempdir(&temp_name) != ARCHIVE_OK)
+				goto exit_tmpfile;
+		} else
+			archive_strcpy(&temp_name, tmpdir);
+		if (temp_name.s[temp_name.length-1] == '/') {
+			temp_name.s[temp_name.length-1] = '\0';
+			temp_name.length --;
+		}
+		if (la_stat(temp_name.s, &st) < 0)
 			goto exit_tmpfile;
-	} else
-		archive_strcpy(&temp_name, tmpdir);
-	if (temp_name.s[temp_name.length-1] == '/') {
-		temp_name.s[temp_name.length-1] = '\0';
-		temp_name.length --;
+		if (!S_ISDIR(st.st_mode)) {
+			errno = ENOTDIR;
+			goto exit_tmpfile;
+		}
+		archive_strcat(&temp_name, "/libarchive_");
+		tp = temp_name.s + archive_strlen(&temp_name);
+		archive_strcat(&temp_name, "XXXXXXXXXX");
+		ep = temp_name.s + archive_strlen(&temp_name);
+	} else {
+		tp = strchr(template->s, 'X');
+		if (tp == NULL)	/* No X, programming error */
+			abort();
+		for (ep = *tp; *ep == 'X'; ep++)
+			continue;
+		if (*ep)	/* X followed by non X, programming error */
+			abort();
 	}
-	if (la_stat(temp_name.s, &st) < 0)
-		goto exit_tmpfile;
-	if (!S_ISDIR(st.st_mode)) {
-		errno = ENOTDIR;
-		goto exit_tmpfile;
-	}
-	archive_strcat(&temp_name, "/libarchive_");
-	tp = temp_name.s + archive_strlen(&temp_name);
-	archive_strcat(&temp_name, "XXXXXXXXXX");
-	ep = temp_name.s + archive_strlen(&temp_name);
 
 	do {
 		char *p;
@@ -469,19 +484,27 @@ __archive_mktemp(const char *tmpdir)
 			int d = *((unsigned char *)p) % sizeof(num);
 			*p++ = num[d];
 		}
-		fd = open(temp_name.s, O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC,
+		fd = open(template->s, O_CREAT | O_EXCL | O_RDWR | O_CLOEXEC,
 			  0600);
 	} while (fd < 0 && errno == EEXIST);
 	if (fd < 0)
 		goto exit_tmpfile;
 	__archive_ensure_cloexec_flag(fd);
-	unlink(temp_name.s);
+	if (template == &temp_name)
+		unlink(temp_name.s);
 exit_tmpfile:
-	archive_string_free(&temp_name);
+	if (template == &temp_name)
+		archive_string_free(&temp_name);
 	return (fd);
 }
 
 #endif /* HAVE_MKSTEMP */
+
+int
+__archive_mktemp(const char *tmpdir)
+{
+	return __archive_mktempx(tmpdir, NULL);
+}
 #endif /* !_WIN32 || __CYGWIN__ */
 
 /*
