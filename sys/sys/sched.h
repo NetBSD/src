@@ -1,4 +1,4 @@
-/*	$NetBSD: sched.h,v 1.86 2020/01/09 16:35:03 ad Exp $	*/
+/*	$NetBSD: sched.h,v 1.87 2020/01/12 22:03:23 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
@@ -158,6 +158,7 @@ struct schedstate_percpu {
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
+	struct cpu_info *spc_nextpkg;	/* (: next package 1st for RR */
 	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 	volatile int	spc_flags;	/* s: flags; see below */
@@ -166,11 +167,11 @@ struct schedstate_percpu {
 	int		spc_ticks;	/* s: ticks until sched_tick() */
 	int		spc_pscnt;	/* s: prof/stat counter */
 	int		spc_psdiv;	/* s: prof/stat divisor */
+	int		spc_nextskim;	/* s: next time to skim other queues */
 	/* Run queue */
 	volatile pri_t	spc_curpriority;/* s: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
 	u_int		spc_count;	/* m: count of the threads */
-	u_int		spc_avgcount;	/* m: average count of threads (* 256) */
 	u_int		spc_mcount;	/* m: count of migratable threads */
 	uint32_t	spc_bitmap[8];	/* m: bitmap of active queues */
 	TAILQ_HEAD(,lwp) *spc_queue;	/* m: queue for each priority */
@@ -243,6 +244,7 @@ void		sched_resched_lwp(struct lwp *, bool);
 struct lwp *	sched_nextlwp(void);
 void		sched_oncpu(struct lwp *);
 void		sched_newts(struct lwp *);
+void		sched_vforkexec(struct lwp *, bool);
 
 /* Priority adjustment */
 void		sched_nice(struct proc *, int);
