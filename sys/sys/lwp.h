@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.195 2020/01/12 21:40:44 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.196 2020/01/12 22:03:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
@@ -266,6 +266,7 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_SINGLESTEP	0x00000400 /* Single step thread in ptrace(2) */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_PREEMPTING	0x00020000 /* mi_switch called involuntarily */
+#define	LP_TELEPORT	0x40000000 /* Teleport to new CPU on preempt() */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
 
 /* The third set is kept in l_prflag. */
