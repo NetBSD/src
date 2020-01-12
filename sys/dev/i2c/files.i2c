@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.107 2020/01/03 18:00:05 jmcneill Exp $
+#	$NetBSD: files.i2c,v 1.108 2020/01/12 17:48:42 thorpej Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -55,7 +55,6 @@ define	motoi2c
 file	dev/i2c/motoi2c.c			motoi2c
 define	mvi2c
 file	dev/i2c/gttwsi_core.c			mvi2c
-defflag opt_gttwsi.h				GTTWSI_ALLWINNER
 
 #
 # I2C client devices
