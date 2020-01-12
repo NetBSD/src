@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.22 2019/11/10 21:16:23 chs Exp $ */
+/* $NetBSD: imxuart.c,v 1.23 2020/01/12 00:35:11 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.22 2019/11/10 21:16:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.23 2020/01/12 00:35:11 jmcneill Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -2186,30 +2186,36 @@ imxuart_init(struct imxuart_regs *regsp, int rate, tcflag_t cflag, int domap)
 	     IMX_UART_SIZE, 0, &regsp->ur_ioh)) != 0)
 		return error;
 
-	if (imxuspeed(rate, &ratio) < 0)
-		return EINVAL;
+	if (imxuart_freq != 0) {
+		if (imxuspeed(rate, &ratio) < 0)
+			return EINVAL;
 
-	/* UBIR must updated before UBMR */
-	bus_space_write_4(regsp->ur_iot, regsp->ur_ioh,
-	    IMX_UBIR, ratio.numerator);
-	bus_space_write_4(regsp->ur_iot, regsp->ur_ioh,
-	    IMX_UBMR, ratio.modulator);
-
+		/* UBIR must updated before UBMR */
+		bus_space_write_4(regsp->ur_iot, regsp->ur_ioh,
+		    IMX_UBIR, ratio.numerator);
+		bus_space_write_4(regsp->ur_iot, regsp->ur_ioh,
+		    IMX_UBMR, ratio.modulator);
+	}
 
 	/* XXX: DTREN, DPEC */
 	bus_space_write_4(regsp->ur_iot, regsp->ur_ioh, IMX_UCR3,
 	    IMX_UCR3_DSR|IMX_UCR3_RXDMUXSEL);
 
-	ufcr = (8 << IMX_UFCR_TXTL_SHIFT) | (rfdiv << IMX_UFCR_RFDIV_SHIFT) |
-		(1 << IMX_UFCR_RXTL_SHIFT);
-	/* XXX: keep DCE/DTE bit */
-	ufcr |= bus_space_read_4(regsp->ur_iot, regsp->ur_ioh, IMX_UFCR) &
-		IMX_UFCR_DCEDTE;
-
+	ufcr = bus_space_read_4(regsp->ur_iot, regsp->ur_ioh, IMX_UFCR);
+	ufcr &= ~IMX_UFCR_TXTL;
+	ufcr |= (8 << IMX_UFCR_TXTL_SHIFT);
+	ufcr &= ~IMX_UFCR_RXTL;
+	ufcr |= (1 << IMX_UFCR_RXTL_SHIFT);
+	if (imxuart_freq != 0) {
+		ufcr &= ~IMX_UFCR_RFDIV;
+		ufcr |= (rfdiv << IMX_UFCR_RFDIV_SHIFT);
+	}
 	bus_space_write_4(regsp->ur_iot, regsp->ur_ioh, IMX_UFCR, ufcr);
 
-	bus_space_write_4(regsp->ur_iot, regsp->ur_ioh, IMX_ONEMS,
-	    imxuart_freq / imxuart_freqdiv / 1000);
+	if (imxuart_freq != 0) {
+		bus_space_write_4(regsp->ur_iot, regsp->ur_ioh, IMX_ONEMS,
+		    imxuart_freq / imxuart_freqdiv / 1000);
+	}
 
 	bus_space_write_4(regsp->ur_iot, regsp->ur_ioh, IMX_UCR2,
 			  IMX_UCR2_IRTS|
