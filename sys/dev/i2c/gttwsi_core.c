@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.11 2020/01/11 22:21:25 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.12 2020/01/12 17:48:42 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.11 2020/01/11 22:21:25 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.12 2020/01/12 17:48:42 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -92,45 +92,35 @@ static int	gttwsi_write_byte(void *v, uint8_t val, int flags);
 static int	gttwsi_wait(struct gttwsi_softc *, uint32_t, uint32_t,
 			    uint32_t, int);
 
-static inline uint32_t
-gttwsi_default_read_4(struct gttwsi_softc *sc, uint32_t reg)
+uint32_t
+gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
 {
-	uint32_t val = bus_space_read_4(sc->sc_bust, sc->sc_bush, reg);
+	const uint32_t val = bus_space_read_4(sc->sc_bust, sc->sc_bush,
+					      sc->sc_regmap[reg]);
 #ifdef TWSI_DEBUG
-	printf("I2C:R:%02x:%02x\n", reg, val);
+	printf("I2C:R:[%u]%02x:%02x\n", reg, sc->sc_regmap[reg], val);
 #else
 	DELAY(TWSI_READ_DELAY);
 #endif
 	return val;
 }
 
-static inline void
-gttwsi_default_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
+void
+gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
 {
+
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
 #ifdef TWSI_DEBUG
-	printf("I2C:W:%02x:%02x\n", reg, val);
+	printf("I2C:W:[%u]%02x:%02x\n", reg, sc->sc_regmap[reg], val);
 #else
 	DELAY(TWSI_WRITE_DELAY);
 #endif
-	return;
-}
-
-static inline uint32_t
-gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
-{
-	return sc->sc_reg_read(sc, reg);
-}
-
-static inline void
-gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
-{
-	return sc->sc_reg_write(sc, reg, val);
 }
 
 /* ARGSUSED */
 void
-gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
+gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh,
+		   const bus_size_t *regmap)
 {
 	struct gttwsi_softc * const sc = device_private(self);
 	prop_dictionary_t cfg = device_properties(self);
@@ -141,11 +131,7 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	sc->sc_dev = self;
 	sc->sc_bust = iot;
 	sc->sc_bush = ioh;
-
-	if (sc->sc_reg_read == NULL)
-		sc->sc_reg_read = gttwsi_default_read_4;
-	if (sc->sc_reg_write == NULL)
-		sc->sc_reg_write = gttwsi_default_write_4;
+	sc->sc_regmap = regmap;
 
 	mutex_init(&sc->sc_mtx, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_cv, device_xname(self));
@@ -166,7 +152,6 @@ gttwsi_attach_subr(device_t self, bus_space_tag_t iot, bus_space_handle_t ioh)
 	 */
 	/* reset */
 	gttwsi_write_4(sc, TWSI_SOFTRESET, SOFTRESET_VAL);
-
 }
 
 void
