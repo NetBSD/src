@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.157 2019/12/10 18:02:14 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.158 2020/01/12 20:06:52 christos Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -564,13 +564,13 @@ l1pte_set(pt_entry_t *pdep, pt_entry_t pde)
 	*pdep = pde;
 	if (l1pte_page_p(pde)) {
 		KASSERTMSG((((uintptr_t)pdep / sizeof(pde)) & (PAGE_SIZE / L2_T_SIZE - 1)) == 0, "%p", pdep);
-		for (size_t k = 1; k < PAGE_SIZE / L2_T_SIZE; k++) {
+		for (int k = 1; k < PAGE_SIZE / L2_T_SIZE; k++) {
 			pde += L2_T_SIZE;
 			pdep[k] = pde;
 		}
 	} else if (l1pte_supersection_p(pde)) {
 		KASSERTMSG((((uintptr_t)pdep / sizeof(pde)) & (L1_SS_SIZE / L1_S_SIZE - 1)) == 0, "%p", pdep);
-		for (size_t k = 1; k < L1_SS_SIZE / L1_S_SIZE; k++) {
+		for (int k = 1; k < L1_SS_SIZE / L1_S_SIZE; k++) {
 			pdep[k] = pde;
 		}
 	}
@@ -589,12 +589,12 @@ l2pte_set(pt_entry_t *ptep, pt_entry_t pte, pt_entry_t opte)
 {
 	if (l1pte_lpage_p(pte)) {
 		KASSERTMSG((((uintptr_t)ptep / sizeof(pte)) & (L2_L_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
-		for (size_t k = 0; k < L2_L_SIZE / L2_S_SIZE; k++) {
+		for (int k = 0; k < L2_L_SIZE / L2_S_SIZE; k++) {
 			*ptep++ = pte;
 		}
 	} else {
 		KASSERTMSG((((uintptr_t)ptep / sizeof(pte)) & (PAGE_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
-		for (size_t k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
+		for (int k = 0; k < PAGE_SIZE / L2_S_SIZE; k++) {
 			KASSERTMSG(*ptep == opte, "%#x [*%p] != %#x", *ptep, ptep, opte);
 			*ptep++ = pte;
 			pte += L2_S_SIZE;
@@ -609,7 +609,7 @@ l2pte_reset(pt_entry_t *ptep)
 {
 	KASSERTMSG((((uintptr_t)ptep / sizeof(*ptep)) & (PAGE_SIZE / L2_S_SIZE - 1)) == 0, "%p", ptep);
 	*ptep = 0;
-	for (vsize_t k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
+	for (int k = 1; k < PAGE_SIZE / L2_S_SIZE; k++) {
 		ptep[k] = 0;
 	}
 }
