@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50 2020/01/08 05:41:07 ryo Exp $	*/
+/*	$NetBSD: locore.S,v 1.51 2020/01/12 09:29:18 mrg Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.50 2020/01/08 05:41:07 ryo Exp $")
+RCSID("$NetBSD: locore.S,v 1.51 2020/01/12 09:29:18 mrg Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -187,7 +187,8 @@ vstart:
 	/* get cache configuration */
 	mrs	x0, tpidr_el1		/* curcpu */
 	mrs     x1, mpidr_el1
-	bl	aarch64_gettopology
+	mov	x2, #0
+	bl	aarch64_set_topology
 	mov	x0, xzr
 	bl	aarch64_getcacheinfo
 

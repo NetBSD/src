@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.17 2020/01/05 20:17:43 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.18 2020/01/12 09:29:18 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -92,6 +92,9 @@ struct cpu_info {
 	struct evcnt ci_vfp_reuse;
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
+
+	/* FDT or similar supplied "cpu capacity" */
+	uint32_t ci_capacity_dmips_mhz;
 
 	/* interrupt controller */
 	u_int ci_gic_redist;	/* GICv3 redistributor index */

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.6 2020/01/09 16:35:03 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.7 2020/01/12 09:29:18 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.6 2020/01/09 16:35:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.7 2020/01/12 09:29:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -152,6 +152,7 @@ cpu_topology_set(struct cpu_info *ci, u_int package_id, u_int core_id,
 	ci->ci_core_id = core_id;
 	ci->ci_smt_id = smt_id;
 	ci->ci_numa_id = numa_id;
+	ci->ci_is_slow = slow;
 	for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 		ci->ci_sibling[rel] = ci;
 		ci->ci_nsibling[rel] = 1;

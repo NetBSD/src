@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.32 2020/01/09 16:23:41 martin Exp $ */
+/* $NetBSD: cpu.c,v 1.33 2020/01/12 09:29:18 mrg Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.32 2020/01/09 16:23:41 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.33 2020/01/12 09:29:18 mrg Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -65,6 +65,7 @@ static void cpu_identify1(device_t self, struct cpu_info *);
 static void cpu_identify2(device_t self, struct cpu_info *);
 static void cpu_setup_id(struct cpu_info *);
 static void cpu_setup_sysctl(device_t, struct cpu_info *);
+static void cpu_do_topology(struct cpu_info *);
 
 #ifdef MULTIPROCESSOR
 uint64_t cpu_mpidr[MAXCPUS];
@@ -144,9 +145,9 @@ cpu_attach(device_t dv, cpuid_t id)
 	ci->ci_dev = dv;
 	dv->dv_private = ci;
 
-	aarch64_gettopology(ci, ci->ci_id.ac_mpidr);
-
+	cpu_do_topology(ci);
 	cpu_identify(ci->ci_dev, ci);
+
 #ifdef MULTIPROCESSOR
 	if (unit != 0) {
 		mi_cpu_attach(ci);
@@ -308,8 +309,8 @@ cpu_identify2(device_t self, struct cpu_info *ci)
 
 	dfr0 = reg_id_aa64dfr0_el1_read();
 
-	aprint_debug_dev(self, "midr=0x%" PRIx32 "\n",
-	    (uint32_t)ci->ci_id.ac_midr);
+	aprint_debug_dev(self, "midr=0x%" PRIx32 " mpidr=0x%" PRIx32 "\n",
+	    (uint32_t)ci->ci_id.ac_midr, (uint32_t)ci->ci_id.ac_mpidr);
 	aprint_normal_dev(self, "revID=0x%" PRIx64, id->ac_revidr);
 
 	/* ID_AA64DFR0_EL1 */
@@ -495,6 +496,43 @@ cpu_setup_sysctl(device_t dv, struct cpu_info *ci)
 		       CTLTYPE_STRUCT, "cpu_id", NULL,
 		       NULL, 0, &ci->ci_id, sizeof(ci->ci_id),
 		       CTL_CREATE, CTL_EOL);
+}
+
+static void
+cpu_do_topology(struct cpu_info *newci)
+{
+	struct cpu_info *ci;
+	CPU_INFO_ITERATOR cii;
+	prop_dictionary_t dict;
+	uint32_t capacity_dmips_mhz;
+	static uint32_t best_cap = 0;
+
+	dict = device_properties(newci->ci_dev);
+	if (prop_dictionary_get_uint32(dict, "capacity_dmips_mhz",
+	    &capacity_dmips_mhz)) {
+		newci->ci_capacity_dmips_mhz = capacity_dmips_mhz;
+	} else {
+		newci->ci_capacity_dmips_mhz = 0;
+	}
+
+	if (newci->ci_capacity_dmips_mhz > best_cap)
+		best_cap = newci->ci_capacity_dmips_mhz;
+
+	/*
+	 * CPU_INFO_FOREACH() doesn't work for this CPU until mi_cpu_attach()
+	 * is called and ncpu is bumped, so call it directly here.
+	 */
+	aarch64_set_topology(newci, newci->ci_id.ac_mpidr,
+	    newci->ci_capacity_dmips_mhz < best_cap);
+
+	/*
+	 * Using saved largest capacity, refresh previous topology info.
+	 * It's supposed to be OK to re-set topology.
+	 */
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		aarch64_set_topology(ci, ci->ci_id.ac_mpidr,
+		    ci->ci_capacity_dmips_mhz < best_cap);
+	}
 }
 
 #ifdef MULTIPROCESSOR
