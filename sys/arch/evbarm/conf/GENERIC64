@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.130 2020/01/04 14:18:28 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.131 2020/01/12 21:52:36 riastradh Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -393,7 +393,7 @@ amdccp*		at fdt?			# AMD Cryptograhic Coprocessor RNG
 amdccp*		at acpi?
 bcmrng*		at fdt?			# Broadcom BCM283x RNG
 mesonrng*	at fdt?			# Amlogic Meson RNG
-#sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
+sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
