@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.638 2020/01/12 13:19:32 ad Exp $	*/
+/*	$NetBSD: param.h,v 1.639 2020/01/12 13:37:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -527,13 +527,16 @@ extern size_t coherency_unit;
 #endif /* _KERNEL */
 
 /*
- * Minimum alignment of "struct lwp" needed by the architecture.
- * This counts when packing a lock byte into a word alongside a
- * pointer to an LWP.  We need a minimum of 32, but go with 64
- * to match the cache line size.
+ * Minimum alignment of "struct lwp" needed by the architecture.  This
+ * counts when packing a lock byte into a word alongside a pointer to an
+ * LWP.  We need a minimum of 32, but go with the cache line size.
  */
 #ifndef MIN_LWP_ALIGNMENT
-#define	MIN_LWP_ALIGNMENT	64
+# if COHERENCY_UNIT > 32
+#  define MIN_LWP_ALIGNMENT	COHERENCY_UNIT
+# else
+#  define MIN_LWP_ALIGNMENT	32
+# endif
 #endif
 #endif /* !__ASSEMBLER__ */
 
