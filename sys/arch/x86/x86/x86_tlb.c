@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.13 2019/12/16 19:17:25 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.14 2020/01/12 13:01:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008-2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.13 2019/12/16 19:17:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.14 2020/01/12 13:01:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -232,14 +232,6 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 
 	if (__predict_false(pm->pm_tlb_flush != NULL)) {
 		(*pm->pm_tlb_flush)(pm);
-		return;
-	}
-
-	/*
-	 * If tearing down the pmap, do nothing.  We will flush later
-	 * when we are ready to recycle/destroy it.
-	 */
-	if (__predict_false(curlwp->l_md.md_gc_pmap == pm)) {
 		return;
 	}
 
