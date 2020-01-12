@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.30 2019/11/01 13:22:08 bad Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.31 2020/01/12 09:29:18 mrg Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.30 2019/11/01 13:22:08 bad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.31 2020/01/12 09:29:18 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -126,9 +126,20 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 	enum cpu_fdt_type type;
 	bus_addr_t mpidr;
 	cpuid_t cpuid;
+	const uint32_t *cap_ptr;
+	int len;
 
 	sc->sc_dev = self;
 	sc->sc_phandle = phandle;
+
+ 	cap_ptr = fdtbus_get_prop(phandle, "capacity-dmips-mhz", &len);
+	if (cap_ptr && len == 4) {
+		prop_dictionary_t dict = device_properties(self);
+		uint32_t capacity_dmips_mhz = be32toh(*cap_ptr);
+
+		prop_dictionary_set_uint32(dict, "capacity_dmips_mhz",
+		    capacity_dmips_mhz);
+	}
 
 	type = of_search_compatible(phandle, compat_data)->data;
 
