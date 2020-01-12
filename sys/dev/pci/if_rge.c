@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.2 2020/01/11 21:05:45 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.3 2020/01/12 23:22:12 sevan Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.2 2020/01/11 21:05:45 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.3 2020/01/12 23:22:12 sevan Exp $");
 
 /* #include "bpfilter.h" Sevan */
 /* #include "vlan.h" Sevan */
@@ -34,6 +34,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.2 2020/01/11 21:05:45 sevan Exp $");
 #include <sys/socket.h>
 #include <sys/device.h>
 #include <sys/endian.h>
+#include <sys/callout.h>
+#include <sys/workqueue.h>
 
 #include <net/if.h>
 
@@ -69,6 +71,12 @@ struct mbuf_list {
 	struct mbuf 	*ml_tail;
 	u_int 	ml_len;
 };
+#ifdef NET_MPSAFE
+#define 	RGE_MPSAFE	1
+#define 	CALLOUT_FLAGS	CALLOUT_MPSAFE
+#else
+#define 	CALLOUT_FLAGS	0
+#endif
 #endif
 
 static int		rge_match(device_t, cfdata_t, void *);
@@ -113,7 +121,7 @@ void		rge_write_phy(struct rge_softc *, uint16_t, uint16_t, uint16_t);
 void		rge_write_phy_ocp(struct rge_softc *, uint16_t, uint16_t);
 uint16_t	rge_read_phy_ocp(struct rge_softc *, uint16_t);
 int		rge_get_link_status(struct rge_softc *);
-void		rge_txstart(void *);
+void		rge_txstart(struct work *, void *);
 void		rge_tick(void *);
 void		rge_link_state(struct rge_softc *);
 
@@ -284,8 +292,9 @@ rge_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_VLAN_HWTAGGING;
 #endif
 
-	timeout_set(&sc->sc_timeout, rge_tick, sc);
-	task_set(&sc->sc_task, rge_txstart, sc);
+	callout_init(&sc->sc_timeout, CALLOUT_FLAGS);
+	callout_setfunc(&sc->sc_timeout, rge_tick, sc);
+	rge_txstart(&sc->sc_task, sc);
 
 	/* Initialize ifmedia structures. */
 	ifmedia_init(&sc->sc_media, IFM_IMASK, rge_ifmedia_upd,
@@ -521,9 +530,8 @@ rge_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 }
 
 void
-rge_start(struct ifnet *ifq)
+rge_start(struct ifnet *ifp)
 {
-	struct ifnet *ifp = ifq->ifq_if;
 	struct rge_softc *sc = ifp->if_softc;
 	struct mbuf *m;
 	int free, idx, used;
@@ -546,11 +554,11 @@ rge_start(struct ifnet *ifq)
 
 	for (;;) {
 		if (RGE_TX_NSEGS >= free + 2) {
-			ifq_set_oactive(&ifp->if_snd);
+			SET(ifp->if_flags, IFF_OACTIVE);
 			break;
 		}
 
-		m = ifq_dequeue(ifq);
+		IFQ_DEQUEUE(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 
@@ -763,9 +771,9 @@ rge_init(struct ifnet *ifp)
 	rge_setup_intr(sc, RGE_IMTYPE_SIM);
 
 	ifp->if_flags |= IFF_RUNNING;
-	ifq_clr_oactive(&ifp->if_snd);
+	CLR(ifp->if_flags, IFF_OACTIVE);
 
-	timeout_add_sec(&sc->sc_timeout, 1);
+	callout_schedule(&sc->sc_timeout, 1);
 
 	return (0);
 }
@@ -2004,7 +2012,7 @@ rge_get_link_status(struct rge_softc *sc)
 }
 
 void
-rge_txstart(void *arg)
+rge_txstart(struct work *wk, void *arg)
 {
 	struct rge_softc *sc = arg;
 
