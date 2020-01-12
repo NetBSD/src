@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -345,7 +345,7 @@ radix_tree_init(void)
 {
 
 	radix_tree_node_cache = pool_cache_init(sizeof(struct radix_tree_node),
-	    coherency_unit, 0, 0, "radixnode", NULL, IPL_NONE,
+	    coherency_unit, 0, PR_LARGECACHE, "radixnode", NULL, IPL_NONE,
 	    radix_tree_node_ctor, NULL, NULL);
 	KASSERT(radix_tree_node_cache != NULL);
 }
