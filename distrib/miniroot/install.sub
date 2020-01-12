@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.49 2019/10/02 11:15:59 maya Exp $
+#	$NetBSD: install.sub,v 1.50 2020/01/12 03:37:10 tsutsui Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -429,7 +429,7 @@ configure_ifs() {
 
 	# Get netmask
 	resp=""		# force one iteration
-	while [ -n "${resp}" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Netmask? [$_interface_mask] "
 		getresp "$_interface_mask"
 		_interface_mask=$resp
