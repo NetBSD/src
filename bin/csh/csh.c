@@ -1,4 +1,4 @@
-/* $NetBSD: csh.c,v 1.48 2019/01/05 16:54:00 christos Exp $ */
+/* $NetBSD: csh.c,v 1.49 2020/01/12 18:36:55 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)csh.c	8.2 (Berkeley) 10/12/93";
 #else
-__RCSID("$NetBSD: csh.c,v 1.48 2019/01/05 16:54:00 christos Exp $");
+__RCSID("$NetBSD: csh.c,v 1.49 2020/01/12 18:36:55 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -104,9 +104,6 @@ static void srcunit(int, int, int);
 static void mailchk(void);
 #ifndef _PATH_DEFPATH
 static Char **defaultpath(void);
-#endif
-#ifdef EDITING
-int	editing = 0;
 #endif
 
 int
