@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_data.h,v 1.47 2020/01/09 16:35:03 ad Exp $	*/
+/*	$NetBSD: cpu_data.h,v 1.48 2020/01/12 13:29:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -151,6 +151,7 @@ struct cpu_data {
 	bool		cpu_is_slow;
 	u_int		cpu_nsibling[CPUREL_COUNT];
 	struct cpu_info	*cpu_sibling[CPUREL_COUNT];
+	struct cpu_info *cpu_package1st;	/* 1st CPU in our package */
 
 	/*
 	 * This section is mostly CPU-private.
@@ -203,6 +204,7 @@ struct cpu_data {
 #define	ci_is_slow		ci_data.cpu_is_slow
 #define	ci_nsibling		ci_data.cpu_nsibling
 #define	ci_sibling		ci_data.cpu_sibling
+#define	ci_package1st		ci_data.cpu_package1st
 #define	ci_faultrng		ci_data.cpu_faultrng
 #define	ci_counts		ci_data.cpu_counts
 
