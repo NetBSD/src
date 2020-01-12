@@ -1,8 +1,9 @@
-#	$NetBSD: Makefile,v 1.1 2009/12/01 09:01:46 uebayasi Exp $
+#	$NetBSD: Makefile,v 1.2 2020/01/12 21:27:44 christos Exp $
+
+.include <bsd.own.mk>
 
 HOSTPROGNAME=	${_TOOL_PREFIX}pkg_add
-HOST_SRCDIR=	external/bsd/pkg_install/sbin/pkg_add
+HOST_SRCDIR=	../external/bsd/pkg_install/sbin/pkg_add
 
 .include "${.CURDIR}/../Makefile.inc"
-
 .include "${.CURDIR}/../../Makefile.host"
