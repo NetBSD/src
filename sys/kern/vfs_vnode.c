@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.106 2020/01/08 12:04:56 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.107 2020/01/12 17:49:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.106 2020/01/08 12:04:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.107 2020/01/12 17:49:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -175,8 +175,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.106 2020/01/08 12:04:56 ad Exp $");
 
 /* Flags to vrelel. */
 #define	VRELEL_ASYNC	0x0001	/* Always defer to vrele thread. */
-#define	VRELEL_FORCE	0x0002	/* Must always succeed. */
-#define	VRELEL_NOINACT	0x0004	/* Don't bother calling VOP_INACTIVE(). */
 
 #define	LRU_VRELE	0
 #define	LRU_FREE	1
@@ -213,7 +211,7 @@ static void		vcache_free(vnode_impl_t *);
 static void		vcache_init(void);
 static void		vcache_reinit(void);
 static void		vcache_reclaim(vnode_t *);
-static void		vrelel(vnode_t *, int);
+static void		vrelel(vnode_t *, int, int);
 static void		vdrain_thread(void *);
 static void		vnpanic(vnode_t *, const char *, ...)
     __printflike(2, 3);
@@ -530,8 +528,9 @@ vrele_flush(struct mount *mp)
 		TAILQ_INSERT_TAIL(vip->vi_lrulisthd, vip, vi_lrulist);
 		mutex_exit(&vdrain_lock);
 
+		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		mutex_enter(vp->v_interlock);
-		vrelel(vp, VRELEL_FORCE);
+		vrelel(vp, 0, LK_EXCLUSIVE);
 
 		mutex_enter(&vdrain_lock);
 	}
@@ -573,8 +572,9 @@ vdrain_remove(vnode_t *vp)
 
 	if (vcache_vget(vp) == 0) {
 		if (!vrecycle(vp)) {
+			vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 			mutex_enter(vp->v_interlock);
-			vrelel(vp, VRELEL_FORCE);
+			vrelel(vp, 0, LK_EXCLUSIVE);
 		}
 	}
 	fstrans_done(mp);
@@ -612,8 +612,9 @@ vdrain_vrele(vnode_t *vp)
 	vdrain_retry = true;
 	mutex_exit(&vdrain_lock);
 
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	mutex_enter(vp->v_interlock);
-	vrelel(vp, VRELEL_FORCE);
+	vrelel(vp, 0, LK_EXCLUSIVE);
 	fstrans_done(mp);
 
 	mutex_enter(&vdrain_lock);
@@ -674,9 +675,16 @@ vdrain_thread(void *cookie)
 void
 vput(vnode_t *vp)
 {
+	int lktype;
 
-	VOP_UNLOCK(vp);
-	vrele(vp);
+	if ((vp->v_vflag & VV_LOCKSWORK) == 0) {
+		lktype = LK_EXCLUSIVE;
+	} else {
+		lktype = VOP_ISLOCKED(vp);
+		KASSERT(lktype != LK_NONE);
+	}
+	mutex_enter(vp->v_interlock);
+	vrelel(vp, 0, lktype);
 }
 
 /*
@@ -684,10 +692,9 @@ vput(vnode_t *vp)
  * routine and either return to freelist or free to the pool.
  */
 static void
-vrelel(vnode_t *vp, int flags)
+vrelel(vnode_t *vp, int flags, int lktype)
 {
 	const bool async = ((flags & VRELEL_ASYNC) != 0);
-	const bool force = ((flags & VRELEL_FORCE) != 0);
 	bool recycle, defer;
 	int error;
 
@@ -703,6 +710,9 @@ vrelel(vnode_t *vp, int flags)
 	 * and unlock.
 	 */
 	if (vp->v_usecount > 1) {
+		if (lktype != LK_NONE) {
+			VOP_UNLOCK(vp);
+		}
 		vp->v_usecount--;
 		mutex_exit(vp->v_interlock);
 		return;
@@ -723,39 +733,42 @@ vrelel(vnode_t *vp, int flags)
 	 * Defer vnode release to vdrain_thread if caller requests
 	 * it explicitly, is the pagedaemon or the lock failed.
 	 */
+	defer = false;
 	if ((curlwp == uvm.pagedaemon_lwp) || async) {
 		defer = true;
-	} else if (force) {
-		mutex_exit(vp->v_interlock);
-		error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-		defer = (error != 0);
-		mutex_enter(vp->v_interlock);
-	} else {
-		error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY | LK_NOWAIT);
-		defer = (error != 0);
+	} else if (lktype == LK_SHARED) {
+		/* Excellent chance of getting, if the last ref. */
+		error = vn_lock(vp, LK_UPGRADE | LK_RETRY |
+		    LK_NOWAIT);
+		if (error != 0) {
+			defer = true;
+		} else {
+			lktype = LK_EXCLUSIVE;
+		}
+	} else if (lktype == LK_NONE) {
+		/* Excellent chance of getting, if the last ref. */
+		error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY |
+		    LK_NOWAIT);
+		if (error != 0) {
+			defer = true;
+		} else {
+			lktype = LK_EXCLUSIVE;
+		}
 	}
 	KASSERT(mutex_owned(vp->v_interlock));
-	KASSERT(! (force && defer));
 	if (defer) {
 		/*
 		 * Defer reclaim to the kthread; it's not safe to
 		 * clean it here.  We donate it our last reference.
 		 */
+		if (lktype != LK_NONE) {
+			VOP_UNLOCK(vp);
+		}
 		lru_requeue(vp, &lru_list[LRU_VRELE]);
 		mutex_exit(vp->v_interlock);
 		return;
 	}
-
-	/*
-	 * If the node got another reference while we
-	 * released the interlock, don't try to inactivate it yet.
-	 */
-	if (vp->v_usecount > 1) {
-		vp->v_usecount--;
-		VOP_UNLOCK(vp);
-		mutex_exit(vp->v_interlock);
-		return;
-	}
+	KASSERT(lktype == LK_EXCLUSIVE);
 
 	/*
 	 * If not clean, deactivate the vnode, but preserve
@@ -839,7 +852,7 @@ vrele(vnode_t *vp)
 {
 
 	mutex_enter(vp->v_interlock);
-	vrelel(vp, 0);
+	vrelel(vp, 0, LK_NONE);
 }
 
 /*
@@ -850,7 +863,7 @@ vrele_async(vnode_t *vp)
 {
 
 	mutex_enter(vp->v_interlock);
-	vrelel(vp, VRELEL_ASYNC);
+	vrelel(vp, VRELEL_ASYNC, LK_NONE);
 }
 
 /*
@@ -921,7 +934,7 @@ vrecycle(vnode_t *vp)
 	/* If the vnode is already clean we're done. */
 	if (VSTATE_GET(vp) != VS_LOADED) {
 		VSTATE_ASSERT(vp, VS_RECLAIMED);
-		vrelel(vp, 0);
+		vrelel(vp, 0, LK_NONE);
 		return true;
 	}
 
@@ -947,7 +960,7 @@ vrecycle(vnode_t *vp)
 
 	KASSERT(vp->v_usecount == 1);
 	vcache_reclaim(vp);
-	vrelel(vp, 0);
+	vrelel(vp, 0, LK_NONE);
 
 	return true;
 }
@@ -1026,16 +1039,20 @@ vrevoke(vnode_t *vp)
 void
 vgone(vnode_t *vp)
 {
+	int lktype;
 
 	KASSERT(vp->v_mount == dead_rootmount || fstrans_is_owner(vp->v_mount));
 
 	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	lktype = LK_EXCLUSIVE;
 	mutex_enter(vp->v_interlock);
 	VSTATE_WAIT_STABLE(vp);
-	if (VSTATE_GET(vp) == VS_LOADED)
+	if (VSTATE_GET(vp) == VS_LOADED) { 
 		vcache_reclaim(vp);
+		lktype = LK_NONE;
+	}
 	VSTATE_ASSERT(vp, VS_RECLAIMED);
-	vrelel(vp, 0);
+	vrelel(vp, 0, lktype);
 }
 
 static inline uint32_t
@@ -1164,7 +1181,7 @@ vcache_dealloc(vnode_impl_t *vip)
 	vp->v_op = dead_vnodeop_p;
 	VSTATE_CHANGE(vp, VS_LOADING, VS_RECLAIMED);
 	mutex_exit(&vcache_lock);
-	vrelel(vp, 0);
+	vrelel(vp, 0, LK_NONE);
 }
 
 /*
