@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.370 2020/01/05 15:57:15 para Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.371 2020/01/12 17:46:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.370 2020/01/05 15:57:15 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.371 2020/01/12 17:46:55 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2240,7 +2240,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 	}
 
 	/*
-	 * Save the free space hint
+	 * save the free space hint
 	 */
 
 	if (map->first_free != &map->header && map->first_free->start >= start)
@@ -2314,6 +2314,18 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 			uvm_map_lock_entry(entry);
 			pmap_remove(map->pmap, entry->start, entry->end);
+
+			/*
+			 * note: if map is dying, leave pmap_update() for
+			 * pmap_destroy(), which will be called later.
+			 */
+
+			if ((map->flags & VM_MAP_DYING) == 0) {
+				pmap_update(vm_map_pmap(map));
+			} else {
+				KASSERT(vm_map_pmap(map) != pmap_kernel());
+			}
+
 			uvm_map_unlock_entry(entry);
 		}
 
@@ -2356,16 +2368,6 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 		entry->next = first_entry;
 		first_entry = entry;
 		entry = next;
-	}
-
-	/*
-	 * Note: if map is dying, leave pmap_update() for pmap_destroy(),
-	 * which will be called later.
-	 */
-	if ((map->flags & VM_MAP_DYING) == 0) {
-		pmap_update(vm_map_pmap(map));
-	} else {
-		KASSERT(vm_map_pmap(map) != pmap_kernel());
 	}
 
 	uvm_map_check(map, "unmap_remove leave");
@@ -4254,14 +4256,10 @@ uvmspace_exec(struct lwp *l, vaddr_t start, vaddr_t end, bool topdown)
 void
 uvmspace_addref(struct vmspace *vm)
 {
-	struct vm_map *map = &vm->vm_map;
 
-	KASSERT((map->flags & VM_MAP_DYING) == 0);
-
-	mutex_enter(&map->misc_lock);
+	KASSERT((vm->vm_map.flags & VM_MAP_DYING) == 0);
 	KASSERT(vm->vm_refcnt > 0);
-	vm->vm_refcnt++;
-	mutex_exit(&map->misc_lock);
+	atomic_inc_uint(&vm->vm_refcnt);
 }
 
 /*
@@ -4273,16 +4271,12 @@ uvmspace_free(struct vmspace *vm)
 {
 	struct vm_map_entry *dead_entries;
 	struct vm_map *map = &vm->vm_map;
-	int n;
 
 	UVMHIST_FUNC("uvmspace_free"); UVMHIST_CALLED(maphist);
 
 	UVMHIST_LOG(maphist,"(vm=%#jx) ref=%jd", (uintptr_t)vm, vm->vm_refcnt,
 	    0, 0);
-	mutex_enter(&map->misc_lock);
-	n = --vm->vm_refcnt;
-	mutex_exit(&map->misc_lock);
-	if (n > 0)
+	if (atomic_dec_uint_nv(&vm->vm_refcnt) > 0)
 		return;
 
 	/*
@@ -4777,15 +4771,14 @@ uvm_unmap1(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 /*
  * uvm_map_reference: add reference to a map
  *
- * => map need not be locked (we use misc_lock).
+ * => map need not be locked
  */
 
 void
 uvm_map_reference(struct vm_map *map)
 {
-	mutex_enter(&map->misc_lock);
-	map->ref_count++;
-	mutex_exit(&map->misc_lock);
+
+	atomic_inc_uint(&map->ref_count);
 }
 
 void
