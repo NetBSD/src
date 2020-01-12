@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.486 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.487 2020/01/12 18:30:58 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.486 2020/01/08 17:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.487 2020/01/12 18:30:58 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -409,6 +409,7 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 		goto bad1;
 
 	/* get attributes */
+	/* XXX VOP_GETATTR is the only thing that needs LK_EXCLUSIVE here */
 	if ((error = VOP_GETATTR(vp, epp->ep_vap, l->l_cred)) != 0)
 		goto bad1;
 
@@ -422,6 +423,12 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 
 	/* try to open it */
 	if ((error = VOP_OPEN(vp, FREAD, l->l_cred)) != 0)
+		goto bad1;
+
+	/* now we have the file, get the exec header */
+	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
+			UIO_SYSSPACE, IO_NODELOCKED, l->l_cred, &resid, NULL);
+	if (error)
 		goto bad1;
 
 	/* unlock vp, since we need it unlocked from here on out. */
@@ -442,11 +449,6 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 		goto bad2;
 #endif /* PAX_SEGVGUARD */
 
-	/* now we have the file, get the exec header */
-	error = vn_rdwr(UIO_READ, vp, epp->ep_hdr, epp->ep_hdrlen, 0,
-			UIO_SYSSPACE, 0, l->l_cred, &resid, NULL);
-	if (error)
-		goto bad2;
 	epp->ep_hdrvalid = epp->ep_hdrlen - resid;
 
 	/*
@@ -543,7 +545,9 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 	 */
 	kill_vmcmds(&epp->ep_vmcmds);
 
+#if NVERIEXEC > 0 || defined(PAX_SEGVGUARD)
 bad2:
+#endif
 	/*
 	 * close and release the vnode, restore the old one, free the
 	 * pathname buf, and punt.

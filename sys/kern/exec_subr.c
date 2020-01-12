@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_subr.c,v 1.82 2017/07/02 16:41:33 joerg Exp $	*/
+/*	$NetBSD: exec_subr.c,v 1.83 2020/01/12 18:30:58 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.82 2017/07/02 16:41:33 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_subr.c,v 1.83 2020/01/12 18:30:58 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -345,19 +345,21 @@ vmcmd_map_zero(struct lwp *l, struct exec_vmcmd *cmd)
 }
 
 /*
- * exec_read_from():
+ * exec_read():
  *
  *	Read from vnode into buffer at offset.
  */
 int
-exec_read_from(struct lwp *l, struct vnode *vp, u_long off, void *bf,
-    size_t size)
+exec_read(struct lwp *l, struct vnode *vp, u_long off, void *bf, size_t size,
+    int ioflg)
 {
 	int error;
 	size_t resid;
 
+	KASSERT((ioflg & IO_NODELOCKED) == 0 || VOP_ISLOCKED(vp) != LK_NONE);
+
 	if ((error = vn_rdwr(UIO_READ, vp, bf, size, off, UIO_SYSSPACE,
-	    0, l->l_cred, &resid, NULL)) != 0)
+	    ioflg, l->l_cred, &resid, NULL)) != 0)
 		return error;
 	/*
 	 * See if we got all of it
