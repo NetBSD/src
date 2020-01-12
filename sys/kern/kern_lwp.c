@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.218 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.219 2020/01/12 13:15:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -209,7 +209,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.218 2020/01/08 17:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.219 2020/01/12 13:15:08 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1266,14 +1266,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 	 * the target CPU.
 	 */
 	membar_enter();
-	if ((l->l_flag & LW_RUNNING) != 0) {
-		int count;
-		(void)count; /* XXXgcc */
-		KERNEL_UNLOCK_ALL(curlwp, &count);
-		while ((l->l_flag & LW_RUNNING) != 0 ||
-		    l->l_cpu->ci_curlwp == l)
-			SPINLOCK_BACKOFF_HOOK;
-		KERNEL_LOCK(count, curlwp);
+	while (__predict_false((l->l_flag & LW_RUNNING) != 0)) {
+		SPINLOCK_BACKOFF_HOOK;
 	}
 #endif
 
