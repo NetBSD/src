@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.s,v 1.276 2020/01/08 20:59:19 skrll Exp $	*/
+/*	$NetBSD: locore.s,v 1.277 2020/01/12 19:13:55 ad Exp $	*/
 
 /*
  * Copyright (c) 1996 Paul Kranenburg
@@ -2770,14 +2770,16 @@ lev14_softint:
 	addx	%l4, %g0, %l4
 	std	%l4, [%l7 + CPUINFO_LEV14]
 
-	ld	[%l6 + CPUINFO_XMSG_TRAP], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_TRAP), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_TRAP)], %l7
 #ifdef DIAGNOSTIC
 	tst	%l7
 	bz	sparc_interrupt4m_bogus
 	 nop
 #endif
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG0), %l6
 	jmp	%l7
-	 ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! prefetch 1st arg
+	 ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG0)], %l3	! prefetch 1st arg
 
 /*
  * Fast flush handlers. xcalled from other CPUs throught soft interrupt 14
@@ -2789,9 +2791,11 @@ lev14_softint:
  */
 _ENTRY(_C_LABEL(ft_tlb_flush))
 	!	<%l3 already fetched for us>	! va
-	ld	[%l6 + CPUINFO_XMSG_ARG2], %l5	! level
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG2), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG2)], %l5	! level
 	andn	%l3, 0xfff, %l3			! %l3 = (va&~0xfff | lvl);
-	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! context
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG1), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG1)], %l4	! context
 	or	%l3, %l5, %l3
 
 	mov	SRMMU_CXR, %l7			!
@@ -2805,7 +2809,8 @@ ft_rett:
 	! enter here with %l5 = ctx to restore, %l6 = CPUINFO_VA, %l7 = ctx reg
 	mov	1, %l4				!
 	sta	%l5, [%l7]ASI_SRMMU		! restore context
-	st	%l4, [%l6 + CPUINFO_XMSG_CMPLT]	! completed = 1
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_CMPLT), %l6
+	st	%l4, [%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_CMPLT)]	! completed = 1
 
 	mov	%l0, %psr			! return from trap
 	 nop
@@ -2813,21 +2818,24 @@ ft_rett:
 
 _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_page))
 	!	<%l3 already fetched for us>	! va
-	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! context
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG1), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG1)], %l4	! context
 
 	mov	SRMMU_CXR, %l7			!
 	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
 	sta	%l4, [%l7]ASI_SRMMU		! set new context
 
 	set	4096, %l4			! N = page size
-	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_LINESZ), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_LINESZ)], %l7
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
 	subcc	%l4, %l7, %l4			!  p += linesz;
 	bgu	1b				! while ((N -= linesz) > 0)
 	 add	%l3, %l7, %l3
 
-	ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! reload va
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG0), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG0)], %l3	! reload va
 	!or	%l3, ASI_SRMMUFP_L3(=0), %l3	! va |= ASI_SRMMUFP_L3
 	sta	%g0, [%l3]ASI_SRMMUFP		! flush TLB
 
@@ -2836,8 +2844,10 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_page))
 
 _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_segment))
 	!	<%l3 already fetched for us>	! vr
-	ld	[%l6 + CPUINFO_XMSG_ARG1], %l5	! vs
-	ld	[%l6 + CPUINFO_XMSG_ARG2], %l4	! context
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG1), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG1)], %l5	! vs
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG2), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG2)], %l4	! context
 
 	sll	%l3, 24, %l3			! va = VSTOVA(vr,vs)
 	sll	%l5, 18, %l5
@@ -2847,8 +2857,10 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_segment))
 	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
 	sta	%l4, [%l7]ASI_SRMMU		! set new context
 
-	ld	[%l6 + CPUINFO_CACHE_NLINES], %l4
-	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_NLINES), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_NLINES)], %l4
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_LINESZ), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_LINESZ)], %l7
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFS	!  flush cache line
 	deccc	%l4				!  p += linesz;
@@ -2860,7 +2872,8 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_segment))
 
 _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_region))
 	!	<%l3 already fetched for us>	! vr
-	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! context
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG1), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG1)], %l4	! context
 
 	sll	%l3, 24, %l3			! va = VRTOVA(vr)
 
@@ -2868,8 +2881,10 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_region))
 	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
 	sta	%l4, [%l7]ASI_SRMMU		! set new context
 
-	ld	[%l6 + CPUINFO_CACHE_NLINES], %l4
-	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_NLINES), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_NLINES)], %l4
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_LINESZ), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_LINESZ)], %l7
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFR	!  flush cache line
 	deccc	%l4				!  p += linesz;
@@ -2886,8 +2901,10 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_context))
 	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
 	sta	%l3, [%l7]ASI_SRMMU		! set new context
 
-	ld	[%l6 + CPUINFO_CACHE_NLINES], %l4
-	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_NLINES), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_NLINES)], %l4
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_LINESZ), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_LINESZ)], %l7
 	mov	%g0, %l3			! va = 0
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFC	!  flush cache line
@@ -2900,18 +2917,21 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_context))
 
 _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	!	<%l3 already fetched for us>	! va
-	ld	[%l6 + CPUINFO_XMSG_ARG2], %l4	! context
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG2), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG2)], %l4	! context
 
 	mov	SRMMU_CXR, %l7			!
 	lda	[%l7]ASI_SRMMU, %l5		! %l5 = old context
 	sta	%l4, [%l7]ASI_SRMMU		! set new context
 
-	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! size
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG1), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG1)], %l4	! size
 	and	%l3, 7, %l7			! double-word alignment
 	andn	%l3, 7, %l3			!  off = va & 7; va &= ~7
 	add	%l4, %l7, %l4			!  sz += off
 
-	ld	[%l6 + CPUINFO_CACHE_LINESZ], %l7
+	sethi	%hi(CPUINFO_VA+CPUINFO_CACHE_LINESZ), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_CACHE_LINESZ)], %l7
 1:
 	sta	%g0, [%l3]ASI_IDCACHELFP	!  flush cache line
 	subcc	%l4, %l7, %l4			!  p += linesz;
@@ -2919,8 +2939,10 @@ _ENTRY(_C_LABEL(ft_srmmu_vcache_flush_range))
 	 add	%l3, %l7, %l3
 
 	/* Flush TLB on all pages we visited */
-	ld	[%l6 + CPUINFO_XMSG_ARG0], %l3	! reload va
-	ld	[%l6 + CPUINFO_XMSG_ARG1], %l4	! reload sz
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG0), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG0)], %l3	! reload va
+	sethi	%hi(CPUINFO_VA+CPUINFO_XMSG_ARG1), %l6
+	ld	[%l6 + %lo(CPUINFO_VA+CPUINFO_XMSG_ARG1)], %l4	! reload sz
 	add	%l3, %l4, %l4			! %l4 = round_page(va + sz)
 	add	%l4, 0xfff, %l4
 	andn	%l4, 0xfff, %l4
@@ -5865,6 +5887,7 @@ _ENTRY(_C_LABEL(smp_get_syncflt))
 	sethi	%hi(CPUINFO_VA+CPUINFO_SYNCFLTDUMP), %o4
 	ld	[%o4 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP)], %o5
 	st	%o5, [%i0]
+	sethi	%hi(CPUINFO_VA+CPUINFO_SYNCFLTDUMP+4), %o4
 	ld	[%o4 + %lo(CPUINFO_VA+CPUINFO_SYNCFLTDUMP+4)], %o5
 	st	%o5, [%i1]
 	ret
