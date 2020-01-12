@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi.c,v 1.11 2013/09/06 00:56:12 matt Exp $	*/
+/*	$NetBSD: gttwsi.c,v 1.12 2020/01/12 17:48:42 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.11 2013/09/06 00:56:12 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.12 2020/01/12 17:48:42 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -86,6 +86,16 @@ __KERNEL_RCSID(0, "$NetBSD: gttwsi.c,v 1.11 2013/09/06 00:56:12 matt Exp $");
 #include <dev/i2c/gttwsivar.h>
 
 #include <dev/marvell/marvellvar.h>
+
+static const bus_size_t marvell_twsi_regmap[GTTWSI_NREGS] = {
+	[TWSI_SLAVEADDR]	= TWSI_MARVELL_SLAVEADDR,
+	[TWSI_EXTEND_SLAVEADDR]	= TWSI_MARVELL_EXTEND_SLAVEADDR,
+	[TWSI_DATA]		= TWSI_MARVELL_DATA,
+	[TWSI_CONTROL]		= TWSI_MARVELL_CONTROL,
+	[TWSI_STATUS]		= TWSI_MARVELL_STATUS,
+	[TWSI_BAUDRATE]		= TWSI_MARVELL_BAUDRATE,
+	[TWSI_SOFTRESET]	= TWSI_MARVELL_SOFTRESET,
+};
 
 static int	gttwsi_match(device_t, cfdata_t, void *);
 static void	gttwsi_attach(device_t, device_t, void *);
@@ -124,7 +134,7 @@ gttwsi_attach(device_t parent, device_t self, void *args)
 		return;
 	}
 
-	gttwsi_attach_subr(self, mva->mva_iot, ioh);
+	gttwsi_attach_subr(self, mva->mva_iot, ioh, marvell_twsi_regmap);
 
 	marvell_intr_establish(mva->mva_irq, IPL_BIO, gttwsi_intr,
 	    device_private(self));
