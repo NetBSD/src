@@ -1,4 +1,4 @@
-/* $NetBSD: set.c,v 1.36 2020/01/12 03:50:30 christos Exp $ */
+/* $NetBSD: set.c,v 1.37 2020/01/12 18:42:41 christos Exp $ */
 
 /*-
  * Copyright (c) 1980, 1991, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)set.c	8.1 (Berkeley) 5/31/93";
 #else
-__RCSID("$NetBSD: set.c,v 1.36 2020/01/12 03:50:30 christos Exp $");
+__RCSID("$NetBSD: set.c,v 1.37 2020/01/12 18:42:41 christos Exp $");
 #endif
 #endif /* not lint */
 
@@ -43,9 +43,7 @@ __RCSID("$NetBSD: set.c,v 1.36 2020/01/12 03:50:30 christos Exp $");
 #include <stdarg.h>
 #include <stdlib.h>
 
-#ifndef SHORT_STRINGS
 #include <string.h>
-#endif /* SHORT_STRINGS */
 
 #include "csh.h"
 #include "extern.h"
@@ -60,6 +58,41 @@ static struct varent *madrof(Char *, struct varent *);
 static void unsetv1(struct varent *);
 static void exportpath(Char **);
 static void balance(struct varent *, int, int);
+
+#ifdef EDIT
+static const char *
+alias_text(void *dummy __unused, const char *name)
+{
+	static char *buf;
+	struct varent *vp;
+	Char **av;
+	char *p;
+	size_t len;
+
+	vp = adrof1(str2short(name), &aliases);
+	if (vp == NULL)
+	    return NULL;
+
+	len = 0;
+	for (av = vp->vec; *av; av++) {
+	    len += strlen(vis_str(*av));
+	    if (av[1])
+		len++;
+	}
+	len++;
+	free(buf);
+	p = buf = xmalloc(len);
+	for (av = vp->vec; *av; av++) {
+	    const char *s = vis_str(*av);
+	    while ((*p++ = *s++) != '\0')
+		continue;
+	    if (av[1])
+		*p++ = ' ';
+	}
+	*p = '\0';
+	return buf;
+}
+#endif
 
 /*
  * C Shell
@@ -124,6 +157,11 @@ update_vars(Char *vp)
 	    SHIN, SHOUT, SHERR);
 	el_set(el, EL_EDITOR, *vn ? short2str(vn) : "emacs");
 	el_set(el, EL_PROMPT, printpromptstr);
+	el_set(el, EL_ALIAS_TEXT, alias_text, NULL);
+	el_set(el, EL_ADDFN, "rl-complete",
+	    "ReadLine compatible completion function", _el_fn_complete);
+	el_set(el, EL_BIND, "^I", adrof(STRfilec) ? "rl-complete" : "ed-insert",
+	    NULL);
 	hi = history_init();
 	history(hi, &ev, H_SETSIZE, getn(value(STRhistory)));
 	loadhist(Histlist.Hnext);
