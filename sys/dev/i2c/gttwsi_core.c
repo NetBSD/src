@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.13 2020/01/13 00:09:28 thorpej Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.14 2020/01/13 09:53:54 martin Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.13 2020/01/13 00:09:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.14 2020/01/13 09:53:54 martin Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -98,7 +98,7 @@ gttwsi_read_4(struct gttwsi_softc *sc, uint32_t reg)
 	const uint32_t val = bus_space_read_4(sc->sc_bust, sc->sc_bush,
 					      sc->sc_regmap[reg]);
 #ifdef TWSI_DEBUG
-	printf("I2C:R:[%u]%02x:%02x\n", reg, sc->sc_regmap[reg], val);
+	printf("I2C:R:[%" PRIu32 "]%02" PRIxBUSSIZE ":%02" PRIx32 "\n", reg, sc->sc_regmap[reg], val);
 #else
 	DELAY(TWSI_READ_DELAY);
 #endif
@@ -111,7 +111,7 @@ gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
 
 	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
 #ifdef TWSI_DEBUG
-	printf("I2C:W:[%u]%02x:%02x\n", reg, sc->sc_regmap[reg], val);
+	printf("I2C:W:[%" PRIu32 "]%02" PRIxBUSSIZE ":%02" PRIx32 "\n", reg, sc->sc_regmap[reg], val);
 #else
 	DELAY(TWSI_WRITE_DELAY);
 #endif
