@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.47.2.1 2020/01/08 11:02:16 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.47.2.2 2020/01/13 08:51:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -208,6 +208,7 @@ NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
  * -  stable throught the lifetime of the namecache entry
  * d  protected by nc_dvp->vi_nclock
  * l  protected by cache_list_lock
+ * u  accesses are unlocked, no serialization applied
  */
 struct namecache {
 	struct rb_node nc_node;		/* d  red-black tree node */
@@ -215,7 +216,7 @@ struct namecache {
 	TAILQ_ENTRY(namecache) nc_vlist;/* l  vp's list of cache entries */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
-	int	nc_hittime;		/* d  approx time of last hit */
+	int	nc_hittime;		/* u  approx time of last hit */
 	u_short	nc_nlen;		/* -  length of name */
 	bool	nc_whiteout;		/* -  true if a whiteout */
 	char	nc_name[49];		/* -  segment name */
