@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.46 2020/01/11 19:06:34 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.47 2020/01/13 20:36:44 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -83,11 +83,6 @@
 #define	PAGE_SHIFT	PGSHIFT
 #define	PAGE_SIZE	(1 << PAGE_SHIFT)
 #define	PAGE_MASK	(PAGE_SIZE - 1)
-
-#define	MIN_PAGE_SHIFT	12			/* normal */
-#define	MAX_PAGE_SHIFT	13			/* _ARM_ARCH_6 */
-#define	MIN_PAGE_SIZE	(1 << MIN_PAGE_SHIFT)
-#define	MAX_PAGE_SIZE	(1 << MAX_PAGE_SHIFT)
 
 /*
  * Mach derived constants
