@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlinfo.3,v 1.2 2020/01/13 09:00:20 kamil Exp $
+.\"	$NetBSD: dlinfo.3,v 1.3 2020/01/13 11:47:06 wiz Exp $
 .\"
 .\" Copyright (c) 2003 Alexey Zelkin <phantom@FreeBSD.org>
 .\" All rights reserved.
@@ -31,7 +31,7 @@
 .Os
 .Sh NAME
 .Nm dlinfo
-.Nd information about dynamically loaded object
+.Nd information about a dynamically loaded object
 .Sh LIBRARY
 (These functions are not in a library.
 They are included in every
@@ -44,7 +44,7 @@ dynamically linked program automatically.)
 .Sh DESCRIPTION
 The
 .Fn dlinfo
-function provides information about dynamically loaded object.
+function provides information about a dynamically loaded object.
 The action taken by
 .Fn dlinfo
 and exact meaning and type of
@@ -194,7 +194,7 @@ structure on the link-map list.
 .\" .Vt char
 .\" pointer
 .\" .Pq Fa "char *p" .
-.\" .El
+.El
 .Sh RETURN VALUES
 The
 .Fn dlinfo
@@ -235,20 +235,20 @@ while (map != NULL) {
 .\" Dl_serinfo	 _info, *info = &_info;
 .\" Dl_serpath	*path;
 .\" unsigned int	 cnt;
-.\" 
+.\"
 .\" /* determine search path count and required buffer size */
 .\" dlinfo(RTLD_SELF, RTLD_DI_SERINFOSIZE, (void *)info);
-.\" 
+.\"
 .\" /* allocate new buffer and initialize */
 .\" info = malloc(_info.dls_size);
 .\" info->dls_size = _info.dls_size;
 .\" info->dls_cnt = _info.dls_cnt;
-.\" 
+.\"
 .\" /* obtain sarch path information */
 .\" dlinfo(RTLD_SELF, RTLD_DI_SERINFO, (void *)info);
-.\" 
+.\"
 .\" path = &info->dls_serpath[0];
-.\" 
+.\"
 .\" for (cnt = 1; cnt <= info->dls_cnt; cnt++, path++) {
 .\" 	(void) printf("%2d: %s\\n", cnt, path->dls_name);
 .\" }
