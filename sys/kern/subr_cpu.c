@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.10 2020/01/13 02:18:13 mrg Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.11 2020/01/13 20:30:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.10 2020/01/13 02:18:13 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.11 2020/01/13 20:30:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -236,6 +236,8 @@ cpu_topology_fake1(struct cpu_info *ci)
 	ci->ci_schedstate.spc_flags |=
 	    (SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
 	ci->ci_package1st = ci;
+	ci->ci_is_slow = false;
+	cpu_topology_haveslow = false;
 }
 
 /*
@@ -251,9 +253,11 @@ cpu_topology_fake(void)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cpu_topology_fake1(ci);
+		/* Undo (early boot) flag set so everything links OK. */
+		ci->ci_schedstate.spc_flags &=
+		    ~(SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
 	}
-	cpu_topology_dump();
- }
+}
 
 /*
  * Fix up basic CPU topology info.  Right now that means attach each CPU to
@@ -268,7 +272,7 @@ cpu_topology_init(void)
 
 	if (!cpu_topology_present) {
 		cpu_topology_fake();
-		return;
+		goto linkit;
 	}
 
 	/* Find siblings in same core and package. */
@@ -292,7 +296,7 @@ cpu_topology_init(void)
 			    	printf("cpu_topology_init: info bogus, "
 			    	    "faking it\n");
 			    	cpu_topology_fake();
-			    	return;
+			    	goto linkit;
 			}
 			if (ci2 == ci ||
 			    ci2->ci_package_id != ci->ci_package_id) {
@@ -314,6 +318,7 @@ cpu_topology_init(void)
 		}
 	}
 
+ linkit:
 	/* Identify lowest numbered SMT in each core. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci2 = ci3 = ci;
@@ -358,7 +363,7 @@ cpu_topology_init(void)
 			ci2->ci_package1st = ci3;
 			ci2->ci_sibling[CPUREL_PACKAGE1ST] = ci3;
 			ci2 = ci2->ci_sibling[CPUREL_PACKAGE];
-		} while (ci2 != ci);
+		} while (ci2 != ci3);
 
 		/* Now look for somebody else to link to. */
 		for (CPU_INFO_FOREACH(cii2, ci2)) {
