@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.3 2012/11/17 15:53:21 tsutsui Exp $
+| $NetBSD: boot.S,v 1.4 2020/01/13 03:34:05 isaki Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -44,7 +44,7 @@ ASENTRY_NOPROFILE(entry0)
 		bra	_ASM_LABEL(entry)
 
 |	Disklabel= 404bytes
-|	Since LABELLOFFSET in <machine/disklabel.h> is 0x40,
+|	Since LABELOFFSET in <machine/disklabel.h> is 0x40,
 |	entry must be after 0x000001d4 (0x000f01d4)
 		nop
 disklabel:
