@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.58 2020/01/12 22:03:22 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.59 2020/01/13 11:53:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.58 2020/01/12 22:03:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.59 2020/01/13 11:53:24 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -884,12 +884,12 @@ sched_preempted(struct lwp *l)
 	 * Try to select another CPU if:
 	 *
 	 * - there is no migration pending already
-	 * - and there is no realtime LWP in the mix (no time to waste then)
-	 * - and this LWP is running on a 2nd class CPU, or is child of vfork()
+	 * - and this LWP is running on a 2nd class CPU
+	 * - or this LWP is a child of vfork() that has just done execve()
 	 */
-	if (tspc->spc_maxpriority >= PRI_USER_RT || l->l_target_cpu != NULL ||
-	    ((tspc->spc_flags & SPCF_1STCLASS) | (l->l_pflag & LP_TELEPORT))
-	    == 0) {
+	if (l->l_target_cpu != NULL ||
+	    ((tspc->spc_flags & SPCF_1STCLASS) != 0 &&
+	    (l->l_pflag & LP_TELEPORT) == 0)) {
 		return;
 	}
 
@@ -911,20 +911,26 @@ sched_preempted(struct lwp *l)
 		tci = tci->ci_sibling[CPUREL_CORE];
 	}
 
-	/*
-	 * Try to find a better CPU to take it, but don't move to another
-	 * 2nd class CPU; there's not much point.
-	 *
-	 * Search in the current CPU package in order to try and keep L2/L3
-	 * cache locality, but expand to include the whole system if needed.
-	 */
 	if ((l->l_pflag & LP_TELEPORT) != 0) {
+		/*
+		 * A child of vfork(): now that the parent is released,
+		 * scatter far and wide, to match the LSIDL distribution
+		 * done in sched_takecpu().
+		 */
 		l->l_pflag &= ~LP_TELEPORT;
 		tci = sched_bestcpu(l, sched_nextpkg());
 		if (tci != ci) {
 			l->l_target_cpu = tci;
 		}
 	} else {
+		/*
+		 * Try to find a better CPU to take it, but don't move to
+		 * another 2nd class CPU; there's not much point.
+		 *
+		 * Search in the current CPU package in order to try and
+		 * keep L2/L3 cache locality, but expand to include the
+		 * whole system if needed.
+		 */
 		tci = sched_bestcpu(l, l->l_cpu);
 		if (tci != ci &&
 		    (tci->ci_schedstate.spc_flags & SPCF_1STCLASS) != 0) {
