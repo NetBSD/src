@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.8 2020/01/12 13:29:24 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.9 2020/01/13 00:20:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.8 2020/01/12 13:29:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.9 2020/01/13 00:20:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -376,7 +376,7 @@ cpu_topology_init(void)
 
 	if (cpu_topology_haveslow) {
 		/*
-		 * For assymmetric systems where some CPUs are slower than
+		 * For asymmetric systems where some CPUs are slower than
 		 * others, mark first class CPUs for the scheduler.  This
 		 * conflicts with SMT right now so whinge if observed.
 		 */
