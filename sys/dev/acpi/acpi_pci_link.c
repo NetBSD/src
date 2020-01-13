@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.24 2019/12/06 07:27:06 maxv Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.25 2020/01/13 00:19:43 chs Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.24 2019/12/06 07:27:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.25 2020/01/13 00:19:43 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -255,6 +255,7 @@ link_add_crs(ACPI_RESOURCE *res, void *context)
 static ACPI_STATUS
 link_add_prs(ACPI_RESOURCE *res, void *context)
 {
+	ACPI_RESOURCE *tmp;
 	struct link_res_request *req;
 	struct link *link;
 	uint8_t *irqs = NULL;
@@ -301,32 +302,28 @@ link_add_prs(ACPI_RESOURCE *res, void *context)
 		req->res_index++;
 
 		/*
-		 * Stash a copy of the resource for later use when
-		 * doing _SRS.
-		 *
-		 * Note that in theory res->Length may exceed the size
-		 * of ACPI_RESOURCE, due to variable length lists in
-		 * subtypes.  However, all uses of l_prs_template only
-		 * rely on lists lengths of zero or one, for which
-		 * sizeof(ACPI_RESOURCE) is sufficient space anyway.
-		 * We cannot read longer than Length bytes, in case we
-		 * read off the end of mapped memory.  So we read
-		 * whichever length is shortest, Length or
-		 * sizeof(ACPI_RESOURCE).
+		 * Stash a copy of the resource for later use when doing
+		 * _SRS.
 		 */
-		KASSERT(res->Length >= ACPI_RS_SIZE_MIN);
-
-		memset(&link->l_prs_template, 0, sizeof(link->l_prs_template));
-		memcpy(&link->l_prs_template, res,
-		       MIN(res->Length, sizeof(link->l_prs_template)));
-
+		tmp = &link->l_prs_template;
 		if (is_ext_irq) {
+			memcpy(tmp, res, ACPI_RS_SIZE(tmp->Data.ExtendedIrq));
+
+			/*
+			 * XXX acpi_AppendBufferResource() cannot handle
+			 * optional data.
+			 */
+			memset(&tmp->Data.ExtendedIrq.ResourceSource, 0,
+			    sizeof(tmp->Data.ExtendedIrq.ResourceSource));
+			tmp->Length = ACPI_RS_SIZE(tmp->Data.ExtendedIrq);
+
 			link->l_num_irqs =
 			    res->Data.ExtendedIrq.InterruptCount;
 			link->l_trig = res->Data.ExtendedIrq.Triggering;
 			link->l_pol = res->Data.ExtendedIrq.Polarity;
 			ext_irqs = res->Data.ExtendedIrq.Interrupts;
 		} else {
+			memcpy(tmp, res, ACPI_RS_SIZE(tmp->Data.Irq));
 			link->l_num_irqs = res->Data.Irq.InterruptCount;
 			link->l_trig = res->Data.Irq.Triggering;
 			link->l_pol = res->Data.Irq.Polarity;
@@ -737,17 +734,16 @@ acpi_pci_link_add_reference(void *v, int index, int bus, int slot, int pin)
 static ACPI_STATUS
 acpi_pci_link_srs_from_crs(struct acpi_pci_link_softc *sc, ACPI_BUFFER *srsbuf)
 {
-	ACPI_RESOURCE *resource, *end, newres, *resptr;
-	ACPI_BUFFER crsbuf;
+	ACPI_RESOURCE *end, *res;
 	ACPI_STATUS status;
 	struct link *link;
 	int i, in_dpf;
 
 	/* Fetch the _CRS. */
-	crsbuf.Pointer = NULL;
-	crsbuf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
-	status = AcpiGetCurrentResources(sc->pl_handle, &crsbuf);
-	if (ACPI_SUCCESS(status) && crsbuf.Pointer == NULL)
+	srsbuf->Pointer = NULL;
+	srsbuf->Length = ACPI_ALLOCATE_BUFFER;
+	status = AcpiGetCurrentResources(sc->pl_handle, srsbuf);
+	if (ACPI_SUCCESS(status) && srsbuf->Pointer == NULL)
 		status = AE_NO_MEMORY;
 	if (ACPI_FAILURE(status)) {
 		aprint_verbose("%s: Unable to fetch current resources: %s\n",
@@ -756,14 +752,13 @@ acpi_pci_link_srs_from_crs(struct acpi_pci_link_softc *sc, ACPI_BUFFER *srsbuf)
 	}
 
 	/* Fill in IRQ resources via link structures. */
-	srsbuf->Pointer = NULL;
 	link = sc->pl_links;
 	i = 0;
 	in_dpf = DPF_OUTSIDE;
-	resource = (ACPI_RESOURCE *)crsbuf.Pointer;
-	end = (ACPI_RESOURCE *)((char *)crsbuf.Pointer + crsbuf.Length);
+	res = (ACPI_RESOURCE *)srsbuf->Pointer;
+	end = (ACPI_RESOURCE *)((char *)srsbuf->Pointer + srsbuf->Length);
 	for (;;) {
-		switch (resource->Type) {
+		switch (res->Type) {
 		case ACPI_RESOURCE_TYPE_START_DEPENDENT:
 			switch (in_dpf) {
 			case DPF_OUTSIDE:
@@ -777,64 +772,44 @@ acpi_pci_link_srs_from_crs(struct acpi_pci_link_softc *sc, ACPI_BUFFER *srsbuf)
 				    __func__);
 				break;
 			}
-			resptr = NULL;
 			break;
 		case ACPI_RESOURCE_TYPE_END_DEPENDENT:
 			/* We are finished with DPF parsing. */
 			KASSERT(in_dpf != DPF_OUTSIDE);
 			in_dpf = DPF_OUTSIDE;
-			resptr = NULL;
 			break;
 		case ACPI_RESOURCE_TYPE_IRQ:
-			newres = link->l_prs_template;
-			resptr = &newres;
-			resptr->Data.Irq.InterruptCount = 1;
+			res->Data.Irq.InterruptCount = 1;
 			if (PCI_INTERRUPT_VALID(link->l_irq)) {
 				KASSERT(link->l_irq < NUM_ISA_INTERRUPTS);
-				resptr->Data.Irq.Interrupts[0] = link->l_irq;
-				resptr->Data.Irq.Triggering = link->l_trig;
-				resptr->Data.Irq.Polarity = link->l_pol;
+				res->Data.Irq.Interrupts[0] = link->l_irq;
+				res->Data.Irq.Triggering = link->l_trig;
+				res->Data.Irq.Polarity = link->l_pol;
 			} else
-				resptr->Data.Irq.Interrupts[0] = 0;
+				res->Data.Irq.Interrupts[0] = 0;
 			link++;
 			i++;
 			break;
 		case ACPI_RESOURCE_TYPE_EXTENDED_IRQ:
-			newres = link->l_prs_template;
-			resptr = &newres;
-			resptr->Data.ExtendedIrq.InterruptCount = 1;
+			res->Data.ExtendedIrq.InterruptCount = 1;
 			if (PCI_INTERRUPT_VALID(link->l_irq)) {
-				resptr->Data.ExtendedIrq.Interrupts[0] =
+				res->Data.ExtendedIrq.Interrupts[0] =
 				    link->l_irq;
-				resptr->Data.ExtendedIrq.Triggering =
+				res->Data.ExtendedIrq.Triggering =
 				    link->l_trig;
-				resptr->Data.ExtendedIrq.Polarity = link->l_pol;
+				res->Data.ExtendedIrq.Polarity = link->l_pol;
 			} else
-				resptr->Data.ExtendedIrq.Interrupts[0] = 0;
+				res->Data.ExtendedIrq.Interrupts[0] = 0;
 			link++;
 			i++;
 			break;
-		default:
-			resptr = resource;
 		}
-		if (resptr != NULL) {
-			status = acpi_AppendBufferResource(srsbuf, resptr);
-			if (ACPI_FAILURE(status)) {
-				printf("%s: Unable to build resources: %s\n",
-				    sc->pl_name, AcpiFormatException(status));
-				if (srsbuf->Pointer != NULL)
-					ACPI_FREE(srsbuf->Pointer);
-				ACPI_FREE(crsbuf.Pointer);
-				return (status);
-			}
-		}
-		if (resource->Type == ACPI_RESOURCE_TYPE_END_TAG)
+		if (res->Type == ACPI_RESOURCE_TYPE_END_TAG)
 			break;
-		resource = ACPI_NEXT_RESOURCE(resource);
-		if (resource >= end)
+		res = ACPI_NEXT_RESOURCE(res);
+		if (res >= end)
 			break;
 	}
-	ACPI_FREE(crsbuf.Pointer);
 	return (AE_OK);
 }
 
@@ -854,10 +829,11 @@ acpi_pci_link_srs_from_links(struct acpi_pci_link_softc *sc,
 
 		/* Add a new IRQ resource from each link. */
 		link = &sc->pl_links[i];
-		newres = link->l_prs_template;
-		if (newres.Type == ACPI_RESOURCE_TYPE_IRQ) {
+		if (link->l_prs_template.Type == ACPI_RESOURCE_TYPE_IRQ) {
 
 			/* Build an IRQ resource. */
+			bcopy(&link->l_prs_template, &newres,
+			    ACPI_RS_SIZE(newres.Data.Irq));
 			newres.Data.Irq.InterruptCount = 1;
 			if (PCI_INTERRUPT_VALID(link->l_irq)) {
 				KASSERT(link->l_irq < NUM_ISA_INTERRUPTS);
@@ -869,6 +845,8 @@ acpi_pci_link_srs_from_links(struct acpi_pci_link_softc *sc,
 		} else {
 
 			/* Build an ExtIRQ resuorce. */
+			bcopy(&link->l_prs_template, &newres,
+			    ACPI_RS_SIZE(newres.Data.ExtendedIrq));
 			newres.Data.ExtendedIrq.InterruptCount = 1;
 			if (PCI_INTERRUPT_VALID(link->l_irq)) {
 				newres.Data.ExtendedIrq.Interrupts[0] =
