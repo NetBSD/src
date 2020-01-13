@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.15 2013/03/21 16:49:12 christos Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.16 2020/01/13 18:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.15 2013/03/21 16:49:12 christos Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.16 2020/01/13 18:22:56 ad Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -151,20 +151,9 @@ pthread_sigmask(int how, const sigset_t *set, sigset_t *oset)
 int
 pthread__sched_yield(void)
 {
-	pthread_t self;
-	int error;
 
 	if (__predict_false(__uselibcstub))
 		return __libc_thr_yield();
 
-	self = pthread__self();
-
-	/* Memory barrier for unlocked mutex release. */
-	membar_producer();
-	self->pt_blocking++;
-	error = _sys_sched_yield();
-	self->pt_blocking--;
-	membar_sync();
-
-	return error;
+	return _sys_sched_yield();
 }
