@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_space_asm_generic.S,v 1.1 2018/04/01 04:35:03 ryo Exp $	*/
+/*	$NetBSD: bus_space_asm_generic.S,v 1.2 2020/01/13 17:23:07 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include <aarch64/asm.h>
 #include "assym.h"
 
-RCSID("$NetBSD: bus_space_asm_generic.S,v 1.1 2018/04/01 04:35:03 ryo Exp $")
+RCSID("$NetBSD: bus_space_asm_generic.S,v 1.2 2020/01/13 17:23:07 ryo Exp $")
 
 .macro generate_bsfunc funcname, dsbop
 /* uint8_t {funcname}_bs_r_1(x0:tag, x1:addr, x2:offset) */
@@ -334,7 +334,7 @@ ENTRY_NP(\funcname\()_bs_rr_4)
 	ldr	w8, [x1, x2]	/* value = *src */
 	subs	x4, x4, #1	/* count-- */
 	add	x2, x2, x9	/* src += delta */
-	str	w8, [x3], #2	/* *dst++ = value */
+	str	w8, [x3], #4	/* *dst++ = value */
 	b.ne	1b
 	ret
 #ifdef DIAGNOSTIC
@@ -363,7 +363,7 @@ ENTRY_NP(\funcname\()_bs_rr_8)
 	ldr	x8, [x1, x2]	/* value = *src */
 	subs	x4, x4, #1	/* count-- */
 	add	x2, x2, x9	/* src += delta */
-	str	x8, [x3], #2	/* *dst++ = value */
+	str	x8, [x3], #8	/* *dst++ = value */
 	b.ne	1b
 	ret
 #ifdef DIAGNOSTIC
@@ -423,7 +423,7 @@ ENTRY_NP(\funcname\()_bs_rr_4_swap)
 	subs	x4, x4, #1	/* count-- */
 	add	x2, x2, x9	/* src += delta */
 	rev	w8, w8
-	str	w8, [x3], #2	/* *dst++ = value */
+	str	w8, [x3], #4	/* *dst++ = value */
 	b.ne	1b
 	ret
 #ifdef DIAGNOSTIC
@@ -453,7 +453,7 @@ ENTRY_NP(\funcname\()_bs_rr_8_swap)
 	subs	x4, x4, #1	/* count-- */
 	add	x2, x2, x9	/* src += delta */
 	rev	x8, x8
-	str	x8, [x3], #2	/* *dst++ = value */
+	str	x8, [x3], #8	/* *dst++ = value */
 	b.ne	1b
 	ret
 #ifdef DIAGNOSTIC
