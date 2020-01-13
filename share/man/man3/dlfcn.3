@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.36 2020/01/13 11:44:02 wiz Exp $
+.\"	$NetBSD: dlfcn.3,v 1.37 2020/01/13 15:54:48 uwe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -104,7 +104,7 @@ The
 .Fa mode
 parameter specifies symbol resolution time and symbol visibility.
 One of the following values may be used to specify symbol resolution time:
-.Bl -tag -width "RTLD_GLOBALXX" -offset indent
+.Bl -tag -width "Dv RTLD_NODELETE" -offset indent
 .It Dv RTLD_NOW
 Symbols are resolved immediately.
 .It Dv RTLD_LAZY
@@ -113,7 +113,7 @@ This is the default value if resolution time is unspecified.
 .El
 .Pp
 One of the following values may be used to specify symbol visibility:
-.Bl -tag -width "RTLD_GLOBALXX" -offset indent
+.Bl -tag -width "Dv RTLD_NODELETE" -offset indent
 .It Dv RTLD_GLOBAL
 The object's symbols and the symbols of its dependencies will be visible to
 other objects.
@@ -135,12 +135,12 @@ then it is promoted to
 Additionally, one of the following flags may be ORed into the
 .Fa mode
 argument:
-.Bl -tag -width "RTLD_NODELETEXX" -offset indent
+.Bl -tag -width "Dv RTLD_NODELETE" -offset indent
 .It Dv RTLD_NODELETE
 Prevents unload of the loaded object on
 .Fn dlclose .
 The same behaviour may be requested by
-.Fl "z nodelete"
+.Fl z Cm nodelete
 option of the static linker
 .Xr ld 1 .
 .It Dv RTLD_NOLOAD
@@ -256,10 +256,10 @@ as mapped in the process address space \(em is closest to but not exceeding
 the value passed in the first argument
 .Fa addr .
 The symbols of a shared object are only eligible if
-.Va addr
+.Fa addr
 is between the base address of the shared object and the value of the
 symbol
-.Dq _end
+.Va _end
 in the same shared object.
 If no object for which this condition holds
 true can be found,
@@ -272,23 +272,23 @@ and the shared object it is contained in.
 The
 .Fa dli
 argument points at a caller-provided
-.Va Dl_info
+.Vt Dl_info
 structure defined as follows:
 .Bd -literal -offset indent
 typedef struct {
-	const char  *dli_fname;     /* File defining the symbol */
-	void	    *dli_fbase;     /* Base address */
-	const char  *dli_sname;     /* Symbol name */
-	const void  *dli_saddr;     /* Symbol address */
+        const char  *dli_fname;     /* File defining the symbol */
+        void        *dli_fbase;     /* Base address */
+        const char  *dli_sname;     /* Symbol name */
+        const void  *dli_saddr;     /* Symbol address */
 } Dl_info;
 .Ed
 .Pp
 The structure members are further described as follows:
-.Bl -tag -width "dli_fnameXX"
-.It Li "dli_fname"
+.Bl -tag -width "Va"
+.It Va dli_fname
 The pathname of the shared object containing the address
 .Fa addr .
-.It Li "dli_fbase"
+.It Va dli_fbase
 The base address at which this shared object is loaded in the process
 address space.
 This may be zero if the symbol was found in the internally generated
@@ -299,9 +299,9 @@ see
 .Xr link 5
 .Pc
 which is not associated with a file.
-.It Li "dli_sname"
+.It Va dli_sname
 points at the nul-terminated name of the selected symbol
-.It Li "dli_saddr"
+.It Va dli_saddr
 is the actual address
 .Pq as it appears in the process address space
 of the symbol.
