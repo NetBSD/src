@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.37 2020/01/13 15:54:48 uwe Exp $
+.\"	$NetBSD: dlfcn.3,v 1.38 2020/01/13 15:59:11 uwe Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -209,7 +209,7 @@ The following special
 .Fa handle
 values may be used with
 .Fn dlsym :
-.Bl -tag -width "RTLD_DEFAULTXX" -offset indent
+.Bl -tag -width ".Dv RTLD_DEFAULT" -offset indent
 .It Dv NULL
 Interpreted as a reference to the executable or shared object
 from which the call is being made.
