@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.14 2020/01/13 09:53:54 martin Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.15 2020/01/13 12:53:46 thorpej Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.14 2020/01/13 09:53:54 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.15 2020/01/13 12:53:46 thorpej Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -109,7 +109,7 @@ void
 gttwsi_write_4(struct gttwsi_softc *sc, uint32_t reg, uint32_t val)
 {
 
-	bus_space_write_4(sc->sc_bust, sc->sc_bush, reg, val);
+	bus_space_write_4(sc->sc_bust, sc->sc_bush, sc->sc_regmap[reg], val);
 #ifdef TWSI_DEBUG
 	printf("I2C:W:[%" PRIu32 "]%02" PRIxBUSSIZE ":%02" PRIx32 "\n", reg, sc->sc_regmap[reg], val);
 #else
