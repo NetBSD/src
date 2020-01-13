@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.453 2019/12/27 09:41:50 msaitoh Exp $ */
+/*	$NetBSD: wd.c,v 1.454 2020/01/13 21:20:17 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.453 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.454 2020/01/13 21:20:17 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -231,8 +231,9 @@ static void bad144intern(struct wd_softc *);
 #endif
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
+#define	WD_QUIRK_BAD_NCQ		0x0002	/* drive NCQ support broken */
 
-#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
+#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2BAD_NCQ"
 
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
@@ -259,14 +260,12 @@ static const struct wd_quirk {
 	 * Seagate Barracuda Serial ATA V family.
 	 *
 	 */
-	{ "ST3120023AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST380023AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST360015AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ NULL,
-	  0 }
+	{ "ST3120023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST380023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST360015AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "Samsung SSD 860 EVO 1TB", WD_QUIRK_BAD_NCQ },
+	{ "Samsung SSD 860 EVO 500GB", WD_QUIRK_BAD_NCQ },
+	{ NULL, 0 }
 };
 
 static const struct wd_quirk *
@@ -374,6 +373,10 @@ wdattach(device_t parent, device_t self, void *aux)
 
 		if (wd->sc_quirks & WD_QUIRK_SPLIT_MOD15_WRITE) {
 			aprint_error_dev(self, "drive corrupts write transfers with certain controllers, consider replacing\n");
+		}
+
+		if (wd->sc_quirks & WD_QUIRK_BAD_NCQ) {
+			aprint_error_dev(self, "drive NCQ support broken, NCQ disabled, consider replacing\n");
 		}
 	}
 
@@ -2181,7 +2184,7 @@ wd_sysctl_attach(struct wd_softc *wd)
 		return;
 	}
 
-	wd->drv_ncq = true;
+	wd->drv_ncq = ((wd->sc_quirks & WD_QUIRK_BAD_NCQ) == 0) ? true : false;
 	if ((error = sysctl_createv(&wd->nodelog, 0, NULL, NULL,
 				CTLFLAG_READWRITE, CTLTYPE_BOOL, "use_ncq",
 				SYSCTL_DESCR("use NCQ if supported"),
