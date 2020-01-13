@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.175 2020/01/08 17:38:41 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.176 2020/01/13 12:03:41 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.175 2020/01/08 17:38:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.176 2020/01/13 12:03:41 ad Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1316,10 +1316,14 @@ ENTRY(cpu_switchto)
 	movl	20(%esp),%edi		/* newlwp */
 	movl	24(%esp),%edx		/* returning */
 
+	testl	%esi,%esi		/* oldlwp = NULL ? */
+	jz	skip_save
+
 	/* Save old context. */
 	movl	L_PCB(%esi),%eax
 	movl	%esp,PCB_ESP(%eax)
 	movl	%ebp,PCB_EBP(%eax)
+skip_save:
 
 	/* Switch to newlwp's stack. */
 	movl	L_PCB(%edi),%ebx
