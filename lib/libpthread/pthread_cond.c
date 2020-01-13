@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_cond.c,v 1.65 2017/12/08 03:08:19 christos Exp $	*/
+/*	$NetBSD: pthread_cond.c,v 1.66 2020/01/13 18:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_cond.c,v 1.65 2017/12/08 03:08:19 christos Exp $");
+__RCSID("$NetBSD: pthread_cond.c,v 1.66 2020/01/13 18:22:56 ad Exp $");
 
 #include <stdlib.h>
 #include <errno.h>
@@ -164,7 +164,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 		self->pt_willpark = 1;
 		pthread_mutex_unlock(mutex);
 		self->pt_willpark = 0;
-		self->pt_blocking++;
 		do {
 			retval = _lwp_park(clkid, TIMER_ABSTIME,
 			    __UNCONST(abstime), self->pt_unpark,
@@ -172,8 +171,6 @@ pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
 			    __UNVOLATILE(&mutex->ptm_waiters));
 			self->pt_unpark = 0;
 		} while (retval == -1 && errno == ESRCH);
-		self->pt_blocking--;
-		membar_sync();
 		pthread_mutex_lock(mutex);
 
 		/*

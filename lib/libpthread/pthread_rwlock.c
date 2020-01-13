@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.36 2019/12/16 22:22:11 uwe Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.37 2020/01/13 18:22:56 ad Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.36 2019/12/16 22:22:11 uwe Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.37 2020/01/13 18:22:56 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -139,8 +139,7 @@ pthread__rwlock_spin(uintptr_t owner)
 
 	thread = (pthread_t)(owner & RW_THREAD);
 	if (__predict_false(thread == NULL) ||
-	    thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE ||
-	    thread->pt_blocking)
+	    thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE)
 		return 0;
 
 	for (i = 128; i != 0; i--)

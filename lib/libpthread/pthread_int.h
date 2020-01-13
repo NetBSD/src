@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.97 2019/12/18 15:11:57 joerg Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.98 2020/01/13 18:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -131,7 +131,6 @@ struct	__pthread_st {
 	 */
 	int		pt_dummy1 __aligned(128);
 	struct lwpctl 	*pt_lwpctl;	/* Kernel/user comms area */
-	volatile int	pt_blocking;	/* Blocking in userspace */
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
 	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
 	volatile int	pt_mutexwait;	/* Waiting to acquire mutex */

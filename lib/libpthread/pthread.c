@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.153 2019/03/05 01:35:52 christos Exp $	*/
+/*	$NetBSD: pthread.c,v 1.154 2020/01/13 18:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.153 2019/03/05 01:35:52 christos Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.154 2020/01/13 18:22:56 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -319,7 +319,6 @@ pthread__initthread(pthread_t t)
 	t->pt_havespecific = 0;
 	t->pt_early = NULL;
 	t->pt_lwpctl = &pthread__dummy_lwpctl;
-	t->pt_blocking = 0;
 	t->pt_droplock = NULL;
 
 	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
@@ -1157,15 +1156,9 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 	int rv, error;
 	void *obj;
 
-	/*
-	 * For non-interlocked release of mutexes we need a store
-	 * barrier before incrementing pt_blocking away from zero. 
-	 * This is provided by pthread_mutex_unlock().
-	 */
 	self->pt_willpark = 1;
 	pthread_mutex_unlock(lock);
 	self->pt_willpark = 0;
-	self->pt_blocking++;
 
 	/*
 	 * Wait until we are awoken by a pending unpark operation,
@@ -1239,8 +1232,6 @@ pthread__park(pthread_t self, pthread_mutex_t *lock,
 		pthread_mutex_unlock(lock);
 	}
 	self->pt_early = NULL;
-	self->pt_blocking--;
-	membar_sync();
 
 	return rv;
 }

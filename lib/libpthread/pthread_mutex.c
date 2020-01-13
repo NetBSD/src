@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.65 2019/03/05 22:49:38 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.66 2020/01/13 18:22:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.65 2019/03/05 22:49:38 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.66 2020/01/13 18:22:56 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -235,10 +235,7 @@ pthread__mutex_pause(void)
 
 /*
  * Spin while the holder is running.  'lwpctl' gives us the true
- * status of the thread.  pt_blocking is set by libpthread in order
- * to cut out system call and kernel spinlock overhead on remote CPUs
- * (could represent many thousands of clock cycles).  pt_blocking also
- * makes this thread yield if the target is calling sched_yield().
+ * status of the thread.
  */
 NOINLINE static void *
 pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
@@ -250,8 +247,7 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 		thread = (pthread_t)MUTEX_OWNER(owner);
 		if (thread == NULL)
 			break;
-		if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE ||
-		    thread->pt_blocking)
+		if (thread->pt_lwpctl->lc_curcpu == LWPCTL_CPU_NONE)
 			break;
 		if (count < 128) 
 			count += count;
@@ -262,10 +258,10 @@ pthread__mutex_spin(pthread_mutex_t *ptm, pthread_t owner)
 	return owner;
 }
 
-NOINLINE static void
+NOINLINE static bool
 pthread__mutex_setwaiters(pthread_t self, pthread_mutex_t *ptm)
 {
-	void *new, *owner;
+	void *owner, *next;
 
 	/*
 	 * Note that the mutex can become unlocked before we set
@@ -281,34 +277,16 @@ pthread__mutex_setwaiters(pthread_t self, pthread_mutex_t *ptm)
 	 * the value of ptm_owner/pt_mutexwait after we have entered
 	 * the waiters list (the CAS itself must be atomic).
 	 */
-again:
-	membar_consumer();
-	owner = ptm->ptm_owner;
-
-	if (MUTEX_OWNER(owner) == 0) {
-		pthread__mutex_wakeup(self, ptm);
-		return;
-	}
-	if (!MUTEX_HAS_WAITERS(owner)) {
-		new = (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT);
-		if (atomic_cas_ptr(&ptm->ptm_owner, owner, new) != owner) {
-			goto again;
+	for (owner = ptm->ptm_owner;; owner = next) {
+		if (MUTEX_OWNER(owner) == 0) {
+			pthread__mutex_wakeup(self, ptm);
+			return true;
 		}
-	}
-
-	/*
-	 * Note that pthread_mutex_unlock() can do a non-interlocked CAS.
-	 * We cannot know if the presence of the waiters bit is stable
-	 * while the holding thread is running.  There are many assumptions;
-	 * see sys/kern/kern_mutex.c for details.  In short, we must spin if
-	 * we see that the holder is running again.
-	 */
-	membar_sync();
-	if (MUTEX_OWNER(owner) != (uintptr_t)self)
-		pthread__mutex_spin(ptm, owner);
-
-	if (membar_consumer(), !MUTEX_HAS_WAITERS(ptm->ptm_owner)) {
-		goto again;
+		if (MUTEX_HAS_WAITERS(owner)) {
+			return false;
+		}
+		next = atomic_cas_ptr(&ptm->ptm_owner, owner,
+		    (void *)((uintptr_t)owner | MUTEX_WAITERS_BIT));
 	}
 }
 
@@ -386,9 +364,12 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 			if (next == waiters)
 			    	break;
 		}
-
+		
 		/* Set the waiters bit and block. */
-		pthread__mutex_setwaiters(self, ptm);
+		membar_sync();
+		if (pthread__mutex_setwaiters(self, ptm)) {
+			continue;
+		}
 
 		/*
 		 * We may have been awoken by the current thread above,
@@ -398,15 +379,13 @@ pthread__mutex_lock_slow(pthread_mutex_t *ptm, const struct timespec *ts)
 		 * being set to zero).  Otherwise it is unsafe to re-enter
 		 * the thread onto the waiters list.
 		 */
+		membar_sync();
 		while (self->pt_mutexwait) {
-			self->pt_blocking++;
 			error = _lwp_park(CLOCK_REALTIME, TIMER_ABSTIME,
 			    __UNCONST(ts), self->pt_unpark,
 			    __UNVOLATILE(&ptm->ptm_waiters),
 			    __UNVOLATILE(&ptm->ptm_waiters));
 			self->pt_unpark = 0;
-			self->pt_blocking--;
-			membar_sync();
 			if (__predict_true(error != -1)) {
 				continue;
 			}
@@ -471,15 +450,11 @@ pthread_mutex_unlock(pthread_mutex_t *ptm)
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_unlock_stub(ptm);
 
-	/*
-	 * Note this may be a non-interlocked CAS.  See lock_slow()
-	 * above and sys/kern/kern_mutex.c for details.
-	 */
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 	membar_exit();
 #endif
 	self = pthread__self();
-	value = atomic_cas_ptr_ni(&ptm->ptm_owner, self, NULL);
+	value = atomic_cas_ptr(&ptm->ptm_owner, self, NULL);
 	if (__predict_true(value == self)) {
 		pthread__smt_wake();
 		return 0;
@@ -582,12 +557,9 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 	pthread_t thread, next;
 	ssize_t n, rv;
 
-	/*
-	 * Take ownership of the current set of waiters.  No
-	 * need for a memory barrier following this, all loads
-	 * are dependent upon 'thread'.
-	 */
+	/* Take ownership of the current set of waiters. */
 	thread = atomic_swap_ptr(&ptm->ptm_waiters, NULL);
+	membar_datadep_consumer(); /* for alpha */
 	pthread__smt_wake();
 
 	for (;;) {
