@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlfcn.3,v 1.35 2020/01/13 09:00:59 kamil Exp $
+.\"	$NetBSD: dlfcn.3,v 1.36 2020/01/13 11:44:02 wiz Exp $
 .\"
 .\" Copyright (c) 1998 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -113,7 +113,6 @@ This is the default value if resolution time is unspecified.
 .El
 .Pp
 One of the following values may be used to specify symbol visibility:
-.Pp
 .Bl -tag -width "RTLD_GLOBALXX" -offset indent
 .It Dv RTLD_GLOBAL
 The object's symbols and the symbols of its dependencies will be visible to
@@ -203,8 +202,9 @@ However, the symbols of an object's dependencies are always visible to it.
 All shared objects loaded at program startup are globally visible.
 Only the symbols in the main executable that are referenced by a
 shared object at link time will be visible unless it has been linked
-with the --export-dynamic option where all of its symbols will be
-visible.
+with the
+.Fl Fl export-dynamic
+option where all of its symbols will be visible.
 The following special
 .Fa handle
 values may be used with
@@ -251,8 +251,8 @@ and the
 must match in order for the symbol to be resolved.
 .Pp
 .Fn dladdr
-examines all currently mapped shared objects for a symbol whose address --
-as mapped in the process address space -- is closest to but not exceeding
+examines all currently mapped shared objects for a symbol whose address \(em
+as mapped in the process address space \(em is closest to but not exceeding
 the value passed in the first argument
 .Fa addr .
 The symbols of a shared object are only eligible if
