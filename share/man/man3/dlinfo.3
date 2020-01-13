@@ -1,4 +1,4 @@
-.\"	$NetBSD: dlinfo.3,v 1.3 2020/01/13 11:47:06 wiz Exp $
+.\"	$NetBSD: dlinfo.3,v 1.4 2020/01/13 14:10:52 uwe Exp $
 .\"
 .\" Copyright (c) 2003 Alexey Zelkin <phantom@FreeBSD.org>
 .\" All rights reserved.
@@ -40,7 +40,7 @@ dynamically linked program automatically.)
 .In link.h
 .In dlfcn.h
 .Ft int
-.Fn dlinfo "void * handle" "int request" "void * p"
+.Fn dlinfo "void *handle" "int request" "void *p"
 .Sh DESCRIPTION
 The
 .Fn dlinfo
@@ -66,19 +66,20 @@ is the value returned from
 the information returned by the
 .Fn dlinfo
 function pertains to the specified object.
-If handle is the special handle
+If
+.Fa handle
+is the special handle
 .Dv RTLD_SELF ,
 the information returned pertains to the caller itself.
 .Pp
 Possible values for the
 .Fa request
 argument are:
-.Bl -tag -width indent
+.Bl -tag -width "Dv RTLD_"
 .It Dv RTLD_DI_LINKMAP
-Retrieve the
+Retrieve the pointer to the
 .Vt Link_map
-.Pq Vt "struct link_map"
-structure pointer for the specified
+for the specified
 .Fa handle .
 On successful return, the
 .Fa p
@@ -98,6 +99,7 @@ in the same order as
 and
 .Xr dlclose 3
 are called.
+.Pp
 The
 .Vt Link_map
 structure is defined in
@@ -113,11 +115,11 @@ void            *l_ld;     /* Pointer to .dynamic in memory */
 struct link_map *l_next,   /* linked list of mapped libs */
                 *l_prev;
 .Ed
-.Bl -tag -width ".Va l_addr"
+.Bl -tag -width Va
 .It Va l_addr
 The base address of the object loaded into memory.
 .It Va l_name
-The full name of the loaded shared object.
+The absolute pathname of the loaded shared object.
 .It Va l_ld
 The address of the dynamic linking information segment
 .Pq Dv PT_DYNAMIC
@@ -273,7 +275,7 @@ The
 implementation of the
 .Fn dlinfo
 function was originally written by
-.An Antii Kantee Aq Mt pooka@NetBSD.org .
+.An Antti Kantee Aq Mt pooka@NetBSD.org .
 .Pp
 The manual page for this function was written by
 .An Alexey Zelkin Aq Mt phantom@FreeBSD.org
