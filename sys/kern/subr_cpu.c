@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.9 2020/01/13 00:20:26 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.10 2020/01/13 02:18:13 mrg Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.9 2020/01/13 00:20:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.10 2020/01/13 02:18:13 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -192,7 +192,11 @@ cpu_topology_dump(void)
 	enum cpu_rel rel;
 	int i;
 
+	CTASSERT(__arraycount(names) >= __arraycount(ci->ci_sibling));
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (cpu_topology_haveslow)
+			printf("%s ", ci->ci_is_slow ? "slow" : "fast");
 		for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 			printf("%s has %d %s siblings:", cpu_name(ci),
 			    ci->ci_nsibling[rel], names[rel]);
@@ -277,6 +281,14 @@ cpu_topology_init(void)
 			    ci2->ci_core_id == ci->ci_core_id &&
 			    ci2->ci_smt_id == ci->ci_smt_id &&
 			    ci2 != ci) {
+#ifdef DEBUG
+				printf("cpu%u %p pkg %u core %u smt %u same as "
+				       "cpu%u %p pkg %u core %u smt %u\n", 
+				       cpu_index(ci), ci, ci->ci_package_id,
+				       ci->ci_core_id, ci->ci_smt_id,
+				       cpu_index(ci2), ci2, ci2->ci_package_id,
+				       ci2->ci_core_id, ci2->ci_smt_id);
+#endif
 			    	printf("cpu_topology_init: info bogus, "
 			    	    "faking it\n");
 			    	cpu_topology_fake();
