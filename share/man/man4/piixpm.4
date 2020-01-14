@@ -1,4 +1,4 @@
-.\" $NetBSD: piixpm.4,v 1.7 2016/07/10 04:44:47 pgoyette Exp $
+.\" $NetBSD: piixpm.4,v 1.8 2020/01/14 15:43:19 msaitoh Exp $
 .\"	$OpenBSD: piixpm.4,v 1.9 2006/01/18 03:06:33 brad Exp $
 .\"
 .\" Copyright (c) 2004, 2005 Alexander Yurchenko <grange@openbsd.org>
@@ -15,7 +15,7 @@
 .\" ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
 .\" OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
 .\"
-.Dd July 10, 2016
+.Dd January 14, 2020
 .Dt PIIXPM 4
 .Os
 .Sh NAME
@@ -43,7 +43,7 @@ Intel 82371AB (PIIX4), 82440MX
 .It
 Serverworks OSB4, OSB5, OSB6, HT1000SB
 .It
-AMD HUDSON
+AMD FCHs (HUDSON, BOLTON and KERNCZ)
 .El
 .Sh SEE ALSO
 .Xr iic 4 ,
