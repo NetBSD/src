@@ -1,4 +1,4 @@
-/*	$NetBSD: thread-stub.c,v 1.29 2019/03/05 01:35:52 christos Exp $	*/
+/*	$NetBSD: thread-stub.c,v 1.30 2020/01/14 18:18:59 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2009 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: thread-stub.c,v 1.29 2019/03/05 01:35:52 christos Exp $");
+__RCSID("$NetBSD: thread-stub.c,v 1.30 2020/01/14 18:18:59 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 /*
@@ -382,7 +382,9 @@ __libc_thr_sigsetmask_stub(int h, const sigset_t *s, sigset_t *o)
 
 	CHECK_NOT_THREADED();
 
-	return sigprocmask(h, s, o);
+	if (sigprocmask(h, s, o))
+		return errno;
+	return 0;
 }
 
 thr_t
