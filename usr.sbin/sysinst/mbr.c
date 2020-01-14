@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.25 2020/01/09 19:51:49 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.26 2020/01/14 19:28:31 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -982,9 +982,16 @@ mbr_change_disk_geom(struct disk_partitions *arg, int ncyl, int nhead,
 		if (!(ptn_0_limit & 2047)) {
 			/* Partition ends on a 1MB boundary, align to 1MB */
 			parts->ptn_alignment = 2048;
-			if (ptn_0_base <= 2048
-			    && !(ptn_0_base & (ptn_0_base - 1))) {
-				/* ptn_base is a power of 2, use it */
+			if ((ptn_0_base <= 2048
+			    && !(ptn_0_base & (ptn_0_base - 1)))
+			    || (ptn_0_base < parts->ptn_0_offset)) {
+				/*
+				 * If ptn_base is a power of 2, use it.
+				 * Also use it if the first partition
+				 * already is close to the begining
+				 * of the disk and we can't enforce
+				 * better alignment.
+				 */
 				parts->ptn_0_offset = ptn_0_base;
 			}
 		}
