@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.103.2.1 2020/01/08 11:02:35 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.103.2.2 2020/01/14 11:08:01 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.47.2.1 2020/01/08 11:02:16 ad Exp 
+ *   from: NetBSD: namei.src,v 1.47.2.3 2020/01/14 11:07:40 ad Exp 
  */
 
 /*
@@ -214,16 +214,18 @@ struct nameidata {
  * Field markings and their corresponding locks:
  *
  * -  stable throught the lifetime of the namecache entry
- * d  protected by nc_dvp->vi_nclock
- * l  protected by cache_list_lock
+ * d  protected by nc_dvp->vi_ncdlock
+ * v  protected by nc_dvp->vi_ncvlock
+ * l  protected by cache_lru_lock
+ * u  accesses are unlocked, no serialization applied
  */
 struct namecache {
 	struct rb_node nc_node;		/* d  red-black tree node */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
-	TAILQ_ENTRY(namecache) nc_vlist;/* l  vp's list of cache entries */
+	TAILQ_ENTRY(namecache) nc_vlist;/* v  vp's list of cache entries */
 	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
-	int	nc_hittime;		/* d  approx time of last hit */
+	int	nc_lrulist;		/* l  which LRU list its on */
 	u_short	nc_nlen;		/* -  length of name */
 	bool	nc_whiteout;		/* -  true if a whiteout */
 	char	nc_name[49];		/* -  segment name */
