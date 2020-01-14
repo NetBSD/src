@@ -1,4 +1,4 @@
-/*	$NetBSD: boot_ufs.h,v 1.5 2009/03/14 14:46:07 dsl Exp $	*/
+/*	$NetBSD: boot_ufs.h,v 1.6 2020/01/14 04:00:41 isaki Exp $	*/
 
 /***************************************************************
  *
@@ -14,10 +14,8 @@ int badbaddr(volatile void *adr);
 #ifdef SCSI_ADHOC_BOOTPART
 void RAW_READ0(void *buf, u_int32_t blkpos, size_t bytelen);
 #endif
-unsigned B_KEYINP(void);
 void B_PUTC(unsigned int c);
 void B_PRINT(const char *p);
-unsigned B_COLOR(unsigned int w);
 
 extern unsigned ID;		/* target SCSI ID */
 extern unsigned BOOT_INFO;	/* result of IOCS(__BOOTINF) */
