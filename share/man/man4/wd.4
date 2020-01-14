@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.22 2020/01/13 21:43:38 jdolecek Exp $
+.\"	$NetBSD: wd.4,v 1.23 2020/01/14 09:30:34 wiz Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -70,11 +70,14 @@ The following
 variables control behavior of disks attached using this driver:
 .Bl -tag -width 8n
 .It Dv hw.wdX.use_ncq
-Whether to use NCQ ATA commands for the disk. Only effective when the disk
-hardware actually claims to support NCQ. Default to true.
+Whether to use NCQ ATA commands for the disk.
+Only effective when the disk hardware actually claims to support
+NCQ.
+Default to true.
 .It Dv hw.wdX.use_ncq_prio
-Use optional NCQ priority for high-priority I/O like meta-data. Intended
-only for experimental use right now, might negatively affect performance.
+Use optional NCQ priority for high-priority I/O like meta-data.
+Intended only for experimental use right now, might negatively
+affect performance.
 This setting only has effect if
 .Dv hw.wdX.use_ncq
 is also true.
@@ -85,8 +88,8 @@ Certain
 .Tn Samsung
 .Tn 860 EVO
 SSD drives have firmware bug which causes interface CRC errors when NCQ
-ATA commands are used. For this reason NCQ is disabled for these drives
-by default.
+ATA commands are used.
+For this reason NCQ is disabled for these drives by default.
 Affected drives include, but are not limited to:
 .Pp
 .Bl -tag -width Ds -offset indent -compact
