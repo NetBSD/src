@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.62 2020/01/14 15:36:54 msaitoh Exp $ */
+/* $NetBSD: piixpm.c,v 1.63 2020/01/14 15:42:03 msaitoh Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.62 2020/01/14 15:36:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.63 2020/01/14 15:42:03 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -75,6 +75,7 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.62 2020/01/14 15:36:54 msaitoh Exp $");
 
 struct piixpm_smbus {
 	int			sda;
+	int			sda_save;
 	struct			piixpm_softc *softc;
 };
 
@@ -498,7 +499,7 @@ piixpm_i2c_sb800_acquire_bus(void *cookie, int flags)
 {
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
-	uint8_t sctl;
+	uint8_t sctl, old_sda, index, mask, reg;
 	int i;
 
 	sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
@@ -521,28 +522,33 @@ piixpm_i2c_sb800_acquire_bus(void *cookie, int flags)
 		return -1;
 	}
 
-	if (PIIXPM_IS_KERNCZ(sc)) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, smbus->sda << 3);
+	if (PIIXPM_IS_KERNCZ(sc) ||
+	    (PIIXPM_IS_HUDSON(sc) && (sc->sc_rev >= 0x1f))) {
+		index = AMDFCH41_PM_PORT_INDEX;
+		mask = AMDFCH41_SMBUS_PORTMASK;
 	} else if (sc->sc_sb800_selen) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA,
-		    __SHIFTIN(smbus->sda, SB800_PM_SMBUS0_MASK_E));
+		index = SB800_PM_SMBUS0SEL;
+		mask = SB800_PM_SMBUS0_MASK_E;
 	} else {
-		uint8_t data;
-
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0EN_LO);
-		data = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA) & ~SB800_PM_SMBUS0_MASK_C;
-		data |= __SHIFTIN(smbus->sda, SB800_PM_SMBUS0_MASK_C);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, data);
+		index = SB800_PM_SMBUS0EN_LO;
+		mask = SB800_PM_SMBUS0_MASK_C;
 	}
+
+	bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+	    SB800_INDIRECTIO_INDEX, index);
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+	    SB800_INDIRECTIO_DATA);
+
+	old_sda = __SHIFTOUT(reg, mask);
+	if (smbus->sda != old_sda) {
+		reg &= ~mask;
+		reg |= __SHIFTIN(smbus->sda, mask);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA, reg);
+	}
+
+	/* Save the old port number */
+	smbus->sda_save = old_sda;
 
 	return 0;
 }
@@ -552,32 +558,30 @@ piixpm_i2c_sb800_release_bus(void *cookie, int flags)
 {
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
-	uint8_t sctl;
+	uint8_t sctl, index, mask, reg;
 
-	if (PIIXPM_IS_KERNCZ(sc)) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
-		/* Set to port 0 */
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, 0);
+	if (PIIXPM_IS_KERNCZ(sc) ||
+	    (PIIXPM_IS_HUDSON(sc) && (sc->sc_rev >= 0x1f))) {
+		index = AMDFCH41_PM_PORT_INDEX;
+		mask = AMDFCH41_SMBUS_PORTMASK;
 	} else if (sc->sc_sb800_selen) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
-
-		/* Set to port 0 */
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, 0);
+		index = SB800_PM_SMBUS0SEL;
+		mask = SB800_PM_SMBUS0_MASK_E;
 	} else {
-		uint8_t data;
+		index = SB800_PM_SMBUS0EN_LO;
+		mask = SB800_PM_SMBUS0_MASK_C;
+	}
 
+	bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+	    SB800_INDIRECTIO_INDEX, index);
+	if (smbus->sda != smbus->sda_save) {
+		/* Restore the port number */
+		reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA);
+		reg &= ~mask;
+		reg |= __SHIFTIN(smbus->sda_save, mask);
 		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0EN_LO);
-
-		/* Set to port 0 */
-		data = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA) & ~SB800_PM_SMBUS0_MASK_C;
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, data);
+		    SB800_INDIRECTIO_DATA, reg);
 	}
 
 	/* Relase the host semaphore */
