@@ -1,4 +1,4 @@
-/*	$NetBSD: dump.c,v 1.46 2020/01/04 22:22:34 mlelstv Exp $	*/
+/*	$NetBSD: dump.c,v 1.47 2020/01/14 11:28:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1988, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993\
 #if 0
 static char sccsid[] = "@(#)kdump.c	8.4 (Berkeley) 4/28/95";
 #endif
-__RCSID("$NetBSD: dump.c,v 1.46 2020/01/04 22:22:34 mlelstv Exp $");
+__RCSID("$NetBSD: dump.c,v 1.47 2020/01/14 11:28:35 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -74,10 +74,12 @@ int width;			/* Keep track of current columns. */
 #include <sys/syscall.h>
 
 static const char *const ptrace_ops[] = {
-	"PT_TRACE_ME",	"PT_READ_I",	"PT_READ_D",	"PT_READ_U",
-	"PT_WRITE_I",	"PT_WRITE_D",	"PT_WRITE_U",	"PT_CONTINUE",
-	"PT_KILL",	"PT_ATTACH",	"PT_DETACH",
+	PT_STRINGS
 };
+
+#ifdef PT_MACHDEP_STRINGS
+static const char * const ptrace_machdep_ops[] = { PT_MACHDEP_STRINGS };
+#endif
 
 struct ktr_entry {
 	TAILQ_ENTRY(ktr_entry) kte_list;
@@ -578,8 +580,14 @@ syscallprint(struct ktr_header *kth)
 
 	case SYS_ptrace :
 		if ((long)*ap >= 0 &&
-		    *ap < (register_t)(sizeof(ptrace_ops) / sizeof(ptrace_ops[0])))
+		    *ap < (register_t)__arraycount(ptrace_ops))
 			xwprintf("(%s", ptrace_ops[*ap]);
+#ifdef PT_MACHDEP_STRINGS
+		else if (*ap >= PT_FIRSTMACH &&
+		    *ap - PT_FIRSTMACH < (register_t)
+		    __arraycount(ptrace_machdep_ops))
+			xwprintf("(%s", ptrace_machdep_ops[*ap - PT_FIRSTMACH]);
+#endif
 		else
 			xwprintf("(%ld", (long)*ap);
 		ap++;
