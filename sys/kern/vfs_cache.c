@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.4 2020/01/13 08:51:07 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.5 2020/01/14 11:07:40 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -71,6 +71,10 @@
  *	DELETE, or NOCACHE is set (rewrite), and name is located in the
  *	cache, it will be dropped.
  *
+ * Background:
+ *
+ *	XXX add a bit of history
+ *
  * Data structures:
  *
  *	The original BSD implementation used a global hash table, which
@@ -86,24 +90,16 @@
  *	utimately make use of some other data structure, perhaps a Robin
  *	Hood hash.  Insert blurb here when that happens.
  *
+ * Replacement:
+ *
+ *	XXX LRU blurb.
+ *
  * Concurrency:
  *
- *	There are two locks that are of particular interest:
+ *	XXX need new blurb here
  *
- *	nc_dvp->vi_nclock: a per-directory lock.  This is taken mainly
- *	during lookups.
- *
- *	cache_list_lock: a global lock for all lists, including per-vnode
- *	lists and the LRU queue.  This is taken mainly during insertion and
- *	removal, and when operating in the list -> tree direction.
- *
- *	vp->v_interlock: per vnode interlock taken when acquiring a ref.
- *
- *	Most all modifications are made holding both cache_list_lock and the
- *	directory lock write locked.  nc_hittime does not have any kind of
- *	serialization appliet to it - updates are racy, but since it's only
- *	used for pseudo-LRU replacement it doesn't matter.  See definition
- *	of "struct namecache" in src/sys/namei.src for the particulars.
+ *	See definition of "struct namecache" in src/sys/namei.src for the
+ *	particulars.
  *
  *	Per-CPU statistics, and "numcache" are read unlocked, since an
  *	approximate value is OK.  We maintain uintptr_t sized per-CPU
@@ -112,11 +108,13 @@
  *
  * Lock order:
  *
- *	1) nc_dvp->vi_nclock
+ *	1) nc_dvp->vi_ncdlock
  *	2) cache_list_lock
  *	3) vp->v_interlock
  *
  * Ugly ASCII diagram:
+ *
+ *	XXX replace tabs with spaces, make less ugly
  *
  *          ...
  *	     |
@@ -150,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.4 2020/01/13 08:51:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.5 2020/01/14 11:07:40 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -176,13 +174,22 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.4 2020/01/13 08:51:07 ad Exp $
 /* Per-CPU counters. */
 struct nchstats_percpu _NAMEI_CACHE_STATS(uintptr_t);
 
-/* Global lock, lists and pool. */
-static kmutex_t cache_list_lock __cacheline_aligned;
-static pool_cache_t namecache_cache __read_mostly;
-static TAILQ_HEAD(, namecache) nclruhead __cacheline_aligned;
+/* Global pool cache. */
+static pool_cache_t cache_pool __read_mostly;
 
-/* Number of cache entries allocated. */
-static u_int	numcache __cacheline_aligned;
+/* LRU replacement state. */
+enum cache_lru_id {
+	LRU_ACTIVE,
+	LRU_INACTIVE,
+	LRU_COUNT
+};
+
+static struct {
+	TAILQ_HEAD(, namecache)	list[LRU_COUNT];
+	u_int			count[LRU_COUNT];
+} cache_lru __cacheline_aligned;
+
+static kmutex_t cache_lru_lock __cacheline_aligned;
 
 /* Cache effectiveness statistics.  This holds total from per-cpu stats */
 struct nchstats	nchstats __cacheline_aligned;
@@ -195,14 +202,12 @@ struct nchstats	nchstats __cacheline_aligned;
 } while (/* CONSTCOND */ 0);
 
 /* Tunables */
-static const int cache_hottime = 5;	/* number of seconds */
-static const int cache_maxscan = 128;	/* reclaim: max entries to scan */
-static int doingcache = 1;		/* 1 => enable the cache */
+static const int cache_lru_maxdeact = 2;	/* max # to deactivate */
+static const int cache_lru_maxscan = 128;	/* max # to scan/reclaim */
+static int doingcache = 1;			/* 1 => enable the cache */
 
 static void	cache_reclaim(void);
-static int	cache_ctor(void *, void *, int);
-static void	cache_dtor(void *, void *);
-static void	cache_remove(struct namecache *, bool);
+static void	cache_remove(struct namecache *, const bool);
 
 /* sysctl */
 static struct	sysctllog *sysctllog;
@@ -273,15 +278,16 @@ static rb_tree_ops_t cache_rbtree_ops __read_mostly = {
 };
 
 /*
- * Remove an entry from the cache.  The directory must be locked, and if
- * "inreverse" is false, cache_list_lock will be acquired when removing the
- * entry from the global lists.
+ * Remove an entry from the cache.  The directory lock must be held, and if
+ * "dirtovnode" is true (it usually will be), the vnode's cache lock will be
+ * acquired when removing the entry from the vnode list.
  */
 static void
-cache_remove(struct namecache *ncp, bool inreverse)
+cache_remove(struct namecache *ncp, const bool dirtovnode)
 {
+	krwlock_t *vlock;
 
-	KASSERT(rw_write_held(VNODE_TO_VIMPL(ncp->nc_dvp)->vi_nclock));
+	KASSERT(rw_write_held(VNODE_TO_VIMPL(ncp->nc_dvp)->vi_ncdlock));
 
 	SDT_PROBE(vfs, namecache, invalidate, done, ncp->nc_dvp,
 	    0, 0, 0, 0);
@@ -289,20 +295,24 @@ cache_remove(struct namecache *ncp, bool inreverse)
 	/* First remove from the directory's rbtree. */
 	rb_tree_remove_node(&VNODE_TO_VIMPL(ncp->nc_dvp)->vi_nctree, ncp);
 
-	/* Then remove from the lists. */
-	if (!inreverse) {
-		mutex_enter(&cache_list_lock);
-	}
-	ncp->nc_dvp = NULL;
+	/* Then remove from the LRU lists. */
+	mutex_enter(&cache_lru_lock);
+	TAILQ_REMOVE(&cache_lru.list[ncp->nc_lrulist], ncp, nc_lru);
+	cache_lru.count[ncp->nc_lrulist]--;
+	mutex_exit(&cache_lru_lock);
+
+	/* Then remove from the vnode list. */
 	if (ncp->nc_vp != NULL) {
+		vlock = VNODE_TO_VIMPL(ncp->nc_vp)->vi_ncvlock;
+		if (__predict_true(dirtovnode)) {
+			rw_enter(vlock, RW_WRITER);
+		}
 		TAILQ_REMOVE(&VNODE_TO_VIMPL(ncp->nc_vp)->vi_nclist, ncp,
 		    nc_vlist);
+		if (__predict_true(dirtovnode)) {
+			rw_exit(vlock);
+		}
 		ncp->nc_vp = NULL;
-	}
-	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);	
-	numcache--;
-	if (!inreverse) {
-		mutex_exit(&cache_list_lock);
 	}
 
 	/* Finally, free it. */
@@ -310,8 +320,63 @@ cache_remove(struct namecache *ncp, bool inreverse)
 		size_t sz = offsetof(struct namecache, nc_name[ncp->nc_nlen]);
 		kmem_free(ncp, sz);
 	} else {
-		pool_cache_put(namecache_cache, ncp);
+		pool_cache_put(cache_pool, ncp);
 	}
+}
+
+/*
+ * Try to balance the LRU lists.  Pick some victim entries, and re-queue
+ * them from the head of the ACTIVE list to the tail of the INACTIVE list. 
+ */
+static void __noinline
+cache_deactivate(void)
+{
+	struct namecache *ncp;
+	int total, i;
+
+	KASSERT(mutex_owned(&cache_lru_lock));
+
+	/* If we're nowhere near budget yet, don't bother. */
+	total = cache_lru.count[LRU_ACTIVE] + cache_lru.count[LRU_INACTIVE];
+	if (total < (desiredvnodes >> 1)) {
+	    	return;
+	}
+
+	/* If not out of balance, don't bother. */
+	if (cache_lru.count[LRU_ACTIVE] < cache_lru.count[LRU_INACTIVE]) {
+		return;
+	}
+
+	/* Move victim from head of ACTIVE list, to tail of INACTIVE. */
+	for (i = 0; i < cache_lru_maxdeact; i++) {
+		ncp = TAILQ_FIRST(&cache_lru.list[LRU_ACTIVE]);
+		if (ncp == NULL) {
+			break;
+		}
+		KASSERT(ncp->nc_lrulist == LRU_ACTIVE);
+		ncp->nc_lrulist = LRU_INACTIVE;
+		TAILQ_REMOVE(&cache_lru.list[LRU_ACTIVE], ncp, nc_lru);
+		TAILQ_INSERT_TAIL(&cache_lru.list[LRU_INACTIVE], ncp, nc_lru);
+		cache_lru.count[LRU_ACTIVE]--;
+		cache_lru.count[LRU_INACTIVE]++;
+	}
+}
+
+/*
+ * Re-queue an entry onto the correct LRU list, after it has scored a hit.
+ */
+static void __noinline
+cache_activate(struct namecache *ncp)
+{
+
+	mutex_enter(&cache_lru_lock);
+	/* Put on tail of ACTIVE queue, since it just scored a hit. */
+	TAILQ_REMOVE(&cache_lru.list[ncp->nc_lrulist], ncp, nc_lru);
+	TAILQ_INSERT_TAIL(&cache_lru.list[LRU_ACTIVE], ncp, nc_lru);
+	cache_lru.count[ncp->nc_lrulist]--;
+	cache_lru.count[LRU_ACTIVE]++;
+	ncp->nc_lrulist = LRU_ACTIVE;
+	mutex_exit(&cache_lru_lock);
 }
 
 /*
@@ -324,7 +389,7 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen)
 	struct namecache *ncp;
 	struct iovec iov;
 
-	KASSERT(rw_lock_held(VNODE_TO_VIMPL(dvp)->vi_nclock));
+	KASSERT(rw_lock_held(VNODE_TO_VIMPL(dvp)->vi_ncdlock));
 
 	iov.iov_base = __UNCONST(name);
 	iov.iov_len = namelen;
@@ -332,14 +397,9 @@ cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen)
 
 	if (ncp != NULL) {
 		KASSERT(ncp->nc_dvp == dvp);
-		/*
-		 * Avoid false sharing: don't write back to nc_hittime
-		 * unless changed significantly.  This is an unlocked
-		 * update and is racy, but it doesn't matter since it's
-		 * only used for pseudo-LRU replacement.
-		 */
-		if (((ncp->nc_hittime ^ hardclock_ticks) & ~31) != 0) {
-			ncp->nc_hittime = hardclock_ticks;
+		/* If the entry is on the wrong LRU list, requeue it. */
+		if (__predict_false(ncp->nc_lrulist != LRU_ACTIVE)) {
+			cache_activate(ncp);
 		}
 		SDT_PROBE(vfs, namecache, lookup, hit, dvp,
 		    name, namelen, 0, 0);
@@ -407,7 +467,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 {
 	struct namecache *ncp;
 	struct vnode *vp;
-	krwlock_t *dirlock;
+	krwlock_t *dlock;
 	int error;
 	bool hit;
 	krw_t op;
@@ -438,11 +498,16 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		op = RW_READER;
 	}
 
-	dirlock = VNODE_TO_VIMPL(dvp)->vi_nclock;
-	rw_enter(dirlock, op);
+	/* If no directory lock yet, there's nothing in cache. */
+	dlock = VNODE_TO_VIMPL(dvp)->vi_ncdlock;
+	if (__predict_false(dlock == NULL)) {
+		return false;
+	}
+
+	rw_enter(dlock, op);
 	ncp = cache_lookup_entry(dvp, name, namelen);
 	if (__predict_false(ncp == NULL)) {
-		rw_exit(dirlock);
+		rw_exit(dlock);
 		/* found nothing */
 		COUNT(ncs_miss);
 		return false;
@@ -453,8 +518,8 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		 * the cache entry is invalid, or otherwise don't
 		 * want cache entry to exist.
 		 */
-		cache_remove(ncp, false);
-		rw_exit(dirlock);
+		cache_remove(ncp, true);
+		rw_exit(dlock);
 		/* found nothing */
 		COUNT(ncs_badhits);
 		return false;
@@ -472,7 +537,7 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 			 * entry.
 			 */
 			COUNT(ncs_badhits);
-			cache_remove(ncp, false);
+			cache_remove(ncp, true);
 			/* found nothing */
 			hit = false;
 		}
@@ -484,12 +549,12 @@ cache_lookup(struct vnode *dvp, const char *name, size_t namelen,
 		} else {
 			KASSERT(!ncp->nc_whiteout);
 		}
-		rw_exit(dirlock);
+		rw_exit(dlock);
 		return hit;
 	}
 	vp = ncp->nc_vp;
 	mutex_enter(vp->v_interlock);
-	rw_exit(dirlock);
+	rw_exit(dlock);
 
 	/*
 	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
@@ -525,7 +590,7 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 {
 	struct namecache *ncp;
 	struct vnode *vp;
-	krwlock_t *dirlock;
+	krwlock_t *dlock;
 	int error;
 
 	/* Establish default results. */
@@ -539,17 +604,22 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 		return false;
 	}
 
-	dirlock = VNODE_TO_VIMPL(dvp)->vi_nclock;
-	rw_enter(dirlock, RW_READER);
+	/* If no directory lock yet, there's nothing in cache. */
+	dlock = VNODE_TO_VIMPL(dvp)->vi_ncdlock;
+	if (__predict_false(dlock == NULL)) {
+		return false;
+	}
+
+	rw_enter(dlock, RW_READER);
 	if (__predict_false(namelen > USHRT_MAX)) {
-		rw_exit(dirlock);
+		rw_exit(dlock);
 		/* found nothing */
 		COUNT(ncs_long);
 		return false;
 	}
 	ncp = cache_lookup_entry(dvp, name, namelen);
 	if (__predict_false(ncp == NULL)) {
-		rw_exit(dirlock);
+		rw_exit(dlock);
 		/* found nothing */
 		COUNT(ncs_miss);
 		return false;
@@ -563,13 +633,13 @@ cache_lookup_raw(struct vnode *dvp, const char *name, size_t namelen,
 			/*cnp->cn_flags |= ncp->nc_flags;*/
 			*iswht_ret = ncp->nc_whiteout;
 		}
-		rw_exit(dirlock);
+		rw_exit(dlock);
 		/* found negative entry; vn is already null from above */
 		COUNT(ncs_neghits);
 		return true;
 	}
 	mutex_enter(vp->v_interlock);
-	rw_exit(dirlock);
+	rw_exit(dlock);
 
 	/*
 	 * Unlocked except for the vnode interlock.  Call vcache_tryvget().
@@ -610,6 +680,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 {
 	struct namecache *ncp;
 	struct vnode *dvp;
+	krwlock_t *vlock;
 	char *bp;
 	int error, nlen;
 
@@ -618,7 +689,8 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 	if (!doingcache)
 		goto out;
 
-	mutex_enter(&cache_list_lock);
+	vlock = VNODE_TO_VIMPL(vp)->vi_ncvlock;
+	rw_enter(vlock, RW_READER);
 	TAILQ_FOREACH(ncp, &VNODE_TO_VIMPL(vp)->vi_nclist, nc_vlist) {
 		KASSERT(ncp->nc_vp == vp);
 		KASSERT(ncp->nc_dvp != NULL);
@@ -634,12 +706,17 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 			}
 		}
 
+		/* Record a hit on the entry. */
+		if (ncp->nc_lrulist != LRU_ACTIVE) {
+			cache_activate(ncp);
+		}
+
 		if (bufp) {
 			bp = *bpp;
 			bp -= nlen;
 			if (bp <= bufp) {
 				*dvpp = NULL;
-				mutex_exit(&cache_list_lock);
+				rw_exit(vlock);
 				SDT_PROBE(vfs, namecache, revlookup,
 				    fail, vp, ERANGE, 0, 0, 0);
 				return (ERANGE);
@@ -650,7 +727,7 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 
 		dvp = ncp->nc_dvp;
 		mutex_enter(dvp->v_interlock);
-		mutex_exit(&cache_list_lock);
+		rw_exit(vlock);
 		error = vcache_tryvget(dvp);
 		if (error) {
 			KASSERT(error == EBUSY);
@@ -667,11 +744,40 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 		COUNT(ncs_revhits);
 		return (0);
 	}
-	mutex_exit(&cache_list_lock);
+	rw_exit(vlock);
 	COUNT(ncs_revmiss);
  out:
 	*dvpp = NULL;
 	return (-1);
+}
+
+/*
+ * Allocate and install a directory lock for a vnode.
+ * XXX Be better to do this when setting vnode type to VDIR.
+ * XXX In the future this could be an "nchdir" - to try other data structs.
+ */
+static krwlock_t *
+cache_alloc_dirlock(struct vnode *dvp)
+{
+	vnode_impl_t *dvi = VNODE_TO_VIMPL(dvp);
+	krwlock_t *dlock;
+
+	/*
+	 * File systems are not generally expected to make concurrent calls
+	 * to cache_enter(), but don't needlessly impose that limitation on
+	 * them.
+	 */
+	for (;;) {
+		dlock = dvi->vi_ncdlock;
+		if (dlock != NULL) {
+			return dlock;
+		}
+		dlock = rw_obj_alloc();
+		if (atomic_cas_ptr(&dvi->vi_ncdlock, NULL, dlock) == NULL) {
+			return dlock;
+		}
+		rw_obj_free(dlock);
+	}
 }
 
 /*
@@ -684,7 +790,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	struct namecache *ncp;
 	struct namecache *oncp;
 	vnode_impl_t *vi, *dvi;
-	krwlock_t *dirlock;
+	krwlock_t *dlock, *vlock;
+	int total;
 
 	/* First, check whether we can/should add a cache entry. */
 	if ((cnflags & MAKEENTRY) == 0 ||
@@ -696,29 +803,39 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 
 	SDT_PROBE(vfs, namecache, enter, done, vp, name, namelen, 0, 0);
 
-	if (__predict_false(numcache > desiredvnodes)) {
-		mutex_enter(&cache_list_lock);
+	/*
+	 * Reclaim some entries if over budget.  This is an unlocked check,
+	 * but it doesn't matter.  Just need to catch up with things
+	 * eventually: it doesn't matter if we go over temporarily.
+	 */
+	total = cache_lru.count[LRU_ACTIVE] + cache_lru.count[LRU_INACTIVE];
+	if (__predict_false(total > desiredvnodes)) {
 		cache_reclaim();
-		mutex_exit(&cache_list_lock);
 	}
 
+	/* Now allocate a fresh entry. */
 	if (namelen > NCHNAMLEN) {
 		size_t sz = offsetof(struct namecache, nc_name[namelen]);
 		ncp = kmem_alloc(sz, KM_SLEEP);
 	} else {
-		ncp = pool_cache_get(namecache_cache, PR_WAITOK);
+		ncp = pool_cache_get(cache_pool, PR_WAITOK);
+	}
+
+	/* If there is no directory lock yet, then allocate one. */
+	dvi = VNODE_TO_VIMPL(dvp);
+	dlock = dvi->vi_ncdlock;
+	if (__predict_false(dlock == NULL)) {
+		dlock = cache_alloc_dirlock(dvp);
 	}
 
 	/*
-	 * Concurrent lookups in the same directory may race for a
-	 * cache entry.  if there's a duplicated entry, free it.
+	 * Concurrent lookups in the same directory may race for a cache
+	 * entry.  If there's a duplicated entry, free it.
 	 */
-	dvi = VNODE_TO_VIMPL(dvp);
-	dirlock = dvi->vi_nclock;
-	rw_enter(dirlock, RW_WRITER);
+	rw_enter(dlock, RW_WRITER);
 	oncp = cache_lookup_entry(dvp, name, namelen);
 	if (oncp) {
-		cache_remove(oncp, false);
+		cache_remove(oncp, true);
 	}
 
 	/* Fill in cache info and insert to directory. */
@@ -728,12 +845,8 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	memcpy(ncp->nc_name, name, (unsigned)ncp->nc_nlen);
 	rb_tree_insert_node(&dvi->vi_nctree, ncp);
 	ncp->nc_vp = vp;
-	ncp->nc_hittime = hardclock_ticks;
 
-	/* Insert to the lists. */
-	mutex_enter(&cache_list_lock);
-	numcache++;
-	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+	/* Insert to the vnode. */
 	if (vp == NULL) {
 		/*
 		 * For negative hits, save the ISWHITEOUT flag so we can
@@ -743,16 +856,30 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	} else {
 		ncp->nc_whiteout = false;
 		vi = VNODE_TO_VIMPL(vp);
+		vlock = vi->vi_ncvlock;
 		/* Partially sort the per-vnode list: dots go to back. */
+		rw_enter(vlock, RW_WRITER);
 		if ((namelen == 1 && name[0] == '.') ||
 		    (namelen == 2 && name[0] == '.' && name[1] == '.')) {
 			TAILQ_INSERT_TAIL(&vi->vi_nclist, ncp, nc_vlist);
 		} else {
 			TAILQ_INSERT_HEAD(&vi->vi_nclist, ncp, nc_vlist);
 		}
+		rw_exit(vlock);
 	}
-	mutex_exit(&cache_list_lock);
-	rw_exit(dirlock);
+
+	/*
+	 * Finally, insert to the tail of the ACTIVE LRU list (new) and with
+	 * the LRU lock held take the to opportunity to incrementally
+	 * balance the lists.
+	 */
+	mutex_enter(&cache_lru_lock);
+	ncp->nc_lrulist = LRU_ACTIVE;
+	cache_lru.count[LRU_ACTIVE]++;
+	TAILQ_INSERT_TAIL(&cache_lru.list[LRU_ACTIVE], ncp, nc_lru);
+	cache_deactivate();
+	mutex_exit(&cache_lru_lock);
+	rw_exit(dlock);
 }
 
 /*
@@ -762,42 +889,16 @@ void
 nchinit(void)
 {
 
-	TAILQ_INIT(&nclruhead);
+	cache_pool = pool_cache_init(sizeof(struct namecache),
+	    coherency_unit, 0, 0, "ncache", NULL, IPL_NONE, NULL,
+	    NULL, NULL);
+	KASSERT(cache_pool != NULL);
 
-	namecache_cache = pool_cache_init(sizeof(struct namecache),
-	    coherency_unit, 0, 0, "ncache", NULL, IPL_NONE, cache_ctor,
-	    cache_dtor, NULL);
-	KASSERT(namecache_cache != NULL);
-
-	mutex_init(&cache_list_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&cache_lru_lock, MUTEX_DEFAULT, IPL_NONE);
+	TAILQ_INIT(&cache_lru.list[LRU_ACTIVE]);
+	TAILQ_INIT(&cache_lru.list[LRU_INACTIVE]);
 
 	sysctl_cache_stat_setup();
-}
-
-static int
-cache_ctor(void *arg, void *obj, int flag)
-{
-#if 0 /* XXXAD */
-	struct namecache *ncp = obj;
-
-	mutex_enter(&cache_lru_lock);
-	ncp->nc_dvp = NULL;
-	TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);	
-	mutex_exit(&cache_lru_lock);
-#endif
-	return 0;
-}
-
-static void
-cache_dtor(void *arg, void *obj)
-{
-#if 0 /* XXXAD */
-
-	mutex_enter(&cache_lru_lock);
-	KASSERT(ncp->nc_dvp == NULL);
-	TAILQ_REMOVE(&nclruhead, ncp, nc_lru);	
-	mutex_exit(&cache_lru_lock);
-#endif
 }
 
 /*
@@ -823,7 +924,8 @@ cache_vnode_init(struct vnode *vp)
 {
 	vnode_impl_t *vi = VNODE_TO_VIMPL(vp);
 
-	vi->vi_nclock = rw_obj_alloc();
+	vi->vi_ncdlock = NULL;
+	vi->vi_ncvlock = rw_obj_alloc();
 	rb_tree_init(&vi->vi_nctree, &cache_rbtree_ops);
 	TAILQ_INIT(&vi->vi_nclist);
 }
@@ -838,7 +940,10 @@ cache_vnode_fini(struct vnode *vp)
 
 	KASSERT(RB_TREE_MIN(&vi->vi_nctree) == NULL);
 	KASSERT(TAILQ_EMPTY(&vi->vi_nclist));
-	rw_obj_free(vi->vi_nclock);
+	rw_obj_free(vi->vi_ncvlock);
+	if (vi->vi_ncdlock != NULL) {
+		rw_obj_free(vi->vi_ncdlock);
+	}
 }
 
 /*
@@ -849,15 +954,18 @@ void
 cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 {
 	struct namecache *ncp;
-	krwlock_t *dirlock, *blocked;
+	krwlock_t *dlock, *vlock, *blocked;
+	rb_tree_t *tree;
 
 	if (flags & PURGE_PARENTS) {
 		SDT_PROBE(vfs, namecache, purge, parents, vp, 0, 0, 0, 0);
 		blocked = NULL;
-		mutex_enter(&cache_list_lock);
+		vlock = VNODE_TO_VIMPL(vp)->vi_ncvlock;
+		rw_enter(vlock, RW_WRITER);
 		while ((ncp = TAILQ_FIRST(&VNODE_TO_VIMPL(vp)->vi_nclist))
 		    != NULL) {
-			dirlock = VNODE_TO_VIMPL(ncp->nc_dvp)->vi_nclock;
+			dlock = VNODE_TO_VIMPL(ncp->nc_dvp)->vi_ncdlock;
+			KASSERT(dlock != NULL);
 			/*
 			 * We can't wait on the directory lock with the 
 			 * list lock held or the system could
@@ -868,45 +976,50 @@ cache_purge1(struct vnode *vp, const char *name, size_t namelen, int flags)
 			 * in a row, we'll give the other side a breather to
 			 * prevent livelock.
 			 */
-			if (!rw_tryenter(dirlock, RW_WRITER)) {
-				rw_obj_hold(dirlock);
-				mutex_exit(&cache_list_lock);
-				rw_enter(dirlock, RW_WRITER);
+			if (!rw_tryenter(dlock, RW_WRITER)) {
+				rw_obj_hold(dlock);
+				rw_exit(vlock);
+				rw_enter(dlock, RW_WRITER);
 				/* Do nothing. */
-				rw_exit(dirlock);
-				rw_obj_free(dirlock);
-				if (blocked == dirlock) {
+				rw_exit(dlock);
+				rw_obj_free(dlock);
+				if (blocked == dlock) {
 					kpause("livelock", false, 1, NULL);
 				}
-				mutex_enter(&cache_list_lock);
-				blocked = dirlock;
+				rw_enter(dlock, RW_WRITER);
+				blocked = dlock;
 			} else {
-				cache_remove(ncp, true);
-				rw_exit(dirlock);
+				cache_remove(ncp, false);
+				rw_exit(dlock);
 				blocked = NULL;
 			}
 		}
-		mutex_exit(&cache_list_lock);
+		rw_exit(vlock);
 	}
 	if (flags & PURGE_CHILDREN) {
 		SDT_PROBE(vfs, namecache, purge, children, vp, 0, 0, 0, 0);
-		dirlock = VNODE_TO_VIMPL(vp)->vi_nclock;
-		rw_enter(dirlock, RW_WRITER);
-		while ((ncp = rb_tree_iterate(&VNODE_TO_VIMPL(vp)->vi_nctree,
-		    NULL, RB_DIR_RIGHT)) != NULL) {
-			cache_remove(ncp, false);
+		dlock = VNODE_TO_VIMPL(vp)->vi_ncdlock;
+		if (dlock != NULL) {
+			rw_enter(dlock, RW_WRITER);
+			tree = &VNODE_TO_VIMPL(vp)->vi_nctree;
+			while ((ncp = rb_tree_iterate(tree, NULL,
+			    RB_DIR_RIGHT)) != NULL) {
+				cache_remove(ncp, true);
+			}
+			rw_exit(dlock);
 		}
-		rw_exit(dirlock);
 	}
 	if (name != NULL) {
 		SDT_PROBE(vfs, namecache, purge, name, name, namelen, 0, 0, 0);
-		dirlock = VNODE_TO_VIMPL(vp)->vi_nclock;
-		rw_enter(dirlock, RW_WRITER);
-		ncp = cache_lookup_entry(vp, name, namelen);
-		if (ncp) {
-			cache_remove(ncp, false);
+		dlock = VNODE_TO_VIMPL(vp)->vi_ncdlock;
+		if (dlock != NULL) {
+			rw_enter(dlock, RW_WRITER);
+			ncp = cache_lookup_entry(vp, name, namelen);
+			if (ncp) {
+				cache_remove(ncp, true);
+			}
+			rw_exit(dlock);
 		}
-		rw_exit(dirlock);
 	}
 }
 
@@ -920,7 +1033,7 @@ cache_purgevfs(struct mount *mp)
 	struct vnode_iterator *marker;
 	struct namecache *ncp;
 	vnode_impl_t *vi;
-	krwlock_t *dirlock;
+	krwlock_t *dlock;
 	vnode_t *vp;
 
 	/*
@@ -936,13 +1049,15 @@ cache_purgevfs(struct mount *mp)
 			KASSERT(RB_TREE_MIN(&vi->vi_nctree) == NULL);
 			continue;
 		}
-		dirlock = vi->vi_nclock;
-		rw_enter(dirlock, RW_WRITER);
+		if ((dlock = vi->vi_ncdlock) == NULL) {
+			continue;
+		}
+		rw_enter(dlock, RW_WRITER);
 		while ((ncp = rb_tree_iterate(&vi->vi_nctree, NULL,
 		    RB_DIR_RIGHT)) != NULL) {
-			cache_remove(ncp, false);
+			cache_remove(ncp, true);
 		}
-		rw_exit(dirlock);
+		rw_exit(dlock);
 	}
 	vfs_vnode_iterator_destroy(marker);
 }
@@ -952,26 +1067,34 @@ cache_purgevfs(struct mount *mp)
  *
  * We don't want to cause too much work for any individual caller, and it
  * doesn't matter if we temporarily go over budget.  This is also "just a
- * cache" so we can throw out whatever we like.  So we take a relaxed
- * attitude to this process to reduce its impact.
+ * cache" so it's not a big deal if we screw up and throw out something we
+ * shouldn't.  So we take a relaxed attitude to this process to reduce its
+ * impact.
  */
 static void
 cache_reclaim(void)
 {
-	struct namecache *ncp, *next;
-	krwlock_t *dirlock;
-	int toscan, delta;
-
-	KASSERT(mutex_owned(&cache_list_lock));
+	struct namecache *ncp;
+	krwlock_t *dlock;
+	int toscan, total;
 
 	/* Scan up to a preset maxium number of entries. */
-	toscan = cache_maxscan;
-	delta = hz * cache_hottime;
-	SDT_PROBE(vfs, namecache, prune, done, numcache, toscan, 0, 0, 0);
-	next = TAILQ_FIRST(&nclruhead);
-	while ((ncp = next) != NULL && toscan-- != 0) {
-		next = TAILQ_NEXT(ncp, nc_lru);
-		dirlock = VNODE_TO_VIMPL(ncp->nc_dvp)->vi_nclock;
+	mutex_enter(&cache_lru_lock);
+	toscan = cache_lru_maxscan;
+	total = cache_lru.count[LRU_ACTIVE] + cache_lru.count[LRU_INACTIVE];
+	SDT_PROBE(vfs, namecache, prune, done, total, toscan, 0, 0, 0);
+	while (toscan-- != 0) {
+		/* First try to balance the lists. */
+		cache_deactivate();
+
+		/* Now look for a victim on head of inactive list (old). */
+		ncp = TAILQ_FIRST(&cache_lru.list[LRU_INACTIVE]);
+		if (ncp == NULL) {
+			break;
+		}
+		dlock = VNODE_TO_VIMPL(ncp->nc_dvp)->vi_ncdlock;
+		KASSERT(ncp->nc_lrulist == LRU_INACTIVE);
+		KASSERT(dlock != NULL);
 
 		/*
 		 * Locking in the wrong direction.  If we can't get the
@@ -979,27 +1102,27 @@ cache_reclaim(void)
 		 * cause problems for the next guy in here, so send the
 		 * entry to the back of the list.
 		 */
-		if (!rw_tryenter(dirlock, RW_WRITER)) {
-			TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-			TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
+		if (!rw_tryenter(dlock, RW_WRITER)) {
+			TAILQ_REMOVE(&cache_lru.list[LRU_INACTIVE],
+			    ncp, nc_lru);
+			TAILQ_INSERT_TAIL(&cache_lru.list[LRU_INACTIVE],
+			    ncp, nc_lru);
 			continue;
 		}
 
 		/*
-		 * Now have the lock.  If the entry was hit recently, send
-		 * it to the back of the list.
+		 * Now have the victim entry locked.  Drop the LRU list
+		 * lock, purge the entry, and start over.  The hold on the
+		 * directory lock will prevent the directory lock itself
+		 * from vanishing until finished (the directory owner
+		 * will call cache_purge() on dvp before it disappears).
 		 */
-		if (ncp->nc_hittime + delta > hardclock_ticks) {
-			TAILQ_REMOVE(&nclruhead, ncp, nc_lru);
-			TAILQ_INSERT_TAIL(&nclruhead, ncp, nc_lru);
-			rw_exit(dirlock);
-			continue;
-		}
-
-		/* We have a victim: reclaim it. */
+		mutex_exit(&cache_lru_lock);
 		cache_remove(ncp, true);
-		rw_exit(dirlock);
+		rw_exit(dlock);
+		mutex_enter(&cache_lru_lock);
 	}
+	mutex_exit(&cache_lru_lock);
 }
 
 #ifdef DDB
@@ -1008,11 +1131,15 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 {
 	struct vnode *dvp = NULL;
 	struct namecache *ncp;
+	enum cache_lru_id id;
 
-	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
-		if (ncp->nc_vp == vp && ncp->nc_dvp != NULL) {
-			(*pr)("name %.*s\n", ncp->nc_nlen, ncp->nc_name);
-			dvp = ncp->nc_dvp;
+	for (id = 0; id < LRU_COUNT; id++) {
+		TAILQ_FOREACH(ncp, &cache_lru.list[id], nc_lru) {
+			if (ncp->nc_vp == vp) {
+				(*pr)("name %.*s\n", ncp->nc_nlen,
+				    ncp->nc_name);
+				dvp = ncp->nc_dvp;
+			}
 		}
 	}
 	if (dvp == NULL) {
@@ -1020,9 +1147,12 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 		return;
 	}
 	vp = dvp;
-	TAILQ_FOREACH(ncp, &nclruhead, nc_lru) {
-		if (ncp->nc_vp == vp) {
-			(*pr)("parent %.*s\n", ncp->nc_nlen, ncp->nc_name);
+	for (id = 0; id < LRU_COUNT; id++) {
+		TAILQ_FOREACH(ncp, &cache_lru.list[id], nc_lru) {
+			if (ncp->nc_vp == vp) {
+				(*pr)("parent %.*s\n", ncp->nc_nlen,
+				    ncp->nc_name);
+			}
 		}
 	}
 }
@@ -1081,9 +1211,9 @@ cache_stat_sysctl(SYSCTLFN_ARGS)
 		stats.ncs_revmiss += np->ncs_revmiss;
 	}
 	/* Serialize the update to nchstats, just because. */
-	mutex_enter(&cache_list_lock);
+	mutex_enter(&cache_lru_lock);
 	nchstats = stats;
-	mutex_exit(&cache_list_lock);
+	mutex_exit(&cache_lru_lock);
 	sysctl_relock();
 
 	*oldlenp = sizeof(stats);
