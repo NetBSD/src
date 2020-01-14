@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.11 2020/01/09 12:49:12 msaitoh Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.12 2020/01/14 22:55:27 msaitoh Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*-
@@ -149,6 +149,7 @@
 #define		AMDFCH41_WDT_EN		0x80
 #define AMDFCH41_PM_DECODE_EN1		0x01
 #define AMDFCH41_PM_PORT_INDEX		0x02
+#define 	AMDFCH41_SMBUS_PORTMASK	0x18
 #define	AMDFCH41_PM_DECODE_EN3		0x03
 #define		AMDFCH41_WDT_RES_MASK	0x03
 #define		AMDFCH41_WDT_RES_32US	0x00
