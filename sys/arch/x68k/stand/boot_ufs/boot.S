@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.11 2020/01/13 03:34:05 isaki Exp $
+| $NetBSD: boot.S,v 1.12 2020/01/14 04:00:41 isaki Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -450,10 +450,6 @@ raw_read_end:
 
 read_half:	BOOT_ERROR("read half of block")
 
-
-ENTRY_NOPROFILE(B_KEYINP)
-		IOCS(__B_KEYINP)
-		rts
 
 ENTRY_NOPROFILE(B_PUTC)
 		movel	%sp@(4),%d1
