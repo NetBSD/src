@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.454 2020/01/13 21:20:17 jdolecek Exp $ */
+/*	$NetBSD: wd.c,v 1.455 2020/01/14 21:08:06 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.454 2020/01/13 21:20:17 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.455 2020/01/14 21:08:06 jdolecek Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -263,8 +263,7 @@ static const struct wd_quirk {
 	{ "ST3120023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST380023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ "ST360015AS", WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "Samsung SSD 860 EVO 1TB", WD_QUIRK_BAD_NCQ },
-	{ "Samsung SSD 860 EVO 500GB", WD_QUIRK_BAD_NCQ },
+	{ "Samsung SSD 860 EVO *", WD_QUIRK_BAD_NCQ },
 	{ NULL, 0 }
 };
 
