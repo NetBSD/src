@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.30 2016/08/04 12:15:07 isaki Exp $	*/
+/*	$NetBSD: boot.c,v 1.31 2020/01/14 03:48:10 isaki Exp $	*/
 
 /*
  * Copyright (c) 2001 Minoura Makoto
@@ -387,6 +387,8 @@ bootmain(int bootdev)
 	u_int sram_memsize;
 	u_int probed_memsize;
 
+	console_device = consio_init(console_device);
+
 	hostadaptor = get_scsi_host_adapter();
 	rtc_offset = RTC_OFFSET;
 	try_bootp = 1;
@@ -402,7 +404,6 @@ bootmain(int bootdev)
 		exit(1);
 	}
 
-	console_device = consio_init(console_device);
 	setheap(HEAP_START, HEAP_END);
 
 #if !defined(NETBOOT)
