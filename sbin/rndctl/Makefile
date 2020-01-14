@@ -1,4 +1,6 @@
-#	$NetBSD: Makefile,v 1.4 2019/12/06 14:43:18 riastradh Exp $
+#	$NetBSD: Makefile,v 1.5 2020/01/14 23:13:36 christos Exp $
+
+.include <bsd.own.mk>
 
 PROG=	rndctl
 MAN=	rndctl.8
