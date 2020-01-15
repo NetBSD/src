@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.19 2020/01/09 08:54:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.20 2020/01/15 08:25:01 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1787,11 +1787,11 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 
 			mutex_enter(&txr->txr_lock);
 			ifp->if_opackets += txr->txr_opackets;
-			ifp->if_obytes += txr->txr_opackets;
+			ifp->if_obytes += txr->txr_obytes;
 			ifp->if_omcasts += txr->txr_omcasts;
 			if (cmd == SIOCZIFDATA) {
 				txr->txr_opackets = 0;
-				txr->txr_opackets = 0;
+				txr->txr_obytes = 0;
 				txr->txr_omcasts = 0;
 			}
 			mutex_exit(&txr->txr_lock);
