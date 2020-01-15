@@ -25,7 +25,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.7 2019/08/05 12:30:13 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_usb.c,v 1.8 2020/01/15 10:25:47 skrll Exp $");
 
 #include "locators.h"
 
@@ -148,8 +148,8 @@ init_h1(struct imxehci_softc *sc)
 	uint32_t reg;
 
 	/* output HIGH to USBH1_STP */
-	gpio_data_write(GPIO_NO(1, 27), GPIO_PIN_HIGH);
-	gpio_set_direction(GPIO_NO(1, 27), GPIO_PIN_OUTPUT);
+	imxgpio_data_write(GPIO_NO(1, 27), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(1, 27), GPIO_PIN_OUTPUT);
 
 	iomux_mux_config(iomux_usb1_config);
 
@@ -181,21 +181,21 @@ init_h1(struct imxehci_softc *sc)
 
 
 	/* HUB RESET release */
-	gpio_data_write(GPIO_NO(1, 7), GPIO_PIN_HIGH);
-	gpio_set_direction(GPIO_NO(1, 7), GPIO_PIN_OUTPUT);
+	imxgpio_data_write(GPIO_NO(1, 7), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(1, 7), GPIO_PIN_OUTPUT);
 
 	/* Drive 26M_OSC_EN line high 3_1 */
-	gpio_data_write(GPIO_NO(3, 1), GPIO_PIN_HIGH);
-	gpio_set_direction(GPIO_NO(3, 1), GPIO_PIN_OUTPUT);
+	imxgpio_data_write(GPIO_NO(3, 1), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(3, 1), GPIO_PIN_OUTPUT);
 
 	/* Drive USB_CLK_EN_B line low  2_1 */
-	gpio_data_write(GPIO_NO(2, 1), GPIO_PIN_LOW);
-	gpio_set_direction(GPIO_NO(2, 1), GPIO_PIN_INPUT);
+	imxgpio_data_write(GPIO_NO(2, 1), GPIO_PIN_LOW);
+	imxgpio_set_direction(GPIO_NO(2, 1), GPIO_PIN_INPUT);
 
 	/* MX51_PIN_EIM_D21 - De-assert USB PHY RESETB */
 	delay(10 * 1000);
-	gpio_data_write(GPIO_NO(2, 5), GPIO_PIN_HIGH);
-	gpio_set_direction(GPIO_NO(2, 5), GPIO_PIN_OUTPUT);
+	imxgpio_data_write(GPIO_NO(2, 5), GPIO_PIN_HIGH);
+	imxgpio_set_direction(GPIO_NO(2, 5), GPIO_PIN_OUTPUT);
 	iomux_set_function(MUX_PIN(EIM_D21), IOMUX_CONFIG_ALT1);
 	delay(5 * 1000);
 }
