@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.199 2020/01/13 11:40:15 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.200 2020/01/15 18:47:23 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -1079,14 +1079,10 @@ ENTRY(cpu_switchto)
 	movq	%rdi,%r13	/* oldlwp */
 	movq	%rsi,%r12	/* newlwp */
 
-	testq	%r13,%r13	/* oldlwp = NULL ? */
-	jz	.Lskip_save
-
 	/* Save old context. */
 	movq	L_PCB(%r13),%rax
 	movq	%rsp,PCB_RSP(%rax)
 	movq	%rbp,PCB_RBP(%rax)
-.Lskip_save:
 
 	/* Switch to newlwp's stack. */
 	movq	L_PCB(%r12),%r14
