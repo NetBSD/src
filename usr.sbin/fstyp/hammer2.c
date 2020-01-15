@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer2.c,v 1.3 2020/01/04 03:43:18 tkusumi Exp $      */
+/*        $NetBSD: hammer2.c,v 1.4 2020/01/15 15:32:05 tkusumi Exp $      */
 
 /*-
  * Copyright (c) 2017-2019 The DragonFly Project
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.3 2020/01/04 03:43:18 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer2.c,v 1.4 2020/01/15 15:32:05 tkusumi Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -224,10 +224,6 @@ read_label(FILE *fp, char *label, size_t size)
 			best_i = i;
 			best = broot;
 		}
-	}
-	if (best_i == -1) {
-		warnx("failed to find best zone");
-		goto fail;
 	}
 
 	bref = &vols[best_i]->voldata.sroot_blockset.blockref[0];
