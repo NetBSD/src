@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zyd.c,v 1.52 2007/02/11 00:08:04 jsg Exp $	*/
-/*	$NetBSD: if_zyd.c,v 1.54 2020/01/15 08:20:13 skrll Exp $	*/
+/*	$NetBSD: if_zyd.c,v 1.55 2020/01/15 08:21:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.54 2020/01/15 08:20:13 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_zyd.c,v 1.55 2020/01/15 08:21:00 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -662,8 +662,7 @@ zyd_node_alloc(struct ieee80211_node_table *nt __unused)
 	struct zyd_node *zn;
 
 	zn = malloc(sizeof(struct zyd_node), M_80211_NODE, M_NOWAIT | M_ZERO);
-
-	return &zn->ni;
+	return zn ? &zn->ni : NULL;
 }
 
 Static int
