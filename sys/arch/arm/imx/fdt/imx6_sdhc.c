@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_sdhc.c,v 1.5 2019/11/24 11:07:19 skrll Exp $	*/
+/*	$NetBSD: imx6_sdhc.c,v 1.6 2020/01/15 01:09:56 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_sdhc.c,v 1.5 2019/11/24 11:07:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_sdhc.c,v 1.6 2020/01/15 01:09:56 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -63,6 +63,7 @@ struct imx6_sdhc_softc {
 	void			*sc_ih;
 
 	struct clk		*sc_clk_per;
+	struct fdtbus_regulator	*sc_vmmc_supply;
 
 	struct fdtbus_gpio_pin	*sc_pin_cd;
 	struct fdtbus_gpio_pin	*sc_pin_wp;
@@ -71,9 +72,23 @@ struct imx6_sdhc_softc {
 CFATTACH_DECL_NEW(imx6_sdhc, sizeof(struct imx6_sdhc_softc),
 	imx6_sdhc_match, imx6_sdhc_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"fsl,imx6q-usdhc",
-	NULL
+struct imx6_sdhc_config {
+	uint32_t		flags;
+};
+
+static const struct imx6_sdhc_config imx6q_config = {
+	.flags = SDHC_FLAG_BROKEN_ADMA2_ZEROLEN |
+		 SDHC_FLAG_NO_BUSY_INTR,
+};
+
+static const struct imx6_sdhc_config imx7d_config = {
+	.flags = 0
+};
+
+static const struct of_compat_data compat_data[] = {
+	{ "fsl,imx6q-usdhc",	(uintptr_t)&imx6q_config },
+	{ "fsl,imx7d-usdhc",	(uintptr_t)&imx7d_config },
+	{ NULL }
 };
 
 static int
@@ -81,7 +96,7 @@ imx6_sdhc_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 static void
@@ -89,25 +104,33 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 {
 	struct imx6_sdhc_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
+	const int phandle = faa->faa_phandle;
+	const struct imx6_sdhc_config *conf;
 	char intrstr[128];
 	bus_addr_t addr;
 	bus_size_t size;
 	u_int bus_width;
 	int error;
 
-	if (fdtbus_get_reg(faa->faa_phandle, 0, &addr, &size) != 0) {
+	fdtbus_clock_assign(phandle);
+
+	if (fdtbus_get_reg(phandle, 0, &addr, &size) != 0) {
 		aprint_error(": couldn't get registers\n");
 		return;
 	}
 
-	if (of_getprop_uint32(faa->faa_phandle, "bus-width", &bus_width))
-		bus_width = 4;
-
-	sc->sc_clk_per = fdtbus_clock_get(faa->faa_phandle, "per");
+	sc->sc_clk_per = fdtbus_clock_get(phandle, "per");
 	if (sc->sc_clk_per == NULL) {
 		aprint_error(": couldn't get clock\n");
 		return;
 	}
+
+	if (of_getprop_uint32(phandle, "bus-width", &bus_width))
+		bus_width = 4;
+
+	sc->sc_vmmc_supply = fdtbus_regulator_acquire(phandle, "vmmc-supply");
+
+	conf = (void *)of_search_compatible(phandle, compat_data)->data;
 
 	sc->sc_sdhc.sc_dev = self;
 	sc->sc_sdhc.sc_dmat = faa->faa_dmat;
@@ -119,13 +142,12 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 	    SDHC_FLAG_HAVE_DVS |
 	    SDHC_FLAG_32BIT_ACCESS |
 	    SDHC_FLAG_USE_ADMA2 |
-	    SDHC_FLAG_USDHC |
-	    SDHC_FLAG_NO_BUSY_INTR |
-	    SDHC_FLAG_BROKEN_ADMA2_ZEROLEN;
+	    SDHC_FLAG_USDHC;
+	sc->sc_sdhc.sc_flags |= conf->flags;
 
 	if (bus_width == 8)
 		sc->sc_sdhc.sc_flags |= SDHC_FLAG_8BIT_MODE;
-	if (of_hasprop(faa->faa_phandle, "no-1-8-v"))
+	if (of_hasprop(phandle, "no-1-8-v"))
 		sc->sc_sdhc.sc_flags |= SDHC_FLAG_NO_1_8_V;
 
 	sc->sc_sdhc.sc_host = &sc->sc_host;
@@ -138,14 +160,14 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_bsz = size;
 
-	sc->sc_pin_cd = fdtbus_gpio_acquire(faa->faa_phandle,
+	sc->sc_pin_cd = fdtbus_gpio_acquire(phandle,
 	    "cd-gpios", GPIO_PIN_INPUT);
 	if (sc->sc_pin_cd) {
 		sc->sc_sdhc.sc_vendor_card_detect = imx6_sdhc_card_detect;
 		sc->sc_sdhc.sc_flags |= SDHC_FLAG_POLL_CARD_DET;
 	}
 
-	sc->sc_pin_wp = fdtbus_gpio_acquire(faa->faa_phandle,
+	sc->sc_pin_wp = fdtbus_gpio_acquire(phandle,
 	    "wp-gpios", GPIO_PIN_INPUT);
 	if (sc->sc_pin_wp) {
 		sc->sc_sdhc.sc_vendor_write_protect = imx6_sdhc_write_protect;
@@ -157,6 +179,14 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (sc->sc_vmmc_supply != NULL) {
+		error = fdtbus_regulator_enable(sc->sc_vmmc_supply);
+		if (error) {
+			aprint_error(": couldn't enable vmmc supply: %d\n", error);
+			return;
+		}
+	}
+
 	aprint_naive("\n");
 	aprint_normal(": SDMMC (%u kHz)\n", sc->sc_sdhc.sc_clkbase);
 
@@ -165,12 +195,12 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (!fdtbus_intr_str(faa->faa_phandle, 0, intrstr, sizeof(intrstr))) {
+	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");
 		return;
 	}
 
-	sc->sc_ih = fdtbus_intr_establish(faa->faa_phandle, 0, IPL_SDMMC,
+	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_SDMMC,
 	    FDT_INTR_MPSAFE, sdhc_intr, &sc->sc_sdhc);
 	if (sc->sc_ih == NULL) {
 		aprint_error_dev(self, "couldn't establish interrupt on %s\n",
@@ -183,7 +213,7 @@ imx6_sdhc_attach(device_t parent, device_t self, void *aux)
 	if (error) {
 		aprint_error_dev(self, "couldn't initialize host, error = %d\n",
 		    error);
-		fdtbus_intr_disestablish(faa->faa_phandle, sc->sc_ih);
+		fdtbus_intr_disestablish(phandle, sc->sc_ih);
 		sc->sc_ih = NULL;
 		return;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_com.c,v 1.2 2019/11/28 14:13:37 hkenken Exp $	*/
+/*	$NetBSD: imx6_com.c,v 1.3 2020/01/15 01:09:56 jmcneill Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_com.c,v 1.2 2019/11/28 14:13:37 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_com.c,v 1.3 2020/01/15 01:09:56 jmcneill Exp $");
 
 #include "opt_fdt.h"
 #include "opt_imxuart.h"
@@ -70,6 +70,7 @@ imx6_com_attach(device_t parent, device_t self, void *aux)
 	bus_space_tag_t bst = faa->faa_bst;
 	bus_space_handle_t bsh;
 	char intrstr[128];
+	struct clk *per;
 	bus_addr_t addr;
 	bus_size_t size;
 
@@ -83,10 +84,27 @@ imx6_com_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+	if (fdtbus_clock_enable(phandle, "ipg", false) != 0) {
+		aprint_error(": couldn't enable ipg clock\n");
+		return;
+	}
+
+	per = fdtbus_clock_get(phandle, "per");
+	if (per != NULL && clk_enable(per) != 0) {
+		aprint_error(": couldn't enable per clock\n");
+		return;
+	}
+
 	sc->sc_dev = self;
 	regsp->ur_iot = bst;
 	regsp->ur_iobase = addr;
 	regsp->ur_ioh = bsh;
+
+	if (per != NULL) {
+		aprint_normal(", %u Hz", clk_get_rate(per));
+		/* XXX */
+		imxuart_set_frequency(clk_get_rate(per), 2);
+	}
 
 	if (imxuart_is_console(regsp->ur_iot, regsp->ur_iobase, &regsp->ur_ioh))
 		aprint_normal(" (console)");
@@ -108,7 +126,6 @@ imx6_com_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	imxuart_attach_subr(sc);
-
 }
 
 /*
