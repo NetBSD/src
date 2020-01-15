@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103 2019/12/01 15:34:44 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.104 2020/01/15 08:34:04 mrg Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -178,6 +178,8 @@ struct cpu_info {
 
 	uint32_t	ci_midr;
 	uint32_t	ci_mpidr;
+#define arm_cpu_mpidr(ci)	((ci)->ci_mpidr)
+	uint32_t	ci_capacity_dmips_mhz;
 
 	struct arm_cache_info *
 			ci_cacheinfo;

@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.18 2020/01/12 09:29:18 mrg Exp $ */
+/* $NetBSD: cpu.h,v 1.19 2020/01/15 08:34:04 mrg Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -104,6 +104,7 @@ struct cpu_info {
 	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
 
 	struct aarch64_sysctl_cpu_id ci_id;
+#define arm_cpu_mpidr(ci)	((ci)->ci_id.ac_mpidr)
 
 	struct aarch64_cache_info *ci_cacheinfo;
 	struct aarch64_cpufuncs ci_cpufuncs;
