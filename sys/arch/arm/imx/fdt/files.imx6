@@ -1,4 +1,4 @@
-#	$NetBSD: files.imx6,v 1.7 2019/10/12 06:46:13 skrll Exp $
+#	$NetBSD: files.imx6,v 1.8 2020/01/15 01:09:56 jmcneill Exp $
 #
 # Configuration info for the Freescale i.MX6
 #
@@ -15,10 +15,29 @@ attach	imxccm at fdt
 file	arch/arm/imx/imx6_ccm.c		imxccm
 file	arch/arm/imx/fdt/imx6_clk.c	imxccm
 
+
+# Common FDT clock framework
+define	imx_ccm
+file	arch/arm/imx/fdt/imx_ccm.c		imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_extclk.c	imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_gate.c		imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_composite.c	imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_fixed.c	imx_ccm
+file	arch/arm/imx/fdt/imx_ccm_fixed_factor.c	imx_ccm
+
+# CCM (iMX8MQ)
+device	imx8mqccm: imx_ccm
+attach	imx8mqccm at fdt with imx8mq_ccm
+file	arch/arm/imx/fdt/imx8mq_ccm.c	imx8mq_ccm
+
 # GPC
 device	imxgpc
 attach	imxgpc at fdt
 file	arch/arm/imx/fdt/imx6_gpc.c	imxgpc
+
+device	imx7gpc
+attach	imx7gpc at fdt
+file	arch/arm/imx/fdt/imx7_gpc.c	imx7gpc
 
 # IOMUX
 device	imxiomux
@@ -60,6 +79,11 @@ file	arch/arm/imx/imxusb.c			imxehci
 device	imxusbphy
 attach	imxusbphy at fdt
 file	arch/arm/imx/fdt/imx6_usbphy.c	imxusbphy
+
+device	imx8mqusbphy
+attach	imx8mqusbphy at fdt
+file	arch/arm/imx/fdt/imx8mq_usbphy.c	imx8mqusbphy
+
 
 # SDMMC
 attach	sdhc at fdt with imx6_sdhc
