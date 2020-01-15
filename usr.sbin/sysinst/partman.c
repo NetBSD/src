@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.47 2020/01/10 12:55:14 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.48 2020/01/15 19:08:24 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -2650,6 +2650,7 @@ pm_commit(menudesc *m, void *arg)
 {
 	int retcode;
 	struct pm_devs *pm_i;
+	struct disk_partitions *secondary;
 
 	pm_retvalue = -1;
 	SLIST_FOREACH(pm_i, &pm_head, l) {
@@ -2664,6 +2665,20 @@ pm_commit(menudesc *m, void *arg)
 				fprintf(logfp, "partitining error %s\n",
 				    pm_i->diskdev);
 			return -1;
+		}
+		if (pm_i->parts->pscheme->secondary_scheme != NULL) {
+			secondary = pm_i->parts->pscheme->
+			    secondary_partitions(pm_i->parts, -1, false);
+			if (secondary != NULL) {
+				if (!secondary->pscheme->write_to_disk(
+				    secondary)) {
+					if (logfp)
+						fprintf(logfp, 
+						    "partitining error %s\n",
+						    pm_i->diskdev);
+					return -1;
+				}
+			}
 		}
 	}
 
@@ -3232,20 +3247,29 @@ pm_edit_partitions(struct part_entry *pe)
 {
 	struct pm_devs *my_pm = pm_from_pe(pe);
 	struct partition_usage_set pset = { 0 };
+	struct disk_partitions *parts;
 
 	if (!my_pm)
 		return;
 
 	if (!pm_force_parts(my_pm))
 		return;
+	parts = my_pm->parts;
 
 	clear();
 	refresh();
 
-	usage_set_from_parts(&pset, my_pm->parts);
+	if (my_pm->parts->pscheme->secondary_scheme != NULL) {
+		if (!edit_outer_parts(my_pm->parts))
+			goto done;
+		parts = get_inner_parts(parts);
+	}
+
+	usage_set_from_parts(&pset, parts);
 	edit_and_check_label(my_pm, &pset, false);
 	free_usage_set(&pset);
 
+done:
 	pm_partusage(my_pm, -1, -1);
 	my_pm->unsaved = true;
 	pm_retvalue = 1;
