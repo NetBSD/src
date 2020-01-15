@@ -1,7 +1,7 @@
-/*	$NetBSD: x86_tlb.c,v 1.14 2020/01/12 13:01:11 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.15 2020/01/15 13:22:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.14 2020/01/12 13:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.15 2020/01/15 13:22:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -66,26 +66,42 @@ __KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.14 2020/01/12 13:01:11 ad Exp $");
  * until the request is completed.  This keeps the cache line in the shared
  * state, and bus traffic to a minimum.
  *
- * On i386 the packet is 32 bytes in size.  On amd64 it's 60 bytes.
+ * In order to make maximal use of the available space, control fields are
+ * overlaid into the lower 12 bits of the first 4 virtual addresses.  This
+ * is very ugly, but it counts.
+ *
+ * On i386 the packet is 64 bytes in size.  On amd64 it's 128 bytes.  This
+ * is sized in concert with UBC_WINSIZE, otherwise excessive shootdown
+ * interrupts could be isssued.
  */
+
+#define	TP_MAXVA	16		/* for individual mappings */
+#define	TP_ALLVA	PAGE_MASK	/* special: shoot all mappings */
+
 typedef struct {
-	uintptr_t		tp_va[7];
-	uint8_t			tp_count;
-	uint8_t			tp_userpmap;
-	uint8_t			tp_global;
-	uint8_t			tp_done;
+	uintptr_t		tp_store[TP_MAXVA];
 } pmap_tlb_packet_t;
 
-/*
- * No more than N separate invlpg.
- *
- * Statistically, a value of 7 is big enough to cover the requested number
- * of pages in ~ 95% of the TLB shootdowns we are getting. We therefore rarely
- * reach the limit, and increasing it can actually reduce the performance due
- * to the high cost of invlpg.
- */
-#define	TP_MAXVA		7	/* for individual mappings */
-#define	TP_ALLVA		255	/* special: shoot all mappings */
+#define	TP_COUNT	0
+#define	TP_USERPMAP	1
+#define	TP_GLOBAL	2
+#define	TP_DONE		3
+
+#define	TP_GET_COUNT(tp)	((tp)->tp_store[TP_COUNT] & PAGE_MASK)
+#define	TP_GET_USERPMAP(tp)	((tp)->tp_store[TP_USERPMAP] & 1)
+#define	TP_GET_GLOBAL(tp)	((tp)->tp_store[TP_GLOBAL] & 1)
+#define	TP_GET_DONE(tp)		((tp)->tp_store[TP_DONE] & 1)
+#define	TP_GET_VA(tp, i)	((tp)->tp_store[(i)] & ~PAGE_MASK)
+
+#define	TP_INC_COUNT(tp)	((tp)->tp_store[TP_COUNT]++)
+#define	TP_SET_ALLVA(tp)	((tp)->tp_store[TP_COUNT] |= TP_ALLVA)
+#define	TP_SET_VA(tp, c, va)	((tp)->tp_store[(c)] |= ((va) & ~PAGE_MASK))
+
+#define	TP_SET_USERPMAP(tp)	((tp)->tp_store[TP_USERPMAP] |= 1)
+#define	TP_SET_GLOBAL(tp)	((tp)->tp_store[TP_GLOBAL] |= 1)
+#define	TP_SET_DONE(tp)		((tp)->tp_store[TP_DONE] |= 1)
+
+#define	TP_CLEAR(tp)		memset(__UNVOLATILE(tp), 0, sizeof(*(tp)));
 
 /*
  * TLB shootdown state.
@@ -124,8 +140,6 @@ static const char *		tlbstat_name[ ] = {
 void
 pmap_tlb_init(void)
 {
-
-	KASSERT(__arraycount(pmap_tlb_packet->tp_va) >= TP_MAXVA);
 
 	evcnt_attach_dynamic(&pmap_tlb_evcnt, EVCNT_TYPE_INTR,
 	    NULL, "TLB", "shootdown");
@@ -195,11 +209,11 @@ pmap_tlbstat_count(struct pmap *pm, vaddr_t va, tlbwhy_t why)
 static inline void
 pmap_tlb_invalidate(volatile pmap_tlb_packet_t *tp)
 {
-	int i = tp->tp_count;
+	int i = TP_GET_COUNT(tp);
 
 	/* Find out what we need to invalidate. */
 	if (i == TP_ALLVA) {
-		if (tp->tp_global) {
+		if (TP_GET_GLOBAL(tp) != 0) {
 			/* Invalidating all TLB entries. */
 			tlbflushg();
 		} else {
@@ -210,7 +224,8 @@ pmap_tlb_invalidate(volatile pmap_tlb_packet_t *tp)
 		/* Invalidating a single page or a range of pages. */
 		KASSERT(i != 0);
 		do {
-			pmap_update_pg(tp->tp_va[--i]);
+			--i;
+			pmap_update_pg(TP_GET_VA(tp, i));
 		} while (i > 0);
 	}
 }
@@ -247,16 +262,18 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 	tp = (pmap_tlb_packet_t *)ci->ci_pmap_data;
 
 	/* Whole address flush will be needed if PTE_G is set. */
-	tp->tp_global |= ((pte & PTE_G) != 0);
-	count = tp->tp_count;
+	if ((pte & PTE_G) != 0) {
+		TP_SET_GLOBAL(tp);
+	}
+	count = TP_GET_COUNT(tp);
 
 	if (count < TP_MAXVA && va != (vaddr_t)-1LL) {
 		/* Flush a single page. */
-		tp->tp_va[count] = va;
-		tp->tp_count = count + 1;
+		TP_SET_VA(tp, count, va);
+		TP_INC_COUNT(tp);
 	} else {
 		/* Flush everything - may already be set. */
-		tp->tp_count = TP_ALLVA;
+		TP_SET_ALLVA(tp);
 	}
 
 	if (pm != pmap_kernel()) {
@@ -264,7 +281,7 @@ pmap_tlb_shootdown(struct pmap *pm, vaddr_t va, pt_entry_t pte, tlbwhy_t why)
 		if (va >= VM_MAXUSER_ADDRESS) {
 			kcpuset_merge(ci->ci_tlb_cpuset, pm->pm_kernel_cpus);
 		}
-		tp->tp_userpmap = 1;
+		TP_SET_USERPMAP(tp);
 	} else {
 		kcpuset_copy(ci->ci_tlb_cpuset, kcpuset_running);
 	}
@@ -278,13 +295,14 @@ static inline void
 pmap_tlb_processpacket(volatile pmap_tlb_packet_t *tp, kcpuset_t *target)
 {
 #ifdef MULTIPROCESSOR
-	int i = tp->tp_count;
+	int i = TP_GET_COUNT(tp);
 
 	if (i != TP_ALLVA) {
 		/* Invalidating a single page or a range of pages. */
 		KASSERT(i != 0);
 		do {
-			xen_mcast_invlpg(tp->tp_va[--i], target);
+			--i;
+			xen_mcast_invlpg(TP_GET_VA(tp, i), target);
 		} while (i > 0);
 	} else {
 		xen_mcast_tlbflush(target);
@@ -293,7 +311,7 @@ pmap_tlb_processpacket(volatile pmap_tlb_packet_t *tp, kcpuset_t *target)
 	/* Remote CPUs have been synchronously flushed. */
 	pmap_tlb_pendcount = 0;
 	pmap_tlb_packet = NULL;
-	tp->tp_done = 1;
+	TP_SET_DONE(tp);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -339,7 +357,7 @@ void
 pmap_tlb_shootnow(void)
 {
 	volatile pmap_tlb_packet_t *tp, *ts;
-	volatile uint8_t stackbuf[128];
+	volatile uint8_t stackbuf[sizeof(*tp) + COHERENCY_UNIT];
 	struct cpu_info *ci;
 	kcpuset_t *target;
 	u_int local, rcpucount;
@@ -351,13 +369,13 @@ pmap_tlb_shootnow(void)
 	/* Pre-check first. */
 	ci = curcpu();
 	tp = (pmap_tlb_packet_t *)ci->ci_pmap_data;
-	if (tp->tp_count == 0) {
+	if (TP_GET_COUNT(tp) == 0) {
 		return;
 	}
 
 	/* An interrupt may have flushed our updates, so check again. */
 	s = splvm();
-	if (tp->tp_count == 0) {
+	if (TP_GET_COUNT(tp) == 0) {
 		splx(s);
 		return;
 	}
@@ -374,9 +392,7 @@ pmap_tlb_shootnow(void)
 	if (rcpucount == 0) {
 		pmap_tlb_invalidate(tp);
 		kcpuset_zero(ci->ci_tlb_cpuset);
-		tp->tp_userpmap = 0;
-		tp->tp_count = 0;
-		tp->tp_global = 0;
+		TP_CLEAR(tp);
 		splx(s);
 		return;
 	}
@@ -388,10 +404,9 @@ pmap_tlb_shootnow(void)
 	 * against an interrupt on the current CPU trying the same.
 	 */
 	KASSERT(rcpucount < ncpu);
-	KASSERT(sizeof(*ts) <= (sizeof(stackbuf) / 2));
-	ts = (void *)roundup2((uintptr_t)stackbuf, (sizeof(stackbuf) / 2));
+	ts = (void *)roundup2((uintptr_t)stackbuf, COHERENCY_UNIT);
 	*ts = *tp;
-	KASSERT(!ts->tp_done);
+	KASSERT(TP_GET_DONE(ts) == 0);
 	while (atomic_cas_ptr(&pmap_tlb_packet, NULL,
 	    __UNVOLATILE(ts)) != NULL) {
 		KASSERT(pmap_tlb_packet != ts);
@@ -411,7 +426,7 @@ pmap_tlb_shootnow(void)
 		 * An interrupt might have done the shootdowns for
 		 * us while we spun.
 		 */
-		if (tp->tp_count == 0) {
+		if (TP_GET_COUNT(tp) == 0) {
 			splx(s);
 			return;
 		}
@@ -431,14 +446,13 @@ pmap_tlb_shootnow(void)
 	 * we can drop the IPL.
 	 */
 #ifdef TLBSTATS
-	if (tp->tp_count != TP_ALLVA) {
-		atomic_add_64(&tlbstat_single_issue.ev_count, tp->tp_count);
+	if (TP_GET_COUNT(tp) != TP_ALLVA) {
+		atomic_add_64(&tlbstat_single_issue.ev_count,
+		    TP_GET_COUNT(tp));
 	}
 #endif
 	kcpuset_zero(ci->ci_tlb_cpuset);
-	tp->tp_userpmap = 0;
-	tp->tp_count = 0;
-	tp->tp_global = 0;
+	TP_CLEAR(tp);
 	splx(s);
 
 	/*
@@ -455,7 +469,7 @@ pmap_tlb_shootnow(void)
 	 * CPU out will update it and only we are reading it).  No memory
 	 * barrier required due to prior stores - yay x86.
 	 */
-	while (!ts->tp_done) {
+	while (TP_GET_DONE(ts) == 0) {
 		x86_pause();
 	}
 }
@@ -489,14 +503,15 @@ pmap_tlb_intr(void)
 	 * packet as done.  Both can be done without using an atomic, and
 	 * the one atomic we do use serves as our memory barrier.
 	 *
-	 * It's important to clear the active pointer before tp_done, to
-	 * ensure a remote CPU does not exit & re-enter pmap_tlb_shootnow()
-	 * only to find its current pointer still seemingly active.
+	 * It's important to clear the active pointer before setting
+	 * TP_DONE, to ensure a remote CPU does not exit & re-enter
+	 * pmap_tlb_shootnow() only to find its current pointer still
+	 * seemingly active.
 	 */
 	if (atomic_dec_uint_nv(&pmap_tlb_pendcount) == 0) {
 		pmap_tlb_packet = NULL;
 		__insn_barrier();
-		source->tp_done = 1;
+		TP_SET_DONE(source);
 	}
 	pmap_tlb_invalidate(&copy);
 
@@ -508,7 +523,7 @@ pmap_tlb_intr(void)
 	 * module.
 	 */
 	ci = curcpu();
-	if (ci->ci_tlbstate == TLBSTATE_LAZY && copy.tp_userpmap) {
+	if (ci->ci_tlbstate == TLBSTATE_LAZY && TP_GET_USERPMAP(&copy) != 0) {
 		kcpuset_atomic_clear(ci->ci_pmap->pm_cpus, cpu_index(ci));
 		ci->ci_tlbstate = TLBSTATE_STALE;
 	}
