@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.280 2019/12/08 19:52:37 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.281 2020/01/15 17:55:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.280 2019/12/08 19:52:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.281 2020/01/15 17:55:44 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -241,7 +241,8 @@ lfs_vflush(struct vnode *vp)
 					pg = uvm_pagelookup(&vp->v_uobj, off);
 					if (pg == NULL)
 						continue;
-					if ((pg->flags & PG_CLEAN) == 0 ||
+					if (uvm_pagegetdirty(pg)
+					    == UVM_PAGE_STATUS_DIRTY ||
 					    pmap_is_modified(pg)) {
 						lfs_sb_addavail(fs,
 							lfs_btofsb(fs,

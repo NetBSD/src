@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_array.c,v 1.2 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_page_array.c,v 1.3 2020/01/15 17:55:45 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.2 2019/12/15 21:11:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_array.c,v 1.3 2020/01/15 17:55:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,7 +142,6 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 	KASSERT(mutex_owned(uobj->vmobjlock));
 #endif
 	KASSERT(uvm_page_array_peek(ar) == NULL);
-#if 0 /* not merged from yamt-pagecache yet */
 	if ((flags & UVM_PAGE_ARRAY_FILL_DIRTY) != 0) {
 		unsigned int tagmask = UVM_PAGE_DIRTY_TAG;
 
@@ -154,9 +153,7 @@ uvm_page_array_fill(struct uvm_page_array *ar, struct uvm_object *uobj,
 		    radix_tree_gang_lookup_tagged_node)(
 		    &uobj->uo_pages, off >> PAGE_SHIFT, (void **)ar->ar_pages,
 		    maxpages, dense, tagmask);
-	} else
-#endif
-	{
+	} else {
 		npages =
 		    (backward ? radix_tree_gang_lookup_node_reverse :
 		    radix_tree_gang_lookup_node)(
