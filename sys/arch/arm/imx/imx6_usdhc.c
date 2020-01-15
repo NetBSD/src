@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_usdhc.c,v 1.8 2019/07/24 12:33:18 hkenken Exp $ */
+/*	$NetBSD: imx6_usdhc.c,v 1.9 2020/01/15 01:09:56 jmcneill Exp $ */
 /*-
  * Copyright (c) 2012  Genetec Corporation.  All rights reserved.
  * Written by Hiroyuki Bessho for Genetec Corporation.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.8 2019/07/24 12:33:18 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_usdhc.c,v 1.9 2020/01/15 01:09:56 jmcneill Exp $");
 
 #include "imxgpio.h"
 
@@ -184,7 +184,7 @@ imx6_sdhc_card_detect(struct sdhc_softc *ssc)
 
 	sc = device_private(ssc->sc_dev);
 	if (sc->sc_gpio_cd >= 0) {
-		detect = gpio_data_read(sc->sc_gpio_cd);
+		detect = imxgpio_data_read(sc->sc_gpio_cd);
 		if (sc->sc_gpio_cd_active == GPIO_PIN_LOW)
 			detect = !detect;
 	} else

@@ -1,4 +1,4 @@
-/* $NetBSD: imxuart.c,v 1.23 2020/01/12 00:35:11 jmcneill Exp $ */
+/* $NetBSD: imxuart.c,v 1.24 2020/01/15 01:09:56 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009, 2010  Genetec Corporation.  All rights reserved.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.23 2020/01/12 00:35:11 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxuart.c,v 1.24 2020/01/15 01:09:56 jmcneill Exp $");
 
 #include "opt_imxuart.h"
 #include "opt_ddb.h"
@@ -1459,9 +1459,11 @@ imxustart(struct tty *tp)
 	space = imxuart_txfifo_space(sc);
 	n = MIN(sc->sc_tbc, space);
 
-	bus_space_write_multi_1(iot, ioh, IMX_UTXD, sc->sc_tba, n);
-	sc->sc_tbc -= n;
-	sc->sc_tba += n;
+	if (n > 0) {
+		bus_space_write_multi_1(iot, ioh, IMX_UTXD, sc->sc_tba, n);
+		sc->sc_tbc -= n;
+		sc->sc_tba += n;
+	}
 
 	/* Enable transmit completion interrupts */
 	imxuart_control_txint(sc, true);

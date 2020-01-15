@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx6.c,v 1.8 2019/11/25 00:54:47 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx6.c,v 1.9 2020/01/15 01:09:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.8 2019/11/25 00:54:47 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx6.c,v 1.9 2020/01/15 01:09:56 jmcneill Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -88,6 +88,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dmat = aa->aa_dmat;
 
 	sc->sc_imxtype = 6;	/* i.MX6 */
+	sc->sc_phyid = MII_PHY_ANY;
 	if (IMX6_CHIPID_MAJOR(imx6_chip_id()) == CHIPID_MAJOR_IMX6UL)
 		sc->sc_rgmii = 0;
 	else
