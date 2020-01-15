@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.132 2020/01/15 01:09:57 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.133 2020/01/15 11:36:48 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -381,6 +381,7 @@ options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
+imxi2c*		at fdt? pass 4		# IMX I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
