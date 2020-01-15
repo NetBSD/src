@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.78 2019/12/13 14:10:32 maxv Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.79 2020/01/15 08:13:20 skrll Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.78 2019/12/13 14:10:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.79 2020/01/15 08:13:20 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -856,7 +856,7 @@ urtwn_task(void *arg)
 	int s;
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
-	if (ic->ic_state == IEEE80211_S_RUN && 
+	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 	    ic->ic_opmode == IEEE80211_M_IBSS)) {
 
