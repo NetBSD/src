@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.149 2019/11/20 19:37:52 pgoyette Exp $
+#	$NetBSD: files.arm,v 1.150 2020/01/15 08:34:04 mrg Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -155,6 +155,7 @@ file	arch/arm/arm/bus_space_asm_generic.S	bus_space_generic
 file	arch/arm/arm/bus_space_notimpl.S	arm32
 
 file	arch/arm/arm/arm_machdep.c
+file	arch/arm/arm/arm_cpu_topology.c	
 file	arch/arm/arm/ast.c
 file	arch/arm/arm/bcopyinout.S
 file	arch/arm/arm/blockio.S
