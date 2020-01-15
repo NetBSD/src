@@ -1,5 +1,5 @@
 /*	$OpenBSD: if_zydreg.h,v 1.19 2006/11/30 19:28:07 damien Exp $	*/
-/*	$NetBSD: if_zydreg.h,v 1.10 2019/10/05 23:27:20 mrg Exp $	*/
+/*	$NetBSD: if_zydreg.h,v 1.11 2020/01/15 08:20:13 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 by Damien Bergamini <damien.bergamini@free.fr>
@@ -1194,6 +1194,9 @@ struct zyd_softc {
 	struct callout			sc_amrr_ch;
 
 	struct ieee80211_amrr		amrr;
+
+	kmutex_t			sc_lock;
+	kcondvar_t			sc_cmdcv;
 
 	SIMPLEQ_HEAD(rqh, rq) sc_rqh;
 
