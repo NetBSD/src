@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.70 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.71 2020/01/15 17:55:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.70 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.71 2020/01/15 17:55:45 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -346,7 +346,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 		uvm_swap_free(anon->an_swslot, 1);
 	}
 	anon->an_swslot = 0;
-	pg->flags &= ~PG_CLEAN;
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 
 	/*
 	 * Deactivate the page (to put it on a page queue).
