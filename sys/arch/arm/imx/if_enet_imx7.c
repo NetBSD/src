@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx7.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx7.c,v 1.6 2020/01/15 01:09:56 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.5 2019/11/12 05:09:29 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx7.c,v 1.6 2020/01/15 01:09:56 jmcneill Exp $");
 
 #include "locators.h"
 #include "imxccm.h"
@@ -84,6 +84,7 @@ enet_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_imxtype = 7;	/* i.MX7 */
 	sc->sc_rgmii = 1;
+	sc->sc_phyid = MII_PHY_ANY;
 
 	switch (aa->aa_addr) {
 	case (IMX7_AIPS_BASE + AIPS3_ENET1_BASE):
