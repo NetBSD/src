@@ -1,4 +1,4 @@
-/* $NetBSD: imx8mq_ccm.c,v 1.1 2020/01/15 01:09:56 jmcneill Exp $ */
+/* $NetBSD: imx8mq_ccm.c,v 1.2 2020/01/15 11:36:34 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: imx8mq_ccm.c,v 1.1 2020/01/15 01:09:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx8mq_ccm.c,v 1.2 2020/01/15 11:36:34 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,6 +71,9 @@ static const char *usb_bus_p[] = {
 };
 static const char *usb_core_phy_p[] = {
 	"osc_25m", "sys1_pll_100m", "sys1_pll_40m", "sys2_pll_100m", "sys2_pll_200m", "clk_ext2", "clk_ext3", "audio_pll2_out"
+};
+static const char *i2c_p[] = {
+	"osc_25m", "sys1_pll_160m", "sys2_pll_50m", "sys3_pll_out", "audio_pll1_out", "video_pll1_out", "audio_pll2_out", "sys1_pll_133m"
 };
 
 CFATTACH_DECL_NEW(imx8mq_ccm, sizeof(struct imx_ccm_softc),
@@ -161,6 +164,16 @@ static struct imx_ccm_clk imx8mq_ccm_clks[] = {
 	IMX_ROOT_GATE(CLK_USB2_CTRL_ROOT, "usb2_ctrl_root_clk", "usb_bus", 0x44e0),
 	IMX_ROOT_GATE(CLK_USB1_PHY_ROOT, "usb1_phy_root_clk", "usb_phy_ref", 0x44f0),
 	IMX_ROOT_GATE(CLK_USB2_PHY_ROOT, "usb2_phy_root_clk", "usb_phy_ref", 0x4500),
+
+	IMX_COMPOSITE(CLK_I2C1, "i2c1", i2c_p, 0xad00, 0),
+	IMX_COMPOSITE(CLK_I2C2, "i2c2", i2c_p, 0xad80, 0),
+	IMX_COMPOSITE(CLK_I2C3, "i2c3", i2c_p, 0xae00, 0),
+	IMX_COMPOSITE(CLK_I2C4, "i2c4", i2c_p, 0xae80, 0),
+
+	IMX_ROOT_GATE(CLK_I2C1_ROOT, "i2c1_root_clk", "i2c1", 0x4170),
+	IMX_ROOT_GATE(CLK_I2C2_ROOT, "i2c2_root_clk", "i2c2", 0x4180),
+	IMX_ROOT_GATE(CLK_I2C3_ROOT, "i2c3_root_clk", "i2c3", 0x4190),
+	IMX_ROOT_GATE(CLK_I2C4_ROOT, "i2c4_root_clk", "i2c4", 0x41a0),
 };
 
 static int
