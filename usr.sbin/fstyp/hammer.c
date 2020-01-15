@@ -1,4 +1,4 @@
-/*        $NetBSD: hammer.c,v 1.2 2020/01/03 08:19:14 tkusumi Exp $      */
+/*        $NetBSD: hammer.c,v 1.3 2020/01/15 15:30:46 tkusumi Exp $      */
 
 /*-
  * Copyright (c) 2016-2019 The DragonFly Project
@@ -27,7 +27,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hammer.c,v 1.2 2020/01/03 08:19:14 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hammer.c,v 1.3 2020/01/15 15:30:46 tkusumi Exp $");
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -72,7 +72,7 @@ test_ondisk(const hammer_volume_ondisk_t ondisk)
 		assert(count != 0);
 		memcpy(&fsid, &ondisk->vol_fsid, sizeof(fsid));
 		memcpy(&fstype, &ondisk->vol_fstype, sizeof(fstype));
-		strncpy(label, ondisk->vol_label, sizeof(label));
+		strlcpy(label, ondisk->vol_label, sizeof(label));
 	} else {
 		if (ondisk->vol_count != count)
 			return (5);
@@ -80,7 +80,7 @@ test_ondisk(const hammer_volume_ondisk_t ondisk)
 			return (6);
 		if (memcmp(&ondisk->vol_fstype, &fstype, sizeof(fstype)))
 			return (7);
-		if (strncmp(ondisk->vol_label, label, sizeof(label)))
+		if (strcmp(ondisk->vol_label, label))
 			return (8);
 	}
 
