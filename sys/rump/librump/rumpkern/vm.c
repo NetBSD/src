@@ -1,4 +1,4 @@
-/*	$NetBSD: vm.c,v 1.182 2020/01/05 15:57:15 para Exp $	*/
+/*	$NetBSD: vm.c,v 1.183 2020/01/15 17:55:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.182 2020/01/05 15:57:15 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm.c,v 1.183 2020/01/15 17:55:44 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -235,7 +235,7 @@ void
 uvm_pagezero(struct vm_page *pg)
 {
 
-	pg->flags &= ~PG_CLEAN;
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	memset((void *)pg->uanon, 0, PAGE_SIZE);
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.218 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.219 2020/01/15 17:55:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -500,6 +500,12 @@ struct uvmexp_sysctl {
 	int64_t poolpages;
 	int64_t countsyncone;
 	int64_t countsyncall;
+	int64_t anonunknown;
+	int64_t anonclean;
+	int64_t anondirty;
+	int64_t fileunknown;
+	int64_t fileclean;
+	int64_t filedirty;
 };
 
 #ifdef _KERNEL
@@ -779,10 +785,12 @@ int			uvm_grow(struct proc *, vaddr_t);
 void			uvm_deallocate(struct vm_map *, vaddr_t, vsize_t);
 
 /* uvm_vnode.c */
+struct uvm_page_array;
 void			uvm_vnp_setsize(struct vnode *, voff_t);
 void			uvm_vnp_setwritesize(struct vnode *, voff_t);
 int			uvn_findpages(struct uvm_object *, voff_t,
-			    int *, struct vm_page **, int);
+			    unsigned int *, struct vm_page **,
+			    struct uvm_page_array *, unsigned int);
 bool			uvn_text_p(struct uvm_object *);
 bool			uvn_clean_p(struct uvm_object *);
 bool			uvn_needs_writefault_p(struct uvm_object *);

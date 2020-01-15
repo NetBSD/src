@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.367 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.368 2020/01/15 17:55:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.367 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.368 2020/01/15 17:55:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2249,7 +2249,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		}
 		uvm_pageactivate(pg);
 		uvm_pageunlock(pg);
-		pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+		pg->flags &= ~(PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		DLOG((DLOG_PAGE, "pg[%d] = %p (vp %p off %" PRIx64 ")\n", i, pg,
 			vp, pg->offset));
 		DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));

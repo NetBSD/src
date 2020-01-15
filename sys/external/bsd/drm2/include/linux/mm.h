@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.9 2018/08/27 13:44:54 riastradh Exp $	*/
+/*	$NetBSD: mm.h,v 1.10 2020/01/15 17:55:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@ static inline void
 set_page_dirty(struct page *page)
 {
 
-	page->p_vmp.flags &= ~PG_CLEAN;
+	uvm_pagemarkdirty(&page->p_vmp, UVM_PAGE_STATUS_DIRTY);
 }
 
 #endif  /* _LINUX_MM_H_ */

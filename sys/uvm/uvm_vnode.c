@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.104 2019/12/21 14:41:44 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.105 2020/01/15 17:55:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.104 2019/12/21 14:41:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.105 2020/01/15 17:55:45 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -66,6 +66,7 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.104 2019/12/21 14:41:44 ad Exp $");
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_readahead.h>
+#include <uvm/uvm_page_array.h>
 
 #ifdef UVMHIST
 UVMHIST_DEFINE(ubchist);
@@ -82,7 +83,8 @@ static int	uvn_put(struct uvm_object *, voff_t, voff_t, int);
 static void	uvn_reference(struct uvm_object *);
 
 static int	uvn_findpage(struct uvm_object *, voff_t, struct vm_page **,
-			     int);
+			     unsigned int, struct uvm_page_array *a,
+			     unsigned int);
 
 /*
  * master pager structure
@@ -136,7 +138,6 @@ uvn_detach(struct uvm_object *uobj)
  *
  * => object must be locked on entry!   VOP_PUTPAGES must unlock it.
  * => flags: PGO_SYNCIO -- use sync. I/O
- * => note: caller must set PG_CLEAN and pmap_clear_modify (if needed)
  */
 
 static int
@@ -201,16 +202,23 @@ uvn_get(struct uvm_object *uobj, voff_t offset,
  */
 
 int
-uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
-    struct vm_page **pgs, int flags)
+uvn_findpages(struct uvm_object *uobj, voff_t offset, unsigned int *npagesp,
+    struct vm_page **pgs, struct uvm_page_array *a, unsigned int flags)
 {
-	int i, count, found, npages, rv;
+	unsigned int count, found, npages;
+	int i, rv;
+	struct uvm_page_array a_store;
 
+	if (a == NULL) {
+		a = &a_store;
+		uvm_page_array_init(a);
+	}
 	count = found = 0;
 	npages = *npagesp;
 	if (flags & UFP_BACKWARD) {
 		for (i = npages - 1; i >= 0; i--, offset -= PAGE_SIZE) {
-			rv = uvn_findpage(uobj, offset, &pgs[i], flags);
+			rv = uvn_findpage(uobj, offset, &pgs[i], flags, a,
+			    i + 1);
 			if (rv == 0) {
 				if (flags & UFP_DIRTYONLY)
 					break;
@@ -220,7 +228,8 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
 		}
 	} else {
 		for (i = 0; i < npages; i++, offset += PAGE_SIZE) {
-			rv = uvn_findpage(uobj, offset, &pgs[i], flags);
+			rv = uvn_findpage(uobj, offset, &pgs[i], flags, a,
+			    npages - i);
 			if (rv == 0) {
 				if (flags & UFP_DIRTYONLY)
 					break;
@@ -229,16 +238,29 @@ uvn_findpages(struct uvm_object *uobj, voff_t offset, int *npagesp,
 			count++;
 		}
 	}
+	if (a == &a_store) {
+		uvm_page_array_fini(a);
+	}
 	*npagesp = count;
 	return (found);
 }
 
+/*
+ * uvn_findpage: find a single page
+ *
+ * if a suitable page was found, put it in *pgp and return 1.
+ * otherwise return 0.
+ */
+
 static int
 uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
-    int flags)
+    unsigned int flags, struct uvm_page_array *a, unsigned int nleft)
 {
 	struct vm_page *pg;
-	bool dirty;
+	const unsigned int fillflags =
+	    ((flags & UFP_BACKWARD) ? UVM_PAGE_ARRAY_FILL_BACKWARD : 0) |
+	    ((flags & UFP_DIRTYONLY) ?
+	    (UVM_PAGE_ARRAY_FILL_DIRTY|UVM_PAGE_ARRAY_FILL_DENSE) : 0);
 	UVMHIST_FUNC("uvn_findpage"); UVMHIST_CALLED(ubchist);
 	UVMHIST_LOG(ubchist, "vp %#jx off 0x%jx", (uintptr_t)uobj, offset,
 	    0, 0);
@@ -247,11 +269,35 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 
 	if (*pgp != NULL) {
 		UVMHIST_LOG(ubchist, "dontcare", 0,0,0,0);
-		return 0;
+		goto skip_offset;
 	}
 	for (;;) {
-		/* look for an existing page */
-		pg = uvm_pagelookup(uobj, offset);
+		/*
+		 * look for an existing page.
+		 *
+		 * XXX fragile API
+		 * note that the array can be the one supplied by the caller of
+		 * uvn_findpages.  in that case, fillflags used by the caller
+		 * might not match strictly with ours.
+		 * in particular, the caller might have filled the array
+		 * without DENSE but passed us UFP_DIRTYONLY (thus DENSE).
+		 */
+		pg = uvm_page_array_fill_and_peek(a, uobj, offset, nleft,
+		    fillflags);
+		if (pg != NULL && pg->offset != offset) {
+			KASSERT(
+			    ((fillflags & UVM_PAGE_ARRAY_FILL_BACKWARD) != 0)
+			    == (pg->offset < offset));
+			KASSERT(uvm_pagelookup(uobj, offset) == NULL
+			    || ((fillflags & UVM_PAGE_ARRAY_FILL_DIRTY) != 0 &&
+			    radix_tree_get_tag(&uobj->uo_pages,
+			    offset >> PAGE_SHIFT, UVM_PAGE_DIRTY_TAG) == 0));
+			pg = NULL;
+			if ((fillflags & UVM_PAGE_ARRAY_FILL_DENSE) != 0) {
+				UVMHIST_LOG(ubchist, "dense", 0,0,0,0);
+				return 0;
+			}
+		}
 
 		/* nope?  allocate one now */
 		if (pg == NULL) {
@@ -268,28 +314,32 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 				}
 				mutex_exit(uobj->vmobjlock);
 				uvm_wait("uvn_fp1");
+				uvm_page_array_clear(a);
 				mutex_enter(uobj->vmobjlock);
 				continue;
 			}
 			UVMHIST_LOG(ubchist, "alloced %#jx (color %ju)",
 			    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
+			KASSERTMSG(uvm_pagegetdirty(pg) ==
+			    UVM_PAGE_STATUS_CLEAN, "page %p not clean", pg);
 			break;
 		} else if (flags & UFP_NOCACHE) {
 			UVMHIST_LOG(ubchist, "nocache",0,0,0,0);
-			return 0;
+			goto skip;
 		}
 
 		/* page is there, see if we need to wait on it */
 		if ((pg->flags & PG_BUSY) != 0) {
 			if (flags & UFP_NOWAIT) {
 				UVMHIST_LOG(ubchist, "nowait",0,0,0,0);
-				return 0;
+				goto skip;
 			}
 			pg->flags |= PG_WANTED;
 			UVMHIST_LOG(ubchist, "wait %#jx (color %ju)",
 			    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
 			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
 					    "uvn_fp2", 0);
+			uvm_page_array_clear(a);
 			mutex_enter(uobj->vmobjlock);
 			continue;
 		}
@@ -297,14 +347,12 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		/* skip PG_RDONLY pages if requested */
 		if ((flags & UFP_NORDONLY) && (pg->flags & PG_RDONLY)) {
 			UVMHIST_LOG(ubchist, "nordonly",0,0,0,0);
-			return 0;
+			goto skip;
 		}
 
 		/* stop on clean pages if requested */
 		if (flags & UFP_DIRTYONLY) {
-			dirty = pmap_clear_modify(pg) ||
-				(pg->flags & PG_CLEAN) == 0;
-			pg->flags |= PG_CLEAN;
+			const bool dirty = uvm_pagecheckdirty(pg, false);
 			if (!dirty) {
 				UVMHIST_LOG(ubchist, "dirtonly", 0,0,0,0);
 				return 0;
@@ -316,10 +364,33 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 		UVM_PAGE_OWN(pg, "uvn_findpage");
 		UVMHIST_LOG(ubchist, "found %#jx (color %ju)",
 		    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
+		uvm_page_array_advance(a);
 		break;
 	}
 	*pgp = pg;
 	return 1;
+
+ skip_offset:
+	/*
+	 * skip this offset
+	 */
+	pg = uvm_page_array_peek(a);
+	if (pg != NULL) {
+		if (pg->offset == offset) {
+			uvm_page_array_advance(a);
+		} else {
+			KASSERT((fillflags & UVM_PAGE_ARRAY_FILL_DENSE) == 0);
+		}
+	}
+	return 0;
+
+ skip:
+	/*
+	 * skip this page
+	 */
+	KASSERT(pg != NULL);
+	uvm_page_array_advance(a);
+	return 0;
 }
 
 /*

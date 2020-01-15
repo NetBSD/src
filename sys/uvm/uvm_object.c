@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.19 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.20 2020/01/15 17:55:45 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.19 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.20 2020/01/15 17:55:45 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -174,7 +174,8 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 			}
 
 			if (pgs[i]->flags & PG_AOBJ) {
-				pgs[i]->flags &= ~(PG_CLEAN);
+				uvm_pagemarkdirty(pgs[i],
+				    UVM_PAGE_STATUS_DIRTY);
 				uao_dropswap(uobj, i);
 			}
 		}

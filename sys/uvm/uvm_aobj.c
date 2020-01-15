@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.133 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.134 2020/01/15 17:55:45 ad Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.133 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.134 2020/01/15 17:55:45 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -849,7 +849,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 				if (ptmp) {
 					/* new page */
 					ptmp->flags &= ~(PG_FAKE);
-					ptmp->flags |= PG_AOBJ;
+					uvm_pagemarkdirty(ptmp,
+					    UVM_PAGE_STATUS_UNKNOWN);
 					goto gotpage;
 				}
 			}
@@ -870,6 +871,8 @@ uao_get(struct uvm_object *uobj, voff_t offset, struct vm_page **pps,
 			 * useful page: busy/lock it and plug it in our
 			 * result array
 			 */
+			KASSERT(uvm_pagegetdirty(ptmp) !=
+			    UVM_PAGE_STATUS_CLEAN);
 
 			/* caller must un-busy this page */
 			ptmp->flags |= PG_BUSY;
@@ -951,8 +954,6 @@ gotpage:
 					continue;
 				}
 
-				ptmp->flags |= PG_AOBJ;
-
 				/*
 				 * got new page ready for I/O.  break pps while
 				 * loop.  pps[lcv] is still NULL.
@@ -980,6 +981,8 @@ gotpage:
 			 * loop).
  			 */
 
+			KASSERT(uvm_pagegetdirty(ptmp) !=
+			    UVM_PAGE_STATUS_CLEAN);
 			/* we own it, caller must un-busy */
 			ptmp->flags |= PG_BUSY;
 			UVM_PAGE_OWN(ptmp, "uao_get2");
@@ -1060,10 +1063,11 @@ gotpage:
 #endif /* defined(VMSWAP) */
 		}
 
-		if ((access_type & VM_PROT_WRITE) == 0) {
-			ptmp->flags |= PG_CLEAN;
-			pmap_clear_modify(ptmp);
-		}
+		/*
+		 * note that we will allow the page being writably-mapped
+		 * (!PG_RDONLY) regardless of access_type.
+		 */
+		uvm_pagemarkdirty(ptmp, UVM_PAGE_STATUS_UNKNOWN);
 
 		/*
  		 * we got the page!   clear the fake flag (indicates valid
@@ -1075,7 +1079,8 @@ gotpage:
  		 * => unbusy the page
  		 * => activate the page
  		 */
-
+		KASSERT(uvm_pagegetdirty(ptmp) != UVM_PAGE_STATUS_CLEAN);
+		KASSERT((ptmp->flags & PG_FAKE) != 0);
 		ptmp->flags &= ~PG_FAKE;
 		pps[lcv] = ptmp;
 	}
@@ -1308,7 +1313,8 @@ uao_pagein_page(struct uvm_aobj *aobj, int pageidx)
 	if (pg->flags & PG_WANTED) {
 		wakeup(pg);
 	}
-	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_CLEAN|PG_FAKE);
+	pg->flags &= ~(PG_WANTED|PG_BUSY|PG_FAKE);
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	UVM_PAGE_OWN(pg, NULL);
 
 	return false;

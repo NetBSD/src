@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.35 2019/12/13 20:10:22 ad Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.36 2020/01/15 17:55:44 ad Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.35 2019/12/13 20:10:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.36 2020/01/15 17:55:44 ad Exp $");
 
 #include <sys/param.h>
 
@@ -141,7 +141,7 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 			start = (uint8_t *)pg->uanon + chunkoff;
 
 			memset(start, 0, chunklen);
-			pg->flags &= ~PG_CLEAN;
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 
 			off += chunklen;
 			len -= chunklen;
@@ -210,8 +210,10 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 				mutex_exit(uobj->vmobjlock);
 				goto out;
 			}
-			if (uio->uio_rw == UIO_WRITE)
-				pg->flags &= ~(PG_CLEAN | PG_FAKE);
+			if (uio->uio_rw == UIO_WRITE) {
+				pg->flags &= ~PG_FAKE;
+				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+			}
 			todo -= xfersize;
 		}
 		uvm_page_unbusy(pgs, npages);
