@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.26 2020/01/14 19:28:31 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.27 2020/01/15 19:36:30 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -2409,6 +2409,15 @@ mbr_guess_geom(struct disk_partitions *arg, int *cyl, int *head, int *sec)
 	return 0;
 }
 
+static size_t
+mbr_get_cylinder(const struct disk_partitions *arg)
+{
+	const struct mbr_disk_partitions *parts =
+	    (const struct mbr_disk_partitions*)arg;
+
+	return parts->geo_cyl;
+}
+
 static daddr_t
 mbr_max_part_size(const struct disk_partitions *arg, daddr_t fp_start)
 {
@@ -3026,6 +3035,7 @@ mbr_parts = {
 	.read_from_disk = mbr_read_from_disk,
 	.create_new_for_disk = mbr_create_new,
 	.guess_disk_geom = mbr_guess_geom,
+	.get_cylinder_size = mbr_get_cylinder,
 	.change_disk_geom = mbr_change_disk_geom,
 	.get_part_device = mbr_get_part_device,
 	.max_free_space_at = mbr_max_part_size,

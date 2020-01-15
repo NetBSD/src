@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.13 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: partitions.h,v 1.14 2020/01/15 19:36:30 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -455,6 +455,12 @@ struct disk_partitioning_scheme {
 	 */
 	int (*guess_disk_geom)(struct disk_partitions *,
 	    int *cyl, int *head, int *sec);
+
+	/*
+	 * Return a "cylinder size" (in number of blocks) - whatever that
+	 * means to a particular partitioning scheme.
+	 */
+	size_t (*get_cylinder_size)(const struct disk_partitions *);
 
 	/*
 	 * Optional: change used geometry info and update internal state

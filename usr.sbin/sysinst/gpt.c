@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.14 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.15 2020/01/15 19:36:30 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -437,6 +437,12 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
 	close(fd);
 
 	return &parts->dp;
+}
+
+static size_t
+gpt_cyl_size(const struct disk_partitions *arg)
+{
+	return MEG / 512;
 }
 
 static struct disk_partitions *
@@ -1777,6 +1783,7 @@ gpt_parts = {
 	.create_unknown_part_type = gpt_create_unknown_part_type,
 	.get_part_alignment = gpt_get_part_alignment,
 	.read_from_disk = gpt_read_from_disk,
+	.get_cylinder_size = gpt_cyl_size,
 	.create_new_for_disk = gpt_create_new,
 	.have_boot_support = gpt_have_boot_support,
 	.find_by_name = gpt_find_by_name,

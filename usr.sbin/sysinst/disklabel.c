@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.29 2020/01/10 10:47:35 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.30 2020/01/15 19:36:30 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -112,6 +112,15 @@ disklabel_change_geom(struct disk_partitions *arg, int ncyl, int nhead,
 		set_default_sizemult(MEG/512);
 
 	return true;
+}
+
+static size_t
+disklabel_cylinder_size(const struct disk_partitions *arg)
+{
+	const struct disklabel_disk_partitions *parts =
+	    (const struct disklabel_disk_partitions*)arg;
+
+	return parts->l.d_secpercyl;
 }
 
 static struct disk_partitions *
@@ -1213,6 +1222,7 @@ disklabel_parts = {
 	.read_from_disk = disklabel_parts_read,
 	.create_new_for_disk = disklabel_parts_new,
 	.change_disk_geom = disklabel_change_geom,
+	.get_cylinder_size = disklabel_cylinder_size,
 	.find_by_name = disklabel_find_by_name,
 	.get_disk_pack_name = disklabel_get_disk_pack_name,
 	.set_disk_pack_name = disklabel_set_disk_pack_name,
