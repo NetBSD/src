@@ -1,4 +1,4 @@
-/*	$NetBSD: netwalker_spi.c,v 1.3 2019/08/19 11:41:36 hkenken Exp $	*/
+/*	$NetBSD: netwalker_spi.c,v 1.4 2020/01/15 10:25:47 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2009  Genetec Corporation.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.3 2019/08/19 11:41:36 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netwalker_spi.c,v 1.4 2020/01/15 10:25:47 skrll Exp $");
 
 #include "opt_imxspi.h"
 
@@ -61,16 +61,16 @@ imxspi_cs_enable(void *arg, int slave)
 {
 	switch (slave) {
 	case 0:
-		gpio_data_write(GPIO_NO(4, 24), GPIO_PIN_LOW);
-		gpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_OUTPUT);
+		imxgpio_data_write(GPIO_NO(4, 24), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_OUTPUT);
 		break;
 	case 1:
-		gpio_data_write(GPIO_NO(4, 25), GPIO_PIN_LOW);
-		gpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_OUTPUT);
+		imxgpio_data_write(GPIO_NO(4, 25), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_OUTPUT);
 		break;
 	case 2:
-		gpio_data_write(GPIO_NO(3, 0), GPIO_PIN_LOW);
-		gpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_OUTPUT);
+		imxgpio_data_write(GPIO_NO(3, 0), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_OUTPUT);
 		break;
 	}
 
@@ -82,16 +82,16 @@ imxspi_cs_disable(void *arg, int slave)
 {
 	switch (slave) {
 	case 0:
-		gpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
-		gpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
+		imxgpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
 		break;
 	case 1:
-		gpio_data_write(GPIO_NO(4, 25), GPIO_PIN_HIGH);
-		gpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_INPUT);
+		imxgpio_data_write(GPIO_NO(4, 25), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_INPUT);
 		break;
 	case 2:
-		gpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
-		gpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
+		imxgpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
 		break;
 	}
 
@@ -129,21 +129,21 @@ imxspi_attach(device_t parent, device_t self, void *aux)
 	switch (device_unit(self)) {
 	case 0:
 		/* CS 0 GPIO setting */
-		gpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
-		gpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
+		imxgpio_data_write(GPIO_NO(4, 24), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 24), GPIO_PIN_INPUT);
 
 		/* CS 1 GPIO setting */
-		gpio_data_write(GPIO_NO(4, 25), GPIO_PIN_HIGH);
-		gpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_INPUT);
+		imxgpio_data_write(GPIO_NO(4, 25), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(4, 25), GPIO_PIN_INPUT);
 
 		/* CS 2 */
 		/* OJ6SH-T25 Shutdown */
-		gpio_data_write(GPIO_NO(3, 14), GPIO_PIN_LOW);
-		gpio_set_direction(GPIO_NO(3, 14), GPIO_PIN_OUTPUT);
+		imxgpio_data_write(GPIO_NO(3, 14), GPIO_PIN_LOW);
+		imxgpio_set_direction(GPIO_NO(3, 14), GPIO_PIN_OUTPUT);
 
 		/* CS 2 GPIO setting */
-		gpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
-		gpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
+		imxgpio_data_write(GPIO_NO(3, 0), GPIO_PIN_HIGH);
+		imxgpio_set_direction(GPIO_NO(3, 0), GPIO_PIN_INPUT);
 
 		isc->sc_tag.spi_cs_enable = imxspi_cs_enable;
 		isc->sc_tag.spi_cs_disable = imxspi_cs_disable;
