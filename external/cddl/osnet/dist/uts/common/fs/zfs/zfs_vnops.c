@@ -746,7 +746,8 @@ mappedread(vnode_t *vp, int nbytes, uio_t *uio)
 		pp = NULL;
 		npages = 1;
 		mutex_enter(mtx);
-		found = uvn_findpages(uobj, start, &npages, &pp, UFP_NOALLOC);
+		found = uvn_findpages(uobj, start, &npages, &pp, NULL,
+		    UFP_NOALLOC);
 		mutex_exit(mtx);
 
 		/* XXXNETBSD shouldn't access userspace with the page busy */
@@ -792,7 +793,8 @@ update_pages(vnode_t *vp, int64_t start, int len, objset_t *os, uint64_t oid,
 
 		pp = NULL;
 		npages = 1;
-		found = uvn_findpages(uobj, start, &npages, &pp, UFP_NOALLOC);
+		found = uvn_findpages(uobj, start, &npages, &pp, NULL,
+		    UFP_NOALLOC);
 		if (found) {
 			mutex_exit(mtx);
 
@@ -5976,7 +5978,7 @@ zfs_netbsd_getpages(void *v)
 	}
 	npages = 1;
 	pg = NULL;
-	uvn_findpages(uobj, offset, &npages, &pg, UFP_ALL);
+	uvn_findpages(uobj, offset, &npages, &pg, NULL, UFP_ALL);
 
 	if (pg->flags & PG_FAKE) {
 		mutex_exit(mtx);
@@ -6224,7 +6226,7 @@ zfs_netbsd_setsize(vnode_t *vp, off_t size)
 	mutex_enter(mtx);
 	count = 1;
 	pg = NULL;
-	if (uvn_findpages(uobj, tsize, &count, &pg, UFP_NOALLOC)) {
+	if (uvn_findpages(uobj, tsize, &count, &pg, NULL, UFP_NOALLOC)) {
 		va = zfs_map_page(pg, S_WRITE);
 		pgoff = size - tsize;
 		memset(va + pgoff, 0, PAGESIZE - pgoff);
