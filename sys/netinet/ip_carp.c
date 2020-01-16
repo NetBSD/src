@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.104 2019/11/10 21:16:38 chs Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.105 2020/01/16 12:56:40 kardel Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.104 2019/11/10 21:16:38 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.105 2020/01/16 12:56:40 kardel Exp $");
 
 /*
  * TODO:
@@ -67,6 +67,7 @@ __KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.104 2019/11/10 21:16:38 chs Exp $");
 #include <net/pfil.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
+#include <net/if_media.h>
 #include <net/route.h>
 #include <net/netisr.h>
 #include <net/net_stats.h>
@@ -122,6 +123,7 @@ struct carp_softc {
 #define	sc_carpdev	sc_ac.ec_if.if_carpdev
 	int ah_cookie;
 	int lh_cookie;
+	struct ifmedia  sc_im;	/* ifmedia for link status */
 	struct ip_moptions sc_imo;
 #ifdef INET6
 	struct ip6_moptions sc_im6o;
@@ -233,6 +235,9 @@ static int	carp_clone_destroy(struct ifnet *);
 static int	carp_ether_addmulti(struct carp_softc *, struct ifreq *);
 static int	carp_ether_delmulti(struct carp_softc *, struct ifreq *);
 static void	carp_ether_purgemulti(struct carp_softc *);
+static int      carp_mediachange(struct ifnet *ifp);
+static void	carp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr);
+static void	carp_update_link_state(struct carp_softc *sc);
 
 static void	sysctl_net_inet_carp_setup(struct sysctllog **);
 
@@ -893,6 +898,8 @@ carp_clone_create(struct if_clone *ifc, int unit)
 
 		return rv;
 	}
+	ifmedia_init(&sc->sc_im, 0, carp_mediachange, carp_mediastatus);
+	sc->sc_im.ifm_media = IFM_CARP;
 	ether_ifattach(ifp, NULL);
 	carp_set_enaddr(sc);
 	/* Overwrite ethernet defaults */
@@ -908,6 +915,7 @@ carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 
+	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	carpdetach(ifp->if_softc);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
@@ -2069,6 +2077,7 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			sc->sc_if.if_flags |= IFF_UP;
 			carp_setrun(sc, 0);
 		}
+		carp_update_link_state(sc);
 		break;
 
 	case SIOCSVH:
@@ -2174,6 +2183,10 @@ carp_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		break;
 
+        case SIOCGIFMEDIA:
+		error = ifmedia_ioctl(ifp, ifr, &sc->sc_im, cmd);
+		break;
+
 	default:
 		error = ether_ioctl(ifp, cmd, data);
 	}
@@ -2209,11 +2222,32 @@ carp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 	}
 }
 
+static int
+carp_mediachange(struct ifnet *ifp)
+{
+        return (0);
+}
+
+static void
+carp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
+{
+        switch (ifp->if_link_state) {
+        case LINK_STATE_UP:
+                imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
+                break;
+        case LINK_STATE_DOWN:
+                imr->ifm_status = IFM_AVALID;
+                break;
+        default:
+                imr->ifm_status = 0;
+                break;
+        }
+}
+
 static void
 carp_set_state(struct carp_softc *sc, int state)
 {
 	static const char *carp_states[] = { CARP_STATES };
-	int link_state;
 
 	if (sc->sc_state == state)
 		return;
@@ -2221,7 +2255,15 @@ carp_set_state(struct carp_softc *sc, int state)
 	CARP_LOG(sc, ("state transition from: %s -> to: %s", carp_states[sc->sc_state], carp_states[state]));
 
 	sc->sc_state = state;
-	switch (state) {
+	carp_update_link_state(sc);
+}
+
+static void
+carp_update_link_state(struct carp_softc *sc)
+{
+	int link_state;
+
+	switch (sc->sc_state) {
 	case BACKUP:
 		link_state = LINK_STATE_DOWN;
 		break;
@@ -2229,7 +2271,8 @@ carp_set_state(struct carp_softc *sc, int state)
 		link_state = LINK_STATE_UP;
 		break;
 	default:
-		link_state = LINK_STATE_UNKNOWN;
+		link_state = ((sc->sc_if.if_flags & IFF_ONLY_MASTER_UP) != 0)
+			     ? LINK_STATE_DOWN : LINK_STATE_UNKNOWN;
 		break;
 	}
 	/*
