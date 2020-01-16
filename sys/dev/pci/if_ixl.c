@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.22 2020/01/16 07:16:04 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.23 2020/01/16 07:19:47 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1050,7 +1050,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	struct ixl_softc *sc;
 	struct pci_attach_args *pa = aux;
 	struct ifnet *ifp;
-	pcireg_t memtype, reg;
+	pcireg_t memtype;
 	uint32_t firstq, port, ari, func;
 	uint64_t phy_types = 0;
 	char xnamebuf[32];
@@ -1065,8 +1065,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	    pa->pa_dmat64 : pa->pa_dmat;
 	sc->sc_aq_regs = &ixl_pf_aq_regs;
 
-	reg = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_SUBSYS_ID_REG);
-	sc->sc_mac_type = ixl_mactype(PCI_PRODUCT(reg));
+	sc->sc_mac_type = ixl_mactype(PCI_PRODUCT(pa->pa_id));
 
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, IXL_PCIREG);
 	if (pci_mapreg_map(pa, IXL_PCIREG, memtype, 0,
