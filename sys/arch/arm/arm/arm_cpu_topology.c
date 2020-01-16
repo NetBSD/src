@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_cpu_topology.c,v 1.1 2020/01/15 08:34:04 mrg Exp $	*/
+/*	$NetBSD: arm_cpu_topology.c,v 1.2 2020/01/16 06:34:24 mrg Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthew R. Green
@@ -28,10 +28,12 @@
  * SUCH DAMAGE.
  */
 
+/* CPU topology support for ARMv7 and ARMv8 systems.  */
+
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.1 2020/01/15 08:34:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.2 2020/01/16 06:34:24 mrg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -40,12 +42,14 @@ __KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.1 2020/01/15 08:34:04 mrg Exp
 
 #include <arm/cpu.h>
 #include <arm/cpu_topology.h>
+#include <arm/armreg.h>
 
 #include <prop/proplib.h>
 
 void
 arm_cpu_topology_set(struct cpu_info * const ci, uint64_t mpidr, bool slow)
 {
+#ifdef MULTIPROCESSOR
 	uint pkgid, coreid, smtid, numaid = 0;
 
 	if (mpidr & MPIDR_MT) {
@@ -58,6 +62,7 @@ arm_cpu_topology_set(struct cpu_info * const ci, uint64_t mpidr, bool slow)
 		smtid = 0;
 	}
 	cpu_topology_set(ci, pkgid, coreid, smtid, numaid, slow);
+#endif /* MULTIPROCESSOR */
 }
 
 void
@@ -66,7 +71,6 @@ arm_cpu_do_topology(struct cpu_info *const newci)
 #ifdef MULTIPROCESSOR
 	struct cpu_info *ci;
 	CPU_INFO_ITERATOR cii;
-#endif /* MULTIPROCESSOR */
 	prop_dictionary_t dict;
 	uint32_t capacity_dmips_mhz = 0;
 	static uint32_t best_cap = 0;
@@ -87,7 +91,6 @@ arm_cpu_do_topology(struct cpu_info *const newci)
 	arm_cpu_topology_set(newci, arm_cpu_mpidr(newci),
 	    newci->ci_capacity_dmips_mhz < best_cap);
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * Using saved largest capacity, refresh previous topology info.
 	 * It's supposed to be OK to re-set topology.
