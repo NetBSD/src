@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.50 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.51 2020/01/16 16:47:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -241,7 +241,10 @@ typedef struct distinfo {
  * layout according to the partitioning scheme backend.
  */
 struct part_usage_info {
-	daddr_t	size;			/* thumb guestimate of size [sec] */
+	daddr_t	size;			/* thumb guestimate of size,
+					 * [sec if positive, %-of-ram
+					 * if TMPFS and negative]
+					 */
 	daddr_t def_size;		/* default size */
 	daddr_t limit;			/* max size */
 	char 	mount[MOUNTLEN];	/* where will we mount this? */
@@ -363,7 +366,6 @@ int partman_go; /* run extended partition manager */
 FILE *logfp;
 FILE *script;
 
-daddr_t tmp_ramdisk_size;
 #define MAX_DISKS 15
 
 daddr_t root_limit;    /* BIOS (etc) read limit */
