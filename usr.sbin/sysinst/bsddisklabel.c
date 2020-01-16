@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.34 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.35 2020/01/16 16:47:19 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -236,8 +236,16 @@ draw_size_menu_line(menudesc *m, int opt, void *arg)
 		    size / sizemult);
 	}
 	size = pset->infos[opt].size;
-	snprintf(psize, sizeof psize, "%" PRIu64 "%s",
-	    size / sizemult, inc_free);
+	if (pset->infos[opt].fs_type == FS_TMPFS) {
+		if (pset->infos[opt].size < 0)
+			snprintf(psize, sizeof psize, "%" PRIu64 "%%", -size);
+		else
+			snprintf(psize, sizeof psize, "%" PRIu64 " %s", size,
+			    msg_string(MSG_megname));
+	} else {
+		snprintf(psize, sizeof psize, "%" PRIu64 "%s",
+		    size / sizemult, inc_free);
+	}
 
 	if (pset->infos[opt].type == PT_swap) {
 		snprintf(swap, sizeof swap, "<%s>",
@@ -521,6 +529,20 @@ find_part_at(struct disk_partitions *parts, daddr_t start)
 	return NO_PART;
 }
 
+static daddr_t
+parse_ram_size(const char *str, bool *is_percent)
+{
+	daddr_t val;
+	char *cp;
+
+	val = strtoull(str, &cp, 10);
+	while (*cp && isspace((unsigned char)*cp))
+		cp++;
+
+	*is_percent = *cp == '%';
+	return val;
+}
+
 int
 set_ptn_size(menudesc *m, void *arg)
 {
@@ -531,7 +553,7 @@ set_ptn_size(menudesc *m, void *arg)
 	size_t i, root = ~0U;
 	daddr_t size, old_size, new_size_val, mult;
 	int rv;
-	bool non_zero, extend;
+	bool non_zero, extend, is_ram_size, is_percent = false;
 
 	if (pset->cur_free_space == 0 && p->size == 0 &&
 	    !(p->flags & PUIFLG_JUST_MOUNTPOINT))
@@ -561,22 +583,47 @@ set_ptn_size(menudesc *m, void *arg)
 		}
 	}
 
+	is_ram_size = (p->flags & PUIFLG_JUST_MOUNTPOINT)
+	    && p->fs_type == FS_TMPFS;
+
 	size = p->size;
+	if (is_ram_size && size < 0) {
+		is_percent = true;
+		size = -size;
+	}
 	old_size = size;
 	if (size == 0)
 		size = p->def_size;
-	size /= sizemult;
-	snprintf(dflt, sizeof dflt, "%" PRIu64 "%s",
-	    size, p->flags & PUIFLAG_EXTEND ? "+" : "");
+	if (!is_ram_size)
+		size /= sizemult;
+
+	if (is_ram_size) {
+		snprintf(dflt, sizeof dflt, "%" PRIu64 "%s",
+		    size, is_percent ? "%" : "");
+	} else {
+		snprintf(dflt, sizeof dflt, "%" PRIu64 "%s",
+		    size, p->flags & PUIFLAG_EXTEND ? "+" : "");
+	}
 
 	for (;;) {
 		msg_fmt_prompt_win(MSG_askfssize, -1, 18, 0, 0,
-		    dflt, answer, sizeof answer, "%s%s", p->mount, multname);
+		    dflt, answer, sizeof answer, "%s%s", p->mount,
+		    is_ram_size ? msg_string(MSG_megname) : multname);
 
-		/* cp will be checked below */
+		if (is_ram_size) {
+			new_size_val = parse_ram_size(answer, &is_percent);
+			if (is_percent && 
+			    (new_size_val < 0 || new_size_val > 100))
+				continue;
+			if (!is_percent && new_size_val < 0)
+				continue;
+			size = new_size_val;
+			extend = false;
+			break;
+		}
 		mult = sizemult;
-		new_size_val = parse_disk_pos(answer, &mult, pm->dlcylsize,
-		    &extend);
+		new_size_val = parse_disk_pos(answer, &mult,
+		    pm->dlcylsize, &extend);
 
 		if (strcmp(answer, dflt) == 0)
 			non_zero = p->def_size > 0;
@@ -613,7 +660,9 @@ set_ptn_size(menudesc *m, void *arg)
 	}
 
 	daddr_t align = pset->parts->pscheme->get_part_alignment(pset->parts);
-	size = NUMSEC(size, mult, align);
+	if (!is_ram_size) {
+		size = NUMSEC(size, mult, align);
+	}
 	if (p->flags & PUIFLAG_EXTEND)
 		p->flags &= ~PUIFLAG_EXTEND;
 	if (extend && (p->limit == 0 || p->limit > p->size)) {
@@ -626,7 +675,7 @@ set_ptn_size(menudesc *m, void *arg)
     adjust_free:
 	if ((p->flags & (PUIFLG_IS_OUTER|PUIFLG_JUST_MOUNTPOINT)) == 0)
 		pset->cur_free_space += p->size - size;
-	p->size = size;
+	p->size = is_percent ? -size : size;
 	set_pset_exit_str(pset);
 
 	return 0;
@@ -879,6 +928,20 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 
 	memcpy(wanted->infos, default_parts_init, sizeof(default_parts_init));
 
+#ifdef HAVE_TMPFS
+	if (get_ramsize() > 96) {
+		for (i = 0; i < wanted->num; i++) {
+			if (wanted->infos[i].type != PT_root ||
+			    wanted->infos[i].fs_type != FS_TMPFS)
+				continue;
+			/* default tmpfs to 1/4 RAM */
+			wanted->infos[i].size = -25;
+			wanted->infos[i].def_size = -25;
+			break;
+		}
+	}
+#endif
+
 #ifdef MD_PART_DEFAULTS
 	MD_PART_DEFAULTS(pm, wanted->infos, wanted->num);
 #endif
@@ -918,11 +981,6 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 #endif
 			}
 		}
-		if ((wanted->infos[i].flags & PUIFLG_JUST_MOUNTPOINT) &&
-		    wanted->infos[i].size == 0)
-			/* default tmpfs to 1/4 RAM */
-			wanted->infos[i].def_size =
-			    get_ramsize() * (MEG/512/4);
 	}
 
 	/*
@@ -1131,7 +1189,7 @@ sort_and_sync_parts(struct partition_usage_set *pset)
 		infos[pno].fs_version = info.fs_sub_type;
 	}
 	/* Add the non-partition entires after that */
-	j = pset->num;
+	j = pset->parts->num_part;
 	for (i = 0; i < pset->num; i++) {
 		if (j >= no)
 			break;

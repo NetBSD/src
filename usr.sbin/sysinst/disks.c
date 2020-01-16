@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.59 2020/01/09 13:22:30 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.60 2020/01/16 16:47:19 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1299,7 +1299,11 @@ make_fstab(struct install_partition_desc *install)
 		if (ptn->size == 0)
 			continue;
 
-		if (ptn->type != PT_swap &&
+		bool is_tmpfs = ptn->type == PT_root &&
+		    ptn->fs_type == FS_TMPFS &&
+		    (ptn->flags & PUIFLG_JUST_MOUNTPOINT);
+
+		if (!is_tmpfs && ptn->type != PT_swap &&
 		    (ptn->instflags & PUIINST_MOUNT) == 0)
 			continue;
 
@@ -1350,6 +1354,29 @@ make_fstab(struct install_partition_desc *install)
 			scripting_fprintf(f, "%s\t\tnone\tswap\tsw%s\t\t 0 0\n",
 				dev, dump_dev);
 			continue;
+#ifdef HAVE_TMPFS
+		case FS_TMPFS:
+			if (ptn->size < 0)
+				scripting_fprintf(f,
+				    "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,"
+				    "-s=ram%%%" PRIu64 "\n", -ptn->size);
+			else
+				scripting_fprintf(f,
+				    "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,"
+				    "-s=%" PRIu64 "M\n", ptn->size);
+			continue;
+#else
+		case FS_MFS:
+			if (swap_dev[0] != 0)
+				scripting_fprintf(f,
+				    "%s\t\t/tmp\tmfs\trw,-s=%"
+				    PRIu64 "\n", swap_dev, ptn->size);
+			else
+				scripting_fprintf(f,
+				    "swap\t\t/tmp\tmfs\trw,-s=%"
+				    PRIu64 "\n", ptn->size);
+			continue;
+#endif
 		case FS_SYSVBFS:
 			fstype = "sysvbfs";
 			make_target_dir("/stand");
@@ -1379,21 +1406,6 @@ make_fstab(struct install_partition_desc *install)
 	}
 
 done_with_disks:
-	if (tmp_ramdisk_size > 0) {
-#ifdef HAVE_TMPFS
-		scripting_fprintf(f, "tmpfs\t\t/tmp\ttmpfs\trw,-m=1777,-s=%"
-		    PRIu64 "\n",
-		    tmp_ramdisk_size * 512);
-#else
-		if (swap_dev[0] != 0)
-			scripting_fprintf(f, "%s\t\t/tmp\tmfs\trw,-s=%"
-			    PRIu64 "\n", swap_dev, tmp_ramdisk_size);
-		else
-			scripting_fprintf(f, "swap\t\t/tmp\tmfs\trw,-s=%"
-			    PRIu64 "\n", tmp_ramdisk_size);
-#endif
-	}
-
 	if (cdrom_dev[0] == 0)
 		get_default_cdrom(cdrom_dev, sizeof(cdrom_dev));
 
