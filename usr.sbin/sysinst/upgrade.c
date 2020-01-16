@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.13 2019/08/27 14:11:00 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.14 2020/01/16 13:56:24 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -61,8 +61,6 @@ do_upgrade(void)
 	msg_display(MSG_upgradeusure);
 	if (!ask_noyes(NULL))
 		return;
-
-	get_ramsize();
 
 	if (find_disks(msg_string(MSG_upgrade), !root_is_read_only()) < 0)
 		return;
