@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.12 2020/01/14 04:00:41 isaki Exp $
+| $NetBSD: boot.S,v 1.13 2020/01/16 13:37:26 isaki Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -44,7 +44,7 @@ ASENTRY_NOPROFILE(entry0)
 |	Disklabel= 404bytes
 |	Since LABELOFFSET in <machine/disklabel.h> is 0x40,
 |	entry must be after 0x000001d4 (0x000f01d4)
-		nop
+		.org	0x40
 disklabel:
 		.space	404
 
