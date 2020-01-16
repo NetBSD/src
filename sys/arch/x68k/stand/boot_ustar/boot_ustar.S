@@ -3,7 +3,7 @@
 |         ITOH Yasufumi
 |	  minoura@NetBSD.org
 |
-| $NetBSD: boot_ustar.S,v 1.9 2020/01/13 03:34:05 isaki Exp $
+| $NetBSD: boot_ustar.S,v 1.10 2020/01/16 13:37:26 isaki Exp $
 
 | supports floppy only
 
@@ -46,8 +46,8 @@ ASENTRY_NOPROFILE(entry0)
 |	Disklabel= 404bytes
 |	Since LABELOFFSET in <machine/disklabel.h> is 0x40,
 |	entry must be after 0x000001d4 (0x000021d4)
-		nop
-GLOBAL(disklabel)
+		.org	0x40
+disklabel:
 		.space	404
 
 ASENTRY_NOPROFILE(entry)
