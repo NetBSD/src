@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.20 2020/01/15 08:25:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.21 2020/01/16 07:11:50 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -77,6 +77,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
+#include "opt_if_ixl.h"
 #endif
 
 #include <sys/param.h>
