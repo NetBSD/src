@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.5 2020/01/16 12:54:16 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.6 2020/01/16 13:15:47 isaki Exp $
 
 NOMAN=		# defined
 
@@ -64,19 +64,17 @@ ${PROG}: $(OBJS)
 	${_MKTARGET_LINK}
 	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDLIBS) > $(PROG).map
 	@grep first_kbyte $(PROG).map
-	@if [ `(echo ibase=16; 						   \
-	    ${TOOL_SED} -n						   \
-		's/^.*0x\([0-9a-f]*\).* first_kbyte$$/\1-$(TEXT)-400/p'    \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	@if [ `${TOOL_AWK}						   \
+	    '/first_kbyte/ {print "eval(eval("$$1")-eval(0x'$(TEXT)'))"}'  \
+	    $(PROG).map | ${TOOL_M4} -` -gt 1024 ];			   \
 	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
 	    rm $(PROG) ; exit 1; 					   \
 	fi
-	@if [ `(echo ibase=16; 						   \
-	    ${TOOL_SED} -n						   \
-		's/^.*0x\([0-9a-f]*\).* _edata *= *\.$$/\1-$(TEXT)-$(TEXTDATASIZE)/p' \
-		$(PROG).map | 						   \
-	    tr a-f A-F) | bc` -gt 0 ]; 					   \
+	@if [ `${TOOL_AWK}						   \
+	    '/_edata/ {print "eval(eval("$$1")-eval(0x'$(TEXT)'))"}'	   \
+	    $(PROG).map | ${TOOL_M4} -`					   \
+	    -gt								   \
+	    `echo 'eval(0x$(TEXTDATASIZE))' | ${TOOL_M4} -` ];		   \
 	then echo '$(BOOT): text+data is too large';			   \
 	    rm $(PROG) ; exit 1; 					   \
 	fi
