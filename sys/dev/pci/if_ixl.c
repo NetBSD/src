@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.21 2020/01/16 07:11:50 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.22 2020/01/16 07:16:04 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -807,7 +807,6 @@ static int	ixl_ifflags_cb(struct ethercom *);
 static int	ixl_setup_interrupts(struct ixl_softc *);
 static int	ixl_establish_intx(struct ixl_softc *);
 static int	ixl_establish_msix(struct ixl_softc *);
-static void	ixl_set_affinity_msix(struct ixl_softc *);
 static void	ixl_enable_queue_intr(struct ixl_softc *,
 		    struct ixl_queue_pair *);
 static void	ixl_disable_queue_intr(struct ixl_softc *,
@@ -5297,11 +5296,15 @@ static int
 ixl_establish_msix(struct ixl_softc *sc)
 {
 	pci_chipset_tag_t pc = sc->sc_pa.pa_pc;
+	kcpuset_t *affinity;
 	unsigned int vector = 0;
 	unsigned int i;
+	int affinity_to, r;
 	char xnamebuf[32];
 	char intrbuf[PCI_INTRSTR_LEN];
 	char const *intrstr;
+
+	kcpuset_create(&affinity, false);
 
 	/* the "other" intr is mapped to vector 0 */
 	vector = 0;
@@ -5317,10 +5320,23 @@ ixl_establish_msix(struct ixl_softc *sc)
 		    "unable to establish interrupt at %s\n", intrstr);
 		goto fail;
 	}
+
+	aprint_normal_dev(sc->sc_dev, "other interrupt at %s", intrstr);
+
+	affinity_to = ncpu > (int)sc->sc_nqueue_pairs_max ? 1 : 0;
+	affinity_to = (affinity_to + sc->sc_nqueue_pairs_max) % ncpu;
+
+	kcpuset_zero(affinity);
+	kcpuset_set(affinity, affinity_to);
+	r = interrupt_distribute(sc->sc_ihs[vector], affinity, NULL);
+	if (r == 0) {
+		aprint_normal(", affinity to %u", affinity_to);
+	}
+	aprint_normal("\n");
 	vector++;
-	aprint_normal_dev(sc->sc_dev, "interrupt at %s\n", intrstr);
 
 	sc->sc_msix_vector_queue = vector;
+	affinity_to = ncpu > (int)sc->sc_nqueue_pairs_max ? 1 : 0;
 
 	for (i = 0; i < sc->sc_nqueue_pairs_max; i++) {
 		intrstr = pci_intr_string(pc, sc->sc_ihp[vector],
@@ -5337,10 +5353,22 @@ ixl_establish_msix(struct ixl_softc *sc)
 			    "unable to establish interrupt at %s\n", intrstr);
 			goto fail;
 		}
-		vector++;
+
 		aprint_normal_dev(sc->sc_dev,
-		    "interrupt at %s\n", intrstr);
+		    "for TXRX%d interrupt at %s",i , intrstr);
+
+		kcpuset_zero(affinity);
+		kcpuset_set(affinity, affinity_to);
+		r = interrupt_distribute(sc->sc_ihs[vector], affinity, NULL);
+		if (r == 0) {
+			aprint_normal(", affinity to %u", affinity_to);
+			affinity_to = (affinity_to + 1) % ncpu;
+		}
+		aprint_normal("\n");
+		vector++;
 	}
+
+	kcpuset_destroy(affinity);
 
 	return 0;
 fail:
@@ -5350,64 +5378,9 @@ fail:
 
 	sc->sc_msix_vector_queue = 0;
 	sc->sc_msix_vector_queue = 0;
+	kcpuset_destroy(affinity);
 
 	return -1;
-}
-
-static void
-ixl_set_affinity_msix(struct ixl_softc *sc)
-{
-	kcpuset_t *affinity;
-	pci_chipset_tag_t pc = sc->sc_pa.pa_pc;
-	int affinity_to, r;
-	unsigned int i, vector;
-	char intrbuf[PCI_INTRSTR_LEN];
-	char const *intrstr;
-
-	affinity_to = 0;
-	kcpuset_create(&affinity, false);
-
-	vector = sc->sc_msix_vector_queue;
-
-	for (i = 0; i < sc->sc_nqueue_pairs_max; i++) {
-		affinity_to = i % ncpu;
-
-		kcpuset_zero(affinity);
-		kcpuset_set(affinity, affinity_to);
-
-		intrstr = pci_intr_string(pc, sc->sc_ihp[vector + i],
-		    intrbuf, sizeof(intrbuf));
-		r = interrupt_distribute(sc->sc_ihs[vector + i],
-		    affinity, NULL);
-		if (r == 0) {
-			aprint_normal_dev(sc->sc_dev,
-			    "for TXRX%u interrupting at %s affinity to %u\n",
-			    i, intrstr, affinity_to);
-		} else {
-			aprint_normal_dev(sc->sc_dev,
-			    "for TXRX%u interrupting at %s\n",
-			    i, intrstr);
-		}
-	}
-
-	vector = 0; /* vector 0 means "other" interrupt */
-	affinity_to = (affinity_to + 1) % ncpu;
-	kcpuset_zero(affinity);
-	kcpuset_set(affinity, affinity_to);
-
-	intrstr = pci_intr_string(pc, sc->sc_ihp[vector],
-	    intrbuf, sizeof(intrbuf));
-	r = interrupt_distribute(sc->sc_ihs[vector], affinity, NULL);
-	if (r == 0) {
-		aprint_normal_dev(sc->sc_dev,
-		    "for other interrupting at %s affinity to %u\n",
-		    intrstr, affinity_to);
-	} else {
-		aprint_normal_dev(sc->sc_dev,
-		    "for other interrupting at %s", intrstr);
-	}
-
-	kcpuset_destroy(affinity);
 }
 
 static void
@@ -5538,8 +5511,6 @@ ixl_setup_interrupts(struct ixl_softc *sc)
 			if (error) {
 				counts[PCI_INTR_TYPE_MSIX] = 0;
 				retry = true;
-			} else {
-				ixl_set_affinity_msix(sc);
 			}
 		} else if (intr_type == PCI_INTR_TYPE_INTX) {
 			error = ixl_establish_intx(sc);
