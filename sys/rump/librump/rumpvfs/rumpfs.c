@@ -1,4 +1,4 @@
-/*	$NetBSD: rumpfs.c,v 1.153 2018/06/04 02:29:53 chs Exp $	*/
+/*	$NetBSD: rumpfs.c,v 1.154 2020/01/17 20:08:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.153 2018/06/04 02:29:53 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rumpfs.c,v 1.154 2020/01/17 20:08:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1917,18 +1917,18 @@ rumpfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-rumpfs_root(struct mount *mp, struct vnode **vpp)
+rumpfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct rumpfs_mount *rfsmp = mp->mnt_data;
 
 	vref(rfsmp->rfsmp_rvp);
-	vn_lock(rfsmp->rfsmp_rvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(rfsmp->rfsmp_rvp, lktype | LK_RETRY);
 	*vpp = rfsmp->rfsmp_rvp;
 	return 0;
 }
 
 int
-rumpfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+rumpfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 
 	return EOPNOTSUPP;

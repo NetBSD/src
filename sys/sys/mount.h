@@ -1,4 +1,4 @@
-/*	$NetBSD: mount.h,v 1.235 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: mount.h,v 1.236 2020/01/17 20:08:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993
@@ -190,17 +190,17 @@ struct vfsops {
 				    size_t *);
 	int	(*vfs_start)	(struct mount *, int);
 	int	(*vfs_unmount)	(struct mount *, int);
-	int	(*vfs_root)	(struct mount *, struct vnode **);
+	int	(*vfs_root)	(struct mount *, int, struct vnode **);
 	int	(*vfs_quotactl)	(struct mount *, struct quotactl_args *);
 	int	(*vfs_statvfs)	(struct mount *, struct statvfs *);
 	int	(*vfs_sync)	(struct mount *, int, struct kauth_cred *);
-	int	(*vfs_vget)	(struct mount *, ino_t, struct vnode **);
+	int	(*vfs_vget)	(struct mount *, ino_t, int, struct vnode **);
 	int	(*vfs_loadvnode) (struct mount *, struct vnode *,
 				    const void *, size_t, const void **);
 	int	(*vfs_newvnode) (struct mount *, struct vnode *, struct vnode *,
 				    struct vattr *, kauth_cred_t, void *,
 				    size_t *, const void **);
-	int	(*vfs_fhtovp)	(struct mount *, struct fid *,
+	int	(*vfs_fhtovp)	(struct mount *, struct fid *, int,
 				    struct vnode **);
 	int	(*vfs_vptofh)	(struct vnode *, struct fid *, size_t *);
 	void	(*vfs_init)	(void);
@@ -221,7 +221,7 @@ struct vfsops {
 };
 
 /* XXX vget is actually file system internal. */
-#define VFS_VGET(MP, INO, VPP)    (*(MP)->mnt_op->vfs_vget)(MP, INO, VPP)
+#define VFS_VGET(MP, INO, LK, VPP) (*(MP)->mnt_op->vfs_vget)(MP, INO, LK, VPP)
 #define VFS_LOADVNODE(MP, VP, KEY, KEY_LEN, NEW_KEY) \
 	(*(MP)->mnt_op->vfs_loadvnode)(MP, VP, KEY, KEY_LEN, NEW_KEY)
 #define VFS_NEWVNODE(MP, DVP, VP, VAP, CRED, EXTRA, NEW_LEN, NEW_KEY) \
@@ -235,11 +235,11 @@ struct vfsops {
 int	VFS_MOUNT(struct mount *, const char *, void *, size_t *);
 int	VFS_START(struct mount *, int);
 int	VFS_UNMOUNT(struct mount *, int);
-int	VFS_ROOT(struct mount *, struct vnode **);
+int	VFS_ROOT(struct mount *, int, struct vnode **);
 int	VFS_QUOTACTL(struct mount *, struct quotactl_args *);
 int	VFS_STATVFS(struct mount *, struct statvfs *);
 int	VFS_SYNC(struct mount *, int, struct kauth_cred *);
-int	VFS_FHTOVP(struct mount *, struct fid *, struct vnode **);
+int	VFS_FHTOVP(struct mount *, struct fid *, int, struct vnode **);
 int	VFS_VPTOFH(struct vnode *, struct fid *, size_t *);
 int	VFS_SNAPSHOT(struct mount *, struct vnode *, struct timespec *);
 int	VFS_EXTATTRCTL(struct mount *, int, struct vnode *, int, const char *);
@@ -255,17 +255,17 @@ int	fsname##_mount(struct mount *, const char *, void *,		\
 		size_t *);						\
 int	fsname##_start(struct mount *, int);				\
 int	fsname##_unmount(struct mount *, int);				\
-int	fsname##_root(struct mount *, struct vnode **);			\
+int	fsname##_root(struct mount *, int, struct vnode **);		\
 int	fsname##_quotactl(struct mount *, struct quotactl_args *);	\
 int	fsname##_statvfs(struct mount *, struct statvfs *);		\
 int	fsname##_sync(struct mount *, int, struct kauth_cred *);	\
-int	fsname##_vget(struct mount *, ino_t, struct vnode **);		\
+int	fsname##_vget(struct mount *, ino_t, int, struct vnode **);	\
 int	fsname##_loadvnode(struct mount *, struct vnode *,		\
 		const void *, size_t, const void **);			\
 int	fsname##_newvnode(struct mount *, struct vnode *,		\
 		struct vnode *, struct vattr *, kauth_cred_t, void *,	\
 		size_t *, const void **);				\
-int	fsname##_fhtovp(struct mount *, struct fid *, struct vnode **);	\
+int	fsname##_fhtovp(struct mount *, struct fid *, int, struct vnode **);\
 int	fsname##_vptofh(struct vnode *, struct fid *, size_t *);	\
 void	fsname##_init(void);						\
 void	fsname##_reinit(void);						\

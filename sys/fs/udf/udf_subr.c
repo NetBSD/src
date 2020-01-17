@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.c,v 1.147 2019/09/18 17:59:15 christos Exp $ */
+/* $NetBSD: udf_subr.c,v 1.148 2020/01/17 20:08:08 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.147 2019/09/18 17:59:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_subr.c,v 1.148 2020/01/17 20:08:08 ad Exp $");
 #endif /* not lint */
 
 
@@ -3082,7 +3082,8 @@ udf_search_vat(struct udf_mount *ump, union udf_pmap *mapping)
 			icb_loc.loc.part_num = udf_rw16(UDF_VTOP_RAWPART);
 			icb_loc.loc.lb_num   = udf_rw32(vat_loc);
 
-			error = udf_get_node(ump, &icb_loc, &vat_node);
+			error = udf_get_node(ump, &icb_loc, &vat_node,
+			    LK_EXCLUSIVE);
 			if (!error) {
 				error = udf_check_for_vat(vat_node);
 				vat_node->i_flags = 0;	/* reset access */
@@ -3197,7 +3198,8 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 
 	DPRINTF(VOLUMES, ("Metadata file\n"));
 	icb_loc.loc.lb_num   = pmm->meta_file_lbn;
-	error = udf_get_node(ump, &icb_loc, &ump->metadata_node);
+	error = udf_get_node(ump, &icb_loc, &ump->metadata_node,
+	    LK_EXCLUSIVE);
 	if (ump->metadata_node) {
 		vp = ump->metadata_node->vnode;
 		UDF_SET_SYSTEMFILE(vp);
@@ -3206,7 +3208,8 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	icb_loc.loc.lb_num   = pmm->meta_mirror_file_lbn;
 	if (icb_loc.loc.lb_num != -1) {
 		DPRINTF(VOLUMES, ("Metadata copy file\n"));
-		error = udf_get_node(ump, &icb_loc, &ump->metadatamirror_node);
+		error = udf_get_node(ump, &icb_loc, &ump->metadatamirror_node,
+		    LK_EXCLUSIVE);
 		if (ump->metadatamirror_node) {
 			vp = ump->metadatamirror_node->vnode;
 			UDF_SET_SYSTEMFILE(vp);
@@ -3216,7 +3219,8 @@ udf_read_metadata_nodes(struct udf_mount *ump, union udf_pmap *mapping)
 	icb_loc.loc.lb_num   = pmm->meta_bitmap_file_lbn;
 	if (icb_loc.loc.lb_num != -1) {
 		DPRINTF(VOLUMES, ("Metadata bitmap file\n"));
-		error = udf_get_node(ump, &icb_loc, &ump->metadatabitmap_node);
+		error = udf_get_node(ump, &icb_loc, &ump->metadatabitmap_node,
+		    LK_EXCLUSIVE);
 		if (ump->metadatabitmap_node) {
 			vp = ump->metadatabitmap_node->vnode;
 			UDF_SET_SYSTEMFILE(vp);
@@ -3397,7 +3401,7 @@ udf_read_rootdirs(struct udf_mount *ump)
 
 	/* try to read in the rootdir */
 	dir_loc = &ump->fileset_desc->rootdir_icb;
-	error = udf_get_node(ump, dir_loc, &rootdir_node);
+	error = udf_get_node(ump, dir_loc, &rootdir_node, LK_EXCLUSIVE);
 	if (error)
 		return ENOENT;
 
@@ -3410,7 +3414,8 @@ udf_read_rootdirs(struct udf_mount *ump)
 	dir_loc = &ump->fileset_desc->streamdir_icb;
 	if (udf_rw32(dir_loc->len)) {
 		printf("udf_read_rootdirs: streamdir defined ");
-		error = udf_get_node(ump, dir_loc, &streamdir_node);
+		error = udf_get_node(ump, dir_loc, &streamdir_node,
+		    LK_EXCLUSIVE);
 		if (error) {
 			printf("but error in streamdir reading\n");
 		} else {
@@ -5625,7 +5630,7 @@ udf_loadvnode(struct mount *mp, struct vnode *vp,
 
 int
 udf_get_node(struct udf_mount *ump, struct long_ad *node_icb_loc,
-	     struct udf_node **udf_noderes)
+	     struct udf_node **udf_noderes, int lktype)
 {
 	int error;
 	struct vnode *vp;

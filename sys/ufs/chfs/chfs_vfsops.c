@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vfsops.c,v 1.20 2019/12/27 09:25:58 msaitoh Exp $	*/
+/*	$NetBSD: chfs_vfsops.c,v 1.21 2020/01/17 20:08:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -67,11 +67,11 @@
 
 static int chfs_mount(struct mount *, const char *, void *, size_t *);
 static int chfs_unmount(struct mount *, int);
-static int chfs_root(struct mount *, struct vnode **);
+static int chfs_root(struct mount *, int, struct vnode **);
 static int chfs_loadvnode(struct mount *, struct vnode *,
     const void *, size_t, const void **);
-static int chfs_vget(struct mount *, ino_t, struct vnode **);
-static int chfs_fhtovp(struct mount *, struct fid *, struct vnode **);
+static int chfs_vget(struct mount *, ino_t, int, struct vnode **);
+static int chfs_fhtovp(struct mount *, struct fid *, int, struct vnode **);
 static int chfs_vptofh(struct vnode *, struct fid *, size_t *);
 static int chfs_start(struct mount *, int);
 static int chfs_statvfs(struct mount *, struct statvfs *);
@@ -338,7 +338,7 @@ chfs_mountfs(struct vnode *devvp, struct mount *mp)
 	ump->um_maxfilesize = 1048512 * 1024;
 
 	/* Allocate the root vnode. */
-	err = VFS_VGET(mp, CHFS_ROOTINO, &vp);
+	err = VFS_VGET(mp, CHFS_ROOTINO, LK_EXCLUSIVE, &vp);
 	if (err) {
 		dbg("error: %d while allocating root node\n", err);
 		return err;
@@ -449,12 +449,12 @@ chfs_unmount(struct mount *mp, int mntflags)
 /* --------------------------------------------------------------------- */
 
 static int
-chfs_root(struct mount *mp, struct vnode **vpp)
+chfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &vp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, lktype, &vp)) != 0)
 		return error;
 	*vpp = vp;
 	return 0;
@@ -656,7 +656,7 @@ chfs_loadvnode(struct mount *mp, struct vnode *vp,
 /* --------------------------------------------------------------------- */
 
 static int
-chfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+chfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
@@ -664,7 +664,7 @@ chfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	if (error)
 		return error;
 
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -678,7 +678,7 @@ chfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 
 
 static int
-chfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+chfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	return ENODEV;
 }

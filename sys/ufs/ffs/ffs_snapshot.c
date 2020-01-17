@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.149 2017/06/01 02:45:15 chs Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.150 2020/01/17 20:08:10 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.149 2017/06/01 02:45:15 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.150 2020/01/17 20:08:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -677,8 +677,8 @@ snapshot_expunge(struct mount *mp, struct vnode *vp, struct fs *copy_fs,
 	 */
 	if ((fs->fs_flags & FS_DOWAPBL) &&
 	    fs->fs_journal_location == UFS_WAPBL_JOURNALLOC_IN_FILESYSTEM) {
-		error = VFS_VGET(mp,
-		    fs->fs_journallocs[UFS_WAPBL_INFS_INO], &logvp);
+		error = VFS_VGET(mp, fs->fs_journallocs[UFS_WAPBL_INFS_INO],
+		    LK_EXCLUSIVE, &logvp);
 		if (error)
 			goto out;
 	}
@@ -1766,7 +1766,7 @@ ffs_snapshot_mount(struct mount *mp)
 		if (fs->fs_snapinum[snaploc] == 0)
 			break;
 		if ((error = VFS_VGET(mp, fs->fs_snapinum[snaploc],
-		    &vp)) != 0) {
+		    LK_EXCLUSIVE, &vp)) != 0) {
 			printf("ffs_snapshot_mount: vget failed %d\n", error);
 			continue;
 		}
