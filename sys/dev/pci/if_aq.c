@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.1 2020/01/01 10:11:21 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.2 2020/01/17 05:11:04 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1 2020/01/01 10:11:21 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.2 2020/01/17 05:11:04 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -4362,7 +4362,7 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 			/* too many mbuf chains? or not enough descriptors? */
 			m_freem(m);
 			ifp->if_oerrors++;
-			if (error == ENOBUFS)
+			if (txring->txr_index == 0 && error == ENOBUFS)
 				ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -4375,7 +4375,7 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
-	if (!is_transmit && txring->txr_nfree < AQ_TXD_MIN)
+	if (txring->txr_index == 0 && txring->txr_nfree < AQ_TXD_MIN)
 		ifp->if_flags |= IFF_OACTIVE;
 
 	if (npkt)
