@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.59 2020/01/13 11:53:24 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.60 2020/01/17 20:27:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.59 2020/01/13 11:53:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.60 2020/01/17 20:27:28 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -631,13 +631,13 @@ sched_catchlwp(struct cpu_info *ci)
 	spc = &ci->ci_schedstate;
 
 	/*
-	 * Be more aggressive if this CPU is first class, and the other is
-	 * not.
+	 * Be more aggressive if this CPU is first class, and the other
+	 * is not.
 	 */
-	gentle = ((curspc->spc_flags & SPCF_1STCLASS) != 0 &&
-	    (spc->spc_flags & SPCF_1STCLASS) == 0);
+	gentle = ((curspc->spc_flags & SPCF_1STCLASS) == 0 ||
+	    (spc->spc_flags & SPCF_1STCLASS) != 0);
 
-	if ((gentle && spc->spc_mcount < min_catch) ||
+	if (spc->spc_mcount < (gentle ? min_catch : 1) ||
 	    curspc->spc_psid != spc->spc_psid) {
 		spc_unlock(ci);
 		return NULL;
