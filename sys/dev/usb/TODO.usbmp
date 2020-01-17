@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.16 2019/08/23 07:29:29 mrg Exp $
+$NetBSD: TODO.usbmp,v 1.17 2020/01/17 15:00:20 maya Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -54,9 +54,6 @@ convert uhidev users to MPSAFE:
   pbms(4)
   - depends upon wscons? check intr
 
-  uyurex(4)
-  - sysmon -- hm?
-
 splusb drivers to convert:
   - auvitek_dtv.c
   - auvitek_video.c
@@ -100,7 +97,6 @@ wakeup/tsleep drivers:
   - ustir.c
   - uthum.c
   - uvscom.c
-  - uyurex.c
 
 missing D_MPSAFE drivers:
   - ucom
@@ -124,7 +120,6 @@ missing CALLOUT_MPSAFE drivers:
   - if_zyd.c
   - ukbd.c
   - ulpt.c
-  - uyurex.c
 
 driver testing:		STATUS
   - uhub		working
