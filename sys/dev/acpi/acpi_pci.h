@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.h,v 1.10 2018/10/21 11:04:26 jmcneill Exp $ */
+/* $NetBSD: acpi_pci.h,v 1.11 2020/01/17 17:06:32 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -32,10 +32,13 @@
 #define _SYS_DEV_ACPI_ACPI_PCI_H
 
 ACPI_STATUS		 acpi_pcidev_scan(struct acpi_devnode *);
-ACPI_STATUS		 acpi_pcidev_ppb_downbus(uint16_t, uint16_t, uint16_t,
+ACPI_STATUS		 acpi_pcidev_ppb_downbus(pci_chipset_tag_t,
+						 uint16_t, uint16_t, uint16_t,
 						 uint16_t, uint16_t *);
 struct acpi_devnode	*acpi_pcidev_find(uint16_t, uint16_t,
 					  uint16_t, uint16_t);
+pci_chipset_tag_t	 acpi_pcidev_get_tag(uint16_t, uint16_t,
+					     uint16_t, uint16_t);
 device_t		 acpi_pcidev_find_dev(struct acpi_devnode *);
 struct acpi_devnode	*acpi_pciroot_find(uint16_t, uint16_t);
 ACPI_INTEGER		 acpi_pci_ignore_boot_config(ACPI_HANDLE);

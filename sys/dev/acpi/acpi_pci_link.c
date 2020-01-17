@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_pci_link.c,v 1.25 2020/01/13 00:19:43 chs Exp $	*/
+/*	$NetBSD: acpi_pci_link.c,v 1.26 2020/01/17 17:06:32 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2002 Mitsuru IWASAKI <iwasaki@jp.freebsd.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.25 2020/01/13 00:19:43 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_link.c,v 1.26 2020/01/17 17:06:32 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/malloc.h>
@@ -142,8 +142,8 @@ static ACPI_STATUS link_add_prs(ACPI_RESOURCE *, void *);
 static int link_valid_irq(struct link *, int);
 static void acpi_pci_link_dump(struct acpi_pci_link_softc *);
 static int acpi_pci_link_attach(struct acpi_pci_link_softc *);
-static uint8_t acpi_pci_link_search_irq(struct acpi_pci_link_softc *, int, int,
-					int);
+static uint8_t acpi_pci_link_search_irq(struct acpi_pci_link_softc *,
+					pci_chipset_tag_t, int, int, int);
 static struct link *acpi_pci_link_lookup(struct acpi_pci_link_softc *, int);
 static ACPI_STATUS acpi_pci_link_srs(struct acpi_pci_link_softc *,
 				     ACPI_BUFFER *);
@@ -560,15 +560,15 @@ fail:
 
 static void
 acpi_pci_link_add_functions(struct acpi_pci_link_softc *sc, struct link *link,
-    int bus, int device, int pin)
+    pci_chipset_tag_t pc, int bus, int device, int pin)
 {
 	uint32_t value;
 	uint8_t func, maxfunc, ipin;
 	pcitag_t tag;
 
-	tag = pci_make_tag(acpi_softc->sc_pc, bus, device, 0);
+	tag = pci_make_tag(pc, bus, device, 0);
 	/* See if we have a valid device at function 0. */
-	value = pci_conf_read(acpi_softc->sc_pc, tag,  PCI_BHLC_REG);
+	value = pci_conf_read(pc, tag,  PCI_BHLC_REG);
 	if (PCI_HDRTYPE_TYPE(value) > PCI_HDRTYPE_PCB)
 		return;
 	if (PCI_HDRTYPE_MULTIFN(value))
@@ -578,11 +578,11 @@ acpi_pci_link_add_functions(struct acpi_pci_link_softc *sc, struct link *link,
 
 	/* Scan all possible functions at this device. */
 	for (func = 0; func <= maxfunc; func++) {
-		tag = pci_make_tag(acpi_softc->sc_pc, bus, device, func);
-		value = pci_conf_read(acpi_softc->sc_pc, tag, PCI_ID_REG);
+		tag = pci_make_tag(pc, bus, device, func);
+		value = pci_conf_read(pc, tag, PCI_ID_REG);
 		if (PCI_VENDOR(value) == 0xffff)
 			continue;
-		value = pci_conf_read(acpi_softc->sc_pc, tag,
+		value = pci_conf_read(pc, tag,
 		    PCI_INTERRUPT_REG);
 		ipin = PCI_INTERRUPT_PIN(value);
 		/*
@@ -602,16 +602,16 @@ acpi_pci_link_add_functions(struct acpi_pci_link_softc *sc, struct link *link,
 }
 
 static uint8_t
-acpi_pci_link_search_irq(struct acpi_pci_link_softc *sc, int bus, int device,
-			 int pin)
+acpi_pci_link_search_irq(struct acpi_pci_link_softc *sc, pci_chipset_tag_t pc,
+    int bus, int device, int pin)
 {
 	uint32_t value;
 	uint8_t func, maxfunc, ipin, iline;
 	pcitag_t tag;
 
-	tag = pci_make_tag(acpi_softc->sc_pc, bus, device, 0);
+	tag = pci_make_tag(pc, bus, device, 0);
 	/* See if we have a valid device at function 0. */
-	value = pci_conf_read(acpi_softc->sc_pc, tag,  PCI_BHLC_REG);
+	value = pci_conf_read(pc, tag,  PCI_BHLC_REG);
 	if (PCI_HDRTYPE_TYPE(value) > PCI_HDRTYPE_PCB)
 		return (PCI_INVALID_IRQ);
 	if (PCI_HDRTYPE_MULTIFN(value))
@@ -621,11 +621,11 @@ acpi_pci_link_search_irq(struct acpi_pci_link_softc *sc, int bus, int device,
 
 	/* Scan all possible functions at this device. */
 	for (func = 0; func <= maxfunc; func++) {
-		tag = pci_make_tag(acpi_softc->sc_pc, bus, device, func);
-		value = pci_conf_read(acpi_softc->sc_pc, tag, PCI_ID_REG);
+		tag = pci_make_tag(pc, bus, device, func);
+		value = pci_conf_read(pc, tag, PCI_ID_REG);
 		if (PCI_VENDOR(value) == 0xffff)
 			continue;
-		value = pci_conf_read(acpi_softc->sc_pc, tag,
+		value = pci_conf_read(pc, tag,
 		    PCI_INTERRUPT_REG);
 		ipin = PCI_INTERRUPT_PIN(value);
 		iline = PCI_INTERRUPT_LINE(value);
@@ -663,7 +663,8 @@ acpi_pci_link_lookup(struct acpi_pci_link_softc *sc, int source_index)
 }
 
 void
-acpi_pci_link_add_reference(void *v, int index, int bus, int slot, int pin)
+acpi_pci_link_add_reference(void *v, pci_chipset_tag_t pc, int index,
+    int bus, int slot, int pin)
 {
 	struct acpi_pci_link_softc *sc = v;
 	struct link *link;
@@ -678,7 +679,7 @@ acpi_pci_link_add_reference(void *v, int index, int bus, int slot, int pin)
 		return;
 	}
 	link->l_references++;
-	acpi_pci_link_add_functions(sc, link, bus, slot, pin);
+	acpi_pci_link_add_functions(sc, link, pc, bus, slot, pin);
 	if (link->l_routed)
 		pci_link_interrupt_weights[link->l_irq]++;
 
@@ -703,7 +704,7 @@ acpi_pci_link_add_reference(void *v, int index, int bus, int slot, int pin)
 	}
 
 	/* Try to find a BIOS IRQ setting from any matching devices. */
-	bios_irq = acpi_pci_link_search_irq(sc, bus, slot, pin);
+	bios_irq = acpi_pci_link_search_irq(sc, pc, bus, slot, pin);
 	if (!PCI_INTERRUPT_VALID(bios_irq)) {
 		ACPI_SERIAL_END(pci_link);
 		return;
@@ -1022,7 +1023,8 @@ acpi_pci_link_choose_irq(struct acpi_pci_link_softc *sc, struct link *link)
 }
 
 int
-acpi_pci_link_route_interrupt(void *v, int index, int *irq, int *pol, int *trig)
+acpi_pci_link_route_interrupt(void *v, pci_chipset_tag_t pc, int index,
+    int *irq, int *pol, int *trig)
 {
 	struct acpi_pci_link_softc *sc = v;
 	struct link *link;
@@ -1073,11 +1075,11 @@ acpi_pci_link_route_interrupt(void *v, int index, int *irq, int *pol, int *trig)
 	link->l_pol = *pol;
 	link->l_trig = *trig;
 	for (i = 0; i < link->l_dev_count; ++i) {
-		reg = pci_conf_read(acpi_softc->sc_pc, link->l_devices[i],
+		reg = pci_conf_read(pc, link->l_devices[i],
 		    PCI_INTERRUPT_REG);
 		reg &= ~(PCI_INTERRUPT_LINE_MASK << PCI_INTERRUPT_LINE_SHIFT);
 		reg |= link->l_irq << PCI_INTERRUPT_LINE_SHIFT;
-		pci_conf_write(acpi_softc->sc_pc, link->l_devices[i],
+		pci_conf_write(pc, link->l_devices[i],
 		    PCI_INTERRUPT_REG, reg);
 	}
 

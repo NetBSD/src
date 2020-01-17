@@ -1,4 +1,4 @@
-/*	$NetBSD: acpivar.h,v 1.81 2019/12/31 17:26:04 jmcneill Exp $	*/
+/*	$NetBSD: acpivar.h,v 1.82 2020/01/17 17:06:32 jmcneill Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -87,6 +87,7 @@ struct acpibus_attach_args {
  * functions on a PCI device (ACPI 4.0a, p. 200).
  */
 struct acpi_pci_info {
+	pci_chipset_tag_t	 ap_pc;		/* PCI chipset tag */
 	uint16_t		 ap_flags;	/* Flags (cf. below) */
 	uint16_t		 ap_segment;	/* PCI segment group */
 	uint16_t		 ap_bus;	/* PCI bus */
@@ -160,7 +161,6 @@ struct acpi_softc {
 
 	bus_space_tag_t		 sc_iot;	/* PCI I/O space tag */
 	bus_space_tag_t		 sc_memt;	/* PCI MEM space tag */
-	pci_chipset_tag_t	 sc_pc;		/* PCI chipset tag */
 	int			 sc_pciflags;	/* PCI bus flags */
 	int			 sc_pci_bus;	/* internal PCI fixup */
 	isa_chipset_tag_t	 sc_ic;		/* ISA chipset tag */
@@ -322,8 +322,10 @@ void		acpi_resource_print(device_t, struct acpi_resources *);
 void		acpi_resource_cleanup(struct acpi_resources *);
 
 void *		acpi_pci_link_devbyhandle(ACPI_HANDLE);
-void		acpi_pci_link_add_reference(void *, int, int, int, int);
-int		acpi_pci_link_route_interrupt(void *, int, int *, int *, int *);
+void		acpi_pci_link_add_reference(void *, pci_chipset_tag_t, int,
+		    int, int, int);
+int		acpi_pci_link_route_interrupt(void *, pci_chipset_tag_t, int,
+		    int *, int *, int *);
 char *		acpi_pci_link_name(void *);
 ACPI_HANDLE	acpi_pci_link_handle(void *);
 void		acpi_pci_link_state(void);
@@ -389,6 +391,7 @@ void	acpi_debug_init(void);
 
 bus_dma_tag_t	acpi_get_dma_tag(struct acpi_softc *, struct acpi_devnode *);
 bus_dma_tag_t	acpi_get_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
+pci_chipset_tag_t acpi_get_pci_chipset_tag(struct acpi_softc *, int, int);
 
 /*
  * Misc routines with vectors updated by acpiverbose module.
