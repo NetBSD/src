@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_acpi.c,v 1.5 2019/10/14 11:00:13 jmcneill Exp $ */
+/* $NetBSD: gicv3_acpi.c,v 1.6 2020/01/17 16:58:57 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.5 2019/10/14 11:00:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_acpi.c,v 1.6 2020/01/17 16:58:57 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -288,6 +288,7 @@ gicv3_acpi_map_redist(struct gicv3_acpi_softc *sc)
 static ACPI_STATUS
 gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 {
+	static bool its_attached;
 	struct gicv3_acpi_softc * const sc = aux;
 	ACPI_MADT_GENERIC_TRANSLATOR *gits;
 	bus_space_handle_t bsh;
@@ -303,9 +304,13 @@ gicv3_acpi_map_gits(ACPI_SUBTABLE_HEADER *hdrp, void *aux)
 		return AE_OK;
 	}
 
-	aprint_normal_dev(sc->sc_gic.sc_dev, "ITS #%#x at 0x%" PRIx64 "\n", gits->TranslationId, gits->BaseAddress);
+	aprint_normal_dev(sc->sc_gic.sc_dev, "ITS #%d at 0x%" PRIx64 "%s\n",
+	    gits->TranslationId, gits->BaseAddress, its_attached ? " (disabled)" : "");
 
-	gicv3_its_init(&sc->sc_gic, bsh, gits->BaseAddress, gits->TranslationId);
+	if (its_attached == false) {
+		gicv3_its_init(&sc->sc_gic, bsh, gits->BaseAddress, gits->TranslationId);
+		its_attached = true;
+	}
 
 	return AE_OK;
 }
