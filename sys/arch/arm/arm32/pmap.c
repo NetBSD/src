@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.377 2020/01/17 12:40:44 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.378 2020/01/17 16:59:07 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.377 2020/01/17 12:40:44 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.378 2020/01/17 16:59:07 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -5787,6 +5787,9 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 #else
 		if (uvm_page_physget(&pa) == false)
 			return (1);
+
+		pmap_kenter_pa(va, pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
 #endif	/* PMAP_STEAL_MEMORY */
 	} else {
 		struct vm_page *pg;
