@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.11 2020/01/15 17:55:43 ad Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.12 2020/01/17 19:56:49 ad Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.11 2020/01/15 17:55:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.12 2020/01/17 19:56:49 ad Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -613,8 +613,10 @@ drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages, bool dirty,
 
 	for (i = 0; i < (obj->size >> PAGE_SHIFT); i++) {
 		if (dirty) {
+			mutex_enter(obj->filp->vmobjlock);
 			uvm_pagemarkdirty(&pages[i]->p_vmp,
 			    UVM_PAGE_STATUS_DIRTY);
+			mutex_exit(obj->filp->vmobjlock);
 		}
 	}
 
