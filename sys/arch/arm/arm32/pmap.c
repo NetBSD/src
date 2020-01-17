@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.376 2020/01/17 12:39:00 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.377 2020/01/17 12:40:44 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.376 2020/01/17 12:39:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.377 2020/01/17 12:40:44 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -7801,7 +7801,7 @@ pmap_boot_pagealloc(psize_t amount, psize_t mask, psize_t match,
 		pv_addr_t *newpv;
 		psize_t off;
 		/*
-		 * If this entry is too small to satify the request...
+		 * If this entry is too small to satisfy the request...
 		 */
 		KASSERT(pv->pv_size > 0);
 		if (pv->pv_size < amount)
