@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.265 2020/01/17 21:59:05 skrll Exp $ */
+/* $NetBSD: pmap.c,v 1.266 2020/01/17 22:03:56 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2020/01/17 21:59:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.266 2020/01/17 22:03:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1030,8 +1030,8 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 #if 0
 		printf("     bank %d: avail_start 0x%"PRIxPADDR", start 0x%"PRIxPADDR", "
-		    "avail_end 0x%"PRIxPADDR"\n", bank, VM_PHYSMEM_PTR(bank)->avail_start,
-		    VM_PHYSMEM_PTR(bank)->start, VM_PHYSMEM_PTR(bank)->avail_end);
+		    "avail_end 0x%"PRIxPADDR"\n", bank, uvm_physseg_get_avail_start(bank),
+		    uvm_physseg_get_start(bank), uvm_physseg_get_avail_end(bank));
 #endif
 
 		if (uvm_physseg_get_avail_start(bank) != uvm_physseg_get_start(bank) ||
@@ -1040,7 +1040,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 
 #if 0
 		printf("             avail_end - avail_start = 0x%"PRIxPADDR"\n",
-		    VM_PHYSMEM_PTR(bank)->avail_end - VM_PHYSMEM_PTR(bank)->avail_start);
+		    uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank));
 #endif
 
 		if (uvm_physseg_get_avail_end(bank) - uvm_physseg_get_avail_start(bank)
@@ -1098,14 +1098,16 @@ pmap_init(void)
 	pmap_initialized = true;
 
 #if 0
-	for (bank = 0; bank < vm_nphysseg; bank++) {
+	for (uvm_physseg_t bank = uvm_physseg_get_first();
+	    uvm_physseg_valid_p(bank);
+	    bank = uvm_physseg_get_next(bank)) {
 		printf("bank %d\n", bank);
-		printf("\tstart = 0x%x\n", ptoa(VM_PHYSMEM_PTR(bank)->start));
-		printf("\tend = 0x%x\n", ptoa(VM_PHYSMEM_PTR(bank)->end));
-		printf("\tavail_start = 0x%x\n",
-		    ptoa(VM_PHYSMEM_PTR(bank)->avail_start));
-		printf("\tavail_end = 0x%x\n",
-		    ptoa(VM_PHYSMEM_PTR(bank)->avail_end));
+		printf("\tstart = 0x%lx\n", ptoa(uvm_physseg_get_start(bank)));
+		printf("\tend = 0x%lx\n", ptoa(uvm_physseg_get_end(bank)));
+		printf("\tavail_start = 0x%lx\n",
+		    ptoa(uvm_physseg_get_avail_start(bank)));
+		printf("\tavail_end = 0x%lx\n",
+		    ptoa(uvm_physseg_get_avail_end(bank)));
 	}
 #endif
 }
