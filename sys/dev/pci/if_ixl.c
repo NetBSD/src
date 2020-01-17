@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.24 2020/01/17 09:04:04 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.25 2020/01/17 09:37:42 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -606,7 +606,6 @@ struct ixl_softc {
 	struct ethercom		 sc_ec;
 	bool			 sc_attached;
 	bool			 sc_dead;
-	bool			 sc_rxctl_atq;
 	uint32_t		 sc_port;
 	struct sysctllog	*sc_sysctllog;
 	struct workqueue	*sc_workq;
@@ -657,6 +656,8 @@ struct ixl_softc {
 
 	const struct ixl_aq_regs *
 				 sc_aq_regs;
+	uint32_t		 sc_aq_flags;
+#define IXL_SC_AQ_FLAG_RXCTL	__BIT(0)
 
 	kmutex_t		 sc_atq_lock;
 	kcondvar_t		 sc_atq_cv;
@@ -3788,12 +3789,13 @@ ixl_get_version(struct ixl_softc *sc)
 	aprint_normal(", FW %hu.%hu.%05u API %hu.%hu", (uint16_t)fwver,
 	    (uint16_t)(fwver >> 16), fwbuild, api_maj_ver, api_min_ver);
 
-	sc->sc_rxctl_atq = true;
-	if (sc->sc_mac_type == I40E_MAC_X722) {
-		if (api_maj_ver == 1 && api_min_ver < 5) {
-			sc->sc_rxctl_atq = false;
+#define IXL_API_VER(maj, min)	(((uint32_t)(maj) << 16) | (min))
+	if (IXL_API_VER(api_maj_ver, api_min_ver) >= IXL_API_VER(1, 5)) {
+		if (sc->sc_mac_type == I40E_MAC_X722) {
+			SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
 		}
 	}
+#undef IXL_API_VER
 
 	return 0;
 }
@@ -6269,7 +6271,11 @@ ixl_rd_rx_csr(struct ixl_softc *sc, uint32_t reg)
 	uint32_t val;
 	int rv, retry, retry_limit;
 
-	retry_limit = sc->sc_rxctl_atq ? 5 : 0;
+	if (ISSET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL)) {
+		retry_limit = 5;
+	} else {
+		retry_limit = 0;
+	}
 
 	for (retry = 0; retry < retry_limit; retry++) {
 		rv = ixl_rx_ctl_read(sc, reg, &val);
@@ -6319,7 +6325,11 @@ ixl_wr_rx_csr(struct ixl_softc *sc, uint32_t reg, uint32_t value)
 {
 	int rv, retry, retry_limit;
 
-	retry_limit = sc->sc_rxctl_atq ? 5 : 0;
+	if (ISSET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL)) {
+		retry_limit = 5;
+	} else {
+		retry_limit = 0;
+	}
 
 	for (retry = 0; retry < retry_limit; retry++) {
 		rv = ixl_rx_ctl_write(sc, reg, value);
