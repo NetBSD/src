@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.362.4.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.362.4.2 2020/01/17 22:26:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.1 2020/01/17 21:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.2 2020/01/17 22:26:26 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2082,6 +2082,7 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_size);
+	cache_set_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	*new_key = &ip->i_number;
 	return 0;
 }
@@ -2203,6 +2204,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	}
 
 	uvm_vnp_setsize(vp, ip->i_size);
+	cache_set_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	*new_key = &ip->i_number;
 	return 0;
 }

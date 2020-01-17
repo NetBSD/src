@@ -1,7 +1,7 @@
-/*	$NetBSD: vnode_impl.h,v 1.19.2.3 2020/01/14 11:07:40 ad Exp $	*/
+/*	$NetBSD: vnode_impl.h,v 1.19.2.4 2020/01/17 22:26:26 ad Exp $	*/
 
 /*-
- * Copyright (c) 2016, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2016, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -32,6 +32,7 @@
 #include <sys/vnode.h>
 
 struct namecache;
+struct nchnode;
 
 enum vnode_state {
 	VS_ACTIVE,	/* Assert only, fs node attached and usecount > 0. */
@@ -60,7 +61,7 @@ struct vcache_key {
  *	d	vdrain_lock
  *	i	v_interlock
  *	m	mnt_vnodelock
- *	n	managed by vfs_cache: look there
+ *	n	managed by vfs_cache: see above
  *	s	syncer_data_lock
  */
 struct vnode_impl {
@@ -68,10 +69,7 @@ struct vnode_impl {
 	enum vnode_state vi_state;		/* i: current state */
 	struct vnodelst *vi_lrulisthd;		/* d: current lru list head */
 	TAILQ_ENTRY(vnode_impl) vi_lrulist;	/* d: lru list */
-	TAILQ_HEAD(, namecache) vi_nclist;	/* n: namecaches (parent) */
-	rb_tree_t vi_nctree;			/* n: namecache tree */
-	krwlock_t *vi_ncdlock;			/* n: namecache lock */
-	krwlock_t *vi_ncvlock;			/* n: namecache lock */
+	struct nchnode *vi_ncache;		/* n: namecache state */
 	int vi_synclist_slot;			/* s: synclist slot index */
 	int vi_lrulisttm;			/* i: time of lru enqueue */
 	TAILQ_ENTRY(vnode_impl) vi_synclist;	/* s: vnodes with dirty bufs */
