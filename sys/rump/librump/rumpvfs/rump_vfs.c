@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.88 2019/02/20 10:07:27 hannken Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.89 2020/01/17 20:08:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.88 2019/02/20 10:07:27 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.89 2020/01/17 20:08:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -411,7 +411,7 @@ rump_vfs_root(struct mount *mp, struct vnode **vpp, int lock)
 {
 	int rv;
 
-	rv = VFS_ROOT(mp, vpp);
+	rv = VFS_ROOT(mp, LK_EXCLUSIVE, vpp);
 	if (rv)
 		return rv;
 
@@ -439,7 +439,7 @@ int
 rump_vfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 {
 
-	return VFS_FHTOVP(mp, fid, vpp);
+	return VFS_FHTOVP(mp, fid, LK_EXCLUSIVE, vpp);
 }
 
 int

@@ -1430,7 +1430,7 @@ sfs_lookup_snapshot(vnode_t *dvp, struct componentname *cnp, vnode_t **vpp)
 
 	/* Return the mounted root rather than the covered mount point.  */
 	ASSERT(vp->v_mountedhere);
-	error = VFS_ROOT(vp->v_mountedhere, vpp);
+	error = VFS_ROOT(vp->v_mountedhere, LK_EXCLUSIVE, vpp);
 	vrele(vp);
 	if (error)
 		return error;
@@ -1949,7 +1949,7 @@ zfsctl_create(zfsvfs_t *zfsvfs)
 
 	zc = kmem_alloc(sizeof(*zc), KM_SLEEP);
 
-	VERIFY(0 == VFS_ROOT(zfsvfs->z_vfs, &vp));
+	VERIFY(0 == VFS_ROOT(zfsvfs->z_vfs, LK_EXCLUSIVE, &vp));
 	VERIFY(0 == sa_lookup(VTOZ(vp)->z_sa_hdl, SA_ZPL_CRTIME(zfsvfs),
 	    &crtime, sizeof(crtime)));
 	vput(vp);
