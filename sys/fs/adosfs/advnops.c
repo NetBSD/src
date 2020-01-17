@@ -1,4 +1,4 @@
-/*	$NetBSD: advnops.c,v 1.50 2017/05/26 14:21:00 riastradh Exp $	*/
+/*	$NetBSD: advnops.c,v 1.51 2020/01/17 20:08:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.50 2017/05/26 14:21:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advnops.c,v 1.51 2020/01/17 20:08:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -657,7 +657,8 @@ adosfs_readdir(void *v)
 		 */
 		ap = NULL;
 		do {
-			error = VFS_VGET(pap->amp->mp, (ino_t)nextbn, &vp);
+			error = VFS_VGET(pap->amp->mp, (ino_t)nextbn,
+			    LK_EXCLUSIVE, &vp);
 			if (error)
 				goto reterr;
 			ap = VTOA(vp);

@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.106 2017/04/01 19:35:56 riastradh Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.107 2020/01/17 20:08:08 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.106 2017/04/01 19:35:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.107 2020/01/17 20:08:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -305,7 +305,7 @@ smbfs_setroot(struct mount *mp)
  * Return locked root vnode of a filesystem.
  */
 int
-smbfs_root(struct mount *mp, struct vnode **vpp)
+smbfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct smbmount *smp = VFSTOSMBFS(mp);
 	int error;
@@ -320,7 +320,7 @@ smbfs_root(struct mount *mp, struct vnode **vpp)
 	KASSERT(smp->sm_root != NULL && SMBTOV(smp->sm_root) != NULL);
 	*vpp = SMBTOV(smp->sm_root);
 	vref(*vpp);
-	error = vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(*vpp, lktype | LK_RETRY);
 	if (error)
 		vrele(*vpp);
 	return error;
@@ -446,7 +446,7 @@ smbfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * smbfs flat namespace lookup. Unsupported.
  */
 /* ARGSUSED */
-int smbfs_vget(struct mount *mp, ino_t ino,
+int smbfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	return (EOPNOTSUPP);

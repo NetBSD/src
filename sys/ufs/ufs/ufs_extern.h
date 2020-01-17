@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_extern.h,v 1.83 2016/10/28 20:38:12 jdolecek Exp $	*/
+/*	$NetBSD: ufs_extern.h,v 1.84 2020/01/17 20:08:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993, 1994
@@ -176,10 +176,10 @@ void	ufs_init(void);
 void	ufs_reinit(void);
 void	ufs_done(void);
 int	ufs_start(struct mount *, int);
-int	ufs_root(struct mount *, struct vnode **);
-int	ufs_vget(struct mount *, ino_t, struct vnode **);
+int	ufs_root(struct mount *, int, struct vnode **);
+int	ufs_vget(struct mount *, ino_t, int, struct vnode **);
 int	ufs_quotactl(struct mount *, struct quotactl_args *);
-int	ufs_fhtovp(struct mount *, struct ufid *, struct vnode **);
+int	ufs_fhtovp(struct mount *, struct ufid *, int, struct vnode **);
 
 /* ufs_vnops.c */
 void	ufs_vinit(struct mount *, int (**)(void *),

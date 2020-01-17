@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.214 2019/06/20 03:31:30 pgoyette Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.215 2020/01/17 20:08:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.214 2019/06/20 03:31:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.215 2020/01/17 20:08:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1186,7 +1186,7 @@ ext2fs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
  * - check for an unallocated inode (i_mode == 0)
  */
 int
-ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+ext2fs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct inode *ip;
 	struct vnode *nvp;
@@ -1203,7 +1203,7 @@ ext2fs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		ufh.ufid_ino >= fs->e2fs_ncg * fs->e2fs.e2fs_ipg)
 		return ESTALE;
 
-	if ((error = VFS_VGET(mp, ufh.ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufh.ufid_ino, lktype, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return error;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: cd9660_vfsops.c,v 1.93 2017/04/17 08:32:00 hannken Exp $	*/
+/*	$NetBSD: cd9660_vfsops.c,v 1.94 2020/01/17 20:08:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.93 2017/04/17 08:32:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cd9660_vfsops.c,v 1.94 2020/01/17 20:08:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -578,14 +578,14 @@ cd9660_unmount(struct mount *mp, int mntflags)
  * Return root of a filesystem
  */
 int
-cd9660_root(struct mount *mp, struct vnode **vpp)
+cd9660_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct iso_mnt *imp = VFSTOISOFS(mp);
 	struct iso_directory_record *dp =
 	    (struct iso_directory_record *)imp->root;
 	ino_t ino = isodirino(dp, imp);
 
-	return cd9660_vget(mp, ino, vpp);
+	return cd9660_vget(mp, ino, lktype, vpp);
 }
 
 /*
@@ -643,7 +643,7 @@ struct ifid {
 
 /* ARGSUSED */
 int
-cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+cd9660_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct ifid ifh;
 	struct iso_node *ip;
@@ -659,7 +659,7 @@ cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	    ifh.ifid_ino, ifh.ifid_start);
 #endif
 
-	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, lktype, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -674,14 +674,14 @@ cd9660_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 }
 
 int
-cd9660_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+cd9660_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;

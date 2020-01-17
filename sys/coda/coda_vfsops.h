@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.h,v 1.20 2017/06/08 22:29:59 chs Exp $	*/
+/*	$NetBSD: coda_vfsops.h,v 1.21 2020/01/17 20:08:06 ad Exp $	*/
 
 /*
  *
@@ -50,14 +50,14 @@ int coda_vfsopstats_init(void);
 int coda_mount(struct mount *, const char *, void *, size_t *);
 int coda_start(struct mount *, int);
 int coda_unmount(struct mount *, int);
-int coda_root(struct mount *, struct vnode **);
+int coda_root(struct mount *, int, struct vnode **);
 int coda_nb_statvfs(struct mount *, struct statvfs *);
 int coda_sync(struct mount *, int, kauth_cred_t);
-int coda_vget(struct mount *, ino_t, struct vnode **);
+int coda_vget(struct mount *, ino_t, int, struct vnode **);
 int coda_loadvnode(struct mount *, struct vnode *, const void *, size_t,
     const void **);
 int coda_fhtovp(struct mount *, struct fid *, struct mbuf *, struct vnode **,
-		       int *, kauth_cred_t *);
+		       int *, kauth_cred_t *, int);
 int coda_vptofh(struct vnode *, struct fid *);
 void coda_init(void);
 void coda_done(void);

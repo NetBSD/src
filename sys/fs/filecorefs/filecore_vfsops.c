@@ -1,4 +1,4 @@
-/*	$NetBSD: filecore_vfsops.c,v 1.81 2017/04/17 08:32:00 hannken Exp $	*/
+/*	$NetBSD: filecore_vfsops.c,v 1.82 2020/01/17 20:08:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The Regents of the University of California.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.81 2017/04/17 08:32:00 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: filecore_vfsops.c,v 1.82 2020/01/17 20:08:07 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -460,12 +460,12 @@ filecore_unmount(struct mount *mp, int mntflags)
  * Return root of a filesystem
  */
 int
-filecore_root(struct mount *mp, struct vnode **vpp)
+filecore_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
         int error;
 
-        if ((error = VFS_VGET(mp, FILECORE_ROOTINO, &nvp)) != 0)
+        if ((error = VFS_VGET(mp, FILECORE_ROOTINO, lktype, &nvp)) != 0)
                 return (error);
         *vpp = nvp;
         return (0);
@@ -519,7 +519,8 @@ struct ifid {
 
 /* ARGSUSED */
 int
-filecore_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+filecore_fhtovp(struct mount *mp, struct fid *fhp, int lktype,
+    struct vnode **vpp)
 {
 	struct ifid ifh;
 	struct vnode *nvp;
@@ -530,7 +531,7 @@ filecore_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 		return EINVAL;
 
 	memcpy(&ifh, fhp, sizeof(ifh));
-	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, lktype, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}
@@ -553,14 +554,14 @@ filecore_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
  */
 
 int
-filecore_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+filecore_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;

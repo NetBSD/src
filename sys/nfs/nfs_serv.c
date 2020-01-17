@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_serv.c,v 1.178 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: nfs_serv.c,v 1.179 2020/01/17 20:08:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.178 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_serv.c,v 1.179 2020/01/17 20:08:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3056,7 +3056,8 @@ again:
 	 * even be here otherwise.
 	 */
 	if (!getret) {
-		if ((getret = VFS_VGET(vp->v_mount, at.va_fileid, &nvp)))
+		if ((getret = VFS_VGET(vp->v_mount, at.va_fileid,
+		    LK_EXCLUSIVE, &nvp)))
 			getret = (getret == EOPNOTSUPP) ?
 				NFSERR_NOTSUPP : NFSERR_IO;
 		else
@@ -3144,7 +3145,8 @@ again:
 			 * For readdir_and_lookup get the vnode using
 			 * the file number.
 			 */
-			if (VFS_VGET(vp->v_mount, dp->d_fileno, &nvp))
+			if (VFS_VGET(vp->v_mount, dp->d_fileno, LK_EXCLUSIVE,
+			    &nvp))
 				goto invalid;
 			if (nfsrv_composefh(nvp, &nnsfh, true)) {
 				vput(nvp);

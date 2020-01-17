@@ -1,4 +1,4 @@
-/*	$NetBSD: adlookup.c,v 1.20 2018/09/03 16:29:34 riastradh Exp $	*/
+/*	$NetBSD: adlookup.c,v 1.21 2020/01/17 20:08:07 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.20 2018/09/03 16:29:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: adlookup.c,v 1.21 2020/01/17 20:08:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,7 +145,8 @@ adosfs_lookup(void *v)
 		 *
 		 */
 		VOP_UNLOCK(vdp); /* race */
-		error = VFS_VGET(vdp->v_mount, (ino_t)adp->pblock, vpp);
+		error = VFS_VGET(vdp->v_mount, (ino_t)adp->pblock,
+		    LK_EXCLUSIVE, vpp);
 		vn_lock(vdp, LK_EXCLUSIVE | LK_RETRY);
 		if (error) {
 			*vpp = NULL;
@@ -163,8 +164,8 @@ adosfs_lookup(void *v)
 	bn = adp->tab[hval];
 	i = uimin(adp->tabi[hval], 0);
 	while (bn != 0) {
-		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn, vpp
-				      )) != 0) {
+		if ((error = VFS_VGET(vdp->v_mount, (ino_t)bn,
+		    LK_EXCLUSIVE, vpp)) != 0) {
 #ifdef ADOSFS_DIAGNOSTIC
 			printf("[aget] %d)", error);
 #endif

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.73 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.74 2020/01/17 20:08:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.73 2019/12/22 19:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.74 2020/01/17 20:08:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -653,7 +653,7 @@ mount_checkdirs(vnode_t *olddp)
 	if (olddp->v_usecount == 1) {
 		return;
 	}
-	if (VFS_ROOT(olddp->v_mountedhere, &newdp))
+	if (VFS_ROOT(olddp->v_mountedhere, LK_EXCLUSIVE, &newdp))
 		panic("mount: lost mount");
 
 	do {
@@ -1241,7 +1241,7 @@ done:
 		 * Get the vnode for '/'.  Set cwdi0.cwdi_cdir to
 		 * reference it.
 		 */
-		error = VFS_ROOT(mp, &rootvnode);
+		error = VFS_ROOT(mp, LK_SHARED, &rootvnode);
 		if (error)
 			panic("cannot find root vnode, error=%d", error);
 		cwdi0.cwdi_cdir = rootvnode;

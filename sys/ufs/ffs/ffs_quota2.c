@@ -1,4 +1,4 @@
-/* $NetBSD: ffs_quota2.c,v 1.6 2016/07/07 06:55:44 msaitoh Exp $ */
+/* $NetBSD: ffs_quota2.c,v 1.7 2020/01/17 20:08:10 ad Exp $ */
 /*-
   * Copyright (c) 2010 Manuel Bouyer
   * All rights reserved.
@@ -26,7 +26,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.6 2016/07/07 06:55:44 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_quota2.c,v 1.7 2020/01/17 20:08:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -78,7 +78,8 @@ ffs_quota2_mount(struct mount *mp)
 
 	if (fs->fs_quota_flags & FS_Q2_DO_TYPE(USRQUOTA) &&
 	    ump->um_quotas[USRQUOTA] == NULLVP) {
-		error = VFS_VGET(mp, fs->fs_quotafile[USRQUOTA], &vp);
+		error = VFS_VGET(mp, fs->fs_quotafile[USRQUOTA],
+		    LK_EXCLUSIVE, &vp);
 		if (error) {
 			printf("%s: can't vget() user quota inode: %d\n",
 			    mp->mnt_stat.f_mntonname, error);
@@ -93,7 +94,8 @@ ffs_quota2_mount(struct mount *mp)
 	}
 	if (fs->fs_quota_flags & FS_Q2_DO_TYPE(GRPQUOTA) &&
 	    ump->um_quotas[GRPQUOTA] == NULLVP) {
-		error = VFS_VGET(mp, fs->fs_quotafile[GRPQUOTA], &vp);
+		error = VFS_VGET(mp, fs->fs_quotafile[GRPQUOTA],
+		    LK_EXCLUSIVE, &vp);
 		if (error) {
 			vn_close(ump->um_quotas[USRQUOTA],
 			    FREAD|FWRITE, l->l_cred);

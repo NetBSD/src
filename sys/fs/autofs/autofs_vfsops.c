@@ -33,7 +33,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.8 2019/11/26 16:17:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vfsops.c,v 1.9 2020/01/17 20:08:07 ad Exp $");
 
 
 #include "autofs.h"
@@ -262,7 +262,7 @@ autofs_start(struct mount *mp, int flags)
 }
 
 static int
-autofs_root(struct mount *mp, struct vnode **vpp)
+autofs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct autofs_node *anp = VFSTOAUTOFS(mp)->am_root;
 	int error;
@@ -270,7 +270,7 @@ autofs_root(struct mount *mp, struct vnode **vpp)
 	error = vcache_get(mp, &anp, sizeof(anp), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULLVP;

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vfsops.c,v 1.79 2019/02/20 10:05:59 hannken Exp $	*/
+/*	$NetBSD: union_vfsops.c,v 1.80 2020/01/17 20:08:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 The Regents of the University of California.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.79 2019/02/20 10:05:59 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vfsops.c,v 1.80 2020/01/17 20:08:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -391,7 +391,7 @@ union_unmount(struct mount *mp, int mntflags)
 }
 
 int
-union_root(struct mount *mp, struct vnode **vpp)
+union_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct union_mount *um = MOUNTTOUNIONMOUNT(mp);
 	int error;
@@ -412,7 +412,7 @@ union_root(struct mount *mp, struct vnode **vpp)
 		return error;
 	}
 
-	vn_lock(*vpp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(*vpp, lktype | LK_RETRY);
 
 	return 0;
 }
@@ -488,7 +488,7 @@ union_sync(struct mount *mp, int waitfor,
 
 /*ARGSUSED*/
 int
-union_vget(struct mount *mp, ino_t ino,
+union_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 

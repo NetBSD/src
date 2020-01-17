@@ -1,4 +1,4 @@
-/*	$NetBSD: v7fs_vnops.c,v 1.26 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: v7fs_vnops.c,v 1.27 2020/01/17 20:08:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004, 2011 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.26 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: v7fs_vnops.c,v 1.27 2020/01/17 20:08:09 ad Exp $");
 #if defined _KERNEL_OPT
 #include "opt_v7fs.h"
 #endif
@@ -174,7 +174,8 @@ v7fs_lookup(void *v)
 		VOP_UNLOCK(dvp); /* preserve reference count. (not vput) */
 	}
 	DPRINTF("enter vget\n");
-	if ((error = v7fs_vget(dvp->v_mount, ino, &vpp))) {
+	error = v7fs_vget(dvp->v_mount, ino, LK_EXCLUSIVE, &vpp);
+	if (error != 0) {
 		DPRINTF("***can't get vnode.\n");
 		return error;
 	}
@@ -230,7 +231,8 @@ v7fs_create(void *v)
 
 	/* Get myself vnode. */
 	*a->a_vpp = 0;
-	if ((error = v7fs_vget(mp, ino, a->a_vpp))) {
+	error = v7fs_vget(mp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("v7fs_vget failed.\n");
 		return error;
 	}
@@ -284,7 +286,8 @@ v7fs_mknod(void *v)
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 
-	if ((error = v7fs_vget(mp, ino, a->a_vpp))) {
+	error = v7fs_vget(mp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("can't get vnode.\n");
 		return error;
 	}
@@ -847,7 +850,8 @@ v7fs_mkdir(void *v)
 	/* Sync dirent size change. */
 	uvm_vnp_setsize(dvp, v7fs_inode_filesize(&parent_node->inode));
 
-	if ((error = v7fs_vget(mp, ino, a->a_vpp))) {
+	error = v7fs_vget(mp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("can't get vnode.\n");
 	}
 	struct v7fs_node *newnode = (*a->a_vpp)->v_data;
@@ -1287,7 +1291,8 @@ v7fs_symlink(void *v)
 	uvm_vnp_setsize(a->a_dvp, v7fs_inode_filesize(&parent_node->inode));
 
 	/* Get myself vnode. */
-	if ((error = v7fs_vget(v7fsmount->mountp, ino, a->a_vpp))) {
+	error = v7fs_vget(v7fsmount->mountp, ino, LK_EXCLUSIVE, a->a_vpp);
+	if (error != 0) {
 		DPRINTF("can't get vnode.\n");
 	}
 
