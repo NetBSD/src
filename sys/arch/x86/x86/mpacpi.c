@@ -1,4 +1,4 @@
-/*	$NetBSD: mpacpi.c,v 1.103 2017/06/01 02:45:08 chs Exp $	*/
+/*	$NetBSD: mpacpi.c,v 1.104 2020/01/17 17:06:32 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.103 2017/06/01 02:45:08 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mpacpi.c,v 1.104 2020/01/17 17:06:32 jmcneill Exp $");
 
 #include "acpica.h"
 #include "opt_acpi.h"
@@ -633,7 +633,7 @@ mpacpi_pciroute(struct mpacpi_pcibus *mpr)
 			/* acpi_allocate_resources(linkdev); */
 			mpi->ioapic_pin = -1;
 			mpi->linkdev = acpi_pci_link_devbyhandle(linkdev);
-			acpi_pci_link_add_reference(mpi->linkdev, 0,
+			acpi_pci_link_add_reference(mpi->linkdev, NULL, 0,
 			    mpr->mpr_bus, dev, ptrp->Pin & 3);
 			mpi->ioapic = NULL;
 			mpi->flags = MPS_INTPO_ACTLO | (MPS_INTTR_LEVEL << 2);
@@ -1009,8 +1009,8 @@ mpacpi_findintr_linkdev(struct mp_intr_map *mip)
 	if (mip->linkdev == NULL)
 		return ENOENT;
 
-	irq = acpi_pci_link_route_interrupt(mip->linkdev, mip->sourceindex,
-	    &line, &pol, &trig);
+	irq = acpi_pci_link_route_interrupt(mip->linkdev, NULL,
+	    mip->sourceindex, &line, &pol, &trig);
 	if (mp_verbose)
 		printf("linkdev %s returned ACPI global irq %d, line %d\n",
 		    acpi_pci_link_name(mip->linkdev), irq, line);
