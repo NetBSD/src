@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.138 2020/01/17 20:08:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.137 2017/08/19 11:27:42 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.138 2020/01/17 20:08:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -758,7 +758,8 @@ lfs_order_freelist(struct lfs *fs)
 		 * happens to such files currently. -- dholland 20160806
 		 */
 		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE &&
-		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, &vp) == 0) {
+		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE, &vp)
+		     == 0) {
 			unsigned segno;
 
 			/* get the segment the inode in on disk  */

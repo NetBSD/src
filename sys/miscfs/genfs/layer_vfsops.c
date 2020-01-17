@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.52 2019/08/07 00:38:02 pgoyette Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.53 2020/01/17 20:08:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.52 2019/08/07 00:38:02 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.53 2020/01/17 20:08:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -125,7 +125,7 @@ layerfs_start(struct mount *mp, int flags)
 }
 
 int
-layerfs_root(struct mount *mp, struct vnode **vpp)
+layerfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 
@@ -138,7 +138,7 @@ layerfs_root(struct mount *mp, struct vnode **vpp)
 	 * Return root vnode with locked and with a reference held.
 	 */
 	vref(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, lktype | LK_RETRY);
 	*vpp = vp;
 	return 0;
 }
@@ -227,12 +227,12 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 }
 
 int
-layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+layerfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	int error;
 
-	error = VFS_VGET(mp->mnt_lower, ino, &vp);
+	error = VFS_VGET(mp->mnt_lower, ino, lktype, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -244,7 +244,7 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 		*vpp = NULL;
 		return error;
 	}
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -254,12 +254,13 @@ layerfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 }
 
 int
-layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
+layerfs_fhtovp(struct mount *mp, struct fid *fidp, int lktype,
+    struct vnode **vpp)
 {
 	struct vnode *vp;
 	int error;
 
-	error = VFS_FHTOVP(mp->mnt_lower, fidp, &vp);
+	error = VFS_FHTOVP(mp->mnt_lower, fidp, lktype, &vp);
 	if (error) {
 		*vpp = NULL;
 		return error;
@@ -271,7 +272,7 @@ layerfs_fhtovp(struct mount *mp, struct fid *fidp, struct vnode **vpp)
 		*vpp = NULL;
 		return (error);
 	}
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
