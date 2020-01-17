@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.218 2019/12/11 07:33:55 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.219 2020/01/17 02:08:25 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.218 2019/12/11 07:33:55 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.219 2020/01/17 02:08:25 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2864,36 +2864,42 @@ pci_conf_print_aer_cap(const pcireg_t *regs, int extcapoff)
 	}
 }
 
+/*
+ * Helper function to print the arbitration phase register.
+ *
+ * phases: Number of phases in the arbitration tables.
+ * arbsize: Number of bits in each phase.
+ * indent: Add more two spaces if it's true.
+ */
 static void
 pci_conf_print_vc_cap_arbtab(const pcireg_t *regs, int off, const char *name,
-    pcireg_t parbsel, int parbsize)
+    const int phases, int arbsize, bool indent)
 {
 	pcireg_t reg;
-	int num = 16 << parbsel;
-	int num_per_reg = sizeof(pcireg_t) / parbsize;
+	int num_per_reg = 32 / arbsize;
 	int i, j;
 
-	/* First, dump the table */
-	for (i = 0; i < num; i += num_per_reg) {
-		reg = regs[o2i(off + i / num_per_reg)];
-		printf("    %s Arbitration Table: 0x%08x\n", name, reg);
-	}
-	/* And then, decode each entry */
-	for (i = 0; i < num; i += num_per_reg) {
-		reg = regs[o2i(off + i / num_per_reg)];
-		for (j = 0; j < num_per_reg; j++)
-			printf("      Phase[%d]: %d\n", j, reg);
+	printf("%s    %s Arbitration Table:\n", indent ? "  " : "", name);
+	for (i = 0; i < phases; i += num_per_reg) {
+		reg = regs[o2i(off + (sizeof(uint32_t) * (i / num_per_reg)))];
+		for (j = 0; j < num_per_reg; j++) {
+			printf("%s      Phase[%d]: 0x%x\n", indent ? "  " : "",
+			    i + j,
+			    (uint32_t)(reg & __BITS(arbsize - 1, 0)));
+			reg >>= arbsize;
+		}
 	}
 }
+
+/* For VC, bit 4-7 are reserved. For Port, bit 6-7 are reserved */
+static const int arb_phases[8] = {0, 32, 64, 128, 128, 256, 0, 0 };
 
 static void
 pci_conf_print_vc_cap(const pcireg_t *regs, int extcapoff)
 {
 	pcireg_t reg, n;
-	int parbtab, parbsize;
-	pcireg_t parbsel;
-	int varbtab, varbsize;
-	pcireg_t varbsel;
+	int arbtab, parbsize;
+	pcireg_t arbsel;
 	int i, count;
 
 	printf("\n  Virtual Channel Register\n");
@@ -2919,18 +2925,22 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int extcapoff)
 	    reg, PCI_VC_CAP2_ARB_CAP_WRR_64);
 	onoff("WRR arbitration with 128 phases",
 	    reg, PCI_VC_CAP2_ARB_CAP_WRR_128);
-	varbtab = __SHIFTOUT(reg, PCI_VC_CAP2_ARB_TABLE_OFFSET);
-	printf("      VC Arbitration Table Offset: 0x%x\n", varbtab);
+	arbtab = __SHIFTOUT(reg, PCI_VC_CAP2_ARB_TABLE_OFFSET);
+	printf("      VC Arbitration Table Offset: 0x%x\n", arbtab);
 
 	reg = regs[o2i(extcapoff + PCI_VC_CONTROL)] & 0xffff;
 	printf("    Port VC Control register: 0x%04x\n", reg);
-	varbsel = __SHIFTOUT(reg, PCI_VC_CONTROL_VC_ARB_SELECT);
-	printf("      VC Arbitration Select: 0x%x\n", varbsel);
+	arbsel = __SHIFTOUT(reg, PCI_VC_CONTROL_VC_ARB_SELECT);
+	printf("      VC Arbitration Select: 0x%x\n", arbsel);
 
 	reg = regs[o2i(extcapoff + PCI_VC_STATUS)] >> 16;
 	printf("    Port VC Status register: 0x%04x\n", reg);
 	onoff("VC Arbitration Table Status",
 	    reg, PCI_VC_STATUS_LOAD_VC_ARB_TABLE);
+
+	if ((arbtab != 0) && (arbsel != 0))
+		pci_conf_print_vc_cap_arbtab(regs, extcapoff + (arbtab * 16),
+		    "VC", arb_phases[arbsel], 4, false);
 
 	for (i = 0; i < count + 1; i++) {
 		reg = regs[o2i(extcapoff + PCI_VC_RESOURCE_CAP(i))];
@@ -2954,9 +2964,10 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int extcapoff)
 		    reg, PCI_VC_RESOURCE_CAP_REJCT_SNOOP_TRANS);
 		n = __SHIFTOUT(reg, PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS) + 1;
 		printf("        Maximum Time Slots: %d\n", n);
-		parbtab = reg >> PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET_S;
+		arbtab = __SHIFTOUT(reg,
+		    PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET);
 		printf("        Port Arbitration Table offset: 0x%02x\n",
-		    parbtab);
+		    arbtab);
 
 		reg = regs[o2i(extcapoff + PCI_VC_RESOURCE_CTL(i))];
 		printf("      VC Resource Control Register: 0x%08x\n", reg);
@@ -2967,8 +2978,8 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int extcapoff)
 		 * the Port Arbitration logic and it's always 0 on read, so
 		 * we don't print it.
 		 */
-		parbsel = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT);
-		printf("        Port Arbitration Select: 0x%x\n", parbsel);
+		arbsel = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT);
+		printf("        Port Arbitration Select: 0x%x\n", arbsel);
 		n = __SHIFTOUT(reg, PCI_VC_RESOURCE_CTL_VC_ID);
 		printf("        VC ID: %d\n", n);
 		onoff("  VC Enable", reg, PCI_VC_RESOURCE_CTL_VC_ENABLE);
@@ -2980,15 +2991,11 @@ pci_conf_print_vc_cap(const pcireg_t *regs, int extcapoff)
 		onoff("  VC Negotiation Pending",
 		    reg, PCI_VC_RESOURCE_STA_VC_NEG_PENDING);
 
-		if ((parbtab != 0) && (parbsel != 0))
-			pci_conf_print_vc_cap_arbtab(regs, extcapoff + parbtab,
-			    "Port", parbsel, parbsize);
+		if ((arbtab != 0) && (arbsel != 0))
+			pci_conf_print_vc_cap_arbtab(regs,
+			    extcapoff + (arbtab * 16),
+			    "Port", arb_phases[arbsel], parbsize, true);
 	}
-
-	varbsize = 8;
-	if ((varbtab != 0) && (varbsel != 0))
-		pci_conf_print_vc_cap_arbtab(regs, extcapoff + varbtab,
-		    "  VC", varbsel, varbsize);
 }
 
 /*
