@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.c,v 1.264 2019/03/29 03:11:32 thorpej Exp $ */
+/* $NetBSD: pmap.c,v 1.265 2020/01/17 21:59:05 skrll Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001, 2007, 2008 The NetBSD Foundation, Inc.
@@ -140,7 +140,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.264 2019/03/29 03:11:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.265 2020/01/17 21:59:05 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1011,7 +1011,7 @@ pmap_steal_memory(vsize_t size, vaddr_t *vstartp, vaddr_t *vendp)
 {
 	int npgs;
 	vaddr_t va;
-	paddr_t pa; 
+	paddr_t pa;
 
 	uvm_physseg_t bank;
 
@@ -1851,7 +1851,7 @@ out:
 	PMAP_MAP_TO_HEAD_UNLOCK();
 	if (opv)
 		pmap_pv_free(opv);
-	
+
 	return error;
 }
 
