@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.4 2015/02/25 14:56:17 riastradh Exp $	*/
+/*	$NetBSD: io.h,v 1.5 2020/01/17 20:28:59 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -46,7 +46,22 @@
 
 #define	memcpy_fromio	memcpy
 #define	memcpy_toio	memcpy
+
+#if defined(__NetBSD__) && defined(__aarch64__)
+static inline void *
+memset_io(void *b, int c, size_t len)
+{
+	uint32_t *ptr = b;
+	while (len >= 4) {
+		*ptr++ = c;
+		len -= 4;
+	}
+	KASSERT(len == 0);
+	return b;
+}
+#else
 #define	memset_io	memset
+#endif
 
 /* XXX wrong place */
 #define	__force
