@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.693 2020/01/01 10:11:21 ryo Exp $
+#	$NetBSD: Makefile,v 1.694 2020/01/17 15:00:20 maya Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -88,7 +88,6 @@ MAN+=	atu.4 aubtfwl.4 aue.4 axe.4 axen.4 cdce.4 cue.4 ehci.4 kue.4 \
 	uplcom.4 ure.4 urio.4 url.4 urndis.4 urtw.4 urtwn.4 \
 	usb.4 usbnet.4 uscanner.4 uslsa.4 usmsc.4 usscanner.4 \
 	ustir.4 uthum.4 utoppy.4 uts.4 uvideo.4 uvisor.4 uvscom.4 uyap.4 \
-	uyurex.4 \
 	xhci.4 \
 
 # Ir devices
