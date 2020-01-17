@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.35 2018/12/10 14:46:24 maxv Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.36 2020/01/17 20:08:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.35 2018/12/10 14:46:24 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.36 2020/01/17 20:08:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -439,7 +439,7 @@ hfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-hfs_root(struct mount *mp, struct vnode **vpp)
+hfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
@@ -448,7 +448,7 @@ hfs_root(struct mount *mp, struct vnode **vpp)
 	printf("vfsop = hfs_root()\n");
 #endif /* HFS_DEBUG */
 
-	if ((error = VFS_VGET(mp, HFS_CNID_ROOT_FOLDER, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, HFS_CNID_ROOT_FOLDER, lktype, &nvp)) != 0)
 		return error;
 	*vpp = nvp;
 
@@ -495,14 +495,14 @@ hfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * since both are conveniently 32-bit numbers
  */
 int
-hfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+hfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = hfs_vget_internal(mp, ino, HFS_DATAFORK, vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -612,7 +612,7 @@ hfs_loadvnode(struct mount *mp, struct vnode *vp,
 }
 
 int
-hfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+hfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 
 #ifdef HFS_DEBUG

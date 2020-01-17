@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.212 2019/07/18 09:39:40 hannken Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.213 2020/01/17 20:08:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212 2019/07/18 09:39:40 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.213 2020/01/17 20:08:09 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1124,7 +1124,7 @@ unionlookup:
 			VOP_UNLOCK(searchdir);
 		}
 		vput(foundobj);
-		error = VFS_ROOT(mp, &foundobj);
+		error = VFS_ROOT(mp, LK_EXCLUSIVE, &foundobj);
 		vfs_unbusy(mp);
 		if (error) {
 			if (searchdir != NULL) {

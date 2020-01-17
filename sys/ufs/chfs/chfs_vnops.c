@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.34 2019/06/17 17:14:56 ryoon Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.35 2020/01/17 20:08:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -106,7 +106,8 @@ chfs_lookup(void *v)
 
 	if (cnp->cn_flags & ISDOTDOT) {
 		VOP_UNLOCK(dvp);
-		error = VFS_VGET(dvp->v_mount, ip->chvc->pvno, vpp);
+		error = VFS_VGET(dvp->v_mount, ip->chvc->pvno, LK_EXCLUSIVE,
+		    vpp);
 		vn_lock(dvp, LK_EXCLUSIVE | LK_RETRY);
 	} else if (cnp->cn_namelen == 1 && cnp->cn_nameptr[0] == '.') {
 		vref(dvp);
@@ -147,7 +148,8 @@ chfs_lookup(void *v)
 
 			dbg("vno@allocating new vnode: %llu\n",
 				(unsigned long long)fd->vno);
-			error = VFS_VGET(dvp->v_mount, fd->vno, vpp);
+			error = VFS_VGET(dvp->v_mount, fd->vno, LK_EXCLUSIVE,
+			    vpp);
 		}
 	}
 	/* Store the result of this lookup in the cache.  Avoid this if the
@@ -1140,7 +1142,7 @@ chfs_rename(void *v)
 		    newparent, tcnp->cn_nameptr, tcnp->cn_namelen);
 		vput(tvp);
 	}
-	VFS_VGET(tdvp->v_mount, old->ino, &tvp);
+	VFS_VGET(tdvp->v_mount, old->ino, LK_EXCLUSIVE, &tvp);
 	ip = VTOI(tvp);
 
 	/* link new */

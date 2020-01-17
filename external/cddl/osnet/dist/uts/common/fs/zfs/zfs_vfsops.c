@@ -135,11 +135,10 @@ kmutex_t zfs_debug_mtx;
 static int zfs_mount(vfs_t *vfsp, const char *path, void *data, size_t *data_len);
 static int zfs_umount(vfs_t *vfsp, int fflag);
 static int zfs_root(vfs_t *vfsp, int flags, vnode_t **vpp);
-static int zfs_netbsd_root(vfs_t *vfsp, vnode_t **vpp);
 static int zfs_statvfs(vfs_t *vfsp, struct statvfs *statp);
 static int zfs_netbsd_vptofh(vnode_t *vp, fid_t *fidp, size_t *fh_size);
-static int zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp);
-static int zfs_vget(vfs_t *vfsp, ino_t ino, vnode_t **vpp);
+static int zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, int lktype, vnode_t **vpp);
+static int zfs_vget(vfs_t *vfsp, ino_t ino, int lktype, vnode_t **vpp);
 static int zfs_sync(vfs_t *vfsp, int waitfor);
 static int zfs_netbsd_sync(vfs_t *vfsp, int waitfor, cred_t *cr);
 static void zfs_freevfs(vfs_t *vfsp);
@@ -166,7 +165,7 @@ struct vfsops zfs_vfsops = {
 	.vfs_opv_descs = zfs_vnodeop_descs,
 	.vfs_mount = zfs_mount,
 	.vfs_unmount = zfs_umount,
-	.vfs_root = zfs_netbsd_root,
+	.vfs_root = zfs_root,
 	.vfs_statvfs = zfs_statvfs,
 	.vfs_sync = zfs_netbsd_sync,
 	.vfs_vget = zfs_vget,
@@ -254,13 +253,6 @@ zfs_netbsd_sync(vfs_t *vfsp, int waitfor, cred_t *cr)
 }
 
 static int
-zfs_netbsd_root(vfs_t *vfsp, vnode_t **vpp)
-{
-
-	return zfs_root(vfsp, LK_EXCLUSIVE | LK_RETRY, vpp);
-}
-
-static int
 zfs_netbsd_vptofh(vnode_t *vp, fid_t *fidp, size_t *fh_size)
 {
 	znode_t		*zp;
@@ -330,7 +322,7 @@ zfs_netbsd_vptofh(vnode_t *vp, fid_t *fidp, size_t *fh_size)
 }
 
 static int
-zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
+zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, int lktype, vnode_t **vpp)
 {
 	zfsvfs_t	*zfsvfs = vfsp->vfs_data;
 	znode_t		*zp;
@@ -417,7 +409,7 @@ zfs_netbsd_fhtovp(vfs_t *vfsp, fid_t *fidp, vnode_t **vpp)
 
 	*vpp = ZTOV(zp);
 	ZFS_EXIT(zfsvfs);
-	err = vn_lock(*vpp, LK_EXCLUSIVE);
+	err = vn_lock(*vpp, lktype);
 	if (err) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -2475,21 +2467,12 @@ zfs_umount(vfs_t *vfsp, int fflag)
 	return (0);
 }
 
-#ifdef __FreeBSD_kernel__
 static int
 zfs_vget(vfs_t *vfsp, ino_t ino, int flags, vnode_t **vpp)
-#endif
-#ifdef __NetBSD__
-static int
-zfs_vget(vfs_t *vfsp, ino_t ino, vnode_t **vpp)
-#endif
 {
 	zfsvfs_t	*zfsvfs = vfsp->vfs_data;
 	znode_t		*zp;
 	int 		err;
-#ifdef __NetBSD__
-	int		flags = LK_EXCLUSIVE;
-#endif
 
 	/*
 	 * zfs_zget() can't operate on virtual entries like .zfs/ or

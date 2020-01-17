@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vfsops.c,v 1.101 2019/03/30 23:28:30 christos Exp $	*/
+/*	$NetBSD: procfs_vfsops.c,v 1.102 2020/01/17 20:08:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1993
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.101 2019/03/30 23:28:30 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vfsops.c,v 1.102 2020/01/17 20:08:09 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -201,13 +201,13 @@ procfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-procfs_root(struct mount *mp, struct vnode **vpp)
+procfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = procfs_allocvp(mp, vpp, 0, PFSroot, -1);
 	if (error == 0) {
-		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		error = vn_lock(*vpp, lktype);
 		if (error != 0) {
 			vrele(*vpp);
 			*vpp = NULL;
@@ -258,7 +258,7 @@ procfs_sync(
 
 /*ARGSUSED*/
 int
-procfs_vget(struct mount *mp, ino_t ino,
+procfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	return (EOPNOTSUPP);

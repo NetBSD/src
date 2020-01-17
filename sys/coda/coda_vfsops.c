@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vfsops.c,v 1.86 2017/04/04 07:36:38 hannken Exp $	*/
+/*	$NetBSD: coda_vfsops.c,v 1.87 2020/01/17 20:08:06 ad Exp $	*/
 
 /*
  *
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.86 2017/04/04 07:36:38 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vfsops.c,v 1.87 2020/01/17 20:08:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -346,7 +346,7 @@ coda_unmount(struct mount *vfsp, int mntflags)
  * find root of cfs
  */
 int
-coda_root(struct mount *vfsp, struct vnode **vpp)
+coda_root(struct mount *vfsp, int lktype, struct vnode **vpp)
 {
     struct coda_mntinfo *mi = vftomi(vfsp);
     int error;
@@ -363,7 +363,7 @@ coda_root(struct mount *vfsp, struct vnode **vpp)
 		*vpp = mi->mi_rootvp;
 		/* On Mach, this is vref.  On NetBSD, VOP_LOCK */
 		vref(*vpp);
-		vn_lock(*vpp, LK_EXCLUSIVE);
+		vn_lock(*vpp, lktype);
 		MARK_INT_SAT(CODA_ROOT_STATS);
 		return(0);
 	    }
@@ -475,7 +475,7 @@ coda_sync(struct mount *vfsp, int waitfor,
 }
 
 int
-coda_vget(struct mount *vfsp, ino_t ino,
+coda_vget(struct mount *vfsp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
     ENTRY;
@@ -515,7 +515,7 @@ coda_loadvnode(struct mount *mp, struct vnode *vp,
 int
 coda_fhtovp(struct mount *vfsp, struct fid *fhp, struct mbuf *nam,
     struct vnode **vpp, int *exflagsp,
-    kauth_cred_t *creadanonp)
+    kauth_cred_t *creadanonp, int lktype)
 {
     struct cfid *cfid = (struct cfid *)fhp;
     struct cnode *cp = 0;
@@ -621,7 +621,7 @@ getNewVnode(struct vnode **vpp)
 	return ENODEV;
 
     return coda_fhtovp(mi->mi_vfsp, (struct fid*)&cfid, NULL, vpp,
-		      NULL, NULL);
+		      NULL, NULL, LK_EXCLUSIVE);
 }
 
 /* Get the mount structure corresponding to a given device.
