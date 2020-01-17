@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.23 2020/01/16 07:19:47 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.24 2020/01/17 09:04:04 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -6361,7 +6361,7 @@ ixl_parse_modprop(prop_dictionary_t dict)
 		val = prop_number_integer_value((prop_number_t)obj);
 
 		/* the range has no reason */
-		if (100 < val || val < 180000) {
+		if (100 < val && val < 180000) {
 			ixl_param_stats_interval = val;
 		}
 	}
