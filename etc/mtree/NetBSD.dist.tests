@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.tests,v 1.159 2019/10/05 18:06:16 jhigh Exp $
+#	$NetBSD: NetBSD.dist.tests,v 1.160 2020/01/17 16:09:11 christos Exp $
 
 ./usr/libdata/debug/usr/tests
 ./usr/libdata/debug/usr/tests/atf
@@ -72,6 +72,7 @@
 ./usr/libdata/debug/usr/tests/kyua-testers
 ./usr/libdata/debug/usr/tests/lib
 ./usr/libdata/debug/usr/tests/lib/csu
+./usr/libdata/debug/usr/tests/lib/libarchive
 ./usr/libdata/debug/usr/tests/lib/libbluetooth
 ./usr/libdata/debug/usr/tests/lib/libbpfjit
 ./usr/libdata/debug/usr/tests/lib/libc
@@ -164,7 +165,9 @@
 ./usr/libdata/debug/usr/tests/sys/netinet
 ./usr/libdata/debug/usr/tests/sys/netinet6
 ./usr/libdata/debug/usr/tests/usr.bin
+./usr/libdata/debug/usr/tests/usr.bin/cpio
 ./usr/libdata/debug/usr/tests/usr.bin/id
+./usr/libdata/debug/usr/tests/usr.bin/tar
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify
 ./usr/libdata/debug/usr/tests/usr.sbin
 ./usr/tests
@@ -258,6 +261,7 @@
 ./usr/tests/kyua-testers
 ./usr/tests/lib
 ./usr/tests/lib/csu
+./usr/tests/lib/libarchive
 ./usr/tests/lib/libbluetooth
 ./usr/tests/lib/libc
 ./usr/tests/lib/libc/atomic
@@ -394,6 +398,7 @@
 ./usr/tests/usr.bin/config/support/arch/regress
 ./usr/tests/usr.bin/config/support/arch/regress/conf
 ./usr/tests/usr.bin/config/support/conf
+./usr/tests/usr.bin/cpio
 ./usr/tests/usr.bin/cut
 ./usr/tests/usr.bin/diff
 ./usr/tests/usr.bin/dirname
@@ -422,6 +427,7 @@
 ./usr/tests/usr.bin/sed
 ./usr/tests/usr.bin/shmif_dumpbus
 ./usr/tests/usr.bin/sort
+./usr/tests/usr.bin/tar
 ./usr/tests/usr.bin/tmux
 ./usr/tests/usr.bin/tr
 ./usr/tests/usr.bin/unifdef
