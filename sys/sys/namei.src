@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.47.2.3 2020/01/14 11:07:40 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.47.2.4 2020/01/17 22:26:26 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -39,6 +39,7 @@
 
 #ifdef _KERNEL
 #include <sys/kauth.h>
+#include <sys/rwlock.h>
 
 /*
  * Abstraction for a single pathname.
@@ -201,7 +202,8 @@ NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
  *
  * This structure describes the elements in the cache of recent names looked
  * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
- * good use of space and the CPU caches.
+ * good use of space and the CPU caches; nc_name is aligned on an 8-byte
+ * boundary to make string comparisons cheaper.
  *
  * Field markings and their corresponding locks:
  *
@@ -211,16 +213,19 @@ NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
  * l  protected by cache_lru_lock
  * u  accesses are unlocked, no serialization applied
  */
+struct nchnode;
 struct namecache {
-	struct rb_node nc_node;		/* d  red-black tree node */
+	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
+	TAILQ_ENTRY(namecache) nc_list;	/* v  vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
-	TAILQ_ENTRY(namecache) nc_vlist;/* v  vp's list of cache entries */
-	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
+	struct	nchnode *nc_dnn;	/* -  nchnode of parent of name */
+	struct	nchnode *nc_nn;		/* -  nchnode the name refers to */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
+	int64_t	nc_key;			/* -  hash key */
 	int	nc_lrulist;		/* l  which LRU list its on */
-	u_short	nc_nlen;		/* -  length of name */
-	bool	nc_whiteout;		/* -  true if a whiteout */
-	char	nc_name[49];		/* -  segment name */
+	short	nc_nlen;		/* -  length of the name */
+	char	nc_whiteout;		/* -  true if a whiteout */
+	char	nc_name[33];		/* -  segment name */
 };
 #endif
 
@@ -284,9 +289,13 @@ bool	cache_lookup(struct vnode *, const char *, size_t, uint32_t, uint32_t,
 			int *, struct vnode **);
 bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
+bool	cache_lookup_linked(struct vnode *, const char *, size_t,
+			    struct vnode **, krwlock_t **, kauth_cred_t);
 int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
+void	cache_set_id(struct vnode *, mode_t, uid_t, gid_t);
+void	cache_update_id(struct vnode *, mode_t, uid_t, gid_t);
 void	cache_vnode_init(struct vnode * );
 void	cache_vnode_fini(struct vnode * );
 void	cache_cpu_init(struct cpu_info *);
@@ -318,6 +327,10 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
 	type	ncs_2passes;	/* number of times we attempt it (U) */	\
 	type	ncs_revhits;	/* reverse-cache hits */		\
 	type	ncs_revmiss;	/* reverse-cache misses */		\
+	type	ncs_collisions;	/* hash value collisions */		\
+	type	ncs_active;	/* active cache entries */		\
+	type	ncs_inactive;	/* inactive cache entries */		\
+	type	ncs_denied;	/* access denied */			\
 }
 
 /*

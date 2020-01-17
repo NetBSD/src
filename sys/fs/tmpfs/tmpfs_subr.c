@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.105 2019/09/18 17:59:15 christos Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.105.2.1 2020/01/17 22:26:25 ad Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.105 2019/09/18 17:59:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.105.2.1 2020/01/17 22:26:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -147,6 +147,8 @@ tmpfs_init_vnode(struct vnode *vp, tmpfs_node_t *node)
 	vp->v_data = node;
 	node->tn_vnode = vp;
 	uvm_vnp_setsize(vp, node->tn_size);
+	KASSERT(node->tn_mode != VNOVAL);
+	cache_set_id(vp, node->tn_mode, node->tn_uid, node->tn_gid);
 }
 
 /*
@@ -1037,6 +1039,7 @@ tmpfs_chmod(vnode_t *vp, mode_t mode, kauth_cred_t cred, lwp_t *l)
 	node->tn_mode = (mode & ALLPERMS);
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	VN_KNOTE(vp, NOTE_ATTRIB);
+	cache_update_id(vp, node->tn_mode, node->tn_uid, node->tn_gid);
 	return 0;
 }
 
@@ -1081,6 +1084,7 @@ tmpfs_chown(vnode_t *vp, uid_t uid, gid_t gid, kauth_cred_t cred, lwp_t *l)
 	node->tn_gid = gid;
 	tmpfs_update(vp, TMPFS_UPDATE_CTIME);
 	VN_KNOTE(vp, NOTE_ATTRIB);
+	cache_update_id(vp, node->tn_mode, node->tn_uid, node->tn_gid);
 	return 0;
 }
 
