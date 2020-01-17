@@ -1,4 +1,4 @@
-/*	$NetBSD: at24cxx.c,v 1.35 2019/12/23 15:51:50 thorpej Exp $	*/
+/*	$NetBSD: at24cxx.c,v 1.35.2.1 2020/01/17 21:47:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.35 2019/12/23 15:51:50 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at24cxx.c,v 1.35.2.1 2020/01/17 21:47:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -392,8 +392,8 @@ seeprom_wait_idle(struct seeprom_softc *sc)
 		if (error == 0)
 			break;
 
-		rv = tsleep(sc, PRIBIO | PCATCH, "seepromwr", timeout);
-		if (rv != EWOULDBLOCK)
+		rv = kpause("seepromwr", true, timeout, NULL);
+		if (rv != EWOULDBLOCK && rv != 0)
 			return (rv);
 	}
 

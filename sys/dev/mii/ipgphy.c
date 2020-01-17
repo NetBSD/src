@@ -1,4 +1,4 @@
-/*	$NetBSD: ipgphy.c,v 1.8 2019/11/27 10:19:20 msaitoh Exp $ */
+/*	$NetBSD: ipgphy.c,v 1.8.2.1 2020/01/17 21:47:31 ad Exp $ */
 /*	$OpenBSD: ipgphy.c,v 1.19 2015/07/19 06:28:12 yuo Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  * Driver for the IC Plus IP1000A/IP1001 10/100/1000 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.8 2019/11/27 10:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.8.2.1 2020/01/17 21:47:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.8 2019/11/27 10:19:20 msaitoh Exp $");
 #include <sys/device.h>
 #include <sys/socket.h>
 #include <sys/errno.h>
+#include <prop/proplib.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -51,12 +52,15 @@ __KERNEL_RCSID(0, "$NetBSD: ipgphy.c,v 1.8 2019/11/27 10:19:20 msaitoh Exp $");
 
 #include <dev/mii/ipgphyreg.h>
 
-#include <dev/pci/if_stgereg.h>
-
 static int ipgphy_match(device_t, cfdata_t, void *);
 static void ipgphy_attach(device_t, device_t, void *);
 
-CFATTACH_DECL_NEW(ipgphy, sizeof(struct mii_softc),
+struct ipgphy_softc {
+	struct mii_softc sc_mii;
+	bool need_loaddspcode;
+};
+
+CFATTACH_DECL_NEW(ipgphy, sizeof(struct ipgphy_softc),
     ipgphy_match, ipgphy_attach, mii_phy_detach, mii_phy_activate);
 
 static int	ipgphy_service(struct mii_softc *, struct mii_data *, int);
@@ -89,10 +93,12 @@ ipgphy_match(device_t parent, cfdata_t match, void *aux)
 static void
 ipgphy_attach(device_t parent, device_t self, void *aux)
 {
-	struct mii_softc *sc = device_private(self);
+	struct ipgphy_softc *isc = device_private(self);
+	struct mii_softc *sc = &isc->sc_mii;
 	struct mii_attach_args *ma = aux;
 	struct mii_data *mii = ma->mii_data;
 	const struct mii_phydesc *mpd;
+	prop_dictionary_t dict;
 
 	mpd = mii_phy_match(ma, ipgphys);
 	aprint_naive(": Media interface\n");
@@ -107,8 +113,13 @@ ipgphy_attach(device_t parent, device_t self, void *aux)
 	sc->mii_funcs = &ipgphy_funcs;
 	sc->mii_pdata = mii;
 	sc->mii_flags = ma->mii_flags;
-
 	sc->mii_flags |= MIIF_NOISOLATE;
+
+	if (device_is_a(parent, "stge")) {
+		dict = device_properties(parent);
+		prop_dictionary_get_bool(dict, "need_loaddspcode",
+		    &isc->need_loaddspcode);
+	}
 
 	PHY_RESET(sc);
 
@@ -342,6 +353,7 @@ ipgphy_mii_phy_auto(struct mii_softc *sc, u_int media)
 static void
 ipgphy_load_dspcode(struct mii_softc *sc)
 {
+
 	PHY_WRITE(sc, 31, 0x0001);
 	PHY_WRITE(sc, 27, 0x01e0);
 	PHY_WRITE(sc, 31, 0x0002);
@@ -356,7 +368,7 @@ ipgphy_load_dspcode(struct mii_softc *sc)
 static void
 ipgphy_reset(struct mii_softc *sc)
 {
-	struct ifnet *ifp = sc->mii_pdata->mii_ifp;
+	struct ipgphy_softc *isc = device_private(sc->mii_dev);
 	uint16_t reg;
 
 	mii_phy_reset(sc);
@@ -366,10 +378,6 @@ ipgphy_reset(struct mii_softc *sc)
 	reg &= ~(BMCR_AUTOEN | BMCR_FDX);
 	PHY_WRITE(sc, MII_BMCR, reg);
 
-	if (sc->mii_mpd_model == MII_MODEL_xxICPLUS_IP1000A &&
-	    strcmp(ifp->if_xname, "stge") == 0) {
-		struct stge_softc *stge_sc = ifp->if_softc;
-		if (stge_sc->sc_rev >= 0x40 && stge_sc->sc_rev <= 0x4e)
-			ipgphy_load_dspcode(sc);
-	}
+	if (isc->need_loaddspcode)
+		ipgphy_load_dspcode(sc);
 }

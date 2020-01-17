@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.107 2018/11/20 19:05:25 christos Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.107.6.1 2020/01/17 21:47:29 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.107 2018/11/20 19:05:25 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.107.6.1 2020/01/17 21:47:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1757,7 +1757,7 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
     /*
      * Obtain vnode from mount point and inode.
      */
-    error = VFS_VGET(mp, ino, vpp);
+    error = VFS_VGET(mp, ino, LK_EXCLUSIVE, vpp);
     if (error) {
 	myprintf(("%s: iget/vget(0x%llx, %llu) returns %p, err %d\n", __func__,
 	    (unsigned long long)dev, (unsigned long long)ino, *vpp, error));

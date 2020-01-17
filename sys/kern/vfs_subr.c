@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.478 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.478.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478 2019/12/22 19:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1350,14 +1350,14 @@ VFS_UNMOUNT(struct mount *mp, int a)
 }
 
 int
-VFS_ROOT(struct mount *mp, struct vnode **a)
+VFS_ROOT(struct mount *mp, int lktype, struct vnode **a)
 {
 	int error;
 
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_LOCK(1, NULL);
 	}
-	error = (*(mp->mnt_op->vfs_root))(mp, a);
+	error = (*(mp->mnt_op->vfs_root))(mp, lktype, a);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_UNLOCK_ONE(NULL);
 	}
@@ -1414,14 +1414,14 @@ VFS_SYNC(struct mount *mp, int a, struct kauth_cred *b)
 }
 
 int
-VFS_FHTOVP(struct mount *mp, struct fid *a, struct vnode **b)
+VFS_FHTOVP(struct mount *mp, struct fid *a, int b, struct vnode **c)
 {
 	int error;
 
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_LOCK(1, NULL);
 	}
-	error = (*(mp->mnt_op->vfs_fhtovp))(mp, a, b);
+	error = (*(mp->mnt_op->vfs_fhtovp))(mp, a, b, c);
 	if ((mp->mnt_iflag & IMNT_MPSAFE) == 0) {
 		KERNEL_UNLOCK_ONE(NULL);
 	}

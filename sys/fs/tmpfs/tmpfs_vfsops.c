@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.75 2019/10/04 12:34:40 mrg Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.75.2.1 2020/01/17 21:47:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.75 2019/10/04 12:34:40 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.75.2.1 2020/01/17 21:47:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -296,7 +296,7 @@ tmpfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-tmpfs_root(struct mount *mp, vnode_t **vpp)
+tmpfs_root(struct mount *mp, int lktype, vnode_t **vpp)
 {
 	tmpfs_node_t *node = VFS_TO_TMPFS(mp)->tm_root;
 	int error;
@@ -304,7 +304,7 @@ tmpfs_root(struct mount *mp, vnode_t **vpp)
 	error = vcache_get(mp, &node, sizeof(node), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -315,14 +315,14 @@ tmpfs_root(struct mount *mp, vnode_t **vpp)
 }
 
 int
-tmpfs_vget(struct mount *mp, ino_t ino, vnode_t **vpp)
+tmpfs_vget(struct mount *mp, ino_t ino, int lktype, vnode_t **vpp)
 {
 
 	return EOPNOTSUPP;
 }
 
 int
-tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
+tmpfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, vnode_t **vpp)
 {
 	tmpfs_mount_t *tmp = VFS_TO_TMPFS(mp);
 	tmpfs_node_t *node;
@@ -335,6 +335,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	memcpy(&tfh, fhp, sizeof(tmpfs_fid_t));
 
 	mutex_enter(&tmp->tm_lock);
+	/* XXX big oof .. use a better data structure */
 	LIST_FOREACH(node, &tmp->tm_nodes, tn_entries) {
 		if (node->tn_id == tfh.tf_id) {
 			/* Prevent this node from disappearing. */
@@ -354,7 +355,7 @@ tmpfs_fhtovp(struct mount *mp, struct fid *fhp, vnode_t **vpp)
 	}
 	if (error)
 		return (error == ENOENT ? ESTALE : error);
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;

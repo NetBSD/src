@@ -1,4 +1,4 @@
-/*	$NetBSD: softint_machdep.c,v 1.3 2011/09/27 01:02:36 jym Exp $	*/
+/*	$NetBSD: softint_machdep.c,v 1.3.62.1 2020/01/17 21:47:27 ad Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -58,7 +58,6 @@ softint_deliver(struct cpu_info *ci, int ipl)
 	KASSERT(ci->ci_data.cpu_softints & (1 << ipl));
 	ci->ci_data.cpu_softints ^= 1 << ipl;
 	softint_fast_dispatch(ci->ci_softlwps[si_level], ipl);
-	KASSERT(ci->ci_softlwps[si_level]->l_ctxswtch == 0);
 	KASSERTMSG(ci->ci_cpl == IPL_HIGH,
 	    "%s: cpl (%d) != HIGH", __func__, ci->ci_cpl);
 }

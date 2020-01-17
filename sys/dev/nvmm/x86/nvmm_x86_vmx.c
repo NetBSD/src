@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.46 2019/12/10 18:06:50 ad Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.46.2.1 2020/01/17 21:47:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.46 2019/12/10 18:06:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.46.2.1 2020/01/17 21:47:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1688,7 +1688,7 @@ vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint16_t val;
+	uint64_t val;
 
 	exit->reason = NVMM_VCPU_EXIT_NONE;
 
@@ -2664,7 +2664,7 @@ vmx_vcpu_init(struct nvmm_machine *mach, struct nvmm_cpu *vcpu)
 	vmx_vmwrite(VMCS_HOST_IDTR_BASE, (uint64_t)idt);
 	vmx_vmwrite(VMCS_HOST_IA32_PAT, rdmsr(MSR_CR_PAT));
 	vmx_vmwrite(VMCS_HOST_IA32_EFER, rdmsr(MSR_EFER));
-	vmx_vmwrite(VMCS_HOST_CR0, rcr0());
+	vmx_vmwrite(VMCS_HOST_CR0, rcr0() & ~CR0_TS);
 
 	/* Generate ASID. */
 	vmx_asid_alloc(vcpu);

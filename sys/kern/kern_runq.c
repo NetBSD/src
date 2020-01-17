@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_runq.c,v 1.55 2020/01/05 20:26:56 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.55.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.55 2020/01/05 20:26:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.55.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -92,7 +92,6 @@ const int	schedppq = 1;
 static void	*sched_getrq(struct schedstate_percpu *, const pri_t);
 #ifdef MULTIPROCESSOR
 static lwp_t *	sched_catchlwp(struct cpu_info *);
-static void	sched_balance(void *);
 #endif
 
 /*
@@ -111,14 +110,9 @@ int		sched_kpreempt_pri = 1000;
 /*
  * Migration and balancing.
  */
-static u_int	cacheht_time;		/* Cache hotness time */
-static u_int	min_catch;		/* Minimal LWP count for catching */
-static u_int	balance_period;		/* Balance period */
-static u_int	average_weight;		/* Weight old thread count average */
-static struct cpu_info *worker_ci;	/* Victim CPU */
-#ifdef MULTIPROCESSOR
-static struct callout balance_ch;	/* Callout of balancer */
-#endif
+static u_int	cacheht_time;	/* Cache hotness time */
+static u_int	min_catch;	/* Minimal LWP count for catching */
+static u_int	skim_interval;	/* Rate limit for stealing LWPs */
 
 #ifdef KDTRACE_HOOKS
 struct lwp *curthread;
@@ -128,22 +122,14 @@ void
 runq_init(void)
 {
 
-	/* Balancing */
-	worker_ci = curcpu();
-	cacheht_time = mstohz(3);		/*   ~3 ms */
-	balance_period = mstohz(300);		/* ~300 ms */
+	/* Pulling from remote packages, LWP must not have run for 10ms. */
+	cacheht_time = 10;
 
 	/* Minimal count of LWPs for catching */
 	min_catch = 1;
-	/* Weight of historical average */
-	average_weight = 50;			/*   0.5   */
 
-	/* Initialize balancing callout and run it */
-#ifdef MULTIPROCESSOR
-	callout_init(&balance_ch, CALLOUT_MPSAFE);
-	callout_setfunc(&balance_ch, sched_balance, NULL);
-	callout_schedule(&balance_ch, balance_period);
-#endif
+	/* Steal from other CPUs at most every 10ms. */
+	skim_interval = 10;
 }
 
 void
@@ -155,6 +141,7 @@ sched_cpuattach(struct cpu_info *ci)
 	u_int i;
 
 	spc = &ci->ci_schedstate;
+	spc->spc_nextpkg = ci;
 
 	if (spc->spc_lwplock == NULL) {
 		spc->spc_lwplock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_SCHED);
@@ -183,7 +170,6 @@ sched_cpuattach(struct cpu_info *ci)
 /*
  * Control of the runqueue.
  */
-
 static inline void *
 sched_getrq(struct schedstate_percpu *spc, const pri_t prio)
 {
@@ -415,18 +401,26 @@ sched_resched_lwp(struct lwp *l, bool unlock)
 
 #ifdef MULTIPROCESSOR
 
-/* Estimate if LWP is cache-hot */
+/*
+ * Estimate if LWP is cache-hot.
+ */
 static inline bool
 lwp_cache_hot(const struct lwp *l)
 {
 
-	if (__predict_false(l->l_slptime || l->l_rticks == 0))
+	/* Leave new LWPs in peace, determination has already been made. */
+	if (l->l_stat == LSIDL)
+		return true;
+
+	if (__predict_false(l->l_slptime != 0 || l->l_rticks == 0))
 		return false;
 
-	return (hardclock_ticks - l->l_rticks <= cacheht_time);
+	return (hardclock_ticks - l->l_rticks < mstohz(cacheht_time));
 }
 
-/* Check if LWP can migrate to the chosen CPU */
+/*
+ * Check if LWP can migrate to the chosen CPU.
+ */
 static inline bool
 sched_migratable(const struct lwp *l, struct cpu_info *ci)
 {
@@ -446,15 +440,102 @@ sched_migratable(const struct lwp *l, struct cpu_info *ci)
 }
 
 /*
+ * A small helper to do round robin through CPU packages.
+ */
+static struct cpu_info *
+sched_nextpkg(void)
+{
+	struct schedstate_percpu *spc = &curcpu()->ci_schedstate;
+
+	spc->spc_nextpkg = 
+	    spc->spc_nextpkg->ci_sibling[CPUREL_PACKAGE1ST];
+
+	return spc->spc_nextpkg;
+}
+
+/*
+ * Find a CPU to run LWP "l".  Look for the CPU with the lowest priority
+ * thread.  In case of equal priority, prefer first class CPUs, and amongst
+ * the remainder choose the CPU with the fewest runqueue entries.
+ *
+ * Begin the search in the CPU package which "pivot" is a member of.
+ */
+static struct cpu_info * __noinline 
+sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
+{
+	struct cpu_info *bestci, *curci, *outer;
+	struct schedstate_percpu *bestspc, *curspc;
+	pri_t bestpri, curpri;
+
+	/*
+	 * If this fails (it shouldn't), run on the given CPU.  This also
+	 * gives us a weak preference for "pivot" to begin with.
+	 */
+	bestci = pivot;
+	bestspc = &bestci->ci_schedstate;
+	bestpri = MAX(bestspc->spc_curpriority, bestspc->spc_maxpriority);
+
+	/* In the outer loop scroll through all CPU packages. */
+	pivot = pivot->ci_package1st;
+	outer = pivot;
+	do {
+		/* In the inner loop scroll through all CPUs in package. */
+		curci = outer;
+		do {
+			if (!sched_migratable(l, curci)) {
+				continue;
+			}
+
+			curspc = &curci->ci_schedstate;
+			curpri = MAX(curspc->spc_curpriority,
+			    curspc->spc_maxpriority);
+
+			if (curpri > bestpri) {
+				continue;
+			}
+			if (curpri == bestpri) {
+				/* Prefer first class CPUs over others. */
+				if ((curspc->spc_flags & SPCF_1STCLASS) == 0 &&
+				    (bestspc->spc_flags & SPCF_1STCLASS) != 0) {
+				    	continue;
+				}
+				/*
+				 * Pick the least busy CPU.  Make sure this is not
+				 * <=, otherwise it defeats the above preference.
+				 */
+				if (bestspc->spc_count < curspc->spc_count) {
+					continue;
+				}
+			}
+
+			bestpri = curpri;
+			bestci = curci;
+			bestspc = curspc;
+
+			/* If this CPU is idle and 1st class, we're done. */
+			if ((curspc->spc_flags & (SPCF_IDLE | SPCF_1STCLASS)) ==
+			    (SPCF_IDLE | SPCF_1STCLASS)) {
+				break;
+			}
+		} while (curci = curci->ci_sibling[CPUREL_PACKAGE],
+		    curci != outer);
+	} while (outer = outer->ci_sibling[CPUREL_PACKAGE1ST],
+	    outer != pivot);
+
+	return bestci;
+}
+
+/*
  * Estimate the migration of LWP to the other CPU.
  * Take and return the CPU, if migration is needed.
  */
 struct cpu_info *
 sched_takecpu(struct lwp *l)
 {
-	struct cpu_info *ci, *tci, *pivot, *next;
-	struct schedstate_percpu *spc, *ici_spc;
-	pri_t eprio, lpri, pri;
+	struct schedstate_percpu *spc, *tspc;
+	struct cpu_info *ci, *curci, *tci;
+	pri_t eprio;
+	int flags;
 
 	KASSERT(lwp_locked(l, NULL));
 
@@ -467,98 +548,71 @@ sched_takecpu(struct lwp *l)
 	eprio = lwp_eprio(l);
 
 	/*
-	 * For new LWPs (LSIDL), l_cpu was inherited from the parent when
-	 * the LWP was created (and is probably still curcpu at this point).
-	 * The child will initially be in close communication with the
-	 * parent and share VM context and cache state.  Look for an idle
-	 * SMT sibling to run it, and failing that run on the same CPU as
-	 * the parent.
+	 * Handle new LWPs.  For vfork() with a timeshared child, make it
+	 * run on the same CPU as the parent if no other LWPs in queue. 
+	 * Otherwise scatter far and wide - try for an even distribution
+	 * across all CPU packages and CPUs.
 	 */
 	if (l->l_stat == LSIDL) {
-		tci = ci->ci_sibling[CPUREL_CORE];
-		while (tci != ci) {
-			ici_spc = &tci->ci_schedstate;
-			if (l->l_psid == ici_spc->spc_psid &&
-			    (ici_spc->spc_flags & SPCF_IDLE) != 0) {
-				return tci;
+		if (curlwp->l_vforkwaiting && l->l_class == SCHED_OTHER) {
+			if (sched_migratable(l, curlwp->l_cpu) &&
+			    curlwp->l_cpu->ci_schedstate.spc_count == 0) {
+				return curlwp->l_cpu;
 			}
-			tci = tci->ci_sibling[CPUREL_CORE];
+		} else {
+			return sched_bestcpu(l, sched_nextpkg());
 		}
-		if (spc->spc_psid == l->l_psid) {
-			return ci;
-		}
+		flags = SPCF_IDLE;
+	} else {
+		flags = SPCF_IDLE | SPCF_1STCLASS;
 	}
 
-	/* If SMT primary is idle, send it back there. */
-	tci = ci->ci_smt_primary;
-	if ((tci->ci_schedstate.spc_flags & SPCF_IDLE) != 0 &&
-	    sched_migratable(l, tci)) {
-		return tci;
-	}
-
-	/* Make sure that thread is in appropriate processor-set */
-	if (__predict_true(spc->spc_psid == l->l_psid)) {
-		/* If CPU of this thread is idling - run there */
-		if (spc->spc_count == 0) {
-			return ci;
+	/*
+	 * Try to send the LWP back to the first CPU in the same core if
+	 * idle.  This keeps LWPs clustered in the run queues of 1st class
+	 * CPUs.  This implies stickiness.  If we didn't find a home for
+	 * a vfork() child above, try to use any SMT sibling to help out.
+	 */
+	tci = ci;
+	do {
+		tspc = &tci->ci_schedstate;
+		if ((tspc->spc_flags & flags) == flags &&
+		    sched_migratable(l, tci)) {
+			return tci;
 		}
+		tci = tci->ci_sibling[CPUREL_CORE];
+	} while (tci != ci);
 
-		/* Stay if thread is cache-hot */
-		if (lwp_cache_hot(l) && eprio >= spc->spc_curpriority) {
-			return ci;
-		}
-	}
-
-	/* Run on current CPU if priority of thread is higher */
-	ci = curcpu();
-	spc = &ci->ci_schedstate;
-	if (eprio > spc->spc_curpriority && sched_migratable(l, ci)) {
+	/*
+	 * Otherwise the LWP is "sticky", i.e.  generally preferring to stay
+	 * on the same CPU.
+	 */
+	if (sched_migratable(l, ci) && (eprio > spc->spc_curpriority ||
+	    (lwp_cache_hot(l) && l->l_class == SCHED_OTHER))) {
 		return ci;
 	}
 
 	/*
-	 * Look for the CPU with the lowest priority thread.  In case of
-	 * equal priority, choose the CPU with the fewest of threads.
+	 * If the current CPU core is idle, run there and avoid the
+	 * expensive scan of CPUs below.
 	 */
-	pivot = l->l_cpu;
-	ci = pivot;
-	tci = pivot;
-	lpri = PRI_COUNT;
+	curci = curcpu();
+	tci = curci;
 	do {
-		if ((next = cpu_lookup(cpu_index(ci) + 1)) == NULL) {
-			/* Reached the end, start from the beginning. */
-			next = cpu_lookup(0);
+		tspc = &tci->ci_schedstate;
+		if ((tspc->spc_flags & flags) == flags &&
+		    sched_migratable(l, tci)) {
+			return tci;
 		}
-		if (!sched_migratable(l, ci))
-			continue;
+		tci = tci->ci_sibling[CPUREL_CORE];
+	} while (tci != curci);
 
-		ici_spc = &ci->ci_schedstate;
-		pri = MAX(ici_spc->spc_curpriority, ici_spc->spc_maxpriority);
-		if (pri > lpri)
-			continue;
-
-		if (pri == lpri) {
-			/* Pick the least busy CPU. */
-			if (spc->spc_count <= ici_spc->spc_count)
-				continue;
-
-			/* Prefer SMT primaries over secondaries. */
-			if ((ici_spc->spc_flags & SPCF_SMTPRIMARY) == 0 &&
-			    (spc->spc_flags & SPCF_SMTPRIMARY) != 0)
-			    	continue;
-		}
-
-		lpri = pri;
-		tci = ci;
-		spc = ici_spc;
-
-		/* If this CPU is idle and an SMT primary, we're done. */
-		if ((spc->spc_flags & (SPCF_IDLE | SPCF_SMTPRIMARY)) ==
-		    (SPCF_IDLE | SPCF_SMTPRIMARY)) {
-			break;
-		}
-	} while (ci = next, ci != pivot);
-	return tci;
+	/*
+	 * Didn't find a new home above - happens infrequently.  Start the
+	 * search in last CPU package that the LWP ran in, but expand to
+	 * include the whole system if needed.
+	 */
+	return sched_bestcpu(l, l->l_cpu);
 }
 
 /*
@@ -571,18 +625,19 @@ sched_catchlwp(struct cpu_info *ci)
 	struct schedstate_percpu *spc, *curspc;
 	TAILQ_HEAD(, lwp) *q_head;
 	struct lwp *l;
-	bool smt;
+	bool gentle;
 
 	curspc = &curci->ci_schedstate;
 	spc = &ci->ci_schedstate;
 
 	/*
-	 * Determine if the other CPU is our SMT twin.  If it is, we'll be
-	 * more aggressive.
+	 * Be more aggressive if this CPU is first class, and the other
+	 * is not.
 	 */
-	smt = (curci->ci_package_id == ci->ci_package_id &&
-	    curci->ci_core_id == ci->ci_core_id);
-	if ((!smt && spc->spc_mcount < min_catch) ||
+	gentle = ((curspc->spc_flags & SPCF_1STCLASS) == 0 ||
+	    (spc->spc_flags & SPCF_1STCLASS) != 0);
+
+	if (spc->spc_mcount < (gentle ? min_catch : 1) ||
 	    curspc->spc_psid != spc->spc_psid) {
 		spc_unlock(ci);
 		return NULL;
@@ -603,7 +658,7 @@ sched_catchlwp(struct cpu_info *ci)
 
 		/* Look for threads, whose are allowed to migrate */
 		if ((l->l_pflag & LP_BOUND) ||
-		    (!smt && lwp_cache_hot(l)) ||
+		    (gentle && lwp_cache_hot(l)) ||
 		    !sched_migratable(l, curci)) {
 			l = TAILQ_NEXT(l, l_runq);
 			/* XXX Gap: could walk down priority list. */
@@ -612,17 +667,6 @@ sched_catchlwp(struct cpu_info *ci)
 
 		/* Grab the thread, and move to the local run queue */
 		sched_dequeue(l);
-
-		/*
-		 * If LWP is still context switching, we may need to
-		 * spin-wait before changing its CPU.
-		 */
-		if (__predict_false(l->l_ctxswtch != 0)) {
-			u_int count;
-			count = SPINLOCK_BACKOFF_MIN;
-			while (l->l_ctxswtch)
-				SPINLOCK_BACKOFF(count);
-		}
 		l->l_cpu = curci;
 		lwp_unlock_to(l, curspc->spc_mutex);
 		sched_enqueue(l);
@@ -631,66 +675,6 @@ sched_catchlwp(struct cpu_info *ci)
 	spc_unlock(ci);
 
 	return l;
-}
-
-/*
- * Periodical calculations for balancing.
- */
-static void
-sched_balance(void *nocallout)
-{
-	static int last __cacheline_aligned;
-	struct cpu_info *ci, *hci;
-	struct schedstate_percpu *spc;
-	CPU_INFO_ITERATOR cii;
-	u_int highest;
-	u_int weight;
-	int now;
-
-	/*
-	 * Only one CPU at a time, no more than hz times per second.  This
-	 * causes tremendous amount of cache misses otherwise.
-	 */
-	now = hardclock_ticks;
-	if (atomic_load_relaxed(&last) == now) {
-		return;
-	}
-	if (atomic_swap_uint(&last, now) == now) {
-		return;
-	}
-
-	/* sanitize sysctl value */
-	weight = MIN(average_weight, 100);
-
-	hci = curcpu();
-	highest = 0;
-
-	/* Make lockless countings */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		spc = &ci->ci_schedstate;
-
-		/*
-		 * Average count of the threads
-		 *
-		 * The average is computed as a fixpoint number with
-		 * 8 fractional bits.
-		 */
-		spc->spc_avgcount = (
-			weight * spc->spc_avgcount + (100 - weight) * 256 * spc->spc_mcount
-			) / 100;
-
-		/* Look for CPU with the highest average */
-		if (spc->spc_avgcount > highest) {
-			hci = ci;
-			highest = spc->spc_avgcount;
-		}
-	}
-
-	/* Update the worker */
-	worker_ci = hci;
-
-	if (nocallout == NULL)
-		callout_schedule(&balance_ch, balance_period);
 }
 
 /*
@@ -772,19 +756,48 @@ sched_idle_migrate(void)
 }
 
 /*
+ * Try to steal an LWP from "tci".
+ */
+static bool
+sched_steal(struct cpu_info *ci, struct cpu_info *tci)
+{
+	struct schedstate_percpu *spc, *tspc;
+	lwp_t *l;
+
+	spc = &ci->ci_schedstate;
+	tspc = &tci->ci_schedstate;
+	if (tspc->spc_mcount != 0 && spc->spc_psid == tspc->spc_psid) {
+		spc_dlock(ci, tci);
+		l = sched_catchlwp(tci);
+		spc_unlock(ci);
+		if (l != NULL) {
+			return true;
+		}
+	}
+	return false;
+}
+
+/*
  * Called from each CPU's idle loop.
  */
 void
 sched_idle(void)
 {
-	struct cpu_info *ci = curcpu(), *tci = NULL;
+	struct cpu_info *ci = curcpu(), *inner, *outer, *first, *tci = NULL;
 	struct schedstate_percpu *spc, *tspc;
-	lwp_t *l;
-
+	struct lwp *l;
 
 	spc = &ci->ci_schedstate;
+
+	/*
+	 * Handle LWP migrations off this CPU to another.  If there a is
+	 * migration to do then go idle afterwards (we'll wake again soon),
+	 * as we don't want to instantly steal back the LWP we just moved
+	 * out.
+	 */
 	if (spc->spc_migrating != NULL) {
 		sched_idle_migrate();
+		return;
 	}
 
 	/* If this CPU is offline, or we have an LWP to run, we're done. */
@@ -792,42 +805,159 @@ sched_idle(void)
 		return;
 	}
 
-	/* If we have SMT then help our siblings out. */
-	tci = ci->ci_sibling[CPUREL_CORE];
-	while (tci != ci) {
-		tspc = &tci->ci_schedstate;
-		if (tspc->spc_mcount != 0 && spc->spc_psid == tspc->spc_psid) {
-			spc_dlock(ci, tci);
-			l = sched_catchlwp(tci);
-			spc_unlock(ci);
-			if (l != NULL) {
+	/* Deal with SMT. */
+	if (ci->ci_nsibling[CPUREL_CORE] > 1) {
+		/* Try to help our siblings out. */
+		tci = ci->ci_sibling[CPUREL_CORE];
+		while (tci != ci) {
+			if (sched_steal(ci, tci)) {
 				return;
 			}
+			tci = tci->ci_sibling[CPUREL_CORE];
+		}
+		/*
+		 * If not the first SMT in the core, and in the default
+		 * processor set, the search ends here.
+		 */
+		if ((spc->spc_flags & SPCF_1STCLASS) == 0 &&
+		    spc->spc_psid == PS_NONE) {
+			return;
+		}
+	}
+
+	/*
+	 * Find something to run, unless this CPU exceeded the rate limit. 
+	 * Start looking on the current package to maximise L2/L3 cache
+	 * locality.  Then expand to looking at the rest of the system.
+	 *
+	 * XXX Should probably look at 2nd class CPUs first, but they will
+	 * shed jobs via preempt() anyway.
+	 */
+	if (spc->spc_nextskim > hardclock_ticks) {
+		return;
+	}
+	spc->spc_nextskim = hardclock_ticks + mstohz(skim_interval);
+
+	/* In the outer loop scroll through all CPU packages, starting here. */
+	first = ci->ci_package1st;
+	outer = first;
+	do {
+		/* In the inner loop scroll through all CPUs in package. */
+		inner = outer;
+		do {
+			/* Don't hit the locks unless needed. */
+			tspc = &inner->ci_schedstate;
+			if (ci == inner || spc->spc_psid != tspc->spc_psid ||
+			    tspc->spc_mcount < min_catch) {
+				continue;
+			}
+			spc_dlock(ci, inner);
+			l = sched_catchlwp(inner);
+			spc_unlock(ci);
+			if (l != NULL) {
+				/* Got it! */
+				return;
+			}
+		} while (inner = inner->ci_sibling[CPUREL_PACKAGE],
+		    inner != outer);
+	} while (outer = outer->ci_sibling[CPUREL_PACKAGE1ST],
+	    outer != first);
+}
+
+/*
+ * Called from mi_switch() when an LWP has been preempted / has yielded. 
+ * The LWP is presently in the CPU's run queue.  Here we look for a better
+ * CPU to teleport the LWP to; there may not be one.
+ */
+void
+sched_preempted(struct lwp *l)
+{
+	struct schedstate_percpu *tspc;
+	struct cpu_info *ci, *tci;
+
+	ci = l->l_cpu;
+	tspc = &ci->ci_schedstate;
+
+	KASSERT(tspc->spc_count >= 1);
+
+	/*
+	 * Try to select another CPU if:
+	 *
+	 * - there is no migration pending already
+	 * - and this LWP is running on a 2nd class CPU
+	 * - or this LWP is a child of vfork() that has just done execve()
+	 */
+	if (l->l_target_cpu != NULL ||
+	    ((tspc->spc_flags & SPCF_1STCLASS) != 0 &&
+	    (l->l_pflag & LP_TELEPORT) == 0)) {
+		return;
+	}
+
+	/*
+	 * Fast path: if the first SMT in the core is idle, send it back
+	 * there, because the cache is shared (cheap) and we want all LWPs
+	 * to be clustered on 1st class CPUs (either running there or on
+	 * their runqueues).
+	 */
+	tci = ci->ci_sibling[CPUREL_CORE];
+	while (tci != ci) {
+		const int flags = SPCF_IDLE | SPCF_1STCLASS;
+		tspc = &tci->ci_schedstate;
+		if ((tspc->spc_flags & flags) == flags &&
+		    sched_migratable(l, tci)) {
+		    	l->l_target_cpu = tci;
+		    	return;
 		}
 		tci = tci->ci_sibling[CPUREL_CORE];
 	}
 
-	/* Reset the counter. */
-	spc->spc_avgcount = 0;
-
-	/* If an SMT secondary and in the default processor set, we're done. */
-	if ((spc->spc_flags & SPCF_SMTPRIMARY) == 0 &&
-	    spc->spc_psid == PS_NONE) {
-		return;
+	if ((l->l_pflag & LP_TELEPORT) != 0) {
+		/*
+		 * A child of vfork(): now that the parent is released,
+		 * scatter far and wide, to match the LSIDL distribution
+		 * done in sched_takecpu().
+		 */
+		l->l_pflag &= ~LP_TELEPORT;
+		tci = sched_bestcpu(l, sched_nextpkg());
+		if (tci != ci) {
+			l->l_target_cpu = tci;
+		}
+	} else {
+		/*
+		 * Try to find a better CPU to take it, but don't move to
+		 * another 2nd class CPU; there's not much point.
+		 *
+		 * Search in the current CPU package in order to try and
+		 * keep L2/L3 cache locality, but expand to include the
+		 * whole system if needed.
+		 */
+		tci = sched_bestcpu(l, l->l_cpu);
+		if (tci != ci &&
+		    (tci->ci_schedstate.spc_flags & SPCF_1STCLASS) != 0) {
+			l->l_target_cpu = tci;
+		}
 	}
+}
 
-	/* Call the balancer. */
-	sched_balance(ci);
-	tci = worker_ci;
-	tspc = &tci->ci_schedstate;
-	if (ci == tci || spc->spc_psid != tspc->spc_psid)
-		return;
+/*
+ * Called during execve() by a child of vfork().  Does two things:
+ *
+ * - If the parent has been awoken and put back on curcpu then give the
+ *   CPU back to the parent.
+ *
+ * - If curlwp is not on a 1st class CPU then find somewhere else to run,
+ *   since it dodged the distribution in sched_takecpu() when first set
+ *   runnable.
+ */
+void
+sched_vforkexec(struct lwp *l, bool samecpu)
+{
 
-	/* Don't hit the locks unless there's something to do. */
-	if (tspc->spc_mcount >= min_catch) {
-		spc_dlock(ci, tci);
-		(void)sched_catchlwp(tci);
-		spc_unlock(ci);
+	KASSERT(l == curlwp);
+	if ((samecpu && ncpu > 1) ||
+	    (l->l_cpu->ci_schedstate.spc_flags & SPCF_1STCLASS) == 0) {
+		l->l_pflag |= LP_TELEPORT;
+		preempt();
 	}
 }
 
@@ -849,6 +979,20 @@ sched_idle(void)
 {
 
 }
+
+void
+sched_preempted(struct lwp *l)
+{
+
+}
+
+void
+sched_vforkexec(struct lwp *l, bool samecpu)
+{
+
+	KASSERT(l == curlwp);
+}
+
 #endif	/* MULTIPROCESSOR */
 
 /*
@@ -877,24 +1021,6 @@ sched_lwp_stats(struct lwp *l)
 		l->l_flag |= LW_BATCH;
 	} else
 		l->l_flag &= ~LW_BATCH;
-
-	/*
-	 * If thread is CPU-bound and never sleeps, it would occupy the CPU.
-	 * In such case reset the value of last sleep, and check it later, if
-	 * it is still zero - perform the migration, unmark the batch flag.
-	 */
-	if (batch && (l->l_slptime + l->l_slpticksum) == 0) {
-		if (l->l_slpticks == 0) {
-			if (l->l_target_cpu == NULL &&
-			    (l->l_stat == LSRUN || l->l_stat == LSONPROC)) {
-				struct cpu_info *ci = sched_takecpu(l);
-				l->l_target_cpu = (ci != l->l_cpu) ? ci : NULL;
-			}
-			l->l_flag &= ~LW_BATCH;
-		} else {
-			l->l_slpticks = 0;
-		}
-	}
 
 	/* Reset the time sums */
 	l->l_slpticksum = 0;
@@ -992,20 +1118,14 @@ SYSCTL_SETUP(sysctl_sched_setup, "sysctl sched setup")
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
 		CTLTYPE_INT, "cacheht_time",
-		SYSCTL_DESCR("Cache hotness time (in ticks)"),
+		SYSCTL_DESCR("Cache hotness time (in ms)"),
 		NULL, 0, &cacheht_time, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "balance_period",
-		SYSCTL_DESCR("Balance period (in ticks)"),
-		NULL, 0, &balance_period, 0,
-		CTL_CREATE, CTL_EOL);
-	sysctl_createv(clog, 0, &node, NULL,
-		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "average_weight",
-		SYSCTL_DESCR("Thread count averaging weight (in percent)"),
-		NULL, 0, &average_weight, 0,
+		CTLTYPE_INT, "skim_interval",
+		SYSCTL_DESCR("Rate limit for stealing from other CPUs (in ms)"),
+		NULL, 0, &skim_interval, 0,
 		CTL_CREATE, CTL_EOL);
 	sysctl_createv(clog, 0, &node, NULL,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
@@ -1048,14 +1168,14 @@ sched_print_runqueue(void (*pr)(const char *, ...))
 		spc = &ci->ci_schedstate;
 
 		(*pr)("Run-queue (CPU = %u):\n", ci->ci_index);
-		(*pr)(" pid.lid = %d.%d, r_count = %u, r_avgcount = %u, "
+		(*pr)(" pid.lid = %d.%d, r_count = %u, "
 		    "maxpri = %d, mlwp = %p\n",
 #ifdef MULTIPROCESSOR
 		    ci->ci_curlwp->l_proc->p_pid, ci->ci_curlwp->l_lid,
 #else
 		    curlwp->l_proc->p_pid, curlwp->l_lid,
 #endif
-		    spc->spc_count, spc->spc_avgcount, spc->spc_maxpriority,
+		    spc->spc_count, spc->spc_maxpriority,
 		    spc->spc_migrating);
 		i = (PRI_COUNT >> BITMAP_SHIFT) - 1;
 		do {

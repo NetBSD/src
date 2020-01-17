@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.96.20.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.20.1 2020/01/17 21:47:36 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -189,7 +189,7 @@ kernfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-kernfs_root(struct mount *mp, struct vnode **vpp)
+kernfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	const struct kern_target *root_target = &kern_targets[0];
 	int error;
@@ -198,7 +198,7 @@ kernfs_root(struct mount *mp, struct vnode **vpp)
 	error = vcache_get(mp, &root_target, sizeof(root_target), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -221,7 +221,7 @@ kernfs_sync(struct mount *mp, int waitfor,
  * Currently unsupported.
  */
 int
-kernfs_vget(struct mount *mp, ino_t ino,
+kernfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 

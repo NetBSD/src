@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.26 2019/03/01 09:26:00 msaitoh Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.26.6.1 2020/01/17 21:47:30 ad Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.26 2019/03/01 09:26:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.26.6.1 2020/01/17 21:47:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -230,6 +230,8 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 
 		ap->ap_flags |= ACPI_PCI_INFO_BRIDGE;
 
+		ap->ap_pc = acpi_get_pci_chipset_tag(acpi_softc, ap->ap_segment, ap->ap_downbus);
+
 		/*
 		 * This ACPI node denotes a PCI root bridge, but it may also
 		 * denote a PCI device on the bridge's downstream bus segment.
@@ -266,6 +268,7 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 		 */
 		ap = kmem_zalloc(sizeof(*ap), KM_SLEEP);
 
+		ap->ap_pc = ad->ad_parent->ad_pciinfo->ap_pc;
 		ap->ap_segment = ad->ad_parent->ad_pciinfo->ap_segment;
 		ap->ap_bus = ad->ad_parent->ad_pciinfo->ap_downbus;
 
@@ -292,8 +295,10 @@ acpi_pcidev_scan(struct acpi_devnode *ad)
 			 * Check whether this device is a PCI-to-PCI
 			 * bridge and get its secondary bus number.
 			 */
-			rv = acpi_pcidev_ppb_downbus(ap->ap_segment, ap->ap_bus,
-			    ap->ap_device, ap->ap_function, &ap->ap_downbus);
+			rv = acpi_pcidev_ppb_downbus(
+			    ad->ad_parent->ad_pciinfo->ap_pc,
+			    ap->ap_segment, ap->ap_bus, ap->ap_device,
+			    ap->ap_function, &ap->ap_downbus);
 
 			if (ACPI_SUCCESS(rv))
 				ap->ap_flags |= ACPI_PCI_INFO_BRIDGE;
@@ -325,18 +330,14 @@ rec:
  * XXX	Need to deal with PCI segment groups (see also acpica/OsdHardware.c).
  */
 ACPI_STATUS
-acpi_pcidev_ppb_downbus(uint16_t segment, uint16_t bus, uint16_t device,
-    uint16_t function, uint16_t *downbus)
+acpi_pcidev_ppb_downbus(pci_chipset_tag_t pc, uint16_t segment, uint16_t bus,
+    uint16_t device, uint16_t function, uint16_t *downbus)
 {
-	struct acpi_softc *sc = acpi_softc;
-	pci_chipset_tag_t pc;
 	pcitag_t tag;
 	pcireg_t val;
 
 	if (bus > 255 || device > 31 || function > 7)
 		return AE_BAD_PARAMETER;
-
-	pc = sc->sc_pc;
 
 	tag = pci_make_tag(pc, bus, device, function);
 
@@ -389,6 +390,24 @@ acpi_pcidev_find(uint16_t segment, uint16_t bus,
 	}
 
 	return NULL;
+}
+
+/*
+ * acpi_pcidev_get_tag:
+ *
+ *	Returns a PCI chipset tag for a PCI device in the ACPI name space.
+ */
+pci_chipset_tag_t
+acpi_pcidev_get_tag(uint16_t segment, uint16_t bus,
+    uint16_t device, uint16_t function)
+{
+	struct acpi_devnode *ad;
+
+	ad = acpi_pcidev_find(segment, bus, device, function);
+	if (ad == NULL || ad->ad_pciinfo == NULL)
+		return NULL;
+
+	return ad->ad_pciinfo->ap_pc;
 }
 
 /*

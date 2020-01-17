@@ -1,4 +1,4 @@
-/*	$NetBSD: spl.S,v 1.42 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: spl.S,v 1.42.2.1 2020/01/17 21:47:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Wasabi Systems, Inc.
@@ -174,7 +174,6 @@ IDTVEC_END(softintr)
  */
 ENTRY(softintr_ret)
 	incl	CPUVAR(MTX_COUNT)	/* re-adjust after mi_switch */
-	movl	$0,L_CTXSWTCH(%rax)	/* %rax from cpu_switchto */
 	cli
 	jmp	*%r13			/* back to Xspllower/Xdoreti */
 END(softintr_ret)

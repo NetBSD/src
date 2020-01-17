@@ -1,4 +1,4 @@
-/*	$NetBSD: union_vnops.c,v 1.70 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: union_vnops.c,v 1.70.16.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1994, 1995
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.70 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_vnops.c,v 1.70.16.1 2020/01/17 21:47:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -253,7 +253,7 @@ union_lookup1(struct vnode *udvp, struct vnode **dvpp, struct vnode **vpp,
 		if (vfs_busy(mp))
 			continue;
 		vput(dvp);
-		error = VFS_ROOT(mp, &tdvp);
+		error = VFS_ROOT(mp, LK_EXCLUSIVE, &tdvp);
 		vfs_unbusy(mp);
 		if (error) {
 			return (error);

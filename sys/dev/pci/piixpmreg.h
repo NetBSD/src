@@ -1,4 +1,4 @@
-/* $NetBSD: piixpmreg.h,v 1.10 2019/12/24 03:43:34 msaitoh Exp $ */
+/* $NetBSD: piixpmreg.h,v 1.10.2.1 2020/01/17 21:47:31 ad Exp $ */
 /*	$OpenBSD: piixreg.h,v 1.3 2006/01/03 22:39:03 grange Exp $	*/
 
 /*-
@@ -95,6 +95,11 @@
 #define PIIX_SMB_HBDB	0x07		/* host block data byte */
 #define PIIX_SMB_SC	0x08		/* slave control */
 #define PIIX_SMB_SC_ALERTEN	(1 << 3)	/* enable SMBALERT# */
+#define PIIX_SMB_SC_HOSTSEM	(1 << 4)	/* (W1S) HostSemaphore */
+#define PIIX_SMB_SC_CLRHOSTSEM	(1 << 5)	/* (W1C) ClrHostSemaphore */
+#define PIIX_SMB_SC_ECSEM	(1 << 6)	/* (W1S) EcSemaphore */
+#define PIIX_SMB_SC_CLRECSEM	(1 << 7)	/* (W1C) ClrEcSemaphore */
+#define PIIX_SMB_SC_SEMMASK	0xf0		/* Semaphore bits */
 
 /* Power management I/O registers */
 #define PIIX_PM_PMTMR	0x08		/* power management timer */
@@ -144,6 +149,7 @@
 #define		AMDFCH41_WDT_EN		0x80
 #define AMDFCH41_PM_DECODE_EN1		0x01
 #define AMDFCH41_PM_PORT_INDEX		0x02
+#define 	AMDFCH41_SMBUS_PORTMASK	0x18
 #define	AMDFCH41_PM_DECODE_EN3		0x03
 #define		AMDFCH41_WDT_RES_MASK	0x03
 #define		AMDFCH41_WDT_RES_32US	0x00

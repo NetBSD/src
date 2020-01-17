@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_srvsubs.c,v 1.14 2012/11/05 19:06:27 dholland Exp $	*/
+/*	$NetBSD: nfs_srvsubs.c,v 1.14.44.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.14 2012/11/05 19:06:27 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_srvsubs.c,v 1.14.44.1 2020/01/17 21:47:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -311,7 +311,7 @@ nfsrv_fhtovp(nfsrvfh_t *nsfh, int lockflag, struct vnode **vpp,
 		return error;
 	}
 
-	error = VFS_FHTOVP(mp, &fhp->fh_fid, vpp);
+	error = VFS_FHTOVP(mp, &fhp->fh_fid, LK_EXCLUSIVE, vpp);
 	if (error)
 		return (error);
 

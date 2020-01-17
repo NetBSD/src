@@ -1,4 +1,4 @@
-/* $NetBSD: udf_subr.h,v 1.20 2016/05/24 09:55:57 reinoud Exp $ */
+/* $NetBSD: udf_subr.h,v 1.20.24.1 2020/01/17 21:47:34 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -132,7 +132,7 @@ uint64_t udf_advance_uniqueid(struct udf_mount *ump);
 void udf_lock_node(struct udf_node *udf_node, int flag, char const *fname, const int lineno);
 void udf_unlock_node(struct udf_node *udf_node, int flag);
 
-int udf_get_node(struct udf_mount *ump, struct long_ad *icbloc, struct udf_node **noderes);
+int udf_get_node(struct udf_mount *ump, struct long_ad *icbloc, struct udf_node **noderes, int);
 int udf_writeout_node(struct udf_node *udf_node, int waitfor);
 int udf_dispose_node(struct udf_node *node);
 

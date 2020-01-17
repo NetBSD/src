@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82 2019/11/23 19:40:37 ad Exp $
+#	$NetBSD: genassym.cf,v 1.82.2.1 2020/01/17 21:47:27 ad Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -112,7 +112,6 @@ define	USRSTACK	USRSTACK
 define	PAGE_SIZE	PAGE_SIZE
 
 # Important offsets into the lwp and proc structs & associated constants
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_TF			offsetof(struct lwp, l_md.md_tf)

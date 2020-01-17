@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_rwlock.c,v 1.59 2019/12/09 21:02:10 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.59.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -38,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59 2019/12/09 21:02:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #define	__RWLOCK_PRIVATE
 
@@ -420,9 +421,13 @@ rw_vector_enter(krwlock_t *rw, const krw_t op)
 	}
 	KPREEMPT_ENABLE(curlwp);
 
-	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK |
-	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime);
-	LOCKSTAT_EVENT(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime);
+	LOCKSTAT_EVENT_RA(lsflag, rw, LB_RWLOCK |
+	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime,
+	    (l->l_rwcallsite != 0 ? l->l_rwcallsite :
+	      (uintptr_t)__builtin_return_address(0)));
+	LOCKSTAT_EVENT_RA(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime,
+	    (l->l_rwcallsite != 0 ? l->l_rwcallsite :
+	      (uintptr_t)__builtin_return_address(0)));
 	LOCKSTAT_EXIT(lsflag);
 
 	RW_DASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||

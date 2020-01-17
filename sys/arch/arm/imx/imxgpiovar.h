@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpiovar.h,v 1.2 2019/07/24 12:33:18 hkenken Exp $ */
+/*	$NetBSD: imxgpiovar.h,v 1.2.4.1 2020/01/17 21:47:24 ad Exp $ */
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,8 +45,8 @@ struct imxgpio_softc {
 	void *gpio_is;
 	void *gpio_is_high;
 
-	uint gpio_unit;
-	uint gpio_irqbase;
+	int gpio_unit;
+	int gpio_irqbase;
 	uint32_t gpio_enable_mask;
 	uint32_t gpio_edge_mask;
 	uint32_t gpio_level_mask;
@@ -75,9 +75,9 @@ void imxgpio_pin_write(void *, int, int);
 void imxgpio_pin_ctl(void *, int, int);
 
 /* in-kernel GPIO access utility functions */
-void gpio_set_direction(u_int, int);
-void gpio_data_write(u_int, u_int);
-bool gpio_data_read(u_int);
+void imxgpio_set_direction(u_int, int);
+void imxgpio_data_write(u_int, u_int);
+bool imxgpio_data_read(u_int);
 
 #define	GPIO_NO(group, pin)	(((group) - 1) * GPIO_NPINS + (pin))
 #define	GPIO_MODULE(pin)	((pin) / GPIO_NPINS)

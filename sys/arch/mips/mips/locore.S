@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.220 2019/09/05 15:48:13 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.220.2.1 2020/01/17 21:47:27 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -63,7 +63,7 @@
 #include <mips/trap.h>
 #include <mips/locore.h>
 
-RCSID("$NetBSD: locore.S,v 1.220 2019/09/05 15:48:13 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.220.2.1 2020/01/17 21:47:27 ad Exp $")
 
 #include "assym.h"
 
@@ -244,10 +244,8 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 #endif
 #endif /* PARANOIA */
 	/*
-	 * Save old context, unless the LWP is exiting.
+	 * Save old context
 	 */
-	beq	a0, zero, 1f
-	 nop
 	PTR_L	a2, L_PCB(a0)			# a2 = pcb of old lwp
 	mfc0	t0, MIPS_COP_0_STATUS
 	REG_PROLOGUE
@@ -268,7 +266,7 @@ NESTED(cpu_switchto, CALLFRAME_SIZ, ra)
 	REG_S	gp, PCB_CONTEXT+SF_REG_GP(a2)
 #endif
 	REG_EPILOGUE
-1:
+
 #if defined(PARANOID_SPL)
 	/*
 	 * Verify interrupt configuration matches IPL_SCHED
@@ -377,7 +375,6 @@ softint_cleanup:
 	REG_L	ra, CALLFRAME_RA(sp)
 	REG_L	v0, CALLFRAME_S0(sp)		# get softint lwp
 	NOP_L					# load delay
-	PTR_S	zero, L_CTXSWITCH(v0)		# clear l_ctxswtch
 #if IPL_SCHED != IPL_HIGH
 	j	_C_LABEL(splhigh_noprof)
 #else

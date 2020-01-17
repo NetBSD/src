@@ -1,4 +1,4 @@
-/*	$NetBSD: ntfs_subr.c,v 1.62 2019/10/18 08:19:33 hannken Exp $	*/
+/*	$NetBSD: ntfs_subr.c,v 1.62.2.1 2020/01/17 21:47:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 Semen Ustimenko (semenu@FreeBSD.org)
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.62 2019/10/18 08:19:33 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ntfs_subr.c,v 1.62.2.1 2020/01/17 21:47:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1772,7 +1772,7 @@ ntfs_toupper_use(struct mount *mp, struct ntfsmount *ntmp)
 	ntfs_toupper_tab = malloc(256 * 256 * sizeof(*ntfs_toupper_tab),
 	    M_NTFSRDATA, M_WAITOK);
 
-	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, &vp)))
+	if ((error = VFS_VGET(mp, NTFS_UPCASEINO, LK_EXCLUSIVE, &vp)))
 		goto out;
 	error = ntfs_readattr(ntmp, VTONT(vp), NTFS_A_DATA, NULL,
 	    0, 256 * 256 * sizeof(*ntfs_toupper_tab), (char *)ntfs_toupper_tab,

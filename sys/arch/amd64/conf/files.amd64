@@ -1,4 +1,4 @@
-#	$NetBSD: files.amd64,v 1.114 2019/12/10 02:06:07 manu Exp $
+#	$NetBSD: files.amd64,v 1.114.2.1 2020/01/17 21:47:23 ad Exp $
 #
 # new style config file for amd64 architecture
 #
@@ -29,10 +29,6 @@ defflag opt_spectre.h	SPECTRE_V2_GCC_MITIGATION
 
 defflag			USER_LDT
 defflag eisa.h		EISA
-
-# Multiboot support
-defflag	opt_multiboot.h	MULTIBOOT
-file	arch/x86/x86/multiboot2.c		multiboot
 
 # Start code
 file	arch/amd64/amd64/locore.S		machdep

@@ -1,4 +1,4 @@
-/*	$NetBSD: advfsops.c,v 1.77 2017/06/01 02:45:12 chs Exp $	*/
+/*	$NetBSD: advfsops.c,v 1.77.16.1 2020/01/17 21:47:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 Christian E. Hopps
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.77 2017/06/01 02:45:12 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: advfsops.c,v 1.77.16.1 2020/01/17 21:47:33 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -264,7 +264,7 @@ adosfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	/*
 	 * get the root anode, if not a valid fs this will fail.
 	 */
-	if ((error = VFS_ROOT(mp, &rvp)) != 0)
+	if ((error = VFS_ROOT(mp, LK_EXCLUSIVE, &rvp)) != 0)
 		goto fail;
 	/* allocate and load bitmap, set free space */
 	bitmap_sz = ((amp->numblks + 31) / 32) * sizeof(*amp->bitmap);
@@ -328,12 +328,13 @@ adosfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-adosfs_root(struct mount *mp, struct vnode **vpp)
+adosfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, &nvp)) != 0)
+	error = VFS_VGET(mp, (ino_t)VFSTOADOSFS(mp)->rootb, lktype, &nvp);
+	if (error != 0)
 		return (error);
 	/* XXX verify it's a root block? */
 	*vpp = nvp;
@@ -366,7 +367,7 @@ adosfs_statvfs(struct mount *mp, struct statvfs *sbp)
  * return locked and referenced
  */
 int
-adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
+adosfs_vget(struct mount *mp, ino_t an, int lktype, struct vnode **vpp)
 {
 	u_long block;
 	int error;
@@ -376,7 +377,7 @@ adosfs_vget(struct mount *mp, ino_t an, struct vnode **vpp)
 	error = vcache_get(mp, &block, sizeof(block), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -690,7 +691,8 @@ struct ifid {
 };
 
 int
-adosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+adosfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype,
+    struct vnode **vpp)
 {
 	struct ifid ifh;
 #if 0
@@ -708,7 +710,7 @@ adosfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 
 	memcpy(&ifh, fhp, sizeof(ifh));
 
-	if ((error = VFS_VGET(mp, ifh.ifid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ifh.ifid_ino, lktype, &nvp)) != 0) {
 		*vpp = NULLVP;
 		return (error);
 	}

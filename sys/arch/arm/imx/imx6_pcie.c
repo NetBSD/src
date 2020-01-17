@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_pcie.c,v 1.14 2019/10/16 11:16:30 hkenken Exp $	*/
+/*	$NetBSD: imx6_pcie.c,v 1.14.2.1 2020/01/17 21:47:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2016  Genetec Corporation.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.14 2019/10/16 11:16:30 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_pcie.c,v 1.14.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include "opt_pci.h"
 
@@ -231,9 +231,9 @@ imx6_pcie_reset(void *cookie)
 
 #if NIMXGPIO > 0
 	if (ipsc->sc_gpio_reset >= 0) {
-		gpio_data_write(ipsc->sc_gpio_reset, ipsc->sc_gpio_reset_active);
+		imxgpio_data_write(ipsc->sc_gpio_reset, ipsc->sc_gpio_reset_active);
 		delay(100 * 1000);
-		gpio_data_write(ipsc->sc_gpio_reset, !ipsc->sc_gpio_reset_active);
+		imxgpio_data_write(ipsc->sc_gpio_reset, !ipsc->sc_gpio_reset_active);
 	}
 #endif
 }

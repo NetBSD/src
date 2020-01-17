@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.35 2019/12/15 21:11:35 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.35.2.1 2020/01/17 21:47:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -61,6 +61,13 @@ struct uvm_object {
 	struct radix_tree	uo_pages;	/* tree of pages */
 	LIST_HEAD(,ubc_map)	uo_ubc;		/* ubc mappings */
 };
+
+/*
+ * tags for uo_pages
+ */
+
+#define	UVM_PAGE_DIRTY_TAG	1	/* might be dirty (!PG_CLEAN) */
+#define	UVM_PAGE_WRITEBACK_TAG	2	/* being written back */
 
 /*
  * UVM_OBJ_KERN is a 'special' uo_refs value which indicates that the

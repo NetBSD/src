@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.419 2020/01/01 10:11:21 ryo Exp $
+#	$NetBSD: files.pci,v 1.419.2.1 2020/01/17 21:47:31 ad Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -168,7 +168,7 @@ attach	mpii at pci
 file	dev/pci/mpii.c			mpii
 
 # Aquantia/Atlantic 10-Gigabit Ethernet
-device	aq: ether, ifnet, arp
+device	aq: ether, ifnet, arp, sysmon_envsys
 attach	aq at pci
 file	dev/pci/if_aq.c			aq
 defflag opt_if_aq.h	AQ_EVENT_COUNTERS
@@ -1185,3 +1185,6 @@ file	dev/pci/qat/qat_d15xx.c		qat
 device	ixl: ether, ifnet, arp
 attach	ixl at pci
 file	dev/pci/if_ixl.c	ixl
+defflag	opt_if_ixl.h	IXL_DEBUG
+defparam opt_if_ixl.h	IXL_STATS_INTERVAL_MSEC
+			IXL_QUEUE_NUM

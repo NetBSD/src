@@ -1,7 +1,7 @@
-/*	$NetBSD: sched_4bsd.c,v 1.41 2019/12/06 18:33:19 ad Exp $	*/
+/*	$NetBSD: sched_4bsd.c,v 1.41.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2019, 2020
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.41 2019/12/06 18:33:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sched_4bsd.c,v 1.41.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -145,6 +145,13 @@ sched_tick(struct cpu_info *ci)
 			 * The process has already been through a roundrobin
 			 * without switching and may be hogging the CPU.
 			 * Indicate that the process should yield.
+			 */
+			pri = MAXPRI_KTHREAD;
+		} else if ((spc->spc_flags & SPCF_1STCLASS) == 0) {
+			/*
+			 * For SMT or assymetric systems push a little
+			 * harder: if this is not a 1st class CPU, try to
+			 * find a better one to run this LWP.
 			 */
 			pri = MAXPRI_KTHREAD;
 		} else {

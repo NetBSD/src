@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_bio.c,v 1.192 2019/12/13 20:10:21 ad Exp $	*/
+/*	$NetBSD: nfs_bio.c,v 1.192.2.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.192 2019/12/13 20:10:21 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_bio.c,v 1.192.2.1 2020/01/17 21:47:36 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -1120,7 +1120,8 @@ again:
 			 */
 			mutex_enter(uobj->vmobjlock);
 			for (i = 0; i < npages; i++) {
-				pgs[i]->flags &= ~PG_CLEAN;
+				uvm_pagemarkdirty(pgs[i],
+				    UVM_PAGE_STATUS_DIRTY);
 			}
 			mutex_exit(uobj->vmobjlock);
 		}

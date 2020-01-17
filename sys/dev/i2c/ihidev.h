@@ -1,4 +1,4 @@
-/* $NetBSD: ihidev.h,v 1.3 2019/12/25 01:19:56 thorpej Exp $ */
+/* $NetBSD: ihidev.h,v 1.3.2.1 2020/01/17 21:47:31 ad Exp $ */
 /* $OpenBSD ihidev.h,v 1.4 2016/01/31 18:24:35 jcs Exp $ */
 
 /*-
@@ -100,7 +100,9 @@ struct ihidev_softc {
 	uint64_t	sc_phandle;
 
 	void *		sc_ih;
+	void *		sc_sih;
 	kmutex_t	sc_intr_lock;
+	int		sc_intr_type;
 
 	u_int		sc_hid_desc_addr;
 	union {

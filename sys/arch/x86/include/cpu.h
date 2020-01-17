@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.116 2019/12/30 23:32:29 thorpej Exp $	*/
+/*	$NetBSD: cpu.h,v 1.116.2.1 2020/01/17 21:47:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -127,7 +127,7 @@ struct cpu_info {
 	int ci_curldt;		/* current LDT descriptor */
 	int ci_nintrhand;	/* number of H/W interrupt handlers */
 	uint64_t ci_scratch;
-	uintptr_t ci_pmap_data[64 / sizeof(uintptr_t)];
+	uintptr_t ci_pmap_data[128 / sizeof(uintptr_t)];
 	struct kcpuset *ci_tlb_cpuset;
 
 	int ci_kfpu_spl;

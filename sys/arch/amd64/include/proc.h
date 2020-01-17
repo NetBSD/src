@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.23 2019/10/12 06:31:03 maxv Exp $	*/
+/*	$NetBSD: proc.h,v 1.23.2.1 2020/01/17 21:47:23 ad Exp $	*/
 
 /*
  * Copyright (c) 1991 Regents of the University of California.
@@ -47,8 +47,6 @@ struct vm_page;
 
 struct mdlwp {
 	struct	trapframe *md_regs;	/* registers on current frame */
-	struct pmap *md_gc_pmap;	/* pmap being garbage collected */
-	struct vm_page *md_gc_ptp;	/* pages from pmap g/c */
 	int	md_flags;		/* machine-dependent flags */
 	volatile int md_astpending;
 };

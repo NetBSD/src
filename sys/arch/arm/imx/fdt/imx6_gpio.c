@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_gpio.c,v 1.4 2019/11/27 07:26:08 hkenken Exp $	*/
+/*	$NetBSD: imx6_gpio.c,v 1.4.2.1 2020/01/17 21:47:24 ad Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.4 2019/11/27 07:26:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_gpio.c,v 1.4.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include "opt_fdt.h"
 #include "gpio.h"
@@ -80,7 +80,7 @@ int
 imxgpio_match(device_t parent, cfdata_t cf, void *aux)
 {
 	const char * const compatible[] = {
-		"fsl,imx6q-gpio",
+		"fsl,imx35-gpio",
 		NULL
 	};
 	struct fdt_attach_args * const faa = aux;
@@ -116,8 +116,8 @@ imxgpio_attach(device_t parent, device_t self, void *aux)
 
 	sc->gpio_memt = faa->faa_bst;
 	sc->gpio_memh = ioh;
-	sc->gpio_unit = (addr - IMX6_AIPS1_BASE - AIPS1_GPIO1_BASE) / 0x4000;
-	sc->gpio_irqbase = PIC_MAXSOURCES + sc->gpio_unit * GPIO_NPINS;
+	sc->gpio_unit = -1;
+	sc->gpio_irqbase = PIC_IRQBASE_ALLOC;
 
 	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
 		aprint_error_dev(self, "failed to decode interrupt\n");

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.33 2019/01/27 02:08:40 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.33.6.1 2020/01/17 21:47:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.33 2019/01/27 02:08:40 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.33.6.1 2020/01/17 21:47:29 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <opt_ntp.h>
@@ -192,7 +192,7 @@ compat_30_netbsd32_fhstat(struct lwp *l, const struct compat_30_netbsd32_fhstat_
 		return (ESTALE);
 	if (mp->mnt_op->vfs_fhtovp == NULL)
 		return EOPNOTSUPP;
-	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, &vp)))
+	if ((error = VFS_FHTOVP(mp, (struct fid*)&fh.fh_fid, LK_EXCLUSIVE, &vp)))
 		return (error);
 	error = vn_stat(vp, &sb);
 	vput(vp);

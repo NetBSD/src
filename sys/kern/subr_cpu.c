@@ -1,7 +1,8 @@
-/*	$NetBSD: subr_cpu.c,v 1.5 2020/01/05 20:27:43 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.5.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -60,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.5 2020/01/05 20:27:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.5.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -78,6 +79,7 @@ int		ncpu			__read_mostly;
 int		ncpuonline		__read_mostly;
 bool		mp_online		__read_mostly;
 static bool	cpu_topology_present	__read_mostly;
+static bool	cpu_topology_haveslow	__read_mostly;
 int64_t		cpu_counts[CPU_COUNT_MAX];
 
 /* An array of CPUs.  There are ncpu entries. */
@@ -140,15 +142,17 @@ cpu_softintr_p(void)
  */
 void
 cpu_topology_set(struct cpu_info *ci, u_int package_id, u_int core_id,
-    u_int smt_id, u_int numa_id)
+    u_int smt_id, u_int numa_id, bool slow)
 {
 	enum cpu_rel rel;
 
 	cpu_topology_present = true;
+	cpu_topology_haveslow |= slow;
 	ci->ci_package_id = package_id;
 	ci->ci_core_id = core_id;
 	ci->ci_smt_id = smt_id;
 	ci->ci_numa_id = numa_id;
+	ci->ci_is_slow = slow;
 	for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 		ci->ci_sibling[rel] = ci;
 		ci->ci_nsibling[rel] = 1;
@@ -181,14 +185,18 @@ cpu_topology_link(struct cpu_info *ci, struct cpu_info *ci2, enum cpu_rel rel)
 static void
 cpu_topology_dump(void)
 {
-#if DEBUG 
+#ifdef DEBUG
 	CPU_INFO_ITERATOR cii;
 	struct cpu_info *ci, *ci2;
-	const char *names[] = { "core", "package", "peer", "smt" };
+	const char *names[] = { "core", "pkg", "1st" };
 	enum cpu_rel rel;
 	int i;
 
+	CTASSERT(__arraycount(names) >= __arraycount(ci->ci_sibling));
+
 	for (CPU_INFO_FOREACH(cii, ci)) {
+		if (cpu_topology_haveslow)
+			printf("%s ", ci->ci_is_slow ? "slow" : "fast");
 		for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 			printf("%s has %d %s siblings:", cpu_name(ci),
 			    ci->ci_nsibling[rel], names[rel]);
@@ -203,6 +211,8 @@ cpu_topology_dump(void)
 			}
 			printf("\n");
 		}
+		printf("%s first in package: %s\n", cpu_name(ci),
+		    cpu_name(ci->ci_package1st));
 	}
 #endif	/* DEBUG */
 }
@@ -223,9 +233,11 @@ cpu_topology_fake1(struct cpu_info *ci)
 	if (!cpu_topology_present) {
 		ci->ci_package_id = cpu_index(ci);
 	}
-	ci->ci_smt_primary = ci;
-	ci->ci_schedstate.spc_flags |= SPCF_SMTPRIMARY;
-	cpu_topology_dump();
+	ci->ci_schedstate.spc_flags |=
+	    (SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
+	ci->ci_package1st = ci;
+	ci->ci_is_slow = false;
+	cpu_topology_haveslow = false;
 }
 
 /*
@@ -241,8 +253,10 @@ cpu_topology_fake(void)
 
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		cpu_topology_fake1(ci);
+		/* Undo (early boot) flag set so everything links OK. */
+		ci->ci_schedstate.spc_flags &=
+		    ~(SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
 	}
-	cpu_topology_dump();
 }
 
 /*
@@ -254,26 +268,35 @@ cpu_topology_init(void)
 {
 	CPU_INFO_ITERATOR cii, cii2;
 	struct cpu_info *ci, *ci2, *ci3;
-	u_int ncore, npackage, npeer, minsmt;
-	bool symmetric;
+	u_int minsmt, mincore;
 
 	if (!cpu_topology_present) {
 		cpu_topology_fake();
-		return;
+		goto linkit;
 	}
 
 	/* Find siblings in same core and package. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
+		ci->ci_schedstate.spc_flags &=
+		    ~(SPCF_CORE1ST | SPCF_PACKAGE1ST | SPCF_1STCLASS);
 		for (CPU_INFO_FOREACH(cii2, ci2)) {
 			/* Avoid bad things happening. */
 			if (ci2->ci_package_id == ci->ci_package_id &&
 			    ci2->ci_core_id == ci->ci_core_id &&
 			    ci2->ci_smt_id == ci->ci_smt_id &&
 			    ci2 != ci) {
+#ifdef DEBUG
+				printf("cpu%u %p pkg %u core %u smt %u same as "
+				       "cpu%u %p pkg %u core %u smt %u\n", 
+				       cpu_index(ci), ci, ci->ci_package_id,
+				       ci->ci_core_id, ci->ci_smt_id,
+				       cpu_index(ci2), ci2, ci2->ci_package_id,
+				       ci2->ci_core_id, ci2->ci_smt_id);
+#endif
 			    	printf("cpu_topology_init: info bogus, "
 			    	    "faking it\n");
 			    	cpu_topology_fake();
-			    	return;
+			    	goto linkit;
 			}
 			if (ci2 == ci ||
 			    ci2->ci_package_id != ci->ci_package_id) {
@@ -295,54 +318,8 @@ cpu_topology_init(void)
 		}
 	}
 
-	/* Find peers in other packages, and peer SMTs in same package. */
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (ci->ci_nsibling[CPUREL_PEER] <= 1) {
-			for (CPU_INFO_FOREACH(cii2, ci2)) {
-				if (ci != ci2 &&
-				    ci->ci_package_id != ci2->ci_package_id &&
-				    ci->ci_core_id == ci2->ci_core_id &&
-				    ci->ci_smt_id == ci2->ci_smt_id) {
-					cpu_topology_link(ci, ci2,
-					    CPUREL_PEER);
-					break;
-				}
-			}
-		}
-		if (ci->ci_nsibling[CPUREL_SMT] <= 1) {
-			for (CPU_INFO_FOREACH(cii2, ci2)) {
-				if (ci != ci2 &&
-				    ci->ci_package_id == ci2->ci_package_id &&
-				    ci->ci_core_id != ci2->ci_core_id &&
-				    ci->ci_smt_id == ci2->ci_smt_id) {
-					cpu_topology_link(ci, ci2,
-					    CPUREL_SMT);
-					break;
-				}
-			}
-		}
-	}
-
-	/* Determine whether the topology is bogus/symmetric. */
-	npackage = curcpu()->ci_nsibling[CPUREL_PACKAGE];
-	ncore = curcpu()->ci_nsibling[CPUREL_CORE];
-	npeer = curcpu()->ci_nsibling[CPUREL_PEER];
-	symmetric = true;
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		if (npackage != ci->ci_nsibling[CPUREL_PACKAGE] ||
-		    ncore != ci->ci_nsibling[CPUREL_CORE] ||
-		    npeer != ci->ci_nsibling[CPUREL_PEER]) {
-			symmetric = false;
-		}
-	}
-	cpu_topology_dump();
-	if (symmetric == false) {
-		printf("cpu_topology_init: not symmetric, faking it\n");
-		cpu_topology_fake();
-		return;
-	}
-
-	/* Identify SMT primary in each core. */
+ linkit:
+	/* Identify lowest numbered SMT in each core. */
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		ci2 = ci3 = ci;
 		minsmt = ci->ci_smt_id;
@@ -353,18 +330,94 @@ cpu_topology_init(void)
 			}
 			ci2 = ci2->ci_sibling[CPUREL_CORE];
 		} while (ci2 != ci);
+		ci3->ci_schedstate.spc_flags |= SPCF_CORE1ST;
+	}
 
-		/*
-		 * Mark the SMT primary, and walk back over the list
-		 * pointing secondaries to the primary.
-		 */
-		ci3->ci_schedstate.spc_flags |= SPCF_SMTPRIMARY;
+	/* Identify lowest numbered SMT in each package. */
+	ci3 = NULL;
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		if ((ci->ci_schedstate.spc_flags & SPCF_CORE1ST) == 0) {
+			continue;
+		}
+		ci2 = ci3 = ci;
+		mincore = ci->ci_core_id;
+		do {
+			if ((ci2->ci_schedstate.spc_flags &
+			    SPCF_CORE1ST) != 0 &&
+			    ci2->ci_core_id < mincore) {
+				ci3 = ci2;
+				mincore = ci2->ci_core_id;
+			}
+			ci2 = ci2->ci_sibling[CPUREL_PACKAGE];
+		} while (ci2 != ci);
+
+		if ((ci3->ci_schedstate.spc_flags & SPCF_PACKAGE1ST) != 0) {
+			/* Already identified - nothing more to do. */
+			continue;
+		}
+		ci3->ci_schedstate.spc_flags |= SPCF_PACKAGE1ST;
+
+		/* Walk through all CPUs in package and point to first. */
+		ci2 = ci3;
+		do {
+			ci2->ci_package1st = ci3;
+			ci2->ci_sibling[CPUREL_PACKAGE1ST] = ci3;
+			ci2 = ci2->ci_sibling[CPUREL_PACKAGE];
+		} while (ci2 != ci3);
+
+		/* Now look for somebody else to link to. */
+		for (CPU_INFO_FOREACH(cii2, ci2)) {
+			if ((ci2->ci_schedstate.spc_flags & SPCF_PACKAGE1ST)
+			    != 0 && ci2 != ci3) {
+			    	cpu_topology_link(ci3, ci2, CPUREL_PACKAGE1ST);
+			    	break;
+			}
+		}
+	}
+
+	/* Walk through all packages, starting with value of ci3 from above. */
+	KASSERT(ci3 != NULL);
+	ci = ci3;
+	do {
+		/* Walk through CPUs in the package and copy in PACKAGE1ST. */
 		ci2 = ci;
 		do {
-			ci2->ci_smt_primary = ci3;
-			ci2 = ci2->ci_sibling[CPUREL_CORE];
+			ci2->ci_sibling[CPUREL_PACKAGE1ST] =
+			    ci->ci_sibling[CPUREL_PACKAGE1ST];
+			ci2->ci_nsibling[CPUREL_PACKAGE1ST] =
+			    ci->ci_nsibling[CPUREL_PACKAGE1ST];
+			ci2 = ci2->ci_sibling[CPUREL_PACKAGE];
 		} while (ci2 != ci);
+		ci = ci->ci_sibling[CPUREL_PACKAGE1ST];
+	} while (ci != ci3);
+
+	if (cpu_topology_haveslow) {
+		/*
+		 * For asymmetric systems where some CPUs are slower than
+		 * others, mark first class CPUs for the scheduler.  This
+		 * conflicts with SMT right now so whinge if observed.
+		 */
+		if (curcpu()->ci_nsibling[CPUREL_CORE] > 1) {
+			printf("cpu_topology_init: asymmetric & SMT??\n");
+		}
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if (!ci->ci_is_slow) {
+				ci->ci_schedstate.spc_flags |= SPCF_1STCLASS;
+			}
+		}
+	} else {
+		/*
+		 * For any other configuration mark the 1st CPU in each
+		 * core as a first class CPU.
+		 */
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			if ((ci->ci_schedstate.spc_flags & SPCF_CORE1ST) != 0) {
+				ci->ci_schedstate.spc_flags |= SPCF_1STCLASS;
+			}
+		}
 	}
+
+	cpu_topology_dump();
 }
 
 /*

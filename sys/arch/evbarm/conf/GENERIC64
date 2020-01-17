@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.130 2020/01/04 14:18:28 skrll Exp $
+#	$NetBSD: GENERIC64,v 1.130.2.1 2020/01/17 21:47:25 ad Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -16,13 +16,21 @@ maxusers	64
 #
 makeoptions 	DTSARCH="arm aarch64"
 makeoptions	DTSGNUARCH="arm arm64"
-makeoptions	DTSSUBDIR="allwinner amlogic broadcom nvidia rockchip"
+makeoptions	DTSSUBDIR="allwinner amlogic broadcom freescale nvidia rockchip"
 makeoptions	DTS="
 	bcm2711-rpi-4-b.dts
 	bcm2837-rpi-3-a-plus.dts
 	bcm2837-rpi-3-b-plus.dts
 	bcm2837-rpi-3-b.dts
 	bcm2837-rpi-cm3-io3.dts
+
+	imx8mq-evk.dts
+	imx8mq-hummingboard-pulse.dts
+	imx8mq-librem5-devkit.dts
+	imx8mq-nitrogen.dts
+	imx8mq-pico-pi.dts
+	imx8mq-zii-ultra-rmb3.dts
+	imx8mq-zii-ultra-zest.dts
 
 	meson-gxbb-nanopi-k2.dts
 	meson-gxbb-nexbox-a95x.dts
@@ -234,6 +242,7 @@ gic*		at acpi?
 armgic0		at gic?
 gicvthree*	at fdt? pass 1		# ARM GICv3
 gicvthree*	at acpi?
+imx7gpc*	at fdt? pass 2		# IMX GPCv2
 sunxinmi*	at fdt? pass 2		# Allwinner NMI / R_INTC
 
 # Memory controller
@@ -263,6 +272,7 @@ bcmcprman*	at fdt? pass 1		# Broadcom BCM283x Clock Manager
 bcmaux*		at fdt? pass 1		# Broadcom BCM283x Aux Periph Clocks
 gxbbaoclkc*	at fdt? pass 2		# Amlogic Meson GXBB AO clock controller
 gxbbclkc*	at fdt? pass 2		# Amlogic Meson GXBB/GXL EE clock controller
+imx8mqccm*	at fdt? pass 2		# NXP iMX8MQ CCM
 mesonresets*	at fdt? pass 2		# Amlogic Meson misc. clock resets
 rkcru*		at fdt? pass 2		# Rockchip RK3328 CRU
 sun8ih3ccu*	at fdt? pass 2		# Allwinner H3/H5 CCU
@@ -279,6 +289,7 @@ tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
 bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
 plgpio*		at acpi?
@@ -292,6 +303,7 @@ rkpwm*		at fdt? pass 3		# Rockchip PWM
 sunxipwm*	at fdt? pass 3		# Allwinner PWM
 
 # MPIO / Pinmux
+imxiomux*	at fdt? pass 2		# IMX IOMUX
 rkiomux*	at fdt?	pass 3		# Rockchip IOMUX
 tegrapinmux*	at fdt?			# NVIDIA Tegra MPIO
 
@@ -312,6 +324,7 @@ pci*		at ppb?
 # Ethernet
 awge*		at fdt?				# DesignWare Gigabit Ethernet
 emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
+enet*		at fdt?				# IMX FEC
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
 mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
@@ -321,6 +334,7 @@ re*		at pci? dev ? function ?	# Realtek RTL8111GS
 wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
 # MII/PHY support
+atphy*		at mii? phy ?		# Attansic/Atheros PHYs
 exphy* 		at mii? phy ?		# 3Com internal PHYs
 gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
@@ -354,6 +368,8 @@ ukphy*		at mii? phy ?		# generic unknown PHYs
 # UART
 com*		at fdt?	pass 4			# UART
 com*		at acpi?
+imxuart*	at fdt? pass 4			# IMX UART
+options 	IMXUARTCONSOLE
 mesonuart*	at fdt? pass 4			# Amlogic Meson UART
 plcom*		at fdt?	pass 4			# ARM PL011 UART
 plcom*		at acpi?
@@ -365,6 +381,7 @@ options 	I2C_MAX_ADDR=0xfff
 bsciic*		at fdt?			# Broadcom BCM283x Serial Control
 dwiic*		at fdt?			# Designware I2C
 dwiic*		at acpi?
+imxi2c*		at fdt? pass 4		# IMX I2C
 rkiic*		at fdt? pass 4		# Rockchip I2C
 sunxirsb*	at fdt?	pass 4		# Allwinner RSB
 sunxitwi*	at fdt?			# Allwinner TWI
@@ -393,7 +410,7 @@ amdccp*		at fdt?			# AMD Cryptograhic Coprocessor RNG
 amdccp*		at acpi?
 bcmrng*		at fdt?			# Broadcom BCM283x RNG
 mesonrng*	at fdt?			# Amlogic Meson RNG
-#sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
+sun8icrypto* 	at fdt?			# Allwinner Crypto Engine
 
 # RTC
 plrtc*		at fdt?			# ARM PrimeCell RTC
@@ -513,6 +530,7 @@ tegrasoctherm*	at fdt?			# NVIDIA Tegra SOC_THERM
 rktsadc*	at fdt?			# RockChip TSASC
 
 # USB
+imx8mqusbphy*	at fdt? pass 9		# IMX USB PHY
 mesonusbphy*	at fdt? pass 9		# Amlogic Meson USB2 PHY
 mesongxlu2phy*	at fdt? pass 9		# Amlogic Meson GXL USB2 PHY
 mesongxlu3phy*	at fdt? pass 9		# Amlogic Meson GXL USB3 PHY

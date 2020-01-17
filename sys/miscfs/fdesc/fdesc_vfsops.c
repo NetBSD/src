@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vfsops.c,v 1.92 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: fdesc_vfsops.c,v 1.92.20.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.92 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vfsops.c,v 1.92.20.1 2020/01/17 21:47:35 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -136,7 +136,7 @@ fdesc_unmount(struct mount *mp, int mntflags)
 }
 
 int
-fdesc_root(struct mount *mp, struct vnode **vpp)
+fdesc_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 
@@ -145,7 +145,7 @@ fdesc_root(struct mount *mp, struct vnode **vpp)
 	 */
 	vp = mp->mnt_data;
 	vref(vp);
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, lktype | LK_RETRY);
 	*vpp = vp;
 	return (0);
 }
@@ -164,7 +164,7 @@ fdesc_sync(struct mount *mp, int waitfor,
  * Currently unsupported.
  */
 int
-fdesc_vget(struct mount *mp, ino_t ino,
+fdesc_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 

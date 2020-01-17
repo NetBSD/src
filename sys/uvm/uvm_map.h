@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.76 2020/01/05 15:57:15 para Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.76.2.1 2020/01/17 21:47:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -209,7 +209,7 @@ struct vm_map {
 	struct pmap *		pmap;		/* Physical map */
 	krwlock_t		lock;		/* Non-intrsafe lock */
 	struct lwp *		busy;		/* LWP holding map busy */
-	kmutex_t		misc_lock;	/* Lock for ref_count, cv */
+	kmutex_t		misc_lock;	/* Lock for cv, busy */
 	kcondvar_t		cv;		/* For signalling */
 	int			flags;		/* flags */
 	struct rb_tree		rb_tree;	/* Tree for entries */

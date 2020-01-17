@@ -1,4 +1,4 @@
-/*	$NetBSD: ptyfs_vfsops.c,v 1.56 2017/02/17 08:31:24 hannken Exp $	*/
+/*	$NetBSD: ptyfs_vfsops.c,v 1.56.20.1 2020/01/17 21:47:34 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.56 2017/02/17 08:31:24 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ptyfs_vfsops.c,v 1.56.20.1 2020/01/17 21:47:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -388,7 +388,7 @@ ptyfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-ptyfs_root(struct mount *mp, struct vnode **vpp)
+ptyfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	int error;
 
@@ -396,7 +396,7 @@ ptyfs_root(struct mount *mp, struct vnode **vpp)
 	error = ptyfs_allocvp(mp, vpp, PTYFSroot, 0);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -460,7 +460,7 @@ ptyfs_loadvnode(struct mount *mp, struct vnode *vp,
  */
 /*ARGSUSED*/
 int
-ptyfs_vget(struct mount *mp, ino_t ino,
+ptyfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	return EOPNOTSUPP;

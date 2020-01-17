@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.122 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.122.2.1 2020/01/17 21:47:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.122 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.122.2.1 2020/01/17 21:47:38 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -609,14 +609,14 @@ uvmpd_dropswap(struct vm_page *pg)
 	if ((pg->flags & PG_ANON) && anon->an_swslot) {
 		uvm_swap_free(anon->an_swslot, 1);
 		anon->an_swslot = 0;
-		pg->flags &= ~PG_CLEAN;
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		result = true;
 	} else if (pg->flags & PG_AOBJ) {
 		int slot = uao_set_swslot(pg->uobject,
 		    pg->offset >> PAGE_SHIFT, 0);
 		if (slot) {
 			uvm_swap_free(slot, 1);
-			pg->flags &= ~PG_CLEAN;
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 			result = true;
 		}
 	}
@@ -757,10 +757,14 @@ uvmpd_scan_queue(void)
 		 */
 
 		pmap_page_protect(p, VM_PROT_NONE);
-		if ((p->flags & PG_CLEAN) && pmap_clear_modify(p)) {
-			p->flags &= ~(PG_CLEAN);
+		if (uvm_pagegetdirty(p) == UVM_PAGE_STATUS_UNKNOWN) {
+			if (pmap_clear_modify(p)) {
+				uvm_pagemarkdirty(p, UVM_PAGE_STATUS_DIRTY);
+			} else {
+				uvm_pagemarkdirty(p, UVM_PAGE_STATUS_CLEAN);
+			}
 		}
-		if (p->flags & PG_CLEAN) {
+		if (uvm_pagegetdirty(p) != UVM_PAGE_STATUS_DIRTY) {
 			int slot;
 			int pageidx;
 
