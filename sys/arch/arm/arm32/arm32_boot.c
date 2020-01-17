@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_boot.c,v 1.35 2019/12/20 21:05:33 ad Exp $	*/
+/*	$NetBSD: arm32_boot.c,v 1.35.2.1 2020/01/17 21:47:23 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -122,7 +122,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.35 2019/12/20 21:05:33 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: arm32_boot.c,v 1.35.2.1 2020/01/17 21:47:23 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_cputypes.h"
@@ -357,20 +357,6 @@ cpu_hatch(struct cpu_info *ci, u_int cpuindex, void (*md_cpu_init)(struct cpu_in
 	ci->ci_ctrl = armreg_sctlr_read();
 	uint32_t mpidr = armreg_mpidr_read();
 	ci->ci_mpidr = mpidr;
-	if (mpidr & MPIDR_MT) {
-		cpu_topology_set(ci,
-		    __SHIFTOUT(mpidr, MPIDR_AFF2),
-		    __SHIFTOUT(mpidr, MPIDR_AFF1),
-		    __SHIFTOUT(mpidr, MPIDR_AFF0),
-		    0);
-	} else {
-		cpu_topology_set(ci,
-		    __SHIFTOUT(mpidr, MPIDR_AFF1),
-	            __SHIFTOUT(mpidr, MPIDR_AFF0),
-	            0,
-	            0);
-	}
-
 	ci->ci_arm_cpuid = cpu_idnum();
 	ci->ci_arm_cputype = ci->ci_arm_cpuid & CPU_ID_CPU_MASK;
 	ci->ci_arm_cpurev = ci->ci_arm_cpuid & CPU_ID_REVISION_MASK;

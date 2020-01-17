@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_machdep.S,v 1.1 2011/01/26 01:18:50 pooka Exp $	*/
+/*	$NetBSD: locore_machdep.S,v 1.1.68.1 2020/01/17 21:47:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -47,52 +47,72 @@
 /*
  * Extension control register bits, definitions and semantics
  */
-/* The Opcode field holds the opcode assigned to the given Extension slot (Z).
- * When this field is written to, the CAM used for decoding the Extension Instructions is updated
- * (in CAM Decoding mode).  The value can be one of the eight Extension Opcodes, or any other opcode
- * iff the Extension has priority and is meant to mask an existing instruction.
+/*
+ * The Opcode field holds the opcode assigned to the given Extension slot (Z).
+ * When this field is written to, the CAM used for decoding the Extension
+ * Instructions is updated (in CAM Decoding mode).  The value can be one
+ * of the eight Extension Opcodes, or any other opcode iff the Extension
+ * has priority and is meant to mask an existing instruction.
  */
 #define EXTCTL_OP       0xfc000000
-/* The Kernel/User flag denotes that Extension Z is a Kernel[0] or User[1] mode Extension.
+/*
+ * The Kernel/User flag denotes that Extension Z is a Kernel[0] or User[1]
+ * mode Extension.
  */
 #define EXTCTL_KU       0x02000000
-/* The Scope flag denotes that Extension Z is a Local[0] (per process) or Global[1] (shared) Extension.
+/*
+ * The Scope flag denotes that Extension Z is a Local[0] (per process) or
+ * Global[1] (shared) Extension.
  */
 #define EXTCTL_SC       0x01000000
-/* The Peripheral flag denotes that Extension Z is a Peripheral Extension.
+/*
+ * The Peripheral flag denotes that Extension Z is a Peripheral Extension.
  */
 #define EXTCTL_PER      0x00080000
-/* The Interrupt flag denotes that Extension Z has an interrupt.
+/*
+ * The Interrupt flag denotes that Extension Z has an interrupt.
  */
 #define EXTCTL_INT      0x00040000
-/* The Virtual/Physical flag denotes that Extension Z uses Virtual[0] or Physical[0] addresses 
- * when accessing the memory bus.
+/*
+ * The Virtual/Physical flag denotes that Extension Z uses Virtual[0] or
+ * Physical[0] addresses when accessing the memory bus.
  */
 #define EXTCTL_VP       0x00020000
-/* The State field denotes the state of Extension Z.  (Loaded, Config, Running, Suspend, etc)
+/*
+ * The State field denotes the state of Extension Z.  (Loaded, Config,
+ * Running, Suspend, etc)
  */
 #define EXTCTL_ST       0x0000f000
-/* The Priority field denotes the execution priority for Extension Z during arbitration.
+/*
+ * The Priority field denotes the execution priority for Extension Z
+ * during arbitration.
  */
 #define EXTCTL_PR       0x00000f00
-/* The Privileged flag denotes that Extension Z has access to security sensitive system resources.
+/*
+ * The Privileged flag denotes that Extension Z has access to security
+ * sensitive system resources.
  */
 #define EXTCTL_PRV      0x00000080
-/* The Trap flag denotes whether an RI exception will be generated for an Extension Z's instruction 
- * if Extension Z is disabled.
+/*
+ * The Trap flag denotes whether an RI exception will be generated for
+ * an Extension Z's instruction if Extension Z is disabled.
  */
 #define EXTCTL_TR       0x00000010
-/* The Trapped flag denotes that a trap occurred during Extension Z's last execution and it was unable
- * to complete.
+/*
+ * The Trapped flag denotes that a trap occurred during Extension Z's
+ * last execution and it was unable to complete.
  */
 #define EXTCTL_TD       0x00000008
-/* The Clock Enable flag denotes that the clock for Extension Z is active.
+/*
+ * The Clock Enable flag denotes that the clock for Extension Z is active.
  */
 #define EXTCTL_CE       0x00000004
-/* The Enable flag denotes that Extension Z is enabled for execution.
+/*
+ * The Enable flag denotes that Extension Z is enabled for execution.
  */
 #define EXTCTL_EN       0x00000002
-/* The Loaded flag denotes that Extension Z has been loaded
+/*
+ * The Loaded flag denotes that Extension Z has been loaded
  */
 #define EXTCTL_LD       0x00000001
 
@@ -103,61 +123,62 @@
  * nb: clears the counter too
  */
 LEAF(acc_get_misses)
-	    la      v0,1f
-        andi    a0,a0,7
-        sll     a0,a0,3
-        addu    a0,v0,a0
-        jr      a0
-        nop
+	la	v0, 1f
+	andi	a0, a0, 7
+	sll	a0, a0, 3
+	addu	a0, v0, a0
+	jr      a0
+	 nop
 1:
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 0
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 1
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 2
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 3
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 4
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 5
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 6
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_MISS, 7
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 0
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 1
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 2
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 3
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 4
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 5
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 6
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_MISS, 7
 END(acc_get_misses)
 
 /*
  * unsigned int acc_get_hits(int slot_number);
  *
- * Get the number of hits for the given accelerator slot on the current processor
+ * Get the number of hits for the given accelerator slot on the current
+ * processor
  * nb: clears the counter too
  */
 LEAF(acc_get_hits)
-	    la      v0,1f
-        andi    a0,a0,7
-        sll     a0,a0,3
-        addu    a0,v0,a0
-        jr      a0
-        nop
+	la	v0, 1f
+	andi	a0, a0, 7
+	sll	a0, a0, 3
+	addu	a0, v0, a0
+	jr	a0
+	 nop
 1:
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 0
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 1
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 2
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 3
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 4
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 5
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 6
-        j       ra
-        mfc0    v0, MIPS_COP_0_EXT_HIT, 7
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 0
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 1
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 2
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 3
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 4
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 5
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 6
+	j	ra
+	 mfc0	v0, MIPS_COP_0_EXT_HIT, 7
 END(acc_get_hits)
 
 /*
@@ -167,50 +188,50 @@ END(acc_get_hits)
  * Returns the previous value in the control register
  */
 LEAF(acc_activate)
-	    la      v0,1f
-        andi    a0,a0,7
-        sll     a0,a0,4
-        addu    a0,v0,a0
-        jr      a0
-        nop
+	la	v0, 1f
+	andi	a0, a0, 7
+	sll	a0, a0, 4
+	addu	a0, v0, a0
+	jr	a0
+	 nop
 1:
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 0
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 0
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 0
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 0
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 1
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 1
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 1
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 1
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 2
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 2
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 2
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 2
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 3
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 3
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 3
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 3
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 4
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 4
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 4
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 4
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 5
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 5
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 5
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 5
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 6
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 6
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 6
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 6
+	j	ra
+	 nop
 
-        mfc0    v0, MIPS_COP_0_EXT_CTL, 7
-        mtc0    a1, MIPS_COP_0_EXT_CTL, 7
-        j       ra
-        nop
+	mfc0	v0, MIPS_COP_0_EXT_CTL, 7
+	mtc0	a1, MIPS_COP_0_EXT_CTL, 7
+	j	ra
+	 nop
 END(acc_activate)

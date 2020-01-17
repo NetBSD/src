@@ -1,7 +1,7 @@
-/*	$NetBSD: uvm_page.c,v 1.221 2020/01/05 22:01:09 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.221.2.1 2020/01/17 21:47:38 ad Exp $	*/
 
 /*-
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.221 2020/01/05 22:01:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.221.2.1 2020/01/17 21:47:38 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -181,6 +181,7 @@ static struct uvm_page_numa_region {
 } *uvm_page_numa_region;
 
 #ifdef DEBUG
+kmutex_t uvm_zerochecklock __cacheline_aligned;
 vaddr_t uvm_zerocheckkva;
 #endif /* DEBUG */
 
@@ -216,19 +217,31 @@ uvm_pageinsert_object(struct uvm_object *uobj, struct vm_page *pg)
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT((pg->flags & PG_TABLED) == 0);
 
-	if (UVM_OBJ_IS_VNODE(uobj)) {
-		if (uobj->uo_npages == 0) {
-			struct vnode *vp = (struct vnode *)uobj;
+	if ((pg->flags & PG_STAT) != 0) {
+		/* Cannot use uvm_pagegetdirty(): not yet in radix tree. */
+		const unsigned int status = pg->flags & (PG_CLEAN | PG_DIRTY);
+		const bool isaobj = (pg->flags & PG_AOBJ) != 0;
 
-			vholdl(vp);
-		}
-		if (UVM_OBJ_IS_VTEXT(uobj)) {
-			cpu_count(CPU_COUNT_EXECPAGES, 1);
+		if (!isaobj) {
+			KASSERT((pg->flags & PG_FILE) != 0);
+			if (uobj->uo_npages == 0) {
+				struct vnode *vp = (struct vnode *)uobj;
+
+				vholdl(vp);
+			}
+			kpreempt_disable();
+			if (UVM_OBJ_IS_VTEXT(uobj)) {
+				CPU_COUNT(CPU_COUNT_EXECPAGES, 1);
+			} else {
+				CPU_COUNT(CPU_COUNT_FILEPAGES, 1);
+			}
+			CPU_COUNT(CPU_COUNT_FILEUNKNOWN + status, 1);
 		} else {
-			cpu_count(CPU_COUNT_FILEPAGES, 1);
+			kpreempt_disable();
+			CPU_COUNT(CPU_COUNT_ANONPAGES, 1);
+			CPU_COUNT(CPU_COUNT_ANONUNKNOWN + status, 1);
 		}
-	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
-		cpu_count(CPU_COUNT_ANONPAGES, 1);
+		kpreempt_enable();
 	}
 	pg->flags |= PG_TABLED;
 	uobj->uo_npages++;
@@ -244,6 +257,11 @@ uvm_pageinsert_tree(struct uvm_object *uobj, struct vm_page *pg)
 	if (error != 0) {
 		return error;
 	}
+	if ((pg->flags & PG_CLEAN) == 0) {
+		radix_tree_set_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG);
+	}
+	KASSERT(((pg->flags & PG_CLEAN) == 0) ==
+	    radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 	return 0;
 }
 
@@ -261,22 +279,32 @@ uvm_pageremove_object(struct uvm_object *uobj, struct vm_page *pg)
 	KASSERT(mutex_owned(uobj->vmobjlock));
 	KASSERT(pg->flags & PG_TABLED);
 
-	if (UVM_OBJ_IS_VNODE(uobj)) {
-		if (uobj->uo_npages == 1) {
-			struct vnode *vp = (struct vnode *)uobj;
+	if ((pg->flags & PG_STAT) != 0) {
+		/* Cannot use uvm_pagegetdirty(): no longer in radix tree. */
+		const unsigned int status = pg->flags & (PG_CLEAN | PG_DIRTY);
+		const bool isaobj = (pg->flags & PG_AOBJ) != 0;
 
-			holdrelel(vp);
-		}
-		if (UVM_OBJ_IS_VTEXT(uobj)) {
-			cpu_count(CPU_COUNT_EXECPAGES, -1);
+		if (!isaobj) {
+			KASSERT((pg->flags & PG_FILE) != 0);
+			if (uobj->uo_npages == 1) {
+				struct vnode *vp = (struct vnode *)uobj;
+
+				holdrelel(vp);
+			}
+			kpreempt_disable();
+			if (UVM_OBJ_IS_VTEXT(uobj)) {
+				CPU_COUNT(CPU_COUNT_EXECPAGES, -1);
+			} else {
+				CPU_COUNT(CPU_COUNT_FILEPAGES, -1);
+			}
+			CPU_COUNT(CPU_COUNT_FILEUNKNOWN + status, -1);
 		} else {
-			cpu_count(CPU_COUNT_FILEPAGES, -1);
+			kpreempt_disable();
+			CPU_COUNT(CPU_COUNT_ANONPAGES, -1);
+			CPU_COUNT(CPU_COUNT_ANONUNKNOWN + status, -1);
 		}
-	} else if (UVM_OBJ_IS_AOBJ(uobj)) {
-		cpu_count(CPU_COUNT_ANONPAGES, -1);
+		kpreempt_enable();
 	}
-
-	/* object should be locked */
 	uobj->uo_npages--;
 	pg->flags &= ~PG_TABLED;
 	pg->uobject = NULL;
@@ -439,6 +467,7 @@ uvm_page_init(vaddr_t *kvm_startp, vaddr_t *kvm_endp)
 	 */
 	uvm_zerocheckkva = *kvm_startp;
 	*kvm_startp += PAGE_SIZE;
+	mutex_init(&uvm_zerochecklock, MUTEX_DEFAULT, IPL_VM);
 #endif /* DEBUG */
 
 	/*
@@ -921,13 +950,7 @@ uvm_page_rebucket(void)
 	 * packages evenly.  uvm_pagefree() will reassign pages to the
 	 * freeing CPU's preferred bucket on free.
 	 */
-	npackage = 0;
-	ci = curcpu();
-	ci2 = ci;
-	do {
-		npackage++;
-		ci2 = ci2->ci_sibling[CPUREL_PEER];
-	} while (ci2 != ci);
+	npackage = curcpu()->ci_nsibling[CPUREL_PACKAGE1ST];
 	
 	/*
 	 * Figure out how to arrange the packages & buckets, and the total
@@ -944,7 +967,7 @@ uvm_page_rebucket(void)
  	 */
  	npackage = 0;
 	ci = curcpu();
-	ci2 = ci;
+	ci2 = ci->ci_sibling[CPUREL_PACKAGE1ST];
 	do {
 		/*
 		 * In the inner loop, scroll through all CPUs in the package
@@ -956,8 +979,8 @@ uvm_page_rebucket(void)
 			ci3 = ci3->ci_sibling[CPUREL_PACKAGE];
 		} while (ci3 != ci2);
 		npackage++;
-		ci2 = ci2->ci_sibling[CPUREL_PEER];
-	} while (ci2 != ci);
+		ci2 = ci2->ci_sibling[CPUREL_PACKAGE1ST];
+	} while (ci2 != ci->ci_sibling[CPUREL_PACKAGE1ST]);
 
 	aprint_debug("UVM: using package allocation scheme, "
 	    "%d package(s) per bucket\n", 1 << shift);
@@ -1294,6 +1317,7 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 	}
 	if (anon) {
 		CPU_COUNT(CPU_COUNT_ANONPAGES, 1);
+		CPU_COUNT(CPU_COUNT_ANONCLEAN, 1);
 	}
 	splx(s);
 	KASSERT((pg->flags & ~(PG_ZERO|PG_FREE)) == 0);
@@ -1316,6 +1340,14 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		pg->flags |= PG_ANON;
 		mutex_exit(&pg->interlock);
 	} else if (obj) {
+		/*
+		 * set PG_FILE|PG_AOBJ before the first uvm_pageinsert.
+		 */
+		if (UVM_OBJ_IS_VNODE(obj)) {
+			pg->flags |= PG_FILE;
+		} else {
+			pg->flags |= PG_AOBJ;
+		}
 		uvm_pageinsert_object(obj, pg);
 		mutex_exit(&pg->interlock);
 		error = uvm_pageinsert_tree(obj, pg);
@@ -1338,9 +1370,12 @@ uvm_pagealloc_strat(struct uvm_object *obj, voff_t off, struct vm_anon *anon,
 		 * A zero'd page is not clean.  If we got a page not already
 		 * zero'd, then we have to zero it ourselves.
 		 */
-		pg->flags &= ~PG_CLEAN;
-		if (zeroit)
+		if (obj != NULL || anon != NULL) {
+			uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
+		}
+		if (zeroit) {
 			pmap_zero_page(VM_PAGE_TO_PHYS(pg));
+		}
 	}
 
 	return(pg);
@@ -1358,6 +1393,7 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 {
 	struct uvm_object *uobj = oldpg->uobject;
 	struct vm_page *pg __diagused;
+	uint64_t idx;
 
 	KASSERT((oldpg->flags & PG_TABLED) != 0);
 	KASSERT(uobj != NULL);
@@ -1367,12 +1403,25 @@ uvm_pagereplace(struct vm_page *oldpg, struct vm_page *newpg)
 	KASSERT(mutex_owned(&oldpg->interlock));
 	KASSERT(mutex_owned(&newpg->interlock));
 
-	newpg->offset = oldpg->offset;
-	pg = radix_tree_replace_node(&uobj->uo_pages,
-	    newpg->offset >> PAGE_SHIFT, newpg);
-	KASSERT(pg == oldpg);
-
 	newpg->uobject = uobj;
+	newpg->offset = oldpg->offset;
+	idx = newpg->offset >> PAGE_SHIFT;
+	pg = radix_tree_replace_node(&uobj->uo_pages, idx, newpg);
+	KASSERT(pg == oldpg);
+	if (((oldpg->flags ^ newpg->flags) & PG_CLEAN) != 0) {
+		if ((newpg->flags & PG_CLEAN) != 0) {
+			radix_tree_clear_tag(&uobj->uo_pages, idx,
+			    UVM_PAGE_DIRTY_TAG);
+		} else {
+			radix_tree_set_tag(&uobj->uo_pages, idx,
+			    UVM_PAGE_DIRTY_TAG);
+		}
+	}
+	/*
+	 * oldpg's PG_STAT is stable.  newpg is not reachable by others yet.
+	 */
+	newpg->flags |=
+	    (newpg->flags & ~PG_STAT) | (oldpg->flags & PG_STAT);
 	uvm_pageinsert_object(uobj, newpg);
 	uvm_pageremove_object(uobj, oldpg);
 }
@@ -1425,6 +1474,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 	 *
 	 * it might be better to have "CPU-local temporary map" pmap interface.
 	 */
+	mutex_spin_enter(&uvm_zerochecklock);
 	pmap_kenter_pa(uvm_zerocheckkva, VM_PAGE_TO_PHYS(pg), VM_PROT_READ, 0);
 	p = (int *)uvm_zerocheckkva;
 	ep = (int *)((char *)p + PAGE_SIZE);
@@ -1435,6 +1485,7 @@ uvm_pagezerocheck(struct vm_page *pg)
 		p++;
 	}
 	pmap_kremove(uvm_zerocheckkva, PAGE_SIZE);
+	mutex_spin_exit(&uvm_zerochecklock);
 	/*
 	 * pmap_update() is not necessary here because no one except us
 	 * uses this VA.
@@ -1504,7 +1555,7 @@ uvm_pagefree(struct vm_page *pg)
 		locked = true;
 		if (pg->uobject != NULL) {
 			uvm_pageremove_object(pg->uobject, pg);
-			pg->flags &= ~PG_CLEAN;
+			pg->flags &= ~(PG_FILE|PG_AOBJ);
 		} else if (pg->uanon != NULL) {
 			if ((pg->flags & PG_ANON) == 0) {
 				pg->loan_count--;
@@ -1522,6 +1573,7 @@ uvm_pagefree(struct vm_page *pg)
 #ifdef UVM_PAGE_TRKOWN
 		pg->owner_tag = NULL;
 #endif
+		KASSERT((pg->flags & PG_STAT) == 0);
 		if (pg->loan_count) {
 			KASSERT(pg->uobject == NULL);
 			if (pg->uanon == NULL) {
@@ -1544,9 +1596,13 @@ uvm_pagefree(struct vm_page *pg)
 	if (pg->uobject != NULL) {
 		uvm_pageremove_object(pg->uobject, pg);
 	} else if (pg->uanon != NULL) {
+		const unsigned int status = uvm_pagegetdirty(pg);
 		pg->uanon->an_page = NULL;
 		pg->uanon = NULL;
-		cpu_count(CPU_COUNT_ANONPAGES, -1);
+		kpreempt_disable();
+		CPU_COUNT(CPU_COUNT_ANONPAGES, -1);
+		CPU_COUNT(CPU_COUNT_ANONUNKNOWN + status, -1);
+		kpreempt_enable();
 	}
 
 	/*
@@ -1580,6 +1636,9 @@ uvm_pagefree(struct vm_page *pg)
 
 	/* Try to send the page to the per-CPU cache. */
 	s = splvm();
+	if (pg->flags & PG_ZERO) {
+	    	CPU_COUNT(CPU_COUNT_ZEROPAGES, 1);
+	}
 	ucpu = curcpu()->ci_data.cpu_uvm;
 	bucket = uvm_page_get_bucket(pg);
 	if (bucket == ucpu->pgflbucket && uvm_pgflcache_free(ucpu, pg)) {
@@ -1952,7 +2011,8 @@ uvm_pageunlock2(struct vm_page *pg1, struct vm_page *pg2)
 void
 uvm_pagezero(struct vm_page *pg)
 {
-	pg->flags &= ~PG_CLEAN;
+
+	uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	pmap_zero_page(VM_PAGE_TO_PHYS(pg));
 }
 
@@ -1967,7 +2027,7 @@ void
 uvm_pagecopy(struct vm_page *src, struct vm_page *dst)
 {
 
-	dst->flags &= ~PG_CLEAN;
+	uvm_pagemarkdirty(dst, UVM_PAGE_STATUS_DIRTY);
 	pmap_copy_page(VM_PAGE_TO_PHYS(src), VM_PAGE_TO_PHYS(dst));
 }
 
@@ -2012,6 +2072,29 @@ uvm_page_owner_locked_p(struct vm_page *pg)
 		return mutex_owned(pg->uanon->an_lock);
 	}
 	return true;
+}
+
+/*
+ * uvm_pagereadonly_p: return if the page should be mapped read-only
+ */
+
+bool
+uvm_pagereadonly_p(struct vm_page *pg)
+{
+	struct uvm_object * const uobj = pg->uobject;
+
+	KASSERT(uobj == NULL || mutex_owned(uobj->vmobjlock));
+	KASSERT(uobj != NULL || mutex_owned(pg->uanon->an_lock));
+	if ((pg->flags & PG_RDONLY) != 0) {
+		return true;
+	}
+	if (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_CLEAN) {
+		return true;
+	}
+	if (uobj == NULL) {
+		return false;
+	}
+	return UVM_OBJ_NEEDS_WRITEFAULT(uobj);
 }
 
 #ifdef PMAP_DIRECT
@@ -2079,7 +2162,7 @@ uvm_page_printit(struct vm_page *pg, bool full,
 
 	(*pr)("PAGE %p:\n", pg);
 	snprintb(pgbuf, sizeof(pgbuf), page_flagbits, pg->flags);
-	(*pr)("  flags=%s, pqflags=%x, wire_count=%d, pa=0x%lx\n",
+	(*pr)("  flags=%s\n  pqflags=%x, wire_count=%d, pa=0x%lx\n",
 	    pgbuf, pg->pqflags, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
 	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
 	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);

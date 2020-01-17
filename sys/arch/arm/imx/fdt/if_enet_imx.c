@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet_imx.c,v 1.8 2019/11/14 06:00:16 hkenken Exp $	*/
+/*	$NetBSD: if_enet_imx.c,v 1.8.2.1 2020/01/17 21:47:24 ad Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.8 2019/11/14 06:00:16 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet_imx.c,v 1.8.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include "opt_fdt.h"
 
@@ -49,20 +49,24 @@ struct enet_fdt_softc {
 CFATTACH_DECL_NEW(enet_fdt, sizeof(struct enet_fdt_softc),
     enet_match, enet_attach, NULL, NULL);
 
-static const char * const compatible[] = {
-	"fsl,imx6q-fec",
-	NULL
+static const struct of_compat_data compat_data[] = {
+	/* compatible			imxtype */
+	{ "fsl,imx6q-fec",		6 },
+	{ "fsl,imx6sx-fec",		7 },
+	{ NULL }
 };
 
 static int enet_init_clocks(struct enet_softc *);
 static void enet_phy_reset(struct enet_fdt_softc *, const int);
+static int enet_phy_id(struct enet_softc *, const int);
+static void *enet_intr_establish(struct enet_softc *, int, u_int);
 
 int
 enet_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 
-	return of_match_compatible(faa->faa_phandle, compatible);
+	return of_match_compat_data(faa->faa_phandle, compat_data);
 }
 
 void
@@ -100,9 +104,18 @@ enet_attach(device_t parent, device_t self, void *aux)
 		aprint_error(": couldn't get clock ahb\n");
 		goto failure;
 	}
-	sc->sc_clk_enet_ref= fdtbus_clock_get(phandle, "ptp");
+	sc->sc_clk_enet_ref = fdtbus_clock_get(phandle, "ptp");
 	if (sc->sc_clk_enet_ref == NULL) {
 		aprint_error(": couldn't get clock ptp\n");
+		goto failure;
+	}
+
+	if (fdtbus_clock_enable(phandle, "enet_clk_ref", false) != 0) {
+		aprint_error(": couldn't enable clock enet_clk_ref\n");
+		goto failure;
+	}
+	if (fdtbus_clock_enable(phandle, "enet_out", false) != 0) {
+		aprint_error(": couldn't enable clock enet_out\n");
 		goto failure;
 	}
 
@@ -114,8 +127,9 @@ enet_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ioh = bsh;
 	sc->sc_dmat = faa->faa_dmat;
 
-	sc->sc_imxtype = 6;	/* i.MX6 */
+	sc->sc_imxtype = of_search_compatible(phandle, compat_data)->data;
 	sc->sc_unit = 0;
+	sc->sc_phyid = enet_phy_id(sc, phandle);
 
 	const char *phy_mode = fdtbus_get_string(phandle, "phy-mode");
 	if (phy_mode == NULL) {
@@ -139,19 +153,16 @@ enet_attach(device_t parent, device_t self, void *aux)
 		sc->sc_rgmii = 0;
 	}
 
-	char intrstr[128];
-	if (!fdtbus_intr_str(phandle, 0, intrstr, sizeof(intrstr))) {
-		aprint_error_dev(self, "failed to decode interrupt\n");
+	sc->sc_ih = enet_intr_establish(sc, phandle, 0);
+	if (sc->sc_ih == NULL)
 		goto failure;
+
+	if (sc->sc_imxtype == 7) {
+		sc->sc_ih2 = enet_intr_establish(sc, phandle, 1);
+		sc->sc_ih3 = enet_intr_establish(sc, phandle, 2);
+		if (sc->sc_ih2 == NULL || sc->sc_ih3 == NULL)
+			goto failure;
 	}
-	sc->sc_ih = fdtbus_intr_establish(phandle, 0, IPL_NET,
-	    FDT_INTR_MPSAFE, enet_intr, sc);
-	if (sc->sc_ih == NULL) {
-		aprint_error_dev(self, "failed to establish interrupt on %s\n",
-		    intrstr);
-		goto failure;
-	}
-	aprint_normal_dev(self, "interrupting on %s\n", intrstr);
 
 	enet_init_clocks(sc);
 	sc->sc_clock = clk_get_rate(sc->sc_clk_ipg);
@@ -166,6 +177,29 @@ enet_attach(device_t parent, device_t self, void *aux)
 failure:
 	bus_space_unmap(sc->sc_iot, sc->sc_ioh, size);
 	return;
+}
+
+static void *
+enet_intr_establish(struct enet_softc *sc, int phandle, u_int index)
+{
+	char intrstr[128];
+	void *ih;
+
+	if (!fdtbus_intr_str(phandle, index, intrstr, sizeof(intrstr))) {
+		aprint_error_dev(sc->sc_dev, "failed to decode interrupt %d\n",
+		    index);
+		return NULL;
+	}
+
+	ih = fdtbus_intr_establish(phandle, index, IPL_NET, 0, enet_intr, sc);
+	if (ih == NULL) {
+		aprint_error_dev(sc->sc_dev, "failed to establish interrupt on %s\n",
+		    intrstr);
+		return NULL;
+	}
+	aprint_normal_dev(sc->sc_dev, "interrupting on %s\n", intrstr);
+
+	return ih;
 }
 
 static int
@@ -198,8 +232,10 @@ enet_phy_reset(struct enet_fdt_softc *sc, const int phandle)
 	u_int msec;
 
 	sc->sc_pin_reset = fdtbus_gpio_acquire(phandle, "phy-reset-gpios", GPIO_PIN_OUTPUT);
-	if (sc->sc_pin_reset == NULL)
+	if (sc->sc_pin_reset == NULL) {
+		aprint_error_dev(sc->sc_enet.sc_dev, "couldn't find phy reset gpios\n");
 		return;
+	}
 
 	if (of_getprop_uint32(phandle, "phy-reset-duration", &msec))
 		msec = 1;
@@ -214,4 +250,20 @@ enet_phy_reset(struct enet_fdt_softc *sc, const int phandle)
 		msec = 0;
 
 	delay(msec * 1000);
+}
+
+static int
+enet_phy_id(struct enet_softc *sc, const int phandle)
+{
+	int phy_phandle;
+	bus_addr_t addr;
+
+	phy_phandle = fdtbus_get_phandle(phandle, "phy-handle");
+	if (phy_phandle == -1)
+		return MII_PHY_ANY;
+
+	if (fdtbus_get_reg(phy_phandle, 0, &addr, NULL) != 0)
+		return MII_PHY_ANY;
+
+	return (int)addr;
 }

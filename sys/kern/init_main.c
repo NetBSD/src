@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.517 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: init_main.c,v 1.517.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.517 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.517.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -290,7 +290,7 @@ main(void)
 #ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
 #endif
-	l->l_pflag |= LP_RUNNING;
+	l->l_flag |= LW_RUNNING;
 
 	/*
 	 * Attempt to find console and initialize

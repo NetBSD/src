@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_lock.c,v 1.164 2019/12/03 15:20:59 riastradh Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.164.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.164 2019/12/03 15:20:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.164.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -164,7 +164,10 @@ _kernel_lock(int nlocks)
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
 	struct lwp *owant;
-	u_int spins;
+	u_int count;
+#ifdef LOCKDEBUG
+	u_int spins = 0;
+#endif
 	int s;
 	struct lwp *l = curlwp;
 
@@ -184,7 +187,7 @@ _kernel_lock(int nlocks)
 	LOCKDEBUG_WANTLOCK(kernel_lock_dodebug, kernel_lock, RETURN_ADDRESS,
 	    0);
 
-	if (__cpu_simple_lock_try(kernel_lock)) {
+	if (__predict_true(__cpu_simple_lock_try(kernel_lock))) {
 		ci->ci_biglock_count = nlocks;
 		l->l_blcnt = nlocks;
 		LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
@@ -200,10 +203,13 @@ _kernel_lock(int nlocks)
 	 * is required to ensure that the result of any mutex_exit()
 	 * by the current LWP becomes visible on the bus before the set
 	 * of ci->ci_biglock_wanted becomes visible.
+	 *
+	 * However, we won't set ci_biglock_wanted until we've spun for
+	 * a bit, as we don't want to make any lock waiters in rw_oncpu()
+	 * or mutex_oncpu() block prematurely.
 	 */
 	membar_producer();
 	owant = ci->ci_biglock_wanted;
-	ci->ci_biglock_wanted = l;
 
 	/*
 	 * Spin until we acquire the lock.  Once we have it, record the
@@ -212,23 +218,30 @@ _kernel_lock(int nlocks)
 	LOCKSTAT_ENTER(lsflag);
 	LOCKSTAT_START_TIMER(lsflag, spintime);
 
-	spins = 0;
+	count = SPINLOCK_BACKOFF_MIN;
 	do {
 		splx(s);
 		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
+#ifdef LOCKDEBUG
 			if (SPINLOCK_SPINOUT(spins)) {
 				extern int start_init_exec;
 				if (!start_init_exec)
 					_KERNEL_LOCK_ABORT("spinout");
 			}
-			SPINLOCK_BACKOFF_HOOK;
-			SPINLOCK_SPIN_HOOK;
+#endif
+			SPINLOCK_BACKOFF(count);
+			if (count == SPINLOCK_BACKOFF_MAX) {
+				/* Ok, waiting for real. */
+				ci->ci_biglock_wanted = l;
+			}
 		}
 		s = splvm();
 	} while (!__cpu_simple_lock_try(kernel_lock));
 
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
+	splx(s);
+
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
 	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
 	    RETURN_ADDRESS, 0);
@@ -237,7 +250,6 @@ _kernel_lock(int nlocks)
 		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);
 	}
 	LOCKSTAT_EXIT(lsflag);
-	splx(s);
 
 	/*
 	 * Now that we have kernel_lock, reset ci_biglock_wanted.  This
@@ -257,7 +269,9 @@ _kernel_lock(int nlocks)
 	 * prevents stores from a following mutex_exit() being reordered
 	 * to occur before our store to ci_biglock_wanted above.
 	 */
+#ifndef __HAVE_ATOMIC_AS_MEMBAR
 	membar_enter();
+#endif
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.539 2019/12/31 11:49:08 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.539.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539 2019/12/31 11:49:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1358,7 +1358,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		vput(vp);
 		if (error != 0)
 			goto out;
-		error = VFS_ROOT(mp, &tdp);
+		error = VFS_ROOT(mp, LK_SHARED, &tdp);
 		vfs_unbusy(mp);
 		if (error)
 			goto out;
@@ -1405,7 +1405,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 	if ((error = fd_getvnode(fd, &fp)) != 0)
 		return error;
 	vp = fp->f_vnode;
-	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(vp, LK_SHARED | LK_RETRY);
 	if (vp->v_type != VDIR)
 		error = ENOTDIR;
 	else
@@ -1831,7 +1831,7 @@ vfs_fhtovp(fhandle_t *fhp, struct vnode **vpp)
 		error = EOPNOTSUPP;
 		goto out;
 	}
-	error = VFS_FHTOVP(mp, FHANDLE_FILEID(fhp), vpp);
+	error = VFS_FHTOVP(mp, FHANDLE_FILEID(fhp), LK_EXCLUSIVE, vpp);
 out:
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_pages.c,v 1.19 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: lfs_pages.c,v 1.19.2.1 2020/01/17 21:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.19 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_pages.c,v 1.19.2.1 2020/01/17 21:47:37 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -306,8 +306,10 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 			UVM_PAGE_OWN(pg, "lfs_putpages");
 
 			pmap_page_protect(pg, VM_PROT_NONE);
-			tdirty = (pmap_clear_modify(pg) ||
-				  (pg->flags & PG_CLEAN) == 0);
+			tdirty =
+			    uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_CLEAN &&
+			    (uvm_pagegetdirty(pg) == UVM_PAGE_STATUS_DIRTY ||
+			    pmap_clear_modify(pg));
 			dirty += tdirty;
 		}
 		if ((pages_per_block > 0 && nonexistent >= pages_per_block) ||
@@ -329,10 +331,11 @@ check_dirty(struct lfs *fs, struct vnode *vp,
 		for (i = 0; i == 0 || i < pages_per_block; i++) {
 			KASSERT(mutex_owned(vp->v_interlock));
 			pg = pgs[i];
-			KASSERT(!((pg->flags & PG_CLEAN) && (pg->flags & PG_DELWRI)));
+			KASSERT(!(uvm_pagegetdirty(pg) != UVM_PAGE_STATUS_DIRTY
+			    && (pg->flags & PG_DELWRI)));
 			KASSERT(pg->flags & PG_BUSY);
 			if (dirty) {
-				pg->flags &= ~PG_CLEAN;
+				uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 				if (flags & PGO_FREE) {
 					/*
 					 * Wire the page so that

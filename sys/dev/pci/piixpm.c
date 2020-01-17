@@ -1,4 +1,4 @@
-/* $NetBSD: piixpm.c,v 1.60 2019/12/24 06:27:17 thorpej Exp $ */
+/* $NetBSD: piixpm.c,v 1.60.2.1 2020/01/17 21:47:31 ad Exp $ */
 /*	$OpenBSD: piixpm.c,v 1.39 2013/10/01 20:06:02 sf Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.60 2019/12/24 06:27:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.60.2.1 2020/01/17 21:47:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,8 +71,11 @@ __KERNEL_RCSID(0, "$NetBSD: piixpm.c,v 1.60 2019/12/24 06:27:17 thorpej Exp $");
 
 #define PIIXPM_IS_FCHGRP(sc)	(PIIXPM_IS_HUDSON(sc) || PIIXPM_IS_KERNCZ(sc))
 
+#define PIIX_SB800_TIMEOUT 500
+
 struct piixpm_smbus {
 	int			sda;
+	int			sda_save;
 	struct			piixpm_softc *softc;
 };
 
@@ -124,8 +127,8 @@ static bool	piixpm_resume(device_t, const pmf_qual_t *);
 
 static int	piixpm_sb800_init(struct piixpm_softc *);
 static void	piixpm_csb5_reset(void *);
-static int	piixpm_i2c_acquire_bus(void *, int);
-static void	piixpm_i2c_release_bus(void *, int);
+static int	piixpm_i2c_sb800_acquire_bus(void *, int);
+static void	piixpm_i2c_sb800_release_bus(void *, int);
 static int	piixpm_i2c_exec(void *, i2c_op_t, i2c_addr_t, const void *,
     size_t, void *, size_t, int);
 
@@ -332,17 +335,24 @@ piixpm_rescan(device_t self, const char *ifattr, const int *flags)
 	/* Attach I2C bus */
 
 	for (i = 0; i < sc->sc_numbusses; i++) {
+		struct i2c_controller *tag = &sc->sc_i2c_tags[i];
+
 		if (sc->sc_i2c_device[i])
 			continue;
 		sc->sc_busses[i].sda = i;
 		sc->sc_busses[i].softc = sc;
-		iic_tag_init(&sc->sc_i2c_tags[i]);
-		sc->sc_i2c_tags[i].ic_cookie = &sc->sc_busses[i];
-		sc->sc_i2c_tags[i].ic_acquire_bus = piixpm_i2c_acquire_bus;
-		sc->sc_i2c_tags[i].ic_release_bus = piixpm_i2c_release_bus;
-		sc->sc_i2c_tags[i].ic_exec = piixpm_i2c_exec;
+		iic_tag_init(tag);
+		tag->ic_cookie = &sc->sc_busses[i];
+		if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_FCHGRP(sc)) {
+			tag->ic_acquire_bus = piixpm_i2c_sb800_acquire_bus;
+			tag->ic_release_bus = piixpm_i2c_sb800_release_bus;
+		} else {
+			tag->ic_acquire_bus = NULL;
+			tag->ic_release_bus = NULL;
+		}
+		tag->ic_exec = piixpm_i2c_exec;
 		memset(&iba, 0, sizeof(iba));
-		iba.iba_tag = &sc->sc_i2c_tags[i];
+		iba.iba_tag = tag;
 		sc->sc_i2c_device[i] = config_found_ia(self, ifattr, &iba,
 		    piixpm_iicbus_print);
 	}
@@ -485,72 +495,100 @@ piixpm_csb5_reset(void *arg)
 }
 
 static int
-piixpm_i2c_acquire_bus(void *cookie, int flags)
+piixpm_i2c_sb800_acquire_bus(void *cookie, int flags)
 {
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
+	uint8_t sctl, old_sda, index, mask, reg;
+	int i;
 
-	if (PIIXPM_IS_KERNCZ(sc)) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, smbus->sda << 3);
-	} else if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_HUDSON(sc)) {
-		if (sc->sc_sb800_selen) {
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_DATA,
-			    __SHIFTIN(smbus->sda, SB800_PM_SMBUS0_MASK_E));
-		} else {
-			uint8_t data;
+	sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
+	for (i = 0; i < PIIX_SB800_TIMEOUT; i++) {
+		/* Try to acquire the host semaphore */
+		sctl &= ~PIIX_SMB_SC_SEMMASK;
+		bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC,
+		    sctl | PIIX_SMB_SC_HOSTSEM);
 
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0EN_LO);
-			data = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_DATA) & ~SB800_PM_SMBUS0_MASK_C;
-			data |= __SHIFTIN(smbus->sda, SB800_PM_SMBUS0_MASK_C);
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_DATA, data);
-		}
+		sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh,
+		    PIIX_SMB_SC);
+		if ((sctl & PIIX_SMB_SC_HOSTSEM) != 0)
+			break;
+
+		delay(1000);
 	}
+	if (i >= PIIX_SB800_TIMEOUT) {
+		device_printf(sc->sc_dev,
+		    "Failed to acquire the host semaphore\n");
+		return -1;
+	}
+
+	if (PIIXPM_IS_KERNCZ(sc) ||
+	    (PIIXPM_IS_HUDSON(sc) && (sc->sc_rev >= 0x1f))) {
+		index = AMDFCH41_PM_PORT_INDEX;
+		mask = AMDFCH41_SMBUS_PORTMASK;
+	} else if (sc->sc_sb800_selen) {
+		index = SB800_PM_SMBUS0SEL;
+		mask = SB800_PM_SMBUS0_MASK_E;
+	} else {
+		index = SB800_PM_SMBUS0EN_LO;
+		mask = SB800_PM_SMBUS0_MASK_C;
+	}
+
+	bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+	    SB800_INDIRECTIO_INDEX, index);
+	reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+	    SB800_INDIRECTIO_DATA);
+
+	old_sda = __SHIFTOUT(reg, mask);
+	if (smbus->sda != old_sda) {
+		reg &= ~mask;
+		reg |= __SHIFTIN(smbus->sda, mask);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA, reg);
+	}
+
+	/* Save the old port number */
+	smbus->sda_save = old_sda;
 
 	return 0;
 }
 
 static void
-piixpm_i2c_release_bus(void *cookie, int flags)
+piixpm_i2c_sb800_release_bus(void *cookie, int flags)
 {
 	struct piixpm_smbus *smbus = cookie;
 	struct piixpm_softc *sc = smbus->softc;
+	uint8_t sctl, index, mask, reg;
 
-	if (PIIXPM_IS_KERNCZ(sc)) {
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_INDEX, AMDFCH41_PM_PORT_INDEX);
-		/* Set to port 0 */
-		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-		    SB800_INDIRECTIO_DATA, 0);
-	} else if (PIIXPM_IS_SB800GRP(sc) || PIIXPM_IS_HUDSON(sc)) {
-		if (sc->sc_sb800_selen) {
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0SEL);
-
-			/* Set to port 0 */
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_DATA, 0);
-		} else {
-			uint8_t data;
-
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_INDEX, SB800_PM_SMBUS0EN_LO);
-
-			/* Set to port 0 */
-			data = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_DATA) & ~SB800_PM_SMBUS0_MASK_C;
-			bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
-			    SB800_INDIRECTIO_DATA, data);
-		}
+	if (PIIXPM_IS_KERNCZ(sc) ||
+	    (PIIXPM_IS_HUDSON(sc) && (sc->sc_rev >= 0x1f))) {
+		index = AMDFCH41_PM_PORT_INDEX;
+		mask = AMDFCH41_SMBUS_PORTMASK;
+	} else if (sc->sc_sb800_selen) {
+		index = SB800_PM_SMBUS0SEL;
+		mask = SB800_PM_SMBUS0_MASK_E;
+	} else {
+		index = SB800_PM_SMBUS0EN_LO;
+		mask = SB800_PM_SMBUS0_MASK_C;
 	}
+
+	bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+	    SB800_INDIRECTIO_INDEX, index);
+	if (smbus->sda != smbus->sda_save) {
+		/* Restore the port number */
+		reg = bus_space_read_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA);
+		reg &= ~mask;
+		reg |= __SHIFTIN(smbus->sda_save, mask);
+		bus_space_write_1(sc->sc_iot, sc->sc_sb800_ioh,
+		    SB800_INDIRECTIO_DATA, reg);
+	}
+
+	/* Relase the host semaphore */
+	sctl = bus_space_read_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC);
+	sctl &= ~PIIX_SMB_SC_SEMMASK;
+	bus_space_write_1(sc->sc_smb_iot, sc->sc_smb_ioh, PIIX_SMB_SC,
+	    sctl | PIIX_SMB_SC_CLRHOSTSEM);
 }
 
 static int

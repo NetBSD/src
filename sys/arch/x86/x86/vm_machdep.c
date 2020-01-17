@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39 2019/10/18 16:26:38 maxv Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39.2.1 2020/01/17 21:47:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39 2019/10/18 16:26:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39.2.1 2020/01/17 21:47:28 ad Exp $");
 
 #include "opt_mtrr.h"
 
@@ -253,12 +253,6 @@ cpu_lwp_free(struct lwp *l, int proc)
 	if (proc && l->l_proc->p_md.md_flags & MDP_USEDMTRR)
 		mtrr_clean(l->l_proc);
 #endif
-	/*
-	 * Free deferred mappings if any.
-	 */
-	struct vm_page *empty_ptps = l->l_md.md_gc_ptp;
-	l->l_md.md_gc_ptp = NULL;
-	pmap_free_ptps(empty_ptps);
 }
 
 /*
@@ -269,9 +263,6 @@ void
 cpu_lwp_free2(struct lwp *l)
 {
 	struct pcb *pcb;
-
-	KASSERT(l->l_md.md_gc_ptp == NULL);
-	KASSERT(l->l_md.md_gc_pmap == NULL);
 
 	pcb = lwp_getpcb(l);
 	KASSERT((pcb->pcb_flags & PCB_DBREGS) == 0);

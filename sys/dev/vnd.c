@@ -1,4 +1,4 @@
-/*	$NetBSD: vnd.c,v 1.272 2019/03/01 11:06:56 pgoyette Exp $	*/
+/*	$NetBSD: vnd.c,v 1.272.6.1 2020/01/17 21:47:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272 2019/03/01 11:06:56 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.6.1 2020/01/17 21:47:30 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -968,6 +968,7 @@ vndiodone(struct buf *bp)
 	struct buf *obp = bp->b_private;
 	int s = splbio();
 
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 	KASSERT(&vnx->vx_buf == bp);
 	KASSERT(vnd->sc_active > 0);
 #ifdef DEBUG
@@ -982,6 +983,7 @@ vndiodone(struct buf *bp)
 	if (vnd->sc_active == 0) {
 		wakeup(&vnd->sc_tab);
 	}
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 	splx(s);
 	obp->b_error = bp->b_error;
 	obp->b_resid = bp->b_resid;

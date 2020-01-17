@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.39 2019/09/14 12:37:34 maxv Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.39.2.1 2020/01/17 21:47:32 ad Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.39 2019/09/14 12:37:34 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.39.2.1 2020/01/17 21:47:32 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -630,6 +630,8 @@ otus_attach(device_t parent, device_t self, void *aux)
 	aprint_normal_dev(sc->sc_dev, "%s\n", devinfop);
 	usbd_devinfo_free(devinfop);
 
+	cv_init(&sc->sc_task_cv, "otustsk");
+	cv_init(&sc->sc_cmd_cv, "otuscmd");
 	mutex_init(&sc->sc_cmd_mtx,   MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_task_mtx,  MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_tx_mtx,    MUTEX_DEFAULT, IPL_NONE);
@@ -678,8 +680,10 @@ otus_wait_async(struct otus_softc *sc)
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
+	mutex_spin_enter(&sc->sc_task_mtx);
 	while (sc->sc_cmdq.queued > 0)
-		tsleep(&sc->sc_cmdq, 0, "sc_cmdq", 0);
+		cv_wait(&sc->sc_task_cv, &sc->sc_task_mtx);
+	mutex_spin_exit(&sc->sc_task_mtx);
 }
 
 Static int
@@ -720,6 +724,9 @@ otus_detach(device_t self, int flags)
 	mutex_destroy(&sc->sc_tx_mtx);
 	mutex_destroy(&sc->sc_task_mtx);
 	mutex_destroy(&sc->sc_cmd_mtx);
+	cv_destroy(&sc->sc_task_cv);
+	cv_destroy(&sc->sc_cmd_cv);
+
 	return 0;
 }
 
@@ -1242,34 +1249,29 @@ otus_task(void *arg)
 	struct otus_softc *sc;
 	struct otus_host_cmd_ring *ring;
 	struct otus_host_cmd *cmd;
-	int s;
 
 	sc = arg;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
 	/* Process host commands. */
-	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
 	ring = &sc->sc_cmdq;
 	while (ring->next != ring->cur) {
 		cmd = &ring->cmd[ring->next];
 		mutex_spin_exit(&sc->sc_task_mtx);
-		splx(s);
 
 		/* Callback. */
 		DPRINTFN(DBG_CMD, sc, "cb=%p queued=%d\n", cmd->cb,
 		    ring->queued);
 		cmd->cb(sc, cmd->data);
 
-		s = splusb();
 		mutex_spin_enter(&sc->sc_task_mtx);
 		ring->queued--;
 		ring->next = (ring->next + 1) % OTUS_HOST_CMD_RING_COUNT;
 	}
+	cv_signal(&sc->sc_task_cv);
 	mutex_spin_exit(&sc->sc_task_mtx);
-	wakeup(ring);
-	splx(s);
 }
 
 Static void
@@ -1278,12 +1280,10 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 {
 	struct otus_host_cmd_ring *ring;
 	struct otus_host_cmd *cmd;
-	int s;
+	bool sched = false;
 
 	DPRINTFN(DBG_FN, sc, "cb=%p\n", cb);
 
-
-	s = splusb();
 	mutex_spin_enter(&sc->sc_task_mtx);
 	ring = &sc->sc_cmdq;
 	cmd = &ring->cmd[ring->cur];
@@ -1294,13 +1294,12 @@ otus_do_async(struct otus_softc *sc, void (*cb)(struct otus_softc *, void *),
 
 	/* If there is no pending command already, schedule a task. */
 	if (++ring->queued == 1) {
-		mutex_spin_exit(&sc->sc_task_mtx);
-		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
+		sched = true;
 	}
-	else
-		mutex_spin_exit(&sc->sc_task_mtx);
-	wakeup(ring);
-	splx(s);
+	cv_signal(&sc->sc_task_cv);
+	mutex_spin_exit(&sc->sc_task_mtx);
+	if (sched)
+		usb_add_task(sc->sc_udev, &sc->sc_task, USB_TASKQ_DRIVER);
 }
 
 Static int
@@ -1401,7 +1400,7 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 {
 	struct otus_tx_cmd *cmd;
 	struct ar_cmd_hdr *hdr;
-	int s, xferlen, error;
+	int xferlen, error;
 
 	DPRINTFN(DBG_FN, sc, "\n");
 
@@ -1427,14 +1426,12 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 	DPRINTFN(DBG_CMD, sc, "sending command code=0x%02x len=%d token=%d\n",
 	    code, ilen, hdr->token);
 
-	s = splusb();
 	cmd->odata = odata;
 	cmd->done = 0;
 	usbd_setup_xfer(cmd->xfer, cmd, cmd->buf, xferlen,
 	    USBD_FORCE_SHORT_XFER, OTUS_CMD_TIMEOUT, NULL);
 	error = usbd_sync_transfer(cmd->xfer);
 	if (error != 0) {
-		splx(s);
 		mutex_exit(&sc->sc_cmd_mtx);
 #if defined(DIAGNOSTIC) || defined(OTUS_DEBUG)	/* XXX: kill some noise */
 		aprint_error_dev(sc->sc_dev,
@@ -1444,9 +1441,8 @@ otus_cmd(struct otus_softc *sc, uint8_t code, const void *idata, int ilen,
 		return EIO;
 	}
 	if (!cmd->done)
-		error = tsleep(cmd, PCATCH, "otuscmd", hz);
+		error = cv_timedwait_sig(&sc->sc_cmd_cv, &sc->sc_cmd_mtx, hz);
 	cmd->odata = NULL;	/* In case answer is received too late. */
-	splx(s);
 	mutex_exit(&sc->sc_cmd_mtx);
 	if (error != 0) {
 		aprint_error_dev(sc->sc_dev,
@@ -1501,7 +1497,7 @@ otus_node_alloc(struct ieee80211_node_table *ntp)
 	DPRINTFN(DBG_FN, DBG_NO_SC, "\n");
 
 	on = malloc(sizeof(*on), M_DEVBUF, M_NOWAIT | M_ZERO);
-	return &on->ni;
+	return on ? &on->ni : NULL;
 }
 
 Static int
@@ -1647,14 +1643,18 @@ otus_cmd_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	if ((hdr->code & 0xc0) != 0xc0) {
 		DPRINTFN(DBG_RX, sc, "received reply code=0x%02x len=%d token=%d\n",
 		    hdr->code, hdr->len, hdr->token);
+		mutex_enter(&sc->sc_cmd_mtx);
 		cmd = &sc->sc_tx_cmd;
-		if (__predict_false(hdr->token != cmd->token))
+		if (__predict_false(hdr->token != cmd->token)) {
+			mutex_exit(&sc->sc_cmd_mtx);
 			return;
+		}
 		/* Copy answer into caller's supplied buffer. */
 		if (cmd->odata != NULL)
 			memcpy(cmd->odata, &hdr[1], hdr->len);
 		cmd->done = 1;
-		wakeup(cmd);
+		cv_signal(&sc->sc_cmd_cv);
+		mutex_exit(&sc->sc_cmd_mtx);
 		return;
 	}
 

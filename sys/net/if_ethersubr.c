@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ethersubr.c,v 1.280 2019/10/16 18:29:49 christos Exp $	*/
+/*	$NetBSD: if_ethersubr.c,v 1.280.2.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.280 2019/10/16 18:29:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ethersubr.c,v 1.280.2.1 2020/01/17 21:47:36 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -243,7 +243,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 		} else if (m->m_flags & M_MCAST) {
 			ETHER_MAP_IP_MULTICAST(&satocsin(dst)->sin_addr, edst);
 		} else {
-			error = arpresolve(ifp, rt, m, dst, edst, sizeof(edst));
+			error = arpresolve(ifp0, rt, m, dst, edst, sizeof(edst));
 			if (error)
 				return (error == EWOULDBLOCK) ? 0 : error;
 		}
@@ -292,7 +292,7 @@ ether_output(struct ifnet * const ifp0, struct mbuf * const m0,
 			ETHER_MAP_IPV6_MULTICAST(&satocsin6(dst)->sin6_addr,
 			    edst);
 		} else {
-			error = nd6_resolve(ifp, rt, m, dst, edst,
+			error = nd6_resolve(ifp0, rt, m, dst, edst,
 			    sizeof(edst));
 			if (error)
 				return (error == EWOULDBLOCK) ? 0 : error;

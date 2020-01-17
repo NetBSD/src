@@ -1,4 +1,4 @@
-/*	$NetBSD: if_enet.c,v 1.29 2019/11/29 17:20:30 ryo Exp $	*/
+/*	$NetBSD: if_enet.c,v 1.29.2.1 2020/01/17 21:47:24 ad Exp $	*/
 
 /*
  * Copyright (c) 2014 Ryo Shimizu <ryo@nerv.org>
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.29 2019/11/29 17:20:30 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_enet.c,v 1.29.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include "vlan.h"
 
@@ -247,7 +247,7 @@ enet_attach_common(device_t self)
 	ifmedia_init(&mii->mii_media, 0, ether_mediachange, enet_mediastatus);
 
 	/* try to attach PHY */
-	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
+	mii_attach(self, mii, 0xffffffff, sc->sc_phyid, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		ifmedia_add(&mii->mii_media, IFM_ETHER | IFM_MANUAL, 0, NULL);
 		ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_MANUAL);

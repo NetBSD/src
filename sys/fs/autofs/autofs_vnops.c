@@ -1,4 +1,4 @@
-/*	$NetBSD: autofs_vnops.c,v 1.4 2019/11/26 16:17:31 tkusumi Exp $	*/
+/*	$NetBSD: autofs_vnops.c,v 1.4.2.1 2020/01/17 21:47:33 ad Exp $	*/
 /*-
  * Copyright (c) 2017 The NetBSD Foundation, Inc.
  * Copyright (c) 2016 The DragonFly Project
@@ -34,7 +34,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.4 2019/11/26 16:17:31 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autofs_vnops.c,v 1.4.2.1 2020/01/17 21:47:33 ad Exp $");
 
 #include "autofs.h"
 
@@ -183,7 +183,7 @@ mounted:
 		autofs_node_uncache(anp);
 	}
 
-	error = VFS_ROOT(vp->v_mountedhere, newvp);
+	error = VFS_ROOT(vp->v_mountedhere, LK_EXCLUSIVE, newvp);
 	if (error) {
 		AUTOFS_WARN("VFS_ROOT() failed with error %d", error);
 		return error;

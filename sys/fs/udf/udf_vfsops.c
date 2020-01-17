@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vfsops.c,v 1.76 2017/06/24 12:13:16 hannken Exp $ */
+/* $NetBSD: udf_vfsops.c,v 1.76.12.1 2020/01/17 21:47:34 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.76 2017/06/24 12:13:16 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vfsops.c,v 1.76.12.1 2020/01/17 21:47:34 ad Exp $");
 #endif /* not lint */
 
 
@@ -744,7 +744,7 @@ udf_start(struct mount *mp, int flags)
 /* --------------------------------------------------------------------- */
 
 int
-udf_root(struct mount *mp, struct vnode **vpp)
+udf_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	struct long_ad *dir_loc;
@@ -755,7 +755,7 @@ udf_root(struct mount *mp, struct vnode **vpp)
 	DPRINTF(CALL, ("udf_root called\n"));
 
 	dir_loc = &ump->fileset_desc->rootdir_icb;
-	error = udf_get_node(ump, dir_loc, &root_dir);
+	error = udf_get_node(ump, dir_loc, &root_dir, lktype);
 
 	if (error)
 		return error;
@@ -895,7 +895,7 @@ udf_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * (optional) TODO lookup why some sources state NFSv3
  */
 int
-udf_vget(struct mount *mp, ino_t ino,
+udf_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("udf_vget called\n"));
@@ -908,7 +908,7 @@ udf_vget(struct mount *mp, ino_t ino,
  * Lookup vnode for file handle specified
  */
 int
-udf_fhtovp(struct mount *mp, struct fid *fhp,
+udf_fhtovp(struct mount *mp, struct fid *fhp, int lktype,
     struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("udf_fhtovp called\n"));

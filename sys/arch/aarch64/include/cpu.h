@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.17 2020/01/05 20:17:43 ad Exp $ */
+/* $NetBSD: cpu.h,v 1.17.2.1 2020/01/17 21:47:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -93,6 +93,9 @@ struct cpu_info {
 	struct evcnt ci_vfp_save;
 	struct evcnt ci_vfp_release;
 
+	/* FDT or similar supplied "cpu capacity" */
+	uint32_t ci_capacity_dmips_mhz;
+
 	/* interrupt controller */
 	u_int ci_gic_redist;	/* GICv3 redistributor index */
 	uint64_t ci_gic_sgir;	/* GICv3 SGIR target */
@@ -101,6 +104,7 @@ struct cpu_info {
 	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
 
 	struct aarch64_sysctl_cpu_id ci_id;
+#define arm_cpu_mpidr(ci)	((ci)->ci_id.ac_mpidr)
 
 	struct aarch64_cache_info *ci_cacheinfo;
 	struct aarch64_cpufuncs ci_cpufuncs;

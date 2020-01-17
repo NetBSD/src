@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.1 2020/01/01 10:11:21 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.1.2.1 2020/01/17 21:47:31 ad Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,10 +62,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1 2020/01/01 10:11:21 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.1 2020/01/17 21:47:31 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
+#include "sysmon_envsys.h"
 #endif
 
 #include <sys/param.h>
@@ -87,6 +88,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1 2020/01/01 10:11:21 ryo Exp $");
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcidevs.h>
+#include <dev/sysmon/sysmonvar.h>
 
 /* driver configuration */
 #define CONFIG_INTR_MODERATION_ENABLE	true	/* delayed interrupt */
@@ -710,11 +712,14 @@ typedef struct fw2x_capabilities {
 typedef struct fw2x_mailbox {		/* struct fwHostInterface */
 	aq_mailbox_header_t header;
 	fw2x_msm_statistics_t msm;	/* msmStatistics_t msm; */
-	uint16_t phy_h_bit;
-	uint16_t phy_fault_code;
-	int16_t phy_temperature;
-	uint8_t cable_len;
-	uint8_t reserved1;
+
+	uint32_t phy_info1;
+#define PHYINFO1_FAULT_CODE	__BITS(31,16)
+#define PHYINFO1_PHY_H_BIT	__BITS(0,15)
+	uint32_t phy_info2;
+#define PHYINFO2_TEMPERATURE	__BITS(15,0)
+#define PHYINFO2_CABLE_LEN	__BITS(23,16)
+
 	fw2x_phy_cable_diag_data_t diag_data;
 	uint32_t reserved[8];
 
@@ -862,6 +867,12 @@ struct aq_txring {
 	unsigned int txr_prodidx;
 	unsigned int txr_considx;
 	int txr_nfree;
+
+	/* counters */
+	uint64_t txr_opackets;
+	uint64_t txr_obytes;
+	uint64_t txr_omcasts;
+	uint64_t txr_oerrors;
 };
 
 struct aq_rxring {
@@ -879,6 +890,12 @@ struct aq_rxring {
 		bus_dmamap_t dmamap;
 	} rxr_mbufs[AQ_RXD_NUM];
 	unsigned int rxr_readidx;
+
+	/* counters */
+	uint64_t rxr_ipackets;
+	uint64_t rxr_ibytes;
+	uint64_t rxr_ierrors;
+	uint64_t rxr_iqdrops;
 };
 
 struct aq_queue {
@@ -895,6 +912,9 @@ struct aq_firmware_ops {
 	int (*get_mode)(struct aq_softc *, aq_hw_fw_mpi_state_t *,
 	    aq_link_speed_t *, aq_link_fc_t *, aq_link_eee_t *);
 	int (*get_stats)(struct aq_softc *, aq_hw_stats_s_t *);
+#if NSYSMON_ENVSYS > 0
+	int (*get_temperature)(struct aq_softc *, uint32_t *);
+#endif
 };
 
 #ifdef AQ_EVENT_COUNTERS
@@ -921,6 +941,11 @@ struct aq_firmware_ops {
 #define AQ_LOCK(sc)		mutex_enter(&(sc)->sc_mutex);
 #define AQ_UNLOCK(sc)		mutex_exit(&(sc)->sc_mutex);
 
+/* lock for FW2X_MPI_{CONTROL,STATE]_REG read-modify-write */
+#define AQ_MPI_LOCK(sc)		mutex_enter(&(sc)->sc_mpi_mutex);
+#define AQ_MPI_UNLOCK(sc)	mutex_exit(&(sc)->sc_mpi_mutex);
+
+
 struct aq_softc {
 	device_t sc_dev;
 
@@ -939,6 +964,11 @@ struct aq_softc {
 	bool sc_poll_linkstat;
 	bool sc_detect_linkstat;
 
+#if NSYSMON_ENVSYS > 0
+	struct sysmon_envsys *sc_sme;
+	envsys_data_t sc_sensor_temp;
+#endif
+
 	callout_t sc_tick_ch;
 
 	int sc_nintrs;
@@ -953,6 +983,7 @@ struct aq_softc {
 	uint16_t sc_revision;
 
 	kmutex_t sc_mutex;
+	kmutex_t sc_mpi_mutex;
 
 	struct aq_firmware_ops *sc_fw_ops;
 	uint64_t sc_fw_caps;
@@ -1051,6 +1082,9 @@ static void aq_tx_pcq_free(struct aq_softc *, struct aq_txring *);
 static void aq_initmedia(struct aq_softc *);
 static void aq_enable_intr(struct aq_softc *, bool, bool);
 
+#if NSYSMON_ENVSYS > 0
+static void aq_temp_refresh(struct sysmon_envsys *, envsys_data_t *);
+#endif
 static void aq_tick(void *);
 static int aq_legacy_intr(void *);
 static int aq_link_intr(void *);
@@ -1087,19 +1121,28 @@ static int fw2x_set_mode(struct aq_softc *, aq_hw_fw_mpi_state_t,
 static int fw2x_get_mode(struct aq_softc *, aq_hw_fw_mpi_state_t *,
     aq_link_speed_t *, aq_link_fc_t *, aq_link_eee_t *);
 static int fw2x_get_stats(struct aq_softc *, aq_hw_stats_s_t *);
+#if NSYSMON_ENVSYS > 0
+static int fw2x_get_temperature(struct aq_softc *, uint32_t *);
+#endif
 
 static struct aq_firmware_ops aq_fw1x_ops = {
 	.reset = fw1x_reset,
 	.set_mode = fw1x_set_mode,
 	.get_mode = fw1x_get_mode,
-	.get_stats = fw1x_get_stats
+	.get_stats = fw1x_get_stats,
+#if NSYSMON_ENVSYS > 0
+	.get_temperature = NULL
+#endif
 };
 
 static struct aq_firmware_ops aq_fw2x_ops = {
 	.reset = fw2x_reset,
 	.set_mode = fw2x_set_mode,
 	.get_mode = fw2x_get_mode,
-	.get_stats = fw2x_get_stats
+	.get_stats = fw2x_get_stats,
+#if NSYSMON_ENVSYS > 0
+	.get_temperature = fw2x_get_temperature
+#endif
 };
 
 CFATTACH_DECL3_NEW(aq, sizeof(struct aq_softc),
@@ -1204,6 +1247,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	mutex_init(&sc->sc_mutex, MUTEX_DEFAULT, IPL_NET);
+	mutex_init(&sc->sc_mpi_mutex, MUTEX_DEFAULT, IPL_NET);
 
 	sc->sc_pc = pc = pa->pa_pc;
 	sc->sc_pcitag = tag = pa->pa_tag;
@@ -1421,6 +1465,31 @@ aq_attach(device_t parent, device_t self, void *aux)
 	/* update media */
 	aq_ifmedia_change(ifp);
 
+#if NSYSMON_ENVSYS > 0
+	/* temperature monitoring */
+	if (sc->sc_fw_ops != NULL && sc->sc_fw_ops->get_temperature != NULL &&
+	    (sc->sc_fw_caps & FW2X_CTRL_TEMPERATURE) != 0) {
+
+		sc->sc_sme = sysmon_envsys_create();
+		sc->sc_sme->sme_name = device_xname(self);
+		sc->sc_sme->sme_cookie = sc;
+		sc->sc_sme->sme_flags = 0;
+		sc->sc_sme->sme_refresh = aq_temp_refresh;
+		sc->sc_sensor_temp.units = ENVSYS_STEMP;
+		sc->sc_sensor_temp.state = ENVSYS_SINVALID;
+		snprintf(sc->sc_sensor_temp.desc, ENVSYS_DESCLEN, "PHY");
+
+		sysmon_envsys_sensor_attach(sc->sc_sme, &sc->sc_sensor_temp);
+		sysmon_envsys_register(sc->sc_sme);
+
+		/*
+		 * for unknown reasons, the first call of fw2x_get_temperature()
+		 * will always fail (firmware matter?), so run once now.
+		 */
+		aq_temp_refresh(sc->sc_sme, &sc->sc_sensor_temp);
+	}
+#endif
+
 #ifdef AQ_EVENT_COUNTERS
 	/* get starting statistics values */
 	if (sc->sc_fw_ops != NULL && sc->sc_fw_ops->get_stats != NULL &&
@@ -1495,6 +1564,14 @@ aq_detach(device_t self, int flags __unused)
 
 	callout_stop(&sc->sc_tick_ch);
 
+#if NSYSMON_ENVSYS > 0
+	if (sc->sc_sme != NULL) {
+		/* all sensors associated with this will also be detached */
+		sysmon_envsys_unregister(sc->sc_sme);
+		sc->sc_sme = NULL;
+	}
+#endif
+
 #ifdef AQ_EVENT_COUNTERS
 	AQ_EVCNT_DETACH(sc, uprc);
 	AQ_EVCNT_DETACH(sc, mprc);
@@ -1516,6 +1593,7 @@ aq_detach(device_t self, int flags __unused)
 	AQ_EVCNT_DETACH(sc, cprc);
 #endif
 
+	mutex_destroy(&sc->sc_mpi_mutex);
 	mutex_destroy(&sc->sc_mutex);
 
 	return 0;
@@ -2204,7 +2282,12 @@ static int
 fw2x_set_mode(struct aq_softc *sc, aq_hw_fw_mpi_state_t mode,
     aq_link_speed_t speed, aq_link_fc_t fc, aq_link_eee_t eee)
 {
-	uint64_t mpi_ctrl = AQ_READ64_REG(sc, FW2X_MPI_CONTROL_REG);
+	uint64_t mpi_ctrl;
+	int error = 0;
+
+	AQ_MPI_LOCK(sc);
+
+	mpi_ctrl = AQ_READ64_REG(sc, FW2X_MPI_CONTROL_REG);
 
 	switch (mode) {
 	case MPI_INIT:
@@ -2238,11 +2321,14 @@ fw2x_set_mode(struct aq_softc *sc, aq_hw_fw_mpi_state_t mode,
 		break;
 	default:
 		device_printf(sc->sc_dev, "fw2x> unknown MPI state %d\n", mode);
-		return EINVAL;
+		error =  EINVAL;
+		goto failure;
 	}
-
 	AQ_WRITE64_REG(sc, FW2X_MPI_CONTROL_REG, mpi_ctrl);
-	return 0;
+
+ failure:
+	AQ_MPI_UNLOCK(sc);
+	return error;
 }
 
 static int
@@ -2332,12 +2418,13 @@ fw2x_get_stats(struct aq_softc *sc, aq_hw_stats_s_t *stats)
 {
 	int error;
 
+	AQ_MPI_LOCK(sc);
 	/* Say to F/W to update the statistics */
 	error = toggle_mpi_ctrl_and_wait(sc, FW2X_CTRL_STATISTICS, 1, 25);
 	if (error != 0) {
 		device_printf(sc->sc_dev,
 		    "fw2x> statistics update error %d\n", error);
-		return error;
+		goto failure;
 	}
 
 	CTASSERT(sizeof(fw2x_msm_statistics_t) <= sizeof(struct aq_hw_stats_s));
@@ -2347,13 +2434,49 @@ fw2x_get_stats(struct aq_softc *sc, aq_hw_stats_s_t *stats)
 	if (error != 0) {
 		device_printf(sc->sc_dev,
 		    "fw2x> download statistics data FAILED, error %d", error);
-		return error;
+		goto failure;
 	}
 	stats->dpc = AQ_READ_REG(sc, RX_DMA_DROP_PKT_CNT_REG);
 	stats->cprc = AQ_READ_REG(sc, RX_DMA_COALESCED_PKT_CNT_REG);
 
+ failure:
+	AQ_MPI_UNLOCK(sc);
+	return error;
+}
+
+#if NSYSMON_ENVSYS > 0
+static int
+fw2x_get_temperature(struct aq_softc *sc, uint32_t *temp)
+{
+	int error;
+	uint32_t value, celsius;
+
+	AQ_MPI_LOCK(sc);
+
+	/* Say to F/W to update the temperature */
+	error = toggle_mpi_ctrl_and_wait(sc, FW2X_CTRL_TEMPERATURE, 1, 25);
+	if (error != 0)
+		goto failure;
+
+	error = aq_fw_downld_dwords(sc,
+	    sc->sc_mbox_addr + offsetof(fw2x_mailbox_t, phy_info2),
+	    &value, sizeof(value) / sizeof(uint32_t));
+	if (error != 0)
+		goto failure;
+
+	/* 1/256 decrees C to microkelvin */
+	celsius = __SHIFTOUT(value, PHYINFO2_TEMPERATURE);
+	if (celsius == 0) {
+		error = EIO;
+		goto failure;
+	}
+	*temp = celsius * (1000000 / 256) + 273150000;
+
+ failure:
+	AQ_MPI_UNLOCK(sc);
 	return 0;
 }
+#endif
 
 static int
 aq_fw_downld_dwords(struct aq_softc *sc, uint32_t addr, uint32_t *p,
@@ -3632,6 +3755,26 @@ aq_tx_pcq_free(struct aq_softc *sc, struct aq_txring *txring)
 	}
 }
 
+#if NSYSMON_ENVSYS > 0
+static void
+aq_temp_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
+{
+	struct aq_softc *sc;
+	uint32_t temp;
+	int error;
+
+	sc = sme->sme_cookie;
+
+	error = sc->sc_fw_ops->get_temperature(sc, &temp);
+	if (error == 0) {
+		edata->value_cur = temp;
+		edata->state = ENVSYS_SVALID;
+	} else {
+		edata->state = ENVSYS_SINVALID;
+	}
+}
+#endif
+
 static void
 aq_tick(void *arg)
 {
@@ -4015,6 +4158,7 @@ aq_tx_intr(void *arg)
 	struct aq_txring *txring = arg;
 	struct aq_softc *sc = txring->txr_sc;
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct mbuf *m;
 	const int ringidx = txring->txr_index;
 	unsigned int idx, hw_head, n = 0;
 
@@ -4032,12 +4176,17 @@ aq_tx_intr(void *arg)
 	for (idx = txring->txr_considx; idx != hw_head;
 	    idx = TXRING_NEXTIDX(idx), n++) {
 
-		if (txring->txr_mbufs[idx].m != NULL) {
+		if ((m = txring->txr_mbufs[idx].m) != NULL) {
 			bus_dmamap_unload(sc->sc_dmat,
 			    txring->txr_mbufs[idx].dmamap);
-			m_freem(txring->txr_mbufs[idx].m);
+
+			txring->txr_opackets++;
+			txring->txr_obytes += m->m_pkthdr.len;
+			if (m->m_flags & M_MCAST)
+				txring->txr_omcasts++;
+
+			m_freem(m);
 			txring->txr_mbufs[idx].m = NULL;
-			ifp->if_opackets++;
 		}
 
 		txring->txr_nfree++;
@@ -4105,7 +4254,7 @@ aq_rx_intr(void *arg)
 
 		if ((rxd_status & RXDESC_STATUS_MACERR) ||
 		    (rxd_type & RXDESC_TYPE_MAC_DMA_ERR)) {
-			ifp->if_ierrors++;
+			rxring->rxr_ierrors++;
 			goto rx_next;
 		}
 
@@ -4120,6 +4269,7 @@ aq_rx_intr(void *arg)
 			 * cannot allocate new mbuf.
 			 * discard this packet, and reuse mbuf for next.
 			 */
+			rxring->rxr_iqdrops++;
 			goto rx_next;
 		}
 		rxring->rxr_mbufs[idx].m = NULL;
@@ -4220,10 +4370,10 @@ aq_rx_intr(void *arg)
 				}
 			}
 #endif
-
 			m_set_rcvif(m0, ifp);
+			rxring->rxr_ipackets++;
+			rxring->rxr_ibytes += m0->m_pkthdr.len;
 			if_percpuq_enqueue(ifp->if_percpuq, m0);
-
 			m0 = mprev = NULL;
 		}
 
@@ -4361,8 +4511,8 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 		if (error != 0) {
 			/* too many mbuf chains? or not enough descriptors? */
 			m_freem(m);
-			ifp->if_oerrors++;
-			if (error == ENOBUFS)
+			txring->txr_oerrors++;
+			if (txring->txr_index == 0 && error == ENOBUFS)
 				ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -4375,7 +4525,7 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 		bpf_mtap(ifp, m, BPF_D_OUT);
 	}
 
-	if (!is_transmit && txring->txr_nfree < AQ_TXD_MIN)
+	if (txring->txr_index == 0 && txring->txr_nfree < AQ_TXD_MIN)
 		ifp->if_flags |= IFF_OACTIVE;
 
 	if (npkt)
@@ -4518,11 +4668,60 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct aq_softc *sc __unused;
 	struct ifreq *ifr __unused;
-	int error, s;
+	uint64_t opackets, oerrors, obytes, omcasts;
+	uint64_t ipackets, ierrors, ibytes, iqdrops;
+	int error, i, s;
 
 	sc = (struct aq_softc *)ifp->if_softc;
 	ifr = (struct ifreq *)data;
 	error = 0;
+
+	switch (cmd) {
+	case SIOCGIFDATA:
+	case SIOCZIFDATA:
+		opackets = oerrors = obytes = omcasts = 0;
+		ipackets = ierrors = ibytes = iqdrops = 0;
+		for (i = 0; i < sc->sc_nqueues; i++) {
+			struct aq_txring *txring = &sc->sc_queue[i].txring;
+			mutex_enter(&txring->txr_mutex);
+			if (cmd == SIOCZIFDATA) {
+				txring->txr_opackets = 0;
+				txring->txr_obytes = 0;
+				txring->txr_omcasts = 0;
+				txring->txr_oerrors = 0;
+			} else {
+				opackets += txring->txr_opackets;
+				oerrors += txring->txr_oerrors;
+				obytes += txring->txr_obytes;
+				omcasts += txring->txr_omcasts;
+			}
+			mutex_exit(&txring->txr_mutex);
+
+			struct aq_rxring *rxring = &sc->sc_queue[i].rxring;
+			mutex_enter(&rxring->rxr_mutex);
+			if (cmd == SIOCZIFDATA) {
+				rxring->rxr_ipackets = 0;
+				rxring->rxr_ibytes = 0;
+				rxring->rxr_ierrors = 0;
+				rxring->rxr_iqdrops = 0;
+			} else {
+				ipackets += rxring->rxr_ipackets;
+				ierrors += rxring->rxr_ierrors;
+				ibytes += rxring->rxr_ibytes;
+				iqdrops += rxring->rxr_iqdrops;
+			}
+			mutex_exit(&rxring->rxr_mutex);
+		}
+		ifp->if_opackets = opackets;
+		ifp->if_oerrors = oerrors;
+		ifp->if_obytes = obytes;
+		ifp->if_omcasts = omcasts;
+		ifp->if_ipackets = ipackets;
+		ifp->if_ierrors = ierrors;
+		ifp->if_ibytes = ibytes;
+		ifp->if_iqdrops = iqdrops;
+		break;
+	}
 
 	s = splnet();
 	error = ether_ioctl(ifp, cmd, data);

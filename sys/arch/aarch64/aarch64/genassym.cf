@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.17 2019/12/28 17:19:43 jmcneill Exp $
+# $NetBSD: genassym.cf,v 1.17.2.1 2020/01/17 21:47:22 ad Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -148,7 +148,6 @@ define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_CTXSWTCH		offsetof(struct lwp, l_ctxswtch)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_UTF		offsetof(struct lwp, l_md.md_utf)

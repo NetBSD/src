@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.54 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.54.6.1 2020/01/17 21:47:32 ad Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.54 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.54.6.1 2020/01/17 21:47:32 ad Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -2643,10 +2643,12 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 		obj->dirty = 0;
 
 	if (obj->dirty) {
+		mutex_enter(obj->base.filp->vmobjlock);
 		TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
-			page->flags &= ~PG_CLEAN;
+			uvm_pagemarkdirty(page, UVM_PAGE_STATUS_DIRTY);
 			/* XXX mark page accessed */
 		}
+		mutex_exit(obj->base.filp->vmobjlock);
 	}
 	obj->dirty = 0;
 

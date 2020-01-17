@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_extattr.c,v 1.14 2016/11/09 05:44:42 dholland Exp $	*/
+/*	$NetBSD: ulfs_extattr.c,v 1.14.22.1 2020/01/17 21:47:38 ad Exp $	*/
 /*  from NetBSD: ulfs_extattr.c,v 1.48 2016/11/09 05:08:35 dholland Exp  */
 
 /*-
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.14 2016/11/09 05:44:42 dholland Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_extattr.c,v 1.14.22.1 2020/01/17 21:47:38 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_lfs.h"
@@ -675,7 +675,7 @@ ulfs_extattr_autostart(struct mount *mp, struct lwp *l)
 	 * Does ULFS_EXTATTR_FSROOTSUBDIR exist off the filesystem root?
 	 * If so, automatically start EA's.
 	 */
-	error = VFS_ROOT(mp, &rvp);
+	error = VFS_ROOT(mp, LK_EXCLUSIVE, &rvp);
 	if (error) {
 		printf("ulfs_extattr_autostart.VFS_ROOT() returned %d\n",
 		    error);

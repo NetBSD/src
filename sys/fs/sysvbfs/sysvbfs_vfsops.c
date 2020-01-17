@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vfsops.c,v 1.46 2015/01/02 16:51:02 hannken Exp $	*/
+/*	$NetBSD: sysvbfs_vfsops.c,v 1.46.24.1 2020/01/17 21:47:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.46 2015/01/02 16:51:02 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vfsops.c,v 1.46.24.1 2020/01/17 21:47:34 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -239,13 +239,13 @@ sysvbfs_unmount(struct mount *mp, int mntflags)
 }
 
 int
-sysvbfs_root(struct mount *mp, struct vnode **vpp)
+sysvbfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	int error;
 
 	DPRINTF("%s:\n", __func__);
-	if ((error = VFS_VGET(mp, BFS_ROOT_INODE, &vp)) != 0)
+	if ((error = VFS_VGET(mp, BFS_ROOT_INODE, lktype, &vp)) != 0)
 		return error;
 	*vpp = vp;
 
@@ -362,7 +362,7 @@ sysvbfs_loadvnode(struct mount *mp, struct vnode *vp,
 }
 
 int
-sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+sysvbfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 	uint16_t number;
@@ -376,7 +376,7 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 	error = vcache_get(mp, &number, sizeof(number), &vp);
 	if (error)
 		return error;
-	error = vn_lock(vp, LK_EXCLUSIVE);
+	error = vn_lock(vp, lktype);
 	if (error) {
 		vrele(vp);
 		return error;
@@ -388,7 +388,8 @@ sysvbfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
 }
 
 int
-sysvbfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
+sysvbfs_fhtovp(struct mount *mp, struct fid *fid, int lktype,
+    struct vnode **vpp)
 {
 
 	DPRINTF("%s:\n", __func__);

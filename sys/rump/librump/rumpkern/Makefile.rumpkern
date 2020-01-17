@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rumpkern,v 1.181 2019/12/20 21:20:09 ad Exp $
+#	$NetBSD: Makefile.rumpkern,v 1.181.2.1 2020/01/17 21:47:37 ad Exp $
 #
 
 IOCONFDIR:=	${.PARSEDIR}
@@ -139,7 +139,7 @@ SRCS+=	init_sysctl_base.c	\
 
 # sys/uvm
 SRCS+=	uvm_aobj.c uvm_readahead.c uvm_object.c uvm_swapstub.c
-SRCS+=	uvm_page_array.c
+SRCS+=	uvm_page_array.c uvm_page_status.c
 
 # 4.4BSD secmodel.  selection is hardcoded for now
 SRCS+=	secmodel.c

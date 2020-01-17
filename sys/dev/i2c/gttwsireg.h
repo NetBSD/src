@@ -1,4 +1,4 @@
-/* $NetBSD: gttwsireg.h,v 1.3 2014/09/11 11:14:44 jmcneill Exp $ */
+/* $NetBSD: gttwsireg.h,v 1.3.28.1 2020/01/17 21:47:31 ad Exp $ */
 
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
@@ -27,27 +27,37 @@
 #ifndef _GTTWSIREG_H_
 #define _GTTWSIREG_H_
 
-#include "opt_gttwsi.h"
-
 #define GTTWSI_SIZE		0x100
+#define	GTTWSI_NREGS		7
 
-#if defined(GTTWSI_ALLWINNER)
-#define TWSI_SLAVEADDR		0x00
-#define TWSI_EXTEND_SLAVEADDR	0x04
-#define TWSI_DATA		0x08
-#define TWSI_CONTROL		0x0c
-#define TWSI_STATUS		0x10
-#define TWSI_BAUDRATE		0x14
-#define TWSI_SOFTRESET		0x18
-#else
-#define	TWSI_SLAVEADDR		0x00
-#define	TWSI_EXTEND_SLAVEADDR	0x10
-#define	TWSI_DATA		0x04
-#define	TWSI_CONTROL		0x08
-#define	TWSI_STATUS		0x0c	/* for read */
-#define	TWSI_BAUDRATE		0x0c	/* for write */
-#define	TWSI_SOFTRESET		0x1c
-#endif
+	/* reg map indices */
+#define	TWSI_SLAVEADDR			0
+#define	TWSI_EXTEND_SLAVEADDR		1
+#define	TWSI_DATA			2
+#define	TWSI_CONTROL			3
+#define	TWSI_STATUS			4
+#define	TWSI_BAUDRATE			5
+#define	TWSI_SOFTRESET			6
+
+	/* register offsets for Allwinner implementations */
+#define	TWSI_ALLWINNER_SLAVEADDR	0x00
+#define	TWSI_ALLWINNER_EXTEND_SLAVEADDR	0x04
+#define	TWSI_ALLWINNER_DATA		0x08
+#define	TWSI_ALLWINNER_CONTROL		0x0c
+#define	TWSI_ALLWINNER_STATUS		0x10
+#define	TWSI_ALLWINNER_BAUDRATE		0x14
+#define	TWSI_ALLWINNER_SOFTRESET	0x18
+#define	TWSI_ALLWINNER_ENH_FEAT		0x1c
+#define	TWSI_ALLWINNER_LINE_CTRL	0x20
+
+	/* register offsets for Marvell implementations */
+#define	TWSI_MARVELL_SLAVEADDR		0x00
+#define	TWSI_MARVELL_EXTEND_SLAVEADDR	0x10
+#define	TWSI_MARVELL_DATA		0x04
+#define	TWSI_MARVELL_CONTROL		0x08
+#define	TWSI_MARVELL_STATUS		0x0c	/* for read */
+#define	TWSI_MARVELL_BAUDRATE		0x0c	/* for write */
+#define	TWSI_MARVELL_SOFTRESET		0x1c
 
 #define	SLAVEADDR_GCE_MASK	0x01
 #define	SLAVEADDR_SADDR_MASK	0xfe

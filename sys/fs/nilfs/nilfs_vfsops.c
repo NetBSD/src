@@ -1,4 +1,4 @@
-/* $NetBSD: nilfs_vfsops.c,v 1.24 2018/05/28 21:04:37 chs Exp $ */
+/* $NetBSD: nilfs_vfsops.c,v 1.24.8.1 2020/01/17 21:47:33 ad Exp $ */
 
 /*
  * Copyright (c) 2008, 2009 Reinoud Zandijk
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.24 2018/05/28 21:04:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nilfs_vfsops.c,v 1.24.8.1 2020/01/17 21:47:33 ad Exp $");
 #endif /* not lint */
 
 
@@ -1023,7 +1023,7 @@ nilfs_start(struct mount *mp, int flags)
 /* --------------------------------------------------------------------- */
 
 int
-nilfs_root(struct mount *mp, struct vnode **vpp)
+nilfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	uint64_t ino = NILFS_ROOT_INO;
 	int error;
@@ -1032,7 +1032,7 @@ nilfs_root(struct mount *mp, struct vnode **vpp)
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error == 0) {
-		error = vn_lock(*vpp, LK_EXCLUSIVE);
+		error = vn_lock(*vpp, lktype);
 		if (error) {
 			vrele(*vpp);
 			*vpp = NULL;
@@ -1090,7 +1090,7 @@ nilfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * (optional) TODO lookup why some sources state NFSv3
  */
 int
-nilfs_vget(struct mount *mp, ino_t ino,
+nilfs_vget(struct mount *mp, ino_t ino, int lktype,
     struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("nilfs_vget called\n"));
@@ -1189,7 +1189,7 @@ nilfs_loadvnode(struct mount *mp, struct vnode *vp,
  * Lookup vnode for file handle specified
  */
 int
-nilfs_fhtovp(struct mount *mp, struct fid *fhp,
+nilfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype,
     struct vnode **vpp)
 {
 	DPRINTF(NOTIMPL, ("nilfs_fhtovp called\n"));

@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_vfsops.c,v 1.15 2019/12/22 19:47:35 ad Exp $	*/
+/*	$NetBSD: ulfs_vfsops.c,v 1.15.2.1 2020/01/17 21:47:38 ad Exp $	*/
 /*  from NetBSD: ufs_vfsops.c,v 1.54 2015/03/17 09:39:29 hannken Exp  */
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.15 2019/12/22 19:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ulfs_vfsops.c,v 1.15.2.1 2020/01/17 21:47:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -85,12 +85,12 @@ ulfs_start(struct mount *mp, int flags)
  * Return the root of a filesystem.
  */
 int
-ulfs_root(struct mount *mp, struct vnode **vpp)
+ulfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)ULFS_ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)ULFS_ROOTINO, lktype, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -212,13 +212,14 @@ ulfs_quotactl(struct mount *mp, struct quotactl_args *args)
  * filesystem has validated the file handle.
  */
 int
-ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, struct vnode **vpp)
+ulfs_fhtovp(struct mount *mp, struct ulfs_ufid *ufhp, int lktype,
+    struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, lktype, &nvp)) != 0) {
 		if (error == ENOENT)
 			error = ESTALE;
 		*vpp = NULLVP;

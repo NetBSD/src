@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2017/04/08 19:53:23 christos Exp $
+#	$NetBSD: Makefile,v 1.30.20.1 2020/01/17 21:47:28 ad Exp $
 
 NOMAN=		# defined
 
@@ -59,13 +59,11 @@ $(PROG): $(OBJS)
 	:
 	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
 	@grep first_kbyte $(PROG).map
-	@if [ `(echo ibase=16;						\
-		${TOOL_SED} -n	-e '/[ 	]first_kbyte/{'			\
-			-e 's/.*0x\([0-9a-fA-F]*\).*/\1-$(TEXT)-400/p'	\
-			-e '}' $(PROG).map |				\
-		tr a-f A-F) | bc` -gt 0 ];				\
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	\
-		exit 1;							\
+	@if [ `${TOOL_AWK}						   \
+	    '/first_kbyte/ {print "eval(eval("$$1")-eval(0x'$(TEXT)'))"}'  \
+	    $(PROG).map | ${TOOL_M4} -` -gt 1024 ];			   \
+	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
+	    exit 1;							   \
 	fi
 	mv -f $(PROG).x $(PROG)
 

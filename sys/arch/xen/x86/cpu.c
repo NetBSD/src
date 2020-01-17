@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.131 2019/11/23 19:40:38 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.131.2.1 2020/01/17 21:47:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131 2019/11/23 19:40:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131.2.1 2020/01/17 21:47:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -716,9 +716,10 @@ cpu_hatch(void *v)
 
 	KASSERT((ci->ci_flags & CPUF_RUNNING) == 0);
 
+	KASSERT(ci->ci_curlwp == ci->ci_data.cpu_idlelwp);
+	KASSERT(curlwp == ci->ci_data.cpu_idlelwp);
 	pcb = lwp_getpcb(curlwp);
 	pcb->pcb_cr3 = pmap_pdirpa(pmap_kernel(), 0);
-	pcb = lwp_getpcb(ci->ci_data.cpu_idlelwp);
 
 	xen_ipi_init();
 
@@ -739,8 +740,7 @@ cpu_hatch(void *v)
 
 	aprint_debug_dev(ci->ci_dev, "running\n");
 
-	cpu_switchto(NULL, ci->ci_data.cpu_idlelwp, true);
-
+	KASSERT(ci->ci_curlwp == ci->ci_data.cpu_idlelwp);
 	idle_loop(NULL);
 	KASSERT(false);
 }

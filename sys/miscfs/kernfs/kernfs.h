@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.41 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.41.2.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -126,7 +126,7 @@ extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 extern kmutex_t kfs_lock;
 
-int kernfs_root(struct mount *, struct vnode **);
+int kernfs_root(struct mount *, int, struct vnode **);
 
 /*
  * Data types for the kernfs file operations.

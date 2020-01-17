@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.237 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.237.6.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.237 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.237.6.1 2020/01/17 21:47:36 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -937,7 +937,7 @@ err:
  * Return root of a filesystem
  */
 int
-nfs_root(struct mount *mp, struct vnode **vpp)
+nfs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *vp;
 	struct nfsmount *nmp;
@@ -946,7 +946,7 @@ nfs_root(struct mount *mp, struct vnode **vpp)
 	nmp = VFSTONFS(mp);
 	vp = nmp->nm_vnode;
 	vref(vp);
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
+	error = vn_lock(vp, lktype | LK_RETRY);
 	if (error != 0) {
 		vrele(vp);
 		return error;
@@ -1005,7 +1005,7 @@ nfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  */
 /* ARGSUSED */
 int
-nfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+nfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 
 	return (EOPNOTSUPP);
@@ -1070,7 +1070,7 @@ nfs_sysctl_fini(void)
 
 /* ARGSUSED */
 int
-nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
+nfs_fhtovp(struct mount *mp, struct fid *fid, int lktype, struct vnode **vpp)
 {
 	size_t fidsize;
 	size_t fhsize;
@@ -1095,6 +1095,7 @@ nfs_fhtovp(struct mount *mp, struct fid *fid, struct vnode **vpp)
 			return EINVAL;
 		}
 	}
+	/* XXX lktype ignored */
 	error = nfs_nget(mp, (void *)fid->fid_data, fhsize, &np);
 	if (error) {
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: sysvbfs_vnops.c,v 1.63 2017/05/26 14:21:01 riastradh Exp $	*/
+/*	$NetBSD: sysvbfs_vnops.c,v 1.63.16.1 2020/01/17 21:47:34 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.63 2017/05/26 14:21:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysvbfs_vnops.c,v 1.63.16.1 2020/01/17 21:47:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -114,7 +114,9 @@ sysvbfs_lookup(void *arg)
 		}
 
 		/* Allocate v-node */
-		if ((error = sysvbfs_vget(v->v_mount, dirent->inode, &vpp)) != 0) {
+		error = sysvbfs_vget(v->v_mount, dirent->inode,
+		    LK_EXCLUSIVE, &vpp);
+		if (error != 0) {
 			DPRINTF("%s: can't get vnode.\n", __func__);
 			return error;
 		}
@@ -159,7 +161,8 @@ sysvbfs_create(void *arg)
 	if (!bfs_dirent_lookup_by_name(bfs, a->a_cnp->cn_nameptr, &dirent))
 		panic("no dirent for created file.");
 
-	if ((err = sysvbfs_vget(mp, dirent->inode, a->a_vpp)) != 0) {
+	err = sysvbfs_vget(mp, dirent->inode, LK_EXCLUSIVE, a->a_vpp);
+	if (err != 0) {
 		DPRINTF("%s: sysvbfs_vget failed.\n", __func__);
 		return err;
 	}

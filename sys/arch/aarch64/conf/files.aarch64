@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.16 2019/12/28 17:19:43 jmcneill Exp $
+#	$NetBSD: files.aarch64,v 1.16.2.1 2020/01/17 21:47:22 ad Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -41,6 +41,7 @@ defparam opt_console.h		CONADDR
 file	arch/aarch64/aarch64/fpu.c
 
 file	arch/arm/arm/arm_generic_dma.c
+file	arch/arm/arm/arm_cpu_topology.c
 file	arch/arm/arm32/bus_dma.c
 
 device	psci

@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.362 2019/06/20 03:31:30 pgoyette Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.362.4.1 2020/01/17 21:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362 2019/06/20 03:31:30 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.1 2020/01/17 21:47:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -2218,7 +2218,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
  *   those rights via. exflagsp and credanonp
  */
 int
-ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+ffs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct ufid ufh;
 	int error;
@@ -2230,7 +2230,7 @@ ffs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	if ((error = ffs_checkrange(mp, ufh.ufid_ino)) != 0)
 		return error;
 
-	return (ufs_fhtovp(mp, &ufh, vpp));
+	return (ufs_fhtovp(mp, &ufh, lktype, vpp));
 }
 
 /*

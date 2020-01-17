@@ -1,4 +1,4 @@
-/*	$NetBSD: cpuswitch.S,v 1.95 2019/10/29 16:18:23 joerg Exp $	*/
+/*	$NetBSD: cpuswitch.S,v 1.95.2.1 2020/01/17 21:47:23 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -87,7 +87,7 @@
 #include <arm/asm.h>
 #include <arm/locore.h>
 
-	RCSID("$NetBSD: cpuswitch.S,v 1.95 2019/10/29 16:18:23 joerg Exp $")
+	RCSID("$NetBSD: cpuswitch.S,v 1.95.2.1 2020/01/17 21:47:23 ad Exp $")
 
 /* LINTSTUB: include <sys/param.h> */
 
@@ -128,7 +128,7 @@
  * Switch to the specified next LWP
  * Arguments:
  *
- *	r0	'struct lwp *' of the current LWP (or NULL if exiting)
+ *	r0	'struct lwp *' of the current LWP
  *	r1	'struct lwp *' of the LWP to switch to
  *	r2	returning
  */
@@ -145,20 +145,6 @@ ENTRY(cpu_switchto)
 #else
 	ldr	r5, [r6, #L_CPU]		/* get cpu from new lwp */
 #endif
-
-	/* rem: r4 = old lwp */
-	/* rem: r5 = curcpu() */
-	/* rem: r6 = new lwp */
-	/* rem: interrupts are enabled */
-
-	/*
-	 * If the old lwp on entry to cpu_switchto was zero then the
-	 * process that called it was exiting. This means that we do
-	 * not need to save the current context. Instead we can jump
-	 * straight to restoring the context for the new process.
-	 */
-	teq	r4, #0
-	beq	.Ldo_switch
 
 	/* rem: r4 = old lwp */
 	/* rem: r5 = curcpu() */
@@ -192,14 +178,8 @@ ENTRY(cpu_switchto)
 	 * them for the new process.
 	 */
 
-	/* rem: r4 = old lwp */
-	/* rem: r5 = curcpu() */
-	/* rem: r6 = new lwp */
-	/* rem: interrupts are enabled */
-
 	/* Restore saved context */
 
-.Ldo_switch:
 	/* rem: r4 = old lwp */
 	/* rem: r5 = curcpu() */
 	/* rem: r6 = new lwp */
@@ -459,9 +439,6 @@ ENTRY_NP(softint_tramp)
 	ldr	r3, [r7, #(CI_MTX_COUNT)]	/* readjust after mi_switch */
 	add	r3, r3, #1
 	str	r3, [r7, #(CI_MTX_COUNT)]
-
-	mov	r3, #0				/* tell softint_dispatch */
-	str	r3, [r0, #(L_CTXSWTCH)]		/*    the soft lwp blocked */
 
 	msr	cpsr_c, r6			/* restore interrupts */
 	pop	{r4, r6, r7, pc}		/* pop stack and return */

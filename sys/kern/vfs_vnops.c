@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.204 2019/12/16 22:47:54 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.204.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.204 2019/12/16 22:47:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.204.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include "veriexec.h"
 
@@ -1030,6 +1030,7 @@ vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
 int
 vn_lock(struct vnode *vp, int flags)
 {
+	struct lwp *l;
 	int error;
 
 #if 0
@@ -1044,9 +1045,16 @@ vn_lock(struct vnode *vp, int flags)
 		WAPBL_JUNLOCK_ASSERT(wapbl_vptomp(vp));
 #endif
 
+	/* Get a more useful report for lockstat. */
+	l = curlwp;
+	KASSERT(l->l_rwcallsite == 0);
+	l->l_rwcallsite = (uintptr_t)__builtin_return_address(0);	
+
 	error = VOP_LOCK(vp, flags);
 	if ((flags & LK_RETRY) != 0 && error == ENOENT)
 		error = VOP_LOCK(vp, flags);
+
+	l->l_rwcallsite = 0;
 
 	KASSERT((flags & LK_RETRY) == 0 || (flags & LK_NOWAIT) != 0 ||
 	    error == 0);

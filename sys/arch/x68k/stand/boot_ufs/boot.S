@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.10 2012/11/01 14:33:31 isaki Exp $
+| $NetBSD: boot.S,v 1.10.44.1 2020/01/17 21:47:28 ad Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -42,9 +42,9 @@ ASENTRY_NOPROFILE(entry0)
 		bra	_ASM_LABEL(entry)
 
 |	Disklabel= 404bytes
-|	Since LABELLOFFSET in <machine/disklabel.h> is 0x40,
+|	Since LABELOFFSET in <machine/disklabel.h> is 0x40,
 |	entry must be after 0x000001d4 (0x000f01d4)
-		nop
+		.org	0x40
 disklabel:
 		.space	404
 
@@ -450,10 +450,6 @@ raw_read_end:
 
 read_half:	BOOT_ERROR("read half of block")
 
-
-ENTRY_NOPROFILE(B_KEYINP)
-		IOCS(__B_KEYINP)
-		rts
 
 ENTRY_NOPROFILE(B_PUTC)
 		movel	%sp@(4),%d1

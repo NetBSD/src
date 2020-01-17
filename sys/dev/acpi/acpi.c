@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi.c,v 1.282 2019/12/31 12:27:50 jmcneill Exp $	*/
+/*	$NetBSD: acpi.c,v 1.282.2.1 2020/01/17 21:47:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2007 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.282 2019/12/31 12:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi.c,v 1.282.2.1 2020/01/17 21:47:30 ad Exp $");
 
 #include "pci.h"
 #include "opt_acpi.h"
@@ -241,6 +241,7 @@ void (*acpi_print_dev)(const char *) = acpi_print_dev_stub;
 
 bus_dma_tag_t		acpi_default_dma_tag(struct acpi_softc *, struct acpi_devnode *);
 bus_dma_tag_t		acpi_default_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
+pci_chipset_tag_t	acpi_default_pci_chipset_tag(struct acpi_softc *, int, int);
 
 CFATTACH_DECL2_NEW(acpi, sizeof(struct acpi_softc),
     acpi_match, acpi_attach, acpi_detach, NULL, acpi_rescan, acpi_childdet);
@@ -461,7 +462,6 @@ acpi_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_iot = aa->aa_iot;
 	sc->sc_memt = aa->aa_memt;
-	sc->sc_pc = aa->aa_pc;
 	sc->sc_pciflags = aa->aa_pciflags;
 	sc->sc_ic = aa->aa_ic;
 	sc->sc_dmat = aa->aa_dmat;
@@ -849,6 +849,13 @@ acpi_default_dma64_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 }
 __weak_alias(acpi_get_dma64_tag,acpi_default_dma64_tag);
 
+pci_chipset_tag_t
+acpi_default_pci_chipset_tag(struct acpi_softc *sc, int seg, int bbn)
+{
+	return NULL;
+}
+__weak_alias(acpi_get_pci_chipset_tag,acpi_default_pci_chipset_tag);
+
 /*
  * Device attachment.
  */
@@ -915,8 +922,10 @@ acpi_rescan_early(struct acpi_softc *sc)
 		aa.aa_node = ad;
 		aa.aa_iot = sc->sc_iot;
 		aa.aa_memt = sc->sc_memt;
-		aa.aa_pc = sc->sc_pc;
-		aa.aa_pciflags = sc->sc_pciflags;
+		if (ad->ad_pciinfo != NULL) {
+			aa.aa_pc = ad->ad_pciinfo->ap_pc;
+			aa.aa_pciflags = sc->sc_pciflags;
+		}
 		aa.aa_ic = sc->sc_ic;
 		aa.aa_dmat = ad->ad_dmat;
 		aa.aa_dmat64 = ad->ad_dmat64;
@@ -977,8 +986,10 @@ acpi_rescan_nodes(struct acpi_softc *sc)
 		aa.aa_node = ad;
 		aa.aa_iot = sc->sc_iot;
 		aa.aa_memt = sc->sc_memt;
-		aa.aa_pc = sc->sc_pc;
-		aa.aa_pciflags = sc->sc_pciflags;
+		if (ad->ad_pciinfo != NULL) {
+			aa.aa_pc = ad->ad_pciinfo->ap_pc;
+			aa.aa_pciflags = sc->sc_pciflags;
+		}
 		aa.aa_ic = sc->sc_ic;
 		aa.aa_dmat = ad->ad_dmat;
 		aa.aa_dmat64 = ad->ad_dmat64;

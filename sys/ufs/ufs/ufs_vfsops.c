@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vfsops.c,v 1.58 2019/12/22 19:47:35 ad Exp $	*/
+/*	$NetBSD: ufs_vfsops.c,v 1.58.2.1 2020/01/17 21:47:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993, 1994
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.58 2019/12/22 19:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vfsops.c,v 1.58.2.1 2020/01/17 21:47:38 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -86,12 +86,12 @@ ufs_start(struct mount *mp, int flags)
  * Return the root of a filesystem.
  */
 int
-ufs_root(struct mount *mp, struct vnode **vpp)
+ufs_root(struct mount *mp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	int error;
 
-	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, &nvp)) != 0)
+	if ((error = VFS_VGET(mp, (ino_t)UFS_ROOTINO, lktype, &nvp)) != 0)
 		return (error);
 	*vpp = nvp;
 	return (0);
@@ -101,14 +101,14 @@ ufs_root(struct mount *mp, struct vnode **vpp)
  * Look up and return a vnode/inode pair by inode number.
  */
 int
-ufs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+ufs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -233,13 +233,13 @@ ufs_quotactl(struct mount *mp, struct quotactl_args *args)
  * filesystem has validated the file handle.
  */
 int
-ufs_fhtovp(struct mount *mp, struct ufid *ufhp, struct vnode **vpp)
+ufs_fhtovp(struct mount *mp, struct ufid *ufhp, int lktype, struct vnode **vpp)
 {
 	struct vnode *nvp;
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_VGET(mp, ufhp->ufid_ino, &nvp)) != 0) {
+	if ((error = VFS_VGET(mp, ufhp->ufid_ino, lktype, &nvp)) != 0) {
 		if (error == ENOENT)
 			error = ESTALE;
 		*vpp = NULLVP;

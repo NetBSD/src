@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_namei.h,v 1.37.2.2 2020/01/14 11:08:01 ad Exp $	*/
+/*	$NetBSD: rump_namei.h,v 1.37.2.3 2020/01/17 21:47:36 ad Exp $	*/
 
 
 /*

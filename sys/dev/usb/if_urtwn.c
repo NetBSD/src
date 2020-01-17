@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.78 2019/12/13 14:10:32 maxv Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.78.2.1 2020/01/17 21:47:32 ad Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.78 2019/12/13 14:10:32 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.78.2.1 2020/01/17 21:47:32 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -395,6 +395,7 @@ urtwn_attach(device_t parent, device_t self, void *aux)
 
 	(void) usbd_do_request(sc->sc_udev, &req, 0);
 
+	cv_init(&sc->sc_task_cv, "urtwntsk");
 	mutex_init(&sc->sc_task_mtx, MUTEX_DEFAULT, IPL_NET);
 	mutex_init(&sc->sc_tx_mtx, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_rx_mtx, MUTEX_DEFAULT, IPL_NONE);
@@ -591,6 +592,7 @@ urtwn_detach(device_t self, int flags)
 	callout_destroy(&sc->sc_scan_to);
 	callout_destroy(&sc->sc_calib_to);
 
+	cv_destroy(&sc->sc_task_cv);
 	mutex_destroy(&sc->sc_write_mtx);
 	mutex_destroy(&sc->sc_fwcmd_mtx);
 	mutex_destroy(&sc->sc_tx_mtx);
@@ -856,7 +858,7 @@ urtwn_task(void *arg)
 	int s;
 
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
-	if (ic->ic_state == IEEE80211_S_RUN && 
+	if (ic->ic_state == IEEE80211_S_RUN &&
 	    (ic->ic_opmode == IEEE80211_M_HOSTAP ||
 	    ic->ic_opmode == IEEE80211_M_IBSS)) {
 
@@ -889,8 +891,8 @@ urtwn_task(void *arg)
 		ring->queued--;
 		ring->next = (ring->next + 1) % URTWN_HOST_CMD_RING_COUNT;
 	}
+	cv_broadcast(&sc->sc_task_cv);
 	mutex_spin_exit(&sc->sc_task_mtx);
-	wakeup(&sc->cmdq);
 	splx(s);
 }
 
@@ -930,8 +932,10 @@ urtwn_wait_async(struct urtwn_softc *sc)
 	URTWNHIST_FUNC(); URTWNHIST_CALLED();
 
 	/* Wait for all queued asynchronous commands to complete. */
+	mutex_spin_enter(&sc->sc_task_mtx);
 	while (sc->cmdq.queued > 0)
-		tsleep(&sc->cmdq, 0, "endtask", 0);
+		cv_wait(&sc->sc_task_cv, &sc->sc_task_mtx);
+	mutex_spin_exit(&sc->sc_task_mtx);
 }
 
 static int

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr.S,v 1.36 2019/04/06 03:06:28 thorpej Exp $	   */
+/*	$NetBSD: subr.S,v 1.36.6.1 2020/01/17 21:47:27 ad Exp $	   */
 
 /*
  * Copyright (c) 1994 Ludd, University of Lule}, Sweden.
@@ -297,7 +297,6 @@ _C_LABEL(vax_mp_tramp):
 softint_cleanup:
 	movl    L_CPU(%r0),%r1		/* get cpu_info */
 	incl    CI_MTX_COUNT(%r1)	/* increment mutex count */
-	clrl    L_CTXSWTCH(%r0)		/* clear l_ctxswtch of old lwp */
 	movl	L_PCB(%r0),%r1		/* get PCB of softint LWP */
 softint_exit:
 	popr	$0x3			/* restore r0 and r1 */

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_glue.c,v 1.175 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_glue.c,v 1.175.2.1 2020/01/17 21:47:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.175 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_glue.c,v 1.175.2.1 2020/01/17 21:47:38 ad Exp $");
 
 #include "opt_kgdb.h"
 #include "opt_kstack.h"
@@ -224,9 +224,6 @@ uvm_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 	 * the specified entry point will be executed.
 	 */
 	cpu_lwp_fork(l1, l2, stack, stacksize, func, arg);
-
-	/* Inactive emap for new LWP. */
-	l2->l_emap_gen = UVM_EMAP_INACTIVE;
 }
 
 #ifndef USPACE_ALIGN

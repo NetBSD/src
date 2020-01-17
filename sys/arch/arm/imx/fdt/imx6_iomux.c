@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_iomux.c,v 1.2 2019/10/02 01:34:09 hkenken Exp $	*/
+/*	$NetBSD: imx6_iomux.c,v 1.2.2.1 2020/01/17 21:47:24 ad Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.2 2019/10/02 01:34:09 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_iomux.c,v 1.2.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include "opt_fdt.h"
 
@@ -132,7 +132,11 @@ CFATTACH_DECL_NEW(imxiomux, sizeof(struct imxiomux_softc),
 static int
 imxiomux_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-iomuxc", NULL };
+	const char * const compatible[] = {
+		"fsl,imx6q-iomuxc",
+		"fsl,imx8mq-iomuxc",
+		NULL
+	};
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);
@@ -166,10 +170,14 @@ imxiomux_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": IOMUX Controller\n");
 
 	for (int child = OF_child(phandle); child; child = OF_peer(child)) {
-		for (int sub = OF_child(child); sub; sub = OF_peer(sub)) {
-			if (!of_hasprop(sub, "fsl,pins"))
-				continue;
-			fdtbus_register_pinctrl_config(self, sub, &imx6_pinctrl_funcs);
+		if (of_hasprop(child, "fsl,pins")) {
+			fdtbus_register_pinctrl_config(self, child, &imx6_pinctrl_funcs);
+		} else {
+			for (int sub = OF_child(child); sub; sub = OF_peer(sub)) {
+				if (!of_hasprop(sub, "fsl,pins"))
+					continue;
+				fdtbus_register_pinctrl_config(self, sub, &imx6_pinctrl_funcs);
+			}
 		}
 	}
 }

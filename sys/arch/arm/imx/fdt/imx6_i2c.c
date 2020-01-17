@@ -1,4 +1,4 @@
-/*	$NetBSD: imx6_i2c.c,v 1.2 2019/08/05 12:21:00 hkenken Exp $	*/
+/*	$NetBSD: imx6_i2c.c,v 1.2.2.1 2020/01/17 21:47:24 ad Exp $	*/
 /*-
  * Copyright (c) 2019 Genetec Corporation.  All rights reserved.
  * Written by Hashimoto Kenichi for Genetec Corporation.
@@ -25,7 +25,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.2 2019/08/05 12:21:00 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.2.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include <sys/bus.h>
 
@@ -36,7 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: imx6_i2c.c,v 1.2 2019/08/05 12:21:00 hkenken Exp $")
 int
 imxi2c_match(device_t parent, cfdata_t cf, void *aux)
 {
-	const char * const compatible[] = { "fsl,imx6q-i2c", NULL };
+	const char * const compatible[] = { "fsl,imx21-i2c", NULL };
 	struct fdt_attach_args * const faa = aux;
 
 	return of_match_compatible(faa->faa_phandle, compatible);

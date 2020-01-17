@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_wapbl.c,v 1.44 2019/01/01 10:06:55 hannken Exp $	*/
+/*	$NetBSD: ffs_wapbl.c,v 1.44.6.1 2020/01/17 21:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.44 2019/01/01 10:06:55 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_wapbl.c,v 1.44.6.1 2020/01/17 21:47:37 ad Exp $");
 
 #define WAPBL_INTERNAL
 
@@ -124,7 +124,8 @@ ffs_wapbl_replay_finish(struct mount *mp)
 	for (i = 0; i < wr->wr_inodescnt; i++) {
 		struct vnode *vp;
 		struct inode *ip;
-		error = VFS_VGET(mp, wr->wr_inodes[i].wr_inumber, &vp);
+		error = VFS_VGET(mp, wr->wr_inodes[i].wr_inumber,
+		    LK_EXCLUSIVE, &vp);
 		if (error) {
 			printf("%s: %s: unable to cleanup inode %" PRIu32 "\n",
 			    __func__, VFSTOUFS(mp)->um_fs->fs_fsmnt,
@@ -254,7 +255,7 @@ wapbl_remove_log(struct mount *mp)
 		/* if no existing log inode, just clear all fields and bail */
 		if (log_ino == 0)
 			goto done;
-		error = VFS_VGET(mp, log_ino, &vp);
+		error = VFS_VGET(mp, log_ino, LK_EXCLUSIVE, &vp);
 		if (error != 0) {
 			printf("%s: %s: vget failed %d\n", __func__,
 			    fs->fs_fsmnt, error);
@@ -651,7 +652,7 @@ wapbl_create_infs_log(struct mount *mp, struct fs *fs, struct vnode *devvp,
 	struct inode *ip;
 	int error;
 
-	if ((error = VFS_ROOT(mp, &rvp)) != 0)
+	if ((error = VFS_ROOT(mp, LK_EXCLUSIVE, &rvp)) != 0)
 		return error;
 
 	vattr_null(&va);

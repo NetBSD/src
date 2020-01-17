@@ -1,4 +1,4 @@
-/*	$NetBSD: imxgpio.c,v 1.7 2019/11/27 07:26:08 hkenken Exp $ */
+/*	$NetBSD: imxgpio.c,v 1.7.2.1 2020/01/17 21:47:24 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.7 2019/11/27 07:26:08 hkenken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: imxgpio.c,v 1.7.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #define	_INTR_PRIVATE
 
@@ -327,25 +327,26 @@ imxgpio_attach_common(device_t self)
 {
 	struct imxgpio_softc * const gpio = device_private(self);
 
-	KASSERT(gpio->gpio_unit < MAX_NGROUP);
-
 	gpio->gpio_dev = self;
 
-	if (gpio->gpio_irqbase > 0) {
-		aprint_normal_dev(gpio->gpio_dev, "interrupts %d..%d\n",
-		    gpio->gpio_irqbase, gpio->gpio_irqbase + GPIO_NPINS - 1);
-
+	if (gpio->gpio_irqbase == PIC_IRQBASE_ALLOC || gpio->gpio_irqbase > 0) {
 		gpio->gpio_pic.pic_ops = &imxgpio_pic_ops;
 		strlcpy(gpio->gpio_pic.pic_name, device_xname(self),
 		    sizeof(gpio->gpio_pic.pic_name));
-		gpio->gpio_pic.pic_maxsources = 32;
+		gpio->gpio_pic.pic_maxsources = GPIO_NPINS;
 
-		pic_add(&gpio->gpio_pic, gpio->gpio_irqbase);
+		gpio->gpio_irqbase = pic_add(&gpio->gpio_pic, gpio->gpio_irqbase);
+
+		aprint_normal_dev(gpio->gpio_dev, "interrupts %d..%d\n",
+		    gpio->gpio_irqbase, gpio->gpio_irqbase + GPIO_NPINS - 1);
 	}
 
 	mutex_init(&gpio->gpio_lock, MUTEX_DEFAULT, IPL_VM);
 
-	imxgpio_handles[gpio->gpio_unit] = gpio;
+	if (gpio->gpio_unit != -1) {
+		KASSERT(gpio->gpio_unit < MAX_NGROUP);
+		imxgpio_handles[gpio->gpio_unit] = gpio;
+	}
 
 #if NGPIO > 0
 	imxgpio_attach_ports(gpio);
@@ -354,7 +355,7 @@ imxgpio_attach_common(device_t self)
 
 /* in-kernel GPIO access utility functions */
 void
-gpio_set_direction(u_int gpio, int dir)
+imxgpio_set_direction(u_int gpio, int dir)
 {
 	int index = gpio / GPIO_NPINS;
 	int pin = gpio % GPIO_NPINS;
@@ -366,7 +367,7 @@ gpio_set_direction(u_int gpio, int dir)
 }
 
 void
-gpio_data_write(u_int gpio, u_int value)
+imxgpio_data_write(u_int gpio, u_int value)
 {
 	int index = gpio / GPIO_NPINS;
 	int pin = gpio % GPIO_NPINS;
@@ -378,7 +379,7 @@ gpio_data_write(u_int gpio, u_int value)
 }
 
 bool
-gpio_data_read(u_int gpio)
+imxgpio_data_read(u_int gpio)
 {
 	int index = gpio / GPIO_NPINS;
 	int pin = gpio % GPIO_NPINS;

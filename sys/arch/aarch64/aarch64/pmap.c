@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.60 2019/12/30 16:03:48 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.60.2.1 2020/01/17 21:47:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60 2019/12/30 16:03:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.60.2.1 2020/01/17 21:47:22 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -1232,6 +1232,10 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 	KASSERT_PM_ADDR(pm, sva);
 	KASSERT(!IN_KSEG_ADDR(sva));
 
+	/* PROT_EXEC requires implicit PROT_READ */
+	if (prot & VM_PROT_EXECUTE)
+		prot |= VM_PROT_READ;
+
 	if ((prot & VM_PROT_READ) == VM_PROT_NONE) {
 		PMAP_COUNT(protect_remove_fallback);
 		pmap_remove(pm, sva, eva);
@@ -2138,6 +2142,10 @@ pmap_fault_fixup(struct pmap *pm, vaddr_t va, vm_prot_t accessprot, bool user)
 
 	/* ignore except read/write */
 	accessprot &= (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE);
+
+	/* PROT_EXEC requires implicit PROT_READ */
+	if (accessprot & VM_PROT_EXECUTE)
+		accessprot |= VM_PROT_READ;
 
 	/* no permission to read/write/execute for this page */
 	if ((pmap_prot & accessprot) != accessprot) {

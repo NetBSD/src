@@ -1,4 +1,4 @@
-/* $NetBSD: tsl256x.c,v 1.7 2019/07/25 04:25:40 thorpej Exp $ */
+/* $NetBSD: tsl256x.c,v 1.7.4.1 2020/01/17 21:47:31 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 Jason R. Thorpe
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.7 2019/07/25 04:25:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsl256x.c,v 1.7.4.1 2020/01/17 21:47:31 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -652,8 +652,7 @@ tsllux_wait_for_adcs(struct tsllux_softc *sc)
 		delay(ms * 1000);
 	} else {
 		/* Round up one tick for the case where we sleep. */
-		(void) tsleep(tsllux_wait_for_adcs, PWAIT, "tslluxwait",
-			      mstohz(ms) + 1);
+		(void) kpause("tslluxwait", false, mstohz(ms) + 1, NULL);
 	}
 
 	return (0);

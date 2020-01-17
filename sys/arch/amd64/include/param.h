@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.33 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: param.h,v 1.33.2.1 2020/01/17 21:47:23 ad Exp $	*/
 
 #ifdef __x86_64__
 
@@ -111,6 +111,17 @@
  */
 #define	NKMEMPAGES_MIN_DEFAULT	((8 * 1024 * 1024) >> PAGE_SHIFT)
 #define	NKMEMPAGES_MAX_UNLIMITED 1
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
 
 /*
  * XXXfvdl the PD* stuff is different from i386.

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.334 2019/12/21 11:54:04 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.334.2.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334 2019/12/21 11:54:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.1 2020/01/17 21:47:35 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -485,13 +485,13 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		KASSERT(lwp_locked(newl, spc->spc_mutex));
 		KASSERT(newl->l_cpu == ci);
 		newl->l_stat = LSONPROC;
-		newl->l_pflag |= LP_RUNNING;
+		newl->l_flag |= LW_RUNNING;
 		lwp_setlock(newl, spc->spc_lwplock);
 		spc->spc_flags &= ~(SPCF_SWITCHCLEAR | SPCF_IDLE);
 	} else {
 		newl = ci->ci_data.cpu_idlelwp;
 		newl->l_stat = LSONPROC;
-		newl->l_pflag |= LP_RUNNING;
+		newl->l_flag |= LW_RUNNING;
 		spc->spc_flags = (spc->spc_flags & ~SPCF_SWITCHCLEAR) |
 		    SPCF_IDLE;
 	}
@@ -512,8 +512,11 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 /*
  * The machine independent parts of context switch.
  *
- * NOTE: do not use l->l_cpu in this routine.  The caller may have enqueued
- * itself onto another CPU's run queue, so l->l_cpu may point elsewhere.
+ * NOTE: l->l_cpu is not changed in this routine, because an LWP never
+ * changes its own l_cpu (that would screw up curcpu on many ports and could
+ * cause all kinds of other evil stuff).  l_cpu is always changed by some
+ * other actor, when it's known the LWP is not running (the LW_RUNNING flag
+ * is checked under lock).
  */
 void
 mi_switch(lwp_t *l)
@@ -534,7 +537,7 @@ mi_switch(lwp_t *l)
 	binuptime(&bt);
 
 	KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
-	KASSERT((l->l_pflag & LP_RUNNING) != 0);
+	KASSERT((l->l_flag & LW_RUNNING) != 0);
 	KASSERT(l->l_cpu == curcpu() || l->l_stat == LSRUN);
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
@@ -563,7 +566,7 @@ mi_switch(lwp_t *l)
 		/* There are pending soft interrupts, so pick one. */
 		newl = softint_picklwp();
 		newl->l_stat = LSONPROC;
-		newl->l_pflag |= LP_RUNNING;
+		newl->l_flag |= LW_RUNNING;
 	}
 #endif	/* !__HAVE_FAST_SOFTINTS */
 
@@ -576,6 +579,8 @@ mi_switch(lwp_t *l)
 		l->l_stat = LSRUN;
 		lwp_setlock(l, spc->spc_mutex);
 		sched_enqueue(l);
+		sched_preempted(l);
+
 		/*
 		 * Handle migration.  Note that "migrating LWP" may
 		 * be reset here, if interrupt/preemption happens
@@ -652,57 +657,48 @@ mi_switch(lwp_t *l)
 		/* We're down to only one lock, so do debug checks. */
 		LOCKDEBUG_BARRIER(l->l_mutex, 1);
 
-		/*
-		 * Mark that context switch is going to be performed
-		 * for this LWP, to protect it from being switched
-		 * to on another CPU.
-		 */
-		KASSERT(l->l_ctxswtch == 0);
-		l->l_ctxswtch = 1;
+		/* Count the context switch. */
+		CPU_COUNT(CPU_COUNT_NSWTCH, 1);
 		l->l_ncsw++;
-		if ((l->l_pflag & LP_PREEMPTING) != 0)
+		if ((l->l_pflag & LP_PREEMPTING) != 0) {
 			l->l_nivcsw++;
-		KASSERT((l->l_pflag & LP_RUNNING) != 0);
-		l->l_pflag &= ~(LP_RUNNING | LP_PREEMPTING);
+			l->l_pflag &= ~LP_PREEMPTING;
+		}
 
 		/*
 		 * Increase the count of spin-mutexes before the release
-		 * of the last lock - we must remain at IPL_SCHED during
-		 * the context switch.
+		 * of the last lock - we must remain at IPL_SCHED after
+		 * releasing the lock.
 		 */
 		KASSERTMSG(ci->ci_mtx_count == -1,
 		    "%s: cpu%u: ci_mtx_count (%d) != -1 "
 		    "(block with spin-mutex held)",
 		     __func__, cpu_index(ci), ci->ci_mtx_count);
 		oldspl = MUTEX_SPIN_OLDSPL(ci);
-		ci->ci_mtx_count--;
-		lwp_unlock(l);
-
-		/* Count the context switch on this CPU. */
-		CPU_COUNT(CPU_COUNT_NSWTCH, 1);
+		ci->ci_mtx_count = -2;
 
 		/* Update status for lwpctl, if present. */
-		if (l->l_lwpctl != NULL)
-			l->l_lwpctl->lc_curcpu = LWPCTL_CPU_NONE;
-
-		/*
-		 * Save old VM context, unless a soft interrupt
-		 * handler is blocking.
-		 */
-		if (!returning)
-			pmap_deactivate(l);
-
-		/*
-		 * We may need to spin-wait if 'newl' is still
-		 * context switching on another CPU.
-		 */
-		if (__predict_false(newl->l_ctxswtch != 0)) {
-			u_int count;
-			count = SPINLOCK_BACKOFF_MIN;
-			while (newl->l_ctxswtch)
-				SPINLOCK_BACKOFF(count);
+		if (l->l_lwpctl != NULL) {
+			l->l_lwpctl->lc_curcpu = (l->l_stat == LSZOMB ?
+			    LWPCTL_CPU_EXITED : LWPCTL_CPU_NONE);
 		}
-		membar_enter();
+
+		/*
+		 * If curlwp is a soft interrupt LWP, there's nobody on the
+		 * other side to unlock - we're returning into an assembly
+		 * trampoline.  Unlock now.  This is safe because this is a
+		 * kernel LWP and is bound to current CPU: the worst anyone
+		 * else will do to it, is to put it back onto this CPU's run
+		 * queue (and the CPU is busy here right now!).
+		 */
+		if (returning) {
+			/* Keep IPL_SCHED after this; MD code will fix up. */
+			l->l_flag &= ~LW_RUNNING;
+			lwp_unlock(l);
+		} else {
+			/* A normal LWP: save old VM context. */
+			pmap_deactivate(l);
+		}
 
 		/*
 		 * If DTrace has set the active vtime enum to anything
@@ -730,6 +726,17 @@ mi_switch(lwp_t *l)
 #endif
 		KASSERTMSG(l == curlwp, "l %p curlwp %p prevlwp %p",
 		    l, curlwp, prevlwp);
+		KASSERT(prevlwp != NULL);
+		KASSERT(l->l_cpu == ci);
+		KASSERT(ci->ci_mtx_count == -2);
+
+		/*
+		 * Immediately mark the previous LWP as no longer running,
+		 * and unlock it.  We'll still be at IPL_SCHED afterwards.
+		 */
+		KASSERT((prevlwp->l_flag & LW_RUNNING) != 0);
+		prevlwp->l_flag &= ~LW_RUNNING;
+		lwp_unlock(prevlwp);
 
 		/*
 		 * Switched away - we have new curlwp.
@@ -738,14 +745,6 @@ mi_switch(lwp_t *l)
 		pmap_activate(l);
 		pcu_switchpoint(l);
 
-		if (prevlwp != NULL) {
-			/* Normalize the count of the spin-mutexes */
-			ci->ci_mtx_count++;
-			/* Unmark the state of context switch */
-			membar_exit();
-			prevlwp->l_ctxswtch = 0;
-		}
-
 		/* Update status for lwpctl, if present. */
 		if (l->l_lwpctl != NULL) {
 			l->l_lwpctl->lc_curcpu = (int)cpu_index(ci);
@@ -753,17 +752,18 @@ mi_switch(lwp_t *l)
 		}
 
 		/*
-		 * Note that, unless the caller disabled preemption, we can
-		 * be preempted at any time after this splx().
+		 * Normalize the spin mutex count and restore the previous
+		 * SPL.  Note that, unless the caller disabled preemption,
+		 * we can be preempted at any time after this splx().
 		 */
 		KASSERT(l->l_cpu == ci);
+		KASSERT(ci->ci_mtx_count == -1);
+		ci->ci_mtx_count = 0;
 		splx(oldspl);
 	} else {
 		/* Nothing to do - just unlock and return. */
 		mutex_spin_exit(spc->spc_mutex);
 		l->l_pflag &= ~LP_PREEMPTING;
-		/* We're down to only one lock, so do debug checks. */
-		LOCKDEBUG_BARRIER(l->l_mutex, 1);
 		lwp_unlock(l);
 	}
 
@@ -772,105 +772,6 @@ mi_switch(lwp_t *l)
 
 	SYSCALL_TIME_WAKEUP(l);
 	LOCKDEBUG_BARRIER(NULL, 1);
-}
-
-/*
- * The machine independent parts of context switch to oblivion.
- * Does not return.  Call with the LWP unlocked.
- */
-void
-lwp_exit_switchaway(lwp_t *l)
-{
-	struct cpu_info *ci;
-	struct lwp *newl;
-	struct bintime bt;
-
-	ci = l->l_cpu;
-
-	KASSERT(kpreempt_disabled());
-	KASSERT(l->l_stat == LSZOMB || l->l_stat == LSIDL);
-	KASSERT(ci == curcpu());
-	LOCKDEBUG_BARRIER(NULL, 0);
-
-	kstack_check_magic(l);
-
-	/* Count time spent in current system call */
-	SYSCALL_TIME_SLEEP(l);
-	binuptime(&bt);
-	updatertime(l, &bt);
-
-	/* Must stay at IPL_SCHED even after releasing run queue lock. */
-	(void)splsched();
-
-	/*
-	 * Let sched_nextlwp() select the LWP to run the CPU next.
-	 * If no LWP is runnable, select the idle LWP.
-	 * 
-	 * Note that spc_lwplock might not necessary be held, and
-	 * new thread would be unlocked after setting the LWP-lock.
-	 */
-	spc_lock(ci);
-#ifndef __HAVE_FAST_SOFTINTS
-	if (ci->ci_data.cpu_softints != 0) {
-		/* There are pending soft interrupts, so pick one. */
-		newl = softint_picklwp();
-		newl->l_stat = LSONPROC;
-		newl->l_pflag |= LP_RUNNING;
-	} else 
-#endif	/* !__HAVE_FAST_SOFTINTS */
-	{
-		newl = nextlwp(ci, &ci->ci_schedstate);
-	}
-
-	/* Update the new LWP's start time. */
-	newl->l_stime = bt;
-	l->l_pflag &= ~LP_RUNNING;
-
-	/*
-	 * ci_curlwp changes when a fast soft interrupt occurs.
-	 * We use ci_onproc to keep track of which kernel or
-	 * user thread is running 'underneath' the software
-	 * interrupt.  This is important for time accounting,
-	 * itimers and forcing user threads to preempt (aston).
-	 */
-	ci->ci_onproc = newl;
-
-	/* Unlock the run queue. */
-	spc_unlock(ci);
-
-	/* Count the context switch on this CPU. */
-	CPU_COUNT(CPU_COUNT_NSWTCH, 1);
-
-	/* Update status for lwpctl, if present. */
-	if (l->l_lwpctl != NULL)
-		l->l_lwpctl->lc_curcpu = LWPCTL_CPU_EXITED;
-
-	/*
-	 * We may need to spin-wait if 'newl' is still
-	 * context switching on another CPU.
-	 */
-	if (__predict_false(newl->l_ctxswtch != 0)) {
-		u_int count;
-		count = SPINLOCK_BACKOFF_MIN;
-		while (newl->l_ctxswtch)
-			SPINLOCK_BACKOFF(count);
-	}
-	membar_enter();
-
-	/*
-	 * If DTrace has set the active vtime enum to anything
-	 * other than INACTIVE (0), then it should have set the
-	 * function to call.
-	 */
-	if (__predict_false(dtrace_vtime_active)) {
-		(*dtrace_vtime_switch_func)(newl);
-	}
-
-	/* Switch to the new LWP.. */
-	(void)cpu_switchto(NULL, newl, false);
-
-	for (;;) continue;	/* XXX: convince gcc about "noreturn" */
-	/* NOTREACHED */
 }
 
 /*
@@ -931,7 +832,7 @@ setrunnable(struct lwp *l)
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
 	 */
-	if ((l->l_pflag & LP_RUNNING) != 0) {
+	if ((l->l_flag & LW_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_unlock(l);

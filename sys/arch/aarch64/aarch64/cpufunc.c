@@ -1,4 +1,4 @@
-/*	$NetBSD: cpufunc.c,v 1.12 2019/12/20 21:05:33 ad Exp $	*/
+/*	$NetBSD: cpufunc.c,v 1.12.2.1 2020/01/17 21:47:22 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -29,7 +29,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.12 2019/12/20 21:05:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpufunc.c,v 1.12.2.1 2020/01/17 21:47:22 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -86,25 +86,6 @@ extract_cacheunit(int level, bool insn, int cachetype,
 	cunit->cache_purging |= (ccsidr & CCSIDR_WB) ? CACHE_PURGING_WB : 0;
 	cunit->cache_purging |= (ccsidr & CCSIDR_RA) ? CACHE_PURGING_RA : 0;
 	cunit->cache_purging |= (ccsidr & CCSIDR_WA) ? CACHE_PURGING_WA : 0;
-}
-
-void
-aarch64_gettopology(struct cpu_info * const ci, uint64_t mpidr)
-{
-
-	if (mpidr & MPIDR_MT) {
-		cpu_topology_set(ci,
-		    __SHIFTOUT(mpidr, MPIDR_AFF2),
-		    __SHIFTOUT(mpidr, MPIDR_AFF1),
-		    __SHIFTOUT(mpidr, MPIDR_AFF0),
-		    0);
-	} else {
-		cpu_topology_set(ci,
-		    __SHIFTOUT(mpidr, MPIDR_AFF1),
-		    __SHIFTOUT(mpidr, MPIDR_AFF0),
-		    0,
-		    0);
-	}
 }
 
 void

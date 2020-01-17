@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.157 2019/11/20 19:37:54 pgoyette Exp $	*/
+/*	$NetBSD: exec.h,v 1.157.2.1 2020/01/17 21:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -271,8 +271,8 @@ int	check_veriexec		(struct lwp *, struct vnode *,
 int	check_exec		(struct lwp *, struct exec_package *,
 				     struct pathbuf *, char **);
 int	exec_init		(int);
-int	exec_read_from		(struct lwp *, struct vnode *, u_long off,
-				    void *, size_t);
+int	exec_read		(struct lwp *, struct vnode *, u_long off,
+				    void *, size_t, int);
 int	exec_setup_stack	(struct lwp *, struct exec_package *);
 
 void	exec_free_emul_arg	(struct exec_package *);

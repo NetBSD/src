@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1 2014/02/24 07:23:43 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.1.42.1 2020/01/17 21:47:25 ad Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -196,7 +196,6 @@ member	L_STAT		l_stat
 member	L_WCHAN		l_wchan
 member	L_MD		l_md
 member	L_MD_REGS	l_md.md_regs
-member	L_CTXSWTCH	l_ctxswtch
 
 struct	pcb
 member	PCB_FPREGS	pcb_fpregs

@@ -1,7 +1,7 @@
-/*	$NetBSD: sched.h,v 1.85 2020/01/06 10:21:21 martin Exp $	*/
+/*	$NetBSD: sched.h,v 1.85.2.1 2020/01/17 21:47:37 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019
+ * Copyright (c) 1999, 2000, 2001, 2002, 2007, 2008, 2019, 2020
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -158,6 +158,7 @@ struct schedstate_percpu {
 	kmutex_t	*spc_mutex;	/* (: lock on below, runnable LWPs */
 	kmutex_t	*spc_lwplock;	/* (: general purpose lock for LWPs */
 	struct lwp	*spc_migrating;	/* (: migrating LWP */
+	struct cpu_info *spc_nextpkg;	/* (: next package 1st for RR */
 	psetid_t	spc_psid;	/* c: processor-set ID */
 	time_t		spc_lastmod;	/* c: time of last cpu state change */
 	volatile int	spc_flags;	/* s: flags; see below */
@@ -166,11 +167,11 @@ struct schedstate_percpu {
 	int		spc_ticks;	/* s: ticks until sched_tick() */
 	int		spc_pscnt;	/* s: prof/stat counter */
 	int		spc_psdiv;	/* s: prof/stat divisor */
+	int		spc_nextskim;	/* s: next time to skim other queues */
 	/* Run queue */
 	volatile pri_t	spc_curpriority;/* s: usrpri of curlwp */
 	pri_t		spc_maxpriority;/* m: highest priority queued */
 	u_int		spc_count;	/* m: count of the threads */
-	u_int		spc_avgcount;	/* m: average count of threads (* 256) */
 	u_int		spc_mcount;	/* m: count of migratable threads */
 	uint32_t	spc_bitmap[8];	/* m: bitmap of active queues */
 	TAILQ_HEAD(,lwp) *spc_queue;	/* m: queue for each priority */
@@ -182,8 +183,10 @@ struct schedstate_percpu {
 #define	SPCF_OFFLINE		0x0004	/* CPU marked offline */
 #define	SPCF_RUNNING		0x0008	/* CPU is running */
 #define	SPCF_NOINTR		0x0010	/* shielded from interrupts */
-#define	SPCF_SMTPRIMARY		0x0020	/* CPU is first thread in core */
-#define	SPCF_IDLE		0x0040	/* CPU is currently idle */
+#define	SPCF_IDLE		0x0020	/* CPU is currently idle */
+#define	SPCF_1STCLASS		0x0040	/* first class scheduling entity */
+#define	SPCF_CORE1ST		0x0100	/* first CPU in core */
+#define	SPCF_PACKAGE1ST		0x0200	/* first CPU in package */
 
 #define	SPCF_SWITCHCLEAR	(SPCF_SEENRR|SPCF_SHOULDYIELD)
 
@@ -235,11 +238,13 @@ void		sched_pstats_hook(struct lwp *, int);
 bool		sched_curcpu_runnable_p(void);
 void		sched_dequeue(struct lwp *);
 void		sched_enqueue(struct lwp *);
+void		sched_preempted(struct lwp *);
 void		sched_resched_cpu(struct cpu_info *, pri_t, bool);
 void		sched_resched_lwp(struct lwp *, bool);
 struct lwp *	sched_nextlwp(void);
 void		sched_oncpu(struct lwp *);
 void		sched_newts(struct lwp *);
+void		sched_vforkexec(struct lwp *, bool);
 
 /* Priority adjustment */
 void		sched_nice(struct proc *, int);

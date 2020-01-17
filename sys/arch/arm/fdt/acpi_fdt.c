@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_fdt.c,v 1.13 2019/12/29 23:47:56 jmcneill Exp $ */
+/* $NetBSD: acpi_fdt.c,v 1.13.2.1 2020/01/17 21:47:24 ad Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_efi.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.13 2019/12/29 23:47:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_fdt.c,v 1.13.2.1 2020/01/17 21:47:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -71,10 +71,6 @@ static int	acpi_fdt_efi_rtc_settime(todr_chip_handle_t, struct clock_ymdhms *);
 static void	acpi_fdt_sysctl_init(void);
 
 extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
-
-#if NPCI > 0
-static struct acpi_pci_context acpi_fdt_pci_context;
-#endif
 
 static uint64_t smbios_table = 0;
 
@@ -122,9 +118,6 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 
 	memset(&aa, 0, sizeof(aa));
 #if NPCI > 0
-	acpi_fdt_pci_context.ap_pc = arm_acpi_pci_chipset;
-	acpi_fdt_pci_context.ap_pc.pc_conf_v = &acpi_fdt_pci_context;
-	acpi_fdt_pci_context.ap_seg = 0;
 	aa.aa_pciflags =
 	    /*PCI_FLAGS_IO_OKAY |*/ PCI_FLAGS_MEM_OKAY |
 	    PCI_FLAGS_MRL_OKAY | PCI_FLAGS_MRM_OKAY | 
@@ -132,7 +125,6 @@ acpi_fdt_attach(device_t parent, device_t self, void *aux)
 #ifdef __HAVE_PCI_MSI_MSIX
 	aa.aa_pciflags |= PCI_FLAGS_MSI_OKAY | PCI_FLAGS_MSIX_OKAY;
 #endif
-	aa.aa_pc = &acpi_fdt_pci_context.ap_pc;
 #endif
 
 	aa.aa_memt = faa->faa_bst;

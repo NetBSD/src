@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_export.c,v 1.61 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: nfs_export.c,v 1.61.2.1 2020/01/17 21:47:36 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2008, 2019 The NetBSD Foundation, Inc.
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.61 2019/12/22 19:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_export.c,v 1.61.2.1 2020/01/17 21:47:36 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -770,7 +770,7 @@ setpublicfs(struct mount *mp, struct netexport *nep,
 	/*
 	 * Get real filehandle for root of exported FS.
 	 */
-	if ((error = VFS_ROOT(mp, &rvp)))
+	if ((error = VFS_ROOT(mp, LK_EXCLUSIVE, &rvp)))
 		return error;
 
 	fhsize = 0;

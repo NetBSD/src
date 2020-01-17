@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.367 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.367.2.1 2020/01/17 21:47:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.367 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.367.2.1 2020/01/17 21:47:37 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -1162,7 +1162,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	 * artificially increment the reference count and keep a pointer
 	 * to it in the incore copy of the superblock.
 	 */
-	if ((error = VFS_VGET(mp, LFS_IFILE_INUM, &vp)) != 0) {
+	if ((error = VFS_VGET(mp, LFS_IFILE_INUM, LK_EXCLUSIVE, &vp)) != 0) {
 		DLOG((DLOG_MOUNT, "lfs_mountfs: ifile vget failed, error=%d\n", error));
 		goto out;
 	}
@@ -1531,14 +1531,14 @@ lfs_sync(struct mount *mp, int waitfor, kauth_cred_t cred)
  * Detection and handling of mount points must be done by the calling routine.
  */
 int
-lfs_vget(struct mount *mp, ino_t ino, struct vnode **vpp)
+lfs_vget(struct mount *mp, ino_t ino, int lktype, struct vnode **vpp)
 {
 	int error;
 
 	error = vcache_get(mp, &ino, sizeof(ino), vpp);
 	if (error)
 		return error;
-	error = vn_lock(*vpp, LK_EXCLUSIVE);
+	error = vn_lock(*vpp, lktype);
 	if (error) {
 		vrele(*vpp);
 		*vpp = NULL;
@@ -1854,7 +1854,7 @@ lfs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
  * File handle to vnode
  */
 int
-lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
+lfs_fhtovp(struct mount *mp, struct fid *fhp, int lktype, struct vnode **vpp)
 {
 	struct lfid lfh;
 	struct lfs *fs;
@@ -1875,7 +1875,7 @@ lfs_fhtovp(struct mount *mp, struct fid *fhp, struct vnode **vpp)
 	     lfs_sb_getcleansz(fs) - lfs_sb_getsegtabsz(fs)) * lfs_sb_getifpb(fs))
 		return ESTALE;
 
-	return (ulfs_fhtovp(mp, &lfh.lfid_ufid, vpp));
+	return (ulfs_fhtovp(mp, &lfh.lfid_ufid, lktype, vpp));
 }
 
 /*
@@ -2249,7 +2249,8 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 		}
 		uvm_pageactivate(pg);
 		uvm_pageunlock(pg);
-		pg->flags &= ~(PG_CLEAN|PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+		pg->flags &= ~(PG_DELWRI|PG_PAGEOUT|PG_RELEASED);
+		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 		DLOG((DLOG_PAGE, "pg[%d] = %p (vp %p off %" PRIx64 ")\n", i, pg,
 			vp, pg->offset));
 		DLOG((DLOG_PAGE, "pg[%d]->flags = %x\n", i, pg->flags));

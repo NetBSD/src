@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc.h,v 1.22 2014/07/13 11:23:01 hannken Exp $	*/
+/*	$NetBSD: fdesc.h,v 1.22.34.1 2020/01/17 21:47:35 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -70,7 +70,7 @@ struct fdescnode {
 extern dev_t devctty;
 extern void fdesc_init(void);
 extern void fdesc_done(void);
-extern int fdesc_root(struct mount *, struct vnode **);
+extern int fdesc_root(struct mount *, int, struct vnode **);
 extern int fdesc_allocvp(fdntype, int, struct mount *, struct vnode **);
 extern int (**fdesc_vnodeop_p)(void *);
 extern struct vfsops fdesc_vfsops;
