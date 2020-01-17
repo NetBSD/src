@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.168 2019/09/20 10:34:54 mrg Exp $
+#	$NetBSD: files.usb,v 1.169 2020/01/17 15:00:20 maya Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -527,11 +527,6 @@ file	dev/usb/udl.c			udl
 device	uhso: ifnet
 attach	uhso at usbdevif
 file	dev/usb/uhso.c			uhso
-
-# Maywa-denki/Kayac YUREX
-device	uyurex: hid
-attach	uyurex at uhidbus
-file	dev/usb/uyurex.c		uyurex
 
 # Microsoft RNDIS
 device	urndis: arp, ether, ifnet, usbnet
