@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_script.c,v 1.80 2019/09/15 20:21:12 christos Exp $	*/
+/*	$NetBSD: exec_script.c,v 1.80.2.1 2020/01/17 21:53:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1993, 1994, 1996 Christopher G. Demetriou
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.80 2019/09/15 20:21:12 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: exec_script.c,v 1.80.2.1 2020/01/17 21:53:01 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_script.h"
@@ -216,7 +216,7 @@ check_shell:
 	 * close all open fd's when the start.  That kills this
 	 * method of implementing "safe" set-id and x-only scripts.
 	 */
-	vn_lock(epp->ep_vp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(epp->ep_vp, LK_SHARED | LK_RETRY);
 	error = VOP_ACCESS(epp->ep_vp, VREAD, l->l_cred);
 	VOP_UNLOCK(epp->ep_vp);
 	if (error == EACCES
