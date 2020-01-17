@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.12 2019/10/15 13:27:50 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.13 2020/01/17 17:06:33 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12 2019/10/15 13:27:50 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.13 2020/01/17 17:06:33 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -69,6 +69,23 @@ struct acpi_pci_prt {
 
 static TAILQ_HEAD(, acpi_pci_prt) acpi_pci_irq_routes =
     TAILQ_HEAD_INITIALIZER(acpi_pci_irq_routes);
+
+struct acpi_pci_pct {
+	struct acpi_pci_context		pct_ap;
+	TAILQ_ENTRY(acpi_pci_pct)	pct_list;
+};
+
+static TAILQ_HEAD(, acpi_pci_pct) acpi_pci_chipset_tags =
+    TAILQ_HEAD_INITIALIZER(acpi_pci_chipset_tags);
+
+static const struct acpi_pci_quirk acpi_pci_quirks[] = {
+	/* OEM ID	OEM Table ID	Revision	Seg	Func */
+	{ "AMAZON",	"GRAVITON",	0,		-1,	acpi_pci_graviton_init },
+	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	0,	acpi_pci_n1sdp_init },
+	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	1,	acpi_pci_n1sdp_init },
+};
+
+pci_chipset_tag_t acpi_pci_md_get_chipset_tag(struct acpi_softc *, int, int);
 
 static void	acpi_pci_md_attach_hook(device_t, device_t,
 				       struct pcibus_attach_args *);
@@ -115,7 +132,7 @@ struct arm32_pci_chipset arm_acpi_pci_chipset = {
 };
 
 static ACPI_STATUS
-acpi_pci_md_pci_link(ACPI_HANDLE handle, int bus)
+acpi_pci_md_pci_link(ACPI_HANDLE handle, pci_chipset_tag_t pc, int bus)
 {
 	ACPI_PCI_ROUTING_TABLE *prt;
 	ACPI_HANDLE linksrc;
@@ -144,7 +161,7 @@ acpi_pci_md_pci_link(ACPI_HANDLE handle, int bus)
 			}
 
 			linkdev = acpi_pci_link_devbyhandle(linksrc);
-			acpi_pci_link_add_reference(linkdev, 0, bus, dev, prt->Pin & 3);
+			acpi_pci_link_add_reference(linkdev, pc, 0, bus, dev, prt->Pin & 3);
 		} else {
 			aprint_debug("ACPI: %s dev %u INT%c on globint %d\n",
 			    acpi_name(handle), dev, 'A' + (prt->Pin & 3), prt->SourceIndex);
@@ -208,7 +225,7 @@ acpi_pci_md_attach_hook(device_t parent, device_t self,
 		/*
 		 * This is a new ACPI managed bus. Add PCI link references.
 		 */
-		acpi_pci_md_pci_link(ad->ad_handle, pba->pba_bus);
+		acpi_pci_md_pci_link(ad->ad_handle, pba->pba_pc, pba->pba_bus);
 	}
 }
 
@@ -343,7 +360,8 @@ acpi_pci_md_intr_map(const struct pci_attach_args *pa, pci_intr_handle_t *ih)
 				if (ACPI_FAILURE(AcpiGetHandle(ACPI_ROOT_OBJECT, tab->Source, &linksrc)))
 					goto done;
 				linkdev = acpi_pci_link_devbyhandle(linksrc);
-				*ih = acpi_pci_link_route_interrupt(linkdev, tab->SourceIndex,
+				*ih = acpi_pci_link_route_interrupt(linkdev,
+				    pa->pa_pc, tab->SourceIndex,
 				    &line, &pol, &trig);
 				error = 0;
 				goto done;
@@ -417,3 +435,58 @@ acpi_pci_md_intr_disestablish(void *v, void *vih)
 {
 	intr_disestablish(vih);
 }
+
+const struct acpi_pci_quirk *
+acpi_pci_md_find_quirk(int seg)
+{
+	ACPI_STATUS rv;
+	ACPI_TABLE_MCFG *mcfg;
+	u_int n;
+
+	rv = AcpiGetTable(ACPI_SIG_MCFG, 0, (ACPI_TABLE_HEADER **)&mcfg);
+	if (ACPI_FAILURE(rv))
+		return NULL;
+
+	for (n = 0; n < __arraycount(acpi_pci_quirks); n++) {
+		const struct acpi_pci_quirk *q = &acpi_pci_quirks[n];
+		if (memcmp(q->q_oemid, mcfg->Header.OemId, ACPI_OEM_ID_SIZE) == 0 &&
+		    memcmp(q->q_oemtableid, mcfg->Header.OemTableId, ACPI_OEM_TABLE_ID_SIZE) == 0 &&
+		    q->q_oemrevision == mcfg->Header.OemRevision &&
+		    (q->q_segment == -1 || q->q_segment == seg))
+			return q;
+	}
+
+	return NULL;
+}
+
+pci_chipset_tag_t
+acpi_pci_md_get_chipset_tag(struct acpi_softc *sc, int seg, int bbn)
+{
+	struct acpi_pci_pct *pct = NULL, *pctp;
+	const struct acpi_pci_quirk *q;
+
+	TAILQ_FOREACH(pctp, &acpi_pci_chipset_tags, pct_list)
+		if (pctp->pct_ap.ap_seg == seg) {
+			pct = pctp;
+			break;
+		}
+
+	if (pct == NULL) {
+		pct = kmem_zalloc(sizeof(*pct), KM_SLEEP);
+		pct->pct_ap.ap_dev = sc->sc_dev;
+		pct->pct_ap.ap_pc = arm_acpi_pci_chipset;
+		pct->pct_ap.ap_pc.pc_conf_v = &pct->pct_ap;
+		pct->pct_ap.ap_seg = seg;
+		pct->pct_ap.ap_bus = bbn;
+		pct->pct_ap.ap_bst = acpi_softc->sc_memt;
+
+		q = acpi_pci_md_find_quirk(seg);
+		if (q != NULL)
+			q->q_init(&pct->pct_ap);
+
+		TAILQ_INSERT_TAIL(&acpi_pci_chipset_tags, pct, pct_list);
+	}
+
+	return &pct->pct_ap.ap_pc;
+}
+__strong_alias(acpi_get_pci_chipset_tag,acpi_pci_md_get_chipset_tag);
