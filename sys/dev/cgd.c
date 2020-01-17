@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.118 2019/12/14 16:58:38 riastradh Exp $ */
+/* $NetBSD: cgd.c,v 1.119 2020/01/17 19:31:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.118 2019/12/14 16:58:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.119 2020/01/17 19:31:30 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -591,8 +591,10 @@ cgdiodone(struct buf *nbp)
 	if (obp->b_error != 0)
 		obp->b_resid = obp->b_bcount;
 
+	KERNEL_LOCK(1, NULL);		/* XXXSMP */
 	dk_done(dksc, obp);
 	dk_start(dksc, NULL);
+	KERNEL_UNLOCK_ONE(NULL);	/* XXXSMP */
 }
 
 static int
