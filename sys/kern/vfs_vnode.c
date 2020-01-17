@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.105.2.2 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.105.2.3 2020/01/17 21:55:13 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -119,8 +119,7 @@
  *			Vnode finished disassociation from underlying file
  *			system in vcache_reclaim().
  *	LOADED -> BLOCKED
- *			Either vcache_rekey*() is changing the vnode key or
- *			vrelel() is about to call VOP_INACTIVE().
+ *			vcache_rekey*() is changing the vnode key.
  *	BLOCKED -> LOADED
  *			The block condition is over.
  *	LOADING -> RECLAIMED
@@ -146,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.2 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.3 2020/01/17 21:55:13 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -777,24 +776,22 @@ vrelel(vnode_t *vp, int flags, int lktype)
 	if (VSTATE_GET(vp) == VS_RECLAIMED) {
 		VOP_UNLOCK(vp);
 	} else {
-		VSTATE_CHANGE(vp, VS_LOADED, VS_BLOCKED);
-		mutex_exit(vp->v_interlock);
-
 		/*
-		 * The vnode must not gain another reference while being
-		 * deactivated.  If VOP_INACTIVE() indicates that
-		 * the described file has been deleted, then recycle
-		 * the vnode.
+		 * If VOP_INACTIVE() indicates that the described file has
+		 * been deleted, then recycle the vnode.  Note that
+		 * VOP_INACTIVE() will not drop the vnode lock.
 		 *
-		 * Note that VOP_INACTIVE() will not drop the vnode lock.
+		 * If the file has been deleted, this is a lingering
+		 * reference and there is no need to worry about new
+		 * references looking to do real work with the vnode (as it
+		 * will have been purged from directories, caches, etc).
 		 */
 		recycle = false;
+		mutex_exit(vp->v_interlock);
 		VOP_INACTIVE(vp, &recycle);
-		if (!recycle)
-			VOP_UNLOCK(vp);
 		mutex_enter(vp->v_interlock);
-		VSTATE_CHANGE(vp, VS_BLOCKED, VS_LOADED);
 		if (!recycle) {
+			VOP_UNLOCK(vp);
 			if (vp->v_usecount > 1) {
 				vp->v_usecount--;
 				mutex_exit(vp->v_interlock);
