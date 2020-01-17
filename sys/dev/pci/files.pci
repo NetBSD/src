@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.420 2020/01/16 07:11:50 yamaguchi Exp $
+#	$NetBSD: files.pci,v 1.421 2020/01/17 05:22:42 ryo Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -168,7 +168,7 @@ attach	mpii at pci
 file	dev/pci/mpii.c			mpii
 
 # Aquantia/Atlantic 10-Gigabit Ethernet
-device	aq: ether, ifnet, arp
+device	aq: ether, ifnet, arp, sysmon_envsys
 attach	aq at pci
 file	dev/pci/if_aq.c			aq
 defflag opt_if_aq.h	AQ_EVENT_COUNTERS
