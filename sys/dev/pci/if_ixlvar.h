@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.3 2019/12/26 03:17:01 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.4 2020/01/17 09:42:05 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -129,6 +129,7 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_PHY_SET_EVENT_MASK	0x0613
 #define IXL_AQ_OP_PHY_SET_REGISTER	0x0628
 #define IXL_AQ_OP_PHY_GET_REGISTER	0x0629
+#define IXL_AQ_OP_NVM_READ		0x0701
 #define IXL_AQ_OP_LLDP_GET_MIB		0x0a00
 #define IXL_AQ_OP_LLDP_MIB_CHG_EV	0x0a01
 #define IXL_AQ_OP_LLDP_ADD_TLV		0x0a02
@@ -656,6 +657,39 @@ struct ixl_aq_link_status { /* this occupies the iaq_param space */
 #define IXL_AQ_PHY_EV_MODULE_QUAL_FAIL	(1 << 8)
 #define IXL_AQ_PHY_EV_PORT_TX_SUSPENDED	(1 << 9)
 
+struct ixl_aq_req_resource_param {
+	uint16_t	 resource_id;
+#define IXL_AQ_RESOURCE_ID_NVM		0x0001
+#define IXL_AQ_RESOURCE_ID_SDP		0x0002
+
+	uint16_t	 access_type;
+#define IXL_AQ_RESOURCE_ACCES_READ	0x01
+#define IXL_AQ_RESOURCE_ACCES_WRITE	0x02
+
+	uint16_t	 timeout;
+	uint32_t	 resource_num;
+	uint32_t	 reserved;
+} __packed __aligned(8);
+
+struct ixl_aq_rel_resource_param {
+	uint16_t	 resource_id;
+/* defined in ixl_aq_req_resource_param */
+	uint16_t	 _reserved1[3];
+	uint32_t	 resource_num;
+	uint32_t	 _reserved2;
+} __packed __aligned(8);
+
+struct ixl_aq_nvm_param {
+	uint8_t		 command_flags;
+#define IXL_AQ_NVM_LAST_CMD	(1 << 0)
+#define IXL_AQ_NVM_FLASH_ONLY	(1 << 7)
+	uint8_t		 module_pointer;
+	uint16_t	 length;
+	uint32_t	 offset;
+	uint32_t	 addr_hi;
+	uint32_t	 addr_lo;
+} __packed __aligned(4);
+
 /* aq response codes */
 #define IXL_AQ_RC_OK			0  /* success */
 #define IXL_AQ_RC_EPERM			1  /* Operation not permitted */
@@ -819,4 +853,20 @@ enum i40e_mac_type {
 	I40E_MAC_GENERIC
 };
 
+#define I40E_SR_NVM_DEV_STARTER_VERSION	0x18
+#define I40E_SR_BOOT_CONFIG_PTR		0x17
+#define I40E_NVM_OEM_VER_OFF		0x83
+#define I40E_SR_NVM_EETRACK_LO		0x2D
+#define I40E_SR_NVM_EETRACK_HI		0x2E
+
+#define IXL_NVM_VERSION_LO_SHIFT	0
+#define IXL_NVM_VERSION_LO_MASK		(0xffUL << IXL_NVM_VERSION_LO_SHIFT)
+#define IXL_NVM_VERSION_HI_SHIFT	12
+#define IXL_NVM_VERSION_HI_MASK		(0xfUL << IXL_NVM_VERSION_HI_SHIFT)
+#define IXL_NVM_OEMVERSION_SHIFT	24
+#define IXL_NVM_OEMVERSION_MASK		(0xffUL << IXL_NVM_OEMVERSION_SHIFT)
+#define IXL_NVM_OEMBUILD_SHIFT		8
+#define IXL_NVM_OEMBUILD_MASK		(0xffffUL << IXL_NVM_OEMBUILD_SHIFT)
+#define IXL_NVM_OEMPATCH_SHIFT		0
+#define IXL_NVM_OEMPATCH_MASK		(0xff << IXL_NVM_OEMPATCH_SHIFT)
 #endif
