@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.53.2.1 2020/01/17 21:47:35 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.53.2.2 2020/01/17 21:54:27 ad Exp $ */
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.53.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.53.2.2 2020/01/17 21:54:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -107,6 +107,9 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	int len, reclen;
 	tries = 0;
 
+	/* Upgrade to exclusive for UFS VOP_GETATTR (itimes) & VOP_LOOKUP. */
+	vn_lock(lvp, LK_UPGRADE | LK_RETRY);
+
 	/*
 	 * If we want the filename, get some info we need while the
 	 * current directory is still locked.
@@ -142,7 +145,7 @@ getcwd_scandir(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	}
 	uvp = *uvpp;
 	/* Now lvp is unlocked, try to lock uvp */
-	error = vn_lock(uvp, LK_EXCLUSIVE);
+	error = vn_lock(uvp, LK_SHARED);
 	if (error) {
 		*lvpp = NULL;
 		*uvpp = NULL;
@@ -254,7 +257,7 @@ unionread:
 		vput(tvp);
 		vref(uvp);
 		*uvpp = uvp;
-		vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
+		vn_lock(uvp, LK_SHARED | LK_RETRY);
 		goto unionread;
 	}
 #endif
@@ -310,7 +313,7 @@ getcwd_getcache(struct vnode **lvpp, struct vnode **uvpp, char **bpp,
 	 */
 
 	VOP_UNLOCK(lvp);
-	vn_lock(uvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(uvp, LK_SHARED | LK_RETRY);
 	vrele(lvp);
 	*lvpp = NULL;
 
@@ -349,7 +352,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 	 *	uvp is either NULL, or locked and held.
 	 */
 
-	vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
+	vn_lock(lvp, LK_SHARED | LK_RETRY);
 	if (bufp)
 		bp = *bpp;
 
@@ -396,7 +399,7 @@ getcwd_common(struct vnode *lvp, struct vnode *rvp, char **bpp, char *bufp,
 				goto out;
 			}
 			vref(lvp);
-			error = vn_lock(lvp, LK_EXCLUSIVE | LK_RETRY);
+			error = vn_lock(lvp, LK_SHARED | LK_RETRY);
 			if (error != 0) {
 				vrele(lvp);
 				lvp = NULL;
@@ -557,11 +560,7 @@ vnode_to_path(char *path, size_t len, struct vnode *vp, struct lwp *curl,
 	bp = bend = &path[len];
 	*(--bp) = '\0';
 
-	error = vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
-	if (error != 0)
-		return error;
 	error = cache_revlookup(vp, &dvp, &bp, path);
-	VOP_UNLOCK(vp);
 	if (error != 0)
 		return (error == -1 ? ENOENT : error);
 
