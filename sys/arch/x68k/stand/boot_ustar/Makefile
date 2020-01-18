@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.29 2020/01/18 06:44:23 isaki Exp $
+#	$NetBSD: Makefile,v 1.30 2020/01/18 07:25:11 isaki Exp $
 
 NOMAN=		# defined
 
@@ -39,6 +39,7 @@ AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-march=m68000 -Wa,-mcpu=m68000
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
 LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
+LINKFLAGS+=  --defsym=BOOT_TEXTADDR=$(BOOT_TEXT)
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
