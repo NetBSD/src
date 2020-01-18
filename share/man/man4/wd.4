@@ -1,4 +1,4 @@
-.\"	$NetBSD: wd.4,v 1.23 2020/01/14 09:30:34 wiz Exp $
+.\"	$NetBSD: wd.4,v 1.24 2020/01/18 11:22:49 simonb Exp $
 .\"
 .\"
 .\" Copyright (c) 1994 James A. Jegers
@@ -84,22 +84,6 @@ is also true.
 Default to false.
 .El
 .Sh NOTES
-Certain
-.Tn Samsung
-.Tn 860 EVO
-SSD drives have firmware bug which causes interface CRC errors when NCQ
-ATA commands are used.
-For this reason NCQ is disabled for these drives by default.
-Affected drives include, but are not limited to:
-.Pp
-.Bl -tag -width Ds -offset indent -compact
-.It Samsung SSD 860 EVO 500GB
-.It Samsung SSD 860 EVO 1TB
-.El
-.Pp
-It is recommended to not use the EVO SSD drives, and replace them
-with other models.
-.Pp
 Certain
 .Tn Seagate
 .Tn Barracuda
