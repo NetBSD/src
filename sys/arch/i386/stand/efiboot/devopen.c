@@ -1,4 +1,4 @@
-/*	$NetBSD: devopen.c,v 1.10 2020/01/18 19:20:23 nonaka Exp $	 */
+/*	$NetBSD: devopen.c,v 1.11 2020/01/18 19:25:58 nonaka Exp $	 */
 
 /*-
  * Copyright (c) 2005 The NetBSD Foundation, Inc.
@@ -100,7 +100,7 @@ bios2dev(int biosdev, daddr_t sector, char **devname, int *unit,
 		*devname = "hd";
 
 	(void)biosdisk_findpartition(biosdev, sector, partition, part_name);
-	if (*part_name != NULL) {
+	if (part_name != NULL && *part_name != NULL) {
 		snprintf(savedevname, sizeof(savedevname),
 		    "NAME=%s", *part_name);
 		*devname = savedevname;
