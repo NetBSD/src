@@ -1,4 +1,4 @@
-/*	$NetBSD: iocscall.h,v 1.1 2001/09/27 10:03:27 minoura Exp $	*/
+/*	$NetBSD: iocscall.h,v 1.2 2020/01/18 05:07:34 isaki Exp $	*/
 
 /*
  *	IOCS call macros for X680x0
@@ -19,6 +19,7 @@
 
 #define __B_KEYINP	0x00
 #define __B_SFTSNS	0x02
+#define __CRTMOD	0x10
 #define __TPALET2	0x14
 #define __TCOLOR	0x15
 #define __TEXTPUT	0x1B
