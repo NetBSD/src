@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.27 2020/01/15 19:36:30 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.28 2020/01/18 18:39:55 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -260,8 +260,8 @@ set_bios_geom_with_mbr_guess(struct disk_partitions *parts)
 {
 	int cyl, head, sec;
 
-	msg_fmt_display(MSG_nobiosgeom, "%d%d%d", pm->dlcyl, pm->dlhead,
-	    pm->dlsec);
+	msg_fmt_display(MSG_nobiosgeom, "%d%d%d",
+	    pm->dlcyl, pm->dlsec, pm->dlhead);
 	if (guess_biosgeom_from_parts(parts, &cyl, &head, &sec) >= 0)
 		msg_fmt_display_add(MSG_biosguess, "%d%d%d", cyl, head, sec);
 	set_bios_geom(parts, &cyl, &head, &sec);
