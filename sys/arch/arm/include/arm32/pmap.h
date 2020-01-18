@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.158 2020/01/12 20:06:52 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.159 2020/01/18 14:40:04 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -381,6 +381,10 @@ bool	pmap_extract(pmap_t, vaddr_t, paddr_t *);
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
 #define	PMAP_PREFER(hint, vap, sz, td)	pmap_prefer((hint), (vap), (td))
 void	pmap_prefer(vaddr_t, vaddr_t *, int);
+#endif
+
+#ifdef _ARM_ARCH_6
+int	pmap_maxproc_set(int);
 #endif
 
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
