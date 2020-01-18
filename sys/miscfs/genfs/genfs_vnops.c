@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.200 2019/12/01 13:56:29 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.200.2.1 2020/01/18 17:12:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.200 2019/12/01 13:56:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.200.2.1 2020/01/18 17:12:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -301,7 +301,7 @@ genfs_deadlock(void *v)
 			rw_exit(vip->vi_lock);
 			rw_enter(vip->vi_lock, RW_WRITER);
 		}
-	} else {
+	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
 		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 		if (ISSET(flags, LK_NOWAIT)) {
 			if (!rw_tryenter(vip->vi_lock, op))
@@ -355,7 +355,7 @@ genfs_lock(void *v)
 			rw_exit(vip->vi_lock);
 			rw_enter(vip->vi_lock, RW_WRITER);
 		}
-	} else {
+	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
 		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 		if (ISSET(flags, LK_NOWAIT)) {
 			if (!rw_tryenter(vip->vi_lock, op))
