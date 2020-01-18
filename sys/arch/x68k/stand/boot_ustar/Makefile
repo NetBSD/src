@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.28 2020/01/18 06:34:30 isaki Exp $
+#	$NetBSD: Makefile,v 1.29 2020/01/18 06:44:23 isaki Exp $
 
 NOMAN=		# defined
 
@@ -37,30 +37,15 @@ CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 CFLAGS+=   -m68000
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 AFLAGS+=   -Wa,-march=m68000 -Wa,-mcpu=m68000
-LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
 LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
 
-CLEANFILES+=	${PROG}.x $(PROG).map
-
 
 ${PROG}: $(OBJS)
 	${_MKTARGET_LINK}
-	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD) > $(PROG).map
-	@grep first_kbyte $(PROG).map
-	@if [ `${TOOL_AWK}						   \
-	    '/first_kbyte/ {print "eval(eval("$$1")-eval('$(TEXT)'))"}'	   \
-	    $(PROG).map | ${TOOL_M4} -` -gt 1024 ];			   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
-	@if [ `${TOOL_AWK}						   \
-	    '/_edata/ {print "eval(eval("$$1")-eval('$(TEXT)'))"}'	   \
-	    $(PROG).map | ${TOOL_M4} -` -gt 8192 ];			   \
-	then echo '$(BOOT): text+data is too large';			   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
+	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDADD)
 
 .include <bsd.prog.mk>

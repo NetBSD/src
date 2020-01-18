@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.34 2020/01/18 06:34:29 isaki Exp $
+#	$NetBSD: Makefile,v 1.35 2020/01/18 06:44:23 isaki Exp $
 
 NOMAN=		# defined
 
@@ -42,29 +42,15 @@ CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
-LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
 LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
 
-CLEANFILES+=	$(PROG).x $(PROG).map
-
 
 $(PROG): $(OBJS)
 	${_MKTARGET_LINK}
-	:
-	: Note:	"relocation truncated to fit: R_68K_16" messages are expected.
-	:	Other errors are fatal.
-	:
-	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
-	@grep first_kbyte $(PROG).map
-	@if [ `${TOOL_AWK}						   \
-	    '/first_kbyte/ {print "eval(eval("$$1")-eval('$(TEXT)'))"}'	   \
-	    $(PROG).map | ${TOOL_M4} -` -gt 1024 ];			   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    exit 1;							   \
-	fi
-	mv -f $(PROG).x $(PROG)
+	$(LD) $(LINKFLAGS) -o $(PROG) $(OBJS) $(LDADD)
 
 .include <bsd.prog.mk>
