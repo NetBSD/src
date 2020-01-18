@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2020/01/18 05:41:48 isaki Exp $
+#	$NetBSD: Makefile,v 1.33 2020/01/18 05:46:25 isaki Exp $
 
 NOMAN=		# defined
 
@@ -11,7 +11,7 @@ VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 NEWVERSWHAT=	"${BOOT}"
 
 # text address
-TEXT=		006000
+TEXT=		0x6000
 
 # RTC offset for netboot (XXX hardcoded for JST-9)
 RTC_OFFSET=	-540
@@ -34,7 +34,7 @@ COMMONDIR=	$M/stand/common
 CPPFLAGS+=	-nostdinc -I$S -I${.OBJDIR} -I$M/stand/libsa
 CPPFLAGS+=	-I$M/stand/libiocs -I${COMMONDIR}
 CPPFLAGS+=	-D_STANDALONE -DHEAP_VARIABLE
-CPPFLAGS+=	-DTEXTADDR="0x${TEXT}" 
+CPPFLAGS+=	-DTEXTADDR="${TEXT}"
 CPPFLAGS+=	-DBOOT=\"${BOOT}\" -DBOOT_VERS=\"${VERSION}\"
 CPPFLAGS+=	-DLIBSA_ENABLE_LS_OP
 CPPFLAGS+=	-DRTC_OFFSET=${RTC_OFFSET}
@@ -42,7 +42,7 @@ CPPFLAGS+=	-DSUPPORT_BOOTP -DSUPPORT_DHCP
 #CPPFLAGS+=	-DDEBUG
 CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/../boot/boot.ldscript
-LINKFLAGS+=	--defsym=TEXTADDR=0x$(TEXT)
+LINKFLAGS+=	--defsym=TEXTADDR=$(TEXT)
 ELF2AOUT_OPTS=	-O
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
