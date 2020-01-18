@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2019/06/14 14:15:53 isaki Exp $
+#	$NetBSD: Makefile,v 1.32 2020/01/18 05:41:48 isaki Exp $
 
 NOMAN=		# defined
 
@@ -42,6 +42,7 @@ CPPFLAGS+=	-DSUPPORT_BOOTP -DSUPPORT_DHCP
 #CPPFLAGS+=	-DDEBUG
 CFLAGS=		-Wno-main -Os -m68020-60
 LINKFLAGS=	-N -static -T ${.CURDIR}/../boot/boot.ldscript
+LINKFLAGS+=	--defsym=TEXTADDR=0x$(TEXT)
 ELF2AOUT_OPTS=	-O
 LIBIOCS!=	cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=		cd $M/stand/libsa && ${PRINTOBJDIR}
