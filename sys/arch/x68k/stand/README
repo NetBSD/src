@@ -1,0 +1,57 @@
+$NetBSD: README,v 1.1 2020/01/18 04:42:29 isaki Exp $
+
+Primary bootloaders:
+	boot_ufs/
+		contains xxboot_ufs.
+		It is placed in ffs's boot area and loads secondary bootloader
+		from its filesystem (ffsv1/v2).
+		This historical primary bootloader uses custom ffs op functions
+		and can recognize Human68k partition table.
+		(See #ifdef SCSI_ADHOC_BOOTPART part for details)
+
+	boot_ustar/
+		is placed in floppy's sector#0 and loads secondary bootloader
+		from subsequent USTARFS.
+
+	xxboot/
+		contains following variants.
+		* cdboot_cd9660
+			is placed in CD and loads secondary bootloader
+			from cd9660 filesystem.
+		* xxboot_ffsv1
+		* xxboot_ffsv2
+		* xxboot_lfsv1
+		* xxboot_lfsv2
+			is placed in each specified filesystem's boot area,
+			and loads secondary bootloader from its filesystem.
+
+		These primary bootloaders use MI ffs/lfs op functions in
+		src/sys/lib/libsa. Currently these don't recognize Human68k
+		partition table.
+
+Secondary bootloaders:
+	boot/
+		boot is placed to / (root directory) and loads the kernel.
+
+	netboot/
+		netboot is the same as /boot except default boot device is
+		nfs using network interface and DHCP.
+		Currently only NE2000 based Neptune-X and Nereid are
+		supported.
+
+Other bootloaders:
+	mboot/
+		mboot is 0-th bootloader.
+		It is placed to sector#0 (as 1024byte/sector) of hard disk
+		as an alternative to genuine boot selector.  And loads
+		active partition's +0 sector (sector size depends media)
+		which should have primary bootloader.
+
+	loadbsd/
+		loadbsd.x is a Human68k executable and loads the kernel from
+		Human68k filesystem.
+
+Utility tools:
+	newdisk/
+		newdisk is a utility to create the "disk mark" for X680x0
+		SCSI IPL using mboot bootloader to make a disk bootable.
