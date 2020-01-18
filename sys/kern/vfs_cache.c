@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.6 2020/01/17 22:26:25 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.7 2020/01/18 15:42:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.6 2020/01/17 22:26:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.7 2020/01/18 15:42:02 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -330,6 +330,22 @@ cache_key(const char *name, size_t nlen)
 }
 
 /*
+ * Like memcmp() but tuned for small strings of equal length.
+ */
+static inline int
+cache_namecmp(struct namecache *nc, const char *name, size_t namelen)
+{
+	size_t i;
+	int d;
+
+	KASSERT(nc->nc_nlen == namelen);
+	for (d = 0, i = 0; i < namelen; i++) {
+		d |= (nc->nc_name[i] ^ name[i]);
+	}
+	return d;
+}
+
+/*
  * Remove an entry from the cache.  The directory lock must be held, and if
  * "dir2node" is true, then we're locking in the conventional direction and
  * the list lock will be acquired when removing the entry from the vnode
@@ -378,11 +394,10 @@ cache_remove(struct namecache *nc, const bool dir2node)
 }
 
 /*
- * Find a single cache entry and return it locked.  The directory lock must
- * be held.
+ * Find a single cache entry and return it.  The nchnode lock must be held.
  *
  * Marked __noinline, and with everything unnecessary excluded, the compiler
- * (gcc 8.3.0 x86_64) does a great job on this.
+ * (gcc 8.3.0 x86_64) does a good job on this.
  */
 static struct namecache * __noinline
 cache_lookup_entry(struct nchnode *dnn, const char *name, size_t namelen,
@@ -394,12 +409,12 @@ cache_lookup_entry(struct nchnode *dnn, const char *name, size_t namelen,
 	KASSERT(rw_lock_held(&dnn->nn_lock));
 
 	/*
-	 * Search the RB tree for the key.  This is one of the most
-	 * performance sensitive code paths in the system, so here is an
-	 * inlined version of rb_tree_find_node() tailored for exactly
-	 * what's needed here (64-bit key and so on).  Elsewhere during
-	 * entry/removal the generic functions are used as it doesn't
-	 * matter so much there.
+	 * Search the RB tree for the key.  File lookup is very performance
+	 * sensitive, so here is an inlined lookup tailored for exactly
+	 * what's needed here (64-bit key and so on) that is much faster
+	 * than using rb_tree_find_node().  Elsewhere during entry/removal
+	 * the generic functions are used as it doesn't matter so much
+	 * there.
 	 */
 	for (;;) {
 		if (__predict_false(RB_SENTINEL_P(node))) {
@@ -415,8 +430,7 @@ cache_lookup_entry(struct nchnode *dnn, const char *name, size_t namelen,
 	}
 
 	/* Exclude collisions. */
-	KASSERT(nc->nc_nlen == namelen);
-	if (__predict_false(memcmp(nc->nc_name, name, namelen) != 0)) {
+	if (__predict_false(cache_namecmp(nc, name, namelen))) {
 		return NULL;
 	}
 
@@ -666,7 +680,7 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 			rw_exit(*plock);
 		}
 		*plock = &dnn->nn_lock;
-	} else {
+	} else if (*plock == NULL) {
 		KASSERT(dvp->v_usecount > 0);
 	}
 
@@ -674,6 +688,8 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
 	 * First up check if the user is allowed to look up files in this
 	 * directory.
 	 */
+	KASSERT(dnn->nn_mode != VNOVAL && dnn->nn_uid != VNOVAL &&
+	    dnn->nn_gid != VNOVAL);
 	error = kauth_authorize_vnode(cred, KAUTH_ACCESS_ACTION(VEXEC,
 	    dvp->v_type, dnn->nn_mode & ALLPERMS), dvp, NULL,
 	    genfs_can_access(dvp->v_type, dnn->nn_mode & ALLPERMS,
@@ -857,7 +873,7 @@ cache_enter(struct vnode *dvp, struct vnode *vp,
 	onc = rb_tree_find_node(&dnn->nn_tree, &nc->nc_key);
 	if (onc) {
 		KASSERT(onc->nc_nlen == nc->nc_nlen);
-		if (memcmp(onc->nc_name, nc->nc_name, nc->nc_nlen) != 0) {
+		if (cache_namecmp(onc, name, namelen)) {
 			COUNT(ncs_collisions);
 		}
 		cache_remove(onc, true);
