@@ -2,7 +2,40 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.14 2020/01/18 05:07:34 isaki Exp $
+| $NetBSD: boot.S,v 1.15 2020/01/18 05:48:31 isaki Exp $
+
+|
+| (1) IPL (or previous stage loader) loads first 1KB of this primary
+|     bootloader to (*).  (*) is 0x2000 (from FD) or 0x2400 (from SASI/SCSI).
+|
+| (2) The first 1KB loads full primary bootloader (including first 1KB) from
+|     the boot partition to 0xf0000.  And jump to there.
+|
+| (3) The full primary bootloader loads the secondary bootloader known as
+|     /boot from its filesystem to 0x6000.  And jump to there.
+|
+| Therefore, The first 1KB must be relocatable.
+| The first 1KB must be smaller than or equal to 1024 bytes.
+|
+|       (1)         ->        (2)         ->        (3)
+|  +------------+        +------------+        +------------+    0x000000
+|  :            :        :            :        :            :
+|  +------------+        +------------+        +------------+    (*)
+|  | first 1KB  |        | first 1KB  |        | first 1KB  |
+|  +------------+        +------------+        +------------+    (*)+0x400
+|  :            :        :            :        :            :
+|  :            :        :            :        +------------+    0x006000
+|  :            :        :            :        | /boot      |
+|  :            :        :            :        +------------+
+|  :            :        :            :        :            :
+|  ~            ~        ~            ~        ~            ~
+|  :            :        :            :<-SP    :            :<-SP
+|  :            :        +------------+        +------------+    0x0f0000
+|  :            :        |full primary|        |full primary|
+|  :            :        |boot loader |        |boot loader |
+|  :            :        +------------+        +------------+
+|  :            :        :            :        :            :
+|
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -28,9 +61,7 @@ ASENTRY_NOPROFILE(top)
 		.word	0x8e9e,0x82c9,0x82cd,0x8cbb
 		.word	0x8ec0,0x93a6,0x94f0,0x8149
 		.word	0
-| 0x2000 (FD), 0x2400 (SASI/SCSI) (もしくは 0x0f0000)
 | d4 にはすでに SCSI ID が入っている
-| ここから jmp まではリロケータブルに書かねばならない。
 ASENTRY_NOPROFILE(entry0)
 		moveml	%d0-%d7/%a0-%a7,_C_LABEL(startregs)
 		lea	BASEPTR_A:l,%a5		| set base ptr
