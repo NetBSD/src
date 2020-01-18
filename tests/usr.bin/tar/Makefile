@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2020/01/18 13:56:53 ryoon Exp $
+# $NetBSD: Makefile,v 1.3 2020/01/18 15:16:48 christos Exp $
 
 NOMAN=
 
@@ -113,7 +113,7 @@ test_print_longpath.tar.Z.uu
 
 .include <bsd.test.mk>
 
-test_main.d: list.h
+test_main.o test_main.d: list.h
 
 CLEANFILES+=list.h
 
