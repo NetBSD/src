@@ -2,14 +2,14 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.16 2020/01/18 05:56:51 isaki Exp $
+| $NetBSD: boot.S,v 1.17 2020/01/18 06:34:29 isaki Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
 |     bootloader to (*).  (*) is 0x2000 (from FD) or 0x2400 (from SASI/SCSI).
 |
 | (2) The first 1KB loads full primary bootloader (including first 1KB) from
-|     the boot partition to 0xf0000.  And jump to there.
+|     the boot partition to 0x3000.  And jump to there.
 |
 | (3) The full primary bootloader loads the secondary bootloader known as
 |     /boot from its filesystem to 0x6000.  And jump to there.
@@ -24,25 +24,23 @@
 |  | first 1KB  |        | first 1KB  |        | first 1KB  |
 |  +------------+        +------------+        +------------+    (*)+0x400
 |  :            :        :            :        :            :
+|  :            :        +------------+        +------------+    0x003000
+|  :            :        |full primary|        |full primary|
+|  :            :        |boot loader |        |boot loader |
+|  :            :        +------------+        +------------+
+|  :            :        :            :        :            :
 |  :            :        :            :        +------------+    0x006000
 |  :            :        :            :        | /boot      |
 |  :            :        :            :        +------------+
 |  :            :        :            :        :            :
 |  ~            ~        ~            ~        ~            ~
 |  :            :        :            :<-SP    :            :<-SP
-|  :            :        +------------+        +------------+    0x0f0000
-|  :            :        |full primary|        |full primary|
-|  :            :        |boot loader |        |boot loader |
-|  :            :        +------------+        +------------+
+|  + - - - - - -+        + - - - - - -+        + - - - - - -+    0x100000
 |  :            :        :            :        :            :
 |
 
 #include <machine/asm.h>
 #include "iocscall.h"
-
-#define BASEOFF		0x8000
-#define BASEPTR_A	(TEXTADDR+BASEOFF)
-#define BASEPTR_R	%pc@(top+BASEOFF:W)
 
 #define SRAM		0x00ED0000	/* SRAM stat addr */
 #define SRAM_MEMSZ	(SRAM + 8)	/* (L) size of main memory */
@@ -64,8 +62,8 @@ ASENTRY_NOPROFILE(top)
 | d4 にはすでに SCSI ID が入っている
 ASENTRY_NOPROFILE(entry0)
 		moveml	%d0-%d7/%a0-%a7,_C_LABEL(startregs)
-		lea	BASEPTR_A:l,%a5		| set base ptr
-#define _RELOC(adr)	%a5@(((adr)-(BASEPTR_A&0xffff)):W)
+		lea	TEXTADDR:W,%a5	| set base ptr
+#define _RELOC(adr)	%a5@(((adr)-top):W)
 #define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
 #define RELOC(var)	_RELOC(_C_LABEL(var))
 
@@ -89,9 +87,9 @@ clrbss:		clrb	%a1@+
 
 		movel	%d4,RELOC(ID)	| SCSI ID (if booted from SCSI)
 
-		| set system stack
-		lea	ASRELOC(top),%a1 | set stack pointer to 0x000F0000
-		lea	%a1@,%sp	| a1 will be used later for IOCS calls
+		lea	0x00100000,%sp	| set system stack
+		lea	%a5@,%a1	| set load address
+					| a1 will be used later for IOCS calls
 
 		| we use 68020 instructions, and check MPU beforehand
 		|
@@ -383,8 +381,8 @@ raw_read1:
 		| d3.l:		length in bytes
 		| a1 (=d1):	buffer address
 
-		lea	BASEPTR_R,%a5	| set base ptr
-#define _RELOC(adr)	%a5@(((adr)-(BASEPTR_A&0xffff)):W)
+		lea	TEXTADDR:W,%a5	| set base ptr
+#define _RELOC(adr)	%a5@(((adr)-top):W)
 #define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
 #define RELOC(var)	_RELOC(_C_LABEL(var))
 
