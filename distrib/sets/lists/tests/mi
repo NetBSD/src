@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.827 2020/01/17 20:14:39 christos Exp $
+# $NetBSD: mi,v 1.828 2020/01/18 17:18:41 kre Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -87,7 +87,6 @@
 ./usr/libdata/debug/usr/tests/lib					tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/csu					tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libarchive				tests-lib-debug	compattestfile,atf
-./usr/libdata/debug/usr/tests/lib/libarchive/h_libarchive.debug		tests-lib-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libbluetooth				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libbpfjit				tests-lib-debug		compattestfile,atf
 ./usr/libdata/debug/usr/tests/lib/libc					tests-lib-debug		compattestfile,atf
@@ -188,11 +187,9 @@
 ./usr/libdata/debug/usr/tests/syscall					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/usr.bin					tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/cpio				tests-usr.bin-debug	compattestfile,atf
-./usr/libdata/debug/usr/tests/usr.bin/cpio/h_cpio.debug			tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/id				tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/netpgpverify			tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.bin/tar				tests-usr.bin-debug	compattestfile,atf
-./usr/libdata/debug/usr/tests/usr.bin/tar/h_tar.debug			tests-usr.bin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/usr.sbin					tests-usr.sbin-debug	compattestfile,atf
 ./usr/libdata/debug/usr/tests/util					tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/util/df					tests-obsolete		obsolete
