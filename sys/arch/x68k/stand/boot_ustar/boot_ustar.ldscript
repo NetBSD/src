@@ -6,7 +6,7 @@ SEARCH_DIR(/usr/lib);
 PROVIDE (__stack = 0);
 SECTIONS
 {
-  . = 0x00002000;
+  . = TEXTADDR;
   .text :
   {
     CREATE_OBJECT_SYMBOLS
