@@ -1,4 +1,4 @@
-/*	$NetBSD: wd.c,v 1.456 2020/01/18 11:22:49 simonb Exp $ */
+/*	$NetBSD: wd.c,v 1.457 2020/01/18 11:24:40 simonb Exp $ */
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.  All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.456 2020/01/18 11:22:49 simonb Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wd.c,v 1.457 2020/01/18 11:24:40 simonb Exp $");
 
 #include "opt_ata.h"
 #include "opt_wd.h"
@@ -232,7 +232,7 @@ static void bad144intern(struct wd_softc *);
 
 #define	WD_QUIRK_SPLIT_MOD15_WRITE	0x0001	/* must split certain writes */
 
-#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE\2FORCE_LBA48"
+#define	WD_QUIRK_FMT "\20\1SPLIT_MOD15_WRITE"
 
 /*
  * Quirk table for IDE drives.  Put more-specific matches first, since
@@ -259,12 +259,9 @@ static const struct wd_quirk {
 	 * Seagate Barracuda Serial ATA V family.
 	 *
 	 */
-	{ "ST3120023AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST380023AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
-	{ "ST360015AS",
-	  WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST3120023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST380023AS", WD_QUIRK_SPLIT_MOD15_WRITE },
+	{ "ST360015AS", WD_QUIRK_SPLIT_MOD15_WRITE },
 	{ NULL,
 	  0 }
 };
