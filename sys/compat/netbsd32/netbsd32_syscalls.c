@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_syscalls.c,v 1.145 2019/11/04 11:33:01 rin Exp $ */
+/* $NetBSD: netbsd32_syscalls.c,v 1.146 2020/01/18 07:33:24 kamil Exp $ */
 
 /*
  * System call names.
@@ -8,7 +8,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.145 2019/11/04 11:33:01 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_syscalls.c,v 1.146 2020/01/18 07:33:24 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #if defined(_KERNEL_OPT)
@@ -584,11 +584,11 @@ const char *const altnetbsd32_syscallnames[] = {
 	/*  17 */	"break",
 	/*  18 */	NULL, /* compat_20_netbsd32_getfsstat */
 	/*  19 */	NULL, /* compat_43_netbsd32_olseek */
-	/*  20 */	NULL, /* getpid */
+	/*  20 */	"getpid_with_ppid",
 	/*  21 */	NULL, /* compat_40_netbsd32_mount */
 	/*  22 */	"unmount",
 	/*  23 */	"setuid",
-	/*  24 */	NULL, /* getuid */
+	/*  24 */	"getuid_with_euid",
 	/*  25 */	NULL, /* geteuid */
 	/*  26 */	"ptrace",
 	/*  27 */	"recvmsg",
@@ -611,7 +611,7 @@ const char *const altnetbsd32_syscallnames[] = {
 	/*  44 */	"profil",
 	/*  45 */	"ktrace",
 	/*  46 */	"sigaction",
-	/*  47 */	NULL, /* getgid */
+	/*  47 */	"getgid_with_egid",
 	/*  48 */	NULL, /* compat_13_sigprocmask13 */
 	/*  49 */	"__getlogin",
 	/*  50 */	"setlogin",
