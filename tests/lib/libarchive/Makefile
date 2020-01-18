@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2020/01/17 16:24:03 christos Exp $
+# $NetBSD: Makefile,v 1.2 2020/01/18 13:56:53 ryoon Exp $
 
 NOMAN=
 
@@ -596,7 +596,7 @@ test_write_disk_no_hfs_compression.tgz.uu
 
 .include <bsd.test.mk>
 
-test_main.o: list.h
+test_main.d: list.h
 
 CLEANFILES+=list.h
 
