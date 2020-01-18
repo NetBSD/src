@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.7 2020/01/18 05:48:31 isaki Exp $
+| $NetBSD: boot.S,v 1.8 2020/01/18 05:56:51 isaki Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
@@ -101,7 +101,7 @@ clrbss:		clrb	%a1@+
 		|	if MPU <= 010	loads 0x49,
 		|	if MPU >= 020	loads 0x90.
 		| This is a move, not a tst instruction
-		| because pc-relative tsts are not availble on 000/010.
+		| because pc-relative tsts are not available on 000/010.
 chkmpu:		moveb	%pc@(clrbss-chkmpu-2:B,%d0:W:2),%d0	| 103B 02xx
 		jmi	mpuok		| MC68020 or later
 		BOOT_ERROR("MPU 68000?")
