@@ -46,3 +46,5 @@ SECTIONS
   }
   /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) }
 }
+
+ASSERT(first_kbyte - TEXTADDR <= 1024, "Error: first_kbyte exceeds 1KB");
