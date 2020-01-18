@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.7 2020/01/18 15:42:02 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.8 2020/01/18 17:16:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.7 2020/01/18 15:42:02 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.8 2020/01/18 17:16:20 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -1388,7 +1388,6 @@ cache_stat_sysctl(SYSCTLFN_ARGS)
 void
 namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 {
-	struct vnode *dvp = NULL;
 	struct namecache *nc;
 	struct nchnode *dnn;
 	enum cache_lru_id id;
@@ -1402,7 +1401,7 @@ namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 			}
 		}
 	}
-	if (dvp == NULL) {
+	if (dnn == NULL) {
 		(*pr)("name not found\n");
 		return;
 	}
