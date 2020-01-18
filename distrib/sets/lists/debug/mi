@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.290 2019/12/03 04:20:45 hikaru Exp $
+# $NetBSD: mi,v 1.291 2020/01/18 17:18:41 kre Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1885,6 +1885,7 @@
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini2.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini3.debug			tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/csu/h_initfini_array.debug			tests-lib-debug		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libarchive/h_libarchive.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_bluetooth.debug	tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_data.debug		tests-lib-debug		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libbluetooth/t_sdp_get.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2249,13 +2250,13 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_dso_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/dlopen/t_main_pthread_create.debug 	tests-lib-debug	debug,atf,pic,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_atexit.debug		tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_exit.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_resolv.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/h_thread_local_dtor.debug	tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_barrier.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_call_once.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cnd.debug		tests-lib-tests		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libpthread/h_cancel.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_cond.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_condwait.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_detach.debug		tests-lib-tests		debug,atf,compattestfile
@@ -2277,9 +2278,9 @@
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_sleep.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_status.debug		tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_swapcontext.debug	tests-lib-tests		debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/lib/libpthread/t_thrd.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_timedmutex.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread/t_tss.debug		tests-lib-tests		debug,atf,compattestfile
-./usr/libdata/debug/usr/tests/lib/libpthread/t_thrd.debug		tests-lib-tests		debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_dummy.debug		tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/libpthread_dbg/t_threads.debug	tests-obsolete		obsolete
 ./usr/libdata/debug/usr/tests/lib/librefuse/t_refuse_opt.debug		tests-lib-debug		debug,atf,compattestfile
@@ -2414,7 +2415,9 @@
 ./usr/libdata/debug/usr/tests/syscall/t_truncate.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_umask.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/syscall/t_unlink.debug			tests-obsolete		obsolete,compattestfile
+./usr/libdata/debug/usr/tests/usr.bin/cpio/h_cpio.debug			tests-usr.bin-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/usr.bin/id/h_id.debug			tests-usr.bin-debug	debug,atf,compattestfile
+./usr/libdata/debug/usr/tests/usr.bin/tar/h_tar.debug			tests-usr.bin-debug	debug,atf,compattestfile
 ./usr/libdata/debug/usr/tests/util/df/h_df.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/id/h_id.debug			tests-obsolete		obsolete,compattestfile
 ./usr/libdata/debug/usr/tests/util/systrace/h_have_systrace.debug	tests-obsolete		obsolete,compattestfile
