@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.60 2020/01/17 20:27:28 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.61 2020/01/18 13:53:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.60 2020/01/17 20:27:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.61 2020/01/18 13:53:50 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -487,6 +487,13 @@ sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
 			}
 
 			curspc = &curci->ci_schedstate;
+
+			/* If this CPU is idle and 1st class, we're done. */
+			if ((curspc->spc_flags & (SPCF_IDLE | SPCF_1STCLASS)) ==
+			    (SPCF_IDLE | SPCF_1STCLASS)) {
+				return curci;
+			}
+
 			curpri = MAX(curspc->spc_curpriority,
 			    curspc->spc_maxpriority);
 
@@ -512,11 +519,6 @@ sched_bestcpu(struct lwp *l, struct cpu_info *pivot)
 			bestci = curci;
 			bestspc = curspc;
 
-			/* If this CPU is idle and 1st class, we're done. */
-			if ((curspc->spc_flags & (SPCF_IDLE | SPCF_1STCLASS)) ==
-			    (SPCF_IDLE | SPCF_1STCLASS)) {
-				break;
-			}
 		} while (curci = curci->ci_sibling[CPUREL_PACKAGE],
 		    curci != outer);
 	} while (outer = outer->ci_sibling[CPUREL_PACKAGE1ST],
