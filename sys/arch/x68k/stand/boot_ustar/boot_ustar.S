@@ -3,7 +3,7 @@
 |         ITOH Yasufumi
 |	  minoura@NetBSD.org
 |
-| $NetBSD: boot_ustar.S,v 1.11 2020/01/18 05:07:34 isaki Exp $
+| $NetBSD: boot_ustar.S,v 1.12 2020/01/18 06:00:04 isaki Exp $
 
 | supports floppy only
 
@@ -56,6 +56,18 @@ ASENTRY_NOPROFILE(entry)
 		moveq	#0x10,%d1
 		IOCS(__CRTMOD)
 
+		| We use 68020 instructions, and check MPU beforehand.
+		| Here "moveql #-1,%d0" = 0x70ff, and subsequent moveb loads
+		|   0xff if MPU <= 010 (chkmpu+2 + %d0.w)
+		|   0x70 if MPU >= 020 (chkmpu+2 + %d0.w*2).
+		| This is a move, not a tst instruction because tst with
+		| pc-relative is not available on 000/010.
+chkmpu:
+		moveql	#-1,%d0
+		.word	0x103b, 0x02fe	| moveb	%pc@(chkmpu+2,%d0:W:2),%d0
+		jpl	mpuok		| MC68020 or later
+		BOOT_ERROR("MPU 68000?");
+mpuok:
 		|
 		| SASI or Floppy
 		|
