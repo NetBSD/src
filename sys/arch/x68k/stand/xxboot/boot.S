@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.5 2020/01/16 13:37:27 isaki Exp $
+| $NetBSD: boot.S,v 1.6 2020/01/18 05:07:34 isaki Exp $
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -293,6 +293,14 @@ first_kbyte:
 |	The latter text+data part is not accessible at the first boot time.
 |	PC-relative can be used from here.
 |
+		| Initialize the screen here.  Some IPL (060turbo ROM or
+		| genuine boot selector) don't initialize the screen.
+		| Such initialization should be done as early as possible
+		| but it's too severe to place it in first_kbyte area.
+		| Therefore do it here.
+		moveq	#0x10,%d1
+		IOCS(__CRTMOD)
+
 		jmp	_C_LABEL(bootmain)	| 0x0Fxxxx に飛んでゆく
 
 		.word	0
