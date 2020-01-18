@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.8 2020/01/18 05:46:26 isaki Exp $
+#	$NetBSD: Makefile.xxboot,v 1.9 2020/01/18 06:34:30 isaki Exp $
 
 NOMAN=		# defined
 
@@ -11,9 +11,10 @@ VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 NEWVERSWHAT=	"${BOOT}"
 
 # text and bss addresses
-TEXT=		0x0f0000	# Primary (me)
+TEXT=		0x003000	# Primary (me)
 TEXTDATASIZE=	0x002000	# 8KB for UFS at maximum
-		  		# 30KB (=(16-1)*2048) for ISO9660 at max.
+				# 30KB (=(16-1)*2048) for ISO9660 at max.
+				# but should use up to 8KB.  See boot.S
 BOOT_TEXT=	0x006000	# Secondary (/boot)
 
 PROG=		$(BOOT)
@@ -41,7 +42,6 @@ AFLAGS=	   ${CFLAGS:M-[ID]*}
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript -M
 LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
 LINKFLAGS+=  --defsym=TEXTDATASIZE=$(TEXTDATASIZE)
-LINKFLAGS+=  -noinhibit-exec	# XXX
 LIBIOCS!= cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=	  cd $M/stand/libsa && ${PRINTOBJDIR}
 LDLIBS=	  -L${LIBSA}/lib/sa -lsa -L ${LIBSA}/lib/kern -lkern

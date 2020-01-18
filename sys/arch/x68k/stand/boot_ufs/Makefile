@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.33 2020/01/18 05:46:26 isaki Exp $
+#	$NetBSD: Makefile,v 1.34 2020/01/18 06:34:29 isaki Exp $
 
 NOMAN=		# defined
 
@@ -11,7 +11,7 @@ VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 NEWVERSWHAT=	"${BOOT}"
 
 # text and bss addresses
-TEXT=		0x0f0000	# Primary (me)
+TEXT=		0x003000	# Primary (me)
 BOOT_TEXT=	0x006000	# Secondary (/boot)
 
 PROG=		xx$(BOOT)
@@ -44,7 +44,6 @@ CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
 LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
 LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
-LINKFLAGS+=  -noinhibit-exec	# XXX
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
