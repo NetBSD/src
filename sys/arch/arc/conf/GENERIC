@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.194 2020/01/19 01:25:04 thorpej Exp $
+# $NetBSD: GENERIC,v 1.195 2020/01/19 06:55:22 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.194 $"
+#ident		"GENERIC-$Revision: 1.195 $"
 
 maxusers	32		# estimated number of users
 
@@ -319,7 +319,6 @@ viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 bge*		at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ep*		at pci? dev ? function ?	# 3Com 3c59x
 epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-#esh*		at pci? dev ? function ?	# Essential HIPPI card
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #fpa*		at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
