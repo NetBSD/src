@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.67 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.68 2020/01/19 01:25:04 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67 $"
+#ident 		"GENERIC-$Revision: 1.68 $"
 
 maxusers	32		# estimated number of users
 
@@ -623,7 +623,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty

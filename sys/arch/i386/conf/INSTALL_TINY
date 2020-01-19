@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_TINY,v 1.159 2019/01/27 08:53:30 maxv Exp $
+#	$NetBSD: INSTALL_TINY,v 1.160 2020/01/19 01:25:05 thorpej Exp $
 #
 #	This kernel should be derived from INSTALL (which is derived
 #	from GENERIC) with some features commented out.
@@ -479,7 +479,6 @@ pseudo-device	md			# memory disk device (ramdisk)
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices
