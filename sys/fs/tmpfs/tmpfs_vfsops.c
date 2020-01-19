@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_vfsops.c,v 1.75.2.1 2020/01/17 21:47:34 ad Exp $	*/
+/*	$NetBSD: tmpfs_vfsops.c,v 1.75.2.2 2020/01/19 21:21:54 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.75.2.1 2020/01/17 21:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_vfsops.c,v 1.75.2.2 2020/01/19 21:21:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -182,7 +182,7 @@ tmpfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 	mp->mnt_stat.f_namemax = TMPFS_MAXNAMLEN;
 	mp->mnt_fs_bshift = PAGE_SHIFT;
 	mp->mnt_dev_bshift = DEV_BSHIFT;
-	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO | IMNT_SHRLOOKUP;
 	vfs_getnewfsid(mp);
 
 	/* Allocate the tmpfs mount structure and fill it. */
