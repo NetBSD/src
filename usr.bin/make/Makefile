@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.65 2019/12/19 07:14:07 maxv Exp $
+#	$NetBSD: Makefile,v 1.66 2020/01/19 19:42:32 riastradh Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -17,9 +17,10 @@ USE_META ?= yes
 .if ${USE_META:tl} != "no"
 SRCS+=	meta.c
 CPPFLAGS+= -DUSE_META
-FILEMON_H ?= ${.CURDIR:H:H}/sys/dev/filemon/filemon.h
-.if exists(${FILEMON_H}) && ${FILEMON_H:T} == "filemon.h"
-COPTS.meta.c += -DHAVE_FILEMON_H -I${FILEMON_H:H}
+USE_FILEMON ?= yes
+.if ${USE_FILEMON:tl} != "no"
+SRCS+=	filemon.c
+CPPFLAGS+= -DUSE_FILEMON
 .endif
 .endif
 
