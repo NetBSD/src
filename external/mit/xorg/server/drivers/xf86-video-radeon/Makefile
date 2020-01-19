@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.21 2019/01/01 00:37:06 mrg Exp $
+#	$NetBSD: Makefile,v 1.22 2020/01/19 00:58:15 jmcneill Exp $
 
 .include <bsd.own.mk>
 
 DRIVER=		xf86-video-ati
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm"
 DRIVER_NAME=	radeon_drv_old
 .else
 DRIVER_NAME=	radeon_drv
@@ -27,7 +28,8 @@ CPPFLAGS+=	-DUSE_XAA
 
 .if ${X11DRI} != "no"
 # XXX
-. if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+. if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+     ${MACHINE} == "evbarm"
 SRCS.KMS=	radeon_dri2.c radeon_kms.c drmmode_display.c radeon_vbo.c
 CPPFLAGS+=	-DXF86DRM_MODE
 LIBDPLIBS+=	drm_radeon ${.CURDIR}/../../../lib/libdrm_radeon

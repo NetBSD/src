@@ -1,9 +1,10 @@
-#	$NetBSD: Makefile,v 1.2 2019/11/18 22:26:14 joerg Exp $
+#	$NetBSD: Makefile,v 1.3 2020/01/19 00:58:14 jmcneill Exp $
 
 .include <bsd.own.mk>
 
 BUILD_RADEON=0
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm"
 BUILD_RADEON=1
 .endif
 

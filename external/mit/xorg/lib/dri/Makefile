@@ -1,10 +1,11 @@
-# $NetBSD: Makefile,v 1.34 2019/11/11 22:45:26 joerg Exp $
+# $NetBSD: Makefile,v 1.35 2020/01/19 00:58:14 jmcneill Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
 .include <bsd.own.mk>
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm"
 
 LIBISMODULE=	yes
 LIBISCXX=     yes
@@ -32,9 +33,9 @@ CPPFLAGS.brw_disk_cache.c+=	-march=i586
 
 #CPPFLAGS+=	-D_NETBSD_SOURCE -DPTHREADS
 
-# We don't actually build this on non-x86 at all, currently.
+# We don't actually build this on non-x86/non-evbarm at all, currently.
 # The following if statements are not effective since we only
-# get here for x86
+# get here for x86 and evbarm
 .if ${MACHINE_ARCH} == "alpha"
 DRIVERS=	r200 radeon
 .elif ${MACHINE} == "macppc" || ${MACHINE} == "ofppc"
@@ -44,6 +45,8 @@ DRIVERS=	r200 radeon
 .elif ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 DRIVERS=	i915 i965 r200 radeon
 .elif ${MACHINE} == "prep" || ${MACHINE} == "bebox"
+DRIVERS=	r200 radeon
+.elif ${MACHINE} == "evbarm"
 DRIVERS=	r200 radeon
 .endif
 
@@ -469,7 +472,8 @@ FILES=		drirc
 .PATH:          ${X11SRCDIR.Mesa}/src/mesa/drivers/dri/common
 
 .include <bsd.x11.mk>
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || \
+    ${MACHINE} == "evbarm"
 LIBDIR=		${X11USRLIBDIR}/modules/dri
 
 CWARNFLAGS.clang+=	-Wno-error=initializer-overrides -Wno-error=switch \

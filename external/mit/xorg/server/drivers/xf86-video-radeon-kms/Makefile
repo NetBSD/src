@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.9 2019/03/10 02:29:53 mrg Exp $
+#	$NetBSD: Makefile,v 1.10 2020/01/19 00:58:15 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -46,7 +46,12 @@ SRCS=		radeon_accel.c radeon_video.c \
 		$(SRCS.GLAMOR)
 
 MAN=		radeon.4
+
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "amd64"
 MANSUBDIR=	/x86
+.else
+MANSUBDIR=	/${MACHINE}
+.endif
 
 CPPFLAGS+=	-DHAVE_CONFIG_H
 CPPFLAGS+=	-I${DESTDIR}${X11INCDIR}/X11 \
