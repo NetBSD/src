@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.334.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.334.2.2 2020/01/19 21:08:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.2 2020/01/19 21:08:29 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.1 2020/01/17 21:47:35 ad Exp 
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
+#include <sys/rwlock.h>
 #include <sys/sched.h>
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
@@ -656,6 +657,9 @@ mi_switch(lwp_t *l)
 
 		/* We're down to only one lock, so do debug checks. */
 		LOCKDEBUG_BARRIER(l->l_mutex, 1);
+
+		/* Disable spinning on any R/W locks that we hold. */
+		rw_switch();
 
 		/* Count the context switch. */
 		CPU_COUNT(CPU_COUNT_NSWTCH, 1);
