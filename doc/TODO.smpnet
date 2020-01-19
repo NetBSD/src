@@ -1,4 +1,4 @@
-$NetBSD: TODO.smpnet,v 1.31 2020/01/06 15:21:29 msaitoh Exp $
+$NetBSD: TODO.smpnet,v 1.32 2020/01/19 16:58:22 thorpej Exp $
 
 MP-safe components
 ==================
@@ -63,7 +63,6 @@ Unprotected ones
    - ARCNET (if_arcsubr.c)
    - BRIDGE_IPF
    - FDDI (if_fddisubr.c)
-   - HIPPI (if_hippisubr.c)
    - IEEE 1394 (if_ieee1394subr.c)
    - IEEE 802.11 (ieee80211(4))
    - Token ring (if_tokensubr.c)
