@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.28 2020/01/19 01:25:05 thorpej Exp $
+# $NetBSD: GENERIC,v 1.29 2020/01/19 06:55:23 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -23,7 +23,7 @@ include 	"arch/hppa/conf/std.hppa"
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 options 	SYSCTL_INCLUDE_DESCR	# Include sysctl descriptions in kernel
 
-#ident 		"GENERIC-$Revision: 1.28 $"
+#ident 		"GENERIC-$Revision: 1.29 $"
 
 maxusers	32		# estimated number of users
 
@@ -464,7 +464,6 @@ bce* 	at pci? dev ? function ?	# Broadcom 4401 10/100 Ethernet
 bge* 	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-esh*	at pci? dev ? function ?	# Essential HIPPI card
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
 # fpa is broken, does funky things with bus_dma
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI

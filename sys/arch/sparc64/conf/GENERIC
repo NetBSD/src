@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.219 2020/01/19 01:25:07 thorpej Exp $
+# $NetBSD: GENERIC,v 1.220 2020/01/19 06:55:24 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.219 $"
+#ident		"GENERIC-$Revision: 1.220 $"
 
 maxusers	64
 
@@ -490,7 +490,6 @@ cas*	at pci? dev ? function ?	# Sun Cassini/Cassini+ Ethernet
 # XXX causes ICE
 #ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-esh*	at pci? dev ? function ?	# Essential HIPPI card UT
 ex*	at pci? dev ? function ?	# 3Com 90x[B]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI UT
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
