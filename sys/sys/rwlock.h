@@ -1,7 +1,7 @@
-/*	$NetBSD: rwlock.h,v 1.12 2020/01/01 21:34:39 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.13 2020/01/19 18:34:24 ad Exp $	*/
 
 /*-
- * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -45,10 +45,6 @@
  *	rw_tryenter()
  */
 
-#if defined(_KERNEL_OPT)
-#include "opt_lockdebug.h"
-#endif
-
 #if !defined(_KERNEL)
 #include <sys/types.h>
 #include <sys/inttypes.h>
@@ -75,13 +71,9 @@ typedef struct krwlock krwlock_t;
 #define	RW_HAS_WAITERS		0x01UL	/* lock has waiters */
 #define	RW_WRITE_WANTED		0x02UL	/* >= 1 waiter is a writer */
 #define	RW_WRITE_LOCKED		0x04UL	/* lock is currently write locked */
-#if defined(LOCKDEBUG)
-#define	RW_NODEBUG		0x08UL	/* LOCKDEBUG disabled */
-#else
-#define	RW_NODEBUG		0x00UL	/* do nothing */
-#endif	/* LOCKDEBUG */
+#define	RW_NODEBUG		0x10UL	/* LOCKDEBUG disabled */
 
-#define	RW_READ_COUNT_SHIFT	4
+#define	RW_READ_COUNT_SHIFT	5
 #define	RW_READ_INCR		(1UL << RW_READ_COUNT_SHIFT)
 #define	RW_THREAD		((uintptr_t)-RW_READ_INCR)
 #define	RW_OWNER(rw)		((rw)->rw_owner & RW_THREAD)
@@ -91,6 +83,7 @@ typedef struct krwlock krwlock_t;
 void	rw_vector_enter(krwlock_t *, const krw_t);
 void	rw_vector_exit(krwlock_t *);
 int	rw_vector_tryenter(krwlock_t *, const krw_t);
+void	_rw_init(krwlock_t *, uintptr_t);
 #endif	/* __RWLOCK_PRIVATE */
 
 struct krwlock {
