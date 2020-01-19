@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.67 2017/06/04 08:05:42 hannken Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.67.12.1 2020/01/19 21:21:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67 2017/06/04 08:05:42 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67.12.1 2020/01/19 21:21:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -384,6 +384,7 @@ layer_lookup(void *v)
 		vrele(lvp);
 	} else if (lvp != NULL) {
 		/* Note: dvp and ldvp are both locked. */
+		KASSERT(error != ENOLCK);
 		error = layer_node_create(dvp->v_mount, lvp, ap->a_vpp);
 		if (error) {
 			vrele(lvp);

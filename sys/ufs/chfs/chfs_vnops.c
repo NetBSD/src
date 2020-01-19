@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.34.4.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.34.4.2 2020/01/19 21:21:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -89,6 +89,10 @@ chfs_lookup(void *v)
 			 cnp->cn_nameiop, cnp->cn_flags, NULL, vpp)) {
 		return (*vpp == NULLVP ? ENOENT : 0);
 	}
+
+	/* May need to restart the lookup with an exclusive lock. */
+	if (VOP_ISLOCKED(dvp) != LK_EXCLUSIVE)
+		return ENOLCK;
 
 	ip = VTOI(dvp);
 	ump = VFSTOUFS(dvp->v_mount);
