@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1172 2020/01/17 16:26:12 christos Exp $
+#	$NetBSD: bsd.own.mk,v 1.1173 2020/01/19 00:57:18 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1174,8 +1174,10 @@ MKFIRMWARE.sparc64=		yes
 # Only install the nouveau and radeon firmwares on DRM-happy systems.
 MKNOUVEAUFIRMWARE.x86_64=	yes
 MKNOUVEAUFIRMWARE.i386=		yes
+MKNOUVEAUFIRMWARE.aarch64=	yes
 MKRADEONFIRMWARE.x86_64=	yes
 MKRADEONFIRMWARE.i386=		yes
+MKRADEONFIRMWARE.aarch64=	yes
 
 # Only install the tegra firmware on evbarm.
 MKTEGRAFIRMWARE.evbarm=		yes
