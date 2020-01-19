@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon.c,v 1.1 2020/01/19 19:42:32 riastradh Exp $	*/
+/*	$NetBSD: filemon_ktrace.c,v 1.1 2020/01/19 19:49:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -29,8 +29,6 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifdef USE_FILEMON
-
 #include "filemon.h"
 
 #include <sys/param.h>
@@ -52,8 +50,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "make.h"
+#include <unistd.h>
 
 #ifndef AT_CWD
 #define AT_CWD -1
@@ -132,8 +129,7 @@ struct filemon_state {
 };
 
 static int
-compare_filemon_states(void *cookie MAKE_ATTR_UNUSED, const void *na,
-    const void *nb)
+compare_filemon_states(void *cookie, const void *na, const void *nb)
 {
 	const struct filemon_state *Sa = na;
 	const struct filemon_state *Sb = nb;
@@ -150,8 +146,7 @@ compare_filemon_states(void *cookie MAKE_ATTR_UNUSED, const void *na,
 }
 
 static int
-compare_filemon_key(void *cookie MAKE_ATTR_UNUSED, const void *n,
-    const void *k)
+compare_filemon_key(void *cookie, const void *n, const void *k)
 {
 	const struct filemon_state *S = n;
 	const struct filemon_key *key = k;
@@ -173,6 +168,19 @@ static const rb_tree_ops_t filemon_rb_ops = {
 	.rbto_node_offset = offsetof(struct filemon_state, node),
 	.rbto_context = NULL,
 };
+
+/*
+ * filemon_path()
+ *
+ *	Return a pointer to a constant string denoting the `path' of
+ *	the filemon.
+ */
+const char *
+filemon_path(void)
+{
+
+	return "ktrace";
+}
 
 /*
  * filemon_open()
@@ -572,7 +580,7 @@ top:	/* If the child has exited, nothing to do.  */
 }
 
 static struct filemon_state *
-syscall_enter(struct filemon *F MAKE_ATTR_UNUSED,
+syscall_enter(struct filemon *F,
     const struct filemon_key *key, const struct ktr_syscall *call,
     unsigned npath,
     void (*show)(struct filemon *, const struct filemon_state *,
@@ -866,5 +874,3 @@ filemon_sys_rename(struct filemon *F, const struct filemon_key *key,
 {
 	return syscall_enter(F, key, call, 2, &show_rename);
 }
-
-#endif	/* USE_META */

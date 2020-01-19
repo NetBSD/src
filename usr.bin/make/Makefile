@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.66 2020/01/19 19:42:32 riastradh Exp $
+#	$NetBSD: Makefile,v 1.67 2020/01/19 19:49:36 riastradh Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -17,9 +17,10 @@ USE_META ?= yes
 .if ${USE_META:tl} != "no"
 SRCS+=	meta.c
 CPPFLAGS+= -DUSE_META
-USE_FILEMON ?= yes
+USE_FILEMON ?= ktrace
 .if ${USE_FILEMON:tl} != "no"
-SRCS+=	filemon.c
+.PATH:	${.CURDIR}/filemon
+SRCS+=	filemon_${USE_FILEMON}.c
 CPPFLAGS+= -DUSE_FILEMON
 .endif
 .endif

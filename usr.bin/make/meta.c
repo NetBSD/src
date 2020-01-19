@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.74 2020/01/19 19:42:32 riastradh Exp $ */
+/*      $NetBSD: meta.c,v 1.75 2020/01/19 19:49:37 riastradh Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -46,7 +46,7 @@
 #include "job.h"
 
 #ifdef USE_FILEMON
-#include "filemon.h"
+#include "filemon/filemon.h"
 #endif
 
 static BuildMon Mybm;			/* for compat */
@@ -130,7 +130,7 @@ meta_open_filemon(BuildMon *pbm)
     pbm->filemon = filemon_open();
     if (pbm->filemon == NULL) {
 	useFilemon = FALSE;
-	warn("Could not open filemon");
+	warn("Could not open filemon %s", filemon_path());
 	return;
     }
 
@@ -563,7 +563,7 @@ meta_init(void)
 {
 #ifdef USE_FILEMON
 	/* this allows makefiles to test if we have filemon support */
-	Var_Set(".MAKE.PATH_FILEMON", "ktrace", VAR_GLOBAL, 0); /* XXX */
+	Var_Set(".MAKE.PATH_FILEMON", filemon_path(), VAR_GLOBAL, 0);
 #endif
 }
 

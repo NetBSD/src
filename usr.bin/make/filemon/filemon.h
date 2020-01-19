@@ -1,4 +1,4 @@
-/*	$NetBSD: filemon.h,v 1.1 2020/01/19 19:42:32 riastradh Exp $	*/
+/*	$NetBSD: filemon.h,v 1.1 2020/01/19 19:49:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -35,6 +35,9 @@
 #include <sys/types.h>
 
 struct filemon;
+
+const char *
+	filemon_path(void);
 
 struct filemon *
 	filemon_open(void);
