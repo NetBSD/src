@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.397 2020/01/19 01:25:04 thorpej Exp $
+# $NetBSD: GENERIC,v 1.398 2020/01/19 06:55:22 thorpej Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.397 $"
+ident		"GENERIC-$Revision: 1.398 $"
 
 maxusers 32
 
@@ -308,7 +308,6 @@ dpt*	at	pci? dev ? function ?		# DPT SmartCache/SmartRAID
 eap*	at	pci? dev ? function ?		# Ensoniq AudioPCI
 ep*	at	pci? dev ? function ?		# 3COM 3c59x/3c90x Ethernet
 epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
-esh*	at	pci? dev ? function ?		# Essential HIPPI card
 eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 ex*	at	pci? dev ? function ?		# 3COM 3c90x[BC] Ethernet
 fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI

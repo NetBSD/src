@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.163 2020/01/19 01:25:04 thorpej Exp $
+# $NetBSD: GENERIC,v 1.164 2020/01/19 06:55:23 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.163 $"
+#ident 		"GENERIC-$Revision: 1.164 $"
 
 maxusers	32
 
@@ -238,7 +238,6 @@ wd* 		at atabus? drive ? flags 0x0000
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-#esh*		at pci? dev ? function ?	# Essential HIPPI card
 #fpa*		at pci? dev ? function ?	# DEC DEFPA FDDI
 #fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO10+/100B
 #le*		at pci? dev ? function ?	# PCnet-PCI Ethernet

@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.421 2020/01/17 05:22:42 ryo Exp $
+#	$NetBSD: files.pci,v 1.422 2020/01/19 06:55:21 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -431,11 +431,6 @@ file	dev/pci/if_tl.c			tl
 # device declaration in sys/conf/files
 attach	ntwoc at pci with ntwoc_pci
 file	dev/pci/if_ntwoc_pci.c		ntwoc_pci
-
-# Essential Communications HIPPI interface
-# device declaration in sys/conf/files
-attach	esh at pci with esh_pci
-file	dev/pci/if_esh_pci.c		esh_pci
 
 # generic PCI VGA
 defflag	opt_vga.h	VGA_POST:	X86EMU

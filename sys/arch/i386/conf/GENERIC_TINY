@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_TINY,v 1.164 2020/01/19 01:25:05 thorpej Exp $
+#	$NetBSD: GENERIC_TINY,v 1.165 2020/01/19 06:55:23 thorpej Exp $
 #
 #	GENERIC_TINY -- suitable default for 4M machines
 #			No EISA, PCI, or SCSI.
@@ -365,7 +365,6 @@ fd*	at fdc? drive ?			# the drives themselves
 # PCI network interfaces
 #ep*	at pci? dev ? function ?	# 3Com 3c59x/3c90x Ethernet
 #epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-#esh*	at pci? dev ? function ?	# Essential HIPPI card
 #fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 #fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 #le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
