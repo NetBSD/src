@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.68 2020/01/19 01:25:04 thorpej Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.69 2020/01/19 20:00:37 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.68 $"
+#ident 		"GENERIC-$Revision: 1.69 $"
 
 maxusers	32		# estimated number of users
 
@@ -370,8 +370,6 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
-# tr at pcmcia has problems with Cardbus bridges
-#tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 #xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 #com*	at xirc?
