@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2638 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2639 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -100,3 +100,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	uyurex(4): Removed from the tree. [maya 20200117]
 	strip(4): Removed from the tree. [thorpej 20200118]
 	hippi and esh(4): Removed from the tree. [thorpej 20200118]
+	de(4): Removed from the tree. [thorpej 20200119]
