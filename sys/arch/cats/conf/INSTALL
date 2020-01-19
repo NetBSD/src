@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.111 2020/01/19 06:55:23 thorpej Exp $
+#	$NetBSD: INSTALL,v 1.112 2020/01/19 17:26:57 thorpej Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -241,7 +241,6 @@ ne*	at pci? dev ? function ?	# NE2000 compat ethernet
 #ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 sip*	at pci? dev ? function ?	# SiS 900 Ethernet
 #tl*	at pci? dev ? function ?	# ThunderLAN-based Ethernet
-#de*	at pci? dev ? function ?	# DECchip 21x4x and clones
 tlp*	at pci? dev ? function ?	# DECchip 21x4x and clones
 vr*	at pci? dev ? function ?	# VIA Rhine Fast Ethernet
 rtk*	at pci? dev ? function ?	# Realtek 8129/8139
