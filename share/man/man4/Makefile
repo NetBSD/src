@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.696 2020/01/19 17:53:15 thorpej Exp $
+#	$NetBSD: Makefile,v 1.697 2020/01/19 20:00:35 thorpej Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -63,7 +63,7 @@ MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
 	ssdfb.4 st.4 ste.4 stge.4 sti.4 stpcide.4 sv.4 \
 	svwsata.4 swsensor.4 swwdog.4 sysmon.4 \
 	tap.4 tc.4 tcds.4 tcp.4 tcu.4 tdvfb.4 tea5767radio.4 termios.4 tfb.4 \
-	thinkpad.4 ti.4 tl.4 tlp.4 tlphy.4 tpm.4 tprof.4 tr.4 tra.4 \
+	thinkpad.4 ti.4 tl.4 tlp.4 tlphy.4 tpm.4 tprof.4 tra.4 \
 	trm.4 tsllux.4 tty.4 tun.4 tqphy.4 twa.4 twe.4 txp.4 \
 	uark.4 ubsec.4 udp.4 uep.4 ug.4 uha.4 uk.4 ukphy.4 umb.4 \
 	unix.4 userconf.4 \
