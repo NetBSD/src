@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.49 2019/02/06 11:58:31 rin Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.50 2020/01/19 01:25:05 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -743,7 +743,6 @@ pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	gre			# generic L3 over IP tunnel
 
