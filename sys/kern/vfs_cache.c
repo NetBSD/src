@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.8 2020/01/18 17:16:20 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.9 2020/01/19 21:19:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -148,7 +148,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.8 2020/01/18 17:16:20 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.9 2020/01/19 21:19:25 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -326,11 +326,15 @@ cache_key(const char *name, size_t nlen)
 	KASSERT(nlen <= USHRT_MAX);
 
 	key = hash32_buf(name, nlen, HASH32_STR_INIT);
-	return (key << 16) | nlen;
+	return (key << 32) | nlen;
 }
 
 /*
- * Like memcmp() but tuned for small strings of equal length.
+ * Like bcmp() but tuned for the use case here which is:
+ *
+ * - always of equal length both sides
+ * - almost always the same string both sides
+ * - small strings
  */
 static inline int
 cache_namecmp(struct namecache *nc, const char *name, size_t namelen)
@@ -743,7 +747,8 @@ cache_lookup_linked(struct vnode *dvp, const char *name, size_t namelen,
  * Returns 0 on success, -1 on cache miss, positive errno on failure.
  */
 int
-cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
+cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp,
+    bool checkaccess, int perms)
 {
 	struct nchnode *nn = VNODE_TO_VIMPL(vp)->vi_ncache;
 	struct namecache *nc;
@@ -757,6 +762,27 @@ cache_revlookup(struct vnode *vp, struct vnode **dvpp, char **bpp, char *bufp)
 		goto out;
 
 	rw_enter(&nn->nn_listlock, RW_READER);
+	if (checkaccess) {
+		/*
+		 * Check if the user is allowed to see.  NOTE: this is
+		 * checking for access on the "wrong" directory.  getcwd()
+		 * wants to see that there is access on every component
+		 * along the way, not that there is access to any individual
+		 * component.
+		 */
+		KASSERT(nn->nn_mode != VNOVAL && nn->nn_uid != VNOVAL &&
+		    nn->nn_gid != VNOVAL);
+		error = kauth_authorize_vnode(curlwp->l_cred,
+		    KAUTH_ACCESS_ACTION(VEXEC, vp->v_type, nn->nn_mode &
+		    ALLPERMS), vp, NULL, genfs_can_access(vp->v_type,
+		    nn->nn_mode & ALLPERMS, nn->nn_uid, nn->nn_gid,
+		    perms, curlwp->l_cred));
+		    if (error != 0) {
+		    	rw_exit(&nn->nn_listlock);
+			COUNT(ncs_denied);
+			return EACCES;
+		}
+	}
 	TAILQ_FOREACH(nc, &nn->nn_list, nc_list) {
 		KASSERT(nc->nc_nn == nn);
 		KASSERT(nc->nc_dnn != NULL);
@@ -931,12 +957,14 @@ cache_set_id(struct vnode *dvp, mode_t mode, uid_t uid, gid_t gid)
 
 	if (dvp->v_type == VDIR) {
 		rw_enter(&nn->nn_lock, RW_WRITER);
+		rw_enter(&nn->nn_listlock, RW_WRITER);
 		KASSERT(nn->nn_mode == VNOVAL);
 		KASSERT(nn->nn_uid == VNOVAL);
 		KASSERT(nn->nn_gid == VNOVAL);
 		nn->nn_mode = mode;
 		nn->nn_uid = uid;
 		nn->nn_gid = gid;
+		rw_exit(&nn->nn_listlock);
 		rw_exit(&nn->nn_lock);
 	}
 }
@@ -953,13 +981,27 @@ cache_update_id(struct vnode *dvp, mode_t mode, uid_t uid, gid_t gid)
 
 	if (dvp->v_type == VDIR) {
 		rw_enter(&nn->nn_lock, RW_WRITER);
+		rw_enter(&nn->nn_listlock, RW_WRITER);
 		if (nn->nn_mode != VNOVAL) {
 			nn->nn_mode = mode;
 			nn->nn_uid = uid;
 			nn->nn_gid = gid;
 		}
+		rw_exit(&nn->nn_listlock);
 		rw_exit(&nn->nn_lock);
 	}
+}
+
+/*
+ * Return true if we have identity for the given vnode.
+ */
+bool
+cache_have_id(struct vnode *dvp)
+{
+	struct nchnode *nn = VNODE_TO_VIMPL(dvp)->vi_ncache;
+
+	/* Unlocked check.  Only goes VNOVAL -> valid, never back. */
+	return nn->nn_mode != VNOVAL;
 }
 
 /*
@@ -1259,7 +1301,7 @@ static void
 cache_reclaim(void)
 {
 	struct namecache *nc;
-	struct nchnode *nn;
+	struct nchnode *dnn;
 	int toscan, total;
 
 	/* Scan up to a preset maxium number of entries. */
@@ -1276,9 +1318,9 @@ cache_reclaim(void)
 		if (nc == NULL) {
 			break;
 		}
-		nn = nc->nc_nn;
+		dnn = nc->nc_dnn;
 		KASSERT(nc->nc_lrulist == LRU_INACTIVE);
-		KASSERT(nn != NULL);
+		KASSERT(dnn != NULL);
 
 		/*
 		 * Locking in the wrong direction.  If we can't get the
@@ -1286,7 +1328,7 @@ cache_reclaim(void)
 		 * cause problems for the next guy in here, so send the
 		 * entry to the back of the list.
 		 */
-		if (!rw_tryenter(&nn->nn_lock, RW_WRITER)) {
+		if (!rw_tryenter(&dnn->nn_lock, RW_WRITER)) {
 			TAILQ_REMOVE(&cache_lru.list[LRU_INACTIVE],
 			    nc, nc_lru);
 			TAILQ_INSERT_TAIL(&cache_lru.list[LRU_INACTIVE],
@@ -1303,7 +1345,7 @@ cache_reclaim(void)
 		 */
 		mutex_exit(&cache_lru_lock);
 		cache_remove(nc, true);
-		rw_exit(&nn->nn_lock);
+		rw_exit(&dnn->nn_lock);
 		mutex_enter(&cache_lru_lock);
 	}
 	mutex_exit(&cache_lru_lock);
@@ -1388,8 +1430,8 @@ cache_stat_sysctl(SYSCTLFN_ARGS)
 void
 namecache_print(struct vnode *vp, void (*pr)(const char *, ...))
 {
+	struct nchnode *dnn = NULL;
 	struct namecache *nc;
-	struct nchnode *dnn;
 	enum cache_lru_id id;
 
 	for (id = 0; id < LRU_COUNT; id++) {
