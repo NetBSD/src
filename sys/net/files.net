@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.21 2020/01/19 01:25:03 thorpej Exp $
+#	$NetBSD: files.net,v 1.22 2020/01/19 06:55:21 thorpej Exp $
 
 # XXX CLEANUP
 define	net
@@ -18,7 +18,6 @@ file	net/if_faith.c			faith & (inet | inet6)	needs-flag
 file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
-file	net/if_hippisubr.c		hippi			needs-flag
 file	net/if_ieee1394subr.c		ieee1394
 file	net/if_ipsec.c			ipsec & ipsecif
 file	net/if_llatbl.c			inet | inet6

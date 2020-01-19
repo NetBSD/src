@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.137 2020/01/19 01:25:04 thorpej Exp $
+# $NetBSD: ALL,v 1.138 2020/01/19 06:55:22 thorpej Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.137 $"
+#ident		"ALL-$Revision: 1.138 $"
 
 maxusers	64		# estimated number of users
 
@@ -974,7 +974,6 @@ dge*	at pci? dev ? function ?	# Intel 82597 10GbE LR
 ena*	at pci? dev ? function ?	# Amazon Elastic Network Adapter
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-esh*	at pci? dev ? function ?	# Essential HIPPI card
 et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI

@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1249 2020/01/08 12:04:56 ad Exp $
+#	$NetBSD: files,v 1.1250 2020/01/19 06:55:24 thorpej Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -923,11 +923,6 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 #
 device	ug: sysmon_envsys
 file	dev/ic/ug.c			ug			needs-flag
-
-# Essential Communications Corp. HIPPI Interface
-#
-device	esh: hippi, ifnet
-file	dev/ic/rrunner.c		esh			needs-flag
 
 # SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
 #
