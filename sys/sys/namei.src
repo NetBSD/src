@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.47.2.4 2020/01/17 22:26:26 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.47.2.5 2020/01/19 21:19:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -152,13 +152,14 @@ NAMEIFL	NOFOLLOW	0x00000000	/* do not follow symbolic links
 					   (pseudo) */
 NAMEIFL	EMULROOTSET	0x00000080	/* emulation root already
 					   in ni_erootdir */
+NAMEIFL	LOCKSHARED	0x00000100	/* want shared locks if possible */
 NAMEIFL	NOCHROOT	0x01000000	/* no chroot on abs path lookups */
-NAMEIFL	MODMASK		0x010000fc	/* mask of operational modifiers */
+NAMEIFL	MODMASK		0x010001fc	/* mask of operational modifiers */
 /*
  * Namei parameter descriptors.
  */
-NAMEIFL	NOCROSSMOUNT	0x0000100	/* do not cross mount points */
-NAMEIFL	RDONLY		0x0000200	/* lookup with read-only semantics */
+NAMEIFL	NOCROSSMOUNT	0x0000800	/* do not cross mount points */
+NAMEIFL	RDONLY		0x0001000	/* lookup with read-only semantics */
 NAMEIFL	ISDOTDOT	0x0002000	/* current component name is .. */
 NAMEIFL	MAKEENTRY	0x0004000	/* entry is to be added to name cache */
 NAMEIFL	ISLASTCN	0x0008000	/* this is last component of pathname */
@@ -166,7 +167,7 @@ NAMEIFL	ISWHITEOUT	0x0020000	/* found whiteout */
 NAMEIFL	DOWHITEOUT	0x0040000	/* do whiteouts */
 NAMEIFL	REQUIREDIR	0x0080000	/* must be a directory */
 NAMEIFL	CREATEDIR	0x0200000	/* trailing slashes are ok */
-NAMEIFL	PARAMASK	0x02ee300	/* mask of parameter descriptors */
+NAMEIFL	PARAMASK	0x02ef800	/* mask of parameter descriptors */
 
 /*
  * Initialization of a nameidata structure.
@@ -291,11 +292,14 @@ bool	cache_lookup_raw(struct vnode *, const char *, size_t, uint32_t,
 			int *, struct vnode **);
 bool	cache_lookup_linked(struct vnode *, const char *, size_t,
 			    struct vnode **, krwlock_t **, kauth_cred_t);
-int	cache_revlookup(struct vnode *, struct vnode **, char **, char *);
+int	cache_revlookup(struct vnode *, struct vnode **, char **, char *,
+			bool, int);
+int	cache_diraccess(struct vnode *, int);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
 void	cache_set_id(struct vnode *, mode_t, uid_t, gid_t);
 void	cache_update_id(struct vnode *, mode_t, uid_t, gid_t);
+bool	cache_have_id(struct vnode *);
 void	cache_vnode_init(struct vnode * );
 void	cache_vnode_fini(struct vnode * );
 void	cache_cpu_init(struct cpu_info *);
