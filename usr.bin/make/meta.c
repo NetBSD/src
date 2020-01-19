@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.73 2019/12/19 07:14:07 maxv Exp $ */
+/*      $NetBSD: meta.c,v 1.74 2020/01/19 19:42:32 riastradh Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -36,7 +36,6 @@
 # include "config.h"
 #endif
 #include <sys/stat.h>
-#include <sys/ioctl.h>
 #include <libgen.h>
 #include <errno.h>
 #if !defined(HAVE_CONFIG_H) || defined(HAVE_ERR_H)
@@ -46,11 +45,8 @@
 #include "make.h"
 #include "job.h"
 
-#ifdef HAVE_FILEMON_H
-# include <filemon.h>
-#endif
-#if !defined(USE_FILEMON) && defined(FILEMON_SET_FD)
-# define USE_FILEMON
+#ifdef USE_FILEMON
+#include "filemon.h"
 #endif
 
 static BuildMon Mybm;			/* for compat */
@@ -117,30 +113,24 @@ extern char    **environ;
  * the benefits are more limited.
  */
 #ifdef USE_FILEMON
-# ifndef _PATH_FILEMON
-#   define _PATH_FILEMON "/dev/filemon"
-# endif
 
 /*
  * Open the filemon device.
  */
 static void
-filemon_open(BuildMon *pbm)
+meta_open_filemon(BuildMon *pbm)
 {
-    int retry;
-    
-    pbm->mon_fd = pbm->filemon_fd = -1;
+    int dupfd;
+
+    pbm->mon_fd = -1;
+    pbm->filemon = NULL;
     if (!useFilemon)
 	return;
 
-    for (retry = 5; retry >= 0; retry--) {
-	if ((pbm->filemon_fd = open(_PATH_FILEMON, O_RDWR)) >= 0)
-	    break;
-    }
-
-    if (pbm->filemon_fd < 0) {
+    pbm->filemon = filemon_open();
+    if (pbm->filemon == NULL) {
 	useFilemon = FALSE;
-	warn("Could not open %s", _PATH_FILEMON);
+	warn("Could not open filemon");
 	return;
     }
 
@@ -151,12 +141,15 @@ filemon_open(BuildMon *pbm)
      * We only care about the descriptor.
      */
     pbm->mon_fd = mkTempFile("filemon.XXXXXX", NULL);
-    if (ioctl(pbm->filemon_fd, FILEMON_SET_FD, &pbm->mon_fd) < 0) {
+    if ((dupfd = dup(pbm->mon_fd)) == -1) {
+	err(1, "Could not dup filemon output!");
+    }
+    (void)fcntl(dupfd, F_SETFD, FD_CLOEXEC);
+    if (filemon_setfd(pbm->filemon, dupfd) == -1) {
 	err(1, "Could not set filemon file descriptor!");
     }
     /* we don't need these once we exec */
     (void)fcntl(pbm->mon_fd, F_SETFD, FD_CLOEXEC);
-    (void)fcntl(pbm->filemon_fd, F_SETFD, FD_CLOEXEC);
 }
 
 /*
@@ -570,7 +563,7 @@ meta_init(void)
 {
 #ifdef USE_FILEMON
 	/* this allows makefiles to test if we have filemon support */
-	Var_Set(".MAKE.PATH_FILEMON", _PATH_FILEMON, VAR_GLOBAL, 0);
+	Var_Set(".MAKE.PATH_FILEMON", "ktrace", VAR_GLOBAL, 0); /* XXX */
 #endif
 }
 
@@ -680,9 +673,10 @@ meta_job_start(Job *job, GNode *gn)
 #endif
 #ifdef USE_FILEMON
     if (pbm->mfp != NULL && useFilemon) {
-	filemon_open(pbm);
+	meta_open_filemon(pbm);
     } else {
-	pbm->mon_fd = pbm->filemon_fd = -1;
+	pbm->mon_fd = -1;
+	pbm->filemon = NULL;
     }
 #endif
 }
@@ -708,12 +702,65 @@ meta_job_child(Job *job)
 	    pid_t pid;
 
 	    pid = getpid();
-	    if (ioctl(pbm->filemon_fd, FILEMON_SET_PID, &pid) < 0) {
+	    if (filemon_setpid_child(pbm->filemon, pid) == -1) {
 		err(1, "Could not set filemon pid!");
 	    }
 	}
     }
 #endif
+}
+
+void
+meta_job_parent(Job *job, pid_t pid)
+{
+#ifdef USE_FILEMON
+    BuildMon *pbm;
+
+    if (job != NULL) {
+	pbm = &job->bm;
+    } else {
+	pbm = &Mybm;
+    }
+    if (useFilemon) {
+	filemon_setpid_parent(pbm->filemon, pid);
+    }
+#endif
+}
+
+int
+meta_job_fd(Job *job)
+{
+#ifdef USE_FILEMON
+    BuildMon *pbm;
+
+    if (job != NULL) {
+	pbm = &job->bm;
+    } else {
+	pbm = &Mybm;
+    }
+    if (useFilemon && pbm->filemon) {
+	return filemon_readfd(pbm->filemon);
+    }
+#endif
+    return -1;
+}
+
+int
+meta_job_event(Job *job)
+{
+#ifdef USE_FILEMON
+    BuildMon *pbm;
+
+    if (job != NULL) {
+	pbm = &job->bm;
+    } else {
+	pbm = &Mybm;
+    }
+    if (useFilemon && pbm->filemon) {
+	return filemon_process(pbm->filemon);
+    }
+#endif
+    return 0;
 }
 
 void
@@ -794,13 +841,16 @@ meta_cmd_finish(void *pbmp)
 	pbm = &Mybm;
 
 #ifdef USE_FILEMON
-    if (pbm->filemon_fd >= 0) {
-	if (close(pbm->filemon_fd) < 0)
+    if (pbm->filemon) {
+	while (filemon_process(pbm->filemon) > 0)
+	    continue;
+	if (filemon_close(pbm->filemon) == -1)
 	    error = errno;
 	x = filemon_read(pbm->mfp, pbm->mon_fd);
 	if (error == 0 && x != 0)
 	    error = x;
-	pbm->filemon_fd = pbm->mon_fd = -1;
+	pbm->mon_fd = -1;
+	pbm->filemon = NULL;
     } else
 #endif
 	fprintf(pbm->mfp, "\n");	/* ensure end with newline */
@@ -1599,9 +1649,10 @@ meta_compat_start(void)
     BuildMon *pbm = &Mybm;
     
     if (pbm->mfp != NULL && useFilemon) {
-	filemon_open(pbm);
+	meta_open_filemon(pbm);
     } else {
-	pbm->mon_fd = pbm->filemon_fd = -1;
+	pbm->mon_fd = -1;
+	pbm->filemon = NULL;
     }
 #endif
     if (pipe(childPipe) < 0)
@@ -1623,19 +1674,56 @@ meta_compat_child(void)
 }
 
 void
-meta_compat_parent(void)
+meta_compat_parent(pid_t child)
 {
-    FILE *fp;
+    int outfd, metafd, maxfd, nfds;
     char buf[BUFSIZ];
-    
+    fd_set readfds;
+
+    meta_job_parent(NULL, child);
     close(childPipe[1]);			/* child side */
-    fp = fdopen(childPipe[0], "r");
-    while (fgets(buf, sizeof(buf), fp)) {
-	meta_job_output(NULL, buf, "");
-	printf("%s", buf);
-	fflush(stdout);
+    outfd = childPipe[0];
+    metafd = filemon_readfd(Mybm.filemon);
+
+    maxfd = -1;
+    if (outfd > maxfd)
+	    maxfd = outfd;
+    if (metafd > maxfd)
+	    maxfd = metafd;
+
+    while (outfd != -1 || metafd != -1) {
+	FD_ZERO(&readfds);
+	if (outfd != -1) {
+	    FD_SET(outfd, &readfds);
+	}
+	if (metafd != -1) {
+	    FD_SET(metafd, &readfds);
+	}
+	nfds = select(maxfd + 1, &readfds, NULL, NULL, NULL);
+	if (nfds == -1) {
+	    if (errno == EINTR)
+		continue;
+	    err(1, "select");
+	}
+
+	if (outfd != -1 && FD_ISSET(outfd, &readfds)) do {
+	    /* XXX this is not line-buffered */
+	    ssize_t nread = read(outfd, buf, sizeof buf);
+	    if (nread == -1)
+		err(1, "read");
+	    if (nread == 0) {
+		close(outfd);
+		outfd = -1;
+		break;
+	    }
+	    fwrite(buf, 1, (size_t)nread, stdout);
+	    fflush(stdout);
+	} while (0);
+	if (metafd != -1 && FD_ISSET(metafd, &readfds)) {
+	    if (meta_job_event(NULL) <= 0)
+		metafd = -1;
+	}
     }
-    fclose(fp);
 }
 
 #endif	/* USE_META */
