@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1671 2020/01/19 10:50:26 martin Exp $
+# $NetBSD: mi,v 1.1672 2020/01/19 17:53:15 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1017,7 +1017,7 @@
 ./usr/share/man/cat4/dbcool.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddb.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ddc.0			man-sys-catman		.cat
-./usr/share/man/cat4/de.0			man-sys-catman		.cat
+./usr/share/man/cat4/de.0			man-obsolete		obsolete
 ./usr/share/man/cat4/depca.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dge.0			man-sys-catman		.cat
 ./usr/share/man/cat4/dk.0			man-sys-catman		.cat
@@ -4201,7 +4201,7 @@
 ./usr/share/man/html4/dbcool.html		man-sys-htmlman		html
 ./usr/share/man/html4/ddb.html			man-sys-htmlman		html
 ./usr/share/man/html4/ddc.html			man-sys-htmlman		html
-./usr/share/man/html4/de.html			man-sys-htmlman		html
+./usr/share/man/html4/de.html			man-obsolete		obsolete
 ./usr/share/man/html4/depca.html		man-sys-htmlman		html
 ./usr/share/man/html4/dge.html			man-sys-htmlman		html
 ./usr/share/man/html4/dk.html			man-sys-htmlman		html
@@ -7157,7 +7157,7 @@
 ./usr/share/man/man4/dbcool.4			man-sys-man		.man
 ./usr/share/man/man4/ddb.4			man-sys-man		.man
 ./usr/share/man/man4/ddc.4			man-sys-man		.man
-./usr/share/man/man4/de.4			man-sys-man		.man
+./usr/share/man/man4/de.4			man-obsolete		obsolete
 ./usr/share/man/man4/depca.4			man-sys-man		.man
 ./usr/share/man/man4/dge.4			man-sys-man		.man
 ./usr/share/man/man4/dk.4			man-sys-man		.man

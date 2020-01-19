@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.422 2020/01/19 06:55:21 thorpej Exp $
+#	$NetBSD: files.pci,v 1.423 2020/01/19 17:53:15 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -172,11 +172,6 @@ device	aq: ether, ifnet, arp, sysmon_envsys
 attach	aq at pci
 file	dev/pci/if_aq.c			aq
 defflag opt_if_aq.h	AQ_EVENT_COUNTERS
-
-# Ethernet driver for DC21040-based boards
-device	de: ether, ifnet, arp
-attach	de at pci
-file	dev/pci/if_de.c			de
 
 # 3Com 3c590 and 3c595 Ethernet controllers
 # device declaration in sys/conf/files
