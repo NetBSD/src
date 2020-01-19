@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2635 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2636 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -97,4 +97,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	evbarm: Add support for NXP i.MX 8M family SoCs. [jmcneill 20200114]
 	arm: Add support for cpu topology for ARMv7 and ARMv7 CPUs.
 		[mrg 20201114]
+	uyurex(4): Removed from the tree. [maya 20200117]
 	strip(4): Removed from the tree. [thorpej 20200118]
