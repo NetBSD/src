@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.220 2020/01/19 06:55:24 thorpej Exp $
+# $NetBSD: GENERIC,v 1.221 2020/01/19 20:00:37 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/sparc64/conf/std.sparc64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.220 $"
+#ident		"GENERIC-$Revision: 1.221 $"
 
 maxusers	64
 
@@ -796,8 +796,6 @@ pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11) UT
 #sm*	at pcmcia? function ?		# Megahertz Ethernet UT
-# tr at pcmcia has problems with Cardbus bridges
-#tr*	at pcmcia? function ?		# TROPIC based Token-Ring UT
 #wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 #xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet UT
 #com*	at xirc?
