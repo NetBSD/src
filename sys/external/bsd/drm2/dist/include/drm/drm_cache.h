@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_cache.h,v 1.3 2020/01/19 12:03:27 jmcneill Exp $	*/
+/*	$NetBSD: drm_cache.h,v 1.4 2020/01/19 16:12:00 jmcneill Exp $	*/
 
 /**************************************************************************
  *
@@ -34,6 +34,10 @@
 
 #ifndef _DRM_CACHE_H_
 #define _DRM_CACHE_H_
+
+#ifdef __NetBSD__
+#include <drm/drm_os_netbsd.h>
+#endif
 
 void drm_clflush_pages(struct page *pages[], unsigned long num_pages);
 
