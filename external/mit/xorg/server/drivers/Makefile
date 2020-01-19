@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.98 2020/01/19 00:58:14 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.99 2020/01/19 10:45:50 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -180,6 +180,7 @@ SUBDIR+= \
 
 .if ${MACHINE} == "evbarm"
 SUBDIR+= \
+	xf86-video-ati \
 	${MODE_SETTING} \
 	xf86-video-nouveau \
 	xf86-video-radeon \
