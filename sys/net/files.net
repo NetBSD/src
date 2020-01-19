@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.20 2018/12/12 01:40:20 rin Exp $
+#	$NetBSD: files.net,v 1.21 2020/01/19 01:25:03 thorpej Exp $
 
 # XXX CLEANUP
 define	net
@@ -31,7 +31,6 @@ file	net/if_srt.c			srt
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
-file	net/if_strip.c			strip			needs-flag
 file	net/if_tokensubr.c		token			needs-flag
 file	net/if_tap.c			tap
 file	net/if_tun.c			tun
@@ -49,7 +48,7 @@ file	net/route.c			net
 file	net/rss_config.c		net
 file	net/rtbl.c			net
 file	net/rtsock.c			net
-file	net/slcompress.c		sl | ppp | strip | (irip & irip_vj)
+file	net/slcompress.c		sl | ppp | (irip & irip_vj)
 file	net/zlib.c			(ppp & ppp_deflate) | swcrypto | vnd_compression
 file	netinet/accf_data.c		accf_data
 file	netinet/accf_http.c		accf_http

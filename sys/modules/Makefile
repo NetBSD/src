@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.234 2020/01/01 10:13:16 ryo Exp $
+#	$NetBSD: Makefile,v 1.235 2020/01/19 01:25:08 thorpej Exp $
 
 .include <bsd.own.mk>
 
@@ -90,7 +90,6 @@ SUBDIR+=	if_sl
 SUBDIR+=	if_smsc
 SUBDIR+=	if_srt srt
 SUBDIR+=	if_stf
-SUBDIR+=	if_strip
 SUBDIR+=	if_tap tap
 SUBDIR+=	if_tun tun
 SUBDIR+=	if_udav
