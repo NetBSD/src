@@ -1,4 +1,5 @@
-# $NetBSD: md.evbarm,v 1.24 2019/12/30 05:37:19 uki Exp $
+# $NetBSD: md.evbarm,v 1.25 2020/01/19 00:58:14 jmcneill Exp $
+./usr/X11R7/lib/libdrm_amdgpu_g.a			xdebug-libdrm_amdgpu-debuglib	xorg,debuglib,compatx11file
 ./usr/X11R7/lib/libdrm_nouveau_g.a			xdebug-libdrm_nouveau-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libvdpau_g.a				xdebug-libvdpau-debuglib	xorg,debuglib
 ./usr/X11R7/lib/modules/extensions/libdbe_g.a		xdebug-obsolete	xorg,obsolete
@@ -19,9 +20,15 @@
 ./usr/libdata/debug/usr/X11R7/bin/Xorg.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/cvt.debug	xdebug-xorg-server-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/bin/gtf.debug	xdebug-xorg-server-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/libdrm_amdgpu.so.1.0.debug	xdebug-libdrm_amdgpu-debug		xorg,debug,compatx11file
 ./usr/libdata/debug/usr/X11R7/lib/libdrm_nouveau.so.3.0.debug	xdebug-libdrm_nouveau-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/libvdpau.so.1.0.debug		xdebug-libvdpau-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/mesa_dri_drivers.so.0.debug	xdebug-dri-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/nouveau_dri.so.0.debug	xdebug-xf86-video-nouveau-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/r200_dri.so.0.debug	xdebug-dri-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	xdebug-gallium-debug		xorg,debug,llvmrt
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug,llvmrt
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/kbd_drv.so.1.debug	xdebug-xf86-input-keyboard-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libkbd_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libmouse_drv.so.1.debug	xdebug-obsolete	xorg,obsolete
@@ -29,6 +36,9 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/libwsfb_drv.so.0.debug	xdebug-obsolete	xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/modesetting_drv.so.0.debug	xdebug-modesetting-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/mouse_drv.so.1.debug	xdebug-xf86-input-mouse-debug	xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/nouveau_drv.so.1.debug	xdebug-xf86-video-nouveau-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv.so.19.debug	xdebug-xf86-video-radeon-kms-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/drivers/radeon_drv_old.so.6.debug	xdebug-xf86-video-radeon-kms-debug		xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/ws_drv.so.1.debug	xdebug-xf86-input-ws-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/drivers/wsfb_drv.so.0.debug	xdebug-xf86-video-wsfb-debug	xorg,debug
 ./usr/libdata/debug/usr/X11R7/lib/modules/extensions/libdbe.so.0.debug	-unknown-	xorg,debug,xorg_server_ver=110
