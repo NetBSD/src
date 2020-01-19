@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.466 2019/12/17 04:54:36 christos Exp $	*/
+/*	$NetBSD: if.c,v 1.467 2020/01/19 20:00:36 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.466 2019/12/17 04:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.467 2020/01/19 20:00:36 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -150,7 +150,6 @@ __KERNEL_RCSID(0, "$NetBSD: if.c,v 1.466 2019/12/17 04:54:36 christos Exp $");
 
 #include "ether.h"
 #include "fddi.h"
-#include "token.h"
 
 #include "bridge.h"
 #if NBRIDGE > 0
@@ -319,7 +318,7 @@ ifinit1(void)
 	if_pfil = pfil_head_create(PFIL_TYPE_IFNET, NULL);
 	KASSERT(if_pfil != NULL);
 
-#if NETHER > 0 || NFDDI > 0 || defined(NETATALK) || NTOKEN > 0 || defined(WLAN)
+#if NETHER > 0 || NFDDI > 0 || defined(NETATALK) || defined(WLAN)
 	etherinit();
 #endif
 }

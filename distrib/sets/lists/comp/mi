@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2302 2020/01/19 10:50:25 martin Exp $
+#	$NetBSD: mi,v 1.2303 2020/01/19 20:00:36 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2366,7 +2366,7 @@
 ./usr/include/net/if_stf.h			comp-c-include
 ./usr/include/net/if_stripvar.h			comp-obsolete		obsolete
 ./usr/include/net/if_tap.h			comp-c-include
-./usr/include/net/if_token.h			comp-c-include
+./usr/include/net/if_token.h			comp-obsolete		obsolete
 ./usr/include/net/if_tun.h			comp-c-include
 ./usr/include/net/if_types.h			comp-c-include
 ./usr/include/net/if_vlanvar.h			comp-c-include
