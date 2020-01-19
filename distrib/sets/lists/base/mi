@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1225 2020/01/19 06:55:22 thorpej Exp $
+# $NetBSD: mi,v 1.1226 2020/01/19 20:41:17 riastradh Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -1114,7 +1114,7 @@
 ./usr/include/dev/dmover			base-c-usr
 ./usr/include/dev/dtv				base-c-usr
 ./usr/include/dev/eisa				base-obsolete		obsolete
-./usr/include/dev/filemon			base-c-usr
+./usr/include/dev/filemon			base-obsolete		obsolete
 ./usr/include/dev/hdaudio			base-c-usr
 ./usr/include/dev/hdmicec			base-c-usr
 ./usr/include/dev/hid				base-c-usr
