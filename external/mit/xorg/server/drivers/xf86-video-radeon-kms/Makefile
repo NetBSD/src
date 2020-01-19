@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2020/01/19 00:58:15 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.11 2020/01/19 10:44:51 martin Exp $
 
 .include <bsd.own.mk>
 
@@ -47,7 +47,7 @@ SRCS=		radeon_accel.c radeon_video.c \
 
 MAN=		radeon.4
 
-.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "amd64"
+.if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 MANSUBDIR=	/x86
 .else
 MANSUBDIR=	/${MACHINE}
