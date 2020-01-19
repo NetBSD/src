@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.380 2020/01/18 14:40:04 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.381 2020/01/19 10:59:56 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.380 2020/01/18 14:40:04 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.381 2020/01/19 10:59:56 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -745,7 +745,6 @@ static void		pmap_use_l1(pmap_t);
 
 static struct l2_bucket *pmap_get_l2_bucket(pmap_t, vaddr_t);
 static struct l2_bucket *pmap_alloc_l2_bucket(pmap_t, vaddr_t);
-static int		pmap_l1tt_ctor(void *, void *, int);
 static void		pmap_free_l2_bucket(pmap_t, struct l2_bucket *, u_int);
 static int		pmap_l2ptp_ctor(void *, void *, int);
 static int		pmap_l2dtable_ctor(void *, void *, int);
@@ -780,18 +779,17 @@ static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 static vaddr_t		kernel_pt_lookup(paddr_t);
 
 #ifdef ARM_MMU_EXTENDED
-
 static struct pool_cache pmap_l1tt_cache;
 
-static void *pmap_l1tt_alloc(struct pool *, int);
-static void pmap_l1tt_free(struct pool *, void *);
+static int		pmap_l1tt_ctor(void *, void *, int);
+static void *		pmap_l1tt_alloc(struct pool *, int);
+static void		pmap_l1tt_free(struct pool *, void *);
 
 static struct pool_allocator pmap_l1tt_allocator = {
 	.pa_alloc = pmap_l1tt_alloc,
 	.pa_free = pmap_l1tt_free,
 	.pa_pagesz = L1TT_SIZE,
 };
-
 #endif
 
 /*
