@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL,v 1.109 2019/02/07 23:11:10 mrg Exp $
+#	$NetBSD: INSTALL,v 1.110 2020/01/19 01:25:04 thorpej Exp $
 #
 #	CATSINST -- CHALTECH CATS Install kernel
 #
@@ -437,7 +437,6 @@ pseudo-device	bpfilter		# Berkeley packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	tun			# network tunneling over tty
 
 # miscellaneous pseudo-devices

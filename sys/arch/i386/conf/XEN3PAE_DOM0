@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.15 2019/08/21 12:16:07 maxv Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.16 2020/01/19 01:25:05 thorpej Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -819,7 +819,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty
