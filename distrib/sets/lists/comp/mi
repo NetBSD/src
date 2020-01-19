@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2301 2020/01/19 06:55:22 thorpej Exp $
+#	$NetBSD: mi,v 1.2302 2020/01/19 10:50:25 martin Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2348,7 +2348,7 @@
 ./usr/include/net/if_fddi.h			comp-c-include
 ./usr/include/net/if_gif.h			comp-c-include
 ./usr/include/net/if_gre.h			comp-c-include
-./usr/include/net/if_hippi.h			comp-c-include
+./usr/include/net/if_hippi.h			comp-obsolete		obsolete
 ./usr/include/net/if_ieee1394.h			comp-c-include
 ./usr/include/net/if_ieee80211.h		comp-obsolete		obsolete
 ./usr/include/net/if_ipsec.h			comp-c-include

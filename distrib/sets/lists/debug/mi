@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.291 2020/01/18 17:18:41 kre Exp $
+# $NetBSD: mi,v 1.292 2020/01/19 10:50:26 martin Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -1065,7 +1065,7 @@
 ./usr/libdata/debug/usr/sbin/dumplfs.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/edquota.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/envstat.debug	comp-sysutil-debug	debug
-./usr/libdata/debug/usr/sbin/eshconfig.debug	comp-sysutil-debug	debug
+./usr/libdata/debug/usr/sbin/eshconfig.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/sbin/extattrctl.debug	comp-sysutil-debug	debug
 ./usr/libdata/debug/usr/sbin/faithd.debug	comp-router-debug	inet6,debug
 ./usr/libdata/debug/usr/sbin/fixmount.debug	comp-nfsclient-debug	debug
