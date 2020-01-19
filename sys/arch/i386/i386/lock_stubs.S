@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.32 2019/12/08 20:00:56 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.32.2.1 2020/01/19 21:08:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.32 2019/12/08 20:00:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lock_stubs.S,v 1.32.2.1 2020/01/19 21:08:29 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -96,132 +96,6 @@ ENTRY(mutex_exit)
 1:
 	jmp	_C_LABEL(mutex_vector_exit)
 END(mutex_exit)
-
-/*
- * void rw_enter(krwlock_t *rwl, krw_t op);
- *
- * Acquire one hold on a RW lock.
- */
-ENTRY(rw_enter)
-	movl	4(%esp), %edx
-	cmpl	$RW_READER, 8(%esp)
-	jne	2f
-
-	/*
-	 * Reader
-	 */
-	movl	(%edx), %eax
-0:
-	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	3f
-	leal	RW_READ_INCR(%eax), %ecx
-	LOCK(2)
-	cmpxchgl %ecx, (%edx)
-	jnz	1f
-	RET(2)
-1:
-	jmp	0b
-
-	/*
-	 * Writer
-	 */
-2:	xorl	%eax, %eax
-	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
-	orl	$RW_WRITE_LOCKED, %ecx
-	LOCK(3)
-	cmpxchgl %ecx, (%edx)
-	jnz	3f
-	RET(3)
-3:
-	jmp	_C_LABEL(rw_vector_enter)
-END(rw_enter)
-
-/*
- * void rw_exit(krwlock_t *rwl);
- *
- * Release one hold on a RW lock.
- */
-ENTRY(rw_exit)
-	movl	4(%esp), %edx
-	movl	(%edx), %eax
-	testb	$RW_WRITE_LOCKED, %al
-	jnz	2f
-
-	/*
-	 * Reader
-	 */
-0:	testb	$RW_HAS_WAITERS, %al
-	jnz	3f
-	cmpl	$RW_READ_INCR, %eax
-	jb	3f
-	leal	-RW_READ_INCR(%eax), %ecx
-	LOCK(4)
-	cmpxchgl %ecx, (%edx)
-	jnz	1f
-	ret
-1:
-	jmp	0b
-
-	/*
-	 * Writer
-	 */
-2:	leal	-RW_WRITE_LOCKED(%eax), %ecx
-	subl	CPUVAR(CURLWP), %ecx
-	jnz	3f
-	LOCK(5)
-	cmpxchgl %ecx, (%edx)
-	jnz	3f
-	ret
-
-	/*
-	 * Slow path.
-	 */
-3:	jmp	_C_LABEL(rw_vector_exit)
-END(rw_exit)
-
-/*
- * int rw_tryenter(krwlock_t *rwl, krw_t op);
- *
- * Try to acquire one hold on a RW lock.
- */
-ENTRY(rw_tryenter)
-	movl	4(%esp), %edx
-	cmpl	$RW_READER, 8(%esp)
-	jne	2f
-
-	/*
-	 * Reader
-	 */
-	movl	(%edx), %eax
-0:
-	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
-	jnz	4f
-	leal	RW_READ_INCR(%eax), %ecx
-	LOCK(12)
-	cmpxchgl %ecx, (%edx)
-	jnz	1f
-	movl	%edx, %eax			/* nonzero */
-	RET(4)
-1:
-	jmp	0b
-
-	/*
-	 * Writer
-	 */
-2:
-	xorl	%eax, %eax
-	movl	%fs:CPU_INFO_CURLWP(%eax), %ecx
-	orl	$RW_WRITE_LOCKED, %ecx
-	LOCK(13)
-	cmpxchgl %ecx, (%edx)
-	movl	$0, %eax
-	setz	%al
-3:
-	RET(5)
-4:
-	xorl	%eax, %eax
-	jmp	3b
-END(rw_tryenter)
 
 #ifndef XENPV
 
