@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.5 2019/12/14 17:24:30 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.6 2020/01/19 15:08:43 skrll Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,7 +32,7 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: start.S,v 1.5 2019/12/14 17:24:30 skrll Exp $")
+RCSID("$NetBSD: start.S,v 1.6 2020/01/19 15:08:43 skrll Exp $")
 
 /* load far effective address (pc relative) */
 .macro	ADDR, reg, addr
@@ -41,9 +41,10 @@ RCSID("$NetBSD: start.S,v 1.5 2019/12/14 17:24:30 skrll Exp $")
 .endm
 
 /*
- * Padding at start of kernel image to make room for 64-byte header (non-ELF booting)
+ * Padding at start of kernel image to make room for 64-byte header
+ * (non-ELF booting)
  */
-.space	64, 0x0
+	.space	64, 0x0
 
 /*
  * Kernel start routine for aarch64 boards.
