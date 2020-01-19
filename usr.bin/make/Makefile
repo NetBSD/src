@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.67 2020/01/19 19:49:36 riastradh Exp $
+#	$NetBSD: Makefile,v 1.68 2020/01/19 19:50:54 riastradh Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -15,15 +15,27 @@ SRCS += lstPrev.c
 
 USE_META ?= yes
 .if ${USE_META:tl} != "no"
+
 SRCS+=	meta.c
 CPPFLAGS+= -DUSE_META
+
 USE_FILEMON ?= ktrace
 .if ${USE_FILEMON:tl} != "no"
+
 .PATH:	${.CURDIR}/filemon
 SRCS+=	filemon_${USE_FILEMON}.c
 CPPFLAGS+= -DUSE_FILEMON
+
+.if ${USE_FILEMON} == "dev"
+FILEMON_H ?= /usr/include/dev/filemon/filemon.h
+.if exists(${FILEMON_H}) && ${FILEMON_H:T} == "filemon.h"
+COPTS.filemon_dev.c += -DHAVE_FILEMON_H -I${FILEMON_H:H}
 .endif
-.endif
+.endif				# USE_FILEMON == dev
+
+.endif				# USE_FILEMON
+
+.endif				# USE_META
 
 .PATH:	${.CURDIR}/lst.lib
 SUBDIR.roff+=	PSD.doc
