@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.554 2020/01/09 00:42:24 manu Exp $
+# $NetBSD: GENERIC,v 1.555 2020/01/19 01:25:04 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.554 $"
+#ident		"GENERIC-$Revision: 1.555 $"
 
 maxusers	64		# estimated number of users
 
@@ -1149,7 +1149,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
