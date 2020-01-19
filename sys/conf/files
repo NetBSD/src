@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1251 2020/01/19 20:00:37 thorpej Exp $
+#	$NetBSD: files,v 1.1252 2020/01/19 20:41:18 riastradh Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1529,12 +1529,6 @@ include "net/files.net"
 # Game adapter (joystick)
 device	joy
 file	dev/ic/joy.c			joy needs-flag
-
-# process monitor for make(1)
-# normally built as module
-defpseudo filemon
-file	dev/filemon/filemon.c		filemon
-file	dev/filemon/filemon_wrapper.c	filemon
 
 #
 # General Purpose Input/Output framework
