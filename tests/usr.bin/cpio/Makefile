@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.3 2020/01/18 15:16:48 christos Exp $
+# $NetBSD: Makefile,v 1.4 2020/01/19 17:36:57 christos Exp $
 
 NOMAN=
 
@@ -19,10 +19,9 @@ CPPFLAGS+=-DPLATFORM_CONFIG_H='"config_netbsd.h"'
 .PATH:  ${LIBARCHIVE}/cpio/test ${LIBARCHIVE}/test_utils ${LIBARCHIVE}/cpio \
 	${LIBARCHIVE}/libarchive_fe
 
-
-LDADD+=-larchive
-DPADD+=${LIBARCHIVE}
-
+DPADD+=	${LIBARCHIVE} ${LIBEXPAT} ${LIBBZ2} ${LIBLZMA} ${LIBZ} \
+	${LIBCRYPTO} ${LIBPTHREAD}
+LDADD+=	-larchive -lexpat -lbz2 -llzma -lz -lcrypto -lpthread  
 
 SRCS.h_cpio= \
 test_main.c \
