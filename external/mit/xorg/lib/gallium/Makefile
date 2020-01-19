@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.40 2019/11/20 06:23:31 martin Exp $
+# $NetBSD: Makefile,v 1.41 2020/01/19 00:58:14 jmcneill Exp $
 
 # Link the gallium mega driver.
 
@@ -94,12 +94,12 @@ BUILD_LLVMPIPE=0
 BUILD_I915=0
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64"
 BUILD_I915=1
-. if ${MKLLVMRT} != "no"
-BUILD_RADEON=1
-. endif
 .endif
 .if ${MACHINE_ARCH} == "i386" || ${MACHINE_ARCH} == "x86_64" || ${MACHINE} == "evbarm"
 BUILD_NOUVEAU=1
+. if ${MKLLVMRT} != "no"
+BUILD_RADEON=1
+. endif
 BUILD_VDPAU=1
 .endif
 
