@@ -1,4 +1,4 @@
-#	$NetBSD: ZAO425,v 1.65 2020/01/19 06:55:23 thorpej Exp $
+#	$NetBSD: ZAO425,v 1.66 2020/01/20 18:38:20 thorpej Exp $
 #
 #	ZAO425 -- Intel IXP425
 #
@@ -156,7 +156,6 @@ bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
