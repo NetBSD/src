@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.171 2020/01/19 06:55:22 thorpej Exp $
+# $NetBSD: XEN3_DOM0,v 1.172 2020/01/20 18:38:19 thorpej Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.171 $"
+#ident		"XEN3_DOM0-$Revision: 1.172 $"
 
 maxusers	32		# estimated number of users
 
@@ -342,7 +342,6 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ

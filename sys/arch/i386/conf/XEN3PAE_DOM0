@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.17 2020/01/19 06:55:23 thorpej Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.18 2020/01/20 18:38:20 thorpej Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -323,7 +323,6 @@ ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 et*	at pci? dev ? function ?	# Agere/LSI ET1310/ET1301 Gigabit
 ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ

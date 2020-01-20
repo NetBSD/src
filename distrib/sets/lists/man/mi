@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1674 2020/01/19 20:41:17 riastradh Exp $
+# $NetBSD: mi,v 1.1675 2020/01/20 18:38:18 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1104,16 +1104,16 @@
 ./usr/share/man/cat4/faith.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fast_ipsec.0		man-obsolete		obsolete
 ./usr/share/man/cat4/fd.0			man-sys-catman		.cat
-./usr/share/man/cat4/fea.0			man-sys-catman		.cat
+./usr/share/man/cat4/fea.0			man-obsolete		obsolete
 ./usr/share/man/cat4/filemon.0			man-obsolete		obsolete
 ./usr/share/man/cat4/finsio.0			man-sys-catman		.cat
 ./usr/share/man/cat4/flash.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fms.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fmv.0			man-sys-catman		.cat
-./usr/share/man/cat4/fpa.0			man-sys-catman		.cat
+./usr/share/man/cat4/fpa.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fss.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fssbs.0			man-obsolete		obsolete
-./usr/share/man/cat4/fta.0			man-sys-catman		.cat
+./usr/share/man/cat4/fta.0			man-obsolete		obsolete
 ./usr/share/man/cat4/fujbp.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fujhk.0			man-sys-catman		.cat
 ./usr/share/man/cat4/fujitsu.0			man-obsolete		obsolete
@@ -4288,16 +4288,16 @@
 ./usr/share/man/html4/faith.html		man-sys-htmlman		html
 ./usr/share/man/html4/fast_ipsec.html		man-obsolete		obsolete
 ./usr/share/man/html4/fd.html			man-sys-htmlman		html
-./usr/share/man/html4/fea.html			man-sys-htmlman		html
+./usr/share/man/html4/fea.html			man-obsolete		obsolete
 ./usr/share/man/html4/filemon.html		man-obsolete		obsolete
 ./usr/share/man/html4/finsio.html		man-sys-htmlman		html
 ./usr/share/man/html4/flash.html		man-sys-htmlman		html
 ./usr/share/man/html4/fms.html			man-sys-htmlman		html
 ./usr/share/man/html4/fmv.html			man-sys-htmlman		html
-./usr/share/man/html4/fpa.html			man-sys-htmlman		html
+./usr/share/man/html4/fpa.html			man-obsolete		obsolete
 ./usr/share/man/html4/fss.html			man-sys-htmlman		html
 ./usr/share/man/html4/fssbs.html		man-obsolete		obsolete
-./usr/share/man/html4/fta.html			man-sys-htmlman		html
+./usr/share/man/html4/fta.html			man-obsolete		obsolete
 ./usr/share/man/html4/fujbp.html		man-sys-htmlman		html
 ./usr/share/man/html4/fujhk.html		man-sys-htmlman		html
 ./usr/share/man/html4/fujitsu.html		man-obsolete		obsolete
@@ -7244,16 +7244,16 @@
 ./usr/share/man/man4/faith.4			man-sys-man		.man
 ./usr/share/man/man4/fast_ipsec.4		man-obsolete		obsolete
 ./usr/share/man/man4/fd.4			man-sys-man		.man
-./usr/share/man/man4/fea.4			man-sys-man		.man
+./usr/share/man/man4/fea.4			man-obsolete		obsolete
 ./usr/share/man/man4/filemon.4			man-obsolete		obsolete
 ./usr/share/man/man4/finsio.4			man-sys-man		.man
 ./usr/share/man/man4/flash.4			man-sys-man		.man
 ./usr/share/man/man4/fms.4			man-sys-man		.man
 ./usr/share/man/man4/fmv.4			man-sys-man		.man
-./usr/share/man/man4/fpa.4			man-sys-man		.man
+./usr/share/man/man4/fpa.4			man-obsolete		obsolete
 ./usr/share/man/man4/fss.4			man-sys-man		.man
 ./usr/share/man/man4/fssbs.4			man-obsolete		obsolete
-./usr/share/man/man4/fta.4			man-sys-man		.man
+./usr/share/man/man4/fta.4			man-obsolete		obsolete
 ./usr/share/man/man4/fujbp.4			man-sys-man		.man
 ./usr/share/man/man4/fujhk.4			man-sys-man		.man
 ./usr/share/man/man4/fujitsu.4			man-obsolete		obsolete
