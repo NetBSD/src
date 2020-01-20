@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.51 2020/01/16 16:47:19 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.52 2020/01/20 21:26:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -789,6 +789,7 @@ int	get_via_localdir(void);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
 void    set_kernel_set(unsigned int);
+void    set_noextract_set(unsigned int);
 unsigned int    get_kernel_set(void);
 unsigned int    set_X11_selected(void);
 int 	get_and_unpack_sets(int, msg, msg, msg);
@@ -811,7 +812,10 @@ const char *set_dir_for_set(const char *);
 const char *ext_dir_for_set(const char *);
 void	replace(const char *, const char *, ...) __printflike(2, 3);
 void	get_tz_default(void);
+distinfo*	get_set_distinfo(int);
 int	extract_file(distinfo *, int);
+int extract_file_to(distinfo *dist, int update, const char *dest_dir,
+    const char *extr_pattern, bool do_stats);
 void	do_coloring (unsigned int, unsigned int);
 int set_menu_select(menudesc *, void *);
 const char *safectime(time_t *);
@@ -823,6 +827,7 @@ void	free_usage_set(struct partition_usage_set*);
 bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
 void	free_install_desc(struct install_partition_desc*);
+bool	may_swap_if_not_sdmmc(const char*);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
