@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.290 2020/01/19 20:00:37 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.291 2020/01/20 18:38:22 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.290 2020/01/19 20:00:37 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.291 2020/01/20 18:38:22 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -120,10 +120,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.290 2020/01/19 20:00:37 thorpej Exp $")
 #include "arcnet.h"
 #if NARCNET > 0
 #include <net/if_arc.h>
-#endif
-#include "fddi.h"
-#if NFDDI > 0
-#include <net/if_fddi.h>
 #endif
 #include "carp.h"
 #if NCARP > 0
@@ -436,12 +432,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * linklayers with particular link MTU limitation.
 		 */
 		switch(ifp->if_type) {
-#if NFDDI > 0
-		case IFT_FDDI:
-			if (ifp->if_mtu > FDDIIPMTU)
-				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-			break;
-#endif
 #if NARCNET > 0
 		case IFT_ARCNET:
 		    {
@@ -483,15 +473,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			 * linklayers with particular link MTU limitation.
 			 */
 			switch (ifp->if_type) {
-#if NFDDI > 0
-			case IFT_FDDI:
-				if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
-				    (rt->rt_rmx.rmx_mtu > FDDIIPMTU ||
-				     (rt->rt_rmx.rmx_mtu == 0 &&
-				      ifp->if_mtu > FDDIIPMTU)))
-					rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-				break;
-#endif
 #if NARCNET > 0
 			case IFT_ARCNET:
 			    {
