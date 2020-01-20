@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.34 2020/01/15 08:34:04 mrg Exp $ */
+/* $NetBSD: cpu.c,v 1.35 2020/01/20 12:32:04 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.34 2020/01/15 08:34:04 mrg Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.35 2020/01/20 12:32:04 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -35,13 +35,13 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.34 2020/01/15 08:34:04 mrg Exp $");
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/atomic.h>
-#include <sys/device.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpu.h>
