@@ -1,4 +1,4 @@
-/* $NetBSD: README.md_defs,v 1.3 2019/12/10 06:25:50 isaki Exp $ */
+/* $NetBSD: README.md_defs,v 1.4 2020/01/20 21:26:35 martin Exp $ */
 
 The following is trying to document the most important machine dependent
 defines used in the sysinst code.
@@ -71,6 +71,24 @@ used like:
 returns true if this setup needs boot blocks. Used for example on x86
 when UEFI installs do not need any bootblocks, but BIOS ones do.
 
+MD_MAY_SWAP_TO		may be undefined
+
+used  like:
+
+	bool MD_MAY_SWAP_TO(const char *disk_name)
+
+returns true if the disk is usable as a swap device. Typical implementation
+in utils.c:may_swap_if_not_sdmmc.
+
+MD_SET_EXTRACT_FINALIZE	may be undefined
+
+used like:
+
+	int MD_SET_EXTRACT_FINALIZE(int update)
+
+extracts any additional parts of the distribution. Returns an error code
+if something fails.
+
 
 HAVE_PLAIN_DISKLABEL_BOOT	may be undefined, only used on architectures
 				that have MBR as primary with disklabel as
@@ -90,3 +108,9 @@ If defined, do not verify the presence of on-disk disklabels before
 offering the disklabel partitioning scheme. This allows ports to use
 kernel translation for the disklabel ioctls (e.g. x68k uses Human68k
 partitions this way).
+
+
+HAVE_GPT_BOOT			defined if the architecture can boot from GPT
+
+NO_DISKLABEL_BOOT		defined if the architecture can NOT boot
+				from a disklabel partitioned disk
