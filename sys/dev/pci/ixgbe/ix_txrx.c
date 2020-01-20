@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.58 2019/12/16 02:50:54 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.59 2020/01/20 07:19:04 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1681,6 +1681,10 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 				rxbuf->pmap = NULL;
 			}
 		}
+
+		/* NetBSD specific. See ixgbe_netbsd.c */
+		ixgbe_jcl_destroy(adapter, rxr);
+
 		if (rxr->rx_buffers != NULL) {
 			free(rxr->rx_buffers, M_DEVBUF);
 			rxr->rx_buffers = NULL;
