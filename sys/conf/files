@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1252 2020/01/19 20:41:18 riastradh Exp $
+#	$NetBSD: files,v 1.1253 2020/01/20 18:38:21 thorpej Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -437,12 +437,10 @@ include "dev/splash/files.splash"
 # videomode support
 include "dev/videomode/files.videomode"
 
-# net device attributes - we have generic code for arc(net), ether(net),
-# and fddi
+# net device attributes
 #
 define	arcnet
 define	ether
-define	fddi
 define	ieee1394
 define	sppp
 define	wlan
@@ -780,12 +778,6 @@ device	nca: scsi, ncr5380sbc
 define	sunscpal
 file	dev/ic/sunscpal.c		sunscpal
 device	ssc: scsi, sunscpal
-
-# DEC FDDI Chipset
-#
-define	pdq
-file	dev/ic/pdq.c			pdq
-file	dev/ic/pdq_ifsubr.c		pdq
 
 # Cyclades Cyclom-8/16/32
 #
