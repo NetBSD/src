@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.444 2019/11/29 22:38:28 riastradh Exp $
+#       $NetBSD: Makefile,v 1.445 2020/01/20 18:38:18 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -319,9 +319,7 @@ MLINKS+=dofileread.9 dofilewrite.9 \
 MLINKS+=do_setresuid.9 do_setresgid.9
 MLINKS+=ethersubr.9 ether_ifattach.9 ethersubr.9 ether_addmulti.9 \
 	ethersubr.9 ether_delmulti.9 ethersubr.9 ETHER_IS_MULTICAST.9 \
-	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9 \
-	ethersubr.9 fddi_ifattach.9 \
-	ethersubr.9 fddi_addmulti.9 ethersubr.9 fddi_delmulti.9
+	ethersubr.9 ETHER_FIRST_MULTI.9 ethersubr.9 ETHER_NEXT_MULTI.9
 MLINKS+=evcnt.9 evcnt_attach_dynamic.9 evcnt.9 evcnt_attach_static.9 \
 	evcnt.9 evcnt_detach.9
 MLINKS+=extent.9 extent_create.9 extent.9 extent_destroy.9 \

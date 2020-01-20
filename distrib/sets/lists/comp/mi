@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2304 2020/01/19 20:41:17 riastradh Exp $
+#	$NetBSD: mi,v 1.2305 2020/01/20 18:38:18 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -2345,7 +2345,7 @@
 ./usr/include/net/if_dl.h			comp-c-include
 ./usr/include/net/if_ether.h			comp-c-include
 ./usr/include/net/if_etherip.h			comp-obsolete		obsolete
-./usr/include/net/if_fddi.h			comp-c-include
+./usr/include/net/if_fddi.h			comp-obsolete		obsolete
 ./usr/include/net/if_gif.h			comp-c-include
 ./usr/include/net/if_gre.h			comp-c-include
 ./usr/include/net/if_hippi.h			comp-obsolete		obsolete
@@ -11099,9 +11099,9 @@
 ./usr/share/man/cat9/fdclone.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fdcloseexec.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/fdcopy.0			comp-sys-catman		.cat
-./usr/share/man/cat9/fddi_addmulti.0		comp-sys-catman		.cat
-./usr/share/man/cat9/fddi_delmulti.0		comp-sys-catman		.cat
-./usr/share/man/cat9/fddi_ifattach.0		comp-sys-catman		.cat
+./usr/share/man/cat9/fddi_addmulti.0		comp-obsolete		obsolete
+./usr/share/man/cat9/fddi_delmulti.0		comp-obsolete		obsolete
+./usr/share/man/cat9/fddi_ifattach.0		comp-obsolete		obsolete
 ./usr/share/man/cat9/fdexpand.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fdfree.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/fdinit.0			comp-sys-catman		.cat
@@ -19034,9 +19034,9 @@
 ./usr/share/man/html9/fdclone.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fdcloseexec.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fdcopy.html		comp-sys-htmlman	html
-./usr/share/man/html9/fddi_addmulti.html	comp-sys-htmlman	html
-./usr/share/man/html9/fddi_delmulti.html	comp-sys-htmlman	html
-./usr/share/man/html9/fddi_ifattach.html	comp-sys-htmlman	html
+./usr/share/man/html9/fddi_addmulti.html	comp-obsolete		obsolete
+./usr/share/man/html9/fddi_delmulti.html	comp-obsolete		obsolete
+./usr/share/man/html9/fddi_ifattach.html	comp-obsolete		obsolete
 ./usr/share/man/html9/fdexpand.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fdfree.html		comp-sys-htmlman	html
 ./usr/share/man/html9/fdinit.html		comp-sys-htmlman	html
@@ -27114,9 +27114,9 @@
 ./usr/share/man/man9/fdclone.9			comp-sys-man		.man
 ./usr/share/man/man9/fdcloseexec.9		comp-sys-man		.man
 ./usr/share/man/man9/fdcopy.9			comp-sys-man		.man
-./usr/share/man/man9/fddi_addmulti.9		comp-sys-man		.man
-./usr/share/man/man9/fddi_delmulti.9		comp-sys-man		.man
-./usr/share/man/man9/fddi_ifattach.9		comp-sys-man		.man
+./usr/share/man/man9/fddi_addmulti.9		comp-obsolete		obsolete
+./usr/share/man/man9/fddi_delmulti.9		comp-obsolete		obsolete
+./usr/share/man/man9/fddi_ifattach.9		comp-obsolete		obsolete
 ./usr/share/man/man9/fdexpand.9			comp-sys-man		.man
 ./usr/share/man/man9/fdfree.9			comp-sys-man		.man
 ./usr/share/man/man9/fdinit.9			comp-sys-man		.man

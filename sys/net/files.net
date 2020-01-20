@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.23 2020/01/19 20:00:36 thorpej Exp $
+#	$NetBSD: files.net,v 1.24 2020/01/20 18:38:18 thorpej Exp $
 
 # XXX CLEANUP
 define	net
@@ -12,10 +12,8 @@ file	net/if.c			net
 file	net/if_arcsubr.c		arcnet			needs-flag
 file	net/if_bridge.c			bridge			needs-flag
 file	net/bridgestp.c			bridge
-file	net/if_ethersubr.c		ether | fddi | netatalk |
-					    wlan		needs-flag
+file	net/if_ethersubr.c		ether | netatalk | wlan	needs-flag
 file	net/if_faith.c			faith & (inet | inet6)	needs-flag
-file	net/if_fddisubr.c		fddi			needs-flag
 file	net/if_gif.c			gif			needs-flag
 file	net/if_gre.c			gre			needs-flag
 file	net/if_ieee1394subr.c		ieee1394

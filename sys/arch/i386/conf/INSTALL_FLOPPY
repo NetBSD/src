@@ -1,4 +1,4 @@
-#	$NetBSD: INSTALL_FLOPPY,v 1.52 2020/01/19 20:00:37 thorpej Exp $
+#	$NetBSD: INSTALL_FLOPPY,v 1.53 2020/01/20 18:38:20 thorpej Exp $
 #
 #	INSTALL - Installation kernel.
 #
@@ -482,7 +482,6 @@ bge*	at pci? dev ? function ?	# Broadcom 570x Gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 ex*	at pci? dev ? function ?	# 3Com 3c90x[BC]
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
@@ -516,7 +515,6 @@ wm*	at pci? dev ? function ?	# Intel 8254x gigabit
 
 # EISA network interfaces
 ep*	at eisa? slot ?			# 3Com 3c579 Ethernet
-fea*	at eisa? slot ?			# DEC DEFEA FDDI
 tlp*	at eisa? slot ?			# DEC DE-425 Ethernet
 
 # ISA Plug-and-Play network interfaces
