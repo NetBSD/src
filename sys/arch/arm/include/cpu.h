@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.105 2020/01/18 14:40:04 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.106 2020/01/20 22:13:57 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -329,7 +329,7 @@ vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
  */
 void	cpu_attach(device_t, cpuid_t);
 
-#ifdef _ARM_ARCH_6
+#ifdef ARM_MMU_EXTENDED
 int	cpu_maxproc_hook(int);
 #endif
 
