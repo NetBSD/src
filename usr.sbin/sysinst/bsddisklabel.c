@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.35 2020/01/16 16:47:19 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.36 2020/01/20 21:26:35 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -949,10 +949,28 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	for (i = 0; i < wanted->num; i++) {
 		wanted->infos[i].parts = parts;
 		wanted->infos[i].cur_part_id = NO_PART;
+		if (wanted->infos[i].type == PT_undef &&
+		    wanted->infos[i].fs_type != FS_UNUSED) {
+			const struct part_type_desc *pt =
+			    parts->pscheme->get_fs_part_type(PT_undef,
+			    wanted->infos[i].fs_type,
+			    wanted->infos[i].fs_version);
+			if (pt != NULL)
+				wanted->infos[i].type = pt->generic_ptype;
+		}
+		if (wanted->parts->parent != NULL &&
+		    wanted->infos[i].fs_type == FS_MSDOS)
+			wanted->infos[i].flags |=
+			    PUIFLG_ADD_INNER|PUIFLAG_ADD_OUTER;
 
 #if DEFSWAPSIZE == -1
-		if (wanted->infos[i].type == PT_swap)
-			wanted->infos[i].size = get_ramsize() * (MEG / 512);
+		if (wanted->infos[i].type == PT_swap) {
+#ifdef	MD_MAY_SWAP_TO
+			if (MD_MAY_SWAP_TO(wanted->parts->disk))
+#endif
+				wanted->infos[i].size =
+				    get_ramsize() * (MEG / 512);
+		}
 #endif
 		if (wanted->infos[i].type == PT_swap && swap > wanted->num)
 			swap = i;
@@ -988,7 +1006,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	 * empty disk. Merge the partitions in target range that are already
 	 * there (match with wanted) or are there additionaly.
 	 * The only thing outside of target range that we care for
-	 * is a potential swap partition - we assume one is enough.
+	 * are FAT partitions and a potential swap partition - we assume one
+	 * is enough.
 	 */
 	size_t num = wanted->num;
 	if (parts->parent) {
@@ -998,7 +1017,8 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 			if (!parts->parent->pscheme->get_part_info(
 			    parts->parent, pno, &info))
 				continue;
-			if (info.nat_type->generic_ptype != PT_swap)
+			if (info.nat_type->generic_ptype != PT_swap &&
+			    info.fs_type != FS_MSDOS)
 				continue;
 			merge_part_with_wanted(parts->parent, pno, &info,
 			    wanted, num, true);
@@ -1297,16 +1317,16 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		if ((wanted->infos[i].flags & PUIFLAG_EXTEND) &&
 		    exp_ndx == ~0U)
 			exp_ndx = i;
-		if (wanted->infos[i].flags &
-		    (PUIFLG_JUST_MOUNTPOINT|PUIFLG_IS_OUTER))
+		if (wanted->infos[i].flags & PUIFLG_JUST_MOUNTPOINT)
 			continue;
 		nsp = wanted->infos[i].size;
 		if (wanted->infos[i].cur_part_id != NO_PART) {
 			ps = wanted->infos[i].flags & PUIFLG_IS_OUTER ?
 			    parts->parent : parts;
 
-			if (ps->pscheme->get_part_info(ps,
-			     wanted->infos[i].cur_part_id, &infos[i]))
+			ps->pscheme->get_part_info(ps,
+			     wanted->infos[i].cur_part_id, &infos[i]);
+			if (!(wanted->infos[i].flags & PUIFLG_IS_OUTER))
 				nsp -= infos[i].size;
 		}
 		if (nsp > 0)
@@ -1343,9 +1363,11 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 		    infos[i].start);
 		if (free_size < wanted->infos[i].size)
 			continue;
-		infos[i].size = wanted->infos[i].size;
-		ps->pscheme->set_part_info(ps, want->cur_part_id,
-		    &infos[i], NULL);
+		if (infos[i].size != wanted->infos[i].size) {
+			infos[i].size = wanted->infos[i].size;
+			ps->pscheme->set_part_info(ps, want->cur_part_id,
+			    &infos[i], NULL);
+		}
 	}
 
 	from = -1;
@@ -1488,7 +1510,7 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 	for (i = 0; i < wanted->num; i++) {
 		struct part_usage_info *want = &wanted->infos[i];
 
-		if (want->cur_part_id != NO_PART)
+		if (want->cur_part_id == NO_PART)
 			continue;
 		if (want->flags & PUIFLG_JUST_MOUNTPOINT)
 			continue;
@@ -1522,6 +1544,13 @@ apply_settings_to_partitions(struct pm_devs *p, struct disk_partitions *parts,
 
 		wanted->parts->pscheme->get_part_info(
 		    wanted->parts, new_part_id, &infos[i]);
+		want->parts = wanted->parts;
+		if (want->fs_type != FS_UNUSED &&
+		    want->type != PT_swap) {
+			want->instflags |= PUIINST_NEWFS;
+			if (want->mount[0] != 0)
+				want->instflags |= PUIINST_MOUNT;
+		}
 	}
 
 	/*
