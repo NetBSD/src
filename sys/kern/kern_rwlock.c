@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.61 2020/01/19 18:34:24 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.62 2020/01/20 18:48:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.61 2020/01/19 18:34:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.62 2020/01/20 18:48:15 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -206,10 +206,15 @@ void
 _rw_init(krwlock_t *rw, uintptr_t return_address)
 {
 
+#ifdef LOCKDEBUG
+	/* XXX only because the assembly stubs can't handle RW_NODEBUG */
 	if (LOCKDEBUG_ALLOC(rw, &rwlock_lockops, return_address))
 		rw->rw_owner = 0;
 	else
 		rw->rw_owner = RW_NODEBUG;
+#else
+	rw->rw_owner = 0;
+#endif
 }
 
 void
@@ -645,7 +650,7 @@ rw_downgrade(krwlock_t *rw)
 			RW_ASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 			newown = owner & RW_NODEBUG;
-			newown = RW_READ_INCR | RW_HAS_WAITERS |
+			newown |= RW_READ_INCR | RW_HAS_WAITERS |
 			    RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, newown);
 			turnstile_exit(rw);
