@@ -1,4 +1,4 @@
-.\"	$NetBSD: quota.1,v 1.19 2012/05/12 21:43:09 wiz Exp $
+.\"	$NetBSD: quota.1,v 1.20 2020/01/20 21:30:41 dholland Exp $
 .\"
 .\" Copyright (c) 1983, 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\"	from: @(#)quota.1	8.1 (Berkeley) 6/6/93
 .\"
-.Dd May 12, 2012
+.Dd Jan 20, 2020
 .Dt QUOTA 1
 .Os
 .Sh NAME
@@ -67,14 +67,14 @@ Query the kernel for default user or group quota instead of a specific
 user or group.
 .It Fl g
 Print group quotas for the group of which the user is a member.
-The optional
-.Fl u
-flag is equivalent to the default.
 .It Fl h
 Numbers are displayed in a human readable format.
 .It Fl q
 Print a more terse message, containing only information
 on file systems where usage is over quota.
+.It Fl u
+Print user quotas.
+This is the default.
 .It Fl v
 .Nm
 will display quotas on file systems where no storage is allocated.
