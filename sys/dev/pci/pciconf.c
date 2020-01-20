@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.44 2020/01/18 22:17:34 thorpej Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.45 2020/01/20 10:35:42 skrll Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.44 2020/01/18 22:17:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.45 2020/01/20 10:35:42 skrll Exp $");
 
 #include "opt_pci.h"
 
@@ -1195,7 +1195,7 @@ mem_region_ok64(struct extent * const ex __used_only_lp64)
 	 */
 	u_long addr64;
 	if (ex->ex_end > (1UL << 32) &&
-	    extent_alloc_subregion(ex, (1UL << 32),
+	    extent_alloc_subregion(ex, MAX((1UL << 32), ex->ex_start),
 				   ex->ex_end,
 				   1 /* size */,
 				   1 /* alignment */,
