@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.60 2019/12/16 02:50:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.61 2020/01/20 07:19:04 msaitoh Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -780,6 +780,7 @@ const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 /* For NetBSD */
 void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
     int, size_t);
+void ixgbe_jcl_destroy(struct adapter *,  struct rx_ring *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"
