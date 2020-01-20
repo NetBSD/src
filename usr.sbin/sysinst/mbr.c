@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.28 2020/01/18 18:39:55 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.29 2020/01/20 21:26:35 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1017,6 +1017,10 @@ mbr_map_part_type(unsigned int t)
 	switch (t) {
 	case MBR_PTYPE_FAT32:
 	case MBR_PTYPE_FAT32L:
+	case MBR_PTYPE_FAT16S:
+	case MBR_PTYPE_FAT16B:
+	case MBR_PTYPE_FAT16L:
+	case MBR_PTYPE_FAT12:
 	case MBR_PTYPE_FT_FAT32:
 	case MBR_PTYPE_FT_FAT32_EXT:
 		return PT_FAT;
