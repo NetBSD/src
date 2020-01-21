@@ -1,4 +1,4 @@
-/*	$NetBSD: tty.c,v 1.285 2020/01/07 08:52:47 skrll Exp $	*/
+/*	$NetBSD: tty.c,v 1.286 2020/01/21 15:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.285 2020/01/07 08:52:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tty.c,v 1.286 2020/01/21 15:25:38 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -2582,7 +2582,7 @@ ttygetinfo(struct tty *tp, int fromsig, char *buf, size_t bufsz)
 				}
 				msg = "found only zombie processes\n";
 			}
-			if (fromsig &&
+			if (pick && fromsig &&
 			    (SIGACTION_PS(pick->p_sigacts, SIGINFO).sa_flags &
 			    SA_NOKERNINFO)) {
 				mutex_exit(pick->p_lock);
