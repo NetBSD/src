@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.93.2.2 2020/01/21 15:05:51 martin Exp $	*/
+/*	$NetBSD: ums.c,v 1.93.2.3 2020/01/21 19:54:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.93.2.2 2020/01/21 15:05:51 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.93.2.3 2020/01/21 19:54:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -245,12 +245,6 @@ ums_detach(device_t self, int flags)
 	int rv = 0;
 
 	DPRINTF(("ums_detach: sc=%p flags=%d\n", sc, flags));
-
-	if (sc->sc_alwayson)
-		uhidev_close(&sc->sc_hdev);
-
-	if (sc->sc_alwayson)
-		uhidev_close(&sc->sc_hdev);
 
 	if (sc->sc_alwayson)
 		uhidev_close(&sc->sc_hdev);
