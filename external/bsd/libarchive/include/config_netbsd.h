@@ -1201,7 +1201,7 @@
 /* #undef HAVE__MKGMTIME64 */
 
 /* Define as const if the declaration of iconv() needs const. */
-#define ICONV_CONST const
+#define ICONV_CONST
 
 /* Version number of libarchive as a single integer */
 #define LIBARCHIVE_VERSION_NUMBER "3004000"

@@ -188,6 +188,12 @@ struct fixup_entry {
 	char			*name;
 };
 
+struct symlink_entry {
+	dev_t sc_dev;
+	ino_t sc_ino;
+	struct symlink_entry *sc_next;
+};
+
 /*
  * We use a bitmask to track which operations remain to be done for
  * this file.  In particular, this helps us avoid unnecessary
@@ -223,6 +229,7 @@ struct archive_write_disk {
 	mode_t			 user_umask;
 	struct fixup_entry	*fixup_list;
 	struct fixup_entry	*current_fixup;
+	struct symlink_entry	*symlink_list;
 	int64_t			 user_uid;
 	int			 skip_file_set;
 	int64_t			 skip_file_dev;
@@ -253,6 +260,8 @@ struct archive_write_disk {
 	struct archive_entry	*entry; /* Entry being extracted. */
 	char			*name; /* Name of entry, possibly edited. */
 	struct archive_string	 _name_data; /* backing store for 'name' */
+	char			*tmpname; /* Temporary name * */
+	struct archive_string	 _tmpname_data; /* backing store for 'tmpname' */
 	/* Tasks remaining for this object. */
 	int			 todo;
 	/* Tasks deferred until end-of-archive. */
@@ -356,8 +365,9 @@ struct archive_write_disk {
 static int	la_opendirat(int, const char *);
 static void	fsobj_error(int *, struct archive_string *, int, const char *,
 		    const char *);
-static int	check_symlinks_fsobj(char *, int *, struct archive_string *,
-		    int);
+static int	check_symlinks_fsobj(struct archive_write_disk *, char *, int *,
+		    struct archive_string *, int);
+
 static int	check_symlinks(struct archive_write_disk *);
 static int	create_filesystem_object(struct archive_write_disk *);
 static struct fixup_entry *current_fixup(struct archive_write_disk *,
@@ -405,6 +415,63 @@ static ssize_t	_archive_write_disk_data(struct archive *, const void *,
 		    size_t);
 static ssize_t	_archive_write_disk_data_block(struct archive *, const void *,
 		    size_t, int64_t);
+
+static int
+symlink_add(struct archive_write_disk *a, const struct stat *st)
+{
+	struct symlink_entry *sc = malloc(sizeof(*sc));
+	if (sc == NULL)
+		return errno;
+	sc->sc_next = a->symlink_list;
+	a->symlink_list = sc->sc_next;
+	sc->sc_dev = st->st_dev;
+	sc->sc_ino = st->st_ino;
+	return 0;
+}
+
+static int
+symlink_find(struct archive_write_disk *a, const struct stat *st)
+{
+	for (struct symlink_entry *sc = a->symlink_list; sc; sc = sc->sc_next)
+		if (st->st_ino == sc->sc_ino && st->st_dev == sc->sc_dev)
+			return 1;
+	return 0;
+}
+
+static void
+symlink_free(struct archive_write_disk *a)
+{
+	for (struct symlink_entry *sc = a->symlink_list; sc; ) {
+		struct symlink_entry *next = sc->sc_next;
+		free(sc);
+		sc = next;
+	}
+	a->symlink_list = NULL;
+}
+
+static int
+la_mktemp(struct archive_write_disk *a)
+{
+	int oerrno, fd;
+	mode_t mode;
+
+	archive_string_empty(&a->_tmpname_data);
+	archive_string_sprintf(&a->_tmpname_data, "%sXXXXXX", a->name);
+	a->tmpname = a->_tmpname_data.s;
+
+	fd = __archive_mktempx(NULL, &a->_tmpname_data);
+	if (fd == -1)
+		return -1;
+
+	mode = a->mode & 0777 & ~a->user_umask;
+	if (fchmod(fd, mode) == -1) {
+		oerrno = errno;
+		close(fd);
+		errno = oerrno;
+		return -1;
+	}
+	return fd;
+}
 
 static int
 la_opendirat(int fd, const char *path) {
@@ -1826,6 +1893,14 @@ finish_metadata:
 	if (a->fd >= 0) {
 		close(a->fd);
 		a->fd = -1;
+		if (a->tmpname) {
+			if (rename(a->tmpname, a->name) == -1) {
+				archive_set_error(&a->archive, errno,
+				    "rename failed");
+				ret = ARCHIVE_FATAL;
+			}
+			a->tmpname = NULL;
+		}
 	}
 	/* If there's an entry, we can release it now. */
 	archive_entry_free(a->entry);
@@ -2103,17 +2178,28 @@ restore_entry(struct archive_write_disk *a)
 		}
 
 		if (!S_ISDIR(a->st.st_mode)) {
-			/* A non-dir is in the way, unlink it. */
 			if (a->flags & ARCHIVE_EXTRACT_CLEAR_NOCHANGE_FFLAGS)
 				(void)clear_nochange_fflags(a);
-			if (unlink(a->name) != 0) {
-				archive_set_error(&a->archive, errno,
-				    "Can't unlink already-existing object");
-				return (ARCHIVE_FAILED);
+
+			if ((a->flags & ARCHIVE_EXTRACT_ATOMIC) &&
+			    S_ISREG(a->st.st_mode)) {
+				/* Use a temporary file to extract */
+				if ((a->fd = la_mktemp(a)) == -1)
+					return ARCHIVE_FAILED;
+				a->pst = NULL;
+				en = 0;
+			} else {
+				/* A non-dir is in the way, unlink it. */
+				if (unlink(a->name) != 0) {
+					archive_set_error(&a->archive, errno,
+					    "Can't unlink already-existing "
+					    "object");
+					return (ARCHIVE_FAILED);
+				}
+				a->pst = NULL;
+				/* Try again. */
+				en = create_filesystem_object(a);
 			}
-			a->pst = NULL;
-			/* Try again. */
-			en = create_filesystem_object(a);
 		} else if (!S_ISDIR(a->mode)) {
 			/* A dir is in the way of a non-dir, rmdir it. */
 			if (a->flags & ARCHIVE_EXTRACT_CLEAR_NOCHANGE_FFLAGS)
@@ -2200,7 +2286,7 @@ create_filesystem_object(struct archive_write_disk *a)
 			 */
 			return (EPERM);
 		}
-		r = check_symlinks_fsobj(linkname_copy, &error_number,
+		r = check_symlinks_fsobj(a, linkname_copy, &error_number,
 		    &error_string, a->flags);
 		if (r != ARCHIVE_OK) {
 			archive_set_error(&a->archive, error_number, "%s",
@@ -2215,6 +2301,8 @@ create_filesystem_object(struct archive_write_disk *a)
 		}
 		free(linkname_copy);
 		archive_string_free(&error_string);
+		if (a->flags & ARCHIVE_EXTRACT_ATOMIC)
+			unlink(a->name);
 		r = link(linkname, a->name) ? errno : 0;
 		/*
 		 * New cpio and pax formats allow hardlink entries
@@ -2253,7 +2341,18 @@ create_filesystem_object(struct archive_write_disk *a)
 	linkname = archive_entry_symlink(a->entry);
 	if (linkname != NULL) {
 #if HAVE_SYMLINK
-		return symlink(linkname, a->name) ? errno : 0;
+		int error = symlink(linkname, a->name) ? errno : 0;
+		if (error == 0) {
+#ifdef HAVE_LSTAT
+			r = lstat(a->name, &st);
+#else
+			r = la_stat(a->name, &st);
+#endif
+			if (r == -1)
+				return errno;
+			error = symlink_add(a, &st);
+		}
+		return error;
 #else
 		return (EPERM);
 #endif
@@ -2288,6 +2387,7 @@ create_filesystem_object(struct archive_write_disk *a)
 		/* POSIX requires that we fall through here. */
 		/* FALLTHROUGH */
 	case AE_IFREG:
+		a->tmpname = NULL;
 		a->fd = open(a->name,
 		    O_WRONLY | O_CREAT | O_EXCL | O_BINARY | O_CLOEXEC, mode);
 		__archive_ensure_cloexec_flag(a->fd);
@@ -2431,6 +2531,7 @@ _archive_write_disk_close(struct archive *_a)
 		p = next;
 	}
 	a->fixup_list = NULL;
+	symlink_free(a);
 	return (ret);
 }
 
@@ -2449,6 +2550,7 @@ _archive_write_disk_free(struct archive *_a)
 	archive_write_disk_set_user_lookup(&a->archive, NULL, NULL, NULL);
 	archive_entry_free(a->entry);
 	archive_string_free(&a->_name_data);
+	archive_string_free(&a->_tmpname_data);
 	archive_string_free(&a->archive.error_string);
 	archive_string_free(&a->path_safe);
 	a->archive.magic = 0;
@@ -2596,8 +2698,8 @@ fsobj_error(int *a_eno, struct archive_string *a_estr,
  * ARCHIVE_OK if there are none, otherwise puts an error in errmsg.
  */
 static int
-check_symlinks_fsobj(char *path, int *a_eno, struct archive_string *a_estr,
-    int flags)
+check_symlinks_fsobj(struct archive_write_disk *a, char *path, int *a_eno,
+    struct archive_string *a_estr, int flags)
 {
 #if !defined(HAVE_LSTAT) && \
     !(defined(HAVE_OPENAT) && defined(HAVE_FSTATAT) && defined(HAVE_UNLINKAT))
@@ -2727,7 +2829,18 @@ check_symlinks_fsobj(char *path, int *a_eno, struct archive_string *a_estr,
 				head = tail + 1;
 			}
 		} else if (S_ISLNK(st.st_mode)) {
+			/*
+			 * We maintain a cache containing symlinks we
+			 * created, so that we don't trust them.
+			 */
+			int preexisting = !symlink_find(a, &st);
 			if (last) {
+				if (preexisting &&
+				    (flags & ARCHIVE_EXTRACT_UNLINK) == 0) {
+					/* Leave it alone */
+					res = ARCHIVE_OK;
+					break;
+				}
 				/*
 				 * Last element is symlink; remove it
 				 * so we can overwrite it with the
@@ -2782,7 +2895,7 @@ check_symlinks_fsobj(char *path, int *a_eno, struct archive_string *a_estr,
 					break;
 				}
 				tail[0] = c;
-			} else if ((flags &
+			} else if (preexisting || (flags &
 			    ARCHIVE_EXTRACT_SECURE_SYMLINKS) == 0) {
 				/*
 				 * We are not the last element and we want to
@@ -2892,7 +3005,7 @@ check_symlinks(struct archive_write_disk *a)
 	int error_number;
 	int rc;
 	archive_string_init(&error_string);
-	rc = check_symlinks_fsobj(a->name, &error_number, &error_string,
+	rc = check_symlinks_fsobj(a, a->name, &error_number, &error_string,
 	    a->flags);
 	if (rc != ARCHIVE_OK) {
 		archive_set_error(&a->archive, error_number, "%s",
