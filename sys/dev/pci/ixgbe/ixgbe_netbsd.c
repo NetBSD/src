@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_netbsd.c,v 1.11 2020/01/20 07:19:04 msaitoh Exp $ */
+/* $NetBSD: ixgbe_netbsd.c,v 1.12 2020/01/21 14:55:55 msaitoh Exp $ */
 /*
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -225,10 +225,10 @@ ixgbe_jcl_destroy(struct adapter *adapter, struct rx_ring *rxr)
 {
 	ixgbe_extmem_head_t *eh = &rxr->jcl_head;
 
-	/* Free all dmamem */
-	ixgbe_jcl_freeall(adapter, rxr);
-
 	if (eh->eh_initialized) {
+		/* Free all dmamem */
+		ixgbe_jcl_freeall(adapter, rxr);
+
 		mutex_destroy(&eh->eh_mtx);
 		eh->eh_initialized = false;
 	}
