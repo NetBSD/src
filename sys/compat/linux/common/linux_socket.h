@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.h,v 1.22 2014/01/27 19:19:15 njoly Exp $	*/
+/*	$NetBSD: linux_socket.h,v 1.22.4.1 2020/01/21 19:19:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -181,13 +181,13 @@ struct linux_cmsghdr {
 /* Linux either uses this, or  &((cmsg)->__cmsg_data) */
 #define LINUX_CMSG_DATA(cmsg)	\
 	((u_char *)((struct linux_cmsghdr *)(cmsg) + 1))
-#define	LINUX_CMSG_NXTHDR(mhdr, cmsg)	\
-	((((char *)(cmsg) + LINUX_CMSG_ALIGN((cmsg)->cmsg_len) + \
-			    sizeof(*(cmsg))) > \
+#define LINUX_CMSG_NXTHDR(mhdr, ucmsg, kcmsg)	\
+	((((char *)(ucmsg) + LINUX_CMSG_ALIGN((kcmsg)->cmsg_len) + \
+			    sizeof(*(ucmsg))) > \
 	    (((char *)(mhdr)->msg_control) + (mhdr)->msg_controllen)) ? \
 	    (struct linux_cmsghdr *)NULL : \
-	    (struct linux_cmsghdr *)((char *)(cmsg) + \
-	        LINUX_CMSG_ALIGN((cmsg)->cmsg_len)))
+	    (struct linux_cmsghdr *)((char *)(ucmsg) + \
+	        LINUX_CMSG_ALIGN((kcmsg)->cmsg_len)))
 /* This the number of bytes removed from each item (excl. final padding) */
 #define LINUX_CMSG_ALIGN_DELTA	\
 	(CMSG_ALIGN(sizeof(struct cmsghdr)) - sizeof(struct linux_cmsghdr))
