@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.62 2020/01/20 18:48:15 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.63 2020/01/21 20:29:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.62 2020/01/20 18:48:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.63 2020/01/21 20:29:51 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -791,4 +791,27 @@ rw_owner(wchan_t obj)
 		return NULL;
 
 	return (void *)(owner & RW_THREAD);
+}
+
+/*
+ * rw_owner_running:
+ *
+ *	Return true if a RW lock is unheld, or write held and the owner is
+ *	running on a CPU.  For the pagedaemon.
+ */
+bool
+rw_owner_running(const krwlock_t *rw)
+{
+#ifdef MULTIPROCESSOR
+	uintptr_t owner;
+	bool rv;
+
+	kpreempt_disable();
+	owner = rw->rw_owner;
+	rv = (owner & RW_THREAD) == 0 || rw_oncpu(owner);
+	kpreempt_enable();
+	return rv;
+#else
+	return rw_owner(rw) == curlwp;
+#endif
 }
