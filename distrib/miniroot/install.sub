@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.48.2.1 2019/11/17 07:04:35 martin Exp $
+#	$NetBSD: install.sub,v 1.48.2.2 2020/01/21 11:30:28 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -429,7 +429,7 @@ configure_ifs() {
 
 	# Get netmask
 	resp=""		# force one iteration
-	while [ -n "${resp}" ]; do
+	while [ -z "${resp}" ]; do
 		echo -n "Netmask? [$_interface_mask] "
 		getresp "$_interface_mask"
 		_interface_mask=$resp
@@ -1531,7 +1531,7 @@ unmount_fs()
 		_fstab=$1
 	fi
 
-	if [ ! \( -f $_fstab -a -s $_fstab \) ]; then
+	if ! [ -f "${_fstab}" ] || ! [ -s "${_fstab}" ]; then
 		echo "fstab empty" > /dev/tty
 		return
 	fi
