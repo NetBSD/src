@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.60 2020/01/07 09:57:10 skrll Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.61 2020/01/21 04:59:47 skrll Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.60 2020/01/07 09:57:10 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.61 2020/01/21 04:59:47 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -309,7 +309,7 @@ cpu_kpreempt_enter(uintptr_t where, int s)
 void
 cpu_kpreempt_exit(uintptr_t where)
 {
-	atomic_and_uint(&curcpu()->ci_astpending, (unsigned int)~__BIT(1));
+	atomic_and_uint(&curcpu()->ci_astpending, ~__BIT(1));
 }
 
 bool
