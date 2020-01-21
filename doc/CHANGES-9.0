@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.160 2020/01/21 15:55:41 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.161 2020/01/21 16:46:07 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7723,6 +7723,11 @@ distrib/miniroot/install.sub			1.50,1.51
 	Avoid obsolete test operators not available in SMALL sh
 	configurations.
 	[tsutsui, ticket #622]
+
+sys/arch/x86/x86/cpu.c:				1.181
+
+	kern/54815: avoid crash when booting in single CPU mode.
+	[pgoyette, ticket #623]
 
 sys/arch/aarch64/aarch64/bus_space_asm_generic.S 1.2
 
