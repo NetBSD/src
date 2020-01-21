@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1237.2.2 2019/11/16 16:48:25 martin Exp $
+#	$NetBSD: files,v 1.1237.2.3 2020/01/21 10:39:58 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1490,6 +1490,10 @@ attach	ipmi at ipmibus
 device	dwhdmi: edid, videomode, drmkms, drmkms_i2c
 file	dev/ic/dw_hdmi.c		dwhdmi
 file	dev/ic/dw_hdmi_phy.c		dwhdmi
+
+# Analogix DisplayPort
+device	anxdp: edid, videomode, drmkms, drmkms_i2c
+file	dev/ic/anx_dp.c			anxdp
 
 #
 # File systems
