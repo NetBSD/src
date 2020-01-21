@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.162 2020/01/21 17:25:03 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.163 2020/01/21 18:24:01 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7854,4 +7854,9 @@ sys/conf/files					1.1254
 
 	COMPAT_43 requires COMPAT_60
 	[pgoyette, ticket #639]
+
+sys/dev/dm/device-mapper.c			1.60
+
+	dm(8) doesn't cause problems on suspend, don't block it.
+	[maya, ticket #641]
 
