@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.130.2.8 2019/03/09 17:10:19 martin Exp $	*/
+/*	$NetBSD: cpu.c,v 1.130.2.9 2020/01/21 16:47:24 martin Exp $	*/
 
 /*-
  * Copyright (c) 2000-2012 NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.8 2019/03/09 17:10:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.130.2.9 2020/01/21 16:47:24 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_mpbios.h"		/* for MPDEBUG */
@@ -534,6 +534,16 @@ cpu_rescan(device_t self, const char *ifattr, const int *locators)
 	struct cpu_softc *sc = device_private(self);
 	struct cpufeature_attach_args cfaa;
 	struct cpu_info *ci = sc->sc_info;
+
+	/*
+	 * If we booted with RB_MD1 to disable multiprocessor, the
+	 * auto-configuration data still contains the additional
+	 * CPUs.   But their initialization was mostly bypassed
+	 * during attach, so we have to make sure we don't look at
+	 * their featurebus info, since it wasn't retrieved.
+	 */
+	if (ci == NULL)
+		return 0;
 
 	memset(&cfaa, 0, sizeof(cfaa));
 	cfaa.ci = ci;
