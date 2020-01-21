@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.70 2014/08/10 06:22:06 matt Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.70.2.1 2020/01/21 19:19:17 martin Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.70 2014/08/10 06:22:06 matt Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.70.2.1 2020/01/21 19:19:17 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -432,6 +432,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
 
+	memset(&ki, 0, sizeof(ki));
 	fill_kproc2(p, &ki, false);
 	calcru(p, NULL, NULL, NULL, &rt);
 
