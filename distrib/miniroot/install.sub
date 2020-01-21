@@ -1,5 +1,5 @@
 #!/bin/sh
-#	$NetBSD: install.sub,v 1.48.2.2 2020/01/21 11:30:28 martin Exp $
+#	$NetBSD: install.sub,v 1.48.2.3 2020/01/21 15:26:46 martin Exp $
 #
 # Copyright (c) 1996 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -114,8 +114,7 @@ cutlast () {
 	read _a; set -- $_a
 	IFS="$_oifs"
 	if [ "$1" = "" ]; then return; fi
-	while [ "$#" -gt 10 ]; do shift 10; done
-	eval echo \$$#
+	eval echo '"${'"$#"'}"'
 }
 
 firstchar () {
@@ -135,8 +134,7 @@ basename () {
 	IFS="/"
 	set -- $1
 	IFS="$_oifs"
-	while [ "$#" -gt 10 ]; do shift 10; done
-	eval echo \$$#
+	eval echo '"${'"$#"'}"'
 }
 
 dir_has_sets() {
