@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_misc.c,v 1.229.8.1 2017/08/12 04:16:52 snj Exp $	*/
+/*	$NetBSD: linux_misc.c,v 1.229.8.2 2020/01/21 19:23:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 1999, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.229.8.1 2017/08/12 04:16:52 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_misc.c,v 1.229.8.2 2020/01/21 19:23:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -349,6 +349,7 @@ linux_sys_uname(struct lwp *l, const struct linux_sys_uname_args *uap, register_
 	} */
 	struct linux_utsname luts;
 
+	memset(&luts, 0, sizeof(luts));
 	strlcpy(luts.l_sysname, linux_sysname, sizeof(luts.l_sysname));
 	strlcpy(luts.l_nodename, hostname, sizeof(luts.l_nodename));
 	strlcpy(luts.l_release, linux_release, sizeof(luts.l_release));
@@ -768,6 +769,7 @@ again:
 		 * we have to worry about touching user memory outside of
 		 * the copyout() call).
 		 */
+		memset(&idb, 0, sizeof(idb));
 		idb.d_ino = bdp->d_fileno;
 		/*
 		 * The old readdir() call misuses the offset and reclen fields.
@@ -1260,6 +1262,7 @@ linux_sys_sysinfo(struct lwp *l, const struct linux_sys_sysinfo_args *uap, regis
 	struct linux_sysinfo si;
 	struct loadavg *la;
 
+	memset(&si, 0, sizeof(si));
 	si.uptime = time_uptime;
 	la = &averunnable;
 	si.loads[0] = la->ldavg[0] * LINUX_SYSINFO_LOADS_SCALE / la->fscale;

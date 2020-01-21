@@ -1,4 +1,4 @@
-/*	$NetBSD: sysv_shm.c,v 1.125.10.1 2019/02/23 07:04:12 martin Exp $	*/
+/*	$NetBSD: sysv_shm.c,v 1.125.10.2 2020/01/21 19:23:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2007 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125.10.1 2019/02/23 07:04:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sysv_shm.c,v 1.125.10.2 2020/01/21 19:23:37 martin Exp $");
 
 #define SYSVSHM
 
@@ -113,6 +113,26 @@ struct shmmap_state {
 #endif
 
 static int shmrealloc(int);
+
+/*
+ * Find the shared memory segment permission by the index. Only used by
+ * compat_linux to implement SHM_STAT.
+ */
+int
+shm_find_segment_perm_by_index(int index, struct ipc_perm *perm)
+{
+	struct shmid_ds *shmseg;
+
+	mutex_enter(&shm_lock);
+	if (index < 0 || index >= shminfo.shmmni) {
+		mutex_exit(&shm_lock);
+		return EINVAL;
+	}
+	shmseg = &shmsegs[index];
+	memcpy(perm, &shmseg->shm_perm, sizeof(*perm));
+	mutex_exit(&shm_lock);
+	return 0;
+}
 
 /*
  * Find the shared memory segment by the identifier.
