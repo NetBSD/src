@@ -1,4 +1,4 @@
-/*      $NetBSD: procfs_linux.c,v 1.73.4.1 2019/09/10 16:00:19 martin Exp $      */
+/*      $NetBSD: procfs_linux.c,v 1.73.4.2 2020/01/21 18:12:54 martin Exp $      */
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.73.4.1 2019/09/10 16:00:19 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_linux.c,v 1.73.4.2 2020/01/21 18:12:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -378,6 +378,7 @@ procfs_do_pid_statm(struct lwp *curl, struct lwp *l,
 	mutex_enter(p->p_lock);
 
 	/* retrieve RSS size */
+	memset(&ki, 0, sizeof(ki));
 	fill_kproc2(p, &ki, false);
 
 	mutex_exit(p->p_lock);
@@ -435,6 +436,7 @@ procfs_do_pid_stat(struct lwp *curl, struct lwp *l,
 	mutex_enter(proc_lock);
 	mutex_enter(p->p_lock);
 
+	memset(&ki, 0, sizeof(ki));
 	fill_kproc2(p, &ki, false);
 	calcru(p, NULL, NULL, NULL, &rt);
 

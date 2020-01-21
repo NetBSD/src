@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_socket.c,v 1.138.6.4 2019/04/19 09:12:58 martin Exp $	*/
+/*	$NetBSD: linux_socket.c,v 1.138.6.5 2020/01/21 18:12:54 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998, 2008 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.4 2019/04/19 09:12:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_socket.c,v 1.138.6.5 2020/01/21 18:12:54 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -561,6 +561,8 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 				case LINUX_SCM_CREDENTIALS:
 					/* no native equivalent, just drop it */
+					if (control != mtod(ctl_mbuf, void *))
+						free(control, M_MBUF);
 					m_free(ctl_mbuf);
 					ctl_mbuf = NULL;
 					msg.msg_control = NULL;
@@ -583,14 +585,15 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 			/* Check the buffer is big enough */
 			if (__predict_false(cidx + cspace > clen)) {
 				u_int8_t *nc;
+				size_t nclen;
 
-				clen = cidx + cspace;
-				if (clen >= PAGE_SIZE) {
+				nclen = cidx + cspace;
+				if (nclen >= PAGE_SIZE) {
 					error = EINVAL;
 					goto done;
 				}
 				nc = realloc(clen <= MLEN ? NULL : control,
-						clen, M_TEMP, M_WAITOK);
+						nclen, M_TEMP, M_WAITOK);
 				if (!nc) {
 					error = ENOMEM;
 					goto done;
@@ -599,6 +602,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 					/* Old buffer was in mbuf... */
 					memcpy(nc, control, cidx);
 				control = nc;
+				clen = nclen;
 			}
 
 			/* Copy header */
@@ -620,7 +624,7 @@ linux_sys_sendmsg(struct lwp *l, const struct linux_sys_sendmsg_args *uap, regis
 
 			resid -= LINUX_CMSG_ALIGN(l_cmsg.cmsg_len);
 			cidx += cspace;
-		} while ((l_cc = LINUX_CMSG_NXTHDR(&msg, l_cc)) && resid > 0);
+		} while ((l_cc = LINUX_CMSG_NXTHDR(&msg, l_cc, &l_cmsg)) && resid > 0);
 
 		/* If we allocated a buffer, attach to mbuf */
 		if (cidx > MLEN) {
@@ -1620,9 +1624,6 @@ linux_get_sa(struct lwp *l, int s, struct sockaddr_big *sb,
 		namelen = sizeof(struct sockaddr_in6);
 		sin6->sin6_scope_id = 0;
 	}
-
-	if (bdom == AF_INET)
-		namelen = sizeof(struct sockaddr_in);
 
 	sb->sb_family = bdom;
 	sb->sb_len = namelen;
