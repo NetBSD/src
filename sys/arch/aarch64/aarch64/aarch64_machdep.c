@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.28.4.1 2019/09/22 10:36:30 martin Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.28.4.2 2020/01/21 11:11:00 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.1 2019/09/22 10:36:30 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.2 2020/01/21 11:11:00 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -100,7 +100,7 @@ vaddr_t physical_end;
 /* filled in before cleaning bss. keep in .data */
 u_long kern_vtopdiff __attribute__((__section__(".data")));
 
-long kernend_extra;	/* extra memory allocated from round_page(_end[]) */
+long kernend_extra;	/* extra physicalmemory allocated from round_page(_end[]) */
 
 /* dump configuration */
 int	cpu_dump(void);
@@ -221,7 +221,7 @@ cpu_kernel_vm_init(uint64_t memory_start __unused, uint64_t memory_size __unused
 	pmapboot_protect(L2_TRUNC_BLOCK(kernstart),
 	    L2_TRUNC_BLOCK(data_start), VM_PROT_WRITE);
 	pmapboot_protect(L2_ROUND_BLOCK(rodata_start),
-	    L2_ROUND_BLOCK(kernend + kernend_extra), VM_PROT_EXECUTE);
+	    L2_ROUND_BLOCK(kernend), VM_PROT_EXECUTE);
 
 	aarch64_tlbi_all();
 
@@ -282,7 +282,7 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	kernstart = trunc_page((vaddr_t)__kernel_text);
 	kernend = round_page((vaddr_t)_end);
 	kernstart_l2 = L2_TRUNC_BLOCK(kernstart);
-	kernend_l2 = L2_ROUND_BLOCK(kernend + kernend_extra);
+	kernend_l2 = L2_ROUND_BLOCK(kernend);
 	kernelvmstart = kernend_l2;
 
 #ifdef MODULAR
@@ -336,14 +336,14 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    "physical_start        = 0x%016lx\n"
 	    "kernel_start_phys     = 0x%016lx\n"
 	    "kernel_end_phys       = 0x%016lx\n"
+	    "pagetables_start_phys = 0x%016lx\n"
+	    "pagetables_end_phys   = 0x%016lx\n"
 	    "msgbuf                = 0x%016lx\n"
 	    "physical_end          = 0x%016lx\n"
 	    "VM_MIN_KERNEL_ADDRESS = 0x%016lx\n"
 	    "kernel_start_l2       = 0x%016lx\n"
 	    "kernel_start          = 0x%016lx\n"
 	    "kernel_end            = 0x%016lx\n"
-	    "pagetables            = 0x%016lx\n"
-	    "pagetables_end        = 0x%016lx\n"
 	    "kernel_end_l2         = 0x%016lx\n"
 #ifdef MODULAR
 	    "module_start          = 0x%016lx\n"
@@ -357,14 +357,14 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	    physical_start,
 	    kernstart_phys,
 	    kernend_phys,
+	    round_page(kernend_phys),
+	    round_page(kernend_phys) + kernend_extra,
 	    msgbufaddr,
 	    physical_end,
 	    VM_MIN_KERNEL_ADDRESS,
 	    kernstart_l2,
 	    kernstart,
 	    kernend,
-	    round_page(kernend),
-	    round_page(kernend) + kernend_extra,
 	    kernend_l2,
 #ifdef MODULAR
 	    module_start,
@@ -550,7 +550,7 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 #define IN_RANGE(addr,sta,end)	(((sta) <= (addr)) && ((addr) < (end)))
 
 	*handled = false;
-	if (IN_RANGE(v, kernstart, kernend + kernend_extra)) {
+	if (IN_RANGE(v, kernstart, kernend)) {
 		*handled = true;
 		if ((v < data_start) && (prot & VM_PROT_WRITE))
 			return EFAULT;
