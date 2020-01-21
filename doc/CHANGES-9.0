@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.159 2020/01/09 17:18:43 snj Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.160 2020/01/21 15:55:41 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7655,4 +7655,198 @@ sys/dev/fdt/fdtbus.c				1.31
 	aka sysctl hw.model).  When attaching the first cpu, do not
 	overwrite a cpu model if it already had been set.
 	[martin, ticket #614]
+
+sys/arch/arm/dts/rk3399-pinebook-pro.dts	1.1,1.2
+sys/arch/arm/dts/rk3399-rockpro64.dts		1.10
+sys/arch/arm/rockchip/files.rockchip		1.23
+sys/arch/arm/rockchip/rk3399_cru.c		1.14-1.19
+sys/arch/arm/rockchip/rk_anxdp.c		1.1,1.2
+sys/arch/arm/rockchip/rk_dwhdmi.c		1.4
+sys/arch/arm/rockchip/rk_i2s.c			1.2
+sys/arch/arm/rockchip/rk_pwm.c			1.3
+sys/arch/arm/rockchip/rk_vop.c			1.4,1.5
+sys/arch/evbarm/conf/GENERIC64			1.117,1.118,1.122-1.124,1.126,
+						1.128
+sys/conf/files					1.1247
+sys/dev/fdt/dwcmmc_fdt.c			1.9,1.10
+sys/dev/fdt/fdt_panel.c				1.1,1.2
+sys/dev/fdt/fdt_port.c				1.5,1.6
+sys/dev/fdt/files.fdt				1.49,1.50
+sys/dev/fdt/pwm_backlight.c			1.5,1.6
+sys/dev/fdt/simple_amplifier.c			1.1
+sys/dev/i2c/cwfg.c				1.1
+sys/dev/i2c/es8316ac.c				1.1,1.2
+sys/dev/i2c/files.i2c				1.105,1.107
+sys/dev/i2c/rkpmic.c				1.4,1.5,1.6,1.8
+sys/dev/ic/anx_dp.c				1.1,1.2
+sys/dev/ic/anx_dp.h				1.1,1.2
+sys/dev/ic/dwc_mmc.c				1.18-1.20
+sys/dev/ic/dwc_mmc_var.h			1.9-1.11
+sys/dev/usb/ums.c				1.96 (via patch)
+sys/dev/usb/usbdevs				1.775
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add support for Pinebook Pro.
+	[mrg, ticket #616]
+
+sys/arch/aarch64/aarch64/aarch64_machdep.c	1.37
+sys/arch/aarch64/aarch64/locore.S		1.50
+
+	Fix panic when loading kernel modules.
+	[ryo, ticket #617]
+
+sys/arch/aarch64/aarch64/fault.c		1.11
+sys/arch/aarch64/aarch64/pmap.c			1.61
+
+	Fix mmap()/mprotect() for protection PROT_EXEC (without read
+	or write).
+	[ryo, ticket #618]
+
+sys/dev/audio/audio.c				1.37
+
+	Fix a race condition.
+	[isaki, ticket #619]
+
+sys/dev/audio/audio.c				1.39
+
+	Fix a resource leak on audiobell close.
+	[isaki, ticket #620]
+
+share/man/man9/callout.9			1.29
+
+	Update callout_halt() to match src/sys/sys/callout.h.
+	[sevan, ticket #621]
+
+distrib/miniroot/install.sub			1.50,1.51
+
+	Avoid obsolete test operators not available in SMALL sh
+	configurations.
+	[tsutsui, ticket #622]
+
+sys/arch/aarch64/aarch64/bus_space_asm_generic.S 1.2
+
+	Fix mis-incrementing pointer size in bus_space_read_region_{4,8}.
+	[ryo, ticket #624]
+
+sys/dev/usb/xhci.c				1.115
+
+	kern/54831: avoid crash at boot time.
+	[taca, ticket #625]
+
+share/man/man4/cas.4				1.4
+sys/arch/amd64/conf/GENERIC			1.552
+sys/dev/pci/if_cas.c				1.37
+sys/dev/pci/if_casreg.h				1.2
+sys/dev/pci/if_casvar.h				1.7
+
+	- Fix a bug that the driver sometimes incorrectly attach gentbi(4)
+	  instead of gphyter(4) on non-fiber device.
+	- Add cas(4) to amd64/conf/GENERIC.
+	- Update manual. 
+	[msaitoh, ticket #626]
+
+sys/dev/pci/if_stgereg.h			1.7
+
+	Fix address of STGE_MaxFrameSize.
+	[msaitoh, ticket #627]
+
+sys/dev/usb/if_urlreg.h				1.16
+
+	URL_TCR_IFG0 is not bit 4 but bit3.
+	[msaitoh, ticket #628]
+
+sys/dev/pci/pcireg.h			1.148 (patch)
+sys/dev/pci/pci_subr.c			1.218-1.219 (patch)
+
+	- Fix a bug that the virtual channel extended configuration's
+	  arbitration phase register can't be decoded correctly.
+	- Fix typo.
+	[msaitoh, ticket #629]
+
+
+sys/dev/ic/ahcisata_core.c			1.81
+sys/dev/ic/ahcisatavar.h			1.24
+sys/dev/pci/ahcisata_pci.c			1.57
+
+	kern/54790, kern/54855: disable NCQ on ATI (AMD) SB600/SB700
+	controllers.
+	[simonb, ticket #630]
+
+sys/arch/i386/stand/efiboot/devopen.c		1.10,1.11
+
+	x86 efiboot: Fixed the problem that /EFI/NetBSD/boot.cfg could
+	not be loaded.
+	[nonaka, ticket #631]
+
+distrib/miniroot/install.sub			1.52
+
+	Simplify - modern shells can do ${10} correctly.
+	[kre, ticket #632]
+
+sys/kern/files.kern				(apply patch)
+
+	kern/54874: fix load failure of exec_aout kernel module.
+	[pgoyette, #633]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_vce.c 1.4
+
+	Fix loading TAHITI VCE firmware.
+	[jmcneill, ticket #634]
+
+share/man/man4/pckbd.4				1.22
+sys/dev/hid/hidkbdmap.c				1.2
+sys/dev/pckbport/wskbdmap_mfii.c		1.27
+
+	Support the combination of KB_SWAPCTRLCAPS and UK layout.
+	Note some more layouts that work with KB_SWAPCTRLCAPS.
+	[nia, ticket #635]
+
+sys/arch/sun3/include/pmap.h			1.33
+sys/arch/sun3/include/pmap3.h			1.50
+sys/arch/sun3/include/pmap3x.h			1.30
+
+	PR/54869: fix "modload nfsserver" failure on sun3.
+	[tsutsui, ticket #636]
+
+sys/dev/sun/kbd.c				1.71
+
+	PR/54873: fix panic on sun3 when any key is typed when kbd
+	is not console.
+	[tsutsui, ticket #637]
+
+external/bsd/libarchive/dist/test_utils/test_common.h up to 1.1
+external/bsd/libarchive/dist/test_utils/test_main.c up to 1.1
+external/bsd/libarchive/dist/test_utils/test_utils.c up to 1.1
+external/bsd/libarchive/dist/test_utils/test_utils.h up to 1.1
+external/bsd/libarchive/prepare-import.sh       up to 1.5
+external/bsd/libarchive/dist/libarchive/archive.h up to 1.5
+external/bsd/libarchive/dist/libarchive/archive_private.h up to 1.2
+external/bsd/libarchive/dist/libarchive/archive_util.c up to 1.2
+external/bsd/libarchive/dist/libarchive/archive_write_disk_posix.c up to 1.4
+external/bsd/libarchive/dist/libarchive/test/test_archive_write_set_format_filter_by_ext.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_disk_directory_traversals.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_read_format_7zip.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_sparse_basic.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_disk_secure.c up to 1.3
+external/bsd/libarchive/dist/libarchive/test/test_write_disk_secure744.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_disk_secure746.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_format_zip_file.c up to 1.2
+external/bsd/libarchive/dist/libarchive/test/test_write_format_zip_file_zip64.c up to 1.2
+external/bsd/libarchive/dist/tar/bsdtar.c       up to 1.2
+external/bsd/libarchive/dist/tar/test/test_copy.c up to 1.2
+external/bsd/libarchive/dist/tar/test/test_option_U_upper.c up to 1.2
+external/bsd/libarchive/dist/tar/test/test_symlink_dir.c up to 1.2
+external/bsd/libarchive/include/config_netbsd.h up to 1.11
+external/bsd/libarchive/lib/libarchive/Makefile up to 1.11
+
+	tar(1):
+	- atomic extraction                        
+	- preserve existing symlinks
+	[christos, ticket #638]
+
+sys/conf/files					1.1254
+
+	COMPAT_43 requires COMPAT_60
+	[pgoyette, ticket #639]
 
