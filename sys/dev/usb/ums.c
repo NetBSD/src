@@ -1,4 +1,4 @@
-/*	$NetBSD: ums.c,v 1.93.2.1 2020/01/21 10:39:59 martin Exp $	*/
+/*	$NetBSD: ums.c,v 1.93.2.2 2020/01/21 15:05:51 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2017 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.93.2.1 2020/01/21 10:39:59 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ums.c,v 1.93.2.2 2020/01/21 15:05:51 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -80,10 +80,6 @@ struct ums_softc {
 
 	bool	sc_alwayson;
 
-	bool	sc_alwayson;
-
-	bool	sc_alwayson;
-
 	int	sc_enabled;
 	char	sc_dying;
 };
@@ -113,7 +109,7 @@ int
 ums_match(device_t parent, cfdata_t match, void *aux)
 {
 	struct uhidev_attach_arg *uha = aux;
-	int size, error;
+	int size;
 	void *desc;
 
 	/*
