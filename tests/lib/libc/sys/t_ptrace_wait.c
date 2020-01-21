@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.146 2020/01/08 17:22:40 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.147 2020/01/21 16:46:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.146 2020/01/08 17:22:40 mgorny Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.147 2020/01/21 16:46:07 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -4439,9 +4439,22 @@ access_regs(const char *regset, const char *aux)
 		} else if (strcmp(aux, "pc") == 0) {
 			rgstr = PTRACE_REG_PC(&gpr);
 			DPRINTF("Retrieved %" PRIxREGISTER "\n", rgstr);
-		} else if (strcmp(aux, "set_pc") == 0) {
+		} else if (strstr(aux, "set_pc") != NULL) {
 			rgstr = PTRACE_REG_PC(&gpr);
+			DPRINTF("Retrieved PC %" PRIxREGISTER "\n", rgstr);
+			if (strstr(aux, "0x1") != NULL) {
+				rgstr |= 0x1;
+			} else if (strstr(aux, "0x3") != NULL) {
+				rgstr |= 0x3;
+			} else if (strstr(aux, "0x7") != NULL) {
+				rgstr |= 0x7;
+			}
+			DPRINTF("Set PC %" PRIxREGISTER "\n", rgstr);
 			PTRACE_REG_SET_PC(&gpr, rgstr);
+			if (strcmp(aux, "set_pc") != 0) {
+				/* This call can fail with EINVAL or similar. */
+				ptrace(PT_SETREGS, child, &gpr, 0);
+			}
 		} else if (strcmp(aux, "sp") == 0) {
 			rgstr = PTRACE_REG_SP(&gpr);
 			DPRINTF("Retrieved %" PRIxREGISTER "\n", rgstr);
@@ -4451,7 +4464,7 @@ access_regs(const char *regset, const char *aux)
 		} else if (strcmp(aux, "setregs") == 0) {
 			DPRINTF("Call SETREGS for the child process\n");
 			SYSCALL_REQUIRE(
-			    ptrace(PT_GETREGS, child, &gpr, 0) != -1);
+			    ptrace(PT_SETREGS, child, &gpr, 0) != -1);
 		}
 	}
 #endif
@@ -4475,13 +4488,31 @@ access_regs(const char *regset, const char *aux)
 	    "without signal to be sent\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+	if (strstr(aux, "unaligned") != NULL) {
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
 
-	validate_status_exited(status, exitval);
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
+		    child);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+		validate_status_signaled(status, SIGKILL, 0);
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_FAILURE(ECHILD,
+		    wpid = TWAIT_GENERIC(child, &status, 0));
+	} else {
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+		validate_status_exited(status, exitval);
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_FAILURE(ECHILD,
+		    wpid = TWAIT_GENERIC(child, &status, 0));
+	}
 }
 
 #define ACCESS_REGS(test, regset, aux)					\
@@ -4506,6 +4537,9 @@ ACCESS_REGS(access_regs3, "regs", "set_pc")
 ACCESS_REGS(access_regs4, "regs", "sp")
 ACCESS_REGS(access_regs5, "regs", "intrv")
 ACCESS_REGS(access_regs6, "regs", "setregs")
+ACCESS_REGS(access_regs_set_unaligned_pc_0x1, "regs", "set_pc+unaligned+0x1")
+ACCESS_REGS(access_regs_set_unaligned_pc_0x3, "regs", "set_pc+unaligned+0x3")
+ACCESS_REGS(access_regs_set_unaligned_pc_0x7, "regs", "set_pc+unaligned+0x7")
 #endif
 #if defined(HAVE_FPREGS)
 ACCESS_REGS(access_fpregs1, "fpregs", "getfpregs")
@@ -8414,6 +8448,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs4);
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs5);
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs6);
+
+	ATF_TP_ADD_TC(tp, access_regs_set_unaligned_pc_0x1);
+	ATF_TP_ADD_TC(tp, access_regs_set_unaligned_pc_0x3);
+	ATF_TP_ADD_TC(tp, access_regs_set_unaligned_pc_0x7);
 
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, access_fpregs1);
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, access_fpregs2);
