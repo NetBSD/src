@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.103.2.6 2019/11/20 16:49:58 martin Exp $
+#	$NetBSD: GENERIC64,v 1.103.2.7 2020/01/21 10:39:58 martin Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -60,6 +60,7 @@ makeoptions	DTS="
 	rk3399-gru-scarlet-kd.dts
 	rk3399-nanopc-t4.dts
 	rk3399-nanopi-m4.dts
+	rk3399-pinebook-pro.dts
 	rk3399-puma-haikou.dts
 	rk3399-roc-pc.dts
 	rk3399-rock-pi-4.dts
@@ -177,7 +178,7 @@ pseudo-device	tprof
 cpufreqdt*	at cpu?
 
 # Power State Coordination Interface (PSCI)
-psci*		at fdt?
+psci*		at fdt? pass 0
 
 fclock*		at fdt? pass 1
 ffclock*	at fdt? pass 1
@@ -354,6 +355,8 @@ as3722pmic*	at iic?
 as3722reg*	at as3722pmic?
 axppmic*	at iic?			# X-Powers AXP Power Management IC
 axpreg*		at axppmic?
+cwfg*		at iic?			# CellWise CW2015 Fuel Gauge IC
+es8316ac*	at iic?			# Everest Semi ES8316 Audio CODEC
 fan53555reg*	at iic?			# FAN53555 / SY82x regulator
 max77620pmic*	at iic?
 pcf8563rtc*	at iic?			# PCF8563 RTC
@@ -376,7 +379,7 @@ tegrartc*	at fdt?			# NVIDIA Tegra RTC
 bcmsdhost*	at fdt?			# Broadcom BCM283x SD Host Interface
 dwcmmc*		at fdt?			# Designware SD/MMC
 mesongxmmc*	at fdt?			# Amlogic Meson GX eMMC/SD/SDIO controller
-mmcpwrseq*	at fdt?			# Simple MMC power sequence provider
+mmcpwrseq*	at fdt? pass 5		# Simple MMC power sequence provider
 rkemmcphy*	at fdt?			# Rockchip eMMC PHY
 sdhc*		at fdt?			# SD Host Controller Interface
 sunximmc*	at fdt?			# Allwinner SD/MMC
@@ -414,6 +417,7 @@ options 	HDAUDIOVERBOSE
 options 	HDAUDIO_ENABLE_HDMI
 options 	HDAUDIO_ENABLE_DISPLAYPORT
 ausoc*		at fdt?			# Simple SoC audio card
+simpleamp*	at fdt?			# Simple amplifier
 spdiftx*	at fdt?			# SPDIF transmitter
 rki2s*		at fdt?			# Rockchip I2S/PCM
 sunxicodec*	at fdt?			# Allwinner audio codec
@@ -430,8 +434,10 @@ tegracec0	at fdt?			# NVIDIA Tegra HDMI CEC
 hdmicec*	at hdmicecbus?
 
 # Display
+anxdp*		at fdt?			# Analogix-based (e)DP
 anxedp*		at iic?			# Analogix eDP TX
 dispcon*	at fdt?			# Display connector devices
+panel*		at fdt?			# Display panels
 dwhdmi* 	at fdt?			# Designware HDMI TX
 rkdrm*		at fdt? pass 5		# Rockchip DRM master
 rkfb*		at rkdrm?		# Rockchip DRM framebuffer

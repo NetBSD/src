@@ -1,4 +1,4 @@
-/* $NetBSD: rk_vop.c,v 1.2.2.4 2020/01/09 11:16:53 martin Exp $ */
+/* $NetBSD: rk_vop.c,v 1.2.2.5 2020/01/21 10:39:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2.2.4 2020/01/09 11:16:53 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_vop.c,v 1.2.2.5 2020/01/21 10:39:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -128,12 +128,6 @@ struct rk_vop_crtc {
 	struct rk_vop_softc	*sc;
 };
 
-struct rk_vop_encoder {
-	struct drm_encoder	base;
-	struct rk_vop_softc	*sc;
-	enum vop_ep_type	ep_type;
-};
-
 struct rk_vop_softc {
 	device_t		sc_dev;
 	bus_space_tag_t		sc_bst;
@@ -143,7 +137,6 @@ struct rk_vop_softc {
 	struct clk		*sc_dclk;
 
 	struct rk_vop_crtc	sc_crtc;
-	struct rk_vop_encoder	sc_encoder[VOP_NEP];
 
 	struct fdt_device_ports	sc_ports;
 
@@ -151,7 +144,6 @@ struct rk_vop_softc {
 };
 
 #define	to_rk_vop_crtc(x)	container_of(x, struct rk_vop_crtc, base)
-#define	to_rk_vop_encoder(x)	container_of(x, struct rk_vop_encoder, base)
 
 #define	RD4(sc, reg)				\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
@@ -244,7 +236,14 @@ rk_vop_mode_do_set_base(struct drm_crtc *crtc, struct drm_framebuffer *fb,
 
 	uint64_t paddr = (uint64_t)sfb->obj->dmamap->dm_segs[0].ds_addr;
 
+	paddr += y * sfb->base.pitches[0];
+	paddr += x * drm_format_plane_cpp(sfb->base.pixel_format, 0);
+
 	KASSERT((paddr & ~0xffffffff) == 0);
+
+	const uint32_t vir = __SHIFTIN(sfb->base.pitches[0] / 4,
+	    WIN0_VIR_STRIDE);
+	WR4(sc, VOP_WIN0_VIR, vir);
 
 	/* Framebuffer start address */
 	WR4(sc, VOP_WIN0_YRGB_MST, (uint32_t)paddr);
@@ -306,14 +305,19 @@ rk_vop_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	uint32_t val;
 	u_int lb_mode;
 	int error;
+	u_int pol;
+	int connector_type = 0;
+	struct drm_connector * connector;
 
 	const u_int hactive = adjusted_mode->hdisplay;
 	const u_int hsync_len = adjusted_mode->hsync_end - adjusted_mode->hsync_start;
 	const u_int hback_porch = adjusted_mode->htotal - adjusted_mode->hsync_end;
+	const u_int hfront_porch = adjusted_mode->hsync_start - adjusted_mode->hdisplay;
 
 	const u_int vactive = adjusted_mode->vdisplay;
 	const u_int vsync_len = adjusted_mode->vsync_end - adjusted_mode->vsync_start;
 	const u_int vback_porch = adjusted_mode->vtotal - adjusted_mode->vsync_end;
+	const u_int vfront_porch = adjusted_mode->vsync_start - adjusted_mode->vdisplay;
 
 	error = clk_set_rate(sc->sc_dclk, adjusted_mode->clock * 1000);
 	if (error != 0)
@@ -333,9 +337,6 @@ rk_vop_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 
 	WR4(sc, VOP_WIN0_COLOR_KEY, 0);
 
-	val = __SHIFTIN(hactive, WIN0_VIR_STRIDE);
-	WR4(sc, VOP_WIN0_VIR, val);
-
 	if (adjusted_mode->hdisplay > 2560)
 		lb_mode = WIN0_LB_MODE_RGB_3840X2;
 	else if (adjusted_mode->hdisplay > 1920)
@@ -351,6 +352,73 @@ rk_vop_mode_set(struct drm_crtc *crtc, struct drm_display_mode *mode,
 	WR4(sc, VOP_WIN0_CTRL, val);
 
 	rk_vop_mode_do_set_base(crtc, old_fb, x, y, 0);
+
+	pol = DSP_DCLK_POL;
+	if ((adjusted_mode->flags & DRM_MODE_FLAG_PHSYNC) != 0)
+		pol |= DSP_HSYNC_POL;
+	if ((adjusted_mode->flags & DRM_MODE_FLAG_PVSYNC) != 0)
+		pol |= DSP_VSYNC_POL;
+
+	drm_for_each_connector(connector, crtc->dev) {
+		if ((connector->encoder) == NULL)
+			continue;
+		if (connector->encoder->crtc == crtc) {
+			connector_type = connector->connector_type;
+			break;
+		}
+	}
+
+	switch (connector_type) {
+	case DRM_MODE_CONNECTOR_HDMIA:
+		sc->sc_conf->set_polarity(sc, VOP_EP_HDMI, pol);
+		break;
+	case DRM_MODE_CONNECTOR_eDP:
+		sc->sc_conf->set_polarity(sc, VOP_EP_EDP, pol);
+		break;
+	}
+
+	val = RD4(sc, VOP_SYS_CTRL);
+	val &= ~VOP_STANDBY_EN;
+	val &= ~(MIPI_OUT_EN|EDP_OUT_EN|HDMI_OUT_EN|RGB_OUT_EN);
+
+	switch (connector_type) {
+	case DRM_MODE_CONNECTOR_HDMIA:
+		val |= HDMI_OUT_EN;
+		break;
+	case DRM_MODE_CONNECTOR_eDP:
+		val |= EDP_OUT_EN;
+		break;
+	}
+	WR4(sc, VOP_SYS_CTRL, val);
+
+	val = RD4(sc, VOP_DSP_CTRL0);
+	val &= ~DSP_OUT_MODE;
+	val |= __SHIFTIN(sc->sc_conf->out_mode, DSP_OUT_MODE);
+	WR4(sc, VOP_DSP_CTRL0, val);
+
+	val = __SHIFTIN(hsync_len + hback_porch, DSP_HACT_ST_POST) |
+	      __SHIFTIN(hsync_len + hback_porch + hactive, DSP_HACT_END_POST);
+	WR4(sc, VOP_POST_DSP_HACT_INFO, val);
+
+	val = __SHIFTIN(hsync_len + hback_porch, DSP_HACT_ST) |
+	      __SHIFTIN(hsync_len + hback_porch + hactive, DSP_HACT_END);
+	WR4(sc, VOP_DSP_HACT_ST_END, val);
+
+	val = __SHIFTIN(hsync_len, DSP_HTOTAL) |
+	      __SHIFTIN(hsync_len + hback_porch + hactive + hfront_porch, DSP_HS_END);
+	WR4(sc, VOP_DSP_HTOTAL_HS_END, val);
+
+	val = __SHIFTIN(vsync_len + vback_porch, DSP_VACT_ST_POST) |
+	      __SHIFTIN(vsync_len + vback_porch + vactive, DSP_VACT_END_POST);
+	WR4(sc, VOP_POST_DSP_VACT_INFO, val);
+
+	val = __SHIFTIN(vsync_len + vback_porch, DSP_VACT_ST) |
+	      __SHIFTIN(vsync_len + vback_porch + vactive, DSP_VACT_END);
+	WR4(sc, VOP_DSP_VACT_ST_END, val);
+
+	val = __SHIFTIN(vsync_len, DSP_VTOTAL) |
+	      __SHIFTIN(vsync_len + vback_porch + vactive + vfront_porch, DSP_VS_END);
+	WR4(sc, VOP_DSP_VTOTAL_VS_END, val);
 
 	return 0;
 }
@@ -416,132 +484,11 @@ static const struct drm_crtc_helper_funcs rk_vop_crtc_helper_funcs = {
 	.commit = rk_vop_commit,
 };
 
-static void
-rk_vop_encoder_destroy(struct drm_encoder *encoder)
-{
-}
-
-static const struct drm_encoder_funcs rk_vop_encoder_funcs = {
-	.destroy = rk_vop_encoder_destroy,
-};
-
-static void
-rk_vop_encoder_dpms(struct drm_encoder *encoder, int mode)
-{
-}
-
-static bool
-rk_vop_encoder_mode_fixup(struct drm_encoder *encoder,
-    const struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
-{
-        return true;
-}
-
-static void
-rk_vop_encoder_mode_set(struct drm_encoder *encoder,
-    struct drm_display_mode *mode, struct drm_display_mode *adjusted_mode)
-{
-	struct rk_vop_encoder *rkencoder = to_rk_vop_encoder(encoder);
-	struct rk_vop_softc * const sc = rkencoder->sc;
-	uint32_t val;
-	u_int pol;
-
-	const u_int hactive = adjusted_mode->hdisplay;
-	const u_int hfront_porch = adjusted_mode->hsync_start - adjusted_mode->hdisplay;
-	const u_int hsync_len = adjusted_mode->hsync_end - adjusted_mode->hsync_start;
-	const u_int hback_porch = adjusted_mode->htotal - adjusted_mode->hsync_end;
-
-	const u_int vactive = adjusted_mode->vdisplay;
-	const u_int vfront_porch = adjusted_mode->vsync_start - adjusted_mode->vdisplay;
-	const u_int vsync_len = adjusted_mode->vsync_end - adjusted_mode->vsync_start;
-	const u_int vback_porch = adjusted_mode->vtotal - adjusted_mode->vsync_end;
-
-	pol = DSP_DCLK_POL;
-	if ((adjusted_mode->flags & DRM_MODE_FLAG_PHSYNC) != 0)
-		pol |= DSP_HSYNC_POL;
-	if ((adjusted_mode->flags & DRM_MODE_FLAG_PVSYNC) != 0)
-		pol |= DSP_VSYNC_POL;
-	sc->sc_conf->set_polarity(sc, rkencoder->ep_type, pol);
-
-	val = RD4(sc, VOP_SYS_CTRL);
-	val &= ~VOP_STANDBY_EN;
-	val &= ~(MIPI_OUT_EN|EDP_OUT_EN|HDMI_OUT_EN|RGB_OUT_EN);
-	switch (rkencoder->ep_type) {
-	case VOP_EP_MIPI:
-	case VOP_EP_MIPI1:
-		val |= MIPI_OUT_EN;
-		break;
-	case VOP_EP_EDP:
-	case VOP_EP_DP:
-		val |= EDP_OUT_EN;
-		break;
-	case VOP_EP_HDMI:
-		val |= HDMI_OUT_EN;
-		break;
-	default:
-		break;
-	}
-	WR4(sc, VOP_SYS_CTRL, val);
-
-	val = RD4(sc, VOP_DSP_CTRL0);
-	val &= ~DSP_OUT_MODE;
-	val |= __SHIFTIN(sc->sc_conf->out_mode, DSP_OUT_MODE);
-	WR4(sc, VOP_DSP_CTRL0, val);
-
-	val = __SHIFTIN(hsync_len + hback_porch, DSP_HACT_ST_POST) |
-	      __SHIFTIN(hsync_len + hback_porch + hactive, DSP_HACT_END_POST);
-	WR4(sc, VOP_POST_DSP_HACT_INFO, val);
-
-	val = __SHIFTIN(hsync_len + hback_porch, DSP_HACT_ST) |
-	      __SHIFTIN(hsync_len + hback_porch + hactive, DSP_HACT_END);
-	WR4(sc, VOP_DSP_HACT_ST_END, val);
-
-	val = __SHIFTIN(hsync_len, DSP_HTOTAL) |
-	      __SHIFTIN(hsync_len + hback_porch + hactive + hfront_porch, DSP_HS_END);
-	WR4(sc, VOP_DSP_HTOTAL_HS_END, val);
-
-	val = __SHIFTIN(vsync_len + vback_porch, DSP_VACT_ST_POST) |
-	      __SHIFTIN(vsync_len + vback_porch + vactive, DSP_VACT_END_POST);
-	WR4(sc, VOP_POST_DSP_VACT_INFO, val);
-
-	val = __SHIFTIN(vsync_len + vback_porch, DSP_VACT_ST) |
-	      __SHIFTIN(vsync_len + vback_porch + vactive, DSP_VACT_END);
-	WR4(sc, VOP_DSP_VACT_ST_END, val);
-
-	val = __SHIFTIN(vsync_len, DSP_VTOTAL) |
-	      __SHIFTIN(vsync_len + vback_porch + vactive + vfront_porch, DSP_VS_END);
-	WR4(sc, VOP_DSP_VTOTAL_VS_END, val);
-}
-
-static void
-rk_vop_encoder_prepare(struct drm_encoder *encoder)
-{
-}
-
-static void
-rk_vop_encoder_commit(struct drm_encoder *encoder)
-{
-	struct rk_vop_encoder *rkencoder = to_rk_vop_encoder(encoder);
-	struct rk_vop_softc * const sc = rkencoder->sc;
-
-	/* Commit settings */
-	WR4(sc, VOP_REG_CFG_DONE, REG_LOAD_EN);
-}
-
-static const struct drm_encoder_helper_funcs rk_vop_encoder_helper_funcs = {
-	.dpms = rk_vop_encoder_dpms,
-	.mode_fixup = rk_vop_encoder_mode_fixup,
-	.prepare = rk_vop_encoder_prepare,
-	.commit = rk_vop_encoder_commit,
-	.mode_set = rk_vop_encoder_mode_set,
-};
-
 static int
 rk_vop_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 {
 	struct rk_vop_softc * const sc = device_private(dev);
 	struct drm_device *ddev;
-	u_int encoder_type;
 
 	if (!activate)
 		return EINVAL;
@@ -563,27 +510,10 @@ rk_vop_ep_activate(device_t dev, struct fdt_endpoint *ep, bool activate)
 	}
 
 	const u_int ep_index = fdt_endpoint_index(ep);
-	switch (ep_index) {
-	case VOP_EP_MIPI:
-	case VOP_EP_MIPI1:
-		encoder_type = DRM_MODE_ENCODER_DSI;
-		break;
-	case VOP_EP_HDMI:
-	case VOP_EP_EDP:
-	case VOP_EP_DP:
-		encoder_type = DRM_MODE_ENCODER_TMDS;
-		break;
-	default:
+	if (ep_index >= VOP_NEP) {
 		DRM_ERROR("endpoint index %d out of range\n", ep_index);
 		return ENXIO;
 	}
-
-	sc->sc_encoder[ep_index].sc = sc;
-	sc->sc_encoder[ep_index].ep_type = ep_index;
-	sc->sc_encoder[ep_index].base.possible_crtcs = 1 << drm_crtc_index(&sc->sc_crtc.base);
-	drm_encoder_init(ddev, &sc->sc_encoder[ep_index].base, &rk_vop_encoder_funcs,
-	    encoder_type);
-	drm_encoder_helper_add(&sc->sc_encoder[ep_index].base, &rk_vop_encoder_helper_funcs);
 
 	return fdt_endpoint_activate(ep, activate);
 }
@@ -592,15 +522,8 @@ static void *
 rk_vop_ep_get_data(device_t dev, struct fdt_endpoint *ep)
 {
 	struct rk_vop_softc * const sc = device_private(dev);
-	const u_int ep_index = fdt_endpoint_index(ep);
 
-	if (ep_index >= VOP_NEP)
-		return NULL;
-
-	if (sc->sc_encoder[ep_index].sc == NULL)
-		return NULL;
-
-	return &sc->sc_encoder[ep_index].base;
+	return &sc->sc_crtc.base;
 }
 
 static int
@@ -667,7 +590,7 @@ rk_vop_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_ports.dp_ep_activate = rk_vop_ep_activate;
 	sc->sc_ports.dp_ep_get_data = rk_vop_ep_get_data;
-	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_ENCODER);
+	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_CRTC);
 
 	const int port_phandle = of_find_firstchild_byname(phandle, "port");
 	if (port_phandle > 0)

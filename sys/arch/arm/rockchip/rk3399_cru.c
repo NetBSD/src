@@ -1,4 +1,4 @@
-/* $NetBSD: rk3399_cru.c,v 1.8.4.2 2019/11/20 16:49:58 martin Exp $ */
+/* $NetBSD: rk3399_cru.c,v 1.8.4.3 2020/01/21 10:39:59 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.8.4.2 2019/11/20 16:49:58 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: rk3399_cru.c,v 1.8.4.3 2020/01/21 10:39:59 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -181,6 +181,7 @@ static const struct rk_cru_cpu_rate armclkb_rates[] = {
         RK3399_CPUB_RATE(2088000000, 1, 10, 10),
         RK3399_CPUB_RATE(2040000000, 1, 10, 10),
         RK3399_CPUB_RATE(2016000000, 1, 9, 9),
+        RK3399_CPUB_RATE(2000000000, 1, 9, 9),
         RK3399_CPUB_RATE(1992000000, 1, 9, 9),
         RK3399_CPUB_RATE(1896000000, 1, 9, 9),
         RK3399_CPUB_RATE(1800000000, 1, 8, 8),
@@ -349,10 +350,11 @@ static const char * armclkb_parents[] = { "clk_core_b_lpll_src", "clk_core_b_bpl
 static const char * mux_clk_tsadc_parents[] = { "xin24m", "xin32k" };
 static const char * mux_pll_src_cpll_gpll_parents[] = { "cpll", "gpll" };
 static const char * mux_pll_src_cpll_gpll_npll_parents[] = { "cpll", "gpll", "npll" };
-static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "npll" };
+static const char * mux_pll_src_cpll_gpll_ppll_parents[] = { "cpll", "gpll", "ppll" };
 static const char * mux_pll_src_cpll_gpll_upll_parents[] = { "cpll", "gpll", "upll" };
 static const char * mux_pll_src_cpll_gpll_npll_24m_parents[] = { "cpll", "gpll", "npll", "xin24m" };
 static const char * mux_pll_src_cpll_gpll_npll_ppll_upll_24m_parents[] = { "cpll", "gpll", "npll", "ppll", "upll", "xin24m" };
+static const char * mux_pll_src_npll_cpll_gpll_parents[] = { "npll", "cpll", "gpll" };
 static const char * mux_pll_src_vpll_cpll_gpll_parents[] = { "vpll", "cpll", "gpll" };
 static const char * mux_pll_src_vpll_cpll_gpll_npll_parents[] = { "vpll", "cpll", "gpll", "npll" };
 static const char * mux_aclk_perilp0_parents[] = { "cpll_aclk_perilp0_src", "gpll_aclk_perilp0_src" };
@@ -875,6 +877,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     RK_COMPOSITE_SET_RATE_PARENT),
 	RK_GATE(RK3399_ACLK_VOP0, "aclk_vop0", "aclk_vop0_pre", CLKGATE_CON(28), 3),
 	RK_GATE(RK3399_HCLK_VOP0, "hclk_vop0", "hclk_vop0_pre", CLKGATE_CON(28), 2),
+	RK_COMPOSITE_FRAC(RK3399_DCLK_VOP0_FRAC, "dclk_vop0_frac", "dclk_vop0_div",
+			  CLKSEL_CON(106),	/* frac_reg */
+			  0),
 	RK_MUX(RK3399_DCLK_VOP0, "dclk_vop0", mux_dclk_vop0_parents, CLKSEL_CON(49), __BIT(11)),
 
 	/* VOP1 */
@@ -900,6 +905,9 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     RK_COMPOSITE_SET_RATE_PARENT),
 	RK_GATE(RK3399_ACLK_VOP1, "aclk_vop1", "aclk_vop1_pre", CLKGATE_CON(28), 7),
 	RK_GATE(RK3399_HCLK_VOP1, "hclk_vop1", "hclk_vop1_pre", CLKGATE_CON(28), 6),
+	RK_COMPOSITE_FRAC(RK3399_DCLK_VOP1_FRAC, "dclk_vop1_frac", "dclk_vop1_div",
+			  CLKSEL_CON(107),	/* frac_reg */
+			  0),
 	RK_MUX(RK3399_DCLK_VOP1, "dclk_vop1", mux_dclk_vop1_parents, CLKSEL_CON(50), __BIT(11)),
 
 	/* VIO */
@@ -990,6 +998,27 @@ static struct rk_cru_clk rk3399_cru_clks[] = {
 		     CLKGATE_CON(8),	/* gate_reg */
 		     __BIT(12),		/* gate_mask */
 		     RK_COMPOSITE_SET_RATE_PARENT),
+
+	/* eDP */
+	RK_COMPOSITE(RK3399_PCLK_EDP, "pclk_edp", mux_pll_src_cpll_gpll_parents,
+		     CLKSEL_CON(44),	/* muxdiv_reg */
+		     __BIT(15),		/* mux_mask */
+		     __BITS(13,8),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(11),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_EDP_NOC, "pclk_edp_noc", "pclk_edp", CLKGATE_CON(32), 12),
+	RK_GATE(RK3399_PCLK_EDP_CTRL, "pclk_edp_ctrl", "pclk_edp", CLKGATE_CON(32), 13),
+
+	RK_COMPOSITE(RK3399_SCLK_DP_CORE, "clk_dp_core", mux_pll_src_npll_cpll_gpll_parents,
+		     CLKSEL_CON(46),	/* muxdiv_reg */
+		     __BITS(7,6),	/* mux_mask */
+		     __BITS(4,0),	/* div_mask */
+		     CLKGATE_CON(11),	/* gate_reg */
+		     __BIT(8),		/* gate_mask */
+		     0),
+	RK_GATE(RK3399_PCLK_DP_CTRL, "pclk_dp_ctrl", "pclk_hdcp", CLKGATE_CON(29), 7),
+
 };
 
 static const struct rk3399_init_param {
@@ -999,6 +1028,10 @@ static const struct rk3399_init_param {
 	{ .clk = "clk_i2s0_mux",	.parent = "clk_i2s0_frac" },
 	{ .clk = "clk_i2s1_mux",	.parent = "clk_i2s1_frac" },
 	{ .clk = "clk_i2s2_mux",	.parent = "clk_i2s2_frac" },
+	{ .clk = "dclk_vop0_div",	.parent = "gpll" },
+	{ .clk = "dclk_vop1_div",	.parent = "gpll" },
+	{ .clk = "dclk_vop0",		.parent = "dclk_vop0_frac" },
+	{ .clk = "dclk_vop1",		.parent = "dclk_vop1_frac" },
 };
 
 static void
