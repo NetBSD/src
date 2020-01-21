@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.130 2020/01/19 01:25:03 thorpej Exp $
+# $NetBSD: mi,v 1.131 2020/01/21 02:37:16 pgoyette Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -94,6 +94,8 @@
 ./@MODULEDIR@/compat_43/compat_43.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_50				base-kernel-modules	kmod
 ./@MODULEDIR@/compat_50/compat_50.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/compat_50_quota			base-kernel-modules	kmod
+./@MODULEDIR@/compat_50_quota/compat_50_quota.kmod base-kernel-modules	kmod
 ./@MODULEDIR@/compat_60				base-kernel-modules	kmod
 ./@MODULEDIR@/compat_60/compat_60.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/compat_70				base-kernel-modules	kmod
