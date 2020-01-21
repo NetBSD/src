@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.196 2020/01/12 22:03:23 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.197 2020/01/21 20:31:57 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
@@ -196,6 +196,7 @@ struct lwp {
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
 	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
 	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
+	volatile void	*l_ld_wanted;	/* !: lock currently wanted by LWP */
 	uintptr_t	l_rwcallsite;	/* !: rwlock actual callsite */
 	int		l_tcgen;	/* !: for timecounter removal */
 
