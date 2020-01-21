@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.143 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.144 2020/01/21 15:25:38 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.143 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.144 2020/01/21 15:25:38 christos Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -61,6 +61,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.143 2019/12/31 13:07:13 ad Exp $")
 struct vm_map *module_map;
 const char *module_machine;
 char	module_base[MODULE_BASE_SIZE];
+
+#ifndef MODULE_NOAUTOLOAD
+#define MODULE_NOAUTOLOAD "compat_linux* filemon"
+#endif
 
 struct modlist        module_list = TAILQ_HEAD_INITIALIZER(module_list);
 struct modlist        module_builtins = TAILQ_HEAD_INITIALIZER(module_builtins);
@@ -94,6 +98,7 @@ u_int		module_autotime = 10;
 u_int		module_gen = 1;
 static kcondvar_t module_thread_cv;
 static kmutex_t module_thread_lock;
+static kmutex_t module_noautoload_lock;
 static int	module_thread_ticks;
 int (*module_load_vfs_vec)(const char *, int, bool, module_t *,
 			   prop_dictionary_t *) = (void *)eopnotsupp;
@@ -121,12 +126,14 @@ static module_t	*module_lookup(const char *);
 static void	module_enqueue(module_t *);
 
 static bool	module_merge_dicts(prop_dictionary_t, const prop_dictionary_t);
+static bool	module_allow_autoload(const char *);
 
 static void	sysctl_module_setup(void);
 static int	sysctl_module_autotime(SYSCTLFN_PROTO);
 
 static void	module_callback_load(struct module *);
 static void	module_callback_unload(struct module *);
+static void	module_noautoload(const char *);
 
 #define MODULE_CLASS_MATCH(mi, modclass) \
 	((modclass) == MODULE_CLASS_ANY || (modclass) == (mi)->mi_class)
@@ -413,6 +420,7 @@ module_init(void)
 	}
 	cv_init(&module_thread_cv, "mod_unld");
 	mutex_init(&module_thread_lock, MUTEX_DEFAULT, IPL_NONE);
+	mutex_init(&module_noautoload_lock, MUTEX_DEFAULT, IPL_NONE);
 	TAILQ_INIT(&modcblist);
 
 #ifdef MODULAR	/* XXX */
@@ -445,6 +453,7 @@ module_init(void)
 	module_netbsd = module_newmodule(MODULE_SOURCE_KERNEL);
 	module_netbsd->mod_refcnt = 1;
 	module_netbsd->mod_info = &module_netbsd_modinfo;
+	module_noautoload(MODULE_NOAUTOLOAD);
 }
 
 /*
@@ -504,6 +513,67 @@ sysctl_module_autotime(SYSCTLFN_ARGS)
 	return (0);
 }
 
+static char noautoload_buf[1024];
+static char *noautoload_ebuf;
+
+static void
+module_noautoload(const char *pat)
+{
+	const unsigned char *p = (const unsigned char *)pat;
+	unsigned char *q = (unsigned char *)noautoload_buf;
+
+	mutex_enter(&module_noautoload_lock);
+
+	*q = '\0';
+	while (*p) {
+		while (*p && isspace(*p)) p++;
+		while (*p && !isspace(*p)) *q++ = *p++;
+		*q++ = '\0';
+	}
+	noautoload_ebuf = q;
+
+	mutex_exit(&module_noautoload_lock);
+}
+
+static bool
+module_allow_autoload(const char *name)
+{
+	const char *p;
+
+	mutex_enter(&module_noautoload_lock);
+	for (p = noautoload_buf; p < noautoload_ebuf; p += strlen(p) + 1) {
+		if (pmatch(name, p, NULL) > 0) {
+			mutex_exit(&module_noautoload_lock);
+			return false;
+		}
+	}
+	mutex_exit(&module_noautoload_lock);
+	return true;
+}
+
+static int
+sysctl_module_noautoload(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error;
+	char newbuf[sizeof(noautoload_buf)];
+
+	node = *rnode;
+	node.sysctl_data = newbuf;
+	node.sysctl_size = sizeof(newbuf);
+
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+
+	if (strlen(newbuf) + 1 > sizeof(noautoload_buf))
+		return ENOSPC;
+
+	module_noautoload(newbuf);
+
+	return 0;
+}
+
 static void
 sysctl_module_setup(void)
 {
@@ -542,6 +612,12 @@ sysctl_module_setup(void)
 		CTLTYPE_INT, "autotime",
 		SYSCTL_DESCR("Auto-unload delay"),
 		sysctl_module_autotime, 0, &module_autotime, 0,
+		CTL_CREATE, CTL_EOL);
+	sysctl_createv(&module_sysctllog, 0, &node, NULL,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "noautoload",
+		SYSCTL_DESCR("List of module patterns not to be autoloaded"),
+		sysctl_module_noautoload, 0, NULL, 0,
 		CTL_CREATE, CTL_EOL);
 }
 
@@ -677,6 +753,9 @@ int
 module_autoload(const char *filename, modclass_t modclass)
 {
 	int error;
+
+	if (!module_allow_autoload(filename))
+		return EACCES;
 
 	kernconfig_lock();
 
