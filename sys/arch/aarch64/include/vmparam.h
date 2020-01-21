@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.8 2018/10/28 10:18:34 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.9 2020/01/21 10:54:11 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -165,10 +165,8 @@
 #define VM_PHYSSEG_MAX		64              /* XXX */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#define VM_NFREELIST		3
+#define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_FIRST4GB	1
-#define VM_FREELIST_HIGHMEM	2
 
 #elif defined(__arm__)
 
