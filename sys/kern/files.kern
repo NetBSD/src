@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.15 2017/05/19 00:01:33 pgoyette Exp $
+#	$NetBSD: files.kern,v 1.15.2.1 2020/01/21 16:59:57 martin Exp $
 
 #
 # kernel sources
@@ -14,7 +14,8 @@ file	kern/bufq_priocscan.c		bufq_priocscan
 file	kern/bufq_readprio.c		bufq_readprio | new_bufq_strategy
 file	kern/core_elf32.c		exec_elf32
 file	kern/core_elf64.c		exec_elf64
-file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff
+file	kern/core_netbsd.c		exec_aout | exec_coff | exec_ecoff |
+					modular
 file	kern/cnmagic.c			kern
 file	kern/exec_aout.c		exec_aout
 file	kern/exec_ecoff.c		exec_ecoff
