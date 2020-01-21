@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_flakey.c,v 1.2 2020/01/05 08:11:10 tkusumi Exp $      */
+/*        $NetBSD: dm_target_flakey.c,v 1.3 2020/01/21 16:27:53 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_flakey.c,v 1.2 2020/01/05 08:11:10 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_flakey.c,v 1.3 2020/01/21 16:27:53 tkusumi Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -107,7 +107,7 @@ dm_target_flakey_modcmd(modcmd_t cmd, void *arg)
 		dmt->strategy = &dm_target_flakey_strategy;
 		dmt->sync = &dm_target_flakey_sync;
 		dmt->destroy = &dm_target_flakey_destroy;
-		dmt->upcall = &dm_target_flakey_upcall;
+		//dmt->upcall = &dm_target_flakey_upcall;
 		dmt->secsize = &dm_target_flakey_secsize;
 
 		r = dm_target_insert(dmt);
@@ -494,12 +494,14 @@ out:
 	return 0;
 }
 
+#if 0
 int
 dm_target_flakey_upcall(dm_table_entry_t *table_en, struct buf *bp)
 {
 
 	return 0;
 }
+#endif
 
 int
 dm_target_flakey_secsize(dm_table_entry_t *table_en, unsigned int *secsizep)

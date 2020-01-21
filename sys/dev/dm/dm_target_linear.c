@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_linear.c,v 1.36 2019/12/28 15:38:16 tkusumi Exp $      */
+/*        $NetBSD: dm_target_linear.c,v 1.37 2020/01/21 16:27:53 tkusumi Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.36 2019/12/28 15:38:16 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_linear.c,v 1.37 2020/01/21 16:27:53 tkusumi Exp $");
 
 /*
  * This file implements initial version of device-mapper linear target.
@@ -163,6 +163,7 @@ out:
 	return 0;
 }
 
+#if 0
 /*
  * Register upcall device.
  * Linear target doesn't need any upcall devices but other targets like
@@ -174,6 +175,7 @@ dm_target_linear_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif
 
 /*
  * Query physical block size of this target
