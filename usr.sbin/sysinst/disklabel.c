@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.31 2020/01/20 21:26:35 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.32 2020/01/21 06:44:40 mrg Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -123,12 +123,14 @@ disklabel_cylinder_size(const struct disk_partitions *arg)
 	return parts->l.d_secpercyl;
 }
 
+#ifdef NO_DISKLABEL_BOOT
 static bool
 disklabel_non_bootable(const char *disk)
 {
 
 	return false;
 }
+#endif
 
 static struct disk_partitions *
 disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
