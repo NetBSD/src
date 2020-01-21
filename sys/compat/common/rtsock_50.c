@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_50.c,v 1.4.10.1 2018/06/09 14:38:18 martin Exp $	*/
+/*	$NetBSD: rtsock_50.c,v 1.4.10.2 2020/01/21 16:51:27 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,14 +61,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.4.10.1 2018/06/09 14:38:18 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_50.c,v 1.4.10.2 2020/01/21 16:51:27 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
+#include "opt_modular.h"
 #endif
 
-#if defined(COMPAT_14) && !defined(COMPAT_50)
-#define	COMPAT_50	1	/* 1.4 needs 5.0 */
+#if (defined(MODULAR) || defined(COMPAT_14)) && !defined(COMPAT_50)
+#define	COMPAT_50	1	/* MODULAR and 1.4 need 5.0 */
 #endif
 
 #if defined(COMPAT_50)
