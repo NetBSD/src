@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_machdep.c,v 1.51.6.2 2019/04/05 07:48:05 martin Exp $ */
+/*	$NetBSD: linux_machdep.c,v 1.51.6.3 2020/01/21 18:12:54 martin Exp $ */
 
 /*-
  * Copyright (c) 2005 Emmanuel Dreyfus, all rights reserved.
@@ -33,7 +33,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.51.6.2 2019/04/05 07:48:05 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_machdep.c,v 1.51.6.3 2020/01/21 18:12:54 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -261,7 +261,6 @@ linux_sendsig(const ksiginfo_t *ksi, const sigset_t *mask)
 int
 linux_sys_modify_ldt(struct lwp *l, const struct linux_sys_modify_ldt_args *v, register_t *retval)
 {
-	printf("linux_sys_modify_ldt\n");
 	return 0;
 }
 
