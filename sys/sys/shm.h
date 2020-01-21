@@ -1,4 +1,4 @@
-/*	$NetBSD: shm.h,v 1.48 2009/01/19 19:39:41 christos Exp $	*/
+/*	$NetBSD: shm.h,v 1.48.48.1 2020/01/21 19:23:38 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -176,6 +176,7 @@ void	shminit(void);
 void	shmfork(struct vmspace *, struct vmspace *);
 void	shmexit(struct vmspace *);
 int	shmctl1(struct lwp *, int, int, struct shmid_ds *);
+int	shm_find_segment_perm_by_index(int, struct ipc_perm *);
 
 #define SYSCTL_FILL_SHM(src, dst) do { \
 	SYSCTL_FILL_PERM((src).shm_perm, (dst).shm_perm); \

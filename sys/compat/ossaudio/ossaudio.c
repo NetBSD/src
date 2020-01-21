@@ -1,4 +1,4 @@
-/*	$NetBSD: ossaudio.c,v 1.68 2013/09/19 18:50:36 christos Exp $	*/
+/*	$NetBSD: ossaudio.c,v 1.68.10.1 2020/01/21 19:23:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.68 2013/09/19 18:50:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ossaudio.c,v 1.68.10.1 2020/01/21 19:23:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -968,7 +968,7 @@ getdevinfo(file_t *fp)
 	}
 	for(i = 0; i < NETBSD_MAXDEVS; i++) {
 		mi.index = i;
-		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) < 0)
+		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) != 0)
 			break;
 		switch(mi.type) {
 		case AUDIO_MIXER_VALUE:
@@ -996,7 +996,7 @@ getdevinfo(file_t *fp)
 	}
 	for(i = 0; i < NETBSD_MAXDEVS; i++) {
 		mi.index = i;
-		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) < 0)
+		if (ioctlf(fp, AUDIO_MIXER_DEVINFO, &mi) != 0)
 			break;
 		if (strcmp(mi.label.name, AudioNsource) != 0)
 			continue;

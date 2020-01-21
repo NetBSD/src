@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_ipc.c,v 1.55.42.1 2019/02/23 07:04:12 martin Exp $	*/
+/*	$NetBSD: linux_ipc.c,v 1.55.42.2 2020/01/21 19:23:37 martin Exp $	*/
 
 /*-
  * Copyright (c) 1995, 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.55.42.1 2019/02/23 07:04:12 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_ipc.c,v 1.55.42.2 2020/01/21 19:23:37 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_sysv.h"
@@ -568,6 +568,7 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 		syscallarg(struct linux_shmid_ds *) buf;
 	} */
 	struct shmid_ds bs;
+	struct ipc_perm perm;
 	struct linux_shmid_ds ls;
 	struct linux_shmid64_ds ls64;
 	struct linux_shminfo64 lsi64;
@@ -582,7 +583,10 @@ linux_sys_shmctl(struct lwp *l, const struct linux_sys_shmctl_args *uap, registe
 
 	switch (cmd & ~LINUX_IPC_64) {
 	case LINUX_SHM_STAT:
-		shmid = IXSEQ_TO_IPCID(shmid, shmsegs[shmid].shm_perm);
+		error = shm_find_segment_perm_by_index(shmid, &perm);
+		if (error)
+			return error;
+		shmid = IXSEQ_TO_IPCID(shmid, perm);
 		retval[0] = shmid;
 		/*FALLTHROUGH*/
 
