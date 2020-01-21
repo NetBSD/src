@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.88 2020/01/07 12:01:32 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.89 2020/01/21 18:14:34 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1850,4 +1850,37 @@ sys/kern/kern_ksyms.c				1.88 (patch)
 	Better deal with symbols removed by unloaded modules when
 	/dev/ksyms has been opened.
 	[pgoyette, ticket #1482]
+
+sys/compat/common/kern_sig_43.c				1.36
+sys/compat/linux/arch/amd64/linux_machdep.c		1.59
+sys/compat/linux/common/linux_fcntl.h			1.18
+sys/compat/linux/common/linux_file64.c			1.62
+sys/compat/linux/common/linux_ipc.c			1.57
+sys/compat/linux/common/linux_misc.c			1.243
+sys/compat/linux/common/linux_signal.c			1.81
+sys/compat/linux/common/linux_socket.c			1.149
+sys/compat/linux/common/linux_socket.h			1.24
+sys/compat/linux/common/linux_statfs.h			1.7
+sys/compat/linux/common/linux_termios.c			1.38
+sys/compat/linux/common/linux_termios.h			1.22
+sys/compat/linux32/common/linux32_dirent.c		1.20
+sys/compat/linux32/common/linux32_ioctl.c		1.14
+sys/compat/linux32/common/linux32_misc.c		1.27
+sys/compat/linux32/common/linux32_signal.c		1.20
+sys/compat/linux32/common/linux32_sysinfo.c		1.8
+sys/compat/linux32/common/linux32_termios.c		1.15
+sys/compat/linux32/common/linux32_utsname.c		1.10
+sys/compat/netbsd32/netbsd32_compat_20.c		1.39
+sys/compat/netbsd32/netbsd32_compat_43.c		1.59
+sys/compat/netbsd32/netbsd32_compat_50.c		1.44
+sys/compat/ossaudio/ossaudio.c				1.75
+sys/kern/sysv_shm.c					1.138
+sys/miscfs/procfs/procfs_linux.c			1.75 (patch)
+sys/sys/shm.h						1.54
+
+	Fix various info leaks, out of bound access, usage of uninitialized
+	values and direct access to userland variables from kernel space
+	and memory leaks in system calls implemented for the compatibility
+	subsystems. 
+	[christos, #1487]
 
