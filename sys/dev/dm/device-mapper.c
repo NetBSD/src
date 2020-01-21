@@ -1,4 +1,4 @@
-/*        $NetBSD: device-mapper.c,v 1.40 2018/10/06 14:59:11 mlelstv Exp $ */
+/*        $NetBSD: device-mapper.c,v 1.40.4.1 2020/01/21 18:22:51 martin Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -241,9 +241,10 @@ dm_match(device_t parent, cfdata_t match, void *aux)
 static void
 dm_attach(device_t parent, device_t self, void *aux)
 {
-	return;
-}
 
+	if (!pmf_device_register(self, NULL, NULL))
+		aprint_error_dev(self, "couldn't establish power handler\n");
+}
 
 /*
  * dm_detach:
@@ -256,6 +257,8 @@ static int
 dm_detach(device_t self, int flags)
 {
 	dm_dev_t *dmv;
+
+	pmf_device_deregister(self);
 
 	/* Detach device from global device list */
 	if ((dmv = dm_dev_detach(self)) == NULL)
