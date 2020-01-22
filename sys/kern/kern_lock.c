@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.165 2020/01/17 20:26:22 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.166 2020/01/22 13:19:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.165 2020/01/17 20:26:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.166 2020/01/22 13:19:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -212,9 +212,10 @@ _kernel_lock(int nlocks)
 	owant = ci->ci_biglock_wanted;
 
 	/*
-	 * Spin until we acquire the lock.  Once we have it, record the
-	 * time spent with lockstat.
+	 * Stay pinned to the CPU and spin until we acquire the lock.  Once
+	 * we have it, record the time spent with lockstat.
 	 */
+	l->l_nopreempt++;
 	LOCKSTAT_ENTER(lsflag);
 	LOCKSTAT_START_TIMER(lsflag, spintime);
 
@@ -238,6 +239,11 @@ _kernel_lock(int nlocks)
 		s = splvm();
 	} while (!__cpu_simple_lock_try(kernel_lock));
 
+	/*
+	 * Got it; not re-enable preemption, although we now can't do a
+	 * preemption as kernel_lock is held!
+	 */
+	l->l_nopreempt--;
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
 	splx(s);

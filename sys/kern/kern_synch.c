@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.336 2020/01/09 16:35:03 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.337 2020/01/22 13:19:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.336 2020/01/09 16:35:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.337 2020/01/22 13:19:33 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -353,8 +353,7 @@ kpreempt(uintptr_t where)
 			break;
 		}
 		s = splsched();
-		if (__predict_false(l->l_blcnt != 0 ||
-		    curcpu()->ci_biglock_wanted != NULL)) {
+		if (__predict_false(l->l_blcnt != 0)) {
 			/* Hold or want kernel_lock, code is not MT safe. */
 			splx(s);
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
@@ -531,6 +530,7 @@ mi_switch(lwp_t *l)
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(kpreempt_disabled());
 	KASSERT(mutex_owned(curcpu()->ci_schedstate.spc_mutex));
+	KASSERTMSG(l->l_blcnt == 0, "kernel_lock leaked");
 
 	kstack_check_magic(l);
 
