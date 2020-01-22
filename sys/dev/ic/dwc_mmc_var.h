@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_var.h,v 1.11 2020/01/01 12:18:18 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_var.h,v 1.12 2020/01/22 23:19:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -69,6 +69,7 @@ struct dwc_mmc_softc {
 	size_t sc_dmabounce_buflen;
 
 	uint32_t sc_intr_card;
+	uint32_t sc_intr_cardmask;
 	struct sdmmc_command *sc_curcmd;
 	bool sc_wait_dma;
 	bool sc_wait_cmd;

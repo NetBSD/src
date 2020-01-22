@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.20 2020/01/01 12:18:18 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.21 2020/01/22 23:19:12 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.20 2020/01/01 12:18:18 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.21 2020/01/22 23:19:12 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.20 2020/01/01 12:18:18 jmcneill Exp $"
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
+#include <sys/proc.h>
 
 #include <dev/sdmmc/sdmmcvar.h>
 #include <dev/sdmmc/sdmmcchip.h>
@@ -532,7 +533,6 @@ dwc_mmc_dma_prepare(struct dwc_mmc_softc *sc, struct sdmmc_command *cmd)
 	val |= DWC_MMC_GCTRL_DMARESET;
 	MMC_WRITE(sc, DWC_MMC_GCTRL, val);
 
-	MMC_WRITE(sc, DWC_MMC_DMAC, DWC_MMC_DMAC_SOFTRESET);
 	if (cmd->c_flags & SCF_CMD_READ)
 		val = DWC_MMC_IDST_RECEIVE_INT;
 	else
@@ -597,7 +597,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (ISSET(sc->sc_flags, DWC_MMC_F_USE_HOLD_REG))
 		cmdval |= DWC_MMC_CMD_USE_HOLD_REG;
 
-	if (cmd->c_opcode == 0)
+	if (cmd->c_opcode == MMC_GO_IDLE_STATE)
 		cmdval |= DWC_MMC_CMD_SEND_INIT_SEQ;
 	if (cmd->c_flags & SCF_RSP_PRESENT)
 		cmdval |= DWC_MMC_CMD_RSP_EXP;
@@ -611,6 +611,14 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	if (cmd->c_datalen > 0) {
 		unsigned int nblks;
 
+		MMC_WRITE(sc, DWC_MMC_GCTRL,
+		    MMC_READ(sc, DWC_MMC_GCTRL) | DWC_MMC_GCTRL_FIFORESET);
+		for (retry = 0; retry < 100; retry++) {
+			if (!(MMC_READ(sc, DWC_MMC_DMAC) & DWC_MMC_DMAC_SOFTRESET))
+				break;
+			kpause("dwcmmcfifo", false, uimax(mstohz(1), 1), &sc->sc_intr_lock);
+		}
+
 		cmdval |= DWC_MMC_CMD_DATA_EXP | DWC_MMC_CMD_WAIT_PRE_OVER;
 		if (!ISSET(cmd->c_flags, SCF_CMD_READ)) {
 			cmdval |= DWC_MMC_CMD_WRITE;
@@ -620,15 +628,22 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 		if (nblks == 0 || (cmd->c_datalen % cmd->c_blklen) != 0)
 			++nblks;
 
-		if (nblks > 1) {
+		if (nblks > 1 && cmd->c_opcode != SD_IO_RW_EXTENDED) {
 			cmdval |= DWC_MMC_CMD_SEND_AUTO_STOP;
 			imask |= DWC_MMC_INT_AUTO_CMD_DONE;
 		} else {
 			imask |= DWC_MMC_INT_DATA_OVER;
 		}
 
+		MMC_WRITE(sc, DWC_MMC_TIMEOUT, 0xffffffff);
 		MMC_WRITE(sc, DWC_MMC_BLKSZ, cmd->c_blklen);
-		MMC_WRITE(sc, DWC_MMC_BYTECNT, nblks * cmd->c_blklen);
+		MMC_WRITE(sc, DWC_MMC_BYTECNT,
+		    nblks > 1 ? nblks * cmd->c_blklen : cmd->c_datalen);
+		if (ISSET(cmd->c_flags, SCF_CMD_READ)) {
+			MMC_WRITE(sc, DWC_MMC_CARDTHRCTL,
+			    __SHIFTIN(cmd->c_blklen, DWC_MMC_CARDTHRCTL_RDTHR) |
+			    DWC_MMC_CARDTHRCTL_RDTHREN);
+		}
 	}
 
 	MMC_WRITE(sc, DWC_MMC_IMASK, imask | sc->sc_intr_card);
@@ -712,19 +727,13 @@ done:
 #ifdef DWC_MMC_DEBUG
 		aprint_error_dev(sc->sc_dev, "i/o error %d\n", cmd->c_error);
 #endif
-		MMC_WRITE(sc, DWC_MMC_GCTRL,
-		    MMC_READ(sc, DWC_MMC_GCTRL) |
-		      DWC_MMC_GCTRL_DMARESET | DWC_MMC_GCTRL_FIFORESET);
-		for (retry = 0; retry < 1000; retry++) {
-			if (!(MMC_READ(sc, DWC_MMC_GCTRL) & DWC_MMC_GCTRL_RESET))
+		MMC_WRITE(sc, DWC_MMC_DMAC, DWC_MMC_DMAC_SOFTRESET);
+		for (retry = 0; retry < 100; retry++) {
+			if (!(MMC_READ(sc, DWC_MMC_DMAC) & DWC_MMC_DMAC_SOFTRESET))
 				break;
-			delay(10);
+			kpause("dwcmmcrst", false, uimax(mstohz(1), 1), NULL);
 		}
-		dwc_mmc_update_clock(sc);
 	}
-
-	MMC_WRITE(sc, DWC_MMC_GCTRL,
-	    MMC_READ(sc, DWC_MMC_GCTRL) | DWC_MMC_GCTRL_FIFORESET);
 }
 
 static void
@@ -736,10 +745,10 @@ dwc_mmc_card_enable_intr(sdmmc_chipset_handle_t sch, int enable)
 	mutex_enter(&sc->sc_intr_lock);
 	imask = MMC_READ(sc, DWC_MMC_IMASK);
 	if (enable)
-		imask |= DWC_MMC_INT_SDIO_INT;
+		imask |= sc->sc_intr_cardmask;
 	else
-		imask &= ~DWC_MMC_INT_SDIO_INT;
-	sc->sc_intr_card = imask & DWC_MMC_INT_SDIO_INT;
+		imask &= ~sc->sc_intr_cardmask;
+	sc->sc_intr_card = imask & sc->sc_intr_cardmask;
 	MMC_WRITE(sc, DWC_MMC_IMASK, imask);
 	mutex_exit(&sc->sc_intr_lock);
 }
@@ -775,6 +784,9 @@ dwc_mmc_init(struct dwc_mmc_softc *sc)
 		val = MMC_READ(sc, DWC_MMC_FIFOTH);
 		sc->sc_fifo_depth = __SHIFTOUT(val, DWC_MMC_FIFOTH_RX_WMARK) + 1;
 	}
+
+	if (sc->sc_intr_cardmask == 0)
+		sc->sc_intr_cardmask = DWC_MMC_INT_SDIO_INT(0);
 
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "dwcmmcirq");
@@ -815,9 +827,9 @@ dwc_mmc_intr(void *priv)
 #endif
 
 	/* Handle SDIO card interrupt */
-	if ((mint & DWC_MMC_INT_SDIO_INT) != 0) {
+	if ((mint & sc->sc_intr_cardmask) != 0) {
 		imask = MMC_READ(sc, DWC_MMC_IMASK);
-		MMC_WRITE(sc, DWC_MMC_IMASK, imask & ~DWC_MMC_INT_SDIO_INT);
+		MMC_WRITE(sc, DWC_MMC_IMASK, imask & ~sc->sc_intr_cardmask);
 		sdmmc_card_intr(sc->sc_sdmmc_dev);
 	}
 
