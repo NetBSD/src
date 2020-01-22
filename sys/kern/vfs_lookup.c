@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.212.4.4 2020/01/19 21:19:25 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.212.4.5 2020/01/22 12:10:46 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.4 2020/01/19 21:19:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.5 2020/01/22 12:10:46 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -954,7 +954,11 @@ lookup_crossmount(struct namei_state *state,
 	    (mp = foundobj->v_mountedhere) != NULL &&
 	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
 		KASSERTMSG(searchdir != foundobj, "same vn %p", searchdir);
-		/* First get the vnode stable. */
+		/*
+		 * First get the vnode stable.  LK_SHARED works brilliantly
+		 * here because almost nothing else wants to lock the
+		 * covered vnode.
+		 */
 		error = vn_lock(foundobj, LK_SHARED);
 		if (error != 0) {
 			vrele(foundobj);
@@ -962,7 +966,7 @@ lookup_crossmount(struct namei_state *state,
 			break;
 		}
 
-		/* Then check to see if something is still mounted there. */
+		/* Then check to see if something is still mounted on it. */
 		if ((mp = foundobj->v_mountedhere) == NULL) {
 			VOP_UNLOCK(foundobj);
 			break;
@@ -1109,7 +1113,9 @@ lookup_once(struct namei_state *state,
 	/*
 	 * If the file system supports VOP_LOOKUP() with a shared lock, and
 	 * we are not making any modifications (nameiop LOOKUP) or this is
-	 * not the last component then get a shared lock LK_SHARED.
+	 * not the last component then get a shared lock LK_SHARED.  Where
+	 * we can't do fast-forwarded lookups (for example with layered file
+	 * systems) then this is the fallback for reducing lock contention.
 	 */
 	if ((searchdir->v_mount->mnt_iflag & IMNT_SHRLOOKUP) != 0 &&
 	    (cnp->cn_nameiop == LOOKUP || (cnp->cn_flags & ISLASTCN) == 0)) {
@@ -1237,8 +1243,8 @@ done:
 /*
  * Parse out the first path name component that we need to to consider. 
  *
- * While doing this, attempt to use the name cache to fastforward through as
- * many "easy" to find components of the path as possible.
+ * While doing this, attempt to use the name cache to fast-forward through
+ * as many "easy" to find components of the path as possible.
  *
  * We use the namecache's node locks to form a chain, and avoid as many
  * vnode references and locks as possible.  In the ideal case, only the
@@ -1280,8 +1286,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		/*
 		 * Can't deal with dotdot lookups, because it means lock
 		 * order reversal, and there are checks in lookup_once()
-		 * that need to be made.  Also check for missing mountpoints
-		 * (XXX racy).
+		 * that need to be made.  Also check for missing mountpoints.
 		 */
 		if ((cnp->cn_flags & ISDOTDOT) != 0 ||
 		    (*searchdir)->v_mount == NULL) {
@@ -1322,25 +1327,22 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 			break;
 		}
 
-		/* Stop if we've reached the last component: get vnode. */
-		if (cnp->cn_flags & ISLASTCN) {
+		/*
+		 * Stop and get a hold on the vnode if there's something
+		 * that can't be handled here:
+		 *
+		 * - we've reached the last component.
+		 * - or encountered a mount point that needs to be crossed.
+		 * - or encountered something other than a directory.
+		 */
+		if ((cnp->cn_flags & ISLASTCN) != 0 || vp->v_type != VDIR ||
+		    (vp->v_type == VDIR && vp->v_mountedhere != NULL)) {
 			mutex_enter(vp->v_interlock);
 			error = vcache_tryvget(vp);
 			/* v_interlock now released */
 			if (error == 0) {
 				*foundobj = vp;
 			}
-			vp = NULL;
-			break;
-		}
-
-		/*
-		 * Not the last component.  If we found something other than
-		 * a directory, or it's a directory with a filesystem
-		 * mounted on it, bail out.
-		 */
-		if (vp->v_type != VDIR || vp->v_mountedhere != NULL) {
-			error = EOPNOTSUPP;
 			vp = NULL;
 			break;
 		}
@@ -1365,9 +1367,8 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		mutex_enter((*searchdir)->v_interlock);
 		error2 = vcache_tryvget(*searchdir);
 		/* v_interlock now unheld */
-		if (plock != NULL) {
-			rw_exit(plock);
-		}
+		KASSERT(plock != NULL);
+		rw_exit(plock);
 		if (__predict_true(error2 == 0)) {
 			vrele(origsearchdir);
 		} else {
@@ -1447,7 +1448,7 @@ namei_oneroot(struct namei_state *state,
 		/*
 		 * Parse out the first path name component that we need to
 		 * to consider.  While doing this, attempt to use the name
-		 * cache to fastforward through as many "easy" to find
+		 * cache to fast-forward through as many "easy" to find
 		 * components of the path as possible.
 		 */
 		error = lookup_fastforward(state, &searchdir, &foundobj);
