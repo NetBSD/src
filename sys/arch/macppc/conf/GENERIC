@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.361 2020/01/20 18:38:20 thorpej Exp $
+# $NetBSD: GENERIC,v 1.362 2020/01/22 22:29:28 macallan Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.361 $"
+#ident 		"GENERIC-$Revision: 1.362 $"
 
 maxusers	32
 
@@ -329,6 +329,9 @@ mc*	at obio?			# MACE ethernet
 esp*	at obio? flags 0x00ff		# 53c9x SCSI
 mesh*	at obio? flags 0xffff		# MESH SCSI
 nvram*	at obio?			# nvram
+options OBIO_SPEED_CONTROL		# CPU speed / voltage control via GPIOs
+					# and/or DFS, found on most *Book G4
+
 
 # the traditional ADB subsystem
 
