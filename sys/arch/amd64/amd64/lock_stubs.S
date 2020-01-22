@@ -1,4 +1,4 @@
-/*	$NetBSD: lock_stubs.S,v 1.35.2.1 2020/01/19 21:08:29 ad Exp $	*/
+/*	$NetBSD: lock_stubs.S,v 1.35.2.2 2020/01/22 11:40:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -184,6 +184,126 @@ ENTRY(mutex_spin_exit)
 #endif	/* DIAGNOSTIC */
 
 END(mutex_spin_exit)
+
+/*
+ * void	rw_enter(krwlock_t *rwl, krw_t op);
+ *
+ * Acquire one hold on a RW lock.
+ */
+ENTRY(rw_enter)
+	cmpl	$RW_READER, %esi
+	jne	2f
+
+	/*
+	 * Reader: this is the most common case.
+	 */
+	movq	(%rdi), %rax
+0:
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+	jnz	3f
+	leaq	RW_READ_INCR(%rax), %rdx
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	jnz	1f
+	RET
+1:
+	jmp	0b
+
+	/*
+	 * Writer: if the compare-and-set fails, don't bother retrying.
+	 */
+2:	movq	CPUVAR(CURLWP), %rcx
+	xorq	%rax, %rax
+	orq	$RW_WRITE_LOCKED, %rcx
+	LOCK
+	cmpxchgq %rcx, (%rdi)
+	jnz	3f
+	RET
+3:
+	jmp	_C_LABEL(rw_vector_enter)
+END(rw_enter)
+
+/*
+ * void	rw_exit(krwlock_t *rwl);
+ *
+ * Release one hold on a RW lock.
+ */
+ENTRY(rw_exit)
+	movq	(%rdi), %rax
+	testb	$RW_WRITE_LOCKED, %al
+	jnz	2f
+
+	/*
+	 * Reader
+	 */
+0:	testb	$RW_HAS_WAITERS, %al
+	jnz	3f
+	cmpq	$RW_READ_INCR, %rax
+	jb	3f
+	leaq	-RW_READ_INCR(%rax), %rdx
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	jnz	1f
+	ret
+1:
+	jmp	0b
+
+	/*
+	 * Writer
+	 */
+2:	leaq	-RW_WRITE_LOCKED(%rax), %rdx
+	subq	CPUVAR(CURLWP), %rdx
+	jnz	3f
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	jnz	3f
+	ret
+
+3:	jmp	_C_LABEL(rw_vector_exit)
+END(rw_exit)
+
+/*
+ * int	rw_tryenter(krwlock_t *rwl, krw_t op);
+ *
+ * Try to acquire one hold on a RW lock.
+ */
+ENTRY(rw_tryenter)
+	cmpl	$RW_READER, %esi
+	jne	2f
+
+	/*
+	 * Reader: this is the most common case.
+	 */
+	movq	(%rdi), %rax
+0:
+	testb	$(RW_WRITE_LOCKED|RW_WRITE_WANTED), %al
+	jnz	4f
+	leaq	RW_READ_INCR(%rax), %rdx
+	LOCK
+	cmpxchgq %rdx, (%rdi)
+	jnz	1f
+	movl	%edx, %eax			/* nonzero */
+	RET
+1:
+	jmp	0b
+
+	/*
+	 * Writer: if the compare-and-set fails, don't bother retrying.
+	 */
+2:	movq	CPUVAR(CURLWP), %rcx
+	xorq	%rax, %rax
+	orq	$RW_WRITE_LOCKED, %rcx
+	LOCK
+	cmpxchgq %rcx, (%rdi)
+	movl	$0, %eax
+	setz	%al
+3:
+	RET
+	ret
+4:
+	xorl	%eax, %eax
+	jmp	3b
+END(rw_tryenter)
 
 #endif	/* LOCKDEBUG */
 

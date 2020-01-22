@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.59.2.3 2020/01/19 21:08:29 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.59.2.4 2020/01/22 11:40:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -36,23 +36,10 @@
  *
  *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
  *	    Richard McDougall.
- *
- * The NetBSD implementation is different from that described in the book,
- * in that the locks are adaptive.  Lock waiters spin wait while the lock
- * holders are on CPU (if the holds can be tracked: up to N per-thread). 
- *
- * While spin waiting, threads compete for the lock without the assistance
- * of turnstiles.  If a lock holder sleeps for any reason, the lock waiters
- * will also sleep in response and at that point turnstiles, priority
- * inheritance and strong efforts at ensuring fairness come into play.
- *
- * The adaptive behaviour is controlled by the RW_SPIN flag bit, which is
- * cleared by a lock owner that is going off the CPU, and set again by the
- * lock owner that releases the last hold on the lock.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.3 2020/01/19 21:08:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.4 2020/01/22 11:40:17 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -71,6 +58,8 @@ __KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.3 2020/01/19 21:08:29 ad Exp 
 #include <sys/pserialize.h>
 
 #include <dev/lockstat.h>
+
+#include <machine/rwlock.h>
 
 /*
  * LOCKDEBUG
@@ -115,6 +104,19 @@ do { \
 #define	RW_MEMBAR_PRODUCER()		membar_producer()
 #endif
 
+/*
+ * For platforms that do not provide stubs, or for the LOCKDEBUG case.
+ */
+#ifdef LOCKDEBUG
+#undef	__HAVE_RW_STUBS
+#endif
+
+#ifndef __HAVE_RW_STUBS
+__strong_alias(rw_enter,rw_vector_enter);
+__strong_alias(rw_exit,rw_vector_exit);
+__strong_alias(rw_tryenter,rw_vector_tryenter);
+#endif
+
 static void	rw_abort(const char *, size_t, krwlock_t *, const char *);
 static void	rw_dump(const volatile void *, lockop_printer_t);
 static lwp_t	*rw_owner(wchan_t);
@@ -147,22 +149,6 @@ rw_cas(krwlock_t *rw, uintptr_t o, uintptr_t n)
 }
 
 /*
- * rw_and:
- *
- *	Do an atomic AND on the lock word.
- */
-static inline void
-rw_and(krwlock_t *rw, uintptr_t m)
-{
-
-#ifdef _LP64
-	atomic_and_64(&rw->rw_owner, m);
-#else
-	atomic_and_32(&rw->rw_owner, m);
-#endif
-}
-
-/*
  * rw_swap:
  *
  *	Do an atomic swap of the lock word.  This is used only when it's
@@ -178,75 +164,6 @@ rw_swap(krwlock_t *rw, uintptr_t o, uintptr_t n)
 
 	RW_ASSERT(rw, n == o);
 	RW_ASSERT(rw, (o & RW_HAS_WAITERS) != 0);
-}
-
-/*
- * rw_hold_remember:
- *
- *	Helper - when acquring a lock, record the new hold.
- */
-static inline uintptr_t
-rw_hold_remember(krwlock_t *rw, lwp_t *l)
-{
-	int i;
-
-	KASSERT(kpreempt_disabled());
-
-	for (i = 0; i < __arraycount(l->l_rwlocks); i++) {
-		if (__predict_true(l->l_rwlocks[i] == NULL)) {
-			l->l_rwlocks[i] = rw;
-			/*
-			 * Clear the write wanted flag on every acquire to
-			 * give readers a chance once again.
-			 */
-			return ~RW_WRITE_WANTED;
-		}
-	}
-
-	/*
-	 * Nowhere to track the hold so we lose: temporarily disable
-	 * spinning on the lock.
-	 */
-	return ~(RW_WRITE_WANTED | RW_SPIN);
-}
-
-/*
- * rw_hold_forget:
- *
- *	Helper - when releasing a lock, stop tracking the hold.
- */
-static inline void
-rw_hold_forget(krwlock_t *rw, lwp_t *l)
-{
-	int i;
-
-	KASSERT(kpreempt_disabled());
-
-	for (i = 0; i < __arraycount(l->l_rwlocks); i++) {
-		if (__predict_true(l->l_rwlocks[i] == rw)) {
-			l->l_rwlocks[i] = NULL;
-			return;
-		}
-	}
-}
-
-/*
- * rw_switch:
- *
- *	Called by mi_switch() to indicate that an LWP is going off the CPU.
- */
-void
-rw_switch(void)
-{
-	lwp_t *l = curlwp;
-	int i;
-
-	for (i = 0; i < __arraycount(l->l_rwlocks); i++) {
-		if (l->l_rwlocks[i] != NULL) {
-			rw_and(l->l_rwlocks[i], ~RW_SPIN);
-			/* Leave in place for exit to clear. */
-		}
-	}
 }
 
 /*
@@ -289,10 +206,15 @@ void
 _rw_init(krwlock_t *rw, uintptr_t return_address)
 {
 
+#ifdef LOCKDEBUG
+	/* XXX only because the assembly stubs can't handle RW_NODEBUG */
 	if (LOCKDEBUG_ALLOC(rw, &rwlock_lockops, return_address))
-		rw->rw_owner = RW_SPIN;
+		rw->rw_owner = 0;
 	else
-		rw->rw_owner = RW_SPIN | RW_NODEBUG;
+		rw->rw_owner = RW_NODEBUG;
+#else
+	rw->rw_owner = 0;
+#endif
 }
 
 void
@@ -311,18 +233,53 @@ void
 rw_destroy(krwlock_t *rw)
 {
 
-	RW_ASSERT(rw, (rw->rw_owner & ~(RW_NODEBUG | RW_SPIN)) == 0);
+	RW_ASSERT(rw, (rw->rw_owner & ~RW_NODEBUG) == 0);
 	LOCKDEBUG_FREE((rw->rw_owner & RW_NODEBUG) == 0, rw);
+}
+
+/*
+ * rw_oncpu:
+ *
+ *	Return true if an rwlock owner is running on a CPU in the system.
+ *	If the target is waiting on the kernel big lock, then we must
+ *	release it.  This is necessary to avoid deadlock.
+ */
+static bool
+rw_oncpu(uintptr_t owner)
+{
+#ifdef MULTIPROCESSOR
+	struct cpu_info *ci;
+	lwp_t *l;
+
+	KASSERT(kpreempt_disabled());
+
+	if ((owner & (RW_WRITE_LOCKED|RW_HAS_WAITERS)) != RW_WRITE_LOCKED) {
+		return false;
+	}
+
+	/*
+	 * See lwp_dtor() why dereference of the LWP pointer is safe.
+	 * We must have kernel preemption disabled for that.
+	 */
+	l = (lwp_t *)(owner & RW_THREAD);
+	ci = l->l_cpu;
+
+	if (ci && ci->ci_curlwp == l) {
+		/* Target is running; do we need to block? */
+		return (ci->ci_biglock_wanted != l);
+	}
+#endif
+	/* Not running.  It may be safe to block now. */
+	return false;
 }
 
 /*
  * rw_vector_enter:
  *
- *	The slow path for acquiring a rwlock, that considers all conditions.
- *	Marked __noinline to prevent the compiler pulling it into rw_enter().
+ *	Acquire a rwlock.
  */
-static void __noinline
-rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
+void
+rw_vector_enter(krwlock_t *rw, const krw_t op)
 {
 	uintptr_t owner, incr, need_wait, set_wait, curthread, next;
 	turnstile_t *ts;
@@ -339,7 +296,6 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 
 	RW_ASSERT(rw, !cpu_intr_p());
 	RW_ASSERT(rw, curthread != 0);
-	RW_ASSERT(rw, kpreempt_disabled());
 	RW_WANTLOCK(rw, op);
 
 	if (panicstr == NULL) {
@@ -371,13 +327,15 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 
 	LOCKSTAT_ENTER(lsflag);
 
+	KPREEMPT_DISABLE(curlwp);
 	for (owner = rw->rw_owner;;) {
 		/*
 		 * Read the lock owner field.  If the need-to-wait
 		 * indicator is clear, then try to acquire the lock.
 		 */
 		if ((owner & need_wait) == 0) {
-			next = rw_cas(rw, owner, (owner + incr) & mask);
+			next = rw_cas(rw, owner, (owner + incr) &
+			    ~RW_WRITE_WANTED);
 			if (__predict_true(next == owner)) {
 				/* Got it! */
 				RW_MEMBAR_ENTER();
@@ -395,36 +353,11 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 			rw_abort(__func__, __LINE__, rw,
 			    "locking against myself");
 		}
-
 		/*
-		 * If the lock owner is running on another CPU, and there
-		 * are no existing waiters, then spin.  Notes:
-		 *
-		 * 1) If an LWP on this CPU (possibly curlwp, or an LWP that
-		 * curlwp has interupted) holds kernel_lock, we can't spin
-		 * without a deadlock.  The CPU that holds the rwlock may be
-		 * blocked trying to acquire kernel_lock, or there may be an
-		 * unseen chain of dependant locks.  To defeat the potential
-		 * deadlock, this LWP needs to sleep (and thereby directly
-		 * drop the kernel_lock, or permit the interrupted LWP that
-		 * holds kernel_lock to complete its work).
-		 *
-		 * 2) If trying to acquire a write lock, and the lock is
-		 * currently read held, after a brief wait set the write
-		 * wanted bit to block out new readers and try to avoid
-		 * starvation.  When the hold is acquired, we'll clear the
-		 * WRITE_WANTED flag to give readers a chance again.  With
-		 * luck this should nudge things in the direction of
-		 * interleaving readers and writers when there is high
-		 * contention.
-		 *
-		 * 3) The spin wait can't be done in soft interrupt context,
-		 * because a lock holder could be pinned down underneath the
-		 * soft interrupt LWP (i.e. curlwp) on the same CPU.  For
-		 * the lock holder to make progress and release the lock,
-		 * the soft interrupt needs to sleep.
+		 * If the lock owner is running on another CPU, and
+		 * there are no existing waiters, then spin.
 		 */
-		if ((owner & RW_SPIN) != 0 && !cpu_softintr_p()) {
+		if (rw_oncpu(owner)) {
 			LOCKSTAT_START_TIMER(lsflag, spintime);
 			u_int count = SPINLOCK_BACKOFF_MIN;
 			do {
@@ -432,19 +365,7 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 				SPINLOCK_BACKOFF(count);
 				KPREEMPT_DISABLE(curlwp);
 				owner = rw->rw_owner;
-				if ((owner & need_wait) == 0)
-					break;
-				if (count != SPINLOCK_BACKOFF_MAX)
-					continue;
-				if (curcpu()->ci_biglock_count != 0)
-					break;
-				if (op == RW_WRITER &&
-				    (owner & RW_WRITE_LOCKED) == 0 &&
-				    (owner & RW_WRITE_WANTED) == 0) {
-					(void)rw_cas(rw, owner,
-					    owner | RW_WRITE_WANTED);
-				}
-			} while ((owner & RW_SPIN) != 0);
+			} while (rw_oncpu(owner));
 			LOCKSTAT_STOP_TIMER(lsflag, spintime);
 			LOCKSTAT_COUNT(spincnt, 1);
 			if ((owner & need_wait) == 0)
@@ -458,18 +379,17 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 		ts = turnstile_lookup(rw);
 
 		/*
-		 * Mark the rwlock as having waiters, and disable spinning. 
-		 * If the set fails, then we may not need to sleep and
-		 * should spin again.  Reload rw_owner now that we own
-		 * the turnstile chain lock.
+		 * Mark the rwlock as having waiters.  If the set fails,
+		 * then we may not need to sleep and should spin again.
+		 * Reload rw_owner because turnstile_lookup() may have
+		 * spun on the turnstile chain lock.
 		 */
 		owner = rw->rw_owner;
-		if ((owner & need_wait) == 0 ||
-		    ((owner & RW_SPIN) != 0 && !cpu_softintr_p())) {
+		if ((owner & need_wait) == 0 || rw_oncpu(owner)) {
 			turnstile_exit(rw);
 			continue;
 		}
-		next = rw_cas(rw, owner, (owner | set_wait) & ~RW_SPIN);
+		next = rw_cas(rw, owner, owner | set_wait);
 		if (__predict_false(next != owner)) {
 			turnstile_exit(rw);
 			owner = next;
@@ -494,9 +414,11 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 
 	LOCKSTAT_EVENT_RA(lsflag, rw, LB_RWLOCK |
 	    (op == RW_WRITER ? LB_SLEEP1 : LB_SLEEP2), slpcnt, slptime,
-	    (l->l_rwcallsite != 0 ? l->l_rwcallsite : ra));
+	    (l->l_rwcallsite != 0 ? l->l_rwcallsite :
+	      (uintptr_t)__builtin_return_address(0)));
 	LOCKSTAT_EVENT_RA(lsflag, rw, LB_RWLOCK | LB_SPIN, spincnt, spintime,
-	    (l->l_rwcallsite != 0 ? l->l_rwcallsite : ra));
+	    (l->l_rwcallsite != 0 ? l->l_rwcallsite :
+	      (uintptr_t)__builtin_return_address(0)));
 	LOCKSTAT_EXIT(lsflag);
 
 	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
@@ -505,70 +427,11 @@ rw_vector_enter(krwlock_t *rw, const krw_t op, uintptr_t mask, uintptr_t ra)
 }
 
 /*
- * rw_enter:
- *
- *	The fast path for acquiring a lock that considers only the
- *	uncontended case.  Falls back to rw_vector_enter().
- */
-void
-rw_enter(krwlock_t *rw, const krw_t op)
-{
-	uintptr_t owner, incr, need_wait, curthread, next, mask;
-	lwp_t *l;
-
-	l = curlwp;
-	curthread = (uintptr_t)l;
-
-	RW_ASSERT(rw, !cpu_intr_p());
-	RW_ASSERT(rw, curthread != 0);
-	RW_WANTLOCK(rw, op);
-
-	KPREEMPT_DISABLE(l);
-	mask = rw_hold_remember(rw, l);
-
-	/*
-	 * We play a slight trick here.  If we're a reader, we want
-	 * increment the read count.  If we're a writer, we want to
-	 * set the owner field and the WRITE_LOCKED bit.
-	 *
-	 * In the latter case, we expect those bits to be zero,
-	 * therefore we can use an add operation to set them, which
-	 * means an add operation for both cases.
-	 */
-	if (__predict_true(op == RW_READER)) {
-		incr = RW_READ_INCR;
-		need_wait = RW_WRITE_LOCKED | RW_WRITE_WANTED;
-	} else {
-		RW_ASSERT(rw, op == RW_WRITER);
-		incr = curthread | RW_WRITE_LOCKED;
-		need_wait = RW_WRITE_LOCKED | RW_THREAD;
-	}
-
-	/*
-	 * Read the lock owner field.  If the need-to-wait
-	 * indicator is clear, then try to acquire the lock.
-	 */
-	owner = rw->rw_owner;
-	if ((owner & need_wait) == 0) {
-		next = rw_cas(rw, owner, (owner + incr) & mask);
-		if (__predict_true(next == owner)) {
-			/* Got it! */
-			KPREEMPT_ENABLE(l);
-			RW_MEMBAR_ENTER();
-			return;
-		}
-	}
-
-	rw_vector_enter(rw, op, mask, (uintptr_t)__builtin_return_address(0));
-}
-
-/*
  * rw_vector_exit:
  *
- *	The slow path for releasing a rwlock, that considers all conditions.
- *	Marked __noinline to prevent the compiler pulling it into rw_enter().
+ *	Release a rwlock.
  */
-static void __noinline
+void
 rw_vector_exit(krwlock_t *rw)
 {
 	uintptr_t curthread, owner, decr, newown, next;
@@ -579,7 +442,6 @@ rw_vector_exit(krwlock_t *rw)
 	l = curlwp;
 	curthread = (uintptr_t)l;
 	RW_ASSERT(rw, curthread != 0);
-	RW_ASSERT(rw, kpreempt_disabled());
 
 	/*
 	 * Again, we use a trick.  Since we used an add operation to
@@ -608,15 +470,9 @@ rw_vector_exit(krwlock_t *rw)
 		newown = (owner - decr);
 		if ((newown & (RW_THREAD | RW_HAS_WAITERS)) == RW_HAS_WAITERS)
 			break;
-		/* Want spinning enabled if lock is becoming free. */
-		if ((newown & RW_THREAD) == 0)
-			newown |= RW_SPIN;
 		next = rw_cas(rw, owner, newown);
-		if (__predict_true(next == owner)) {
-			rw_hold_forget(rw, l);
-			kpreempt_enable();
+		if (__predict_true(next == owner))
 			return;
-		}
 		owner = next;
 	}
 
@@ -656,14 +512,12 @@ rw_vector_exit(krwlock_t *rw)
 			if (wcnt > 1)
 				newown |= RW_WRITE_WANTED;
 			rw_swap(rw, owner, newown);
-			rw_hold_forget(rw, l);
 			turnstile_wakeup(ts, TS_WRITER_Q, 1, l);
 		} else {
 			/* Wake all writers and let them fight it out. */
 			newown = owner & RW_NODEBUG;
 			newown |= RW_WRITE_WANTED;
 			rw_swap(rw, owner, newown);
-			rw_hold_forget(rw, l);
 			turnstile_wakeup(ts, TS_WRITER_Q, wcnt, NULL);
 		}
 	} else {
@@ -681,82 +535,25 @@ rw_vector_exit(krwlock_t *rw)
 			
 		/* Wake up all sleeping readers. */
 		rw_swap(rw, owner, newown);
-		rw_hold_forget(rw, l);
 		turnstile_wakeup(ts, TS_READER_Q, rcnt, NULL);
 	}
-	kpreempt_enable();
 }
 
 /*
- * rw_exit:
- *
- *	The fast path for releasing a lock that considers only the
- *	uncontended case.  Falls back to rw_vector_exit().
- */
-void
-rw_exit(krwlock_t *rw)
-{
-	uintptr_t curthread, owner, decr, newown, next;
-	lwp_t *l;
-
-	l = curlwp;
-	curthread = (uintptr_t)l;
-	RW_ASSERT(rw, curthread != 0);
-
-	/*
-	 * Again, we use a trick.  Since we used an add operation to
-	 * set the required lock bits, we can use a subtract to clear
-	 * them, which makes the read-release and write-release path
-	 * the same.
-	 */
-	owner = rw->rw_owner;
-	if (__predict_false((owner & RW_WRITE_LOCKED) != 0)) {
-		RW_UNLOCKED(rw, RW_WRITER);
-		RW_ASSERT(rw, RW_OWNER(rw) == curthread);
-		decr = curthread | RW_WRITE_LOCKED;
-	} else {
-		RW_UNLOCKED(rw, RW_READER);
-		RW_ASSERT(rw, RW_COUNT(rw) != 0);
-		decr = RW_READ_INCR;
-	}
-
-	/* Now try to release it. */
-	RW_MEMBAR_EXIT();
-	KPREEMPT_DISABLE(l);
-	newown = (owner - decr);
-	if (__predict_true((newown & (RW_THREAD | RW_HAS_WAITERS)) !=
-	    RW_HAS_WAITERS)) {
-		/* Want spinning (re-)enabled if lock is becoming free. */
-		if ((newown & RW_THREAD) == 0)
-			newown |= RW_SPIN;
-		next = rw_cas(rw, owner, newown);
-		if (__predict_true(next == owner)) {
-			rw_hold_forget(rw, l);
-			KPREEMPT_ENABLE(l);
-			return;
-		}
-	}
-	rw_vector_exit(rw);
-}
-
-/*
- * rw_tryenter:
+ * rw_vector_tryenter:
  *
  *	Try to acquire a rwlock.
  */
 int
-rw_tryenter(krwlock_t *rw, const krw_t op)
+rw_vector_tryenter(krwlock_t *rw, const krw_t op)
 {
-	uintptr_t curthread, owner, incr, need_wait, next, mask;
+	uintptr_t curthread, owner, incr, need_wait, next;
 	lwp_t *l;
 
 	l = curlwp;
 	curthread = (uintptr_t)l;
 
 	RW_ASSERT(rw, curthread != 0);
-
-	KPREEMPT_DISABLE(l);
-	mask = rw_hold_remember(rw, l);
 
 	if (op == RW_READER) {
 		incr = RW_READ_INCR;
@@ -768,12 +565,9 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 	}
 
 	for (owner = rw->rw_owner;; owner = next) {
-		if (__predict_false((owner & need_wait) != 0)) {
-			rw_hold_forget(rw, l);
-			KPREEMPT_ENABLE(l);
+		if (__predict_false((owner & need_wait) != 0))
 			return 0;
-		}
-		next = rw_cas(rw, owner, (owner + incr) & mask);
+		next = rw_cas(rw, owner, owner + incr);
 		if (__predict_true(next == owner)) {
 			/* Got it! */
 			break;
@@ -785,7 +579,6 @@ rw_tryenter(krwlock_t *rw, const krw_t op)
 	RW_ASSERT(rw, (op != RW_READER && RW_OWNER(rw) == curthread) ||
 	    (op == RW_READER && RW_COUNT(rw) != 0));
 
-	KPREEMPT_ENABLE(l);
 	RW_MEMBAR_ENTER();
 	return 1;
 }
@@ -823,7 +616,7 @@ rw_downgrade(krwlock_t *rw)
 		 * waiters.
 		 */
 		if ((owner & RW_HAS_WAITERS) == 0) {
-			newown = (owner & RW_NODEBUG) | RW_SPIN;
+			newown = (owner & RW_NODEBUG);
 			next = rw_cas(rw, owner, newown + RW_READ_INCR);
 			if (__predict_true(next == owner)) {
 				RW_LOCKED(rw, RW_READER);
@@ -850,15 +643,14 @@ rw_downgrade(krwlock_t *rw)
 			/*
 			 * If there are no readers, just preserve the
 			 * waiters bits, swap us down to one read hold and
-			 * return.  Don't set the spin bit as nobody's
-			 * running yet.
+			 * return.
 			 */
 			RW_ASSERT(rw, wcnt != 0);
 			RW_ASSERT(rw, (rw->rw_owner & RW_WRITE_WANTED) != 0);
 			RW_ASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 			newown = owner & RW_NODEBUG;
-			newown = RW_READ_INCR | RW_HAS_WAITERS |
+			newown |= RW_READ_INCR | RW_HAS_WAITERS |
 			    RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, newown);
 			turnstile_exit(rw);
@@ -869,8 +661,7 @@ rw_downgrade(krwlock_t *rw)
 			 * Give the lock to all blocked readers.  We may
 			 * retain one read hold if downgrading.  If there is
 			 * a writer waiting, new readers will be blocked
-			 * out.  Don't set the spin bit as nobody's running
-			 * yet.
+			 * out.
 			 */
 			newown = owner & RW_NODEBUG;
 			newown += (rcnt << RW_READ_COUNT_SHIFT) + RW_READ_INCR;
@@ -1005,14 +796,22 @@ rw_owner(wchan_t obj)
 /*
  * rw_owner_running:
  *
- *	Return true if a RW lock is unheld, or held and the owner is running
- *	on a CPU.  For the pagedaemon only - do not document or use in other
- *	code.
+ *	Return true if a RW lock is unheld, or write held and the owner is
+ *	running on a CPU.  For the pagedaemon.
  */
 bool
 rw_owner_running(const krwlock_t *rw)
 {
-	uintptr_t owner = rw->rw_owner;
+#ifdef MULTIPROCESSOR
+	uintptr_t owner;
+	bool rv;
 
-	return (owner & RW_THREAD) == 0 || (owner & RW_SPIN) != 0;
+	kpreempt_disable();
+	owner = rw->rw_owner;
+	rv = (owner & RW_THREAD) == 0 || rw_oncpu(owner);
+	kpreempt_enable();
+	return rv;
+#else
+	return rw_owner(rw) == curlwp;
+#endif
 }
