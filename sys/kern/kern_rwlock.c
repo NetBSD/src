@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.63 2020/01/21 20:29:51 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.64 2020/01/22 12:44:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -36,10 +36,16 @@
  *
  *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
  *	    Richard McDougall.
+ *
+ * The NetBSD implementation differs from that described in the book, in
+ * that the locks are partially adaptive.  Lock waiters spin wait while a
+ * lock is write held and the holder is still running on a CPU.  The method
+ * of choosing which threads to awaken when a lock is released also differs,
+ * mainly to take account of the partially adaptive behaviour.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.63 2020/01/21 20:29:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.64 2020/01/22 12:44:54 ad Exp $");
 
 #include "opt_lockdebug.h"
 
