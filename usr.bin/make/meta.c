@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.76 2020/01/22 00:26:45 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.77 2020/01/22 21:04:29 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -124,7 +124,7 @@ meta_open_filemon(BuildMon *pbm)
 
     pbm->mon_fd = -1;
     pbm->filemon = NULL;
-    if (!useFilemon)
+    if (!useFilemon || !pbm->mfp)
 	return;
 
     pbm->filemon = filemon_open();
@@ -701,7 +701,7 @@ meta_job_child(Job *job)
     }
     if (pbm->mfp != NULL) {
 	close(fileno(pbm->mfp));
-	if (useFilemon) {
+	if (useFilemon && pbm->filemon) {
 	    pid_t pid;
 
 	    pid = getpid();
@@ -724,7 +724,7 @@ meta_job_parent(Job *job, pid_t pid)
     } else {
 	pbm = &Mybm;
     }
-    if (useFilemon) {
+    if (useFilemon && pbm->filemon) {
 	filemon_setpid_parent(pbm->filemon, pid);
     }
 #endif
@@ -1686,6 +1686,8 @@ meta_compat_parent(pid_t child)
     meta_job_parent(NULL, child);
     close(childPipe[1]);			/* child side */
     outfd = childPipe[0];
+    if (!Mybm.filemon)				/* no meta  */
+	    return;
     metafd = filemon_readfd(Mybm.filemon);
 
     maxfd = -1;
