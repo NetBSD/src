@@ -1,7 +1,8 @@
-/*	$NetBSD: userret.h,v 1.31 2019/11/30 17:49:03 ad Exp $	*/
+/*	$NetBSD: userret.h,v 1.32 2020/01/22 12:23:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2003, 2006, 2008, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -84,8 +85,8 @@ mi_userret(struct lwp *l)
 
 	KPREEMPT_DISABLE(l);
 	ci = l->l_cpu;
+	KASSERTMSG(ci->ci_biglock_count == 0, "kernel_lock leaked");
 	KASSERT(l->l_blcnt == 0);
-	KASSERT(ci->ci_biglock_count == 0);
 	if (__predict_false(ci->ci_want_resched)) {
 		preempt();
 		ci = l->l_cpu;
