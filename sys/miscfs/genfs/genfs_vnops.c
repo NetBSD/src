@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.200.2.1 2020/01/18 17:12:59 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.200.2.2 2020/01/22 12:00:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.200.2.1 2020/01/18 17:12:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.200.2.2 2020/01/22 12:00:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,11 +295,9 @@ genfs_deadlock(void *v)
 	if (ISSET(flags, LK_DOWNGRADE)) {
 		rw_downgrade(vip->vi_lock);
 	} else if (ISSET(flags, LK_UPGRADE)) {
+		KASSERT(ISSET(flags, LK_NOWAIT));
 		if (!rw_tryupgrade(vip->vi_lock)) {
-			if (ISSET(flags, LK_NOWAIT))
-				return EBUSY;
-			rw_exit(vip->vi_lock);
-			rw_enter(vip->vi_lock, RW_WRITER);
+			return EBUSY;
 		}
 	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
 		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
@@ -349,11 +347,9 @@ genfs_lock(void *v)
 	if (ISSET(flags, LK_DOWNGRADE)) {
 		rw_downgrade(vip->vi_lock);
 	} else if (ISSET(flags, LK_UPGRADE)) {
+		KASSERT(ISSET(flags, LK_NOWAIT));
 		if (!rw_tryupgrade(vip->vi_lock)) {
-			if (ISSET(flags, LK_NOWAIT))
-				return EBUSY;
-			rw_exit(vip->vi_lock);
-			rw_enter(vip->vi_lock, RW_WRITER);
+			return EBUSY;
 		}
 	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
 		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
