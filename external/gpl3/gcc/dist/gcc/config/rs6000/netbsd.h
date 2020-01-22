@@ -138,10 +138,6 @@
 #define TRAMPOLINE_SIZE 48
 #endif
 
-/* Override STACK_BOUNDARY to use Altivec compliant one.  */
-#undef STACK_BOUNDARY
-#define STACK_BOUNDARY	128
-
 /* Use standard DWARF numbering for DWARF debugging information.  */
 #define RS6000_USE_DWARF_NUMBERING
 
