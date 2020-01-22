@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.164 2020/01/22 17:55:41 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.165 2020/01/22 19:22:06 roy Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.164 2020/01/22 17:55:41 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.165 2020/01/22 19:22:06 roy Exp $");
 #endif
 #endif /* not lint */
 
@@ -1375,7 +1375,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_DELADDR:
 	case RTM_CHGADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		(void)printf("pid %d, metric %d, flags: ",
+		(void)printf("pid %d, metric %d, addrflags: ",
 		    ifam->ifam_pid, ifam->ifam_metric);
 		struct sockaddr *sa = (struct sockaddr *)(ifam + 1);
 		const char *bits;
@@ -1390,7 +1390,7 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 			bits = unknownflags;
 			break;
 		}
-		bprintf(stdout, ifam->ifam_flags, bits);
+		bprintf(stdout, ifam->ifam_addrflags, bits);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
 		break;
 	case RTM_IEEE80211:
