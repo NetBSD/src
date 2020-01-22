@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.7 2018/06/16 00:15:40 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.8 2020/01/22 21:59:10 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -107,7 +107,7 @@
 
 #define DWC_MMC_INT_CARD_REMOVE		__BIT(31)
 #define DWC_MMC_INT_CARD_INSERT		__BIT(30)
-#define DWC_MMC_INT_SDIO_INT		__BIT(16)
+#define DWC_MMC_INT_SDIO_INT		__BIT(24)
 #define DWC_MMC_INT_END_BIT_ERR		__BIT(15)
 #define DWC_MMC_INT_AUTO_CMD_DONE	__BIT(14)
 #define DWC_MMC_INT_START_BIT_ERR	__BIT(13)
