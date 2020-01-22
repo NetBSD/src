@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1676 2020/01/21 03:29:56 taca Exp $
+# $NetBSD: mi,v 1.1677 2020/01/22 14:01:50 thorpej Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1073,7 +1073,7 @@
 ./usr/share/man/cat4/ep.0			man-sys-catman		.cat
 ./usr/share/man/cat4/epic.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esa.0			man-sys-catman		.cat
-./usr/share/man/cat4/esh.0			man-sys-catman		.cat
+./usr/share/man/cat4/esh.0			man-obsolete		obsolete
 ./usr/share/man/cat4/esiop.0			man-sys-catman		.cat
 ./usr/share/man/cat4/esis.0			man-obsolete		obsolete
 ./usr/share/man/cat4/esl.0			man-obsolete		obsolete
@@ -4258,7 +4258,7 @@
 ./usr/share/man/html4/ep.html			man-sys-htmlman		html
 ./usr/share/man/html4/epic.html			man-sys-htmlman		html
 ./usr/share/man/html4/esa.html			man-sys-htmlman		html
-./usr/share/man/html4/esh.html			man-sys-htmlman		html
+./usr/share/man/html4/esh.html			man-obsolete		obsolete
 ./usr/share/man/html4/esiop.html		man-sys-htmlman		html
 ./usr/share/man/html4/esis.html			man-obsolete		obsolete
 ./usr/share/man/html4/esl.html			man-obsolete		obsolete
@@ -7215,7 +7215,7 @@
 ./usr/share/man/man4/ep.4			man-sys-man		.man
 ./usr/share/man/man4/epic.4			man-sys-man		.man
 ./usr/share/man/man4/esa.4			man-sys-man		.man
-./usr/share/man/man4/esh.4			man-sys-man		.man
+./usr/share/man/man4/esh.4			man-obsolete		obsolete
 ./usr/share/man/man4/esiop.4			man-sys-man		.man
 ./usr/share/man/man4/esis.4			man-obsolete		obsolete
 ./usr/share/man/man4/esl.4			man-obsolete		obsolete
