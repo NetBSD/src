@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.75 2020/01/19 19:49:37 riastradh Exp $ */
+/*      $NetBSD: meta.c,v 1.76 2020/01/22 00:26:45 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -462,7 +462,7 @@ meta_create(BuildMon *pbm, GNode *gn)
     const char *tname;
     char *fname;
     const char *cp;
-    char *p[4];				/* >= possible uses */
+    char *p[5];				/* >= possible uses */
     int i;
 
     mf.fp = NULL;
@@ -517,7 +517,10 @@ meta_create(BuildMon *pbm, GNode *gn)
 
     fprintf(mf.fp, "CWD %s\n", getcwd(buf, sizeof(buf)));
     fprintf(mf.fp, "TARGET %s\n", tname);
-
+    cp = Var_Value(".OODATE", gn, &p[i++]);
+    if (cp && *cp) {
+	    fprintf(mf.fp, "OODATE %s\n", cp);
+    }
     if (metaEnv) {
 	for (ptr = environ; *ptr != NULL; ptr++)
 	    fprintf(mf.fp, "ENV %s\n", *ptr);
