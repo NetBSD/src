@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.148 2019/12/11 07:33:55 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.149 2020/01/22 02:51:38 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1568,8 +1568,6 @@ struct pci_rom {
 	  /* Shares bits with COR_STATUS */
 #define	PCI_AER_CAP_CONTROL	0x18	/* AE Capabilities and Control Reg. */
 #define	  PCI_AER_FIRST_ERROR_PTR		__BITS(4, 0)
-#define	  PCI_AER_FIRST_ERROR_PTR_S		0
-#define	  PCI_AER_FIRST_ERROR_PTR_M		0x1f
 #define	  PCI_AER_ECRC_GEN_CAPABLE		__BIT(5)
 #define	  PCI_AER_ECRC_GEN_ENABLE		__BIT(6)
 #define	  PCI_AER_ECRC_CHECK_CAPABLE		__BIT(7)
@@ -1594,15 +1592,9 @@ struct pci_rom {
 #define	  PCI_AER_ROOTERR_NF_ERR		__BIT(5)
 #define	  PCI_AER_ROOTERR_F_ERR			__BIT(6)
 #define	  PCI_AER_ROOTERR_INT_MESSAGE		__BITS(31, 27)
-#define	  PCI_AER_ROOTERR_INT_MESSAGE_S		27
-#define	  PCI_AER_ROOTERR_INT_MESSAGE_M		0x1f
 #define	PCI_AER_ERRSRC_ID	0x34	/* Error Source Identification Reg. */
 #define	  PCI_AER_ERRSRC_ID_ERR_COR		__BITS(15, 0)
-#define	  PCI_AER_ERRSRC_ID_ERR_COR_S		0
-#define	  PCI_AER_ERRSRC_ID_ERR_COR_M		0xffff
 #define	  PCI_AER_ERRSRC_ID_ERR_UC		__BITS(31, 16)
-#define	  PCI_AER_ERRSRC_ID_ERR_UC_S		16
-#define	  PCI_AER_ERRSRC_ID_ERR_UC_M		0xffff
 					/* Only for root complex ports */
 #define	PCI_AER_TLP_PREFIX_LOG	0x38	/*TLP Prefix Log Register */
 					/* Only for TLP prefix functions */
@@ -1613,31 +1605,19 @@ struct pci_rom {
  */
 #define	PCI_VC_CAP1		0x04	/* Port VC Capability Register 1 */
 #define	  PCI_VC_CAP1_EXT_COUNT			__BITS(2, 0)
-#define	  PCI_VC_CAP1_EXT_COUNT_S		0
-#define	  PCI_VC_CAP1_EXT_COUNT_M		0x7
 #define	  PCI_VC_CAP1_LOWPRI_EXT_COUNT		__BITS(6, 4)
-#define	  PCI_VC_CAP1_LOWPRI_EXT_COUNT_S	4
-#define	  PCI_VC_CAP1_LOWPRI_EXT_COUNT_M	0x7
 #define	  PCI_VC_CAP1_REFCLK			__BITS(9, 8)
-#define	  PCI_VC_CAP1_REFCLK_S			8
-#define	  PCI_VC_CAP1_REFCLK_M			0x3
 #define	  PCI_VC_CAP1_REFCLK_100NS		0x0
 #define	  PCI_VC_CAP1_PORT_ARB_TABLE_SIZE	__BITS(11, 10)
-#define	  PCI_VC_CAP1_PORT_ARB_TABLE_SIZE_S	10
-#define	  PCI_VC_CAP1_PORT_ARB_TABLE_SIZE_M	0x3
 #define	PCI_VC_CAP2		0x08	/* Port VC Capability Register 2 */
 #define	  PCI_VC_CAP2_ARB_CAP_HW_FIXED_SCHEME	__BIT(0)
 #define	  PCI_VC_CAP2_ARB_CAP_WRR_32		__BIT(1)
 #define	  PCI_VC_CAP2_ARB_CAP_WRR_64		__BIT(2)
 #define	  PCI_VC_CAP2_ARB_CAP_WRR_128		__BIT(3)
 #define	  PCI_VC_CAP2_ARB_TABLE_OFFSET		__BITS(31, 24)
-#define	  PCI_VC_CAP2_ARB_TABLE_OFFSET_S	24
-#define	  PCI_VC_CAP2_ARB_TABLE_OFFSET_M	0xff
 #define	PCI_VC_CONTROL		0x0c	/* Port VC Control Register (16bit) */
 #define	  PCI_VC_CONTROL_LOAD_VC_ARB_TABLE	__BIT(0)
 #define	  PCI_VC_CONTROL_VC_ARB_SELECT		__BITS(3, 1)
-#define	  PCI_VC_CONTROL_VC_ARB_SELECT_S	1
-#define	  PCI_VC_CONTROL_VC_ARB_SELECT_M	0x7
 #define	PCI_VC_STATUS		0x0e	/* Port VC Status Register (16bit) */
 #define	  PCI_VC_STATUS_LOAD_VC_ARB_TABLE	__BIT(0)
 #define	PCI_VC_RESOURCE_CAP(n)	(0x10 + ((n) * 0x0c))	/* VC Resource Capability Register */
@@ -1650,22 +1630,12 @@ struct pci_rom {
 #define	  PCI_VC_RESOURCE_CAP_ADV_PKT_SWITCH	__BIT(14)
 #define	  PCI_VC_RESOURCE_CAP_REJCT_SNOOP_TRANS	__BIT(15)
 #define	  PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS	__BITS(22, 16)
-#define	  PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS_S	16
-#define	  PCI_VC_RESOURCE_CAP_MAX_TIME_SLOTS_M	0x7f
 #define	  PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET   __BITS(31, 24)
-#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET_S 24
-#define	  PCI_VC_RESOURCE_CAP_PORT_ARB_TABLE_OFFSET_M 0xff
 #define	PCI_VC_RESOURCE_CTL(n)	(0x14 + ((n) * 0x0c))	/* VC Resource Control Register */
 #define	  PCI_VC_RESOURCE_CTL_TCVC_MAP		__BITS(7, 0)
-#define	  PCI_VC_RESOURCE_CTL_TCVC_MAP_S	0
-#define	  PCI_VC_RESOURCE_CTL_TCVC_MAP_M	0xff
 #define	  PCI_VC_RESOURCE_CTL_LOAD_PORT_ARB_TABLE __BIT(16)
 #define	  PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT	__BITS(19, 17)
-#define	  PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT_S	17
-#define	  PCI_VC_RESOURCE_CTL_PORT_ARB_SELECT_M	0x7
 #define	  PCI_VC_RESOURCE_CTL_VC_ID		__BITS(26, 24)
-#define	  PCI_VC_RESOURCE_CTL_VC_ID_S		24
-#define	  PCI_VC_RESOURCE_CTL_VC_ID_M		0x7
 #define	  PCI_VC_RESOURCE_CTL_VC_ENABLE		__BIT(31)
 #define	PCI_VC_RESOURCE_STA(n)	(0x18 + ((n) * 0x0c))	/* VC Resource Status Register */
 #define	  PCI_VC_RESOURCE_STA_PORT_ARB_TABLE	__BIT(0)
@@ -1820,8 +1790,6 @@ struct pci_rom {
 #define	  PCI_SRIOV_CAP_VF_MIGRATION		__BIT(0)
 #define	  PCI_SRIOV_CAP_ARI_CAP_HIER_PRESERVED	__BIT(1)
 #define	  PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N	__BITS(31, 21)
-#define	  PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N_S	21
-#define	  PCI_SRIOV_CAP_VF_MIGRATION_INTMSG_N_M	0x7ff
 #define	PCI_SRIOV_CTL		0x08	/* SR-IOV Control (16bit) */
 #define	  PCI_SRIOV_CTL_VF_ENABLE		__BIT(0)
 #define	  PCI_SRIOV_CTL_VF_MIGRATION_SUPPORT	__BIT(1)
@@ -1844,11 +1812,7 @@ struct pci_rom {
 #define	PCI_SRIOV_BAR(x)	(PCI_SRIOV_BARS + ((x) * 4))
 #define	PCI_SRIOV_VF_MIG_STA_AR	0x3c	/* VF Migration State Array Offset */
 #define	  PCI_SRIOV_VF_MIG_STA_OFFSET	__BITS(31, 3)
-#define	  PCI_SRIOV_VF_MIG_STA_OFFSET_S	3
-#define	  PCI_SRIOV_VF_MIG_STA_OFFSET_M	0x1fffffff
 #define	  PCI_SRIOV_VF_MIG_STA_BIR	__BITS(2, 0)
-#define	  PCI_SRIOV_VF_MIG_STA_BIR_S	0
-#define	  PCI_SRIOV_VF_MIG_STA_BIR_M	0x7
 
 /*
  * Extended capability ID: 0x0011
