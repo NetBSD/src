@@ -33,6 +33,8 @@ SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 // FourCC code used for VCHI connection
 #define VC_AUDIO_SERVER_NAME  MAKE_FOURCC("AUDS")
+#define VC_AUDIO_WRITE_COOKIE1  MAKE_FOURCC("BCMA")
+#define VC_AUDIO_WRITE_COOKIE2  MAKE_FOURCC("DATA")
 
 // Maximum message length
 #define VC_AUDIO_MAX_MSG_LEN  (sizeof( VC_AUDIO_MSG_T ))
@@ -115,8 +117,8 @@ typedef struct
 typedef struct
 {
    uint32_t count; // in bytes
-   void *callback;
-   void *cookie;
+   uint32_t cookie1;
+   uint32_t cookie2;
    uint16_t silence;
    uint16_t max_packet;
 } VC_AUDIO_WRITE_T;
@@ -132,8 +134,8 @@ typedef struct
 typedef struct
 {
    int32_t count;  // Success value
-   void *callback;
-   void *cookie;
+   uint32_t cookie1;
+   uint32_t cookie2;
 } VC_AUDIO_COMPLETE_T;
 
 // Message header for all messages in HOST->VC direction
