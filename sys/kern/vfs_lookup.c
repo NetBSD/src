@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.212.4.5 2020/01/22 12:10:46 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.212.4.6 2020/01/23 12:21:01 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.5 2020/01/22 12:10:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.6 2020/01/23 12:21:01 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1113,9 +1113,9 @@ lookup_once(struct namei_state *state,
 	/*
 	 * If the file system supports VOP_LOOKUP() with a shared lock, and
 	 * we are not making any modifications (nameiop LOOKUP) or this is
-	 * not the last component then get a shared lock LK_SHARED.  Where
-	 * we can't do fast-forwarded lookups (for example with layered file
-	 * systems) then this is the fallback for reducing lock contention.
+	 * not the last component then get a shared lock.  Where we can't do
+	 * fast-forwarded lookups (for example with layered file systems)
+	 * then this is the fallback for reducing lock contention.
 	 */
 	if ((searchdir->v_mount->mnt_iflag & IMNT_SHRLOOKUP) != 0 &&
 	    (cnp->cn_nameiop == LOOKUP || (cnp->cn_flags & ISLASTCN) == 0)) {
@@ -1251,13 +1251,13 @@ done:
  * final vnode will have its reference count adjusted and lock taken.
  */
 static int
-lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
-		   struct vnode **foundobj)
+lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
+		   struct vnode **foundobj_ret)
 {
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
 	krwlock_t *plock;
-	struct vnode *vp, *origsearchdir;
+	struct vnode *foundobj, *searchdir;
 	int error, error2;
 	size_t oldpathlen;
 	const char *oldnameptr;
@@ -1268,10 +1268,12 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 	 * case we can't get vnode references and need to roll back.
 	 */
 	plock = NULL;
-	origsearchdir = *searchdir;
+	searchdir = *searchdir_ret;
 	oldnameptr = cnp->cn_nameptr;
 	oldpathlen = ndp->ni_pathlen;
 	for (;;) {
+		foundobj = NULL;
+
 		/*
 		 * Get the next component name.  There should be no slashes
 		 * here, and we shouldn't have looped around if we were
@@ -1289,15 +1291,15 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		 * that need to be made.  Also check for missing mountpoints.
 		 */
 		if ((cnp->cn_flags & ISDOTDOT) != 0 ||
-		    (*searchdir)->v_mount == NULL) {
+		    searchdir->v_mount == NULL) {
 			error = EOPNOTSUPP;
 			break;
 		}
 
 		/*
 		 * Can't deal with last component when modifying; this needs
-		 * the directory vnode locked and VOP_LOOKUP() called (which
-		 * can and does modify state, despite the name).
+		 * searchdir locked and VOP_LOOKUP() called (which can and
+		 * does modify state, despite the name).
 		 */
 		if ((cnp->cn_flags & ISLASTCN) != 0) {
 			if (cnp->cn_nameiop != LOOKUP ||
@@ -1313,16 +1315,15 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		 * ownership info for the directory, or if the user doesn't
 		 * have permission to look up files in this directory.
 		 */
-		if (!cache_lookup_linked(*searchdir, cnp->cn_nameptr,
-		    cnp->cn_namelen, &vp, &plock, cnp->cn_cred)) {
+		if (!cache_lookup_linked(searchdir, cnp->cn_nameptr,
+		    cnp->cn_namelen, &foundobj, &plock, cnp->cn_cred)) {
 			error = EOPNOTSUPP;
 			break;
 		}
 		KASSERT(plock != NULL && rw_lock_held(plock));
 
 		/* Scored a hit.  Negative is good too (ENOENT). */
-		if (vp == NULL) {
-			*foundobj = vp;
+		if (foundobj == NULL) {
 			error = ENOENT;
 			break;
 		}
@@ -1335,15 +1336,16 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		 * - or encountered a mount point that needs to be crossed.
 		 * - or encountered something other than a directory.
 		 */
-		if ((cnp->cn_flags & ISLASTCN) != 0 || vp->v_type != VDIR ||
-		    (vp->v_type == VDIR && vp->v_mountedhere != NULL)) {
-			mutex_enter(vp->v_interlock);
-			error = vcache_tryvget(vp);
+		if ((cnp->cn_flags & ISLASTCN) != 0 ||
+		    foundobj->v_type != VDIR ||
+		    (foundobj->v_type == VDIR &&
+		    foundobj->v_mountedhere != NULL)) {
+			mutex_enter(foundobj->v_interlock);
+			error = vcache_tryvget(foundobj);
 			/* v_interlock now released */
-			if (error == 0) {
-				*foundobj = vp;
+			if (error != 0) {
+				foundobj = NULL;
 			}
-			vp = NULL;
 			break;
 		}
 
@@ -1353,7 +1355,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		 * continue on to it.
 		 */
 		cnp->cn_nameptr = ndp->ni_next;
-		*searchdir = vp;
+		searchdir = foundobj;
 	}
 
 	/*
@@ -1363,20 +1365,22 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 	 * bit of a problem.  Roll back the fastforward to the beginning and
 	 * let lookup_once() take care of it.
 	 */
-	if (*searchdir != origsearchdir) {
-		mutex_enter((*searchdir)->v_interlock);
-		error2 = vcache_tryvget(*searchdir);
+	if (searchdir != *searchdir_ret) {
+		mutex_enter(searchdir->v_interlock);
+		error2 = vcache_tryvget(searchdir);
 		/* v_interlock now unheld */
 		KASSERT(plock != NULL);
 		rw_exit(plock);
 		if (__predict_true(error2 == 0)) {
-			vrele(origsearchdir);
+			/* Returning new searchdir, and maybe new foundobj. */
+			vrele(*searchdir_ret);
+			*searchdir_ret = searchdir;
 		} else {
-			if (error == 0) {
-				vrele_async(*foundobj);
-				*foundobj = NULL;
+			/* Returning nothing. */
+			if (foundobj != NULL) {
+				vrele(foundobj);
+				foundobj = NULL;
 			}
-			*searchdir = origsearchdir;
 			cnp->cn_nameptr = oldnameptr;
 			ndp->ni_pathlen = oldpathlen;
 			error = lookup_parsepath(state);
@@ -1386,6 +1390,8 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir,
 		rw_exit(plock);
 	}
 
+	KASSERT(foundobj == NULL || error == 0);
+	*foundobj_ret = foundobj;
 	return error;
 }
 
@@ -1657,10 +1663,12 @@ namei_oneroot(struct namei_state *state,
 			 * forever.  So convert it to the real root.
 			 */
 			if (searchdir != NULL) {
-				if ((cnp->cn_flags & LOCKPARENT) != 0) {
-					VOP_UNLOCK(searchdir);
+				if (searchdir_locked) {
+					vput(searchdir);
+					searchdir_locked = false;
+				} else {
+					vrele(searchdir);
 				}
-				vrele(searchdir);
 				searchdir = NULL;
 			}
 			vrele(foundobj);
@@ -1678,10 +1686,13 @@ namei_oneroot(struct namei_state *state,
 		    (searchdir == NULL ||
 		     searchdir->v_mount != foundobj->v_mount)) {
 			if (searchdir) {
-				if ((cnp->cn_flags & LOCKPARENT) != 0) {
-					VOP_UNLOCK(searchdir);
+				if (searchdir_locked) {
+					vput(searchdir);
+					searchdir_locked = false;
+				} else {
+					vrele(searchdir);
 				}
-				vrele(searchdir);
+				searchdir = NULL;
 			}
 			vrele(foundobj);
 			foundobj = NULL;
@@ -1708,10 +1719,12 @@ namei_oneroot(struct namei_state *state,
 		if (state->rdonly &&
 		    (cnp->cn_nameiop == DELETE || cnp->cn_nameiop == RENAME)) {
 			if (searchdir) {
-				if ((cnp->cn_flags & LOCKPARENT) != 0) {
-					VOP_UNLOCK(searchdir);
+				if (searchdir_locked) {
+					vput(searchdir);
+					searchdir_locked = false;
+				} else {
+					vrele(searchdir);
 				}
-				vrele(searchdir);
 				searchdir = NULL;
 			}
 			vrele(foundobj);
@@ -1736,7 +1749,9 @@ namei_oneroot(struct namei_state *state,
 			 * that uses this combination "knows" this, so
 			 * it can't be safely changed. Feh. XXX
 			 */
+			KASSERT(searchdir_locked);
 		    	VOP_UNLOCK(searchdir);
+		    	searchdir_locked = false;
 		} else if ((cnp->cn_flags & LOCKLEAF) != 0 &&
 		    (searchdir != foundobj ||
 		    (cnp->cn_flags & LOCKPARENT) == 0)) {
@@ -1891,6 +1906,7 @@ static int
 do_lookup_for_nfsd_index(struct namei_state *state)
 {
 	int error = 0;
+
 	struct componentname *cnp = state->cnp;
 	struct nameidata *ndp = state->ndp;
 	struct vnode *startdir;
@@ -1930,32 +1946,35 @@ do_lookup_for_nfsd_index(struct namei_state *state)
 	vref(startdir);
 	error = lookup_once(state, startdir, &startdir, &foundobj,
 	    &startdir_locked);
-	KASSERT(!startdir_locked);
-	if (error == 0 && startdir == foundobj) {
+
+	KASSERT((cnp->cn_flags & LOCKPARENT) == 0);
+	if (startdir_locked) {
+		VOP_UNLOCK(startdir);
+		startdir_locked = false;
+	}
+
+	/*
+	 * If the vnode we found is mounted on, then cross the mount and get
+	 * the root vnode in foundobj.  If this encounters an error, it will
+	 * dispose of foundobj, but searchdir is untouched.
+	 */
+	if (error == 0 && foundobj != NULL &&
+	    foundobj->v_type == VDIR &&
+	    foundobj->v_mountedhere != NULL &&
+	    (cnp->cn_flags & NOCROSSMOUNT) == 0) {
+		error = lookup_crossmount(state, &startdir, &foundobj,
+		    &startdir_locked);
+	}
+
+	/* Now toss startdir and see if we have an error. */
+	if (startdir != NULL)
 		vrele(startdir);
-	} else if (startdir != NULL) {
-		if (startdir_locked) {
-			vput(startdir);
-		} else {
-			vrele(startdir);
-		}
-	}
-	if (error) {
-		goto bad;
-	}
-	ndp->ni_vp = foundobj;
-
-	if (foundobj == NULL) {
-		return 0;
-	}
-
-	if ((cnp->cn_flags & LOCKLEAF) != 0) {
+	if (error)
+		foundobj = NULL;
+	else if (foundobj != NULL && (cnp->cn_flags & LOCKLEAF) != 0)
 		vn_lock(foundobj, LK_EXCLUSIVE | LK_RETRY);
-	}
-	return (0);
 
-bad:
-	ndp->ni_vp = NULL;
+	ndp->ni_vp = foundobj;
 	return (error);
 }
 
