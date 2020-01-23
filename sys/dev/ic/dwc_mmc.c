@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc.c,v 1.21 2020/01/22 23:19:12 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc.c,v 1.22 2020/01/23 23:53:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.21 2020/01/22 23:19:12 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc_mmc.c,v 1.22 2020/01/23 23:53:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -297,6 +297,11 @@ dwc_mmc_write_protect(sdmmc_chipset_handle_t sch)
 static int
 dwc_mmc_bus_power(sdmmc_chipset_handle_t sch, uint32_t ocr)
 {
+	struct dwc_mmc_softc *sc = sch;
+
+	if (ocr == 0)
+		sc->sc_card_inited = false;
+
 	return 0;
 }
 
@@ -573,6 +578,7 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	uint32_t cmdval = DWC_MMC_CMD_START;
 	int retry, error;
 	uint32_t imask;
+	u_int reg;
 
 #ifdef DWC_MMC_DEBUG
 	aprint_normal_dev(sc->sc_dev,
@@ -581,24 +587,41 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	    cmd->c_blklen);
 #endif
 
-	mutex_enter(&sc->sc_intr_lock);
+	mutex_enter(&sc->sc_lock);
 	if (sc->sc_curcmd != NULL) {
 		device_printf(sc->sc_dev,
 		    "WARNING: driver submitted a command while the controller was busy\n");
 		cmd->c_error = EBUSY;
 		SET(cmd->c_flags, SCF_ITSDONE);
-		mutex_exit(&sc->sc_intr_lock);
+		mutex_exit(&sc->sc_lock);
 		return;
 	}
 	sc->sc_curcmd = cmd;
 
 	MMC_WRITE(sc, DWC_MMC_IDST, 0xffffffff);
 
+	if (!sc->sc_card_inited) {
+		cmdval |= DWC_MMC_CMD_SEND_INIT_SEQ;
+		sc->sc_card_inited = true;
+	}
+
 	if (ISSET(sc->sc_flags, DWC_MMC_F_USE_HOLD_REG))
 		cmdval |= DWC_MMC_CMD_USE_HOLD_REG;
 
-	if (cmd->c_opcode == MMC_GO_IDLE_STATE)
-		cmdval |= DWC_MMC_CMD_SEND_INIT_SEQ;
+	switch (cmd->c_opcode) {
+	case SD_IO_RW_DIRECT:
+		reg = (cmd->c_arg >> SD_ARG_CMD52_REG_SHIFT) &
+		    SD_ARG_CMD52_REG_MASK;
+		if (reg != 0x6)	/* func abort / card reset */
+			break;
+		/* FALLTHROUGH */
+	case MMC_GO_IDLE_STATE:
+	case MMC_STOP_TRANSMISSION:
+	case MMC_INACTIVE_STATE:
+		cmdval |= DWC_MMC_CMD_STOP_ABORT_CMD;
+		break;
+	}
+
 	if (cmd->c_flags & SCF_RSP_PRESENT)
 		cmdval |= DWC_MMC_CMD_RSP_EXP;
 	if (cmd->c_flags & SCF_RSP_136)
@@ -613,10 +636,10 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 
 		MMC_WRITE(sc, DWC_MMC_GCTRL,
 		    MMC_READ(sc, DWC_MMC_GCTRL) | DWC_MMC_GCTRL_FIFORESET);
-		for (retry = 0; retry < 100; retry++) {
+		for (retry = 0; retry < 100000; retry++) {
 			if (!(MMC_READ(sc, DWC_MMC_DMAC) & DWC_MMC_DMAC_SOFTRESET))
 				break;
-			kpause("dwcmmcfifo", false, uimax(mstohz(1), 1), &sc->sc_intr_lock);
+			delay(1);
 		}
 
 		cmdval |= DWC_MMC_CMD_DATA_EXP | DWC_MMC_CMD_WAIT_PRE_OVER;
@@ -671,6 +694,16 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 	}
 	sc->sc_wait_cmd = true;
 
+	if ((cmdval & DWC_MMC_CMD_WAIT_PRE_OVER) != 0) {
+		for (retry = 0; retry < 10000; retry++) {
+			if (!(MMC_READ(sc, DWC_MMC_STATUS) & DWC_MMC_STATUS_CARD_DATA_BUSY))
+				break;
+			delay(1);
+		}
+	}
+
+	mutex_enter(&sc->sc_intr_lock);
+
 	MMC_WRITE(sc, DWC_MMC_CMD, cmdval | cmd->c_opcode);
 
 	if (sc->sc_wait_dma)
@@ -687,6 +720,8 @@ dwc_mmc_exec_command(sdmmc_chipset_handle_t sch, struct sdmmc_command *cmd)
 			goto done;
 		}
 	}
+
+	mutex_exit(&sc->sc_intr_lock);
 
 	if (cmd->c_error == 0 && cmd->c_datalen > 0)
 		dwc_mmc_dma_complete(sc, cmd);
@@ -720,8 +755,6 @@ done:
 	MMC_WRITE(sc, DWC_MMC_IDIE, 0);
 	MMC_WRITE(sc, DWC_MMC_RINT, 0x7fff);
 	MMC_WRITE(sc, DWC_MMC_IDST, 0xffffffff);
-	sc->sc_curcmd = NULL;
-	mutex_exit(&sc->sc_intr_lock);
 
 	if (cmd->c_error) {
 #ifdef DWC_MMC_DEBUG
@@ -731,9 +764,12 @@ done:
 		for (retry = 0; retry < 100; retry++) {
 			if (!(MMC_READ(sc, DWC_MMC_DMAC) & DWC_MMC_DMAC_SOFTRESET))
 				break;
-			kpause("dwcmmcrst", false, uimax(mstohz(1), 1), NULL);
+			kpause("dwcmmcrst", false, uimax(mstohz(1), 1), &sc->sc_lock);
 		}
 	}
+
+	sc->sc_curcmd = NULL;
+	mutex_exit(&sc->sc_lock);
 }
 
 static void
@@ -788,6 +824,7 @@ dwc_mmc_init(struct dwc_mmc_softc *sc)
 	if (sc->sc_intr_cardmask == 0)
 		sc->sc_intr_cardmask = DWC_MMC_INT_SDIO_INT(0);
 
+	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_NONE);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_BIO);
 	cv_init(&sc->sc_intr_cv, "dwcmmcirq");
 
