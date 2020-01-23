@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.89 2020/01/21 18:14:34 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.90 2020/01/23 10:32:38 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1851,7 +1851,29 @@ sys/kern/kern_ksyms.c				1.88 (patch)
 	/dev/ksyms has been opened.
 	[pgoyette, ticket #1482]
 
-sys/compat/common/kern_sig_43.c				1.36
+sys/arch/x86/x86/cpu.c				1.181
+
+	kern/54815: avoid crash when booting in single CPU mode.
+	[pgoyette, ticket #1483]
+
+sys/compat/common/rtsock_50.c			(apply patch)
+
+	kern/54861: fix kernel builds with options MODULAR and no
+	older compat than COMPAT_60.
+	[pgoyette, ticket #1484]
+
+sys/arch/i386/stand/efiboot/devopen.c		1.10,1.11
+
+	x86 efiboot: Fixed the problem that /EFI/NetBSD/boot.cfg could
+	not be loaded.
+	[nonaka, ticket #1485]
+
+sys/kern/files.kern				(apply patch)
+        
+	kern/54874: fix load failure of exec_aout kernel module.
+	[pgoyette, ticket #1486]
+
+sys/compat/common/kern_sig_43.c 			1.36
 sys/compat/linux/arch/amd64/linux_machdep.c		1.59
 sys/compat/linux/common/linux_fcntl.h			1.18
 sys/compat/linux/common/linux_file64.c			1.62
@@ -1861,8 +1883,8 @@ sys/compat/linux/common/linux_signal.c			1.81
 sys/compat/linux/common/linux_socket.c			1.149
 sys/compat/linux/common/linux_socket.h			1.24
 sys/compat/linux/common/linux_statfs.h			1.7
-sys/compat/linux/common/linux_termios.c			1.38
-sys/compat/linux/common/linux_termios.h			1.22
+sys/compat/linux/common/linux_termios.c 		1.38
+sys/compat/linux/common/linux_termios.h 		1.22
 sys/compat/linux32/common/linux32_dirent.c		1.20
 sys/compat/linux32/common/linux32_ioctl.c		1.14
 sys/compat/linux32/common/linux32_misc.c		1.27
@@ -1882,5 +1904,15 @@ sys/sys/shm.h						1.54
 	values and direct access to userland variables from kernel space
 	and memory leaks in system calls implemented for the compatibility
 	subsystems. 
-	[christos, #1487]
+	[christos, ticket #1487]
+
+sys/dev/pci/if_wm.c				1.661
+
+	Fix softint_disestablish() in wm_detach().
+	[knakahara, ticket #1488]
+
+sys/netinet/ip_encap.c				1.72
+
+	Fix PR security/54881: fix bogus psref_release().
+	[knakahara, ticket #1489]
 
