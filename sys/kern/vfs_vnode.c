@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.105.2.3 2020/01/17 21:55:13 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.105.2.4 2020/01/23 19:28:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -145,7 +145,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.3 2020/01/17 21:55:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.4 2020/01/23 19:28:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1582,6 +1582,13 @@ vcache_reclaim(vnode_t *vp)
 	vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP);
 	mutex_exit(vp->v_interlock);
 
+	/*
+	 * With vnode state set to reclaiming, purge name cache immediately
+	 * to prevent new handles on vnode, and wait for existing threads
+	 * trying to get a handle to notice VS_RECLAIMED status and abort.
+	 */
+	cache_purge(vp);
+
 	/* Replace the vnode key with a temporary copy. */
 	if (vip->vi_key.vk_key_len > sizeof(temp_buf)) {
 		temp_key = kmem_alloc(temp_key_len, KM_SLEEP);
@@ -1634,9 +1641,6 @@ vcache_reclaim(vnode_t *vp)
 		uvm_ra_freectx(vp->v_ractx);
 		vp->v_ractx = NULL;
 	}
-
-	/* Purge name cache. */
-	cache_purge(vp);
 
 	if (vip->vi_key.vk_key_len > 0) {
 	/* Remove from vnode cache. */
