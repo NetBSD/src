@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_encap.c,v 1.71 2019/05/15 03:33:41 knakahara Exp $	*/
+/*	$NetBSD: ip_encap.c,v 1.71.2.1 2020/01/23 10:14:30 martin Exp $	*/
 /*	$KAME: ip_encap.c,v 1.73 2001/10/02 08:30:58 itojun Exp $	*/
 
 /*
@@ -68,7 +68,7 @@
 #define USE_RADIX
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.71 2019/05/15 03:33:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_encap.c,v 1.71.2.1 2020/01/23 10:14:30 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_mrouting.h"
@@ -884,10 +884,11 @@ encap6_ctlinput(int cmd, const struct sockaddr *sa, void *d0)
 		 	*/
 			match = encap6_lookup(m, off, nxt, OUTBOUND,
 			    &elem_psref);
-			if (match)
+			if (match) {
 				valid++;
-			psref_release(&elem_psref, &match->psref,
-			    encaptab.elem_class);
+				psref_release(&elem_psref, &match->psref,
+				    encaptab.elem_class);
+			}
 
 			/*
 		 	* Depending on the value of "valid" and routing table
