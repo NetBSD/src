@@ -1078,10 +1078,6 @@ OPENSSL_1_1_0 {
         ECPKParameters_print_fp;
         ECParameters_print;
         ECParameters_print_fp;
-        EC_GFp_nistp224_method;
-        EC_GFp_nistp256_method;
-        EC_GFp_nistp521_method;
-        EC_GFp_nistz256_method;
         EC_GF2m_simple_method;
         EC_GFp_mont_method;
         EC_GFp_nist_method;
@@ -4424,7 +4420,24 @@ OPENSSL_1_1_1 {
         NAMING_AUTHORITY_it;
         PROFESSION_INFO_it;
         SCRYPT_PARAMS_it;
-    local: *;
 } OPENSSL_1_1_0j;
+
+OPENSSL_1_1_1b {
+    global:
+        OPENSSL_INIT_set_config_file_flags;
+        OPENSSL_INIT_set_config_filename;
+} OPENSSL_1_1_1;
+
+OPENSSL_1_1_1c {
+    global:
+        EVP_PKEY_get0_engine;
+} OPENSSL_1_1_1b;
+
+OPENSSL_1_1_1d {
+    global:
+        X509_get0_authority_issuer;
+        X509_get0_authority_serial;
+    local: *;
+} OPENSSL_1_1_1c;
 
 
