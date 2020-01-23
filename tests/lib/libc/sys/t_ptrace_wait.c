@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.147 2020/01/21 16:46:07 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.148 2020/01/23 06:17:21 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.147 2020/01/21 16:46:07 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.148 2020/01/23 06:17:21 martin Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -8449,9 +8449,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs5);
 	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs6);
 
-	ATF_TP_ADD_TC(tp, access_regs_set_unaligned_pc_0x1);
-	ATF_TP_ADD_TC(tp, access_regs_set_unaligned_pc_0x3);
-	ATF_TP_ADD_TC(tp, access_regs_set_unaligned_pc_0x7);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs_set_unaligned_pc_0x1);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs_set_unaligned_pc_0x3);
+	ATF_TP_ADD_TC_HAVE_GPREGS(tp, access_regs_set_unaligned_pc_0x7);
 
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, access_fpregs1);
 	ATF_TP_ADD_TC_HAVE_FPREGS(tp, access_fpregs2);
