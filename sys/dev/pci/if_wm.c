@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.660 2020/01/21 08:50:54 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.661 2020/01/23 07:49:57 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.660 2020/01/21 08:50:54 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.661 2020/01/23 07:49:57 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3095,6 +3095,9 @@ wm_detach(device_t self, int flags __unused)
 		}
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
+
+	for (i = 0; i < sc->sc_nqueues; i++)
+		softint_disestablish(sc->sc_queue[i].wmq_si);
 
 	wm_free_txrx_queues(sc);
 
