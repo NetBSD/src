@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.291 2020/01/20 18:38:22 thorpej Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.292 2020/01/23 17:27:35 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.291 2020/01/20 18:38:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.292 2020/01/23 17:27:35 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -988,7 +988,7 @@ in_arpinput(struct mbuf *m)
 	struct psref psref, psref_ia;
 	int s;
 	char ipbuf[INET_ADDRSTRLEN];
-	bool do_dad;
+	bool find_source, do_dad;
 
 	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
 		goto out;
@@ -1023,11 +1023,20 @@ in_arpinput(struct mbuf *m)
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function.
 	 *
-	 * If the target IP address is zero then try and find
-	 * the sender address for DAD.
+	 * First try and find the source address for early
+	 * duplicate address detection.
 	 */
-	myaddr = in_nullhost(itaddr) ? isaddr : itaddr;
+	if (in_nullhost(isaddr)) {
+		if (in_nullhost(itaddr)) /* very bogus ARP */
+			goto out;
+		find_source = false;
+		myaddr = itaddr;
+	} else {
+		find_source = true;
+		myaddr = isaddr;
+	}
 	s = pserialize_read_enter();
+again:
 	IN_ADDRHASH_READER_FOREACH(ia, myaddr.s_addr) {
 		if (!in_hosteq(ia->ia_addr.sin_addr, myaddr))
 			continue;
@@ -1069,6 +1078,15 @@ in_arpinput(struct mbuf *m)
 		ifp = bridge_ia->ia_ifp;
 	}
 #endif
+
+	/* If we failed to find the source address then find
+	 * the target address. */
+	if (ia == NULL && find_source && !in_nullhost(itaddr)) {
+		find_source = false;
+		myaddr = itaddr;
+		goto again;
+	}
+
 	if (ia != NULL)
 		ia4_acquire(ia, &psref_ia);
 	pserialize_read_exit(s);
@@ -1722,7 +1740,7 @@ done:
 static void
 arp_dad_duplicated(struct ifaddr *ifa, const struct sockaddr_dl *from)
 {
-	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
+	struct in_ifaddr *ia = ifatoia(ifa);
 	struct ifnet *ifp = ifa->ifa_ifp;
 	char ipbuf[INET_ADDRSTRLEN], llabuf[LLA_ADDRSTRLEN];
 	const char *iastr, *llastr;
