@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.286 2019/12/22 19:47:34 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.287 2020/01/23 10:21:14 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -124,6 +124,7 @@ LIST_HEAD(buflists, buf);
  * lock.  Field markings and the corresponding locks:
  *
  *	:	stable, reference to the vnode is required
+ *	e	exec_lock
  *	f	vnode_free_list_lock, or vrele_lock for vrele_list
  *	i	v_interlock
  *	u	locked by underlying filesystem
@@ -159,6 +160,7 @@ struct vnode {
 	enum vtagtype	v_tag;			/* :: type of underlying data */
 	void 		*v_data;		/* :: private data for fs */
 	struct klist	v_klist;		/* i: notes attached to vnode */
+	void		*v_segvguard;		/* e: for PAX_SEGVGUARD */
 };
 #define	v_usecount	v_uobj.uo_refs
 #define	v_interlock	v_uobj.vmobjlock
