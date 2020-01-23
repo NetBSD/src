@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.108 2020/01/23 10:21:14 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.109 2020/01/23 11:17:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -146,9 +146,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.108 2020/01/23 10:21:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.109 2020/01/23 11:17:09 ad Exp $");
 
+#ifdef _KERNEL_OPT
 #include "opt_pax.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
