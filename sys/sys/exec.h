@@ -1,4 +1,4 @@
-/*	$NetBSD: exec.h,v 1.158 2020/01/12 18:30:58 ad Exp $	*/
+/*	$NetBSD: exec.h,v 1.159 2020/01/23 10:05:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1992, 1993
@@ -139,6 +139,7 @@ struct ps_strings32 {
  */
 
 #include <sys/uio.h>
+#include <sys/rwlock.h>
 
 struct lwp;
 struct proc;
@@ -312,6 +313,7 @@ int      exec_makepathbuf(struct lwp *, const char *, enum uio_seg,
     struct pathbuf **, size_t *);
 
 extern int	maxexec;
+extern krwlock_t exec_lock;
 
 /*
  * Utility functions
