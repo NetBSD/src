@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.163 2020/01/21 18:24:01 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.164 2020/01/23 10:15:40 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7859,4 +7859,19 @@ sys/dev/dm/device-mapper.c			1.60
 
 	dm(8) doesn't cause problems on suspend, don't block it.
 	[maya, ticket #641]
+
+usr.bin/calendar/calendars/calendar.birthday	1.36
+
+	Add Terry Jones.
+	[sevan, ticket #642]
+
+sys/dev/pci/if_wm.c				1.661
+
+	Fix softint_disestablish() in wm_detach().
+	[knakahara, ticket #643]
+
+sys/netinet/ip_encap.c				1.72
+
+	PR security/54881: fix bogus psref_release().
+	[knakahara, ticket #644]
 
