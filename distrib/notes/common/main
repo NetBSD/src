@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.560 2019/12/04 13:04:09 uwe Exp $
+.\"	$NetBSD: main,v 1.561 2020/01/23 23:34:47 uwe Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -74,7 +74,7 @@
 .
 .Dd \*[cur_date]
 .Dt INSTALL 8
-.Os NetBSD
+.Os NetBSD/\*M \*V
 .Sh NAME
 .Nm INSTALL
 .Nd Installation procedure for
