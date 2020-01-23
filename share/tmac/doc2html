@@ -1,4 +1,4 @@
-.\" $NetBSD: doc2html,v 1.70 2019/12/23 20:17:33 uwe Exp $
+.\" $NetBSD: doc2html,v 1.71 2020/01/23 23:52:13 uwe Exp $
 .\"
 .\" Copyright (c) 1998, 1999, 2008 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -276,8 +276,8 @@ TODO:
 <head>
 	<meta charset="\\*[html-charset]"/>
 	<title>
-		\\*[document-title]\\$*
-		\\*[title-section]
+.ie '\\*[title-section]'' \\*[document-title]\\$*
+.el  \\*[title-section]
 	</title>
 	<style type="text/css">
 	<!--
