@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.9 2020/01/19 21:19:25 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.10 2020/01/23 12:33:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -63,92 +63,104 @@
 /*
  * Name caching:
  *
- * 	Names found by directory scans are retained in a cache for future
- * 	reference.  It is managed pseudo-LRU, so frequently used names will
- * 	hang around.  Cache is indexed by directory.
- *
- *	Upon reaching the last segment of a path, if the reference is for
- *	DELETE, or NOCACHE is set (rewrite), and name is located in the
- *	cache, it will be dropped.
+ *	Names found by directory scans are retained in a cache for future
+ *	reference.  It is managed pseudo-LRU, so frequently used names will
+ *	hang around.  The cache is indexed by directory.
  *
  * Background:
  *
  *	XXX add a bit of history
  *
- * Data structures:
+ * Data structures
  *
- *	The original BSD implementation used a global hash table, which
- *	works very well but can cause difficulties for the CPU cache on
- *	modern CPUs, and concurrency headaches for the kernel hacker on
- *	multiprocessor systems.  The global hash table is also difficult to
- *	size dynamically.  To try and address these concerns, the focus of
- *	interest in this implementation is the directory itself: a
- *	per-directory red-black tree is used to look up names.  Other than
- *	the choice of data structure, it works largely the same way as the
- *	BSD implementation.
+ *	Typically DNLCs use a global hash table for lookup, which works very
+ *	well but can cause challenges for the CPU cache on modern CPUs, and
+ *	concurrency headaches for the kernel hacker.  The focus of interest
+ *	in this implementation is the directory itself: a per-directory data
+ *	structure is used to index names.  Currently this is a red-black
+ *	tree.  There are no special concurrency requirements placed on the
+ *	index, so it should not be difficult to experiment with other
+ *	structures.
+ *
+ *	Each cached name is stored in a struct namecache, along with a
+ *	pointer the associated vnode (nc_vp).  For simplicity (and economy
+ *	of storage), names longer than a maximum length of NCHNAMLEN are
+ *	allocated with kmem_alloc(); they occur infrequently.  Names shorter
+ *	than this are stored directly in struct namecache.  If it is a
+ *	"negative" entry, (i.e.  for a name that is known NOT to exist) the
+ *	vnode pointer will be NULL.
+ *
+ *	The nchnode (XXXAD vnode) and namecache structures are connected together thusly
+ *	(the root is at the bottom of the diagram):
+ *
+ *          ...
+ *           ^
+ *           |- nn_tree
+ *           |                                                           
+ *      +----o----+               +---------+               +---------+
+ *      |  VDIR   |               |  VCHR   |               |  VREG   |
+ *      | nchnode o-----+         | nchnode o-----+         | nchnode o------+
+ *      +---------+     |         +---------+     |         +---------+      |
+ *           ^          |              ^          |              ^           |
+ *           |- nc_nn   |- nn_list     |- nc_nn   |- nn_list     |- nc_nn    |
+ *           |          |              |          |              |           |
+ *      +----o----+     |         +----o----+     |         +----o----+      |
+ *  +---onamecache|<----+     +---onamecache|<----+     +---onamecache|<-----+
+ *  |   +---------+           |   +---------+           |   +---------+
+ *  |        ^                |        ^                |        ^
+ *  |        |                |        |                |        |
+ *  |        |  +----------------------+                |        |
+ *  |-nc_dnn | +-------------------------------------------------+
+ *  |        |/- nn_tree      |                         |
+ *  |        |                |- nc_dnn                 |- nc_dnn
+ *  |   +----o----+           |                         |
+ *  +-->|  VDIR   |<----------+                         |
+ *      | nchnode |<------------------------------------+
+ *      +---------+
+ *
+ *      START HERE
  *
  * Replacement:
  *
- *	XXX LRU blurb.
+ *	As the cache becomes full, old and unused entries are purged as new
+ *	entries are added.  It would be too expensive to maintain a strict
+ *	LRU list based on last access, so instead we ape the VM system and
+ *	maintain lits of active and inactive entries.  New entries go to the
+ *	tail of the active list.  After they age out, they are placed on the
+ *	tail of the inactive list.  Any subsequent use of the cache entry
+ *	reactivates it, saving it from impending doom; if not reactivated,
+ *	the entry will eventually be purged.
  *
  * Concurrency:
  *
- *	XXX need new blurb here
+ *	From a performance perspective, cache_lookup(nameiop == LOOKUP) and
+ *	its siblings are what really matters; insertion of new entries with
+ *	cache_enter() is comparatively infrequent.  This dictates the
+ *	concurrency strategy: lookups must be easy, never difficult.
  *
- *	See definition of "struct namecache" in src/sys/namei.src for the
- *	particulars.
+ *	struct namecache is mostly stable except for list and tree related
+ *	entries, which don't affect the cached name or vnode, and entries
+ *	are purged in preference to modifying them.  Read access to
+ *	namecache entries is made via tree, list, or LRU list.  A lock
+ *	corresponding to the direction of access should be held.  See
+ *	definition of "struct namecache" in src/sys/namei.src, and the
+ *	definition of "struct nchnode" XXXAD vnode for the particulars.
  *
  *	Per-CPU statistics, and "numcache" are read unlocked, since an
  *	approximate value is OK.  We maintain uintptr_t sized per-CPU
  *	counters and 64-bit global counters under the theory that uintptr_t
  *	sized counters are less likely to be hosed by nonatomic increment.
  *
- * Lock order:
+ *	The lock order is:
  *
- *	1) nc_dvp->vi_ncdlock
- *	2) nc_dvp->vi_ncvlock
- *	3) cache_lru_lock, vp->v_interlock
- *
- * Ugly ASCII diagram:
- *
- *	XXX replace tabs with spaces, make less ugly
- *
- *          ...
- *           ^
- *           |
- *      -----o-----
- *      |  VDIR   |
- *      | nchnode |
- *      -----------
- *           ^
- *           |- nd_tree
- *           |                                                           
- *      -----o-----               -----------               -----------
- *      |  VDIR   |               |  VCHR   |               |  VREG   |
- *      | nchnode o-----+         | nchnode o-----+         | nchnode o------+
- *      -----------     |         -----------     |         -----------      |
- *           ^          |              ^          |              ^           |
- *           |- nc_nn   |- nn_list     |- nc_nn   |- nn_list     |- nc_nn    |
- *           |          |              |          |              |           |
- *      -----o-----     |         -----o-----     |         -----o-----      |
- *  +---onamecache|<----+     +---onamecache|<----+     +---onamecache|<-----+
- *  |   -----------           |   -----------           |   -----------
- *  |        ^                |        ^                |        ^
- *  |        |                |        |                |        |
- *  |        |  +----------------------+                |        |
- *  |-nc_dnn | +-------------------------------------------------+
- *  |        |/- nd_tree      |                         |
- *  |        |                |- nc_dnn                 |- nc_dnn
- *  |   -----o-----           |                         |
- *  +-->|  VDIR   |<----------+                         |
- *      | nchnode |<------------------------------------+
- *      -----------
- *
- *      START HERE
+ *	1) nn->nn_lock		(tree or parent->child direction)
+ *	2) nn->nn_listlock	(list or child->parent direction)
+ *	3) cache_lru_lock	(LRU list direction)
+ *	4) vp->v_interlock
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.9 2020/01/19 21:19:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.10 2020/01/23 12:33:18 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -175,9 +187,9 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.9 2020/01/19 21:19:25 ad Exp $
 #include <miscfs/genfs/genfs.h>
 
 /*
- * Per-vnode state for the namecache.  This is allocated apart from struct
- * vnode to make the best use of memory, and best use of CPU cache.  Field
- * markings and corresponding locks:
+ * Per-vnode state for the namecache.  Field markings and corresponding
+ * locks.  XXXAD this needs to be folded back into struct vnode, but
+ * struct vnode_impl_t needs to be folded back into struct vnode first.
  *
  *	-	stable throught the lifetime of the vnode
  *	n	protected by nn_lock
