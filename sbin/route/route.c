@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.160.2.3 2019/09/05 08:43:42 martin Exp $	*/
+/*	$NetBSD: route.c,v 1.160.2.4 2020/01/24 20:13:45 martin Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.160.2.3 2019/09/05 08:43:42 martin Exp $");
+__RCSID("$NetBSD: route.c,v 1.160.2.4 2020/01/24 20:13:45 martin Exp $");
 #endif
 #endif /* not lint */
 
@@ -54,6 +54,7 @@ __RCSID("$NetBSD: route.c,v 1.160.2.3 2019/09/05 08:43:42 martin Exp $");
 #include <net/if_dl.h>
 #include <net80211/ieee80211_netbsd.h>
 #include <netinet/in.h>
+#include <netinet/in_var.h>
 #include <netatalk/at.h>
 #include <netmpls/mpls.h>
 #include <arpa/inet.h>
@@ -1301,9 +1302,12 @@ const char * const msgtypes[] = {
 	[RTM_CHGADDR] = "RTM_CHGADDR: address being changed on iface",
 };
 
+const char unknownflags[] = "\020";
 const char metricnames[] = RTVBITS;
 const char routeflags[] = RTFBITS;
 const char ifnetflags[] = IFFBITS;
+const char in_ifflags[] = IN_IFFBITS;
+const char in6_ifflags[] = IN6_IFFBITS;
 const char addrnames[] = RTABITS;
 
 
@@ -1371,9 +1375,22 @@ print_rtmsg(struct rt_msghdr *rtm, int msglen)
 	case RTM_DELADDR:
 	case RTM_CHGADDR:
 		ifam = (struct ifa_msghdr *)rtm;
-		(void)printf("pid %d, metric %d, flags: ",
+		(void)printf("pid %d, metric %d, addrflags: ",
 		    ifam->ifam_pid, ifam->ifam_metric);
-		bprintf(stdout, ifam->ifam_flags, routeflags);
+		struct sockaddr *sa = (struct sockaddr *)(ifam + 1);
+		const char *bits;
+		switch (sa->sa_family) {
+		case AF_INET:
+			bits = in_ifflags;
+			break;
+		case AF_INET6:
+			bits = in6_ifflags;
+			break;
+		default:
+			bits = unknownflags;
+			break;
+		}
+		bprintf(stdout, ifam->ifam_addrflags, bits);
 		pmsg_addrs((char *)(ifam + 1), ifam->ifam_addrs);
 		break;
 	case RTM_IEEE80211:
