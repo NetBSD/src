@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.508.4.37 2020/01/23 10:17:41 martin Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.508.4.38 2020/01/24 18:43:35 martin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.37 2020/01/23 10:17:41 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.508.4.38 2020/01/24 18:43:35 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2645,10 +2645,11 @@ alloc_retry:
 		}
 	}
 
-	/* XXX For other than 82580? */
-	if (sc->sc_type == WM_T_82580) {
-		wm_nvm_read(sc, NVM_OFF_CFG3_PORTA, 1, &nvmword);
-		if (nvmword & __BIT(13))
+	if ((sc->sc_type >= WM_T_82580) && (sc->sc_type <= WM_T_I211)) {
+		wm_nvm_read(sc,
+		    NVM_OFF_LAN_FUNC_82580(sc->sc_funcid) + NVM_OFF_CFG3_PORTA,
+		    1, &nvmword);
+		if (nvmword & NVM_CFG3_ILOS)
 			sc->sc_ctrl |= CTRL_ILOS;
 	}
 
@@ -5981,8 +5982,7 @@ wm_init_locked(struct ifnet *ifp)
 
 	/* Set up the interrupt registers. */
 	CSR_WRITE(sc, WMREG_IMC, 0xffffffffU);
-	sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
-	    ICR_RXO | ICR_RXT0;
+
 	if (wm_is_using_msix(sc)) {
 		uint32_t mask;
 		struct wm_queue *wmq;
@@ -6022,8 +6022,11 @@ wm_init_locked(struct ifnet *ifp)
 			CSR_WRITE(sc, WMREG_IMS, ICR_LSC);
 			break;
 		}
-	} else
+	} else {
+		sc->sc_icr = ICR_TXDW | ICR_LSC | ICR_RXSEQ | ICR_RXDMT0 |
+		    ICR_RXO | ICR_RXT0;
 		CSR_WRITE(sc, WMREG_IMS, sc->sc_icr);
+	}
 
 	/* Set up the inter-packet gap. */
 	CSR_WRITE(sc, WMREG_TIPG, sc->sc_tipg);
@@ -9098,7 +9101,7 @@ wm_linkintr_serdes(struct wm_softc *sc, uint32_t icr)
 {
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t pcs_adv, pcs_lpab, reg;
 
 	DPRINTF(WM_DEBUG_LINK, ("%s: %s:\n", device_xname(sc->sc_dev),
@@ -9441,11 +9444,12 @@ wm_linkintr_msix(void *arg)
 	uint32_t reg;
 	bool has_rxo;
 
-	DPRINTF(WM_DEBUG_LINK,
-	    ("%s: LINK: got link intr\n", device_xname(sc->sc_dev)));
-
 	reg = CSR_READ(sc, WMREG_ICR);
 	WM_CORE_LOCK(sc);
+	DPRINTF(WM_DEBUG_LINK,
+	    ("%s: LINK: got link intr. ICR = %08x\n",
+		device_xname(sc->sc_dev), reg));
+
 	if (sc->sc_core_stopping)
 		goto out;
 
@@ -11180,7 +11184,7 @@ wm_gmii_statchg(struct ifnet *ifp)
 			sc->sc_ctrl |= CTRL_RFCE;
 	}
 
-	if (sc->sc_mii.mii_media_active & IFM_FDX) {
+	if (mii->mii_media_active & IFM_FDX) {
 		DPRINTF(WM_DEBUG_LINK,
 		    ("%s: LINK: statchg: FDX\n", ifp->if_xname));
 		sc->sc_tctl |= TCTL_COLD(TX_COLLISION_DISTANCE_FDX);
@@ -11195,7 +11199,7 @@ wm_gmii_statchg(struct ifnet *ifp)
 	CSR_WRITE(sc, (sc->sc_type < WM_T_82543) ? WMREG_OLD_FCRTL
 						 : WMREG_FCRTL, sc->sc_fcrtl);
 	if (sc->sc_type == WM_T_80003) {
-		switch (IFM_SUBTYPE(sc->sc_mii.mii_media_active)) {
+		switch (IFM_SUBTYPE(mii->mii_media_active)) {
 		case IFM_1000_T:
 			wm_kmrn_writereg(sc, KUMCTRLSTA_OFFSET_HD_CTRL,
 			    KUMCTRLSTA_HD_CTRL_1000_DEFAULT);
@@ -11784,7 +11788,8 @@ wm_tbi_tick(struct wm_softc *sc)
 		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
 		    && (++sc->sc_tbi_serdes_ticks
 			>= sc->sc_tbi_serdes_anegticks)) {
-			DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+			DPRINTF(WM_DEBUG_LINK, ("%s: %s: EXPIRE\n",
+				device_xname(sc->sc_dev), __func__));
 			sc->sc_tbi_serdes_ticks = 0;
 			/*
 			 * Reset the link, and let autonegotiation do
@@ -11891,7 +11896,7 @@ wm_serdes_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct wm_softc *sc = ifp->if_softc;
 	struct mii_data *mii = &sc->sc_mii;
-	struct ifmedia_entry *ife = sc->sc_mii.mii_media.ifm_cur;
+	struct ifmedia_entry *ife = mii->mii_media.ifm_cur;
 	uint32_t pcs_adv, pcs_lpab, reg;
 
 	ifmr->ifm_status = IFM_AVALID;
@@ -12009,7 +12014,8 @@ wm_serdes_tick(struct wm_softc *sc)
 		if ((IFM_SUBTYPE(ife->ifm_media) == IFM_AUTO)
 		    && (++sc->sc_tbi_serdes_ticks
 			>= sc->sc_tbi_serdes_anegticks)) {
-			DPRINTF(WM_DEBUG_LINK, ("EXPIRE\n"));
+			DPRINTF(WM_DEBUG_LINK, ("%s: %s: EXPIRE\n",
+				device_xname(sc->sc_dev), __func__));
 			sc->sc_tbi_serdes_ticks = 0;
 			/* XXX */
 			wm_serdes_mediachange(ifp);
@@ -12071,6 +12077,7 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	}
 	if (rv != 0)
 		goto out;
+
 	switch (val) {
 	case SFF_SFP_ID_SFF:
 		aprint_normal_dev(sc->sc_dev,
@@ -12086,9 +12093,8 @@ wm_sfp_get_media_type(struct wm_softc *sc)
 	}
 
 	rv = wm_sfp_read_data_byte(sc, SFF_SFP_ETH_FLAGS_OFF, &val);
-	if (rv != 0) {
+	if (rv != 0)
 		goto out;
-	}
 
 	if ((val & (SFF_SFP_ETH_FLAGS_1000SX | SFF_SFP_ETH_FLAGS_1000LX)) != 0)
 		mediatype = WM_MEDIATYPE_SERDES;
