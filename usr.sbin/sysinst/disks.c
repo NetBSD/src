@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.60 2020/01/16 16:47:19 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.61 2020/01/24 07:31:15 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1889,7 +1889,7 @@ mount_disks(struct install_partition_desc *install)
 int
 set_swap_if_low_ram(struct install_partition_desc *install)
 {
-	if (get_ramsize() <= 32)
+	if (get_ramsize() <= TINY_RAM_SIZE)
 		return set_swap(install);
 	return 0;
 }

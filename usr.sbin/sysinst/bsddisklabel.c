@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.36 2020/01/20 21:26:35 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.37 2020/01/24 07:31:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -929,7 +929,7 @@ fill_defaults(struct partition_usage_set *wanted, struct disk_partitions *parts,
 	memcpy(wanted->infos, default_parts_init, sizeof(default_parts_init));
 
 #ifdef HAVE_TMPFS
-	if (get_ramsize() > 96) {
+	if (get_ramsize() >= SMALL_RAM_SIZE) {
 		for (i = 0; i < wanted->num; i++) {
 			if (wanted->infos[i].type != PT_root ||
 			    wanted->infos[i].fs_type != FS_TMPFS)
