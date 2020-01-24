@@ -1,4 +1,4 @@
-/*	$NetBSD: ihphy.c,v 1.10.8.1 2019/08/01 14:27:30 martin Exp $	*/
+/*	$NetBSD: ihphy.c,v 1.10.8.2 2020/01/24 18:40:45 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10.8.1 2019/08/01 14:27:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ihphy.c,v 1.10.8.2 2020/01/24 18:40:45 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -295,14 +295,6 @@ ihphy_reset(struct mii_softc *sc)
 	int reg, i;
 
 	PHY_WRITE(sc, MII_BMCR, BMCR_RESET | BMCR_ISO);
-
-	/*
-	 * Regarding reset, the data sheet specifies (page 55):
-	 *
-	 * "After PHY reset, a delay of 10 ms is required before
-	 *  any register access using MDIO."
-	 */
-	delay(10000);
 
 	/* Wait another 100ms for it to complete. */
 	for (i = 0; i < 100; i++) {
