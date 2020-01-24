@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.337 2020/01/22 13:19:33 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.338 2020/01/24 20:05:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.337 2020/01/22 13:19:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.338 2020/01/24 20:05:15 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -353,7 +353,8 @@ kpreempt(uintptr_t where)
 			break;
 		}
 		s = splsched();
-		if (__predict_false(l->l_blcnt != 0)) {
+		if (__predict_false(l->l_blcnt != 0 ||
+		    curcpu()->ci_biglock_wanted != NULL)) {
 			/* Hold or want kernel_lock, code is not MT safe. */
 			splx(s);
 			if ((dop & DOPREEMPT_COUNTED) == 0) {
