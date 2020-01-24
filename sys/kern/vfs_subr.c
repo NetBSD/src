@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.478.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.478.2.2 2020/01/24 16:05:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.2 2020/01/24 16:05:22 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1111,7 +1111,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
-	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, vip->vi_lock);
+	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vip->vi_lock);
 
 	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(vip->vi_state),
 	    vip->vi_key.vk_mount, vip->vi_key.vk_key_len);
@@ -1544,7 +1544,7 @@ vfs_vnode_lock_print(void *vlock, int full, void (*pr)(const char *, ...))
 
 	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp)) {
 		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
-			if (vip->vi_lock == vlock ||
+			if (&vip->vi_lock == vlock ||
 			    VIMPL_TO_VNODE(vip)->v_interlock == vlock)
 				vfs_vnode_print(VIMPL_TO_VNODE(vip), full, pr);
 		}
