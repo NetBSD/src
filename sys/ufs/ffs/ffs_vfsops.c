@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.362.4.3 2020/01/19 21:21:55 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.362.4.4 2020/01/24 16:48:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.3 2020/01/19 21:21:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.4 2020/01/24 16:48:59 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1453,7 +1453,8 @@ ffs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_fs_bshift = fs->fs_bshift;
 	mp->mnt_dev_bshift = DEV_BSHIFT;	/* XXX */
 	mp->mnt_flag |= MNT_LOCAL;
-	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO | IMNT_SHRLOOKUP;
+	mp->mnt_iflag |= IMNT_MPSAFE | IMNT_CAN_RWTORO | IMNT_SHRLOOKUP |
+	    IMNT_NCLOOKUP;
 #ifdef FFS_EI
 	if (needswap)
 		ump->um_flags |= UFS_NEEDSWAP;
@@ -2082,7 +2083,7 @@ ffs_loadvnode(struct mount *mp, struct vnode *vp,
 		ip->i_gid = ip->i_ffs1_ogid;			/* XXX */
 	}							/* XXX */
 	uvm_vnp_setsize(vp, ip->i_size);
-	cache_set_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	*new_key = &ip->i_number;
 	return 0;
 }
@@ -2204,7 +2205,7 @@ ffs_newvnode(struct mount *mp, struct vnode *dvp, struct vnode *vp,
 	}
 
 	uvm_vnp_setsize(vp, ip->i_size);
-	cache_set_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
+	cache_enter_id(vp, ip->i_mode, ip->i_uid, ip->i_gid);
 	*new_key = &ip->i_number;
 	return 0;
 }
