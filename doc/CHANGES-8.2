@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.90 2020/01/23 10:32:38 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.91 2020/01/24 18:50:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1916,3 +1916,47 @@ sys/netinet/ip_encap.c				1.72
 	Fix PR security/54881: fix bogus psref_release().
 	[knakahara, ticket #1489]
 
+sys/dev/pci/ixgbe/if_bypass.c		1.5
+sys/dev/pci/ixgbe/ixgbe_osdep.c		1.5
+sys/dev/pci/ixgbe/ix_txrx.c		1.58-1.60
+sys/dev/pci/ixgbe/ixgbe.c		1.195,1.220-1.221 via patch
+sys/dev/pci/ixgbe/ixgbe.h		1.60-1.2
+sys/dev/pci/ixgbe/ixgbe_api.c		1.24
+sys/dev/pci/ixgbe/ixgbe_common.c	1.26
+sys/dev/pci/ixgbe/ixgbe_netbsd.c	1.11-1.12
+sys/dev/pci/ixgbe/ixgbe_osdep.h		1.24
+sys/dev/pci/ixgbe/ixgbe_phy.c		1.19
+sys/dev/pci/ixgbe/ixgbe_82598.c		1.14
+sys/dev/pci/ixgbe/ixv.c			1.122,1.142,1.144 via patch
+
+	- Use unsigned to avoid undefined behavior in
+	  ix{gbe,v}_[un]register_vlan().
+	- Free RX structure correctly when detaching.
+	- Remove unused code.
+	- Remove extra spaces.
+	- Fix some typos in comment.
+	- KNF.
+	[msaitoh, ticket #1490]
+
+sys/dev/mii/ihphy.c				1.15
+
+	Remove extra 10ms delay in ihphy_reset() to reduce the
+	possibility of packet drop.
+	[msaitoh, ticket #1491]
+
+sys/dev/pci/if_wm.c			1.650, 1.652-1.654 via patch
+sys/dev/pci/if_wmreg.h			1.116-1.117
+
+	- Set CTRL_ILOS(Invert loss of signal) bit correctly on 82580
+	  port 1, 2, 3 and newer chips. This change fixes a bug that some
+	  fiber, serdes or SFP devices don't detect the link status correctly.
+	- Simplify code by using "struct mii_data *mii" more. No functional
+	  change.
+	- MSI-X doesn't use sc->sc_icr variable, so move the code into
+	  non-MSI-X part. No functional change intended.
+	- Modify debug printfs a bit.
+	- Rename macro.
+	- Use __BIT()
+	- Fix comment. Add comment.
+	- KNF.
+	[msaitoh, ticket #1492]
