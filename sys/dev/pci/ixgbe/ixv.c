@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.56.2.28 2019/11/19 10:48:15 martin Exp $*/
+/*$NetBSD: ixv.c,v 1.56.2.29 2020/01/24 18:37:31 martin Exp $*/
 
 /******************************************************************************
 
@@ -559,9 +559,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	return;
 
 err_late:
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 err_out:
 	ixv_free_pci_resources(adapter);
 	IXGBE_CORE_LOCK_DESTROY(adapter);
@@ -694,13 +692,7 @@ ixv_detach(device_t dev, int flags)
 	evcnt_detach(&hw->mbx.stats.reqs);
 	evcnt_detach(&hw->mbx.stats.rsts);
 
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	for (int i = 0; i < adapter->num_queues; i++) {
-		struct ix_queue *lque = &adapter->queues[i];
-		mutex_destroy(&lque->dc_mtx);
-	}
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 
 	IXGBE_CORE_LOCK_DESTROY(adapter);
 
@@ -785,19 +777,6 @@ ixv_init_locked(struct adapter *adapter)
 
 	/* Configure RX settings */
 	ixv_initialize_receive_units(adapter);
-
-#if 0 /* XXX isn't it required? -- msaitoh  */
-	/* Set the various hardware offload abilities */
-	ifp->if_hwassist = 0;
-	if (ifp->if_capenable & IFCAP_TSO4)
-		ifp->if_hwassist |= CSUM_TSO;
-	if (ifp->if_capenable & IFCAP_TXCSUM) {
-		ifp->if_hwassist |= (CSUM_TCP | CSUM_UDP);
-#if __FreeBSD_version >= 800000
-		ifp->if_hwassist |= CSUM_SCTP;
-#endif
-	}
-#endif
 
 	/* Set up VLAN offload and filter */
 	ixv_setup_vlan_support(adapter);
@@ -2126,7 +2105,7 @@ ixv_register_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	ixv_shadow_vfta[index] |= (1 << bit);
+	ixv_shadow_vfta[index] |= ((u32)1 << bit);
 	/* Re-init to load the changes */
 	ixv_init_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
@@ -2153,7 +2132,7 @@ ixv_unregister_vlan(void *arg, struct ifnet *ifp, u16 vtag)
 	IXGBE_CORE_LOCK(adapter);
 	index = (vtag >> 5) & 0x7F;
 	bit = vtag & 0x1F;
-	ixv_shadow_vfta[index] &= ~(1 << bit);
+	ixv_shadow_vfta[index] &= ~((u32)1 << bit);
 	/* Re-init to load the changes */
 	ixv_init_locked(adapter);
 	IXGBE_CORE_UNLOCK(adapter);
