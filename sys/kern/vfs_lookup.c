@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.212.4.7 2020/01/23 21:23:56 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.212.4.8 2020/01/24 16:05:37 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.7 2020/01/23 21:23:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.8 2020/01/24 16:05:37 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1324,6 +1324,7 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 
 		/* Scored a hit.  Negative is good too (ENOENT). */
 		if (foundobj == NULL) {
+			/* XXXAD need to handle -o union mount. */
 			error = ENOENT;
 			break;
 		}
