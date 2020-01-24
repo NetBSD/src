@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.24.2.18 2019/11/10 13:36:29 martin Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.24.2.19 2020/01/24 18:37:31 martin Exp $ */
 
 /******************************************************************************
 
@@ -148,7 +148,7 @@ ixgbe_legacy_start_locked(struct ifnet *ifp, struct tx_ring *txr)
 		return (ENETDOWN);
 	if (txr->txr_no_space)
 		return (ENETDOWN);
-	
+
 	while (!IFQ_IS_EMPTY(&ifp->if_snd)) {
 		if (txr->tx_avail <= IXGBE_QUEUE_MIN_FREE)
 			break;
@@ -1693,6 +1693,10 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 				rxbuf->pmap = NULL;
 			}
 		}
+
+		/* NetBSD specific. See ixgbe_netbsd.c */
+		ixgbe_jcl_destroy(adapter, rxr);
+
 		if (rxr->rx_buffers != NULL) {
 			free(rxr->rx_buffers, M_DEVBUF);
 			rxr->rx_buffers = NULL;
@@ -2379,3 +2383,24 @@ tx_fail:
 fail:
 	return (error);
 } /* ixgbe_allocate_queues */
+
+/************************************************************************
+ * ixgbe_free_queues
+ *
+ *   Free descriptors for the transmit and receive rings, and then
+ *   the memory associated with each.
+ ************************************************************************/
+void
+ixgbe_free_queues(struct adapter *adapter)
+{
+	struct ix_queue *que;
+	int i;
+
+	ixgbe_free_transmit_structures(adapter);
+	ixgbe_free_receive_structures(adapter);
+	for (i = 0; i < adapter->num_queues; i++) {
+		que = &adapter->queues[i];
+		mutex_destroy(&que->dc_mtx);
+	}
+	free(adapter->queues, M_DEVBUF);
+} /* ixgbe_free_queues */

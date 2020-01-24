@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.13.2.7 2019/09/05 09:06:08 martin Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.13.2.8 2020/01/24 18:37:31 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -5520,7 +5520,7 @@ s32 ixgbe_setup_mac_link_multispeed_fiber(struct ixgbe_hw *hw,
 
 		goto out;
 	}
-	
+
 	/* We didn't get link.  Configure back to the highest speed we tried,
 	 * (if there was more than one).  We call ourselves back with just the
 	 * single highest speed that the user requested.
