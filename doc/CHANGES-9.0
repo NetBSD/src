@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.164 2020/01/23 10:15:40 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.165 2020/01/24 20:21:53 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7874,4 +7874,15 @@ sys/netinet/ip_encap.c				1.72
 
 	PR security/54881: fix bogus psref_release().
 	[knakahara, ticket #644]
+
+sys/netinet/if_arp.c				1.292
+
+	Fix ARA duplicate address defending.
+	[roy, ticket #645]
+
+sbin/route/route.c				1.164,1.165
+
+	route(8): decode the correct flags for interface address messages
+	and show them instead of interface flags.
+	[roy, ticket #646]
 
