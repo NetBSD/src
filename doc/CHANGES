@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2642 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2643 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -56,6 +56,7 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	bind: Import version 9.14.7. [christos 20191017]
 	libc: Changed the iconv(3) function signature to the POSIX variation
 		[kamil 20191024]
+	nct(4): Add Nuvoton NCT5104D GPIO driver. [ad 20191025]
 	vio9p(4): Add virtio-9p front-end driver. [ozaki-r 20191028]
 	mount_9p(8): Enable to mount a filesystem exported via virtio-9p.
 		[ozaki-r 20191028]
@@ -73,30 +74,61 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 		Atom C2XXX, C3XXX, Xeon D-21XX and D-15XX, C62X chipsets and
 		QuickAssist Adapter 8960/8970.
 		[hikaru 20191120]
+	select(2), poll(2): Performance and scalability improvements
+		[ad 20191121]
+	amd64, i386: Performance and scalability improvements for TLB
+		shootdown [ad 20191121]
 	bind: Import version 9.14.8. [christos 20191127]
 	terminfo: Import 20190609 [christos 20191127]
+	onewire(4), owtemp(4): Improve reliability and reduce CPU overhead
+		slightly. [ad 20191130]
+	scheduler: Improve performance and interactivity. [ad 20191201]
+	vfs: Reduce false sharing and lock overhead during normal operation.
+		[ad 20191201]
 	ixl(4): Ported driver for Intel Ethernet 700 series
 		[yamaguchi 20191210]
 	acpi(4): Updated ACPICA to 20191213. [christos 20191214]
+	uvm: Replace red-black tree page lookup with radix tree lookup,
+		including tagging and gang lookup of pages.  Original work
+		done by yamt@. [ad 20191214]
 	nsd: Import 4.2.4. [christos 20191215]
 	unbound(8): Import 1.9.6. [christos 20191215]
 	openpam(3): update to 20190224 (tabebuia) [christos 20191215]
  	kerberos(8): Update to Heimdal-7.7.0 [christos 20191215]
 	file(1): Upgraded to 5.38. [christos 20191216]
+	uvm: Replace global counters with per-CPU counters, significantly
+		reducing system time on workloads that are VM-system heavy.
+		[ad 20191216]
 	anxdp(4): Add driver for Analogix DisplayPort core found in
 		Rockchip RK3399. [jakllsch 20191219]
 	net80211: Require SSID configuration to associate with an open AP.
 		[jakllsch 20191219]
 	dhcpcd(8): Import dhcpcd-8.1.4 [roy 20191220]
+	uvm: Rewrite the page allocator to be more efficient and somewhat CPU
+		topology aware.  Add preliminary NUMA support.  [ad 20191227]
 	crunchgen(1): Added the ability to pass variables in the submake
 		command line, and removed all command like flags that are
 		not needed anymore [christos 20191229]
+	uvm: Reduce lock contention by making the maintentance of page
+		replacement state more concurrent. [ad 20191231]
 	aq(4): Add Aquantia 10G network adapter driver [ryo 20200101]
 	dhcpcd(8): Import dhcpcd-8.1.5 [roy 20200103]
 	tmux(1): Imported 3.0a. [christos 20200106]
+	amd64, i386: Replace the global PV hash table with radix trees,
+		yielding significant performance and scalability benefits.
+		[ad 20200112]
+	amd64, i386: Use the pmap module as a source of pre-zeroed pages
+		for the VM system. [ad 20200112]
+	scheduler: Make the scheduler topology aware.  It understands and
+		makes good use of HyperThreading/SMT, spreads the load evenly
+		across different physical CPU packages, and can effectively
+		run asymmetric systems with slow and fast CPUs [ad 20200113]
 	evbarm: Add support for NXP i.MX 8M family SoCs. [jmcneill 20200114]
 	arm: Add support for cpu topology for ARMv7 and ARMv7 CPUs.
 		[mrg 20201114]
+	uvm: More precisely track clean/dirty pages, and change how they are
+		indexed, speeding up fsync() on large files by orders of
+		magnitude.  Original work done by yamt@. [ad 20200115]
 	uyurex(4): Removed from the tree. [maya 20200117]
 	strip(4): Removed from the tree. [thorpej 20200118]
 	hippi and esh(4): Removed from the tree. [thorpej 20200118]
