@@ -1,4 +1,4 @@
-/* $NetBSD: t_mlock.c,v 1.7 2019/03/13 08:50:12 kre Exp $ */
+/* $NetBSD: t_mlock.c,v 1.8 2020/01/24 08:45:16 skrll Exp $ */
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mlock.c,v 1.7 2019/03/13 08:50:12 kre Exp $");
+__RCSID("$NetBSD: t_mlock.c,v 1.8 2020/01/24 08:45:16 skrll Exp $");
 
 #include <sys/mman.h>
 #include <sys/resource.h>
@@ -302,7 +302,6 @@ ATF_TP_ADD_TCS(tp)
 {
 
 	page = sysconf(_SC_PAGESIZE);
-	fprintf(stderr, "t_mlock: pagesize %ld\n", page);
 	ATF_REQUIRE(page >= 0);
 
 	ATF_TP_ADD_TC(tp, mlock_clip);
