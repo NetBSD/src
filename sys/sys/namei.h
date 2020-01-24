@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.103.2.4 2020/01/19 21:24:01 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.103.2.5 2020/01/24 16:49:12 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.47.2.5 2020/01/19 21:19:25 ad Exp 
+ *   from: NetBSD: namei.src,v 1.47.2.6 2020/01/24 16:48:59 ad Exp 
  */
 
 /*
@@ -227,14 +227,13 @@ struct namecache {
 	struct	rb_node nc_tree;	/* d  red-black tree, must be first */
 	TAILQ_ENTRY(namecache) nc_list;	/* v  vp's list of cache entries */
 	TAILQ_ENTRY(namecache) nc_lru;	/* l  pseudo-lru chain */
-	struct	nchnode *nc_dnn;	/* -  nchnode of parent of name */
-	struct	nchnode *nc_nn;		/* -  nchnode the name refers to */
+	struct	vnode *nc_dvp;		/* -  vnode of parent of name */
 	struct	vnode *nc_vp;		/* -  vnode the name refers to */
 	int64_t	nc_key;			/* -  hash key */
 	int	nc_lrulist;		/* l  which LRU list its on */
 	short	nc_nlen;		/* -  length of the name */
 	char	nc_whiteout;		/* -  true if a whiteout */
-	char	nc_name[33];		/* -  segment name */
+	char	nc_name[41];		/* -  segment name */
 };
 #endif
 
@@ -305,8 +304,7 @@ int	cache_revlookup(struct vnode *, struct vnode **, char **, char *,
 int	cache_diraccess(struct vnode *, int);
 void	cache_enter(struct vnode *, struct vnode *,
 			const char *, size_t, uint32_t);
-void	cache_set_id(struct vnode *, mode_t, uid_t, gid_t);
-void	cache_update_id(struct vnode *, mode_t, uid_t, gid_t);
+void	cache_enter_id(struct vnode *, mode_t, uid_t, gid_t);
 bool	cache_have_id(struct vnode *);
 void	cache_vnode_init(struct vnode * );
 void	cache_vnode_fini(struct vnode * );
@@ -340,8 +338,6 @@ void	namecache_print(struct vnode *, void (*)(const char *, ...)
 	type	ncs_revhits;	/* reverse-cache hits */		\
 	type	ncs_revmiss;	/* reverse-cache misses */		\
 	type	ncs_collisions;	/* hash value collisions */		\
-	type	ncs_active;	/* active cache entries */		\
-	type	ncs_inactive;	/* inactive cache entries */		\
 	type	ncs_denied;	/* access denied */			\
 }
 
