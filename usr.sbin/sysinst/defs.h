@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.52 2020/01/20 21:26:35 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.53 2020/01/24 07:31:15 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,20 @@ const char *getfslabelname(uint, uint);
 #define	MENUSTRSIZE	80
 #define SSTRSIZE	30
 
+/* these are used for different alignment defaults */
 #define	HUGE_DISK_SIZE	(daddr_t)(128 * (GIG / 512))
 #define	TINY_DISK_SIZE	(daddr_t)(1800 * (MEG / 512))
+
+/*
+ * if a system does not have more ram (in MB) than this, swap will be enabled
+ * very early (as soon as the swap partition has been created)
+ */
+#define	TINY_RAM_SIZE		32
+/*
+ * if a system has less ram (in MB) than this, we will not create a
+ * tmpfs /tmp by default (to workaround PR misc/54886)
+ */
+#define	SMALL_RAM_SIZE		256
 
 /* helper macros to create unique internal error messages */
 #define STR_NO(STR)	#STR
