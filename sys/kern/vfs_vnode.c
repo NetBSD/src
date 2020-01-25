@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.105.2.5 2020/01/24 16:05:22 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.105.2.6 2020/01/25 15:54:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.5 2020/01/24 16:05:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.6 2020/01/25 15:54:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -912,6 +912,8 @@ vrele_async(vnode_t *vp)
 /*
  * Vnode reference, where a reference is already held by some other
  * object (for example, a file structure).
+ *
+ * NB: we have lockless code sequences that rely on this not blocking.
  */
 void
 vref(vnode_t *vp)
