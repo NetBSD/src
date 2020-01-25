@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.559 2020/01/24 18:58:46 nia Exp $
+# $NetBSD: GENERIC,v 1.560 2020/01/25 18:38:34 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.559 $"
+#ident		"GENERIC-$Revision: 1.560 $"
 
 maxusers	64		# estimated number of users
 
@@ -809,7 +809,6 @@ ixl*	at pci? dev ? function ?	# Intel Ethernet 700 Series
 ixv*	at pci? dev ? function ?	# Intel 8259x 10G virtual function
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 ethernet
 hme*	at pci? dev ? function ?	# Sun Microelectronics STP2002-STQ
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mcx*	at pci? dev ? function ?	# Mellanox 5th generation Ethernet

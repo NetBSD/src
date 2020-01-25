@@ -1,10 +1,10 @@
-#	$NetBSD: MALTA,v 1.99 2020/01/20 18:38:20 thorpej Exp $
+#	$NetBSD: MALTA,v 1.100 2020/01/25 18:38:35 thorpej Exp $
 
 include 	"arch/evbmips/conf/std.malta"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"MALTA-$Revision: 1.99 $"
+#ident 		"MALTA-$Revision: 1.100 $"
 
 maxusers	32
 
@@ -218,7 +218,6 @@ ath*		at pci? dev ? function ?	# Atheros WLAN
 #ex*		at pci? dev ? function ?	# 3Com 90x[B]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO10+/100B
-#le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
 pcn*		at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
 options 	PCN_EVENT_COUNTERS
 #ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet

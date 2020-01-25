@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.112 2020/01/20 18:38:19 thorpej Exp $
+# $NetBSD: INSTALL,v 1.113 2020/01/25 18:38:34 thorpej Exp $
 #
 # Alpha INSTALL kernel.
 
@@ -191,7 +191,7 @@ fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+pcn*	at	pci? dev ? function ?		# PCnet-PCI Ethernet
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)

@@ -1,4 +1,4 @@
-#	$NetBSD: XEN3PAE_DOM0,v 1.18 2020/01/20 18:38:20 thorpej Exp $
+#	$NetBSD: XEN3PAE_DOM0,v 1.19 2020/01/25 18:38:36 thorpej Exp $
 #
 #	XEN3_0: Xen 3.0 domain0 kernel
 
@@ -331,7 +331,6 @@ iwi*	at pci? dev ? function ?	# Intel PRO/Wireless 2200BG
 iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 iwm*	at pci? dev ? function ?	# Intel Wireless WiFi Link 7xxx
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*	at mskc?			# Marvell Yukon 2 Gigabit Ethernet

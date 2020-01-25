@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.362 2020/01/22 22:29:28 macallan Exp $
+# $NetBSD: GENERIC,v 1.363 2020/01/25 18:38:36 thorpej Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.362 $"
+#ident 		"GENERIC-$Revision: 1.363 $"
 
 maxusers	32
 
@@ -207,7 +207,6 @@ fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gem*	at pci? dev ? function ?	# gmac ethernet
 #gm*	at pci? dev ? function ?	# gmac ethernet (old)
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 pcn*	at pci? dev ? function ?	# AMD PCnet-PCI Ethernet
