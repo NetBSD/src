@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.67 2020/01/25 17:58:28 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.68 2020/01/25 18:30:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.67 2020/01/25 17:58:28 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.68 2020/01/25 18:30:41 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -529,7 +529,7 @@ pthread__mutex_unlock_slow(pthread_mutex_t *ptm)
 			(void)_lwp_unpark(self->pt_waiters[0],
 			    __UNVOLATILE(&ptm->ptm_waiters));
 		}
-	} else {
+	} else if (self->pt_nwaiters > 0) {
 		(void)_lwp_unpark_all(self->pt_waiters, self->pt_nwaiters,
 		    __UNVOLATILE(&ptm->ptm_waiters));
 	}
