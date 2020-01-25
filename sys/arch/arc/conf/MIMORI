@@ -1,4 +1,4 @@
-#	$NetBSD: MIMORI,v 1.74 2020/01/19 01:25:04 thorpej Exp $
+#	$NetBSD: MIMORI,v 1.75 2020/01/25 18:38:35 thorpej Exp $
 #	NetBSD: GENERIC,v 1.31 2000/06/09 05:33:02 soda Exp
 #
 #	MIMORI -- My NEC RISCstation 2250 (ur)
@@ -179,7 +179,7 @@ slide*  	at pci? dev ? function ?	# Symphony Labs IDE controllers
 
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
-le*		at pci? dev ? function ?	# PCnet-PCI
+pcn*		at pci? dev ? function ?	# PCnet-PCI
 ne*		at pci? dev ? function ?	# NE2000-compatible
 tlp*		at pci? dev ? function ?	# DECchip 21x4x and clones
 
