@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.35 2020/01/19 00:58:14 jmcneill Exp $
+# $NetBSD: Makefile,v 1.36 2020/01/25 19:05:08 christos Exp $
 
 # Link the mesa_dri_drivers mega driver.
 
@@ -421,6 +421,7 @@ SRCS+=	${DRI_SOURCES.${_d}}
 .PATH: ${X11SRCDIR.Mesa}/src/mesa/drivers/dri/${_d}
 .endfor
 
+
 LIBDPLIBS+=	expat		${NETBSDSRCDIR}/external/mit/expat/lib/libexpat
 LIBDPLIBS+=	m		${NETBSDSRCDIR}/lib/libm
 LIBDPLIBS+=	pthread		${NETBSDSRCDIR}/lib/libpthread
@@ -440,6 +441,8 @@ SRCS+=	streaming-load-memcpy.c
 CPPFLAGS.streaming-load-memcpy.c+=	-msse4.1
 CPPFLAGS.isl_tiled_memcpy_sse41.c+=	-msse4.1
 .endif
+
+CFLAGS+= ${${ACTIVE_CC} == "clang":? -Wno-error=atomic-alignment :}
 
 .include "../driver.mk"
 
