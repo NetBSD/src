@@ -1,4 +1,4 @@
-/* $NetBSD: vmstat.c,v 1.235 2020/01/15 17:56:46 ad Exp $ */
+/* $NetBSD: vmstat.c,v 1.236 2020/01/25 05:43:32 simonb Exp $ */
 
 /*-
  * Copyright (c) 1998, 2000, 2001, 2007, 2019, 2020
@@ -71,7 +71,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1986, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)vmstat.c	8.2 (Berkeley) 3/1/95";
 #else
-__RCSID("$NetBSD: vmstat.c,v 1.235 2020/01/15 17:56:46 ad Exp $");
+__RCSID("$NetBSD: vmstat.c,v 1.236 2020/01/25 05:43:32 simonb Exp $");
 #endif
 #endif /* not lint */
 
@@ -1492,7 +1492,7 @@ dopool_sysctl(int verbose, int wide)
 	    "Minpg",
 	    wide ? 7 : 6, "Maxpg",
 	    "Idle",
-	    wide ? "  Flags" : "",
+	    wide ? "   Flags" : "",
 	    wide ? "   Util" : "");
 
 	name_len = MIN((int)sizeof(pp->pr_wchan), wide ? 16 : 11);
@@ -1533,7 +1533,7 @@ dopool_sysctl(int verbose, int wide)
 		PRWORD(ovflw, " %*s", wide ? 7 : 6, 1, maxp);
 		PRWORD(ovflw, " %*" PRIu64, 5, 1, pp->pr_nidle);
 		if (wide)
-			PRWORD(ovflw, " 0x%0*" PRIx64, 5, 1,
+			PRWORD(ovflw, " 0x%0*" PRIx64, 6, 1,
 			    pp->pr_flags);
 
 		this_inuse = pp->pr_nout * pp->pr_size;
@@ -1640,7 +1640,7 @@ dopool(int verbose, int wide)
 			    "Minpg",
 			    wide ? 7 : 6, "Maxpg",
 			    "Idle",
-			    wide ? "  Flags" : "",
+			    wide ? "   Flags" : "",
 			    wide ? "   Util" : "");
 			first = 0;
 		}
@@ -1679,7 +1679,7 @@ dopool(int verbose, int wide)
 		PRWORD(ovflw, " %*s", wide ? 7 : 6, 1, maxp);
 		PRWORD(ovflw, " %*lu", 5, 1, pp->pr_nidle);
 		if (wide)
-			PRWORD(ovflw, " 0x%0*x", 5, 1,
+			PRWORD(ovflw, " 0x%0*x", 6, 1,
 			    pp->pr_flags | pp->pr_roflags);
 
 		this_inuse = pp->pr_nout * pp->pr_size;
