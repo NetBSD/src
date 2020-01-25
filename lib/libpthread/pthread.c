@@ -1,7 +1,8 @@
-/*	$NetBSD: pthread.c,v 1.154 2020/01/13 18:22:56 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.155 2020/01/25 15:41:52 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.154 2020/01/13 18:22:56 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.155 2020/01/25 15:41:52 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -571,10 +572,6 @@ pthread__create_tramp(void *cookie)
 	 * thrash.  May help for SMT processors.  XXX We should not
 	 * be allocating stacks on fixed 2MB boundaries.  Needs a
 	 * thread register or decent thread local storage.
-	 *
-	 * Note that we may race with the kernel in _lwp_create(),
-	 * and so pt_lid can be unset at this point, but we don't
-	 * care.
 	 */
 	(void)alloca(((unsigned)self->pt_lid & 7) << 8);
 
