@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.220 2020/01/25 07:59:14 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.221 2020/01/25 08:13:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.220 2020/01/25 07:59:14 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.221 2020/01/25 08:13:39 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -2165,6 +2165,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("Reserved\n");
 		break;
 	}
+	onoff("10-bit Tag Completer Supported", reg, PCIE_DCAP2_TBT_COMP);
+	onoff("10-bit Tag Requester Supported", reg, PCIE_DCAP2_TBT_REQ);
 	printf("      OBFF Supported: ");
 	switch (__SHIFTOUT(reg, PCIE_DCAP2_OBFF)) {
 	case 0x0:
@@ -2217,6 +2219,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("LTR Mechanism Enabled", reg, PCIE_DCSR2_LTR_MEC);
 	onoff("Emergency Power Reduction Request", reg,
 	    PCIE_DCSR2_EMGPWRRED_REQ);
+	onoff("10-bit Tag Requester Enabled", reg, PCIE_DCSR2_TBT_REQ);
 	printf("      OBFF: ");
 	switch (__SHIFTOUT(reg, PCIE_DCSR2_OBFF_EN)) {
 	case 0x0:
@@ -4165,6 +4168,24 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int extcapoff)
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
 /* XXX pci_conf_print_vf_resizbar_cap */
+
+static void
+pci_conf_print_dlf_cap(const pcireg_t *regs, int extcapoff)
+{
+	pcireg_t reg;
+
+	printf("\n  Data link Feature Register\n");
+	reg = regs[o2i(extcapoff + PCI_DLF_CAP)];
+	printf("    Capability register: 0x%08x\n", reg);
+	onoff("Scaled Flow Control", reg, PCI_DLF_LFEAT_SCLFCTL);
+	onoff("DLF Exchange enable", reg, PCI_DLF_CAP_XCHG);
+
+	reg = regs[o2i(extcapoff + PCI_DLF_STAT)];
+	printf("    Status register: 0x%08x\n", reg);
+	onoff("Scaled Flow Control", reg, PCI_DLF_LFEAT_SCLFCTL);
+	onoff("Remote DLF supported Valid", reg, PCI_DLF_STAT_RMTVALID);
+}
+
 /* XXX pci_conf_print_hierarchyid_cap */
 /* XXX pci_conf_print_npem_cap */
 
@@ -4251,8 +4272,8 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
-	{ 0x25, "unknown", NULL },
-	{ 0x26, "unknown", NULL },
+	{ PCI_EXTCAP_DLF, "Data link Feature", pci_conf_print_dlf_cap },
+	{ PCI_EXTCAP_PYSLAY_16GT, "Physical Layer 16.0 GT/s", NULL },
 	{ 0x27, "unknown", NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },
