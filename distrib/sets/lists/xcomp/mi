@@ -1,4 +1,4 @@
-#	 $NetBSD: mi,v 1.214 2019/11/12 10:14:11 uki Exp $
+#	 $NetBSD: mi,v 1.215 2020/01/25 00:12:42 uki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2727,15 +2727,15 @@
 ./usr/X11R7/man/html3/XExposeEvent.html			xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XExtentsOfFontSet.html		xcomp-libX11-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86DGA.html			xcomp-libXxf86dga-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86Misc.html			libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscGetKbdSettings.html	libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscGetMouseSettings.html	libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscGetSaver.html		libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscQueryExtension.html	libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscQueryVersion.html		libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscSetKbdSettings.html	libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscSetMouseSettings.html	libXxf86misc-htmlman	html,xorg
-./usr/X11R7/man/html3/XF86MiscSetSaver.html		libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86Misc.html			xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscGetKbdSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscGetMouseSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscGetSaver.html		xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscQueryExtension.html	xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscQueryVersion.html		xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscSetKbdSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscSetMouseSettings.html	xcomp-libXxf86misc-htmlman	html,xorg
+./usr/X11R7/man/html3/XF86MiscSetSaver.html		xcomp-libXxf86misc-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VM.html			libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeDeleteModeLine.html	libXxf86vm-htmlman	html,xorg
 ./usr/X11R7/man/html3/XF86VidModeGetAllModeLines.html	libXxf86vm-htmlman	html,xorg
