@@ -1,4 +1,4 @@
-/*	$NetBSD: pcireg.h,v 1.149 2020/01/22 02:51:38 msaitoh Exp $	*/
+/*	$NetBSD: pcireg.h,v 1.150 2020/01/25 08:13:39 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1999, 2000
@@ -1097,6 +1097,8 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCAP2_LTR_MEC	__BIT(11)      /* LTR Mechanism Supported */
 #define PCIE_DCAP2_TPH_COMP	__BITS(13, 12) /* TPH Completer Supported */
 #define PCIE_DCAP2_LNSYSCLS	__BITS(15, 14) /* LN System CLS */
+#define PCIE_DCAP2_TBT_COMP	__BIT(16)      /* 10-bit Tag Completer Supp. */
+#define PCIE_DCAP2_TBT_REQ	__BIT(17)      /* 10-bit Tag Requester Supp. */
 #define PCIE_DCAP2_OBFF		__BITS(19, 18) /* Optimized Buffer Flush/Fill*/
 #define PCIE_DCAP2_EXTFMT_FLD	__BIT(20)      /* Extended Fmt Field Support */
 #define PCIE_DCAP2_EETLP_PREF	__BIT(21)      /* End-End TLP Prefix Support */
@@ -1114,6 +1116,7 @@ typedef u_int8_t pci_revision_t;
 #define PCIE_DCSR2_IDO_COMP	__BIT(9)       /* IDO Completion Enable */
 #define PCIE_DCSR2_LTR_MEC	__BIT(10)      /* LTR Mechanism Enable */
 #define PCIE_DCSR2_EMGPWRRED_REQ __BIT(11)     /* Emergency Power Reduc. Req */
+#define PCIE_DCSR2_TBT_REQ	__BIT(12)      /* 10-bit Tag Requester Ena. */
 #define PCIE_DCSR2_OBFF_EN	__BITS(14, 13) /* OBFF Enable */
 #define PCIE_DCSR2_EETLP	__BIT(15)      /* End-End TLP Prefix Blcking */
 #define PCIE_LCAP2	0x2c	/* Link Capabilities 2 Register */
@@ -1525,6 +1528,8 @@ struct pci_rom {
 #define	PCI_EXTCAP_RTR		0x0022	/* Readiness Time Reporting */
 #define	PCI_EXTCAP_DESIGVNDSP	0x0023	/* Designated Vendor-Specific */
 #define	PCI_EXTCAP_VF_RESIZBAR	0x0024	/* VF Resizable BAR */
+#define	PCI_EXTCAP_DLF		0x0025	/* Data link Feature */
+#define	PCI_EXTCAP_PYSLAY_16GT	0x0026	/* Physical Layer 16.0 GT/s */
 #define	PCI_EXTCAP_HIERARCHYID	0x0028	/* Hierarchy ID */
 #define	PCI_EXTCAP_NPEM		0x0029	/* Native PCIe Enclosure Management */
 
@@ -2148,6 +2153,23 @@ struct pci_rom {
 /*
  * Extended capability ID: 0x0024
  * VF Resizable BAR
+ */
+
+/*
+ * Extended capability ID: 0x0025
+ * Data link Feature
+ */
+#define	PCI_DLF_CAP	0x04	/* Capability register */
+#define	PCI_DLF_LFEAT         __BITS(22, 0)  /* Local DLF supported */
+#define	PCI_DLF_LFEAT_SCLFCTL __BIT(0)	     /* Scaled Flow Control */
+#define	PCI_DLF_CAP_XCHG      __BIT(31)	     /* DLF Exchange enable */
+#define	PCI_DLF_STAT	0x08	/* Status register */
+	/* Bit 22:0 is the same as PCI_DLF_CAP_LINKFEAT */
+#define	PCI_DLF_STAT_RMTVALID __BIT(31)	     /* Remote DLF supported Valid */
+
+/*
+ * Extended capability ID: 0x0026
+ * Physical Layer 16.0 GT/s
  */
 
 /*
