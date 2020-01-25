@@ -1,5 +1,5 @@
 #
-# 	$NetBSD: RC3230,v 1.50 2018/08/01 20:04:12 maxv Exp $
+# 	$NetBSD: RC3230,v 1.50.6.1 2020/01/25 22:38:42 ad Exp $
 #
 include 	"arch/mipsco/conf/std.mipsco"
 
@@ -127,7 +127,6 @@ pseudo-device	vnd			# disk-like interface to files
 pseudo-device	ccd			# concatenated and striped disks
 #pseudo-device	raid			# RAIDframe disk driver
 #pseudo-device	fss			# file system snapshot device
-#pseudo-device	strip			# radio clock
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	clockctl		# user control of clock subsystem
 

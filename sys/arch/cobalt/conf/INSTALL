@@ -1,4 +1,4 @@
-# $NetBSD: INSTALL,v 1.70 2018/12/12 06:29:36 maxv Exp $
+# $NetBSD: INSTALL,v 1.70.6.1 2020/01/25 22:38:39 ad Exp $
 #
 # INSTALL -- installation and rescue kernel.
 #
@@ -10,7 +10,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"INSTALL-$Revision: 1.70 $"
+#ident 		"INSTALL-$Revision: 1.70.6.1 $"
 
 makeoptions     COPTS="-Os -mmemcpy"
 makeoptions	CPUFLAGS="-march=vr5000 -mabi=32"
@@ -228,10 +228,8 @@ wd* 		at atabus? drive ? flags 0x0000
 #ep*		at pci? dev ? function ?	# 3Com 3c59x
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-#esh*		at pci? dev ? function ?	# Essential HIPPI card
-#fpa*		at pci? dev ? function ?	# DEC DEFPA FDDI
 #fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO10+/100B
-#le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
+#pcn*		at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
 #ntwoc*		at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 #sip*		at pci? dev ? function ?	# SiS 900 Ethernet
@@ -295,7 +293,6 @@ pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	pppoe				# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel

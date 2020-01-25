@@ -1,4 +1,4 @@
-# 	$NetBSD: GENERIC_TINY,v 1.88 2018/12/19 13:57:49 maxv Exp $
+# 	$NetBSD: GENERIC_TINY,v 1.88.6.1 2020/01/25 22:38:42 ad Exp $
 
 #	news68k GENERIC config file for low memory machines;
 #
@@ -6,7 +6,7 @@ include 	"arch/news68k/conf/std.news68k"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC_TINY-$Revision: 1.88 $"
+#ident 		"GENERIC_TINY-$Revision: 1.88.6.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -204,7 +204,6 @@ pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel
 pseudo-device	bpfilter		# Berkeley Packet Filter
 #pseudo-device	npf			# NPF packet filter
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation

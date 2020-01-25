@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.143 2019/12/17 05:49:01 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.143.2.1 2020/01/25 22:38:49 ad Exp $*/
 
 /******************************************************************************
 
@@ -547,9 +547,7 @@ ixv_attach(device_t parent, device_t dev, void *aux)
 	return;
 
 err_late:
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 err_out:
 	ixv_free_pci_resources(adapter);
 	IXGBE_CORE_LOCK_DESTROY(adapter);
@@ -674,13 +672,7 @@ ixv_detach(device_t dev, int flags)
 	evcnt_detach(&hw->mbx.stats.reqs);
 	evcnt_detach(&hw->mbx.stats.rsts);
 
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	for (int i = 0; i < adapter->num_queues; i++) {
-		struct ix_queue *lque = &adapter->queues[i];
-		mutex_destroy(&lque->dc_mtx);
-	}
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 
 	IXGBE_CORE_LOCK_DESTROY(adapter);
 

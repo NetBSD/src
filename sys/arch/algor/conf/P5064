@@ -1,4 +1,4 @@
-#	$NetBSD: P5064,v 1.90 2019/04/13 08:22:58 isaki Exp $
+#	$NetBSD: P5064,v 1.90.6.1 2020/01/25 22:38:37 ad Exp $
 #
 # Algorithmics P-5064 kernel.
 #
@@ -7,7 +7,7 @@ include	"arch/algor/conf/std.algor"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"P5064-$Revision: 1.90 $"
+#ident 		"P5064-$Revision: 1.90.6.1 $"
 
 maxusers 32
 
@@ -130,11 +130,10 @@ pci*	at	vtpbc?
 #epic*	at	pci? dev ? function ?		# SMC EPIC/100 Ethernet
 #eso*	at	pci? dev ? function ?		# ESS Solo-1 PCI AudioDrive
 #ex*	at	pci? dev ? function ?		# 3COM 3c90x[B] Ethernet
-#fpa*	at	pci? dev ? function ?		# DEC DEFPA FDDI
 #fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 #gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 #isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-#le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+#pcn*	at	pci? dev ? function ?		# PCInet-PCI Ethernet
 pcib*	at	pci? dev ? function ?		# Intel PCI-ISA Bridges
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 #mlx*	at	pci? dev ? function ?		# Mylex DAC960 / DEC SWXCR (untested)

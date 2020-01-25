@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.93.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.93.2.2 2020/01/25 22:38:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -181,7 +181,7 @@ struct vm_page {
 };
 
 /*
- * Overview of UVM page flags.
+ * Overview of UVM page flags, stored in pg->flags.
  *
  * Locking notes:
  *
@@ -275,12 +275,9 @@ struct vm_page {
 	"\21PAGER1"
 
 /*
- * uvmpdpol state flags.
+ * Flags stored in pg->pqflags, which is protected by pg->interlock.
  *
- * => may only be changed with pg->interlock held.
- * => changing them is the responsibility of uvmpdpol ..
- * => .. but uvm_page needs to know about them in order to purge updates.
- * => PQ_PRIVATE is private to the individual uvmpdpol implementation.
+ * PQ_PRIVATE is for uvmpdpol to do whatever it wants with.
  */
 
 #define	PQ_INTENT_A		0x00000000	/* intend activation */
@@ -290,7 +287,12 @@ struct vm_page {
 #define	PQ_INTENT_MASK		0x00000003	/* mask of intended state */
 #define	PQ_INTENT_SET		0x00000004	/* not realized yet */
 #define	PQ_INTENT_QUEUED	0x00000008	/* queued for processing */
-#define	PQ_PRIVATE		0xfffffff0
+#define	PQ_PRIVATE		0x00000ff0	/* private for pdpolicy */
+
+#define	UVM_PQFLAGBITS \
+	"\20\1INTENT_0\2INTENT_1\3INTENT_SET\4INTENT_QUEUED" \
+	"\5PRIVATE1\6PRIVATE2\7PRIVATE3\10PRIVATE4" \
+	"\11PRIVATE5\12PRIVATE6\13PRIVATE7\14PRIVATE8"
 
 /*
  * physical memory layout structure

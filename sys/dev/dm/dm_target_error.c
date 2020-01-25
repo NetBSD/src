@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_error.c,v 1.28 2019/12/23 16:17:35 tkusumi Exp $      */
+/*        $NetBSD: dm_target_error.c,v 1.28.2.1 2020/01/25 22:38:45 ad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.28 2019/12/23 16:17:35 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_error.c,v 1.28.2.1 2020/01/25 22:38:45 ad Exp $");
 
 /*
  * This file implements initial version of device-mapper error target.
@@ -73,7 +73,7 @@ dm_target_error_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_error_init;
 		dmt->strategy = &dm_target_error_strategy;
 		dmt->destroy = &dm_target_error_destroy;
-		dmt->upcall = &dm_target_error_upcall;
+		//dmt->upcall = &dm_target_error_upcall;
 
 		r = dm_target_insert(dmt);
 
@@ -135,6 +135,7 @@ dm_target_error_destroy(dm_table_entry_t *table_en)
 	return 0;
 }
 
+#if 0
 /* Unsupported for this target. */
 int
 dm_target_error_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -142,3 +143,4 @@ dm_target_error_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif

@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_stripe.c,v 1.43 2019/12/21 16:00:29 tkusumi Exp $*/
+/*$NetBSD: dm_target_stripe.c,v 1.43.2.1 2020/01/25 22:38:45 ad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.43 2019/12/21 16:00:29 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_stripe.c,v 1.43.2.1 2020/01/25 22:38:45 ad Exp $");
 
 /*
  * This file implements initial version of device-mapper stripe target.
@@ -85,7 +85,7 @@ dm_target_stripe_modcmd(modcmd_t cmd, void *arg)
 		dmt->strategy = &dm_target_stripe_strategy;
 		dmt->sync = &dm_target_stripe_sync;
 		dmt->destroy = &dm_target_stripe_destroy;
-		dmt->upcall = &dm_target_stripe_upcall;
+		//dmt->upcall = &dm_target_stripe_upcall;
 		dmt->secsize = &dm_target_stripe_secsize;
 
 		r = dm_target_insert(dmt);
@@ -345,6 +345,7 @@ dm_target_stripe_destroy(dm_table_entry_t *table_en)
 	return 0;
 }
 
+#if 0
 /* Unsupported for this target. */
 int
 dm_target_stripe_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -352,6 +353,7 @@ dm_target_stripe_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif
 
 /*
  * Compute physical block size

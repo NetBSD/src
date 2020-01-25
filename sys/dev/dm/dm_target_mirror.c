@@ -1,4 +1,4 @@
-/*$NetBSD: dm_target_mirror.c,v 1.23 2019/12/21 11:59:03 tkusumi Exp $*/
+/*$NetBSD: dm_target_mirror.c,v 1.23.2.1 2020/01/25 22:38:45 ad Exp $*/
 
 /*
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.23 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_mirror.c,v 1.23.2.1 2020/01/25 22:38:45 ad Exp $");
 
 /*
  * This file implements initial version of device-mapper mirror target.
@@ -46,7 +46,7 @@ char *dm_target_mirror_table(void *);
 int dm_target_mirror_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_mirror_sync(dm_table_entry_t *);
 int dm_target_mirror_destroy(dm_table_entry_t *);
-int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_mirror_upcall(dm_table_entry_t *, struct buf *);
 
 typedef struct target_mirror_config {
 #define MAX_MIRROR_COPIES 4
@@ -95,7 +95,7 @@ dm_target_mirror_modcmd(modcmd_t cmd, void *arg)
 		dmt->strategy = &dm_target_mirror_strategy;
 		dmt->sync = &dm_target_mirror_sync;
 		dmt->destroy = &dm_target_mirror_destroy;
-		dmt->upcall = &dm_target_mirror_upcall;
+		//dmt->upcall = &dm_target_mirror_upcall;
 
 		r = dm_target_insert(dmt);
 
@@ -172,6 +172,7 @@ dm_target_mirror_destroy(dm_table_entry_t *table_en)
 	return 0;
 }
 
+#if 0
 /* Unsupported for this target. */
 int
 dm_target_mirror_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -179,3 +180,4 @@ dm_target_mirror_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif

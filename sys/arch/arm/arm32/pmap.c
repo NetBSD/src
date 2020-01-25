@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.375.2.1 2020/01/17 21:47:23 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.375.2.2 2020/01/25 22:38:38 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375.2.1 2020/01/17 21:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375.2.2 2020/01/25 22:38:38 ad Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -547,7 +547,7 @@ pmap_acquire_pmap_lock(pmap_t pm)
 	if (__predict_false(db_onproc != NULL))
 		return;
 #endif
-	
+
 	mutex_enter(pm->pm_lock);
 }
 
@@ -778,6 +778,19 @@ static void		pmap_init_l1(struct l1_ttable *, pd_entry_t *);
 #endif
 static vaddr_t		kernel_pt_lookup(paddr_t);
 
+#ifdef ARM_MMU_EXTENDED
+static struct pool_cache pmap_l1tt_cache;
+
+static int		pmap_l1tt_ctor(void *, void *, int);
+static void *		pmap_l1tt_alloc(struct pool *, int);
+static void		pmap_l1tt_free(struct pool *, void *);
+
+static struct pool_allocator pmap_l1tt_allocator = {
+	.pa_alloc = pmap_l1tt_alloc,
+	.pa_free = pmap_l1tt_free,
+	.pa_pagesz = L1TT_SIZE,
+};
+#endif
 
 /*
  * Misc variables
@@ -1290,6 +1303,29 @@ pmap_modify_pv(struct vm_page_md *md, paddr_t pa, pmap_t pm, vaddr_t va,
 	return (oflags);
 }
 
+
+#if defined(ARM_MMU_EXTENDED)
+int
+pmap_maxproc_set(int nmaxproc)
+{
+	static const char pmap_l1ttpool_warnmsg[] =
+	    "WARNING: l1ttpool limit reached; increase kern.maxproc";
+
+//	pool_cache_setlowat(&pmap_l1tt_cache, nmaxproc);
+
+	/*
+	 * Set the hard limit on the pmap_l1tt_cache to the number
+	 * of processes the kernel is to support.  Log the limit
+	 * reached message max once a minute.
+	 */
+	pool_cache_sethardlimit(&pmap_l1tt_cache, nmaxproc,
+	    pmap_l1ttpool_warnmsg, 60);
+
+	return 0;
+}
+
+#endif
+
 /*
  * Allocate an L1 translation table for the specified pmap.
  * This is called at pmap creation time.
@@ -1298,33 +1334,11 @@ static void
 pmap_alloc_l1(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	struct vm_page *pg;
-	bool ok __diagused;
-	for (;;) {
-#ifdef PMAP_NEED_ALLOC_POOLPAGE
-		pg = arm_pmap_alloc_poolpage(UVM_PGA_ZERO);
-#else
-		pg = uvm_pagealloc(NULL, 0, NULL, UVM_PGA_ZERO);
-#endif
-		if (pg != NULL)
-			break;
-		uvm_wait("pmapl1alloc");
-	}
-	pm->pm_l1_pa = VM_PAGE_TO_PHYS(pg);
-	vaddr_t va = pmap_direct_mapped_phys(pm->pm_l1_pa, &ok, 0);
-	KASSERT(ok);
-	KASSERT(va >= KERNEL_BASE);
+	vaddr_t va = (vaddr_t)pool_cache_get_paddr(&pmap_l1tt_cache, PR_WAITOK,
+	    &pm->pm_l1_pa);
 
-#else
-	KASSERTMSG(kernel_map != NULL, "pm %p", pm);
-	vaddr_t va = uvm_km_alloc(kernel_map, PAGE_SIZE, 0,
-	    UVM_KMF_WIRED|UVM_KMF_ZERO);
-	KASSERT(va);
-	pmap_extract(pmap_kernel(), va, &pm->pm_l1_pa);
-#endif
 	pm->pm_l1 = (pd_entry_t *)va;
-	PTE_SYNC_RANGE(pm->pm_l1, PAGE_SIZE / sizeof(pt_entry_t));
+	PTE_SYNC_RANGE(pm->pm_l1, L1TT_SIZE / sizeof(pt_entry_t));
 #else
 	struct l1_ttable *l1;
 	uint8_t domain;
@@ -1369,12 +1383,8 @@ static void
 pmap_free_l1(pmap_t pm)
 {
 #ifdef ARM_MMU_EXTENDED
-#ifdef __HAVE_MM_MD_DIRECT_MAPPED_PHYS
-	struct vm_page *pg = PHYS_TO_VM_PAGE(pm->pm_l1_pa);
-	uvm_pagefree(pg);
-#else
-	uvm_km_free(kernel_map, (vaddr_t)pm->pm_l1, PAGE_SIZE, UVM_KMF_WIRED);
-#endif
+	pool_cache_put_paddr(&pmap_l1tt_cache, (void *)pm->pm_l1, pm->pm_l1_pa);
+
 	pm->pm_l1 = NULL;
 	pm->pm_l1_pa = 0;
 #else
@@ -1670,6 +1680,24 @@ pmap_free_l2_bucket(pmap_t pm, struct l2_bucket *l2b, u_int count)
 	pm->pm_l2[L2_IDX(l1slot)] = NULL;
 	pmap_free_l2_dtable(l2);
 }
+
+#if defined(ARM_MMU_EXTENDED)
+/*
+ * Pool cache constructors for L1 translation tables
+ */
+
+static int
+pmap_l1tt_ctor(void *arg, void *v, int flags)
+{
+#ifndef PMAP_INCLUDE_PTE_SYNC
+#error not supported
+#endif
+
+	memset(v, 0, L1TT_SIZE);
+	PTE_SYNC_RANGE(v, L1TT_SIZE / sizeof(pt_entry_t));
+	return 0;
+}
+#endif
 
 /*
  * Pool cache constructors for L2 descriptor tables, metadata and pmap
@@ -6484,6 +6512,17 @@ pmap_init(void)
 	pool_setlowat(&pmap_pv_pool, (PAGE_SIZE / sizeof(struct pv_entry)) * 2);
 
 #ifdef ARM_MMU_EXTENDED
+	/*
+	 * Initialise the L1 pool and cache.
+	 */
+
+	pool_cache_bootstrap(&pmap_l1tt_cache, L1TT_SIZE, L1TT_SIZE,
+	    0, 0, "l1ttpl", &pmap_l1tt_allocator, IPL_NONE, pmap_l1tt_ctor,
+	     NULL, NULL);
+
+	int error __diagused = pmap_maxproc_set(maxproc);
+	KASSERT(error == 0);
+
 	pmap_tlb_info_evcnt_attach(&pmap_tlb0_info);
 #endif
 
@@ -6534,6 +6573,76 @@ pmap_bootstrap_pv_page_free(struct pool *pp, void *v)
 		return;
 	}
 }
+
+
+#if defined(ARM_MMU_EXTENDED)
+static void *
+pmap_l1tt_alloc(struct pool *pp, int flags)
+{
+	struct pglist plist;
+	vaddr_t va;
+
+	const int waitok = flags & PR_WAITOK;
+
+	int error = uvm_pglistalloc(L1TT_SIZE, 0, -1, L1TT_SIZE, 0, &plist, 1,
+	    waitok);
+	if (error)
+		panic("Cannot allocate L1TT physical pages, %d", error);
+
+	struct vm_page *pg = TAILQ_FIRST(&plist);
+#if !defined( __HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+
+	/* Allocate a L1 translation table VA */
+	va = uvm_km_alloc(kernel_map, L1TT_SIZE, L1TT_SIZE, UVM_KMF_VAONLY);
+	if (va == 0)
+		panic("Cannot allocate L1TT KVA");
+
+	const vaddr_t eva = va + L1TT_SIZE;
+	vaddr_t mva = va;
+	while (pg && mva < eva) {
+		paddr_t pa = VM_PAGE_TO_PHYS(pg);
+
+		pmap_kenter_pa(mva, pa,
+		    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
+
+		mva += PAGE_SIZE;
+		pg = TAILQ_NEXT(pg, pageq.queue);
+	}
+	KASSERTMSG(pg == NULL && mva == eva, "pg %p mva %" PRIxVADDR
+	    " eva %" PRIxVADDR, pg, mva, eva);
+#else
+	bool ok;
+	paddr_t pa = VM_PAGE_TO_PHYS(pg);
+	va = pmap_direct_mapped_phys(pa, &ok, 0);
+	KASSERT(ok);
+	KASSERT(va >= KERNEL_BASE);
+#endif
+
+	return (void *)va;
+}
+
+static void
+pmap_l1tt_free(struct pool *pp, void *v)
+{
+	vaddr_t va = (vaddr_t)v;
+
+#if !defined( __HAVE_MM_MD_DIRECT_MAPPED_PHYS)
+	uvm_km_free(kernel_map, va, L1TT_SIZE, UVM_KMF_WIRED);
+#else
+#if defined(KERNEL_BASE_VOFFSET)
+	paddr_t pa = va - KERNEL_BASE_VOFFSET;
+#else
+	paddr_t pa = va - KERNEL_BASE + physical_start;
+#endif
+	const paddr_t epa = pa + L1TT_SIZE;
+
+	for (; pa < epa; pa += PAGE_SIZE) {
+		struct vm_page *pg = PHYS_TO_VM_PAGE(pa);
+		uvm_pagefree(pg);
+	}
+#endif
+}
+#endif
 
 /*
  * pmap_postinit()

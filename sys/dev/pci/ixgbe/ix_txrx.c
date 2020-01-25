@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.58 2019/12/16 02:50:54 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.58.2.1 2020/01/25 22:38:49 ad Exp $ */
 
 /******************************************************************************
 
@@ -1681,6 +1681,10 @@ ixgbe_free_receive_buffers(struct rx_ring *rxr)
 				rxbuf->pmap = NULL;
 			}
 		}
+
+		/* NetBSD specific. See ixgbe_netbsd.c */
+		ixgbe_jcl_destroy(adapter, rxr);
+
 		if (rxr->rx_buffers != NULL) {
 			free(rxr->rx_buffers, M_DEVBUF);
 			rxr->rx_buffers = NULL;
@@ -2349,3 +2353,24 @@ err_tx_desc:
 	free(adapter->queues, M_DEVBUF);
 	return (error);
 } /* ixgbe_allocate_queues */
+
+/************************************************************************
+ * ixgbe_free_queues
+ *
+ *   Free descriptors for the transmit and receive rings, and then
+ *   the memory associated with each.
+ ************************************************************************/
+void
+ixgbe_free_queues(struct adapter *adapter)
+{
+	struct ix_queue *que;
+	int i;
+
+	ixgbe_free_transmit_structures(adapter);
+	ixgbe_free_receive_structures(adapter);
+	for (i = 0; i < adapter->num_queues; i++) {
+		que = &adapter->queues[i];
+		mutex_destroy(&que->dc_mtx);
+	}
+	free(adapter->queues, M_DEVBUF);
+} /* ixgbe_free_queues */

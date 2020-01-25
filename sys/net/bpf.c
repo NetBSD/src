@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.232 2019/11/29 17:29:31 ryo Exp $	*/
+/*	$NetBSD: bpf.c,v 1.232.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,12 +39,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.232 2019/11/29 17:29:31 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.232.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
 #include "sl.h"
-#include "strip.h"
 #include "opt_net_mpsafe.h"
 #endif
 

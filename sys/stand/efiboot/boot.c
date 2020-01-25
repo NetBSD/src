@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.19 2019/12/18 21:46:03 riastradh Exp $	*/
+/*	$NetBSD: boot.c,v 1.19.2.1 2020/01/25 22:38:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -115,6 +115,7 @@ const struct boot_command commands[] = {
 	{ "reboot",	command_reset,		"reboot|reset" },
 	{ "reset",	command_reset,		NULL },
 	{ "version",	command_version,	"version" },
+	{ "ver",	command_version,	NULL },
 	{ "help",	command_help,		"help|?" },
 	{ "?",		command_help,		NULL },
 	{ "quit",	command_quit,		"quit" },
@@ -271,12 +272,13 @@ command_version(char *arg)
 	char *ufirmware;
 	int rv;
 
-	printf("EFI version: %d.%02d\n",
+	printf("Version: %s (%s)\n", bootprog_rev, bootprog_kernrev);
+	printf("EFI: %d.%02d\n",
 	    ST->Hdr.Revision >> 16, ST->Hdr.Revision & 0xffff);
 	ufirmware = NULL;
 	rv = ucs2_to_utf8(ST->FirmwareVendor, &ufirmware);
 	if (rv == 0) {
-		printf("EFI Firmware: %s (rev 0x%x)\n", ufirmware,
+		printf("Firmware: %s (rev 0x%x)\n", ufirmware,
 		    ST->FirmwareRevision);
 		FreePool(ufirmware);
 	}
@@ -393,8 +395,8 @@ void
 print_banner(void)
 {
 	printf("\n\n"
-	    ">> %s, Revision %s (from NetBSD %s)\n",
-	    bootprog_name, bootprog_rev, bootprog_kernrev);
+	    ">> %s, Revision %s\n",
+	    bootprog_name, bootprog_rev);
 }
 
 static void

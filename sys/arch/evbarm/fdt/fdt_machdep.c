@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.65 2019/12/18 21:46:03 riastradh Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.65.2.1 2020/01/25 22:38:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.65 2019/12/18 21:46:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.65.2.1 2020/01/25 22:38:39 ad Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -270,11 +270,6 @@ fdt_add_boot_physmem(const struct fdt_memory *m, void *arg)
 	bp->bp_start = atop(saddr);
 	bp->bp_pages = atop(eaddr) - bp->bp_start;
 	bp->bp_freelist = VM_FREELIST_DEFAULT;
-
-#ifdef _LP64
-	if (m->end > 0x100000000)
-		bp->bp_freelist = VM_FREELIST_HIGHMEM;
-#endif
 
 #ifdef PMAP_NEED_ALLOC_POOLPAGE
 	const uint64_t memory_size = *(uint64_t *)arg;

@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266,v 1.75 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: OPENBLOCKS266,v 1.75.4.1 2020/01/25 22:38:40 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.obs266"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS266-$Revision: 1.75 $"
+#ident 		"OPENBLOCKS266-$Revision: 1.75.4.1 $"
 
 maxusers	32
 
@@ -186,7 +186,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual ethernet
 pseudo-device	tun			# network tunneling over tty

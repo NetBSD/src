@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.31.2.1 2020/01/17 21:47:22 ad Exp $ */
+/* $NetBSD: cpu.c,v 1.31.2.2 2020/01/25 22:38:36 ad Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.31.2.1 2020/01/17 21:47:22 ad Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.31.2.2 2020/01/25 22:38:36 ad Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -35,13 +35,13 @@ __KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.31.2.1 2020/01/17 21:47:22 ad Exp $");
 #include "opt_multiprocessor.h"
 
 #include <sys/param.h>
-#include <sys/systm.h>
 #include <sys/atomic.h>
-#include <sys/device.h>
 #include <sys/cpu.h>
+#include <sys/device.h>
 #include <sys/kmem.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/systm.h>
 
 #include <aarch64/armreg.h>
 #include <aarch64/cpu.h>
@@ -161,7 +161,7 @@ cpu_attach(device_t dv, cpuid_t id)
 	cpu_identify1(dv, ci);
 #if 0
 	/* already done in locore */
-	aarch64_getcacheinfo(unit); 
+	aarch64_getcacheinfo(unit);
 #endif
 	aarch64_printcacheinfo(dv);
 	cpu_identify2(dv, ci);
@@ -229,7 +229,7 @@ cpu_identify(device_t self, struct cpu_info *ci)
 	const char *m;
 
 	identify_aarch64_model(ci->ci_id.ac_midr, model, sizeof(model));
-	if (ci->ci_index == 0) { 
+	if (ci->ci_index == 0) {
 		m = cpu_getmodel();
 		if (m == NULL || *m == 0)
 			cpu_setmodel("%s", model);

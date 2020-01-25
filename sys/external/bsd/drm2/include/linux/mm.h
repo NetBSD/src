@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.9.6.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: mm.h,v 1.9.6.2 2020/01/25 22:38:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,7 @@
 #include <sys/malloc.h>
 
 #include <uvm/uvm_extern.h>
+#include <uvm/uvm_object.h>
 
 #include <asm/page.h>
 #include <linux/shrinker.h>

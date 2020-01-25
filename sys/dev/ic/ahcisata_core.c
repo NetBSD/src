@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.80 2019/12/27 09:41:50 msaitoh Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.80.2.1 2020/01/25 22:38:46 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.80 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.80.2.1 2020/01/25 22:38:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -275,6 +275,11 @@ ahci_attach(struct ahci_softc *sc)
 		aprint_verbose_dev(sc->sc_atac.atac_dev,
 		    "ignoring broken port multiplier support\n");
 		sc->sc_ahci_cap &= ~AHCI_CAP_SPM;
+	}
+	if (sc->sc_ahci_quirks & AHCI_QUIRK_BADNCQ) {
+		aprint_verbose_dev(sc->sc_atac.atac_dev,
+		    "ignoring broken NCQ support\n");
+		sc->sc_ahci_cap &= ~AHCI_CAP_NCQ;
 	}
 	sc->sc_atac.atac_nchannels = (sc->sc_ahci_cap & AHCI_CAP_NPMASK) + 1;
 	sc->sc_ncmds = ((sc->sc_ahci_cap & AHCI_CAP_NCS) >> 8) + 1;

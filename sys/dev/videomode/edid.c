@@ -1,4 +1,4 @@
-/* $NetBSD: edid.c,v 1.14 2018/07/10 01:44:30 macallan Exp $ */
+/* $NetBSD: edid.c,v 1.14.8.1 2020/01/25 22:38:49 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -32,7 +32,7 @@
  */ 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.14 2018/07/10 01:44:30 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: edid.c,v 1.14.8.1 2020/01/25 22:38:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -467,6 +467,7 @@ edid_block(struct edid_info *edid, uint8_t *data)
 		break;
 
 	case EDID_DESC_BLOCK_TYPE_ASCII:
+		memset(edid->edid_comment, 0, sizeof(edid->edid_comment));
 		memcpy(edid->edid_comment, data + EDID_DESC_ASCII_DATA_OFFSET,
 		    EDID_DESC_ASCII_DATA_LEN);
 		edid->edid_comment[sizeof(edid->edid_comment) - 1] = 0;
@@ -561,6 +562,8 @@ edid_parse(uint8_t *data, struct edid_info *edid)
 
 	snprintf(edid->edid_serial, sizeof(edid->edid_serial), "%08x",
 	    EDID_SERIAL_NUMBER(data));
+
+	edid->edid_comment[0] = '\0';
 
 	edid->edid_week = EDID_WEEK(data);
 	edid->edid_year = EDID_YEAR(data);

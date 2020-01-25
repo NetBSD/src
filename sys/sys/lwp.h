@@ -1,7 +1,7 @@
-/*	$NetBSD: lwp.h,v 1.192.2.3 2020/01/22 11:40:17 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.192.2.4 2020/01/25 22:38:53 ad Exp $	*/
 
 /*
- * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -186,8 +186,8 @@ struct lwp {
 	u_short		l_exlocks;	/* !: lockdebug: excl. locks held */
 	u_short		l_psrefs;	/* !: count of psref held */
 	u_short		l_blcnt;	/* !: count of kernel_lock held */
-	int		l_nopreempt;	/* !: don't preempt me! */
-	u_int		l_dopreempt;	/* s: kernel preemption pending */
+	volatile int	l_nopreempt;	/* !: don't preempt me! */
+	volatile u_int	l_dopreempt;	/* s: kernel preemption pending */
 	int		l_pflag;	/* !: LWP private flags */
 	int		l_dupfd;	/* !: side return from cloning devs XXX */
 	const struct sysent * volatile l_sysent;/* !: currently active syscall */
@@ -196,6 +196,7 @@ struct lwp {
 	uintptr_t	l_pfailaddr;	/* !: for kernel preemption */
 	uintptr_t	l_pfaillock;	/* !: for kernel preemption */
 	_TAILQ_HEAD(,struct lockdebug,volatile) l_ld_locks;/* !: locks held by LWP */
+	volatile void	*l_ld_wanted;	/* !: lock currently wanted by LWP */
 	uintptr_t	l_rwcallsite;	/* !: rwlock actual callsite */
 	int		l_tcgen;	/* !: for timecounter removal */
 
@@ -351,7 +352,7 @@ void	lwp_need_userret(lwp_t *);
 void	lwp_free(lwp_t *, bool, bool);
 uint64_t lwp_pctr(void);
 int	lwp_setprivate(lwp_t *, void *);
-int	do_lwp_create(lwp_t *, void *, u_long, lwpid_t *, const sigset_t *,
+int	do_lwp_create(lwp_t *, void *, u_long, lwp_t **, const sigset_t *,
     const stack_t *);
 
 void	lwpinit_specificdata(void);

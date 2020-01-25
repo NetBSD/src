@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_machdep.c,v 1.18 2019/12/31 17:26:04 jmcneill Exp $ */
+/* $NetBSD: acpi_machdep.c,v 1.18.2.1 2020/01/25 22:38:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18 2019/12/31 17:26:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_machdep.c,v 1.18.2.1 2020/01/25 22:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,8 @@ extern struct bus_space arm_generic_bs_tag;
 extern struct arm32_bus_dma_tag acpi_coherent_dma_tag;
 extern struct arm32_bus_dma_tag arm_generic_dma_tag;
 
-bus_dma_tag_t	arm_acpi_dma_tag(struct acpi_softc *, struct acpi_devnode *);
+bus_dma_tag_t	arm_acpi_dma32_tag(struct acpi_softc *, struct acpi_devnode *);
+bus_dma_tag_t	arm_acpi_dma64_tag(struct acpi_softc *, struct acpi_devnode *);
 
 static int
 acpi_md_pmapflags(paddr_t pa)
@@ -473,14 +474,34 @@ arm_acpi_dma_flags(struct acpi_softc *sc, struct acpi_devnode *ad)
 	return cca ? _BUS_DMAMAP_COHERENT : 0;
 }
 
-
 bus_dma_tag_t
-arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+arm_acpi_dma32_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 {
-	struct arm32_bus_dma_tag *dmat;
+	bus_dma_tag_t dmat64, dmat32;
+	int error;
 
 	if (ad->ad_dmat != NULL)
 		return ad->ad_dmat;
+
+	dmat64 = arm_acpi_dma64_tag(sc, ad);
+
+	const uint32_t flags = arm_acpi_dma_flags(sc, ad);
+	error = bus_dmatag_subregion(dmat64, 0, UINT32_MAX, &dmat32, flags);
+	if (error != 0)
+		panic("arm_acpi_dma32_tag: bus_dmatag_subregion returned %d",
+		    error);
+
+	return dmat32;
+}
+__strong_alias(acpi_get_dma_tag,arm_acpi_dma32_tag);
+
+bus_dma_tag_t
+arm_acpi_dma64_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
+{
+	struct arm32_bus_dma_tag *dmat;
+
+	if (ad->ad_dmat64 != NULL)
+		return ad->ad_dmat64;
 		
 	dmat = kmem_alloc(sizeof(*dmat), KM_SLEEP);
 	*dmat = arm_generic_dma_tag;
@@ -490,5 +511,4 @@ arm_acpi_dma_tag(struct acpi_softc *sc, struct acpi_devnode *ad)
 
 	return dmat;
 }
-__strong_alias(acpi_get_dma_tag,arm_acpi_dma_tag);
-__strong_alias(acpi_get_dma64_tag,arm_acpi_dma_tag);
+__strong_alias(acpi_get_dma64_tag,arm_acpi_dma64_tag);

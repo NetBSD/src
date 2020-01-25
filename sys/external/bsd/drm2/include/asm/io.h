@@ -1,4 +1,4 @@
-/*	$NetBSD: io.h,v 1.4.24.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: io.h,v 1.4.24.2 2020/01/25 22:38:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -51,12 +51,13 @@
 static inline void *
 memset_io(void *b, int c, size_t len)
 {
-	uint32_t *ptr = b;
-	while (len >= 4) {
+	uint8_t *ptr = b;
+
+	while (len > 0) {
 		*ptr++ = c;
-		len -= 4;
+		len--;
 	}
-	KASSERT(len == 0);
+
 	return b;
 }
 #else

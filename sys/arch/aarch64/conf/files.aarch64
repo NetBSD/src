@@ -1,4 +1,4 @@
-#	$NetBSD: files.aarch64,v 1.16.2.1 2020/01/17 21:47:22 ad Exp $
+#	$NetBSD: files.aarch64,v 1.16.2.2 2020/01/25 22:38:36 ad Exp $
 
 defflag opt_cpuoptions.h	AARCH64_ALIGNMENT_CHECK
 defflag opt_cpuoptions.h	AARCH64_EL0_STACK_ALIGNMENT_CHECK
@@ -39,10 +39,6 @@ defparam opt_console.h		CONADDR
 # Power State Coordination Interface (PSCI)
 # FP support
 file	arch/aarch64/aarch64/fpu.c
-
-file	arch/arm/arm/arm_generic_dma.c
-file	arch/arm/arm/arm_cpu_topology.c
-file	arch/arm/arm32/bus_dma.c
 
 device	psci
 file	arch/arm/arm/psci.c			psci
@@ -87,7 +83,10 @@ file	arch/aarch64/aarch64/bus_space_asm_generic.S	# bus_space_generic
 file	arch/aarch64/aarch64/bus_space_notimpl.S
 
 # Standard files
+file	arch/arm/arm/arm_cpu_topology.c
+file	arch/arm/arm/arm_generic_dma.c
 file	arch/arm/arm/bootconfig.c
+file	arch/arm/arm32/bus_dma.c
 file	arch/aarch64/aarch64/aarch64_machdep.c
 file	arch/aarch64/aarch64/aarch64_reboot.c
 file	arch/aarch64/aarch64/core_machdep.c		coredump

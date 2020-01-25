@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.3 2018/08/27 07:40:11 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.3.10.1 2020/01/25 22:38:49 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.3 2018/08/27 07:40:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_fifo_gk104.c,v 1.3.10.1 2020/01/25 22:38:49 ad Exp $");
 
 #include "gk104.h"
 #include "changk104.h"
@@ -751,6 +751,20 @@ gk104_fifo_init(struct nvkm_fifo *base)
 	}
 
 	nvkm_wr32(device, 0x002254, 0x10000000 | fifo->user.bar.offset >> 12);
+
+	/* XXX NetBSD
+	 * write pbdma timeout regs during initialization
+	 * backport of:
+	 * https://github.com/torvalds/linux/commit/79bb4b617f965736d2e1c616235302c1d0e823b2
+	 */
+	switch (device->chipset) {
+	case 0x106:	/* GK208B */
+	case 0x108:	/* GK208 */
+	case 0x117:	/* GM107 */
+		for (i = 0; i < fifo->spoon_nr; i++)
+			nvkm_wr32(device, 0x04012c + (i * 0x2000), 0x0000ffff);
+		break;
+	}
 
 	nvkm_wr32(device, 0x002100, 0xffffffff);
 	nvkm_wr32(device, 0x002140, 0x7fffffff);

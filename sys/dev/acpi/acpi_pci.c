@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci.c,v 1.26.6.1 2020/01/17 21:47:30 ad Exp $ */
+/* $NetBSD: acpi_pci.c,v 1.26.6.2 2020/01/25 22:38:45 ad Exp $ */
 
 /*
  * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.26.6.1 2020/01/17 21:47:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci.c,v 1.26.6.2 2020/01/25 22:38:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -518,9 +518,9 @@ acpi_pci_ignore_boot_config(ACPI_HANDLE handle)
 	buf.Length = ACPI_ALLOCATE_LOCAL_BUFFER;
 
 	if (ACPI_FAILURE(AcpiEvaluateObject(handle, "_DSM", &objs, &buf)) || buf.Pointer == NULL)
-		return 0;
+		return 1;
 
-	ret = 0;
+	ret = 1;
 
 	pobj = buf.Pointer;
 	switch (pobj->Type) {

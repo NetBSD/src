@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.37 2020/01/08 05:41:07 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.37.2.1 2020/01/25 22:38:36 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.37 2020/01/08 05:41:07 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.37.2.1 2020/01/25 22:38:36 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -99,7 +99,8 @@ vaddr_t physical_end;
 /* filled in before cleaning bss. keep in .data */
 u_long kern_vtopdiff __attribute__((__section__(".data")));
 
-long kernend_extra;	/* extra physicalmemory allocated from round_page(_end[]) */
+/* extra physical memory allocated from round_page(_end[]) */
+long kernend_extra;
 
 /* dump configuration */
 int	cpu_dump(void);

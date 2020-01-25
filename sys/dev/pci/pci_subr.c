@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.218.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.218.2.2 2020/01/25 22:38:47 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.218.2.1 2020/01/17 21:47:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.218.2.2 2020/01/25 22:38:47 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1869,6 +1869,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Enable No Snoop", reg, PCIE_DCSR_ENA_NO_SNOOP);
 	printf("      Max Read Request Size: %d byte\n",
 	    128 << __SHIFTOUT(reg, PCIE_DCSR_MAX_READ_REQ));
+	if (pcie_devtype == PCIE_XCAP_TYPE_PCIE2PCI)
+		onoff("Bridge Config Retry Enable", reg,
+		    PCIE_DCSR_BRDG_CFG_RETRY);
 
 	/* Device Status Register */
 	reg = regs[o2i(capoff + PCIE_DCSR)];
@@ -2162,6 +2165,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 		printf("Reserved\n");
 		break;
 	}
+	onoff("10-bit Tag Completer Supported", reg, PCIE_DCAP2_TBT_COMP);
+	onoff("10-bit Tag Requester Supported", reg, PCIE_DCAP2_TBT_REQ);
 	printf("      OBFF Supported: ");
 	switch (__SHIFTOUT(reg, PCIE_DCAP2_OBFF)) {
 	case 0x0:
@@ -2214,6 +2219,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("LTR Mechanism Enabled", reg, PCIE_DCSR2_LTR_MEC);
 	onoff("Emergency Power Reduction Request", reg,
 	    PCIE_DCSR2_EMGPWRRED_REQ);
+	onoff("10-bit Tag Requester Enabled", reg, PCIE_DCSR2_TBT_REQ);
 	printf("      OBFF: ");
 	switch (__SHIFTOUT(reg, PCIE_DCSR2_OBFF_EN)) {
 	case 0x0:
@@ -2254,6 +2260,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			pci_print_pcie_linkspeedvector(
 				__SHIFTOUT(reg, PCIE_LCAP2_LOWSKPOS_RECSUPPSV));
 			printf("\n");
+			onoff("Retimer Presence Detect Supported", reg,
+			    PCIE_LCAP2_RETIMERPD);
 			onoff("DRS Supported", reg, PCIE_LCAP2_DRS);
 			drs_supported = (reg & PCIE_LCAP2_DRS) ? true : false;
 		}
@@ -2273,7 +2281,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			__SHIFTOUT(reg, PCIE_LCSR2_SEL_DEEMP));
 		printf("\n");
 		printf("      Transmit Margin: %u\n",
-		    (unsigned int)(reg & PCIE_LCSR2_TX_MARGIN) >> 7);
+		    (unsigned int)__SHIFTOUT(reg,  PCIE_LCSR2_TX_MARGIN));
 		onoff("Enter Modified Compliance", reg, PCIE_LCSR2_EN_MCOMP);
 		onoff("Compliance SOS", reg, PCIE_LCSR2_COMP_SOS);
 		printf("      Compliance Present/De-emphasis: ");
@@ -4160,6 +4168,24 @@ pci_conf_print_ptm_cap(const pcireg_t *regs, int extcapoff)
 /* XXX pci_conf_print_rtr_cap */
 /* XXX pci_conf_print_desigvndsp_cap */
 /* XXX pci_conf_print_vf_resizbar_cap */
+
+static void
+pci_conf_print_dlf_cap(const pcireg_t *regs, int extcapoff)
+{
+	pcireg_t reg;
+
+	printf("\n  Data link Feature Register\n");
+	reg = regs[o2i(extcapoff + PCI_DLF_CAP)];
+	printf("    Capability register: 0x%08x\n", reg);
+	onoff("Scaled Flow Control", reg, PCI_DLF_LFEAT_SCLFCTL);
+	onoff("DLF Exchange enable", reg, PCI_DLF_CAP_XCHG);
+
+	reg = regs[o2i(extcapoff + PCI_DLF_STAT)];
+	printf("    Status register: 0x%08x\n", reg);
+	onoff("Scaled Flow Control", reg, PCI_DLF_LFEAT_SCLFCTL);
+	onoff("Remote DLF supported Valid", reg, PCI_DLF_STAT_RMTVALID);
+}
+
 /* XXX pci_conf_print_hierarchyid_cap */
 /* XXX pci_conf_print_npem_cap */
 
@@ -4246,8 +4272,8 @@ static struct {
 	  NULL },
 	{ PCI_EXTCAP_VF_RESIZBAR, "VF Resizable BARs",
 	  NULL },
-	{ 0x25, "unknown", NULL },
-	{ 0x26, "unknown", NULL },
+	{ PCI_EXTCAP_DLF, "Data link Feature", pci_conf_print_dlf_cap },
+	{ PCI_EXTCAP_PYSLAY_16GT, "Physical Layer 16.0 GT/s", NULL },
 	{ 0x27, "unknown", NULL },
 	{ PCI_EXTCAP_HIERARCHYID, "Hierarchy ID",
 	  NULL },

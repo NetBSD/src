@@ -1,4 +1,4 @@
-# $NetBSD: files.mca,v 1.22 2005/12/11 12:22:18 christos Exp $
+# $NetBSD: files.mca,v 1.22.172.1 2020/01/25 22:38:47 ad Exp $
 #
 # Config.new file and device description for machine-independent MCA code.
 # Included by ports that need it.
@@ -23,10 +23,6 @@ file	dev/mca/if_we_mca.c		we_mca
 # Adaptec AHA-1640
 attach	aha at mca with aha_mca
 file	dev/mca/aha_mca.c		aha_mca
-
-# TROPIC based Token-Ring (IBM)
-attach	tr at mca with tr_mca
-file	dev/mca/if_tr_mca.c		tr_mca
 
 # 3Com 3C523
 device	elmc: ether, ifnet, arp, i82586

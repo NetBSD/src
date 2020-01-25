@@ -1,4 +1,4 @@
-# $NetBSD: MODULAR,v 1.13 2019/12/31 15:07:22 pgoyette Exp $
+# $NetBSD: MODULAR,v 1.13.2.1 2020/01/25 22:38:37 ad Exp $
 #
 # Try to exclude all the drivers in GENERIC that have been modularized
 # XXX: incomplete
@@ -134,7 +134,6 @@ options 	MODULAR_DEFAULT_AUTOLOAD
 -no pseudo-device	ppp			# Point-to-Point Protocol
 -no pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 -no pseudo-device	sl			# Serial Line IP
--no pseudo-device	strip			# Starmode Radio IP (Metricom)
 -no pseudo-device	tun			# network tunneling over tty
 -no pseudo-device	tap			# virtual Ethernet
 -no pseudo-device	gre			# generic L3 over IP tunnel

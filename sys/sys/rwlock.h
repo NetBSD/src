@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.12.2.3 2020/01/25 21:45:00 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.12.2.4 2020/01/25 22:38:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -63,10 +63,10 @@ typedef struct krwlock krwlock_t;
  * WRITE_LOCKED bit is clear, then the owner field is actually a count of
  * the number of readers.  The rw_owner field is laid out like so:
  *
- *	 N                    4        3        2        1        0
- *	+---------------------------------------------------------+
- *	| owner or read count | nodbug | wrlock | wrwant |  wait  |
- *	+---------------------------------------------------------+
+ *  N                     5        4        3        2        1        0
+ *  +------------------------------------------------------------------+
+ *  | owner or read count | nodbug | <free> | wrlock | wrwant |  wait  |
+ *  +------------------------------------------------------------------+
  */
 #define	RW_HAS_WAITERS		0x01UL	/* lock has waiters */
 #define	RW_WRITE_WANTED		0x02UL	/* >= 1 waiter is a writer */
@@ -84,6 +84,7 @@ void	rw_vector_enter(krwlock_t *, const krw_t);
 void	rw_vector_exit(krwlock_t *);
 int	rw_vector_tryenter(krwlock_t *, const krw_t);
 void	_rw_init(krwlock_t *, uintptr_t);
+bool	rw_owner_running(const krwlock_t *);
 #endif	/* __RWLOCK_PRIVATE */
 
 struct krwlock {

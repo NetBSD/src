@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.137 2019/04/26 21:40:31 sevan Exp $
+# $NetBSD: GENERIC,v 1.137.4.1 2020/01/25 22:38:42 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/newsmips/conf/std.newsmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.137 $"
+#ident 		"GENERIC-$Revision: 1.137.4.1 $"
 
 maxusers	16
 
@@ -218,7 +218,6 @@ pseudo-device	ccd			# concatenated and striped disks
 #options 	RF_INCLUDE_PARITY_DECLUSTERING=1
 #options 	RF_INCLUDE_PARITY_DECLUSTERING_DS=1
 pseudo-device	fss			# file system snapshot device
-#pseudo-device	strip			# radio clock
 #pseudo-device	npf			# NPF packet filter
 pseudo-device	clockctl		# user control of clock subsystem
 pseudo-device	ksyms			# /dev/ksyms

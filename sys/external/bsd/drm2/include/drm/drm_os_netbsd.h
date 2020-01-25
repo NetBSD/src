@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_os_netbsd.h,v 1.15 2019/11/05 23:29:28 jmcneill Exp $	*/
+/*	$NetBSD: drm_os_netbsd.h,v 1.15.2.1 2020/01/25 22:38:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -39,6 +39,14 @@
 #if defined(__i386__) || defined(__x86_64__)
 #define	CONFIG_X86	1
 #define	CONFIG_X86_PAT	1
+#endif
+
+#if defined(__arm__)
+#define CONFIG_ARM	1
+#endif
+
+#if defined(__aarch64__)
+#define CONFIG_ARM64	1
 #endif
 
 /*

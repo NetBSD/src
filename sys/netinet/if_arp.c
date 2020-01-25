@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.289 2019/10/11 13:32:46 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.289.2.1 2020/01/25 22:38:52 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.289 2019/10/11 13:32:46 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.289.2.1 2020/01/25 22:38:52 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -105,7 +105,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.289 2019/10/11 13:32:46 roy Exp $");
 #include <net/ethertypes.h>
 #include <net/if.h>
 #include <net/if_dl.h>
-#include <net/if_token.h>
 #include <net/if_types.h>
 #include <net/if_ether.h>
 #include <net/if_llatbl.h>
@@ -122,11 +121,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.289 2019/10/11 13:32:46 roy Exp $");
 #if NARCNET > 0
 #include <net/if_arc.h>
 #endif
-#include "fddi.h"
-#if NFDDI > 0
-#include <net/if_fddi.h>
-#endif
-#include "token.h"
 #include "carp.h"
 #if NCARP > 0
 #include <netinet/ip_carp.h>
@@ -180,9 +174,6 @@ static void arp_dad_stop(struct ifaddr *);
 static void arp_dad_duplicated(struct ifaddr *, const struct sockaddr_dl *);
 
 static void arp_init_llentry(struct ifnet *, struct llentry *);
-#if NTOKEN > 0
-static void arp_free_llentry_tokenring(struct llentry *);
-#endif
 
 struct ifqueue arpintrq = {
 	.ifq_head = NULL,
@@ -408,24 +399,11 @@ arp_init_llentry(struct ifnet *ifp, struct llentry *lle)
 {
 
 	switch (ifp->if_type) {
-#if NTOKEN > 0
-	case IFT_ISO88025:
-		lle->la_opaque = kmem_intr_alloc(sizeof(struct token_rif),
-		    KM_NOSLEEP);
-		lle->lle_ll_free = arp_free_llentry_tokenring;
+	default:
+		/* Nothing. */
 		break;
-#endif
 	}
 }
-
-#if NTOKEN > 0
-static void
-arp_free_llentry_tokenring(struct llentry *lle)
-{
-
-	kmem_intr_free(lle->la_opaque, sizeof(struct token_rif));
-}
-#endif
 
 /*
  * Parallel to llc_rtrequest.
@@ -454,12 +432,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 		 * linklayers with particular link MTU limitation.
 		 */
 		switch(ifp->if_type) {
-#if NFDDI > 0
-		case IFT_FDDI:
-			if (ifp->if_mtu > FDDIIPMTU)
-				rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-			break;
-#endif
 #if NARCNET > 0
 		case IFT_ARCNET:
 		    {
@@ -501,15 +473,6 @@ arp_rtrequest(int req, struct rtentry *rt, const struct rt_addrinfo *info)
 			 * linklayers with particular link MTU limitation.
 			 */
 			switch (ifp->if_type) {
-#if NFDDI > 0
-			case IFT_FDDI:
-				if ((rt->rt_rmx.rmx_locks & RTV_MTU) == 0 &&
-				    (rt->rt_rmx.rmx_mtu > FDDIIPMTU ||
-				     (rt->rt_rmx.rmx_mtu == 0 &&
-				      ifp->if_mtu > FDDIIPMTU)))
-					rt->rt_rmx.rmx_mtu = FDDIIPMTU;
-				break;
-#endif
 #if NARCNET > 0
 			case IFT_ARCNET:
 			    {
@@ -1025,7 +988,7 @@ in_arpinput(struct mbuf *m)
 	struct psref psref, psref_ia;
 	int s;
 	char ipbuf[INET_ADDRSTRLEN];
-	bool do_dad;
+	bool find_source, do_dad;
 
 	if (__predict_false(m_makewritable(&m, 0, m->m_pkthdr.len, M_DONTWAIT)))
 		goto out;
@@ -1060,11 +1023,20 @@ in_arpinput(struct mbuf *m)
 	 * or any address on the interface to use
 	 * as a dummy address in the rest of this function.
 	 *
-	 * If the target IP address is zero then try and find
-	 * the sender address for DAD.
+	 * First try and find the source address for early
+	 * duplicate address detection.
 	 */
-	myaddr = in_nullhost(itaddr) ? isaddr : itaddr;
+	if (in_nullhost(isaddr)) {
+		if (in_nullhost(itaddr)) /* very bogus ARP */
+			goto out;
+		find_source = false;
+		myaddr = itaddr;
+	} else {
+		find_source = true;
+		myaddr = isaddr;
+	}
 	s = pserialize_read_enter();
+again:
 	IN_ADDRHASH_READER_FOREACH(ia, myaddr.s_addr) {
 		if (!in_hosteq(ia->ia_addr.sin_addr, myaddr))
 			continue;
@@ -1106,6 +1078,15 @@ in_arpinput(struct mbuf *m)
 		ifp = bridge_ia->ia_ifp;
 	}
 #endif
+
+	/* If we failed to find the source address then find
+	 * the target address. */
+	if (ia == NULL && find_source && !in_nullhost(itaddr)) {
+		find_source = false;
+		myaddr = itaddr;
+		goto again;
+	}
+
 	if (ia != NULL)
 		ia4_acquire(ia, &psref_ia);
 	pserialize_read_exit(s);
@@ -1236,34 +1217,6 @@ in_arpinput(struct mbuf *m)
 		rt_cmd = la->la_flags & LLE_VALID ? 0 : RTM_ADD;
 
 	KASSERT(ifp->if_sadl->sdl_alen == ifp->if_addrlen);
-
-#if NTOKEN > 0
-	/*
-	 * XXX uses m_data and assumes the complete answer including
-	 * XXX token-ring headers is in the same buf
-	 */
-	if (ifp->if_type == IFT_ISO88025) {
-		struct token_header *trh;
-
-		trh = (struct token_header *)M_TRHSTART(m);
-		if (trh->token_shost[0] & TOKEN_RI_PRESENT) {
-			struct token_rif *rif;
-			size_t riflen;
-
-			rif = TOKEN_RIF(trh);
-			riflen = (ntohs(rif->tr_rcf) &
-			    TOKEN_RCF_LEN_MASK) >> 8;
-
-			if (riflen > 2 &&
-			    riflen < sizeof(struct token_rif) &&
-			    (riflen & 1) == 0) {
-				rif->tr_rcf ^= htons(TOKEN_RCF_DIRECTION);
-				rif->tr_rcf &= htons(~TOKEN_RCF_BROADCAST_MASK);
-				memcpy(TOKEN_RIF_LLE(la), rif, riflen);
-			}
-		}
-	}
-#endif
 
 	KASSERT(sizeof(la->ll_addr) >= ifp->if_addrlen);
 	memcpy(&la->ll_addr, ar_sha(ah), ifp->if_addrlen);
@@ -1787,7 +1740,7 @@ done:
 static void
 arp_dad_duplicated(struct ifaddr *ifa, const struct sockaddr_dl *from)
 {
-	struct in_ifaddr *ia = (struct in_ifaddr *)ifa;
+	struct in_ifaddr *ia = ifatoia(ifa);
 	struct ifnet *ifp = ifa->ifa_ifp;
 	char ipbuf[INET_ADDRSTRLEN], llabuf[LLA_ADDRSTRLEN];
 	const char *iastr, *llastr;

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.334.2.4 2020/01/25 21:45:00 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.334.2.5 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.4 2020/01/25 21:45:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.5 2020/01/25 22:38:51 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -531,6 +531,7 @@ mi_switch(lwp_t *l)
 	KASSERT(lwp_locked(l, NULL));
 	KASSERT(kpreempt_disabled());
 	KASSERT(mutex_owned(curcpu()->ci_schedstate.spc_mutex));
+	KASSERTMSG(l->l_blcnt == 0, "kernel_lock leaked");
 
 	kstack_check_magic(l);
 

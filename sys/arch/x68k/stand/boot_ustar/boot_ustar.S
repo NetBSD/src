@@ -3,7 +3,7 @@
 |         ITOH Yasufumi
 |	  minoura@NetBSD.org
 |
-| $NetBSD: boot_ustar.S,v 1.8.24.1 2020/01/17 21:47:28 ad Exp $
+| $NetBSD: boot_ustar.S,v 1.8.24.2 2020/01/25 22:38:44 ad Exp $
 
 | supports floppy only
 
@@ -36,9 +36,9 @@ ASENTRY_NOPROFILE(entry0)
 		| 0xED0000...0xED3FFE	SRAM
 		| others		ROM (SCSI?)
 		|
-		movel	%d0,%d1
-		clrb	%d1
-		tstl	%d1
+		movel	%d0,%d6
+		clrb	%d0
+		tstl	%d0
 		jne	boot_dev_unsupported
 
 		bra	_ASM_LABEL(entry)
@@ -51,10 +51,27 @@ disklabel:
 		.space	404
 
 ASENTRY_NOPROFILE(entry)
+		| Initialize the screen first.  Some IPL (060turbo ROM or
+		| genuine boot selector) doesn't initialize the screen.
+		moveq	#0x10,%d1
+		IOCS(__CRTMOD)
+
+		| We use 68020 instructions, and check MPU beforehand.
+		| Here "moveql #-1,%d0" = 0x70ff, and subsequent moveb loads
+		|   0xff if MPU <= 010 (chkmpu+2 + %d0.w)
+		|   0x70 if MPU >= 020 (chkmpu+2 + %d0.w*2).
+		| This is a move, not a tst instruction because tst with
+		| pc-relative is not available on 000/010.
+chkmpu:
+		moveql	#-1,%d0
+		.word	0x103b, 0x02fe	| moveb	%pc@(chkmpu+2,%d0:W:2),%d0
+		jpl	mpuok		| MC68020 or later
+		BOOT_ERROR("MPU 68000?");
+mpuok:
 		|
 		| SASI or Floppy
 		|
-		movel	%d0,%d6
+		movel	%d6,%d0
 		andib	#0xFC,%d0
 		cmpib	#0x90,%d0
 		jne	boot_dev_unsupported	| boot from SASI?

@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.18 2019/06/08 08:02:38 isaki Exp $ */
+/* $NetBSD: hdafg.c,v 1.18.4.1 2020/01/25 22:38:46 ad Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.18 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.18.4.1 2020/01/25 22:38:46 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -3780,6 +3780,12 @@ hdafg_attach(device_t parent, device_t self, void *opaque)
 	    HDAUDIO_STREAM_ISS, hdafg_stream_intr, &sc->sc_audiodev);
 	sc->sc_audiodev.ad_playback = hdaudio_stream_establish(sc->sc_host,
 	    HDAUDIO_STREAM_OSS, hdafg_stream_intr, &sc->sc_audiodev);
+
+	if (sc->sc_audiodev.ad_capture == NULL &&
+	    sc->sc_audiodev.ad_playback == NULL) {
+		hda_error(sc, "couldn't find any input or output streams\n");
+		return;
+	}
 
 	hda_debug(sc, "connecting streams\n");
 	defparams.channels = 2;

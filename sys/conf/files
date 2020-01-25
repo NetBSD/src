@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1248.2.1 2020/01/17 21:47:29 ad Exp $
+#	$NetBSD: files,v 1.1248.2.2 2020/01/25 22:38:45 ad Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -160,7 +160,7 @@ defflag	opt_compat_netbsd.h	COMPAT_11: COMPAT_12, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_10: COMPAT_11, COMPAT_NETBSD
 defflag	opt_compat_netbsd.h	COMPAT_09: COMPAT_10, COMPAT_NETBSD
 defflag				COMPAT_OSSAUDIO
-defflag				COMPAT_43
+defflag				COMPAT_43: COMPAT_60
 defflag				COMPAT_FREEBSD: COMPAT_09, COMPAT_43
 defflag				COMPAT_LINUX: COMPAT_NETBSD, COMPAT_43
 defflag				COMPAT_SUNOS: COMPAT_09, COMPAT_43
@@ -437,15 +437,11 @@ include "dev/splash/files.splash"
 # videomode support
 include "dev/videomode/files.videomode"
 
-# net device attributes - we have generic code for arc(net), ether(net),
-# fddi, and token ring.
+# net device attributes
 #
 define	arcnet
 define	ether
-define	fddi
-define	hippi
 define	ieee1394
-define	token
 define	sppp
 define	wlan
 define	crypto
@@ -771,11 +767,6 @@ file	dev/ic/dp83905.c		dp83905
 define	mx98905
 file	dev/ic/mx98905.c		mx98905
 
-# TROPIC Token-Ring controller
-#
-device	tr: arp, token, ifnet
-file	dev/ic/tropic.c			tr
-
 # NCR 5380 SCSI Bus Controller
 #
 define	ncr5380sbc
@@ -787,12 +778,6 @@ device	nca: scsi, ncr5380sbc
 define	sunscpal
 file	dev/ic/sunscpal.c		sunscpal
 device	ssc: scsi, sunscpal
-
-# DEC FDDI Chipset
-#
-define	pdq
-file	dev/ic/pdq.c			pdq
-file	dev/ic/pdq_ifsubr.c		pdq
 
 # Cyclades Cyclom-8/16/32
 #
@@ -923,11 +908,6 @@ file	dev/ic/clmpcc.c			clmpcc			needs-flag
 #
 device	ug: sysmon_envsys
 file	dev/ic/ug.c			ug			needs-flag
-
-# Essential Communications Corp. HIPPI Interface
-#
-device	esh: hippi, ifnet
-file	dev/ic/rrunner.c		esh			needs-flag
 
 # SMC 90c26, SMC 90C56 (and 90C66 if in compat mode) chip driver
 #
@@ -1541,12 +1521,6 @@ include "net/files.net"
 # Game adapter (joystick)
 device	joy
 file	dev/ic/joy.c			joy needs-flag
-
-# process monitor for make(1)
-# normally built as module
-defpseudo filemon
-file	dev/filemon/filemon.c		filemon
-file	dev/filemon/filemon_wrapper.c	filemon
 
 #
 # General Purpose Input/Output framework

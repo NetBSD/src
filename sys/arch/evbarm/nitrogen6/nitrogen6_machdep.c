@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.18 2019/07/16 14:41:47 skrll Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.18.4.1 2020/01/25 22:38:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.18 2019/07/16 14:41:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.18.4.1 2020/01/25 22:38:40 ad Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -247,7 +247,7 @@ nitrogen6_mpstart(void)
 	}
 	for (size_t i = 1; i < arm_cpu_max; i++) {
 		if ((arm_cpu_hatched & __BIT(i)) == 0) {
-		printf("%s: warning: cpu%zu failed to hatch\n",
+			printf("%s: warning: cpu%zu failed to hatch\n",
 			    __func__, i);
 		}
 	}

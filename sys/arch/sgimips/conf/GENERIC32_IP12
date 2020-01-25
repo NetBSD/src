@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC32_IP12,v 1.36 2019/05/06 02:24:37 sevan Exp $
+#	$NetBSD: GENERIC32_IP12,v 1.36.4.1 2020/01/25 22:38:43 ad Exp $
 #
 # GENERIC32_IP12 machine description file
 # 
@@ -32,7 +32,7 @@ makeoptions	TEXTADDR=0x80002000	# entry point
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC32-IP2x-$Revision: 1.36 $"
+#ident		"GENERIC32-IP2x-$Revision: 1.36.4.1 $"
 
 maxusers	32
 
@@ -223,7 +223,6 @@ pseudo-device	npf			# NPF packet filter
 pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	gre			# generic L3 over IP tunnel

@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.60 2019/12/16 02:50:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.60.2.1 2020/01/25 22:38:49 ad Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -768,6 +768,7 @@ void ixgbe_deferred_mq_start_work(struct work *, void *);
 void ixgbe_drain_all(struct adapter *);
 
 int  ixgbe_allocate_queues(struct adapter *);
+void ixgbe_free_queues(struct adapter *);
 int  ixgbe_setup_transmit_structures(struct adapter *);
 void ixgbe_free_transmit_structures(struct adapter *);
 int  ixgbe_setup_receive_structures(struct adapter *);
@@ -780,6 +781,7 @@ const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 /* For NetBSD */
 void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
     int, size_t);
+void ixgbe_jcl_destroy(struct adapter *,  struct rx_ring *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"

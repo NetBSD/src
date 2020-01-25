@@ -1,4 +1,4 @@
-/*	$NetBSD: start.S,v 1.5 2019/12/14 17:24:30 skrll Exp $	*/
+/*	$NetBSD: start.S,v 1.5.2.1 2020/01/25 22:38:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -32,18 +32,13 @@
 
 #include <aarch64/asm.h>
 
-RCSID("$NetBSD: start.S,v 1.5 2019/12/14 17:24:30 skrll Exp $")
-
-/* load far effective address (pc relative) */
-.macro	ADDR, reg, addr
-	adrp	\reg, \addr
-	add	\reg, \reg, #:lo12:\addr
-.endm
+RCSID("$NetBSD: start.S,v 1.5.2.1 2020/01/25 22:38:36 ad Exp $")
 
 /*
- * Padding at start of kernel image to make room for 64-byte header (non-ELF booting)
+ * Padding at start of kernel image to make room for 64-byte header
+ * (non-ELF booting)
  */
-.space	64, 0x0
+	.space	64, 0x0
 
 /*
  * Kernel start routine for aarch64 boards.
@@ -56,7 +51,7 @@ start:
 	sub	x10, x10, x9
 
 	/* address of kern_vtopdiff (relative) */
-	ADDR	x8, kern_vtopdiff
+	adrl	x8, kern_vtopdiff
 	str	x10, [x8]	/* kern_vtopdiff = start(virt) - start(phys) */
 
 	/*
@@ -64,7 +59,7 @@ start:
 	 */
 
 	/* address of uboot_args (relative) */
-	ADDR	x8, uboot_args
+	adrl	x8, uboot_args
 	str	x0, [x8, #(8*0)]
 	str	x1, [x8, #(8*1)]
 	str	x2, [x8, #(8*2)]
@@ -73,7 +68,7 @@ start:
 	/*
 	 * ARM64 boot protocol has FDT address in x0 *
 	 */
-	ADDR	x8, fdt_addr_r
+	adrl	x8, fdt_addr_r
 	str	x0, [x8]
 
 	b	aarch64_start		/* aarch64_start() @ aarch64/locore.S */

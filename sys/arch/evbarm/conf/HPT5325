@@ -1,4 +1,4 @@
-#	$NetBSD: HPT5325,v 1.42 2019/04/26 22:46:03 sevan Exp $
+#	$NetBSD: HPT5325,v 1.42.4.1 2020/01/25 22:38:39 ad Exp $
 #
 #  This configuration supports for HP T5325 Thin Client
 #
@@ -457,7 +457,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty

@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_zero.c,v 1.31 2019/12/27 09:22:20 msaitoh Exp $      */
+/*        $NetBSD: dm_target_zero.c,v 1.31.2.1 2020/01/25 22:38:46 ad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.31 2019/12/27 09:22:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_zero.c,v 1.31.2.1 2020/01/25 22:38:46 ad Exp $");
 
 /*
  * This file implements initial version of device-mapper zero target.
@@ -73,7 +73,7 @@ dm_target_zero_modcmd(modcmd_t cmd, void *arg)
 		dmt->init = &dm_target_zero_init;
 		dmt->strategy = &dm_target_zero_strategy;
 		dmt->destroy = &dm_target_zero_destroy;
-		dmt->upcall = &dm_target_zero_upcall;
+		//dmt->upcall = &dm_target_zero_upcall;
 
 		r = dm_target_insert(dmt);
 		break;
@@ -140,6 +140,7 @@ dm_target_zero_destroy(dm_table_entry_t *table_en)
 	return 0;
 }
 
+#if 0
 /* Unsupported for this target. */
 int
 dm_target_zero_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -147,3 +148,4 @@ dm_target_zero_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif

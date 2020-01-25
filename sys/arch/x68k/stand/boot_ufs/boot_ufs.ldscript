@@ -6,7 +6,7 @@ SEARCH_DIR(/usr/lib);
 PROVIDE (__stack = 0);
 SECTIONS
 {
-  . = 0x0f0000;
+  . = TEXTADDR;
   .text :
   {
     CREATE_OBJECT_SYMBOLS
@@ -23,7 +23,6 @@ SECTIONS
     etext = .;
     _etext = .;
   }
-/*  . = ALIGN(0x2000); */
   .data :
   {
     /* The first three sections are for SunOS dynamic linking.  */
@@ -36,7 +35,6 @@ SECTIONS
     edata  =  .;
     _edata  =  .;
   }
-  . = 0x0f2000;
   .bss :
   {
     __bss_start = .;
@@ -47,3 +45,7 @@ SECTIONS
   }
   /DISCARD/ : { *(.ident) *(.stab) *(.stabstr) }
 }
+
+ASSERT(first_kbyte - TEXTADDR <= 1024, "Error: first_kbyte exceeds 1KB");
+ASSERT(_edata - TEXTADDR <= 8192, "Error: text+data is too large to bootarea");
+ASSERT(_end <= BOOT_TEXTADDR, "Error: _end conflicts BOOT_TEXT");

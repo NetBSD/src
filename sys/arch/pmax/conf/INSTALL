@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.74 2016/12/13 20:42:20 christos Exp $
+# 	$NetBSD: INSTALL,v 1.74.22.1 2020/01/25 22:38:42 ad Exp $
 #
 # Distribution	install kernel (any model)
 #    netbsd:	cut-down kernel for miniroots.
@@ -139,7 +139,6 @@ pxg*	at	tc? slot ? offset ?	# PMAG-D,E,F 3D accelerator
 xcfb*	at	tc? slot ? offset ?	# PMAG-DV Color Framebuffer at MAXINE
 asc*	at	tc? slot ? offset ?	# PMAZ-A single channel SCSI
 le*	at	tc? slot ? offset ?	# PMAD-A LANCE
-fta*	at	tc? slot ? offset ?	# PMAF-F FDDI
 tcds*	at	tc? slot ? offset ?	# PMAZB/PMAZC dual channel SCSI
 asc*	at	tcds? chip ?
 

@@ -1,4 +1,4 @@
-/* $NetBSD: exec.c,v 1.12 2019/12/18 21:46:03 riastradh Exp $ */
+/* $NetBSD: exec.c,v 1.12.2.1 2020/01/25 22:38:52 ad Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -33,6 +33,8 @@
 #include "efiacpi.h"
 
 #include <sys/reboot.h>
+
+extern char twiddle_toggle;
 
 u_long load_offset = 0;
 
@@ -127,6 +129,7 @@ load_efibootplist(bool default_fallback)
 	u_long plist_size = 0;
 	prop_dictionary_t plist = NULL, oplist = NULL;
 	bool load_quietly = false;
+	bool old_twiddle_toggle = twiddle_toggle;
 
 	const char *path = get_efibootplist_path();
 	if (path == NULL || strlen(path) == 0) {
@@ -135,6 +138,8 @@ load_efibootplist(bool default_fallback)
 		path = default_efibootplist_path;
 		load_quietly = true;
 	}
+
+	twiddle_toggle = load_quietly;
 
 	/*
 	 * Fudge the size so we can ensure the resulting buffer
@@ -156,6 +161,8 @@ load_efibootplist(bool default_fallback)
 
 out:
 	oplist = efibootplist;
+
+	twiddle_toggle = old_twiddle_toggle;
 
 	/*
 	 * If we had a failure, create an empty one for

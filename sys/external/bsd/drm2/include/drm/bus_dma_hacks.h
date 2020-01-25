@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.18 2019/11/05 23:27:23 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.18.2.1 2020/01/25 22:38:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@ PHYS_TO_BUS_MEM(bus_dma_tag_t dmat, paddr_t pa)
 		const struct arm32_dma_range *dr = &dmat->_ranges[i];
 
 		if (dr->dr_sysbase <= pa && pa - dr->dr_sysbase <= dr->dr_len)
-			return dr->dr_busbase + (dr->dr_sysbase - pa);
+			return pa - dr->dr_sysbase + dr->dr_busbase;
 	}
 	panic("paddr has no bus address in dma tag %p: %"PRIxPADDR, dmat, pa);
 }
@@ -74,7 +74,7 @@ BUS_MEM_TO_PHYS(bus_dma_tag_t dmat, bus_addr_t ba)
 		const struct arm32_dma_range *dr = &dmat->_ranges[i];
 
 		if (dr->dr_busbase <= ba && ba - dr->dr_busbase <= dr->dr_len)
-			return dr->dr_sysbase + (dr->dr_busbase - ba);
+			return ba - dr->dr_busbase + dr->dr_sysbase;
 	}
 	panic("bus addr has no bus address in dma tag %p: %"PRIxPADDR, dmat,
 	    ba);

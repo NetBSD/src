@@ -1,4 +1,4 @@
-/*        $NetBSD: dm.h,v 1.54 2020/01/05 08:08:26 tkusumi Exp $      */
+/*        $NetBSD: dm.h,v 1.54.2.1 2020/01/25 22:38:45 ad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -182,7 +182,7 @@ typedef struct dm_target {
 	int (*destroy)(dm_table_entry_t *);
 
 	int (*strategy)(dm_table_entry_t *, struct buf *);
-	int (*upcall)(dm_table_entry_t *, struct buf *);
+	//int (*upcall)(dm_table_entry_t *, struct buf *);
 
 	/*
 	 * Optional routines.
@@ -247,7 +247,7 @@ char *dm_target_linear_table(void *);
 int dm_target_linear_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_linear_sync(dm_table_entry_t *);
 int dm_target_linear_destroy(dm_table_entry_t *);
-int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_linear_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_linear_secsize(dm_table_entry_t *, unsigned int *);
 
 /* dm_target_stripe.c */
@@ -257,20 +257,20 @@ char *dm_target_stripe_table(void *);
 int dm_target_stripe_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_sync(dm_table_entry_t *);
 int dm_target_stripe_destroy(dm_table_entry_t *);
-int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_stripe_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_stripe_secsize(dm_table_entry_t *, unsigned int *);
 
 /* dm_target_error.c */
 int dm_target_error_init(dm_table_entry_t*, int, char **);
 int dm_target_error_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_error_destroy(dm_table_entry_t *);
-int dm_target_error_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_error_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm_target_zero.c */
 int dm_target_zero_init(dm_table_entry_t *, int, char **);
 int dm_target_zero_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_zero_destroy(dm_table_entry_t *);
-int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_zero_upcall(dm_table_entry_t *, struct buf *);
 
 #if 0
 /* dm_target_delay.c */
@@ -282,7 +282,7 @@ char *dm_target_delay_table(void *);
 int dm_target_delay_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_delay_sync(dm_table_entry_t *);
 int dm_target_delay_destroy(dm_table_entry_t *);
-int dm_target_delay_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_delay_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_delay_secsize(dm_table_entry_t *, unsigned int *);
 
 /* dm_target_flakey.c */
@@ -291,7 +291,7 @@ char *dm_target_flakey_table(void *);
 int dm_target_flakey_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_flakey_sync(dm_table_entry_t *);
 int dm_target_flakey_destroy(dm_table_entry_t *);
-int dm_target_flakey_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_flakey_upcall(dm_table_entry_t *, struct buf *);
 int dm_target_flakey_secsize(dm_table_entry_t *, unsigned int *);
 #endif
 

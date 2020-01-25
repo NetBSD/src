@@ -1,4 +1,4 @@
-/*	$NetBSD: bootxx.c,v 1.20 2019/10/28 18:13:40 joerg Exp $	*/
+/*	$NetBSD: bootxx.c,v 1.20.2.1 2020/01/25 22:38:41 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -70,8 +70,8 @@ __asm(
 "	li	%r9,0x40	\n"	/* loop 64 times (for 2048 bytes of bootxx) */
 "	mtctr	%r9		\n"
 "				\n"
-"1:	dcbf	%r0,%r8		\n"
-"	icbi	%r0,%r8		\n"
+"1:	dcbf	0,%r8		\n"
+"	icbi	0,%r8		\n"
 "	addi	%r8,%r8,0x20	\n"
 "	bdnz	1b		\n"
 "	sync			\n"

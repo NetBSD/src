@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.19 2017/04/21 15:10:34 christos Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.19.18.1 2020/01/25 22:38:44 ad Exp $	*/
 
 /*
- *  Copyright (c) 2005, 2006, 2007 The NetBSD Foundation.
+ *  Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation.
  *  All rights reserved.
  *
  *  Redistribution and use in source and binary forms, with or without
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.19 2017/04/21 15:10:34 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.19.18.1 2020/01/25 22:38:44 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -55,7 +55,7 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	ucontext32_t *newuc = NULL;
-	lwpid_t lid;
+	lwp_t *l2;
 	int error;
 
 	KASSERT(p->p_emul->e_ucsize == sizeof(*newuc));
@@ -77,18 +77,20 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 	const sigset_t *sigmask = newuc->uc_flags & _UC_SIGMASK ?
 	    &newuc->uc_sigmask : &l->l_sigmask;
 
-	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid, sigmask,
+	error = do_lwp_create(l, newuc, SCARG(uap, flags), &l2, sigmask,
 	    &SS_INIT);
-	if (error)
+	if (error != 0)
 		goto fail;
 
-	/*
-	 * do not free ucontext in case of an error here,
-	 * the lwp will actually run and access it
-	 */
-	return copyout(&lid, SCARG_P32(uap, new_lwp), sizeof(lid));
+	error = copyout(&l2->l_lid, SCARG_P32(uap, new_lwp),
+	    sizeof(l2->l_lid));
+	if (error != 0)
+		lwp_exit(l2);
+	else
+		lwp_start(l2, SCARG(uap, flags));
+	return error;
 
-fail:
+ fail:
 	kmem_free(newuc, sizeof(ucontext_t));
 	return error;
 }

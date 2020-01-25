@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_turnstile.c,v 1.35 2019/12/16 19:22:15 ad Exp $	*/
+/*	$NetBSD: kern_turnstile.c,v 1.35.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2009, 2019 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.35 2019/12/16 19:22:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_turnstile.c,v 1.35.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/lockdebug.h>
@@ -536,29 +536,25 @@ turnstile_print(volatile void *obj, void (*pr)(const char *, ...))
 	turnstile_t *ts;
 	tschain_t *tc;
 	sleepq_t *rsq, *wsq;
-	kmutex_t *lock;
 	u_int hash;
 	lwp_t *l;
 
 	hash = TS_HASH(obj);
 	tc = &turnstile_chains[hash];
-	lock = &turnstile_locks[hash].lock;
 
 	LIST_FOREACH(ts, tc, ts_chain)
 		if (ts->ts_obj == obj)
 			break;
 
-	(*pr)("Turnstile chain at %p with mutex %p.\n", tc, lock);
 	if (ts == NULL) {
-		(*pr)("=> No active turnstile for this lock.\n");
+		(*pr)("Turnstile: no active turnstile for this lock.\n");
 		return;
 	}
 
 	rsq = &ts->ts_sleepq[TS_READER_Q];
 	wsq = &ts->ts_sleepq[TS_WRITER_Q];
 
-	(*pr)("=> Turnstile at %p (wrq=%p, rdq=%p).\n", ts, rsq, wsq);
-
+	(*pr)("Turnstile:\n");
 	(*pr)("=> %d waiting readers:", TS_WAITERS(ts, TS_READER_Q));
 	TAILQ_FOREACH(l, rsq, l_sleepchain) {
 		(*pr)(" %p", l);

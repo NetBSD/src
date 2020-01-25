@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.39.2.1 2020/01/17 21:47:28 ad Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.39.2.2 2020/01/25 22:38:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986 The Regents of the University of California.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39.2.1 2020/01/17 21:47:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.39.2.2 2020/01/25 22:38:44 ad Exp $");
 
 #include "opt_mtrr.h"
 
@@ -237,11 +237,15 @@ cpu_lwp_fork(struct lwp *l1, struct lwp *l2, void *stack, size_t stacksize,
 /*
  * cpu_lwp_free is called from exit() to let machine-dependent
  * code free machine-dependent resources.  Note that this routine
- * must not block.
+ * must not block.  NB: this may be called with l != curlwp in
+ * error paths.
  */
 void
 cpu_lwp_free(struct lwp *l, int proc)
 {
+
+	if (l != curlwp)
+		return;
 
 	/* Abandon the FPU state. */
 	fpu_lwp_abandon(l);

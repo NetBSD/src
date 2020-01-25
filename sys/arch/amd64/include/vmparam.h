@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.51 2019/02/11 14:59:32 cherry Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.51.6.1 2020/01/25 22:38:37 ad Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -61,6 +61,17 @@
  * of VA so use it.
  */
 #define	PAGER_MAP_DEFAULT_SIZE (512 * 1024 * 1024)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
 
 /*
  * USRSTACK is the top (end) of the user stack. Immediately above the

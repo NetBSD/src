@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103.2.1 2020/01/17 21:47:24 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103.2.2 2020/01/25 22:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -328,6 +328,10 @@ vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
  * cpu device glue (belongs in cpuvar.h)
  */
 void	cpu_attach(device_t, cpuid_t);
+
+#ifdef _ARM_ARCH_6
+int	cpu_maxproc_hook(int);
+#endif
 
 #endif /* !_LOCORE */
 

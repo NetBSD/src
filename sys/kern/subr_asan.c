@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_asan.c,v 1.16 2019/10/10 13:45:14 maxv Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.16.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*
- * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.16 2019/10/10 13:45:14 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.16.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1077,10 +1077,10 @@ kasan_dma_sync_uio(struct uio *uio, bus_addr_t offset, bus_size_t len,
 	struct iovec *iov;
 	int i;
 
-	if (uio->uio_vmspace != NULL)
-		return;
-
 	kasan_shadow_check((uintptr_t)uio, sizeof(struct uio), false, pc);
+
+	if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
+		return;
 
 	resid = uio->uio_resid;
 	iov = uio->uio_iov;
@@ -1233,13 +1233,15 @@ ASAN_SET_SHADOW(f8);
 void __asan_poison_stack_memory(const void *, size_t);
 void __asan_unpoison_stack_memory(const void *, size_t);
 
-void __asan_poison_stack_memory(const void *addr, size_t size)
+void
+__asan_poison_stack_memory(const void *addr, size_t size)
 {
 	size = roundup(size, KASAN_SHADOW_SCALE_SIZE);
 	kasan_shadow_Nbyte_fill(addr, size, KASAN_USE_AFTER_SCOPE);
 }
 
-void __asan_unpoison_stack_memory(const void *addr, size_t size)
+void
+__asan_unpoison_stack_memory(const void *addr, size_t size)
 {
 	kasan_shadow_Nbyte_markvalid(addr, size);
 }

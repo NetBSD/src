@@ -10,7 +10,7 @@ SEARCH_DIR(/usr/lib);
 PROVIDE (__stack = 0);
 SECTIONS
 {
-  . = 0x6000;
+  . = TEXTADDR;
   .text :
   {
     CREATE_OBJECT_SYMBOLS
@@ -28,7 +28,6 @@ SECTIONS
     etext = .;
     _etext = .;
   }
-/*  . = ALIGN(0x2000); */
   .data :
   {
     /* The first three sections are for SunOS dynamic linking.  */

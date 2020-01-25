@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.221.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.221.2.2 2020/01/25 22:38:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.221.2.1 2020/01/17 21:47:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.221.2.2 2020/01/25 22:38:53 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -2149,6 +2149,7 @@ uvm_direct_process(struct vm_page **pgs, u_int npages, voff_t off, vsize_t len,
  */
 
 static const char page_flagbits[] = UVM_PGFLAGBITS;
+static const char page_pqflagbits[] = UVM_PQFLAGBITS;
 
 void
 uvm_page_printit(struct vm_page *pg, bool full,
@@ -2162,12 +2163,15 @@ uvm_page_printit(struct vm_page *pg, bool full,
 
 	(*pr)("PAGE %p:\n", pg);
 	snprintb(pgbuf, sizeof(pgbuf), page_flagbits, pg->flags);
-	(*pr)("  flags=%s\n  pqflags=%x, wire_count=%d, pa=0x%lx\n",
-	    pgbuf, pg->pqflags, pg->wire_count, (long)VM_PAGE_TO_PHYS(pg));
-	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx loan_count=%d\n",
-	    pg->uobject, pg->uanon, (long long)pg->offset, pg->loan_count);
-	(*pr)("  bucket=%d freelist=%d\n",
-	    uvm_page_get_bucket(pg), uvm_page_get_freelist(pg));
+	(*pr)("  flags=%s\n", pgbuf);
+	snprintb(pgbuf, sizeof(pgbuf), page_pqflagbits, pg->pqflags);
+	(*pr)("  pqflags=%s\n", pgbuf);
+	(*pr)("  uobject=%p, uanon=%p, offset=0x%llx\n",
+	    pg->uobject, pg->uanon, (long long)pg->offset);
+	(*pr)("  loan_count=%d wire_count=%d bucket=%d freelist=%d\n",
+	    pg->loan_count, pg->wire_count, uvm_page_get_bucket(pg),
+	    uvm_page_get_freelist(pg));
+	(*pr)("  pa=0x%lx\n", (long)VM_PAGE_TO_PHYS(pg));
 #if defined(UVM_PAGE_TRKOWN)
 	if (pg->flags & PG_BUSY)
 		(*pr)("  owning process = %d, tag=%s\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_lockdebug.c,v 1.72.4.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: subr_lockdebug.c,v 1.72.4.2 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.72.4.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_lockdebug.c,v 1.72.4.2 2020/01/25 22:38:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -108,7 +108,8 @@ static void	lockdebug_abort1(const char *, size_t, lockdebug_t *, int,
     const char *, bool);
 static int	lockdebug_more(int);
 static void	lockdebug_init(void);
-static void	lockdebug_dump(lockdebug_t *, void (*)(const char *, ...)
+static void	lockdebug_dump(lwp_t *, lockdebug_t *,
+    void (*)(const char *, ...)
     __printflike(1, 2));
 
 static signed int
@@ -468,6 +469,9 @@ lockdebug_wantlock(const char *func, size_t line,
 		    true);
 		return;
 	}
+	if (l->l_ld_wanted == NULL) {
+		l->l_ld_wanted = ld;
+	}
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
 }
@@ -529,6 +533,9 @@ lockdebug_locked(const char *func, size_t line,
 	ld->ld_cpu = (uint16_t)cpu_index(curcpu());
 	ld->ld_lwp = l;
 	__cpu_simple_unlock(&ld->ld_spinlock);
+	if (l->l_ld_wanted == ld) {
+		l->l_ld_wanted = NULL;
+	}
 	splx(s);
 }
 
@@ -692,7 +699,7 @@ lockdebug_barrier(const char *func, size_t line, volatile void *onelock,
 			if (ld->ld_lockops->lo_type == LOCKOPS_CV)
 				continue;
 			if (ld->ld_lwp == l)
-				lockdebug_dump(ld, printf);
+				lockdebug_dump(l, ld, printf);
 		}
 		panic("%s,%zu: holding %d shared locks", func, line,
 		    l->l_shlocks);
@@ -744,7 +751,7 @@ lockdebug_mem_check(const char *func, size_t line, void *base, size_t sz)
  *	Dump information about a lock on panic, or for DDB.
  */
 static void
-lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
+lockdebug_dump(lwp_t *l, lockdebug_t *ld, void (*pr)(const char *, ...)
     __printflike(1, 2))
 {
 	int sleeper = (ld->ld_flags & LD_SLEEPER);
@@ -761,13 +768,13 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
 		(*pr)("\n"
 		    "shared holds : %18u exclusive: %18u\n"
 		    "shares wanted: %18u exclusive: %18u\n"
-		    "current cpu  : %18u last held: %18u\n"
-		    "current lwp  : %#018lx last held: %#018lx\n"
+		    "relevant cpu : %18u last held: %18u\n"
+		    "relevant lwp : %#018lx last held: %#018lx\n"
 		    "last locked%c : %#018lx unlocked%c: %#018lx\n",
 		    (unsigned)ld->ld_shares, ((ld->ld_flags & LD_LOCKED) != 0),
 		    (unsigned)ld->ld_shwant, (unsigned)ld->ld_exwant,
-		    (unsigned)cpu_index(curcpu()), (unsigned)ld->ld_cpu,
-		    (long)curlwp, (long)ld->ld_lwp,
+		    (unsigned)cpu_index(l->l_cpu), (unsigned)ld->ld_cpu,
+		    (long)l, (long)ld->ld_lwp,
 		    ((ld->ld_flags & LD_LOCKED) ? '*' : ' '),
 		    (long)ld->ld_locked,
 		    ((ld->ld_flags & LD_LOCKED) ? ' ' : '*'),
@@ -778,7 +785,6 @@ lockdebug_dump(lockdebug_t *ld, void (*pr)(const char *, ...)
 		(*ld->ld_lockops->lo_dump)(ld->ld_lock, pr);
 
 	if (sleeper) {
-		(*pr)("\n");
 		turnstile_print(ld->ld_lock, pr);
 	}
 }
@@ -806,7 +812,7 @@ lockdebug_abort1(const char *func, size_t line, lockdebug_t *ld, int s,
 
 	printf_nolog("%s error: %s,%zu: %s\n\n", ld->ld_lockops->lo_name,
 	    func, line, msg);
-	lockdebug_dump(ld, printf_nolog);
+	lockdebug_dump(curlwp, ld, printf_nolog);
 	__cpu_simple_unlock(&ld->ld_spinlock);
 	splx(s);
 	printf_nolog("\n");
@@ -837,7 +843,7 @@ lockdebug_lock_print(void *addr,
 		if (ld->ld_lock == NULL)
 			continue;
 		if (addr == NULL || ld->ld_lock == addr) {
-			lockdebug_dump(ld, pr);
+			lockdebug_dump(curlwp, ld, pr);
 			if (addr != NULL)
 				return;
 		}
@@ -853,15 +859,15 @@ lockdebug_lock_print(void *addr,
 
 #ifdef LOCKDEBUG
 static void
-lockdebug_show_one(lockdebug_t *ld, int i,
+lockdebug_show_one(lwp_t *l, lockdebug_t *ld, int i,
     void (*pr)(const char *, ...) __printflike(1, 2))
 {
 	const char *sym;
 
 	ksyms_getname(NULL, &sym, (vaddr_t)ld->ld_initaddr,
 	    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
-	(*pr)("Lock %d (initialized at %s)\n", i++, sym);
-	lockdebug_dump(ld, pr);
+	(*pr)("* Lock %d (initialized at %s)\n", i++, sym);
+	lockdebug_dump(l, ld, pr);
 }
 
 static void
@@ -882,16 +888,34 @@ lockdebug_show_all_locks_lwp(void (*pr)(const char *, ...) __printflike(1, 2),
 		LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 			lockdebug_t *ld;
 			int i = 0;
-			if (TAILQ_EMPTY(&l->l_ld_locks))
-				continue;
-			(*pr)("Locks held by an LWP (%s):\n",
-			    l->l_name ? l->l_name : p->p_comm);
-			TAILQ_FOREACH(ld, &l->l_ld_locks, ld_chain) {
-				lockdebug_show_one(ld, i++, pr);
+			if (TAILQ_EMPTY(&l->l_ld_locks) &&
+			    l->l_ld_wanted == NULL) {
+			    	continue;
 			}
-			if (show_trace)
+			(*pr)("\n****** LWP %d.%d (%s) @ %p, l_stat=%d\n",
+			    p->p_pid, l->l_lid,
+			    l->l_name ? l->l_name : p->p_comm, l, l->l_stat);
+			if (!TAILQ_EMPTY(&l->l_ld_locks)) {
+				(*pr)("\n*** Locks held: \n");
+				TAILQ_FOREACH(ld, &l->l_ld_locks, ld_chain) {
+					(*pr)("\n");
+					lockdebug_show_one(l, ld, i++, pr);
+				}
+			} else {
+				(*pr)("\n*** Locks held: none\n");
+			}
+
+			if (l->l_ld_wanted != NULL) {
+				(*pr)("\n*** Locks wanted: \n\n");
+				lockdebug_show_one(l, l->l_ld_wanted, 0, pr);
+			} else {
+				(*pr)("\n*** Locks wanted: none\n");
+			}
+			if (show_trace) {
+				(*pr)("\n*** Traceback: \n\n");
 				lockdebug_show_trace(l, pr);
-			(*pr)("\n");
+				(*pr)("\n");
+			}
 		}
 	}
 }
@@ -908,16 +932,18 @@ lockdebug_show_all_locks_cpu(void (*pr)(const char *, ...) __printflike(1, 2),
 		int i = 0;
 		if (TAILQ_EMPTY(&ci->ci_data.cpu_ld_locks))
 			continue;
-		(*pr)("Locks held on CPU %u:\n", ci->ci_index);
+		(*pr)("\n******* Locks held on %s:\n", cpu_name(ci));
 		TAILQ_FOREACH(ld, &ci->ci_data.cpu_ld_locks, ld_chain) {
-			lockdebug_show_one(ld, i++, pr);
-			if (show_trace)
+			(*pr)("\n");
 #ifdef MULTIPROCESSOR
+			lockdebug_show_one(ci->ci_curlwp, ld, i++, pr);
+			if (show_trace)
 				lockdebug_show_trace(ci->ci_curlwp, pr);
 #else
+			lockdebug_show_one(curlwp, ld, i++, pr);
+			if (show_trace)
 				lockdebug_show_trace(curlwp, pr);
 #endif
-			(*pr)("\n");
 		}
 	}
 }

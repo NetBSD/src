@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.7 2019/07/06 12:58:58 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.7.4.1 2020/01/25 22:38:45 ad Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -28,6 +28,10 @@
 
 #ifndef _SYS_DEV_AUDIO_AUDIODEF_H_
 #define _SYS_DEV_AUDIO_AUDIODEF_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_audio.h"
+#endif
 
 /* Number of HW buffer's blocks. */
 #define NBLKHW (3)
