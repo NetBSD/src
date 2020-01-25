@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.61 2020/01/18 13:53:50 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.62 2020/01/25 15:09:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.61 2020/01/18 13:53:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.62 2020/01/25 15:09:54 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -557,8 +557,8 @@ sched_takecpu(struct lwp *l)
 	 */
 	if (l->l_stat == LSIDL) {
 		if (curlwp->l_vforkwaiting && l->l_class == SCHED_OTHER) {
-			if (sched_migratable(l, curlwp->l_cpu) &&
-			    curlwp->l_cpu->ci_schedstate.spc_count == 0) {
+			if (sched_migratable(l, curlwp->l_cpu) && eprio >
+			    curlwp->l_cpu->ci_schedstate.spc_maxpriority) {
 				return curlwp->l_cpu;
 			}
 		} else {
