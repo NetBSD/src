@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.485.2.2 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.485.2.3 2020/01/25 22:38:50 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485.2.2 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485.2.3 2020/01/25 22:38:50 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -246,9 +246,9 @@ struct emul emul_netbsd = {
  * Exec lock. Used to control access to execsw[] structures.
  * This must not be static so that netbsd32 can access it, too.
  */
-krwlock_t exec_lock;
+krwlock_t exec_lock __cacheline_aligned;
 
-static kmutex_t sigobject_lock;
+static kmutex_t sigobject_lock __cacheline_aligned;
 
 /*
  * Data used between a loadvm and execve part of an "exec" operation

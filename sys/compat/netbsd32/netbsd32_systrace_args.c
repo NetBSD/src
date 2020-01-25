@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.36 2019/11/04 11:33:01 rin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.36.2.1 2020/01/25 22:38:44 ad Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -164,7 +164,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* sys_getpid */
+	/* sys_getpid_with_ppid */
 	case 20: {
 		*n_args = 0;
 		break;
@@ -194,7 +194,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 1;
 		break;
 	}
-	/* sys_getuid */
+	/* sys_getuid_with_euid */
 	case 24: {
 		*n_args = 0;
 		break;
@@ -375,7 +375,7 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		*n_args = 3;
 		break;
 	}
-	/* sys_getgid */
+	/* sys_getgid_with_egid */
 	case 47: {
 		*n_args = 0;
 		break;
@@ -3785,7 +3785,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_getpid */
+	/* sys_getpid_with_ppid */
 	case 20:
 		break;
 	/* netbsd32_mount */
@@ -3830,7 +3830,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_getuid */
+	/* sys_getuid_with_euid */
 	case 24:
 		break;
 	/* sys_geteuid */
@@ -4114,7 +4114,7 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 			break;
 		};
 		break;
-	/* sys_getgid */
+	/* sys_getgid_with_egid */
 	case 47:
 		break;
 	/* netbsd32_sigprocmask */
@@ -9633,7 +9633,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "netbsd32_long";
 		break;
-	/* sys_getpid */
+	/* sys_getpid_with_ppid */
 	case 20:
 	/* netbsd32_mount */
 	case 21:
@@ -9650,7 +9650,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys_getuid */
+	/* sys_getuid_with_euid */
 	case 24:
 	/* sys_geteuid */
 	case 25:
@@ -9747,7 +9747,7 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys_getgid */
+	/* sys_getgid_with_egid */
 	case 47:
 	/* netbsd32_sigprocmask */
 	case 48:

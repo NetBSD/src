@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.12.2.1 2020/01/17 21:47:23 ad Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.12.2.2 2020/01/25 22:38:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -29,8 +29,10 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
+#define	_INTR_PRIVATE
+
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12.2.1 2020/01/17 21:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12.2.2 2020/01/25 22:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -46,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12.2.1 2020/01/17 21:47:23 ad
 #include <machine/cpu.h>
 
 #include <arm/cpufunc.h>
+
+#include <arm/pic/picvar.h>
 
 #include <dev/pci/pcireg.h>
 #include <dev/pci/pcivar.h>
@@ -77,6 +81,20 @@ struct acpi_pci_pct {
 
 static TAILQ_HEAD(, acpi_pci_pct) acpi_pci_chipset_tags =
     TAILQ_HEAD_INITIALIZER(acpi_pci_chipset_tags);
+
+struct acpi_pci_intr;
+
+struct acpi_pci_intr {
+	struct pic_softc		pi_pic;
+	int				pi_irqbase;
+	int				pi_irq;
+	uint32_t			pi_unblocked;
+	void				*pi_ih;
+	TAILQ_ENTRY(acpi_pci_intr)	pi_list;
+};
+
+static TAILQ_HEAD(, acpi_pci_intr) acpi_pci_intrs =
+    TAILQ_HEAD_INITIALIZER(acpi_pci_intrs);
 
 static const struct acpi_pci_quirk acpi_pci_quirks[] = {
 	/* OEM ID	OEM Table ID	Revision	Seg	Func */
@@ -415,11 +433,70 @@ acpi_pci_md_intr_setattr(void *v, pci_intr_handle_t *ih, int attr, uint64_t data
 	}
 }
 
+static struct acpi_pci_intr *
+acpi_pci_md_intr_lookup(int irq)
+{
+	struct acpi_pci_intr *pi;
+
+	TAILQ_FOREACH(pi, &acpi_pci_intrs, pi_list)
+		if (pi->pi_irq == irq)
+			return pi;
+
+	return NULL;
+}
+
+static void
+acpi_pci_md_unblock_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irqmask)
+{
+	struct acpi_pci_intr * const pi = (struct acpi_pci_intr *)pic;
+
+	pi->pi_unblocked |= irqmask;
+}
+
+static void
+acpi_pci_md_block_irqs(struct pic_softc *pic, size_t irqbase, uint32_t irqmask)
+{
+	struct acpi_pci_intr * const pi = (struct acpi_pci_intr *)pic;
+
+	pi->pi_unblocked &= ~irqmask;
+}
+
+static int
+acpi_pci_md_find_pending_irqs(struct pic_softc *pic)
+{
+	struct acpi_pci_intr * const pi = (struct acpi_pci_intr *)pic;
+
+	pic_mark_pending_sources(pic, 0, pi->pi_unblocked);
+
+	return 1;
+}
+
+static void
+acpi_pci_md_establish_irq(struct pic_softc *pic, struct intrsource *is)
+{
+}
+
+static void
+acpi_pci_md_source_name(struct pic_softc *pic, int irq, char *buf, size_t len)
+{
+	snprintf(buf, len, "slot %d", irq);
+}
+
+static struct pic_ops acpi_pci_pic_ops = {
+	.pic_unblock_irqs = acpi_pci_md_unblock_irqs,
+	.pic_block_irqs = acpi_pci_md_block_irqs,
+	.pic_find_pending_irqs = acpi_pci_md_find_pending_irqs,
+	.pic_establish_irq = acpi_pci_md_establish_irq,
+	.pic_source_name = acpi_pci_md_source_name,
+};
+
 static void *
 acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
     int (*callback)(void *), void *arg, const char *xname)
 {
 	struct acpi_pci_context * const ap = v;
+	struct acpi_pci_intr *pi;
+	int slot;
 
 	if ((ih & (ARM_PCI_INTR_MSI | ARM_PCI_INTR_MSIX)) != 0)
 		return arm_pci_msi_intr_establish(&ap->ap_pc, ih, ipl, callback, arg, xname);
@@ -427,7 +504,31 @@ acpi_pci_md_intr_establish(void *v, pci_intr_handle_t ih, int ipl,
 	const int irq = (int)__SHIFTOUT(ih, ARM_PCI_INTR_IRQ);
 	const int mpsafe = (ih & ARM_PCI_INTR_MPSAFE) ? IST_MPSAFE : 0;
 
-	return intr_establish_xname(irq, ipl, IST_LEVEL | mpsafe, callback, arg, xname);
+	pi = acpi_pci_md_intr_lookup(irq);
+	if (pi == NULL) {
+		pi = kmem_zalloc(sizeof(*pi), KM_SLEEP);
+		pi->pi_irq = irq;
+		snprintf(pi->pi_pic.pic_name, sizeof(pi->pi_pic.pic_name),
+		    "PCI irq %d", irq);
+		pi->pi_pic.pic_maxsources = 32;
+		pi->pi_pic.pic_ops = &acpi_pci_pic_ops;
+		pi->pi_irqbase = pic_add(&pi->pi_pic, PIC_IRQBASE_ALLOC);
+		TAILQ_INSERT_TAIL(&acpi_pci_intrs, pi, pi_list);
+		pi->pi_ih = intr_establish_xname(irq, IPL_SCHED, IST_LEVEL | IST_MPSAFE,
+		    pic_handle_intr, &pi->pi_pic, device_xname(ap->ap_dev));
+	}
+	if (pi->pi_ih == NULL)
+		return NULL;
+
+	/* Find a free slot */
+	for (slot = 0; slot < pi->pi_pic.pic_maxsources; slot++)
+		if (pi->pi_pic.pic_sources[slot] == NULL)
+			break;
+	if (slot == pi->pi_pic.pic_maxsources)
+		return NULL;
+
+	return intr_establish_xname(pi->pi_irqbase + slot, ipl, IST_LEVEL | mpsafe,
+	    callback, arg, xname);
 }
 
 static void
@@ -476,6 +577,7 @@ acpi_pci_md_get_chipset_tag(struct acpi_softc *sc, int seg, int bbn)
 		pct->pct_ap.ap_dev = sc->sc_dev;
 		pct->pct_ap.ap_pc = arm_acpi_pci_chipset;
 		pct->pct_ap.ap_pc.pc_conf_v = &pct->pct_ap;
+		pct->pct_ap.ap_pc.pc_intr_v = &pct->pct_ap;
 		pct->pct_ap.ap_seg = seg;
 		pct->pct_ap.ap_bus = bbn;
 		pct->pct_ap.ap_bst = acpi_softc->sc_memt;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.58 2019/04/26 21:40:30 sevan Exp $
+# $NetBSD: GENERIC,v 1.58.4.1 2020/01/25 22:38:40 ad Exp $
 #
 # GENERIC machine description file
 # This machine description file is used to generate the default NetBSD
@@ -25,7 +25,7 @@ include 	"arch/ews4800mips/conf/std.ews4800mips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.58 $"
+#ident		"GENERIC-$Revision: 1.58.4.1 $"
 
 maxusers	16
 
@@ -234,7 +234,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty

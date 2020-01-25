@@ -1,4 +1,4 @@
-# $NetBSD: RPC44,v 1.55 2018/08/01 20:04:10 maxv Exp $
+# $NetBSD: RPC44,v 1.55.6.1 2020/01/25 22:38:37 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.55 $"
+#ident		"GENERIC-$Revision: 1.55.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -264,7 +264,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel

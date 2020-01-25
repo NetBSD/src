@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.38.6.1 2020/01/17 21:47:24 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.38.6.2 2020/01/25 22:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1990 The Regents of the University of California.
@@ -91,6 +91,7 @@ typedef	int		__register_t;
 #define	__HAVE_ATOMIC64_OPS
 #endif
 #if defined(_ARM_ARCH_6)
+#define	__HAVE_MAXPROC_HOOK
 #define	__HAVE_UCAS_MP
 #endif
 

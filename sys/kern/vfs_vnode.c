@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.105.2.6 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.105.2.7 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -154,7 +154,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.6 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.7 2020/01/25 22:38:51 ad Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_pax.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -170,6 +174,7 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.6 2020/01/25 15:54:03 ad Exp $
 #include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/namei.h>
+#include <sys/pax.h>
 #include <sys/syscallargs.h>
 #include <sys/sysctl.h>
 #include <sys/systm.h>
@@ -1768,6 +1773,10 @@ vcache_reclaim(vnode_t *vp)
 	vp->v_vflag &= ~VV_ROOT;
 	vfs_ref(dead_rootmount);
 	vfs_insmntque(vp, dead_rootmount);
+
+#ifdef PAX_SEGVGUARD
+	pax_segvguard_cleanup(vp);
+#endif /* PAX_SEGVGUARD */
 
 	mutex_enter(vp->v_interlock);
 	fstrans_done(mp);

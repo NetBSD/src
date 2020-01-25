@@ -1,4 +1,4 @@
-/* $NetBSD: asm.h,v 1.5 2019/12/20 07:16:43 ryo Exp $ */
+/* $NetBSD: asm.h,v 1.5.2.1 2020/01/25 22:38:36 ad Exp $ */
 
 #ifndef _AARCH64_ASM_H_
 #define _AARCH64_ASM_H_
@@ -6,6 +6,14 @@
 #include <arm/asm.h>
 
 #ifdef __aarch64__
+
+#ifdef __ASSEMBLER__
+.macro	adrl 	reg, addr
+	adrp	\reg, \addr
+	add	\reg, \reg, #:lo12:\addr
+.endm
+#endif
+
 #define	fp	x29
 #define	lr	x30
 

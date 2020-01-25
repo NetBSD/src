@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.43 2019/12/05 07:03:01 msaitoh Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.43.2.1 2020/01/25 22:38:47 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.43 2019/12/05 07:03:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.43.2.1 2020/01/25 22:38:47 ad Exp $");
 
 #include "opt_pci.h"
 
@@ -131,6 +131,7 @@ typedef struct _s_pciconf_bus_t {
 	int		swiz;
 	int		io_32bit;
 	int		pmem_64bit;
+	int		mem_64bit;
 	int		io_align;
 	int		mem_align;
 	int		pmem_align;
@@ -164,7 +165,7 @@ static int	setup_iowins(pciconf_bus_t *);
 static int	setup_memwins(pciconf_bus_t *);
 static int	configure_bridge(pciconf_dev_t *);
 static int	configure_bus(pciconf_bus_t *);
-static uint64_t	pci_allocate_range(struct extent *, uint64_t, int);
+static uint64_t	pci_allocate_range(struct extent *, uint64_t, int, bool);
 static pciconf_win_t	*get_io_desc(pciconf_bus_t *, bus_size_t);
 static pciconf_win_t	*get_mem_desc(pciconf_bus_t *, bus_size_t);
 static pciconf_bus_t	*query_bus(pciconf_bus_t *, pciconf_dev_t *, int);
@@ -179,6 +180,12 @@ print_tag(pci_chipset_tag_t pc, pcitag_t tag)
 	pci_decompose_tag(pc, tag, &bus, &dev, &func);
 	printf("PCI: bus %d, device %d, function %d: ", bus, dev, func);
 }
+
+#ifdef _LP64
+#define	__used_only_lp64	__unused
+#else
+#define	__used_only_lp64	/* nothing */
+#endif /* _LP64 */
 
 /************************************************************************/
 /************************************************************************/
@@ -352,6 +359,9 @@ query_bus(pciconf_bus_t *parent, pciconf_dev_t *pd, int dev)
 		if (PCI_BRIDGE_PREFETCHMEM_64BITS(pmem))
 			pb->pmem_64bit = 1;
 	}
+
+	/* Bridges only forward a 32-bit range of non-prefetcable memory. */
+	pb->mem_64bit = 0;
 
 	if (probe_bus(pb)) {
 		printf("Failed to probe bus %d\n", pb->busno);
@@ -660,14 +670,22 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 			pm->reg = PCI_MAPREG_ROM;
 			pm->size = size;
 			pm->align = 4;
-			pm->prefetch = 1;
+			pm->prefetch = 0;
 			if (pci_conf_debug) {
 				print_tag(pb->pc, tag);
 				printf("Expansion ROM memory size %"
 				    PRIu64 "\n", pm->size);
 			}
 			pb->nmemwin++;
-			pb->pmem_total += size;
+			if (pm->prefetch) {
+				pb->pmem_total += size;
+				if (pb->pmem_align < pm->size)
+					pb->pmem_align = pm->size;
+			} else {
+				pb->mem_total += size;
+				if (pb->mem_align < pm->size)
+					pb->mem_align = pm->size;
+			}
 		}
 	} else {
 		/* Don't enable ROMs if we aren't going to map them. */
@@ -691,15 +709,52 @@ pci_do_device_query(pciconf_bus_t *pb, pcitag_t tag, int dev, int func,
 /************************************************************************/
 /************************************************************************/
 static uint64_t
-pci_allocate_range(struct extent *ex, uint64_t amt, int align)
+pci_allocate_range(struct extent * const ex, const uint64_t amt,
+		   const int align, const bool ok64 __used_only_lp64)
 {
 	int	r;
 	u_long	addr;
 
-	r = extent_alloc(ex, amt, align, 0, EX_NOWAIT, &addr);
+	u_long end = ex->ex_end;
+
+#ifdef _LP64
+	/*
+	 * If a 64-bit range is not OK:
+	 * ==> If the start of the range is > 4GB, allocation not possible.
+	 * ==> If the end of the range is > (4GB-1), constrain the end.
+	 *
+	 * If a 64-bit range IS OK, then we prefer allocating above 4GB.
+	 *
+	 * XXX We guard this with _LP64 because extent maps use u_long
+	 * internally.
+	 */
+	if (!ok64) {
+		if (ex->ex_start >= (1UL << 32)) {
+			printf("PCI: 32-BIT RESTRICTION, RANGE BEGINS AT %#lx\n",
+			    ex->ex_start);
+			return ~0ULL;
+		}
+		if (end > 0xffffffffUL) {
+			end = 0xffffffffUL;
+		}
+	} else if (end > (1UL << 32)) {
+		u_long start4g = ex->ex_start;
+		if (start4g < (1UL << 32)) {
+			start4g = (1UL << 32);
+		}
+		r = extent_alloc_subregion(ex, start4g, end, amt, align, 0,
+					   EX_NOWAIT, &addr);
+		if (r == 0) {
+			return addr;
+		}
+	}
+#endif /* _L64 */
+
+	r = extent_alloc_subregion(ex, ex->ex_start, end, amt, align, 0,
+				   EX_NOWAIT, &addr);
 	if (r) {
-		printf("extent_alloc(%p, %#" PRIx64 ", %#x) returned %d\n",
-		    ex, amt, align, r);
+		printf("extent_alloc_subregion(%p, %#lx, %#lx, %#" PRIx64 ", %#x) returned %d\n",
+		    ex, ex->ex_start, end, amt, align, r);
 		extent_print(ex);
 		return ~0ULL;
 	}
@@ -718,7 +773,7 @@ setup_iowins(pciconf_bus_t *pb)
 
 		pd = pi->dev;
 		pi->address = pci_allocate_range(pb->ioext, pi->size,
-		    pi->align);
+		    pi->align, false);
 		if (~pi->address == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf("Failed to allocate PCI I/O space (%"
@@ -761,19 +816,43 @@ setup_memwins(pciconf_bus_t *pb)
 	pciconf_dev_t	*pd;
 	pcireg_t	base;
 	struct extent	*ex;
+	bool		ok64;
 
 	for (pm = pb->pcimemwin; pm < &pb->pcimemwin[pb->nmemwin]; pm++) {
 		if (pm->size == 0)
 			continue;
 
+		ok64 = false;
 		pd = pm->dev;
-		ex = (pm->prefetch) ? pb->pmemext : pb->memext;
-		pm->address = pci_allocate_range(ex, pm->size, pm->align);
+		if (pm->prefetch) {
+			ex = pb->pmemext;
+			ok64 = pb->pmem_64bit;
+		} else {
+			ex = pb->memext;
+			ok64 = pb->mem_64bit && pd->ppb == NULL;
+		}
+
+		/*
+		 * We need to figure out if the memory BAR is 64-bit
+		 * capable or not.  If it's not, then we need to constrain
+		 * the address allocation.
+		 */
+		if (pm->reg == PCI_MAPREG_ROM) {
+			ok64 = false;
+		} else if (ok64) {
+			base = pci_conf_read(pd->pc, pd->tag, pm->reg);
+			ok64 = PCI_MAPREG_MEM_TYPE(base) ==
+			    PCI_MAPREG_MEM_TYPE_64BIT;
+		}
+
+		pm->address = pci_allocate_range(ex, pm->size, pm->align,
+						 ok64);
 		if (~pm->address == 0) {
 			print_tag(pd->pc, pd->tag);
 			printf(
 			   "Failed to allocate PCI memory space (%" PRIu64
-			   " req)\n", pm->size);
+			   " req, prefetch=%d ok64=%d)\n", pm->size,
+			   pm->prefetch, (int)ok64);
 			return -1;
 		}
 		if (pd->ppb && pm->reg == 0) {
@@ -792,8 +871,7 @@ setup_memwins(pciconf_bus_t *pb)
 
 			continue;
 		}
-		if (pm->prefetch && !pb->pmem_64bit &&
-		    pm->address > 0xFFFFFFFFULL) {
+		if (!ok64 && pm->address > 0xFFFFFFFFULL) {
 			pm->address = 0;
 			pd->enable &= ~PCI_CONF_ENABLE_MEM;
 		} else
@@ -842,6 +920,30 @@ setup_memwins(pciconf_bus_t *pb)
 	return 0;
 }
 
+static bool
+constrain_bridge_mem_range(struct extent * const ex,
+			   u_long * const base,
+			   u_long * const limit,
+			   const bool ok64 __used_only_lp64)
+{
+
+	*base = ex->ex_start;
+	*limit = ex->ex_end;
+
+#ifdef _LP64
+	if (!ok64) {
+		if (ex->ex_start >= (1UL << 32)) {
+			return true;
+		}
+		if (ex->ex_end > 0xffffffffUL) {
+			*limit = 0xffffffffUL;
+		}
+	}
+#endif /* _LP64 */
+
+	return false;
+}
+
 /*
  * Configure I/O, memory, and prefetcable memory spaces, then make
  * a call to configure_bus().
@@ -854,6 +956,7 @@ configure_bridge(pciconf_dev_t *pd)
 	pcireg_t	io, iohigh, mem, cmd;
 	int		rv;
 	bool		isprefetchmem64;
+	bool		bad_range;
 
 	pb = pd->ppb;
 	/* Configure I/O base & limit*/
@@ -887,21 +990,22 @@ configure_bridge(pciconf_dev_t *pd)
 	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_IOHIGH_REG, iohigh);
 
 	/* Configure mem base & limit */
+	bad_range = false;
 	if (pb->memext) {
-		mem_base = pb->memext->ex_start;
-		mem_limit = pb->memext->ex_end;
+		bad_range = constrain_bridge_mem_range(pb->memext,
+						       &mem_base,
+						       &mem_limit,
+						       false);
 	} else {
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
-#if ULONG_MAX > 0xffffffff
-	if (mem_limit > 0xFFFFFFFFULL) {
+	if (bad_range) {
 		printf("Bus %d bridge MEM range out of range.  ", pb->busno);
 		printf("Disabling MEM accesses\n");
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
-#endif
 	mem = __SHIFTIN((mem_base >> 16) & PCI_BRIDGE_MEMORY_ADDR,
 	    PCI_BRIDGE_MEMORY_BASE);
 	mem |= __SHIFTIN((mem_limit >> 16) & PCI_BRIDGE_MEMORY_ADDR,
@@ -909,24 +1013,25 @@ configure_bridge(pciconf_dev_t *pd)
 	pci_conf_write(pb->pc, pd->tag, PCI_BRIDGE_MEMORY_REG, mem);
 
 	/* Configure prefetchable mem base & limit */
+	mem = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHMEM_REG);
+	isprefetchmem64 = PCI_BRIDGE_PREFETCHMEM_64BITS(mem);
+	bad_range = false;
 	if (pb->pmemext) {
-		mem_base = pb->pmemext->ex_start;
-		mem_limit = pb->pmemext->ex_end;
+		bad_range = constrain_bridge_mem_range(pb->pmemext,
+						       &mem_base,
+						       &mem_limit,
+						       isprefetchmem64);
 	} else {
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
-	mem = pci_conf_read(pb->pc, pd->tag, PCI_BRIDGE_PREFETCHMEM_REG);
-	isprefetchmem64 = PCI_BRIDGE_PREFETCHMEM_64BITS(mem);
-#if ULONG_MAX > 0xffffffff
-	if (!isprefetchmem64 && mem_limit > 0xFFFFFFFFULL) {
+	if (bad_range) {
 		printf("Bus %d bridge does not support 64-bit PMEM.  ",
 		    pb->busno);
 		printf("Disabling prefetchable-MEM accesses\n");
 		mem_base  = 0x100000;	/* 1M */
 		mem_limit = 0x000000;
 	}
-#endif
 	mem = __SHIFTIN((mem_base >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
 	    PCI_BRIDGE_PREFETCHMEM_BASE);
 	mem |= __SHIFTIN((mem_limit >> 16) & PCI_BRIDGE_PREFETCHMEM_ADDR,
@@ -1078,6 +1183,35 @@ configure_bus(pciconf_bus_t *pb)
 	return 0;
 }
 
+static bool
+mem_region_ok64(struct extent * const ex __used_only_lp64)
+{
+	bool rv = false;
+
+#ifdef _LP64
+	/*
+	 * XXX We need to guard this with _LP64 because
+	 * extent maps use u_long internally.
+	 */
+	u_long addr64;
+	if (ex->ex_end > (1UL << 32) &&
+	    extent_alloc_subregion(ex, MAX((1UL << 32), ex->ex_start),
+				   ex->ex_end,
+				   1 /* size */,
+				   1 /* alignment */,
+				   0 /* boundary */,
+				   EX_NOWAIT,
+				   &addr64) == 0) {
+		(void) extent_free(ex, addr64,
+				   1 /* size */,
+				   EX_NOWAIT);
+		rv = true;
+	}
+#endif /* _LP64 */
+
+	return rv;
+}
+
 /*
  * Let's configure the PCI bus.
  * This consists of basically scanning for all existing devices,
@@ -1121,13 +1255,19 @@ pci_configure_bus(pci_chipset_tag_t pc, struct extent *ioext,
 	pb->parent_bus = NULL;
 	pb->swiz = 0;
 	pb->io_32bit = 1;
-	pb->pmem_64bit = 0;
 	pb->ioext = ioext;
 	pb->memext = memext;
 	if (pmemext == NULL)
 		pb->pmemext = memext;
 	else
 		pb->pmemext = pmemext;
+
+	/*
+	 * Probe the memory region extent maps to see
+	 * if allocation of 64-bit addresses is possible.
+	 */
+	pb->mem_64bit = mem_region_ok64(pb->memext);
+	pb->pmem_64bit = mem_region_ok64(pb->pmemext);
 
 	pb->pc = pc;
 	pb->io_total = pb->mem_total = pb->pmem_total = 0;

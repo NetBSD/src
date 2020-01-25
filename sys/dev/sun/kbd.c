@@ -1,4 +1,4 @@
-/*	$NetBSD: kbd.c,v 1.70 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: kbd.c,v 1.70.2.1 2020/01/25 22:38:49 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.70 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kbd.c,v 1.70.2.1 2020/01/25 22:38:49 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -202,7 +202,7 @@ kbdopen(dev_t dev, int flags, int mode, struct lwp *l)
 	k->k_events.ev_io = l->l_proc;
 
 	/* stop pending autorepeat of console input */
-	if (k->k_repeating) {
+	if (k->k_cc != NULL && k->k_repeating) {
 		k->k_repeating = 0;
 		callout_stop(&k->k_repeat_ch);
 	}
@@ -492,9 +492,11 @@ kbd_input(struct kbd_softc *k, int code)
 
 	/*
 	 * If /dev/kbd is not connected in event mode, or wskbd mode,
-	 * translate and send upstream (to console).
+	 * and is attached as console, translate and send upstream
+	 * (to console).
 	 */
-	kbd_input_console(k, code);
+	if (k->k_cc != NULL)
+		kbd_input_console(k, code);
 }
 
 

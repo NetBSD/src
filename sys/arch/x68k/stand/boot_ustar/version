@@ -1,7 +1,8 @@
-$NetBSD: version,v 1.1.218.1 2020/01/17 21:47:28 ad Exp $
+$NetBSD: version,v 1.1.218.2 2020/01/25 22:38:44 ad Exp $
 
 NOTE ANY CHANGES YOU MAKE TO THE BOOTBLOCKS HERE.  The format of this
 file is important - make sure the entries are appended on end, last item
 is taken as the current.
 
 1.0:	Initial revision.
+1.1:	Initialize the screen.

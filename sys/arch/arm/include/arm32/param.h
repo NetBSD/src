@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.27 2019/06/19 09:53:39 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.27.4.1 2020/01/25 22:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -46,11 +46,7 @@
  * this file. */
 
 #ifndef PGSHIFT
-#if defined(_ARM_ARCH_6)
-#define	PGSHIFT		13		/* LOG2(NBPG) */
-#else
 #define	PGSHIFT		12		/* LOG2(NBPG) */
-#endif
 #endif
 #define	NBPG		(1 << PGSHIFT)	/* bytes/page */
 #define	PGOFSET		(NBPG - 1)	/* byte offset into page */

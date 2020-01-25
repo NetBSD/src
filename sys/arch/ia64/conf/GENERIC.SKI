@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC.SKI,v 1.15 2018/08/14 06:37:59 maxv Exp $
+# $NetBSD: GENERIC.SKI,v 1.15.6.1 2020/01/25 22:38:41 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/ia64/conf/std.ia64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.15 $"
+#ident 		"GENERIC-$Revision: 1.15.6.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -137,7 +137,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #options 	PPPOE_SERVER		# Enable PPPoE server via link0
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty

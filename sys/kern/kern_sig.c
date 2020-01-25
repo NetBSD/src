@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.381 2019/12/06 21:36:10 ad Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.381.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.381 2019/12/06 21:36:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.381.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -2304,8 +2304,11 @@ sigexit(struct lwp *l, int signo)
 		}
 
 #ifdef PAX_SEGVGUARD
+		rw_enter(&exec_lock, RW_WRITER);
 		pax_segvguard(l, p->p_textvp, p->p_comm, true);
+		rw_exit(&exec_lock);
 #endif /* PAX_SEGVGUARD */
+
 		/* Acquire the sched state mutex.  exit1() will release it. */
 		mutex_enter(p->p_lock);
 		if (error == 0)

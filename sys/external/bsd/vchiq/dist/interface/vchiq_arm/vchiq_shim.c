@@ -388,7 +388,7 @@ EXPORT_SYMBOL(vchi_msg_queuev);
 /***********************************************************
  * Name: vchi_held_msg_release
  *
- * Arguments:  VCHI_HELD_MSG_T *message
+ * Arguments:  VCHI_HELD_MSG_T *message_handle
  *
  * Description: Routine to release a held message (after it has been read with
  *              vchi_msg_hold)
@@ -396,10 +396,15 @@ EXPORT_SYMBOL(vchi_msg_queuev);
  * Returns: int32_t - success == 0
  *
  ***********************************************************/
-int32_t vchi_held_msg_release(VCHI_HELD_MSG_T *message)
+int32_t vchi_held_msg_release(VCHI_HELD_MSG_T *message_handle)
 {
-	vchiq_release_message((VCHIQ_SERVICE_HANDLE_T)message->service,
-		(VCHIQ_HEADER_T *)message->message);
+	SHIM_SERVICE_T *service;
+	VCHIQ_HEADER_T *header;
+
+	service = (SHIM_SERVICE_T *)message_handle->service;
+	header = (VCHIQ_HEADER_T *)message_handle->message;
+
+	vchiq_release_message(service->handle, header);
 
 	return 0;
 }
@@ -444,7 +449,7 @@ int32_t vchi_msg_hold(VCHI_SERVICE_HANDLE_T handle,
 	*msg_size = header->size;
 
 	message_handle->service =
-		(struct opaque_vchi_service_t *)service->handle;
+		(struct opaque_vchi_service_t *)(uintptr_t)service->handle;
 	message_handle->message = header;
 
 	return 0;

@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.70 2020/01/04 14:53:11 skrll Exp $
+#	$NetBSD: GENERIC,v 1.70.2.1 2020/01/25 22:38:39 ad Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -622,6 +622,7 @@ sun8icodec* 	at fdt?			# Audio codec (sun8i)
 sunxicodec* 	at fdt?			# Allwinner audio codec
 sunxii2s* 	at fdt?			# I2S/PCM
 audio* 		at audiobus?
+options 	AUDIO_BLK_MS=4
 spkr* 		at audio?
 
 # SDMMC

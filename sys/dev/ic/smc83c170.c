@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.90 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.90.4.1 2020/01/25 22:38:46 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.90 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.90.4.1 2020/01/25 22:38:46 ad Exp $");
 
 
 #include <sys/param.h>
@@ -66,27 +66,27 @@ __KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.90 2019/05/28 07:41:48 msaitoh Exp $
 #include <dev/ic/smc83c170reg.h>
 #include <dev/ic/smc83c170var.h>
 
-void	epic_start(struct ifnet *);
-void	epic_watchdog(struct ifnet *);
-int	epic_ioctl(struct ifnet *, u_long, void *);
-int	epic_init(struct ifnet *);
-void	epic_stop(struct ifnet *, int);
+static void	epic_start(struct ifnet *);
+static void	epic_watchdog(struct ifnet *);
+static int	epic_ioctl(struct ifnet *, u_long, void *);
+static int	epic_init(struct ifnet *);
+static void	epic_stop(struct ifnet *, int);
 
-bool	epic_shutdown(device_t, int);
+static bool	epic_shutdown(device_t, int);
 
-void	epic_reset(struct epic_softc *);
-void	epic_rxdrain(struct epic_softc *);
-int	epic_add_rxbuf(struct epic_softc *, int);
-void	epic_read_eeprom(struct epic_softc *, int, int, uint16_t *);
-void	epic_set_mchash(struct epic_softc *);
-void	epic_fixup_clock_source(struct epic_softc *);
-int	epic_mii_read(device_t, int, int, uint16_t *);
-int	epic_mii_write(device_t, int, int, uint16_t);
-int	epic_mii_wait(struct epic_softc *, uint32_t);
-void	epic_tick(void *);
+static void	epic_reset(struct epic_softc *);
+static void	epic_rxdrain(struct epic_softc *);
+static int	epic_add_rxbuf(struct epic_softc *, int);
+static void	epic_read_eeprom(struct epic_softc *, int, int, uint16_t *);
+static void	epic_set_mchash(struct epic_softc *);
+static void	epic_fixup_clock_source(struct epic_softc *);
+static int	epic_mii_read(device_t, int, int, uint16_t *);
+static int	epic_mii_write(device_t, int, int, uint16_t);
+static int	epic_mii_wait(struct epic_softc *, uint32_t);
+static void	epic_tick(void *);
 
-void	epic_statchg(struct ifnet *);
-int	epic_mediachange(struct ifnet *);
+static void	epic_statchg(struct ifnet *);
+static int	epic_mediachange(struct ifnet *);
 
 #define	INTMASK	(INTSTAT_FATAL_INT | INTSTAT_TXU | \
 	    INTSTAT_TXC | INTSTAT_RXE | INTSTAT_RQE | INTSTAT_RCC)
@@ -339,7 +339,7 @@ epic_attach(struct epic_softc *sc)
 /*
  * Shutdown hook.  Make sure the interface is stopped at reboot.
  */
-bool
+static bool
 epic_shutdown(device_t self, int howto)
 {
 	struct epic_softc *sc = device_private(self);
@@ -353,7 +353,7 @@ epic_shutdown(device_t self, int howto)
  * Start packet transmission on the interface.
  * [ifnet interface function]
  */
-void
+static void
 epic_start(struct ifnet *ifp)
 {
 	struct epic_softc *sc = ifp->if_softc;
@@ -539,7 +539,7 @@ epic_start(struct ifnet *ifp)
  * Watchdog timer handler.
  * [ifnet interface function]
  */
-void
+static void
 epic_watchdog(struct ifnet *ifp)
 {
 	struct epic_softc *sc = ifp->if_softc;
@@ -554,7 +554,7 @@ epic_watchdog(struct ifnet *ifp)
  * Handle control requests from the operator.
  * [ifnet interface function]
  */
-int
+static int
 epic_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct epic_softc *sc = ifp->if_softc;
@@ -833,7 +833,7 @@ epic_intr(void *arg)
 /*
  * One second timer, used to tick the MII.
  */
-void
+static void
 epic_tick(void *arg)
 {
 	struct epic_softc *sc = arg;
@@ -849,7 +849,7 @@ epic_tick(void *arg)
 /*
  * Fixup the clock source on the EPIC.
  */
-void
+static void
 epic_fixup_clock_source(struct epic_softc *sc)
 {
 	int i;
@@ -870,7 +870,7 @@ epic_fixup_clock_source(struct epic_softc *sc)
 /*
  * Perform a soft reset on the EPIC.
  */
-void
+static void
 epic_reset(struct epic_softc *sc)
 {
 
@@ -887,7 +887,7 @@ epic_reset(struct epic_softc *sc)
 /*
  * Initialize the interface.  Must be called at splnet().
  */
-int
+static int
 epic_init(struct ifnet *ifp)
 {
 	struct epic_softc *sc = ifp->if_softc;
@@ -1050,7 +1050,7 @@ epic_init(struct ifnet *ifp)
 /*
  * Drain the receive queue.
  */
-void
+static void
 epic_rxdrain(struct epic_softc *sc)
 {
 	struct epic_descsoft *ds;
@@ -1069,7 +1069,7 @@ epic_rxdrain(struct epic_softc *sc)
 /*
  * Stop transmission on the interface.
  */
-void
+static void
 epic_stop(struct ifnet *ifp, int disable)
 {
 	struct epic_softc *sc = ifp->if_softc;
@@ -1128,7 +1128,7 @@ epic_stop(struct ifnet *ifp, int disable)
 /*
  * Read the EPIC Serial EEPROM.
  */
-void
+static void
 epic_read_eeprom(struct epic_softc *sc, int word, int wordcnt, uint16_t *data)
 {
 	bus_space_tag_t st = sc->sc_st;
@@ -1206,7 +1206,7 @@ epic_read_eeprom(struct epic_softc *sc, int word, int wordcnt, uint16_t *data)
 /*
  * Add a receive buffer to the indicated descriptor.
  */
-int
+static int
 epic_add_rxbuf(struct epic_softc *sc, int idx)
 {
 	struct epic_descsoft *ds = EPIC_DSRX(sc, idx);
@@ -1250,7 +1250,7 @@ epic_add_rxbuf(struct epic_softc *sc, int idx)
  *
  * NOTE: We rely on a recently-updated mii_media_active here!
  */
-void
+static void
 epic_set_mchash(struct epic_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -1321,7 +1321,7 @@ epic_set_mchash(struct epic_softc *sc)
 /*
  * Wait for the MII to become ready.
  */
-int
+static int
 epic_mii_wait(struct epic_softc *sc, uint32_t rw)
 {
 	int i;
@@ -1343,7 +1343,7 @@ epic_mii_wait(struct epic_softc *sc, uint32_t rw)
 /*
  * Read from the MII.
  */
-int
+static int
 epic_mii_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct epic_softc *sc = device_private(self);
@@ -1366,7 +1366,7 @@ epic_mii_read(device_t self, int phy, int reg, uint16_t *val)
 /*
  * Write to the MII.
  */
-int
+static int
 epic_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct epic_softc *sc = device_private(self);
@@ -1385,7 +1385,7 @@ epic_mii_write(device_t self, int phy, int reg, uint16_t val)
 /*
  * Callback from PHY when media changes.
  */
-void
+static void
 epic_statchg(struct ifnet *ifp)
 {
 	struct epic_softc *sc = ifp->if_softc;
@@ -1424,7 +1424,7 @@ epic_statchg(struct ifnet *ifp)
  * XXX Looks to me like some of this complexity should move into
  * XXX one or two custom PHY drivers. --dyoung
  */
-int
+static int
 epic_mediachange(struct ifnet *ifp)
 {
 	struct epic_softc *sc = ifp->if_softc;

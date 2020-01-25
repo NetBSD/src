@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.220 2020/01/03 12:59:46 pgoyette Exp $ */
+/* $NetBSD: ixgbe.c,v 1.220.2.1 2020/01/25 22:38:49 ad Exp $ */
 
 /******************************************************************************
 
@@ -1059,9 +1059,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 		error = ixgbe_allocate_msix(adapter, pa);
 		if (error) {
 			/* Free allocated queue structures first */
-			ixgbe_free_transmit_structures(adapter);
-			ixgbe_free_receive_structures(adapter);
-			free(adapter->queues, M_DEVBUF);
+			ixgbe_free_queues(adapter);
 
 			/* Fallback to legacy interrupt */
 			adapter->feat_en &= ~IXGBE_FEATURE_MSIX;
@@ -1236,9 +1234,7 @@ ixgbe_attach(device_t parent, device_t dev, void *aux)
 	return;
 
 err_late:
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 err_out:
 	ctrl_ext = IXGBE_READ_REG(&adapter->hw, IXGBE_CTRL_EXT);
 	ctrl_ext &= ~IXGBE_CTRL_EXT_DRV_LOAD;
@@ -3712,13 +3708,7 @@ ixgbe_detach(device_t dev, int flags)
 	evcnt_detach(&stats->ptc1023);
 	evcnt_detach(&stats->ptc1522);
 
-	ixgbe_free_transmit_structures(adapter);
-	ixgbe_free_receive_structures(adapter);
-	for (i = 0; i < adapter->num_queues; i++) {
-		struct ix_queue * que = &adapter->queues[i];
-		mutex_destroy(&que->dc_mtx);
-	}
-	free(adapter->queues, M_DEVBUF);
+	ixgbe_free_queues(adapter);
 	free(adapter->mta, M_DEVBUF);
 
 	IXGBE_CORE_LOCK_DESTROY(adapter);

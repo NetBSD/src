@@ -1,10 +1,10 @@
-#	$NetBSD: WGT624V3,v 1.29 2018/12/30 14:51:36 sevan Exp $
+#	$NetBSD: WGT624V3,v 1.29.6.1 2020/01/25 22:38:40 ad Exp $
 
 include 	"arch/evbmips/conf/std.atheros"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"WGT624V3-$Revision: 1.29 $"
+#ident 		"WGT624V3-$Revision: 1.29.6.1 $"
 
 maxusers	32
 
@@ -156,7 +156,6 @@ pseudo-device	bpfilter			# Berkeley packet filter
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	tap				# virtual Ethernet
 #pseudo-device	gre				# generic L3 over IP tunnel

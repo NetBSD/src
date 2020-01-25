@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC_PS2TINY,v 1.80 2018/08/01 16:59:09 maxv Exp $
+#	$NetBSD: GENERIC_PS2TINY,v 1.80.6.1 2020/01/25 22:38:40 ad Exp $
 #
 #	GENERIC-style kernel config for IBM PS/2 with MCA bus. It only contains
 #	IBM PS/2 related stuff and has been generally trimmed down somewhat,
@@ -177,7 +177,6 @@ ep*	at mca? slot ?			# 3Com EtherLink III (3c529)
 we*	at mca? slot ?			# WD/SMC Ethernet
 ate*	at mca? slot ?			# Allied Telesis AT1720
 ne*	at mca? slot ?			# Novell NE/2 and clones
-tr*	at mca? slot ?			# IBM Token Ring adapter
 tra*	at mca? slot ?			# Tiara LANCard/E and clones
 le*	at mca? slot ?			# SKNET Personal/MC2+
 

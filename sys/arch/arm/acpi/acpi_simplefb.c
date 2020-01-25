@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_simplefb.c,v 1.1 2019/09/22 18:31:59 jmcneill Exp $ */
+/* $NetBSD: acpi_simplefb.c,v 1.1.4.1 2020/01/25 22:38:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_simplefb.c,v 1.1 2019/09/22 18:31:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_simplefb.c,v 1.1.4.1 2020/01/25 22:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -166,6 +166,9 @@ acpi_simplefb_preattach(void)
 	    (format = fdtbus_get_string(phandle, "format")) == NULL)
 		return;
 
+	if (width == 0 || height == 0)
+		return;
+
 	if (strcmp(format, "a8b8g8r8") == 0 ||
 	    strcmp(format, "x8r8g8b8") == 0) {
 		depth = 32;
@@ -197,6 +200,9 @@ acpi_simplefb_preattach(void)
 	acpi_simplefb_vcons_data.use_intr = 0;
 	vcons_init_screen(&acpi_simplefb_vcons_data, &acpi_simplefb_screen, 1, &defattr);
 	acpi_simplefb_screen.scr_flags |= VCONS_SCREEN_IS_STATIC;    
+
+	if (ri->ri_rows < 1 || ri->ri_cols < 1)
+		return;
 
 	acpi_simplefb_stdscreen.nrows = ri->ri_rows;
 	acpi_simplefb_stdscreen.ncols = ri->ri_cols;

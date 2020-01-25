@@ -1,4 +1,4 @@
-#	$NetBSD: files.tc,v 1.35 2019/05/08 13:40:19 isaki Exp $
+#	$NetBSD: files.tc,v 1.35.4.1 2020/01/25 22:38:49 ad Exp $
 #
 # Config file and device description for machine-independent
 # TURBOchannel code.  Included by ports that need it.
@@ -28,11 +28,6 @@ file	dev/tc/if_le_tc.c		le_tc
 device  bba: audiobus, am7930
 attach  bba at ioasic
 file    dev/tc/bba.c                    bba
-
-# DEFTA FDDI controller
-device	fta: pdq, fddi, ifnet, arp
-attach	fta at tc
-file	dev/tc/if_fta.c			fta
 
 # TCDS dual channel SCSI
 device	tcds { chip = -1 }

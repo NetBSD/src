@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.5 2019/06/22 19:35:40 jmcneill Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.5.4.1 2020/01/25 22:38:45 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.5 2019/06/22 19:35:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.5.4.1 2020/01/25 22:38:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -130,16 +130,11 @@ xhci_acpi_attach(device_t parent, device_t self, void *aux)
 	hccparams = bus_space_read_4(sc->sc_iot, sc->sc_ioh, XHCI_HCCPARAMS);
 	if (XHCI_HCC_AC64(hccparams)) {
 		aprint_verbose_dev(self, "using 64-bit DMA\n");
-		sc->sc_bus.ub_dmatag = aa->aa_dmat;
+		sc->sc_bus.ub_dmatag = BUS_DMA_TAG_VALID(aa->aa_dmat64) ?
+		    aa->aa_dmat64 : aa->aa_dmat;
 	} else {
 		aprint_verbose_dev(self, "using 32-bit DMA\n");
-		error = bus_dmatag_subregion(aa->aa_dmat, 0, 0xffffffff,
-		    &sc->sc_bus.ub_dmatag, BUS_DMA_WAITOK);
-		if (error != 0) {
-			aprint_error_dev(self, "couldn't create DMA tag: %d\n",
-			    error);
-			return;
-		}
+		sc->sc_bus.ub_dmatag = aa->aa_dmat;
 	}
 
         ih = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,

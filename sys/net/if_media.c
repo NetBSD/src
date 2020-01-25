@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.48 2019/10/01 17:45:25 chs Exp $	*/
+/*	$NetBSD: if_media.c,v 1.48.2.1 2020/01/25 22:38:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.48 2019/10/01 17:45:25 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.48.2.1 2020/01/25 22:38:52 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -362,12 +362,21 @@ ifmedia_ioctl(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	int e;
 
 	/*
-	 * If if_is_mpsafe(ifp), KERNEL_LOCK isn't held here,
-	 * but ifmedia_ioctl_locked isn't MP-safe yet, so we must hold the lock.
+	 * If if_is_mpsafe(ifp), KERNEL_LOCK isn't held here and
+	 * ipl will not have been raised (well, maybe it has, but
+	 * it doesn't matter), but ifmedia_ioctl_locked isn't MP-safe
+	 * yet, so we go to splnet and grab the KERNEL_LOCK.
+	 *
+	 * In the non-mpsafe case, the interface's ioctl routine
+	 * will already be running at splnet() and so raising it
+	 * again is redundant, but also harmless.
 	 */
+	int s = splnet();
 	KERNEL_LOCK_IF_IFP_MPSAFE(ifp);
 	e = ifmedia_ioctl_locked(ifp, ifr, ifm, cmd);
 	KERNEL_UNLOCK_IF_IFP_MPSAFE(ifp);
+	splx(s);
+
 	return e;
 }
 

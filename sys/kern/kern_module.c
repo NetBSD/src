@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_module.c,v 1.143 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: kern_module.c,v 1.143.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.143 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.143.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #define _MODULE_INTERNAL
 
@@ -47,6 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_module.c,v 1.143 2019/12/31 13:07:13 ad Exp $")
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
+#include <sys/lwp.h>
 #include <sys/kauth.h>
 #include <sys/kobj.h>
 #include <sys/kmem.h>
@@ -677,6 +678,7 @@ int
 module_autoload(const char *filename, modclass_t modclass)
 {
 	int error;
+	struct proc *p = curlwp->l_proc;
 
 	kernconfig_lock();
 
@@ -701,6 +703,8 @@ module_autoload(const char *filename, modclass_t modclass)
 		error = module_do_load(filename, false, 0, NULL, NULL, modclass,
 		    true);
 
+	module_print("Autoload for `%s' requested by pid %d (%s), status %d\n",
+	    filename, p->p_pid, p->p_comm, error);
 	kernconfig_unlock();
 	return error;
 }

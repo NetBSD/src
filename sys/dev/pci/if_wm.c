@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.658 2019/12/13 02:03:46 msaitoh Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.658.2.1 2020/01/25 22:38:47 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.658 2019/12/13 02:03:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.658.2.1 2020/01/25 22:38:47 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -105,6 +105,8 @@ __KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.658 2019/12/13 02:03:46 msaitoh Exp $");
 #include <sys/interrupt.h>
 #include <sys/cpu.h>
 #include <sys/pcq.h>
+#include <sys/sysctl.h>
+#include <sys/workqueue.h>
 
 #include <sys/rndsource.h>
 
@@ -164,9 +166,13 @@ int	wm_debug = WM_DEBUG_TX | WM_DEBUG_RX | WM_DEBUG_LINK | WM_DEBUG_GMII
 #ifdef NET_MPSAFE
 #define WM_MPSAFE	1
 #define CALLOUT_FLAGS	CALLOUT_MPSAFE
+#define WM_WORKQUEUE_FLAGS	WQ_PERCPU | WQ_MPSAFE
 #else
 #define CALLOUT_FLAGS	0
+#define WM_WORKQUEUE_FLAGS	WQ_PERCPU
 #endif
+
+#define WM_WORKQUEUE_PRI PRI_SOFTNET
 
 /*
  * This device driver's max interrupt numbers.
@@ -456,6 +462,8 @@ struct wm_queue {
 	struct wm_txqueue wmq_txq;
 	struct wm_rxqueue wmq_rxq;
 
+	bool wmq_txrx_use_workqueue;
+	struct work wmq_cookie;
 	void *wmq_si;
 	krndsource_t rnd_source;	/* random source */
 };
@@ -552,6 +560,8 @@ struct wm_softc {
 	u_int sc_tx_intr_process_limit;	/* Tx proc. repeat limit in H/W intr */
 	u_int sc_rx_process_limit;	/* Rx proc. repeat limit in softint */
 	u_int sc_rx_intr_process_limit;	/* Rx proc. repeat limit in H/W intr */
+	struct workqueue *sc_queue_wq;
+	bool sc_txrx_use_workqueue;
 
 	int sc_affinity_offset;
 
@@ -566,6 +576,8 @@ struct wm_softc {
 	struct evcnt sc_ev_rx_xon;	/* Rx PAUSE(0) frames */
 	struct evcnt sc_ev_rx_macctl;	/* Rx Unsupported */
 #endif /* WM_EVENT_COUNTERS */
+
+	struct sysctllog *sc_sysctllog;
 
 	/* This variable are used only on the 82547. */
 	callout_t sc_txfifo_ch;		/* Tx FIFO stall work-around timer */
@@ -738,11 +750,12 @@ static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
 static inline bool	wm_is_using_msix(struct wm_softc *);
 static inline bool	wm_is_using_multiqueue(struct wm_softc *);
-static int	wm_softint_establish(struct wm_softc *, int, int);
+static int	wm_softhandler_establish(struct wm_softc *, int, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
 static int	wm_init_locked(struct ifnet *);
+static void	wm_init_sysctls(struct wm_softc *);
 static void	wm_unset_stopping_flags(struct wm_softc *);
 static void	wm_set_stopping_flags(struct wm_softc *);
 static void	wm_stop(struct ifnet *, int);
@@ -794,6 +807,7 @@ static void	wm_nq_send_common_locked(struct ifnet *, struct wm_txqueue *,
     bool);
 static void	wm_deferred_start_locked(struct wm_txqueue *);
 static void	wm_handle_queue(void *);
+static void	wm_handle_queue_work(struct work *, void *);
 /* Interrupt */
 static bool	wm_txeof(struct wm_txqueue *, u_int);
 static bool	wm_rxeof(struct wm_rxqueue *, u_int);
@@ -1555,6 +1569,24 @@ static const struct wm_product {
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM9,
 	  "I219 LM Ethernet Connection",
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM10,
+	  "I219 LM Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM11,
+	  "I219 LM Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM12,
+	  "I219 LM Ethernet Connection",
+	  WM_T_PCH_SPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM13,
+	  "I219 LM Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM14,
+	  "I219 LM Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_LM15,
+	  "I219 LM Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V,
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_SPT,		WMP_F_COPPER },
@@ -1577,6 +1609,21 @@ static const struct wm_product {
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
 	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V9,
+	  "I219 V Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V10,
+	  "I219 V Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V11,
+	  "I219 V Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V12,
+	  "I219 V Ethernet Connection",
+	  WM_T_PCH_SPT,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V13,
+	  "I219 V Ethernet Connection",
+	  WM_T_PCH_CNP,		WMP_F_COPPER },
+	{ PCI_VENDOR_INTEL,	PCI_PRODUCT_INTEL_I219_V14,
 	  "I219 V Ethernet Connection",
 	  WM_T_PCH_CNP,		WMP_F_COPPER },
 	{ 0,			0,
@@ -2993,6 +3040,10 @@ alloc_retry:
 	    NULL, xname, "rx_macctl");
 #endif /* WM_EVENT_COUNTERS */
 
+	sc->sc_txrx_use_workqueue = false;
+
+	wm_init_sysctls(sc);
+
 	if (pmf_device_register(self, wm_suspend, wm_resume))
 		pmf_class_network_register(self, ifp);
 	else
@@ -3018,6 +3069,8 @@ wm_detach(device_t self, int flags __unused)
 	wm_stop(ifp, 1);
 
 	pmf_device_deregister(self);
+
+	sysctl_teardown(&sc->sc_sysctllog);
 
 #ifdef WM_EVENT_COUNTERS
 	evcnt_detach(&sc->sc_ev_linkintr);
@@ -3062,6 +3115,9 @@ wm_detach(device_t self, int flags __unused)
 		}
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
+
+	for (i = 0; i < sc->sc_nqueues; i++)
+		softint_disestablish(sc->sc_queue[i].wmq_si);
 
 	wm_free_txrx_queues(sc);
 
@@ -3398,13 +3454,7 @@ wm_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			sc->sc_flowflags = ifr->ifr_media & IFM_ETH_FMASK;
 		}
 		WM_CORE_UNLOCK(sc);
-#ifdef WM_MPSAFE
-		s = splnet();
-#endif
 		error = ifmedia_ioctl(ifp, ifr, &sc->sc_mii.mii_media, cmd);
-#ifdef WM_MPSAFE
-		splx(s);
-#endif
 		break;
 	case SIOCINITIFADDR:
 		WM_CORE_LOCK(sc);
@@ -5363,9 +5413,12 @@ wm_is_using_multiqueue(struct wm_softc *sc)
 }
 
 static int
-wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
+wm_softhandler_establish(struct wm_softc *sc, int qidx, int intr_idx)
 {
+	char wqname[MAXCOMLEN];
 	struct wm_queue *wmq = &sc->sc_queue[qidx];
+	int error;
+
 	wmq->wmq_id = qidx;
 	wmq->wmq_intr_idx = intr_idx;
 	wmq->wmq_si = softint_establish(SOFTINT_NET
@@ -5373,12 +5426,28 @@ wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
 	    | SOFTINT_MPSAFE
 #endif
 	    , wm_handle_queue, wmq);
-	if (wmq->wmq_si != NULL)
-		return 0;
+	if (wmq->wmq_si == NULL) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to establish queue[%d] softint handler\n",
+		    wmq->wmq_id);
+		goto err;
+	}
 
-	aprint_error_dev(sc->sc_dev, "unable to establish queue[%d] handler\n",
-	    wmq->wmq_id);
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(sc->sc_dev));
+	error = workqueue_create(&sc->sc_queue_wq, wqname,
+	    wm_handle_queue_work, sc, WM_WORKQUEUE_PRI, IPL_NET,
+	    WM_WORKQUEUE_FLAGS);
+	if (error) {
+		softint_disestablish(wmq->wmq_si);
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create queue[%d] workqueue\n",
+		    wmq->wmq_id);
+		goto err;
+	}
 
+	return 0;
+
+err:
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[wmq->wmq_intr_idx]);
 	sc->sc_ihs[wmq->wmq_intr_idx] = NULL;
 	return ENOMEM;
@@ -5418,7 +5487,7 @@ wm_setup_legacy(struct wm_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 	sc->sc_nintrs = 1;
 
-	return wm_softint_establish(sc, 0, 0);
+	return wm_softhandler_establish(sc, 0, 0);
 }
 
 static int
@@ -5496,7 +5565,7 @@ wm_setup_msix(struct wm_softc *sc)
 			    "for TX and RX interrupting at %s\n", intrstr);
 		}
 		sc->sc_ihs[intr_idx] = vih;
-		if (wm_softint_establish(sc, qidx, intr_idx) != 0)
+		if (wm_softhandler_establish(sc, qidx, intr_idx) != 0)
 			goto fail;
 		txrx_established++;
 		intr_idx++;
@@ -5688,6 +5757,40 @@ out:
 	txq->txq_packets = 0;
 	txq->txq_bytes = 0;
 #endif
+}
+
+static void
+wm_init_sysctls(struct wm_softc *sc)
+{
+	struct sysctllog **log;
+	const struct sysctlnode *rnode, *cnode;
+	int rv;
+	const char *dvname;
+
+	log = &sc->sc_sysctllog;
+	dvname = device_xname(sc->sc_dev);
+
+	rv = sysctl_createv(log, 0, NULL, &rnode,
+	    0, CTLTYPE_NODE, dvname,
+	    SYSCTL_DESCR("wm information and settings"),
+	    NULL, 0, NULL, 0, CTL_HW, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		goto err;
+
+	rv = sysctl_createv(log, 0, &rnode, &cnode, CTLFLAG_READWRITE,
+	    CTLTYPE_BOOL, "txrx_workqueue", SYSCTL_DESCR("Use workqueue for packet processing"),
+	    NULL, 0, &sc->sc_txrx_use_workqueue, 0, CTL_CREATE, CTL_EOL);
+	if (rv != 0)
+		goto teardown;
+
+	return;
+
+teardown:
+	sysctl_teardown(log);
+err:
+	sc->sc_sysctllog = NULL;
+	device_printf(sc->sc_dev, "%s: sysctl_createv failed, rv = %d\n",
+	    __func__, rv);
 }
 
 /*
@@ -9405,6 +9508,17 @@ wm_linkintr(struct wm_softc *sc, uint32_t icr)
 		wm_linkintr_tbi(sc, icr);
 }
 
+
+static inline void
+wm_sched_handle_queue(struct wm_softc *sc, struct wm_queue *wmq)
+{
+
+	if (wmq->wmq_txrx_use_workqueue)
+		workqueue_enqueue(sc->sc_queue_wq, &wmq->wmq_cookie, curcpu());
+	else
+		softint_schedule(wmq->wmq_si);
+}
+
 /*
  * wm_intr_legacy:
  *
@@ -9506,7 +9620,8 @@ wm_intr_legacy(void *arg)
 
 	if (handled) {
 		/* Try to get more packets going. */
-		softint_schedule(wmq->wmq_si);
+		wmq->wmq_txrx_use_workqueue = sc->sc_txrx_use_workqueue;
+		wm_sched_handle_queue(sc, wmq);
 	}
 
 	return handled;
@@ -9609,9 +9724,10 @@ wm_txrxintr_msix(void *arg)
 	if (rndval != 0)
 		rnd_add_uint32(&sc->sc_queue[wmq->wmq_id].rnd_source, rndval);
 
-	if (txmore || rxmore)
-		softint_schedule(wmq->wmq_si);
-	else
+	if (txmore || rxmore) {
+		wmq->wmq_txrx_use_workqueue = sc->sc_txrx_use_workqueue;
+		wm_sched_handle_queue(sc, wmq);
+	} else
 		wm_txrxintr_enable(wmq);
 
 	return 1;
@@ -9647,10 +9763,22 @@ wm_handle_queue(void *arg)
 	rxmore = wm_rxeof(rxq, rxlimit);
 	mutex_exit(rxq->rxq_lock);
 
-	if (txmore || rxmore)
-		softint_schedule(wmq->wmq_si);
-	else
+	if (txmore || rxmore) {
+		wmq->wmq_txrx_use_workqueue = sc->sc_txrx_use_workqueue;
+		wm_sched_handle_queue(sc, wmq);
+	} else
 		wm_txrxintr_enable(wmq);
+}
+
+static void
+wm_handle_queue_work(struct work *wk, void *context)
+{
+	struct wm_queue *wmq = container_of(wk, struct wm_queue, wmq_cookie);
+
+	/*
+	 * "enqueued flag" is not required here.
+	 */
+	wm_handle_queue(wmq);
 }
 
 /*

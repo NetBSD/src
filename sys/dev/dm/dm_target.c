@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target.c,v 1.39 2020/01/05 08:08:26 tkusumi Exp $      */
+/*        $NetBSD: dm_target.c,v 1.39.2.1 2020/01/25 22:38:45 ad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.39 2020/01/05 08:08:26 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target.c,v 1.39.2.1 2020/01/25 22:38:45 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -168,10 +168,12 @@ dm_target_insert(dm_target_t *dm_target)
 		printf("%s missing destroy\n", dm_target->name);
 		return EINVAL;
 	}
+#if 0
 	if (dm_target->upcall == NULL) {
 		printf("%s missing upcall\n", dm_target->name);
 		return EINVAL;
 	}
+#endif
 
 	mutex_enter(&dm_target_mutex);
 
@@ -320,7 +322,7 @@ dm_target_init(void)
 	dmt->strategy = &dm_target_linear_strategy;
 	dmt->sync = &dm_target_linear_sync;
 	dmt->destroy = &dm_target_linear_destroy;
-	dmt->upcall = &dm_target_linear_upcall;
+	//dmt->upcall = &dm_target_linear_upcall;
 	dmt->secsize = &dm_target_linear_secsize;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert linear\n");
@@ -335,7 +337,7 @@ dm_target_init(void)
 	dmt->strategy = &dm_target_stripe_strategy;
 	dmt->sync = &dm_target_stripe_sync;
 	dmt->destroy = &dm_target_stripe_destroy;
-	dmt->upcall = &dm_target_stripe_upcall;
+	//dmt->upcall = &dm_target_stripe_upcall;
 	dmt->secsize = &dm_target_stripe_secsize;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert striped\n");
@@ -347,7 +349,7 @@ dm_target_init(void)
 	dmt->init = &dm_target_error_init;
 	dmt->strategy = &dm_target_error_strategy;
 	dmt->destroy = &dm_target_error_destroy;
-	dmt->upcall = &dm_target_error_upcall;
+	//dmt->upcall = &dm_target_error_upcall;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert error\n");
 
@@ -358,7 +360,7 @@ dm_target_init(void)
 	dmt->init = &dm_target_zero_init;
 	dmt->strategy = &dm_target_zero_strategy;
 	dmt->destroy = &dm_target_zero_destroy;
-	dmt->upcall = &dm_target_zero_upcall;
+	//dmt->upcall = &dm_target_zero_upcall;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert zero\n");
 #if 0
@@ -372,7 +374,7 @@ dm_target_init(void)
 	dmt->strategy = &dm_target_delay_strategy;
 	dmt->sync = &dm_target_delay_sync;
 	dmt->destroy = &dm_target_delay_destroy;
-	dmt->upcall = &dm_target_delay_upcall;
+	//dmt->upcall = &dm_target_delay_upcall;
 	dmt->secsize = &dm_target_delay_secsize;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert delay\n");
@@ -387,7 +389,7 @@ dm_target_init(void)
 	dmt->strategy = &dm_target_flakey_strategy;
 	dmt->sync = &dm_target_flakey_sync;
 	dmt->destroy = &dm_target_flakey_destroy;
-	dmt->upcall = &dm_target_flakey_upcall;
+	//dmt->upcall = &dm_target_flakey_upcall;
 	dmt->secsize = &dm_target_flakey_secsize;
 	if (dm_target_insert(dmt))
 		printf("Failed to insert flakey\n");

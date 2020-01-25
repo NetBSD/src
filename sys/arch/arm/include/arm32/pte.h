@@ -1,4 +1,4 @@
-/*	$NetBSD: pte.h,v 1.20 2019/06/19 09:54:15 skrll Exp $	*/
+/*	$NetBSD: pte.h,v 1.20.4.1 2020/01/25 22:38:38 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -140,6 +140,8 @@ typedef uint32_t	pt_entry_t;	/* L2 table entry */
  */
 #define	L1_TABLE_SIZE_REAL	0x4000	/* 16K */
 #define	L2_TABLE_SIZE_REAL	0x400	/* 1K */
+
+#define L1TT_SIZE		0x2000	/* 8K */
 
 /*
  * ARM L1 Descriptors

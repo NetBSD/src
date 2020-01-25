@@ -1,4 +1,4 @@
-#	$NetBSD: IXDP425,v 1.56 2018/12/12 06:29:36 maxv Exp $
+#	$NetBSD: IXDP425,v 1.56.6.1 2020/01/25 22:38:39 ad Exp $
 #
 #	IXDP425 -- Intel IXDP425/IXCDP1100 Development Platform
 #
@@ -168,12 +168,9 @@ an*	at pci? dev ? function ?	# Aironet PC4500/PC4800 (802.11)
 bge*	at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ep*	at pci? dev ? function ?	# 3Com 3c59x
 epic*	at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-esh*	at pci? dev ? function ?	# Essential HIPPI card
 ex*	at pci? dev ? function ?	# 3Com 90x[BC]
-fpa*	at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*	at pci? dev ? function ?	# Intel EtherExpress PRO 10+/100B
 gsip*	at pci? dev ? function ?	# NS83820 Gigabit Ethernet
-le*	at pci? dev ? function ?	# PCnet-PCI Ethernet
 mtd*	at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*	at pci? dev ? function ?	# NE2000-compatible Ethernet
 ntwoc*	at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial

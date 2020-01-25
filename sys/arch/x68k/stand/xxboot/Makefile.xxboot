@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.xxboot,v 1.4.20.1 2020/01/17 21:47:28 ad Exp $
+#	$NetBSD: Makefile.xxboot,v 1.4.20.2 2020/01/25 22:38:44 ad Exp $
 
 NOMAN=		# defined
 
@@ -10,11 +10,12 @@ VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
-# text and bss addresses in hex
-TEXT=		0f0000		# Primary (me)
-TEXTDATASIZE=	  2000		# 8KB for UFS at maximum
-		  		# 30KB (=(16-1)*2048) for ISO9660 at max.
-BOOT_TEXT=	006000		# Secondary (/boot)
+# text and bss addresses
+TEXT=		0x003000	# Primary (me)
+TEXTDATASIZE=	0x002000	# 8KB for UFS at maximum
+				# 30KB (=(16-1)*2048) for ISO9660 at max.
+				# but should use up to 8KB.  See boot.S
+BOOT_TEXT=	0x006000	# Secondary (/boot)
 
 PROG=		$(BOOT)
 BINDIR=		/usr/mdec
@@ -31,15 +32,17 @@ SRCS=	boot.S bootmain.c conf.c consio1.c $(DEVDRV).c
 CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 #CFLAGS+= -Wall
 CPPFLAGS+= -D_STANDALONE
-CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
-CPPFLAGS+= -DTDSIZE="0x$(TEXTDATASIZE)"
+CPPFLAGS+= -DTEXTADDR="$(TEXT)" -DBOOT_TEXTADDR="$(BOOT_TEXT)"
+CPPFLAGS+= -DTDSIZE="$(TEXTDATASIZE)"
 CPPFLAGS+= -DPROG=\"$(PROG)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DBOOT_STAGE1 $(BOOTCPPFLAGS)
 CPPFLAGS+= -nostdinc -I${.OBJDIR} -I${S}
 CPPFLAGS+= -I$M/stand/libiocs -I$M/stand/libsa -I$M/stand/common
 AFLAGS=	   ${CFLAGS:M-[ID]*}
-LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript -M
-LINKFLAGS+=  -noinhibit-exec	# XXX
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/../xxboot.ldscript
+LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
+LINKFLAGS+=  --defsym=BOOT_TEXTADDR=$(BOOT_TEXT)
+LINKFLAGS+=  --defsym=TEXTDATASIZE=$(TEXTDATASIZE)
 LIBIOCS!= cd $M/stand/libiocs && ${PRINTOBJDIR}
 LIBSA!=	  cd $M/stand/libsa && ${PRINTOBJDIR}
 LDLIBS=	  -L${LIBSA}/lib/sa -lsa -L ${LIBSA}/lib/kern -lkern
@@ -57,27 +60,10 @@ SRCS+=	exec_image.S
 
 .include "${.CURDIR}/../../Makefile.booters"
 
-CLEANFILES+=	${PROG}.x $(PROG).map ${PROG}
-
 
 ${PROG}: $(OBJS)
 	${_MKTARGET_LINK}
-	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDLIBS) > $(PROG).map
-	@grep first_kbyte $(PROG).map
-	@if [ `${TOOL_AWK}						   \
-	    '/first_kbyte/ {print "eval(eval("$$1")-eval(0x'$(TEXT)'))"}'  \
-	    $(PROG).map | ${TOOL_M4} -` -gt 1024 ];			   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
-	@if [ `${TOOL_AWK}						   \
-	    '/_edata/ {print "eval(eval("$$1")-eval(0x'$(TEXT)'))"}'	   \
-	    $(PROG).map | ${TOOL_M4} -`					   \
-	    -gt								   \
-	    `echo 'eval(0x$(TEXTDATASIZE))' | ${TOOL_M4} -` ];		   \
-	then echo '$(BOOT): text+data is too large';			   \
-	    rm $(PROG) ; exit 1; 					   \
-	fi
+	$(LD) $(LINKFLAGS) -o ${PROG} $(OBJS) $(LDLIBS)
 	${TOUCHPROG}
 
 .include <bsd.prog.mk>

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.59.2.5 2020/01/25 21:45:00 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.59.2.6 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -36,10 +36,16 @@
  *
  *	Solaris Internals: Core Kernel Architecture, Jim Mauro and
  *	    Richard McDougall.
+ *
+ * The NetBSD implementation differs from that described in the book, in
+ * that the locks are partially adaptive.  Lock waiters spin wait while a
+ * lock is write held and the holder is still running on a CPU.  The method
+ * of choosing which threads to awaken when a lock is released also differs,
+ * mainly to take account of the partially adaptive behaviour.
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.5 2020/01/25 21:45:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.6 2020/01/25 22:38:51 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -206,10 +212,15 @@ void
 _rw_init(krwlock_t *rw, uintptr_t return_address)
 {
 
+#ifdef LOCKDEBUG
+	/* XXX only because the assembly stubs can't handle RW_NODEBUG */
 	if (LOCKDEBUG_ALLOC(rw, &rwlock_lockops, return_address))
 		rw->rw_owner = 0;
 	else
 		rw->rw_owner = RW_NODEBUG;
+#else
+	rw->rw_owner = 0;
+#endif
 }
 
 void
@@ -645,7 +656,7 @@ rw_downgrade(krwlock_t *rw)
 			RW_ASSERT(rw, (rw->rw_owner & RW_HAS_WAITERS) != 0);
 
 			newown = owner & RW_NODEBUG;
-			newown = RW_READ_INCR | RW_HAS_WAITERS |
+			newown |= RW_READ_INCR | RW_HAS_WAITERS |
 			    RW_WRITE_WANTED;
 			next = rw_cas(rw, owner, newown);
 			turnstile_exit(rw);
@@ -786,4 +797,27 @@ rw_owner(wchan_t obj)
 		return NULL;
 
 	return (void *)(owner & RW_THREAD);
+}
+
+/*
+ * rw_owner_running:
+ *
+ *	Return true if a RW lock is unheld, or write held and the owner is
+ *	running on a CPU.  For the pagedaemon.
+ */
+bool
+rw_owner_running(const krwlock_t *rw)
+{
+#ifdef MULTIPROCESSOR
+	uintptr_t owner;
+	bool rv;
+
+	kpreempt_disable();
+	owner = rw->rw_owner;
+	rv = (owner & RW_THREAD) == 0 || rw_oncpu(owner);
+	kpreempt_enable();
+	return rv;
+#else
+	return rw_owner(rw) == curlwp;
+#endif
 }

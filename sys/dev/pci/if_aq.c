@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.1.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.1.2.2 2020/01/25 22:38:47 ad Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.1 2020/01/17 21:47:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.2 2020/01/25 22:38:47 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -209,7 +209,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.1 2020/01/17 21:47:31 ad Exp $");
 
 /* AQ_GEN_INTR_MAP_REG[AQ_RINGS_NUM] 0x2180-0x2200 */
 #define AQ_GEN_INTR_MAP_REG(i)			(0x2180 + (i) * 4)
-#define  AQ_B0_ERR_INT				8
+#define  AQ_B0_ERR_INT				8U
 
 #define AQ_INTR_CTRL_REG			0x2300
 #define  AQ_INTR_CTRL_IRQMODE			__BITS(1,0)
@@ -2581,7 +2581,7 @@ aq_set_mac_addr(struct aq_softc *sc, int index, uint8_t *enaddr)
 	}
 
 	h = (enaddr[0] <<  8) | (enaddr[1]);
-	l = (enaddr[2] << 24) | (enaddr[3] << 16) |
+	l = ((uint32_t)enaddr[2] << 24) | (enaddr[3] << 16) |
 	    (enaddr[4] <<  8) | (enaddr[5]);
 
 	/* disable, set, and enable */
@@ -3281,7 +3281,7 @@ aq_hw_init(struct aq_softc *sc)
 	AQ_WRITE_REG(sc, AQ_INTR_AUTOMASK_REG, 0xffffffff);
 
 	AQ_WRITE_REG(sc, AQ_GEN_INTR_MAP_REG(0),
-	    ((AQ_B0_ERR_INT << 24) | (1 << 31)) |
+	    ((AQ_B0_ERR_INT << 24) | (1U << 31)) |
 	    ((AQ_B0_ERR_INT << 16) | (1 << 23))
 	);
 

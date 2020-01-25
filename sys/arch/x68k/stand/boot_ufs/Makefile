@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30.20.1 2020/01/17 21:47:28 ad Exp $
+#	$NetBSD: Makefile,v 1.30.20.2 2020/01/25 22:38:44 ad Exp $
 
 NOMAN=		# defined
 
@@ -10,9 +10,9 @@ VERSION!=	${TOOL_AWK} -F: '$$1 ~ /^[0-9.]*$$/ { it = $$1; } \
 			END { print it }' ${VERSIONFILE}
 NEWVERSWHAT=	"${BOOT}"
 
-# text and bss addresses in hex
-TEXT=		0f0000		# Primary (me)
-BOOT_TEXT=	006000		# Secondary (/boot)
+# text and bss addresses
+TEXT=		0x003000	# Primary (me)
+BOOT_TEXT=	0x006000	# Secondary (/boot)
 
 PROG=		xx$(BOOT)
 LINKS=		${BINDIR}/xx$(BOOT) ${BINDIR}/sd$(BOOT)
@@ -35,36 +35,23 @@ SRCS+=	exec_image.S memset.S strcmp.S
 CFLAGS=	-Os -fomit-frame-pointer -fno-unwind-tables
 CFLAGS+= -m68020-60
 CFLAGS+= -W -Wall -Wstrict-prototypes -Wmissing-prototypes
-CPPFLAGS+= -DTEXTADDR="0x$(TEXT)" -DBOOT_TEXTADDR="0x$(BOOT_TEXT)"
+CPPFLAGS+= -DTEXTADDR="$(TEXT)" -DBOOT_TEXTADDR="$(BOOT_TEXT)"
 CPPFLAGS+= -DBOOT=\"$(BOOT)\" -DBOOT_VERS=\"$(VERSION)\"
 CPPFLAGS+= -DSCSI_ADHOC_BOOTPART
 #CPPFLAGS+= -DBOOT_DEBUG
 CPPFLAGS+= -DUSE_FFS -DUSE_LFS -DUSE_UFS1 -DUSE_UFS2
 CPPFLAGS+= -I${COMMONDIR} -I${LIBIOCS} -I${S} -I. -D_STANDALONE
 AFLAGS=	   ${CFLAGS:M-[ID]*}
-LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript -M
-LINKFLAGS+=  -noinhibit-exec	# XXX
+LINKFLAGS=   -n -Bstatic -T ${.CURDIR}/${BOOT}.ldscript
+LINKFLAGS+=  --defsym=TEXTADDR=$(TEXT)
+LINKFLAGS+=  --defsym=BOOT_TEXTADDR=$(BOOT_TEXT)
 
 .include "${.CURDIR}/../Makefile.booters"
 .include "${S}/../common/lib/libc/Makefile.inc"
 
-CLEANFILES+=	$(PROG).x $(PROG).map
-
 
 $(PROG): $(OBJS)
 	${_MKTARGET_LINK}
-	:
-	: Note:	"relocation truncated to fit: R_68K_16" messages are expected.
-	:	Other errors are fatal.
-	:
-	$(LD) $(LINKFLAGS) -o $(PROG).x $(OBJS) $(LDADD) >$(PROG).map
-	@grep first_kbyte $(PROG).map
-	@if [ `${TOOL_AWK}						   \
-	    '/first_kbyte/ {print "eval(eval("$$1")-eval(0x'$(TEXT)'))"}'  \
-	    $(PROG).map | ${TOOL_M4} -` -gt 1024 ];			   \
-	then echo '$(BOOT): first_kbyte exceeds the first killobyte';	   \
-	    exit 1;							   \
-	fi
-	mv -f $(PROG).x $(PROG)
+	$(LD) $(LINKFLAGS) -o $(PROG) $(OBJS) $(LDADD)
 
 .include <bsd.prog.mk>

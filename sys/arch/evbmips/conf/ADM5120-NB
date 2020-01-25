@@ -1,11 +1,11 @@
-#	$NetBSD: ADM5120-NB,v 1.26 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: ADM5120-NB,v 1.26.4.1 2020/01/25 22:38:40 ad Exp $
 #
 # Kernel config for the Alchemy Semiconductor (AMD) PB1000, PB1500,
 # DBAu1000 and DBAu1500 evaluation boards.
 
 include 	"arch/evbmips/conf/std.adm5120"
 
-#ident 		"GENERIC-$Revision: 1.26 $"
+#ident 		"GENERIC-$Revision: 1.26.4.1 $"
 
 maxusers	32
 
@@ -137,7 +137,6 @@ pseudo-device 	carp				# Common Address Redundancy Protocol
 pseudo-device	loop				# network loopback
 #pseudo-device	ppp				# Point-to-Point Protocol
 #pseudo-device	sl				# Serial Line IP
-#pseudo-device	strip				# Starmode Radio IP (Metricom)
 #pseudo-device	tun				# network tunneling over tty
 #pseudo-device	gre				# generic L3 over IP tunnel
 #pseudo-device	ipip				# RFC 2003 IP Encapsulation

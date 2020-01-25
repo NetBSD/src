@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2800,v 1.61 2018/08/01 20:04:11 maxv Exp $
+#	$NetBSD: SMDK2800,v 1.61.6.1 2020/01/25 22:38:39 ad Exp $
 #
 #	SMDK2800 -- Samsung's S3C2800 evaluation board.
 #
@@ -211,7 +211,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty

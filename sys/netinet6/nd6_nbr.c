@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6_nbr.c,v 1.175 2019/11/13 02:51:22 ozaki-r Exp $	*/
+/*	$NetBSD: nd6_nbr.c,v 1.175.2.1 2020/01/25 22:38:52 ad Exp $	*/
 /*	$KAME: nd6_nbr.c,v 1.61 2001/02/10 16:06:14 jinmei Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.175 2019/11/13 02:51:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6_nbr.c,v 1.175.2.1 2020/01/25 22:38:52 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1089,7 +1089,6 @@ nd6_ifptomac(const struct ifnet *ifp)
 	switch (ifp->if_type) {
 	case IFT_ARCNET:
 	case IFT_ETHER:
-	case IFT_FDDI:
 	case IFT_IEEE1394:
 	case IFT_PROPVIRTUAL:
 	case IFT_CARP:
@@ -1461,7 +1460,6 @@ nd6_dad_duplicated(struct ifaddr *ifa, struct dadq *dp,
 		 */
 		switch (ifp->if_type) {
 		case IFT_ETHER:
-		case IFT_FDDI:
 		case IFT_ATM:
 		case IFT_IEEE1394:
 		case IFT_IEEE80211:

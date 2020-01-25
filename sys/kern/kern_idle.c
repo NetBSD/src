@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.29.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.29.2.2 2020/01/25 22:38:50 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -27,8 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.29.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.29.2.2 2020/01/25 22:38:50 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -49,17 +48,15 @@ idle_loop(void *dummy)
 	struct schedstate_percpu *spc;
 	struct lwp *l = curlwp;
 
-	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
-	spc = &ci->ci_schedstate;
-	ci->ci_onproc = l;
-
-	/* Update start time for this thread. */
 	lwp_lock(l);
+	spc = &ci->ci_schedstate;
 	KASSERT(lwp_locked(l, spc->spc_lwplock));
+	kcpuset_atomic_set(kcpuset_running, cpu_index(ci));
+	/* Update start time for this thread. */
 	binuptime(&l->l_stime);
 	spc->spc_flags |= SPCF_RUNNING;
-	l->l_stat = LSONPROC;
-	l->l_flag |= LW_RUNNING;
+	KASSERT(l->l_stat == LSONPROC);
+	KASSERT((l->l_flag & LW_RUNNING) != 0);
 	lwp_unlock(l);
 
 	/*
@@ -114,6 +111,17 @@ create_idle_lwp(struct cpu_info *ci)
 		panic("create_idle_lwp: error %d", error);
 	lwp_lock(l);
 	l->l_flag |= LW_IDLE;
+	if (ci != lwp0.l_cpu) {
+		/*
+		 * For secondary CPUs, the idle LWP is the first to run, and
+		 * it's directly entered from MD code without a trip through
+		 * mi_switch().  Make the picture look good in case the CPU
+		 * takes an interrupt before it calls idle_loop().
+		 */
+		l->l_stat = LSONPROC;
+		l->l_flag |= LW_RUNNING;
+		ci->ci_onproc = l;
+	}
 	lwp_unlock(l);
 	ci->ci_data.cpu_idlelwp = l;
 

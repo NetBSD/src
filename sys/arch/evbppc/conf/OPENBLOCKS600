@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS600,v 1.27 2019/04/26 21:40:29 sevan Exp $
+#	$NetBSD: OPENBLOCKS600,v 1.27.4.1 2020/01/25 22:38:40 ad Exp $
 #
 #	GENERIC -- everything that's currently supported
 #
@@ -7,7 +7,7 @@ include 	"arch/evbppc/conf/std.obs600"
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"OPENBLOCKS600-$Revision: 1.27 $"
+#ident 		"OPENBLOCKS600-$Revision: 1.27.4.1 $"
 
 maxusers	32
 
@@ -189,7 +189,6 @@ pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #options 	PPPOE_SERVER		# Enable PPPoE server via link0
 pseudo-device	sl			# Serial Line IP
-pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual ethernet
 pseudo-device	tun			# network tunneling over tty

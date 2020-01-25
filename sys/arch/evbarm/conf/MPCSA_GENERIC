@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.67 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.67.4.1 2020/01/25 22:38:39 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.67 $"
+#ident 		"GENERIC-$Revision: 1.67.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -370,8 +370,6 @@ sd*	at atapibus? drive ? flags 0x0000	# ATAPI disk drives
 #ne*	at pcmcia? function ?		# NE2000-compatible Ethernet
 #ray*	at pcmcia? function ?		# Raytheon Raylink (802.11)
 #sm*	at pcmcia? function ?		# Megahertz Ethernet
-# tr at pcmcia has problems with Cardbus bridges
-#tr*	at pcmcia? function ?		# TROPIC based Token-Ring
 wi*	at pcmcia? function ?		# Lucent/Intersil WaveLan IEEE (802.11)
 #xirc*	at pcmcia? function ?		# Xircom CreditCard Ethernet
 #com*	at xirc?
@@ -623,7 +621,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty

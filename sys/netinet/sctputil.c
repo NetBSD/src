@@ -1,5 +1,5 @@
 /*	$KAME: sctputil.c,v 1.39 2005/06/16 20:54:06 jinmei Exp $	*/
-/*	$NetBSD: sctputil.c,v 1.15 2019/08/13 19:55:40 rjs Exp $	*/
+/*	$NetBSD: sctputil.c,v 1.15.2.1 2020/01/25 22:38:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Cisco Systems, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.15 2019/08/13 19:55:40 rjs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.15.2.1 2020/01/25 22:38:52 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -54,6 +54,7 @@ __KERNEL_RCSID(0, "$NetBSD: sctputil.c,v 1.15 2019/08/13 19:55:40 rjs Exp $");
 #include <sys/proc.h>
 #include <sys/kernel.h>
 #include <sys/sysctl.h>
+#include <sys/cprng.h>
 
 #include <sys/callout.h>
 
@@ -614,52 +615,10 @@ find_next_best_mtu(int totsz)
 	return (sctp_mtu_sizes[perfer]);
 }
 
-void
-sctp_fill_random_store(struct sctp_pcb *m)
-{
-	/*
-	 * Here we use the MD5/SHA-1 to hash with our good randomNumbers
-	 * and our counter. The result becomes our good random numbers and
-	 * we then setup to give these out. Note that we do no lockig
-	 * to protect this. This is ok, since if competing folks call
-	 * this we will get more gobbled gook in the random store whic
-	 * is what we want. There is a danger that two guys will use
-	 * the same random numbers, but thats ok too since that
-	 * is random as well :->
-	 */
-	m->store_at = 0;
-	sctp_hash_digest((char *)m->random_numbers, sizeof(m->random_numbers),
-			 (char *)&m->random_counter, sizeof(m->random_counter),
-			 (char *)m->random_store);
-	m->random_counter++;
-}
-
 uint32_t
 sctp_select_initial_TSN(struct sctp_pcb *m)
 {
-	/*
-	 * A true implementation should use random selection process to
-	 * get the initial stream sequence number, using RFC1750 as a
-	 * good guideline
-	 */
-	u_long x, *xp;
-	uint8_t *p;
-
-	if (m->initial_sequence_debug != 0) {
-		u_int32_t ret;
-		ret = m->initial_sequence_debug;
-		m->initial_sequence_debug++;
-		return (ret);
-	}
-	if ((m->store_at+sizeof(u_long)) > SCTP_SIGNATURE_SIZE) {
-		/* Refill the random store */
-		sctp_fill_random_store(m);
-	}
-	p = &m->random_store[(int)m->store_at];
-	xp = (u_long *)p;
-	x = *xp;
-	m->store_at += sizeof(u_long);
-	return (x);
+	return cprng_strong32();
 }
 
 u_int32_t sctp_select_a_tag(struct sctp_inpcb *m)

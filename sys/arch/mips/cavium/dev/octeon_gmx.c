@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.6 2019/11/10 21:16:30 chs Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.6.2.1 2020/01/25 22:38:41 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.6 2019/11/10 21:16:30 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.6.2.1 2020/01/25 22:38:41 ad Exp $");
 
 #include "opt_octeon.h"
 
@@ -1080,20 +1080,10 @@ octeon_gmx_stats(struct octeon_gmx_port_softc *sc)
 	ifp->if_oerrors +=
 	    (uint32_t)tmp + ((uint32_t)(tmp >> 32) * 16);
 	ifp->if_collisions += (uint32_t)tmp;
-#if IFETHER_DOT3STATS
-	/* dot3StatsExcessiveCollisions */
-	ifp->if_data.ifi_dot3stats.if_oexsvcols += (uint32_t)tmp;
-#endif
 
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT1);
 	ifp->if_collisions +=
 	    (uint32_t)tmp + (uint32_t)(tmp >> 32);
-#if IFETHER_DOT3STATS
-	/* dot3StatsSingleCollisionFrames */
-	ifp->if_data.ifi_dot3stats.if_oscols += (uint32_t)(tmp >> 32);
-	/* dot3StatsMultipleCollisionFrames */
-	ifp->if_data.ifi_dot3stats.if_omcols += (uint32_t)tmp;
-#endif
 
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT9);
 	ifp->if_oerrors += (uint32_t)(tmp >> 32);

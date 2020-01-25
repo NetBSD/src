@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.30 2020/01/01 14:33:48 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.30.2.1 2020/01/25 22:38:53 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.30 2020/01/01 14:33:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.30.2.1 2020/01/25 22:38:53 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -124,7 +124,6 @@ __KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.30 2020/01/01 14:33:48 ad E
 #define	CLOCK_PDQ_SIZE	128
 #endif /* !defined(CLOCK_PDQ_SIZE) */
 
-#define	PQ_TIME		0xffffffc0	/* time of last activation */
 #define PQ_INACTIVE	0x00000010	/* page is in inactive list */
 #define PQ_ACTIVE	0x00000020	/* page is in active list */
 
@@ -487,29 +486,17 @@ uvmpdpol_pageactivate_locked(struct vm_page *pg)
 	uvmpdpol_pagedequeue_locked(pg);
 	TAILQ_INSERT_TAIL(&pdpol_state.s_activeq, pg, pdqueue);
 	pdpol_state.s_active++;
-	pg->pqflags = (pg->pqflags & PQ_INTENT_QUEUED) | PQ_ACTIVE |
-	    (hardclock_ticks & PQ_TIME);
+	pg->pqflags = (pg->pqflags & PQ_INTENT_QUEUED) | PQ_ACTIVE;
 }
 
 void
 uvmpdpol_pageactivate(struct vm_page *pg)
 {
-	uint32_t pqflags;
 
 	KASSERT(uvm_page_owner_locked_p(pg));
 	KASSERT(mutex_owned(&pg->interlock));
 
-	/*
-	 * if there is any intent set on the page, or the page is not
-	 * active, or the page was activated in the "distant" past, then
-	 * it needs to be activated anew.
-	 */
-	pqflags = pg->pqflags;
-	if ((pqflags & PQ_INTENT_SET) != 0 ||
-	    (pqflags & PQ_ACTIVE) == 0 ||
-	    ((hardclock_ticks & PQ_TIME) - (pqflags & PQ_TIME)) > hz) {
-		uvmpdpol_set_intent(pg, PQ_INTENT_A);
-	}
+	uvmpdpol_set_intent(pg, PQ_INTENT_A);
 }
 
 static void

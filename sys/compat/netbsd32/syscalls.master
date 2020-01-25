@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.130 2019/11/04 11:32:22 rin Exp $
+	$NetBSD: syscalls.master,v 1.130.2.1 2020/01/25 22:38:45 ad Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -97,7 +97,7 @@
 19	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ netbsd32_long|netbsd32||olseek(int fd, \
 			    netbsd32_long offset, int whence); }
-20	NOARGS 		{ pid_t|sys||getpid(void); }
+20	NOARGS 		{ pid_t|sys||getpid_with_ppid(void); } getpid
 21	COMPAT_40 MODULAR compat_netbsd32_40	\
 			{ int|netbsd32||mount(netbsd32_charp type, \
 			    netbsd32_charp path, int flags, \
@@ -105,7 +105,7 @@
 22	STD		{ int|netbsd32||unmount(netbsd32_charp path, \
 			    int flags); }
 23	STD		{ int|netbsd32||setuid(uid_t uid); }
-24	NOARGS 		{ uid_t|sys||getuid(void); }
+24	NOARGS 		{ uid_t|sys||getuid_with_euid(void); } getuid
 25	NOARGS		{ uid_t|sys||geteuid(void); }
 26	STD MODULAR compat_netbsd32_ptrace \
 			{ int|netbsd32||ptrace(int req, pid_t pid, \
@@ -150,7 +150,7 @@
 46	STD		{ int|netbsd32||sigaction(int signum, \
 			    netbsd32_sigactionp_t nsa, \
 			    netbsd32_sigactionp_t osa); }
-47	NOARGS 		{ gid_t|sys||getgid(void); }
+47	NOARGS 		{ gid_t|sys||getgid_with_egid(void); } getgid
 48	COMPAT_13 MODULAR compat_netbsd32_13	\
 			{ int|netbsd32||sigprocmask(int how, \
 			    int mask); } sigprocmask13

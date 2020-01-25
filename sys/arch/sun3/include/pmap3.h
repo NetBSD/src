@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap3.h,v 1.49 2013/01/07 16:58:09 chs Exp $	*/
+/*	$NetBSD: pmap3.h,v 1.49.44.1 2020/01/25 22:38:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996 The NetBSD Foundation, Inc.
@@ -63,8 +63,6 @@ extern segsz_t pmap_wired_pages(pmap_t);
 
 /* We use the PA plus some low bits for device mmap. */
 #define pmap_phys_address(addr) 	(addr)
-
-#define	pmap_update(pmap)		/* nothing (yet) */
 
 /* Map a given physical region to a virtual region */
 extern vaddr_t pmap_map(vaddr_t, paddr_t, paddr_t, int);

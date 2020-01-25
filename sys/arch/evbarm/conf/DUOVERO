@@ -1,5 +1,5 @@
 #
-#	$NetBSD: DUOVERO,v 1.14 2019/08/11 19:34:04 skrll Exp $
+#	$NetBSD: DUOVERO,v 1.14.2.1 2020/01/25 22:38:39 ad Exp $
 #
 #	DUOOVERO -- Gumstix. Inc. DuoVero COMS platforms kernel
 #
@@ -259,7 +259,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	tun			# network tunneling over tty

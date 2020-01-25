@@ -1,10 +1,10 @@
-# $NetBSD: GENERIC,v 1.108 2019/04/26 21:40:32 sevan Exp $
+# $NetBSD: GENERIC,v 1.108.4.1 2020/01/25 22:38:43 ad Exp $
 
 include 	"arch/sbmips/conf/std.sbmips"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.108 $"
+#ident 		"GENERIC-$Revision: 1.108.4.1 $"
 
 #options 	LOCKDEBUG	# XXX XXX XXX XXX
 #options 	DEBUG		# extra kernel debugging support
@@ -177,7 +177,6 @@ pseudo-device	loop			# network loopback
 #pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tun			# network tunneling over tty
 #pseudo-device	tap			# virtual Ethernet

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.164.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.164.2.2 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.164.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.164.2.2 2020/01/25 22:38:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -156,6 +156,11 @@ _kernel_lock_dump(const volatile void *junk, lockop_printer_t pr)
 
 /*
  * Acquire 'nlocks' holds on the kernel lock.
+ *
+ * Although it may not look it, this is one of the most central, intricate
+ * routines in the kernel, and tons of code elsewhere depends on its exact
+ * behaviour.  If you change something in here, expect it to bite you in the
+ * rear.
  */
 void
 _kernel_lock(int nlocks)
@@ -164,7 +169,6 @@ _kernel_lock(int nlocks)
 	LOCKSTAT_TIMER(spintime);
 	LOCKSTAT_FLAG(lsflag);
 	struct lwp *owant;
-	u_int count;
 #ifdef LOCKDEBUG
 	u_int spins = 0;
 #endif
@@ -210,6 +214,7 @@ _kernel_lock(int nlocks)
 	 */
 	membar_producer();
 	owant = ci->ci_biglock_wanted;
+	ci->ci_biglock_wanted = l;
 
 	/*
 	 * Spin until we acquire the lock.  Once we have it, record the
@@ -218,7 +223,6 @@ _kernel_lock(int nlocks)
 	LOCKSTAT_ENTER(lsflag);
 	LOCKSTAT_START_TIMER(lsflag, spintime);
 
-	count = SPINLOCK_BACKOFF_MIN;
 	do {
 		splx(s);
 		while (__SIMPLELOCK_LOCKED_P(kernel_lock)) {
@@ -229,19 +233,12 @@ _kernel_lock(int nlocks)
 					_KERNEL_LOCK_ABORT("spinout");
 			}
 #endif
-			SPINLOCK_BACKOFF(count);
-			if (count == SPINLOCK_BACKOFF_MAX) {
-				/* Ok, waiting for real. */
-				ci->ci_biglock_wanted = l;
-			}
 		}
 		s = splvm();
 	} while (!__cpu_simple_lock_try(kernel_lock));
 
 	ci->ci_biglock_count = nlocks;
 	l->l_blcnt = nlocks;
-	splx(s);
-
 	LOCKSTAT_STOP_TIMER(lsflag, spintime);
 	LOCKDEBUG_LOCKED(kernel_lock_dodebug, kernel_lock, NULL,
 	    RETURN_ADDRESS, 0);
@@ -250,6 +247,7 @@ _kernel_lock(int nlocks)
 		    LB_KERNEL_LOCK | LB_SPIN, 1, spintime, RETURN_ADDRESS);
 	}
 	LOCKSTAT_EXIT(lsflag);
+	splx(s);
 
 	/*
 	 * Now that we have kernel_lock, reset ci_biglock_wanted.  This

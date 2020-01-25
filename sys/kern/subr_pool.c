@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.264 2019/12/27 15:49:20 maxv Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.264.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.264 2019/12/27 15:49:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.264.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1145,7 +1145,7 @@ pool_get(struct pool *pp, int flags)
 
 			pp->pr_nfail++;
 			mutex_exit(&pp->pr_lock);
-			KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
+			KASSERT((flags & (PR_NOWAIT|PR_LIMITFAIL)) != 0);
 			return NULL;
 		}
 
@@ -2509,7 +2509,7 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 	object = pool_get(&pc->pc_pool, flags);
 	*objectp = object;
 	if (__predict_false(object == NULL)) {
-		KASSERT((flags & (PR_WAITOK|PR_NOWAIT)) == PR_NOWAIT);
+		KASSERT((flags & (PR_NOWAIT|PR_LIMITFAIL)) != 0);
 		return false;
 	}
 

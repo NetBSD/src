@@ -1,4 +1,4 @@
-/* $NetBSD: acpipchb.c,v 1.15.2.1 2020/01/17 21:47:23 ad Exp $ */
+/* $NetBSD: acpipchb.c,v 1.15.2.2 2020/01/25 22:38:37 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.15.2.1 2020/01/17 21:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpipchb.c,v 1.15.2.2 2020/01/25 22:38:37 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -83,8 +83,6 @@ struct acpipchb_softc {
 	device_t		sc_dev;
 
 	bus_space_tag_t		sc_memt;
-
-	struct arm32_bus_dma_tag sc_dmat;
 
 	ACPI_HANDLE		sc_handle;
 	ACPI_INTEGER		sc_bus;
@@ -139,8 +137,6 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": PCI Express Host Bridge\n");
 
-	sc->sc_dmat = *aa->aa_dmat;
-
 	if (acpi_pci_ignore_boot_config(sc->sc_handle)) {
 		if (acpimcfg_configure_bus(self, aa->aa_pc, sc->sc_handle, sc->sc_bus, PCIHOST_CACHELINE_SIZE) != 0)
 			aprint_error_dev(self, "failed to configure bus\n");
@@ -150,9 +146,9 @@ acpipchb_attach(device_t parent, device_t self, void *aux)
 	pba.pba_flags = aa->aa_pciflags & ~(PCI_FLAGS_MEM_OKAY | PCI_FLAGS_IO_OKAY);
 	pba.pba_memt = 0;
 	pba.pba_iot = 0;
-	pba.pba_dmat = &sc->sc_dmat;
+	pba.pba_dmat = aa->aa_dmat;
 #ifdef _PCI_HAVE_DMA64
-	pba.pba_dmat64 = &sc->sc_dmat;
+	pba.pba_dmat64 = aa->aa_dmat64;
 #endif
 	pba.pba_pc = aa->aa_pc;
 	pba.pba_bus = sc->sc_bus;

@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.193 2019/04/26 21:40:29 sevan Exp $
+# $NetBSD: GENERIC,v 1.193.4.1 2020/01/25 22:38:37 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/arc/conf/std.arc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.193 $"
+#ident		"GENERIC-$Revision: 1.193.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -319,13 +319,10 @@ viaide* 	at pci? dev ? function ?	# VIA/AMD/Nvidia IDE controllers
 bge*		at pci? dev ? function ?	# Broadcom 570x gigabit Ethernet
 ep*		at pci? dev ? function ?	# 3Com 3c59x
 epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
-#esh*		at pci? dev ? function ?	# Essential HIPPI card
 ex*		at pci? dev ? function ?	# 3Com 90x[BC]
-#fpa*		at pci? dev ? function ?	# DEC DEFPA FDDI
 fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO
 gsip*		at pci? dev ? function ?	# NS83820 Gigabit Ethernet
 #hme*		at pci? dev ? function ?	# Sun STP2002-STQ
-#le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
 #mtd*		at pci? dev ? function ?	# Myson MTD803 3-in-1 Ethernet
 ne*		at pci? dev ? function ?	# NE2000-compatible
 #ntwoc*		at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
@@ -451,7 +448,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 pseudo-device	tun			# network tunneling over tty
 pseudo-device	tap			# virtual Ethernet
 #pseudo-device	gre			# generic L3 over IP tunnel

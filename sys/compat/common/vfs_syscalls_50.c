@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_50.c,v 1.24 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: vfs_syscalls_50.c,v 1.24.2.1 2020/01/25 22:38:44 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.24 2019/12/15 16:48:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.24.2.1 2020/01/25 22:38:44 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -62,12 +62,6 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_50.c,v 1.24 2019/12/15 16:48:26 tsutsui
 
 #include <ufs/lfs/lfs_extern.h>
 
-#ifdef QUOTA
-#include <sys/quota.h>
-#include <sys/quotactl.h>
-#include <ufs/ufs/quota1.h>
-#endif
-
 #include <compat/common/compat_util.h>
 #include <compat/common/compat_mod.h>
 #include <compat/sys/time.h>
@@ -88,9 +82,6 @@ static const struct syscall_package vfs_syscalls_50_syscalls[] = {
 	{ SYS_compat_50_futimes, 0, (sy_call_t *)compat_50_sys_futimes },
 	{ SYS_compat_50_lutimes, 0, (sy_call_t *)compat_50_sys_lutimes },
 	{ SYS_compat_50_mknod, 0, (sy_call_t *)compat_50_sys_mknod },
-#ifdef QUOTA
-	{ SYS_compat_50_quotactl, 0, (sy_call_t *)compat_50_sys_quotactl },
-#endif
 	{ 0, 0, NULL }
 };
 
@@ -338,118 +329,6 @@ compat_50_sys_mknod(struct lwp *l,
 	return do_sys_mknod(l, SCARG(uap, path), SCARG(uap, mode),
 	    SCARG(uap, dev), UIO_USERSPACE);
 }
-
-#ifdef QUOTA
-/* ARGSUSED */
-int   
-compat_50_sys_quotactl(struct lwp *l, const struct compat_50_sys_quotactl_args *uap, register_t *retval)
-{
-	/* {
-		syscallarg(const char *) path;
-		syscallarg(int) cmd;
-		syscallarg(int) uid;
-		syscallarg(void *) arg; 
-	} */
-	struct vnode *vp;
-	struct mount *mp;
-	int q1cmd;
-	int idtype;
-	char *qfile;
-	struct dqblk dqblk;
-	struct quotakey key;
-	struct quotaval blocks, files;
-	struct quotastat qstat;
-	int error;
-
-	error = namei_simple_user(SCARG(uap, path),
-				NSM_FOLLOW_TRYEMULROOT, &vp);
-	if (error != 0)
-		return (error);       
-
-	mp = vp->v_mount;
-	q1cmd = SCARG(uap, cmd);
-	idtype = quota_idtype_from_ufs(q1cmd & SUBCMDMASK);
-
-	switch ((q1cmd & ~SUBCMDMASK) >> SUBCMDSHIFT) {
-	case Q_QUOTAON:
-		qfile = PNBUF_GET();
-		error = copyinstr(SCARG(uap, arg), qfile, PATH_MAX, NULL);
-		if (error != 0) {
-			PNBUF_PUT(qfile);
-			break;
-		}
-
-		error = vfs_quotactl_quotaon(mp, idtype, qfile);
-
-		PNBUF_PUT(qfile);
-		break;
-
-	case Q_QUOTAOFF:
-		error = vfs_quotactl_quotaoff(mp, idtype);
-		break;
-
-	case Q_GETQUOTA:
-		key.qk_idtype = idtype;
-		key.qk_id = SCARG(uap, uid);
-
-		key.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-		error = vfs_quotactl_get(mp, &key, &blocks);
-		if (error) {
-			break;
-		}
-
-		key.qk_objtype = QUOTA_OBJTYPE_FILES;
-		error = vfs_quotactl_get(mp, &key, &files);
-		if (error) {
-			break;
-		}
-
-		quotavals_to_dqblk(&blocks, &files, &dqblk);
-		error = copyout(&dqblk, SCARG(uap, arg), sizeof(dqblk));
-		break;
-		
-	case Q_SETQUOTA:
-		error = copyin(SCARG(uap, arg), &dqblk, sizeof(dqblk));
-		if (error) {
-			break;
-		}
-		dqblk_to_quotavals(&dqblk, &blocks, &files);
-
-		key.qk_idtype = idtype;
-		key.qk_id = SCARG(uap, uid);
-
-		key.qk_objtype = QUOTA_OBJTYPE_BLOCKS;
-		error = vfs_quotactl_put(mp, &key, &blocks);
-		if (error) {
-			break;
-		}
-
-		key.qk_objtype = QUOTA_OBJTYPE_FILES;
-		error = vfs_quotactl_put(mp, &key, &files);
-		break;
-		
-	case Q_SYNC:
-		/*
-		 * not supported but used only to see if quota is supported,
-		 * emulate with stat
-		 *
-		 * XXX should probably be supported
-		 */
-		(void)idtype; /* not used */
-
-		error = vfs_quotactl_stat(mp, &qstat);
-		break;
-
-	case Q_SETUSE:
-	default:
-		error = EOPNOTSUPP;
-		break;
-	}
-
-	vrele(vp);
-	return error;
-}
-#endif
 
 int             
 vfs_syscalls_50_init(void)

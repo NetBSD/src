@@ -1,4 +1,4 @@
-# $NetBSD: Makefile.efiboot,v 1.9 2019/11/30 13:02:18 jmcneill Exp $
+# $NetBSD: Makefile.efiboot,v 1.9.2.1 2020/01/25 22:38:52 ad Exp $
 
 S=		${.CURDIR}/../../..
 
@@ -8,7 +8,7 @@ NOLIBCSANITIZER=# defined
 NOSANITIZER=	# defined
 NORELRO=	# defined
 PROG?=		boot.efi
-NEWVERSWHAT?=	"EFI Boot"
+NEWVERSWHAT?=	"efiboot"
 
 EFIDIR= ${S}/external/bsd/gnu-efi/dist
 GNUEFIARCH?= ${MACHINE_CPU}

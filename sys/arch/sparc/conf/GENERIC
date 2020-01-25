@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.267 2019/05/08 13:40:16 isaki Exp $
+# $NetBSD: GENERIC,v 1.267.4.1 2020/01/25 22:38:43 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/sparc/conf/std.sparc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.267 $"
+#ident 		"GENERIC-$Revision: 1.267.4.1 $"
 
 maxusers	32
 
@@ -561,9 +561,6 @@ pseudo-device	ppp
 
 ## PPP over Ethernet (RFC 2516)
 pseudo-device	pppoe
-
-## Starmode Radio IP, a special hardware network device.
-#pseudo-device	strip		
 
 ## Network "tunnel" device, allowing protocol stacks to run in the userland.
 ## This is used by the third-party user-mode "ppp" program, and others.

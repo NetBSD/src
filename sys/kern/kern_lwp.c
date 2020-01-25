@@ -1,7 +1,8 @@
-/*	$NetBSD: kern_lwp.c,v 1.217.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.217.2.2 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -209,7 +210,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.217.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.217.2.2 2020/01/25 22:38:51 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1063,8 +1064,9 @@ lwp_exit(struct lwp *l)
 
 	SDT_PROBE(proc, kernel, , lwp__exit, l, 0, 0, 0, 0);
 
-	/* Verify that we hold no locks */
+	/* Verify that we hold no locks; for DIAGNOSTIC check kernel_lock. */
 	LOCKDEBUG_BARRIER(NULL, 0);
+	KASSERTMSG(curcpu()->ci_biglock_count == 0, "kernel_lock leaked");
 
 	/*
 	 * If we are the last live LWP in a process, we need to exit the
@@ -1080,7 +1082,6 @@ lwp_exit(struct lwp *l)
 	if (p->p_nlwps - p->p_nzlwps == 1) {
 		KASSERT(current == true);
 		KASSERT(p != &proc0);
-		/* XXXSMP kernel_lock not held */
 		exit1(l, 0, 0);
 		/* NOTREACHED */
 	}

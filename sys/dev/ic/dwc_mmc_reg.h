@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_mmc_reg.h,v 1.7 2018/06/16 00:15:40 jmcneill Exp $ */
+/* $NetBSD: dwc_mmc_reg.h,v 1.7.10.1 2020/01/25 22:38:46 ad Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -67,6 +67,7 @@
 #define DWC_MMC_IDIE			0x0090
 #define DWC_MMC_DSCADDR			0x0094
 #define DWC_MMC_BUFADDR			0x0098
+#define DWC_MMC_CARDTHRCTL		0x0100
 
 #define DWC_MMC_GCTRL_USE_INTERNAL_DMAC	__BIT(25)
 #define DWC_MMC_GCTRL_SEND_AUTO_STOP_CCSD __BIT(10)
@@ -107,7 +108,7 @@
 
 #define DWC_MMC_INT_CARD_REMOVE		__BIT(31)
 #define DWC_MMC_INT_CARD_INSERT		__BIT(30)
-#define DWC_MMC_INT_SDIO_INT		__BIT(16)
+#define DWC_MMC_INT_SDIO_INT(n)		__BIT(16 + (n))
 #define DWC_MMC_INT_END_BIT_ERR		__BIT(15)
 #define DWC_MMC_INT_AUTO_CMD_DONE	__BIT(14)
 #define DWC_MMC_INT_START_BIT_ERR	__BIT(13)
@@ -166,6 +167,9 @@
 	 DWC_MMC_IDST_DES_INVALID | DWC_MMC_IDST_FATAL_BUS_ERR)
 #define DWC_MMC_IDST_COMPLETE \
 	(DWC_MMC_IDST_RECEIVE_INT | DWC_MMC_IDST_TRANSMIT_INT)
+
+#define DWC_MMC_CARDTHRCTL_RDTHR	__BITS(27,16)
+#define DWC_MMC_CARDTHRCTL_RDTHREN	__BIT(0)
 
 struct dwc_mmc_idma_desc {
 	uint32_t		dma_config;

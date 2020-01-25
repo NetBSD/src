@@ -1,4 +1,4 @@
-/*	$NetBSD: init_sysctl.c,v 1.223.2.1 2020/01/08 11:02:16 ad Exp $ */
+/*	$NetBSD: init_sysctl.c,v 1.223.2.2 2020/01/25 22:38:50 ad Exp $ */
 
 /*-
  * Copyright (c) 2003, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.223.2.1 2020/01/08 11:02:16 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_sysctl.c,v 1.223.2.2 2020/01/25 22:38:50 ad Exp $");
 
 #include "opt_sysv.h"
 #include "opt_compat_netbsd.h"
@@ -873,6 +873,13 @@ sysctl_kern_maxproc(SYSCTLFN_ARGS)
 	if (nmaxproc > cpu_maxproc())
 		return (EINVAL);
 #endif
+	error = 0;
+#ifdef __HAVE_MAXPROC_HOOK
+	error = cpu_maxproc_hook(nmaxproc);
+#endif
+	if (error)
+		return error;
+
 	maxproc = nmaxproc;
 
 	return (0);

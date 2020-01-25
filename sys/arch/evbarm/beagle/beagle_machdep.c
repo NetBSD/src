@@ -1,4 +1,4 @@
-/*	$NetBSD: beagle_machdep.c,v 1.80 2019/11/23 18:03:57 martin Exp $ */
+/*	$NetBSD: beagle_machdep.c,v 1.80.2.1 2020/01/25 22:38:39 ad Exp $ */
 
 /*
  * Machine dependent functions for kernel setup for TI OSK5912 board.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.80 2019/11/23 18:03:57 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: beagle_machdep.c,v 1.80.2.1 2020/01/25 22:38:39 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -498,7 +498,7 @@ beagle_mpstart(void)
 	}
 	for (size_t i = 1; i < arm_cpu_max; i++) {
 		if ((arm_cpu_hatched & __BIT(i)) == 0) {
-		printf("%s: warning: cpu%zu failed to hatch\n",
+			printf("%s: warning: cpu%zu failed to hatch\n",
 			    __func__, i);
 		}
 	}

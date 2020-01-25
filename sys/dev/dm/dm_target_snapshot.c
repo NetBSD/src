@@ -1,4 +1,4 @@
-/*        $NetBSD: dm_target_snapshot.c,v 1.37 2019/12/21 11:59:03 tkusumi Exp $      */
+/*        $NetBSD: dm_target_snapshot.c,v 1.37.2.1 2020/01/25 22:38:45 ad Exp $      */
 
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.37 2019/12/21 11:59:03 tkusumi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dm_target_snapshot.c,v 1.37.2.1 2020/01/25 22:38:45 ad Exp $");
 
 /*
  * 1. Suspend my_data to temporarily stop any I/O while the snapshot is being
@@ -91,7 +91,7 @@ char *dm_target_snapshot_table(void *);
 int dm_target_snapshot_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_sync(dm_table_entry_t *);
 int dm_target_snapshot_destroy(dm_table_entry_t *);
-int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_snapshot_upcall(dm_table_entry_t *, struct buf *);
 
 /* dm snapshot origin driver */
 int dm_target_snapshot_orig_init(dm_table_entry_t *, int, char **);
@@ -99,7 +99,7 @@ char *dm_target_snapshot_orig_table(void *);
 int dm_target_snapshot_orig_strategy(dm_table_entry_t *, struct buf *);
 int dm_target_snapshot_orig_sync(dm_table_entry_t *);
 int dm_target_snapshot_orig_destroy(dm_table_entry_t *);
-int dm_target_snapshot_orig_upcall(dm_table_entry_t *, struct buf *);
+//int dm_target_snapshot_orig_upcall(dm_table_entry_t *, struct buf *);
 
 typedef struct target_snapshot_config {
 	dm_pdev_t *tsc_snap_dev;
@@ -155,7 +155,7 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt->strategy = &dm_target_snapshot_strategy;
 		dmt->sync = &dm_target_snapshot_sync;
 		dmt->destroy = &dm_target_snapshot_destroy;
-		dmt->upcall = &dm_target_snapshot_upcall;
+		//dmt->upcall = &dm_target_snapshot_upcall;
 
 		r = dm_target_insert(dmt);
 
@@ -167,7 +167,7 @@ dm_target_snapshot_modcmd(modcmd_t cmd, void *arg)
 		dmt1->strategy = &dm_target_snapshot_orig_strategy;
 		dmt1->sync = &dm_target_snapshot_orig_sync;
 		dmt1->destroy = &dm_target_snapshot_orig_destroy;
-		dmt1->upcall = &dm_target_snapshot_orig_upcall;
+		//dmt1->upcall = &dm_target_snapshot_orig_upcall;
 
 		r = dm_target_insert(dmt1);
 		break;
@@ -336,6 +336,7 @@ out:
 	return 0;
 }
 
+#if 0
 /* Upcall is used to inform other depended devices about IO. */
 int
 dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -349,6 +350,7 @@ dm_target_snapshot_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif
 
 /*
  * dm target snapshot origin routines.
@@ -475,6 +477,7 @@ out:
 	return 0;
 }
 
+#if 0
 /* Unsupported for this target. */
 int
 dm_target_snapshot_orig_upcall(dm_table_entry_t *table_en, struct buf *bp)
@@ -482,3 +485,4 @@ dm_target_snapshot_orig_upcall(dm_table_entry_t *table_en, struct buf *bp)
 
 	return 0;
 }
+#endif

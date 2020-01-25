@@ -1,4 +1,4 @@
-# $NetBSD: MMNET_GENERIC,v 1.46 2019/04/26 22:46:03 sevan Exp $
+# $NetBSD: MMNET_GENERIC,v 1.46.4.1 2020/01/25 22:38:39 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mmnet"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.46 $"
+#ident 		"GENERIC-$Revision: 1.46.4.1 $"
 
 maxusers	32		# estimated number of users
 
@@ -558,7 +558,6 @@ pseudo-device	loop			# network loopback
 pseudo-device	ppp			# Point-to-Point Protocol
 #pseudo-device	pppoe			# PPP over Ethernet (RFC 2516)
 #pseudo-device	sl			# Serial Line IP
-#pseudo-device	strip			# Starmode Radio IP (Metricom)
 #pseudo-device	irframetty		# IrDA frame line discipline
 #pseudo-device	tap			# virtual Ethernet
 pseudo-device	tun			# network tunneling over tty

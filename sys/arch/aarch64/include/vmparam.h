@@ -1,4 +1,4 @@
-/* $NetBSD: vmparam.h,v 1.8 2018/10/28 10:18:34 jmcneill Exp $ */
+/* $NetBSD: vmparam.h,v 1.8.6.1 2020/01/25 22:38:36 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -40,6 +40,17 @@
  * Default pager_map of 16MB is small and we have plenty of VA to burn.
  */
 #define	PAGER_MAP_DEFAULT_SIZE	(512 * 1024 * 1024)
+
+/*
+ * Defaults for Unified Buffer Cache parameters.
+ */
+
+#ifndef UBC_WINSHIFT
+#define	UBC_WINSHIFT	16	/* 64kB */
+#endif
+#ifndef UBC_NWINS
+#define	UBC_NWINS	4096	/* 256MB */
+#endif
 
 /*
  * AARCH64 supports 3 page sizes: 4KB, 16KB, 64KB.  Each page table can
@@ -165,10 +176,8 @@
 #define VM_PHYSSEG_MAX		64              /* XXX */
 #define VM_PHYSSEG_STRAT	VM_PSTRAT_BSEARCH
 
-#define VM_NFREELIST		3
+#define VM_NFREELIST		1
 #define VM_FREELIST_DEFAULT	0
-#define VM_FREELIST_FIRST4GB	1
-#define VM_FREELIST_HIGHMEM	2
 
 #elif defined(__arm__)
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_pax.c,v 1.60 2017/06/25 04:10:47 snj Exp $	*/
+/*	$NetBSD: kern_pax.c,v 1.60.12.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*
- * Copyright (c) 2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 2015, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.60 2017/06/25 04:10:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.60.12.1 2020/01/25 22:38:51 ad Exp $");
 
 #include "opt_pax.h"
 
@@ -69,7 +69,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_pax.c,v 1.60 2017/06/25 04:10:47 snj Exp $");
 #include <sys/sysctl.h>
 #include <sys/kmem.h>
 #include <sys/mman.h>
-#include <sys/fileassoc.h>
 #include <sys/syslog.h>
 #include <sys/vnode.h>
 #include <sys/queue.h>
@@ -155,8 +154,6 @@ static int pax_segvguard_expiry = PAX_SEGVGUARD_EXPIRY;
 static int pax_segvguard_suspension = PAX_SEGVGUARD_SUSPENSION;
 static int pax_segvguard_maxcrashes = PAX_SEGVGUARD_MAXCRASHES;
 
-static fileassoc_t segvguard_id;
-
 struct pax_segvguard_uid_entry {
 	uid_t sue_uid;
 	size_t sue_ncrashes;
@@ -170,7 +167,6 @@ struct pax_segvguard_entry {
 };
 
 static bool pax_segvguard_elf_flags_active(uint32_t);
-static void pax_segvguard_cleanup_cb(void *);
 #endif /* PAX_SEGVGUARD */
 
 SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
@@ -338,15 +334,6 @@ SYSCTL_SETUP(sysctl_security_pax_setup, "sysctl security.pax setup")
 void
 pax_init(void)
 {
-#ifdef PAX_SEGVGUARD
-	int error;
-
-	error = fileassoc_register("segvguard", pax_segvguard_cleanup_cb,
-	    &segvguard_id);
-	if (error) {
-		panic("pax_init: segvguard_id: error=%d\n", error);
-	}
-#endif /* PAX_SEGVGUARD */
 #ifdef PAX_ASLR
 	/* Adjust maximum stack by the size we can consume for ASLR */
 	extern rlim_t maxsmap;
@@ -704,13 +691,13 @@ pax_segvguard_elf_flags_active(uint32_t flags)
 	return true;
 }
 
-static void
-pax_segvguard_cleanup_cb(void *v)
+void
+pax_segvguard_cleanup(struct vnode *vp)
 {
-	struct pax_segvguard_entry *p = v;
+	struct pax_segvguard_entry *p = vp->v_segvguard;
 	struct pax_segvguard_uid_entry *up;
 
-	if (p == NULL) {
+	if (__predict_true(p == NULL)) {
 		return;
 	}
 	while ((up = LIST_FIRST(&p->segv_uids)) != NULL) {
@@ -718,14 +705,17 @@ pax_segvguard_cleanup_cb(void *v)
 		kmem_free(up, sizeof(*up));
 	}
 	kmem_free(p, sizeof(*p));
+	vp->v_segvguard = NULL;
 }
 
 /*
  * Called when a process of image vp generated a segfault.
+ *
+ * => exec_lock must be held by the caller
+ * => if "crashed" is true, exec_lock must be held for write
  */
 int
-pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
-    bool crashed)
+pax_segvguard(struct lwp *l, struct vnode *vp, const char *name, bool crashed)
 {
 	struct pax_segvguard_entry *p;
 	struct pax_segvguard_uid_entry *up;
@@ -734,6 +724,9 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	uint32_t flags;
 	bool have_uid;
 
+	KASSERT(rw_lock_held(&exec_lock));
+	KASSERT(!crashed || rw_write_held(&exec_lock));
+
 	flags = l->l_proc->p_pax;
 	if (!pax_flags_active(flags, P_PAX_GUARD))
 		return 0;
@@ -741,11 +734,8 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	if (vp == NULL)
 		return EFAULT;	
 
-	/* Check if we already monitor the file. */
-	p = fileassoc_lookup(vp, segvguard_id);
-
 	/* Fast-path if starting a program we don't know. */
-	if (p == NULL && !crashed)
+	if ((p = vp->v_segvguard) == NULL && !crashed)
 		return 0;
 
 	microtime(&tv);
@@ -756,7 +746,7 @@ pax_segvguard(struct lwp *l, struct vnode *vp, const char *name,
 	 */
 	if (p == NULL) {
 		p = kmem_alloc(sizeof(*p), KM_SLEEP);
-		fileassoc_add(vp, segvguard_id, p);
+		vp->v_segvguard = p;
 		LIST_INIT(&p->segv_uids);
 
 		/*

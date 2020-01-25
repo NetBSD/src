@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.152 2019/12/14 17:28:58 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.152.2.1 2020/01/25 22:38:53 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.152 2019/12/14 17:28:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.152.2.1 2020/01/25 22:38:53 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -773,6 +773,11 @@ uvm_km_free(struct vm_map *map, vaddr_t addr, vsize_t size, uvm_flag_t flags)
 #if (defined(PMAP_MAP_POOLPAGE) || defined(PMAP_UNMAP_POOLPAGE)) && \
     (!defined(PMAP_MAP_POOLPAGE) || !defined(PMAP_UNMAP_POOLPAGE))
 #error Must specify MAP and UNMAP together.
+#endif
+
+#if defined(PMAP_ALLOC_POOLPAGE) && \
+    !defined(PMAP_MAP_POOLPAGE) && !defined(PMAP_UNMAP_POOLPAGE)
+#error Must specify ALLOC with MAP and UNMAP
 #endif
 
 int

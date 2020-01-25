@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_mutex.c,v 1.88 2020/01/07 13:44:23 ad Exp $	*/
+/*	$NetBSD: kern_mutex.c,v 1.88.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
 #define	__MUTEX_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.88 2020/01/07 13:44:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_mutex.c,v 1.88.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -846,7 +846,8 @@ mutex_owner(const kmutex_t *mtx)
  * mutex_owner_running:
  *
  *	Return true if an adaptive mutex is unheld, or held and the owner is
- *	running on a CPU.  For the pagedaemon.
+ *	running on a CPU.  For the pagedaemon only - do not document or use
+ *	in other code.
  */
 bool
 mutex_owner_running(const kmutex_t *mtx)

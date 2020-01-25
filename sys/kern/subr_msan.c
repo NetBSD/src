@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_msan.c,v 1.5 2019/12/08 11:53:54 maxv Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.5.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*
- * Copyright (c) 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.5 2019/12/08 11:53:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.5.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -1538,7 +1538,7 @@ kmsan_dma_sync_uio(struct uio *uio, bus_addr_t offset, bus_size_t len,
 	struct iovec *iov;
 	int i;
 
-	if (uio->uio_vmspace != NULL)
+	if (!VMSPACE_IS_KERNEL_P(uio->uio_vmspace))
 		return;
 
 	resid = uio->uio_resid;

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.2.1 2020/01/17 21:47:22 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.2 2020/01/25 22:38:36 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.50.2.1 2020/01/17 21:47:22 ad Exp $")
+RCSID("$NetBSD: locore.S,v 1.50.2.2 2020/01/25 22:38:36 ad Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -80,12 +80,6 @@ RCSID("$NetBSD: locore.S,v 1.50.2.1 2020/01/17 21:47:22 ad Exp $")
 #define PRINT(string)	bl xprint; .asciz string; .align 2
 
 
-/* load far effective address (pc relative) */
-.macro	ADDR, reg, addr
-	adrp	\reg, \addr
-	add	\reg, \reg, #:lo12:\addr
-.endm
-
 	.text
 	.align	3
 ASENTRY_NP(aarch64_start)
@@ -94,7 +88,7 @@ ASENTRY_NP(aarch64_start)
 	mov	x28, sp
 
 	/* set stack pointer for boot */
-	ADDR	x0, bootstk
+	adrl	x0, bootstk
 	mov	sp, x0
 
 	bl	clear_bss
@@ -165,11 +159,11 @@ vstart:
 	DPRINTREG("PC               = ", x20)
 
 	/* set exception vector */
-	ADDR	x0, _C_LABEL(el1_vectors)
+	adrl	x0, _C_LABEL(el1_vectors)
 	msr	vbar_el1, x0
 
 	/* set lwp0 stack */
-	ADDR	x0, lwp0uspace
+	adrl	x0, lwp0uspace
 	add	x0, x0, #(UPAGES * PAGE_SIZE)
 	sub	x0, x0, #TF_SIZE	/* lwp0space + USPACE - TF_SIZE */
 	mov	sp, x0			/* define lwp0 ksp bottom */
@@ -180,7 +174,7 @@ vstart:
 	msr	tpidrro_el0, xzr
 
 	/* set curcpu() */
-	ADDR	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
+	adrl	x0, cpu_info_store	/* cpu_info_store is cpu_info[0] */
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 	DPRINTREG("curcpu           = ", x0);
 
@@ -193,7 +187,7 @@ vstart:
 	bl	aarch64_getcacheinfo
 
 #ifdef KASAN
-	ADDR	x0, lwp0uspace
+	adrl	x0, lwp0uspace
 	bl	_C_LABEL(kasan_early_init)
 #endif
 
@@ -216,8 +210,8 @@ ASEND(aarch64_start)
 
 ASENTRY_NP(clear_bss)
 	/* Zero the BSS. The size must be aligned 16, usually it should be. */
-	ADDR	x14, __bss_start__
-	ADDR	x15, __bss_end__
+	adrl	x14, __bss_start__
+	adrl	x15, __bss_end__
 	b	2f
 1:	stp	xzr, xzr, [x14], #16
 2:	cmp	x14, x15
@@ -267,7 +261,7 @@ locore_lock_enter:
 	mov	x3, xzr			/* x3 = level */
 levelloop:
 	/* lock_level[] and lock_turn[] are always accessed via PA(devmap) */
-	ADDR	x0, kern_vtopdiff
+	adrl	x0, kern_vtopdiff
 	ldr	x0, [x0]
 	ldr	x4, =lock_level
 	sub	x4, x4, x0
@@ -308,7 +302,7 @@ nextlevel:
 locore_lock_exit:
 #ifdef DEBUG_LOCORE_PRINT_LOCK
 	/* lock_level[] and lock_turn[] are always accessed via PA(devmap) */
-	ADDR	x0, kern_vtopdiff
+	adrl	x0, kern_vtopdiff
 	ldr	x0, [x0]
 	ldr	x1, =lock_level
 	sub	x1, x1, x0
@@ -369,7 +363,7 @@ ENTRY_NP(cpu_mpstart)
 	 * resolve own cpuindex. my mpidr is stored in
 	 * extern uint64_t cpu_mpidr[MAXCPUS]
 	 */
-	ADDR	x0, _C_LABEL(cpu_mpidr)
+	adrl	x0, _C_LABEL(cpu_mpidr)
 	mov	x1, xzr
 1:
 	add	x1, x1, #1
@@ -388,7 +382,7 @@ ENTRY_NP(cpu_mpstart)
 	/* set stack pointer for boot */
 	mov	x1, #BOOT_AP_STACKSIZE
 	mul	x1, x1, x27
-	ADDR	x0, bootstk
+	adrl	x0, bootstk
 	add	sp, x0, x1  /* sp = bootstk + (BOOT_AP_STACKSIZE * cpuindex) */
 
 	bl	1f
@@ -434,7 +428,7 @@ mp_vstart:
 	CPU_DPRINTREG("PC               = ", x20)
 
 	/* set exception vector */
-	ADDR	x0, _C_LABEL(el1_vectors)
+	adrl	x0, _C_LABEL(el1_vectors)
 	msr	vbar_el1, x0
 
 	/* lwp-private = NULL */
@@ -444,7 +438,7 @@ mp_vstart:
 	/* set curcpu(), and fill curcpu()->ci_{midr,mpidr} */
 	mov	x0, #CPU_INFO_SIZE
 	mul	x0, x27, x0
-	ADDR	x1, _C_LABEL(cpu_info_store)
+	adrl	x1, _C_LABEL(cpu_info_store)
 	add	x0, x0, x1		/* x0 = &cpu_info_store[cpuindex] */
 	msr	tpidr_el1, x0		/* tpidr_el1 = curcpu() = x0 */
 
@@ -455,7 +449,7 @@ mp_vstart:
 
 	mov	x0, #32
 	udiv	x1, x27, x0
-	ADDR	x0, _C_LABEL(aarch64_cpu_hatched)
+	adrl	x0, _C_LABEL(aarch64_cpu_hatched)
 	add	x28, x0, x1, lsl #2	/* x28 = &aarch64_cpu_hatched[cpuindex/32] */
 	mov	x0, #1
 	mov	x2, #32
@@ -474,7 +468,7 @@ mp_vstart:
 
 	mov	x0, #32
 	udiv	x1, x27, x0
-	ADDR	x0, _C_LABEL(aarch64_cpu_mbox)
+	adrl	x0, _C_LABEL(aarch64_cpu_mbox)
 	add	x28, x0, x1, lsl #2	/* x28 = &aarch64_cpu_mbox[cpuindex/32] */
 
 	/* wait for the mailbox start bit to become true */
@@ -732,13 +726,13 @@ save_ttbrs:
 	/* save ttbr[01]_el1 for AP */
 	mrs	x0, ttbr0_el1
 	mrs	x1, ttbr1_el1
-	ADDR	x2, ttbr_save
+	adrl	x2, ttbr_save
 	stp	x0, x1, [x2]
 	ret
 
 load_ttbrs:
 	/* load ttbr[01]_el1 */
-	ADDR	x2, ttbr_save
+	adrl	x2, ttbr_save
 	ldp	x0, x1, [x2]
 	msr	ttbr0_el1, x0
 	msr	ttbr1_el1, x1
@@ -814,7 +808,7 @@ init_mmutable:
 	mov	x4, #LX_BLKPAG_ATTR_NORMAL_NC|LX_BLKPAG_AP_RW	/* attr */
 	mov	x3, #L2_SIZE			/* blocksize */
 	adr	x0, start			/* va = start */
-	ADDR	x2, _end
+	adrl	x2, _end
 	sub	x2, x2, x0			/* size = _end - start */
 	add	x2, x2, #BOOTPAGE_ALLOC_MAX	/* for bootpage_alloc() */
 	mov	x1, x0				/* pa */
@@ -822,7 +816,7 @@ init_mmutable:
 	cbnz	x0, init_mmutable_error
 
 #ifdef FDT
-	ADDR	x8, _C_LABEL(fdt_addr_r)
+	adrl	x8, _C_LABEL(fdt_addr_r)
 	ldr	x8, [x8]
 
 	VPRINT("Creating VA=PA tables for FDT\n")
@@ -847,7 +841,7 @@ init_mmutable:
 	orr	x4, x4, #LX_BLKPAG_UXN
 	mov	x3, #L2_SIZE			/* blocksize */
 	adr	x1, start			/* pa = start */
-	ADDR	x2, _end
+	adrl	x2, _end
 	sub	x2, x2, x1			/* size = _end - start */
 	ldr	x0, =start			/* va */
 	bl	pmapboot_enter
@@ -865,7 +859,7 @@ init_mmutable_done:
 /* return PA of allocated page */
 ENTRY_NP(bootpage_alloc)
 	/* x2 = kernend_extra */
-	ADDR	x3, kernend_extra
+	adrl	x3, kernend_extra
 	ldr	x2, [x3]
 	/* if (kernend_extra < 0) return NULL */
 	mov	x0, xzr
@@ -873,7 +867,7 @@ ENTRY_NP(bootpage_alloc)
 	bmi	bootpage_alloc_done
 
 	/* x0 = PA of _end[] */
-	ADDR	x1, kern_vtopdiff
+	adrl	x1, kern_vtopdiff
 	ldr	x1, [x1]
 	ldr	x0, =ARM_BOOTSTRAP_LxPT
 	sub	x0, x0, x1

@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_lwp.c,v 1.71 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.71.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.71 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.71.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,11 +97,10 @@ mi_startlwp(void *arg)
 }
 
 int
-do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
+do_lwp_create(lwp_t *l, void *arg, u_long flags, lwp_t **l2,
     const sigset_t *sigmask, const stack_t *sigstk)
 {
 	struct proc *p = l->l_proc;
-	struct lwp *l2;
 	vaddr_t uaddr;
 	int error;
 
@@ -112,14 +111,12 @@ do_lwp_create(lwp_t *l, void *arg, u_long flags, lwpid_t *new_lwp,
 		return ENOMEM;
 
 	error = lwp_create(l, p, uaddr, flags & LWP_DETACHED, NULL, 0,
-	    mi_startlwp, arg, &l2, l->l_class, sigmask, &lwp_ss_init);
+	    mi_startlwp, arg, l2, l->l_class, sigmask, &lwp_ss_init);
 	if (__predict_false(error)) {
 		uvm_uarea_free(uaddr);
 		return error;
 	}
 
-	*new_lwp = l2->l_lid;
-	lwp_start(l2, flags);
 	return 0;
 }
 
@@ -134,7 +131,7 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 	} */
 	struct proc *p = l->l_proc;
 	ucontext_t *newuc;
-	lwpid_t lid;
+	lwp_t *l2;
 	int error;
 
 	newuc = kmem_alloc(sizeof(ucontext_t), KM_SLEEP);
@@ -153,18 +150,19 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 
 	const sigset_t *sigmask = newuc->uc_flags & _UC_SIGMASK ?
 	    &newuc->uc_sigmask : &l->l_sigmask;
-	error = do_lwp_create(l, newuc, SCARG(uap, flags), &lid, sigmask,
+	error = do_lwp_create(l, newuc, SCARG(uap, flags), &l2, sigmask,
 	    &SS_INIT);
 	if (error)
 		goto fail;
 
-	/*
-	 * do not free ucontext in case of an error here,
-	 * the lwp will actually run and access it
-	 */
-	return copyout(&lid, SCARG(uap, new_lwp), sizeof(lid));
+	error = copyout(&l2->l_lid, SCARG(uap, new_lwp), sizeof(l2->l_lid));
+	if (error != 0)
+		lwp_exit(l2);
+	else
+		lwp_start(l2, SCARG(uap, flags));
+	return error;
 
-fail:
+ fail:
 	kmem_free(newuc, sizeof(ucontext_t));
 	return error;
 }

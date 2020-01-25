@@ -1,7 +1,7 @@
-/*	$NetBSD: subr_kmem.c,v 1.77 2019/11/14 16:23:52 maxv Exp $	*/
+/*	$NetBSD: subr_kmem.c,v 1.77.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*
- * Copyright (c) 2009-2015 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009-2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.77 2019/11/14 16:23:52 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_kmem.c,v 1.77.2.1 2020/01/25 22:38:51 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kmem.h"
@@ -105,35 +105,35 @@ struct kmem_cache_info {
 };
 
 static const struct kmem_cache_info kmem_cache_sizes[] = {
-	{  8, "kmem-8" },
-	{ 16, "kmem-16" },
-	{ 24, "kmem-24" },
-	{ 32, "kmem-32" },
-	{ 40, "kmem-40" },
-	{ 48, "kmem-48" },
-	{ 56, "kmem-56" },
-	{ 64, "kmem-64" },
-	{ 80, "kmem-80" },
-	{ 96, "kmem-96" },
-	{ 112, "kmem-112" },
-	{ 128, "kmem-128" },
-	{ 160, "kmem-160" },
-	{ 192, "kmem-192" },
-	{ 224, "kmem-224" },
-	{ 256, "kmem-256" },
-	{ 320, "kmem-320" },
-	{ 384, "kmem-384" },
-	{ 448, "kmem-448" },
-	{ 512, "kmem-512" },
-	{ 768, "kmem-768" },
-	{ 1024, "kmem-1024" },
+	{  8, "kmem-00008" },
+	{ 16, "kmem-00016" },
+	{ 24, "kmem-00024" },
+	{ 32, "kmem-00032" },
+	{ 40, "kmem-00040" },
+	{ 48, "kmem-00048" },
+	{ 56, "kmem-00056" },
+	{ 64, "kmem-00064" },
+	{ 80, "kmem-00080" },
+	{ 96, "kmem-00096" },
+	{ 112, "kmem-00112" },
+	{ 128, "kmem-00128" },
+	{ 160, "kmem-00160" },
+	{ 192, "kmem-00192" },
+	{ 224, "kmem-00224" },
+	{ 256, "kmem-00256" },
+	{ 320, "kmem-00320" },
+	{ 384, "kmem-00384" },
+	{ 448, "kmem-00448" },
+	{ 512, "kmem-00512" },
+	{ 768, "kmem-00768" },
+	{ 1024, "kmem-01024" },
 	{ 0, NULL }
 };
 
 static const struct kmem_cache_info kmem_cache_big_sizes[] = {
-	{ 2048, "kmem-2048" },
-	{ 4096, "kmem-4096" },
-	{ 8192, "kmem-8192" },
+	{ 2048, "kmem-02048" },
+	{ 4096, "kmem-04096" },
+	{ 8192, "kmem-08192" },
 	{ 16384, "kmem-16384" },
 	{ 0, NULL }
 };
@@ -359,22 +359,28 @@ kmem_create_caches(const struct kmem_cache_info *array,
 		pool_cache_t pc;
 		size_t align;
 
-		if ((cache_size & (CACHE_LINE_SIZE - 1)) == 0)
-			align = CACHE_LINE_SIZE;
-		else if ((cache_size & (PAGE_SIZE - 1)) == 0)
-			align = PAGE_SIZE;
-		else
-			align = KMEM_ALIGN;
-
-		if (cache_size < CACHE_LINE_SIZE)
-			flags |= PR_NOTOUCH;
-
 		/* check if we reached the requested size */
 		if (cache_size > maxsize || cache_size > PAGE_SIZE) {
 			break;
 		}
-		if ((cache_size >> shift) > maxidx) {
-			maxidx = cache_size >> shift;
+
+		/*
+		 * Exclude caches with size not a factor or multiple of the
+		 * coherency unit.
+		 */
+		if (cache_size < COHERENCY_UNIT) {
+			if (COHERENCY_UNIT % cache_size > 0) {
+			    	continue;
+			}
+			flags |= PR_NOTOUCH;
+			align = KMEM_ALIGN;
+		} else if ((cache_size & (PAGE_SIZE - 1)) == 0) {
+			align = PAGE_SIZE;
+		} else {
+			if ((cache_size % COHERENCY_UNIT) > 0) {
+				continue;
+			}
+			align = COHERENCY_UNIT;
 		}
 
 		if ((cache_size >> shift) > maxidx) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: nd6.c,v 1.265 2019/09/25 09:53:38 ozaki-r Exp $	*/
+/*	$NetBSD: nd6.c,v 1.265.2.1 2020/01/25 22:38:52 ad Exp $	*/
 /*	$KAME: nd6.c,v 1.279 2002/06/08 11:16:51 itojun Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.265 2019/09/25 09:53:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.265.2.1 2020/01/25 22:38:52 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -63,7 +63,6 @@ __KERNEL_RCSID(0, "$NetBSD: nd6.c,v 1.265 2019/09/25 09:53:38 ozaki-r Exp $");
 #include <net/if_types.h>
 #include <net/route.h>
 #include <net/if_ether.h>
-#include <net/if_fddi.h>
 #include <net/if_arc.h>
 
 #include <netinet/in.h>
@@ -221,9 +220,6 @@ nd6_setmtu0(struct ifnet *ifp, struct nd_ifinfo *ndi)
 	switch (ifp->if_type) {
 	case IFT_ARCNET:
 		ndi->maxmtu = MIN(ARC_PHDS_MAXMTU, ifp->if_mtu); /* RFC2497 */
-		break;
-	case IFT_FDDI:
-		ndi->maxmtu = MIN(FDDIIPMTU, ifp->if_mtu);
 		break;
 	default:
 		ndi->maxmtu = ifp->if_mtu;
@@ -2482,7 +2478,7 @@ nd6_need_cache(struct ifnet *ifp)
 {
 	/*
 	 * XXX: we currently do not make neighbor cache on any interface
-	 * other than ARCnet, Ethernet, FDDI and GIF.
+	 * other than ARCnet, Ethernet, and GIF.
 	 *
 	 * RFC2893 says:
 	 * - unidirectional tunnels needs no ND
@@ -2490,7 +2486,6 @@ nd6_need_cache(struct ifnet *ifp)
 	switch (ifp->if_type) {
 	case IFT_ARCNET:
 	case IFT_ETHER:
-	case IFT_FDDI:
 	case IFT_IEEE1394:
 	case IFT_CARP:
 	case IFT_GIF:		/* XXX need more cases? */

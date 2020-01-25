@@ -1,4 +1,4 @@
-#	$NetBSD: GENERIC,v 1.133 2019/04/26 21:40:32 sevan Exp $
+#	$NetBSD: GENERIC,v 1.133.4.1 2020/01/25 22:38:43 ad Exp $
 #
 # Generic Shark configuration.
 #
@@ -7,7 +7,7 @@ include	"arch/shark/conf/std.shark"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.133 $"
+#ident		"GENERIC-$Revision: 1.133.4.1 $"
 
 # estimated number of users
 maxusers	32
@@ -288,7 +288,6 @@ pseudo-device	carp			# Common Address Redundancy Protocol
 pseudo-device	gif			# IPv[46] over IPv[46] tunnel (RFC1933)
 #pseudo-device	faith			# IPv[46] tcp relay translation i/f
 pseudo-device	stf			# 6to4 IPv6 over IPv4 encapsulation
-#pseudo-device	strip			# STarmode Radio IP (Metricon Ricochet)
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	vnd			# disk-like interface to files
 #options 	VND_COMPRESSION		# compressed vnd(4)

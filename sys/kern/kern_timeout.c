@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_timeout.c,v 1.57 2019/11/21 17:57:40 ad Exp $	*/
+/*	$NetBSD: kern_timeout.c,v 1.57.2.1 2020/01/25 22:38:51 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.57 2019/11/21 17:57:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_timeout.c,v 1.57.2.1 2020/01/25 22:38:51 ad Exp $");
 
 /*
  * Timeouts are kept in a hierarchical timing wheel.  The c_time is the
@@ -505,14 +505,25 @@ callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
 	l = curlwp;
 	relock = NULL;
 	for (;;) {
+		/*
+		 * At this point we know the callout is not pending, but it
+		 * could be running on a CPU somewhere.  That can be curcpu
+		 * in a few cases:
+		 *
+		 * - curlwp is a higher priority soft interrupt
+		 * - the callout blocked on a lock and is currently asleep
+		 * - the callout itself has called callout_halt() (nice!)
+		 */
 		cc = c->c_cpu;
 		if (__predict_true(cc->cc_active != c || cc->cc_lwp == l))
 			break;
+
+		/* It's running - need to wait for it to complete. */
 		if (interlock != NULL) {
 			/*
 			 * Avoid potential scheduler lock order problems by
 			 * dropping the interlock without the callout lock
-			 * held.
+			 * held; then retry.
 			 */
 			mutex_spin_exit(lock);
 			mutex_exit(interlock);
@@ -529,7 +540,16 @@ callout_wait(callout_impl_t *c, void *interlock, kmutex_t *lock)
 			    &sleep_syncobj);
 			sleepq_block(0, false);
 		}
+
+		/*
+		 * Re-lock the callout and check the state of play again. 
+		 * It's a common design pattern for callouts to re-schedule
+		 * themselves so put a stop to it again if needed.
+		 */
 		lock = callout_lock(c);
+		if ((c->c_flags & CALLOUT_PENDING) != 0)
+			CIRCQ_REMOVE(&c->c_list);
+		c->c_flags &= ~(CALLOUT_PENDING|CALLOUT_FIRED);
 	}
 
 	mutex_spin_exit(lock);
