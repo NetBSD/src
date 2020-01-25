@@ -1,4 +1,4 @@
-#	$NetBSD: files.pci,v 1.424 2020/01/20 18:38:17 thorpej Exp $
+#	$NetBSD: files.pci,v 1.425 2020/01/25 18:59:43 thorpej Exp $
 #
 # Config file and device description for machine-independent PCI code.
 # Included by ports that need it.  Requires that the SCSI files be
@@ -183,13 +183,7 @@ file	dev/pci/if_ep_pci.c		ep_pci
 attach	ex at pci with ex_pci
 file	dev/pci/if_ex_pci.c		ex_pci
 
-# AMD am7990 (LANCE) -based Ethernet controllers
-# device declaration in sys/conf/files
-attach	le at pci with le_pci: le32
-file	dev/pci/if_le_pci.c		le_pci
-
 # AMD PCnet-PCI Ethernet controller family
-# Supersedes if_le_pci.c
 device	pcn: ether, ifnet, arp, mii
 attach	pcn at pci
 file	dev/pci/if_pcn.c		pcn
