@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.334.2.3 2020/01/23 12:17:08 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.334.2.4 2020/01/25 21:45:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.3 2020/01/23 12:17:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.4 2020/01/25 21:45:00 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -83,7 +83,6 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.334.2.3 2020/01/23 12:17:08 ad Exp 
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
-#include <sys/rwlock.h>
 #include <sys/sched.h>
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
