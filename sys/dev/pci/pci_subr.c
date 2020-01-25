@@ -1,4 +1,4 @@
-/*	$NetBSD: pci_subr.c,v 1.219 2020/01/17 02:08:25 msaitoh Exp $	*/
+/*	$NetBSD: pci_subr.c,v 1.220 2020/01/25 07:59:14 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Zubin D. Dittia.  All rights reserved.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.219 2020/01/17 02:08:25 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_subr.c,v 1.220 2020/01/25 07:59:14 msaitoh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pci.h"
@@ -1869,6 +1869,9 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 	onoff("Enable No Snoop", reg, PCIE_DCSR_ENA_NO_SNOOP);
 	printf("      Max Read Request Size: %d byte\n",
 	    128 << __SHIFTOUT(reg, PCIE_DCSR_MAX_READ_REQ));
+	if (pcie_devtype == PCIE_XCAP_TYPE_PCIE2PCI)
+		onoff("Bridge Config Retry Enable", reg,
+		    PCIE_DCSR_BRDG_CFG_RETRY);
 
 	/* Device Status Register */
 	reg = regs[o2i(capoff + PCIE_DCSR)];
@@ -2254,6 +2257,8 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			pci_print_pcie_linkspeedvector(
 				__SHIFTOUT(reg, PCIE_LCAP2_LOWSKPOS_RECSUPPSV));
 			printf("\n");
+			onoff("Retimer Presence Detect Supported", reg,
+			    PCIE_LCAP2_RETIMERPD);
 			onoff("DRS Supported", reg, PCIE_LCAP2_DRS);
 			drs_supported = (reg & PCIE_LCAP2_DRS) ? true : false;
 		}
@@ -2273,7 +2278,7 @@ pci_conf_print_pcie_cap(const pcireg_t *regs, int capoff)
 			__SHIFTOUT(reg, PCIE_LCSR2_SEL_DEEMP));
 		printf("\n");
 		printf("      Transmit Margin: %u\n",
-		    (unsigned int)(reg & PCIE_LCSR2_TX_MARGIN) >> 7);
+		    (unsigned int)__SHIFTOUT(reg,  PCIE_LCSR2_TX_MARGIN));
 		onoff("Enter Modified Compliance", reg, PCIE_LCSR2_EN_MCOMP);
 		onoff("Compliance SOS", reg, PCIE_LCSR2_COMP_SOS);
 		printf("      Compliance Present/De-emphasis: ");
