@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.31 2020/01/12 09:29:18 mrg Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.32 2020/01/25 18:21:37 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.31 2020/01/12 09:29:18 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.32 2020/01/25 18:21:37 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -310,7 +310,8 @@ arm_fdt_cpu_mpstart(void)
 
 		error = arm_fdt_cpu_enable(child, acm);
 		if (error != 0) {
-			aprint_error("%s: failed to enable CPU %#" PRIx64 "\n", __func__, mpidr);
+			aprint_error("%s: failed to enable CPU %#" PRIx64 "\n",
+			    __func__, mpidr);
 			continue;
 		}
 
