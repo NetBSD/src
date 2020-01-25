@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cwd.c,v 1.4.62.1 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: vfs_cwd.c,v 1.4.62.2 2020/01/25 18:42:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.4.62.1 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.4.62.2 2020/01/25 18:42:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -183,8 +183,10 @@ cwdenter(krw_t op)
 		 * changes while the caller is pondering the cwdinfo.
 		 */
 		kpreempt_disable();
-		if (__predict_true(mutex_owner(&cwdi->cwdi_lock) == NULL))
+		if (__predict_true(mutex_owner(&cwdi->cwdi_lock) == NULL)) {
+			membar_consumer();
 			return cwdi;
+		}
 		kpreempt_enable();
 		mutex_enter(&cwdi->cwdi_lock);
 	} else {
