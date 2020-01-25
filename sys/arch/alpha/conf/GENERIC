@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.399 2020/01/20 18:38:19 thorpej Exp $
+# $NetBSD: GENERIC,v 1.400 2020/01/25 18:38:34 thorpej Exp $
 #
 # This machine description file is used to generate the default NetBSD
 # kernel.
@@ -19,7 +19,7 @@ include 	"arch/alpha/conf/std.alpha"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-ident		"GENERIC-$Revision: 1.399 $"
+ident		"GENERIC-$Revision: 1.400 $"
 
 maxusers 32
 
@@ -313,7 +313,7 @@ fxp*	at	pci? dev ? function ?		# Intel EEPRO 10+/100B
 gsip*	at	pci? dev ? function ?		# NS DP83820 Gigabit Ethernet
 iha*	at	pci? dev ? function ?		# Initio INIC-940/950 SCSI
 isp*	at	pci? dev ? function ?		# Qlogic ISP 10x0 SCSI
-le*	at	pci? dev ? function ?		# PCI LANCE Ethernet (untested)
+pcn*	at	pci? dev ? function ?		# PCnet-PCI Ethernet
 sf*	at	pci? dev ? function ?		# Adaptec AIC-6915 Ethernet
 siop*	at	pci? dev ? function ?		# Symbios 53c8xx SCSI
 esiop*	at	pci? dev ? function ?		# Symbios 53c875 SCSI and newer
