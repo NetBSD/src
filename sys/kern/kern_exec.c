@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_exec.c,v 1.485.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.485.2.2 2020/01/25 15:54:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485.2.2 2020/01/25 15:54:03 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -664,7 +664,7 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	char *path, *bp;
 	size_t len, tlen;
 	int error;
-	struct cwdinfo *cwdi;
+	struct vnode *dvp;
 
 	path = PNBUF_GET();
 	if (seg == UIO_SYSSPACE) {
@@ -690,11 +690,10 @@ exec_makepathbuf(struct lwp *l, const char *upath, enum uio_seg seg,
 	memmove(bp, path, len);
 	*(--bp) = '/';
 
-	cwdi = l->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, MAXPATHLEN / 2,
+	dvp = cwdcdir();
+	error = getcwd_common(dvp, NULL, &bp, path, MAXPATHLEN / 2,
 	    GETCWD_CHECK_ACCESS, l);
-	rw_exit(&cwdi->cwdi_lock);
+	vrele(dvp);
 
 	if (error)
 		goto err;
@@ -1111,6 +1110,7 @@ static void
 emulexec(struct lwp *l, struct exec_package *epp)
 {
 	struct proc		*p = l->l_proc;
+	struct cwdinfo		*cwdi;
 
 	/* The emulation root will usually have been found when we looked
 	 * for the elf interpreter (or similar), if not look now. */
@@ -1119,9 +1119,10 @@ emulexec(struct lwp *l, struct exec_package *epp)
 		emul_find_root(l, epp);
 
 	/* Any old emulation root got removed by fdcloseexec */
-	rw_enter(&p->p_cwdi->cwdi_lock, RW_WRITER);
-	p->p_cwdi->cwdi_edir = epp->ep_emul_root;
-	rw_exit(&p->p_cwdi->cwdi_lock);
+	KASSERT(p == curproc);
+	cwdi = cwdenter(RW_WRITER);
+	cwdi->cwdi_edir = epp->ep_emul_root;
+	cwdexit(cwdi);
 	epp->ep_emul_root = NULL;
 	if (epp->ep_interp != NULL)
 		vrele(epp->ep_interp);

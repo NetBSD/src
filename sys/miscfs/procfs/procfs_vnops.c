@@ -1,7 +1,7 @@
-/*	$NetBSD: procfs_vnops.c,v 1.207 2019/08/29 06:43:13 hannken Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.207.2.1 2020/01/25 15:54:04 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.207 2019/08/29 06:43:13 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.207.2.1 2020/01/25 15:54:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -557,7 +557,7 @@ static void
 procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
     char *path, size_t len)
 {
-	struct cwdinfo *cwdi;
+	const struct cwdinfo *cwdi;
 	struct vnode *vp, *rvp;
 	char *bp;
 
@@ -566,26 +566,25 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 	 * we are interested in to prevent it from disappearing
 	 * before getcwd_common() below.
 	 */
-	rw_enter(&target->p_cwdi->cwdi_lock, RW_READER);
+	cwdi = cwdlock(target);
 	switch (t) {
 	case PFScwd:
-		vp = target->p_cwdi->cwdi_cdir;
+		vp = cwdi->cwdi_cdir;
 		break;
 	case PFSchroot:
-		vp = target->p_cwdi->cwdi_rdir;
+		vp = cwdi->cwdi_rdir;
 		break;
 	default:
-		rw_exit(&target->p_cwdi->cwdi_lock);
+		cwdunlock(target);
 		return;
 	}
 	if (vp != NULL)
 		vref(vp);
-	rw_exit(&target->p_cwdi->cwdi_lock);
+	cwdunlock(target);
 
-	cwdi = caller->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	KASSERT(caller == curlwp);
 
-	rvp = cwdi->cwdi_rdir;
+	rvp = cwdrdir();
 	bp = bpp ? *bpp : NULL;
 
 	/*
@@ -598,12 +597,15 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 			*bpp = bp;
 		}
 		vrele(vp);
-		rw_exit(&cwdi->cwdi_lock);
+		if (rvp != NULL)
+			vrele(rvp);
 		return;
 	}
 
-	if (rvp == NULL)
+	if (rvp == NULL) {
 		rvp = rootvnode;
+		vref(rvp);
+	}
 	if (vp == NULL || getcwd_common(vp, rvp, bp ? &bp : NULL, path,
 	    len / 2, 0, caller) != 0) {
 		if (bpp) {
@@ -617,7 +619,8 @@ procfs_dir(pfstype t, struct lwp *caller, struct proc *target, char **bpp,
 
 	if (vp != NULL)
 		vrele(vp);
-	rw_exit(&cwdi->cwdi_lock);
+	if (rvp != NULL)
+		vrele(rvp);
 }
 
 /*
@@ -1646,7 +1649,7 @@ procfs_readlink(void *v)
 		len = strlen(bp);
 	} else {
 		file_t *fp;
-		struct vnode *vxp, *vp;
+		struct vnode *vxp, *rvp;
 
 		if ((error = procfs_proc_lock(pfs->pfs_pid, &pown, ESRCH)) != 0)
 			return error;
@@ -1679,14 +1682,13 @@ procfs_readlink(void *v)
 			if (vxp->v_tag == VT_PROCFS) {
 				*--bp = '/';
 			} else {
-				rw_enter(&curproc->p_cwdi->cwdi_lock,
-				    RW_READER);
-				vp = curproc->p_cwdi->cwdi_rdir;
-				if (vp == NULL)
-					vp = rootvnode;
-				error = getcwd_common(vxp, vp, &bp, path,
+				if ((rvp = cwdrdir()) == NULL) {
+					rvp = rootvnode;
+					vref(rvp);
+				}
+				error = getcwd_common(vxp, rvp, &bp, path,
 				    MAXPATHLEN / 2, 0, curlwp);
-				rw_exit(&curproc->p_cwdi->cwdi_lock);
+				vrele(rvp);
 			}
 			if (error)
 				break;

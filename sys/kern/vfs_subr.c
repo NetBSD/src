@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr.c,v 1.478.2.2 2020/01/24 16:05:22 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.478.2.3 2020/01/25 15:54:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.2 2020/01/24 16:05:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.3 2020/01/25 15:54:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1215,24 +1215,25 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	size_t size;
 	struct statvfs *sfs = &mp->mnt_stat;
 	int (*fun)(const void *, void *, size_t, size_t *);
+	struct vnode *rvp;
 
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsname,
 	    sizeof(mp->mnt_stat.f_fstypename));
 
 	if (onp) {
-		struct cwdinfo *cwdi = l->l_proc->p_cwdi;
 		fun = (ukon == UIO_SYSSPACE) ? copystr : copyinstr;
-		if (cwdi->cwdi_rdir != NULL) {
+		KASSERT(l == curlwp);
+		rvp = cwdrdir();
+		if (rvp != NULL) {
 			size_t len;
 			char *bp;
 			char *path = PNBUF_GET();
 
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
-			rw_enter(&cwdi->cwdi_lock, RW_READER);
-			error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+			error = getcwd_common(rvp, rootvnode, &bp,
 			    path, MAXPATHLEN / 2, 0, l);
-			rw_exit(&cwdi->cwdi_lock);
+			vrele(rvp);
 			if (error) {
 				PNBUF_PUT(path);
 				return error;

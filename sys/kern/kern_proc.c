@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_proc.c,v 1.239 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.239.2.1 2020/01/25 15:54:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.239 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.239.2.1 2020/01/25 15:54:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -106,6 +106,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.239 2019/12/31 13:07:13 ad Exp $");
 #include <sys/exec.h>
 #include <sys/cpu.h>
 #include <sys/compat_stub.h>
+#include <sys/vnode.h>
 
 #include <uvm/uvm_extern.h>
 #include <uvm/uvm.h>
@@ -470,7 +471,7 @@ proc0_init(void)
 	p->p_cred = cred0;
 
 	/* Create the CWD info. */
-	rw_init(&cwdi0.cwdi_lock);
+	mutex_init(&cwdi0.cwdi_lock, MUTEX_DEFAULT, IPL_NONE);
 
 	/* Create the limits structures. */
 	mutex_init(&limit0.pl_lock, MUTEX_DEFAULT, IPL_NONE);
@@ -2588,7 +2589,7 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	struct proc *p;
 	char *path;
 	char *bp, *bend;
-	struct cwdinfo *cwdi;
+	const struct cwdinfo *cwdi;
 	struct vnode *vp;
 	size_t len, lenused;
 
@@ -2603,11 +2604,12 @@ fill_cwd(struct lwp *l, pid_t pid, void *oldp, size_t *oldlenp)
 	bend = bp;
 	*(--bp) = '\0';
 
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
+	cwdi = cwdlock(p);
 	vp = cwdi->cwdi_cdir;
+	vref(vp);
+	cwdunlock(p);
 	error = getcwd_common(vp, NULL, &bp, path, len/2, 0, l);
-	rw_exit(&cwdi->cwdi_lock);
+	vrele(vp);
 
 	if (error)
 		goto out;

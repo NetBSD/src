@@ -1,7 +1,7 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.194.4.1 2020/01/25 15:54:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194.4.1 2020/01/25 15:54:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1395,6 +1395,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 {
 	struct cmsghdr * const cm = mtod(rights, struct cmsghdr *);
 	struct proc * const p = l->l_proc;
+	struct vnode *rvp = NULL;
 	file_t **rp;
 	int error = 0;
 
@@ -1404,9 +1405,11 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		goto noop;
 
 	int * const fdp = kmem_alloc(nfds * sizeof(int), KM_SLEEP);
-	rw_enter(&p->p_cwdi->cwdi_lock, RW_READER);
+
+	KASSERT(l == curlwp);
 
 	/* Make sure the recipient should be able to see the files.. */
+	rvp = cwdrdir();
 	rp = (file_t **)CMSG_DATA(cm);
 	for (size_t i = 0; i < nfds; i++) {
 		file_t * const fp = *rp++;
@@ -1420,15 +1423,15 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		 * sure it's inside the subtree we're allowed
 		 * to access.
 		 */
-		if (p->p_cwdi->cwdi_rdir != NULL && fp->f_type == DTYPE_VNODE) {
+		if (rvp != NULL && fp->f_type == DTYPE_VNODE) {
 			vnode_t *vp = fp->f_vnode;
-			if ((vp->v_type == VDIR) &&
-			    !vn_isunder(vp, p->p_cwdi->cwdi_rdir, l)) {
+			if ((vp->v_type == VDIR) && !vn_isunder(vp, rvp, l)) {
 				error = EPERM;
 				goto out;
 			}
 		}
 	}
+	
 
  restart:
 	/*
@@ -1506,7 +1509,6 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 		cm->cmsg_len = CMSG_LEN(0);
 		rights->m_len = CMSG_SPACE(0);
 	}
-	rw_exit(&p->p_cwdi->cwdi_lock);
 	kmem_free(fdp, nfds * sizeof(int));
 
  noop:
@@ -1516,6 +1518,10 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	KASSERT(cm->cmsg_len <= rights->m_len);
 	memset(&mtod(rights, char *)[cm->cmsg_len], 0, rights->m_len -
 	    cm->cmsg_len);
+
+	/* Async release please since in the networking code. */
+	if (rvp != NULL)
+		vrele_async(rvp);
 	return error;
 }
 

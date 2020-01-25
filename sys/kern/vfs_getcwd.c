@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.53.2.3 2020/01/19 21:19:25 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.53.2.4 2020/01/25 15:54:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.53.2.3 2020/01/19 21:19:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.53.2.4 2020/01/25 15:54:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -479,7 +479,7 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 	char   *bp, *bend;
 	int     len = SCARG(uap, length);
 	int	lenused;
-	struct	cwdinfo *cwdi;
+	struct	vnode *dvp;
 
 	if (len > MAXPATHLEN * 4)
 		len = MAXPATHLEN * 4;
@@ -496,11 +496,10 @@ sys___getcwd(struct lwp *l, const struct sys___getcwd_args *uap, register_t *ret
 	 * Since each entry takes up at least 2 bytes in the output buffer,
 	 * limit it to N/2 vnodes for an N byte buffer.
 	 */
-	cwdi = l->l_proc->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_READER);
-	error = getcwd_common(cwdi->cwdi_cdir, NULL, &bp, path, 
+	dvp = cwdcdir();
+	error = getcwd_common(dvp, NULL, &bp, path, 
 	    len/2, GETCWD_CHECK_ACCESS, l);
-	rw_exit(&cwdi->cwdi_lock);
+	vrele(dvp);
 
 	if (error)
 		goto out;

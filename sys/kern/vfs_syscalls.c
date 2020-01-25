@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.539.2.2 2020/01/19 21:23:36 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.539.2.3 2020/01/25 15:54:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539.2.2 2020/01/19 21:23:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539.2.3 2020/01/25 15:54:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1100,7 +1100,7 @@ int
 dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
     int root)
 {
-	struct cwdinfo *cwdi = l->l_proc->p_cwdi;
+	struct vnode *rvp;
 	int error = 0;
 
 	/*
@@ -1111,19 +1111,20 @@ dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
 	if (flags == MNT_NOWAIT	|| flags == MNT_LAZY ||
 	    (flags != MNT_WAIT && flags != 0)) {
 		memcpy(sp, &mp->mnt_stat, sizeof(*sp));
-		goto done;
+		rvp = NULL;
+	} else {
+		/* Get the filesystem stats now */
+		memset(sp, 0, sizeof(*sp));
+		if ((error = VFS_STATVFS(mp, sp)) != 0) {
+			return error;
+		}
+		KASSERT(l == curlwp);
+		rvp = cwdrdir();
+		if (rvp == NULL)
+			(void)memcpy(&mp->mnt_stat, sp, sizeof(mp->mnt_stat));
 	}
 
-	/* Get the filesystem stats now */
-	memset(sp, 0, sizeof(*sp));
-	if ((error = VFS_STATVFS(mp, sp)) != 0) {
-		return error;
-	}
-
-	if (cwdi->cwdi_rdir == NULL)
-		(void)memcpy(&mp->mnt_stat, sp, sizeof(mp->mnt_stat));
-done:
-	if (cwdi->cwdi_rdir != NULL) {
+	if (rvp != NULL) {
 		size_t len;
 		char *bp;
 		char c;
@@ -1131,12 +1132,11 @@ done:
 
 		bp = path + MAXPATHLEN;
 		*--bp = '\0';
-		rw_enter(&cwdi->cwdi_lock, RW_READER);
-		error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp, path,
+		error = getcwd_common(rvp, rootvnode, &bp, path,
 		    MAXPATHLEN / 2, 0, l);
-		rw_exit(&cwdi->cwdi_lock);
 		if (error) {
 			PNBUF_PUT(path);
+			vrele(rvp);
 			return error;
 		}
 		len = strlen(bp);
@@ -1161,6 +1161,7 @@ done:
 			}
 		}
 		PNBUF_PUT(path);
+		vrele(rvp);
 	}
 	sp->f_flag = mp->mnt_flag & MNT_VISFLAGMASK;
 	return error;
@@ -1330,7 +1331,6 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	/* {
 		syscallarg(int) fd;
 	} */
-	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 	struct vnode *vp, *tdp;
 	struct mount *mp;
@@ -1370,8 +1370,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 	 * Disallow changing to a directory not under the process's
 	 * current root directory (if there is one).
 	 */
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+	cwdi = cwdenter(RW_WRITER);
 	if (cwdi->cwdi_rdir && !vn_isunder(vp, NULL, l)) {
 		vrele(vp);
 		error = EPERM;	/* operation not permitted */
@@ -1379,7 +1378,7 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 		vrele(cwdi->cwdi_cdir);
 		cwdi->cwdi_cdir = vp;
 	}
-	rw_exit(&cwdi->cwdi_lock);
+	cwdexit(cwdi);
 
  out:
 	fd_putfile(fd);
@@ -1393,7 +1392,6 @@ sys_fchdir(struct lwp *l, const struct sys_fchdir_args *uap, register_t *retval)
 int
 sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retval)
 {
-	struct proc *p = l->l_proc;
 	struct vnode	*vp;
 	file_t	*fp;
 	int		 error, fd = SCARG(uap, fd);
@@ -1414,8 +1412,7 @@ sys_fchroot(struct lwp *l, const struct sys_fchroot_args *uap, register_t *retva
 	if (error)
 		goto out;
 	vref(vp);
-
-	change_root(p->p_cwdi, vp, l);
+	change_root(vp);
 
  out:
 	fd_putfile(fd);
@@ -1432,19 +1429,19 @@ sys_chdir(struct lwp *l, const struct sys_chdir_args *uap, register_t *retval)
 	/* {
 		syscallarg(const char *) path;
 	} */
-	struct proc *p = l->l_proc;
 	struct cwdinfo *cwdi;
 	int error;
-	struct vnode *vp;
+	struct vnode *vp, *ovp;
 
-	if ((error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE,
-				  &vp, l)) != 0)
+	error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE, &vp, l);
+	if (error != 0)
 		return (error);
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	vrele(cwdi->cwdi_cdir);
+
+	cwdi = cwdenter(RW_WRITER);
+	ovp = cwdi->cwdi_cdir;
 	cwdi->cwdi_cdir = vp;
-	rw_exit(&cwdi->cwdi_lock);
+	cwdexit(cwdi);
+	vrele(ovp);
 	return (0);
 }
 
@@ -1458,20 +1455,17 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
 	/* {
 		syscallarg(const char *) path;
 	} */
-	struct proc *p = l->l_proc;
 	int error;
 	struct vnode *vp;
 
 	if ((error = kauth_authorize_system(l->l_cred, KAUTH_SYSTEM_CHROOT,
 	    KAUTH_REQ_SYSTEM_CHROOT_CHROOT, NULL, NULL, NULL)) != 0)
 		return (error);
-	if ((error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE,
-				  &vp, l)) != 0)
-		return (error);
 
-	change_root(p->p_cwdi, vp, l);
-
-	return (0);
+	error = chdir_lookup(SCARG(uap, path), UIO_USERSPACE, &vp, l);
+	if (error == 0)
+		change_root(vp);
+	return error;
 }
 
 /*
@@ -1479,14 +1473,16 @@ sys_chroot(struct lwp *l, const struct sys_chroot_args *uap, register_t *retval)
  * NB: callers need to properly authorize the change root operation.
  */
 void
-change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
+change_root(struct vnode *vp)
 {
-	struct proc *p = l->l_proc;
+	struct cwdinfo *cwdi;
 	kauth_cred_t ncred;
+	struct lwp *l = curlwp;
+	struct proc *p = l->l_proc;
 
 	ncred = kauth_cred_alloc();
 
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
+	cwdi = cwdenter(RW_WRITER);
 	if (cwdi->cwdi_rdir != NULL)
 		vrele(cwdi->cwdi_rdir);
 	cwdi->cwdi_rdir = vp;
@@ -1505,7 +1501,7 @@ change_root(struct cwdinfo *cwdi, struct vnode *vp, struct lwp *l)
 		vref(vp);
 		cwdi->cwdi_cdir = vp;
 	}
-	rw_exit(&cwdi->cwdi_lock);
+	cwdexit(cwdi);
 
 	/* Get a write lock on the process credential. */
 	proc_crmod_enter();
@@ -4674,21 +4670,15 @@ sys_umask(struct lwp *l, const struct sys_umask_args *uap, register_t *retval)
 	/* {
 		syscallarg(mode_t) newmask;
 	} */
-	struct proc *p = l->l_proc;
-	struct cwdinfo *cwdi;
 
 	/*
-	 * cwdi->cwdi_cmask will be read unlocked elsewhere.  What's
-	 * important is that we serialize changes to the mask.  The
-	 * rw_exit() will issue a write memory barrier on our behalf,
-	 * and force the changes out to other CPUs (as it must use an
-	 * atomic operation, draining the local CPU's store buffers).
+	 * cwdi->cwdi_cmask will be read unlocked elsewhere, and no kind of
+	 * serialization with those reads is required.  All that's important
+	 * is that we get the correct answer for the caller of umask() and
+	 * the atomic operation accomplishes.
 	 */
-	cwdi = p->p_cwdi;
-	rw_enter(&cwdi->cwdi_lock, RW_WRITER);
-	*retval = cwdi->cwdi_cmask;
-	cwdi->cwdi_cmask = SCARG(uap, newmask) & ALLPERMS;
-	rw_exit(&cwdi->cwdi_lock);
+	*retval = atomic_swap_uint(&curproc->p_cwdi->cwdi_cmask,
+	    SCARG(uap, newmask) & ALLPERMS);
 
 	return (0);
 }
@@ -4699,7 +4689,7 @@ dorevoke(struct vnode *vp, kauth_cred_t cred)
 	struct vattr vattr;
 	int error, fs_decision;
 
-	vn_lock(vp, LK_SHARED | LK_RETRY);
+	vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	error = VOP_GETATTR(vp, &vattr, cred);
 	VOP_UNLOCK(vp);
 	if (error != 0)
