@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.165 2020/01/20 18:38:19 thorpej Exp $
+# $NetBSD: GENERIC,v 1.166 2020/01/25 18:38:35 thorpej Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/cobalt/conf/std.cobalt"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.165 $"
+#ident 		"GENERIC-$Revision: 1.166 $"
 
 maxusers	32
 
@@ -239,7 +239,7 @@ wd* 		at atabus? drive ? flags 0x0000
 #ex*		at pci? dev ? function ?	# 3Com 90x[BC]
 #epic*		at pci? dev ? function ?	# SMC EPIC/100 Ethernet
 #fxp*		at pci? dev ? function ?	# Intel EtherExpress PRO10+/100B
-#le*		at pci? dev ? function ?	# PCnet-PCI Ethernet
+#pcn*		at pci? dev ? function ?	# PCnet-PCI Ethernet
 #ne*		at pci? dev ? function ?	# NE2000-compatible Ethernet
 #ntwoc*		at pci? dev ? function ?	# Riscom/N2 PCI Sync Serial
 ral*		at pci? dev ? function ?	# ralink wifi
