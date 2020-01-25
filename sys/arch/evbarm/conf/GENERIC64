@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.133 2020/01/15 11:36:48 jmcneill Exp $
+#	$NetBSD: GENERIC64,v 1.134 2020/01/25 12:26:58 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -471,6 +471,7 @@ h3codec*	at fdt?			# Allwinner H3 audio codec (analog part)
 a64acodec*	at fdt?			# Allwinner A64 audio codec (analog part)
 sunxii2s*	at fdt?			# Allwinner I2S/PCM
 audio*		at audiobus?
+options 	AUDIO_BLK_MS=4
 
 spkr*		at audio?		# PC speaker (synthesized)
 
