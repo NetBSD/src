@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.381 2020/01/19 10:59:56 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.382 2020/01/25 16:19:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.381 2020/01/19 10:59:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.382 2020/01/25 16:19:29 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -6627,12 +6627,13 @@ pmap_l1tt_free(struct pool *pp, void *v)
 	vaddr_t va = (vaddr_t)v;
 
 #if !defined( __HAVE_MM_MD_DIRECT_MAPPED_PHYS)
-	uvm_km_free(kernel_map, va, L1TT_SIZE, 0);
+	uvm_km_free(kernel_map, va, L1TT_SIZE, UVM_KMF_WIRED);
 #else
-	paddr_t pa;
-
-	bool ok = pmap_extract(pmap_kernel(), va, &pa);
-	KASSERT(ok);
+#if defined(KERNEL_BASE_VOFFSET)
+	paddr_t pa = va - KERNEL_BASE_VOFFSET;
+#else
+	paddr_t pa = va - KERNEL_BASE + physical_start;
+#endif
 	const paddr_t epa = pa + L1TT_SIZE;
 
 	for (; pa < epa; pa += PAGE_SIZE) {
