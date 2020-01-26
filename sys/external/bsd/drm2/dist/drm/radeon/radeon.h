@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon.h,v 1.6 2018/08/27 06:38:51 riastradh Exp $	*/
+/*	$NetBSD: radeon.h,v 1.7 2020/01/26 14:36:35 jmcneill Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -259,6 +259,7 @@ struct radeon_dummy_page {
 #ifdef __NetBSD__
 	bus_dma_segment_t	rdp_seg;
 	bus_dmamap_t		rdp_map;
+	void		*rdp_addr;
 #else
 	struct page	*page;
 #endif
