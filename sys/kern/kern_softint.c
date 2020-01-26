@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.58 2020/01/25 15:12:47 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.59 2020/01/26 18:52:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.58 2020/01/25 15:12:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.59 2020/01/26 18:52:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -841,7 +841,24 @@ softint_dispatch(lwp_t *pinned, int s)
 	u_int timing;
 	lwp_t *l;
 
-	KASSERT((pinned->l_flag & LW_RUNNING) != 0);
+#ifdef DIAGNOSTIC
+	if ((pinned->l_flag & LW_RUNNING) == 0 || curlwp->l_stat != LSIDL) {
+		struct lwp *onproc = curcpu()->ci_onproc;
+		int s2 = splhigh();
+		printf("curcpu=%d, spl=%d curspl=%d\n"
+			"onproc=%p => l_stat=%d l_flag=%08x l_cpu=%d\n"
+			"curlwp=%p => l_stat=%d l_flag=%08x l_cpu=%d\n"
+			"pinned=%p => l_stat=%d l_flag=%08x l_cpu=%d\n",
+			cpu_index(curcpu()), s, s2, onproc, onproc->l_stat,
+			onproc->l_flag, cpu_index(onproc->l_cpu), curlwp,
+			curlwp->l_stat, curlwp->l_flag,
+			cpu_index(curlwp->l_cpu), pinned, pinned->l_stat,
+			pinned->l_flag, cpu_index(pinned->l_cpu));
+		splx(s2);
+		panic("softint screwup");
+	}
+#endif
+
 	l = curlwp;
 	si = l->l_private;
 
