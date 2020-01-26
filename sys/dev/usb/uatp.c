@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.21 2020/01/26 22:19:39 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.22 2020/01/26 22:19:54 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.21 2020/01/26 22:19:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.22 2020/01/26 22:19:54 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -200,6 +200,13 @@ __KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.21 2020/01/26 22:19:39 riastradh Exp $");
 #define UATP_DEBUG_ACCEL	(1 << 13)
 #define UATP_DEBUG_TRACK_DIST	(1 << 14)
 #define UATP_DEBUG_PALM		(1 << 15)
+
+/*
+ * Unconditionally enable the debug output so you don't have to
+ * recompile the kernel to diagnose it.  This is not a high-throughput
+ * NIC driver or anything that will be hurt by a few conditionals.
+ */
+#define	UATP_DEBUG	1
 
 #if UATP_DEBUG
 #  define DPRINTF(sc, flags, format) do {				\
