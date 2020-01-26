@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.43.18.6 2020/01/08 07:53:30 msaitoh Exp $
+#	$NetBSD: Makefile.inc,v 1.43.18.7 2020/01/26 11:19:36 martin Exp $
 #
 
 # Ross Harvey <ross@NetBSD.org>
@@ -118,7 +118,7 @@ ${TARG}.ASCII.toc: ${SRCS}
 	mv -f $@.tmp $@
 
 ${TARG}.HTML.toc: ${SRCS}
-	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc ${MAIN} > /dev/null
+	${TOOL_GROFF} -dTOC=1 ${ARGS_HTML} -mdoc2html ${MAIN} > /dev/null
 	mv -f $@.tmp $@
 
 ${TARG}.more.toc: ${SRCS}
