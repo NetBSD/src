@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.165 2020/01/24 20:21:53 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.166 2020/01/26 11:29:39 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -7885,4 +7885,106 @@ sbin/route/route.c				1.164,1.165
 	route(8): decode the correct flags for interface address messages
 	and show them instead of interface flags.
 	[roy, ticket #646]
+
+lib/libpthread/pthread.c			1.154
+lib/libpthread/pthread_cond.c			1.66
+lib/libpthread/pthread_int.h			1.98
+lib/libpthread/pthread_misc.c			1.16
+lib/libpthread/pthread_mutex.c			1.66
+lib/libpthread/pthread_rwlock.c			1.37 (patch)
+
+	Remove some ery ambitious optimisations around pthread_mutex
+	that do not by much and were likely buggy.
+	[ad, ticket #647]
+
+sys/dev/pci/ixgbe/if_bypass.c		1.5
+sys/dev/pci/ixgbe/ixgbe_osdep.c		1.5
+sys/dev/pci/ixgbe/ix_txrx.c		1.58-1.60
+sys/dev/pci/ixgbe/ixgbe.c		1.220-1.221
+sys/dev/pci/ixgbe/ixgbe.h		1.60-1.2
+sys/dev/pci/ixgbe/ixgbe_api.c		1.24
+sys/dev/pci/ixgbe/ixgbe_common.c	1.26
+sys/dev/pci/ixgbe/ixgbe_netbsd.c	1.11-1.12
+sys/dev/pci/ixgbe/ixgbe_osdep.h		1.24
+sys/dev/pci/ixgbe/ixgbe_phy.c		1.19
+sys/dev/pci/ixgbe/ixgbe_82598.c		1.14
+sys/dev/pci/ixgbe/ixv.c			1.142,1.144
+
+	- Free RX structure correctly when detaching.
+	- Remove unused code.
+	- Fix some typos in comment.
+	- Remove extra spaces.
+	- KNF.
+	[msaitoh, ticket #648]
+
+sys/dev/mii/ihphy.c				1.15
+
+	Remove extra 10ms delay in ihphy_reset() to reduce the
+	possibility of packet drop.
+	[msaitoh, ticket #649]
+
+sys/dev/pci/if_wm.c			1.650, 1.652-1.654
+sys/dev/pci/if_wmreg.h			1.116-1.117
+
+	- Set CTRL_ILOS(Invert loss of signal) bit correctly on 82580
+	  port 1, 2, 3 and newer chips. This change fixes a bug that some
+	  fiber, serdes or SFP devices don't detect the link status correctly.
+	- Simplify code by using "struct mii_data *mii" more. No functional
+	  change.
+	- MSI-X doesn't use sc->sc_icr variable, so move the code into
+	  non-MSI-X part. No functional change intended.
+	- Modify debug printfs a bit.
+	- Rename macro.
+	- Use __BIT()
+	- Fix comment. Add comment.
+	- KNF.
+	[msaitoh, ticket #650]
+
+sys/dev/pci/if_mcx.c				1.8
+sys/dev/pci/if_mcx.c				1.9
+
+	mcx(4):
+	- Change IFM_10G_T(10GBase-T) entry to IFM_10G_CR1(10GBASE-CR1)
+	- Add the following entries: 20GBASE-KR2, 56GBASE-R4, 100GBASE-LR4,
+	  100BaseTX, 1000baseT, 10GBase-T
+	- Set if_baudrate.
+	[msaitoh, ticket #651]
+
+distrib/notes/Makefile.inc			1.54
+distrib/notes/common/main			1.561,1.562
+share/tmac/doc2html				1.71
+
+	Use better html titles for the install docs.
+	[uwe, ticket #652]
+
+sys/stand/efiboot/Makefile.efiboot		1.10
+sys/stand/efiboot/boot.c			1.20
+sys/stand/efiboot/bootaa64/Makefile		1.7
+sys/stand/efiboot/bootarm/Makefile		1.4
+sys/stand/efiboot/efiacpi.c			1.6
+sys/stand/efiboot/exec.c			1.13
+sys/stand/efiboot/prompt.c			1.6
+
+	Fix for disappearing counters on graphics consoles.
+	Hide the twiddle while loading efiboot plist.
+	Clean up the banner so it fits in 80 columns and add some extra details
+	to the "version" command output.
+	[jmcneill, ticket #653]
+
+sys/ddb/db_output.c				1.35,1.36
+
+	db_putchar - check if we need to wrap at $maxwidth after whitespace.
+	[uwe, ticket #654]
+
+sys/ddb/db_input.c				1.27
+sys/ddb/db_lex.c				1.23
+
+	Print db> prompt in db_read_line(), not db_readline().
+	[uwe, ticket #655]
+
+sys/ddb/db_command.c				1.162-1.164
+
+	db_command - make sure count is always initialized and other
+	cosmetic/code cleanup changes.
+	[uwe, ticket #656]
 
