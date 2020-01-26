@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.41 2020/01/20 21:26:35 martin Exp $	*/
+/*	$NetBSD: util.c,v 1.42 2020/01/26 14:37:29 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1085,7 +1085,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 {
 	distinfo *dist;
 	int status;
-	int set;
+	int set, olderror, oldfound;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
@@ -1114,6 +1114,10 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			continue;
 		if (set_status[set] != (SET_VALID | SET_SELECTED))
 			continue;
+
+		/* save stats, in case we will retry */
+		oldfound = tarstats.nfound;
+		olderror = tarstats.nerror;
 
 		if (status != SET_OK) {
 			/* This might force a redraw.... */
@@ -1151,8 +1155,14 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 
 		/* Try to extract this set */
 		status = extract_file(dist, update);
-		if (status == SET_RETRY)
+		if (status == SET_RETRY) {
+			/* do this set again */
 			dist--;
+			/* and reset statistics to what we had before this
+			 * set */
+			tarstats.nfound = oldfound;
+			tarstats.nerror = olderror;
+		}
 	}
 
 #ifdef MD_SET_EXTRACT_FINALIZE
