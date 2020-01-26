@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sleepq.c,v 1.58 2020/01/12 13:08:32 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.59 2020/01/26 19:01:56 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.58 2020/01/12 13:08:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.59 2020/01/26 19:01:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -114,7 +114,13 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	TAILQ_REMOVE(sq, l, l_sleepchain);
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_NULL) == 0) {
+		KASSERT(sq != NULL);
+		TAILQ_REMOVE(sq, l, l_sleepchain);
+	} else {
+		KASSERT(sq == NULL);
+	}
+
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
@@ -174,6 +180,12 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 static void
 sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
+
+	if ((sobj->sobj_flag & SOBJ_SLEEPQ_NULL) != 0) {
+		KASSERT(sq == NULL); 
+		return;
+	}
+	KASSERT(sq != NULL);
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		lwp_t *l2;
@@ -441,7 +453,7 @@ sleepq_reinsert(sleepq_t *sq, lwp_t *l)
 {
 
 	KASSERT(l->l_sleepq == sq);
-	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) { 
 		return;
 	}
 
