@@ -1,4 +1,4 @@
-.\"	$NetBSD: main,v 1.551.2.7 2019/12/02 15:08:52 martin Exp $
+.\"	$NetBSD: main,v 1.551.2.8 2020/01/26 11:19:36 martin Exp $
 .\"
 .\" Copyright (c) 1999-2012 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -72,9 +72,11 @@
 .as MACHINE_LIST " sgimips shark sparc sparc64 sun2 sun3 vax x68k zaurus .
 .so \*[.CURDIR]/../common/macros
 .
+.\" Override <title> for HTML output
+.if rHTML .ds title-section Installation procedure for NetBSD/\*M \*V
 .Dd \*[cur_date]
 .Dt INSTALL 8
-.Os NetBSD
+.Os NetBSD/\*M \*V
 .Sh NAME
 .Nm INSTALL
 .Nd Installation procedure for
