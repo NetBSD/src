@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.5 2018/10/28 10:17:47 jmcneill Exp $
+# $NetBSD: Makefile,v 1.5.6.1 2020/01/26 11:21:59 martin Exp $
 
 PROG=		bootaa64.efi
 OBJFMT=		binary
-NEWVERSWHAT=	"EFI Boot (aarch64)"
+NEWVERSWHAT=	"efiboot (arm64)"
 
 EXTRA_SOURCES=	efibootaa64.c
 EXTRA_SOURCES+=	cache.S

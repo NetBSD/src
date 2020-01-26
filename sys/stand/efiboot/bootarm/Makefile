@@ -1,8 +1,8 @@
-# $NetBSD: Makefile,v 1.1 2019/03/30 12:48:50 jmcneill Exp $
+# $NetBSD: Makefile,v 1.1.6.1 2020/01/26 11:21:59 martin Exp $
 
 PROG=		bootarm.efi
 OBJFMT=		binary
-NEWVERSWHAT=	"EFI Boot (arm)"
+NEWVERSWHAT=	"efiboot (arm)"
 GNUEFIARCH=	arm
 LIBGNUEFI_ARCH=	arm
 
