@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs.c,v 1.49 2019/03/31 20:08:45 christos Exp $	*/
+/*	$NetBSD: nfs.c,v 1.50 2020/01/26 10:13:10 skrll Exp $	*/
 
 /*-
  *  Copyright (c) 1993 John Brezak
@@ -566,7 +566,7 @@ nfs_read(struct open_file *f, void *buf, size_t size, size_t *resid)
 
 #ifdef NFS_DEBUG
 	if (debug)
-		printf("%s: size=%zu off=%td\n", __func__, size, fp->off);
+		printf("%s: size=%zu off=%" PRIx64 "\n", __func__, size, fp->off);
 #endif
 	while ((int)size > 0) {
 #if !defined(LIBSA_NO_TWIDDLE)
