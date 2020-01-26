@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.c,v 1.4.8.1 2019/12/24 17:44:22 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.c,v 1.4.8.2 2020/01/26 11:03:17 martin Exp $ */
 
 /******************************************************************************
 
@@ -56,7 +56,7 @@ ixgbe_read_pci_cfg(struct ixgbe_hw *hw, u32 reg)
 		return __SHIFTOUT(pci_conf_read(pc, tag, reg - 2),
 		    __BITS(31, 16));
 	default:
-		panic("%s: invalid register (%" PRIx32, __func__, reg); 
+		panic("%s: invalid register (%" PRIx32, __func__, reg);
 		break;
 	}
 }
@@ -79,7 +79,7 @@ ixgbe_write_pci_cfg(struct ixgbe_hw *hw, u32 reg, u16 value)
 		    __SHIFTIN(value, __BITS(31, 16)) | old);
 		break;
 	default:
-		panic("%s: invalid register (%" PRIx32, __func__, reg); 
+		panic("%s: invalid register (%" PRIx32, __func__, reg);
 		break;
 	}
 
