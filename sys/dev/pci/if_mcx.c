@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.1.2.6 2019/11/26 18:30:57 martin Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.1.2.7 2020/01/26 11:17:11 martin Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -159,8 +159,10 @@
 #define MCX_ETHER_CAP_10G_CX4	(1 << 2)
 #define MCX_ETHER_CAP_10G_KX4	(1 << 3)
 #define MCX_ETHER_CAP_10G_KR	(1 << 4)
+#define MCX_ETHER_CAP_20G_KR2	(1 << 5)
 #define MCX_ETHER_CAP_40G_CR4	(1 << 6)
 #define MCX_ETHER_CAP_40G_KR4	(1 << 7)
+#define MCX_ETHER_CAP_56G_R4	(1 << 8)
 #define MCX_ETHER_CAP_10G_CR	(1 << 12)
 #define MCX_ETHER_CAP_10G_SR	(1 << 13)
 #define MCX_ETHER_CAP_10G_LR	(1 << 14)
@@ -170,6 +172,10 @@
 #define MCX_ETHER_CAP_100G_CR4	(1 << 20)
 #define MCX_ETHER_CAP_100G_SR4	(1 << 21)
 #define MCX_ETHER_CAP_100G_KR4	(1 << 22)
+#define MCX_ETHER_CAP_100G_LR4	(1 << 23)
+#define MCX_ETHER_CAP_100_TX	(1 << 24)
+#define MCX_ETHER_CAP_1000_T	(1 << 25)
+#define MCX_ETHER_CAP_10G_T	(1 << 26)
 #define MCX_ETHER_CAP_25G_CR	(1 << 27)
 #define MCX_ETHER_CAP_25G_KR	(1 << 28)
 #define MCX_ETHER_CAP_25G_SR	(1 << 29)
@@ -2146,14 +2152,14 @@ static const uint64_t mcx_eth_cap_map[] = {
 	IFM_10G_CX4,
 	IFM_10G_KX4,
 	IFM_10G_KR,
-	0,
+	IFM_20G_KR2,
 	IFM_40G_CR4,
 	IFM_40G_KR4,
+	IFM_56G_R4,
 	0,
 	0,
 	0,
-	0,
-	IFM_10G_T,
+	IFM_10G_CR1,
 	IFM_10G_SR,
 	IFM_10G_LR,
 	IFM_40G_SR4,
@@ -2164,10 +2170,10 @@ static const uint64_t mcx_eth_cap_map[] = {
 	IFM_100G_CR4,
 	IFM_100G_SR4,
 	IFM_100G_KR4,
-	0,
-	0,
-	0,
-	0,
+	IFM_100G_LR4,
+	IFM_100_TX,
+	IFM_1000_T,
+	IFM_10G_T,
 	IFM_25G_CR,
 	IFM_25G_KR,
 	IFM_25G_SR,
@@ -6647,6 +6653,7 @@ mcx_port_change(struct work *wk, void *xsc)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	struct mcx_reg_paos paos;
 	int link_state = LINK_STATE_DOWN;
+	struct ifmediareq ifmr;
 
 	memset(&paos, 0, sizeof(paos));
 	paos.rp_local_port = 1;
@@ -6654,6 +6661,8 @@ mcx_port_change(struct work *wk, void *xsc)
 	    sizeof(paos)) == 0) {
 		if (paos.rp_oper_status == MCX_REG_PAOS_OPER_STATUS_UP)
 			link_state = LINK_STATE_UP;
+		mcx_media_status(ifp, &ifmr);
+		ifp->if_baudrate = ifmedia_baudrate(ifmr.ifm_active);
 	}
 
 	if (link_state != ifp->if_link_state) {
