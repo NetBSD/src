@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.20 2020/01/26 22:19:27 riastradh Exp $	*/
+/*	$NetBSD: uatp.c,v 1.21 2020/01/26 22:19:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.20 2020/01/26 22:19:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.21 2020/01/26 22:19:39 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1446,8 +1446,8 @@ uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	sc->sc_input_index += len;
 	if (sc->sc_input_index != sc->sc_input_size) {
 		/* Wait until packet is complete.  */
-		aprint_verbose_dev(uatp_dev(sc), "partial packet: %u bytes\n",
-		    len);
+		DPRINTF(sc, UATP_DEBUG_INTR, ("partial packet: %u bytes\n",
+		    len));
 		return;
 	}
 
