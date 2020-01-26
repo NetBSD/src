@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.6 2018/08/27 07:48:40 riastradh Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.7 2020/01/26 14:36:35 jmcneill Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.6 2018/08/27 07:48:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.7 2020/01/26 14:36:35 jmcneill Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -835,10 +835,17 @@ int radeon_dummy_page_init(struct radeon_device *rdev)
 	    BUS_DMA_WAITOK, &rdev->dummy_page.rdp_map);
 	if (error)
 		goto fail1;
-	error = bus_dmamap_load_raw(rdev->ddev->dmat, rdev->dummy_page.rdp_map,
-	    &rdev->dummy_page.rdp_seg, 1, PAGE_SIZE, BUS_DMA_WAITOK);
+	error = bus_dmamem_map(rdev->ddev->dmat, &rdev->dummy_page.rdp_seg, 1,
+	    PAGE_SIZE, &rdev->dummy_page.rdp_addr,
+	    BUS_DMA_WAITOK|BUS_DMA_NOCACHE);
 	if (error)
 		goto fail2;
+	error = bus_dmamap_load(rdev->ddev->dmat, rdev->dummy_page.rdp_map,
+	    rdev->dummy_page.rdp_addr, PAGE_SIZE, NULL, BUS_DMA_WAITOK);
+	if (error)
+		goto fail3;
+
+	memset(rdev->dummy_page.rdp_addr, 0, PAGE_SIZE);
 
 	/* Success!  */
 	rdev->dummy_page.addr = rdev->dummy_page.rdp_map->dm_segs[0].ds_addr;
@@ -846,8 +853,10 @@ int radeon_dummy_page_init(struct radeon_device *rdev)
 		rdev->dummy_page.addr, RADEON_GART_PAGE_DUMMY);
 	return 0;
 
-fail3: __unused
+fail4: __unused
 	bus_dmamap_unload(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
+fail3:	bus_dmamem_unmap(rdev->ddev->dmat, rdev->dummy_page.rdp_addr,
+	    PAGE_SIZE);
 fail2:	bus_dmamap_destroy(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
 fail1:	bus_dmamem_free(rdev->ddev->dmat, &rdev->dummy_page.rdp_seg, 1);
 fail0:	KASSERT(error);
@@ -888,6 +897,8 @@ void radeon_dummy_page_fini(struct radeon_device *rdev)
 	if (rdev->dummy_page.rdp_map == NULL)
 		return;
 	bus_dmamap_unload(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
+	bus_dmamem_unmap(rdev->ddev->dmat, rdev->dummy_page.rdp_addr,
+	    PAGE_SIZE);
 	bus_dmamap_destroy(rdev->ddev->dmat, rdev->dummy_page.rdp_map);
 	bus_dmamem_free(rdev->ddev->dmat, &rdev->dummy_page.rdp_seg, 1);
 	rdev->dummy_page.rdp_map = NULL;
