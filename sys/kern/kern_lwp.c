@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.220 2020/01/22 12:23:04 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.221 2020/01/26 19:06:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -176,7 +176,8 @@
  *	LSSLEEP:
  *
  *		Covered by a lock associated with the sleep queue (sometimes
- *		a turnstile sleep queue) that the LWP resides on.
+ *		a turnstile sleep queue) that the LWP resides on.  This can
+ *		be spc_lwplock for SOBJ_SLEEPQ_NULL (an "untracked" sleep).
  *
  *	LSSTOP:
  *
@@ -210,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.220 2020/01/22 12:23:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.221 2020/01/26 19:06:24 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
