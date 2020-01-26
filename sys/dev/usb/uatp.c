@@ -1,4 +1,4 @@
-/*	$NetBSD: uatp.c,v 1.19 2019/01/22 06:47:20 skrll Exp $	*/
+/*	$NetBSD: uatp.c,v 1.20 2020/01/26 22:19:27 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2011-2014 The NetBSD Foundation, Inc.
@@ -146,7 +146,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.19 2019/01/22 06:47:20 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uatp.c,v 1.20 2020/01/26 22:19:27 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1414,6 +1414,19 @@ uatp_intr(struct uhidev *addr, void *ibuf, unsigned int len)
 	} else if (sc->sc_input_size < (sc->sc_input_index + len)) {
 		aprint_error_dev(uatp_dev(sc), "discarding %u-byte input\n",
 		    (sc->sc_input_index + len));
+		sc->sc_input_index = 0;
+		return;
+	} else if (sc->sc_input_size == 81 && len == 17 &&
+	    sc->sc_input_index != 64) {
+		/*
+		 * Quirk of Fountain and Geyser 1 devices: a 17-byte
+		 * packet seems to mean the last one, but sometimes we
+		 * get desynchronized, so drop this one and start over
+		 * if we see a 17-byte packet that's not at the end.
+		 */
+		aprint_error_dev(uatp_dev(sc),
+		    "discarding 17-byte nonterminal input at %u\n",
+		    sc->sc_input_index);
 		sc->sc_input_index = 0;
 		return;
 	}
