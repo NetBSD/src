@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.56.2.1 2019/09/26 19:07:22 martin Exp $ */
+/* $NetBSD: ixgbe.h,v 1.56.2.2 2020/01/26 11:03:17 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -134,9 +134,9 @@
  * RxDescriptors Valid Range: 64-4096 Default Value: 256 This value is the
  * number of receive descriptors allocated for each RX queue. Increasing this
  * value allows the driver to buffer more incoming packets. Each descriptor
- * is 16 bytes.  A receive buffer is also allocated for each descriptor. 
- * 
- * Note: with 8 rings and a dual port card, it is possible to bump up 
+ * is 16 bytes.  A receive buffer is also allocated for each descriptor.
+ *
+ * Note: with 8 rings and a dual port card, it is possible to bump up
  *	against the system mbuf pool limit, you can tune nmbclusters
  *	to adjust for this.
  */
@@ -770,6 +770,7 @@ void ixgbe_deferred_mq_start_work(struct work *, void *);
 void ixgbe_drain_all(struct adapter *);
 
 int  ixgbe_allocate_queues(struct adapter *);
+void ixgbe_free_queues(struct adapter *);
 int  ixgbe_setup_transmit_structures(struct adapter *);
 void ixgbe_free_transmit_structures(struct adapter *);
 int  ixgbe_setup_receive_structures(struct adapter *);
@@ -782,6 +783,7 @@ const struct sysctlnode *ixgbe_sysctl_instance(struct adapter *);
 /* For NetBSD */
 void ixgbe_jcl_reinit(struct adapter *, bus_dma_tag_t, struct rx_ring *,
     int, size_t);
+void ixgbe_jcl_destroy(struct adapter *,  struct rx_ring *);
 
 #include "ixgbe_bypass.h"
 #include "ixgbe_fdir.h"

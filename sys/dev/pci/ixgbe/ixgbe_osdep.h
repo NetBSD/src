@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_osdep.h,v 1.23.6.1 2019/12/24 17:44:22 martin Exp $ */
+/* $NetBSD: ixgbe_osdep.h,v 1.23.6.2 2020/01/26 11:03:17 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -54,7 +54,7 @@
 #include <net/if.h>
 #include <net/if_ether.h>
 
-#define ASSERT(x) if(!(x)) panic("IXGBE: x")
+#define ASSERT(x) if (!(x)) panic("IXGBE: x")
 #define EWARN(H, W) printf(W)
 
 enum {
@@ -152,7 +152,7 @@ typedef uint32_t	u32;
 typedef int32_t		s32;
 typedef uint64_t	u64;
 
-#define le16_to_cpu 
+#define le16_to_cpu
 
 /* This device driver's max interrupt numbers. */
 #define IXG_MAX_NINTR		64
