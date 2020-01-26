@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.30 2020/01/06 08:29:08 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.31 2020/01/26 15:52:00 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -242,7 +242,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	 * aarch64 arch has 5 memory attribute:
 	 *
 	 *  WriteBack      - write back cache
-	 *  WriteThru      - wite through cache
+	 *  WriteThru      - write through cache
 	 *  NoCache        - no cache
 	 *  Device(nGnRE)  - no Gathering, no Reordering, Early write ack
 	 *  Device(nGnRnE) - no Gathering, no Reordering, no Early write ack
