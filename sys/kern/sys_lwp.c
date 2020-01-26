@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.72 2020/01/25 15:41:52 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.73 2020/01/26 19:08:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.72 2020/01/25 15:41:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.73 2020/01/26 19:08:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -156,12 +156,11 @@ sys__lwp_create(struct lwp *l, const struct sys__lwp_create_args *uap,
 		goto fail;
 
 	error = copyout(&l2->l_lid, SCARG(uap, new_lwp), sizeof(l2->l_lid));
-	if (error != 0)
-		lwp_exit(l2);
-	else
+	if (error == 0) {
 		lwp_start(l2, SCARG(uap, flags));
-	return error;
-
+		return 0;
+	}
+	lwp_exit(l2);
  fail:
 	kmem_free(newuc, sizeof(ucontext_t));
 	return error;
