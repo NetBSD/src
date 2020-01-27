@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.280 2020/01/22 12:23:04 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.281 2020/01/27 21:09:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.280 2020/01/22 12:23:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.281 2020/01/27 21:09:33 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -99,6 +99,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.280 2020/01/22 12:23:04 ad Exp $");
 #include <sys/syscallargs.h>
 #include <sys/kauth.h>
 #include <sys/sleepq.h>
+#include <sys/lock.h>
 #include <sys/lockdebug.h>
 #include <sys/ktrace.h>
 #include <sys/cpu.h>
@@ -203,6 +204,9 @@ exit1(struct lwp *l, int exitcode, int signo)
 	int		wakeinit;
 
 	p = l->l_proc;
+
+	/* XXX Temporary. */
+	kernel_lock_plug_leak();
 
 	/* Verify that we hold no locks other than p->p_lock. */
 	LOCKDEBUG_BARRIER(p->p_lock, 0);
@@ -617,6 +621,7 @@ retry:
 			setrunnable(l2);
 			continue;
 		}
+		lwp_need_userret(l2);
 		lwp_unlock(l2);
 	}
 
