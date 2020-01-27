@@ -1262,7 +1262,8 @@ ipv6nd_handlera(struct dhcpcd_ctx *ctx,
 #ifdef IPV6_MANAGETEMPADDR
 			/* RFC4941 Section 3.3.3 */
 			if (ap->flags & IPV6_AF_AUTOCONF &&
-			    ip6_use_tempaddr(ap->iface->name))
+			    ip6_use_tempaddr(ap->iface->name) &&
+			    ipv6_ifidlen(ap->iface) + ap->prefix_len == 128)
 			{
 				if (!new_ap) {
 					if (ipv6_settemptime(ap, 1) == NULL)
