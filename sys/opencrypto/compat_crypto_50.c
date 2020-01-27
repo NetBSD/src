@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_crypto_50.c,v 1.1 2020/01/27 17:09:17 pgoyette Exp $ */
+/*	$NetBSD: compat_crypto_50.c,v 1.2 2020/01/27 17:11:27 pgoyette Exp $ */
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -30,28 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_crypto_50.c,v 1.1 2020/01/27 17:09:17 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_crypto_50.c,v 1.2 2020/01/27 17:11:27 pgoyette Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
-/* XXX PRG
-#include <sys/kmem.h>
-#include <sys/malloc.h>
-#include <sys/mbuf.h>
-#include <sys/pool.h>
-#include <sys/sysctl.h>
-#include <sys/file.h>
-#include <sys/filedesc.h>
-#include <sys/errno.h>
-#include <sys/md5.h>
-#include <sys/sha1.h>
-#include <sys/conf.h>
-#include <sys/device.h>
-#include <sys/kauth.h>
-#include <sys/select.h>
-#include <sys/poll.h>
-#include <sys/atomic.h>
-XXX PRG */
 #include <sys/compat_stub.h> 
 #include <sys/module.h>
 
