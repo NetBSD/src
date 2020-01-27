@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.221 2020/01/26 19:06:24 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.222 2020/01/27 21:58:16 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.221 2020/01/26 19:06:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.222 2020/01/27 21:58:16 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -653,8 +653,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 */
 		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
-			cv_wait(&p->p_lwpcv, p->p_lock);
-			error = EAGAIN;
+			error = cv_timedwait(&p->p_lwpcv, p->p_lock, 1);
 			break;
 		}
 
@@ -662,9 +661,6 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 * If all other LWPs are waiting for exits or suspends
 		 * and the supply of zombies and potential zombies is
 		 * exhausted, then we are about to deadlock.
-		 *
-		 * If the process is exiting (and this LWP is not the one
-		 * that is coordinating the exit) then bail out now.
 		 */
 		if ((p->p_sflag & PS_WEXIT) != 0 ||
 		    p->p_nrlwps + p->p_nzlwps - p->p_ndlwps <= p->p_nlwpwait) {
@@ -839,7 +835,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_inheritedprio = -1;
 	l2->l_protectprio = -1;
 	l2->l_auxprio = -1;
-	l2->l_flag = (l1->l_flag & (LW_WEXIT | LW_WREBOOT | LW_WCORE));
+	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
 	l2->l_psrefs = 0;
@@ -920,6 +916,11 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		p2->p_ndlwps++;
 	} else
 		l2->l_prflag = 0;
+
+	if (l1->l_proc == p2)
+		l2->l_flag |= (l1->l_flag & (LW_WEXIT | LW_WREBOOT | LW_WCORE));
+	else
+		l2->l_flag |= (l1->l_flag & LW_WREBOOT);
 
 	l2->l_sigstk = *sigstk;
 	l2->l_sigmask = *sigmask;
