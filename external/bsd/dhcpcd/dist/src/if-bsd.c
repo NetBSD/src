@@ -860,8 +860,6 @@ if_address(unsigned char cmd, const struct ipv4_addr *ia)
 	return r;
 }
 
-
-
 #if !(defined(HAVE_IFADDRS_ADDRFLAGS) && defined(HAVE_IFAM_ADDRFLAGS))
 int
 if_addrflags(const struct interface *ifp, const struct in_addr *addr,
@@ -1194,7 +1192,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 {
 	struct interface *ifp;
 	const struct sockaddr *rti_info[RTAX_MAX];
-	int addrflags;
+	int flags;
 	pid_t pid;
 
 	if (ifam->ifam_msglen < sizeof(*ifam)) {
@@ -1216,9 +1214,6 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 	pid = 0;
 #endif
 
-#ifdef HAVE_IFAM_ADDRFLAGS
-	addrflags = ifam->ifam_addrflags;
-#endif
 	switch (rti_info[RTAX_IFA]->sa_family) {
 	case AF_LINK:
 	{
@@ -1252,78 +1247,70 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		bcast.s_addr = sin != NULL && sin->sin_family == AF_INET ?
 		    sin->sin_addr.s_addr : INADDR_ANY;
 
-#if defined(__NetBSD_Version__) && __NetBSD_Version__ < 800000000
 		/*
 		 * NetBSD-7 and older send an invalid broadcast address.
 		 * So we need to query the actual address to get
 		 * the right one.
+		 * We can also use this to test if the address
+		 * has really been added or deleted.
 		 */
-		{
-#else
-		/*
-		 * If the address was deleted, lets check if it's
-		 * a late message and it still exists (maybe modified).
-		 * If so, ignore it as deleting an address causes
-		 * dhcpcd to drop any lease to which it belongs.
-		 */
-		if (ifam->ifam_type == RTM_DELADDR) {
-#endif
 #ifdef SIOCGIFALIAS
-			struct in_aliasreq ifra;
+		struct in_aliasreq ifra;
 
-			memset(&ifra, 0, sizeof(ifra));
-			strlcpy(ifra.ifra_name, ifp->name,
-			    sizeof(ifra.ifra_name));
-			ifra.ifra_addr.sin_family = AF_INET;
-			ifra.ifra_addr.sin_len = sizeof(ifra.ifra_addr);
-			ifra.ifra_addr.sin_addr = addr;
-			if (ioctl(ctx->pf_inet_fd, SIOCGIFALIAS, &ifra) == -1) {
-				if (errno != ENXIO && errno != EADDRNOTAVAIL)
-					logerr("%s: SIOCGIFALIAS", __func__);
-				if (ifam->ifam_type != RTM_DELADDR)
-					break;
-			}
+		memset(&ifra, 0, sizeof(ifra));
+		strlcpy(ifra.ifra_name, ifp->name, sizeof(ifra.ifra_name));
+		ifra.ifra_addr.sin_family = AF_INET;
+		ifra.ifra_addr.sin_len = sizeof(ifra.ifra_addr);
+		ifra.ifra_addr.sin_addr = addr;
+		if (ioctl(ctx->pf_inet_fd, SIOCGIFALIAS, &ifra) == -1) {
+			if (errno != ENXIO && errno != EADDRNOTAVAIL)
+				logerr("%s: SIOCGIFALIAS", __func__);
+			if (ifam->ifam_type != RTM_DELADDR)
+				break;
+		} else {
+			if (ifam->ifam_type == RTM_DELADDR)
+				break;
 #if defined(__NetBSD_Version__) && __NetBSD_Version__ < 800000000
-			else
-				bcast = ifra.ifra_broadaddr.sin_addr;
+			bcast = ifra.ifra_broadaddr.sin_addr;
 #endif
+		}
 #else
 #warning No SIOCGIFALIAS support
-			/*
-			 * No SIOCGIFALIAS? That sucks!
-			 * This makes this call very heavy weight, but we
-			 * really need to know if the message is late or not.
-			 */
-			const struct sockaddr *sa;
-			struct ifaddrs *ifaddrs = NULL, *ifa;
+		/*
+		 * No SIOCGIFALIAS? That sucks!
+		 * This makes this call very heavy weight, but we
+		 * really need to know if the message is late or not.
+		 */
+		const struct sockaddr *sa;
+		struct ifaddrs *ifaddrs = NULL, *ifa;
 
-			sa = rti_info[RTAX_IFA];
-			getifaddrs(&ifaddrs);
-			for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
-				if (ifa->ifa_addr == NULL)
-					continue;
-				if (sa_cmp(ifa->ifa_addr, sa) == 0 &&
-				    strcmp(ifa->ifa_name, ifp->name) == 0)
-					break;
-			}
-			freeifaddrs(ifaddrs);
+		sa = rti_info[RTAX_IFA];
+		getifaddrs(&ifaddrs);
+		for (ifa = ifaddrs; ifa; ifa = ifa->ifa_next) {
+			if (ifa->ifa_addr == NULL)
+				continue;
+			if (sa_cmp(ifa->ifa_addr, sa) == 0 &&
+			    strcmp(ifa->ifa_name, ifp->name) == 0)
+				break;
+		}
+		freeifaddrs(ifaddrs);
+		if (ifam->ifam_type == RTM_DELADDR) {
 			if (ifa != NULL)
-				return 0;
+				break;
+		} else {
+			if (ifa == NULL)
+				break;
+		}
 #endif
-		}
 
-#ifndef HAVE_IFAM_ADDRFLAGS
-		if (ifam->ifam_type == RTM_DELADDR)
-			addrflags = 0 ;
-		else if ((addrflags = if_addrflags(ifp, &addr, NULL)) == -1) {
-			if (errno != EADDRNOTAVAIL)
-				logerr("%s: if_addrflags", __func__);
-			break;
-		}
+#ifdef HAVE_IFAM_ADDRFLAGS
+		flags = ifam->ifam_addrflags;
+#else
+		flags = 0;
 #endif
 
 		ipv4_handleifa(ctx, ifam->ifam_type, NULL, ifp->name,
-		    &addr, &mask, &bcast, addrflags, pid);
+		    &addr, &mask, &bcast, flags, pid);
 		break;
 	}
 #endif
@@ -1332,7 +1319,6 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 	{
 		struct in6_addr addr6, mask6;
 		const struct sockaddr_in6 *sin6;
-		int flags;
 
 		sin6 = (const void *)rti_info[RTAX_IFA];
 		addr6 = sin6->sin6_addr;
@@ -1344,20 +1330,17 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 		 * a late message and it still exists (maybe modified).
 		 * If so, ignore it as deleting an address causes
 		 * dhcpcd to drop any lease to which it belongs.
+		 * Also check an added address was really added.
 		 */
-		if (ifam->ifam_type == RTM_DELADDR) {
-			flags = if_addrflags6(ifp, &addr6, NULL);
-			if (flags != -1)
-				break;
-			addrflags = 0;
-		}
-#ifndef HAVE_IFAM_ADDRFLAGS
-		else if ((addrflags = if_addrflags6(ifp, &addr6, NULL)) == -1) {
+		flags = if_addrflags6(ifp, &addr6, NULL);
+		if (flags == -1) {
 			if (errno != EADDRNOTAVAIL)
 				logerr("%s: if_addrflags6", __func__);
+			if (ifam->ifam_type != RTM_DELADDR)
+				break;
+			flags = 0;
+		} else if (ifam->ifam_type == RTM_DELADDR)
 			break;
-		}
-#endif
 
 #ifdef __KAME__
 		if (IN6_IS_ADDR_LINKLOCAL(&addr6))
@@ -1366,7 +1349,7 @@ if_ifa(struct dhcpcd_ctx *ctx, const struct ifa_msghdr *ifam)
 #endif
 
 		ipv6_handleifa(ctx, ifam->ifam_type, NULL,
-		    ifp->name, &addr6, ipv6_prefixlen(&mask6), addrflags, pid);
+		    ifp->name, &addr6, ipv6_prefixlen(&mask6), flags, pid);
 		break;
 	}
 #endif
