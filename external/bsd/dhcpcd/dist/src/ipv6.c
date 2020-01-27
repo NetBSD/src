@@ -1565,7 +1565,9 @@ ipv6_newaddr(struct interface *ifp, const struct in6_addr *addr,
 	tempaddr = false;
 #endif
 
-	if (ia->flags & IPV6_AF_AUTOCONF && !tempaddr) {
+	if (prefix_len == 128)
+		goto makepfx;
+	else if (ia->flags & IPV6_AF_AUTOCONF && !tempaddr) {
 		ia->prefix = *addr;
 		ia->dadcounter = ipv6_makeaddr(&ia->addr, ifp,
 		                               &ia->prefix,
@@ -1581,13 +1583,12 @@ ipv6_newaddr(struct interface *ifp, const struct in6_addr *addr,
 #else
 		return ia;
 #endif
-	} else if (ia->flags & (IPV6_AF_REQUEST | IPV6_AF_DELEGATEDPFX) &&
-	           prefix_len != 128)
-	{
+	} else if (ia->flags & (IPV6_AF_REQUEST | IPV6_AF_DELEGATEDPFX)) {
 		ia->prefix = *addr;
 		cbp = inet_ntop(AF_INET6, &ia->prefix, buf, sizeof(buf));
 		goto paddr;
 	} else {
+makepfx:
 		ia->addr = *addr;
 		if (ipv6_makeprefix(&ia->prefix,
 		                    &ia->addr, ia->prefix_len) == -1)
