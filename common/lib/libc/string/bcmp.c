@@ -1,4 +1,4 @@
-/*	$NetBSD: bcmp.c,v 1.8 2020/01/27 22:13:39 ad Exp $	*/
+/*	$NetBSD: bcmp.c,v 1.9 2020/01/27 22:22:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -63,7 +63,7 @@
 #if 0
 static char sccsid[] = "@(#)bcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: bcmp.c,v 1.8 2020/01/27 22:13:39 ad Exp $");
+__RCSID("$NetBSD: bcmp.c,v 1.9 2020/01/27 22:22:03 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -92,7 +92,10 @@ bcmp(const void *s1, const void *s2, size_t n)
 	b1 = s1;
 	b2 = s2;
 
-	if ((((uintptr_t)b1 | (uintptr_t)b2) & (sizeof(uintptr_t) - 1)) == 0) {
+#ifndef __NO_STRICT_ALIGNMENT
+	if ((((uintptr_t)b1 | (uintptr_t)b2) & (sizeof(uintptr_t) - 1)) == 0)
+#endif
+	{
 		while (n >= sizeof(uintptr_t)) {
 			if (*b1++ != *b2++)
 				return 1;
