@@ -1,4 +1,4 @@
-/*	$NetBSD: label.c,v 1.19 2020/01/15 19:37:41 martin Exp $	*/
+/*	$NetBSD: label.c,v 1.20 2020/01/27 21:21:22 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: label.c,v 1.19 2020/01/15 19:37:41 martin Exp $");
+__RCSID("$NetBSD: label.c,v 1.20 2020/01/27 21:21:22 martin Exp $");
 #endif
 
 #include <sys/types.h>
@@ -1142,10 +1142,10 @@ fmt_fspart_header(menudesc *menu, void *arg)
 		if (pset->infos[ptn].flags & PUIFLG_CLONE_PARTS)
 			with_clone = true;
 	humanize_number(total, sizeof total,
-	    pset->parts->disk_size * 512,
+	    pset->parts->disk_size * pset->parts->bytes_per_sector,
 	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 	humanize_number(free_space, sizeof free_space,
-	    pset->cur_free_space * 512,
+	    pset->cur_free_space * pset->parts->bytes_per_sector,
 	    "", HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 
 	if (with_clone)
@@ -1983,7 +1983,8 @@ getpartoff(struct disk_partitions *parts, daddr_t defpartstart)
 			i = min;
 			localsizemult = 1;
 		} else {
-			i = parse_disk_pos(isize, &localsizemult, 
+			i = parse_disk_pos(isize, &localsizemult,
+			    parts->bytes_per_sector,
 			    parts->pscheme->get_cylinder_size(parts), NULL);
 			if (i < 0) {
 				errmsg = msg_string(MSG_invalid_sector_number);
@@ -2095,6 +2096,7 @@ getpartsize(struct disk_partitions *parts, daddr_t partstart, daddr_t dflt)
 			max_r = max;
 		} else {
 			i = parse_disk_pos(isize, &localsizemult,
+			    parts->bytes_per_sector,
 			    parts->pscheme->get_cylinder_size(parts), NULL);
 			if (localsizemult != sizemult)
 				max_r = max;
@@ -2147,6 +2149,7 @@ daddr_t
 parse_disk_pos(
 	const char *str,
 	daddr_t *localsizemult,
+	daddr_t bps,
 	daddr_t cyl_size,
 	bool *extend_this)
 {
@@ -2165,13 +2168,13 @@ parse_disk_pos(
 		if (*cp == 'G' || *cp == 'g') {
 			if (mult_found)
 				return -1;
-			*localsizemult = GIG / 512;
+			*localsizemult = GIG / bps;
 			goto next;
 		}
 		if (*cp == 'M' || *cp == 'm') {
 			if (mult_found)
 				return -1;
-			*localsizemult = MEG / 512;
+			*localsizemult = MEG / bps;
 			goto next;
 		}
 		if (*cp == 'c' || *cp == 'C') {

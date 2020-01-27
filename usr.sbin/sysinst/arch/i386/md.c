@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.28 2020/01/09 13:22:31 martin Exp $ */
+/*	$NetBSD: md.c,v 1.29 2020/01/27 21:21:23 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,7 +122,7 @@ md_get_info(struct install_partition_desc *install)
 
 		struct disk_partitions *parts =
 		   (*ps->create_new_for_disk)(pm->diskdev,
-		   0, pm->dlsize, pm->dlsize, true, NULL);
+		   0, pm->dlsize, true, NULL);
 		if (!parts)
 			return false;
 
@@ -136,7 +136,7 @@ md_get_info(struct install_partition_desc *install)
 		pm->parts->pscheme->change_disk_geom(pm->parts,
 		    bcyl, bhead, bsec);
 	else
-		set_default_sizemult(MEG/512);
+		set_default_sizemult(pm->diskdev, MEG, pm->sectorsize);
 
 	/*
 	 * If the selected scheme does not need two-stage partitioning
