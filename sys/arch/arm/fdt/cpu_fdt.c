@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.32 2020/01/25 18:21:37 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.33 2020/01/27 23:26:15 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.32 2020/01/25 18:21:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.33 2020/01/27 23:26:15 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -56,36 +56,9 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.32 2020/01/25 18:21:37 skrll Exp $");
 static int	cpu_fdt_match(device_t, cfdata_t, void *);
 static void	cpu_fdt_attach(device_t, device_t, void *);
 
-enum cpu_fdt_type {
-	ARM_CPU_UP = 1,
-	ARM_CPU_ARMV7,
-	ARM_CPU_ARMV8,
-};
-
 struct cpu_fdt_softc {
 	device_t		sc_dev;
 	int			sc_phandle;
-};
-
-static const struct of_compat_data compat_data[] = {
-	{ "arm,arm1176jzf-s",		ARM_CPU_UP },
-
-	{ "arm,arm-v7",			ARM_CPU_ARMV7 },
-	{ "arm,cortex-a5",		ARM_CPU_ARMV7 },
-	{ "arm,cortex-a7",		ARM_CPU_ARMV7 },
-	{ "arm,cortex-a8",		ARM_CPU_ARMV7 },
-	{ "arm,cortex-a9",		ARM_CPU_ARMV7 },
-	{ "arm,cortex-a12",		ARM_CPU_ARMV7 },
-	{ "arm,cortex-a15",		ARM_CPU_ARMV7 },
-	{ "arm,cortex-a17",		ARM_CPU_ARMV7 },
-
-	{ "arm,armv8",			ARM_CPU_ARMV8 },
-	{ "arm,cortex-a53",		ARM_CPU_ARMV8 },
-	{ "arm,cortex-a57",		ARM_CPU_ARMV8 },
-	{ "arm,cortex-a72",		ARM_CPU_ARMV8 },
-	{ "arm,cortex-a73",		ARM_CPU_ARMV8 },
-
-	{ NULL }
 };
 
 CFATTACH_DECL_NEW(cpu_fdt, sizeof(struct cpu_fdt_softc),
@@ -96,25 +69,11 @@ cpu_fdt_match(device_t parent, cfdata_t cf, void *aux)
 {
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	enum cpu_fdt_type type;
-	int is_compatible;
-	bus_addr_t mpidr;
+	const char *device_type;
 
-	is_compatible = of_match_compat_data(phandle, compat_data);
-	if (!is_compatible)
-		return 0;
+	device_type = fdtbus_get_string(phandle, "device_type");
 
-	type = of_search_compatible(phandle, compat_data)->data;
-	switch (type) {
-	case ARM_CPU_ARMV7:
-	case ARM_CPU_ARMV8:
-		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0)
-			return 0;
-	default:
-		break;
-	}
-
-	return is_compatible;
+	return device_type != NULL && strcmp(device_type, "cpu") == 0;
 }
 
 static void
@@ -123,9 +82,7 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 	struct cpu_fdt_softc * const sc = device_private(self);
 	struct fdt_attach_args * const faa = aux;
 	const int phandle = faa->faa_phandle;
-	enum cpu_fdt_type type;
-	bus_addr_t mpidr;
-	cpuid_t cpuid;
+	bus_addr_t cpuid;
 	const uint32_t *cap_ptr;
 	int len;
 
@@ -141,21 +98,8 @@ cpu_fdt_attach(device_t parent, device_t self, void *aux)
 		    capacity_dmips_mhz);
 	}
 
-	type = of_search_compatible(phandle, compat_data)->data;
-
-	switch (type) {
-	case ARM_CPU_ARMV7:
-	case ARM_CPU_ARMV8:
-		if (fdtbus_get_reg(phandle, 0, &mpidr, NULL) != 0) {
-			aprint_error(": missing 'reg' property\n");
-			return;
-		}
-		cpuid = mpidr;
-		break;
-	default:
+	if (fdtbus_get_reg(phandle, 0, &cpuid, NULL) != 0)
 		cpuid = 0;
-		break;
-	}
 
 	/* Attach the CPU */
 	cpu_attach(self, cpuid);
