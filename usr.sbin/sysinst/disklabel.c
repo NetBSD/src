@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.33 2020/01/21 20:04:30 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.34 2020/01/27 21:21:22 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@ disklabel_init_default_alignment(struct disklabel_disk_partitions *parts,
     uint track)
 {
 	if (track == 0)
-		track = MEG / 512;
+		track = MEG / parts->dp.bytes_per_sector;
 
 	if (dl_maxpart == 0)
 		dl_maxpart = getmaxpartitions();
@@ -82,7 +82,8 @@ disklabel_init_default_alignment(struct disklabel_disk_partitions *parts,
 	/* Use 1MB alignemnt for large (>128GB) disks */
 	if (parts->dp.disk_size > HUGE_DISK_SIZE) {
 		parts->ptn_alignment = 2048;
-	} else if (parts->dp.disk_size > TINY_DISK_SIZE) {
+	} else if (parts->dp.disk_size > TINY_DISK_SIZE ||
+	    parts->dp.bytes_per_sector > 512) {
 		parts->ptn_alignment = 64;
 	} else {
 		parts->ptn_alignment = 1;
@@ -107,9 +108,11 @@ disklabel_change_geom(struct disk_partitions *arg, int ncyl, int nhead,
 
 	disklabel_init_default_alignment(parts, nhead * nsec);
 	if (ncyl*nhead*nsec <= TINY_DISK_SIZE)
-		set_default_sizemult(1);
+		set_default_sizemult(arg->disk,
+		    arg->bytes_per_sector, arg->bytes_per_sector);
 	else
-		set_default_sizemult(MEG/512);
+		set_default_sizemult(arg->disk, MEG,
+		    arg->bytes_per_sector);
 
 	return true;
 }
@@ -134,10 +137,11 @@ disklabel_non_bootable(const char *disk)
 
 static struct disk_partitions *
 disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
-    daddr_t total_size, bool is_boot_drive, struct disk_partitions *parent)
+    bool is_boot_drive, struct disk_partitions *parent)
 {
 	struct disklabel_disk_partitions *parts;
 	struct disk_geom geo;
+	daddr_t total_size;
 
 	if (!get_disk_geom(dev, &geo))
 		return NULL;
@@ -146,10 +150,11 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 	if (parts == NULL)
 		return NULL;
 
-	if (len > disklabel_parts.size_limit)
-		len = disklabel_parts.size_limit;
-	if (total_size > disklabel_parts.size_limit)
-		total_size = disklabel_parts.size_limit;
+	total_size = geo.dg_secperunit;
+	if (len*(geo.dg_secsize/512) > disklabel_parts.size_limit)
+		len = disklabel_parts.size_limit/(geo.dg_secsize/512);
+	if (total_size*(geo.dg_secsize/512) > disklabel_parts.size_limit)
+		total_size = disklabel_parts.size_limit/(geo.dg_secsize/512);
 
 	parts->l.d_ncylinders = geo.dg_ncylinders;
 	parts->l.d_ntracks = geo.dg_ntracks;
@@ -161,6 +166,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 	parts->dp.disk = strdup(dev);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;
+	parts->dp.bytes_per_sector = parts->l.d_secsize;
 	disklabel_init_default_alignment(parts, parts->l.d_secpercyl);
 	parts->dp.parent = parent;
 
@@ -185,7 +191,7 @@ disklabel_parts_new(const char *dev, daddr_t start, daddr_t len,
 }
 
 static struct disk_partitions *
-disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
+disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
     const struct disk_partitioning_scheme *scheme)
 {
 	int fd;
@@ -246,6 +252,8 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len,
 	parts->dp.disk = strdup(disk);
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = parts->dp.free_space = len;
+	parts->l.d_secsize = bps;
+	parts->dp.bytes_per_sector = bps;
 	disklabel_init_default_alignment(parts, parts->l.d_secpercyl);
 
 	for (int part = 0; part < parts->l.d_npartitions; part++) {
@@ -1013,13 +1021,13 @@ disklabel_add_partition(struct disk_partitions *arg,
 	struct disk_part_info data = *info;
 
 	if (disklabel_get_free_spaces_internal(parts, &space, 1, 1, 1,
-	    info->start, -1) < 1) {
+	    data.start, -1) < 1) {
 		if (err_msg)
 			*err_msg = msg_string(MSG_No_free_space);
 		return NO_PART;
 	}
 	if (space.start <= (parts->dp.disk_start + LABELSECTOR) &&
-	    need_to_skip_past_label(info)) {
+	    need_to_skip_past_label(&data)) {
 		daddr_t new_start = roundup(parts->dp.disk_start + LABELSECTOR,
 		    parts->ptn_alignment);
 		daddr_t off = new_start - space.start;
@@ -1040,12 +1048,12 @@ disklabel_add_partition(struct disk_partitions *arg,
 	for (new_id = 0, i = 0; i < parts->l.d_npartitions; i++) {
 		if (parts->l.d_partitions[i].p_size > 0)
 			new_id++;
-		if (info->nat_type->generic_ptype != PT_root &&
-		    info->nat_type->generic_ptype != PT_swap && i < RAW_PART)
+		if (data.nat_type->generic_ptype != PT_root &&
+		    data.nat_type->generic_ptype != PT_swap && i < RAW_PART)
 			continue;
-		if (i == 0 && info->nat_type->generic_ptype != PT_root)
+		if (i == 0 && data.nat_type->generic_ptype != PT_root)
 			continue;
-		if (i == 1 && info->nat_type->generic_ptype != PT_swap)
+		if (i == 1 && data.nat_type->generic_ptype != PT_swap)
 			continue;
 		if (i == RAW_PART)
 			continue;
@@ -1072,13 +1080,13 @@ disklabel_add_partition(struct disk_partitions *arg,
 	parts->l.d_partitions[part].p_offset = data.start;
 	parts->l.d_partitions[part].p_size = data.size;
 	parts->l.d_partitions[part].p_fstype =
-	     dl_part_type_from_generic(info->nat_type);
-	if (info->last_mounted && info->last_mounted[0])
-		strlcpy(parts->last_mounted[part], info->last_mounted,
+	     dl_part_type_from_generic(data.nat_type);
+	if (data.last_mounted && data.last_mounted[0])
+		strlcpy(parts->last_mounted[part], data.last_mounted,
 		    sizeof(parts->last_mounted[part]));
 	else
 		parts->last_mounted[part][0] = 0;
-	parts->fs_sub_type[part] = info->fs_sub_type;
+	parts->fs_sub_type[part] = data.fs_sub_type;
 	parts->dp.num_part++;
 	if (data.size <= parts->dp.free_space)
 		parts->dp.free_space -= data.size;

@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.37 2020/01/24 07:31:15 martin Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.38 2020/01/27 21:21:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -622,7 +622,7 @@ set_ptn_size(menudesc *m, void *arg)
 			break;
 		}
 		mult = sizemult;
-		new_size_val = parse_disk_pos(answer, &mult,
+		new_size_val = parse_disk_pos(answer, &mult, pm->sectorsize,
 		    pm->dlcylsize, &extend);
 
 		if (strcmp(answer, dflt) == 0)
@@ -1634,7 +1634,7 @@ make_bsd_partitions(struct install_partition_desc *install)
 		if (pscheme == NULL)
 			return false;
 		parts = pscheme->create_new_for_disk(pm->diskdev,
-		    0, pm->dlsize, pm->dlsize, true, NULL);
+		    0, pm->dlsize, true, NULL);
 		if (parts == NULL)
 			return false;
 		pm->parts = parts;
