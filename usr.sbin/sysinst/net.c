@@ -1,4 +1,4 @@
-/*	$NetBSD: net.c,v 1.34 2019/11/16 20:26:59 martin Exp $	*/
+/*	$NetBSD: net.c,v 1.35 2020/01/27 21:30:17 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -279,7 +279,7 @@ do_ifreq(struct ifreq *ifr, unsigned long cmd)
 		return -1;
 
 	memset(ifr, 0, sizeof *ifr);
-	strncpy(ifr->ifr_name, net_dev, sizeof ifr->ifr_name);
+	strlcpy(ifr->ifr_name, net_dev, sizeof ifr->ifr_name);
 	rval = ioctl(sock, cmd, ifr);
 	close(sock);
 
@@ -297,7 +297,7 @@ do_ifmreq(struct ifmediareq *ifmr, unsigned long cmd)
 		return -1;
 
 	memset(ifmr, 0, sizeof *ifmr);
-	strncpy(ifmr->ifm_name, net_dev, sizeof ifmr->ifm_name);
+	strlcpy(ifmr->ifm_name, net_dev, sizeof ifmr->ifm_name);
 	rval = ioctl(sock, cmd, ifmr);
 	close(sock);
 
@@ -539,7 +539,7 @@ again:
 	network_up = 1;
 	dhcp_config = 0;
 
-	strncpy(net_dev, net_devs[selected_net].if_dev, STRSIZE);
+	strlcpy(net_dev, net_devs[selected_net].if_dev, sizeof net_dev);
 
 	if (!handle_license(net_dev))
 		goto done;
