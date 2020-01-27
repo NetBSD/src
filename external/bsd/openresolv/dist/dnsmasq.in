@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2019 Roy Marples
+# Copyright (c) 2007-2020 Roy Marples
 # All rights reserved
 
 # dnsmasq subscriber for resolvconf
