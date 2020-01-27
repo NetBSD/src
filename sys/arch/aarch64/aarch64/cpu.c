@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.37 2020/01/27 12:56:44 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.38 2020/01/27 16:25:08 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.37 2020/01/27 12:56:44 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.38 2020/01/27 16:25:08 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -190,7 +190,7 @@ const struct cpuidtab cpuids[] = {
 	{ CPU_ID_CORTEXA76R3 & CPU_PARTMASK, "Cortex-A76", "Cortex", "V8.2-A+" },
 	{ CPU_ID_CORTEXA76AER1 & CPU_PARTMASK, "Cortex-A76AE", "Cortex", "V8.2-A+" },
 	{ CPU_ID_CORTEXA77R0 & CPU_PARTMASK, "Cortex-A77", "Cortex", "V8.2-A+" },
-	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "Nvidia", "Denver2", "V8-A" },
+	{ CPU_ID_NVIDIADENVER2 & CPU_PARTMASK, "NVIDIA", "Denver2", "V8-A" },
 	{ CPU_ID_EMAG8180 & CPU_PARTMASK, "Ampere eMAG", "Skylark", "V8-A" },
 	{ CPU_ID_NEOVERSEE1R1 & CPU_PARTMASK, "Neoverse E1", "Neoverse", "V8.2-A+" },
 	{ CPU_ID_NEOVERSEN1R3 & CPU_PARTMASK, "Neoverse N1", "Neoverse", "V8.2-A+" },
