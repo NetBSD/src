@@ -1,7 +1,8 @@
-/*	$NetBSD: pthread_int.h,v 1.98 2020/01/13 18:22:56 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.99 2020/01/27 20:50:05 ad Exp $	*/
 
 /*-
- * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
+ *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -107,8 +108,6 @@ struct	__pthread_st {
 	int		pt_willpark;	/* About to park */
 	lwpid_t		pt_unpark;	/* Unpark this when parking */
 	struct pthread_lock_ops pt_lockops;/* Cached to avoid PIC overhead */
-	pthread_mutex_t	*pt_droplock;	/* Drop this lock if cancelled */
-	pthread_cond_t	pt_joiners;	/* Threads waiting to join. */
 	void		*(*pt_func)(void *);/* Function to call at start. */
 	void		*pt_arg;	/* Argument to pass at start. */
 
