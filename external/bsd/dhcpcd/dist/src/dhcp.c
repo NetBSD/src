@@ -2335,9 +2335,10 @@ dhcp_message_new(struct bootp **bootp,
 static void
 dhcp_arp_defend_failed(struct arp_state *astate)
 {
+	struct interface *ifp = astate->iface;
 
-	dhcp_drop(astate->iface, "EXPIRED");
-	dhcp_start1(astate->iface);
+	dhcp_drop(ifp, "EXPIRED");
+	dhcp_start1(ifp);
 }
 #endif
 
