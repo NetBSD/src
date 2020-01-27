@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.27 2020/01/27 08:40:46 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.28 2020/01/27 09:40:43 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -103,6 +103,9 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/rss_config.h>
+
+#include <netinet/tcp.h>	/* for struct tcphdr */
+#include <netinet/udp.h>	/* for struct udphdr */
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -704,11 +707,19 @@ struct ixl_softc {
 #define IXL_TX_INTR_PROCESS_LIMIT	256
 #define IXL_RX_INTR_PROCESS_LIMIT	0U
 
-#define IXL_IFCAP_RXCSUM	(IFCAP_CSUM_IPv4_Rx|	\
-				 IFCAP_CSUM_TCPv4_Rx|	\
-				 IFCAP_CSUM_UDPv4_Rx|	\
-				 IFCAP_CSUM_TCPv6_Rx|	\
+#define IXL_IFCAP_RXCSUM	(IFCAP_CSUM_IPv4_Rx |	\
+				 IFCAP_CSUM_TCPv4_Rx |	\
+				 IFCAP_CSUM_UDPv4_Rx |	\
+				 IFCAP_CSUM_TCPv6_Rx |	\
 				 IFCAP_CSUM_UDPv6_Rx)
+#define IXL_IFCAP_TXCSUM	(IFCAP_CSUM_IPv4_Tx |	\
+				 IFCAP_CSUM_TCPv4_Tx |	\
+				 IFCAP_CSUM_UDPv4_Tx |	\
+				 IFCAP_CSUM_TCPv6_Tx |	\
+				 IFCAP_CSUM_UDPv6_Tx)
+#define IXL_CSUM_ALL_OFFLOAD	(M_CSUM_IPv4 |			\
+				 M_CSUM_TCPv4 | M_CSUM_TCPv6 |	\
+				 M_CSUM_UDPv4 | M_CSUM_UDPv6)
 
 #define delaymsec(_x)	DELAY(1000 * (_x))
 #ifdef IXL_DEBUG
@@ -1340,8 +1351,9 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities |= IXL_IFCAP_RXCSUM;
+	ifp->if_capabilities |= IXL_IFCAP_TXCSUM;
 #if 0
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
+	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #endif
 	ether_set_vlan_cb(&sc->sc_ec, ixl_vlan_cb);
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
@@ -2548,6 +2560,71 @@ ixl_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf **m0,
 	return error;
 }
 
+static inline int
+ixl_tx_setup_offloads(struct mbuf *m, uint64_t *cmd_txd)
+{
+	struct ether_header *eh;
+	size_t len;
+	uint64_t cmd;
+
+	cmd = 0;
+
+	eh = mtod(m, struct ether_header *);
+	switch (htons(eh->ether_type)) {
+	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
+		len = ETHER_HDR_LEN;
+		break;
+	case ETHERTYPE_VLAN:
+		len = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+		break;
+	default:
+		len = 0;
+	}
+	cmd |= ((len >> 1) << IXL_TX_DESC_MACLEN_SHIFT);
+
+	if (m->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
+		cmd |= IXL_TX_DESC_CMD_IIPT_IPV4;
+	}
+	if (m->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+		cmd |= IXL_TX_DESC_CMD_IIPT_IPV4_CSUM;
+	}
+
+	if (m->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv6 | M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
+		cmd |= IXL_TX_DESC_CMD_IIPT_IPV6;
+	}
+
+	switch (cmd & IXL_TX_DESC_CMD_IIPT_MASK) {
+	case IXL_TX_DESC_CMD_IIPT_IPV4:
+	case IXL_TX_DESC_CMD_IIPT_IPV4_CSUM:
+		len = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+		break;
+	case IXL_TX_DESC_CMD_IIPT_IPV6:
+		len = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
+		break;
+	default:
+		len = 0;
+	}
+	cmd |= ((len >> 2) << IXL_TX_DESC_IPLEN_SHIFT);
+
+	if (m->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4 | M_CSUM_TSOv6 | M_CSUM_TCPv4 | M_CSUM_TCPv6)) {
+		len = sizeof(struct tcphdr);
+		cmd |= IXL_TX_DESC_CMD_L4T_EOFT_TCP;
+	} else if (m->m_pkthdr.csum_flags & (M_CSUM_UDPv4 | M_CSUM_UDPv6)) {
+		len = sizeof(struct udphdr);
+		cmd |= IXL_TX_DESC_CMD_L4T_EOFT_UDP;
+	} else {
+		len = 0;
+	}
+	cmd |= ((len >> 2) << IXL_TX_DESC_L4LEN_SHIFT);
+
+	*cmd_txd |= cmd;
+	return 0;
+}
+
 static void
 ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
     bool is_transmit)
@@ -2557,7 +2634,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 	struct ixl_tx_map *txm;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	uint64_t cmd, cmd_vlan;
+	uint64_t cmd, cmd_txd;
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
@@ -2611,12 +2688,15 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 			continue;
 		}
 
+		cmd_txd = 0;
+		if (m->m_pkthdr.csum_flags & IXL_CSUM_ALL_OFFLOAD) {
+			ixl_tx_setup_offloads(m, &cmd_txd);
+		}
+
 		if (vlan_has_tag(m)) {
-			cmd_vlan = (uint64_t)vlan_get_tag(m) <<
+			cmd_txd |= (uint64_t)vlan_get_tag(m) <<
 			    IXL_TX_DESC_L2TAG1_SHIFT;
-			cmd_vlan |= IXL_TX_DESC_CMD_IL2TAG1;
-		} else {
-			cmd_vlan = 0;
+			cmd_txd |= IXL_TX_DESC_CMD_IL2TAG1;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
@@ -2628,7 +2708,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IXL_TX_DESC_BSIZE_SHIFT;
 			cmd |= IXL_TX_DESC_DTYPE_DATA | IXL_TX_DESC_CMD_ICRC;
-			cmd |= cmd_vlan;
+			cmd |= cmd_txd;
 
 			txd->addr = htole64(map->dm_segs[i].ds_addr);
 			txd->cmd = htole64(cmd);
