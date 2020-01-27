@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.26 2020/01/17 09:42:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.27 2020/01/27 08:40:46 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -5549,14 +5549,15 @@ ixl_setup_interrupts(struct ixl_softc *sc)
 			    "couldn't map interrupt\n");
 			break;
 		}
-		for (i = 0; i < sc->sc_nintrs; i++) {
-			pci_intr_setattr(pa->pa_pc, &sc->sc_ihp[i],
-			    PCI_INTR_MPSAFE, true);
-		}
 
 		intr_type = pci_intr_type(pa->pa_pc, sc->sc_ihp[0]);
 		sc->sc_nintrs = counts[intr_type];
 		KASSERT(sc->sc_nintrs > 0);
+
+		for (i = 0; i < sc->sc_nintrs; i++) {
+			pci_intr_setattr(pa->pa_pc, &sc->sc_ihp[i],
+			    PCI_INTR_MPSAFE, true);
+		}
 
 		sc->sc_ihs = kmem_alloc(sizeof(sc->sc_ihs[0]) * sc->sc_nintrs,
 		    KM_SLEEP);
