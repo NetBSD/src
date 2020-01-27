@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lock.c,v 1.167 2020/01/24 20:05:15 ad Exp $	*/
+/*	$NetBSD: kern_lock.c,v 1.168 2020/01/27 21:05:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.167 2020/01/24 20:05:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.168 2020/01/27 21:05:43 ad Exp $");
+
+#ifdef _KERNEL_OPT
+#include "opt_lockdebug.h"
+#endif
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -44,6 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: kern_lock.c,v 1.167 2020/01/24 20:05:15 ad Exp $");
 #include <sys/atomic.h>
 #include <sys/lwp.h>
 #include <sys/pserialize.h>
+
+#if defined(DIAGNOSTIC) && !defined(LOCKDEBUG)
+#include <sys/ksyms.h>
+#endif
 
 #include <machine/lock.h>
 
@@ -215,6 +223,9 @@ _kernel_lock(int nlocks)
 	membar_producer();
 	owant = ci->ci_biglock_wanted;
 	ci->ci_biglock_wanted = l;
+#if defined(DIAGNOSTIC) && !defined(LOCKDEBUG)
+	l->l_ld_wanted = __builtin_return_address(0);
+#endif
 
 	/*
 	 * Spin until we acquire the lock.  Once we have it, record the
@@ -329,4 +340,24 @@ bool
 _kernel_locked_p(void)
 {
 	return __SIMPLELOCK_LOCKED_P(kernel_lock);
+}
+
+void
+kernel_lock_plug_leak(void)
+{
+#ifndef LOCKDEBUG
+# ifdef DIAGNOSTIC
+	int biglocks = 0;
+	KERNEL_UNLOCK_ALL(curlwp, &biglocks);
+	if (biglocks != 0) {
+		const char *sym = "(unknown)";
+		ksyms_getname(NULL, &sym, (vaddr_t)curlwp->l_ld_wanted,
+		    KSYMS_CLOSEST|KSYMS_PROC|KSYMS_ANY);
+		printf("kernel_lock leak detected. last acquired: %s / %p\n",
+		    sym, curlwp->l_ld_wanted);
+	}
+# else
+	KERNEL_UNLOCK_ALL(curlwp, NULL);
+# endif
+#endif
 }
