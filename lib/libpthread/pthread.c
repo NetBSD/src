@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.156 2020/01/25 18:01:28 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.157 2020/01/27 20:50:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.156 2020/01/25 18:01:28 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.157 2020/01/27 20:50:05 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -320,12 +320,10 @@ pthread__initthread(pthread_t t)
 	t->pt_havespecific = 0;
 	t->pt_early = NULL;
 	t->pt_lwpctl = &pthread__dummy_lwpctl;
-	t->pt_droplock = NULL;
 
 	memcpy(&t->pt_lockops, pthread__lock_ops, sizeof(t->pt_lockops));
 	pthread_mutex_init(&t->pt_lock, NULL);
 	PTQ_INIT(&t->pt_cleanup_stack);
-	pthread_cond_init(&t->pt_joiners, NULL);
 }
 
 static void
@@ -457,11 +455,9 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	if (!PTQ_EMPTY(&pthread__deadqueue)) {
 		pthread_mutex_lock(&pthread__deadqueue_lock);
 		PTQ_FOREACH(newthread, &pthread__deadqueue, pt_deadq) {
-			/* Still running? */
+			/* Still busily exiting, or finished? */
 			if (newthread->pt_lwpctl->lc_curcpu ==
-			    LWPCTL_CPU_EXITED ||
-			    (_lwp_kill(newthread->pt_lid, 0) == -1 &&
-			    errno == ESRCH))
+			    LWPCTL_CPU_EXITED)
 				break;
 		}
 		if (newthread)
@@ -527,10 +523,12 @@ pthread_create(pthread_t *thread, const pthread_attr_t *attr,
 	private_area = newthread;
 #endif
 
-	flag = LWP_DETACHED;
+	flag = 0;
 	if ((newthread->pt_flags & PT_FLAG_SUSPENDED) != 0 ||
 	    (nattr.pta_flags & PT_FLAG_EXPLICIT_SCHED) != 0)
 		flag |= LWP_SUSPENDED;
+	if ((newthread->pt_flags & PT_FLAG_DETACHED) != 0)
+		flag |= LWP_DETACHED;
 
 	ret = pthread__makelwp(pthread__create_tramp, newthread, private_area,
 	    newthread->pt_stack.ss_sp, newthread->pt_stack.ss_size,
@@ -643,7 +641,6 @@ pthread_exit(void *retval)
 {
 	pthread_t self;
 	struct pt_clean_t *cleanup;
-	char *name;
 
 	if (__predict_false(__uselibcstub)) {
 		__libc_thr_exit_stub(retval);
@@ -681,20 +678,12 @@ pthread_exit(void *retval)
 	 */
 	self->pt_exitval = retval;
 	if (self->pt_flags & PT_FLAG_DETACHED) {
-		self->pt_state = PT_STATE_DEAD;
-		name = self->pt_name;
-		self->pt_name = NULL;
-		pthread_mutex_unlock(&self->pt_lock);
-		if (name != NULL)
-			free(name);
-		pthread_mutex_lock(&pthread__deadqueue_lock);
-		PTQ_INSERT_TAIL(&pthread__deadqueue, self, pt_deadq);
-		pthread_mutex_unlock(&pthread__deadqueue_lock);
+		/* pthread__reap() will drop the lock. */
+		pthread__reap(self);
 		pthread__clear_waiters(self);
 		_lwp_exit();
 	} else {
 		self->pt_state = PT_STATE_ZOMBIE;
-		pthread_cond_broadcast(&self->pt_joiners);
 		pthread_mutex_unlock(&self->pt_lock);
 		pthread__clear_waiters(self);
 		/* Note: name will be freed by the joiner. */
@@ -712,7 +701,6 @@ int
 pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
-	int error;
 
 	self = pthread__self();
 
@@ -725,36 +713,29 @@ pthread_join(pthread_t thread, void **valptr)
 	if (thread == self)
 		return EDEADLK;
 
-	self->pt_droplock = &thread->pt_lock;
-	pthread_mutex_lock(&thread->pt_lock);
+	/* IEEE Std 1003.1 says pthread_join() never returns EINTR. */
 	for (;;) {
-		if (thread->pt_state == PT_STATE_ZOMBIE)
+		pthread__testcancel(self);
+		if (_lwp_wait(thread->pt_lid, NULL) == 0)
 			break;
-		if (thread->pt_state == PT_STATE_DEAD) {
-			pthread_mutex_unlock(&thread->pt_lock);
-			self->pt_droplock = NULL;
-			return ESRCH;
-		}
-		if ((thread->pt_flags & PT_FLAG_DETACHED) != 0) {
-			pthread_mutex_unlock(&thread->pt_lock);
-			self->pt_droplock = NULL;
-			return EINVAL;
-		}
-		error = pthread_cond_wait(&thread->pt_joiners,
-		    &thread->pt_lock);
-		if (error != 0) {
-			pthread__errorfunc(__FILE__, __LINE__,
-			    __func__, "unexpected return from cond_wait()");
-		}
-
+		if (errno != EINTR)
+			return errno;
 	}
-	pthread__testcancel(self);
+
+	/*
+	 * Don't test for cancellation again.  The spec is that if
+	 * cancelled, pthread_join() must not have succeeded.
+	 */
+	pthread_mutex_lock(&thread->pt_lock);
+	if (thread->pt_state != PT_STATE_ZOMBIE) {
+		pthread__errorfunc(__FILE__, __LINE__, __func__,
+		    "not a zombie");
+ 	}
 	if (valptr != NULL)
 		*valptr = thread->pt_exitval;
+
 	/* pthread__reap() will drop the lock. */
 	pthread__reap(thread);
-	self->pt_droplock = NULL;
-
 	return 0;
 }
 
@@ -790,6 +771,7 @@ pthread_equal(pthread_t t1, pthread_t t2)
 int
 pthread_detach(pthread_t thread)
 {
+	int error;
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -798,23 +780,21 @@ pthread_detach(pthread_t thread)
 		return EINVAL;
 
 	pthread_mutex_lock(&thread->pt_lock);
-	thread->pt_flags |= PT_FLAG_DETACHED;
+	if ((thread->pt_flags & PT_FLAG_DETACHED) != 0) {
+		error = EINVAL;
+	} else {
+		error = _lwp_detach(thread->pt_lid);
+		if (error == 0)
+			thread->pt_flags |= PT_FLAG_DETACHED;
+		else
+			error = errno;
+	}
 	if (thread->pt_state == PT_STATE_ZOMBIE) {
 		/* pthread__reap() will drop the lock. */
 		pthread__reap(thread);
-	} else {
-		/*
-		 * Not valid for threads to be waiting in
-		 * pthread_join() (there are intractable
-		 * sync issues from the application
-		 * perspective), but give those threads
-		 * a chance anyway.
-		 */
-		pthread_cond_broadcast(&thread->pt_joiners);
+	} else
 		pthread_mutex_unlock(&thread->pt_lock);
-	}
-
-	return 0;
+	return error;
 }
 
 
@@ -872,11 +852,6 @@ pthread_setname_np(pthread_t thread, const char *name, void *arg)
 }
 
 
-
-/*
- * XXX There should be a way for applications to use the efficent
- *  inline version, but there are opacity/namespace issues.
- */
 pthread_t
 pthread_self(void)
 {
@@ -1035,15 +1010,6 @@ pthread__testcancel(pthread_t self)
 void
 pthread__cancelled(void)
 {
-	pthread_mutex_t *droplock;
-	pthread_t self;
-
-	self = pthread__self();
-	droplock = self->pt_droplock;
-	self->pt_droplock = NULL;
-
-	if (droplock != NULL && pthread_mutex_held_np(droplock))
-		pthread_mutex_unlock(droplock);
 
 	pthread_exit(PTHREAD_CANCELED);
 }
