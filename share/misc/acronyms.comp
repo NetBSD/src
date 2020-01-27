@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.296 2019/12/14 13:36:14 sevan Exp $
+$NetBSD: acronyms.comp,v 1.297 2020/01/27 10:56:29 nia Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -214,6 +214,7 @@ CAV	constant angular velocity
 CBC	cipher block chaining
 CBR	constant bit rate
 CC	carbon copy
+CCC	Chaos Computer Club
 CCD	charge coupled device
 CCI	co-channel interferer
 CCNUMA	cache-coherent non-uniform memory access
@@ -282,6 +283,7 @@ CORBA	common object request broker architecture
 COS	class of service
 COW	copy-on-write
 CP	continuous pilot
+CPA	chosen-plaintext attack
 CPB	core performance boost
 CPC	central processor complex
 CPC	cpu performance counters
