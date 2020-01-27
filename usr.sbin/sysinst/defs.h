@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.53 2020/01/24 07:31:15 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.54 2020/01/27 21:21:22 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -368,7 +368,7 @@ char machine[SSTRSIZE];
 int ignorerror;
 int ttysig_ignore;
 pid_t ttysig_forward;
-int sizemult;
+uint sizemult;
 extern const char *multname;
 extern const char *err_outofmem;
 int partman_go; /* run extended partition manager */
@@ -421,12 +421,16 @@ struct pm_devs {
 	 */
 	bool cur_system;
 
-	/* Actual values for current disk - set by find_disks() or
-	   md_get_info() */
-	int sectorsize, dlcyl, dlhead, dlsec, dlcylsize, current_cylsize;
-	daddr_t dlsize;
+	/* Actual values for current disk geometry - set by find_disks() or
+	 *  md_get_info()
+	 */
+	uint sectorsize, dlcyl, dlhead, dlsec, dlcylsize, current_cylsize;
+	/*
+	 * Total size of the disk - in 'sectorsize' units (!)
+	 */
+	daddr_t dlsize;	/* total number of disk sectors */
 
-	/* Area of disk we can allocate, start and size in disk sectors. */
+	/* Area of disk we can allocate, start and size in sectors. */
 	daddr_t ptstart, ptsize;
 
 	/* For some bootblocks we need to know the CHS addressable limit */
@@ -813,8 +817,8 @@ void	add_rc_conf(const char *, ...) __printflike(1, 2);
 int	del_rc_conf(const char *);
 void	add_sysctl_conf(const char *, ...) __printflike(1, 2);
 void	enable_rc_conf(void);
-void	set_sizemult(uint secs);
-void	set_default_sizemult(uint secs);
+void	set_sizemult(daddr_t, uint bps);
+void	set_default_sizemult(const char *disk, daddr_t unit, uint bps);
 int	check_lfs_progs(void);
 void	init_set_status(int);
 void	customise_sets(void);
@@ -913,7 +917,8 @@ bool pm_force_parts(struct pm_devs *);
 daddr_t parse_disk_pos(
 	const char *,	/* in: input string */
 	daddr_t *,	/* in/out: multiplicator for return value */
-	daddr_t,	/* in: cylinder size in blocks */
+	daddr_t bps,	/* in: sector size in bytes */
+	daddr_t,	/* in: cylinder size in sectors */
 	bool *);	/* NULL if "extend" is not supported, & of
 			 * "extend" flag otherwise */
 

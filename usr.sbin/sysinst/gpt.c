@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.15 2020/01/15 19:36:30 martin Exp $	*/
+/*	$NetBSD: gpt.c,v 1.16 2020/01/27 21:21:22 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ bool	gpt_parts_check(void);	/* check for needed binaries */
 				 * gpt type -l | wc -l */
 #define	GPT_DEV_LEN	16	/* dkNN */
 
-#define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector hols 4 entries */
+#define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector holds 4 entries */
 #define	GPT_DEFAULT_MAX_PARTS	128
 
 /* a usable label will be short, so we can get away with an arbitrary limit */
@@ -255,7 +255,7 @@ update_part_from_wedge_info(struct gpt_disk_partitions *parts,
 }
 
 static struct disk_partitions *
-gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
+gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
     const struct disk_partitioning_scheme *scheme)
 {
 	char diskpath[MAXPATHLEN];
@@ -374,6 +374,7 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = disk_size;
 	parts->dp.free_space = avail_size;
+	parts->dp.bytes_per_sector = bps;
 	parts->has_gpt = true;
 
 	fd = opendisk(parts->dp.disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
@@ -446,15 +447,19 @@ gpt_cyl_size(const struct disk_partitions *arg)
 }
 
 static struct disk_partitions *
-gpt_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
+gpt_create_new(const char *disk, daddr_t start, daddr_t len,
     bool is_boot_drive, struct disk_partitions *parent)
 {
 	struct gpt_disk_partitions *parts;
+	struct disk_geom geo;
 
 	if (start != 0) {
 		assert(0);
 		return NULL;
 	}
+
+	if (!get_disk_geom(disk, &geo))
+		return NULL;
 
 	parts = calloc(1, sizeof(*parts));
 	if (!parts)
@@ -468,6 +473,7 @@ gpt_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = len;
+	parts->dp.bytes_per_sector = geo.dg_secsize;
 	parts->dp.free_space = len - start - parts->prologue - parts->epilogue;
 	parts->has_gpt = false;
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.29 2020/01/20 21:26:35 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.30 2020/01/27 21:21:22 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -234,6 +234,67 @@ dump_mbr(mbr_info_t *m, const char *label)
 }
 #endif
 
+/*
+ * Like pread, but handles re-blocking for non 512 byte sector disks
+ */
+static ssize_t
+blockread(int fd, size_t secsize, void *buf, size_t nbytes, off_t offset)
+{
+        ssize_t nr;
+	off_t sector = offset / 512;
+        off_t offs = sector * (off_t)secsize;
+        off_t mod = offs & (secsize - 1);
+        off_t rnd = offs & ~(secsize - 1);
+	char *iobuf;
+
+	assert(nbytes <= 512);
+
+	if (secsize == 512)
+		return pread(fd, buf, nbytes, offset);
+
+	iobuf = malloc(secsize);
+	if (iobuf == NULL)
+		return -1;
+	nr = pread(fd, iobuf, secsize, rnd);
+	if (nr == (off_t)secsize)
+		memcpy(buf, &iobuf[mod], nbytes);
+	free(iobuf);
+
+	return nr == (off_t)secsize ? (off_t)nbytes : -1;
+}
+
+/*
+ * Same for pwrite
+ */
+static ssize_t
+blockwrite(int fd, size_t secsize, const void *buf, size_t nbytes,
+    off_t offset)
+{
+        ssize_t nr;
+	off_t sector = offset / secsize;
+        off_t offs = sector * (off_t)secsize;
+        off_t mod = offs & (secsize - 1);
+        off_t rnd = offs & ~(secsize - 1);
+	char *iobuf;
+
+	assert(nbytes <= 512);
+
+	if (secsize == 512)
+		return pwrite(fd, buf, nbytes, offset);
+
+	iobuf = malloc(secsize);
+	if (iobuf == NULL)
+		return -1;
+	nr = pread(fd, iobuf, secsize, rnd);
+	if (nr == (off_t)secsize) {
+		memcpy(&iobuf[mod], buf, nbytes);
+		nr = pwrite(fd, iobuf, secsize, rnd);
+	}
+	free(iobuf);
+
+	return nr == (off_t)secsize ? (off_t)nbytes : -1;
+}
+
 static void
 free_last_mounted(mbr_info_t *m)
 {
@@ -466,7 +527,7 @@ valid_mbr(struct mbr_sector *mbrs)
 }
 
 static int
-read_mbr(const char *disk, mbr_info_t *mbri)
+read_mbr(const char *disk, size_t secsize, mbr_info_t *mbri)
 {
 	struct mbr_partition *mbrp;
 	struct mbr_sector *mbrs = &mbri->mbr;
@@ -488,7 +549,7 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 		goto bad_mbr;
 
 	for (;;) {
-		if (pread(fd, mbrs, sizeof *mbrs,
+		if (blockread(fd, secsize, mbrs, sizeof *mbrs,
 		    (ext_base + next_ext) * (off_t)MBR_SECSIZE) - sizeof *mbrs != 0)
 			break;
 
@@ -597,7 +658,8 @@ read_mbr(const char *disk, mbr_info_t *mbri)
 }
 
 static int
-write_mbr(const char *disk, mbr_info_t *mbri, int bsec, int bhead, int bcyl)
+write_mbr(const char *disk, size_t secsize, mbr_info_t *mbri, int bsec,
+    int bhead, int bcyl)
 {
 	char diskpath[MAXPATHLEN];
 	int fd, i, ret = 0, bits = 0;
@@ -613,7 +675,8 @@ write_mbr(const char *disk, mbr_info_t *mbri, int bsec, int bhead, int bcyl)
 	dump_mbr(mbri, "write");
 
 	/* Open the disk. */
-	fd = opendisk(disk, O_WRONLY, diskpath, sizeof(diskpath), 0);
+	fd = opendisk(disk, secsize == 512 ? O_WRONLY : O_RDWR,
+	    diskpath, sizeof(diskpath), 0);
 	if (fd < 0)
 		return -1;
 
@@ -709,7 +772,7 @@ write_mbr(const char *disk, mbr_info_t *mbri, int bsec, int bhead, int bcyl)
 		}
 
 		mbrsec.mbr_magic = htole16(MBR_MAGIC);
-		if (pwrite(fd, &mbrsec, sizeof mbrsec,
+		if (blockwrite(fd, secsize, &mbrsec, sizeof mbrsec,
 					    sector * (off_t)MBR_SECSIZE) < 0) {
 			ret = -1;
 			break;
@@ -833,10 +896,11 @@ mbr_init_default_alignments(struct mbr_disk_partitions *parts, uint track)
 }
 
 static struct disk_partitions *
-mbr_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
+mbr_create_new(const char *disk, daddr_t start, daddr_t len,
     bool is_boot_drive, struct disk_partitions *parent)
 {
 	struct mbr_disk_partitions *parts;
+	struct disk_geom geo;
 
 	assert(start == 0);
 	if (start != 0)
@@ -853,9 +917,18 @@ mbr_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = len;
 	parts->dp.free_space = len-1;
+	parts->dp.bytes_per_sector = 512;
 	parts->geo_sec = MAXSECTOR;
 	parts->geo_head = MAXHEAD;
 	parts->geo_cyl = len/MAXHEAD/MAXSECTOR+1;
+
+	if (get_disk_geom(disk, &geo)) {
+		parts->geo_sec = geo.dg_nsectors;
+		parts->geo_head = geo.dg_ntracks;
+		parts->geo_cyl = geo.dg_ncylinders;
+		parts->dp.bytes_per_sector = geo.dg_secsize;
+	}
+
 	mbr_init_default_alignments(parts, 0);
 
 	return &parts->dp;
@@ -897,7 +970,7 @@ mbr_calc_free_space(struct mbr_disk_partitions *parts)
 }
 
 static struct disk_partitions *
-mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len,
+mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len, size_t bps,
     const struct disk_partitioning_scheme *scheme)
 {
 	struct mbr_disk_partitions *parts;
@@ -919,8 +992,9 @@ mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len,
 	parts->geo_sec = MAXSECTOR;
 	parts->geo_head = MAXHEAD;
 	parts->geo_cyl = len/MAXHEAD/MAXSECTOR+1;
+	parts->dp.bytes_per_sector = bps;
 	mbr_init_default_alignments(parts, 0);
-	if (read_mbr(disk, &parts->mbr) == -1) {
+	if (read_mbr(disk, parts->dp.bytes_per_sector, &parts->mbr) == -1) {
 		free(parts);
 		return NULL;
 	}
@@ -952,8 +1026,8 @@ mbr_write_to_disk(struct disk_partitions *new_state)
 	else
 		bcyl = (unsigned long)(parts->dp.disk_size / t);
 
-	return write_mbr(parts->dp.disk, &parts->mbr,
-	    bsec, bhead, bcyl) == 0;
+	return write_mbr(parts->dp.disk, parts->dp.bytes_per_sector,
+	    &parts->mbr, bsec, bhead, bcyl) == 0;
 }
 
 static bool
@@ -969,7 +1043,8 @@ mbr_change_disk_geom(struct disk_partitions *arg, int ncyl, int nhead,
 	mbr_init_default_alignments(parts, nhead * nsec);
 
 	if (parts->dp.disk_size <= TINY_DISK_SIZE) {
-		set_default_sizemult(1);
+		set_default_sizemult(arg->disk,
+		    parts->dp.bytes_per_sector, parts->dp.bytes_per_sector);
 		return true;
 	}
 
@@ -996,7 +1071,7 @@ mbr_change_disk_geom(struct disk_partitions *arg, int ncyl, int nhead,
 			}
 		}
 	}
-	set_default_sizemult(MEG/512);
+	set_default_sizemult(arg->disk, MEG, parts->dp.bytes_per_sector);
 	return true;
 }
 
@@ -1757,7 +1832,7 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 		if (!force_empty) {
 			myparts->dlabel = disklabel_parts.read_from_disk(
 			    myparts->dp.disk, part.start, part.size,
-			    &disklabel_parts);
+			    myparts->dp.bytes_per_sector, &disklabel_parts);
 			if (myparts->dlabel != NULL)
 				myparts->dlabel->parent = &myparts->dp;
 		}
@@ -1767,7 +1842,7 @@ mbr_read_disklabel(struct disk_partitions *arg, daddr_t start, bool force_empty)
 			myparts->dlabel = 
 			    disklabel_parts.create_new_for_disk(
 			    myparts->dp.disk, part.start, part.size,
-			    myparts->dp.disk_size, false, &myparts->dp);
+			    false, &myparts->dp);
 		}
 
 		if (myparts->dlabel != NULL)

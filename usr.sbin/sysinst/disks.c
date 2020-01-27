@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.61 2020/01/24 07:31:15 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.62 2020/01/27 21:21:22 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -758,7 +758,7 @@ convert_scheme(struct pm_devs *p, bool is_boot_drive, const char **err_msg)
 		return false;
 
 	new_parts = new_scheme->create_new_for_disk(p->diskdev,
-	    0, p->dlsize, p->dlsize, is_boot_drive, NULL);
+	    0, p->dlsize, is_boot_drive, NULL);
 	if (new_parts == NULL)
 		return false;
 
@@ -904,6 +904,7 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 						    partitions_read_disk(
 						    pm_i->diskdev,
 						    disk->dd_totsec,
+						    disk->dd_secsize,
 						    disk->dd_no_mbr);
 					}
 				}
@@ -928,11 +929,11 @@ find_disks(const char *doingwhat, bool allow_cur_system)
 		pm->dlsec = disk->dd_sec;
 		pm->dlsize = disk->dd_totsec;
 		if (pm->dlsize == 0)
-			pm->dlsize = disk->dd_cyl * disk->dd_head
-			    * disk->dd_sec;
+			pm->dlsize =
+			    disk->dd_cyl * disk->dd_head * disk->dd_sec;
 
 		pm->parts = partitions_read_disk(pm->diskdev,
-		    disk->dd_totsec, disk->dd_no_mbr);
+		    pm->dlsize, disk->dd_secsize, disk->dd_no_mbr);
 
 again:
 
@@ -960,8 +961,8 @@ again:
 			pm->dlsec = disk->dd_sec;
 			pm->dlsize = disk->dd_totsec;
 			if (pm->dlsize == 0)
-				pm->dlsize = disk->dd_cyl * disk->dd_head
-				    * disk->dd_sec;
+				pm->dlsize =
+				    disk->dd_cyl * disk->dd_head * disk->dd_sec;
 
 			if (pm->parts && pm->parts->pscheme->size_limit != 0
 			    && pm->dlsize > pm->parts->pscheme->size_limit
@@ -970,7 +971,7 @@ again:
 				char size[5], limit[5];
 
 				humanize_number(size, sizeof(size),
-				    (uint64_t)pm->dlsize * 512U,
+				    (uint64_t)pm->dlsize * pm->sectorsize,
 				    "", HN_AUTOSCALE, HN_B | HN_NOSPACE
 				    | HN_DECIMAL);
 
@@ -1461,7 +1462,9 @@ find_part_by_name(const char *name, struct disk_partitions **parts,
 			if (strcmp(disks[n].dd_name, pm->diskdev) == 0)
 				continue;
 			ps = partitions_read_disk(disks[n].dd_name,
-			    disks[n].dd_totsec, disks[n].dd_no_mbr);
+			    disks[n].dd_totsec,
+			    disks[n].dd_secsize,
+			    disks[n].dd_no_mbr);
 			if (ps == NULL)
 				continue;
 			if (ps->pscheme->find_by_name == NULL)
@@ -2391,7 +2394,9 @@ select_partitions(struct selected_partitions *res,
 				continue;
 
 			ps = partitions_read_disk(disks[n].dd_name,
-			    disks[n].dd_totsec, disks[n].dd_no_mbr);
+			    disks[n].dd_totsec,
+			    disks[n].dd_secsize,
+			    disks[n].dd_no_mbr);
 			if (ps == NULL)
 				continue;
 			data.all_parts[data.all_cnt++] = ps;
