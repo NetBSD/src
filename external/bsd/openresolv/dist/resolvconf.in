@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2007-2019 Roy Marples
+# Copyright (c) 2007-2020 Roy Marples
 # All rights reserved
 
 # Redistribution and use in source and binary forms, with or without
@@ -25,7 +25,7 @@
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 
 RESOLVCONF="$0"
-OPENRESOLV_VERSION="3.9.2"
+OPENRESOLV_VERSION="3.10.0"
 SYSCONFDIR=@SYSCONFDIR@
 LIBEXECDIR=@LIBEXECDIR@
 VARDIR=@VARDIR@
@@ -34,7 +34,7 @@ RESTARTCMD=@RESTARTCMD@
 
 if [ "$1" = "--version" ]; then
 	echo "openresolv $OPENRESOLV_VERSION"
-	echo "Copyright (c) 2007-2016 Roy Marples"
+	echo "Copyright (c) 2007-2020 Roy Marples"
 	exit 0
 fi
 
@@ -44,7 +44,7 @@ unset interface_order state_dir
 # If you change this, change the test in VFLAG and libc.in as well
 local_nameservers="127.* 0.0.0.0 255.255.255.255 ::1"
 
-dynamic_order="tap[0-9]* tun[0-9]* vpn vpn[0-9]* ppp[0-9]* ippp[0-9]*"
+dynamic_order="tap[0-9]* tun[0-9]* vpn vpn[0-9]* wg[0-9]* ppp[0-9]* ippp[0-9]*"
 interface_order="lo lo[0-9]*"
 name_server_blacklist="0.0.0.0"
 
@@ -59,6 +59,7 @@ elif [ -d "$SYSCONFDIR/resolvconf" ]; then
 		interface_order="$(cat "$SYSCONFDIR"/interface-order)"
 	fi
 fi
+
 IFACEDIR="$VARDIR/interfaces"
 METRICDIR="$VARDIR/metrics"
 PRIVATEDIR="$VARDIR/private"
@@ -494,6 +495,23 @@ list_resolv()
 			fi
 			continue
 		fi
+
+		if ! $ALLIFACES; then
+			if [ -n "$allow_interfaces" ]; then
+				x=false
+				for j in $allow_interfaces; do
+					if [ "$i" = "$j" ]; then
+						x=true
+					fi
+				done
+				$x || continue
+			fi
+			for j in $deny_interfaces; do
+				if [ "$i" = "$j" ]; then
+					continue 2
+				fi
+			done
+		fi
 		
 		if [ "$cmd" = i ] || [ "$cmd" = "-i" ]; then
 			printf %s "$i "
@@ -605,7 +623,7 @@ make_vars()
 	SEARCH=
 	NAMESERVERS=
 	LOCALNAMESERVERS=
-	
+
 	if [ -n "${name_servers}${search_domains}" ]; then
 		eval "$(echo_prepend | parse_resolv)"
 	fi
@@ -700,9 +718,11 @@ fi
 
 # -l lists our resolv files, optionally for a specific interface
 if [ "$cmd" = l ] || [ "$cmd" = i ]; then
+	ALLIFACES=true
 	list_resolv "$cmd" "$args"
 	exit $?
 fi
+ALLIFACES=false
 
 # Restart a service or echo the command to restart a service
 if [ "$cmd" = r ] || [ "$cmd" = R ]; then
