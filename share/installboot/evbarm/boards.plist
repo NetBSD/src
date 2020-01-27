@@ -1,4 +1,4 @@
-<!-- $NetBSD: boards.plist,v 1.4 2019/06/05 07:22:49 thorpej Exp $ -->
+<!-- $NetBSD: boards.plist,v 1.5 2020/01/27 07:48:59 thorpej Exp $ -->
 <!--
   Copyright (c) 2019 The NetBSD Foundation, Inc.
   All rights reserved.
@@ -61,12 +61,26 @@
 	<!--
 	  -- rockchip boards
 	  -->
+	<key>pine64,rock64</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 Rock64</string>
+		<key>u-boot-pkg</key>
+		<string>rock64</string>
+	</dict>
 	<key>pine64,rockpro64</key>
 	<dict>
 		<key>description</key>
 		<string>Pine64 RockPro64</string>
 		<key>u-boot-pkg</key>
 		<string>rockpro64</string>
+	</dict>
+	<key>pine64,pinebook-pro</key>
+	<dict>
+		<key>description</key>
+		<string>Pine64 Pinebook Pro</string>
+		<key>u-boot-pkg</key>
+		<string>pinebook-pro</string>
 	</dict>
 
 	<!--
