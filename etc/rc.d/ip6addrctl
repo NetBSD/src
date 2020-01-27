@@ -1,6 +1,7 @@
 #!/bin/sh
 #
-# $FreeBSD: head/etc/rc.d/ip6addrctl 270836 2014-08-30 07:08:10Z hrs $
+# $NetBSD: ip6addrctl,v 1.4 2020/01/27 08:33:24 kim Exp $
+# FreeBSD: head/etc/rc.d/ip6addrctl 270836 2014-08-30 07:08:10Z hrs
 #
 
 # PROVIDE: ip6addrctl
