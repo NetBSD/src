@@ -1,5 +1,5 @@
 #!/bin/sh
-# Copyright (c) 2009-2016 Roy Marples
+# Copyright (c) 2009-2020 Roy Marples
 # All rights reserved
 
 # unbound subscriber for resolvconf
