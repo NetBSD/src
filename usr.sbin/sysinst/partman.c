@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.48 2020/01/15 19:08:24 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.49 2020/01/27 21:21:22 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -245,7 +245,7 @@ static int pm_upddevlist(menudesc *, void *);
 static void pm_select(struct pm_devs *);
 
 static void
-pm_edit_size_value(msg prompt_msg, daddr_t cylsec, daddr_t *size)
+pm_edit_size_value(msg prompt_msg, daddr_t bps, daddr_t cylsec, daddr_t *size)
 {
 
 	char answer[16], dflt[16];
@@ -257,7 +257,7 @@ pm_edit_size_value(msg prompt_msg, daddr_t cylsec, daddr_t *size)
 	msg_prompt_win(prompt_msg, -1, 18, 0, 0, dflt, answer, sizeof answer);
 
 	mult = sizemult;
-	new_size_val = parse_disk_pos(answer, &mult, cylsec, NULL);
+	new_size_val = parse_disk_pos(answer, &mult, bps, cylsec, NULL);
 
 	if (new_size_val > 0)
 		*size = new_size_val * mult;
@@ -1057,7 +1057,8 @@ pm_vnd_set_value(menudesc *m, void *arg)
 			if (dev_ptr->is_exist)
 				return 0;
 
-			pm_edit_size_value(MSG_vnd_size_ask, pm->dlcylsize,
+			pm_edit_size_value(MSG_vnd_size_ask,
+			    pm->sectorsize, pm->dlcylsize,
 			    &dev_ptr->size);
 
 			break;
@@ -1881,7 +1882,8 @@ pm_lvmlv_set_value(menudesc *m, void *arg)
 			return 0;
 		case PMLV_MENU_SIZE:
 			pm_edit_size_value(MSG_lvmlv_size_ask,
-			    pm->dlcylsize, &dev_ptr->size); /* XXX cylsize? */
+			    pm->sectorsize, pm->dlcylsize,
+			    &dev_ptr->size); /* XXX cylsize? */
 			break;
 		case PMLV_MENU_READONLY:
 			dev_ptr->readonly = !dev_ptr->readonly;
@@ -3230,8 +3232,8 @@ pm_force_parts(struct pm_devs *my_pm)
 		return false;
 
 	struct disk_partitions *parts =
-	   (*ps->create_new_for_disk)(my_pm->diskdev, 0, my_pm->dlsize,
-	    my_pm->dlsize, false, NULL);
+	   (*ps->create_new_for_disk)(my_pm->diskdev, 0,
+	   my_pm->dlsize, false, NULL);
 	if (parts == NULL)
 		return false;
 
