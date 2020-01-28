@@ -1,4 +1,4 @@
-/*	$NetBSD: makphyreg.h,v 1.6.20.1 2019/01/17 17:23:02 martin Exp $	*/
+/*	$NetBSD: makphyreg.h,v 1.6.20.2 2020/01/28 09:34:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -107,6 +107,12 @@
 #define	SPEED_1000		2
 #define	SPEED_reserved		3
 
+/* For 88E1112 */
+#define	PSSR_RESOLUTION_FIBER	(1U << 7)   /*
+					     * Fiber/Copper resolution
+					     * 1 = Fiber, 0 = Copper
+					     */
+
 #define	MAKPHY_IE		0x12	/* Interrupt enable */
 #define	IE_JABBER		(1U << 0)   /* jabber indication */
 #define	IE_POL_CHANGED		(1U << 1)   /* polarity changed */
@@ -143,6 +149,7 @@
 #define	LEDCTRL_PULSE_STRCH(x)	((x) << 12)
 #define	LEDCTRL_DISABLE		(1U << 15)  /* disable LED */
 
+/* For 88E1011, 88E1111 */
 #define MAKPHY_ESSR		0x1b    /* Extended PHY specific status */
 #define ESSR_AUTOSEL_DISABLE	0x8000	/* Fiber/Copper autoselect disable */
 #define ESSR_FIBER_LINK		0x2000	/* Fiber/Copper resolution */
@@ -153,13 +160,23 @@
 #define ESSR_DTE_DROP_HYST	0x01e0	/* DTE detect status drop hysteresis */
 #define ESSR_DTE_POWER		0x0010
 #define ESSR_HWCFG_MODE		0x000f
-#define ESSR_GMII_COPPER	0x000f
-#define ESSR_GMII_FIBER		0x0007
-#define ESSR_RGMII_COPPER	0x000b
-#define ESSR_RGMII_FIBER	0x0003
-#define ESSR_RGMII_SGMII	0x0006
-#define ESSR_TBI_COPPER		0x000d
-#define ESSR_TBI_FIBER		0x0005
-
+#define ESSR_SGMII_WC_COPPER	 0x0000 /* SGMII w/ Clock w/ SGMII AN Copper */
+#define ESSR_RTBI_FIBER		 0x0001 /* RTBI to Fiber */
+#define ESSR_RGMII_FIBER	 0x0003 /* RGMII to Fiber */
+#define ESSR_SGMII_WOC_COPPER	 0x0004 /* SGMII w/o Clock w/ SGMII AN Copp. */
+#define ESSR_TBI_FIBER		 0x0005 /* TBI to Fiber */
+#define ESSR_RGMII_SGMII	 0x0006 /* RGMII to SGMII */
+#define ESSR_GMII_FIBER		 0x0007 /* GMII to Fiber */
+#define ESSR_SERIAL_WAN		 0x0008 /* 88E1011: Serial w 1000KX AN */
+#define ESSR_GBIC		 0x0008 /* 88E1111: GBIC */
+#define ESSR_RTBI_COPPER	 0x0009 /* RTBI to Copper */
+#define ESSR_RGMII_COPPER	 0x000b /* RGMII to Copper */
+#define ESSR_RGMII_AUTOSEL	 0x000b /* RGMII with Auto-Selection */
+#define ESSR_SERIAL_WOAN	 0x000c /* 88E1011: Serial w/o 1000KX AN */
+#define ESSR_1000X_WOAN		 0x000c /* 88E1111: 1000X w/o AN Copper */
+#define ESSR_TBI_COPPER		 0x000d /* TBI to Copper */
+#define ESSR_GMII_SGMII		 0x000e /* GMII to SGMII */
+#define ESSR_GMII_COPPER	 0x000f /* GMII to Copper */
+#define ESSR_GMII_AUTOSEL	 0x000f /* GMII with Auto-Selection */
 
 #endif /* _DEV_MII_MAKPHYREG_H_ */
