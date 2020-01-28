@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_type.h,v 1.41.2.1 2019/09/26 19:07:22 martin Exp $ */
+/* $NetBSD: ixgbe_type.h,v 1.41.2.2 2020/01/28 11:09:27 martin Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -4263,6 +4263,7 @@ struct ixgbe_hw {
 	bool allow_unsupported_sfp;
 	bool wol_enabled;
 	bool need_crosstalk_fix;
+	bool need_unsupported_sfp_recovery;
 };
 
 #define ixgbe_call_func(hw, func, params, error) \
