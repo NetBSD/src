@@ -1,4 +1,4 @@
-/*	$NetBSD: util.c,v 1.29.2.5 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: util.c,v 1.29.2.6 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,6 +59,9 @@
 #include "defsizes.h"
 #include "msg_defs.h"
 #include "menu_defs.h"
+#ifdef MD_MAY_SWAP_TO
+#include <sys/drvctlio.h>
+#endif
 
 #define MAX_CD_DEVS	256	/* how many cd drives do we expect to attach */
 #define ISO_BLKSIZE	ISO_DEFAULT_BLOCK_SIZE
@@ -71,6 +74,7 @@ static uint8_t set_status[SET_GROUP_END];
 #define SET_SELECTED	0x02
 #define SET_SKIPPED	0x04
 #define SET_INSTALLED	0x08
+#define	SET_NO_EXTRACT	0x10
 
 struct  tarstats {
 	int nselected;
@@ -718,6 +722,13 @@ set_kernel_set(unsigned int kernel_set)
 	set_status[kernel_set] |= SET_SELECTED;
 }
 
+void
+set_noextract_set(unsigned int set)
+{
+
+	set_status[set] |= SET_NO_EXTRACT;
+}
+
 static int
 set_toggle(menudesc *menu, void *arg)
 {
@@ -904,6 +915,23 @@ customise_sets(void)
 int
 extract_file(distinfo *dist, int update)
 {
+	const char *dest_dir = NULL;
+
+	if (update && (dist->set == SET_ETC || dist->set == SET_X11_ETC)) {
+		dest_dir = "/.sysinst";
+		make_target_dir(dest_dir);
+	} else if (dist->set == SET_PKGSRC)
+		dest_dir = "/usr";
+	else
+		dest_dir = "/";
+
+	return extract_file_to(dist, update, dest_dir, NULL, true);
+}
+
+int
+extract_file_to(distinfo *dist, int update, const char *dest_dir,
+    const char *extr_pattern, bool do_stats)
+{
 	char path[STRSIZE];
 	char *owd;
 	int   rval;
@@ -939,7 +967,8 @@ extract_file(distinfo *dist, int update)
 
 		if (!file_exists_p(path)) {
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
-			tarstats.nnotfound++;
+			if (do_stats)
+				tarstats.nnotfound++;
 
 			char *err = str_arg_subst(msg_string(MSG_notarfile),
 			    1, &dist->name);
@@ -952,15 +981,10 @@ extract_file(distinfo *dist, int update)
 	}
 #endif /* SUPPORT_8_3_SOURCE_FILESYSTEM */
 
-	tarstats.nfound++;
+	if (do_stats)
+		tarstats.nfound++;
 	/* cd to the target root. */
-	if (update && (dist->set == SET_ETC || dist->set == SET_X11_ETC)) {
-		make_target_dir("/.sysinst");
-		target_chdir_or_die("/.sysinst");
-	} else if (dist->set == SET_PKGSRC)
-		target_chdir_or_die("/usr");
-	else
-		target_chdir_or_die("/");
+	target_chdir_or_die(dest_dir);
 
 	/*
 	 * /usr/X11R7/lib/X11/xkb/symbols/pc was a directory in 5.0
@@ -971,16 +995,24 @@ extract_file(distinfo *dist, int update)
 		run_program(0, "rm -rf usr/X11R7/lib/X11/xkb/symbols/pc");
 
 	/* now extract set files into "./". */
-	rval = run_program(RUN_DISPLAY | RUN_PROGRESS,
-			"progress -zf %s tar --chroot "
-			TAR_EXTRACT_FLAGS " -", path);
+	if (extr_pattern != NULL) {
+		rval = run_program(RUN_DISPLAY | RUN_PROGRESS,
+				"progress -zf %s tar --chroot "
+				TAR_EXTRACT_FLAGS " - '%s'",
+				path, extr_pattern);
+	} else {
+		rval = run_program(RUN_DISPLAY | RUN_PROGRESS,
+				"progress -zf %s tar --chroot "
+				TAR_EXTRACT_FLAGS " -", path);
+	}
 
 	chdir(owd);
 	free(owd);
 
 	/* Check rval for errors and give warning. */
 	if (rval != 0) {
-		tarstats.nerror++;
+		if (do_stats)
+			tarstats.nerror++;
 		msg_fmt_display(MSG_tarerror, "%s", path);
 		hit_enter_to_continue(NULL, NULL);
 		return SET_RETRY;
@@ -992,7 +1024,8 @@ extract_file(distinfo *dist, int update)
 	}
 
 	set_status[dist->set] |= SET_INSTALLED;
-	tarstats.nsuccess++;
+	if (do_stats)
+		tarstats.nsuccess++;
 	return SET_OK;
 }
 
@@ -1017,6 +1050,27 @@ skip_set(distinfo *dist, int skip_type)
 	}
 }
 
+distinfo*
+get_set_distinfo(int opt)
+{
+	distinfo *dist;
+	int set;
+
+	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
+		if (set != opt)
+			continue;
+		if (dist->name == NULL)
+			continue;
+		if ((set_status[set] & (SET_VALID | SET_SELECTED))
+		    != (SET_VALID | SET_SELECTED))
+			continue;
+		return dist;
+	}
+
+	return NULL;
+}
+
+
 /*
  * Get and unpack the distribution.
  * Show success_msg if installation completes.
@@ -1028,7 +1082,7 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 {
 	distinfo *dist;
 	int status;
-	int set;
+	int set, olderror, oldfound;
 
 	/* Ensure mountpoint for distribution files exists in current root. */
 	(void)mkdir("/mnt2", S_IRWXU| S_IRGRP|S_IXGRP | S_IROTH|S_IXOTH);
@@ -1044,6 +1098,8 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 	for (dist = dist_list; (set = dist->set) != SET_LAST; dist++) {
 		if (dist->name == NULL)
 			continue;
+		if (set_status[set] & SET_NO_EXTRACT)
+			continue;
 		if ((set_status[set] & (SET_VALID | SET_SELECTED))
 		    == (SET_VALID | SET_SELECTED))
 			tarstats.nselected++;
@@ -1055,6 +1111,10 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			continue;
 		if (set_status[set] != (SET_VALID | SET_SELECTED))
 			continue;
+
+		/* save stats, in case we will retry */
+		oldfound = tarstats.nfound;
+		olderror = tarstats.nerror;
 
 		if (status != SET_OK) {
 			/* This might force a redraw.... */
@@ -1087,11 +1147,24 @@ get_and_unpack_sets(int update, msg setupdone_msg, msg success_msg, msg failure_
 			}
 		}
 
+		if (set_status[set] & SET_NO_EXTRACT)
+			continue;
+
 		/* Try to extract this set */
 		status = extract_file(dist, update);
-		if (status == SET_RETRY)
+		if (status == SET_RETRY) {
+			/* do this set again */
 			dist--;
+			/* and reset statistics to what we had before this
+			 * set */
+			tarstats.nfound = oldfound;
+			tarstats.nerror = olderror;
+		}
 	}
+
+#ifdef MD_SET_EXTRACT_FINALIZE
+	MD_SET_EXTRACT_FINALIZE(update);
+#endif
 
 	if (tarstats.nerror == 0 && tarstats.nsuccess == tarstats.nselected) {
 		msg_display(MSG_endtarok);
@@ -2123,3 +2196,59 @@ free_install_desc(struct install_partition_desc *install)
 	free(install->infos);
 }
 
+#ifdef MD_MAY_SWAP_TO
+bool
+may_swap_if_not_sdmmc(const char *disk)
+{
+	int fd, res;
+	prop_dictionary_t command_dict, args_dict, results_dict, data_dict;
+	prop_string_t string;
+	prop_number_t number;
+	const char *parent = "";
+
+	fd = open(DRVCTLDEV, O_RDONLY, 0);
+	if (fd == -1)
+		return true;
+
+	command_dict = prop_dictionary_create();
+	args_dict = prop_dictionary_create();
+
+	string = prop_string_create_cstring_nocopy("get-properties");
+	prop_dictionary_set(command_dict, "drvctl-command", string);
+	prop_object_release(string);
+
+	string = prop_string_create_cstring(disk);
+	prop_dictionary_set(args_dict, "device-name", string);
+	prop_object_release(string);
+
+	prop_dictionary_set(command_dict, "drvctl-arguments",
+	    args_dict);
+	prop_object_release(args_dict);
+
+	res = prop_dictionary_sendrecv_ioctl(command_dict, fd,
+	    DRVCTLCOMMAND, &results_dict);
+	prop_object_release(command_dict);
+	close(fd);
+	if (res)
+		return true;
+
+	number = prop_dictionary_get(results_dict, "drvctl-error");
+	if (prop_number_integer_value(number) == 0) {
+		data_dict = prop_dictionary_get(results_dict,
+		    "drvctl-result-data");
+		if (data_dict != NULL) {
+			string = prop_dictionary_get(data_dict,
+			    "device-parent");
+			if (string != NULL)
+				parent = prop_string_cstring_nocopy(string);
+		}
+	}
+
+	prop_object_release(results_dict);
+
+	if (parent == NULL)
+		return true;
+
+	return strncmp(parent, "sdmmc", 5) != 0;
+}
+#endif

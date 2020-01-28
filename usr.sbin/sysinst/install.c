@@ -1,4 +1,4 @@
-/*	$NetBSD: install.c,v 1.9.2.2 2019/11/17 13:45:26 msaitoh Exp $	*/
+/*	$NetBSD: install.c,v 1.9.2.3 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -154,8 +154,6 @@ do_install(void)
 #endif
 
 	memset(&install, 0, sizeof install);
-
-	get_ramsize();
 
 	/* Create and mount partitions */
 	find_disks_ret = find_disks(msg_string(MSG_install), false);

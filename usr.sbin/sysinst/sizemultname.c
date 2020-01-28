@@ -1,4 +1,4 @@
-/*	$NetBSD: sizemultname.c,v 1.3 2019/06/12 06:20:18 martin Exp $	*/
+/*	$NetBSD: sizemultname.c,v 1.3.2.1 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -49,18 +49,18 @@
 #include "menu_defs.h"
 
 void
-set_sizemult(uint secs)
+set_sizemult(daddr_t unit, uint bps)
 {
-	if (secs == 0)
+	if (unit == 0 || bps == 0)
 		return;
 
-	sizemult = secs;
+	sizemult = unit/bps;
 
-	if (secs == 1)
+	if (sizemult == 1)
 		multname = msg_string(MSG_secname);
-	else if (secs == MEG/512)
+	else if (unit == MEG)
 		multname = msg_string(MSG_megname);
-	else if (secs == GIG/512)
+	else if (unit == GIG)
 		multname = msg_string(MSG_gigname);
 	else
 		multname = msg_string(MSG_cylname);
@@ -70,15 +70,14 @@ set_sizemult(uint secs)
  * Only first call sets it
  */
 void
-set_default_sizemult(uint secs)
+set_default_sizemult(const char *disk, daddr_t unit, uint bps)
 {
-	static bool default_done;
+	static char last_dev[40];
 
-	if (default_done)
+	if (strcmp(disk, last_dev) == 0)
 		return;
 
-	default_done = true;
-	set_sizemult(secs);
+	strlcpy(last_dev, disk, sizeof last_dev);
+	set_sizemult(unit, bps);
 }
-
 

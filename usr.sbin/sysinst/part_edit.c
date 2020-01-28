@@ -1,4 +1,4 @@
-/*	$NetBSD: part_edit.c,v 1.7.2.3 2019/11/17 13:45:26 msaitoh Exp $ */
+/*	$NetBSD: part_edit.c,v 1.7.2.4 2020/01/28 10:17:58 msaitoh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -973,6 +973,10 @@ parts_use_wholedisk(struct disk_partitions *parts,
 			    1, info.size, align, -1, -1) != 1)
 				return false;
 			info.start = space.start;
+			if (info.nat_type == NULL)
+				info.nat_type = parts->pscheme->
+				    get_fs_part_type(PT_undef, info.fs_type,
+				    info.fs_sub_type);
 			if (parts->pscheme->add_partition(parts, &info, NULL)
 			    == NO_PART)
 				return false;
@@ -1185,7 +1189,7 @@ ask_outer_partsizes(struct disk_partitions *parts)
 	}
 
 	/* Default to MB, and use bios geometry for cylinder size */
-	set_default_sizemult(MEG/512);
+	set_default_sizemult(parts->disk, MEG, parts->bytes_per_sector);
 	if (pm->current_cylsize == 0)
 		pm->current_cylsize = 16065;	/* noone cares nowadays */
 	pm->ptstart = 0;
@@ -1376,7 +1380,12 @@ select_part_scheme(
 
 	for (used = 0, ndx = 0; ndx < num_available_part_schemes; ndx++) {
 		p = available_part_schemes[ndx];
-		if (skip != NULL && p == skip)
+		/*
+		 * Do not match exactly, we want to skip all lookalikes
+		 * too (only_disklabel_parts vs. disklabel_parts)
+		 */
+		if (skip != NULL &&
+		    p->create_new_for_disk == skip->create_new_for_disk)
 			continue;
 		if (bootable && p->have_boot_support != NULL &&
 		    !p->have_boot_support(dev->diskdev))
@@ -1385,7 +1394,8 @@ select_part_scheme(
 		if (dev->no_mbr && p->name == MSG_parttype_mbr)
 			continue;
 #endif
-		if (p->size_limit && dev->dlsize > p->size_limit) {
+		if (p->size_limit && dev->dlsize*(dev->sectorsize/512) >
+		    p->size_limit) {
 			char buf[255], hum_lim[5];
 
 			humanize_number(hum_lim, sizeof(hum_lim),
@@ -1421,7 +1431,7 @@ select_part_scheme(
 		const char *p2 = msg_string(MSG_select_part_limit);
 
 		humanize_number(hum_lim, sizeof(hum_lim),
-		    (uint64_t)dev->dlsize*512, "",
+		    (uint64_t)dev->dlsize*dev->sectorsize, "",
 		    HN_AUTOSCALE, HN_B | HN_NOSPACE | HN_DECIMAL);
 
 		const char *args[] = { dev->diskdev, hum_lim };
