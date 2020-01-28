@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.18 2020/01/28 11:52:21 isaki Exp $
+| $NetBSD: boot.S,v 1.19 2020/01/28 11:57:22 isaki Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
@@ -27,9 +27,10 @@
 |  :            :        +------------+        +------------+    0x003000
 |  :            :        |full primary|        |full primary|
 |  :            :        |boot loader |        |boot loader |
-|  :            :        +------------+        +------------+
-|  :            :        :            :        :            :
-|  :            :        :            :        +------------+    0x006000
+|  :            :        |(text+data) |        |(text+data) |
+|  :            :        +------------+        +------------+    0x005000
+|  :            :        |(bss)       |        |(bss)       |
+|  :            :        +------------+        +------------+    0x006000
 |  :            :        :            :        | /boot      |
 |  :            :        :            :        +------------+
 |  :            :        :            :        :            :
