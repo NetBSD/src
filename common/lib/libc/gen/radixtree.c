@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.22 2020/01/28 16:33:34 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.22 2020/01/28 16:33:34 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.21 2020/01/12 20:00:41 para Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.22 2020/01/28 16:33:34 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -349,6 +349,23 @@ radix_tree_init(void)
 	    radix_tree_node_ctor, NULL, NULL);
 	KASSERT(radix_tree_node_cache != NULL);
 }
+
+/*
+ * radix_tree_await_memory:
+ *
+ * after an insert has failed with ENOMEM, wait for memory to become
+ * available, so the caller can retry.
+ */
+
+void
+radix_tree_await_memory(void)
+{
+	struct radix_tree_node *n;
+
+	n = pool_cache_get(radix_tree_node_cache, PR_WAITOK);
+	pool_cache_put(radix_tree_node_cache, n);
+}
+
 #endif /* defined(_KERNEL) */
 
 static bool __unused
