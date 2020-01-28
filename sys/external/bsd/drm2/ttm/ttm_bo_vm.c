@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.12 2019/03/09 01:59:47 mrg Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.13 2020/01/28 23:24:09 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.12 2019/03/09 01:59:47 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.13 2020/01/28 23:24:09 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -89,7 +89,6 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	unsigned i;
 	vm_prot_t vm_prot;	/* VM_PROT_* */
 	pgprot_t pgprot;	/* VM_PROT_* | PMAP_* cacheability flags */
-	unsigned mmapflags;
 	int ret;
 
 	/* Thanks, uvm, but we don't need this lock.  */
@@ -189,13 +188,11 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 			    0);
 
 			paddr = pmap_phys_address(cookie);
-			mmapflags = pmap_mmap_flags(cookie);
 		} else {
 			paddr = page_to_phys(u.ttm->pages[startpage + i]);
-			mmapflags = 0;
 		}
 		ret = -pmap_enter(ufi->orig_map->pmap, vaddr + i*PAGE_SIZE,
-		    paddr, vm_prot, (PMAP_CANFAIL | pgprot | mmapflags));
+		    paddr, vm_prot, (PMAP_CANFAIL | pgprot));
 		if (ret)
 			goto out3;
 	}
