@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6.2.1 2019/11/27 13:46:45 martin Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.6.2.2 2020/01/28 11:01:37 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.2.1 2019/11/27 13:46:45 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.2.2 2020/01/28 11:01:37 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -1555,9 +1555,11 @@ cpsw_ale_update_addresses(struct cpsw_softc *sc, int purge)
 		cpsw_ale_remove_all_mc_entries(sc);
 
 	/* Set other multicast addrs desired. */
+	ETHER_LOCK(ec);
 	LIST_FOREACH(ifma, &ec->ec_multiaddrs, enm_list) {
 		cpsw_ale_mc_entry_set(sc, ALE_PORT_MASK_ALL, ifma->enm_addrlo);
 	}
+	ETHER_UNLOCK(ec);
 
 	return 0;
 }
