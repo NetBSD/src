@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.167 2020/01/27 07:29:56 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.168 2020/01/28 09:10:10 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8352,3 +8352,13 @@ doc/3RDPARTY					(manually edited)
 	Import OpenSSL 1.1.1d.
 	[christos, ticket #660]
 
+sys/dev/fdt/fdtbus.c				1.32
+
+	First arg of cpu_setmodel needs to be a format string - fix the llvm
+	build.
+	[martin, ticket #665]
+
+distrib/evbmips/instkernel/ramdisk/Makefile	1.14
+
+	PR install/54777: Add dhcpcd to the install ramdisk.
+	[martin, ticket #666]
