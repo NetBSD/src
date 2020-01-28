@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.14 2018/08/30 01:19:49 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.15 2020/01/28 23:21:05 jmcneill Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.14 2018/08/30 01:19:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.15 2020/01/28 23:21:05 jmcneill Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -565,17 +565,11 @@ pgprot_t ttm_io_prot(uint32_t caching_flags, pgprot_t tmp)
 		return tmp;
 
 #ifdef __NetBSD__
-	switch (caching_flags & TTM_PL_MASK_CACHING) {
-	case TTM_PL_FLAG_CACHED:
-		return (tmp | PMAP_WRITE_BACK);
-	case TTM_PL_FLAG_WC:
+	tmp &= ~PMAP_CACHE_MASK;
+	if (caching_flags & TTM_PL_FLAG_WC)
 		return (tmp | PMAP_WRITE_COMBINE);
-	case TTM_PL_FLAG_UNCACHED:
+	else
 		return (tmp | PMAP_NOCACHE);
-	default:
-		panic("invalid caching flags: %"PRIx32"\n",
-		    (caching_flags & TTM_PL_MASK_CACHING));
-	}
 #else
 #if defined(__i386__) || defined(__x86_64__)
 	if (caching_flags & TTM_PL_FLAG_WC)
