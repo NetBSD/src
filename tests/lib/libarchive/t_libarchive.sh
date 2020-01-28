@@ -1,4 +1,4 @@
-#       $NetBSD: t_libarchive.sh,v 1.1 2020/01/17 16:24:03 christos Exp $
+#       $NetBSD: t_libarchive.sh,v 1.2 2020/01/28 18:18:32 martin Exp $
 #
 # Copyright (c) 2020 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -30,6 +30,7 @@ atf_test_case libarchive
 libarchive_head()
 {
         atf_set "descr" "test libarchive"
+	atf_set	"timeout" "3600"
 }
 
 libarchive_body()
