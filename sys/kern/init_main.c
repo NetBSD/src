@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.518 2020/01/08 17:38:42 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.519 2020/01/28 16:35:39 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.518 2020/01/08 17:38:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.519 2020/01/28 16:35:39 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -329,6 +329,9 @@ main(void)
 	mutex_obj_init();
 	rw_obj_init();
 
+	/* Initialize radix trees (used by numerous subsystems). */
+	radix_tree_init();
+
 	/* Passive serialization. */
 	pserialize_init();
 
@@ -480,7 +483,6 @@ main(void)
 	/* Initialize fstrans. */
 	fstrans_init();
 
-	radix_tree_init(); /* used for page cache */
 	vfsinit();
 	lf_init();
 
