@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.38 2020/01/27 16:25:08 skrll Exp $ */
+/* $NetBSD: cpu.c,v 1.39 2020/01/28 17:47:50 maxv Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.38 2020/01/27 16:25:08 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.39 2020/01/28 17:47:50 maxv Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -460,8 +460,7 @@ cpu_setup_id(struct cpu_info *ci)
 
 	id->ac_aa64mmfr0 = reg_id_aa64mmfr0_el1_read();
 	id->ac_aa64mmfr1 = reg_id_aa64mmfr1_el1_read();
-	/* Only in ARMv8.2. */
-	id->ac_aa64mmfr2 = 0 /* reg_id_aa64mmfr2_el1_read() */;
+	id->ac_aa64mmfr2 = reg_id_aa64mmfr2_el1_read();
 
 	id->ac_mvfr0     = reg_mvfr0_el1_read();
 	id->ac_mvfr1     = reg_mvfr1_el1_read();
