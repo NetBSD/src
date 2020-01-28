@@ -62,5 +62,5 @@ if [ "X${DONEPROFILE}" = "X" ]; then
 	mount -t kernfs /kern /kern
 
 	# run the installation program
-	sysinst
+	sysinst || stty sane
 fi
