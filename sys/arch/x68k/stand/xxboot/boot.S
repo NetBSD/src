@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.11 2020/01/28 11:57:22 isaki Exp $
+| $NetBSD: boot.S,v 1.12 2020/01/28 12:02:02 isaki Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
@@ -37,6 +37,7 @@
 |  ~            ~        ~            ~        ~            ~
 |  :            :        :            :<-SP    :            :<-SP
 |  + - - - - - -+        + - - - - - -+        + - - - - - -+    0x100000
+|  :            :        :(heap)      :        :(heap)      :
 |  :            :        :            :        :            :
 |
 
