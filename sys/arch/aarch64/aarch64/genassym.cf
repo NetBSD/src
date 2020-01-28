@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.18 2020/01/08 17:38:41 ad Exp $
+# $NetBSD: genassym.cf,v 1.19 2020/01/28 17:33:07 maxv Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -348,7 +348,7 @@ define	SCTLR_C			SCTLR_C
 define	SCTLR_SA		SCTLR_SA
 define	SCTLR_SA0		SCTLR_SA0
 define	SCTLR_CP15BEN		SCTLR_CP15BEN
-define	SCTLR_THEE		SCTLR_THEE
+define	SCTLR_nAA		SCTLR_nAA
 define	SCTLR_ITD		SCTLR_ITD
 define	SCTLR_SED		SCTLR_SED
 define	SCTLR_UMA		SCTLR_UMA
