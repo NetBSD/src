@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.33 2020/01/28 17:47:51 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.34 2020/01/28 18:02:30 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -710,19 +710,35 @@ AARCH64REG_WRITE_INLINE(sctlr_el1)
 #define	SCTLR_ITD		__BIT(7)
 #define	SCTLR_SED		__BIT(8)
 #define	SCTLR_UMA		__BIT(9)
+#define	SCTLR_EnRCTX		__BIT(10)
+#define	SCTLR_EOS		__BIT(11)
 #define	SCTLR_I			__BIT(12)
+#define	SCTLR_EnDB		__BIT(13)
 #define	SCTLR_DZE		__BIT(14)
 #define	SCTLR_UCT		__BIT(15)
 #define	SCTLR_nTWI		__BIT(16)
 #define	SCTLR_nTWE		__BIT(18)
 #define	SCTLR_WXN		__BIT(19)
+#define	SCTLR_TSCXT		__BIT(20)
 #define	SCTLR_IESB		__BIT(21)
+#define	SCTLR_EIS		__BIT(22)
 #define	SCTLR_SPAN		__BIT(23)
 #define	SCTLR_EOE		__BIT(24)
 #define	SCTLR_EE		__BIT(25)
 #define	SCTLR_UCI		__BIT(26)
+#define	SCTLR_EnDA		__BIT(27)
 #define	SCTLR_nTLSMD		__BIT(28)
 #define	SCTLR_LSMAOE		__BIT(29)
+#define	SCTLR_EnIB		__BIT(30)
+#define	SCTLR_EnIA		__BIT(31)
+#define	SCTLR_BT0		__BIT(35)
+#define	SCTLR_BT1		__BIT(36)
+#define	SCTLR_ITFSB		__BIT(37)
+#define	SCTLR_TCF0		__BITS(39,38)
+#define	SCTLR_TCF		__BITS(41,40)
+#define	SCTLR_ATA0		__BIT(42)
+#define	SCTLR_ATA		__BIT(43)
+#define	SCTLR_DSSBS		__BIT(44)
 
 // current EL stack pointer
 static __inline uint64_t
