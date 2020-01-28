@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.31 2020/01/28 17:23:30 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.32 2020/01/28 17:33:07 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -699,7 +699,7 @@ AARCH64REG_WRITE_INLINE(sctlr_el1)
 #define	SCTLR_SA		__BIT(3)
 #define	SCTLR_SA0		__BIT(4)
 #define	SCTLR_CP15BEN		__BIT(5)
-#define	SCTLR_THEE		__BIT(6)
+#define	SCTLR_nAA		__BIT(6)
 #define	SCTLR_ITD		__BIT(7)
 #define	SCTLR_SED		__BIT(8)
 #define	SCTLR_UMA		__BIT(9)
@@ -743,9 +743,8 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	 SPSR_C	 		__BIT(29)	// Carry
 #define	 SPSR_V	 		__BIT(28)	// oVerflow
 #define	SPSR_A32_Q 		__BIT(27)	// A32: Overflow
-#define	SPSR_A32_J 		__BIT(24)	// A32: Jazelle Mode
-#define	SPSR_A32_IT1 		__BIT(23)	// A32: IT[1]
-#define	SPSR_A32_IT0 		__BIT(22)	// A32: IT[0]
+#define	SPSR_A32_IT1 		__BIT(26)	// A32: IT[1]
+#define	SPSR_A32_IT0 		__BIT(25)	// A32: IT[0]
 #define	SPSR_SS	 		__BIT(21)	// Software Step
 #define	SPSR_SS_SHIFT		21
 #define	SPSR_IL	 		__BIT(20)	// Instruction Length
