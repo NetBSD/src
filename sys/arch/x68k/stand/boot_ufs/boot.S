@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.17 2020/01/18 06:34:29 isaki Exp $
+| $NetBSD: boot.S,v 1.18 2020/01/28 11:52:21 isaki Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
@@ -67,7 +67,7 @@ ASENTRY_NOPROFILE(entry0)
 #define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
 #define RELOC(var)	_RELOC(_C_LABEL(var))
 
-		lea	RELOC(edata),%a1
+		lea	RELOC(__bss_start),%a1
 		bra	_ASM_LABEL(entry)
 
 |	Disklabel= 404bytes
