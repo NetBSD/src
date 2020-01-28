@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.169 2020/01/28 10:21:39 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.170 2020/01/28 11:14:15 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8474,3 +8474,69 @@ distrib/zaurus/ramdisk/dot.profile		1.4
 	PR install/54780: in the (of course totally unlikely) case that sysinst
 	should crash, run "stty sane".
 	[martin, ticket #669]
+
+external/bsd/dhcpcd/dist/src/defs.h             up to 1.1.1.37
+external/bsd/dhcpcd/dist/src/dhcp.c             up to 1.32
+external/bsd/dhcpcd/dist/src/if-bsd.c           up to 1.16
+external/bsd/dhcpcd/dist/src/ipv6.c             up to 1.8
+external/bsd/dhcpcd/dist/src/ipv6.h             up to 1.8
+external/bsd/dhcpcd/dist/src/ipv6nd.c           up to 1.16
+external/bsd/dhcpcd/dist/src/script.c           up to 1.2
+doc/3RDPARTY					manually edited
+
+	Import dhcpcd-8.1.6.
+	[roy, #661]
+
+sys/arch/arm/omap/if_cpsw.c			1.26
+sys/arch/arm/ti/if_cpsw.c			1.10
+sys/arch/x86/pci/if_vmx.c			1.54
+sys/dev/isa/if_iy.c				1.112
+sys/dev/pci/if_de.c				1.165
+sys/dev/pcmcia/if_ray.c				1.96
+sys/dev/pcmcia/if_xi.c				1.93
+
+	Protect multicast data by lock for NET_MPSAFE.
+	[msaitoh, ticket #662]
+
+sys/dev/mii/makphy.c			1.61, 1.63-1.64 via patch
+sys/dev/mii/makphyreg.h			1.10
+
+	- Remove ESSR_FIBER_LINK bit check in makphyattach(). This bit is
+	  valid only when the link is up, so it's not good to check in the
+	  attach function.
+	- There is an environment that both copper and fiber bits are set in
+	  EXTSR but it support copper only. To resolve this problem, check the
+	  ESSR register's HWCFG_MODE bit and drop unsupported bits.
+	- If the chip is in Fiber/Copper auto select mode, check which media is
+	  selected. Currently, the code supports 88E1011, 88E1111 and 88E1112
+	  only.
+	- Fix comment. KNF.
+	[msaitoh, ticket #663]
+
+sys/dev/pci/ixgbe/ixgbe.c			1.219
+sys/dev/pci/ixgbe/ixgbe_82598.c			1.13
+sys/dev/pci/ixgbe/ixgbe_82599.c			1.22
+sys/dev/pci/ixgbe/ixgbe_phy.c			1.20
+sys/dev/pci/ixgbe/ixgbe_type.h			1.44
+sys/dev/pci/ixgbe/ixgbe_x550.c			1.17
+
+	Before this commit, if an unsupported SFP module was inserted before
+	booting, the driver attach failed and there was no way to recover form
+	it without reboot or detaching/reattaching driver. After this commit,
+	we can automatically recover any time by replacing it with a supported
+	module.
+	[msaitoh, ticket #664]
+
+sys/dev/ic/rtl8169.c				1.160,1.161
+sys/dev/ic/rtl81x9.c				1.107
+sys/dev/ic/rtl81x9reg.h				1.51,1.52
+sys/dev/ic/rtl81x9var.h				1.57
+
+	- Use unsigned in rtk_setmulti() to avoid undefined behavior.
+	- Add new quirk for 8168H to linkup correctly.
+	- Improve 8168FP, 8411, 8168G, 8401E, 8105E, 8105E_SPIN1, 8106E and
+	  8402 support.
+	- Renumber RTK_HWREV_8103E from 0x24C00000 to 0x34c00000. 0x24C00000
+	  is newly used as RTK_HWREV_8102EL_SPIN1.
+	[msaitoh, ticket #667]
+
