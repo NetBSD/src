@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.99 2020/01/27 20:50:05 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.100 2020/01/28 13:08:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -47,6 +47,7 @@
 
 #include <sys/atomic.h>
 #include <sys/rbtree.h>
+#include <sys/param.h>
 
 #include <limits.h>
 #include <lwp.h>
@@ -96,7 +97,6 @@ struct	__pthread_st {
 #endif
 	unsigned int	pt_magic;	/* Magic number */
 	int		pt_state;	/* running, blocked, etc. */
-	pthread_mutex_t	pt_lock;	/* lock on state */
 	int		pt_flags;	/* see PT_FLAG_* below */
 	int		pt_cancel;	/* Deferred cancellation */
 	int		pt_errno;	/* Thread-specific errno. */
@@ -120,15 +120,25 @@ struct	__pthread_st {
 
 	/* LWP ID and entry on the list of all threads. */
 	lwpid_t		pt_lid;
-	rb_node_t	pt_alltree;
-	PTQ_ENTRY(__pthread_st) pt_allq;
 	PTQ_ENTRY(__pthread_st)	pt_deadq;
+
+	/*
+	 * rbtree node and entry on the list of all threads.  pt_alltree in
+	 * its own cacheline, so pthread__find() is not needlessly impacted
+	 * by threads going about their normal business.  pt_allq is
+	 * adjusted at the same time as pt_alltree.
+	 */
+	rb_node_t	pt_alltree __aligned(COHERENCY_UNIT);
+	PTQ_ENTRY(__pthread_st) pt_allq;
+
+	/* Lock on state also gets its own line. */
+	pthread_mutex_t	pt_lock __aligned(COHERENCY_UNIT);
 
 	/*
 	 * General synchronization data.  We try to align, as threads
 	 * on other CPUs will access this data frequently.
 	 */
-	int		pt_dummy1 __aligned(128);
+	int		pt_dummy1 __aligned(COHERENCY_UNIT);
 	struct lwpctl 	*pt_lwpctl;	/* Kernel/user comms area */
 	volatile int	pt_rwlocked;	/* Handed rwlock successfully */
 	volatile int	pt_signalled;	/* Received pthread_cond_signal() */
@@ -137,10 +147,9 @@ struct	__pthread_st {
 	void * volatile	pt_sleepobj;	/* Object slept on */
 	PTQ_ENTRY(__pthread_st) pt_sleep;
 	void		(*pt_early)(void *);
-	int		pt_dummy2 __aligned(128);
 
 	/* Thread-specific data.  Large so it sits close to the end. */
-	int		pt_havespecific;
+	int		pt_havespecific __aligned(COHERENCY_UNIT);
 	struct pt_specific {
 		void *pts_value;
 		PTQ_ENTRY(pt_specific) pts_next;
