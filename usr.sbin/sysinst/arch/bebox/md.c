@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.5.2.1 2019/08/18 13:19:52 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.5.2.2 2020/01/28 10:17:59 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -72,7 +72,7 @@ md_get_info(struct install_partition_desc *install)
 
 		struct disk_partitions *parts =
 		   (*ps->create_new_for_disk)(pm->diskdev,
-		   0, pm->dlsize, pm->dlsize, true);
+		   0, pm->dlsize, true, NULL);
 		if (!parts)
 			return false;
 

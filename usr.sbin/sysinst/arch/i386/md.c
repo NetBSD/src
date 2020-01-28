@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20.2.4 2019/12/17 09:44:51 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.20.2.5 2020/01/28 10:17:58 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -122,7 +122,7 @@ md_get_info(struct install_partition_desc *install)
 
 		struct disk_partitions *parts =
 		   (*ps->create_new_for_disk)(pm->diskdev,
-		   0, pm->dlsize, pm->dlsize, true);
+		   0, pm->dlsize, true, NULL);
 		if (!parts)
 			return false;
 
@@ -136,7 +136,7 @@ md_get_info(struct install_partition_desc *install)
 		pm->parts->pscheme->change_disk_geom(pm->parts,
 		    bcyl, bhead, bsec);
 	else
-		set_default_sizemult(MEG/512);
+		set_default_sizemult(pm->diskdev, MEG, pm->sectorsize);
 
 	/*
 	 * If the selected scheme does not need two-stage partitioning
@@ -285,7 +285,7 @@ md_post_newfs_bios(struct install_partition_desc *install)
 
 		install->infos[0].parts->pscheme->get_part_device(
 		    install->infos[0].parts, install->infos[0].cur_part_id,
-		    rdev, sizeof rdev, NULL, raw_dev_name, true);
+		    rdev, sizeof rdev, NULL, raw_dev_name, true, true);
 
 		snprintf(boot_options, sizeof boot_options,
 		    "console=%s,speed=%u", consoles[boottype.bp_consdev],
@@ -317,7 +317,7 @@ copy_uefi_boot(const struct part_usage_info *boot)
 	int err;
 
 	if (!boot->parts->pscheme->get_part_device(boot->parts,
-	    boot->cur_part_id, dev, sizeof(dev), NULL, plain_name, true))
+	    boot->cur_part_id, dev, sizeof(dev), NULL, plain_name, true, true))
 		return -1;
 
 	/*

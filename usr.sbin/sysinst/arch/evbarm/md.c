@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.2 2019/12/17 09:44:50 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.8.2.3 2020/01/28 10:17:58 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -42,6 +42,7 @@
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/param.h>
+#include <sys/sysctl.h>
 
 #include "defs.h"
 #include "md.h"
@@ -50,25 +51,43 @@
 
 int boardtype = BOARD_TYPE_NORMAL;
 
+#define	SBSA_MODEL_STR	"netbsd,generic-acpi"
+#define	RPI_MODEL_STR	"raspberrypi,"
+
 void
 md_init(void)
 {
-	int rv;
+	static const int mib[2] = {CTL_HW, HW_MODEL};
+	size_t len;
+	char *cpu_model;
 
-	rv =run_program(RUN_SILENT|RUN_ERROR_OK, "sh -c 'ofctl -p / model | "
-	    "fgrep \"Raspberry Pi\"'");
-	if (rv != 0)
-		return;
+	sysctl(mib, 2, NULL, &len, NULL, 0);
+	cpu_model = malloc(len);
+	sysctl(mib, 2, cpu_model, &len, NULL, 0);
 
-	/* this is some kind of Raspberry Pi */
-	boardtype = BOARD_TYPE_RPI;
+	if (strstr(cpu_model, RPI_MODEL_STR) != NULL)
+		/* this is some kind of Raspberry Pi */
+		boardtype = BOARD_TYPE_RPI;
+	else if (strstr(cpu_model, SBSA_MODEL_STR) != NULL)
+		/* some SBSA compatible machine */
+		boardtype = BOARD_TYPE_ACPI;
+	else
+		/* unknown, assume u-boot + dtb */
+		boardtype = BOARD_TYPE_NORMAL;
+
+	free(cpu_model);
 }
 
 void
 md_init_set_status(int flags)
 {
-	if (boardtype == BOARD_TYPE_RPI)
-		set_kernel_set(SET_KERNEL_RPI);
+
+	/*
+	 * we will extract kernel variants and DTB files piecwise
+	 * manually later, just fetch the kernel set, do not
+	 * unpack it.
+	 */
+	set_noextract_set(SET_KERNEL_1);
 }
 
 bool
@@ -88,7 +107,7 @@ md_get_info(struct install_partition_desc *install)
 
 		struct disk_partitions *parts =
 		   (*ps->create_new_for_disk)(pm->diskdev,
-		   0, pm->dlsize, pm->dlsize, true);
+		   0, pm->dlsize, true, NULL);
 		if (!parts)
 			return false;
 
@@ -97,10 +116,7 @@ md_get_info(struct install_partition_desc *install)
 			pm->dlsize = ps->size_limit;
 	}
 
-	if (boardtype == BOARD_TYPE_RPI)
-		return set_bios_geom_with_mbr_guess(pm->parts);
-
-	return true;
+	return edit_outer_parts(pm->parts);
 }
 
 /*
@@ -120,16 +136,13 @@ md_check_partitions(struct install_partition_desc *install)
 {
 	size_t i;
 
-	if (boardtype == BOARD_TYPE_NORMAL)
-		return true;
-	if (boardtype == BOARD_TYPE_RPI) {
-		for (i = 0; i < install->num; i++)
-			if (install->infos[i].fs_type == FS_MSDOS)
-				return true;
+	for (i = 0; i < install->num; i++)
+		if (install->infos[i].fs_type == FS_MSDOS)
+			return true;
 
-		msg_display(MSG_nomsdospart);
-		process_menu(MENU_ok, NULL);
-	}
+	msg_display(MSG_nomsdospart);
+	process_menu(MENU_ok, NULL);
+
 	return false;
 }
 
@@ -181,13 +194,43 @@ md_post_newfs(struct install_partition_desc *install)
 }
 
 int
-md_post_extract(struct install_partition_desc *install)
+evbarm_extract_finalize(int update)
 {
+	distinfo *dist;
 	char kernelbin[100];
+	int (*saved_fetch_fn)(const char *);
+#ifdef	_LP64
+#define EFIBOOT	"/usr/mdec/bootaa64.efi"
+#else
+#define EFIBOOT	"/usr/mdec/bootarm.efi"
+#endif
 
-	if (boardtype == BOARD_TYPE_NORMAL)
+	dist = get_set_distinfo(SET_KERNEL_1);
+	if (dist == NULL)
 		return 0;
+
+	saved_fetch_fn = fetch_fn;
+	extract_file_to(dist, false, "/", "./netbsd", false);
+	fetch_fn = NULL;
+	make_target_dir("/boot/EFI/boot");
+	if (target_file_exists_p(EFIBOOT))
+		cp_within_target(EFIBOOT, "/boot/EFI/boot", 0);
+
+	if (boardtype == BOARD_TYPE_ACPI) {
+		fetch_fn = saved_fetch_fn;
+		return 0;
+	}
+	if (boardtype == BOARD_TYPE_NORMAL) {
+		make_target_dir("/boot/dtb");
+		extract_file_to(dist, false, "/boot/dtb", "*.dt*", false);
+		extract_file_to(dist, false, "/boot", "./netbsd.ub", false);
+		fetch_fn = saved_fetch_fn;
+		return 0;
+	}
 	if (boardtype == BOARD_TYPE_RPI) {
+		extract_file_to(dist, false, "/boot", "./netbsd.img", false);
+		extract_file_to(dist, false, "/boot", "./bcm*.dtb", false);
+		fetch_fn = saved_fetch_fn;
 		snprintf(kernelbin, 100, "%s/netbsd.img", targetroot_mnt);
 		if (file_exists_p(kernelbin)) {
 			run_program(RUN_DISPLAY,
@@ -198,6 +241,14 @@ md_post_extract(struct install_partition_desc *install)
 			return 1;
 		}
 	}
+	fetch_fn = saved_fetch_fn;
+	return 0;
+}
+
+int
+md_post_extract(struct install_partition_desc *install)
+{
+
 	return 0;
 }
 
@@ -238,86 +289,36 @@ md_check_mbr(struct disk_partitions *parts, mbr_info_t *mbri, bool quiet)
 	struct mbr_partition *part;
 	int i, hasboot=0;
 
-	if (boardtype == BOARD_TYPE_NORMAL)
-		return 2;
-	/* raspi code */
-	if (boardtype == BOARD_TYPE_RPI) {
-		for (ext = mbri; ext; ext = ext->extended) {
-			part = ext->mbr.mbr_parts;
-			for (i=0, hasboot=0; i < MBR_PART_COUNT; part++, i++) {
-				if (part->mbrp_type != MBR_PTYPE_FAT16L &&
-				    part->mbrp_type != MBR_PTYPE_FAT32L)
-					continue;
-				hasboot = 1;
-				break;
-			}
-		}
-		if (!hasboot) {
-			if (quiet)
-				return 2;
-			msg_display(MSG_nomsdospart);
-			return ask_reedit(parts);
+	for (ext = mbri; ext; ext = ext->extended) {
+		part = ext->mbr.mbr_parts;
+		for (i=0, hasboot=0; i < MBR_PART_COUNT; part++, i++) {
+			if (part->mbrp_type != MBR_PTYPE_FAT16L &&
+			    part->mbrp_type != MBR_PTYPE_FAT32L)
+				continue;
+			hasboot = 1;
+			break;
 		}
 	}
+	if (!hasboot) {
+		if (quiet)
+			return 2;
+		msg_display(MSG_nomsdospart);
+		return ask_reedit(parts);
+	}
+
 	return 2;
 }
 
 bool
 md_parts_use_wholedisk(struct disk_partitions *parts)
 {
-	part_id nbsd, boot;
-	struct disk_part_info info;
-	daddr_t offset;
+	struct disk_part_info boot_part = {
+		.size = boardtype == BOARD_TYPE_NORMAL ? 
+		    PART_BOOT_LARGE/512 : PART_BOOT/512,
+		.fs_type = PART_BOOT_TYPE, .fs_sub_type = MBR_PTYPE_FAT16L,
+	};
 
-	/*
-	 * XXX - set (U)EFI install depending on boardtype
-	 */
-
-	if (boardtype == BOARD_TYPE_NORMAL) {
-		/* this keeps it from creating /boot as msdos */
-		pm->bootsize = 0;
-		return parts_use_wholedisk(parts, 0, NULL);
-	}
-
-	/* raspi code */
-	if (boardtype == BOARD_TYPE_RPI) {
-
-		for (boot = 0; boot < parts->num_part; boot++) {
-			if (!parts->pscheme->get_part_info(parts, boot, &info))
-				continue;
-			if (info.nat_type == NULL)
-				continue;
-			if (info.nat_type->generic_ptype == PT_FAT)
-				break;
-		}
-
-		if (boot >= parts->num_part) {
-			/* It's hopelessly corrupt, punt for now */
-			msg_display(MSG_nomsdospart);
-			process_menu(MENU_ok, NULL);
-			return false;
-		}
-		pm->bootstart = info.start;
-		pm->bootsize = info.size;
-		offset = info.start + info.size + 1;
-		memset(&info, 0, sizeof info);
-		info.start = offset;
-		info.size = parts->pscheme->max_free_space_at(parts, offset);
-		info.nat_type = parts->pscheme->get_generic_part_type(PT_root);
-		info.fs_type = FS_BSDFFS;
-		info.fs_sub_type = 2;    
-
-		nbsd = parts->pscheme->add_partition(parts, &info, NULL);
-		if (nbsd == NO_PART)
-			return false;
-
-		parts->pscheme->get_part_info(parts, nbsd, &info);
-		pm->ptstart = info.start;
-		pm->ptsize = info.size;
-		return true;
-	}
-
-	return parts_use_wholedisk(parts, 0, NULL);
+	return parts_use_wholedisk(parts, 1, &boot_part);
 }
 
 /* returns false if no write-back of parts is required */
@@ -339,3 +340,23 @@ md_gpt_post_write(struct disk_partitions *parts, part_id root_id,
 	return true;
 }
 #endif
+
+void
+evbarm_part_defaults(struct pm_devs *my_pm, struct part_usage_info *infos,
+    size_t num_usage_infos)
+{
+	size_t i;
+
+	if (boardtype != BOARD_TYPE_NORMAL)
+		return;
+
+	for (i = 0; i < num_usage_infos; i++) {
+		if (infos[i].fs_type == PART_BOOT_TYPE &&
+		    infos[i].mount != NULL &&
+		    strcmp(infos[i].mount, PART_BOOT_MOUNT) == 0) {
+			infos[i].size = PART_BOOT_LARGE;
+			return;
+		}
+	}
+}
+

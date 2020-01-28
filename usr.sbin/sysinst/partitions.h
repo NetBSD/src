@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.h,v 1.4.2.5 2019/12/17 09:44:50 msaitoh Exp $	*/
+/*	$NetBSD: partitions.h,v 1.4.2.6 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -31,6 +31,17 @@
  * Abstract interface to access arbitrary disk partitioning schemes and
  * keep Sysinst proper independent of the implementation / on-disk
  * details.
+ *
+ * NOTE:
+ *  - all sector numbers, alignement and sizes are in units of the
+ *    disks physical sector size (not necessarily 512 bytes)!
+ *  - some interfaces pass the disks sector size (when it is easily
+ *    available at typical callers), but the backends can always
+ *    assume it to be equal to the real physical sector size. If
+ *    no value is passed, the backend can query the disk data
+ *    via get_disk_geom().
+ *  - single exception: disk_partitioning_scheme::size_limit is in 512
+ *    byte sectors (as it is not associated with a concrete disk)
  */
 
 #include <sys/types.h>
@@ -180,7 +191,10 @@ struct disk_partitioning_scheme {
 	/* description of scheme specific partition flags */
 	msg part_flag_desc;
 
-	/* size restrictions for this partitioning scheme */
+	/*
+	 * size restrictions for this partitioning scheme (number
+	 * of 512 byte sectors max)
+	 */
 	daddr_t size_limit;	/* 0 if not limited */
 
 	/*
@@ -224,6 +238,12 @@ struct disk_partitioning_scheme {
 	 */
 	const struct part_type_desc * (*get_fs_part_type)(
 	    enum part_type, unsigned, unsigned);
+	/*
+	 * Optional: inverse to above: given a part_type_desc, set default
+	 * fstype and subtype.
+	 */
+	bool (*get_default_fstype)(const struct part_type_desc *,
+	    unsigned *fstype, unsigned *fs_sub_type);
 	/*
 	 * Create a custom partition type. If the type already exists
 	 * (or there is a collision), the old existing type will be
@@ -322,10 +342,14 @@ struct disk_partitioning_scheme {
 	 * If with_path is true (and the returned value is a device
 	 * node), include the /dev/ prefix in the result string
 	 * (this is ignored when returning NAME= syntax for /etc/fstab).
+	 * If life is true, the device must be made available under
+	 * that name (only makes a difference for NAME=syntax if
+	 * no wedge has been created yet,) - implied for all variants
+	 * where dev_name_usage != logical_name.
 	 */
 	bool (*get_part_device)(const struct disk_partitions*,
 	    part_id, char *devname, size_t max_devname_len, int *part,
-	    enum dev_name_usage, bool with_path);
+	    enum dev_name_usage, bool with_path, bool life);
 
 	/*
 	 * How big could we resize the given position (start of existing
@@ -425,15 +449,15 @@ struct disk_partitioning_scheme {
 	 * disk.
 	 */
 	struct disk_partitions * (*read_from_disk)(const char *,
-	    daddr_t start, daddr_t len, const struct
-	    disk_partitioning_scheme *);
+	    daddr_t start, daddr_t len, size_t bytes_per_sec,
+	    const struct disk_partitioning_scheme *);
 
 	/*
-	 * Set up all internal data for a new disk
+	 * Set up all internal data for a new disk.
 	 */
 	struct disk_partitions * (*create_new_for_disk)(const char *,
-	    daddr_t start, daddr_t len, daddr_t disk_total_size,
-	    bool is_boot_drive);
+	    daddr_t start, daddr_t len, bool is_boot_drive,
+	    struct disk_partitions *parent);
 
 	/*
 	 * Optional: this scheme may be used to boot from the given disk
@@ -445,6 +469,12 @@ struct disk_partitioning_scheme {
 	 */
 	int (*guess_disk_geom)(struct disk_partitions *,
 	    int *cyl, int *head, int *sec);
+
+	/*
+	 * Return a "cylinder size" (in number of blocks) - whatever that
+	 * means to a particular partitioning scheme.
+	 */
+	size_t (*get_cylinder_size)(const struct disk_partitions *);
 
 	/*
 	 * Optional: change used geometry info and update internal state
@@ -526,6 +556,12 @@ struct disk_partitions {
 	/* global/public disk data */
 
 	/*
+	 * The basic unit of size used for this disk (all "start",
+	 * "size" and "align" values are in this unit).
+	 */
+	size_t bytes_per_sector;	/* must be 2^n and >= 512 */
+
+	/*
 	 * Valid partitions may have IDs in the range 0 .. num_part (excl.)
 	 */
 	part_id num_part;
@@ -564,7 +600,8 @@ extern size_t num_available_part_schemes;
  * Generic reader - query a disk device and read all partitions from it
  */
 struct disk_partitions *
-partitions_read_disk(const char *, daddr_t disk_size, bool no_mbr);
+partitions_read_disk(const char *, daddr_t disk_size,
+    size_t bytes_per_sector, bool no_mbr);
 
 /*
  * Generic part info adaption, may be overriden by individual partitionin

@@ -1,4 +1,4 @@
-/*	$NetBSD: menus.mi,v 1.19 2019/07/23 16:02:32 martin Exp $	*/
+/*	$NetBSD: menus.mi,v 1.19.2.1 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -195,16 +195,6 @@ remove_lvm_options()
 }
 
 void
-remove_gpt_options()
-{
-	/*
-	 * No GPT available, remove the following menu entries:
-	 */
-	remove_menu_option(MENU_pmdiskentry, MSG_switchgpt);
-	remove_menu_option(MENU_pmpartentry, MSG_switchgpt);
-}
-
-void
 remove_cgd_options()
 {
 	/*
@@ -331,14 +321,18 @@ menu sizechoice, sub menu, y=0, title MSG_Choose_your_size_specifier;
 			menu->cursel = 2;
 		else if (sizemult == 1)
 			menu->cursel = 3;
-		else if (sizemult == (GIG/512))
+		else if (sizemult == (GIG/pm->sectorsize))
 			menu->cursel = 0;
 		else
 			menu->cursel = 1; };
-	option MSG_Gigabytes, exit, action { set_sizemult(GIG/512); };
-	option MSG_Megabytes, exit, action { set_sizemult(MEG/512); };
-	option MSG_Cylinders, exit, action { set_sizemult(pm->current_cylsize); };
-	option MSG_Sectors, exit, action { set_sizemult(1); };
+	option MSG_Gigabytes, exit, action
+		{ set_sizemult(GIG, pm->sectorsize); };
+	option MSG_Megabytes, exit, action
+		{ set_sizemult(MEG, pm->sectorsize); };
+	option MSG_Cylinders, exit, action
+		{ set_sizemult(pm->current_cylsize*pm->sectorsize, pm->sectorsize); };
+	option MSG_Sectors, exit, action
+		{ set_sizemult(pm->sectorsize, pm->sectorsize); };
 
 menu ptnsize_replace_existing_partition, sub menu, y=0,
 	title MSG_ptnsize_replace_existing;

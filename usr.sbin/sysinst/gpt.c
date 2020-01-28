@@ -1,4 +1,4 @@
-/*	$NetBSD: gpt.c,v 1.6.2.7 2019/12/17 09:44:50 msaitoh Exp $	*/
+/*	$NetBSD: gpt.c,v 1.6.2.8 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@ bool	gpt_parts_check(void);	/* check for needed binaries */
 				 * gpt type -l | wc -l */
 #define	GPT_DEV_LEN	16	/* dkNN */
 
-#define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector hols 4 entries */
+#define	GPT_PARTS_PER_SEC	4	/* a 512 byte sector holds 4 entries */
 #define	GPT_DEFAULT_MAX_PARTS	128
 
 /* a usable label will be short, so we can get away with an arbitrary limit */
@@ -107,8 +107,8 @@ struct {
 	{ .name = "lfs",	.fstype = FS_BSDLFS,	.ptype = PT_root },
 	{ .name = "linux-data",	.fstype = FS_EX2FS,	.ptype = PT_root },
 	{ .name = "apple",	.fstype = FS_HFS,	.ptype = PT_unknown },
-	{ .name = "ccd",	.fstype = FS_CCD,	.ptype = PT_unknown },
-	{ .name = "cgd",	.fstype = FS_CGD,	.ptype = PT_unknown },
+	{ .name = "ccd",	.fstype = FS_CCD,	.ptype = PT_root },
+	{ .name = "cgd",	.fstype = FS_CGD,	.ptype = PT_root },
 	{ .name = "raid",	.fstype = FS_RAID,	.ptype = PT_root },
 	{ .name = "vmcore",	.fstype = FS_VMKCORE,	.ptype = PT_unknown },
 	{ .name = "vmfs",	.fstype = FS_VMFS,	.ptype = PT_unknown },
@@ -255,7 +255,7 @@ update_part_from_wedge_info(struct gpt_disk_partitions *parts,
 }
 
 static struct disk_partitions *
-gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
+gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len, size_t bps,
     const struct disk_partitioning_scheme *scheme)
 {
 	char diskpath[MAXPATHLEN];
@@ -374,6 +374,7 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = disk_size;
 	parts->dp.free_space = avail_size;
+	parts->dp.bytes_per_sector = bps;
 	parts->has_gpt = true;
 
 	fd = opendisk(parts->dp.disk, O_RDONLY, diskpath, sizeof(diskpath), 0);
@@ -439,16 +440,26 @@ gpt_read_from_disk(const char *dev, daddr_t start, daddr_t len,
 	return &parts->dp;
 }
 
+static size_t
+gpt_cyl_size(const struct disk_partitions *arg)
+{
+	return MEG / 512;
+}
+
 static struct disk_partitions *
-gpt_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
-    bool is_boot_drive)
+gpt_create_new(const char *disk, daddr_t start, daddr_t len,
+    bool is_boot_drive, struct disk_partitions *parent)
 {
 	struct gpt_disk_partitions *parts;
+	struct disk_geom geo;
 
 	if (start != 0) {
 		assert(0);
 		return NULL;
 	}
+
+	if (!get_disk_geom(disk, &geo))
+		return NULL;
 
 	parts = calloc(1, sizeof(*parts));
 	if (!parts)
@@ -462,6 +473,7 @@ gpt_create_new(const char *disk, daddr_t start, daddr_t len, daddr_t total,
 
 	parts->dp.disk_start = start;
 	parts->dp.disk_size = len;
+	parts->dp.bytes_per_sector = geo.dg_secsize;
 	parts->dp.free_space = len - start - parts->prologue - parts->epilogue;
 	parts->has_gpt = false;
 
@@ -878,7 +890,7 @@ gpt_get_fs_part_type(enum part_type pt, unsigned fstype, unsigned fs_sub_type)
 {
 	size_t i;
 
-	/* Try with complet match (including part_type) first */
+	/* Try with complete match (including part_type) first */
 	for (i = 0; i < __arraycount(gpt_fs_types); i++)
 		if (fstype == gpt_fs_types[i].fstype &&
 		    pt == gpt_fs_types[i].ptype)
@@ -890,6 +902,26 @@ gpt_get_fs_part_type(enum part_type pt, unsigned fstype, unsigned fs_sub_type)
 			return gpt_find_type(gpt_fs_types[i].name);
 
 	return NULL;
+}
+
+static bool
+gpt_get_default_fstype(const struct part_type_desc *nat_type,
+    unsigned *fstype, unsigned *fs_sub_type)
+{
+	const struct gpt_ptype_desc *gtype;
+
+	gtype = gpt_find_native_type(nat_type);
+	if (gtype == NULL)
+		return false;
+
+	*fstype = gtype->default_fs_type;
+#ifdef DEFAULT_UFS2
+	if (gtype->default_fs_type == FS_BSDFFS)
+		*fs_sub_type = 2;
+	else
+#endif
+		*fs_sub_type = 0;
+	return true;
 }
 
 static const struct part_type_desc *
@@ -1278,6 +1310,15 @@ gpt_add_wedge(const char *disk, struct gpt_part_entry *p)
 	strlcpy((char*)&dkw.dkw_wname, p->gp_id, sizeof(dkw.dkw_wname));
 	dkw.dkw_offset = p->gp_start;
 	dkw.dkw_size = p->gp_size;
+	if (dkw.dkw_wname[0] == 0) {
+		if (p->gp_label[0] != 0)
+				strlcpy((char*)&dkw.dkw_wname,
+				    p->gp_label, sizeof(dkw.dkw_wname));
+	}
+	if (dkw.dkw_wname[0] == 0) {
+		snprintf((char*)dkw.dkw_wname, sizeof dkw.dkw_wname,
+		    "%s_%" PRIi64 "@%" PRIi64, disk, p->gp_size, p->gp_start);
+	}
 
 	fd = opendisk(disk, O_RDWR, diskpath, sizeof(diskpath), 0);
 	if (fd < 0)
@@ -1310,7 +1351,7 @@ escape_spaces(char *dest, const char *src)
 static bool
 gpt_get_part_device(const struct disk_partitions *arg,
     part_id id, char *devname, size_t max_devname_len, int *part,
-    enum dev_name_usage usage, bool with_path)
+    enum dev_name_usage usage, bool with_path, bool life)
 {
 	const struct gpt_disk_partitions *parts =
 	    (const struct gpt_disk_partitions*)arg;
@@ -1328,8 +1369,11 @@ gpt_get_part_device(const struct disk_partitions *arg,
 	if (part)
 		*part = -1;
 
-	if (!(p->gp_flags & GPEF_WEDGE) &&
-	    (usage == plain_name || usage == raw_dev_name))
+	if (usage == logical_name && p->gp_label[0] == 0 && p->gp_id[0] == 0)
+		usage = plain_name;
+	if (usage == plain_name || usage == raw_dev_name)
+		life = true;
+	if (!(p->gp_flags & GPEF_WEDGE) && life)
 		gpt_add_wedge(arg->disk, p);
 
 	switch (usage) {
@@ -1740,10 +1784,12 @@ gpt_parts = {
 	.get_part_type = gpt_get_ptype,
 	.get_generic_part_type = gpt_get_generic_type,
 	.get_fs_part_type = gpt_get_fs_part_type,
+	.get_default_fstype = gpt_get_default_fstype,
 	.create_custom_part_type = gpt_create_custom_part_type,
 	.create_unknown_part_type = gpt_create_unknown_part_type,
 	.get_part_alignment = gpt_get_part_alignment,
 	.read_from_disk = gpt_read_from_disk,
+	.get_cylinder_size = gpt_cyl_size,
 	.create_new_for_disk = gpt_create_new,
 	.have_boot_support = gpt_have_boot_support,
 	.find_by_name = gpt_find_by_name,

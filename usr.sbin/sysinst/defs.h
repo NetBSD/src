@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.5 2019/12/17 09:44:50 msaitoh Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.6 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -59,8 +59,20 @@ const char *getfslabelname(uint, uint);
 #define	MENUSTRSIZE	80
 #define SSTRSIZE	30
 
+/* these are used for different alignment defaults */
 #define	HUGE_DISK_SIZE	(daddr_t)(128 * (GIG / 512))
 #define	TINY_DISK_SIZE	(daddr_t)(1800 * (MEG / 512))
+
+/*
+ * if a system does not have more ram (in MB) than this, swap will be enabled
+ * very early (as soon as the swap partition has been created)
+ */
+#define	TINY_RAM_SIZE		32
+/*
+ * if a system has less ram (in MB) than this, we will not create a
+ * tmpfs /tmp by default (to workaround PR misc/54886)
+ */
+#define	SMALL_RAM_SIZE		256
 
 /* helper macros to create unique internal error messages */
 #define STR_NO(STR)	#STR
@@ -241,7 +253,10 @@ typedef struct distinfo {
  * layout according to the partitioning scheme backend.
  */
 struct part_usage_info {
-	daddr_t	size;			/* thumb guestimate of size [sec] */
+	daddr_t	size;			/* thumb guestimate of size,
+					 * [sec if positive, %-of-ram
+					 * if TMPFS and negative]
+					 */
 	daddr_t def_size;		/* default size */
 	daddr_t limit;			/* max size */
 	char 	mount[MOUNTLEN];	/* where will we mount this? */
@@ -353,7 +368,7 @@ char machine[SSTRSIZE];
 int ignorerror;
 int ttysig_ignore;
 pid_t ttysig_forward;
-int sizemult;
+uint sizemult;
 extern const char *multname;
 extern const char *err_outofmem;
 int partman_go; /* run extended partition manager */
@@ -363,12 +378,11 @@ int partman_go; /* run extended partition manager */
 FILE *logfp;
 FILE *script;
 
-daddr_t tmp_ramdisk_size;
 #define MAX_DISKS 15
 
 daddr_t root_limit;    /* BIOS (etc) read limit */
 
-enum SHRED_T { SHRED_NONE=0, SHRED_ZEROS, SHRED_RANDOM, SHRED_CRYPTO };
+enum SHRED_T { SHRED_NONE=0, SHRED_ZEROS, SHRED_RANDOM };
 
 /* All information that is unique for each drive */
 SLIST_HEAD(pm_head_t, pm_devs) pm_head;
@@ -407,12 +421,16 @@ struct pm_devs {
 	 */
 	bool cur_system;
 
-	/* Actual values for current disk - set by find_disks() or
-	   md_get_info() */
-	int sectorsize, dlcyl, dlhead, dlsec, dlcylsize, current_cylsize;
-	daddr_t dlsize;
+	/* Actual values for current disk geometry - set by find_disks() or
+	 *  md_get_info()
+	 */
+	uint sectorsize, dlcyl, dlhead, dlsec, dlcylsize, current_cylsize;
+	/*
+	 * Total size of the disk - in 'sectorsize' units (!)
+	 */
+	daddr_t dlsize;	/* total number of disk sectors */
 
-	/* Area of disk we can allocate, start and size in disk sectors. */
+	/* Area of disk we can allocate, start and size in sectors. */
 	daddr_t ptstart, ptsize;
 
 	/* For some bootblocks we need to know the CHS addressable limit */
@@ -430,7 +448,6 @@ struct pm_devs {
 	 */
 	char **mounted;
 
-	bool bootable;	/* This device is bootable */
 	bool unsaved;	/* Flag indicating to partman that device need saving */
 	bool found;	/* Flag to delete unplugged and unconfigured devices */
 	int blocked;	/* Device is busy and cannot be changed */
@@ -442,11 +459,10 @@ struct pm_devs *pm_new; /* Pointer for next allocating device in find_disks() */
 
 /* Generic structure for partman */
 struct part_entry {
-	int retvalue;
 	part_id id;
 	struct disk_partitions *parts;
 	void *dev_ptr;
-	size_t index;
+	size_t index;	/* e.g. if PM_RAID: this is raids[index] */
 	int dev_ptr_delta;
 	char fullname[SSTRSIZE];
 	enum {PM_DISK=1, PM_PART, PM_SPEC,
@@ -579,7 +595,6 @@ void remove_color_options(void);
 void remove_raid_options(void);
 void remove_lvm_options(void);
 void remove_cgd_options(void);
-void remove_gpt_options(void);
 
 /* Machine dependent functions .... */
 void	md_init(void);
@@ -697,7 +712,7 @@ int	fs_is_lfs(void *);
 const char *get_last_mounted(int fd, daddr_t offset, uint *fs_type,
      uint *fs_sub_type, uint flags);
 void	canonicalize_last_mounted(char*);
-int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset);
+int	edit_and_check_label(struct pm_devs *p, struct partition_usage_set *pset, bool install);
 int edit_ptn(menudesc *, void *);
 int checkoverlap(struct disk_partitions *parts);
 daddr_t getpartsize(struct disk_partitions *parts, daddr_t partstart,
@@ -790,6 +805,7 @@ int	get_via_localdir(void);
 void	show_cur_distsets(void);
 void	make_ramdisk_dir(const char *);
 void    set_kernel_set(unsigned int);
+void    set_noextract_set(unsigned int);
 unsigned int    get_kernel_set(void);
 unsigned int    set_X11_selected(void);
 int 	get_and_unpack_sets(int, msg, msg, msg);
@@ -801,8 +817,8 @@ void	add_rc_conf(const char *, ...) __printflike(1, 2);
 int	del_rc_conf(const char *);
 void	add_sysctl_conf(const char *, ...) __printflike(1, 2);
 void	enable_rc_conf(void);
-void	set_sizemult(uint secs);
-void	set_default_sizemult(uint secs);
+void	set_sizemult(daddr_t, uint bps);
+void	set_default_sizemult(const char *disk, daddr_t unit, uint bps);
 int	check_lfs_progs(void);
 void	init_set_status(int);
 void	customise_sets(void);
@@ -812,7 +828,10 @@ const char *set_dir_for_set(const char *);
 const char *ext_dir_for_set(const char *);
 void	replace(const char *, const char *, ...) __printflike(2, 3);
 void	get_tz_default(void);
+distinfo*	get_set_distinfo(int);
 int	extract_file(distinfo *, int);
+int extract_file_to(distinfo *dist, int update, const char *dest_dir,
+    const char *extr_pattern, bool do_stats);
 void	do_coloring (unsigned int, unsigned int);
 int set_menu_select(menudesc *, void *);
 const char *safectime(time_t *);
@@ -824,6 +843,7 @@ void	free_usage_set(struct partition_usage_set*);
 bool	install_desc_from_parts(struct install_partition_desc *,
 	    struct disk_partitions*);
 void	free_install_desc(struct install_partition_desc*);
+bool	may_swap_if_not_sdmmc(const char*);
 
 /* from target.c */
 #if defined(DEBUG)  ||	defined(DEBUG_ROOT)
@@ -869,15 +889,23 @@ static inline int partman(void) { return -1; }
 static inline int pm_getrefdev(struct pm_devs *x __unused) { return -1; }
 #define update_wedges(x) __nothing
 #endif
+void pmdiskentry_enable(menudesc*, struct part_entry *);
 int pm_partusage(struct pm_devs *, int, int);
 void pm_setfstype(struct pm_devs *, part_id, int, int);
+void pm_set_lvmpv(struct pm_devs *, part_id, bool);
+bool pm_is_lvmpv(struct pm_devs *, part_id, const struct disk_part_info*);
 int pm_editpart(int);
 void pm_rename(struct pm_devs *);
-int pm_shred(struct pm_devs *, int, int);
+void pm_shred(struct part_entry *, int);
 void pm_umount(struct pm_devs *, int);
 int pm_unconfigure(struct pm_devs *);
-int pm_cgd_edit(void *, struct part_entry *);
+int pm_cgd_edit_new(struct pm_devs *pm, part_id id);
+int pm_cgd_edit_old(struct part_entry *);
 void pm_wedges_fill(struct pm_devs *);
+void pm_edit_partitions(struct part_entry *);
+part_id pm_whole_disk(struct part_entry *, int);
+struct pm_devs * pm_from_pe(struct part_entry *);
+bool pm_force_parts(struct pm_devs *);
 
 /*
  * Parse a file system position or size in a common way, return
@@ -889,7 +917,8 @@ void pm_wedges_fill(struct pm_devs *);
 daddr_t parse_disk_pos(
 	const char *,	/* in: input string */
 	daddr_t *,	/* in/out: multiplicator for return value */
-	daddr_t,	/* in: cylinder size in blocks */
+	daddr_t bps,	/* in: sector size in bytes */
+	daddr_t,	/* in: cylinder size in sectors */
 	bool *);	/* NULL if "extend" is not supported, & of
 			 * "extend" flag otherwise */
 

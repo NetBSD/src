@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.17.2.2 2019/12/17 09:44:50 msaitoh Exp $	*/
+/*	$NetBSD: main.c,v 1.17.2.3 2020/01/28 10:17:58 msaitoh Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -134,7 +134,6 @@ init(void)
 	const struct f_arg *arg;
 	
 	sizemult = 1;
-	tmp_ramdisk_size = 0;
 	clean_xfer_dir = 0;
 	mnt2_mounted = 0;
 	fd_type = "msdos";
