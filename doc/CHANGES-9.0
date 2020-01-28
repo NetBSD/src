@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.168 2020/01/28 09:10:10 msaitoh Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.169 2020/01/28 10:21:39 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8362,3 +8362,115 @@ distrib/evbmips/instkernel/ramdisk/Makefile	1.14
 
 	PR install/54777: Add dhcpcd to the install ramdisk.
 	[martin, ticket #666]
+
+usr.sbin/sysinst/arch/arc/md.c			1.11-1.12
+usr.sbin/sysinst/arch/bebox/md.c		1.7-1.8
+usr.sbin/sysinst/arch/cobalt/md.c		1.11-1.12
+usr.sbin/sysinst/arch/evbarm/md.c		1.11-1.14
+usr.sbin/sysinst/arch/evbarm/md.h		1.4-1.5
+usr.sbin/sysinst/arch/evbmips/md.c		1.7-1.8
+usr.sbin/sysinst/arch/evbppc/md.c		1.7-1.8
+usr.sbin/sysinst/arch/hpcarm/md.c		1.7-1.8
+usr.sbin/sysinst/arch/hpcmips/md.c		1.7-1.8
+usr.sbin/sysinst/arch/hpcsh/md.c		1.8-1.9
+usr.sbin/sysinst/arch/i386/md.c			1.28-1.29
+usr.sbin/sysinst/arch/landisk/md.c		1.12-1.13
+usr.sbin/sysinst/arch/luna68k/md.c		1.8
+usr.sbin/sysinst/arch/ofppc/md.c		1.9-1.10
+usr.sbin/sysinst/arch/playstation2/md.c		1.7-1.8
+usr.sbin/sysinst/arch/prep/md.c			1.11-1.12
+usr.sbin/sysinst/arch/sandpoint/md.c		1.7-1.8
+usr.sbin/sysinst/arch/zaurus/md.c		1.7-1.8
+usr.sbin/sysinst/bsddisklabel.c			1.34-1.38
+usr.sbin/sysinst/defs.h				1.50-1.54
+usr.sbin/sysinst/disklabel.c			1.28-1.34
+usr.sbin/sysinst/disks.c			1.59-1.62
+usr.sbin/sysinst/gpt.c				1.14-1.16
+usr.sbin/sysinst/install.c			1.14
+usr.sbin/sysinst/label.c			1.18-1.20
+usr.sbin/sysinst/main.c				1.20
+usr.sbin/sysinst/mbr.c				1.24-1.30
+usr.sbin/sysinst/menus.mi			1.20-1.21
+usr.sbin/sysinst/menus.pm			1.3
+usr.sbin/sysinst/msg.mi.de			1.20
+usr.sbin/sysinst/msg.mi.en			1.27
+usr.sbin/sysinst/msg.mi.es			1.21
+usr.sbin/sysinst/msg.mi.fr			1.25
+usr.sbin/sysinst/msg.mi.pl			1.28
+usr.sbin/sysinst/msg.pm.de			1.2
+usr.sbin/sysinst/msg.pm.en			1.2
+usr.sbin/sysinst/msg.pm.es			1.2
+usr.sbin/sysinst/msg.pm.fr			1.2
+usr.sbin/sysinst/msg.pm.pl			1.2
+usr.sbin/sysinst/net.c				1.35
+usr.sbin/sysinst/part_edit.c			1.14-1.16
+usr.sbin/sysinst/partitions.c			1.9-1.10
+usr.sbin/sysinst/partitions.h			1.13-1.15
+usr.sbin/sysinst/partman.c			1.43, 1.46-1.49
+usr.sbin/sysinst/sizemultname.c			1.4
+usr.sbin/sysinst/target.c			1.11
+usr.sbin/sysinst/upgrade.c			1.14
+usr.sbin/sysinst/util.c				1.41-1.42
+
+	Various sysinst fixes:
+	 - Fix extended partitioning.
+	 - Fix retrying after set extraction/download failure.
+	 - Fix support for non 512 byte/sector disks.
+	 - Remove runtime dependency on ofctl(8).
+	 - Fix various small partitioning bugs and fixes, including
+	   PR install/54787, PR install/54872 and a workaround
+	   for PR kern/54882.
+	 - Add tmpfs on /tmp by default when enough RAM is available.
+	 - Adapt to evbarm GENERIC{,64} changes and efiboot.
+	[martin, ticket #668]
+
+distrib/acorn32/ramdisk/dot.profile		1.4
+distrib/alpha/instkernel/ramdisk/dot.profile	1.11
+distrib/amd64/ramdisks/common/dot.profile	1.4
+distrib/arc/ramdisk/dot.profile			1.5
+distrib/atari/floppies/common/dot.profile	1.8
+distrib/bebox/ramdisk/dot.profile		1.2
+distrib/cats/ramdisk/dot.profile		1.5
+distrib/cobalt/ramdisk/dot.profile		1.2
+distrib/dreamcast/ramdisk/dot.profile		1.3
+distrib/emips/miniroot/dot.profile		1.2
+distrib/emips/ramdisk/dot.profile		1.3
+distrib/evbarm/instkernel/ramdisk/dot.profile	1.3
+distrib/evbmips/instkernel/ramdisk/dot.profile	1.2
+distrib/evbppc/ramdisk/dot.profile		1.5
+distrib/evbsh3/instkernel/ramdisk/dot.profile	1.2
+distrib/ews4800mips/floppies/ramdisk/dot.profile 1.2
+distrib/hp300/ramdisk/dot.profile		1.7
+distrib/hpcarm/miniroot/dot.profile		1.3
+distrib/hpcmips/miniroot/dot.profile		1.8
+distrib/hpcsh/miniroot/dot.profile		1.5
+distrib/hppa/ramdisk/dot.profile		1.2
+distrib/i386/ramdisks/common/dot.profile	1.7
+distrib/landisk/ramdisk/dot.profile		1.3
+distrib/luna68k/ramdisk/dot.profile		1.2
+distrib/mac68k/instkernel/ramdisk/dot.profile	1.9
+distrib/macppc/floppies/ramdisk/dot.profile	1.14
+distrib/mipsco/ramdisk/dot.profile		1.3
+distrib/mvme68k/miniroot/dot.profile		1.9
+distrib/news68k/floppies/ramdisk/dot.profile	1.8
+distrib/newsmips/floppies/ramdisk/dot.profile	1.7
+distrib/ofppc/ramdisks/common/dot.profile	1.2
+distrib/playstation2/miniroot/dot.profile	1.5
+distrib/pmax/miniroot/dot.profile		1.3
+distrib/pmax/ramdisk/dot.profile		1.11
+distrib/prep/floppies/ramdisk/dot.profile	1.3
+distrib/riscv/ramdisk/dot.profile		1.2
+distrib/rs6000/ramdisk/dot.profile		1.2
+distrib/sandpoint/ramdisk/dot.profile		1.2
+distrib/sgimips/miniroot/dot.profile		1.2
+distrib/sgimips/ramdisk/dot.profile		1.4
+distrib/shark/instkernel/ramdisk/dot.profile	1.5
+distrib/sparc/miniroot/dot.profile		1.16
+distrib/sparc64/instfs/dot.profile		1.8
+distrib/vax/ramdisk/dot.profile			1.10
+distrib/x68k/floppies/ramdisk/dot.profile	1.16
+distrib/zaurus/ramdisk/dot.profile		1.4
+
+	PR install/54780: in the (of course totally unlikely) case that sysinst
+	should crash, run "stty sane".
+	[martin, ticket #669]
