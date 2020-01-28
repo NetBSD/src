@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.32 2020/01/28 17:33:07 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.33 2020/01/28 17:47:51 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
 #include <arm/cputypes.h>
 #include <sys/types.h>
 
-#define AARCH64REG_READ_INLINE2(regname, regdesc)		\
-static __inline uint64_t					\
+#define AARCH64REG_READ_INLINE3(regname, regdesc, fnattrs)	\
+static __inline uint64_t fnattrs				\
 reg_##regname##_read(void)					\
 {								\
 	uint64_t __rv;						\
@@ -44,12 +44,18 @@ reg_##regname##_read(void)					\
 	return __rv;						\
 }
 
-#define AARCH64REG_WRITE_INLINE2(regname, regdesc)		\
-static __inline void						\
+#define AARCH64REG_READ_INLINE2(regname, regdesc)		\
+	AARCH64REG_READ_INLINE3(regname, regdesc, )
+
+#define AARCH64REG_WRITE_INLINE3(regname, regdesc, fnattrs)	\
+static __inline void fnattrs					\
 reg_##regname##_write(uint64_t __val)				\
 {								\
 	__asm __volatile("msr " #regdesc ", %0" :: "r"(__val));	\
 }
+
+#define AARCH64REG_WRITE_INLINE2(regname, regdesc)		\
+	AARCH64REG_WRITE_INLINE3(regname, regdesc, )
 
 #define AARCH64REG_WRITEIMM_INLINE2(regname, regdesc)		\
 static __inline void						\
@@ -329,7 +335,8 @@ AARCH64REG_READ_INLINE(id_aa64mmfr1_el1)
 #define	 ID_AA64MMFR1_EL1_HAFDBS_A	 1
 #define	 ID_AA64MMFR1_EL1_HAFDBS_AD	 2
 
-AARCH64REG_READ_INLINE(id_aa64mmfr2_el1)
+AARCH64REG_READ_INLINE3(id_aa64mmfr2_el1, id_aa64mmfr2_el1,
+    __attribute__((target("arch=armv8.2-a"))))
 
 #define	ID_AA64MMFR2_EL1_E0PD		__BITS(63,60)
 #define	 ID_AA64MMFR2_EL1_E0PD_NONE	 0
