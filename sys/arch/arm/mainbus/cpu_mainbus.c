@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.16 2014/10/29 14:14:14 skrll Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.17 2020/01/28 07:47:26 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,7 +45,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.16 2014/10/29 14:14:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.17 2020/01/28 07:47:26 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,19 +60,19 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.16 2014/10/29 14:14:14 skrll Exp $
  */
 static int cpu_mainbus_match(device_t, cfdata_t, void *);
 static void cpu_mainbus_attach(device_t, device_t, void *);
- 
+
 /*
  * int cpumatch(device_t parent, cfdata_t cf, void *aux)
  *
  * Probe for the main cpu. Currently all this does is return 1 to
  * indicate that the cpu was found.
- */ 
+ */
 #ifdef MULTIPROCESSOR
 extern u_int arm_cpu_max;
 #else
 #define	arm_cpu_max		1
 #endif
- 
+
 static int
 cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 {
@@ -113,7 +113,7 @@ cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
  *
  * Attach the main cpu
  */
-  
+
 static void
 cpu_mainbus_attach(device_t parent, device_t self, void *aux)
 {
