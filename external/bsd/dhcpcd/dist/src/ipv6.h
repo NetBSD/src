@@ -67,6 +67,9 @@
 #define IDGEN_RETRIES	3
 #define IDGEN_DELAY	1 /* second */
 
+/* Interface identifier length. Prefix + this == 128 for autoconf */
+#define ipv6_ifidlen(ifp)	64
+
 #ifndef IN6_ARE_MASKED_ADDR_EQUAL
 #define IN6_ARE_MASKED_ADDR_EQUAL(d, a, m)	(	\
 	(((d)->s6_addr32[0] ^ (a)->s6_addr32[0]) & (m)->s6_addr32[0]) == 0 && \

@@ -453,7 +453,7 @@ make_env(const struct interface *ifp, const char *reason)
 dumplease:
 #ifdef INET
 #ifdef IPV4LL
-	if (protocol == PROTO_IPV4LL) {
+	if (protocol == PROTO_IPV4LL && istate) {
 		if (ipv4ll_env(fp, istate->down ? "old" : "new", ifp) == -1)
 			goto eexit;
 	}
