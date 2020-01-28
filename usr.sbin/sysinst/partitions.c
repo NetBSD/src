@@ -1,4 +1,4 @@
-/*	$NetBSD: partitions.c,v 1.9 2020/01/27 21:21:22 martin Exp $	*/
+/*	$NetBSD: partitions.c,v 1.10 2020/01/28 07:43:42 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -41,6 +41,8 @@ const struct disk_partitioning_scheme **available_part_schemes;
  */
 size_t num_available_part_schemes;
 
+extern const struct disk_partitioning_scheme disklabel_parts;
+
 /*
  * Generic reader - query a disk device and read all partitions from it.
  * disk_size is in units of physical sector size, which is passe as
@@ -51,14 +53,23 @@ partitions_read_disk(const char *dev, daddr_t disk_size, size_t bytes_per_sec,
     bool no_mbr)
 {
 	const struct disk_partitioning_scheme **ps;
+#ifdef HAVE_MBR
+	bool mbr_done = false, disklabel_done = false;
+#endif
 
 	if (!available_part_schemes)
 		return NULL;
 
 	for (ps = available_part_schemes; *ps; ps++) {
 #ifdef HAVE_MBR
+		if (!no_mbr && (*ps) == &disklabel_parts && !mbr_done)
+			continue;
 		if (no_mbr && (*ps)->name == MSG_parttype_mbr)
 			continue;
+		if ((*ps)->name == MSG_parttype_mbr)
+			mbr_done = true;
+		if ((*ps)->read_from_disk == disklabel_parts.read_from_disk)
+			disklabel_done = true;
 #endif
 		struct disk_partitions *parts =
 		    (*ps)->read_from_disk(dev, 0, disk_size, bytes_per_sec,
@@ -66,6 +77,11 @@ partitions_read_disk(const char *dev, daddr_t disk_size, size_t bytes_per_sec,
 		if (parts)
 			return parts;
 	}
+#ifdef HAVE_MBR
+	if (!disklabel_done)
+		return disklabel_parts.read_from_disk(dev, 0, disk_size,
+		    bytes_per_sec, &disklabel_parts);
+#endif
 	return NULL;
 }
 
@@ -117,7 +133,6 @@ extern const struct disk_partitioning_scheme gpt_parts;
 extern const struct disk_partitioning_scheme mbr_parts;
 #endif
 
-extern const struct disk_partitioning_scheme disklabel_parts;
 #if RAW_PART != 2
 static struct disk_partitioning_scheme only_disklabel_parts;
 
