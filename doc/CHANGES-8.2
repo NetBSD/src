@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.91 2020/01/24 18:50:19 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.92 2020/01/28 09:36:21 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1960,3 +1960,19 @@ sys/dev/pci/if_wmreg.h			1.116-1.117
 	- Fix comment. Add comment.
 	- KNF.
 	[msaitoh, ticket #1492]
+
+sys/dev/mii/makphy.c			1.61, 1.63-1.64 via patch
+sys/dev/mii/makphyreg.h			1.10
+
+	- Remove ESSR_FIBER_LINK bit check in makphyattach(). This bit is
+	  valid only when the link is up, so it's not good to check in the
+	  attach function.
+	- There is an environment that both copper and fiber bits are set in
+	  EXTSR but it support copper only. To resolve this problem, check the
+	  ESSR register's HWCFG_MODE bit and drop unsupported bits.
+	- If the chip is in Fiber/Copper auto select mode, check which media is
+	  selected. Currently, the code supports 88E1011, 88E1111 and 88E1112
+	  only.
+	- Fix comment. KNF.
+	[msaitoh, ticket #1493]
+
