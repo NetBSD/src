@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.198 2020/01/25 15:41:52 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.199 2020/01/28 16:40:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -103,7 +103,7 @@ struct lwp {
 	int		l_biglocks;	/* l: biglock count before sleep */
 	short		l_stat;		/* l: overall LWP status */
 	short		l_class;	/* l: scheduling class */
-	short		l_kpriority;	/* !: has kernel priority boost */
+	int		l_kpriority;	/* !: has kernel priority boost */
 	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
