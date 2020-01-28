@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.157 2020/01/27 20:50:05 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.158 2020/01/28 09:23:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.157 2020/01/27 20:50:05 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.158 2020/01/28 09:23:15 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -712,6 +712,10 @@ pthread_join(pthread_t thread, void **valptr)
 
 	if (thread == self)
 		return EDEADLK;
+
+	/* XXX temporary - kernel should handle. */
+	if ((thread->pt_flags & PT_FLAG_DETACHED) != 0)
+		return EINVAL;
 
 	/* IEEE Std 1003.1 says pthread_join() never returns EINTR. */
 	for (;;) {
