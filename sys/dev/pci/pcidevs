@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1396 2020/01/21 08:49:31 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1397 2020/01/28 02:27:46 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -3223,8 +3223,6 @@ product INTEL E5V2_ADDRMAP	0x0e28	E5 v2 Address Map
 product INTEL E5V2_HOTPLUG	0x0e29	E5 v2 Hot-Plug
 product INTEL E5V2_IIO_RAS	0x0e2a	E5 v2 IIO RAS
 product INTEL E5V2_IOAPIC	0x0e2c	E5 v2 I/O APIC
-product INTEL E5_IOAT_RAID_1	0x3c2e	E5 I/OAT DMA (RAID 5/6)
-product INTEL E5_IOAT_RAID_2	0x3c2f	E5 I/OAT DMA (RAID 5/6)
 product INTEL E5V2_HA_2		0x0e30	E5 v2 Home Agent
 product INTEL E5V2_PCIE_PM_1	0x0e34	E5 v2 PCIe Performance Monitor
 product INTEL E5V2_QPI_PM_1	0x0e36	E5 v2 QPI Performance Monitor
