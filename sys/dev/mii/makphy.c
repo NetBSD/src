@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.60 2019/07/03 17:40:29 maxv Exp $	*/
+/*	$NetBSD: makphy.c,v 1.60.2.1 2020/01/28 11:04:14 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60 2019/07/03 17:40:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.60.2.1 2020/01/28 11:04:14 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -201,27 +201,61 @@ page0:
 		break;
 	}
 
-	switch (model) {
-	case MII_MODEL_xxMARVELL_E1011:
-	case MII_MODEL_xxMARVELL_E1112:
-		if (PHY_READ(sc, MAKPHY_ESSR, &reg) != 0) {
-			aprint_verbose_dev(self,
-			    "Failed to read MAKPHY_ESSR\n");
-			break;
-		}
-		if (reg & ESSR_FIBER_LINK)
-			sc->mii_flags |= MIIF_HAVEFIBER;
-		break;
-	default:
-		break;
-	}
-
 	PHY_RESET(sc);
 
 	PHY_READ(sc, MII_BMSR, &sc->mii_capabilities);
 	sc->mii_capabilities &= ma->mii_capmask;
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
+
+	if (((sc->mii_extcapabilities & (EXTSR_1000TFDX | EXTSR_1000THDX))
+		!= 0)
+	    && ((sc->mii_extcapabilities & (EXTSR_1000XFDX | EXTSR_1000XHDX))
+		!= 0)) {
+		bool fiberonly = false, copperonly = false;
+
+		/* Both copper and fiber are set. check MODE[] */
+		switch (sc->mii_mpd_model) {
+		case MII_MODEL_xxMARVELL_E1011:
+		case MII_MODEL_xxMARVELL_E1111:
+			/* These devices have ESSR register */
+			PHY_READ(sc, MAKPHY_ESSR, &reg);
+			if ((reg & ESSR_AUTOSEL_DISABLE) != 0) {
+				switch (reg & ESSR_HWCFG_MODE) {
+				case ESSR_RTBI_FIBER:
+				case ESSR_RGMII_FIBER:
+				case ESSR_RGMII_SGMII: /* right? */
+				case ESSR_TBI_FIBER:
+				case ESSR_GMII_FIBER:
+					fiberonly = true;
+					break;
+				case ESSR_SGMII_WC_COPPER:
+				case ESSR_SGMII_WOC_COPPER:
+				case ESSR_RTBI_COPPER:
+				case ESSR_RGMII_COPPER:
+				case ESSR_GMII_COPPER:
+					copperonly = true;
+				default:
+					break;
+				}
+			}
+			break;
+		default:
+			break;
+		}
+		if (fiberonly || copperonly)
+			aprint_debug_dev(self, "both copper and fiber are set "
+			    "but MODE[] is %s only.\n",
+			    fiberonly ? "fiber" : "copper");
+		if (fiberonly)
+			sc->mii_extcapabilities
+			    &= ~(EXTSR_1000TFDX | EXTSR_1000THDX);
+		else if (copperonly) {
+			sc->mii_extcapabilities
+			    &= ~(EXTSR_1000XFDX | EXTSR_1000XHDX);
+			sc->mii_flags &= ~MIIF_IS_1000X;
+		}
+	}
 
 	aprint_normal_dev(self, "");
 	if ((sc->mii_capabilities & BMSR_MEDIAMASK) == 0 &&
@@ -240,9 +274,7 @@ makphy_reset(struct mii_softc *sc)
 
 	mii_phy_reset(sc);
 
-	/*
-	 * Initialize PHY Specific Control Register.
-	 */
+	/* Initialize PHY Specific Control Register. */
 	PHY_READ(sc, MAKPHY_PSCR, &reg);
 
 	/* Assert CRS on transmit. */
@@ -387,7 +419,7 @@ static void
 makphy_status(struct mii_softc *sc)
 {
 	struct mii_data *mii = sc->mii_pdata;
-	uint16_t bmcr, gsr, pssr;
+	uint16_t bmcr, gsr, pssr, essr;
 
 	mii->mii_media_status = IFM_AVALID;
 	mii->mii_media_active = IFM_ETHER;
@@ -425,10 +457,45 @@ makphy_status(struct mii_softc *sc)
 		}
 	}
 
-	/* XXX FIXME: Use different page for Fiber on newer chips */
+	/*
+	 * XXX The following code support Fiber/Copper auto select mode
+	 * only for 88E1011, 88E1111 and 88E1112. For other chips, the document
+	 * is required.
+	 */
 	if (sc->mii_flags & MIIF_IS_1000X) {
+		/* Not in Fiber/Copper auto select mode */
 		mii->mii_media_active |= IFM_1000_SX;
+	} else if ((sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1011) ||
+	    (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1111)) {
+		/* Fiber/Copper auto select mode */
+
+		PHY_READ(sc, MAKPHY_ESSR, &essr);
+		if ((essr & ESSR_FIBER_LINK) == 0)
+			goto copper;
+
+		/* XXX Assume 1000BASE-SX only */
+		mii->mii_media_active |= IFM_1000_SX;
+	} else if (sc->mii_mpd_model == MII_MODEL_xxMARVELL_E1112) {
+		/* Fiber/Copper auto select mode */
+
+		PHY_READ(sc, MAKPHY_PSSR, &pssr);
+		if ((pssr & PSSR_RESOLUTION_FIBER) == 0)
+			goto copper;
+
+		switch (PSSR_SPEED_get(pssr)) {
+		case SPEED_1000:
+			mii->mii_media_active |= IFM_1000_SX;
+			break;
+		case SPEED_100:
+			mii->mii_media_active |= IFM_100_FX;
+			break;
+		default: /* Undefined (reserved) value */
+			mii->mii_media_active |= IFM_NONE;
+			mii->mii_media_status = 0;
+			return;
+		}
 	} else {
+copper:
 		switch (PSSR_SPEED_get(pssr)) {
 		case SPEED_1000:
 			mii->mii_media_active |= IFM_1000_T;
