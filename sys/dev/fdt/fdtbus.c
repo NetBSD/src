@@ -1,4 +1,4 @@
-/* $NetBSD: fdtbus.c,v 1.29.2.2 2020/01/09 17:16:47 snj Exp $ */
+/* $NetBSD: fdtbus.c,v 1.29.2.3 2020/01/28 09:06:37 msaitoh Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.29.2.2 2020/01/09 17:16:47 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdtbus.c,v 1.29.2.3 2020/01/28 09:06:37 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -145,9 +145,9 @@ fdt_attach(device_t parent, device_t self, void *aux)
 	/* Set hw.model if available */
 	model = fdtbus_get_string(phandle, "compatible");
 	if (model)
-		cpu_setmodel(model);
+		cpu_setmodel("%s", model);
 	else if (descr)
-		cpu_setmodel(descr);
+		cpu_setmodel("%s", descr);
 
 	/* Scan devices */
 	fdt_rescan(self, NULL, NULL);
