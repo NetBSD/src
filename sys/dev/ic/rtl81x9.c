@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.107 2019/08/01 15:21:50 msaitoh Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.108 2020/01/29 15:06:12 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.107 2019/08/01 15:21:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.108 2020/01/29 15:06:12 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -954,7 +954,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		if ((rxstat & RTK_RXSTAT_RXOK) == 0 ||
 		    total_len < ETHER_MIN_LEN ||
 		    total_len > (MCLBYTES - RTK_ETHER_ALIGN)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 			/*
 			 * submitted by:[netbsd-pcmcia:00484]
@@ -1030,7 +1030,7 @@ rtk_rxeof(struct rtk_softc *sc)
 		if (m == NULL) {
 			printf("%s: unable to allocate Rx mbuf\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
 		if (total_len > (MHLEN - RTK_ETHER_ALIGN)) {
@@ -1038,7 +1038,7 @@ rtk_rxeof(struct rtk_softc *sc)
 			if ((m->m_flags & M_EXT) == 0) {
 				printf("%s: unable to allocate Rx cluster\n",
 				    device_xname(sc->sc_dev));
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 				m = NULL;
 				goto next_packet;
@@ -1116,12 +1116,14 @@ rtk_txeof(struct rtk_softc *sc)
 		m_freem(txd->txd_mbuf);
 		txd->txd_mbuf = NULL;
 
-		ifp->if_collisions += (txstat & RTK_TXSTAT_COLLCNT) >> 24;
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+		if_statadd_ref(nsr, if_collisions,
+		    (txstat & RTK_TXSTAT_COLLCNT) >> 24);
 
 		if (txstat & RTK_TXSTAT_TX_OK)
-			ifp->if_opackets++;
+			if_statinc_ref(nsr, if_opackets);
 		else {
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 
 			/*
 			 * Increase Early TX threshold if underrun occurred.
@@ -1146,6 +1148,7 @@ rtk_txeof(struct rtk_softc *sc)
 			if (txstat & (RTK_TXSTAT_TXABRT | RTK_TXSTAT_OUTOFWIN))
 				CSR_WRITE_4(sc, RTK_TXCFG, RTK_TXCFG_CONFIG);
 		}
+		IF_STAT_PUTREF(ifp);
 		SIMPLEQ_INSERT_TAIL(&sc->rtk_tx_free, txd, txd_q);
 		ifp->if_flags &= ~IFF_OACTIVE;
 	}
@@ -1460,7 +1463,7 @@ rtk_watchdog(struct ifnet *ifp)
 	sc = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	rtk_txeof(sc);
 	rtk_rxeof(sc);
 	rtk_init(ifp);
