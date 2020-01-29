@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.165 2019/08/05 13:30:21 msaitoh Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.166 2020/01/29 04:18:34 thorpej Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.165 2019/08/05 13:30:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.166 2020/01/29 04:18:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -1461,14 +1461,16 @@ bridge_enqueue(struct bridge_softc *sc, struct ifnet *dst_ifp, struct mbuf *m,
 	error = if_transmit_lock(dst_ifp, m);
 	if (error) {
 		/* mbuf is already freed */
-		sc->sc_if.if_oerrors++;
+		if_statinc(&sc->sc_if, if_oerrors);
 		return;
 	}
 
-	sc->sc_if.if_opackets++;
-	sc->sc_if.if_obytes += len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(&sc->sc_if);
+	if_statinc_ref(nsr, if_opackets);
+	if_statadd_ref(nsr, if_obytes, len);
 	if (mflags & M_MCAST)
-		sc->sc_if.if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(&sc->sc_if);
 }
 
 /*
@@ -1649,7 +1651,7 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 			} else {
 				mc = m_copypacket(m, M_DONTWAIT);
 				if (mc == NULL) {
-					sc->sc_if.if_oerrors++;
+					if_statinc(&sc->sc_if, if_oerrors);
 					goto next;
 				}
 			}
@@ -1667,7 +1669,8 @@ bridge_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *sa,
 				} else {
 					mc = m_copypacket(m, M_DONTWAIT);
 					if (mc == NULL) {
-						sc->sc_if.if_oerrors++;
+						if_statinc(&sc->sc_if,
+						    if_oerrors);
 						goto next;
 					}
 				}
@@ -1750,8 +1753,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		goto out;
 	}
 
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
+	if_statadd2(&sc->sc_if, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
 
 	/*
 	 * Look up the bridge_iflist.
@@ -1819,7 +1821,7 @@ bridge_forward(struct bridge_softc *sc, struct mbuf *m)
 		}
 	} else {
 		/* ...forward it to all interfaces. */
-		sc->sc_if.if_imcasts++;
+		if_statinc(&sc->sc_if, if_imcasts);
 		dst_if = NULL;
 	}
 
@@ -2081,7 +2083,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		if (dst_if != src_if) {
 			mc = m_copypacket(m, M_DONTWAIT);
 			if (mc == NULL) {
-				sc->sc_if.if_oerrors++;
+				if_statinc(&sc->sc_if, if_oerrors);
 				goto next;
 			}
 			/*
@@ -2099,7 +2101,7 @@ bridge_broadcast(struct bridge_softc *sc, struct ifnet *src_if,
 		if (bmcast) {
 			mc = m_copypacket(m, M_DONTWAIT);
 			if (mc == NULL) {
-				sc->sc_if.if_oerrors++;
+				if_statinc(&sc->sc_if, if_oerrors);
 				goto next;
 			}
 
