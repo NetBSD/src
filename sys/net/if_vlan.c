@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.149 2019/12/12 02:15:43 pgoyette Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.150 2020/01/29 04:28:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.149 2019/12/12 02:15:43 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.150 2020/01/29 04:28:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1391,7 +1391,7 @@ vlan_start(struct ifnet *ifp)
 			if (m == NULL) {
 				printf("%s: unable to prepend encap header",
 				    p->if_xname);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 
@@ -1406,7 +1406,7 @@ vlan_start(struct ifnet *ifp)
 				if (m == NULL) {
 					printf("%s: unable to pullup encap "
 					    "header", p->if_xname);
-					ifp->if_oerrors++;
+					if_statinc(ifp, if_oerrors);
 					continue;
 				}
 
@@ -1455,10 +1455,10 @@ vlan_start(struct ifnet *ifp)
 		error = if_transmit_lock(p, m);
 		if (error) {
 			/* mbuf is already freed */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1509,7 +1509,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 		if (m == NULL) {
 			printf("%s: unable to prepend encap header",
 			    p->if_xname);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			error = ENOBUFS;
 			goto out;
 		}
@@ -1525,7 +1525,7 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 			if (m == NULL) {
 				printf("%s: unable to pullup encap "
 				    "header", p->if_xname);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				error = ENOBUFS;
 				goto out;
 			}
@@ -1574,16 +1574,17 @@ vlan_transmit(struct ifnet *ifp, struct mbuf *m)
 	}
 
 	error = if_transmit_lock(p, m);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (error) {
 		/* mbuf is already freed */
-		ifp->if_oerrors++;
+		if_statinc_ref(nsr, if_oerrors);
 	} else {
-
-		ifp->if_opackets++;
-		ifp->if_obytes += pktlen;
+		if_statinc_ref(nsr, if_opackets);
+		if_statadd_ref(nsr, if_obytes, pktlen);
 		if (mcast)
-			ifp->if_omcasts++;
+			if_statinc_ref(nsr, if_omcasts);
 	}
+	IF_STAT_PUTREF(ifp);
 
 out:
 	/* Remove reference to mib before release */
@@ -1639,7 +1640,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	mib = vlan_lookup_tag_psref(ifp, vid, &psref);
 	if (mib == NULL) {
 		m_freem(m);
-		ifp->if_noproto++;
+		if_statinc(ifp, if_noproto);
 		return;
 	}
 	KASSERT(mib->ifvm_encaplen == ETHER_VLAN_ENCAP_LEN);
@@ -1648,7 +1649,7 @@ vlan_input(struct ifnet *ifp, struct mbuf *m)
 	if ((ifv->ifv_if.if_flags & (IFF_UP | IFF_RUNNING)) !=
 	    (IFF_UP | IFF_RUNNING)) {
 		m_freem(m);
-		ifp->if_noproto++;
+		if_statinc(ifp, if_noproto);
 		goto out;
 	}
 
