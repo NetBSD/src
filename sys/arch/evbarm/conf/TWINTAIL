@@ -1,4 +1,4 @@
-#	$NetBSD: TWINTAIL,v 1.77 2020/01/19 20:00:37 thorpej Exp $
+#	$NetBSD: TWINTAIL,v 1.78 2020/01/29 18:39:01 maya Exp $
 #
 #	TWINTAIL -- Genetec corp. G4255EB-X002 Evaluation Board Kernel
 #
@@ -257,9 +257,6 @@ opio0 	at obio?  intr 2
 
 #uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
 
 # USB Handspring Visor
 #uvisor*	at uhub? port ?

@@ -1,4 +1,4 @@
-# $NetBSD: ALL,v 1.486 2020/01/25 18:38:36 thorpej Exp $
+# $NetBSD: ALL,v 1.487 2020/01/29 18:39:02 maya Exp $
 # From NetBSD: GENERIC,v 1.787 2006/10/01 18:37:54 bouyer Exp
 #
 # ALL machine description file
@@ -17,7 +17,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"ALL-$Revision: 1.486 $"
+#ident		"ALL-$Revision: 1.487 $"
 
 maxusers	64		# estimated number of users
 
@@ -1402,9 +1402,6 @@ uberry* at uhub? port ?
 
 # Apple iPad
 uipad* at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor* at uhub? port ?
