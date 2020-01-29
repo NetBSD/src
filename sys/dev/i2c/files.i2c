@@ -1,4 +1,4 @@
-#	$NetBSD: files.i2c,v 1.108 2020/01/12 17:48:42 thorpej Exp $
+#	$NetBSD: files.i2c,v 1.109 2020/01/29 05:27:05 macallan Exp $
 
 obsolete defflag	opt_i2cbus.h		I2C_SCAN
 define	i2cbus { }
@@ -385,3 +385,8 @@ file	dev/i2c/es8316ac.c			es8316ac
 device	cwfg: sysmon_envsys
 attach	cwfg at iic
 file	dev/i2c/cwfg.c				cwfg
+
+# Philips PCA955x GPIO
+device	pcagpio
+attach	pcagpio at iic
+file	dev/i2c/pcagpio.c			pcagpio
