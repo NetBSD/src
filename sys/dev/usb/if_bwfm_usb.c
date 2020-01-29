@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_usb.c,v 1.9 2019/01/27 02:08:42 pgoyette Exp $ */
+/* $NetBSD: if_bwfm_usb.c,v 1.10 2020/01/29 06:26:32 thorpej Exp $ */
 /* $OpenBSD: if_bwfm_usb.c,v 1.2 2017/10/15 14:55:13 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.9 2019/01/27 02:08:42 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bwfm_usb.c,v 1.10 2020/01/29 06:26:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -617,12 +617,12 @@ bwfm_usb_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	if (__predict_false(status != USBD_NORMAL_COMPLETION)) {
 		if (status == USBD_CANCELLED)
 			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		splx(s);
 		return;
 	}
 
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	/* We just released a Tx buffer, notify Tx. */
 	if ((ifp->if_flags & IFF_OACTIVE) != 0) {
