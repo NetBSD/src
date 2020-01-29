@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.19 2020/01/28 17:33:07 maxv Exp $
+# $NetBSD: genassym.cf,v 1.20 2020/01/29 19:21:51 skrll Exp $
 #-
 # Copyright (c) 2014 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -275,7 +275,6 @@ define	FPREG_FPCR		offsetof(struct fpreg, fpcr)
 define	FPREG_FPSR		offsetof(struct fpreg, fpsr)
 
 define	CPU_INFO_SIZE		sizeof(struct cpu_info)
-define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
 define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_CPUID		offsetof(struct cpu_info, ci_cpuid)
