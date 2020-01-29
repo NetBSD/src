@@ -1,4 +1,4 @@
-#	$NetBSD: majors.epoc32,v 1.4 2019/01/28 02:28:57 dholland Exp $
+#	$NetBSD: majors.epoc32,v 1.5 2020/01/29 18:39:01 maya Exp $
 #
 # Device majors for epoc32
 #
@@ -68,7 +68,7 @@ device-major	raid		char 71  block 71	raid
 device-major	ugen		char 72			ugen
 device-major	wsmux		char 73			wsmux
 device-major	ucom		char 74			ucom
-device-major	urio		char 75			urio
+#device-major	obsolete	char 75			obsolete (urio)
 device-major	uscanner	char 76			uscanner
 device-major	openfirm	char 77			openfirm
 device-major	biconsdev	char 78			biconsdev

@@ -1,4 +1,4 @@
-#	$NetBSD: SHEEVAPLUG,v 1.65 2020/01/19 01:25:04 thorpej Exp $
+#	$NetBSD: SHEEVAPLUG,v 1.66 2020/01/29 18:39:01 maya Exp $
 #
 #  This configuration supports for generically Marvell SheevaPlug
 #
@@ -342,9 +342,6 @@ ucom*	at uvscom? portno ?
 
 # RIM BlackBerry
 uberry* at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor* at uhub? port ?
