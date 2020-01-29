@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1677 2020/01/22 14:01:50 thorpej Exp $
+# $NetBSD: mi,v 1.1678 2020/01/29 18:39:04 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1906,7 +1906,7 @@
 ./usr/share/man/cat4/uplcom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urandom.0			man-sys-catman		.cat
 ./usr/share/man/cat4/ure.0			man-sys-catman		.cat
-./usr/share/man/cat4/urio.0			man-sys-catman		.cat
+./usr/share/man/cat4/urio.0			man-obsolete		obsolete
 ./usr/share/man/cat4/url.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urlphy.0			man-sys-catman		.cat
 ./usr/share/man/cat4/urndis.0			man-sys-catman		.cat
@@ -5015,7 +5015,7 @@
 ./usr/share/man/html4/uplcom.html		man-sys-htmlman		html
 ./usr/share/man/html4/urandom.html		man-sys-htmlman		html
 ./usr/share/man/html4/ure.html			man-sys-htmlman		html
-./usr/share/man/html4/urio.html			man-sys-htmlman		html
+./usr/share/man/html4/urio.html			man-obsolete		obsolete
 ./usr/share/man/html4/url.html			man-sys-htmlman		html
 ./usr/share/man/html4/urlphy.html		man-sys-htmlman		html
 ./usr/share/man/html4/urndis.html		man-sys-htmlman		html
@@ -8048,7 +8048,7 @@
 ./usr/share/man/man4/uplcom.4			man-sys-man		.man
 ./usr/share/man/man4/urandom.4			man-sys-man		.man
 ./usr/share/man/man4/ure.4			man-sys-man		.man
-./usr/share/man/man4/urio.4			man-sys-man		.man
+./usr/share/man/man4/urio.4			man-obsolete		obsolete
 ./usr/share/man/man4/url.4			man-sys-man		.man
 ./usr/share/man/man4/urlphy.4			man-sys-man		.man
 ./usr/share/man/man4/urndis.4			man-sys-man		.man
