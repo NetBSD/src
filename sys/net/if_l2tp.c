@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.40 2019/10/16 06:53:34 knakahara Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.41 2020/01/29 04:18:34 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.40 2019/10/16 06:53:34 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.41 2020/01/29 04:18:34 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -404,7 +404,7 @@ l2tp_tx_enqueue(struct l2tp_variant *var, struct mbuf *m)
 	s = splsoftnet();
 	ifq = l2tp_ifq_percpu_getref(sc->l2tp_ifq_percpu);
 	if (IF_QFULL(ifq)) {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		l2tp_ifq_percpu_putref(sc->l2tp_ifq_percpu);
 		splx(s);
 		m_freem(m);
@@ -465,7 +465,7 @@ l2tp_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 end:
 	l2tp_putref_variant(var, &psref);
 	if (error)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	return error;
 }
@@ -504,10 +504,9 @@ l2tp_sendit(struct l2tp_variant *var, struct mbuf *m)
 		break;
 	}
 	if (error) {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	} else {
-		ifp->if_opackets++;
-		ifp->if_obytes += len;
+		if_statadd2(ifp, if_opackets, 1, if_obytes, len);
 	}
 }
 
