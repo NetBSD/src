@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.35 2020/01/07 06:42:26 maxv Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.36 2020/01/29 06:39:07 thorpej Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.35 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.36 2020/01/29 06:39:07 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -820,7 +820,7 @@ urndis_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		}
 
 		if (le32toh(msg->rm_datalen) < sizeof(struct ether_header)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			printf("%s: urndis_decap invalid ethernet size "
 			    "%d < %zu\n",
 			    DEVNAME(un),
