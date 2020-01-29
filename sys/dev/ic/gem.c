@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.125 2020/01/29 14:47:08 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.126 2020/01/29 21:11:38 christos Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.125 2020/01/29 14:47:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.126 2020/01/29 21:11:38 christos Exp $");
 
 #include "opt_inet.h"
 
@@ -1388,7 +1388,9 @@ gem_start(struct ifnet *ifp)
 	 * until we drain the queue, or use up all available transmit
 	 * descriptors.
 	 */
+#ifdef INET
 next:
+#endif
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txfreeq)) != NULL &&
 	    sc->sc_txfree != 0) {
 		/*
