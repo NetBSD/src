@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.11 2019/10/14 16:43:04 maxv Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.12 2020/01/29 04:35:13 thorpej Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.11 2019/10/14 16:43:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.12 2020/01/29 04:35:13 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1348,7 +1348,7 @@ COMPATNAME(rt_ifmsg)(struct ifnet *ifp)
 	(void)memset(&ifm, 0, sizeof(ifm));
 	ifm.ifm_index = ifp->if_index;
 	ifm.ifm_flags = ifp->if_flags;
-	ifm.ifm_data = ifp->if_data;
+	if_export_if_data(ifp, &ifm.ifm_data, false);
 	ifm.ifm_addrs = 0;
 	m = COMPATNAME(rt_msg1)(RTM_IFINFO, &info, &ifm, sizeof(ifm));
 	if (m == NULL)
