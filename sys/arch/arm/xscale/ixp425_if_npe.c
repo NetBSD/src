@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.44 2019/12/27 08:22:49 msaitoh Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.45 2020/01/29 06:05:31 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.44 2019/12/27 08:22:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.45 2020/01/29 06:05:31 thorpej Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -703,20 +703,23 @@ npe_addstats(struct npe_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	struct npestats *ns = sc->sc_stats;
 
-	ifp->if_oerrors +=
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_oerrors,
 		  be32toh(ns->dot3StatsInternalMacTransmitErrors)
 		+ be32toh(ns->dot3StatsCarrierSenseErrors)
 		+ be32toh(ns->TxVLANIdFilterDiscards)
-		;
-	ifp->if_ierrors += be32toh(ns->dot3StatsFCSErrors)
+		);
+	if_statadd_ref(nsr, if_ierrors,
+		  be32toh(ns->dot3StatsFCSErrors)
 		+ be32toh(ns->dot3StatsInternalMacReceiveErrors)
 		+ be32toh(ns->RxOverrunDiscards)
 		+ be32toh(ns->RxUnderflowEntryDiscards)
-		;
-	ifp->if_collisions +=
+		);
+	if_statadd_ref(nsr, if_collisions,
 		  be32toh(ns->dot3StatsSingleCollisionFrames)
 		+ be32toh(ns->dot3StatsMultipleCollisionFrames)
-		;
+		);
+	IF_STAT_PUTREF(ifp);
 }
 
 static void
@@ -798,7 +801,7 @@ npe_txdone_finish(struct npe_softc *sc, const struct txdone *td)
 	 * We're no longer busy, so clear the busy flag and call the
 	 * start routine to xmit more packets.
 	 */
-	ifp->if_opackets += td->count;
+	if_statadd(ifp, if_opackets, td->count);
 	ifp->if_flags &= ~IFF_OACTIVE;
 	ifp->if_timer = 0;
 	if_schedule_deferred_start(ifp);
@@ -953,7 +956,7 @@ npe_rxdone(int qid, void *arg)
 				    mrx->m_pkthdr.len);
 				/* Back out "newly allocated" mbuf. */
 				m_freem(m);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto fail;
 			}
 			if ((ifp->if_flags & IFF_PROMISC) == 0) {
@@ -1032,7 +1035,7 @@ npe_rxdone(int qid, void *arg)
 				    device_xname(sc->sc_dev), mrx->m_pkthdr.len);
 				/* Back out "newly allocated" mbuf. */
 				m_freem(m);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto fail;
 			}
 #endif
@@ -1154,7 +1157,7 @@ npeinit_resetcb(void *xsc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint32_t msg[2];
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	npeinit_locked(sc);
 
 	msg[0] = NPE_NOTIFYMACRECOVERYDONE << NPE_MAC_MSGID_SHL
@@ -1402,7 +1405,7 @@ npewatchdog(struct ifnet *ifp)
 
 	aprint_error_dev(sc->sc_dev, "device timeout\n");
 	s = splnet();
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	npeinit_locked(sc);
 	splx(s);
 }
