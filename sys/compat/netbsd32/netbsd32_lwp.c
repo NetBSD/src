@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.21 2020/01/26 19:08:09 ad Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.22 2020/01/29 15:47:52 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.21 2020/01/26 19:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.22 2020/01/29 15:47:52 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -183,14 +183,12 @@ netbsd32____lwp_park60(struct lwp *l,
 	}
 
 	if (SCARG(uap, unpark) != 0) {
-		error = lwp_unpark(SCARG(uap, unpark),
-		    SCARG_P32(uap, unparkhint));
+		error = lwp_unpark(&SCARG(uap, unpark), 1);
 		if (error != 0)
 			return error;
 	}
 
-	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp,
-	    SCARG_P32(uap, hint));
+	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp);
 }
 
 int

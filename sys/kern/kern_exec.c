@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.489 2020/01/23 10:05:44 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.490 2020/01/29 15:47:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.489 2020/01/23 10:05:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.490 2020/01/29 15:47:52 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -1141,13 +1141,31 @@ emulexec(struct lwp *l, struct exec_package *epp)
 		(*p->p_emul->e_proc_exit)(p);
 
 	/*
-	 * This is now LWP 1.
+	 * This is now LWP 1.  Re-number the LWP if needed.  Don't bother
+	 * with p_treelock here as this is the only live LWP in the proc
+	 * right now.
 	 */
-	/* XXX elsewhere */
-	mutex_enter(p->p_lock);
-	p->p_nlwpid = 1;
-	l->l_lid = 1;
-	mutex_exit(p->p_lock);
+	while (__predict_false(l->l_lid != 1)) {
+		lwp_t *l2 __diagused;
+		int error;
+
+		mutex_enter(p->p_lock);
+		error = radix_tree_insert_node(&p->p_lwptree, 1 - 1, l);
+		if (error == 0) {
+			l2 = radix_tree_remove_node(&p->p_lwptree,
+			    (uint64_t)(l->l_lid - 1));
+			KASSERT(l2 == l);
+			p->p_nlwpid = 2;
+			l->l_lid = 1;
+		}
+		mutex_exit(p->p_lock);
+
+		if (error == 0)
+			break;
+
+		KASSERT(error == ENOMEM);
+		radix_tree_await_memory();
+	}
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
@@ -2526,6 +2544,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
+	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 
