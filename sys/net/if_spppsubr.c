@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.184 2019/09/13 07:55:07 msaitoh Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.185 2020/01/29 04:28:27 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.184 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.185 2020/01/29 04:28:27 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -532,7 +532,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 
 	if (ifp->if_flags & IFF_UP) {
 		/* Count received bytes, add hardware framing */
-		ifp->if_ibytes += m->m_pkthdr.len + sp->pp_framebytes;
+		if_statadd(ifp, if_ibytes, m->m_pkthdr.len + sp->pp_framebytes);
 		/* Note time of last receive */
 		sp->pp_last_receive = time_uptime;
 	}
@@ -544,8 +544,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			    "%s: input packet is too small, %d bytes\n",
 			    ifp->if_xname, m->m_pkthdr.len);
 	  drop:
-		++ifp->if_ierrors;
-		++ifp->if_iqdrops;
+		if_statadd2(ifp, if_ierrors, 1, if_iqdrops, 1);
 		m_freem(m);
 		SPPP_UNLOCK(sp);
 		return;
@@ -589,7 +588,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			}
 			switch (ntohs(h->protocol)) {
 			default:
-				++ifp->if_noproto;
+				if_statinc(ifp, if_noproto);
 				goto invalid;
 			case CISCO_KEEPALIVE:
 				SPPP_UNLOCK(sp);
@@ -636,7 +635,7 @@ sppp_input(struct ifnet *ifp, struct mbuf *m)
 			log(LOG_DEBUG,
 			    "%s: invalid input protocol "
 			    "<proto=0x%x>\n", ifp->if_xname, ntohs(protocol));
-		++ifp->if_noproto;
+		if_statinc(ifp, if_noproto);
 		goto drop;
 	case PPP_LCP:
 		SPPP_UNLOCK(sp);
@@ -850,7 +849,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (ifp->if_flags & IFF_DEBUG)
 				log(LOG_DEBUG, "%s: no memory for transmit header\n",
 					ifp->if_xname);
-			++ifp->if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			SPPP_UNLOCK(sp);
 			splx(s);
 			return (ENOBUFS);
@@ -912,7 +911,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 #endif
 	default:
 		m_freem(m);
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		SPPP_UNLOCK(sp);
 		splx(s);
 		return (EAFNOSUPPORT);
@@ -924,7 +923,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if (ifp->if_flags & IFF_DEBUG)
 				log(LOG_DEBUG, "%s: no memory for transmit header\n",
 					ifp->if_xname);
-			++ifp->if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			SPPP_UNLOCK(sp);
 			splx(s);
 			return (ENOBUFS);
@@ -940,7 +939,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 	error = if_transmit_lock(ifp, m);
 	SPPP_LOCK(sp, RW_READER);
 	if (error == 0)
-		ifp->if_obytes += pktlen + sp->pp_framebytes;
+		if_statadd(ifp, if_obytes, pktlen + sp->pp_framebytes);
 #else /* !SPPPSUBR_MPSAFE */
 	error = ifq_enqueue2(ifp, ifq, m);
 
@@ -955,7 +954,7 @@ sppp_output(struct ifnet *ifp, struct mbuf *m,
 			if_start_lock(ifp);
 			SPPP_LOCK(sp, RW_READER);
 		}
-		ifp->if_obytes += pktlen + sp->pp_framebytes;
+		if_statadd(ifp, if_obytes, pktlen + sp->pp_framebytes);
 	}
 #endif /* !SPPPSUBR_MPSAFE */
 	SPPP_UNLOCK(sp);
@@ -1419,11 +1418,11 @@ sppp_cisco_send(struct sppp *sp, int type, int32_t par1, int32_t par2)
 		IF_DROP(&sp->pp_fastq);
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+	if_statadd(ifp, if_obytes, m->m_pkthdr.len + sp->pp_framebytes);
 	IF_ENQUEUE(&sp->pp_cpq, m);
 
 	if (! (ifp->if_flags & IFF_OACTIVE)) {
@@ -1492,11 +1491,11 @@ sppp_cp_send(struct sppp *sp, u_short proto, u_char type,
 		IF_DROP(&sp->pp_fastq);
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+	if_statadd(ifp, if_obytes, m->m_pkthdr.len + sp->pp_framebytes);
 	IF_ENQUEUE(&sp->pp_cpq, m);
 
 
@@ -1554,7 +1553,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				addlog("%s: %s invalid conf-req length %d\n",
 				       ifp->if_xname, cp->name,
 				       len);
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 		/* handle states where RCR doesn't get a SCA/SCN */
@@ -1609,7 +1608,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case CONF_ACK:
@@ -1618,7 +1617,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
 				       h->ident, sp->confid[cp->protoidx]);
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 		switch (sp->state[cp->protoidx]) {
@@ -1653,7 +1652,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case CONF_NAK:
@@ -1663,7 +1662,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 				addlog("%s: %s id mismatch 0x%x != 0x%x\n",
 				       ifp->if_xname, cp->name,
 				       h->ident, sp->confid[cp->protoidx]);
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 		if (h->type == CONF_NAK)
@@ -1696,7 +1695,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 
@@ -1728,7 +1727,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case TERM_ACK:
@@ -1761,7 +1760,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case CODE_REJ:
@@ -1788,7 +1787,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	case PROTO_REJ:
@@ -1847,7 +1846,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name,
 			       sppp_cp_type_name(h->type),
 			       sppp_state_name(sp->state[cp->protoidx]));
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 		}
 		break;
 	    }
@@ -1863,7 +1862,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			if (debug)
 				addlog("%s: lcp echo req but lcp closed\n",
 				       ifp->if_xname);
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 		if (len < 8) {
@@ -1901,7 +1900,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 		if (cp->proto != PPP_LCP)
 			goto illegal;
 		if (h->ident != sp->lcp.echoid) {
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 		if (len < 8) {
@@ -1926,7 +1925,7 @@ sppp_cp_input(const struct cp *cp, struct sppp *sp, struct mbuf *m)
 			       ifp->if_xname, cp->name, h->type);
 		sppp_cp_send(sp, cp->proto, CODE_REJ,
 		    ++sp->pp_seq[cp->protoidx], m->m_pkthdr.len, h);
-		++ifp->if_ierrors;
+		if_statinc(ifp, if_ierrors);
 	}
 
 	SPPP_UNLOCK(sp);
@@ -5094,11 +5093,11 @@ sppp_auth_send(const struct cp *cp, struct sppp *sp,
 		IF_DROP(&sp->pp_fastq);
 		IF_DROP(&ifp->if_snd);
 		m_freem(m);
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
-	ifp->if_obytes += m->m_pkthdr.len + sp->pp_framebytes;
+	if_statadd(ifp, if_obytes, m->m_pkthdr.len + sp->pp_framebytes);
 	IF_ENQUEUE(&sp->pp_cpq, m);
 
 	if (! (ifp->if_flags & IFF_OACTIVE)) {

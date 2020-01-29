@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.25 2019/11/01 04:28:14 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.26 2020/01/29 04:34:10 thorpej Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.25 2019/11/01 04:28:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.26 2020/01/29 04:34:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -538,7 +538,7 @@ end:
 	curlwp_bindx(bound);
 noref_end:
 	if (error)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	return error;
 }
@@ -566,8 +566,7 @@ if_ipsec_out_direct(struct ipsec_variant *var, struct mbuf *m, int family)
 	if (error)
 		return error;
 
-	ifp->if_opackets++;
-	ifp->if_obytes += len;
+	if_statadd2(ifp, if_opackets, 1, if_obytes, len);
 
 	return 0;
 }
@@ -609,7 +608,7 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 		break;
 #endif
 	default:
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		return;
 	}
@@ -621,10 +620,9 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 #endif
 	pktlen = m->m_pkthdr.len;
 	if (__predict_true(pktq_enqueue(pktq, m, h))) {
-		ifp->if_ibytes += pktlen;
-		ifp->if_ipackets++;
+		if_statadd2(ifp, if_ibytes, pktlen, if_ipackets, 1);
 	} else {
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		m_freem(m);
 	}
 
