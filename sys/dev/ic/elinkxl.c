@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.133 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.134 2020/01/29 14:17:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.133 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.134 2020/01/29 14:17:27 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -86,7 +86,6 @@ void ex_read(struct ex_softc *);
 void ex_reset(struct ex_softc *);
 void ex_set_mc(struct ex_softc *);
 void ex_getstats(struct ex_softc *);
-void ex_printstats(struct ex_softc *);
 void ex_tick(void *);
 
 static int ex_eeprom_busy(struct ex_softc *);
@@ -814,7 +813,7 @@ ex_txstat(struct ex_softc *sc)
 		/* Resetting takes a while and we will do more than wait. */
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		++sc->sc_ethercom.ec_if.if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		aprint_error_dev(sc->sc_dev, "%s%s%s",
 		    (err & TXS_UNDERRUN) ? " transmit underrun" : "",
 		    (err & TXS_JABBER) ? " jabber" : "",
@@ -834,7 +833,7 @@ ex_txstat(struct ex_softc *sc)
 		}
 		aprint_error("\n");
 		if (err & TXS_MAX_COLLISION)
-			++sc->sc_ethercom.ec_if.if_collisions;
+			if_statinc(ifp, if_collisions);
 
 		/* Wait for TX_RESET to finish. */
 		ex_waitcmd(sc);
@@ -843,7 +842,7 @@ ex_txstat(struct ex_softc *sc)
 		ex_setup_tx(sc);
 	} else {
 		if (err & TXS_MAX_COLLISION)
-			++sc->sc_ethercom.ec_if.if_collisions;
+			if_statinc(ifp, if_collisions);
 		sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 	}
 
@@ -1367,7 +1366,7 @@ ex_intr(void *arg)
 					    ((sc->sc_ethercom.ec_capenable &
 					    ETHERCAP_VLAN_MTU) ?
 					    EX_UPD_ERR_VLAN : EX_UPD_ERR)) {
-						ifp->if_ierrors++;
+						if_statinc(ifp, if_ierrors);
 						m_freem(m);
 						goto rcvloop;
 					}
@@ -1485,18 +1484,26 @@ ex_getstats(struct ex_softc *sc)
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	uint8_t upperok;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	GO_WINDOW(6);
 	upperok = bus_space_read_1(iot, ioh, UPPER_FRAMES_OK);
-	ifp->if_opackets += bus_space_read_1(iot, ioh, TX_FRAMES_OK);
-	ifp->if_opackets += (upperok & 0x30) << 4;
-	ifp->if_ierrors += bus_space_read_1(iot, ioh, RX_OVERRUNS);
-	ifp->if_collisions += bus_space_read_1(iot, ioh, TX_COLLISIONS);
+	if_statadd_ref(nsr, if_opackets,
+	    bus_space_read_1(iot, ioh, TX_FRAMES_OK));
+	if_statadd_ref(nsr, if_opackets, (upperok & 0x30) << 4);
+	if_statadd_ref(nsr, if_ierrors,
+	    bus_space_read_1(iot, ioh, RX_OVERRUNS));
+	if_statadd_ref(nsr, if_collisions,
+	    bus_space_read_1(iot, ioh, TX_COLLISIONS));
 	/*
 	 * There seems to be no way to get the exact number of collisions,
 	 * this is the number that occurred at the very least.
 	 */
-	ifp->if_collisions += 2 * bus_space_read_1(iot, ioh,
-	    TX_AFTER_X_COLLISIONS);
+	if_statadd_ref(nsr, if_collisions,
+	    2 * bus_space_read_1(iot, ioh, TX_AFTER_X_COLLISIONS));
+
+	IF_STAT_PUTREF(ifp);
+
 	/*
 	 * Interface byte counts are counted by ether_input() and
 	 * ether_output(), so don't accumulate them here.  Just
@@ -1517,21 +1524,6 @@ ex_getstats(struct ex_softc *sc)
 	GO_WINDOW(4);
 	(void)bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
 	GO_WINDOW(1);
-}
-
-void
-ex_printstats(struct ex_softc *sc)
-{
-	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
-
-	ex_getstats(sc);
-	printf("in %llu out %llu ierror %llu oerror %llu ibytes %llu obytes "
-	    "%llu\n", (unsigned long long)ifp->if_ipackets,
-	    (unsigned long long)ifp->if_opackets,
-	    (unsigned long long)ifp->if_ierrors,
-	    (unsigned long long)ifp->if_oerrors,
-	    (unsigned long long)ifp->if_ibytes,
-	    (unsigned long long)ifp->if_obytes);
 }
 
 void
@@ -1580,7 +1572,7 @@ ex_watchdog(struct ifnet *ifp)
 	struct ex_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	ex_reset(sc);
 	ex_init(ifp);
