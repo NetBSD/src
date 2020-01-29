@@ -1,4 +1,4 @@
-/*	$NetBSD: memcmp.c,v 1.7 2020/01/27 22:22:03 ad Exp $	*/
+/*	$NetBSD: memcmp.c,v 1.8 2020/01/29 09:18:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
 #if 0
 static char sccsid[] = "@(#)memcmp.c	8.1 (Berkeley) 6/4/93";
 #else
-__RCSID("$NetBSD: memcmp.c,v 1.7 2020/01/27 22:22:03 ad Exp $");
+__RCSID("$NetBSD: memcmp.c,v 1.8 2020/01/29 09:18:26 ad Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -86,8 +86,10 @@ __RCSID("$NetBSD: memcmp.c,v 1.7 2020/01/27 22:22:03 ad Exp $");
 int
 memcmp(const void *s1, const void *s2, size_t n)
 {
-	const uintptr_t *b1, *b2;
 	const unsigned char *c1, *c2;
+
+#ifndef _STANDALONE
+	const uintptr_t *b1, *b2;
 
 	b1 = s1;
 	b2 = s2;
@@ -107,6 +109,10 @@ memcmp(const void *s1, const void *s2, size_t n)
 
 	c1 = (const unsigned char *)b1;
 	c2 = (const unsigned char *)b2;
+#else
+	c1 = (const unsigned char *)s1;
+	c2 = (const unsigned char *)s2;
+#endif
 
 	if (n != 0) {
 		do {
