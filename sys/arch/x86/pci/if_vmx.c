@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.55 2020/01/29 02:58:51 knakahara Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.56 2020/01/29 08:43:30 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.55 2020/01/29 02:58:51 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.56 2020/01/29 08:43:30 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -667,6 +667,7 @@ vmxnet3_detach(device_t self, int flags)
 		VMXNET3_CORE_LOCK(sc);
 		vmxnet3_stop_locked(sc);
 		callout_halt(&sc->vmx_tick, sc->vmx_mtx);
+		callout_destroy(&sc->vmx_tick);
 		VMXNET3_CORE_UNLOCK(sc);
 
 		ifmedia_delete_instance(&sc->vmx_media, IFM_INST_ANY);
