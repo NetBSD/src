@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.3 2020/01/28 10:17:58 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.8.2.4 2020/01/29 23:31:30 msaitoh Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -352,7 +352,7 @@ evbarm_part_defaults(struct pm_devs *my_pm, struct part_usage_info *infos,
 
 	for (i = 0; i < num_usage_infos; i++) {
 		if (infos[i].fs_type == PART_BOOT_TYPE &&
-		    infos[i].mount != NULL &&
+		    infos[i].mount[0] != 0 &&
 		    strcmp(infos[i].mount, PART_BOOT_MOUNT) == 0) {
 			infos[i].size = PART_BOOT_LARGE;
 			return;
