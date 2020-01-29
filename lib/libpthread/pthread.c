@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.158 2020/01/28 09:23:15 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.159 2020/01/29 15:15:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.158 2020/01/28 09:23:15 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.159 2020/01/29 15:15:00 kamil Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -362,8 +362,9 @@ pthread__getstack(pthread_t newthread, const pthread_attr_t *attr)
 		    newthread->pt_stack.ss_size == stacksize &&
 		    newthread->pt_guardsize == guardsize)
 			return 0;
+#ifdef __MACHINE_STACK_GROWS_UP
 		stackbase2 = newthread->pt_stack.ss_sp;
-#ifndef __MACHINE_STACK_GROWS_UP
+#else
 		stackbase2 = (char *)stackbase2 - newthread->pt_guardsize;
 #endif
 		munmap(stackbase2,
