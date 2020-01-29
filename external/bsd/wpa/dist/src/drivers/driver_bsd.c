@@ -51,7 +51,6 @@ struct bsd_driver_global {
 	void		*ctx;
 	int		sock;			/* socket for 802.11 ioctls */
 	int		route;			/* routing socket for events */
-	struct iovec	event_iov[1];
 	struct dl_list	ifaces;			/* list of interfaces */
 };
 
@@ -74,50 +73,6 @@ struct bsd_driver_data {
 };
 
 /* Generic functions for hostapd and wpa_supplicant */
-
-#define IOVEC_BUFSIZ		256
-ssize_t
-recvmsg_realloc(int fd, struct msghdr *msg, int flags)
-{
-	struct iovec *iov;
-	ssize_t slen;
-	size_t len;
-	void *n;
-
-	/* Assume we are reallocing the last iovec. */
-	iov = &msg->msg_iov[msg->msg_iovlen - 1];
-
-	for (;;) {
-		/* Passing MSG_TRUNC should return the actual size needed. */
-		slen = recvmsg(fd, msg, flags | MSG_PEEK | MSG_TRUNC);
-		if (slen == -1)
-			return -1;
-		if (!(msg->msg_flags & MSG_TRUNC))
-			break;
-
-		len = (size_t)slen;
-
-		/* Some kernels return the size of the receive buffer
-		 * on truncation, not the actual size needed.
-		 * So grow the buffer and try again. */
-		if (iov->iov_len == len)
-			len = roundup(len + 1, IOVEC_BUFSIZ);
-		else if (iov->iov_len > len)
-			break;
-		if ((n = realloc(iov->iov_base, len)) == NULL)
-			return -1;
-		iov->iov_base = n;
-		iov->iov_len = len;
-	}
-
-	slen = recvmsg(fd, msg, flags);
-	if (slen != -1 && msg->msg_flags & MSG_TRUNC) {
-		/* This should not be possible ... */
-		errno = ENOBUFS;
-		return -1;
-	}
-	return slen;
-}
 
 static struct bsd_driver_data *
 bsd_get_drvindex(void *priv, unsigned int ifindex)
@@ -662,6 +617,7 @@ bsd_set_opt_ie(void *priv, const u8 *ie, size_t ie_len)
 static void
 bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
 {
+	char event_buf[2048]; /* max size of a single route(4) msg */
 	struct bsd_driver_global *global = sock_ctx;
 	struct bsd_driver_data *drv;
 	struct if_announcemsghdr *ifan;
@@ -672,9 +628,8 @@ bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
 	struct ieee80211_leave_event *leave;
 	struct ieee80211_join_event *join;
 	int n;
-	struct msghdr msg = { .msg_iov = global->event_iov, .msg_iovlen = 1};
 
-	n = recvmsg_realloc(sock, &msg, 0);
+	n = read(sock, event_buf, sizeof(event_buf));
 	if (n < 0) {
 		if (errno != EINTR && errno != EAGAIN)
 			wpa_printf(MSG_ERROR, "%s read() failed: %s",
@@ -682,7 +637,7 @@ bsd_wireless_event_receive(int sock, void *ctx, void *sock_ctx)
 		return;
 	}
 
-	rtm = (struct rt_msghdr *) global->event_iov[0].iov_base;
+	rtm = (struct rt_msghdr *) event_buf;
 	if (rtm->rtm_version != RTM_VERSION) {
 		wpa_printf(MSG_DEBUG, "Invalid routing message version=%d",
 			   rtm->rtm_version);
@@ -1639,7 +1594,6 @@ bsd_global_deinit(void *priv)
 	eloop_unregister_read_sock(global->route);
 	(void) close(global->route);
 	(void) close(global->sock);
-	free(global->event_iov[0].iov_base);
 	os_free(global);
 }
 
