@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.149 2019/05/29 06:17:28 msaitoh Exp $	*/
+/*	$NetBSD: elink3.c,v 1.150 2020/01/29 14:17:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.149 2019/05/29 06:17:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.150 2020/01/29 14:17:27 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1123,7 +1123,7 @@ startagain:
 	 */
 	if (len + pad > ETHER_MAX_LEN) {
 		/* packet is obviously too large: toss it */
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		IFQ_DEQUEUE(&ifp->if_snd, m0);
 		m_freem(m0);
 		goto readcheck;
@@ -1229,7 +1229,7 @@ startagain:
 
 	splx(sh);
 
-	++ifp->if_opackets;
+	if_statinc(ifp, if_opackets);
 
 readcheck:
 	if ((bus_space_read_2(iot, ioh, ep_w1_reg(sc, ELINK_W1_RX_STATUS)) &
@@ -1318,6 +1318,7 @@ eptxstat(struct ep_softc *sc)
 {
 	bus_space_tag_t iot = sc->sc_iot;
 	bus_space_handle_t ioh = sc->sc_ioh;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 	int i;
 
 	/*
@@ -1330,13 +1331,13 @@ eptxstat(struct ep_softc *sc)
 		    0x0);
 
 		if (i & TXS_JABBER) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: jabber (%x)\n",
 				       device_xname(sc->sc_dev), i);
 			epreset(sc);
 		} else if (i & TXS_UNDERRUN) {
-			++sc->sc_ethercom.ec_if.if_oerrors;
+			if_statinc(ifp, if_oerrors);
 			if (sc->sc_ethercom.ec_if.if_flags & IFF_DEBUG)
 				printf("%s: fifo underrun (%x) @%d\n",
 				       device_xname(sc->sc_dev), i,
@@ -1347,7 +1348,7 @@ eptxstat(struct ep_softc *sc)
 			sc->tx_succ_ok = 0;
 			epreset(sc);
 		} else if (i & TXS_MAX_COLLISION) {
-			++sc->sc_ethercom.ec_if.if_collisions;
+			if_statinc(ifp, if_collisions);
 			bus_space_write_2(iot, ioh, ELINK_COMMAND, TX_ENABLE);
 			sc->sc_ethercom.ec_if.if_flags &= ~IFF_OACTIVE;
 		} else
@@ -1472,7 +1473,7 @@ again:
 		return;
 
 	if (len & ERR_RX) {
-		++ifp->if_ierrors;
+		if_statinc(ifp, if_ierrors);
 		goto abort;
 	}
 
@@ -1481,7 +1482,7 @@ again:
 	/* Pull packet off interface. */
 	m = epget(sc, len);
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto abort;
 	}
 
@@ -1713,7 +1714,7 @@ epwatchdog(struct ifnet *ifp)
 	struct ep_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	epreset(sc);
 }

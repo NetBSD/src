@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.40 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.41 2020/01/29 14:09:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.40 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.41 2020/01/29 14:09:58 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -502,7 +502,7 @@ sf_watchdog(struct ifnet *ifp)
 	struct sf_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void) sf_init(ifp);
 
@@ -746,7 +746,7 @@ sf_rxintr(struct sf_softc *sc)
 		 */
 		m = ds->ds_mbuf;
 		if (sf_add_rxbuf(sc, rxidx) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			SF_INIT_RXDESC(sc, rxidx);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -762,7 +762,7 @@ sf_rxintr(struct sf_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			SF_INIT_RXDESC(sc, rxidx);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -846,19 +846,26 @@ sf_stats_update(struct sf_softc *sc)
 		sf_genreg_write(sc, SF_STATS_BASE + (i * sizeof(uint32_t)), 0);
 	}
 
-	ifp->if_opackets += stats.TransmitOKFrames;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	ifp->if_collisions += stats.SingleCollisionFrames +
-	    stats.MultipleCollisionFrames;
+	if_statadd_ref(nsr, if_opackets, stats.TransmitOKFrames);
 
-	ifp->if_oerrors += stats.TransmitAbortDueToExcessiveCollisions +
+	if_statadd_ref(nsr, if_collisions,
+	    stats.SingleCollisionFrames +
+	    stats.MultipleCollisionFrames);
+
+	if_statadd_ref(nsr, if_oerrors,
+	    stats.TransmitAbortDueToExcessiveCollisions +
 	    stats.TransmitAbortDueToExcessingDeferral +
-	    stats.FramesLostDueToInternalTransmitErrors;
+	    stats.FramesLostDueToInternalTransmitErrors);
 
-	ifp->if_ierrors += stats.ReceiveCRCErrors + stats.AlignmentErrors +
+	if_statadd_ref(nsr, if_ierrors,
+	    stats.ReceiveCRCErrors + stats.AlignmentErrors +
 	    stats.ReceiveFramesTooLong + stats.ReceiveFramesTooShort +
 	    stats.ReceiveFramesJabbersError +
-	    stats.FramesLostDueToInternalReceiveErrors;
+	    stats.FramesLostDueToInternalReceiveErrors);
+
+	IF_STAT_PUTREF(ifp);
 }
 
 /*
