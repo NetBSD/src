@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.121 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.122 2020/01/29 06:24:10 thorpej Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.121 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.122 2020/01/29 06:24:10 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1034,7 +1034,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			struct axe_sframe_hdr hdr;
 
 			if (total_len < sizeof(hdr)) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
@@ -1051,7 +1051,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			if (((le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK) ^
 			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK)) !=
 			    AXE_RH1M_RXLEN_MASK) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
@@ -1069,7 +1069,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			struct axe_csum_hdr csum_hdr;
 
 			if (total_len <	sizeof(csum_hdr)) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
@@ -1087,7 +1087,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			    AXE_CSUM_RXBYTES(csum_hdr.ilen)) !=
 			    sc->sc_lenmask) {
 				/* we lost sync */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				DPRINTFN(20, "len %#jx ilen %#jx lenmask %#jx "
 				    "err",
 				    AXE_CSUM_RXBYTES(csum_hdr.len),
@@ -1107,7 +1107,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 				DPRINTFN(20, "total_len %#jx < len %#jx",
 				    total_len, len, 0, 0);
 				/* invalid length */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 			buf += sizeof(csum_hdr);
