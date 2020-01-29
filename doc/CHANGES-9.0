@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.170 2020/01/28 11:14:15 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.171 2020/01/29 23:33:15 msaitoh Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8540,3 +8540,7 @@ sys/dev/ic/rtl81x9var.h				1.57
 	  is newly used as RTK_HWREV_8102EL_SPIN1.
 	[msaitoh, ticket #667]
 
+usr.sbin/sysinst/arch/evbarm/md.c		1.15
+
+	Do not compare a char array to NULL, test for empty string instead.
+	[martin, ticket #673]
