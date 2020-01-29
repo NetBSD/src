@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.54 2020/01/06 07:15:03 msaitoh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.55 2020/01/29 02:58:51 knakahara Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.54 2020/01/06 07:15:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.55 2020/01/29 02:58:51 knakahara Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1966,9 +1966,9 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 		evcnt_attach_dynamic(&txq->vxtxq_transmitdef, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "Deferred transmit");
 		evcnt_attach_dynamic(&txq->vxtxq_watchdogto, EVCNT_TYPE_MISC,
-		    NULL, txq->vxtxq_name, "Watchdog timeount");
+		    NULL, txq->vxtxq_name, "Watchdog timeout");
 		evcnt_attach_dynamic(&txq->vxtxq_defragged, EVCNT_TYPE_MISC,
-		    NULL, txq->vxtxq_name, "m_defrag sucessed");
+		    NULL, txq->vxtxq_name, "m_defrag successed");
 		evcnt_attach_dynamic(&txq->vxtxq_defrag_failed, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "m_defrag failed");
 	}
