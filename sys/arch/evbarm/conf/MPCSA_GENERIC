@@ -1,4 +1,4 @@
-# $NetBSD: MPCSA_GENERIC,v 1.69 2020/01/19 20:00:37 thorpej Exp $
+# $NetBSD: MPCSA_GENERIC,v 1.70 2020/01/29 18:39:01 maya Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include		"arch/evbarm/conf/std.mpcsa"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.69 $"
+#ident 		"GENERIC-$Revision: 1.70 $"
 
 maxusers	32		# estimated number of users
 
@@ -505,9 +505,6 @@ ucom*	at uplcom? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
 
 # USB Handspring Visor
 #uvisor*	at uhub? port ?
