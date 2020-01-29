@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.468 2020/01/20 18:38:18 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.469 2020/01/29 03:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.468 2020/01/20 18:38:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.469 2020/01/29 03:16:28 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -733,6 +733,9 @@ if_initialize(ifnet_t *ifp)
 	psref_target_init(&ifp->if_psref, ifnet_psref_class);
 	ifp->if_ioctl_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 	LIST_INIT(&ifp->if_multiaddrs);
+	if ((rv = if_stats_init(ifp)) != 0) {
+		goto fail;
+	}
 
 	IFNET_GLOBAL_LOCK();
 	if_getindex(ifp);
@@ -816,7 +819,7 @@ if_percpuq_softint(void *arg)
 	struct mbuf *m;
 
 	while ((m = if_percpuq_dequeue(ipq)) != NULL) {
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ipackets);
 		bpf_mtap(ifp, m, BPF_D_IN);
 
 		ifp->_if_input(ifp, m);
@@ -1110,7 +1113,7 @@ if_input(struct ifnet *ifp, struct mbuf *m)
 	KASSERT(ifp->if_percpuq == NULL);
 	KASSERT(!cpu_intr_p());
 
-	ifp->if_ipackets++;
+	if_statinc(ifp, if_ipackets);
 	bpf_mtap(ifp, m, BPF_D_IN);
 
 	ifp->_if_input(ifp, m);
@@ -1521,6 +1524,7 @@ restart:
 	mutex_obj_free(ifp->if_ioctl_lock);
 	ifp->if_ioctl_lock = NULL;
 	mutex_obj_free(ifp->if_snd.ifq_lock);
+	if_stats_fini(ifp);
 
 	splx(s);
 
@@ -2959,6 +2963,22 @@ void if_tunnel_ro_percpu_rtcache_free(percpu_t *ro_percpu)
 	percpu_foreach(ro_percpu, if_tunnel_rtcache_free_pc, NULL);
 }
 
+void
+if_export_if_data(ifnet_t * const ifp, struct if_data *ifi, bool zero_stats)
+{
+
+	/* Collet the volatile stats first; this zeros *ifi. */
+	if_stats_to_if_data(ifp, ifi, zero_stats);
+
+	ifi->ifi_type = ifp->if_type;
+	ifi->ifi_addrlen = ifp->if_addrlen;
+	ifi->ifi_hdrlen = ifp->if_hdrlen;
+	ifi->ifi_link_state = ifp->if_link_state;
+	ifi->ifi_mtu = ifp->if_mtu;
+	ifi->ifi_metric = ifp->if_metric;
+	ifi->ifi_baudrate = ifp->if_baudrate;
+	ifi->ifi_lastchange = ifp->if_lastchange;
+}
 
 /* common */
 int
@@ -3083,7 +3103,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCGIFDATA:
 		ifdr = data;
-		ifdr->ifdr_data = ifp->if_data;
+		if_export_if_data(ifp, &ifdr->ifdr_data, false);
 		break;
 
 	case SIOCGIFINDEX:
@@ -3093,20 +3113,7 @@ ifioctl_common(struct ifnet *ifp, u_long cmd, void *data)
 
 	case SIOCZIFDATA:
 		ifdr = data;
-		ifdr->ifdr_data = ifp->if_data;
-		/*
-		 * Assumes that the volatile counters that can be
-		 * zero'ed are at the end of if_data.
-		 */
-		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
-		    offsetof(struct if_data, ifi_ipackets));
-		/*
-		 * The memset() clears to the bottm of if_data. In the area,
-		 * if_lastchange is included. Please be careful if new entry
-		 * will be added into if_data or rewite this.
-		 *
-		 * And also, update if_lastchnage.
-		 */
+		if_export_if_data(ifp, &ifdr->ifdr_data, true);
 		getnanotime(&ifp->if_lastchange);
 		break;
 	case SIOCSIFMTU:
@@ -3595,9 +3602,11 @@ if_transmit(struct ifnet *ifp, struct mbuf *m)
 		goto out;
 	}
 
-	ifp->if_obytes += pktlen;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, pktlen);
 	if (mcast)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)
 		if_start_lock(ifp);
@@ -3666,7 +3675,7 @@ ifq_enqueue2(struct ifnet *ifp, struct ifqueue *ifq, struct mbuf *m)
 	} else
 		IFQ_ENQUEUE(&ifp->if_snd, m, error);
 	if (error != 0) {
-		++ifp->if_oerrors;
+		if_statinc(ifp, if_oerrors);
 		return error;
 	}
 	return 0;
