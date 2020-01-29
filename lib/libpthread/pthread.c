@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.160 2020/01/29 15:31:14 kamil Exp $	*/
+/*	$NetBSD: pthread.c,v 1.161 2020/01/29 16:03:44 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.160 2020/01/29 15:31:14 kamil Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.161 2020/01/29 16:03:44 kamil Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -597,6 +597,9 @@ pthread_suspend_np(pthread_t thread)
 {
 	pthread_t self;
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	self = pthread__self();
 	if (self == thread) {
 		return EDEADLK;
@@ -611,6 +614,9 @@ pthread_suspend_np(pthread_t thread)
 int
 pthread_resume_np(pthread_t thread)
 {
+
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
  
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -702,13 +708,13 @@ pthread_join(pthread_t thread, void **valptr)
 {
 	pthread_t self;
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	self = pthread__self();
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-
-	if (thread->pt_magic != PT_MAGIC)
-		return EINVAL;
 
 	if (thread == self)
 		return EDEADLK;
@@ -764,8 +770,15 @@ pthread__reap(pthread_t thread)
 int
 pthread_equal(pthread_t t1, pthread_t t2)
 {
+
 	if (__predict_false(__uselibcstub))
 		return __libc_thr_equal_stub(t1, t2);
+
+	pthread__error(EINVAL, "Invalid thread",
+	    t1->pt_magic == PT_MAGIC);
+
+	pthread__error(EINVAL, "Invalid thread",
+	    t2->pt_magic == PT_MAGIC);
 
 	/* Nothing special here. */
 	return (t1 == t2);
@@ -777,11 +790,11 @@ pthread_detach(pthread_t thread)
 {
 	int error;
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-
-	if (thread->pt_magic != PT_MAGIC)
-		return EINVAL;
 
 	pthread_mutex_lock(&thread->pt_lock);
 	if ((thread->pt_flags & PT_FLAG_DETACHED) != 0) {
@@ -806,11 +819,11 @@ int
 pthread_getname_np(pthread_t thread, char *name, size_t len)
 {
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-
-	if (thread->pt_magic != PT_MAGIC)
-		return EINVAL;
 
 	pthread_mutex_lock(&thread->pt_lock);
 	if (thread->pt_name == NULL)
@@ -829,11 +842,11 @@ pthread_setname_np(pthread_t thread, const char *name, void *arg)
 	char *oldname, *cp, newname[PTHREAD_MAX_NAMELEN_NP];
 	int namelen;
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
-
-	if (thread->pt_magic != PT_MAGIC)
-		return EINVAL;
 
 	namelen = snprintf(newname, sizeof(newname), name, arg);
 	if (namelen >= PTHREAD_MAX_NAMELEN_NP)
@@ -869,6 +882,9 @@ pthread_self(void)
 int
 pthread_cancel(pthread_t thread)
 {
+
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
