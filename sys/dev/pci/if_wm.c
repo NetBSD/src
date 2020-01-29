@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.662 2020/01/24 02:50:41 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.663 2020/01/29 06:44:27 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.662 2020/01/24 02:50:41 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.663 2020/01/29 06:44:27 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3266,7 +3266,7 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    device_xname(sc->sc_dev), txq->txq_free, txq->txq_sfree,
 		    txq->txq_next);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 #ifdef WM_DEBUG
 		for (i = txq->txq_sdirty; i != txq->txq_snext;
 		    i = WM_NEXTTXS(txq, i)) {
@@ -3331,15 +3331,16 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
 	}
 
-	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += 0ULL /* ensure quad_t */
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_collisions, CSR_READ(sc, WMREG_COLC));
+	if_statadd_ref(nsr, if_ierrors, 0ULL /* ensure quad_t */
 	    + CSR_READ(sc, WMREG_CRCERRS)
 	    + CSR_READ(sc, WMREG_ALGNERRC)
 	    + CSR_READ(sc, WMREG_SYMERRC)
 	    + CSR_READ(sc, WMREG_RXERRC)
 	    + CSR_READ(sc, WMREG_SEC)
 	    + CSR_READ(sc, WMREG_CEXTERR)
-	    + CSR_READ(sc, WMREG_RLEC);
+	    + CSR_READ(sc, WMREG_RLEC));
 	/*
 	 * WMREG_RNBC is incremented when there is no available buffers in host
 	 * memory. It does not mean the number of dropped packet. Because
@@ -3349,7 +3350,8 @@ wm_tick(void *arg)
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
 	 * own EVCNT instead of if_iqdrops.
 	 */
-	ifp->if_iqdrops += CSR_READ(sc, WMREG_MPC);
+	if_statadd_ref(nsr, if_iqdrops, CSR_READ(sc, WMREG_MPC));
+	IF_STAT_PUTREF(ifp);
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
@@ -5847,8 +5849,8 @@ wm_init_locked(struct ifnet *ifp)
 	wm_stop_locked(ifp, 0);
 
 	/* Update statistics before reset */
-	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
+	if_statadd2(ifp, if_collisions, CSR_READ(sc, WMREG_COLC),
+	    if_ierrors, CSR_READ(sc, WMREG_RXERRC));
 
 	/* PCH_SPT hardware workaround */
 	if (sc->sc_type == WM_T_PCH_SPT)
@@ -7562,7 +7564,7 @@ wm_start(struct ifnet *ifp)
 	KASSERT(if_is_mpsafe(ifp));
 #endif
 	/*
-	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
+	 * if_obytes and if_omcasts are added in if_transmit()@if.c.
 	 */
 
 	mutex_enter(txq->txq_lock);
@@ -7596,10 +7598,11 @@ wm_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	/* XXX NOMPSAFE: ifp->if_data should be percpu. */
-	ifp->if_obytes += m->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	if (mutex_tryenter(txq->txq_lock)) {
 		if (!txq->txq_stopping)
@@ -8167,7 +8170,7 @@ wm_nq_start(struct ifnet *ifp)
 	KASSERT(if_is_mpsafe(ifp));
 #endif
 	/*
-	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
+	 * if_obytes and if_omcasts are added in if_transmit()@if.c.
 	 */
 
 	mutex_enter(txq->txq_lock);
@@ -8201,10 +8204,11 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	/* XXX NOMPSAFE: ifp->if_data should be percpu. */
-	ifp->if_obytes += m->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	/*
 	 * The situations which this mutex_tryenter() fails at running time
@@ -8649,18 +8653,18 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 		if (((status & (WTX_ST_EC | WTX_ST_LC)) != 0)
 		    && ((sc->sc_type < WM_T_82574)
 			|| (sc->sc_type == WM_T_80003))) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			if (status & WTX_ST_LC)
 				log(LOG_WARNING, "%s: late collision\n",
 				    device_xname(sc->sc_dev));
 			else if (status & WTX_ST_EC) {
-				ifp->if_collisions +=
-				    TX_COLLISION_THRESHOLD + 1;
+				if_statadd(ifp, if_collisions, 
+				    TX_COLLISION_THRESHOLD + 1);
 				log(LOG_WARNING, "%s: excessive collisions\n",
 				    device_xname(sc->sc_dev));
 			}
 		} else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 		txq->txq_packets++;
 		txq->txq_bytes += txs->txs_mbuf->m_pkthdr.len;
@@ -8982,7 +8986,7 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			wm_init_rxdesc(rxq, i);
