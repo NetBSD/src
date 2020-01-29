@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.156 2019/10/30 07:26:28 msaitoh Exp $	*/
+/*	$NetBSD: i82557.c,v 1.157 2020/01/29 14:49:44 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.156 2019/10/30 07:26:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.157 2020/01/29 14:49:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1436,7 +1436,7 @@ fxp_rxintr(struct fxp_softc *sc)
 		} else {
 			if (fxp_add_rfabuf(sc, rxmap, 1) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				FXP_INIT_RFABUF(sc, m);
 				continue;
 			}
@@ -1474,26 +1474,28 @@ fxp_tick(void *arg)
 
 	s = splnet();
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	FXP_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
 
-	ifp->if_opackets += le32toh(sp->tx_good);
-	ifp->if_collisions += le32toh(sp->tx_total_collisions);
+	if_statadd_ref(nsr, if_opackets, le32toh(sp->tx_good));
+	if_statadd_ref(nsr, if_collisions, le32toh(sp->tx_total_collisions));
 	if (sp->rx_good) {
 		sc->sc_rxidle = 0;
 	} else if (sc->sc_flags & FXPF_RECV_WORKAROUND) {
 		sc->sc_rxidle++;
 	}
-	ifp->if_ierrors +=
+	if_statadd_ref(nsr, if_ierrors,
 	    le32toh(sp->rx_crc_errors) +
 	    le32toh(sp->rx_alignment_errors) +
 	    le32toh(sp->rx_rnr_errors) +
-	    le32toh(sp->rx_overrun_errors);
+	    le32toh(sp->rx_overrun_errors));
 	/*
 	 * If any transmit underruns occurred, bump up the transmit
 	 * threshold by another 512 bytes (64 * 8).
 	 */
 	if (sp->tx_underruns) {
-		ifp->if_oerrors += le32toh(sp->tx_underruns);
+		if_statadd_ref(nsr, if_oerrors, le32toh(sp->tx_underruns));
 		if (tx_threshold < 192)
 			tx_threshold += 64;
 	}
@@ -1503,6 +1505,8 @@ fxp_tick(void *arg)
 		sc->sc_ev_rxpause.ev_count += sp->rx_pauseframes;
 	}
 #endif
+
+	IF_STAT_PUTREF(ifp);
 
 	/*
 	 * If we haven't received any packets in FXP_MAX_RX_IDLE seconds,
@@ -1652,7 +1656,7 @@ fxp_watchdog(struct ifnet *ifp)
 	struct fxp_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void) fxp_init(ifp);
 }

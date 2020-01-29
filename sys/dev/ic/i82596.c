@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.42 2019/05/29 10:07:29 msaitoh Exp $ */
+/* $NetBSD: i82596.c,v 1.43 2020/01/29 14:49:44 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.42 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.43 2020/01/29 14:49:44 thorpej Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -348,8 +348,9 @@ iee_intr(void *intarg)
 						    & IEE_CB_MAXCOL;
 					sc->sc_tx_col += col;
 					if ((status & IEE_CB_OK) != 0) {
-						ifp->if_opackets++;
-						ifp->if_collisions += col;
+						if_statadd2(ifp,
+						    if_opackets, 1,
+						    if_collisions, col);
 					}
 				}
 				sc->sc_next_tbd = 0;
