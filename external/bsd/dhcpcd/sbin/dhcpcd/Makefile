@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.49 2019/09/13 11:58:32 roy Exp $
+# $NetBSD: Makefile,v 1.50 2020/01/29 23:42:57 christos Exp $
 #
 
 WARNS?=		6
@@ -58,6 +58,9 @@ FILESMODE_dhcpcd.conf=		644	# -rw-r--r--
 
 MAN=			dhcpcd.conf.5 dhcpcd.8 
 CLEANFILES=		dhcpcd.conf.5 dhcpcd.8 
+
+COPTS.logerr.c+=    ${${ACTIVE_CC} == "clang" && ${MACHINE_ARCH} == "powerpc":? -O0 :}
+
 
 .for f in dhcpcd.conf.5 dhcpcd.8
 ${f}:	${f}.in
