@@ -1,4 +1,4 @@
-/*	$NetBSD: in6_l2tp.c,v 1.18 2019/09/19 06:07:25 knakahara Exp $	*/
+/*	$NetBSD: in6_l2tp.c,v 1.19 2020/01/29 04:38:06 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.18 2019/09/19 06:07:25 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: in6_l2tp.c,v 1.19 2020/01/29 04:38:06 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_l2tp.h"
@@ -231,7 +231,7 @@ in6_l2tp_output(struct l2tp_variant *var, struct mbuf *m)
 
 looped:
 	if (error)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	return error;
 }
