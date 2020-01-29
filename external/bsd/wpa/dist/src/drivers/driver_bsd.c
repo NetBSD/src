@@ -9,11 +9,12 @@
 
 #include "includes.h"
 #include <sys/ioctl.h>
-#include <sys/param.h>
 
 #include "common.h"
 #include "driver.h"
 #include "eloop.h"
+#include "common/ieee802_11_defs.h"
+#include "common/wpa_common.h"
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -43,8 +44,6 @@
 #include <net80211/ieee80211_netbsd.h>
 #endif
 
-#include "common/ieee802_11_defs.h"
-#include "common/wpa_common.h"
 #include "l2_packet/l2_packet.h"
 
 struct bsd_driver_global {
@@ -138,7 +137,7 @@ bsd_get80211(void *priv, struct ieee80211req *ireq, int op, void *arg,
 	ireq->i_data = arg;
 
 	if (ioctl(drv->global->sock, SIOCG80211, ireq) < 0) {
-		wpa_printf(MSG_ERROR, "ioctl[SIOCS80211, op=%u, "
+		wpa_printf(MSG_ERROR, "ioctl[SIOCG80211, op=%u, "
 			   "arg_len=%u]: %s", op, arg_len, strerror(errno));
 		return -1;
 	}
@@ -1570,7 +1569,7 @@ bsd_global_init(void *ctx)
 #ifdef RO_MSGFILTER
 	if (setsockopt(global->route, PF_ROUTE, RO_MSGFILTER,
 	    &msgfilter, sizeof(msgfilter)) < 0)
-		wpa_printf(MSG_ERROR, "setsockopt[PF_ROUTE,RO_MSGFILTER]: %s",
+		wpa_printf(MSG_ERROR, "socket[PF_ROUTE,RO_MSGFILTER]: %s",
 			   strerror(errno));
 #endif
 
