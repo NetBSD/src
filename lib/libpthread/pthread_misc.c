@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_misc.c,v 1.16 2020/01/13 18:22:56 ad Exp $	*/
+/*	$NetBSD: pthread_misc.c,v 1.17 2020/01/29 16:34:09 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_misc.c,v 1.16 2020/01/13 18:22:56 ad Exp $");
+__RCSID("$NetBSD: pthread_misc.c,v 1.17 2020/01/29 16:34:09 kamil Exp $");
 
 #include <errno.h>
 #include <string.h>
@@ -61,6 +61,9 @@ int
 pthread_getschedparam(pthread_t thread, int *policy, struct sched_param *param)
 {
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
@@ -76,6 +79,9 @@ pthread_setschedparam(pthread_t thread, int policy,
 {
 	struct sched_param sp;
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
@@ -90,6 +96,9 @@ int
 pthread_getaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
 {
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
@@ -102,6 +111,9 @@ pthread_getaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
 int
 pthread_setaffinity_np(pthread_t thread, size_t size, cpuset_t *cpuset)
 {
+
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
 
 	if (pthread__find(thread) != 0)
 		return ESRCH;
@@ -117,6 +129,9 @@ pthread_setschedprio(pthread_t thread, int prio)
 {
 	struct sched_param sp;
 
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 
@@ -130,6 +145,9 @@ pthread_setschedprio(pthread_t thread, int prio)
 int
 pthread_kill(pthread_t thread, int sig)
 {
+
+	pthread__error(EINVAL, "Invalid thread",
+	    thread->pt_magic == PT_MAGIC);
 
 	if ((sig < 0) || (sig >= _NSIG))
 		return EINVAL;
