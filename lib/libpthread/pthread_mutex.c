@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.68 2020/01/25 18:30:41 ad Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.69 2020/01/29 10:55:23 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.68 2020/01/25 18:30:41 ad Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.69 2020/01/29 10:55:23 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -626,6 +626,8 @@ pthread_mutexattr_destroy(pthread_mutexattr_t *attr)
 
 	pthread__error(EINVAL, "Invalid mutex attribute",
 	    attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
+
+	attr->ptma_magic = _PT_MUTEXATTR_DEAD;
 
 	return 0;
 }
