@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.239 2019/12/31 13:07:13 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.240 2020/01/29 15:47:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.239 2019/12/31 13:07:13 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.240 2020/01/29 15:47:52 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -376,7 +376,7 @@ procinit(void)
 	proc_specificdata_domain = specificdata_domain_create();
 	KASSERT(proc_specificdata_domain != NULL);
 
-	proc_cache = pool_cache_init(sizeof(struct proc), 0, 0, 0,
+	proc_cache = pool_cache_init(sizeof(struct proc), coherency_unit, 0, 0,
 	    "procpl", NULL, IPL_NONE, proc_ctor, NULL, NULL);
 
 	proc_listener = kauth_listen_scope(KAUTH_SCOPE_PROCESS,
@@ -440,6 +440,7 @@ proc0_init(void)
 	struct pgrp *pg;
 	struct rlimit *rlim;
 	rlim_t lim;
+	int error __diagused;
 	int i;
 
 	p = &proc0;
@@ -450,10 +451,15 @@ proc0_init(void)
 	p->p_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 
 	rw_init(&p->p_reflock);
+	rw_init(&p->p_treelock);
 	cv_init(&p->p_waitcv, "wait");
 	cv_init(&p->p_lwpcv, "lwpwait");
 
 	LIST_INSERT_HEAD(&p->p_lwps, &lwp0, l_sibling);
+	radix_tree_init_tree(&p->p_lwptree);
+	error = radix_tree_insert_node(&p->p_lwptree,
+	    (uint64_t)(lwp0.l_lid - 1), &lwp0);
+	KASSERT(error == 0);
 
 	pid_table[0].pt_proc = p;
 	LIST_INSERT_HEAD(&allproc, p, p_list);

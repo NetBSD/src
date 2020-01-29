@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.199 2020/01/28 16:40:27 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.200 2020/01/29 15:47:52 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -319,7 +319,6 @@ do {									\
 
 void	lwpinit(void);
 void	lwp0_init(void);
-void	lwp_sys_init(void);
 
 void	lwp_startup(lwp_t *, lwp_t *);
 void	startlwp(void *);
@@ -368,8 +367,8 @@ void	lwp_setspecific(specificdata_key_t, void *);
 void	lwp_setspecific_by_lwp(lwp_t *, specificdata_key_t, void *);
 
 /* Syscalls. */
-int	lwp_park(clockid_t, int, struct timespec *, const void *);
-int	lwp_unpark(lwpid_t, const void *);
+int	lwp_park(clockid_t, int, struct timespec *);
+int	lwp_unpark(const lwpid_t *, const u_int);
 
 /* DDB. */
 void	lwp_whatis(uintptr_t, void (*)(const char *, ...) __printflike(1, 2));
