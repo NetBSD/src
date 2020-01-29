@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.15 2019/12/28 02:58:59 gutteridge Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.16 2020/01/29 05:30:14 thorpej Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.15 2019/12/28 02:58:59 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.16 2020/01/29 05:30:14 thorpej Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -1487,14 +1487,14 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 	OCTEON_ETH_KASSERT(ifp != NULL);
 
 	if (__predict_false(octeon_eth_recv_check(sc, word2) != 0)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		result = 1;
 		octeon_eth_buf_free_work(sc, work, word2);
 		goto drop;
 	}
 
 	if (__predict_false(octeon_eth_recv_mbuf(sc, work, &m) != 0)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		result = 1;
 		octeon_eth_buf_free_work(sc, work, word2);
 		goto drop;
