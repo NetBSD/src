@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.161 2020/01/29 16:03:44 kamil Exp $	*/
+/*	$NetBSD: pthread.c,v 1.162 2020/01/29 17:11:57 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.161 2020/01/29 16:03:44 kamil Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.162 2020/01/29 17:11:57 ad Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -719,10 +719,6 @@ pthread_join(pthread_t thread, void **valptr)
 	if (thread == self)
 		return EDEADLK;
 
-	/* XXX temporary - kernel should handle. */
-	if ((thread->pt_flags & PT_FLAG_DETACHED) != 0)
-		return EINVAL;
-
 	/* IEEE Std 1003.1 says pthread_join() never returns EINTR. */
 	for (;;) {
 		pthread__testcancel(self);
@@ -1101,8 +1097,7 @@ pthread__assertfunc(const char *file, int line, const char *function,
 	    function ? "\"" : "");
 
 	_sys_write(STDERR_FILENO, buf, (size_t)len);
-	(void)kill(getpid(), SIGABRT);
-
+	(void)_lwp_kill(_lwp_self(), SIGABRT);
 	_exit(1);
 }
 
@@ -1137,7 +1132,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
 		syslog(LOG_DEBUG | LOG_USER, "%s", buf);
 
 	if (pthread__diagassert & DIAGASSERT_ABORT) {
-		(void)kill(getpid(), SIGABRT);
+		(void)_lwp_kill(_lwp_self(), SIGABRT);
 		_exit(1);
 	}
 }
