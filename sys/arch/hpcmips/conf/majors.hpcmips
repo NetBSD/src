@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcmips,v 1.33 2019/01/28 02:28:58 dholland Exp $
+#	$NetBSD: majors.hpcmips,v 1.34 2020/01/29 18:39:02 maya Exp $
 #
 # Device majors for hpcmips
 #
@@ -42,7 +42,7 @@ device-major	txcom		char 35			txcom
 device-major	ucbsnd		char 36			ucbsnd
 device-major	ucom		char 37			ucom
 device-major	wsmux		char 38			wsmux
-device-major	urio		char 39			urio
+#device-major	obsolete	char 39			obsolete (urio)
 device-major	uscanner	char 40			uscanner
 #device-major	obsolete	char 41			obsolete (isdn)
 #device-major	obsolete	char 42			obsolete (isdnctl)

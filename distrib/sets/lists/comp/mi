@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2306 2020/01/29 03:17:34 thorpej Exp $
+#	$NetBSD: mi,v 1.2307 2020/01/29 18:39:04 maya Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -740,7 +740,7 @@
 ./usr/include/dev/usb/if_umbreg.h		comp-c-include
 ./usr/include/dev/usb/mbim.h			comp-c-include
 ./usr/include/dev/usb/ukyopon.h			comp-c-include
-./usr/include/dev/usb/urio.h			comp-c-include
+./usr/include/dev/usb/urio.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usb.h			comp-c-include
 ./usr/include/dev/usb/usbcdc.h			comp-obsolete		obsolete
 ./usr/include/dev/usb/usbdevs.h			comp-obsolete		obsolete

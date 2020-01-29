@@ -1,4 +1,4 @@
-#	$NetBSD: SMDK2410,v 1.72 2020/01/19 01:25:04 thorpej Exp $
+#	$NetBSD: SMDK2410,v 1.73 2020/01/29 18:39:01 maya Exp $
 #
 #	SMDK2410 -- Samsung's S3C2410 evaluation board.
 #
@@ -294,9 +294,6 @@ ucom*	at uplcom? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor*	at uhub? port ?

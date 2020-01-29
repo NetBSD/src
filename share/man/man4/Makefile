@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.700 2020/01/22 14:01:50 thorpej Exp $
+#	$NetBSD: Makefile,v 1.701 2020/01/29 18:39:04 maya Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/18/93
 
 MAN=	aac.4 ac97.4 acardide.4 aceride.4 acphy.4 \
@@ -85,7 +85,7 @@ MAN+=	atu.4 aubtfwl.4 aue.4 axe.4 axen.4 cdce.4 cue.4 ehci.4 kue.4 \
 	ucom.4 ucycom.4 udav.4 udsbr.4 uftdi.4 ugen.4 ugensa.4 uhci.4 uhid.4 \
 	uhidev.4 uhmodem.4 uhso.4 uipad.4 uipaq.4 uirda.4 ukbd.4 ukyopon.4 \
 	ulpt.4 umass.4 umcs.4 umct.4 umidi.4 umodem.4 ums.4 upgt.4 upl.4 \
-	uplcom.4 ure.4 urio.4 url.4 urndis.4 urtw.4 urtwn.4 \
+	uplcom.4 ure.4 url.4 urndis.4 urtw.4 urtwn.4 \
 	usb.4 usbnet.4 uscanner.4 uslsa.4 usmsc.4 usscanner.4 \
 	ustir.4 uthum.4 utoppy.4 uts.4 uvideo.4 uvisor.4 uvscom.4 uyap.4 \
 	xhci.4 \

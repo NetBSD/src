@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.173 2020/01/25 18:38:34 thorpej Exp $
+# $NetBSD: XEN3_DOM0,v 1.174 2020/01/29 18:39:00 maya Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.173 $"
+#ident		"XEN3_DOM0-$Revision: 1.174 $"
 
 maxusers	32		# estimated number of users
 
@@ -665,9 +665,6 @@ ucom*	at uplcom? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor* at uhub? port ?
