@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2645 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2646 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -138,3 +138,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	OpenSSL: Imported 1.1.1d. [christos 20200122]
 	dhcpcd(8): Import dhcpcd-8.1.6 [roy 20200127]
 	openresolv(8): Import openresolv-3.10.0 [roy 20200127]
+	urio(4): Removed from the tree. [maya 20200129]
