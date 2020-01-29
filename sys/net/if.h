@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.277 2019/09/19 06:07:24 knakahara Exp $	*/
+/*	$NetBSD: if.h,v 1.278 2020/01/29 03:16:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -173,6 +173,8 @@ struct if_clonereq {
 /*
  * Structure defining statistics and other data kept regarding a network
  * interface.
+ *
+ * Only used for exporting data from the interface.
  */
 struct if_data {
 	/* generic interface information */
@@ -273,7 +275,20 @@ typedef struct ifnet {
 	short		if_timer;	/* ?: time 'til if_slowtimo called */
 	unsigned short	if_flags;	/* i: up/down, broadcast, etc. */
 	short		if_extflags;	/* :: if_output MP-safe, etc. */
-	struct if_data	if_data;	/* ?: statistics and other data about if */
+#ifdef __IF_STATS_PERCPU
+	u_char		if_type;	/* :: ethernet, tokenring, etc. */
+	u_char		if_addrlen;	/* :: media address length */
+	u_char		if_hdrlen;	/* :: media header length */
+	/* XXX audit :? fields here. */
+	int		if_link_state;	/* :? current link state */
+	uint64_t	if_mtu;		/* :? maximum transmission unit */
+	uint64_t	if_metric;	/* :? routing metric (external only) */
+	uint64_t	if_baudrate;	/* :? linespeed */
+	struct timespec	if_lastchange;	/* :? last operational state change */
+	percpu_t	*if_stats;	/* :: statistics */
+#else /* ! __IF_STATS_PERCPU */
+	struct if_data	if_data;	/* ?: statistics and other data */
+#endif /* __IF_STATS_PERCPU */
 	/*
 	 * Procedure handles.  If you add more of these, don't forget the
 	 * corresponding NULL stub in if.c.
@@ -393,7 +408,10 @@ typedef struct ifnet {
 			if_multiaddrs;	/* 6: */
 #endif
 } ifnet_t;
+
+#include <net/if_stats.h>
  
+#ifndef __IF_STATS_PERCPU
 #define	if_mtu		if_data.ifi_mtu
 #define	if_type		if_data.ifi_type
 #define	if_addrlen	if_data.ifi_addrlen
@@ -413,6 +431,7 @@ typedef struct ifnet {
 #define	if_iqdrops	if_data.ifi_iqdrops
 #define	if_noproto	if_data.ifi_noproto
 #define	if_lastchange	if_data.ifi_lastchange
+#endif /* __IF_STATS_PERCPU */
 #define	if_name(ifp)	((ifp)->if_xname)
 
 #define	IFF_UP		0x0001		/* interface is up */
@@ -1090,6 +1109,7 @@ int	if_attach(struct ifnet *); /* Deprecated. Use if_initialize and if_register 
 void	if_attachdomain(void);
 void	if_deactivate(struct ifnet *);
 bool	if_is_deactivated(const struct ifnet *);
+void	if_export_if_data(struct ifnet *, struct if_data *, bool);
 void	if_purgeaddrs(struct ifnet *, int, void (*)(struct ifaddr *));
 void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);

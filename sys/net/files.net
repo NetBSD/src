@@ -1,4 +1,4 @@
-#	$NetBSD: files.net,v 1.24 2020/01/20 18:38:18 thorpej Exp $
+#	$NetBSD: files.net,v 1.25 2020/01/29 03:16:28 thorpej Exp $
 
 # XXX CLEANUP
 define	net
@@ -25,6 +25,7 @@ file	net/if_media.c			net
 file	net/if_mpls.c			mpls			needs-flag
 file	net/if_ppp.c			ppp			needs-flag
 file	net/if_srt.c			srt
+file	net/if_stats.c			net
 file	net/if_stf.c			stf & inet & inet6	needs-flag
 file	net/if_sl.c			sl			needs-flag
 file	net/if_spppsubr.c		sppp
