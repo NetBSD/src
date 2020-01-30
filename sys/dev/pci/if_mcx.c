@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.9 2019/11/29 15:17:14 msaitoh Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.10 2020/01/30 14:02:14 thorpej Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -6438,7 +6438,7 @@ mcx_start(struct ifnet *ifp)
 
 		if (mcx_load_mbuf(sc, ms, m) != 0) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		bf = (uint64_t *)sqe;
