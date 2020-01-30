@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.50 2019/11/14 09:11:35 msaitoh Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.51 2020/01/30 00:36:29 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.50 2019/11/14 09:11:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.51 2020/01/30 00:36:29 jmcneill Exp $");
 
 #include <sys/types.h>
 
@@ -190,6 +190,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	bus_space_handle_t ioh, memh;
 	bus_size_t iosize, memsize;
 	char intrbuf[PCI_INTRSTR_LEN];
+	bool prefer_io = false;
 
 	sc->sc_dev = self;
 	psc->sc_pc = pa->pa_pc;
@@ -219,16 +220,38 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 		break;
 	}
 
-	if (ioh_valid) {
+	switch (PCI_VENDOR(pa->pa_id)) {
+	case PCI_VENDOR_REALTEK:
+		switch (PCI_PRODUCT(pa->pa_id)) {
+		case PCI_PRODUCT_REALTEK_RT8169SC:
+			prefer_io = true;
+			break;
+		}
+		break;
+	}
+	if (!memh_valid)
+		prefer_io = true;
+
+	if (ioh_valid && prefer_io) {
 		sc->rtk_btag = iot;
 		sc->rtk_bhandle = ioh;
 		sc->rtk_bsize = iosize;
 		if (memh_valid)
 			bus_space_unmap(memt, memh, memsize);
+
+		command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		command |= PCI_COMMAND_IO_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	} else if (memh_valid) {
 		sc->rtk_btag = memt;
 		sc->rtk_bhandle = memh;
 		sc->rtk_bsize = memsize;
+		if (ioh_valid)
+			bus_space_unmap(iot, ioh, iosize);
+
+		command = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+		command |= PCI_COMMAND_MEM_ENABLE;
+		pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG, command);
 	} else {
 		aprint_error(": can't map registers\n");
 		return;
