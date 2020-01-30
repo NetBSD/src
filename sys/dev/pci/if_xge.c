@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.32 2019/05/29 10:07:29 msaitoh Exp $ */
+/*      $NetBSD: if_xge.c,v 1.33 2020/01/30 06:10:26 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.32 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.33 2020/01/30 06:10:26 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -741,7 +741,7 @@ xge_intr(void *pv)
 		}
 		bus_dmamap_unload(sc->sc_dmat, dmp);
 		m_freem(sc->sc_txb[i]);
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_lasttx = i;
 	}
 	if (i == sc->sc_nexttx) {
@@ -803,7 +803,7 @@ xge_intr(void *pv)
 #endif
 			XGE_RXSYNC(sc->sc_nextrx,
 			    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			break;
 		}
 
