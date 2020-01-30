@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.118 2019/12/22 23:23:32 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.119 2020/01/30 05:24:53 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.118 2019/12/22 23:23:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.119 2020/01/30 05:24:53 thorpej Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -1409,7 +1409,7 @@ tl_ifwatchdog(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	tl_init(ifp);
 }
 
@@ -1504,8 +1504,10 @@ tl_read_stats(tl_softc_t *sc)
 	int oerr_carrloss;
 	struct ifnet *ifp = &sc->tl_if;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	reg =  tl_intreg_read(sc, TL_INT_STATS_TX);
-	ifp->if_opackets += reg & 0x00ffffff;
+	if_statadd_ref(nsr, if_opackets, reg & 0x00ffffff);
 	oerr_underr = reg >> 24;
 
 	reg =  tl_intreg_read(sc, TL_INT_STATS_RX);
@@ -1525,11 +1527,11 @@ tl_read_stats(tl_softc_t *sc)
 	oerr_latecoll = (reg & TL_LERR_LCOLL) >> 8;
 	oerr_carrloss = (reg & TL_LERR_CL) >> 16;
 
-
-	ifp->if_oerrors += oerr_underr + oerr_exesscoll + oerr_latecoll +
-	   oerr_carrloss;
-	ifp->if_collisions += oerr_coll + oerr_multicoll;
-	ifp->if_ierrors += ierr_overr + ierr_code + ierr_crc;
+	if_statadd_ref(nsr, if_oerrors,
+	   oerr_underr + oerr_exesscoll + oerr_latecoll + oerr_carrloss);
+	if_statadd_ref(nsr, if_collisions, oerr_coll + oerr_multicoll);
+	if_statadd_ref(nsr, if_ierrors, ierr_overr + ierr_code + ierr_crc);
+	IF_STAT_PUTREF(ifp);
 
 	if (ierr_overr)
 		printf("%s: receiver ring buffer overrun\n",

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.77 2020/01/14 09:49:26 msaitoh Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.78 2020/01/30 05:24:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.77 2020/01/14 09:49:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.78 2020/01/30 05:24:53 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1028,7 +1028,7 @@ stge_watchdog(struct ifnet *ifp)
 	stge_txintr(sc);
 	if (sc->sc_txpending != 0) {
 		printf("%s: device timeout\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		(void) stge_init(ifp);
 
@@ -1261,7 +1261,7 @@ stge_rxintr(struct stge_softc *sc)
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			STGE_INIT_RXDESC(sc, i);
@@ -1331,7 +1331,7 @@ stge_rxintr(struct stge_softc *sc)
 			struct mbuf *nm;
 			MGETHDR(nm, M_DONTWAIT, MT_DATA);
 			if (nm == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 				continue;
 			}
@@ -1433,22 +1433,26 @@ stge_stats_update(struct stge_softc *sc)
 
 	(void) CSR_READ_4(sc, STGE_FramesRcvdOk);
 
-	ifp->if_ierrors +=
-	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
+	if_statadd_ref(nsr, if_ierrors,
+	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors));
 
 	(void) CSR_READ_4(sc, STGE_OctetXmtdOk);
 
-	ifp->if_opackets +=
-	    CSR_READ_4(sc, STGE_FramesXmtdOk);
+	if_statadd_ref(nsr, if_opackets,
+	    CSR_READ_4(sc, STGE_FramesXmtdOk));
 
-	ifp->if_collisions +=
+	if_statadd_ref(nsr, if_collisions,
 	    CSR_READ_4(sc, STGE_LateCollisions) +
 	    CSR_READ_4(sc, STGE_MultiColFrames) +
-	    CSR_READ_4(sc, STGE_SingleColFrames);
+	    CSR_READ_4(sc, STGE_SingleColFrames));
 
-	ifp->if_oerrors +=
+	if_statadd_ref(nsr, if_oerrors,
 	    (u_int) CSR_READ_2(sc, STGE_FramesAbortXSColls) +
-	    (u_int) CSR_READ_2(sc, STGE_FramesWEXDeferal);
+	    (u_int) CSR_READ_2(sc, STGE_FramesWEXDeferal));
+
+	IF_STAT_PUTREF(ifp);
 }
 
 /*
