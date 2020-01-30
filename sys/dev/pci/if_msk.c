@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.96 2019/12/01 12:47:10 maxv Exp $ */
+/* $NetBSD: if_msk.c,v 1.97 2020/01/30 05:42:00 thorpej Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.96 2019/12/01 12:47:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.97 2020/01/30 05:42:00 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1986,7 +1986,7 @@ msk_watchdog(struct ifnet *ifp)
 	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
 		aprint_error_dev(sc_if->sk_dev, "watchdog timeout\n");
 
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* XXX Resets both ports; we shouldn't do that. */
 		mskc_reset(sc_if->sk_softc);
@@ -2077,7 +2077,7 @@ msk_rxeof(struct sk_if_softc *sc_if, uint16_t len, uint32_t rxstat)
 	if (total_len < SK_MIN_FRAMELEN ||
 	    total_len > ETHER_MAX_LEN_JUMBO ||
 	    msk_rxvalid(sc, rxstat, total_len) == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		return;
 	}
@@ -2121,7 +2121,7 @@ msk_txeof(struct sk_if_softc *sc_if)
 			msk_dump_txdesc(cur_tx, idx);
 #endif
 		if (sk_ctl & SK_Y2_TXCTL_LASTFRAG)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
 
