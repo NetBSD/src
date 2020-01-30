@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.31 2020/01/21 20:37:06 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.32 2020/01/30 12:28:51 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.31 2020/01/21 20:37:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.32 2020/01/30 12:28:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -568,14 +568,17 @@ uvmpdpol_estimatepageable(int *active, int *inactive)
 {
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 
-	mutex_enter(&s->lock);
+	/*
+	 * Don't take any locks here.  This can be called from DDB, and in
+	 * any case the numbers are stale the instant the lock is dropped,
+	 * so it just doesn't matter.
+	 */
 	if (active) {
-		*active = pdpol_state.s_active;
+		*active = s->s_active;
 	}
 	if (inactive) {
-		*inactive = pdpol_state.s_inactive;
+		*inactive = s->s_inactive;
 	}
-	mutex_exit(&s->lock);
 }
 
 #if !defined(PDSIM)
