@@ -1,4 +1,4 @@
-/*	$NetBSD: multiboot2.c,v 1.3 2019/12/10 02:06:07 manu Exp $	*/
+/*	$NetBSD: multiboot2.c,v 1.4 2020/01/30 01:49:44 manu Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.3 2019/12/10 02:06:07 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: multiboot2.c,v 1.4 2020/01/30 01:49:44 manu Exp $");
 
 #include "opt_multiboot.h"
 
@@ -565,7 +565,7 @@ mbi_mmap(struct multiboot_tag_mmap *mbt)
 	}
 
 	bootinfo_add((struct btinfo_common *)bim, BTINFO_MEMMAP,
-	    sizeof(bimbuf));
+	    (char*)&bim->entry[bim->num] - (char *)bim);
 
 	return;
 }
