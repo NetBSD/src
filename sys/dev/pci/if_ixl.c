@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.28 2020/01/27 09:40:43 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.29 2020/01/30 09:53:49 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -175,10 +175,20 @@ struct ixl_softc; /* defined */
 	I40E_PFINT_ICR0_PE_CRITERR_MASK)
 
 #define IXL_TX_PKT_DESCS		8
+#define IXL_TX_PKT_MAXSIZE		(MCLBYTES * IXL_TX_PKT_DESCS)
 #define IXL_TX_QUEUE_ALIGN		128
 #define IXL_RX_QUEUE_ALIGN		128
 
-#define IXL_HARDMTU			9712 /* 9726 - ETHER_HDR_LEN */
+#define IXL_MCLBYTES			(MCLBYTES - ETHER_ALIGN)
+#define IXL_MTU_ETHERLEN		ETHER_HDR_LEN		\
+					+ ETHER_CRC_LEN
+#if 0
+#define IXL_MAX_MTU			(9728 - IXL_MTU_ETHERLEN)
+#else
+/* (dbuff * 5) - ETHER_HDR_LEN - ETHER_CRC_LEN */
+#define IXL_MAX_MTU			(9600 - IXL_MTU_ETHERLEN)
+#endif
+#define IXL_MIN_MTU			(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 #define IXL_PCIREG			PCI_MAPREG_START
 
@@ -1356,7 +1366,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #endif
 	ether_set_vlan_cb(&sc->sc_ec, ixl_vlan_cb);
-	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	sc->sc_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 
@@ -1758,9 +1768,24 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	const struct sockaddr *sa;
 	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
 	int s, error = 0;
-	unsigned int i;
+	unsigned int i, nmtu;
 
 	switch (cmd) {
+	case SIOCSIFMTU:
+		nmtu = ifr->ifr_mtu;
+
+		if (nmtu < IXL_MIN_MTU || nmtu > IXL_MAX_MTU) {
+			error = EINVAL;
+			break;
+		}
+		if (ifp->if_mtu != nmtu) {
+			s = splnet();
+			error = ether_ioctl(ifp, cmd, data);
+			splx(s);
+			if (error == ENETRESET)
+				error = ixl_init(ifp);
+		}
+		break;
 	case SIOCADDMULTI:
 		sa = ifreq_getaddr(SIOCADDMULTI, ifr);
 		if (ether_addmulti(sa, &sc->sc_ec) == ENETRESET) {
@@ -2342,8 +2367,8 @@ ixl_txr_alloc(struct ixl_softc *sc, unsigned int qid)
 	for (i = 0; i < sc->sc_tx_ring_ndescs; i++) {
 		txm = &maps[i];
 
-		if (bus_dmamap_create(sc->sc_dmat,
-		    IXL_HARDMTU, IXL_TX_PKT_DESCS, IXL_HARDMTU, 0,
+		if (bus_dmamap_create(sc->sc_dmat, IXL_TX_PKT_MAXSIZE,
+		    IXL_TX_PKT_DESCS, IXL_TX_PKT_MAXSIZE, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &txm->txm_map) != 0)
 			goto uncreate;
 
@@ -2908,7 +2933,7 @@ ixl_rxr_alloc(struct ixl_softc *sc, unsigned int qid)
 		rxm = &maps[i];
 
 		if (bus_dmamap_create(sc->sc_dmat,
-		    IXL_HARDMTU, 1, IXL_HARDMTU, 0,
+		    IXL_MCLBYTES, 1, IXL_MCLBYTES, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &rxm->rxm_map) != 0)
 			goto uncreate;
 
@@ -3016,21 +3041,24 @@ static void
 ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 {
 	struct ixl_hmc_rxq rxq;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	uint16_t rxmax;
 	void *hmc;
 
 	memset(&rxq, 0, sizeof(rxq));
+	rxmax = ifp->if_mtu + IXL_MTU_ETHERLEN;
 
 	rxq.head = htole16(rxr->rxr_cons);
 	rxq.base = htole64(IXL_DMA_DVA(&rxr->rxr_mem) / IXL_HMC_RXQ_BASE_UNIT);
 	rxq.qlen = htole16(sc->sc_rx_ring_ndescs);
-	rxq.dbuff = htole16(MCLBYTES / IXL_HMC_RXQ_DBUFF_UNIT);
+	rxq.dbuff = htole16(IXL_MCLBYTES / IXL_HMC_RXQ_DBUFF_UNIT);
 	rxq.hbuff = 0;
 	rxq.dtype = IXL_HMC_RXQ_DTYPE_NOSPLIT;
 	rxq.dsize = IXL_HMC_RXQ_DSIZE_32;
 	rxq.crcstrip = 1;
 	rxq.l2sel = 1;
 	rxq.showiv = 1;
-	rxq.rxmax = htole16(IXL_HARDMTU);
+	rxq.rxmax = htole16(rxmax);
 	rxq.tphrdesc_ena = 0;
 	rxq.tphwdesc_ena = 0;
 	rxq.tphdata_ena = 0;
@@ -3274,7 +3302,7 @@ ixl_rxfill(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 			break;
 		}
 
-		m->m_len = m->m_pkthdr.len = MCLBYTES + ETHER_ALIGN;
+		m->m_len = m->m_pkthdr.len = MCLBYTES;
 		m_adj(m, ETHER_ALIGN);
 
 		map = rxm->rxm_map;
