@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.19 2020/01/18 12:00:33 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.20 2020/01/30 00:21:23 jmcneill Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.19 2020/01/18 12:00:33 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.20 2020/01/30 00:21:23 jmcneill Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -889,6 +889,7 @@ hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin,
 			return;
 		}
 
+#ifdef HDAFG_HDMI_DEBUG
 		hda_print(sc, "  ELD version=0x%x", ELD_VER(&hdi.eld));
 		hda_print1(sc, ",len=%u", hdi.eld.header.baseline_eld_len * 4);
 		hda_print1(sc, ",edid=0x%x", ELD_CEA_EDID_VER(&hdi.eld));
@@ -914,6 +915,7 @@ hdafg_assoc_dump_dd(struct hdafg_softc *sc, struct hdaudio_assoc *as, int pin,
 				    CEA_MAX_BITRATE(&hdi.sad[i]));
 			hda_print1(sc, "\n");
 		}
+#endif
 	}
 }
 
