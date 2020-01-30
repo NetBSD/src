@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.12 2019/12/29 22:19:13 tsutsui Exp $
+# $NetBSD: postinstall.in,v 1.13 2020/01/30 01:39:40 christos Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1022,6 +1022,40 @@ do_envsys()
 
 	return ${failed}
 }
+
+#
+#	autofs config files
+#
+additem autofsconfig "automounter configuration files"
+do_autofsconfig()
+{
+	[ -n "$1" ] || err 3 "USAGE: do_autofsconfig fix|check"
+	local autofs_files="
+include_ldap
+include_nis
+special_hosts
+special_media
+special_noauto
+special_null 
+"
+	op="$1"
+	failed=0
+	if [ "$op" = "fix" ]; then
+		mkdir -p "${DEST_DIR}/etc/autofs"
+	fi
+	failed=$(( ${failed} + $? ))
+	populate_dir "$op" false "${SRC_DIR}/etc" \
+	    "${DEST_DIR}/etc" \
+	    444 \
+	    auto_master
+	failed=$(( ${failed} + $? ))
+	populate_dir "$op" false "${SRC_DIR}/etc/autofs" \
+	    "${DEST_DIR}/etc/autofs" \
+	    444 \
+	    ${autofs_files}
+	return ${failed}
+}
+
 
 #
 #	X11 fontconfig
