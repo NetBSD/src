@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sq.c,v 1.53 2020/01/29 05:37:08 thorpej Exp $	*/
+/*	$NetBSD: if_sq.c,v 1.54 2020/01/30 06:25:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Rafal K. Boni
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.53 2020/01/29 05:37:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sq.c,v 1.54 2020/01/30 06:25:46 martin Exp $");
 
 
 #include <sys/param.h>
@@ -1074,7 +1074,7 @@ sq_txintr(struct sq_softc *sc)
 
 	SQ_TRACE(SQ_TXINTR_ENTER, sc, sc->sc_prevtx, status);
 
-	net_stats_ref_t nsr = IF_STAT_GETREF(ifp);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	tmp = (sc->hpc_regs->enetx_ctl_active >> shift) | TXSTAT_GOOD;
 	if ((status & tmp) == 0) {
 		if (status & TXSTAT_COLL)
