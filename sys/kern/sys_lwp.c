@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_lwp.c,v 1.74 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: sys_lwp.c,v 1.75 2020/01/30 12:36:38 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.74 2020/01/29 15:47:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_lwp.c,v 1.75 2020/01/30 12:36:38 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -480,15 +480,21 @@ lwp_unpark(const lwpid_t *tp, const u_int ntargets)
 			continue;
 		}
 
-		/* It may not have parked yet or we may have raced. */
 		lwp_lock(t);
 		if (t->l_syncobj == &lwp_park_syncobj) {
-			/* Releases the LWP lock. */
+			/*
+			 * As expected it's parked, so wake it up. 
+			 * lwp_unsleep() will release the LWP lock.
+			 */
 			lwp_unsleep(t, true);
 		} else {
 			/*
-			 * Set the operation pending.  The next call to
-			 * _lwp_park() will return early.
+			 * It hasn't parked yet because the wakeup side won
+			 * the race, or something else has happened to make
+			 * the thread not park.  Why doesn't really matter. 
+			 * Set the operation pending, so that the next call
+			 * to _lwp_park() in the LWP returns early.  If it
+			 * turns out to be a spurious wakeup, no harm done.
 			 */
 			t->l_flag |= LW_UNPARKED;
 			lwp_unlock(t);
