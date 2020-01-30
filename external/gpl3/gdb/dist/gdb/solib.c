@@ -509,7 +509,7 @@ solib_bfd_open (const char *pathname)
   if (!b->compatible (b, bfd_get_arch_info (abfd.get ())))
     {
       char buf[SO_NAME_MAX_PATH_SIZE];
-      char *slash = strrchr(pathname, '/');
+      const char *slash = strrchr(pathname, '/');
       if (slash)
         {
           struct stat st;
