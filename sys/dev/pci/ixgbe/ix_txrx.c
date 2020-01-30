@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.60 2020/01/21 14:55:55 msaitoh Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.61 2020/01/30 14:02:14 thorpej Exp $ */
 
 /******************************************************************************
 
@@ -540,12 +540,11 @@ retry:
 	++txr->total_packets.ev_count;
 	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
 
-	/*
-	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
-	 */
-	ifp->if_obytes += m_head->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m_head->m_pkthdr.len);
 	if (m_head->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	/* Mark queue as having work */
 	if (txr->busy == 0)
@@ -1191,7 +1190,7 @@ ixgbe_txeof(struct tx_ring *txr)
 		}
 		++txr->packets;
 		++processed;
-		++ifp->if_opackets;
+		if_statinc(ifp, if_opackets);
 
 		/* Try the next packet */
 		++txd;

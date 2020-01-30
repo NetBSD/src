@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.56 2019/10/18 23:08:29 msaitoh Exp $	 */
+/* $NetBSD: if_bce.c,v 1.57 2020/01/30 13:56:48 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.56 2019/10/18 23:08:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.57 2020/01/30 13:56:48 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -558,7 +558,7 @@ bce_start(struct ifnet *ifp)
 			    "dropping...\n");
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
 			m_freem(m0);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		} else if (error) {
 			/* short on resources, come back later */
@@ -654,7 +654,7 @@ bce_watchdog(struct ifnet *ifp)
 	struct bce_softc *sc = ifp->if_softc;
 
 	device_printf(sc->bce_dev, "device timeout\n");
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void) bce_init(ifp);
 
@@ -702,7 +702,7 @@ bce_intr(void *xsc)
 				msg = "transmit fifo underflow";
 			if (intstatus & I_RO) {
 				msg = "receive fifo overflow";
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			}
 			if (intstatus & I_RU)
 				msg = "receive descriptor underflow";
@@ -762,7 +762,7 @@ bce_rxintr(struct bce_softc *sc)
 		 */
 		pph = mtod(sc->bce_cdata.bce_rx_chain[i], struct rx_pph *);
 		if (pph->flags & (RXF_NO | RXF_RXER | RXF_CRC | RXF_OV)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			pph->len = 0;
 			pph->flags = 0;
 			continue;
@@ -805,7 +805,7 @@ bce_rxintr(struct bce_softc *sc)
 			m = sc->bce_cdata.bce_rx_chain[i];
 			if (bce_add_rxbuf(sc, i) != 0) {
 		dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				/* continue to use old buffer */
 				sc->bce_cdata.bce_rx_chain[i]->m_data -= 30;
 				bus_dmamap_sync(sc->bce_dmatag,
@@ -862,7 +862,7 @@ bce_txintr(struct bce_softc *sc)
 		bus_dmamap_unload(sc->bce_dmatag, sc->bce_cdata.bce_tx_map[i]);
 		m_freem(sc->bce_cdata.bce_tx_chain[i]);
 		sc->bce_cdata.bce_tx_chain[i] = NULL;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 	sc->bce_txin = curr;
 
