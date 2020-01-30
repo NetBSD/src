@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ste.c,v 1.58 2019/11/02 21:11:55 tnn Exp $	*/
+/*	$NetBSD: if_ste.c,v 1.59 2020/01/30 05:24:53 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.58 2019/11/02 21:11:55 tnn Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ste.c,v 1.59 2020/01/30 05:24:53 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -780,7 +780,7 @@ ste_watchdog(struct ifnet *ifp)
 	struct ste_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	ste_txintr(sc);
 	ste_rxintr(sc);
@@ -1039,7 +1039,7 @@ ste_rxintr(struct ste_softc *sc)
 			m = ds->ds_mbuf;
 			if (ste_add_rxbuf(sc, i) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				STE_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat,
 				    ds->ds_dmamap, 0,
@@ -1097,25 +1097,29 @@ ste_stats_update(struct ste_softc *sc)
 	(void) bus_space_read_2(st, sh, STE_OctetsTransmittedOk0);
 	(void) bus_space_read_2(st, sh, STE_OctetsTransmittedOk1);
 
-	ifp->if_opackets +=
-	    (u_int) bus_space_read_2(st, sh, STE_FramesTransmittedOK);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
+	if_statadd_ref(nsr, if_opackets,
+	    (u_int) bus_space_read_2(st, sh, STE_FramesTransmittedOK));
 
 	(void) bus_space_read_2(st, sh, STE_FramesReceivedOK);
 
-	ifp->if_collisions +=
+	if_statadd_ref(nsr, if_collisions,
 	    (u_int) bus_space_read_1(st, sh, STE_LateCollisions) +
 	    (u_int) bus_space_read_1(st, sh, STE_MultipleColFrames) +
-	    (u_int) bus_space_read_1(st, sh, STE_SingleColFrames);
+	    (u_int) bus_space_read_1(st, sh, STE_SingleColFrames));
 
 	(void) bus_space_read_1(st, sh, STE_FramesWDeferredXmt);
 
-	ifp->if_ierrors +=
-	    (u_int) bus_space_read_1(st, sh, STE_FramesLostRxErrors);
+	if_statadd_ref(nsr, if_ierrors,
+	    (u_int) bus_space_read_1(st, sh, STE_FramesLostRxErrors));
 
-	ifp->if_oerrors +=
+	if_statadd_ref(nsr, if_oerrors,
 	    (u_int) bus_space_read_1(st, sh, STE_FramesWExDeferral) +
 	    (u_int) bus_space_read_1(st, sh, STE_FramesXbortXSColls) +
-	    bus_space_read_1(st, sh, STE_CarrierSenseErrors);
+	    bus_space_read_1(st, sh, STE_CarrierSenseErrors));
+
+	IF_STAT_PUTREF(ifp);
 
 	(void) bus_space_read_1(st, sh, STE_BcstFramesXmtdOk);
 	(void) bus_space_read_1(st, sh, STE_BcstFramesRcvdOk);
