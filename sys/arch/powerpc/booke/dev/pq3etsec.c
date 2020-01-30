@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.48 2020/01/29 05:35:28 thorpej Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.49 2020/01/30 06:27:13 martin Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.48 2020/01/29 05:35:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.49 2020/01/30 06:27:13 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -2226,7 +2226,7 @@ pq3etsec_txq_consume(
 			if (m->m_flags & M_HASFCB)
 				m_adj(m, sizeof(struct txfcb));
 			bpf_mtap(ifp, m, BPF_D_OUT);
-			net_stats_ref_t nsr = IF_STAT_GETREF(ifp);
+			net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 			if_statinc_ref(nsr, if_opackets);
 			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
