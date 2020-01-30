@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mc.c,v 1.54 2020/01/30 06:28:46 martin Exp $	*/
+/*	$NetBSD: if_mc.c,v 1.55 2020/01/30 06:30:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@azeotrope.org>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.54 2020/01/30 06:28:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mc.c,v 1.55 2020/01/30 06:30:52 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -491,12 +491,12 @@ mc_tint(struct mc_softc *sc)
 
 	if (xmtfs & MORE)
 		/* Real number is unknown. */
-		if_statadd_ref(nsr, if_collisons, 2);
+		if_statadd_ref(nsr, if_collisions, 2);
 	else if (xmtfs & ONE)
 		if_statinc_ref(nsr, if_collisions);
 	else if (xmtfs & RTRY) {
 		printf("%s: excessive collisions\n", device_xname(sc->sc_dev));
-		if_statadd_ref(nsr, if_collsions, 16);
+		if_statadd_ref(nsr, if_collisions, 16);
 		if_statinc_ref(nsr, if_oerrors);
 	}
 
