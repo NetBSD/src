@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.46 2019/09/23 06:50:04 maxv Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.47 2020/01/30 05:42:00 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.46 2019/09/23 06:50:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.47 2020/01/30 05:42:00 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1095,7 +1095,7 @@ jme_intr_rx(jme_softc_t *sc) {
 			printf("rx error flags 0x%x buflen 0x%x\n",
 			    flags, buflen);
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/* reuse the mbufs */
 			for (seg = 0; seg < nsegs; seg++) {
 				m = sc->jme_rxmbuf[i];
@@ -1139,7 +1139,7 @@ jme_intr_rx(jme_softc_t *sc) {
 				JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
 				i = sc->jme_rx_cons;
 			}
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
@@ -1595,13 +1595,14 @@ jme_txeof(struct jme_softc *sc)
 			break;
 
 		if ((status & (JME_TD_TMOUT | JME_TD_RETRY_EXP)) != 0)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		else {
-			ifp->if_opackets++;
-			if ((status & JME_TD_COLLISION) != 0)
-				ifp->if_collisions +=
+			if_statinc(ifp, if_opackets);
+			if ((status & JME_TD_COLLISION) != 0) {
+				if_statadd(ifp, if_collisions,
 				    le32toh(desc->buflen) &
-				    JME_TD_BUF_LEN_MASK;
+				    JME_TD_BUF_LEN_MASK);
+			}
 		}
 		/*
 		 * Only the first descriptor of multi-descriptor
@@ -1673,7 +1674,7 @@ nexttx:
 		/* try to add this mbuf to the TX ring */
 		if (jme_encap(sc, &mb_head)) {
 			if (mb_head == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				/* packet dropped, try next one */
 				goto nexttx;
 			}
@@ -1726,7 +1727,7 @@ jme_ifwatchdog(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	printf("%s: device timeout\n", device_xname(sc->jme_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	jme_init(ifp, 0);
 }
 
