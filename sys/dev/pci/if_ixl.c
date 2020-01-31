@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.32 2020/01/31 02:21:17 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.33 2020/01/31 02:25:06 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -2970,7 +2970,9 @@ ixl_transmit(struct ifnet *ifp, struct mbuf *m)
 		ixl_tx_common_locked(ifp, txr, true);
 		mutex_exit(&txr->txr_lock);
 	} else {
+		kpreempt_disable();
 		softint_schedule(txr->txr_si);
+		kpreempt_enable();
 	}
 
 	return 0;
