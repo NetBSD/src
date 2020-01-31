@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.17.2.1 2019/12/12 21:00:32 martin Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.17.2.2 2020/01/31 11:25:09 martin Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.17.2.1 2019/12/12 21:00:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.17.2.2 2020/01/31 11:25:09 martin Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -297,7 +297,7 @@ static void chv_set_memory_pm5(struct drm_i915_private *dev_priv, bool enable)
 }
 
 #define FW_WM(value, plane) \
-	(((value) << DSPFW_ ## plane ## _SHIFT) & DSPFW_ ## plane ## _MASK)
+	(((u32)(value) << DSPFW_ ## plane ## _SHIFT) & DSPFW_ ## plane ## _MASK)
 
 void intel_set_memory_cxsr(struct drm_i915_private *dev_priv, bool enable)
 {
@@ -5058,7 +5058,7 @@ static void gen6_enable_rps(struct drm_device *dev)
 		DRM_DEBUG_DRIVER("Failed to set the min frequency\n");
 
 	ret = sandybridge_pcode_read(dev_priv, GEN6_READ_OC_PARAMS, &pcu_mbox);
-	if (!ret && (pcu_mbox & (1<<31))) { /* OC supported */
+	if (!ret && (pcu_mbox & __BIT(31))) { /* OC supported */
 		DRM_DEBUG_DRIVER("Overclocking supported. Max: %dMHz, Overclock max: %dMHz\n",
 				 (dev_priv->rps.max_freq_softlimit & 0xff) * 50,
 				 (pcu_mbox & 0xff) * 50);
