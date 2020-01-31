@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.42 2020/01/31 20:56:03 jmcneill Exp $
+# $NetBSD: Makefile,v 1.43 2020/01/31 21:13:40 jmcneill Exp $
 
 # Link the gallium mega driver.
 
@@ -1113,8 +1113,8 @@ CPPFLAGS.streaming-load-memcpy.c+= -msse4.1
 CPPFLAGS.i386+= -march=i586
 CPPFLAGS+=	${CPPFLAGS.${XORG_MACHINE_ARCH:U${MACHINE_ARCH}}}
 
-CPPFLAGS.r600_pipe_common.c+=	-DMESA_LLVM_VERSION_STRING=\"7.0.0\"
-CPPFLAGS.si_get.c+=	-DMESA_LLVM_VERSION_STRING=\"7.0.0\"
+CPPFLAGS.r600_pipe_common.c+=	-DMESA_LLVM_VERSION_STRING=\"9.0.0\"
+CPPFLAGS.si_get.c+=	-DMESA_LLVM_VERSION_STRING=\"9.0.0\"
 
 .include "../driver.mk"
 
