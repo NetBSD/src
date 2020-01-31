@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.663 2020/01/29 06:44:27 thorpej Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.664 2020/01/31 12:03:23 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.663 2020/01/29 06:44:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.664 2020/01/31 12:03:23 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -750,7 +750,7 @@ static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
 static inline bool	wm_is_using_msix(struct wm_softc *);
 static inline bool	wm_is_using_multiqueue(struct wm_softc *);
-static int	wm_softhandler_establish(struct wm_softc *, int, int);
+static int	wm_softint_establish(struct wm_softc *, int, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
@@ -1822,6 +1822,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	char buf[256];
+	char wqname[MAXCOMLEN];
 	uint16_t cfg1, cfg2, swdpin, nvmword;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
@@ -2053,6 +2054,16 @@ alloc_retry:
 			    counts[PCI_INTR_TYPE_INTX]);
 			return;
 		}
+	}
+
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(sc->sc_dev));
+	error = workqueue_create(&sc->sc_queue_wq, wqname,
+	    wm_handle_queue_work, sc, WM_WORKQUEUE_PRI, IPL_NET,
+	    WM_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create workqueue\n");
+		goto out;
 	}
 
 	/*
@@ -5415,11 +5426,9 @@ wm_is_using_multiqueue(struct wm_softc *sc)
 }
 
 static int
-wm_softhandler_establish(struct wm_softc *sc, int qidx, int intr_idx)
+wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
 {
-	char wqname[MAXCOMLEN];
 	struct wm_queue *wmq = &sc->sc_queue[qidx];
-	int error;
 
 	wmq->wmq_id = qidx;
 	wmq->wmq_intr_idx = intr_idx;
@@ -5428,28 +5437,11 @@ wm_softhandler_establish(struct wm_softc *sc, int qidx, int intr_idx)
 	    | SOFTINT_MPSAFE
 #endif
 	    , wm_handle_queue, wmq);
-	if (wmq->wmq_si == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to establish queue[%d] softint handler\n",
-		    wmq->wmq_id);
-		goto err;
-	}
+	if (wmq->wmq_si != NULL)
+		return 0;
 
-	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(sc->sc_dev));
-	error = workqueue_create(&sc->sc_queue_wq, wqname,
-	    wm_handle_queue_work, sc, WM_WORKQUEUE_PRI, IPL_NET,
-	    WM_WORKQUEUE_FLAGS);
-	if (error) {
-		softint_disestablish(wmq->wmq_si);
-		aprint_error_dev(sc->sc_dev,
-		    "unable to create queue[%d] workqueue\n",
-		    wmq->wmq_id);
-		goto err;
-	}
-
-	return 0;
-
-err:
+	aprint_error_dev(sc->sc_dev, "unable to establish queue[%d] handler\n",
+	    wmq->wmq_id);
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[wmq->wmq_intr_idx]);
 	sc->sc_ihs[wmq->wmq_intr_idx] = NULL;
 	return ENOMEM;
@@ -5489,7 +5481,7 @@ wm_setup_legacy(struct wm_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 	sc->sc_nintrs = 1;
 
-	return wm_softhandler_establish(sc, 0, 0);
+	return wm_softint_establish(sc, 0, 0);
 }
 
 static int
@@ -5567,7 +5559,7 @@ wm_setup_msix(struct wm_softc *sc)
 			    "for TX and RX interrupting at %s\n", intrstr);
 		}
 		sc->sc_ihs[intr_idx] = vih;
-		if (wm_softhandler_establish(sc, qidx, intr_idx) != 0)
+		if (wm_softint_establish(sc, qidx, intr_idx) != 0)
 			goto fail;
 		txrx_established++;
 		intr_idx++;
