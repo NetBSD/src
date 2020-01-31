@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.46 2019/12/29 03:00:35 uki Exp $
+# $NetBSD: md.i386,v 1.47 2020/01/31 20:56:03 jmcneill Exp $
 ./usr/X11R7/lib/libI810XvMC_g.a				xdebug-libI810XvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libIntelXvMC_g.a			xdebug-libIntelXvMC-debuglib	xorg,debuglib
 ./usr/X11R7/lib/libchromeXvMCPro_g.a			xdebug-libchromeXvMCPro-debuglib	xorg,debuglib
@@ -80,6 +80,7 @@
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r300_dri.so.0.debug	xdebug-gallium-debug		xorg,debug,llvmrt
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/r600_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug,llvmrt
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeon_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug
+./usr/libdata/debug/usr/X11R7/lib/modules/dri/radeonsi_dri.so.0.debug	xdebug-xf86-video-radeon-debug		xorg,debug,llvmrt
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/s3v_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/savage_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
 ./usr/libdata/debug/usr/X11R7/lib/modules/dri/sis_dri.so.0.debug	xdebug-obsolete		xorg,obsolete
