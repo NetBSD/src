@@ -1,4 +1,4 @@
-/* $NetBSD: xhci_acpi.c,v 1.6 2020/01/21 11:29:17 jmcneill Exp $ */
+/* $NetBSD: xhci_acpi.c,v 1.7 2020/01/31 23:12:13 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.6 2020/01/21 11:29:17 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.7 2020/01/31 23:12:13 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -52,6 +52,7 @@ __KERNEL_RCSID(0, "$NetBSD: xhci_acpi.c,v 1.6 2020/01/21 11:29:17 jmcneill Exp $
 static const char * const compatible[] = {
 	"PNP0D10",	/* XHCI-compliant USB controller without standard debug */
 	"PNP0D15",	/* XHCI-compliant USB controller with standard debug */
+	"808622B7",	/* DesignWare Dual Role SuperSpeed USB controller */
 	NULL
 };
 
