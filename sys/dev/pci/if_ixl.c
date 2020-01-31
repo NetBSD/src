@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.29 2020/01/30 09:53:49 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.30 2020/01/31 02:11:06 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -4314,7 +4314,7 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 		break;
 	case IXL_AQ_RC_EIO:
 		aprint_error_dev(sc->sc_dev,"unable to query phy types\n");
-		break;
+		goto done;
 	default:
 		aprint_error_dev(sc->sc_dev,
 		    "GET PHY ABILITIIES error %u\n", rv);
