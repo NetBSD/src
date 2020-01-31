@@ -1,4 +1,4 @@
-/* $NetBSD: trap.c,v 1.24 2020/01/06 08:36:08 skrll Exp $ */
+/* $NetBSD: trap.c,v 1.25 2020/01/31 09:23:58 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.24 2020/01/06 08:36:08 skrll Exp $");
+__KERNEL_RCSID(1, "$NetBSD: trap.c,v 1.25 2020/01/31 09:23:58 maxv Exp $");
 
 #include "opt_arm_intr_impl.h"
 #include "opt_compat_netbsd32.h"
@@ -93,6 +93,8 @@ const char * const trap_names[] = {
 	[ESR_EC_SERROR]		= "SError Interrupt",
 	[ESR_EC_WFX]		= "WFI or WFE instruction execution",
 	[ESR_EC_ILL_STATE]	= "Illegal Execution State",
+
+	[ESR_EC_BTE_A64]	= "Branch Target Exception",
 
 	[ESR_EC_SYS_REG]	= "MSR/MRS/SYS instruction",
 	[ESR_EC_SVC_A64]	= "SVC Instruction Execution",
