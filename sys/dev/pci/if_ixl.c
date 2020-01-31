@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.31 2020/01/31 02:16:26 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.32 2020/01/31 02:21:17 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -931,8 +931,6 @@ static const struct ixl_phy_type ixl_phy_type_map[] = {
 	{ 1ULL << IXL_PHY_TYPE_10GBASE_SFPP_CU,	IFM_10G_TWINAX },
 	{ 1ULL << IXL_PHY_TYPE_40GBASE_SR4,	IFM_40G_SR4 },
 	{ 1ULL << IXL_PHY_TYPE_40GBASE_LR4,	IFM_40G_LR4 },
-	{ 1ULL << IXL_PHY_TYPE_1000BASE_SX,	IFM_1000_SX },
-	{ 1ULL << IXL_PHY_TYPE_1000BASE_LX,	IFM_1000_LX },
 	{ 1ULL << IXL_PHY_TYPE_20GBASE_KR2,	IFM_20G_KR2 },
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_KR,	IFM_25G_KR },
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_CR,	IFM_25G_CR },
