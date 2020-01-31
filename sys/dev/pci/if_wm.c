@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.664 2020/01/31 12:03:23 knakahara Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.665 2020/01/31 12:04:57 knakahara Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.664 2020/01/31 12:03:23 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.665 2020/01/31 12:04:57 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3126,6 +3126,9 @@ wm_detach(device_t self, int flags __unused)
 		}
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
+
+	/* wm_stop() ensure workqueue is stopped. */
+	workqueue_destroy(sc->sc_queue_wq);
 
 	for (i = 0; i < sc->sc_nqueues; i++)
 		softint_disestablish(sc->sc_queue[i].wmq_si);
@@ -6401,6 +6404,16 @@ wm_stop(struct ifnet *ifp, int disable)
 	WM_CORE_LOCK(sc);
 	wm_stop_locked(ifp, disable);
 	WM_CORE_UNLOCK(sc);
+
+	/*
+	 * After wm_set_stopping_flags(), it is guaranteed
+	 * wm_handle_queue_work() does not call workqueue_enqueue().
+	 * However, workqueue_wait() cannot call in wm_stop_locked()
+	 * because it can sleep...
+	 * so, call workqueue_wait() here.
+	 */
+	for (int i = 0; i < sc->sc_nqueues; i++)
+		workqueue_wait(sc->sc_queue_wq, &sc->sc_queue[i].wmq_cookie);
 }
 
 static void
