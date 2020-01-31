@@ -1,4 +1,4 @@
-/*	$NetBSD: i386.c,v 1.74.6.8 2019/11/19 10:45:11 martin Exp $	*/
+/*	$NetBSD: i386.c,v 1.74.6.9 2020/01/31 10:53:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: i386.c,v 1.74.6.8 2019/11/19 10:45:11 martin Exp $");
+__RCSID("$NetBSD: i386.c,v 1.74.6.9 2020/01/31 10:53:29 martin Exp $");
 #endif /* not lint */
 
 #include <sys/types.h>
@@ -1432,7 +1432,8 @@ amd_cpu_cacheinfo(struct cpu_info *ci)
 	if (lfunc < 0x8000001d)
 		return;
 
-	cpu_dcp_cacheinfo(ci, 0x8000001d);
+	if (ci->ci_feat_val[3] & CPUID_TOPOEXT)
+		cpu_dcp_cacheinfo(ci, 0x8000001d);
 }
 
 static void
@@ -2212,11 +2213,24 @@ identifycpu(int fd, const char *cpuname)
 	}
 
 	if (cpu_vendor == CPUVENDOR_AMD) {
+		uint32_t ci_max_ext_cpuid;
+
 		x86_cpuid(0x80000000, descs);
-		if (descs[0] >= 0x80000007)
+		if (descs[0] >= 0x80000000)
+			ci_max_ext_cpuid = descs[0];
+		else
+			ci_max_ext_cpuid = 0;
+
+		if (ci_max_ext_cpuid >= 0x80000007)
 			powernow_probe(ci);
 
-		if ((descs[0] >= 0x8000000a)
+		if (ci_max_ext_cpuid >= 0x80000008) {
+			x86_cpuid(0x80000008, descs);
+			print_bits(cpuname, "AMD Extended features",
+			    CPUID_CAPEX_FLAGS, descs[1]);
+		}
+
+		if ((ci_max_ext_cpuid >= 0x8000000a)
 		    && (ci->ci_feat_val[3] & CPUID_SVM) != 0) {
 			x86_cpuid(0x8000000a, descs);
 			aprint_verbose("%s: SVM Rev. %d\n", cpuname,
@@ -2225,6 +2239,11 @@ identifycpu(int fd, const char *cpuname)
 			    descs[1]);
 			print_bits(cpuname, "SVM features",
 			    CPUID_AMD_SVM_FLAGS, descs[3]);
+		}
+		if (ci_max_ext_cpuid >= 0x8000001f) {
+			x86_cpuid(0x8000001f, descs);
+			print_bits(cpuname, "Encrypted Memory features",
+			    CPUID_AMD_ENCMEM_FLAGS, descs[0]);
 		}
 	} else if (cpu_vendor == CPUVENDOR_INTEL) {
 		int32_t bi_index;

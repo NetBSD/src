@@ -1,4 +1,4 @@
-/*	$NetBSD: specialreg.h,v 1.98.2.17 2019/11/19 10:45:11 martin Exp $	*/
+/*	$NetBSD: specialreg.h,v 1.98.2.18 2020/01/31 10:53:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 1991 The Regents of the University of California.
@@ -104,7 +104,7 @@
 #define XCR0_Hi16_ZMM	0x00000080	/* AVX-512 512 bits upper registers */
 
 /*
- * Known fpu bits - only these get enabled. The save area is sized for all the
+ * Known FPU bits, only these get enabled. The save area is sized for all the
  * fields below (max 2680 bytes).
  */
 #define XCR0_FPU	(XCR0_X87 | XCR0_SSE | XCR0_YMM_Hi128 | \
@@ -351,12 +351,12 @@
 /* %ebx */
 #define CPUID_SEF_FSGSBASE	__BIT(0)  /* {RD,WR}{FS,GS}BASE */
 #define CPUID_SEF_TSC_ADJUST	__BIT(1)  /* IA32_TSC_ADJUST MSR support */
-#define CPUID_SEF_SGX		__BIT(2)  /* Software Guard Extentions */
+#define CPUID_SEF_SGX		__BIT(2)  /* Software Guard Extensions */
 #define CPUID_SEF_BMI1		__BIT(3)  /* advanced bit manipulation ext. 1st grp */
 #define CPUID_SEF_HLE		__BIT(4)  /* Hardware Lock Elision */
 #define CPUID_SEF_AVX2		__BIT(5)  /* Advanced Vector Extensions 2 */
 #define CPUID_SEF_FDPEXONLY	__BIT(6)  /* x87FPU Data ptr updated only on x87exp */
-#define CPUID_SEF_SMEP		__BIT(7)  /* Supervisor-Mode Excecution Prevention */
+#define CPUID_SEF_SMEP		__BIT(7)  /* Supervisor-Mode Execution Prevention */
 #define CPUID_SEF_BMI2		__BIT(8)  /* advanced bit manipulation ext. 2nd grp */
 #define CPUID_SEF_ERMS		__BIT(9)  /* Enhanced REP MOVSB/STOSB */
 #define CPUID_SEF_INVPCID	__BIT(10) /* INVPCID instruction */
@@ -605,7 +605,7 @@
 	"\31" "FXSR"	"\32" "FFXSR"	"\33" "P1GB"	"\34" "RDTSCP"	\
 			"\36" "LONG"	"\37" "3DNOW2"	"\40" "3DNOW"
 
-/* AMD Fn80000001 extended features - %ecx */
+/* AMD Fn8000_0001 extended features - %ecx */
 /* 	CPUID_LAHF			   LAHF/SAHF instruction */
 #define CPUID_CMPLEGACY	0x00000002	/* Compare Legacy */
 #define CPUID_SVM	0x00000004	/* Secure Virtual Machine */
@@ -671,7 +671,40 @@
 	"\11" "TSC"	"\12" "CPB"	"\13" "EffFreq"	"\14" "PROCFI"	      \
 	"\15" "PROCPR"	"\16" "CONNSTBY" "\17" "RAPL"
 
-/* AMD Fn8000000a %edx features (SVM features) */
+/*
+ * AMD Processor Capacity Parameters and Extended Features
+ * CPUID Fn8000_0008
+ * %eax: Long Mode Size Identifiers
+ * %ebx: Extended Feature Identifiers
+ * %ecx: Size Identifiers
+ */
+
+/* %ebx */
+#define CPUID_CAPEX_CLZERO	__BIT(0)	/* CLZERO instruction */
+#define CPUID_CAPEX_IRPERF	__BIT(1)	/* InstRetCntMsr */
+#define CPUID_CAPEX_XSAVEERPTR	__BIT(2)	/* RstrFpErrPtrs by XRSTOR */
+#define CPUID_CAPEX_RDPRU	__BIT(4)	/* RDPRU instruction */
+#define CPUID_CAPEX_MCOMMIT	__BIT(8)	/* MCOMMIT instruction */
+#define CPUID_CAPEX_WBNOINVD	__BIT(9)	/* WBNOINVD instruction */
+#define CPUID_CAPEX_IBPB	__BIT(12)	/* Speculation Control IBPB */
+#define CPUID_CAPEX_IBRS	__BIT(14)	/* Speculation Control IBRS */
+#define CPUID_CAPEX_STIBP	__BIT(15)	/* Speculation Control STIBP */
+#define CPUID_CAPEX_IBRS_ALWAYSON __BIT(16)	/* IBRS always on mode */
+#define CPUID_CAPEX_STIBP_ALWAYSON __BIT(17)	/* STIBP always on mode */
+#define CPUID_CAPEX_PREFER_IBRS	__BIT(18)	/* IBRS preferred */
+#define CPUID_CAPEX_SSBD	__BIT(24)	/* Speculation Control SSBD */
+#define CPUID_CAPEX_VIRT_SSBD	__BIT(25)	/* Virt Spec Control SSBD */
+#define CPUID_CAPEX_SSB_NO	__BIT(26)	/* SSBD not required */
+
+#define CPUID_CAPEX_FLAGS	"\20"					 \
+	"\1CLZERO"	"\2IRPERF"	"\3XSAVEERPTR"			 \
+	"\5RDPRU"			"\7B6"				 \
+	"\11MCOMMIT"	"\12WBNOINVD"	"\13B10"			 \
+	"\15IBPB"	"\16B13"	"\17IBRS"	"\20STIBP"	 \
+	"\21IBRS_ALWAYSON" "\22STIBP_ALWAYSON" "\23PREFER_IBRS"	"\24B19" \
+	"\31SSBD"	"\32VIRT_SSBD"	"\33SSB_NO"
+
+/* AMD Fn8000_000a %edx features (SVM features) */
 #define CPUID_AMD_SVM_NP		0x00000001
 #define CPUID_AMD_SVM_LbrVirt		0x00000002
 #define CPUID_AMD_SVM_SVML		0x00000004
@@ -681,26 +714,46 @@
 #define CPUID_AMD_SVM_FlushByASID	0x00000040
 #define CPUID_AMD_SVM_DecodeAssist	0x00000080
 #define CPUID_AMD_SVM_PauseFilter	0x00000400
-#define CPUID_AMD_SVM_PFThreshold	0x0x001000 /* PAUSE filter threshold */
+#define CPUID_AMD_SVM_PFThreshold	0x00001000 /* PAUSE filter threshold */
 #define CPUID_AMD_SVM_AVIC		0x00002000 /* AMD Virtual intr. ctrl */
 #define CPUID_AMD_SVM_V_VMSAVE_VMLOAD	0x00008000 /* Virtual VM{SAVE/LOAD} */
 #define CPUID_AMD_SVM_vGIF		0x00010000 /* Virtualized GIF */
+#define CPUID_AMD_SVM_GMET		0x00020000
 #define CPUID_AMD_SVM_FLAGS	 "\20" \
 	"\1" "NP"	"\2" "LbrVirt"	"\3" "SVML"	"\4" "NRIPS"	\
 	"\5" "TSCRate"	"\6" "VMCBCleanBits" 				\
 			        "\7" "FlushByASID" "\10" "DecodeAssist"	\
-	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11" \
+	"\11" "B08"	"\12" "B09"	"\13" "PauseFilter" "\14" "B11"	\
 	"\15" "PFThreshold" "\16" "AVIC" "\17" "B14"			\
 						"\20" "V_VMSAVE_VMLOAD"	\
-	"\21" "VGIF"
+	"\21" "VGIF"	"\22" "GMET"					\
+	"\25" "B20"
 
 /*
- * AMD Fn8000_0001d  Cache Topology Information.
+ * AMD Fn8000_0001d Cache Topology Information.
  * It's almost the same as Intel Deterministic Cache Parameter Leaf(0x04)
  * except the following:
  *	No Cores/package (%eax bit 31..26)
  *	No Complex cache indexing (%edx bit 2)
  */
+
+/*
+ * AMD Fn8000_0001f Encrypted Memory Capabilities.
+ * %eax: flags
+ * %ebx:  5-0: Cbit Position
+ *       11-6: PhysAddrReduction
+ * %ecx: 31-0: NumEncryptedGuests
+ * %edx: 31-0: MinSevNoEsAsid
+ */
+#define CPUID_AMD_ENCMEM_SME	__BIT(0)   /* Secure Memory Encryption */
+#define CPUID_AMD_ENCMEM_SEV	__BIT(1)   /* Secure Encrypted Virtualiz. */
+#define CPUID_AMD_ENCMEM_PGFLMSR __BIT(2)  /* Page Flush MSR */
+#define CPUID_AMD_ENCMEM_SEVES	__BIT(3)   /* SEV Encrypted State */
+#define CPUID_AMD_ENCMEM_VTE	__BIT(16)  /* Virtual Transparent Encryption */
+
+#define CPUID_AMD_ENCMEM_FLAGS	 "\20"					      \
+	"\1" "SME"	"\2" "SEV"	"\3" "PageFlushMsr"	"\4" "SEV-ES" \
+	"\21" "VTE"
 
 /*
  * Centaur Extended Feature flags
