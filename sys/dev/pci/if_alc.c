@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.38.2.3 2019/11/26 08:20:47 martin Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.38.2.4 2020/01/31 11:14:50 martin Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -3459,7 +3459,7 @@ alc_iff(struct alc_softc *sc)
 			goto update;
 		}
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		mchash[crc >> 31] |= 1U << ((crc >> 26) & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
