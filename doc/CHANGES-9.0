@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.172 2020/01/31 11:33:59 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.173 2020/01/31 12:19:17 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8651,4 +8651,9 @@ sys/netipsec/ipsecif.c				1.19
 
 	Fix IPv6 over IPv4 ipsecif(4) uses wrong SP.
 	[knakahara, ticket #679]
+
+external/gpl2/groff/tmac/mdoc.local		(edited manually)
+sys/sys/param.h					(edited manually)
+
+	Welcome to 9.0_RC2 !
 
