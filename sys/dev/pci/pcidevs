@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1383.2.4 2019/11/19 13:03:32 martin Exp $
+$NetBSD: pcidevs,v 1.1383.2.5 2020/01/31 11:06:31 martin Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -651,6 +651,7 @@ vendor SYMPHONY2	0x1c1c	Symphony Labs (2nd PCI Vendor ID)
 vendor HGST		0x1c58	HGST, Inc.
 vendor BEIJING_MEMBLAZE	0x1c5f	Beijing Memblaze Technology Co. Ltd.
 vendor AMAZON		0x1d0f	Amazon.com, Inc.
+vendor AQUANTIA		0x1d6a	Aquantia
 vendor ROCKCHIP		0x1d87	Rockchip
 vendor TEKRAM2		0x1de1	Tekram Technology (2nd PCI Vendor ID)
 vendor SUNIX2		0x1fd4	SUNIX Co
@@ -1030,6 +1031,11 @@ product AMD F17_7X_IOMMU	0x1481	Family17h/7xh IOMMU
 product AMD F17_7X_RESV_SPP	0x1485	Family17h/7xh Reserved SPP
 product AMD F17_7X_USB3		0x149c	Family17h/7xh USB 3.0 Host Controller
 product AMD F14_RC		0x1510	Family14h Root Complex
+product AMD F14_PCIE_1		0x1512	Family14h PCIe
+product AMD F14_PCIE_2		0x1513	Family14h PCIe
+product AMD F14_PCIE_3		0x1514	Family14h PCIe
+product AMD F14_PCIE_4		0x1515	Family14h PCIe
+product AMD F14_PCIE_5		0x1516	Family14h PCIe
 product AMD F16_HT		0x1530	Family16h HyperTransport Configuration
 product AMD F16_ADDR		0x1531	Family16h Address Map Configuration
 product AMD F16_DRAM		0x1532	Family16h DRAM Configuration
@@ -1281,6 +1287,21 @@ product APPLE INTREPID2_ATA	0x0069	Intrepid 2 ATA
 product APPLE INTREPID2_FW	0x006a	Intrepid 2 FireWire
 product APPLE INTREPID2_GMAC	0x006b	Intrepid 2 GMAC
 product APPLE BCM5701		0x1645	BCM5701
+
+/* Aquantia Corp. */
+product AQUANTIA AQC107		0x07b1	AQC107 10 Gigabit Network Adapter
+product AQUANTIA AQC108		0x08b1	AQC108 5 Gigabit Network Adapter
+product AQUANTIA AQC109		0x09b1	AQC109 2.5 Gigabit Network Adapter
+product AQUANTIA AQC111		0x11b1	AQC111 5 Gigabit Network Adapter
+product AQUANTIA AQC112		0x12b1	AQC112 2.5 Gigabit Network Adapter
+product AQUANTIA AQC107S	0x87b1	AQC107S 10 Gigabit Network Adapter
+product AQUANTIA AQC108S	0x88b1	AQC108S 5 Gigabit Network Adapter
+product AQUANTIA AQC109S	0x89b1	AQC109S 2.5 Gigabit Network Adapter
+product AQUANTIA AQC111S	0x91b1	AQC111S 5 Gigabit Network Adapter
+product AQUANTIA AQC112S	0x92b1	AQC112S 2.5 Gigabit Network Adapter
+product AQUANTIA D107		0xd107	D107 10 Gigabit Network Adapter
+product AQUANTIA D108		0xd108	D108 5 Gigabit Network Adapter
+product AQUANTIA D109		0xd109	D109 2.5 Gigabit Network Adapter
 
 /* ARC Logic products */
 product ARC 1000PV	0xa091	1000PV
@@ -3169,6 +3190,12 @@ product INTEL S1200_ILB		0x0c60	Atom S1200 LPC bridge
 product INTEL S1200_S1220	0x0c72	Atom S1220 Internal
 product INTEL S1200_S1240	0x0c73	Atom S1240 Internal
 product INTEL S1200_S1260	0x0c75	Atom S1260 Internal
+product INTEL I219_LM11		0x0d4c	I219-LM Ethernet Connection
+product INTEL I219_V11		0x0d4d	I219-V Ethernet Connection
+product INTEL I219_LM10		0x0d4e	I219-LM Ethernet Connection
+product INTEL I219_V10		0x0d4f	I219-V Ethernet Connection
+product INTEL I219_LM12		0x0d53	I219-LM Ethernet Connection
+product INTEL I219_V12		0x0d55	I219-V Ethernet Connection
 product INTEL E5V2_DMI2		0x0e00	E5 v2 DMI2
 product INTEL E5V2_PCIE_1	0x0e01	E5 v2 PCIe x4 (DMI2 Mode)
 product INTEL E5V2_PCIE_2	0x0e02	E5 v2 PCIe
@@ -3196,8 +3223,6 @@ product INTEL E5V2_ADDRMAP	0x0e28	E5 v2 Address Map
 product INTEL E5V2_HOTPLUG	0x0e29	E5 v2 Hot-Plug
 product INTEL E5V2_IIO_RAS	0x0e2a	E5 v2 IIO RAS
 product INTEL E5V2_IOAPIC	0x0e2c	E5 v2 I/O APIC
-product INTEL E5_IOAT_RAID_1	0x3c2e	E5 I/OAT DMA (RAID 5/6)
-product INTEL E5_IOAT_RAID_2	0x3c2f	E5 I/OAT DMA (RAID 5/6)
 product INTEL E5V2_HA_2		0x0e30	E5 v2 Home Agent
 product INTEL E5V2_PCIE_PM_1	0x0e34	E5 v2 PCIe Performance Monitor
 product INTEL E5V2_QPI_PM_1	0x0e36	E5 v2 QPI Performance Monitor
@@ -3602,7 +3627,12 @@ product INTEL I219_V9		0x15e2	I219-V Ethernet Connection
 product INTEL I219_LM5		0x15e3	I219-LM Ethernet Connection
 product INTEL C3K_X553_SGMII	0x15e4	C3000 X553 1GbE SGMII (10G SKU)
 product INTEL C3K_X553_SGMII_L	0x15e5	C3000 X553 1GbE SGMII (non-10G SKU)
+product INTEL I219_LM15		0x15f4	I219-LM Ethernet Connection
 product INTEL I210_SGMII_WOF	0x15f6	I210 Ethernet (SGMII)
+product INTEL I219_LM14		0x15f9	I219-LM Ethernet Connection
+product INTEL I219_V14		0x15fa	I219-V Ethernet Connection
+product INTEL I219_LM13		0x15fb	I219-LM Ethernet Connection
+product INTEL I219_V13		0x15fc	I219-V Ethernet Connection
 product INTEL CORE5G_HB_1	0x1604	Core 5G Host Bridge
 product INTEL CORE5G_M_GT1	0x1606	HD Graphics (GT1)
 product INTEL CORE5G_HDA_1	0x160c	Core 5G HD Audio
@@ -4995,6 +5025,7 @@ product INTEL XEOND_PCIE_9	0x6f0a	Core i7-6xxxK/Xeon-D PCIe Root Port (x16, x8 o
 product INTEL XEOND_PCIE_10	0x6f0b	Core i7-6xxxK/Xeon-D PCIe Root Port (x16, x8 or x4 max)
 product INTEL XEOND_PCIE_NTBNTB	0x6f0d	Xeon-D PCIe Root Port NTB-NTB
 product INTEL XEOND_PCIE_NTBRP	0x6f0e	Xeon-D PCIe Root Port NTB-RP
+product INTEL XEOND_PCIE_NTB2ND	0x6f0f	Xeon-D PCIe Root Port NTB-secondary
 product INTEL XEOND_IIO_DEBUG_0	0x6f10	Xeon-D IIO Debug
 product INTEL XEOND_IIO_DEBUG_1	0x6f11	Xeon-D IIO Debug
 product INTEL XEOND_IIO_DEBUG_2	0x6f12	Xeon-D IIO Debug
@@ -5011,7 +5042,15 @@ product INTEL XEOND_IIO_DEBUG_12 0x6f1c	Xeon-D IIO Debug
 product INTEL XEOND_R2_0	0x6f1d	Xeon-D R2 PCIe Agent
 product INTEL XEOND_UBOX_0	0x6f1e	Core i7-6xxxK/Xeon-D Ubox
 product INTEL XEOND_UBOX_1	0x6f1f	Core i7-6xxxK/Xeon-D Ubox
-product INTEL XEOND_ADDRMAP	0x6f28	Core i7-6xxxK/Xeon-D IIO Address Map, VTD_Misc, System Management
+product INTEL XEONDNS_QD_0	0x6f20	Xeon-D NS QuickData DMA Channel 0
+product INTEL XEONDNS_QD_1	0x6f21	Xeon-D NS QuickData DMA Channel 1
+product INTEL XEONDNS_QD_2	0x6f22	Xeon-D NS QuickData DMA Channel 2
+product INTEL XEONDNS_QD_3	0x6f23	Xeon-D NS QuickData DMA Channel 3
+product INTEL XEONDNS_QD_4	0x6f24	Xeon-D NS QuickData DMA Channel 4
+product INTEL XEONDNS_QD_5	0x6f25	Xeon-D NS QuickData DMA Channel 5
+product INTEL XEONDNS_QD_6	0x6f26	Xeon-D NS QuickData DMA Channel 6
+product INTEL XEONDNS_QD_7	0x6f27	Xeon-D NS QuickData DMA Channel 7
+product INTEL XEONDNS_ADDRMAP	0x6f28	Core i7-6xxxK/Xeon-D IIO Address Map, VTD_Misc, System Management
 product INTEL XEOND_HOTPLUG	0x6f29	Xeon-D IIO Hot Plug
 product INTEL XEOND_RAS		0x6f2a	Core i7-6xxxK/Xeon-D IIO RAS, Control Status, Global Errors
 product INTEL XEOND_IOAPIC_2	0x6f2c	Core i7-6xxxK/Xeon-D I/O APIC
@@ -7028,6 +7067,7 @@ product RDC	R6060_OHCI	0x6060	R6060 USB OHCI
 product RDC	R6061_EHCI	0x6061	R6061 USB EHCI
 
 /* Realtek products */
+product REALTEK E3000 		0x3000	Killer E3000
 product REALTEK RTS5208		0x5208	RTS5208 PCI-E Card Reader
 product REALTEK RTS5209		0x5209	RTS5209 PCI-E Card Reader
 product REALTEK RTS5227		0x5227	RTS5227 PCI-E Card Reader
