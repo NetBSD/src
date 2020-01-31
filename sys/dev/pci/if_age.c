@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.60.2.4 2019/11/26 08:20:47 martin Exp $ */
+/*	$NetBSD: if_age.c,v 1.60.2.5 2020/01/31 11:14:50 martin Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.60.2.4 2019/11/26 08:20:47 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.60.2.5 2020/01/31 11:14:50 martin Exp $");
 
 #include "vlan.h"
 
@@ -2291,7 +2291,7 @@ age_rxfilter(struct age_softc *sc)
 			goto update;
 		}
 		crc = ether_crc32_be(enm->enm_addrlo, ETHER_ADDR_LEN);
-		mchash[crc >> 31] |= 1 << ((crc >> 26) & 0x1f);
+		mchash[crc >> 31] |= 1U << ((crc >> 26) & 0x1f);
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
