@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.30 2020/01/31 02:11:06 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.31 2020/01/31 02:16:26 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -634,6 +634,13 @@ struct ixl_softc {
 	struct ifmedia		 sc_media;
 	uint64_t		 sc_media_status;
 	uint64_t		 sc_media_active;
+	uint64_t		 sc_phy_types;
+	uint8_t			 sc_phy_abilities;
+	uint8_t			 sc_phy_linkspeed;
+	uint8_t			 sc_phy_fec_cfg;
+	uint16_t		 sc_eee_cap;
+	uint32_t		 sc_eeer_val;
+	uint8_t			 sc_d3_lpan;
 	kmutex_t		 sc_cfg_lock;
 	enum i40e_mac_type	 sc_mac_type;
 	uint32_t		 sc_rss_table_size;
@@ -786,7 +793,9 @@ static int	ixl_lldp_shut(struct ixl_softc *);
 static int	ixl_get_mac(struct ixl_softc *);
 static int	ixl_get_switch_config(struct ixl_softc *);
 static int	ixl_phy_mask_ints(struct ixl_softc *);
-static int	ixl_get_phy_types(struct ixl_softc *, uint64_t *);
+static int	ixl_get_phy_info(struct ixl_softc *);
+static int	ixl_set_phy_config(struct ixl_softc *, uint8_t, uint8_t, bool);
+static int	ixl_set_phy_autoselect(struct ixl_softc *);
 static int	ixl_restart_an(struct ixl_softc *);
 static int	ixl_hmc(struct ixl_softc *);
 static void	ixl_hmc_free(struct ixl_softc *);
@@ -797,6 +806,8 @@ static void	ixl_get_link_status(void *);
 static int	ixl_get_link_status_poll(struct ixl_softc *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
+static uint64_t	ixl_search_link_speed(uint8_t);
+static uint8_t	ixl_search_baudrate(uint64_t);
 static void	ixl_config_rss(struct ixl_softc *);
 static int	ixl_add_macvlan(struct ixl_softc *, const uint8_t *,
 		    uint16_t, uint16_t);
@@ -813,7 +824,7 @@ static int	ixl_match(device_t, cfdata_t, void *);
 static void	ixl_attach(device_t, device_t, void *);
 static int	ixl_detach(device_t, int);
 
-static void	ixl_media_add(struct ixl_softc *, uint64_t);
+static void	ixl_media_add(struct ixl_softc *);
 static int	ixl_media_change(struct ifnet *);
 static void	ixl_media_status(struct ifnet *, struct ifmediareq *);
 static void	ixl_watchdog(struct ifnet *);
@@ -1081,7 +1092,6 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	pcireg_t memtype;
 	uint32_t firstq, port, ari, func;
-	uint64_t phy_types = 0;
 	char xnamebuf[32];
 	int tries, rv;
 
@@ -1280,8 +1290,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto free_hmc;
 	}
 
-	if (ixl_get_phy_types(sc, &phy_types) != 0) {
-		/* error printed by ixl_get_phy_abilities */
+	if (ixl_get_phy_info(sc) != 0) {
+		/* error printed by ixl_get_phy_info */
 		goto free_hmc;
 	}
 
@@ -1380,8 +1390,14 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_media, IFM_IMASK, ixl_media_change,
 	    ixl_media_status);
 
-	ixl_media_add(sc, phy_types);
+	ixl_media_add(sc);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	if (ISSET(sc->sc_phy_abilities,
+	    (IXL_PHY_ABILITY_PAUSE_TX | IXL_PHY_ABILITY_PAUSE_RX))) {
+		ifmedia_add(&sc->sc_media,
+		    IFM_ETHER | IFM_AUTO | IFM_FLOW, 0, NULL);
+	}
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_NONE, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
@@ -1394,6 +1410,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	ixl_config_other_intr(sc);
 	ixl_enable_other_intr(sc);
+
+	ixl_set_phy_autoselect(sc);
 
 	/* remove default mac filter and replace it so we can see vlans */
 	rv = ixl_remove_macvlan(sc, sc->sc_enaddr, 0, 0);
@@ -1614,21 +1632,41 @@ ixl_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 }
 
 static void
-ixl_media_add(struct ixl_softc *sc, uint64_t phy_types)
+ixl_media_add(struct ixl_softc *sc)
 {
 	struct ifmedia *ifm = &sc->sc_media;
 	const struct ixl_phy_type *itype;
 	unsigned int i;
+	bool flow;
+
+	if (ISSET(sc->sc_phy_abilities,
+	    (IXL_PHY_ABILITY_PAUSE_TX | IXL_PHY_ABILITY_PAUSE_RX))) {
+		flow = true;
+	} else {
+		flow = false;
+	}
 
 	for (i = 0; i < __arraycount(ixl_phy_type_map); i++) {
 		itype = &ixl_phy_type_map[i];
 
-		if (ISSET(phy_types, itype->phy_type)) {
+		if (ISSET(sc->sc_phy_types, itype->phy_type)) {
 			ifmedia_add(ifm,
 			    IFM_ETHER | IFM_FDX | itype->ifm_type, 0, NULL);
 
-			if (itype->ifm_type == IFM_100_TX) {
-				ifmedia_add(ifm, IFM_ETHER | itype->ifm_type,
+			if (flow) {
+				ifmedia_add(ifm,
+				    IFM_ETHER | IFM_FDX | IFM_FLOW |
+				    itype->ifm_type, 0, NULL);
+			}
+
+			if (itype->ifm_type != IFM_100_TX)
+				continue;
+
+			ifmedia_add(ifm, IFM_ETHER | itype->ifm_type,
+			    0, NULL);
+			if (flow) {
+				ifmedia_add(ifm,
+				    IFM_ETHER | IFM_FLOW | itype->ifm_type,
 				    0, NULL);
 			}
 		}
@@ -1652,8 +1690,49 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 ixl_media_change(struct ifnet *ifp)
 {
+	struct ixl_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_media;
+	uint64_t ifm_active = sc->sc_media_active;
+	uint8_t link_speed, abilities;
 
-	return 0;
+	switch (IFM_SUBTYPE(ifm_active)) {
+	case IFM_1000_SGMII:
+	case IFM_1000_KX:
+	case IFM_10G_KX4:
+	case IFM_10G_KR:
+	case IFM_40G_KR4:
+	case IFM_20G_KR2:
+	case IFM_25G_KR:
+		/* backplanes */
+		return EINVAL;
+	}
+
+	abilities = IXL_PHY_ABILITY_AUTONEGO | IXL_PHY_ABILITY_LINKUP;
+
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_AUTO:
+		link_speed = sc->sc_phy_linkspeed;
+		break;
+	case IFM_NONE:
+		link_speed = 0;
+		CLR(abilities, IXL_PHY_ABILITY_LINKUP);
+		break;
+	default:
+		link_speed = ixl_search_baudrate(
+		    ifmedia_baudrate(ifm->ifm_media));
+	}
+
+	if (ISSET(abilities, IXL_PHY_ABILITY_LINKUP)) {
+		if (ISSET(link_speed, sc->sc_phy_linkspeed) == 0)
+			return EINVAL;
+	}
+
+	if (ifm->ifm_media & IFM_FLOW) {
+		abilities |= sc->sc_phy_abilities &
+		    (IXL_PHY_ABILITY_PAUSE_TX | IXL_PHY_ABILITY_PAUSE_RX);
+	}
+
+	return ixl_set_phy_config(sc, link_speed, abilities, false);
 }
 
 static void
@@ -4292,11 +4371,10 @@ ixl_get_phy_abilities(struct ixl_softc *sc,struct ixl_dmamem *idm)
 }
 
 static int
-ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
+ixl_get_phy_info(struct ixl_softc *sc)
 {
 	struct ixl_dmamem idm;
 	struct ixl_aq_phy_abilities *phy;
-	uint64_t phy_types;
 	int rv;
 
 	if (ixl_dmamem_alloc(sc, &idm, IXL_AQ_BUFLEN, 0) != 0) {
@@ -4323,16 +4401,77 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 
 	phy = IXL_DMA_KVA(&idm);
 
-	phy_types = le32toh(phy->phy_type);
-	phy_types |= (uint64_t)le32toh(phy->phy_type_ext) << 32;
+	sc->sc_phy_types = le32toh(phy->phy_type);
+	sc->sc_phy_types |= (uint64_t)le32toh(phy->phy_type_ext) << 32;
 
-	*phy_types_ptr = phy_types;
+	sc->sc_phy_abilities = phy->abilities;
+	sc->sc_phy_linkspeed = phy->link_speed;
+	sc->sc_phy_fec_cfg = phy->fec_cfg_curr_mod_ext_info &
+	    (IXL_AQ_ENABLE_FEC_KR | IXL_AQ_ENABLE_FEC_RS |
+	    IXL_AQ_REQUEST_FEC_KR | IXL_AQ_REQUEST_FEC_RS);
+	sc->sc_eee_cap = phy->eee_capability;
+	sc->sc_eeer_val = phy->eeer_val;
+	sc->sc_d3_lpan = phy->d3_lpan;
 
 	rv = 0;
 
 done:
 	ixl_dmamem_free(sc, &idm);
 	return rv;
+}
+
+static int
+ixl_set_phy_config(struct ixl_softc *sc,
+    uint8_t link_speed, uint8_t abilities, bool polling)
+{
+	struct ixl_aq_phy_param *param;
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	int error;
+
+	memset(&iatq, 0, sizeof(iatq));
+
+	iaq = &iatq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_SET_CONFIG);
+	param = (struct ixl_aq_phy_param *)&iaq->iaq_param;
+	param->phy_types = htole32((uint32_t)sc->sc_phy_types);
+	param->phy_type_ext = (uint8_t)(sc->sc_phy_types >> 32);
+	param->link_speed = link_speed;
+	param->abilities = abilities | IXL_AQ_PHY_ABILITY_AUTO_LINK;
+	param->fec_cfg = sc->sc_phy_fec_cfg;
+	param->eee_capability = sc->sc_eee_cap;
+	param->eeer_val = sc->sc_eeer_val;
+	param->d3_lpan = sc->sc_d3_lpan;
+
+	if (polling)
+		error = ixl_atq_poll(sc, iaq, 250);
+	else
+		error = ixl_atq_exec(sc, &iatq);
+
+	if (error != 0)
+		return error;
+
+	switch (le16toh(iaq->iaq_retval)) {
+	case IXL_AQ_RC_OK:
+		break;
+	case IXL_AQ_RC_EPERM:
+		return EPERM;
+	default:
+		return EIO;
+	}
+
+	return 0;
+}
+
+static int
+ixl_set_phy_autoselect(struct ixl_softc *sc)
+{
+	uint8_t link_speed, abilities;
+
+	link_speed = sc->sc_phy_linkspeed;
+	abilities = IXL_PHY_ABILITY_LINKUP | IXL_PHY_ABILITY_AUTONEGO;
+
+	return ixl_set_phy_config(sc, link_speed, abilities, true);
 }
 
 static int
@@ -4616,6 +4755,23 @@ ixl_search_link_speed(uint8_t link_speed)
 
 		if (ISSET(type->dev_speed, link_speed))
 			return type->net_speed;
+	}
+
+	return 0;
+}
+
+static uint8_t
+ixl_search_baudrate(uint64_t baudrate)
+{
+	const struct ixl_speed_type *type;
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(ixl_speed_type_map); i++) {
+		type = &ixl_speed_type_map[i];
+
+		if (type->net_speed == baudrate) {
+			return type->dev_speed;
+		}
 	}
 
 	return 0;
@@ -5397,8 +5553,10 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	uint64_t baudrate = 0;
 
 	status = (const struct ixl_aq_link_status *)iaq->iaq_param;
-	if (!ISSET(status->link_info, IXL_AQ_LINK_UP_FUNCTION))
+	if (!ISSET(status->link_info, IXL_AQ_LINK_UP_FUNCTION)) {
+		ifm_active |= IFM_NONE;
 		goto done;
+	}
 
 	ifm_active |= IFM_FDX;
 	ifm_status |= IFM_ACTIVE;

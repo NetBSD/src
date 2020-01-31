@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.4 2020/01/17 09:42:05 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.5 2020/01/31 02:16:26 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -265,6 +265,20 @@ struct ixl_aq_switch_config_element {
 #define IXL_PHY_TYPE_25GBASE_AOC	0x23
 #define IXL_PHY_TYPE_25GBASE_ACC	0x24
 
+#define IXL_PHY_LINK_SPEED_100MB	(1 << 1)
+#define IXL_PHY_LINK_SPEED_1000MB	(1 << 2)
+#define IXL_PHY_LINK_SPEED_10GB		(1 << 3)
+#define IXL_PHY_LINK_SPEED_40GB		(1 << 4)
+#define IXL_PHY_LINK_SPEED_20GB		(1 << 5)
+#define IXL_PHY_LINK_SPEED_25GB		(1 << 6)
+
+#define IXL_PHY_ABILITY_PAUSE_TX	(1 << 0)
+#define IXL_PHY_ABILITY_PAUSE_RX	(1 << 1)
+#define IXL_PHY_ABILITY_LOWPOW		(1 << 2)
+#define IXL_PHY_ABILITY_LINKUP		(1 << 3)
+#define IXL_PHY_ABILITY_AUTONEGO	(1 << 4)
+#define IXL_PHY_ABILITY_MODQUAL		(1 << 5)
+
 struct ixl_aq_module_desc {
 	uint8_t		oui[3];
 	uint8_t		_reserved1;
@@ -277,12 +291,6 @@ struct ixl_aq_phy_abilities {
 	uint32_t	phy_type;
 
 	uint8_t		link_speed;
-#define IXL_AQ_PHY_LINK_SPEED_100MB	(1 << 1)
-#define IXL_AQ_PHY_LINK_SPEED_1000MB	(1 << 2)
-#define IXL_AQ_PHY_LINK_SPEED_10GB	(1 << 3)
-#define IXL_AQ_PHY_LINK_SPEED_40GB	(1 << 4)
-#define IXL_AQ_PHY_LINK_SPEED_20GB	(1 << 5)
-#define IXL_AQ_PHY_LINK_SPEED_25GB	(1 << 6)
 	uint8_t		abilities;
 	uint16_t	eee_capability;
 
@@ -315,6 +323,19 @@ struct ixl_aq_phy_abilities {
 #define IXL_AQ_PHY_MAX_QMS		16
 	struct ixl_aq_module_desc
 			qualified_module[IXL_AQ_PHY_MAX_QMS];
+} __packed __aligned(4);
+
+struct ixl_aq_phy_param {
+	uint32_t	 phy_types;
+	uint8_t		 link_speed;
+	uint8_t		 abilities;
+#define IXL_AQ_PHY_ABILITY_AUTO_LINK	(1 << 5)
+	uint16_t	 eee_capability;
+	uint32_t	 eeer_val;
+	uint8_t		 d3_lpan;
+	uint8_t		 phy_type_ext;
+	uint8_t		 fec_cfg;
+	uint8_t		 config;
 } __packed __aligned(4);
 
 struct ixl_aq_link_param {
