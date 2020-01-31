@@ -1,4 +1,4 @@
-# $NetBSD: md.amd64,v 1.111 2019/10/30 11:59:02 uki Exp $
+# $NetBSD: md.amd64,v 1.112 2020/01/31 20:56:03 jmcneill Exp $
 ./usr/X11R7/bin/X					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/Xorg					xserver-xorg-server-bin	xorg
 ./usr/X11R7/bin/cvt					xserver-xorg-server-bin	xorg
@@ -35,6 +35,8 @@
 ./usr/X11R7/lib/modules/dri/r600_dri.so.0		xserver-xf86-video-radeon-drivers	xorg,llvmrt
 ./usr/X11R7/lib/modules/dri/radeon_dri.so		xserver-xf86-video-radeon-drivers	xorg
 ./usr/X11R7/lib/modules/dri/radeon_dri.so.0		xserver-xf86-video-radeon-drivers	xorg
+./usr/X11R7/lib/modules/dri/radeonsi_dri.so		xserver-xf86-video-radeon-drivers	xorg,llvmrt
+./usr/X11R7/lib/modules/dri/radeonsi_dri.so.0		xserver-xf86-video-radeon-drivers	xorg,llvmrt
 ./usr/X11R7/lib/modules/dri/s3v_dri.so			xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/s3v_dri.so.0		xserver-obsolete	obsolete
 ./usr/X11R7/lib/modules/dri/savage_dri.so		xserver-obsolete	obsolete

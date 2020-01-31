@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.41 2020/01/19 00:58:14 jmcneill Exp $
+# $NetBSD: Makefile,v 1.42 2020/01/31 20:56:03 jmcneill Exp $
 
 # Link the gallium mega driver.
 
@@ -118,7 +118,7 @@ BUILD_LLVMPIPE=1
 
 DRIVERS=		kms_swrast swrast
 .if ${BUILD_RADEON} == 1
-DRIVERS+=		r600 r300
+DRIVERS+=		r600 r300 radeonsi
 GALLIUM_SUBDIRS+=	${GALLIUM_SUBDIRS_ATI}
 .endif
 .if ${BUILD_NOUVEAU} == 1
