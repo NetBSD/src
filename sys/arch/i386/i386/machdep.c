@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.824 2019/12/10 18:04:54 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.825 2020/01/31 08:21:11 maxv Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2004, 2006, 2008, 2009, 2017
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.824 2019/12/10 18:04:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.825 2020/01/31 08:21:11 maxv Exp $");
 
 #include "opt_beep.h"
 #include "opt_compat_freebsd.h"
@@ -203,7 +203,7 @@ int cpureset_delay = 2000; /* default to 2s */
 #endif
 
 #ifdef MTRR
-struct mtrr_funcs *mtrr_funcs;
+const struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int cpu_class;
