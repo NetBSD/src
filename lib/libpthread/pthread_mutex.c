@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.70 2020/01/29 21:11:24 kamil Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.71 2020/01/31 02:37:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.70 2020/01/29 21:11:24 kamil Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.71 2020/01/31 02:37:46 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -616,8 +616,10 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 int
 pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
+#if 0
 	if (__predict_false(__uselibcstub))
 		return __libc_mutexattr_init_stub(attr);
+#endif
 
 	attr->ptma_magic = _PT_MUTEXATTR_MAGIC;
 	attr->ptma_private = (void *)PTHREAD_MUTEX_DEFAULT;
