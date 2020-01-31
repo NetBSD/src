@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.9 2019/09/24 21:33:48 maya Exp $
+#	$NetBSD: libmesa.mk,v 1.10 2020/01/31 20:58:18 jmcneill Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -534,7 +534,7 @@ CPPFLAGS+=	\
 
 .if ${MKLLVMRT} != "no"
 CPPFLAGS+=	\
-	-DHAVE_LLVM=0x0700
+	-DHAVE_LLVM=0x0900
 CXXFLAGS+=	-fno-rtti
 .endif
 
