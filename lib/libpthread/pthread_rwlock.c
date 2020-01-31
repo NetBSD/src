@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.37 2020/01/13 18:22:56 ad Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.38 2020/01/31 17:52:14 kamil Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.37 2020/01/13 18:22:56 ad Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.38 2020/01/31 17:52:14 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -91,8 +91,9 @@ pthread_rwlock_init(pthread_rwlock_t *ptr,
 	if (__predict_false(__uselibcstub))
 		return __libc_rwlock_init_stub(ptr, attr);
 
-	if (attr && (attr->ptra_magic != _PT_RWLOCKATTR_MAGIC))
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock attribute",
+	    attr == NULL || attr->ptra_magic == _PT_RWLOCKATTR_MAGIC);
+
 	ptr->ptr_magic = _PT_RWLOCK_MAGIC;
 	PTQ_INIT(&ptr->ptr_rblocked);
 	PTQ_INIT(&ptr->ptr_wblocked);
@@ -109,8 +110,10 @@ pthread_rwlock_destroy(pthread_rwlock_t *ptr)
 	if (__predict_false(__uselibcstub))
 		return __libc_rwlock_destroy_stub(ptr);
 
-	if ((ptr->ptr_magic != _PT_RWLOCK_MAGIC) ||
-	    (!PTQ_EMPTY(&ptr->ptr_rblocked)) ||
+	pthread__error(EINVAL, "Invalid rwlock",
+	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
+
+	if ((!PTQ_EMPTY(&ptr->ptr_rblocked)) ||
 	    (!PTQ_EMPTY(&ptr->ptr_wblocked)) ||
 	    (ptr->ptr_nreaders != 0) ||
 	    (ptr->ptr_owner != NULL))
@@ -156,8 +159,8 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	int error;
 
 #ifdef ERRORCHECK
-	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock",
+	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
 #endif
 
 	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
@@ -246,8 +249,8 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *ptr)
 		return __libc_rwlock_tryrdlock_stub(ptr);
 
 #ifdef ERRORCHECK
-	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock",
+	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
 #endif
 
 	/*
@@ -281,8 +284,8 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	_DIAGASSERT(((uintptr_t)self & RW_FLAGMASK) == 0);
 
 #ifdef ERRORCHECK
-	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock",
+	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
 #endif
 
 	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
@@ -372,8 +375,8 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 		return __libc_rwlock_trywrlock_stub(ptr);
 
 #ifdef ERRORCHECK
-	if (ptr->ptr_magic != _PT_RWLOCK_MAGIC)
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock",
+	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
 #endif
 
 	self = pthread__self();
@@ -451,8 +454,8 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 		return __libc_rwlock_unlock_stub(ptr);
 
 #ifdef ERRORCHECK
-	if ((ptr == NULL) || (ptr->ptr_magic != _PT_RWLOCK_MAGIC))
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock",
+	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
 #endif
 
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
@@ -650,6 +653,10 @@ int
 pthread_rwlockattr_getpshared(const pthread_rwlockattr_t * __restrict attr,
     int * __restrict pshared)
 {
+
+	pthread__error(EINVAL, "Invalid rwlock attribute",
+	    ptr->ptra_magic == _PT_RWLOCKATTR_MAGIC);
+
 	*pshared = PTHREAD_PROCESS_PRIVATE;
 	return 0;
 }
@@ -657,6 +664,9 @@ pthread_rwlockattr_getpshared(const pthread_rwlockattr_t * __restrict attr,
 int
 pthread_rwlockattr_setpshared(pthread_rwlockattr_t *attr, int pshared)
 {
+
+	pthread__error(EINVAL, "Invalid rwlock attribute",
+	    ptr->ptra_magic == _PT_RWLOCKATTR_MAGIC);
 
 	switch(pshared) {
 	case PTHREAD_PROCESS_PRIVATE:
@@ -684,9 +694,9 @@ int
 pthread_rwlockattr_destroy(pthread_rwlockattr_t *attr)
 {
 
-	if ((attr == NULL) ||
-	    (attr->ptra_magic != _PT_RWLOCKATTR_MAGIC))
-		return EINVAL;
+	pthread__error(EINVAL, "Invalid rwlock attribute",
+	    attr->ptra_magic == _PT_RWLOCKATTR_MAGIC);
+
 	attr->ptra_magic = _PT_RWLOCKATTR_DEAD;
 
 	return 0;

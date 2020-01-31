@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.71 2020/01/31 02:37:46 christos Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.72 2020/01/31 17:52:14 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.71 2020/01/31 02:37:46 christos Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.72 2020/01/31 17:52:14 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -130,6 +130,9 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_init_stub(ptm, attr);
 #endif
+
+	pthread__error(EINVAL, "Invalid mutes attribute",
+	    attr == NULL || attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
 
 	if (attr == NULL) {
 		type = PTHREAD_MUTEX_NORMAL;
