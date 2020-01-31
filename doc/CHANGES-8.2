@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.92 2020/01/28 09:36:21 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.93 2020/01/31 11:02:56 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -1975,4 +1975,32 @@ sys/dev/mii/makphyreg.h			1.10
 	  only.
 	- Fix comment. KNF.
 	[msaitoh, ticket #1493]
+
+sys/arch/x86/include/specialreg.h	1.146, 1.151-1.154, 1.156 via patch
+usr.sbin/cpuctl/arch/i386.c		1.105-1.107 via patch
+
+	- Add definitions of AMD's CPUID Fn8000_0008 %ebx.
+	- Add definitions of AMD's CPUID Fn8000_001f Encrypted Memory features.
+	- Add definition of AMD's CPUID Fn8000_000a %edx bit 11 "GMET".
+	- Define CPUID_AMD_SVM_PFThreshold correctly.
+	- Modify comment a bit for consistency.
+	- Call cpu_dcp_cacheinfo() only when the cpuid Topology Extension flag
+	  is set on AMD processor.
+	- Fix typos.
+	[msaitoh, ticket #1494]
+
+sys/dev/usb/if_urlreg.h				1.16
+
+	url(4): set inter frame gap correctly.
+	[msaitoh, ticket #1495]
+
+sys/dev/pci/if_stgereg.h			1.7
+
+	stge(4): fix max frame size.
+	[msaitoh, ticket #1496]
+
+sys/netipsec/ipsecif.c				1.19
+
+	Fix IPv6 over IPv4 ipsecif(4) uses wrong SP.
+	[knakahara, ticket #1497]
 
