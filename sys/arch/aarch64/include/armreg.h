@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.34 2020/01/28 18:02:30 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.35 2020/01/31 09:23:58 maxv Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -547,6 +547,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_FP_ACCESS	 0x07	// AXX: Access to SIMD/FP Registers
 #define	 ESR_EC_FPID		 0x08	// A32: MCR/MRC access to CP10 !EC=7
 #define	 ESR_EC_CP14_RRT	 0x0c	// A32: MRRC access to CP14
+#define	 ESR_EC_BTE_A64		 0x0d	// A64: Branch Target Exception (V8.5)
 #define	 ESR_EC_ILL_STATE	 0x0e	// AXX: Illegal Execution State
 #define	 ESR_EC_SVC_A32		 0x11	// A32: SVC Instruction Execution
 #define	 ESR_EC_HVC_A32		 0x12	// A32: HVC Instruction Execution
@@ -778,6 +779,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_IT4 		__BIT(12)	// A32: IT[4]
 #define	SPSR_IT3 		__BIT(11)	// A32: IT[3]
 #define	SPSR_IT2 		__BIT(10)	// A32: IT[2]
+#define	SPSR_A64_BTYPE 		__BIT(11,10)	// A64: BTYPE
 #define	SPSR_A64_D 		__BIT(9)	// A64: Debug Exception Mask
 #define	SPSR_A32_E 		__BIT(9)	// A32: BE Endian Mode
 #define	SPSR_A	 		__BIT(8)	// Async abort (SError) Mask
