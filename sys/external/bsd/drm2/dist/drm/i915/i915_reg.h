@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_reg.h,v 1.7.2.2 2020/01/31 11:25:09 martin Exp $	*/
+/*	$NetBSD: i915_reg.h,v 1.7.2.3 2020/01/31 11:28:38 martin Exp $	*/
 
 /* Copyright 2003 Tungsten Graphics, Inc., Cedar Park, Texas.
  * All Rights Reserved.
@@ -187,7 +187,7 @@
 
 #define GEN6_STOLEN_RESERVED		0x1082C0
 #define GEN6_STOLEN_RESERVED_ADDR_MASK	(0xFFFUL << 20)
-#define GEN7_STOLEN_RESERVED_ADDR_MASK	(0x3FFF << 18)
+#define GEN7_STOLEN_RESERVED_ADDR_MASK	(0x3FFFUL << 18)
 #define GEN6_STOLEN_RESERVED_SIZE_MASK	(3 << 4)
 #define GEN6_STOLEN_RESERVED_1M		(0 << 4)
 #define GEN6_STOLEN_RESERVED_512K	(1 << 4)
@@ -4616,7 +4616,7 @@ enum skl_disp_power_wells {
 #define   DSPFW_SPRITEA_MASK		(0x7f<<0) /* g4x */
 #define   DSPFW_SPRITEA_MASK_VLV	(0xff<<0) /* vlv/chv */
 #define DSPFW3			(dev_priv->info.display_mmio_offset + 0x7003c)
-#define   DSPFW_HPLL_SR_EN		(1<<31)
+#define   DSPFW_HPLL_SR_EN		(1U<<31)
 #define   PINEVIEW_SELF_REFRESH_EN	(1<<30)
 #define   DSPFW_CURSOR_SR_SHIFT		24
 #define   DSPFW_CURSOR_SR_MASK		(0x3f<<24)
