@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $FreeBSD$
+# $NetBSD: autounmountd,v 1.1.6.2 2020/01/31 11:19:58 martin Exp $
 #
 
 # PROVIDE: autounmountd
