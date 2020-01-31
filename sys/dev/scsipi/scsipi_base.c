@@ -1,4 +1,4 @@
-/*	$NetBSD: scsipi_base.c,v 1.182 2019/03/28 10:44:29 kardel Exp $	*/
+/*	$NetBSD: scsipi_base.c,v 1.182.4.1 2020/01/31 11:17:32 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002, 2003, 2004 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.182 2019/03/28 10:44:29 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scsipi_base.c,v 1.182.4.1 2020/01/31 11:17:32 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_scsi.h"
@@ -367,7 +367,7 @@ scsipi_get_tag(struct scsipi_xfer *xs)
 #endif
 
 	bit -= 1;
-	periph->periph_freetags[word] &= ~(1 << bit);
+	periph->periph_freetags[word] &= ~(1U << bit);
 	tag = (word << 5) | bit;
 
 	/* XXX Should eventually disallow this completely. */
@@ -398,7 +398,7 @@ scsipi_put_tag(struct scsipi_xfer *xs)
 	word = xs->xs_tag_id >> 5;
 	bit = xs->xs_tag_id & 0x1f;
 
-	periph->periph_freetags[word] |= (1 << bit);
+	periph->periph_freetags[word] |= (1U << bit);
 }
 
 /*
