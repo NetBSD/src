@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_machdep.c,v 1.9 2019/11/24 04:08:36 rin Exp $	*/
+/*	$NetBSD: netbsd32_machdep.c,v 1.10 2020/01/31 09:08:57 maxv Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.9 2019/11/24 04:08:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_machdep.c,v 1.10 2020/01/31 09:08:57 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -317,8 +317,6 @@ cpu_mcontext32_validate(struct lwp *l, const mcontext32_t *mcp)
 	KASSERT(p->p_flag & PK_32);
 
 	if (__SHIFTOUT(spsr, SPSR_M) != SPSR_M_USR32)
-		return EINVAL;
-	if ((spsr & (SPSR_A64_D|SPSR_A|SPSR_I|SPSR_F)) != 0)
 		return EINVAL;
 
 #ifdef __AARCH64EB__
