@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_fs.c,v 1.85 2019/09/26 01:32:09 christos Exp $	*/
+/*	$NetBSD: netbsd32_fs.c,v 1.86 2020/01/31 09:01:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.85 2019/09/26 01:32:09 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_fs.c,v 1.86 2020/01/31 09:01:23 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -630,7 +630,7 @@ netbsd32___fhstat50(struct lwp *l, const struct netbsd32___fhstat50_args *uap, r
 	error = do_fhstat(l, SCARG_P32(uap, fhp), SCARG(uap, fh_size), &sb);
 	if (error == 0) {
 		netbsd32_from_stat(&sb, &sb32);
-		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
+		error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	}
 	return error;
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_compat_30.c,v 1.34 2020/01/17 20:08:06 ad Exp $	*/
+/*	$NetBSD: netbsd32_compat_30.c,v 1.35 2020/01/31 09:01:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.34 2020/01/17 20:08:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_30.c,v 1.35 2020/01/31 09:01:23 maxv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include <opt_ntp.h>
@@ -199,7 +199,7 @@ compat_30_netbsd32_fhstat(struct lwp *l, const struct compat_30_netbsd32_fhstat_
 	if (error)
 		return (error);
 	netbsd32_from___stat13(&sb, &sb32);
-	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb));
+	error = copyout(&sb32, SCARG_P32(uap, sb), sizeof(sb32));
 	return (error);
 }
 
