@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.50 2020/01/31 00:49:18 thorpej Exp $	*/
+/*	$NetBSD: if_media.c,v 1.51 2020/02/01 20:56:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.50 2020/01/31 00:49:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.51 2020/02/01 20:56:16 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -120,6 +120,16 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
 	ifm->ifm_change = change_callback;
 	ifm->ifm_status = status_callback;
+}
+
+/*
+ * Free resources associated with an ifmedia.
+ */
+void
+ifmedia_fini(struct ifmedia *ifm)
+{
+
+	ifmedia_removeall(ifm);
 }
 
 int
@@ -423,13 +433,13 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 	TAILQ_FOREACH_SAFE(ife, &ifm->ifm_list, ifm_list, nife) {
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
+			if (ifm->ifm_cur == ife) {
+				ifm->ifm_cur = NULL;
+				ifm->ifm_media = IFM_NONE;
+			}
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
 			kmem_free(ife, sizeof(*ife));
 		}
-	}
-	if (inst == IFM_INST_ANY) {
-		ifm->ifm_cur = NULL;
-		ifm->ifm_media = IFM_NONE;
 	}
 }
 
