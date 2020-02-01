@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.221 2020/01/21 14:55:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.222 2020/02/01 12:55:22 thorpej Exp $ */
 
 /******************************************************************************
 
@@ -1701,11 +1701,13 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 	 * adapter->stats counters. It's required to make ifconfig -z
 	 * (SOICZIFDATA) work.
 	 */
-	ifp->if_collisions = 0;
+	/* XXX Actually, just fill in the per-cpu stats, please !!! */
 
 	/* Rx Errors */
-	ifp->if_iqdrops += total_missed_rx;
-	ifp->if_ierrors += crcerrs + rlec;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_iqdrops, total_missed_rx);
+	if_statadd_ref(nsr, if_ierrors, crcerrs + rlec);
+	IF_STAT_PUTREF(ifp);
 } /* ixgbe_update_stats_counters */
 
 /************************************************************************
