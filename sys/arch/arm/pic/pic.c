@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.55 2020/02/01 12:55:26 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.56 2020/02/01 12:55:35 riastradh Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,20 +33,20 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.55 2020/02/01 12:55:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.56 2020/02/01 12:55:35 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
 #include <sys/cpu.h>
 #include <sys/evcnt.h>
+#include <sys/interrupt.h>
 #include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/kernel.h>
 #include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/once.h>
-#include <sys/interrupt.h>
 #include <sys/xcall.h>
-#include <sys/ipi.h>
 
 #include <arm/armreg.h>
 #include <arm/cpufunc.h>
@@ -366,7 +366,6 @@ pic_dispatch(struct intrsource *is, void *frame)
 #endif
 		(void)(*func)(arg);
 
-
 	struct pic_percpu * const pcpu = percpu_getref(is->is_pic->pic_percpu);
 	KASSERT(pcpu->pcpu_magic == PICPERCPU_MAGIC);
 	pcpu->pcpu_evs[is->is_irq].ev_count++;
@@ -508,7 +507,6 @@ pic_list_unblock_irqs(struct pic_pending *pend)
 		blocked_pics &= ~__BIT(pic_id);
 	}
 }
-
 
 struct pic_softc *
 pic_list_find_pic_by_pending_ipl(struct pic_pending *pend, uint32_t ipl_mask)
