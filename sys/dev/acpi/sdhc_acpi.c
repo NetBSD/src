@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.13 2020/02/01 19:11:59 christos Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.14 2020/02/01 20:11:24 tnn Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.13 2020/02/01 19:11:59 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.14 2020/02/01 20:11:24 tnn Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ static const struct sdhc_acpi_slot {
 	{ .hid = "INT344D",		 .type = SLOT_TYPE_SD },
 	{ .hid = "NXP0003",  .uid = "0", .type = SLOT_TYPE_SD,
 					 .flags = SDHC_ESDHC_FLAGS },
-	{ .hid = "NXP0003",  .uid = "1", .type SLOT_TYPE_EMMC,
+	{ .hid = "NXP0003",  .uid = "1", .type = SLOT_TYPE_EMMC,
 					 .flags = SDHC_ESDHC_FLAGS },
 
 	/* Generic IDs last */
