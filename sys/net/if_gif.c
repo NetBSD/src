@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gif.c,v 1.151 2020/01/29 04:18:34 thorpej Exp $	*/
+/*	$NetBSD: if_gif.c,v 1.152 2020/02/01 02:57:45 riastradh Exp $	*/
 /*	$KAME: if_gif.c,v 1.76 2001/08/20 02:01:02 kjc Exp $	*/
 
 /*
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.151 2020/01/29 04:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.152 2020/02/01 02:57:45 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_gif.c,v 1.151 2020/01/29 04:18:34 thorpej Exp $")
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
 #include <sys/socket.h>
@@ -1125,7 +1126,6 @@ gif_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 	if (error)
 		goto out;
 	psref_target_init(&nvar->gv_psref, gv_psref_class);
-	membar_producer();
 	gif_update_variant(sc, nvar);
 
 	mutex_exit(&sc->gif_lock);
@@ -1202,7 +1202,6 @@ gif_delete_tunnel(struct ifnet *ifp)
 	nvar->gv_encap_cookie6 = NULL;
 	nvar->gv_output = NULL;
 	psref_target_init(&nvar->gv_psref, gv_psref_class);
-	membar_producer();
 	gif_update_variant(sc, nvar);
 
 	mutex_exit(&sc->gif_lock);
@@ -1235,7 +1234,7 @@ gif_update_variant(struct gif_softc *sc, struct gif_variant *nvar)
 
 	KASSERT(mutex_owned(&sc->gif_lock));
 
-	sc->gif_var = nvar;
+	atomic_store_release(&sc->gif_var, nvar);
 	pserialize_perform(sc->gif_psz);
 	psref_target_destroy(&ovar->gv_psref, gv_psref_class);
 
