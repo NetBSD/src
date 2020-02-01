@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.19 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.20 2020/02/01 02:32:40 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3349,7 +3349,6 @@ static void ena_keep_alive_wd(void *adapter_data,
 {
 	struct ena_adapter *adapter = (struct ena_adapter *)adapter_data;
 	struct ena_admin_aenq_keep_alive_desc *desc;
-	sbintime_t stime;
 	uint64_t rx_drops;
 
 	desc = (struct ena_admin_aenq_keep_alive_desc *)aenq_e;
@@ -3358,8 +3357,7 @@ static void ena_keep_alive_wd(void *adapter_data,
 	counter_u64_zero(adapter->hw_stats.rx_drops);
 	counter_u64_add(adapter->hw_stats.rx_drops, rx_drops);
 
-	stime = getsbinuptime();
-	(void) atomic_swap_64(&adapter->keep_alive_timestamp, stime);
+	atomic_store_release(&adapter->keep_alive_timestamp, getsbinuptime());
 }
 
 /* Check for keep alive expiration */
@@ -3373,9 +3371,7 @@ static void check_for_missing_keep_alive(struct ena_adapter *adapter)
 	if (likely(adapter->keep_alive_timeout == 0))
 		return;
 
-	/* FreeBSD uses atomic_load_acq_64() in place of the membar + read */
-	membar_sync();
-	timestamp = adapter->keep_alive_timestamp;
+	timestamp = atomic_load_acquire(&adapter->keep_alive_timestamp);
 
 	time = getsbinuptime() - timestamp;
 	if (unlikely(time > adapter->keep_alive_timeout)) {
