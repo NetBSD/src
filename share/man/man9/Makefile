@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.445 2020/01/20 18:38:18 thorpej Exp $
+#       $NetBSD: Makefile,v 1.446 2020/02/01 12:49:02 riastradh Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -663,6 +663,7 @@ MLINKS+=pcmcia.9 pcmcia_function_init.9 \
 	pcmcia.9 pcmcia_cis_read_n.9 \
 	pcmcia.9 pcmcia_scan_cis.9
 MLINKS+=percpu.9 percpu_alloc.9 \
+	percpu.9 percpu_create.9 \
 	percpu.9 percpu_free.9 \
 	percpu.9 percpu_getref.9 \
 	percpu.9 percpu_putref.9 \
