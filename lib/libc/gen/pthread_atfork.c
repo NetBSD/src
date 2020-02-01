@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_atfork.c,v 1.10 2015/01/20 18:31:25 christos Exp $	*/
+/*	$NetBSD: pthread_atfork.c,v 1.11 2020/02/01 15:38:46 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -31,15 +31,17 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: pthread_atfork.c,v 1.10 2015/01/20 18:31:25 christos Exp $");
+__RCSID("$NetBSD: pthread_atfork.c,v 1.11 2020/02/01 15:38:46 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include "namespace.h"
 
+#include <sys/types.h>
+#include <sys/mman.h>
+#include <sys/queue.h>
 #include <errno.h>
 #include <stdlib.h>
 #include <unistd.h>
-#include <sys/queue.h>
 #include "reentrant.h"
 
 #ifdef __weak_alias
@@ -73,11 +75,22 @@ static struct atfork_callback_q childq = SIMPLEQ_HEAD_INITIALIZER(childq);
 static struct atfork_callback *
 af_alloc(void)
 {
+	void *arena;
+	size_t sz;
 
 	if (atfork_builtin.fn == NULL)
 		return &atfork_builtin;
 
-	return malloc(sizeof(atfork_builtin));
+	/*
+	 * Avoid using here malloc() as this function is used on early init
+	 * and can prematuraly initialize the malloc library.
+	 * malloc() allocations here also confuse the LLVM Leak Sanitizer.
+	 */
+	sz = sizeof(atfork_builtin);
+	arena = mmap(NULL, sz, PROT_READ|PROT_WRITE, MAP_ANON, -1, 0);
+	if (arena == MAP_FAILED)
+		return NULL;
+	return arena;
 }
 
 static void
@@ -85,7 +98,7 @@ af_free(struct atfork_callback *af)
 {
 
 	if (af != &atfork_builtin)
-		free(af);
+		munmap(af, sizeof(atfork_builtin));
 }
 
 int
