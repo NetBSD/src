@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket2.c,v 1.135 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: uipc_socket2.c,v 1.136 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.135 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket2.c,v 1.136 2020/02/01 02:23:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1610,7 +1610,7 @@ sofindproc(struct socket *so, int all, void (*pr)(const char *, ...))
 			if (ff == NULL)
 				continue;
 
-			fp = ff->ff_file;
+			fp = atomic_load_consume(&ff->ff_file);
 			if (fp == NULL)
 				continue;
 
