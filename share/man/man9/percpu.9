@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.12 2017/05/31 23:54:17 chs Exp $
+.\"     $NetBSD: percpu.9,v 1.13 2020/02/01 12:49:02 riastradh Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,12 +27,13 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd May 31, 2017
+.Dd January 29, 2020
 .Dt PERCPU 9
 .Os
 .Sh NAME
 .Nm percpu ,
 .Nm percpu_alloc ,
+.Nm percpu_create ,
 .Nm percpu_free ,
 .Nm percpu_getref ,
 .Nm percpu_putref ,
@@ -43,6 +44,8 @@
 .Vt typedef void (*percpu_callback_t)(void *, void *, struct cpu_info *);
 .Ft percpu_t *
 .Fn percpu_alloc "size_t size"
+.Ft percpu_t *
+.Fn percpu_create "size_t size" "percpu_callback_t ctor" "percpu_callback_t dtor" "void *arg"
 .Ft void
 .Fn percpu_free "percpu_t *pc" "size_t size"
 .Ft void *
@@ -85,6 +88,30 @@ The storage is initialized with zeroes.
 Treat this as an expensive operation.
 .Fn percpu_alloc
 returns a handle for the per-CPU storage.
+.It Fn percpu_create "size" "ctor" "dtor" "arg"
+Like
+.Fn percpu_alloc ,
+but before returning, for each CPU, call
+.Fn "(*ctor)" p arg ci
+in the current thread, where
+.Fa p
+is the pointer to that CPU's storage and
+.Fa ci
+is the
+.Vt "struct cpu_info *"
+for that CPU.
+Further, arrange that
+.Fn percpu_free
+will do the same with
+.Fn "(*dtor)" p arg ci .
+.Pp
+.Fa ctor
+and
+.Fa dtor
+.Em MAY
+sleep, e.g. to allocate memory or to wait for users to drain before
+deallocating memory.
+Do not rely on any particular order of iteration over the CPUs.
 .It Fn percpu_free "pc" "size"
 Call this in thread context to
 return to the system the per-CPU storage held by
@@ -93,7 +120,9 @@ return to the system the per-CPU storage held by
 should match the
 .Fa size
 passed to
-.Fn percpu_alloc .
+.Fn percpu_alloc
+or
+.Fn percpu_create .
 When
 .Fn percpu_free
 returns,
@@ -111,6 +140,13 @@ Follow each
 .Fn percpu_getref
 call with a matching call to
 .Fn percpu_putref .
+.Pp
+Caller
+.Em MUST NOT
+sleep after
+.Fn percpu_getref ,
+not even on an adaptive lock, before
+.Fn percpu_putref .
 .It Fn percpu_putref "pc"
 Indicate that the thread is finished
 with the pointer returned by the matching
@@ -118,9 +154,9 @@ call to
 .Fn percpu_getref .
 Re-enables preemption.
 .It Fn percpu_foreach "pc" "cb" "arg"
-On each CPU, for
+For each CPU, with
 .Fa ci
-the corresponding
+being the corresponding
 .Vt "struct cpu_info *"
 and
 .Fa "p"
@@ -132,12 +168,17 @@ run
 .Fa "arg"
 .Fa "ci"
 .Fc .
-Call this in thread context.
+The call to
 .Fa cb
-should be non-blocking and fast.
-Do not rely on
+runs in the current thread; use
+.Xr xcall 9
+for cross-calls to run logic on other CPUs.
+.Pp
+Must be used in thread context.
 .Fa cb
-to be run on the CPUs in any particular order.
+.Em MUST NOT
+sleep except on adaptive locks, and should be fast.
+Do not rely on any particular order of iteration over the CPUs.
 .El
 .Sh CODE REFERENCES
 The
