@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.68 2019/12/05 05:29:27 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.69 2020/02/01 20:56:16 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -899,6 +899,9 @@ struct ifmedia {
 
 /* Initialize an interface's struct if_media field. */
 void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
+
+/* Release resourecs associated with an ifmedia. */
+void	ifmedia_fini(struct ifmedia *);
 
 int	ifmedia_change(struct ifmedia *, struct ifnet *);
 
