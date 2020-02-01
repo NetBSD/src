@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.11 2020/02/01 13:40:55 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.12 2020/02/01 18:24:24 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.11 2020/02/01 13:40:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.12 2020/02/01 18:24:24 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,22 +78,22 @@ static const struct sdhc_acpi_slot {
 #define	SLOT_TYPE_EMMC	1	/* eMMC */
 	uint32_t flags;
 } sdhc_acpi_slot_map[] = {
-	{ "80865ACA",	NULL,	SLOT_TYPE_SD },
-	{ "80865ACC",	NULL,	SLOT_TYPE_EMMC },
-	{ "80865AD0",	NULL,	SLOT_TYPE_SD },
-	{ "80860F14",   "1",	SLOT_TYPE_EMMC },
-	{ "80860F14",   "3",	SLOT_TYPE_SD },
-	{ "80860F16",   NULL,	SLOT_TYPE_SD },
-	{ "INT33BB",	"2",	SLOT_TYPE_SD },
-	{ "INT33BB",	"3",	SLOT_TYPE_SD },
-	{ "INT33C6",	NULL,	SLOT_TYPE_SD },
-	{ "INT3436",	NULL,	SLOT_TYPE_SD },
-	{ "INT344D",	NULL,	SLOT_TYPE_SD },
+	{ "80865ACA",	NULL,	SLOT_TYPE_SD,	0 },
+	{ "80865ACC",	NULL,	SLOT_TYPE_EMMC,	0 },
+	{ "80865AD0",	NULL,	SLOT_TYPE_SD,	0 },
+	{ "80860F14",   "1",	SLOT_TYPE_EMMC,	0 },
+	{ "80860F14",   "3",	SLOT_TYPE_SD,	0 },
+	{ "80860F16",   NULL,	SLOT_TYPE_SD,	0 },
+	{ "INT33BB",	"2",	SLOT_TYPE_SD,	0 },
+	{ "INT33BB",	"3",	SLOT_TYPE_SD,	0 },
+	{ "INT33C6",	NULL,	SLOT_TYPE_SD,	0 },
+	{ "INT3436",	NULL,	SLOT_TYPE_SD,	0 },
+	{ "INT344D",	NULL,	SLOT_TYPE_SD,	0 },
 	{ "NXP0003",	"0",	SLOT_TYPE_SD,	SDHC_ESDHC_FLAGS },
 	{ "NXP0003",	"1",	SLOT_TYPE_EMMC,	SDHC_ESDHC_FLAGS },
 	/* Generic IDs last */
-	{ "PNP0D40",	NULL,	SLOT_TYPE_SD },
-	{ "PNP0FFF",	"3",	SLOT_TYPE_SD },
+	{ "PNP0D40",	NULL,	SLOT_TYPE_SD,	0 },
+	{ "PNP0FFF",	"3",	SLOT_TYPE_SD,	0 },
 };
 
 static const struct sdhc_acpi_slot *
