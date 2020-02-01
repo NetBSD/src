@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.h,v 1.6 2019/11/01 04:28:14 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.h,v 1.7 2020/02/01 02:57:55 riastradh Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -165,9 +165,8 @@ if_ipsec_getref_variant(struct ipsec_softc *sc, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	var = sc->ipsec_var;
+	var = atomic_load_consume(&sc->ipsec_var);
 	KASSERT(var != NULL);
-	membar_datadep_consumer();
 	psref_acquire(psref, &var->iv_psref, iv_psref_class);
 	pserialize_read_exit(s);
 
