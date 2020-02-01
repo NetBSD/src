@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.41 2020/01/29 04:18:34 thorpej Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.42 2020/02/01 02:58:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.41 2020/01/29 04:18:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.42 2020/02/01 02:58:05 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1061,7 +1061,6 @@ l2tp_set_tunnel(struct ifnet *ifp, struct sockaddr *src, struct sockaddr *dst)
 		encap_lock_exit();
 		goto error;
 	}
-	membar_producer();
 	l2tp_variant_update(sc, nvar);
 
 	mutex_exit(&sc->l2tp_lock);
@@ -1110,7 +1109,6 @@ l2tp_delete_tunnel(struct ifnet *ifp)
 	psref_target_init(&nvar->lv_psref, lv_psref_class);
 	nvar->lv_psrc = NULL;
 	nvar->lv_pdst = NULL;
-	membar_producer();
 	l2tp_variant_update(sc, nvar);
 
 	mutex_exit(&sc->l2tp_lock);
@@ -1185,7 +1183,6 @@ l2tp_set_session(struct l2tp_softc *sc, uint32_t my_sess_id,
 	psref_target_init(&nvar->lv_psref, lv_psref_class);
 	nvar->lv_my_sess_id = my_sess_id;
 	nvar->lv_peer_sess_id = peer_sess_id;
-	membar_producer();
 
 	mutex_enter(&l2tp_hash.lock);
 	if (ovar->lv_my_sess_id > 0 && ovar->lv_peer_sess_id > 0) {
@@ -1226,7 +1223,6 @@ l2tp_clear_session(struct l2tp_softc *sc)
 	psref_target_init(&nvar->lv_psref, lv_psref_class);
 	nvar->lv_my_sess_id = 0;
 	nvar->lv_peer_sess_id = 0;
-	membar_producer();
 
 	mutex_enter(&l2tp_hash.lock);
 	if (ovar->lv_my_sess_id > 0 && ovar->lv_peer_sess_id > 0) {
@@ -1253,7 +1249,7 @@ l2tp_lookup_session_ref(uint32_t id, struct psref *psref)
 	s = pserialize_read_enter();
 	PSLIST_READER_FOREACH(sc, &l2tp_hash.lists[idx], struct l2tp_softc,
 	    l2tp_hash) {
-		struct l2tp_variant *var = sc->l2tp_var;
+		struct l2tp_variant *var = atomic_load_consume(&sc->l2tp_var);
 		if (var == NULL)
 			continue;
 		if (var->lv_my_sess_id != id)
@@ -1282,17 +1278,12 @@ l2tp_variant_update(struct l2tp_softc *sc, struct l2tp_variant *nvar)
 
 	KASSERT(mutex_owned(&sc->l2tp_lock));
 
-	sc->l2tp_var = nvar;
+	atomic_store_release(&sc->l2tp_var, nvar);
 	pserialize_perform(sc->l2tp_psz);
 	psref_target_destroy(&ovar->lv_psref, lv_psref_class);
 
-	/*
-	 * In the manual of atomic_swap_ptr(3), there is no mention if 2nd
-	 * argument is rewrite or not. So, use sc->l2tp_var instead of nvar.
-	 */
-	if (sc->l2tp_var != NULL) {
-		if (sc->l2tp_var->lv_psrc != NULL
-		    && sc->l2tp_var->lv_pdst != NULL)
+	if (nvar != NULL) {
+		if (nvar->lv_psrc != NULL && nvar->lv_pdst != NULL)
 			ifp->if_flags |= IFF_RUNNING;
 		else
 			ifp->if_flags &= ~IFF_RUNNING;
@@ -1323,7 +1314,6 @@ l2tp_set_cookie(struct l2tp_softc *sc, uint64_t my_cookie, u_int my_cookie_len,
 	nvar->lv_peer_cookie = peer_cookie;
 	nvar->lv_peer_cookie_len = peer_cookie_len;
 	nvar->lv_use_cookie = L2TP_COOKIE_ON;
-	membar_producer();
 	l2tp_variant_update(sc, nvar);
 
 	mutex_exit(&sc->l2tp_lock);
@@ -1357,7 +1347,6 @@ l2tp_clear_cookie(struct l2tp_softc *sc)
 	nvar->lv_peer_cookie = 0;
 	nvar->lv_peer_cookie_len = 0;
 	nvar->lv_use_cookie = L2TP_COOKIE_OFF;
-	membar_producer();
 	l2tp_variant_update(sc, nvar);
 
 	mutex_exit(&sc->l2tp_lock);
@@ -1376,7 +1365,6 @@ l2tp_set_state(struct l2tp_softc *sc, int state)
 	*nvar = *sc->l2tp_var;
 	psref_target_init(&nvar->lv_psref, lv_psref_class);
 	nvar->lv_state = state;
-	membar_producer();
 	l2tp_variant_update(sc, nvar);
 
 	if (nvar->lv_state == L2TP_STATE_UP) {
