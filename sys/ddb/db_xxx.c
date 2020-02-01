@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.72 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.73 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.72 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.73 2020/02/01 02:23:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -179,7 +179,7 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 		if ((ff = dt->dt_ff[i]) == NULL)
 			continue;
 
-		fp = ff->ff_file;
+		fp = atomic_load_consume(&ff->ff_file);
 
 		/* Only look at vnodes... */
 		if (fp != NULL && fp->f_type == DTYPE_VNODE
