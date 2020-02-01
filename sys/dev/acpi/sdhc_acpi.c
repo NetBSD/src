@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.10 2020/02/01 13:09:08 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.10 2020/02/01 13:09:08 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -103,7 +103,8 @@ sdhc_acpi_find_slot(ACPI_DEVICE_INFO *ad)
 
 	for (i = 0; i < __arraycount(sdhc_acpi_slot_map); i++) {
 		slot = &sdhc_acpi_slot_map[i];
-		if (strcmp(hid, slot->hid) == 0) {
+		const char * const slot_id[] = { slot->hid, NULL };
+		if (acpi_match_hid(ad, slot_id)) {
 			if (slot->uid == NULL ||
 			    ((ad->Valid & ACPI_VALID_UID) != 0 &&
 			     uid != NULL &&
