@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.54 2020/02/01 12:55:13 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.55 2020/02/01 12:55:26 riastradh Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.54 2020/02/01 12:55:13 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.55 2020/02/01 12:55:26 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -81,8 +81,20 @@ static void
 
 #ifdef MULTIPROCESSOR
 percpu_t *pic_pending_percpu;
+static struct pic_pending *
+pic_pending_get(void)
+{
+	return percpu_getref(pic_pending_percpu);
+}
+static void
+pic_pending_put(struct pic_pending *pend)
+{
+	percpu_putref(pic_pending_percpu);
+}
 #else
 struct pic_pending pic_pending;
+#define	pic_pending_get()	(&pic_pending)
+#define	pic_pending_put(pend)	__nothing
 #endif /* MULTIPROCESSOR */
 #endif /* __HAVE_PIC_PENDING_INTRS */
 
@@ -244,16 +256,10 @@ pic_mark_pending_source(struct pic_softc *pic, struct intrsource *is)
 	    __BIT(is->is_irq & 0x1f));
 
 	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
-#ifdef MULTIPROCESSOR
-	struct pic_pending *pend = percpu_getref(pic_pending_percpu);
-#else
-	struct pic_pending *pend = &pic_pending;
-#endif
+	struct pic_pending *pend = pic_pending_get();
 	atomic_or_32(&pend->pending_ipls, ipl_mask);
 	atomic_or_32(&pend->pending_pics, __BIT(pic->pic_id));
-#ifdef MULTIPROCESSOR
-	percpu_putref(pic_pending_percpu);
-#endif
+	pic_pending_put(pend);
 }
 
 void
@@ -296,16 +302,10 @@ pic_mark_pending_sources(struct pic_softc *pic, size_t irq_base,
 	}
 
 	atomic_or_32(&pic->pic_pending_ipls, ipl_mask);
-#ifdef MULTIPROCESSOR
-	struct pic_pending *pend = percpu_getref(pic_pending_percpu);
-#else
-	struct pic_pending *pend = &pic_pending;
-#endif
+	struct pic_pending *pend = pic_pending_get();
 	atomic_or_32(&pend->pending_ipls, ipl_mask);
 	atomic_or_32(&pend->pending_pics, __BIT(pic->pic_id));
-#ifdef MULTIPROCESSOR
-	percpu_putref(pic_pending_percpu);
-#endif
+	pic_pending_put(pend);
 	return ipl_mask;
 }
 
@@ -553,11 +553,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 		return;
 	}
 #if defined(__HAVE_PIC_PENDING_INTRS)
-#ifdef MULTIPROCESSOR
-	struct pic_pending *pend = percpu_getref(pic_pending_percpu);
-#else
-	struct pic_pending *pend = &pic_pending;
-#endif
+	struct pic_pending *pend = pic_pending_get();
 	while ((pend->pending_ipls & ~__BIT(newipl)) > __BIT(newipl)) {
 		KASSERT(pend->pending_ipls < __BIT(NIPL));
 		for (;;) {
@@ -571,9 +567,7 @@ pic_do_pending_ints(register_t psw, int newipl, void *frame)
 			pic_list_unblock_irqs(pend);
 		}
 	}
-#ifdef MULTIPROCESSOR
-	percpu_putref(pic_pending_percpu);
-#endif
+	pic_pending_put(pend);
 #endif /* __HAVE_PIC_PENDING_INTRS */
 #ifdef __HAVE_PREEMPTION
 	if (newipl == IPL_NONE && (ci->ci_astpending & __BIT(1))) {
