@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.110 2019/10/06 15:11:17 uwe Exp $ */
+/*	$NetBSD: crypto.c,v 1.111 2020/02/01 12:54:30 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.110 2019/10/06 15:11:17 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.111 2020/02/01 12:54:30 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -562,8 +562,8 @@ crypto_init0(void)
 	cryptkop_cache = pool_cache_init(sizeof(struct cryptkop),
 	    coherency_unit, 0, 0, "cryptkop", NULL, IPL_NET, NULL, NULL, NULL);
 
-	crypto_crp_qs_percpu = percpu_alloc(sizeof(struct crypto_crp_qs));
-	percpu_foreach(crypto_crp_qs_percpu, crypto_crp_qs_init_pc, NULL);
+	crypto_crp_qs_percpu = percpu_create(sizeof(struct crypto_crp_qs),
+	    crypto_crp_qs_init_pc, /*XXX*/NULL, NULL);
 
 	crypto_crp_ret_qs_init();
 
