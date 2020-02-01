@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sleepq.c,v 1.59 2020/01/26 19:01:56 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.60 2020/02/01 19:29:27 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.59 2020/01/26 19:01:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.60 2020/02/01 19:29:27 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -189,7 +189,7 @@ sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		lwp_t *l2;
-		const int pri = lwp_eprio(l);
+		const pri_t pri = lwp_eprio(l);
 
 		TAILQ_FOREACH(l2, sq, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
