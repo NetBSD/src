@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.28 2020/01/18 14:40:04 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.29 2020/02/01 09:21:49 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994,1995 Mark Brinicombe.
@@ -92,7 +92,6 @@
 
 #define arm_btop(x)			((unsigned)(x) >> PGSHIFT)
 #define arm_ptob(x)			((unsigned)(x) << PGSHIFT)
-#define arm_trunc_page(x)		((unsigned)(x) & ~PGOFSET)
 
 #ifdef _KERNEL
 #ifndef _LOCORE
