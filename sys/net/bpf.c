@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.233 2020/01/19 05:07:22 thorpej Exp $	*/
+/*	$NetBSD: bpf.c,v 1.234 2020/02/01 02:54:02 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.233 2020/01/19 05:07:22 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.234 2020/02/01 02:54:02 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -301,10 +301,13 @@ const struct cdevsw bpf_cdevsw = {
 bpfjit_func_t
 bpf_jit_generate(bpf_ctx_t *bc, void *code, size_t size)
 {
+	struct bpfjit_ops *ops = &bpfjit_module_ops;
+	bpfjit_func_t (*generate_code)(const bpf_ctx_t *,
+	    const struct bpf_insn *, size_t);
 
-	membar_consumer();
-	if (bpfjit_module_ops.bj_generate_code != NULL) {
-		return bpfjit_module_ops.bj_generate_code(bc, code, size);
+	generate_code = atomic_load_acquire(&ops->bj_generate_code);
+	if (generate_code != NULL) {
+		return generate_code(bc, code, size);
 	}
 	return NULL;
 }
@@ -1289,7 +1292,6 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 			kmem_free(fcode, size);
 			return EINVAL;
 		}
-		membar_consumer();
 		if (bpf_jit)
 			jcode = bpf_jit_generate(NULL, fcode, flen);
 	} else {
@@ -1306,8 +1308,7 @@ bpf_setf(struct bpf_d *d, struct bpf_program *fp)
 	mutex_enter(&bpf_mtx);
 	mutex_enter(d->bd_mtx);
 	oldf = d->bd_filter;
-	d->bd_filter = newf;
-	membar_producer();
+	atomic_store_release(&d->bd_filter, newf);
 	reset_d(d);
 	pserialize_perform(bpf_psz);
 	mutex_exit(d->bd_mtx);
@@ -1607,8 +1608,7 @@ bpf_deliver(struct bpf_if *bp, void *(*cpfn)(void *, const void *, size_t),
 		atomic_inc_ulong(&d->bd_rcount);
 		BPF_STATINC(recv);
 
-		filter = d->bd_filter;
-		membar_datadep_consumer();
+		filter = atomic_load_consume(&d->bd_filter);
 		if (filter != NULL) {
 			if (filter->bf_jitcode != NULL)
 				slen = filter->bf_jitcode(NULL, &args);
@@ -2308,13 +2308,6 @@ sysctl_net_bpf_jit(SYSCTLFN_ARGS)
 		return error;
 
 	bpf_jit = newval;
-
-	/*
-	 * Do a full sync to publish new bpf_jit value and
-	 * update bpfjit_module_ops.bj_generate_code variable.
-	 */
-	membar_sync();
-
 	if (newval && bpfjit_module_ops.bj_generate_code == NULL) {
 		printf("JIT compilation is postponed "
 		    "until after bpfjit module is loaded\n");
