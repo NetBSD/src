@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.12 2020/02/01 18:24:24 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.13 2020/02/01 19:11:59 christos Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.12 2020/02/01 18:24:24 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.13 2020/02/01 19:11:59 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -78,22 +78,25 @@ static const struct sdhc_acpi_slot {
 #define	SLOT_TYPE_EMMC	1	/* eMMC */
 	uint32_t flags;
 } sdhc_acpi_slot_map[] = {
-	{ "80865ACA",	NULL,	SLOT_TYPE_SD,	0 },
-	{ "80865ACC",	NULL,	SLOT_TYPE_EMMC,	0 },
-	{ "80865AD0",	NULL,	SLOT_TYPE_SD,	0 },
-	{ "80860F14",   "1",	SLOT_TYPE_EMMC,	0 },
-	{ "80860F14",   "3",	SLOT_TYPE_SD,	0 },
-	{ "80860F16",   NULL,	SLOT_TYPE_SD,	0 },
-	{ "INT33BB",	"2",	SLOT_TYPE_SD,	0 },
-	{ "INT33BB",	"3",	SLOT_TYPE_SD,	0 },
-	{ "INT33C6",	NULL,	SLOT_TYPE_SD,	0 },
-	{ "INT3436",	NULL,	SLOT_TYPE_SD,	0 },
-	{ "INT344D",	NULL,	SLOT_TYPE_SD,	0 },
-	{ "NXP0003",	"0",	SLOT_TYPE_SD,	SDHC_ESDHC_FLAGS },
-	{ "NXP0003",	"1",	SLOT_TYPE_EMMC,	SDHC_ESDHC_FLAGS },
+	{ .hid = "80865ACA",		 .type = SLOT_TYPE_SD },
+	{ .hid = "80865ACC",		 .type = SLOT_TYPE_EMMC },
+	{ .hid = "80865AD0",		 .type = SLOT_TYPE_SD },
+	{ .hid = "80860F14", .uid = "1", .type = SLOT_TYPE_EMMC },
+	{ .hid = "80860F14", .uid = "3", .type = SLOT_TYPE_SD },
+	{ .hid = "80860F16",   		 .type = SLOT_TYPE_SD },
+	{ .hid = "INT33BB",  .uid = "2", .type = SLOT_TYPE_SD },
+	{ .hid = "INT33BB",  .uid = "3", .type = SLOT_TYPE_SD },
+	{ .hid = "INT33C6",		 .type = SLOT_TYPE_SD },
+	{ .hid = "INT3436",		 .type = SLOT_TYPE_SD },
+	{ .hid = "INT344D",		 .type = SLOT_TYPE_SD },
+	{ .hid = "NXP0003",  .uid = "0", .type = SLOT_TYPE_SD,
+					 .flags = SDHC_ESDHC_FLAGS },
+	{ .hid = "NXP0003",  .uid = "1", .type SLOT_TYPE_EMMC,
+					 .flags = SDHC_ESDHC_FLAGS },
+
 	/* Generic IDs last */
-	{ "PNP0D40",	NULL,	SLOT_TYPE_SD,	0 },
-	{ "PNP0FFF",	"3",	SLOT_TYPE_SD,	0 },
+	{ .hid = "PNP0D40",		 .type = SLOT_TYPE_SD },
+	{ .hid = "PNP0FFF",  .uid = "3", .type = SLOT_TYPE_SD },
 };
 
 static const struct sdhc_acpi_slot *
