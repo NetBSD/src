@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_descrip.c,v 1.35 2019/09/15 16:25:57 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.36 2020/02/01 02:23:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.35 2019/09/15 16:25:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.36 2020/02/01 02:23:04 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +345,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	} */
 	int fd, i, tmp, error, cmd, newmin;
 	filedesc_t *fdp;
+	fdtab_t *dt;
 	file_t *fp;
 	struct flock fl;
 	bool cloexec = false;
@@ -413,7 +414,8 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_GETFD:
-		*retval = fdp->fd_dt->dt_ff[fd]->ff_exclose;
+		dt = atomic_load_consume(&fdp->fd_dt);
+		*retval = dt->dt_ff[fd]->ff_exclose;
 		break;
 
 	case F_SETFD:

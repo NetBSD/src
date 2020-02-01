@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.195 2020/02/01 02:23:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194 2019/07/29 09:42:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.195 2020/02/01 02:23:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1523,6 +1523,7 @@ static int
 unp_internalize(struct mbuf **controlp)
 {
 	filedesc_t *fdescp = curlwp->l_fd;
+	fdtab_t *dt;
 	struct mbuf *control = *controlp;
 	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
 	file_t **rp, **files;
@@ -1585,7 +1586,8 @@ unp_internalize(struct mbuf **controlp)
 	fdp = (int *)CMSG_DATA(cm) + nfds;
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
-		fp = fdescp->fd_dt->dt_ff[*--fdp]->ff_file;
+		dt = atomic_load_consume(&fdescp->fd_dt);
+		fp = dt->dt_ff[*--fdp]->ff_file;
 		KASSERT(fp != NULL);
 		mutex_enter(&fp->f_lock);
 		*--rp = fp;
