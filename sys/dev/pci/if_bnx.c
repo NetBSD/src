@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.89 2019/12/27 08:22:50 msaitoh Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.90 2020/02/01 07:12:40 thorpej Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.89 2019/12/27 08:22:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.90 2020/02/01 07:12:40 thorpej Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -4685,7 +4685,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 			    len < (BNX_MIN_MTU - ETHER_CRC_LEN) ||
 			    len >
 			    (BNX_MAX_JUMBO_ETHER_MTU_VLAN - ETHER_CRC_LEN)) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				DBRUNIF(1, sc->l2fhdr_status_errors++);
 
 				/* Reuse the mbuf for a new frame. */
@@ -4710,7 +4710,7 @@ bnx_rx_intr(struct bnx_softc *sc)
 				    "Failed to allocate "
 				    "new mbuf, incoming frame dropped!\n"));
 
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 
 				/* Try and reuse the exisitng mbuf. */
 				if (bnx_add_buf(sc, m, &sw_prod,
@@ -4911,7 +4911,7 @@ bnx_tx_intr(struct bnx_softc *sc)
 			m_freem(pkt->pkt_mbuf);
 			DBRUNIF(1, sc->tx_mbuf_alloc--);
 
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 			mutex_enter(&sc->tx_pkt_mtx);
 			TAILQ_INSERT_TAIL(&sc->tx_free_pkts, pkt, pkt_entry);
@@ -5456,7 +5456,7 @@ bnx_watchdog(struct ifnet *ifp)
 
 	bnx_init(ifp);
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 }
 
 /*
@@ -5672,22 +5672,31 @@ bnx_stats_update(struct bnx_softc *sc)
 
 	stats = (struct statistics_block *)sc->stats_block;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	uint64_t value;
+
 	/*
 	 * Update the interface statistics from the
 	 * hardware statistics.
 	 */
-	ifp->if_collisions = (u_long)stats->stat_EtherStatsCollisions;
+	value = (u_long)stats->stat_EtherStatsCollisions;
+	if_statadd_ref(nsr, if_collisions, value - sc->if_stat_collisions);
+	sc->if_stat_collisions = value;
 
-	ifp->if_ierrors = (u_long)stats->stat_EtherStatsUndersizePkts +
+	value = (u_long)stats->stat_EtherStatsUndersizePkts +
 	    (u_long)stats->stat_EtherStatsOverrsizePkts +
 	    (u_long)stats->stat_IfInMBUFDiscards +
 	    (u_long)stats->stat_Dot3StatsAlignmentErrors +
 	    (u_long)stats->stat_Dot3StatsFCSErrors;
+	if_statadd_ref(nsr, if_ierrors, value - sc->if_stat_ierrors);
+	sc->if_stat_ierrors = value;
 
-	ifp->if_oerrors = (u_long)
+	value = (u_long)
 	    stats->stat_emac_tx_stat_dot3statsinternalmactransmiterrors +
 	    (u_long)stats->stat_Dot3StatsExcessiveCollisions +
 	    (u_long)stats->stat_Dot3StatsLateCollisions;
+	if_statadd_ref(nsr, if_oerrors, value - sc->if_stat_oerrors);
+	sc->if_stat_oerrors = value;
 
 	/*
 	 * Certain controllers don't report
@@ -5695,8 +5704,12 @@ bnx_stats_update(struct bnx_softc *sc)
 	 * See errata E11_5708CA0_1165.
 	 */
 	if (!(BNX_CHIP_NUM(sc) == BNX_CHIP_NUM_5706) &&
-	    !(BNX_CHIP_ID(sc) == BNX_CHIP_ID_5708_A0))
-		ifp->if_oerrors += (u_long) stats->stat_Dot3StatsCarrierSenseErrors;
+	    !(BNX_CHIP_ID(sc) == BNX_CHIP_ID_5708_A0)) {
+		if_statadd_ref(nsr, if_oerrors,
+		    (u_long) stats->stat_Dot3StatsCarrierSenseErrors);
+	}
+
+	IF_STAT_PUTREF(ifp);
 
 	/*
 	 * Update the sysctl statistics from the
