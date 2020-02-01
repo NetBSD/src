@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.278 2020/01/29 03:16:28 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.279 2020/02/01 21:11:10 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,6 +62,12 @@
 
 #ifndef _NET_IF_H_
 #define _NET_IF_H_
+
+/*
+ * Temporary, to allow for a quick disable if problems are discovered
+ * during a transition period.
+ */
+#define	__IF_STATS_PERCPU
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
