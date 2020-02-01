@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.20 2019/12/05 03:21:08 riastradh Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.21 2020/02/01 12:49:02 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.20 2019/12/05 03:21:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.21 2020/02/01 12:49:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -47,14 +47,12 @@ __KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.20 2019/12/05 03:21:08 riastradh E
 #define	PERCPU_QCACHE_MAX	0
 #define	PERCPU_IMPORT_SIZE	2048
 
-#if defined(DIAGNOSTIC)
-#define	MAGIC	0x50435055	/* "PCPU" */
-#define	percpu_encrypt(pc)	((pc) ^ MAGIC)
-#define	percpu_decrypt(pc)	((pc) ^ MAGIC)
-#else /* defined(DIAGNOSTIC) */
-#define	percpu_encrypt(pc)	(pc)
-#define	percpu_decrypt(pc)	(pc)
-#endif /* defined(DIAGNOSTIC) */
+struct percpu {
+	unsigned		pc_offset;
+	size_t			pc_size;
+	percpu_callback_t	pc_dtor;
+	void			*pc_cookie;
+};
 
 static krwlock_t	percpu_swap_lock	__cacheline_aligned;
 static kmutex_t		percpu_allocation_lock	__cacheline_aligned;
@@ -71,7 +69,7 @@ cpu_percpu(struct cpu_info *ci)
 static unsigned int
 percpu_offset(percpu_t *pc)
 {
-	const unsigned int off = percpu_decrypt((uintptr_t)pc);
+	const unsigned int off = pc->pc_offset;
 
 	KASSERT(off < percpu_nextoff);
 	return off;
@@ -253,14 +251,56 @@ percpu_init_cpu(struct cpu_info *ci)
 percpu_t *
 percpu_alloc(size_t size)
 {
+
+	return percpu_create(size, NULL, NULL, NULL);
+}
+
+/*
+ * percpu_create: allocate percpu storage and associate ctor/dtor with it
+ *
+ * => called in thread context.
+ * => considered as an expensive and rare operation.
+ * => allocated storage is initialized by ctor, or zeros if ctor is null
+ * => percpu_free will call dtor first, if dtor is nonnull
+ * => ctor or dtor may sleep, even on allocation
+ */
+
+percpu_t *
+percpu_create(size_t size, percpu_callback_t ctor, percpu_callback_t dtor,
+    void *cookie)
+{
 	vmem_addr_t offset;
 	percpu_t *pc;
 
 	ASSERT_SLEEPABLE();
 	(void)vmem_alloc(percpu_offset_arena, size, VM_SLEEP | VM_BESTFIT,
 	    &offset);
-	pc = (percpu_t *)percpu_encrypt((uintptr_t)offset);
-	percpu_zero(pc, size);
+
+	pc = kmem_alloc(sizeof(*pc), KM_SLEEP);
+	pc->pc_offset = offset;
+	pc->pc_size = size;
+	pc->pc_dtor = dtor;
+	pc->pc_cookie = cookie;
+
+	if (ctor) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		void *buf;
+
+		buf = kmem_alloc(size, KM_SLEEP);
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			memset(buf, 0, size);
+			(*ctor)(buf, cookie, ci);
+			percpu_traverse_enter();
+			memcpy(percpu_getptr_remote(pc, ci), buf, size);
+			percpu_traverse_exit();
+		}
+		explicit_memset(buf, 0, size);
+		kmem_free(buf, size);
+	} else {
+		percpu_zero(pc, size);
+	}
+
 	return pc;
 }
 
@@ -276,7 +316,27 @@ percpu_free(percpu_t *pc, size_t size)
 {
 
 	ASSERT_SLEEPABLE();
+	KASSERT(size == pc->pc_size);
+
+	if (pc->pc_dtor) {
+		CPU_INFO_ITERATOR cii;
+		struct cpu_info *ci;
+		void *buf;
+
+		buf = kmem_alloc(size, KM_SLEEP);
+		for (CPU_INFO_FOREACH(cii, ci)) {
+			percpu_traverse_enter();
+			memcpy(buf, percpu_getptr_remote(pc, ci), size);
+			explicit_memset(percpu_getptr_remote(pc, ci), 0, size);
+			percpu_traverse_exit();
+			(*pc->pc_dtor)(buf, pc->pc_cookie, ci);
+		}
+		explicit_memset(buf, 0, size);
+		kmem_free(buf, size);
+	}
+
 	vmem_free(percpu_offset_arena, (vmem_addr_t)percpu_offset(pc), size);
+	kmem_free(pc, sizeof(*pc));
 }
 
 /*
