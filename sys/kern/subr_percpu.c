@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.22 2020/02/01 12:51:18 riastradh Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.23 2020/02/01 12:53:41 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,12 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.22 2020/02/01 12:51:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.23 2020/02/01 12:53:41 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
-#include <sys/kmem.h>
 #include <sys/kernel.h>
+#include <sys/kmem.h>
 #include <sys/mutex.h>
 #include <sys/percpu.h>
 #include <sys/rwlock.h>
