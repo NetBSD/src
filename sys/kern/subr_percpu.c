@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.21 2020/02/01 12:49:02 riastradh Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.22 2020/02/01 12:51:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.21 2020/02/01 12:49:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.22 2020/02/01 12:51:18 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -55,9 +55,11 @@ struct percpu {
 };
 
 static krwlock_t	percpu_swap_lock	__cacheline_aligned;
-static kmutex_t		percpu_allocation_lock	__cacheline_aligned;
-static vmem_t *		percpu_offset_arena	__cacheline_aligned;
-static unsigned int	percpu_nextoff		__cacheline_aligned;
+static vmem_t *		percpu_offset_arena	__read_mostly;
+static struct {
+	kmutex_t	lock;
+	unsigned int	nextoff;
+} percpu_allocation __cacheline_aligned;
 
 static percpu_cpu_t *
 cpu_percpu(struct cpu_info *ci)
@@ -71,7 +73,7 @@ percpu_offset(percpu_t *pc)
 {
 	const unsigned int off = pc->pc_offset;
 
-	KASSERT(off < percpu_nextoff);
+	KASSERT(off < percpu_allocation.nextoff);
 	return off;
 }
 
@@ -172,10 +174,10 @@ percpu_backend_alloc(vmem_t *dummy, vmem_size_t size, vmem_size_t *resultsize,
 		return ENOMEM;
 
 	size = roundup(size, PERCPU_IMPORT_SIZE);
-	mutex_enter(&percpu_allocation_lock);
-	offset = percpu_nextoff;
-	percpu_nextoff = nextoff = percpu_nextoff + size;
-	mutex_exit(&percpu_allocation_lock);
+	mutex_enter(&percpu_allocation.lock);
+	offset = percpu_allocation.nextoff;
+	percpu_allocation.nextoff = nextoff = percpu_allocation.nextoff + size;
+	mutex_exit(&percpu_allocation.lock);
 
 	percpu_cpu_enlarge(nextoff);
 
@@ -213,8 +215,8 @@ percpu_init(void)
 
 	ASSERT_SLEEPABLE();
 	rw_init(&percpu_swap_lock);
-	mutex_init(&percpu_allocation_lock, MUTEX_DEFAULT, IPL_NONE);
-	percpu_nextoff = PERCPU_QUANTUM_SIZE;
+	mutex_init(&percpu_allocation.lock, MUTEX_DEFAULT, IPL_NONE);
+	percpu_allocation.nextoff = PERCPU_QUANTUM_SIZE;
 
 	percpu_offset_arena = vmem_xcreate("percpu", 0, 0, PERCPU_QUANTUM_SIZE,
 	    percpu_backend_alloc, NULL, NULL, PERCPU_QCACHE_MAX, VM_SLEEP,
@@ -231,7 +233,7 @@ void
 percpu_init_cpu(struct cpu_info *ci)
 {
 	percpu_cpu_t * const pcc = cpu_percpu(ci);
-	size_t size = percpu_nextoff; /* XXX racy */
+	size_t size = percpu_allocation.nextoff; /* XXX racy */
 
 	ASSERT_SLEEPABLE();
 	pcc->pcc_size = size;
