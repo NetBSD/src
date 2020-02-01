@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.113 2019/11/10 21:16:36 chs Exp $ */
+/* $NetBSD: if_ti.c,v 1.114 2020/02/01 06:38:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.113 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.114 2020/02/01 06:38:58 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1923,13 +1923,13 @@ ti_rxeof(struct ti_softc *sc)
 			m = sc->ti_cdata.ti_rx_jumbo_chain[rxidx];
 			sc->ti_cdata.ti_rx_jumbo_chain[rxidx] = NULL;
 			if (cur_rx->ti_flags & TI_BDFLAG_ERROR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				ti_newbuf_jumbo(sc, sc->ti_jumbo, m);
 				continue;
 			}
 			if (ti_newbuf_jumbo(sc, sc->ti_jumbo, NULL)
 			    == ENOBUFS) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				ti_newbuf_jumbo(sc, sc->ti_jumbo, m);
 				continue;
 			}
@@ -1940,13 +1940,13 @@ ti_rxeof(struct ti_softc *sc)
 			dmamap = sc->mini_dmamap[rxidx];
 			sc->mini_dmamap[rxidx] = 0;
 			if (cur_rx->ti_flags & TI_BDFLAG_ERROR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				ti_newbuf_mini(sc, sc->ti_mini, m, dmamap);
 				continue;
 			}
 			if (ti_newbuf_mini(sc, sc->ti_mini, NULL, dmamap)
 			    == ENOBUFS) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				ti_newbuf_mini(sc, sc->ti_mini, m, dmamap);
 				continue;
 			}
@@ -1957,13 +1957,13 @@ ti_rxeof(struct ti_softc *sc)
 			dmamap = sc->std_dmamap[rxidx];
 			sc->std_dmamap[rxidx] = 0;
 			if (cur_rx->ti_flags & TI_BDFLAG_ERROR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				ti_newbuf_std(sc, sc->ti_std, m, dmamap);
 				continue;
 			}
 			if (ti_newbuf_std(sc, sc->ti_std, NULL, dmamap)
 			    == ENOBUFS) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				ti_newbuf_std(sc, sc->ti_std, m, dmamap);
 				continue;
 			}
@@ -2068,7 +2068,7 @@ ti_txeof_tigon1(struct ti_softc *sc)
 			    TI_TX_RING_BASE);
 		cur_tx = &sc->ti_tx_ring_nic[idx % 128];
 		if (cur_tx->ti_flags & TI_BDFLAG_END)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
 			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
 			sc->ti_cdata.ti_tx_chain[idx] = NULL;
@@ -2113,7 +2113,7 @@ ti_txeof_tigon2(struct ti_softc *sc)
 		idx = sc->ti_tx_saved_considx;
 		cur_tx = &sc->ti_rdata->ti_tx_ring[idx];
 		if (cur_tx->ti_flags & TI_BDFLAG_END)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		if (sc->ti_cdata.ti_tx_chain[idx] != NULL) {
 			m_freem(sc->ti_cdata.ti_tx_chain[idx]);
 			sc->ti_cdata.ti_tx_chain[idx] = NULL;
@@ -2181,18 +2181,17 @@ ti_intr(void *xsc)
 static void
 ti_stats_update(struct ti_softc *sc)
 {
-	struct ifnet		*ifp;
-
-	ifp = &sc->ethercom.ec_if;
+	struct ifnet *ifp = &sc->ethercom.ec_if;
 
 	TI_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
 
-	ifp->if_collisions +=
+	uint64_t collisions = 
 	   (sc->ti_rdata->ti_info.ti_stats.dot3StatsSingleCollisionFrames +
-	   sc->ti_rdata->ti_info.ti_stats.dot3StatsMultipleCollisionFrames +
-	   sc->ti_rdata->ti_info.ti_stats.dot3StatsExcessiveCollisions +
-	   sc->ti_rdata->ti_info.ti_stats.dot3StatsLateCollisions) -
-	   ifp->if_collisions;
+	    sc->ti_rdata->ti_info.ti_stats.dot3StatsMultipleCollisionFrames +
+	    sc->ti_rdata->ti_info.ti_stats.dot3StatsExcessiveCollisions +
+	    sc->ti_rdata->ti_info.ti_stats.dot3StatsLateCollisions);
+	if_statadd(ifp, if_collisions, collisions - sc->ti_if_collisions);
+	sc->ti_if_collisions = collisions;
 
 	TI_CDSTATSSYNC(sc, BUS_DMASYNC_PREREAD);
 }
@@ -2792,7 +2791,7 @@ ti_watchdog(struct ifnet *ifp)
 	ti_stop(sc);
 	ti_init(sc);
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 }
 
 /*

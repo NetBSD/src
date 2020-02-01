@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.22 2019/09/13 07:55:07 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.23 2020/02/01 06:38:58 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -1103,6 +1103,8 @@ struct ti_softc {
 	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
 
 	struct ti_chain_data	ti_cdata;	/* mbufs */
+
+	uint64_t		ti_if_collisions;
 
 	/*
 	 * Function pointers to deal with Tigon 1 vs. Tigon 2 differences.
