@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_sig.c,v 1.383 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: kern_sig.c,v 1.384 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.383 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sig.c,v 1.384 2020/02/01 02:23:23 riastradh Exp $");
 
 #include "opt_ptrace.h"
 #include "opt_dtrace.h"
@@ -1072,7 +1072,7 @@ kpsignal(struct proc *p, ksiginfo_t *ksi, void *data)
 		for (fd = 0; fd < dt->dt_nfiles; fd++) {
 			if ((ff = dt->dt_ff[fd]) == NULL)
 				continue;
-			if ((fp = ff->ff_file) == NULL)
+			if ((fp = atomic_load_consume(&ff->ff_file)) == NULL)
 				continue;
 			if (fp->f_data == data) {
 				ksi->ksi_fd = fd;

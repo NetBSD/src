@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.195 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.196 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.195 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.196 2020/02/01 02:23:23 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1587,7 +1587,7 @@ unp_internalize(struct mbuf **controlp)
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
 		dt = atomic_load_consume(&fdescp->fd_dt);
-		fp = dt->dt_ff[*--fdp]->ff_file;
+		fp = atomic_load_consume(&dt->dt_ff[*--fdp]->ff_file);
 		KASSERT(fp != NULL);
 		mutex_enter(&fp->f_lock);
 		*--rp = fp;

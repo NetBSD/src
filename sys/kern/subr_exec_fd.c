@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.9 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.10 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.9 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.10 2020/02/01 02:23:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -47,6 +47,7 @@ fd_ktrexecfd(void)
 	fdfile_t *ff;
 	lwp_t *l;
 	fdtab_t *dt;
+	file_t *fp;
 	int fd;
 
 	l = curlwp;
@@ -61,9 +62,9 @@ fd_ktrexecfd(void)
 		}
 		KASSERT(fd >= NDFDFILE ||
 		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
-		if (ff->ff_file == NULL)
+		if ((fp = atomic_load_consume(&ff->ff_file)) == NULL)
 			continue;
-		ktr_execfd(fd, ff->ff_file->f_type);
+		ktr_execfd(fd, fp->f_type);
 	}
 }
 
