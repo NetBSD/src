@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.34 2020/01/31 03:30:37 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.35 2020/02/01 12:45:05 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -434,11 +434,6 @@ struct ixl_tx_ring {
 	pcq_t			*txr_intrq;
 	void			*txr_si;
 
-	uint64_t		 txr_oerrors;	/* if_oerrors */
-	uint64_t		 txr_opackets;	/* if_opackets */
-	uint64_t		 txr_obytes;	/* if_obytes */
-	uint64_t		 txr_omcasts;	/* if_omcasts */
-
 	struct evcnt		 txr_defragged;
 	struct evcnt		 txr_defrag_failed;
 	struct evcnt		 txr_pcqdrop;
@@ -466,11 +461,6 @@ struct ixl_rx_ring {
 
 	bus_size_t		 rxr_tail;
 	unsigned int		 rxr_qid;
-
-	uint64_t		 rxr_ipackets;	/* if_ipackets */
-	uint64_t		 rxr_ibytes;	/* if_ibytes */
-	uint64_t		 rxr_iqdrops;	/* iqdrops */
-	uint64_t		 rxr_ierrors;	/* if_ierrors */
 
 	struct evcnt		 rxr_mgethdr_failed;
 	struct evcnt		 rxr_mgetcl_failed;
@@ -1842,12 +1832,10 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ixl_softc *sc = (struct ixl_softc *)ifp->if_softc;
-	struct ixl_tx_ring *txr;
-	struct ixl_rx_ring *rxr;
 	const struct sockaddr *sa;
 	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
 	int s, error = 0;
-	unsigned int i, nmtu;
+	unsigned int nmtu;
 
 	switch (cmd) {
 	case SIOCSIFMTU:
@@ -1891,45 +1879,6 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCGIFDATA:
-	case SIOCZIFDATA:
-		ifp->if_ipackets = 0;
-		ifp->if_ibytes = 0;
-		ifp->if_iqdrops = 0;
-		ifp->if_ierrors = 0;
-		ifp->if_opackets = 0;
-		ifp->if_obytes = 0;
-		ifp->if_omcasts = 0;
-
-		for (i = 0; i < sc->sc_nqueue_pairs_max; i++) {
-			txr = sc->sc_qps[i].qp_txr;
-			rxr = sc->sc_qps[i].qp_rxr;
-
-			mutex_enter(&rxr->rxr_lock);
-			ifp->if_ipackets += rxr->rxr_ipackets;
-			ifp->if_ibytes += rxr->rxr_ibytes;
-			ifp->if_iqdrops += rxr->rxr_iqdrops;
-			ifp->if_ierrors += rxr->rxr_ierrors;
-			if (cmd == SIOCZIFDATA) {
-				rxr->rxr_ipackets = 0;
-				rxr->rxr_ibytes = 0;
-				rxr->rxr_iqdrops = 0;
-				rxr->rxr_ierrors = 0;
-			}
-			mutex_exit(&rxr->rxr_lock);
-
-			mutex_enter(&txr->txr_lock);
-			ifp->if_opackets += txr->txr_opackets;
-			ifp->if_obytes += txr->txr_obytes;
-			ifp->if_omcasts += txr->txr_omcasts;
-			if (cmd == SIOCZIFDATA) {
-				txr->txr_opackets = 0;
-				txr->txr_obytes = 0;
-				txr->txr_omcasts = 0;
-			}
-			mutex_exit(&txr->txr_lock);
-		}
-		/* FALLTHROUGH */
 	default:
 		s = splnet();
 		error = ether_ioctl(ifp, cmd, data);
@@ -2787,7 +2736,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 		map = txm->txm_map;
 
 		if (ixl_load_mbuf(sc->sc_dmat, map, &m, txr) != 0) {
-			txr->txr_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m);
 			continue;
 		}
@@ -2870,6 +2819,8 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 	ring = IXL_DMA_KVA(&txr->txr_mem);
 	mask = sc->sc_tx_ring_ndescs - 1;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	do {
 		if (txlimit-- <= 0) {
 			more = 1;
@@ -2892,10 +2843,10 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 
 		m = txm->txm_m;
 		if (m != NULL) {
-			txr->txr_opackets++;
-			txr->txr_obytes += m->m_pkthdr.len;
+			if_statinc_ref(nsr, if_opackets);
+			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 			if (ISSET(m->m_flags, M_MCAST))
-				txr->txr_omcasts++;
+				if_statinc_ref(nsr, if_omcasts);
 			m_freem(m);
 		}
 
@@ -2906,6 +2857,8 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 		cons &= mask;
 		done = 1;
 	} while (cons != prod);
+
+	IF_STAT_PUTREF(ifp);
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&txr->txr_mem),
 	    0, IXL_DMA_LEN(&txr->txr_mem), BUS_DMASYNC_PREREAD);
@@ -3260,6 +3213,8 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 	ring = IXL_DMA_KVA(&rxr->rxr_mem);
 	mask = sc->sc_rx_ring_ndescs - 1;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	do {
 		if (rxlimit-- <= 0) {
 			more = 1;
@@ -3310,11 +3265,12 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
 				m_set_rcvif(m, ifp);
-				rxr->rxr_ipackets++;
-				rxr->rxr_ibytes += m->m_pkthdr.len;
+				if_statinc_ref(nsr, if_ipackets);
+				if_statadd_ref(nsr, if_ibytes,
+				    m->m_pkthdr.len);
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else {
-				rxr->rxr_ierrors++;
+				if_statinc_ref(nsr, if_ierrors);
 				m_freem(m);
 			}
 
@@ -3331,8 +3287,10 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 	if (done) {
 		rxr->rxr_cons = cons;
 		if (ixl_rxfill(sc, rxr) == -1)
-			rxr->rxr_iqdrops++;
+			if_statinc_ref(nsr, if_iqdrops);
 	}
+
+	IF_STAT_PUTREF(ifp);
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&rxr->rxr_mem),
 	    0, IXL_DMA_LEN(&rxr->rxr_mem),
