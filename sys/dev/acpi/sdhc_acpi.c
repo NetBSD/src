@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.10 2020/02/01 13:09:08 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.11 2020/02/01 13:40:55 jmcneill Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.10 2020/02/01 13:09:08 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.11 2020/02/01 13:40:55 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.10 2020/02/01 13:09:08 jmcneill Exp 
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+/* Freescale ESDHC */
+#define	SDHC_ESDHC_FLAGS	\
+    (SDHC_FLAG_HAVE_DVS|SDHC_FLAG_NO_PWR0|SDHC_FLAG_32BIT_ACCESS|SDHC_FLAG_ENHANCED)
 
 #define _COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME	("sdhc_acpi")
@@ -72,6 +76,7 @@ static const struct sdhc_acpi_slot {
 	int type;
 #define	SLOT_TYPE_SD	0	/* SD or SDIO */
 #define	SLOT_TYPE_EMMC	1	/* eMMC */
+	uint32_t flags;
 } sdhc_acpi_slot_map[] = {
 	{ "80865ACA",	NULL,	SLOT_TYPE_SD },
 	{ "80865ACC",	NULL,	SLOT_TYPE_EMMC },
@@ -84,6 +89,9 @@ static const struct sdhc_acpi_slot {
 	{ "INT33C6",	NULL,	SLOT_TYPE_SD },
 	{ "INT3436",	NULL,	SLOT_TYPE_SD },
 	{ "INT344D",	NULL,	SLOT_TYPE_SD },
+	{ "NXP0003",	"0",	SLOT_TYPE_SD,	SDHC_ESDHC_FLAGS },
+	{ "NXP0003",	"1",	SLOT_TYPE_EMMC,	SDHC_ESDHC_FLAGS },
+	/* Generic IDs last */
 	{ "PNP0D40",	NULL,	SLOT_TYPE_SD },
 	{ "PNP0FFF",	"3",	SLOT_TYPE_SD },
 };
@@ -191,6 +199,8 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	sc->sc.sc_host = kmem_zalloc(sizeof(struct sdhc_host *), KM_SLEEP);
+
+	sc->sc.sc_flags |= slot->flags;
 
 	/* Enable DMA transfer */
 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;
