@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.469 2020/01/29 03:16:28 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.470 2020/02/01 12:54:50 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.469 2020/01/29 03:16:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.470 2020/02/01 12:54:50 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -2916,17 +2916,6 @@ if_tunnel_ro_init_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 	tro->tr_lock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
 }
 
-percpu_t *
-if_tunnel_alloc_ro_percpu(void)
-{
-	percpu_t *ro_percpu;
-
-	ro_percpu = percpu_alloc(sizeof(struct tunnel_ro));
-	percpu_foreach(ro_percpu, if_tunnel_ro_init_pc, NULL);
-
-	return ro_percpu;
-}
-
 static void
 if_tunnel_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 {
@@ -2938,11 +2927,18 @@ if_tunnel_ro_fini_pc(void *p, void *arg __unused, struct cpu_info *ci __unused)
 	mutex_obj_free(tro->tr_lock);
 }
 
+percpu_t *
+if_tunnel_alloc_ro_percpu(void)
+{
+
+	return percpu_create(sizeof(struct tunnel_ro),
+	    if_tunnel_ro_init_pc, if_tunnel_ro_fini_pc, NULL);
+}
+
 void
 if_tunnel_free_ro_percpu(percpu_t *ro_percpu)
 {
 
-	percpu_foreach(ro_percpu, if_tunnel_ro_fini_pc, NULL);
 	percpu_free(ro_percpu, sizeof(struct tunnel_ro));
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_l2tp.c,v 1.42 2020/02/01 02:58:05 riastradh Exp $	*/
+/*	$NetBSD: if_l2tp.c,v 1.43 2020/02/01 12:54:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.42 2020/02/01 02:58:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_l2tp.c,v 1.43 2020/02/01 12:54:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -267,8 +267,8 @@ l2tp_clone_create(struct if_clone *ifc, int unit)
 
 	sc->l2tp_ro_percpu = if_tunnel_alloc_ro_percpu();
 
-	sc->l2tp_ifq_percpu = percpu_alloc(sizeof(struct ifqueue *));
-	percpu_foreach(sc->l2tp_ifq_percpu, l2tp_ifq_init_pc, NULL);
+	sc->l2tp_ifq_percpu = percpu_create(sizeof(struct ifqueue *),
+	    l2tp_ifq_init_pc, l2tp_ifq_fini_pc, NULL);
 	sc->l2tp_si = softint_establish(si_flags, l2tpintr_softint, sc);
 
 	mutex_enter(&l2tp_softcs.lock);
@@ -367,7 +367,6 @@ l2tp_clone_destroy(struct ifnet *ifp)
 	mutex_exit(&sc->l2tp_lock);
 
 	softint_disestablish(sc->l2tp_si);
-	percpu_foreach(sc->l2tp_ifq_percpu, l2tp_ifq_fini_pc, NULL);
 	percpu_free(sc->l2tp_ifq_percpu, sizeof(struct ifqueue *));
 
 	mutex_enter(&l2tp_softcs.lock);

@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.6 2019/09/19 04:09:34 ozaki-r Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.7 2020/02/01 12:54:51 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -188,8 +188,8 @@ wqinput_create(const char *name, void (*func)(struct mbuf *, int, int))
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	pool_init(&wqi->wqi_work_pool, sizeof(struct wqinput_work), 0, 0, 0,
 	    name, NULL, IPL_SOFTNET);
-	wqi->wqi_worklists = percpu_alloc(sizeof(struct wqinput_worklist *));
-	percpu_foreach(wqi->wqi_worklists, wqinput_percpu_init_cpu, NULL);
+	wqi->wqi_worklists = percpu_create(sizeof(struct wqinput_worklist *),
+	    wqinput_percpu_init_cpu, NULL, NULL);
 	wqi->wqi_input = func;
 
 	wqinput_sysctl_setup(name, wqi);
