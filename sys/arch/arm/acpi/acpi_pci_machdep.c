@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.14 2020/01/23 11:59:37 jmcneill Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.15 2020/02/01 13:26:43 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.14 2020/01/23 11:59:37 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.15 2020/02/01 13:26:43 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,6 +101,7 @@ static const struct acpi_pci_quirk acpi_pci_quirks[] = {
 	{ "AMAZON",	"GRAVITON",	0,		-1,	acpi_pci_graviton_init },
 	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	0,	acpi_pci_n1sdp_init },
 	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	1,	acpi_pci_n1sdp_init },
+	{ "NXP   ",     "LX2160  ",     0,              -1,	acpi_pci_layerscape_gen4_init },
 };
 
 pci_chipset_tag_t acpi_pci_md_get_chipset_tag(struct acpi_softc *, int, int);
