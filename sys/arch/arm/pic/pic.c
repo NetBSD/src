@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.52 2019/12/24 20:40:09 skrll Exp $	*/
+/*	$NetBSD: pic.c,v 1.53 2020/02/01 12:55:02 riastradh Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.52 2019/12/24 20:40:09 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.53 2020/02/01 12:55:02 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -647,12 +647,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 
 #if defined(__HAVE_PIC_PENDING_INTRS) && defined(MULTIPROCESSOR)
 	if (__predict_false(pic_pending_percpu == NULL)) {
-		pic_pending_percpu = percpu_alloc(sizeof(struct pic_pending));
-
-		/*
-		 * Now zero the per-cpu pending data.
-		 */
-		percpu_foreach(pic_pending_percpu, pic_pending_zero, NULL);
+		pic_pending_percpu = percpu_create(sizeof(struct pic_pending),
+		    pic_pending_zero, NULL, NULL);
 	}
 #endif /* __HAVE_PIC_PENDING_INTRS && MULTIPROCESSOR */
 
@@ -702,12 +698,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	 * corrupt the pointers in the evcnts themselves.  Remember, any
 	 * problem can be solved with sufficient indirection.
 	 */
-	pic->pic_percpu = percpu_alloc(sizeof(struct pic_percpu));
-
-	/*
-	 * Now allocate the per-cpu evcnts.
-	 */
-	percpu_foreach(pic->pic_percpu, pic_percpu_allocate, pic);
+	pic->pic_percpu = percpu_create(sizeof(struct pic_percpu),
+	    pic_percpu_allocate, NULL, pic);
 
 	pic->pic_sources = &pic_sources[sourcebase];
 	pic->pic_irqbase = irqbase;
