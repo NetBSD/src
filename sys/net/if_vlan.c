@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vlan.c,v 1.150 2020/01/29 04:28:27 thorpej Exp $	*/
+/*	$NetBSD: if_vlan.c,v 1.151 2020/02/01 02:58:15 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.150 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vlan.c,v 1.151 2020/02/01 02:58:15 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -780,12 +780,11 @@ vlan_getref_linkmib(struct ifvlan *sc, struct psref *psref)
 	int s;
 
 	s = pserialize_read_enter();
-	mib = sc->ifv_mib;
+	mib = atomic_load_consume(&sc->ifv_mib);
 	if (mib == NULL) {
 		pserialize_read_exit(s);
 		return NULL;
 	}
-	membar_datadep_consumer();
 	psref_acquire(psref, &mib->ifvm_psref, ifvm_psref_class);
 	pserialize_read_exit(s);
 
@@ -812,7 +811,7 @@ vlan_lookup_tag_psref(struct ifnet *ifp, uint16_t tag, struct psref *psref)
 	s = pserialize_read_enter();
 	PSLIST_READER_FOREACH(sc, &ifv_hash.lists[idx], struct ifvlan,
 	    ifv_hash) {
-		struct ifvlan_linkmib *mib = sc->ifv_mib;
+		struct ifvlan_linkmib *mib = atomic_load_consume(&sc->ifv_mib);
 		if (mib == NULL)
 			continue;
 		if (mib->ifvm_tag != tag)
@@ -835,8 +834,7 @@ vlan_linkmib_update(struct ifvlan *ifv, struct ifvlan_linkmib *nmib)
 
 	KASSERT(mutex_owned(&ifv->ifv_lock));
 
-	membar_producer();
-	ifv->ifv_mib = nmib;
+	atomic_store_release(&ifv->ifv_mib, nmib);
 
 	pserialize_perform(ifv->ifv_psz);
 	psref_target_destroy(&omib->ifvm_psref, ifvm_psref_class);
