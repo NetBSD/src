@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.76 2018/12/12 01:51:32 rin Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.77 2020/02/01 22:38:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.76 2018/12/12 01:51:32 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.77 2020/02/01 22:38:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -561,7 +561,7 @@ shmif_start(struct ifnet *ifp)
 
 		m = ether_sw_offload_tx(ifp, m);
 		if (m == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -630,7 +630,7 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 	shmif_unlockbus(busmem);
 
 	m_freem(m0);
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	DPRINTF(("shmif_start: send %d bytes at off %d\n", pktsize,
 	    busmem->shm_last));
