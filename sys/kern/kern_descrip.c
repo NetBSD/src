@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_descrip.c,v 1.244 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: kern_descrip.c,v 1.245 2020/02/01 02:23:23 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.244 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_descrip.c,v 1.245 2020/02/01 02:23:23 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -403,7 +403,7 @@ fd_getfile(unsigned fd)
 	 * If the file is not open or is being closed then put the
 	 * reference back.
 	 */
-	fp = ff->ff_file;
+	fp = atomic_load_consume(&ff->ff_file);
 	if (__predict_true(fp != NULL)) {
 		return fp;
 	}
@@ -557,7 +557,7 @@ fd_getfile2(proc_t *p, unsigned fd)
 		mutex_exit(&fdp->fd_lock);
 		return NULL;
 	}
-	if ((fp = ff->ff_file) == NULL) {
+	if ((fp = atomic_load_consume(&ff->ff_file)) == NULL) {
 		mutex_exit(&fdp->fd_lock);
 		return NULL;
 	}
@@ -595,7 +595,8 @@ fd_close(unsigned fd)
 
 	mutex_enter(&fdp->fd_lock);
 	KASSERT((ff->ff_refcnt & FR_MASK) > 0);
-	if (__predict_false(ff->ff_file == NULL)) {
+	fp = atomic_load_consume(&ff->ff_file);
+	if (__predict_false(fp == NULL)) {
 		/*
 		 * Another user of the file is already closing, and is
 		 * waiting for other users of the file to drain.  Release
@@ -620,7 +621,6 @@ fd_close(unsigned fd)
 	 * will prevent them from adding additional uses to this file
 	 * while we are closing it.
 	 */
-	fp = ff->ff_file;
 	ff->ff_file = NULL;
 	ff->ff_exclose = false;
 
@@ -1150,7 +1150,8 @@ fd_affix(proc_t *p, file_t *fp, unsigned fd)
 	 * The memory barriers provided by lock activity in this routine
 	 * ensure that any updates to the file structure become globally
 	 * visible before the file becomes visible to other LWPs in the
-	 * current process.
+	 * current process; otherwise we would set ff->ff_file with
+	 * atomic_store_release(&ff->ff_file, fp) at the bottom.
 	 */
 	fdp = p->p_fd;
 	dt = atomic_load_consume(&fdp->fd_dt);
@@ -1462,7 +1463,8 @@ fd_copy(void)
 		KASSERT(i >= NDFDFILE ||
 		    *nffp == (fdfile_t *)newfdp->fd_dfdfile[i]);
 		ff = *ffp;
-		if (ff == NULL || (fp = ff->ff_file) == NULL) {
+		if (ff == NULL ||
+		    (fp = atomic_load_consume(&ff->ff_file)) == NULL) {
 			/* Descriptor unused, or descriptor half open. */
 			KASSERT(!fd_isused(newfdp, i));
 			continue;
@@ -1549,7 +1551,7 @@ fd_free(void)
 		    ff == (fdfile_t *)fdp->fd_dfdfile[fd]);
 		if (ff == NULL)
 			continue;
-		if ((fp = ff->ff_file) != NULL) {
+		if ((fp = atomic_load_consume(&ff->ff_file)) != NULL) {
 			/*
 			 * Must use fd_close() here if there is
 			 * a reference from kqueue or we might have posix
@@ -1977,7 +1979,7 @@ sysctl_file_marker_reset(void)
 			if ((ff = dt->dt_ff[i]) == NULL) {
 				continue;
 			}
-			if ((fp = ff->ff_file) == NULL) {
+			if ((fp = atomic_load_consume(&ff->ff_file)) == NULL) {
 				continue;
 			}
 			fp->f_marker = 0;
@@ -2079,7 +2081,7 @@ sysctl_kern_file(SYSCTLFN_ARGS)
 			if ((ff = dt->dt_ff[i]) == NULL) {
 				continue;
 			}
-			if ((fp = ff->ff_file) == NULL) {
+			if ((fp = atomic_load_consume(&ff->ff_file)) == NULL) {
 				continue;
 			}
 
@@ -2234,7 +2236,8 @@ sysctl_kern_file2(SYSCTLFN_ARGS)
 				if ((ff = dt->dt_ff[i]) == NULL) {
 					continue;
 				}
-				if ((fp = ff->ff_file) == NULL) {
+				if ((fp = atomic_load_consume(&ff->ff_file)) ==
+				    NULL) {
 					continue;
 				}
 
