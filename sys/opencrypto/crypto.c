@@ -1,4 +1,4 @@
-/*	$NetBSD: crypto.c,v 1.111 2020/02/01 12:54:30 riastradh Exp $ */
+/*	$NetBSD: crypto.c,v 1.112 2020/02/01 13:48:08 riastradh Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/crypto.c,v 1.4.2.5 2003/02/26 00:14:05 sam Exp $	*/
 /*	$OpenBSD: crypto.c,v 1.41 2002/07/17 23:52:38 art Exp $	*/
 
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.111 2020/02/01 12:54:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: crypto.c,v 1.112 2020/02/01 13:48:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/reboot.h>
@@ -644,10 +644,7 @@ crypto_destroy(bool exit_kthread)
 		 * prohibit touch crypto_drivers[] and each element after here.
 		 */
 
-		/*
-		 * Ensure cryptoret_softint() is never scheduled and then wait
-		 * for last softint_execute().
-		 */
+		/* Ensure cryptoret_softint() is never scheduled again.  */
 		for (i = 0; i < ncpu; i++) {
 			struct crypto_crp_ret_qs *qs;
 			struct cpu_info *ci = cpu_lookup(i);
@@ -656,7 +653,6 @@ crypto_destroy(bool exit_kthread)
 			qs->crp_ret_q_exit_flag = true;
 			crypto_put_crp_ret_qs(ci);
 		}
-		xc_barrier(0);
 	}
 
 	if (sysctl_opencrypto_clog != NULL)
