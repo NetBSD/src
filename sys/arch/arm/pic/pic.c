@@ -1,4 +1,4 @@
-/*	$NetBSD: pic.c,v 1.53 2020/02/01 12:55:02 riastradh Exp $	*/
+/*	$NetBSD: pic.c,v 1.54 2020/02/01 12:55:13 riastradh Exp $	*/
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.53 2020/02/01 12:55:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pic.c,v 1.54 2020/02/01 12:55:13 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -616,15 +616,6 @@ pic_percpu_allocate(void *v0, void *v1, struct cpu_info *ci)
 #endif
 }
 
-#if defined(__HAVE_PIC_PENDING_INTRS) && defined(MULTIPROCESSOR)
-static void
-pic_pending_zero(void *v0, void *v1, struct cpu_info *ci)
-{
-	struct pic_pending * const p = v0;
-	memset(p, 0, sizeof(*p));
-}
-#endif /* __HAVE_PIC_PENDING_INTRS && MULTIPROCESSOR */
-
 static int
 pic_init(void)
 {
@@ -646,10 +637,8 @@ pic_add(struct pic_softc *pic, int irqbase)
 	KASSERT(strlen(pic->pic_name) > 0);
 
 #if defined(__HAVE_PIC_PENDING_INTRS) && defined(MULTIPROCESSOR)
-	if (__predict_false(pic_pending_percpu == NULL)) {
-		pic_pending_percpu = percpu_create(sizeof(struct pic_pending),
-		    pic_pending_zero, NULL, NULL);
-	}
+	if (__predict_false(pic_pending_percpu == NULL))
+		pic_pending_percpu = percpu_alloc(sizeof(struct pic_pending));
 #endif /* __HAVE_PIC_PENDING_INTRS && MULTIPROCESSOR */
 
 	mutex_enter(&pic_lock);
