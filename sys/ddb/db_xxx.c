@@ -1,4 +1,4 @@
-/*	$NetBSD: db_xxx.c,v 1.71 2015/02/27 00:47:30 ozaki-r Exp $	*/
+/*	$NetBSD: db_xxx.c,v 1.72 2020/02/01 02:23:04 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.71 2015/02/27 00:47:30 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.72 2020/02/01 02:23:04 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kgdb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(0, "$NetBSD: db_xxx.c,v 1.71 2015/02/27 00:47:30 ozaki-r Exp $");
 #endif
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/proc.h>
@@ -173,7 +174,7 @@ db_show_files_cmd(db_expr_t addr, bool haddr,
 	p = (struct proc *) (uintptr_t) addr;
 
 	fdp = p->p_fd;
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 	for (i = 0; i < dt->dt_nfiles; i++) {
 		if ((ff = dt->dt_ff[i]) == NULL)
 			continue;

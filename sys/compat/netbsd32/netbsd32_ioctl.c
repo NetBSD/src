@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.106 2019/11/18 04:17:08 rin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.107 2020/02/01 02:23:03 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,13 +31,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.106 2019/11/18 04:17:08 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.107 2020/02/01 02:23:03 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/filedesc.h>
 #include <sys/ioctl.h>
@@ -1132,7 +1133,7 @@ netbsd32_ioctl(struct lwp *l,
 		goto out;
 	}
 
-	ff = fdp->fd_dt->dt_ff[SCARG(uap, fd)];
+	ff = atomic_load_consume(&fdp->fd_dt)->dt_ff[SCARG(uap, fd)];
 	switch (com = SCARG(uap, com)) {
 	case FIOCLEX:
 		ff->ff_exclose = true;

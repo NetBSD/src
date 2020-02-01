@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_exec_fd.c,v 1.8 2019/04/08 13:05:23 maya Exp $	*/
+/*	$NetBSD: subr_exec_fd.c,v 1.9 2020/02/01 02:23:04 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,9 +27,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.8 2019/04/08 13:05:23 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_exec_fd.c,v 1.9 2020/02/01 02:23:04 riastradh Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/file.h>
 #include <sys/filedesc.h>
 #include <sys/mutex.h>
@@ -51,7 +52,7 @@ fd_ktrexecfd(void)
 	l = curlwp;
 	p = l->l_proc;
 	fdp = p->p_fd;
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 
 	for (fd = 0; fd <= fdp->fd_lastfile; fd++) {
 		if ((ff = dt->dt_ff[fd]) == NULL) {
@@ -91,7 +92,7 @@ fd_checkstd(void)
 	closed[0] = '\0';
 	if ((fdp = p->p_fd) == NULL)
 		return (0);
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 	for (i = 0; i < CHECK_UPTO; i++) {
 		KASSERT(i >= NDFDFILE ||
 		    dt->dt_ff[i] == (fdfile_t *)fdp->fd_dfdfile[i]);
