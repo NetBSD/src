@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1678 2020/01/29 18:39:04 maya Exp $
+# $NetBSD: mi,v 1.1679 2020/02/02 21:49:44 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -480,6 +480,7 @@
 ./usr/share/man/cat1/rcsmerge.0			man-rcs-catman		.cat
 ./usr/share/man/cat1/rdist.0			man-netutil-catman	.cat
 ./usr/share/man/cat1/readlink.0			man-util-catman		.cat
+./usr/share/man/cat1/realpath.0			man-util-catman		.cat
 ./usr/share/man/cat1/rehash.0			man-util-catman		.cat
 ./usr/share/man/cat1/repeat.0			man-util-catman		.cat
 ./usr/share/man/cat1/reset.0			man-util-catman		.cat
@@ -3726,6 +3727,7 @@
 ./usr/share/man/html1/rcsmerge.html		man-rcs-htmlman		html
 ./usr/share/man/html1/rdist.html		man-netutil-htmlman	html
 ./usr/share/man/html1/readlink.html		man-util-htmlman	html
+./usr/share/man/html1/realpath.html		man-util-htmlman	html
 ./usr/share/man/html1/rehash.html		man-util-htmlman	html
 ./usr/share/man/html1/repeat.html		man-util-htmlman	html
 ./usr/share/man/html1/reset.html		man-util-htmlman	html
@@ -6622,6 +6624,7 @@
 ./usr/share/man/man1/rcsmerge.1			man-rcs-man		.man
 ./usr/share/man/man1/rdist.1			man-netutil-man		.man
 ./usr/share/man/man1/readlink.1			man-util-man		.man
+./usr/share/man/man1/realpath.1			man-util-man		.man
 ./usr/share/man/man1/rehash.1			man-util-man		.man
 ./usr/share/man/man1/repeat.1			man-util-man		.man
 ./usr/share/man/man1/reset.1			man-util-man		.man
