@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.131 2020/02/02 07:59:41 skrll Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.131 2020/02/02 07:59:41 skrll Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -53,24 +53,24 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh 
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
-#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/mount.h>
-#include <sys/buf.h>
-#include <sys/msgbuf.h>
-#include <sys/device.h>
-#include <sys/sysctl.h>
-#include <sys/cpu.h>
-#include <sys/intr.h>
 #include <sys/module.h>
-#include <sys/atomic.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 #include <sys/xcall.h>
-#include <sys/ipi.h>
 
 #include <uvm/uvm_extern.h>
 
