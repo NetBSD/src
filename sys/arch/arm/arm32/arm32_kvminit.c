@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.55 2019/05/08 13:18:47 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.56 2020/02/02 09:19:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.55 2019/05/08 13:18:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.56 2020/02/02 09:19:48 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -460,7 +460,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	 */
 	size_t kernel_size = bmi->bmi_kernelend;
 	kernel_size -= (bmi->bmi_kernelstart & -L2_S_SEGSIZE);
-	kernel_size += L1_TABLE_SIZE_REAL;
+	kernel_size += L1_TABLE_SIZE;
 	kernel_size += PAGE_SIZE * KERNEL_L2PT_VMDATA_NUM;
 	if (map_vectors_p) {
 		kernel_size += PAGE_SIZE;	/* L2PT for VECTORS */
