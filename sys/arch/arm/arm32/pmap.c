@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.382 2020/01/25 16:19:29 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.383 2020/02/02 07:47:51 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.382 2020/01/25 16:19:29 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.383 2020/02/02 07:47:51 skrll Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -614,7 +614,7 @@ struct l1_ttable {
 /*
  * L1 Page Tables are tracked using a Least Recently Used list.
  *  - New L1s are allocated from the HEAD.
- *  - Freed L1s are added to the TAIl.
+ *  - Freed L1s are added to the TAIL.
  *  - Recently accessed L1s (where an 'access' is some change to one of
  *    the userland pmaps which owns this L1) are moved to the TAIL.
  */
