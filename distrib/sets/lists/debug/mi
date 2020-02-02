@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.292 2020/01/19 10:50:26 martin Exp $
+# $NetBSD: mi,v 1.293 2020/02/02 21:49:44 kamil Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -735,6 +735,7 @@
 ./usr/libdata/debug/usr/bin/rcsmerge.debug	comp-rcs-debug		debug
 ./usr/libdata/debug/usr/bin/rdist.debug		comp-netutil-debug	debug
 ./usr/libdata/debug/usr/bin/readelf.debug	comp-util-debug		binutils,debug
+./usr/libdata/debug/usr/bin/realpath.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/refer.debug		comp-groff-debug	groff,debug
 ./usr/libdata/debug/usr/bin/renice.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/rev.debug		comp-util-debug		debug
