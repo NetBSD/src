@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.385 2020/02/02 08:16:40 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.386 2020/02/02 08:19:15 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.385 2020/02/02 08:16:40 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.386 2020/02/02 08:19:15 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5800,6 +5800,8 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 {
 	paddr_t pa;
 
+	KASSERT((va & PGOFSET) == 0);
+
 	if (uvm.page_init_done == false) {
 #ifdef PMAP_STEAL_MEMORY
 		pv_addr_t pv;
@@ -5886,7 +5888,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 			 * The new l2_dtable straddles a page boundary.
 			 * Map in another page to cover it.
 			 */
-			if (pmap_grow_map(nva, NULL))
+			if (pmap_grow_map(nva & ~PGOFSET, NULL))
 				return (NULL);
 		}
 
