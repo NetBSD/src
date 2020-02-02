@@ -1,4 +1,4 @@
-/* $NetBSD: pcagpio.c,v 1.2 2020/02/02 06:41:27 macallan Exp $ */
+/* $NetBSD: pcagpio.c,v 1.3 2020/02/02 06:43:14 macallan Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.2 2020/02/02 06:41:27 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pcagpio.c,v 1.3 2020/02/02 06:43:14 macallan Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -77,7 +77,8 @@ struct pcagpio_softc {
 
 static void 	pcagpio_writereg(struct pcagpio_softc *, int, uint32_t);
 static uint32_t pcagpio_readreg(struct pcagpio_softc *, int);
-static void	pcagpio_attach_led(struct pcagpio_softc *, char *, int, int, int);
+static void	pcagpio_attach_led(
+			struct pcagpio_softc *, char *, int, int, int);
 static int	pcagpio_get(void *);
 static void	pcagpio_set(void *, int);
 
@@ -172,10 +173,12 @@ pcagpio_attach(device_t parent, device_t self, void *aux)
 		for (i = 0; i < prop_array_count(pins); i++) {
 			nptr = NULL;
 			pin = prop_array_get(pins, i);
-			ok &= prop_dictionary_get_cstring_nocopy(pin, "name", &nptr);
+			ok &= prop_dictionary_get_cstring_nocopy(pin, "name",
+			    &nptr);
 			strncpy(name, nptr, 31);
 			ok &= prop_dictionary_get_uint32(pin, "pin", &num);
-			ok &= prop_dictionary_get_bool(pin, "active_high", &act);
+			ok &= prop_dictionary_get_bool(
+			    pin, "active_high", &act);
 			/* optional default state */
 			def = -1;
 			prop_dictionary_get_int32(pin, "default_state", &def);
@@ -244,7 +247,8 @@ pcagpio_attach_led(struct pcagpio_softc *sc, char *n, int pin, int act, int def)
 	l->v_off = act ? 0 : l->mask;
 	led_attach(n, l, pcagpio_get, pcagpio_set);
 	if (def != -1) pcagpio_set(l, def);
-	DPRINTF("%s: %04x %04x %04x def %d\n", __func__, l->mask, l->v_on, l->v_off, def);
+	DPRINTF("%s: %04x %04x %04x def %d\n",
+	    __func__, l->mask, l->v_on, l->v_off, def);
 	sc->sc_nleds++;
 }
 
