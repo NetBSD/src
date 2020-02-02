@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1226 2020/01/19 20:41:17 riastradh Exp $
+# $NetBSD: mi,v 1.1227 2020/02/02 21:49:44 kamil Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -923,6 +923,7 @@
 ./usr/bin/rcsmerge				base-rcs-bin
 ./usr/bin/rdist					base-netutil-bin
 ./usr/bin/readlink				base-util-bin
+./usr/bin/realpath				base-util-bin
 ./usr/bin/renice				base-util-bin
 ./usr/bin/reset					base-util-bin
 ./usr/bin/rev					base-util-bin
