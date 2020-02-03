@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_pci.c,v 1.7 2020/01/18 02:59:42 jmcneill Exp $	*/
+/*	$NetBSD: linux_pci.c,v 1.8 2020/02/03 16:22:52 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.7 2020/01/18 02:59:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_pci.c,v 1.8 2020/02/03 16:22:52 jmcneill Exp $");
 
 #include <linux/pci.h>
 
@@ -266,7 +266,6 @@ pci_bus_write_config_byte(struct pci_bus *bus, unsigned devfn, int reg,
 int
 pci_enable_msi(struct pci_dev *pdev)
 {
-#ifdef notyet
 	const struct pci_attach_args *const pa = &pdev->pd_pa;
 
 	if (pci_msi_alloc_exact(pa, &pdev->pd_intr_handles, 1))
@@ -274,9 +273,6 @@ pci_enable_msi(struct pci_dev *pdev)
 
 	pdev->msi_enabled = 1;
 	return 0;
-#else
-	return -ENOSYS;
-#endif
 }
 
 void
