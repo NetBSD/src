@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.253 2020/01/29 04:35:13 thorpej Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.254 2020/02/03 20:34:13 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.253 2020/01/29 04:35:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.254 2020/02/03 20:34:13 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -129,11 +129,11 @@ if_addrflags(struct ifaddr *ifa)
 	switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 	case AF_INET:
-		return ((struct in_ifaddr *)ifa)->ia4_flags;
+		return ifatoia(ifa)->ia4_flags;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		return ((struct in6_ifaddr *)ifa)->ia6_flags;
+		return ifatoia6(ifa)->ia6_flags;
 #endif
 	default:
 		return 0;
