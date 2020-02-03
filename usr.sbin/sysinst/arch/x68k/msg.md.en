@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.1 2014/07/26 19:30:47 dholland Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.2 2020/02/03 10:29:34 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -58,15 +58,15 @@ here and format the disk with Human68k format.x utility.
 message ordering
 {The order of partition %c is wrong.  Edit again?}
 
-message emptypart
-{There is an valid partition %c after empty partition(s).
-Please re-edit the partition table.}
-
 message set_kernel_1
 {Kernel (GENERIC)}
 
 .if notyet
 /* XXX: not yet implemented */
+message emptypart
+{There is an valid partition %c after empty partition(s).
+Please re-edit the partition table.}
+
 message existing
 {Do you want to preserve existing BSD partition(s)?}
 
