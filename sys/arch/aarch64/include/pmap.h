@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.32 2020/02/03 13:35:44 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.33 2020/02/03 13:37:01 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #define PMAP_STEAL_MEMORY
 
 #define __HAVE_VM_PAGE_MD
+#define __HAVE_PMAP_PV_TRACK	1
 
 #ifndef KASAN
 #define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
@@ -90,6 +91,7 @@ struct pmap_page {
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
 	uint32_t pp_flags;
+#define PMAP_PAGE_FLAGS_PV_TRACKED	0x80000000
 };
 
 struct vm_page_md {
@@ -286,6 +288,11 @@ aarch64_mmap_flags(paddr_t mdpgno)
 void	pmap_procwr(struct proc *, vaddr_t, int);
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
+
+void	pmap_pv_init(void);
+void	pmap_pv_track(paddr_t, psize_t);
+void	pmap_pv_untrack(paddr_t, psize_t);
+void	pmap_pv_protect(paddr_t, vm_prot_t);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
 
