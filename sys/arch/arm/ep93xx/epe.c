@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.46 2020/02/03 13:53:57 skrll Exp $	*/
+/*	$NetBSD: epe.c,v 1.47 2020/02/03 13:58:05 skrll Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.46 2020/02/03 13:53:57 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.47 2020/02/03 13:58:05 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -505,7 +505,7 @@ epe_tick(void *arg)
 	int s;
 	uint32_t misses;
 
-	ifp->if_collisions += EPE_READ(TXCollCnt);
+	if_statadd(ifp, if_collisions, EPE_READ(TXCollCnt));
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EPE_READ(RXMissCnt);
 	if (misses > 0)
