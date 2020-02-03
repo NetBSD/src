@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.62 2020/02/03 13:35:44 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.63 2020/02/03 13:37:01 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2020/02/03 13:35:44 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2020/02/03 13:37:01 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -43,6 +43,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.62 2020/02/03 13:35:44 ryo Exp $");
 #include <sys/asan.h>
 
 #include <uvm/uvm.h>
+#include <uvm/pmap/pmap_pvt.h>
 
 #include <aarch64/pmap.h>
 #include <aarch64/pte.h>
@@ -116,6 +117,7 @@ PMAP_COUNTER(protect_remove_fallback, "pmap_protect with no-read");
 PMAP_COUNTER(protect_none, "pmap_protect non-exists pages");
 PMAP_COUNTER(protect_managed, "pmap_protect managed pages");
 PMAP_COUNTER(protect_unmanaged, "pmap_protect unmanaged pages");
+PMAP_COUNTER(protect_pvmanaged, "pmap_protect pv-tracked unmanaged pages");
 
 PMAP_COUNTER(clear_modify, "pmap_clear_modify call");
 PMAP_COUNTER(clear_modify_pages, "pmap_clear_modify pages");
@@ -135,6 +137,7 @@ PMAP_COUNTER(user_mappings_changed, "user mapping changed");
 PMAP_COUNTER(kern_mappings_changed, "kernel mapping changed");
 PMAP_COUNTER(uncached_mappings, "uncached pages mapped");
 PMAP_COUNTER(unmanaged_mappings, "unmanaged pages mapped");
+PMAP_COUNTER(pvmanaged_mappings, "pv-tracked unmanaged pages mapped");
 PMAP_COUNTER(managed_mappings, "managed pages mapped");
 PMAP_COUNTER(mappings, "pages mapped (including remapped)");
 PMAP_COUNTER(remappings, "pages remapped");
@@ -245,6 +248,12 @@ pm_unlock(struct pmap *pm)
 	mutex_exit(&pm->pm_lock);
 }
 
+static inline void
+_pmap_page_init(struct pmap_page *pp)
+{
+	mutex_init(&pp->pp_pvlock, MUTEX_SPIN, IPL_VM);
+}
+
 static inline struct pmap_page *
 phys_to_pp(paddr_t pa)
 {
@@ -254,7 +263,17 @@ phys_to_pp(paddr_t pa)
 	if (pg != NULL)
 		return VM_PAGE_TO_PP(pg);
 
+#ifdef __HAVE_PMAP_PV_TRACK
+	struct pmap_page *pp = pmap_pv_tracked(pa);
+	if (pp != NULL && (pp->pp_flags & PMAP_PAGE_FLAGS_PV_TRACKED) == 0) {
+		/* XXX: initialize pv_tracked pmap_page. should not init here */
+		_pmap_page_init(pp);
+		pp->pp_flags |= PMAP_PAGE_FLAGS_PV_TRACKED;
+	}
+	return pp;
+#else
 	return NULL;
+#endif /* __HAVE_PMAP_PV_TRACK */
 }
 
 #define IN_RANGE(va,sta,end)	(((sta) <= (va)) && ((va) < (end)))
@@ -538,7 +557,7 @@ pmap_init(void)
 		     pfn++) {
 			pg = PHYS_TO_VM_PAGE(ptoa(pfn));
 			md = VM_PAGE_TO_MD(pg);
-			mutex_init(&md->mdpg_pp.pp_pvlock, MUTEX_SPIN, IPL_VM);
+			_pmap_page_init(&md->mdpg_pp);
 		}
 	}
 }
@@ -1284,8 +1303,18 @@ pmap_protect(struct pmap *pm, vaddr_t sva, vaddr_t eva, vm_prot_t prot)
 			pp = VM_PAGE_TO_PP(pg);
 			PMAP_COUNT(protect_managed);
 		} else {
+#ifdef __HAVE_PMAP_PV_TRACK
+			pp = pmap_pv_tracked(pa);
+#ifdef PMAPCOUNTERS
+			if (pp != NULL)
+				PMAP_COUNT(protect_pvmanaged);
+			else
+				PMAP_COUNT(protect_unmanaged);
+#endif
+#else
 			pp = NULL;
 			PMAP_COUNT(protect_unmanaged);
+#endif /* __HAVE_PMAP_PV_TRACK */
 		}
 
 		if (pp != NULL) {
@@ -1621,8 +1650,18 @@ _pmap_enter(struct pmap *pm, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			pp = VM_PAGE_TO_PP(pg);
 			PMAP_COUNT(managed_mappings);
 		} else {
+#ifdef __HAVE_PMAP_PV_TRACK
+			pp = pmap_pv_tracked(pa);
+#ifdef PMAPCOUNTERS
+			if (pp != NULL)
+				PMAP_COUNT(pvmanaged_mappings);
+			else
+				PMAP_COUNT(unmanaged_mappings);
+#endif
+#else
 			pp = NULL;
 			PMAP_COUNT(unmanaged_mappings);
+#endif /* __HAVE_PMAP_PV_TRACK */
 		}
 	}
 
@@ -1995,25 +2034,12 @@ pmap_remove(struct pmap *pm, vaddr_t sva, vaddr_t eva)
 	}
 }
 
-void
-pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+static void
+pmap_page_remove(struct pmap_page *pp, vm_prot_t prot)
 {
-	struct pmap_page *pp = VM_PAGE_TO_PP(pg);
 	struct pv_entry *pv, *pvtmp;
+	struct pv_entry *pvtofree = NULL;
 	pt_entry_t opte;
-
-	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
-
-	UVMHIST_FUNC(__func__);
-	UVMHIST_CALLED(pmaphist);
-
-	UVMHIST_LOG(pmaphist, "pg=%p, pp=%p, pa=%016lx, prot=%08x",
-	    pg, pp, VM_PAGE_TO_PHYS(pg), prot);
-
-
-	if ((prot & (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
-	    VM_PROT_NONE) {
-		struct pv_entry *pvtofree = NULL;
 
 		/* remove all pages reference to this physical page */
 		pmap_pv_lock(pp);
@@ -2044,6 +2070,48 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 			pvtmp = pv->pv_next;
 			pool_cache_put(&_pmap_pv_pool, pv);
 		}
+}
+
+#ifdef __HAVE_PMAP_PV_TRACK
+void
+pmap_pv_protect(paddr_t pa, vm_prot_t prot)
+{
+	struct pmap_page *pp;
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLED(pmaphist);
+
+	UVMHIST_LOG(pmaphist, "pa=%016lx, prot=%08x",
+	    pa, prot, 0, 0);
+
+	pp = pmap_pv_tracked(pa);
+	if (pp == NULL)
+		panic("pmap_pv_protect: page not pv-tracked: %#" PRIxPADDR, pa);
+
+	KASSERT(prot == VM_PROT_NONE);
+	pmap_page_remove(pp, prot);
+}
+#endif
+
+void
+pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
+{
+	struct pv_entry *pv;
+	struct pmap_page *pp;
+
+	KASSERT((prot & VM_PROT_READ) || !(prot & VM_PROT_WRITE));
+
+	UVMHIST_FUNC(__func__);
+	UVMHIST_CALLED(pmaphist);
+
+	pp = VM_PAGE_TO_PP(pg);
+
+	UVMHIST_LOG(pmaphist, "pg=%p, pp=%p, pa=%016lx, prot=%08x",
+	    pg, pp, VM_PAGE_TO_PHYS(pg), prot);
+
+	if ((prot & (VM_PROT_READ|VM_PROT_WRITE|VM_PROT_EXECUTE)) ==
+	    VM_PROT_NONE) {
+		pmap_page_remove(pp, prot);
 	} else {
 		pmap_pv_lock(pp);
 		TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
