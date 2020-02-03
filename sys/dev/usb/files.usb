@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.169 2020/01/17 15:00:20 maya Exp $
+#	$NetBSD: files.usb,v 1.170 2020/02/03 12:56:26 kre Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -281,11 +281,6 @@ file	dev/usb/emdtv_ir.c		emdtv
 device	umodeswitch
 attach	umodeswitch at usbdevif
 file	dev/usb/umodeswitch.c		umodeswitch
-
-# Diamond Multimedia Rio 500
-device	urio
-attach	urio at usbdevif
-file	dev/usb/urio.c			urio			needs-flag
 
 # Apple iPad
 device	uipad
