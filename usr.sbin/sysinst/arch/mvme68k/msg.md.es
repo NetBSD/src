@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.es,v 1.1 2014/07/26 19:30:46 dholland Exp $	*/
+/*	$NetBSD: msg.md.es,v 1.2 2020/02/03 10:29:34 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -56,15 +56,15 @@ a escribir un disklabel.
 message ordering
 {El orden de la partición %c esta mal. ¿Editar de nuevo?}
 
-message emptypart
-{Hay una partición valida %c despues de particion(es) valida(s).
-Por favor, reedite la tabla de particiones}
-
 message set_kernel_1
 {Núcleo (GENERIC)}
 
 .if notyet
 /* XXX: not yet implemented */
+message emptypart
+{Hay una partición valida %c despues de particion(es) valida(s).
+Por favor, reedite la tabla de particiones}
+
 message existing
 {¿Quiere preservar particion(es) BSD existente(s)?}
 
