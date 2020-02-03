@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.md.en,v 1.2 2020/02/03 10:29:34 martin Exp $	*/
+/*	$NetBSD: msg.md.en,v 1.3 2020/02/03 10:37:46 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -54,7 +54,7 @@ writing a disklabel.
 }
 
 message ordering
-{The order of partition %c is wrong.  Edit again?}
+{The order of partition %s is wrong.  Edit again?}
 
 message set_kernel_1
 {Kernel (GENERIC)}
