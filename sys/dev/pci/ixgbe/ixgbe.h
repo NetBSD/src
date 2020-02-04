@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.62 2020/01/21 14:55:55 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.63 2020/02/04 19:42:55 thorpej Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -507,11 +507,14 @@ struct adapter {
 	/* Mbuf cluster size */
 	u32			rx_mbuf_sz;
 
+	bool			schedule_wqs_ok;
+
 	/* Support for pluggable optics */
 	bool			sfp_probe;
 	void			*link_si;  /* Link tasklet */
 	void			*mod_si;   /* SFP tasklet */
-	void			*msf_si;   /* Multispeed Fiber */
+	struct workqueue	*msf_wq;   /* Multispeed Fiber */
+	struct work		 msf_wc;
 	void			*mbx_si;   /* VF -> PF mailbox interrupt */
 
 	/* Flow Director */
