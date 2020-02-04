@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.56 2020/02/02 09:19:48 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.57 2020/02/04 10:57:32 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,7 +127,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.56 2020/02/02 09:19:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.57 2020/02/04 10:57:32 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -655,7 +655,7 @@ arm32_kernel_vm_init(vaddr_t kernel_vm_base, vaddr_t vectors, vaddr_t iovbase,
 	}
 
 	/*
-	 * This enforces a alignment requirement of L2_S_SEGSIZE for kernel
+	 * This enforces an alignment requirement of L2_S_SEGSIZE for kernel
 	 * start PA
 	 */
 	const vaddr_t kernel_base =
