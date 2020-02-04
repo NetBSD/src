@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.22 2020/02/04 07:35:45 skrll Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.23 2020/02/04 13:53:07 martin Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.22 2020/02/04 07:35:45 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.23 2020/02/04 13:53:07 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -554,7 +554,7 @@ enic_watchdog(struct ifnet *ifp)
 	printf("enic_watch ctl=%x\n", sc->sc_regs->Control);
 #endif
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	enic_reset(ifp);
 }
