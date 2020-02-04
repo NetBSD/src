@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.343 2020/02/01 06:17:23 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.344 2020/02/04 05:44:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.343 2020/02/01 06:17:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.344 2020/02/04 05:44:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4041,11 +4041,11 @@ bge_detach(device_t self, int flags __unused)
 
 	mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->bge_mii.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->bge_mii.mii_media);
 
 	bge_release_resources(sc);
 

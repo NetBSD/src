@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.144 2020/01/21 14:55:55 msaitoh Exp $*/
+/*$NetBSD: ixv.c,v 1.145 2020/02/04 05:44:15 thorpej Exp $*/
 
 /******************************************************************************
 
@@ -619,6 +619,7 @@ ixv_detach(device_t dev, int flags)
 	bus_generic_detach(dev);
 #endif
 	if_detach(adapter->ifp);
+	ifmedia_fini(&adapter->media);
 	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);

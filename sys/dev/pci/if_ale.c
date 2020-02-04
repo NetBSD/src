@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.38 2020/01/30 13:59:24 thorpej Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.38 2020/01/30 13:59:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -613,12 +613,12 @@ ale_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ale_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);

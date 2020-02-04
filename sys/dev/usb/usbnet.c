@@ -1,4 +1,4 @@
-/*	$NetBSD: usbnet.c,v 1.34 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: usbnet.c,v 1.35 2020/02/04 05:46:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2019 Matthew R. Green
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.34 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbnet.c,v 1.35 2020/02/04 05:46:32 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -1534,7 +1534,7 @@ usbnet_detach(device_t self, int flags)
 
 	if (mii) {
 		mii_detach(mii, MII_PHY_ANY, MII_OFFSET_ANY);
-		ifmedia_delete_instance(&mii->mii_media, IFM_INST_ANY);
+		ifmedia_fini(&mii->mii_media);
 	}
 	if (ifp->if_softc) {
 		if (!usbnet_empty_eaddr(un))

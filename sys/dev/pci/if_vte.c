@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.29 2020/02/01 05:14:28 thorpej Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.29 2020/02/01 05:14:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -325,10 +325,10 @@ vte_detach(device_t dev, int flags __unused)
 	pmf_device_deregister(dev);
 
 	mii_detach(&sc->vte_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_delete_instance(&sc->vte_mii.mii_media, IFM_INST_ANY);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->vte_mii.mii_media);
 
 	vte_dma_free(sc);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.47 2020/01/30 13:59:24 thorpej Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.48 2020/02/04 05:44:14 thorpej Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1542,12 +1542,12 @@ alc_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	alc_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	alc_phy_down(sc);
 	if (sc->sc_irq_handle != NULL) {

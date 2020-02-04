@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.20 2020/02/01 02:32:40 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.21 2020/02/04 05:44:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3880,6 +3880,7 @@ ena_detach(device_t pdev, int flags)
 		ether_ifdetach(adapter->ifp);
 		if_free(adapter->ifp);
 	}
+	ifmedia_fini(&adapter->media);
 
 	ena_free_all_io_rings_resources(adapter);
 

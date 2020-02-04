@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.116 2020/01/29 04:28:27 thorpej Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.117 2020/02/04 05:46:32 thorpej Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.116 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.117 2020/02/04 05:46:32 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -451,7 +451,7 @@ tap_detach(device_t self, int flags)
 		    "sysctl_destroyv returned %d, ignoring\n", error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	ifmedia_removeall(&sc->sc_im);
+	ifmedia_fini(&sc->sc_im);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_cv);

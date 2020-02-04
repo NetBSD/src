@@ -1,4 +1,4 @@
-/*	$NetBSD: if_umb.c,v 1.11 2020/01/29 06:35:28 thorpej Exp $ */
+/*	$NetBSD: if_umb.c,v 1.12 2020/02/04 05:46:32 thorpej Exp $ */
 /*	$OpenBSD: if_umb.c,v 1.20 2018/09/10 17:00:45 gerhard Exp $ */
 
 /*
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.11 2020/01/29 06:35:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_umb.c,v 1.12 2020/02/04 05:46:32 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -601,7 +601,7 @@ umb_detach(device_t self, int flags)
 		sc->sc_resp_buf = NULL;
 	}
 	if (ifp->if_softc) {
-		ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
+		ifmedia_fini(&sc->sc_im);
 	}
 	if (sc->sc_attached) {
 		rnd_detach_source(&sc->sc_rnd_source);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.185 2020/01/29 04:28:27 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.186 2020/02/04 05:46:32 thorpej Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.185 2020/01/29 04:28:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.186 2020/02/04 05:46:32 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -1094,8 +1094,7 @@ sppp_detach(struct ifnet *ifp)
 	SPPP_UNLOCK(sp);
 	rw_destroy(&sp->pp_lock);
 
-	/* Safety - shouldn't be needed as there is no media to set. */
-	ifmedia_delete_instance(&sp->pp_im, IFM_INST_ANY);
+	ifmedia_fini(&sp->pp_im);
 }
 
 /*

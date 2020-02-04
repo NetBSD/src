@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.97 2020/01/29 13:54:41 thorpej Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.98 2020/02/04 05:46:32 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.97 2020/01/29 13:54:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.98 2020/02/04 05:46:32 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -642,9 +642,9 @@ ray_detach(device_t self, int flags)
 	if (sc->sc_if.if_flags & IFF_UP)
 		ray_disable(sc);
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
 
 	pcmcia_function_unconfigure(sc->sc_pf);
 
