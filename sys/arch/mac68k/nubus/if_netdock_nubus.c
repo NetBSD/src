@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.32 2020/01/29 05:25:42 thorpej Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.33 2020/02/04 07:36:28 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.32 2020/01/29 05:25:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.33 2020/02/04 07:36:28 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -674,9 +674,9 @@ netdock_txint(struct netdock_softc *sc)
 		NIC_GET_2(sc, REG_ISR);
 		regdata = NIC_GET_2(sc, REG_DATA);
 		if ((regdata & REG_DATA_BIT_08) == 0) {
-			/* ifp->if_collisions++; */
+			/* if_statinc(ifp, if_collisions); */
 			if (regdata & REG_DATA_BIT_07)
-			/* ifp->if_oerrors++; */
+			/* if_statinc(ifp, if_oerrors); */
 			NIC_PUT_2(sc, REG_000E, 0);
 			NIC_ORW(sc, REG_0000, 0x0100);
 			NIC_PUT_2(sc, REG_000E, 0x0200);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.3 2020/01/12 23:22:12 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.4 2020/02/04 07:37:00 skrll Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.3 2020/01/12 23:22:12 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.4 2020/02/04 07:37:00 skrll Exp $");
 
 /* #include "bpfilter.h" Sevan */
 /* #include "vlan.h" Sevan */
@@ -599,7 +599,7 @@ rge_watchdog(struct ifnet *ifp)
 	struct rge_softc *sc = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", sc->sc_dev.dv_xname);
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	rge_init(ifp);
 }
@@ -1189,7 +1189,7 @@ rge_rxeof(struct rge_softc *sc)
 		}
 
 		if (rxstat & RGE_RDCMDSTS_RXERRSUM) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/*
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
@@ -1307,9 +1307,9 @@ rge_txeof(struct rge_softc *sc)
 		txq->txq_mbuf = NULL;
 
 		if (txstat & (RGE_TDCMDSTS_EXCESSCOLL | RGE_TDCMDSTS_COLL))
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 		if (txstat & RGE_TDCMDSTS_TXERR)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
 		bus_dmamap_sync(sc->sc_dmat, sc->rge_ldata.rge_tx_list_map,
 		    idx * sizeof(struct rge_tx_desc),

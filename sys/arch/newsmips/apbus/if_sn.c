@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.46 2019/09/13 07:55:06 msaitoh Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.47 2020/02/04 07:36:42 skrll Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.46 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.47 2020/02/04 07:36:42 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -347,7 +347,7 @@ outloop:
 	sc->mtd_prev = sc->mtd_free;
 	sc->mtd_free = mtd_next;
 
-	ifp->if_opackets++;		/* # of pkts */
+	if_statinc(ifp, if_opackets);		/* # of pkts */
 
 	/* Jump back for possibly more punishment. */
 	goto outloop;
@@ -916,11 +916,11 @@ sonictxint(struct sn_softc *sc)
 
 		txp_status = SRO(sc->bitmode, txp, TXP_STATUS);
 
-		ifp->if_collisions += (txp_status & TCR_EXC) ? 16 :
-			((txp_status & TCR_NC) >> 12);
+		if_statadd(ifp, if_collisions, (txp_status & TCR_EXC) ? 16 :
+			((txp_status & TCR_NC) >> 12));
 
 		if ((txp_status & TCR_PTX) == 0) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			printf("%s: Tx packet status=0x%x\n",
 			    device_xname(sc->sc_dev), txp_status);
 
