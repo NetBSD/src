@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.90 2020/02/01 07:12:40 thorpej Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.91 2020/02/04 05:44:14 thorpej Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.90 2020/02/01 07:12:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.91 2020/02/04 05:44:14 thorpej Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -975,11 +975,11 @@ bnx_detach(device_t dev, int flags)
 	ether_ifdetach(ifp);
 	workqueue_destroy(sc->bnx_wq);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->bnx_mii.mii_media, IFM_INST_ANY);
-
 	if_detach(ifp);
 	mii_detach(&sc->bnx_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->bnx_mii.mii_media);
 
 	/* Release all remaining resources. */
 	bnx_release_resources(sc);

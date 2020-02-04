@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.108 2020/01/29 04:37:24 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.109 2020/02/04 05:46:32 thorpej Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.108 2020/01/29 04:37:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.109 2020/02/04 05:46:32 thorpej Exp $");
 
 /*
  * TODO:
@@ -907,10 +907,10 @@ carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 
-	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	carpdetach(ifp->if_softc);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_im);
 	callout_destroy(&sc->sc_ad_tmo);
 	callout_destroy(&sc->sc_md_tmo);
 	callout_destroy(&sc->sc_md6_tmo);
