@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.16 2020/01/29 05:55:16 thorpej Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.17 2020/02/04 05:25:38 thorpej Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.16 2020/01/29 05:55:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.17 2020/02/04 05:25:38 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -362,6 +362,7 @@ hvn_detach(device_t self, int flags)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
 	if_percpuq_destroy(sc->sc_ipq);
 
 	hvn_rndis_detach(sc);

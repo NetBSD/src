@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.157 2020/01/29 14:49:44 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.158 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.157 2020/01/29 14:49:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.158 2020/02/04 05:25:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2508,12 +2508,12 @@ fxp_detach(struct fxp_softc *sc, int flags)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < FXP_NRFABUFS; i++) {
 		bus_dmamap_unload(sc->sc_dmat, sc->sc_rxmaps[i]);
