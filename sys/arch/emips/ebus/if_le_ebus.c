@@ -1,4 +1,4 @@
-/*	$NetBSD: if_le_ebus.c,v 1.21 2019/12/05 05:28:09 msaitoh Exp $	*/
+/*	$NetBSD: if_le_ebus.c,v 1.22 2020/02/04 07:35:45 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.21 2019/12/05 05:28:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_le_ebus.c,v 1.22 2020/02/04 07:35:45 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -693,7 +693,7 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	/* uhu?? */
 	printf("%s: bad recv phys %llx\n", device_xname(sc->sc_dev),
 	    (long long)phys);
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 	return;
 
 	/* got it, pop it */
@@ -714,7 +714,7 @@ enic_rint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	    len > ((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_MTU) ?
 		ETHER_VLAN_ENCAP_LEN + ETHERMTU + sizeof(struct ether_header) :
 		ETHERMTU + sizeof(struct ether_header))) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 
 		/* reuse it */
 		enic_post_recv(sc, m);
@@ -755,7 +755,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 	/* uhu?? */
 	printf("%s: bad xmit phys %llx\n", device_xname(sc->sc_dev),
 	    (long long)phys);
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	return;
 
 	/* got it, pop it */
@@ -771,7 +771,7 @@ void enic_tint(struct enic_softc *sc, uint32_t saf, paddr_t phys)
 		sc->bxh++;
 #endif
 	m_freem(m);
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	if (--sc->sc_no_td == 0)
 		ifp->if_timer = 0;
