@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.201 2020/01/29 14:18:54 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.202 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.201 2020/01/29 14:18:54 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.202 2020/02/04 05:25:39 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -619,13 +619,13 @@ tlp_detach(struct tulip_softc *sc)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->sc_rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];

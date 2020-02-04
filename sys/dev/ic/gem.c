@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.126 2020/01/29 21:11:38 christos Exp $ */
+/*	$NetBSD: gem.c,v 1.127 2020/02/04 05:25:39 thorpej Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.126 2020/01/29 21:11:38 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.127 2020/02/04 05:25:39 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -175,7 +175,7 @@ gem_detach(struct gem_softc *sc, int flags)
 		rnd_detach_source(&sc->rnd_source);
 		ether_ifdetach(ifp);
 		if_detach(ifp);
-		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		callout_destroy(&sc->sc_tick_ch);
 		callout_destroy(&sc->sc_rx_watchdog);
