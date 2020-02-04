@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.33 2020/02/04 07:36:28 skrll Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.34 2020/02/04 07:40:53 skrll Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.33 2020/02/04 07:36:28 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.34 2020/02/04 07:40:53 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.33 2020/02/04 07:36:28 skrll 
 #define REG_DATA	0x0008
 #define REG_EFD00	0xefd00
 
-#define ISR_ALL		0x3300	
+#define ISR_ALL		0x3300
 #define ISR_TX		0x0200
 #define ISR_RX		0x0100
 #define ISR_READY	0x0800
@@ -518,7 +518,7 @@ netdock_init(struct netdock_softc *sc)
 	/* 1382 */
 	savetmp = NIC_GET_2(sc, REG_000E);
 	NIC_PUT_2(sc, REG_000E, 0x0100);
-	NIC_ORW(sc, REG_ISR, ISR_BIT_03); 
+	NIC_ORW(sc, REG_ISR, ISR_BIT_03);
 	NIC_PUT_2(sc, REG_000E, savetmp);
 	NIC_PUT_2(sc, REG_ISR , saveisr);
 
