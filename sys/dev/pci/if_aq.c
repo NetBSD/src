@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.6 2020/01/31 22:41:07 thorpej Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.7 2020/02/04 05:44:14 thorpej Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.6 2020/01/31 22:41:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.7 2020/02/04 05:44:14 thorpej Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1580,6 +1580,8 @@ aq_detach(device_t self, int flags __unused)
 	AQ_EVCNT_DETACH(sc, dpc);
 	AQ_EVCNT_DETACH(sc, cprc);
 #endif
+
+	ifmedia_fini(&sc->sc_media);
 
 	mutex_destroy(&sc->sc_mpi_mutex);
 	mutex_destroy(&sc->sc_mutex);

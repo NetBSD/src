@@ -1,4 +1,4 @@
-/* $NetBSD: if_msk.c,v 1.97 2020/01/30 05:42:00 thorpej Exp $ */
+/* $NetBSD: if_msk.c,v 1.98 2020/02/04 05:44:14 thorpej Exp $ */
 /*	$OpenBSD: if_msk.c,v 1.79 2009/10/15 17:54:56 deraadt Exp $	*/
 
 /*
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.97 2020/01/30 05:42:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_msk.c,v 1.98 2020/02/04 05:44:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1332,13 +1332,13 @@ msk_detach(device_t self, int flags)
 	if (LIST_FIRST(&sc_if->sk_mii.mii_phys) != NULL)
 		mii_detach(&sc_if->sk_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete any remaining media. */
-	ifmedia_delete_instance(&sc_if->sk_mii.mii_media, IFM_INST_ANY);
-
 	pmf_device_deregister(self);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete any remaining media. */
+	ifmedia_fini(&sc_if->sk_mii.mii_media);
 
 	msk_free_jumbo_mem(sc_if);
 

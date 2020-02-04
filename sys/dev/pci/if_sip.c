@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.176 2020/01/30 05:42:00 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.177 2020/02/04 05:44:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.176 2020/01/30 05:42:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.177 2020/02/04 05:44:14 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -911,6 +911,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		/*FALLTHROUGH*/
 	case SIP_ATTACH_CREATE_RXMAP:
