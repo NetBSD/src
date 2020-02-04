@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.26 2020/01/06 06:50:00 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.27 2020/02/04 05:15:44 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.26 2020/01/06 06:50:00 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.27 2020/02/04 05:15:44 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -362,11 +362,11 @@ cpsw_detach(device_t self, int flags)
 	intr_disestablish(sc->sc_txih);
 	intr_disestablish(sc->sc_miscih);
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	/* Free the packet padding buffer */
 	kmem_free(sc->sc_txpad, ETHER_MIN_LEN);
