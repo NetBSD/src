@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.4 2020/02/04 07:37:00 skrll Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.5 2020/02/04 07:41:21 skrll Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.4 2020/02/04 07:37:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.5 2020/02/04 07:41:21 skrll Exp $");
 
 /* #include "bpfilter.h" Sevan */
 /* #include "vlan.h" Sevan */
@@ -80,7 +80,7 @@ struct mbuf_list {
 #endif
 
 static int		rge_match(device_t, cfdata_t, void *);
-static void		rge_attach(device_t, device_t, void *); 
+static void		rge_attach(device_t, device_t, void *);
 int		rge_intr(void *);
 int		rge_encap(struct rge_softc *, struct mbuf *, int);
 int		rge_ioctl(struct ifnet *, u_long, void *);
@@ -185,7 +185,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 
 	pci_set_powerstate(pa->pa_pc, pa->pa_tag, PCI_PMCSR_STATE_D0);
 
-	/* 
+	/*
 	 * Map control/status registers.
 	 */
 	if (pci_mapreg_map(pa, RGE_PCI_BAR2, PCI_MAPREG_TYPE_MEM |
@@ -203,7 +203,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 		}
 	}
 
-	/* 
+	/*
 	 * Allocate interrupt.
 	 */
 	if (pci_intr_map(pa, &ih) == 0)
@@ -244,7 +244,7 @@ rge_attach(device_t parent, device_t self, void *aux)
 
 	rge_config_imtype(sc, RGE_IMTYPE_SIM);
 
-	/* 
+	/*
 	 * PCI Express check.
 	 */
 	if (pci_get_capability(pa->pa_pc, pa->pa_tag, PCI_CAP_PCIEXPRESS,
@@ -627,7 +627,7 @@ rge_init(struct ifnet *ifp)
 	    ETHER_CRC_LEN + 1;
 
 	if (max_frame_size > RGE_JUMBO_FRAMELEN)
-		max_frame_size -= 1; 
+		max_frame_size -= 1;
 
 	RGE_WRITE_2(sc, RGE_RXMAXSIZE, max_frame_size);
 
@@ -724,7 +724,7 @@ rge_init(struct ifnet *ifp)
 	val = rge_read_mac_ocp(sc, 0xd430) & ~0x0fff;
 	rge_write_mac_ocp(sc, 0xd430, val | 0x047f);
 
-	RGE_MAC_SETBIT(sc, 0xe84c, 0x00c0); 
+	RGE_MAC_SETBIT(sc, 0xe84c, 0x00c0);
 
 	/* Disable EEE plus. */
 	RGE_MAC_CLRBIT(sc, 0xe080, 0x0002);
@@ -924,7 +924,7 @@ rge_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 	}
 }
 
-/* 
+/*
  * Allocate memory for RX/TX rings.
  */
 int
@@ -1171,7 +1171,7 @@ rge_rxeof(struct rge_softc *sc)
 
 		rxstat = letoh32(cur_rx->rge_cmdsts);
 		extsts = letoh32(cur_rx->rge_extsts);
-		
+
 		total_len = RGE_RXBYTES(cur_rx);
 		rxq = &sc->rge_ldata.rge_rxq[i];
 		m = rxq->rxq_mbuf;
@@ -1300,7 +1300,7 @@ rge_txeof(struct rge_softc *sc)
 			break;
 		}
 
-		bus_dmamap_sync(sc->sc_dmat, txq->txq_dmamap, 0, 
+		bus_dmamap_sync(sc->sc_dmat, txq->txq_dmamap, 0,
 		    txq->txq_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txq->txq_dmamap);
 		m_freem(txq->txq_mbuf);
@@ -1444,7 +1444,7 @@ rge_phy_config(struct rge_softc *sc)
 	      0x00bb, 0x0058, 0x0029, 0x0013, 0x0009, 0x0004, 0x0002 };
 
 	static const uint16_t mac_cfg3_b88e_value[] =
-	    { 0xc091, 0x6e12, 0xc092, 0x1214, 0xc094, 0x1516, 0xc096, 0x171b, 
+	    { 0xc091, 0x6e12, 0xc092, 0x1214, 0xc094, 0x1516, 0xc096, 0x171b,
 	      0xc098, 0x1b1c, 0xc09a, 0x1f1f, 0xc09c, 0x2021, 0xc09e, 0x2224,
 	      0xc0a0, 0x2424, 0xc0a2, 0x2424, 0xc0a4, 0x2424, 0xc018, 0x0af2,
 	      0xc01a, 0x0d4a, 0xc01c, 0x0f26, 0xc01e, 0x118d, 0xc020, 0x14f3,
@@ -1496,7 +1496,7 @@ rge_phy_config(struct rge_softc *sc)
 			rge_write_phy_ocp(sc, 0xa436, 0x801e);
 			rge_write_phy_ocp(sc, 0xa438, RGE_MAC_CFG2_MCODE_VER);
 		}
-		
+
 		val = rge_read_phy_ocp(sc, 0xad40) & ~0x03ff;
 		rge_write_phy_ocp(sc, 0xad40, val | 0x0084);
 		RGE_PHY_SETBIT(sc, 0xad4e, 0x0010);
