@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bm.c,v 1.62 2020/02/04 07:36:36 skrll Exp $	*/
+/*	$NetBSD: if_bm.c,v 1.63 2020/02/04 13:47:34 martin Exp $	*/
 
 /*-
  * Copyright (C) 1998, 1999, 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.62 2020/02/04 07:36:36 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bm.c,v 1.63 2020/02/04 13:47:34 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -436,7 +436,7 @@ bmac_intr(void *v)
 	if (stat & IntFrameSent) {
 		sc->sc_if.if_flags &= ~IFF_OACTIVE;
 		sc->sc_if.if_timer = 0;
-		sc->sc_if.if_opackets++;
+		if_statinc(&sc->sc_if, if_opackets);
 		if_schedule_deferred_start(&sc->sc_if);
 	}
 
