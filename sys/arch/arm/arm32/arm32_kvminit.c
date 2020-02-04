@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_kvminit.c,v 1.57 2020/02/04 10:57:32 skrll Exp $	*/
+/*	$NetBSD: arm32_kvminit.c,v 1.58 2020/02/04 10:59:21 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003, 2005  Genetec Corporation.  All rights reserved.
@@ -127,23 +127,23 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.57 2020/02/04 10:57:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_kvminit.c,v 1.58 2020/02/04 10:59:21 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/bus.h>
 #include <sys/device.h>
 #include <sys/kernel.h>
 #include <sys/reboot.h>
-#include <sys/bus.h>
 
 #include <dev/cons.h>
 
 #include <uvm/uvm_extern.h>
 
-#include <arm/locore.h>
-#include <arm/db_machdep.h>
-#include <arm/undefined.h>
-#include <arm/bootconfig.h>
 #include <arm/arm32/machdep.h>
+#include <arm/bootconfig.h>
+#include <arm/db_machdep.h>
+#include <arm/locore.h>
+#include <arm/undefined.h>
 
 #if defined(FDT)
 #include <arch/evbarm/fdt/platform.h>
