@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.29 2020/01/30 05:42:00 thorpej Exp $	*/
+/*	$NetBSD: if_et.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.29 2020/01/30 05:42:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -332,12 +332,12 @@ et_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	et_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);

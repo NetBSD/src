@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.38 2020/01/30 05:24:53 thorpej Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.38 2020/01/30 05:24:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -760,7 +760,7 @@ cas_detach(device_t self, int flags)
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
-		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		callout_destroy(&sc->sc_tick_ch);
 

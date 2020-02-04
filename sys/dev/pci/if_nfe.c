@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.73 2020/01/30 05:42:00 thorpej Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.74 2020/02/04 05:44:14 thorpej Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.73 2020/01/30 05:42:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.74 2020/02/04 05:44:14 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -452,6 +452,7 @@ nfe_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	nfe_free_rx_ring(sc, &sc->rxq);
 	mutex_destroy(&sc->rxq.mtx);
