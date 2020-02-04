@@ -1,4 +1,4 @@
-/*	$NetBSD: am79c950.c,v 1.47 2019/12/27 09:32:10 msaitoh Exp $	*/
+/*	$NetBSD: am79c950.c,v 1.48 2020/02/04 07:36:36 skrll Exp $	*/
 
 /*-
  * Copyright (c) 1997 David Huang <khym@bga.com>
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.47 2019/12/27 09:32:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79c950.c,v 1.48 2020/02/04 07:36:36 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -271,7 +271,7 @@ mcstart(struct ifnet *ifp)
 		ifp->if_flags |= IFF_OACTIVE;
 		maceput(sc, m);
 
-		ifp->if_opackets++;		/* # of pkts */
+		if_statinc(ifp, if_opackets);		/* # of pkts */
 	}
 }
 
@@ -570,13 +570,13 @@ mace_read(struct mc_softc *sc, uint8_t *pkt, int len)
 		printf("%s: invalid packet size %d; dropping\n",
 		    device_xname(sc->sc_dev), len);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	m = mace_get(sc, pkt, len);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
