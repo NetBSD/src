@@ -1,4 +1,4 @@
-/*	$NetBSD: if_age.c,v 1.66 2020/01/30 13:59:24 thorpej Exp $ */
+/*	$NetBSD: if_age.c,v 1.67 2020/02/04 05:44:14 thorpej Exp $ */
 /*	$OpenBSD: if_age.c,v 1.1 2009/01/16 05:00:34 kevlo Exp $	*/
 
 /*-
@@ -31,7 +31,7 @@
 /* Driver for Attansic Technology Corp. L1 Gigabit Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.66 2020/01/30 13:59:24 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_age.c,v 1.67 2020/02/04 05:44:14 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -320,12 +320,12 @@ age_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	age_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);

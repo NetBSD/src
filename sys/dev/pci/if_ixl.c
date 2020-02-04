@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.35 2020/02/01 12:45:05 thorpej Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.36 2020/02/04 05:44:14 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1522,9 +1522,9 @@ ixl_detach(device_t self, int flags)
 		sc->sc_workq_txrx = NULL;
 	}
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
 
 	ixl_teardown_interrupts(sc);
 	ixl_teardown_stats(sc);
