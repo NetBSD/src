@@ -1,4 +1,4 @@
-/*	$NetBSD: eval.c,v 1.177 2019/12/21 18:54:15 kre Exp $	*/
+/*	$NetBSD: eval.c,v 1.178 2020/02/04 16:06:59 kre Exp $	*/
 
 /*-
  * Copyright (c) 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)eval.c	8.9 (Berkeley) 6/8/95";
 #else
-__RCSID("$NetBSD: eval.c,v 1.177 2019/12/21 18:54:15 kre Exp $");
+__RCSID("$NetBSD: eval.c,v 1.178 2020/02/04 16:06:59 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -1493,7 +1493,9 @@ dotcmd(int argc, char **argv)
 {
 	exitstatus = 0;
 
-	if (argc >= 2) {		/* That's what SVR2 does */
+	(void) nextopt(NULL);		/* ignore a leading "--" */
+
+	if (*argptr != NULL) {		/* That's what SVR2 does */
 		char *fullname;
 		/*
 		 * dot_funcnest needs to be 0 when not in a dotcmd, so it
@@ -1503,7 +1505,7 @@ dotcmd(int argc, char **argv)
 		struct stackmark smark;
 
 		setstackmark(&smark);
-		fullname = find_dot_file(argv[1]);
+		fullname = find_dot_file(*argptr);
 		setinputfile(fullname, 1);
 		commandname = fullname;
 		dot_funcnest_old = dot_funcnest;
@@ -1649,7 +1651,9 @@ truecmd(int argc, char **argv)
 int
 execcmd(int argc, char **argv)
 {
-	if (argc > 1) {
+	(void) nextopt(NULL);		/* ignore a leading "--" */
+
+	if (*argptr) {
 		struct strlist *sp;
 
 		iflag = 0;		/* exit on error */
@@ -1657,7 +1661,7 @@ execcmd(int argc, char **argv)
 		optschanged();
 		for (sp = cmdenviron; sp; sp = sp->next)
 			setvareq(sp->text, VDOEXPORT|VEXPORT|VSTACK);
-		shellexec(argv + 1, environment(), pathval(), 0, 0);
+		shellexec(argptr, environment(), pathval(), 0, 0);
 	}
 	return 0;
 }
