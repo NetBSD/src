@@ -1,4 +1,4 @@
-.\"	$NetBSD: make.1,v 1.278 2020/02/03 22:25:17 uwe Exp $
+.\"	$NetBSD: make.1,v 1.279 2020/02/04 16:28:29 wiz Exp $
 .\"
 .\" Copyright (c) 1990, 1993
 .\"	The Regents of the University of California.  All rights reserved.
@@ -1233,7 +1233,7 @@ Quotes every shell meta-character in the variable, and also doubles
 characters so that it can be passed
 safely through recursive invocations of
 .Nm .
-This is equivalent to: 
+This is equivalent to:
 .Sq \&:S/\e\&$/&&/g:Q .
 .It Cm \&:R
 Replaces each word in the variable with everything but its suffix.
