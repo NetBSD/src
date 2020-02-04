@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.151 2020/02/04 21:34:12 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.152 2020/02/04 21:34:47 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.151 2020/02/04 21:34:12 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.152 2020/02/04 21:34:47 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -116,7 +116,7 @@ static_assert(sizeof(((struct ptrace_state *)0)->pe_other_pid) ==
 #define SYSCALL_REQUIRE_ERRNO(res, exp) ATF_REQUIRE_MSG(res == exp, \
     "%d(%s) != %d", res, strerror(res), exp)
 
-static int debug = 1;
+static int debug = 0;
 
 #define DPRINTF(a, ...)	do  \
 	if (debug) \
