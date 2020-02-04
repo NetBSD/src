@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urndis.c,v 1.36 2020/01/29 06:39:07 thorpej Exp $ */
+/*	$NetBSD: if_urndis.c,v 1.37 2020/02/04 07:37:16 skrll Exp $ */
 /*	$OpenBSD: if_urndis.c,v 1.31 2011/07/03 15:47:17 matthew Exp $ */
 
 /*
@@ -21,7 +21,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.36 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urndis.c,v 1.37 2020/02/04 07:37:16 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -847,7 +847,7 @@ urndis_watchdog(struct ifnet *ifp)
 	if (un->un_dying)
 		return;
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	printf("%s: watchdog timeout\n", DEVNAME(un));
 
 	urndis_ctrl_keepalive(un);

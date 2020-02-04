@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.44 2019/09/13 07:55:05 msaitoh Exp $ */
+/* $NetBSD: if_ie.c,v 1.45 2020/02/04 07:35:21 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.44 2019/09/13 07:55:05 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.45 2020/02/04 07:35:21 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1274,7 +1274,7 @@ ie_read_frame(struct ie_softc *sc, int num)
     }
 
     if ( m==0 ) {
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 	return;
     }
 
@@ -1529,10 +1529,10 @@ ietint(struct ie_softc *sc)
 	printf ( "ietint: command still busy!\n" );
     
     if ( status & IE_STAT_OK ) {
-	ifp->if_opackets++;
-	ifp->if_collisions += status & IE_XS_MAXCOLL;
+	if_statinc(ifp, if_opackets);
+	if_statadd(ifp, if_collisions, status & IE_XS_MAXCOLL);
     } else {
-	ifp->if_oerrors++;	
+	if_statinc(ifp, if_oerrors);
 	if ( status & IE_STAT_ABORT )
 	    printf ( "ie: send aborted\n" );
 	if ( status & IE_XS_LATECOLL )

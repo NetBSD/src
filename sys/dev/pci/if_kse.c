@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.48 2020/02/04 07:37:00 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.48 2020/02/04 07:37:00 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -934,7 +934,7 @@ kse_watchdog(struct ifnet *ifp)
 		aprint_error_dev(sc->sc_dev,
 		    "device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		kse_init(ifp);
@@ -1269,7 +1269,7 @@ rxintr(struct kse_softc *sc)
 		/* R0_FS | R0_LS must have been marked for this desc */
 
 		if (rxstat & R0_ES) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 #define PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				aprint_error_dev(sc->sc_dev,		\
@@ -1292,7 +1292,7 @@ rxintr(struct kse_softc *sc)
 		m = rxs->rxs_mbuf;
 
 		if (add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			KSE_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat,
 			    rxs->rxs_dmamap, 0,
@@ -1347,7 +1347,7 @@ txreap(struct kse_softc *sc)
 
 		/* There is no way to tell transmission status per frame */
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		sc->sc_txfree += txs->txs_ndesc;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,

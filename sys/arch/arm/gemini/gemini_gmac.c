@@ -1,4 +1,4 @@
-/* $NetBSD: gemini_gmac.c,v 1.18 2019/10/30 10:12:37 msaitoh Exp $ */
+/* $NetBSD: gemini_gmac.c,v 1.19 2020/02/04 07:35:34 skrll Exp $ */
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -49,7 +49,7 @@
 
 #include <sys/gpio.h>
 
-__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.18 2019/10/30 10:12:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gemini_gmac.c,v 1.19 2020/02/04 07:35:34 skrll Exp $");
 
 #define	SWFREEQ_DESCS	256	/* one page worth */
 #define	HWFREEQ_DESCS	256	/* one page worth */
@@ -546,8 +546,8 @@ gmac_hwqueue_txconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 	gmac_mapcache_put(hqm->hqm_mc, map);
 
 	ifp = hwq->hwq_ifp;
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+	if_statinc(ifp, if_opackets);
+	if_statiadd(ifp, if_obytes,	 m->m_pkthdr.len);
 
 	aprint_debug("gmac_hwqueue_txconsume(%p): %zu@%p: %s m=%p\n",
 	    hwq, d - hwq->hwq_base, d, ifp->if_xname, m);
@@ -859,7 +859,7 @@ gmac_hwqueue_rxconsume(gmac_hwqueue_t *hwq, const gmac_desc_t *d)
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 		break;
 	default:
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		break;
 	}

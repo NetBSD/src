@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.29 2019/05/28 07:41:46 msaitoh Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.30 2020/02/04 07:35:34 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.29 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.30 2020/02/04 07:35:34 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -245,13 +245,13 @@ emac_intr(void *arg)
 		EMAC_WRITE(ETH_CTL, ctl & ~ETH_CTL_RE);	// disable receiver
 		EMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
 		EMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		ifp->if_ipackets++;
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
 		EMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		ifp->if_ipackets++;
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
@@ -306,7 +306,7 @@ emac_intr(void *arg)
 				if (m != NULL) {
 					m_freem(m);
 				}
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			}
 			sc->rxqi++;
 		}
@@ -587,7 +587,7 @@ emac_tick(void *arg)
 	int s;
 	uint32_t misses;
 
-	ifp->if_collisions += EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL);
+	if_statadd(ifp, if_collisions, EMAC_READ(ETH_SCOL) + EMAC_READ(ETH_MCOL));
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EMAC_READ(ETH_DRFC);
 	if (misses > 0)
