@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.45 2020/01/29 06:05:31 thorpej Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.46 2020/02/04 05:16:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.45 2020/01/29 06:05:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.46 2020/02/04 05:16:18 thorpej Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -671,6 +671,7 @@ npe_deactivate(struct npe_softc *sc);
 	npe_dma_destroy(sc, &sc->txdma);
 	npe_dma_destroy(sc, &sc->rxdma);
 	bus_generic_detach(sc->sc_dev);
+	XXX ifmedia_fini somewhere
 	if (sc->sc_mii)
 		device_delete_child(sc->sc_dev, sc->sc_mii);
 #if 0
