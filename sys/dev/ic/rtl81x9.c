@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.108 2020/01/29 15:06:12 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.109 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.108 2020/01/29 15:06:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.109 2020/02/04 05:25:39 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -829,13 +829,13 @@ rtk_detach(struct rtk_softc *sc)
 	/* Detach all PHYs. */
 	mii_detach(&sc->mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->mii.mii_media);
 
 	for (i = 0; i < RTK_TX_LIST_CNT; i++) {
 		txd = &sc->rtk_tx_descs[i];

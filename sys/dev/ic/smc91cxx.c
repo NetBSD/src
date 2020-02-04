@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.104 2020/01/30 04:56:11 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.105 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.104 2020/01/30 04:56:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.105 2020/02/04 05:25:39 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1386,13 +1386,13 @@ smc91cxx_detach(device_t self, int flags)
 
 	/* smc91cxx_attach() never fails */
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	return 0;
 }

@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.43 2020/01/29 14:49:44 thorpej Exp $ */
+/* $NetBSD: i82596.c,v 1.44 2020/02/04 05:25:39 thorpej Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.43 2020/01/29 14:49:44 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.44 2020/02/04 05:25:39 thorpej Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -699,6 +699,7 @@ iee_detach(struct iee_softc *sc, int flags)
 		iee_stop(ifp, 1);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_ifmedia);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_shmem_map);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, sc->sc_shmem_sz);
