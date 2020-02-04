@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.150 2020/01/29 14:17:27 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.151 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.150 2020/01/29 14:17:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.151 2020/02/04 05:25:39 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -2005,12 +2005,12 @@ ep_detach(device_t self, int flags)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	pmf_device_deregister(sc->sc_dev);
 

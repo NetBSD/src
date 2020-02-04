@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.20 2020/01/29 05:30:14 thorpej Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.21 2020/02/04 05:18:36 thorpej Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.20 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.21 2020/02/04 05:18:36 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -656,9 +656,9 @@ ralink_eth_detach(device_t self, int flags)
 
 	ralink_eth_disable(sc);
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < RALINK_ETH_NUM_RX_DESC; i++) {
 		rxs = &sc->sc_rxstate[i];

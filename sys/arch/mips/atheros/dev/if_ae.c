@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.38 2020/01/29 05:30:14 thorpej Exp $ */
+/* $Id: if_ae.c,v 1.39 2020/02/04 05:18:36 thorpej Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.38 2020/01/29 05:30:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.39 2020/02/04 05:18:36 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -485,12 +485,12 @@ ae_detach(device_t self, int flags)
 	/* Detach all PHYs */
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->sc_rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < AE_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];

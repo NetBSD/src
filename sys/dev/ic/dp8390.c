@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.96 2020/01/29 14:14:55 thorpej Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.96 2020/01/29 14:14:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.97 2020/02/04 05:25:39 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -1220,12 +1220,12 @@ dp8390_detach(struct dp8390_softc *sc, int flags)
 	if (sc->sc_media_fini != NULL)
 		(*sc->sc_media_fini)(sc);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_media);
 
 	return 0;
 }

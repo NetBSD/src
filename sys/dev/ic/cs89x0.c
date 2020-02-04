@@ -1,4 +1,4 @@
-/*	$NetBSD: cs89x0.c,v 1.48 2020/01/29 14:14:55 thorpej Exp $	*/
+/*	$NetBSD: cs89x0.c,v 1.49 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Christopher Gilbert
@@ -212,7 +212,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.48 2020/01/29 14:14:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0.c,v 1.49 2020/02/04 05:25:39 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -517,6 +517,7 @@ cs_detach(struct cs_softc *sc)
 		rnd_detach_source(&sc->rnd_source);
 		ether_ifdetach(ifp);
 		if_detach(ifp);
+		ifmedia_fini(&sc->sc_media);
 		sc->sc_cfgflags &= ~CFGFLG_ATTACHED;
 	}
 

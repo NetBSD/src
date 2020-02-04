@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86950.c,v 1.33 2020/01/29 15:00:39 thorpej Exp $	*/
+/*	$NetBSD: mb86950.c,v 1.34 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -67,7 +67,7 @@
   */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.33 2020/01/29 15:00:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86950.c,v 1.34 2020/02/04 05:25:39 thorpej Exp $");
 
 /*
  * Device driver for Fujitsu mb86950 based Ethernet cards.
@@ -965,14 +965,14 @@ mb86950_detach(struct mb86950_softc *sc)
 	if ((sc->sc_stat & ESTAR_STAT_ATTACHED) == 0)
 		return 0;
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_media);
 
 	return 0;
 }

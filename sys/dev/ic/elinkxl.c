@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.134 2020/01/29 14:17:27 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.135 2020/02/04 05:25:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.134 2020/01/29 14:17:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.135 2020/02/04 05:25:39 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1688,12 +1688,12 @@ ex_detach(struct ex_softc *sc)
 		mii_detach(&sc->ex_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->ex_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->ex_mii.mii_media);
 
 	for (i = 0; i < EX_NUPD; i++) {
 		rxd = &sc->sc_rxdescs[i];
