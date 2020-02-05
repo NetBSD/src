@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.32 2020/02/04 07:36:55 skrll Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.33 2020/02/05 08:34:48 skrll Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.32 2020/02/04 07:36:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.33 2020/02/05 08:34:48 skrll Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -3264,10 +3264,10 @@ mvxpe_update_mib(struct mvxpe_softc *sc)
 
 		switch (mvxpe_mib_list[i].ext) {
 		case MVXPE_MIBEXT_IF_OERRORS:
-			ifp->if_oerrors += val;
+			if_statadd(ifp, if_oerrors,  val);
 			break;
 		case MVXPE_MIBEXT_IF_IERRORS:
-			ifp->if_ierrors += val;
+			if_statadd(ifp, if_ierrors,  val);
 			break;
 		case MVXPE_MIBEXT_IF_COLLISIONS:
 			if_statadd(ifp, if_collisions, val);

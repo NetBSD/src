@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gfe.c,v 1.55 2020/02/04 07:36:55 skrll Exp $	*/
+/*	$NetBSD: if_gfe.c,v 1.56 2020/02/05 08:34:48 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002 Allegro Networks, Inc., Wasabi Systems, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.55 2020/02/04 07:36:55 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gfe.c,v 1.56 2020/02/05 08:34:48 skrll Exp $");
 
 #include "opt_inet.h"
 
@@ -906,7 +906,7 @@ gfe_rx_get(struct gfe_softc *sc, enum gfe_rxprio rxprio)
 		    (buflen > sc->sc_max_frame_length)) {
 			GE_DPRINTF(sc, ("!"));
 			--rxq->rxq_active;
-			ifp->if_ipackets++;
+			if_statinc(ifp, if_ipackets);
 			if_statinc(ifp, if_ierrors);
 			goto give_it_back;
 		}
