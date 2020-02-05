@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.47 2020/02/05 08:22:23 skrll Exp $ */
+/* $NetBSD: if_ie.c,v 1.48 2020/02/05 08:33:19 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.47 2020/02/05 08:22:23 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.48 2020/02/05 08:33:19 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -1545,7 +1545,7 @@ ietint(struct ie_softc *sc)
 	    printf ( "ie: DMA underrun\n" );
 	if ( status & IE_XS_EXCMAX )
 	    printf ( "ie: too many collisions\n" );
-	ifp->if_collisions+=16;
+	if_statadd(ifp, if_collisions, 16);
     }
     /* Done with the buffer */
     sc->xmit_free++;
