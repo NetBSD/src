@@ -1,4 +1,4 @@
-/* $NetBSD: if_ie.c,v 1.46 2020/02/04 07:40:34 skrll Exp $ */
+/* $NetBSD: if_ie.c,v 1.47 2020/02/05 08:22:23 skrll Exp $ */
 
 /*
  * Copyright (c) 1995 Melvin Tang-Richardson.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.46 2020/02/04 07:40:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.47 2020/02/05 08:22:23 skrll Exp $");
 
 #define IGNORE_ETHER1_IDROM_CHECKSUM
 
@@ -679,7 +679,7 @@ iewatchdog(struct ifnet *ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 	iereset(sc);
 }
 
