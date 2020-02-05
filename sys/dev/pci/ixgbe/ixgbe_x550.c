@@ -2895,7 +2895,7 @@ static s32 ixgbe_setup_sfi_x550a(struct ixgbe_hw *hw, ixgbe_link_speed *speed)
  *  @speed: new link speed
  *  @autoneg_wait_to_complete: unused
  *
- *  Configure the the integrated PHY for SFP support.
+ *  Configure the integrated PHY for SFP support.
  **/
 static s32 ixgbe_setup_mac_link_sfp_x550a(struct ixgbe_hw *hw,
 				    ixgbe_link_speed speed,
@@ -4843,4 +4843,3 @@ bool ixgbe_fw_recovery_mode_X550(struct ixgbe_hw *hw)
 
 	return !!(fwsm & IXGBE_FWSM_FW_NVM_RECOVERY_MODE);
 }
-
