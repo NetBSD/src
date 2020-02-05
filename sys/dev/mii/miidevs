@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.161 2019/11/06 16:00:02 msaitoh Exp $
+$NetBSD: miidevs,v 1.162 2020/02/05 06:38:20 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -82,7 +82,6 @@ oui INTEL			0x00aa00	Intel
 oui TSC				0x00c039	TDK Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
 oui ATTANSIC			0x00c82e	Attansic Technology
-oui RDC				0x00d02d	RDC Semiconductor
 oui JMICRON			0x00d831	JMicron
 oui PMCSIERRA			0x00e004	PMC-Sierra
 oui SIS				0x00e006	Silicon Integrated Systems
@@ -115,6 +114,7 @@ oui yyASIX			0x007063	Asix Semiconductor
 oui xxVITESSE			0x008083	Vitesse Semiconductor
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 oui xxCICADA			0x00c08f	Cicada Semiconductor
+oui xxRDC			0x00d02d	RDC Semiconductor
 oui xxNATSEMI			0x1000e8	National Semiconductor
 oui xxLEVEL1			0x782000	Level 1
 oui xxXAQTI			0xace000	XaQti Corp.
@@ -361,7 +361,7 @@ model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RDC Semiconductor PHYs */
-model RDC R6040			0x0003 R6040 10/100 media interface
+model xxRDC R6040		0x0003 R6040 10/100 media interface
 
 /* RealTek PHYs */
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
