@@ -1,4 +1,4 @@
-/*	$NetBSD: options.c,v 1.54 2020/02/04 16:06:59 kre Exp $	*/
+/*	$NetBSD: options.c,v 1.55 2020/02/05 14:56:25 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)options.c	8.2 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: options.c,v 1.54 2020/02/04 16:06:59 kre Exp $");
+__RCSID("$NetBSD: options.c,v 1.55 2020/02/05 14:56:25 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -616,6 +616,8 @@ nextopt(const char *optstring)
 		argptr++;
 		if (p[0] == '-' && p[1] == '\0')	/* check for "--" */
 			return '\0';
+		if (optstring == NULL)	/* not processing the "option" */
+			argptr--;	/* so make it be an arg again */
 	}
 	if (optstring == NULL)
 		return '\0';
