@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.61 2020/01/30 14:02:14 thorpej Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.62 2020/02/05 07:45:46 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1556,7 +1556,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
 
-
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = 0;
@@ -1612,6 +1611,7 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 	int            j;
 
+	INIT_DEBUGOUT("ixgbe_setup_receive_structures");
 	for (j = 0; j < adapter->num_queues; j++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))
 			goto fail;
