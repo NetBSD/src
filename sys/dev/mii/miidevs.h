@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.159 2019/11/06 16:00:33 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.160 2020/02/05 06:38:36 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.161 2019/11/06 16:00:02 msaitoh Exp
+ *	NetBSD: miidevs,v 1.162 2020/02/05 06:38:20 msaitoh Exp
  */
 
 /*-
@@ -89,7 +89,6 @@
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
-#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
 #define	MII_OUI_JMICRON	0x00d831	/* JMicron */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -122,6 +121,7 @@
 #define	MII_OUI_xxVITESSE	0x008083	/* Vitesse Semiconductor */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 #define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
+#define	MII_OUI_xxRDC	0x00d02d	/* RDC Semiconductor */
 #define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
 #define	MII_OUI_xxLEVEL1	0x782000	/* Level 1 */
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
@@ -555,8 +555,8 @@
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
 
 /* RDC Semiconductor PHYs */
-#define	MII_MODEL_RDC_R6040	0x0003
-#define	MII_STR_RDC_R6040	"R6040 10/100 media interface"
+#define	MII_MODEL_xxRDC_R6040	0x0003
+#define	MII_STR_xxRDC_R6040	"R6040 10/100 media interface"
 
 /* RealTek PHYs */
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
