@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.162 2020/01/29 17:11:57 ad Exp $	*/
+/*	$NetBSD: pthread.c,v 1.163 2020/02/05 14:56:04 ryoon Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.162 2020/01/29 17:11:57 ad Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.163 2020/02/05 14:56:04 ryoon Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -111,7 +111,7 @@ int pthread__nspins;
 int pthread__unpark_max = PTHREAD__UNPARK_MAX;
 int pthread__dbg;	/* set by libpthread_dbg if active */
 
-/* 
+/*
  * We have to initialize the pthread_stack* variables here because
  * mutexes are used before pthread_init() and thus pthread__initmain()
  * are called.  Since mutexes only save the stack pointer and not a
@@ -176,9 +176,9 @@ pthread__init(void)
 
 	/*
 	 * Allocate pthread_keys descriptors before
-	 * reseting __uselibcstub because otherwise 
+	 * reseting __uselibcstub because otherwise
 	 * malloc() will call pthread_keys_create()
-	 * while pthread_keys descriptors are not 
+	 * while pthread_keys descriptors are not
 	 * yet allocated.
 	 */
 	pthread__main = pthread_tsd_init(&__pthread_st_size);
@@ -298,7 +298,7 @@ pthread__start(void)
 	/*
 	 * Per-process timers are cleared by fork(); despite the
 	 * various restrictions on fork() and threads, it's legal to
-	 * fork() before creating any threads. 
+	 * fork() before creating any threads.
 	 */
 	pthread_atfork(NULL, NULL, pthread__child_callback);
 }
@@ -617,7 +617,7 @@ pthread_resume_np(pthread_t thread)
 
 	pthread__error(EINVAL, "Invalid thread",
 	    thread->pt_magic == PT_MAGIC);
- 
+
 	if (pthread__find(thread) != 0)
 		return ESRCH;
 	if (_lwp_continue(thread->pt_lid) == 0)
@@ -1089,7 +1089,7 @@ pthread__assertfunc(const char *file, int line, const char *function,
 	 * snprintf should not acquire any locks, or we could
 	 * end up deadlocked if the assert caller held locks.
 	 */
-	len = snprintf(buf, 1024, 
+	len = snprintf(buf, 1024,
 	    "assertion \"%s\" failed: file \"%s\", line %d%s%s%s\n",
 	    expr, file, line,
 	    function ? ", function \"" : "",
@@ -1108,7 +1108,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
 {
 	char buf[1024];
 	size_t len;
-	
+
 	if (pthread__diagassert == 0)
 		return;
 
@@ -1116,7 +1116,7 @@ pthread__errorfunc(const char *file, int line, const char *function,
 	 * snprintf should not acquire any locks, or we could
 	 * end up deadlocked if the assert caller held locks.
 	 */
-	len = snprintf(buf, 1024, 
+	len = snprintf(buf, 1024,
 	    "%s: Error detected by libpthread: %s.\n"
 	    "Detected by file \"%s\", line %d%s%s%s.\n"
 	    "See pthread(3) for information.\n",
