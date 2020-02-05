@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.152 2020/02/04 21:34:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.153 2020/02/05 23:43:18 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.152 2020/02/04 21:34:47 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.153 2020/02/05 23:43:18 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -6395,7 +6395,7 @@ trace_threads_cb(void *arg __unused)
 }
 
 static void
-trace_threads(bool trace_create, bool trace_exit)
+trace_threads(bool trace_create, bool trace_exit, bool masked)
 {
 	const int sigval = SIGSTOP;
 	pid_t child, wpid;
@@ -6407,6 +6407,8 @@ trace_threads(bool trace_create, bool trace_exit)
 	ptrace_event_t event;
 	const int elen = sizeof(event);
 	struct ptrace_siginfo info;
+
+	sigset_t intmask;
 
 	pthread_t t[TRACE_THREADS_NUM];
 	int rv;
@@ -6421,6 +6423,12 @@ trace_threads(bool trace_create, bool trace_exit)
 	if (child == 0) {
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
+
+		if (masked) {
+			sigemptyset(&intmask);
+			sigaddset(&intmask, SIGTRAP);
+			sigprocmask(SIG_BLOCK, &intmask, NULL);
+		}
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
@@ -6570,7 +6578,7 @@ trace_threads(bool trace_create, bool trace_exit)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define TRACE_THREADS(test, trace_create, trace_exit)			\
+#define TRACE_THREADS(test, trace_create, trace_exit, mask)		\
 ATF_TC(test);								\
 ATF_TC_HEAD(test, tc)							\
 {									\
@@ -6583,13 +6591,17 @@ ATF_TC_HEAD(test, tc)							\
 ATF_TC_BODY(test, tc)							\
 {									\
 									\
-        trace_threads(trace_create, trace_exit);			\
+        trace_threads(trace_create, trace_exit, mask);			\
 }
 
-TRACE_THREADS(trace_thread_nolwpevents, false, false)
-TRACE_THREADS(trace_thread_lwpexit, false, true)
-TRACE_THREADS(trace_thread_lwpcreate, true, false)
-TRACE_THREADS(trace_thread_lwpcreate_and_exit, true, true)
+TRACE_THREADS(trace_thread_nolwpevents, false, false, false)
+TRACE_THREADS(trace_thread_lwpexit, false, true, false)
+TRACE_THREADS(trace_thread_lwpcreate, true, false, false)
+TRACE_THREADS(trace_thread_lwpcreate_and_exit, true, true, false)
+
+TRACE_THREADS(trace_thread_lwpexit_masked_sigtrap, false, true, true)
+TRACE_THREADS(trace_thread_lwpcreate_masked_sigtrap, true, false, true)
+TRACE_THREADS(trace_thread_lwpcreate_and_exit_masked_sigtrap, true, true, true)
 
 /// ----------------------------------------------------------------------------
 
@@ -7238,217 +7250,6 @@ ATF_TC_BODY(threads_and_exec, tc)
 /// ----------------------------------------------------------------------------
 
 volatile lwpid_t the_lwp_id = 0;
-
-static void
-lwp_main_func(void *arg)
-{
-	the_lwp_id = _lwp_self();
-	_lwp_exit();
-}
-
-ATF_TC(signal9);
-ATF_TC_HEAD(signal9, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that masking SIGTRAP in tracee does not stop tracer from "
-	    "catching PTRACE_LWP_CREATE breakpoint");
-}
-
-ATF_TC_BODY(signal9, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	const int sigmasked = SIGTRAP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	sigset_t intmask;
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
-	ucontext_t uc;
-	lwpid_t lid;
-	static const size_t ssize = 16*1024;
-	void *stack;
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		sigemptyset(&intmask);
-		sigaddset(&intmask, sigmasked);
-		sigprocmask(SIG_BLOCK, &intmask, NULL);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before allocating memory for stack in child\n");
-		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
-
-		DPRINTF("Before making context for new lwp in child\n");
-		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
-
-		DPRINTF("Before creating new in child\n");
-		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
-
-		DPRINTF("Before waiting for lwp %d to exit\n", lid);
-		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
-
-		DPRINTF("Before verifying that reported %d and running lid %d "
-		    "are the same\n", lid, the_lwp_id);
-		FORKEE_ASSERT_EQ(lid, the_lwp_id);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_LWP_CREATE;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGTRAP\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigmasked);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_CREATE);
-
-	lid = state.pe_lwp;
-	DPRINTF("Reported PTRACE_LWP_CREATE event with lid %d\n", lid);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
-
-ATF_TC(signal10);
-ATF_TC_HEAD(signal10, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that masking SIGTRAP in tracee does not stop tracer from "
-	    "catching PTRACE_LWP_EXIT breakpoint");
-}
-
-ATF_TC_BODY(signal10, tc)
-{
-	const int exitval = 5;
-	const int sigval = SIGSTOP;
-	const int sigmasked = SIGTRAP;
-	pid_t child, wpid;
-#if defined(TWAIT_HAVE_STATUS)
-	int status;
-#endif
-	sigset_t intmask;
-	ptrace_state_t state;
-	const int slen = sizeof(state);
-	ptrace_event_t event;
-	const int elen = sizeof(event);
-	ucontext_t uc;
-	lwpid_t lid;
-	static const size_t ssize = 16*1024;
-	void *stack;
-
-	DPRINTF("Before forking process PID=%d\n", getpid());
-	SYSCALL_REQUIRE((child = fork()) != -1);
-	if (child == 0) {
-		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
-		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
-
-		sigemptyset(&intmask);
-		sigaddset(&intmask, sigmasked);
-		sigprocmask(SIG_BLOCK, &intmask, NULL);
-
-		DPRINTF("Before raising %s from child\n", strsignal(sigval));
-		FORKEE_ASSERT(raise(sigval) == 0);
-
-		DPRINTF("Before allocating memory for stack in child\n");
-		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
-
-		DPRINTF("Before making context for new lwp in child\n");
-		_lwp_makecontext(&uc, lwp_main_func, NULL, NULL, stack, ssize);
-
-		DPRINTF("Before creating new in child\n");
-		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
-
-		DPRINTF("Before waiting for lwp %d to exit\n", lid);
-		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
-
-		DPRINTF("Before verifying that reported %d and running lid %d "
-		    "are the same\n", lid, the_lwp_id);
-		FORKEE_ASSERT_EQ(lid, the_lwp_id);
-
-		DPRINTF("Before exiting of the child process\n");
-		_exit(exitval);
-	}
-	DPRINTF("Parent process PID=%d, child's PID=%d\n", getpid(), child);
-
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigval);
-
-	DPRINTF("Set empty EVENT_MASK for the child %d\n", child);
-	event.pe_set_event = PTRACE_LWP_EXIT;
-	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, elen) != -1);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected stopped "
-	    "SIGTRAP\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_stopped(status, sigmasked);
-
-	SYSCALL_REQUIRE(ptrace(PT_GET_PROCESS_STATE, child, &state, slen) != -1);
-
-	ATF_REQUIRE_EQ(state.pe_report_event, PTRACE_LWP_EXIT);
-
-	lid = state.pe_lwp;
-	DPRINTF("Reported PTRACE_LWP_EXIT event with lid %d\n", lid);
-
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
-
-	DPRINTF("Before calling %s() for the child - expected exited\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
-
-	validate_status_exited(status, exitval);
-
-	DPRINTF("Before calling %s() for the child - expected no process\n",
-	    TWAIT_FNAME);
-	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
-}
 
 static void
 lwp_main_stop(void *arg)
@@ -9439,6 +9240,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, trace_thread_lwpcreate);
 	ATF_TP_ADD_TC(tp, trace_thread_lwpcreate_and_exit);
 
+	ATF_TP_ADD_TC(tp, trace_thread_lwpexit_masked_sigtrap);
+	ATF_TP_ADD_TC(tp, trace_thread_lwpcreate_masked_sigtrap);
+	ATF_TP_ADD_TC(tp, trace_thread_lwpcreate_and_exit_masked_sigtrap);
+
 	ATF_TP_ADD_TC(tp, signal_mask_unrelated);
 
 	ATF_TP_ADD_TC_HAVE_PID(tp, posix_spawn_singalmasked);
@@ -9451,9 +9256,6 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC_HAVE_PID(tp, vforkdone_singalignored);
 
 	ATF_TP_ADD_TC(tp, threads_and_exec);
-
-	ATF_TP_ADD_TC(tp, signal9);
-	ATF_TP_ADD_TC(tp, signal10);
 
 	ATF_TP_ADD_TC(tp, suspend2);
 
