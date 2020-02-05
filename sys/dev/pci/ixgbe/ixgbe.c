@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.223 2020/02/04 19:42:55 thorpej Exp $ */
+/* $NetBSD: ixgbe.c,v 1.224 2020/02/05 01:44:53 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -1708,15 +1708,11 @@ ixgbe_update_stats_counters(struct adapter *adapter)
 		stats->fcoedwtc.ev_count += IXGBE_READ_REG(hw, IXGBE_FCOEDWTC);
 	}
 
-	/* Fill out the OS statistics structure */
 	/*
-	 * NetBSD: Don't override if_{i|o}{packets|bytes|mcasts} with
-	 * adapter->stats counters. It's required to make ifconfig -z
-	 * (SOICZIFDATA) work.
+	 * Fill out the OS statistics structure. Only RX errors are required
+	 * here because all TX counters are incremented in the TX path and
+	 * normal RX counters are prepared in ether_input().
 	 */
-	/* XXX Actually, just fill in the per-cpu stats, please !!! */
-
-	/* Rx Errors */
 	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if_statadd_ref(nsr, if_iqdrops, total_missed_rx);
 	if_statadd_ref(nsr, if_ierrors, crcerrs + rlec);
