@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.42 2020/02/05 08:36:34 skrll Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.43 2020/02/05 08:36:56 skrll Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.42 2020/02/05 08:36:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.43 2020/02/05 08:36:56 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -386,7 +386,7 @@ void
 ae_nubus_intr(void *arg)
 {
 	struct dp8390_softc *sc = arg;
-	
+
 	(void)dp8390_intr(sc);
 }
 
