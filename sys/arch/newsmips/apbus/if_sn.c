@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.48 2020/02/04 07:41:01 skrll Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.49 2020/02/05 13:08:19 martin Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.48 2020/02/04 07:41:01 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.49 2020/02/05 13:08:19 martin Exp $");
 
 #include "opt_inet.h"
 
@@ -966,9 +966,9 @@ sonicrxint(struct sn_softc *sc)
 			    (char *)sc->rbuf[orra & RBAMASK] +
 				 (rxpkt_ptr & PGOFSET);
 			if (sonic_read(sc, pkt, len) == 0)
-				sc->sc_if.if_ierrors++;
+				if_statinc(&sc->sc_if, if_ierrors);
 		} else
-			sc->sc_if.if_ierrors++;
+			if_statinc(&sc->sc_if, if_ierrors);
 
 		/*
 		 * give receive buffer area back to chip.
