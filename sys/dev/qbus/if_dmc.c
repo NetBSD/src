@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dmc.c,v 1.27 2020/02/04 07:37:11 skrll Exp $	*/
+/*	$NetBSD: if_dmc.c,v 1.28 2020/02/05 08:35:10 skrll Exp $	*/
 /*
  * Copyright (c) 1982, 1986 Regents of the University of California.
  * All rights reserved.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.27 2020/02/04 07:37:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dmc.c,v 1.28 2020/02/05 08:35:10 skrll Exp $");
 
 #undef DMCDEBUG	/* for base table dump on fatal error */
 
@@ -580,7 +580,7 @@ dmcxint(void *a)
 			 * Pass packet to type specific
 			 * higher-level input routine.
 			 */
-			ifp->if_ipackets++;
+			if_statinc(ifp, if_ipackets);
 			/* find location in dmcuba struct */
 			ifrw= &sc->sc_ifr[0];
 			for (rp = &sc->sc_rbufs[0]; rp < &sc->sc_rbufs[NRCV]; rp++) {
