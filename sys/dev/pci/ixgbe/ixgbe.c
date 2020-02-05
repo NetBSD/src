@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.224 2020/02/05 01:44:53 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.225 2020/02/05 07:45:46 msaitoh Exp $ */
 
 /******************************************************************************
 
@@ -676,6 +676,8 @@ ixgbe_initialize_transmit_units(struct adapter *adapter)
 	struct tx_ring	*txr = adapter->tx_rings;
 	struct ixgbe_hw	*hw = &adapter->hw;
 	int i;
+
+	INIT_DEBUGOUT("ixgbe_initialize_transmit_units");
 
 	/* Setup the Base and Length of the Tx Descriptor Ring */
 	for (i = 0; i < adapter->num_queues; i++, txr++) {
