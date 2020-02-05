@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.100 2020/01/28 13:08:40 ad Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.101 2020/02/05 11:05:10 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -36,7 +36,6 @@
 #include <sys/tls.h>
 
 /* #define PTHREAD__DEBUG */
-#define ERRORCHECK
 
 #include "pthread_types.h"
 #include "pthread_queue.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_rwlock.c,v 1.38 2020/01/31 17:52:14 kamil Exp $ */
+/*	$NetBSD: pthread_rwlock.c,v 1.39 2020/02/05 11:05:10 kamil Exp $ */
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_rwlock.c,v 1.38 2020/01/31 17:52:14 kamil Exp $");
+__RCSID("$NetBSD: pthread_rwlock.c,v 1.39 2020/02/05 11:05:10 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -158,10 +158,8 @@ pthread__rwlock_rdlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	pthread_t self;
 	int error;
 
-#ifdef ERRORCHECK
 	pthread__error(EINVAL, "Invalid rwlock",
 	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
-#endif
 
 	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
 		/*
@@ -248,10 +246,8 @@ pthread_rwlock_tryrdlock(pthread_rwlock_t *ptr)
 	if (__predict_false(__uselibcstub))
 		return __libc_rwlock_tryrdlock_stub(ptr);
 
-#ifdef ERRORCHECK
 	pthread__error(EINVAL, "Invalid rwlock",
 	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
-#endif
 
 	/*
 	 * Don't get a readlock if there is a writer or if there are waiting
@@ -283,10 +279,8 @@ pthread__rwlock_wrlock(pthread_rwlock_t *ptr, const struct timespec *ts)
 	self = pthread__self();
 	_DIAGASSERT(((uintptr_t)self & RW_FLAGMASK) == 0);
 
-#ifdef ERRORCHECK
 	pthread__error(EINVAL, "Invalid rwlock",
 	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
-#endif
 
 	for (owner = (uintptr_t)ptr->ptr_owner;; owner = next) {
 		/*
@@ -374,10 +368,8 @@ pthread_rwlock_trywrlock(pthread_rwlock_t *ptr)
 	if (__predict_false(__uselibcstub))
 		return __libc_rwlock_trywrlock_stub(ptr);
 
-#ifdef ERRORCHECK
 	pthread__error(EINVAL, "Invalid rwlock",
 	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
-#endif
 
 	self = pthread__self();
 	_DIAGASSERT(((uintptr_t)self & RW_FLAGMASK) == 0);
@@ -453,10 +445,8 @@ pthread_rwlock_unlock(pthread_rwlock_t *ptr)
 	if (__predict_false(__uselibcstub))
 		return __libc_rwlock_unlock_stub(ptr);
 
-#ifdef ERRORCHECK
 	pthread__error(EINVAL, "Invalid rwlock",
 	    ptr->ptr_magic == _PT_RWLOCK_MAGIC);
-#endif
 
 #ifndef PTHREAD__ATOMIC_IS_MEMBAR
 	membar_exit();
