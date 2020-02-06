@@ -1,4 +1,4 @@
-/*	$NetBSD: mbr.c,v 1.30 2020/01/27 21:21:22 martin Exp $ */
+/*	$NetBSD: mbr.c,v 1.31 2020/02/06 18:07:22 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -155,6 +155,8 @@ static part_id mbr_add_part(struct disk_partitions *arg,
 static size_t mbr_get_free_spaces(const struct disk_partitions *arg,
     struct disk_part_free_space *result, size_t max_num_result,
     daddr_t min_size, daddr_t align, daddr_t lower_bound, daddr_t ignore);
+
+static size_t mbr_type_from_gen_desc(const struct part_type_desc *desc);
 
 /*
  * Notes on the extended partition editor.
@@ -999,6 +1001,20 @@ mbr_read_from_disk(const char *disk, daddr_t start, daddr_t len, size_t bps,
 		return NULL;
 	}
 	mbr_calc_free_space(parts);
+	if (parts->dp.num_part == 1 &&
+	    parts->dp.free_space < parts->ptn_alignment) {
+		struct disk_part_info info;
+
+		/*
+		 * Check if this is a GPT protective MBR
+		 */
+		if (parts->dp.pscheme->get_part_info(&parts->dp, 0, &info)
+		    && info.nat_type != NULL
+		    && mbr_type_from_gen_desc(info.nat_type) == 0xEE) {
+			parts->dp.pscheme->free(&parts->dp);
+			return NULL;
+		}
+	}
 
 	return &parts->dp;
 }
