@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.77 2020/01/22 21:04:29 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.78 2020/02/06 01:13:19 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -716,7 +716,7 @@ meta_job_child(Job *job)
 void
 meta_job_parent(Job *job, pid_t pid)
 {
-#ifdef USE_FILEMON
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
 
     if (job != NULL) {
@@ -733,7 +733,7 @@ meta_job_parent(Job *job, pid_t pid)
 int
 meta_job_fd(Job *job)
 {
-#ifdef USE_FILEMON
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
 
     if (job != NULL) {
@@ -751,7 +751,7 @@ meta_job_fd(Job *job)
 int
 meta_job_event(Job *job)
 {
-#ifdef USE_FILEMON
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     BuildMon *pbm;
 
     if (job != NULL) {
@@ -1680,16 +1680,13 @@ void
 meta_compat_parent(pid_t child)
 {
     int outfd, metafd, maxfd, nfds;
-    char buf[BUFSIZ];
+    char buf[BUFSIZ+1];
     fd_set readfds;
 
     meta_job_parent(NULL, child);
     close(childPipe[1]);			/* child side */
     outfd = childPipe[0];
-    if (!Mybm.filemon)				/* no meta  */
-	    return;
-    metafd = filemon_readfd(Mybm.filemon);
-
+    metafd = Mybm.filemon ? filemon_readfd(Mybm.filemon) : -1;
     maxfd = -1;
     if (outfd > maxfd)
 	    maxfd = outfd;
@@ -1713,7 +1710,7 @@ meta_compat_parent(pid_t child)
 
 	if (outfd != -1 && FD_ISSET(outfd, &readfds)) do {
 	    /* XXX this is not line-buffered */
-	    ssize_t nread = read(outfd, buf, sizeof buf);
+	    ssize_t nread = read(outfd, buf, sizeof(buf) - 1);
 	    if (nread == -1)
 		err(1, "read");
 	    if (nread == 0) {
@@ -1723,6 +1720,8 @@ meta_compat_parent(pid_t child)
 	    }
 	    fwrite(buf, 1, (size_t)nread, stdout);
 	    fflush(stdout);
+	    buf[nread] = '\0';
+	    meta_job_output(NULL, buf, "");
 	} while (0);
 	if (metafd != -1 && FD_ISSET(metafd, &readfds)) {
 	    if (meta_job_event(NULL) <= 0)
