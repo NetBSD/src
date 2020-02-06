@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.470 2020/02/01 12:54:50 riastradh Exp $	*/
+/*	$NetBSD: if.c,v 1.471 2020/02/06 23:30:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.470 2020/02/01 12:54:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.471 2020/02/06 23:30:19 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -180,6 +180,7 @@ static uint64_t			index_gen;
 kmutex_t			ifnet_mtx __cacheline_aligned;
 static struct psref_class	*ifnet_psref_class __read_mostly;
 static pserialize_t		ifnet_psz;
+static struct workqueue		*ifnet_link_state_wq __read_mostly;
 
 static kmutex_t			if_clone_mtx;
 
@@ -211,7 +212,7 @@ static int ifconf(u_long, void *);
 static int if_transmit(struct ifnet *, struct mbuf *);
 static int if_clone_create(const char *);
 static int if_clone_destroy(const char *);
-static void if_link_state_change_si(void *);
+static void if_link_state_change_work(struct work *, void *);
 static void if_up_locked(struct ifnet *);
 static void _if_down(struct ifnet *);
 static void if_down_deactivated(struct ifnet *);
@@ -298,6 +299,7 @@ ifinit(void)
 void
 ifinit1(void)
 {
+	int error __diagused;
 
 #ifdef NET_MPSAFE
 	printf("NET_MPSAFE enabled\n");
@@ -310,6 +312,10 @@ ifinit1(void)
 	ifnet_psz = pserialize_create();
 	ifnet_psref_class = psref_class_create("ifnet", IPL_SOFTNET);
 	ifa_psref_class = psref_class_create("ifa", IPL_SOFTNET);
+	error = workqueue_create(&ifnet_link_state_wq, "iflnkst",
+	    if_link_state_change_work, NULL, PRI_SOFTNET, IPL_SOFTNET,
+	    WQ_MPSAFE);
+	KASSERT(error == 0);
 	PSLIST_INIT(&ifnet_pslist);
 
 	if_indexlim = 8;
@@ -716,17 +722,6 @@ if_initialize(ifnet_t *ifp)
 	pfil_run_ifhooks(if_pfil, PFIL_IFNET_ATTACH, ifp);
 
 	IF_AFDATA_LOCK_INIT(ifp);
-
-	if (if_is_link_state_changeable(ifp)) {
-		u_int flags = SOFTINT_NET;
-		flags |= if_is_mpsafe(ifp) ? SOFTINT_MPSAFE : 0;
-		ifp->if_link_si = softint_establish(flags,
-		    if_link_state_change_si, ifp);
-		if (ifp->if_link_si == NULL) {
-			rv = ENOMEM;
-			goto fail;
-		}
-	}
 
 	PSLIST_ENTRY_INIT(ifp, if_pslist_entry);
 	PSLIST_INIT(&ifp->if_addr_pslist);
@@ -1483,11 +1478,6 @@ restart:
 	rt_ifannouncemsg(ifp, IFAN_DEPARTURE);
 
 	IF_AFDATA_LOCK_DESTROY(ifp);
-
-	if (if_is_link_state_changeable(ifp)) {
-		softint_disestablish(ifp->if_link_si);
-		ifp->if_link_si = NULL;
-	}
 
 	/*
 	 * remove packets that came from ifp, from software interrupt queues.
@@ -2252,13 +2242,23 @@ link_rtrequest(int cmd, struct rtentry *rt, const struct rt_addrinfo *info)
  * - if IFEF_MPSAFE is enabled, if_snd isn't used and lock contentions on
  *   ifq_lock don't happen
  * - if IFEF_MPSAFE is disabled, there is no lock contention on ifq_lock
- *   because if_snd, if_link_state_change and if_link_state_change_softint
+ *   because if_snd, if_link_state_change and if_link_state_change_process
  *   are all called with KERNEL_LOCK
  */
 #define IF_LINK_STATE_CHANGE_LOCK(ifp)		\
 	mutex_enter((ifp)->if_snd.ifq_lock)
 #define IF_LINK_STATE_CHANGE_UNLOCK(ifp)	\
 	mutex_exit((ifp)->if_snd.ifq_lock)
+
+static void
+if_link_state_change_work_schedule(struct ifnet *ifp)
+{
+	if (ifp->if_link_cansched && !ifp->if_link_scheduled) {
+		ifp->if_link_scheduled = true;
+		workqueue_enqueue(ifnet_link_state_wq, &ifp->if_link_work,
+		    NULL);
+	}
+}
 
 /*
  * Handle a change in the interface link state and
@@ -2328,7 +2328,7 @@ if_link_state_change(struct ifnet *ifp, int link_state)
 	} else
 		LQ_STORE(ifp->if_link_queue, idx, (uint8_t)link_state);
 
-	softint_schedule(ifp->if_link_si);
+	if_link_state_change_work_schedule(ifp);
 
 out:
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
@@ -2337,8 +2337,8 @@ out:
 /*
  * Handle interface link state change notifications.
  */
-void
-if_link_state_change_softint(struct ifnet *ifp, int link_state)
+static void
+if_link_state_change_process(struct ifnet *ifp, int link_state)
 {
 	struct domain *dp;
 	int s = splnet();
@@ -2409,32 +2409,34 @@ if_link_state_change_softint(struct ifnet *ifp, int link_state)
  * Process the interface link state change queue.
  */
 static void
-if_link_state_change_si(void *arg)
+if_link_state_change_work(struct work *work, void *arg)
 {
-	struct ifnet *ifp = arg;
+	struct ifnet *ifp = container_of(work, struct ifnet, if_link_work);
 	int s;
 	uint8_t state;
 	bool schedule;
 
-	SOFTNET_KERNEL_LOCK_UNLESS_NET_MPSAFE();
+	KERNEL_LOCK_UNLESS_NET_MPSAFE();
 	s = splnet();
 
 	/* Pop a link state change from the queue and process it. */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
+	ifp->if_link_scheduled = false;
 	LQ_POP(ifp->if_link_queue, state);
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 
-	if_link_state_change_softint(ifp, state);
+	if_link_state_change_process(ifp, state);
 
 	/* If there is a link state change to come, schedule it. */
 	IF_LINK_STATE_CHANGE_LOCK(ifp);
 	schedule = (LQ_ITEM(ifp->if_link_queue, 0) != LINK_STATE_UNSET);
 	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+
 	if (schedule)
-		softint_schedule(ifp->if_link_si);
+		if_link_state_change_work_schedule(ifp);
 
 	splx(s);
-	SOFTNET_KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
+	KERNEL_UNLOCK_UNLESS_NET_MPSAFE();
 }
 
 /*
@@ -2517,6 +2519,11 @@ _if_down(struct ifnet *ifp)
 	pserialize_read_exit(s);
 	curlwp_bindx(bound);
 
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
+	ifp->if_link_cansched = false;
+	workqueue_wait(ifnet_link_state_wq, &ifp->if_link_work);
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
+
 	IFQ_PURGE(&ifp->if_snd);
 #if NCARP > 0
 	if (ifp->if_carp)
@@ -2589,6 +2596,10 @@ if_up_locked(struct ifnet *ifp)
 		if (dp->dom_if_up)
 			dp->dom_if_up(ifp);
 	}
+
+	IF_LINK_STATE_CHANGE_LOCK(ifp);
+	ifp->if_link_cansched = true;
+	IF_LINK_STATE_CHANGE_UNLOCK(ifp);
 }
 
 /*

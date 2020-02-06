@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.280 2020/02/01 21:59:39 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.281 2020/02/06 23:30:19 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -229,6 +229,7 @@ struct ifqueue {
 #include <sys/percpu.h>
 #include <sys/callout.h>
 #include <sys/rwlock.h>
+#include <sys/workqueue.h>
 
 #endif /* _KERNEL */
 
@@ -402,8 +403,12 @@ typedef struct ifnet {
 	struct krwlock	*if_afdata_lock;/* :: */
 	struct if_percpuq
 			*if_percpuq;	/* :: we should remove it in the future */
-	void		*if_link_si;	/* :: softint to handle link state changes */
+	struct work	if_link_work;	/* q: linkage on link state work queue */
 	uint16_t	if_link_queue;	/* q: masked link state change queue */
+					/* q: is link state work scheduled? */
+	bool		if_link_scheduled;
+					/* q: can link state work be scheduled? */
+	bool		if_link_cansched;
 	struct pslist_entry
 			if_pslist_entry;/* i: */
 	struct psref_target
@@ -1125,7 +1130,6 @@ void	if_detach(struct ifnet *);
 void	if_down(struct ifnet *);
 void	if_down_locked(struct ifnet *);
 void	if_link_state_change(struct ifnet *, int);
-void	if_link_state_change_softint(struct ifnet *, int);
 void	if_up(struct ifnet *);
 void	ifinit(void);
 void	ifinit1(void);
