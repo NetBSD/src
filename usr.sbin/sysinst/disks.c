@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.64 2020/02/06 16:28:10 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.65 2020/02/06 19:08:38 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1446,7 +1446,8 @@ find_part_by_name(const char *name, struct disk_partitions **parts,
 		 * List has not been filled, only "pm" is valid - check
 		 * that first.
 		 */
-		if (pm->parts->pscheme->find_by_name != NULL) {
+		if (pm->parts != NULL &&
+		    pm->parts->pscheme->find_by_name != NULL) {
 			id = pm->parts->pscheme->find_by_name(pm->parts, name);
 			if (id != NO_PART) {
 				*pno = id;
@@ -1840,10 +1841,15 @@ mount_disks(struct install_partition_desc *install)
 	assert((size_t)(l - fstabbuf) == num_entries);
 
 	/* First the root device. */
-	if (target_already_root())
+	if (target_already_root()) {
 		/* avoid needing to call target_already_root() again */
 		targetroot_mnt[0] = 0;
-	else {
+	} else if (pm->no_part) {
+		snprintf(devdev, sizeof devdev, _PATH_DEV "%s", pm->diskdev);
+		error = mount_root(devdev, true, false, install);
+		if (error != 0 && error != EBUSY)
+			return -1;
+	} else {
 		for (i = 0; i < install->num; i++) {
 			if (is_root_part_mount(install->infos[i].mount))
 				break;
