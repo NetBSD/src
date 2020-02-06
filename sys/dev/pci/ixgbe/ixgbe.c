@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.c,v 1.225 2020/02/05 07:45:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe.c,v 1.226 2020/02/06 06:28:49 thorpej Exp $ */
 
 /******************************************************************************
 
@@ -1507,6 +1507,18 @@ ixgbe_is_sfp(struct ixgbe_hw *hw)
 	}
 } /* ixgbe_is_sfp */
 
+static void
+ixgbe_schedule_msf_tasklet(struct adapter *adapter)
+{
+	if (adapter->schedule_wqs_ok) {
+		if (!adapter->msf_pending) {
+			adapter->msf_pending = true;
+			workqueue_enqueue(adapter->msf_wq,
+			    &adapter->msf_wc, NULL);
+		}
+	}
+}
+
 /************************************************************************
  * ixgbe_config_link
  ************************************************************************/
@@ -1523,9 +1535,7 @@ ixgbe_config_link(struct adapter *adapter)
 		if (hw->phy.multispeed_fiber) {
 			ixgbe_enable_tx_laser(hw);
 			kpreempt_disable();
-			if (adapter->schedule_wqs_ok)
-				workqueue_enqueue(adapter->msf_wq,
-				    &adapter->msf_wc, NULL);
+			ixgbe_schedule_msf_tasklet(adapter);
 			kpreempt_enable();
 		}
 		kpreempt_disable();
@@ -3099,9 +3109,7 @@ ixgbe_msix_link(void *arg)
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
 			IXGBE_WRITE_REG(hw, IXGBE_EICR,
 			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
-			if (adapter->schedule_wqs_ok)
-				workqueue_enqueue(adapter->msf_wq,
-				    &adapter->msf_wc, NULL);
+			ixgbe_schedule_msf_tasklet(adapter);
 		}
 	}
 
@@ -4674,8 +4682,7 @@ ixgbe_handle_mod(void *context)
 			goto out;
 		}
 	}
-	if (adapter->schedule_wqs_ok)
-		workqueue_enqueue(adapter->msf_wq, &adapter->msf_wc, NULL);
+	ixgbe_schedule_msf_tasklet(adapter);
 out:
 	IXGBE_CORE_UNLOCK(adapter);
 } /* ixgbe_handle_mod */
@@ -4703,6 +4710,7 @@ ixgbe_handle_msf(struct work *wk, void *context)
 	IFNET_LOCK(ifp);
 
 	IXGBE_CORE_LOCK(adapter);
+	adapter->msf_pending = false;
 	++adapter->msf_sicount.ev_count;
 	/* get_supported_phy_layer will call hw->phy.ops.identify_sfp() */
 	adapter->phy_layer = ixgbe_get_supported_physical_layer(hw);
@@ -4754,6 +4762,7 @@ ixgbe_ifstop(struct ifnet *ifp, int disable)
 	IXGBE_CORE_UNLOCK(adapter);
 
 	workqueue_wait(adapter->msf_wq, &adapter->msf_wc);
+	adapter->msf_pending = false;
 }
 
 /************************************************************************
@@ -5122,9 +5131,7 @@ ixgbe_legacy_irq(void *arg)
 		    (eicr & IXGBE_EICR_GPI_SDP1_BY_MAC(hw))) {
 			IXGBE_WRITE_REG(hw, IXGBE_EICR,
 			    IXGBE_EICR_GPI_SDP1_BY_MAC(hw));
-			if (adapter->schedule_wqs_ok)
-				workqueue_enqueue(adapter->msf_wq,
-				    &adapter->msf_wc, NULL);
+			ixgbe_schedule_msf_tasklet(adapter);
 		}
 	}
 

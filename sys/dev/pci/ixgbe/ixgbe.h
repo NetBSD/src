@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe.h,v 1.64 2020/02/05 07:45:46 msaitoh Exp $ */
+/* $NetBSD: ixgbe.h,v 1.65 2020/02/06 06:28:49 thorpej Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -515,6 +515,7 @@ struct adapter {
 	void			*mod_si;   /* SFP tasklet */
 	struct workqueue	*msf_wq;   /* Multispeed Fiber */
 	struct work		 msf_wc;
+	bool			 msf_pending;
 	void			*mbx_si;   /* VF -> PF mailbox interrupt */
 
 	/* Flow Director */
