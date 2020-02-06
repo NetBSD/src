@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.63 2020/02/06 10:42:06 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.64 2020/02/06 16:28:10 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1520,6 +1520,16 @@ process_found_fs(struct data *list, size_t num, const struct lookfor *item,
 
 	if (strcmp(item->head, name_prefix) == 0) {
 		/* this fstab entry uses NAME= syntax */
+
+		/* unescape */
+		char *src, *dst;
+		for (src = list[0].u.s_val, dst =src; src[0] != 0; ) {
+			if (src[0] == '\\' && src[1] != 0)
+				src++;
+			*dst++ = *src++;
+		}
+		*dst = 0;
+
 		if (!find_part_by_name(list[0].u.s_val,
 		    &parts, &pno) || parts == NULL || pno == NO_PART)
 			return 0;
