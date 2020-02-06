@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.10 2020/02/05 13:23:42 kamil Exp $
+	$NetBSD: README,v 1.11 2020/02/06 22:52:25 kamil Exp $
 
                            Kernel Developer's Manual
 
@@ -13,6 +13,7 @@ DESCRIPTION
      * mapper          - basic implementation of mmap
      * panic_string    - shows how panic is being called through a device
      * ping            - basic ioctl(9)
+     * ping_block      - basic ioctl(9) with a block device
      * properties      - handle incoming properties during the module load
      * readhappy       - basic implementation of read(9) with happy numbers
      * readhappy_mpsafe- demonstrates how to make a module MPSAFE
