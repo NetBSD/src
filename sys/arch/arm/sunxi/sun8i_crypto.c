@@ -1,4 +1,4 @@
-/*	$NetBSD: sun8i_crypto.c,v 1.11 2020/01/20 16:29:38 riastradh Exp $	*/
+/*	$NetBSD: sun8i_crypto.c,v 1.12 2020/02/06 19:52:09 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.11 2020/01/20 16:29:38 riastradh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun8i_crypto.c,v 1.12 2020/02/06 19:52:09 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -1177,7 +1177,7 @@ sun8i_crypto_sysctl_attach(struct sun8i_crypto_softc *sc)
 	}
 
 	/* hw.sun8icryptoN.rng (`struct', 4096-byte array) */
-	sysctl_createv(&cy->cy_log, 0, &cy->cy_trng_node, NULL,
+	sysctl_createv(&cy->cy_log, 0, &cy->cy_root_node, &cy->cy_trng_node,
 	    CTLFLAG_PERMANENT|CTLFLAG_READONLY|CTLFLAG_PRIVATE, CTLTYPE_STRUCT,
 	    "rng", SYSCTL_DESCR("Read up to 4096 bytes out of the TRNG"),
 	    &sun8i_crypto_sysctl_rng, 0, sc, 0, CTL_CREATE, CTL_EOL);
