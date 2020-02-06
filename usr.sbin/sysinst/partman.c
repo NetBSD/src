@@ -1,4 +1,4 @@
-/*	$NetBSD: partman.c,v 1.49 2020/01/27 21:21:22 martin Exp $ */
+/*	$NetBSD: partman.c,v 1.50 2020/02/06 11:55:18 martin Exp $ */
 
 /*
  * Copyright 2012 Eugene Lozovoy
@@ -3249,7 +3249,7 @@ pm_edit_partitions(struct part_entry *pe)
 {
 	struct pm_devs *my_pm = pm_from_pe(pe);
 	struct partition_usage_set pset = { 0 };
-	struct disk_partitions *parts;
+	struct disk_partitions *parts, *np;
 
 	if (!my_pm)
 		return;
@@ -3264,12 +3264,16 @@ pm_edit_partitions(struct part_entry *pe)
 	if (my_pm->parts->pscheme->secondary_scheme != NULL) {
 		if (!edit_outer_parts(my_pm->parts))
 			goto done;
-		parts = get_inner_parts(parts);
+		np = get_inner_parts(parts);
+		if (np != NULL)
+			parts = np;
 	}
 
-	usage_set_from_parts(&pset, parts);
-	edit_and_check_label(my_pm, &pset, false);
-	free_usage_set(&pset);
+	if (parts != NULL) {
+		usage_set_from_parts(&pset, parts);
+		edit_and_check_label(my_pm, &pset, false);
+		free_usage_set(&pset);
+	}
 
 done:
 	pm_partusage(my_pm, -1, -1);
