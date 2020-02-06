@@ -1,4 +1,4 @@
-/*	$NetBSD: devpubd.c,v 1.4 2015/02/15 21:46:49 christos Exp $	*/
+/*	$NetBSD: devpubd.c,v 1.5 2020/02/06 19:20:21 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,14 +36,13 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011-2015\
 Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: devpubd.c,v 1.4 2015/02/15 21:46:49 christos Exp $");
+__RCSID("$NetBSD: devpubd.c,v 1.5 2020/02/06 19:20:21 kamil Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/drvctlio.h>
 #include <sys/wait.h>
-#include <sys/poll.h>
 
 #include <assert.h>
 #include <err.h>
