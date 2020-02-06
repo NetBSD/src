@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.109 2020/02/04 05:46:32 thorpej Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.110 2020/02/06 23:30:20 thorpej Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.109 2020/02/04 05:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.110 2020/02/06 23:30:20 thorpej Exp $");
 
 /*
  * TODO:
@@ -2265,13 +2265,7 @@ carp_update_link_state(struct carp_softc *sc)
 			     ? LINK_STATE_DOWN : LINK_STATE_UNKNOWN;
 		break;
 	}
-	/*
-	 * The lock is needed to serialize a call of
-	 * if_link_state_change_softint from here and a call from softint.
-	 */
-	KERNEL_LOCK(1, NULL);
-	if_link_state_change_softint(&sc->sc_if, link_state);
-	KERNEL_UNLOCK_ONE(NULL);
+	if_link_state_change(&sc->sc_if, link_state);
 }
 
 void
