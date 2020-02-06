@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.15 2020/02/06 19:08:38 martin Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.16 2020/02/06 19:50:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -209,14 +209,9 @@ do_reinstall_sets()
 	if (find_disks(msg_string(MSG_reinstall), !root_is_read_only()) < 0)
 		return;
 
-	if (!pm->cur_system) {
-		if (pm->parts == NULL) {
-			hit_enter_to_continue(MSG_noroot, NULL);
-			return;
-		}
-
+	if (!pm->cur_system && pm->parts != NULL) {
 		install_desc_from_parts(&install, pm->parts);
-	} else {
+	} else if (pm->cur_system) {
 		install.cur_system = true;
 	}
 
