@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.11 2020/01/09 13:22:30 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.12 2020/02/06 15:08:04 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.11 2020/01/09 13:22:30 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.12 2020/02/06 15:08:04 martin Exp $");
 #endif
 
 /*
@@ -157,7 +157,7 @@ target_already_root(void)
 	static struct pm_devs *last_pm;
 	static int last_res;
 	part_id ptn;
-	struct disk_partitions *parts;
+	struct disk_partitions *parts, *inner;
 	struct disk_part_info info;
 
 	if (pm == last_pm)
@@ -180,9 +180,12 @@ target_already_root(void)
 		return last_res;
 	}
 
-	if (pm->parts->pscheme->secondary_partitions != NULL)
-		parts = pm->parts->pscheme->secondary_partitions(parts,
+	if (pm->parts->pscheme->secondary_partitions != NULL) {
+		inner = pm->parts->pscheme->secondary_partitions(parts,
 		    pm->ptstart, false);
+		if (inner != NULL)
+			parts = inner;
+	}
 
 	for (ptn = 0; ptn < parts->num_part; ptn++) {
 		if (!parts->pscheme->get_part_info(parts, ptn, &info))
