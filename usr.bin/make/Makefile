@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2020/01/19 19:50:54 riastradh Exp $
+#	$NetBSD: Makefile,v 1.69 2020/02/06 01:13:19 sjg Exp $
 #	@(#)Makefile	5.2 (Berkeley) 12/28/90
 
 PROG=	make
@@ -24,7 +24,7 @@ USE_FILEMON ?= ktrace
 
 .PATH:	${.CURDIR}/filemon
 SRCS+=	filemon_${USE_FILEMON}.c
-CPPFLAGS+= -DUSE_FILEMON
+CPPFLAGS+= -DUSE_FILEMON -DUSE_FILEMON_${USE_FILEMON:tu}
 
 .if ${USE_FILEMON} == "dev"
 FILEMON_H ?= /usr/include/dev/filemon/filemon.h
@@ -67,5 +67,5 @@ COPTS.meta.c+=	${GCC_NO_FORMAT_TRUNCATION}
 COPTS.parse.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
 # A simple unit-test driver to help catch regressions
-accept test:
+accept test: .MAKE
 	cd ${.CURDIR}/unit-tests && MAKEFLAGS= ${.MAKE} -r -m / TEST_MAKE=${TEST_MAKE:U${.OBJDIR}/${PROG:T}} ${.TARGET}
