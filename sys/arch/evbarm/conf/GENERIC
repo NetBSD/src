@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.72 2020/01/26 06:51:06 mrg Exp $
+#	$NetBSD: GENERIC,v 1.73 2020/02/06 01:37:46 mrg Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -767,5 +767,6 @@ spiflash* at spiflashbus?
 
 include "dev/usb/usbdevices.config"
 midi* 		at midibus?
+pseudo-device	sequencer			# MIDI sequencer
 
 cinclude "arch/evbarm/conf/GENERIC.local"
