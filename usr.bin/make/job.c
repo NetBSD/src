@@ -1,4 +1,4 @@
-/*	$NetBSD: job.c,v 1.196 2020/01/19 19:42:32 riastradh Exp $	*/
+/*	$NetBSD: job.c,v 1.197 2020/02/06 01:13:19 sjg Exp $	*/
 
 /*
  * Copyright (c) 1988, 1989, 1990 The Regents of the University of California.
@@ -70,14 +70,14 @@
  */
 
 #ifndef MAKE_NATIVE
-static char rcsid[] = "$NetBSD: job.c,v 1.196 2020/01/19 19:42:32 riastradh Exp $";
+static char rcsid[] = "$NetBSD: job.c,v 1.197 2020/02/06 01:13:19 sjg Exp $";
 #else
 #include <sys/cdefs.h>
 #ifndef lint
 #if 0
 static char sccsid[] = "@(#)job.c	8.2 (Berkeley) 3/19/94";
 #else
-__RCSID("$NetBSD: job.c,v 1.196 2020/01/19 19:42:32 riastradh Exp $");
+__RCSID("$NetBSD: job.c,v 1.197 2020/02/06 01:13:19 sjg Exp $");
 #endif
 #endif /* not lint */
 #endif
@@ -362,7 +362,7 @@ const char *malloc_options="A";
 static unsigned
 nfds_per_job(void)
 {
-#ifdef USE_META
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     if (useMeta)
 	return 2;
 #endif
@@ -2145,7 +2145,7 @@ Job_CatchOutput(void)
 	job = jobfds[i];
 	if (job->job_state == JOB_ST_RUNNING)
 	    JobDoOutput(job, FALSE);
-#ifdef USE_META
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 	/*
 	 * With meta mode, we may have activity on the job's filemon
 	 * descriptor too, which at the moment is any pollfd other than
@@ -2824,7 +2824,7 @@ watchfd(Job *job)
     jobfds[nfds] = job;
     job->inPollfd = &fds[nfds];
     nfds++;
-#ifdef USE_META
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     if (useMeta) {
 	fds[nfds].fd = meta_job_fd(job);
 	fds[nfds].events = fds[nfds].fd == -1 ? 0 : POLLIN;
@@ -2842,7 +2842,7 @@ clearfd(Job *job)
 	Punt("Unwatching unwatched job");
     i = job->inPollfd - fds;
     nfds--;
-#ifdef USE_META
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
     if (useMeta) {
 	/*
 	 * Sanity check: there should be two fds per job, so the job's
@@ -2861,7 +2861,7 @@ clearfd(Job *job)
 	fds[i] = fds[nfds];
 	jobfds[i] = jobfds[nfds];
 	jobfds[i]->inPollfd = &fds[i];
-#ifdef USE_META
+#if defined(USE_FILEMON) && !defined(USE_FILEMON_DEV)
 	if (useMeta) {
 	    fds[i + 1] = fds[nfds + 1];
 	    jobfds[i + 1] = jobfds[nfds + 1];
