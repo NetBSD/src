@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.83 2020/02/06 19:51:59 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.84 2020/02/06 20:08:28 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.83 2020/02/06 19:51:59 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.84 2020/02/06 20:08:28 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,6 +108,7 @@ main(int argc, char **argv)
 	char *shinit;
 	uid_t uid;
 	gid_t gid;
+	sigset_t sigs;
 
 	/*
 	 * If we happen to be invoked with SIGCHLD ignored, we cannot
@@ -117,6 +118,12 @@ main(int argc, char **argv)
 	 * footpath for someone else to fall into...
 	 */
 	(void)signal(SIGCHLD, SIG_DFL);
+	/*
+	 * Similarly, SIGCHLD must not be blocked
+	 */
+	sigemptyset(&sigs);
+	sigaddset(&sigs, SIGCHLD);
+	sigprocmask(SIG_UNBLOCK, &sigs, NULL);
 
 	uid = getuid();
 	gid = getgid();
