@@ -1,4 +1,4 @@
-/*	$NetBSD: quip_client.c,v 1.13 2020/02/07 20:13:26 fox Exp $	*/
+/*	$NetBSD: quip_client.c,v 1.14 2020/02/07 21:53:20 fox Exp $	*/
 /*	$KAME: quip_client.c,v 1.9 2003/05/17 05:59:00 itojun Exp $	*/
 /*
  * Copyright (C) 1999-2000
@@ -454,7 +454,8 @@ extract_ifname(const char *name)
 	else
 		len = strlen(name);
 	len = MIN(len, 63);
-	strlcpy(ifname, name, len);
+	strncpy(ifname, name, len);
+	ifname[len] = '\0';
 	return (ifname);
 }
 
