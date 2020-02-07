@@ -1,3 +1,3 @@
-CLANG_VER=	7.0.0
+CLANG_VER=	9.0.0
 NODEBUG=	# defined
 NOLIBCSANITIZER=# defined
