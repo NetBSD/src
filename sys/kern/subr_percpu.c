@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_percpu.c,v 1.23 2020/02/01 12:53:41 riastradh Exp $	*/
+/*	$NetBSD: subr_percpu.c,v 1.24 2020/02/07 11:55:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.23 2020/02/01 12:53:41 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_percpu.c,v 1.24 2020/02/07 11:55:22 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -412,7 +412,9 @@ percpu_getptr_remote(percpu_t *pc, struct cpu_info *ci)
 /*
  * percpu_foreach: call the specified callback function for each cpus.
  *
- * => called in thread context.
+ * => must be called from thread context.
+ * => callback executes on **current** CPU (or, really, arbitrary CPU,
+ *    in case of preemption)
  * => caller should not rely on the cpu iteration order.
  * => the callback function should be minimum because it is executed with
  *    holding a global lock, which can block low-priority xcalls.
@@ -429,4 +431,47 @@ percpu_foreach(percpu_t *pc, percpu_callback_t cb, void *arg)
 		(*cb)(percpu_getptr_remote(pc, ci), arg, ci);
 	}
 	percpu_traverse_exit();
+}
+
+struct percpu_xcall_ctx {
+	percpu_callback_t  ctx_cb;
+	void		  *ctx_arg;
+};
+
+static void
+percpu_xcfunc(void * const v1, void * const v2)
+{
+	percpu_t * const pc = v1;
+	struct percpu_xcall_ctx * const ctx = v2;
+
+	(*ctx->ctx_cb)(percpu_getref(pc), ctx->ctx_arg, curcpu());
+	percpu_putref(pc);
+}
+
+/*
+ * percpu_foreach_xcall: call the specified callback function for each
+ * cpu.  This version uses an xcall to run the callback on each cpu.
+ *
+ * => must be called from thread context.
+ * => callback executes on **remote** CPU in soft-interrupt context
+ *    (at the specified soft interrupt priority).
+ * => caller should not rely on the cpu iteration order.
+ * => the callback function should be minimum because it may be
+ *    executed in soft-interrupt context.  eg. it's illegal for
+ *    a callback function to sleep for memory allocation.
+ */
+void
+percpu_foreach_xcall(percpu_t *pc, u_int xcflags, percpu_callback_t cb,
+		     void *arg)
+{
+	struct percpu_xcall_ctx ctx = {
+		.ctx_cb = cb,
+		.ctx_arg = arg,
+	};
+	CPU_INFO_ITERATOR cii;
+	struct cpu_info *ci;
+
+	for (CPU_INFO_FOREACH(cii, ci)) {
+		xc_wait(xc_unicast(xcflags, percpu_xcfunc, pc, &ctx, ci));
+	}
 }
