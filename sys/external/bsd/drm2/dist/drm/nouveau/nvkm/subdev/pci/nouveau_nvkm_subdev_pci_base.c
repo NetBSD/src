@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.5 2020/02/03 16:22:25 jmcneill Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.6 2020/02/07 18:13:33 jmcneill Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.5 2020/02/03 16:22:25 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.6 2020/02/07 18:13:33 jmcneill Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -142,18 +142,14 @@ nvkm_pci_init(struct nvkm_subdev *subdev)
 #ifdef __NetBSD__
     {
 	const struct pci_attach_args *pa = &pdev->pd_pa;
-	const pci_intr_type_t intr_type = pci->msi ?
-	    PCI_INTR_TYPE_MSI : PCI_INTR_TYPE_INTX;
-
 	int counts[PCI_INTR_TYPE_SIZE] =  {
-			[PCI_INTR_TYPE_INTX] = 0,
+			[PCI_INTR_TYPE_INTX] = 1,
 			[PCI_INTR_TYPE_MSI] = 0,
 			[PCI_INTR_TYPE_MSIX] = 0,
 	};
-	counts[intr_type] = 1;
 
 	/* XXX errno NetBSD->Linux */
-	ret = -pci_intr_alloc(pa, &pci->pci_ihp, counts, intr_type);
+	ret = -pci_intr_alloc(pa, &pci->pci_ihp, counts, PCI_INTR_TYPE_INTX);
 	if (ret)
 		return ret;
 	pci->pci_intrcookie = pci_intr_establish_xname(pa->pa_pc,
