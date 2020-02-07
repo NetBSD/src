@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.446 2020/02/01 12:49:02 riastradh Exp $
+#       $NetBSD: Makefile,v 1.447 2020/02/07 13:02:35 thorpej Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -667,7 +667,8 @@ MLINKS+=percpu.9 percpu_alloc.9 \
 	percpu.9 percpu_free.9 \
 	percpu.9 percpu_getref.9 \
 	percpu.9 percpu_putref.9 \
-	percpu.9 percpu_foreach.9
+	percpu.9 percpu_foreach.9 \
+	percpu.9 percpu_foreach_xcall.9
 MLINKS+=pfil.9 pfil_hook_get.9 \
 	pfil.9 pfil_add_hook.9 \
 	pfil.9 pfil_remove_hook.9 \

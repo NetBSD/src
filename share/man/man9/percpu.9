@@ -1,4 +1,4 @@
-.\"     $NetBSD: percpu.9,v 1.13 2020/02/01 12:49:02 riastradh Exp $
+.\"     $NetBSD: percpu.9,v 1.14 2020/02/07 13:02:35 thorpej Exp $
 .\"
 .\" Copyright (c) 2010 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd January 29, 2020
+.Dd February 7, 2020
 .Dt PERCPU 9
 .Os
 .Sh NAME
@@ -37,7 +37,8 @@
 .Nm percpu_free ,
 .Nm percpu_getref ,
 .Nm percpu_putref ,
-.Nm percpu_foreach
+.Nm percpu_foreach ,
+.Nm percpu_foreach_xcall
 .Nd per-CPU storage allocator
 .Sh SYNOPSIS
 .In sys/percpu.h
@@ -54,6 +55,8 @@
 .Fn percpu_putref "percpu_t *pc"
 .Ft void
 .Fn percpu_foreach "percpu_t *pc" "percpu_callback_t cb" "void *arg"
+.Ft void
+.Fn percpu_foreach_xcall "percpu_t *pc" "u_int xcflags" "percpu_callback_t cb" "void *arg"
 .Sh DESCRIPTION
 The machine-independent
 .Nm
@@ -171,14 +174,30 @@ run
 The call to
 .Fa cb
 runs in the current thread; use
-.Xr xcall 9
-for cross-calls to run logic on other CPUs.
+.Fn percpu_foreach_xcall
+to to execute the call to
+.Fa cb
+on the remote CPUs.
 .Pp
 Must be used in thread context.
 .Fa cb
 .Em MUST NOT
 sleep except on adaptive locks, and should be fast.
 Do not rely on any particular order of iteration over the CPUs.
+.It Fn percpu_foreach_xcall "pc" "xcflags" "cb" "arg"
+Like
+.Fn percpu_foreach ,
+except the call to
+.Fa cb
+executes on the remote CPUs.
+The
+.Fa xcflags
+argument specifies how the cross calls are invoked; see
+.Xr xc_broadcast 9 .
+The same caveats and restrictions that apply to
+.Fn percpu_foreach
+also apply to
+.Fn percpu_foreach_xcall .
 .El
 .Sh CODE REFERENCES
 The
