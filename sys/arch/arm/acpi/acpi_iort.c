@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_iort.c,v 1.1 2018/12/08 15:04:40 jmcneill Exp $ */
+/* $NetBSD: acpi_iort.c,v 1.2 2020/02/07 00:35:00 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.1 2018/12/08 15:04:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_iort.c,v 1.2 2020/02/07 00:35:00 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -51,7 +51,7 @@ acpi_iort_id_map(ACPI_IORT_NODE *node, uint32_t *id)
 	for (n = 0; n < node->MappingCount; n++) {
 		map = ACPI_ADD_PTR(ACPI_IORT_ID_MAPPING, node, offset);
 		if (map->Flags & ACPI_IORT_ID_SINGLE_MAPPING) {
-			*id = map->InputBase;
+			*id = map->OutputBase;
 			return map;
 		}
 		if (*id >= map->InputBase && *id <= map->InputBase + map->IdCount) {
