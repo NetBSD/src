@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.132 2020/01/30 05:24:53 thorpej Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.133 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.132 2020/01/30 05:24:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.133 2020/02/07 00:04:28 thorpej Exp $");
 
 
 
@@ -1275,7 +1275,7 @@ vr_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Start one second timer. */
-	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
+	callout_schedule(&sc->vr_tick_ch, hz);
 
 	/* Attempt to start output on the interface. */
 	vr_start(ifp);
@@ -1356,7 +1356,7 @@ vr_tick(void *arg)
 	mii_tick(&sc->vr_mii);
 	splx(s);
 
-	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
+	callout_schedule(&sc->vr_tick_ch, hz);
 }
 
 /*
@@ -1498,6 +1498,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_tag = pa->pa_tag;
 	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
+	callout_setfunc(&sc->vr_tick_ch, vr_tick, sc);
 
 	pci_aprint_devinfo(pa, NULL);
 

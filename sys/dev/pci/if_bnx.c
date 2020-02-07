@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bnx.c,v 1.91 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_bnx.c,v 1.92 2020/02/07 00:04:28 thorpej Exp $	*/
 /*	$OpenBSD: if_bnx.c,v 1.101 2013/03/28 17:21:44 brad Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/dev/bce/if_bce.c,v 1.3 2006/04/13 14:12:26 ru Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.91 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bnx.c,v 1.92 2020/02/07 00:04:28 thorpej Exp $");
 
 /*
  * The following controllers are supported by this driver:
@@ -912,6 +912,7 @@ bnx_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->eaddr);
 
 	callout_init(&sc->bnx_timeout, 0);
+	callout_setfunc(&sc->bnx_timeout, bnx_tick, sc);
 
 	/* Hookup IRQ last. */
 	sc->bnx_intrhand = pci_intr_establish_xname(pc, ih, IPL_NET, bnx_intr,
@@ -5065,7 +5066,7 @@ bnx_init(struct ifnet *ifp)
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
-	callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
+	callout_schedule(&sc->bnx_timeout, hz);
 
 bnx_init_exit:
 	DBPRINT(sc, BNX_VERBOSE_RESET, "Exiting %s()\n", __func__);
@@ -5894,7 +5895,7 @@ bnx_tick(void *xsc)
 
 	/* Schedule the next tick. */
 	if (!sc->bnx_detaching)
-		callout_reset(&sc->bnx_timeout, hz, bnx_tick, sc);
+		callout_schedule(&sc->bnx_timeout, hz);
 
 	if (sc->bnx_link)
 		goto bnx_tick_exit;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.73 2020/01/29 06:46:58 thorpej Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.74 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.73 2020/01/29 06:46:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.74 2020/02/07 00:04:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,6 +582,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, pcn_tick, sc);
 
 	aprint_normal(": AMD PCnet-PCI Ethernet\n");
 
@@ -1567,7 +1568,7 @@ pcn_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, pcn_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -1811,7 +1812,7 @@ pcn_init(struct ifnet *ifp)
 
 	if (sc->sc_flags & PCN_F_HAS_MII) {
 		/* Start the one second MII clock. */
-		callout_reset(&sc->sc_tick_ch, hz, pcn_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz);
 	}
 
 	/* ...all done! */

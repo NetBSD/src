@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.344 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.345 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.344 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.345 2020/02/07 00:04:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4010,6 +4010,7 @@ again:
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
+	callout_setfunc(&sc->bge_timeout, bge_tick, sc);
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
@@ -4802,7 +4803,7 @@ bge_tick(void *xsc)
 	bge_asf_driver_up(sc);
 
 	if (!sc->bge_detaching)
-		callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
+		callout_schedule(&sc->bge_timeout, hz);
 
 	splx(s);
 }
@@ -5693,7 +5694,7 @@ bge_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
+	callout_schedule(&sc->bge_timeout, hz);
 
 out:
 	sc->bge_if_flags = ifp->if_flags;

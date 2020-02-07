@@ -1,4 +1,4 @@
-/* $NetBSD: if_bce.c,v 1.57 2020/01/30 13:56:48 thorpej Exp $	 */
+/* $NetBSD: if_bce.c,v 1.58 2020/02/07 00:04:28 thorpej Exp $	 */
 
 /*
  * Copyright (c) 2003 Clifford Wright. All rights reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.57 2020/01/30 13:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bce.c,v 1.58 2020/02/07 00:04:28 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -475,6 +475,7 @@ bce_attach(device_t parent, device_t self, void *aux)
 	rnd_attach_source(&sc->rnd_source, device_xname(self),
 	    RND_TYPE_NET, RND_FLAG_DEFAULT);
 	callout_init(&sc->bce_timeout, 0);
+	callout_setfunc(&sc->bce_timeout, bce_tick, sc);
 
 	if (pmf_device_register(self, NULL, bce_resume))
 		pmf_class_network_register(self, ifp);
@@ -998,7 +999,7 @@ bce_init(struct ifnet *ifp)
 	    BCE_ENET_CTL) | EC_EE);
 
 	/* start timer */
-	callout_reset(&sc->bce_timeout, hz, bce_tick, sc);
+	callout_schedule(&sc->bce_timeout, hz);
 
 	/* mark as running, and no outputs active */
 	ifp->if_flags |= IFF_RUNNING;
@@ -1487,5 +1488,5 @@ bce_tick(void *v)
 	mii_tick(&sc->bce_mii);
 	splx(s);
 
-	callout_reset(&sc->bce_timeout, hz, bce_tick, sc);
+	callout_schedule(&sc->bce_timeout, hz);
 }

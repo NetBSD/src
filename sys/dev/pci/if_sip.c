@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.177 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.178 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.177 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.178 2020/02/07 00:04:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -995,6 +995,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, sipcom_tick, sc);
 
 	sip = sipcom_lookup(pa, strcmp(cf->cf_name, "gsip") == 0);
 	if (sip == NULL) {
@@ -2427,7 +2428,7 @@ sipcom_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, sipcom_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -2760,7 +2761,7 @@ sipcom_init(struct ifnet *ifp)
 	/*
 	 * Start the one second MII clock.
 	 */
-	callout_reset(&sc->sc_tick_ch, hz, sipcom_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	/*
 	 * ...all done!

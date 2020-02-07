@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.21 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.22 2020/02/07 00:04:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2261,8 +2261,7 @@ ena_up(struct ena_adapter *adapter)
 		if_setdrvflagbits(adapter->ifp, IFF_RUNNING,
 		    IFF_OACTIVE);
 
-		callout_reset(&adapter->timer_service, hz,
-		    ena_timer_service, (void *)adapter);
+		callout_schedule(&adapter->timer_service, hz);
 
 		adapter->up = true;
 
@@ -3629,8 +3628,7 @@ ena_reset_task(struct work *wk, void *arg)
 		}
 	}
 
-	callout_reset(&adapter->timer_service, hz,
-	    ena_timer_service, (void *)adapter);
+	callout_schedule(&adapter->timer_service, hz);
 
 	rw_exit(&adapter->ioctl_sx);
 
@@ -3800,6 +3798,7 @@ ena_attach(device_t parent, device_t self, void *aux)
 	}
 
 	callout_init(&adapter->timer_service, CALLOUT_MPSAFE);
+	callout_setfunc(&adapter->timer_service, ena_timer_service, adapter);
 
 	/* Initialize reset task queue */
 	rc = workqueue_create(&adapter->reset_tq, "ena_reset_enq",
