@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.106 2020/01/29 14:47:08 thorpej Exp $	*/
+/*	$NetBSD: hme.c,v 1.107 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.106 2020/01/29 14:47:08 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.107 2020/02/07 00:56:48 thorpej Exp $");
 
 /* #define HMEDEBUG */
 
@@ -315,6 +315,7 @@ hme_config(struct hme_softc *sc)
 			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, hme_tick, sc);
 }
 
 void
@@ -327,7 +328,7 @@ hme_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 void
@@ -635,7 +636,7 @@ hme_init(struct ifnet *ifp)
 		return rc;
 
 	/* Start the one second timer. */
-	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
