@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.78 2020/01/30 05:24:53 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.79 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.78 2020/01/30 05:24:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.79 2020/02/07 00:04:28 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -409,6 +409,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, stge_tick, sc);
 
 	sp = stge_lookup(pa);
 	if (sp == NULL) {
@@ -1416,7 +1417,7 @@ stge_tick(void *arg)
 	stge_stats_update(sc);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, stge_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -1684,7 +1685,7 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Start the one second MII clock.
 	 */
-	callout_reset(&sc->sc_tick_ch, hz, stge_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	/*
 	 * ...all done!
