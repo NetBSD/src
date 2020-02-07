@@ -1,4 +1,4 @@
-/*	$NetBSD: bpf.c,v 1.234 2020/02/01 02:54:02 riastradh Exp $	*/
+/*	$NetBSD: bpf.c,v 1.235 2020/02/07 12:35:33 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1990, 1991, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.234 2020/02/01 02:54:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.235 2020/02/07 12:35:33 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_bpf.h"
@@ -78,6 +78,7 @@ __KERNEL_RCSID(0, "$NetBSD: bpf.c,v 1.234 2020/02/01 02:54:02 riastradh Exp $");
 #include <sys/percpu.h>
 #include <sys/pserialize.h>
 #include <sys/lwp.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 #include <net/slip.h>
@@ -2395,9 +2396,13 @@ bpf_stats(void *p, void *arg, struct cpu_info *ci __unused)
 	struct bpf_stat *const stats = p;
 	struct bpf_stat *sum = arg;
 
+	int s = splnet();
+
 	sum->bs_recv += stats->bs_recv;
 	sum->bs_drop += stats->bs_drop;
 	sum->bs_capt += stats->bs_capt;
+
+	splx(s);
 }
 
 static int
@@ -2410,7 +2415,8 @@ bpf_sysctl_gstats_handler(SYSCTLFN_ARGS)
 	memset(&sum, 0, sizeof(sum));
 	node = *rnode;
 
-	percpu_foreach(bpf_gstats_percpu, bpf_stats, &sum);
+	percpu_foreach_xcall(bpf_gstats_percpu, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    bpf_stats, &sum);
 
 	node.sysctl_data = &sum;
 	node.sysctl_size = sizeof(sum);
