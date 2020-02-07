@@ -1,4 +1,4 @@
-$NetBSD: README.gcc8,v 1.6 2019/11/28 19:31:27 mrg Exp $
+$NetBSD: README.gcc8,v 1.7 2020/02/07 07:16:32 mrg Exp $
 
 new stuff:
 	cc1objcplus
@@ -51,9 +51,9 @@ mipseb		y	y	y	y		?		?	?	?
 mipsel		y	?	y	y		?		?	?	?
 mips64eb	y	y	y	y		y		y	y[2]	?
 mips64el	y	?	y	y		?		?	?	?
-powerpc		y	y	y	y		y		y	y[1]	?
+powerpc		y	y	y	y		y		y	y[1]	y
 powerpc64	y	n	y	y		y		y	y	y
-sh3eb		y	y	y	y		y		y	yX	?
+sh3eb		y	y	y	y		y		y	y	?
 sh3el		y	y	y	y		y		?	?	?
 sparc		y	y	y	y		y		y	y	y
 sparc64		y	y	y	y		y		y	y	y
