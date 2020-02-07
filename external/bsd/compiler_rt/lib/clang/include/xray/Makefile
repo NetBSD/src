@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2019/08/08 14:00:28 kamil Exp $
+#	$NetBSD: Makefile,v 1.2 2020/02/07 19:00:10 kamil Exp $
 
 TOPDIR= ${NETBSDSRCDIR}/sys/external/bsd/compiler_rt/dist
 
@@ -12,6 +12,6 @@ INCS+=	xray_records.h
 
 .include <bsd.own.mk>
 
-INCSDIR=	/usr/lib/clang/7.0.0/include/xray
+INCSDIR=	/usr/lib/clang/9.0.0/include/xray
 
 .include <bsd.prog.mk>
