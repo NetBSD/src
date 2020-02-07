@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.163 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.164 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.163 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.164 2020/02/07 00:56:48 thorpej Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -873,6 +873,7 @@ re_attach(struct rtk_softc *sc)
 	IFQ_SET_READY(&ifp->if_snd);
 
 	callout_init(&sc->rtk_tick_ch, 0);
+	callout_setfunc(&sc->rtk_tick_ch, re_tick, sc);
 
 	/* Do MII setup */
 	mii->mii_ifp = ifp;
@@ -1470,7 +1471,7 @@ re_tick(void *arg)
 	mii_tick(&sc->mii);
 	splx(s);
 
-	callout_reset(&sc->rtk_tick_ch, hz, re_tick, sc);
+	callout_schedule(&sc->rtk_tick_ch, hz);
 }
 
 int
@@ -2031,7 +2032,7 @@ re_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	callout_reset(&sc->rtk_tick_ch, hz, re_tick, sc);
+	callout_schedule(&sc->rtk_tick_ch, hz);
 
  out:
 	if (error) {

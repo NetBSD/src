@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.41 2020/01/29 14:09:58 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.42 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.41 2020/01/29 14:09:58 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.42 2020/02/07 00:56:48 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -143,6 +143,7 @@ sf_attach(struct sf_softc *sc)
 	uint8_t enaddr[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_tick_callout, 0);
+	callout_setfunc(&sc->sc_tick_callout, sf_tick, sc);
 
 	/*
 	 * If we're I/O mapped, the functional register handle is
@@ -823,7 +824,7 @@ sf_tick(void *arg)
 	sf_stats_update(sc);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_callout, hz, sf_tick, sc);
+	callout_schedule(&sc->sc_tick_callout, hz);
 }
 
 /*
@@ -1088,7 +1089,7 @@ sf_init(struct ifnet *ifp)
 	    GEC_TxDmaEn | GEC_RxDmaEn | GEC_TransmitEn | GEC_ReceiveEn);
 
 	/* Start the on second clock. */
-	callout_reset(&sc->sc_tick_callout, hz, sf_tick, sc);
+	callout_schedule(&sc->sc_tick_callout, hz);
 
 	/*
 	 * Note that the interface is now running.

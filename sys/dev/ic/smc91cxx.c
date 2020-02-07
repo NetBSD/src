@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.105 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.106 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.105 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.106 2020/02/07 00:56:48 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -381,6 +381,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, uint8_t *myea)
 			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_mii_callout, 0);
+	callout_setfunc(&sc->sc_mii_callout, smc91cxx_tick, sc);
 
 	/* The attach is successful. */
 	sc->sc_flags |= SMC_FLAGS_ATTACHED;
@@ -593,7 +594,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 
 	if (sc->sc_flags & SMC_FLAGS_HAS_MII) {
 		/* Start the one second clock. */
-		callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
+		callout_schedule(&sc->sc_mii_callout, hz);
 	}
 
 	/* Attempt to start any pending transmission. */
@@ -1486,5 +1487,5 @@ smc91cxx_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 }

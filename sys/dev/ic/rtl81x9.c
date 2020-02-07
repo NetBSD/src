@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl81x9.c,v 1.109 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: rtl81x9.c,v 1.110 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998
@@ -86,7 +86,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.109 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl81x9.c,v 1.110 2020/02/07 00:56:48 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -627,6 +627,7 @@ rtk_attach(struct rtk_softc *sc)
 	int i, addr_len;
 
 	callout_init(&sc->rtk_tick_ch, 0);
+	callout_setfunc(&sc->rtk_tick_ch, rtk_tick, sc);
 
 	/*
 	 * Check EEPROM type 9346 or 9356.
@@ -1421,7 +1422,7 @@ rtk_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	callout_reset(&sc->rtk_tick_ch, hz, rtk_tick, sc);
+	callout_schedule(&sc->rtk_tick_ch, hz);
 
  out:
 	if (error) {
@@ -1514,5 +1515,5 @@ rtk_tick(void *arg)
 	mii_tick(&sc->mii);
 	splx(s);
 
-	callout_reset(&sc->rtk_tick_ch, hz, rtk_tick, sc);
+	callout_schedule(&sc->rtk_tick_ch, hz);
 }

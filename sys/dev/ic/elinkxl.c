@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.135 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.136 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.135 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.136 2020/02/07 00:56:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -176,6 +176,7 @@ ex_config(struct ex_softc *sc)
 	pmf_self_suspensor_init(sc->sc_dev, &sc->sc_suspensor, &sc->sc_qual);
 
 	callout_init(&sc->ex_mii_callout, 0);
+	callout_setfunc(&sc->ex_mii_callout, ex_tick, sc);
 
 	ex_reset(sc);
 
@@ -688,7 +689,7 @@ ex_init(struct ifnet *ifp)
 
 	GO_WINDOW(1);
 
-	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
+	callout_schedule(&sc->ex_mii_callout, hz);
 
  out:
 	if (error) {
@@ -1546,7 +1547,7 @@ ex_tick(void *arg)
 
 	splx(s);
 
-	callout_reset(&sc->ex_mii_callout, hz, ex_tick, sc);
+	callout_schedule(&sc->ex_mii_callout, hz);
 }
 
 void

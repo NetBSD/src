@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.92 2020/01/30 04:56:11 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.93 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.92 2020/01/30 04:56:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.93 2020/02/07 00:56:48 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -113,6 +113,7 @@ epic_attach(struct epic_softc *sc)
 	char *nullbuf;
 
 	callout_init(&sc->sc_mii_callout, 0);
+	callout_setfunc(&sc->sc_mii_callout, epic_tick, sc);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -846,7 +847,7 @@ epic_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_mii_callout, hz, epic_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 }
 
 /*
@@ -1037,7 +1038,7 @@ epic_init(struct ifnet *ifp)
 	/*
 	 * Start the one second clock.
 	 */
-	callout_reset(&sc->sc_mii_callout, hz, epic_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 
 	/*
 	 * Attempt to start output on the interface.
