@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1175 2020/01/22 21:46:06 uwe Exp $
+#	$NetBSD: bsd.own.mk,v 1.1176 2020/02/07 14:08:11 jmcneill Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1033,7 +1033,7 @@ MKZFS?=		yes
 .endif
 
 #
-# DTrace works on amd64, i386 and earm*
+# DTrace works on amd64, i386, aarch64, and earm*
 #
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64" || \
