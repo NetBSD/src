@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.7 2020/02/01 12:54:51 riastradh Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.8 2020/02/07 12:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <sys/percpu.h>
 #include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 #include <netinet/wqinput.h>
@@ -98,7 +99,8 @@ wqinput_sysctl_drops_handler(SYSCTLFN_ARGS)
 	node = *rnode;
 	wqi = node.sysctl_data;
 
-	percpu_foreach(wqi->wqi_worklists, wqinput_drops, &sum);
+	percpu_foreach_xcall(wqi->wqi_worklists, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    wqinput_drops, &sum);
 
 	node.sysctl_data = &sum;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));

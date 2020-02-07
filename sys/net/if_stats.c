@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.c,v 1.1 2020/01/29 03:16:28 thorpej Exp $	*/
+/*	$NetBSD: if_stats.c,v 1.2 2020/02/07 12:35:33 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,11 +30,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.1 2020/01/29 03:16:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.2 2020/02/07 12:35:33 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
 #include <sys/systm.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 
@@ -123,7 +124,8 @@ if_stats_to_if_data(ifnet_t * const ifp, struct if_data * const ifi,
 	};
 
 	memset(ifi, 0, sizeof(*ifi));
-	percpu_foreach(ifp->if_stats, if_stats_to_if_data_cb, &ctx);
+	percpu_foreach_xcall(ifp->if_stats, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    if_stats_to_if_data_cb, &ctx);
 }
 
 #else /* ! __IF_STATS_PERCPU */
