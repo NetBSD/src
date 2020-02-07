@@ -1,4 +1,4 @@
-#	$NetBSD: libloader.mk,v 1.4 2019/09/24 19:29:41 maya Exp $
+#	$NetBSD: libloader.mk,v 1.5 2020/02/07 19:00:18 jmcneill Exp $
 
 # makefile fragment for mesa src/loader
 
@@ -17,7 +17,8 @@ CPPFLAGS.${_f}= 	-I${X11SRCDIR.Mesa}/src/util \
 			-I${X11SRCDIR.Mesa}/src \
 			-DGL_LIB_NAME=\"libGL.so.3\" \
 			-DDEFAULT_DRIVER_DIR=\"${X11USRLIBDIR}/modules/dri\" \
-			-DUSE_DRICONF
+			-DUSE_DRICONF \
+			-DHAVE_LIBDRM
 .endfor
 
 SRCS+=	${SRCS.loader}
