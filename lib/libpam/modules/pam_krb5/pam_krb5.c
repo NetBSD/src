@@ -1,4 +1,4 @@
-/*	$NetBSD: pam_krb5.c,v 1.27 2020/02/07 22:13:35 christos Exp $	*/
+/*	$NetBSD: pam_krb5.c,v 1.28 2020/02/07 23:28:59 christos Exp $	*/
 
 /*-
  * This pam_krb5 module contains code that is:
@@ -53,7 +53,7 @@
 #ifdef __FreeBSD__
 __FBSDID("$FreeBSD: src/lib/libpam/modules/pam_krb5/pam_krb5.c,v 1.22 2005/01/24 16:49:50 rwatson Exp $");
 #else
-__RCSID("$NetBSD: pam_krb5.c,v 1.27 2020/02/07 22:13:35 christos Exp $");
+__RCSID("$NetBSD: pam_krb5.c,v 1.28 2020/02/07 23:28:59 christos Exp $");
 #endif
 
 #include <sys/types.h>
@@ -467,7 +467,6 @@ pam_sm_setcred(pam_handle_t *pamh, int flags,
 			cache_name = cache_name_buf;
 		}
 
-		/* XXX potential overflow */
 		cache_name_buf2 = p = calloc(len, sizeof(char));
 		q = cache_name;
 	
