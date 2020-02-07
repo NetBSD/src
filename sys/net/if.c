@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.471 2020/02/06 23:30:19 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.472 2020/02/07 01:14:55 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.471 2020/02/06 23:30:19 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.472 2020/02/07 01:14:55 thorpej Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -313,7 +313,7 @@ ifinit1(void)
 	ifnet_psref_class = psref_class_create("ifnet", IPL_SOFTNET);
 	ifa_psref_class = psref_class_create("ifa", IPL_SOFTNET);
 	error = workqueue_create(&ifnet_link_state_wq, "iflnkst",
-	    if_link_state_change_work, NULL, PRI_SOFTNET, IPL_SOFTNET,
+	    if_link_state_change_work, NULL, PRI_SOFTNET, IPL_NET,
 	    WQ_MPSAFE);
 	KASSERT(error == 0);
 	PSLIST_INIT(&ifnet_pslist);
