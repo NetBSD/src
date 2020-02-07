@@ -1,4 +1,4 @@
-/*	$NetBSD: elink3.c,v 1.151 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: elink3.c,v 1.152 2020/02/07 01:19:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.151 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elink3.c,v 1.152 2020/02/07 01:19:46 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -324,7 +324,10 @@ epconfig(struct ep_softc *sc, u_short chipset, u_int8_t *enaddr)
 	u_int8_t myla[ETHER_ADDR_LEN];
 
 	callout_init(&sc->sc_mii_callout, 0);
+	callout_setfunc(&sc->sc_mii_callout, ep_tick, sc);
+
 	callout_init(&sc->sc_mbuf_callout, 0);
+	callout_setfunc(&sc->sc_mbuf_callout, epmbuffill, sc);
 
 	sc->ep_chipset = chipset;
 
@@ -708,7 +711,7 @@ ep_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_mii_callout, hz, ep_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 }
 
 /*
@@ -830,7 +833,7 @@ epinit(struct ifnet *ifp)
 
 	if (sc->ep_flags & ELINK_FLAGS_MII) {
 		/* Start the one second clock. */
-		callout_reset(&sc->sc_mii_callout, hz, ep_tick, sc);
+		callout_schedule(&sc->sc_mii_callout, hz);
 	}
 
 	/* Attempt to start output, if any. */
@@ -1547,7 +1550,7 @@ epget(struct ep_softc *sc, int totlen)
 	} else {
 		/* If the queue is no longer full, refill. */
 		if (sc->last_mb == sc->next_mb)
-			callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
+			callout_schedule(&sc->sc_mbuf_callout, 1);
 
 		/* Convert one of our saved mbuf's. */
 		sc->next_mb = (sc->next_mb + 1) % MAX_MBS;
@@ -1915,7 +1918,7 @@ epmbuffill(void *v)
 	sc->last_mb = i;
 	/* If the queue was not filled, try again. */
 	if (sc->last_mb != sc->next_mb)
-		callout_reset(&sc->sc_mbuf_callout, 1, epmbuffill, sc);
+		callout_schedule(&sc->sc_mbuf_callout, 1);
 	splx(s);
 }
 
