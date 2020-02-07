@@ -1,4 +1,4 @@
-/*	$NetBSD: percpu.h,v 1.4 2020/02/01 12:49:02 riastradh Exp $	*/
+/*	$NetBSD: percpu.h,v 1.5 2020/02/07 11:55:22 thorpej Exp $	*/
 
 /*-
  * Copyright (c)2007,2008 YAMAMOTO Takashi,
@@ -40,6 +40,7 @@ void	percpu_putref(percpu_t *);
 
 typedef void (*percpu_callback_t)(void *, void *, struct cpu_info *);
 void	percpu_foreach(percpu_t *, percpu_callback_t, void *);
+void	percpu_foreach_xcall(percpu_t *, u_int, percpu_callback_t, void *);
 
 percpu_t *percpu_create(size_t, percpu_callback_t, percpu_callback_t, void *);
 
