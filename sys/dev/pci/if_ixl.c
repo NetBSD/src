@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.36 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.37 2020/02/07 09:38:29 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -793,7 +793,7 @@ static int	ixl_get_vsi(struct ixl_softc *);
 static int	ixl_set_vsi(struct ixl_softc *);
 static void	ixl_set_filter_control(struct ixl_softc *);
 static void	ixl_get_link_status(void *);
-static int	ixl_get_link_status_poll(struct ixl_softc *);
+static int	ixl_get_link_status_poll(struct ixl_softc *, int *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
 static uint64_t	ixl_search_link_speed(uint8_t);
@@ -1083,7 +1083,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	pcireg_t memtype;
 	uint32_t firstq, port, ari, func;
 	char xnamebuf[32];
-	int tries, rv;
+	int tries, rv, link;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -1285,7 +1285,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto free_hmc;
 	}
 
-	rv = ixl_get_link_status_poll(sc);
+	rv = ixl_get_link_status_poll(sc, NULL);
 	if (rv != 0) {
 		aprint_error_dev(self, "GET LINK STATUS %s\n",
 		    rv == ETIMEDOUT ? "timeout" : "error");
@@ -1395,7 +1395,11 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ec, ixl_ifflags_cb);
 
-	(void)ixl_get_link_status_poll(sc);
+	rv = ixl_get_link_status_poll(sc, &link);
+	if (rv != 0)
+		link = LINK_STATE_UNKNOWN;
+	if_link_state_change(ifp, link);
+
 	ixl_work_set(&sc->sc_link_state_task, ixl_get_link_status, sc);
 
 	ixl_config_other_intr(sc);
@@ -4435,7 +4439,7 @@ ixl_set_phy_autoselect(struct ixl_softc *sc)
 }
 
 static int
-ixl_get_link_status_poll(struct ixl_softc *sc)
+ixl_get_link_status_poll(struct ixl_softc *sc, int *l)
 {
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_link_param *param;
@@ -4454,7 +4458,9 @@ ixl_get_link_status_poll(struct ixl_softc *sc)
 	}
 
 	link = ixl_set_link_status(sc, &iaq);
-	sc->sc_ec.ec_if.if_link_state = link;
+
+	if (l != NULL)
+		*l = link;
 
 	return 0;
 }
