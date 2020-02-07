@@ -1,4 +1,4 @@
-/*	$NetBSD: jobs.c,v 1.106 2019/03/26 13:32:26 kre Exp $	*/
+/*	$NetBSD: jobs.c,v 1.107 2020/02/07 02:06:12 kre Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)jobs.c	8.5 (Berkeley) 5/4/95";
 #else
-__RCSID("$NetBSD: jobs.c,v 1.106 2019/03/26 13:32:26 kre Exp $");
+__RCSID("$NetBSD: jobs.c,v 1.107 2020/02/07 02:06:12 kre Exp $");
 #endif
 #endif /* not lint */
 
@@ -819,6 +819,9 @@ waitcmd(int argc, char **argv)
 			job = NULL;
 			if ((i = dowait(WBLOCK|WNOFREE, NULL, &job)) == -1)
 			       return 128 + lastsig();
+
+			if (job == NULL)	/* an interloper */
+				continue;
 
 			/*
 			 * one of the job's processes exited,
