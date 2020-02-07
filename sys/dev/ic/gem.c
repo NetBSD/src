@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.127 2020/02/04 05:25:39 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.128 2020/02/07 00:56:48 thorpej Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.127 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.128 2020/02/07 00:56:48 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -616,6 +616,8 @@ gem_attach(struct gem_softc *sc, const uint8_t *enaddr)
 #endif
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, gem_tick, sc);
+
 	callout_init(&sc->sc_rx_watchdog, 0);
 	callout_setfunc(&sc->sc_rx_watchdog, gem_rx_watchdog, sc);
 
@@ -641,7 +643,7 @@ gem_tick(void *arg)
 		s = splnet();
 		mii_tick(&sc->sc_mii);
 		splx(s);
-		callout_reset(&sc->sc_tick_ch, hz, gem_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz);
 	}
 }
 
@@ -1062,7 +1064,7 @@ gem_pcs_start(struct gem_softc *sc)
 	gem_bitwait(sc, h, GEM_MII_STATUS, 0, GEM_MII_STATUS_ANEG_CPT);
 
 	/* Start the 10 second timer */
-	callout_reset(&sc->sc_tick_ch, hz * 10, gem_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz * 10);
 }
 
 /*
@@ -1221,7 +1223,7 @@ gem_init(struct ifnet *ifp)
 		gem_pcs_start(sc);
 	else
 		/* Start the one second timer. */
-		callout_reset(&sc->sc_tick_ch, hz, gem_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz);
 
 	sc->sc_flags &= ~GEM_LINK;
 	ifp->if_flags |= IFF_RUNNING;
@@ -2163,7 +2165,7 @@ gem_pint(struct gem_softc *sc)
 		gem_statuschange(sc);
 
 		/* Start the 10 second timer */
-		callout_reset(&sc->sc_tick_ch, hz * 10, gem_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz * 10);
 	}
 	return 1;
 }
