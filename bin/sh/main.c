@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.84 2020/02/06 20:08:28 kre Exp $	*/
+/*	$NetBSD: main.c,v 1.85 2020/02/07 01:25:08 fox Exp $	*/
 
 /*-
  * Copyright (c) 1991, 1993
@@ -42,7 +42,7 @@ __COPYRIGHT("@(#) Copyright (c) 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)main.c	8.7 (Berkeley) 7/19/95";
 #else
-__RCSID("$NetBSD: main.c,v 1.84 2020/02/06 20:08:28 kre Exp $");
+__RCSID("$NetBSD: main.c,v 1.85 2020/02/07 01:25:08 fox Exp $");
 #endif
 #endif /* not lint */
 
@@ -108,7 +108,7 @@ main(int argc, char **argv)
 	char *shinit;
 	uid_t uid;
 	gid_t gid;
-	sigset_t sigs;
+	sigset_t mask;
 
 	/*
 	 * If we happen to be invoked with SIGCHLD ignored, we cannot
@@ -121,9 +121,9 @@ main(int argc, char **argv)
 	/*
 	 * Similarly, SIGCHLD must not be blocked
 	 */
-	sigemptyset(&sigs);
-	sigaddset(&sigs, SIGCHLD);
-	sigprocmask(SIG_UNBLOCK, &sigs, NULL);
+	sigemptyset(&mask);
+	sigaddset(&mask, SIGCHLD);
+	sigprocmask(SIG_UNBLOCK, &mask, NULL);
 
 	uid = getuid();
 	gid = getgid();
