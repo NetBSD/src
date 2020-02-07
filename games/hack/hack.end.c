@@ -1,4 +1,4 @@
-/*	$NetBSD: hack.end.c,v 1.17 2011/08/06 20:42:43 dholland Exp $	*/
+/*	$NetBSD: hack.end.c,v 1.18 2020/02/07 20:34:18 fox Exp $	*/
 
 /*
  * Copyright (c) 1985, Stichting Centrum voor Wiskunde en Informatica,
@@ -63,7 +63,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: hack.end.c,v 1.17 2011/08/06 20:42:43 dholland Exp $");
+__RCSID("$NetBSD: hack.end.c,v 1.18 2020/02/07 20:34:18 fox Exp $");
 #endif				/* not lint */
 
 #include <signal.h>
@@ -362,7 +362,7 @@ topten(void)
 	t0->plchar = pl_character[0];
 	t0->sex = (flags.female ? 'F' : 'M');
 	t0->uid = uid;
-	(void) strncpy(t0->name, plname, NAMSZ);
+	(void) strlcpy(t0->name, plname, NAMSZ);
 	(t0->name)[NAMSZ] = 0;
 	(void) strncpy(t0->death, killer, DTHSZ);
 	(t0->death)[DTHSZ] = 0;
