@@ -1,4 +1,4 @@
-/*	$NetBSD: i82557.c,v 1.158 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: i82557.c,v 1.159 2020/02/07 00:56:48 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2001, 2002 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.158 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82557.c,v 1.159 2020/02/07 00:56:48 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -260,6 +260,7 @@ fxp_attach(struct fxp_softc *sc)
 	struct fxp_phytype *fp;
 
 	callout_init(&sc->sc_callout, 0);
+	callout_setfunc(&sc->sc_callout, fxp_tick, sc);
 
         /*
 	 * Enable use of extended RFDs and IPCBs for 82550 and later chips.
@@ -1566,7 +1567,7 @@ fxp_tick(void *arg)
 	/*
 	 * Schedule another timeout one second from now.
 	 */
-	callout_reset(&sc->sc_callout, hz, fxp_tick, sc);
+	callout_schedule(&sc->sc_callout, hz);
 }
 
 /*
@@ -2006,7 +2007,7 @@ fxp_init(struct ifnet *ifp)
 	/*
 	 * Start the one second timer.
 	 */
-	callout_reset(&sc->sc_callout, hz, fxp_tick, sc);
+	callout_schedule(&sc->sc_callout, hz);
 
 	/*
 	 * Attempt to start output on the interface.
