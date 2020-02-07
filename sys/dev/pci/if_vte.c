@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vte.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_vte.c,v 1.31 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2011 Manuel Bouyer.  All rights reserved.
@@ -55,7 +55,7 @@
 /* Driver for DM&P Electronics, Inc, Vortex86 RDC R6040 FastEthernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vte.c,v 1.31 2020/02/07 00:04:28 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -178,6 +178,7 @@ vte_attach(device_t parent, device_t self, void *aux)
 	sc->vte_dev = self;
 
 	callout_init(&sc->vte_tick_ch, 0);
+	callout_setfunc(&sc->vte_tick_ch, vte_tick, sc);
 
 	/* Map the device. */
 	h_valid = 0;
@@ -1203,7 +1204,7 @@ vte_tick(void *arg)
 	vte_stats_update(sc);
 	vte_txeof(sc);
 	vte_ifwatchdog(&sc->vte_if);
-	callout_reset(&sc->vte_tick_ch, hz, vte_tick, sc);
+	callout_schedule(&sc->vte_tick_ch, hz);
 	splx(s);
 }
 
@@ -1367,7 +1368,7 @@ vte_init(struct ifnet *ifp)
 		return error;
 	}
 
-	callout_reset(&sc->vte_tick_ch, hz, vte_tick, sc);
+	callout_schedule(&sc->vte_tick_ch, hz);
 
 	DPRINTF(("ipend 0x%x 0x%x\n", CSR_READ_2(sc, VTE_MIER),
 		CSR_READ_2(sc, VTE_MISR)));

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.47 2020/01/30 05:42:00 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.48 2020/02/07 00:04:28 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.47 2020/01/30 05:42:00 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.48 2020/02/07 00:04:28 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -280,6 +280,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->jme_dev = self;
 	aprint_normal("\n");
 	callout_init(&sc->jme_tick_ch, 0);
+	callout_setfunc(&sc->jme_tick_ch, jme_ticks, sc);
 
 	jp = jme_lookup_product(pa->pa_id);
 	if (jp == NULL)
@@ -962,7 +963,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 	    sc->jme_txcsr | TXCSR_TX_ENB);
 
 	/* start ticks calls */
-	callout_reset(&sc->jme_tick_ch, hz, jme_ticks, sc);
+	callout_schedule(&sc->jme_tick_ch, hz);
 	sc->jme_if.if_flags |= IFF_RUNNING;
 	sc->jme_if.if_flags &= ~IFF_OACTIVE;
 	splx(s);
@@ -1756,7 +1757,7 @@ jme_ticks(void *v)
 	mii_tick(&sc->jme_mii);
 
 	/* every seconds */
-	callout_reset(&sc->jme_tick_ch, hz, jme_ticks, sc);
+	callout_schedule(&sc->jme_tick_ch, hz);
 	splx(s);
 }
 
