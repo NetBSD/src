@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.40 2020/02/07 00:04:28 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.40 2020/02/07 00:04:28 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -732,6 +732,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	    NULL, device_xname(sc->sc_dev), "interrupts");
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, cas_tick, sc);
 
 	return;
 }
@@ -875,7 +876,7 @@ cas_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, cas_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 int
@@ -1277,7 +1278,7 @@ cas_init(struct ifnet *ifp)
 		bus_space_write_4(t, h, CAS_RX_KICK2, 4);
 
 	/* Start the one second timer. */
-	callout_reset(&sc->sc_tick_ch, hz, cas_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
