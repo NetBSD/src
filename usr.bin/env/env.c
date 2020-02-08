@@ -35,7 +35,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.20 2010/11/16 02:53:49 christos Exp $");
+__RCSID("$NetBSD: env.c,v 1.21 2020/02/08 10:30:22 kamil Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -60,12 +60,16 @@ main(int argc, char **argv)
 	setprogname(*argv);
 	(void)setlocale(LC_ALL, "");
 
-	while ((ch = getopt(argc, argv, "-i")) != -1)
+	while ((ch = getopt(argc, argv, "-iu:")) != -1)
 		switch((char)ch) {
 		case '-':			/* obsolete */
 		case 'i':
 			environ = cleanenv;
 			cleanenv[0] = NULL;
+			break;
+		case 'u':
+			if (unsetenv(optarg) == -1)
+				errx(EXIT_FAILURE, "unsetenv %s", optarg);
 			break;
 		case '?':
 		default:
@@ -93,7 +97,8 @@ main(int argc, char **argv)
 static void
 usage(void)
 {
-	(void)fprintf(stderr, "Usage: %s [-i] [name=value ...] [command]\n",
+	(void)fprintf(stderr,
+	    "Usage: %s [-i] [-u name] [name=value ...] [command]\n",
 	    getprogname());
 	exit(1);
 }
