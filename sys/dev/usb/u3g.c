@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.38 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: u3g.c,v 1.39 2020/02/08 07:53:23 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.38 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.39 2020/02/08 07:53:23 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -571,7 +571,6 @@ static int
 u3g_open(void *arg, int portno)
 {
 	struct u3g_softc *sc = arg;
-	usb_device_request_t req;
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
 	struct usbd_interface *ih;
@@ -596,13 +595,8 @@ u3g_open(void *arg, int portno)
 		if (UE_GET_DIR(ed->bEndpointAddress) == UE_DIR_IN &&
 		    UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK &&
 		    nin++ == portno) {
-			/* Issue ENDPOINT_HALT request */
-			req.bmRequestType = UT_WRITE_ENDPOINT;
-			req.bRequest = UR_CLEAR_FEATURE;
-			USETW(req.wValue, UF_ENDPOINT_HALT);
-			USETW(req.wIndex, ed->bEndpointAddress);
-			USETW(req.wLength, 0);
-			err = usbd_do_request(sc->sc_udev, &req, 0);
+			err = usbd_clear_endpoint_feature(sc->sc_udev,
+			    ed->bEndpointAddress, UF_ENDPOINT_HALT);
 			if (err)
 				return EIO;
 		}
