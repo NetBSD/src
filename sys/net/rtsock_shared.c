@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.12 2020/01/29 04:35:13 thorpej Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.13 2020/02/08 14:17:30 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.12 2020/01/29 04:35:13 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.13 2020/02/08 14:17:30 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -169,6 +169,8 @@ struct routecb {
 	struct rawcb	rocb_rcb;
 	unsigned int	rocb_msgfilter;
 #define	RTMSGFILTER(m)	(1U << (m))
+	char		*rocb_missfilter;
+	size_t		rocb_missfilterlen;
 };
 #define sotoroutecb(so)	((struct routecb *)(so)->so_pcb)
 
@@ -218,7 +220,7 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 		return ENOPROTOOPT;
 
 	/* If no filter set, just return. */
-	if (rop->rocb_msgfilter == 0)
+	if (rop->rocb_msgfilter == 0 && rop->rocb_missfilterlen == 0)
 		return 0;
 
 	/* Ensure we can access rtm_type */
@@ -230,8 +232,26 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 	if (rtm->rtm_type >= sizeof(rop->rocb_msgfilter) * CHAR_BIT)
 		return EINVAL;
 	/* If the rtm type is filtered out, return a positive. */
-	if (!(rop->rocb_msgfilter & RTMSGFILTER(rtm->rtm_type)))
+	if (rop->rocb_msgfilter != 0 &&
+	    !(rop->rocb_msgfilter & RTMSGFILTER(rtm->rtm_type)))
 		return EEXIST;
+
+	if (rop->rocb_missfilterlen != 0 && rtm->rtm_type == RTM_MISS) {
+		__CTASSERT(RTA_DST == 1);
+		struct sockaddr *sa, *dst = (struct sockaddr *)(rtm + 1);
+		char *cp = rop->rocb_missfilter;
+		char *ep = cp + rop->rocb_missfilterlen;
+
+		while (cp < ep) {
+			sa = (struct sockaddr *)cp;
+			if (sa->sa_len == dst->sa_len &&
+			    memcmp(sa, dst, sa->sa_len) == 0)
+				break;
+			cp += RT_XROUNDUP(sa->sa_len);
+		}
+		if (cp == ep)
+			return EEXIST;
+	}
 
 	/* Passed the filter. */
 	return 0;
@@ -291,12 +311,15 @@ static void
 COMPATNAME(route_detach)(struct socket *so)
 {
 	struct rawcb *rp = sotorawcb(so);
+	struct routecb *rop = (struct routecb *)rp;
 	int s;
 
 	KASSERT(rp != NULL);
 	KASSERT(solocked(so));
 
 	s = splsoftnet();
+	if (rop->rocb_missfilterlen != 0)
+		kmem_free(rop->rocb_missfilter, rop->rocb_missfilterlen);
 	rt_adjustcount(rp->rcb_proto.sp_protocol, -1);
 	raw_detach(so);
 	splx(s);
@@ -980,9 +1003,10 @@ route_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 {
 	struct routecb *rop = sotoroutecb(so);
 	int error = 0;
-	unsigned char *rtm_type;
+	unsigned char *rtm_type, *cp, *ep;
 	size_t len;
 	unsigned int msgfilter;
+	struct sockaddr *sa;
 
 	KASSERT(solocked(so));
 
@@ -1006,6 +1030,46 @@ route_ctloutput(int op, struct socket *so, struct sockopt *sopt)
 			}
 			if (error == 0)
 				rop->rocb_msgfilter = msgfilter;
+			break;
+		case RO_MISSFILTER:
+			/* Validate the data */
+			len = 0;
+			cp = sopt->sopt_data;
+			ep = cp + sopt->sopt_size;
+			while (cp < ep) {
+				if (ep - cp <
+				    offsetof(struct sockaddr, sa_len) +
+				    sizeof(sa->sa_len))
+					break;
+				if (++len > RO_FILTSA_MAX) {
+					error = ENOBUFS;
+					break;
+				}
+				sa = (struct sockaddr *)cp;
+				cp += RT_XROUNDUP(sa->sa_len);
+			}
+			if (cp != ep) {
+				if (error == 0)
+					error = EINVAL;
+				break;
+			}
+			if (rop->rocb_missfilterlen != 0)
+				kmem_free(rop->rocb_missfilter,
+				    rop->rocb_missfilterlen);
+			if (sopt->sopt_size != 0) {
+				rop->rocb_missfilter =
+				    kmem_alloc(sopt->sopt_size, KM_SLEEP);
+				if (rop->rocb_missfilter == NULL) {
+					rop->rocb_missfilterlen = 0;
+					error = ENOBUFS;
+					break;
+				}
+			} else
+				rop->rocb_missfilter = NULL;
+			rop->rocb_missfilterlen = sopt->sopt_size;
+			if (rop->rocb_missfilterlen != 0)
+				memcpy(rop->rocb_missfilter, sopt->sopt_data,
+				    rop->rocb_missfilterlen);
 			break;
 		default:
 			error = ENOPROTOOPT;
