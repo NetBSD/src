@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.77 2020/02/08 08:18:06 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.78 2020/02/08 08:47:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.77 2020/02/08 08:18:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.78 2020/02/08 08:47:27 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -152,6 +152,81 @@ usbd_get_device_desc(struct usbd_device *dev, usb_device_descriptor_t *d)
 
 	return usbd_get_desc(dev, UDESC_DEVICE,
 			     0, USB_DEVICE_DESCRIPTOR_SIZE, d);
+}
+
+/*
+ * Get the first 8 bytes of the device descriptor.
+ * Do as Windows does: try to read 64 bytes -- there are devices which
+ * recognize the initial descriptor fetch (before the control endpoint's
+ * MaxPacketSize is known by the host) by exactly this length.
+ */
+usbd_status
+usbd_get_initial_ddesc(struct usbd_device *dev, usb_device_descriptor_t *desc)
+{
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "dev %#jx", (uintptr_t)dev, 0, 0, 0);
+	usb_device_request_t req;
+	char buf[64];
+	int res, actlen;
+
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_DESCRIPTOR;
+	USETW2(req.wValue, UDESC_DEVICE, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 8);
+	res = usbd_do_request_flags(dev, &req, buf, USBD_SHORT_XFER_OK,
+		&actlen, USBD_DEFAULT_TIMEOUT);
+	if (res)
+		return res;
+	if (actlen < 8)
+		return USBD_SHORT_XFER;
+	memcpy(desc, buf, 8);
+	return USBD_NORMAL_COMPLETION;
+}
+
+usbd_status
+usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
+    usb_string_descriptor_t *sdesc, int *sizep)
+{
+	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	usb_device_request_t req;
+	usbd_status err;
+	int actlen;
+
+	/*
+	 * Pass a full-sized buffer to usbd_do_request_len().  At least
+	 * one device has been seen returning additional data beyond the
+	 * provided buffers (2-bytes written shortly after the request
+	 * claims to have completed and returned the 2 byte header,
+	 * corrupting other memory.)
+	 */
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_DESCRIPTOR;
+	USETW2(req.wValue, UDESC_STRING, sindex);
+	USETW(req.wIndex, langid);
+	USETW(req.wLength, 2);	/* only size byte first */
+	err = usbd_do_request_len(dev, &req, sizeof(*sdesc), sdesc,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
+	if (err)
+		return err;
+
+	if (actlen < 2)
+		return USBD_SHORT_XFER;
+
+	if (sdesc->bLength > sizeof(*sdesc))
+		return USBD_INVAL;
+	USETW(req.wLength, sdesc->bLength);	/* the whole string */
+	err = usbd_do_request_len(dev, &req, sizeof(*sdesc), sdesc,
+	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
+	if (err)
+		return err;
+
+	if (actlen != sdesc->bLength) {
+		DPRINTF("expected %jd, got %jd", sdesc->bLength, actlen, 0, 0);
+	}
+
+	*sizep = actlen;
+	return USBD_NORMAL_COMPLETION;
 }
 
 /* -------------------------------------------------------------------------- */
@@ -346,6 +421,22 @@ usbd_get_config(struct usbd_device *dev, uint8_t *conf)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, 1);
 	return usbd_do_request(dev, &req, conf);
+}
+
+usbd_status
+usbd_set_config(struct usbd_device *dev, int conf)
+{
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "dev %#jx conf %jd",
+	    (uintptr_t)dev, conf, 0, 0);
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_CONFIG;
+	USETW(req.wValue, conf);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	return usbd_do_request(dev, &req, 0);
 }
 
 usbd_status
