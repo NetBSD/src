@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.15 2019/10/13 07:28:05 mrg Exp $
+# $NetBSD: Makefile,v 1.16 2020/02/08 00:11:18 kamil Exp $
 
 LIB=		fetch
 SRCS=		fetch.c common.c ftp.c http.c file.c
@@ -32,7 +32,7 @@ httperr.h: ${LIBFETCHDIR}/http.errors ${LIBFETCHDIR}/errlist.sh
 	${HOST_SH} ${LIBFETCHDIR}/errlist.sh http_errlist HTTP \
 	    ${LIBFETCHDIR}/http.errors > ${.TARGET}
 
-.if ${MKSANITIZER:Uno} == "yes"
+.if ${MKSANITIZER:Uno} == "yes" || ${MKLIBCSANITIZER:Uno} == "yes"
 CFLAGS+=	-Wno-macro-redefined # _REENTRANT redefined
 .endif
 
