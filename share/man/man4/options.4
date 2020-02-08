@@ -1,4 +1,4 @@
-.\"	$NetBSD: options.4,v 1.507 2019/08/20 14:03:55 gson Exp $
+.\"	$NetBSD: options.4,v 1.508 2020/02/08 07:07:06 maxv Exp $
 .\"
 .\" Copyright (c) 1996
 .\" 	Perry E. Metzger.  All rights reserved.
@@ -30,7 +30,7 @@
 .\" THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 .\"
 .\"
-.Dd August 20, 2019
+.Dd February 8, 2020
 .Dt OPTIONS 4
 .Os
 .Sh NAME
@@ -2331,17 +2331,11 @@ The flag can be changed at runtime by
 .Xr sysctl 3 .
 .It Cd options KASAN
 Enables Kernel Address Sanitizer.
-Should not be used in conjunction with KLEAK.
 .Em NOTE :
 not available on all architectures.
 .It Cd options KASLR
 Enables Kernel ASLR.
 This randomizes the location of the kernel image in memory.
-.Em NOTE :
-not available on all architectures.
-.It Cd options KLEAK
-Enables the KLEAK feature, that allows to detect kernel information leaks.
-Should not be used in conjunction with KASAN.
 .Em NOTE :
 not available on all architectures.
 .It Cd options SVS

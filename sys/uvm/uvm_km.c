@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.153 2020/01/20 10:43:48 skrll Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.154 2020/02/08 07:07:07 maxv Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.153 2020/01/20 10:43:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.154 2020/02/08 07:07:07 maxv Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -715,7 +715,6 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	pmap_update(pmap_kernel());
 
 	if ((flags & UVM_KMF_ZERO) == 0) {
-		kleak_fill_area((void *)kva, size);
 		kmsan_orig((void *)kva, size, KMSAN_TYPE_UVM, __RET_ADDR);
 		kmsan_mark((void *)kva, size, KMSAN_STATE_UNINIT);
 	}

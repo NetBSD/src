@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.560 2020/01/25 18:38:34 thorpej Exp $
+# $NetBSD: GENERIC,v 1.561 2020/02/08 07:07:06 maxv Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/amd64/conf/std.amd64"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.560 $"
+#ident		"GENERIC-$Revision: 1.561 $"
 
 maxusers	64		# estimated number of users
 
@@ -146,10 +146,6 @@ options 	KDTRACE_HOOKS	# kernel DTrace hooks
 #no options 	MODULAR_DEFAULT_AUTOLOAD	# mandatory
 #options	POOL_QUARANTINE	# optional
 #options 	KMSAN_PANIC	# optional
-
-# Kernel Info Leak Detector.
-#makeoptions 	KLEAK=1
-#options 	KLEAK
 
 # Kernel Code Coverage Driver.
 #makeoptions	KCOV=1
