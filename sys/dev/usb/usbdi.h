@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.97 2019/08/28 01:44:39 mrg Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.98 2020/02/08 07:38:17 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -194,7 +194,10 @@ typedef struct {
 	const uByte *end;
 } usbd_desc_iter_t;
 void usb_desc_iter_init(struct usbd_device *, usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_peek(usbd_desc_iter_t *);
 const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
+const usb_interface_descriptor_t *usb_desc_iter_next_interface(usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_next_non_interface(usbd_desc_iter_t *);
 
 /* Used to clear endpoint stalls from the softint */
 void usbd_clear_endpoint_stall_task(void *);
