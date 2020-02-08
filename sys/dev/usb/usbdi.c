@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.188 2020/02/08 07:53:23 maxv Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.189 2020/02/08 07:57:16 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.188 2020/02/08 07:53:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.189 2020/02/08 07:57:16 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1278,16 +1278,16 @@ usb_desc_iter_peek(usbd_desc_iter_t *iter)
 
 	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
 		if (iter->cur != iter->end)
-			printf("usb_desc_iter_peek_next: bad descriptor\n");
+			printf("%s: bad descriptor\n", __func__);
 		return NULL;
 	}
 	desc = (const usb_descriptor_t *)iter->cur;
 	if (desc->bLength == 0) {
-		printf("usb_desc_iter_peek_next: descriptor length = 0\n");
+		printf("%s: descriptor length = 0\n", __func__);
 		return NULL;
 	}
 	if (iter->cur + desc->bLength > iter->end) {
-		printf("usb_desc_iter_peek_next: descriptor length too large\n");
+		printf("%s: descriptor length too large\n", __func__);
 		return NULL;
 	}
 	return desc;
@@ -1296,23 +1296,10 @@ usb_desc_iter_peek(usbd_desc_iter_t *iter)
 const usb_descriptor_t *
 usb_desc_iter_next(usbd_desc_iter_t *iter)
 {
-	const usb_descriptor_t *desc;
-
-	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
-		if (iter->cur != iter->end)
-			printf("usb_desc_iter_next: bad descriptor\n");
+	const usb_descriptor_t *desc = usb_desc_iter_peek(iter);
+	if (desc == NULL)
 		return NULL;
-	}
-	desc = (const usb_descriptor_t *)iter->cur;
-	if (desc->bLength == 0) {
-		printf("usb_desc_iter_next: descriptor length = 0\n");
-		return NULL;
-	}
 	iter->cur += desc->bLength;
-	if (iter->cur > iter->end) {
-		printf("usb_desc_iter_next: descriptor length too large\n");
-		return NULL;
-	}
 	return desc;
 }
 
