@@ -1,4 +1,4 @@
-/* $NetBSD: mkubootimage.c,v 1.29 2020/01/01 11:48:36 martin Exp $ */
+/* $NetBSD: mkubootimage.c,v 1.30 2020/02/08 13:27:00 ryo Exp $ */
 
 /*-
  * Copyright (c) 2010 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: mkubootimage.c,v 1.29 2020/01/01 11:48:36 martin Exp $");
+__RCSID("$NetBSD: mkubootimage.c,v 1.30 2020/02/08 13:27:00 ryo Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -389,7 +389,7 @@ generate_header_arm64(struct arm64_image_header *hdr, int kernel_fd)
 #endif
 
 	const uint64_t dsize = update_image ?
-	   (uint64_t)st.st_size - sizeof(*hdr) : (uint64_t)st.st_size;
+	    (uint64_t)st.st_size : (uint64_t)st.st_size + sizeof(*hdr);
 
 	memset(hdr, 0, sizeof(*hdr));
 	hdr->code0 = htole32(ARM64_CODE0);
