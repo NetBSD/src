@@ -1,4 +1,4 @@
-/*	$NetBSD: exfat.c,v 1.2 2019/12/28 08:00:08 tkusumi Exp $	*/
+/*	$NetBSD: exfat.c,v 1.3 2020/02/08 12:56:56 fox Exp $	*/
 
 /*
  * Copyright (c) 2017 Conrad Meyer <cem@FreeBSD.org>
@@ -26,7 +26,7 @@
  * SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: exfat.c,v 1.2 2019/12/28 08:00:08 tkusumi Exp $");
+__RCSID("$NetBSD: exfat.c,v 1.3 2020/02/08 12:56:56 fox Exp $");
 
 #include <sys/param.h>
 #include <sys/endian.h>
@@ -250,7 +250,7 @@ exfat_fat_next(FILE *fp, const struct exfat_vbr *ev, unsigned BPS,
 
 	fat_offset_sect = le32toh(ev->ev_fat_offset);
 	clsect = fat_offset_sect + (cluster / (BPS / (uint32_t)sizeof(cluster)));
-	clsectoff = (cluster % (BPS / sizeof(cluster)));
+	clsectoff = (cluster % (BPS / (uint32_t)sizeof(cluster)));
 
 	/* XXX This is pretty wasteful without a block cache for the FAT. */
 	fatsect = read_sect(fp, clsect, BPS);
