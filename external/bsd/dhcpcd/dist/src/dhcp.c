@@ -3307,7 +3307,7 @@ is_packet_udp_bootp(void *packet, size_t plen)
 	memcpy(&udp, (char *)ip + ip_hlen, sizeof(udp));
 	if (ntohs(udp.uh_ulen) < sizeof(udp))
 		return false;
-	if (ip_hlen + ntohs(udp.uh_ulen) > plen)
+	if (ip_hlen + (size_t)ntohs(udp.uh_ulen) > plen)
 		return false;
 
 	/* Check it's to and from the right ports. */
