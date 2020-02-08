@@ -1,4 +1,4 @@
-$NetBSD: acronyms.comp,v 1.297 2020/01/27 10:56:29 nia Exp $
+$NetBSD: acronyms.comp,v 1.298 2020/02/08 00:47:57 sevan Exp $
 3WHS	three-way handshake
 8VSB	8-state vestigial side band modulation
 AA	anti-aliasing
@@ -811,6 +811,7 @@ KVM	kernel virtual machine
 KVM	kernel virtual memory
 KVM	keyboard, video, [and] mouse
 L2CAP	link layer control and adaptation protocol
+LAG	link aggregation group
 LAMP	Linux Apache MySQL {Perl,PHP,Python}
 LAN	local area network
 LAPIC	local advanced programmable interrupt controller
@@ -913,7 +914,7 @@ MCC	multiversion concurrency control
 MCE	machine check exception
 MCGA	Multi-Color Graphics Array
 MCH	memory controller hub
-MCLAG	multi-chassis link aggregation
+MCLAG	multi-chassis link aggregation group
 MCM	multi-chip module
 MCQ	memory controlled queue
 MD	machine-dependent
@@ -955,6 +956,7 @@ ML	machine learning
 ML	mailing list
 ML	markup language
 ML	maximum likelihood
+MLAG	multi-chassis link aggregation group
 MLC	multi-level cell
 MLD	multicast listener discovery
 MLHP	micro loop heat pipe
