@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.sys.mk,v 1.298 2019/12/20 04:04:25 christos Exp $
+#	$NetBSD: bsd.sys.mk,v 1.299 2020/02/08 07:07:06 maxv Exp $
 #
 # Build definitions used for NetBSD source tree builds.
 
@@ -235,14 +235,6 @@ CPUFLAGS+=	-Wa,--fatal-warnings
 #.endif
 CFLAGS+=	${CPUFLAGS}
 AFLAGS+=	${CPUFLAGS}
-
-.if ${KLEAK:U0} > 0
-KLEAKFLAGS=	-fsanitize-coverage=trace-pc
-.for f in subr_kleak.c
-KLEAKFLAGS.${f}=	# empty
-.endfor
-CFLAGS+=	${KLEAKFLAGS.${.IMPSRC:T}:U${KLEAKFLAGS}}
-.endif
 
 .if ${KCOV:U0} > 0
 KCOVFLAGS=	-fsanitize-coverage=trace-pc
