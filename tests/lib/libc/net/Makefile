@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2019/08/27 22:48:53 kamil Exp $
+# $NetBSD: Makefile,v 1.13 2020/02/08 00:11:18 kamil Exp $
 
 .include <bsd.own.mk>
 
@@ -41,7 +41,7 @@ LDADD.h_nsd_recurse+=	-lpthread
 
 CLEANFILES+=	aton_ether_subr.c
 
-.if ${MKSANITIZER:Uno} == "yes"
+.if ${MKSANITIZER:Uno} == "yes" || ${MKLIBCSANITIZER:Uno} == "yes"
 COPTS.h_nsd_recurse.c+=	-Wno-macro-redefined # _REENTRANT redefined
 .endif
 
