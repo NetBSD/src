@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.119 2019/09/26 01:35:08 christos Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.120 2020/02/08 08:47:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -334,8 +334,6 @@ int		usb_disconnect_port(struct usbd_port *, device_t, int);
 void		usbd_kill_pipe(struct usbd_pipe *);
 usbd_status	usbd_attach_roothub(device_t, struct usbd_device *);
 usbd_status	usbd_probe_and_attach(device_t, struct usbd_device *, int, int);
-usbd_status	usbd_get_initial_ddesc(struct usbd_device *,
-				       usb_device_descriptor_t *);
 
 /* Routines from usb.c */
 void		usb_needs_explore(struct usbd_device *);
