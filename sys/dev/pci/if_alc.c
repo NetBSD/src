@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.48 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.49 2020/02/08 07:24:46 maxv Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -78,7 +78,7 @@
 /*
  * Devices supported by this driver.
  */
-static struct alc_ident alc_ident_table[] = {
+static const struct alc_ident alc_ident_table[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8131, 9 * 1024,
 		"Atheros AR8131 PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8132, 9 * 1024,
@@ -128,7 +128,7 @@ static int	alc_dma_alloc(struct alc_softc *);
 static void	alc_dma_free(struct alc_softc *);
 static void	alc_dsp_fixup(struct alc_softc *, int);
 static int	alc_encap(struct alc_softc *, struct mbuf **);
-static struct alc_ident *
+static const struct alc_ident *
 		alc_find_ident(struct pci_attach_args *);
 static void	alc_get_macaddr(struct alc_softc *);
 static void	alc_get_macaddr_813x(struct alc_softc *);
@@ -172,7 +172,7 @@ static void	alc_tick(void *);
 static void	alc_txeof(struct alc_softc *);
 static void	alc_init_pcie(struct alc_softc *);
 
-static uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
+static const uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
 
 CFATTACH_DECL_NEW(alc, sizeof(struct alc_softc),
     alc_match, alc_attach, alc_detach, NULL);
@@ -574,10 +574,10 @@ alc_mediachange(struct ifnet *ifp)
 	return (error);
 }
 
-static struct alc_ident *
+static const struct alc_ident *
 alc_find_ident(struct pci_attach_args *pa)
 {
-	struct alc_ident *ident;
+	const struct alc_ident *ident;
 	uint16_t vendor, devid;
 
 	vendor = PCI_VENDOR(pa->pa_id);
