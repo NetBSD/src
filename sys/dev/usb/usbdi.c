@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.186 2019/08/28 01:44:39 mrg Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.187 2020/02/08 07:38:17 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.186 2019/08/28 01:44:39 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.187 2020/02/08 07:38:17 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1282,6 +1282,28 @@ usb_desc_iter_init(struct usbd_device *dev, usbd_desc_iter_t *iter)
 }
 
 const usb_descriptor_t *
+usb_desc_iter_peek(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
+		if (iter->cur != iter->end)
+			printf("usb_desc_iter_peek_next: bad descriptor\n");
+		return NULL;
+	}
+	desc = (const usb_descriptor_t *)iter->cur;
+	if (desc->bLength == 0) {
+		printf("usb_desc_iter_peek_next: descriptor length = 0\n");
+		return NULL;
+	}
+	if (iter->cur + desc->bLength > iter->end) {
+		printf("usb_desc_iter_peek_next: descriptor length too large\n");
+		return NULL;
+	}
+	return desc;
+}
+
+const usb_descriptor_t *
 usb_desc_iter_next(usbd_desc_iter_t *iter)
 {
 	const usb_descriptor_t *desc;
@@ -1302,6 +1324,38 @@ usb_desc_iter_next(usbd_desc_iter_t *iter)
 		return NULL;
 	}
 	return desc;
+}
+
+/* Return the next interface descriptor, skipping over any other
+ * descriptors.  Returns NULL at the end or on error. */
+const usb_interface_descriptor_t *
+usb_desc_iter_next_interface(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	while ((desc = usb_desc_iter_peek(iter)) != NULL &&
+	       desc->bDescriptorType != UDESC_INTERFACE)
+	{
+		usb_desc_iter_next(iter);
+	}
+
+	return (const usb_interface_descriptor_t *)usb_desc_iter_next(iter);
+}
+
+/* Returns the next non-interface descriptor, returning NULL when the
+ * next descriptor would be an interface descriptor. */
+const usb_descriptor_t *
+usb_desc_iter_next_non_interface(usbd_desc_iter_t *iter)
+{
+	const usb_descriptor_t *desc;
+
+	if ((desc = usb_desc_iter_peek(iter)) != NULL &&
+	    desc->bDescriptorType != UDESC_INTERFACE)
+	{
+		return usb_desc_iter_next(iter);
+	} else {
+		return NULL;
+	}
 }
 
 usbd_status
