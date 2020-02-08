@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.50 2020/02/08 07:53:23 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.51 2020/02/08 08:18:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -35,56 +35,56 @@
 
 #include <dev/usb/usbhid.h>
 
-usbd_status	usbd_get_desc(struct usbd_device *, int,
-			      int, int, void *);
+usbd_status	usbd_get_desc(struct usbd_device *, int, int, int, void *);
 usbd_status	usbd_get_config_desc(struct usbd_device *, int,
-				     usb_config_descriptor_t *);
-usbd_status	usbd_get_config_desc_full(struct usbd_device *, int, void *, int);
+		    usb_config_descriptor_t *);
+usbd_status	usbd_get_config_desc_full(struct usbd_device *, int, void *,
+		    int);
 usbd_status	usbd_get_bos_desc(struct usbd_device *, int,
-				     usb_bos_descriptor_t *);
+		    usb_bos_descriptor_t *);
 usbd_status	usbd_get_bos_desc_full(struct usbd_device *, int, void *, int);
 usbd_status	usbd_get_device_desc(struct usbd_device *,
-				     usb_device_descriptor_t *);
-usbd_status	usbd_get_desc_fake(struct usbd_device *, int,
-				   int, int, void *);
-usbd_status	usbd_set_address(struct usbd_device *, int);
-usbd_status	usbd_get_port_status(struct usbd_device *,
-				     int, usb_port_status_t *);
-usbd_status	usbd_get_port_status_ext(struct usbd_device *,
-				     int, usb_port_status_ext_t *);
-usbd_status	usbd_set_hub_feature(struct usbd_device *, int);
+		    usb_device_descriptor_t *);
+usbd_status	usbd_get_string_desc(struct usbd_device *, int, int,
+		    usb_string_descriptor_t *, int *);
+
+usbd_status	usbd_get_device_status(struct usbd_device *, usb_status_t *);
+usbd_status	usbd_get_hub_status(struct usbd_device *, usb_hub_status_t *);
+usbd_status	usbd_get_port_status(struct usbd_device *, int,
+		    usb_port_status_t *);
+usbd_status	usbd_get_port_status_ext(struct usbd_device *, int,
+		    usb_port_status_ext_t *);
+
+usbd_status	usbd_get_desc_fake(struct usbd_device *, int, int, int, void *);
+
 usbd_status	usbd_clear_hub_feature(struct usbd_device *, int);
-usbd_status	usbd_set_port_feature(struct usbd_device *, int, int);
+usbd_status	usbd_set_hub_feature(struct usbd_device *, int);
 usbd_status	usbd_clear_port_feature(struct usbd_device *, int, int);
+usbd_status	usbd_set_port_feature(struct usbd_device *, int, int);
 usbd_status	usbd_set_port_u1_timeout(struct usbd_device *, int, int);
 usbd_status	usbd_set_port_u2_timeout(struct usbd_device *, int, int);
 usbd_status	usbd_clear_endpoint_feature(struct usbd_device *, int, int);
-usbd_status	usbd_get_device_status(struct usbd_device *, usb_status_t *);
-usbd_status	usbd_get_hub_status(struct usbd_device *, usb_hub_status_t *);
+
+usbd_status	usbd_get_config(struct usbd_device *, uint8_t *);
+usbd_status	usbd_set_address(struct usbd_device *, int);
+usbd_status	usbd_set_idle(struct usbd_interface *, int, int);
+
 usbd_status	usbd_get_protocol(struct usbd_interface *, uint8_t *);
 usbd_status	usbd_set_protocol(struct usbd_interface *, int);
-usbd_status	usbd_get_report_descriptor(struct usbd_device *, int,
-					   int, void *);
-usb_hid_descriptor_t *usbd_get_hid_descriptor(struct usbd_interface *);
-usbd_status	usbd_set_report(struct usbd_interface *, int, int,
-				void *, int);
-usbd_status	usbd_get_report(struct usbd_interface *, int, int,
-				void *, int);
-usbd_status	usbd_set_idle(struct usbd_interface *, int, int);
-usbd_status	usbd_read_report_desc(struct usbd_interface *, void **,
-				      int *);
-usbd_status	usbd_get_config(struct usbd_device *, uint8_t *);
-usbd_status	usbd_get_string_desc(struct usbd_device *, int,
-				     int, usb_string_descriptor_t *,
-				     int *);
 
+usbd_status	usbd_set_report(struct usbd_interface *, int, int, void *, int);
+usbd_status	usbd_get_report(struct usbd_interface *, int, int, void *, int);
+usbd_status	usbd_get_report_descriptor(struct usbd_device *, int, int,
+		    void *);
+
+usb_hid_descriptor_t *usbd_get_hid_descriptor(struct usbd_interface *);
+usbd_status	usbd_read_report_desc(struct usbd_interface *, void **, int *);
 
 usbd_status	usbd_set_config_no(struct usbd_device *, int, int);
 usbd_status	usbd_set_config_index(struct usbd_device *, int, int);
 
 usbd_status	usbd_bulk_transfer(struct usbd_xfer *, struct usbd_pipe *,
-		uint16_t, uint32_t, void *, uint32_t *);
-
+		    uint16_t, uint32_t, void *, uint32_t *);
 usbd_status	usbd_intr_transfer(struct usbd_xfer *, struct usbd_pipe *,
 		    uint16_t, uint32_t, void *, uint32_t *);
 
