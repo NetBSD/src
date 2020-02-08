@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.48 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.49 2020/02/08 07:20:41 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.48 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.49 2020/02/08 07:20:41 maxv Exp $");
 
 
 #include <sys/param.h>
@@ -200,9 +200,9 @@ static void jme_ticks(void *);
 static void jme_mac_config(jme_softc_t *);
 static void jme_set_filter(jme_softc_t *);
 
-int jme_mii_read(device_t, int, int, uint16_t *);
-int jme_mii_write(device_t, int, int, uint16_t);
-void jme_statchg(struct ifnet *);
+static int jme_mii_read(device_t, int, int, uint16_t *);
+static int jme_mii_write(device_t, int, int, uint16_t);
+static void jme_statchg(struct ifnet *);
 
 static int jme_eeprom_read_byte(struct jme_softc *, uint8_t, uint8_t *);
 static int jme_eeprom_macaddr(struct jme_softc *);
@@ -970,8 +970,7 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 	return 0;
 }
 
-
-int
+static int
 jme_mii_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct jme_softc *sc = device_private(self);
@@ -1005,7 +1004,7 @@ jme_mii_read(device_t self, int phy, int reg, uint16_t *val)
 	return 0;
 }
 
-int
+static int
 jme_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct jme_softc *sc = device_private(self);
@@ -1039,7 +1038,7 @@ jme_mii_write(device_t self, int phy, int reg, uint16_t val)
 	return 0;
 }
 
-void
+static void
 jme_statchg(struct ifnet *ifp)
 {
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
