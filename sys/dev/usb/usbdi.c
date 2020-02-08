@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.187 2020/02/08 07:38:17 maxv Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.188 2020/02/08 07:53:23 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.187 2020/02/08 07:38:17 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.188 2020/02/08 07:53:23 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -677,7 +677,6 @@ usbd_status
 usbd_clear_endpoint_stall(struct usbd_pipe *pipe)
 {
 	struct usbd_device *dev = pipe->up_dev;
-	usb_device_request_t req;
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
@@ -688,12 +687,8 @@ usbd_clear_endpoint_stall(struct usbd_pipe *pipe)
 	 */
 	pipe->up_methods->upm_cleartoggle(pipe);
 
-	req.bmRequestType = UT_WRITE_ENDPOINT;
-	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, UF_ENDPOINT_HALT);
-	USETW(req.wIndex, pipe->up_endpoint->ue_edesc->bEndpointAddress);
-	USETW(req.wLength, 0);
-	err = usbd_do_request(dev, &req, 0);
+	err = usbd_clear_endpoint_feature(dev,
+	    pipe->up_endpoint->ue_edesc->bEndpointAddress, UF_ENDPOINT_HALT);
 #if 0
 XXX should we do this?
 	if (!err) {
@@ -709,16 +704,11 @@ usbd_clear_endpoint_stall_task(void *arg)
 {
 	struct usbd_pipe *pipe = arg;
 	struct usbd_device *dev = pipe->up_dev;
-	usb_device_request_t req;
 
 	pipe->up_methods->upm_cleartoggle(pipe);
 
-	req.bmRequestType = UT_WRITE_ENDPOINT;
-	req.bRequest = UR_CLEAR_FEATURE;
-	USETW(req.wValue, UF_ENDPOINT_HALT);
-	USETW(req.wIndex, pipe->up_endpoint->ue_edesc->bEndpointAddress);
-	USETW(req.wLength, 0);
-	(void)usbd_do_request(dev, &req, 0);
+	(void)usbd_clear_endpoint_feature(dev,
+	    pipe->up_endpoint->ue_edesc->bEndpointAddress, UF_ENDPOINT_HALT);
 }
 
 void
