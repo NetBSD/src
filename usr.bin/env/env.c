@@ -1,3 +1,4 @@
+/*	$NetBSD: env.c,v 1.22 2020/02/08 10:36:02 kamil Exp $	*/
 /*
  * Copyright (c) 1988, 1993, 1994
  *	The Regents of the University of California.  All rights reserved.
@@ -35,7 +36,7 @@ __COPYRIGHT("@(#) Copyright (c) 1988, 1993, 1994\
 
 #ifndef lint
 /*static char sccsid[] = "@(#)env.c	8.3 (Berkeley) 4/2/94";*/
-__RCSID("$NetBSD: env.c,v 1.21 2020/02/08 10:30:22 kamil Exp $");
+__RCSID("$NetBSD: env.c,v 1.22 2020/02/08 10:36:02 kamil Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -46,7 +47,7 @@ __RCSID("$NetBSD: env.c,v 1.21 2020/02/08 10:30:22 kamil Exp $");
 #include <locale.h>
 #include <errno.h>
 
-static void usage(void) __attribute__((__noreturn__));
+static void usage(void) __dead;
 
 extern char **environ;
 
