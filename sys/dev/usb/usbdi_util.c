@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.76 2020/02/08 07:53:23 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.77 2020/02/08 08:18:06 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.76 2020/02/08 07:53:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.77 2020/02/08 08:18:06 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -154,6 +154,8 @@ usbd_get_device_desc(struct usbd_device *dev, usb_device_descriptor_t *d)
 			     0, USB_DEVICE_DESCRIPTOR_SIZE, d);
 }
 
+/* -------------------------------------------------------------------------- */
+
 usbd_status
 usbd_get_device_status(struct usbd_device *dev, usb_status_t *st)
 {
@@ -181,22 +183,6 @@ usbd_get_hub_status(struct usbd_device *dev, usb_hub_status_t *st)
 	USETW(req.wIndex, 0);
 	USETW(req.wLength, sizeof(usb_hub_status_t));
 	return usbd_do_request(dev, &req, st);
-}
-
-usbd_status
-usbd_set_address(struct usbd_device *dev, int addr)
-{
-	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "dev %#jx addr %jd",
-	    (uintptr_t)dev, addr, 0, 0);
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_WRITE_DEVICE;
-	req.bRequest = UR_SET_ADDRESS;
-	USETW(req.wValue, addr);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	return usbd_do_request(dev, &req, 0);
 }
 
 usbd_status
@@ -232,6 +218,8 @@ usbd_get_port_status_ext(struct usbd_device *dev, int port,
 	USETW(req.wLength, sizeof(*pse));
 	return usbd_do_request(dev, &req, pse);
 }
+
+/* -------------------------------------------------------------------------- */
 
 usbd_status
 usbd_clear_hub_feature(struct usbd_device *dev, int sel)
@@ -343,6 +331,62 @@ usbd_clear_endpoint_feature(struct usbd_device *dev, int epaddr, int sel)
 	return usbd_do_request(dev, &req, 0);
 }
 
+/* -------------------------------------------------------------------------- */
+
+usbd_status
+usbd_get_config(struct usbd_device *dev, uint8_t *conf)
+{
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "dev %#jx", (uintptr_t)dev, 0, 0, 0);
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_READ_DEVICE;
+	req.bRequest = UR_GET_CONFIG;
+	USETW(req.wValue, 0);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 1);
+	return usbd_do_request(dev, &req, conf);
+}
+
+usbd_status
+usbd_set_address(struct usbd_device *dev, int addr)
+{
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "dev %#jx addr %jd",
+	    (uintptr_t)dev, addr, 0, 0);
+	usb_device_request_t req;
+
+	req.bmRequestType = UT_WRITE_DEVICE;
+	req.bRequest = UR_SET_ADDRESS;
+	USETW(req.wValue, addr);
+	USETW(req.wIndex, 0);
+	USETW(req.wLength, 0);
+	return usbd_do_request(dev, &req, 0);
+}
+
+usbd_status
+usbd_set_idle(struct usbd_interface *iface, int duration, int id)
+{
+	usb_interface_descriptor_t *ifd = usbd_get_interface_descriptor(iface);
+	struct usbd_device *dev;
+	usb_device_request_t req;
+
+	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "duration %jd id %jd", duration, id, 0, 0);
+
+	if (ifd == NULL)
+		return USBD_IOERROR;
+	usbd_interface2device_handle(iface, &dev);
+	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
+	req.bRequest = UR_SET_IDLE;
+	USETW2(req.wValue, duration, id);
+	USETW(req.wIndex, ifd->bInterfaceNumber);
+	USETW(req.wLength, 0);
+	return usbd_do_request(dev, &req, 0);
+}
+
+/* -------------------------------------------------------------------------- */
+
 usbd_status
 usbd_get_protocol(struct usbd_interface *iface, uint8_t *report)
 {
@@ -389,6 +433,8 @@ usbd_set_protocol(struct usbd_interface *iface, int report)
 	return usbd_do_request(dev, &req, 0);
 }
 
+/* -------------------------------------------------------------------------- */
+
 usbd_status
 usbd_set_report(struct usbd_interface *iface, int type, int id, void *data,
 		int len)
@@ -433,27 +479,6 @@ usbd_get_report(struct usbd_interface *iface, int type, int id, void *data,
 }
 
 usbd_status
-usbd_set_idle(struct usbd_interface *iface, int duration, int id)
-{
-	usb_interface_descriptor_t *ifd = usbd_get_interface_descriptor(iface);
-	struct usbd_device *dev;
-	usb_device_request_t req;
-
-	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "duration %jd id %jd", duration, id, 0, 0);
-
-	if (ifd == NULL)
-		return USBD_IOERROR;
-	usbd_interface2device_handle(iface, &dev);
-	req.bmRequestType = UT_WRITE_CLASS_INTERFACE;
-	req.bRequest = UR_SET_IDLE;
-	USETW2(req.wValue, duration, id);
-	USETW(req.wIndex, ifd->bInterfaceNumber);
-	USETW(req.wLength, 0);
-	return usbd_do_request(dev, &req, 0);
-}
-
-usbd_status
 usbd_get_report_descriptor(struct usbd_device *dev, int ifcno,
 			   int size, void *d)
 {
@@ -469,6 +494,8 @@ usbd_get_report_descriptor(struct usbd_device *dev, int ifcno,
 	USETW(req.wLength, size);
 	return usbd_do_request(dev, &req, d);
 }
+
+/* -------------------------------------------------------------------------- */
 
 usb_hid_descriptor_t *
 usbd_get_hid_descriptor(struct usbd_interface *ifc)
@@ -526,21 +553,6 @@ usbd_read_report_desc(struct usbd_interface *ifc, void **descp, int *sizep)
 		return err;
 	}
 	return USBD_NORMAL_COMPLETION;
-}
-
-usbd_status
-usbd_get_config(struct usbd_device *dev, uint8_t *conf)
-{
-	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "dev %#jx", (uintptr_t)dev, 0, 0, 0);
-	usb_device_request_t req;
-
-	req.bmRequestType = UT_READ_DEVICE;
-	req.bRequest = UR_GET_CONFIG;
-	USETW(req.wValue, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 1);
-	return usbd_do_request(dev, &req, conf);
 }
 
 usbd_status
