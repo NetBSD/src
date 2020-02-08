@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.163 2020/02/05 14:56:04 ryoon Exp $	*/
+/*	$NetBSD: pthread.c,v 1.164 2020/02/08 17:06:03 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.163 2020/02/05 14:56:04 ryoon Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.164 2020/02/08 17:06:03 kamil Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -770,11 +770,11 @@ pthread_equal(pthread_t t1, pthread_t t2)
 	if (__predict_false(__uselibcstub))
 		return __libc_thr_equal_stub(t1, t2);
 
-	pthread__error(EINVAL, "Invalid thread",
-	    t1->pt_magic == PT_MAGIC);
+	pthread__error(0, "Invalid thread",
+	    (t1 != NULL) && (t1->pt_magic == PT_MAGIC));
 
-	pthread__error(EINVAL, "Invalid thread",
-	    t2->pt_magic == PT_MAGIC);
+	pthread__error(0, "Invalid thread",
+	    (t2 != NULL) && (t2->pt_magic == PT_MAGIC));
 
 	/* Nothing special here. */
 	return (t1 == t2);
