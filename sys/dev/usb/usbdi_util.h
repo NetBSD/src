@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.51 2020/02/08 08:18:06 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.52 2020/02/08 08:47:27 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -45,6 +45,8 @@ usbd_status	usbd_get_bos_desc(struct usbd_device *, int,
 usbd_status	usbd_get_bos_desc_full(struct usbd_device *, int, void *, int);
 usbd_status	usbd_get_device_desc(struct usbd_device *,
 		    usb_device_descriptor_t *);
+usbd_status	usbd_get_initial_ddesc(struct usbd_device *,
+		    usb_device_descriptor_t *);
 usbd_status	usbd_get_string_desc(struct usbd_device *, int, int,
 		    usb_string_descriptor_t *, int *);
 
@@ -66,6 +68,7 @@ usbd_status	usbd_set_port_u2_timeout(struct usbd_device *, int, int);
 usbd_status	usbd_clear_endpoint_feature(struct usbd_device *, int, int);
 
 usbd_status	usbd_get_config(struct usbd_device *, uint8_t *);
+usbd_status	usbd_set_config(struct usbd_device *, int);
 usbd_status	usbd_set_address(struct usbd_device *, int);
 usbd_status	usbd_set_idle(struct usbd_interface *, int, int);
 
