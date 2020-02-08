@@ -1,4 +1,4 @@
-/*     $NetBSD: login_pam.c,v 1.25 2015/10/29 11:31:52 shm Exp $       */
+/*     $NetBSD: login_pam.c,v 1.26 2020/02/08 13:44:35 kamil Exp $       */
 
 /*-
  * Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1987, 1988, 1991, 1993, 1994\
 #if 0
 static char sccsid[] = "@(#)login.c	8.4 (Berkeley) 4/2/94";
 #endif
-__RCSID("$NetBSD: login_pam.c,v 1.25 2015/10/29 11:31:52 shm Exp $");
+__RCSID("$NetBSD: login_pam.c,v 1.26 2020/02/08 13:44:35 kamil Exp $");
 #endif /* not lint */
 
 /*
@@ -602,8 +602,8 @@ skip_auth:
 		char **envitem;
 
 		for (envitem = pamenv; *envitem; envitem++) {
-			putenv(*envitem);
-			free(*envitem);
+			if (putenv(*envitem) == -1)
+				free(*envitem);
 		}
 
 		free(pamenv);
