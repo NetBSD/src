@@ -1,4 +1,4 @@
-#	$NetBSD: files.usb,v 1.171 2020/02/03 19:37:42 maya Exp $
+#	$NetBSD: files.usb,v 1.172 2020/02/09 15:46:15 maya Exp $
 #
 # Config file and device description for machine-independent USB code.
 # Included by ports that need it.  Ports that use it must provide
@@ -83,7 +83,6 @@ defflag opt_usb.h	UTS_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVIDEO_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVISOR_DEBUG: USB_DEBUG
 defflag opt_usb.h	UVSCOM_DEBUG: USB_DEBUG
-defflag opt_usb.h	UYUREX_DEBUG: USB_DEBUG
 defflag opt_usb.h	ZYD_DEBUG: USB_DEBUG
 
 define	usbroothubif { }
