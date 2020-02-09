@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.13 2019/11/11 22:45:32 joerg Exp $
+#	$NetBSD: Makefile,v 1.14 2020/02/09 15:13:28 fox Exp $
 #	@(#)Makefile	8.1 (Berkeley) 6/6/93
 #
 # optional flags are: MEASURE TESTING DEBUG
@@ -12,5 +12,7 @@ CPPFLAGS+=-DSUPPORT_UTMP -DSUPPORT_UTMPX
 MAN=	timed.8
 
 CWARNFLAGS.clang+=	-Wno-error=implicit-int-float-conversion
+
+COPTS.master.c+=	${GCC_NO_STRINGOP_TRUNCATION}
 
 .include <bsd.prog.mk>
