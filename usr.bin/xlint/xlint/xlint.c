@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.47 2019/04/13 15:08:49 christos Exp $ */
+/* $NetBSD: xlint.c,v 1.48 2020/02/09 08:10:25 fox Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.47 2019/04/13 15:08:49 christos Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.48 2020/02/09 08:10:25 fox Exp $");
 #endif
 
 #include <sys/param.h>
@@ -613,7 +613,7 @@ fname(const char *name)
 	const	char *bn, *suff;
 	char	**args, *ofn, *pathname;
 	const char *CC;
-	size_t	len;
+	size_t	buff_size, len;
 	int is_stdin;
 	int	fd;
 
@@ -648,10 +648,10 @@ fname(const char *name)
 			warnx("-i not supported without -o for standard input");
 			return;
 		}
-		ofn = xmalloc(strlen(bn) + (bn == suff ? 4 : 2));
+		buff_size = strlen(bn) + (bn == suff ? 4 : 2);
+		ofn = xmalloc(buff_size);
 		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
-		(void)sprintf(ofn, "%.*s", (int)len, bn);
-		(void)strcat(ofn, ".ln");
+		(void)snprintf(ofn, buff_size, "%.*s.ln", (int)len, bn);
 	} else {
 		ofn = xmalloc(strlen(tmpdir) + sizeof ("lint1.XXXXXX"));
 		(void)sprintf(ofn, "%slint1.XXXXXX", tmpdir);
