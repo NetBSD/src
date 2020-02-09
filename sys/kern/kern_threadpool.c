@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_threadpool.c,v 1.15 2019/01/17 10:18:52 hannken Exp $	*/
+/*	$NetBSD: kern_threadpool.c,v 1.16 2020/02/09 22:57:26 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2014, 2018 The NetBSD Foundation, Inc.
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.15 2019/01/17 10:18:52 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_threadpool.c,v 1.16 2020/02/09 22:57:26 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -132,6 +132,9 @@ static void	threadpool_rele(struct threadpool *);
 
 static int	threadpool_percpu_create(struct threadpool_percpu **, pri_t);
 static void	threadpool_percpu_destroy(struct threadpool_percpu *);
+static void	threadpool_percpu_init(void *, void *, struct cpu_info *);
+static void	threadpool_percpu_ok(void *, void *, struct cpu_info *);
+static void	threadpool_percpu_fini(void *, void *, struct cpu_info *);
 
 static threadpool_job_fn_t threadpool_job_dead;
 
@@ -576,78 +579,75 @@ static int
 threadpool_percpu_create(struct threadpool_percpu **pool_percpup, pri_t pri)
 {
 	struct threadpool_percpu *pool_percpu;
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-	unsigned int i, j;
-	int error;
+	bool ok = true;
 
 	pool_percpu = kmem_zalloc(sizeof(*pool_percpu), KM_SLEEP);
-	if (pool_percpu == NULL) {
-		error = ENOMEM;
-		goto fail0;
-	}
 	pool_percpu->tpp_pri = pri;
+	pool_percpu->tpp_percpu = percpu_create(sizeof(struct threadpool *),
+	    threadpool_percpu_init, threadpool_percpu_fini,
+	    (void *)(intptr_t)pri);
 
-	pool_percpu->tpp_percpu = percpu_alloc(sizeof(struct threadpool *));
-	if (pool_percpu->tpp_percpu == NULL) {
-		error = ENOMEM;
-		goto fail1;
-	}
-
-	for (i = 0, CPU_INFO_FOREACH(cii, ci), i++) {
-		struct threadpool *pool;
-
-		pool = kmem_zalloc(sizeof(*pool), KM_SLEEP);
-		error = threadpool_create(pool, ci, pri);
-		if (error) {
-			kmem_free(pool, sizeof(*pool));
-			goto fail2;
-		}
-		percpu_traverse_enter();
-		struct threadpool **const poolp =
-		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
-		*poolp = pool;
-		percpu_traverse_exit();
-	}
+	/*
+	 * Verify that all of the CPUs were initialized.
+	 *
+	 * XXX What to do if we add CPU hotplug?
+	 */
+	percpu_foreach(pool_percpu->tpp_percpu, &threadpool_percpu_ok, &ok);
+	if (!ok)
+		goto fail;
 
 	/* Success!  */
 	*pool_percpup = (struct threadpool_percpu *)pool_percpu;
 	return 0;
 
-fail2:	for (j = 0, CPU_INFO_FOREACH(cii, ci), j++) {
-		if (i <= j)
-			break;
-		percpu_traverse_enter();
-		struct threadpool **const poolp =
-		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
-		struct threadpool *const pool = *poolp;
-		percpu_traverse_exit();
-		threadpool_destroy(pool);
-		kmem_free(pool, sizeof(*pool));
-	}
-	percpu_free(pool_percpu->tpp_percpu, sizeof(struct taskthread_pool *));
-fail1:	kmem_free(pool_percpu, sizeof(*pool_percpu));
-fail0:	return error;
+fail:	percpu_free(pool_percpu->tpp_percpu, sizeof(struct threadpool *));
+	kmem_free(pool_percpu, sizeof(*pool_percpu));
+	return ENOMEM;
 }
 
 static void
 threadpool_percpu_destroy(struct threadpool_percpu *pool_percpu)
 {
-	struct cpu_info *ci;
-	CPU_INFO_ITERATOR cii;
-
-	for (CPU_INFO_FOREACH(cii, ci)) {
-		percpu_traverse_enter();
-		struct threadpool **const poolp =
-		    percpu_getptr_remote(pool_percpu->tpp_percpu, ci);
-		struct threadpool *const pool = *poolp;
-		percpu_traverse_exit();
-		threadpool_destroy(pool);
-		kmem_free(pool, sizeof(*pool));
-	}
 
 	percpu_free(pool_percpu->tpp_percpu, sizeof(struct threadpool *));
 	kmem_free(pool_percpu, sizeof(*pool_percpu));
+}
+
+static void
+threadpool_percpu_init(void *vpoolp, void *vpri, struct cpu_info *ci)
+{
+	struct threadpool **const poolp = vpoolp;
+	pri_t pri = (intptr_t)(void *)vpri;
+	int error;
+
+	*poolp = kmem_zalloc(sizeof(**poolp), KM_SLEEP);
+	error = threadpool_create(*poolp, ci, pri);
+	if (error) {
+		KASSERT(error == ENOMEM);
+		kmem_free(*poolp, sizeof(**poolp));
+		*poolp = NULL;
+	}
+}
+
+static void
+threadpool_percpu_ok(void *vpoolp, void *vokp, struct cpu_info *ci)
+{
+	struct threadpool **const poolp = vpoolp;
+	bool *okp = vokp;
+
+	if (*poolp == NULL)
+		atomic_store_relaxed(okp, false);
+}
+
+static void
+threadpool_percpu_fini(void *vpoolp, void *vprip, struct cpu_info *ci)
+{
+	struct threadpool **const poolp = vpoolp;
+
+	if (*poolp == NULL)	/* initialization failed */
+		return;
+	threadpool_destroy(*poolp);
+	kmem_free(*poolp, sizeof(**poolp));
 }
 
 /* Thread pool jobs */
