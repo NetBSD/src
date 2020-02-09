@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.11 2020/01/13 20:30:08 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.12 2020/02/09 09:30:22 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.11 2020/01/13 20:30:08 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.12 2020/02/09 09:30:22 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -261,7 +261,7 @@ cpu_topology_fake(void)
 
 /*
  * Fix up basic CPU topology info.  Right now that means attach each CPU to
- * circular lists of its siblings in the same core, and in the same package. 
+ * circular lists of its siblings in the same core, and in the same package.
  */
 void
 cpu_topology_init(void)
@@ -287,7 +287,7 @@ cpu_topology_init(void)
 			    ci2 != ci) {
 #ifdef DEBUG
 				printf("cpu%u %p pkg %u core %u smt %u same as "
-				       "cpu%u %p pkg %u core %u smt %u\n", 
+				       "cpu%u %p pkg %u core %u smt %u\n",
 				       cpu_index(ci), ci, ci->ci_package_id,
 				       ci->ci_core_id, ci->ci_smt_id,
 				       cpu_index(ci2), ci2, ci2->ci_package_id,
