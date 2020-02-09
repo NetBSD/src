@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2019/10/30 00:25:00 christos Exp $
+# $NetBSD: Makefile,v 1.3 2020/02/09 07:59:44 fox Exp $
 
 .include <bsd.own.mk>
 
@@ -19,6 +19,7 @@ FILES=	dhcpd.conf
 COPTS.ddns.c +=-Wno-stringop-overflow
 .endif
 
+COPTS.mdb6.c +=		-Wno-error=format-overflow
 COPTS.omapi.c +=	-Wno-stack-protector
 
 .include <bsd.prog.mk>
