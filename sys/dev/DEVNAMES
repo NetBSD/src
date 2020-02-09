@@ -1,4 +1,4 @@
-#	$NetBSD: DEVNAMES,v 1.326 2020/01/17 15:00:20 maya Exp $
+#	$NetBSD: DEVNAMES,v 1.327 2020/02/09 16:06:18 jmcneill Exp $
 #
 # This file contains all used device names and defined attributes in
 # alphabetical order. New devices added to the system somewhere should first
@@ -150,7 +150,6 @@ avmebus			atari
 awi			MI
 axe			MI
 az			MI
-azalia			MI
 bah			MI
 bandit			macppc
 bba			MI
