@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.13 2020/02/08 14:17:30 roy Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.14 2020/02/09 21:15:03 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.13 2020/02/08 14:17:30 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.14 2020/02/09 21:15:03 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -237,11 +237,24 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 		return EEXIST;
 
 	if (rop->rocb_missfilterlen != 0 && rtm->rtm_type == RTM_MISS) {
-		__CTASSERT(RTA_DST == 1);
-		struct sockaddr *sa, *dst = (struct sockaddr *)(rtm + 1);
+		__CTASSERT(RTAX_DST == 0);
+		struct sockaddr_storage ss;
+		struct sockaddr *dst = (struct sockaddr *)&ss, *sa;
 		char *cp = rop->rocb_missfilter;
 		char *ep = cp + rop->rocb_missfilterlen;
 
+		/* Ensure we can access sa_len */
+		if (m->m_pkthdr.len < sizeof(*rtm) +
+		    offsetof(struct sockaddr, sa_len) + sizeof(ss.ss_len))
+			return EINVAL;
+		m_copydata(m, sizeof(*rtm) + offsetof(struct sockaddr, sa_len),
+		    sizeof(ss.ss_len), &ss);
+		if (m->m_pkthdr.len < sizeof(*rtm) + ss.ss_len)
+			return EINVAL;
+		/* Copy out the destination sockaddr */
+		m_copydata(m, sizeof(*rtm), ss.ss_len, &ss);
+
+		/* Find a matching sockaddr in the filter */
 		while (cp < ep) {
 			sa = (struct sockaddr *)cp;
 			if (sa->sa_len == dst->sa_len &&
