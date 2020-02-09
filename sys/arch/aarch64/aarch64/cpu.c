@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.c,v 1.39 2020/01/28 17:47:50 maxv Exp $ */
+/* $NetBSD: cpu.c,v 1.40 2020/02/09 08:14:55 skrll Exp $ */
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.39 2020/01/28 17:47:50 maxv Exp $");
+__KERNEL_RCSID(1, "$NetBSD: cpu.c,v 1.40 2020/02/09 08:14:55 skrll Exp $");
 
 #include "locators.h"
 #include "opt_arm_debug.h"
@@ -159,10 +159,8 @@ cpu_attach(device_t dv, cpuid_t id)
 	fpu_attach(ci);
 
 	cpu_identify1(dv, ci);
-#if 0
-	/* already done in locore */
-	aarch64_getcacheinfo(unit);
-#endif
+
+	/* aarch64_getcacheinfo(0) was called by locore.S */
 	aarch64_printcacheinfo(dv);
 	cpu_identify2(dv, ci);
 
