@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.70 2020/01/09 16:35:03 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.71 2020/02/09 09:30:37 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.70 2020/01/09 16:35:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2020/02/09 09:30:37 skrll Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -170,7 +170,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 	core = 0;
 
 	vers = (mfpvr() >> 16) & 0xffff;
-	
+
 	if (vers == IBM970MP) {
 		core = package & 1;
 		package >>= 1;
@@ -348,7 +348,7 @@ md_setup_interrupts(void)
 	if (openpic_base) {
 		openpic_set_priority(cpu_number(), 0);
 	} else if (have_u3_ht()) {
-		__u3_ht_set_priority(cpu_number(), 0);		
+		__u3_ht_set_priority(cpu_number(), 0);
 	} else
 #endif /* OPENPIC */
 		out32(HH_INTR_SECONDARY, ~0);	/* Reset interrupt. */
