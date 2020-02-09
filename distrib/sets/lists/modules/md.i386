@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.83 2019/12/04 11:47:17 jmcneill Exp $
+# $NetBSD: md.i386,v 1.84 2020/02/09 16:06:17 jmcneill Exp $
 #
 # NOTE that there are two sets of files here: @MODULEDIR@ and i386pae-xen
 #
@@ -47,8 +47,8 @@
 ./@MODULEDIR@/au8522/au8522.kmod		base-kernel-modules	kmod
 ./@MODULEDIR@/auvitek				base-kernel-modules	kmod
 ./@MODULEDIR@/auvitek/auvitek.kmod		base-kernel-modules	kmod
-./@MODULEDIR@/azalia				base-kernel-modules	kmod
-./@MODULEDIR@/azalia/azalia.kmod		base-kernel-modules	kmod
+./@MODULEDIR@/azalia				base-obsolete		obsolete
+./@MODULEDIR@/azalia/azalia.kmod		base-obsolete		obsolete
 ./@MODULEDIR@/bpfjit				base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/bpfjit/bpfjit.kmod		base-kernel-modules	kmod,sljit
 ./@MODULEDIR@/cac_eisa				base-obsolete		obsolete

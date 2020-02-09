@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.174 2020/01/29 18:39:00 maya Exp $
+# $NetBSD: XEN3_DOM0,v 1.175 2020/02/09 16:06:18 jmcneill Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.174 $"
+#ident		"XEN3_DOM0-$Revision: 1.175 $"
 
 maxusers	32		# estimated number of users
 
@@ -706,7 +706,6 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
-#azalia* at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738
