@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.237 2020/01/21 02:37:16 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.238 2020/02/09 16:06:18 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -327,7 +327,6 @@ SUBDIR+=	viadrmums
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=	azalia
 SUBDIR+=	compat_linux
 SUBDIR+=	drm
 SUBDIR+=	drmkms
