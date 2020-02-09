@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.1 2012/03/23 21:29:45 christos Exp $
+#	$NetBSD: Makefile,v 1.2 2020/02/09 07:47:50 fox Exp $
 
 PROG=		ipmon
 SRCS=		ipmon.c ipmon_y.c ipmon_l.c
@@ -10,6 +10,8 @@ DPSRCS+=	ipmon_l.h ipmon_y.h
 
 CLEANFILES+=	ipmon_y.c ipmon_y.h
 CLEANFILES+=	ipmon_l.c ipmon_l.h
+
+COPTS.ipmon.c+=	-Wno-error=format-overflow
 
 ipmon_y.c: ipmon_y.y
 	${_MKTARGET_CREATE}
