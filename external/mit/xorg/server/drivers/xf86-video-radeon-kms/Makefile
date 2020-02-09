@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.11 2020/01/19 10:44:51 martin Exp $
+#	$NetBSD: Makefile,v 1.12 2020/02/09 12:28:28 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -16,7 +16,6 @@ CPPFLAGS+= \
 		-DHAS_DIRTYTRACKING2 \
 		-DHAVE_XORG_LIST \
 		-DHAVE_XF86_CURSOR_RESET_CURSOR \
-		-DHAVE_DRI3_H \
 		-DHAVE_MISYNCSHM_H \
 		-DHAVE_PRESENT_H
 .endif
