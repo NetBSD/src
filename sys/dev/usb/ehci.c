@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.267 2019/06/13 17:20:25 maxv Exp $ */
+/*	$NetBSD: ehci.c,v 1.267.2.1 2020/02/10 18:50:29 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.267 2019/06/13 17:20:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.267.2.1 2020/02/10 18:50:29 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3946,8 +3946,9 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 	DPRINTFN(5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
@@ -4020,8 +4021,9 @@ ehci_device_bulk_done(struct usbd_xfer *xfer)
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    rd ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
 
 	DPRINTF("length=%jd", xfer->ux_actlen, 0, 0, 0);
 }
@@ -4163,8 +4165,9 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 	DPRINTFN(5, "--- dump end ---", 0, 0, 0, 0);
 #endif
 
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    isread ? BUS_DMASYNC_PREREAD : BUS_DMASYNC_PREWRITE);
 
 	/* also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
@@ -4226,7 +4229,6 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 {
 	ehci_softc_t *sc __diagused = EHCI_XFER2SC(xfer);
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
-	int isread, endpt;
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -4234,10 +4236,14 @@ ehci_device_intr_done(struct usbd_xfer *xfer)
 
 	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 
-	endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
-	isread = UE_GET_DIR(endpt) == UE_DIR_IN;
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	if (xfer->ux_length) {
+		int isread, endpt;
+
+		endpt = epipe->pipe.up_endpoint->ue_edesc->bEndpointAddress;
+		isread = UE_GET_DIR(endpt) == UE_DIR_IN;
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    isread ? BUS_DMASYNC_POSTREAD : BUS_DMASYNC_POSTWRITE);
+	}
 }
 
 /************************/
@@ -4493,8 +4499,9 @@ ehci_device_fs_isoc_transfer(struct usbd_xfer *xfer)
 	    sizeof(sitd->sitd.sitd_trans),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 
-	usb_syncmem(&exfer->ex_xfer.ux_dmabuf, 0, total_length,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	if (total_length)
+		usb_syncmem(&exfer->ex_xfer.ux_dmabuf, 0, total_length,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
@@ -4601,8 +4608,9 @@ ehci_device_fs_isoc_done(struct usbd_xfer *xfer)
 	epipe->isoc.cur_xfers--;
 	ehci_remove_sitd_chain(sc, exfer->ex_itdstart);
 
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 }
 
 /* -------------------------------------------------------------------------- */
@@ -4879,8 +4887,9 @@ ehci_device_isoc_transfer(struct usbd_xfer *xfer)
 		prev = itd;
 	} /* End of frame */
 
-	usb_syncmem(&exfer->ex_xfer.ux_dmabuf, 0, total_length,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	if (total_length)
+		usb_syncmem(&exfer->ex_xfer.ux_dmabuf, 0, total_length,
+		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 	/*
 	 * Part 2: Transfer descriptors have now been set up, now they must
@@ -4991,6 +5000,7 @@ ehci_device_isoc_done(struct usbd_xfer *xfer)
 
 	epipe->isoc.cur_xfers--;
 	ehci_remove_itd_chain(sc, exfer->ex_sitdstart);
-	usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
-	    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
+	if (xfer->ux_length)
+		usb_syncmem(&xfer->ux_dmabuf, 0, xfer->ux_length,
+		    BUS_DMASYNC_POSTWRITE | BUS_DMASYNC_POSTREAD);
 }
