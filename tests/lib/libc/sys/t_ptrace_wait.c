@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.153 2020/02/05 23:43:18 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.154 2020/02/10 11:42:41 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.153 2020/02/05 23:43:18 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.154 2020/02/10 11:42:41 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7249,27 +7249,15 @@ ATF_TC_BODY(threads_and_exec, tc)
 
 /// ----------------------------------------------------------------------------
 
-volatile lwpid_t the_lwp_id = 0;
-
-static void
-lwp_main_stop(void *arg)
-{
-	the_lwp_id = _lwp_self();
-
-	raise(SIGTRAP);
-
-	_lwp_exit();
-}
-
-ATF_TC(suspend2);
-ATF_TC_HEAD(suspend2, tc)
+ATF_TC(suspend_no_deadlock);
+ATF_TC_HEAD(suspend_no_deadlock, tc)
 {
 	atf_tc_set_md_var(tc, "descr",
 	    "Verify that the while the only thread within a process is "
 	    "suspended, the whole process cannot be unstopped");
 }
 
-ATF_TC_BODY(suspend2, tc)
+ATF_TC_BODY(suspend_no_deadlock, tc)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -7325,6 +7313,20 @@ ATF_TC_BODY(suspend2, tc)
 	DPRINTF("Before calling %s() for the child - expected no process\n",
 	    TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
+}
+
+/// ----------------------------------------------------------------------------
+
+volatile lwpid_t the_lwp_id = 0;
+
+static void
+lwp_main_stop(void *arg)
+{
+	the_lwp_id = _lwp_self();
+
+	raise(SIGTRAP);
+
+	_lwp_exit();
 }
 
 ATF_TC(resume1);
@@ -9257,7 +9259,7 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, threads_and_exec);
 
-	ATF_TP_ADD_TC(tp, suspend2);
+	ATF_TP_ADD_TC(tp, suspend_no_deadlock);
 
 	ATF_TP_ADD_TC(tp, resume1);
 
