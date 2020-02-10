@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.32 2018/11/06 09:14:08 blymn Exp $
+.\" $NetBSD: pms.4,v 1.33 2020/02/10 15:30:33 ryoon Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd February 4, 2018
+.Dd February 11, 2020
 .Dt PMS 4
 .Os
 .Sh NAME
@@ -222,7 +222,7 @@ The following
 variables control behavior of ALPS touchpads:
 .Bl -tag -width 8n
 .It Dv hw.alps.touchpad_xy_precision_shift
-.It Dv hw.alps.tackstick_xy_precision_shift
+.It Dv hw.alps.trackstick_xy_precision_shift
 Decreased values improve the accuracy of X and Y-axis reporting
 at the expense of slower mouse movement (default 2 for touchpad
 and 1 for TrackStick).
