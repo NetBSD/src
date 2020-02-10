@@ -1,4 +1,4 @@
-/*	$NetBSD: upgrade.c,v 1.12.2.2 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: upgrade.c,v 1.12.2.3 2020/02/10 21:39:37 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -65,19 +65,19 @@ do_upgrade(void)
 	if (find_disks(msg_string(MSG_upgrade), !root_is_read_only()) < 0)
 		return;
 
-	if (pm->parts == NULL && !pm->cur_system) {
+	if (pm->parts == NULL && !pm->cur_system && !pm->no_part) {
 		hit_enter_to_continue(MSG_noroot, NULL);
 		return;
 	}
 
-	if (!pm->cur_system) {
+	if (!pm->cur_system && pm->parts != NULL) {
 		if (pm->parts->pscheme->pre_update_verify) {
 			if (pm->parts->pscheme->pre_update_verify(pm->parts))
 				pm->parts->pscheme->write_to_disk(pm->parts);
 		}
 
 		install_desc_from_parts(&install, pm->parts);
-	} else {
+	} else if (pm->cur_system) {
 		install.cur_system = true;
 	}
 
@@ -209,14 +209,9 @@ do_reinstall_sets()
 	if (find_disks(msg_string(MSG_reinstall), !root_is_read_only()) < 0)
 		return;
 
-	if (!pm->cur_system) {
-		if (pm->parts == NULL) {
-			hit_enter_to_continue(MSG_noroot, NULL);
-			return;
-		}
-
+	if (!pm->cur_system && pm->parts != NULL) {
 		install_desc_from_parts(&install, pm->parts);
-	} else {
+	} else if (pm->cur_system) {
 		install.cur_system = true;
 	}
 

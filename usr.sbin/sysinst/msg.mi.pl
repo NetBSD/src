@@ -1,4 +1,4 @@
-/*	$NetBSD: msg.mi.pl,v 1.20.2.7 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: msg.mi.pl,v 1.20.2.8 2020/02/10 21:39:37 bouyer Exp $	*/
 /*	Based on english version: */
 /*	NetBSD: msg.mi.pl,v 1.36 2004/04/17 18:55:35 atatat Exp       */
 
@@ -1191,7 +1191,8 @@ message swap_display	{swap}
  *  $1 = swap partition name		my_swap
  */
 message Auto_add_swap_part
-{Partycja swap ($1) istnieje na $0. 
+{Partycja swap ($1) 
+istnieje na $0. 
 Chcesz jej uzyc?}
 
 message parttype_disklabel {disklabel BSD}

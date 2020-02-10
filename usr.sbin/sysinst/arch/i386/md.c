@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.20.2.5 2020/01/28 10:17:58 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.20.2.6 2020/02/10 21:39:38 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -291,7 +291,7 @@ md_post_newfs_bios(struct install_partition_desc *install)
 		    "console=%s,speed=%u", consoles[boottype.bp_consdev],
 		    boottype.bp_conspeed);
                	ret = run_program(RUN_DISPLAY,
-                	    "/usr/sbin/installboot -o %s %s %s",
+                	    "/usr/sbin/installboot -f -o %s %s %s",
 			    boot_options, rdev, bootxx_filename);
                 free(bootxx_filename);
         } else {

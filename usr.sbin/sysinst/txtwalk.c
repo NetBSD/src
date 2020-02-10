@@ -1,4 +1,4 @@
-/*	$NetBSD: txtwalk.c,v 1.1.30.1 2019/08/08 05:51:43 msaitoh Exp $	*/
+/*	$NetBSD: txtwalk.c,v 1.1.30.2 2020/02/10 21:39:37 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -239,9 +239,14 @@ finddata(const struct lookfor *item, char *line, struct data *found, size_t *num
 				break;
 			case 's':  /* Matches a 'space' separated string. */
 				len = 0;
-				while (line[len] && !isspace((unsigned char)line[len])
-				    && line[len] != fmt[1])
+				while (line[len]
+				    && !isspace((unsigned char)line[len])
+				    && line[len] != fmt[1]) {
+					if (line[len] == '\\' 
+					    && line[len+1] != 0)
+						len++;
 					len++;
+				}
 				found[*numfound].what = STR;
 				found[(*numfound)++].u.s_val = line;
 				line[len] = 0;
