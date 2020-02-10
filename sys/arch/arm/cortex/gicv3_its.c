@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.21 2019/06/30 17:33:59 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.21.2.1 2020/02/10 18:17:57 martin Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.21 2019/06/30 17:33:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.21.2.1 2020/02/10 18:17:57 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -846,7 +846,7 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	if ((typer & GITS_TYPER_Physical) == 0)
 		return ENXIO;
 
-	its = kmem_alloc(sizeof(*its), KM_SLEEP);
+	its = kmem_zalloc(sizeof(*its), KM_SLEEP);
 	its->its_id = its_id;
 	its->its_bst = sc->sc_bst;
 	its->its_bsh = bsh;
