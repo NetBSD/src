@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.c,v 1.78 2020/02/08 08:47:27 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.c,v 1.79 2020/02/10 09:15:27 skrll Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.78 2020/02/08 08:47:27 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi_util.c,v 1.79 2020/02/10 09:15:27 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -396,6 +396,8 @@ usbd_status
 usbd_clear_endpoint_feature(struct usbd_device *dev, int epaddr, int sel)
 {
 	USBHIST_FUNC();
+	USBHIST_CALLARGS(usbdebug, "dev %#jx epaddr %jd sel %jd",
+	    (uintptr_t)dev, epaddr, sel, 0);
 	usb_device_request_t req;
 
 	req.bmRequestType = UT_WRITE_ENDPOINT;
