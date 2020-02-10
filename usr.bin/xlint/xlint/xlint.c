@@ -1,4 +1,4 @@
-/* $NetBSD: xlint.c,v 1.48 2020/02/09 08:10:25 fox Exp $ */
+/* $NetBSD: xlint.c,v 1.49 2020/02/10 04:54:01 christos Exp $ */
 
 /*
  * Copyright (c) 1996 Christopher G. Demetriou.  All Rights Reserved.
@@ -38,7 +38,7 @@
 
 #include <sys/cdefs.h>
 #if defined(__RCSID) && !defined(lint)
-__RCSID("$NetBSD: xlint.c,v 1.48 2020/02/09 08:10:25 fox Exp $");
+__RCSID("$NetBSD: xlint.c,v 1.49 2020/02/10 04:54:01 christos Exp $");
 #endif
 
 #include <sys/param.h>
@@ -613,7 +613,7 @@ fname(const char *name)
 	const	char *bn, *suff;
 	char	**args, *ofn, *pathname;
 	const char *CC;
-	size_t	buff_size, len;
+	size_t	len;
 	int is_stdin;
 	int	fd;
 
@@ -648,13 +648,10 @@ fname(const char *name)
 			warnx("-i not supported without -o for standard input");
 			return;
 		}
-		buff_size = strlen(bn) + (bn == suff ? 4 : 2);
-		ofn = xmalloc(buff_size);
 		len = bn == suff ? strlen(bn) : (size_t)((suff - 1) - bn);
-		(void)snprintf(ofn, buff_size, "%.*s.ln", (int)len, bn);
+		xasprintf(&ofn, "%.*s.ln", (int)len, bn);
 	} else {
-		ofn = xmalloc(strlen(tmpdir) + sizeof ("lint1.XXXXXX"));
-		(void)sprintf(ofn, "%slint1.XXXXXX", tmpdir);
+		xasprintf(&ofn, "%slint1.XXXXXX", tmpdir);
 		fd = mkstemp(ofn);
 		if (fd == -1) {
 			warn("can't make temp");
