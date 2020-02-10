@@ -1,4 +1,4 @@
-.\" $NetBSD: pms.4,v 1.33 2020/02/10 15:30:33 ryoon Exp $
+.\" $NetBSD: pms.4,v 1.34 2020/02/10 16:13:48 ryoon Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -226,6 +226,9 @@ variables control behavior of ALPS touchpads:
 Decreased values improve the accuracy of X and Y-axis reporting
 at the expense of slower mouse movement (default 2 for touchpad
 and 1 for TrackStick).
+.It Dv hw.alps.touchpad_movement_threshold
+Movements of less than this value (in ALPS coordinates) are
+ignored (default 4).
 .El
 .Sh SEE ALSO
 .Xr pckbc 4 ,
