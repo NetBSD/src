@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.4 2019/11/25 16:39:30 martin Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.36.2.5 2020/02/10 19:05:05 martin Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.4 2019/11/25 16:39:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.36.2.5 2020/02/10 19:05:05 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1690,7 +1690,7 @@ vmx_exit_xsetbv(struct nvmm_machine *mach, struct nvmm_cpu *vcpu,
     struct nvmm_vcpu_exit *exit)
 {
 	struct vmx_cpudata *cpudata = vcpu->cpudata;
-	uint16_t val;
+	uint64_t val;
 
 	exit->reason = NVMM_VCPU_EXIT_NONE;
 

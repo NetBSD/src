@@ -1,6 +1,6 @@
-.\"	$NetBSD: libnvmm.3,v 1.19.4.1 2019/11/10 12:58:30 martin Exp $
+.\"	$NetBSD: libnvmm.3,v 1.19.4.2 2020/02/10 19:05:05 martin Exp $
 .\"
-.\" Copyright (c) 2018, 2019 The NetBSD Foundation, Inc.
+.\" Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
 .\"
 .\" This code is derived from software contributed to The NetBSD Foundation
@@ -27,7 +27,7 @@
 .\" ARISING IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 .\" POSSIBILITY OF SUCH DAMAGE.
 .\"
-.Dd October 28, 2019
+.Dd February 9, 2020
 .Dt LIBNVMM 3
 .Os
 .Sh NAME
@@ -733,7 +733,8 @@ A query was made on a machine or a VCPU that does not exist.
 An attempt was made to access a machine that does not belong to the process.
 .El
 .Sh SEE ALSO
-.Xr nvmm 4
+.Xr nvmm 4 ,
+.Xr nvmmctl 8
 .Sh AUTHORS
 NVMM was designed and implemented by
 .An Maxime Villard .
