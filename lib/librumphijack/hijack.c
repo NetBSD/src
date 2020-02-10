@@ -1,4 +1,4 @@
-/*      $NetBSD: hijack.c,v 1.128 2019/09/25 20:19:59 christos Exp $	*/
+/*      $NetBSD: hijack.c,v 1.129 2020/02/10 09:10:58 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2011 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
 #include <rump/rumpuser_port.h>
 
 #if !defined(lint)
-__RCSID("$NetBSD: hijack.c,v 1.128 2019/09/25 20:19:59 christos Exp $");
+__RCSID("$NetBSD: hijack.c,v 1.129 2020/02/10 09:10:58 kamil Exp $");
 #endif
 
 #include <sys/param.h>
@@ -440,7 +440,7 @@ static int hijack_fdoff = FD_SETSIZE/2;
 /* note: you cannot change this without editing the env-passing code */
 #define DUP2HIGH 2
 static uint32_t dup2vec[DUP2HIGH+1];
-#define DUP2BIT (1<<31)
+#define DUP2BIT (1U<<31)
 #define DUP2ALIAS (1<<30)
 #define DUP2FDMASK ((1<<30)-1)
 
