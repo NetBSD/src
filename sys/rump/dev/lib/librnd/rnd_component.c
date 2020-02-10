@@ -1,4 +1,4 @@
-/*	$NetBSD: rnd_component.c,v 1.5 2016/05/30 14:52:06 pooka Exp $	*/
+/*	$NetBSD: rnd_component.c,v 1.6 2020/02/10 07:13:06 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rnd_component.c,v 1.5 2016/05/30 14:52:06 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rnd_component.c,v 1.6 2020/02/10 07:13:06 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -61,7 +61,6 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 		panic("cannot create /dev/urandom: %d", error);
 
 	rump_pdev_add(rndattach, 4);
-	rnd_init();
 }
 
 #if 0
