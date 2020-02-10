@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $ */
+/* $NetBSD: alps.c,v 1.13 2020/02/10 15:29:05 ryoon Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.13 2020/02/10 15:29:05 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -113,7 +113,7 @@ pms_sysctl_alps(struct sysctllog **clog)
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "tackstick_xy_precision_shift",
+		CTLTYPE_INT, "trackstick_xy_precision_shift",
 		SYSCTL_DESCR("Trackstick X/Y-axis precision value"),
 		pms_sysctl_alps_verify, 0,
 		&alps_trackstick_xy_precision,
