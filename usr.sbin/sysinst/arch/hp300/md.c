@@ -1,4 +1,4 @@
-/*	$NetBSD: md.c,v 1.8.2.1 2019/12/17 09:44:51 msaitoh Exp $ */
+/*	$NetBSD: md.c,v 1.8.2.2 2020/02/10 21:39:38 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -136,6 +136,12 @@ md_check_partitions(struct install_partition_desc *install)
 
 	for (i = 0; i < install->num; i++) {
 		if (i > 0) {
+			/* skip raw part and similar */
+			if (install->infos[i].cur_flags &
+			    (PTI_SEC_CONTAINER|PTI_PSCHEME_INTERNAL|
+			    PTI_RAW_PART))
+				continue;
+
 			if (install->infos[i].cur_start < last_end) {
 				snprintf(desc, sizeof desc,
 				    "%zu (%s)", i,

@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.42.2.6 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: defs.h,v 1.42.2.7 2020/02/10 21:39:37 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -527,7 +527,7 @@ int  clean_xfer_dir;
 #ifdef	USING_PAXASTAR
 #define	TAR_EXTRACT_FLAGS	"-xhepf"
 #else
-#define	TAR_EXTRACT_FLAGS	"-xpPf"
+#define	TAR_EXTRACT_FLAGS	"-xpf"
 #endif
 
 /* Abs. path we extract binary sets from */

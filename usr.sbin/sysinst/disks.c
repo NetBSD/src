@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.44.2.13 2020/01/28 10:17:58 msaitoh Exp $ */
+/*	$NetBSD: disks.c,v 1.44.2.14 2020/02/10 21:39:37 bouyer Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1446,7 +1446,8 @@ find_part_by_name(const char *name, struct disk_partitions **parts,
 		 * List has not been filled, only "pm" is valid - check
 		 * that first.
 		 */
-		if (pm->parts->pscheme->find_by_name != NULL) {
+		if (pm->parts != NULL &&
+		    pm->parts->pscheme->find_by_name != NULL) {
 			id = pm->parts->pscheme->find_by_name(pm->parts, name);
 			if (id != NO_PART) {
 				*pno = id;
@@ -1520,6 +1521,16 @@ process_found_fs(struct data *list, size_t num, const struct lookfor *item,
 
 	if (strcmp(item->head, name_prefix) == 0) {
 		/* this fstab entry uses NAME= syntax */
+
+		/* unescape */
+		char *src, *dst;
+		for (src = list[0].u.s_val, dst =src; src[0] != 0; ) {
+			if (src[0] == '\\' && src[1] != 0)
+				src++;
+			*dst++ = *src++;
+		}
+		*dst = 0;
+
 		if (!find_part_by_name(list[0].u.s_val,
 		    &parts, &pno) || parts == NULL || pno == NO_PART)
 			return 0;
@@ -1830,10 +1841,15 @@ mount_disks(struct install_partition_desc *install)
 	assert((size_t)(l - fstabbuf) == num_entries);
 
 	/* First the root device. */
-	if (target_already_root())
+	if (target_already_root()) {
 		/* avoid needing to call target_already_root() again */
 		targetroot_mnt[0] = 0;
-	else {
+	} else if (pm->no_part) {
+		snprintf(devdev, sizeof devdev, _PATH_DEV "%s", pm->diskdev);
+		error = mount_root(devdev, true, false, install);
+		if (error != 0 && error != EBUSY)
+			return -1;
+	} else {
 		for (i = 0; i < install->num; i++) {
 			if (is_root_part_mount(install->infos[i].mount))
 				break;
@@ -2006,7 +2022,7 @@ bootxx_name(struct install_partition_desc *install)
 	switch (fstype) {
 #if defined(BOOTXX_FFSV1) || defined(BOOTXX_FFSV2)
 	case FS_BSDFFS:
-		if (install->infos[0].fs_version == 2) {
+		if (install->infos[i].fs_version == 2) {
 #ifdef BOOTXX_FFSV2
 			bootxxname = BOOTXX_FFSV2;
 #else

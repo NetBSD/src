@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.10.2.8 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.10.2.9 2020/02/10 21:39:37 bouyer Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -237,8 +237,12 @@ disklabel_parts_read(const char *disk, daddr_t start, daddr_t len, size_t bps,
 		daddr_t dlend = start +
 		    parts->l.d_partitions[RAW_PART-1].p_size;
 
-		if (dlstart < start && dlend > (start+len)) {
-			assert(false);
+		if (dlstart < start || dlend > (start+len)) {
+			/*
+			 * Kernel assumes different outer partion
+			 * (probably not yet written back to disk)
+			 * so this label is invalid.
+			 */
 			free(parts);
 			close(fd);
 			return NULL;

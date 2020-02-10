@@ -1,4 +1,4 @@
-/*	$NetBSD: bsddisklabel.c,v 1.23.2.9 2020/01/28 10:17:58 msaitoh Exp $	*/
+/*	$NetBSD: bsddisklabel.c,v 1.23.2.10 2020/02/10 21:39:37 bouyer Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -666,6 +666,8 @@ set_ptn_size(menudesc *m, void *arg)
 	if (p->flags & PUIFLAG_EXTEND)
 		p->flags &= ~PUIFLAG_EXTEND;
 	if (extend && (p->limit == 0 || p->limit > p->size)) {
+		for (size_t k = 0; k < pset->num; k++)
+			pset->infos[k].flags &= ~PUIFLAG_EXTEND;
 		p->flags |= PUIFLAG_EXTEND;
 		if (size == 0)
 			size = align;
