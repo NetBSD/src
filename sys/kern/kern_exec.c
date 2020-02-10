@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.490 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.491 2020/02/10 22:13:01 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.490 2020/01/29 15:47:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.491 2020/02/10 22:13:01 christos Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -316,7 +316,7 @@ exec_path_free(struct execve_data *data)
 		PNBUF_PUT(data->ed_resolvedname);
 }
 
-static void
+static int
 exec_resolvename(struct lwp *l, struct exec_package *epp, struct vnode *vp,
     char **rpath)
 {
@@ -328,13 +328,16 @@ exec_resolvename(struct lwp *l, struct exec_package *epp, struct vnode *vp,
 	*rpath = PNBUF_GET();
 	error = vnode_to_path(*rpath, MAXPATHLEN, vp, l, l->l_proc);
 	if (error) {
+		DPRINTF(("%s: can't resolve name for %s, error %d\n",
+		    __func__, epp->ep_kname, error));
 		PNBUF_PUT(*rpath);
 		*rpath = NULL;
-		return;
+		return error;
 	}
 	epp->ep_resolvedname = *rpath;
 	if ((p = strrchr(*rpath, '/')) != NULL)
 		epp->ep_kname = p + 1;
+	return 0;
 }
 
 
@@ -396,7 +399,8 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 		epp->ep_vp = vp = fp->f_vnode;
 		vref(vp);
 		fd_putfile(epp->ep_xfd);
-		exec_resolvename(l, epp, vp, rpath);
+		if ((error = exec_resolvename(l, epp, vp, rpath)) != 0)
+			return error;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
@@ -633,6 +637,10 @@ exec_autoload(void)
 		"exec_ecoff",
 		"compat_aoutm68k",
 		"compat_netbsd32",
+#if 0
+		"compat_linux",
+		"compat_linux32",
+#endif
 		"compat_sunos",
 		"compat_sunos32",
 		"compat_ultrix",
@@ -641,7 +649,7 @@ exec_autoload(void)
 	char const * const *list;
 	int i;
 
-	list = (nexecs == 0 ? native : compat);
+	list = nexecs == 0 ? native : compat;
 	for (i = 0; list[i] != NULL; i++) {
 		if (module_autoload(list[i], MODULE_CLASS_EXEC) != 0) {
 			continue;
