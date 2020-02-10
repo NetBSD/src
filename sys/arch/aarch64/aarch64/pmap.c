@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.63 2020/02/03 13:37:01 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.64 2020/02/10 19:04:01 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.63 2020/02/03 13:37:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2020/02/10 19:04:01 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -189,13 +189,13 @@ PMAP_COUNTER(unwire_failure, "pmap_unwire failure");
 #define VM_PAGE_TO_PP(pg)	(&(pg)->mdpage.mdpg_pp)
 
 struct pv_entry {
-	TAILQ_ENTRY(pv_entry) pv_link;
+	LIST_ENTRY(pv_entry) pv_link;
 	struct pmap *pv_pmap;
 	vaddr_t pv_va;
 	paddr_t pv_pa;		/* debug */
 	pt_entry_t *pv_ptep;	/* for fast pte lookup */
 };
-#define pv_next	pv_link.tqe_next
+#define pv_next	pv_link.le_next
 
 #define L3INDEXMASK	(L3_SIZE * Ln_ENTRIES - 1)
 #define PDPSWEEP_TRIGGER	512
@@ -496,7 +496,7 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	kpm->pm_l0table = l0;
 	kpm->pm_l0table_pa = l0pa;
 	kpm->pm_activated = true;
-	TAILQ_INIT(&kpm->pm_vmlist);
+	LIST_INIT(&kpm->pm_vmlist);
 	mutex_init(&kpm->pm_lock, MUTEX_DEFAULT, IPL_VM);
 
 	CTASSERT(sizeof(kpm->pm_stats.wired_count) == sizeof(long));
@@ -639,7 +639,7 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 			return POOL_PADDR_INVALID;
 		}
 
-		TAILQ_INSERT_HEAD(&pm->pm_vmlist, pg, mdpage.mdpg_vmlist);
+		LIST_INSERT_HEAD(&pm->pm_vmlist, pg, mdpage.mdpg_vmlist);
 		pg->flags &= ~PG_BUSY;	/* never busy */
 		pg->wire_count = 1;	/* max = 1 + Ln_ENTRIES = 513 */
 		pa = VM_PAGE_TO_PHYS(pg);
@@ -666,7 +666,7 @@ pmap_alloc_pdp(struct pmap *pm, struct vm_page **pgp, int flags, bool waitok)
 static void
 pmap_free_pdp(struct pmap *pm, struct vm_page *pg)
 {
-	TAILQ_REMOVE(&pm->pm_vmlist, pg, mdpage.mdpg_vmlist);
+	LIST_REMOVE(pg, mdpage.mdpg_vmlist);
 	pg->flags |= PG_BUSY;
 	pg->wire_count = 0;
 	VM_MDPAGE_INIT(pg);
@@ -686,7 +686,7 @@ _pmap_sweep_pdp(struct pmap *pm)
 	uint16_t wirecount __diagused;
 
 	nsweep = 0;
-	TAILQ_FOREACH_SAFE(pg, &pm->pm_vmlist, mdpage.mdpg_vmlist, tmp) {
+	LIST_FOREACH_SAFE(pg, &pm->pm_vmlist, mdpage.mdpg_vmlist, tmp) {
 		if (pg->wire_count != 1)
 			continue;
 
@@ -735,7 +735,7 @@ _pmap_free_pdp_all(struct pmap *pm)
 {
 	struct vm_page *pg, *tmp;
 
-	TAILQ_FOREACH_SAFE(pg, &pm->pm_vmlist, mdpage.mdpg_vmlist, tmp) {
+	LIST_FOREACH_SAFE(pg, &pm->pm_vmlist, mdpage.mdpg_vmlist, tmp) {
 		pmap_free_pdp(pm, pg);
 	}
 }
@@ -1037,9 +1037,9 @@ _pmap_remove_pv(struct pmap_page *pp, struct pmap *pm, vaddr_t va, pt_entry_t pt
 	UVMHIST_LOG(pmaphist, "pp=%p, pm=%p, va=%llx, pte=%llx",
 	    pp, pm, va, pte);
 
-	TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
+	LIST_FOREACH(pv, &pp->pp_pvhead, pv_link) {
 		if ((pm == pv->pv_pmap) && (va == pv->pv_va)) {
-			TAILQ_REMOVE(&pp->pp_pvhead, pv, pv_link);
+			LIST_REMOVE(pv, pv_link);
 			PMAP_COUNT(pv_remove);
 			break;
 		}
@@ -1102,7 +1102,7 @@ pv_dump(struct pmap_page *pp, void (*pr)(const char *, ...) __printflike(1, 2))
 	pr(" pp->pp_flags=%08x %s\n", pp->pp_flags,
 	    str_vmflags(pp->pp_flags));
 
-	TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
+	LIST_FOREACH(pv, &pp->pp_pvhead, pv_link) {
 		pr("  pv[%d] pv=%p\n",
 		    i, pv);
 		pr("    pv[%d].pv_pmap = %p (asid=%d)\n",
@@ -1131,7 +1131,7 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 	UVMHIST_LOG(pmaphist, "ptep=%p, flags=%08x", ptep, flags, 0, 0);
 
 	/* pv is already registered? */
-	TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
+	LIST_FOREACH(pv, &pp->pp_pvhead, pv_link) {
 		if ((pm == pv->pv_pmap) && (va == pv->pv_va)) {
 			break;
 		}
@@ -1152,11 +1152,11 @@ _pmap_enter_pv(struct pmap_page *pp, struct pmap *pm, struct pv_entry **pvp,
 		pv->pv_pa = pa;
 		pv->pv_ptep = ptep;
 
-		TAILQ_INSERT_HEAD(&pp->pp_pvhead, pv, pv_link);
+		LIST_INSERT_HEAD(&pp->pp_pvhead, pv, pv_link);
 		PMAP_COUNT(pv_enter);
 
 #ifdef PMAP_PV_DEBUG
-		if (!TAILQ_EMPTY(&pp->pp_pvhead)){
+		if (!LIST_EMPTY(&pp->pp_pvhead)){
 			printf("pv %p alias added va=%016lx -> pa=%016lx\n",
 			    pv, va, pa);
 			pv_dump(pp, printf);
@@ -1433,7 +1433,7 @@ pmap_create(void)
 	pm->pm_refcnt = 1;
 	pm->pm_idlepdp = 0;
 	pm->pm_asid = -1;
-	TAILQ_INIT(&pm->pm_vmlist);
+	LIST_INIT(&pm->pm_vmlist);
 	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
 
 	pm->pm_l0table_pa = pmap_alloc_pdp(pm, NULL, 0, true);
@@ -2043,7 +2043,7 @@ pmap_page_remove(struct pmap_page *pp, vm_prot_t prot)
 
 		/* remove all pages reference to this physical page */
 		pmap_pv_lock(pp);
-		TAILQ_FOREACH_SAFE(pv, &pp->pp_pvhead, pv_link, pvtmp) {
+		LIST_FOREACH_SAFE(pv, &pp->pp_pvhead, pv_link, pvtmp) {
 
 			opte = atomic_swap_64(pv->pv_ptep, 0);
 			if (lxpde_valid(opte)) {
@@ -2058,7 +2058,7 @@ pmap_page_remove(struct pmap_page *pp, vm_prot_t prot)
 				}
 				PMSTAT_DEC_RESIDENT_COUNT(pv->pv_pmap);
 			}
-			TAILQ_REMOVE(&pp->pp_pvhead, pv, pv_link);
+			LIST_REMOVE(pv, pv_link);
 			PMAP_COUNT(pv_remove);
 
 			pv->pv_next = pvtofree;
@@ -2114,7 +2114,7 @@ pmap_page_protect(struct vm_page *pg, vm_prot_t prot)
 		pmap_page_remove(pp, prot);
 	} else {
 		pmap_pv_lock(pp);
-		TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
+		LIST_FOREACH(pv, &pp->pp_pvhead, pv_link) {
 			_pmap_protect_pv(pp, pv, prot);
 		}
 		pmap_pv_unlock(pp);
@@ -2308,7 +2308,7 @@ pmap_clear_modify(struct vm_page *pg)
 	pp->pp_flags &= ~VM_PROT_WRITE;
 
 	PMAP_COUNT(clear_modify);
-	TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
+	LIST_FOREACH(pv, &pp->pp_pvhead, pv_link) {
 		PMAP_COUNT(clear_modify_pages);
 
 		va = pv->pv_va;
@@ -2364,7 +2364,7 @@ pmap_clear_reference(struct vm_page *pg)
 	pp->pp_flags &= ~VM_PROT_READ;
 
 	PMAP_COUNT(clear_reference);
-	TAILQ_FOREACH(pv, &pp->pp_pvhead, pv_link) {
+	LIST_FOREACH(pv, &pp->pp_pvhead, pv_link) {
 		PMAP_COUNT(clear_reference_pages);
 
 		va = pv->pv_va;
