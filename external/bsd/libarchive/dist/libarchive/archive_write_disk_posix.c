@@ -2301,6 +2301,11 @@ create_filesystem_object(struct archive_write_disk *a)
 		}
 		free(linkname_copy);
 		archive_string_free(&error_string);
+		/*
+		 * Unlinking and linking here is really not atomic,
+		 * but doing it right, would require us to construct
+		 * an mktemplink() function, and then use rename(2).
+		 */
 		if (a->flags & ARCHIVE_EXTRACT_ATOMIC)
 			unlink(a->name);
 		r = link(linkname, a->name) ? errno : 0;
@@ -2341,7 +2346,15 @@ create_filesystem_object(struct archive_write_disk *a)
 	linkname = archive_entry_symlink(a->entry);
 	if (linkname != NULL) {
 #if HAVE_SYMLINK
-		int error = symlink(linkname, a->name) ? errno : 0;
+		int error;
+		/*
+		 * Unlinking and linking here is really not atomic,
+		 * but doing it right, would require us to construct
+		 * an mktempsymlink() function, and then use rename(2).
+		 */
+		if (a->flags & ARCHIVE_EXTRACT_ATOMIC)
+			unlink(a->name);
+		error = symlink(linkname, a->name) ? errno : 0;
 		if (error == 0) {
 #ifdef HAVE_LSTAT
 			r = lstat(a->name, &st);
