@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.9 2020/02/10 05:07:28 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.10 2020/02/10 05:53:12 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.9 2020/02/10 05:07:28 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.10 2020/02/10 05:53:12 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1051,6 +1051,7 @@ static int aq_establish_msix_intr(struct aq_softc *, bool, bool);
 
 static int aq_ifmedia_change(struct ifnet * const);
 static void aq_ifmedia_status(struct ifnet * const, struct ifmediareq *);
+static int aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set);
 static int aq_ifflags_cb(struct ethercom *);
 static int aq_init(struct ifnet *);
 static void aq_send_common_locked(struct ifnet *, struct aq_softc *,
@@ -1404,14 +1405,15 @@ aq_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	/* TODO */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_EEE;
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 #endif
 	sc->sc_ethercom.ec_capabilities |=
 	    ETHERCAP_JUMBO_MTU |
 	    ETHERCAP_VLAN_MTU |
-	    ETHERCAP_VLAN_HWTAGGING;
+	    ETHERCAP_VLAN_HWTAGGING |
+	    ETHERCAP_VLAN_HWFILTER;
 	sc->sc_ethercom.ec_capenable |=
-	    ETHERCAP_VLAN_HWTAGGING;
+	    ETHERCAP_VLAN_HWTAGGING |
+	    ETHERCAP_VLAN_HWFILTER;
 
 	ifp->if_capabilities = 0;
 	ifp->if_capenable = 0;
@@ -1446,6 +1448,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr.ether_addr_octet);
+	ether_set_vlan_cb(&sc->sc_ethercom, aq_vlan_cb);
 	ether_set_ifflags_cb(&sc->sc_ethercom, aq_ifflags_cb);
 
 	aq_enable_intr(sc, true, false);	/* only intr about link */
@@ -2944,7 +2947,7 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 	    ETHERTYPE_QINQ);
 	AQ_WRITE_REG_BIT(sc, RPF_VLAN_TPID_REG, RPF_VLAN_TPID_INNER,
 	    ETHERTYPE_VLAN);
-	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 1);
+	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 0);
 
 	if (sc->sc_features & FEATURES_REV_B) {
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
@@ -3216,18 +3219,55 @@ aq_hw_l3_filter_set(struct aq_softc *sc)
 }
 
 static void
-aq_update_vlan_filters(struct aq_softc *sc)
+aq_set_vlan_filters(struct aq_softc *sc)
 {
-	/* XXX: notyet. vlan always promisc */
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct vlanid_list *vlanidp;
 	int i;
 
-	for (i = 0; i < RPF_VLAN_MAX_FILTERS; i++) {
+	ETHER_LOCK(ec);
+
+	/* disable all vlan filters */
+	for (i = 0; i < RPF_VLAN_MAX_FILTERS; i++)
+		AQ_WRITE_REG(sc, RPF_VLAN_FILTER_REG(i), 0);
+
+	/* count VID */
+	i = 0;
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list)
+		i++;
+
+	if (((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_HWFILTER) == 0) ||
+	    (ifp->if_flags & IFF_PROMISC) ||
+	    (i > RPF_VLAN_MAX_FILTERS)) {
+		/*
+		 * no vlan hwfilter, in promiscuous mode, or too many VID?
+		 * must receive all VID
+		 */
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
+		    RPF_VLAN_MODE_PROMISC, 1);
+		goto done;
+	}
+
+	/* receive only selected VID */
+	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 0);
+	i = 0;
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
-		    RPF_VLAN_FILTER_EN, 0);
+		    RPF_VLAN_FILTER_EN, 1);
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
 		    RPF_VLAN_FILTER_RXQ_EN, 0);
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
+		    RPF_VLAN_FILTER_RXQ, 0);
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
+		    RPF_VLAN_FILTER_ACTION, RPF_ACTION_HOST);
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
+		    RPF_VLAN_FILTER_ID, vlanidp->vid);
+		i++;
 	}
-	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 1);
+
+ done:
+	ETHER_UNLOCK(ec);
 }
 
 static int
@@ -4389,6 +4429,16 @@ aq_rx_intr(void *arg)
 }
 
 static int
+aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct aq_softc *sc = ifp->if_softc;
+
+	aq_set_vlan_filters(sc);
+	return 0;
+}
+
+static int
 aq_ifflags_cb(struct ethercom *ec)
 {
 	struct ifnet *ifp = &ec->ec_if;
@@ -4412,6 +4462,10 @@ aq_ifflags_cb(struct ethercom *ec)
 		}
 	}
 
+	/* vlan configuration depends on also interface promiscuous mode */
+	if ((ecchange & ETHERCAP_VLAN_HWFILTER) || (iffchange & IFF_PROMISC))
+		aq_set_vlan_filters(sc);
+
 	sc->sc_ec_capenable = ec->ec_capenable;
 	sc->sc_if_flags = ifp->if_flags;
 
@@ -4428,7 +4482,7 @@ aq_init(struct ifnet *ifp)
 
 	AQ_LOCK(sc);
 
-	aq_update_vlan_filters(sc);
+	aq_set_vlan_filters(sc);
 	aq_set_capability(sc);
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
