@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.93 2020/01/31 11:02:56 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.94 2020/02/10 16:51:59 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2003,4 +2003,15 @@ sys/netipsec/ipsecif.c				1.19
 
 	Fix IPv6 over IPv4 ipsecif(4) uses wrong SP.
 	[knakahara, ticket #1497]
+
+sys/arch/i386/stand/efiboot/eficons.c		1.8
+
+	Fix a few bugs related to the framebuffer and the "gop" command.
+	[nonaka, ticket #1498]
+
+sys/arch/i386/stand/efiboot/efiboot.c		1.12
+
+	Do not clear the screen before exiting boot services,
+	as this may cause an undesired display mode switch.
+	[nonaka, ticket #1499]
 
