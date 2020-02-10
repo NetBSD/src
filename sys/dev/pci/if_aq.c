@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.8 2020/02/08 07:19:09 maxv Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.9 2020/02/10 05:07:28 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.8 2020/02/08 07:19:09 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.9 2020/02/10 05:07:28 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -258,7 +258,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.8 2020/02/08 07:19:09 maxv Exp $");
 #define AQ_HW_MAC_OWN			0	/* index of own address */
 #define AQ_HW_MAC_NUM			34
 
-/* RPF_MCAST_FILTER_REG[12] 0x5250-0x5280 */
+/* RPF_MCAST_FILTER_REG[8] 0x5250-0x5270 */
 #define RPF_MCAST_FILTER_REG(i)			(0x5250 + (i) * 4)
 #define  RPF_MCAST_FILTER_EN			__BIT(31)
 #define RPF_MCAST_FILTER_MASK_REG		0x5270
@@ -273,7 +273,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.8 2020/02/08 07:19:09 maxv Exp $");
 #define  RPF_VLAN_TPID_OUTER			__BITS(31,16)
 #define  RPF_VLAN_TPID_INNER			__BITS(15,0)
 
-/* RPF_VLAN_FILTER_REG[16] 0x5290-0x52d0 */
+/* RPF_VLAN_FILTER_REG[RPF_VLAN_MAX_FILTERS] 0x5290-0x52d0 */
 #define RPF_VLAN_MAX_FILTERS			16
 #define RPF_VLAN_FILTER_REG(i)			(0x5290 + (i) * 4)
 #define  RPF_VLAN_FILTER_EN			__BIT(31)
