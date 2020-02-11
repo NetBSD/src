@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.828 2020/01/18 17:18:41 kre Exp $
+# $NetBSD: mi,v 1.829 2020/02/11 03:15:10 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2142,6 +2142,7 @@
 ./usr/tests/kernel/arch/i386/t_ptrace_waitpid	tests-obsolete		obsolete
 ./usr/tests/kernel/arch/x86			tests-obsolete		obsolete
 ./usr/tests/kernel/h_fexecve			tests-kernel-tests	compattestfile,atf
+./usr/tests/kernel/h_fpufork			tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_getprocpath		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_interpreter		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/h_ps_strings1		tests-kernel-tests	compattestfile,atf
@@ -2185,6 +2186,7 @@
 ./usr/tests/kernel/t_fcntl			tests-kernel-tests	atf
 ./usr/tests/kernel/t_fexecve			tests-kernel-tests	atf
 ./usr/tests/kernel/t_filedesc			tests-kernel-tests	atf,rump
+./usr/tests/kernel/t_fpufork			tests-kernel-tests	atf
 ./usr/tests/kernel/t_interp			tests-kernel-tests	atf
 ./usr/tests/kernel/t_kauth_pr_47598		tests-kernel-tests	compattestfile,atf
 ./usr/tests/kernel/t_ksem			tests-kernel-tests	atf
