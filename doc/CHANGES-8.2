@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.94 2020/02/10 16:51:59 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.95 2020/02/11 08:44:57 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2014,4 +2014,15 @@ sys/arch/i386/stand/efiboot/efiboot.c		1.12
 	Do not clear the screen before exiting boot services,
 	as this may cause an undesired display mode switch.
 	[nonaka, ticket #1499]
+
+sys/dev/ld.c					1.108
+
+	Reject open when attach didn't complete successfully.
+	[mlelstv, ticket #1500]
+
+sys/dev/ic/elinkxl.c				1.137
+
+	PR 54920: restore an register read for RX_FRAMES_OK ro ACK the
+	interrupt.
+	[msaitoh, ticket #1501]
 
