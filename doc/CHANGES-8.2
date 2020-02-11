@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.95 2020/02/11 08:44:57 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.96 2020/02/11 11:40:09 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2025,4 +2025,9 @@ sys/dev/ic/elinkxl.c				1.137
 	PR 54920: restore an register read for RX_FRAMES_OK ro ACK the
 	interrupt.
 	[msaitoh, ticket #1501]
+
+sys/arch/i386/stand/efiboot/eficons.c		1.9
+
+	Use 1024x768 as the default GOP mode.
+	[jmcneill, ticket #1502]
 
