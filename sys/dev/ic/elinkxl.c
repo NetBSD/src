@@ -1,4 +1,4 @@
-/*	$NetBSD: elinkxl.c,v 1.121.6.2 2019/11/06 10:04:46 martin Exp $	*/
+/*	$NetBSD: elinkxl.c,v 1.121.6.3 2020/02/11 08:44:11 martin Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.6.2 2019/11/06 10:04:46 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: elinkxl.c,v 1.121.6.3 2020/02/11 08:44:11 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1510,6 +1510,7 @@ ex_getstats(struct ex_softc *sc)
 	(void)bus_space_read_1(iot, ioh, TX_AFTER_1_COLLISION);
 	(void)bus_space_read_1(iot, ioh, TX_NO_SQE);
 	(void)bus_space_read_1(iot, ioh, TX_CD_LOST);
+	(void)bus_space_read_1(iot, ioh, RX_FRAMES_OK);
 	GO_WINDOW(4);
 	(void)bus_space_read_1(iot, ioh, ELINK_W4_BADSSD);
 	GO_WINDOW(1);
