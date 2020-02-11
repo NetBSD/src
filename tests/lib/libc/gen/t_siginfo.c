@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.36 2019/04/25 20:48:54 kamil Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.37 2020/02/11 03:11:42 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -366,8 +366,8 @@ ATF_TC_BODY(sigfpe_int, tc)
 	struct sigaction sa;
 	long l = strtol("0", NULL, 10);
 
-#if defined(__powerpc__)
-	atf_tc_skip("Test not valid on powerpc");
+#if defined(__powerpc__) || defined(__aarch64__)
+	atf_tc_skip("Integer division by zero doesn't trap");
 #endif
 	if (sigsetjmp(sigfpe_int_env, 0) == 0) {
 		sa.sa_flags = SA_SIGINFO;
