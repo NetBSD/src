@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.6.6.2 2020/02/10 18:57:06 martin Exp $	*/
+/*	$NetBSD: eficons.c,v 1.6.6.3 2020/02/11 11:36:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -35,7 +35,7 @@
 #include "vbe.h"
 
 #ifndef DEFAULT_GOP_MODE
-#define DEFAULT_GOP_MODE	"800x600"
+#define DEFAULT_GOP_MODE	"1024x768"
 #endif
 
 extern struct x86_boot_params boot_params;
