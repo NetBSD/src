@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.64 2019/09/29 23:45:00 mrg Exp $
+# $NetBSD: Makefile,v 1.65 2020/02/11 03:15:10 riastradh Exp $
 
 NOMAN=		# defined
 
@@ -29,6 +29,7 @@ TESTS_SH+=	t_interp
 TESTS_SH+=	t_origin
 TESTS_SH+=	t_procpath
 TESTS_SH+=	t_fexecve
+TESTS_SH+=	t_fpufork
 
 BINDIR=		${TESTSDIR}
 PROGS=		h_fexecve
@@ -36,6 +37,7 @@ PROGS+=		h_ps_strings1
 PROGS+=		h_ps_strings2
 PROGS+=		h_segv
 PROGS+=		h_getprocpath
+PROGS+=		h_fpufork
 
 SCRIPTSDIR=	${TESTSDIR}
 SCRIPTS=	h_interpreter.sh
