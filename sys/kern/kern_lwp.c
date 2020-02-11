@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.224 2020/02/11 03:14:49 riastradh Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.225 2020/02/11 06:09:48 dogcow Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.224 2020/02/11 03:14:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.225 2020/02/11 06:09:48 dogcow Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -890,7 +890,9 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	 * the MD cpu_lwp_fork() can copy the saved state to the new LWP.
 	 */
 	pcu_save_all(l1);
+#if PCU_UNIT_COUNT > 0
 	l2->l_pcu_valid = l1->l_pcu_valid;
+#endif
 
 	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
