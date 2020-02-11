@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.176 2020/02/11 08:43:28 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.177 2020/02/11 11:38:05 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8789,5 +8789,8 @@ sys/dev/ic/elinkxl.c				1.137
 	interrupt.
 	[msaitoh, ticket #695]
 
+sys/arch/i386/stand/efiboot/eficons.c		1.9
 
+	Use 1024x768 as the default GOP mode.
+	[jmcneill, ticket #696]
 
