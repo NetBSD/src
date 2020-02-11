@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.108 2020/02/10 22:33:28 mlelstv Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.109 2020/02/11 06:33:51 mlelstv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.108 2020/02/10 22:33:28 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.109 2020/02/11 06:33:51 mlelstv Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -147,7 +147,7 @@ netbsd32_to_if_addrprefreq(const struct netbsd32_if_addrprefreq *ifap32,
     struct if_addrprefreq *ifap, u_long cmd)
 {
 
-	memcpy(ifap->ifap_name, ifap32->ifap_name, IFNAMSIZ+1);
+	memcpy(ifap->ifap_name, ifap32->ifap_name, IFNAMSIZ);
 	ifap->ifap_preference = ifap32->ifap_preference;
 	memcpy(&ifap->ifap_addr, &ifap32->ifap_addr,
 	    uimin(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
