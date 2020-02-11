@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.829 2020/02/11 03:15:10 riastradh Exp $
+# $NetBSD: mi,v 1.830 2020/02/11 07:03:16 isaki Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -1391,7 +1391,9 @@
 ./usr/tests/dev/audio				tests-fs-tests		compattestfile,atf
 ./usr/tests/dev/audio/Atffile			tests-fs-tests		atf,rump
 ./usr/tests/dev/audio/Kyuafile			tests-fs-tests		atf,rump,kyua
+./usr/tests/dev/audio/audiotest		tests-fs-tests		atf,rump
 ./usr/tests/dev/audio/h_pad			tests-fs-tests		atf,rump
+./usr/tests/dev/audio/t_audio		tests-fs-tests		atf,rump
 ./usr/tests/dev/audio/t_pad			tests-fs-tests		atf,rump
 ./usr/tests/dev/audio/t_pad_output.bz2.uue	tests-obsolete		obsolete
 ./usr/tests/dev/cgd				tests-fs-tests		compattestfile,atf
