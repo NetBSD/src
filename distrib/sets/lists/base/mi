@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1228 2020/02/07 18:48:58 kamil Exp $
+# $NetBSD: mi,v 1.1229 2020/02/11 11:36:52 uki Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -120,7 +120,7 @@
 ./etc/racoon					base-netutil-bin
 ./etc/rc.conf.d					base-sys-root
 ./etc/rc.d					base-sys-root
-./etc/release					etc-sys-etc
+./etc/release					base-sys-etc
 ./etc/skel					base-sys-root
 ./etc/sliphome					base-slip-root
 ./etc/ssh					base-sys-root
