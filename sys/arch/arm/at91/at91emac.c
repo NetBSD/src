@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.30 2020/02/04 07:35:34 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.31 2020/02/11 15:09:14 skrll Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.30 2020/02/04 07:35:34 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.31 2020/02/11 15:09:14 skrll Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -246,13 +246,13 @@ emac_intr(void *arg)
 		EMAC_WRITE(ETH_RSR, ETH_RSR_BNA);	// clear BNA bit
 		EMAC_WRITE(ETH_CTL, ctl |  ETH_CTL_RE);	// re-enable receiver
 		if_statinc(ifp, if_ierrors);
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ipackets);
 		DPRINTFN(1,("%s: out of receive buffers\n", __FUNCTION__));
 	}
 	if (isr & ETH_ISR_ROVR) {
 		EMAC_WRITE(ETH_RSR, ETH_RSR_OVR);	// clear interrupt
 		if_statinc(ifp, if_ierrors);
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ipackets);
 		DPRINTFN(1,("%s: receive overrun\n", __FUNCTION__));
 	}
 
