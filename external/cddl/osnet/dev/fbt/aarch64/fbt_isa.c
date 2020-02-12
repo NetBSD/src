@@ -70,6 +70,7 @@ fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 			    frame->tf_regs.r_reg[3], frame->tf_regs.r_reg[4]);
 
 			cpu->cpu_dtrace_caller = 0;
+			KASSERT(fbt->fbtp_savedval != 0);
 			return (fbt->fbtp_savedval);
 		}
 	}
@@ -142,6 +143,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 
 	if (instr >= limit)
 		return (0);
+	KASSERT(*instr != 0);
 
 #ifdef __FreeBSD__
 	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
@@ -161,7 +163,6 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 #endif
 	fbt->fbtp_savedval = *instr;
 	fbt->fbtp_patchval = FBT_PATCHVAL;
-	fbt->fbtp_rval = DTRACE_INVOP_PUSHM;
 	fbt->fbtp_symindx = symindx;
 
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
@@ -192,6 +193,7 @@ again:
 
 	if (instr >= limit)
 		return (0);
+	KASSERT(*instr != 0);
 
 	/*
 	 * We have a winner!
@@ -219,13 +221,10 @@ again:
 #ifdef __NetBSD__
 	fbt->fbtp_ctl = mod;
 #endif
-	fbt->fbtp_symindx = symindx;
-	if ((*instr & B_MASK) == B_INSTR)
-		fbt->fbtp_rval = DTRACE_INVOP_B;
-	else
-		fbt->fbtp_rval = DTRACE_INVOP_RET;
 	fbt->fbtp_savedval = *instr;
 	fbt->fbtp_patchval = FBT_PATCHVAL;
+	fbt->fbtp_symindx = symindx;
+
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
 	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
 
