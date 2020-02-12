@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.7 2020/02/12 20:25:48 jdolecek Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.8 2020/02/12 20:31:46 jdolecek Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.7 2020/02/12 20:25:48 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.8 2020/02/12 20:31:46 jdolecek Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -434,10 +434,9 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 
 	nouveau_fbcon_zfill(dev, fbcon);
 
-    {
-	static const struct nouveaufb_attach_args zero_nfa;
-	struct nouveaufb_attach_args nfa = zero_nfa;
+	struct nouveaufb_attach_args nfa;
 
+	memset(&nfa, 0, sizeof(nfa));
 	nfa.nfa_fb_helper = helper;
 	nfa.nfa_fb_sizes = *sizes;
 	nfa.nfa_fb_ptr = nvbo_kmap_obj_iovirtual(nvbo);
@@ -448,7 +447,7 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	if (helper->fbdev == NULL) {
 		goto out_unlock;
 	}
-    }
+
 	helper->fb = fb;
 
 	return 0;
