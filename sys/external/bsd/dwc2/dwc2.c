@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.67 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.68 2020/02/12 16:02:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.67 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.68 2020/02/12 16:02:01 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -649,7 +649,8 @@ dwc2_root_intr_start(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	return USBD_IN_PROGRESS;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	return xfer->ux_status;
 }
 
 /* Abort a root interrupt request. */
@@ -663,6 +664,16 @@ dwc2_root_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intrxfer == NULL)
+		return;
+
+	/*
+	 * Otherwise, sc->sc_intrxfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -676,7 +687,11 @@ dwc2_root_intr_close(struct usbd_pipe *pipe)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	sc->sc_intrxfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intrxfer == NULL);
 }
 
 Static void
@@ -684,9 +699,12 @@ dwc2_root_intr_done(struct usbd_xfer *xfer)
 {
 	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
 
-	KASSERT(sc->sc_intrxfer != NULL);
-	sc->sc_intrxfer = NULL;
 	DPRINTF("\n");
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intrxfer = NULL;
 }
 
 /***********************************************************************/
