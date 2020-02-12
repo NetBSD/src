@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.389 2020/02/12 16:08:19 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.390 2020/02/12 17:31:51 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.389 2020/02/12 16:08:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.390 2020/02/12 17:31:51 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5978,6 +5978,7 @@ pmap_growkernel(vaddr_t maxkvaddr)
 		const pd_entry_t npde = L1_C_PROTO | l2b->l2b_pa
 		    | L1_C_DOM(PMAP_DOMAIN_KERNEL);
 #ifdef ARM_MMU_EXTENDED
+		KASSERT(*pdep == 0);
 		l1pte_setone(pdep, npde);
 #else
 		/* Distribute new L1 entry to all other L1s */
