@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.41 2020/02/12 06:37:21 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.42 2020/02/12 06:41:44 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3398,9 +3398,6 @@ ixl_handle_queue_common(struct ixl_softc *sc, struct ixl_queue_pair *qp,
 	struct ixl_rx_ring *rxr = qp->qp_rxr;
 	int txmore, rxmore;
 	int rv;
-
-	KASSERT(!mutex_owned(&txr->txr_lock));
-	KASSERT(!mutex_owned(&rxr->rxr_lock));
 
 	mutex_enter(&txr->txr_lock);
 	txevcnt->ev_count++;
