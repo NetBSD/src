@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.1 2019/12/03 22:10:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.2 2020/02/12 01:09:38 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,13 +69,13 @@ typedef struct dtrace_invop_hdlr {
 dtrace_invop_hdlr_t *dtrace_invop_hdlr;
 
 int
-dtrace_invop(uintptr_t addr, struct trapframe *frame, uintptr_t eax)
+dtrace_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 {
 	dtrace_invop_hdlr_t *hdlr;
 	int rval;
 
 	for (hdlr = dtrace_invop_hdlr; hdlr != NULL; hdlr = hdlr->dtih_next)
-		if ((rval = hdlr->dtih_func(addr, frame, eax)) != 0)
+		if ((rval = hdlr->dtih_func(addr, frame, r0)) != 0)
 			return (rval);
 
 	return (0);
@@ -263,7 +263,7 @@ dtrace_invop_start(struct trapframe *frame)
 	int tmp;
 	int i;
 
-	invop = dtrace_invop(frame->tf_pc, frame, frame->tf_pc);
+	invop = dtrace_invop(frame->tf_pc, frame, frame->tf_regs.r_reg[0]);
 
 	tmp = (invop & LDP_STP_MASK);
 	if (tmp == STP_64 || tmp == LDP_64) {
