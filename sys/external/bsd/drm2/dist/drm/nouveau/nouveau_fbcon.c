@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.5 2018/08/27 07:57:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.6 2020/02/12 20:08:31 jdolecek Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.5 2018/08/27 07:57:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.6 2020/02/12 20:08:31 jdolecek Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -507,7 +507,7 @@ out_unlock:
 out_unpin:
 	nouveau_bo_unpin(nvbo);
 out_unref:
-	nouveau_bo_ref(NULL, &nvbo);
+	nouveau_gem_object_del(&nvbo->gem);
 out:
 	return ret;
 }
