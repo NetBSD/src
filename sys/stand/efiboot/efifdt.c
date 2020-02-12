@@ -1,4 +1,4 @@
-/* $NetBSD: efifdt.c,v 1.17.2.2 2019/09/01 13:25:22 martin Exp $ */
+/* $NetBSD: efifdt.c,v 1.17.2.3 2020/02/12 20:10:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2019 Jason R. Thorpe
@@ -382,4 +382,26 @@ efi_fdt_initrd(u_long initrd_addr, u_long initrd_size)
 
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-start", initrd_addr);
 	fdt_setprop_u64(fdt_data, chosen, "linux,initrd-end", initrd_addr + initrd_size);
+}
+
+void
+efi_fdt_rndseed(u_long rndseed_addr, u_long rndseed_size)
+{
+	int chosen;
+
+	if (rndseed_size == 0)
+		return;
+
+	chosen = fdt_path_offset(fdt_data, FDT_CHOSEN_NODE_PATH);
+	if (chosen < 0)
+		chosen = fdt_add_subnode(fdt_data,
+		    fdt_path_offset(fdt_data, "/"),
+		    FDT_CHOSEN_NODE_NAME);
+	if (chosen < 0)
+		panic("FDT: Failed to create " FDT_CHOSEN_NODE_PATH " node");
+
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-start",
+	    rndseed_addr);
+	fdt_setprop_u64(fdt_data, chosen, "netbsd,rndseed-end",
+	    rndseed_addr + rndseed_size);
 }

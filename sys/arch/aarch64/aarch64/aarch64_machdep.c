@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.28.4.2 2020/01/21 11:11:00 martin Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.28.4.3 2020/02/12 20:10:09 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.2 2020/01/21 11:11:00 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.28.4.3 2020/02/12 20:10:09 martin Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -599,6 +599,14 @@ cpu_startup(void)
 
 	/* Hello! */
 	banner();
+
+	cpu_startup_hook();
+}
+
+__weak_alias(cpu_startup_hook,cpu_startup_default)
+void
+cpu_startup_default(void)
+{
 }
 
 /*
