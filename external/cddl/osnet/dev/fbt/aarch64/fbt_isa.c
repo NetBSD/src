@@ -36,6 +36,11 @@
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/kmem.h>
+
+#include <uvm/uvm_extern.h>
+
+#include <dev/mm.h>
+
 #include <machine/cpufunc.h>
 
 #include <sys/dtrace.h>
@@ -49,8 +54,19 @@
 #define	FBT_ENTRY	"entry"
 #define	FBT_RETURN	"return"
 
+/*
+ * How many artificial frames appear between dtrace_probe and the
+ * interrupted function call?
+ *
+ *	fbt_invop
+ *	dtrace_invop
+ *	dtrace_invop_start
+ *	el1_trap_exit
+ */
+#define	FBT_AFRAMES	4
+
 int
-fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t rval)
+fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 {
 	solaris_cpu_t *cpu;
 	fbt_probe_t *fbt;
@@ -67,6 +83,7 @@ fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t rval)
 			    frame->tf_regs.r_reg[3], frame->tf_regs.r_reg[4]);
 
 			cpu->cpu_dtrace_caller = 0;
+			KASSERT(fbt->fbtp_savedval != 0);
 			return (fbt->fbtp_savedval);
 		}
 	}
@@ -77,9 +94,15 @@ fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t rval)
 void
 fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 {
+	paddr_t pa;
+	vaddr_t va;
 
-	*fbt->fbtp_patchpoint = val;
-	cpu_icache_sync_range((vm_offset_t)fbt->fbtp_patchpoint, 4);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)fbt->fbtp_patchpoint, &pa))
+		return;
+	if (!mm_md_direct_mapped_phys(pa, &va))
+		return;
+	*(fbt_patchval_t *)va = val;
+	cpu_icache_sync_range((vm_offset_t)fbt->fbtp_patchpoint, sizeof(val));
 }
 
 #if defined(__FreeBSD__)
@@ -138,6 +161,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 
 	if (instr >= limit)
 		return (0);
+	KASSERT(*instr != 0);
 
 #ifdef __FreeBSD__
 	fbt = malloc(sizeof (fbt_probe_t), M_FBT, M_WAITOK | M_ZERO);
@@ -146,7 +170,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 #endif
 	fbt->fbtp_name = name;
 	fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-	    name, FBT_ENTRY, 3, fbt);
+	    name, FBT_ENTRY, FBT_AFRAMES, fbt);
 	fbt->fbtp_patchpoint = instr;
 #ifdef __FreeBSD__
 	fbt->fbtp_ctl = lf;
@@ -157,7 +181,6 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 #endif
 	fbt->fbtp_savedval = *instr;
 	fbt->fbtp_patchval = FBT_PATCHVAL;
-	fbt->fbtp_rval = DTRACE_INVOP_PUSHM;
 	fbt->fbtp_symindx = symindx;
 
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
@@ -188,6 +211,7 @@ again:
 
 	if (instr >= limit)
 		return (0);
+	KASSERT(*instr != 0);
 
 	/*
 	 * We have a winner!
@@ -200,7 +224,7 @@ again:
 	fbt->fbtp_name = name;
 	if (retfbt == NULL) {
 		fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-		    name, FBT_RETURN, 3, fbt);
+		    name, FBT_RETURN, FBT_AFRAMES, fbt);
 	} else {
 		retfbt->fbtp_next = fbt;
 		fbt->fbtp_id = retfbt->fbtp_id;
@@ -215,13 +239,10 @@ again:
 #ifdef __NetBSD__
 	fbt->fbtp_ctl = mod;
 #endif
-	fbt->fbtp_symindx = symindx;
-	if ((*instr & B_MASK) == B_INSTR)
-		fbt->fbtp_rval = DTRACE_INVOP_B;
-	else
-		fbt->fbtp_rval = DTRACE_INVOP_RET;
 	fbt->fbtp_savedval = *instr;
 	fbt->fbtp_patchval = FBT_PATCHVAL;
+	fbt->fbtp_symindx = symindx;
+
 	fbt->fbtp_hashnext = fbt_probetab[FBT_ADDR2NDX(instr)];
 	fbt_probetab[FBT_ADDR2NDX(instr)] = fbt;
 

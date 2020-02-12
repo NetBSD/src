@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.1.2.2 2019/12/09 15:19:30 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dtrace_subr.c,v 1.1.2.3 2020/02/12 19:55:56 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -69,13 +69,13 @@ typedef struct dtrace_invop_hdlr {
 dtrace_invop_hdlr_t *dtrace_invop_hdlr;
 
 int
-dtrace_invop(uintptr_t addr, struct trapframe *frame, uintptr_t eax)
+dtrace_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 {
 	dtrace_invop_hdlr_t *hdlr;
 	int rval;
 
 	for (hdlr = dtrace_invop_hdlr; hdlr != NULL; hdlr = hdlr->dtih_next)
-		if ((rval = hdlr->dtih_func(addr, frame, eax)) != 0)
+		if ((rval = hdlr->dtih_func(addr, frame, r0)) != 0)
 			return (rval);
 
 	return (0);
@@ -128,7 +128,8 @@ void
 dtrace_toxic_ranges(void (*func)(uintptr_t base, uintptr_t limit))
 {
 
-	(*func)(0, (uintptr_t)VM_MIN_KERNEL_ADDRESS);
+	(*func)(0, (uintptr_t)AARCH64_KSEG_START);
+	(*func)((uintptr_t)VM_KERNEL_IO_ADDRESS, ~(uintptr_t)0);
 }
 
 static void
@@ -263,7 +264,7 @@ dtrace_invop_start(struct trapframe *frame)
 	int tmp;
 	int i;
 
-	invop = dtrace_invop(frame->tf_pc, frame, frame->tf_pc);
+	invop = dtrace_invop(frame->tf_pc, frame, frame->tf_regs.r_reg[0]);
 
 	tmp = (invop & LDP_STP_MASK);
 	if (tmp == STP_64 || tmp == LDP_64) {
