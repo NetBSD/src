@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.37 2020/02/07 09:38:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.38 2020/02/12 06:20:13 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -1280,15 +1280,20 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto free_hmc;
 	}
 
-	if (ixl_get_phy_info(sc) != 0) {
-		/* error printed by ixl_get_phy_info */
-		goto free_hmc;
-	}
-
 	rv = ixl_get_link_status_poll(sc, NULL);
 	if (rv != 0) {
 		aprint_error_dev(self, "GET LINK STATUS %s\n",
 		    rv == ETIMEDOUT ? "timeout" : "error");
+		goto free_hmc;
+	}
+
+	/*
+	 * The FW often returns EIO in "Get PHY Abilities" command
+	 * if there is no delay
+	 */
+	DELAY(500);
+	if (ixl_get_phy_info(sc) != 0) {
+		/* error printed by ixl_get_phy_info */
 		goto free_hmc;
 	}
 
