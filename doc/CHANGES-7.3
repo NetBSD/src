@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-7.3,v 1.1.2.75 2020/01/21 19:21:14 martin Exp $
+# $NetBSD: CHANGES-7.3,v 1.1.2.76 2020/02/12 20:21:12 martin Exp $
 
 A complete list of changes from the NetBSD 7.2 release to the NetBSD 7.3
 release:
@@ -791,4 +791,14 @@ sys/sys/shm.h						1.54 (patch)
 	and memory leaks in system calls implemented for the compatibility
 	subsystems. 
 	[christos, ticket #1720]
+
+sys/arch/mac68k/nubus/grf_nubus.c		1.78
+
+	Set sc_dev field of softc.
+	[tsutsui, ticket #1721]
+
+external/bsd/ppp/dist/pppd/eap.c		1.5
+
+	pppd: Fix bounds check in EAP code
+	[christos, ticket #1722]
 
