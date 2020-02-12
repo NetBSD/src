@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.134 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.135 2020/02/12 00:19:07 chs Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.134 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.135 2020/02/12 00:19:07 chs Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -138,7 +138,7 @@ wdc_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_flags = SCSIPI_CHAN_OPENINGS;
 	chan->chan_openings = 1;
 	chan->chan_max_periph = 1;
-	chan->chan_ntargets = 2;
+	chan->chan_ntargets = chp->ch_ndrives;
 	chan->chan_nluns = 1;
 
 	chp->atapibus = config_found_ia(ata_sc->sc_dev, "atapi", chan,
