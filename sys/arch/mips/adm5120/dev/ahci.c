@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.18 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: ahci.c,v 1.19 2020/02/12 16:02:01 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.18 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.19 2020/02/12 16:02:01 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -283,6 +283,7 @@ ahci_attach(device_t parent, device_t self, void *aux)
 	SIMPLEQ_INIT(&sc->sc_free_xfers);
 
 	callout_init(&sc->sc_poll_handle, 0);
+	callout_setfunc(&sc->sc_poll_handle, ahci_poll_hub, sc);
 
 	mutex_init(&sc->sc_lock, MUTEX_DEFAULT, IPL_SOFTUSB);
 	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_SCHED /* XXXNH */);
@@ -422,13 +423,39 @@ ahci_poll(struct usbd_bus *bus)
 void
 ahci_poll_hub(void *arg)
 {
-	struct usbd_xfer *xfer = arg;
-	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
+	struct ahci_softc *sc = arg;
+	struct usbd_xfer *xfer;
 	u_char *p;
 	static int p0_state=0;
 	static int p1_state=0;
 
-	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
+	mutex_enter(&sc->sc_lock);
+
+	/*
+	 * If the intr xfer has completed or been synchronously
+	 * aborted, we have nothing to do.
+	 */
+	xfer = sc->sc_intr_xfer;
+	if (xfer == NULL)
+		goto out;
+
+	/*
+	 * If the intr xfer for which we were scheduled is done, and
+	 * another intr xfer has been submitted, let that one be dealt
+	 * with when the callout fires again.
+	 *
+	 * The call to callout_pending is racy, but the the transition
+	 * from pending to invoking happens atomically.  The
+	 * callout_ack ensures callout_invoking does not return true
+	 * due to this invocation of the callout; the lock ensures the
+	 * next invocation of the callout cannot callout_ack (unless it
+	 * had already run to completion and nulled sc->sc_intr_xfer,
+	 * in which case would have bailed out already).
+	 */
+	callout_ack(&sc->sc_poll_handle);
+	if (callout_pending(&sc->sc_poll_handle) ||
+	    callout_invoking(&sc->sc_poll_handle))
+		goto out;
 
 	/* USB spec 11.13.3 (p.260) */
 	p = KERNADDR(&xfer->ux_dmabuf, 0);
@@ -444,15 +471,23 @@ ahci_poll_hub(void *arg)
 		p1_state=(REG_READ(ADMHCD_REG_PORTSTATUS1) & ADMHCD_CCS);
 	};
 
-	/* no change, return NAK */
-	if (p[0] == 0)
-		return;
+	/* no change, return NAK and try again later */
+	if (p[0] == 0) {
+		callout_schedule(&sc->sc_poll_handle, sc->sc_interval);
+		goto out;
+	}
 
+	/*
+	 * Interrupt completed, and the xfer has not been completed or
+	 * synchronously aborted.  Complete the xfer now.
+	 *
+	 * XXX Set ux_isdone if DIAGNOSTIC?
+	 */
 	xfer->ux_actlen = 1;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
+
+out:	mutex_exit(&sc->sc_lock);
 }
 
 struct usbd_xfer *
@@ -719,8 +754,10 @@ ahci_root_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
+	KASSERT(sc->sc_intr_xfer == NULL);
+
 	sc->sc_interval = MS_TO_TICKS(xfer->ux_pipe->up_endpoint->ue_edesc->bInterval);
-	callout_reset(&sc->sc_poll_handle, sc->sc_interval, ahci_poll_hub, xfer);
+	callout_schedule(&sc->sc_poll_handle, sc->sc_interval);
 	sc->sc_intr_xfer = xfer;
 	return USBD_IN_PROGRESS;
 }
@@ -728,24 +765,59 @@ ahci_root_intr_start(struct usbd_xfer *xfer)
 static void
 ahci_root_intr_abort(struct usbd_xfer *xfer)
 {
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
+
 	DPRINTF(D_TRACE, ("SLRIabort "));
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
+
+	/*
+	 * Try to stop the callout before it starts.  If we got in too
+	 * late, too bad; but if the callout had yet to run and time
+	 * out the xfer, cancel it ourselves.
+	 */
+	callout_stop(&sc->sc_poll_handle);
+	if (sc->sc_intr_xfer == NULL)
+		return;
+
+	KASSERT(sc->sc_intr_xfer == xfer);
+	xfer->ux_status = USBD_CANCELLED;
+	usb_transfer_complete(xfer);
 }
 
 static void
 ahci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct ahci_softc *sc = AHCI_PIPE2SC(pipe);
+	struct ahci_softc *sc __diagused = AHCI_PIPE2SC(pipe);
 
 	DPRINTF(D_TRACE, ("SLRIclose "));
 
-	callout_stop(&sc->sc_poll_handle);
-	sc->sc_intr_xfer = NULL;
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/*
+	 * The caller must arrange to have aborted the pipe already, so
+	 * there can be no intr xfer in progress.  The callout may
+	 * still be pending from a prior intr xfer -- if it has already
+	 * fired, it will see there is nothing to do, and do nothing.
+	 */
+	KASSERT(sc->sc_intr_xfer == NULL);
+	KASSERT(!callout_pending(&sc->sc_poll_handle));
 }
 
 static void
 ahci_root_intr_done(struct usbd_xfer *xfer)
 {
+	struct ahci_softc *sc = AHCI_XFER2SC(xfer);
+
 	//DPRINTF(D_XFER, ("RIdn "));
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intr_xfer = NULL;
 }
 
 static usbd_status
