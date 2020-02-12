@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.17 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: ahci.c,v 1.18 2020/02/12 16:01:00 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.17 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.18 2020/02/12 16:01:00 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -98,6 +98,7 @@ static void		ahci_poll_device(void *arg);
 static struct usbd_xfer *
 			ahci_allocx(struct usbd_bus *, unsigned int);
 static void		ahci_freex(struct usbd_bus *, struct usbd_xfer *);
+static void		ahci_abortx(struct usbd_xfer *);
 
 static void		ahci_get_lock(struct usbd_bus *, kmutex_t **);
 static int		ahci_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
@@ -136,7 +137,6 @@ static void		ahci_device_bulk_done(struct usbd_xfer *);
 static int		ahci_transaction(struct ahci_softc *,
 	struct usbd_pipe *, uint8_t, int, u_char *, uint8_t);
 static void		ahci_noop(struct usbd_pipe *);
-static void		ahci_abort_xfer(struct usbd_xfer *, usbd_status);
 static void		ahci_device_clear_toggle(struct usbd_pipe *);
 
 extern int usbdebug;
@@ -169,6 +169,7 @@ struct usbd_bus_methods ahci_bus_methods = {
 	.ubm_dopoll = ahci_poll,
 	.ubm_allocx = ahci_allocx,
 	.ubm_freex = ahci_freex,
+	.ubm_abortx = ahci_abortx,
 	.ubm_getlock = ahci_get_lock,
 	.ubm_rhctrl = ahci_roothub_ctrl,
 };
@@ -919,7 +920,7 @@ static void
 ahci_device_ctrl_abort(struct usbd_xfer *xfer)
 {
 	DPRINTF(D_TRACE, ("Cab "));
-	ahci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 static void
@@ -1031,7 +1032,7 @@ ahci_device_intr_abort(struct usbd_xfer *xfer)
 	} else {
 		printf("%s: sx == NULL!\n", __func__);
 	}
-	ahci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 static void
@@ -1247,7 +1248,7 @@ static void
 ahci_device_bulk_abort(struct usbd_xfer *xfer)
 {
 	DPRINTF(D_TRACE, ("Bab "));
-	ahci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 static void
@@ -1377,11 +1378,15 @@ ahci_transaction(struct ahci_softc *sc, struct usbd_pipe *pipe,
 #endif
 }
 
-void
-ahci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
+static void
+ahci_abortx(struct usbd_xfer *xfer)
 {
-	xfer->ux_status = status;
-	usb_transfer_complete(xfer);
+	/*
+	 * XXX This is totally busted; there's no way it can possibly
+	 * work!  All transfers are busy-waited, it seems, so there is
+	 * no opportunity to abort.
+	 */
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
 }
 
 void

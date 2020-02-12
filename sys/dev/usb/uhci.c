@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.288 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: uhci.c,v 1.289 2020/02/12 16:01:00 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.288 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.289 2020/02/12 16:01:00 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -194,10 +194,8 @@ Static void		uhci_check_intr(uhci_softc_t *, struct uhci_xfer *,
 			    ux_completeq_t *);
 Static void		uhci_idone(struct uhci_xfer *, ux_completeq_t *);
 
-Static void		uhci_abort_xfer(struct usbd_xfer *, usbd_status);
+Static void		uhci_abortx(struct usbd_xfer *);
 
-Static void		uhci_timeout(void *);
-Static void		uhci_timeout_task(void *);
 Static void		uhci_add_ls_ctrl(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_add_hs_ctrl(uhci_softc_t *, uhci_soft_qh_t *);
 Static void		uhci_add_bulk(uhci_softc_t *, uhci_soft_qh_t *);
@@ -212,6 +210,7 @@ Static usbd_status	uhci_setup_isoc(struct usbd_pipe *);
 Static struct usbd_xfer *
 			uhci_allocx(struct usbd_bus *, unsigned int);
 Static void		uhci_freex(struct usbd_bus *, struct usbd_xfer *);
+Static bool		uhci_dying(struct usbd_bus *);
 Static void		uhci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		uhci_roothub_ctrl(struct usbd_bus *,
 			    usb_device_request_t *, void *, int);
@@ -330,6 +329,8 @@ const struct usbd_bus_methods uhci_bus_methods = {
 	.ubm_dopoll =	uhci_poll,
 	.ubm_allocx =	uhci_allocx,
 	.ubm_freex =	uhci_freex,
+	.ubm_abortx =	uhci_abortx,
+	.ubm_dying =	uhci_dying,
 	.ubm_getlock =	uhci_get_lock,
 	.ubm_rhctrl =	uhci_roothub_ctrl,
 };
@@ -657,9 +658,6 @@ uhci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct uhci_xfer));
 
-		/* Initialise this always so we can call remove on it. */
-		usb_init_task(&xfer->ux_aborttask, uhci_timeout_task, xfer,
-		    USB_TASKQ_MPSAFE);
 #ifdef DIAGNOSTIC
 		struct uhci_xfer *uxfer = UHCI_XFER2UXFER(xfer);
 		uxfer->ux_isdone = true;
@@ -684,6 +682,14 @@ uhci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	xfer->ux_state = XFER_FREE;
 #endif
 	pool_cache_put(sc->sc_xferpool, xfer);
+}
+
+Static bool
+uhci_dying(struct usbd_bus *bus)
+{
+	struct uhci_softc *sc = UHCI_BUS2SC(bus);
+
+	return sc->sc_dying;
 }
 
 Static void
@@ -1565,24 +1571,11 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 	DPRINTFN(12, "ux=%#jx", (uintptr_t)ux, 0, 0, 0);
 
 	/*
-	 * If software has completed it, either by cancellation
-	 * or timeout, drop it on the floor.
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
 	 */
-	if (xfer->ux_status != USBD_IN_PROGRESS) {
-		KASSERT(xfer->ux_status == USBD_CANCELLED ||
-		    xfer->ux_status == USBD_TIMEOUT);
-		DPRINTF("aborted xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
+	if (!usbd_xfer_trycomplete(xfer))
 		return;
-	}
-
-	/*
-	 * Cancel the timeout and the task, which have not yet
-	 * run.  If they have already fired, at worst they are
-	 * waiting for the lock.  They will see that the xfer
-	 * is no longer in progress and give up.
-	 */
-	callout_stop(&xfer->ux_callout);
-	usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
 
 #ifdef DIAGNOSTIC
 #ifdef UHCI_DEBUG
@@ -1710,40 +1703,6 @@ uhci_idone(struct uhci_xfer *ux, ux_completeq_t *cqp)
 
 	KASSERT(polling || mutex_owned(&sc->sc_lock));
 	DPRINTFN(12, "ux=%#jx done", (uintptr_t)ux, 0, 0, 0);
-}
-
-/*
- * Called when a request does not complete.
- */
-void
-uhci_timeout(void *addr)
-{
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	struct usbd_xfer *xfer = addr;
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-	struct usbd_device *dev = xfer->ux_pipe->up_dev;
-
-	DPRINTF("xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
-
-	mutex_enter(&sc->sc_lock);
-	if (!sc->sc_dying && xfer->ux_status == USBD_IN_PROGRESS)
-		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
-	mutex_exit(&sc->sc_lock);
-}
-
-void
-uhci_timeout_task(void *addr)
-{
-	struct usbd_xfer *xfer = addr;
-	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
-
-	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-
-	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-
-	mutex_enter(&sc->sc_lock);
-	uhci_abort_xfer(xfer, USBD_TIMEOUT);
-	mutex_exit(&sc->sc_lock);
 }
 
 void
@@ -2314,11 +2273,7 @@ uhci_device_bulk_start(struct usbd_xfer *xfer)
 
 	uhci_add_bulk(sc, sqh);
 	uhci_add_intr_list(sc, ux);
-
-	if (xfer->ux_timeout && !polling) {
-		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
-			    uhci_timeout, xfer);
-	}
+	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
@@ -2336,25 +2291,14 @@ uhci_device_bulk_abort(struct usbd_xfer *xfer)
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
-	uhci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /*
- * Cancel or timeout a device request.  We have two cases to deal with
- *
- * 1) A driver wants to stop scheduled or inflight transfers
- * 2) A transfer has timed out
- *
- * It's impossible to guarantee that the requested transfer will not
- * have (partially) happened since the hardware runs concurrently.
- *
- * Transfer state is protected by the bus lock and we set the transfer status
- * as soon as either of the above happens (with bus lock held).
- *
  * To allow the hardware time to notice we simply wait.
  */
-void
-uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
+Static void
+uhci_abortx(struct usbd_xfer *xfer)
 {
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	struct uhci_xfer *ux = UHCI_XFER2UXFER(xfer);
@@ -2362,45 +2306,14 @@ uhci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	uhci_softc_t *sc = UHCI_XFER2SC(xfer);
 	uhci_soft_td_t *std;
 
-	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
-	    "invalid status for abort: %d", (int)status);
-
-	DPRINTFN(1,"xfer=%#jx, status=%jd", (uintptr_t)xfer, status, 0, 0);
+	DPRINTFN(1,"xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	ASSERT_SLEEPABLE();
 
-	if (status == USBD_CANCELLED) {
-		/*
-		 * We are synchronously aborting.  Try to stop the
-		 * callout and task, but if we can't, wait for them to
-		 * complete.
-		 */
-		callout_halt(&xfer->ux_callout, &sc->sc_lock);
-		usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
-		    USB_TASKQ_HC, &sc->sc_lock);
-	} else {
-		/* Otherwise, we are timing out.  */
-		KASSERT(status == USBD_TIMEOUT);
-	}
-
-	/*
-	 * The xfer cannot have been cancelled already.  It is the
-	 * responsibility of the caller of usbd_abort_pipe not to try
-	 * to abort a pipe multiple times, whether concurrently or
-	 * sequentially.
-	 */
-	KASSERT(xfer->ux_status != USBD_CANCELLED);
-
-	/* Only the timeout, which runs only once, can time it out.  */
-	KASSERT(xfer->ux_status != USBD_TIMEOUT);
-
-	/* If anyone else beat us, we're done.  */
-	if (xfer->ux_status != USBD_IN_PROGRESS)
-		return;
-
-	/* We beat everyone else.  Claim the status.  */
-	xfer->ux_status = status;
+	KASSERTMSG((xfer->ux_status == USBD_CANCELLED ||
+		xfer->ux_status == USBD_TIMEOUT),
+	    "bad abort status: %d", xfer->ux_status);
 
 	/*
 	 * If we're dying, skip the hardware action and just notify the
@@ -2672,10 +2585,7 @@ uhci_device_ctrl_start(struct usbd_xfer *xfer)
 		DPRINTF("--- dump end ---", 0, 0, 0, 0);
 	}
 #endif
-	if (xfer->ux_timeout && !polling) {
-		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
-			    uhci_timeout, xfer);
-	}
+	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
@@ -2834,7 +2744,7 @@ uhci_device_ctrl_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
-	uhci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device control pipe. */
@@ -2862,7 +2772,7 @@ uhci_device_intr_abort(struct usbd_xfer *xfer)
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
 
-	uhci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device interrupt pipe. */
