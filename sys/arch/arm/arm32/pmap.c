@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.390 2020/02/12 17:31:51 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.391 2020/02/12 17:34:18 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.390 2020/02/12 17:31:51 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.391 2020/02/12 17:34:18 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5865,6 +5865,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 	struct l2_dtable *l2;
 	vaddr_t nva;
 
+	CTASSERT((PAGE_SIZE % L2_TABLE_SIZE_REAL) == 0);
 	if ((l2 = pm->pm_l2[L2_IDX(l1slot)]) == NULL) {
 		/*
 		 * No mapping at this address, as there is
