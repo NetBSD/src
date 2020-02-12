@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.16 2020/02/12 20:22:37 jdolecek Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.16 2020/02/12 20:22:37 jdolecek Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -273,6 +273,7 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 	case ttm_bo_type_device:
 		if (zero_alloc)
 			page_flags |= TTM_PAGE_FLAG_ZERO_ALLOC;
+		/* FALLTHROUGH */
 	case ttm_bo_type_kernel:
 		bo->ttm = bdev->driver->ttm_tt_create(bdev, bo->num_pages << PAGE_SHIFT,
 						      page_flags, glob->dummy_read_page);
