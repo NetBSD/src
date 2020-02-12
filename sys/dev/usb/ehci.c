@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.270 2020/02/12 16:00:34 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.271 2020/02/12 16:01:00 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.270 2020/02/12 16:00:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.271 2020/02/12 16:01:00 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -166,11 +166,6 @@ Static void		ehci_check_itd_intr(ehci_softc_t *, struct ehci_xfer *,
 Static void		ehci_check_sitd_intr(ehci_softc_t *, struct ehci_xfer *,
 			    ex_completeq_t *);
 Static void		ehci_idone(struct ehci_xfer *, ex_completeq_t *);
-Static void		ehci_timeout(void *);
-Static void		ehci_timeout_task(void *);
-Static bool		ehci_probe_timeout(struct usbd_xfer *);
-Static void		ehci_schedule_timeout(struct usbd_xfer *);
-Static void		ehci_cancel_timeout_async(struct usbd_xfer *);
 Static void		ehci_intrlist_timeout(void *);
 Static void		ehci_doorbell(void *);
 Static void		ehci_pcd(void *);
@@ -180,6 +175,7 @@ Static struct usbd_xfer *
 Static void		ehci_freex(struct usbd_bus *, struct usbd_xfer *);
 
 Static void		ehci_get_lock(struct usbd_bus *, kmutex_t **);
+Static bool		ehci_dying(struct usbd_bus *);
 Static int		ehci_roothub_ctrl(struct usbd_bus *,
 			    usb_device_request_t *, void *, int);
 
@@ -281,7 +277,7 @@ Static void		ehci_set_qh_qtd(ehci_soft_qh_t *, ehci_soft_qtd_t *);
 Static void		ehci_sync_hc(ehci_softc_t *);
 
 Static void		ehci_close_pipe(struct usbd_pipe *, ehci_soft_qh_t *);
-Static void		ehci_abort_xfer(struct usbd_xfer *, usbd_status);
+Static void		ehci_abortx(struct usbd_xfer *);
 
 #ifdef EHCI_DEBUG
 Static ehci_softc_t 	*theehci;
@@ -322,6 +318,8 @@ Static const struct usbd_bus_methods ehci_bus_methods = {
 	.ubm_dopoll =	ehci_poll,
 	.ubm_allocx =	ehci_allocx,
 	.ubm_freex =	ehci_freex,
+	.ubm_abortx =	ehci_abortx,
+	.ubm_dying =	ehci_dying,
 	.ubm_getlock =	ehci_get_lock,
 	.ubm_rhctrl =	ehci_roothub_ctrl,
 };
@@ -1049,22 +1047,11 @@ ehci_idone(struct ehci_xfer *ex, ex_completeq_t *cq)
 	DPRINTF("ex=%#jx", (uintptr_t)ex, 0, 0, 0);
 
 	/*
-	 * If software has completed it, either by cancellation
-	 * or timeout, drop it on the floor.
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
 	 */
-	if (xfer->ux_status != USBD_IN_PROGRESS) {
-		KASSERT(xfer->ux_status == USBD_CANCELLED ||
-		    xfer->ux_status == USBD_TIMEOUT);
-		DPRINTF("aborted xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
+	if (!usbd_xfer_trycomplete(xfer))
 		return;
-	}
-
-	/*
-	 * We are completing the xfer.  Cancel the timeout if we can,
-	 * but only asynchronously.  See ehci_cancel_timeout_async for
-	 * why we need not wait for the callout or task here.
-	 */
-	ehci_cancel_timeout_async(xfer);
 
 #ifdef DIAGNOSTIC
 #ifdef EHCI_DEBUG
@@ -1539,9 +1526,6 @@ ehci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ehci_xfer));
 
-		/* Initialise this always so we can call remove on it. */
-		usb_init_task(&xfer->ux_aborttask, ehci_timeout_task, xfer,
-		    USB_TASKQ_MPSAFE);
 #ifdef DIAGNOSTIC
 		struct ehci_xfer *ex = EHCI_XFER2EXFER(xfer);
 		ex->ex_isdone = true;
@@ -1567,6 +1551,14 @@ ehci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 #endif
 
 	pool_cache_put(sc->sc_xferpool, xfer);
+}
+
+Static bool
+ehci_dying(struct usbd_bus *bus)
+{
+	struct ehci_softc *sc = EHCI_BUS2SC(bus);
+
+	return sc->sc_dying;
 }
 
 Static void
@@ -3201,22 +3193,12 @@ ehci_close_pipe(struct usbd_pipe *pipe, ehci_soft_qh_t *head)
 }
 
 /*
- * Cancel or timeout a device request.  We have two cases to deal with
- *
- * 1) A driver wants to stop scheduled or inflight transfers
- * 2) A transfer has timed out
- *
- * have (partially) happened since the hardware runs concurrently.
- *
- * Transfer state is protected by the bus lock and we set the transfer status
- * as soon as either of the above happens (with bus lock held).
- *
- * Then we arrange for the hardware to tells us that it is not still
+ * Arrrange for the hardware to tells us that it is not still
  * processing the TDs by setting the QH halted bit and wait for the ehci
  * door bell
  */
 Static void
-ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
+ehci_abortx(struct usbd_xfer *xfer)
 {
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 	struct ehci_pipe *epipe = EHCI_XFER2EPIPE(xfer);
@@ -3228,48 +3210,14 @@ ehci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	uint32_t qhstatus;
 	int hit;
 
-	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
-	    "invalid status for abort: %d", (int)status);
-
 	DPRINTF("xfer=%#jx pipe=%#jx", (uintptr_t)xfer, (uintptr_t)epipe, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	ASSERT_SLEEPABLE();
 
-	/*
-	 * Nobody else can set this status: only one caller can time
-	 * out, and only one caller can synchronously abort.  So the
-	 * status can't be the status we're trying to set this to.
-	 */
-	KASSERT(xfer->ux_status != status);
-
-	/*
-	 * If host controller or timer interrupt has completed it, too
-	 * late to abort.  Forget about it.
-	 */
-	if (xfer->ux_status != USBD_IN_PROGRESS)
-		return;
-
-	if (status == USBD_CANCELLED) {
-		/*
-		 * We are synchronously aborting.  Cancel the timeout
-		 * if we can, but only asynchronously.  See
-		 * ehci_cancel_timeout_async for why we need not wait
-		 * for the callout or task here.
-		 */
-		ehci_cancel_timeout_async(xfer);
-	} else {
-		/*
-		 * Otherwise, we are timing out.  No action needed to
-		 * cancel the timeout because we _are_ the timeout.
-		 * This case should happen only via the timeout task,
-		 * invoked via the callout.
-		 */
-		KASSERT(status == USBD_TIMEOUT);
-	}
-
-	/* We beat everyone else.  Claim the status.  */
-	xfer->ux_status = status;
+	KASSERTMSG((xfer->ux_status == USBD_CANCELLED ||
+		xfer->ux_status == USBD_TIMEOUT),
+	    "bad abort status: %d", xfer->ux_status);
 
 	/*
 	 * If we're dying, skip the hardware action and just notify the
@@ -3475,291 +3423,6 @@ dying:
 	DPRINTFN(14, "end", 0, 0, 0, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-}
-
-/*
- * ehci_timeout(xfer)
- *
- *	Called at IPL_SOFTCLOCK when too much time has elapsed waiting
- *	for xfer to complete.  Since we can't abort the xfer at
- *	IPL_SOFTCLOCK, defer to a usb_task to run it in thread context,
- *	unless the xfer has completed or aborted concurrently -- and if
- *	the xfer has also been resubmitted, take care of rescheduling
- *	the callout.
- */
-Static void
-ehci_timeout(void *addr)
-{
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-	struct usbd_xfer *xfer = addr;
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-	struct usbd_device *dev = xfer->ux_pipe->up_dev;
-
-	DPRINTF("xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
-#ifdef EHCI_DEBUG
-	if (ehcidebug >= 2) {
-		struct usbd_pipe *pipe = xfer->ux_pipe;
-		usbd_dump_pipe(pipe);
-	}
-#endif
-
-	/* Acquire the lock so we can transition the timeout state.  */
-	mutex_enter(&sc->sc_lock);
-
-	/*
-	 * Use ehci_probe_timeout to check whether the timeout is still
-	 * valid, or to reschedule the callout if necessary.  If it is
-	 * still valid, schedule the task.
-	 */
-	if (ehci_probe_timeout(xfer))
-		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
-
-	/*
-	 * Notify ehci_cancel_timeout_async that we may have scheduled
-	 * the task.  This causes callout_invoking to return false in
-	 * ehci_cancel_timeout_async so that it can tell which stage in
-	 * the callout->task->abort process we're at.
-	 */
-	callout_ack(&xfer->ux_callout);
-
-	/* All done -- release the lock.  */
-	mutex_exit(&sc->sc_lock);
-}
-
-/*
- * ehci_timeout_task(xfer)
- *
- *	Called in thread context when too much time has elapsed waiting
- *	for xfer to complete.  Issue ehci_abort_xfer(USBD_TIMEOUT),
- *	unless the xfer has completed or aborted concurrently -- and if
- *	the xfer has also been resubmitted, take care of rescheduling
- *	the callout.
- */
-Static void
-ehci_timeout_task(void *addr)
-{
-	struct usbd_xfer *xfer = addr;
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-
-	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-
-	/* Acquire the lock so we can transition the timeout state.  */
-	mutex_enter(&sc->sc_lock);
-
-	/*
-	 * Use ehci_probe_timeout to check whether the timeout is still
-	 * valid, or to reschedule the callout if necessary.  If it is
-	 * still valid, schedule the task.
-	 */
-	if (ehci_probe_timeout(xfer))
-		ehci_abort_xfer(xfer, USBD_TIMEOUT);
-
-	/* All done -- release the lock.  */
-	mutex_exit(&sc->sc_lock);
-}
-
-/*
- * ehci_probe_timeout(xfer)
- *
- *	Probe the status of xfer's timeout.  Acknowledge and process a
- *	request to reschedule.  Return true if the timeout is still
- *	valid and the caller should take further action (queueing a
- *	task or aborting the xfer), false if it must stop here.
- */
-Static bool
-ehci_probe_timeout(struct usbd_xfer *xfer)
-{
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-	struct ehci_softc *sc = EHCI_XFER2SC(xfer);
-	bool valid;
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
-	/* The timeout must be set.  */
-	KASSERT(xfer->ux_timeout_set);
-
-	/*
-	 * Neither callout nor task may be pending; they execute
-	 * alternately in lock step.
-	 */
-	KASSERT(!callout_pending(&xfer->ux_callout));
-	KASSERT(!usb_task_pending(xfer->ux_pipe->up_dev, &xfer->ux_aborttask));
-
-	/* There are a few cases... */
-	if (sc->sc_dying) {
-		/* Host controller dying.  Drop it all on the floor.  */
-		xfer->ux_timeout_set = false;
-		xfer->ux_timeout_reset = false;
-		valid = false;
-	} else if (xfer->ux_timeout_reset) {
-		/*
-		 * The xfer completed _and_ got resubmitted while we
-		 * waited for the lock.  Acknowledge the request to
-		 * reschedule, and reschedule it if there is a timeout
-		 * and the bus is not polling.
-		 */
-		xfer->ux_timeout_reset = false;
-		if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
-			KASSERT(xfer->ux_timeout_set);
-			callout_schedule(&xfer->ux_callout,
-			    mstohz(xfer->ux_timeout));
-		} else {
-			/* No more callout or task scheduled.  */
-			xfer->ux_timeout_set = false;
-		}
-		valid = false;
-	} else if (xfer->ux_status != USBD_IN_PROGRESS) {
-		/*
-		 * The xfer has completed by hardware completion or by
-		 * software abort, and has not been resubmitted, so the
-		 * timeout must be unset, and is no longer valid for
-		 * the caller.
-		 */
-		xfer->ux_timeout_set = false;
-		valid = false;
-	} else {
-		/*
-		 * The xfer has not yet completed, so the timeout is
-		 * valid.
-		 */
-		valid = true;
-	}
-
-	/* Any reset must have been processed.  */
-	KASSERT(!xfer->ux_timeout_reset);
-
-	/*
-	 * Either we claim the timeout is set, or the callout is idle.
-	 * If the timeout is still set, we may be handing off to the
-	 * task instead, so this is an if but not an iff.
-	 */
-	KASSERT(xfer->ux_timeout_set || !callout_pending(&xfer->ux_callout));
-
-	/*
-	 * The task must be idle now.
-	 *
-	 * - If the caller is the callout, _and_ the timeout is still
-	 *   valid, the caller will schedule it, but it hasn't been
-	 *   scheduled yet.  (If the timeout is not valid, the task
-	 *   should not be scheduled.)
-	 *
-	 * - If the caller is the task, it cannot be scheduled again
-	 *   until the callout runs again, which won't happen until we
-	 *   next release the lock.
-	 */
-	KASSERT(!usb_task_pending(xfer->ux_pipe->up_dev, &xfer->ux_aborttask));
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
-	return valid;
-}
-
-/*
- * ehci_schedule_timeout(xfer)
- *
- *	Ensure that xfer has a timeout.  If the callout is already
- *	queued or the task is already running, request that they
- *	reschedule the callout.  If not, and if we're not polling,
- *	schedule the callout anew.
- */
-Static void
-ehci_schedule_timeout(struct usbd_xfer *xfer)
-{
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-	ehci_softc_t *sc = EHCI_XFER2SC(xfer);
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
-	if (xfer->ux_timeout_set) {
-		/*
-		 * Callout or task has fired from a prior completed
-		 * xfer but has not yet noticed that the xfer is done.
-		 * Ask it to reschedule itself to ux_timeout.
-		 */
-		xfer->ux_timeout_reset = true;
-	} else if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
-		/* Callout is not scheduled.  Schedule it.  */
-		KASSERT(!callout_pending(&xfer->ux_callout));
-		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
-		    ehci_timeout, xfer);
-		xfer->ux_timeout_set = true;
-	}
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-}
-
-/*
- * ehci_cancel_timeout_async(xfer)
- *
- *	Cancel the callout and the task of xfer, which have not yet run
- *	to completion, but don't wait for the callout or task to finish
- *	running.
- *
- *	If they have already fired, at worst they are waiting for the
- *	bus lock.  They will see that the xfer is no longer in progress
- *	and give up, or they will see that the xfer has been
- *	resubmitted with a new timeout and reschedule the callout.
- *
- *	If a resubmitted request completed so fast that the callout
- *	didn't have time to process a timer reset, just cancel the
- *	timer reset.
- */
-Static void
-ehci_cancel_timeout_async(struct usbd_xfer *xfer)
-{
-	EHCIHIST_FUNC(); EHCIHIST_CALLED();
-	struct ehci_softc *sc = EHCI_XFER2SC(xfer);
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
-
-	KASSERT(xfer->ux_timeout_set);
-	xfer->ux_timeout_reset = false;
-	if (!callout_stop(&xfer->ux_callout)) {
-		/*
-		 * We stopped the callout before it ran.  The timeout
-		 * is no longer set.
-		 */
-		xfer->ux_timeout_set = false;
-	} else if (callout_invoking(&xfer->ux_callout)) {
-		/*
-		 * The callout has begun to run but it has not yet
-		 * acquired the lock and called callout_ack.  The task
-		 * cannot be queued yet, and the callout cannot have
-		 * been rescheduled yet.
-		 *
-		 * By the time the callout acquires the lock, we will
-		 * have transitioned from USBD_IN_PROGRESS to a
-		 * completed status, and possibly also resubmitted the
-		 * xfer and set xfer->ux_timeout_reset = true.  In both
-		 * cases, the callout will DTRT, so no further action
-		 * is needed here.
-		 */
-	} else if (usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask)) {
-		/*
-		 * The callout had fired and scheduled the task, but we
-		 * stopped the task before it could run.  The timeout
-		 * is therefore no longer set -- the next resubmission
-		 * of the xfer must schedule a new timeout.
-		 *
-		 * The callout should not be be pending at this point:
-		 * it is scheduled only under the lock, and only when
-		 * xfer->ux_timeout_set is false, or by the callout or
-		 * task itself when xfer->ux_timeout_reset is true.
-		 */
-		xfer->ux_timeout_set = false;
-	}
-
-	/*
-	 * The callout cannot be scheduled and the task cannot be
-	 * queued at this point.  Either we cancelled them, or they are
-	 * already running and waiting for the bus lock.
-	 */
-	KASSERT(!callout_pending(&xfer->ux_callout));
-	KASSERT(!usb_task_pending(xfer->ux_pipe->up_dev, &xfer->ux_aborttask));
-
-	KASSERT(sc->sc_bus.ub_usepolling || mutex_owned(&sc->sc_lock));
 }
 
 /************************/
@@ -4003,7 +3666,7 @@ ehci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	/* Insert qTD in QH list - also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, setup);
-	ehci_schedule_timeout(xfer);
+	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
@@ -4054,7 +3717,7 @@ ehci_device_ctrl_abort(struct usbd_xfer *xfer)
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-	ehci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device control pipe. */
@@ -4201,7 +3864,7 @@ ehci_device_bulk_start(struct usbd_xfer *xfer)
 
 	/* also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
-	ehci_schedule_timeout(xfer);
+	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
@@ -4232,7 +3895,7 @@ ehci_device_bulk_abort(struct usbd_xfer *xfer)
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	DPRINTF("xfer %#jx", (uintptr_t)xfer, 0, 0, 0);
-	ehci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /*
@@ -4417,7 +4080,7 @@ ehci_device_intr_start(struct usbd_xfer *xfer)
 
 	/* also does usb_syncmem(sqh) */
 	ehci_set_qh_qtd(sqh, exfer->ex_sqtdstart);
-	ehci_schedule_timeout(xfer);
+	usbd_xfer_schedule_timeout(xfer);
 	ehci_add_intr_list(sc, exfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
@@ -4451,7 +4114,7 @@ ehci_device_intr_abort(struct usbd_xfer *xfer)
 	 *       async doorbell. That's dependent on the async list, wheras
 	 *       intr xfers are periodic, should not use this?
 	 */
-	ehci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 Static void
