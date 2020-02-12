@@ -1,4 +1,4 @@
-/*	$NetBSD: eap.c,v 1.2 2013/11/28 22:33:42 christos Exp $	*/
+/*	$NetBSD: eap.c,v 1.2.10.1 2020/02/12 20:23:39 martin Exp $	*/
 /*
  * eap.c - Extensible Authentication Protocol for PPP (RFC 2284)
  *
@@ -49,7 +49,7 @@
 #define RCSID	"Id: eap.c,v 1.4 2004/11/09 22:39:25 paulus Exp "
 static const char rcsid[] = RCSID;
 #else
-__RCSID("$NetBSD: eap.c,v 1.2 2013/11/28 22:33:42 christos Exp $");
+__RCSID("$NetBSD: eap.c,v 1.2.10.1 2020/02/12 20:23:39 martin Exp $");
 #endif
 
 /*
@@ -1433,7 +1433,7 @@ int len;
 		}
 
 		/* Not so likely to happen. */
-		if (vallen >= len + sizeof (rhostname)) {
+		if (len - vallen >= sizeof (rhostname)) {
 			dbglog("EAP: trimming really long peer name down");
 			BCOPY(inp + vallen, rhostname, sizeof (rhostname) - 1);
 			rhostname[sizeof (rhostname) - 1] = '\0';
@@ -1859,7 +1859,7 @@ int len;
 		}
 
 		/* Not so likely to happen. */
-		if (vallen >= len + sizeof (rhostname)) {
+		if (len - vallen >= sizeof (rhostname)) {
 			dbglog("EAP: trimming really long peer name down");
 			BCOPY(inp + vallen, rhostname, sizeof (rhostname) - 1);
 			rhostname[sizeof (rhostname) - 1] = '\0';
