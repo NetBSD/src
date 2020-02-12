@@ -1,4 +1,4 @@
-/*      $NetBSD: meta.c,v 1.78 2020/02/06 01:13:19 sjg Exp $ */
+/*      $NetBSD: meta.c,v 1.79 2020/02/12 16:50:37 sjg Exp $ */
 
 /*
  * Implement 'meta' mode.
@@ -1686,7 +1686,11 @@ meta_compat_parent(pid_t child)
     meta_job_parent(NULL, child);
     close(childPipe[1]);			/* child side */
     outfd = childPipe[0];
+#ifdef USE_FILEMON
     metafd = Mybm.filemon ? filemon_readfd(Mybm.filemon) : -1;
+#else
+    metafd = -1;
+#endif
     maxfd = -1;
     if (outfd > maxfd)
 	    maxfd = outfd;
