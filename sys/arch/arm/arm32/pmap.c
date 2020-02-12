@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.388 2020/02/05 07:37:35 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.389 2020/02/12 16:08:19 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.388 2020/02/05 07:37:35 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.389 2020/02/12 16:08:19 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5861,12 +5861,9 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 static inline struct l2_bucket *
 pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 {
+	const size_t l1slot = l1pte_index(va);
 	struct l2_dtable *l2;
-	struct l2_bucket *l2b;
-	u_short l1slot;
 	vaddr_t nva;
-
-	l1slot = l1pte_index(va);
 
 	if ((l2 = pm->pm_l2[L2_IDX(l1slot)]) == NULL) {
 		/*
@@ -5903,7 +5900,7 @@ pmap_grow_l2_bucket(pmap_t pm, vaddr_t va)
 		pm->pm_l2[L2_IDX(l1slot)] = l2;
 	}
 
-	l2b = &l2->l2_bucket[L2_BUCKET(l1slot)];
+	struct l2_bucket * const l2b = &l2->l2_bucket[L2_BUCKET(l1slot)];
 
 	/*
 	 * Fetch pointer to the L2 page table associated with the address.
