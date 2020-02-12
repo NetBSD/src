@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.38 2020/02/12 06:20:13 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.39 2020/02/12 06:21:44 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -4348,7 +4348,7 @@ ixl_get_phy_info(struct ixl_softc *sc)
 
 	if (ixl_dmamem_alloc(sc, &idm, IXL_AQ_BUFLEN, 0) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate switch config buffer\n");
+		    "unable to allocate phy abilities buffer\n");
 		return -1;
 	}
 
