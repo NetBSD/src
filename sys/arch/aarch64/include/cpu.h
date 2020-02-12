@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.13.4.1 2019/10/23 19:14:19 martin Exp $ */
+/* $NetBSD: cpu.h,v 1.13.4.2 2020/02/12 19:55:57 martin Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@ extern uint64_t cpu_mpidr[];		/* MULTIPROCESSOR */
 bool cpu_hatched_p(u_int);		/* MULTIPROCESSOR */
 
 #define CPU_INFO_ITERATOR	cpuid_t
-#ifdef MULTIPROCESSOR
+#if defined(MULTIPROCESSOR) || defined(_MODULE)
 #define cpu_number()		(curcpu()->ci_index)
 #define CPU_IS_PRIMARY(ci)	((ci)->ci_index == 0)
 #define CPU_INFO_FOREACH(cii, ci)					\

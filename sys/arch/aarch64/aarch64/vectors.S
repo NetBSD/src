@@ -1,8 +1,20 @@
-/*	$NetBSD: vectors.S,v 1.9 2018/10/12 01:28:57 ryo Exp $	*/
+/*	$NetBSD: vectors.S,v 1.9.4.1 2020/02/12 19:55:57 martin Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
 #include "opt_ddb.h"
+#include "opt_dtrace.h"
+
+#ifdef KDTRACE_HOOKS
+/*
+ * dtrace needs to emulate  stp x29,x30,[sp,#-FRAMESIZE]!   where
+ * FRAMESIZE can be as large as 512, so create a 512-byte buffer
+ * between the interrupted code's frame and our struct trapframe.
+ */
+#define	TRAP_FRAMESIZE	(TF_SIZE + 512)
+#else
+#define	TRAP_FRAMESIZE	TF_SIZE
+#endif
 
 	/*
 	 * vector_entry macro must be small enough to fit 0x80 bytes!
@@ -11,7 +23,7 @@
 	.align 7	/* aligned 0x80 */
 
 	.if \el == 1
-	sub	sp, sp, #TF_SIZE	/* need to allocate stack on el1 */
+	sub	sp, sp, #TRAP_FRAMESIZE	/* need to allocate stack on el1 */
 	.endif
 
 	stp	x0, x1, [sp, #TF_X0]
@@ -35,7 +47,7 @@
 	.if \el == 0
 	mrs	x20, sp_el0
 	.else
-	add	x20, sp, #TF_SIZE	/* sp is already adjusted */
+	add	x20, sp, #TRAP_FRAMESIZE	/* sp is already adjusted */
 	.endif
 	mrs	x21, elr_el1
 
