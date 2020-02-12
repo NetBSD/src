@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.293 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.294 2020/02/12 16:02:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.293 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.294 2020/02/12 16:02:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1708,6 +1708,7 @@ ohci_rhsc(ohci_softc_t *sc, struct usbd_xfer *xfer)
 			p[i/8] |= 1 << (i%8);
 	}
 	DPRINTF("change=0x%02jx", *p, 0, 0, 0);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 
@@ -1721,7 +1722,9 @@ ohci_root_intr_done(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
+	/* Claim the xfer so it doesn't get completed again.  */
 	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
 	sc->sc_intrxfer = NULL;
 }
 
@@ -2516,18 +2519,29 @@ ohci_root_intr_start(struct usbd_xfer *xfer)
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	return USBD_IN_PROGRESS;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	return xfer->ux_status;
 }
 
 /* Abort a root interrupt request. */
 Static void
 ohci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intrxfer == NULL)
+		return;
+
+	/*
+	 * Otherwise, sc->sc_intrxfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -2536,13 +2550,17 @@ ohci_root_intr_abort(struct usbd_xfer *xfer)
 Static void
 ohci_root_intr_close(struct usbd_pipe *pipe)
 {
-	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
+	ohci_softc_t *sc __diagused = OHCI_PIPE2SC(pipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
-	sc->sc_intrxfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intrxfer == NULL);
 }
 
 /************************/

@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.271 2020/02/12 16:01:00 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.272 2020/02/12 16:02:01 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.271 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.272 2020/02/12 16:02:01 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -2722,11 +2722,13 @@ ehci_root_intr_start(struct usbd_xfer *xfer)
 
 	if (!polling)
 		mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	return USBD_IN_PROGRESS;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	return xfer->ux_status;
 }
 
 /* Abort a root interrupt request. */
@@ -2738,8 +2740,16 @@ ehci_root_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
-	sc->sc_intrxfer = NULL;
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intrxfer == NULL)
+		return;
 
+	/*
+	 * Otherwise, sc->sc_intrxfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -2748,18 +2758,30 @@ ehci_root_intr_abort(struct usbd_xfer *xfer)
 Static void
 ehci_root_intr_close(struct usbd_pipe *pipe)
 {
-	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
+	ehci_softc_t *sc __diagused = EHCI_PIPE2SC(pipe);
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	sc->sc_intrxfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intrxfer == NULL);
 }
 
 Static void
 ehci_root_intr_done(struct usbd_xfer *xfer)
 {
+	struct ehci_softc *sc = EHCI_XFER2SC(xfer);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intrxfer = NULL;
 }
 
 /************************/

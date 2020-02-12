@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.4 2019/11/17 11:28:48 maxv Exp $ */
+/*	$NetBSD: vhci.c,v 1.5 2020/02/12 16:02:01 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.4 2019/11/17 11:28:48 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.5 2020/02/12 16:02:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -627,6 +627,7 @@ vhci_root_intr_start(struct usbd_xfer *xfer)
 
 	if (!polling)
 		mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
@@ -644,8 +645,15 @@ vhci_root_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
-	sc->sc_intrxfer = NULL;
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intrxfer == NULL)
+		return;
 
+	/*
+	 * Otherwise, sc->sc_intrxfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intrxfer == xfer);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -653,13 +661,17 @@ vhci_root_intr_abort(struct usbd_xfer *xfer)
 static void
 vhci_root_intr_close(struct usbd_pipe *pipe)
 {
-	vhci_softc_t *sc = pipe->up_dev->ud_bus->ub_hcpriv;
+	vhci_softc_t *sc __diagused = pipe->up_dev->ud_bus->ub_hcpriv;
 
 	DPRINTF("%s: called\n", __func__);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	sc->sc_intrxfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intrxfer == NULL);
 }
 
 static void
@@ -671,6 +683,14 @@ vhci_root_intr_cleartoggle(struct usbd_pipe *pipe)
 static void
 vhci_root_intr_done(struct usbd_xfer *xfer)
 {
+	vhci_softc_t *sc = xfer->ux_bus->ub_hcpriv;
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intrxfer = NULL;
 }
 
 /* -------------------------------------------------------------------------- */

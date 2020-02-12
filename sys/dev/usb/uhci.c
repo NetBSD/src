@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.289 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.290 2020/02/12 16:02:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.289 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.290 2020/02/12 16:02:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -574,6 +574,7 @@ uhci_init(uhci_softc_t *sc)
 	    "uhcixfer", NULL, IPL_USB, NULL, NULL, NULL);
 
 	callout_init(&sc->sc_poll_handle, CALLOUT_MPSAFE);
+	callout_setfunc(&sc->sc_poll_handle, uhci_poll_hub, sc);
 
 	/* Set up the bus struct. */
 	sc->sc_bus.ub_methods = &uhci_bus_methods;
@@ -739,8 +740,7 @@ uhci_resume(device_t dv, const pmf_qual_t *qual)
 	usb_delay_ms_locked(&sc->sc_bus, USB_RESUME_RECOVERY, &sc->sc_intr_lock);
 	sc->sc_bus.ub_usepolling--;
 	if (sc->sc_intr_xfer != NULL)
-		callout_reset(&sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub,
-		    sc->sc_intr_xfer);
+		callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
 #ifdef UHCI_DEBUG
 	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
@@ -766,9 +766,9 @@ uhci_suspend(device_t dv, const pmf_qual_t *qual)
 	if (uhcidebug >= 2)
 		uhci_dumpregs(sc);
 #endif
-	if (sc->sc_intr_xfer != NULL)
-		callout_stop(&sc->sc_poll_handle);
 	sc->sc_suspend = PWR_SUSPEND;
+	if (sc->sc_intr_xfer != NULL)
+		callout_halt(&sc->sc_poll_handle, &sc->sc_intr_lock);
 	sc->sc_bus.ub_usepolling++;
 
 	uhci_run(sc, 0, 1); /* stop the controller */
@@ -998,38 +998,85 @@ void iidump(void) { uhci_dump_iis(thesc); }
 void
 uhci_poll_hub(void *addr)
 {
-	struct usbd_xfer *xfer = addr;
-	struct usbd_pipe *pipe = xfer->ux_pipe;
-	uhci_softc_t *sc;
+	struct uhci_softc *sc = addr;
+	struct usbd_xfer *xfer;
 	u_char *p;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
-	if (__predict_false(pipe->up_dev == NULL || pipe->up_dev->ud_bus == NULL))
-		return;	/* device has detached */
-	sc = UHCI_PIPE2SC(pipe);
-	callout_reset(&sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
+	mutex_enter(&sc->sc_lock);
 
+	/*
+	 * If the intr xfer has completed or been synchronously
+	 * aborted, we have nothing to do.
+	 */
+	xfer = sc->sc_intr_xfer;
+	if (xfer == NULL)
+		goto out;
+
+	/*
+	 * If the intr xfer for which we were scheduled is done, and
+	 * another intr xfer has been submitted, let that one be dealt
+	 * with when the callout fires again.
+	 *
+	 * The call to callout_pending is racy, but the the transition
+	 * from pending to invoking happens atomically.  The
+	 * callout_ack ensures callout_invoking does not return true
+	 * due to this invocation of the callout; the lock ensures the
+	 * next invocation of the callout cannot callout_ack (unless it
+	 * had already run to completion and nulled sc->sc_intr_xfer,
+	 * in which case would have bailed out already).
+	 */
+	callout_ack(&sc->sc_poll_handle);
+	if (callout_pending(&sc->sc_poll_handle) ||
+	    callout_invoking(&sc->sc_poll_handle))
+		goto out;
+
+	/*
+	 * Check flags for the two interrupt ports, and set them in the
+	 * buffer if an interrupt arrived; otherwise arrange .
+	 */
 	p = xfer->ux_buf;
 	p[0] = 0;
 	if (UREAD2(sc, UHCI_PORTSC1) & (UHCI_PORTSC_CSC|UHCI_PORTSC_OCIC))
 		p[0] |= 1<<1;
 	if (UREAD2(sc, UHCI_PORTSC2) & (UHCI_PORTSC_CSC|UHCI_PORTSC_OCIC))
 		p[0] |= 1<<2;
-	if (p[0] == 0)
-		/* No change, try again in a while */
-		return;
+	if (p[0] == 0) {
+		/*
+		 * No change -- try again in a while, unless we're
+		 * suspending, in which case we'll try again after
+		 * resume.
+		 */
+		if (sc->sc_suspend != PWR_SUSPEND)
+			callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
+		goto out;
+	}
 
+	/*
+	 * Interrupt completed, and the xfer has not been completed or
+	 * synchronously aborted.  Complete the xfer now.
+	 *
+	 * XXX Set ux_isdone if DIAGNOSTIC?
+	 */
 	xfer->ux_actlen = 1;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
-	mutex_enter(&sc->sc_lock);
 	usb_transfer_complete(xfer);
-	mutex_exit(&sc->sc_lock);
+
+out:	mutex_exit(&sc->sc_lock);
 }
 
 void
 uhci_root_intr_done(struct usbd_xfer *xfer)
 {
+	struct uhci_softc *sc = UHCI_XFER2SC(xfer);
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intr_xfer = NULL;
 }
 
 /*
@@ -3793,9 +3840,16 @@ uhci_root_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
+	/*
+	 * Try to stop the callout before it starts.  If we got in too
+	 * late, too bad; but if the callout had yet to run and time
+	 * out the xfer, cancel it ourselves.
+	 */
 	callout_stop(&sc->sc_poll_handle);
-	sc->sc_intr_xfer = NULL;
+	if (sc->sc_intr_xfer == NULL)
+		return;
 
+	KASSERT(sc->sc_intr_xfer == xfer);
 	xfer->ux_status = USBD_CANCELLED;
 #ifdef DIAGNOSTIC
 	UHCI_XFER2UXFER(xfer)->ux_isdone = true;
@@ -3830,6 +3884,7 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	uhci_softc_t *sc = UHCI_PIPE2SC(pipe);
 	unsigned int ival;
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 	DPRINTF("xfer=%#jx len=%jd flags=%jd", (uintptr_t)xfer, xfer->ux_length,
@@ -3838,11 +3893,20 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
+
+	KASSERT(sc->sc_intr_xfer == NULL);
+
 	/* XXX temporary variable needed to avoid gcc3 warning */
 	ival = xfer->ux_pipe->up_endpoint->ue_edesc->bInterval;
 	sc->sc_ival = mstohz(ival);
-	callout_reset(&sc->sc_poll_handle, sc->sc_ival, uhci_poll_hub, xfer);
+	callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
 	sc->sc_intr_xfer = xfer;
+
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
+
 	return USBD_IN_PROGRESS;
 }
 
@@ -3850,11 +3914,17 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 void
 uhci_root_intr_close(struct usbd_pipe *pipe)
 {
-	uhci_softc_t *sc = UHCI_PIPE2SC(pipe);
+	uhci_softc_t *sc __diagused = UHCI_PIPE2SC(pipe);
 	UHCIHIST_FUNC(); UHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	callout_stop(&sc->sc_poll_handle);
-	sc->sc_intr_xfer = NULL;
+	/*
+	 * The caller must arrange to have aborted the pipe already, so
+	 * there can be no intr xfer in progress.  The callout may
+	 * still be pending from a prior intr xfer -- if it has already
+	 * fired, it will see there is nothing to do, and do nothing.
+	 */
+	KASSERT(sc->sc_intr_xfer == NULL);
+	KASSERT(!callout_pending(&sc->sc_poll_handle));
 }
