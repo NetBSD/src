@@ -53,7 +53,7 @@
 #define	FBT_RETURN	"return"
 
 int
-fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t rval)
+fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 {
 	solaris_cpu_t *cpu;
 	fbt_probe_t *fbt;
