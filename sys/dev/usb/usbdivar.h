@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.120 2020/02/08 08:47:27 maxv Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.121 2020/02/12 16:00:17 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -288,6 +288,19 @@ struct usbd_xfer {
 
 	struct usb_task		ux_aborttask;
 	struct callout		ux_callout;
+
+	/*
+	 * Protected by bus lock.
+	 *
+	 * - ux_timeout_set: The timeout is scheduled as a callout or
+	 *   usb task, and has not yet acquired the bus lock.
+	 *
+	 * - ux_timeout_reset: The xfer completed, and was resubmitted
+	 *   before the callout or task was able to acquire the bus
+	 *   lock, so one or the other needs to schedule a new callout.
+	 */
+	bool			ux_timeout_set;
+	bool			ux_timeout_reset;
 };
 
 void usbd_init(void);
