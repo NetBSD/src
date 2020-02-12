@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.116 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.117 2020/02/12 16:02:01 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.116 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.117 2020/02/12 16:02:01 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3715,6 +3715,7 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 
 	if (!polling)
 		mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_intrxfer[bn] == NULL);
 	sc->sc_intrxfer[bn] = xfer;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
@@ -3725,13 +3726,23 @@ xhci_root_intr_start(struct usbd_xfer *xfer)
 static void
 xhci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	struct xhci_softc * const sc __diagused = XHCI_XFER2SC(xfer);
+	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
+	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intrxfer[bn] == NULL)
+		return;
+
+	/*
+	 * Otherwise, sc->sc_intrxfer[bn] had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intrxfer[bn] == xfer);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -3739,22 +3750,35 @@ xhci_root_intr_abort(struct usbd_xfer *xfer)
 static void
 xhci_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct xhci_softc * const sc = XHCI_PIPE2SC(pipe);
-	const struct usbd_xfer *xfer = pipe->up_intrxfer;
+	struct xhci_softc * const sc __diagused = XHCI_PIPE2SC(pipe);
+	const struct usbd_xfer *xfer __diagused = pipe->up_intrxfer;
+	const size_t bn __diagused = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
+
+	XHCIHIST_FUNC(); XHCIHIST_CALLED();
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intrxfer[bn] == NULL);
+}
+
+static void
+xhci_root_intr_done(struct usbd_xfer *xfer)
+{
+	struct xhci_softc * const sc = XHCI_XFER2SC(xfer);
 	const size_t bn = XHCI_XFER2BUS(xfer) == &sc->sc_bus ? 0 : 1;
 
 	XHCIHIST_FUNC(); XHCIHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intrxfer[bn] == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
 	sc->sc_intrxfer[bn] = NULL;
-}
-
-static void
-xhci_root_intr_done(struct usbd_xfer *xfer)
-{
-	XHCIHIST_FUNC(); XHCIHIST_CALLED();
-
 }
 
 /* -------------- */
