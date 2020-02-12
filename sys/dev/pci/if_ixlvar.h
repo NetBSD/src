@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.5 2020/01/31 02:16:26 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.6 2020/02/12 06:37:21 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -139,6 +139,10 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_LLDP_START_AGENT	0x0a06
 #define IXL_AQ_OP_LLDP_GET_CEE_DCBX	0x0a07
 #define IXL_AQ_OP_LLDP_SPECIFIC_AGENT	0x0a09
+#define IXL_AQ_OP_RSS_SET_KEY		0x0b02
+#define IXL_AQ_OP_RSS_SET_LUT		0x0b03
+#define IXL_AQ_OP_RSS_GET_KEY		0x0b04
+#define IXL_AQ_OP_RSS_GET_LUT		0x0b05
 
 struct ixl_aq_mac_addresses {
 	uint8_t		pf_lan[ETHER_ADDR_LEN];
@@ -710,6 +714,38 @@ struct ixl_aq_nvm_param {
 	uint32_t	 addr_hi;
 	uint32_t	 addr_lo;
 } __packed __aligned(4);
+
+struct ixl_aq_rss_key_param {
+	uint16_t	 vsi_id;
+#define IXL_AQ_RSSKEY_VSI_VALID		(0x01 << 15)
+#define IXL_AQ_RSSKEY_VSI_ID_SHIFT	0
+#define IXL_AQ_RSSKEY_VSI_ID_MASK	(0x3FF << IXL_RSSKEY_VSI_ID_SHIFT)
+
+	uint8_t		 reserved[6];
+	uint32_t	 addr_hi;
+	uint32_t	 addr_lo;
+} __packed __aligned(8);
+
+struct ixl_aq_rss_key_data {
+	uint8_t	 standard_rss_key[0x28];
+	uint8_t	 extended_hash_key[0xc];
+} __packed __aligned(8);
+
+struct ixl_aq_rss_lut_param {
+	uint16_t	 vsi_id;
+#define IXL_AQ_RSSLUT_VSI_VALID		(0x01 << 15)
+#define IXL_AQ_RSSLUT_VSI_ID_SHIFT	0
+#define IXL_AQ_RSSLUT_VSI_ID_MASK	(0x03FF << IXL_AQ_RSSLUT_VSI_ID_SHIFT)
+
+	uint16_t flags;
+#define IXL_AQ_RSSLUT_TABLE_TYPE_SHIFT	0
+#define IXL_AQ_RSSLUT_TABLE_TYPE_MASK	(0x01 << IXL_AQ_RSSLUT_TABLE_TYPE_SHIFT)
+#define IXL_AQ_RSSLUT_TABLE_TYPE_VSI	0
+#define IXL_AQ_RSSLUT_TABLE_TYPE_PF	1
+	uint8_t		 reserved[4];
+	uint32_t	 addr_hi;
+	uint32_t	 addr_lo;
+} __packed __aligned(8);
 
 /* aq response codes */
 #define IXL_AQ_RC_OK			0  /* success */
