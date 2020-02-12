@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.96 2020/02/11 11:40:09 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.97 2020/02/12 20:15:04 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2030,4 +2030,9 @@ sys/arch/i386/stand/efiboot/eficons.c		1.9
 
 	Use 1024x768 as the default GOP mode.
 	[jmcneill, ticket #1502]
+
+external/bsd/ppp/dist/pppd/eap.c		1.5
+
+	pppd: Fix bounds check in EAP code.
+	[christos, ticket #1503]
 
