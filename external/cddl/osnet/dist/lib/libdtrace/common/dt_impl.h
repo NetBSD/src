@@ -750,8 +750,6 @@ extern int yylex(void);
 #endif
 
 #ifdef __NetBSD__
-extern const char *dt_bootfile(char *, size_t);
-
 #define longlong_t long long
 #define u_longlong_t unsigned long long
 #define __DECONST(a, b) __UNCONST(b)
