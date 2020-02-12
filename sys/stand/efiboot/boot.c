@@ -1,4 +1,4 @@
-/*	$NetBSD: boot.c,v 1.18.4.1 2020/01/26 11:21:58 martin Exp $	*/
+/*	$NetBSD: boot.c,v 1.18.4.2 2020/02/12 20:10:09 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -75,6 +75,7 @@ static char dtb_path[255];
 static char efibootplist_path[255];
 static char netbsd_path[255];
 static char netbsd_args[255];
+static char rndseed_path[255];
 
 #define	DEFTIMEOUT	5
 #define DEFFILENAME	names[0]
@@ -87,6 +88,7 @@ void	command_dev(char *);
 void	command_dtb(char *);
 void	command_plist(char *);
 void	command_initrd(char *);
+void	command_rndseed(char *);
 void	command_ls(char *);
 void	command_mem(char *);
 void	command_printenv(char *);
@@ -103,6 +105,7 @@ const struct boot_command commands[] = {
 	{ "dtb",	command_dtb,		"dtb [dev:][filename]" },
 	{ "plist",	command_plist,		"plist [dev:][filename]" },
 	{ "initrd",	command_initrd,		"initrd [dev:][filename]" },
+	{ "rndseed",	command_rndseed,	"rndseed [dev:][filename]" },
 	{ "ls",		command_ls,		"ls [hdNn:/path]" },
 	{ "mem",	command_mem,		"mem" },
 	{ "printenv",	command_printenv,	"printenv [key]" },
@@ -180,6 +183,12 @@ void
 command_initrd(char *arg)
 {
 	set_initrd_path(arg);
+}
+
+void
+command_rndseed(char *arg)
+{
+	set_rndseed_path(arg);
 }
 
 void
@@ -350,6 +359,21 @@ char *get_efibootplist_path(void)
 }
 
 int
+set_rndseed_path(const char *arg)
+{
+	if (strlen(arg) + 1 > sizeof(rndseed_path))
+		return ERANGE;
+	strcpy(rndseed_path, arg);
+	return 0;
+}
+
+char *
+get_rndseed_path(void)
+{
+	return rndseed_path;
+}
+
+int
 set_bootfile(const char *arg)
 {
 	if (strlen(arg) + 1 > sizeof(netbsd_path))
@@ -437,6 +461,15 @@ read_env(void)
 		printf(">> Setting default boot args to '%s' from environment\n", s);
 #endif
 		set_bootargs(s);
+		FreePool(s);
+	}
+
+	s = efi_env_get("rndseed");
+	if (s) {
+#ifdef EFIBOOT_DEBUG
+		printf(">> Setting rndseed path to '%s' from environment\n", s);
+#endif
+		set_rndseed_path(s);
 		FreePool(s);
 	}
 }
