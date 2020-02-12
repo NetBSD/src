@@ -36,6 +36,9 @@
 #include <sys/cpu.h>
 #include <sys/module.h>
 #include <sys/kmem.h>
+
+#include <ddb/ddb.h>
+
 #include <machine/cpufunc.h>
 
 #include <sys/dtrace.h>
@@ -78,8 +81,9 @@ void
 fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 {
 
-	*fbt->fbtp_patchpoint = val;
-	cpu_icache_sync_range((vm_offset_t)fbt->fbtp_patchpoint, 4);
+	db_write_bytes((db_addr_t)fbt->fbtp_patchpoint, sizeof(val),
+	    (const void *)&val);
+	cpu_icache_sync_range((vm_offset_t)fbt->fbtp_patchpoint, sizeof(val));
 }
 
 #if defined(__FreeBSD__)
