@@ -37,7 +37,9 @@
 #include <sys/module.h>
 #include <sys/kmem.h>
 
-#include <ddb/ddb.h>
+#include <uvm/uvm_extern.h>
+
+#include <dev/mm.h>
 
 #include <machine/cpufunc.h>
 
@@ -92,9 +94,14 @@ fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 void
 fbt_patch_tracepoint(fbt_probe_t *fbt, fbt_patchval_t val)
 {
+	paddr_t pa;
+	vaddr_t va;
 
-	db_write_bytes((db_addr_t)fbt->fbtp_patchpoint, sizeof(val),
-	    (const void *)&val);
+	if (!pmap_extract(pmap_kernel(), (vaddr_t)fbt->fbtp_patchpoint, &pa))
+		return;
+	if (!mm_md_direct_mapped_phys(pa, &va))
+		return;
+	*(fbt_patchval_t *)va = val;
 	cpu_icache_sync_range((vm_offset_t)fbt->fbtp_patchpoint, sizeof(val));
 }
 
