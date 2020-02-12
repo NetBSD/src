@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.0,v 1.1.2.177 2020/02/11 11:38:05 martin Exp $
+# $NetBSD: CHANGES-9.0,v 1.1.2.178 2020/02/12 20:11:33 martin Exp $
 
 A complete list of changes from the initial NetBSD 9.0 branch on 2019-07-30
 until the 9.0 release:
@@ -8793,4 +8793,77 @@ sys/arch/i386/stand/efiboot/eficons.c		1.9
 
 	Use 1024x768 as the default GOP mode.
 	[jmcneill, ticket #696]
+
+sys/kern/kern_lwp.c				1.224,1.225
+
+	Preserve pcu(9) state in fork.
+	[maya, ticket #697]
+
+external/bsd/ppp/dist/pppd/eap.c		1.5
+
+	pppd: Fix bounds check in EAP code.
+	[christos, ticket #698]
+
+sys/net/npf/npf_ruleset.c			1.50
+
+	PR 54950: Lloyd Parkes: Avoid NULL deref.
+	[christos, ticket #699]
+
+share/man/man5/fstab.5				1.45
+
+	fstab.5: add mention of zfs
+	[christos, ticket #700]
+
+external/cddl/osnet/dev/dtrace/aarch64/dtrace_isa.c 1.2
+external/cddl/osnet/dev/dtrace/aarch64/dtrace_subr.c 1.2,1.3
+external/cddl/osnet/dev/fbt/aarch64/fbt_isa.c	1.2-1.6
+external/cddl/osnet/dist/lib/libdtrace/common/dt_impl.h 1.9
+external/cddl/osnet/dist/lib/libdtrace/common/dt_module.c 1.18
+external/cddl/osnet/dist/lib/libdtrace/common/dt_open.c 1.17
+sys/arch/aarch64/aarch64/vectors.S		1.10
+sys/arch/aarch64/include/cpu.h			1.20
+sys/modules/cyclic/Makefile			1.5
+
+	Fix dtrace(1) for aarch64:
+	- Reserve stack space on trap to emulate function prologue.
+	- Fix memory protection in fbt function patching.
+	- Fix dtrace stack traces and implement argument references.
+	- Allow dtrace to read direct-mapped addresses.
+	- Forbid dtrace from reading I/O-mapped addresses.
+	- Fix cpu_number() in modules on aarch64.
+	- Fix build fallout from cpu_number() change.
+	- [MI] Use /dev/ksyms, not /netbsd, to get running kernel's symbols.
+	[riastradh, ticket #701]
+
+sys/miscfs/kernfs/kernfs.h			1.43
+sys/miscfs/kernfs/kernfs_vfsops.c		1.98
+sys/miscfs/kernfs/kernfs_vnops.c		1.163
+
+	Fix various kernfs issues.
+	[riastradh, ticket #702]
+
+sys/external/bsd/common/linux/linux_work.c	1.45
+
+	Fix abuse of TAILQ_CONCAT.
+	[riastradh, ticket #703]
+
+sys/dev/usb/uatp.c				1.20-1.23
+
+	Fix uatp(4) on some Apple iBooks and PowerBooks.
+	[riastradh, ticket #704]
+
+sys/arch/aarch64/aarch64/aarch64_machdep.c	1.35
+sys/arch/aarch64/include/machdep.h		1.9
+sys/arch/arm/arm32/arm32_machdep.c		1.129
+sys/arch/arm/include/arm32/machdep.h		1.30
+sys/arch/evbarm/fdt/fdt_machdep.c		1.65
+sys/stand/efiboot/boot.c			1.19
+sys/stand/efiboot/efiboot.h			1.11
+sys/stand/efiboot/efifdt.c			1.20
+sys/stand/efiboot/efifdt.h			1.7
+sys/stand/efiboot/exec.c			1.12
+sys/stand/efiboot/version			1.14
+
+	Support random seed loading from efiboot.
+	[riastradh, ticket #705]
 
