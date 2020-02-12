@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.39 2020/02/12 06:21:44 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.40 2020/02/12 06:26:02 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -3965,13 +3965,12 @@ ixl_get_version(struct ixl_softc *sc)
 	if (sc->sc_mac_type == I40E_MAC_X722) {
 		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_NVMLOCK |
 		    IXL_SC_AQ_FLAG_NVMREAD);
+		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
 	}
 
 #define IXL_API_VER(maj, min)	(((uint32_t)(maj) << 16) | (min))
 	if (IXL_API_VER(api_maj_ver, api_min_ver) >= IXL_API_VER(1, 5)) {
-		if (sc->sc_mac_type == I40E_MAC_X722) {
-			SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
-		}
+		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
 		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_NVMLOCK);
 	}
 #undef IXL_API_VER
