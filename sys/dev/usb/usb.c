@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.181 2020/02/12 15:59:30 riastradh Exp $	*/
+/*	$NetBSD: usb.c,v 1.182 2020/02/12 15:59:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.181 2020/02/12 15:59:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.182 2020/02/12 15:59:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -528,6 +528,23 @@ usb_rem_task_wait(struct usbd_device *dev, struct usb_task *task, int queue,
 		mutex_enter(interlock);
 
 	return removed;
+}
+
+/*
+ * usb_task_pending(dev, task)
+ *
+ *	True if task is queued, false if not.  Note that if task is
+ *	already running, it is not considered queued.
+ *
+ *	For _negative_ diagnostic assertions only:
+ *
+ *		KASSERT(!usb_task_pending(dev, task));
+ */
+bool
+usb_task_pending(struct usbd_device *dev, struct usb_task *task)
+{
+
+	return task->queue != USB_NUM_TASKQS;
 }
 
 void
