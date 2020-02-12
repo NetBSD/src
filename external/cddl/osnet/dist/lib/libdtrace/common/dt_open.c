@@ -1025,24 +1025,15 @@ dt_get_sysinfo(int cmd, char *buf, size_t len)
 }
 #endif
 
-#ifndef illumos
-# ifdef __FreeBSD__
-#  define DEFKERNEL	"kernel"
-#  define BOOTFILE	"kern.bootfile"
-# endif
-# ifdef __NetBSD__
-#  define DEFKERNEL	"netbsd"
-#  define BOOTFILE	"machdep.booted_kernel"
-# endif
-
-const char *
+#ifdef __FreeBSD__
+static const char *
 dt_bootfile(char *bootfile, size_t len)
 {
 	char *p;
 	size_t olen = len;
 
-	if (sysctlbyname(BOOTFILE, bootfile, &len, NULL, 0) != 0)
-		strlcpy(bootfile, DEFKERNEL, olen);
+	if (sysctlbyname("kern.bootfile", bootfile, &len, NULL, 0) != 0)
+		strlcpy(bootfile, "kernel", olen);
 
 	if ((p = strrchr(bootfile, '/')) != NULL)
 		p++;
@@ -1050,9 +1041,6 @@ dt_bootfile(char *bootfile, size_t len)
 		p = bootfile;
 	return p;
 }
-
-# undef DEFKERNEL
-# undef BOOTFILE
 #endif
 
 static dtrace_hdl_t *
