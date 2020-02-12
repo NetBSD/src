@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.1 2020/02/11 07:03:16 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.2 2020/02/12 07:02:21 martin Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.1 2020/02/11 07:03:16 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.2 2020/02/12 07:02:21 martin Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -6431,4 +6431,5 @@ struct testentry testtable[] = {
 	ENT(audioctl_rw_RDWR),
 	ENT(audioctl_poll),
 	ENT(audioctl_kqueue),
+	{.name = NULL},
 };
