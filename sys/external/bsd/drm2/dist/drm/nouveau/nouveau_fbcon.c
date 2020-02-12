@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.6 2020/02/12 20:08:31 jdolecek Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.7 2020/02/12 20:25:48 jdolecek Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.6 2020/02/12 20:08:31 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.7 2020/02/12 20:25:48 jdolecek Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -356,6 +356,17 @@ nouveau_fbcon_zfill(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 #endif
 }
 
+#ifdef __NetBSD__
+static int
+nouveau_fbcon_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("nouveaufbbus at %s", pnp);
+
+	return (UNCONF);
+}
+#endif
+
 static int
 nouveau_fbcon_create(struct drm_fb_helper *helper,
 		     struct drm_fb_helper_surface_size *sizes)
@@ -432,9 +443,9 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 	nfa.nfa_fb_ptr = nvbo_kmap_obj_iovirtual(nvbo);
 	nfa.nfa_fb_linebytes = mode_cmd.pitches[0];
 
-	helper->fbdev = config_found_ia(dev->dev, "nouveaufbbus", &nfa, NULL);
+	helper->fbdev = config_found_ia(dev->dev, "nouveaufbbus", &nfa,
+	    nouveau_fbcon_print);
 	if (helper->fbdev == NULL) {
-		DRM_ERROR("failed to attach nouveaufb\n");
 		goto out_unlock;
 	}
     }
