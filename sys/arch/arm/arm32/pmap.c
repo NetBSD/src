@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.391 2020/02/12 17:34:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.392 2020/02/12 17:36:41 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.391 2020/02/12 17:34:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.392 2020/02/12 17:36:41 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -5842,14 +5842,15 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 		*pap = pa;
 
 	PMAPCOUNT(pt_mappings);
-#ifdef DEBUG
-	struct l2_bucket * const l2b = pmap_get_l2_bucket(pmap_kernel(), va);
-	KDASSERT(l2b != NULL);
 
-	pt_entry_t * const ptep = &l2b->l2b_kva[l2pte_index(va)];
-	const pt_entry_t opte = *ptep;
-	KDASSERT((opte & L2_S_CACHE_MASK) == pte_l2_s_cache_mode_pt);
-#endif
+	struct l2_bucket * const l2b __diagused =
+	    pmap_get_l2_bucket(pmap_kernel(), va);
+	KASSERT(l2b != NULL);
+
+	pt_entry_t * const ptep __diagused = &l2b->l2b_kva[l2pte_index(va)];
+	const pt_entry_t opte __diagused = *ptep;
+	KASSERT((opte & L2_S_CACHE_MASK) == pte_l2_s_cache_mode_pt);
+
 	memset((void *)va, 0, PAGE_SIZE);
 	return 0;
 }
