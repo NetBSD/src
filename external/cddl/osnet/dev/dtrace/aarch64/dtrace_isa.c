@@ -89,52 +89,60 @@ void
 dtrace_getpcstack(pc_t *pcstack, int pcstack_limit, int aframes,
     uint32_t *intrpc)
 {
-	struct unwind_state state;
-	int scp_offset;
-	register_t sp, fp;
-	int depth;
+	extern const char el1_trap_exit[];
+	const register_t *fp;
+	int i = 0;
 
-	depth = 0;
-
-	if (intrpc != 0) {
-		pcstack[depth++] = (pc_t) intrpc;
+	if (intrpc) {
+		if (i < pcstack_limit)
+			pcstack[i++] = (pc_t)intrpc;
 	}
 
-	aframes++;
-
-	__asm __volatile("mov %0, sp" : "=&r" (sp));
-
-	state.fp = (uint64_t)__builtin_frame_address(0);
-	state.sp = sp;
-	state.pc = (uint64_t)dtrace_getpcstack;
-
-	while (depth < pcstack_limit) {
-		if (!INKERNEL(state.pc) || !INKERNEL(state.fp))
-			break;
-
-		fp = state.fp;
-		state.sp = fp + 0x10;
-		/* FP to previous frame (X29) */
-		state.fp = *(register_t *)(fp);
-		/* LR (X30) */
-		state.pc = *(register_t *)(fp + 8) - 4;
-
-		/*
-		 * NB: Unlike some other architectures, we don't need to
-		 * explicitly insert cpu_dtrace_caller as it appears in the
-		 * normal kernel stack trace rather than a special trap frame.
-		 */
-		if (aframes > 0) {
+	/*
+	 * fp[0] = x29 (saved frame pointer)
+	 * fp[1] = x30 (saved link register == return address)
+	 */
+	fp = __builtin_frame_address(0);
+	while (i < pcstack_limit && INKERNEL(fp[0]) && INKERNEL(fp[1])) {
+		/* Skip the specified number of artificial frames.  */
+		if (aframes > 0)
 			aframes--;
+		else
+			pcstack[i++] = fp[1];
+
+		/* Check whether this frame is handling a trap.  */
+		if (fp[1] == (register_t)el1_trap_exit) {
+			/*
+			 * Trap from kernel.  The trapframe is the
+			 * saved frame pointer of the call to the trap
+			 * handler whose return address is
+			 * el1_trap_exit.  The frame pointer of the
+			 * interrupted code is in x29 stashed in the
+			 * trapframe, alongside its pc.
+			 */
+			const struct trapframe *tf = (const void *)fp[0];
+			/* x29 = frame pointer */
+			fp = (const void *)tf->tf_regs.r_reg[29];
+			if (INKERNEL(tf->tf_pc)) {
+				if (i >= pcstack_limit)
+					break;
+				if (aframes > 0)
+					aframes--;
+				else
+					pcstack[i++] = tf->tf_pc;
+			}
 		} else {
-			pcstack[depth++] = state.pc;
+			/*
+			 * Not a trap.  Keep going with fp[0] as the
+			 * parent frame pointer.
+			 */
+			fp = (const void *)fp[0];
 		}
-
 	}
 
-	for (; depth < pcstack_limit; depth++) {
-		pcstack[depth] = 0;
-	}
+	/* Zero the rest of the return address stack.  (Paranoia?)  */
+	while (i < pcstack_limit)
+		pcstack[i++] = 0;
 }
 
 static int
@@ -282,48 +290,78 @@ dtrace_getufpstack(uint64_t *pcstack, uint64_t *fpstack, int pcstack_limit)
 uint64_t
 dtrace_getarg(int arg, int aframes)
 {
+	extern const char el1_trap_exit[];
+	const register_t *fp;
+	const struct trapframe *tf = NULL;
+	int i = 0;
 
-	printf("IMPLEMENT ME: %s\n", __func__);
+	/*
+	 * The first arguments are passed in x0,...,x7.  The rest are
+	 * on the stack, too much trouble to figure out.
+	 *
+	 * XXX Shouldn't we ask ctf or dwarf or something to figure
+	 * this stuff out for us?
+	 */
+	KASSERT(arg >= 0);
+	if (arg >= 8)
+		return 0;
 
-	return (0);
+	fp = __builtin_frame_address(0);
+	while (i < 1000 && INKERNEL(fp[0]) && INKERNEL(fp[1])) {
+		if (aframes > 0)
+			aframes--;
+		else
+			i++;
+		if (fp[1] == (register_t)el1_trap_exit) {
+			tf = (const void *)fp[0];
+			break;
+		} else {
+			fp = (const void *)fp[0];
+		}
+	}
+
+	/* If we didn't find a trap frame, give up.  */
+	if (tf == NULL)
+		return 0;
+
+	/* Arg0, arg1, ..., arg7 are in registers x0, x1, ..., x7.  */
+	return tf->tf_regs.r_reg[arg];
 }
 
 int
 dtrace_getstackdepth(int aframes)
 {
-	struct unwind_state state;
-	int scp_offset;
-	register_t sp;
-	int depth;
-	int done;
+	extern const char el1_trap_exit[];
+	const register_t *fp;
+	int i = 0;
 
-	depth = 1;
-	done = 0;
+	fp = __builtin_frame_address(0);
+	while (i < 1000 && INKERNEL(fp[0]) && INKERNEL(fp[1])) {
+		if (aframes > 0)
+			aframes--;
+		else
+			i++;
+		if (fp[1] == (register_t)el1_trap_exit) {
+			const struct trapframe *tf = (const void *)fp[0];
+			fp = (const void *)tf->tf_regs.r_reg[29];
+			if (aframes > 0)
+				aframes--;
+			else
+				i++;
+		} else {
+			fp = (const void *)fp[0];
+		}
+	}
 
-	__asm __volatile("mov %0, sp" : "=&r" (sp));
-
-	state.fp = (uint64_t)__builtin_frame_address(0);
-	state.sp = sp;
-	state.pc = (uint64_t)dtrace_getstackdepth;
-
-	do {
-		done = unwind_frame(&state);
-		if (!INKERNEL(state.pc) || !INKERNEL(state.fp))
-			break;
-		depth++;
-	} while (!done);
-
-	if (depth < aframes)
-		return (0);
-	else
-		return (depth - aframes);
+	return i;
 }
 
 ulong_t
-dtrace_getreg(struct trapframe *rp, uint_t reg)
+dtrace_getreg(struct trapframe *tf, uint_t reg)
 {
 
-	printf("IMPLEMENT ME: %s\n", __func__);
+	if (reg < 32)
+		return tf->tf_regs.r_reg[reg];
 
 	return (0);
 }
