@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.100 2020/02/12 15:59:44 riastradh Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.101 2020/02/12 16:01:00 riastradh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -187,6 +187,11 @@ int usbd_ratecheck(struct timeval *);
 
 usbd_status usbd_get_string(struct usbd_device *, int, char *);
 usbd_status usbd_get_string0(struct usbd_device *, int, char *, int);
+
+/* For use by HCI drivers, not USB device drivers */
+void usbd_xfer_schedule_timeout(struct usbd_xfer *);
+bool usbd_xfer_trycomplete(struct usbd_xfer *);
+void usbd_xfer_abort(struct usbd_xfer *);
 
 /* An iterator for descriptors. */
 typedef struct {
