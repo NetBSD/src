@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $	*/
+/*	$NetBSD: kernfs_vfsops.c,v 1.96.18.1 2020/02/12 19:59:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993, 1995
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96 2017/02/17 08:31:25 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vfsops.c,v 1.96.18.1 2020/02/12 19:59:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -283,6 +283,7 @@ again:
 		vp->v_vflag = VV_ROOT;
 
 	if (kt->kt_tag == KFSdevice) {
+		vp->v_op = kernfs_specop_p;
 		spec_node_init(vp, *(dev_t *)kt->kt_data);
 	}
 
@@ -293,9 +294,11 @@ again:
 }
 
 extern const struct vnodeopv_desc kernfs_vnodeop_opv_desc;
+extern const struct vnodeopv_desc kernfs_specop_opv_desc;
 
 const struct vnodeopv_desc * const kernfs_vnodeopv_descs[] = {
 	&kernfs_vnodeop_opv_desc,
+	&kernfs_specop_opv_desc,
 	NULL,
 };
 
