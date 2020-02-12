@@ -1,4 +1,4 @@
-/*	$NetBSD: vectors.S,v 1.10 2020/02/12 01:09:17 riastradh Exp $	*/
+/*	$NetBSD: vectors.S,v 1.11 2020/02/12 07:02:08 skrll Exp $	*/
 
 #include <aarch64/asm.h>
 #include "assym.h"
@@ -23,7 +23,8 @@
 	.align 7	/* aligned 0x80 */
 
 	.if \el == 1
-	sub	sp, sp, #TRAP_FRAMESIZE	/* need to allocate stack on el1 */
+	/* need to allocate stack on el1 */
+	sub	sp, sp, #TRAP_FRAMESIZE
 	.endif
 
 	stp	x0, x1, [sp, #TF_X0]
@@ -47,7 +48,8 @@
 	.if \el == 0
 	mrs	x20, sp_el0
 	.else
-	add	x20, sp, #TRAP_FRAMESIZE	/* sp is already adjusted */
+	/* sp was already adjusted, so adjust x20 back */
+	add	x20, sp, #TRAP_FRAMESIZE
 	.endif
 	mrs	x21, elr_el1
 
