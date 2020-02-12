@@ -52,6 +52,17 @@
 #define	FBT_ENTRY	"entry"
 #define	FBT_RETURN	"return"
 
+/*
+ * How many artificial frames appear between dtrace_probe and the
+ * interrupted function call?
+ *
+ *	fbt_invop
+ *	dtrace_invop
+ *	dtrace_invop_start
+ *	el1_trap_exit
+ */
+#define	FBT_AFRAMES	4
+
 int
 fbt_invop(uintptr_t addr, struct trapframe *frame, uintptr_t r0)
 {
@@ -152,7 +163,7 @@ fbt_provide_module_cb(const char *name, int symindx, void *value,
 #endif
 	fbt->fbtp_name = name;
 	fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-	    name, FBT_ENTRY, 3, fbt);
+	    name, FBT_ENTRY, FBT_AFRAMES, fbt);
 	fbt->fbtp_patchpoint = instr;
 #ifdef __FreeBSD__
 	fbt->fbtp_ctl = lf;
@@ -206,7 +217,7 @@ again:
 	fbt->fbtp_name = name;
 	if (retfbt == NULL) {
 		fbt->fbtp_id = dtrace_probe_create(fbt_id, modname,
-		    name, FBT_RETURN, 3, fbt);
+		    name, FBT_RETURN, FBT_AFRAMES, fbt);
 	} else {
 		retfbt->fbtp_next = fbt;
 		fbt->fbtp_id = retfbt->fbtp_id;
