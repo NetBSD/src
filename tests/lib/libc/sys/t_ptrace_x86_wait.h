@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.20 2020/02/13 15:27:05 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.21 2020/02/13 15:27:25 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -3572,9 +3572,15 @@ thread_concurrent_lwp_setup(pid_t child, lwpid_t lwpid)
 	dr7.bits.global_dr0_breakpoint = 1;
 	dr7.bits.condition_dr0 = 0; /* exec */
 	dr7.bits.len_dr0 = 0;
+	/* use DR1 for watchpoints */
+	dr7.bits.global_dr1_breakpoint = 1;
+	dr7.bits.condition_dr1 = 1; /* write */
+	dr7.bits.len_dr1 = 3; /* 4 bytes */
 	r.dr[7] = dr7.raw;
 	r.dr[0] = (long)(intptr_t)check_happy;
+	r.dr[1] = (long)(intptr_t)&thread_concurrent_watchpoint_var;
 	DPRINTF("dr0=%" PRIxREGISTER "\n", r.dr[0]);
+	DPRINTF("dr1=%" PRIxREGISTER "\n", r.dr[1]);
 	DPRINTF("dr7=%" PRIxREGISTER "\n", r.dr[7]);
 
 	DPRINTF("Call SETDBREGS for LWP %d\n", lwpid);
@@ -3597,9 +3603,12 @@ thread_concurrent_handle_sigtrap(pid_t child, ptrace_siginfo_t *info)
 	DPRINTF("dr6=%" PRIxREGISTER ", dr7=%" PRIxREGISTER "\n",
 	    r.dr[6], r.dr[7]);
 
-	ATF_CHECK_MSG(r.dr[6] & 1, "lwp=%d, got DR6=%" PRIxREGISTER,
+	ATF_CHECK_MSG(r.dr[6] & 3, "lwp=%d, got DR6=%" PRIxREGISTER,
 	    info->psi_lwpid, r.dr[6]);
 
+	/* Handle only one event at a time, we should get
+	 * a separate SIGTRAP for the other one.
+	 */
 	if (r.dr[6] & 1) {
 		r.dr[6] &= ~1;
 
@@ -3613,6 +3622,9 @@ thread_concurrent_handle_sigtrap(pid_t child, ptrace_siginfo_t *info)
 		r.dr[7] = dr7.raw;
 
 		ret = TCSE_BREAKPOINT;
+	} else if (r.dr[6] & 2) {
+		r.dr[6] &= ~2;
+		ret = TCSE_WATCHPOINT;
 	}
 
 	DPRINTF("Call SETDBREGS for LWP %d\n", info->psi_lwpid);
