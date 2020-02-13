@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.155 2020/02/11 00:41:37 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.156 2020/02/13 15:25:29 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.155 2020/02/11 00:41:37 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.156 2020/02/13 15:25:29 mgorny Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -8620,13 +8620,7 @@ ATF_TC_BODY(core_dump_procinfo, tc)
 
 #if defined(TWAIT_HAVE_STATUS)
 
-ATF_TC(thread_concurrent_signals);
-ATF_TC_HEAD(thread_concurrent_signals, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that concurrent signals issued to a single thread "
-	    "are reported correctly");
-}
+#define THREAD_CONCURRENT_SIGNALS_NUM 50
 
 /* List of signals to use for the test */
 const int thread_concurrent_signals_list[] = {
@@ -8641,23 +8635,22 @@ const int thread_concurrent_signals_list[] = {
 	SIGUSR2
 };
 
-pthread_barrier_t thread_concurrent_signals_barrier;
+static pthread_barrier_t thread_concurrent_barrier;
 
 static void *
 thread_concurrent_signals_thread(void *arg)
 {
 	int sigval = thread_concurrent_signals_list[
 	    _lwp_self() % __arraycount(thread_concurrent_signals_list)];
-	pthread_barrier_wait(&thread_concurrent_signals_barrier);
+	pthread_barrier_wait(&thread_concurrent_barrier);
 	DPRINTF("Before raising %s from LWP %d\n", strsignal(sigval),
 		_lwp_self());
 	pthread_kill(pthread_self(), sigval);
 	return NULL;
 }
 
-#define THREAD_CONCURRENT_SIGNALS_NUM 50
-
-ATF_TC_BODY(thread_concurrent_signals, tc)
+static void
+thread_concurrent_test(int signal_threads)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -8665,12 +8658,15 @@ ATF_TC_BODY(thread_concurrent_signals, tc)
 	int status;
 	struct lwp_event_count signal_counts[THREAD_CONCURRENT_SIGNALS_NUM]
 	    = {{0, 0}};
-	unsigned int i;
+	int i;
+
+	/* Protect against out-of-bounds array access. */
+	ATF_REQUIRE(signal_threads <= THREAD_CONCURRENT_SIGNALS_NUM);
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
 	if (child == 0) {
-		pthread_t threads[THREAD_CONCURRENT_SIGNALS_NUM];
+		pthread_t sig_threads[THREAD_CONCURRENT_SIGNALS_NUM];
 
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
@@ -8680,21 +8676,21 @@ ATF_TC_BODY(thread_concurrent_signals, tc)
 
 		DPRINTF("Before starting threads from the child\n");
 		FORKEE_ASSERT(pthread_barrier_init(
-		    &thread_concurrent_signals_barrier, NULL,
-		    __arraycount(threads)) == 0);
+		    &thread_concurrent_barrier, NULL,
+		    signal_threads) == 0);
 
-		for (i = 0; i < __arraycount(threads); i++) {
-			FORKEE_ASSERT(pthread_create(&threads[i], NULL,
+		for (i = 0; i < signal_threads; i++) {
+			FORKEE_ASSERT(pthread_create(&sig_threads[i], NULL,
 			    thread_concurrent_signals_thread, NULL) == 0);
 		}
 
 		DPRINTF("Before joining threads from the child\n");
-		for (i = 0; i < __arraycount(threads); i++) {
-			FORKEE_ASSERT(pthread_join(threads[i], NULL) == 0);
+		for (i = 0; i < signal_threads; i++) {
+			FORKEE_ASSERT(pthread_join(sig_threads[i], NULL) == 0);
 		}
 
 		FORKEE_ASSERT(pthread_barrier_destroy(
-		    &thread_concurrent_signals_barrier) == 0);
+		    &thread_concurrent_barrier) == 0);
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
@@ -8748,13 +8744,34 @@ ATF_TC_BODY(thread_concurrent_signals, tc)
 		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 	}
 
-	for (i = 0; i < __arraycount(signal_counts); i++)
+	for (i = 0; i < signal_threads; i++)
 		ATF_CHECK_EQ_MSG(signal_counts[i].lec_count, 1,
 		    "signal_counts[%d].lec_count=%d; lec_lwp=%d",
+		    i, signal_counts[i].lec_count, signal_counts[i].lec_lwp);
+	for (i = signal_threads; i < THREAD_CONCURRENT_SIGNALS_NUM; i++)
+		ATF_CHECK_EQ_MSG(signal_counts[i].lec_count, 0,
+		    "extraneous signal_counts[%d].lec_count=%d; lec_lwp=%d",
 		    i, signal_counts[i].lec_count, signal_counts[i].lec_lwp);
 
 	validate_status_exited(status, exitval);
 }
+
+#define THREAD_CONCURRENT_TEST(test, sigs, descr)			\
+ATF_TC(test);								\
+ATF_TC_HEAD(test, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr", descr);				\
+}									\
+									\
+ATF_TC_BODY(test, tc)							\
+{									\
+	thread_concurrent_test(sigs);					\
+}
+
+THREAD_CONCURRENT_TEST(thread_concurrent_signals,
+   THREAD_CONCURRENT_SIGNALS_NUM,
+   "Verify that concurrent signals issued to a single thread are reported "
+   "correctly");
 
 #endif /*defined(TWAIT_HAVE_STATUS)*/
 
