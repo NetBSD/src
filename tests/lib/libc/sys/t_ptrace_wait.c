@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.157 2020/02/13 15:25:58 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.158 2020/02/13 15:26:18 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.157 2020/02/13 15:25:58 mgorny Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.158 2020/02/13 15:26:18 mgorny Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -8645,11 +8645,15 @@ enum thread_concurrent_signal_handling {
 };
 
 static pthread_barrier_t thread_concurrent_barrier;
+static pthread_key_t thread_concurrent_key;
 
 static void
 thread_concurrent_sig_handler(int sig)
 {
-	/* TODO: verify that handler is actually called */
+	void *tls_val = pthread_getspecific(thread_concurrent_key);
+	DPRINTF("Before increment, LWP %d tls_val=%p\n", _lwp_self(), tls_val);
+	FORKEE_ASSERT(pthread_setspecific(thread_concurrent_key,
+	    (void*)((uintptr_t)tls_val + 1)) == 0);
 }
 
 static void *
@@ -8657,10 +8661,18 @@ thread_concurrent_signals_thread(void *arg)
 {
 	int sigval = thread_concurrent_signals_list[
 	    _lwp_self() % __arraycount(thread_concurrent_signals_list)];
+	enum thread_concurrent_signal_handling *signal_handle = arg;
+	void *tls_val;
+
 	pthread_barrier_wait(&thread_concurrent_barrier);
 	DPRINTF("Before raising %s from LWP %d\n", strsignal(sigval),
 		_lwp_self());
 	pthread_kill(pthread_self(), sigval);
+	if (*signal_handle == TCSH_HANDLER) {
+	    tls_val = pthread_getspecific(thread_concurrent_key);
+	    DPRINTF("After raising, LWP %d tls_val=%p\n", _lwp_self(), tls_val);
+	    FORKEE_ASSERT(tls_val == (void*)1);
+	}
 	return NULL;
 }
 
@@ -8718,10 +8730,13 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 		FORKEE_ASSERT(pthread_barrier_init(
 		    &thread_concurrent_barrier, NULL,
 		    signal_threads) == 0);
+		FORKEE_ASSERT(pthread_key_create(&thread_concurrent_key, NULL)
+		    == 0);
 
 		for (i = 0; i < signal_threads; i++) {
 			FORKEE_ASSERT(pthread_create(&sig_threads[i], NULL,
-			    thread_concurrent_signals_thread, NULL) == 0);
+			    thread_concurrent_signals_thread,
+			    &signal_handle) == 0);
 		}
 
 		DPRINTF("Before joining threads from the child\n");
@@ -8729,6 +8744,7 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 			FORKEE_ASSERT(pthread_join(sig_threads[i], NULL) == 0);
 		}
 
+		FORKEE_ASSERT(pthread_key_delete(thread_concurrent_key) == 0);
 		FORKEE_ASSERT(pthread_barrier_destroy(
 		    &thread_concurrent_barrier) == 0);
 
