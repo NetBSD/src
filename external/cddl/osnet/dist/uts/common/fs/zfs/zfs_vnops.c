@@ -5575,6 +5575,9 @@ zfs_netbsd_setattr(void *v)
 
 	zflags = VTOZ(vp)->z_pflags;
 
+	/* Ignore size changes on device nodes. */
+	if (vp->v_type == VBLK || vp->v_type == VCHR)
+		xvap.xva_vattr.va_mask &= ~AT_SIZE;
 	if (vap->va_flags != VNOVAL) {
 		int error;
 
