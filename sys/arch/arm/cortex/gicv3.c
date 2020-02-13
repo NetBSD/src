@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.22 2019/12/24 09:12:56 skrll Exp $ */
+/* $NetBSD: gicv3.c,v 1.23 2020/02/13 00:42:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.22 2019/12/24 09:12:56 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.23 2020/02/13 00:42:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -40,6 +40,7 @@ __KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.22 2019/12/24 09:12:56 skrll Exp $");
 #include <sys/intr.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
+#include <sys/vmem.h>
 
 #include <machine/cpufunc.h>
 
@@ -827,6 +828,11 @@ gicv3_init(struct gicv3_softc *sc)
 		sc->sc_lpi.pic_maxsources = 8192;	/* Min. required by GICv3 spec */
 		snprintf(sc->sc_lpi.pic_name, sizeof(sc->sc_lpi.pic_name), "gicv3-lpi");
 		pic_add(&sc->sc_lpi, GIC_LPI_BASE);
+
+		sc->sc_lpi_pool = vmem_create("gicv3-lpi", 0, sc->sc_lpi.pic_maxsources,
+		    1, NULL, NULL, NULL, 0, VM_SLEEP, IPL_HIGH);
+		if (sc->sc_lpi_pool == NULL)
+			panic("failed to create gicv3 lpi pool\n");
 
 		gicv3_lpi_init(sc);
 	}
