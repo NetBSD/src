@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.97 2020/02/12 20:15:04 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.98 2020/02/13 19:38:52 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2035,4 +2035,14 @@ external/bsd/ppp/dist/pppd/eap.c		1.5
 
 	pppd: Fix bounds check in EAP code.
 	[christos, ticket #1503]
+
+sys/compat/netbsd32/netbsd32_ioctl.c		1.108,1.109
+
+	Do not use strlcpy to copy untrusted input.
+	[mlelstv, ticket #1504]
+
+sys/net/if_pppoe.c				1.149
+
+	Safely extract character sequences from packet for printing.
+	[mlelstv, ticket #1505]
 
