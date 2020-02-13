@@ -1,4 +1,4 @@
-/* $NetBSD: if_pppoe.c,v 1.147 2019/03/18 11:38:03 msaitoh Exp $ */
+/* $NetBSD: if_pppoe.c,v 1.147.4.1 2020/02/13 19:40:05 martin Exp $ */
 
 /*
  * Copyright (c) 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.147 2019/03/18 11:38:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pppoe.c,v 1.147.4.1 2020/02/13 19:40:05 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "pppoe.h"
@@ -558,6 +558,7 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 	const char *err_msg;
 	char devname[IF_NAMESIZE];
 	char *error;
+	size_t dlen;
 	uint8_t *ac_cookie;
 	size_t ac_cookie_len;
 	uint8_t *relay_sid;
@@ -631,7 +632,8 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 			break;	/* ignored */
 		case PPPOE_TAG_ACNAME:
 			if (len > 0) {
-				error = malloc(len + 1, M_TEMP, M_NOWAIT);
+				dlen = 4 * len + 1;
+				error = malloc(dlen, M_TEMP, M_NOWAIT);
 				if (error == NULL)
 					break;
 
@@ -643,7 +645,9 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 					goto done;
 				}
 
-				strlcpy(error, mtod(n, char*) + noff, len + 1);
+				strnvisx(error, dlen,
+				    mtod(n, char*) + noff, len,
+				    VIS_SAFE | VIS_OCTAL);
 				printf("pppoe: connected to %s\n", error);
 				free(error, M_TEMP);
 			}
@@ -704,15 +708,17 @@ pppoe_dispatch_disc_pkt(struct mbuf *m, int off)
 		if (err_msg) {
 			error = NULL;
 			if (errortag && len) {
-				error = malloc(len + 1, M_TEMP,
+				dlen = 4 * len + 1;
+				error = malloc(dlen, M_TEMP,
 				    M_NOWAIT|M_ZERO);
 				n = m_pulldown(m, off + sizeof(*pt), len,
 				    &noff);
 				if (!n) {
 					m = NULL;
 				} else if (error) {
-					strlcpy(error, mtod(n, char *) + noff,
-					    len + 1);
+					strnvisx(error, dlen,
+					    mtod(n, char*) + noff, len,
+					    VIS_SAFE | VIS_OCTAL);
 				}
 			}
 			if (error) {
