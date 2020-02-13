@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_ioctl.c,v 1.89.8.2 2019/07/22 16:27:29 martin Exp $	*/
+/*	$NetBSD: netbsd32_ioctl.c,v 1.89.8.3 2020/02/13 19:34:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Matthew R. Green
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.89.8.2 2019/07/22 16:27:29 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_ioctl.c,v 1.89.8.3 2020/02/13 19:34:29 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ntp.h"
@@ -145,7 +145,7 @@ static inline void
 netbsd32_to_if_addrprefreq(const struct netbsd32_if_addrprefreq *ifap32,
 	struct if_addrprefreq *ifap, u_long cmd)
 {
-	strlcpy(ifap->ifap_name, ifap32->ifap_name, sizeof(ifap->ifap_name));
+	memcpy(ifap->ifap_name, ifap32->ifap_name, IFNAMSIZ);
 	ifap->ifap_preference = ifap32->ifap_preference;
 	memcpy(&ifap->ifap_addr, &ifap32->ifap_addr,
 	    min(ifap32->ifap_addr.ss_len, _SS_MAXSIZE));
@@ -341,7 +341,7 @@ static inline void
 netbsd32_to_ieee80211req(struct netbsd32_ieee80211req *ireq32,
 			 struct ieee80211req *ireq, u_long cmd)
 {
-	strlcpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
+	memcpy(ireq->i_name, ireq32->i_name, IFNAMSIZ);
 	ireq->i_type = ireq32->i_type;
 	ireq->i_val = ireq32->i_val;
 	ireq->i_len = ireq32->i_len;
@@ -355,7 +355,7 @@ netbsd32_to_ieee80211_nwkey(struct netbsd32_ieee80211_nwkey *nwk32,
 {
 	int i;
 
-	strlcpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
+	memcpy(nwk->i_name, nwk32->i_name, IFNAMSIZ);
 	nwk->i_wepon = nwk32->i_wepon;
 	nwk->i_defkid = nwk32->i_defkid;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
@@ -569,7 +569,7 @@ static inline void
 netbsd32_from_if_addrprefreq(const struct if_addrprefreq *ifap,
 	struct netbsd32_if_addrprefreq *ifap32, u_long cmd)
 {
-	strlcpy(ifap32->ifap_name, ifap->ifap_name, sizeof(ifap32->ifap_name));
+	memcpy(ifap32->ifap_name, ifap->ifap_name, IFNAMSIZ);
 	ifap32->ifap_preference = ifap->ifap_preference;
 	memcpy(&ifap32->ifap_addr, &ifap->ifap_addr,
 	    min(ifap->ifap_addr.ss_len, _SS_MAXSIZE));
@@ -770,7 +770,7 @@ static inline void
 netbsd32_from_ieee80211req(struct ieee80211req *ireq,
 			   struct netbsd32_ieee80211req *ireq32, u_long cmd)
 {
-	strlcpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
+	memcpy(ireq32->i_name, ireq->i_name, IFNAMSIZ);
 	ireq32->i_type = ireq->i_type;
 	ireq32->i_val = ireq->i_val;
 	ireq32->i_len = ireq->i_len;
@@ -784,7 +784,7 @@ netbsd32_from_ieee80211_nwkey(struct ieee80211_nwkey *nwk,
 {
 	int i;
 
-	strlcpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
+	memcpy(nwk32->i_name, nwk->i_name, IFNAMSIZ);
 	nwk32->i_wepon = nwk->i_wepon;
 	nwk32->i_defkid = nwk->i_defkid;
 	for (i = 0; i < IEEE80211_WEP_NKID; i++) {
