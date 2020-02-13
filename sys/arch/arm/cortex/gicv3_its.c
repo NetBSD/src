@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.25 2020/02/01 15:33:48 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.26 2020/02/13 00:42:59 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.25 2020/02/01 15:33:48 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.26 2020/02/13 00:42:59 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -284,18 +284,19 @@ gicv3_its_msi_alloc_lpi(struct gicv3_its *its,
     const struct pci_attach_args *pa)
 {
 	struct pci_attach_args *new_pa;
-	int n;
+	vmem_addr_t n;
 
-	for (n = 0; n < its->its_pic->pic_maxsources; n++) {
-		if (its->its_pa[n] == NULL) {
-			new_pa = kmem_alloc(sizeof(*new_pa), KM_SLEEP);
-			memcpy(new_pa, pa, sizeof(*new_pa));
-			its->its_pa[n] = new_pa;
-			return n + its->its_pic->pic_irqbase;
-		}
-	}
+	KASSERT(its->its_gic->sc_lpi_pool != NULL);
 
-        return -1;
+	if (vmem_alloc(its->its_gic->sc_lpi_pool, 1, VM_INSTANTFIT|VM_SLEEP, &n) != 0)
+		return -1;
+	
+	KASSERT(its->its_pa[n] == NULL);
+
+	new_pa = kmem_alloc(sizeof(*new_pa), KM_SLEEP);
+	memcpy(new_pa, pa, sizeof(*new_pa));
+	its->its_pa[n] = new_pa;
+	return n + its->its_pic->pic_irqbase;
 }
 
 static void
@@ -303,11 +304,14 @@ gicv3_its_msi_free_lpi(struct gicv3_its *its, int lpi)
 {
 	struct pci_attach_args *pa;
 
+	KASSERT(its->its_gic->sc_lpi_pool != NULL);
 	KASSERT(lpi >= its->its_pic->pic_irqbase);
 
 	pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
 	its->its_pa[lpi - its->its_pic->pic_irqbase] = NULL;
 	kmem_free(pa, sizeof(*pa));
+
+	vmem_free(its->its_gic->sc_lpi_pool, lpi - its->its_pic->pic_irqbase, 1);
 }
 
 static uint32_t
