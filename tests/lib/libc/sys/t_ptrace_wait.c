@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.156 2020/02/13 15:25:29 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.157 2020/02/13 15:25:58 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.156 2020/02/13 15:25:29 mgorny Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.157 2020/02/13 15:25:58 mgorny Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -8635,7 +8635,22 @@ const int thread_concurrent_signals_list[] = {
 	SIGUSR2
 };
 
+enum thread_concurrent_signal_handling {
+	/* the signal is discarded by debugger */
+	TCSH_DISCARD,
+	/* the handler is set to SIG_IGN */
+	TCSH_SIG_IGN,
+	/* an actual handler is used */
+	TCSH_HANDLER
+};
+
 static pthread_barrier_t thread_concurrent_barrier;
+
+static void
+thread_concurrent_sig_handler(int sig)
+{
+	/* TODO: verify that handler is actually called */
+}
 
 static void *
 thread_concurrent_signals_thread(void *arg)
@@ -8650,7 +8665,8 @@ thread_concurrent_signals_thread(void *arg)
 }
 
 static void
-thread_concurrent_test(int signal_threads)
+thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
+    int signal_threads)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -8659,6 +8675,11 @@ thread_concurrent_test(int signal_threads)
 	struct lwp_event_count signal_counts[THREAD_CONCURRENT_SIGNALS_NUM]
 	    = {{0, 0}};
 	int i;
+
+	if (signal_handle == TCSH_SIG_IGN)
+		atf_tc_expect_fail("PR kern/54960");
+	else if (signal_handle == TCSH_HANDLER)
+		atf_tc_skip("PR kern/54960");
 
 	/* Protect against out-of-bounds array access. */
 	ATF_REQUIRE(signal_threads <= THREAD_CONCURRENT_SIGNALS_NUM);
@@ -8673,6 +8694,25 @@ thread_concurrent_test(int signal_threads)
 
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
+
+		if (signal_handle != TCSH_DISCARD) {
+			struct sigaction sa;
+			unsigned int j;
+
+			memset(&sa, 0, sizeof(sa));
+			if (signal_handle == TCSH_SIG_IGN)
+				sa.sa_handler = SIG_IGN;
+			else
+				sa.sa_handler = thread_concurrent_sig_handler;
+			sigemptyset(&sa.sa_mask);
+
+			for (j = 0;
+			    j < __arraycount(thread_concurrent_signals_list);
+			    j++)
+				FORKEE_ASSERT(sigaction(
+				    thread_concurrent_signals_list[j], &sa, NULL)
+				    != -1);
+		}
 
 		DPRINTF("Before starting threads from the child\n");
 		FORKEE_ASSERT(pthread_barrier_init(
@@ -8741,7 +8781,9 @@ thread_concurrent_test(int signal_threads)
 		*FIND_EVENT_COUNT(signal_counts, info.psi_lwpid) += 1;
 
 		DPRINTF("Before resuming the child process\n");
-		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1,
+		     signal_handle != TCSH_DISCARD ? WSTOPSIG(status) : 0)
+		     != -1);
 	}
 
 	for (i = 0; i < signal_threads; i++)
@@ -8756,7 +8798,7 @@ thread_concurrent_test(int signal_threads)
 	validate_status_exited(status, exitval);
 }
 
-#define THREAD_CONCURRENT_TEST(test, sigs, descr)			\
+#define THREAD_CONCURRENT_TEST(test, sig_hdl, sigs, descr)		\
 ATF_TC(test);								\
 ATF_TC_HEAD(test, tc)							\
 {									\
@@ -8765,13 +8807,21 @@ ATF_TC_HEAD(test, tc)							\
 									\
 ATF_TC_BODY(test, tc)							\
 {									\
-	thread_concurrent_test(sigs);					\
+	thread_concurrent_test(sig_hdl, sigs);				\
 }
 
-THREAD_CONCURRENT_TEST(thread_concurrent_signals,
-   THREAD_CONCURRENT_SIGNALS_NUM,
-   "Verify that concurrent signals issued to a single thread are reported "
-   "correctly");
+THREAD_CONCURRENT_TEST(thread_concurrent_signals, TCSH_DISCARD,
+    THREAD_CONCURRENT_SIGNALS_NUM,
+    "Verify that concurrent signals issued to a single thread are reported "
+    "correctly");
+THREAD_CONCURRENT_TEST(thread_concurrent_signals_sig_ign, TCSH_SIG_IGN,
+    THREAD_CONCURRENT_SIGNALS_NUM,
+    "Verify that concurrent signals issued to a single thread are reported "
+    "correctly and passed back to SIG_IGN handler");
+THREAD_CONCURRENT_TEST(thread_concurrent_signals_handler, TCSH_HANDLER,
+    THREAD_CONCURRENT_SIGNALS_NUM,
+    "Verify that concurrent signals issued to a single thread are reported "
+    "correctly and passed back to a handler function");
 
 #endif /*defined(TWAIT_HAVE_STATUS)*/
 
@@ -9363,6 +9413,8 @@ ATF_TP_ADD_TCS(tp)
 
 #if defined(TWAIT_HAVE_STATUS)
 	ATF_TP_ADD_TC(tp, thread_concurrent_signals);
+	ATF_TP_ADD_TC(tp, thread_concurrent_signals_sig_ign);
+	ATF_TP_ADD_TC(tp, thread_concurrent_signals_handler);
 #endif
 
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
