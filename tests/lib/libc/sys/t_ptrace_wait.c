@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.158 2020/02/13 15:26:18 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.159 2020/02/13 15:26:45 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.158 2020/02/13 15:26:18 mgorny Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.159 2020/02/13 15:26:45 mgorny Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -8686,6 +8686,7 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 	int status;
 	struct lwp_event_count signal_counts[THREAD_CONCURRENT_SIGNALS_NUM]
 	    = {{0, 0}};
+	ptrace_event_t event;
 	int i;
 
 	if (signal_handle == TCSH_SIG_IGN)
@@ -8758,13 +8759,18 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 
 	validate_status_stopped(status, sigval);
 
+	DPRINTF("Set LWP event mask for the child process\n");
+	memset(&event, 0, sizeof(event));
+	event.pe_set_event |= PTRACE_LWP_CREATE;
+	SYSCALL_REQUIRE(ptrace(PT_SET_EVENT_MASK, child, &event, sizeof(event))
+	    != -1);
+
 	DPRINTF("Before resuming the child process where it left off\n");
 	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
 
 	DPRINTF("Before entering signal collection loop\n");
 	while (1) {
 		ptrace_siginfo_t info;
-		int expected_sig;
 
 		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0),
@@ -8785,21 +8791,29 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 		    info.psi_siginfo.si_signo, info.psi_lwpid,
 		    WSTOPSIG(status));
 
-		expected_sig = thread_concurrent_signals_list[info.psi_lwpid %
-		    __arraycount(thread_concurrent_signals_list)];
-		ATF_CHECK_EQ_MSG(info.psi_siginfo.si_signo, expected_sig,
-		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
-		    expected_sig, info.psi_siginfo.si_signo);
-		ATF_CHECK_EQ_MSG(WSTOPSIG(status), expected_sig,
-		    "lwp=%d, expected %d, got %d", info.psi_lwpid,
-		    expected_sig, WSTOPSIG(status));
+		ATF_CHECK_EQ_MSG(info.psi_siginfo.si_signo, WSTOPSIG(status),
+		    "lwp=%d, WSTOPSIG=%d, psi_siginfo=%d", info.psi_lwpid,
+		    WSTOPSIG(status), info.psi_siginfo.si_signo);
 
-		*FIND_EVENT_COUNT(signal_counts, info.psi_lwpid) += 1;
+		if (WSTOPSIG(status) != SIGTRAP) {
+			int expected_sig =
+			    thread_concurrent_signals_list[info.psi_lwpid %
+			    __arraycount(thread_concurrent_signals_list)];
+			ATF_CHECK_EQ_MSG(WSTOPSIG(status), expected_sig,
+				"lwp=%d, expected %d, got %d", info.psi_lwpid,
+				expected_sig, WSTOPSIG(status));
+
+			*FIND_EVENT_COUNT(signal_counts, info.psi_lwpid) += 1;
+		} else {
+			ATF_CHECK_EQ_MSG(info.psi_siginfo.si_code, TRAP_LWP,
+			    "lwp=%d, expected TRAP_LWP (%d), got %d",
+			    info.psi_lwpid, TRAP_LWP, info.psi_siginfo.si_code);
+		}
 
 		DPRINTF("Before resuming the child process\n");
 		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1,
-		     signal_handle != TCSH_DISCARD ? WSTOPSIG(status) : 0)
-		     != -1);
+		     signal_handle != TCSH_DISCARD && WSTOPSIG(status) != SIGTRAP
+		     ? WSTOPSIG(status) : 0) != -1);
 	}
 
 	for (i = 0; i < signal_threads; i++)
