@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.20 2020/02/13 13:34:47 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.21 2020/02/13 13:38:44 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -606,6 +606,11 @@ trigger_trap(void)
 #endif
 }
 
+#if defined(__clang__)
+__attribute__((no_sanitize("undefined")))
+#else
+__attribute__((no_sanitize_undefined))
+#endif
 static void __used
 trigger_segv(void)
 {
