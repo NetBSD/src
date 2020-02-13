@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1689 2020/01/27 21:14:17 roy Exp $
+#	$NetBSD: 3RDPARTY,v 1.1690 2020/02/13 12:23:39 wiz Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -456,7 +456,7 @@ Before importing a new version of external/gpl3/gcc:
 
 Package:	gdb
 Version:	8.3
-Current Vers:	8.3.1
+Current Vers:	9.1
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/gdb/
 Home Page:	http://www.gnu.org/software/gdb/
@@ -473,7 +473,7 @@ When updating GDB, it is imperative to test that:
 
 Package:	binutils
 Version:	2.31.1
-Current Vers:	2.32
+Current Vers:	2.34
 Maintainer:	FSF
 Archive Site:	ftp://ftp.gnu.org/gnu/binutils/
 Home Page:	http://www.gnu.org/software/binutils/
