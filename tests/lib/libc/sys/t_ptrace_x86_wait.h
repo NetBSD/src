@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.18 2020/01/08 17:23:34 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.19 2020/02/13 02:53:46 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -1971,7 +1971,7 @@ ATF_TC_HEAD(x86_cve_2018_8897, tc)
 
 #define X86_CVE_2018_8897_PAGE 0x5000 /* page addressable by 32-bit registers */
 
-static void
+static __attribute__((__optimize__("O0"))) void
 x86_cve_2018_8897_trigger(void)
 {
 	/*
