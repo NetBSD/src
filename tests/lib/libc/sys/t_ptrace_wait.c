@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.161 2020/02/13 15:27:25 mgorny Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.162 2020/02/13 15:27:41 mgorny Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.161 2020/02/13 15:27:25 mgorny Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.162 2020/02/13 15:27:41 mgorny Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -8954,6 +8954,50 @@ THREAD_CONCURRENT_TEST(thread_concurrent_breakpoints, TCSH_DISCARD,
 THREAD_CONCURRENT_TEST(thread_concurrent_watchpoints, TCSH_DISCARD,
     0, 0, THREAD_CONCURRENT_WATCHPOINT_NUM,
     "Verify that concurrent breakpoints are reported correctly");
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_wp, TCSH_DISCARD,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, 0, THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent breakpoints and watchpoints are reported "
+    "correctly");
+
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_sig, TCSH_DISCARD,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, THREAD_CONCURRENT_SIGNALS_NUM, 0,
+    "Verify that concurrent breakpoints and signals are reported correctly");
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_sig_sig_ign, TCSH_SIG_IGN,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, THREAD_CONCURRENT_SIGNALS_NUM, 0,
+    "Verify that concurrent breakpoints and signals are reported correctly "
+    "and passed back to SIG_IGN handler");
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_sig_handler, TCSH_HANDLER,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, THREAD_CONCURRENT_SIGNALS_NUM, 0,
+    "Verify that concurrent breakpoints and signals are reported correctly "
+    "and passed back to a handler function");
+
+THREAD_CONCURRENT_TEST(thread_concurrent_wp_sig, TCSH_DISCARD,
+    0, THREAD_CONCURRENT_SIGNALS_NUM, THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent watchpoints and signals are reported correctly");
+THREAD_CONCURRENT_TEST(thread_concurrent_wp_sig_sig_ign, TCSH_SIG_IGN,
+    0, THREAD_CONCURRENT_SIGNALS_NUM, THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent watchpoints and signals are reported correctly "
+    "and passed back to SIG_IGN handler");
+THREAD_CONCURRENT_TEST(thread_concurrent_wp_sig_handler, TCSH_HANDLER,
+    0, THREAD_CONCURRENT_SIGNALS_NUM, THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent watchpoints and signals are reported correctly "
+    "and passed back to a handler function");
+
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_wp_sig, TCSH_DISCARD,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, THREAD_CONCURRENT_SIGNALS_NUM,
+    THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent breakpoints, watchpoints and signals are reported "
+    "correctly");
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_wp_sig_sig_ign, TCSH_SIG_IGN,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, THREAD_CONCURRENT_SIGNALS_NUM,
+    THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent breakpoints, watchpoints and signals are reported "
+    "correctly and passed back to SIG_IGN handler");
+THREAD_CONCURRENT_TEST(thread_concurrent_bp_wp_sig_handler, TCSH_HANDLER,
+    THREAD_CONCURRENT_BREAKPOINT_NUM, THREAD_CONCURRENT_SIGNALS_NUM,
+    THREAD_CONCURRENT_WATCHPOINT_NUM,
+    "Verify that concurrent breakpoints, watchpoints and signals are reported "
+    "correctly and passed back to a handler function");
 
 #endif /*defined(TWAIT_HAVE_STATUS)*/
 
@@ -9550,6 +9594,16 @@ ATF_TP_ADD_TCS(tp)
 #if defined(__i386__) || defined(__x86_64__)
 	ATF_TP_ADD_TC(tp, thread_concurrent_breakpoints);
 	ATF_TP_ADD_TC(tp, thread_concurrent_watchpoints);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_wp);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_sig);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_sig_sig_ign);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_sig_handler);
+	ATF_TP_ADD_TC(tp, thread_concurrent_wp_sig);
+	ATF_TP_ADD_TC(tp, thread_concurrent_wp_sig_sig_ign);
+	ATF_TP_ADD_TC(tp, thread_concurrent_wp_sig_handler);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_wp_sig);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_wp_sig_sig_ign);
+	ATF_TP_ADD_TC(tp, thread_concurrent_bp_wp_sig_handler);
 #endif
 #endif
 
