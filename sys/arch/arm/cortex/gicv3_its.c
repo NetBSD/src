@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.26 2020/02/13 00:42:59 jmcneill Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.27 2020/02/13 02:12:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.26 2020/02/13 00:42:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.27 2020/02/13 02:12:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -806,7 +806,6 @@ gicv3_its_get_affinity(void *priv, size_t irq, kcpuset_t *affinity)
 	struct gicv3_its * const its = priv;
 	struct cpu_info *ci;
 
-	kcpuset_zero(affinity);
 	ci = its->its_targets[irq];
 	if (ci)
 		kcpuset_set(affinity, cpu_index(ci));
@@ -825,7 +824,7 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 
 	pa = its->its_pa[irq];
 	if (pa == NULL)
-		return EINVAL;
+		return EPASSTHROUGH;
 
 	ci = cpu_lookup(kcpuset_ffs(affinity) - 1);
 	its->its_targets[irq] = ci;

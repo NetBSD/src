@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3.c,v 1.23 2020/02/13 00:42:59 jmcneill Exp $ */
+/* $NetBSD: gicv3.c,v 1.24 2020/02/13 02:12:06 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -31,7 +31,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.23 2020/02/13 00:42:59 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3.c,v 1.24 2020/02/13 02:12:06 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -634,6 +634,7 @@ gicv3_lpi_get_affinity(struct pic_softc *pic, size_t irq, kcpuset_t *affinity)
 	struct gicv3_softc * const sc = LPITOSOFTC(pic);
 	struct gicv3_lpi_callback *cb;
 
+	kcpuset_zero(affinity);
 	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list)
 		cb->get_affinity(cb->priv, irq, affinity);
 }
@@ -647,11 +648,11 @@ gicv3_lpi_set_affinity(struct pic_softc *pic, size_t irq, const kcpuset_t *affin
 
 	LIST_FOREACH(cb, &sc->sc_lpi_callbacks, list) {
 		error = cb->set_affinity(cb->priv, irq, affinity);
-		if (error)
+		if (error != EPASSTHROUGH)
 			return error;
 	}
 
-	return error;
+	return EINVAL;
 }
 #endif
 
