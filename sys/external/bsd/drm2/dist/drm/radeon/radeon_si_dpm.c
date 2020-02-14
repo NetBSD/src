@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_si_dpm.c,v 1.2 2020/02/14 04:29:19 riastradh Exp $	*/
+/*	$NetBSD: radeon_si_dpm.c,v 1.3 2020/02/14 04:29:42 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.2 2020/02/14 04:29:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.3 2020/02/14 04:29:42 riastradh Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -2535,7 +2535,7 @@ static int si_initialize_smc_dte_tables(struct radeon_device *rdev)
 }
 
 static int si_get_cac_std_voltage_max_min(struct radeon_device *rdev,
-					  u16 *vmax, u16 *vmin)
+					  u16 *max, u16 *min)
 {
 	struct si_power_info *si_pi = si_get_pi(rdev);
 	struct radeon_cac_leakage_table *table =
@@ -2547,35 +2547,35 @@ static int si_get_cac_std_voltage_max_min(struct radeon_device *rdev,
 	if (table == NULL)
 		return -EINVAL;
 
-	*vmax = 0;
-	*vmin = 0xFFFF;
+	*max = 0;
+	*min = 0xFFFF;
 
 	for (i = 0; i < table->count; i++) {
-		if (table->entries[i].vddc > *vmax)
-			*vmax = table->entries[i].vddc;
-		if (table->entries[i].vddc < *vmin)
-			*vmin = table->entries[i].vddc;
+		if (table->entries[i].vddc > *max)
+			*max = table->entries[i].vddc;
+		if (table->entries[i].vddc < *min)
+			*min = table->entries[i].vddc;
 	}
 
 	if (si_pi->powertune_data->lkge_lut_v0_percent > 100)
 		return -EINVAL;
 
-	v0_loadline = (*vmin) * (100 - si_pi->powertune_data->lkge_lut_v0_percent) / 100;
+	v0_loadline = (*min) * (100 - si_pi->powertune_data->lkge_lut_v0_percent) / 100;
 
 	if (v0_loadline > 0xFFFFUL)
 		return -EINVAL;
 
-	*vmin = (u16)v0_loadline;
+	*min = (u16)v0_loadline;
 
-	if ((*vmin > *vmax) || (*vmax == 0) || (*vmin == 0))
+	if ((*min > *max) || (*max == 0) || (*min == 0))
 		return -EINVAL;
 
 	return 0;
 }
 
-static u16 si_get_cac_std_voltage_step(u16 vmax, u16 vmin)
+static u16 si_get_cac_std_voltage_step(u16 max, u16 min)
 {
-	return ((vmax - vmin) + (SMC_SISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES - 1)) /
+	return ((max - min) + (SMC_SISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES - 1)) /
 		SMC_SISLANDS_LKGE_LUT_NUM_OF_VOLT_ENTRIES;
 }
 
