@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd.c,v 1.4 2019/01/01 08:07:47 maya Exp $	*/
+/*	$NetBSD: amdgpu_uvd.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.4 2019/01/01 08:07:47 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -287,7 +287,7 @@ int amdgpu_uvd_resume(struct amdgpu_device *adev)
 	size = amdgpu_bo_size(adev->uvd.vcpu_bo);
 	size -= le32_to_cpu(hdr->ucode_size_bytes);
 	ptr = adev->uvd.cpu_addr;
-	ptr = (char *)ptr + le32_to_cpu(hdr->ucode_size_bytes);
+	ptr += le32_to_cpu(hdr->ucode_size_bytes);
 
 	memset(ptr, 0, size);
 
@@ -570,7 +570,7 @@ static int amdgpu_uvd_cs_msg(struct amdgpu_uvd_cs_ctx *ctx,
 		return r;
 	}
 
-	msg = (void *)((char *)ptr + offset);
+	msg = ptr + offset;
 
 	msg_type = msg[1];
 	handle = msg[2];

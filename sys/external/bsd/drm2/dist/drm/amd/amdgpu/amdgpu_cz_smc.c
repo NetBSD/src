@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp $	*/
+/*	$NetBSD: amdgpu_cz_smc.c,v 1.3 2020/02/14 04:30:04 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.3 2020/02/14 04:30:04 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <asm/byteorder.h>
@@ -501,7 +501,7 @@ static int cz_smu_populate_single_scratch_entry(struct amdgpu_device *adev,
 
 	priv->smu_buffer_used_bytes += size_in_byte;
 	entry->data_size = size_in_byte;
-	entry->kaddr = (char *)priv->smu_buffer.kaddr + priv->smu_buffer_used_bytes;
+	entry->kaddr = priv->smu_buffer.kaddr + priv->smu_buffer_used_bytes;
 	entry->mc_addr_low = lower_32_bits(mc_addr);
 	entry->mc_addr_high = upper_32_bits(mc_addr);
 	entry->firmware_ID = scratch_type;
