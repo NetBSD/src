@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.14 2020/02/14 04:37:09 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.14 2020/02/14 04:37:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -584,7 +584,7 @@ static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = {
 	.action_msg = "Restore framebuffer console",
 };
 #else
-static struct sysrq_key_op sysrq_drm_fb_helper_restore_op;
+static struct sysrq_key_op sysrq_drm_fb_helper_restore_op = { };
 #endif
 
 #ifndef __NetBSD__		/* XXX fb info */
