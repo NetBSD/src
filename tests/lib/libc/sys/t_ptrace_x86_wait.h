@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.22 2020/02/13 18:31:54 tnn Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.23 2020/02/14 04:20:59 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -1972,11 +1972,6 @@ ATF_TC_HEAD(x86_cve_2018_8897, tc)
 #define X86_CVE_2018_8897_PAGE 0x5000 /* page addressable by 32-bit registers */
 
 static void
-#ifdef __clang__
-__attribute__((optnone))
-#else
-__attribute__((__optimize__("O0")))
-#endif
 x86_cve_2018_8897_trigger(void)
 {
 	/*
@@ -2077,13 +2072,13 @@ x86_cve_2018_8897_trigger(void)
 		);
 #else /* !__PIE__ */
 	__asm__ __volatile__(
-		"       movq $farjmp32, %%rax\n\t"
+		"       movq $farjmp32%=, %%rax\n\t"
 		"       ljmp *(%%rax)\n\t"
-		"farjmp32:\n\t"
-		"       .long trigger32\n\t"
+		"farjmp32%=:\n\t"
+		"       .long trigger32%=\n\t"
 		"       .word 0x73\n\t"
 		"       .code32\n\t"
-		"trigger32:\n\t"
+		"trigger32%=:\n\t"
 		"       movl $0x5000, %%esp\n\t"
 		"       pop %%ss\n\t"
 		"       int $4\n\t"
