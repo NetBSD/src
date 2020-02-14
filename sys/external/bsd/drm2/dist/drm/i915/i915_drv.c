@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.c,v 1.17 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: i915_drv.c,v 1.18 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /* i915_drv.c -- i830,i845,i855,i865,i915 driver -*- linux-c -*-
  */
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.17 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_drv.c,v 1.18 2020/02/14 04:37:09 riastradh Exp $");
 
 #include <linux/device.h>
 #include <linux/acpi.h>
@@ -741,9 +741,7 @@ int i915_drm_suspend(struct drm_device *dev)
 	intel_uncore_forcewake_reset(dev, false);
 	intel_opregion_fini(dev);
 
-#ifndef __NetBSD__		/* XXX fb */
 	intel_fbdev_set_suspend(dev, FBINFO_STATE_SUSPENDED, true);
-#endif
 
 	dev_priv->suspend_count++;
 
@@ -870,9 +868,7 @@ int i915_drm_resume(struct drm_device *dev)
 
 	intel_opregion_init(dev);
 
-#ifndef __NetBSD__		/* XXX fb */
 	intel_fbdev_set_suspend(dev, FBINFO_STATE_RUNNING, false);
-#endif
 
 	mutex_lock(&dev_priv->modeset_restore_lock);
 	dev_priv->modeset_restore = MODESET_DONE;

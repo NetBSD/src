@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.8 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.9 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.8 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.9 2020/02/14 04:37:09 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -1844,13 +1844,11 @@ int radeon_suspend_kms(struct drm_device *dev, bool suspend, bool fbcon)
 	}
 #endif
 
-#ifndef __NetBSD__		/* XXX radeon fb */
 	if (fbcon) {
 		console_lock();
 		radeon_fbdev_set_suspend(rdev, 1);
 		console_unlock();
 	}
-#endif
 	return 0;
 }
 
@@ -1873,11 +1871,9 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
-#ifndef __NetBSD__		/* XXX radeon fb */
 	if (fbcon) {
 		console_lock();
 	}
-#endif
 #ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (resume) {
 		pci_set_power_state(dev->pdev, PCI_D0);
@@ -1963,12 +1959,10 @@ int radeon_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	if ((rdev->pm.pm_method == PM_METHOD_DPM) && rdev->pm.dpm_enabled)
 		radeon_pm_compute_clocks(rdev);
 
-#ifndef __NetBSD__		/* XXX radeon fb */
 	if (fbcon) {
 		radeon_fbdev_set_suspend(rdev, 0);
 		console_unlock();
 	}
-#endif
 
 	return 0;
 }
