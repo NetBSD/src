@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.14 2020/02/14 04:36:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.14 2020/02/14 04:36:55 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -3462,12 +3462,7 @@ int drm_mode_getfb(struct drm_device *dev,
 	r->bpp = fb->bits_per_pixel;
 	r->pitch = fb->pitches[0];
 	if (fb->funcs->create_handle) {
-		if (file_priv->is_master ||
-#ifdef __NetBSD__
-		    DRM_SUSER() ||
-#else
-		    capable(CAP_SYS_ADMIN) ||
-#endif
+		if (file_priv->is_master || capable(CAP_SYS_ADMIN) ||
 		    drm_is_control_client(file_priv)) {
 			ret = fb->funcs->create_handle(fb, file_priv,
 						       &r->handle);

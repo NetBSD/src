@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bufs.c,v 1.10 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: drm_bufs.c,v 1.11 2020/02/14 04:36:55 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Buffer Management
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.10 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.11 2020/02/14 04:36:55 riastradh Exp $");
 
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
@@ -424,17 +424,8 @@ int drm_legacy_addmap_ioctl(struct drm_device *dev, void *data,
 	struct drm_map_list *maplist;
 	int err;
 
-#ifdef __NetBSD__
-#  if 0				/* XXX Old drm did this.  */
-	if (!(dev->flags & (FREAD | FWRITE)))
-		return -EACCES;
-#  endif
-	if (!(DRM_SUSER() || map->type == _DRM_AGP || map->type == _DRM_SHM))
-		return -EACCES;	/* XXX */
-#else
 	if (!(capable(CAP_SYS_ADMIN) || map->type == _DRM_AGP || map->type == _DRM_SHM))
 		return -EPERM;
-#endif
 
 	err = drm_addmap_core(dev, map->offset, map->size, map->type,
 			      map->flags, &maplist);
@@ -856,13 +847,8 @@ int drm_legacy_addbufs_pci(struct drm_device *dev,
 	if (!dma)
 		return -EINVAL;
 
-#ifdef __NetBSD__
-	if (!DRM_SUSER())
-		return -EACCES;	/* XXX */
-#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
-#endif
 
 	count = request->count;
 	order = order_base_2(request->size);
@@ -1064,13 +1050,8 @@ static int drm_legacy_addbufs_sg(struct drm_device *dev,
 	if (!dma)
 		return -EINVAL;
 
-#ifdef __NetBSD__
-	if (!DRM_SUSER())
-		return -EACCES;	/* XXX */
-#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
-#endif
 
 	count = request->count;
 	order = order_base_2(request->size);

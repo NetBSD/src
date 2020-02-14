@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.16 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.17 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.16 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.17 2020/02/14 04:36:56 riastradh Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -48,7 +48,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.16 2020/02/14 04:35:20 riastradh E
 
 #ifdef __NetBSD__		/* PMAP_* caching flags for ttm_io_prot */
 #include <uvm/uvm_pmap.h>
-#include <drm/drm_auth_netbsd.h>
 #include <linux/nbsd-namespace.h>
 #endif
 

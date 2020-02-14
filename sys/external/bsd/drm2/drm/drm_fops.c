@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fops.c,v 1.14 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: drm_fops.c,v 1.15 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.14 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fops.c,v 1.15 2020/02/14 04:36:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/select.h>
@@ -52,7 +52,7 @@ drm_open_file(struct drm_file *file, void *fp, struct drm_minor *minor)
 	struct drm_device *const dev = minor->dev;
 	int ret;
 
-	file->authenticated = DRM_SUSER(); /* XXX */
+	file->authenticated = capable(CAP_SYS_ADMIN); /* XXX */
 	file->is_master = false;
 	file->stereo_allowed = false;
 	file->universal_planes = false;
