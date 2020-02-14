@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.22 2020/02/14 04:36:12 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.23 2020/02/14 09:39:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.22 2020/02/14 04:36:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.23 2020/02/14 09:39:37 riastradh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -3723,15 +3723,11 @@ static void ilk_update_wm(struct drm_crtc *crtc)
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct ilk_wm_maximums max;
-	static const struct ilk_wm_values zero_values;
-	struct ilk_wm_values results = zero_values;
+	struct ilk_wm_values results = {};
 	enum intel_ddb_partitioning partitioning;
-	static const struct intel_pipe_wm zero_wm;
-	struct intel_pipe_wm pipe_wm = zero_wm;
-	struct intel_pipe_wm lp_wm_1_2 = zero_wm, lp_wm_5_6 = zero_wm,
-	    *best_lp_wm;
-	static const struct intel_wm_config zero_config;
-	struct intel_wm_config config = zero_config;
+	struct intel_pipe_wm pipe_wm = {};
+	struct intel_pipe_wm lp_wm_1_2 = {}, lp_wm_5_6 = {}, *best_lp_wm;
+	struct intel_wm_config config = {};
 
 	WARN_ON(cstate->base.active != intel_crtc->active);
 
