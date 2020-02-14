@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gem.c,v 1.7 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_gem.c,v 1.8 2020/02/14 04:38:24 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.7 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.8 2020/02/14 04:38:24 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -290,15 +290,6 @@ int radeon_gem_create_ioctl(struct drm_device *dev, void *data,
 int radeon_gem_userptr_ioctl(struct drm_device *dev, void *data,
 			     struct drm_file *filp)
 {
-#ifdef __NetBSD__
-	/*
-	 * XXX Too painful to contemplate for now.  If you add this,
-	 * make sure to update radeon_cs.c radeon_cs_parser_relocs
-	 * (need_mmap_lock), and anything else using
-	 * radeon_ttm_tt_has_userptr.
-	 */
-	return -ENODEV;
-#else
 	struct radeon_device *rdev = dev->dev_private;
 	struct drm_radeon_gem_userptr *args = data;
 	struct drm_gem_object *gobj;
@@ -349,17 +340,29 @@ int radeon_gem_userptr_ioctl(struct drm_device *dev, void *data,
 	}
 
 	if (args->flags & RADEON_GEM_USERPTR_VALIDATE) {
+#ifdef __NetBSD__
+		vm_map_lock_read(&curproc->p_vmspace->vm_map);
+#else
 		down_read(&current->mm->mmap_sem);
+#endif
 		r = radeon_bo_reserve(bo, true);
 		if (r) {
+#ifdef __NetBSD__
+			vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 			up_read(&current->mm->mmap_sem);
+#endif
 			goto release_object;
 		}
 
 		radeon_ttm_placement_from_domain(bo, RADEON_GEM_DOMAIN_GTT);
 		r = ttm_bo_validate(&bo->tbo, &bo->placement, true, false);
 		radeon_bo_unreserve(bo);
+#ifdef __NetBSD__
+		vm_map_unlock_read(&curproc->p_vmspace->vm_map);
+#else
 		up_read(&current->mm->mmap_sem);
+#endif
 		if (r)
 			goto release_object;
 	}
@@ -382,7 +385,6 @@ handle_lockup:
 	r = radeon_gem_handle_lockup(rdev, r);
 
 	return r;
-#endif
 }
 
 int radeon_gem_set_domain_ioctl(struct drm_device *dev, void *data,
