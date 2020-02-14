@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon.h,v 1.7 2020/01/26 14:36:35 jmcneill Exp $	*/
+/*	$NetBSD: radeon.h,v 1.8 2020/02/14 04:37:43 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -127,7 +127,7 @@ extern int radeon_mst;
  * symbol;
  */
 #define RADEON_MAX_USEC_TIMEOUT			100000	/* 100 ms */
-#define RADEON_FENCE_JIFFIES_TIMEOUT		(DRM_HZ / 2)
+#define RADEON_FENCE_JIFFIES_TIMEOUT		(HZ / 2)
 /* RADEON_IB_POOL_SIZE must be a power of 2 */
 #define RADEON_IB_POOL_SIZE			16
 #define RADEON_DEBUGFS_MAX_COMPONENTS		32
