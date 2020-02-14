@@ -1,11 +1,8 @@
-/*	$NetBSD: drm_auth_netbsd.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: capability.h,v 1.1 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,16 +26,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DRM_DRM_AUTH_NETBSD_H_
-#define _DRM_DRM_AUTH_NETBSD_H_
+#ifndef _LINUX_CAPABILITY_H_
+#define _LINUX_CAPABILITy_H_
 
 #include <sys/kauth.h>
 
+enum linux_capability {
+	LINUX_CAP_SYS_ADMIN,
+#define	CAP_SYS_ADMIN	LINUX_CAP_SYS_ADMIN
+};
+
 static inline bool
-DRM_SUSER(void)
+capable(enum linux_capability cap)
 {
+
+	KASSERT(cap == CAP_SYS_ADMIN);
 	return kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
 	    NULL) == 0;
 }
 
-#endif  /* _DRM_DRM_AUTH_NETBSD_H_ */
+#endif  /* _LINUX_CAPABILITY_H_ */
