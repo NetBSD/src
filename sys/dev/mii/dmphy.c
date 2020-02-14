@@ -1,4 +1,4 @@
-/*	$NetBSD: dmphy.c,v 1.45 2020/02/14 14:14:45 nisimura Exp $	*/
+/*	$NetBSD: dmphy.c,v 1.46 2020/02/14 14:17:42 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.45 2020/02/14 14:14:45 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dmphy.c,v 1.46 2020/02/14 14:17:42 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -241,7 +241,7 @@ dmphy_status(struct mii_softc *sc)
 		else
 			mii->mii_media_active |= IFM_NONE;
 		if (mii->mii_media_active & IFM_FDX)
-			mii->mii_media_active |= mii_phy_flowstatus(phy);
+			mii->mii_media_active |= mii_phy_flowstatus(sc);
 	} else
 		mii->mii_media_active = ife->ifm_media;
 }
