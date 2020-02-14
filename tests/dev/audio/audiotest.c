@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.3 2020/02/13 18:06:26 tnn Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.4 2020/02/14 13:20:48 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.3 2020/02/13 18:06:26 tnn Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.4 2020/02/14 13:20:48 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -1381,8 +1381,8 @@ void test_open_audio(int);
 void test_open_sound(int);
 void test_open_audioctl(int);
 void test_open_simul(int, int);
-void try_open_multiuser(int);
-void test_open_multiuser(int);
+void try_open_multiuser(bool);
+void test_open_multiuser(bool);
 void test_rdwr_fallback(int, bool, bool);
 void test_rdwr_two(int, int);
 void test_mmap_mode(int, int);
@@ -1400,8 +1400,8 @@ void getenc_check_encodings(int, int[][5]);
 void test_AUDIO_ERROR(int);
 void test_audioctl_open_1(int, int);
 void test_audioctl_open_2(int, int);
-void try_audioctl_open_multiuser(int, const char *, const char *);
-void test_audioctl_open_multiuser(int, const char *, const char *);
+void try_audioctl_open_multiuser(const char *, const char *);
+void test_audioctl_open_multiuser(bool, const char *, const char *);
 void test_audioctl_rw(int);
 
 #define DEF(name) \
@@ -2219,7 +2219,7 @@ DEF(open_simul_RDWR_RDWR)	{ test_open_simul(O_RDWR, O_RDWR);	}
  * /dev/audio can be opened by other user who opens /dev/audio.
  */
 void
-try_open_multiuser(int multiuser)
+try_open_multiuser(bool multiuser)
 {
 	int fd0;
 	int fd1;
@@ -2295,10 +2295,9 @@ try_open_multiuser(int multiuser)
  * XXX XP_* macros are not compatible with on-error-goto, we need try-catch...
  */
 void
-test_open_multiuser(int multiuser)
+test_open_multiuser(bool multiuser)
 {
 	char mibname[32];
-	bool newval;
 	bool oldval;
 	size_t oldlen;
 	int r;
@@ -2327,26 +2326,24 @@ test_open_multiuser(int multiuser)
 
 	/* Change if necessary */
 	if (oldval != multiuser) {
-		newval = multiuser;
-		r = SYSCTLBYNAME(mibname, NULL, NULL, &newval, sizeof(newval));
+		r = SYSCTLBYNAME(mibname, NULL, NULL, &multiuser,
+		    sizeof(multiuser));
 		REQUIRED_SYS_EQ(0, r);
 		DPRINTF("  > new multiuser=%d\n", multiuser);
-	} else {
-		newval = oldval;
 	}
 
 	/* Do test */
 	try_open_multiuser(multiuser);
 
 	/* Restore multiuser mode */
-	if (oldval != newval) {
+	if (oldval != multiuser) {
 		DPRINTF("  > restore multiuser to %d\n", oldval);
 		r = SYSCTLBYNAME(mibname, NULL, NULL, &oldval, sizeof(oldval));
 		REQUIRED_SYS_EQ(0, r);
 	}
 }
-DEF(open_multiuser_0)	{ test_open_multiuser(0); }
-DEF(open_multiuser_1)	{ test_open_multiuser(1); }
+DEF(open_multiuser_0)	{ test_open_multiuser(false); }
+DEF(open_multiuser_1)	{ test_open_multiuser(true); }
 
 /*
  * Normal playback (with PLAY_ALL).
@@ -6034,12 +6031,13 @@ DEF(audioctl_open_simul)
 }
 
 /*
- * /dev/audioctl can be opened by other user who opens /dev/audioctl.
- * /dev/audioctl can be opened by other user who opens /dev/audio.
- * /dev/audio    can be opened by other user who opens /dev/audioct.
+ * /dev/audioctl can be opened by other user who opens /dev/audioctl,
+ * /dev/audioctl can be opened by other user who opens /dev/audio,
+ * /dev/audio    can be opened by other user who opens /dev/audioctl,
+ * regardless of multiuser mode.
  */
 void
-try_audioctl_open_multiuser(int multiuser, const char *dev1, const char *dev2)
+try_audioctl_open_multiuser(const char *dev1, const char *dev2)
 {
 	int fd1;
 	int fd2;
@@ -6076,10 +6074,10 @@ try_audioctl_open_multiuser(int multiuser, const char *dev1, const char *dev2)
  * XXX XP_* macros are not compatible with on-error-goto, we need try-catch...
  */
 void
-test_audioctl_open_multiuser(int multiuser, const char *dev1, const char *dev2)
+test_audioctl_open_multiuser(bool multiuser,
+	const char *dev1, const char *dev2)
 {
 	char mibname[32];
-	bool newval;
 	bool oldval;
 	size_t oldlen;
 	int r;
@@ -6107,19 +6105,17 @@ test_audioctl_open_multiuser(int multiuser, const char *dev1, const char *dev2)
 
 	/* Change if necessary */
 	if (oldval != multiuser) {
-		newval = multiuser;
-		r = SYSCTLBYNAME(mibname, NULL, NULL, &newval, sizeof(newval));
+		r = SYSCTLBYNAME(mibname, NULL, NULL, &multiuser,
+		    sizeof(multiuser));
 		REQUIRED_SYS_EQ(0, r);
 		DPRINTF("  > new multiuser=%d\n", multiuser);
-	} else {
-		newval = oldval;
 	}
 
 	/* Do test */
-	try_audioctl_open_multiuser(multiuser, dev1, dev2);
+	try_audioctl_open_multiuser(dev1, dev2);
 
 	/* Restore multiuser mode */
-	if (oldval != newval) {
+	if (oldval != multiuser) {
 		DPRINTF("  > restore multiuser to %d\n", oldval);
 		r = SYSCTLBYNAME(mibname, NULL, NULL, &oldval, sizeof(oldval));
 		XP_SYS_EQ(0, r);
@@ -6127,27 +6123,27 @@ test_audioctl_open_multiuser(int multiuser, const char *dev1, const char *dev2)
 }
 DEF(audioctl_open_multiuser0_audio1) {
 	TEST("audioctl_open_multiuser0_audio1");
-	test_audioctl_open_multiuser(0, devaudio, devaudioctl);
+	test_audioctl_open_multiuser(false, devaudio, devaudioctl);
 }
 DEF(audioctl_open_multiuser1_audio1) {
 	TEST("audioctl_open_multiuser1_audio1");
-	test_audioctl_open_multiuser(1, devaudio, devaudioctl);
+	test_audioctl_open_multiuser(true, devaudio, devaudioctl);
 }
 DEF(audioctl_open_multiuser0_audio2) {
 	TEST("audioctl_open_multiuser0_audio2");
-	test_audioctl_open_multiuser(0, devaudioctl, devaudio);
+	test_audioctl_open_multiuser(false, devaudioctl, devaudio);
 }
 DEF(audioctl_open_multiuser1_audio2) {
 	TEST("audioctl_open_multiuser1_audio2");
-	test_audioctl_open_multiuser(1, devaudioctl, devaudio);
+	test_audioctl_open_multiuser(true, devaudioctl, devaudio);
 }
 DEF(audioctl_open_multiuser0_audioctl) {
 	TEST("audioctl_open_multiuser0_audioctl");
-	test_audioctl_open_multiuser(0, devaudioctl, devaudioctl);
+	test_audioctl_open_multiuser(false, devaudioctl, devaudioctl);
 }
 DEF(audioctl_open_multiuser1_audioctl) {
 	TEST("audioctl_open_multiuser1_audioctl");
-	test_audioctl_open_multiuser(1, devaudioctl, devaudioctl);
+	test_audioctl_open_multiuser(true, devaudioctl, devaudioctl);
 }
 
 /*
