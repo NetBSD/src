@@ -1,4 +1,4 @@
-/*	$NetBSD: capability.h,v 1.1 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: capability.h,v 1.2 2020/02/14 16:02:41 tnn Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #ifndef _LINUX_CAPABILITY_H_
-#define _LINUX_CAPABILITy_H_
+#define _LINUX_CAPABILITY_H_
 
 #include <sys/kauth.h>
 
