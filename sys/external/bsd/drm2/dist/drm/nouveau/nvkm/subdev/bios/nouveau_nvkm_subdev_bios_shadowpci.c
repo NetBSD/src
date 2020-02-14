@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_bios_shadowpci.c,v 1.3 2018/08/27 07:42:02 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_bios_shadowpci.c,v 1.4 2020/02/14 04:30:05 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -23,7 +23,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_shadowpci.c,v 1.3 2018/08/27 07:42:02 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_bios_shadowpci.c,v 1.4 2020/02/14 04:30:05 riastradh Exp $");
 
 #include "priv.h"
 
@@ -44,8 +44,7 @@ pcirom_read(void *data, u32 offset, u32 length, struct nvkm_bios *bios)
 {
 	struct priv *priv = data;
 	if (offset + length <= priv->size) {
-		memcpy_fromio(bios->data + offset,
-		    (const char __iomem *)priv->rom + offset, length);
+		memcpy_fromio(bios->data + offset, priv->rom + offset, length);
 		return length;
 	}
 	return 0;
