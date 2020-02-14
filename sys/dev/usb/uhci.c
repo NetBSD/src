@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.291 2020/02/14 16:47:11 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.292 2020/02/14 16:47:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.291 2020/02/14 16:47:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.292 2020/02/14 16:47:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1056,11 +1056,12 @@ uhci_poll_hub(void *addr)
 	/*
 	 * Interrupt completed, and the xfer has not been completed or
 	 * synchronously aborted.  Complete the xfer now.
-	 *
-	 * XXX Set ux_isdone if DIAGNOSTIC?
 	 */
 	xfer->ux_actlen = 1;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
+#ifdef DIAGNOSTIC
+	UHCI_XFER2UXFER(xfer)->ux_isdone = true;
+#endif
 	usb_transfer_complete(xfer);
 
 out:	mutex_exit(&sc->sc_lock);
