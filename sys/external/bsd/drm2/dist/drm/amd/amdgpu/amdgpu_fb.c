@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.4 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.5 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.4 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.5 2020/02/14 04:37:09 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -438,11 +438,9 @@ void amdgpu_fbdev_fini(struct amdgpu_device *adev)
 
 void amdgpu_fbdev_set_suspend(struct amdgpu_device *adev, int state)
 {
-#ifndef __NetBSD__		/* XXX amdgpu fb suspend */
 	if (adev->mode_info.rfbdev)
 		drm_fb_helper_set_suspend(&adev->mode_info.rfbdev->helper,
 			state);
-#endif
 }
 
 int amdgpu_fbdev_total_size(struct amdgpu_device *adev)

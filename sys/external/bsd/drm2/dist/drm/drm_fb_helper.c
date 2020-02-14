@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.13 2019/11/05 04:09:51 msaitoh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.14 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.13 2019/11/05 04:09:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.14 2020/02/14 04:37:09 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -864,7 +864,11 @@ void drm_fb_helper_fini(struct drm_fb_helper *fb_helper)
 }
 EXPORT_SYMBOL(drm_fb_helper_fini);
 
-#ifndef __NetBSD__		/* XXX fb info */
+#ifdef __NetBSD__		/* XXX fb info */
+void drm_fb_helper_set_suspend(struct drm_fb_helper *fb_helper, int state)
+{
+}
+#else
 /**
  * drm_fb_helper_unlink_fbi - wrapper around unlink_framebuffer
  * @fb_helper: driver-allocated fbdev helper
