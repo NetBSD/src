@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bufs.c,v 1.9 2018/08/27 06:44:14 riastradh Exp $	*/
+/*	$NetBSD: drm_bufs.c,v 1.10 2020/02/14 04:30:04 riastradh Exp $	*/
 
 /*
  * Legacy: Generic DRM Buffer Management
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.9 2018/08/27 06:44:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.10 2020/02/14 04:30:04 riastradh Exp $");
 
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
@@ -969,7 +969,7 @@ int drm_legacy_addbufs_pci(struct drm_device *dev,
 			buf->order = order;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
-			buf->address = (void *)((char *)dmah->vaddr + offset);
+			buf->address = (void *)(dmah->vaddr + offset);
 			buf->bus_address = dmah->busaddr + offset;
 			buf->next = NULL;
 			buf->waiting = 0;

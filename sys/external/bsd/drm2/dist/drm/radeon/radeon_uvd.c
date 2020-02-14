@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_uvd.c,v 1.4 2018/08/27 07:50:30 riastradh Exp $	*/
+/*	$NetBSD: radeon_uvd.c,v 1.5 2020/02/14 04:30:05 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_uvd.c,v 1.4 2018/08/27 07:50:30 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_uvd.c,v 1.5 2020/02/14 04:30:05 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -242,7 +242,7 @@ int radeon_uvd_suspend(struct radeon_device *rdev)
 int radeon_uvd_resume(struct radeon_device *rdev)
 {
 	unsigned size;
-	uint8_t *ptr;
+	void *ptr;
 
 	if (rdev->uvd.vcpu_bo == NULL)
 		return -EINVAL;
@@ -469,7 +469,7 @@ static int radeon_uvd_cs_msg(struct radeon_cs_parser *p, struct radeon_bo *bo,
 		return r;
 	}
 
-	msg = (int32_t *)((uint8_t *)ptr + offset);
+	msg = ptr + offset;
 
 	msg_type = msg[1];
 	handle = msg[2];
@@ -753,7 +753,7 @@ int radeon_uvd_get_create_msg(struct radeon_device *rdev, int ring,
 	uint64_t offs = radeon_bo_size(rdev->uvd.vcpu_bo) -
 		RADEON_GPU_PAGE_SIZE;
 
-	uint32_t *msg = (void *)((char *)rdev->uvd.cpu_addr + offs);
+	uint32_t *msg = rdev->uvd.cpu_addr + offs;
 	uint64_t addr = rdev->uvd.gpu_addr + offs;
 
 	int r, i;
@@ -789,7 +789,7 @@ int radeon_uvd_get_destroy_msg(struct radeon_device *rdev, int ring,
 	uint64_t offs = radeon_bo_size(rdev->uvd.vcpu_bo) -
 		RADEON_GPU_PAGE_SIZE;
 
-	uint32_t *msg = (void *)((char *)rdev->uvd.cpu_addr + offs);
+	uint32_t *msg = rdev->uvd.cpu_addr + offs;
 	uint64_t addr = rdev->uvd.gpu_addr + offs;
 
 	int r, i;

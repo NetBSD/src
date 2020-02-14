@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.56 2020/01/17 19:56:50 ad Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.57 2020/02/14 04:30:05 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.56 2020/01/17 19:56:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.57 2020/02/14 04:30:05 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -404,7 +404,7 @@ i915_gem_phys_pwrite(struct drm_i915_gem_object *obj,
 		     struct drm_file *file_priv)
 {
 	struct drm_device *dev = obj->base.dev;
-	void *vaddr = (char *)obj->phys_handle->vaddr + args->offset;
+	void *vaddr = obj->phys_handle->vaddr + args->offset;
 	char __user *user_data = to_user_ptr(args->data_ptr);
 	int ret = 0;
 

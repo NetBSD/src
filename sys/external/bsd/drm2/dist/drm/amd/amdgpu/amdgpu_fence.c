@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $");
 
 #include <asm/byteorder.h>
 #include <linux/seq_file.h>
@@ -499,7 +499,7 @@ int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
 #else
 		index = ALIGN(adev->uvd.fw->size, 8);
 #endif
-		ring->fence_drv.cpu_addr = (void *)((char *)adev->uvd.cpu_addr + index);
+		ring->fence_drv.cpu_addr = adev->uvd.cpu_addr + index;
 		ring->fence_drv.gpu_addr = adev->uvd.gpu_addr + index;
 	}
 	amdgpu_fence_write(ring, atomic64_read(&ring->fence_drv.last_seq));

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_psr.c,v 1.5 2018/08/27 07:28:57 riastradh Exp $	*/
+/*	$NetBSD: intel_psr.c,v 1.6 2020/02/14 04:30:05 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.5 2018/08/27 07:28:57 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.6 2020/02/14 04:30:05 riastradh Exp $");
 
 #include <drm/drmP.h>
 
@@ -87,7 +87,7 @@ static void intel_psr_write_vsc(struct intel_dp *intel_dp,
 	enum transcoder cpu_transcoder = crtc->config->cpu_transcoder;
 	u32 ctl_reg = HSW_TVIDEO_DIP_CTL(cpu_transcoder);
 	uint32_t data;
-	const char *ptr = (const char *)vsc_psr;
+	const char *ptr = (const void *)vsc_psr;
 	unsigned int i;
 
 	/* As per BSPec (Pipe Video Data Island Packet), we need to disable
