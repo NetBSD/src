@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.4 2018/08/27 14:14:28 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.4 2018/08/27 14:14:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
@@ -233,7 +233,7 @@ int amdgpu_bo_list_ioctl(struct drm_device *dev, void *data,
 			if (copy_from_user(&info[i], uptr, bytes))
 				goto error_free;
 			
-			uptr = ((const char *)uptr + args->in.bo_info_size);
+			uptr += args->in.bo_info_size;
 		}
 	}
 
