@@ -1,4 +1,4 @@
-/*	$NetBSD: nbsd-namespace.h,v 1.1 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: nbsd-namespace.h,v 1.2 2020/02/14 04:38:48 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -36,8 +36,10 @@
  */
 
 #undef	ALIGN
+#undef	LIST_HEAD
 
 #define	ALIGN		round_up
+#define	LIST_HEAD	LINUX_LIST_HEAD
 #define	mutex_destroy	linux_mutex_destroy
 #define	mutex_init	linux_mutex_init
 
