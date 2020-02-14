@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_gtt.c,v 1.16 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: i915_gem_gtt.c,v 1.17 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2010 Daniel Vetter
@@ -26,10 +26,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.16 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_gtt.c,v 1.17 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/bitmap.h>
-#include <linux/err.h>
 #include <linux/seq_file.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>

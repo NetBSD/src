@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.11 2020/02/14 09:38:51 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.12 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,18 +23,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.11 2020/02/14 09:38:51 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.12 2020/02/14 14:34:57 maya Exp $");
 
 #include <linux/kernel.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/delay.h>
 #include <linux/init.h>
 #include <linux/errno.h>
 #include <linux/sched.h>
 #include <linux/i2c.h>
-#include <linux/export.h>
-#include <linux/device.h>
 #include <drm/drm_dp_helper.h>
 #include <drm/drmP.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_mst_topology.c,v 1.4 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_mst_topology.c,v 1.5 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright © 2014 Red Hat
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.4 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.5 2020/02/14 14:34:57 maya Exp $");
 
 #include <linux/kernel.h>
 #include <linux/delay.h>
@@ -32,9 +32,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_dp_mst_topology.c,v 1.4 2020/02/14 04:35:19 rias
 #include <linux/sched.h>
 #include <linux/seq_file.h>
 #include <linux/i2c.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/module.h>
 #include <drm/drm_dp_mst_helper.h>
 #include <drm/drmP.h>
 

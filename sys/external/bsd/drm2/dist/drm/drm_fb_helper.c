@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_fb_helper.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $	*/
+/*	$NetBSD: drm_fb_helper.c,v 1.16 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright (c) 2006-2009 Red Hat Inc.
@@ -30,7 +30,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.16 2020/02/14 14:34:57 maya Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -39,13 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_fb_helper.c,v 1.15 2020/02/14 04:37:27 riastradh
 #include <linux/slab.h>
 #include <linux/fb.h>
 #include <linux/module.h>
-#include <linux/device.h>
-#include <linux/export.h>
-#include <linux/list.h>
-#include <linux/notifier.h>
-#include <linux/printk.h>
 #include <linux/sysrq.h>
-#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_fb_helper.h>

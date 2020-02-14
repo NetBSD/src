@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd_v4_2.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd_v4_2.c,v 1.3 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -25,10 +25,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v4_2.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd_v4_2.c,v 1.3 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/firmware.h>
-#include <linux/log2.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_uvd.h"
