@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.23 2020/02/14 09:39:37 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.24 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,11 +28,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.23 2020/02/14 09:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.24 2020/02/14 14:34:58 maya Exp $");
 
-#include <linux/bitops.h>
 #include <linux/cpufreq.h>
-#include <linux/export.h>
 #include "i915_drv.h"
 #include "i915_trace.h"
 #include "intel_drv.h"
@@ -40,9 +38,6 @@ __KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.23 2020/02/14 09:39:37 riastradh Exp 
 #include "../../../platform/x86/intel_ips.h"
 #endif
 #include <linux/module.h>
-#include <linux/log2.h>
-#include <linux/math64.h>
-#include <linux/time.h>
 
 #include <linux/nbsd-namespace.h>
 

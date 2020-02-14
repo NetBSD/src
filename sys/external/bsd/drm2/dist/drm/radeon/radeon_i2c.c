@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_i2c.c,v 1.6 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_i2c.c,v 1.7 2020/02/14 14:34:59 maya Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,10 +26,9 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.6 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_i2c.c,v 1.7 2020/02/14 14:34:59 maya Exp $");
 
 #include <linux/export.h>
-#include <linux/module.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>

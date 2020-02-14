@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.18 2020/02/14 04:37:28 riastradh Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.19 2020/02/14 14:34:59 maya Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.18 2020/02/14 04:37:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.19 2020/02/14 14:34:59 maya Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -53,9 +53,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.18 2020/02/14 04:37:28 riastradh Exp $"
 #include <linux/module.h>
 #include <linux/atomic.h>
 #include <linux/reservation.h>
-#include <linux/printk.h>
-#include <linux/export.h>
-#include <linux/fence.h>
 
 #include <linux/nbsd-namespace.h>
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lvds.c,v 1.9 2020/02/14 09:39:37 riastradh Exp $	*/
+/*	$NetBSD: intel_lvds.c,v 1.10 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.9 2020/02/14 09:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.10 2020/02/14 14:34:58 maya Exp $");
 
 #include <acpi/button.h>
 #include <linux/dmi.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.9 2020/02/14 09:39:37 riastradh Exp
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 #include <linux/acpi.h>
-#include <linux/err.h>
-#include <linux/notifier.h>
 
 /* Private structure for the integrated LVDS support */
 struct intel_lvds_connector {

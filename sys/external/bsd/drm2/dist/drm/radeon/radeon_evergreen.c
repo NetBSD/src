@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen.c,v 1.3 2019/10/04 12:29:05 mrg Exp $	*/
+/*	$NetBSD: radeon_evergreen.c,v 1.4 2020/02/14 14:34:59 maya Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -24,9 +24,8 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.3 2019/10/04 12:29:05 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen.c,v 1.4 2020/02/14 14:34:59 maya Exp $");
 
-#include <linux/bitops.h>
 #include <linux/firmware.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>

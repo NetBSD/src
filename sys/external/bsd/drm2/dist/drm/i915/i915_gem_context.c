@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_context.c,v 1.11 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_context.c,v 1.12 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2011-2012 Intel Corporation
@@ -88,9 +88,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.11 2020/02/14 04:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_context.c,v 1.12 2020/02/14 14:34:58 maya Exp $");
 
-#include <linux/err.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"

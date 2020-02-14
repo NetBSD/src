@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.16 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,16 +32,12 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.16 2020/02/14 14:34:57 maya Exp $");
 
-#include <linux/err.h>
-#include <linux/spinlock.h>
 #include <linux/ctype.h>
 #include <linux/list.h>
 #include <linux/slab.h>
 #include <linux/export.h>
-#include <linux/errno.h>
-#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
 #include <drm/drm_edid.h>

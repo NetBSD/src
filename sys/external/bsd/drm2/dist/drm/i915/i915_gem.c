@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.58 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.59 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.58 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.59 2020/02/14 14:34:58 maya Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -60,12 +60,6 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.58 2020/02/14 04:35:19 riastradh Exp 
 #include <linux/swap.h>
 #include <linux/pci.h>
 #include <linux/dma-buf.h>
-#include <linux/errno.h>
-#include <linux/time.h>
-#include <linux/err.h>
-#include <linux/bitops.h>
-#include <linux/printk.h>
-#include <asm/param.h>
 #include <asm/page.h>
 #include <asm/cpufeature.h>
 

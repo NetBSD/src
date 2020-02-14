@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_r600.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_r600.c,v 1.5 2020/02/14 14:34:59 maya Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,9 +28,8 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_r600.c,v 1.5 2020/02/14 14:34:59 maya Exp $");
 
-#include <linux/bitops.h>
 #include <linux/slab.h>
 #include <linux/seq_file.h>
 #include <linux/firmware.h>

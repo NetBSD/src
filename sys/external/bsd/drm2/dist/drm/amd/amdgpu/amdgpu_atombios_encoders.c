@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios_encoders.c,v 1.2 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atombios_encoders.c,v 1.3 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.2 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.3 2020/02/14 14:34:57 maya Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.2 2020/02/14 04:30:04
 #include "atombios_encoders.h"
 #include "atombios_dp.h"
 #include <linux/backlight.h>
-#include <asm/byteorder.h>
 #include "bif/bif_4_1_d.h"
 
 static u8

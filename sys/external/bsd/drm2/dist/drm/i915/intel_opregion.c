@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_opregion.c,v 1.16 2020/02/14 04:30:05 riastradh Exp $	*/
+/*	$NetBSD: intel_opregion.c,v 1.17 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2008 Intel Corporation <hong.liu@intel.com>
@@ -28,12 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.16 2020/02/14 04:30:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_opregion.c,v 1.17 2020/02/14 14:34:58 maya Exp $");
 
-#include <linux/printk.h>
 #include <linux/acpi.h>
 #include <acpi/video.h>
-#include <asm/io.h>
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>

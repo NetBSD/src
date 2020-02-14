@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_si_dpm.c,v 1.3 2020/02/14 04:29:42 riastradh Exp $	*/
+/*	$NetBSD: radeon_si_dpm.c,v 1.4 2020/02/14 14:34:59 maya Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.3 2020/02/14 04:29:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.4 2020/02/14 14:34:59 maya Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.3 2020/02/14 04:29:42 riastradh 
 #include "atom.h"
 #include <linux/math64.h>
 #include <linux/seq_file.h>
-#include <linux/bitops.h>
 
 #define MC_CG_ARB_FREQ_F0           0x0a
 #define MC_CG_ARB_FREQ_F1           0x0b

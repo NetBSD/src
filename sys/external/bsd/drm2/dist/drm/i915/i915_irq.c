@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.18 2020/02/14 04:36:11 riastradh Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.19 2020/02/14 14:34:58 maya Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,16 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.18 2020/02/14 04:36:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.19 2020/02/14 14:34:58 maya Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#ifdef __NetBSD__
-#include <sys/cdefs.h>
-#endif
-
-#include <linux/hardirq.h>
-#include <linux/printk.h>
 #include <linux/sysrq.h>
 #include <linux/slab.h>
 #ifdef CONFIG_DEBUG_FS

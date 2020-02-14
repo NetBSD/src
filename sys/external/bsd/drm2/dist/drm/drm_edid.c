@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_edid.c,v 1.7 2020/02/14 04:38:48 riastradh Exp $	*/
+/*	$NetBSD: drm_edid.c,v 1.8 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright (c) 2006 Luc Verhaegen (quirks list)
@@ -30,20 +30,13 @@
  * DEALINGS IN THE SOFTWARE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.7 2020/02/14 04:38:48 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_edid.c,v 1.8 2020/02/14 14:34:57 maya Exp $");
 
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/hdmi.h>
 #include <linux/i2c.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
-#include <linux/export.h>
-#include <linux/printk.h>
-#include <linux/device.h>
-#include <linux/string.h>
-#include <linux/errno.h>
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
 #include <drm/drm_displayid.h>

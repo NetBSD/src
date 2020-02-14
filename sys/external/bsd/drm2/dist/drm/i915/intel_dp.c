@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp.c,v 1.21 2020/02/14 04:36:11 riastradh Exp $	*/
+/*	$NetBSD: intel_dp.c,v 1.22 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,18 +28,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.21 2020/02/14 04:36:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp.c,v 1.22 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/export.h>
 #include <linux/notifier.h>
 #include <linux/reboot.h>
-#include <linux/err.h>
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <linux/pm_qos.h>
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>

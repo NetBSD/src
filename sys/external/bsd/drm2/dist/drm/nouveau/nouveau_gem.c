@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_gem.c,v 1.10 2020/02/14 04:38:48 riastradh Exp $	*/
+/*	$NetBSD: nouveau_gem.c,v 1.11 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright (C) 2008 Ben Skeggs.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.10 2020/02/14 04:38:48 riastradh Exp $");
-
-#include <linux/err.h>		/* XXX */
+__KERNEL_RCSID(0, "$NetBSD: nouveau_gem.c,v 1.11 2020/02/14 14:34:58 maya Exp $");
 
 #include "nouveau_drm.h"
 #include "nouveau_dma.h"

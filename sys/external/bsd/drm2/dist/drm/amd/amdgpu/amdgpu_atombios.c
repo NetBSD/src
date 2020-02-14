@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atombios.c,v 1.5 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,9 +26,8 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios.c,v 1.5 2020/02/14 14:34:57 maya Exp $");
 
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"

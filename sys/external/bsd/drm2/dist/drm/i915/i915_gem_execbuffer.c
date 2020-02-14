@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_execbuffer.c,v 1.10 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_execbuffer.c,v 1.11 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2008,2010 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.10 2020/02/14 04:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.11 2020/02/14 14:34:58 maya Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -38,9 +38,7 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.10 2020/02/14 04:36:56 ria
 #include "intel_drv.h"
 #include <linux/dma_remapping.h>
 #include <linux/uaccess.h>
-#include <linux/log2.h>
 #include <linux/pagemap.h>
-#include <linux/err.h>
 #include <asm/cpufeature.h>
 
 #define  __EXEC_OBJECT_HAS_PIN (1<<31)

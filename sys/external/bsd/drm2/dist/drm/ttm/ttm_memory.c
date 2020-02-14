@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_memory.c,v 1.5 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: ttm_memory.c,v 1.6 2020/02/14 14:34:59 maya Exp $	*/
 
 /**************************************************************************
  *
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.5 2020/02/14 04:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.6 2020/02/14 14:34:59 maya Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -42,8 +42,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.5 2020/02/14 04:36:56 riastradh Exp
 #include <linux/mm.h>
 #include <linux/module.h>
 #include <linux/slab.h>
-#include <linux/printk.h>
-#include <linux/export.h>
 
 #define TTM_MEMORY_ALLOC_RETRIES 4
 

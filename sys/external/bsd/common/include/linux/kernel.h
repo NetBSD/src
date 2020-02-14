@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.24 2020/02/14 04:38:36 riastradh Exp $	*/
+/*	$NetBSD: kernel.h,v 1.25 2020/02/14 14:34:57 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,12 @@
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+
+#include <asm/byteorder.h>
+#include <asm/div64.h>
+
 #include <linux/bitops.h>
+#include <linux/log2.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
 

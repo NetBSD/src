@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.31 2020/02/14 09:39:37 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.32 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.31 2020/02/14 09:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.32 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -36,8 +36,6 @@ __KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.31 2020/02/14 09:39:37 riastradh
 #include <linux/kernel.h>
 #include <linux/slab.h>
 #include <linux/vgaarb.h>
-#include <linux/err.h>
-#include <linux/interrupt.h>
 #include <drm/drm_edid.h>
 #include <drm/drmP.h>
 #include "intel_drv.h"
@@ -51,11 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.31 2020/02/14 09:39:37 riastradh
 #include <drm/drm_plane_helper.h>
 #include <drm/drm_rect.h>
 #include <linux/dma_remapping.h>
-#include <linux/err.h>
-#include <asm/bug.h>
 #include <linux/math64.h>
-#include <linux/bitops.h>
-#include <linux/log2.h>
 
 #include <linux/nbsd-namespace.h>
 

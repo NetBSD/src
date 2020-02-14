@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.14 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,10 +29,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.14 2020/02/14 14:34:58 maya Exp $");
 
-#include <linux/printk.h>
-#include <linux/err.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo.c,v 1.14 2020/02/14 09:39:38 riastradh Exp $	*/
+/*	$NetBSD: intel_sdvo.c,v 1.15 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -28,15 +28,12 @@
  *	Eric Anholt <eric@anholt.net>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.14 2020/02/14 09:39:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.15 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
-#include <linux/module.h>
 #include <linux/export.h>
-#include <linux/bitops.h>
-#include <linux/module.h>
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>

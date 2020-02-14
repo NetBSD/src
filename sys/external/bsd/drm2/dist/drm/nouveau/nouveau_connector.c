@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_connector.c,v 1.4 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_connector.c,v 1.5 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,13 +27,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.4 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_connector.c,v 1.5 2020/02/14 14:34:58 maya Exp $");
 
 #include <acpi/button.h>
 
-#include <linux/err.h>
 #include <linux/pm_runtime.h>
-#include <linux/string.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>

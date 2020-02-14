@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_hdmi.c,v 1.8 2020/02/14 04:36:11 riastradh Exp $	*/
+/*	$NetBSD: intel_hdmi.c,v 1.9 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -29,13 +29,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_hdmi.c,v 1.8 2020/02/14 04:36:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_hdmi.c,v 1.9 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
 #include <linux/delay.h>
 #include <linux/hdmi.h>
-#include <asm/io.h>
 #include <drm/drmP.h>
 #include <drm/drm_atomic_helper.h>
 #include <drm/drm_crtc.h>

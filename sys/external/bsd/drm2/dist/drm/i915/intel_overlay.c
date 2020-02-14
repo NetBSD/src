@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_overlay.c,v 1.9 2020/02/14 04:36:12 riastradh Exp $	*/
+/*	$NetBSD: intel_overlay.c,v 1.10 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2009
@@ -28,10 +28,8 @@
  * Derived from Xorg ddx, xf86-video-intel, src/i830_video.c
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.9 2020/02/14 04:36:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_overlay.c,v 1.10 2020/02/14 14:34:58 maya Exp $");
 
-#include <linux/kernel.h>
-#include <asm/io.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"

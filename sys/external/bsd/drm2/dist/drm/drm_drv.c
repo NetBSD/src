@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_drv.c,v 1.11 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: drm_drv.c,v 1.12 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Created: Fri Jan 19 10:48:35 2001 by faith@acm.org
@@ -29,16 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.11 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_drv.c,v 1.12 2020/02/14 14:34:57 maya Exp $");
 
-#include <linux/err.h>
-#include <linux/export.h>
 #include <linux/debugfs.h>
 #include <linux/fs.h>
 #include <linux/module.h>
 #include <linux/moduleparam.h>
 #include <linux/mount.h>
-#include <linux/printk.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>
 #include <drm/drm_core.h>

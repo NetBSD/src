@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atom.c,v 1.2 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atom.c,v 1.3 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -25,13 +25,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atom.c,v 1.2 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atom.c,v 1.3 2020/02/14 14:34:57 maya Exp $");
 
 #include <linux/module.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
 #include <asm/unaligned.h>
-#include <asm/byteorder.h>
 
 #define ATOM_DEBUG
 
