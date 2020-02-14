@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.6 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,9 +31,8 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.6 2020/02/14 14:34:58 maya Exp $");
 
-#include <asm/byteorder.h>
 #include <linux/seq_file.h>
 #include <linux/atomic.h>
 #include <linux/wait.h>

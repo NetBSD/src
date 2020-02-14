@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic.h,v 1.21 2019/09/28 12:34:56 christos Exp $	*/
+/*	$NetBSD: atomic.h,v 1.22 2020/02/14 14:34:59 maya Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -35,6 +35,8 @@
 #include <sys/atomic.h>
 
 #include <machine/limits.h>
+
+#include <asm/barrier.h>
 
 #if defined(MULTIPROCESSOR) && !defined(__HAVE_ATOMIC_AS_MEMBAR)
 #  define	smp_mb__before_atomic()		membar_exit()

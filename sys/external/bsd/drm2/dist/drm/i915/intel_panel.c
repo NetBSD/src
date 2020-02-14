@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_panel.c,v 1.13 2020/02/14 04:36:12 riastradh Exp $	*/
+/*	$NetBSD: intel_panel.c,v 1.14 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2006-2010 Intel Corporation
@@ -31,15 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.13 2020/02/14 04:36:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_panel.c,v 1.14 2020/02/14 14:34:58 maya Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
 #include <linux/kernel.h>
 #include <linux/moduleparam.h>
-#include <linux/module.h>
-#include <linux/printk.h>
-#include <asm/div64.h>
 #include <linux/pwm.h>
 #include "intel_drv.h"
 
