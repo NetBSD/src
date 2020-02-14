@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.11 2020/02/14 09:39:37 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.12 2020/02/14 09:39:57 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.11 2020/02/14 09:39:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.12 2020/02/14 09:39:57 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -53,6 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.11 2020/02/14 09:39:37 riastradh E
 
 #ifdef __NetBSD__
 #include "intelfb.h"
+#include <linux/nbsd-namespace.h>
 #endif
 
 #ifndef __NetBSD__
@@ -145,13 +146,8 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 	mode_cmd.width = sizes->surface_width;
 	mode_cmd.height = sizes->surface_height;
 
-#ifdef __NetBSD__
-	mode_cmd.pitches[0] = round_up(mode_cmd.width *
-				    DIV_ROUND_UP(sizes->surface_bpp, 8), 64);
-#else
 	mode_cmd.pitches[0] = ALIGN(mode_cmd.width *
 				    DIV_ROUND_UP(sizes->surface_bpp, 8), 64);
-#endif
 	mode_cmd.pixel_format = drm_mode_legacy_fb_format(sizes->surface_bpp,
 							  sizes->surface_depth);
 
