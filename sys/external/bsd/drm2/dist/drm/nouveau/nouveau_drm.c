@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.18 2020/02/14 04:35:20 riastradh Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.19 2020/02/14 04:38:48 riastradh Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.18 2020/02/14 04:35:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.19 2020/02/14 04:38:48 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -61,7 +61,11 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.18 2020/02/14 04:35:20 riastradh E
 #include "nouveau_platform.h"
 #include "nouveau_ttm.h"
 
+#ifdef __NetBSD__
+#include <sys/file.h>
+#include <sys/ioccom.h>
 #include <linux/nbsd-namespace.h>
+#endif
 
 MODULE_PARM_DESC(config, "option string to pass to driver core");
 char *nouveau_config;
@@ -949,8 +953,6 @@ nouveau_ioctls[] = {
 };
 
 #ifdef __NetBSD__
-#include <sys/file.h>
-#include <sys/ioccom.h>
 static int			/* XXX expose to ioc32 */
 nouveau_ioctl_override(struct file *fp, unsigned long cmd, void *data)
 {
