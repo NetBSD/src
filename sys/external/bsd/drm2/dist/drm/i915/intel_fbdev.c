@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.9 2018/08/27 07:55:39 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.10 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.9 2018/08/27 07:55:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.10 2020/02/14 04:37:09 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -790,9 +790,9 @@ void intel_fbdev_fini(struct drm_device *dev)
 	dev_priv->fbdev = NULL;
 }
 
-#ifndef __NetBSD__		/* XXX fb suspend */
 void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous)
 {
+#ifndef __NetBSD__		/* XXX fb suspend */
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_fbdev *ifbdev = dev_priv->fbdev;
 	struct fb_info *info;
@@ -838,8 +838,8 @@ void intel_fbdev_set_suspend(struct drm_device *dev, int state, bool synchronous
 
 	drm_fb_helper_set_suspend(&ifbdev->helper, state);
 	console_unlock();
-}
 #endif
+}
 
 void intel_fbdev_output_poll_changed(struct drm_device *dev)
 {

@@ -1,4 +1,4 @@
-/*	$NetBSD: console.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: console.h,v 1.3 2020/02/14 04:37:10 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -31,5 +31,15 @@
 
 #ifndef _LINUX_CONSOLE_H_
 #define _LINUX_CONSOLE_H_
+
+static inline void
+console_lock(void)
+{
+}
+
+static inline void
+console_unlock(void)
+{
+}
 
 #endif  /* _LINUX_CONSOLE_H_ */

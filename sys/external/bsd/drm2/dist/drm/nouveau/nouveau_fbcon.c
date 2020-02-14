@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.8 2020/02/12 20:31:46 jdolecek Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.9 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.8 2020/02/12 20:31:46 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.9 2020/02/14 04:37:09 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -273,11 +273,11 @@ nouveau_fbcon_accel_fini(struct drm_device *dev)
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	struct nouveau_fbdev *fbcon = drm->fbcon;
 	if (fbcon && drm->channel) {
-#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 		console_lock();
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 		fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
-		console_unlock();
 #endif
+		console_unlock();
 		nouveau_channel_idle(drm->channel);
 		nvif_object_fini(&fbcon->twod);
 		nvif_object_fini(&fbcon->blit);
@@ -585,7 +585,6 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
-#ifndef __NetBSD__
 		console_lock();
 		if (state == FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_restore(dev);
@@ -593,7 +592,6 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 		if (state != FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_save_disable(dev);
 		console_unlock();
-#endif
 	}
 }
 
