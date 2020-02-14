@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_uncore.c,v 1.11 2019/07/24 14:57:09 msaitoh Exp $	*/
+/*	$NetBSD: intel_uncore.c,v 1.12 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.11 2019/07/24 14:57:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_uncore.c,v 1.12 2020/02/14 04:36:56 riastradh Exp $");
 
 #include "i915_drv.h"
 #include "intel_drv.h"
@@ -1384,13 +1384,8 @@ int i915_get_reset_stats_ioctl(struct drm_device *dev,
 	if (args->flags || args->pad)
 		return -EINVAL;
 
-#ifdef __NetBSD__
-	if (args->ctx_id == DEFAULT_CONTEXT_HANDLE && !DRM_SUSER())
-		return -EPERM;
-#else
 	if (args->ctx_id == DEFAULT_CONTEXT_HANDLE && !capable(CAP_SYS_ADMIN))
 		return -EPERM;
-#endif
 
 	ret = mutex_lock_interruptible(&dev->struct_mutex);
 	if (ret)
@@ -1403,11 +1398,7 @@ int i915_get_reset_stats_ioctl(struct drm_device *dev,
 	}
 	hs = &ctx->hang_stats;
 
-#ifdef __NetBSD__
-	if (DRM_SUSER())
-#else
 	if (capable(CAP_SYS_ADMIN))
-#endif
 		args->reset_count = i915_reset_count(&dev_priv->gpu_error);
 	else
 		args->reset_count = 0;
