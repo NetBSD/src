@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_si_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_si_dpm.c,v 1.2 2020/02/14 04:29:19 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_si_dpm.c,v 1.2 2020/02/14 04:29:19 riastradh Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -6957,9 +6957,7 @@ int si_dpm_init(struct radeon_device *rdev)
 	struct si_power_info *si_pi;
 	struct atom_clock_dividers dividers;
 	int ret;
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	u32 mask;
-#endif
 
 	si_pi = kzalloc(sizeof(struct si_power_info), GFP_KERNEL);
 	if (si_pi == NULL)
@@ -6969,13 +6967,11 @@ int si_dpm_init(struct radeon_device *rdev)
 	eg_pi = &ni_pi->eg;
 	pi = &eg_pi->rv7xx;
 
-#ifndef __NetBSD__		/* XXX radeon pcie */
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret)
 		si_pi->sys_pcie_mask = 0;
 	else
 		si_pi->sys_pcie_mask = mask;
-#endif
 	si_pi->force_pcie_gen = RADEON_PCIE_GEN_INVALID;
 	si_pi->boot_pcie_gen = si_get_current_pcie_speed(rdev);
 

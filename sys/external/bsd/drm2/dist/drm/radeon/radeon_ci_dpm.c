@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ci_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_ci_dpm.c,v 1.2 2020/02/14 04:29:19 riastradh Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ci_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ci_dpm.c,v 1.2 2020/02/14 04:29:19 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include "drmP.h"
@@ -5664,22 +5664,18 @@ int ci_dpm_init(struct radeon_device *rdev)
 	u8 frev, crev;
 	struct ci_power_info *pi;
 	int ret;
-#ifndef __NetBSD__
 	u32 mask;
-#endif
 
 	pi = kzalloc(sizeof(struct ci_power_info), GFP_KERNEL);
 	if (pi == NULL)
 		return -ENOMEM;
 	rdev->pm.dpm.priv = pi;
 
-#ifndef __NetBSD__
 	ret = drm_pcie_get_speed_cap_mask(rdev->ddev, &mask);
 	if (ret)
 		pi->sys_pcie_mask = 0;
 	else
 		pi->sys_pcie_mask = mask;
-#endif
 	pi->force_pcie_gen = RADEON_PCIE_GEN_INVALID;
 
 	pi->pcie_gen_performance.max = RADEON_PCIE_GEN1;
