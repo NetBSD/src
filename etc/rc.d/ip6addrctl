@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: ip6addrctl,v 1.4 2020/01/27 08:33:24 kim Exp $
+# $NetBSD: ip6addrctl,v 1.5 2020/02/14 12:12:07 kim Exp $
 # FreeBSD: head/etc/rc.d/ip6addrctl 270836 2014-08-30 07:08:10Z hrs
 #
 
@@ -86,7 +86,7 @@ ip6addrctl_start()
 
 ip6addrctl_stop()
 {
-	ip6addrctl flush >/dev/null 2>&1
+	${IP6ADDRCTL_CMD} flush >/dev/null 2>&1
 }
 
 load_rc_config $name
