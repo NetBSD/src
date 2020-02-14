@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_i2c.c,v 1.17 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_i2c.c,v 1.18 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006 Dave Airlie <airlied@linux.ie>
@@ -29,7 +29,7 @@
  *	Chris Wilson <chris@chris-wilson.co.uk>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.17 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.18 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/i2c-algo-bit.h>
@@ -39,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_i2c.c,v 1.17 2018/09/13 08:25:55 mrg Exp $");
 #include "intel_drv.h"
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 struct gmbus_pin {
 	const char *name;
@@ -692,11 +694,7 @@ int intel_setup_gmbus(struct drm_device *dev)
 	else
 		dev_priv->gpio_mmio_base = 0;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->gmbus_mutex);
-#else
 	mutex_init(&dev_priv->gmbus_mutex);
-#endif
 
 #ifdef __NetBSD__
 	spin_lock_init(&dev_priv->gmbus_wait_lock);
@@ -799,6 +797,6 @@ void intel_teardown_gmbus(struct drm_device *dev)
 #ifdef __NetBSD__
 	DRM_DESTROY_WAITQUEUE(&dev_priv->gmbus_wait_queue);
 	spin_lock_destroy(&dev_priv->gmbus_wait_lock);
-	linux_mutex_destroy(&dev_priv->gmbus_mutex);
 #endif
+	mutex_destroy(&dev_priv->gmbus_mutex);
 }
