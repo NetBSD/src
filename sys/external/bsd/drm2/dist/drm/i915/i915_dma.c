@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.30 2020/02/14 04:36:11 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.31 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.30 2020/02/14 04:36:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.31 2020/02/14 04:36:56 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -139,11 +139,7 @@ static int i915_getparam(struct drm_device *dev, void *data,
 		value = 1;
 		break;
 	case I915_PARAM_HAS_SECURE_BATCHES:
-#ifdef __NetBSD__
-		value = HAS_SECURE_BATCHES(dev_priv) && DRM_SUSER();
-#else
 		value = HAS_SECURE_BATCHES(dev_priv) && capable(CAP_SYS_ADMIN);
-#endif
 		break;
 	case I915_PARAM_HAS_PINNED_BATCHES:
 		value = 1;

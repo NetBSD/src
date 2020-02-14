@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dma.c,v 1.3 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: via_dma.c,v 1.4 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.3 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.4 2020/02/14 04:36:56 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -241,21 +241,13 @@ static int via_dma_init(struct drm_device *dev, void *data, struct drm_file *fil
 
 	switch (init->func) {
 	case VIA_INIT_DMA:
-#ifdef __NetBSD__
-		if (!DRM_SUSER())
-#else
 		if (!capable(CAP_SYS_ADMIN))
-#endif
 			retcode = -EPERM;
 		else
 			retcode = via_initialize(dev, dev_priv, init);
 		break;
 	case VIA_CLEANUP_DMA:
-#ifdef __NetBSD__
-		if (!DRM_SUSER())
-#else
 		if (!capable(CAP_SYS_ADMIN))
-#endif
 			retcode = -EPERM;
 		else
 			retcode = via_dma_cleanup(dev);
