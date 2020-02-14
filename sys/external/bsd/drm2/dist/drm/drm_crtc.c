@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.14 2020/02/14 04:36:55 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.14 2020/02/14 04:36:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.15 2020/02/14 04:37:27 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -3065,8 +3065,7 @@ int drm_mode_addfb(struct drm_device *dev,
 		   void *data, struct drm_file *file_priv)
 {
 	struct drm_mode_fb_cmd *or = data;
-	static const struct drm_mode_fb_cmd2 zero_fbcmd;
-	struct drm_mode_fb_cmd2 r = zero_fbcmd;
+	struct drm_mode_fb_cmd2 r = {};
 	int ret;
 
 	/* convert to new format and call new ioctl */
