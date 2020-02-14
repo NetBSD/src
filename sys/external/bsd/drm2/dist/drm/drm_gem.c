@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.12 2020/01/17 19:56:49 ad Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.12 2020/01/17 19:56:49 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -51,6 +51,7 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.12 2020/01/17 19:56:49 ad Exp $");
 
 #ifdef __NetBSD__
 #include <uvm/uvm_extern.h>
+#include <linux/nbsd-namespace.h>
 #endif
 
 /** @file drm_gem.c
@@ -107,11 +108,7 @@ drm_gem_init(struct drm_device *dev)
 {
 	struct drm_vma_offset_manager *vma_offset_manager;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev->object_name_lock);
-#else
 	mutex_init(&dev->object_name_lock);
-#endif
 	idr_init(&dev->object_name_idr);
 
 	vma_offset_manager = kzalloc(sizeof(*vma_offset_manager), GFP_KERNEL);
@@ -137,9 +134,7 @@ drm_gem_destroy(struct drm_device *dev)
 	dev->vma_offset_manager = NULL;
 
 	idr_destroy(&dev->object_name_idr);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev->object_name_lock);
-#endif
+	mutex_destroy(&dev->object_name_lock);
 }
 
 /**

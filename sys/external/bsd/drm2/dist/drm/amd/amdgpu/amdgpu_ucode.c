@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ucode.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ucode.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -33,6 +33,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_ucode.c,v 1.4 2020/02/14 04:30:04 riastradh E
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ucode.h"
+
+#include <linux/nbsd-namespace.h>
 
 static void amdgpu_ucode_print_common_hdr(const struct common_firmware_header *hdr)
 {
@@ -293,11 +295,7 @@ int amdgpu_ucode_init_bo(struct amdgpu_device *adev)
 			header = (const struct common_firmware_header *)ucode->fw->data;
 			amdgpu_ucode_init_single_fw(ucode, fw_mc_addr + fw_offset,
 						    fw_buf_ptr + fw_offset);
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-			fw_offset += round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 			fw_offset += ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 		}
 	}
 

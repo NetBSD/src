@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.20 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.21 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.20 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.21 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.20 2019/12/05 20:03:09 maya Exp $");
 #include <linux/log2.h>
 #include <linux/math64.h>
 #include <linux/time.h>
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * RC6 is a special power stage which allows the GPU to enter an very
@@ -7531,11 +7533,7 @@ void intel_pm_setup(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->rps.hw_lock);
-#else
 	mutex_init(&dev_priv->rps.hw_lock);
-#endif
 	spin_lock_init(&dev_priv->rps.client_lock);
 
 	INIT_DELAYED_WORK(&dev_priv->rps.delayed_resume_work,

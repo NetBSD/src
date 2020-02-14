@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_evergreen_cs.c,v 1.3 2020/02/14 04:29:42 riastradh Exp $	*/
+/*	$NetBSD: radeon_evergreen_cs.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -28,13 +28,15 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.3 2020/02/14 04:29:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_evergreen_cs.c,v 1.4 2020/02/14 04:35:20 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "radeon.h"
 #include "evergreend.h"
 #include "evergreen_reg_safe.h"
 #include "cayman_reg_safe.h"
+
+#include <linux/nbsd-namespace.h>
 
 #ifndef __NetBSD__
 #define MAX(a,b)                   (((a)>(b))?(a):(b))
@@ -849,11 +851,7 @@ static int evergreen_cs_track_validate_texture(struct radeon_cs_parser *p,
 
 	/* align height */
 	evergreen_surface_check(p, &surf, NULL);
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	surf.nby = round_up(surf.nby, surf.halign);
-#else
 	surf.nby = ALIGN(surf.nby, surf.halign);
-#endif
 
 	r = evergreen_surface_check(p, &surf, "texture");
 	if (r) {
@@ -926,13 +924,8 @@ static int evergreen_cs_track_validate_texture(struct radeon_cs_parser *p,
 				 __func__, __LINE__, surf.mode);
 			return -EINVAL;
 		}
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		surf.nbx = round_up(surf.nbx, surf.palign);
-		surf.nby = round_up(surf.nby, surf.halign);
-#else
 		surf.nbx = ALIGN(surf.nbx, surf.palign);
 		surf.nby = ALIGN(surf.nby, surf.halign);
-#endif
 
 		r = evergreen_surface_check(p, &surf, "mipmap");
 		if (r) {

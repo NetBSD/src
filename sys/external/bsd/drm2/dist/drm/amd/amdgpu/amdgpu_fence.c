@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fence.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fence.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -31,7 +31,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.4 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <asm/byteorder.h>
 #include <linux/seq_file.h>
@@ -43,6 +43,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_fence.c,v 1.4 2020/02/14 04:30:04 riastradh E
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Fences
@@ -494,11 +496,7 @@ int amdgpu_fence_driver_start_ring(struct amdgpu_ring *ring,
 		ring->fence_drv.gpu_addr = adev->wb.gpu_addr + (ring->fence_offs * 4);
 	} else {
 		/* put fence directly behind firmware */
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		index = round_up(adev->uvd.fw->size, 8);
-#else
 		index = ALIGN(adev->uvd.fw->size, 8);
-#endif
 		ring->fence_drv.cpu_addr = adev->uvd.cpu_addr + index;
 		ring->fence_drv.gpu_addr = adev->uvd.gpu_addr + index;
 	}

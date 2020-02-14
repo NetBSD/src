@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_crtc.c,v 1.12 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: drm_crtc.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2006-2008 Intel Corporation
@@ -32,7 +32,7 @@
  *      Jesse Barnes <jesse.barnes@intel.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.12 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/err.h>
 #include <linux/spinlock.h>
@@ -51,6 +51,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_crtc.c,v 1.12 2020/02/14 04:30:04 riastradh Exp 
 
 #include "drm_crtc_internal.h"
 #include "drm_internal.h"
+
+#include <linux/nbsd-namespace.h>
 
 static struct drm_framebuffer *
 internal_framebuffer_create(struct drm_device *dev,
@@ -5772,19 +5774,11 @@ EXPORT_SYMBOL(drm_rotation_simplify);
  */
 void drm_mode_config_init(struct drm_device *dev)
 {
-#ifdef __NetBSD__
-	linux_mutex_init(&dev->mode_config.mutex);
-	drm_modeset_lock_init(&dev->mode_config.connection_mutex);
-	linux_mutex_init(&dev->mode_config.idr_mutex);
-	linux_mutex_init(&dev->mode_config.fb_lock);
-	linux_mutex_init(&dev->mode_config.blob_lock);
-#else
 	mutex_init(&dev->mode_config.mutex);
 	drm_modeset_lock_init(&dev->mode_config.connection_mutex);
 	mutex_init(&dev->mode_config.idr_mutex);
 	mutex_init(&dev->mode_config.fb_lock);
 	mutex_init(&dev->mode_config.blob_lock);
-#endif
 	INIT_LIST_HEAD(&dev->mode_config.fb_list);
 	INIT_LIST_HEAD(&dev->mode_config.crtc_list);
 	INIT_LIST_HEAD(&dev->mode_config.connector_list);
@@ -5876,12 +5870,10 @@ void drm_mode_config_cleanup(struct drm_device *dev)
 
 	idr_destroy(&dev->mode_config.tile_idr);
 	idr_destroy(&dev->mode_config.crtc_idr);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev->mode_config.blob_lock);
-	linux_mutex_destroy(&dev->mode_config.fb_lock);
-	linux_mutex_destroy(&dev->mode_config.idr_mutex);
-	linux_mutex_destroy(&dev->mode_config.mutex);
-#endif
+	mutex_destroy(&dev->mode_config.blob_lock);
+	mutex_destroy(&dev->mode_config.fb_lock);
+	mutex_destroy(&dev->mode_config.idr_mutex);
+	mutex_destroy(&dev->mode_config.mutex);
 	drm_modeset_lock_fini(&dev->mode_config.connection_mutex);
 }
 EXPORT_SYMBOL(drm_mode_config_cleanup);

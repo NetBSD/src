@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_runtime_pm.c,v 1.7 2019/09/20 12:41:33 kamil Exp $	*/
+/*	$NetBSD: intel_runtime_pm.c,v 1.8 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2012-2014 Intel Corporation
@@ -29,13 +29,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.7 2019/09/20 12:41:33 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_runtime_pm.c,v 1.8 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/pm_runtime.h>
 #include <linux/vgaarb.h>
 
 #include "i915_drv.h"
 #include "intel_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 /**
  * DOC: runtime pm
@@ -1879,11 +1881,7 @@ int intel_power_domains_init(struct drm_i915_private *dev_priv)
 
 	BUILD_BUG_ON(POWER_DOMAIN_NUM > 31);
 
-#ifdef __NetBSD__
-	linux_mutex_init(&power_domains->lock);
-#else
 	mutex_init(&power_domains->lock);
-#endif
 
 	/*
 	 * The enabling order will be from lower to higher indexed wells,
@@ -1940,11 +1938,7 @@ void intel_power_domains_fini(struct drm_i915_private *dev_priv)
 	 * we're going to unload/reload. */
 	intel_display_set_init_power(dev_priv, true);
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->power_domains.lock);
-#else
 	mutex_destroy(&dev_priv->power_domains.lock);
-#endif
 }
 
 static void intel_power_domains_resume(struct drm_i915_private *dev_priv)

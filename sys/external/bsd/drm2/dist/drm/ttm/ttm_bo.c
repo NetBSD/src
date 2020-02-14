@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.16 2020/02/12 20:22:37 jdolecek Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.17 2020/02/14 04:35:20 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.16 2020/02/12 20:22:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.17 2020/02/14 04:35:20 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.16 2020/02/12 20:22:37 jdolecek Exp $")
 #include <linux/printk.h>
 #include <linux/export.h>
 #include <linux/fence.h>
+
+#include <linux/nbsd-namespace.h>
 
 #define TTM_ASSERT_LOCKED(param)
 #define TTM_DEBUG(fmt, arg...)	do {} while (0)
@@ -173,11 +175,7 @@ static void ttm_bo_release_list(struct kref *list_kref)
 	atomic_dec(&bo->glob->bo_count);
 	if (bo->resv == &bo->ttm_resv)
 		reservation_object_fini(&bo->ttm_resv);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&bo->wu_mutex);
-#else
 	mutex_destroy(&bo->wu_mutex);
-#endif
 	if (bo->destroy)
 		bo->destroy(bo);
 	else {
@@ -1176,11 +1174,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 	INIT_LIST_HEAD(&bo->ddestroy);
 	INIT_LIST_HEAD(&bo->swap);
 	INIT_LIST_HEAD(&bo->io_reserve_lru);
-#ifdef __NetBSD__
-	linux_mutex_init(&bo->wu_mutex);
-#else
 	mutex_init(&bo->wu_mutex);
-#endif
 	bo->bdev = bdev;
 	bo->glob = bdev->glob;
 	bo->type = type;
@@ -1354,11 +1348,7 @@ int ttm_bo_clean_mm(struct ttm_bo_device *bdev, unsigned mem_type)
 		ret = (*man->func->takedown)(man);
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&man->io_reserve_mutex);
-#else
 	mutex_destroy(&man->io_reserve_mutex);
-#endif
 
 	return ret;
 }
@@ -1393,11 +1383,7 @@ int ttm_bo_init_mm(struct ttm_bo_device *bdev, unsigned type,
 	BUG_ON(man->has_type);
 	man->io_reserve_fastpath = true;
 	man->use_io_reserve_lru = false;
-#ifdef __NetBSD__
-	linux_mutex_init(&man->io_reserve_mutex);
-#else
 	mutex_init(&man->io_reserve_mutex);
-#endif
 	INIT_LIST_HEAD(&man->io_reserve_lru);
 
 	ret = bdev->driver->init_mem_type(bdev, type, man);
@@ -1442,7 +1428,7 @@ void ttm_bo_global_release(struct drm_global_reference *ref)
 	ttm_mem_unregister_shrink(glob->mem_glob, &glob->shrink);
 	BUG_ON(glob->dummy_read_page != NULL);
 	spin_lock_destroy(&glob->lru_lock);
-	linux_mutex_destroy(&glob->device_list_mutex);
+	mutex_destroy(&glob->device_list_mutex);
 	kfree(glob);
 #else
 	kobject_del(&glob->kobj);
@@ -1458,11 +1444,7 @@ int ttm_bo_global_init(struct drm_global_reference *ref)
 	struct ttm_bo_global *glob = ref->object;
 	int ret;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&glob->device_list_mutex);
-#else
 	mutex_init(&glob->device_list_mutex);
-#endif
 	spin_lock_init(&glob->lru_lock);
 	glob->mem_glob = bo_ref->mem_glob;
 #ifdef __NetBSD__

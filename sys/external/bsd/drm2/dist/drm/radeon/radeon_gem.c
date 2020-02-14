@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_gem.c,v 1.6 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: radeon_gem.c,v 1.7 2020/02/14 04:35:20 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,11 +28,13 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.6 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_gem.c,v 1.7 2020/02/14 04:35:20 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"
+
+#include <linux/nbsd-namespace.h>
 
 void radeon_gem_object_free(struct drm_gem_object *gobj)
 {
@@ -763,11 +765,7 @@ int radeon_mode_dumb_create(struct drm_file *file_priv,
 
 	args->pitch = radeon_align_pitch(rdev, args->width, args->bpp, 0) * ((args->bpp + 1) / 8);
 	args->size = args->pitch * args->height;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	args->size = round_up(args->size, PAGE_SIZE);
-#else
 	args->size = ALIGN(args->size, PAGE_SIZE);
-#endif
 
 	r = radeon_gem_object_create(rdev, args->size, 0,
 				     RADEON_GEM_DOMAIN_VRAM, 0,

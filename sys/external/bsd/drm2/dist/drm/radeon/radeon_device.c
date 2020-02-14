@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_device.c,v 1.7 2020/01/26 14:36:35 jmcneill Exp $	*/
+/*	$NetBSD: radeon_device.c,v 1.8 2020/02/14 04:35:20 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.7 2020/01/26 14:36:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.8 2020/02/14 04:35:20 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -42,6 +42,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_device.c,v 1.7 2020/01/26 14:36:35 jmcneill E
 #include "radeon_reg.h"
 #include "radeon.h"
 #include "atom.h"
+
+#include <linux/nbsd-namespace.h>
 
 static const char radeon_family_name[][16] = {
 	"R100",
@@ -1105,13 +1107,8 @@ int radeon_atombios_init(struct radeon_device *rdev)
 		return -ENOMEM;
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_init(&rdev->mode_info.atom_context->mutex);
-	linux_mutex_init(&rdev->mode_info.atom_context->scratch_mutex);
-#else
 	mutex_init(&rdev->mode_info.atom_context->mutex);
 	mutex_init(&rdev->mode_info.atom_context->scratch_mutex);
-#endif
 	radeon_atom_initialize_bios_scratch_regs(rdev->ddev);
 	atom_allocate_fb_scratch(rdev->mode_info.atom_context);
 	return 0;
@@ -1129,13 +1126,8 @@ int radeon_atombios_init(struct radeon_device *rdev)
 void radeon_atombios_fini(struct radeon_device *rdev)
 {
 	if (rdev->mode_info.atom_context) {
-#ifdef __NetBSD__
-		linux_mutex_destroy(&rdev->mode_info.atom_context->scratch_mutex);
-		linux_mutex_destroy(&rdev->mode_info.atom_context->mutex);
-#else
 		mutex_destroy(&rdev->mode_info.atom_context->scratch_mutex);
 		mutex_destroy(&rdev->mode_info.atom_context->mutex);
-#endif
 		kfree(rdev->mode_info.atom_context->scratch);
 	}
 	kfree(rdev->mode_info.atom_context);
@@ -1444,37 +1436,23 @@ int radeon_device_init(struct radeon_device *rdev,
 
 	/* mutex initialization are all done here so we
 	 * can recall function without having locking issues */
-#ifdef __NetBSD__
-	linux_mutex_init(&rdev->ring_lock);
-	linux_mutex_init(&rdev->dc_hw_i2c_mutex);
-#else
 	mutex_init(&rdev->ring_lock);
 	mutex_init(&rdev->dc_hw_i2c_mutex);
-#endif
 	atomic_set(&rdev->ih.lock, 0);
-#ifdef __NetBSD__
-	linux_mutex_init(&rdev->gem.mutex);
-	linux_mutex_init(&rdev->pm.mutex);
-	linux_mutex_init(&rdev->gpu_clock_mutex);
-	linux_mutex_init(&rdev->srbm_mutex);
-	linux_mutex_init(&rdev->grbm_idx_mutex);
-#else
 	mutex_init(&rdev->gem.mutex);
 	mutex_init(&rdev->pm.mutex);
 	mutex_init(&rdev->gpu_clock_mutex);
 	mutex_init(&rdev->srbm_mutex);
 	mutex_init(&rdev->grbm_idx_mutex);
-#endif
 	init_rwsem(&rdev->pm.mclk_lock);
 	init_rwsem(&rdev->exclusive_lock);
 #ifdef __NetBSD__
 	spin_lock_init(&rdev->irq.vblank_lock);
 	DRM_INIT_WAITQUEUE(&rdev->irq.vblank_queue, "radvblnk");
-	linux_mutex_init(&rdev->mn_lock);
 #else
 	init_waitqueue_head(&rdev->irq.vblank_queue);
-	mutex_init(&rdev->mn_lock);
 #endif
+	mutex_init(&rdev->mn_lock);
 	hash_init(rdev->mn_hash);
 	r = radeon_gem_init(rdev);
 	if (r)
@@ -1760,20 +1738,13 @@ void radeon_device_fini(struct radeon_device *rdev)
 	spin_lock_destroy(&rdev->irq.vblank_lock);
 	destroy_rwsem(&rdev->exclusive_lock);
 	destroy_rwsem(&rdev->pm.mclk_lock);
-	linux_mutex_destroy(&rdev->srbm_mutex);
-	linux_mutex_destroy(&rdev->gpu_clock_mutex);
-	linux_mutex_destroy(&rdev->pm.mutex);
-	linux_mutex_destroy(&rdev->gem.mutex);
-	linux_mutex_destroy(&rdev->dc_hw_i2c_mutex);
-	linux_mutex_destroy(&rdev->ring_lock);
-#else
+#endif
 	mutex_destroy(&rdev->srbm_mutex);
 	mutex_destroy(&rdev->gpu_clock_mutex);
 	mutex_destroy(&rdev->pm.mutex);
 	mutex_destroy(&rdev->gem.mutex);
 	mutex_destroy(&rdev->dc_hw_i2c_mutex);
 	mutex_destroy(&rdev->ring_lock);
-#endif
 }
 
 

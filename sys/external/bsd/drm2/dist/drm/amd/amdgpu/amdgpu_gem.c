@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gem.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_gem.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,12 +28,14 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.4 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gem.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/ktime.h>
 #include <drm/drmP.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
+
+#include <linux/nbsd-namespace.h>
 
 void amdgpu_gem_object_free(struct drm_gem_object *gobj)
 {
@@ -687,11 +689,7 @@ int amdgpu_mode_dumb_create(struct drm_file *file_priv,
 
 	args->pitch = amdgpu_align_pitch(adev, args->width, args->bpp, 0) * ((args->bpp + 1) / 8);
 	args->size = (u64)args->pitch * args->height;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	args->size = round_up(args->size, PAGE_SIZE);
-#else
 	args->size = ALIGN(args->size, PAGE_SIZE);
-#endif
 
 	r = amdgpu_gem_object_create(adev, args->size, 0,
 				     AMDGPU_GEM_DOMAIN_VRAM,

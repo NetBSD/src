@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.57 2020/02/14 04:30:05 riastradh Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.58 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.57 2020/02/14 04:30:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.58 2020/02/14 04:35:19 riastradh Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -68,6 +68,8 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.57 2020/02/14 04:30:05 riastradh Exp 
 #include <asm/param.h>
 #include <asm/page.h>
 #include <asm/cpufeature.h>
+
+#include <linux/nbsd-namespace.h>
 
 #define RQ_BUG_ON(expr)
 
@@ -487,11 +489,7 @@ i915_gem_dumb_create(struct drm_file *file,
 		     struct drm_mode_create_dumb *args)
 {
 	/* have to work out size/pitch and return them */
-#ifdef __NetBSD__		/* ALIGN means something else.  */
-	args->pitch = round_up(args->width * DIV_ROUND_UP(args->bpp, 8), 64);
-#else
 	args->pitch = ALIGN(args->width * DIV_ROUND_UP(args->bpp, 8), 64);
-#endif
 	args->size = args->pitch * args->height;
 	return i915_gem_create(file, dev,
 			       args->size, &args->handle);
@@ -518,11 +516,7 @@ __copy_to_user_swizzled(char __user *cpu_vaddr,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		int cacheline_end = round_up(gpu_offset + 1, 64);
-#else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
-#endif
 		int this_length = min(cacheline_end - gpu_offset, length);
 		int swizzled_gpu_offset = gpu_offset ^ 64;
 
@@ -548,11 +542,7 @@ __copy_from_user_swizzled(char *gpu_vaddr, int gpu_offset,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		int cacheline_end = round_up(gpu_offset + 1, 64);
-#else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
-#endif
 		int this_length = min(cacheline_end - gpu_offset, length);
 		int swizzled_gpu_offset = gpu_offset ^ 64;
 
@@ -5648,11 +5638,7 @@ i915_gem_load(struct drm_device *dev)
 	dev_priv->mm.interruptible = true;
 
 	i915_gem_shrinker_init(dev_priv);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->fb_tracking.lock);
-#else
 	mutex_init(&dev_priv->fb_tracking.lock);
-#endif
 }
 
 void i915_gem_release(struct drm_device *dev, struct drm_file *file)
