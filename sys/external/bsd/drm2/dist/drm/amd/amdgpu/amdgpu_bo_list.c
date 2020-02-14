@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_bo_list.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_bo_list.c,v 1.6 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright 2015 Advanced Micro Devices, Inc.
@@ -31,11 +31,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_bo_list.c,v 1.6 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 static int amdgpu_bo_list_create(struct amdgpu_fpriv *fpriv,
 				 struct amdgpu_bo_list **result,
@@ -60,11 +62,7 @@ static int amdgpu_bo_list_create(struct amdgpu_fpriv *fpriv,
 	idr_preload_end();
 	*id = r;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&(*result)->lock);
-#else
 	mutex_init(&(*result)->lock);
-#endif
 	(*result)->num_entries = 0;
 	(*result)->array = NULL;
 
@@ -185,11 +183,7 @@ void amdgpu_bo_list_free(struct amdgpu_bo_list *list)
 	for (i = 0; i < list->num_entries; ++i)
 		amdgpu_bo_unref(&list->array[i].robj);
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&list->lock);
-#else
 	mutex_destroy(&list->lock);
-#endif
 	drm_free_large(list->array);
 	kfree(list);
 }

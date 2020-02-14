@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.28 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.29 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.28 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.29 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -56,6 +56,8 @@ __KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.28 2019/12/05 20:03:09 maya Exp 
 #include <linux/math64.h>
 #include <linux/bitops.h>
 #include <linux/log2.h>
+
+#include <linux/nbsd-namespace.h>
 
 /* Primary plane formats for gen <= 3 */
 static const uint32_t i8xx_primary_formats[] = {
@@ -2278,13 +2280,8 @@ unsigned int
 intel_fb_align_height(struct drm_device *dev, unsigned int height,
 		      uint32_t pixel_format, uint64_t fb_format_modifier)
 {
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	return round_up(height, intel_tile_height(dev, pixel_format,
-					       fb_format_modifier, 0));
-#else
 	return ALIGN(height, intel_tile_height(dev, pixel_format,
 					       fb_format_modifier, 0));
-#endif
 }
 
 static int
@@ -10284,11 +10281,7 @@ static u32
 intel_framebuffer_pitch_for_width(int width, int bpp)
 {
 	u32 pitch = DIV_ROUND_UP(width * bpp, 8);
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	return round_up(pitch, 64);
-#else
 	return ALIGN(pitch, 64);
-#endif
 }
 
 static u32
@@ -14782,13 +14775,8 @@ static void intel_init_display(struct drm_device *dev)
 		dev_priv->display.queue_flip = intel_default_queue_flip;
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->pps_mutex);
-	linux_mutex_init(&dev_priv->drrs.mutex);
-#else
 	mutex_init(&dev_priv->pps_mutex);
 	mutex_init(&dev_priv->drrs.mutex);
-#endif
 }
 
 /*
@@ -15719,17 +15707,10 @@ void intel_modeset_cleanup(struct drm_device *dev)
 
 	intel_teardown_gmbus(dev);
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->psr.lock);
-	linux_mutex_destroy(&dev_priv->drrs.mutex);
-	linux_mutex_destroy(&dev_priv->pps_mutex);
-	linux_mutex_destroy(&dev_priv->fbc.lock);
-#else
 	mutex_destroy(&dev_priv->psr.lock);
 	mutex_destroy(&dev_priv->drrs.mutex);
 	mutex_destroy(&dev_priv->pps_mutex);
 	mutex_destroy(&dev_priv->fbc.lock);
-#endif
 }
 
 /*

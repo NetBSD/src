@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_uvd.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_uvd.c,v 1.6 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright 2011 Advanced Micro Devices, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.5 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.6 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/firmware.h>
 #include <linux/module.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_uvd.c,v 1.5 2020/02/14 04:30:04 riastradh Exp
 #include "amdgpu_uvd.h"
 #include "cikd.h"
 #include "uvd/uvd_4_2_d.h"
+
+#include <linux/nbsd-namespace.h>
 
 /* 1 second timeout */
 #define UVD_IDLE_TIMEOUT_MS	1000
@@ -390,11 +392,7 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 	unsigned level = msg[57];
 
 	unsigned width_in_mb = width / 16;
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	unsigned height_in_mb = round_up(height / 16, 2);
-#else
 	unsigned height_in_mb = ALIGN(height / 16, 2);
-#endif
 	unsigned fs_in_mb = width_in_mb * height_in_mb;
 
 	unsigned image_size, tmp, min_dpb_size, num_dpb_buffer;
@@ -402,11 +400,7 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 	image_size = width * height;
 	image_size += image_size / 2;
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	image_size = round_up(image_size, 1024);
-#else
 	image_size = ALIGN(image_size, 1024);
-#endif
 
 	switch (stream_type) {
 	case 0: /* H264 */
@@ -467,11 +461,7 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 
 		/* BP */
 		tmp = max(width_in_mb, height_in_mb);
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-		min_dpb_size += round_up(tmp * 7 * 16, 64);
-#else
 		min_dpb_size += ALIGN(tmp * 7 * 16, 64);
-#endif
 		break;
 
 	case 3: /* MPEG2 */
@@ -489,21 +479,12 @@ static int amdgpu_uvd_cs_msg_decode(uint32_t *msg, unsigned buf_sizes[])
 		min_dpb_size += width_in_mb * height_in_mb * 64;
 
 		/* IT surface buffer */
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-		min_dpb_size += round_up(width_in_mb * height_in_mb * 32, 64);
-#else
 		min_dpb_size += ALIGN(width_in_mb * height_in_mb * 32, 64);
-#endif
 		break;
 
 	case 16: /* H265 */
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-		image_size = (round_up(width, 16) * round_up(height, 16) * 3) / 2;
-		image_size = round_up(image_size, 256);
-#else
 		image_size = (ALIGN(width, 16) * ALIGN(height, 16) * 3) / 2;
 		image_size = ALIGN(image_size, 256);
-#endif
 
 		num_dpb_buffer = (le32_to_cpu(msg[59]) & 0xff) + 2;
 		min_dpb_size = image_size * num_dpb_buffer;
