@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dma.c,v 1.4 2020/02/14 04:36:56 riastradh Exp $	*/
+/*	$NetBSD: via_dma.c,v 1.5 2020/02/14 14:34:59 maya Exp $	*/
 
 /* via_dma.c -- DMA support for the VIA Unichrome/Pro
  *
@@ -37,14 +37,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.4 2020/02/14 04:36:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dma.c,v 1.5 2020/02/14 14:34:59 maya Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
 #include "via_drv.h"
 #include "via_3d_reg.h"
-
-#include <linux/delay.h>
 
 #define CMDBUF_ALIGNMENT_SIZE   (0x100)
 #define CMDBUF_ALIGNMENT_MASK   (0x0ff)

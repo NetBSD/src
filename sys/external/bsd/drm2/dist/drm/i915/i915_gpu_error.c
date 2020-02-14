@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gpu_error.c,v 1.10 2018/08/27 16:14:55 riastradh Exp $	*/
+/*	$NetBSD: i915_gpu_error.c,v 1.11 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright (c) 2008 Intel Corporation
@@ -30,12 +30,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.10 2018/08/27 16:14:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gpu_error.c,v 1.11 2020/02/14 14:34:58 maya Exp $");
 
 #include <sys/param.h>
 
-#include <asm/io.h>
-#include <linux/irqflags.h>
 #include "i915_drv.h"
 
 static const char *ring_str(int ring)

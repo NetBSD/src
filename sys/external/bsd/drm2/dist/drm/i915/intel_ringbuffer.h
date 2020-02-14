@@ -1,9 +1,8 @@
-/*	$NetBSD: intel_ringbuffer.h,v 1.7 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: intel_ringbuffer.h,v 1.8 2020/02/14 14:34:58 maya Exp $	*/
 
 #ifndef _INTEL_RINGBUFFER_H_
 #define _INTEL_RINGBUFFER_H_
 
-#include <asm/bug.h>
 #include <linux/hashtable.h>
 #include "i915_gem_batch_pool.h"
 

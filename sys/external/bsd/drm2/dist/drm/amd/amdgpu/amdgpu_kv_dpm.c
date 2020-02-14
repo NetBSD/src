@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_kv_dpm.c,v 1.3 2020/02/14 04:30:04 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_kv_dpm.c,v 1.4 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,9 +24,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_kv_dpm.c,v 1.3 2020/02/14 04:30:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_kv_dpm.c,v 1.4 2020/02/14 14:34:58 maya Exp $");
 
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_pm.h"

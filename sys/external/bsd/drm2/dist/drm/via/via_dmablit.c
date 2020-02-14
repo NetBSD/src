@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dmablit.c,v 1.7 2020/02/14 04:37:43 riastradh Exp $	*/
+/*	$NetBSD: via_dmablit.c,v 1.8 2020/02/14 14:34:59 maya Exp $	*/
 
 /* via_dmablit.c -- PCI DMA BitBlt support for the VIA Unichrome/Pro
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.7 2020/02/14 04:37:43 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.8 2020/02/14 14:34:59 maya Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.7 2020/02/14 04:37:43 riastradh Ex
 
 #include <linux/pagemap.h>
 #include <linux/slab.h>
-#include <linux/timer.h>
 
 #define VIA_PGDN(x)	     (((unsigned long)(x)) & PAGE_MASK)
 #define VIA_PGOFF(x)	    (((unsigned long)(x)) & ~PAGE_MASK)

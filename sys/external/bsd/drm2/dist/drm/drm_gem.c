@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.14 2020/02/14 14:34:57 maya Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.14 2020/02/14 14:34:57 maya Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -41,9 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.13 2020/02/14 04:35:19 riastradh Exp $
 #include <linux/pagemap.h>
 #include <linux/shmem_fs.h>
 #include <linux/dma-buf.h>
-#include <linux/err.h>
-#include <linux/export.h>
-#include <asm/bug.h>
 #include <drm/drmP.h>
 #include <drm/drm_vma_manager.h>
 #include <drm/drm_gem.h>
