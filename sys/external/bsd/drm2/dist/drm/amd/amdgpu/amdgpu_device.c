@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.6 2020/02/14 04:37:09 riastradh Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.6 2020/02/14 04:37:09 riastradh Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -1893,13 +1893,11 @@ int amdgpu_suspend_kms(struct drm_device *dev, bool suspend, bool fbcon)
 	}
 #endif
 
-#ifndef __NetBSD__		/* XXX amdgpu fb */
 	if (fbcon) {
 		console_lock();
 		amdgpu_fbdev_set_suspend(adev, 1);
 		console_unlock();
 	}
-#endif
 	return 0;
 }
 
@@ -1922,11 +1920,9 @@ int amdgpu_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
-#ifndef __NetBSD__		/* XXX amdgpu fb */
 	if (fbcon) {
 		console_lock();
 	}
-#endif
 #ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (resume) {
 		pci_set_power_state(dev->pdev, PCI_D0);
@@ -1957,10 +1953,8 @@ int amdgpu_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 
 	r = amdgpu_late_init(adev);
 	if (r) {
-#ifndef __NetBSD__
 		if (fbcon)
 			console_unlock();
-#endif
 		return r;
 	}
 
@@ -2012,12 +2006,10 @@ int amdgpu_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	dev->dev->power.disable_depth--;
 #endif
 
-#ifndef __NetBSD__		/* XXX amdgpu fb */
 	if (fbcon) {
 		amdgpu_fbdev_set_suspend(adev, 0);
 		console_unlock();
 	}
-#endif
 
 	return 0;
 }
