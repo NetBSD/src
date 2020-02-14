@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.85 2020/01/29 19:29:23 skrll Exp $
+#	$NetBSD: genassym.cf,v 1.86 2020/02/14 07:23:24 skrll Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -220,24 +220,24 @@ define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
 define	CI_ARM_CPUID		offsetof(struct cpu_info, ci_arm_cpuid)
-define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
+define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 define	CI_UNDEFSAVE		offsetof(struct cpu_info, ci_undefsave[0])
+define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
 endif
 ifdef __HAVE_FAST_SOFTINTS
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
-define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 ifdef FPU_VFP
 define	CI_VFP_ID		offsetof(struct cpu_info, ci_vfp_id)
 endif
-define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 
 define	VFP_FPEXC_EN		VFP_FPEXC_EN
 
