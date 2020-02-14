@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_dp_helper.c,v 1.10 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: drm_dp_helper.c,v 1.11 2020/02/14 09:38:51 riastradh Exp $	*/
 
 /*
  * Copyright © 2009 Keith Packard
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.10 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_dp_helper.c,v 1.11 2020/02/14 09:38:51 riastradh Exp $");
 
 #include <linux/kernel.h>
 #include <linux/module.h>
@@ -668,7 +668,7 @@ static int drm_dp_i2c_drain_msg(struct drm_dp_aux *aux, struct drm_dp_aux_msg *o
 		}
 
 		msg.size -= err;
-		msg.buffer = msg.buffer + err;
+		msg.buffer += err;
 	}
 
 	return ret;
