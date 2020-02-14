@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_display.c,v 1.30 2020/02/14 04:36:11 riastradh Exp $	*/
+/*	$NetBSD: intel_display.c,v 1.31 2020/02/14 09:39:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.30 2020/02/14 04:36:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_display.c,v 1.31 2020/02/14 09:39:37 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/module.h>
@@ -2545,8 +2545,7 @@ intel_alloc_initial_plane_obj(struct intel_crtc *crtc,
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = to_i915(dev);
 	struct drm_i915_gem_object *obj = NULL;
-	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
-	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
 	struct drm_framebuffer *fb = &plane_config->fb->base;
 	u32 base_aligned = round_down(plane_config->base, PAGE_SIZE);
 	u32 size_aligned = round_up(plane_config->base + plane_config->size,
@@ -8100,7 +8099,7 @@ i9xx_get_initial_plane_config(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 val, base;
+	u32 val, base, offset __unused;
 	int pipe = crtc->pipe, plane = crtc->plane;
 	int fourcc, pixel_format;
 	unsigned int aligned_height;
@@ -8133,9 +8132,9 @@ i9xx_get_initial_plane_config(struct intel_crtc *crtc,
 
 	if (INTEL_INFO(dev)->gen >= 4) {
 		if (plane_config->tiling)
-			(void)I915_READ(DSPTILEOFF(plane));
+			offset = I915_READ(DSPTILEOFF(plane));
 		else
-			(void)I915_READ(DSPLINOFF(plane));
+			offset = I915_READ(DSPLINOFF(plane));
 		base = I915_READ(DSPSURF(plane)) & 0xfffff000;
 	} else {
 		base = I915_READ(DSPADDR(plane));
@@ -9173,7 +9172,7 @@ skylake_get_initial_plane_config(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 val, base, stride_mult, tiling;
+	u32 val, base, offset __unused, stride_mult, tiling;
 	int pipe = crtc->pipe;
 	int fourcc, pixel_format;
 	unsigned int aligned_height;
@@ -9222,7 +9221,7 @@ skylake_get_initial_plane_config(struct intel_crtc *crtc,
 	base = I915_READ(PLANE_SURF(pipe, 0)) & 0xfffff000;
 	plane_config->base = base;
 
-	(void)I915_READ(PLANE_OFFSET(pipe, 0));
+	offset = I915_READ(PLANE_OFFSET(pipe, 0));
 
 	val = I915_READ(PLANE_SIZE(pipe, 0));
 	fb->height = ((val >> 16) & 0xfff) + 1;
@@ -9281,7 +9280,7 @@ ironlake_get_initial_plane_config(struct intel_crtc *crtc,
 {
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	u32 val, base;
+	u32 val, base, offset __unused;
 	int pipe = crtc->pipe;
 	int fourcc, pixel_format;
 	unsigned int aligned_height;
@@ -9314,12 +9313,12 @@ ironlake_get_initial_plane_config(struct intel_crtc *crtc,
 
 	base = I915_READ(DSPSURF(pipe)) & 0xfffff000;
 	if (IS_HASWELL(dev) || IS_BROADWELL(dev)) {
-		(void)I915_READ(DSPOFFSET(pipe));
+		offset = I915_READ(DSPOFFSET(pipe));
 	} else {
 		if (plane_config->tiling)
-			(void)I915_READ(DSPTILEOFF(pipe));
+			offset = I915_READ(DSPTILEOFF(pipe));
 		else
-			(void)I915_READ(DSPLINOFF(pipe));
+			offset = I915_READ(DSPLINOFF(pipe));
 	}
 	plane_config->base = base;
 
@@ -10297,8 +10296,7 @@ intel_framebuffer_create_for_mode(struct drm_device *dev,
 				  int depth, int bpp)
 {
 	struct drm_i915_gem_object *obj;
-	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
-	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = { 0 };
 
 	obj = i915_gem_alloc_object(dev,
 				    intel_framebuffer_size_for_mode(mode, bpp));
@@ -14858,7 +14856,7 @@ static const struct intel_dmi_quirk intel_dmi_quirks[] = {
 					    DMI_MATCH(DMI_PRODUCT_NAME, ""),
 				},
 			},
-			{ .callback = NULL }  /* terminating entry */
+			{ }  /* terminating entry */
 		},
 		.hook = quirk_invert_brightness,
 	},

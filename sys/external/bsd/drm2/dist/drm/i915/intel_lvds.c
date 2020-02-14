@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lvds.c,v 1.8 2020/02/14 04:36:12 riastradh Exp $	*/
+/*	$NetBSD: intel_lvds.c,v 1.9 2020/02/14 09:39:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.8 2020/02/14 04:36:12 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.9 2020/02/14 09:39:37 riastradh Exp $");
 
 #include <acpi/button.h>
 #include <linux/dmi.h>
@@ -422,7 +422,7 @@ static const struct dmi_system_id intel_no_modeset_on_lid[] = {
 		},
 	},
 
-	{ .callback = NULL }	/* terminating entry */
+	{ }	/* terminating entry */
 };
 
 /*
@@ -784,7 +784,7 @@ static const struct dmi_system_id intel_no_lvds[] = {
 		},
 	},
 
-	{ .callback = NULL }	/* terminating entry */
+	{ }	/* terminating entry */
 };
 
 /*
@@ -869,7 +869,7 @@ static const struct dmi_system_id intel_dual_link_lvds[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "MacBookPro9,1"),
 		},
 	},
-	{ .callback = NULL }	/* terminating entry */
+	{ }	/* terminating entry */
 };
 
 bool intel_is_dual_link_lvds(struct drm_device *dev)
