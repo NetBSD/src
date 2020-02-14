@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.c,v 1.4 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_fbc.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -41,10 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.4 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.5 2020/02/14 04:35:19 riastradh Exp $");
 
 #include "intel_drv.h"
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 static inline bool fbc_supported(struct drm_i915_private *dev_priv)
 {
@@ -1090,11 +1092,7 @@ void intel_fbc_init(struct drm_i915_private *dev_priv)
 {
 	enum i915_pipe pipe;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->fbc.lock);
-#else
 	mutex_init(&dev_priv->fbc.lock);
-#endif
 
 	if (!HAS_FBC(dev_priv)) {
 		dev_priv->fbc.enabled = false;

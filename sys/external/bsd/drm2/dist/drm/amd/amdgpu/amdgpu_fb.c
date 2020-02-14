@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_fb.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_fb.c,v 1.4 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.4 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -46,6 +46,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_fb.c,v 1.3 2018/08/27 14:04:50 riastradh Exp 
 #ifdef __NetBSD__
 #include "amdgpufb.h"
 #endif
+
+#include <linux/nbsd-namespace.h>
 
 /* object hierarchy -
    this contains a helper + a amdgpu fb
@@ -132,17 +134,9 @@ static int amdgpufb_create_pinned_object(struct amdgpu_fbdev *rfbdev,
 	mode_cmd->pitches[0] = amdgpu_align_pitch(adev, mode_cmd->width, bpp,
 						  fb_tiled) * ((bpp + 1) / 8);
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	height = round_up(mode_cmd->height, 8);
-#else
 	height = ALIGN(mode_cmd->height, 8);
-#endif
 	size = mode_cmd->pitches[0] * height;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	aligned_size = round_up(size, PAGE_SIZE);
-#else
 	aligned_size = ALIGN(size, PAGE_SIZE);
-#endif
 	ret = amdgpu_gem_object_create(adev, aligned_size, 0,
 				       AMDGPU_GEM_DOMAIN_VRAM,
 				       AMDGPU_GEM_CREATE_CPU_ACCESS_REQUIRED,

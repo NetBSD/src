@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_psr.c,v 1.6 2020/02/14 04:30:05 riastradh Exp $	*/
+/*	$NetBSD: intel_psr.c,v 1.7 2020/02/14 04:35:19 riastradh Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -54,12 +54,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.6 2020/02/14 04:30:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_psr.c,v 1.7 2020/02/14 04:35:19 riastradh Exp $");
 
 #include <drm/drmP.h>
 
 #include "intel_drv.h"
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 static bool is_edp_psr(struct intel_dp *intel_dp)
 {
@@ -758,9 +760,5 @@ void intel_psr_init(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
 	INIT_DELAYED_WORK(&dev_priv->psr.work, intel_psr_work);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->psr.lock);
-#else
 	mutex_init(&dev_priv->psr.lock);
-#endif
 }
