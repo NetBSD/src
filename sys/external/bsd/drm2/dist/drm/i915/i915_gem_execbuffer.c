@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_execbuffer.c,v 1.9 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: i915_gem_execbuffer.c,v 1.10 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /*
  * Copyright © 2008,2010 Intel Corporation
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.9 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_execbuffer.c,v 1.10 2020/02/14 04:36:56 riastradh Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -1465,13 +1465,8 @@ i915_gem_do_execbuffer(struct drm_device *dev, void *data,
 		/* Return -EPERM to trigger fallback code on old binaries. */
 		if (!HAS_SECURE_BATCHES(dev_priv))
 			return -EPERM;
-#ifdef __NetBSD__
-		if (!file->is_master || !DRM_SUSER())
-		    return -EPERM;
-#else
 		if (!file->is_master || !capable(CAP_SYS_ADMIN))
 		    return -EPERM;
-#endif
 
 		dispatch_flags |= I915_DISPATCH_SECURE;
 	}

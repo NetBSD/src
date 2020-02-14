@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_memory.c,v 1.4 2018/08/27 14:41:10 riastradh Exp $	*/
+/*	$NetBSD: ttm_memory.c,v 1.5 2020/02/14 04:36:56 riastradh Exp $	*/
 
 /**************************************************************************
  *
@@ -28,7 +28,7 @@
  **************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.4 2018/08/27 14:41:10 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_memory.c,v 1.5 2020/02/14 04:36:56 riastradh Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -202,11 +202,7 @@ static bool ttm_zones_above_swap_target(struct ttm_mem_global *glob,
 
 		if (from_wq)
 			target = zone->swap_limit;
-#ifdef __NetBSD__
-		else if (DRM_SUSER())
-#else
 		else if (capable(CAP_SYS_ADMIN))
-#endif
 			target = zone->emer_mem;
 		else
 			target = zone->max_mem;
@@ -525,13 +521,8 @@ static int ttm_mem_global_reserve(struct ttm_mem_global *glob,
 		if (single_zone && zone != single_zone)
 			continue;
 
-#ifdef __NetBSD__
-		limit = DRM_SUSER() ?
-			zone->emer_mem : zone->max_mem;
-#else
 		limit = (capable(CAP_SYS_ADMIN)) ?
 			zone->emer_mem : zone->max_mem;
-#endif
 
 		if (zone->used_mem > limit)
 			goto out_unlock;
