@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbdev.c,v 1.10 2020/02/14 04:37:09 riastradh Exp $	*/
+/*	$NetBSD: intel_fbdev.c,v 1.11 2020/02/14 09:39:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.10 2020/02/14 04:37:09 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbdev.c,v 1.11 2020/02/14 09:39:37 riastradh Exp $");
 
 #include <linux/async.h>
 #include <linux/module.h>
@@ -134,8 +134,7 @@ static int intelfb_alloc(struct drm_fb_helper *helper,
 	struct drm_framebuffer *fb;
 	struct drm_device *dev = helper->dev;
 	struct drm_i915_private *dev_priv = to_i915(dev);
-	static const struct drm_mode_fb_cmd2 zero_mode_cmd;
-	struct drm_mode_fb_cmd2 mode_cmd = zero_mode_cmd;
+	struct drm_mode_fb_cmd2 mode_cmd = {};
 	struct drm_i915_gem_object *obj = NULL;
 	int size, ret;
 
@@ -214,6 +213,7 @@ static int intelfb_create(struct drm_fb_helper *helper,
 	bool prealloc = false;
 
 	mutex_lock(&dev->struct_mutex);
+
 	if (intel_fb &&
 	    (sizes->fb_width > intel_fb->base.width ||
 	     sizes->fb_height > intel_fb->base.height)) {

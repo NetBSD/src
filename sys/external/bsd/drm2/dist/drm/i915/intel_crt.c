@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_crt.c,v 1.7 2020/02/14 04:36:11 riastradh Exp $	*/
+/*	$NetBSD: intel_crt.c,v 1.8 2020/02/14 09:39:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_crt.c,v 1.7 2020/02/14 04:36:11 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_crt.c,v 1.8 2020/02/14 09:39:37 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/i2c.h>
@@ -784,7 +784,7 @@ static const struct dmi_system_id intel_no_crt[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "XPS 8700"),
 		},
 	},
-	{ .callback = NULL }
+	{ }
 };
 
 void intel_crt_init(struct drm_device *dev)

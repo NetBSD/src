@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_bios.c,v 1.8 2020/02/14 04:30:05 riastradh Exp $	*/
+/*	$NetBSD: intel_bios.c,v 1.9 2020/02/14 09:39:37 riastradh Exp $	*/
 
 /*
  * Copyright © 2006 Intel Corporation
@@ -27,7 +27,7 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_bios.c,v 1.8 2020/02/14 04:30:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_bios.c,v 1.9 2020/02/14 09:39:37 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <drm/drm_dp_helper.h>
@@ -1248,7 +1248,7 @@ static const struct dmi_system_id intel_no_opregion_vbt[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "97027RG"),
 		},
 	},
-	{ 	.callback = NULL, }
+	{ }
 };
 
 static const struct bdb_header *validate_vbt(const void *base,
