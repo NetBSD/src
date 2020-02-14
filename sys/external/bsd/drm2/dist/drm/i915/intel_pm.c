@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_pm.c,v 1.21 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: intel_pm.c,v 1.22 2020/02/14 04:36:12 riastradh Exp $	*/
 
 /*
  * Copyright © 2012 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.21 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_pm.c,v 1.22 2020/02/14 04:36:12 riastradh Exp $");
 
 #include <linux/bitops.h>
 #include <linux/cpufreq.h>
@@ -357,7 +357,7 @@ static const int pessimal_latency_ns = 5000;
 	((((dsparb) >> (lo_shift)) & 0xff) | ((((dsparb2) >> (hi_shift)) & 0x1) << 8))
 
 static int vlv_get_fifo_size(struct drm_device *dev,
-			      enum i915_pipe pipe, int plane)
+			      enum pipe pipe, int plane)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	int sprite0_start, sprite1_start, size;
@@ -843,7 +843,7 @@ static void vlv_write_wm_values(struct intel_crtc *crtc,
 				const struct vlv_wm_values *wm)
 {
 	struct drm_i915_private *dev_priv = to_i915(crtc->base.dev);
-	enum i915_pipe pipe = crtc->pipe;
+	enum pipe pipe = crtc->pipe;
 
 	I915_WRITE(VLV_DDL(pipe),
 		   (wm->ddl[pipe].cursor << DDL_CURSOR_SHIFT) |
@@ -1305,7 +1305,7 @@ static void vlv_merge_wm(struct drm_device *dev,
 
 	for_each_intel_crtc(dev, crtc) {
 		struct vlv_wm_state *wm_state = &crtc->wm_state;
-		enum i915_pipe pipe = crtc->pipe;
+		enum pipe pipe = crtc->pipe;
 
 		if (!crtc->active)
 			continue;
@@ -1326,7 +1326,7 @@ static void vlv_update_wm(struct drm_crtc *crtc)
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	struct vlv_wm_values wm = {};
 
 	vlv_compute_wm(intel_crtc);
@@ -2555,7 +2555,7 @@ static void ilk_compute_wm_results(struct drm_device *dev,
 
 	/* LP0 register values */
 	for_each_intel_crtc(dev, intel_crtc) {
-		enum i915_pipe pipe = intel_crtc->pipe;
+		enum pipe pipe = intel_crtc->pipe;
 		const struct intel_wm_level *r =
 			&intel_crtc->wm.active.wm[0];
 
@@ -2612,7 +2612,7 @@ static unsigned int ilk_compute_wm_dirty(struct drm_i915_private *dev_priv,
 					 const struct ilk_wm_values *new)
 {
 	unsigned int dirty = 0;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	int wm_lp;
 
 	for_each_pipe(dev_priv, pipe) {
@@ -2843,7 +2843,7 @@ static void skl_ddb_entry_init_from_hw(struct skl_ddb_entry *entry, u32 reg)
 void skl_ddb_get_hw_state(struct drm_i915_private *dev_priv,
 			  struct skl_ddb_allocation *ddb /* out */)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	int plane;
 	u32 val;
 
@@ -2918,7 +2918,7 @@ skl_allocate_pipe_ddb(struct drm_crtc *crtc,
 	struct drm_device *dev = crtc->dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	struct skl_ddb_entry *alloc = &ddb->pipe[pipe];
 	uint16_t alloc_size, start, cursor_blocks;
 	uint16_t minimum[I915_MAX_PLANES];
@@ -3070,7 +3070,7 @@ static bool skl_ddb_allocation_changed(const struct skl_ddb_allocation *new_ddb,
 	struct drm_device *dev = intel_crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	const struct skl_ddb_allocation *cur_ddb = &dev_priv->wm.skl_hw.ddb;
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 
 	if (memcmp(new_ddb->plane[pipe], cur_ddb->plane[pipe],
 		   sizeof(new_ddb->plane[pipe])))
@@ -3106,7 +3106,7 @@ static void skl_compute_wm_pipe_parameters(struct drm_crtc *crtc,
 {
 	struct drm_device *dev = crtc->dev;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	struct drm_plane *plane;
 	struct drm_framebuffer *fb;
 	int i = 1; /* Index for sprite planes start */
@@ -3242,7 +3242,7 @@ static bool skl_compute_plane_wm(const struct drm_i915_private *dev_priv,
 static void skl_compute_wm_level(const struct drm_i915_private *dev_priv,
 				 struct skl_ddb_allocation *ddb,
 				 struct skl_pipe_wm_parameters *p,
-				 enum i915_pipe pipe,
+				 enum pipe pipe,
 				 int level,
 				 int num_planes,
 				 struct skl_wm_level *result)
@@ -3324,7 +3324,7 @@ static void skl_compute_wm_results(struct drm_device *dev,
 				   struct intel_crtc *intel_crtc)
 {
 	int level, max_level = ilk_wm_max_level(dev);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	uint32_t temp;
 	int i;
 
@@ -3392,7 +3392,7 @@ static void skl_write_wm_values(struct drm_i915_private *dev_priv,
 
 	list_for_each_entry(crtc, &dev->mode_config.crtc_list, base.head) {
 		int i, level, max_level = ilk_wm_max_level(dev);
-		enum i915_pipe pipe = crtc->pipe;
+		enum pipe pipe = crtc->pipe;
 
 		if (!new->dirty[pipe])
 			continue;
@@ -3451,7 +3451,7 @@ static void skl_write_wm_values(struct drm_i915_private *dev_priv,
  */
 
 static void
-skl_wm_flush_pipe(struct drm_i915_private *dev_priv, enum i915_pipe pipe, int pass)
+skl_wm_flush_pipe(struct drm_i915_private *dev_priv, enum pipe pipe, int pass)
 {
 	int plane;
 
@@ -3467,7 +3467,7 @@ skl_wm_flush_pipe(struct drm_i915_private *dev_priv, enum i915_pipe pipe, int pa
 static bool
 skl_ddb_allocation_included(const struct skl_ddb_allocation *old,
 			    const struct skl_ddb_allocation *new,
-			    enum i915_pipe pipe)
+			    enum pipe pipe)
 {
 	uint16_t old_size, new_size;
 
@@ -3486,7 +3486,7 @@ static void skl_flush_wm_values(struct drm_i915_private *dev_priv,
 	struct skl_ddb_allocation *cur_ddb, *new_ddb;
 	bool reallocated[I915_MAX_PIPES] = {};
 	struct intel_crtc *crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	new_ddb = &new_values->ddb;
 	cur_ddb = &dev_priv->wm.skl_hw.ddb;
@@ -3630,7 +3630,7 @@ static void skl_update_other_pipe_wm(struct drm_device *dev,
 	}
 }
 
-static void skl_clear_wm(struct skl_wm_values *watermarks, enum i915_pipe pipe)
+static void skl_clear_wm(struct skl_wm_values *watermarks, enum pipe pipe)
 {
 	watermarks->wm_linetime[pipe] = 0;
 	memset(watermarks->plane[pipe], 0,
@@ -3839,7 +3839,7 @@ static void skl_pipe_wm_get_hw_state(struct drm_crtc *crtc)
 	struct skl_wm_values *hw = &dev_priv->wm.skl_hw;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct skl_pipe_wm *active = &intel_crtc->wm.skl_active;
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	int level, i, max_level;
 	uint32_t temp;
 
@@ -3902,7 +3902,7 @@ static void ilk_pipe_wm_get_hw_state(struct drm_crtc *crtc)
 	struct ilk_wm_values *hw = &dev_priv->wm.hw;
 	struct intel_crtc *intel_crtc = to_intel_crtc(crtc);
 	struct intel_pipe_wm *active = &intel_crtc->wm.active;
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	static const unsigned int wm0_pipe_reg[] = {
 		[PIPE_A] = WM0_PIPEA_ILK,
 		[PIPE_B] = WM0_PIPEB_ILK,
@@ -3952,7 +3952,7 @@ static void ilk_pipe_wm_get_hw_state(struct drm_crtc *crtc)
 static void vlv_read_wm_values(struct drm_i915_private *dev_priv,
 			       struct vlv_wm_values *wm)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	uint32_t tmp;
 
 	for_each_pipe(dev_priv, pipe) {
@@ -4030,7 +4030,7 @@ void vlv_wm_get_hw_state(struct drm_device *dev)
 	struct drm_i915_private *dev_priv = to_i915(dev);
 	struct vlv_wm_values *wm = &dev_priv->wm.vlv;
 	struct intel_plane *plane;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	u32 val;
 
 	vlv_read_wm_values(dev_priv, wm);
@@ -6479,7 +6479,7 @@ static void ibx_init_clock_gating(struct drm_device *dev)
 static void g4x_disable_trickle_feed(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	for_each_pipe(dev_priv, pipe) {
 		I915_WRITE(DSPCNTR(pipe),
@@ -6776,7 +6776,7 @@ static void lpt_suspend_hw(struct drm_device *dev)
 static void broadwell_init_clock_gating(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	uint32_t misccpctl;
 
 	ilk_init_lp_watermarks(dev);

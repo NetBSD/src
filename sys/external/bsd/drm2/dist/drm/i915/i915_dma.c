@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_dma.c,v 1.29 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: i915_dma.c,v 1.30 2020/02/14 04:36:11 riastradh Exp $	*/
 
 /* i915_dma.c -- DMA support for the I915 -*- linux-c -*-
  */
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.29 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_dma.c,v 1.30 2020/02/14 04:36:11 riastradh Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
@@ -793,7 +793,7 @@ static void intel_device_info_runtime_init(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	struct intel_device_info *info;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	info = (struct intel_device_info *)&dev_priv->info;
 

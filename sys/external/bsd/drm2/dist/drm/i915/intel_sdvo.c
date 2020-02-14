@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_sdvo.c,v 1.12 2019/02/19 00:30:16 christos Exp $	*/
+/*	$NetBSD: intel_sdvo.c,v 1.13 2020/02/14 04:36:12 riastradh Exp $	*/
 
 /*
  * Copyright 2006 Dave Airlie <airlied@linux.ie>
@@ -28,7 +28,7 @@
  *	Eric Anholt <eric@anholt.net>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.12 2019/02/19 00:30:16 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_sdvo.c,v 1.13 2020/02/14 04:36:12 riastradh Exp $");
 
 #include <linux/i2c.h>
 #include <linux/slab.h>
@@ -1346,7 +1346,7 @@ static bool intel_sdvo_connector_get_hw_state(struct intel_connector *connector)
 }
 
 static bool intel_sdvo_get_hw_state(struct intel_encoder *encoder,
-				    enum i915_pipe *pipe)
+				    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;

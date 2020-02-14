@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_crt.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_crt.c,v 1.7 2020/02/14 04:36:11 riastradh Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_crt.c,v 1.6 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_crt.c,v 1.7 2020/02/14 04:36:11 riastradh Exp $");
 
 #include <linux/dmi.h>
 #include <linux/i2c.h>
@@ -69,7 +69,7 @@ static struct intel_crt *intel_attached_crt(struct drm_connector *connector)
 }
 
 static bool intel_crt_get_hw_state(struct intel_encoder *encoder,
-				   enum i915_pipe *pipe)
+				   enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
