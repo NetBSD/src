@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.h,v 1.1 2020/01/29 03:16:28 thorpej Exp $	*/
+/*	$NetBSD: if_stats.h,v 1.2 2020/02/14 22:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -34,7 +34,6 @@
 
 #include <net/net_stats.h>
 
-#ifdef __IF_STATS_PERCPU
 /*
  * Interface statistics.  All values are unsigned 64-bit.
  */
@@ -116,50 +115,10 @@ if_statsub_ref(net_stat_ref_t nsr, if_stat_t x, uint64_t v)
 	_NET_STATSUB_REF(nsr, x, v);
 }
 
-#endif /* _KERNEL */
-
-#else /* ! __IF_STATS_PERCPU */
-
-#ifdef _KERNEL
-
-/*
- * Transitional aid to allow drivers to migrate to the new API.  Once
- * all drivers are transitioned, the implementation will be replaced
- * with per-cpu counters.
- */
-
-static inline net_stat_ref_t
-IF_STAT_GETREF(ifnet_t *ifp)
-{
-	return (net_stat_ref_t)ifp;
-}
-
-#define	IF_STAT_PUTREF(ifp)	__nothing
-
-#define	if_statinc(ifp, x)	do { ++(ifp)->x; } while (/*CONSTCOND*/0)
-#define	if_statdec(ifp, x)	do { --(ifp)->x; } while (/*CONSTCOND*/0)
-#define	if_statadd(ifp, x, v)	do { (ifp)->x += (v); } while (/*CONSTCOND*/0)
-#define	if_statsub(ifp, x, v)	do { (ifp)->x -= (v); } while (/*CONSTCOND*/0)
-
-#define	if_statadd2(ifp, x1, v1, x2, v2)				\
-do {									\
-	(ifp)->x1 += (v1);						\
-	(ifp)->x2 += (v2);						\
-} while (/*CONSTCOND*/0)
-
-#define	if_statinc_ref(r, x)	if_statinc((ifnet_t *)(r), x)
-#define	if_statdec_ref(r, x)	if_statdec((ifnet_t *)(r), x)
-#define	if_statadd_ref(r, x, v)	if_statadd((ifnet_t *)(r), x, v)
-#define	if_statsub_ref(r, x, v)	if_statsub((ifnet_t *)(r), x, v)
-
-#endif /* _KERNEL */
-
-#endif /* __IF_STATS_PERCPU */
-
-#ifdef _KERNEL
 int	if_stats_init(ifnet_t *);
 void	if_stats_fini(ifnet_t *);
 void	if_stats_to_if_data(ifnet_t *, struct if_data *, bool);
+
 #endif /* _KERNEL */
 
 #endif /* !_NET_IF_STATS_H_ */

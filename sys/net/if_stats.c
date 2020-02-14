@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stats.c,v 1.2 2020/02/07 12:35:33 thorpej Exp $	*/
+/*	$NetBSD: if_stats.c,v 1.3 2020/02/14 22:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.2 2020/02/07 12:35:33 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.3 2020/02/14 22:04:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/mbuf.h>
@@ -48,11 +48,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_stats.c,v 1.2 2020/02/07 12:35:33 thorpej Exp $")
 int
 if_stats_init(ifnet_t * const ifp)
 {
-#ifdef __IF_STATS_PERCPU
 	ifp->if_stats = percpu_alloc(IF_STATS_SIZE);
 	if (ifp->if_stats == NULL)
 		return ENOMEM;
-#endif /* __IF_STATS_PERCPU */
 	return 0;
 }
 
@@ -63,16 +61,12 @@ if_stats_init(ifnet_t * const ifp)
 void
 if_stats_fini(ifnet_t * const ifp)
 {
-#ifdef __IF_STATS_PERCPU
 	percpu_t *pc = ifp->if_stats;
 	ifp->if_stats = NULL;
 	if (pc) {
 		percpu_free(pc, IF_STATS_SIZE);
 	}
-#endif /* __IF_STATS_PERCPU */
 }
-
-#ifdef __IF_STATS_PERCPU
 
 struct if_stats_to_if_data_ctx {
 	struct if_data * const ifi;
@@ -127,37 +121,3 @@ if_stats_to_if_data(ifnet_t * const ifp, struct if_data * const ifi,
 	percpu_foreach_xcall(ifp->if_stats, XC_HIGHPRI_IPL(IPL_SOFTNET),
 	    if_stats_to_if_data_cb, &ctx);
 }
-
-#else /* ! __IF_STATS_PERCPU */
-
-/*
- * if_stats_to_if_data --
- *	Collect the interface statistics and place them into the
- *	legacy if_data structure for reportig to user space.
- *	Optionally zeros the stats after collection.
- */
-void
-if_stats_to_if_data(ifnet_t * const ifp, struct if_data * const ifi,
-		    const bool zero_stats)
-{
-
-	memset(ifi, 0, sizeof(*ifi));
-
-	int s = splnet();
-
-	if (ifi) {
-		memcpy(&ifi->ifi_ipackets, &ifp->if_data.ifi_ipackets,
-		    offsetof(struct if_data, ifi_lastchange) -
-		    offsetof(struct if_data, ifi_ipackets));
-	}
-
-	if (zero_stats) {
-		memset(&ifp->if_data.ifi_ipackets, 0,
-		    offsetof(struct if_data, ifi_lastchange) -
-		    offsetof(struct if_data, ifi_ipackets));
-	}
-
-	splx(s);
-}
-
-#endif /* __IF_STATS_PERCPU */

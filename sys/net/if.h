@@ -1,4 +1,4 @@
-/*	$NetBSD: if.h,v 1.281 2020/02/06 23:30:19 thorpej Exp $	*/
+/*	$NetBSD: if.h,v 1.282 2020/02/14 22:04:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -62,12 +62,6 @@
 
 #ifndef _NET_IF_H_
 #define _NET_IF_H_
-
-/*
- * Temporary, to allow for a quick disable if problems are discovered
- * during a transition period.
- */
-#define	__IF_STATS_PERCPU
 
 #if !defined(_KERNEL) && !defined(_STANDALONE)
 #include <stdbool.h>
@@ -282,7 +276,6 @@ typedef struct ifnet {
 	short		if_timer;	/* ?: time 'til if_slowtimo called */
 	unsigned short	if_flags;	/* i: up/down, broadcast, etc. */
 	short		if_extflags;	/* :: if_output MP-safe, etc. */
-#ifdef __IF_STATS_PERCPU
 	u_char		if_type;	/* :: ethernet, tokenring, etc. */
 	u_char		if_addrlen;	/* :: media address length */
 	u_char		if_hdrlen;	/* :: media header length */
@@ -297,9 +290,6 @@ typedef struct ifnet {
 #else
 	void		*if_stats;	/* opaque to user-space */
 #endif /* _KERNEL */
-#else /* ! __IF_STATS_PERCPU */
-	struct if_data	if_data;	/* ?: statistics and other data */
-#endif /* __IF_STATS_PERCPU */
 	/*
 	 * Procedure handles.  If you add more of these, don't forget the
 	 * corresponding NULL stub in if.c.
@@ -426,27 +416,6 @@ typedef struct ifnet {
 
 #include <net/if_stats.h>
  
-#ifndef __IF_STATS_PERCPU
-#define	if_mtu		if_data.ifi_mtu
-#define	if_type		if_data.ifi_type
-#define	if_addrlen	if_data.ifi_addrlen
-#define	if_hdrlen	if_data.ifi_hdrlen
-#define	if_metric	if_data.ifi_metric
-#define	if_link_state	if_data.ifi_link_state
-#define	if_baudrate	if_data.ifi_baudrate
-#define	if_ipackets	if_data.ifi_ipackets
-#define	if_ierrors	if_data.ifi_ierrors
-#define	if_opackets	if_data.ifi_opackets
-#define	if_oerrors	if_data.ifi_oerrors
-#define	if_collisions	if_data.ifi_collisions
-#define	if_ibytes	if_data.ifi_ibytes
-#define	if_obytes	if_data.ifi_obytes
-#define	if_imcasts	if_data.ifi_imcasts
-#define	if_omcasts	if_data.ifi_omcasts
-#define	if_iqdrops	if_data.ifi_iqdrops
-#define	if_noproto	if_data.ifi_noproto
-#define	if_lastchange	if_data.ifi_lastchange
-#endif /* __IF_STATS_PERCPU */
 #define	if_name(ifp)	((ifp)->if_xname)
 
 #define	IFF_UP		0x0001		/* interface is up */
