@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_ring.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_ring.c,v 1.4 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -29,10 +29,8 @@
  *          Christian König
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_ring.c,v 1.4 2020/02/14 14:34:58 maya Exp $");
 
-#include <asm/byteorder.h>
-#include <linux/log2.h>
 #include <linux/seq_file.h>
 #include <linux/slab.h>
 #include <drm/drmP.h>

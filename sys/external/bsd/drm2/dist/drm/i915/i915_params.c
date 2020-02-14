@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_params.c,v 1.3 2018/08/27 04:58:23 riastradh Exp $	*/
+/*	$NetBSD: i915_params.c,v 1.4 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -25,10 +25,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_params.c,v 1.3 2018/08/27 04:58:23 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_params.c,v 1.4 2020/02/14 14:34:58 maya Exp $");
 
-#include <linux/module.h>
-#include <linux/moduleparam.h>
 #include "i915_drv.h"
 
 struct i915_params i915 __read_mostly = {

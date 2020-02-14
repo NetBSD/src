@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_sdma_v3_0.c,v 1.2 2020/02/14 04:35:19 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_sdma_v3_0.c,v 1.3 2020/02/14 14:34:58 maya Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,12 +24,9 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v3_0.c,v 1.2 2020/02/14 04:35:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_sdma_v3_0.c,v 1.3 2020/02/14 14:34:58 maya Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/log2.h>
-#include <asm/byteorder.h>
 #include <drm/drmP.h>
 #include "amdgpu.h"
 #include "amdgpu_ucode.h"
