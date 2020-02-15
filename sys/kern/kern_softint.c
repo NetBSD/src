@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.59 2020/01/26 18:52:55 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.60 2020/02/15 18:12:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.59 2020/01/26 18:52:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.60 2020/02/15 18:12:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -842,7 +842,7 @@ softint_dispatch(lwp_t *pinned, int s)
 	lwp_t *l;
 
 #ifdef DIAGNOSTIC
-	if ((pinned->l_flag & LW_RUNNING) == 0 || curlwp->l_stat != LSIDL) {
+	if ((pinned->l_pflag & LP_RUNNING) == 0 || curlwp->l_stat != LSIDL) {
 		struct lwp *onproc = curcpu()->ci_onproc;
 		int s2 = splhigh();
 		printf("curcpu=%d, spl=%d curspl=%d\n"
@@ -881,7 +881,7 @@ softint_dispatch(lwp_t *pinned, int s)
 		membar_producer();	/* for calcru */
 		l->l_pflag |= LP_TIMEINTR;
 	}
-	l->l_flag |= LW_RUNNING;
+	l->l_pflag |= LP_RUNNING;
 	softint_execute(si, l, s);
 	if (timing) {
 		binuptime(&now);
@@ -911,7 +911,7 @@ softint_dispatch(lwp_t *pinned, int s)
 		/* NOTREACHED */
 	}
 	l->l_switchto = NULL;
-	l->l_flag &= ~LW_RUNNING;
+	l->l_pflag &= ~LP_RUNNING;
 }
 
 #endif	/* !__HAVE_FAST_SOFTINTS */
