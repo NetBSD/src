@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_exit.c,v 1.282 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.283 2020/02/15 18:12:15 ad Exp $	*/
 
 /*-
- * Copyright (c) 1998, 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.282 2020/01/29 15:47:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.283 2020/02/15 18:12:15 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -591,9 +591,6 @@ exit1(struct lwp *l, int exitcode, int signo)
 	 * case these resources are in the PCB.
 	 */
 	cpu_lwp_free(l, 1);
-
-	/* For the LW_RUNNING check in lwp_free(). */
-	membar_exit();
 
 	/* Switch away into oblivion. */
 	lwp_lock(l);
