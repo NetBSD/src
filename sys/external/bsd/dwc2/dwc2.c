@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.68 2020/02/12 16:02:01 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.69 2020/02/15 01:21:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.68 2020/02/12 16:02:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.69 2020/02/15 01:21:56 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -301,6 +301,8 @@ dwc2_rhc(void *addr)
 		return;
 
 	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
+
 	/* set port bit */
 	p = KERNADDR(&xfer->ux_dmabuf, 0);
 
@@ -646,11 +648,11 @@ dwc2_root_intr_start(struct usbd_xfer *xfer)
 		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	xfer->ux_status = USBD_IN_PROGRESS;
-	return xfer->ux_status;
+	return USBD_IN_PROGRESS;
 }
 
 /* Abort a root interrupt request. */

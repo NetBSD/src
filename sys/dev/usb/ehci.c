@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.272 2020/02/12 16:02:01 riastradh Exp $ */
+/*	$NetBSD: ehci.c,v 1.273 2020/02/15 01:21:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.272 2020/02/12 16:02:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.273 2020/02/15 01:21:56 riastradh Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -785,6 +785,7 @@ ehci_pcd(void *addr)
 		/* Just ignore the change. */
 		goto done;
 	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	p = xfer->ux_buf;
 	m = uimin(sc->sc_noport, xfer->ux_length * 8 - 1);
@@ -2724,11 +2725,11 @@ ehci_root_intr_start(struct usbd_xfer *xfer)
 		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	xfer->ux_status = USBD_IN_PROGRESS;
-	return xfer->ux_status;
+	return USBD_IN_PROGRESS;
 }
 
 /* Abort a root interrupt request. */

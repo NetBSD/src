@@ -1,4 +1,4 @@
-/*	$NetBSD: vhci.c,v 1.5 2020/02/12 16:02:01 riastradh Exp $ */
+/*	$NetBSD: vhci.c,v 1.6 2020/02/15 01:21:56 riastradh Exp $ */
 
 /*
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.5 2020/02/12 16:02:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vhci.c,v 1.6 2020/02/15 01:21:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -629,6 +629,7 @@ vhci_root_intr_start(struct usbd_xfer *xfer)
 		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
@@ -654,6 +655,7 @@ vhci_root_intr_abort(struct usbd_xfer *xfer)
 	 * Cancel it.
 	 */
 	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -748,6 +750,7 @@ vhci_usb_attach(vhci_fd_t *vfd, struct vhci_ioc_usb_attach *args)
 		ret = ENOBUFS;
 		goto done;
 	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	p = xfer->ux_buf;
 	memset(p, 0, xfer->ux_length);
@@ -823,6 +826,7 @@ vhci_usb_detach(vhci_fd_t *vfd, struct vhci_ioc_usb_detach *args)
 		mutex_exit(&sc->sc_lock);
 		return ENOBUFS;
 	}
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	mutex_enter(&port->lock);
 

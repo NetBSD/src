@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.19 2020/02/12 16:02:01 riastradh Exp $	*/
+/*	$NetBSD: ahci.c,v 1.20 2020/02/15 01:21:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.19 2020/02/12 16:02:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.20 2020/02/15 01:21:56 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -438,6 +438,7 @@ ahci_poll_hub(void *arg)
 	xfer = sc->sc_intr_xfer;
 	if (xfer == NULL)
 		goto out;
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	/*
 	 * If the intr xfer for which we were scheduled is done, and
@@ -754,11 +755,14 @@ ahci_root_intr_start(struct usbd_xfer *xfer)
 
 	DPRINTF(D_TRACE, ("SLRIstart "));
 
+	mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intr_xfer == NULL);
-
 	sc->sc_interval = MS_TO_TICKS(xfer->ux_pipe->up_endpoint->ue_edesc->bInterval);
 	callout_schedule(&sc->sc_poll_handle, sc->sc_interval);
 	sc->sc_intr_xfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	mutex_exit(&sc->sc_lock);
+
 	return USBD_IN_PROGRESS;
 }
 

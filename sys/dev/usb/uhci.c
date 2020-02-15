@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.292 2020/02/14 16:47:28 riastradh Exp $	*/
+/*	$NetBSD: uhci.c,v 1.293 2020/02/15 01:21:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.292 2020/02/14 16:47:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.293 2020/02/15 01:21:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1013,6 +1013,7 @@ uhci_poll_hub(void *addr)
 	xfer = sc->sc_intr_xfer;
 	if (xfer == NULL)
 		goto out;
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	/*
 	 * If the intr xfer for which we were scheduled is done, and
@@ -3905,12 +3906,12 @@ uhci_root_intr_start(struct usbd_xfer *xfer)
 	sc->sc_ival = mstohz(ival);
 	callout_schedule(&sc->sc_poll_handle, sc->sc_ival);
 	sc->sc_intr_xfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	xfer->ux_status = USBD_IN_PROGRESS;
-	return xfer->ux_status;
+	return USBD_IN_PROGRESS;
 }
 
 /* Close the root interrupt pipe. */
