@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_tsd.c,v 1.18 2019/12/25 00:44:45 joerg Exp $	*/
+/*	$NetBSD: pthread_tsd.c,v 1.19 2020/02/15 23:59:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_tsd.c,v 1.18 2019/12/25 00:44:45 joerg Exp $");
+__RCSID("$NetBSD: pthread_tsd.c,v 1.19 2020/02/15 23:59:30 kamil Exp $");
 
 /* Functions and structures dealing with thread-specific data */
 #include <errno.h>
@@ -61,26 +61,12 @@ null_destructor(void *p)
 #include <stdlib.h>
 #include <stdio.h>
 
-static void
-pthread_tsd_prefork(void)
-{
-	pthread_mutex_lock(&tsd_mutex);
-}
-
-static void
-pthread_tsd_postfork(void)
-{
-	pthread_mutex_unlock(&tsd_mutex);
-}
-
 void *
-pthread_tsd_init(size_t *tlen)
+pthread_tsd_earlyinit(size_t *tlen)
 {
 	char *pkm;
 	size_t alen;
 	char *arena;
-
-	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork);
 
 	if ((pkm = pthread__getenv("PTHREAD_KEYS_MAX")) != NULL) {
 		pthread_keys_max = (int)strtol(pkm, NULL, 0);
@@ -111,6 +97,25 @@ pthread_tsd_init(size_t *tlen)
 	pthread__tsd_destructors = (void *)arena;
 	arena += sizeof(*pthread__tsd_destructors) * pthread_keys_max;
 	return arena;
+}
+
+static void
+pthread_tsd_prefork(void)
+{
+	pthread_mutex_lock(&tsd_mutex);
+}
+
+static void
+pthread_tsd_postfork(void)
+{
+	pthread_mutex_unlock(&tsd_mutex);
+}
+
+void
+pthread_tsd_init(void)
+{
+
+	pthread_atfork(pthread_tsd_prefork, pthread_tsd_postfork, pthread_tsd_postfork);
 }
 
 int
