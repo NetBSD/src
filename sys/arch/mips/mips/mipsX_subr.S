@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.106 2020/02/15 16:56:15 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.107 2020/02/15 17:01:00 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1960,7 +1960,7 @@ MIPSX(kern_tlbi_odd):
 	_SLL	k0, k0, WIRED_SHIFT		# get rid of wired bit
 	_SRL	k0, k0, WIRED_SHIFT
 #endif
-	_MTC0	k0, MIPS_COP_0_TLB_LO1		# save PTE entry
+	_MTC0	k0, MIPS_COP_0_TLB_LO1		# load PTE entry
 	COP0_SYNC
 	and	k0, k0, MIPS3_PG_V		# check for valid entry
 #ifdef MIPS3
@@ -1981,7 +1981,7 @@ MIPSX(kern_tlbi_odd):
 	sltiu	k1, k1, MIPS3_TLB_WIRED_UPAGES	# Luckily this is MIPS3_PG_G
 	or	k1, k1, k0
 #endif
-	_MTC0	k0, MIPS_COP_0_TLB_LO0		# save PTE entry
+	_MTC0	k0, MIPS_COP_0_TLB_LO0		# load PTE entry
 	COP0_SYNC
 #ifdef MIPS3
 	nop					# required for QED5230
