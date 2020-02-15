@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.28 2020/02/15 07:46:48 skrll Exp $	*/
+/*	$NetBSD: motg.c,v 1.29 2020/02/15 13:56:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.28 2020/02/15 07:46:48 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.29 2020/02/15 13:56:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1056,7 +1056,7 @@ motg_root_intr_start(struct usbd_xfer *xfer)
 void
 motg_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
+	struct motg_softc *sc __diagused = MOTG_PIPE2SC(pipe);
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
