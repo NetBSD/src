@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.225 2020/02/11 06:09:48 dogcow Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.226 2020/02/15 17:13:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.225 2020/02/11 06:09:48 dogcow Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.226 2020/02/15 17:13:55 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -2023,6 +2023,40 @@ lwp_setprivate(struct lwp *l, void *ptr)
 	error = cpu_lwp_setprivate(l, ptr);
 #endif
 	return error;
+}
+
+/*
+ * Renumber the first and only LWP in a process on exec() or fork().
+ * Don't bother with p_treelock here as this is the only live LWP in
+ * the proc right now.
+ */
+void
+lwp_renumber(lwp_t *l, lwpid_t lid)
+{
+	lwp_t *l2 __diagused;
+	proc_t *p = l->l_proc;
+	int error;
+
+	KASSERT(p->p_nlwps == 1);
+
+	while (l->l_lid != lid) {
+		mutex_enter(p->p_lock);
+		error = radix_tree_insert_node(&p->p_lwptree, lid - 1, l);
+		if (error == 0) {
+			l2 = radix_tree_remove_node(&p->p_lwptree,
+			    (uint64_t)(l->l_lid - 1));
+			KASSERT(l2 == l);
+			p->p_nlwpid = lid + 1;
+			l->l_lid = lid;
+		}
+		mutex_exit(p->p_lock);
+
+		if (error == 0)
+			break;
+
+		KASSERT(error == ENOMEM);
+		radix_tree_await_memory();
+	}
 }
 
 #if defined(DDB)
