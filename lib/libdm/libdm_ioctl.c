@@ -171,14 +171,12 @@ libdm_task_run(libdm_task_t libdm_task)
 	}
 	dict = prop_dictionary_internalize(prefp.pref_plist);
 #else
-	prop_dictionary_externalize_to_file(libdm_task->ldm_task, "/tmp/libdm_in");
 	error = prop_dictionary_sendrecv_ioctl(libdm_task->ldm_task,
 	    libdm_control_fd, NETBSD_DM_IOCTL, &dict);
 	if ( error != 0) {
 		libdm_control_close(libdm_control_fd);
 		return error;
 	}
-	prop_dictionary_externalize_to_file(dict, "/tmp/libdm_out");
 #endif
 
 	libdm_control_close(libdm_control_fd);
