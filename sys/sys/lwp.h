@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.200 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.201 2020/02/15 17:13:55 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -334,6 +334,7 @@ void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
+void	lwp_renumber(lwp_t *, lwpid_t);
 int	lwp_wait(lwp_t *, lwpid_t, lwpid_t *, bool);
 void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
