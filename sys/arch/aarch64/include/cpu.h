@@ -1,4 +1,4 @@
-/* $NetBSD: cpu.h,v 1.20 2020/02/12 06:05:46 riastradh Exp $ */
+/* $NetBSD: cpu.h,v 1.21 2020/02/15 08:16:10 skrll Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _AARCH64_CPU_H_
 #define _AARCH64_CPU_H_
+
+#include <arm/cpu.h>
 
 #ifdef __aarch64__
 
@@ -104,7 +106,6 @@ struct cpu_info {
 	uint64_t ci_acpiid;	/* ACPI Processor Unique ID */
 
 	struct aarch64_sysctl_cpu_id ci_id;
-#define arm_cpu_mpidr(ci)	((ci)->ci_id.ac_mpidr)
 
 	struct aarch64_cache_info *ci_cacheinfo;
 	struct aarch64_cpufuncs ci_cpufuncs;
@@ -123,15 +124,12 @@ curcpu(void)
 #define setsoftast(ci)		atomic_or_uint(&(ci)->ci_astpending, __BIT(0))
 #define cpu_signotify(l)	setsoftast((l)->l_cpu)
 
-void cpu_proc_fork(struct proc *, struct proc *);
-void cpu_need_proftick(struct lwp *l);
-void cpu_boot_secondary_processors(void);
-void cpu_mpstart(void);
-void cpu_hatch(struct cpu_info *);
+void	cpu_need_proftick(struct lwp *l);
+
+void	cpu_hatch(struct cpu_info *);
 
 extern struct cpu_info *cpu_info[];
-extern uint64_t cpu_mpidr[];		/* MULTIPROCESSOR */
-bool cpu_hatched_p(u_int);		/* MULTIPROCESSOR */
+extern struct cpu_info cpu_info_store[];
 
 #define CPU_INFO_ITERATOR	cpuid_t
 #if defined(MULTIPROCESSOR) || defined(_MODULE)
@@ -161,13 +159,7 @@ cpu_dosoftints(void)
 #endif
 }
 
-void	cpu_attach(device_t, cpuid_t);
-
 #endif /* _KERNEL || _KMEMUSER */
-
-#elif defined(__arm__)
-
-#include <arm/cpu.h>
 
 #endif
 
