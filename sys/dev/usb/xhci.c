@@ -1,4 +1,4 @@
-/*	$NetBSD: xhci.c,v 1.118 2020/02/15 01:21:56 riastradh Exp $	*/
+/*	$NetBSD: xhci.c,v 1.119 2020/02/15 09:26:07 skrll Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.118 2020/02/15 01:21:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xhci.c,v 1.119 2020/02/15 09:26:07 skrll Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -3175,9 +3175,9 @@ xhci_setup_route(struct usbd_pipe *pipe, uint32_t *cp)
 		;
 	if (hub) {
 		int p;
-		for (p = 0; p < hub->ud_hub->uh_hubdesc.bNbrPorts; p++) {
-			if (hub->ud_hub->uh_ports[p].up_dev == adev) {
-				dev->ud_myhsport = &hub->ud_hub->uh_ports[p];
+		for (p = 1; p <= hub->ud_hub->uh_hubdesc.bNbrPorts; p++) {
+			if (hub->ud_hub->uh_ports[p - 1].up_dev == adev) {
+				dev->ud_myhsport = &hub->ud_hub->uh_ports[p - 1];
 				goto found;
 			}
 		}
