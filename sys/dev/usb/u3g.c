@@ -1,4 +1,4 @@
-/*	$NetBSD: u3g.c,v 1.39 2020/02/08 07:53:23 maxv Exp $	*/
+/*	$NetBSD: u3g.c,v 1.40 2020/02/15 02:14:02 manu Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.39 2020/02/08 07:53:23 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: u3g.c,v 1.40 2020/02/15 02:14:02 manu Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -255,6 +255,10 @@ static const struct usb_devno u3g_devs[] = {
 	/* 4G Systems */
 	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_P14 },
 	{ USB_VENDOR_LONGCHEER, USB_PRODUCT_LONGCHEER_XSSTICK_W14 },
+
+	/* DLink */
+	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157 },
+	{ USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157E },
 };
 
 /*
