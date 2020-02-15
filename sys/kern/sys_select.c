@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.51 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.52 2020/02/15 17:09:24 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.51 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.52 2020/02/15 17:09:24 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ static const int sel_flag[] = {
 	POLLRDBAND
 };
 
-static syncobj_t select_sobj = {
+syncobj_t select_sobj = {
 	.sobj_flag	= SOBJ_SLEEPQ_FIFO,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
