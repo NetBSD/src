@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_int.h,v 1.101 2020/02/05 11:05:10 kamil Exp $	*/
+/*	$NetBSD: pthread_int.h,v 1.102 2020/02/15 23:59:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -294,7 +294,8 @@ pthread__self(void)
 	} 								\
         } while (/*CONSTCOND*/0)
 
-void 	*pthread_tsd_init(size_t *) PTHREAD_HIDE;
+void 	*pthread_tsd_earlyinit(size_t *) PTHREAD_HIDE;
+void 	pthread_tsd_init(void) PTHREAD_HIDE;
 void	pthread__destroy_tsd(pthread_t) PTHREAD_HIDE;
 void	pthread__copy_tsd(pthread_t) PTHREAD_HIDE;
 
