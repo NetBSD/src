@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.56 2020/02/15 08:16:10 skrll Exp $	*/
+/*	$NetBSD: locore.S,v 1.57 2020/02/15 13:51:33 tnn Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.56 2020/02/15 08:16:10 skrll Exp $")
+RCSID("$NetBSD: locore.S,v 1.57 2020/02/15 13:51:33 tnn Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -47,9 +47,9 @@ RCSID("$NetBSD: locore.S,v 1.56 2020/02/15 08:16:10 skrll Exp $")
 #endif
 #define	MAIR_DEVICE_MEM_SO	MAIR_DEVICE_nGnRnE
 
-/*#define DEBUG_LOCORE			/* debug print */
-/*#define DEBUG_LOCORE_PRINT_LOCK	/* avoid mixing AP's output */
-/*#define DEBUG_MMU			/* dump MMU table */
+/*#define DEBUG_LOCORE			// debug print */
+/*#define DEBUG_LOCORE_PRINT_LOCK	// avoid mixing AP's output */
+/*#define DEBUG_MMU			// dump MMU table */
 
 #define LOCORE_EL2
 
