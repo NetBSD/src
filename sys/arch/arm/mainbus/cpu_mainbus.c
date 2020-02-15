@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_mainbus.c,v 1.17 2020/01/28 07:47:26 skrll Exp $	*/
+/*	$NetBSD: cpu_mainbus.c,v 1.18 2020/02/15 08:16:11 skrll Exp $	*/
 
 /*
  * Copyright (c) 1995 Mark Brinicombe.
@@ -45,14 +45,16 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.17 2020/01/28 07:47:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_mainbus.c,v 1.18 2020/02/15 08:16:11 skrll Exp $");
 
 #include <sys/param.h>
+#include <sys/types.h>
 #include <sys/systm.h>
 #include <sys/cpu.h>
 #include <sys/device.h>
 #include <sys/proc.h>
 
+#include <arm/cpuvar.h>
 #include <arm/mainbus/mainbus.h>
 
 /*
@@ -67,9 +69,7 @@ static void cpu_mainbus_attach(device_t, device_t, void *);
  * Probe for the main cpu. Currently all this does is return 1 to
  * indicate that the cpu was found.
  */
-#ifdef MULTIPROCESSOR
-extern u_int arm_cpu_max;
-#else
+#ifndef MULTIPROCESSOR
 #define	arm_cpu_max		1
 #endif
 
@@ -81,7 +81,7 @@ cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 
 	if (id != MAINBUSCF_CORE_DEFAULT) {
 		if (id == 0)
-			return cpu_info_store.ci_dev == NULL;
+			return cpu_info_store[0].ci_dev == NULL;
 		if (id >= arm_cpu_max)
 			return 0;
 #ifdef MULTIPROCESSOR
@@ -91,7 +91,7 @@ cpu_mainbus_match(device_t parent, cfdata_t cf, void *aux)
 		return 1;
 	}
 
-	if (cpu_info_store.ci_dev == NULL) {
+	if (cpu_info_store[0].ci_dev == NULL) {
 		mb->mb_core = 0;
 		return 1;
 	}
