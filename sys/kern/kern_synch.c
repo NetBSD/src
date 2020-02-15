@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.338 2020/01/24 20:05:15 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.339 2020/02/15 18:12:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.338 2020/01/24 20:05:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.339 2020/02/15 18:12:15 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -484,17 +484,15 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 		sched_dequeue(newl);
 		KASSERT(lwp_locked(newl, spc->spc_mutex));
 		KASSERT(newl->l_cpu == ci);
-		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
 		lwp_setlock(newl, spc->spc_lwplock);
 		spc->spc_flags &= ~(SPCF_SWITCHCLEAR | SPCF_IDLE);
 	} else {
 		newl = ci->ci_data.cpu_idlelwp;
-		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
 		spc->spc_flags = (spc->spc_flags & ~SPCF_SWITCHCLEAR) |
 		    SPCF_IDLE;
 	}
+	newl->l_stat = LSONPROC;
+	newl->l_pflag |= LP_RUNNING;
 
 	/*
 	 * Only clear want_resched if there are no pending (slow) software
@@ -515,7 +513,7 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
  * NOTE: l->l_cpu is not changed in this routine, because an LWP never
  * changes its own l_cpu (that would screw up curcpu on many ports and could
  * cause all kinds of other evil stuff).  l_cpu is always changed by some
- * other actor, when it's known the LWP is not running (the LW_RUNNING flag
+ * other actor, when it's known the LWP is not running (the LP_RUNNING flag
  * is checked under lock).
  */
 void
@@ -524,6 +522,7 @@ mi_switch(lwp_t *l)
 	struct cpu_info *ci;
 	struct schedstate_percpu *spc;
 	struct lwp *newl;
+	kmutex_t *lock;
 	int oldspl;
 	struct bintime bt;
 	bool returning;
@@ -538,7 +537,7 @@ mi_switch(lwp_t *l)
 	binuptime(&bt);
 
 	KASSERTMSG(l == curlwp, "l %p curlwp %p", l, curlwp);
-	KASSERT((l->l_flag & LW_RUNNING) != 0);
+	KASSERT((l->l_pflag & LP_RUNNING) != 0);
 	KASSERT(l->l_cpu == curcpu() || l->l_stat == LSRUN);
 	ci = curcpu();
 	spc = &ci->ci_schedstate;
@@ -567,7 +566,7 @@ mi_switch(lwp_t *l)
 		/* There are pending soft interrupts, so pick one. */
 		newl = softint_picklwp();
 		newl->l_stat = LSONPROC;
-		newl->l_flag |= LW_RUNNING;
+		newl->l_pflag |= LP_RUNNING;
 	}
 #endif	/* !__HAVE_FAST_SOFTINTS */
 
@@ -694,7 +693,7 @@ mi_switch(lwp_t *l)
 		 */
 		if (returning) {
 			/* Keep IPL_SCHED after this; MD code will fix up. */
-			l->l_flag &= ~LW_RUNNING;
+			l->l_pflag &= ~LP_RUNNING;
 			lwp_unlock(l);
 		} else {
 			/* A normal LWP: save old VM context. */
@@ -732,12 +731,20 @@ mi_switch(lwp_t *l)
 		KASSERT(ci->ci_mtx_count == -2);
 
 		/*
-		 * Immediately mark the previous LWP as no longer running,
-		 * and unlock it.  We'll still be at IPL_SCHED afterwards.
+		 * Immediately mark the previous LWP as no longer running
+		 * and unlock (to keep lock wait times short as possible). 
+		 * We'll still be at IPL_SCHED afterwards.  If a zombie,
+		 * don't touch after clearing LP_RUNNING as it could be
+		 * reaped by another CPU.  Issue a memory barrier to ensure
+		 * this.
 		 */
-		KASSERT((prevlwp->l_flag & LW_RUNNING) != 0);
-		prevlwp->l_flag &= ~LW_RUNNING;
-		lwp_unlock(prevlwp);
+		KASSERT((prevlwp->l_pflag & LP_RUNNING) != 0);
+		lock = prevlwp->l_mutex;
+		if (__predict_false(prevlwp->l_stat == LSZOMB)) {
+			membar_sync();
+		}
+		prevlwp->l_pflag &= ~LP_RUNNING;
+		mutex_spin_exit(lock);
 
 		/*
 		 * Switched away - we have new curlwp.
@@ -833,7 +840,7 @@ setrunnable(struct lwp *l)
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0) {
+	if ((l->l_pflag & LP_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_unlock(l);
