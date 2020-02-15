@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.33 2020/01/27 23:26:15 jmcneill Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.34 2020/02/15 08:16:11 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.33 2020/01/27 23:26:15 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.34 2020/02/15 08:16:11 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -45,6 +45,7 @@ __KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.33 2020/01/27 23:26:15 jmcneill Exp $"
 #include <arm/armreg.h>
 #include <arm/cpu.h>
 #include <arm/cpufunc.h>
+#include <arm/cpuvar.h>
 #include <arm/locore.h>
 
 #include <arm/arm/psci.h>

@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_cpu_topology.c,v 1.3 2020/02/15 07:20:41 skrll Exp $	*/
+/*	$NetBSD: arm_cpu_topology.c,v 1.4 2020/02/15 08:16:10 skrll Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthew R. Green
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.3 2020/02/15 07:20:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.4 2020/02/15 08:16:10 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.3 2020/02/15 07:20:41 skrll E
 #include <prop/proplib.h>
 
 void
-arm_cpu_topology_set(struct cpu_info * const ci, uint64_t mpidr, bool slow)
+arm_cpu_topology_set(struct cpu_info * const ci, mpidr_t mpidr)
 {
 #ifdef MULTIPROCESSOR
 	uint pkgid, coreid, smtid, numaid = 0;
