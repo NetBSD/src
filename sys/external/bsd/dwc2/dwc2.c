@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.70 2020/02/15 13:56:56 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.71 2020/02/15 14:05:06 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.70 2020/02/15 13:56:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.71 2020/02/15 14:05:06 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -449,9 +449,7 @@ dwc2_poll(struct usbd_bus *bus)
 Static void
 dwc2_close_pipe(struct usbd_pipe *pipe)
 {
-#ifdef DIAGNOSTIC
-	struct dwc2_softc *sc = pipe->up_dev->ud_bus->ub_hcpriv;
-#endif
+	struct dwc2_softc *sc __diagused = pipe->up_dev->ud_bus->ub_hcpriv;
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 }
@@ -755,9 +753,8 @@ dwc2_device_ctrl_start(struct usbd_xfer *xfer)
 Static void
 dwc2_device_ctrl_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-#endif
+	struct dwc2_softc *sc __diagused = DWC2_XFER2SC(xfer);
+
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTF("xfer=%p\n", xfer);
@@ -805,9 +802,8 @@ dwc2_device_bulk_transfer(struct usbd_xfer *xfer)
 Static void
 dwc2_device_bulk_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-#endif
+	struct dwc2_softc *sc __diagused = DWC2_XFER2SC(xfer);
+
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTF("xfer=%p\n", xfer);
@@ -877,9 +873,7 @@ dwc2_device_intr_start(struct usbd_xfer *xfer)
 Static void
 dwc2_device_intr_abort(struct usbd_xfer *xfer)
 {
-#ifdef DIAGNOSTIC
-	struct dwc2_softc *sc = DWC2_XFER2SC(xfer);
-#endif
+	struct dwc2_softc *sc __diagused = DWC2_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
