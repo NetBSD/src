@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.10 2020/02/10 05:53:12 ryo Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.11 2020/02/15 12:20:35 ryo Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.10 2020/02/10 05:53:12 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.11 2020/02/15 12:20:35 ryo Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -1004,8 +1004,6 @@ struct aq_softc {
 
 	bool sc_intr_moderation_enable;
 	bool sc_rss_enable;
-
-	int sc_media_active;
 
 	struct ethercom sc_ethercom;
 	struct ether_addr sc_enaddr;
@@ -2717,39 +2715,6 @@ aq_set_filter(struct aq_softc *sc)
 	return error;
 }
 
-static void
-aq_mediastatus_update(struct aq_softc *sc)
-{
-	sc->sc_media_active = 0;
-
-	if (sc->sc_link_fc & AQ_FC_RX)
-		sc->sc_media_active |= IFM_ETH_RXPAUSE;
-	if (sc->sc_link_fc & AQ_FC_TX)
-		sc->sc_media_active |= IFM_ETH_TXPAUSE;
-
-	switch (sc->sc_link_rate) {
-	case AQ_LINK_100M:
-		/* XXX: need to detect fulldup or halfdup */
-		sc->sc_media_active |= IFM_100_TX | IFM_FDX;
-		break;
-	case AQ_LINK_1G:
-		sc->sc_media_active |= IFM_1000_T | IFM_FDX;
-		break;
-	case AQ_LINK_2G5:
-		sc->sc_media_active |= IFM_2500_T | IFM_FDX;
-		break;
-	case AQ_LINK_5G:
-		sc->sc_media_active |= IFM_5000_T | IFM_FDX;
-		break;
-	case AQ_LINK_10G:
-		sc->sc_media_active |= IFM_10G_T | IFM_FDX;
-		break;
-	default:
-		sc->sc_media_active |= IFM_NONE;
-		break;
-	}
-}
-
 static int
 aq_ifmedia_change(struct ifnet * const ifp)
 {
@@ -2805,13 +2770,39 @@ aq_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *ifmr)
 {
 	struct aq_softc *sc = ifp->if_softc;
 
+	/* update ifm_active */
 	ifmr->ifm_active = IFM_ETHER;
-	ifmr->ifm_status = IFM_AVALID;
+	if (sc->sc_link_fc & AQ_FC_RX)
+		ifmr->ifm_active |= IFM_ETH_RXPAUSE;
+	if (sc->sc_link_fc & AQ_FC_TX)
+		ifmr->ifm_active |= IFM_ETH_TXPAUSE;
 
+	switch (sc->sc_link_rate) {
+	case AQ_LINK_100M:
+		/* XXX: need to detect fulldup or halfdup */
+		ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
+		break;
+	case AQ_LINK_1G:
+		ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
+		break;
+	case AQ_LINK_2G5:
+		ifmr->ifm_active |= IFM_2500_T | IFM_FDX;
+		break;
+	case AQ_LINK_5G:
+		ifmr->ifm_active |= IFM_5000_T | IFM_FDX;
+		break;
+	case AQ_LINK_10G:
+		ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
+		break;
+	default:
+		ifmr->ifm_active |= IFM_NONE;
+		break;
+	}
+
+	/* update ifm_status */
+	ifmr->ifm_status = IFM_AVALID;
 	if (sc->sc_link_rate != AQ_LINK_NONE)
 		ifmr->ifm_status |= IFM_ACTIVE;
-
-	ifmr->ifm_active |= sc->sc_media_active;
 }
 
 static void
@@ -3384,8 +3375,6 @@ aq_update_link_status(struct aq_softc *sc)
 		sc->sc_link_rate = rate;
 		sc->sc_link_fc = fc;
 		sc->sc_link_eee = eee;
-
-		aq_mediastatus_update(sc);
 
 		/* update interrupt timing according to new link speed */
 		aq_hw_interrupt_moderation_set(sc);
