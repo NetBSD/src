@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.71 2020/02/09 09:30:37 skrll Exp $	*/
+/*	$NetBSD: cpu.c,v 1.72 2020/02/15 07:20:41 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2001 Tsubai Masanari.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.71 2020/02/09 09:30:37 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.72 2020/02/15 07:20:41 skrll Exp $");
 
 #include "opt_ppcparam.h"
 #include "opt_multiprocessor.h"
@@ -175,7 +175,7 @@ cpuattach(device_t parent, device_t self, void *aux)
 		core = package & 1;
 		package >>= 1;
 	}
-	cpu_topology_set(ci, package, core, 0, 0, false);
+	cpu_topology_set(ci, package, core, 0, 0);
 
 	if (ci->ci_khz == 0) {
 		cpu_OFgetspeed(self, ci);

@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.49 2020/02/09 09:29:50 skrll Exp $	*/
+/*	$NetBSD: cpu.h,v 1.50 2020/02/15 07:20:40 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -90,7 +90,8 @@ bool	cpu_kpreempt_disabled(void);
 int	cpu_lwp_setprivate(struct lwp *, void *);
 void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
-void	cpu_topology_set(struct cpu_info *, u_int, u_int, u_int, u_int, bool);
+void	cpu_topology_set(struct cpu_info *, u_int, u_int, u_int, u_int);
+void	cpu_topology_setspeed(struct cpu_info *, bool);
 void	cpu_topology_init(void);
 #endif
 
