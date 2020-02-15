@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.26 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.27 2020/02/15 01:21:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.26 2020/02/12 16:01:00 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.27 2020/02/15 01:21:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -991,8 +991,16 @@ motg_root_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
-	sc->sc_intr_xfer = NULL;
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intr_xfer == NULL)
+		return;
 
+	/*
+	 * Otherwise, sc->sc_intr_xfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -1032,7 +1040,14 @@ motg_root_intr_start(struct usbd_xfer *xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_intr_xfer == NULL);
 	sc->sc_intr_xfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
+
 	return USBD_IN_PROGRESS;
 }
 
@@ -1045,12 +1060,25 @@ motg_root_intr_close(struct usbd_pipe *pipe)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	sc->sc_intr_xfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intr_xfer == NULL);
 }
 
 void
 motg_root_intr_done(struct usbd_xfer *xfer)
 {
+	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intr_xfer = NULL;
 }
 
 void
@@ -1101,6 +1129,7 @@ motg_hub_change(struct motg_softc *sc)
 
 	if (xfer == NULL)
 		return; /* the interrupt pipe is not open */
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	pipe = xfer->ux_pipe;
 	if (pipe->up_dev == NULL || pipe->up_dev->ud_bus == NULL)
