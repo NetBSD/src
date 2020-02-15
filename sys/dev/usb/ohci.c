@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.294 2020/02/12 16:02:01 riastradh Exp $	*/
+/*	$NetBSD: ohci.c,v 1.295 2020/02/15 01:21:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.294 2020/02/12 16:02:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.295 2020/02/15 01:21:56 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1698,6 +1698,8 @@ ohci_rhsc(ohci_softc_t *sc, struct usbd_xfer *xfer)
 		/* Just ignore the change. */
 		return;
 	}
+	KASSERT(xfer == sc->sc_intrxfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	p = xfer->ux_buf;
 	m = uimin(sc->sc_noport, xfer->ux_length * 8 - 1);
@@ -2516,11 +2518,11 @@ ohci_root_intr_start(struct usbd_xfer *xfer)
 		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
-	xfer->ux_status = USBD_IN_PROGRESS;
-	return xfer->ux_status;
+	return USBD_IN_PROGRESS;
 }
 
 /* Abort a root interrupt request. */
