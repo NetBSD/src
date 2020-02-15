@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread_mutex.c,v 1.74 2020/02/01 18:14:16 kamil Exp $	*/
+/*	$NetBSD: pthread_mutex.c,v 1.75 2020/02/15 23:59:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2003, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -47,7 +47,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread_mutex.c,v 1.74 2020/02/01 18:14:16 kamil Exp $");
+__RCSID("$NetBSD: pthread_mutex.c,v 1.75 2020/02/15 23:59:30 kamil Exp $");
 
 #include <sys/types.h>
 #include <sys/lwpctl.h>
@@ -122,14 +122,12 @@ pthread_mutex_init(pthread_mutex_t *ptm, const pthread_mutexattr_t *attr)
 {
 	uintptr_t type, proto, val, ceil;
 
-#if 0
 	/*
 	 * Always initialize the mutex structure, maybe be used later
 	 * and the cost should be minimal.
 	 */
 	if (__predict_false(__uselibcstub))
 		return __libc_mutex_init_stub(ptm, attr);
-#endif
 
 	pthread__error(EINVAL, "Invalid mutes attribute",
 	    attr == NULL || attr->ptma_magic == _PT_MUTEXATTR_MAGIC);
@@ -619,10 +617,9 @@ pthread__mutex_wakeup(pthread_t self, pthread_mutex_t *ptm)
 int
 pthread_mutexattr_init(pthread_mutexattr_t *attr)
 {
-#if 0
+
 	if (__predict_false(__uselibcstub))
 		return __libc_mutexattr_init_stub(attr);
-#endif
 
 	attr->ptma_magic = _PT_MUTEXATTR_MAGIC;
 	attr->ptma_private = (void *)PTHREAD_MUTEX_DEFAULT;
