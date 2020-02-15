@@ -1,4 +1,4 @@
-/*	$NetBSD: mipsX_subr.S,v 1.105 2019/06/25 21:26:04 skrll Exp $	*/
+/*	$NetBSD: mipsX_subr.S,v 1.106 2020/02/15 16:56:15 skrll Exp $	*/
 
 /*
  * Copyright 2002 Wasabi Systems, Inc.
@@ -1826,7 +1826,7 @@ END(MIPSX(cache_exception))
  *	virtual address.
  *
  *	If we are page sizes which use both TLB LO entries, either both
- *	are valid or neither are.  So this expection should never happen.
+ *	are valid or neither are.  So this exception should never happen.
  *
  * Results:
  *	None.
