@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.69 2020/02/15 01:21:56 riastradh Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.70 2020/02/15 13:56:56 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.69 2020/02/15 01:21:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.70 2020/02/15 13:56:56 riastradh Exp $");
 
 #include "opt_usb.h"
 
@@ -683,7 +683,7 @@ dwc2_root_intr_abort(struct usbd_xfer *xfer)
 Static void
 dwc2_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct dwc2_softc *sc = DWC2_PIPE2SC(pipe);
+	struct dwc2_softc *sc __diagused = DWC2_PIPE2SC(pipe);
 
 	DPRINTF("\n");
 
