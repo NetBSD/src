@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.164 2020/02/08 17:06:03 kamil Exp $	*/
+/*	$NetBSD: pthread.c,v 1.165 2020/02/15 23:59:30 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.164 2020/02/08 17:06:03 kamil Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.165 2020/02/15 23:59:30 kamil Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -181,7 +181,7 @@ pthread__init(void)
 	 * while pthread_keys descriptors are not
 	 * yet allocated.
 	 */
-	pthread__main = pthread_tsd_init(&__pthread_st_size);
+	pthread__main = pthread_tsd_earlyinit(&__pthread_st_size);
 	if (pthread__main == NULL)
 		err(EXIT_FAILURE, "Cannot allocate pthread storage");
 
@@ -257,8 +257,16 @@ pthread__init(void)
 		}
 	}
 
-	/* Tell libc that we're here and it should role-play accordingly. */
+	/*
+	 * Tell libc that we're here and it should role-play accordingly.
+	 *
+	 * pthread_atfork(3) calls malloc(3) and initializes the system malloc.
+	 */
 	pthread_atfork(NULL, NULL, pthread__fork_callback);
+
+	/* Requires functional malloc(3). */
+	pthread_tsd_init();
+
 	__isthreaded = 1;
 }
 
