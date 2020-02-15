@@ -1,4 +1,4 @@
-/* $NetBSD: hdafg.c,v 1.20 2020/01/30 00:21:23 jmcneill Exp $ */
+/* $NetBSD: hdafg.c,v 1.21 2020/02/15 03:04:45 isaki Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.20 2020/01/30 00:21:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdafg.c,v 1.21 2020/02/15 03:04:45 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -796,7 +796,7 @@ hdafg_assoc_count_channels(struct hdafg_softc *sc,
 		if (as->as_dacs[i])
 			dacmap[as->as_dacs[i]] = 1;
 
-	for (i = 1; i < sc->sc_endnode; i++) {
+	for (i = sc->sc_startnode; i < sc->sc_endnode; i++) {
 		if (!dacmap[i])
 			continue;
 		w = hdafg_widget_lookup(sc, i);
