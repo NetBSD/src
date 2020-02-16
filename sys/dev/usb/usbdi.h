@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.101 2020/02/12 16:01:00 riastradh Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.102 2020/02/16 09:40:35 maxv Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -192,17 +192,6 @@ usbd_status usbd_get_string0(struct usbd_device *, int, char *, int);
 void usbd_xfer_schedule_timeout(struct usbd_xfer *);
 bool usbd_xfer_trycomplete(struct usbd_xfer *);
 void usbd_xfer_abort(struct usbd_xfer *);
-
-/* An iterator for descriptors. */
-typedef struct {
-	const uByte *cur;
-	const uByte *end;
-} usbd_desc_iter_t;
-void usb_desc_iter_init(struct usbd_device *, usbd_desc_iter_t *);
-const usb_descriptor_t *usb_desc_iter_peek(usbd_desc_iter_t *);
-const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
-const usb_interface_descriptor_t *usb_desc_iter_next_interface(usbd_desc_iter_t *);
-const usb_descriptor_t *usb_desc_iter_next_non_interface(usbd_desc_iter_t *);
 
 /* Used to clear endpoint stalls from the softint */
 void usbd_clear_endpoint_stall_task(void *);
