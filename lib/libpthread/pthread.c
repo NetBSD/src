@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.166 2020/02/16 17:14:31 kamil Exp $	*/
+/*	$NetBSD: pthread.c,v 1.167 2020/02/16 17:45:11 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.166 2020/02/16 17:14:31 kamil Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.167 2020/02/16 17:45:11 kamil Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -181,7 +181,7 @@ pthread__init(void)
 	 * while pthread_keys descriptors are not
 	 * yet allocated.
 	 */
-	pthread__main = pthread_tsd_earlyinit(&__pthread_st_size);
+	pthread__main = pthread_tsd_init(&__pthread_st_size);
 	if (pthread__main == NULL)
 		err(EXIT_FAILURE, "Cannot allocate pthread storage");
 
@@ -257,23 +257,9 @@ pthread__init(void)
 		}
 	}
 
-	/*
-	 * We are officially threded now.
-	 *
-	 * libc must be informed about this before bootstrapping malloc(3).
-	 */
-	__isthreaded = 1;
-
-	/*
-	 * Tell libc that we're here and it should role-play accordingly.
-	 *
-	 * pthread_atfork(3) calls malloc(3) and initializes the system malloc.
-	 * At this point all POSIX thread inferfaces must be functional.
-	 */
+	/* Tell libc that we're here and it should role-play accordingly. */
 	pthread_atfork(NULL, NULL, pthread__fork_callback);
-
-	/* Register atfork handlers for TSD. */
-	pthread_tsd_init();
+	__isthreaded = 1;
 }
 
 static void
