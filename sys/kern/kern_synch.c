@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_synch.c,v 1.339 2020/02/15 18:12:15 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.340 2020/02/16 21:31:19 ad Exp $	*/
 
 /*-
- * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019
+ * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
  *    The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.339 2020/02/15 18:12:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.340 2020/02/16 21:31:19 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -476,23 +476,34 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	 * Let sched_nextlwp() select the LWP to run the CPU next.
 	 * If no LWP is runnable, select the idle LWP.
 	 * 
-	 * Note that spc_lwplock might not necessary be held, and
-	 * new thread would be unlocked after setting the LWP-lock.
+	 * On arrival here LWPs on a run queue are locked by spc_mutex which
+	 * is currently held.  Idle LWPs are always locked by spc_lwplock,
+	 * which may or may not be held here.  On exit from this code block,
+	 * in all cases newl is locked by spc_lwplock.
 	 */
 	newl = sched_nextlwp();
 	if (newl != NULL) {
 		sched_dequeue(newl);
 		KASSERT(lwp_locked(newl, spc->spc_mutex));
 		KASSERT(newl->l_cpu == ci);
-		lwp_setlock(newl, spc->spc_lwplock);
+		newl->l_stat = LSONPROC;
+		newl->l_pflag |= LP_RUNNING;
+		spc->spc_curpriority = lwp_eprio(newl);
 		spc->spc_flags &= ~(SPCF_SWITCHCLEAR | SPCF_IDLE);
+		lwp_setlock(newl, spc->spc_lwplock);
 	} else {
+		/*
+		 * Updates to newl here are unlocked, but newl is the idle
+		 * LWP and thus sheltered from outside interference, so no
+		 * harm is going to come of it.
+		 */
 		newl = ci->ci_data.cpu_idlelwp;
+		newl->l_stat = LSONPROC;
+		newl->l_pflag |= LP_RUNNING;
+		spc->spc_curpriority = PRI_IDLE;
 		spc->spc_flags = (spc->spc_flags & ~SPCF_SWITCHCLEAR) |
 		    SPCF_IDLE;
 	}
-	newl->l_stat = LSONPROC;
-	newl->l_pflag |= LP_RUNNING;
 
 	/*
 	 * Only clear want_resched if there are no pending (slow) software
@@ -502,7 +513,6 @@ nextlwp(struct cpu_info *ci, struct schedstate_percpu *spc)
 	 * the release of spc_mutex becomes globally visible.
 	 */
 	ci->ci_want_resched = ci->ci_data.cpu_softints;
-	spc->spc_curpriority = lwp_eprio(newl);
 
 	return newl;
 }
