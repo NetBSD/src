@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi_util.h,v 1.52 2020/02/08 08:47:27 maxv Exp $	*/
+/*	$NetBSD: usbdi_util.h,v 1.53 2020/02/16 09:40:35 maxv Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -99,6 +99,17 @@ typedef struct {
 	uByte		bDescriptorType;
 	uByte		bDescriptorSubtype;
 } UPACKED usb_cdc_descriptor_t;
+
+/* An iterator for descriptors. */
+typedef struct {
+	const uByte *cur;
+	const uByte *end;
+} usbd_desc_iter_t;
+void usb_desc_iter_init(struct usbd_device *, usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_peek(usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_next(usbd_desc_iter_t *);
+const usb_interface_descriptor_t *usb_desc_iter_next_interface(usbd_desc_iter_t *);
+const usb_descriptor_t *usb_desc_iter_next_non_interface(usbd_desc_iter_t *);
 
 const usb_cdc_descriptor_t *usb_find_desc(struct usbd_device *, int,
 				      int);
