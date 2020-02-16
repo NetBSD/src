@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.11 2020/01/24 16:48:59 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.12 2020/02/16 22:00:53 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -67,8 +67,9 @@
  *	reference.  It is managed LRU, so frequently used names will hang
  *	around.  The cache is indexed by hash value obtained from the name.
  *
- *	The name cache (or directory name lookup cache) is the brainchild of
- *	Robert Elz and made its first appearance in 4.3BSD.
+ *	The name cache is the brainchild of Robert Elz and was introduced in
+ *	4.3BSD.  See "Using gprof to Tune the 4.2BSD Kernel", Marshall Kirk
+ *	McKusick, May 21 1984.
  *
  * Data structures:
  *
@@ -81,7 +82,7 @@
  *	The index is a red-black tree.  There are no special concurrency
  *	requirements placed on it, because it's per-directory and protected
  *	by the namecache's per-directory locks.  It should therefore not be
- *	difficult to experiment with other data structures.
+ *	difficult to experiment with other types of index.
  *
  *	Each cached name is stored in a struct namecache, along with a
  *	pointer to the associated vnode (nc_vp).  Names longer than a
@@ -170,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.11 2020/01/24 16:48:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.12 2020/02/16 22:00:53 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -393,7 +394,7 @@ cache_remove(struct namecache *ncp, const bool dir2node)
 }
 
 /*
- * Find a single cache entry and return it.  The vnode lock must be held.
+ * Find a single cache entry and return it.  vi_nc_lock must be held.
  */
 static struct namecache * __noinline
 cache_lookup_entry(struct vnode *dvp, const char *name, size_t namelen,
@@ -1239,11 +1240,10 @@ cache_deactivate(void)
 	}
 
 	/*
-	 * Aim for a 1:1 ratio of active to inactive.  It's a bit wet finger
-	 * in the air here, but this is to allow each potential victim a
-	 * reasonable amount of time to cycle through the inactive list in
-	 * order to score a hit and be reactivated, while trying not to
-	 * cause reactivations too frequently.
+	 * Aim for a 1:1 ratio of active to inactive.  This is to allow each
+	 * potential victim a reasonable amount of time to cycle through the
+	 * inactive list in order to score a hit and be reactivated, while
+	 * trying not to cause reactivations too frequently.
 	 */
 	if (cache_lru.count[LRU_ACTIVE] < cache_lru.count[LRU_INACTIVE]) {
 		return;
