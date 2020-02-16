@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.57 2019/11/09 23:28:26 jmcneill Exp $ */
+/* $NetBSD: fdtvar.h,v 1.58 2020/02/16 14:56:52 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -396,7 +396,7 @@ void		fdtbus_power_poweroff(void);
 device_t	fdtbus_attach_i2cbus(device_t, int, i2c_tag_t, cfprint_t);
 device_t	fdtbus_attach_spibus(device_t, int, cfprint_t);
 
-bool		fdtbus_set_data(const void *);
+bool		fdtbus_init(const void *);
 const void *	fdtbus_get_data(void);
 int		fdtbus_phandle2offset(int);
 int		fdtbus_offset2phandle(int);
