@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.58 2020/02/16 14:56:52 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.59 2020/02/16 20:28:18 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -76,6 +76,8 @@ struct fdtbus_interrupt_controller_func {
 			     int (*)(void *), void *);
 	void	(*disestablish)(device_t, void *);
 	bool	(*intrstr)(device_t, u_int *, char *, size_t);
+	void	(*mask)(device_t, void *);
+	void	(*unmask)(device_t, void *);
 };
 
 struct fdtbus_i2c_controller_func {
@@ -316,6 +318,8 @@ void *		fdtbus_intr_establish_byname(int, const char *, int, int,
 		    int (*func)(void *), void *arg);
 void *		fdtbus_intr_establish_raw(int, const u_int *, int, int,
 		    int (*func)(void *), void *arg);
+void		fdtbus_intr_mask(int, void *);
+void		fdtbus_intr_unmask(int, void *);
 void		fdtbus_intr_disestablish(int, void *);
 bool		fdtbus_intr_str(int, u_int, char *, size_t);
 bool		fdtbus_intr_str_raw(int, const u_int *, char *, size_t);
