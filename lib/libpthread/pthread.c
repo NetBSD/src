@@ -1,4 +1,4 @@
-/*	$NetBSD: pthread.c,v 1.165 2020/02/15 23:59:30 kamil Exp $	*/
+/*	$NetBSD: pthread.c,v 1.166 2020/02/16 17:14:31 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002, 2003, 2006, 2007, 2008, 2020
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: pthread.c,v 1.165 2020/02/15 23:59:30 kamil Exp $");
+__RCSID("$NetBSD: pthread.c,v 1.166 2020/02/16 17:14:31 kamil Exp $");
 
 #define	__EXPOSE_STACK	1
 
@@ -258,16 +258,22 @@ pthread__init(void)
 	}
 
 	/*
+	 * We are officially threded now.
+	 *
+	 * libc must be informed about this before bootstrapping malloc(3).
+	 */
+	__isthreaded = 1;
+
+	/*
 	 * Tell libc that we're here and it should role-play accordingly.
 	 *
 	 * pthread_atfork(3) calls malloc(3) and initializes the system malloc.
+	 * At this point all POSIX thread inferfaces must be functional.
 	 */
 	pthread_atfork(NULL, NULL, pthread__fork_callback);
 
-	/* Requires functional malloc(3). */
+	/* Register atfork handlers for TSD. */
 	pthread_tsd_init();
-
-	__isthreaded = 1;
 }
 
 static void
