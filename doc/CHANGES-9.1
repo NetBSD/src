@@ -1,0 +1,21 @@
+# $NetBSD: CHANGES-9.1,v 1.1.2.1 2020/02/16 12:21:24 martin Exp $
+
+A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
+release:
+
+external/gpl2/groff/tmac/mdoc.local             patched by hand
+sys/sys/param.h                                 patched by hand
+
+        Welcome to 9.0_STABLE.
+        [martin]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.57
+
+	zfs_netbsd_setattr: ignore size changes on device nodes.
+	[hannken, ticket #709]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.58
+
+	Teach zfs to revoke vnodes the usual way.
+	[riastradh, ticket #710]
+
