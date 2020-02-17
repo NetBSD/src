@@ -1,4 +1,4 @@
-$NetBSD: acronyms,v 1.296 2020/01/30 23:47:45 sevan Exp $
+$NetBSD: acronyms,v 1.297 2020/02/17 17:16:51 fcambus Exp $
 10Q	thank you
 10X	thanks
 1337	elite ("leet")
@@ -472,6 +472,7 @@ RCD	residual current device
 RFC	request for comments
 RFD	request for discussion
 RFE	request for enhancements
+RIF	reduction in force
 RIP	rest in peace
 RL	real life
 RLC	rod length check
