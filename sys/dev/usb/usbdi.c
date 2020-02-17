@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.193 2020/02/16 09:40:35 maxv Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.194 2020/02/17 08:16:44 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.193 2020/02/16 09:40:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.194 2020/02/17 08:16:44 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -876,6 +876,7 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 		usbd_dump_queue(pipe);
 #endif
 	pipe->up_repeat = 0;
+	pipe->up_running = 0;
 	pipe->up_aborting = 1;
 	while ((xfer = SIMPLEQ_FIRST(&pipe->up_queue)) != NULL) {
 		USBHIST_LOG(usbdebug, "pipe = %#jx xfer = %#jx "
