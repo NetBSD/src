@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.45 2018/12/19 13:57:47 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.46 2020/02/17 09:09:48 skrll Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -151,13 +151,6 @@ define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
-
-# lwp fields and values
-
-define	LSSLEEP			LSSLEEP
-define	LSRUN			LSRUN
-define	LSONPROC		LSONPROC
-
 
 # interrupt event counters
 define	HI_EVCNT		offsetof(struct hp300_intr, hi_evcnt)
