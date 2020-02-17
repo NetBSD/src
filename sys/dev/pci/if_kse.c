@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.48 2020/02/04 07:37:00 skrll Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.49 2020/02/17 06:05:31 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.48 2020/02/04 07:37:00 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.49 2020/02/17 06:05:31 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.48 2020/02/04 07:37:00 skrll Exp $");
 #define KSE_LINKDEBUG 0
 
 #define CSR_READ_4(sc, off) \
-	    bus_space_read_4(sc->sc_st, sc->sc_sh, off)
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
 #define CSR_WRITE_4(sc, off, val) \
-	    bus_space_write_4(sc->sc_st, sc->sc_sh, off, val)
+	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 #define CSR_READ_2(sc, off) \
 	    bus_space_read_2((sc)->sc_st, (sc)->sc_sh, (off))
 #define CSR_WRITE_2(sc, off, val) \
@@ -833,7 +833,7 @@ kse_init(struct ifnet *ifp)
 		    CSR_READ_2(sc, SGCR3) | CR3_USEFC);
 	}
 
-	/* build multicast hash filter if necessary */
+	/* accept multicast frame or run promisc mode */
 	kse_set_filter(sc);
 
 	/* set current media */
@@ -1098,16 +1098,18 @@ kse_set_filter(struct kse_softc *sc)
 	int i;
 
 	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM | RXC_RA);
-	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		goto update;
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	/* clear perfect match filter and prepare mcast hash table */
 	for (i = 0; i < 16; i++)
 		 CSR_WRITE_4(sc, MAAH0 + i*8, 0);
 	crc = mchash[0] = mchash[1] = 0;
+
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	i = 0;
