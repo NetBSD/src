@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.68 2012/11/02 00:01:19 chs Exp $
+#	$NetBSD: genassym.cf,v 1.69 2020/02/17 09:09:49 skrll Exp $
 
 #
 # Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -114,9 +114,6 @@ define	L_WCHAN		offsetof(struct lwp, l_wchan)
 define	L_CPU		offsetof(struct lwp, l_cpu)
 define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_TF		offsetof(struct lwp, l_md.md_tf)
-
-define	LSRUN		LSRUN
-define	LSONPROC	LSONPROC
 
 # proc fields
 define	P_VMSPACE	offsetof(struct proc, p_vmspace)
