@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.60 2020/02/15 18:12:15 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.61 2020/02/17 21:44:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,12 +170,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.60 2020/02/15 18:12:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.61 2020/02/17 21:44:42 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
 #include <sys/ipi.h>
+#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
@@ -888,6 +889,9 @@ softint_dispatch(lwp_t *pinned, int s)
 		updatertime(l, &now);
 		l->l_pflag &= ~LP_TIMEINTR;
 	}
+
+	/* XXX temporary */
+	kernel_lock_plug_leak();
 
 	/*
 	 * If we blocked while handling the interrupt, the pinned LWP is
