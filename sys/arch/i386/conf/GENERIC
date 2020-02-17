@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.1224 2020/02/09 16:06:18 jmcneill Exp $
+# $NetBSD: GENERIC,v 1.1225 2020/02/17 06:32:46 nisimura Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/i386/conf/std.i386"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.1224 $"
+#ident		"GENERIC-$Revision: 1.1225 $"
 
 maxusers	64		# estimated number of users
 
@@ -983,6 +983,7 @@ iwn*	at pci? dev ? function ?	# Intel PRO/Wireless 4965AGN
 ixg*	at pci? dev ? function ?	# Intel 8259x 10 gigabit
 ixl*	at pci? dev ? function ?	# Intel Ethernet 700 Series
 jme*	at pci? dev ? function ?	# JMicron JMC2[56]0 Ethernet
+kse*	at pci? dev ? function ?	# Micrel KSZ8841/8842 ethernet
 lii*	at pci? dev ? function ?	# Atheros L2 Fast-Ethernet
 malo*	at pci? dev ? function ?	# Marvell Libertas Wireless
 mskc*	at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
