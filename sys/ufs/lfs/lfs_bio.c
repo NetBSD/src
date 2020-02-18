@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.144 2019/12/31 13:07:14 ad Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.145 2020/02/18 20:23:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.144 2019/12/31 13:07:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.145 2020/02/18 20:23:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -729,7 +729,7 @@ lfs_newbuf(struct lfs *fs, struct vnode *vp, daddr_t daddr, size_t size, int typ
 	bp->b_blkno = daddr;
 	bp->b_error = 0;
 	bp->b_resid = 0;
-	bp->b_iodone = lfs_callback;
+	bp->b_iodone = lfs_free_aiodone;
 	bp->b_cflags = BC_BUSY | BC_NOCACHE;
 	bp->b_private = fs;
 
