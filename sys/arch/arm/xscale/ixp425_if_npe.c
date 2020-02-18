@@ -1,4 +1,4 @@
-/*	$NetBSD: ixp425_if_npe.c,v 1.46 2020/02/04 05:16:18 thorpej Exp $ */
+/*	$NetBSD: ixp425_if_npe.c,v 1.47 2020/02/18 14:49:32 thorpej Exp $ */
 
 /*-
  * Copyright (c) 2006 Sam Leffler.  All rights reserved.
@@ -28,7 +28,7 @@
 #if 0
 __FBSDID("$FreeBSD: src/sys/arm/xscale/ixp425/if_npe.c,v 1.1 2006/11/19 23:55:23 sam Exp $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.46 2020/02/04 05:16:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ixp425_if_npe.c,v 1.47 2020/02/18 14:49:32 thorpej Exp $");
 
 /*
  * Intel XScale NPE Ethernet driver.
@@ -192,7 +192,6 @@ static int	npe_activate(struct npe_softc *);
 #if 0
 static void	npe_deactivate(struct npe_softc *);
 #endif
-static void	npe_ifmedia_status(struct ifnet *, struct ifmediareq *);
 static void	npe_setmac(struct npe_softc *, const u_char *);
 static void	npe_getmac(struct npe_softc *);
 static void	npe_txdone(int, void *);
@@ -301,7 +300,7 @@ npe_attach(device_t parent, device_t self, void *arg)
 	sc->sc_ethercom.ec_mii = mii;
 
 	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
-	    npe_ifmedia_status);
+	    ether_mediastatus);
 
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 		    MII_OFFSET_ANY, MIIF_DOPAUSE);
@@ -683,20 +682,6 @@ npe_deactivate(struct npe_softc *sc);
 #endif
 }
 #endif
-
-/*
- * Notify the world which media we're using.
- */
-static void
-npe_ifmedia_status(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct npe_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-}
 
 static void
 npe_addstats(struct npe_softc *sc)
