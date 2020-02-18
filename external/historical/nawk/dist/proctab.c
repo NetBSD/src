@@ -1,55 +1,52 @@
-#if HAVE_NBTOOL_CONFIG_H
-#include "nbtool_config.h"
-#endif
-
 #include <stdio.h>
 #include "awk.h"
-#include "awkgram.h"
+#include "ytab.h"
 
-static const char * const printname[95] = {
-	"FIRSTTOKEN",	/* 258 */
-	"PROGRAM",	/* 259 */
-	"PASTAT",	/* 260 */
-	"PASTAT2",	/* 261 */
-	"XBEGIN",	/* 262 */
-	"XEND",	/* 263 */
-	"NL",	/* 264 */
-	"ARRAY",	/* 265 */
-	"MATCH",	/* 266 */
-	"NOTMATCH",	/* 267 */
-	"MATCHOP",	/* 268 */
-	"FINAL",	/* 269 */
-	"DOT",	/* 270 */
-	"ALL",	/* 271 */
-	"CCL",	/* 272 */
-	"NCCL",	/* 273 */
-	"CHAR",	/* 274 */
-	"OR",	/* 275 */
-	"STAR",	/* 276 */
-	"QUEST",	/* 277 */
-	"PLUS",	/* 278 */
-	"EMPTYRE",	/* 279 */
-	"ZERO",	/* 280 */
-	"AND",	/* 281 */
-	"BOR",	/* 282 */
-	"APPEND",	/* 283 */
-	"EQ",	/* 284 */
-	"GE",	/* 285 */
-	"GT",	/* 286 */
-	"LE",	/* 287 */
-	"LT",	/* 288 */
-	"NE",	/* 289 */
-	"IN",	/* 290 */
-	"ARG",	/* 291 */
-	"BLTIN",	/* 292 */
-	"BREAK",	/* 293 */
-	"CLOSE",	/* 294 */
-	"CONTINUE",	/* 295 */
-	"DELETE",	/* 296 */
-	"DO",	/* 297 */
-	"EXIT",	/* 298 */
-	"FOR",	/* 299 */
-	"FUNC",	/* 300 */
+static const char * const printname[96] = {
+	"FIRSTTOKEN",	/* 257 */
+	"PROGRAM",	/* 258 */
+	"PASTAT",	/* 259 */
+	"PASTAT2",	/* 260 */
+	"XBEGIN",	/* 261 */
+	"XEND",	/* 262 */
+	"NL",	/* 263 */
+	"ARRAY",	/* 264 */
+	"MATCH",	/* 265 */
+	"NOTMATCH",	/* 266 */
+	"MATCHOP",	/* 267 */
+	"FINAL",	/* 268 */
+	"DOT",	/* 269 */
+	"ALL",	/* 270 */
+	"CCL",	/* 271 */
+	"NCCL",	/* 272 */
+	"CHAR",	/* 273 */
+	"OR",	/* 274 */
+	"STAR",	/* 275 */
+	"QUEST",	/* 276 */
+	"PLUS",	/* 277 */
+	"EMPTYRE",	/* 278 */
+	"ZERO",	/* 279 */
+	"AND",	/* 280 */
+	"BOR",	/* 281 */
+	"APPEND",	/* 282 */
+	"EQ",	/* 283 */
+	"GE",	/* 284 */
+	"GT",	/* 285 */
+	"LE",	/* 286 */
+	"LT",	/* 287 */
+	"NE",	/* 288 */
+	"IN",	/* 289 */
+	"ARG",	/* 290 */
+	"BLTIN",	/* 291 */
+	"BREAK",	/* 292 */
+	"CLOSE",	/* 293 */
+	"CONTINUE",	/* 294 */
+	"DELETE",	/* 295 */
+	"DO",	/* 296 */
+	"EXIT",	/* 297 */
+	"FOR",	/* 298 */
+	"FUNC",	/* 299 */
+	"GENSUB",	/* 300 */
 	"SUB",	/* 301 */
 	"GSUB",	/* 302 */
 	"IF",	/* 303 */
@@ -105,7 +102,7 @@ static const char * const printname[95] = {
 };
 
 
-Cell *(*proctab[95])(Node **, int) = {
+Cell *(*proctab[96])(Node **, int) = {
 	nullproc,	/* FIRSTTOKEN */
 	program,	/* PROGRAM */
 	pastat,	/* PASTAT */
@@ -149,6 +146,7 @@ Cell *(*proctab[95])(Node **, int) = {
 	jump,	/* EXIT */
 	forstat,	/* FOR */
 	nullproc,	/* FUNC */
+	gensub,	/* GENSUB */
 	sub,	/* SUB */
 	gsub,	/* GSUB */
 	ifstat,	/* IF */
