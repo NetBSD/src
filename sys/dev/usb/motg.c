@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.29 2020/02/15 13:56:55 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.30 2020/02/18 17:50:20 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.29 2020/02/15 13:56:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.30 2020/02/18 17:50:20 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2234,7 +2234,6 @@ motg_abortx(struct usbd_xfer *xfer)
 	}
 
 	if (otgpipe->hw_ep->xfer == xfer) {
-		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		otgpipe->hw_ep->xfer = NULL;
 		if (otgpipe->hw_ep->ep_number > 0) {
 			/* select endpoint */
