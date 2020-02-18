@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.114 2018/08/22 01:05:24 msaitoh Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.115 2020/02/18 20:23:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -197,7 +197,7 @@ int lfs_match_data(struct lfs *, struct buf *);
 int lfs_match_indir(struct lfs *, struct buf *);
 int lfs_match_dindir(struct lfs *, struct buf *);
 int lfs_match_tindir(struct lfs *, struct buf *);
-void lfs_callback(struct buf *);
+void lfs_free_aiodone(struct buf *);
 void lfs_acquire_finfo(struct lfs *fs, ino_t, int);
 void lfs_release_finfo(struct lfs *fs);
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.36 2020/01/15 17:55:44 ad Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.37 2020/02/18 20:23:17 chs Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.36 2020/01/15 17:55:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.37 2020/02/18 20:23:17 chs Exp $");
 
 #include <sys/param.h>
 
@@ -88,13 +88,6 @@ uvm_aio_aiodone(struct buf *bp)
 	putiobuf(bp);
 
 	kmem_free(pgs, npages * sizeof(*pgs));
-}
-
-void
-uvm_aio_biodone(struct buf *bp)
-{
-
-	uvm_aio_aiodone(bp);
 }
 
 /*

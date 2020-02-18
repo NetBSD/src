@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.219 2020/01/15 17:55:45 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.220 2020/02/18 20:23:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -757,7 +757,6 @@ void			uvm_pagerealloc(struct vm_page *,
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
-void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
 void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
 			    int);

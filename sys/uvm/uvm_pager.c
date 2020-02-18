@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.120 2020/01/15 17:55:45 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.121 2020/02/18 20:23:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.120 2020/01/15 17:55:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.121 2020/02/18 20:23:17 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -144,12 +144,6 @@ uvm_pager_init(void)
 	pager_map_wanted = false;
 
 	uvm_pager_realloc_emerg();
-
-	/*
-	 * init ASYNC I/O queue
-	 */
-
-	TAILQ_INIT(&uvm.aio_done);
 
 	/*
 	 * call pager init functions
@@ -284,20 +278,6 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	if (entries)
 		uvm_unmap_detach(entries, 0);
 	UVMHIST_LOG(maphist,"<- done",0,0,0,0);
-}
-
-/*
- * interrupt-context iodone handler for single-buf i/os
- * or the top-level buf of a nested-buf i/o.
- */
-
-void
-uvm_aio_biodone(struct buf *bp)
-{
-	/* reset b_iodone for when this is a single-buf i/o. */
-	bp->b_iodone = uvm_aio_aiodone;
-
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
 }
 
 void
