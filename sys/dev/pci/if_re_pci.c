@@ -1,4 +1,4 @@
-/*	$NetBSD: if_re_pci.c,v 1.51 2020/01/30 00:36:29 jmcneill Exp $	*/
+/*	$NetBSD: if_re_pci.c,v 1.52 2020/02/18 03:48:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.51 2020/01/30 00:36:29 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_re_pci.c,v 1.52 2020/02/18 03:48:22 msaitoh Exp $");
 
 #include <sys/types.h>
 
@@ -130,7 +130,7 @@ re_pci_lookup(const struct pci_attach_args * pa)
 {
 	int i;
 
-	for(i = 0; i < __arraycount(re_devs); i++) {
+	for (i = 0; i < __arraycount(re_devs); i++) {
 		if (PCI_VENDOR(pa->pa_id) != re_devs[i].rtk_vid)
 			continue;
 		if (PCI_PRODUCT(pa->pa_id) == re_devs[i].rtk_did)
@@ -210,7 +210,7 @@ re_pci_attach(device_t parent, device_t self, void *aux)
 	case PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT:
 		memh_valid =
 		    (pci_mapreg_map(pa, RTK_PCI_LOMEM,
-		        memtype, 0, &memt, &memh, NULL, &memsize) == 0) ||
+			memtype, 0, &memt, &memh, NULL, &memsize) == 0) ||
 		    (pci_mapreg_map(pa, RTK_PCI_LOMEM + 4,
 			PCI_MAPREG_TYPE_MEM | PCI_MAPREG_MEM_TYPE_64BIT,
 			0, &memt, &memh, NULL, &memsize) == 0);
