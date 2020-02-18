@@ -36,7 +36,7 @@ THIS SOFTWARE.
 #include <string.h>
 #include <stdlib.h>
 #include "awk.h"
-#include "awktab.h"
+#include "awkgram.h"
 
 struct xx
 {	int token;
