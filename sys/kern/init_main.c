@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.520 2020/02/15 18:12:15 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.521 2020/02/18 20:23:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.520 2020/02/15 18:12:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.521 2020/02/18 20:23:17 chs Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -719,11 +719,6 @@ main(void)
 	if (kthread_create(PRI_IOFLUSH, KTHREAD_MPSAFE, NULL, sched_sync,
 	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
-
-	/* Create the aiodone daemon kernel thread. */
-	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
-		panic("fork aiodoned");
 
 	/* Wait for final configure threads to complete. */
 	config_finalize_mountroot();

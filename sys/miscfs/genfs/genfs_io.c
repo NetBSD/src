@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.84 2020/01/15 17:55:44 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.85 2020/02/18 20:23:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.84 2020/01/15 17:55:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.85 2020/02/18 20:23:17 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -606,9 +606,6 @@ genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
 	if (kva == 0)
 		return EBUSY;
 
-	if (uvm.aiodone_queue == NULL)
-		async = 0;
-
 	mbp = getiobuf(vp, true);
 	mbp->b_bufsize = totalbytes;
 	mbp->b_data = (void *)kva;
@@ -616,7 +613,7 @@ genfs_getpages_read(struct vnode *vp, struct vm_page **pgs, int npages,
 	mbp->b_cflags = BC_BUSY;
 	if (async) {
 		mbp->b_flags = B_READ | B_ASYNC;
-		mbp->b_iodone = uvm_aio_biodone;
+		mbp->b_iodone = uvm_aio_aiodone;
 	} else {
 		mbp->b_flags = B_READ;
 		mbp->b_iodone = NULL;
@@ -1396,9 +1393,8 @@ genfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages, int flags)
 	    UVMPAGER_MAPIN_WRITE | UVMPAGER_MAPIN_WAITOK);
 	len = npages << PAGE_SHIFT;
 
-	KASSERT(uvm.aiodone_queue != NULL);
 	error = genfs_do_io(vp, off, kva, len, flags, UIO_WRITE,
-			    uvm_aio_biodone);
+			    uvm_aio_aiodone);
 
 	return error;
 }
@@ -1429,9 +1425,8 @@ genfs_gop_write_rwmap(struct vnode *vp, struct vm_page **pgs, int npages,
 	    UVMPAGER_MAPIN_READ | UVMPAGER_MAPIN_WAITOK);
 	len = npages << PAGE_SHIFT;
 
-	KASSERT(uvm.aiodone_queue != NULL);
 	error = genfs_do_io(vp, off, kva, len, flags, UIO_WRITE,
-			    uvm_aio_biodone);
+			    uvm_aio_aiodone);
 
 	return error;
 }

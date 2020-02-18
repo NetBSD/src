@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.369 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.370 2020/02/18 20:23:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.369 2020/01/17 20:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.370 2020/02/18 20:23:17 chs Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2113,7 +2113,7 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 	mbp->b_data = (void *)kva;
 	mbp->b_resid = mbp->b_bcount = bytes;
 	mbp->b_cflags = BC_BUSY|BC_AGE;
-	mbp->b_iodone = uvm_aio_biodone;
+	mbp->b_iodone = uvm_aio_aiodone;
 
 	bp = NULL;
 	for (offset = startoffset;

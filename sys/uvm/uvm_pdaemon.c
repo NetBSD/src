@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.123 2020/01/15 17:55:45 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.124 2020/02/18 20:23:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.123 2020/01/15 17:55:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.124 2020/02/18 20:23:17 chs Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -340,25 +340,6 @@ uvm_pageout(void *arg)
 		uvmpd_pool_drain_wakeup();
 	}
 	/*NOTREACHED*/
-}
-
-
-/*
- * uvm_aiodone_worker: a workqueue callback for the aiodone daemon.
- */
-
-void
-uvm_aiodone_worker(struct work *wk, void *dummy)
-{
-	struct buf *bp = (void *)wk;
-
-	KASSERT(&bp->b_work == wk);
-
-	/*
-	 * process an i/o that's done.
-	 */
-
-	(*bp->b_iodone)(bp);
 }
 
 void

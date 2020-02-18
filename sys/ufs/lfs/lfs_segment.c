@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.281 2020/01/15 17:55:44 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.282 2020/02/18 20:23:17 chs Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.281 2020/01/15 17:55:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.282 2020/02/18 20:23:17 chs Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -109,11 +109,8 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.281 2020/01/15 17:55:44 ad Exp $")
 
 MALLOC_JUSTDEFINE(M_SEGMENT, "LFS segment", "Segment for LFS");
 
-static void lfs_generic_callback(struct buf *, void (*)(struct buf *));
-static void lfs_free_aiodone(struct buf *);
 static void lfs_super_aiodone(struct buf *);
 static void lfs_cluster_aiodone(struct buf *);
-static void lfs_cluster_callback(struct buf *);
 
 /*
  * Determine if it's OK to start a partial in this segment, or if we need
@@ -136,7 +133,6 @@ static void lfs_cluster_callback(struct buf *);
 
 int	 lfs_match_fake(struct lfs *, struct buf *);
 void	 lfs_newseg(struct lfs *);
-void	 lfs_supercallback(struct buf *);
 void	 lfs_updatemeta(struct segment *);
 void	 lfs_writesuper(struct lfs *, daddr_t);
 int	 lfs_writevnodes(struct lfs *fs, struct mount *mp,
@@ -2007,7 +2003,7 @@ lfs_newclusterbuf(struct lfs *fs, struct vnode *vp, daddr_t addr,
 	bp = getiobuf(vp, true);
 	bp->b_dev = NODEV;
 	bp->b_blkno = bp->b_lblkno = addr;
-	bp->b_iodone = lfs_cluster_callback;
+	bp->b_iodone = lfs_cluster_aiodone;
 	bp->b_private = cl;
 
 	return bp;
@@ -2430,7 +2426,7 @@ lfs_writesuper(struct lfs *fs, daddr_t daddr)
 	bp->b_flags = (bp->b_flags & ~B_READ) | B_ASYNC;
 	bp->b_oflags &= ~(BO_DONE | BO_DELWRI);
 	bp->b_error = 0;
-	bp->b_iodone = lfs_supercallback;
+	bp->b_iodone = lfs_super_aiodone;
 
 	if (fs->lfs_sp != NULL && fs->lfs_sp->seg_flags & SEGM_SYNC)
 		BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);
@@ -2508,7 +2504,7 @@ lfs_match_tindir(struct lfs *fs, struct buf *bp)
 	return (lbn < 0 && (-lbn - ULFS_NDADDR) % LFS_NINDIR(fs) == 2);
 }
 
-static void
+void
 lfs_free_aiodone(struct buf *bp)
 {
 	struct lfs *fs;
@@ -2673,43 +2669,6 @@ lfs_cluster_aiodone(struct buf *bp)
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;
 	pool_put(&fs->lfs_clpool, cl);
-}
-
-static void
-lfs_generic_callback(struct buf *bp, void (*aiodone)(struct buf *))
-{
-	/* reset b_iodone for when this is a single-buf i/o. */
-	bp->b_iodone = aiodone;
-
-	workqueue_enqueue(uvm.aiodone_queue, &bp->b_work, NULL);
-}
-
-static void
-lfs_cluster_callback(struct buf *bp)
-{
-
-	lfs_generic_callback(bp, lfs_cluster_aiodone);
-}
-
-void
-lfs_supercallback(struct buf *bp)
-{
-
-	lfs_generic_callback(bp, lfs_super_aiodone);
-}
-
-/*
- * The only buffers that are going to hit these functions are the
- * segment write blocks, or the segment summaries, or the superblocks.
- *
- * All of the above are created by lfs_newbuf, and so do not need to be
- * released via brelse.
- */
-void
-lfs_callback(struct buf *bp)
-{
-
-	lfs_generic_callback(bp, lfs_free_aiodone);
 }
 
 /*
