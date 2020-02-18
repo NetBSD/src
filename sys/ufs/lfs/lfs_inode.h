@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.h,v 1.23 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_inode.h,v 1.24 2020/02/18 20:23:17 chs Exp $	*/
 /*  from NetBSD: ulfs_inode.h,v 1.5 2013/06/06 00:51:50 dholland Exp  */
 /*  from NetBSD: inode.h,v 1.72 2016/06/03 15:36:03 christos Exp  */
 
@@ -214,7 +214,7 @@ struct lfs_inode_ext {
 
 #ifdef _KERNEL
 
-# define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_callback)
+# define LFS_IS_MALLOC_BUF(bp) ((bp)->b_iodone == lfs_free_aiodone)
 
 /* log for debugging writes to the Ifile */
 # ifdef DEBUG
