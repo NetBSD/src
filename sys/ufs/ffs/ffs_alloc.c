@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.164 2019/04/14 15:55:24 kardel Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.165 2020/02/18 17:50:32 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.164 2019/04/14 15:55:24 kardel Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.165 2020/02/18 17:50:32 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -208,7 +208,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 	    ffs_lblktosize(fs, (voff_t)lbn) < round_page(vp->v_size) &&
 	    ((vp->v_vflag & VV_MAPPED) != 0 || (size & PAGE_MASK) != 0 ||
 	     ffs_blkoff(fs, size) != 0)) {
-		struct vm_page *pg;
+		struct vm_page *pg __diagused;
 		struct uvm_object *uobj = &vp->v_uobj;
 		voff_t off = trunc_page(ffs_lblktosize(fs, lbn));
 		voff_t endoff = round_page(ffs_lblktosize(fs, lbn) + size);
@@ -328,7 +328,7 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 	 */
 
 	if (ITOV(ip)->v_type == VREG) {
-		struct vm_page *pg;
+		struct vm_page *pg __diagused;
 		struct uvm_object *uobj = &ITOV(ip)->v_uobj;
 		voff_t off = trunc_page(ffs_lblktosize(fs, lbprev));
 		voff_t endoff = round_page(ffs_lblktosize(fs, lbprev) + osize);
