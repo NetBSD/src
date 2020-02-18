@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.4 2020/02/14 13:20:48 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.5 2020/02/18 12:11:26 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.4 2020/02/14 13:20:48 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.5 2020/02/18 12:11:26 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -5405,6 +5405,176 @@ DEF(AUDIO_SETINFO_params_simul)
 }
 
 /*
+ * AUDIO_SETINFO(encoding/precision) is tested in AUDIO_GETENC_range below.
+ */
+
+/*
+ * Check whether the number of channels can be set.
+ */
+DEF(AUDIO_SETINFO_channels)
+{
+	struct audio_info ai;
+	int mode;
+	int r;
+	int fd;
+	int i;
+	struct {
+		int ch;
+		bool expected;
+	} table[] = {
+		{  0,	false },
+		{  1,	true },	/* monaural */
+		{  2,	true },	/* stereo */
+		{  3,	true },	/* multi channels */
+		{ 12,	true },	/* upper limit */
+		{ 13,	false },
+	};
+
+	TEST("AUDIO_SETINFO_channels");
+	if (netbsd < 8) {
+		/*
+		 * On NetBSD7, the result depends the hardware and there is
+		 * no way to know it.
+		 */
+		XP_SKIP("The test doesn't make sense on NetBSD7");
+		return;
+	}
+
+	mode = openable_mode();
+	fd = OPEN(devaudio, mode);
+	REQUIRED_SYS_OK(fd);
+
+	for (i = 0; i < (int)__arraycount(table); i++) {
+		int ch = table[i].ch;
+		bool expected = table[i].expected;
+
+		AUDIO_INITINFO(&ai);
+		if (mode != O_RDONLY)
+			ai.play.channels = ch;
+		if (mode != O_WRONLY)
+			ai.record.channels = ch;
+		r = IOCTL(fd, AUDIO_SETINFO, &ai, "channels=%d", ch);
+		if (expected) {
+			/* Expects to succeed */
+			XP_SYS_EQ(0, r);
+
+			r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+			XP_SYS_EQ(0, r);
+			if (mode != O_RDONLY)
+				XP_EQ(ch, ai.play.channels);
+			if (mode != O_WRONLY)
+				XP_EQ(ch, ai.record.channels);
+		} else {
+			/* Expects to fail */
+			XP_SYS_NG(EINVAL, r);
+		}
+	}
+
+	r = CLOSE(fd);
+	XP_SYS_EQ(0, r);
+}
+
+/*
+ * Check whether the sample rate can be set.
+ */
+DEF(AUDIO_SETINFO_sample_rate)
+{
+	struct audio_info ai;
+	int mode;
+	int r;
+	int fd;
+	int i;
+	struct {
+		int freq;
+		bool expected;
+	} table[] = {
+		{    999,	false },
+		{   1000,	true },	/* lower limit */
+		{  48000,	true },
+		{ 192000,	true },	/* upper limit */
+		{ 192001,	false },
+	};
+
+	TEST("AUDIO_SETINFO_sample_rate");
+	if (netbsd < 8) {
+		/*
+		 * On NetBSD7, the result depends the hardware and there is
+		 * no way to know it.
+		 */
+		XP_SKIP("The test doesn't make sense on NetBSD7");
+		return;
+	}
+
+	mode = openable_mode();
+	fd = OPEN(devaudio, mode);
+	REQUIRED_SYS_OK(fd);
+
+	for (i = 0; i < (int)__arraycount(table); i++) {
+		int freq = table[i].freq;
+		bool expected = table[i].expected;
+
+		AUDIO_INITINFO(&ai);
+		if (mode != O_RDONLY)
+			ai.play.sample_rate = freq;
+		if (mode != O_WRONLY)
+			ai.record.sample_rate = freq;
+		r = IOCTL(fd, AUDIO_SETINFO, &ai, "sample_rate=%d", freq);
+		if (expected) {
+			/* Expects to succeed */
+			XP_SYS_EQ(0, r);
+
+			r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+			XP_SYS_EQ(0, r);
+			if (mode != O_RDONLY)
+				XP_EQ(freq, ai.play.sample_rate);
+			if (mode != O_WRONLY)
+				XP_EQ(freq, ai.record.sample_rate);
+		} else {
+			/* Expects to fail */
+			XP_SYS_NG(EINVAL, r);
+		}
+	}
+
+	r = CLOSE(fd);
+	XP_SYS_EQ(0, r);
+}
+
+/*
+ * SETINFO(sample_rate = 0) should fail correctly.
+ */
+DEF(AUDIO_SETINFO_sample_rate_0)
+{
+	struct audio_info ai;
+	int mode;
+	int r;
+	int fd;
+
+	TEST("AUDIO_SETINFO_sample_rate_0");
+	if (netbsd < 9) {
+		/*
+		 * On NetBSD7,8 this will block system call and you will not
+		 * even be able to shutdown...
+		 */
+		XP_SKIP("This will cause an infinate loop in the kernel");
+		return;
+	}
+
+	mode = openable_mode();
+	fd = OPEN(devaudio, mode);
+	REQUIRED_SYS_OK(fd);
+
+	AUDIO_INITINFO(&ai);
+	ai.play.sample_rate = 0;
+	ai.record.sample_rate = 0;
+	r = IOCTL(fd, AUDIO_SETINFO, &ai, "sample_rate=0");
+	/* Expects to fail */
+	XP_SYS_NG(EINVAL, r);
+
+	r = CLOSE(fd);
+	XP_SYS_EQ(0, r);
+}
+
+/*
  * Check whether the pause/unpause works.
  */
 void
@@ -6385,6 +6555,9 @@ struct testentry testtable[] = {
 	ENT(AUDIO_SETINFO_params_set_RDWR_2),
 	ENT(AUDIO_SETINFO_params_set_RDWR_3),
 	ENT(AUDIO_SETINFO_params_simul),
+	ENT(AUDIO_SETINFO_channels),
+	ENT(AUDIO_SETINFO_sample_rate),
+	ENT(AUDIO_SETINFO_sample_rate_0),
 	ENT(AUDIO_SETINFO_pause_RDONLY_0),
 	ENT(AUDIO_SETINFO_pause_RDONLY_1),
 	ENT(AUDIO_SETINFO_pause_WRONLY_0),
