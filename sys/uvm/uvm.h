@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.73 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.74 2020/02/18 20:23:17 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,12 +112,6 @@ struct uvm {
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct lwp *pagedaemon_lwp;	/* daemon's lid */
-
-		/* aiodone daemon */
-	struct workqueue *aiodone_queue;
-
-	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
-	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
 };
 
 /*
