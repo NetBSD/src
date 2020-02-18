@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.10 2014/01/17 16:31:45 roy Exp $
+#	$NetBSD: Makefile,v 1.11 2020/02/18 21:12:21 christos Exp $
 
 WARNS?= 4
 CWARNFLAGS.clang+=	-Wno-self-assign
@@ -11,7 +11,7 @@ DIST=	${.CURDIR}/../dist
 
 PROG=	awk
 SRCS=	awkgram.y b.c lex.c lib.c main.c parse.c proctab.c run.c tran.c
-CPPFLAGS+=	-I${DIST} -I.
+CPPFLAGS+=	-I${DIST} -I. -DHAS_ISBLANK
 LDADD+=	-lm
 .if !defined(HOSTPROG)
 DPADD+=	${LIBM}
