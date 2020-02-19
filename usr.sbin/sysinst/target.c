@@ -1,4 +1,4 @@
-/*	$NetBSD: target.c,v 1.12 2020/02/06 15:08:04 martin Exp $	*/
+/*	$NetBSD: target.c,v 1.13 2020/02/19 18:08:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Jonathan Stone
@@ -71,7 +71,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: target.c,v 1.12 2020/02/06 15:08:04 martin Exp $");
+__RCSID("$NetBSD: target.c,v 1.13 2020/02/19 18:08:03 martin Exp $");
 #endif
 
 /*
@@ -436,8 +436,8 @@ cp_within_target(const char *frompath, const char *topath, int optional)
 	char realfrom[STRSIZE];
 	char realto[STRSIZE];
 
-	strncpy(realfrom, target_expand(frompath), STRSIZE);
-	strncpy(realto, target_expand(topath), STRSIZE);
+	strlcpy(realfrom, target_expand(frompath), sizeof realfrom);
+	strlcpy(realto, target_expand(topath), sizeof realto);
 
 	if (access(realfrom, R_OK) == -1 && optional)
 		return 0;
