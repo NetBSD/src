@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1397 2020/01/28 02:27:46 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1398 2020/02/19 09:00:34 mrg Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -1775,6 +1775,7 @@ product ATI RADEON_HD6480G_1	0x9648	Radeon HD 6480G
 product ATI RADEON_HD6480G_2	0x9649	Radeon HD 6480G
 product ATI RADEON_HD6530D	0x964a	Radeon HD 6530D
 product ATI RADEON_HD4200	0x9712	Radeon HD4200 Mobility
+product ATI RADEON_HD4290	0x9714	Radeon HD4290 Graphics
 product ATI RADEON_HD4250	0x9715	Radeon HD4250 GPU (RS880)
 product ATI RADEON_HD6310	0x9802	Radeon HD6310 Graphics
 product ATI RADEON_HD6320	0x9806	Radeon HD6320 Graphics
@@ -6664,6 +6665,7 @@ product NVIDIA	GEFORCE_210_HDA	0x0be3	GeForce 210 High Definition Audio Controll
 product NVIDIA	GF100_HDA	0x0be5	GF100 HD Audio
 product NVIDIA	GF108_HDA	0x0bea	GF108 HD Audio
 product NVIDIA	GF116_HDA	0x0bee	GF116 HD Audio
+product NVIDIA	GF_440		0x0de0	GeForce GT 440
 product NVIDIA	GF_GT640M	0x0fd2	GeForce GT 640M
 product NVIDIA	GT520		0x1040	GeForce GT 520
 product NVIDIA	GEFORCE_510	0x1042	GeForce 510
