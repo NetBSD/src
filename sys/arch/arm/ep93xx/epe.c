@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.47 2020/02/03 13:58:05 skrll Exp $	*/
+/*	$NetBSD: epe.c,v 1.48 2020/02/19 02:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.47 2020/02/03 13:58:05 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.48 2020/02/19 02:51:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,6 @@ static void	epe_attach(device_t, device_t, void *);
 static void	epe_init(struct epe_softc *);
 static int	epe_intr(void* arg);
 static int	epe_gctx(struct epe_softc *);
-static int	epe_mediachange(struct ifnet *);
 int		epe_mii_readreg (device_t, int, int, uint16_t *);
 int		epe_mii_writereg (device_t, int, int, uint16_t);
 void		epe_statchg (struct ifnet *);
@@ -401,7 +400,7 @@ epe_init(struct epe_softc *sc)
 	mii->mii_writereg = epe_mii_writereg;
 	mii->mii_statchg = epe_statchg;
 	sc->sc_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, epe_mediachange,
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 		ether_mediastatus);
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
@@ -438,14 +437,6 @@ epe_init(struct epe_softc *sc)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, (sc)->sc_enaddr);
-}
-
-static int
-epe_mediachange(struct ifnet *ifp)
-{
-	if (ifp->if_flags & IFF_UP)
-		epe_ifinit(ifp);
-	return 0;
 }
 
 int
