@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.178 2020/02/19 16:02:33 riastradh Exp $	*/
+/*	$NetBSD: umass.c,v 1.179 2020/02/19 16:02:50 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.178 2020/02/19 16:02:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.179 2020/02/19 16:02:50 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -995,8 +995,11 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 {
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		umass_transfer_done(sc, sc->transfer_datalen,
+		    STATUS_WIRE_FAILED);
 		return;
+	}
 
 	DPRINTFM(UDMASS_BBB, "Clear endpoint 0x%02jx stall",
 	    sc->sc_epaddr[endpt], 0, 0, 0);
@@ -1008,7 +1011,9 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 	USETW(sc->sc_req.wValue, UF_ENDPOINT_HALT);
 	USETW(sc->sc_req.wIndex, sc->sc_epaddr[endpt]);
 	USETW(sc->sc_req.wLength, 0);
-	umass_setup_ctrl_transfer(sc, &sc->sc_req, NULL, 0, 0, xfer);
+	if (umass_setup_ctrl_transfer(sc, &sc->sc_req, NULL, 0, 0, xfer))
+		umass_transfer_done(sc, sc->transfer_datalen,
+		    STATUS_WIRE_FAILED);
 }
 
 Static void
@@ -1055,8 +1060,10 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 		   "sc->sc_wire == 0x%02x wrong for umass_bbb_reset\n",
 		   sc->sc_wire);
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		umass_transfer_done(sc, sc->transfer_datalen, status);
 		return;
+	}
 
 	/*
 	 * Reset recovery (5.3.4 in Universal Serial Bus Mass Storage Class)
@@ -1085,8 +1092,9 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 	USETW(sc->sc_req.wValue, 0);
 	USETW(sc->sc_req.wIndex, sc->sc_ifaceno);
 	USETW(sc->sc_req.wLength, 0);
-	umass_setup_ctrl_transfer(sc, &sc->sc_req, NULL, 0, 0,
-				  sc->transfer_xfer[XFER_BBB_RESET1]);
+	if (umass_setup_ctrl_transfer(sc, &sc->sc_req, NULL, 0, 0,
+		sc->transfer_xfer[XFER_BBB_RESET1]))
+		umass_transfer_done(sc, sc->transfer_datalen, status);
 }
 
 Static void
@@ -1104,8 +1112,10 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 		   "sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
 		   sc->sc_wire);
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		cb(sc, priv, datalen, STATUS_WIRE_FAILED);
 		return;
+	}
 
 	/* Be a little generous. */
 	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
@@ -1243,8 +1253,11 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 		return;
 	}
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		umass_transfer_done(sc, sc->transfer_datalen,
+		    STATUS_WIRE_FAILED);
 		return;
+	}
 
 	switch (sc->transfer_state) {
 
@@ -1561,8 +1574,10 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 		   "sc->sc_wire == 0x%02x wrong for umass_cbi_reset\n",
 		   sc->sc_wire);
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		umass_transfer_done(sc, sc->transfer_datalen, status);
 		return;
+	}
 
 	/*
 	 * Command Block Reset Protocol
@@ -1598,8 +1613,9 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 	for (i = 2; i < SEND_DIAGNOSTIC_CMDLEN; i++)
 		sc->cbl[i] = 0xff;
 
-	umass_cbi_adsc(sc, sc->cbl, SEND_DIAGNOSTIC_CMDLEN, 0,
-		       sc->transfer_xfer[XFER_CBI_RESET1]);
+	if (umass_cbi_adsc(sc, sc->cbl, SEND_DIAGNOSTIC_CMDLEN, 0,
+		sc->transfer_xfer[XFER_CBI_RESET1]))
+		umass_transfer_done(sc, sc->transfer_datalen, status);
 	/* XXX if the command fails we should reset the port on the bub */
 }
 
@@ -1617,8 +1633,10 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 		   "sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
 		   sc->sc_wire);
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		cb(sc, priv, datalen, STATUS_WIRE_FAILED);
 		return;
+	}
 
 	/* Be a little generous. */
 	sc->timeout = timeout + USBD_DEFAULT_TIMEOUT;
@@ -1683,8 +1701,11 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 		return;
 	}
 
-	if (sc->sc_dying)
+	if (sc->sc_dying) {
+		umass_transfer_done(sc, sc->transfer_datalen,
+		    STATUS_WIRE_FAILED);
 		return;
+	}
 
 	/*
 	 * State handling for CBI transfers.
@@ -1882,6 +1903,10 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 				umass_transfer_done(sc,
 				    sc->transfer_datalen - sc->transfer_actlen,
 				    status);
+			} else {
+				/* XXX What to do?  */
+				umass_transfer_done(sc, sc->transfer_datalen,
+				    STATUS_WIRE_FAILED);
 			}
 		}
 		return;
