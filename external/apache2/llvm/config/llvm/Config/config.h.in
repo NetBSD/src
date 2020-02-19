@@ -312,15 +312,11 @@
 /* Define to 1 if you have the <sys/uio.h> header file. */
 #define HAVE_SYS_UIO_H 1
 
-#if !HAVE_NBTOOL_CONFIG_H
 /* Define if the setupterm() function is supported this platform. */
 #define HAVE_TERMINFO 1
-#endif
 
-#if !HAVE_NBTOOL_CONFIG_H
 /* Define to 1 if you have the <termios.h> header file. */
 #define HAVE_TERMIOS_H 1
-#endif
 
 /* Define to 1 if the system has the type `uint64_t'. */
 #define HAVE_UINT64_T 1
