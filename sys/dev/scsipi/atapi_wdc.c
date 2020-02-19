@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.135 2020/02/12 00:19:07 chs Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.136 2020/02/19 16:04:39 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.135 2020/02/12 00:19:07 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.136 2020/02/19 16:04:39 riastradh Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -101,12 +101,12 @@ static void	wdc_atapi_polldsc(void *arg);
 #define MAX_SIZE MAXPHYS
 
 static const struct scsipi_bustype wdc_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	wdc_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = wdc_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 
 void
