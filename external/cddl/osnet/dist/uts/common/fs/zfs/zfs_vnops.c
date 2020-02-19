@@ -6375,6 +6375,7 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_mmap_desc,		spec_mmap },
 	{ &vop_islocked_desc,		zfs_netbsd_islocked },
 	{ &vop_advlock_desc,		spec_advlock },
+	{ &vop_strategy_desc,		spec_strategy },
 	{ &vop_print_desc,		zfs_netbsd_print },
 	{ &vop_fcntl_desc,		zfs_netbsd_fcntl },
 	{ NULL, NULL }
