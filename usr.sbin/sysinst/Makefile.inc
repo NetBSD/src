@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.31 2019/12/16 13:48:44 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.32 2020/02/19 21:42:53 martin Exp $
 #
 # Makefile for sysinst
 
@@ -7,7 +7,7 @@
 .endif
 
 PROG=		sysinst
-NOMAN=		# defined
+MAN=		sysinst.8
 
 WARNS=		4
 
