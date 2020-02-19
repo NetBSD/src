@@ -1,4 +1,4 @@
-.\"	$NetBSD: sysinst.8,v 1.1 2020/02/19 21:42:54 martin Exp $
+.\"	$NetBSD: sysinst.8,v 1.2 2020/02/19 21:51:21 martin Exp $
 .\"
 .\" Copyright (c) 2007 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -34,7 +34,6 @@
 .Nm
 .Op Fl D
 .Op Fl f Ar definition_file
-.Op Fl r Ar release
 .Sh DESCRIPTION
 .Nm
 is a menu-based program that may be used to install or upgrade a
@@ -60,11 +59,6 @@ as a file for definitions other than the defaults.
 See the
 .Sx DEFINITION FILE
 section for its format.
-.It Fl r Ar release
-Use
-.Ar release
-as the release name if it is different to the one compiled.
-Currently unused.
 .El
 .Sh DEFINITION FILE
 A definition file can be used with
@@ -84,7 +78,6 @@ respectively, as determined by the image
 is used on):
 .Bl -column "targetroot mount" "pub/NetBSD/NetBSD-REL"
 .It Sy "option name" Ta Sy "default value" Ta Sy "description"
-.It release Ta REL Ta Release name (also set by Fl r Ar release )
 .It machine Ta MACH Ta Machine architecture
 .It xfer dir Ta /usr/INSTALL Ta Transfer dir
 .It ext dir Ta "" Ta Extract dir (will usually be set later on)
