@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.30 2020/02/18 17:50:20 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.31 2020/02/19 16:01:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.30 2020/02/18 17:50:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.31 2020/02/19 16:01:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1350,6 +1350,7 @@ motg_device_ctrl_start1(struct motg_softc *sc)
 		err = USBD_NOT_STARTED;
 		goto end;
 	}
+	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
@@ -1427,15 +1428,8 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-
-	/*
-	 * Try to claim this xfer for completion.  If it has already
-	 * completed or aborted, drop it on the floor.
-	 */
-	if (!usbd_xfer_trycomplete(xfer))
-		return;
-
 	KASSERT(ep->phase == DATA_IN || ep->phase == STATUS_IN);
+
 	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
@@ -1528,7 +1522,12 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 complete:
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -1549,13 +1548,6 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-
-	/*
-	 * Try to claim this xfer for completion.  If it has already
-	 * completed or aborted, drop it on the floor.
-	 */
-	if (!usbd_xfer_trycomplete(xfer))
-		return;
 
 	if (ep->phase == DATA_IN || ep->phase == STATUS_IN) {
 		motg_device_ctrl_intr_rx(sc);
@@ -1603,7 +1595,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 		/* data still not sent */
 		return;
 	}
-	if (xfer == NULL)
+	if (xfer == NULL || xfer->ux_status != USBD_IN_PROGRESS)
 		goto complete;
 	if (ep->phase == STATUS_OUT) {
 		/*
@@ -1675,7 +1667,12 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 complete:
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -1810,6 +1807,7 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 		err = USBD_NOT_STARTED;
 		goto end;
 	}
+	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
@@ -2055,7 +2053,12 @@ complete:
 	    (xfer != NULL) ? xfer->ux_status : 0, 0, 0);
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -2075,14 +2078,6 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-
-	/*
-	 * Try to claim this xfer for completion.  If it has already
-	 * completed or aborted, drop it on the floor.
-	 */
-	if (!usbd_xfer_trycomplete(xfer))
-		return;
-
 	KASSERT(ep->ep_number == epnumber);
 
 	DPRINTFN(MD_BULK, " on ep %jd", epnumber, 0, 0, 0);
@@ -2144,12 +2139,14 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 complete:
 	DPRINTFN(MD_BULK, "xfer %#jx complete, status %jd", (uintptr_t)xfer,
 	    (xfer != NULL) ? xfer->ux_status : 0, 0, 0);
-	KASSERTMSG(xfer && xfer->ux_status == USBD_IN_PROGRESS && 
-	    ep->phase == DATA_OUT, "xfer %p status %d phase %d",
-	    xfer, xfer->ux_status, ep->phase);
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
