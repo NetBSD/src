@@ -1,4 +1,4 @@
-/*	$NetBSD: misc.c,v 1.7 2019/12/31 14:51:29 pgoyette Exp $	*/
+/*	$NetBSD: misc.c,v 1.8 2020/02/19 16:11:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -82,7 +82,7 @@ opensolaris_utsname_init(void *arg)
 	strlcpy(utsname.sysname, ostype, sizeof(utsname.sysname));
 	strlcpy(utsname.nodename, hostname, sizeof(utsname.nodename));
 	strlcpy(utsname.release, osrelease, sizeof(utsname.release));
-	strlcpy(utsname.version, "OpenSolaris", sizeof(utsname.version));
+	strlcpy(utsname.version, version, sizeof(utsname.version));
 	strlcpy(utsname.machine, machine, sizeof(utsname.machine));
 }
 
