@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.inc,v 1.32 2020/02/19 21:42:53 martin Exp $
+#	$NetBSD: Makefile.inc,v 1.33 2020/02/19 21:45:09 martin Exp $
 #
 # Makefile for sysinst
 
@@ -128,6 +128,7 @@ CPPFLAGS+=-DINET6
 .endif
 
 COPTS+=	${GCC_NO_FORMAT_TRUNCATION}
+COPTS.disklabel.c+= ${GCC_NO_STRINGOP_TRUNCATION}
 
 # Host to ftp from.  Default:
 #	"ftp.NetBSD.org"
