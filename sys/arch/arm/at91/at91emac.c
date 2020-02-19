@@ -1,4 +1,4 @@
-/*	$NetBSD: at91emac.c,v 1.31 2020/02/11 15:09:14 skrll Exp $	*/
+/*	$NetBSD: at91emac.c,v 1.32 2020/02/19 02:51:54 thorpej Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.31 2020/02/11 15:09:14 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91emac.c,v 1.32 2020/02/19 02:51:54 thorpej Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -93,8 +93,6 @@ static void	emac_attach(device_t, device_t, void *);
 static void	emac_init(struct emac_softc *);
 static int	emac_intr(void* arg);
 static int	emac_gctx(struct emac_softc *);
-static int	emac_mediachange(struct ifnet *);
-static void	emac_mediastatus(struct ifnet *, struct ifmediareq *);
 int		emac_mii_readreg (device_t, int, int, uint16_t *);
 int		emac_mii_writereg (device_t, int, int, uint16_t);
 void		emac_statchg (struct ifnet *);
@@ -467,8 +465,8 @@ emac_init(struct emac_softc *sc)
 	mii->mii_writereg = emac_mii_writereg;
 	mii->mii_statchg = emac_statchg;
 	sc->sc_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, emac_mediachange,
-		emac_mediastatus);
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
+		ether_mediastatus);
 	mii_attach((device_t )sc, mii, 0xffffffff, MII_PHY_ANY,
 		MII_OFFSET_ANY, 0);
 	ifmedia_set(&mii->mii_media, IFM_ETHER | IFM_AUTO);
@@ -505,25 +503,6 @@ emac_init(struct emac_softc *sc)
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, (sc)->sc_enaddr);
 }
-
-static int
-emac_mediachange(struct ifnet *ifp)
-{
-	if (ifp->if_flags & IFF_UP)
-		emac_ifinit(ifp);
-	return (0);
-}
-
-static void
-emac_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
-{
-	struct emac_softc *sc = ifp->if_softc;
-
-	mii_pollstat(&sc->sc_mii);
-	ifmr->ifm_active = sc->sc_mii.mii_media_active;
-	ifmr->ifm_status = sc->sc_mii.mii_media_status;
-}
-
 
 int
 emac_mii_readreg(device_t self, int phy, int reg, uint16_t *val)
