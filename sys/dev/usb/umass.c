@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.177 2020/02/19 16:00:28 riastradh Exp $	*/
+/*	$NetBSD: umass.c,v 1.178 2020/02/19 16:02:33 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.177 2020/02/19 16:00:28 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.178 2020/02/19 16:02:33 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -236,6 +236,8 @@ Static usbd_status umass_setup_ctrl_transfer(struct umass_softc *,
 				struct usbd_xfer *);
 Static void umass_clear_endpoint_stall(struct umass_softc *, int,
 				struct usbd_xfer *);
+Static void umass_transfer_done(struct umass_softc *, int, int);
+Static void umass_transfer_reset(struct umass_softc *);
 #if 0
 Static void umass_reset(struct umass_softc *, transfer_cb_f, void *);
 #endif
@@ -1009,6 +1011,26 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 	umass_setup_ctrl_transfer(sc, &sc->sc_req, NULL, 0, 0, xfer);
 }
 
+Static void
+umass_transfer_done(struct umass_softc *sc, int residue, int status)
+{
+	UMASSHIST_FUNC(); UMASSHIST_CALLED();
+
+	sc->transfer_state = TSTATE_IDLE;
+	sc->transfer_cb(sc, sc->transfer_priv, residue, status);
+}
+
+Static void
+umass_transfer_reset(struct umass_softc *sc)
+{
+	UMASSHIST_FUNC(); UMASSHIST_CALLED();
+
+	sc->transfer_state = TSTATE_IDLE;
+	if (sc->transfer_priv)
+		sc->transfer_cb(sc, sc->transfer_priv, sc->transfer_datalen,
+		    sc->transfer_status);
+}
+
 #if 0
 Static void
 umass_reset(struct umass_softc *sc, transfer_cb_f cb, void *priv)
@@ -1217,8 +1239,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 		DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx cancelled",
 		    (uintptr_t)sc, (uintptr_t)xfer, 0, 0);
 
-		sc->transfer_state = TSTATE_IDLE;
-		sc->transfer_cb(sc, sc->transfer_priv, 0, STATUS_TIMEOUT);
+		umass_transfer_done(sc, 0, STATUS_TIMEOUT);
 		return;
 	}
 
@@ -1454,17 +1475,11 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			    "res = %jd", (uintptr_t)sc, residue, 0, 0);
 
 			/* SCSI command failed but transfer was succesful */
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv, residue,
-					STATUS_CMD_FAILED);
-
+			umass_transfer_done(sc, residue, STATUS_CMD_FAILED);
 			return;
 
 		} else {	/* success */
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv, residue,
-					STATUS_CMD_OK);
-
+			umass_transfer_done(sc, residue, STATUS_CMD_OK);
 			return;
 		}
 
@@ -1496,12 +1511,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			       device_xname(sc->sc_dev), usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
-		sc->transfer_state = TSTATE_IDLE;
-		if (sc->transfer_priv) {
-			sc->transfer_cb(sc, sc->transfer_priv,
-					sc->transfer_datalen,
-					sc->transfer_status);
-		}
+		umass_transfer_reset(sc);
 
 		return;
 
@@ -1669,8 +1679,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 	if (err == USBD_CANCELLED) {
 		DPRINTFM(UDMASS_BBB, "sc %#jx xfer %#jx cancelled",
 			(uintptr_t)sc, (uintptr_t)xfer, 0, 0);
-		sc->transfer_state = TSTATE_IDLE;
-		sc->transfer_cb(sc, sc->transfer_priv, 0, STATUS_TIMEOUT);
+		umass_transfer_done(sc, 0, STATUS_TIMEOUT);
 		return;
 	}
 
@@ -1700,12 +1709,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			 * Section 2.4.3.1.1 states that the bulk in endpoints
 			 * should not stalled at this point.
 			 */
-
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-					sc->transfer_datalen,
-					STATUS_CMD_FAILED);
-
+			umass_transfer_done(sc, sc->transfer_datalen,
+			    STATUS_CMD_FAILED);
 			return;
 		} else if (err) {
 			DPRINTFM(UDMASS_CBI, "sc %#jx: failed to send ADSC",
@@ -1794,10 +1799,9 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			/* No command completion interrupt. Request
 			 * sense to get status of command.
 			 */
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-				sc->transfer_datalen - sc->transfer_actlen,
-				STATUS_CMD_UNKNOWN);
+			umass_transfer_done(sc,
+			    sc->transfer_datalen - sc->transfer_actlen,
+			    STATUS_CMD_UNKNOWN);
 		}
 		return;
 
@@ -1848,9 +1852,9 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 				status = STATUS_CMD_FAILED;
 
 			/* No autosense, command successful */
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
-			    sc->transfer_datalen - sc->transfer_actlen, status);
+			umass_transfer_done(sc,
+			    sc->transfer_datalen - sc->transfer_actlen,
+			    status);
 		} else {
 			int status;
 
@@ -1875,8 +1879,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 					break;
 				}
 
-				sc->transfer_state = TSTATE_IDLE;
-				sc->transfer_cb(sc, sc->transfer_priv,
+				umass_transfer_done(sc,
 				    sc->transfer_datalen - sc->transfer_actlen,
 				    status);
 			}
@@ -1891,8 +1894,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			    usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 		} else {
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
+			umass_transfer_done(sc,
 			    sc->transfer_datalen, STATUS_CMD_FAILED);
 		}
 		return;
@@ -1903,8 +1905,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			       device_xname(sc->sc_dev), usbd_errstr(err));
 			umass_cbi_reset(sc, STATUS_WIRE_FAILED);
 		} else {
-			sc->transfer_state = TSTATE_IDLE;
-			sc->transfer_cb(sc, sc->transfer_priv,
+			umass_transfer_done(sc,
 			    sc->transfer_datalen, STATUS_CMD_FAILED);
 		}
 		return;
@@ -1937,13 +1938,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			       device_xname(sc->sc_dev), usbd_errstr(err));
 			/* no error recovery, otherwise we end up in a loop */
 
-		sc->transfer_state = TSTATE_IDLE;
-		if (sc->transfer_priv) {
-			sc->transfer_cb(sc, sc->transfer_priv,
-					sc->transfer_datalen,
-					sc->transfer_status);
-		}
-
+		umass_transfer_reset(sc);
 		return;
 
 
