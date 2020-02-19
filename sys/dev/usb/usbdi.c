@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.194 2020/02/17 08:16:44 riastradh Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.195 2020/02/19 16:07:37 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.194 2020/02/17 08:16:44 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.195 2020/02/19 16:07:37 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -55,12 +55,65 @@ __KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.194 2020/02/17 08:16:44 riastradh Exp $"
 #include <dev/usb/usbdivar.h>
 #include <dev/usb/usb_mem.h>
 #include <dev/usb/usb_quirks.h>
+#include <dev/usb/usb_sdt.h>
 #include <dev/usb/usbhist.h>
 
 /* UTF-8 encoding stuff */
 #include <fs/unicode.h>
 
 extern int usbdebug;
+
+SDT_PROBE_DEFINE5(usb, device, pipe, open,
+    "struct usbd_interface *"/*iface*/,
+    "uint8_t"/*address*/,
+    "uint8_t"/*flags*/,
+    "int"/*ival*/,
+    "struct usbd_pipe *"/*pipe*/);
+
+SDT_PROBE_DEFINE7(usb, device, pipe, open__intr,
+    "struct usbd_interface *"/*iface*/,
+    "uint8_t"/*address*/,
+    "uint8_t"/*flags*/,
+    "int"/*ival*/,
+    "usbd_callback"/*cb*/,
+    "void *"/*cookie*/,
+    "struct usbd_pipe *"/*pipe*/);
+
+SDT_PROBE_DEFINE2(usb, device, pipe, transfer__start,
+    "struct usbd_pipe *"/*pipe*/,
+    "struct usbd_xfer *"/*xfer*/);
+SDT_PROBE_DEFINE3(usb, device, pipe, transfer__done,
+    "struct usbd_pipe *"/*pipe*/,
+    "struct usbd_xfer *"/*xfer*/,
+    "usbd_status"/*err*/);
+SDT_PROBE_DEFINE2(usb, device, pipe, start,
+    "struct usbd_pipe *"/*pipe*/,
+    "struct usbd_xfer *"/*xfer*/);
+
+SDT_PROBE_DEFINE1(usb, device, pipe, close,  "struct usbd_pipe *"/*pipe*/);
+SDT_PROBE_DEFINE1(usb, device, pipe, abort__start,
+    "struct usbd_pipe *"/*pipe*/);
+SDT_PROBE_DEFINE1(usb, device, pipe, abort__done,
+    "struct usbd_pipe *"/*pipe*/);
+SDT_PROBE_DEFINE1(usb, device, pipe, clear__endpoint__stall,
+    "struct usbd_pipe *"/*pipe*/);
+SDT_PROBE_DEFINE1(usb, device, pipe, clear__endpoint__toggle,
+    "struct usbd_pipe *"/*pipe*/);
+
+SDT_PROBE_DEFINE5(usb, device, xfer, create,
+    "struct usbd_xfer *"/*xfer*/,
+    "struct usbd_pipe *"/*pipe*/,
+    "size_t"/*len*/,
+    "unsigned int"/*flags*/,
+    "unsigned int"/*nframes*/);
+SDT_PROBE_DEFINE1(usb, device, xfer, start,  "struct usbd_xfer *"/*xfer*/);
+SDT_PROBE_DEFINE1(usb, device, xfer, preabort,  "struct usbd_xfer *"/*xfer*/);
+SDT_PROBE_DEFINE1(usb, device, xfer, abort,  "struct usbd_xfer *"/*xfer*/);
+SDT_PROBE_DEFINE1(usb, device, xfer, timeout,  "struct usbd_xfer *"/*xfer*/);
+SDT_PROBE_DEFINE2(usb, device, xfer, done,
+    "struct usbd_xfer *"/*xfer*/,
+    "usbd_status"/*status*/);
+SDT_PROBE_DEFINE1(usb, device, xfer, destroy,  "struct usbd_xfer *"/*xfer*/);
 
 Static usbd_status usbd_ar_pipe(struct usbd_pipe *);
 Static void usbd_start_next(struct usbd_pipe *);
@@ -195,6 +248,8 @@ usbd_open_pipe_ival(struct usbd_interface *iface, uint8_t address,
 		return err;
 	LIST_INSERT_HEAD(&iface->ui_pipes, p, up_next);
 	*pipe = p;
+	SDT_PROBE5(usb, device, pipe, open,
+	    iface, address, flags, ival, p);
 	return USBD_NORMAL_COMPLETION;
 }
 
@@ -228,6 +283,8 @@ usbd_open_pipe_intr(struct usbd_interface *iface, uint8_t address,
 	*pipe = ipipe;
 	if (err != USBD_IN_PROGRESS)
 		goto bad3;
+	SDT_PROBE7(usb, device, pipe, open__intr,
+	    iface, address, flags, ival, cb, priv, ipipe);
 	return USBD_NORMAL_COMPLETION;
 
  bad3:
@@ -248,6 +305,7 @@ usbd_close_pipe(struct usbd_pipe *pipe)
 	KASSERT(pipe != NULL);
 
 	usbd_lock_pipe(pipe);
+	SDT_PROBE1(usb, device, pipe, close,  pipe);
 
 	if (!SIMPLEQ_EMPTY(&pipe->up_queue)) {
 		printf("WARNING: pipe closed with active xfers on addr %d\n",
@@ -285,6 +343,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	    "xfer = %#jx, flags = %#jx, pipe = %#jx, running = %jd",
 	    (uintptr_t)xfer, xfer->ux_flags, (uintptr_t)pipe, pipe->up_running);
 	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
+	SDT_PROBE1(usb, device, xfer, start,  xfer);
 
 #ifdef USB_DEBUG
 	if (usbdebug > 5)
@@ -295,6 +354,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 	if (pipe->up_aborting) {
 		USBHIST_LOG(usbdebug, "<- done xfer %#jx, aborting",
 		    (uintptr_t)xfer, 0, 0, 0);
+		SDT_PROBE2(usb, device, xfer, done,  xfer, USBD_CANCELLED);
 		return USBD_CANCELLED;
 	}
 
@@ -326,7 +386,9 @@ usbd_transfer(struct usbd_xfer *xfer)
 	}
 
 	/* xfer is not valid after the transfer method unless synchronous */
+	SDT_PROBE2(usb, device, pipe, transfer__start,  pipe, xfer);
 	err = pipe->up_methods->upm_transfer(xfer);
+	SDT_PROBE3(usb, device, pipe, transfer__done,  pipe, xfer, err);
 
 	if (err != USBD_IN_PROGRESS && err) {
 		/*
@@ -337,6 +399,7 @@ usbd_transfer(struct usbd_xfer *xfer)
 		USBHIST_LOG(usbdebug, "xfer failed: %s, reinserting",
 		    err, 0, 0, 0);
 		usbd_lock_pipe(pipe);
+		SDT_PROBE1(usb, device, xfer, preabort,  xfer);
 		SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		if (pipe->up_serialise)
 			usbd_start_next(pipe);
@@ -346,12 +409,15 @@ usbd_transfer(struct usbd_xfer *xfer)
 	if (!(flags & USBD_SYNCHRONOUS)) {
 		USBHIST_LOG(usbdebug, "<- done xfer %#jx, not sync (err %jd)",
 		    (uintptr_t)xfer, err, 0, 0);
+		if (err != USBD_IN_PROGRESS) /* XXX Possible?  */
+			SDT_PROBE2(usb, device, xfer, done,  xfer, err);
 		return err;
 	}
 
 	if (err != USBD_IN_PROGRESS) {
 		USBHIST_LOG(usbdebug, "<- done xfer %#jx, sync (err %jd)",
 		    (uintptr_t)xfer, err, 0, 0);
+		SDT_PROBE2(usb, device, xfer, done,  xfer, err);
 		return err;
 	}
 
@@ -370,11 +436,15 @@ usbd_transfer(struct usbd_xfer *xfer)
 			cv_wait(&xfer->ux_cv, pipe->up_dev->ud_bus->ub_lock);
 		}
 		if (err) {
-			if (!xfer->ux_done)
+			if (!xfer->ux_done) {
+				SDT_PROBE1(usb, device, xfer, abort,  xfer);
 				pipe->up_methods->upm_abort(xfer);
+			}
 			break;
 		}
 	}
+	SDT_PROBE2(usb, device, xfer, done,  xfer, xfer->ux_status);
+	/* XXX Race to read xfer->ux_status?  */
 	usbd_unlock_pipe(pipe);
 	return xfer->ux_status;
 }
@@ -546,6 +616,8 @@ usbd_create_xfer(struct usbd_pipe *pipe, size_t len, unsigned int flags,
 	}
 
 	*xp = xfer;
+	SDT_PROBE5(usb, device, xfer, create,
+	    xfer, pipe, len, flags, nframes);
 	return 0;
 }
 
@@ -553,9 +625,9 @@ void
 usbd_destroy_xfer(struct usbd_xfer *xfer)
 {
 
-	if (xfer->ux_methods->upm_fini) {
+	SDT_PROBE1(usb, device, xfer, destroy,  xfer);
+	if (xfer->ux_methods->upm_fini)
 		xfer->ux_methods->upm_fini(xfer);
-	}
 
 	usbd_free_xfer(xfer);
 }
@@ -690,11 +762,13 @@ usbd_clear_endpoint_stall(struct usbd_pipe *pipe)
 	usbd_status err;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	SDT_PROBE1(usb, device, pipe, clear__endpoint__stall,  pipe);
 
 	/*
 	 * Clearing en endpoint stall resets the endpoint toggle, so
 	 * do the same to the HC toggle.
 	 */
+	SDT_PROBE1(usb, device, pipe, clear__endpoint__toggle,  pipe);
 	pipe->up_methods->upm_cleartoggle(pipe);
 
 	err = usbd_clear_endpoint_feature(dev,
@@ -715,6 +789,8 @@ usbd_clear_endpoint_stall_task(void *arg)
 	struct usbd_pipe *pipe = arg;
 	struct usbd_device *dev = pipe->up_dev;
 
+	SDT_PROBE1(usb, device, pipe, clear__endpoint__stall,  pipe);
+	SDT_PROBE1(usb, device, pipe, clear__endpoint__toggle,  pipe);
 	pipe->up_methods->upm_cleartoggle(pipe);
 
 	(void)usbd_clear_endpoint_feature(dev,
@@ -731,6 +807,7 @@ void
 usbd_clear_endpoint_toggle(struct usbd_pipe *pipe)
 {
 
+	SDT_PROBE1(usb, device, pipe, clear__endpoint__toggle,  pipe);
 	pipe->up_methods->upm_cleartoggle(pipe);
 }
 
@@ -868,6 +945,7 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 
 	USBHIST_FUNC();
 	USBHIST_CALLARGS(usbdebug, "pipe = %#jx", (uintptr_t)pipe, 0, 0, 0);
+	SDT_PROBE1(usb, device, pipe, abort__start,  pipe);
 
 	KASSERT(mutex_owned(pipe->up_dev->ud_bus->ub_lock));
 
@@ -883,14 +961,17 @@ usbd_ar_pipe(struct usbd_pipe *pipe)
 		    "(methods = %#jx)", (uintptr_t)pipe, (uintptr_t)xfer,
 		    (uintptr_t)pipe->up_methods, 0);
 		if (xfer->ux_status == USBD_NOT_STARTED) {
+			SDT_PROBE1(usb, device, xfer, preabort,  xfer);
 			SIMPLEQ_REMOVE_HEAD(&pipe->up_queue, ux_next);
 		} else {
 			/* Make the HC abort it (and invoke the callback). */
+			SDT_PROBE1(usb, device, xfer, abort,  xfer);
 			pipe->up_methods->upm_abort(xfer);
 			/* XXX only for non-0 usbd_clear_endpoint_stall(pipe); */
 		}
 	}
 	pipe->up_aborting = 0;
+	SDT_PROBE1(usb, device, pipe, abort__done,  pipe);
 	return USBD_NORMAL_COMPLETION;
 }
 
@@ -969,6 +1050,7 @@ usb_transfer_complete(struct usbd_xfer *xfer)
 
 	USBHIST_LOG(usbdebug, "xfer %#jx doing done %#jx", (uintptr_t)xfer,
 	    (uintptr_t)pipe->up_methods->upm_done, 0, 0);
+	SDT_PROBE2(usb, device, xfer, done,  xfer, xfer->ux_status);
 	pipe->up_methods->upm_done(xfer);
 
 	if (xfer->ux_length != 0 && xfer->ux_buffer != xfer->ux_buf) {
@@ -1075,6 +1157,7 @@ usbd_start_next(struct usbd_pipe *pipe)
 	} else {
 		if (!polling)
 			mutex_exit(pipe->up_dev->ud_bus->ub_lock);
+		SDT_PROBE2(usb, device, pipe, start,  pipe, xfer);
 		err = pipe->up_methods->upm_start(xfer);
 		if (!polling)
 			mutex_enter(pipe->up_dev->ud_bus->ub_lock);
