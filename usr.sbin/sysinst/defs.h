@@ -1,4 +1,4 @@
-/*	$NetBSD: defs.h,v 1.55 2020/02/10 14:55:53 martin Exp $	*/
+/*	$NetBSD: defs.h,v 1.56 2020/02/19 21:51:21 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -362,7 +362,6 @@ struct install_partition_desc {
 
 int debug;		/* set by -D option */
 
-char rel[SSTRSIZE];
 char machine[SSTRSIZE];
 
 int ignorerror;
