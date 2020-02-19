@@ -1,4 +1,4 @@
-/*	$NetBSD: disks.c,v 1.65 2020/02/06 19:08:38 martin Exp $ */
+/*	$NetBSD: disks.c,v 1.66 2020/02/19 18:08:03 martin Exp $ */
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -1347,7 +1347,7 @@ make_fstab(struct install_partition_desc *install)
 			break;
 		case FS_SWAP:
 			if (swap_dev[0] == 0) {
-				strncpy(swap_dev, dev, sizeof swap_dev);
+				strlcpy(swap_dev, dev, sizeof swap_dev);
 				dump_dev = ",dp";
 			} else {
 				dump_dev = "";

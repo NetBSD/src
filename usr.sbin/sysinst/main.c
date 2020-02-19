@@ -1,4 +1,4 @@
-/*	$NetBSD: main.c,v 1.20 2020/01/16 16:47:19 martin Exp $	*/
+/*	$NetBSD: main.c,v 1.21 2020/02/19 18:08:03 martin Exp $	*/
 
 /*
  * Copyright 1997 Piermont Information Systems Inc.
@@ -193,7 +193,7 @@ main(int argc, char **argv)
 			break;
 		case 'r':
 			/* Release name other than compiled in release. */
-			strncpy(rel, optarg, sizeof rel);
+			strlcpy(rel, optarg, sizeof rel);
 			break;
 		case 'f':
 			/* Definition file to read. */
