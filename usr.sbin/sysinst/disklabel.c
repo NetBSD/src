@@ -1,4 +1,4 @@
-/*	$NetBSD: disklabel.c,v 1.35 2020/02/06 11:46:35 martin Exp $	*/
+/*	$NetBSD: disklabel.c,v 1.36 2020/02/19 18:08:03 martin Exp $	*/
 
 /*
  * Copyright 2018 The NetBSD Foundation, Inc.
@@ -934,7 +934,7 @@ disklabel_set_disk_pack_name(struct disk_partitions *arg, const char *pack)
 	struct disklabel_disk_partitions *parts =
 	    (struct disklabel_disk_partitions*)arg;
 
-	strncpy(parts->l.d_packname, pack, sizeof(parts->l.d_packname));
+	strlcpy(parts->l.d_packname, pack, sizeof(parts->l.d_packname));
 	return true;
 }
 
