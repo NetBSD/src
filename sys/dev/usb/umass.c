@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.176 2019/12/06 07:12:39 maxv Exp $	*/
+/*	$NetBSD: umass.c,v 1.177 2020/02/19 16:00:28 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.176 2019/12/06 07:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.177 2020/02/19 16:00:28 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -809,6 +809,7 @@ umass_detach(device_t self, int flags)
 		if (sc->sc_pipe[i] != NULL)
 			usbd_abort_pipe(sc->sc_pipe[i]);
 	}
+	usbd_abort_default_pipe(sc->sc_udev);
 
 	/* Do we really need reference counting?  Perhaps in ioctl() */
 	mutex_enter(&sc->sc_lock);
