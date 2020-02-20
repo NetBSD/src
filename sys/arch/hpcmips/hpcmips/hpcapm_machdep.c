@@ -1,4 +1,4 @@
-/*	$NetBSD: hpcapm_machdep.c,v 1.5 2011/03/16 13:23:41 tsutsui Exp $	*/
+/*	$NetBSD: hpcapm_machdep.c,v 1.5.48.1 2020/02/20 14:31:46 martin Exp $	*/
 
 /*
  * Copyright (c) 2000 Takemura Shin
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.5 2011/03/16 13:23:41 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hpcapm_machdep.c,v 1.5.48.1 2020/02/20 14:31:46 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -67,8 +67,8 @@ machine_standby(void)
 		vrip_splpiu();
 
 		/*
-		 * STANDBY instruction puts the CPU into power saveing
-		 * state until some interrupt occuer.
+		 * STANDBY instruction puts the CPU into power saving
+		 * state until some interrupt occurs.
 		 * It sleeps until you push the power button.
 		 */
 		__asm(".set noreorder");
@@ -99,8 +99,8 @@ machine_sleep(void)
 		vrip_splpiu();
 
 		/*
-		 * SUSPEND instruction puts the CPU into power saveing
-		 * state until some interrupt occuer.
+		 * SUSPEND instruction puts the CPU into power saving
+		 * state until some interrupt occurs.
 		 * It sleeps until you push the power button.
 		 */
 		__asm(".set noreorder");
