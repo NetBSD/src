@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_x86_wait.h,v 1.23 2020/02/14 04:20:59 christos Exp $	*/
+/*	$NetBSD: t_ptrace_x86_wait.h,v 1.24 2020/02/20 23:57:16 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -1617,13 +1617,11 @@ ATF_TC_BODY(dbregs_dr3_trap_code, tc)
 }
 #endif
 
-volatile lwpid_t x86_the_lwp_id = 0;
-
-static void __used
-x86_lwp_main_func(void *arg)
+static void * __used
+x86_main_func(void *arg)
 {
-	x86_the_lwp_id = _lwp_self();
-	_lwp_exit();
+
+	return arg;
 }
 
 static void
@@ -1639,10 +1637,8 @@ dbregs_dont_inherit_lwp(int reg)
 	const int slen = sizeof(state);
 	ptrace_event_t event;
 	const int elen = sizeof(event);
-	ucontext_t uc;
+	pthread_t t;
 	lwpid_t lid;
-	static const size_t ssize = 16*1024;
-	void *stack;
 	size_t i;
 	struct dbreg r1;
 	struct dbreg r2;
@@ -1661,22 +1657,10 @@ dbregs_dont_inherit_lwp(int reg)
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
-		DPRINTF("Before allocating memory for stack in child\n");
-		FORKEE_ASSERT((stack = malloc(ssize)) != NULL);
+		FORKEE_ASSERT(!pthread_create(&t, NULL, x86_main_func, NULL));
 
-		DPRINTF("Before making context for new lwp in child\n");
-		_lwp_makecontext(&uc, x86_lwp_main_func, NULL, NULL, stack,
-		    ssize);
-
-		DPRINTF("Before creating new in child\n");
-		FORKEE_ASSERT(_lwp_create(&uc, 0, &lid) == 0);
-
-		DPRINTF("Before waiting for lwp %d to exit\n", lid);
-		FORKEE_ASSERT(_lwp_wait(lid, NULL) == 0);
-
-		DPRINTF("Before verifying that reported %d and running lid %d "
-		    "are the same\n", lid, x86_the_lwp_id);
-		FORKEE_ASSERT_EQ(lid, x86_the_lwp_id);
+		DPRINTF("Before waiting for thread to exit\n");
+		FORKEE_ASSERT(!pthread_join(t, NULL));
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
