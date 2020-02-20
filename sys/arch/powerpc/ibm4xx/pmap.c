@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.77 2020/02/20 05:13:16 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2020/02/20 05:13:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1021,7 +1021,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	int s;
 
 	s = splvm();
-	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn])) {
+	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn]) && pap) {
 		*pap = TTE_PA(pa) | (va & PGOFSET);
 	}
 	splx(s);
