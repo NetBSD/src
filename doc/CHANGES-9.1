@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.1 2020/02/16 12:21:24 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.2 2020/02/20 14:54:22 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -18,4 +18,37 @@ external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.58
 
 	Teach zfs to revoke vnodes the usual way.
 	[riastradh, ticket #710]
+
+sys/arch/arm/ti/if_cpsw.c			1.9
+
+	Fix KERNHIST build (and simplify).
+	[skrll, ticket #711]
+
+sys/arch/hpcmips/hpcmips/hpcapm_machdep.c	1.6
+
+	Fix spelling in comments.
+	[sevan, ticket #712]
+
+lib/libdm/libdm_ioctl.c				1.4
+
+	Do not write temporary files to fixed paths in /tmp.
+	[riastradh, ticket #713]
+
+crypto/external/bsd/openssl/dist/crypto/rand/rand_unix.c 1.14
+
+	Open /dev/urandom with O_CLOEXEC to avoid leaking filedescriptors
+	into child processes.
+	[riastradh, ticket #714]
+
+external/cddl/osnet/dist/cmd/zpool/zpool_vdev.c	1.5
+
+	zpool: The NetBSD specific ioctl needs to include sys/ioctl.h.
+	[riastradh, ticket #715]
+
+sys/dev/usb/usbdi.c				1.194
+
+	Fix a race in USB abort, so that a transfer on an interrupt
+	pipe whose callback is currently running at the moment the
+	pipe is aborted will not be restarted afterward.
+	[riastradh, ticket #716]
 
