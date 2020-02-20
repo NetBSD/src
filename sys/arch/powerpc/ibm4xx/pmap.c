@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.77 2020/02/20 05:13:16 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.78 2020/02/20 05:21:54 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.77 2020/02/20 05:13:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2020/02/20 05:21:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1563,7 +1563,7 @@ ctx_alloc(struct pmap *pm)
 	/* Find a likely context. */
 	cnum = next;
 	do {
-		if ((++cnum) > NUMCTX)
+		if ((++cnum) >= NUMCTX)
 			cnum = MINCTX;
 	} while (ctxbusy[cnum] != NULL && cnum != next);
 
@@ -1573,7 +1573,7 @@ oops:
 		cnum = MINCTX; /* Never steal ctx 0 or 1 */
 	if (ctx_flush(cnum)) {
 		/* oops -- something's wired. */
-		if ((++cnum) > NUMCTX)
+		if ((++cnum) >= NUMCTX)
 			cnum = MINCTX;
 		goto oops;
 	}
