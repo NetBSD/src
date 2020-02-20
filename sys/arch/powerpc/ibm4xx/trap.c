@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.72 2020/02/20 05:55:24 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.73 2020/02/20 05:57:49 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2020/02/20 05:55:24 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2020/02/20 05:57:49 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -82,7 +82,6 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2020/02/20 05:55:24 rin Exp $");
 #include <sys/reboot.h>
 #include <sys/syscall.h>
 #include <sys/systm.h>
-#include <sys/userret.h>
 
 #if defined(KGDB)
 #include <sys/kgdb.h>
@@ -97,6 +96,7 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.72 2020/02/20 05:55:24 rin Exp $");
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
+#include <powerpc/userret.h>
 
 #include <powerpc/db_machdep.h>
 #include <powerpc/spr.h>
@@ -348,8 +348,8 @@ brain_damage:
 		panic("trap");
 	}
 
-	/* Invoke MI userret code */
-	mi_userret(l);
+	/* Invoke powerpc userret code */
+	userret(l, tf);
 }
 
 int
