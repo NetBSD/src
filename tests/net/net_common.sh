@@ -1,4 +1,4 @@
-#	$NetBSD: net_common.sh,v 1.37 2019/08/26 04:50:32 ozaki-r Exp $
+#	$NetBSD: net_common.sh,v 1.38 2020/02/20 07:58:19 ozaki-r Exp $
 #
 # Copyright (c) 2016 Internet Initiative Japan Inc.
 # All rights reserved.
@@ -398,6 +398,9 @@ rump_server_destroy_ifaces()
 	while read sock ifname; do
 		export RUMP_SERVER=$sock
 		if rump.ifconfig -l |grep -q $ifname; then
+			if $DEBUG; then
+				rump.ifconfig -v $ifname
+			fi
 			atf_check -s exit:0 rump.ifconfig $ifname destroy
 		fi
 		atf_check -s exit:0 -o ignore rump.ifconfig
