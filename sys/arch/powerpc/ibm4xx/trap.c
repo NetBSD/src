@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.73 2020/02/20 05:57:49 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.74 2020/02/20 06:36:04 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2020/02/20 05:57:49 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2020/02/20 06:36:04 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -96,10 +96,10 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.73 2020/02/20 05:57:49 rin Exp $");
 #include <machine/pcb.h>
 #include <machine/psl.h>
 #include <machine/trap.h>
-#include <powerpc/userret.h>
 
 #include <powerpc/db_machdep.h>
 #include <powerpc/spr.h>
+#include <powerpc/userret.h>
 
 #include <powerpc/ibm4xx/cpu.h>
 #include <powerpc/ibm4xx/pmap.h>
