@@ -218,7 +218,9 @@ int main(int argc, char *argv[])
 	if (!safe)
 		envinit(environ);
 	yyparse();
+#if 0
 	setlocale(LC_NUMERIC, ""); /* back to whatever it is locally */
+#endif
 	if (fs)
 		*FS = qstring(fs, '\0');
 	   dprintf( ("errorflag=%d\n", errorflag) );
