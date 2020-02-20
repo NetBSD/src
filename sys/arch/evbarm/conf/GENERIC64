@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.136 2020/02/06 01:37:46 mrg Exp $
+#	$NetBSD: GENERIC64,v 1.137 2020/02/20 01:36:37 jmcneill Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -288,7 +288,7 @@ sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
 tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
-bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+bcmgpio*	at fdt? pass 3		# Broadcom BCM283x GPIO
 imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
