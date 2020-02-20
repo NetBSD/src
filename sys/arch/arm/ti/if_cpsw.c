@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.6.2.2 2020/01/28 11:01:37 martin Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.6.2.3 2020/02/20 14:36:38 martin Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.2.2 2020/01/28 11:01:37 martin Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.6.2.3 2020/02/20 14:36:38 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -174,19 +174,14 @@ static int cpsw_ale_update_addresses(struct cpsw_softc *, int purge);
 CFATTACH_DECL_NEW(cpsw, sizeof(struct cpsw_softc),
     cpsw_match, cpsw_attach, cpsw_detach, NULL);
 
-#undef KERNHIST
 #include <sys/kernhist.h>
 KERNHIST_DEFINE(cpswhist);
 
-#ifdef KERNHIST
-#define KERNHIST_CALLED_5(NAME, i, j, k, l) \
-do { \
-	_kernhist_call = atomic_inc_uint_nv(&_kernhist_cnt); \
-	KERNHIST_LOG(NAME, "called! %x %x %x %x", i, j, k, l); \
-} while (/*CONSTCOND*/ 0)
-#else
-#define KERNHIST_CALLED_5(NAME, i, j, k, l)
-#endif
+#define CPSWHIST_CALLARGS(A,B,C,D)	do {					\
+	    KERNHIST_CALLARGS(cpswhist, "%jx %jx %jx %jx",			\
+		(uintptr_t)(A), (uintptr_t)(B), (uintptr_t)(C), (uintptr_t)(D));\
+	} while (0)
+
 
 static inline u_int
 cpsw_txdesc_adjust(u_int x, int y)
@@ -219,7 +214,7 @@ cpsw_set_txdesc_next(struct cpsw_softc * const sc, const u_int i, uint32_t n)
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i + 0;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, n, 0);
+	CPSWHIST_CALLARGS(sc, i, n, 0);
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_txdescs, o, n);
 }
@@ -230,7 +225,7 @@ cpsw_set_rxdesc_next(struct cpsw_softc * const sc, const u_int i, uint32_t n)
 	const bus_size_t o = sizeof(struct cpsw_cpdma_bd) * i + 0;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, n, 0);
+	CPSWHIST_CALLARGS(sc, i, n, 0);
 
 	bus_space_write_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, n);
 }
@@ -244,7 +239,7 @@ cpsw_get_txdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
+	CPSWHIST_CALLARGS(sc, i, bdp, 0);
 
 	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_txdescs, o, dp, c);
 	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
@@ -260,7 +255,7 @@ cpsw_set_txdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
+	CPSWHIST_CALLARGS(sc, i, bdp, 0);
 	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
 	    dp[0], dp[1], dp[2], dp[3]);
 
@@ -276,7 +271,7 @@ cpsw_get_rxdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
+	CPSWHIST_CALLARGS(sc, i, bdp, 0);
 
 	bus_space_read_region_4(sc->sc_bst, sc->sc_bsh_rxdescs, o, dp, c);
 
@@ -293,7 +288,7 @@ cpsw_set_rxdesc(struct cpsw_softc * const sc, const u_int i,
 	const bus_size_t c = __arraycount(bdp->word);
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, i, bdp, 0);
+	CPSWHIST_CALLARGS(sc, i, bdp, 0);
 	KERNHIST_LOG(cpswhist, "%08x %08x %08x %08x\n",
 	    dp[0], dp[1], dp[2], dp[3]);
 
@@ -607,7 +602,7 @@ cpsw_start(struct ifnet *ifp)
 	u_int mlen;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
+	CPSWHIST_CALLARGS(sc, 0, 0, 0);
 
 	if (__predict_false((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) !=
 	    IFF_RUNNING)) {
@@ -1140,7 +1135,7 @@ cpsw_rxintr(void *arg)
 	u_int len, off;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
+	CPSWHIST_CALLARGS(sc, 0, 0, 0);
 
 	for (;;) {
 		KASSERT(sc->sc_rxhead < CPSW_NRXDESCS);
@@ -1225,7 +1220,7 @@ cpsw_txintr(void *arg)
 	u_int cpi;
 
 	KERNHIST_FUNC(__func__);
-	KERNHIST_CALLED_5(cpswhist, sc, 0, 0, 0);
+	CPSWHIST_CALLARGS(sc, 0, 0, 0);
 
 	KASSERT(sc->sc_txrun);
 
