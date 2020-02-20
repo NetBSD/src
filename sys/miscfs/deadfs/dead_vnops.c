@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.61 2017/04/26 03:02:49 riastradh Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.62 2020/02/20 15:48:05 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.61 2017/04/26 03:02:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.62 2020/02/20 15:48:05 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -48,7 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.61 2017/04/26 03:02:49 riastradh Ex
 /*
  * Prototypes for dead operations on vnodes.
  */
-#define dead_bwrite	genfs_nullop
+#define	dead_bwrite	vn_bwrite
 int	dead_lookup(void *);
 int	dead_open(void *);
 #define dead_close	genfs_nullop
