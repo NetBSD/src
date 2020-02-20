@@ -479,7 +479,7 @@ static int get_random_device(size_t n)
         return rd->fd;
 
     /* open the random device ... */
-    if ((rd->fd = open(random_device_paths[n], O_RDONLY)) == -1)
+    if ((rd->fd = open(random_device_paths[n], O_RDONLY|O_CLOEXEC)) == -1)
         return rd->fd;
 
     /* ... and cache its relevant stat(2) data */
