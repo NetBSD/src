@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.78 2020/02/20 05:21:54 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.79 2020/02/20 05:34:37 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.78 2020/02/20 05:21:54 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2020/02/20 05:34:37 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1535,6 +1535,7 @@ ctx_flush(int cnum)
 #endif
 			/* Invalidate particular TLB entry regardless of locked status */
 			__asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));
+			tlb_info[i].ti_ctx = 0;
 			tlb_info[i].ti_flags = 0;
 		}
 	}
