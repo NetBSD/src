@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.163 2020/02/19 17:13:00 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.164 2020/02/20 22:38:54 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.163 2020/02/19 17:13:00 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.164 2020/02/20 22:38:54 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -2488,6 +2488,7 @@ ATF_TC_BODY(tracer_sees_terminaton_before_the_parent, tc)
 ATF_TC(tracer_sysctl_lookup_without_duplicates);
 ATF_TC_HEAD(tracer_sysctl_lookup_without_duplicates, tc)
 {
+	atf_tc_set_md_var(tc, "timeout", "15");
 	atf_tc_set_md_var(tc, "descr",
 	    "Assert that await_zombie() in attach1 always finds a single "
 	    "process and no other error is reported");
@@ -7541,6 +7542,8 @@ ATF_TC_BODY(syscall1, tc)
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
+/// ----------------------------------------------------------------------------
+
 ATF_TC(syscallemu1);
 ATF_TC_HEAD(syscallemu1, tc)
 {
@@ -8728,10 +8731,14 @@ thread_concurrent_test(enum thread_concurrent_signal_handling signal_handle,
 	ptrace_event_t event;
 	int i;
 
-	if (signal_handle == TCSH_SIG_IGN)
-		atf_tc_expect_fail("PR kern/54960");
-	else if (signal_handle == TCSH_HANDLER)
-		atf_tc_skip("PR kern/54960");
+#if defined(HAVE_DBREGS)
+	if (!can_we_set_dbregs()) {
+		atf_tc_skip("Either run this test as root or set sysctl(3) "
+		            "security.models.extensions.user_set_dbregs to 1");
+        }
+#endif
+
+	atf_tc_skip("PR kern/54960");
 
 	/* Protect against out-of-bounds array access. */
 	ATF_REQUIRE(breakpoint_threads <= THREAD_CONCURRENT_BREAKPOINT_NUM);
