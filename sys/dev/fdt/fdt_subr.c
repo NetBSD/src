@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.33 2020/02/16 20:28:18 thorpej Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.34 2020/02/20 01:35:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.33 2020/02/16 20:28:18 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.34 2020/02/20 01:35:55 jmcneill Exp $");
 
 #include "opt_fdt.h"
 
@@ -95,7 +95,7 @@ fdtbus_set_decoderegprop(bool decode)
 	fdtbus_decoderegprop = decode;
 }
 
-static int
+int
 fdtbus_get_addr_cells(int phandle)
 {
 	uint32_t addr_cells;
@@ -106,7 +106,7 @@ fdtbus_get_addr_cells(int phandle)
 	return addr_cells;
 }
 
-static int
+int
 fdtbus_get_size_cells(int phandle)
 {
 	uint32_t size_cells;
@@ -193,7 +193,7 @@ fdtbus_get_path(int phandle, char *buf, size_t buflen)
 	return true;
 }
 
-static uint64_t
+uint64_t
 fdtbus_get_cells(const uint8_t *buf, int cells)
 {
 	switch (cells) {

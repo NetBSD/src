@@ -1,4 +1,4 @@
-/* $NetBSD: fdtvar.h,v 1.59 2020/02/16 20:28:18 thorpej Exp $ */
+/* $NetBSD: fdtvar.h,v 1.60 2020/02/20 01:35:55 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -270,6 +270,12 @@ _FDT_OPP_REGISTER(_name)
 
 TAILQ_HEAD(fdt_conslist, fdt_console_info);
 
+struct fdt_dma_range {
+	paddr_t		dr_sysbase;
+	bus_addr_t	dr_busbase;
+	bus_size_t	dr_len;
+};
+
 int		fdtbus_register_interrupt_controller(device_t, int,
 		    const struct fdtbus_interrupt_controller_func *);
 int		fdtbus_register_i2c_controller(device_t, int,
@@ -306,6 +312,9 @@ int		fdtbus_get_reg(int, u_int, bus_addr_t *, bus_size_t *);
 int		fdtbus_get_reg_byname(int, const char *, bus_addr_t *,
 		    bus_size_t *);
 int		fdtbus_get_reg64(int, u_int, uint64_t *, uint64_t *);
+int		fdtbus_get_addr_cells(int);
+int		fdtbus_get_size_cells(int);
+uint64_t	fdtbus_get_cells(const uint8_t *, int);
 int		fdtbus_get_phandle(int, const char *);
 int		fdtbus_get_phandle_with_data(int, const char *, const char *,
 		    int, struct fdt_phandle_data *);
@@ -429,5 +438,8 @@ void		fdt_remove_byhandle(int);
 void		fdt_remove_bycompat(const char *[]);
 int		fdt_find_with_property(const char *, int *);
 int		fdtbus_print(void *, const char *);
+
+bus_dma_tag_t	fdtbus_dma_tag_create(int, const struct fdt_dma_range *,
+		    u_int);
 
 #endif /* _DEV_FDT_FDTVAR_H */
