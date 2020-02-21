@@ -1,4 +1,4 @@
-/* $NetBSD: cpu_fdt.c,v 1.34 2020/02/15 08:16:11 skrll Exp $ */
+/* $NetBSD: cpu_fdt.c,v 1.35 2020/02/21 13:15:54 skrll Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "psci_fdt.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.34 2020/02/15 08:16:11 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_fdt.c,v 1.35 2020/02/21 13:15:54 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -327,7 +327,7 @@ spintable_cpu_on(u_int cpuindex, paddr_t entry_point_address, paddr_t cpu_releas
 {
 	/*
 	 * we need devmap for cpu-release-addr in advance.
-	 * __HAVE_MM_MD_DIRECT_MAPPED_PHYS nor pmap didn't work at this point.
+	 * __HAVE_MM_MD_DIRECT_MAPPED_PHYS nor pmap work at this point.
 	 */
 	if (pmap_devmap_find_pa(cpu_release_addr, sizeof(paddr_t)) == NULL) {
 		aprint_error("%s: devmap for cpu-release-addr"
