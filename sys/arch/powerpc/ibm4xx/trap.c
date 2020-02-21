@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.76 2020/02/21 14:27:20 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.77 2020/02/21 14:49:57 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2020/02/21 14:27:20 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2020/02/21 14:49:57 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -428,12 +428,20 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
 		"1: mtpid %[ctx]; sync;"
+#ifdef PPC_IBM403
 		"   lswi %[tmp],%[udaddr],4;"	/* Load user word */
+#else
+		"   lwz %[tmp],0(%[udaddr]);"
+#endif
 		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
 		"   mtpid %[pid]; sync;"
+#ifdef PPC_IBM403
 		"   stswi %[tmp],%[kaddr],4;"	/* Store kernel word */
-		"   dcbf 0,%[kaddr];"		/* flush cache */
+#else
+		"   stw %[tmp],0(%[kaddr]);"
+#endif
+		"   dcbst 0,%[kaddr];"		/* flush cache */
 		"   addi %[kaddr],%[kaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
 		"   bdnz 1b;"			/* repeat */
@@ -448,7 +456,7 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 		"   sync; isync;"
 		"   mtpid %[pid]; sync;"
 		"   stb %[tmp],0(%[kaddr]);"	/* Store kernel byte */
-		"   dcbf 0,%[kaddr];"		/* flush cache */
+		"   dcbst 0,%[kaddr];"		/* flush cache */
 		"   addi %[kaddr],%[kaddr],0x1;"
 		"   sync; isync;"
 		"   b 3b;"
@@ -527,12 +535,20 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
 		"1: mtpid %[pid]; sync;"
+#ifdef PPC_IBM403
 		"   lswi %[tmp],%[kaddr],4;"	/* Load kernel word */
+#else
+		"   lwz %[tmp],0(%[kaddr]);"
+#endif
 		"   addi %[kaddr],%[kaddr],0x4;" /* next kaddr word */
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
+#ifdef PPC_IBM403
 		"   stswi %[tmp],%[udaddr],4;"	/* Store user word */
-		"   dcbf 0,%[udaddr];"		/* flush cache */
+#else
+		"   stw %[tmp],0(%[udaddr]);"
+#endif
+		"   dcbst 0,%[udaddr];"		/* flush cache */
 		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
 		"   bdnz 1b;"			/* repeat */
@@ -547,7 +563,7 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
 		"   stb %[tmp],0(%[udaddr]);"	/* Store user byte */
-		"   dcbf 0,%[udaddr];"		/* flush cache */
+		"   dcbst 0,%[udaddr];"		/* flush cache */
 		"   addi %[udaddr],%[udaddr],0x1;"
 		"   sync; isync;"
 		"   b 3b;"
