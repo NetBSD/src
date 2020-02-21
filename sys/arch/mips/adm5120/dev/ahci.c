@@ -1,4 +1,4 @@
-/*	$NetBSD: ahci.c,v 1.20 2020/02/15 01:21:56 riastradh Exp $	*/
+/*	$NetBSD: ahci.c,v 1.21 2020/02/21 12:41:29 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.20 2020/02/15 01:21:56 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahci.c,v 1.21 2020/02/21 12:41:29 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -989,6 +989,9 @@ ahci_device_ctrl_start(struct usbd_xfer *xfer)
 
 	usb_transfer_complete(xfer);
 	mutex_exit(&sc->sc_lock);
+
+	usb_freemem(&sc->sc_bus, &reqdma);
+
 	return USBD_NORMAL_COMPLETION;
 }
 
