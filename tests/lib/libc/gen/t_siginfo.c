@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.37 2020/02/11 03:11:42 riastradh Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.38 2020/02/21 22:25:50 kamil Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -361,6 +361,18 @@ ATF_TC_HEAD(sigfpe_int, tc)
 	    "for integer div-by-zero (PR port-i386/43655)");
 }
 
+#if defined(__clang__)
+__attribute__((no_sanitize("undefined")))
+#else               
+__attribute__((no_sanitize_undefined))
+#endif
+static long int
+sigfpe_int_division(long int a, long int b)
+{
+
+	return a / b;
+}
+
 ATF_TC_BODY(sigfpe_int, tc)
 {
 	struct sigaction sa;
@@ -379,7 +391,7 @@ ATF_TC_BODY(sigfpe_int, tc)
 #elif defined(_FLOAT_IEEE754)
 		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
-		printf("%ld\n", 1 / l);
+		printf("%ld\n", sigfpe_int_division(1, l));
 	}
 	if (intdiv_signalled == 0)
 		atf_tc_fail("FPE signal handler was not invoked");
