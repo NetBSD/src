@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.288 2020/02/20 15:48:38 riastradh Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.289 2020/02/21 02:04:40 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.288 2020/02/20 15:48:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.289 2020/02/21 02:04:40 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -2225,7 +2225,7 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 
 out:	SDT_PROBE5(io, kernel, , bbusy__done,
 	    bp, intr, timo, interlock, error);
-	return 0;
+	return error;
 }
 
 /*
