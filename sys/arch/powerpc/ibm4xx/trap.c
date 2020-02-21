@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.77 2020/02/21 14:49:57 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.78 2020/02/21 15:15:48 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.77 2020/02/21 14:49:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.78 2020/02/21 15:15:48 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -182,7 +182,15 @@ trap(struct trapframe *tf)
 		{
 			struct vm_map *map;
 			vaddr_t va;
-			struct faultbuf *fb = NULL;
+			struct faultbuf *fb;
+
+			pcb = lwp_getpcb(l);
+			fb = pcb->pcb_onfault;
+
+			if (curcpu()->ci_idepth >= 0) {
+				rv = EFAULT;
+				goto out;
+			}
 
 			va = tf->tf_dear;
 			if (tf->tf_pid == KERNEL_PID) {
@@ -200,13 +208,12 @@ trap(struct trapframe *tf)
 			    (ftype & VM_PROT_WRITE) ? "write" : "read",
 			    (void *)va, tf->tf_esr));
 
-			pcb = lwp_getpcb(l);
-			fb = pcb->pcb_onfault;
 			pcb->pcb_onfault = NULL;
 			rv = uvm_fault(map, trunc_page(va), ftype);
 			pcb->pcb_onfault = fb;
 			if (rv == 0)
 				return;
+out:
 			if (fb != NULL) {
 				tf->tf_pid = KERNEL_PID;
 				tf->tf_srr0 = fb->fb_pc;
