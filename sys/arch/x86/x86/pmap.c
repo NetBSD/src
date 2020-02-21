@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.355 2020/01/12 13:01:11 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.356 2020/02/21 18:31:55 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.355 2020/01/12 13:01:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.356 2020/02/21 18:31:55 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -1258,6 +1258,17 @@ slotspace_rand(int type, size_t sz, size_t align)
 	vaddr_t startva, va;
 
 	sz = roundup(sz, align);
+
+	/*
+	 * Take one more slot with +NBPD_L4, because we may end up choosing
+	 * an area that crosses slots:
+	 *     +------+------+------+
+	 *     | Slot | Slot | Slot |
+	 *     +------+------+------+
+	 *        [Chosen Area]
+	 * And in that case we must take into account the additional slot
+	 * consumed.
+	 */
 	nslots = roundup(sz+NBPD_L4, NBPD_L4) / NBPD_L4;
 
 	/* Get the holes. */
@@ -1279,16 +1290,20 @@ slotspace_rand(int type, size_t sz, size_t align)
 				minnslot = slotspace.area[i].nslot;
 			}
 		}
+
+		/* No hole anymore, stop here. */
 		if (minsslot == 512) {
 			break;
 		}
 
+		/* Register the hole. */
 		if (minsslot - curslot >= nslots) {
 			holes[nholes].start = curslot;
 			holes[nholes].end = minsslot;
 			nholes++;
 		}
 
+		/* Skip that hole, and iterate again. */
 		curslot = minsslot + minnslot;
 	}
 
