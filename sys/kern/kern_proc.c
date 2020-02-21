@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_proc.c,v 1.240 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: kern_proc.c,v 1.241 2020/02/21 00:26:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.240 2020/01/29 15:47:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_proc.c,v 1.241 2020/02/21 00:26:22 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_kstack.h"
@@ -262,7 +262,7 @@ proc_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case KAUTH_PROCESS_CANSEE: {
 		enum kauth_process_req req;
 
-		req = (enum kauth_process_req)arg1;
+		req = (enum kauth_process_req)(uintptr_t)arg1;
 
 		switch (req) {
 		case KAUTH_REQ_PROCESS_CANSEE_ARGS:
