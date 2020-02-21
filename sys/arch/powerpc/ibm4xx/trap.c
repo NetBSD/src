@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.74 2020/02/20 06:36:04 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.75 2020/02/21 13:32:31 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2020/02/20 06:36:04 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2020/02/21 13:32:31 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -116,9 +116,11 @@ __KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.74 2020/02/20 06:36:04 rin Exp $");
 static int fix_unaligned(struct lwp *l, struct trapframe *tf);
 
 void trap(struct trapframe *);	/* Called from locore / trap_subr */
-/* Why are these not defined in a header? */
+#if 0
+/* Not currently used nor exposed externally in any header file */
 int badaddr(void *, size_t);
 int badaddr_read(void *, size_t, int *);
+#endif
 int ctx_setup(int, int);
 
 #ifdef DEBUG
@@ -616,6 +618,7 @@ kcopy(const void *src, void *dst, size_t len)
 	return 0;
 }
 
+#if 0
 int
 badaddr(void *addr, size_t size)
 {
@@ -666,6 +669,7 @@ badaddr_read(void *addr, size_t size, int *rptr)
 
 	return 0;
 }
+#endif
 
 /*
  * For now, this only deals with the particular unaligned access case
