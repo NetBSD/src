@@ -1,4 +1,4 @@
-/*	$NetBSD: if.c,v 1.472 2020/02/07 01:14:55 thorpej Exp $	*/
+/*	$NetBSD: if.c,v 1.473 2020/02/21 00:26:23 joerg Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2008 The NetBSD Foundation, Inc.
@@ -90,7 +90,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.472 2020/02/07 01:14:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if.c,v 1.473 2020/02/21 00:26:23 joerg Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -259,7 +259,7 @@ if_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg1;
+	req = (enum kauth_network_req)(uintptr_t)arg1;
 
 	if (action != KAUTH_NETWORK_INTERFACE)
 		return result;

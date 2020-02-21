@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.33 2020/01/31 08:55:38 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.34 2020/02/21 00:26:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.33 2020/01/31 08:55:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.34 2020/02/21 00:26:22 joerg Exp $");
 
 #include "opt_spectre.h"
 
@@ -277,7 +277,7 @@ static void
 mitigation_v2_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 	u_long psl = 0;
 
 	/* Rendez-vous 1 (IBRS only). */
@@ -488,7 +488,7 @@ mitigation_v4_apply_cpu(bool enabled)
 static void
 mitigation_v4_change_cpu(void *arg1, void *arg2)
 {
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 
 	mitigation_v4_apply_cpu(enabled);
 }
@@ -635,7 +635,7 @@ static void
 mitigation_mds_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 	u_long psl = 0;
 
 	/* Rendez-vous 1. */
@@ -812,7 +812,7 @@ static void
 mitigation_taa_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 
 	mitigation_taa_apply_cpu(ci, enabled);
 }

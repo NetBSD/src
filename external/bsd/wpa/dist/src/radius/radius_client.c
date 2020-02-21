@@ -791,7 +791,7 @@ static void radius_client_receive(int sock, void *eloop_ctx, void *sock_ctx)
 {
 	struct radius_client_data *radius = eloop_ctx;
 	struct hostapd_radius_servers *conf = radius->conf;
-	RadiusType msg_type = (RadiusType) sock_ctx;
+	RadiusType msg_type = (RadiusType)(uintptr_t) sock_ctx;
 	int len, roundtrip;
 	unsigned char buf[3000];
 	struct radius_msg *msg;
