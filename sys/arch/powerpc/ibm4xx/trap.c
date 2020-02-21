@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.75 2020/02/21 13:32:31 rin Exp $	*/
+/*	$NetBSD: trap.c,v 1.76 2020/02/21 14:27:20 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.75 2020/02/21 13:32:31 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.76 2020/02/21 14:27:20 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -418,43 +418,45 @@ copyin(const void *udaddr, void *kaddr, size_t len)
 	}
 
 	__asm volatile(
-		"   mfmsr %[msr];"          /* Save MSR */
-		"   li %[pid],0x20; "
-		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];"   /* Disable IMMU */
-		"   mfpid %[pid];"          /* Save old PID */
+		"   mfmsr %[msr];"		/* Save MSR */
+		"   li %[pid],0x20;"
+		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];" /* Disable IMMU */
+		"   mfpid %[pid];"		/* Save old PID */
 		"   sync; isync;"
 
-		"   srwi. %[count],%[len],0x2;"     /* How many words? */
-		"   beq-  2f;"              /* No words. Go do bytes */
+		"   srwi. %[count],%[len],0x2;"	/* How many words? */
+		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
 		"1: mtpid %[ctx]; sync;"
-		"   lswi %[tmp],%[udaddr],4;"       /* Load user word */
-		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
-		"   sync; isync;"
-		"   mtpid %[pid];sync;"
-		"   stswi %[tmp],%[kaddr],4;"        /* Store kernel word */
-		"   dcbf 0,%[kaddr];"           /* flush cache */
-		"   addi %[kaddr],%[kaddr],0x4;"    /* next udaddr word */
-		"   sync; isync;"
-		"   bdnz 1b;"               /* repeat */
-
-		"2: andi. %[count],%[len],0x3;"     /* How many remaining bytes? */
-		"   addi %[count],%[count],0x1;"
-		"   mtctr %[count];"
-		"3: bdz 10f;"               /* while count */
-		"   mtpid %[ctx];sync;"
-		"   lbz %[tmp],0(%[udaddr]);"       /* Load user byte */
-		"   addi %[udaddr],%[udaddr],0x1;"  /* next udaddr byte */
+		"   lswi %[tmp],%[udaddr],4;"	/* Load user word */
+		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
 		"   mtpid %[pid]; sync;"
-		"   stb %[tmp],0(%[kaddr]);"        /* Store kernel byte */
-		"   dcbf 0,%[kaddr];"           /* flush cache */
+		"   stswi %[tmp],%[kaddr],4;"	/* Store kernel word */
+		"   dcbf 0,%[kaddr];"		/* flush cache */
+		"   addi %[kaddr],%[kaddr],0x4;" /* next udaddr word */
+		"   sync; isync;"
+		"   bdnz 1b;"			/* repeat */
+
+		"2: andi. %[count],%[len],0x3;"	/* How many remaining bytes? */
+		"   addi %[count],%[count],0x1;"
+		"   mtctr %[count];"
+		"3: bdz 10f;"			/* while count */
+		"   mtpid %[ctx]; sync;"
+		"   lbz %[tmp],0(%[udaddr]);"	/* Load user byte */
+		"   addi %[udaddr],%[udaddr],0x1;" /* next udaddr byte */
+		"   sync; isync;"
+		"   mtpid %[pid]; sync;"
+		"   stb %[tmp],0(%[kaddr]);"	/* Store kernel byte */
+		"   dcbf 0,%[kaddr];"		/* flush cache */
 		"   addi %[kaddr],%[kaddr],0x1;"
 		"   sync; isync;"
 		"   b 3b;"
-		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
+		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;"
+						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
+		  [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
@@ -515,43 +517,45 @@ copyout(const void *kaddr, void *udaddr, size_t len)
 	}
 
 	__asm volatile(
-		"   mfmsr %[msr];"          /* Save MSR */ \
-		"   li %[pid],0x20; " \
-		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];"   /* Disable IMMU */ \
-		"   mfpid %[pid];"          /* Save old PID */ \
+		"   mfmsr %[msr];"		/* Save MSR */
+		"   li %[pid],0x20;"
+		"   andc %[pid],%[msr],%[pid]; mtmsr %[pid];" /* Disable IMMU */
+		"   mfpid %[pid];"		/* Save old PID */
 		"   sync; isync;"
 
-		"   srwi. %[count],%[len],0x2;"     /* How many words? */
-		"   beq-  2f;"              /* No words. Go do bytes */
+		"   srwi. %[count],%[len],0x2;"	/* How many words? */
+		"   beq- 2f;"			/* No words. Go do bytes */
 		"   mtctr %[count];"
-		"1: mtpid %[pid];sync;"
-		"   lswi %[tmp],%[kaddr],4;"        /* Load kernel word */
-		"   addi %[kaddr],%[kaddr],0x4;"    /* next kaddr word */
+		"1: mtpid %[pid]; sync;"
+		"   lswi %[tmp],%[kaddr],4;"	/* Load kernel word */
+		"   addi %[kaddr],%[kaddr],0x4;" /* next kaddr word */
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
-		"   stswi %[tmp],%[udaddr],4;"       /* Store user word */
-		"   dcbf 0,%[udaddr];"          /* flush cache */
-		"   addi %[udaddr],%[udaddr],0x4;"  /* next udaddr word */
+		"   stswi %[tmp],%[udaddr],4;"	/* Store user word */
+		"   dcbf 0,%[udaddr];"		/* flush cache */
+		"   addi %[udaddr],%[udaddr],0x4;" /* next udaddr word */
 		"   sync; isync;"
-		"   bdnz 1b;"               /* repeat */
+		"   bdnz 1b;"			/* repeat */
 
-		"2: andi. %[count],%[len],0x3;"     /* How many remaining bytes? */
+		"2: andi. %[count],%[len],0x3;"	/* How many remaining bytes? */
 		"   addi %[count],%[count],0x1;"
 		"   mtctr %[count];"
-		"3: bdz  10f;"              /* while count */
-		"   mtpid %[pid];sync;"
-		"   lbz %[tmp],0(%[kaddr]);"        /* Load kernel byte */
-		"   addi %[kaddr],%[kaddr],0x1;"    /* next kaddr byte */
+		"3: bdz  10f;"			/* while count */
+		"   mtpid %[pid]; sync;"
+		"   lbz %[tmp],0(%[kaddr]);"	/* Load kernel byte */
+		"   addi %[kaddr],%[kaddr],0x1;" /* next kaddr byte */
 		"   sync; isync;"
 		"   mtpid %[ctx]; sync;"
-		"   stb %[tmp],0(%[udaddr]);"       /* Store user byte */
-		"   dcbf 0,%[udaddr];"          /* flush cache */
+		"   stb %[tmp],0(%[udaddr]);"	/* Store user byte */
+		"   dcbf 0,%[udaddr];"		/* flush cache */
 		"   addi %[udaddr],%[udaddr],0x1;"
 		"   sync; isync;"
 		"   b 3b;"
-		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;" /* Restore PID and MSR */
+		"10:mtpid %[pid]; mtmsr %[msr]; sync; isync;"
+						/* Restore PID and MSR */
 		: [msr] "=&r" (msr), [pid] "=&r" (pid), [tmp] "=&r" (tmp)
-		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr), [len] "b" (len), [count] "b" (count));
+		: [udaddr] "b" (udaddr), [ctx] "b" (ctx), [kaddr] "b" (kaddr),
+		  [len] "b" (len), [count] "b" (count));
 
 	curpcb->pcb_onfault = NULL;
 	return 0;
