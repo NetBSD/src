@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.356 2020/02/21 18:31:55 maxv Exp $	*/
+/*	$NetBSD: pmap.c,v 1.357 2020/02/21 18:34:37 maxv Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.356 2020/02/21 18:31:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.357 2020/02/21 18:34:37 maxv Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -868,7 +868,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 	if ((prot & VM_PROT_WRITE) != 0)
 		npte |= PTE_W;
 	else
-		npte &= ~PTE_W;
+		npte &= ~(PTE_W|PTE_D);
 
 	if (opte != npte) {
 		pmap_pte_set(pte, npte);
