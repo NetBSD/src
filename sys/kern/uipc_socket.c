@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.286 2020/02/18 00:40:50 christos Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.287 2020/02/21 00:26:22 joerg Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.286 2020/02/18 00:40:50 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.287 2020/02/21 00:26:22 joerg Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -386,7 +386,7 @@ socket_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	if ((action != KAUTH_NETWORK_SOCKET) &&
 	    (action != KAUTH_NETWORK_BIND))
