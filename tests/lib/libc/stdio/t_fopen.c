@@ -1,4 +1,4 @@
-/*	$NetBSD: t_fopen.c,v 1.7 2019/07/16 17:29:18 martin Exp $ */
+/*	$NetBSD: t_fopen.c,v 1.8 2020/02/21 22:14:59 kamil Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_fopen.c,v 1.7 2019/07/16 17:29:18 martin Exp $");
+__RCSID("$NetBSD: t_fopen.c,v 1.8 2020/02/21 22:14:59 kamil Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -314,6 +314,7 @@ is_module_present(const char *name)
 	int count;
 	struct iovec iov;
 	modstat_t *ms;
+	modstat_t m;
 
 	for (len = 8192; ;) {
 		iov.iov_base = malloc(len);
@@ -336,7 +337,8 @@ is_module_present(const char *name)
 	count = *(int *)iov.iov_base;
 	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
 	while (count > 0) {
-		if (strcmp(ms->ms_name, name) == 0) {
+		memcpy(&m, ms, sizeof(m));
+		if (strcmp(m.ms_name, name) == 0) {
 			found = true;
 			break;
 		}
