@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.79 2020/02/20 05:34:37 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.80 2020/02/21 13:16:16 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.79 2020/02/20 05:34:37 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2020/02/21 13:16:16 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1276,7 +1276,7 @@ ppc4xx_tlb_find_victim(void)
 			    (tlb_info[tlbnext].ti_ctx == KERNEL_PID) &&
 			     (flags & TLBF_USED)) {
 				/* Kernel stack page */
-				flags |= TLBF_USED;
+				flags |= TLBF_REF;
 				tlb_info[tlbnext].ti_flags = flags;
 			} else {
 				/* Found it! */
