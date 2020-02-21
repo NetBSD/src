@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.118 2019/11/05 10:21:31 jmcneill Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.119 2020/02/21 23:27:06 maya Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #include "opt_cputypes.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.118 2019/11/05 10:21:31 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.119 2020/02/21 23:27:06 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -404,7 +404,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 #ifdef DEBUG_DMA
 	printf("dmamap_create:map=%p\n", map);
 #endif	/* DEBUG_DMA */
-	return 0;
+	return error;
 }
 
 /*
