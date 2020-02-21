@@ -1,4 +1,4 @@
-/*	$NetBSD: tsc.c,v 1.37 2017/10/02 19:23:16 maxv Exp $	*/
+/*	$NetBSD: tsc.c,v 1.38 2020/02/21 00:26:22 joerg Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.37 2017/10/02 19:23:16 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tsc.c,v 1.38 2020/02/21 00:26:22 joerg Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -271,7 +271,7 @@ tsc_sync_ap(struct cpu_info *ci)
 static void
 tsc_apply_cpu(void *arg1, void *arg2)
 {
-	bool enable = (bool)arg1;
+	bool enable = arg1 != NULL;
 	if (enable) {
 		lcr4(rcr4() & ~CR4_TSD);
 	} else {
