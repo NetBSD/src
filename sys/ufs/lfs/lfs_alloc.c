@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.138 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.139 2020/02/22 00:32:08 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.138 2020/01/17 20:08:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.139 2020/02/22 00:32:08 kamil Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -95,16 +95,16 @@ __KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.138 2020/01/17 20:08:10 ad Exp $");
 #define SET_BITMAP_FREE(F, I) do { \
 	DLOG((DLOG_ALLOC, "lfs: ino %d wrd %d bit %d set\n", (int)(I), 	\
 	     (int)((I) >> BMSHIFT), (int)((I) & BMMASK)));		\
-	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] |= (1 << ((I) & BMMASK));	\
+	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] |= (1U << ((I) & BMMASK));	\
 } while (0)
 #define CLR_BITMAP_FREE(F, I) do { \
 	DLOG((DLOG_ALLOC, "lfs: ino %d wrd %d bit %d clr\n", (int)(I), 	\
 	     (int)((I) >> BMSHIFT), (int)((I) & BMMASK)));		\
-	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] &= ~(1 << ((I) & BMMASK));	\
+	(F)->lfs_ino_bitmap[(I) >> BMSHIFT] &= ~(1U << ((I) & BMMASK));	\
 } while(0)
 
 #define ISSET_BITMAP_FREE(F, I) \
-	((F)->lfs_ino_bitmap[(I) >> BMSHIFT] & (1 << ((I) & BMMASK)))
+	((F)->lfs_ino_bitmap[(I) >> BMSHIFT] & (1U << ((I) & BMMASK)))
 
 /*
  * Add a new block to the Ifile, to accommodate future file creations.
