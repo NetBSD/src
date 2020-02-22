@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.358 2020/02/22 17:33:42 thorpej Exp $ */
+/* $NetBSD: machdep.c,v 1.359 2020/02/22 20:29:15 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.358 2020/02/22 17:33:42 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.359 2020/02/22 20:29:15 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -457,7 +457,7 @@ nobootinfo:
 	}
 
 #if 0
-	printf("Memory cluster count: %d\n", mddtp->mddt_cluster_cnt);
+	printf("Memory cluster count: %" PRIu64 "\n", mddtp->mddt_cluster_cnt);
 #endif
 
 	for (i = 0; i < mddtp->mddt_cluster_cnt; i++) {
@@ -601,7 +601,7 @@ nobootinfo:
 	maxmem = physmem;
 #if 0
 	printf("totalphysmem = %d\n", totalphysmem);
-	printf("physmem = %d\n", physmem);
+	printf("physmem = %lu\n", physmem);
 	printf("resvmem = %d\n", resvmem);
 	printf("unusedmem = %d\n", unusedmem);
 	printf("unknownmem = %d\n", unknownmem);
