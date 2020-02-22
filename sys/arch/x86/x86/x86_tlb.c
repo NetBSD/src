@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.15 2020/01/15 13:22:03 ad Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.16 2020/02/22 20:12:40 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.15 2020/01/15 13:22:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.16 2020/02/22 20:12:40 maxv Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -90,7 +90,7 @@ typedef struct {
 #define	TP_GET_COUNT(tp)	((tp)->tp_store[TP_COUNT] & PAGE_MASK)
 #define	TP_GET_USERPMAP(tp)	((tp)->tp_store[TP_USERPMAP] & 1)
 #define	TP_GET_GLOBAL(tp)	((tp)->tp_store[TP_GLOBAL] & 1)
-#define	TP_GET_DONE(tp)		((tp)->tp_store[TP_DONE] & 1)
+#define	TP_GET_DONE(tp)		(atomic_load_relaxed(&(tp)->tp_store[TP_DONE]) & 1)
 #define	TP_GET_VA(tp, i)	((tp)->tp_store[(i)] & ~PAGE_MASK)
 
 #define	TP_INC_COUNT(tp)	((tp)->tp_store[TP_COUNT]++)
@@ -99,7 +99,7 @@ typedef struct {
 
 #define	TP_SET_USERPMAP(tp)	((tp)->tp_store[TP_USERPMAP] |= 1)
 #define	TP_SET_GLOBAL(tp)	((tp)->tp_store[TP_GLOBAL] |= 1)
-#define	TP_SET_DONE(tp)		((tp)->tp_store[TP_DONE] |= 1)
+#define	TP_SET_DONE(tp)		atomic_store_relaxed(&(tp)->tp_store[TP_DONE], 1)
 
 #define	TP_CLEAR(tp)		memset(__UNVOLATILE(tp), 0, sizeof(*(tp)));
 
@@ -409,7 +409,7 @@ pmap_tlb_shootnow(void)
 	KASSERT(TP_GET_DONE(ts) == 0);
 	while (atomic_cas_ptr(&pmap_tlb_packet, NULL,
 	    __UNVOLATILE(ts)) != NULL) {
-		KASSERT(pmap_tlb_packet != ts);
+		KASSERT(atomic_load_relaxed(&pmap_tlb_packet) != ts);
 		/*
 		 * Don't bother with exponentional backoff, as the pointer
 		 * is in a dedicated cache line and only updated twice per
@@ -419,7 +419,7 @@ pmap_tlb_shootnow(void)
 		splx(s);
 		do {
 			x86_pause();
-		} while (pmap_tlb_packet != NULL);
+		} while (atomic_load_relaxed(&pmap_tlb_packet) != NULL);
 		s = splvm();
 
 		/*
@@ -509,7 +509,7 @@ pmap_tlb_intr(void)
 	 * seemingly active.
 	 */
 	if (atomic_dec_uint_nv(&pmap_tlb_pendcount) == 0) {
-		pmap_tlb_packet = NULL;
+		atomic_store_relaxed(&pmap_tlb_packet, NULL);
 		__insn_barrier();
 		TP_SET_DONE(source);
 	}
