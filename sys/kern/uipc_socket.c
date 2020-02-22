@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_socket.c,v 1.287 2020/02/21 00:26:22 joerg Exp $	*/
+/*	$NetBSD: uipc_socket.c,v 1.288 2020/02/22 08:39:33 maxv Exp $	*/
 
 /*
  * Copyright (c) 2002, 2007, 2008, 2009 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.287 2020/02/21 00:26:22 joerg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_socket.c,v 1.288 2020/02/22 08:39:33 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1992,6 +1992,7 @@ sogetopt1(struct socket *so, struct sockopt *sopt)
 		optval = (opt == SO_SNDTIMEO ?
 		     so->so_snd.sb_timeo : so->so_rcv.sb_timeo);
 
+		memset(&tv, 0, sizeof(tv));
 		tv.tv_sec = optval / hz;
 		tv.tv_usec = (optval % hz) * tick;
 
