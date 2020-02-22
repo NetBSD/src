@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.282 2020/02/18 20:23:17 chs Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.283 2020/02/22 22:20:47 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.282 2020/02/18 20:23:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.283 2020/02/22 22:20:47 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -2513,7 +2513,7 @@ lfs_free_aiodone(struct buf *bp)
 	fs = bp->b_private;
 	ASSERT_NO_SEGLOCK(fs);
 	lfs_freebuf(fs, bp);
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
@@ -2531,7 +2531,7 @@ lfs_super_aiodone(struct buf *bp)
 	wakeup(&fs->lfs_sbactive);
 	mutex_exit(&lfs_lock);
 	lfs_freebuf(fs, bp);
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 }
 
 static void
@@ -2664,7 +2664,7 @@ lfs_cluster_aiodone(struct buf *bp)
 		wakeup(&fs->lfs_iocount);
 	mutex_exit(&lfs_lock);
 
-	KERNEL_UNLOCK_LAST(curlwp);
+	KERNEL_UNLOCK_ONE(curlwp);
 
 	pool_put(&fs->lfs_bpppool, cl->bpp);
 	cl->bpp = NULL;
