@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.160 2020/02/05 06:38:36 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.161 2020/02/22 18:57:09 jmcneill Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.162 2020/02/05 06:38:20 msaitoh Exp
+ *	NetBSD: miidevs,v 1.163 2020/02/22 18:56:57 jmcneill Exp
  */
 
 /*-
@@ -302,6 +302,8 @@
 #define	MII_STR_BROADCOM3_BCM53125	"BCM53125 1000BASE-T switch"
 #define	MII_MODEL_BROADCOM3_BCM5720C	0x0036
 #define	MII_STR_BROADCOM3_BCM5720C	"BCM5720C 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM4_BCM54213PE	0x000a
+#define	MII_STR_BROADCOM4_BCM54213PE	"BCM54213PE 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM4_BCM5725C	0x0038
 #define	MII_STR_BROADCOM4_BCM5725C	"BCM5725C 1000BASE-T media interface"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
