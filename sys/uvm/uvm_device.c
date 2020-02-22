@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.67 2019/12/01 16:44:11 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.68 2020/02/22 19:46:49 chs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.67 2019/12/01 16:44:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.68 2020/02/22 19:46:49 chs Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -441,8 +441,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap,
 			    uobj);
-			uvm_wait("udv_fault");
-			return (ERESTART);
+			return ENOMEM;
 		}
 	}
 
