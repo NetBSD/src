@@ -1,4 +1,4 @@
-/*	$NetBSD: random.c,v 1.5 2016/02/08 05:27:24 dholland Exp $	*/
+/*	$NetBSD: random.c,v 1.6 2020/02/22 14:47:29 fox Exp $	*/
 
 /*
  * Copyright (c) 1983, 1993
@@ -35,7 +35,7 @@
 #if 0
 static char sccsid[] = "@(#)random.c	8.2 (Berkeley) 5/19/95";
 #else
-__RCSID("$NetBSD: random.c,v 1.5 2016/02/08 05:27:24 dholland Exp $");
+__RCSID("$NetBSD: random.c,v 1.6 2020/02/22 14:47:29 fox Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -189,7 +189,7 @@ static const int seps[MAX_TYPES] =	{ SEP_0, SEP_1, SEP_2, SEP_3, SEP_4 };
  */
 
 /* LINTED */
-static int randtbl[DEG_3 + 1] = {
+static uint32_t randtbl[DEG_3 + 1] = {
 	TYPE_3,
 #ifdef USE_BETTER_RANDOM
 	0x991539b1, 0x16a5bce3, 0x6774a4cd,
@@ -232,8 +232,8 @@ static int randtbl[DEG_3 + 1] = {
  * in the initialization of randtbl) because the state table pointer is set
  * to point to randtbl[1] (as explained below).
  */
-static int *fptr = &randtbl[SEP_3 + 1];
-static int *rptr = &randtbl[1];
+static uint32_t *fptr = &randtbl[SEP_3 + 1];
+static uint32_t *rptr = &randtbl[1];
 
 /*
  * The following things are the pointer to the state information table, the
@@ -245,11 +245,11 @@ static int *rptr = &randtbl[1];
  * this is more efficient than indexing every time to find the address of
  * the last element to see if the front and rear pointers have wrapped.
  */
-static int *state = &randtbl[1];
+static uint32_t *state = &randtbl[1];
 static int rand_type = TYPE_3;
 static int rand_deg = DEG_3;
 static int rand_sep = SEP_3;
-static int *end_ptr = &randtbl[DEG_3 + 1];
+static uint32_t *end_ptr = &randtbl[DEG_3 + 1];
 
 /*
  * srandom:
@@ -340,17 +340,17 @@ initstate(
 	size_t n)			/* # bytes of state info */
 {
 	void *ostate = (void *)(&state[-1]);
-	int *int_arg_state;
+	uint32_t *int_arg_state;
 
 	_DIAGASSERT(arg_state != NULL);
 
-	int_arg_state = (int *)(void *)arg_state;
+	int_arg_state = (uint32_t *)(void *)arg_state;
 
 	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
-		state[-1] = MAX_TYPES * (int)(rptr - state) + rand_type;
+		state[-1] = MAX_TYPES * (uint32_t)(rptr - state) + rand_type;
 	if (n < BREAK_0) {
 		mutex_unlock(&random_mutex);
 		return (NULL);
@@ -375,13 +375,13 @@ initstate(
 		rand_deg = DEG_4;
 		rand_sep = SEP_4;
 	}
-	state = (int *) (int_arg_state + 1); /* first location */
+	state = (uint32_t *) (int_arg_state + 1); /* first location */
 	end_ptr = &state[rand_deg];	/* must set end_ptr before srandom */
 	srandom_unlocked(seed);
 	if (rand_type == TYPE_0)
 		int_arg_state[0] = rand_type;
 	else
-		int_arg_state[0] = MAX_TYPES * (int)(rptr - state) + rand_type;
+		int_arg_state[0] = MAX_TYPES * (uint32_t)(rptr - state) + rand_type;
 	mutex_unlock(&random_mutex);
 	return((char *)ostate);
 }
@@ -408,22 +408,22 @@ initstate(
 char *
 setstate(char *arg_state)		/* pointer to state array */
 {
-	int *new_state;
-	int type;
-	int rear;
+	uint32_t *new_state;
+	uint32_t type;
+	uint32_t rear;
 	void *ostate = (void *)(&state[-1]);
 
 	_DIAGASSERT(arg_state != NULL);
 
-	new_state = (int *)(void *)arg_state;
-	type = (int)(new_state[0] % MAX_TYPES);
-	rear = (int)(new_state[0] / MAX_TYPES);
+	new_state = (uint32_t *)(void *)arg_state;
+	type = (uint32_t)(new_state[0] % MAX_TYPES);
+	rear = (uint32_t)(new_state[0] / MAX_TYPES);
 
 	mutex_lock(&random_mutex);
 	if (rand_type == TYPE_0)
 		state[-1] = rand_type;
 	else
-		state[-1] = MAX_TYPES * (int)(rptr - state) + rand_type;
+		state[-1] = MAX_TYPES * (uint32_t)(rptr - state) + rand_type;
 	switch(type) {
 	case TYPE_0:
 	case TYPE_1:
@@ -438,7 +438,7 @@ setstate(char *arg_state)		/* pointer to state array */
 		mutex_unlock(&random_mutex);
 		return (NULL);
 	}
-	state = (int *) (new_state + 1);
+	state = (uint32_t *) (new_state + 1);
 	if (rand_type != TYPE_0) {
 		rptr = &state[rear];
 		fptr = &state[(rear + rand_sep) % rand_deg];
@@ -468,8 +468,8 @@ setstate(char *arg_state)		/* pointer to state array */
 static long
 random_unlocked(void)
 {
-	int i;
-	int *f, *r;
+	uint32_t i;
+	uint32_t *f, *r;
 
 	if (rand_type == TYPE_0) {
 		i = state[0];
@@ -481,7 +481,7 @@ random_unlocked(void)
 		f = fptr; r = rptr;
 		*f += *r;
 		/* chucking least random bit */
-		i = ((unsigned int)*f >> 1) & 0x7fffffff;
+		i = ((uint32_t)*f >> 1) & 0x7fffffff;
 		if (++f >= end_ptr) {
 			f = state;
 			++r;
