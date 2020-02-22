@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.14 2020/02/09 21:15:03 roy Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.15 2020/02/22 09:30:42 maxv Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.14 2020/02/09 21:15:03 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.15 2020/02/22 09:30:42 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -248,7 +248,7 @@ COMPATNAME(route_filter)(struct mbuf *m, struct sockproto *proto,
 		    offsetof(struct sockaddr, sa_len) + sizeof(ss.ss_len))
 			return EINVAL;
 		m_copydata(m, sizeof(*rtm) + offsetof(struct sockaddr, sa_len),
-		    sizeof(ss.ss_len), &ss);
+		    sizeof(ss.ss_len), &ss.ss_len);
 		if (m->m_pkthdr.len < sizeof(*rtm) + ss.ss_len)
 			return EINVAL;
 		/* Copy out the destination sockaddr */
