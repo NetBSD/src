@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.57 2019/06/30 21:20:04 mgorny Exp $
+# $NetBSD: Makefile,v 1.58 2020/02/22 19:44:07 kamil Exp $
 
 MKMAN=	no
 
@@ -109,6 +109,15 @@ CPPFLAGS.t_ptrace_wait6.c	+= -D_KERNTYPES -D__TEST_FENV
 CPPFLAGS.t_ptrace_waitid.c	+= -D_KERNTYPES -D__TEST_FENV
 CPPFLAGS.t_ptrace_waitpid.c	+= -D_KERNTYPES -D__TEST_FENV
 CPPFLAGS.t_ucontext.c		+= -D_KERNTYPES
+
+.if ${MKSANITIZER:Uno} != "yes" && ${MKLIBCSANITIZER:Uno} != "yes"
+CPPFLAGS.t_ptrace_wait.c	+= -DENABLE_TESTS
+CPPFLAGS.t_ptrace_wait3.c	+= -DENABLE_TESTS
+CPPFLAGS.t_ptrace_wait4.c	+= -DENABLE_TESTS
+CPPFLAGS.t_ptrace_wait6.c	+= -DENABLE_TESTS
+CPPFLAGS.t_ptrace_waitid.c	+= -DENABLE_TESTS
+CPPFLAGS.t_ptrace_waitpid.c	+= -DENABLE_TESTS
+.endif
 
 FILES=		truncate_test.root_owned
 FILESBUILD=	yes

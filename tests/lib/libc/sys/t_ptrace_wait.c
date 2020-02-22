@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.164 2020/02/20 22:38:54 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.165 2020/02/22 19:44:07 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.164 2020/02/20 22:38:54 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.165 2020/02/22 19:44:07 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -75,6 +75,8 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.164 2020/02/20 22:38:54 kamil Exp $");
 #include <gelf.h>
 
 #include <atf-c.h>
+
+#ifdef ENABLE_TESTS
 
 /* Assumptions in the kernel code that must be kept. */
 static_assert(sizeof(((struct ptrace_state *)0)->pe_report_event) ==
@@ -9016,11 +9018,29 @@ THREAD_CONCURRENT_TEST(thread_concurrent_bp_wp_sig_handler, TCSH_HANDLER,
 #include "t_ptrace_i386_wait.h"
 #include "t_ptrace_x86_wait.h"
 
+/// ----------------------------------------------------------------------------
+
+#else
+ATF_TC(dummy);
+ATF_TC_HEAD(dummy, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A dummy test");
+}
+
+ATF_TC_BODY(dummy, tc)
+{
+
+	// Dummy, skipped
+	// The ATF framework requires at least a single defined test.
+}
+#endif
+
 ATF_TP_ADD_TCS(tp)
 {
 	setvbuf(stdout, NULL, _IONBF, 0);
 	setvbuf(stderr, NULL, _IONBF, 0);
 
+#ifdef ENABLE_TESTS
 	ATF_TP_ADD_TC(tp, traceme_raise1);
 	ATF_TP_ADD_TC(tp, traceme_raise2);
 	ATF_TP_ADD_TC(tp, traceme_raise3);
@@ -9619,6 +9639,10 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TCS_PTRACE_WAIT_AMD64();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_I386();
 	ATF_TP_ADD_TCS_PTRACE_WAIT_X86();
+
+#else
+	ATF_TP_ADD_TC(tp, dummy);
+#endif
 
 	return atf_no_error();
 }
