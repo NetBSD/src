@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.10 2020/02/22 09:34:26 jmcneill Exp $	*/
+/*	$NetBSD: eficons.c,v 1.11 2020/02/22 10:30:37 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -421,7 +421,7 @@ bi_framebuffer(void)
 	EFI_STATUS status;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 	struct btinfo_framebuffer fb;
-	INT32 bestmode = -1;
+	INT32 bestmode;
 	UINTN sz;
 
 	if (efi_gop == NULL)
@@ -435,8 +435,6 @@ bi_framebuffer(void)
 		if (bestmode == -1)
 			bestmode = FALLBACK_GOP_MODE;
 	}
-	if (bestmode == -1)
-		goto nofb;
 
 	status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
 	    bestmode);
