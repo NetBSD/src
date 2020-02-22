@@ -1,11 +1,12 @@
 #!/bin/sh
 #
-# $NetBSD: amd,v 1.15 2008/02/25 22:12:42 tron Exp $
+# $NetBSD: amd,v 1.16 2020/02/22 11:52:45 roy Exp $
 #
 
 # PROVIDE: amd
-# REQUIRE: rpcbind mountall ypbind
+# REQUIRE: rpcbind mountall
 # BEFORE:  DAEMON
+# AFTER:   ypbind
 
 $_rc_subr_loaded . /etc/rc.subr
 
