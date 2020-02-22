@@ -1,4 +1,4 @@
-/* $NetBSD: t_siginfo.c,v 1.38 2020/02/21 22:25:50 kamil Exp $ */
+/* $NetBSD: t_siginfo.c,v 1.39 2020/02/22 19:09:51 kamil Exp $ */
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -53,6 +53,7 @@
 
 #include "isqemu.h"
 
+#ifdef ENABLE_TESTS
 /* for sigbus */
 volatile char *addr;
 
@@ -361,18 +362,6 @@ ATF_TC_HEAD(sigfpe_int, tc)
 	    "for integer div-by-zero (PR port-i386/43655)");
 }
 
-#if defined(__clang__)
-__attribute__((no_sanitize("undefined")))
-#else               
-__attribute__((no_sanitize_undefined))
-#endif
-static long int
-sigfpe_int_division(long int a, long int b)
-{
-
-	return a / b;
-}
-
 ATF_TC_BODY(sigfpe_int, tc)
 {
 	struct sigaction sa;
@@ -391,7 +380,7 @@ ATF_TC_BODY(sigfpe_int, tc)
 #elif defined(_FLOAT_IEEE754)
 		fpsetmask(FP_X_INV|FP_X_DZ|FP_X_OFL|FP_X_UFL|FP_X_IMP);
 #endif
-		printf("%ld\n", sigfpe_int_division(1, l));
+		printf("%ld\n", 1 / l);
 	}
 	if (intdiv_signalled == 0)
 		atf_tc_fail("FPE signal handler was not invoked");
@@ -508,9 +497,25 @@ ATF_TC_BODY(sigbus_adraln, tc)
 	atf_tc_fail("Test did not fault as expected");
 }
 
+#else
+ATF_TC(dummy);
+ATF_TC_HEAD(dummy, tc)
+{
+	atf_tc_set_md_var(tc, "descr", "A dummy test");
+}
+
+ATF_TC_BODY(dummy, tc)
+{
+
+	// Dummy, skipped
+	// The ATF framework requires at least a single defined test.
+}
+#endif
+
 ATF_TP_ADD_TCS(tp)
 {
 
+#ifdef ENABLE_TESTS
 	ATF_TP_ADD_TC(tp, sigalarm);
 	ATF_TP_ADD_TC(tp, sigchild_normal);
 	ATF_TP_ADD_TC(tp, sigchild_dump);
@@ -519,6 +524,9 @@ ATF_TP_ADD_TCS(tp)
 	ATF_TP_ADD_TC(tp, sigfpe_int);
 	ATF_TP_ADD_TC(tp, sigsegv);
 	ATF_TP_ADD_TC(tp, sigbus_adraln);
+#else
+	ATF_TP_ADD_TC(tp, dummy);
+#endif
 
 	return atf_no_error();
 }
