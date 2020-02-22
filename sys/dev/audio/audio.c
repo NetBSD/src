@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.51 2020/02/22 08:03:19 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.52 2020/02/22 08:15:09 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -121,7 +121,7 @@
  *	allocm 			-	- +	(*1)
  *	freem 			-	- +	(*1)
  *	round_buffersize 	-	x
- *	get_props 		-	x	Called at attach time
+ *	get_props 		-	-	Called at attach time
  *	trigger_output 		x	x +
  *	trigger_input 		x	x +
  *	dev_ioctl 		-	x
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.51 2020/02/22 08:03:19 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.52 2020/02/22 08:15:09 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -886,9 +886,7 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_am_used = 0;
 	sc->sc_am = NULL;
 
-	mutex_enter(sc->sc_lock);
 	sc->sc_props = hw_if->get_props(sc->hw_hdl);
-	mutex_exit(sc->sc_lock);
 
 	/* MMAP is now supported by upper layer.  */
 	sc->sc_props |= AUDIO_PROP_MMAP;
