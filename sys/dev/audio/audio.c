@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.47 2020/02/22 06:58:39 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.48 2020/02/22 07:09:18 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.47 2020/02/22 06:58:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.48 2020/02/22 07:09:18 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2690,15 +2690,11 @@ audio_ioctl(dev_t dev, struct audio_softc *sc, u_long cmd, void *addr, int flag,
 
 	case AUDIO_QUERYFORMAT:
 		query = (audio_format_query_t *)addr;
-		if (sc->hw_if->query_format) {
-			mutex_enter(sc->sc_lock);
-			error = sc->hw_if->query_format(sc->hw_hdl, query);
-			mutex_exit(sc->sc_lock);
-			/* Hide internal infomations */
-			query->fmt.driver_data = NULL;
-		} else {
-			error = ENODEV;
-		}
+		mutex_enter(sc->sc_lock);
+		error = sc->hw_if->query_format(sc->hw_hdl, query);
+		mutex_exit(sc->sc_lock);
+		/* Hide internal infomations */
+		query->fmt.driver_data = NULL;
 		break;
 
 	case AUDIO_GETFORMAT:
@@ -6225,21 +6221,6 @@ audio_hw_validate_format(struct audio_softc *sc, int mode,
 	int j;
 
 	KASSERT(mutex_owned(sc->sc_lock));
-
-	/*
-	 * If query_format is not supported by hardware driver,
-	 * a rough check instead will be performed.
-	 * XXX This will gone in the future.
-	 */
-	if (sc->hw_if->query_format == NULL) {
-		if (fmt->encoding != AUDIO_ENCODING_SLINEAR_NE)
-			return EINVAL;
-		if (fmt->precision != AUDIO_INTERNAL_BITS)
-			return EINVAL;
-		if (fmt->stride != AUDIO_INTERNAL_BITS)
-			return EINVAL;
-		return 0;
-	}
 
 	for (index = 0; ; index++) {
 		query.index = index;
