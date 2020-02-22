@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.43 2020/02/22 05:51:39 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.44 2020/02/22 06:22:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.43 2020/02/22 05:51:39 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.44 2020/02/22 06:22:46 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6274,9 +6274,9 @@ audio_hw_validate_format(struct audio_softc *sc, int mode,
 /*
  * Set track mixer's format depending on ai->mode.
  * If AUMODE_PLAY is set in ai->mode, it set up the playback mixer
- * with ai.play.{channels, sample_rate}.
+ * with ai.play.*.
  * If AUMODE_RECORD is set in ai->mode, it set up the recording mixer
- * with ai.record.{channels, sample_rate}.
+ * with ai.record.*.
  * All other fields in ai are ignored.
  * If successful returns 0.  Otherwise returns errno.
  * This function does not roll back even if it fails.
@@ -6304,7 +6304,6 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	if (!SPECIFIED(ai->mode) || ai->mode == 0)
 		return ENOTTY;
 
-	/* Only channels and sample_rate are changeable. */
 	mode = ai->mode;
 	if ((mode & AUMODE_PLAY)) {
 		phwfmt.encoding    = ai->play.encoding;
@@ -6844,7 +6843,7 @@ audio_track_setinfo_water(audio_track_t *track, const struct audio_info *ai)
 }
 
 /*
- * Set hardware part of *ai.
+ * Set hardware part of *newai.
  * The parameters handled here are *.port, *.gain, *.balance and monitor_gain.
  * If oldai is specified, previous parameters are stored.
  * This function itself does not roll back if error occurred.
