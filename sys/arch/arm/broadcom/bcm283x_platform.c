@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.35 2020/02/20 01:43:07 jmcneill Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.36 2020/02/22 00:17:54 jmcneill Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.35 2020/02/20 01:43:07 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.36 2020/02/22 00:17:54 jmcneill Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -186,6 +186,10 @@ bcm2711_bus_to_phys(bus_addr_t ba)
 	if (ba >= BCM283X_PERIPHERALS_BASE_BUS &&
 	    ba < BCM283X_PERIPHERALS_BASE_BUS + BCM283X_PERIPHERALS_SIZE)
 		return BCM2711_PERIPHERALS_BUS_TO_PHYS(ba);
+
+	if (ba >= BCM2711_SCB_BASE_BUS &&
+	    ba < BCM2711_SCB_BASE_BUS + BCM2711_SCB_SIZE)
+		return BCM2711_SCB_BUS_TO_PHYS(ba);
 
 	if (ba >= BCM2711_ARM_LOCAL_BASE_BUS &&
 	    ba < BCM2711_ARM_LOCAL_BASE_BUS + BCM2711_ARM_LOCAL_SIZE)
