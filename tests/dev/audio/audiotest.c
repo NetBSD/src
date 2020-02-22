@@ -1,4 +1,4 @@
-/*	$NetBSD: audiotest.c,v 1.5 2020/02/18 12:11:26 isaki Exp $	*/
+/*	$NetBSD: audiotest.c,v 1.6 2020/02/22 05:53:19 isaki Exp $	*/
 
 /*
  * Copyright (C) 2019 Tetsuya Isaki. All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: audiotest.c,v 1.5 2020/02/18 12:11:26 isaki Exp $");
+__RCSID("$NetBSD: audiotest.c,v 1.6 2020/02/22 05:53:19 isaki Exp $");
 
 #include <errno.h>
 #include <fcntl.h>
@@ -5413,11 +5413,13 @@ DEF(AUDIO_SETINFO_params_simul)
  */
 DEF(AUDIO_SETINFO_channels)
 {
+	struct audio_info hwinfo;
 	struct audio_info ai;
 	int mode;
 	int r;
 	int fd;
 	int i;
+	unsigned int ch;
 	struct {
 		int ch;
 		bool expected;
@@ -5425,9 +5427,6 @@ DEF(AUDIO_SETINFO_channels)
 		{  0,	false },
 		{  1,	true },	/* monaural */
 		{  2,	true },	/* stereo */
-		{  3,	true },	/* multi channels */
-		{ 12,	true },	/* upper limit */
-		{ 13,	false },
 	};
 
 	TEST("AUDIO_SETINFO_channels");
@@ -5444,8 +5443,12 @@ DEF(AUDIO_SETINFO_channels)
 	fd = OPEN(devaudio, mode);
 	REQUIRED_SYS_OK(fd);
 
+	/*
+	 * The audio layer always supports monaural and stereo regardless of
+	 * the hardware capability.
+	 */
 	for (i = 0; i < (int)__arraycount(table); i++) {
-		int ch = table[i].ch;
+		ch = table[i].ch;
 		bool expected = table[i].expected;
 
 		AUDIO_INITINFO(&ai);
@@ -5468,6 +5471,52 @@ DEF(AUDIO_SETINFO_channels)
 			/* Expects to fail */
 			XP_SYS_NG(EINVAL, r);
 		}
+	}
+
+	/*
+	 * The maximum number of supported channels depends the hardware.
+	 */
+	/* Get the number of channels that the hardware supports */
+	r = IOCTL(fd, AUDIO_GETFORMAT, &hwinfo, "");
+	REQUIRED_SYS_EQ(0, r);
+
+	if ((hwinfo.mode & AUMODE_PLAY)) {
+		DPRINTF("  > hwinfo.play.channels = %d\n",
+		    hwinfo.play.channels);
+		for (ch = 3; ch <= hwinfo.play.channels; ch++) {
+			AUDIO_INITINFO(&ai);
+			ai.play.channels = ch;
+			r = IOCTL(fd, AUDIO_SETINFO, &ai, "channels=%d", ch);
+			XP_SYS_EQ(0, r);
+
+			r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+			XP_SYS_EQ(0, r);
+			XP_EQ(ch, ai.play.channels);
+		}
+
+		AUDIO_INITINFO(&ai);
+		ai.play.channels = ch;
+		r = IOCTL(fd, AUDIO_SETINFO, &ai, "channels=%d", ch);
+		XP_SYS_NG(EINVAL, r);
+	}
+	if ((hwinfo.mode & AUMODE_RECORD)) {
+		DPRINTF("  > hwinfo.record.channels = %d\n",
+		    hwinfo.record.channels);
+		for (ch = 3; ch <= hwinfo.record.channels; ch++) {
+			AUDIO_INITINFO(&ai);
+			ai.record.channels = ch;
+			r = IOCTL(fd, AUDIO_SETINFO, &ai, "channels=%d", ch);
+			XP_SYS_EQ(0, r);
+
+			r = IOCTL(fd, AUDIO_GETBUFINFO, &ai, "");
+			XP_SYS_EQ(0, r);
+			XP_EQ(ch, ai.record.channels);
+		}
+
+		AUDIO_INITINFO(&ai);
+		ai.record.channels = ch;
+		r = IOCTL(fd, AUDIO_SETINFO, &ai, "channels=%d", ch);
+		XP_SYS_NG(EINVAL, r);
 	}
 
 	r = CLOSE(fd);
