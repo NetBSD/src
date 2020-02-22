@@ -1,4 +1,4 @@
-/*	$NetBSD: rump.c,v 1.341 2020/02/18 20:23:17 chs Exp $	*/
+/*	$NetBSD: rump.c,v 1.342 2020/02/22 21:45:34 ad Exp $	*/
 
 /*
  * Copyright (c) 2007-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.341 2020/02/18 20:23:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump.c,v 1.342 2020/02/22 21:45:34 ad Exp $");
 
 #include <sys/systm.h>
 #define ELFSIZE ARCH_ELFSIZE
@@ -411,6 +411,7 @@ rump_init(void)
 	procinit_sysctl();
 	time_init();
 	time_init2();
+	config_init();
 
 	/* start page baroness */
 	if (rump_threads) {
