@@ -1,4 +1,4 @@
-/* $NetBSD: pad.c,v 1.63 2019/06/26 12:21:40 isaki Exp $ */
+/* $NetBSD: pad.c,v 1.64 2020/02/22 08:15:09 isaki Exp $ */
 
 /*-
  * Copyright (c) 2007 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.63 2019/06/26 12:21:40 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pad.c,v 1.64 2020/02/22 08:15:09 isaki Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -795,11 +795,6 @@ pad_query_devinfo(void *opaque, mixer_devinfo_t *di)
 static int
 pad_get_props(void *opaque)
 {
-	struct pad_softc *sc __diagused;
-
-	sc = (struct pad_softc *)opaque;
-
-	KASSERT(mutex_owned(&sc->sc_lock));
 
 	return AUDIO_PROP_PLAYBACK;
 }
