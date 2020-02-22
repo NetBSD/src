@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1691 2020/02/18 21:14:16 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1692 2020/02/22 23:40:05 sevan Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -195,12 +195,12 @@ Todo[4]: Re-entrant functions of net/*
 Todo[5]: Reconcile the doc directory.
 
 Package:	bsd-family-tree
-Version:	355063
-Current Vers:	355063
+Version:	358254
+Current Vers:	358254
 Maintainer:	The FreeBSD Project
 Archive Site:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 Home Page:	https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
-Date:		2019-12-23
+Date:		2020-02-22
 Mailing List:
 Responsible:
 License:	BSD (2-clause) (see http://www.freebsd.org/cgi/cvsweb.cgi/src/COPYRIGHT)
