@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.36 2019/10/21 02:36:48 jhigh Exp $	*/
+/*	$NetBSD: crypt.c,v 1.37 2020/02/22 10:22:32 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.36 2019/10/21 02:36:48 jhigh Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.37 2020/02/22 10:22:32 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -836,8 +836,8 @@ des_cipher(const char *in, char *out, long salt, int num_iter)
 	}
 
 	/* store the encrypted (or decrypted) result */
-	L0 = ((L0 >> 3) & 0x0f0f0f0fL) | ((L1 << 1) & 0xf0f0f0f0L);
-	L1 = ((R0 >> 3) & 0x0f0f0f0fL) | ((R1 << 1) & 0xf0f0f0f0L);
+	L0 = (((uint32_t)L0 >> 3) & 0x0f0f0f0fL) | (((uint32_t)L1 << 1) & 0xf0f0f0f0L);
+	L1 = (((uint32_t)R0 >> 3) & 0x0f0f0f0fL) | (((uint32_t)R1 << 1) & 0xf0f0f0f0L);
 	STORE(L,L0,L1,B);
 	PERM6464(L,L0,L1,B.b, (C_block *)CF6464);
 #if defined(MUST_ALIGN)
