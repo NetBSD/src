@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.1 2020/02/22 00:28:35 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.2 2020/02/22 13:41:40 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.1 2020/02/22 00:28:35 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.2 2020/02/22 13:41:40 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -80,6 +80,7 @@ CTASSERT(MCLBYTES == 2048);
 #define	TX_DESC_COUNT		GENET_DMA_DESC_COUNT
 #define	RX_DESC_COUNT		GENET_DMA_DESC_COUNT
 #define	MII_BUSY_RETRY		1000
+#define	GENET_MAX_MDF_FILTER	17
 
 #define	GENET_LOCK(sc)		mutex_enter(&(sc)->sc_lock)
 #define	GENET_UNLOCK(sc)	mutex_exit(&(sc)->sc_lock)
@@ -323,19 +324,65 @@ genet_tick(void *softc)
 }
 
 static void
+genet_setup_rxfilter_mdf(struct genet_softc *sc, u_int n, const uint8_t *ea)
+{
+	uint32_t addr0 = (ea[0] << 8) | ea[1];
+	uint32_t addr1 = (ea[2] << 24) | (ea[3] << 16) | (ea[4] << 8) | ea[5];
+
+	WR4(sc, GENET_UMAC_MDF_ADDR0(n), addr0);
+	WR4(sc, GENET_UMAC_MDF_ADDR1(n), addr1);
+}
+
+static void
 genet_setup_rxfilter(struct genet_softc *sc)
 {
-	uint32_t val;
+	struct ethercom *ec = &sc->sc_ec;
+	struct ifnet *ifp = &ec->ec_if;
+	struct ether_multistep step;
+	struct ether_multi *enm;
+	uint32_t cmd, mdf_ctrl;
+	u_int n;
 
 	GENET_ASSERT_LOCKED(sc);
 
-	/* Enable promiscuous mode */
-	val = RD4(sc, GENET_UMAC_CMD);
-	val |= GENET_UMAC_CMD_PROMISC;
-	WR4(sc, GENET_UMAC_CMD, val);
+	ETHER_LOCK(ec);
 
-	/* Disable filters */
-	WR4(sc, GENET_UMAC_MDF_CTRL, 0);
+	cmd = RD4(sc, GENET_UMAC_CMD);
+
+	/*
+	 * Count the required number of hardware filters. We need one
+	 * for each multicast address, plus one for our own address and
+	 * the broadcast address.
+	 */
+	ETHER_FIRST_MULTI(step, ec, enm);
+	for (n = 2; enm != NULL; n++)
+		ETHER_NEXT_MULTI(step, enm);
+
+	if (n > GENET_MAX_MDF_FILTER)
+		ifp->if_flags |= IFF_ALLMULTI;
+	else
+		ifp->if_flags &= ~IFF_ALLMULTI;
+
+	if ((ifp->if_flags & (IFF_PROMISC|IFF_ALLMULTI)) != 0) {
+		cmd |= GENET_UMAC_CMD_PROMISC;
+		mdf_ctrl = 0;
+	} else {
+		cmd &= ~GENET_UMAC_CMD_PROMISC;
+		genet_setup_rxfilter_mdf(sc, 0, ifp->if_broadcastaddr);
+		genet_setup_rxfilter_mdf(sc, 1, CLLADDR(ifp->if_sadl));
+		ETHER_FIRST_MULTI(step, ec, enm);
+		for (n = 2; enm != NULL; n++) {
+			genet_setup_rxfilter_mdf(sc, n, enm->enm_addrlo);
+			ETHER_NEXT_MULTI(step, enm);
+		}
+		mdf_ctrl = __BITS(GENET_MAX_MDF_FILTER - 1,
+				  GENET_MAX_MDF_FILTER - n);
+	}
+
+	WR4(sc, GENET_UMAC_CMD, cmd);
+	WR4(sc, GENET_UMAC_MDF_CTRL, mdf_ctrl);
+
+	ETHER_UNLOCK(ec);
 }
 
 static int
@@ -465,10 +512,10 @@ genet_init_locked(struct genet_softc *sc)
 		    GENET_SYS_PORT_MODE_EXT_GPHY);
 
 	/* Write hardware address */
-	val = enaddr[0] | (enaddr[1] << 8) | (enaddr[2] << 16) |
-	    (enaddr[3] << 24);
+	val = enaddr[3] | (enaddr[2] << 8) | (enaddr[1] << 16) |
+	    (enaddr[0] << 24);
 	WR4(sc, GENET_UMAC_MAC0, val);
-	val = enaddr[4] | (enaddr[5] << 8);
+	val = enaddr[5] | (enaddr[4] << 8);
 	WR4(sc, GENET_UMAC_MAC1, val);
 
 	/* Setup RX filter */
