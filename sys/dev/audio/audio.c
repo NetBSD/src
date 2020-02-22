@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.49 2020/02/22 07:59:47 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.50 2020/02/22 08:01:59 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.49 2020/02/22 07:59:47 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.50 2020/02/22 08:01:59 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4788,7 +4788,7 @@ audio_mixer_destroy(struct audio_softc *sc, audio_trackmixer_t *mixer)
 /*
  * Starts playback mixer.
  * Must be called only if sc_pbusy is false.
- * Must be called with sc_lock held.
+ * Must be called with sc_lock && sc_exlock held.
  * Must not be called from the interrupt context.
  */
 static void
@@ -4798,6 +4798,7 @@ audio_pmixer_start(struct audio_softc *sc, bool force)
 	int minimum;
 
 	KASSERT(mutex_owned(sc->sc_lock));
+	KASSERT(sc->sc_exlock);
 	KASSERT(sc->sc_pbusy == false);
 
 	mutex_enter(sc->sc_intr_lock);
@@ -5290,7 +5291,7 @@ audio_pintr(void *arg)
 /*
  * Starts record mixer.
  * Must be called only if sc_rbusy is false.
- * Must be called with sc_lock held.
+ * Must be called with sc_lock && sc_exlock held.
  * Must not be called from the interrupt context.
  */
 static void
@@ -5298,6 +5299,7 @@ audio_rmixer_start(struct audio_softc *sc)
 {
 
 	KASSERT(mutex_owned(sc->sc_lock));
+	KASSERT(sc->sc_exlock);
 	KASSERT(sc->sc_rbusy == false);
 
 	mutex_enter(sc->sc_intr_lock);
