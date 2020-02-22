@@ -1,4 +1,4 @@
-/*	$NetBSD: crypt.c,v 1.37 2020/02/22 10:22:32 kamil Exp $	*/
+/*	$NetBSD: crypt.c,v 1.38 2020/02/22 10:29:17 kamil Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
 #if 0
 static char sccsid[] = "@(#)crypt.c	8.1.1.1 (Berkeley) 8/18/93";
 #else
-__RCSID("$NetBSD: crypt.c,v 1.37 2020/02/22 10:22:32 kamil Exp $");
+__RCSID("$NetBSD: crypt.c,v 1.38 2020/02/22 10:29:17 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -769,9 +769,9 @@ des_cipher(const char *in, char *out, long salt, int num_iter)
 	LOADREG(R,R0,R1,L,L0,L1);
 	L0 &= 0x55555555L;
 	L1 &= 0x55555555L;
-	L0 = (L0 << 1) | L1;	/* L0 is the even-numbered input bits */
+	L0 = ((uint32_t)L0 << 1) | L1;	/* L0 is the even-numbered input bits */
 	R0 &= 0xaaaaaaaaL;
-	R1 = (R1 >> 1) & 0x55555555L;
+	R1 = ((uint32_t)R1 >> 1) & 0x55555555L;
 	L1 = R0 | R1;		/* L1 is the odd-numbered input bits */
 	STORE(L,L0,L1,B);
 	PERM3264(L,L0,L1,B.b,  (C_block *)IE3264);	/* even bits */
