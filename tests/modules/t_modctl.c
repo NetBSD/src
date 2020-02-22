@@ -1,4 +1,4 @@
-/*	$NetBSD: t_modctl.c,v 1.14 2019/04/21 11:45:09 maya Exp $	*/
+/*	$NetBSD: t_modctl.c,v 1.15 2020/02/22 00:24:15 kamil Exp $	*/
 /*
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.14 2019/04/21 11:45:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: t_modctl.c,v 1.15 2020/02/22 00:24:15 kamil Exp $");
 
 #include <sys/module.h>
 #include <sys/sysctl.h>
@@ -87,6 +87,7 @@ get_modstat_info(const char *name, modstat_t *msdest)
 	int count;
 	struct iovec iov;
 	modstat_t *ms;
+	modstat_t m;
 
 	check_permission();
 	for (len = 8192; ;) {
@@ -111,9 +112,10 @@ get_modstat_info(const char *name, modstat_t *msdest)
 	count = *(int *)iov.iov_base;
 	ms = (modstat_t *)((char *)iov.iov_base + sizeof(int));
 	while ( count ) {
-		if (strcmp(ms->ms_name, name) == 0) {
+		memcpy(&m, ms, sizeof(m));
+		if (strcmp(m.ms_name, name) == 0) {
 			if (msdest != NULL)
-				*msdest = *ms;
+				memcpy(msdest, &m, sizeof(*msdest));
 			found = true;
 			break;
 		}
