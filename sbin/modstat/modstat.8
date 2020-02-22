@@ -1,4 +1,4 @@
-.\" $NetBSD: modstat.8,v 1.26 2019/12/07 12:35:27 wiz Exp $
+.\" $NetBSD: modstat.8,v 1.27 2020/02/22 14:26:18 pgoyette Exp $
 .\"
 .\" Copyright (c) 1993 Christopher G. Demetriou
 .\" All rights reserved.
@@ -32,7 +32,7 @@
 .\"
 .\" <<Id: LICENSE,v 1.2 2000/06/14 15:57:33 cgd Exp>>
 .\"
-.Dd December 5, 2019
+.Dd Februaru 22, 2020
 .Dt MODSTAT 8
 .Os
 .Sh NAME
@@ -64,7 +64,7 @@ take into consideration the sysctl
 .It Fl e
 Tells you whether or not you may load a module at the moment.
 .It Fl k
-Display the module's kernel address (disabled by default).
+Display the kernel address of the module's text segment (disabled by default).
 .It Fl n Ar name
 Display the status of only the module with this name.
 Please note that
