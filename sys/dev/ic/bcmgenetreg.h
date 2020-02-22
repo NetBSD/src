@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenetreg.h,v 1.1 2020/02/22 00:28:35 jmcneill Exp $ */
+/* $NetBSD: bcmgenetreg.h,v 1.2 2020/02/22 13:41:41 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -85,6 +85,8 @@
 #define	 GENET_MDIO_PMD			__BITS(25,21)
 #define	 GENET_MDIO_REG			__BITS(20,16)
 #define	GENET_UMAC_MDF_CTRL		0xe50
+#define	GENET_UMAC_MDF_ADDR0(n)		(0xe54 + (n) * 0x8)
+#define	GENET_UMAC_MDF_ADDR1(n)		(0xe58 + (n) * 0x8)
 
 #define	GENET_DMA_DESC_COUNT		256
 #define	GENET_DMA_DESC_SIZE		12
