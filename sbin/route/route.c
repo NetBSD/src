@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.165 2020/01/22 19:22:06 roy Exp $	*/
+/*	$NetBSD: route.c,v 1.166 2020/02/22 00:42:15 kamil Exp $	*/
 
 /*
  * Copyright (c) 1983, 1989, 1991, 1993
@@ -39,7 +39,7 @@ __COPYRIGHT("@(#) Copyright (c) 1983, 1989, 1991, 1993\
 #if 0
 static char sccsid[] = "@(#)route.c	8.6 (Berkeley) 4/28/95";
 #else
-__RCSID("$NetBSD: route.c,v 1.165 2020/01/22 19:22:06 roy Exp $");
+__RCSID("$NetBSD: route.c,v 1.166 2020/02/22 00:42:15 kamil Exp $");
 #endif
 #endif /* not lint */
 
@@ -1498,7 +1498,7 @@ print_getmsg(struct rt_msghdr *rtm, int msglen, struct sou *soup)
 	struct sockaddr_dl *ifp = NULL;
 	struct sockaddr *sa;
 	char *cp;
-	int i;
+	unsigned int i;
 
 	if (! shortoutput) {
 		(void)printf("   route to: %s\n",
