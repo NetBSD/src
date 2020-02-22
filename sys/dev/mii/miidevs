@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.162 2020/02/05 06:38:20 msaitoh Exp $
+$NetBSD: miidevs,v 1.163 2020/02/22 18:56:57 jmcneill Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -219,6 +219,7 @@ model BROADCOM3 BCM5719C	0x0022 BCM5719C 1000BASE-T media interface
 model BROADCOM3 BCM57765	0x0024 BCM57765 1000BASE-T media interface
 model BROADCOM3 BCM53125	0x0032 BCM53125 1000BASE-T switch
 model BROADCOM3 BCM5720C	0x0036 BCM5720C 1000BASE-T media interface
+model BROADCOM4 BCM54213PE	0x000a BCM54213PE 1000BASE-T media interface
 model BROADCOM4 BCM5725C	0x0038 BCM5725C 1000BASE-T media interface
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
 
