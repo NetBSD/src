@@ -1,4 +1,4 @@
-.\"	$NetBSD: rand48.3,v 1.12 2020/02/22 11:56:13 kamil Exp $
+.\"	$NetBSD: rand48.3,v 1.13 2020/02/22 13:20:21 kamil Exp $
 .\"
 .\" Copyright (c) 1993 Martin Birgmeier
 .\" All rights reserved.
@@ -98,7 +98,7 @@ On the other hand,
 and
 .Fn jrand48
 use a user-supplied buffer to store the seed r(n), which consists
-of an array of unsigned 3 shorts, where the zeroth member holds the least
+of an array of 3 unsigned shorts, where the zeroth member holds the least
 significant bits.
 .Pp
 All functions share the same multiplicand and addend.
