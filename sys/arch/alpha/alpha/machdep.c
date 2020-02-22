@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.c,v 1.357 2019/12/31 13:07:09 ad Exp $ */
+/* $NetBSD: machdep.c,v 1.358 2020/02/22 17:33:42 thorpej Exp $ */
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2019 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>			/* RCS ID & Copyright macro defns */
 
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.357 2019/12/31 13:07:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.358 2020/02/22 17:33:42 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -216,8 +216,9 @@ const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
 };
 
 void
-alpha_init(u_long pfn, u_long ptb, u_long bim, u_long bip, u_long biv)
-	/* pfn:		 first free PFN number */
+alpha_init(u_long xxx_pfn __unused, u_long ptb, u_long bim, u_long bip,
+    u_long biv)
+	/* pfn:		 first free PFN number (no longer used) */
 	/* ptb:		 PFN of current level 1 page table */
 	/* bim:		 bootinfo magic */
 	/* bip:		 bootinfo pointer */
