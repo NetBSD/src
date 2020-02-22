@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.50 2020/02/22 08:01:59 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.51 2020/02/22 08:03:19 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.50 2020/02/22 08:01:59 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.51 2020/02/22 08:03:19 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5546,7 +5546,6 @@ audio_pmixer_halt(struct audio_softc *sc)
 
 	mutex_enter(sc->sc_intr_lock);
 	error = sc->hw_if->halt_output(sc->hw_hdl);
-	mutex_exit(sc->sc_intr_lock);
 
 	/* Halts anyway even if some error has occurred. */
 	sc->sc_pbusy = false;
@@ -5554,6 +5553,7 @@ audio_pmixer_halt(struct audio_softc *sc)
 	sc->sc_pmixer->hwbuf.used = 0;
 	sc->sc_pmixer->mixseq = 0;
 	sc->sc_pmixer->hwseq = 0;
+	mutex_exit(sc->sc_intr_lock);
 
 	return error;
 }
@@ -5576,7 +5576,6 @@ audio_rmixer_halt(struct audio_softc *sc)
 
 	mutex_enter(sc->sc_intr_lock);
 	error = sc->hw_if->halt_input(sc->hw_hdl);
-	mutex_exit(sc->sc_intr_lock);
 
 	/* Halts anyway even if some error has occurred. */
 	sc->sc_rbusy = false;
@@ -5584,6 +5583,7 @@ audio_rmixer_halt(struct audio_softc *sc)
 	sc->sc_rmixer->hwbuf.used = 0;
 	sc->sc_rmixer->mixseq = 0;
 	sc->sc_rmixer->hwseq = 0;
+	mutex_exit(sc->sc_intr_lock);
 
 	return error;
 }
