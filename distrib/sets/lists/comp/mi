@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2310 2020/02/07 18:48:58 kamil Exp $
+#	$NetBSD: mi,v 1.2311 2020/02/22 21:24:44 ad Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -11792,6 +11792,7 @@
 ./usr/share/man/cat9/rw_exit.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_init.0			comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_lock_held.0		comp-sys-catman		.cat
+./usr/share/man/cat9/rw_lock_op.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_read_held.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_tryenter.0		comp-sys-catman		.cat
 ./usr/share/man/cat9/rw_tryupgrade.0		comp-sys-catman		.cat
@@ -19710,6 +19711,7 @@
 ./usr/share/man/html9/rw_exit.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rw_init.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rw_lock_held.html		comp-sys-htmlman	html
+./usr/share/man/html9/rw_lock_op.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rw_read_held.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rw_tryenter.html		comp-sys-htmlman	html
 ./usr/share/man/html9/rw_tryupgrade.html	comp-sys-htmlman	html
@@ -27811,6 +27813,7 @@
 ./usr/share/man/man9/rw_exit.9			comp-sys-man		.man
 ./usr/share/man/man9/rw_init.9			comp-sys-man		.man
 ./usr/share/man/man9/rw_lock_held.9		comp-sys-man		.man
+./usr/share/man/man9/rw_lock_op.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_read_held.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_tryenter.9		comp-sys-man		.man
 ./usr/share/man/man9/rw_tryupgrade.9		comp-sys-man		.man
