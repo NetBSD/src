@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.540 2020/01/17 20:08:09 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.541 2020/02/22 08:58:39 maxv Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.540 2020/01/17 20:08:09 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.541 2020/02/22 08:58:39 maxv Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2286,10 +2286,12 @@ do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
 			error = EINVAL;
 			break;
 		}
+
+		if (error == 0 && optype == VOP_MKNOD_DESCOFFSET &&
+		    vattr.va_rdev == VNOVAL)
+			error = EINVAL;
 	}
-	if (error == 0 && optype == VOP_MKNOD_DESCOFFSET
-	    && vattr.va_rdev == VNOVAL)
-		error = EINVAL;
+
 	if (!error) {
 		switch (optype) {
 		case VOP_WHITEOUT_DESCOFFSET:
