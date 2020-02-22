@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.51 2017/06/22 22:36:50 chs Exp $ */
+/* $NetBSD: privcmd.c,v 1.52 2020/02/22 19:46:48 chs Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.51 2017/06/22 22:36:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.52 2020/02/22 19:46:48 chs Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -502,7 +502,6 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		    PMAP_CANFAIL | ufi->entry->protection,
 		    pobj->domid);
 		if (error == ENOMEM) {
-			error = ERESTART;
 			break;
 		}
 		if (error) {
@@ -513,10 +512,6 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	}
 	pmap_update(ufi->orig_map->pmap);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-
-	if (error == ERESTART) {
-		uvm_wait("privpgop_fault");
-	}
 	return error;
 }
 
