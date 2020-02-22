@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.48 2020/02/22 07:09:18 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.49 2020/02/22 07:59:47 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.48 2020/02/22 07:09:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.49 2020/02/22 07:59:47 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -5224,12 +5224,12 @@ audio_pintr(void *arg)
 
 	if (sc->sc_dying)
 		return;
-#if defined(DIAGNOSTIC)
 	if (sc->sc_pbusy == false) {
+#if defined(DIAGNOSTIC)
 		device_printf(sc->sc_dev, "stray interrupt\n");
+#endif
 		return;
 	}
-#endif
 
 	mixer = sc->sc_pmixer;
 	mixer->hw_complete_counter += mixer->frames_per_block;
@@ -5492,12 +5492,12 @@ audio_rintr(void *arg)
 
 	if (sc->sc_dying)
 		return;
-#if defined(DIAGNOSTIC)
 	if (sc->sc_rbusy == false) {
+#if defined(DIAGNOSTIC)
 		device_printf(sc->sc_dev, "stray interrupt\n");
+#endif
 		return;
 	}
-#endif
 
 	mixer = sc->sc_rmixer;
 	mixer->hw_complete_counter += mixer->frames_per_block;
