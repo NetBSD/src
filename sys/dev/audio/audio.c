@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.52 2020/02/22 08:15:09 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.53 2020/02/22 19:49:11 chs Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.52 2020/02/22 08:15:09 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.53 2020/02/22 19:49:11 chs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -188,7 +188,7 @@ __KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.52 2020/02/22 08:15:09 isaki Exp $");
 
 #include <machine/endian.h>
 
-#include <uvm/uvm.h>
+#include <uvm/uvm_extern.h>
 
 #include "ioconf.h"
 
