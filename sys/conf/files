@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1255 2020/02/08 07:07:07 maxv Exp $
+#	$NetBSD: files,v 1.1256 2020/02/22 00:28:35 jmcneill Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -1469,6 +1469,10 @@ file	dev/ic/dw_hdmi_phy.c		dwhdmi
 # Analogix DisplayPort
 device	anxdp: edid, videomode, drmkms, drmkms_i2c
 file	dev/ic/anx_dp.c			anxdp
+
+# Broadcom GENET v5 ethernet
+device	genet: arp, ether, ifnet, mii
+file	dev/ic/bcmgenet.c		genet
 
 #
 # File systems
