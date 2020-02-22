@@ -1,0 +1,29 @@
+#	$NetBSD: list.zfsroot,v 1.1 2020/02/22 09:53:47 roy Exp $
+#
+# list file (c.f. parselist.awk) for ZFS on root.
+#
+
+SRCDIRS	external/cddl/osnet/sbin
+PROG	sbin/zfs
+PROG	sbin/zpool
+LINK	sbin/zfs sbin/mount_zfs
+ARGVLN	zfs mount_zfs
+
+# We need sysctl to set init.root=/altroot
+PROG	sbin/sysctl
+
+LIBS	-lnvpair
+LIBS	-luutil
+LIBS	-lzfs
+LIBS	-lavl
+LIBS	-lm
+LIBS	-lpthread
+LIBS	-lumem
+#LIBS	-lutil		# replaced by libhack
+LIBS	-lz
+LIBS	-lzfs_core
+
+COPY	${NETBSDSRCDIR}/distrib/common/zfsroot.rc etc/rc
+
+# Make firmware images available.
+SYMLINK	altroot/libdata libdata
