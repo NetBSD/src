@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.98 2020/02/23 08:38:58 riastradh Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.99 2020/02/23 08:40:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.98 2020/02/23 08:38:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.99 2020/02/23 08:40:37 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -575,7 +575,7 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 {
 	int error = 0;
 
-	ASSERT_MAYBE_SEGLOCK(fs);
+	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
 
 	/* disallow dirops during flush */
@@ -594,6 +594,21 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 	mutex_exit(&lfs_lock);
 
 	return error;
+}
+
+int
+lfs_writer_tryenter(struct lfs *fs)
+{
+	int writer_set;
+
+	ASSERT_MAYBE_SEGLOCK(fs);
+	mutex_enter(&lfs_lock);
+	writer_set = (fs->lfs_dirops == 0);
+	if (writer_set)
+		fs->lfs_writer++;
+	mutex_exit(&lfs_lock);
+
+	return writer_set;
 }
 
 void
