@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_alloc.c,v 1.139 2020/02/22 00:32:08 kamil Exp $	*/
+/*	$NetBSD: lfs_alloc.c,v 1.140 2020/02/23 08:49:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.139 2020/02/22 00:32:08 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_alloc.c,v 1.140 2020/02/23 08:49:34 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -757,7 +757,7 @@ lfs_order_freelist(struct lfs *fs)
 		 * but presumably it doesn't work... not sure what
 		 * happens to such files currently. -- dholland 20160806
 		 */
-		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE &&
+		if (lfs_if_getnextfree(fs, ifp) == LFS_ORPHAN_NEXTFREE(fs) &&
 		    VFS_VGET(fs->lfs_ivnode->v_mount, ino, LK_EXCLUSIVE, &vp)
 		     == 0) {
 			unsigned segno;
@@ -852,6 +852,6 @@ lfs_orphan(struct lfs *fs, ino_t ino)
 	struct buf *bp;
 
 	LFS_IENTRY(ifp, fs, ino, bp);
-	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE);
+	lfs_if_setnextfree(fs, ifp, LFS_ORPHAN_NEXTFREE(fs));
 	LFS_BWRITE_LOG(bp);
 }
