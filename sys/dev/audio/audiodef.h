@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.9 2020/02/22 06:58:39 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.10 2020/02/23 07:17:01 isaki Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -201,6 +201,9 @@ struct audio_file {
 
 	/* process who wants audio SIGIO. */
 	pid_t		async_audio;
+
+	/* true when closing */
+	bool		dying;
 
 	SLIST_ENTRY(audio_file) entry;
 };

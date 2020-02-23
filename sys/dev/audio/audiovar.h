@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.7 2020/01/11 04:53:10 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.8 2020/02/23 07:17:01 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -69,6 +69,8 @@
 
 #include <sys/condvar.h>
 #include <sys/proc.h>
+#include <sys/pserialize.h>
+#include <sys/psref.h>
 #include <sys/queue.h>
 
 #include <dev/audio/audio_if.h>
@@ -216,6 +218,13 @@ struct audio_softc {
 	 */
 	int sc_exlock;
 	kcondvar_t sc_exlockcv;
+
+	/*
+	 * Passive reference to prevent a race between detach and fileops.
+	 * pserialize_perform(sc_psz) must be protected by sc_lock.
+	 */
+	pserialize_t sc_psz;
+	struct psref_target sc_psref;
 
 	/*
 	 * Must be protected by sc_lock (?)
