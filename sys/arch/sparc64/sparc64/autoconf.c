@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.216 2020/02/02 06:38:23 macallan Exp $ */
+/*	$NetBSD: autoconf.c,v 1.217 2020/02/23 05:14:29 macallan Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.216 2020/02/02 06:38:23 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.217 2020/02/23 05:14:29 macallan Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1088,6 +1088,28 @@ add_gpio_props_v210(device_t dev, void *aux)
 	}
 }
 
+static void
+add_drivebay_props_v210(device_t dev, int ofnode, void *aux)
+{
+	struct scsipibus_attach_args *sa = aux;
+	int target = sa->sa_periph->periph_target;
+	char path[256]= "";
+
+	OF_package_to_path(ofnode, path, sizeof(path));
+
+	/* see if we're on the onboard controller's 1st channel */
+	if (strcmp(path, "/pci@1c,600000/scsi@2") != 0)
+		return;
+	/* yes, yes we are */
+	if ( target < 2) {
+		prop_dictionary_t dict = device_properties(dev);
+		char name[16];
+
+		snprintf(name, sizeof(name), "bay%d", target);		
+		prop_dictionary_set_cstring(dict, "location", name);
+	}
+}
+
 /*
  * Called back during autoconfiguration for each device found
  */
@@ -1163,6 +1185,12 @@ device_register(device_t dev, void *aux)
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_bi_unit_drive_match(dev, ofnode, periph->periph_target + off,
 		    0, periph->periph_lun);
+		if (device_is_a(busdev, "scsibus")) {
+			/* see if we're in a known SCA drivebay */
+			if (strcmp(machine_model, "SUNW,Sun-Fire-V210") == 0) {
+				add_drivebay_props_v210(dev, ofnode, aux);
+			}
+		}
 		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;
