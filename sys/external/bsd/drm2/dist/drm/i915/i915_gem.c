@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.60 2020/02/22 19:46:48 chs Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.61 2020/02/23 15:46:40 ad Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.60 2020/02/22 19:46:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.61 2020/02/23 15:46:40 ad Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -2010,7 +2010,7 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	intel_runtime_pm_get(dev_priv);
 
 	/* Thanks, uvm, but we don't need this lock.  */
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
@@ -2050,7 +2050,7 @@ unpin:
 unlock:
 	mutex_unlock(&dev->struct_mutex);
 out:
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 
 	/*
@@ -2549,7 +2549,7 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 
 		if (uobj != NULL) {
 			/* XXX Calling pgo_put like this is bogus.  */
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			(*uobj->pgops->pgo_put)(uobj, 0, obj->base.size,
 			    (PGO_ALLPAGES | PGO_FREE));
 		}
@@ -2587,7 +2587,7 @@ i915_gem_object_invalidate(struct drm_i915_gem_object *obj)
 
 #ifdef __NetBSD__
 	uobj = obj->base.filp;
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	(*uobj->pgops->pgo_put)(uobj, 0, obj->base.size,
 	    PGO_ALLPAGES|PGO_DEACTIVATE|PGO_CLEANIT);
 #else
@@ -2624,12 +2624,12 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 		obj->dirty = 0;
 
 	if (obj->dirty) {
-		mutex_enter(obj->base.filp->vmobjlock);
+		rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
 		TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
 			uvm_pagemarkdirty(page, UVM_PAGE_STATUS_DIRTY);
 			/* XXX mark page accessed */
 		}
-		mutex_exit(obj->base.filp->vmobjlock);
+		rw_exit(obj->base.filp->vmobjlock);
 	}
 	obj->dirty = 0;
 

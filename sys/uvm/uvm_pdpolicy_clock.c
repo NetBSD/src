@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.32 2020/01/30 12:28:51 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clock.c,v 1.33 2020/02/23 15:46:43 ad Exp $	*/
 /*	NetBSD: uvm_pdaemon.c,v 1.72 2006/01/05 10:47:33 yamt Exp $	*/
 
 /*-
@@ -98,7 +98,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.32 2020/01/30 12:28:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clock.c,v 1.33 2020/02/23 15:46:43 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -236,12 +236,12 @@ uvmpdpol_scanfini(void)
 }
 
 struct vm_page *
-uvmpdpol_selectvictim(kmutex_t **plock)
+uvmpdpol_selectvictim(krwlock_t **plock)
 {
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 	struct uvmpdpol_scanstate *ss = &pdpol_scanstate;
 	struct vm_page *pg;
-	kmutex_t *lock;
+	krwlock_t *lock;
 
 	mutex_enter(&s->lock);
 	while (/* CONSTCOND */ 1) {
@@ -335,7 +335,7 @@ uvmpdpol_selectvictim(kmutex_t **plock)
 			uvmpdpol_pageactivate_locked(pg);
 			mutex_exit(&pg->interlock);
 			uvmexp.pdreact++;
-			mutex_exit(lock);
+			rw_exit(lock);
 			continue;
 		}
 
@@ -353,7 +353,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 	struct uvmpdpol_globalstate *s = &pdpol_state;
 	int inactive_shortage;
 	struct vm_page *p, marker;
-	kmutex_t *lock;
+	krwlock_t *lock;
 
 	/*
 	 * we have done the scan to get free pages.   now we work on meeting
@@ -429,7 +429,7 @@ uvmpdpol_balancequeue(int swap_shortage)
 			uvmexp.pddeact++;
 			inactive_shortage--;
 		}
-		mutex_exit(lock);
+		rw_exit(lock);
 	}
 	TAILQ_REMOVE(&pdpol_state.s_activeq, &marker, pdqueue);
 	mutex_exit(&s->lock);
@@ -462,7 +462,7 @@ void
 uvmpdpol_pagedeactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	/*
@@ -493,7 +493,7 @@ void
 uvmpdpol_pageactivate(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_A);
@@ -524,7 +524,7 @@ void
 uvmpdpol_pagedequeue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_D);
@@ -534,7 +534,7 @@ void
 uvmpdpol_pageenqueue(struct vm_page *pg)
 {
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(mutex_owned(&pg->interlock));
 
 	uvmpdpol_set_intent(pg, PQ_INTENT_E);

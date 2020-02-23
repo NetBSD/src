@@ -1,4 +1,4 @@
-/*	$NetBSD: proc.h,v 1.358 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: proc.h,v 1.359 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -513,6 +513,7 @@ void	fixjobc(struct proc *, struct pgrp *, int);
 
 int	tsleep(wchan_t, pri_t, const char *, int);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
+int	rwtsleep(wchan_t, pri_t, const char *, int, krwlock_t *);
 void	wakeup(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int, int) __dead;
