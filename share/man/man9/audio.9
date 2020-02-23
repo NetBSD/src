@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.56 2019/06/12 13:53:25 wiz Exp $
+.\"	$NetBSD: audio.9,v 1.57 2020/02/23 04:02:45 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -395,6 +395,7 @@ Calling
 will normally initiate another call to
 .Va start_output .
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support playback.
 It is called in the Opened phase.
 .It Dv int start_input(void *hdl, void *block, int blksize,
 .Dv "void (*intr)(void*), void *intrarg)"
@@ -415,18 +416,21 @@ Calling
 will normally initiate another call to
 .Va start_input .
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support recording.
 It is called in the Opened phase.
 .It Dv int halt_output(void *hdl)
 is called to abort the output transfer (started by
 .Va start_output )
 in progress.
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support playback.
 It is called in the Opened phase.
 .It Dv int halt_input(void *hdl)
 is called to abort the input transfer (started by
 .Va start_input )
 in progress.
 Return 0 on success, otherwise an error code.
+This field is optional only if the driver doesn't support recording,
 It is called in the Opened phase.
 .It Dv int speaker_ctl(void *hdl, int on)
 optional, is called when a half duplex device changes between
