@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2019/11/11 22:45:02 joerg Exp $
+# $NetBSD: Makefile,v 1.2 2020/02/23 02:01:17 joerg Exp $
 
 .include <bsd.own.mk>
 
@@ -116,7 +116,7 @@ SUBDIR+= \
 	libLLVMRuntimeDyld
 .endif
 
-.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes
+.if ${NO_LLVM_DEVELOPER:Uno} == "no" && ${LLVM_DEVELOPER:U} == "yes"
 SUBDIR+= \
 	libLLVMDebugInfoPDB \
 	libLLVMDebugInfoPDBNative \
