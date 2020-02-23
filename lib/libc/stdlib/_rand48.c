@@ -1,4 +1,4 @@
-/*	$NetBSD: _rand48.c,v 1.9 2020/02/22 14:07:57 kamil Exp $	*/
+/*	$NetBSD: _rand48.c,v 1.10 2020/02/23 09:53:42 kamil Exp $	*/
 
 /*
  * Copyright (c) 1993 Martin Birgmeier
@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #if defined(LIBC_SCCS) && !defined(lint)
-__RCSID("$NetBSD: _rand48.c,v 1.9 2020/02/22 14:07:57 kamil Exp $");
+__RCSID("$NetBSD: _rand48.c,v 1.10 2020/02/23 09:53:42 kamil Exp $");
 #endif /* LIBC_SCCS and not lint */
 
 #include <assert.h>
@@ -50,9 +50,9 @@ __dorand48(unsigned short xseed[3])
 	accu += (unsigned long) __rand48_mult[1] * (unsigned long) xseed[0];
 	temp[1] = (unsigned short) accu;	/* middle 16 bits */
 	accu >>= sizeof(unsigned short) * 8;
-	accu += (unsigned int) __rand48_mult[0] * (unsigned int) xseed[2];
-	accu += (unsigned int) __rand48_mult[1] * (unsigned int) xseed[1];
-	accu += (unsigned int) __rand48_mult[2] * (unsigned int) xseed[0];
+	accu += (unsigned long) __rand48_mult[0] * (unsigned long) xseed[2];
+	accu += (unsigned long) __rand48_mult[1] * (unsigned long) xseed[1];
+	accu += (unsigned long) __rand48_mult[2] * (unsigned long) xseed[0];
 	xseed[0] = temp[0];
 	xseed[1] = temp[1];
 	xseed[2] = (unsigned short) accu;
