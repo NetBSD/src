@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.201 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.202 2020/02/23 22:14:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.201 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.202 2020/02/23 22:14:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -293,21 +293,19 @@ genfs_deadlock(void *v)
 		return ENOENT;
 
 	if (ISSET(flags, LK_DOWNGRADE)) {
-		rw_downgrade(vip->vi_lock);
+		rw_downgrade(&vip->vi_lock);
 	} else if (ISSET(flags, LK_UPGRADE)) {
-		if (!rw_tryupgrade(vip->vi_lock)) {
-			if (ISSET(flags, LK_NOWAIT))
-				return EBUSY;
-			rw_exit(vip->vi_lock);
-			rw_enter(vip->vi_lock, RW_WRITER);
+		KASSERT(ISSET(flags, LK_NOWAIT));
+		if (!rw_tryupgrade(&vip->vi_lock)) {
+			return EBUSY;
 		}
-	} else {
+	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
 		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 		if (ISSET(flags, LK_NOWAIT)) {
-			if (!rw_tryenter(vip->vi_lock, op))
+			if (!rw_tryenter(&vip->vi_lock, op))
 				return EBUSY;
 		} else {
-			rw_enter(vip->vi_lock, op);
+			rw_enter(&vip->vi_lock, op);
 		}
 	}
 	VSTATE_ASSERT_UNLOCKED(vp, VS_RECLAIMED);
@@ -326,7 +324,7 @@ genfs_deadunlock(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	rw_exit(vip->vi_lock);
+	rw_exit(&vip->vi_lock);
 
 	return 0;
 }
@@ -347,21 +345,19 @@ genfs_lock(void *v)
 	krw_t op;
 
 	if (ISSET(flags, LK_DOWNGRADE)) {
-		rw_downgrade(vip->vi_lock);
+		rw_downgrade(&vip->vi_lock);
 	} else if (ISSET(flags, LK_UPGRADE)) {
-		if (!rw_tryupgrade(vip->vi_lock)) {
-			if (ISSET(flags, LK_NOWAIT))
-				return EBUSY;
-			rw_exit(vip->vi_lock);
-			rw_enter(vip->vi_lock, RW_WRITER);
+		KASSERT(ISSET(flags, LK_NOWAIT));
+		if (!rw_tryupgrade(&vip->vi_lock)) {
+			return EBUSY;
 		}
-	} else {
+	} else if ((flags & (LK_EXCLUSIVE | LK_SHARED)) != 0) {
 		op = (ISSET(flags, LK_EXCLUSIVE) ? RW_WRITER : RW_READER);
 		if (ISSET(flags, LK_NOWAIT)) {
-			if (!rw_tryenter(vip->vi_lock, op))
+			if (!rw_tryenter(&vip->vi_lock, op))
 				return EBUSY;
 		} else {
-			rw_enter(vip->vi_lock, op);
+			rw_enter(&vip->vi_lock, op);
 		}
 	}
 	VSTATE_ASSERT_UNLOCKED(vp, VS_ACTIVE);
@@ -380,7 +376,7 @@ genfs_unlock(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	rw_exit(vip->vi_lock);
+	rw_exit(&vip->vi_lock);
 
 	return 0;
 }
@@ -397,10 +393,10 @@ genfs_islocked(void *v)
 	vnode_t *vp = ap->a_vp;
 	vnode_impl_t *vip = VNODE_TO_VIMPL(vp);
 
-	if (rw_write_held(vip->vi_lock))
+	if (rw_write_held(&vip->vi_lock))
 		return LK_EXCLUSIVE;
 
-	if (rw_read_held(vip->vi_lock))
+	if (rw_read_held(&vip->vi_lock))
 		return LK_SHARED;
 
 	return 0;

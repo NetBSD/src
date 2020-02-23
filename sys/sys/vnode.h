@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.288 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.289 2020/02/23 22:14:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -138,22 +138,36 @@ LIST_HEAD(buflists, buf);
  * it from v_data.
  */
 struct vnode {
-	struct uvm_object v_uobj;		/* i   the VM object */
-	kmutex_t	*v_interlock;		/* -   vnode interlock */
-	kcondvar_t	v_cv;			/* i   synchronization */
+	/*
+	 * VM system related items.
+	 */
+	struct uvm_object v_uobj;		/* u   the VM object */
 	voff_t		v_size;			/* i+u size of file */
 	voff_t		v_writesize;		/* i+u new size after write */
-	int		v_iflag;		/* i   VI_* flags */
-	int		v_vflag;		/* v   VV_* flags */
+
+	/*
+	 * Unstable items get their own cache line.
+	 * On _LP64 this fills the space nicely.
+	 */
+	kcondvar_t	v_cv			/* i   synchronization */
+	    __aligned(COHERENCY_UNIT);
+	int		v_iflag;		/* i+u VI_* flags */
 	int		v_uflag;		/* k   VU_* flags */
 	int		v_usecount;		/* i   reference count */
 	int		v_numoutput;		/* i   # of pending writes */
 	int		v_writecount;		/* i   ref count of writers */
 	int		v_holdcnt;		/* i   page & buffer refs */
-	struct mount	*v_mount;		/* v   ptr to vfs we are in */
-	int		(**v_op)(void *);	/* -   vnode operations vector */
 	struct buflists	v_cleanblkhd;		/* i+b clean blocklist head */
 	struct buflists	v_dirtyblkhd;		/* i+b dirty blocklist head */
+
+	/*
+	 * The remaining items are largely stable.
+	 */
+	int		v_vflag			/* v   VV_* flags */
+	    __aligned(COHERENCY_UNIT);
+	kmutex_t	*v_interlock;		/* -   vnode interlock */
+	struct mount	*v_mount;		/* v   ptr to vfs we are in */
+	int		(**v_op)(void *);	/* :   vnode operations vector */
 	union {
 		struct mount	*vu_mountedhere;/* v   ptr to vfs (VDIR) */
 		struct socket	*vu_socket;	/* v   unix ipc (VSOCK) */
@@ -327,35 +341,10 @@ extern const int	vttoif_tab[];
 #define VDEAD_NOWAIT	0x0001		/* vdead_check: do not sleep */
 
 void holdrelel(struct vnode *);
+void holdrele(struct vnode *);
 void vholdl(struct vnode *);
+void vhold(struct vnode *);
 void vref(struct vnode *);
-
-static __inline void holdrele(struct vnode *) __unused;
-static __inline void vhold(struct vnode *) __unused;
-
-/*
- * decrease buf or page ref
- */
-static __inline void
-holdrele(struct vnode *vp)
-{
-
-	mutex_enter(vp->v_interlock);
-	holdrelel(vp);
-	mutex_exit(vp->v_interlock);
-}
-
-/*
- * increase buf or page ref
- */
-static __inline void
-vhold(struct vnode *vp)
-{
-
-	mutex_enter(vp->v_interlock);
-	vholdl(vp);
-	mutex_exit(vp->v_interlock);
-}
 
 #define	NULLVP	((struct vnode *)NULL)
 
