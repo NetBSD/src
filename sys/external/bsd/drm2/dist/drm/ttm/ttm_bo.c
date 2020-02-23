@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.19 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.20 2020/02/23 15:46:40 ad Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.19 2020/02/14 14:34:59 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.20 2020/02/23 15:46:40 ad Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -299,7 +299,7 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 	 * set the uao to have the main uvm object's lock.  However,
 	 * uvm_obj_setlock is not safe on uvm_aobjs.
 	 */
-	mutex_obj_hold(bo->ttm->swap_storage->vmobjlock);
+	rw_obj_hold(bo->ttm->swap_storage->vmobjlock);
 	uvm_obj_setlock(&bo->uvmobj, bo->ttm->swap_storage->vmobjlock);
 	return 0;
 #else
@@ -1622,11 +1622,11 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 	} else if (bo->ttm != NULL) {
 		unsigned i;
 
-		mutex_enter(bo->uvmobj.vmobjlock);
+		rw_enter(bo->uvmobj.vmobjlock, RW_WRITER);
 		for (i = 0; i < bo->ttm->num_pages; i++)
 			pmap_page_protect(&bo->ttm->pages[i]->p_vmp,
 			    VM_PROT_NONE);
-		mutex_exit(bo->uvmobj.vmobjlock);
+		rw_exit(bo->uvmobj.vmobjlock);
 	}
 #else
 	struct ttm_bo_device *bdev = bo->bdev;

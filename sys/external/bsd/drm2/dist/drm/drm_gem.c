@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_gem.c,v 1.14 2020/02/14 14:34:57 maya Exp $	*/
+/*	$NetBSD: drm_gem.c,v 1.15 2020/02/23 15:46:40 ad Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.14 2020/02/14 14:34:57 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem.c,v 1.15 2020/02/23 15:46:40 ad Exp $");
 
 #include <linux/types.h>
 #include <linux/slab.h>
@@ -163,7 +163,7 @@ int drm_gem_object_init(struct drm_device *dev,
 	 * set the uao to have the main uvm object's lock.  However,
 	 * uvm_obj_setlock is not safe on uvm_aobjs.
 	 */
-	mutex_obj_hold(obj->filp->vmobjlock);
+	rw_obj_hold(obj->filp->vmobjlock);
 	uvm_obj_setlock(&obj->gemo_uvmobj, obj->filp->vmobjlock);
 #else
 	filp = shmem_file_setup("drm mm object", size, VM_NORESERVE);
@@ -605,10 +605,10 @@ drm_gem_put_pages(struct drm_gem_object *obj, struct page **pages, bool dirty,
 
 	for (i = 0; i < (obj->size >> PAGE_SHIFT); i++) {
 		if (dirty) {
-			mutex_enter(obj->filp->vmobjlock);
+			rw_enter(obj->filp->vmobjlock, RW_WRITER);
 			uvm_pagemarkdirty(&pages[i]->p_vmp,
 			    UVM_PAGE_STATUS_DIRTY);
-			mutex_exit(obj->filp->vmobjlock);
+			rw_exit(obj->filp->vmobjlock);
 		}
 	}
 

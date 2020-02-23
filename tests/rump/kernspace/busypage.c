@@ -1,4 +1,4 @@
-/*	$NetBSD: busypage.c,v 1.5 2011/08/07 14:03:15 rmind Exp $	*/
+/*	$NetBSD: busypage.c,v 1.6 2020/02/23 15:46:43 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -29,7 +29,7 @@
 
 #include <sys/cdefs.h>
 #if !defined(lint)
-__RCSID("$NetBSD: busypage.c,v 1.5 2011/08/07 14:03:15 rmind Exp $");
+__RCSID("$NetBSD: busypage.c,v 1.6 2020/02/23 15:46:43 ad Exp $");
 #endif /* !lint */
 
 #include <sys/param.h>
@@ -52,11 +52,15 @@ static void
 thread(void *arg)
 {
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	threadrun = true;
+#ifdef notyet
 	cv_signal(&tcv);
+#else
+	wakeup(&tcv);
+#endif
 	testpg->flags |= PG_WANTED;
-	UVM_UNLOCK_AND_WAIT(testpg, uobj->vmobjlock, false, "tw", 0);
+	UVM_UNLOCK_AND_WAIT_RW(testpg, uobj->vmobjlock, false, "tw", 0);
 	kthread_exit(0);
 }
 
@@ -69,9 +73,9 @@ rumptest_busypage()
 	cv_init(&tcv, "napina");
 
 	uobj = uao_create(1, 0);
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	testpg = uvm_pagealloc(uobj, 0, NULL, 0);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 	if (testpg == NULL)
 		panic("couldn't create vm page");
 
@@ -80,12 +84,17 @@ rumptest_busypage()
 	if (rv)
 		panic("thread creation failed: %d", rv);
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
+#ifdef notyet
 	while (!threadrun)
 		cv_wait(&tcv, uobj->vmobjlock);
+#else
+	while (!threadrun)
+		rwtsleep(&tcv, 0, "nutter", 0, uobj->vmobjlock);
+#endif
 
 	uvm_page_unbusy(&testpg, 1);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	rv = kthread_join(newl);
 	if (rv)
