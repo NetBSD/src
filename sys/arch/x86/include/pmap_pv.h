@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_pv.h,v 1.10 2020/01/12 13:01:11 ad Exp $	*/
+/*	$NetBSD: pmap_pv.h,v 1.11 2020/02/23 15:46:39 ad Exp $	*/
 
 /*-
  * Copyright (c)2008 YAMAMOTO Takashi,
@@ -72,6 +72,7 @@ struct pmap_page {
 		LIST_ENTRY(vm_page) u_link;
 	} pp_u;
 	LIST_HEAD(, pv_entry) pp_pvlist;
+	__cpu_simple_lock_t pp_lock;
 #define	pp_pte	pp_u.u_pte
 #define	pp_link	pp_u.u_link
 	uint8_t pp_flags;
@@ -85,6 +86,10 @@ struct pmap_page {
 #define	PP_EMBEDDED	1
 #define	PP_FREEING	2
 
-#define	PMAP_PAGE_INIT(pp)	LIST_INIT(&(pp)->pp_pvlist)
+#define	PMAP_PAGE_INIT(pp) \
+do { \
+	LIST_INIT(&(pp)->pp_pvlist); \
+	__cpu_simple_lock_init(&(pp)->pp_lock); \
+} while (0);
 
 #endif /* !_X86_PMAP_PV_H_ */

@@ -1,4 +1,4 @@
-/*	$NetBSD: coda_vnops.c,v 1.108 2020/01/17 20:08:06 ad Exp $	*/
+/*	$NetBSD: coda_vnops.c,v 1.109 2020/02/23 15:46:39 ad Exp $	*/
 
 /*
  *
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.108 2020/01/17 20:08:06 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: coda_vnops.c,v 1.109 2020/02/23 15:46:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1764,8 +1764,7 @@ coda_grab_vnode(vnode_t *uvp, dev_t dev, ino_t ino, vnode_t **vpp)
 	return(ENOENT);
     }
     /* share the underlying vnode lock with the coda vnode */
-    mutex_obj_hold((*vpp)->v_interlock);
-    uvm_obj_setlock(&uvp->v_uobj, (*vpp)->v_interlock);
+    vshareilock(*vpp, uvp);
     KASSERT(VOP_ISLOCKED(*vpp));
     return(0);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.h,v 1.77 2020/01/12 17:46:55 ad Exp $	*/
+/*	$NetBSD: uvm_map.h,v 1.78 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -329,7 +329,7 @@ void		vm_map_unlock_read(struct vm_map *);
 void		vm_map_busy(struct vm_map *);
 bool		vm_map_locked_p(struct vm_map *);
 
-void		uvm_map_lock_entry(struct vm_map_entry *);
+void		uvm_map_lock_entry(struct vm_map_entry *, krw_t);
 void		uvm_map_unlock_entry(struct vm_map_entry *);
 
 #endif /* _KERNEL */

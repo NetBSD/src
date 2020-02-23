@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.52 2020/02/22 19:46:48 chs Exp $ */
+/* $NetBSD: privcmd.c,v 1.53 2020/02/23 15:46:39 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.52 2020/02/22 19:46:48 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.53 2020/02/23 15:46:39 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,9 +450,9 @@ static struct uvm_pagerops privpgops = {
 static void
 privpgop_reference(struct uvm_object *uobj)
 {
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uobj->uo_refs++;
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 }
 
 static void
@@ -460,13 +460,13 @@ privpgop_detach(struct uvm_object *uobj)
 {
 	struct privcmd_object *pobj = (struct privcmd_object *)uobj;
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 		return;
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 	kmem_free(pobj->maddr, sizeof(paddr_t) * pobj->npages);
 	uvm_obj_destroy(uobj, true);
 	kmem_free(pobj, sizeof(struct privcmd_object));

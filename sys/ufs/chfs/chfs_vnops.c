@@ -1,4 +1,4 @@
-/*	$NetBSD: chfs_vnops.c,v 1.35 2020/01/17 20:08:10 ad Exp $	*/
+/*	$NetBSD: chfs_vnops.c,v 1.36 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 Department of Software Engineering,
@@ -859,7 +859,7 @@ chfs_write(void *v)
 		if (error)
 			goto out;
 		if (flags & B_SYNC) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			VOP_PUTPAGES(vp,
 			    trunc_page(osize & chmp->chm_fs_bmask),
 			    round_page(eob),
@@ -954,7 +954,7 @@ chfs_write(void *v)
 		 */
 
 		if (!async && oldoff >> 16 != uio->uio_offset >> 16) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, (oldoff >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
 			    PGO_CLEANIT | PGO_JOURNALLOCKED);
@@ -964,7 +964,7 @@ chfs_write(void *v)
 	}
 out:
 	if (error == 0 && ioflag & IO_SYNC) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp,
 		    trunc_page(origoff & chmp->chm_fs_bmask),
 		    round_page(chfs_blkroundup(chmp, uio->uio_offset)),
