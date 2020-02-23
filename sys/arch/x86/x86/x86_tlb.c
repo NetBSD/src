@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_tlb.c,v 1.16 2020/02/22 20:12:40 maxv Exp $	*/
+/*	$NetBSD: x86_tlb.c,v 1.17 2020/02/23 18:57:28 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008-2020 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.16 2020/02/22 20:12:40 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_tlb.c,v 1.17 2020/02/23 18:57:28 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -99,7 +99,11 @@ typedef struct {
 
 #define	TP_SET_USERPMAP(tp)	((tp)->tp_store[TP_USERPMAP] |= 1)
 #define	TP_SET_GLOBAL(tp)	((tp)->tp_store[TP_GLOBAL] |= 1)
-#define	TP_SET_DONE(tp)		atomic_store_relaxed(&(tp)->tp_store[TP_DONE], 1)
+#define	TP_SET_DONE(tp) \
+do { \
+	uintptr_t v = atomic_load_relaxed(&(tp)->tp_store[TP_DONE]); \
+	atomic_store_relaxed(&(tp)->tp_store[TP_DONE], v | 1); \
+} while (/* CONSTCOND */ 0);
 
 #define	TP_CLEAR(tp)		memset(__UNVOLATILE(tp), 0, sizeof(*(tp)));
 
