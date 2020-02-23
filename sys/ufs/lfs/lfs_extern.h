@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.117 2020/02/23 08:42:53 riastradh Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.118 2020/02/23 08:49:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -127,9 +127,10 @@ extern kcondvar_t locked_queue_cv;
 int lfs_valloc(struct vnode *, int, kauth_cred_t, ino_t *, int *);
 int lfs_valloc_fixed(struct lfs *, ino_t, int);
 int lfs_vfree(struct vnode *, ino_t, int);
-void lfs_order_freelist(struct lfs *);
+void lfs_order_freelist(struct lfs *, ino_t **, size_t *);
 int lfs_extend_ifile(struct lfs *, kauth_cred_t);
 void lfs_orphan(struct lfs *, ino_t);
+void lfs_free_orphans(struct lfs *, ino_t *, size_t);
 
 /* lfs_balloc.c */
 int lfs_balloc(struct vnode *, off_t, int, kauth_cred_t, int, struct buf **);
