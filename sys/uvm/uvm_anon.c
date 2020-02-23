@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.71 2020/01/15 17:55:45 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.72 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.71 2020/01/15 17:55:45 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.72 2020/02/23 15:46:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -108,7 +108,7 @@ uvm_anon_dispose(struct vm_anon *anon)
 	UVMHIST_FUNC("uvm_anon_dispose"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"(anon=0x%#jx)", (uintptr_t)anon, 0,0,0);
 
-	KASSERT(mutex_owned(anon->an_lock));
+	KASSERT(rw_write_held(anon->an_lock));
 
 	/*
 	 * Dispose the page, if it is resident.
@@ -139,7 +139,7 @@ uvm_anon_dispose(struct vm_anon *anon)
 			pg->loan_count--;
 			pg->uanon = NULL;
 			mutex_exit(&pg->interlock);
-			mutex_exit(pg->uobject->vmobjlock);
+			rw_exit(pg->uobject->vmobjlock);
 		} else {
 
 			/*
@@ -157,7 +157,7 @@ uvm_anon_dispose(struct vm_anon *anon)
 
 			if (pg->flags & PG_BUSY) {
 				pg->flags |= PG_RELEASED;
-				mutex_obj_hold(anon->an_lock);
+				rw_obj_hold(anon->an_lock);
 				return false;
 			}
 			uvm_pagefree(pg);
@@ -215,7 +215,7 @@ uvm_anon_freelst(struct vm_amap *amap, struct vm_anon *anonlst)
 
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	KASSERT(mutex_owned(amap->am_lock));
+	KASSERT(rw_write_held(amap->am_lock));
 
 	for (; anonlst != NULL; anonlst = next) {
 		next = anonlst->an_link;
@@ -250,8 +250,9 @@ struct vm_page *
 uvm_anon_lockloanpg(struct vm_anon *anon)
 {
 	struct vm_page *pg;
+	krw_t op;
 
-	KASSERT(mutex_owned(anon->an_lock));
+	KASSERT(rw_lock_held(anon->an_lock));
 
 	/*
 	 * loop while we have a resident page that has a non-zero loan count.
@@ -270,7 +271,7 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 			 * toggle our anon lock and try again
 			 */
 
-			if (!mutex_tryenter(pg->uobject->vmobjlock)) {
+			if (!rw_tryenter(pg->uobject->vmobjlock, RW_WRITER)) {
 				/*
 				 * someone locking the object has a chance to
 				 * lock us right now
@@ -278,7 +279,11 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 				 * XXX Better than yielding but inadequate.
 				 */
 				mutex_exit(&pg->interlock);
-				kpause("livelock", false, 1, anon->an_lock);
+				op = rw_write_held(anon->an_lock)
+				    ? RW_WRITER : RW_READER;
+				rw_exit(anon->an_lock);
+				kpause("lkloanpg", false, 1, NULL);
+				rw_enter(anon->an_lock, op);
 				continue;
 			}
 		}
@@ -313,7 +318,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	struct vm_page *pg;
 	struct uvm_object *uobj;
 
-	KASSERT(mutex_owned(anon->an_lock));
+	KASSERT(rw_write_held(anon->an_lock));
 	KASSERT(anon->an_lock == amap->am_lock);
 
 	/*
@@ -323,7 +328,7 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 	switch (uvmfault_anonget(NULL, amap, anon)) {
 	case 0:
 		/* Success - we have the page. */
-		KASSERT(mutex_owned(anon->an_lock));
+		KASSERT(rw_write_held(anon->an_lock));
 		break;
 	case EIO:
 	case ERESTART:
@@ -360,9 +365,9 @@ uvm_anon_pagein(struct vm_amap *amap, struct vm_anon *anon)
 		wakeup(pg);
 	}
 
-	mutex_exit(anon->an_lock);
+	rw_exit(anon->an_lock);
 	if (uobj) {
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 	}
 	return false;
 }
@@ -401,7 +406,7 @@ uvm_anon_release(struct vm_anon *anon)
 	struct vm_page *pg = anon->an_page;
 	bool success __diagused;
 
-	KASSERT(mutex_owned(anon->an_lock));
+	KASSERT(rw_write_held(anon->an_lock));
 	KASSERT(pg != NULL);
 	KASSERT((pg->flags & PG_RELEASED) != 0);
 	KASSERT((pg->flags & PG_BUSY) != 0);
@@ -415,9 +420,9 @@ uvm_anon_release(struct vm_anon *anon)
 	/* dispose should succeed as no one can reach this anon anymore. */
 	success = uvm_anon_dispose(anon);
 	KASSERT(success);
-	mutex_exit(anon->an_lock);
+	rw_exit(anon->an_lock);
 	/* Note: extra reference is held for PG_RELEASED case. */
-	mutex_obj_free(anon->an_lock);
+	rw_obj_free(anon->an_lock);
 	anon->an_lock = NULL;
 	uvm_anon_free(anon);
 }

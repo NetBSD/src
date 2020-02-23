@@ -1561,7 +1561,7 @@ zfs_rezget(znode_t *zp)
 	zp->z_unlinked = (zp->z_links == 0);
 	zp->z_blksz = doi.doi_data_block_size;
 #ifdef __NetBSD__
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	(void)VOP_PUTPAGES(vp, 0, 0, PGO_ALLPAGES|PGO_FREE|PGO_SYNCIO);
 #else
 	vn_pages_remove(vp, 0, 0);

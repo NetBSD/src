@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.205 2020/01/12 18:37:10 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.206 2020/02/23 15:46:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.205 2020/01/12 18:37:10 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.206 2020/02/23 15:46:41 ad Exp $");
 
 #include "veriexec.h"
 
@@ -1162,33 +1162,6 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 	}
 
 	return (error);
-}
-
-void
-vn_ra_allocctx(struct vnode *vp)
-{
-	struct uvm_ractx *ra = NULL;
-
-	KASSERT(mutex_owned(vp->v_interlock));
-
-	if (vp->v_type != VREG) {
-		return;
-	}
-	if (vp->v_ractx != NULL) {
-		return;
-	}
-	if (vp->v_ractx == NULL) {
-		mutex_exit(vp->v_interlock);
-		ra = uvm_ra_allocctx();
-		mutex_enter(vp->v_interlock);
-		if (ra != NULL && vp->v_ractx == NULL) {
-			vp->v_ractx = ra;
-			ra = NULL;
-		}
-	}
-	if (ra != NULL) {
-		uvm_ra_freectx(ra);
-	}
 }
 
 int
