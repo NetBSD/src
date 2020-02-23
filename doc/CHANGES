@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2651 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2652 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -144,3 +144,5 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	realpath(1): Ported from FreeBSD. [kamil 20200202]
 	kernel: Remove azalia(4). [jmcneill 20200209]
 	awk(1): Import 20200218 [christos 20200218]
+	genet(4): Add support for Broadcom GENETv5 ethernet controllers, found
+		in the Raspberry Pi 4. [jmcneill 20200222]
