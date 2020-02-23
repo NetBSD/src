@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.327 2020/02/23 08:39:39 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.328 2020/02/23 08:40:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.327 2020/02/23 08:39:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.328 2020/02/23 08:40:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1707,7 +1707,7 @@ lfs_flush_dirops(struct lfs *fs)
 				break;
 			}
 		}
-		KDASSERT(ip->i_number != LFS_IFILE_INUM);
+		KASSERT(ip->i_number != LFS_IFILE_INUM);
 		error = lfs_writeinode(fs, sp, ip);
 		mutex_enter(&lfs_lock);
 		if (error && (sp->seg_flags & SEGM_SINGLE)) {
@@ -1829,7 +1829,7 @@ lfs_flush_pchain(struct lfs *fs)
 			LFS_SET_UINO(ip, IN_MODIFIED);
 		    	mutex_exit(&lfs_lock);
 		}
-		KDASSERT(ip->i_number != LFS_IFILE_INUM);
+		KASSERT(ip->i_number != LFS_IFILE_INUM);
 		error2 = lfs_writeinode(fs, sp, ip);
 
 		VOP_UNLOCK(vp);
