@@ -799,7 +799,7 @@ OpenBSD 6.6		2019-10-17 [OBD]
 macOS 10.15		2019-10-07 [APL]
 macOS 10.15.1		2019-10-29 [APL] (security/critical release)
 FreeBSD 12.1		2019-11-04 [FBD]
-NetBSD 9.0 		2020-02-15 [NBD]
+NetBSD 9.0 		2020-02-14 [NBD]
 
 Bibliography
 ------------------------
@@ -864,5 +864,5 @@ Steven M. Schultz for providing 2.8BSD, 2.10BSD, 2.11BSD manual pages.
 Copyright (c) 1997-2012 Wolfram Schneider <wosch@FreeBSD.ORG>
 URL: https://svnweb.freebsd.org/base/head/share/misc/bsd-family-tree
 
-$FreeBSD: head/share/misc/bsd-family-tree 358254 2020-02-22 23:36:10Z sevan $
-$NetBSD: bsd-family-tree,v 1.78 2020/02/22 23:38:04 sevan Exp $
+$FreeBSD: head/share/misc/bsd-family-tree 358264 2020-02-23 23:29:53Z sevan $
+$NetBSD: bsd-family-tree,v 1.79 2020/02/23 23:31:55 sevan Exp $
