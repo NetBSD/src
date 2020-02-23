@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.226 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.227 2020/02/23 23:54:52 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.226 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.227 2020/02/23 23:54:52 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1772,7 +1772,7 @@ uvm_pagelookup(struct uvm_object *obj, voff_t off)
 {
 	struct vm_page *pg;
 
-	/* No - used from DDB. KASSERT(rw_write_held(obj->vmobjlock)); */
+	/* No - used from DDB. KASSERT(rw_lock_held(obj->vmobjlock)); */
 
 	pg = radix_tree_lookup_node(&obj->uo_pages, off >> PAGE_SHIFT);
 
