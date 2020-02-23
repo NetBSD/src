@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.328 2020/02/23 08:40:08 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.329 2020/02/23 08:40:19 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.328 2020/02/23 08:40:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.329 2020/02/23 08:40:19 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1623,7 +1623,6 @@ lfs_flush_dirops(struct lfs *fs)
 		return EROFS;
 
 	mutex_enter(&lfs_lock);
-	KASSERT(fs->lfs_writer);
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL) {
 		mutex_exit(&lfs_lock);
 		return 0;
@@ -1667,13 +1666,33 @@ lfs_flush_dirops(struct lfs *fs)
 			lfs_dchain_marker_pass_flush.ev_count++;
 			continue;
 		}
-		mutex_exit(&lfs_lock);
 		vp = ITOV(ip);
-		mutex_enter(vp->v_interlock);
 
+		/*
+		 * Prevent the vnode from going away if it's just been
+		 * put out in the segment and lfs_unmark_dirop is about
+		 * to release it.  While it is on the list it is always
+		 * referenced, so it cannot be reclaimed until we
+		 * release it.
+		 */
+		vref(vp);
+
+		/*
+		 * Since we hold lfs_writer, the node can't be in an
+		 * active dirop.  Since it's on the list and we hold a
+		 * reference to it, it can't be reclaimed now.
+		 */
 		KASSERT((ip->i_state & IN_ADIROP) == 0);
 		KASSERT(vp->v_uflag & VU_DIROP);
-		KASSERT(vdead_check(vp, VDEAD_NOWAIT) == 0);
+
+		/*
+		 * After we release lfs_lock, if we were in the middle
+		 * of writing a segment, lfs_unmark_dirop may end up
+		 * clearing VU_DIROP, and we have no way to stop it.
+		 * That should be OK -- we'll just have less to do
+		 * here.
+		 */
+		mutex_exit(&lfs_lock);
 
 		/*
 		 * All writes to directories come from dirops; all
@@ -1682,15 +1701,6 @@ lfs_flush_dirops(struct lfs *fs)
 		 * and/or directories will not be affected by writing
 		 * directory blocks inodes and file inodes.  So we don't
 		 * really need to lock.
-		 */
-		if (vdead_check(vp, VDEAD_NOWAIT) != 0) {
-			mutex_exit(vp->v_interlock);
-			mutex_enter(&lfs_lock);
-			continue;
-		}
-		mutex_exit(vp->v_interlock);
-		/* XXX see below
-		 * waslocked = VOP_ISLOCKED(vp);
 		 */
 		if (vp->v_type != VREG &&
 		    ((ip->i_state & IN_ALLMOD) || !VPISEMPTY(vp))) {
@@ -1702,6 +1712,7 @@ lfs_flush_dirops(struct lfs *fs)
 			    	mutex_exit(&lfs_lock);
 			}
 			if (error && (sp->seg_flags & SEGM_SINGLE)) {
+				vrele(vp);
 				mutex_enter(&lfs_lock);
 				error = EAGAIN;
 				break;
@@ -1709,8 +1720,9 @@ lfs_flush_dirops(struct lfs *fs)
 		}
 		KASSERT(ip->i_number != LFS_IFILE_INUM);
 		error = lfs_writeinode(fs, sp, ip);
-		mutex_enter(&lfs_lock);
 		if (error && (sp->seg_flags & SEGM_SINGLE)) {
+			vrele(vp);
+			mutex_enter(&lfs_lock);
 			error = EAGAIN;
 			break;
 		}
@@ -1723,7 +1735,12 @@ lfs_flush_dirops(struct lfs *fs)
 		 * write them.
 		 */
 		/* XXX only for non-directories? --KS */
+		mutex_enter(&lfs_lock);
 		LFS_SET_UINO(ip, IN_MODIFIED);
+		mutex_exit(&lfs_lock);
+
+		vrele(vp);
+		mutex_enter(&lfs_lock);
 	}
 	TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 	mutex_exit(&lfs_lock);
