@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_bio.c,v 1.145 2020/02/18 20:23:17 chs Exp $	*/
+/*	$NetBSD: lfs_bio.c,v 1.146 2020/02/23 08:39:28 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.145 2020/02/18 20:23:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_bio.c,v 1.146 2020/02/23 08:39:28 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -653,9 +653,14 @@ lfs_check(struct vnode *vp, daddr_t blkno, int flags)
 	/* If there are too many pending dirops, we have to flush them. */
 	if (fs->lfs_dirvcount > LFS_MAX_FSDIROP(fs) ||
 	    lfs_dirvcount > LFS_MAX_DIROP || fs->lfs_diropwait > 0) {
+		KASSERT(fs->lfs_dirops == 0);
+		fs->lfs_writer++;
 		mutex_exit(&lfs_lock);
 		lfs_flush_dirops(fs);
 		mutex_enter(&lfs_lock);
+		if (--fs->lfs_writer == 0)
+			cv_broadcast(&fs->lfs_diropscv);
+		KASSERT(fs->lfs_dirops == 0);
 	} else if (locked_queue_count + INOCOUNT(fs) > LFS_MAX_BUFS ||
 	    locked_queue_bytes + INOBYTES(fs) > LFS_MAX_BYTES ||
 	    lfs_subsys_pages > LFS_MAX_PAGES ||
