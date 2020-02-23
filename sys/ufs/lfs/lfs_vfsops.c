@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.372 2020/02/23 08:40:49 riastradh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.373 2020/02/23 08:49:46 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.372 2020/02/23 08:40:49 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.373 2020/02/23 08:49:46 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -870,6 +870,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	CLEANERINFO *cip;
 	SEGUSE *sup;
 	daddr_t sb_addr;
+	ino_t *orphan;
+	size_t norphan;
 
 	cred = l ? l->l_cred : NOCRED;
 
@@ -1162,8 +1164,8 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	fs->lfs_ivnode = vp;
 	vref(vp);
 
-	/* Set up inode bitmap and order free list */
-	lfs_order_freelist(fs);
+	/* Set up inode bitmap, order free list, and gather orphans.  */
+	lfs_order_freelist(fs, &orphan, &norphan);
 
 	/* Set up segment usage flags for the autocleaner. */
 	fs->lfs_nactive = 0;
@@ -1201,6 +1203,9 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 		else
 			brelse(bp, 0);
 	}
+
+	/* Free the orphans we discovered while ordering the freelist.  */
+	lfs_free_orphans(fs, orphan, norphan);
 
 	/*
 	 * XXX: if the fs has quotas, quotas should be on even if
