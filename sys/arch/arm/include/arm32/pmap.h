@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.161 2020/02/05 07:37:36 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.162 2020/02/23 15:12:18 skrll Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -557,8 +557,6 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 #define l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 #define l1pte_pa(pde)		((pde) & L1_C_ADDR_MASK)
 #define l1pte_index(v)		((vaddr_t)(v) >> L1_S_SHIFT)
-#define l1pte_pgindex(v)	l1pte_index((v) & L1_ADDR_BITS \
-		& ~(PAGE_SIZE * PAGE_SIZE / sizeof(pt_entry_t) - 1))
 
 static inline void
 l1pte_setone(pt_entry_t *pdep, pt_entry_t pde)
