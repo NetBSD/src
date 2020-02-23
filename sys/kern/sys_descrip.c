@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_descrip.c,v 1.36 2020/02/01 02:23:04 riastradh Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.37 2020/02/23 15:46:41 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.36 2020/02/01 02:23:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.37 2020/02/23 15:46:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -742,7 +742,7 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 		 */
 		if (round_page(offset) < trunc_page(endoffset) &&
 		    offset <= round_page(offset)) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp,
 			    round_page(offset), trunc_page(endoffset),
 			    PGO_DEACTIVATE | PGO_CLEANIT);

@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_vnops.c,v 1.200 2019/12/01 13:56:29 ad Exp $	*/
+/*	$NetBSD: genfs_vnops.c,v 1.201 2020/02/23 15:46:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.200 2019/12/01 13:56:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_vnops.c,v 1.201 2020/02/23 15:46:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -453,7 +453,7 @@ genfs_null_putpages(void *v)
 	struct vnode *vp = ap->a_vp;
 
 	KASSERT(vp->v_uobj.uo_npages == 0);
-	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 	return (0);
 }
 

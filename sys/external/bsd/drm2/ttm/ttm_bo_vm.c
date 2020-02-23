@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_vm.c,v 1.13 2020/01/28 23:24:09 jmcneill Exp $	*/
+/*	$NetBSD: ttm_bo_vm.c,v 1.14 2020/02/23 15:46:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.13 2020/01/28 23:24:09 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_vm.c,v 1.14 2020/02/23 15:46:40 ad Exp $");
 
 #include <sys/types.h>
 
@@ -92,7 +92,7 @@ ttm_bo_uvm_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 	int ret;
 
 	/* Thanks, uvm, but we don't need this lock.  */
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	/* Copy-on-write mappings make no sense for the graphics aperture.  */
 	if (UVM_ET_ISCOPYONWRITE(ufi->entry)) {

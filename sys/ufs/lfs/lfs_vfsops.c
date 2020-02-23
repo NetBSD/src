@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.373 2020/02/23 08:49:46 riastradh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.374 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.373 2020/02/23 08:49:46 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.374 2020/02/23 15:46:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -2068,11 +2068,11 @@ lfs_gop_write(struct vnode *vp, struct vm_page **pgs, int npages,
 			pgs[i]->flags &= ~PG_DELWRI;
 			pgs[i]->flags |= PG_PAGEOUT;
 			uvm_pageout_start(1);
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			uvm_pagelock(pgs[i]);
 			uvm_pageunwire(pgs[i]);
 			uvm_pageunlock(pgs[i]);
-			mutex_exit(vp->v_interlock);
+			rw_exit(vp->v_uobj.vmobjlock);
 		}
 	}
 

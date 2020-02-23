@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.330 2020/02/23 15:23:08 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.331 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.330 2020/02/23 15:23:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.331 2020/02/23 15:46:42 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -482,7 +482,7 @@ lfs_fsync(void *v)
 
 	wait = (ap->a_flags & FSYNC_WAIT);
 	do {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, trunc_page(ap->a_offlo),
 				     round_page(ap->a_offhi),
 				     PGO_CLEANIT | (wait ? PGO_SYNCIO : 0));

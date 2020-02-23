@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo_util.c,v 1.19 2020/02/14 14:34:59 maya Exp $	*/
+/*	$NetBSD: ttm_bo_util.c,v 1.20 2020/02/23 15:46:40 ad Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.19 2020/02/14 14:34:59 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo_util.c,v 1.20 2020/02/23 15:46:40 ad Exp $");
 
 #include <drm/ttm/ttm_bo_driver.h>
 #include <drm/ttm/ttm_placement.h>
@@ -535,7 +535,7 @@ static int ttm_buffer_object_transfer(struct ttm_buffer_object *bo,
 #ifdef __NetBSD__
 	drm_vma_node_init(&fbo->vma_node);
 	uvm_obj_init(&fbo->uvmobj, bo->bdev->driver->ttm_uvm_ops, true, 1);
-	mutex_obj_hold(bo->uvmobj.vmobjlock);
+	rw_obj_hold(bo->uvmobj.vmobjlock);
 	uvm_obj_setlock(&fbo->uvmobj, bo->uvmobj.vmobjlock);
 #else
 	drm_vma_node_reset(&fbo->vma_node);

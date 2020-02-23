@@ -1,4 +1,4 @@
-/*	$NetBSD: dead_vnops.c,v 1.62 2020/02/20 15:48:05 riastradh Exp $	*/
+/*	$NetBSD: dead_vnops.c,v 1.63 2020/02/23 15:46:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.62 2020/02/20 15:48:05 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dead_vnops.c,v 1.63 2020/02/23 15:46:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -348,7 +348,7 @@ dead_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		mutex_exit(ap->a_vp->v_interlock);
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
 
 	return (EFAULT);
 }
@@ -363,6 +363,6 @@ dead_putpages(void *v)
 		int a_flags;
 	} */ *ap = v;
 
-	mutex_exit(ap->a_vp->v_interlock);
+	rw_exit(ap->a_vp->v_uobj.vmobjlock);
 	return (EFAULT);
 }

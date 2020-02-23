@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.158 2020/02/23 08:40:58 riastradh Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.159 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.158 2020/02/23 08:40:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.159 2020/02/23 15:46:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -291,7 +291,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 					return error;
 				}
 				if (ioflag & IO_SYNC) {
-					mutex_enter(ovp->v_interlock);
+					rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 					VOP_PUTPAGES(ovp,
 					    trunc_page(osize & lfs_sb_getbmask(fs)),
 					    round_page(eob),
@@ -411,7 +411,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		ubc_zerorange(&ovp->v_uobj, length, eoz - length,
 		    UBC_UNMAP_FLAG(ovp));
 		if (round_page(eoz) > round_page(length)) {
-			mutex_enter(ovp->v_interlock);
+			rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
 			    PGO_CLEANIT | PGO_DEACTIVATE |
@@ -872,7 +872,7 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
 	if (error)
 		return error;

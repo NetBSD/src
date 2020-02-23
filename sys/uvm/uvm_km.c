@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.154 2020/02/08 07:07:07 maxv Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.155 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.154 2020/02/08 07:07:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.155 2020/02/23 15:46:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -450,16 +450,16 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	KASSERT(startva < endva);
 	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	pmap_remove(pmap_kernel(), startva, endva);
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg != NULL && pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
+			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
 				    "km_pgrm", 0);
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			nextoff = curoff;
 			continue;
 		}
@@ -477,7 +477,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 			uvm_pagefree(pg);
 		}
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
@@ -569,12 +569,12 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 		 * - we can recurse when allocating radix_node for
 		 *   kernel_object.
 		 */
-		if (mutex_tryenter(uvm_kernel_object->vmobjlock)) {
+		if (rw_tryenter(uvm_kernel_object->vmobjlock, RW_WRITER)) {
 			struct vm_page *pg;
 
 			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
-			mutex_exit(uvm_kernel_object->vmobjlock);
+			rw_exit(uvm_kernel_object->vmobjlock);
 			if (pg) {
 				panic("uvm_km_check_empty: "
 				    "has page hashed at %p",

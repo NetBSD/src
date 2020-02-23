@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.340 2020/02/16 21:31:19 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.341 2020/02/23 15:46:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.340 2020/02/16 21:31:19 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.341 2020/02/23 15:46:41 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -83,6 +83,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.340 2020/02/16 21:31:19 ad Exp $");
 #include <sys/cpu.h>
 #include <sys/pserialize.h>
 #include <sys/resourcevar.h>
+#include <sys/rwlock.h>
 #include <sys/sched.h>
 #include <sys/syscall_stats.h>
 #include <sys/sleepq.h>
@@ -206,6 +207,46 @@ mtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
 
 	if ((priority & PNORELOCK) == 0)
 		mutex_enter(mtx);
+
+	return error;
+}
+
+/*
+ * XXXAD Temporary - for use of UVM only.  PLEASE DO NOT USE ELSEWHERE. 
+ * Will go once there is a better solution, eg waits interlocked by
+ * pg->interlock.  To wake an LWP sleeping with this, you need to hold a
+ * write lock.
+ */
+int
+rwtsleep(wchan_t ident, pri_t priority, const char *wmesg, int timo,
+	 krwlock_t *rw)
+{
+	struct lwp *l = curlwp;
+	sleepq_t *sq;
+	kmutex_t *mp;
+	int error;
+	krw_t op;
+
+	KASSERT((l->l_pflag & LP_INTR) == 0);
+	KASSERT(ident != &lbolt);
+
+	if (sleepq_dontsleep(l)) {
+		(void)sleepq_abort(NULL, (priority & PNORELOCK) != 0);
+		if ((priority & PNORELOCK) != 0)
+			rw_exit(rw);
+		return 0;
+	}
+
+	l->l_kpriority = true;
+	sq = sleeptab_lookup(&sleeptab, ident, &mp);
+	sleepq_enter(sq, l, mp);
+	sleepq_enqueue(sq, ident, wmesg, &sleep_syncobj);
+	op = rw_lock_op(rw);
+	rw_exit(rw);
+	error = sleepq_block(timo, priority & PCATCH);
+
+	if ((priority & PNORELOCK) == 0)
+		rw_enter(rw, op);
 
 	return error;
 }

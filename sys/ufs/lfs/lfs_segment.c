@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.285 2020/02/23 08:40:37 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.286 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.285 2020/02/23 08:40:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.286 2020/02/23 15:46:42 ad Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -889,7 +889,7 @@ lfs_writefile(struct lfs *fs, struct segment *sp, struct vnode *vp)
 		 * everything we've got.
 		 */
 		if (!IS_FLUSHING(fs, vp)) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, 0, 0,
 				PGO_CLEANIT | PGO_ALLPAGES | PGO_LOCKED);
 		}

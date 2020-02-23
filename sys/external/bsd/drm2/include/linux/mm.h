@@ -1,4 +1,4 @@
-/*	$NetBSD: mm.h,v 1.12 2020/01/19 15:31:56 skrll Exp $	*/
+/*	$NetBSD: mm.h,v 1.13 2020/02/23 15:46:40 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -100,9 +100,9 @@ set_page_dirty(struct page *page)
 
 	/* XXX */
 	if (pg->uobject != NULL) {
-		mutex_enter(pg->uobject->vmobjlock);
+		rw_enter(pg->uobject->vmobjlock, RW_WRITER);
 		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
-		mutex_exit(pg->uobject->vmobjlock);
+		rw_exit(pg->uobject->vmobjlock);
 	} else {
 		uvm_pagemarkdirty(pg, UVM_PAGE_STATUS_DIRTY);
 	}

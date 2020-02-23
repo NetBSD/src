@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.68 2020/02/22 19:46:49 chs Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.69 2020/02/23 15:46:43 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.68 2020/02/22 19:46:49 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.69 2020/02/23 15:46:43 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -196,9 +196,9 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 			 * bump reference count, unhold, return.
 			 */
 
-			mutex_enter(lcv->u_obj.vmobjlock);
+			rw_enter(lcv->u_obj.vmobjlock, RW_WRITER);
 			lcv->u_obj.uo_refs++;
-			mutex_exit(lcv->u_obj.vmobjlock);
+			rw_exit(lcv->u_obj.vmobjlock);
 
 			mutex_enter(&udv_lock);
 			if (lcv->u_flags & UVM_DEVICE_WANTED)
@@ -271,11 +271,11 @@ udv_reference(struct uvm_object *uobj)
 {
 	UVMHIST_FUNC("udv_reference"); UVMHIST_CALLED(maphist);
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uobj->uo_refs++;
 	UVMHIST_LOG(maphist, "<- done (uobj=0x%#jx, ref = %jd)",
 	    (uintptr_t)uobj, uobj->uo_refs,0,0);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 }
 
 /*
@@ -296,10 +296,10 @@ udv_detach(struct uvm_object *uobj)
 	 * loop until done
 	 */
 again:
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 		UVMHIST_LOG(maphist," <- done, uobj=0x%#jx, ref=%jd",
 		    (uintptr_t)uobj,uobj->uo_refs,0,0);
 		return;
@@ -312,7 +312,7 @@ again:
 	mutex_enter(&udv_lock);
 	if (udv->u_flags & UVM_DEVICE_HOLD) {
 		udv->u_flags |= UVM_DEVICE_WANTED;
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 		UVM_UNLOCK_AND_WAIT(udv, &udv_lock, false, "udv_detach",0);
 		goto again;
 	}
@@ -325,7 +325,7 @@ again:
 	if (udv->u_flags & UVM_DEVICE_WANTED)
 		wakeup(udv);
 	mutex_exit(&udv_lock);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	uvm_obj_destroy(uobj, true);
 	kmem_free(udv, sizeof(*udv));

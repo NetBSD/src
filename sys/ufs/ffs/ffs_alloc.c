@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_alloc.c,v 1.165 2020/02/18 17:50:32 riastradh Exp $	*/
+/*	$NetBSD: ffs_alloc.c,v 1.166 2020/02/23 15:46:42 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.165 2020/02/18 17:50:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_alloc.c,v 1.166 2020/02/23 15:46:42 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -213,7 +213,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 		voff_t off = trunc_page(ffs_lblktosize(fs, lbn));
 		voff_t endoff = round_page(ffs_lblktosize(fs, lbn) + size);
 
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT((pg != NULL && pg->owner_tag != NULL &&
@@ -221,7 +221,7 @@ ffs_alloc(struct inode *ip, daddr_t lbn, daddr_t bpref, int size,
 				 pg->lowner == curlwp->l_lid));
 			off += PAGE_SIZE;
 		}
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 	}
 #endif
 
@@ -333,14 +333,14 @@ ffs_realloccg(struct inode *ip, daddr_t lbprev, daddr_t bpref, int osize,
 		voff_t off = trunc_page(ffs_lblktosize(fs, lbprev));
 		voff_t endoff = round_page(ffs_lblktosize(fs, lbprev) + osize);
 
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		while (off < endoff) {
 			pg = uvm_pagelookup(uobj, off);
 			KASSERT(pg->owner == curproc->p_pid &&
 				pg->lowner == curlwp->l_lid);
 			off += PAGE_SIZE;
 		}
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 	}
 #endif
 
