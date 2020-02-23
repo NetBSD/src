@@ -1,6 +1,6 @@
 #/bin/sh
 #
-#	$NetBSD: zfsroot.rc,v 1.2 2020/02/23 05:15:54 roy Exp $
+#	$NetBSD: zfsroot.rc,v 1.3 2020/02/23 10:51:12 roy Exp $
 
 echo "Starting root on ZFS boot strapper"
 
@@ -45,11 +45,6 @@ echo "Importing $rpool"
 
 echo "Mounting $rpool/$rroot to /altroot"
 /sbin/mount -t zfs "$rpool/$rroot" /altroot;
-
-# This ensures that rc.d/mountall mounts all ZFS mounts set to automount.
-if [ ! -e /altroot/etc/zfs/zpool.cache ]; then
-	echo >/altroot/etc/zfs/zpool.cache
-fi
 
 echo "Pivoting to /altroot, welcome to root on ZFS"
 /sbin/sysctl -w init.root=/altroot
