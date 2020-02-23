@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_extern.h,v 1.116 2020/02/23 08:40:37 riastradh Exp $	*/
+/*	$NetBSD: lfs_extern.h,v 1.117 2020/02/23 08:42:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -210,7 +210,7 @@ void lfs_free(struct lfs *, void *, int);
 int lfs_seglock(struct lfs *, unsigned long);
 void lfs_segunlock(struct lfs *);
 void lfs_segunlock_relock(struct lfs *);
-int lfs_writer_enter(struct lfs *, const char *);
+void lfs_writer_enter(struct lfs *, const char *);
 int lfs_writer_tryenter(struct lfs *);
 void lfs_writer_leave(struct lfs *);
 void lfs_wakeup_cleaner(struct lfs *);
