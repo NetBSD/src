@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.155 2020/01/19 00:58:13 jmcneill Exp $
+# $NetBSD: mi,v 1.156 2020/02/23 11:17:03 mrg Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -630,6 +630,7 @@
 ./usr/X11R7/lib/X11/xkb/compat/japan			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/compat/keypad			xbase-obsolete	obsolete
 ./usr/X11R7/lib/X11/xkb/compat/ledcaps			xbase-xkeyboard-config-lib	xorg
+./usr/X11R7/lib/X11/xkb/compat/ledcompose		xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/compat/lednum			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/compat/ledscroll		xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/compat/level5			xbase-xkeyboard-config-lib	xorg
@@ -952,6 +953,7 @@
 ./usr/X11R7/lib/X11/xkb/symbols/jolla_vndr		base-x11-root	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/jolla_vndr/sbj		xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/jp			xbase-xkeyboard-config-lib	xorg
+./usr/X11R7/lib/X11/xkb/symbols/jv			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/kan			xbase-obsolete	obsolete
 ./usr/X11R7/lib/X11/xkb/symbols/ke			xbase-xkeyboard-config-lib	xorg
 ./usr/X11R7/lib/X11/xkb/symbols/keypad			xbase-xkeyboard-config-lib	xorg
