@@ -1,7 +1,11 @@
 #/bin/sh
 #
-#	$NetBSD: zfsroot.rc,v 1.1 2020/02/22 09:53:47 roy Exp $
-#	ZFS on Root boot strapper
+#	$NetBSD: zfsroot.rc,v 1.2 2020/02/23 05:15:54 roy Exp $
+
+echo "Starting root on ZFS boot strapper"
+
+# Abort on any error
+set -e
 
 # Configurable - define the ZFS root pool and ROOT.
 # XXX Can these be set in boot.cfg?
@@ -10,7 +14,7 @@ rpool=rpool
 rroot=ROOT
 
 # Assumption - the boot device is named boot.
-# Could use dk0, wd0a, etc instead.
+# Could use /dev/dk0, /dev/wd0a, etc instead.
 # XXX Can be exposed by sysctl kern.boot_device?
 bootdev="NAME=boot"
 
@@ -19,46 +23,33 @@ export HOME=/
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 022
 
-echo
-echo "Starting ZFS on root boot strapper"
-
 # Avoid having the solaris and zfs modules in ramdisk directly.
 # Means we don't need to update the ramdisk with the kernel modules
 # or load them from boot.cfg so it's less pain for the user.
 #bootdev="$(/sbin/sysctl -n kern.boot_device)"
 modpath="$(/sbin/sysctl -n kern.module.path)"
-modmnt=/mnt
-echo "Copying needed kernel modules from $bootdev:$modpath"
-case "$bootdev" in
-*=*|"/"*)	;;
-*)		bootdev="/dev/$bootdev";;
-esac
-/sbin/mount -o ro "$bootdev" "$modmnt"
-/sbin/mount -t tmpfs none /stand
+echo "Loading needed kernel modules from $bootdev:$modpath"
+/sbin/mount -o ro "$bootdev" /mnt
 for m in solaris zfs; do
-	p="$modpath/$m"
-	if [ ! -e "$modmnt/$p/$m.kmod" ]; then
-		echo "$modmnt/$p/$m.kmod not found!" >&2
-		continue
-	fi
-	echo "	$m.kmod"
-	/bin/mkdir -p "$p"
-	/bin/cp "$modmnt/$p/$m.kmod" "$p"
+	/sbin/modload "/mnt/$modpath/$m/$m.kmod"
 done
-# zpool list will load the needed modules, then we can dispose of the mounts.
-/sbin/zpool list >/dev/null 2>&1
-/sbin/umount /stand
-/sbin/umount "$modmnt"
-echo
+/sbin/umount /mnt
 
-echo "Importing $rpool, mounting and pivoting"
-# If we can mount the ZFS root partition to /altroot
-# then chroot to it and start /etc/rc
-if /sbin/zpool import -f -N "$rpool" && \
-   /sbin/mount -t zfs "$rpool/$rroot" /altroot; then
-	# This ensures that mountall mounts all ZFS mounts set to automount.
-	if [ ! -e /altroot/etc/zfs/zpool.cache ]; then
-		echo >/altroot/etc/zfs/zpool.cache
-	fi
-	/sbin/sysctl -w init.root=/altroot
+# FIXME XXX Sometimes zpool import gets SIGBUS
+# Ensure that we are in a writable directory to try and capture a coredump
+# Not that we actually get a coredump ....
+cd /tmp
+
+echo "Importing $rpool"
+/sbin/zpool import -f -N "$rpool"
+
+echo "Mounting $rpool/$rroot to /altroot"
+/sbin/mount -t zfs "$rpool/$rroot" /altroot;
+
+# This ensures that rc.d/mountall mounts all ZFS mounts set to automount.
+if [ ! -e /altroot/etc/zfs/zpool.cache ]; then
+	echo >/altroot/etc/zfs/zpool.cache
 fi
+
+echo "Pivoting to /altroot, welcome to root on ZFS"
+/sbin/sysctl -w init.root=/altroot

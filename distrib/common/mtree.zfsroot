@@ -1,8 +1,7 @@
-#	$NetBSD: mtree.zfsroot,v 1.1 2020/02/22 09:53:47 roy Exp $
+#	$NetBSD: mtree.zfsroot,v 1.2 2020/02/23 05:15:54 roy Exp $
 
 .
 ./altroot
 ./etc
 ./etc/zfs
 ./rpool
-./stand
