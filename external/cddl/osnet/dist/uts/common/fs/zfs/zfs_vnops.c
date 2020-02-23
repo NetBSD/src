@@ -5509,6 +5509,19 @@ zfs_netbsd_fsync(void *v)
 }
 
 static int
+zfs_spec_fsync(void *v)
+{
+	struct vop_fsync_args *ap = v;
+	int error;
+
+	error = spec_fsync(v);
+	if (error)
+		return error;
+
+	return (zfs_fsync(ap->a_vp, ap->a_flags, ap->a_cred, NULL));
+}
+
+static int
 zfs_netbsd_getattr(void *v)
 {
 	struct vop_getattr_args *ap = v;
@@ -6355,7 +6368,7 @@ const struct vnodeopv_entry_desc zfs_specop_entries[] = {
 	{ &vop_poll_desc,		spec_poll },
 	{ &vop_kqfilter_desc,		spec_kqfilter },
 	{ &vop_revoke_desc,		spec_revoke },
-	{ &vop_fsync_desc,		zfs_netbsd_fsync },
+	{ &vop_fsync_desc,		zfs_spec_fsync },
 	{ &vop_remove_desc,		spec_remove },
 	{ &vop_link_desc,		spec_link },
 	{ &vop_lock_desc,		zfs_netbsd_lock },
