@@ -1,4 +1,4 @@
-#	$NetBSD: list.zfsroot,v 1.1 2020/02/22 09:53:47 roy Exp $
+#	$NetBSD: list.zfsroot,v 1.2 2020/02/23 05:15:54 roy Exp $
 #
 # list file (c.f. parselist.awk) for ZFS on root.
 #
@@ -11,6 +11,11 @@ ARGVLN	zfs mount_zfs
 
 # We need sysctl to set init.root=/altroot
 PROG	sbin/sysctl
+
+# We need modload as we cannot build CDDL modules in the kernel
+PROG	sbin/modload
+PROG	sbin/modunload
+PROG	sbin/modstat
 
 LIBS	-lnvpair
 LIBS	-luutil
@@ -25,5 +30,6 @@ LIBS	-lzfs_core
 
 COPY	${NETBSDSRCDIR}/distrib/common/zfsroot.rc etc/rc
 
-# Make firmware images available.
+# Make modules and firmware images available
+SYMLINK	altroot/stand stand
 SYMLINK	altroot/libdata libdata
