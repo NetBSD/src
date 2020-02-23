@@ -1,4 +1,4 @@
-#       $NetBSD: Makefile,v 1.447 2020/02/07 13:02:35 thorpej Exp $
+#       $NetBSD: Makefile,v 1.448 2020/02/23 08:57:44 mrg Exp $
 
 #	Makefile for section 9 (kernel function and variable) manual pages.
 
@@ -808,7 +808,8 @@ MLINKS+=rwlock.9 rw.9 rwlock.9 rw_init.9 rwlock.9 rw_destroy.9 \
 	rwlock.9 rw_enter.9 rwlock.9 rw_exit.9 \
 	rwlock.9 rw_tryenter.9 rwlock.9 rw_tryupgrade.9 \
 	rwlock.9 rw_downgrade.9 rwlock.9 rw_read_held.9 \
-	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9
+	rwlock.9 rw_write_held.9 rwlock.9 rw_lock_held.9 \
+	rwlock.9 rw_lock_op.9
 MLINKS+=STACK.9 STACK_ALLOC.9 \
 	STACK.9 STACK_MAX.9 \
 	STACK.9 STACK_ALIGN.9 \
