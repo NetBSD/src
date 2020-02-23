@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.3 2019/10/13 07:28:08 mrg Exp $
+#	$NetBSD: Makefile,v 1.4 2020/02/23 09:10:51 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -18,6 +18,8 @@ LIBDPLIBS=	Xext	${.CURDIR}/../libXext \
 		X11	${.CURDIR}/../libX11/dynamic
 
 COPTS.XvMCWrapper.c=	${GCC_NO_STRINGOP_OVERFLOW}
+
+PKGDIST=	xvmc-wrapper
 
 .include <bsd.x11.mk>
 .include <bsd.lib.mk>
