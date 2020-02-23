@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.c,v 1.72 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_anon.c,v 1.73 2020/02/23 21:36:29 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.72 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_anon.c,v 1.73 2020/02/23 21:36:29 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -279,8 +279,7 @@ uvm_anon_lockloanpg(struct vm_anon *anon)
 				 * XXX Better than yielding but inadequate.
 				 */
 				mutex_exit(&pg->interlock);
-				op = rw_write_held(anon->an_lock)
-				    ? RW_WRITER : RW_READER;
+				op = rw_lock_op(anon->an_lock);
 				rw_exit(anon->an_lock);
 				kpause("lkloanpg", false, 1, NULL);
 				rw_enter(anon->an_lock, op);
