@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.392 2020/02/12 17:36:41 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.393 2020/02/23 10:22:07 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.392 2020/02/12 17:36:41 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.393 2020/02/23 10:22:07 skrll Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -6730,7 +6730,7 @@ pmap_postinit(void)
  * find them as necessary.
  *
  * Note that the data on this list MUST remain valid after initarm() returns,
- * as pmap_bootstrap() uses it to contruct L2 table metadata.
+ * as pmap_bootstrap() uses it to construct L2 table metadata.
  */
 SLIST_HEAD(, pv_addr) kernel_pt_list = SLIST_HEAD_INITIALIZER(kernel_pt_list);
 
