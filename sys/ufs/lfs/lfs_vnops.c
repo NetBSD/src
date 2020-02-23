@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.329 2020/02/23 08:40:19 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.330 2020/02/23 15:23:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.329 2020/02/23 08:40:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.330 2020/02/23 15:23:08 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1595,10 +1595,6 @@ lfs_strategy(void *v)
 	return VOP_STRATEGY(vp, bp);
 }
 
-static struct evcnt lfs_dchain_marker_pass_flush =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "lfs", "dchain marker pass flush");
-EVCNT_ATTACH_STATIC(lfs_dchain_marker_pass_flush);
-
 /*
  * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
  * Technically this is a checkpoint (the on-disk state is valid)
@@ -1662,10 +1658,8 @@ lfs_flush_dirops(struct lfs *fs)
 		TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 		TAILQ_INSERT_AFTER(&fs->lfs_dchainhd, ip, marker,
 		    i_lfs_dchain);
-		if (ip->i_state & IN_MARKER) {
-			lfs_dchain_marker_pass_flush.ev_count++;
+		if (ip->i_state & IN_MARKER)
 			continue;
-		}
 		vp = ITOV(ip);
 
 		/*
