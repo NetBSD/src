@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.105.2.7 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.105.2.8 2020/02/23 19:14:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019 The NetBSD Foundation, Inc.
@@ -142,10 +142,10 @@
  *	as vput(9), routines.  Common points holding references are e.g.
  *	file openings, current working directory, mount points, etc.  
  *
- * Note on v_usecount & v_holdcnt and their locking
+ * Note on v_usecount and its locking
  *
- *	At nearly all points it is known that the counts could be zero,
- *	the vnode_t::v_interlock will be held.  To change the counts away
+ *	At nearly all points it is known that v_usecount could be zero,
+ *	the vnode_t::v_interlock will be held.  To change the count away
  *	from zero, the interlock must be held.  To change from a non-zero
  *	value to zero, again the interlock must be held.
  *
@@ -154,7 +154,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.7 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.105.2.8 2020/02/23 19:14:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -939,7 +939,7 @@ vholdl(vnode_t *vp)
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	if (atomic_inc_uint_nv(&vp->v_holdcnt) == 1 && vp->v_usecount == 0)
+	if (vp->v_holdcnt++ == 0 && vp->v_usecount == 0)
 		lru_requeue(vp, lru_which(vp));
 }
 
@@ -949,17 +949,6 @@ vholdl(vnode_t *vp)
 void
 vhold(vnode_t *vp)
 {
-	int hold, next;
-
-	for (hold = vp->v_holdcnt;; hold = next) {
-		if (__predict_false(hold == 0)) {
-			break;
-		}
-		next = atomic_cas_uint(&vp->v_holdcnt, hold, hold + 1);
-		if (__predict_true(next == hold)) {
-			return;
-		}
-	}
 
 	mutex_enter(vp->v_interlock);
 	vholdl(vp);
@@ -980,7 +969,8 @@ holdrelel(vnode_t *vp)
 		vnpanic(vp, "%s: holdcnt vp %p", __func__, vp);
 	}
 
-	if (atomic_dec_uint_nv(&vp->v_holdcnt) == 0 && vp->v_usecount == 0)
+	vp->v_holdcnt--;
+	if (vp->v_holdcnt == 0 && vp->v_usecount == 0)
 		lru_requeue(vp, lru_which(vp));
 }
 
@@ -990,18 +980,6 @@ holdrelel(vnode_t *vp)
 void
 holdrele(vnode_t *vp)
 {
-	int hold, next;
-
-	for (hold = vp->v_holdcnt;; hold = next) {
-		if (__predict_false(hold == 1)) {
-			break;
-		}
-		KASSERT(hold > 1);
-		next = atomic_cas_uint(&vp->v_holdcnt, hold, hold - 1);
-		if (__predict_true(next == hold)) {
-			return;
-		}
-	}
 
 	mutex_enter(vp->v_interlock);
 	holdrelel(vp);
