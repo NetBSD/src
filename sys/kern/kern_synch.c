@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_synch.c,v 1.341 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: kern_synch.c,v 1.342 2020/02/23 16:27:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2004, 2006, 2007, 2008, 2009, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.341 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_synch.c,v 1.342 2020/02/23 16:27:09 ad Exp $");
 
 #include "opt_kstack.h"
 #include "opt_dtrace.h"
@@ -119,6 +119,14 @@ syncobj_t sched_syncobj = {
 	.sobj_unsleep	= sched_unsleep,
 	.sobj_changepri	= sched_changepri,
 	.sobj_lendpri	= sched_lendpri,
+	.sobj_owner	= syncobj_noowner,
+};
+
+syncobj_t kpause_syncobj = {
+	.sobj_flag	= SOBJ_SLEEPQ_NULL,
+	.sobj_unsleep	= sleepq_unsleep,
+	.sobj_changepri	= sleepq_changepri,
+	.sobj_lendpri	= sleepq_lendpri,
 	.sobj_owner	= syncobj_noowner,
 };
 
@@ -258,8 +266,6 @@ int
 kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 {
 	struct lwp *l = curlwp;
-	kmutex_t *mp;
-	sleepq_t *sq;
 	int error;
 
 	KASSERT(!(timo == 0 && intr == false));
@@ -270,9 +276,9 @@ kpause(const char *wmesg, bool intr, int timo, kmutex_t *mtx)
 	if (mtx != NULL)
 		mutex_exit(mtx);
 	l->l_kpriority = true;
-	sq = sleeptab_lookup(&sleeptab, l, &mp);
-	sleepq_enter(sq, l, mp);
-	sleepq_enqueue(sq, l, wmesg, &sleep_syncobj);
+	lwp_lock(l);
+	KERNEL_UNLOCK_ALL(NULL, &l->l_biglocks);
+	sleepq_enqueue(NULL, l, wmesg, &kpause_syncobj);
 	error = sleepq_block(timo, intr);
 	if (mtx != NULL)
 		mutex_enter(mtx);
