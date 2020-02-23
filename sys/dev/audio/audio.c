@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.53 2020/02/22 19:49:11 chs Exp $	*/
+/*	$NetBSD: audio.c,v 1.54 2020/02/23 04:02:46 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.53 2020/02/22 19:49:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.54 2020/02/23 04:02:46 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -852,26 +852,43 @@ audioattach(device_t parent, device_t self, void *aux)
 	hw_if = sa->hwif;
 	hdlp = sa->hdl;
 
-	if (hw_if == NULL || hw_if->get_locks == NULL) {
+	if (hw_if == NULL) {
 		panic("audioattach: missing hw_if method");
+	}
+	if (hw_if->get_locks == NULL || hw_if->get_props == NULL) {
+		aprint_error(": missing mandatory method\n");
+		return;
 	}
 
 	hw_if->get_locks(hdlp, &sc->sc_intr_lock, &sc->sc_lock);
+	sc->sc_props = hw_if->get_props(hdlp);
+
+	has_playback = (sc->sc_props & AUDIO_PROP_PLAYBACK);
+	has_capture  = (sc->sc_props & AUDIO_PROP_CAPTURE);
+	has_indep    = (sc->sc_props & AUDIO_PROP_INDEPENDENT);
+	has_fulldup  = (sc->sc_props & AUDIO_PROP_FULLDUPLEX);
 
 #ifdef DIAGNOSTIC
 	if (hw_if->query_format == NULL ||
 	    hw_if->set_format == NULL ||
-	    (hw_if->start_output == NULL && hw_if->trigger_output == NULL) ||
-	    (hw_if->start_input == NULL && hw_if->trigger_input == NULL) ||
-	    hw_if->halt_output == NULL ||
-	    hw_if->halt_input == NULL ||
 	    hw_if->getdev == NULL ||
 	    hw_if->set_port == NULL ||
 	    hw_if->get_port == NULL ||
-	    hw_if->query_devinfo == NULL ||
-	    hw_if->get_props == NULL) {
-		aprint_error(": missing method\n");
+	    hw_if->query_devinfo == NULL) {
+		aprint_error(": missing mandatory method\n");
 		return;
+	}
+	if (has_playback) {
+		if ((hw_if->start_output == NULL && hw_if->trigger_output == NULL) ||
+		    hw_if->halt_output == NULL) {
+			aprint_error(": missing playback method\n");
+		}
+	}
+	if (has_capture) {
+		if ((hw_if->start_input == NULL && hw_if->trigger_input == NULL) ||
+		    hw_if->halt_input == NULL) {
+			aprint_error(": missing capture method\n");
+		}
 	}
 #endif
 
@@ -886,15 +903,8 @@ audioattach(device_t parent, device_t self, void *aux)
 	sc->sc_am_used = 0;
 	sc->sc_am = NULL;
 
-	sc->sc_props = hw_if->get_props(sc->hw_hdl);
-
 	/* MMAP is now supported by upper layer.  */
 	sc->sc_props |= AUDIO_PROP_MMAP;
-
-	has_playback = (sc->sc_props & AUDIO_PROP_PLAYBACK);
-	has_capture  = (sc->sc_props & AUDIO_PROP_CAPTURE);
-	has_indep    = (sc->sc_props & AUDIO_PROP_INDEPENDENT);
-	has_fulldup  = (sc->sc_props & AUDIO_PROP_FULLDUPLEX);
 
 	KASSERT(has_playback || has_capture);
 	/* Unidirectional device must have neither FULLDUP nor INDEPENDENT. */
