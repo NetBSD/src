@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.32 2020/02/23 08:54:47 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.33 2020/02/23 08:54:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.32 2020/02/23 08:54:47 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.33 2020/02/23 08:54:55 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1284,7 +1284,7 @@ motg_device_ctrl_transfer(struct usbd_xfer *xfer)
 	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
-	xfer->ux_status = USBD_NOT_STARTED;
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 	mutex_exit(&sc->sc_lock);
 	if (err)
 		return err;
@@ -1304,9 +1304,7 @@ motg_device_ctrl_start(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 	err = motg_device_ctrl_start1(sc);
 	mutex_exit(&sc->sc_lock);
-	if (err != USBD_IN_PROGRESS)
-		return err;
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 static usbd_status
@@ -1741,7 +1739,7 @@ motg_device_data_transfer(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 	DPRINTF("xfer %#jx status %jd", (uintptr_t)xfer, xfer->ux_status, 0, 0);
 	err = usb_insert_transfer(xfer);
-	xfer->ux_status = USBD_NOT_STARTED;
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 	mutex_exit(&sc->sc_lock);
 	if (err)
 		return err;
@@ -1766,9 +1764,7 @@ motg_device_data_start(struct usbd_xfer *xfer)
 	DPRINTF("xfer %#jx status %jd", (uintptr_t)xfer, xfer->ux_status, 0, 0);
 	err = motg_device_data_start1(sc, otgpipe->hw_ep);
 	mutex_exit(&sc->sc_lock);
-	if (err != USBD_IN_PROGRESS)
-		return err;
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 static usbd_status
