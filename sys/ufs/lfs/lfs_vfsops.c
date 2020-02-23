@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.371 2020/02/23 08:39:18 riastradh Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.372 2020/02/23 08:40:49 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.371 2020/02/23 08:39:18 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.372 2020/02/23 08:40:49 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -356,6 +356,7 @@ lfs_modcmd(modcmd_t cmd, void *arg)
 			break;
 		}
 		lfs_sysctl_setup(&lfs_sysctl_log);
+		cv_init(&lfs_allclean_wakeup, "segment");
 		break;
 	case MODULE_CMD_FINI:
 		error = vfs_detach(&lfs_vfsops);
@@ -363,6 +364,7 @@ lfs_modcmd(modcmd_t cmd, void *arg)
 			break;
 		syscall_disestablish(NULL, lfs_syscalls);
 		sysctl_teardown(&lfs_sysctl_log);
+		cv_destroy(&lfs_allclean_wakeup);
 		break;
 	default:
 		error = ENOTTY;
@@ -857,7 +859,6 @@ lfs_checkmagic(struct lfs *fs)
 int
 lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 {
-	static bool lfs_mounted_once = false;
 	struct lfs *primarysb, *altsb, *thesb;
 	struct buf *primarybuf, *altbuf;
 	struct lfs *fs;
@@ -1090,12 +1091,6 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	cv_init(&fs->lfs_diropscv, "lfs_dirop");
 	cv_init(&fs->lfs_stopcv, "lfsstop");
 	cv_init(&fs->lfs_nextsegsleep, "segment");
-
-	/* Initialize values for all LFS mounts */
-	if (!lfs_mounted_once) {
-		cv_init(&lfs_allclean_wakeup, "segment");
-		lfs_mounted_once = true;
-	}
 
 	/* Set the file system readonly/modify bits. */
 	fs->lfs_ronly = ronly;
