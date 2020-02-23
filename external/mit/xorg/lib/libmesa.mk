@@ -1,4 +1,4 @@
-#	$NetBSD: libmesa.mk,v 1.10 2020/01/31 20:58:18 jmcneill Exp $
+#	$NetBSD: libmesa.mk,v 1.11 2020/02/23 02:03:19 joerg Exp $
 #
 # Consumer of this Makefile should set MESA_SRC_MODULES.
 
@@ -533,8 +533,10 @@ CPPFLAGS+=	\
 	-DHAVE_MINCORE
 
 .if ${MKLLVMRT} != "no"
+LLVM_VERSION!=		cd ${NETBSDSRCDIR}/external/apache2/llvm && ${MAKE} -V LLVM_VERSION
+HAVE_LLVM_VERSION!=	expr ${LLVM_VERSION:R:R} \* 256 + ${LLVM_VERSION:R:E} \* 16
 CPPFLAGS+=	\
-	-DHAVE_LLVM=0x0900
+	-DHAVE_LLVM=${HAVE_LLVM_VERSION}
 CXXFLAGS+=	-fno-rtti
 .endif
 
