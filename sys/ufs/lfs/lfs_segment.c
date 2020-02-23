@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.284 2020/02/23 08:40:08 riastradh Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.285 2020/02/23 08:40:37 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.284 2020/02/23 08:40:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.285 2020/02/23 08:40:37 riastradh Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -621,6 +621,15 @@ lfs_segwrite(struct mount *mp, int flags)
 	 */
 	do_ckp = LFS_SHOULD_CHECKPOINT(fs, flags);
 
+	/*
+	 * If we know we're gonna need the writer lock, take it now to
+	 * preserve the lock order lfs_writer -> lfs_seglock.
+	 */
+	if (do_ckp) {
+		lfs_writer_enter(fs, "ckpwriter");
+		writer_set = 1;
+	}
+
 	/* We can't do a partial write and checkpoint at the same time. */
 	if (do_ckp)
 		flags &= ~SEGM_SINGLE;
@@ -650,11 +659,10 @@ lfs_segwrite(struct mount *mp, int flags)
 				break;
 			}
 
-			if (do_ckp || fs->lfs_dirops == 0) {
-				if (!writer_set) {
-					lfs_writer_enter(fs, "lfs writer");
-					writer_set = 1;
-				}
+			if (do_ckp ||
+			    (writer_set = lfs_writer_tryenter(fs)) != 0) {
+				KASSERT(writer_set);
+				KASSERT(fs->lfs_writer);
 				error = lfs_writevnodes(fs, mp, sp, VN_DIROP);
 				if (um_error == 0)
 					um_error = error;
