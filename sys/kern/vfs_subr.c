@@ -1,7 +1,7 @@
-/*	$NetBSD: vfs_subr.c,v 1.480 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.481 2020/02/23 22:14:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019
+ * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
  *     The NetBSD Foundation, Inc.
  * All rights reserved.
  *
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.480 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.481 2020/02/23 22:14:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -1111,7 +1111,7 @@ vprint_common(struct vnode *vp, const char *prefix,
 	    vp->v_usecount, vp->v_writecount, vp->v_holdcnt);
 	(*pr)("%ssize %" PRIx64 " writesize %" PRIx64 " numoutput %d\n",
 	    prefix, vp->v_size, vp->v_writesize, vp->v_numoutput);
-	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, vip->vi_lock);
+	(*pr)("%sdata %p lock %p\n", prefix, vp->v_data, &vip->vi_lock);
 
 	(*pr)("%sstate %s key(%p %zd)", prefix, vstate_name(vip->vi_state),
 	    vip->vi_key.vk_mount, vip->vi_key.vk_key_len);
@@ -1215,24 +1215,25 @@ set_statvfs_info(const char *onp, int ukon, const char *fromp, int ukfrom,
 	size_t size;
 	struct statvfs *sfs = &mp->mnt_stat;
 	int (*fun)(const void *, void *, size_t, size_t *);
+	struct vnode *rvp;
 
 	(void)strlcpy(mp->mnt_stat.f_fstypename, vfsname,
 	    sizeof(mp->mnt_stat.f_fstypename));
 
 	if (onp) {
-		struct cwdinfo *cwdi = l->l_proc->p_cwdi;
 		fun = (ukon == UIO_SYSSPACE) ? copystr : copyinstr;
-		if (cwdi->cwdi_rdir != NULL) {
+		KASSERT(l == curlwp);
+		rvp = cwdrdir();
+		if (rvp != NULL) {
 			size_t len;
 			char *bp;
 			char *path = PNBUF_GET();
 
 			bp = path + MAXPATHLEN;
 			*--bp = '\0';
-			rw_enter(&cwdi->cwdi_lock, RW_READER);
-			error = getcwd_common(cwdi->cwdi_rdir, rootvnode, &bp,
+			error = getcwd_common(rvp, rootvnode, &bp,
 			    path, MAXPATHLEN / 2, 0, l);
-			rw_exit(&cwdi->cwdi_lock);
+			vrele(rvp);
 			if (error) {
 				PNBUF_PUT(path);
 				return error;
@@ -1544,7 +1545,7 @@ vfs_vnode_lock_print(void *vlock, int full, void (*pr)(const char *, ...))
 
 	for (mp = _mountlist_next(NULL); mp; mp = _mountlist_next(mp)) {
 		TAILQ_FOREACH(vip, &mp->mnt_vnodelist, vi_mntvnodes) {
-			if (vip->vi_lock == vlock ||
+			if (&vip->vi_lock == vlock ||
 			    VIMPL_TO_VNODE(vip)->v_interlock == vlock)
 				vfs_vnode_print(VIMPL_TO_VNODE(vip), full, pr);
 		}
