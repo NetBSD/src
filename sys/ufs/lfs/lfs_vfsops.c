@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vfsops.c,v 1.370 2020/02/18 20:23:17 chs Exp $	*/
+/*	$NetBSD: lfs_vfsops.c,v 1.371 2020/02/23 08:39:18 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003, 2007, 2007
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.370 2020/02/18 20:23:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vfsops.c,v 1.371 2020/02/23 08:39:18 riastradh Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_lfs.h"
@@ -120,6 +120,7 @@ MODULE(MODULE_CLASS_VFS, lfs, NULL);
 
 static int lfs_gop_write(struct vnode *, struct vm_page **, int, int);
 static int lfs_mountfs(struct vnode *, struct mount *, struct lwp *);
+static int lfs_flushfiles(struct mount *, int);
 
 static struct sysctllog *lfs_sysctl_log;
 
@@ -755,23 +756,18 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 		ump = VFSTOULFS(mp);
 		fs = ump->um_lfs;
 
-		if (fs->lfs_ronly == 0 && (mp->mnt_flag & MNT_RDONLY)) {
+		if (!fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDONLY)) {
 			/*
 			 * Changing from read/write to read-only.
-			 * XXX: shouldn't we sync here? or does vfs do that?
 			 */
-#ifdef LFS_QUOTA2
-			/* XXX: quotas should remain on when readonly */
-			if (fs->lfs_use_quota2) {
-				error = lfsquota2_umount(mp, 0);
-				if (error) {
-					return error;
-				}
-			}
-#endif
-		}
-
-		if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
+			int flags = WRITECLOSE;
+			if (mp->mnt_flag & MNT_FORCE)
+				flags |= FORCECLOSE;
+			error = lfs_flushfiles(mp, flags);
+			if (error)
+				return error;
+			fs->lfs_ronly = 1;
+		} else if (fs->lfs_ronly && (mp->mnt_iflag & IMNT_WANTRDWR)) {
 			/*
 			 * Changing from read-only to read/write.
 			 * Note in the superblocks that we're writing.
@@ -805,8 +801,9 @@ lfs_mount(struct mount *mp, const char *path, void *data, size_t *data_len)
 				lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
 			}
 		}
+
 		if (args->fspec == NULL)
-			return EINVAL;
+			return 0;
 	}
 
 	error = set_statvfs_info(path, UIO_USERSPACE, args->fspec,
@@ -1137,6 +1134,7 @@ lfs_mountfs(struct vnode *devvp, struct mount *mp, struct lwp *l)
 	mp->mnt_stat.f_iosize = lfs_sb_getbsize(fs);
 	mp->mnt_flag |= MNT_LOCAL;
 	mp->mnt_fs_bshift = lfs_sb_getbshift(fs);
+	mp->mnt_iflag |= IMNT_CAN_RWTORO;
 	if (fs->um_maxsymlinklen > 0)
 		mp->mnt_iflag |= IMNT_DTYPE;
 	else
@@ -1328,22 +1326,72 @@ out:
 int
 lfs_unmount(struct mount *mp, int mntflags)
 {
+	struct ulfsmount *ump;
+	struct lfs *fs;
+	int error, ronly;
+
+	ump = VFSTOULFS(mp);
+	fs = ump->um_lfs;
+
+	error = lfs_flushfiles(mp, mntflags & MNT_FORCE ? FORCECLOSE : 0);
+	if (error)
+		return error;
+
+	/* Finish with the Ifile, now that we're done with it */
+	vgone(fs->lfs_ivnode);
+
+	ronly = !fs->lfs_ronly;
+	if (fs->lfs_devvp->v_type != VBAD)
+		spec_node_setmountedfs(fs->lfs_devvp, NULL);
+	vn_lock(fs->lfs_devvp, LK_EXCLUSIVE | LK_RETRY);
+	error = VOP_CLOSE(fs->lfs_devvp,
+	    ronly ? FREAD : FREAD|FWRITE, NOCRED);
+	vput(fs->lfs_devvp);
+
+	/* Complain about page leakage */
+	if (fs->lfs_pages > 0)
+		printf("lfs_unmount: still claim %d pages (%d in subsystem)\n",
+			fs->lfs_pages, lfs_subsys_pages);
+
+	/* Free per-mount data structures */
+	free(fs->lfs_ino_bitmap, M_SEGMENT);
+	free(fs->lfs_suflags[0], M_SEGMENT);
+	free(fs->lfs_suflags[1], M_SEGMENT);
+	free(fs->lfs_suflags, M_SEGMENT);
+	lfs_free_resblks(fs);
+	cv_destroy(&fs->lfs_sleeperscv);
+	cv_destroy(&fs->lfs_diropscv);
+	cv_destroy(&fs->lfs_stopcv);
+	cv_destroy(&fs->lfs_nextsegsleep);
+
+	rw_destroy(&fs->lfs_fraglock);
+	rw_destroy(&fs->lfs_iflock);
+
+	kmem_free(fs, sizeof(struct lfs));
+	kmem_free(ump, sizeof(*ump));
+
+	mp->mnt_data = NULL;
+	mp->mnt_flag &= ~MNT_LOCAL;
+	return (error);
+}
+
+static int
+lfs_flushfiles(struct mount *mp, int flags)
+{
 	struct lwp *l = curlwp;
 	struct ulfsmount *ump;
 	struct lfs *fs;
-	int error, flags, ronly;
-	vnode_t *vp;
-
-	flags = 0;
-	if (mntflags & MNT_FORCE)
-		flags |= FORCECLOSE;
+	struct vnode *vp;
+	int error;
 
 	ump = VFSTOULFS(mp);
 	fs = ump->um_lfs;
 
 	/* Two checkpoints */
-	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
-	lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	if (!fs->lfs_ronly) {
+		lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+		lfs_segwrite(mp, SEGM_CKP | SEGM_SYNC);
+	}
 
 	/* wake up the cleaner so it can die */
 	/* XXX: shouldn't this be *after* the error cases below? */
@@ -1383,51 +1431,18 @@ lfs_unmount(struct mount *mp, int mntflags)
 	mutex_exit(vp->v_interlock);
 
 	/* Explicitly write the superblock, to update serial and pflags */
-	lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) | LFS_PF_CLEAN);
-	lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
-	lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
+	if (!fs->lfs_ronly) {
+		lfs_sb_setpflags(fs, lfs_sb_getpflags(fs) | LFS_PF_CLEAN);
+		lfs_writesuper(fs, lfs_sb_getsboff(fs, 0));
+		lfs_writesuper(fs, lfs_sb_getsboff(fs, 1));
+	}
 	mutex_enter(&lfs_lock);
 	while (fs->lfs_iocount)
 		mtsleep(&fs->lfs_iocount, PRIBIO + 1, "lfs_umount", 0,
 			&lfs_lock);
 	mutex_exit(&lfs_lock);
 
-	/* Finish with the Ifile, now that we're done with it */
-	vgone(fs->lfs_ivnode);
-
-	ronly = !fs->lfs_ronly;
-	if (fs->lfs_devvp->v_type != VBAD)
-		spec_node_setmountedfs(fs->lfs_devvp, NULL);
-	vn_lock(fs->lfs_devvp, LK_EXCLUSIVE | LK_RETRY);
-	error = VOP_CLOSE(fs->lfs_devvp,
-	    ronly ? FREAD : FREAD|FWRITE, NOCRED);
-	vput(fs->lfs_devvp);
-
-	/* Complain about page leakage */
-	if (fs->lfs_pages > 0)
-		printf("lfs_unmount: still claim %d pages (%d in subsystem)\n",
-			fs->lfs_pages, lfs_subsys_pages);
-
-	/* Free per-mount data structures */
-	free(fs->lfs_ino_bitmap, M_SEGMENT);
-	free(fs->lfs_suflags[0], M_SEGMENT);
-	free(fs->lfs_suflags[1], M_SEGMENT);
-	free(fs->lfs_suflags, M_SEGMENT);
-	lfs_free_resblks(fs);
-	cv_destroy(&fs->lfs_sleeperscv);
-	cv_destroy(&fs->lfs_diropscv);
-	cv_destroy(&fs->lfs_stopcv);
-	cv_destroy(&fs->lfs_nextsegsleep);
-
-	rw_destroy(&fs->lfs_fraglock);
-	rw_destroy(&fs->lfs_iflock);
-
-	kmem_free(fs, sizeof(struct lfs));
-	kmem_free(ump, sizeof(*ump));
-
-	mp->mnt_data = NULL;
-	mp->mnt_flag &= ~MNT_LOCAL;
-	return (error);
+	return 0;
 }
 
 /*
