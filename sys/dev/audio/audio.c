@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.54 2020/02/23 04:02:46 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.55 2020/02/23 04:24:56 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.54 2020/02/23 04:02:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.55 2020/02/23 04:24:56 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -558,9 +558,7 @@ static int audio_mixers_init(struct audio_softc *sc, int,
 	const audio_format2_t *, const audio_format2_t *,
 	const audio_filter_reg_t *, const audio_filter_reg_t *);
 static int audio_select_freq(const struct audio_format *);
-static int audio_hw_probe(struct audio_softc *, int, int *,
-	audio_format2_t *, audio_format2_t *);
-static int audio_hw_probe_fmt(struct audio_softc *, audio_format2_t *, int);
+static int audio_hw_probe(struct audio_softc *, audio_format2_t *, int);
 static int audio_hw_validate_format(struct audio_softc *, int,
 	const audio_format2_t *);
 static int audio_mixers_set_format(struct audio_softc *,
@@ -940,21 +938,46 @@ audioattach(device_t parent, device_t self, void *aux)
 	memset(&rhwfmt, 0, sizeof(rhwfmt));
 	memset(&pfil, 0, sizeof(pfil));
 	memset(&rfil, 0, sizeof(rfil));
-	mutex_enter(sc->sc_lock);
-	error = audio_hw_probe(sc, has_indep, &mode, &phwfmt, &rhwfmt);
-	if (error) {
-		mutex_exit(sc->sc_lock);
-		aprint_error_dev(self, "audio_hw_probe failed, "
-		    "error = %d\n", error);
-		goto bad;
+	if (has_indep) {
+		int perror, rerror;
+
+		/* On independent devices, probe separately. */
+		perror = audio_hw_probe(sc, &phwfmt, AUMODE_PLAY);
+		rerror = audio_hw_probe(sc, &rhwfmt, AUMODE_RECORD);
+		if (perror && rerror) {
+			aprint_error_dev(self, "audio_hw_probe failed, "
+			    "perror = %d, rerror = %d\n", perror, rerror);
+			goto bad;
+		}
+		if (perror) {
+			mode &= ~AUMODE_PLAY;
+			aprint_error_dev(self, "audio_hw_probe failed with "
+			    "%d, playback disabled\n", perror);
+		}
+		if (rerror) {
+			mode &= ~AUMODE_RECORD;
+			aprint_error_dev(self, "audio_hw_probe failed with "
+			    "%d, capture disabled\n", rerror);
+		}
+	} else {
+		/*
+		 * On non independent devices or uni-directional devices,
+		 * probe once (simultaneously).
+		 */
+		audio_format2_t *fmt = has_playback ? &phwfmt : &rhwfmt;
+		error = audio_hw_probe(sc, fmt, mode);
+		if (error) {
+			aprint_error_dev(self, "audio_hw_probe failed, "
+			    "error = %d\n", error);
+			goto bad;
+		}
+		if (has_playback && has_capture)
+			rhwfmt = phwfmt;
 	}
-	if (mode == 0) {
-		mutex_exit(sc->sc_lock);
-		aprint_error_dev(self, "audio_hw_probe failed, no mode\n");
-		goto bad;
-	}
+
 	/* Init hardware. */
 	/* hw_probe() also validates [pr]hwfmt.  */
+	mutex_enter(sc->sc_lock);
 	error = audio_hw_set_format(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	if (error) {
 		mutex_exit(sc->sc_lock);
@@ -6045,76 +6068,19 @@ audio_select_freq(const struct audio_format *fmt)
 }
 
 /*
- * Probe playback and/or recording format (depending on *modep).
- * *modep is an in-out parameter.  It indicates the direction to configure
- * as an argument, and the direction configured is written back as out
- * parameter.
- * If successful, probed hardware format is stored into *phwfmt, *rhwfmt
- * depending on *modep, and return 0.  Otherwise it returns errno.
- * Must be called with sc_lock held.
- */
-static int
-audio_hw_probe(struct audio_softc *sc, int is_indep, int *modep,
-	audio_format2_t *phwfmt, audio_format2_t *rhwfmt)
-{
-	audio_format2_t fmt;
-	int mode;
-	int error = 0;
-
-	KASSERT(mutex_owned(sc->sc_lock));
-
-	mode = *modep;
-	KASSERTMSG((mode & (AUMODE_PLAY | AUMODE_RECORD)) != 0, "mode=0x%x", mode);
-
-	if (is_indep) {
-		int errorp = 0, errorr = 0;
-
-		/* On independent devices, probe separately. */
-		if ((mode & AUMODE_PLAY) != 0) {
-			errorp = audio_hw_probe_fmt(sc, phwfmt, AUMODE_PLAY);
-			if (errorp)
-				mode &= ~AUMODE_PLAY;
-		}
-		if ((mode & AUMODE_RECORD) != 0) {
-			errorr = audio_hw_probe_fmt(sc, rhwfmt, AUMODE_RECORD);
-			if (errorr)
-				mode &= ~AUMODE_RECORD;
-		}
-
-		/* Return error if both play and record probes failed. */
-		if (errorp && errorr)
-			error = errorp;
-	} else {
-		/* On non independent devices, probe simultaneously. */
-		error = audio_hw_probe_fmt(sc, &fmt, mode);
-		if (error) {
-			mode = 0;
-		} else {
-			*phwfmt = fmt;
-			*rhwfmt = fmt;
-		}
-	}
-
-	*modep = mode;
-	return error;
-}
-
-/*
  * Choose the most preferred hardware format.
  * If successful, it will store the chosen format into *cand and return 0.
  * Otherwise, return errno.
- * Must be called with sc_lock held.
+ * Must be called without sc_lock held.
  */
 static int
-audio_hw_probe_fmt(struct audio_softc *sc, audio_format2_t *cand, int mode)
+audio_hw_probe(struct audio_softc *sc, audio_format2_t *cand, int mode)
 {
 	audio_format_query_t query;
 	int cand_score;
 	int score;
 	int i;
 	int error;
-
-	KASSERT(mutex_owned(sc->sc_lock));
 
 	/*
 	 * Score each formats and choose the highest one.
@@ -6130,7 +6096,9 @@ audio_hw_probe_fmt(struct audio_softc *sc, audio_format2_t *cand, int mode)
 		memset(&query, 0, sizeof(query));
 		query.index = i;
 
+		mutex_enter(sc->sc_lock);
 		error = sc->hw_if->query_format(sc->hw_hdl, &query);
+		mutex_exit(sc->sc_lock);
 		if (error == EINVAL)
 			break;
 		if (error)
