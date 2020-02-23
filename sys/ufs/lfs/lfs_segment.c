@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_segment.c,v 1.283 2020/02/22 22:20:47 ad Exp $	*/
+/*	$NetBSD: lfs_segment.c,v 1.284 2020/02/23 08:40:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.283 2020/02/22 22:20:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_segment.c,v 1.284 2020/02/23 08:40:08 riastradh Exp $");
 
 #ifdef DEBUG
 # define vndebug(vp, str) do {						\
@@ -396,7 +396,7 @@ lfs_vflush(struct vnode *vp)
 					 * still not done with this vnode.
 					 * XXX we can do better than this.
 					 */
-					KDASSERT(ip->i_number != LFS_IFILE_INUM);
+					KASSERT(ip->i_number != LFS_IFILE_INUM);
 					lfs_writeinode(fs, sp, ip);
 					mutex_enter(&lfs_lock);
 					LFS_SET_UINO(ip, IN_MODIFIED);
