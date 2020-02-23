@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.325 2019/09/18 17:59:15 christos Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.326 2020/02/23 08:38:58 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.325 2019/09/18 17:59:15 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.326 2020/02/23 08:38:58 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1595,6 +1595,10 @@ lfs_strategy(void *v)
 	return VOP_STRATEGY(vp, bp);
 }
 
+static struct evcnt lfs_dchain_marker_pass_flush =
+    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "lfs", "dchain marker pass flush");
+EVCNT_ATTACH_STATIC(lfs_dchain_marker_pass_flush);
+
 /*
  * Inline lfs_segwrite/lfs_writevnodes, but just for dirops.
  * Technically this is a checkpoint (the on-disk state is valid)
@@ -1603,7 +1607,7 @@ lfs_strategy(void *v)
 int
 lfs_flush_dirops(struct lfs *fs)
 {
-	struct inode *ip, *nip;
+	struct inode *ip, *marker;
 	struct vnode *vp;
 	extern int lfs_dostats; /* XXX this does not belong here */
 	struct segment *sp;
@@ -1627,6 +1631,12 @@ lfs_flush_dirops(struct lfs *fs)
 	if (lfs_dostats)
 		++lfs_stats.flush_invoked;
 
+	marker = pool_get(&lfs_inode_pool, PR_WAITOK);
+	memset(marker, 0, sizeof(*marker));
+	marker->inode_ext.lfs = pool_get(&lfs_inoext_pool, PR_WAITOK);
+	memset(marker->inode_ext.lfs, 0, sizeof(*marker->inode_ext.lfs));
+	marker->i_state = IN_MARKER;
+
 	lfs_imtime(fs);
 	lfs_seglock(fs, flags);
 	sp = fs->lfs_sp;
@@ -1645,8 +1655,15 @@ lfs_flush_dirops(struct lfs *fs)
 	 *
 	 */
 	mutex_enter(&lfs_lock);
-	for (ip = TAILQ_FIRST(&fs->lfs_dchainhd); ip != NULL; ip = nip) {
-		nip = TAILQ_NEXT(ip, i_lfs_dchain);
+	TAILQ_INSERT_HEAD(&fs->lfs_dchainhd, marker, i_lfs_dchain);
+	while ((ip = TAILQ_NEXT(marker, i_lfs_dchain)) != NULL) {
+		TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
+		TAILQ_INSERT_AFTER(&fs->lfs_dchainhd, ip, marker,
+		    i_lfs_dchain);
+		if (ip->i_state & IN_MARKER) {
+			lfs_dchain_marker_pass_flush.ev_count++;
+			continue;
+		}
 		mutex_exit(&lfs_lock);
 		vp = ITOV(ip);
 		mutex_enter(vp->v_interlock);
@@ -1705,13 +1722,18 @@ lfs_flush_dirops(struct lfs *fs)
 		/* XXX only for non-directories? --KS */
 		LFS_SET_UINO(ip, IN_MODIFIED);
 	}
+	TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 	mutex_exit(&lfs_lock);
+
 	/* We've written all the dirops there are */
 	ssp = (SEGSUM *)sp->segsum;
 	lfs_ss_setflags(fs, ssp, lfs_ss_getflags(fs, ssp) & ~(SS_CONT));
 	lfs_finalize_fs_seguse(fs);
 	(void) lfs_writeseg(fs, sp);
 	lfs_segunlock(fs);
+
+	pool_put(&lfs_inoext_pool, marker->inode_ext.lfs);
+	pool_put(&lfs_inode_pool, marker);
 
 	return error;
 }
