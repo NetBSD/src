@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.101 2020/02/23 15:09:55 ad Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.102 2020/02/23 15:23:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.101 2020/02/23 15:09:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.102 2020/02/23 15:23:08 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -337,10 +337,6 @@ lfs_seglock(struct lfs *fs, unsigned long flags)
 
 static void lfs_unmark_dirop(struct lfs *);
 
-static struct evcnt lfs_dchain_marker_pass_dirop =
-    EVCNT_INITIALIZER(EVCNT_TYPE_MISC, NULL, "lfs", "dchain marker pass dirop");
-EVCNT_ATTACH_STATIC(lfs_dchain_marker_pass_dirop);
-
 static void
 lfs_unmark_dirop(struct lfs *fs)
 {
@@ -371,10 +367,8 @@ lfs_unmark_dirop(struct lfs *fs)
 		TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 		TAILQ_INSERT_AFTER(&fs->lfs_dchainhd, ip, marker,
 		    i_lfs_dchain);
-		if (ip->i_state & IN_MARKER) {
-			lfs_dchain_marker_pass_dirop.ev_count++;
+		if (ip->i_state & IN_MARKER)
 			continue;
-		}
 		vp = ITOV(ip);
 		if ((ip->i_state & (IN_ADIROP | IN_CDIROP)) == IN_CDIROP) {
 			--lfs_dirvcount;
