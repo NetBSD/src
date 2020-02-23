@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.31 2020/02/19 16:01:37 riastradh Exp $	*/
+/*	$NetBSD: motg.c,v 1.32 2020/02/23 08:54:47 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.31 2020/02/19 16:01:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.32 2020/02/23 08:54:47 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1350,8 +1350,12 @@ motg_device_ctrl_start1(struct motg_softc *sc)
 		err = USBD_NOT_STARTED;
 		goto end;
 	}
-	usbd_xfer_schedule_timeout(xfer);
-	xfer->ux_status = USBD_IN_PROGRESS;
+	if (xfer->ux_status == USBD_NOT_STARTED) {
+		usbd_xfer_schedule_timeout(xfer);
+		xfer->ux_status = USBD_IN_PROGRESS;
+	} else {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
+	}
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
@@ -1807,8 +1811,12 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 		err = USBD_NOT_STARTED;
 		goto end;
 	}
-	usbd_xfer_schedule_timeout(xfer);
-	xfer->ux_status = USBD_IN_PROGRESS;
+	if (xfer->ux_status == USBD_NOT_STARTED) {
+		usbd_xfer_schedule_timeout(xfer);
+		xfer->ux_status = USBD_IN_PROGRESS;
+	} else {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
+	}
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
 	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
