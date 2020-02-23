@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.100 2020/02/23 08:42:53 riastradh Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.101 2020/02/23 15:09:55 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.100 2020/02/23 08:42:53 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.101 2020/02/23 15:09:55 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -574,7 +574,7 @@ lfs_segunlock(struct lfs *fs)
 void
 lfs_writer_enter(struct lfs *fs, const char *wmesg)
 {
-	int error;
+	int error __diagused;
 
 	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
