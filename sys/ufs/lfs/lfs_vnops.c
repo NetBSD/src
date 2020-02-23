@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_vnops.c,v 1.326 2020/02/23 08:38:58 riastradh Exp $	*/
+/*	$NetBSD: lfs_vnops.c,v 1.327 2020/02/23 08:39:39 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -125,7 +125,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.326 2020/02/23 08:38:58 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_vnops.c,v 1.327 2020/02/23 08:39:39 riastradh Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1616,12 +1616,14 @@ lfs_flush_dirops(struct lfs *fs)
 	int error = 0;
 
 	ASSERT_MAYBE_SEGLOCK(fs);
-	KASSERT(fs->lfs_nadirop == 0);
+	KASSERT(fs->lfs_nadirop == 0); /* stable during lfs_writer */
+	KASSERT(fs->lfs_dirops == 0);  /* stable during lfs_writer */
 
 	if (fs->lfs_ronly)
 		return EROFS;
 
 	mutex_enter(&lfs_lock);
+	KASSERT(fs->lfs_writer);
 	if (TAILQ_FIRST(&fs->lfs_dchainhd) == NULL) {
 		mutex_exit(&lfs_lock);
 		return 0;
@@ -1655,6 +1657,7 @@ lfs_flush_dirops(struct lfs *fs)
 	 *
 	 */
 	mutex_enter(&lfs_lock);
+	KASSERT(fs->lfs_writer);
 	TAILQ_INSERT_HEAD(&fs->lfs_dchainhd, marker, i_lfs_dchain);
 	while ((ip = TAILQ_NEXT(marker, i_lfs_dchain)) != NULL) {
 		TAILQ_REMOVE(&fs->lfs_dchainhd, marker, i_lfs_dchain);
@@ -1755,6 +1758,7 @@ lfs_flush_pchain(struct lfs *fs)
 	int error, error2;
 
 	ASSERT_NO_SEGLOCK(fs);
+	KASSERT(fs->lfs_writer);
 
 	if (fs->lfs_ronly)
 		return EROFS;
