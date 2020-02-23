@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_subr.c,v 1.99 2020/02/23 08:40:37 riastradh Exp $	*/
+/*	$NetBSD: lfs_subr.c,v 1.100 2020/02/23 08:42:53 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.99 2020/02/23 08:40:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_subr.c,v 1.100 2020/02/23 08:42:53 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -561,6 +561,7 @@ lfs_segunlock(struct lfs *fs)
 			lfs_unmark_dirop(fs);
 	} else {
 		--fs->lfs_seglock;
+		KASSERT(fs->lfs_seglock != 0);
 		mutex_exit(&lfs_lock);
 	}
 }
@@ -570,10 +571,10 @@ lfs_segunlock(struct lfs *fs)
  *
  * No simple_locks are held when we enter and none are held when we return.
  */
-int
+void
 lfs_writer_enter(struct lfs *fs, const char *wmesg)
 {
-	int error = 0;
+	int error;
 
 	ASSERT_NO_SEGLOCK(fs);
 	mutex_enter(&lfs_lock);
@@ -585,15 +586,11 @@ lfs_writer_enter(struct lfs *fs, const char *wmesg)
 		++fs->lfs_diropwait;
 		error = mtsleep(&fs->lfs_writer, PRIBIO+1, wmesg, 0,
 				&lfs_lock);
+		KASSERT(error == 0);
 		--fs->lfs_diropwait;
 	}
 
-	if (error)
-		fs->lfs_writer--;
-
 	mutex_exit(&lfs_lock);
-
-	return error;
 }
 
 int
