@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.14 2018/12/30 09:19:04 mrg Exp $
+#	$NetBSD: Makefile,v 1.15 2020/02/23 11:17:03 mrg Exp $
 
 .include <bsd.own.mk>
 
@@ -13,7 +13,7 @@ FILES=	af al altwin am apl ara at au az \
 	gb ge gh gn gr group \
 	hr hu \
 	id ie il in inet iq ir is it \
-	jp \
+	jp jv \
 	ke keypad kg kh kpdl kr kz \
 	la latam latin level3 level5 lk lt lv \
 	ma mao md me mk ml mm mn mt mv my \
