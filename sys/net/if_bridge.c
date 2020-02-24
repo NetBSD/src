@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bridge.c,v 1.167 2020/02/23 21:50:21 jdolecek Exp $	*/
+/*	$NetBSD: if_bridge.c,v 1.168 2020/02/24 00:47:38 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.167 2020/02/23 21:50:21 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bridge.c,v 1.168 2020/02/24 00:47:38 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bridge_ipf.h"
@@ -789,9 +789,6 @@ bridge_calc_csum_flags(struct bridge_softc *sc)
 	}
 	sc->sc_csum_flags_tx = flags;
 	BRIDGE_UNLOCK(sc);
-#if 0
-	printf("%s: 0x%x\n", __func__, flags);
-#endif
 }
 
 static int
