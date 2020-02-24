@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.103 2020/02/23 15:46:39 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.104 2020/02/24 20:42:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2020/02/23 15:46:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2020/02/24 20:42:18 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -74,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.103 2020/02/23 15:46:39 ad Exp $");
 #include <sys/malloc.h>
 #include <sys/proc.h>
 #include <sys/mutex.h>
+#include <sys/rwlock.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_page_array.h>
@@ -237,16 +238,16 @@ void pmap_dump_pv(paddr_t);
 #define pmap_pvh_attrs(a) \
 	(((a) & (PVF_MOD|PVF_REF)) ^ PVF_REF)
 
-#define PMAP_LOCK(pm)					\
-	do {						\
-		if ((pm) != pmap_kernel())		\
-			mutex_enter((pm)->pm_lock);	\
+#define PMAP_LOCK(pm)						\
+	do {							\
+		if ((pm) != pmap_kernel())			\
+			rw_enter((pm)->pm_lock, RW_WRITER);	\
 	} while (/*CONSTCOND*/0)
 
-#define PMAP_UNLOCK(pm)					\
-	do {						\
-		if ((pm) != pmap_kernel())		\
-			mutex_exit((pm)->pm_lock);	\
+#define PMAP_UNLOCK(pm)						\
+	do {							\
+		if ((pm) != pmap_kernel())			\
+			rw_exit((pm)->pm_lock);			\
 	} while (/*CONSTCOND*/0)
 
 struct vm_page *
@@ -346,7 +347,7 @@ pmap_pde_alloc(pmap_t pm, vaddr_t va, struct vm_page **pdep)
 	    ("%s(%p, 0x%lx, %p)\n", __func__, pm, va, pdep));
 
 	KASSERT(pm != pmap_kernel());
-	KASSERT(mutex_owned(pm->pm_lock));
+	KASSERT(rw_write_held(pm->pm_lock));
 
 	pg = pmap_pagealloc(&pm->pm_obj, va);
 
@@ -694,7 +695,7 @@ pmap_bootstrap(vaddr_t vstart)
 	kpm = pmap_kernel();
 	memset(kpm, 0, sizeof(*kpm));
 
-	mutex_init(&kpm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&kpm->pm_obj_lock);
 	uvm_obj_init(&kpm->pm_obj, NULL, false, 1);
 	uvm_obj_setlock(&kpm->pm_obj, &kpm->pm_obj_lock);
 
@@ -1057,7 +1058,7 @@ pmap_create(void)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: pmap = %p\n", __func__, pmap));
 
-	mutex_init(&pmap->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&pmap->pm_obj_lock);
 	uvm_obj_init(&pmap->pm_obj, NULL, false, 1);
 	uvm_obj_setlock(&pmap->pm_obj, &pmap->pm_obj_lock);
 
@@ -1110,9 +1111,9 @@ pmap_destroy(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 
-	mutex_enter(pmap->pm_lock);
+	rw_enter(pmap->pm_lock, RW_WRITER);
 	refs = --pmap->pm_obj.uo_refs;
-	mutex_exit(pmap->pm_lock);
+	rw_exit(pmap->pm_lock);
 
 	if (refs > 0)
 		return;
@@ -1120,7 +1121,7 @@ pmap_destroy(pmap_t pmap)
 #ifdef DIAGNOSTIC
 	uvm_page_array_init(&a);
 	off = 0;
-	mutex_enter(pmap->pm_lock);
+	rw_enter(pmap->pm_lock, RW_WRITER);
 	while ((pg = uvm_page_array_fill_and_peek(&a, &pmap->pm_obj, off, 0, 0))
 	    != NULL) {
 		pt_entry_t *pde, *epde;
@@ -1161,16 +1162,16 @@ pmap_destroy(pmap_t pmap)
 		}
 		DPRINTF(PDB_FOLLOW, ("\n"));
 	}
-	mutex_exit(pmap->pm_lock);
+	rw_exit(pmap->pm_lock);
 	uvm_page_array_fini(&a);
 #endif
 	pmap_sdir_set(pmap->pm_space, 0);
-	mutex_enter(pmap->pm_lock);
+	rw_enter(pmap->pm_lock, RW_WRITER);
 	pmap_pagefree(pmap->pm_pdir_pg);
-	mutex_exit(pmap->pm_lock);
+	rw_exit(pmap->pm_lock);
 
 	uvm_obj_destroy(&pmap->pm_obj, false);
-	mutex_destroy(&pmap->pm_obj_lock);
+	rw_destroy(&pmap->pm_obj_lock);
 	pool_put(&pmap_pool, pmap);
 }
 
@@ -1183,9 +1184,9 @@ pmap_reference(pmap_t pmap)
 
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s(%p)\n", __func__, pmap));
 
-	mutex_enter(pmap->pm_lock);
+	rw_enter(pmap->pm_lock, RW_WRITER);
 	pmap->pm_obj.uo_refs++;
-	mutex_exit(pmap->pm_lock);
+	rw_exit(pmap->pm_lock);
 }
 
 
