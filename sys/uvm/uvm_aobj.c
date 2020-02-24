@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_aobj.c,v 1.135 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_aobj.c,v 1.136 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1998 Chuck Silvers, Charles D. Cranor and
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.135 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_aobj.c,v 1.136 2020/02/24 12:38:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -593,7 +593,7 @@ uao_detach(struct uvm_object *uobj)
 	 */
 
 	KASSERT(uobj->uo_refs > 0);
-	UVMHIST_LOG(maphist,"  (uobj=0x%#jx)  ref=%jd",
+	UVMHIST_LOG(maphist,"  (uobj=%#jx)  ref=%jd",
 	    (uintptr_t)uobj, uobj->uo_refs, 0, 0);
 	if (atomic_dec_uint_nv(&uobj->uo_refs) > 0) {
 		UVMHIST_LOG(maphist, "<- done (rc>0)", 0,0,0,0);
@@ -681,14 +681,14 @@ uao_put(struct uvm_object *uobj, voff_t start, voff_t stop, int flags)
 		}
 		if (stop > (uint64_t)(aobj->u_pages << PAGE_SHIFT)) {
 			printf("uao_put: strange, got an out of range "
-			    "flush 0x%jx > 0x%jx (fixed)\n",
+			    "flush %#jx > %#jx (fixed)\n",
 			    (uintmax_t)stop,
 			    (uintmax_t)(aobj->u_pages << PAGE_SHIFT));
 			stop = aobj->u_pages << PAGE_SHIFT;
 		}
 	}
 	UVMHIST_LOG(maphist,
-	    " flush start=0x%jx, stop=0x%jx, flags=0x%jx",
+	    " flush start=%#jx, stop=%#jx, flags=%#jx",
 	    start, stop, flags, 0);
 
 	/*
@@ -966,7 +966,7 @@ gotpage:
 			if ((ptmp->flags & PG_BUSY) != 0) {
 				ptmp->flags |= PG_WANTED;
 				UVMHIST_LOG(pdhist,
-				    "sleeping, ptmp->flags 0x%jx\n",
+				    "sleeping, ptmp->flags %#jx\n",
 				    ptmp->flags,0,0,0);
 				UVM_UNLOCK_AND_WAIT_RW(ptmp, uobj->vmobjlock,
 				    false, "uao_get", 0);
