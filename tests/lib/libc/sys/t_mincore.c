@@ -1,4 +1,4 @@
-/* $NetBSD: t_mincore.c,v 1.14 2017/10/08 08:29:57 kre Exp $ */
+/* $NetBSD: t_mincore.c,v 1.15 2020/02/24 12:20:30 rin Exp $ */
 
 /*-
  * Copyright (c) 2011 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_mincore.c,v 1.14 2017/10/08 08:29:57 kre Exp $");
+__RCSID("$NetBSD: t_mincore.c,v 1.15 2020/02/24 12:20:30 rin Exp $");
 
 #include <sys/mman.h>
 #include <sys/stat.h>
@@ -103,7 +103,7 @@ check_residency(void *addr, size_t npgs)
 			resident++;
 
 #if 0
-		(void)fprintf(stderr, "page 0x%p is %sresident\n",
+		(void)fprintf(stderr, "page %p is %sresident\n",
 		    (char *)addr + (i * page), vec[i] ? "" : "not ");
 #endif
 	}
