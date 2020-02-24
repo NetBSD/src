@@ -15,7 +15,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-pgm.c,v 1.9 2017/09/08 14:01:13 christos Exp $");
+__RCSID("$NetBSD: print-pgm.c,v 1.10 2020/02/24 18:39:47 kamil Exp $");
 #endif
 
 /* \summary: Pragmatic General Multicast (PGM) printer */
@@ -147,6 +147,7 @@ typedef enum _pgm_type {
 
 #define PGM_MIN_OPT_LEN		4
 
+UNALIGNED_OK
 void
 pgm_print(netdissect_options *ndo,
           register const u_char *bp, register u_int length,

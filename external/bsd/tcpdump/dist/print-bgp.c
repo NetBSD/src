@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-bgp.c,v 1.10 2019/10/01 16:06:16 christos Exp $");
+__RCSID("$NetBSD: print-bgp.c,v 1.11 2020/02/24 18:39:47 kamil Exp $");
 #endif
 
 /* \summary: Border Gateway Protocol (BGP) printer */
@@ -921,6 +921,7 @@ static const struct tok bgp_multicast_vpn_route_type_values[] = {
     { 0, NULL}
 };
 
+UNALIGNED_OK
 static int
 decode_multicast_vpn(netdissect_options *ndo,
                      const u_char *pptr, char *buf, u_int buflen)

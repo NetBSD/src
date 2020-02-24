@@ -23,7 +23,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-ah.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
+__RCSID("$NetBSD: print-ah.c,v 1.7 2020/02/24 18:39:47 kamil Exp $");
 #endif
 
 /* \summary: IPSEC Authentication Header printer */
@@ -39,6 +39,7 @@ __RCSID("$NetBSD: print-ah.c,v 1.6 2017/02/05 04:05:05 spz Exp $");
 #include "netdissect.h"
 #include "extract.h"
 
+UNALIGNED_OK
 int
 ah_print(netdissect_options *ndo, register const u_char *bp)
 {
