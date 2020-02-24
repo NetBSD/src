@@ -1,4 +1,4 @@
-/*	$NetBSD: fileio.c,v 1.6 2018/10/02 17:35:44 roy Exp $	*/
+/*	$NetBSD: fileio.c,v 1.7 2020/02/24 12:20:29 rin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: fileio.c,v 1.6 2018/10/02 17:35:44 roy Exp $");
+__RCSID("$NetBSD: fileio.c,v 1.7 2020/02/24 12:20:29 rin Exp $");
 #endif				/* not lint */
 
 #include "curses.h"
@@ -236,7 +236,7 @@ getwin(FILE *fp)
 		__touchline(win, y, 0, (int) win->maxx - 1);
 	}
 #ifdef DEBUG
-	__CTRACE(__CTRACE_FILEIO, "getwin: win = 0x%p\n", win);
+	__CTRACE(__CTRACE_FILEIO, "getwin: win = %p\n", win);
 #endif
 	return win;
 
