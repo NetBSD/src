@@ -1,4 +1,4 @@
-/*	$NetBSD: fiq.c,v 1.9 2020/02/22 19:49:11 chs Exp $	*/
+/*	$NetBSD: fiq.c,v 1.10 2020/02/24 12:08:08 rin Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002 Wasabi Systems, Inc.
@@ -36,13 +36,15 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.9 2020/02/22 19:49:11 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fiq.c,v 1.10 2020/02/24 12:08:08 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 
 #include <arm/cpufunc.h>
 #include <arm/fiq.h>
+
+#include <uvm/uvm_extern.h>
 
 TAILQ_HEAD(, fiqhandler) fiqhandler_stack =
     TAILQ_HEAD_INITIALIZER(fiqhandler_stack);
