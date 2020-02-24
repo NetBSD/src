@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.393 2020/02/23 10:22:07 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.394 2020/02/24 20:31:56 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,8 +198,9 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.393 2020/02/23 10:22:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.394 2020/02/24 20:31:56 ad Exp $");
 
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -548,7 +549,7 @@ pmap_acquire_pmap_lock(pmap_t pm)
 		return;
 #endif
 
-	mutex_enter(pm->pm_lock);
+	mutex_enter(&pm->pm_lock);
 }
 
 static inline void
@@ -558,7 +559,7 @@ pmap_release_pmap_lock(pmap_t pm)
 	if (__predict_false(db_onproc != NULL))
 		return;
 #endif
-	mutex_exit(pm->pm_lock);
+	mutex_exit(&pm->pm_lock);
 }
 
 static inline void
@@ -3026,10 +3027,9 @@ pmap_create(void)
 
 	pm = pool_cache_get(&pmap_cache, PR_WAITOK);
 
-	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_NONE);
-	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
-	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
+	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 
+	pm->pm_refs = 1;
 	pm->pm_stats.wired_count = 0;
 	pm->pm_stats.resident_count = 1;
 #ifdef ARM_MMU_EXTENDED
@@ -5219,8 +5219,6 @@ pmap_destroy(pmap_t pm)
 {
 	UVMHIST_FUNC(__func__); UVMHIST_CALLED(maphist);
 
-	u_int count;
-
 	if (pm == NULL)
 		return;
 
@@ -5239,10 +5237,7 @@ pmap_destroy(pmap_t pm)
 	/*
 	 * Drop reference count
 	 */
-	mutex_enter(pm->pm_lock);
-	count = --pm->pm_obj.uo_refs;
-	mutex_exit(pm->pm_lock);
-	if (count > 0) {
+	if (atomic_dec_uint_nv(&pm->pm_refs) > 0) {
 #ifndef ARM_MMU_EXTENDED
 		if (pmap_is_current(pm)) {
 			if (pm != pmap_kernel())
@@ -5280,8 +5275,7 @@ pmap_destroy(pmap_t pm)
 		ci->ci_pmap_lastuser = NULL;
 #endif
 
-	uvm_obj_destroy(&pm->pm_obj, false);
-	mutex_destroy(&pm->pm_obj_lock);
+	mutex_destroy(&pm->pm_lock);
 	pool_cache_put(&pmap_cache, pm);
 	UVMHIST_LOG(maphist, "  <-- done", 0, 0, 0, 0);
 }
@@ -5303,9 +5297,7 @@ pmap_reference(pmap_t pm)
 	pmap_use_l1(pm);
 #endif
 
-	mutex_enter(pm->pm_lock);
-	pm->pm_obj.uo_refs++;
-	mutex_exit(pm->pm_lock);
+	atomic_inc_uint(&pm->pm_refs);
 }
 
 #if (ARM_MMU_V6 + ARM_MMU_V7) > 0
@@ -6209,9 +6201,8 @@ pmap_bootstrap(vaddr_t vstart, vaddr_t vend)
 	 */
 	mutex_init(&pmap_lock, MUTEX_DEFAULT, IPL_VM);
 	mutex_init(&kpm_lock, MUTEX_DEFAULT, IPL_NONE);
-	mutex_init(&pm->pm_obj_lock, MUTEX_DEFAULT, IPL_VM);
-	uvm_obj_init(&pm->pm_obj, NULL, false, 1);
-	uvm_obj_setlock(&pm->pm_obj, &pm->pm_obj_lock);
+	mutex_init(&pm->pm_lock, MUTEX_DEFAULT, IPL_VM);
+	pm->pm_refs = 1;
 
 	VPRINTF("l1pt ");
 	/*
