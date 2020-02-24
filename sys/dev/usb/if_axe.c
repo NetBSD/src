@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.122 2020/01/29 06:24:10 thorpej Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.123 2020/02/24 12:38:57 rin Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.122 2020/01/29 06:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.123 2020/02/24 12:38:57 rin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -321,7 +321,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	usbd_status err;
 	uint16_t data;
 
-	DPRINTFN(30, "phy 0x%jx reg 0x%jx\n", phy, reg, 0, 0);
+	DPRINTFN(30, "phy %#jx reg %#jx\n", phy, reg, 0, 0);
 
 	if (un->un_phyno != phy)
 		return EINVAL;
@@ -347,7 +347,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 		*val &= ~BMSR_EXTCAP;
 	}
 
-	DPRINTFN(30, "phy 0x%jx reg 0x%jx val %#jx", phy, reg, *val, 0);
+	DPRINTFN(30, "phy %#jx reg %#jx val %#jx", phy, reg, *val, 0);
 
 	return 0;
 }
@@ -417,7 +417,7 @@ axe_mii_statchg(struct ifnet *ifp)
 		}
 	}
 
-	DPRINTF("val=0x%jx", val, 0, 0, 0);
+	DPRINTF("val=%#jx", val, 0, 0, 0);
 	usbnet_lock_mii(un);
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	usbnet_unlock_mii(un);
@@ -597,7 +597,7 @@ axe_ax88178_init(struct axe_softc *sc)
 
 	eeprom = le16toh(eeprom);
 
-	DPRINTF("EEPROM is 0x%jx", eeprom, 0, 0, 0);
+	DPRINTF("EEPROM is %#jx", eeprom, 0, 0, 0);
 
 	/* if EEPROM is invalid we have to use to GPIO0 */
 	if (eeprom == 0xffff) {
@@ -1040,7 +1040,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 
 			memcpy(&hdr, buf, sizeof(hdr));
 
-			DPRINTFN(20, "total_len %#jx len %jx ilen %#jx",
+			DPRINTFN(20, "total_len %#jx len %#jx ilen %#jx",
 			    total_len,
 			    (le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK),
 			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK), 0);
@@ -1331,7 +1331,7 @@ axe_init_locked(struct ifnet *ifp)
 	if (ifp->if_flags & IFF_BROADCAST)
 		rxmode |= AXE_RXCMD_BROADCAST;
 
-	DPRINTF("rxmode 0x%#jx", rxmode, 0, 0, 0);
+	DPRINTF("rxmode %#jx", rxmode, 0, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 

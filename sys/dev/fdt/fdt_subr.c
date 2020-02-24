@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.34 2020/02/20 01:35:55 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.35 2020/02/24 12:38:57 rin Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.34 2020/02/20 01:35:55 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.35 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_fdt.h"
 
@@ -243,7 +243,7 @@ fdtbus_decode_range(int phandle, uint64_t paddr)
 		buf += size_cells * 4;
 
 #ifdef FDTBUS_DEBUG
-		printf("%s: %s: cba=0x%#" PRIx64 ", pba=0x%#" PRIx64 ", cl=0x%#" PRIx64 "\n", __func__, fdt_get_name(fdtbus_get_data(), fdtbus_phandle2offset(phandle), NULL), cba, pba, cl);
+		printf("%s: %s: cba=%#" PRIx64 ", pba=%#" PRIx64 ", cl=%#" PRIx64 "\n", __func__, fdt_get_name(fdtbus_get_data(), fdtbus_phandle2offset(phandle), NULL), cba, pba, cl);
 #endif
 
 		if (paddr >= cba && paddr < cba + cl)
