@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_loan.c,v 1.95 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_loan.c,v 1.96 2020/02/24 21:06:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.95 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_loan.c,v 1.96 2020/02/24 21:06:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -988,6 +988,7 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 			}
 			/* XXX Better than yielding but inadequate. */
 			kpause("livelock", false, 1, &pg->interlock);
+			slock = NULL;
 		}
 
 		/*
@@ -1015,7 +1016,9 @@ uvm_unloanpage(struct vm_page **ploans, int npages)
 			KASSERT((pg->flags & PG_BUSY) == 0);
 			uvm_pagefree(pg);
 		}
-		rw_exit(slock);
+		if (slock != NULL) {
+			rw_exit(slock);
+		}
 	}
 }
 
