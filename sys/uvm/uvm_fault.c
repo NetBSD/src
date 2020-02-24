@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault.c,v 1.216 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_fault.c,v 1.217 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.216 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_fault.c,v 1.217 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -953,7 +953,7 @@ uvm_fault_check(
 	 */
 
 	if (uvmfault_lookup(ufi, false) == false) {
-		UVMHIST_LOG(maphist, "<- no mapping @ 0x%#jx", ufi->orig_rvaddr,
+		UVMHIST_LOG(maphist, "<- no mapping @ %#jx", ufi->orig_rvaddr,
 		    0,0,0);
 		return EFAULT;
 	}
@@ -964,7 +964,7 @@ uvm_fault_check(
 		printf("Page fault on non-pageable map:\n");
 		printf("ufi->map = %p\n", ufi->map);
 		printf("ufi->orig_map = %p\n", ufi->orig_map);
-		printf("ufi->orig_rvaddr = 0x%lx\n", (u_long) ufi->orig_rvaddr);
+		printf("ufi->orig_rvaddr = %#lx\n", (u_long) ufi->orig_rvaddr);
 		panic("uvm_fault: (ufi->map->flags & VM_MAP_PAGEABLE) == 0");
 	}
 #endif
@@ -1817,7 +1817,7 @@ uvm_fault_lower_lookup(
 		 */
 
 		if (lcv == flt->centeridx) {
-			UVMHIST_LOG(maphist, "  got uobjpage (0x%#jx) "
+			UVMHIST_LOG(maphist, "  got uobjpage (%#jx) "
 			    "with locked get", (uintptr_t)curpg, 0, 0, 0);
 		} else {
 			uvm_fault_lower_neighbor(ufi, flt, currva, curpg);
@@ -2190,7 +2190,7 @@ uvm_fault_lower_promote(
 		UVM_PAGE_OWN(uobjpage, NULL);
 
 		UVMHIST_LOG(maphist,
-		    "  promote uobjpage 0x%#jx to anon/page 0x%#jx/0x%#jx",
+		    "  promote uobjpage %#jx to anon/page %#jx/%#jx",
 		    (uintptr_t)uobjpage, (uintptr_t)anon, (uintptr_t)pg, 0);
 
 	} else {
@@ -2201,7 +2201,7 @@ uvm_fault_lower_promote(
 		 * uvmfault_promote().
 		 */
 
-		UVMHIST_LOG(maphist,"  zero fill anon/page 0x%#jx/0%#jx",
+		UVMHIST_LOG(maphist,"  zero fill anon/page %#jx/%#jx",
 		    (uintptr_t)anon, (uintptr_t)pg, 0, 0);
 	}
 
