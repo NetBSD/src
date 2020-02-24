@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.165 2020/02/22 19:44:07 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.166 2020/02/24 23:46:45 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.165 2020/02/22 19:44:07 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.166 2020/02/24 23:46:45 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7458,14 +7458,8 @@ ATF_TC_BODY(resume, tc)
 
 /// ----------------------------------------------------------------------------
 
-ATF_TC(syscall1);
-ATF_TC_HEAD(syscall1, tc)
-{
-	atf_tc_set_md_var(tc, "descr",
-	    "Verify that getpid(2) can be traced with PT_SYSCALL");
-}
-
-ATF_TC_BODY(syscall1, tc)
+static void
+syscall_body(bool killed)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -7514,35 +7508,68 @@ ATF_TC_BODY(syscall1, tc)
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+	if (killed) {
+		SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	validate_status_stopped(status, SIGTRAP);
+		validate_status_signaled(status, SIGKILL, 0);
+	} else {
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
 
-	DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for child\n");
-	SYSCALL_REQUIRE(ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-	DPRINTF("Before checking siginfo_t and lwpid\n");
-	ATF_REQUIRE_EQ(info.psi_lwpid, 1);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
+		validate_status_stopped(status, SIGTRAP);
 
-	DPRINTF("Before resuming the child process where it left off and "
-	    "without signal to be sent\n");
-	SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
+		    "child\n");
+		SYSCALL_REQUIRE(
+		    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
 
-	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-	TWAIT_REQUIRE_SUCCESS(wpid = TWAIT_GENERIC(child, &status, 0), child);
+		DPRINTF("Before checking siginfo_t and lwpid\n");
+		ATF_REQUIRE_EQ(info.psi_lwpid, 1);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
-	validate_status_exited(status, exitval);
+		DPRINTF("Before resuming the child process where it left off "
+		    "and without signal to be sent\n");
+		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+
+		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
+		TWAIT_REQUIRE_SUCCESS(
+		    wpid = TWAIT_GENERIC(child, &status, 0), child);
+
+		validate_status_exited(status, exitval);
+	}
+
 
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
+
+#define SYSCALL_TEST(name,killed)						\
+ATF_TC(name);								\
+ATF_TC_HEAD(name, tc)							\
+{									\
+	atf_tc_set_md_var(tc, "descr",					\
+	    "Verify that getpid(2) can be traced with PT_SYSCALL %s",	\
+	   killed ? "and killed on syscall entry" : "" );		\
+}									\
+									\
+ATF_TC_BODY(name, tc)							\
+{									\
+									\
+	syscall_body(killed);						\
+}
+
+SYSCALL_TEST(syscall, false)
+SYSCALL_TEST(syscall_killed_on_sce, true)
 
 /// ----------------------------------------------------------------------------
 
@@ -9532,7 +9559,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, resume);
 
-	ATF_TP_ADD_TC(tp, syscall1);
+	ATF_TP_ADD_TC(tp, syscall);
+	ATF_TP_ADD_TC(tp, syscall_killed_on_sce);
 
 	ATF_TP_ADD_TC(tp, syscallemu1);
 
