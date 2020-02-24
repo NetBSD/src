@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_machdep.c,v 1.101 2020/02/21 13:38:05 rin Exp $	*/
+/*	$NetBSD: vm_machdep.c,v 1.102 2020/02/24 11:49:17 rin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.101 2020/02/21 13:38:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_machdep.c,v 1.102 2020/02/24 11:49:17 rin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_multiprocessor.h"
@@ -309,11 +309,6 @@ vunmapbuf(struct buf *bp, vsize_t len)
 	bp->b_data = bp->b_saveaddr;
 	bp->b_saveaddr = 0;
 }
-
-#if UPAGES > 1 && \
-    (!defined(__HAVE_CPU_UAREA_ROUTINES) || !defined(PMAP_MAP_POOLPAGE))
-#error "We need physically contiguous pages for u-area."
-#endif
 
 #ifdef __HAVE_CPU_UAREA_ROUTINES
 void *
