@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.104 2020/01/30 06:03:34 thorpej Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.105 2020/02/24 12:20:30 rin Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.104 2020/01/30 06:03:34 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.105 2020/02/24 12:20:30 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -864,7 +864,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 
 	state = 4;
 	sc_if->sk_cdata.sk_jumbo_buf = (void *)kva;
-	DPRINTFN(1,("sk_jumbo_buf = 0x%p\n", sc_if->sk_cdata.sk_jumbo_buf));
+	DPRINTFN(1,("sk_jumbo_buf = %p\n", sc_if->sk_cdata.sk_jumbo_buf));
 
 	LIST_INIT(&sc_if->sk_jfree_listhead);
 	LIST_INIT(&sc_if->sk_jinuse_listhead);
