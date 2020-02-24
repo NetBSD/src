@@ -21,7 +21,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: print-icmp6.c,v 1.12 2019/10/01 16:06:16 christos Exp $");
+__RCSID("$NetBSD: print-icmp6.c,v 1.13 2020/02/24 18:39:47 kamil Exp $");
 #endif
 
 /* \summary: IPv6 Internet Control Message Protocol (ICMPv6) printer */
@@ -818,6 +818,7 @@ tooshort:
 	return;
 }
 
+UNALIGNED_OK
 static void
 rpl_print(netdissect_options *ndo,
           const struct icmp6_hdr *hdr,
@@ -876,6 +877,7 @@ trunc:
 }
 
 
+UNALIGNED_OK
 void
 icmp6_print(netdissect_options *ndo,
             const u_char *bp, u_int length, const u_char *bp2, int fragmented)
@@ -1403,6 +1405,7 @@ trunc:
 #undef ECHECK
 }
 
+UNALIGNED_OK
 static void
 mld6_print(netdissect_options *ndo, const u_char *bp)
 {
@@ -1419,6 +1422,7 @@ mld6_print(netdissect_options *ndo, const u_char *bp)
 	ND_PRINT((ndo,"addr: %s", ip6addr_string(ndo, &mp->mld6_addr)));
 }
 
+UNALIGNED_OK
 static void
 mldv2_report_print(netdissect_options *ndo, const u_char *bp, u_int len)
 {
@@ -1477,6 +1481,7 @@ trunc:
     return;
 }
 
+UNALIGNED_OK
 static void
 mldv2_query_print(netdissect_options *ndo, const u_char *bp, u_int len)
 {
