@@ -19,6 +19,37 @@
  * MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE.
  */
 
+
+/*
+ * If we have versions of GCC or Clang that support an __attribute__
+ * to say "if we're building with unsigned behavior sanitization,
+ * don't complain about undefined behavior in this function", we
+ * label these functions with that attribute - we *know* it's undefined
+ * in the C standard, but we *also* know it does what we want with
+ * the ISA we're targeting and the compiler we're using.
+ *
+ * For GCC 4.9.0 and later, we use __attribute__((no_sanitize_undefined));
+ * pre-5.0 GCC doesn't have __has_attribute, and I'm not sure whether
+ * GCC or Clang first had __attribute__((no_sanitize(XXX)).
+ *
+ * For Clang, we check for __attribute__((no_sanitize(XXX)) with
+ * __has_attribute, as there are versions of Clang that support
+ * __attribute__((no_sanitize("undefined")) but don't support
+ * __attribute__((no_sanitize_undefined)).
+ *
+ * We define this here, rather than in funcattrs.h, because we
+ * only want it used here, we don't want it to be broadly used.
+ * (Any printer will get this defined, but this should at least
+ * make it harder for people to find.)
+ */
+#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 409)
+#define UNALIGNED_OK	__attribute__((no_sanitize_undefined))
+#elif __has_attribute(no_sanitize)
+#define UNALIGNED_OK	__attribute__((no_sanitize("undefined")))
+#else
+#define UNALIGNED_OK
+#endif
+
 #ifdef __NetBSD__
 #include <string.h>
 
@@ -138,36 +169,6 @@ static inline uint64_t EXTRACT_LE_64BITS(const void *p)
  * integral values.
  */
 #include "funcattrs.h"
-
-/*
- * If we have versions of GCC or Clang that support an __attribute__
- * to say "if we're building with unsigned behavior sanitization,
- * don't complain about undefined behavior in this function", we
- * label these functions with that attribute - we *know* it's undefined
- * in the C standard, but we *also* know it does what we want with
- * the ISA we're targeting and the compiler we're using.
- *
- * For GCC 4.9.0 and later, we use __attribute__((no_sanitize_undefined));
- * pre-5.0 GCC doesn't have __has_attribute, and I'm not sure whether
- * GCC or Clang first had __attribute__((no_sanitize(XXX)).
- *
- * For Clang, we check for __attribute__((no_sanitize(XXX)) with
- * __has_attribute, as there are versions of Clang that support
- * __attribute__((no_sanitize("undefined")) but don't support
- * __attribute__((no_sanitize_undefined)).
- *
- * We define this here, rather than in funcattrs.h, because we
- * only want it used here, we don't want it to be broadly used.
- * (Any printer will get this defined, but this should at least
- * make it harder for people to find.)
- */
-#if defined(__GNUC__) && ((__GNUC__ * 100 + __GNUC_MINOR__) >= 409)
-#define UNALIGNED_OK	__attribute__((no_sanitize_undefined))
-#elif __has_attribute(no_sanitize)
-#define UNALIGNED_OK	__attribute__((no_sanitize("undefined")))
-#else
-#define UNALIGNED_OK
-#endif
 
 #ifdef LBL_ALIGN
 /*
