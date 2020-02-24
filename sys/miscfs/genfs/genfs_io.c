@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.86 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.87 2020/02/24 20:49:51 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.86 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.87 2020/02/24 20:49:51 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1916,7 +1916,7 @@ genfs_do_directio(struct vmspace *vs, vaddr_t uva, size_t len, struct vnode *vp,
 
 	spoff = trunc_page(off);
 	epoff = round_page(off + len);
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, spoff, epoff, pgoflags);
 	if (error) {
 		return error;
