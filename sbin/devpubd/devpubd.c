@@ -1,4 +1,4 @@
-/*	$NetBSD: devpubd.c,v 1.5 2020/02/06 19:20:21 kamil Exp $	*/
+/*	$NetBSD: devpubd.c,v 1.6 2020/02/24 11:45:30 mlelstv Exp $	*/
 
 /*-
  * Copyright (c) 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -36,7 +36,7 @@
 #include <sys/cdefs.h>
 __COPYRIGHT("@(#) Copyright (c) 2011-2015\
 Jared D. McNeill <jmcneill@invisible.ca>. All rights reserved.");
-__RCSID("$NetBSD: devpubd.c,v 1.5 2020/02/06 19:20:21 kamil Exp $");
+__RCSID("$NetBSD: devpubd.c,v 1.6 2020/02/24 11:45:30 mlelstv Exp $");
 
 #include <sys/queue.h>
 #include <sys/types.h>
@@ -252,7 +252,7 @@ devpubd_init(void)
 __dead static void
 usage(void)
 {
-	fprintf(stderr, "usage: %s [-f]\n", getprogname());
+	fprintf(stderr, "usage: %s [-1f]\n", getprogname());
 	exit(EXIT_FAILURE);
 }
 
@@ -260,12 +260,17 @@ int
 main(int argc, char *argv[])
 {
 	bool fflag = false;
+	bool once = false;
 	int ch;
 
 	setprogname(argv[0]);
 
-	while ((ch = getopt(argc, argv, "fh")) != -1) {
+	while ((ch = getopt(argc, argv, "1fh")) != -1) {
 		switch (ch) {
+		case '1':
+			fflag = true;
+			once = true;
+			break;
 		case 'f':
 			fflag = true;
 			break;
@@ -295,7 +300,8 @@ main(int argc, char *argv[])
 		}
 	}
 
-	devpubd_eventloop();
+	if (!once)
+		devpubd_eventloop();
 
 	return EXIT_SUCCESS;
 }
