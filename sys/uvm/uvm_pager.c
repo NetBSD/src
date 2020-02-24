@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pager.c,v 1.122 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_pager.c,v 1.123 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.122 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pager.c,v 1.123 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
@@ -173,7 +173,7 @@ uvm_pagermapin(struct vm_page **pps, int npages, int flags)
 	const u_int first_color = VM_PGCOLOR(*pps);
 	UVMHIST_FUNC("uvm_pagermapin"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist,"(pps=0x%#jx, npages=%jd, first_color=%ju)",
+	UVMHIST_LOG(maphist,"(pps=%#jx, npages=%jd, first_color=%ju)",
 		(uintptr_t)pps, npages, first_color, 0);
 
 	/*
@@ -230,7 +230,7 @@ enter:
 	}
 	pmap_update(vm_map_pmap(pager_map));
 
-	UVMHIST_LOG(maphist, "<- done (KVA=0x%jx)", kva,0,0,0);
+	UVMHIST_LOG(maphist, "<- done (KVA=%#jx)", kva,0,0,0);
 	return(kva);
 }
 
@@ -248,7 +248,7 @@ uvm_pagermapout(vaddr_t kva, int npages)
 	struct vm_map_entry *entries;
 	UVMHIST_FUNC("uvm_pagermapout"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, " (kva=0x%jx, npages=%jd)", kva, npages,0,0);
+	UVMHIST_LOG(maphist, " (kva=%#jx, npages=%jd)", kva, npages,0,0);
 
 	/*
 	 * duplicate uvm_unmap, but add in pager_map_wanted handling.

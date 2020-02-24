@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_device.c,v 1.69 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_device.c,v 1.70 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.69 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_device.c,v 1.70 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -116,7 +116,7 @@ udv_attach(dev_t device, vm_prot_t accessprot,
 
 	UVMHIST_FUNC("udv_attach"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "(device=0x%jx)", device,0,0,0);
+	UVMHIST_LOG(maphist, "(device=%#jx)", device,0,0,0);
 
 	/*
 	 * before we do anything, ensure this device supports mmap
@@ -273,7 +273,7 @@ udv_reference(struct uvm_object *uobj)
 
 	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uobj->uo_refs++;
-	UVMHIST_LOG(maphist, "<- done (uobj=0x%#jx, ref = %jd)",
+	UVMHIST_LOG(maphist, "<- done (uobj=%#jx, ref = %jd)",
 	    (uintptr_t)uobj, uobj->uo_refs,0,0);
 	rw_exit(uobj->vmobjlock);
 }
@@ -300,7 +300,7 @@ again:
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
 		rw_exit(uobj->vmobjlock);
-		UVMHIST_LOG(maphist," <- done, uobj=0x%#jx, ref=%jd",
+		UVMHIST_LOG(maphist," <- done, uobj=%#jx, ref=%jd",
 		    (uintptr_t)uobj,uobj->uo_refs,0,0);
 		return;
 	}
@@ -329,7 +329,7 @@ again:
 
 	uvm_obj_destroy(uobj, true);
 	kmem_free(udv, sizeof(*udv));
-	UVMHIST_LOG(maphist," <- done, freed uobj=0x%#jx", (uintptr_t)uobj,
+	UVMHIST_LOG(maphist," <- done, freed uobj=%#jx", (uintptr_t)uobj,
 	    0, 0, 0);
 }
 
@@ -373,7 +373,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 */
 
 	if (UVM_ET_ISCOPYONWRITE(entry)) {
-		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=0x%jx)",
+		UVMHIST_LOG(maphist, "<- failed -- COW entry (etype=%#jx)",
 		    entry->etype, 0,0,0);
 		uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
 		return(EIO);
@@ -424,7 +424,7 @@ udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		mmapflags = pmap_mmap_flags(mdpgno);
 		mapprot = ufi->entry->protection;
 		UVMHIST_LOG(maphist,
-		    "  MAPPING: device: pm=0x%#jx, va=0x%jx, pa=0x%jx, at=%jd",
+		    "  MAPPING: device: pm=%#jx, va=%#jx, pa=%#jx, at=%jd",
 		    (uintptr_t)ufi->orig_map->pmap, curr_va, paddr, mapprot);
 		if (pmap_enter(ufi->orig_map->pmap, curr_va, paddr, mapprot,
 		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {

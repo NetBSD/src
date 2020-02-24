@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.155 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.156 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.155 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.156 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -557,7 +557,7 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 		paddr_t pa;
 
 		if (pmap_extract(pmap_kernel(), va, &pa)) {
-			panic("uvm_km_check_empty: va %p has pa 0x%llx",
+			panic("uvm_km_check_empty: va %p has pa %#llx",
 			    (void *)va, (long long)pa);
 		}
 		/*
@@ -620,7 +620,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
 	obj = (flags & UVM_KMF_PAGEABLE) ? uvm_kernel_object : NULL;
-	UVMHIST_LOG(maphist,"  (map=0x%#jx, obj=0x%#jx, size=0x%jx, flags=%jd)",
+	UVMHIST_LOG(maphist,"  (map=%#jx, obj=%#jx, size=%#jx, flags=%jd)",
 	    (uintptr_t)map, (uintptr_t)obj, size, flags);
 
 	/*
@@ -642,7 +642,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 */
 
 	if (flags & (UVM_KMF_VAONLY | UVM_KMF_PAGEABLE)) {
-		UVMHIST_LOG(maphist,"<- done valloc (kva=0x%jx)", kva,0,0,0);
+		UVMHIST_LOG(maphist,"<- done valloc (kva=%#jx)", kva,0,0,0);
 		return(kva);
 	}
 
@@ -651,7 +651,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 */
 
 	offset = kva - vm_map_min(kernel_map);
-	UVMHIST_LOG(maphist, "  kva=0x%jx, offset=0x%jx", kva, offset,0,0);
+	UVMHIST_LOG(maphist, "  kva=%#jx, offset=%#jx", kva, offset,0,0);
 
 	/*
 	 * now allocate and map in the memory... note that we are the only ones
@@ -719,7 +719,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 		kmsan_mark((void *)kva, size, KMSAN_STATE_UNINIT);
 	}
 
-	UVMHIST_LOG(maphist,"<- done (kva=0x%jx)", kva,0,0,0);
+	UVMHIST_LOG(maphist,"<- done (kva=%#jx)", kva,0,0,0);
 	return(kva);
 }
 

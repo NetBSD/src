@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.c,v 1.115 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_amap.c,v 1.116 2020/02/24 12:38:57 rin Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.115 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_amap.c,v 1.116 2020/02/24 12:38:57 rin Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -246,7 +246,7 @@ amap_alloc(vaddr_t sz, vaddr_t padsz, int waitf)
 		    amap->am_maxslot * sizeof(struct vm_anon *));
 	}
 
-	UVMHIST_LOG(maphist,"<- done, amap = 0x%#jx, sz=%jd", (uintptr_t)amap,
+	UVMHIST_LOG(maphist,"<- done, amap = %#jx, sz=%jd", (uintptr_t)amap,
 	    sz, 0, 0);
 	return(amap);
 }
@@ -333,7 +333,7 @@ amap_free(struct vm_amap *amap)
 		kmem_free(amap->am_ppref, slots * sizeof(*amap->am_ppref));
 #endif
 	pool_cache_put(&uvm_amap_cache, amap);
-	UVMHIST_LOG(maphist,"<- done, freed amap = 0x%#jx", (uintptr_t)amap,
+	UVMHIST_LOG(maphist,"<- done, freed amap = %#jx", (uintptr_t)amap,
 	    0, 0, 0);
 }
 
@@ -364,7 +364,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 
 	UVMHIST_FUNC("amap_extend"); UVMHIST_CALLED(maphist);
 
-	UVMHIST_LOG(maphist, "  (entry=0x%#jx, addsize=0x%jx, flags=0x%jx)",
+	UVMHIST_LOG(maphist, "  (entry=%#jx, addsize=%#jx, flags=%#jx)",
 	    (uintptr_t)entry, addsize, flags, 0);
 
 	/*
@@ -404,7 +404,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 #endif
 			uvm_anon_freelst(amap, tofree);
 			UVMHIST_LOG(maphist,
-			    "<- done (case 1f), amap = 0x%#jx, sltneed=%jd",
+			    "<- done (case 1f), amap = %#jx, sltneed=%jd",
 			    (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		}
@@ -420,7 +420,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 #endif
 			uvm_anon_freelst(amap, tofree);
 			UVMHIST_LOG(maphist,
-			    "<- done (case 1b), amap = 0x%#jx, sltneed=%jd",
+			    "<- done (case 1b), amap = %#jx, sltneed=%jd",
 			    (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		}
@@ -453,7 +453,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			 * alloc time and we never shrink an allocation.
 			 */
 
-			UVMHIST_LOG(maphist,"<- done (case 2f), amap = 0x%#jx, "
+			UVMHIST_LOG(maphist,"<- done (case 2f), amap = %#jx, "
 			    "slotneed=%jd", (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		} else {
@@ -510,7 +510,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 			entry->aref.ar_pageoff = slotarea - slotadd;
 			amap_unlock(amap);
 
-			UVMHIST_LOG(maphist,"<- done (case 2b), amap = 0x%#jx, "
+			UVMHIST_LOG(maphist,"<- done (case 2b), amap = %#jx, "
 			    "slotneed=%jd", (uintptr_t)amap, slotneed, 0, 0);
 			return 0;
 		}
@@ -656,7 +656,7 @@ amap_extend(struct vm_map_entry *entry, vsize_t addsize, int flags)
 	if (oldppref && oldppref != PPREF_NONE)
 		kmem_free(oldppref, oldnslots * sizeof(*oldppref));
 #endif
-	UVMHIST_LOG(maphist,"<- done (case 3), amap = 0x%#jx, slotneed=%jd",
+	UVMHIST_LOG(maphist,"<- done (case 3), amap = %#jx, slotneed=%jd",
 	    (uintptr_t)amap, slotneed, 0, 0);
 	return 0;
 }
@@ -731,7 +731,7 @@ amap_wipeout(struct vm_amap *amap)
 	u_int lcv;
 
 	UVMHIST_FUNC("amap_wipeout"); UVMHIST_CALLED(maphist);
-	UVMHIST_LOG(maphist,"(amap=0x%#jx)", (uintptr_t)amap, 0,0,0);
+	UVMHIST_LOG(maphist,"(amap=%#jx)", (uintptr_t)amap, 0,0,0);
 
 	KASSERT(rw_write_held(amap->am_lock));
 	KASSERT(amap->am_ref == 0);
@@ -753,7 +753,7 @@ amap_wipeout(struct vm_amap *amap)
 		KASSERT(anon != NULL && anon->an_ref != 0);
 
 		KASSERT(anon->an_lock == amap->am_lock);
-		UVMHIST_LOG(maphist,"  processing anon 0x%#jx, ref=%jd",
+		UVMHIST_LOG(maphist,"  processing anon %#jx, ref=%jd",
 		    (uintptr_t)anon, anon->an_ref, 0, 0);
 
 		/*
@@ -834,8 +834,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 			startva = (startva / chunksize) * chunksize;
 			endva = roundup(endva, chunksize);
 			UVMHIST_LOG(maphist,
-			    "  chunk amap ==> clip 0x%jx->0x%jx to "
-			    "0x%jx->0x%jx",
+			    "  chunk amap ==> clip %#jx->%#jx to %#jx->%#jx",
 			    entry->start, entry->end, startva, endva);
 			UVM_MAP_CLIP_START(map, entry, startva);
 
@@ -850,7 +849,7 @@ amap_copy(struct vm_map *map, struct vm_map_entry *entry, int flags,
 			return;
 		}
 
-		UVMHIST_LOG(maphist, "<- done [creating new amap 0x%jx->0x%jx]",
+		UVMHIST_LOG(maphist, "<- done [creating new amap %#jx->%#jx]",
 		    entry->start, entry->end, 0, 0);
 
 		/*
@@ -1441,7 +1440,7 @@ amap_lookup(struct vm_aref *aref, vaddr_t offset)
 	an = amap->am_anon[slot];
 
 	UVMHIST_LOG(maphist,
-	    "<- done (amap=0x%#jx, offset=0x%jx, result=0x%#jx)",
+	    "<- done (amap=%#jx, offset=%#jx, result=%#jx)",
 	    (uintptr_t)amap, offset, (uintptr_t)an, 0);
 
 	KASSERT(slot < amap->am_nslot);
@@ -1527,7 +1526,7 @@ amap_add(struct vm_aref *aref, vaddr_t offset, struct vm_anon *anon,
 	}
 	amap->am_anon[slot] = anon;
 	UVMHIST_LOG(maphist,
-	    "<- done (amap=0x%#jx, offset=0x%x, anon=0x%#jx, rep=%d)",
+	    "<- done (amap=%#jx, offset=%#x, anon=%#jx, rep=%d)",
 	    (uintptr_t)amap, offset, (uintptr_t)anon, replace);
 }
 
@@ -1561,7 +1560,7 @@ amap_unadd(struct vm_aref *aref, vaddr_t offset)
 		amap->am_bckptr[amap->am_slots[ptr]] = ptr;
 	}
 	amap->am_nused--;
-	UVMHIST_LOG(maphist, "<- done (amap=0x%#jx, slot=0x%jx)",
+	UVMHIST_LOG(maphist, "<- done (amap=%#jx, slot=%#jx)",
 	    (uintptr_t)amap, slot,0, 0);
 }
 
@@ -1619,7 +1618,7 @@ amap_ref(struct vm_amap *amap, vaddr_t offset, vsize_t len, int flags)
 	}
 	amap_adjref_anons(amap, offset, len, 1, (flags & AMAP_REFALL) != 0);
 
-	UVMHIST_LOG(maphist,"<- done!  amap=0x%#jx", (uintptr_t)amap, 0, 0, 0);
+	UVMHIST_LOG(maphist,"<- done!  amap=%#jx", (uintptr_t)amap, 0, 0, 0);
 }
 
 /*
@@ -1636,7 +1635,7 @@ amap_unref(struct vm_amap *amap, vaddr_t offset, vsize_t len, bool all)
 
 	amap_lock(amap, RW_WRITER);
 
-	UVMHIST_LOG(maphist,"  amap=0x%#jx  refs=%d, nused=%d",
+	UVMHIST_LOG(maphist,"  amap=%#jx  refs=%d, nused=%d",
 	    (uintptr_t)amap, amap->am_ref, amap->am_nused, 0);
 	KASSERT(amap->am_ref > 0);
 
