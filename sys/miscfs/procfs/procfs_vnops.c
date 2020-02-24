@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.209 2020/02/23 22:14:04 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.210 2020/02/24 20:47:41 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.209 2020/02/23 22:14:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.210 2020/02/24 20:47:41 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -1739,7 +1739,7 @@ procfs_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		mutex_exit(ap->a_vp->v_interlock);
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
 
 	return (EFAULT);
 }
