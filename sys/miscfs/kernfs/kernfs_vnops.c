@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs_vnops.c,v 1.163 2020/02/04 04:19:24 riastradh Exp $	*/
+/*	$NetBSD: kernfs_vnops.c,v 1.164 2020/02/24 20:44:25 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.163 2020/02/04 04:19:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kernfs_vnops.c,v 1.164 2020/02/24 20:44:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1229,7 +1229,7 @@ kernfs_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		mutex_exit(ap->a_vp->v_interlock);
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
 
 	return (EFAULT);
 }
