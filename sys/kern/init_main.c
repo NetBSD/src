@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.521 2020/02/18 20:23:17 chs Exp $	*/
+/*	$NetBSD: init_main.c,v 1.522 2020/02/24 20:47:47 jdolecek Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.521 2020/02/18 20:23:17 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.522 2020/02/24 20:47:47 jdolecek Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -466,6 +466,9 @@ main(void)
 	/* Second part of module system initialization. */
 	module_start_unload_thread();
 
+	/* Initialize autoconf data structures before any modules are loaded */
+	config_init_mi();
+
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -743,8 +746,6 @@ static void
 configure(void)
 {
 
-	/* Initialize autoconf data structures. */
-	config_init_mi();
 	/*
 	 * XXX
 	 * callout_setfunc() requires mutex(9) so it can't be in config_init()
