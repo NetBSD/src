@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.52 2020/02/25 07:50:25 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.53 2020/02/25 07:53:55 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.52 2020/02/25 07:50:25 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.53 2020/02/25 07:53:55 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2583,7 +2583,7 @@ ixl_txr_disabled(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 
 	KASSERT(mutex_owned(&txr->txr_lock));
 
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < 10; i++) {
 		reg = ixl_rd(sc, ena);
 		if (ISSET(reg, I40E_QTX_ENA_QENA_STAT_MASK) == 0)
 			return 0;
@@ -3097,7 +3097,7 @@ ixl_rxr_disabled(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	KASSERT(mutex_owned(&rxr->rxr_lock));
 
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < 10; i++) {
 		reg = ixl_rd(sc, ena);
 		if (ISSET(reg, I40E_QRX_ENA_QENA_STAT_MASK) == 0)
 			return 0;
