@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.47 2020/02/25 07:22:18 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.48 2020/02/25 07:31:19 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.47 2020/02/25 07:22:18 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.48 2020/02/25 07:31:19 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2293,8 +2293,13 @@ ixl_stop_locked(struct ixl_softc *sc)
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
 
+		mutex_enter(&txr->txr_lock);
 		ixl_txr_unconfig(sc, txr);
+		mutex_exit(&txr->txr_lock);
+
+		mutex_enter(&rxr->rxr_lock);
 		ixl_rxr_unconfig(sc, rxr);
+		mutex_exit(&rxr->rxr_lock);
 
 		ixl_txr_clean(sc, txr);
 		ixl_rxr_clean(sc, rxr);
