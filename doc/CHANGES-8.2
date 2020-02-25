@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.99 2020/02/20 14:32:21 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.100 2020/02/25 19:22:18 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2050,4 +2050,24 @@ sys/arch/hpcmips/hpcmips/hpcapm_machdep.c	1.6
 
 	Fix spelling in commments.
 	[sevan, ticket #1506]
+
+sys/arch/mips/adm5120/dev/ahci.c		1.21
+sys/dev/usb/ehci.c				1.274
+sys/dev/usb/ohci.c				1.296
+sys/dev/usb/uhci.c				1.294
+sys/external/bsd/dwc2/dwc2.c			1.72
+
+	Fix a memory leak.
+	[skrll, ticket #1507]
+
+sys/kern/uipc_socket.c				1.288
+
+	SO_RCVTIMEO: zero out the time value, to prevent uninitialized
+	bytes in its padding from leaking to userland.
+	[maxv, ticket #1509]
+
+sys/arch/arm/arm32/bus_dma.c			1.119,1.120
+
+	Make sure to convey a failure to the calling function.
+	[skrll, ticket #1510]
 
