@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.53 2020/02/25 07:53:55 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.54 2020/02/25 07:58:44 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.53 2020/02/25 07:53:55 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.54 2020/02/25 07:58:44 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -89,7 +89,6 @@ __KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.53 2020/02/25 07:53:55 yamaguchi Exp $"
 #include <sys/evcnt.h>
 #include <sys/interrupt.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/pcq.h>
@@ -5229,9 +5228,7 @@ ixl_aqb_alloc(struct ixl_softc *sc)
 {
 	struct ixl_aq_buf *aqb;
 
-	aqb = malloc(sizeof(*aqb), M_DEVBUF, M_WAITOK);
-	if (aqb == NULL)
-		return NULL;
+	aqb = kmem_alloc(sizeof(*aqb), KM_SLEEP);
 
 	aqb->aqb_size = IXL_AQ_BUFLEN;
 
@@ -5258,7 +5255,7 @@ dma_free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, aqb->aqb_map);
 free:
-	free(aqb, M_DEVBUF);
+	kmem_free(aqb, sizeof(*aqb));
 
 	return NULL;
 }
@@ -5266,11 +5263,12 @@ free:
 static void
 ixl_aqb_free(struct ixl_softc *sc, struct ixl_aq_buf *aqb)
 {
+
 	bus_dmamap_unload(sc->sc_dmat, aqb->aqb_map);
 	bus_dmamem_unmap(sc->sc_dmat, aqb->aqb_data, aqb->aqb_size);
 	bus_dmamem_free(sc->sc_dmat, &aqb->aqb_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, aqb->aqb_map);
-	free(aqb, M_DEVBUF);
+	kmem_free(aqb, sizeof(*aqb));
 }
 
 static int
