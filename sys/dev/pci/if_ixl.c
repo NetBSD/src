@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.51 2020/02/25 07:45:28 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.52 2020/02/25 07:50:25 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.51 2020/02/25 07:45:28 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.52 2020/02/25 07:50:25 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2257,17 +2257,39 @@ ixl_stop_locked(struct ixl_softc *sc)
 
 		mutex_enter(&txr->txr_lock);
 		ixl_txr_qdis(sc, txr, 0);
-		/* XXX wait at least 400 usec for all tx queues in one go */
-		ixl_flush(sc);
-		DELAY(500);
+		mutex_exit(&txr->txr_lock);
+	}
 
+	/* XXX wait at least 400 usec for all tx queues in one go */
+	ixl_flush(sc);
+	DELAY(500);
+
+	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
+		txr = sc->sc_qps[i].qp_txr;
+		rxr = sc->sc_qps[i].qp_rxr;
+
+		mutex_enter(&txr->txr_lock);
 		reg = ixl_rd(sc, I40E_QTX_ENA(i));
 		CLR(reg, I40E_QTX_ENA_QENA_REQ_MASK);
 		ixl_wr(sc, I40E_QTX_ENA(i), reg);
-		/* XXX wait 50ms from completaion of the TX queue disable*/
-		ixl_flush(sc);
-		DELAY(50);
+		mutex_exit(&txr->txr_lock);
 
+		mutex_enter(&rxr->rxr_lock);
+		reg = ixl_rd(sc, I40E_QRX_ENA(i));
+		CLR(reg, I40E_QRX_ENA_QENA_REQ_MASK);
+		ixl_wr(sc, I40E_QRX_ENA(i), reg);
+		mutex_exit(&rxr->rxr_lock);
+	}
+
+	/* XXX short wait for all queue disables to settle */
+	ixl_flush(sc);
+	DELAY(50);
+
+	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
+		txr = sc->sc_qps[i].qp_txr;
+		rxr = sc->sc_qps[i].qp_rxr;
+
+		mutex_enter(&txr->txr_lock);
 		if (ixl_txr_disabled(sc, txr) != 0) {
 			mutex_exit(&txr->txr_lock);
 			goto die;
@@ -2275,13 +2297,6 @@ ixl_stop_locked(struct ixl_softc *sc)
 		mutex_exit(&txr->txr_lock);
 
 		mutex_enter(&rxr->rxr_lock);
-		reg = ixl_rd(sc, I40E_QRX_ENA(i));
-		CLR(reg, I40E_QRX_ENA_QENA_REQ_MASK);
-		ixl_wr(sc, I40E_QRX_ENA(i), reg);
-		/* XXX wait 50ms from completion of the RX queue disable */
-		ixl_flush(sc);
-		DELAY(50);
-
 		if (ixl_rxr_disabled(sc, rxr) != 0) {
 			mutex_exit(&rxr->rxr_lock);
 			goto die;
