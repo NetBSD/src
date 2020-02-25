@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.2 2020/02/20 14:54:22 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.3 2020/02/25 20:29:30 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -51,4 +51,107 @@ sys/dev/usb/usbdi.c				1.194
 	pipe whose callback is currently running at the moment the
 	pipe is aborted will not be restarted afterward.
 	[riastradh, ticket #716]
+
+sys/dev/fdt/dwcmmc_fdt.c			1.11
+sys/dev/ic/bwfm.c				1.15-1.18
+sys/dev/ic/bwfmreg.h				1.4-1.6
+sys/dev/ic/bwfmvar.h				1.4,1.5
+sys/dev/ic/dwc_mmc.c				1.21,1.22
+sys/dev/ic/dwc_mmc_reg.h			1.8,1.9,1.12,1.13
+sys/dev/pcmcia/pcmciareg.h			1.11
+sys/dev/sdmmc/if_bwfm_sdio.c			1.4,1.6-1.12
+sys/dev/sdmmc/if_bwfm_sdio.h			1.1,1.2
+sys/dev/sdmmc/sdhc.c				1.105,1.106
+sys/dev/sdmmc/sdmmc.c				1.37,1.39
+sys/dev/sdmmc/sdmmc_cis.c			1.6,1.8
+sys/dev/sdmmc/sdmmc_io.c			1.15-1.19
+sys/dev/sdmmc/sdmmc_ioreg.h			1.4,1.5
+sys/dev/sdmmc/sdmmc_mem.c			1.69-1.71
+sys/dev/sdmmc/sdmmcdevs				1.5-1.8
+sys/dev/sdmmc/sdmmcvar.h			1.31,1.33,1.34
+sys/net/if_media.h				1.66
+sys/dev/sdmmc/sdmmcdevs.h			(regen)
+
+	Various fixes to make bwfm@sdio work on Pinebook Pro:
+	 - Several fixes to SDIO (generic for the dwc driver)
+	 - bwfm sdio attachment.
+	 - Various bwfm fixes
+	 - isplay 802.11 modes beyond 'g'
+	 - sdhc voltage setting fixes
+	[mrg, ticket #717]
+
+sys/arch/mips/adm5120/dev/ahci.c		1.21
+sys/dev/usb/ehci.c				1.274
+sys/dev/usb/ohci.c				1.296
+sys/dev/usb/uhci.c				1.294
+sys/external/bsd/dwc2/dwc2.c			1.72
+
+	Fix a memory leak.
+	[skrll, ticket #718]
+
+sys/kern/uipc_socket.c				1.288
+
+	SO_RCVTIMEO: zero out the time value, to prevent uninitialized
+	bytes in its padding from leaking to userland.
+	[maxv, ticket #720]
+
+sys/arch/arm/arm32/bus_dma.c			1.119,1.120
+
+	Make sure to convey a failure to the calling function.
+	[skrll, ticket #721]
+
+sys/arch/i386/stand/efiboot/eficons.c		1.10,1.11
+
+	If the default GOP mode is unavailable, fallback to the first mode
+	defined.
+	[jmcneill, ticket #723]
+
+xsrc/external/mit/MesaLib/dist/src/mapi/entry_x86-64_tls.h 1.5
+xsrc/external/mit/MesaLib/dist/src/mapi/entry_x86_tls.h 1.6
+
+	mesa: sync w/ pkgsrc: don't assume the current gl dispatch table
+	points to noop if NULL, instead call the ENTRY_CURRENT_TABLE_GET
+	function.
+	[tnn, ticket #724]
+
+etc/rc.d/mountall				1.12
+external/cddl/osnet/dist/uts/common/fs/zfs/spa_history.c 1.5,1.6
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.59-1.61
+external/cddl/osnet/sys/kern/misc.c		1.8
+
+	- Make block device nodes with /dev on zfs work.
+	- Mount zfs if zfs=YES whether or not /etc/zfs/zpool.cache is there.
+	- Allow random seed to be stored on zfs.
+	- Mark our changes to zpools as NetBSD, not OpenSolaris.
+	[riastradh, ticket #725]
+
+external/gpl3/binutils/dist/bfd/elf.c		1.14
+
+	Fix 'nm /dev/ksyms'.
+	[rin, ticket #726]
+
+sys/arch/powerpc/include/db_machdep.h		1.27
+
+	Do not mask out LK bit (bit 31) from M_BCTR, which distinguishes
+	bcctr and bcctrl.
+	[rin, ticket #727]
+
+sys/arch/powerpc/ibm4xx/dev/com_opb.c		1.23
+
+	Fix a panic during attach of com(4) for powerpc/ibm4xx peripheral.
+	[rin, ticket #728]
+
+sys/arch/powerpc/include/intr.h			1.15
+
+	Fix !__HAVE_FAST_SOFTINTS build for debugging.
+	[rin, ticket #729]
+
+sys/arch/powerpc/conf/files.powerpc		1.93
+sys/arch/powerpc/include/pio.h			1.8
+sys/arch/powerpc/pic/intr.c			1.27
+sys/arch/powerpc/powerpc/bus_dma.c		1.50
+sys/arch/powerpc/powerpc/pio_subr.S		1.17
+
+	Remove redundant "eieio" instructions for powerpc/ibm4xx.
+	[rin, ticket #730]
 
