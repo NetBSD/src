@@ -1,4 +1,4 @@
-/* $NetBSD: bwfmvar.h,v 1.3 2018/09/01 22:01:03 riastradh Exp $ */
+/* $NetBSD: bwfmvar.h,v 1.3.6.1 2020/02/25 18:40:43 martin Exp $ */
 /* $OpenBSD: bwfmvar.h,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -57,7 +57,7 @@
 #define BWFM_DEFAULT_SCAN_UNASSOC_TIME	40
 #define BWFM_DEFAULT_SCAN_PASSIVE_TIME	120
 
-#define	BWFM_TASK_COUNT			32
+#define	BWFM_TASK_COUNT			256
 
 
 struct bwfm_softc;
@@ -119,6 +119,7 @@ enum bwfm_task_cmd {
 	BWFM_TASK_NEWSTATE,
 	BWFM_TASK_KEY_SET,
 	BWFM_TASK_KEY_DELETE,
+	BWFM_TASK_RX_EVENT,
 };
 
 struct bwfm_cmd_newstate {
@@ -138,9 +139,11 @@ struct bwfm_task {
 	union {
 		struct bwfm_cmd_newstate	newstate;
 		struct bwfm_cmd_key		key;
+		struct mbuf			*mbuf;
 	} t_u;
 #define	t_newstate	t_u.newstate
 #define	t_key		t_u.key
+#define	t_mbuf		t_u.mbuf
 };
 
 struct bwfm_softc {
@@ -166,6 +169,8 @@ struct bwfm_softc {
 
 	int			(*sc_newstate)(struct ieee80211com *,
 				    enum ieee80211_state, int);
+
+	int			 sc_bcdc_reqid;
 };
 
 void bwfm_attach(struct bwfm_softc *);
@@ -178,6 +183,7 @@ int bwfm_detach(struct bwfm_softc *, int);
 int bwfm_chip_attach(struct bwfm_softc *);
 int bwfm_chip_set_active(struct bwfm_softc *, uint32_t);
 void bwfm_chip_set_passive(struct bwfm_softc *);
+int bwfm_chip_sr_capable(struct bwfm_softc *);
 struct bwfm_core *bwfm_chip_get_core(struct bwfm_softc *, int);
 struct bwfm_core *bwfm_chip_get_pmu(struct bwfm_softc *);
 void bwfm_rx(struct bwfm_softc *, struct mbuf *m);

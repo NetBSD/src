@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmcvar.h,v 1.30 2019/02/25 19:28:00 jmcneill Exp $	*/
+/*	$NetBSD: sdmmcvar.h,v 1.30.4.1 2020/02/25 18:40:43 martin Exp $	*/
 /*	$OpenBSD: sdmmcvar.h,v 1.13 2009/01/09 10:55:22 jsg Exp $	*/
 
 /*
@@ -185,6 +185,7 @@ struct sdmmc_function {
 	uint16_t rca;			/* relative card address */
 	int interface;			/* SD/MMC:0, SDIO:standard interface */
 	int width;			/* bus width */
+	u_int blklen;			/* block length */
 	int flags;
 #define SFF_ERROR		0x0001	/* function is poo; ignore it */
 #define SFF_SDHC		0x0002	/* SD High Capacity card */
@@ -356,16 +357,20 @@ void	sdmmc_dump_data(const char *, void *, size_t);
 int	sdmmc_io_enable(struct sdmmc_softc *);
 void	sdmmc_io_scan(struct sdmmc_softc *);
 int	sdmmc_io_init(struct sdmmc_softc *, struct sdmmc_function *);
+int	sdmmc_io_set_blocklen(struct sdmmc_function *, int);
 uint8_t sdmmc_io_read_1(struct sdmmc_function *, int);
 uint16_t sdmmc_io_read_2(struct sdmmc_function *, int);
 uint32_t sdmmc_io_read_4(struct sdmmc_function *, int);
 int	sdmmc_io_read_multi_1(struct sdmmc_function *, int, u_char *, int);
+int	sdmmc_io_read_region_1(struct sdmmc_function *, int, u_char *, int);
 void	sdmmc_io_write_1(struct sdmmc_function *, int, uint8_t);
 void	sdmmc_io_write_2(struct sdmmc_function *, int, uint16_t);
 void	sdmmc_io_write_4(struct sdmmc_function *, int, uint32_t);
 int	sdmmc_io_write_multi_1(struct sdmmc_function *, int, u_char *, int);
+int	sdmmc_io_write_region_1(struct sdmmc_function *, int, u_char *, int);
 int	sdmmc_io_function_enable(struct sdmmc_function *);
 void	sdmmc_io_function_disable(struct sdmmc_function *);
+int	sdmmc_io_function_abort(struct sdmmc_function *);
 
 int	sdmmc_read_cis(struct sdmmc_function *, struct sdmmc_cis *);
 void	sdmmc_print_cis(struct sdmmc_function *);
@@ -384,5 +389,7 @@ int	sdmmc_mem_write_block(struct sdmmc_function *, uint32_t, u_char *,
 	    size_t);
 int	sdmmc_mem_discard(struct sdmmc_function *, uint32_t, uint32_t);
 int	sdmmc_mem_flush_cache(struct sdmmc_function *, bool);
+
+void	sdmmc_pause(u_int, kmutex_t *);
 
 #endif	/* _SDMMCVAR_H_ */
