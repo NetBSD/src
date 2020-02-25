@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.48 2020/02/25 07:31:19 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.49 2020/02/25 07:35:54 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.48 2020/02/25 07:31:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.49 2020/02/25 07:35:54 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -369,8 +369,8 @@ struct ixl_hmc_txq {
 	uint8_t			timesync_ena;
 	uint8_t			fd_ena;
 	uint8_t			alt_vlan_ena;
-	uint16_t		thead_wb;
 	uint8_t			cpuid;
+	uint16_t		thead_wb;
 	uint8_t			head_wb_ena;
 #define IXL_HMC_TXQ_DESC_WB		0
 #define IXL_HMC_TXQ_HEAD_WB		1
