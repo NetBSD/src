@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.78 2020/02/20 08:06:15 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.79 2020/02/25 03:24:48 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.78 2020/02/20 08:06:15 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.79 2020/02/25 03:24:48 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -172,7 +172,7 @@ allocif(int unit, struct shmif_sc **scp)
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
 	sc->sc_unit = unit;
-	sc->sc_uuid = cprng_fast64();
+	sc->sc_uuid = cprng_strong64();
 
 	ifp = &sc->sc_ec.ec_if;
 
