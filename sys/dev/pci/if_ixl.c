@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.46 2020/02/25 07:17:19 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.47 2020/02/25 07:22:18 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.46 2020/02/25 07:17:19 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.47 2020/02/25 07:22:18 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -174,6 +174,9 @@ struct ixl_softc; /* defined */
 	(I40E_PFINT_ICR0_PCI_EXCEPTION_MASK |	\
 	I40E_PFINT_ICR0_ECC_ERR_MASK |		\
 	I40E_PFINT_ICR0_PE_CRITERR_MASK)
+
+#define IXL_QUEUE_MAX_XL710		64
+#define IXL_QUEUE_MAX_X722		128
 
 #define IXL_TX_PKT_DESCS		8
 #define IXL_TX_PKT_MAXSIZE		(MCLBYTES * IXL_TX_PKT_DESCS)
@@ -1215,9 +1218,9 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ixl_get_nvm_version(sc);
 
 	if (sc->sc_mac_type == I40E_MAC_X722)
-		sc->sc_nqueue_pairs_device = 128;
+		sc->sc_nqueue_pairs_device = IXL_QUEUE_MAX_X722;
 	else
-		sc->sc_nqueue_pairs_device = 64;
+		sc->sc_nqueue_pairs_device = IXL_QUEUE_MAX_XL710;
 
 	rv = ixl_get_hw_capabilities(sc);
 	if (rv != 0) {
