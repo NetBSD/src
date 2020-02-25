@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.43 2020/02/25 07:00:26 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.44 2020/02/25 07:05:57 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.43 2020/02/25 07:00:26 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.44 2020/02/25 07:05:57 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1341,7 +1341,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_wq_cfg", device_xname(self));
 	sc->sc_workq = ixl_workq_create(xnamebuf, IXL_WORKQUEUE_PRI,
-	    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	    IPL_NET, WQ_MPSAFE);
 	if (sc->sc_workq == NULL)
 		goto teardown_sysctls;
 
@@ -6642,7 +6642,9 @@ ixl_work_add(struct workqueue *wq, struct ixl_work *work)
 	if (atomic_cas_uint(&work->ixw_added, 0, 1) != 0)
 		return;
 
+	kpreempt_disable();
 	workqueue_enqueue(wq, &work->ixw_cookie, NULL);
+	kpreempt_enable();
 }
 
 static void
