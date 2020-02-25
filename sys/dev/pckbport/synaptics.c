@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.53 2020/02/25 21:38:42 ryoon Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.54 2020/02/25 21:41:38 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.53 2020/02/25 21:38:42 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.54 2020/02/25 21:41:38 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1182,7 +1182,7 @@ pms_synaptics_input(void *vsc, int data)
 	case 0:
 		if ((data & 0xc8) != 0x80) {
 			aprint_debug_dev(psc->sc_dev,
-			    "pms_input: 0x%02x out of sync\n", data);
+			    "pms_synaptics_input: 0x%02x out of sync\n", data);
 			/* use negative counts to limit resync phase */
 			psc->inputstate--;
 			return;	/* not in sync yet, discard input */
@@ -1194,7 +1194,7 @@ pms_synaptics_input(void *vsc, int data)
 	case 3:
 		if ((data & 8) == 8) {
 			aprint_debug_dev(psc->sc_dev,
-			    "pms_input: dropped in relative mode, reset\n");
+			    "pms_synaptics_input: dropped in relative mode, reset\n");
 			psc->inputstate = 0;
 			psc->sc_enabled = 0;
 			wakeup(&psc->sc_enabled);
