@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.44 2020/02/25 07:05:57 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.45 2020/02/25 07:10:10 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.44 2020/02/25 07:05:57 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.45 2020/02/25 07:10:10 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -478,7 +478,7 @@ struct ixl_queue_pair {
 	char			 qp_name[16];
 
 	void			*qp_si;
-	struct ixl_work		 qp_task;
+	struct work		 qp_work;
 	bool			 qp_workqueue;
 };
 
@@ -828,6 +828,7 @@ static int	ixl_intr(void *);
 static int	ixl_queue_intr(void *);
 static int	ixl_other_intr(void *);
 static void	ixl_handle_queue(void *);
+static void	ixl_handle_queue_wk(struct work *, void *);
 static void	ixl_sched_handle_queue(struct ixl_softc *,
 		    struct ixl_queue_pair *);
 static int	ixl_init(struct ifnet *);
@@ -1346,10 +1347,12 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto teardown_sysctls;
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_wq_txrx", device_xname(self));
-	sc->sc_workq_txrx = ixl_workq_create(xnamebuf, IXL_WORKQUEUE_PRI,
-	    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
-	if (sc->sc_workq_txrx == NULL)
+	rv = workqueue_create(&sc->sc_workq_txrx, xnamebuf, ixl_handle_queue_wk,
+	    sc, IXL_WORKQUEUE_PRI, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	if (rv != 0) {
+		sc->sc_workq_txrx = NULL;
 		goto teardown_wqs;
+	}
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_atq_cv", device_xname(self));
 	cv_init(&sc->sc_atq_cv, xnamebuf);
@@ -1529,7 +1532,7 @@ ixl_detach(device_t self, int flags)
 	}
 
 	if (sc->sc_workq_txrx != NULL) {
-		ixl_workq_destroy(sc->sc_workq_txrx);
+		workqueue_destroy(sc->sc_workq_txrx);
 		sc->sc_workq_txrx = NULL;
 	}
 
@@ -1597,7 +1600,7 @@ ixl_workqs_teardown(device_t self)
 	}
 
 	if (sc->sc_workq_txrx != NULL) {
-		ixl_workq_destroy(sc->sc_workq_txrx);
+		workqueue_destroy(sc->sc_workq_txrx);
 		sc->sc_workq_txrx = NULL;
 	}
 
@@ -2225,8 +2228,9 @@ ixl_stop_rendezvous(struct ixl_softc *sc)
 		mutex_enter(&rxr->rxr_lock);
 		mutex_exit(&rxr->rxr_lock);
 
-		ixl_work_wait(sc->sc_workq_txrx,
-		    &sc->sc_qps[i].qp_task);
+		sc->sc_qps[i].qp_workqueue = false;
+		workqueue_wait(sc->sc_workq_txrx,
+		    &sc->sc_qps[i].qp_work);
 	}
 }
 
@@ -2341,7 +2345,6 @@ ixl_queue_pairs_alloc(struct ixl_softc *sc)
 			goto free;
 
 		qp->qp_sc = sc;
-		ixl_work_set(&qp->qp_task, ixl_handle_queue, qp);
 		snprintf(qp->qp_name, sizeof(qp->qp_name),
 		    "%s-TXRX%d", device_xname(sc->sc_dev), i);
 	}
@@ -3420,7 +3423,7 @@ ixl_sched_handle_queue(struct ixl_softc *sc, struct ixl_queue_pair *qp)
 {
 
 	if (qp->qp_workqueue)
-		ixl_work_add(sc->sc_workq_txrx, &qp->qp_task);
+		workqueue_enqueue(sc->sc_workq_txrx, &qp->qp_work, NULL);
 	else
 		softint_schedule(qp->qp_si);
 }
@@ -3500,6 +3503,15 @@ ixl_queue_intr(void *xqp)
 	}
 
 	return 1;
+}
+
+static void
+ixl_handle_queue_wk(struct work *wk, void *xsc)
+{
+	struct ixl_queue_pair *qp;
+
+	qp = container_of(wk, struct ixl_queue_pair, qp_work);
+	ixl_handle_queue(qp);
 }
 
 static void
