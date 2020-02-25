@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.51 2020/02/25 16:24:47 ryoon Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.52 2020/02/25 21:36:13 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.51 2020/02/25 16:24:47 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.52 2020/02/25 21:36:13 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -945,7 +945,8 @@ pms_synaptics_parse(struct pms_softc *psc)
 	   ((psc->packet[0] & 0x04) >> 1) +
 	   ((psc->packet[3] & 0x04) >> 2);
 	sp.sp_finger = 0;
-	if (sp.sp_w == SYNAPTICS_WIDTH_EXTENDED_W) {
+	if ((sc->flags & SYN_FLAG_HAS_EXTENDED_WMODE) &&
+	    (sp.sp_w == SYNAPTICS_WIDTH_EXTENDED_W)) {
 		ew_mode = psc->packet[5] >> 4;
 		switch (ew_mode)
 		{
