@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.98 2017/01/05 09:08:45 msaitoh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.98.8.1 2020/02/25 19:20:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
 #include "opt_arm_bus_space.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.98 2017/01/05 09:08:45 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.98.8.1 2020/02/25 19:20:43 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -323,6 +323,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 {
 	struct arm32_bus_dmamap *map;
 	void *mapstore;
+	int error = 0;
 
 #ifdef DEBUG_DMA
 	printf("dmamap_create: t=%p size=%lx nseg=%x msegsz=%lx boundary=%lx flags=%x\n",
@@ -365,7 +366,6 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 	struct arm32_bus_dma_cookie *cookie;
 	int cookieflags;
 	void *cookiestore;
-	int error;
 
 	cookieflags = 0;
 
@@ -412,7 +412,7 @@ _bus_dmamap_create(bus_dma_tag_t t, bus_size_t size, int nsegments,
 #ifdef DEBUG_DMA
 	printf("dmamap_create:map=%p\n", map);
 #endif	/* DEBUG_DMA */
-	return (0);
+	return error;
 }
 
 /*
