@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.50 2019/07/05 05:09:24 mlelstv Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.51 2020/02/25 16:24:47 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.50 2019/07/05 05:09:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.51 2020/02/25 16:24:47 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -956,7 +956,7 @@ pms_synaptics_parse(struct pms_softc *psc)
 
 		case SYNAPTICS_EW_SECONDARY_FINGER:
 			/* parse the second finger report */
-			
+
 			sp.sp_finger = 1; /* just one other finger for now */
 			sp.sp_x = psc->packet[1]
 			    + ((psc->packet[4] & 0x0f) << 8);
