@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.55 2020/02/25 08:02:29 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.56 2020/02/25 08:05:24 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.55 2020/02/25 08:02:29 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.56 2020/02/25 08:05:24 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -4805,6 +4805,11 @@ ixl_register_rss_pctype(struct ixl_softc *sc)
 	uint64_t set_hena = 0;
 	uint32_t hena0, hena1;
 
+	/*
+	 * We use TCP/UDP with IPv4/IPv6 by default.
+	 * Note: the device can not use just IP header in each
+	 * TCP/UDP packets for the RSS hash calculation.
+	 */
 	if (sc->sc_mac_type == I40E_MAC_X722)
 		set_hena = IXL_RSS_HENA_DEFAULT_X722;
 	else
@@ -5713,7 +5718,6 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	baudrate = ixl_search_link_speed(status->link_speed);
 
 done:
-	/* NET_ASSERT_LOCKED() except during attach */
 	sc->sc_media_active = ifm_active;
 	sc->sc_media_status = ifm_status;
 
