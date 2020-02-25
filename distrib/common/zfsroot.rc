@@ -1,39 +1,23 @@
 #/bin/sh
 #
-#	$NetBSD: zfsroot.rc,v 1.3 2020/02/23 10:51:12 roy Exp $
+#	$NetBSD: zfsroot.rc,v 1.4 2020/02/25 20:05:10 roy Exp $
 
-echo "Starting root on ZFS boot strapper"
-
-# Abort on any error
-set -e
+# Assumption - boot.cfg loads this ramdisk.
+# Assumption - The needed kernel modules: solaris and zfs; are either on this
+#              ramdisk OR loaded by boot.cfg.
+#              Finding the correct dev node to mount to get them is too magic.
+#              NetBSD cannot build and distribute a kernel with ZFS builtin.
+# Assumption - the root pool is set to legacy mount.
 
 # Configurable - define the ZFS root pool and ROOT.
 # XXX Can these be set in boot.cfg?
-# Assumption - the root pool is set to legacy mount.
 rpool=rpool
 rroot=ROOT
-
-# Assumption - the boot device is named boot.
-# Could use /dev/dk0, /dev/wd0a, etc instead.
-# XXX Can be exposed by sysctl kern.boot_device?
-bootdev="NAME=boot"
 
 # Setup some stuff incase things go south and we drop to the shell
 export HOME=/
 export PATH=/sbin:/bin:/usr/sbin:/usr/bin
 umask 022
-
-# Avoid having the solaris and zfs modules in ramdisk directly.
-# Means we don't need to update the ramdisk with the kernel modules
-# or load them from boot.cfg so it's less pain for the user.
-#bootdev="$(/sbin/sysctl -n kern.boot_device)"
-modpath="$(/sbin/sysctl -n kern.module.path)"
-echo "Loading needed kernel modules from $bootdev:$modpath"
-/sbin/mount -o ro "$bootdev" /mnt
-for m in solaris zfs; do
-	/sbin/modload "/mnt/$modpath/$m/$m.kmod"
-done
-/sbin/umount /mnt
 
 # FIXME XXX Sometimes zpool import gets SIGBUS
 # Ensure that we are in a writable directory to try and capture a coredump
@@ -46,5 +30,4 @@ echo "Importing $rpool"
 echo "Mounting $rpool/$rroot to /altroot"
 /sbin/mount -t zfs "$rpool/$rroot" /altroot;
 
-echo "Pivoting to /altroot, welcome to root on ZFS"
 /sbin/sysctl -w init.root=/altroot
