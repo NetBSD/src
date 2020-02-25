@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.49 2020/02/25 07:35:54 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.50 2020/02/25 07:41:32 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.49 2020/02/25 07:35:54 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.50 2020/02/25 07:41:32 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1448,7 +1448,6 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	ixl_stats_update(sc);
 	sc->sc_stats_counters.isc_has_offset = true;
-	callout_schedule(&sc->sc_stats_callout, mstohz(sc->sc_stats_intval));
 
 	if (pmf_device_register(self, NULL, NULL) != true)
 		aprint_debug_dev(self, "couldn't establish power handler\n");
@@ -2133,6 +2132,8 @@ ixl_init_locked(struct ixl_softc *sc)
 		return error;
 	}
 
+	callout_schedule(&sc->sc_stats_callout, mstohz(sc->sc_stats_intval));
+
 	return 0;
 }
 
@@ -2246,6 +2247,7 @@ ixl_stop_locked(struct ixl_softc *sc)
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
+	callout_stop(&sc->sc_stats_callout);
 
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		txr = sc->sc_qps[i].qp_txr;
