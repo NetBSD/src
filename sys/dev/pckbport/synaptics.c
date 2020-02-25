@@ -1,4 +1,4 @@
-/*	$NetBSD: synaptics.c,v 1.52 2020/02/25 21:36:13 ryoon Exp $	*/
+/*	$NetBSD: synaptics.c,v 1.53 2020/02/25 21:38:42 ryoon Exp $	*/
 
 /*
  * Copyright (c) 2005, Steve C. Woodford
@@ -48,7 +48,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.52 2020/02/25 21:36:13 ryoon Exp $");
+__KERNEL_RCSID(0, "$NetBSD: synaptics.c,v 1.53 2020/02/25 21:38:42 ryoon Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1159,10 +1159,10 @@ pms_synaptics_input(void *vsc, int data)
 		timersub(&psc->current, &psc->last, &diff);
 		if (diff.tv_sec > 0 || diff.tv_usec >= 40000) {
 			aprint_debug_dev(psc->sc_dev,
-			    "pms_input: unusual delay (%ld.%06ld s), "
+			    "pms_synaptics_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n",
 			    (long)diff.tv_sec, (long)diff.tv_usec);
-			printf("pms_input: unusual delay (%ld.%06ld s), "
+			printf("pms_synaptics_input: unusual delay (%ld.%06ld s), "
 			    "scheduling reset\n",
 			    (long)diff.tv_sec, (long)diff.tv_usec);
 			psc->inputstate = 0;
