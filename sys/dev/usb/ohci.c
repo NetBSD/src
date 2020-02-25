@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.289.4.3 2019/12/14 12:35:58 martin Exp $	*/
+/*	$NetBSD: ohci.c,v 1.289.4.4 2020/02/25 18:50:29 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.289.4.3 2019/12/14 12:35:58 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.289.4.4 2020/02/25 18:50:29 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2915,6 +2915,8 @@ ohci_device_ctrl_close(struct usbd_pipe *pipe)
 	DPRINTF("pipe=%#jx", (uintptr_t)pipe, 0, 0, 0);
 	ohci_close_pipe(pipe, sc->sc_ctrl_head);
 	ohci_free_std_locked(sc, opipe->tail.td);
+
+	usb_freemem(&sc->sc_bus, &opipe->ctrl.reqdma);
 }
 
 /************************/

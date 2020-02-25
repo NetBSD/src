@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2.c,v 1.59.4.1 2019/12/09 13:06:38 martin Exp $	*/
+/*	$NetBSD: dwc2.c,v 1.59.4.2 2020/02/25 18:50:29 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59.4.1 2019/12/09 13:06:38 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dwc2.c,v 1.59.4.2 2020/02/25 18:50:29 martin Exp $");
 
 #include "opt_usb.h"
 
@@ -767,9 +767,13 @@ dwc2_device_ctrl_abort(struct usbd_xfer *xfer)
 Static void
 dwc2_device_ctrl_close(struct usbd_pipe *pipe)
 {
+	struct dwc2_softc * const sc = DWC2_PIPE2SC(pipe);
+	struct dwc2_pipe * const dpipe = DWC2_PIPE2DPIPE(pipe);
 
 	DPRINTF("pipe=%p\n", pipe);
 	dwc2_close_pipe(pipe);
+
+	usb_freemem(&sc->sc_bus, &dpipe->req_dma);
 }
 
 Static void
