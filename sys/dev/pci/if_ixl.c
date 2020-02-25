@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.50 2020/02/25 07:41:32 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.51 2020/02/25 07:45:28 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.50 2020/02/25 07:41:32 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.51 2020/02/25 07:45:28 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1518,7 +1518,7 @@ ixl_detach(device_t self, int flags)
 
 	ixl_disable_other_intr(sc);
 
-	callout_stop(&sc->sc_stats_callout);
+	callout_halt(&sc->sc_stats_callout, NULL);
 	ixl_work_wait(sc->sc_workq, &sc->sc_stats_task);
 
 	/* wait for ATQ handler */
