@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.79 2020/02/25 03:24:48 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.80 2020/02/25 03:25:36 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.79 2020/02/25 03:24:48 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.80 2020/02/25 03:25:36 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -101,7 +101,7 @@ struct shmif_sc {
 	struct lwp *sc_rcvl;
 	bool sc_dying;
 
-	uint64_t sc_uuid;
+	uint64_t sc_uid;
 };
 
 static void shmif_rcv(void *);
@@ -172,7 +172,7 @@ allocif(int unit, struct shmif_sc **scp)
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
 	sc->sc_unit = unit;
-	sc->sc_uuid = cprng_strong64();
+	sc->sc_uid = cprng_strong64();
 
 	ifp = &sc->sc_ec.ec_if;
 
@@ -605,7 +605,7 @@ shmif_snd(struct ifnet *ifp, struct mbuf *m0)
 	sp.sp_len = pktsize;
 	sp.sp_sec = tv.tv_sec;
 	sp.sp_usec = tv.tv_usec;
-	sp.sp_sender = sc->sc_uuid;
+	sp.sp_sender = sc->sc_uid;
 
 	bpf_mtap(ifp, m0, BPF_D_OUT);
 
@@ -798,7 +798,7 @@ shmif_rcv(void *arg)
 		 * Test if we want to pass the packet upwards
 		 */
 		eth = mtod(m, struct ether_header *);
-		if (sp.sp_sender == sc->sc_uuid) {
+		if (sp.sp_sender == sc->sc_uid) {
 			passup = false;
 		} else if (memcmp(eth->ether_dhost, CLLADDR(ifp->if_sadl),
 		    ETHER_ADDR_LEN) == 0) {
