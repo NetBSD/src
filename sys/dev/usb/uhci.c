@@ -1,4 +1,4 @@
-/*	$NetBSD: uhci.c,v 1.275.2.5 2018/09/27 14:52:26 martin Exp $	*/
+/*	$NetBSD: uhci.c,v 1.275.2.6 2020/02/25 18:52:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012 The NetBSD Foundation, Inc.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275.2.5 2018/09/27 14:52:26 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhci.c,v 1.275.2.6 2020/02/25 18:52:44 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -2845,6 +2845,7 @@ uhci_device_ctrl_close(struct usbd_pipe *pipe)
 	uhci_free_std_locked(sc, upipe->ctrl.setup);
 	uhci_free_std_locked(sc, upipe->ctrl.stat);
 
+	usb_freemem(&sc->sc_bus, &upipe->ctrl.reqdma);
 }
 
 /* Abort a device interrupt request. */
