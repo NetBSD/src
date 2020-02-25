@@ -1,4 +1,4 @@
-/*	$NetBSD: if_shmem.c,v 1.80 2020/02/25 03:25:36 ozaki-r Exp $	*/
+/*	$NetBSD: if_shmem.c,v 1.81 2020/02/25 03:26:18 ozaki-r Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.80 2020/02/25 03:25:36 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_shmem.c,v 1.81 2020/02/25 03:26:18 ozaki-r Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -163,16 +163,16 @@ allocif(int unit, struct shmif_sc **scp)
 	uint8_t enaddr[ETHER_ADDR_LEN] = { 0xb2, 0xa0, 0x00, 0x00, 0x00, 0x00 };
 	struct shmif_sc *sc;
 	struct ifnet *ifp;
-	uint32_t randnum;
+	uint64_t randnum;
 	int error;
 
-	randnum = cprng_strong32();
-	memcpy(&enaddr[2], &randnum, sizeof(randnum));
+	randnum = cprng_strong64();
+	memcpy(&enaddr[2], &randnum, 4);
 
 	sc = kmem_zalloc(sizeof(*sc), KM_SLEEP);
 	sc->sc_memfd = -1;
 	sc->sc_unit = unit;
-	sc->sc_uid = cprng_strong64();
+	sc->sc_uid = randnum;
 
 	ifp = &sc->sc_ec.ec_if;
 
