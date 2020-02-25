@@ -298,7 +298,8 @@ bfd_elf_get_str_section (bfd *abfd, unsigned int shindex)
       /* Allocate and clear an extra byte at the end, to prevent crashes
 	 in case the string table is not terminated.  */
       if (shstrtabsize + 1 <= 1
-	  || shstrtabsize > bfd_get_file_size (abfd)
+	  || (bfd_get_file_size (abfd) > 0 /* not a character device */
+		&& shstrtabsize > bfd_get_file_size (abfd))
 	  || bfd_seek (abfd, offset, SEEK_SET) != 0
 	  || (shstrtab = (bfd_byte *) bfd_alloc (abfd, shstrtabsize + 1)) == NULL)
 	shstrtab = NULL;
