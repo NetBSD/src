@@ -1,4 +1,4 @@
-/*	$NetBSD: ehci.c,v 1.254.8.6 2018/09/28 08:33:43 martin Exp $ */
+/*	$NetBSD: ehci.c,v 1.254.8.7 2020/02/25 18:52:44 martin Exp $ */
 
 /*
  * Copyright (c) 2004-2012 The NetBSD Foundation, Inc.
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.254.8.6 2018/09/28 08:33:43 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ehci.c,v 1.254.8.7 2020/02/25 18:52:44 martin Exp $");
 
 #include "ohci.h"
 #include "uhci.h"
@@ -3831,7 +3831,7 @@ Static void
 ehci_device_ctrl_close(struct usbd_pipe *pipe)
 {
 	ehci_softc_t *sc = EHCI_PIPE2SC(pipe);
-	/*struct ehci_pipe *epipe = EHCI_PIPE2EPIPE(pipe);*/
+	struct ehci_pipe * const epipe = EHCI_PIPE2EPIPE(pipe);
 
 	EHCIHIST_FUNC(); EHCIHIST_CALLED();
 
@@ -3840,6 +3840,8 @@ ehci_device_ctrl_close(struct usbd_pipe *pipe)
 	DPRINTF("pipe=%#jx", (uintptr_t)pipe, 0, 0, 0);
 
 	ehci_close_pipe(pipe, sc->sc_async_head);
+
+	usb_freemem(&sc->sc_bus, &epipe->ctrl.reqdma);
 }
 
 /*
