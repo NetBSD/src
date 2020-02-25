@@ -1,4 +1,4 @@
-/*	$NetBSD: sdmmc.c,v 1.36 2018/11/06 16:01:38 jmcneill Exp $	*/
+/*	$NetBSD: sdmmc.c,v 1.36.4.1 2020/02/25 18:40:43 martin Exp $	*/
 /*	$OpenBSD: sdmmc.c,v 1.18 2009/01/09 10:58:38 jsg Exp $	*/
 
 /*
@@ -49,7 +49,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.36 2018/11/06 16:01:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdmmc.c,v 1.36.4.1 2020/02/25 18:40:43 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_sdmmc.h"
@@ -567,7 +567,7 @@ sdmmc_enable(struct sdmmc_softc *sc)
 	}
 
 	/* XXX wait for card to power up */
-	sdmmc_delay(100000);
+	sdmmc_pause(100000, NULL);
 
 	if (!ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
 		/* Initialize SD I/O card function(s). */
@@ -656,6 +656,7 @@ sdmmc_function_alloc(struct sdmmc_softc *sc)
 	sf->cis.product = SDMMC_PRODUCT_INVALID;
 	sf->cis.function = SDMMC_FUNCTION_INVALID;
 	sf->width = 1;
+	sf->blklen = sdmmc_chip_host_maxblklen(sc->sc_sct, sc->sc_sch);
 
 	if (ISSET(sc->sc_flags, SMF_MEM_MODE) &&
 	    ISSET(sc->sc_caps, SMC_CAPS_DMA) &&
@@ -788,6 +789,17 @@ sdmmc_delay(u_int usecs)
 	delay(usecs);
 }
 
+void
+sdmmc_pause(u_int usecs, kmutex_t *lock)
+{
+	unsigned ticks = mstohz(usecs/1000);
+
+	if (cold || ticks < 1)
+		delay(usecs);
+	else
+		kpause("sdmmcdelay", false, ticks, lock);
+}
+
 int
 sdmmc_app_command(struct sdmmc_softc *sc, struct sdmmc_function *sf, struct sdmmc_command *cmd)
 {
@@ -908,7 +920,7 @@ sdmmc_set_relative_addr(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	/* Don't lock */
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 			"sdmmc_set_relative_addr: SMC_CAPS_SPI_MODE set");
 		return EIO;
 	}
@@ -941,7 +953,7 @@ sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	/* Don't lock */
 
 	if (ISSET(sc->sc_caps, SMC_CAPS_SPI_MODE)) {
-		aprint_error_dev(sc->sc_dev,
+		device_printf(sc->sc_dev,
 			"sdmmc_select_card: SMC_CAPS_SPI_MODE set");
 		return EIO;
 	}
@@ -959,6 +971,11 @@ sdmmc_select_card(struct sdmmc_softc *sc, struct sdmmc_function *sf)
 	error = sdmmc_mmc_command(sc, &cmd);
 	if (error == 0 || sf == NULL)
 		sc->sc_card = sf;
+
+	if (error) {
+		device_printf(sc->sc_dev,
+			"sdmmc_select_card: error %d", error);
+	}
 
 	return error;
 }

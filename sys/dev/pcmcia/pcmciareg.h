@@ -1,4 +1,4 @@
-/*	$NetBSD: pcmciareg.h,v 1.10 2005/12/11 12:23:23 christos Exp $	*/
+/*	$NetBSD: pcmciareg.h,v 1.10.170.1 2020/02/25 18:40:44 martin Exp $	*/
 
 /*
  * Copyright (c) 1997 Marc Horowitz.  All rights reserved.
@@ -202,6 +202,7 @@
 
 /* #define	PCMCIA_CISTPL_RESERVED		0x80-0x8F */
 #define	PCMCIA_CISTPL_SPCL			0x90
+#define	PCMCIA_CISTPL_SDIO			0x91
 /* #define	PCMCIA_CISTPL_RESERVED		0x90-0xFE */
 
 /*
