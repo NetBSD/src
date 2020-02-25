@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.54 2020/02/25 07:58:44 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.55 2020/02/25 08:02:29 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.54 2020/02/25 07:58:44 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.55 2020/02/25 08:02:29 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -934,7 +934,7 @@ static const struct ixl_phy_type ixl_phy_type_map[] = {
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_SR,	IFM_25G_SR },
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_LR,	IFM_25G_LR },
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_AOC,	IFM_25G_AOC },
-	{ 1ULL << IXL_PHY_TYPE_25GBASE_ACC,	IFM_25G_CR },
+	{ 1ULL << IXL_PHY_TYPE_25GBASE_ACC,	IFM_25G_ACC },
 };
 
 static const struct ixl_speed_type ixl_speed_type_map[] = {
