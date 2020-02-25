@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.45 2020/02/25 07:10:10 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.46 2020/02/25 07:17:19 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.45 2020/02/25 07:10:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.46 2020/02/25 07:17:19 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2021,9 +2021,6 @@ ixl_reinit(struct ixl_softc *sc)
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
 
-		txr->txr_cons = txr->txr_prod = 0;
-		rxr->rxr_cons = rxr->rxr_prod = 0;
-
 		ixl_txr_config(sc, txr);
 		ixl_rxr_config(sc, rxr);
 	}
@@ -2507,6 +2504,7 @@ ixl_txr_unconfig(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 
 	hmc = ixl_hmc_kva(sc, IXL_HMC_LAN_TX, txr->txr_qid);
 	memset(hmc, 0, ixl_hmc_len(sc, IXL_HMC_LAN_TX));
+	txr->txr_cons = txr->txr_prod = 0;
 }
 
 static void
@@ -3127,6 +3125,7 @@ ixl_rxr_unconfig(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	hmc = ixl_hmc_kva(sc, IXL_HMC_LAN_RX, rxr->rxr_qid);
 	memset(hmc, 0, ixl_hmc_len(sc, IXL_HMC_LAN_RX));
+	rxr->rxr_cons = rxr->rxr_prod = 0;
 }
 
 static void
