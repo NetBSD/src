@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.266 2020/02/20 21:14:23 jdolecek Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.267 2020/02/25 19:14:05 jdolecek Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.266 2020/02/20 21:14:23 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.267 2020/02/25 19:14:05 jdolecek Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -442,21 +442,23 @@ static void
 config_interrupts_thread(void *cookie)
 {
 	struct deferred_config *dc;
+	device_t dev;
 
 	mutex_enter(&config_misc_lock);
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
 		mutex_exit(&config_misc_lock);
 
-		(*dc->dc_func)(dc->dc_dev);
-		if (!device_pmf_is_registered(dc->dc_dev))
-			aprint_debug_dev(dc->dc_dev,
+		dev = dc->dc_dev;
+		(*dc->dc_func)(dev);
+		if (!device_pmf_is_registered(dev))
+			aprint_debug_dev(dev,
 			    "WARNING: power management not supported\n");
-		config_pending_decr(dc->dc_dev);
+		config_pending_decr(dev);
 		kmem_free(dc, sizeof(*dc));
 
 		mutex_enter(&config_misc_lock);
-		dc->dc_dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
+		dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 	}
 	mutex_exit(&config_misc_lock);
 
