@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1680 2020/02/09 16:06:17 jmcneill Exp $
+# $NetBSD: mi,v 1.1681 2020/02/26 07:31:51 riastradh Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -5403,6 +5403,7 @@
 ./usr/share/man/html7/editline.html		man-sys-htmlman		html
 ./usr/share/man/html7/environ.html		man-reference-htmlman	html
 ./usr/share/man/html7/glob.html			man-reference-htmlman	html
+./usr/share/man/html7/groups.html		man-reference-htmlman	html
 ./usr/share/man/html7/hier.html			man-reference-htmlman	html
 ./usr/share/man/html7/hostname.html		man-reference-htmlman	html
 ./usr/share/man/html7/intro.html		man-reference-htmlman	html
@@ -5436,6 +5437,7 @@
 ./usr/share/man/html7/symlink.html		man-reference-htmlman	html
 ./usr/share/man/html7/sysctl.html		man-reference-htmlman	html
 ./usr/share/man/html7/tests.html		man-reference-htmlman	html
+./usr/share/man/html7/users.html		man-reference-htmlman	html
 ./usr/share/man/html7/zpool-features.html	man-zfs-htmlman		zfs,html
 ./usr/share/man/html8/MAKEDEV.html		man-sysutil-htmlman	html
 ./usr/share/man/html8/MAKEDEV.local.html	man-sysutil-htmlman	html
@@ -8460,6 +8462,7 @@
 ./usr/share/man/man7/editline.7			man-sys-man		.man
 ./usr/share/man/man7/environ.7			man-reference-man	.man
 ./usr/share/man/man7/glob.7			man-reference-man	.man
+./usr/share/man/man7/groups.7			man-reference-man	.man
 ./usr/share/man/man7/hier.7			man-reference-man	.man
 ./usr/share/man/man7/hostname.7			man-reference-man	.man
 ./usr/share/man/man7/intro.7			man-reference-man	.man
@@ -8496,6 +8499,7 @@
 ./usr/share/man/man7/symlink.7			man-reference-man	.man
 ./usr/share/man/man7/sysctl.7			man-reference-man	.man
 ./usr/share/man/man7/tests.7			man-reference-man	.man
+./usr/share/man/man7/users.7			man-reference-man	.man
 ./usr/share/man/man7/zpool-features.7		man-zfs-man		zfs,.man
 ./usr/share/man/man8/MAKEDEV.8			man-sysutil-man		.man
 ./usr/share/man/man8/MAKEDEV.local.8		man-sysutil-man		.man
