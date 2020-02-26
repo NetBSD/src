@@ -1,4 +1,4 @@
-.\"	$NetBSD: users.7,v 1.1 2020/02/26 07:31:51 riastradh Exp $
+.\"	$NetBSD: users.7,v 1.2 2020/02/26 10:04:32 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -42,7 +42,7 @@ installation has the following user account names:
 .It Em root
 The super-user, uid 0, with the highest administrative privileges.
 Normally not used for login directly, only via
-.Xr su 8
+.Xr su 1
 or equivalent by users in the
 .Em wheel
 group; see
@@ -100,7 +100,7 @@ Unused in modern
 Owner of high-score files and other shared files for games.
 .It Em postfix
 Pseudo-user for use by the
-.Xr postfix 8
+.Xr postfix 1
 mail transfer agent.
 .It Em named
 Pseudo-user for use by the
