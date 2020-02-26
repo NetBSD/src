@@ -1,4 +1,4 @@
-/*	$NetBSD: db_proc.c,v 1.10 2020/02/15 18:12:14 ad Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.11 2020/02/26 07:57:24 hikaru Exp $	*/
 
 /*-
  * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.10 2020/02/15 18:12:14 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.11 2020/02/26 07:57:24 hikaru Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -233,7 +233,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				wbuf[0] = '\0';
 			}
 			db_printf("%8d %8d %10d %d %#7x %4d %16s %7.7s\n",
-			    p.p_pptr != NULL ? p.p_pid : -1, pgrp.pg_id,
+			    p.p_pptr != NULL ? p.p_pptr->p_pid : -1, pgrp.pg_id,
 #ifdef _KERNEL
 			    kauth_cred_getuid(p.p_cred),
 #else
