@@ -1,4 +1,4 @@
-.\"	$NetBSD: groups.7,v 1.1 2020/02/26 07:31:51 riastradh Exp $
+.\"	$NetBSD: groups.7,v 1.2 2020/02/26 10:04:32 wiz Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -49,16 +49,16 @@ group has gid 0.
 Users who are not in the group
 .Em wheel
 are never allowed by
-.Xr su 8
+.Xr su 1
 to gain root privileges.
 .It Em daemon
 Used by the set-group-id
 .Pq Xr setuid 7
 programs
-.Xr lpq 8 ,
-.Xr lpr 8 ,
+.Xr lpq 1 
+.Xr lpr 1 ,
 and
-.Xr lprm 8 .
+.Xr lprm 1 .
 .\" Unclear why.  Maybe used to be used by uucp stuff too, since
 .\" /var/spool/lock ownership is uucp:daemon?
 .It Em sys
@@ -69,7 +69,7 @@ Unused in modern
 Used by the set-group-id
 .Pq Xr setuid 7
 programs
-.Xr wall 8
+.Xr wall 1
 and
 .Xr write 1
 to allow users to send messages to another tty even if they don't own
@@ -131,11 +131,11 @@ Unused in modern
 Used by the set-group-id
 .Pq Xr setuid 7
 programs
-.Xr postdrop 8
+.Xr postdrop 1
 and
-.Xr postqueue 8
+.Xr postqueue 1
 to submit to and examine the
-.Xr postfix 8
+.Xr postfix 1
 mail queue at
 .Pa /var/spool/postfix/maildrop
 and
@@ -144,7 +144,7 @@ and
 Primary group for the
 .Em postfix
 pseudo-user used by the
-.Xr postfix 8
+.Xr postfix 1
 mail transfer agent.
 .\" Why are various subdirectories of /var/spool/postfix owned by
 .\" postfix:wheel and not postfix:postfix?
@@ -276,7 +276,7 @@ pseudo-user used by the
 authoritative DNS nameserver.
 .It Em nvmm
 Users authorized to use the
-.Xr nvmm 8
+.Xr nvmm 4
 .Nx
 Virtual Machine Monitor.
 .It Em nobody
