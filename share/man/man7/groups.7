@@ -1,4 +1,4 @@
-.\"	$NetBSD: groups.7,v 1.4 2020/02/26 18:25:39 uwe Exp $
+.\"	$NetBSD: groups.7,v 1.5 2020/02/26 18:32:57 uwe Exp $
 .\"
 .\" Copyright (c) 2020 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -38,13 +38,13 @@ A standard
 installation has the following user group names:
 .\" These are currently sorted by gid; perhaps they should be sorted
 .\" lexicographically by name instead.
-.Bl -tag -width "_tcpdump"
+.Bl -tag -width ".Em _tcpdump"
 .It Em wheel
 Users authorized to elevate themselves to the super-user privileges of
-the root user, meaning uid 0.
+the root user, meaning uid\~0.
 Normally the
 .Em wheel
-group has gid 0.
+group has gid\~0.
 .Pp
 Users who are not in the group
 .Em wheel
@@ -307,8 +307,7 @@ file.
 Some administrators may instead prefer to assign to each user a unique
 group with the same name as the user by passing the
 .So
-.Fl g
-.Ar "=uid"
+.Fl g Cm "=uid"
 .Sc
 option to
 .Xr useradd 8 .
