@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1681 2020/02/26 07:31:51 riastradh Exp $
+# $NetBSD: mi,v 1.1682 2020/02/26 16:12:44 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -2315,6 +2315,7 @@
 ./usr/share/man/cat7/des_modes.0		man-reference-catman	.cat
 ./usr/share/man/cat7/editline.0			man-sys-catman		.cat
 ./usr/share/man/cat7/environ.0			man-reference-catman	.cat
+./usr/share/man/cat7/groups.0			man-reference-catman	.cat
 ./usr/share/man/cat7/glob.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hier.0			man-reference-catman	.cat
 ./usr/share/man/cat7/hostname.0			man-reference-catman	.cat
@@ -2353,6 +2354,7 @@
 ./usr/share/man/cat7/symlink.0			man-reference-catman	.cat
 ./usr/share/man/cat7/sysctl.0			man-reference-catman	.cat
 ./usr/share/man/cat7/tests.0			man-reference-catman	.cat
+./usr/share/man/cat7/users.0			man-reference-catman	.cat
 ./usr/share/man/cat7/zpool-features.0		man-zfs-catman		zfs,.cat
 ./usr/share/man/cat8/MAKEDEV.0			man-sysutil-catman	.cat
 ./usr/share/man/cat8/MAKEDEV.local.0		man-sysutil-catman	.cat
