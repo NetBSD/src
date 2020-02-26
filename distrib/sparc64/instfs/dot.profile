@@ -1,4 +1,4 @@
-# $NetBSD: dot.profile,v 1.8 2020/01/09 19:17:45 martin Exp $
+# $NetBSD: dot.profile,v 1.9 2020/02/26 16:00:48 riastradh Exp $
 #
 # Copyright (c) 1997 Perry E. Metzger
 # Copyright (c) 1994 Christopher G. Demetriou
@@ -90,9 +90,6 @@ EOM
 	# mount the kern_fs so that we can find the root device, and also
 	# examine the dmesg state
 	mount -t kernfs /kern /kern
-
-	# hack to get around bugs in kernfs's rootdev/rrootdev lookup.
-	ls -l /dev/* > /dev/null 2>&1
 
 	# mount the ramdisk read write
 	mount -t ffs -u /kern/rootdev /
