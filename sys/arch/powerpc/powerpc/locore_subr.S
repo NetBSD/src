@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.57 2019/04/06 03:06:27 thorpej Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.57.4.1 2020/02/27 18:50:43 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -579,6 +579,7 @@ ENTRY(cpu_spinstart)
 
 #endif /*MULTIPROCESSOR + OEA*/
 
+#if 0 /* XXX CPU configuration spaghetti */
 /*
  * int do_ucas_32(uint32_t *uptr, uint32_t old, uint32_t new, uint32_t *ret);
  */
@@ -594,3 +595,4 @@ ENTRY(do_ucas_32)
 	li	%r3,0
 	stw	%r10,0(%r6)
 	blr
+#endif
