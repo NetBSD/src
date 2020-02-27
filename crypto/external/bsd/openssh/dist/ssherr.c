@@ -1,4 +1,4 @@
-/*	$OpenBSD: ssherr.c,v 1.8 2018/07/03 11:39:54 djm Exp $	*/
+/*	$OpenBSD: ssherr.c,v 1.10 2020/01/25 23:13:09 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssherr.c,v 1.8 2018/08/26 07:46:37 christos Exp $");
+__RCSID("$NetBSD: ssherr.c,v 1.9 2020/02/27 00:24:40 christos Exp $");
 
 #include <errno.h>
 #include <stdio.h>
@@ -146,6 +146,10 @@ ssh_err(int n)
 		return "number is too large";
 	case SSH_ERR_SIGN_ALG_UNSUPPORTED:
 		return "signature algorithm not supported";
+	case SSH_ERR_FEATURE_UNSUPPORTED:
+		return "requested feature not supported";
+	case SSH_ERR_DEVICE_NOT_FOUND:
+		return "device not found";
 	default:
 		{
 			static char buf[1024];
