@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.3 2020/02/25 20:29:30 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.4 2020/02/27 17:28:57 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -154,4 +154,13 @@ sys/arch/powerpc/powerpc/pio_subr.S		1.17
 
 	Remove redundant "eieio" instructions for powerpc/ibm4xx.
 	[rin, ticket #730]
+
+sys/dev/usb/u3g.c				1.40
+sys/dev/usb/umodeswitch.c			1.5
+sys/dev/usb/usbdevs				1.776
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add support for D-Link DWM-157 3G USB modem.
+	[manu, ticket #719]
 
