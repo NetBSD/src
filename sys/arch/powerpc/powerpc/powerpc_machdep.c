@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.72 2018/09/16 09:25:47 skrll Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.72.4.1 2020/02/27 18:32:08 martin Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.72 2018/09/16 09:25:47 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.72.4.1 2020/02/27 18:32:08 martin Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -89,9 +89,7 @@ extern int powersave;
 char *booted_kernel;
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
-#if defined(PPC_HAVE_FPU)
 	[PCU_FPU] = &fpu_ops,
-#endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 	[PCU_VEC] = &vec_ops,
 #endif
