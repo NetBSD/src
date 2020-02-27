@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.268 2020/02/25 19:34:37 jdolecek Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.269 2020/02/27 20:16:38 macallan Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.268 2020/02/25 19:34:37 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.269 2020/02/27 20:16:38 macallan Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -549,9 +549,10 @@ no_devmon_insert(const char *name, prop_dictionary_t p)
 static void
 devmon_report_device(device_t dev, bool isattach)
 {
-	prop_dictionary_t ev;
+	prop_dictionary_t ev, dict = device_properties(dev);
 	const char *parent;
 	const char *what;
+	const char *where;
 	device_t pdev = device_parent(dev);
 
 	/* If currently no drvctl device, just return */
@@ -564,6 +565,11 @@ devmon_report_device(device_t dev, bool isattach)
 
 	what = (isattach ? "device-attach" : "device-detach");
 	parent = (pdev == NULL ? "root" : device_xname(pdev));
+	if (prop_dictionary_get_cstring_nocopy(dict, "location", &where)) {
+		prop_dictionary_set_cstring(ev, "location", where);
+		aprint_debug("ev: %s %s at %s in [%s]\n",
+		    what, device_xname(dev), parent, where); 
+	}
 	if (!prop_dictionary_set_cstring(ev, "device", device_xname(dev)) ||
 	    !prop_dictionary_set_cstring(ev, "parent", parent)) {
 		prop_object_release(ev);
