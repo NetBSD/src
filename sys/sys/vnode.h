@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.289 2020/02/23 22:14:04 ad Exp $	*/
+/*	$NetBSD: vnode.h,v 1.290 2020/02/27 22:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -212,6 +212,7 @@ typedef struct vnode vnode_t;
 #define	VI_WRMAP	0x00000400	/* might have PROT_WRITE u. mappings */
 #define	VI_WRMAPDIRTY	0x00000800	/* might have dirty pages */
 #define	VI_ONWORKLST	0x00004000	/* On syncer work-list */
+#define	VI_PAGES	0x00008000	/* UVM object has >0 pages */
 
 /*
  * The third set are locked by the underlying file system.

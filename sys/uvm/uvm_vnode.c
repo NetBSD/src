@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.106 2020/02/23 15:46:43 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.107 2020/02/27 22:12:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.106 2020/02/23 15:46:43 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.107 2020/02/27 22:12:54 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -465,15 +465,19 @@ uvn_text_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
+	/*
+	 * v_interlock is not held here, but VI_EXECMAP is only ever changed
+	 * with the vmobjlock held too.
+	 */
 	return (vp->v_iflag & VI_EXECMAP) != 0;
 }
 
 bool
 uvn_clean_p(struct uvm_object *uobj)
 {
-	struct vnode *vp = (struct vnode *)uobj;
 
-	return (vp->v_iflag & VI_ONWORKLST) == 0;
+	return radix_tree_empty_tagged_tree_p(&uobj->uo_pages,
+            UVM_PAGE_DIRTY_TAG);
 }
 
 bool
@@ -481,6 +485,11 @@ uvn_needs_writefault_p(struct uvm_object *uobj)
 {
 	struct vnode *vp = (struct vnode *)uobj;
 
+	/*
+	 * v_interlock is not held here, but VI_WRMAP and VI_WRMAPDIRTY are
+	 * only ever changed with the vmobjlock held too, or when it's known
+	 * the uvm_object contains no pages (VI_PAGES clear).
+	 */
 	return uvn_clean_p(uobj) ||
 	    (vp->v_iflag & (VI_WRMAP|VI_WRMAPDIRTY)) == VI_WRMAP;
 }
