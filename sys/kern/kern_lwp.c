@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.227 2020/02/15 18:12:15 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.228 2020/02/27 20:52:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.227 2020/02/15 18:12:15 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.228 2020/02/27 20:52:25 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -1305,18 +1305,14 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		mutex_exit(p->p_lock);
 	}
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * In the unlikely event that the LWP is still on the CPU,
-	 * then spin until it has switched away.  We need to release
-	 * all locks to avoid deadlock against interrupt handlers on
-	 * the target CPU.
+	 * then spin until it has switched away.
 	 */
 	membar_consumer();
 	while (__predict_false((l->l_pflag & LP_RUNNING) != 0)) {
 		SPINLOCK_BACKOFF_HOOK;
 	}
-#endif
 
 	/*
 	 * Destroy the LWP's remaining signal information.
