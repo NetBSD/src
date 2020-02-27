@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.161 2020/02/22 18:57:09 jmcneill Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.162 2020/02/27 06:17:50 msaitoh Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.163 2020/02/22 18:56:57 jmcneill Exp
+ *	NetBSD: miidevs,v 1.164 2020/02/27 06:17:28 msaitoh Exp
  */
 
 /*-
@@ -77,7 +77,6 @@
 #define	MII_OUI_AQUANTIA	0x0017b6	/* Aquantia Corporation */
 #define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
-#define	MII_OUI_VIA	0x004063	/* VIA Technologies */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_AMLOGIC	0x006051	/* Amlogic */
@@ -103,6 +102,7 @@
 /* Unregistered or wrong OUI */
 #define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
+#define	MII_OUI_xxVIA	0x0002c6	/* VIA Technologies */
 #define	MII_OUI_xxMYSON	0x00032d	/* Myson Technology */
 #define	MII_OUI_xxTSC	0x00039c	/* TDK Semiconductor */
 #define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
@@ -617,10 +617,10 @@
 #define	MII_STR_xxTSC_78Q2121	"78Q2121 100BASE-TX media interface"
 
 /* VIA Technologies PHYs */
-#define	MII_MODEL_VIA_VT6103	0x0032
-#define	MII_STR_VIA_VT6103	"VT6103 10/100 PHY"
-#define	MII_MODEL_VIA_VT6103_2	0x0034
-#define	MII_STR_VIA_VT6103_2	"VT6103 10/100 PHY"
+#define	MII_MODEL_xxVIA_VT6103	0x0032
+#define	MII_STR_xxVIA_VT6103	"VT6103 10/100 PHY"
+#define	MII_MODEL_xxVIA_VT6103_2	0x0034
+#define	MII_STR_xxVIA_VT6103_2	"VT6103 10/100 PHY"
 
 /* Vitesse PHYs (Now Microsemi) */
 #define	MII_MODEL_xxVITESSE_VSC8601	0x0002
