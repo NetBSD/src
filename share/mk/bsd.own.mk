@@ -1,4 +1,4 @@
-#	$NetBSD: bsd.own.mk,v 1.1176 2020/02/07 14:08:11 jmcneill Exp $
+#	$NetBSD: bsd.own.mk,v 1.1177 2020/02/27 12:52:20 macallan Exp $
 
 # This needs to be before bsd.init.mk
 .if defined(BSD_MK_COMPAT_FILE)
@@ -1026,9 +1026,10 @@ SOFTFLOAT_BITS=	32
 .endif
 
 #
-# We want to build zfs only for amd64 and aarch64 by default for now.
+# We want to build zfs only for amd64, aarch64 and sparc64 by default for now.
 #
-.if ${MACHINE} == "amd64" || ${MACHINE_ARCH} == "aarch64"
+.if ${MACHINE} == "amd64" || ${MACHINE_ARCH} == "aarch64" || \
+    ${MACHINE} == "sparc64"
 MKZFS?=		yes
 .endif
 
