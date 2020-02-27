@@ -1,4 +1,4 @@
-/* $NetBSD: bcmgenet.c,v 1.2 2020/02/22 13:41:40 jmcneill Exp $ */
+/* $NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $ */
 
 /*-
  * Copyright (c) 2020 Jared McNeill <jmcneill@invisible.ca>
@@ -34,7 +34,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.2 2020/02/22 13:41:40 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcmgenet.c,v 1.3 2020/02/27 17:30:07 jmcneill Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -933,7 +933,7 @@ genet_attach(struct genet_softc *sc)
 
 	/* Setup ethernet interface */
 	ifp->if_softc = sc;
-	snprintf(ifp->if_xname, IFNAMSIZ, device_xname(sc->sc_dev));
+	snprintf(ifp->if_xname, IFNAMSIZ, "%s", device_xname(sc->sc_dev));
 	ifp->if_flags = IFF_BROADCAST | IFF_SIMPLEX | IFF_MULTICAST;
 #ifdef GENET_MPSAFE
 	ifp->if_extflags = IFEF_MPSAFE;
