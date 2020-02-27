@@ -1,4 +1,4 @@
-#	$NetBSD: mod.mk,v 1.13 2020/02/26 19:33:30 christos Exp $
+#	$NetBSD: mod.mk,v 1.14 2020/02/27 00:02:56 mrg Exp $
 
 NOLINT=		# don't build a lint library
 NOPROFILE=	# don't build a profile library
@@ -6,7 +6,7 @@ NOPICINSTALL=	# don't install _pic.a library
 
 .include <bsd.own.mk>
 
-.include "${.PARSEDIR}/../../Makefile.inc"
+.include "${.PARSEDIR}/../Makefile.inc"
 
 .if defined(MLIBDIR)
 LIBDIR=/usr/lib/${MLIBDIR}/security
