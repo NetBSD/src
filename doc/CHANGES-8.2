@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.100 2020/02/25 19:22:18 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.101 2020/02/27 14:45:30 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2070,4 +2070,18 @@ sys/arch/arm/arm32/bus_dma.c			1.119,1.120
 
 	Make sure to convey a failure to the calling function.
 	[skrll, ticket #1510]
+
+sys/dev/usb/u3g.c				1.40
+sys/dev/usb/umodeswitch.c			1.5
+sys/dev/usb/usbdevs				1.776
+sys/dev/usb/usbdevs.h				(regen)
+sys/dev/usb/usbdevs_data.h			(regen)
+
+	Add support for D-Link DWM-157 3G USB modem.
+	[manu, ticket #1508]
+
+sys/ufs/ufs/ufs_vnops.c				1.249
+
+	Zero out the padding in 'd_namlen', to prevent info leaks.
+	[maxv, ticket #1511]
 
