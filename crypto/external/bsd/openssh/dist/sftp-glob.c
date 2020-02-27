@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp-glob.c,v 1.11 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: sftp-glob.c,v 1.28 2019/10/02 00:42:30 djm Exp $ */
+/*	$NetBSD: sftp-glob.c,v 1.12 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: sftp-glob.c,v 1.29 2019/11/13 04:47:52 deraadt Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp-glob.c,v 1.11 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sftp-glob.c,v 1.12 2020/02/27 00:24:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -25,6 +25,7 @@ __RCSID("$NetBSD: sftp-glob.c,v 1.11 2019/10/12 18:32:22 christos Exp $");
 #include <glob.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "sftp.h"

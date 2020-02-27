@@ -1,5 +1,5 @@
-/*	$NetBSD: misc.h,v 1.17 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: misc.h,v 1.81 2019/09/03 08:32:11 djm Exp $ */
+/*	$NetBSD: misc.h,v 1.18 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: misc.h,v 1.84 2020/01/24 23:54:40 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -74,6 +74,8 @@ char	*percent_expand(const char *, ...)
 #endif
     ;
 char	*tohex(const void *, size_t);
+void	 xextendf(char **s, const char *sep, const char *fmt, ...)
+    __attribute__((__format__ (printf, 3, 4))) __attribute__((__nonnull__ (3)));
 void	 sanitise_stdfd(void);
 struct timeval;
 void	 ms_subtract_diff(struct timeval *, int *);
@@ -185,11 +187,18 @@ int	opt_match(const char **opts, const char *term);
 #define RP_ALLOW_EOF		0x0004
 #define RP_USE_ASKPASS		0x0008
 
+struct notifier_ctx;
+
 char	*read_passphrase(const char *, int);
 int	 ask_permission(const char *, ...) __attribute__((format(printf, 1, 2)));
+struct notifier_ctx *notify_start(int, const char *, ...)
+	__attribute__((format(printf, 2, 3)));
+void	notify_complete(struct notifier_ctx *);
 
 #define MINIMUM(a, b)	(((a) < (b)) ? (a) : (b))
 #define MAXIMUM(a, b)	(((a) > (b)) ? (a) : (b))
 #define ROUNDUP(x, y)   ((((x)+((y)-1))/(y))*(y))
 
+typedef void (*sshsig_t)(int);
+sshsig_t ssh_signal(int, sshsig_t);
 #endif /* _MISC_H */

@@ -1,3 +1,5 @@
+/*	$NetBSD: sk-usbhid.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
+
 /*
  * Copyright (c) 2019 Markus Friedl
  *
@@ -13,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sk-usbhid.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -416,7 +420,7 @@ check_enroll_options(struct sk_option **options, char **devicep,
 			}
 			skdebug(__func__, "requested device %s", *devicep);
 		} else if (strcmp(options[i]->name, "user") == 0) {
-			if (strlcpy(user_id, options[i]->value, user_id_len) >=
+			if (strlcpy((char *)user_id, options[i]->value, user_id_len) >=
 			    user_id_len) {
 				skdebug(__func__, "user too long");
 				return -1;

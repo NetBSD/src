@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keysign.c,v 1.18 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: ssh-keysign.c,v 1.61 2019/10/02 00:42:30 djm Exp $ */
+/*	$NetBSD: ssh-keysign.c,v 1.19 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: ssh-keysign.c,v 1.63 2019/11/18 16:10:05 naddy Exp $ */
 /*
  * Copyright (c) 2002 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keysign.c,v 1.18 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: ssh-keysign.c,v 1.19 2020/02/27 00:24:40 christos Exp $");
 #include <sys/types.h>
 
 #ifdef WITH_OPENSSL
@@ -38,6 +38,7 @@ __RCSID("$NetBSD: ssh-keysign.c,v 1.18 2019/10/12 18:32:22 christos Exp $");
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <errno.h>
 
@@ -279,8 +280,8 @@ main(int argc, char **argv)
 		    sshkey_type(key), fp ? fp : "");
 	}
 
-	if ((r = sshkey_sign(keys[i], &signature, &slen, data, dlen, NULL, 0))
-	    != 0)
+	if ((r = sshkey_sign(keys[i], &signature, &slen, data, dlen,
+	    NULL, NULL, 0)) != 0)
 		fatal("sshkey_sign failed: %s", ssh_err(r));
 	free(data);
 

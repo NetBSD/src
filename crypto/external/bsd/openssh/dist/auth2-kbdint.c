@@ -1,5 +1,5 @@
-/*	$NetBSD: auth2-kbdint.c,v 1.11 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: auth2-kbdint.c,v 1.10 2019/09/06 04:53:27 djm Exp $ */
+/*	$NetBSD: auth2-kbdint.c,v 1.12 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: auth2-kbdint.c,v 1.11 2019/11/13 04:47:52 deraadt Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
  *
@@ -25,11 +25,12 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: auth2-kbdint.c,v 1.11 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: auth2-kbdint.c,v 1.12 2020/02/27 00:24:40 christos Exp $");
 #include <sys/types.h>
 
 #include <stdlib.h>
 #include <stdio.h>
+#include <stdarg.h>
 
 #include "xmalloc.h"
 #include "packet.h"

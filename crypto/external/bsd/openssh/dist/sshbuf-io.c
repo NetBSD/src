@@ -1,3 +1,4 @@
+/*	$NetBSD: sshbuf-io.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
 /*	$OpenBSD: sshbuf-io.c,v 1.2 2020/01/25 23:28:06 djm Exp $ */
 /*
  * Copyright (c) 2011 Damien Miller
@@ -14,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: sshbuf-io.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/stat.h>

@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2019/11/11 22:44:56 joerg Exp $
+#	$NetBSD: Makefile,v 1.31 2020/02/27 00:24:40 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -56,11 +56,13 @@ sc25519.c \
 smult_curve25519_ref.c \
 sntrup4591761.c \
 ssh-ed25519.c \
+ssh-ed25519-sk.c \
 ssh-pkcs11.c \
 ssh-xmss.c \
 sshbuf-getput-basic.c \
 sshbuf-getput-crypto.c \
 sshbuf-misc.c \
+sshbuf-io.c \
 sshbuf.c \
 ssherr.c \
 sshkey-xmss.c \
@@ -83,6 +85,7 @@ digest-openssl.c \
 kexc25519.c \
 ssh-dss.c \
 ssh-ecdsa.c \
+ssh-ecdsa-sk.c \
 ssh-rsa.c
 
 SRCS+=	fmt_scaled.c

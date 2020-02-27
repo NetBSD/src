@@ -1,5 +1,5 @@
-/*	$NetBSD: ssh-keyscan.c,v 1.25 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: ssh-keyscan.c,v 1.130 2019/09/06 05:23:55 djm Exp $ */
+/*	$NetBSD: ssh-keyscan.c,v 1.26 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: ssh-keyscan.c,v 1.131 2019/12/15 19:47:10 djm Exp $ */
 /*
  * Copyright 1995, 1996 by David Mazieres <dm@lcs.mit.edu>.
  *
@@ -9,7 +9,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: ssh-keyscan.c,v 1.25 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: ssh-keyscan.c,v 1.26 2020/02/27 00:24:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -60,12 +60,14 @@ int ssh_port = SSH_DEFAULT_PORT;
 #define KT_ECDSA	(1<<2)
 #define KT_ED25519	(1<<3)
 #define KT_XMSS		(1<<4)
+#define KT_ECDSA_SK	(1<<5)
+#define KT_ED25519_SK	(1<<6)
 
 #define KT_MIN		KT_DSA
-#define KT_MAX		KT_XMSS
+#define KT_MAX		KT_ED25519_SK
 
 int get_cert = 0;
-int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519;
+int get_keytypes = KT_RSA|KT_ECDSA|KT_ED25519|KT_ECDSA_SK|KT_ED25519_SK;
 
 int hash_hosts = 0;		/* Hash hostname on output */
 
@@ -247,6 +249,16 @@ keygrab_ssh2(con *c)
 		    "ecdsa-sha2-nistp256,"
 		    "ecdsa-sha2-nistp384,"
 		    "ecdsa-sha2-nistp521";
+		break;
+	case KT_ECDSA_SK:
+		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+		    "sk-ecdsa-sha2-nistp256-cert-v01@openssh.com" :
+		    "sk-ecdsa-sha2-nistp256@openssh.com";
+		break;
+	case KT_ED25519_SK:
+		myproposal[PROPOSAL_SERVER_HOST_KEY_ALGS] = get_cert ?
+		    "sk-ssh-ed25519-cert-v01@openssh.com" :
+		    "sk-ssh-ed25519@openssh.com";
 		break;
 	default:
 		fatal("unknown key type %d", c->c_keytype);
@@ -719,6 +731,12 @@ main(int argc, char **argv)
 					break;
 				case KEY_XMSS:
 					get_keytypes |= KT_XMSS;
+					break;
+				case KEY_ED25519_SK:
+					get_keytypes |= KT_ED25519_SK;
+					break;
+				case KEY_ECDSA_SK:
+					get_keytypes |= KT_ECDSA_SK;
 					break;
 				case KEY_UNSPEC:
 				default:

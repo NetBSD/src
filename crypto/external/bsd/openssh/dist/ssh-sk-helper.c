@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-sk-helper.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
 /* $OpenBSD: ssh-sk-helper.c,v 1.9 2020/01/25 23:13:09 djm Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
@@ -24,6 +25,8 @@
  * Please crank SSH_SK_HELPER_VERSION in sshkey.h for any incompatible
  * protocol changes.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-sk-helper.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
 
 #include <limits.h>
 #include <stdarg.h>
@@ -47,11 +50,11 @@
 
 extern char *__progname;
 
-static struct sshbuf *reply_error(int r, char *fmt, ...)
-    __attribute__((__format__ (printf, 2, 3)));
+static struct sshbuf *reply_error(int r, const char *fmt, ...)
+    __attribute__((__format__ (__printf__, 2, 3)));
 
 static struct sshbuf *
-reply_error(int r, char *fmt, ...)
+reply_error(int r, const char *fmt, ...)
 {
 	char *msg;
 	va_list ap;

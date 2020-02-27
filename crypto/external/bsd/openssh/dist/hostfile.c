@@ -1,5 +1,5 @@
-/*	$NetBSD: hostfile.c,v 1.15 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: hostfile.c,v 1.76 2019/07/07 01:05:00 dtucker Exp $ */
+/*	$NetBSD: hostfile.c,v 1.16 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: hostfile.c,v 1.77 2020/01/25 00:21:08 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -38,7 +38,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: hostfile.c,v 1.15 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: hostfile.c,v 1.16 2020/02/27 00:24:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 
@@ -568,6 +568,7 @@ hostfile_replace_entries(const char *filename, const char *host, const char *ip,
 	/* Remove all entries for the specified host from the file */
 	if ((r = hostkeys_foreach(filename, host_delete, &ctx, host, ip,
 	    HKF_WANT_PARSE_KEY)) != 0) {
+		oerrno = errno;
 		error("%s: hostkeys_foreach failed: %s", __func__, ssh_err(r));
 		goto fail;
 	}

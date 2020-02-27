@@ -1,5 +1,5 @@
-/*	$NetBSD: kex.c,v 1.25 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: kex.c,v 1.155 2019/10/08 22:40:39 dtucker Exp $ */
+/*	$NetBSD: kex.c,v 1.26 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: kex.c,v 1.156 2020/01/23 10:24:29 dtucker Exp $ */
 /*
  * Copyright (c) 2000, 2001 Markus Friedl.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: kex.c,v 1.25 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: kex.c,v 1.26 2020/02/27 00:24:40 christos Exp $");
 
 #include <sys/param.h>	/* MAX roundup */
 #include <sys/types.h>
@@ -795,11 +795,14 @@ choose_comp(struct sshcomp *comp, char *client, char *server)
 
 	if (name == NULL)
 		return SSH_ERR_NO_COMPRESS_ALG_MATCH;
+#ifdef WITH_ZLIB
 	if (strcmp(name, "zlib@openssh.com") == 0) {
 		comp->type = COMP_DELAYED;
 	} else if (strcmp(name, "zlib") == 0) {
 		comp->type = COMP_ZLIB;
-	} else if (strcmp(name, "none") == 0) {
+	} else
+#endif	/* WITH_ZLIB */
+	if (strcmp(name, "none") == 0) {
 		comp->type = COMP_NONE;
 	} else {
 		error("%s: unsupported compression scheme %s", __func__, name);

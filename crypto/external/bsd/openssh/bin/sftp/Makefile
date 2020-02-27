@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.7 2019/09/29 23:44:58 mrg Exp $
+#	$NetBSD: Makefile,v 1.8 2020/02/27 00:24:38 christos Exp $
 
 BINDIR=	/usr/bin
 
 PROG=	sftp
-SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c
+SRCS=	sftp.c sftp-client.c sftp-common.c sftp-glob.c ssh-sk-client.c
 MAN=	sftp.1
 
 LDADD+=	-ledit -lterminfo
