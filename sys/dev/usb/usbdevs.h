@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs.h,v 1.727.2.5 2019/08/01 13:41:54 martin Exp $	*/
+/*	$NetBSD: usbdevs.h,v 1.727.2.6 2020/02/27 14:34:11 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.5 2019/08/01 13:40:54 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.6 2020/02/27 14:32:31 martin Exp
  */
 
 /*-
@@ -1432,8 +1432,10 @@
 #define	USB_PRODUCT_DLINK_DSB650TX3	0x400b		/* 10/100 ethernet adapter */
 #define	USB_PRODUCT_DLINK_DSB650TX2	0x4102		/* 10/100 ethernet adapter */
 #define	USB_PRODUCT_DLINK_DSB650	0xabc1		/* 10/100 ethernet adapter */
+#define	USB_PRODUCT_DLINK_DWM157E_CD	0xa407		/* DWM-157 CD-ROM Mode */
 #define	USB_PRODUCT_DLINK_DWM157_CD	0xa707		/* DWM-157 CD-ROM Mode */
 #define	USB_PRODUCT_DLINK_DWM157	0x7d02		/* DWM-157 LTE */
+#define	USB_PRODUCT_DLINK_DWM157E	0x7d0e		/* DWM-157 LTE */
 #define	USB_PRODUCT_DLINK_DWM222_CD	0xab00		/* DWM-222 CD-ROM Mode */
 #define	USB_PRODUCT_DLINK_DWM222	0x7e35		/* DWM-222 LTE */
 #define	USB_PRODUCT_DLINK_DWR510_CD	0xa805		/* DWR-510 CD-ROM Mode */

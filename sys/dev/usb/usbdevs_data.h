@@ -1,10 +1,10 @@
-/*	$NetBSD: usbdevs_data.h,v 1.728.2.5 2019/08/01 13:41:54 martin Exp $	*/
+/*	$NetBSD: usbdevs_data.h,v 1.728.2.6 2020/02/27 14:34:11 martin Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: usbdevs,v 1.736.2.5 2019/08/01 13:40:54 martin Exp
+ *	NetBSD: usbdevs,v 1.736.2.6 2020/02/27 14:32:31 martin Exp
  */
 
 /*-
@@ -1796,9 +1796,13 @@ static const uint16_t usb_products[] = {
 	    6668, 5155, 4911, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DSB650, 
 	    6668, 5155, 4911, 0,
+	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157E_CD, 
+	    9312, 9320, 9327, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157_CD, 
 	    9312, 9320, 9327, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157, 
+	    9312, 9332, 0,
+	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM157E, 
 	    9312, 9332, 0,
 	    USB_VENDOR_DLINK, USB_PRODUCT_DLINK_DWM222_CD, 
 	    9336, 9320, 9327, 0,
@@ -6171,10 +6175,10 @@ static const char usb_words[] = { "."
 	    "B2\0" /* 1 refs @ 9293 */
 	    "DWA-127\0" /* 1 refs @ 9296 */
 	    "DWA-162\0" /* 1 refs @ 9304 */
-	    "DWM-157\0" /* 2 refs @ 9312 */
-	    "CD-ROM\0" /* 4 refs @ 9320 */
-	    "Mode\0" /* 3 refs @ 9327 */
-	    "LTE\0" /* 3 refs @ 9332 */
+	    "DWM-157\0" /* 4 refs @ 9312 */
+	    "CD-ROM\0" /* 5 refs @ 9320 */
+	    "Mode\0" /* 4 refs @ 9327 */
+	    "LTE\0" /* 4 refs @ 9332 */
 	    "DWM-222\0" /* 2 refs @ 9336 */
 	    "DWR-510\0" /* 2 refs @ 9344 */
 	    "A1\0" /* 3 refs @ 9352 */
