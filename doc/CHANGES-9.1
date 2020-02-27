@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.4 2020/02/27 17:28:57 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.5 2020/02/27 19:08:09 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -163,4 +163,86 @@ sys/dev/usb/usbdevs_data.h			(regen)
 
 	Add support for D-Link DWM-157 3G USB modem.
 	[manu, ticket #719]
+
+sys/arch/powerpc/ibm4xx/pmap.c			1.77-1.80
+
+	Fix powerpc/ibm4xx bugs:
+	- fix NULL dereference; "pap" argument of pmap_extract(9) can be
+	  NULL.
+	- fix off-by-one error for ctx (ASID).
+	- clear ti_ctx when flushing a TLB entry for clarity.
+	- in ppc4xx_tlb_find_victim(), mark kernel stack page TLBF_REF
+	  instead of TLBF_USED.
+	[rin, ticket #731]
+
+sys/uvm/uvm_pglist.c				1.80
+
+	Make this compile again with PGALLOC_VERBOSE.
+	[rin, ticket #732]
+
+sys/arch/powerpc/powerpc/fpu.c			1.39
+sys/arch/powerpc/powerpc/powerpc_machdep.c	1.77
+
+	Fix panics on machines without FPU.
+	[rin, ticket #733]
+
+sys/net/if_bridge.c				1.167,1.168
+
+	bridge(4): disable two noisy debug messages.
+	[rin, ticket #734]
+
+sys/arch/powerpc/ibm4xx/trap.c			1.71-1.78
+
+	Various fixes for powerpc/ibm4xx:
+	- improve copyin() and copyout()
+	- do not try to recovery from data page fault in interrupt context
+	- comment out unused functions badaddr() and badaddr_read()
+	- cleanup/cosmetic
+	[rin, ticket #735]
+
+lib/libpthread/arch/powerpc/pthread_md.h	1.8
+sys/arch/powerpc/powerpc/sig_machdep.c		1.47
+
+	Document how the initial MSR for lwps is set.
+	Add a KASSERT validating the effective value.
+	[rin, ticket #736]
+
+sys/arch/powerpc/powerpc/locore_subr.S		1.60
+sys/arch/powerpc/powerpc/trap.c			1.157
+
+	Comment out do_ucas_32(), only user of which, _ucas_32(), is
+	commented out since powerpc/trap.c rev 1.156.
+	[rin, ticket #737]
+
+usr.sbin/postinstall/postinstall.in		1.15
+
+	PR install/54990: fix the fixup script to follow the URL change in
+	/etc/motd (http->https).
+	[nakayama, ticket #738]
+
+sys/ufs/ufs/ufs_vnops.c				1.249
+
+	Zero out the padding in 'd_namlen', to prevent info leaks.
+	[maxv, ticket #739]
+
+sys/external/bsd/drm2/dist/drm/radeon/radeon_irq_kms.c 1.5
+
+	Take a mutex around mode config logic as the comment advises.
+	[riastradh, ticket #740]
+
+sys/compat/common/vfs_syscalls_43.c		1.65
+
+	PR kern/55025: include all of the vfs syscalls in the syscall_package,
+	not just oquota.
+	[pgoyette, ticket #741]
+
+sys/arch/arm/arm/cpufunc.c			1.176
+sys/arch/arm/arm32/armv7_generic_space.c	1.11
+sys/arch/arm/arm32/pmap.c			1.388
+sys/arch/arm/conf/Makefile.arm			1.54 (via patch)
+sys/arch/arm/include/arm32/pmap.h		1.161
+
+	Fix the armv[67] memory attributes for uncached memory.
+	Remove workaround for unaligned access faults.
+	[skrll, ticket #742]
 
