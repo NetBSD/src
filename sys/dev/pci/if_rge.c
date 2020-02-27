@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.6 2020/02/13 23:05:53 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.7 2020/02/27 22:58:57 sevan Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.6 2020/02/13 23:05:53 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.7 2020/02/27 22:58:57 sevan Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -70,6 +70,25 @@ struct mbuf_list {
 	struct mbuf 	*ml_tail;
 	u_int 	ml_len;
 };
+
+static struct mbuf *
+MCLGETI(struct rge_softc *sc __unused, int how,
+    struct ifnet *ifp __unused, u_int size)
+{
+	struct mbuf *m;
+
+	MGETHDR(m, how, MT_DATA);
+	if (m == NULL)
+		return NULL;
+
+	MEXTMALLOC(m, size, how);
+	if ((m->m_flags & M_EXT) == 0) {
+		m_freem(m);
+		return NULL;
+	}
+	return m;
+}
+
 #ifdef NET_MPSAFE
 #define 	RGE_MPSAFE	1
 #define 	CALLOUT_FLAGS	CALLOUT_MPSAFE
