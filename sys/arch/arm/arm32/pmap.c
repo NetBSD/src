@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.373.2.1 2020/02/10 19:20:01 martin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.373.2.2 2020/02/27 19:06:22 martin Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@
 #include <arm/db_machdep.h>
 #endif
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.373.2.1 2020/02/10 19:20:01 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.373.2.2 2020/02/27 19:06:22 martin Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
@@ -3740,8 +3740,11 @@ pmap_kenter_pa(vaddr_t va, paddr_t pa, vm_prot_t prot, u_int flags)
 		if (!(flags & PMAP_NOCACHE))
 			npte |= pte_l2_s_cache_mode_pt;
 	} else {
-		switch (flags & PMAP_CACHE_MASK) {
+		switch (flags & (PMAP_CACHE_MASK | PMAP_DEV_MASK)) {
+		case PMAP_DEV ... PMAP_DEV | PMAP_CACHE_MASK:
+			break;
 		case PMAP_NOCACHE:
+			npte |= pte_l2_s_nocache_mode;
 			break;
 		case PMAP_WRITE_COMBINE:
 			npte |= pte_l2_s_wc_mode;
@@ -6650,8 +6653,7 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	switch (cache) {
 	case PTE_NOCACHE:
-	default:
-		fl = 0;
+		fl = pte_l1_s_nocache_mode;
 		break;
 
 	case PTE_CACHE:
@@ -6660,6 +6662,11 @@ pmap_map_section(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	case PTE_PAGETABLE:
 		fl = pte_l1_s_cache_mode_pt;
+		break;
+
+	case PTE_DEV:
+	default:
+		fl = 0;
 		break;
 	}
 
@@ -6686,8 +6693,7 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	switch (cache) {
 	case PTE_NOCACHE:
-	default:
-		npte = 0;
+		npte = pte_l2_s_nocache_mode;
 		break;
 
 	case PTE_CACHE:
@@ -6696,6 +6702,10 @@ pmap_map_entry(vaddr_t l1pt, vaddr_t va, paddr_t pa, int prot, int cache)
 
 	case PTE_PAGETABLE:
 		npte = pte_l2_s_cache_mode_pt;
+		break;
+
+	default:
+		npte = 0;
 		break;
 	}
 
@@ -6765,10 +6775,9 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 
 	switch (cache) {
 	case PTE_NOCACHE:
-	default:
-		f1 = 0;
-		f2l = 0;
-		f2s = 0;
+		f1 = pte_l1_s_nocache_mode;
+		f2l = pte_l2_l_nocache_mode;
+		f2s = pte_l2_s_nocache_mode;
 		break;
 
 	case PTE_CACHE:
@@ -6781,6 +6790,13 @@ pmap_map_chunk(vaddr_t l1pt, vaddr_t va, paddr_t pa, vsize_t size,
 		f1 = pte_l1_s_cache_mode_pt;
 		f2l = pte_l2_l_cache_mode_pt;
 		f2s = pte_l2_s_cache_mode_pt;
+		break;
+
+	case PTE_DEV:
+	default:
+		f1 = 0;
+		f2l = 0;
+		f2s = 0;
 		break;
 	}
 
@@ -6993,16 +7009,19 @@ pmap_devmap_find_va(vaddr_t va, vsize_t size)
  * them (though, they shouldn't).
  */
 
+pt_entry_t	pte_l1_s_nocache_mode;
 pt_entry_t	pte_l1_s_cache_mode;
 pt_entry_t	pte_l1_s_wc_mode;
 pt_entry_t	pte_l1_s_cache_mode_pt;
 pt_entry_t	pte_l1_s_cache_mask;
 
+pt_entry_t	pte_l2_l_nocache_mode;
 pt_entry_t	pte_l2_l_cache_mode;
 pt_entry_t	pte_l2_l_wc_mode;
 pt_entry_t	pte_l2_l_cache_mode_pt;
 pt_entry_t	pte_l2_l_cache_mask;
 
+pt_entry_t	pte_l2_s_nocache_mode;
 pt_entry_t	pte_l2_s_cache_mode;
 pt_entry_t	pte_l2_s_wc_mode;
 pt_entry_t	pte_l2_s_cache_mode_pt;
@@ -7036,14 +7055,17 @@ void
 pmap_pte_init_generic(void)
 {
 
+	pte_l1_s_nocache_mode = 0;
 	pte_l1_s_cache_mode = L1_S_B|L1_S_C;
 	pte_l1_s_wc_mode = L1_S_B;
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_generic;
 
+	pte_l2_l_nocache_mode = 0;
 	pte_l2_l_cache_mode = L2_B|L2_C;
 	pte_l2_l_wc_mode = L2_B;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_generic;
 
+	pte_l2_s_nocache_mode = 0;
 	pte_l2_s_cache_mode = L2_B|L2_C;
 	pte_l2_s_wc_mode = L2_B;
 	pte_l2_s_cache_mask = L2_S_CACHE_MASK_generic;
@@ -7427,12 +7449,11 @@ pmap_uarea(vaddr_t va)
 
 
 #if defined(CPU_ARM11MPCORE)
-
 void
 pmap_pte_init_arm11mpcore(void)
 {
 
-	/* cache mode is controlled by 5 bits (B, C, TEX) */
+	/* cache mode is controlled by 5 bits (B, C, TEX[2:0]) */
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv6;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv6;
 #if defined(ARM11MPCORE_COMPAT_MMU) || defined(ARMV6_EXTENDED_SMALL_PAGE)
@@ -7511,6 +7532,54 @@ pmap_pte_init_arm11mpcore(void)
 #endif	/* CPU_ARM11MPCORE */
 
 
+#if ARM_MMU_V6 == 1
+void
+pmap_pte_init_armv6(void)
+{
+	/*
+	 * The ARMv6-A MMU is mostly compatible with generic. If the
+	 * AP field is zero, that now means "no access" rather than
+	 * read-only. The prototypes are a little different because of
+	 * the XN bit.
+	 */
+	pmap_pte_init_generic();
+
+	pte_l1_s_nocache_mode = L1_S_XS_TEX(1);
+	pte_l2_l_nocache_mode = L2_XS_L_TEX(1);
+	pte_l2_s_nocache_mode = L2_XS_T_TEX(1);
+
+#ifdef ARM11_COMPAT_MMU
+	/* with AP[0..3] */
+	pte_l1_ss_proto = L1_SS_PROTO_armv6;
+#else
+	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv6n;
+	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv6n;
+	pte_l2_s_cache_mask = L2_S_CACHE_MASK_armv6n;
+
+	pte_l1_ss_proto = L1_SS_PROTO_armv6;
+	pte_l1_s_proto = L1_S_PROTO_armv6;
+	pte_l1_c_proto = L1_C_PROTO_armv6;
+	pte_l2_s_proto = L2_S_PROTO_armv6n;
+
+	pte_l1_s_prot_u = L1_S_PROT_U_armv6;
+	pte_l1_s_prot_w = L1_S_PROT_W_armv6;
+	pte_l1_s_prot_ro = L1_S_PROT_RO_armv6;
+	pte_l1_s_prot_mask = L1_S_PROT_MASK_armv6;
+
+	pte_l2_l_prot_u = L2_L_PROT_U_armv6n;
+	pte_l2_l_prot_w = L2_L_PROT_W_armv6n;
+	pte_l2_l_prot_ro = L2_L_PROT_RO_armv6n;
+	pte_l2_l_prot_mask = L2_L_PROT_MASK_armv6n;
+
+	pte_l2_s_prot_u = L2_S_PROT_U_armv6n;
+	pte_l2_s_prot_w = L2_S_PROT_W_armv6n;
+	pte_l2_s_prot_ro = L2_S_PROT_RO_armv6n;
+	pte_l2_s_prot_mask = L2_S_PROT_MASK_armv6n;
+
+#endif
+}
+#endif /* ARM_MMU_V6 */
+
 #if ARM_MMU_V7 == 1
 void
 pmap_pte_init_armv7(void)
@@ -7524,6 +7593,10 @@ pmap_pte_init_armv7(void)
 	pmap_pte_init_generic();
 
 	pmap_needs_pte_sync = 1;
+
+	pte_l1_s_nocache_mode = L1_S_XS_TEX(1);
+	pte_l2_l_nocache_mode = L2_XS_L_TEX(1);
+	pte_l2_s_nocache_mode = L2_XS_T_TEX(1);
 
 	pte_l1_s_cache_mask = L1_S_CACHE_MASK_armv7;
 	pte_l2_l_cache_mask = L2_L_CACHE_MASK_armv7;
@@ -7676,21 +7749,27 @@ pmap_dump(pmap_t pm)
 					ch = '.';
 				} else {
 					occ--;
-					switch (pte & 0x0c) {
+					switch (pte & 0x4c) {
 					case 0x00:
-						ch = 'D'; /* No cache No buff */
+						ch = 'N'; /* No cache No buff */
 						break;
 					case 0x04:
 						ch = 'B'; /* No cache buff */
 						break;
 					case 0x08:
-						if (pte & 0x40)
-							ch = 'm';
-						else
-						   ch = 'C'; /* Cache No buff */
+						ch = 'C'; /* Cache No buff */
 						break;
 					case 0x0c:
 						ch = 'F'; /* Cache Buff */
+						break;
+					case 0x40:
+						ch = 'D';
+						break;
+					case 0x48:
+						ch = 'm'; /* Xscale mini-data */
+						break;
+					default:
+						ch = '?';
 						break;
 					}
 
