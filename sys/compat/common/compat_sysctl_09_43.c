@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_sysctl_09_43.c,v 1.3 2019/12/06 08:35:21 maxv Exp $	*/
+/*	$NetBSD: compat_sysctl_09_43.c,v 1.4 2020/02/27 16:41:59 pgoyette Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.3 2019/12/06 08:35:21 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: compat_sysctl_09_43.c,v 1.4 2020/02/27 16:41:59 pgoyette Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -101,8 +101,7 @@ sysctl_vfs_generic_conf(SYSCTLFN_ARGS)
 /*
  * Top level filesystem related information gathering.
  */
-static int
-compat_sysctl_vfs(struct sysctllog **clog)
+SYSCTL_SETUP(compat_sysctl_vfs, "Top-level filesystem info")
 {
 	int error;
 
@@ -129,20 +128,17 @@ compat_sysctl_vfs(struct sysctllog **clog)
 }
 #endif
 
-static struct sysctllog *compat_09_43_clog = NULL;
-
 int
 compat_sysctl_09_43_init(void)
 {
 
-	return compat_sysctl_vfs(&compat_09_43_clog);
+	return 0;
 }
 
 int
 compat_sysctl_09_43_fini(void)
 {
 
-	sysctl_teardown(&compat_09_43_clog);
 	return 0;
 }
 
