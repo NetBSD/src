@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.c,v 1.11 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: xmalloc.c,v 1.35 2019/06/06 05:13:13 otto Exp $ */
+/*	$NetBSD: xmalloc.c,v 1.12 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: xmalloc.c,v 1.36 2019/11/12 22:32:48 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
@@ -15,7 +15,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: xmalloc.c,v 1.11 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: xmalloc.c,v 1.12 2020/02/27 00:24:40 christos Exp $");
 #include <sys/param.h>
 #include <stdarg.h>
 #include <stdint.h>
@@ -96,17 +96,24 @@ xstrdup(const char *str)
 }
 
 int
+xvasprintf(char **ret, const char *fmt, va_list ap)
+{
+	int i;
+
+	i = vasprintf(ret, fmt, ap);
+	if (i < 0 || *ret == NULL)
+		fatal("xvasprintf: could not allocate memory");
+	return i;
+}
+
+int
 xasprintf(char **ret, const char *fmt, ...)
 {
 	va_list ap;
 	int i;
 
 	va_start(ap, fmt);
-	i = vasprintf(ret, fmt, ap);
+	i = xvasprintf(ret, fmt, ap);
 	va_end(ap);
-
-	if (i < 0 || *ret == NULL)
-		fatal("xasprintf: could not allocate memory");
-
-	return (i);
+	return i;
 }

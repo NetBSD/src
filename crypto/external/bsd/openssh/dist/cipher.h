@@ -1,5 +1,5 @@
-/*	$NetBSD: cipher.h,v 1.14 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: cipher.h,v 1.54 2019/09/06 05:23:55 djm Exp $ */
+/*	$NetBSD: cipher.h,v 1.15 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: cipher.h,v 1.55 2020/01/23 10:24:29 dtucker Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -66,6 +66,7 @@ const struct sshcipher *cipher_by_name(const char *);
 const char *cipher_warning_message(const struct sshcipher_ctx *);
 int	 ciphers_valid(const char *);
 char	*cipher_alg_list(char, int);
+const char *compression_alg_list(int);
 int	 cipher_init(struct sshcipher_ctx **, const struct sshcipher *,
     const u_char *, u_int, const u_char *, u_int, int);
 int	 cipher_crypt(struct sshcipher_ctx *, u_int, u_char *, const u_char *,

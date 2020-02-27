@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-sk-client.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
 /* $OpenBSD: ssh-sk-client.c,v 1.7 2020/01/23 07:10:22 dtucker Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
@@ -14,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-sk-client.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -47,7 +50,7 @@ start_helper(int *fdp, pid_t *pidp, void (**osigchldp)(int))
 	void (*osigchld)(int);
 	int oerrno, pair[2], r = SSH_ERR_INTERNAL_ERROR;
 	pid_t pid;
-	char *helper, *verbosity = NULL;
+	const char *helper, *verbosity = NULL;
 
 	*fdp = -1;
 	*pidp = 0;
