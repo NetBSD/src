@@ -1,4 +1,4 @@
-$NetBSD: usbdevs,v 1.736.2.5 2019/08/01 13:40:54 martin Exp $
+$NetBSD: usbdevs,v 1.736.2.6 2020/02/27 14:32:31 martin Exp $
 
 /*-
  * Copyright (c) 1998-2004 The NetBSD Foundation, Inc.
@@ -1425,8 +1425,10 @@ product DLINK DSB650TX_PNA	0x4003	1/10/100 ethernet adapter
 product DLINK DSB650TX3		0x400b	10/100 ethernet adapter
 product DLINK DSB650TX2		0x4102	10/100 ethernet adapter
 product DLINK DSB650		0xabc1	10/100 ethernet adapter
+product DLINK DWM157E_CD	0xa407	DWM-157 CD-ROM Mode
 product DLINK DWM157_CD		0xa707	DWM-157 CD-ROM Mode
 product DLINK DWM157		0x7d02	DWM-157 LTE
+product DLINK DWM157E		0x7d0e	DWM-157 LTE
 product DLINK DWM222_CD		0xab00	DWM-222 CD-ROM Mode
 product DLINK DWM222		0x7e35	DWM-222 LTE
 product DLINK DWR510_CD		0xa805	DWR-510 CD-ROM Mode
