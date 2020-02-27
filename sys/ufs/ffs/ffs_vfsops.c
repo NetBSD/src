@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.364 2020/02/23 15:46:42 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.365 2020/02/27 22:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.364 2020/02/23 15:46:42 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.365 2020/02/27 22:12:54 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1864,7 +1864,7 @@ ffs_sync_selector(void *cl, struct vnode *vp)
 	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
 	    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 	    (c->waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	    UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+	    (vp->v_iflag & VI_ONWORKLST) == 0)))
 		return false;
 
 	return true;
