@@ -1,4 +1,4 @@
-/* $OpenBSD: session.c,v 1.316 2019/06/28 13:35:04 deraadt Exp $ */
+/* $OpenBSD: session.c,v 1.318 2020/01/23 07:10:22 dtucker Exp $ */
 /*
  * Copyright (c) 1995 Tatu Ylonen <ylo@cs.hut.fi>, Espoo, Finland
  *                    All rights reserved
@@ -52,6 +52,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <stdarg.h>
 #include <unistd.h>
 #include <limits.h>
 
@@ -1322,7 +1323,7 @@ do_child(struct ssh *ssh, Session *s, const char *command)
 	do_rc_files(ssh, s, shell);
 
 	/* restore SIGPIPE for child */
-	signal(SIGPIPE, SIG_DFL);
+	ssh_signal(SIGPIPE, SIG_DFL);
 
 	if (s->is_subsystem == SUBSYSTEM_INT_SFTP_ERROR) {
 		error("Connection from %s: refusing non-sftp session",
