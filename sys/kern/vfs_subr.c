@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.481 2020/02/23 22:14:03 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.482 2020/02/27 22:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.481 2020/02/23 22:14:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.482 2020/02/27 22:12:54 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -421,8 +421,13 @@ brelvp(struct buf *bp)
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 
-	if (vp->v_uobj.uo_npages == 0 && (vp->v_iflag & VI_ONWORKLST) &&
+	if ((vp->v_iflag & (VI_ONWORKLST | VI_PAGES)) == VI_ONWORKLST &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+	    	/*
+	    	 * Okay to clear VI_WRMAPDIRTY without the uvm_object locked
+	    	 * here, because new pages can't be inserted without first
+	    	 * taking v_interlock (which is held here).
+	    	 */
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		vn_syncer_remove_from_worklist(vp);
 	}
@@ -461,9 +466,15 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	 */
 	if ((bp->b_oflags & BO_DELWRI) == 0) {
 		listheadp = &vp->v_cleanblkhd;
-		if (vp->v_uobj.uo_npages == 0 &&
-		    (vp->v_iflag & VI_ONWORKLST) &&
+		if ((vp->v_iflag & (VI_ONWORKLST | VI_PAGES)) ==
+		    VI_ONWORKLST &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		    	/*
+		    	 * Okay to clear VI_WRMAPDIRTY without the
+		    	 * uvm_object locked here, because new pages can't
+		    	 * be inserted without first taking v_interlock
+		    	 * (which is held here).
+		    	 */
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}
