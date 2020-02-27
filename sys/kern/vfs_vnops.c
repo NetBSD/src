@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.206 2020/02/23 15:46:41 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.207 2020/02/27 22:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.206 2020/02/23 15:46:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.207 2020/02/27 22:12:54 ad Exp $");
 
 #include "veriexec.h"
 
@@ -339,6 +339,7 @@ vn_markexec(struct vnode *vp)
 		return;
 	}
 
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		cpu_count(CPU_COUNT_FILEPAGES, -vp->v_uobj.uo_npages);
@@ -346,6 +347,7 @@ vn_markexec(struct vnode *vp)
 		vp->v_iflag |= VI_EXECMAP;
 	}
 	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 }
 
 /*
@@ -361,10 +363,12 @@ vn_marktext(struct vnode *vp)
 		return (0);
 	}
 
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	mutex_enter(vp->v_interlock);
 	if (vp->v_writecount != 0) {
 		KASSERT((vp->v_iflag & VI_TEXT) == 0);
 		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		return (ETXTBSY);
 	}
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
@@ -373,6 +377,7 @@ vn_marktext(struct vnode *vp)
 	}
 	vp->v_iflag |= (VI_TEXT | VI_EXECMAP);
 	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 	return (0);
 }
 
@@ -979,9 +984,11 @@ vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		vp->v_vflag |= VV_MAPPED;
 		if (needwritemap) {
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			mutex_enter(vp->v_interlock);
 			vp->v_iflag |= VI_WRMAP;
 			mutex_exit(vp->v_interlock);
+			rw_exit(vp->v_uobj.vmobjlock);
 		}
 		VOP_UNLOCK(vp);
 	}

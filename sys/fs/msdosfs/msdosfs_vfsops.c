@@ -1,4 +1,4 @@
-/*	$NetBSD: msdosfs_vfsops.c,v 1.131 2020/01/17 20:08:07 ad Exp $	*/
+/*	$NetBSD: msdosfs_vfsops.c,v 1.132 2020/02/27 22:12:53 ad Exp $	*/
 
 /*-
  * Copyright (C) 1994, 1995, 1997 Wolfgang Solfrank.
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.131 2020/01/17 20:08:07 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: msdosfs_vfsops.c,v 1.132 2020/02/27 22:12:53 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -1008,7 +1008,7 @@ msdosfs_sync_selector(void *cl, struct vnode *vp)
 	    dep == NULL || (((dep->de_flag &
 	    (DE_ACCESS | DE_CREATE | DE_UPDATE | DE_MODIFIED)) == 0) &&
 	     (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	      UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+	      (vp->v_iflag & VI_ONWORKLST) == 0)))
 		return false;
 	return true;
 }

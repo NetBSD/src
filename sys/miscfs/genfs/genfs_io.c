@@ -1,4 +1,4 @@
-/*	$NetBSD: genfs_io.c,v 1.87 2020/02/24 20:49:51 ad Exp $	*/
+/*	$NetBSD: genfs_io.c,v 1.88 2020/02/27 22:12:54 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.87 2020/02/24 20:49:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfs_io.c,v 1.88 2020/02/27 22:12:54 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -87,7 +87,7 @@ static void
 genfs_markdirty(struct vnode *vp)
 {
 
-	KASSERT(rw_lock_held(vp->v_uobj.vmobjlock));
+	KASSERT(rw_write_held(vp->v_uobj.vmobjlock));
 
 	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_ONWORKLST) == 0) {

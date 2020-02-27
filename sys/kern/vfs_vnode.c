@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnode.c,v 1.112 2020/02/23 22:14:04 ad Exp $	*/
+/*	$NetBSD: vfs_vnode.c,v 1.113 2020/02/27 22:12:54 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2011, 2019, 2020 The NetBSD Foundation, Inc.
@@ -155,7 +155,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.112 2020/02/23 22:14:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnode.c,v 1.113 2020/02/27 22:12:54 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_pax.h"
@@ -843,20 +843,18 @@ vrelel(vnode_t *vp, int flags, int lktype)
 		VOP_INACTIVE(vp, &recycle);
 		if (!recycle)
 			VOP_UNLOCK(vp);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		mutex_enter(vp->v_interlock);
 		VSTATE_CHANGE(vp, VS_BLOCKED, VS_LOADED);
 		if (!recycle) {
 			if (vtryrele(vp)) {
 				mutex_exit(vp->v_interlock);
+				rw_exit(vp->v_uobj.vmobjlock);
 				return;
 			}
 		}
 
-		/*
-		 * Take care of space accounting.  We hold the last ref so
-		 * it's OK to update VM related fields in v_iflag without
-		 * holding vmobjlock: nobody else will be looking at them.
-		 */
+		/* Take care of space accounting. */
 		if ((vp->v_iflag & VI_EXECMAP) != 0 &&
 		    vp->v_uobj.uo_npages != 0) {
 			cpu_count(CPU_COUNT_EXECPAGES, -vp->v_uobj.uo_npages);
@@ -864,6 +862,7 @@ vrelel(vnode_t *vp, int flags, int lktype)
 		}
 		vp->v_iflag &= ~(VI_TEXT|VI_EXECMAP|VI_WRMAP);
 		vp->v_vflag &= ~VV_MAPPED;
+		rw_exit(vp->v_uobj.vmobjlock);
 
 		/*
 		 * Recycle the vnode if the file is now unused (unlinked),
@@ -1728,7 +1727,7 @@ vcache_reclaim(vnode_t *vp)
 	}
 
 	KASSERT(vp->v_data == NULL);
-	KASSERT(vp->v_uobj.uo_npages == 0);
+	KASSERT((vp->v_iflag & VI_PAGES) == 0);
 
 	if (vp->v_type == VREG && vp->v_ractx != NULL) {
 		uvm_ra_freectx(vp->v_ractx);
