@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_vnops.c,v 1.237.4.1 2017/11/02 21:29:53 snj Exp $	*/
+/*	$NetBSD: ufs_vnops.c,v 1.237.4.2 2020/02/27 14:41:05 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.237.4.1 2017/11/02 21:29:53 snj Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_vnops.c,v 1.237.4.2 2020/02/27 14:41:05 martin Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -873,7 +873,11 @@ ufs_whiteout(void *v)
 		newdir->d_namlen = cnp->cn_namelen;
 		memcpy(newdir->d_name, cnp->cn_nameptr,
 		    (size_t)cnp->cn_namelen);
-		newdir->d_name[cnp->cn_namelen] = '\0';
+
+		/* NUL terminate and zero out padding */
+		memset(&newdir->d_name[cnp->cn_namelen], 0,
+		    UFS_NAMEPAD(cnp->cn_namelen));
+
 		newdir->d_type = DT_WHT;
 		error = ufs_direnter(dvp, ulr, NULL, newdir, cnp, NULL);
 		pool_cache_put(ufs_direct_cache, newdir);
