@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.163 2020/02/22 18:56:57 jmcneill Exp $
+$NetBSD: miidevs,v 1.164 2020/02/27 06:17:28 msaitoh Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ oui RALINK2			0x0017a5	Ralink Technology
 oui AQUANTIA			0x0017b6	Aquantia Corporation
 oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
-oui VIA				0x004063	VIA Technologies
 oui MARVELL			0x005043	Marvell Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui AMLOGIC			0x006051	Amlogic
@@ -96,6 +95,7 @@ oui RENESAS			0x749050	Renesas
 /* Unregistered or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
 oui yyAMD			0x000058	Advanced Micro Devices
+oui xxVIA			0x0002c6	VIA Technologies
 oui xxMYSON			0x00032d	Myson Technology
 oui xxTSC			0x00039c	TDK Semiconductor
 oui xxASIX			0x000674	Asix Semiconductor
@@ -399,8 +399,8 @@ model xxTSC 78Q2120		0x0014 78Q2120 10/100 media interface
 model xxTSC 78Q2121		0x0015 78Q2121 100BASE-TX media interface
 
 /* VIA Technologies PHYs */
-model VIA VT6103		0x0032	VT6103 10/100 PHY
-model VIA VT6103_2		0x0034	VT6103 10/100 PHY
+model xxVIA VT6103		0x0032	VT6103 10/100 PHY
+model xxVIA VT6103_2		0x0034	VT6103 10/100 PHY
 
 /* Vitesse PHYs (Now Microsemi) */
 model xxVITESSE VSC8601		0x0002 VSC8601 10/100/1000 PHY
