@@ -1,6 +1,6 @@
 #!/bin/sh
 #
-# $NetBSD: postinstall.in,v 1.5.2.3 2020/01/02 09:09:01 martin Exp $
+# $NetBSD: postinstall.in,v 1.5.2.4 2020/02/27 18:53:04 martin Exp $
 #
 # Copyright (c) 2002-2015 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -1237,7 +1237,7 @@ do_motd()
 
 	if ${GREP} -i 'http://www.NetBSD.org/Misc/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1 \
-	    || ${GREP} -i 'http://www.NetBSD.org/support/send-pr.html' \
+	    || ${GREP} -i 'https*://www.NetBSD.org/support/send-pr.html' \
 		"${DEST_DIR}/etc/motd" >/dev/null 2>&1
 	then
 		tmp1="$(mktemp /tmp/postinstall.motd.XXXXXXXX)"
