@@ -1,4 +1,4 @@
-/*	$OpenBSD: sshbuf-misc.c,v 1.11 2019/07/30 05:04:49 djm Exp $	*/
+/*	$OpenBSD: sshbuf-misc.c,v 1.13 2020/01/25 23:28:06 djm Exp $	*/
 /*
  * Copyright (c) 2011 Damien Miller
  *
@@ -15,7 +15,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: sshbuf-misc.c,v 1.9 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sshbuf-misc.c,v 1.10 2020/02/27 00:24:40 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
