@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.238 2020/02/09 16:06:18 jmcneill Exp $
+#	$NetBSD: Makefile,v 1.239 2020/02/27 06:30:56 yamaguchi Exp $
 
 .include <bsd.own.mk>
 
@@ -79,6 +79,7 @@ SUBDIR+=	if_cue
 SUBDIR+=	if_faith
 SUBDIR+=	if_gif
 SUBDIR+=	if_gre
+SUBDIR+=	if_ixl
 SUBDIR+=	if_kue
 SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
@@ -439,7 +440,6 @@ SUBDIR+=	cac
 SUBDIR+=	cac_eisa
 SUBDIR+=	cac_pci
 SUBDIR+=	if_aq
-SUBDIR+=	if_ixl
 SUBDIR+=	if_vioif
 SUBDIR+=	ld
 SUBDIR+=	ld_aac
