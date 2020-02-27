@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-sk.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
 /* $OpenBSD: ssh-sk.c,v 1.27 2020/02/06 22:30:54 naddy Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
@@ -14,6 +15,8 @@
  * ACTION OF CONTRACT, NEGLIGENCE OR OTHER TORTIOUS ACTION, ARISING OUT OF
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-sk.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
 
 /* #define DEBUG_SK 1 */
 

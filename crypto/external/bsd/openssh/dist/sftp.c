@@ -1,5 +1,5 @@
-/*	$NetBSD: sftp.c,v 1.27 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: sftp.c,v 1.195 2019/10/02 00:42:30 djm Exp $ */
+/*	$NetBSD: sftp.c,v 1.28 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: sftp.c,v 1.197 2020/01/23 07:10:22 dtucker Exp $ */
 /*
  * Copyright (c) 2001-2004 Damien Miller <djm@openbsd.org>
  *
@@ -17,7 +17,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: sftp.c,v 1.27 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: sftp.c,v 1.28 2020/02/27 00:24:40 christos Exp $");
 
 #include <sys/param.h>	/* MIN MAX */
 #include <sys/types.h>
@@ -204,9 +204,12 @@ static const struct CMD cmds[] = {
 __dead static void
 killchild(int signo)
 {
-	if (sshpid > 1) {
-		kill(sshpid, SIGTERM);
-		waitpid(sshpid, NULL, 0);
+	pid_t pid;
+
+	pid = sshpid;
+	if (pid > 1) {
+		kill(pid, SIGTERM);
+		waitpid(pid, NULL, 0);
 	}
 
 	_exit(1);
@@ -2252,7 +2255,7 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 		const char *line;
 		int count = 0;
 
-		signal(SIGINT, SIG_IGN);
+		ssh_signal(SIGINT, SIG_IGN);
 
 		if (el == NULL) {
 			if (interactive)
@@ -2279,14 +2282,14 @@ interactive_loop(struct sftp_conn *conn, const char *file1, const char *file2)
 
 		/* Handle user interrupts gracefully during commands */
 		interrupted = 0;
-		signal(SIGINT, cmd_interrupt);
+		ssh_signal(SIGINT, cmd_interrupt);
 
 		err = parse_dispatch_command(conn, cmd, &remote_path,
 		    startdir, batchmode, !interactive && el == NULL);
 		if (err != 0)
 			break;
 	}
-	signal(SIGCHLD, SIG_DFL);
+	ssh_signal(SIGCHLD, SIG_DFL);
 	free(remote_path);
 	free(startdir);
 	free(conn);
@@ -2330,20 +2333,20 @@ connect_to_server(const char *path, char **args, int *in, int *out)
 		 * kill it too.  Contrawise, since sftp sends SIGTERMs to the
 		 * underlying ssh, it must *not* ignore that signal.
 		 */
-		signal(SIGINT, SIG_IGN);
-		signal(SIGTERM, SIG_DFL);
+		ssh_signal(SIGINT, SIG_IGN);
+		ssh_signal(SIGTERM, SIG_DFL);
 		execvp(path, args);
 		fprintf(stderr, "exec: %s: %s\n", path, strerror(errno));
 		_exit(1);
 	}
 
-	signal(SIGTERM, killchild);
-	signal(SIGINT, killchild);
-	signal(SIGHUP, killchild);
-	signal(SIGTSTP, suspchild);
-	signal(SIGTTIN, suspchild);
-	signal(SIGTTOU, suspchild);
-	signal(SIGCHLD, sigchld_handler);
+	ssh_signal(SIGTERM, killchild);
+	ssh_signal(SIGINT, killchild);
+	ssh_signal(SIGHUP, killchild);
+	ssh_signal(SIGTSTP, suspchild);
+	ssh_signal(SIGTTIN, suspchild);
+	ssh_signal(SIGTTOU, suspchild);
+	ssh_signal(SIGCHLD, sigchld_handler);
 	close(c_in);
 	close(c_out);
 }

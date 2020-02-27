@@ -1,3 +1,4 @@
+/*	$NetBSD: ssh-ecdsa-sk.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
 /* $OpenBSD: ssh-ecdsa-sk.c,v 1.5 2019/11/26 03:04:27 djm Exp $ */
 /*
  * Copyright (c) 2000 Markus Friedl.  All rights reserved.
@@ -24,6 +25,8 @@
  * (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE OF
  * THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
  */
+#include "includes.h"
+__RCSID("$NetBSD: ssh-ecdsa-sk.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
 
 /* #define DEBUG_SK 1 */
 

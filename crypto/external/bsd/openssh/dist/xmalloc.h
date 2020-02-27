@@ -1,5 +1,5 @@
-/*	$NetBSD: xmalloc.h,v 1.11 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: xmalloc.h,v 1.18 2019/06/06 05:13:13 otto Exp $ */
+/*	$NetBSD: xmalloc.h,v 1.12 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: xmalloc.h,v 1.19 2019/11/12 22:32:48 djm Exp $ */
 
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -25,3 +25,5 @@ char	*xstrdup(const char *);
 int	 xasprintf(char **, const char *, ...)
                 __attribute__((__format__ (printf, 2, 3)))
                 __attribute__((__nonnull__ (2)));
+int	 xvasprintf(char **, const char *, va_list)
+		__attribute__((__nonnull__ (2)));

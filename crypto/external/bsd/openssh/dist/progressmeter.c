@@ -1,5 +1,5 @@
-/*	$NetBSD: progressmeter.c,v 1.12 2019/10/12 18:32:22 christos Exp $	*/
-/* $OpenBSD: progressmeter.c,v 1.48 2019/05/03 06:06:30 dtucker Exp $ */
+/*	$NetBSD: progressmeter.c,v 1.13 2020/02/27 00:24:40 christos Exp $	*/
+/* $OpenBSD: progressmeter.c,v 1.50 2020/01/23 07:10:22 dtucker Exp $ */
 /*
  * Copyright (c) 2003 Nils Nordman.  All rights reserved.
  *
@@ -25,7 +25,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: progressmeter.c,v 1.12 2019/10/12 18:32:22 christos Exp $");
+__RCSID("$NetBSD: progressmeter.c,v 1.13 2020/02/27 00:24:40 christos Exp $");
 #include <sys/types.h>
 #include <sys/ioctl.h>
 #include <sys/uio.h>
@@ -251,7 +251,6 @@ refresh_progress_meter(int force_update)
 static void
 sig_alarm(int ignore)
 {
-	signal(SIGALRM, sig_alarm);
 	alarm_fired = 1;
 	alarm(UPDATE_INTERVAL);
 }
@@ -271,8 +270,8 @@ start_progress_meter(const char *f, off_t filesize, off_t *ctr)
 	setscreensize();
 	refresh_progress_meter(1);
 
-	signal(SIGALRM, sig_alarm);
-	signal(SIGWINCH, sig_winch);
+	ssh_signal(SIGALRM, sig_alarm);
+	ssh_signal(SIGWINCH, sig_winch);
 	alarm(UPDATE_INTERVAL);
 }
 
@@ -295,7 +294,6 @@ stop_progress_meter(void)
 static void
 sig_winch(int sig)
 {
-	signal(SIGWINCH, sig_winch);
 	win_resized = 1;
 }
 
