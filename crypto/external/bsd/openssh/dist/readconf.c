@@ -1,4 +1,4 @@
-/*	$NetBSD: readconf.c,v 1.29 2020/02/27 00:24:40 christos Exp $	*/
+/*	$NetBSD: readconf.c,v 1.30 2020/02/28 17:27:34 kim Exp $	*/
 /* $OpenBSD: readconf.c,v 1.326 2020/02/06 22:46:31 djm Exp $ */
 /*
  * Author: Tatu Ylonen <ylo@cs.hut.fi>
@@ -14,7 +14,7 @@
  */
 
 #include "includes.h"
-__RCSID("$NetBSD: readconf.c,v 1.29 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: readconf.c,v 1.30 2020/02/28 17:27:34 kim Exp $");
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <sys/socket.h>
@@ -196,9 +196,25 @@ static struct {
 	{ "useprivilegedport", oDeprecated },
 
 	/* Unsupported options */
+#ifdef AFS
+	{ "afstokenpassing", oAFSTokenPassing },
+#else
 	{ "afstokenpassing", oUnsupported },
+#endif
+#if defined(KRB4) || defined(KRB5)
+	{ "kerberosauthentication", oKerberosAuthentication },
+#else
 	{ "kerberosauthentication", oUnsupported },
+#endif
+#if defined(AFS) || defined(KRB5)
+	{ "kerberostgtpassing", oKerberosTgtPassing },
+	{ "kerberos5tgtpassing", oKerberosTgtPassing },		/* alias */
+	{ "kerberos4tgtpassing", oKerberosTgtPassing },		/* alias */
+#else
 	{ "kerberostgtpassing", oUnsupported },
+	{ "kerberos5tgtpassing", oUnsupported },
+	{ "kerberos4tgtpassing", oUnsupported },
+#endif
 	{ "rsaauthentication", oUnsupported },
 	{ "rhostsrsaauthentication", oUnsupported },
 	{ "compressionlevel", oUnsupported },
@@ -235,17 +251,6 @@ static struct {
 	{ "challengeresponseauthentication", oChallengeResponseAuthentication },
 	{ "skeyauthentication", oChallengeResponseAuthentication }, /* alias */
 	{ "tisauthentication", oChallengeResponseAuthentication },  /* alias */
-#if defined(KRB4) || defined(KRB5)
-	{ "kerberosauthentication", oKerberosAuthentication },
-#endif
-#if defined(AFS) || defined(KRB5)
-	{ "kerberostgtpassing", oKerberosTgtPassing },
-	{ "kerberos5tgtpassing", oKerberosTgtPassing },		/* alias */
-	{ "kerberos4tgtpassing", oKerberosTgtPassing },		/* alias */
-#endif
-#ifdef AFS
-	{ "afstokenpassing", oAFSTokenPassing },
-#endif
 #if defined(GSSAPI)
 	{ "gssapiauthentication", oGssAuthentication },
 	{ "gssapidelegatecredentials", oGssDelegateCreds },
