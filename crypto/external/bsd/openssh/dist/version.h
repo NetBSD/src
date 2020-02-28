@@ -1,4 +1,4 @@
-/*	$NetBSD: version.h,v 1.31 2020/02/27 00:27:44 christos Exp $	*/
+/*	$NetBSD: version.h,v 1.32 2020/02/28 17:50:29 kim Exp $	*/
 /* $OpenBSD: version.h,v 1.86 2020/02/14 00:39:20 djm Exp $ */
 
 #define __OPENSSH_VERSION	"OpenSSH_8.2"
@@ -10,4 +10,3 @@
  * used for bug compatibility operation.  present NetBSD SSH version as comment
  */
 #define SSH_VERSION	__OPENSSH_VERSION " " __NETBSDSSH_VERSION SSH_HPN SSH_LPK
-#define SSH_RELEASE SSH_VERSION SSH_HPN SSH_LPK
