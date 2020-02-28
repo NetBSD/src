@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_et.c,v 1.31 2020/02/28 05:13:19 msaitoh Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.30 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.31 2020/02/28 05:13:19 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -93,7 +93,6 @@ static int	et_init(struct ifnet *);
 static int	et_ioctl(struct ifnet *, u_long, void *);
 static void	et_start(struct ifnet *);
 static void	et_watchdog(struct ifnet *);
-static int	et_ifmedia_upd(struct ifnet *);
 static void	et_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int	et_intr(void *);
@@ -280,7 +279,8 @@ et_attach(device_t parent, device_t self, void *aux)
 	mii->mii_statchg = et_miibus_statchg;
 
 	sc->sc_ethercom.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, 0, et_ifmedia_upd, et_ifmedia_sts);
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange,
+	    et_ifmedia_sts);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -542,20 +542,6 @@ et_miibus_statchg(struct ifnet *ifp)
 	sc->sc_flags |= ET_FLAG_TXRX_ENABLED;
 
 #undef NRETRY
-}
-
-static int
-et_ifmedia_upd(struct ifnet *ifp)
-{
-	struct et_softc *sc;
-	struct mii_data *mii;
-	struct mii_softc *miisc;
-
-	sc = ifp->if_softc;
-	mii = &sc->sc_miibus;
-	LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-		PHY_RESET(miisc);
-	return (mii_mediachg(mii));
 }
 
 static void
@@ -1115,7 +1101,7 @@ et_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	sc->sc_flags &= ~ET_FLAG_LINK;
-	et_ifmedia_upd(ifp);
+	ether_mediachange(ifp);
 back:
 	if (error)
 		et_stop(sc);
