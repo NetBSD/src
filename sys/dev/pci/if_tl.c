@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tl.c,v 1.119 2020/01/30 05:24:53 thorpej Exp $	*/
+/*	$NetBSD: if_tl.c,v 1.120 2020/02/28 06:53:22 msaitoh Exp $	*/
 
 /*
  * Copyright (c) 1997 Manuel Bouyer.  All rights reserved.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.119 2020/01/30 05:24:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tl.c,v 1.120 2020/02/28 06:53:22 msaitoh Exp $");
 
 #undef TLDEBUG
 #define TL_PRIV_STATS
@@ -107,7 +107,6 @@ static void tl_pci_attach(device_t, device_t, void *);
 static int tl_intr(void *);
 
 static int tl_ifioctl(struct ifnet *, ioctl_cmd_t, void *);
-static int tl_mediachange(struct ifnet *);
 static void tl_ifwatchdog(struct ifnet *);
 static bool tl_shutdown(device_t, int);
 
@@ -428,7 +427,7 @@ tl_pci_attach(device_t parent, device_t self, void *aux)
 	mii->mii_writereg = tl_mii_write;
 	mii->mii_statchg = tl_statchg;
 	sc->tl_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, tl_mediachange,
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 	    ether_mediastatus);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
@@ -1411,15 +1410,6 @@ tl_ifwatchdog(struct ifnet *ifp)
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
 	if_statinc(ifp, if_oerrors);
 	tl_init(ifp);
-}
-
-static int
-tl_mediachange(struct ifnet *ifp)
-{
-
-	if (ifp->if_flags & IFF_UP)
-		tl_init(ifp);
-	return 0;
 }
 
 static int
