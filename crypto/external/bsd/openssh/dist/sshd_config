@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.23 2018/08/26 07:46:37 christos Exp $
+#	$NetBSD: sshd_config,v 1.24 2020/02/28 10:59:58 kim Exp $
 #	$OpenBSD: sshd_config,v 1.103 2018/04/09 20:41:22 tj Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -53,7 +53,7 @@ AuthorizedKeysFile	.ssh/authorized_keys
 # Don't read the user's ~/.rhosts and ~/.shosts files
 #IgnoreRhosts yes
 
-# To disable password authentication, set this and UsePam to no
+# To disable password authentication, set this and UsePAM to no
 #PasswordAuthentication yes
 #PermitEmptyPasswords no
 
@@ -72,9 +72,7 @@ AuthorizedKeysFile	.ssh/authorized_keys
 #PrintMotd yes
 #PrintLastLog yes
 #TCPKeepAlive yes
-#UseLogin no
-#UsePrivilegeSeparation sandbox
-UsePam yes
+UsePAM yes
 #PermitUserEnvironment no
 #Compression delayed
 #ClientAliveInterval 0
@@ -120,7 +118,6 @@ Subsystem	sftp	/usr/libexec/sftp-server
 
 # buffer size for hpn to non-hpn connections
 #HPNBufferSize 2048
-
 
 # Example of overriding settings on a per-user basis
 #Match User anoncvs
