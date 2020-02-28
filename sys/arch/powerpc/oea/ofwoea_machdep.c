@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.46 2020/02/28 22:09:34 macallan Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.47 2020/02/28 22:14:10 macallan Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.46 2020/02/28 22:09:34 macallan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.47 2020/02/28 22:14:10 macallan Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -175,8 +175,8 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		model_init();
 	}
 
-	if (strncmp(model_name, "PowerMac11,", 11) == 0 ||
-	    strncmp(model_name, "PowerMac7,", 10) == 0)
+	if (strncmp(model_name, "PowerMac11,2", 12) == 0 ||
+	    strncmp(model_name, "PowerMac12,1", 12) == 0)
 		OF_quiesce();
 
 	/* switch CPUs to full speed */
