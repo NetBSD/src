@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.23 2020/02/01 06:38:58 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.24 2020/02/29 18:49:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -270,7 +270,7 @@
 #define TI_GCR_RXRETURNCONS_IDX		0x680
 #define TI_GCR_CMDRING			0x700
 
-#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE);
+#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE)
 
 /*
  * Local memory window. The local memory window is a 2K shared
@@ -373,21 +373,15 @@
  */
 #define TI_MEM_MAX		0x7FFFFF
 
-/*
- * Even on the alpha, pci addresses are 32-bit quantities
- */
-
 #ifdef __64_bit_pci_addressing__
 typedef struct {
 	u_int64_t		ti_addr;
 } ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr
 #else
 typedef struct {
 	u_int32_t		ti_addr_hi;
 	u_int32_t		ti_addr_lo;
 } ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr_lo
 #endif
 
 /*
