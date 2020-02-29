@@ -1,4 +1,4 @@
-/*	$NetBSD: pmapboot.c,v 1.5 2020/02/29 21:09:11 ryo Exp $	*/
+/*	$NetBSD: pmapboot.c,v 1.6 2020/02/29 21:34:37 ryo Exp $	*/
 
 /*
  * Copyright (c) 2018 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.5 2020/02/29 21:09:11 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.6 2020/02/29 21:34:37 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmapboot.c,v 1.5 2020/02/29 21:09:11 ryo Exp $");
 
 
 #define OPTIMIZE_TLB_CONTIG
-
 
 static void
 pmapboot_protect_entry(pt_entry_t *pte, vm_prot_t clrprot)
@@ -77,17 +76,21 @@ pmapboot_protect(vaddr_t sva, vaddr_t eva, vm_prot_t clrprot)
 	paddr_t pa;
 	pd_entry_t *l0, *l1, *l2, *l3;
 
-	for (va = sva; va < eva;) {
-		/*
-		 * 0x0000xxxxxxxxxxxx -> l0 = (ttbr0_el1 & TTBR_BADDR)
-		 * 0xffffxxxxxxxxxxxx -> l0 = (ttbr1_el1 & TTBR_BADDR)
-		 */
-		if (va & TTBR_SEL_VA)
-			pa = (reg_ttbr1_el1_read() & TTBR_BADDR);
-		else
-			pa = (reg_ttbr0_el1_read() & TTBR_BADDR);
-		l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
+	switch (aarch64_addressspace(sva)) {
+	case AARCH64_ADDRSPACE_LOWER:
+		/* 0x0000xxxxxxxxxxxx */
+		pa = (reg_ttbr0_el1_read() & TTBR_BADDR);
+		break;
+	case AARCH64_ADDRSPACE_UPPER:
+		/* 0xFFFFxxxxxxxxxxxx */
+		pa = (reg_ttbr1_el1_read() & TTBR_BADDR);
+		break;
+	default:
+		return -1;
+	}
+	l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
 
+	for (va = sva; va < eva;) {
 		idx = l0pde_index(va);
 		if (!l0pde_valid(l0[idx]))
 			return -1;
@@ -233,19 +236,22 @@ pmapboot_enter(vaddr_t va, paddr_t pa, psize_t size, psize_t blocksize,
 
 	attr |= LX_BLKPAG_OS_BOOT;
 
-	while (va <= va_end) {
-		/*
-		 * 0x0000xxxxxxxxxxxx -> l0 = (ttbr0_el1 & TTBR_BADDR)
-		 * 0xffffxxxxxxxxxxxx -> l0 = (ttbr1_el1 & TTBR_BADDR)
-		 */
-		if (va & TTBR_SEL_VA) {
-			l0 = (pd_entry_t *)(reg_ttbr1_el1_read() & TTBR_BADDR);
-			ttbr = 1;
-		} else {
-			l0 = (pd_entry_t *)(reg_ttbr0_el1_read() & TTBR_BADDR);
-			ttbr = 0;
-		}
+	switch (aarch64_addressspace(va)) {
+	case AARCH64_ADDRSPACE_LOWER:
+		/* 0x0000xxxxxxxxxxxx */
+		l0 = (pd_entry_t *)(reg_ttbr0_el1_read() & TTBR_BADDR);
+		ttbr = 0;
+		break;
+	case AARCH64_ADDRSPACE_UPPER:
+		/* 0xFFFFxxxxxxxxxxxx */
+		l0 = (pd_entry_t *)(reg_ttbr1_el1_read() & TTBR_BADDR);
+		ttbr = 1;
+		break;
+	default:
+		return -1;
+	}
 
+	while (va <= va_end) {
 #ifdef OPTIMIZE_TLB_CONTIG
 		ll = NULL;
 		llidx = -1;
