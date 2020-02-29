@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.125 2020/02/29 04:02:06 nisimura Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.126 2020/02/29 04:27:53 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.125 2020/02/29 04:02:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.126 2020/02/29 04:27:53 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -475,15 +475,15 @@ axe_setiff_locked(struct usbnet *un)
 	}
 	ETHER_UNLOCK(ec);
 
-	rxmode |= AXE_RXCMD_MULTICAST;
+	rxmode |= AXE_RXCMD_MULTICAST;	/* activate mcast hash filter */
 	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, hashtbl);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 	return;
 
  allmulti:
 	if (ifp->if_flags & IFF_PROMISC)
-		rxmode |= AXE_RXCMD_PROMISC;
-	rxmode |= AXE_RXCMD_ALLMULTI;
+		rxmode |= AXE_RXCMD_PROMISC; /* run promisc. mode */
+	rxmode |= AXE_RXCMD_ALLMULTI;	/* accept all mcast frames */
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 }
 
