@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.63 2020/01/30 06:10:26 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.64 2020/02/29 21:31:55 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.63 2020/01/30 06:10:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.64 2020/02/29 21:31:55 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -236,7 +236,10 @@ txp_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * Allocate our interrupt.
