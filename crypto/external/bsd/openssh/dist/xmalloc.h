@@ -1,4 +1,4 @@
-/*	$NetBSD: xmalloc.h,v 1.12 2020/02/27 00:24:40 christos Exp $	*/
+/*	$NetBSD: xmalloc.h,v 1.13 2020/02/29 14:03:17 tnn Exp $	*/
 /* $OpenBSD: xmalloc.h,v 1.19 2019/11/12 22:32:48 djm Exp $ */
 
 /*
@@ -26,4 +26,5 @@ int	 xasprintf(char **, const char *, ...)
                 __attribute__((__format__ (printf, 2, 3)))
                 __attribute__((__nonnull__ (2)));
 int	 xvasprintf(char **, const char *, va_list)
+                __attribute__((__format__ (printf, 2, 0)))
 		__attribute__((__nonnull__ (2)));
