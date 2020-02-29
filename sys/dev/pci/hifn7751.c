@@ -1,4 +1,4 @@
-/*	$NetBSD: hifn7751.c,v 1.64 2020/02/18 04:12:40 msaitoh Exp $	*/
+/*	$NetBSD: hifn7751.c,v 1.65 2020/02/29 16:36:25 mlelstv Exp $	*/
 /*	$FreeBSD: hifn7751.c,v 1.5.2.7 2003/10/08 23:52:00 sam Exp $ */
 /*	$OpenBSD: hifn7751.c,v 1.140 2003/08/01 17:55:54 deraadt Exp $	*/
 
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.64 2020/02/18 04:12:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.65 2020/02/29 16:36:25 mlelstv Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: hifn7751.c,v 1.64 2020/02/18 04:12:40 msaitoh Exp $"
 #include <sys/mbuf.h>
 #include <sys/device.h>
 #include <sys/module.h>
+#include <sys/endian.h>
 
 #ifdef __OpenBSD__
 #include <crypto/crypto.h>
@@ -689,7 +690,7 @@ hifn_rng_locked(void *vsc)
 
 		if (sc->sc_rng_need) {
 			nwords = (sc->sc_rng_need * NBBY) / HIFN_RNG_BITSPER;
-			nwords = MIN(__arraycount(num), nwords);
+			nwords = MIN((int)__arraycount(num), nwords);
 		}
 
 		if (nwords < 2) {
@@ -844,7 +845,7 @@ hifn_reset_board(struct hifn_softc *sc, int full)
 static uint32_t
 hifn_next_signature(uint32_t a, u_int cnt)
 {
-	int i;
+	u_int i;
 	uint32_t v;
 
 	for (i = 0; i < cnt; i++) {
@@ -1129,7 +1130,7 @@ static int
 hifn_ramtype(struct hifn_softc *sc)
 {
 	uint8_t data[8], dataexpect[8];
-	int i;
+	size_t i;
 
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = 0x55;
@@ -1163,28 +1164,35 @@ hifn_ramtype(struct hifn_softc *sc)
 static int
 hifn_sramsize(struct hifn_softc *sc)
 {
-	uint32_t a;
+	uint32_t a, b;
 	uint8_t data[8];
 	uint8_t dataexpect[sizeof(data)];
-	int32_t i;
+	size_t i;
 
 	for (i = 0; i < sizeof(data); i++)
 		data[i] = dataexpect[i] = i ^ 0x5a;
 
-	for (i = HIFN_SRAM_GRANULARITY - 1; i >= 0; i--) {
-		a = i * HIFN_SRAM_STEP_SIZE;
-		memcpy(data, &i, sizeof(i));
+	a = HIFN_SRAM_GRANULARITY * HIFN_SRAM_STEP_SIZE;
+	b = HIFN_SRAM_GRANULARITY;
+	for (i = 0; i < HIFN_SRAM_GRANULARITY; ++i) {
+		a -= HIFN_SRAM_STEP_SIZE;
+		b -= 1;
+		le32enc(data, b);
 		hifn_writeramaddr(sc, a, data);
 	}
 
+	a = 0;
+	b = 0;
 	for (i = 0; i < HIFN_SRAM_GRANULARITY; i++) {
-		a = i * HIFN_SRAM_STEP_SIZE;
-		memcpy(dataexpect, &i, sizeof(i));
+		le32enc(dataexpect, b);
 		if (hifn_readramaddr(sc, a, data) < 0)
 			return (0);
 		if (memcmp(data, dataexpect, sizeof(data)) != 0)
 			return (0);
-		sc->sc_ramsize = a + HIFN_SRAM_STEP_SIZE;
+
+		a += HIFN_SRAM_STEP_SIZE;
+		b += 1;
+		sc->sc_ramsize = a;
 	}
 
 	return (0);
