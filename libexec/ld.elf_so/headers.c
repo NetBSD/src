@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.66 2020/02/29 04:24:33 kamil Exp $	 */
+/*	$NetBSD: headers.c,v 1.67 2020/02/29 18:53:55 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.66 2020/02/29 04:24:33 kamil Exp $");
+__RCSID("$NetBSD: headers.c,v 1.67 2020/02/29 18:53:55 kamil Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -214,7 +214,7 @@ _rtld_digest_dynamic(const char *execname, Obj_Entry *obj)
 				nmaskwords = hashtab[2];
 				bloom_size32 = nmaskwords * (ELFSIZE / 32);
 
-				obj->buckets_gnu = hashtab + 4 + bloom_size32;
+				obj->buckets_gnu = (const uint32_t *)(hashtab + 4 + bloom_size32);
 
 				nmw_power2 = powerof2(nmaskwords);
 
