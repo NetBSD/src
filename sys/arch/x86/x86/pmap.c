@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.359 2020/02/23 22:28:53 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.360 2020/02/29 20:17:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.359 2020/02/23 22:28:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.360 2020/02/29 20:17:11 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -230,7 +230,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.359 2020/02/23 22:28:53 ad Exp $");
  * - pg->uobject->vmobjlock, pg->uanon->an_lock
  *   These per-object locks are taken by the VM system before calling into
  *   the pmap module.  Holding them prevents concurrent operations on the
- *   given page or set of pages.  Asserted with uvm_page_owner_locked_p().
+ *   given page or set of pages.
  *
  * - pmap->pm_lock (per pmap)
  *   This lock protects the fields in the pmap structure including the
@@ -3588,7 +3588,6 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	if ((pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
-		KASSERT(uvm_page_owner_locked_p(pg, false));
 		pp = VM_PAGE_TO_PP(pg);
 	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
 		paddr_t pa = pmap_pte2pa(opte);
@@ -3921,9 +3920,6 @@ pmap_page_remove(struct vm_page *pg)
 	struct pmap_page *pp;
 	paddr_t pa;
 
-	/* Need an exclusive lock to prevent PV list changing behind us. */
-	KASSERT(uvm_page_owner_locked_p(pg, true));
-
 	pp = VM_PAGE_TO_PP(pg);
 	pa = VM_PAGE_TO_PHYS(pg);
 	pmap_pp_remove(pp, pa);
@@ -3962,9 +3958,6 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	uint8_t oattrs;
 	u_int result;
 	paddr_t pa;
-
-	/* Need an exclusive lock to prevent PV list changing behind us. */
-	KASSERT(uvm_page_owner_locked_p(pg, true));
 
 	pp = VM_PAGE_TO_PP(pg);
 	if ((pp->pp_attrs & testbits) != 0) {
@@ -4036,9 +4029,6 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 {
 	struct pmap_page *pp;
 	paddr_t pa;
-
-	/* Need an exclusive lock to prevent PV list changing behind us. */
-	KASSERT(uvm_page_owner_locked_p(pg, true));
 
 	pp = VM_PAGE_TO_PP(pg);
 	pa = VM_PAGE_TO_PHYS(pg);
@@ -4316,7 +4306,6 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		/* This is a managed page */
 		npte |= PTE_PVLIST;
 		new_pp = VM_PAGE_TO_PP(new_pg);
-		KASSERT(uvm_page_owner_locked_p(new_pg, false));
 	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
 		/* This is an unmanaged pv-tracked page */
 		npte |= PTE_PVLIST;
@@ -4448,7 +4437,6 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 	if ((~opte & (PTE_P | PTE_PVLIST)) == 0) {
 		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
-			KASSERT(uvm_page_owner_locked_p(old_pg, false));
 			old_pp = VM_PAGE_TO_PP(old_pg);
 		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
 			panic("%s: PTE_PVLIST with pv-untracked page"
@@ -5212,7 +5200,6 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		/* This is a managed page */
 		npte |= EPT_PVLIST;
 		new_pp = VM_PAGE_TO_PP(new_pg);
-		KASSERT(uvm_page_owner_locked_p(new_pg, false));
 	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
 		/* This is an unmanaged pv-tracked page */
 		npte |= EPT_PVLIST;
@@ -5329,7 +5316,6 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 	if ((~opte & (EPT_R | EPT_PVLIST)) == 0) {
 		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
-			KASSERT(uvm_page_owner_locked_p(old_pg, false));
 			old_pp = VM_PAGE_TO_PP(old_pg);
 		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
 			panic("%s: EPT_PVLIST with pv-untracked page"
@@ -5495,7 +5481,6 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	if ((pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
-		KASSERT(uvm_page_owner_locked_p(pg, false));
 		pp = VM_PAGE_TO_PP(pg);
 	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
 		paddr_t pa = pmap_pte2pa(opte);
