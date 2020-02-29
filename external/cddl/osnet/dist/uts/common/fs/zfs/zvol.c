@@ -72,6 +72,9 @@
 #include <sys/dnode.h>
 #include <sys/dsl_dataset.h>
 #include <sys/dsl_prop.h>
+#ifdef __NetBSD__
+#include <sys/disklabel.h>
+#endif
 #include <sys/dkio.h>
 #include <sys/byteorder.h>
 #include <sys/sunddi.h>
@@ -316,12 +319,17 @@ zvol_size_changed(zvol_state_t *zv, uint64_t volsize)
 #endif /* __FreeBSD__ */
 #ifdef __NetBSD__
 	struct disk_geom *dg = &zv->zv_dk.dk_geom;
+	objset_t *os = zv->zv_objset;
+	spa_t *spa = dmu_objset_spa(os);
+	unsigned secsize;
 
 	zv->zv_volsize = volsize;
 
+	secsize = MAX(DEV_BSIZE, 1U << spa->spa_max_ashift);
+
 	memset(dg, 0, sizeof(*dg));
-	dg->dg_secsize = DEV_BSIZE; /* XXX 512? */
-	dg->dg_secperunit = zv->zv_volsize / dg->dg_secsize;;
+	dg->dg_secsize = secsize;
+	dg->dg_secperunit = volsize / secsize;
 	disk_set_info(NULL, &zv->zv_dk, "ZVOL");
 #endif
 }
@@ -3589,15 +3597,43 @@ zvol_ioctl(dev_t dev, int cmd, intptr_t arg, int flag, cred_t *cr, int *rvalp)
 	case DIOCGWEDGEINFO:
 	{
 		struct dkwedge_info *dkw = (void *) arg;
-		
+		struct disk_geom *dg = &zv->zv_dk.dk_geom;
+
 		memset(dkw, 0, sizeof(*dkw));
 		strlcpy(dkw->dkw_devname, zv->zv_name,
 		    sizeof(dkw->dkw_devname));
+
+		/*
+		 * dkw_parent is interpreted as disk device name by the kernel
+		 * to locate the disk driver and its geometry data. The faked
+		 * name "ZFS" must never match a device name. The kernel will
+		 * then call DIOCGPARTINFO below to retrieve the missing
+		 * information.
+		 *
+		 * Userland will also be confused, but it can use the
+		 * proplib based DIOCGDISKINFO to get the geometry
+		 * information.
+		 */
 		strlcpy(dkw->dkw_parent, "ZFS", sizeof(dkw->dkw_parent));
-		
+
 		dkw->dkw_offset = 0;
-		dkw->dkw_size = zv->zv_volsize / DEV_BSIZE;
+		dkw->dkw_size = dg->dg_secperunit;
 		strcpy(dkw->dkw_ptype, DKW_PTYPE_FFS);
+
+		break;
+	}
+
+	case DIOCGPARTINFO:
+	{
+		struct partinfo *pi = (void *) arg;
+		struct disk_geom *dg = &zv->zv_dk.dk_geom;
+
+		memset(pi, 0, sizeof(*pi));
+		pi->pi_offset = 0;
+		pi->pi_secsize = dg->dg_secsize;
+		pi->pi_size = dg->dg_secperunit;
+		pi->pi_fstype = FS_OTHER;
+		pi->pi_bsize = MAX(BLKDEV_IOSIZE, pi->pi_secsize);
 
 		break;
 	}
