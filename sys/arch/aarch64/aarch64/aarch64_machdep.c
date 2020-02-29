@@ -1,4 +1,4 @@
-/* $NetBSD: aarch64_machdep.c,v 1.39 2020/02/29 21:09:11 ryo Exp $ */
+/* $NetBSD: aarch64_machdep.c,v 1.40 2020/02/29 21:36:03 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.39 2020/02/29 21:09:11 ryo Exp $");
+__KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.40 2020/02/29 21:36:03 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -50,6 +50,7 @@ __KERNEL_RCSID(1, "$NetBSD: aarch64_machdep.c,v 1.39 2020/02/29 21:09:11 ryo Exp
 #include <sys/msgbuf.h>
 #include <sys/reboot.h>
 #include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <dev/mm.h>
 
@@ -395,6 +396,66 @@ initarm_common(vaddr_t kvm_base, vsize_t kvm_size,
 	lwp0.l_md.md_utf = pcb->pcb_tf = tf;
 
 	return (vaddr_t)tf;
+}
+
+/*
+ * machine dependent system variables.
+ */
+static xcfunc_t
+set_user_tagged_address(void *arg1, void *arg2)
+{
+	uint64_t enable = PTRTOUINT64(arg1);
+	uint64_t tcr = reg_tcr_el1_read();
+	if (enable)
+		tcr |= TCR_TBI0;
+	else
+		tcr &= ~TCR_TBI0;
+	reg_tcr_el1_write(tcr);
+
+	return 0;
+}
+
+static int
+sysctl_machdep_tagged_address(SYSCTLFN_ARGS)
+{
+	struct sysctlnode node;
+	int error, cur, val;
+	uint64_t tcr;
+
+	tcr = reg_tcr_el1_read();
+	cur = val = (tcr & TCR_TBI0) ? 1 : 0;
+
+	node = *rnode;
+	node.sysctl_data = &val;
+	error = sysctl_lookup(SYSCTLFN_CALL(&node));
+	if (error || newp == NULL)
+		return error;
+	if (val < 0 || val > 1)
+		return EINVAL;
+
+	if (cur != val) {
+		uint64_t where = xc_broadcast(0,
+		    (xcfunc_t)set_user_tagged_address, UINT64TOPTR(val), NULL);
+		xc_wait(where);
+	}
+
+	return 0;
+}
+
+SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
+{
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT,
+	    CTLTYPE_NODE, "machdep", NULL,
+	    NULL, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_EOL);
+
+	sysctl_createv(clog, 0, NULL, NULL,
+	    CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
+	    CTLTYPE_INT, "tagged_address",
+	    SYSCTL_DESCR("top byte ignored in the address calculation"),
+	    sysctl_machdep_tagged_address, 0, NULL, 0,
+	    CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 }
 
 void
