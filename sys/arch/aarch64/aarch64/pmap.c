@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.64 2020/02/10 19:04:01 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.65 2020/02/29 21:10:09 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.64 2020/02/10 19:04:01 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2020/02/29 21:10:09 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -301,54 +301,20 @@ phys_to_pp(paddr_t pa)
 
 static const struct pmap_devmap *pmap_devmap_table;
 
-#define	L1_BLK_MAPPABLE_P(va, pa, size)					\
-    ((((va) | (pa)) & L1_OFFSET) == 0 && (size) >= L1_SIZE)
-
-#define	L2_BLK_MAPPABLE_P(va, pa, size)					\
-    ((((va) | (pa)) & L2_OFFSET) == 0 && (size) >= L2_SIZE)
-
 static vsize_t
 pmap_map_chunk(vaddr_t va, paddr_t pa, vsize_t size,
     vm_prot_t prot, u_int flags)
 {
 	pt_entry_t attr;
-	psize_t blocksize;
-	int rc;
-
 	vsize_t resid = round_page(size);
-	vsize_t mapped = 0;
 
-	while (resid > 0) {
-		if (L1_BLK_MAPPABLE_P(va, pa, resid)) {
-			blocksize = L1_SIZE;
-			attr = L1_BLOCK;
-		} else if (L2_BLK_MAPPABLE_P(va, pa, resid)) {
-			blocksize = L2_SIZE;
-			attr = L2_BLOCK;
-		} else {
-			blocksize = L3_SIZE;
-			attr = L3_PAGE;
-		}
+	attr = _pmap_pte_adjust_prot(0, prot, VM_PROT_ALL, false);
+	attr = _pmap_pte_adjust_cacheflags(attr, flags);
+	pmapboot_enter_range(va, pa, resid, attr,
+	    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, printf);
+	aarch64_tlbi_all();
 
-		attr = _pmap_pte_adjust_prot(attr, prot, VM_PROT_ALL, false);
-		attr = _pmap_pte_adjust_cacheflags(attr, flags);
-
-		rc = pmapboot_enter(va, pa, blocksize, blocksize, attr,
-		    PMAPBOOT_ENTER_NOOVERWRITE, bootpage_alloc, NULL);
-		if (rc != 0) {
-			panic("%s: pmapboot_enter failed. %lx is already mapped?\n",
-			    __func__, va);
-		}
-
-		va += blocksize;
-		pa += blocksize;
-		resid -= blocksize;
-		mapped += blocksize;
-
-		aarch64_tlbi_by_va(va);
-	}
-
-	return mapped;
+	return resid;
 }
 
 void
