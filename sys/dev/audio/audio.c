@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.56 2020/02/23 07:17:01 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.57 2020/02/29 07:13:37 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.56 2020/02/23 07:17:01 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.57 2020/02/29 07:13:37 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -1956,6 +1956,11 @@ audiobellclose(audio_file_t *file)
 	error = audio_close(sc, file);
 
 	audio_file_exit(sc, &sc_ref);
+
+	KASSERT(file->ptrack);
+	audio_track_destroy(file->ptrack);
+	KASSERT(file->rtrack == NULL);
+	kmem_free(file, sizeof(*file));
 	return error;
 }
 
