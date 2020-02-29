@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.29.2.3 2020/02/29 20:21:02 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.29.2.4 2020/02/29 21:50:45 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.29.2.3 2020/02/29 20:21:02 ad Exp $");
+
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.29.2.4 2020/02/29 21:50:45 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>

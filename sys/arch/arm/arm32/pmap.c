@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.375.2.3 2020/02/29 20:18:17 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.375.2.4 2020/02/29 21:50:45 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375.2.3 2020/02/29 20:18:17 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375.2.4 2020/02/29 21:50:45 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -223,8 +223,6 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375.2.3 2020/02/29 20:18:17 ad Exp $");
 #ifdef DDB
 #include <arm/db_machdep.h>
 #endif
-
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.375.2.3 2020/02/29 20:18:17 ad Exp $");
 
 //#define PMAP_DEBUG
 #ifdef PMAP_DEBUG
