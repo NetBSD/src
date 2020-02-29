@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.57 2020/02/29 07:13:37 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.58 2020/02/29 09:38:10 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.57 2020/02/29 07:13:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.58 2020/02/29 09:38:10 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -2086,19 +2086,19 @@ audio_open(dev_t dev, struct audio_softc *sc, int flags, int ifmt,
 		ai.play.encoding      = AUDIO_ENCODING_SLINEAR_NE;
 		ai.play.channels      = 1;
 		ai.play.precision     = 16;
-		ai.play.pause         = false;
+		ai.play.pause         = 0;
 	} else if (ISDEVAUDIO(dev)) {
 		/* If /dev/audio, initialize everytime. */
 		ai.play.sample_rate   = audio_default.sample_rate;
 		ai.play.encoding      = audio_default.encoding;
 		ai.play.channels      = audio_default.channels;
 		ai.play.precision     = audio_default.precision;
-		ai.play.pause         = false;
+		ai.play.pause         = 0;
 		ai.record.sample_rate = audio_default.sample_rate;
 		ai.record.encoding    = audio_default.encoding;
 		ai.record.channels    = audio_default.channels;
 		ai.record.precision   = audio_default.precision;
-		ai.record.pause       = false;
+		ai.record.pause       = 0;
 	} else {
 		/* If /dev/sound, take over the previous parameters. */
 		ai.play.sample_rate   = sc->sc_sound_pparams.sample_rate;
