@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.204.2.3 2020/02/29 20:21:03 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.204.2.4 2020/02/29 22:00:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.204.2.3 2020/02/29 20:21:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.204.2.4 2020/02/29 22:00:03 ad Exp $");
 
 #include "veriexec.h"
 
@@ -163,10 +163,7 @@ vn_open(struct nameidata *ndp, int fmode, int cmode)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	} else {
 		ndp->ni_cnd.cn_nameiop = LOOKUP;
-		if ((fmode & O_TRUNC) == 0) /* XXXAD check nfs etc */
-			ndp->ni_cnd.cn_flags |= LOCKLEAF | LOCKSHARED;
-		else
-			ndp->ni_cnd.cn_flags |= LOCKLEAF;
+		ndp->ni_cnd.cn_flags |= LOCKLEAF;
 		if ((fmode & O_NOFOLLOW) == 0)
 			ndp->ni_cnd.cn_flags |= FOLLOW;
 	}
