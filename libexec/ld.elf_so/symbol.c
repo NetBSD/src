@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.69 2017/08/09 18:44:32 joerg Exp $	 */
+/*	$NetBSD: symbol.c,v 1.70 2020/02/29 04:21:42 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.69 2017/08/09 18:44:32 joerg Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.70 2020/02/29 04:21:42 kamil Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -193,6 +193,119 @@ _rtld_symlook_needed(const char *name, unsigned long hash,
 	return def;
 }
 
+static bool
+_rtld_symlook_obj_matched_symbol(const char *name,
+    const Obj_Entry *obj, u_int flags, const Ver_Entry *ventry,
+    unsigned long symnum, const Elf_Sym **vsymp, int *vcount)
+{
+	const Elf_Sym  *symp;
+	const char     *strp;
+	Elf_Half verndx;
+
+	symp = obj->symtab + symnum;
+	strp = obj->strtab + symp->st_name;
+	rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
+	if (name[1] != strp[1] || strcmp(name, strp))
+		return false;
+#if defined(__mips__) || defined(__vax__)
+	if (symp->st_shndx == SHN_UNDEF)
+		continue;
+#else
+	/*
+	 * XXX DANGER WILL ROBINSON!
+	 * If we have a function pointer in the executable's
+	 * data section, it points to the executable's PLT
+	 * slot, and there is NO relocation emitted.  To make
+	 * the function pointer comparable to function pointers
+	 * in shared libraries, we must resolve data references
+	 * in the libraries to point to PLT slots in the
+	 * executable, if they exist.
+	 */
+	if (symp->st_shndx == SHN_UNDEF &&
+	    ((flags & SYMLOOK_IN_PLT) ||
+	    symp->st_value == 0 ||
+	    ELF_ST_TYPE(symp->st_info) != STT_FUNC))
+		return false;
+#endif
+
+	if (ventry == NULL) {
+		if (obj->versyms != NULL) {
+			verndx = VER_NDX(obj->versyms[symnum].vs_vers);
+			if (verndx > obj->vertabnum) {
+				_rtld_error("%s: symbol %s references "
+				    "wrong version %d", obj->path,
+				    &obj->strtab[symnum], verndx);
+				return false;
+			}
+
+			/*
+			 * If we are not called from dlsym (i.e. this
+			 * is a normal relocation from unversioned
+			 * binary), accept the symbol immediately
+			 * if it happens to have first version after
+			 * this shared object became versioned.
+			 * Otherwise, if symbol is versioned and not
+			 * hidden, remember it. If it is the only
+			 * symbol with this name exported by the shared
+			 * object, it will be returned as a match at the
+			 * end of the function. If symbol is global
+			 * (verndx < 2) accept it unconditionally.
+			 */
+			if (!(flags & SYMLOOK_DLSYM) &&
+			    verndx == VER_NDX_GIVEN) {
+				*vsymp = symp;
+				return true;
+			} else if (verndx >= VER_NDX_GIVEN) {
+				if (!(obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN)) {
+					if (*vsymp == NULL)
+						*vsymp = symp;
+					(*vcount)++;
+				}
+				return false;
+			}
+		}
+		*vsymp = symp;
+		return true;
+	} else {
+		if (obj->versyms == NULL) {
+			if (_rtld_object_match_name(obj, ventry->name)){
+				_rtld_error("%s: object %s should "
+				    "provide version %s for symbol %s",
+				    _rtld_objself.path, obj->path,
+				    ventry->name, &obj->strtab[symnum]);
+				return false;
+			}
+		} else {
+			verndx = VER_NDX(obj->versyms[symnum].vs_vers);
+			if (verndx > obj->vertabnum) {
+				_rtld_error("%s: symbol %s references "
+				    "wrong version %d", obj->path,
+				    &obj->strtab[symnum], verndx);
+				return false;
+			}
+			if (obj->vertab[verndx].hash != ventry->hash ||
+			    strcmp(obj->vertab[verndx].name, ventry->name)) {
+				/*
+				* Version does not match. Look if this
+				* is a global symbol and if it is not
+				* hidden. If global symbol (verndx < 2)
+				* is available, use it. Do not return
+				* symbol if we are called by dlvsym,
+				* because dlvsym looks for a specific
+				* version and default one is not what
+				* dlvsym wants.
+				*/
+				if ((flags & SYMLOOK_DLSYM) ||
+				    (obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN) ||
+				    (verndx >= VER_NDX_GIVEN))
+					return false;
+			}
+		}
+		*vsymp = symp;
+		return true;
+	}
+}
+
 /*
  * Search the symbol table of a single shared object for a symbol of
  * the given name.  Returns a pointer to the symbol, or NULL if no
@@ -207,115 +320,17 @@ _rtld_symlook_obj(const char *name, unsigned long hash,
 {
 	unsigned long symnum;
 	const Elf_Sym *vsymp = NULL;
-	Elf_Half verndx;
 	int vcount = 0;
 
 	for (symnum = obj->buckets[fast_remainder32(hash, obj->nbuckets,
 	     obj->nbuckets_m, obj->nbuckets_s1, obj->nbuckets_s2)];
 	     symnum != ELF_SYM_UNDEFINED;
 	     symnum = obj->chains[symnum]) {
-		const Elf_Sym  *symp;
-		const char     *strp;
-
 		assert(symnum < obj->nchains);
-		symp = obj->symtab + symnum;
-		strp = obj->strtab + symp->st_name;
-		rdbg(("check \"%s\" vs \"%s\" in %s", name, strp, obj->path));
-		if (name[1] != strp[1] || strcmp(name, strp))
-			continue;
-#if defined(__mips__) || defined(__vax__)
-		if (symp->st_shndx == SHN_UNDEF)
-			continue;
-#else
-		/*
-		 * XXX DANGER WILL ROBINSON!
-		 * If we have a function pointer in the executable's
-		 * data section, it points to the executable's PLT
-		 * slot, and there is NO relocation emitted.  To make
-		 * the function pointer comparable to function pointers
-		 * in shared libraries, we must resolve data references
-		 * in the libraries to point to PLT slots in the
-		 * executable, if they exist.
-		 */
-		if (symp->st_shndx == SHN_UNDEF &&
-		    ((flags & SYMLOOK_IN_PLT) ||
-		    symp->st_value == 0 ||
-		    ELF_ST_TYPE(symp->st_info) != STT_FUNC))
-			continue;
-#endif
 
-		if (ventry == NULL) {
-			if (obj->versyms != NULL) {
-				verndx = VER_NDX(obj->versyms[symnum].vs_vers);
-				if (verndx > obj->vertabnum) {
-					_rtld_error("%s: symbol %s references "
-					    "wrong version %d", obj->path,
-					    &obj->strtab[symnum], verndx);
-					continue;
-				}
-
-				/*
-				 * If we are not called from dlsym (i.e. this
-				 * is a normal relocation from unversioned
-				 * binary), accept the symbol immediately
-				 * if it happens to have first version after
-				 * this shared object became versioned.
-				 * Otherwise, if symbol is versioned and not
-				 * hidden, remember it. If it is the only
-				 * symbol with this name exported by the shared
-				 * object, it will be returned as a match at the
-				 * end of the function. If symbol is global
-				 * (verndx < 2) accept it unconditionally.
-				 */
-				if (!(flags & SYMLOOK_DLSYM) &&
-				    verndx == VER_NDX_GIVEN) {
-					return symp;
-				} else if (verndx >= VER_NDX_GIVEN) {
-					if (!(obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN)) {
-						if (vsymp == NULL)
-							vsymp = symp;
-						vcount++;
-					}
-					continue;
-				}
-			}
-			return symp;
-		} else {
-			if (obj->versyms == NULL) {
-				if (_rtld_object_match_name(obj, ventry->name)){
-					_rtld_error("%s: object %s should "
-					    "provide version %s for symbol %s",
-					    _rtld_objself.path, obj->path,
-					    ventry->name, &obj->strtab[symnum]);
-					continue;
-				}
-			} else {
-				verndx = VER_NDX(obj->versyms[symnum].vs_vers);
-				if (verndx > obj->vertabnum) {
-					_rtld_error("%s: symbol %s references "
-					    "wrong version %d", obj->path,
-					    &obj->strtab[symnum], verndx);
-					continue;
-				}
-				if (obj->vertab[verndx].hash != ventry->hash ||
-				    strcmp(obj->vertab[verndx].name, ventry->name)) {
-					/*
-					* Version does not match. Look if this
-					* is a global symbol and if it is not
-					* hidden. If global symbol (verndx < 2)
-					* is available, use it. Do not return
-					* symbol if we are called by dlvsym,
-					* because dlvsym looks for a specific
-					* version and default one is not what
-					* dlvsym wants.
-					*/
-					if ((flags & SYMLOOK_DLSYM) ||
-					    (obj->versyms[symnum].vs_vers & VER_NDX_HIDDEN) ||
-					    (verndx >= VER_NDX_GIVEN))
-						continue;
-				}
-			}
-			return symp;
+		if (_rtld_symlook_obj_matched_symbol(name, obj, flags,
+		    ventry, symnum, &vsymp, &vcount)) {
+			return vsymp;
 		}
 	}
 	if (vcount == 1)
