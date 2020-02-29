@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.79 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.80 2020/02/29 20:39:09 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.79 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.80 2020/02/29 20:39:09 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -442,7 +442,24 @@ stge_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	sc->sc_dmat = pa->pa_dmat;
+	/*
+	 * We have a 40-bit limit on our DMA addresses.  This isn't an
+	 * issue if we're only using a 32-bit DMA tag, but we have to
+	 * account for it if the 64-bit DMA tag is available.
+	 */
+	if (pci_dma64_available(pa)) {
+		if (bus_dmatag_subregion(pa->pa_dmat64,
+					 0,
+					 FRAG_ADDR_MASK + 1ULL,
+					 &sc->sc_dmat,
+					 BUS_DMA_WAITOK) != 0) {
+			aprint_error_dev(self,
+			    "unable to create 40-bit DMA tag\n");
+			return;
+		}
+	} else {
+		sc->sc_dmat = pa->pa_dmat;
+	}
 
 	/* Enable bus mastering. */
 	pci_conf_write(pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
