@@ -1,4 +1,4 @@
-.\"	$NetBSD: audio.9,v 1.57 2020/02/23 04:02:45 isaki Exp $
+.\"	$NetBSD: audio.9,v 1.58 2020/02/29 05:39:03 isaki Exp $
 .\"
 .\" Copyright (c) 1999, 2000 The NetBSD Foundation, Inc.
 .\" All rights reserved.
@@ -344,8 +344,12 @@ or
 and
 .Va param ,
 encoding parameters for the hardware.
+.Va bs
+passed is always non-zero and a multiple of the frame size represented by
+param->channels * param->precision / 8.
 It should return a block size, possibly changed according to the needs
 of the hardware driver.
+The return value also must be non-zero and a multiple of the frame size.
 It is called in the Attach or Closed phases.
 .It Dv int commit_settings(void *hdl)
 optional, is called after all calls to
