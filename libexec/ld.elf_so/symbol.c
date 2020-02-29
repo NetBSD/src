@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.70 2020/02/29 04:21:42 kamil Exp $	 */
+/*	$NetBSD: symbol.c,v 1.71 2020/02/29 04:23:05 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.70 2020/02/29 04:21:42 kamil Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.71 2020/02/29 04:23:05 kamil Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -85,7 +85,7 @@ _rtld_donelist_check(DoneList *dlp, const Obj_Entry *obj)
  * this.  It is specified by the System V ABI.
  */
 unsigned long
-_rtld_elf_hash(const char *name)
+_rtld_sysv_hash(const char *name)
 {
 	const unsigned char *p = (const unsigned char *) name;
 	unsigned long   h = 0;
@@ -103,8 +103,24 @@ _rtld_elf_hash(const char *name)
 	return (h);
 }
 
+/*
+ * Hash function for symbol table lookup.  Don't even think about changing
+ * this.  It is specified by the GNU toolchain ABI.
+ */
+unsigned long
+_rtld_gnu_hash(const char *name)
+{
+	const unsigned char *p = (const unsigned char *) name;
+	uint_fast32_t h = 5381;
+	unsigned char c;
+
+	for (c = *p; c != '\0'; c = *++p)
+		h = h * 33 + c;
+	return (unsigned long)h;
+}
+
 const Elf_Sym *
-_rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
+_rtld_symlook_list(const char *name, Elf_Hash *hash, const Objlist *objlist,
     const Obj_Entry **defobj_out, u_int flags, const Ver_Entry *ventry,
     DoneList *dlp)
 {
@@ -142,7 +158,7 @@ _rtld_symlook_list(const char *name, unsigned long hash, const Objlist *objlist,
  * to the symbol, or NULL if no definition was found.
  */
 const Elf_Sym *
-_rtld_symlook_needed(const char *name, unsigned long hash,
+_rtld_symlook_needed(const char *name, Elf_Hash *hash,
     const Needed_Entry *needed, const Obj_Entry **defobj_out, u_int flags,
     const Ver_Entry *ventry, DoneList *breadth, DoneList *depth)
 {
@@ -315,14 +331,14 @@ _rtld_symlook_obj_matched_symbol(const char *name,
  * eliminates many recomputations of the hash value.
  */
 const Elf_Sym *
-_rtld_symlook_obj(const char *name, unsigned long hash,
+_rtld_symlook_obj(const char *name, Elf_Hash *hash,
     const Obj_Entry *obj, u_int flags, const Ver_Entry *ventry)
 {
 	unsigned long symnum;
 	const Elf_Sym *vsymp = NULL;
 	int vcount = 0;
 
-	for (symnum = obj->buckets[fast_remainder32(hash, obj->nbuckets,
+	for (symnum = obj->buckets[fast_remainder32(hash->sysv, obj->nbuckets,
 	     obj->nbuckets_m, obj->nbuckets_s1, obj->nbuckets_s2)];
 	     symnum != ELF_SYM_UNDEFINED;
 	     symnum = obj->chains[symnum]) {
@@ -352,7 +368,7 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 	const Elf_Sym  *def;
 	const Obj_Entry *defobj;
 	const char     *name;
-	unsigned long   hash;
+	Elf_Hash        hash;
 
 	ref = refobj->symtab + symnum;
 	name = refobj->strtab + ref->st_name;
@@ -368,9 +384,10 @@ _rtld_find_symdef(unsigned long symnum, const Obj_Entry *refobj,
 			    refobj->path, symnum);
         	}
 
-		hash = _rtld_elf_hash(name);
+		hash.sysv = _rtld_sysv_hash(name);
+		hash.gnu = _rtld_gnu_hash(name);
 		defobj = NULL;
-		def = _rtld_symlook_default(name, hash, refobj, &defobj, flags,
+		def = _rtld_symlook_default(name, &hash, refobj, &defobj, flags,
 		    _rtld_fetch_ventry(refobj, symnum));
 	} else {
 		rdbg(("STB_LOCAL symbol %s in %s", name, refobj->path));
@@ -430,7 +447,7 @@ _rtld_find_plt_symdef(unsigned long symnum, const Obj_Entry *obj,
  * defining object via the reference parameter DEFOBJ_OUT.
  */
 const Elf_Sym *
-_rtld_symlook_default(const char *name, unsigned long hash,
+_rtld_symlook_default(const char *name, Elf_Hash *hash,
     const Obj_Entry *refobj, const Obj_Entry **defobj_out, u_int flags,
     const Ver_Entry *ventry)
 {
