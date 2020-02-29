@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.194.4.2 2020/02/29 20:21:03 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.194.4.3 2020/02/29 21:50:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194.4.2 2020/02/29 20:21:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194.4.3 2020/02/29 21:50:45 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1431,7 +1431,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 			}
 		}
 	}
-
+	
  restart:
 	/*
 	 * First loop -- allocate file descriptor table slots for the
