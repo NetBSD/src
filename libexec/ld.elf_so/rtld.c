@@ -1,4 +1,4 @@
-/*	$NetBSD: rtld.c,v 1.201 2019/12/08 22:35:27 uwe Exp $	 */
+/*	$NetBSD: rtld.c,v 1.202 2020/02/29 04:23:05 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: rtld.c,v 1.201 2019/12/08 22:35:27 uwe Exp $");
+__RCSID("$NetBSD: rtld.c,v 1.202 2020/02/29 04:23:05 kamil Exp $");
 #endif /* not lint */
 
 #include <sys/param.h>
@@ -1098,16 +1098,17 @@ dlopen(const char *name, int mode)
 void *
 _rtld_objmain_sym(const char *name)
 {
-	unsigned long hash;
+	Elf_Hash hash;
 	const Elf_Sym *def;
 	const Obj_Entry *obj;
 	DoneList donelist;
 
-	hash = _rtld_elf_hash(name);
+	hash.sysv = _rtld_sysv_hash(name);
+	hash.gnu = _rtld_gnu_hash(name);
 	obj = _rtld_objmain;
 	_rtld_donelist_init(&donelist);
 
-	def = _rtld_symlook_list(name, hash, &_rtld_list_main, &obj, 0,
+	def = _rtld_symlook_list(name, &hash, &_rtld_list_main, &obj, 0,
 	    NULL, &donelist);
 
 	if (def != NULL)
@@ -1142,7 +1143,7 @@ static void *
 do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 {
 	const Obj_Entry *obj;
-	unsigned long hash;
+	Elf_Hash hash;
 	const Elf_Sym *def;
 	const Obj_Entry *defobj;
 	DoneList donelist;
@@ -1153,7 +1154,8 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 	lookup_mutex_enter();
 
-	hash = _rtld_elf_hash(name);
+	hash.sysv = _rtld_sysv_hash(name);
+	hash.gnu = _rtld_gnu_hash(name);
 	def = NULL;
 	defobj = NULL;
 
@@ -1170,7 +1172,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		switch ((intptr_t)handle) {
 		case (intptr_t)NULL:	 /* Just the caller's shared object. */
-			def = _rtld_symlook_obj(name, hash, obj, flags, ventry);
+			def = _rtld_symlook_obj(name, &hash, obj, flags, ventry);
 			defobj = obj;
 			break;
 
@@ -1180,7 +1182,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		case (intptr_t)RTLD_SELF:	/* Caller included */
 			for (; obj; obj = obj->next) {
-				if ((def = _rtld_symlook_obj(name, hash, obj,
+				if ((def = _rtld_symlook_obj(name, &hash, obj,
 				    flags, ventry)) != NULL) {
 					defobj = obj;
 					break;
@@ -1194,7 +1196,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 			 */
 			if (!def || ELF_ST_BIND(def->st_info) == STB_WEAK) {
 				const Elf_Sym *symp = _rtld_symlook_obj(name,
-				    hash, &_rtld_objself, flags, ventry);
+				    &hash, &_rtld_objself, flags, ventry);
 				if (symp != NULL) {
 					def = symp;
 					defobj = &_rtld_objself;
@@ -1203,7 +1205,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 			break;
 
 		case (intptr_t)RTLD_DEFAULT:
-			def = _rtld_symlook_default(name, hash, obj, &defobj,
+			def = _rtld_symlook_default(name, &hash, obj, &defobj,
 			    flags, ventry);
 			break;
 
@@ -1222,7 +1224,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 
 		if (obj->mainprog) {
 			/* Search main program and all libraries loaded by it */
-			def = _rtld_symlook_list(name, hash, &_rtld_list_main,
+			def = _rtld_symlook_list(name, &hash, &_rtld_list_main,
 			    &defobj, flags, ventry, &donelist);
 		} else {
 			Needed_Entry fake;
@@ -1234,7 +1236,7 @@ do_dlsym(void *handle, const char *name, const Ver_Entry *ventry, void *retaddr)
 			fake.name = 0;
 
 			_rtld_donelist_init(&depth);
-			def = _rtld_symlook_needed(name, hash, &fake, &defobj,
+			def = _rtld_symlook_needed(name, &hash, &fake, &defobj,
 			    flags, ventry, &donelist, &depth);
 		}
 
@@ -1301,7 +1303,7 @@ dlvsym(void *handle, const char *name, const char *version)
 	if (version != NULL) {
 		ver_entry.name = version;
 		ver_entry.file = NULL;
-		ver_entry.hash = _rtld_elf_hash(version);
+		ver_entry.hash = _rtld_sysv_hash(version);
 		ver_entry.flags = 0;
 		ventry = &ver_entry;
 	}
