@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.239 2020/02/27 06:30:56 yamaguchi Exp $
+#	$NetBSD: Makefile,v 1.240 2020/02/29 11:03:44 skrll Exp $
 
 .include <bsd.own.mk>
 
@@ -79,7 +79,6 @@ SUBDIR+=	if_cue
 SUBDIR+=	if_faith
 SUBDIR+=	if_gif
 SUBDIR+=	if_gre
-SUBDIR+=	if_ixl
 SUBDIR+=	if_kue
 SUBDIR+=	if_l2tp
 SUBDIR+=	if_loop
@@ -182,7 +181,6 @@ SUBDIR+=	wsbell
 SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
-SUBDIR+=	hifn		# Builds on architectures with PCI bus
 SUBDIR+=	unionfs
 .endif
 .if ${MKBINUTILS} != "no"
@@ -232,9 +230,14 @@ SUBDIR+=	vmt
 SUBDIR+=	nvmm
 .endif
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=	ubsec		# Builds on architectures with PCI bus
+# Builds on architectures with PCI bus
+.if \
+     ${MACHINE_ARCH} == "evbarm" || \
+     ${MACHINE_ARCH} == "i386" || \
+     ${MACHINE_ARCH} == "x86_64"
+SUBDIR+=	hifn
+SUBDIR+=	if_ixl
+SUBDIR+=	ubsec
 .endif
 
 .if ${MKSLJIT} != "no"
