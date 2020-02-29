@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.34 2020/02/10 19:04:01 ryo Exp $ */
+/* $NetBSD: pmap.h,v 1.35 2020/02/29 21:09:11 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -173,6 +173,8 @@ int pmapboot_enter(vaddr_t, paddr_t, psize_t, psize_t,
     void (*pr)(const char *, ...) __printflike(1, 2));
 #define PMAPBOOT_ENTER_NOBLOCK		0x00000001
 #define PMAPBOOT_ENTER_NOOVERWRITE	0x00000002
+int pmapboot_enter_range(vaddr_t, paddr_t, psize_t, pt_entry_t, uint64_t,
+    pd_entry_t *(*)(void), void (*)(const char *, ...) __printflike(1, 2));
 int pmapboot_protect(vaddr_t, vaddr_t, vm_prot_t);
 void pmap_db_pte_print(pt_entry_t, int,
     void (*pr)(const char *, ...) __printflike(1, 2));
