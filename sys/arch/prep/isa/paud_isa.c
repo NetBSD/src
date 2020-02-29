@@ -1,4 +1,4 @@
-/*	$NetBSD: paud_isa.c,v 1.18 2019/05/08 13:40:16 isaki Exp $	*/
+/*	$NetBSD: paud_isa.c,v 1.19 2020/02/29 05:51:11 isaki Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.18 2019/05/08 13:40:16 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: paud_isa.c,v 1.19 2020/02/29 05:51:11 isaki Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -98,7 +98,6 @@ static const struct audio_hw_if paud_hw_if = {
 	.close			= ad1848_isa_close,
 	.query_format		= ad1848_query_format,
 	.set_format		= ad1848_set_format,
-	.round_blocksize	= ad1848_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= ad1848_isa_halt_output,
 	.halt_input		= ad1848_isa_halt_input,
