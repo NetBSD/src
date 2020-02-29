@@ -1,4 +1,4 @@
-/*	$NetBSD: symbol.c,v 1.72 2020/02/29 04:24:33 kamil Exp $	 */
+/*	$NetBSD: symbol.c,v 1.73 2020/02/29 18:45:20 kamil Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: symbol.c,v 1.72 2020/02/29 04:24:33 kamil Exp $");
+__RCSID("$NetBSD: symbol.c,v 1.73 2020/02/29 18:45:20 kamil Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -225,7 +225,7 @@ _rtld_symlook_obj_matched_symbol(const char *name,
 		return false;
 #if defined(__mips__) || defined(__vax__)
 	if (symp->st_shndx == SHN_UNDEF)
-		continue;
+		return false;
 #else
 	/*
 	 * XXX DANGER WILL ROBINSON!
