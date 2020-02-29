@@ -1,4 +1,4 @@
-/*	$NetBSD: mvsata.c,v 1.52 2019/12/27 09:41:50 msaitoh Exp $	*/
+/*	$NetBSD: mvsata.c,v 1.52.2.1 2020/02/29 20:19:08 ad Exp $	*/
 /*
  * Copyright (c) 2008 KIYOHARA Takashi
  * All rights reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.52 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mvsata.c,v 1.52.2.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_mvsata.h"
 
@@ -235,12 +235,12 @@ static const struct ata_bustype mvsata_ata_bustype = {
 
 #if NATAPIBUS > 0
 static const struct scsipi_bustype mvsata_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	mvsata_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = mvsata_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 #endif /* NATAPIBUS */
 #endif

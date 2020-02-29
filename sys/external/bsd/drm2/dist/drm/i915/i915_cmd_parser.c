@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_cmd_parser.c,v 1.20 2019/12/05 20:25:54 maya Exp $	*/
+/*	$NetBSD: i915_cmd_parser.c,v 1.20.2.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright © 2013 Intel Corporation
@@ -28,11 +28,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.20 2019/12/05 20:25:54 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_cmd_parser.c,v 1.20.2.1 2020/02/29 20:20:13 ad Exp $");
 
 #include "i915_drv.h"
 #include <linux/bitmap.h>
-#include <linux/log2.h>
 
 /**
  * DOC: batch buffer command parser
@@ -1061,7 +1060,7 @@ static u32 *copy_batch(struct drm_i915_gem_object *dest_obj,
 	}
 #endif
 
-	src = (const char *)src_base + offset_in_page(batch_start_offset);
+	src = src_base + offset_in_page(batch_start_offset);
 	if (needs_clflush)
 		drm_clflush_virt_range(src, batch_len);
 

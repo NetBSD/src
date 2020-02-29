@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axen.c,v 1.68.2.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: if_axen.c,v 1.68.2.2 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_axen.c,v 1.3 2013/10/21 10:10:22 yuo Exp $	*/
 
 /*
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.68.2.1 2020/01/17 21:47:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axen.c,v 1.68.2.2 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -778,7 +778,7 @@ axen_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 
 	if (total_len < sizeof(pkt_hdr)) {
 		aprint_error_dev(un->un_dev, "rxeof: too short transfer\n");
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -797,7 +797,7 @@ axen_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		aprint_error_dev(un->un_dev,
 		    "rxeof: invalid hdr offset (%u > %u)\n",
 		    hdr_offset, total_len);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		usbd_delay_ms(un->un_udev, 100);
 		return;
 	}
@@ -826,7 +826,7 @@ axen_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		if ((buf[0] != 0xee) || (buf[1] != 0xee)) {
 			aprint_error_dev(un->un_dev,
 			    "invalid buffer(pkt#%d), continue\n", pkt_count);
-			ifp->if_ierrors += pkt_count;
+			if_statadd(ifp, if_ierrors, pkt_count);
 			return;
 		}
 
@@ -837,7 +837,7 @@ axen_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		   device_xname(un->un_dev), pkt_count, pkt_hdr, pkt_len));
 
 		if (pkt_hdr & (AXEN_RXHDR_CRC_ERR | AXEN_RXHDR_DROP_ERR)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/* move to next pkt header */
 			DPRINTF(("%s: %s err (pkt#%d)\n",
 			    device_xname(un->un_dev),

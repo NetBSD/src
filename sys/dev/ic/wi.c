@@ -1,4 +1,4 @@
-/*	$NetBSD: wi.c,v 1.254 2019/12/05 03:11:40 msaitoh Exp $	*/
+/*	$NetBSD: wi.c,v 1.254.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2004 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.254 2019/12/05 03:11:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wi.c,v 1.254.2.1 2020/02/29 20:19:08 ad Exp $");
 
 #define WI_HERMES_AUTOINC_WAR	/* Work around data write autoinc bug. */
 #define WI_HERMES_STATS_WAR	/* Work around stats counter bug. */
@@ -1173,7 +1173,7 @@ wi_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				break;
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			m_copydata(m0, 0, ETHER_HDR_LEN,
 			    (void *)&frmhdr.wi_ehdr);
 			bpf_mtap(ifp, m0, BPF_D_OUT);
@@ -1181,7 +1181,7 @@ wi_start(struct ifnet *ifp)
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 			if (ni == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 			if ((ni->ni_flags & IEEE80211_NODE_PWR_MGT) &&
@@ -1191,7 +1191,7 @@ wi_start(struct ifnet *ifp)
 			}
 			if ((m0 = ieee80211_encap(ic, m0, ni)) == NULL) {
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 			wh = mtod(m0, struct ieee80211_frame *);
@@ -1207,7 +1207,7 @@ wi_start(struct ifnet *ifp)
 		    (wh->i_fc[1] & IEEE80211_FC1_WEP)) {
 			if (ieee80211_crypto_encap(ic, ni, m0) == NULL) {
 				m_freem(m0);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				goto next;
 			}
 			frmhdr.wi_tx_ctl |= htole16(WI_TXCNTL_NOCRYPT);
@@ -1257,7 +1257,7 @@ wi_start(struct ifnet *ifp)
 		    wi_mwrite_bap(sc, fid, off, m0, m0->m_pkthdr.len) != 0) {
 			aprint_error_dev(sc->sc_dev, "%s write fid %x failed\n",
 			    __func__, fid);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m0);
 			goto next;
 		}
@@ -1332,7 +1332,7 @@ wi_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", ifp->if_xname);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			wi_init(ifp);
 			return;
 		}
@@ -1669,7 +1669,7 @@ wi_rx_intr(struct wi_softc *sc)
 	if (wi_read_bap(sc, fid, 0, &frmhdr, sizeof(frmhdr))) {
 		aprint_error_dev(sc->sc_dev, "%s read fid %x failed\n",
 		    __func__, fid);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1682,7 +1682,7 @@ wi_rx_intr(struct wi_softc *sc)
 	status = le16toh(frmhdr.wi_status);
 	if ((status & WI_STAT_ERRSTAT) != 0 &&
 	    ic->ic_opmode != IEEE80211_M_MONITOR) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(("wi_rx_intr: fid %x error status %x\n", fid, status));
 		return;
 	}
@@ -1698,7 +1698,7 @@ wi_rx_intr(struct wi_softc *sc)
 	 */
 	if (off + len > MCLBYTES) {
 		if (ic->ic_opmode != IEEE80211_M_MONITOR) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			DPRINTF(("wi_rx_intr: oversized packet\n"));
 			return;
 		} else
@@ -1707,7 +1707,7 @@ wi_rx_intr(struct wi_softc *sc)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(("wi_rx_intr: MGET failed\n"));
 		return;
 	}
@@ -1715,7 +1715,7 @@ wi_rx_intr(struct wi_softc *sc)
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_freem(m);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			DPRINTF(("wi_rx_intr: MCLGET failed\n"));
 			return;
 		}
@@ -1831,7 +1831,7 @@ wi_tx_ex_intr(struct wi_softc *sc)
 			printf(", status=0x%x", status);
 		printf("\n");
 	}
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	rssd = &sc->sc_rssd[frmhdr.wi_tx_idx];
 	id = &rssd->rd_desc;
 	if ((status & WI_TXSTAT_RET_ERR) != 0)
@@ -2084,9 +2084,10 @@ wi_info_intr(struct wi_softc *sc)
 #endif
 			*ptr += stat;
 		}
-		ifp->if_collisions = sc->sc_stats.wi_tx_single_retries +
+		if_statadd(ifp, if_collisions,
+		    sc->sc_stats.wi_tx_single_retries +
 		    sc->sc_stats.wi_tx_multi_retries +
-		    sc->sc_stats.wi_tx_retry_limit;
+		    sc->sc_stats.wi_tx_retry_limit);
 		break;
 
 	case WI_INFO_SCAN_RESULTS:

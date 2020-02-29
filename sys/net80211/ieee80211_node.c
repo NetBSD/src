@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_node.c,v 1.79 2019/12/27 09:25:58 msaitoh Exp $	*/
+/*	$NetBSD: ieee80211_node.c,v 1.79.2.1 2020/02/29 20:21:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_node.c,v 1.65 2005/08/13 17:50:21 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.79 2019/12/27 09:25:58 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_node.c,v 1.79.2.1 2020/02/29 20:21:07 ad Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -2136,7 +2136,7 @@ void
 ieee80211_dump_node(struct ieee80211_node_table *nt,
     struct ieee80211_node *ni)
 {
-	printf("0x%p: mac %s refcnt %d\n", ni,
+	printf("%p: mac %s refcnt %d\n", ni,
 		ether_sprintf(ni->ni_macaddr), ieee80211_node_refcnt(ni));
 	printf("\tscangen %u authmode %u flags 0x%x\n",
 		ni->ni_scangen, ni->ni_authmode, ni->ni_flags);

@@ -1,4 +1,4 @@
-/* $NetBSD: if_bwfm_sdio.c,v 1.12 2020/01/04 14:52:52 mlelstv Exp $ */
+/* $NetBSD: if_bwfm_sdio.c,v 1.12.2.1 2020/02/29 20:19:16 ad Exp $ */
 /* $OpenBSD: if_bwfm_sdio.c,v 1.1 2017/10/11 17:19:50 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -1610,7 +1610,7 @@ bwfm_sdio_tx_frames(struct bwfm_sdio_softc *sc)
 			bwfm_sdio_tx_ctrlframe(sc, m);
 		else {
 			bwfm_sdio_tx_dataframe(sc, m);  
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			ifstart = true;
 		}
 

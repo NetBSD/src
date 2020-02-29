@@ -1,4 +1,4 @@
-/*	$NetBSD: if_faith.c,v 1.60 2019/04/27 06:18:15 pgoyette Exp $	*/
+/*	$NetBSD: if_faith.c,v 1.60.4.1 2020/02/29 20:21:06 ad Exp $	*/
 /*	$KAME: if_faith.c,v 1.21 2001/02/20 07:59:26 itojun Exp $	*/
 
 /*
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.60 2019/04/27 06:18:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_faith.c,v 1.60.4.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -201,8 +201,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		        rt->rt_flags & RTF_HOST ? EHOSTUNREACH : ENETUNREACH);
 	}
 	pktlen = m->m_pkthdr.len;
-	ifp->if_opackets++;
-	ifp->if_obytes += pktlen;
+	if_statadd2(ifp, if_opackets, 1, if_obytes, pktlen);
 	switch (af) {
 #ifdef INET
 	case AF_INET:
@@ -225,8 +224,7 @@ faithoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	s = splnet();
 	if (__predict_true(pktq_enqueue(pktq, m, 0))) {
-		ifp->if_ipackets++;
-		ifp->if_ibytes += pktlen;
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 		error = 0;
 	} else {
 		m_freem(m);

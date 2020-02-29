@@ -1,4 +1,4 @@
-/*	$NetBSD: sunxi_can.c,v 1.2 2019/10/21 08:00:58 msaitoh Exp $	*/
+/*	$NetBSD: sunxi_can.c,v 1.2.2.1 2020/02/29 20:18:20 ad Exp $	*/
 
 /*-
  * Copyright (c) 2017,2018 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.2 2019/10/21 08:00:58 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sunxi_can.c,v 1.2.2.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -253,14 +253,14 @@ sunxi_can_rx_intr(struct sunxi_can_softc *sc)
 	dlc = reg0v & SUNXI_CAN_TXBUF0_DL;
 
 	if (dlc > CAN_MAX_DLC) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_REL_RX_BUF);
 		return;
 	}
 		
 	m = m_gethdr(M_NOWAIT, MT_HEADER);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_REL_RX_BUF);
 		return;
 	}
@@ -292,7 +292,7 @@ sunxi_can_rx_intr(struct sunxi_can_softc *sc)
 	}
 	sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_REL_RX_BUF);
 	m->m_len = m->m_pkthdr.len = CAN_MTU;
-	ifp->if_ibytes += m->m_len;
+	if_statadd(ifp, if_ibytes, m->m_len);
 	m_set_rcvif(m, ifp);
 	can_bpf_mtap(ifp, m, 1);
 	can_input(ifp, m);
@@ -306,8 +306,7 @@ sunxi_can_tx_intr(struct sunxi_can_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_intr_lock));
 	if ((m = sc->sc_m_transmit) != NULL) {
-		ifp->if_obytes += m->m_len;
-		ifp->if_opackets++;
+		if_statadd2(ifp, if_obytes, m->m_len, if_opackets, 1);
 		can_mbuf_tag_clean(m);
 		m_set_rcvif(m, ifp);
 		can_input(ifp, m); /* loopback */
@@ -346,7 +345,7 @@ sunxi_can_err_intr(struct sunxi_can_softc *sc, uint32_t irq, uint32_t sts)
 	uint32_t reg;
 
 	if (irq & SUNXI_CAN_INT_DATA_OR) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		sunxi_can_write(sc, SUNXI_CAN_CMD_REG, SUNXI_CAN_CMD_CLR_OR);
 	}
 	if (irq & SUNXI_CAN_INT_ERR) {
@@ -359,7 +358,7 @@ sunxi_can_err_intr(struct sunxi_can_softc *sc, uint32_t irq, uint32_t sts)
 		if (sts & SUNXI_CAN_STA_TX)
 			txerr++;
 		if (sts & SUNXI_CAN_STA_RX)
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 	}
 	if (irq & SUNXI_CAN_INT_ERR_PASSIVE) {
 		printf("%s: PASSV interrupt status 0x%x\n",
@@ -369,7 +368,7 @@ sunxi_can_err_intr(struct sunxi_can_softc *sc, uint32_t irq, uint32_t sts)
 		txerr++;
 	}
 	if (txerr) {
-		ifp->if_oerrors += txerr;
+		if_statadd(ifp, if_oerrors, txerr);
 		(void) sunxi_can_tx_abort(sc);
 	}
 }
@@ -603,7 +602,7 @@ sunxi_can_ifwatchdog(struct ifnet *ifp)
 	    sunxi_can_read(sc, SUNXI_CAN_REC_REG));
 	/* if there is a transmit in progress abort */
 	if (sunxi_can_tx_abort(sc)) {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	}
 	mutex_exit(&sc->sc_intr_lock);
 }

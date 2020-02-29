@@ -1,4 +1,4 @@
-/* $NetBSD: hdaudio.c,v 1.9 2019/07/26 11:13:46 jmcneill Exp $ */
+/* $NetBSD: hdaudio.c,v 1.9.4.1 2020/02/29 20:19:07 ad Exp $ */
 
 /*
  * Copyright (c) 2009 Precedence Technologies Ltd <support@precedence.co.uk>
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.9 2019/07/26 11:13:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hdaudio.c,v 1.9.4.1 2020/02/29 20:19:07 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -121,36 +121,21 @@ hdaudio_codec_init(struct hdaudio_softc *sc)
 static void
 hdaudio_init(struct hdaudio_softc *sc)
 {
-	uint16_t gcap;
-	int nos, nis, nbidir;
-#if defined(HDAUDIO_DEBUG)
-	uint8_t vmin, vmaj;
-	int nsdo, addr64;
-#endif
+	const uint8_t vmaj = hda_read1(sc, HDAUDIO_MMIO_VMAJ);
+	const uint8_t vmin = hda_read1(sc, HDAUDIO_MMIO_VMIN);
+	const uint16_t gcap = hda_read2(sc, HDAUDIO_MMIO_GCAP);
+	const int nis = HDAUDIO_GCAP_ISS(gcap);
+	const int nos = HDAUDIO_GCAP_OSS(gcap);
+	const int nbidir = HDAUDIO_GCAP_BSS(gcap);
+	const int nsdo = HDAUDIO_GCAP_NSDO(gcap);
+	const int addr64 = HDAUDIO_GCAP_64OK(gcap);
 
-#if defined(HDAUDIO_DEBUG)
-	vmaj = hda_read1(sc, HDAUDIO_MMIO_VMAJ);
-	vmin = hda_read1(sc, HDAUDIO_MMIO_VMIN);
-
-	hda_print(sc, "High Definition Audio version %d.%d\n", vmaj, vmin);
-#endif
-
-	gcap = hda_read2(sc, HDAUDIO_MMIO_GCAP);
-	nis = HDAUDIO_GCAP_ISS(gcap);
-	nos = HDAUDIO_GCAP_OSS(gcap);
-	nbidir = HDAUDIO_GCAP_BSS(gcap);
+	hda_print(sc, "HDA ver. %d.%d, OSS %d, ISS %d, BSS %d, SDO %d%s\n",
+	    vmaj, vmin, nos, nis, nbidir, nsdo, addr64 ? ", 64-bit" : "");
 
 	/* Initialize codecs and streams */
 	hdaudio_codec_init(sc);
 	hdaudio_stream_init(sc, nis, nos, nbidir);
-
-#if defined(HDAUDIO_DEBUG)
-	nsdo = HDAUDIO_GCAP_NSDO(gcap);
-	addr64 = HDAUDIO_GCAP_64OK(gcap);
-
-	hda_print(sc, "OSS %d ISS %d BSS %d SDO %d%s\n",
-	    nos, nis, nbidir, nsdo, addr64 ? " 64-bit" : "");
-#endif
 }
 
 static int
@@ -795,8 +780,6 @@ hdaudio_attach(device_t dev, struct hdaudio_softc *sc)
 	mutex_init(&sc->sc_corb_mtx, MUTEX_DEFAULT, IPL_AUDIO);
 	mutex_init(&sc->sc_stream_mtx, MUTEX_DEFAULT, IPL_AUDIO);
 
-	hdaudio_init(sc);
-
 	/*
 	 * Put the controller into a known state by entering and leaving
 	 * CRST as necessary.
@@ -814,6 +797,15 @@ hdaudio_attach(device_t dev, struct hdaudio_softc *sc)
 	 * In reality, we need to wait longer than this.
 	 */
 	hda_delay(HDAUDIO_CODEC_DELAY);
+
+	/*
+	 * Read device capabilities
+	 */
+	hdaudio_init(sc);
+
+	/*
+	 * Detect codecs
+	 */
 	if (hdaudio_codec_probe(sc) == 0) {
 		hda_error(sc, "no codecs found\n");
 		err = ENODEV;

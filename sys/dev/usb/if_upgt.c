@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upgt.c,v 1.26.2.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: if_upgt.c,v 1.26.2.2 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_upgt.c,v 1.49 2010/04/20 22:05:43 tedu Exp $ */
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.26.2.1 2020/01/17 21:47:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upgt.c,v 1.26.2.2 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1491,7 +1491,7 @@ upgt_start(struct ifnet *ifp)
 				aprint_error_dev(sc->sc_dev,
 				    "no free prism memory\n");
 				m_freem(m);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 			data_tx->ni = ni;
@@ -1533,7 +1533,7 @@ upgt_start(struct ifnet *ifp)
 				    "no free prism memory\n");
 				m_freem(m);
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 			data_tx->ni = ni;
@@ -1611,7 +1611,7 @@ upgt_tx_task(void *arg)
 				data_tx->m = NULL;
 				ieee80211_free_node(data_tx->ni);
 				data_tx->ni = NULL;
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 
@@ -1696,7 +1696,7 @@ upgt_tx_task(void *arg)
 		    error != USBD_IN_PROGRESS) {
 			aprint_error_dev(sc->sc_dev,
 			    "could not transmit TX data URB\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 		}
 
@@ -1735,7 +1735,7 @@ upgt_tx_done(struct upgt_softc *sc, uint8_t *data)
 			data_tx->addr = 0;
 
 			sc->tx_queued--;
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 			DPRINTF(2, "%s: TX done: ", device_xname(sc->sc_dev));
 			DPRINTF(2, "memaddr=0x%08x, status=0x%04x, rssi=%d, ",
@@ -1857,7 +1857,7 @@ upgt_rx(struct upgt_softc *sc, uint8_t *data, int pkglen)
 	if (m == NULL) {
 		DPRINTF(1, "%s: could not create RX mbuf\n",
 		   device_xname(sc->sc_dev));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

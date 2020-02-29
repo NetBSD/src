@@ -1,4 +1,4 @@
-#	$NetBSD: majors.hpcarm,v 1.15 2019/01/28 02:28:58 dholland Exp $
+#	$NetBSD: majors.hpcarm,v 1.15.6.1 2020/02/29 20:18:24 ad Exp $
 #
 # Device majors for hpcarm
 #
@@ -69,7 +69,7 @@ device-major	raid		char 71  block 71	raid
 device-major	ugen		char 72			ugen
 device-major	wsmux		char 73			wsmux
 device-major	ucom		char 74			ucom
-device-major	urio		char 75			urio
+#device-major	obsolete	char 75			obsolete (urio)
 device-major	uscanner	char 76			uscanner
 device-major	openfirm	char 77			openfirm
 device-major	biconsdev	char 78			biconsdev

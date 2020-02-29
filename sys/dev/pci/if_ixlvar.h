@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixlvar.h,v 1.3.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: if_ixlvar.h,v 1.3.2.2 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -139,6 +139,10 @@ struct ixl_aq_desc {
 #define IXL_AQ_OP_LLDP_START_AGENT	0x0a06
 #define IXL_AQ_OP_LLDP_GET_CEE_DCBX	0x0a07
 #define IXL_AQ_OP_LLDP_SPECIFIC_AGENT	0x0a09
+#define IXL_AQ_OP_RSS_SET_KEY		0x0b02
+#define IXL_AQ_OP_RSS_SET_LUT		0x0b03
+#define IXL_AQ_OP_RSS_GET_KEY		0x0b04
+#define IXL_AQ_OP_RSS_GET_LUT		0x0b05
 
 struct ixl_aq_mac_addresses {
 	uint8_t		pf_lan[ETHER_ADDR_LEN];
@@ -265,6 +269,20 @@ struct ixl_aq_switch_config_element {
 #define IXL_PHY_TYPE_25GBASE_AOC	0x23
 #define IXL_PHY_TYPE_25GBASE_ACC	0x24
 
+#define IXL_PHY_LINK_SPEED_100MB	(1 << 1)
+#define IXL_PHY_LINK_SPEED_1000MB	(1 << 2)
+#define IXL_PHY_LINK_SPEED_10GB		(1 << 3)
+#define IXL_PHY_LINK_SPEED_40GB		(1 << 4)
+#define IXL_PHY_LINK_SPEED_20GB		(1 << 5)
+#define IXL_PHY_LINK_SPEED_25GB		(1 << 6)
+
+#define IXL_PHY_ABILITY_PAUSE_TX	(1 << 0)
+#define IXL_PHY_ABILITY_PAUSE_RX	(1 << 1)
+#define IXL_PHY_ABILITY_LOWPOW		(1 << 2)
+#define IXL_PHY_ABILITY_LINKUP		(1 << 3)
+#define IXL_PHY_ABILITY_AUTONEGO	(1 << 4)
+#define IXL_PHY_ABILITY_MODQUAL		(1 << 5)
+
 struct ixl_aq_module_desc {
 	uint8_t		oui[3];
 	uint8_t		_reserved1;
@@ -277,12 +295,6 @@ struct ixl_aq_phy_abilities {
 	uint32_t	phy_type;
 
 	uint8_t		link_speed;
-#define IXL_AQ_PHY_LINK_SPEED_100MB	(1 << 1)
-#define IXL_AQ_PHY_LINK_SPEED_1000MB	(1 << 2)
-#define IXL_AQ_PHY_LINK_SPEED_10GB	(1 << 3)
-#define IXL_AQ_PHY_LINK_SPEED_40GB	(1 << 4)
-#define IXL_AQ_PHY_LINK_SPEED_20GB	(1 << 5)
-#define IXL_AQ_PHY_LINK_SPEED_25GB	(1 << 6)
 	uint8_t		abilities;
 	uint16_t	eee_capability;
 
@@ -315,6 +327,19 @@ struct ixl_aq_phy_abilities {
 #define IXL_AQ_PHY_MAX_QMS		16
 	struct ixl_aq_module_desc
 			qualified_module[IXL_AQ_PHY_MAX_QMS];
+} __packed __aligned(4);
+
+struct ixl_aq_phy_param {
+	uint32_t	 phy_types;
+	uint8_t		 link_speed;
+	uint8_t		 abilities;
+#define IXL_AQ_PHY_ABILITY_AUTO_LINK	(1 << 5)
+	uint16_t	 eee_capability;
+	uint32_t	 eeer_val;
+	uint8_t		 d3_lpan;
+	uint8_t		 phy_type_ext;
+	uint8_t		 fec_cfg;
+	uint8_t		 config;
 } __packed __aligned(4);
 
 struct ixl_aq_link_param {
@@ -689,6 +714,38 @@ struct ixl_aq_nvm_param {
 	uint32_t	 addr_hi;
 	uint32_t	 addr_lo;
 } __packed __aligned(4);
+
+struct ixl_aq_rss_key_param {
+	uint16_t	 vsi_id;
+#define IXL_AQ_RSSKEY_VSI_VALID		(0x01 << 15)
+#define IXL_AQ_RSSKEY_VSI_ID_SHIFT	0
+#define IXL_AQ_RSSKEY_VSI_ID_MASK	(0x3FF << IXL_RSSKEY_VSI_ID_SHIFT)
+
+	uint8_t		 reserved[6];
+	uint32_t	 addr_hi;
+	uint32_t	 addr_lo;
+} __packed __aligned(8);
+
+struct ixl_aq_rss_key_data {
+	uint8_t	 standard_rss_key[0x28];
+	uint8_t	 extended_hash_key[0xc];
+} __packed __aligned(8);
+
+struct ixl_aq_rss_lut_param {
+	uint16_t	 vsi_id;
+#define IXL_AQ_RSSLUT_VSI_VALID		(0x01 << 15)
+#define IXL_AQ_RSSLUT_VSI_ID_SHIFT	0
+#define IXL_AQ_RSSLUT_VSI_ID_MASK	(0x03FF << IXL_AQ_RSSLUT_VSI_ID_SHIFT)
+
+	uint16_t flags;
+#define IXL_AQ_RSSLUT_TABLE_TYPE_SHIFT	0
+#define IXL_AQ_RSSLUT_TABLE_TYPE_MASK	(0x01 << IXL_AQ_RSSLUT_TABLE_TYPE_SHIFT)
+#define IXL_AQ_RSSLUT_TABLE_TYPE_VSI	0
+#define IXL_AQ_RSSLUT_TABLE_TYPE_PF	1
+	uint8_t		 reserved[4];
+	uint32_t	 addr_hi;
+	uint32_t	 addr_lo;
+} __packed __aligned(8);
 
 /* aq response codes */
 #define IXL_AQ_RC_OK			0  /* success */

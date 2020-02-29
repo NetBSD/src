@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_snapshot.c,v 1.149.16.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: ffs_snapshot.c,v 1.149.16.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright 2000 Marshall Kirk McKusick. All Rights Reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.149.16.1 2020/01/17 21:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_snapshot.c,v 1.149.16.2 2020/02/29 20:21:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -334,7 +334,7 @@ ffs_snapshot(struct mount *mp, struct vnode *vp, struct timespec *ctime)
 	 * Invalidate and free all pages on the snapshot vnode.
 	 * We will read and write through the buffercache.
 	 */
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, 0, 0,
 		    PGO_ALLPAGES | PGO_CLEANIT | PGO_SYNCIO | PGO_FREE);
 	if (error)

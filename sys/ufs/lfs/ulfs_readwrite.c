@@ -1,4 +1,4 @@
-/*	$NetBSD: ulfs_readwrite.c,v 1.25 2019/06/20 00:49:11 christos Exp $	*/
+/*	$NetBSD: ulfs_readwrite.c,v 1.25.4.1 2020/02/29 20:21:11 ad Exp $	*/
 /*  from NetBSD: ufs_readwrite.c,v 1.120 2015/04/12 22:48:38 riastradh Exp  */
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.25 2019/06/20 00:49:11 christos Exp $");
+__KERNEL_RCSID(1, "$NetBSD: ulfs_readwrite.c,v 1.25.4.1 2020/02/29 20:21:11 ad Exp $");
 
 #define	FS			struct lfs
 #define	I_FS			i_lfs
@@ -303,7 +303,7 @@ WRITE(void *v)
 		if (error)
 			goto out;
 		if (flags & B_SYNC) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			VOP_PUTPAGES(vp, trunc_page(osize & lfs_sb_getbmask(fs)),
 			    round_page(eob),
 			    PGO_CLEANIT | PGO_SYNCIO);
@@ -398,7 +398,7 @@ WRITE(void *v)
 		__USE(async);
 	}
 	if (error == 0 && ioflag & IO_SYNC) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, trunc_page(origoff & lfs_sb_getbmask(fs)),
 		    round_page(lfs_blkroundup(fs, uio->uio_offset)),
 		    PGO_CLEANIT | PGO_SYNCIO);

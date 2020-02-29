@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem.c,v 1.54.6.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: i915_gem.c,v 1.54.6.2 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.54.6.1 2020/01/17 21:47:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.54.6.2 2020/02/29 20:20:13 ad Exp $");
 
 #ifdef __NetBSD__
 #if 0				/* XXX uvmhist option?  */
@@ -60,14 +60,10 @@ __KERNEL_RCSID(0, "$NetBSD: i915_gem.c,v 1.54.6.1 2020/01/17 21:47:32 ad Exp $")
 #include <linux/swap.h>
 #include <linux/pci.h>
 #include <linux/dma-buf.h>
-#include <linux/errno.h>
-#include <linux/time.h>
-#include <linux/err.h>
-#include <linux/bitops.h>
-#include <linux/printk.h>
-#include <asm/param.h>
 #include <asm/page.h>
 #include <asm/cpufeature.h>
+
+#include <linux/nbsd-namespace.h>
 
 #define RQ_BUG_ON(expr)
 
@@ -404,7 +400,7 @@ i915_gem_phys_pwrite(struct drm_i915_gem_object *obj,
 		     struct drm_file *file_priv)
 {
 	struct drm_device *dev = obj->base.dev;
-	void *vaddr = (char *)obj->phys_handle->vaddr + args->offset;
+	void *vaddr = obj->phys_handle->vaddr + args->offset;
 	char __user *user_data = to_user_ptr(args->data_ptr);
 	int ret = 0;
 
@@ -487,11 +483,7 @@ i915_gem_dumb_create(struct drm_file *file,
 		     struct drm_mode_create_dumb *args)
 {
 	/* have to work out size/pitch and return them */
-#ifdef __NetBSD__		/* ALIGN means something else.  */
-	args->pitch = round_up(args->width * DIV_ROUND_UP(args->bpp, 8), 64);
-#else
 	args->pitch = ALIGN(args->width * DIV_ROUND_UP(args->bpp, 8), 64);
-#endif
 	args->size = args->pitch * args->height;
 	return i915_gem_create(file, dev,
 			       args->size, &args->handle);
@@ -518,11 +510,7 @@ __copy_to_user_swizzled(char __user *cpu_vaddr,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		int cacheline_end = round_up(gpu_offset + 1, 64);
-#else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
-#endif
 		int this_length = min(cacheline_end - gpu_offset, length);
 		int swizzled_gpu_offset = gpu_offset ^ 64;
 
@@ -548,11 +536,7 @@ __copy_from_user_swizzled(char *gpu_vaddr, int gpu_offset,
 	int ret, cpu_offset = 0;
 
 	while (length > 0) {
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		int cacheline_end = round_up(gpu_offset + 1, 64);
-#else
 		int cacheline_end = ALIGN(gpu_offset + 1, 64);
-#endif
 		int this_length = min(cacheline_end - gpu_offset, length);
 		int swizzled_gpu_offset = gpu_offset ^ 64;
 
@@ -2026,7 +2010,7 @@ i915_gem_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	intel_runtime_pm_get(dev_priv);
 
 	/* Thanks, uvm, but we don't need this lock.  */
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	ret = i915_mutex_lock_interruptible(dev);
 	if (ret)
@@ -2066,10 +2050,8 @@ unpin:
 unlock:
 	mutex_unlock(&dev->struct_mutex);
 out:
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-	if (ret == -ERESTART)
-		uvm_wait("i915flt");
 
 	/*
 	 * Remap EINTR to success, so that we return to userland.
@@ -2103,7 +2085,7 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	off_t curr_offset;
 	paddr_t paddr;
 	u_int mmapflags;
-	int lcv, retval;
+	int lcv;
 	vm_prot_t mapprot;
 	UVMHIST_FUNC("i915_udv_fault"); UVMHIST_CALLED(maphist);
 	UVMHIST_LOG(maphist,"  flags=%jd", flags,0,0,0);
@@ -2135,7 +2117,6 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	 * loop over the page range entering in as needed
 	 */
 
-	retval = 0;
 	for (lcv = 0 ; lcv < npages ; lcv++, curr_offset += PAGE_SIZE,
 	    curr_va += PAGE_SIZE) {
 		if ((flags & PGO_ALLPAGES) == 0 && lcv != centeridx)
@@ -2163,12 +2144,12 @@ i915_udv_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 			 * XXX case.
 			 */
 			pmap_update(ufi->orig_map->pmap);	/* sync what we have so far */
-			return (ERESTART);
+			return ENOMEM;
 		}
 	}
 
 	pmap_update(ufi->orig_map->pmap);
-	return (retval);
+	return 0;
 }
 #else
 /**
@@ -2568,7 +2549,7 @@ i915_gem_object_truncate(struct drm_i915_gem_object *obj)
 
 		if (uobj != NULL) {
 			/* XXX Calling pgo_put like this is bogus.  */
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			(*uobj->pgops->pgo_put)(uobj, 0, obj->base.size,
 			    (PGO_ALLPAGES | PGO_FREE));
 		}
@@ -2606,7 +2587,7 @@ i915_gem_object_invalidate(struct drm_i915_gem_object *obj)
 
 #ifdef __NetBSD__
 	uobj = obj->base.filp;
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	(*uobj->pgops->pgo_put)(uobj, 0, obj->base.size,
 	    PGO_ALLPAGES|PGO_DEACTIVATE|PGO_CLEANIT);
 #else
@@ -2643,12 +2624,12 @@ i915_gem_object_put_pages_gtt(struct drm_i915_gem_object *obj)
 		obj->dirty = 0;
 
 	if (obj->dirty) {
-		mutex_enter(obj->base.filp->vmobjlock);
+		rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
 		TAILQ_FOREACH(page, &obj->pageq, pageq.queue) {
 			uvm_pagemarkdirty(page, UVM_PAGE_STATUS_DIRTY);
 			/* XXX mark page accessed */
 		}
-		mutex_exit(obj->base.filp->vmobjlock);
+		rw_exit(obj->base.filp->vmobjlock);
 	}
 	obj->dirty = 0;
 
@@ -5648,11 +5629,7 @@ i915_gem_load(struct drm_device *dev)
 	dev_priv->mm.interruptible = true;
 
 	i915_gem_shrinker_init(dev_priv);
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->fb_tracking.lock);
-#else
 	mutex_init(&dev_priv->fb_tracking.lock);
-#endif
 }
 
 void i915_gem_release(struct drm_device *dev, struct drm_file *file)

@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_ringbuffer.c,v 1.11 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: intel_ringbuffer.c,v 1.11.2.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2008-2010 Intel Corporation
@@ -30,9 +30,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.11 2019/12/05 20:03:09 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_ringbuffer.c,v 1.11.2.1 2020/02/29 20:20:14 ad Exp $");
 
-#include <asm/param.h>
 #include <drm/drmP.h>
 #include "i915_drv.h"
 #include <drm/i915_drm.h>

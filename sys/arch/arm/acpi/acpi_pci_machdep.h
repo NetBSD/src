@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.h,v 1.5.2.1 2020/01/17 21:47:23 ad Exp $ */
+/* $NetBSD: acpi_pci_machdep.h,v 1.5.2.2 2020/02/29 20:18:17 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct acpi_pci_context {
 	bus_space_handle_t ap_conf_bsh;
 	int (*ap_conf_read)(pci_chipset_tag_t, pcitag_t, int, pcireg_t *);
 	int (*ap_conf_write)(pci_chipset_tag_t, pcitag_t, int, pcireg_t);
+	void *ap_conf_priv;
 	int ap_pciflags_clear;
 };
 
@@ -57,6 +58,7 @@ struct acpi_pci_quirk {
 const struct acpi_pci_quirk *	acpi_pci_md_find_quirk(int);
 
 void	acpi_pci_graviton_init(struct acpi_pci_context *);
+void	acpi_pci_layerscape_gen4_init(struct acpi_pci_context *);
 void	acpi_pci_n1sdp_init(struct acpi_pci_context *);
 
 #endif /* !_ARM_ACPI_PCI_MACHDEP_H */

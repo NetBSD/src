@@ -1,11 +1,8 @@
-/*	$NetBSD: byteorder.h,v 1.3 2014/07/16 20:59:58 riastradh Exp $	*/
+/*	$NetBSD: scsi_sdt.h,v 1.1.2.2 2020/02/29 20:19:16 ad Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,30 +26,11 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ASM_BYTEORDER_H_
-#define _ASM_BYTEORDER_H_
+#ifndef	_DEV_SCSIPI_SCSI_SDT_H_
+#define	_DEV_SCSIPI_SCSI_SDT_H_
 
-#include <sys/endian.h>
+#include <sys/sdt.h>
 
-#define	cpu_to_le16	htole16
-#define	cpu_to_le32	htole32
-#define	cpu_to_le64	htole64
-#define	cpu_to_be16	htobe16
-#define	cpu_to_be32	htobe32
-#define	cpu_to_be64	htobe64
+SDT_PROVIDER_DECLARE(scsi);
 
-#define	le16_to_cpu	le16toh
-#define	le32_to_cpu	le32toh
-#define	le64_to_cpu	le64toh
-#define	be16_to_cpu	be16toh
-#define	be32_to_cpu	be32toh
-#define	be64_to_cpu	be64toh
-
-#define	be16_to_cpup	be16dec
-#define	be32_to_cpup	be32dec
-#define	be64_to_cpup	be64dec
-#define	le16_to_cpup	le16dec
-#define	le32_to_cpup	le32dec
-#define	le64_to_cpup	le64dec
-
-#endif	/* _ASM_BYTEORDER_H_ */
+#endif	/* _DEV_SCSIPI_SCSI_SDT_H_ */

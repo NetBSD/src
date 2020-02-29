@@ -1,4 +1,4 @@
-/* $NetBSD: privcmd.c,v 1.51 2017/06/22 22:36:50 chs Exp $ */
+/* $NetBSD: privcmd.c,v 1.51.12.1 2020/02/29 20:18:34 ad Exp $ */
 
 /*-
  * Copyright (c) 2004 Christian Limpach.
@@ -27,7 +27,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.51 2017/06/22 22:36:50 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: privcmd.c,v 1.51.12.1 2020/02/29 20:18:34 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -450,9 +450,9 @@ static struct uvm_pagerops privpgops = {
 static void
 privpgop_reference(struct uvm_object *uobj)
 {
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	uobj->uo_refs++;
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 }
 
 static void
@@ -460,13 +460,13 @@ privpgop_detach(struct uvm_object *uobj)
 {
 	struct privcmd_object *pobj = (struct privcmd_object *)uobj;
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	if (uobj->uo_refs > 1) {
 		uobj->uo_refs--;
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 		return;
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 	kmem_free(pobj->maddr, sizeof(paddr_t) * pobj->npages);
 	uvm_obj_destroy(uobj, true);
 	kmem_free(pobj, sizeof(struct privcmd_object));
@@ -502,7 +502,6 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 		    PMAP_CANFAIL | ufi->entry->protection,
 		    pobj->domid);
 		if (error == ENOMEM) {
-			error = ERESTART;
 			break;
 		}
 		if (error) {
@@ -513,10 +512,6 @@ privpgop_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr, struct vm_page **pps,
 	}
 	pmap_update(ufi->orig_map->pmap);
 	uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-
-	if (error == ERESTART) {
-		uvm_wait("privpgop_fault");
-	}
 	return error;
 }
 

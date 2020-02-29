@@ -1,4 +1,4 @@
-/*	$NetBSD: ip_carp.c,v 1.104.2.2 2020/01/25 22:38:52 ad Exp $	*/
+/*	$NetBSD: ip_carp.c,v 1.104.2.3 2020/02/29 20:21:07 ad Exp $	*/
 /*	$OpenBSD: ip_carp.c,v 1.113 2005/11/04 08:11:54 mcbride Exp $	*/
 
 /*
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.104.2.2 2020/01/25 22:38:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ip_carp.c,v 1.104.2.3 2020/02/29 20:21:07 ad Exp $");
 
 /*
  * TODO:
@@ -712,13 +712,12 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 	}
 
 	nanotime(&sc->sc_if.if_lastchange);
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
+	if_statadd2(&sc->sc_if, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
 
 	/* verify the CARP version. */
 	if (ch->carp_version != CARP_VERSION) {
 		CARP_STATINC(CARP_STAT_BADVER);
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		CARP_LOG(sc, ("invalid version %d != %d",
 		    ch->carp_version, CARP_VERSION));
 		m_freem(m);
@@ -735,7 +734,7 @@ carp_proto_input_c(struct mbuf *m, struct carp_header *ch, sa_family_t af)
 #endif
 
 		CARP_STATINC(CARP_STAT_BADAUTH);
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 
 		switch(af) {
 		case AF_INET:
@@ -908,10 +907,10 @@ carp_clone_destroy(struct ifnet *ifp)
 {
 	struct carp_softc *sc = ifp->if_softc;
 
-	ifmedia_delete_instance(&sc->sc_im, IFM_INST_ANY);
 	carpdetach(ifp->if_softc);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_im);
 	callout_destroy(&sc->sc_ad_tmo);
 	callout_destroy(&sc->sc_md_tmo);
 	callout_destroy(&sc->sc_md6_tmo);
@@ -1038,7 +1037,7 @@ carp_send_ad(void *v)
 
 	advbase = advskew = 0; /* Sssssh compiler */
 	if (sc->sc_carpdev == NULL) {
-		sc->sc_if.if_oerrors++;
+		if_statinc(&sc->sc_if, if_oerrors);
 		goto retry_later;
 	}
 
@@ -1075,7 +1074,7 @@ carp_send_ad(void *v)
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 			CARP_STATINC(CARP_STAT_ONOMEM);
 			/* XXX maybe less ? */
 			goto retry_later;
@@ -1119,8 +1118,7 @@ carp_send_ad(void *v)
 		m->m_data -= sizeof(*ip);
 
 		nanotime(&sc->sc_if.if_lastchange);
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += len;
+		if_statadd2(&sc->sc_if, if_opackets, 1, if_obytes, len);
 		CARP_STATINC(CARP_STAT_OPACKETS);
 
 		error = ip_output(m, NULL, NULL, IP_RAWOUTPUT, &sc->sc_imo,
@@ -1130,7 +1128,7 @@ carp_send_ad(void *v)
 				CARP_STATINC(CARP_STAT_ONOMEM);
 			else
 				CARP_LOG(sc, ("ip_output failed: %d", error));
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
 			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS) {
@@ -1159,7 +1157,7 @@ carp_send_ad(void *v)
 
 		MGETHDR(m, M_DONTWAIT, MT_HEADER);
 		if (m == NULL) {
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 			CARP_STATINC(CARP_STAT_ONOMEM);
 			/* XXX maybe less ? */
 			goto retry_later;
@@ -1193,7 +1191,7 @@ carp_send_ad(void *v)
 		ip6->ip6_dst.s6_addr16[0] = htons(0xff02);
 		ip6->ip6_dst.s6_addr8[15] = 0x12;
 		if (in6_setscope(&ip6->ip6_dst, &sc->sc_if, NULL) != 0) {
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 			m_freem(m);
 			CARP_LOG(sc, ("in6_setscope failed"));
 			goto retry_later;
@@ -1207,8 +1205,7 @@ carp_send_ad(void *v)
 		    len - sizeof(*ip6));
 
 		nanotime(&sc->sc_if.if_lastchange);
-		sc->sc_if.if_opackets++;
-		sc->sc_if.if_obytes += len;
+		if_statadd2(&sc->sc_if, if_opackets, 1, if_obytes, len);
 		CARP_STATINC(CARP_STAT_OPACKETS6);
 
 		error = ip6_output(m, NULL, NULL, 0, &sc->sc_im6o, NULL, NULL);
@@ -1217,7 +1214,7 @@ carp_send_ad(void *v)
 				CARP_STATINC(CARP_STAT_ONOMEM);
 			else
 				CARP_LOG(sc, ("ip6_output failed: %d", error));
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 			if (sc->sc_sendad_errors < INT_MAX)
 				sc->sc_sendad_errors++;
 			if (sc->sc_sendad_errors == CARP_SENDAD_MAX_ERRORS) {
@@ -1509,7 +1506,7 @@ carp_input(struct mbuf *m, u_int8_t *shost, u_int8_t *dhost, u_int16_t etype)
 	m_set_rcvif(m, ifp);
 
 	bpf_mtap(ifp, m, BPF_D_IN);
-	ifp->if_ipackets++;
+	if_statinc(ifp, if_ipackets);
 	ether_input(ifp, m);
 	return (0);
 }
@@ -2268,13 +2265,7 @@ carp_update_link_state(struct carp_softc *sc)
 			     ? LINK_STATE_DOWN : LINK_STATE_UNKNOWN;
 		break;
 	}
-	/*
-	 * The lock is needed to serialize a call of
-	 * if_link_state_change_softint from here and a call from softint.
-	 */
-	KERNEL_LOCK(1, NULL);
-	if_link_state_change_softint(&sc->sc_if, link_state);
-	KERNEL_UNLOCK_ONE(NULL);
+	if_link_state_change(&sc->sc_if, link_state);
 }
 
 void

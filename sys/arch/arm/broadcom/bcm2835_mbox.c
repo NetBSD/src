@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox.c,v 1.14 2019/12/30 18:43:38 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_mbox.c,v 1.14.2.1 2020/02/29 20:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.14 2019/12/30 18:43:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox.c,v 1.14.2.1 2020/02/29 20:18:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -97,8 +97,9 @@ bcmmbox_attach(struct bcm2835mbox_softc *sc)
 		cv_init(&sc->sc_chan[i], "bcmmbox");
 
 	/* enable mbox interrupt */
-	bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_MBOX_CFG,
-	    BCM2835_MBOX_CFG_DATAIRQEN);
+	if (sc->sc_intrh != NULL)
+		bus_space_write_4(sc->sc_iot, sc->sc_ioh, BCM2835_MBOX_CFG,
+		    BCM2835_MBOX_CFG_DATAIRQEN);
 
 	baa.baa_dmat = sc->sc_dmat;
 	sc->sc_platdev = config_found_ia(sc->sc_dev, "bcmmboxbus", &baa, NULL);
@@ -130,7 +131,7 @@ bcmmbox_read(uint8_t chan, uint32_t *data)
 
 	mutex_enter(&sc->sc_intr_lock);
 	while (BCM2835_MBOX_CHAN(sc->sc_mbox[chan]) == 0) {
-		if (cold)
+		if (cold || sc->sc_intrh == NULL)
 			bcmmbox_intr1(sc, 0);
 		else
 			cv_wait(&sc->sc_chan[chan], &sc->sc_intr_lock);

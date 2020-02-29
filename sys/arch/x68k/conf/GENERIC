@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.196 2019/04/26 22:46:04 sevan Exp $
+# $NetBSD: GENERIC,v 1.196.4.1 2020/02/29 20:18:32 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include 	"arch/x68k/conf/std.x68k"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.196 $"
+#ident 		"GENERIC-$Revision: 1.196.4.1 $"
 
 makeoptions	COPTS="-O2 -fno-reorder-blocks"	# see share/mk/sys.mk
 
@@ -377,9 +377,6 @@ bmd*	at intio0 addr 0xecebf0		# Nereid
 
 #uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
 
 # USB Handspring Visor
 #uvisor*	at uhub? port ?

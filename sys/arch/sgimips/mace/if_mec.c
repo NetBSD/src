@@ -1,4 +1,4 @@
-/* $NetBSD: if_mec.c,v 1.62 2019/12/26 04:53:11 msaitoh Exp $ */
+/* $NetBSD: if_mec.c,v 1.62.2.1 2020/02/29 20:18:30 ad Exp $ */
 
 /*-
  * Copyright (c) 2004, 2008 Izumi Tsutsui.  All rights reserved.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.62 2019/12/26 04:53:11 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mec.c,v 1.62.2.1 2020/02/29 20:18:30 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1470,7 +1470,7 @@ mec_watchdog(struct ifnet *ifp)
 	struct mec_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	mec_init(ifp);
 }
@@ -1665,7 +1665,7 @@ mec_rxintr(struct mec_softc *sc)
 			DPRINTF(MEC_DEBUG_RXINTR,
 			    ("%s: wrong packet\n", __func__));
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			rxd->rxd_stat = 0;
 			MEC_RXSTATSYNC(sc, i, BUS_DMASYNC_PREREAD);
 			bus_space_write_8(st, sh, MEC_MCL_RX_FIFO,
@@ -1880,14 +1880,15 @@ mec_txintr(struct mec_softc *sc, uint32_t txptr)
 		}
 
 		col = (txstat & MEC_TXSTAT_COLCNT) >> MEC_TXSTAT_COLCNT_SHIFT;
-		ifp->if_collisions += col;
+		if (col)
+			if_statadd(ifp, if_collisions, col);
 
 		if ((txstat & MEC_TXSTAT_SUCCESS) == 0) {
 			printf("%s: TX error: txstat = 0x%016"PRIx64"\n",
 			    device_xname(sc->sc_dev), txstat);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		} else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 	}
 
 	/* update the dirty TX buffer pointer */

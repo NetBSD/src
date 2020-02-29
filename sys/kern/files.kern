@@ -1,4 +1,4 @@
-#	$NetBSD: files.kern,v 1.42 2020/01/04 03:46:19 kamil Exp $
+#	$NetBSD: files.kern,v 1.42.2.1 2020/02/29 20:21:02 ad Exp $
 
 #
 # kernel sources
@@ -124,7 +124,6 @@ file	kern/subr_interrupt.c		kern
 file	kern/subr_iostat.c		kern
 file	kern/subr_ipi.c			kern
 file	kern/subr_kcpuset.c		kern
-file	kern/subr_kleak.c		kleak
 file	kern/subr_kcov.c		kcov
 defflag	opt_kmem.h			KMEM_SIZE
 file	kern/subr_kmem.c		kern

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sl.c,v 1.131 2019/01/24 09:33:03 knakahara Exp $	*/
+/*	$NetBSD: if_sl.c,v 1.131.6.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1987, 1989, 1992, 1993
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.131 2019/01/24 09:33:03 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sl.c,v 1.131.6.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -485,7 +485,7 @@ sloutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		printf("%s: af%d not supported\n", sc->sc_if.if_xname,
 		    dst->sa_family);
 		m_freem(m);
-		sc->sc_if.if_noproto++;
+		if_statinc(&sc->sc_if, if_noproto);
 		return EAFNOSUPPORT;
 	}
 
@@ -625,7 +625,7 @@ slinput(int c, struct tty *tp)
 	}
 	c &= TTY_CHARMASK;
 
-	++sc->sc_if.if_ibytes;
+	if_statinc(&sc->sc_if, if_ibytes);
 
 	if (sc->sc_if.if_flags & IFF_DEBUG) {
 		if (c == ABT_ESC) {
@@ -697,7 +697,7 @@ slinput(int c, struct tty *tp)
 	sc->sc_flags |= SC_ERROR;
 
 error:
-	sc->sc_if.if_ierrors++;
+	if_statinc(&sc->sc_if, if_ierrors);
 newpack:
 	sc->sc_mp = sc->sc_pktstart = (u_char *)sc->sc_mbuf->m_ext.ext_buf +
 	    BUFOFFSET;
@@ -746,7 +746,7 @@ slintr(void *arg)
 		s = splnet();
 		IF_DEQUEUE(&sc->sc_fastq, m);
 		if (m)
-			sc->sc_if.if_omcasts++;	/* XXX */
+			if_statinc(&sc->sc_if, if_omcasts);	/* XXX */
 		else
 			IFQ_DEQUEUE(&sc->sc_if.if_snd, m);
 		splx(s);
@@ -794,7 +794,7 @@ slintr(void *arg)
 		 * some time.
 		 */
 		if (tp->t_outq.c_cc == 0) {
-			sc->sc_if.if_obytes++;
+			if_statinc(&sc->sc_if, if_obytes);
 			(void)putc(FRAME_END, &tp->t_outq);
 		}
 
@@ -825,7 +825,8 @@ slintr(void *arg)
 					 */
 					if (b_to_q(bp, cp - bp, &tp->t_outq))
 						break;
-					sc->sc_if.if_obytes += cp - bp;
+					if_statadd(&sc->sc_if, if_obytes,
+					    cp - bp);
 				}
 				/*
 				 * If there are characters left in
@@ -843,7 +844,7 @@ slintr(void *arg)
 						(void)unputc(&tp->t_outq);
 						break;
 					}
-					sc->sc_if.if_obytes += 2;
+					if_statadd(&sc->sc_if, if_obytes, 2);
 				}
 				bp = cp;
 			}
@@ -861,10 +862,9 @@ slintr(void *arg)
 			 */
 			(void)unputc(&tp->t_outq);
 			(void)putc(FRAME_END, &tp->t_outq);
-			sc->sc_if.if_collisions++;
+			if_statinc(&sc->sc_if, if_collisions);
 		} else {
-			sc->sc_if.if_obytes++;
-			sc->sc_if.if_opackets++;
+			if_statadd2(&sc->sc_if, if_obytes, 1, if_opackets, 1);
 		}
 
 		/*
@@ -959,14 +959,13 @@ slintr(void *arg)
 			m = n;
 		}
 
-		sc->sc_if.if_ipackets++;
+		if_statinc(&sc->sc_if, if_ipackets);
 		getbinuptime(&sc->sc_lastpacket);
 
 #ifdef INET
 		s = splnet();
 		if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
-			sc->sc_if.if_ierrors++;
-			sc->sc_if.if_iqdrops++;
+			if_statadd2(&sc->sc_if, if_ierrors, 1, if_iqdrops, 1);
 			m_freem(m);
 		}
 		splx(s);
@@ -1032,15 +1031,18 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCGPPPSTATS:
+	case SIOCGPPPSTATS: {
+		struct if_data ifi;
+
+		if_export_if_data(&sc->sc_if, &ifi, false);
 		psp = &((struct ifpppstatsreq *) data)->stats;
 		(void)memset(psp, 0, sizeof(*psp));
-		psp->p.ppp_ibytes = sc->sc_if.if_ibytes;
-		psp->p.ppp_ipackets = sc->sc_if.if_ipackets;
-		psp->p.ppp_ierrors = sc->sc_if.if_ierrors;
-		psp->p.ppp_obytes = sc->sc_if.if_obytes;
-		psp->p.ppp_opackets = sc->sc_if.if_opackets;
-		psp->p.ppp_oerrors = sc->sc_if.if_oerrors;
+		psp->p.ppp_ibytes = ifi.ifi_ibytes;
+		psp->p.ppp_ipackets = ifi.ifi_ipackets;
+		psp->p.ppp_ierrors = ifi.ifi_ierrors;
+		psp->p.ppp_obytes = ifi.ifi_obytes;
+		psp->p.ppp_opackets = ifi.ifi_opackets;
+		psp->p.ppp_oerrors = ifi.ifi_oerrors;
 #ifdef INET
 		psp->vj.vjs_packets = sc->sc_comp.sls_packets;
 		psp->vj.vjs_compressed = sc->sc_comp.sls_compressed;
@@ -1051,6 +1053,7 @@ slioctl(struct ifnet *ifp, u_long cmd, void *data)
 		psp->vj.vjs_errorin = sc->sc_comp.sls_errorin;
 		psp->vj.vjs_tossed = sc->sc_comp.sls_tossed;
 #endif
+	    }
 		break;
 
 	case SIOCGPPPCSTATS:

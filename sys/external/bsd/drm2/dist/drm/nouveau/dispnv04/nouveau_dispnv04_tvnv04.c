@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.4 2018/08/27 07:35:03 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.4.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright (C) 2009 Francisco Jerez.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.4 2018/08/27 07:35:03 riastradh Exp $");
-
-#include <linux/err.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_tvnv04.c,v 1.4.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <drm/drmP.h>
 #include "nouveau_drm.h"

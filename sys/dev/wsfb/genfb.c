@@ -1,4 +1,4 @@
-/*	$NetBSD: genfb.c,v 1.70 2019/08/09 17:22:02 rin Exp $ */
+/*	$NetBSD: genfb.c,v 1.70.2.1 2020/02/29 20:19:17 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.70 2019/08/09 17:22:02 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.70.2.1 2020/02/29 20:19:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -39,6 +39,7 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.70 2019/08/09 17:22:02 rin Exp $");
 #include <sys/kernel.h>
 #include <sys/systm.h>
 #include <sys/kmem.h>
+#include <sys/reboot.h>
 
 #include <dev/wscons/wsconsio.h>
 #include <dev/wscons/wsdisplayvar.h>
@@ -53,7 +54,6 @@ __KERNEL_RCSID(0, "$NetBSD: genfb.c,v 1.70 2019/08/09 17:22:02 rin Exp $");
 #include <dev/videomode/edidvar.h>
 
 #ifdef GENFB_DISABLE_TEXT
-#include <sys/reboot.h>
 #define DISABLESPLASH (boothowto & (RB_SINGLE | RB_USERCONF | RB_ASKNAME | \
 		AB_VERBOSE | AB_DEBUG) )
 #endif
@@ -342,7 +342,7 @@ genfb_attach(struct genfb_softc *sc, struct genfb_ops *ops)
 	}
 #else
 	genfb_init_palette(sc);
-	if (console)
+	if (console && (boothowto & (AB_SILENT|AB_QUIET)) == 0)
 		vcons_replay_msgbuf(&sc->sc_console_screen);
 #endif
 

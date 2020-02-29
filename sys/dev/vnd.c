@@ -1,7 +1,7 @@
-/*	$NetBSD: vnd.c,v 1.272.6.1 2020/01/17 21:47:30 ad Exp $	*/
+/*	$NetBSD: vnd.c,v 1.272.6.2 2020/02/29 20:19:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 1996, 1997, 1998, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 1996, 1997, 1998, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -91,7 +91,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.6.1 2020/01/17 21:47:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.6.2 2020/02/29 20:19:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_vnd.h"
@@ -121,6 +121,7 @@ __KERNEL_RCSID(0, "$NetBSD: vnd.c,v 1.272.6.1 2020/01/17 21:47:30 ad Exp $");
 #include <sys/kauth.h>
 #include <sys/module.h>
 #include <sys/compat_stub.h>
+#include <sys/atomic.h>
 
 #include <net/zlib.h>
 
@@ -794,6 +795,7 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	off_t offset;
 	size_t len, resid;
 	struct vnode *vp;
+	int npages;
 
 	doread = bp->b_flags & B_READ;
 	offset = obp->b_rawblkno * vnd->sc_dkdev.dk_label->d_secsize;
@@ -824,12 +826,12 @@ handle_with_rdwr(struct vnd_softc *vnd, const struct buf *obp, struct buf *bp)
 	 * We need some amount of caching to not hinder
 	 * read-ahead and write-behind operations.
 	 */
-	mutex_enter(vp->v_interlock);
-	if (vp->v_uobj.uo_npages > VND_MAXPAGES(vnd))
+	npages = atomic_load_relaxed(&vp->v_uobj.uo_npages);
+	if (npages > VND_MAXPAGES(vnd)) {
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		(void) VOP_PUTPAGES(vp, 0, 0,
 		    PGO_ALLPAGES | PGO_CLEANIT | PGO_FREE);
-	else
-		mutex_exit(vp->v_interlock);
+	}
 
 	/* We need to increase the number of outputs on the vnode if
 	 * there was any write to it. */

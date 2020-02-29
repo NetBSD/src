@@ -1,4 +1,4 @@
-/*	$NetBSD: hfs_vfsops.c,v 1.35.6.1 2020/01/17 21:47:33 ad Exp $	*/
+/*	$NetBSD: hfs_vfsops.c,v 1.35.6.2 2020/02/29 20:21:01 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005, 2007 The NetBSD Foundation, Inc.
@@ -99,7 +99,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.35.6.1 2020/01/17 21:47:33 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hfs_vfsops.c,v 1.35.6.2 2020/02/29 20:21:01 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -474,7 +474,7 @@ hfs_statvfs(struct mount *mp, struct statvfs *sbp)
 	sbp->f_bavail = vh->free_blocks; /* blocks free for non superuser */
 	sbp->f_bresvd = 0;
 	sbp->f_files =  vh->file_count; /* total files */
-	sbp->f_ffree = (1<<31) - vh->file_count; /* free file nodes */
+	sbp->f_ffree = (1U<<31) - vh->file_count; /* free file nodes */
 	copy_statvfs_info(sbp, mp);
 
 	return 0;

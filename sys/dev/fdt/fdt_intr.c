@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_intr.c,v 1.24 2019/12/31 20:47:05 jmcneill Exp $ */
+/* $NetBSD: fdt_intr.c,v 1.24.2.1 2020/02/29 20:19:07 ad Exp $ */
 
 /*-
  * Copyright (c) 2015-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,15 +27,19 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.24 2019/12/31 20:47:05 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_intr.c,v 1.24.2.1 2020/02/29 20:19:07 ad Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
 #include <sys/queue.h>
+#include <sys/mutex.h>
+#include <sys/condvar.h>
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_private.h>
 
 struct fdtbus_interrupt_controller {
 	device_t ic_dev;
@@ -53,13 +57,25 @@ struct fdtbus_interrupt_cookie {
 	void *c_ih;
 
 	LIST_ENTRY(fdtbus_interrupt_cookie) c_next;
+	uint32_t c_refcnt;
 };
 
 static LIST_HEAD(, fdtbus_interrupt_cookie) fdtbus_interrupt_cookies =
     LIST_HEAD_INITIALIZER(fdtbus_interrupt_cookies);
+static kmutex_t fdtbus_interrupt_cookie_mutex;
+static kcondvar_t fdtbus_interrupt_cookie_wait;
+static bool fdtbus_interrupt_cookies_wanted;
 
 static const u_int *	get_specifier_by_index(int, int, int *);
 static const u_int *	get_specifier_from_map(int, const u_int *, int *);
+
+void
+fdtbus_intr_init(void)
+{
+
+	mutex_init(&fdtbus_interrupt_cookie_mutex, MUTEX_SPIN, IPL_HIGH);
+	cv_init(&fdtbus_interrupt_cookie_wait, "fdtintr");
+}
 
 /*
  * Find the interrupt controller for a given node. This function will either
@@ -130,6 +146,37 @@ fdtbus_register_interrupt_controller(device_t dev, int phandle,
 	return 0;
 }
 
+static struct fdtbus_interrupt_cookie *
+fdtbus_get_interrupt_cookie(void *cookie)
+{
+	struct fdtbus_interrupt_cookie *c;
+
+	mutex_enter(&fdtbus_interrupt_cookie_mutex);
+	LIST_FOREACH(c, &fdtbus_interrupt_cookies, c_next) {
+		if (c->c_ih == cookie) {
+			c->c_refcnt++;
+			KASSERT(c->c_refcnt > 0);
+			break;
+		}
+	}
+	mutex_exit(&fdtbus_interrupt_cookie_mutex);
+	return c;
+}
+
+static void
+fdtbus_put_interrupt_cookie(struct fdtbus_interrupt_cookie *c)
+{
+
+	mutex_enter(&fdtbus_interrupt_cookie_mutex);
+	KASSERT(c->c_refcnt > 0);
+	c->c_refcnt--;
+	if (fdtbus_interrupt_cookies_wanted) {
+		fdtbus_interrupt_cookies_wanted = false;
+		cv_signal(&fdtbus_interrupt_cookie_wait);
+	}
+	mutex_exit(&fdtbus_interrupt_cookie_mutex);
+}
+
 void *
 fdtbus_intr_establish(int phandle, u_int index, int ipl, int flags,
     int (*func)(void *), void *arg)
@@ -173,13 +220,29 @@ fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
 		return NULL;
 	}
 
+	c = kmem_zalloc(sizeof(*c), KM_SLEEP);
+	c->c_ic = ic;
+	mutex_enter(&fdtbus_interrupt_cookie_mutex);
+	LIST_INSERT_HEAD(&fdtbus_interrupt_cookies, c, c_next);
+	mutex_exit(&fdtbus_interrupt_cookie_mutex);
+
+	/*
+	 * XXX This leaves a small window where the handler is registered
+	 * (and thus could be called) before the cookie on the list has a
+	 * valid lookup key (and thus can be found).  This will cause a
+	 * panic in fdt_intr_mask() if that is called from the handler before
+	 * this situation is resolved.  For now we just cross our fingers
+	 * and hope that the device won't actually interrupt until we return.
+	 */
 	ih = ic->ic_funcs->establish(ic->ic_dev, __UNCONST(specifier),
 	    ipl, flags, func, arg);
 	if (ih != NULL) {
-		c = kmem_alloc(sizeof(*c), KM_SLEEP);
-		c->c_ic = ic;
-		c->c_ih = ih;
-		LIST_INSERT_HEAD(&fdtbus_interrupt_cookies, c, c_next);
+		atomic_store_release(&c->c_ih, ih);
+	} else {
+		mutex_enter(&fdtbus_interrupt_cookie_mutex);
+		LIST_REMOVE(c, c_next);
+		mutex_exit(&fdtbus_interrupt_cookie_mutex);
+		kmem_free(c, sizeof(*c));
 	}
 
 	return ih;
@@ -188,22 +251,70 @@ fdtbus_intr_establish_raw(int ihandle, const u_int *specifier, int ipl,
 void
 fdtbus_intr_disestablish(int phandle, void *cookie)
 {
-	struct fdtbus_interrupt_controller *ic = NULL;
 	struct fdtbus_interrupt_cookie *c;
 
-	LIST_FOREACH(c, &fdtbus_interrupt_cookies, c_next) {
-		if (c->c_ih == cookie) {
-			ic = c->c_ic;
-			LIST_REMOVE(c, c_next);
-			kmem_free(c, sizeof(*c));
-			break;
-		}
+	if ((c = fdtbus_get_interrupt_cookie(cookie)) == NULL) {
+		panic("%s: interrupt handle not valid", __func__);
 	}
 
-	if (ic == NULL)
-		panic("%s: interrupt handle not valid", __func__);
+	const struct fdtbus_interrupt_controller *ic = c->c_ic;
+	ic->ic_funcs->disestablish(ic->ic_dev, cookie);
 
-	return ic->ic_funcs->disestablish(ic->ic_dev, cookie);
+	/*
+	 * Wait for any dangling references other than ours to
+	 * drain away.
+	 */
+	mutex_enter(&fdtbus_interrupt_cookie_mutex);
+	while (c->c_refcnt != 1) {
+		KASSERT(c->c_refcnt > 0);
+		fdtbus_interrupt_cookies_wanted = true;
+		cv_wait(&fdtbus_interrupt_cookie_wait,
+			&fdtbus_interrupt_cookie_mutex);
+	}
+	LIST_REMOVE(c, c_next);
+	mutex_exit(&fdtbus_interrupt_cookie_mutex);
+
+	kmem_free(c, sizeof(*c));
+}
+
+void
+fdtbus_intr_mask(int phandle, void *cookie)
+{
+	struct fdtbus_interrupt_cookie *c;
+
+	if ((c = fdtbus_get_interrupt_cookie(cookie)) == NULL) {
+		panic("%s: interrupt handle not valid", __func__);
+	}
+
+	struct fdtbus_interrupt_controller * const ic = c->c_ic;
+
+	if (ic->ic_funcs->mask == NULL) {
+		panic("%s: no 'mask' method for %s", __func__,
+		    device_xname(ic->ic_dev));
+	}
+
+	ic->ic_funcs->mask(ic->ic_dev, cookie);
+	fdtbus_put_interrupt_cookie(c);
+}
+
+void
+fdtbus_intr_unmask(int phandle, void *cookie)
+{
+	struct fdtbus_interrupt_cookie *c;
+
+	if ((c = fdtbus_get_interrupt_cookie(cookie)) == NULL) {
+		panic("%s: interrupt handle not valid", __func__);
+	}
+
+	struct fdtbus_interrupt_controller * const ic = c->c_ic;
+
+	if (ic->ic_funcs->unmask == NULL) {
+		panic("%s: no 'unmask' method for %s", __func__,
+		    device_xname(ic->ic_dev));
+	}
+
+	ic->ic_funcs->unmask(ic->ic_dev, cookie);
+	fdtbus_put_interrupt_cookie(c);
 }
 
 bool

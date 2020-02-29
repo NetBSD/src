@@ -1,4 +1,4 @@
-/* $NetBSD: ofwoea_machdep.c,v 1.45 2018/07/15 05:16:44 maxv Exp $ */
+/* $NetBSD: ofwoea_machdep.c,v 1.45.6.1 2020/02/29 20:18:29 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.45 2018/07/15 05:16:44 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofwoea_machdep.c,v 1.45.6.1 2020/02/29 20:18:29 ad Exp $");
 
 #include "opt_ppcarch.h"
 #include "opt_compat_netbsd.h"
@@ -175,9 +175,17 @@ ofwoea_initppc(u_int startkernel, u_int endkernel, char *args)
 		model_init();
 	}
 
-	if (strncmp(model_name, "PowerMac11,", 11) == 0 ||
-	    strncmp(model_name, "PowerMac7,", 10) == 0) 
+	if (strncmp(model_name, "PowerMac11,2", 12) == 0 ||
+	    strncmp(model_name, "PowerMac12,1", 12) == 0)
 		OF_quiesce();
+
+	/* switch CPUs to full speed */
+	if  (strncmp(model_name, "PowerMac7,", 10) == 0) {
+		int clock_ih = OF_open("/u3/i2c/i2c-hwclock");
+		if (clock_ih != 0) {
+			OF_call_method_1("slew-high", clock_ih, 0);
+		}
+	}
 
 	/* Initialize bus_space */
 	ofwoea_bus_space_init();

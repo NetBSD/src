@@ -1,4 +1,4 @@
-/* $NetBSD: sun4i_emac.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $ */
+/* $NetBSD: sun4i_emac.c,v 1.11.4.1 2020/02/29 20:18:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2013-2017 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.11 2019/05/28 07:41:46 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: sun4i_emac.c,v 1.11.4.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -569,13 +569,13 @@ sun4i_emac_rx_intr(struct sun4i_emac_softc *sc)
 		uint32_t rxsts = __SHIFTOUT(rxhdr, EMAC_RXHDR_STS);
 
 		if (rxlen < ETHER_MIN_LEN || (rxsts & EMAC_RX_STA_PKTOK) == 0) {
-			sc->sc_ec.ec_if.if_ierrors++;
+			if_statinc(&sc->sc_ec.ec_if, if_ierrors);
 			continue;
 		}
 
 		m = sun4i_emac_mgethdr(sc, rxlen);
 		if (m == NULL) {
-			sc->sc_ec.ec_if.if_ierrors++;
+			if_statinc(&sc->sc_ec.ec_if, if_ierrors);
 			sun4i_emac_rxfifo_consume(sc, rxlen);
 			return;
 		}
@@ -831,7 +831,7 @@ sun4i_emac_ifwatchdog(struct ifnet *ifp)
 
 	device_printf(sc->sc_dev, "device timeout\n");
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	sun4i_emac_ifinit(ifp);
 	sun4i_emac_ifstart(ifp);
 }

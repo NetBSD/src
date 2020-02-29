@@ -1,4 +1,4 @@
-/*	$NetBSD: rwlock.h,v 1.12.2.4 2020/01/25 22:38:53 ad Exp $	*/
+/*	$NetBSD: rwlock.h,v 1.12.2.5 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -103,6 +103,7 @@ void	rw_downgrade(krwlock_t *);
 int	rw_read_held(krwlock_t *);
 int	rw_write_held(krwlock_t *);
 int	rw_lock_held(krwlock_t *);
+krw_t	rw_lock_op(krwlock_t *);
 
 void	rw_enter(krwlock_t *, const krw_t);
 void	rw_exit(krwlock_t *);

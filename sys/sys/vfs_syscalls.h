@@ -1,4 +1,4 @@
-/*     $NetBSD: vfs_syscalls.h,v 1.26.2.1 2020/01/25 15:54:04 ad Exp $        */
+/*     $NetBSD: vfs_syscalls.h,v 1.26.2.2 2020/02/29 20:21:10 ad Exp $        */
 
 /*
  * Copyright (c) 2007, 2008, 2009 The NetBSD Foundation, Inc.

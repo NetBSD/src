@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cz_ih.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_cz_ih.c,v 1.1.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,10 +23,8 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_ih.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_ih.c,v 1.1.10.1 2020/02/29 20:20:13 ad Exp $");
 
-#include <asm/byteorder.h>
-#include <linux/log2.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_ih.h"

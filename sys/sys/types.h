@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.102.6.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: types.h,v 1.102.6.2 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993, 1994
@@ -317,7 +317,7 @@ typedef	_BSD_USECONDS_T_	useconds_t;
 
 typedef struct kauth_cred *kauth_cred_t;
 
-typedef short pri_t;
+typedef int pri_t;
 
 #endif
 

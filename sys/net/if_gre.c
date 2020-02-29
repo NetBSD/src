@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gre.c,v 1.176 2019/10/16 06:53:34 knakahara Exp $ */
+/*	$NetBSD: if_gre.c,v 1.176.2.1 2020/02/29 20:21:06 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.176 2019/10/16 06:53:34 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gre.c,v 1.176.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_atalk.h"
@@ -791,8 +791,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 	int isr = 0, s;
 	int hlen;
 
-	sc->sc_if.if_ipackets++;
-	sc->sc_if.if_ibytes += m->m_pkthdr.len;
+	if_statadd2(&sc->sc_if, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
 
 	hlen = sizeof(struct gre_h);
 
@@ -804,7 +803,7 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 		hlen += 4;
 	/* We don't support routing fields (variable length) */
 	if (flags & GRE_RP) {
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return 0;
 	}
 	if (flags & GRE_KP)
@@ -842,13 +841,13 @@ gre_input(struct gre_softc *sc, struct mbuf *m, const struct gre_h *gh)
 	default:	   /* others not yet supported */
 		GRE_DPRINTF(sc, "unhandled ethertype 0x%04x\n",
 		    ntohs(gh->ptype));
-		sc->sc_if.if_noproto++;
+		if_statinc(&sc->sc_if, if_noproto);
 		return 0;
 	}
 
 	if (hlen > m->m_pkthdr.len) {
 		m_freem(m);
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return 1;
 	}
 	m_adj(m, hlen);
@@ -953,8 +952,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	gh->ptype = etype;
 	/* XXX Need to handle IP ToS.  Look at how I handle IP TTL. */
 
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+	if_statadd2(ifp, if_opackets, 1, if_obytes, m->m_pkthdr.len);
 
 	/* Clear checksum-offload flags. */
 	m->m_pkthdr.csum_flags = 0;
@@ -972,7 +970,7 @@ gre_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 end:
 	if (error)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	return error;
 }
 

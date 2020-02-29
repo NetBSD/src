@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC,v 1.70.2.1 2020/01/25 22:38:39 ad Exp $
+#	$NetBSD: GENERIC,v 1.70.2.2 2020/02/29 20:18:22 ad Exp $
 #
 #	GENERIC ARM (aarch32) kernel
 #
@@ -640,6 +640,7 @@ ld1 		at sdmmc1
 ld2 		at sdmmc2
 ld3 		at sdmmc3
 ld* 		at sdmmc?
+bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
 # NAND Flash
 sunxinand* 	at fdt?			# Allwinner NAND flash controller
@@ -766,5 +767,6 @@ spiflash* at spiflashbus?
 
 include "dev/usb/usbdevices.config"
 midi* 		at midibus?
+pseudo-device	sequencer			# MIDI sequencer
 
 cinclude "arch/evbarm/conf/GENERIC.local"

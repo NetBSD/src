@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_atombios_encoders.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_atombios_encoders.c,v 1.1.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2007-11 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.1.10.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>
@@ -37,7 +37,6 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_atombios_encoders.c,v 1.1 2018/08/27 14:10:14
 #include "atombios_encoders.h"
 #include "atombios_dp.h"
 #include <linux/backlight.h>
-#include <asm/byteorder.h>
 #include "bif/bif_4_1_d.h"
 
 static u8
@@ -1930,7 +1929,7 @@ amdgpu_atombios_encoder_get_lcd_info(struct amdgpu_encoder *encoder)
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset)) {
 		lvds_info =
-			(union lvds_info *)((char *)mode_info->atom_context->bios + data_offset);
+			(union lvds_info *)(mode_info->atom_context->bios + data_offset);
 		lvds =
 		    kzalloc(sizeof(struct amdgpu_encoder_atom_dig), GFP_KERNEL);
 
@@ -1995,11 +1994,11 @@ amdgpu_atombios_encoder_get_lcd_info(struct amdgpu_encoder *encoder)
 
 			if ((frev == 1) && (crev < 2))
 				/* absolute */
-				record = (u8 *)((char *)mode_info->atom_context->bios +
+				record = (u8 *)(mode_info->atom_context->bios +
 						le16_to_cpu(lvds_info->info.usModePatchTableOffset));
 			else
 				/* relative */
-				record = (u8 *)((char *)mode_info->atom_context->bios +
+				record = (u8 *)(mode_info->atom_context->bios +
 						data_offset +
 						le16_to_cpu(lvds_info->info.usModePatchTableOffset));
 			while (*record != ATOM_RECORD_END_TYPE) {

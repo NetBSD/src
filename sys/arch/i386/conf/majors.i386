@@ -1,4 +1,4 @@
-#	$NetBSD: majors.i386,v 1.51 2019/01/28 02:28:58 dholland Exp $
+#	$NetBSD: majors.i386,v 1.51.6.1 2020/02/29 20:18:24 ad Exp $
 #
 # Device majors for i386
 #
@@ -68,7 +68,7 @@ device-major	ucom		char 66			ucom
 device-major	sysmon		char 67			sysmon
 #device-major	obsolete	char 68			obsolete (vmegeneric)
 device-major	ld		char 69  block 19	ld
-device-major	urio		char 70			urio
+#device-major	obsolete	char 70			obsolete (urio)
 device-major	bktr		char 71			bktr
 
 device-major	cz		char 73			cz

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_dispnv04_overlay.c,v 1.3 2018/08/27 04:58:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_dispnv04_overlay.c,v 1.3.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright 2013 Ilia Mirkin
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_overlay.c,v 1.3 2018/08/27 04:58:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_overlay.c,v 1.3.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_dispnv04_overlay.c,v 1.3 2018/08/27 04:58:29
 #include "nvreg.h"
 
 #include "dispnv04/disp.h"
+
+#include <linux/nbsd-namespace.h>
 
 struct nouveau_plane {
 	struct drm_plane base;
@@ -120,11 +122,7 @@ nv10_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	src_w >>= 16;
 	src_h >>= 16;
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	format = round_up(src_w * 4, 0x100);
-#else
 	format = ALIGN(src_w * 4, 0x100);
-#endif
 
 	if (format > 0xffff)
 		return -ERANGE;
@@ -372,11 +370,7 @@ nv04_update_plane(struct drm_plane *plane, struct drm_crtc *crtc,
 	src_w >>= 16;
 	src_h >>= 16;
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	pitch = round_up(src_w * 4, 0x100);
-#else
 	pitch = ALIGN(src_w * 4, 0x100);
-#endif
 
 	if (pitch > 0xffff)
 		return -ERANGE;

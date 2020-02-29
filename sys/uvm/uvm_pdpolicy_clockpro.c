@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.22 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm_pdpolicy_clockpro.c,v 1.22.2.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c)2005, 2006 YAMAMOTO Takashi,
@@ -43,7 +43,7 @@
 #else /* defined(PDSIM) */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.22 2019/12/31 22:42:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdpolicy_clockpro.c,v 1.22.2.1 2020/02/29 20:21:11 ad Exp $");
 
 #include "opt_ddb.h"
 
@@ -1286,14 +1286,17 @@ uvmpdpol_estimatepageable(int *active, int *inactive)
 {
 	struct clockpro_state * const s = &clockpro;
 
-	mutex_enter(&s->lock);
+	/*
+	 * Don't take any locks here.  This can be called from DDB, and in
+	 * any case the numbers are stale the instant the lock is dropped,
+	 * so it just doesn't matter.
+	 */
 	if (active) {
 		*active = s->s_npages - s->s_ncold;
 	}
 	if (inactive) {
 		*inactive = s->s_ncold;
 	}
-	mutex_exit(&s->lock);
 }
 
 bool

@@ -1,11 +1,11 @@
-/*	$NetBSD: kleak.h,v 1.1 2018/12/02 21:00:13 maxv Exp $	*/
+/*	$NetBSD: log2.h,v 1.1.2.2 2020/02/29 20:20:12 ad Exp $	*/
 
-/*
- * Copyright (c) 2018 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Maxime Villard.
+ * by Taylor R. Campbell.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,73 +29,48 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/ksyms.h>
+#ifndef _LINUX_LOG2_H_
+#define _LINUX_LOG2_H_
 
-#include <amd64/pmap.h>
-#include <amd64/vmparam.h>
+#include <sys/types.h>
+#include <sys/bitops.h>
 
-static void
-kleak_md_init(uintptr_t *sva, uintptr_t *eva)
-{
-	extern char __rodata_start;
-	*sva = (uintptr_t)KERNTEXTOFF;
-	*eva = (uintptr_t)&__rodata_start;
-}
+#include <machine/limits.h>
 
 static inline bool
-__md_unwind_end(const char *name)
+is_power_of_2(unsigned long x)
 {
-	if (!strcmp(name, "syscall") ||
-	    !strcmp(name, "handle_syscall") ||
-	    !strncmp(name, "Xintr", 5) ||
-	    !strncmp(name, "Xhandle", 7) ||
-	    !strncmp(name, "Xresume", 7) ||
-	    !strncmp(name, "Xstray", 6) ||
-	    !strncmp(name, "Xhold", 5) ||
-	    !strncmp(name, "Xrecurse", 8) ||
-	    !strcmp(name, "Xdoreti") ||
-	    !strncmp(name, "Xsoft", 5)) {
-		return true;
-	}
-
-	return false;
+	return ((x != 0) && (((x - 1) & x) == 0));
 }
 
-static void
-kleak_md_unwind(struct kleak_hit *hit)
+static inline unsigned long
+roundup_pow_of_two(unsigned long n)
 {
-	uint64_t *rbp, rip;
-	const char *mod;
-	const char *sym;
-	int error;
+	unsigned i;
 
-	rbp = (uint64_t *)__builtin_frame_address(0);
+	if (n == 0)
+		return 1;
 
-	hit->npc = 0;
+	n -= 1;
+	for (i = 1; i < CHAR_BIT * sizeof n; i <<= 1)
+		n |= (n >> i);
 
-	while (1) {
-		/* 8(%rbp) contains the saved %rip. */
-		rip = *(rbp + 1);
-
-		if (rip < KERNBASE) {
-			break;
-		}
-		error = ksyms_getname(&mod, &sym, (vaddr_t)rip, KSYMS_PROC);
-		if (error) {
-			break;
-		}
-		hit->pc[hit->npc++] = rip;
-		if (__md_unwind_end(sym)) {
-			break;
-		}
-
-		rbp = (uint64_t *)*(rbp);
-		if (rbp == 0) {
-			break;
-		}
-
-		if (hit->npc >= KLEAK_HIT_MAXPC) {
-			break;
-		}
-	}
+	return (n + 1);
 }
+
+static inline unsigned long
+rounddown_pow_of_two(unsigned long n)
+{
+
+	/* XXX fls64 is not fls_ulong, but it'll do for now.  */
+	return (1UL << (fls64(n) - 1));
+}
+
+static inline unsigned
+order_base_2(unsigned long n)
+{
+
+	return ilog2(roundup_pow_of_two(n));
+}
+
+#endif  /* _LINUX_LOG2_H_ */

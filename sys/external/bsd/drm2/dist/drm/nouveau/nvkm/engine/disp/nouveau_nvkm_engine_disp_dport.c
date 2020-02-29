@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.3 2018/08/27 07:43:38 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.3.10.1 2020/02/29 20:20:15 ad Exp $	*/
 
 /*
  * Copyright 2013 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.3 2018/08/27 07:43:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_dport.c,v 1.3.10.1 2020/02/29 20:20:15 ad Exp $");
 
 #include "dport.h"
 #include "outpdp.h"
@@ -302,7 +302,7 @@ dp_link_train_fini(struct dp_state *dp)
 	};
 
 	/* post-train script */
-	init.offset = outp->info.script[1];
+	init.offset = outp->info.script[1],
 	nvbios_exec(&init);
 }
 

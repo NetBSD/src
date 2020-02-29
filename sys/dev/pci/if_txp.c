@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.62 2019/12/06 07:12:39 maxv Exp $ */
+/* $NetBSD: if_txp.c,v 1.62.2.1 2020/02/29 20:19:11 ad Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.62 2019/12/06 07:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.62.2.1 2020/02/29 20:19:11 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -684,7 +684,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		if (rxd->rx_flags & RX_FLAGS_ERROR) {
 			printf("%s: error 0x%x\n", device_xname(sc->sc_dev),
 			    le32toh(rxd->rx_stat));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -883,7 +883,7 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 				m_freem(m);
 				txd->tx_addrlo = 0;
 				txd->tx_addrhi = 0;
-				ifp->if_opackets++;
+				if_statinc(ifp, if_opackets);
 			}
 		}
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -1362,13 +1362,16 @@ txp_tick(void *vsc)
 		goto out;
 	ext = (struct txp_ext_desc *)(rsp + 1);
 
-	ifp->if_ierrors += ext[3].ext_2 + ext[3].ext_3 + ext[3].ext_4 +
-	    ext[4].ext_1 + ext[4].ext_4;
-	ifp->if_oerrors += ext[0].ext_1 + ext[1].ext_1 + ext[1].ext_4 +
-	    ext[2].ext_1;
-	ifp->if_collisions += ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 +
-	    ext[1].ext_3;
-	ifp->if_opackets += rsp->rsp_par2;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_ierrors,
+	    ext[3].ext_2 + ext[3].ext_3 + ext[3].ext_4 +
+	    ext[4].ext_1 + ext[4].ext_4);
+	if_statadd_ref(nsr, if_oerrors,
+	    ext[0].ext_1 + ext[1].ext_1 + ext[1].ext_4 + ext[2].ext_1);
+	if_statadd_ref(nsr, if_collisions,
+	    ext[0].ext_2 + ext[0].ext_3 + ext[1].ext_2 + ext[1].ext_3);
+	if_statadd_ref(nsr, if_opackets, rsp->rsp_par2);
+	IF_STAT_PUTREF(ifp);
 
 out:
 	if (rsp != NULL)

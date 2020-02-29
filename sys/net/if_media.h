@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.h,v 1.68 2019/12/05 05:29:27 msaitoh Exp $	*/
+/*	$NetBSD: if_media.h,v 1.68.2.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2001 The NetBSD Foundation, Inc.
@@ -262,6 +262,7 @@
 #define	IFM_25G_AOC	_IFM_EX(43)	/* 25G active optical cable */
 #define	IFM_25G_AUI	_IFM_EX(44)	/* 25G-AUI-C2C (chip to chip) */
 #define	IFM_25G_CR	_IFM_EX(45)	/* 25GBASE-CR (twinax) */
+#define	IFM_25G_ACC	_IFM_EX(46)	/* 25GBASE-ACC */
 #define	IFM_25G_CR_S	_IFM_EX(47)	/* 25GBASE-CR-S (CR short) */
 #define	IFM_25G_ER	_IFM_EX(48)	/* 25GBASE-ER */
 #define	IFM_25G_KR	_IFM_EX(49)	/* 25GBASE-KR */
@@ -286,8 +287,8 @@
 #define	IFM_50G_KR	_IFM_EX(68)	/* 50GBASE-KR */
 #define	IFM_50G_KR2	_IFM_EX(69)	/* 50GBASE-KR2 */
 #define	IFM_50G_LAUI2	_IFM_EX(70)	/* 50GLAUI-2 */
-#define	IFM_50G_LR	_IFM_EX(71)	/* 50GBASE-LR (2Km) */
-#define	IFM_50G_LR10	_IFM_EX(72)	/* 50GBASE-LR10 (10Km) */
+#define	IFM_50G_LR	_IFM_EX(71)	/* 50GBASE-LR */
+		     /* _IFM_EX(72) Not defined yet */
 #define	IFM_50G_SR	_IFM_EX(73)	/* 50GBASE-SR */
 #define	IFM_50G_SR2	_IFM_EX(74)	/* 50GBASE-SR2 */
 #define	IFM_56G_R4	_IFM_EX(75)	/* 56GBASE-R4 */
@@ -317,6 +318,17 @@
 #define	IFM_400G_KR4	_IFM_EX(99)	/* 400GBASE-KR4 */
 #define	IFM_400G_LR8	_IFM_EX(100)	/* 400GBASE-LR8 */
 #define	IFM_400G_SR16	_IFM_EX(101)	/* 400GBASE-SR16 */
+#define	IFM_100G_ACC	_IFM_EX(102)	/* 100GBASE-ACC */
+#define	IFM_100G_AOC	_IFM_EX(103)	/* 100GBASE-AOC */
+#define	IFM_100G_FR	_IFM_EX(104)	/* 100GBASE-FR */
+#define	IFM_100G_LR	_IFM_EX(105)	/* 100GBASE-LR */
+#define	IFM_200G_ER4	_IFM_EX(106)	/* 200GBASE-ER4 */
+#define	IFM_400G_ER8	_IFM_EX(107)	/* 400GBASE-ER8 */
+#define	IFM_400G_FR4	_IFM_EX(108)	/* 400GBASE-FR4 */
+#define	IFM_400G_LR4	_IFM_EX(109)	/* 400GBASE-LR4 */
+#define	IFM_400G_SR4_2	_IFM_EX(110)	/* 400GBASE-SR4.2 */
+#define	IFM_400G_SR8	_IFM_EX(111)	/* 400GBASE-SR8 */
+
 /* IFM_OMASK bits */
 #define	IFM_ETH_MASTER	0x00000100	/* master mode (1000baseT) */
 #define	IFM_ETH_RXPAUSE	0x00000200	/* receive PAUSE frames */
@@ -522,6 +534,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_10G_SFI | IFM_FDX,	"10GBASE-SFI" },	\
 	{ IFM_ETHER | IFM_10G_ZR | IFM_FDX,	"10GBASE-ZR" },		\
 	{ IFM_ETHER | IFM_20G_KR2 | IFM_FDX,	"20GBASE-KR2" },	\
+	{ IFM_ETHER | IFM_25G_ACC | IFM_FDX,	"25GBASE-ACC" },	\
 	{ IFM_ETHER | IFM_25G_AOC | IFM_FDX,	"25GBASE-AOC" },	\
 	{ IFM_ETHER | IFM_25G_AUI | IFM_FDX,	"25G-AUI" },	\
 	{ IFM_ETHER | IFM_25G_CR | IFM_FDX,	"25GBASE-CR" },		\
@@ -550,18 +563,21 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_50G_KR2 | IFM_FDX,	"50GBASE-KR2" },	\
 	{ IFM_ETHER | IFM_50G_LAUI2 | IFM_FDX,	"50GLAUI-2" },		\
 	{ IFM_ETHER | IFM_50G_LR | IFM_FDX,	"50GBASE-LR" },		\
-	{ IFM_ETHER | IFM_50G_LR10 | IFM_FDX,	"50GBASE-LR10" },	\
 	{ IFM_ETHER | IFM_50G_SR | IFM_FDX,	"50GBASE-SR" },		\
 	{ IFM_ETHER | IFM_50G_SR2 | IFM_FDX,	"50GBASE-SR2" },	\
 	{ IFM_ETHER | IFM_56G_R4 | IFM_FDX,	"56GBASE-R4" },		\
+	{ IFM_ETHER | IFM_100G_ACC | IFM_FDX,	"100GBASE-ACC" },	\
+	{ IFM_ETHER | IFM_100G_AOC | IFM_FDX,	"100GBASE-AOC" },	\
 	{ IFM_ETHER | IFM_100G_CR2 | IFM_FDX,	"100GBASE-CR2" },	\
 	{ IFM_ETHER | IFM_100G_CR4 | IFM_FDX,	"100GBASE-CR4" },	\
 	{ IFM_ETHER | IFM_100G_CR10 | IFM_FDX,	"100GBASE-CR10" },	\
 	{ IFM_ETHER | IFM_100G_DR | IFM_FDX,	"100GBASE-DR" },	\
 	{ IFM_ETHER | IFM_100G_ER4 | IFM_FDX,	"100GBASE-ER4" },	\
+	{ IFM_ETHER | IFM_100G_FR | IFM_FDX,	"100GBASE-FR" },	\
 	{ IFM_ETHER | IFM_100G_KP4 | IFM_FDX,	"100GBASE-KP4" },	\
 	{ IFM_ETHER | IFM_100G_KR2 | IFM_FDX,	"100GBASE-KR2" },	\
 	{ IFM_ETHER | IFM_100G_KR4 | IFM_FDX,	"100GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_100G_LR | IFM_FDX,	"100GBASE-LR" },	\
 	{ IFM_ETHER | IFM_100G_LR4 | IFM_FDX,	"100GBASE-LR4" },	\
 	{ IFM_ETHER | IFM_100G_SR2 | IFM_FDX,	"100GBASE-SR2" },	\
 	{ IFM_ETHER | IFM_100G_SR4 | IFM_FDX,	"100GBASE-SR4" },	\
@@ -569,6 +585,7 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_200G_CR2 | IFM_FDX,	"200GBASE-CR2" },	\
 	{ IFM_ETHER | IFM_200G_CR4 | IFM_FDX,	"200GBASE-CR4" },	\
 	{ IFM_ETHER | IFM_200G_DR4 | IFM_FDX,	"200GBASE-DR4" },	\
+	{ IFM_ETHER | IFM_200G_ER4 | IFM_FDX,	"200GBASE-ER4" },	\
 	{ IFM_ETHER | IFM_200G_FR4 | IFM_FDX,	"200GBASE-FR4" },	\
 	{ IFM_ETHER | IFM_200G_KR2 | IFM_FDX,	"200GBASE-KR2" },	\
 	{ IFM_ETHER | IFM_200G_KR4 | IFM_FDX,	"200GBASE-KR4" },	\
@@ -576,9 +593,14 @@ struct ifmedia_description {
 	{ IFM_ETHER | IFM_200G_SR4 | IFM_FDX,	"200GBASE-SR4" },	\
 	{ IFM_ETHER | IFM_400G_CR4 | IFM_FDX,	"400GBASE-CR4" },	\
 	{ IFM_ETHER | IFM_400G_DR4 | IFM_FDX,	"400GBASE-DR4" },	\
+	{ IFM_ETHER | IFM_400G_ER8 | IFM_FDX,	"400GBASE-ER8" },	\
+	{ IFM_ETHER | IFM_400G_FR4 | IFM_FDX,	"400GBASE-FR4" },	\
 	{ IFM_ETHER | IFM_400G_FR8 | IFM_FDX,	"400GBASE-FR8" },	\
 	{ IFM_ETHER | IFM_400G_KR4 | IFM_FDX,	"400GBASE-KR4" },	\
+	{ IFM_ETHER | IFM_400G_LR4 | IFM_FDX,	"400GBASE-LR4" },	\
 	{ IFM_ETHER | IFM_400G_LR8 | IFM_FDX,	"400GBASE-LR8" },	\
+	{ IFM_ETHER | IFM_400G_SR4_2 | IFM_FDX,	"400GBASE-SR4.2" },	\
+	{ IFM_ETHER | IFM_400G_SR8 | IFM_FDX,	"400GBASE-SR8" },	\
 	{ IFM_ETHER | IFM_400G_SR16 | IFM_FDX,	"400GBASE-SR16" },	\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	"DB9/4Mbit" },			\
@@ -736,6 +758,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_10G_SFI,	IF_Gbps(10) },			\
 	{ IFM_ETHER | IFM_10G_ZR,	IF_Gbps(10) },			\
 	{ IFM_ETHER | IFM_20G_KR2,	IF_Gbps(20) },			\
+	{ IFM_ETHER | IFM_25G_ACC,	IF_Gbps(25) },			\
 	{ IFM_ETHER | IFM_25G_AOC,	IF_Gbps(25) },			\
 	{ IFM_ETHER | IFM_25G_AUI,	IF_Gbps(25) },			\
 	{ IFM_ETHER | IFM_25G_CR,	IF_Gbps(25) },			\
@@ -764,18 +787,21 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_50G_KR2,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_LAUI2,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_LR,	IF_Gbps(50) },			\
-	{ IFM_ETHER | IFM_50G_LR10,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_SR,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_50G_SR2,	IF_Gbps(50) },			\
 	{ IFM_ETHER | IFM_56G_R4,	IF_Gbps(56) },			\
+	{ IFM_ETHER | IFM_100G_ACC,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_AOC,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_CR2,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_CR4,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_CR10,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_DR,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_ER4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_FR,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_KP4,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_KR2,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_KR4,	IF_Gbps(100) },			\
+	{ IFM_ETHER | IFM_100G_LR,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_LR4,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_SR2,	IF_Gbps(100) },			\
 	{ IFM_ETHER | IFM_100G_SR4,	IF_Gbps(100) },			\
@@ -783,6 +809,7 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_200G_CR2,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_CR4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_DR4,	IF_Gbps(200) },			\
+	{ IFM_ETHER | IFM_200G_ER4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_FR4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_KR2,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_200G_KR4,	IF_Gbps(200) },			\
@@ -790,9 +817,14 @@ struct ifmedia_baudrate {
 	{ IFM_ETHER | IFM_200G_SR4,	IF_Gbps(200) },			\
 	{ IFM_ETHER | IFM_400G_CR4,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_DR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_ER8,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_FR4,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_FR8,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_KR4,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_LR4,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_LR8,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_SR4_2,	IF_Gbps(400) },			\
+	{ IFM_ETHER | IFM_400G_SR8,	IF_Gbps(400) },			\
 	{ IFM_ETHER | IFM_400G_SR16,	IF_Gbps(400) },			\
 									\
 	{ IFM_TOKEN | IFM_TOK_STP4,	IF_Mbps(4) },			\
@@ -899,6 +931,9 @@ struct ifmedia {
 
 /* Initialize an interface's struct if_media field. */
 void	ifmedia_init(struct ifmedia *, int, ifm_change_cb_t, ifm_stat_cb_t);
+
+/* Release resourecs associated with an ifmedia. */
+void	ifmedia_fini(struct ifmedia *);
 
 int	ifmedia_change(struct ifmedia *, struct ifnet *);
 

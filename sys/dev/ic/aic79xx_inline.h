@@ -1,4 +1,4 @@
-/*	$NetBSD: aic79xx_inline.h,v 1.22 2013/04/27 13:25:09 kardel Exp $	*/
+/*	$NetBSD: aic79xx_inline.h,v 1.22.44.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*
  * Inline routines shareable across OS platforms.
@@ -548,7 +548,7 @@ ahd_inq(struct ahd_softc *ahd, u_int port)
 	return ((ahd_inb(ahd, port))
 	      | (ahd_inb(ahd, port+1) << 8)
 	      | (ahd_inb(ahd, port+2) << 16)
-	      | (ahd_inb(ahd, port+3) << 24)
+	      | (((uint64_t)ahd_inb(ahd, port+3)) << 24)
 	      | (((uint64_t)ahd_inb(ahd, port+4)) << 32)
 	      | (((uint64_t)ahd_inb(ahd, port+5)) << 40)
 	      | (((uint64_t)ahd_inb(ahd, port+6)) << 48)

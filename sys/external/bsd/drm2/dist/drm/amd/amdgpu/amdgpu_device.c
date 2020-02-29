@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_device.c,v 1.4 2018/08/27 14:54:08 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_device.c,v 1.4.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,7 +28,7 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.4 2018/08/27 14:54:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.4.10.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/console.h>
 #include <linux/slab.h>
@@ -48,6 +48,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_device.c,v 1.4 2018/08/27 14:54:08 riastradh 
 #endif
 #include "vi.h"
 #include "bif/bif_4_1_d.h"
+
+#include <linux/nbsd-namespace.h>
 
 static int amdgpu_debugfs_regs_init(struct amdgpu_device *adev);
 static void amdgpu_debugfs_regs_cleanup(struct amdgpu_device *adev);
@@ -973,11 +975,7 @@ static uint32_t cail_ioreg_read(struct card_info *info, uint32_t reg)
 static void amdgpu_atombios_fini(struct amdgpu_device *adev)
 {
 	if (adev->mode_info.atom_context) {
-#ifdef __NetBSD__
-		linux_mutex_destroy(&adev->mode_info.atom_context->mutex);
-#else
 		mutex_destroy(&adev->mode_info.atom_context->mutex);
-#endif
 		kfree(adev->mode_info.atom_context->scratch);
 	}
 	kfree(adev->mode_info.atom_context);
@@ -1033,11 +1031,7 @@ static int amdgpu_atombios_init(struct amdgpu_device *adev)
 		return -ENOMEM;
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_init(&adev->mode_info.atom_context->mutex);
-#else
 	mutex_init(&adev->mode_info.atom_context->mutex);
-#endif
 	amdgpu_atombios_scratch_regs_init(adev);
 	amdgpu_atom_allocate_fb_scratch(adev->mode_info.atom_context);
 	return 0;
@@ -1557,24 +1551,14 @@ int amdgpu_device_init(struct amdgpu_device *adev,
 
 	/* mutex initialization are all done here so we
 	 * can recall function without having locking issues */
-	atomic_set(&adev->irq.ih.lock, 0);
-#ifdef __NetBSD__
-	linux_mutex_init(&adev->ring_lock);
-	linux_mutex_init(&adev->gem.mutex);
-	linux_mutex_init(&adev->pm.mutex);
-	linux_mutex_init(&adev->gfx.gpu_clock_mutex);
-	linux_mutex_init(&adev->srbm_mutex);
-	linux_mutex_init(&adev->grbm_idx_mutex);
-	linux_mutex_init(&adev->mn_lock);
-#else
 	mutex_init(&adev->ring_lock);
+	atomic_set(&adev->irq.ih.lock, 0);
 	mutex_init(&adev->gem.mutex);
 	mutex_init(&adev->pm.mutex);
 	mutex_init(&adev->gfx.gpu_clock_mutex);
 	mutex_init(&adev->srbm_mutex);
 	mutex_init(&adev->grbm_idx_mutex);
 	mutex_init(&adev->mn_lock);
-#endif
 	hash_init(adev->mn_hash);
 
 	amdgpu_check_arguments(adev);
@@ -1814,15 +1798,6 @@ void amdgpu_device_fini(struct amdgpu_device *adev)
 	spin_lock_destroy(&adev->pcie_idx_lock);
 	spin_lock_destroy(&adev->smc_idx_lock);
 	spin_lock_destroy(&adev->mmio_idx_lock);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&adev->mn_lock);
-	linux_mutex_destroy(&adev->grbm_idx_mutex);
-	linux_mutex_destroy(&adev->srbm_mutex);
-	linux_mutex_destroy(&adev->gfx.gpu_clock_mutex);
-	linux_mutex_destroy(&adev->pm.mutex);
-	linux_mutex_destroy(&adev->gem.mutex);
-	linux_mutex_destroy(&adev->ring_lock);
-#else
 	mutex_destroy(&adev->mn_lock);
 	mutex_destroy(&adev->grbm_idx_mutex);
 	mutex_destroy(&adev->srbm_mutex);
@@ -1830,7 +1805,6 @@ void amdgpu_device_fini(struct amdgpu_device *adev)
 	mutex_destroy(&adev->pm.mutex);
 	mutex_destroy(&adev->gem.mutex);
 	mutex_destroy(&adev->ring_lock);
-#endif
 }
 
 
@@ -1919,13 +1893,11 @@ int amdgpu_suspend_kms(struct drm_device *dev, bool suspend, bool fbcon)
 	}
 #endif
 
-#ifndef __NetBSD__		/* XXX amdgpu fb */
 	if (fbcon) {
 		console_lock();
 		amdgpu_fbdev_set_suspend(adev, 1);
 		console_unlock();
 	}
-#endif
 	return 0;
 }
 
@@ -1948,11 +1920,9 @@ int amdgpu_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	if (dev->switch_power_state == DRM_SWITCH_POWER_OFF)
 		return 0;
 
-#ifndef __NetBSD__		/* XXX amdgpu fb */
 	if (fbcon) {
 		console_lock();
 	}
-#endif
 #ifndef __NetBSD__		/* pmf handles this for us.  */
 	if (resume) {
 		pci_set_power_state(dev->pdev, PCI_D0);
@@ -1983,10 +1953,8 @@ int amdgpu_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 
 	r = amdgpu_late_init(adev);
 	if (r) {
-#ifndef __NetBSD__
 		if (fbcon)
 			console_unlock();
-#endif
 		return r;
 	}
 
@@ -2038,12 +2006,10 @@ int amdgpu_resume_kms(struct drm_device *dev, bool resume, bool fbcon)
 	dev->dev->power.disable_depth--;
 #endif
 
-#ifndef __NetBSD__		/* XXX amdgpu fb */
 	if (fbcon) {
 		amdgpu_fbdev_set_suspend(adev, 0);
 		console_unlock();
 	}
-#endif
 
 	return 0;
 }

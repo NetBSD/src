@@ -1,4 +1,4 @@
- /* $NetBSD: lmu.c,v 1.1.2.2 2020/01/17 21:47:26 ad Exp $ */
+ /* $NetBSD: lmu.c,v 1.1.2.3 2020/02/29 20:18:26 ad Exp $ */
 
 /*-
  * Copyright (c) 2020 Michael Lorenz
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.1.2.2 2020/01/17 21:47:26 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lmu.c,v 1.1.2.3 2020/02/29 20:18:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -56,7 +56,8 @@ struct lmu_softc {
 	struct sysmon_envsys *sc_sme;
 	envsys_data_t	sc_sensors[2];
 	callout_t	sc_adjust;
-	int sc_thresh, sc_hyst;
+	int sc_thresh, sc_hyst, sc_level;
+	int		sc_lid_state, sc_video_state;
 };
 
 static int	lmu_match(device_t, cfdata_t, void *);
@@ -75,6 +76,38 @@ static const struct device_compatible_entry compat_data[] = {
 	{ "lmu-controller",	0 },
 	{ NULL,			0 }
 };
+
+static void
+lmu_lid_open(device_t dev)
+{
+	struct lmu_softc * const sc = device_private(dev);
+
+	sc->sc_lid_state = true;
+}
+
+static void
+lmu_lid_close(device_t dev)
+{
+	struct lmu_softc * const sc = device_private(dev);
+
+	sc->sc_lid_state = false;
+}
+
+static void
+lmu_video_on(device_t dev)
+{
+	struct lmu_softc * const sc = device_private(dev);
+
+	sc->sc_video_state = true;
+}
+
+static void
+lmu_video_off(device_t dev)
+{
+	struct lmu_softc * const sc = device_private(dev);
+
+	sc->sc_video_state = false;
+}
 
 static int
 lmu_match(device_t parent, cfdata_t match, void *aux)
@@ -103,6 +136,17 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": ambient light sensor\n");
 
+	sc->sc_lid_state = true;
+	pmf_event_register(sc->sc_dev, PMFE_CHASSIS_LID_OPEN,
+	    lmu_lid_open, true);
+	pmf_event_register(sc->sc_dev, PMFE_CHASSIS_LID_CLOSE,
+	    lmu_lid_close, true);
+	sc->sc_video_state = true;
+	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_ON,
+	    lmu_video_on, true);
+	pmf_event_register(sc->sc_dev, PMFE_DISPLAY_OFF,
+	    lmu_video_off, true);
+
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
@@ -127,6 +171,7 @@ lmu_attach(device_t parent, device_t self, void *aux)
 	/* TODO: make this adjustable via sysctl */
 	sc->sc_thresh = 300;
 	sc->sc_hyst = 30;
+	sc->sc_level = 100;
 
 	callout_init(&sc->sc_adjust, 0);
 	callout_setfunc(&sc->sc_adjust, lmu_adjust, sc);
@@ -189,10 +234,11 @@ lmu_adjust(void *cookie)
 	right = lmu_get_brightness(sc, 0);
 	b = left > right ? left : right;
 
-	if (b > (sc->sc_thresh + sc->sc_hyst)) {
+	if ((b > (sc->sc_thresh + sc->sc_hyst)) ||
+	   !(sc->sc_lid_state && sc->sc_video_state)) {
 		lmu_set_brightness(sc, 0);
 	} else if (b < sc->sc_thresh) {
-		lmu_set_brightness(sc, 100);
+		lmu_set_brightness(sc, sc->sc_level);
 	}
 
 	callout_schedule(&sc->sc_adjust, hz * 2);	

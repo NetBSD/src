@@ -1,4 +1,4 @@
-/*	$NetBSD: locks_up.c,v 1.10 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: locks_up.c,v 1.10.24.1 2020/02/29 20:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2010 Antti Kantee.  All Rights Reserved.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.10 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locks_up.c,v 1.10.24.1 2020/02/29 20:21:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -317,6 +317,12 @@ rw_lock_held(krwlock_t *rw)
 	return uprw->uprw_owner || uprw->uprw_readers;
 }
 
+krw_t
+rw_lock_op(krwlock_t *rw)
+{
+
+	return rw_write_held(rw) ? RW_WRITER : RW_READER;
+}
 
 /*
  * Condvars are almost the same as in the MP case except that we

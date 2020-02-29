@@ -1,4 +1,4 @@
-/*	$NetBSD: nitrogen6_machdep.c,v 1.18.4.1 2020/01/25 22:38:40 ad Exp $	*/
+/*	$NetBSD: nitrogen6_machdep.c,v 1.18.4.2 2020/02/29 20:18:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.18.4.1 2020/01/25 22:38:40 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nitrogen6_machdep.c,v 1.18.4.2 2020/02/29 20:18:22 ad Exp $");
 
 #include "opt_evbarm_boardtype.h"
 #include "opt_arm_debug.h"
@@ -234,27 +234,29 @@ nitrogen6_mpstart(void)
 	    AIPS1_SRC_BASE + SRC_SCR, srcctl);
 
 	arm_dsb();
+	/* Wake up AP in case firmware has placed it in WFE state */
 	__asm __volatile("sev" ::: "memory");
 
-	for (int loop = 0; loop < 16; loop++) {
-		VPRINTF("%u hatched %#x\n", loop, arm_cpu_hatched);
-		if (arm_cpu_hatched == __BITS(arm_cpu_max - 1, 1))
-			break;
-		int timo = 1500000;
-		while (arm_cpu_hatched != __BITS(arm_cpu_max - 1, 1))
-			if (--timo == 0)
+	u_int hatched = 0;
+	for (u_int cpuindex = 1; cpuindex < arm_cpu_max; cpuindex++) {
+		/* Wait for AP to start */
+		u_int i;
+		for (i = 1500000; i > 0; i--) {
+			if (cpu_hatched_p(cpuindex)) {
+				hatched |= __BIT(cpuindex);
 				break;
-	}
-	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if ((arm_cpu_hatched & __BIT(i)) == 0) {
-			printf("%s: warning: cpu%zu failed to hatch\n",
-			    __func__, i);
+			}
 		}
+
+		if (i == 0) {
+			aprint_error("cpu%d: WARNING: AP failed to start\n", cpuindex);
+		}
+
+		cpuindex++;
 	}
 
-	VPRINTF(" (%u cpu%s, hatched %#x)",
-	    arm_cpu_max, arm_cpu_max ? "s" : "",
-	    arm_cpu_hatched);
+	VPRINTF(" (%u cpu%s, hatched %#x)", arm_cpu_max,
+	    arm_cpu_max ? "s" : "", hatched);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -324,11 +326,6 @@ initarm(void *arg)
 
 #ifdef VERBOSE_INIT_ARM
 	printf("initarm: Configuring system");
-#ifdef MULTIPROCESSOR
-	printf(" (%u cpu%s, hatched %#x)",
-	    arm_cpu_max, arm_cpu_max ? "s" : "",
-	    arm_cpu_hatched);
-#endif /* MULTIPROCESSOR */
 	printf(", CLIDR=%010o CTR=%#x",
 	    armreg_clidr_read(), armreg_ctr_read());
 	printf("\n");

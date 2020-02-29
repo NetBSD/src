@@ -1,4 +1,4 @@
-$NetBSD: miidevs,v 1.161 2019/11/06 16:00:02 msaitoh Exp $
+$NetBSD: miidevs,v 1.161.2.1 2020/02/29 20:19:09 ad Exp $
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -70,7 +70,6 @@ oui RALINK2			0x0017a5	Ralink Technology
 oui AQUANTIA			0x0017b6	Aquantia Corporation
 oui BROADCOM3			0x001be9	Broadcom Corporation
 oui LEVEL1			0x00207b	Level 1
-oui VIA				0x004063	VIA Technologies
 oui MARVELL			0x005043	Marvell Semiconductor
 oui QUALSEMI			0x006051	Quality Semiconductor
 oui AMLOGIC			0x006051	Amlogic
@@ -82,7 +81,6 @@ oui INTEL			0x00aa00	Intel
 oui TSC				0x00c039	TDK Semiconductor
 oui MYSON			0x00c0b4	Myson Technology
 oui ATTANSIC			0x00c82e	Attansic Technology
-oui RDC				0x00d02d	RDC Semiconductor
 oui JMICRON			0x00d831	JMicron
 oui PMCSIERRA			0x00e004	PMC-Sierra
 oui SIS				0x00e006	Silicon Integrated Systems
@@ -97,6 +95,7 @@ oui RENESAS			0x749050	Renesas
 /* Unregistered or wrong OUI */
 oui yyREALTEK			0x000004	Realtek
 oui yyAMD			0x000058	Advanced Micro Devices
+oui xxVIA			0x0002c6	VIA Technologies
 oui xxMYSON			0x00032d	Myson Technology
 oui xxTSC			0x00039c	TDK Semiconductor
 oui xxASIX			0x000674	Asix Semiconductor
@@ -115,6 +114,7 @@ oui yyASIX			0x007063	Asix Semiconductor
 oui xxVITESSE			0x008083	Vitesse Semiconductor
 oui xxPMCSIERRA2		0x009057	PMC-Sierra
 oui xxCICADA			0x00c08f	Cicada Semiconductor
+oui xxRDC			0x00d02d	RDC Semiconductor
 oui xxNATSEMI			0x1000e8	National Semiconductor
 oui xxLEVEL1			0x782000	Level 1
 oui xxXAQTI			0xace000	XaQti Corp.
@@ -219,6 +219,7 @@ model BROADCOM3 BCM5719C	0x0022 BCM5719C 1000BASE-T media interface
 model BROADCOM3 BCM57765	0x0024 BCM57765 1000BASE-T media interface
 model BROADCOM3 BCM53125	0x0032 BCM53125 1000BASE-T switch
 model BROADCOM3 BCM5720C	0x0036 BCM5720C 1000BASE-T media interface
+model BROADCOM4 BCM54213PE	0x000a BCM54213PE 1000BASE-T media interface
 model BROADCOM4 BCM5725C	0x0038 BCM5725C 1000BASE-T media interface
 model xxBROADCOM_ALT1 BCM5906	0x0004 BCM5906 10/100baseTX media interface
 
@@ -361,7 +362,7 @@ model PMCSIERRA PM8354		0x0004 PM8354 QuadPHY Gigabit interface
 model xxQUALSEMI QS6612		0x0000 QS6612 10/100 media interface
 
 /* RDC Semiconductor PHYs */
-model RDC R6040			0x0003 R6040 10/100 media interface
+model xxRDC R6040		0x0003 R6040 10/100 media interface
 
 /* RealTek PHYs */
 model xxREALTEK RTL8169S	0x0011 RTL8169S/8110S/8211 1000BASE-T media interface
@@ -398,8 +399,8 @@ model xxTSC 78Q2120		0x0014 78Q2120 10/100 media interface
 model xxTSC 78Q2121		0x0015 78Q2121 100BASE-TX media interface
 
 /* VIA Technologies PHYs */
-model VIA VT6103		0x0032	VT6103 10/100 PHY
-model VIA VT6103_2		0x0034	VT6103 10/100 PHY
+model xxVIA VT6103		0x0032	VT6103 10/100 PHY
+model xxVIA VT6103_2		0x0034	VT6103 10/100 PHY
 
 /* Vitesse PHYs (Now Microsemi) */
 model xxVITESSE VSC8601		0x0002 VSC8601 10/100/1000 PHY

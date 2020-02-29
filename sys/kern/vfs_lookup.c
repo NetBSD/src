@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.212.4.9 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.212.4.10 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.9 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.10 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -546,7 +546,7 @@ namei_getstartdir(struct namei_state *state)
 		state->root_referenced = 0;
 	}
 
-	/* NB: we must not block while holding the cwdi read locked. */
+	/* NB: must not block while inspecting the cwdinfo. */
 	cwdi = cwdenter(RW_READER);
 
 	/* root dir */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211_input.c,v 1.115 2018/12/22 13:11:37 maxv Exp $	*/
+/*	$NetBSD: ieee80211_input.c,v 1.115.6.1 2020/02/29 20:21:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Atsushi Onoe
@@ -37,7 +37,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211_input.c,v 1.81 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.115 2018/12/22 13:11:37 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211_input.c,v 1.115.6.1 2020/02/29 20:21:07 ad Exp $");
 #endif
 
 #ifdef _KERNEL_OPT
@@ -361,7 +361,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 		}
 	}
 
-	ifp->if_ipackets++;
+	if_statinc(ifp, if_ipackets);
 	IEEE80211_NODE_STAT(ni, rx_data);
 	IEEE80211_NODE_STAT_ADD(ni, rx_bytes, m->m_pkthdr.len);
 
@@ -371,7 +371,7 @@ ieee80211_input_data(struct ieee80211com *ic, struct mbuf **mp,
 	return 0;
 
 err:
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 out:
 	*mp = m;
 	return -1;
@@ -460,7 +460,7 @@ ieee80211_input_management(struct ieee80211com *ic, struct mbuf **mp,
 	return 0;
 
 err:
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 out:
 	*mp = m;
 	return -1;
@@ -742,7 +742,7 @@ ieee80211_input(struct ieee80211com *ic, struct mbuf *m,
 	}
 
 err:
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 
 out:
 	if (m != NULL) {
@@ -868,7 +868,7 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 		if (ETHER_IS_MULTICAST(eh->ether_dhost)) {
 			m1 = m_copypacket(m, M_DONTWAIT);
 			if (m1 == NULL)
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			else
 				m1->m_flags |= M_MCAST;
 		} else {
@@ -907,11 +907,11 @@ ieee80211_deliver_data(struct ieee80211com *ic,
 			len = m1->m_pkthdr.len;
 			IFQ_ENQUEUE(&ifp->if_snd, m1, error);
 			if (error) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				m_freem(m);
 				m = NULL;
 			}
-			ifp->if_obytes += len;
+			if_statadd(ifp, if_obytes, len);
 		}
 	}
 

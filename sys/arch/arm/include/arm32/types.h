@@ -1,4 +1,4 @@
-/*	$NetBSD: types.h,v 1.12 2018/01/24 09:04:45 skrll Exp $	*/
+/*	$NetBSD: types.h,v 1.12.10.1 2020/02/29 20:18:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -37,13 +37,6 @@
 
 #ifndef _ARM_ARM32_TYPES_H_
 #define	_ARM_ARM32_TYPES_H_
-
-#ifdef _KERNEL
-
-#ifdef _KERNEL_OPT
-#include "opt_arm32_pmap.h"
-#endif
-#endif
 
 #include <arm/types.h>		/* pull in generic ARM definitions */
 

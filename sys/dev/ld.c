@@ -1,4 +1,4 @@
-/*	$NetBSD: ld.c,v 1.107 2019/10/06 06:10:44 mlelstv Exp $	*/
+/*	$NetBSD: ld.c,v 1.107.2.1 2020/02/29 20:19:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.107 2019/10/06 06:10:44 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ld.c,v 1.107.2.1 2020/02/29 20:19:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -296,6 +296,10 @@ ldopen(dev_t dev, int flags, int fmt, struct lwp *l)
 	unit = DISKUNIT(dev);
 	if ((sc = device_lookup_private(&ld_cd, unit)) == NULL)
 		return (ENXIO);
+
+	if ((sc->sc_flags & LDF_ENABLED) == 0)
+		return (ENODEV);
+
 	dksc = &sc->sc_dksc;
 
 	return dk_open(dksc, dev, flags, fmt, l);

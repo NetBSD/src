@@ -1,4 +1,4 @@
-/*	$NetBSD: delay.h,v 1.5 2018/08/06 00:30:24 riastradh Exp $	*/
+/*	$NetBSD: delay.h,v 1.5.6.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@ static inline void
 msleep(unsigned int msec)
 {
 	if (cold ||
-	    ((hz < 1000) && (msec < (1000/hz))))
+	    ((hz < 1000) && (msec < (1000/(unsigned)hz))))
 		mdelay(msec);
 	else
 		(void)kpause("lnxmslep", false, mstohz(msec), NULL);

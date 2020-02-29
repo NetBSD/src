@@ -1,4 +1,4 @@
-/*	$NetBSD: spectre.c,v 1.32 2019/12/12 16:49:20 maxv Exp $	*/
+/*	$NetBSD: spectre.c,v 1.32.2.1 2020/02/29 20:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.32 2019/12/12 16:49:20 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: spectre.c,v 1.32.2.1 2020/02/29 20:18:33 ad Exp $");
 
 #include "opt_spectre.h"
 
@@ -277,7 +277,7 @@ static void
 mitigation_v2_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 	u_long psl = 0;
 
 	/* Rendez-vous 1 (IBRS only). */
@@ -488,7 +488,7 @@ mitigation_v4_apply_cpu(bool enabled)
 static void
 mitigation_v4_change_cpu(void *arg1, void *arg2)
 {
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 
 	mitigation_v4_apply_cpu(enabled);
 }
@@ -635,7 +635,7 @@ static void
 mitigation_mds_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 	u_long psl = 0;
 
 	/* Rendez-vous 1. */
@@ -812,7 +812,7 @@ static void
 mitigation_taa_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enabled = (bool)arg1;
+	bool enabled = arg1 != NULL;
 
 	mitigation_taa_apply_cpu(ci, enabled);
 }
@@ -966,8 +966,7 @@ speculation_barrier(struct lwp *oldlwp, struct lwp *newlwp)
 	/*
 	 * From kernel thread to kernel thread, no need for a barrier.
 	 */
-	if ((oldlwp != NULL && (oldlwp->l_flag & LW_SYSTEM)) &&
-	    (newlwp->l_flag & LW_SYSTEM))
+	if ((oldlwp->l_flag & LW_SYSTEM) && (newlwp->l_flag & LW_SYSTEM))
 		return;
 
 	switch (v2_mitigation_method) {

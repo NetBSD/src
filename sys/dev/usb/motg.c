@@ -1,4 +1,4 @@
-/*	$NetBSD: motg.c,v 1.25 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: motg.c,v 1.25.6.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2011, 2012, 2014 The NetBSD Foundation, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.25 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: motg.c,v 1.25.6.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -144,6 +144,7 @@ static void		motg_softintr(void *);
 static struct usbd_xfer *
 			motg_allocx(struct usbd_bus *, unsigned int);
 static void		motg_freex(struct usbd_bus *, struct usbd_xfer *);
+static bool		motg_dying(struct usbd_bus *);
 static void		motg_get_lock(struct usbd_bus *, kmutex_t **);
 static int		motg_roothub_ctrl(struct usbd_bus *, usb_device_request_t *,
 			    void *, int);
@@ -174,7 +175,7 @@ static void		motg_device_data_read(struct usbd_xfer *);
 static void		motg_device_data_write(struct usbd_xfer *);
 
 static void		motg_device_clear_toggle(struct usbd_pipe *);
-static void		motg_device_xfer_abort(struct usbd_xfer *);
+static void		motg_abortx(struct usbd_xfer *);
 
 #define UBARR(sc) bus_space_barrier((sc)->sc_iot, (sc)->sc_ioh, 0, (sc)->sc_size, \
 			BUS_SPACE_BARRIER_READ|BUS_SPACE_BARRIER_WRITE)
@@ -233,6 +234,8 @@ const struct usbd_bus_methods motg_bus_methods = {
 	.ubm_dopoll =	motg_poll,
 	.ubm_allocx =	motg_allocx,
 	.ubm_freex =	motg_freex,
+	.ubm_abortx =	motg_abortx,
+	.ubm_dying =	motg_dying,
 	.ubm_getlock =	motg_get_lock,
 	.ubm_rhctrl =	motg_roothub_ctrl,
 };
@@ -770,6 +773,14 @@ motg_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	pool_cache_put(sc->sc_xferpool, xfer);
 }
 
+static bool
+motg_dying(struct usbd_bus *bus)
+{
+	struct motg_softc *sc = MOTG_BUS2SC(bus);
+
+	return sc->sc_dying;
+}
+
 static void
 motg_get_lock(struct usbd_bus *bus, kmutex_t **lock)
 {
@@ -980,8 +991,16 @@ motg_root_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
-	sc->sc_intr_xfer = NULL;
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intr_xfer == NULL)
+		return;
 
+	/*
+	 * Otherwise, sc->sc_intr_xfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -1012,6 +1031,7 @@ motg_root_intr_start(struct usbd_xfer *xfer)
 {
 	struct usbd_pipe *pipe = xfer->ux_pipe;
 	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
+	const bool polling = sc->sc_bus.ub_usepolling;
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
@@ -1021,7 +1041,14 @@ motg_root_intr_start(struct usbd_xfer *xfer)
 	if (sc->sc_dying)
 		return USBD_IOERROR;
 
+	if (!polling)
+		mutex_enter(&sc->sc_lock);
+	KASSERT(sc->sc_intr_xfer == NULL);
 	sc->sc_intr_xfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
+	if (!polling)
+		mutex_exit(&sc->sc_lock);
+
 	return USBD_IN_PROGRESS;
 }
 
@@ -1029,17 +1056,30 @@ motg_root_intr_start(struct usbd_xfer *xfer)
 void
 motg_root_intr_close(struct usbd_pipe *pipe)
 {
-	struct motg_softc *sc = MOTG_PIPE2SC(pipe);
+	struct motg_softc *sc __diagused = MOTG_PIPE2SC(pipe);
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
-	sc->sc_intr_xfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intr_xfer == NULL);
 }
 
 void
 motg_root_intr_done(struct usbd_xfer *xfer)
 {
+	struct motg_softc *sc = MOTG_XFER2SC(xfer);
+	MOTGHIST_FUNC(); MOTGHIST_CALLED();
+
+	KASSERT(mutex_owned(&sc->sc_lock));
+
+	/* Claim the xfer so it doesn't get completed again.  */
+	KASSERT(sc->sc_intr_xfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
+	sc->sc_intr_xfer = NULL;
 }
 
 void
@@ -1090,6 +1130,7 @@ motg_hub_change(struct motg_softc *sc)
 
 	if (xfer == NULL)
 		return; /* the interrupt pipe is not open */
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	pipe = xfer->ux_pipe;
 	if (pipe->up_dev == NULL || pipe->up_dev->ud_bus == NULL)
@@ -1243,7 +1284,7 @@ motg_device_ctrl_transfer(struct usbd_xfer *xfer)
 	/* Insert last in queue. */
 	mutex_enter(&sc->sc_lock);
 	err = usb_insert_transfer(xfer);
-	xfer->ux_status = USBD_NOT_STARTED;
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 	mutex_exit(&sc->sc_lock);
 	if (err)
 		return err;
@@ -1263,9 +1304,7 @@ motg_device_ctrl_start(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 	err = motg_device_ctrl_start1(sc);
 	mutex_exit(&sc->sc_lock);
-	if (err != USBD_IN_PROGRESS)
-		return err;
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 static usbd_status
@@ -1309,7 +1348,12 @@ motg_device_ctrl_start1(struct motg_softc *sc)
 		err = USBD_NOT_STARTED;
 		goto end;
 	}
-	xfer->ux_status = USBD_IN_PROGRESS;
+	if (xfer->ux_status == USBD_NOT_STARTED) {
+		usbd_xfer_schedule_timeout(xfer);
+		xfer->ux_status = USBD_IN_PROGRESS;
+	} else {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
+	}
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
 	KASSERT(xfer->ux_rqflags & URQ_REQUEST);
@@ -1386,8 +1430,8 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
-
 	KASSERT(ep->phase == DATA_IN || ep->phase == STATUS_IN);
+
 	/* select endpoint 0 */
 	UWRITE1(sc, MUSB2_REG_EPINDEX, 0);
 
@@ -1480,7 +1524,12 @@ motg_device_ctrl_intr_rx(struct motg_softc *sc)
 complete:
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -1501,6 +1550,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
 	KASSERT(mutex_owned(&sc->sc_lock));
+
 	if (ep->phase == DATA_IN || ep->phase == STATUS_IN) {
 		motg_device_ctrl_intr_rx(sc);
 		return;
@@ -1547,7 +1597,7 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 		/* data still not sent */
 		return;
 	}
-	if (xfer == NULL)
+	if (xfer == NULL || xfer->ux_status != USBD_IN_PROGRESS)
 		goto complete;
 	if (ep->phase == STATUS_OUT) {
 		/*
@@ -1619,7 +1669,12 @@ motg_device_ctrl_intr_tx(struct motg_softc *sc)
 complete:
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -1633,7 +1688,7 @@ motg_device_ctrl_abort(struct usbd_xfer *xfer)
 {
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
-	motg_device_xfer_abort(xfer);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device control pipe */
@@ -1684,7 +1739,7 @@ motg_device_data_transfer(struct usbd_xfer *xfer)
 	mutex_enter(&sc->sc_lock);
 	DPRINTF("xfer %#jx status %jd", (uintptr_t)xfer, xfer->ux_status, 0, 0);
 	err = usb_insert_transfer(xfer);
-	xfer->ux_status = USBD_NOT_STARTED;
+	KASSERT(xfer->ux_status == USBD_NOT_STARTED);
 	mutex_exit(&sc->sc_lock);
 	if (err)
 		return err;
@@ -1709,9 +1764,7 @@ motg_device_data_start(struct usbd_xfer *xfer)
 	DPRINTF("xfer %#jx status %jd", (uintptr_t)xfer, xfer->ux_status, 0, 0);
 	err = motg_device_data_start1(sc, otgpipe->hw_ep);
 	mutex_exit(&sc->sc_lock);
-	if (err != USBD_IN_PROGRESS)
-		return err;
-	return USBD_IN_PROGRESS;
+	return err;
 }
 
 static usbd_status
@@ -1754,7 +1807,12 @@ motg_device_data_start1(struct motg_softc *sc, struct motg_hw_ep *ep)
 		err = USBD_NOT_STARTED;
 		goto end;
 	}
-	xfer->ux_status = USBD_IN_PROGRESS;
+	if (xfer->ux_status == USBD_NOT_STARTED) {
+		usbd_xfer_schedule_timeout(xfer);
+		xfer->ux_status = USBD_IN_PROGRESS;
+	} else {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
+	}
 	KASSERT(otgpipe == MOTG_PIPE2MPIPE(xfer->ux_pipe));
 	KASSERT(otgpipe->hw_ep == ep);
 	KASSERT(!(xfer->ux_rqflags & URQ_REQUEST));
@@ -1999,7 +2057,12 @@ complete:
 	    (xfer != NULL) ? xfer->ux_status : 0, 0, 0);
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -2080,12 +2143,14 @@ motg_device_intr_tx(struct motg_softc *sc, int epnumber)
 complete:
 	DPRINTFN(MD_BULK, "xfer %#jx complete, status %jd", (uintptr_t)xfer,
 	    (xfer != NULL) ? xfer->ux_status : 0, 0, 0);
-	KASSERTMSG(xfer && xfer->ux_status == USBD_IN_PROGRESS && 
-	    ep->phase == DATA_OUT, "xfer %p status %d phase %d",
-	    xfer, xfer->ux_status, ep->phase);
 	ep->phase = IDLE;
 	ep->xfer = NULL;
-	if (xfer && xfer->ux_status == USBD_IN_PROGRESS) {
+	/*
+	 * Try to claim this xfer for completion.  If it has already
+	 * completed or aborted, drop it on the floor.
+	 */
+	if (xfer && usbd_xfer_trycomplete(xfer)) {
+		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		KASSERT(new_status != USBD_IN_PROGRESS);
 		xfer->ux_status = new_status;
 		usb_transfer_complete(xfer);
@@ -2102,7 +2167,7 @@ motg_device_data_abort(struct usbd_xfer *xfer)
 
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 
-	motg_device_xfer_abort(xfer);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device control pipe */
@@ -2151,7 +2216,7 @@ motg_device_clear_toggle(struct usbd_pipe *pipe)
 
 /* Abort a device control request. */
 static void
-motg_device_xfer_abort(struct usbd_xfer *xfer)
+motg_abortx(struct usbd_xfer *xfer)
 {
 	MOTGHIST_FUNC(); MOTGHIST_CALLED();
 	uint8_t csr;
@@ -2162,30 +2227,6 @@ motg_device_xfer_abort(struct usbd_xfer *xfer)
 	ASSERT_SLEEPABLE();
 
 	/*
-	 * We are synchronously aborting.  Try to stop the
-	 * callout and task, but if we can't, wait for them to
-	 * complete.
-	 */
-	callout_halt(&xfer->ux_callout, &sc->sc_lock);
-	usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
-	    USB_TASKQ_HC, &sc->sc_lock);
-
-	/*
-	 * The xfer cannot have been cancelled already.  It is the
-	 * responsibility of the caller of usbd_abort_pipe not to try
-	 * to abort a pipe multiple times, whether concurrently or
-	 * sequentially.
-	 */
-	KASSERT(xfer->ux_status != USBD_CANCELLED);
-
-	/* If anyone else beat us, we're done.  */
-	if (xfer->ux_status != USBD_IN_PROGRESS)
-		return;
-
-	/* We beat everyone else.  Claim the status.  */
-	xfer->ux_status = USBD_CANCELLED;
-
-	/*
 	 * If we're dying, skip the hardware action and just notify the
 	 * software that we're done.
 	 */
@@ -2194,7 +2235,6 @@ motg_device_xfer_abort(struct usbd_xfer *xfer)
 	}
 
 	if (otgpipe->hw_ep->xfer == xfer) {
-		KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 		otgpipe->hw_ep->xfer = NULL;
 		if (otgpipe->hw_ep->ep_number > 0) {
 			/* select endpoint */

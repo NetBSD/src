@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.7.4.1 2020/01/25 22:38:45 ad Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.7.4.2 2020/02/29 20:19:07 ad Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -202,6 +202,9 @@ struct audio_file {
 	/* process who wants audio SIGIO. */
 	pid_t		async_audio;
 
+	/* true when closing */
+	bool		dying;
+
 	SLIST_ENTRY(audio_file) entry;
 };
 
@@ -296,8 +299,9 @@ static __inline int
 auring_round(const audio_ring_t *ring, int idx)
 {
 	DIAGNOSTIC_ring(ring);
-	KASSERT(idx >= 0);
-	KASSERT(idx < ring->capacity * 2);
+	KASSERTMSG(idx >= 0, "idx=%d", idx);
+	KASSERTMSG(idx < ring->capacity * 2,
+	    "idx=%d ring->capacity=%d", idx, ring->capacity);
 
 	if (idx < ring->capacity) {
 		return idx;
@@ -324,7 +328,9 @@ auring_tail(const audio_ring_t *ring)
 static __inline aint_t *
 auring_headptr_aint(const audio_ring_t *ring)
 {
-	KASSERT(ring->fmt.stride == sizeof(aint_t) * NBBY);
+	KASSERTMSG(ring->fmt.stride == sizeof(aint_t) * NBBY,
+	    "ring->fmt.stride=%d sizeof(aint_t)*NBBY=%zd",
+	    ring->fmt.stride, sizeof(aint_t) * NBBY);
 
 	return (aint_t *)ring->mem + ring->head * ring->fmt.channels;
 }
@@ -337,7 +343,9 @@ auring_headptr_aint(const audio_ring_t *ring)
 static __inline aint_t *
 auring_tailptr_aint(const audio_ring_t *ring)
 {
-	KASSERT(ring->fmt.stride == sizeof(aint_t) * NBBY);
+	KASSERTMSG(ring->fmt.stride == sizeof(aint_t) * NBBY,
+	    "ring->fmt.stride=%d sizeof(aint_t)*NBBY=%zd",
+	    ring->fmt.stride, sizeof(aint_t) * NBBY);
 
 	return (aint_t *)ring->mem + auring_tail(ring) * ring->fmt.channels;
 }

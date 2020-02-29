@@ -1,4 +1,4 @@
-/*	$NetBSD: etphy.c,v 1.7 2019/11/27 10:19:20 msaitoh Exp $	*/
+/*	$NetBSD: etphy.c,v 1.7.2.1 2020/02/29 20:19:09 ad Exp $	*/
 /*	$OpenBSD: etphy.c,v 1.4 2008/04/02 20:12:58 brad Exp $	*/
 
 /*
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.7 2019/11/27 10:19:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: etphy.c,v 1.7.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -212,6 +212,12 @@ etphy_service(struct mii_softc *sc, struct mii_data *mii, int cmd)
 			bmcr &= ~BMCR_AUTOEN;
 			PHY_WRITE(sc, MII_BMCR, bmcr);
 			PHY_WRITE(sc, MII_BMCR, bmcr | BMCR_PDOWN);
+		} else {
+			/*
+			 * Issue reset before configuring autonego.
+			 * XXX Is this required?
+			 */
+			PHY_RESET(sc);
 		}
 
 		mii_phy_setmedia(sc);

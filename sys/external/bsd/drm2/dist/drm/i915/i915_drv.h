@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_drv.h,v 1.30 2019/12/05 20:03:09 maya Exp $	*/
+/*	$NetBSD: i915_drv.h,v 1.30.2.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /* i915_drv.h -- Private header for the I915 driver -*- linux-c -*-
  */
@@ -127,7 +127,7 @@ static inline const char *yesno(bool v)
 	return v ? "yes" : "no";
 }
 
-enum i915_pipe {
+enum pipe {
 	INVALID_PIPE = -1,
 	PIPE_A = 0,
 	PIPE_B,
@@ -2880,11 +2880,11 @@ static inline bool intel_vgpu_active(struct drm_device *dev)
 }
 
 void
-i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		     u32 status_mask);
 
 void
-i915_disable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+i915_disable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		      u32 status_mask);
 
 void valleyview_enable_display_irqs(struct drm_i915_private *dev_priv);
@@ -3021,9 +3021,9 @@ i915_gem_object_get_page(struct drm_i915_gem_object *obj, int n)
 		 * lock to prevent them from disappearing.
 		 */
 		KASSERT(obj->pages != NULL);
-		mutex_enter(obj->base.filp->vmobjlock);
+		rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
 		page = uvm_pagelookup(obj->base.filp, ptoa(n));
-		mutex_exit(obj->base.filp->vmobjlock);
+		rw_exit(obj->base.filp->vmobjlock);
 	}
 	KASSERT(page != NULL);
 	return container_of(page, struct page, p_vmp);
@@ -3591,8 +3591,8 @@ u32 vlv_bunit_read(struct drm_i915_private *dev_priv, u32 reg);
 void vlv_bunit_write(struct drm_i915_private *dev_priv, u32 reg, u32 val);
 u32 vlv_gps_core_read(struct drm_i915_private *dev_priv, u32 reg);
 void vlv_gps_core_write(struct drm_i915_private *dev_priv, u32 reg, u32 val);
-u32 vlv_dpio_read(struct drm_i915_private *dev_priv, enum i915_pipe pipe, int reg);
-void vlv_dpio_write(struct drm_i915_private *dev_priv, enum i915_pipe pipe, int reg, u32 val);
+u32 vlv_dpio_read(struct drm_i915_private *dev_priv, enum pipe pipe, int reg);
+void vlv_dpio_write(struct drm_i915_private *dev_priv, enum pipe pipe, int reg, u32 val);
 u32 intel_sbi_read(struct drm_i915_private *dev_priv, u16 reg,
 		   enum intel_sbi_destination destination);
 void intel_sbi_write(struct drm_i915_private *dev_priv, u16 reg, u32 value,

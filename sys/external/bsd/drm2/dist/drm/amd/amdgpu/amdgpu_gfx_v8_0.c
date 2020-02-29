@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_gfx_v8_0.c,v 1.2 2019/02/23 19:37:36 kamil Exp $	*/
+/*	$NetBSD: amdgpu_gfx_v8_0.c,v 1.2.8.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,12 +23,9 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v8_0.c,v 1.2 2019/02/23 19:37:36 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v8_0.c,v 1.2.8.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
-#include <linux/log2.h>
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_gfx.h"
@@ -57,6 +54,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_gfx_v8_0.c,v 1.2 2019/02/23 19:37:36 kamil Ex
 
 #include "dce/dce_10_0_d.h"
 #include "dce/dce_10_0_sh_mask.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define GFX8_NUM_GFX_RINGS     1
 #define GFX8_NUM_COMPUTE_RINGS 8
@@ -841,55 +840,35 @@ static int gfx_v8_0_init_microcode(struct amdgpu_device *adev)
 		info->fw = adev->gfx.pfp_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_ME];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_ME;
 		info->fw = adev->gfx.me_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_CE];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_CE;
 		info->fw = adev->gfx.ce_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_RLC_G];
 		info->ucode_id = AMDGPU_UCODE_ID_RLC_G;
 		info->fw = adev->gfx.rlc_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 
 		info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_MEC1];
 		info->ucode_id = AMDGPU_UCODE_ID_CP_MEC1;
 		info->fw = adev->gfx.mec_fw;
 		header = (const struct common_firmware_header *)info->fw->data;
 		adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-			round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 			ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 
 		if (adev->gfx.mec2_fw) {
 			info = &adev->firmware.ucode[AMDGPU_UCODE_ID_CP_MEC2];
@@ -897,11 +876,7 @@ static int gfx_v8_0_init_microcode(struct amdgpu_device *adev)
 			info->fw = adev->gfx.mec2_fw;
 			header = (const struct common_firmware_header *)info->fw->data;
 			adev->firmware.fw_size +=
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-				round_up(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#else
 				ALIGN(le32_to_cpu(header->ucode_size_bytes), PAGE_SIZE);
-#endif
 		}
 
 	}

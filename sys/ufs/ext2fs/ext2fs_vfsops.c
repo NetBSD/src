@@ -1,4 +1,4 @@
-/*	$NetBSD: ext2fs_vfsops.c,v 1.214.4.2 2020/01/19 21:21:55 ad Exp $	*/
+/*	$NetBSD: ext2fs_vfsops.c,v 1.214.4.3 2020/02/29 20:21:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1991, 1993, 1994
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.214.4.2 2020/01/19 21:21:55 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ext2fs_vfsops.c,v 1.214.4.3 2020/02/29 20:21:10 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -895,7 +895,7 @@ ext2fs_sync_selector(void *cl, struct vnode *vp)
 	if (((ip->i_flag &
 	      (IN_CHANGE | IN_UPDATE | IN_MODIFIED)) == 0 &&
 	     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	     UVM_OBJ_IS_CLEAN(&vp->v_uobj)))
+	     (vp->v_iflag & VI_ONWORKLST) == 0))
 		return false;
 	return true;
 }

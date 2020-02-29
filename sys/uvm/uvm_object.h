@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.h,v 1.35.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_object.h,v 1.35.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -53,8 +53,9 @@
  * For other objects, it is arbitrary (may use the lock or atomics).
  */
 
+struct krwlock;
 struct uvm_object {
-	kmutex_t *		vmobjlock;	/* lock on object */
+	struct krwlock *	vmobjlock;	/* lock on object */
 	const struct uvm_pagerops *pgops;	/* pager ops */
 	int			uo_npages;	/* # of pages in uo_pages */
 	unsigned		uo_refs;	/* reference count */

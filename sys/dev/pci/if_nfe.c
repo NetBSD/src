@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.72 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.72.2.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.72 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.72.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -452,6 +452,7 @@ nfe_detach(device_t self, int flags)
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	nfe_free_rx_ring(sc, &sc->rxq);
 	mutex_destroy(&sc->rxq.mtx);
@@ -837,7 +838,7 @@ nfe_rxeof(struct nfe_softc *sc)
 		}
 
 		if (flags & NFE_RX_ERROR) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -850,7 +851,7 @@ nfe_rxeof(struct nfe_softc *sc)
 		 */
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -860,13 +861,13 @@ nfe_rxeof(struct nfe_softc *sc)
 			if ((jbuf = nfe_jalloc(sc, i)) == NULL) {
 				if (len > MCLBYTES) {
 					m_freem(mnew);
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					goto skip1;
 				}
 				MCLGET(mnew, M_DONTWAIT);
 				if ((mnew->m_flags & M_EXT) == 0) {
 					m_freem(mnew);
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					goto skip1;
 				}
 
@@ -886,7 +887,7 @@ nfe_rxeof(struct nfe_softc *sc)
 			MCLGET(mnew, M_DONTWAIT);
 			if ((mnew->m_flags & M_EXT) == 0) {
 				m_freem(mnew);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto skip;
 			}
 
@@ -909,7 +910,7 @@ nfe_rxeof(struct nfe_softc *sc)
 					panic("%s: could not load old rx mbuf",
 					    device_xname(sc->sc_dev));
 				}
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto skip;
 			}
 			physaddr = data->map->dm_segs[0].ds_addr;
@@ -1026,9 +1027,9 @@ nfe_txeof(struct nfe_softc *sc)
 				snprintb(buf, sizeof(buf), NFE_V1_TXERR, flags);
 				aprint_error_dev(sc->sc_dev, "tx v1 error %s\n",
 				    buf);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			} else
-				ifp->if_opackets++;
+				if_statinc(ifp, if_opackets);
 		} else {
 			if ((flags & NFE_TX_LASTFRAG_V2) == 0 &&
 			    data->m == NULL)
@@ -1038,9 +1039,9 @@ nfe_txeof(struct nfe_softc *sc)
 				snprintb(buf, sizeof(buf), NFE_V2_TXERR, flags);
 				aprint_error_dev(sc->sc_dev, "tx v2 error %s\n",
 				    buf);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			} else
-				ifp->if_opackets++;
+				if_statinc(ifp, if_opackets);
 		}
 
 		if (data->m == NULL) {	/* should not get there */
@@ -1241,7 +1242,7 @@ nfe_watchdog(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_RUNNING;
 	nfe_init(ifp);
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 }
 
 int

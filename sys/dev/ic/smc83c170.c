@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.90.4.1 2020/01/25 22:38:46 ad Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.90.4.2 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.90.4.1 2020/01/25 22:38:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.90.4.2 2020/02/29 20:19:08 ad Exp $");
 
 
 #include <sys/param.h>
@@ -113,6 +113,7 @@ epic_attach(struct epic_softc *sc)
 	char *nullbuf;
 
 	callout_init(&sc->sc_mii_callout, 0);
+	callout_setfunc(&sc->sc_mii_callout, epic_tick, sc);
 
 	/*
 	 * Allocate the control data structures, and create and load the
@@ -545,7 +546,7 @@ epic_watchdog(struct ifnet *ifp)
 	struct epic_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void)epic_init(ifp);
 }
@@ -645,7 +646,7 @@ epic_intr(void *arg)
 				if (rxstatus & ER_RXSTAT_ALIGNERROR)
 					printf("%s: alignment error\n",
 					    device_xname(sc->sc_dev));
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				EPIC_INIT_RXDESC(sc, i);
 				continue;
 			}
@@ -663,7 +664,7 @@ epic_intr(void *arg)
 				/*
 				 * Runt packet; drop it now.
 				 */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				EPIC_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 				    ds->ds_dmamap->dm_mapsize,
@@ -696,7 +697,7 @@ epic_intr(void *arg)
 				m = ds->ds_mbuf;
 				if (epic_add_rxbuf(sc, i) != 0) {
  dropit:
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					EPIC_INIT_RXDESC(sc, i);
 					bus_dmamap_sync(sc->sc_dmat,
 					    ds->ds_dmamap, 0,
@@ -762,15 +763,18 @@ epic_intr(void *arg)
 			/*
 			 * Check for errors and collisions.
 			 */
+			net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 			if ((txstatus & ET_TXSTAT_PACKETTX) == 0)
-				ifp->if_oerrors++;
+				if_statinc_ref(nsr, if_oerrors);
 			else
-				ifp->if_opackets++;
-			ifp->if_collisions +=
-			    TXSTAT_COLLISIONS(txstatus);
+				if_statinc_ref(nsr, if_opackets);
+			if (TXSTAT_COLLISIONS(txstatus))
+				if_statadd_ref(nsr, if_collisions,
+				    TXSTAT_COLLISIONS(txstatus));
 			if (txstatus & ET_TXSTAT_CARSENSELOST)
 				printf("%s: lost carrier\n",
 				    device_xname(sc->sc_dev));
+			IF_STAT_PUTREF(ifp);
 		}
 
 		/* Update the dirty transmit buffer pointer. */
@@ -843,7 +847,7 @@ epic_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_mii_callout, hz, epic_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 }
 
 /*
@@ -1034,7 +1038,7 @@ epic_init(struct ifnet *ifp)
 	/*
 	 * Start the one second clock.
 	 */
-	callout_reset(&sc->sc_mii_callout, hz, epic_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 
 	/*
 	 * Attempt to start output on the interface.

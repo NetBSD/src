@@ -1,4 +1,4 @@
-/*	$NetBSD: cryptodev.c,v 1.102.2.1 2020/01/17 21:47:36 ad Exp $ */
+/*	$NetBSD: cryptodev.c,v 1.102.2.2 2020/02/29 20:21:08 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.102.2.1 2020/01/17 21:47:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cryptodev.c,v 1.102.2.2 2020/02/29 20:21:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2201,6 +2201,7 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 {
 	int error = 0;
 #ifdef _MODULE
+	int error2;
 	devmajor_t cmajor = NODEVMAJOR, bmajor = NODEVMAJOR;
 #endif
 
@@ -2235,14 +2236,14 @@ crypto_modcmd(modcmd_t cmd, void *arg)
 		error = devsw_attach(crypto_cd.cd_name, NULL, &bmajor,
 		    &crypto_cdevsw, &cmajor);
 		if (error) {
-			error = config_cfdata_detach(crypto_cfdata);
-			if (error) {
-				return error;
+			error2 = config_cfdata_detach(crypto_cfdata);
+			if (error2) {
+				return error2;
 			}
 			config_cfattach_detach(crypto_cd.cd_name, &crypto_ca);
 			config_cfdriver_detach(&crypto_cd);
-			aprint_error("%s: unable to register devsw\n",
-				crypto_cd.cd_name);
+			aprint_error("%s: unable to register devsw, error %d\n",
+				crypto_cd.cd_name, error);
 
 			return error;
 		}

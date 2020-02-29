@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vtevar.h,v 1.4 2015/04/14 20:32:36 riastradh Exp $	*/
+/*	$NetBSD: if_vtevar.h,v 1.4.26.1 2020/02/29 20:19:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -101,17 +101,21 @@ struct vte_hw_stats {
 	uint32_t rx_frames;
 	uint32_t rx_bcast_frames;
 	uint32_t rx_mcast_frames;
+#if 0 /* unused fields; if_stats used instead. */
 	uint32_t rx_runts;
 	uint32_t rx_crcerrs;
 	uint32_t rx_long_frames;
 	uint32_t rx_fifo_full;
+#endif
 	uint32_t rx_desc_unavail;
 	uint32_t rx_pause_frames;
 
 	/* TX stats. */
+#if 0 /* unused fields; if_stats used instead. */
 	uint32_t tx_frames;
 	uint32_t tx_underruns;
 	uint32_t tx_late_colls;
+#endif
 	uint32_t tx_pause_frames;
 };
 

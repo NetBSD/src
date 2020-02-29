@@ -1,4 +1,4 @@
-/* $NetBSD: param.h,v 1.13 2019/11/24 04:08:36 rin Exp $ */
+/* $NetBSD: param.h,v 1.13.2.1 2020/02/29 20:18:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -164,8 +164,6 @@ void delay(unsigned int);
 /* compatibility for arm */
 #define arm_btop(x)		aarch64_btop(x)
 #define arm_ptob(x)		aarch64_ptob(x)
-#define arm_trunc_page(x)	aarch64_trunc_page(x)
-#define arm_round_page(x)	aarch64_round_page(x)
 
 #elif defined(__arm__)
 

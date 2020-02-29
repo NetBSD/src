@@ -1,4 +1,4 @@
-/* $NetBSD: dstemp.c,v 1.4 2018/06/26 06:03:57 thorpej Exp $ */
+/* $NetBSD: dstemp.c,v 1.4.10.1 2020/02/29 20:19:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 Michael Lorenz
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.4 2018/06/26 06:03:57 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.4.10.1 2020/02/29 20:19:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -55,6 +55,18 @@ __KERNEL_RCSID(0, "$NetBSD: dstemp.c,v 1.4 2018/06/26 06:03:57 thorpej Exp $");
 #define DSTEMP_TLOW		0xa2	/* low threshold, 2 bytes */
 #define DSTEMP_CONFIG		0xac	/* 1 byte */
 
+#define DSTEMP_1SHOT		0x01
+#define DSTEMP_POL		0x02	/* Tout polarity, 1 - active high */
+#define DSTEMP_8BIT		0x00
+#define DSTEMP_10BIT		0x04
+#define DSTEMP_11BIT		0x08
+#define DSTEMP_12BIT		0x0c
+#define DSTEMP_RES_MASK		0x0c
+#define DSTEMP_NVB		0x10	/* EEPROM busy */
+#define DSTEMP_TLF		0x20	/* temperature low flag */
+#define DSTEMP_THF		0x40	/* temperature high flag */
+#define DSTEMP_DONE		0x80
+
 struct dstemp_softc {
 	device_t	sc_dev;
 	i2c_tag_t	sc_i2c;
@@ -68,6 +80,7 @@ static int	dstemp_match(device_t, cfdata_t, void *);
 static void	dstemp_attach(device_t, device_t, void *);
 
 static void	dstemp_sensors_refresh(struct sysmon_envsys *, envsys_data_t *);
+static void	dstemp_init(struct dstemp_softc *);
 
 CFATTACH_DECL_NEW(dstemp, sizeof(struct dstemp_softc),
     dstemp_match, dstemp_attach, NULL, NULL);
@@ -106,6 +119,8 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 	aprint_naive("\n");
 	aprint_normal(": DS1361\n");
 
+	dstemp_init(sc);
+
 	sc->sc_sme = sysmon_envsys_create();
 	sc->sc_sme->sme_name = device_xname(self);
 	sc->sc_sme->sme_cookie = sc;
@@ -128,6 +143,29 @@ dstemp_attach(device_t parent, device_t self, void *aux)
 }
 
 static void
+dstemp_init(struct dstemp_softc *sc)
+{
+	int error;
+	uint8_t cmd[2], data;
+
+	iic_acquire_bus(sc->sc_i2c, 0);
+	cmd[0] = DSTEMP_CONFIG;
+	data = 0;
+	error = iic_exec(sc->sc_i2c, I2C_OP_READ_WITH_STOP,
+	    sc->sc_addr, cmd, 1, &data, 1, 0);
+	/* we don't want to change the POL bit, so preserve it */
+	cmd[1] = (data & DSTEMP_POL) | DSTEMP_12BIT;
+	error |= iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, cmd, 2, NULL, 0, 0);
+	/* ... and start converting */
+	cmd[0] = DSTEMP_CMD_START;
+	error |= iic_exec(sc->sc_i2c, I2C_OP_WRITE_WITH_STOP,
+	    sc->sc_addr, cmd, 1, NULL, 0, 0);
+	if (error) aprint_error_dev(sc->sc_dev, "chip initialization failed\n");
+	iic_release_bus(sc->sc_i2c, 0);
+}
+
+static void
 dstemp_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 {
 	struct dstemp_softc *sc = sme->sme_cookie;
@@ -145,8 +183,11 @@ dstemp_sensors_refresh(struct sysmon_envsys *sme, envsys_data_t *edata)
 		edata->state = ENVSYS_SINVALID;
 	} else {
 		edata->value_cur =
-		    ((uint64_t)(data>>4) * 62500) +
+		    ((uint64_t)(be16toh(data) >> 4) * 62500) +
 		    + 273150000;
-		edata->state = ENVSYS_SVALID;
+		if (edata->value_cur > (273150000 + 120000000)) {
+			edata->state = ENVSYS_SINVALID;
+		} else
+			edata->state = ENVSYS_SVALID;
 	}
 }

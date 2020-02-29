@@ -1,4 +1,4 @@
-/* $Id: if_ae.c,v 1.37 2019/09/13 07:55:06 msaitoh Exp $ */
+/* $Id: if_ae.c,v 1.37.2.1 2020/02/29 20:18:27 ad Exp $ */
 /*-
  * Copyright (c) 2006 Urbana-Champaign Independent Media Center.
  * Copyright (c) 2006 Garrett D'Amore.
@@ -98,7 +98,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.37 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae.c,v 1.37.2.1 2020/02/29 20:18:27 ad Exp $");
 
 
 #include <sys/param.h>
@@ -485,12 +485,12 @@ ae_detach(device_t self, int flags)
 	/* Detach all PHYs */
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->sc_rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < AE_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -784,7 +784,7 @@ ae_watchdog(struct ifnet *ifp)
 
 	if (doing_transmit) {
 		printf("%s: transmit timeout\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	}
 	else
 		printf("%s: spurious watchdog timeout\n", device_xname(sc->sc_dev));
@@ -1033,7 +1033,7 @@ ae_rxintr(struct ae_softc *sc)
 		 * If any collisions were seen on the wire, count one.
 		 */
 		if (rxstat & ADSTAT_Rx_CS)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 
 		/*
 		 * If an error occurred, update stats, clear the status
@@ -1050,7 +1050,7 @@ ae_rxintr(struct ae_softc *sc)
 			if (rxstat & (bit))				\
 				printf("%s: receive error: %s\n",	\
 				    device_xname(sc->sc_dev), str)
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			PRINTERR(ADSTAT_Rx_DE, "descriptor error");
 			PRINTERR(ADSTAT_Rx_RF, "runt frame");
 			PRINTERR(ADSTAT_Rx_TL, "frame too long");
@@ -1084,7 +1084,7 @@ ae_rxintr(struct ae_softc *sc)
 		 */
 		m = rxs->rxs_mbuf;
 		if (ae_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			AE_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1100,7 +1100,7 @@ ae_rxintr(struct ae_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			AE_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1216,17 +1216,20 @@ ae_txintr(struct ae_softc *sc)
 			sc->sc_stats.ts_tx_lc++;
 #endif
 
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (ADSTAT_Tx_UF | ADSTAT_Tx_TO))
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 
 		if (txstat & ADSTAT_Tx_EC)
-			ifp->if_collisions += 16;
-		else
-			ifp->if_collisions += ADSTAT_Tx_COLLISIONS(txstat);
+			if_statadd_ref(nsr, if_collisions, 16);
+		else if (ADSTAT_Tx_COLLISIONS(txstat))
+			if_statadd_ref(nsr, if_collisions,
+			    ADSTAT_Tx_COLLISIONS(txstat));
 		if (txstat & ADSTAT_Tx_LC)
-			ifp->if_collisions++;
+			if_statinc_ref(nsr, if_collisions);
 
-		ifp->if_opackets++;
+		if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 	}
 
 	/*

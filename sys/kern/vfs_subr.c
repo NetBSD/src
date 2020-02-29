@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_subr.c,v 1.478.2.3 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: vfs_subr.c,v 1.478.2.4 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 2004, 2005, 2007, 2008, 2019, 2020
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.3 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_subr.c,v 1.478.2.4 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -155,7 +155,7 @@ vinvalbuf(struct vnode *vp, int flags, kauth_cred_t cred, struct lwp *l,
 	    (flags & V_SAVE ? PGO_CLEANIT | PGO_RECLAIM : 0);
 
 	/* XXXUBC this doesn't look at flags or slp* */
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, 0, 0, flushflags);
 	if (error) {
 		return error;
@@ -234,7 +234,7 @@ vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch_p, int slptimeo)
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
 	if (error) {
 		return error;
@@ -292,7 +292,7 @@ vflushbuf(struct vnode *vp, int flags)
 	pflags = PGO_CLEANIT | PGO_ALLPAGES |
 		(sync ? PGO_SYNCIO : 0) |
 		((flags & FSYNC_LAZY) ? PGO_LAZY : 0);
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	(void) VOP_PUTPAGES(vp, 0, 0, pflags);
 
 loop:
@@ -421,8 +421,13 @@ brelvp(struct buf *bp)
 	if (LIST_NEXT(bp, b_vnbufs) != NOLIST)
 		bufremvn(bp);
 
-	if (vp->v_uobj.uo_npages == 0 && (vp->v_iflag & VI_ONWORKLST) &&
+	if ((vp->v_iflag & (VI_ONWORKLST | VI_PAGES)) == VI_ONWORKLST &&
 	    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+	    	/*
+	    	 * Okay to clear VI_WRMAPDIRTY without the uvm_object locked
+	    	 * here, because new pages can't be inserted without first
+	    	 * taking v_interlock (which is held here).
+	    	 */
 		vp->v_iflag &= ~VI_WRMAPDIRTY;
 		vn_syncer_remove_from_worklist(vp);
 	}
@@ -461,9 +466,15 @@ reassignbuf(struct buf *bp, struct vnode *vp)
 	 */
 	if ((bp->b_oflags & BO_DELWRI) == 0) {
 		listheadp = &vp->v_cleanblkhd;
-		if (vp->v_uobj.uo_npages == 0 &&
-		    (vp->v_iflag & VI_ONWORKLST) &&
+		if ((vp->v_iflag & (VI_ONWORKLST | VI_PAGES)) ==
+		    VI_ONWORKLST &&
 		    LIST_FIRST(&vp->v_dirtyblkhd) == NULL) {
+		    	/*
+		    	 * Okay to clear VI_WRMAPDIRTY without the
+		    	 * uvm_object locked here, because new pages can't
+		    	 * be inserted without first taking v_interlock
+		    	 * (which is held here).
+		    	 */
 			vp->v_iflag &= ~VI_WRMAPDIRTY;
 			vn_syncer_remove_from_worklist(vp);
 		}

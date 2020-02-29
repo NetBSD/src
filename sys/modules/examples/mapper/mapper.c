@@ -1,4 +1,4 @@
-/*	$NetBSD: mapper.c,v 1.1 2019/01/17 20:47:42 kamil Exp $	*/
+/*	$NetBSD: mapper.c,v 1.1.10.1 2020/02/29 20:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mapper.c,v 1.1 2019/01/17 20:47:42 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mapper.c,v 1.1.10.1 2020/02/29 20:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -42,7 +42,7 @@ __KERNEL_RCSID(0, "$NetBSD: mapper.c,v 1.1 2019/01/17 20:47:42 kamil Exp $");
 /*
  * Creating a device /dev/mapper for demonstration.
  * To use this device you need to do:
- * 	mknod /dev/mapper c 210 0
+ * 	mknod /dev/mapper c 351 0
  *
  */
 
@@ -121,7 +121,7 @@ mapper_modcmd(modcmd_t cmd, void *arg __unused)
 {
 	/* The major should be verified and changed if needed to avoid
 	 * conflicts with other devices. */
-	int cmajor = 210, bmajor = -1;
+	int cmajor = 351, bmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

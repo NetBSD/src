@@ -1,4 +1,4 @@
-/*	$NetBSD: atapi_wdc.c,v 1.134 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: atapi_wdc.c,v 1.134.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.134 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atapi_wdc.c,v 1.134.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifndef ATADEBUG
 #define ATADEBUG
@@ -101,12 +101,12 @@ static void	wdc_atapi_polldsc(void *arg);
 #define MAX_SIZE MAXPHYS
 
 static const struct scsipi_bustype wdc_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	wdc_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = wdc_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 
 void
@@ -138,7 +138,7 @@ wdc_atapibus_attach(struct atabus_softc *ata_sc)
 	chan->chan_flags = SCSIPI_CHAN_OPENINGS;
 	chan->chan_openings = 1;
 	chan->chan_max_periph = 1;
-	chan->chan_ntargets = 2;
+	chan->chan_ntargets = chp->ch_ndrives;
 	chan->chan_nluns = 1;
 
 	chp->atapibus = config_found_ia(ata_sc->sc_dev, "atapi", chan,

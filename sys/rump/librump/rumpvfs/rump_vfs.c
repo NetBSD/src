@@ -1,4 +1,4 @@
-/*	$NetBSD: rump_vfs.c,v 1.88.6.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: rump_vfs.c,v 1.88.6.2 2020/02/29 20:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Antti Kantee.  All Rights Reserved.
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.88.6.1 2020/01/17 21:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rump_vfs.c,v 1.88.6.2 2020/02/29 20:21:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -397,6 +397,13 @@ rump_vp_interlock(struct vnode *vp)
 {
 
 	mutex_enter(vp->v_interlock);
+}
+
+void
+rump_vp_vmobjlock(struct vnode *vp, int write)
+{
+
+	rw_enter(vp->v_uobj.vmobjlock, write ? RW_WRITER : RW_READER);
 }
 
 int

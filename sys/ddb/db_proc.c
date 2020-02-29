@@ -1,7 +1,7 @@
-/*	$NetBSD: db_proc.c,v 1.8.6.1 2020/01/17 21:47:29 ad Exp $	*/
+/*	$NetBSD: db_proc.c,v 1.8.6.2 2020/02/29 20:21:01 ad Exp $	*/
 
 /*-
- * Copyright (c) 2009 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.8.6.1 2020/01/17 21:47:29 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_proc.c,v 1.8.6.2 2020/02/29 20:21:01 ad Exp $");
 
 #ifndef _KERNEL
 #include <stdbool.h>
@@ -196,7 +196,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 					    sizeof(db_nbuf));
 				}
 				run = (l.l_stat == LSONPROC ||
-				    (l.l_flag & LW_RUNNING) != 0);
+				    (l.l_pflag & LP_RUNNING) != 0);
 				if (l.l_cpu != NULL) {
 					db_read_bytes((db_addr_t)
 					    &l.l_cpu->ci_data.cpu_index,
@@ -233,7 +233,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 				wbuf[0] = '\0';
 			}
 			db_printf("%8d %8d %10d %d %#7x %4d %16s %7.7s\n",
-			    p.p_pptr != NULL ? p.p_pid : -1, pgrp.pg_id,
+			    p.p_pptr != NULL ? p.p_pptr->p_pid : -1, pgrp.pg_id,
 #ifdef _KERNEL
 			    kauth_cred_getuid(p.p_cred),
 #else
@@ -254,7 +254,7 @@ db_show_all_procs(db_expr_t addr, bool haddr, db_expr_t count,
 					wbuf[0] = '\0';
 				}
 				run = (l.l_stat == LSONPROC ||
-				    (l.l_flag & LW_RUNNING) != 0);
+				    (l.l_pflag & LP_RUNNING) != 0);
 				db_read_bytes((db_addr_t)&p.p_emul->e_name,
 				    sizeof(ename), (char *)&ename);
 
@@ -332,7 +332,7 @@ db_show_proc(db_expr_t addr, bool haddr, db_expr_t count, const char *modif)
 		db_read_bytes((db_addr_t)lp, sizeof(l), (char *)&l);
 
 		run = (l.l_stat == LSONPROC ||
-		    (l.l_flag & LW_RUNNING) != 0);
+		    (l.l_pflag & LP_RUNNING) != 0);
 
 		db_printf("%slwp %d", (run ? "> " : "  "), l.l_lid);
 		if (l.l_name != NULL) {

@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_event.c,v 1.105 2019/10/18 19:43:49 christos Exp $	*/
+/*	$NetBSD: kern_event.c,v 1.105.2.1 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.105 2019/10/18 19:43:49 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_event.c,v 1.105.2.1 2020/02/29 20:21:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1671,8 +1671,8 @@ knote_fdclose(int fd)
 	filedesc_t *fdp;
 
 	fdp = curlwp->l_fd;
-	list = (struct klist *)&fdp->fd_dt->dt_ff[fd]->ff_knlist;
 	mutex_enter(&fdp->fd_lock);
+	list = (struct klist *)&fdp->fd_dt->dt_ff[fd]->ff_knlist;
 	while ((kn = SLIST_FIRST(list)) != NULL) {
 		knote_detach(kn, fdp, true);
 		mutex_enter(&fdp->fd_lock);

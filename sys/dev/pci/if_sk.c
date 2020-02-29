@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sk.c,v 1.103 2019/12/27 07:02:26 msaitoh Exp $	*/
+/*	$NetBSD: if_sk.c,v 1.103.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -115,7 +115,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.103 2019/12/27 07:02:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sk.c,v 1.103.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -864,7 +864,7 @@ sk_alloc_jumbo_mem(struct sk_if_softc *sc_if)
 
 	state = 4;
 	sc_if->sk_cdata.sk_jumbo_buf = (void *)kva;
-	DPRINTFN(1,("sk_jumbo_buf = 0x%p\n", sc_if->sk_cdata.sk_jumbo_buf));
+	DPRINTFN(1,("sk_jumbo_buf = %p\n", sc_if->sk_cdata.sk_jumbo_buf));
 
 	LIST_INIT(&sc_if->sk_jfree_listhead);
 	LIST_INIT(&sc_if->sk_jinuse_listhead);
@@ -2011,7 +2011,7 @@ sk_watchdog(struct ifnet *ifp)
 	if (sc_if->sk_cdata.sk_tx_cnt != 0) {
 		aprint_error_dev(sc_if->sk_dev, "watchdog timeout\n");
 
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		sk_init(ifp);
 	}
@@ -2086,7 +2086,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 		SK_INC(i, SK_RX_RING_CNT);
 
 		if (rxstat & XM_RXSTAT_ERRFRAME) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			sk_newbuf(sc_if, cur, m, dmamap);
 			continue;
 		}
@@ -2106,7 +2106,7 @@ sk_rxeof(struct sk_if_softc *sc_if)
 			if (m0 == NULL) {
 				aprint_error_dev(sc_if->sk_dev, "no receive "
 				    "buffers available -- packet dropped!\n");
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				continue;
 			}
 			m_adj(m0, ETHER_ALIGN);
@@ -2152,7 +2152,7 @@ sk_txeof(struct sk_if_softc *sc_if)
 			break;
 		}
 		if (sk_ctl & SK_TXCTL_LASTFRAG)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		if (sc_if->sk_cdata.sk_tx_chain[idx].sk_mbuf != NULL) {
 			entry = sc_if->sk_cdata.sk_tx_map[idx];
 

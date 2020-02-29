@@ -1,4 +1,4 @@
-# $NetBSD: genassym.cf,v 1.21 2019/04/06 03:06:24 thorpej Exp $
+# $NetBSD: genassym.cf,v 1.21.6.1 2020/02/29 20:18:15 ad Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -140,10 +140,8 @@ define	ALPHA_PTE_KW		ALPHA_PTE_KW
 
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)
-define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_CPU			offsetof(struct lwp, l_cpu)
 define	L_PROC			offsetof(struct lwp, l_proc)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	L_MD_PCBPADDR		offsetof(struct lwp, l_md.md_pcbpaddr)
 define	L_MD_TF			offsetof(struct lwp, l_md.md_tf)

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.16.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.16.2.2 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,6 +74,7 @@
  */
 
 #include <sys/cdefs.h>
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.16.2.2 2020/02/29 20:19:10 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -88,7 +89,6 @@
 #include <sys/evcnt.h>
 #include <sys/interrupt.h>
 #include <sys/kmem.h>
-#include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/mutex.h>
 #include <sys/pcq.h>
@@ -103,6 +103,9 @@
 #include <net/if_media.h>
 #include <net/if_ether.h>
 #include <net/rss_config.h>
+
+#include <netinet/tcp.h>	/* for struct tcphdr */
+#include <netinet/udp.h>	/* for struct udphdr */
 
 #include <dev/pci/pcivar.h>
 #include <dev/pci/pcidevs.h>
@@ -171,11 +174,24 @@ struct ixl_softc; /* defined */
 	I40E_PFINT_ICR0_ECC_ERR_MASK |		\
 	I40E_PFINT_ICR0_PE_CRITERR_MASK)
 
+#define IXL_QUEUE_MAX_XL710		64
+#define IXL_QUEUE_MAX_X722		128
+
 #define IXL_TX_PKT_DESCS		8
+#define IXL_TX_PKT_MAXSIZE		(MCLBYTES * IXL_TX_PKT_DESCS)
 #define IXL_TX_QUEUE_ALIGN		128
 #define IXL_RX_QUEUE_ALIGN		128
 
-#define IXL_HARDMTU			9712 /* 9726 - ETHER_HDR_LEN */
+#define IXL_MCLBYTES			(MCLBYTES - ETHER_ALIGN)
+#define IXL_MTU_ETHERLEN		ETHER_HDR_LEN		\
+					+ ETHER_CRC_LEN
+#if 0
+#define IXL_MAX_MTU			(9728 - IXL_MTU_ETHERLEN)
+#else
+/* (dbuff * 5) - ETHER_HDR_LEN - ETHER_CRC_LEN */
+#define IXL_MAX_MTU			(9600 - IXL_MTU_ETHERLEN)
+#endif
+#define IXL_MIN_MTU			(ETHER_MIN_LEN - ETHER_CRC_LEN)
 
 #define IXL_PCIREG			PCI_MAPREG_START
 
@@ -352,8 +368,8 @@ struct ixl_hmc_txq {
 	uint8_t			timesync_ena;
 	uint8_t			fd_ena;
 	uint8_t			alt_vlan_ena;
-	uint16_t		thead_wb;
 	uint8_t			cpuid;
+	uint16_t		thead_wb;
 	uint8_t			head_wb_ena;
 #define IXL_HMC_TXQ_DESC_WB		0
 #define IXL_HMC_TXQ_HEAD_WB		1
@@ -421,11 +437,6 @@ struct ixl_tx_ring {
 	pcq_t			*txr_intrq;
 	void			*txr_si;
 
-	uint64_t		 txr_oerrors;	/* if_oerrors */
-	uint64_t		 txr_opackets;	/* if_opackets */
-	uint64_t		 txr_obytes;	/* if_obytes */
-	uint64_t		 txr_omcasts;	/* if_omcasts */
-
 	struct evcnt		 txr_defragged;
 	struct evcnt		 txr_defrag_failed;
 	struct evcnt		 txr_pcqdrop;
@@ -454,11 +465,6 @@ struct ixl_rx_ring {
 	bus_size_t		 rxr_tail;
 	unsigned int		 rxr_qid;
 
-	uint64_t		 rxr_ipackets;	/* if_ipackets */
-	uint64_t		 rxr_ibytes;	/* if_ibytes */
-	uint64_t		 rxr_iqdrops;	/* iqdrops */
-	uint64_t		 rxr_ierrors;	/* if_ierrors */
-
 	struct evcnt		 rxr_mgethdr_failed;
 	struct evcnt		 rxr_mgetcl_failed;
 	struct evcnt		 rxr_mbuf_load_failed;
@@ -474,7 +480,7 @@ struct ixl_queue_pair {
 	char			 qp_name[16];
 
 	void			*qp_si;
-	struct ixl_work		 qp_task;
+	struct work		 qp_work;
 	bool			 qp_workqueue;
 };
 
@@ -621,6 +627,13 @@ struct ixl_softc {
 	struct ifmedia		 sc_media;
 	uint64_t		 sc_media_status;
 	uint64_t		 sc_media_active;
+	uint64_t		 sc_phy_types;
+	uint8_t			 sc_phy_abilities;
+	uint8_t			 sc_phy_linkspeed;
+	uint8_t			 sc_phy_fec_cfg;
+	uint16_t		 sc_eee_cap;
+	uint32_t		 sc_eeer_val;
+	uint8_t			 sc_d3_lpan;
 	kmutex_t		 sc_cfg_lock;
 	enum i40e_mac_type	 sc_mac_type;
 	uint32_t		 sc_rss_table_size;
@@ -646,7 +659,7 @@ struct ixl_softc {
 	uint8_t			 sc_pf_id;
 	uint16_t		 sc_uplink_seid;	/* le */
 	uint16_t		 sc_downlink_seid;	/* le */
-	uint16_t		 sc_vsi_number;		/* le */
+	uint16_t		 sc_vsi_number;
 	uint16_t		 sc_vsi_stat_counter_idx;
 	uint16_t		 sc_seid;
 	unsigned int		 sc_base_queue;
@@ -663,6 +676,7 @@ struct ixl_softc {
 #define IXL_SC_AQ_FLAG_RXCTL	__BIT(0)
 #define IXL_SC_AQ_FLAG_NVMLOCK	__BIT(1)
 #define IXL_SC_AQ_FLAG_NVMREAD	__BIT(2)
+#define IXL_SC_AQ_FLAG_RSS	__BIT(3)
 
 	kmutex_t		 sc_atq_lock;
 	kcondvar_t		 sc_atq_cv;
@@ -704,11 +718,19 @@ struct ixl_softc {
 #define IXL_TX_INTR_PROCESS_LIMIT	256
 #define IXL_RX_INTR_PROCESS_LIMIT	0U
 
-#define IXL_IFCAP_RXCSUM	(IFCAP_CSUM_IPv4_Rx|	\
-				 IFCAP_CSUM_TCPv4_Rx|	\
-				 IFCAP_CSUM_UDPv4_Rx|	\
-				 IFCAP_CSUM_TCPv6_Rx|	\
+#define IXL_IFCAP_RXCSUM	(IFCAP_CSUM_IPv4_Rx |	\
+				 IFCAP_CSUM_TCPv4_Rx |	\
+				 IFCAP_CSUM_UDPv4_Rx |	\
+				 IFCAP_CSUM_TCPv6_Rx |	\
 				 IFCAP_CSUM_UDPv6_Rx)
+#define IXL_IFCAP_TXCSUM	(IFCAP_CSUM_IPv4_Tx |	\
+				 IFCAP_CSUM_TCPv4_Tx |	\
+				 IFCAP_CSUM_UDPv4_Tx |	\
+				 IFCAP_CSUM_TCPv6_Tx |	\
+				 IFCAP_CSUM_UDPv6_Tx)
+#define IXL_CSUM_ALL_OFFLOAD	(M_CSUM_IPv4 |			\
+				 M_CSUM_TCPv4 | M_CSUM_TCPv6 |	\
+				 M_CSUM_UDPv4 | M_CSUM_UDPv6)
 
 #define delaymsec(_x)	DELAY(1000 * (_x))
 #ifdef IXL_DEBUG
@@ -765,7 +787,9 @@ static int	ixl_lldp_shut(struct ixl_softc *);
 static int	ixl_get_mac(struct ixl_softc *);
 static int	ixl_get_switch_config(struct ixl_softc *);
 static int	ixl_phy_mask_ints(struct ixl_softc *);
-static int	ixl_get_phy_types(struct ixl_softc *, uint64_t *);
+static int	ixl_get_phy_info(struct ixl_softc *);
+static int	ixl_set_phy_config(struct ixl_softc *, uint8_t, uint8_t, bool);
+static int	ixl_set_phy_autoselect(struct ixl_softc *);
 static int	ixl_restart_an(struct ixl_softc *);
 static int	ixl_hmc(struct ixl_softc *);
 static void	ixl_hmc_free(struct ixl_softc *);
@@ -773,9 +797,11 @@ static int	ixl_get_vsi(struct ixl_softc *);
 static int	ixl_set_vsi(struct ixl_softc *);
 static void	ixl_set_filter_control(struct ixl_softc *);
 static void	ixl_get_link_status(void *);
-static int	ixl_get_link_status_poll(struct ixl_softc *);
+static int	ixl_get_link_status_poll(struct ixl_softc *, int *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
+static uint64_t	ixl_search_link_speed(uint8_t);
+static uint8_t	ixl_search_baudrate(uint64_t);
 static void	ixl_config_rss(struct ixl_softc *);
 static int	ixl_add_macvlan(struct ixl_softc *, const uint8_t *,
 		    uint16_t, uint16_t);
@@ -792,7 +818,7 @@ static int	ixl_match(device_t, cfdata_t, void *);
 static void	ixl_attach(device_t, device_t, void *);
 static int	ixl_detach(device_t, int);
 
-static void	ixl_media_add(struct ixl_softc *, uint64_t);
+static void	ixl_media_add(struct ixl_softc *);
 static int	ixl_media_change(struct ifnet *);
 static void	ixl_media_status(struct ifnet *, struct ifmediareq *);
 static void	ixl_watchdog(struct ifnet *);
@@ -804,6 +830,7 @@ static int	ixl_intr(void *);
 static int	ixl_queue_intr(void *);
 static int	ixl_other_intr(void *);
 static void	ixl_handle_queue(void *);
+static void	ixl_handle_queue_wk(struct work *, void *);
 static void	ixl_sched_handle_queue(struct ixl_softc *,
 		    struct ixl_queue_pair *);
 static int	ixl_init(struct ifnet *);
@@ -907,7 +934,7 @@ static const struct ixl_phy_type ixl_phy_type_map[] = {
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_SR,	IFM_25G_SR },
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_LR,	IFM_25G_LR },
 	{ 1ULL << IXL_PHY_TYPE_25GBASE_AOC,	IFM_25G_AOC },
-	{ 1ULL << IXL_PHY_TYPE_25GBASE_ACC,	IFM_25G_CR },
+	{ 1ULL << IXL_PHY_TYPE_25GBASE_ACC,	IFM_25G_ACC },
 };
 
 static const struct ixl_speed_type ixl_speed_type_map[] = {
@@ -1060,9 +1087,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	struct ifnet *ifp;
 	pcireg_t memtype;
 	uint32_t firstq, port, ari, func;
-	uint64_t phy_types = 0;
 	char xnamebuf[32];
-	int tries, rv;
+	int tries, rv, link;
 
 	sc = device_private(self);
 	sc->sc_dev = self;
@@ -1191,9 +1217,9 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ixl_get_nvm_version(sc);
 
 	if (sc->sc_mac_type == I40E_MAC_X722)
-		sc->sc_nqueue_pairs_device = 128;
+		sc->sc_nqueue_pairs_device = IXL_QUEUE_MAX_X722;
 	else
-		sc->sc_nqueue_pairs_device = 64;
+		sc->sc_nqueue_pairs_device = IXL_QUEUE_MAX_XL710;
 
 	rv = ixl_get_hw_capabilities(sc);
 	if (rv != 0) {
@@ -1259,15 +1285,20 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		goto free_hmc;
 	}
 
-	if (ixl_get_phy_types(sc, &phy_types) != 0) {
-		/* error printed by ixl_get_phy_abilities */
-		goto free_hmc;
-	}
-
-	rv = ixl_get_link_status_poll(sc);
+	rv = ixl_get_link_status_poll(sc, NULL);
 	if (rv != 0) {
 		aprint_error_dev(self, "GET LINK STATUS %s\n",
 		    rv == ETIMEDOUT ? "timeout" : "error");
+		goto free_hmc;
+	}
+
+	/*
+	 * The FW often returns EIO in "Get PHY Abilities" command
+	 * if there is no delay
+	 */
+	DELAY(500);
+	if (ixl_get_phy_info(sc) != 0) {
+		/* error printed by ixl_get_phy_info */
 		goto free_hmc;
 	}
 
@@ -1313,15 +1344,17 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_wq_cfg", device_xname(self));
 	sc->sc_workq = ixl_workq_create(xnamebuf, IXL_WORKQUEUE_PRI,
-	    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	    IPL_NET, WQ_MPSAFE);
 	if (sc->sc_workq == NULL)
 		goto teardown_sysctls;
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_wq_txrx", device_xname(self));
-	sc->sc_workq_txrx = ixl_workq_create(xnamebuf, IXL_WORKQUEUE_PRI,
-	    IPL_NET, WQ_PERCPU | WQ_MPSAFE);
-	if (sc->sc_workq_txrx == NULL)
+	rv = workqueue_create(&sc->sc_workq_txrx, xnamebuf, ixl_handle_queue_wk,
+	    sc, IXL_WORKQUEUE_PRI, IPL_NET, WQ_PERCPU | WQ_MPSAFE);
+	if (rv != 0) {
+		sc->sc_workq_txrx = NULL;
 		goto teardown_wqs;
+	}
 
 	snprintf(xnamebuf, sizeof(xnamebuf), "%s_atq_cv", device_xname(self));
 	cv_init(&sc->sc_atq_cv, xnamebuf);
@@ -1340,11 +1373,12 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	IFQ_SET_MAXLEN(&ifp->if_snd, sc->sc_tx_ring_ndescs);
 	IFQ_SET_READY(&ifp->if_snd);
 	ifp->if_capabilities |= IXL_IFCAP_RXCSUM;
+	ifp->if_capabilities |= IXL_IFCAP_TXCSUM;
 #if 0
-	ifp->if_capabilities |= IFCAP_CSUM_TCPv4_Tx | IFCAP_CSUM_UDPv4_Tx;
+	ifp->if_capabilities |= IFCAP_TSOv4 | IFCAP_TSOv6;
 #endif
 	ether_set_vlan_cb(&sc->sc_ec, ixl_vlan_cb);
-	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_MTU;
+	sc->sc_ec.ec_capabilities |= ETHERCAP_JUMBO_MTU;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWTAGGING;
 	sc->sc_ec.ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 
@@ -1358,8 +1392,14 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ifmedia_init(&sc->sc_media, IFM_IMASK, ixl_media_change,
 	    ixl_media_status);
 
-	ixl_media_add(sc, phy_types);
+	ixl_media_add(sc);
 	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_AUTO, 0, NULL);
+	if (ISSET(sc->sc_phy_abilities,
+	    (IXL_PHY_ABILITY_PAUSE_TX | IXL_PHY_ABILITY_PAUSE_RX))) {
+		ifmedia_add(&sc->sc_media,
+		    IFM_ETHER | IFM_AUTO | IFM_FLOW, 0, NULL);
+	}
+	ifmedia_add(&sc->sc_media, IFM_ETHER | IFM_NONE, 0, NULL);
 	ifmedia_set(&sc->sc_media, IFM_ETHER | IFM_AUTO);
 
 	if_attach(ifp);
@@ -1367,11 +1407,17 @@ ixl_attach(device_t parent, device_t self, void *aux)
 	ether_ifattach(ifp, sc->sc_enaddr);
 	ether_set_ifflags_cb(&sc->sc_ec, ixl_ifflags_cb);
 
-	(void)ixl_get_link_status_poll(sc);
+	rv = ixl_get_link_status_poll(sc, &link);
+	if (rv != 0)
+		link = LINK_STATE_UNKNOWN;
+	if_link_state_change(ifp, link);
+
 	ixl_work_set(&sc->sc_link_state_task, ixl_get_link_status, sc);
 
 	ixl_config_other_intr(sc);
 	ixl_enable_other_intr(sc);
+
+	ixl_set_phy_autoselect(sc);
 
 	/* remove default mac filter and replace it so we can see vlans */
 	rv = ixl_remove_macvlan(sc, sc->sc_enaddr, 0, 0);
@@ -1401,7 +1447,6 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	ixl_stats_update(sc);
 	sc->sc_stats_counters.isc_has_offset = true;
-	callout_schedule(&sc->sc_stats_callout, mstohz(sc->sc_stats_intval));
 
 	if (pmf_device_register(self, NULL, NULL) != true)
 		aprint_debug_dev(self, "couldn't establish power handler\n");
@@ -1472,7 +1517,7 @@ ixl_detach(device_t self, int flags)
 
 	ixl_disable_other_intr(sc);
 
-	callout_stop(&sc->sc_stats_callout);
+	callout_halt(&sc->sc_stats_callout, NULL);
 	ixl_work_wait(sc->sc_workq, &sc->sc_stats_task);
 
 	/* wait for ATQ handler */
@@ -1488,13 +1533,13 @@ ixl_detach(device_t self, int flags)
 	}
 
 	if (sc->sc_workq_txrx != NULL) {
-		ixl_workq_destroy(sc->sc_workq_txrx);
+		workqueue_destroy(sc->sc_workq_txrx);
 		sc->sc_workq_txrx = NULL;
 	}
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
 
 	ixl_teardown_interrupts(sc);
 	ixl_teardown_stats(sc);
@@ -1556,7 +1601,7 @@ ixl_workqs_teardown(device_t self)
 	}
 
 	if (sc->sc_workq_txrx != NULL) {
-		ixl_workq_destroy(sc->sc_workq_txrx);
+		workqueue_destroy(sc->sc_workq_txrx);
 		sc->sc_workq_txrx = NULL;
 	}
 
@@ -1592,21 +1637,41 @@ ixl_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
 }
 
 static void
-ixl_media_add(struct ixl_softc *sc, uint64_t phy_types)
+ixl_media_add(struct ixl_softc *sc)
 {
 	struct ifmedia *ifm = &sc->sc_media;
 	const struct ixl_phy_type *itype;
 	unsigned int i;
+	bool flow;
+
+	if (ISSET(sc->sc_phy_abilities,
+	    (IXL_PHY_ABILITY_PAUSE_TX | IXL_PHY_ABILITY_PAUSE_RX))) {
+		flow = true;
+	} else {
+		flow = false;
+	}
 
 	for (i = 0; i < __arraycount(ixl_phy_type_map); i++) {
 		itype = &ixl_phy_type_map[i];
 
-		if (ISSET(phy_types, itype->phy_type)) {
+		if (ISSET(sc->sc_phy_types, itype->phy_type)) {
 			ifmedia_add(ifm,
 			    IFM_ETHER | IFM_FDX | itype->ifm_type, 0, NULL);
 
-			if (itype->ifm_type == IFM_100_TX) {
-				ifmedia_add(ifm, IFM_ETHER | itype->ifm_type,
+			if (flow) {
+				ifmedia_add(ifm,
+				    IFM_ETHER | IFM_FDX | IFM_FLOW |
+				    itype->ifm_type, 0, NULL);
+			}
+
+			if (itype->ifm_type != IFM_100_TX)
+				continue;
+
+			ifmedia_add(ifm, IFM_ETHER | itype->ifm_type,
+			    0, NULL);
+			if (flow) {
+				ifmedia_add(ifm,
+				    IFM_ETHER | IFM_FLOW | itype->ifm_type,
 				    0, NULL);
 			}
 		}
@@ -1630,8 +1695,49 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 ixl_media_change(struct ifnet *ifp)
 {
+	struct ixl_softc *sc = ifp->if_softc;
+	struct ifmedia *ifm = &sc->sc_media;
+	uint64_t ifm_active = sc->sc_media_active;
+	uint8_t link_speed, abilities;
 
-	return 0;
+	switch (IFM_SUBTYPE(ifm_active)) {
+	case IFM_1000_SGMII:
+	case IFM_1000_KX:
+	case IFM_10G_KX4:
+	case IFM_10G_KR:
+	case IFM_40G_KR4:
+	case IFM_20G_KR2:
+	case IFM_25G_KR:
+		/* backplanes */
+		return EINVAL;
+	}
+
+	abilities = IXL_PHY_ABILITY_AUTONEGO | IXL_PHY_ABILITY_LINKUP;
+
+	switch (IFM_SUBTYPE(ifm->ifm_media)) {
+	case IFM_AUTO:
+		link_speed = sc->sc_phy_linkspeed;
+		break;
+	case IFM_NONE:
+		link_speed = 0;
+		CLR(abilities, IXL_PHY_ABILITY_LINKUP);
+		break;
+	default:
+		link_speed = ixl_search_baudrate(
+		    ifmedia_baudrate(ifm->ifm_media));
+	}
+
+	if (ISSET(abilities, IXL_PHY_ABILITY_LINKUP)) {
+		if (ISSET(link_speed, sc->sc_phy_linkspeed) == 0)
+			return EINVAL;
+	}
+
+	if (ifm->ifm_media & IFM_FLOW) {
+		abilities |= sc->sc_phy_abilities &
+		    (IXL_PHY_ABILITY_PAUSE_TX | IXL_PHY_ABILITY_PAUSE_RX);
+	}
+
+	return ixl_set_phy_config(sc, link_speed, abilities, false);
 }
 
 static void
@@ -1741,14 +1847,27 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
 	struct ifreq *ifr = (struct ifreq *)data;
 	struct ixl_softc *sc = (struct ixl_softc *)ifp->if_softc;
-	struct ixl_tx_ring *txr;
-	struct ixl_rx_ring *rxr;
 	const struct sockaddr *sa;
 	uint8_t addrhi[ETHER_ADDR_LEN], addrlo[ETHER_ADDR_LEN];
 	int s, error = 0;
-	unsigned int i;
+	unsigned int nmtu;
 
 	switch (cmd) {
+	case SIOCSIFMTU:
+		nmtu = ifr->ifr_mtu;
+
+		if (nmtu < IXL_MIN_MTU || nmtu > IXL_MAX_MTU) {
+			error = EINVAL;
+			break;
+		}
+		if (ifp->if_mtu != nmtu) {
+			s = splnet();
+			error = ether_ioctl(ifp, cmd, data);
+			splx(s);
+			if (error == ENETRESET)
+				error = ixl_init(ifp);
+		}
+		break;
 	case SIOCADDMULTI:
 		sa = ifreq_getaddr(SIOCADDMULTI, ifr);
 		if (ether_addmulti(sa, &sc->sc_ec) == ENETRESET) {
@@ -1775,45 +1894,6 @@ ixl_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 
-	case SIOCGIFDATA:
-	case SIOCZIFDATA:
-		ifp->if_ipackets = 0;
-		ifp->if_ibytes = 0;
-		ifp->if_iqdrops = 0;
-		ifp->if_ierrors = 0;
-		ifp->if_opackets = 0;
-		ifp->if_obytes = 0;
-		ifp->if_omcasts = 0;
-
-		for (i = 0; i < sc->sc_nqueue_pairs_max; i++) {
-			txr = sc->sc_qps[i].qp_txr;
-			rxr = sc->sc_qps[i].qp_rxr;
-
-			mutex_enter(&rxr->rxr_lock);
-			ifp->if_ipackets += rxr->rxr_ipackets;
-			ifp->if_ibytes += rxr->rxr_ibytes;
-			ifp->if_iqdrops += rxr->rxr_iqdrops;
-			ifp->if_ierrors += rxr->rxr_ierrors;
-			if (cmd == SIOCZIFDATA) {
-				rxr->rxr_ipackets = 0;
-				rxr->rxr_ibytes = 0;
-				rxr->rxr_iqdrops = 0;
-				rxr->rxr_ierrors = 0;
-			}
-			mutex_exit(&rxr->rxr_lock);
-
-			mutex_enter(&txr->txr_lock);
-			ifp->if_opackets += txr->txr_opackets;
-			ifp->if_obytes += txr->txr_obytes;
-			ifp->if_omcasts += txr->txr_omcasts;
-			if (cmd == SIOCZIFDATA) {
-				txr->txr_opackets = 0;
-				txr->txr_obytes = 0;
-				txr->txr_omcasts = 0;
-			}
-			mutex_exit(&txr->txr_lock);
-		}
-		/* FALLTHROUGH */
 	default:
 		s = splnet();
 		error = ether_ioctl(ifp, cmd, data);
@@ -1942,9 +2022,6 @@ ixl_reinit(struct ixl_softc *sc)
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
 
-		txr->txr_cons = txr->txr_prod = 0;
-		rxr->rxr_cons = rxr->rxr_prod = 0;
-
 		ixl_txr_config(sc, txr);
 		ixl_rxr_config(sc, rxr);
 	}
@@ -2054,6 +2131,8 @@ ixl_init_locked(struct ixl_softc *sc)
 		return error;
 	}
 
+	callout_schedule(&sc->sc_stats_callout, mstohz(sc->sc_stats_intval));
+
 	return 0;
 }
 
@@ -2149,8 +2228,9 @@ ixl_stop_rendezvous(struct ixl_softc *sc)
 		mutex_enter(&rxr->rxr_lock);
 		mutex_exit(&rxr->rxr_lock);
 
-		ixl_work_wait(sc->sc_workq_txrx,
-		    &sc->sc_qps[i].qp_task);
+		sc->sc_qps[i].qp_workqueue = false;
+		workqueue_wait(sc->sc_workq_txrx,
+		    &sc->sc_qps[i].qp_work);
 	}
 }
 
@@ -2166,6 +2246,7 @@ ixl_stop_locked(struct ixl_softc *sc)
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
 	CLR(ifp->if_flags, IFF_RUNNING | IFF_OACTIVE);
+	callout_stop(&sc->sc_stats_callout);
 
 	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
 		txr = sc->sc_qps[i].qp_txr;
@@ -2175,17 +2256,39 @@ ixl_stop_locked(struct ixl_softc *sc)
 
 		mutex_enter(&txr->txr_lock);
 		ixl_txr_qdis(sc, txr, 0);
-		/* XXX wait at least 400 usec for all tx queues in one go */
-		ixl_flush(sc);
-		DELAY(500);
+		mutex_exit(&txr->txr_lock);
+	}
 
+	/* XXX wait at least 400 usec for all tx queues in one go */
+	ixl_flush(sc);
+	DELAY(500);
+
+	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
+		txr = sc->sc_qps[i].qp_txr;
+		rxr = sc->sc_qps[i].qp_rxr;
+
+		mutex_enter(&txr->txr_lock);
 		reg = ixl_rd(sc, I40E_QTX_ENA(i));
 		CLR(reg, I40E_QTX_ENA_QENA_REQ_MASK);
 		ixl_wr(sc, I40E_QTX_ENA(i), reg);
-		/* XXX wait 50ms from completaion of the TX queue disable*/
-		ixl_flush(sc);
-		DELAY(50);
+		mutex_exit(&txr->txr_lock);
 
+		mutex_enter(&rxr->rxr_lock);
+		reg = ixl_rd(sc, I40E_QRX_ENA(i));
+		CLR(reg, I40E_QRX_ENA_QENA_REQ_MASK);
+		ixl_wr(sc, I40E_QRX_ENA(i), reg);
+		mutex_exit(&rxr->rxr_lock);
+	}
+
+	/* XXX short wait for all queue disables to settle */
+	ixl_flush(sc);
+	DELAY(50);
+
+	for (i = 0; i < sc->sc_nqueue_pairs; i++) {
+		txr = sc->sc_qps[i].qp_txr;
+		rxr = sc->sc_qps[i].qp_rxr;
+
+		mutex_enter(&txr->txr_lock);
 		if (ixl_txr_disabled(sc, txr) != 0) {
 			mutex_exit(&txr->txr_lock);
 			goto die;
@@ -2193,13 +2296,6 @@ ixl_stop_locked(struct ixl_softc *sc)
 		mutex_exit(&txr->txr_lock);
 
 		mutex_enter(&rxr->rxr_lock);
-		reg = ixl_rd(sc, I40E_QRX_ENA(i));
-		CLR(reg, I40E_QRX_ENA_QENA_REQ_MASK);
-		ixl_wr(sc, I40E_QRX_ENA(i), reg);
-		/* XXX wait 50ms from completion of the RX queue disable */
-		ixl_flush(sc);
-		DELAY(50);
-
 		if (ixl_rxr_disabled(sc, rxr) != 0) {
 			mutex_exit(&rxr->rxr_lock);
 			goto die;
@@ -2213,8 +2309,13 @@ ixl_stop_locked(struct ixl_softc *sc)
 		txr = sc->sc_qps[i].qp_txr;
 		rxr = sc->sc_qps[i].qp_rxr;
 
+		mutex_enter(&txr->txr_lock);
 		ixl_txr_unconfig(sc, txr);
+		mutex_exit(&txr->txr_lock);
+
+		mutex_enter(&rxr->rxr_lock);
 		ixl_rxr_unconfig(sc, rxr);
+		mutex_exit(&rxr->rxr_lock);
 
 		ixl_txr_clean(sc, txr);
 		ixl_rxr_clean(sc, rxr);
@@ -2265,7 +2366,6 @@ ixl_queue_pairs_alloc(struct ixl_softc *sc)
 			goto free;
 
 		qp->qp_sc = sc;
-		ixl_work_set(&qp->qp_task, ixl_handle_queue, qp);
 		snprintf(qp->qp_name, sizeof(qp->qp_name),
 		    "%s-TXRX%d", device_xname(sc->sc_dev), i);
 	}
@@ -2330,8 +2430,8 @@ ixl_txr_alloc(struct ixl_softc *sc, unsigned int qid)
 	for (i = 0; i < sc->sc_tx_ring_ndescs; i++) {
 		txm = &maps[i];
 
-		if (bus_dmamap_create(sc->sc_dmat,
-		    IXL_HARDMTU, IXL_TX_PKT_DESCS, IXL_HARDMTU, 0,
+		if (bus_dmamap_create(sc->sc_dmat, IXL_TX_PKT_MAXSIZE,
+		    IXL_TX_PKT_DESCS, IXL_TX_PKT_MAXSIZE, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &txm->txm_map) != 0)
 			goto uncreate;
 
@@ -2428,6 +2528,7 @@ ixl_txr_unconfig(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 
 	hmc = ixl_hmc_kva(sc, IXL_HMC_LAN_TX, txr->txr_qid);
 	memset(hmc, 0, ixl_hmc_len(sc, IXL_HMC_LAN_TX));
+	txr->txr_cons = txr->txr_prod = 0;
 }
 
 static void
@@ -2481,7 +2582,7 @@ ixl_txr_disabled(struct ixl_softc *sc, struct ixl_tx_ring *txr)
 
 	KASSERT(mutex_owned(&txr->txr_lock));
 
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < 10; i++) {
 		reg = ixl_rd(sc, ena);
 		if (ISSET(reg, I40E_QTX_ENA_QENA_STAT_MASK) == 0)
 			return 0;
@@ -2548,6 +2649,71 @@ ixl_load_mbuf(bus_dma_tag_t dmat, bus_dmamap_t map, struct mbuf **m0,
 	return error;
 }
 
+static inline int
+ixl_tx_setup_offloads(struct mbuf *m, uint64_t *cmd_txd)
+{
+	struct ether_header *eh;
+	size_t len;
+	uint64_t cmd;
+
+	cmd = 0;
+
+	eh = mtod(m, struct ether_header *);
+	switch (htons(eh->ether_type)) {
+	case ETHERTYPE_IP:
+	case ETHERTYPE_IPV6:
+		len = ETHER_HDR_LEN;
+		break;
+	case ETHERTYPE_VLAN:
+		len = ETHER_HDR_LEN + ETHER_VLAN_ENCAP_LEN;
+		break;
+	default:
+		len = 0;
+	}
+	cmd |= ((len >> 1) << IXL_TX_DESC_MACLEN_SHIFT);
+
+	if (m->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4 | M_CSUM_TCPv4 | M_CSUM_UDPv4)) {
+		cmd |= IXL_TX_DESC_CMD_IIPT_IPV4;
+	}
+	if (m->m_pkthdr.csum_flags & M_CSUM_IPv4) {
+		cmd |= IXL_TX_DESC_CMD_IIPT_IPV4_CSUM;
+	}
+
+	if (m->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv6 | M_CSUM_TCPv6 | M_CSUM_UDPv6)) {
+		cmd |= IXL_TX_DESC_CMD_IIPT_IPV6;
+	}
+
+	switch (cmd & IXL_TX_DESC_CMD_IIPT_MASK) {
+	case IXL_TX_DESC_CMD_IIPT_IPV4:
+	case IXL_TX_DESC_CMD_IIPT_IPV4_CSUM:
+		len = M_CSUM_DATA_IPv4_IPHL(m->m_pkthdr.csum_data);
+		break;
+	case IXL_TX_DESC_CMD_IIPT_IPV6:
+		len = M_CSUM_DATA_IPv6_IPHL(m->m_pkthdr.csum_data);
+		break;
+	default:
+		len = 0;
+	}
+	cmd |= ((len >> 2) << IXL_TX_DESC_IPLEN_SHIFT);
+
+	if (m->m_pkthdr.csum_flags &
+	    (M_CSUM_TSOv4 | M_CSUM_TSOv6 | M_CSUM_TCPv4 | M_CSUM_TCPv6)) {
+		len = sizeof(struct tcphdr);
+		cmd |= IXL_TX_DESC_CMD_L4T_EOFT_TCP;
+	} else if (m->m_pkthdr.csum_flags & (M_CSUM_UDPv4 | M_CSUM_UDPv6)) {
+		len = sizeof(struct udphdr);
+		cmd |= IXL_TX_DESC_CMD_L4T_EOFT_UDP;
+	} else {
+		len = 0;
+	}
+	cmd |= ((len >> 2) << IXL_TX_DESC_L4LEN_SHIFT);
+
+	*cmd_txd |= cmd;
+	return 0;
+}
+
 static void
 ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
     bool is_transmit)
@@ -2557,7 +2723,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 	struct ixl_tx_map *txm;
 	bus_dmamap_t map;
 	struct mbuf *m;
-	uint64_t cmd, cmd_vlan;
+	uint64_t cmd, cmd_txd;
 	unsigned int prod, free, last, i;
 	unsigned int mask;
 	int post = 0;
@@ -2606,17 +2772,20 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 		map = txm->txm_map;
 
 		if (ixl_load_mbuf(sc->sc_dmat, map, &m, txr) != 0) {
-			txr->txr_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m);
 			continue;
 		}
 
+		cmd_txd = 0;
+		if (m->m_pkthdr.csum_flags & IXL_CSUM_ALL_OFFLOAD) {
+			ixl_tx_setup_offloads(m, &cmd_txd);
+		}
+
 		if (vlan_has_tag(m)) {
-			cmd_vlan = (uint64_t)vlan_get_tag(m) <<
+			cmd_txd |= (uint64_t)vlan_get_tag(m) <<
 			    IXL_TX_DESC_L2TAG1_SHIFT;
-			cmd_vlan |= IXL_TX_DESC_CMD_IL2TAG1;
-		} else {
-			cmd_vlan = 0;
+			cmd_txd |= IXL_TX_DESC_CMD_IL2TAG1;
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, map, 0,
@@ -2628,7 +2797,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 			cmd = (uint64_t)map->dm_segs[i].ds_len <<
 			    IXL_TX_DESC_BSIZE_SHIFT;
 			cmd |= IXL_TX_DESC_DTYPE_DATA | IXL_TX_DESC_CMD_ICRC;
-			cmd |= cmd_vlan;
+			cmd |= cmd_txd;
 
 			txd->addr = htole64(map->dm_segs[i].ds_addr);
 			txd->cmd = htole64(cmd);
@@ -2686,6 +2855,8 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 	ring = IXL_DMA_KVA(&txr->txr_mem);
 	mask = sc->sc_tx_ring_ndescs - 1;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	do {
 		if (txlimit-- <= 0) {
 			more = 1;
@@ -2708,10 +2879,10 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 
 		m = txm->txm_m;
 		if (m != NULL) {
-			txr->txr_opackets++;
-			txr->txr_obytes += m->m_pkthdr.len;
+			if_statinc_ref(nsr, if_opackets);
+			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 			if (ISSET(m->m_flags, M_MCAST))
-				txr->txr_omcasts++;
+				if_statinc_ref(nsr, if_omcasts);
 			m_freem(m);
 		}
 
@@ -2722,6 +2893,8 @@ ixl_txeof(struct ixl_softc *sc, struct ixl_tx_ring *txr, u_int txlimit)
 		cons &= mask;
 		done = 1;
 	} while (cons != prod);
+
+	IF_STAT_PUTREF(ifp);
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&txr->txr_mem),
 	    0, IXL_DMA_LEN(&txr->txr_mem), BUS_DMASYNC_PREREAD);
@@ -2788,7 +2961,9 @@ ixl_transmit(struct ifnet *ifp, struct mbuf *m)
 		ixl_tx_common_locked(ifp, txr, true);
 		mutex_exit(&txr->txr_lock);
 	} else {
+		kpreempt_disable();
 		softint_schedule(txr->txr_si);
+		kpreempt_enable();
 	}
 
 	return 0;
@@ -2828,7 +3003,7 @@ ixl_rxr_alloc(struct ixl_softc *sc, unsigned int qid)
 		rxm = &maps[i];
 
 		if (bus_dmamap_create(sc->sc_dmat,
-		    IXL_HARDMTU, 1, IXL_HARDMTU, 0,
+		    IXL_MCLBYTES, 1, IXL_MCLBYTES, 0,
 		    BUS_DMA_WAITOK | BUS_DMA_ALLOCNOW, &rxm->rxm_map) != 0)
 			goto uncreate;
 
@@ -2921,7 +3096,7 @@ ixl_rxr_disabled(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	KASSERT(mutex_owned(&rxr->rxr_lock));
 
-	for (i = 0; i < 20; i++) {
+	for (i = 0; i < 10; i++) {
 		reg = ixl_rd(sc, ena);
 		if (ISSET(reg, I40E_QRX_ENA_QENA_STAT_MASK) == 0)
 			return 0;
@@ -2936,21 +3111,24 @@ static void
 ixl_rxr_config(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 {
 	struct ixl_hmc_rxq rxq;
+	struct ifnet *ifp = &sc->sc_ec.ec_if;
+	uint16_t rxmax;
 	void *hmc;
 
 	memset(&rxq, 0, sizeof(rxq));
+	rxmax = ifp->if_mtu + IXL_MTU_ETHERLEN;
 
 	rxq.head = htole16(rxr->rxr_cons);
 	rxq.base = htole64(IXL_DMA_DVA(&rxr->rxr_mem) / IXL_HMC_RXQ_BASE_UNIT);
 	rxq.qlen = htole16(sc->sc_rx_ring_ndescs);
-	rxq.dbuff = htole16(MCLBYTES / IXL_HMC_RXQ_DBUFF_UNIT);
+	rxq.dbuff = htole16(IXL_MCLBYTES / IXL_HMC_RXQ_DBUFF_UNIT);
 	rxq.hbuff = 0;
 	rxq.dtype = IXL_HMC_RXQ_DTYPE_NOSPLIT;
 	rxq.dsize = IXL_HMC_RXQ_DSIZE_32;
 	rxq.crcstrip = 1;
 	rxq.l2sel = 1;
 	rxq.showiv = 1;
-	rxq.rxmax = htole16(IXL_HARDMTU);
+	rxq.rxmax = htole16(rxmax);
 	rxq.tphrdesc_ena = 0;
 	rxq.tphwdesc_ena = 0;
 	rxq.tphdata_ena = 0;
@@ -2971,6 +3149,7 @@ ixl_rxr_unconfig(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 
 	hmc = ixl_hmc_kva(sc, IXL_HMC_LAN_RX, rxr->rxr_qid);
 	memset(hmc, 0, ixl_hmc_len(sc, IXL_HMC_LAN_RX));
+	rxr->rxr_cons = rxr->rxr_prod = 0;
 }
 
 static void
@@ -3071,6 +3250,8 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 	ring = IXL_DMA_KVA(&rxr->rxr_mem);
 	mask = sc->sc_rx_ring_ndescs - 1;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	do {
 		if (rxlimit-- <= 0) {
 			more = 1;
@@ -3121,11 +3302,12 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 			if (!ISSET(word,
 			    IXL_RX_DESC_RXE | IXL_RX_DESC_OVERSIZE)) {
 				m_set_rcvif(m, ifp);
-				rxr->rxr_ipackets++;
-				rxr->rxr_ibytes += m->m_pkthdr.len;
+				if_statinc_ref(nsr, if_ipackets);
+				if_statadd_ref(nsr, if_ibytes,
+				    m->m_pkthdr.len);
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else {
-				rxr->rxr_ierrors++;
+				if_statinc_ref(nsr, if_ierrors);
 				m_freem(m);
 			}
 
@@ -3142,8 +3324,10 @@ ixl_rxeof(struct ixl_softc *sc, struct ixl_rx_ring *rxr, u_int rxlimit)
 	if (done) {
 		rxr->rxr_cons = cons;
 		if (ixl_rxfill(sc, rxr) == -1)
-			rxr->rxr_iqdrops++;
+			if_statinc_ref(nsr, if_iqdrops);
 	}
+
+	IF_STAT_PUTREF(ifp);
 
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&rxr->rxr_mem),
 	    0, IXL_DMA_LEN(&rxr->rxr_mem),
@@ -3194,7 +3378,7 @@ ixl_rxfill(struct ixl_softc *sc, struct ixl_rx_ring *rxr)
 			break;
 		}
 
-		m->m_len = m->m_pkthdr.len = MCLBYTES + ETHER_ALIGN;
+		m->m_len = m->m_pkthdr.len = MCLBYTES;
 		m_adj(m, ETHER_ALIGN);
 
 		map = rxm->rxm_map;
@@ -3242,9 +3426,6 @@ ixl_handle_queue_common(struct ixl_softc *sc, struct ixl_queue_pair *qp,
 	int txmore, rxmore;
 	int rv;
 
-	KASSERT(!mutex_owned(&txr->txr_lock));
-	KASSERT(!mutex_owned(&rxr->rxr_lock));
-
 	mutex_enter(&txr->txr_lock);
 	txevcnt->ev_count++;
 	txmore = ixl_txeof(sc, txr, txlimit);
@@ -3265,7 +3446,7 @@ ixl_sched_handle_queue(struct ixl_softc *sc, struct ixl_queue_pair *qp)
 {
 
 	if (qp->qp_workqueue)
-		ixl_work_add(sc->sc_workq_txrx, &qp->qp_task);
+		workqueue_enqueue(sc->sc_workq_txrx, &qp->qp_work, NULL);
 	else
 		softint_schedule(qp->qp_si);
 }
@@ -3345,6 +3526,15 @@ ixl_queue_intr(void *xqp)
 	}
 
 	return 1;
+}
+
+static void
+ixl_handle_queue_wk(struct work *wk, void *xsc)
+{
+	struct ixl_queue_pair *qp;
+
+	qp = container_of(wk, struct ixl_queue_pair, qp_work);
+	ixl_handle_queue(qp);
 }
 
 static void
@@ -3809,13 +3999,13 @@ ixl_get_version(struct ixl_softc *sc)
 	if (sc->sc_mac_type == I40E_MAC_X722) {
 		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_NVMLOCK |
 		    IXL_SC_AQ_FLAG_NVMREAD);
+		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
+		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RSS);
 	}
 
 #define IXL_API_VER(maj, min)	(((uint32_t)(maj) << 16) | (min))
 	if (IXL_API_VER(api_maj_ver, api_min_ver) >= IXL_API_VER(1, 5)) {
-		if (sc->sc_mac_type == I40E_MAC_X722) {
-			SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
-		}
+		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RXCTL);
 		SET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_NVMLOCK);
 	}
 #undef IXL_API_VER
@@ -4184,16 +4374,15 @@ ixl_get_phy_abilities(struct ixl_softc *sc,struct ixl_dmamem *idm)
 }
 
 static int
-ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
+ixl_get_phy_info(struct ixl_softc *sc)
 {
 	struct ixl_dmamem idm;
 	struct ixl_aq_phy_abilities *phy;
-	uint64_t phy_types;
 	int rv;
 
 	if (ixl_dmamem_alloc(sc, &idm, IXL_AQ_BUFLEN, 0) != 0) {
 		aprint_error_dev(sc->sc_dev,
-		    "unable to allocate switch config buffer\n");
+		    "unable to allocate phy abilities buffer\n");
 		return -1;
 	}
 
@@ -4206,7 +4395,7 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 		break;
 	case IXL_AQ_RC_EIO:
 		aprint_error_dev(sc->sc_dev,"unable to query phy types\n");
-		break;
+		goto done;
 	default:
 		aprint_error_dev(sc->sc_dev,
 		    "GET PHY ABILITIIES error %u\n", rv);
@@ -4215,10 +4404,17 @@ ixl_get_phy_types(struct ixl_softc *sc, uint64_t *phy_types_ptr)
 
 	phy = IXL_DMA_KVA(&idm);
 
-	phy_types = le32toh(phy->phy_type);
-	phy_types |= (uint64_t)le32toh(phy->phy_type_ext) << 32;
+	sc->sc_phy_types = le32toh(phy->phy_type);
+	sc->sc_phy_types |= (uint64_t)le32toh(phy->phy_type_ext) << 32;
 
-	*phy_types_ptr = phy_types;
+	sc->sc_phy_abilities = phy->abilities;
+	sc->sc_phy_linkspeed = phy->link_speed;
+	sc->sc_phy_fec_cfg = phy->fec_cfg_curr_mod_ext_info &
+	    (IXL_AQ_ENABLE_FEC_KR | IXL_AQ_ENABLE_FEC_RS |
+	    IXL_AQ_REQUEST_FEC_KR | IXL_AQ_REQUEST_FEC_RS);
+	sc->sc_eee_cap = phy->eee_capability;
+	sc->sc_eeer_val = phy->eeer_val;
+	sc->sc_d3_lpan = phy->d3_lpan;
 
 	rv = 0;
 
@@ -4228,7 +4424,61 @@ done:
 }
 
 static int
-ixl_get_link_status_poll(struct ixl_softc *sc)
+ixl_set_phy_config(struct ixl_softc *sc,
+    uint8_t link_speed, uint8_t abilities, bool polling)
+{
+	struct ixl_aq_phy_param *param;
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	int error;
+
+	memset(&iatq, 0, sizeof(iatq));
+
+	iaq = &iatq.iatq_desc;
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_SET_CONFIG);
+	param = (struct ixl_aq_phy_param *)&iaq->iaq_param;
+	param->phy_types = htole32((uint32_t)sc->sc_phy_types);
+	param->phy_type_ext = (uint8_t)(sc->sc_phy_types >> 32);
+	param->link_speed = link_speed;
+	param->abilities = abilities | IXL_AQ_PHY_ABILITY_AUTO_LINK;
+	param->fec_cfg = sc->sc_phy_fec_cfg;
+	param->eee_capability = sc->sc_eee_cap;
+	param->eeer_val = sc->sc_eeer_val;
+	param->d3_lpan = sc->sc_d3_lpan;
+
+	if (polling)
+		error = ixl_atq_poll(sc, iaq, 250);
+	else
+		error = ixl_atq_exec(sc, &iatq);
+
+	if (error != 0)
+		return error;
+
+	switch (le16toh(iaq->iaq_retval)) {
+	case IXL_AQ_RC_OK:
+		break;
+	case IXL_AQ_RC_EPERM:
+		return EPERM;
+	default:
+		return EIO;
+	}
+
+	return 0;
+}
+
+static int
+ixl_set_phy_autoselect(struct ixl_softc *sc)
+{
+	uint8_t link_speed, abilities;
+
+	link_speed = sc->sc_phy_linkspeed;
+	abilities = IXL_PHY_ABILITY_LINKUP | IXL_PHY_ABILITY_AUTONEGO;
+
+	return ixl_set_phy_config(sc, link_speed, abilities, true);
+}
+
+static int
+ixl_get_link_status_poll(struct ixl_softc *sc, int *l)
 {
 	struct ixl_aq_desc iaq;
 	struct ixl_aq_link_param *param;
@@ -4247,7 +4497,9 @@ ixl_get_link_status_poll(struct ixl_softc *sc)
 	}
 
 	link = ixl_set_link_status(sc, &iaq);
-	sc->sc_ec.ec_if.if_link_state = link;
+
+	if (l != NULL)
+		*l = link;
 
 	return 0;
 }
@@ -4298,7 +4550,7 @@ ixl_get_vsi(struct ixl_softc *sc)
 	}
 
 	reply = (struct ixl_aq_vsi_reply *)iaq.iaq_param;
-	sc->sc_vsi_number = reply->vsi_number;
+	sc->sc_vsi_number = le16toh(reply->vsi_number);
 	data = IXL_DMA_KVA(vsi);
 	sc->sc_vsi_stat_counter_idx = le16toh(data->stat_counter_idx);
 
@@ -4407,25 +4659,157 @@ ixl_get_default_rss_key(uint32_t *buf, size_t len)
 	memcpy(buf, rss_seed, cplen);
 }
 
-static void
-ixl_set_rss_key(struct ixl_softc *sc)
+static int
+ixl_set_rss_key(struct ixl_softc *sc, uint8_t *key, size_t keylen)
+{
+	struct ixl_dmamem *idm;
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	struct ixl_aq_rss_key_param *param;
+	struct ixl_aq_rss_key_data *data;
+	size_t len, datalen, stdlen, extlen;
+	uint16_t vsi_id;
+	int rv;
+
+	memset(&iatq, 0, sizeof(iatq));
+	iaq = &iatq.iatq_desc;
+	idm = &sc->sc_aqbuf;
+
+	datalen = sizeof(*data);
+
+	/*XXX The buf size has to be less than the size of the register */
+	datalen = MIN(IXL_RSS_KEY_SIZE_REG * sizeof(uint32_t), datalen);
+
+	iaq->iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD |
+	    (datalen > I40E_AQ_LARGE_BUF ? IXL_AQ_LB : 0));
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_RSS_SET_KEY);
+	iaq->iaq_datalen = htole16(datalen);
+
+	param = (struct ixl_aq_rss_key_param *)iaq->iaq_param;
+	vsi_id = (sc->sc_vsi_number << IXL_AQ_RSSKEY_VSI_ID_SHIFT) |
+	    IXL_AQ_RSSKEY_VSI_VALID;
+	param->vsi_id = htole16(vsi_id);
+
+	memset(IXL_DMA_KVA(idm), 0, IXL_DMA_LEN(idm));
+	data = IXL_DMA_KVA(idm);
+
+	len = MIN(keylen, datalen);
+	stdlen = MIN(sizeof(data->standard_rss_key), len);
+	memcpy(data->standard_rss_key, key, stdlen);
+	len = (len > stdlen) ? (len - stdlen) : 0;
+
+	extlen = MIN(sizeof(data->extended_hash_key), len);
+	extlen = (stdlen < keylen) ? 0 : keylen - stdlen;
+	memcpy(data->extended_hash_key, key + stdlen, extlen);
+
+	ixl_aq_dva(iaq, IXL_DMA_DVA(idm));
+
+	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(idm), 0,
+	    IXL_DMA_LEN(idm), BUS_DMASYNC_PREWRITE);
+
+	rv = ixl_atq_exec(sc, &iatq);
+
+	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(idm), 0,
+	    IXL_DMA_LEN(idm), BUS_DMASYNC_POSTWRITE);
+
+	if (rv != 0) {
+		return ETIMEDOUT;
+	}
+
+	if (iaq->iaq_retval != htole16(IXL_AQ_RC_OK)) {
+		return EIO;
+	}
+
+	return 0;
+}
+
+static int
+ixl_set_rss_lut(struct ixl_softc *sc, uint8_t *lut, size_t lutlen)
+{
+	struct ixl_dmamem *idm;
+	struct ixl_atq iatq;
+	struct ixl_aq_desc *iaq;
+	struct ixl_aq_rss_lut_param *param;
+	uint16_t vsi_id;
+	uint8_t *data;
+	size_t dmalen;
+	int rv;
+
+	memset(&iatq, 0, sizeof(iatq));
+	iaq = &iatq.iatq_desc;
+	idm = &sc->sc_aqbuf;
+
+	dmalen = MIN(lutlen, IXL_DMA_LEN(idm));
+
+	iaq->iaq_flags = htole16(IXL_AQ_BUF | IXL_AQ_RD |
+	    (dmalen > I40E_AQ_LARGE_BUF ? IXL_AQ_LB : 0));
+	iaq->iaq_opcode = htole16(IXL_AQ_OP_RSS_SET_LUT);
+	iaq->iaq_datalen = htole16(dmalen);
+
+	memset(IXL_DMA_KVA(idm), 0, IXL_DMA_LEN(idm));
+	data = IXL_DMA_KVA(idm);
+	memcpy(data, lut, dmalen);
+	ixl_aq_dva(iaq, IXL_DMA_DVA(idm));
+
+	param = (struct ixl_aq_rss_lut_param *)iaq->iaq_param;
+	vsi_id = (sc->sc_vsi_number << IXL_AQ_RSSLUT_VSI_ID_SHIFT) |
+	    IXL_AQ_RSSLUT_VSI_VALID;
+	param->vsi_id = htole16(vsi_id);
+	param->flags = htole16(IXL_AQ_RSSLUT_TABLE_TYPE_PF <<
+	    IXL_AQ_RSSLUT_TABLE_TYPE_SHIFT);
+
+	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(idm), 0,
+	    IXL_DMA_LEN(idm), BUS_DMASYNC_PREWRITE);
+
+	rv = ixl_atq_exec(sc, &iatq);
+
+	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(idm), 0,
+	    IXL_DMA_LEN(idm), BUS_DMASYNC_POSTWRITE);
+
+	if (rv != 0) {
+		return ETIMEDOUT;
+	}
+
+	if (iaq->iaq_retval != htole16(IXL_AQ_RC_OK)) {
+		return EIO;
+	}
+
+	return 0;
+}
+
+static int
+ixl_register_rss_key(struct ixl_softc *sc)
 {
 	uint32_t rss_seed[IXL_RSS_KEY_SIZE_REG];
+	int rv;
 	size_t i;
 
 	ixl_get_default_rss_key(rss_seed, sizeof(rss_seed));
 
-	for (i = 0; i < IXL_RSS_KEY_SIZE_REG; i++) {
-		ixl_wr_rx_csr(sc, I40E_PFQF_HKEY(i), rss_seed[i]);
+	if (ISSET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RSS)){
+		rv = ixl_set_rss_key(sc, (uint8_t*)rss_seed,
+		    sizeof(rss_seed));
+	} else {
+		rv = 0;
+		for (i = 0; i < IXL_RSS_KEY_SIZE_REG; i++) {
+			ixl_wr_rx_csr(sc, I40E_PFQF_HKEY(i), rss_seed[i]);
+		}
 	}
+
+	return rv;
 }
 
 static void
-ixl_set_rss_pctype(struct ixl_softc *sc)
+ixl_register_rss_pctype(struct ixl_softc *sc)
 {
 	uint64_t set_hena = 0;
 	uint32_t hena0, hena1;
 
+	/*
+	 * We use TCP/UDP with IPv4/IPv6 by default.
+	 * Note: the device can not use just IP header in each
+	 * TCP/UDP packets for the RSS hash calculation.
+	 */
 	if (sc->sc_mac_type == I40E_MAC_X722)
 		set_hena = IXL_RSS_HENA_DEFAULT_X722;
 	else
@@ -4441,13 +4825,14 @@ ixl_set_rss_pctype(struct ixl_softc *sc)
 	ixl_wr_rx_csr(sc, I40E_PFQF_HENA(1), hena1);
 }
 
-static void
-ixl_set_rss_hlut(struct ixl_softc *sc)
+static int
+ixl_register_rss_hlut(struct ixl_softc *sc)
 {
 	unsigned int qid;
 	uint8_t hlut_buf[512], lut_mask;
 	uint32_t *hluts;
 	size_t i, hluts_num;
+	int rv;
 
 	lut_mask = (0x01 << sc->sc_rss_table_entry_width) - 1;
 
@@ -4456,12 +4841,19 @@ ixl_set_rss_hlut(struct ixl_softc *sc)
 		hlut_buf[i] = qid & lut_mask;
 	}
 
-	hluts = (uint32_t *)hlut_buf;
-	hluts_num = sc->sc_rss_table_size >> 2;
-	for (i = 0; i < hluts_num; i++) {
-		ixl_wr(sc, I40E_PFQF_HLUT(i), hluts[i]);
+	if (ISSET(sc->sc_aq_flags, IXL_SC_AQ_FLAG_RSS)) {
+		rv = ixl_set_rss_lut(sc, hlut_buf, sizeof(hlut_buf));
+	} else {
+		rv = 0;
+		hluts = (uint32_t *)hlut_buf;
+		hluts_num = sc->sc_rss_table_size >> 2;
+		for (i = 0; i < hluts_num; i++) {
+			ixl_wr(sc, I40E_PFQF_HLUT(i), hluts[i]);
+		}
+		ixl_flush(sc);
 	}
-	ixl_flush(sc);
+
+	return rv;
 }
 
 static void
@@ -4470,9 +4862,9 @@ ixl_config_rss(struct ixl_softc *sc)
 
 	KASSERT(mutex_owned(&sc->sc_cfg_lock));
 
-	ixl_set_rss_key(sc);
-	ixl_set_rss_pctype(sc);
-	ixl_set_rss_hlut(sc);
+	ixl_register_rss_key(sc);
+	ixl_register_rss_pctype(sc);
+	ixl_register_rss_hlut(sc);
 }
 
 static const struct ixl_phy_type *
@@ -4508,6 +4900,23 @@ ixl_search_link_speed(uint8_t link_speed)
 
 		if (ISSET(type->dev_speed, link_speed))
 			return type->net_speed;
+	}
+
+	return 0;
+}
+
+static uint8_t
+ixl_search_baudrate(uint64_t baudrate)
+{
+	const struct ixl_speed_type *type;
+	unsigned int i;
+
+	for (i = 0; i < __arraycount(ixl_speed_type_map); i++) {
+		type = &ixl_speed_type_map[i];
+
+		if (type->net_speed == baudrate) {
+			return type->dev_speed;
+		}
 	}
 
 	return 0;
@@ -4824,9 +5233,7 @@ ixl_aqb_alloc(struct ixl_softc *sc)
 {
 	struct ixl_aq_buf *aqb;
 
-	aqb = malloc(sizeof(*aqb), M_DEVBUF, M_WAITOK);
-	if (aqb == NULL)
-		return NULL;
+	aqb = kmem_alloc(sizeof(*aqb), KM_SLEEP);
 
 	aqb->aqb_size = IXL_AQ_BUFLEN;
 
@@ -4853,7 +5260,7 @@ dma_free:
 destroy:
 	bus_dmamap_destroy(sc->sc_dmat, aqb->aqb_map);
 free:
-	free(aqb, M_DEVBUF);
+	kmem_free(aqb, sizeof(*aqb));
 
 	return NULL;
 }
@@ -4861,11 +5268,12 @@ free:
 static void
 ixl_aqb_free(struct ixl_softc *sc, struct ixl_aq_buf *aqb)
 {
+
 	bus_dmamap_unload(sc->sc_dmat, aqb->aqb_map);
 	bus_dmamem_unmap(sc->sc_dmat, aqb->aqb_data, aqb->aqb_size);
 	bus_dmamem_free(sc->sc_dmat, &aqb->aqb_seg, 1);
 	bus_dmamap_destroy(sc->sc_dmat, aqb->aqb_map);
-	free(aqb, M_DEVBUF);
+	kmem_free(aqb, sizeof(*aqb));
 }
 
 static int
@@ -5289,8 +5697,10 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	uint64_t baudrate = 0;
 
 	status = (const struct ixl_aq_link_status *)iaq->iaq_param;
-	if (!ISSET(status->link_info, IXL_AQ_LINK_UP_FUNCTION))
+	if (!ISSET(status->link_info, IXL_AQ_LINK_UP_FUNCTION)) {
+		ifm_active |= IFM_NONE;
 		goto done;
+	}
 
 	ifm_active |= IFM_FDX;
 	ifm_status |= IFM_ACTIVE;
@@ -5308,7 +5718,6 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	baudrate = ixl_search_link_speed(status->link_speed);
 
 done:
-	/* NET_ASSERT_LOCKED() except during attach */
 	sc->sc_media_active = ifm_active;
 	sc->sc_media_status = ifm_status;
 
@@ -5549,14 +5958,15 @@ ixl_setup_interrupts(struct ixl_softc *sc)
 			    "couldn't map interrupt\n");
 			break;
 		}
-		for (i = 0; i < sc->sc_nintrs; i++) {
-			pci_intr_setattr(pa->pa_pc, &sc->sc_ihp[i],
-			    PCI_INTR_MPSAFE, true);
-		}
 
 		intr_type = pci_intr_type(pa->pa_pc, sc->sc_ihp[0]);
 		sc->sc_nintrs = counts[intr_type];
 		KASSERT(sc->sc_nintrs > 0);
+
+		for (i = 0; i < sc->sc_nintrs; i++) {
+			pci_intr_setattr(pa->pa_pc, &sc->sc_ihp[i],
+			    PCI_INTR_MPSAFE, true);
+		}
 
 		sc->sc_ihs = kmem_alloc(sizeof(sc->sc_ihs[0]) * sc->sc_nintrs,
 		    KM_SLEEP);
@@ -6270,7 +6680,9 @@ ixl_work_add(struct workqueue *wq, struct ixl_work *work)
 	if (atomic_cas_uint(&work->ixw_added, 0, 1) != 0)
 		return;
 
+	kpreempt_disable();
 	workqueue_enqueue(wq, &work->ixw_cookie, NULL);
+	kpreempt_enable();
 }
 
 static void

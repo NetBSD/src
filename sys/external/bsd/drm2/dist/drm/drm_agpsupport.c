@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_agpsupport.c,v 1.10 2018/08/28 03:41:38 riastradh Exp $	*/
+/*	$NetBSD: drm_agpsupport.c,v 1.10.6.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /**
  * \file drm_agpsupport.c
@@ -34,11 +34,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.10 2018/08/28 03:41:38 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_agpsupport.c,v 1.10.6.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <drm/drmP.h>
-#include <linux/errno.h>
-#include <linux/export.h>
 #include <linux/module.h>
 #include <linux/slab.h>
 #include "drm_legacy.h"

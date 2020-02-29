@@ -1,4 +1,4 @@
-/*	$NetBSD: autoconf.c,v 1.215 2019/01/05 15:46:02 martin Exp $ */
+/*	$NetBSD: autoconf.c,v 1.215.6.1 2020/02/29 20:18:31 ad Exp $ */
 
 /*
  * Copyright (c) 1996
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.215 2019/01/05 15:46:02 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: autoconf.c,v 1.215.6.1 2020/02/29 20:18:31 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -1046,6 +1046,70 @@ device_setofnode(device_t dev, int node)
 	    device_xname(dev), node));
 }
 
+static void
+add_gpio_LED(prop_array_t pins, const char *name, int num, int act, int def)
+{
+	prop_dictionary_t pin = prop_dictionary_create();
+	prop_dictionary_set_cstring(pin, "name", name);
+	prop_dictionary_set_uint32(pin, "type", 0);	/* 0 for LED, for now */
+	prop_dictionary_set_uint32(pin, "pin", num);
+	prop_dictionary_set_bool(pin, "active_high", act);
+	if (def != -1)
+		prop_dictionary_set_int32(pin, "default_state", def);
+	prop_array_add(pins, pin);
+	prop_object_release(pin);
+}
+	
+static void
+add_gpio_props_v210(device_t dev, void *aux)
+{
+	struct i2c_attach_args *ia = aux;
+	prop_dictionary_t dict = device_properties(dev);
+	prop_array_t pins;
+
+	switch (ia->ia_addr) {
+		case 0x38:	/* front panel LEDs */
+			pins = prop_array_create();
+			add_gpio_LED(pins, "indicator", 7, 0, -1);
+			add_gpio_LED(pins, "fault", 5, 0, 0);
+			add_gpio_LED(pins, "power", 4, 0, 1);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+		case 0x23:	/* drive bay LEDs */
+			pins = prop_array_create();
+			add_gpio_LED(pins, "bay0_fault", 10, 0, 0);
+			add_gpio_LED(pins, "bay1_fault", 11, 0, 0);
+			add_gpio_LED(pins, "bay0_remove", 12, 0, 0);
+			add_gpio_LED(pins, "bay1_remove", 13, 0, 0);
+			prop_dictionary_set(dict, "pins", pins);
+			prop_object_release(pins);
+			break;
+	}
+}
+
+static void
+add_drivebay_props_v210(device_t dev, int ofnode, void *aux)
+{
+	struct scsipibus_attach_args *sa = aux;
+	int target = sa->sa_periph->periph_target;
+	char path[256]= "";
+
+	OF_package_to_path(ofnode, path, sizeof(path));
+
+	/* see if we're on the onboard controller's 1st channel */
+	if (strcmp(path, "/pci@1c,600000/scsi@2") != 0)
+		return;
+	/* yes, yes we are */
+	if ( target < 2) {
+		prop_dictionary_t dict = device_properties(dev);
+		char name[16];
+
+		snprintf(name, sizeof(name), "bay%d", target);		
+		prop_dictionary_set_cstring(dict, "location", name);
+	}
+}
+
 /*
  * Called back during autoconfiguration for each device found
  */
@@ -1090,6 +1154,11 @@ device_register(device_t dev, void *aux)
 			return;
 
 		ofnode = (int)ia->ia_cookie;
+		if (device_is_a(dev, "pcagpio")) {
+			if (strcmp(machine_model, "SUNW,Sun-Fire-V210") == 0) {
+				add_gpio_props_v210(dev, aux);
+			}
+		} 
 	} else if (device_is_a(dev, "sd") || device_is_a(dev, "cd")) {
 		struct scsipibus_attach_args *sa = aux;
 		struct scsipi_periph *periph = sa->sa_periph;
@@ -1116,6 +1185,12 @@ device_register(device_t dev, void *aux)
 		ofnode = device_ofnode(device_parent(busdev));
 		dev_bi_unit_drive_match(dev, ofnode, periph->periph_target + off,
 		    0, periph->periph_lun);
+		if (device_is_a(busdev, "scsibus")) {
+			/* see if we're in a known SCA drivebay */
+			if (strcmp(machine_model, "SUNW,Sun-Fire-V210") == 0) {
+				add_drivebay_props_v210(dev, ofnode, aux);
+			}
+		}
 		return;
 	} else if (device_is_a(dev, "wd")) {
 		struct ata_device *adev = aux;

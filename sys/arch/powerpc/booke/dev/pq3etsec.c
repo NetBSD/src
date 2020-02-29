@@ -1,4 +1,4 @@
-/*	$NetBSD: pq3etsec.c,v 1.47 2019/10/30 10:12:37 msaitoh Exp $	*/
+/*	$NetBSD: pq3etsec.c,v 1.47.2.1 2020/02/29 20:18:29 ad Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.47 2019/10/30 10:12:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pq3etsec.c,v 1.47.2.1 2020/02/29 20:18:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1683,7 +1683,7 @@ pq3etsec_rxq_consume(
 			 * We encountered an error, take the mbufs and add
 			 * then to the rx bufcache so we can reuse them.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			for (m = rxq->rxq_mhead;
 			     m != rxq->rxq_mconsumer;
 			     m = m->m_next) {
@@ -2226,12 +2226,14 @@ pq3etsec_txq_consume(
 			if (m->m_flags & M_HASFCB)
 				m_adj(m, sizeof(struct txfcb));
 			bpf_mtap(ifp, m, BPF_D_OUT);
-			ifp->if_opackets++;
-			ifp->if_obytes += m->m_pkthdr.len;
+			net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+			if_statinc_ref(nsr, if_opackets);
+			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
-				ifp->if_omcasts++;
+				if_statinc_ref(nsr, if_omcasts);
 			if (txbd_flags & TXBD_ERRORS)
-				ifp->if_oerrors++;
+				if_statinc_ref(nsr, if_oerrors);
+			IF_STAT_PUTREF(ifp);
 			m_freem(m);
 #ifdef ETSEC_DEBUG
 			txq->txq_lmbufs[consumer - txq->txq_first] = NULL;

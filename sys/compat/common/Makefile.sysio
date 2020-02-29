@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.sysio,v 1.12 2019/05/17 07:37:11 msaitoh Exp $
+#	$NetBSD: Makefile.sysio,v 1.12.4.1 2020/02/29 20:21:00 ad Exp $
 
 # Sources for syscall and ioctl compatibility across the versions.
 
@@ -51,7 +51,7 @@ SRCS+=	kern_mod_80.c if_media_80.c
 
 # More compatibility code for NetBSD 5.0
 .PATH:	${S}/opencrypto
-SRCS+=	ocryptodev.c
+SRCS+=	ocryptodev.c  compat_crypto_50.c
 
 # Raidframe compatibility code for NetBSD 5.0 and 8.0
 .PATH:	${S}/dev/raidframe

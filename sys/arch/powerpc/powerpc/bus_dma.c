@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma.c,v 1.49 2018/09/03 16:29:26 riastradh Exp $	*/
+/*	$NetBSD: bus_dma.c,v 1.49.6.1 2020/02/29 20:18:30 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996, 1997, 1998 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 
 #define _POWERPC_BUS_DMA_PRIVATE
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2018/09/03 16:29:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49.6.1 2020/02/29 20:18:30 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,9 +47,13 @@ __KERNEL_RCSID(0, "$NetBSD: bus_dma.c,v 1.49 2018/09/03 16:29:26 riastradh Exp $
 #include <uvm/uvm.h>
 #include <uvm/uvm_physseg.h>
 
-#ifdef PPC_BOOKE
+#if defined(PPC_BOOKE)
 #define	EIEIO	__asm volatile("mbar\t0")
 #define	SYNC	__asm volatile("msync")
+#elif defined(PPC_IBM4XX) && !defined(PPC_IBM440)
+/* eieio is implemented as sync */
+#define	EIEIO	__asm volatile("eieio")
+#define	SYNC	/* nothing */
 #else
 #define	EIEIO	__asm volatile("eieio")
 #define	SYNC	__asm volatile("sync")

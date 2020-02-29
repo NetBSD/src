@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_km.c,v 1.152.2.1 2020/01/25 22:38:53 ad Exp $	*/
+/*	$NetBSD: uvm_km.c,v 1.152.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -152,7 +152,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.152.2.1 2020/01/25 22:38:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_km.c,v 1.152.2.2 2020/02/29 20:21:11 ad Exp $");
 
 #include "opt_uvmhist.h"
 
@@ -450,16 +450,16 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 	KASSERT(startva < endva);
 	KASSERT(endva <= VM_MAX_KERNEL_ADDRESS);
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	pmap_remove(pmap_kernel(), startva, endva);
 	for (curoff = start; curoff < end; curoff = nextoff) {
 		nextoff = curoff + PAGE_SIZE;
 		pg = uvm_pagelookup(uobj, curoff);
 		if (pg != NULL && pg->flags & PG_BUSY) {
 			pg->flags |= PG_WANTED;
-			UVM_UNLOCK_AND_WAIT(pg, uobj->vmobjlock, 0,
+			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
 				    "km_pgrm", 0);
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			nextoff = curoff;
 			continue;
 		}
@@ -477,7 +477,7 @@ uvm_km_pgremove(vaddr_t startva, vaddr_t endva)
 			uvm_pagefree(pg);
 		}
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	if (swpgonlydelta > 0) {
 		KASSERT(uvmexp.swpgonly >= swpgonlydelta);
@@ -557,7 +557,7 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 		paddr_t pa;
 
 		if (pmap_extract(pmap_kernel(), va, &pa)) {
-			panic("uvm_km_check_empty: va %p has pa 0x%llx",
+			panic("uvm_km_check_empty: va %p has pa %#llx",
 			    (void *)va, (long long)pa);
 		}
 		/*
@@ -569,12 +569,12 @@ uvm_km_check_empty(struct vm_map *map, vaddr_t start, vaddr_t end)
 		 * - we can recurse when allocating radix_node for
 		 *   kernel_object.
 		 */
-		if (mutex_tryenter(uvm_kernel_object->vmobjlock)) {
+		if (rw_tryenter(uvm_kernel_object->vmobjlock, RW_WRITER)) {
 			struct vm_page *pg;
 
 			pg = uvm_pagelookup(uvm_kernel_object,
 			    va - vm_map_min(kernel_map));
-			mutex_exit(uvm_kernel_object->vmobjlock);
+			rw_exit(uvm_kernel_object->vmobjlock);
 			if (pg) {
 				panic("uvm_km_check_empty: "
 				    "has page hashed at %p",
@@ -620,7 +620,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	kva = vm_map_min(map);	/* hint */
 	size = round_page(size);
 	obj = (flags & UVM_KMF_PAGEABLE) ? uvm_kernel_object : NULL;
-	UVMHIST_LOG(maphist,"  (map=0x%#jx, obj=0x%#jx, size=0x%jx, flags=%jd)",
+	UVMHIST_LOG(maphist,"  (map=%#jx, obj=%#jx, size=%#jx, flags=%jd)",
 	    (uintptr_t)map, (uintptr_t)obj, size, flags);
 
 	/*
@@ -642,7 +642,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 */
 
 	if (flags & (UVM_KMF_VAONLY | UVM_KMF_PAGEABLE)) {
-		UVMHIST_LOG(maphist,"<- done valloc (kva=0x%jx)", kva,0,0,0);
+		UVMHIST_LOG(maphist,"<- done valloc (kva=%#jx)", kva,0,0,0);
 		return(kva);
 	}
 
@@ -651,7 +651,7 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	 */
 
 	offset = kva - vm_map_min(kernel_map);
-	UVMHIST_LOG(maphist, "  kva=0x%jx, offset=0x%jx", kva, offset,0,0);
+	UVMHIST_LOG(maphist, "  kva=%#jx, offset=%#jx", kva, offset,0,0);
 
 	/*
 	 * now allocate and map in the memory... note that we are the only ones
@@ -715,12 +715,11 @@ uvm_km_alloc(struct vm_map *map, vsize_t size, vsize_t align, uvm_flag_t flags)
 	pmap_update(pmap_kernel());
 
 	if ((flags & UVM_KMF_ZERO) == 0) {
-		kleak_fill_area((void *)kva, size);
 		kmsan_orig((void *)kva, size, KMSAN_TYPE_UVM, __RET_ADDR);
 		kmsan_mark((void *)kva, size, KMSAN_STATE_UNINIT);
 	}
 
-	UVMHIST_LOG(maphist,"<- done (kva=0x%jx)", kva,0,0,0);
+	UVMHIST_LOG(maphist,"<- done (kva=%#jx)", kva,0,0,0);
 	return(kva);
 }
 

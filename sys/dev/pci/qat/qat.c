@@ -1,4 +1,4 @@
-/*	$NetBSD: qat.c,v 1.3 2019/12/04 01:06:28 hikaru Exp $	*/
+/*	$NetBSD: qat.c,v 1.3.2.1 2020/02/29 20:19:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2019 Internet Initiative Japan, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.3 2019/12/04 01:06:28 hikaru Exp $");
+__KERNEL_RCSID(0, "$NetBSD: qat.c,v 1.3.2.1 2020/02/29 20:19:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1968,8 +1968,6 @@ qat_crypto_new_session(void *arg, uint32_t *lid, struct cryptoini *cri)
 
 	qcy->qcy_sc->sc_hw.qhw_crypto_setup_desc(qcy, qs, &qs->qs_dec_desc, crie, cria);
 	qcy->qcy_sc->sc_hw.qhw_crypto_setup_desc(qcy, qs, &qs->qs_enc_desc, crie, cria);
-
-	membar_producer();
 
 	return 0;
 fail:

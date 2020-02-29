@@ -1,4 +1,4 @@
-/*	$NetBSD: systm.h,v 1.292 2020/01/01 09:33:19 skrll Exp $	*/
+/*	$NetBSD: systm.h,v 1.292.2.1 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1988, 1991, 1993
@@ -45,7 +45,6 @@
 #include "opt_gprof.h"
 #include "opt_kasan.h"
 #include "opt_kcsan.h"
-#include "opt_kleak.h"
 #include "opt_kmsan.h"
 #include "opt_wsdisplay_compat.h"
 #endif
@@ -323,18 +322,6 @@ int	copyinstr(const void *, void *, size_t, size_t *);
 int	copyoutstr(const void *, void *, size_t, size_t *);
 int	copyin(const void *, void *, size_t);
 int	copyout(const void *, void *, size_t);
-#endif
-
-#ifdef KLEAK
-#define copyout		kleak_copyout
-#define copyoutstr	kleak_copyoutstr
-int	kleak_copyout(const void *, void *, size_t);
-int	kleak_copyoutstr(const void *, void *, size_t, size_t *);
-void	kleak_fill_area(void *, size_t);
-void	kleak_fill_stack(void);
-#else
-#define kleak_fill_area(a, b)	__nothing
-#define kleak_fill_stack()	__nothing
 #endif
 
 #ifdef _KERNEL

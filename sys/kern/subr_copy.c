@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_copy.c,v 1.11 2019/04/07 16:27:41 thorpej Exp $	*/
+/*	$NetBSD: subr_copy.c,v 1.11.6.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998, 1999, 2002, 2007, 2008, 2019
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.11 2019/04/07 16:27:41 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_copy.c,v 1.11.6.1 2020/02/29 20:21:03 ad Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 #define	__UCAS_PRIVATE
@@ -321,13 +321,14 @@ copyin_pid(pid_t pid, const void *uaddr, void *kaddr, size_t len)
 		return ESRCH;
 	}
 	mutex_enter(p->p_lock);
-	proc_vmspace_getref(p, &vm);
+	error = proc_vmspace_getref(p, &vm);
 	mutex_exit(p->p_lock);
 	mutex_exit(proc_lock);
 
-	error = copyin_vmspace(vm, uaddr, kaddr, len);
-
-	uvmspace_free(vm);
+	if (error == 0) {
+		error = copyin_vmspace(vm, uaddr, kaddr, len);
+		uvmspace_free(vm);
+	}
 	return error;
 }
 

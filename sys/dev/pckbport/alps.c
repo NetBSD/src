@@ -1,4 +1,4 @@
-/* $NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $ */
+/* $NetBSD: alps.c,v 1.12.4.1 2020/02/29 20:19:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2017 Ryo ONODERA <ryo@tetera.org>
@@ -30,7 +30,7 @@
 #include "opt_pms.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.12.4.1 2020/02/29 20:19:15 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -51,9 +51,11 @@ __KERNEL_RCSID(0, "$NetBSD: alps.c,v 1.12 2019/05/28 08:59:35 msaitoh Exp $");
 
 /* #define ALPS_DEBUG */
 
+static int alps_touchpad_movement_threshold_nodenum;
 static int alps_touchpad_xy_unprecision_nodenum;
 static int alps_trackstick_xy_precision_nodenum;
 
+static int alps_touchpad_movement_threshold = 4;
 static int alps_touchpad_xy_unprecision = 2;
 static int alps_trackstick_xy_precision = 1;
 
@@ -76,6 +78,9 @@ pms_sysctl_alps_verify(SYSCTLFN_ARGS)
 	if (node.sysctl_num == alps_touchpad_xy_unprecision_nodenum ||
 		node.sysctl_num == alps_trackstick_xy_precision_nodenum) {
 		if (t < 0 || t > 7)
+			return EINVAL;
+	} else if (node.sysctl_num == alps_touchpad_movement_threshold_nodenum) {
+		if (t < 0)
 			return EINVAL;
 	} else
 		return EINVAL;
@@ -113,7 +118,7 @@ pms_sysctl_alps(struct sysctllog **clog)
 
 	if ((rc = sysctl_createv(clog, 0, NULL, &node,
 		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
-		CTLTYPE_INT, "tackstick_xy_precision_shift",
+		CTLTYPE_INT, "trackstick_xy_precision_shift",
 		SYSCTL_DESCR("Trackstick X/Y-axis precision value"),
 		pms_sysctl_alps_verify, 0,
 		&alps_trackstick_xy_precision,
@@ -121,6 +126,17 @@ pms_sysctl_alps(struct sysctllog **clog)
 		CTL_EOL)) != 0)
 			goto err;
 	alps_trackstick_xy_precision_nodenum = node->sysctl_num;
+
+	if ((rc = sysctl_createv(clog, 0, NULL, &node,
+		CTLFLAG_PERMANENT | CTLFLAG_READWRITE,
+		CTLTYPE_INT, "touchpad_movement_threshold",
+		SYSCTL_DESCR("Minimum reported movement threshold"),
+		pms_sysctl_alps_verify, 0,
+		&alps_touchpad_movement_threshold,
+		0, CTL_HW, root_num, CTL_CREATE,
+		CTL_EOL)) != 0)
+			goto err;
+	alps_touchpad_movement_threshold_nodenum = node->sysctl_num;
 
 	return;
 
@@ -965,6 +981,13 @@ pms_alps_decode_touchpad_packet_v7(struct pms_softc *psc)
 
 		dx1 = dx1 >> alps_touchpad_xy_unprecision;
 		dy1 = dy1 >> alps_touchpad_xy_unprecision;
+	}
+
+	if (abs(dx1) < alps_touchpad_movement_threshold) {
+		dx1 = 0;
+	}
+	if (abs(dy1) < alps_touchpad_movement_threshold) {
+		dy1 = 0;
 	}
 
 	/* Allow finger detouch during drag and drop */

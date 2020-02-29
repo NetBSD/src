@@ -1,4 +1,4 @@
-/*	$NetBSD: if_iwm.c,v 1.83 2018/06/26 06:48:01 msaitoh Exp $	*/
+/*	$NetBSD: if_iwm.c,v 1.83.10.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	OpenBSD: if_iwm.c,v 1.148 2016/11/19 21:07:08 stsp Exp	*/
 #define IEEE80211_NO_HT
 /*
@@ -106,7 +106,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.83 2018/06/26 06:48:01 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_iwm.c,v 1.83.10.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -4031,9 +4031,9 @@ iwm_rx_tx_cmd_single(struct iwm_softc *sc, struct iwm_rx_packet *pkt,
 
 	if (status != IWM_TX_STATUS_SUCCESS &&
 	    status != IWM_TX_STATUS_DIRECT_DONE)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	else
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 }
 
 static void
@@ -6824,7 +6824,7 @@ iwm_start(struct ifnet *ifp)
 
 		if (m->m_len < sizeof (*eh) &&
 		   (m = m_pullup(m, sizeof (*eh))) == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -6832,7 +6832,7 @@ iwm_start(struct ifnet *ifp)
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -6840,7 +6840,7 @@ iwm_start(struct ifnet *ifp)
 		if (ieee80211_classify(ic, m, ni) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -6852,7 +6852,7 @@ iwm_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -6861,7 +6861,7 @@ iwm_start(struct ifnet *ifp)
 
 		if (iwm_tx(sc, m, ni, ac) != 0) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -6910,7 +6910,7 @@ iwm_watchdog(struct ifnet *ifp)
 #endif
 			ifp->if_flags &= ~IFF_UP;
 			iwm_stop(ifp, 1);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

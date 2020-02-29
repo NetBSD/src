@@ -1,4 +1,4 @@
-/* $NetBSD: dwc_gmac.c,v 1.68 2019/10/19 06:40:20 tnn Exp $ */
+/* $NetBSD: dwc_gmac.c,v 1.68.2.1 2020/02/29 20:19:08 ad Exp $ */
 
 /*-
  * Copyright (c) 2013, 2014 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.68 2019/10/19 06:40:20 tnn Exp $");
+__KERNEL_RCSID(1, "$NetBSD: dwc_gmac.c,v 1.68.2.1 2020/02/29 20:19:08 ad Exp $");
 
 /* #define	DWC_GMAC_DEBUG	1 */
 
@@ -1192,7 +1192,7 @@ dwc_gmac_tx_intr(struct dwc_gmac_softc *sc)
 		if (data->td_m == NULL)
 			continue;
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		nsegs = data->td_active->dm_nsegs;
 		bus_dmamap_sync(sc->sc_dmat, data->td_active, 0,
 		    data->td_active->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1245,7 +1245,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 			    "RX error: descriptor status %08x, skipping\n",
 			    le32toh(desc->ddesc_status0));
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -1264,13 +1264,13 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 		 */
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 		MCLGET(mnew, M_DONTWAIT);
 		if ((mnew->m_flags & M_EXT) == 0) {
 			m_freem(mnew);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 		mnew->m_len = mnew->m_pkthdr.len = mnew->m_ext.ext_size;
@@ -1295,7 +1295,7 @@ dwc_gmac_rx_intr(struct dwc_gmac_softc *sc)
 				panic("%s: could not load old rx mbuf",
 				    device_xname(sc->sc_dev));
 			}
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 		physaddr = data->rd_map->dm_segs[0].ds_addr;
@@ -1459,7 +1459,7 @@ dwc_gmac_intr(struct dwc_gmac_softc *sc)
 	 * Check error conditions
 	 */
 	if (dma_status & GMAC_DMA_INT_ERRORS) {
-		sc->sc_ec.ec_if.if_oerrors++;
+		if_statinc(&sc->sc_ec.ec_if, if_oerrors);
 #ifdef DWC_GMAC_DEBUG
 		dwc_dump_and_abort(sc, "interrupt error condition");
 #endif

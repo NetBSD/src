@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs_vfsops.c,v 1.362.4.4 2020/01/24 16:48:59 ad Exp $	*/
+/*	$NetBSD: ffs_vfsops.c,v 1.362.4.5 2020/02/29 20:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.4 2020/01/24 16:48:59 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ffs_vfsops.c,v 1.362.4.5 2020/02/29 20:21:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -1865,7 +1865,7 @@ ffs_sync_selector(void *cl, struct vnode *vp)
 	if ((ip->i_flag & (IN_ACCESS | IN_CHANGE | IN_UPDATE |
 	    IN_MODIFY | IN_MODIFIED | IN_ACCESSED)) == 0 &&
 	    (c->waitfor == MNT_LAZY || (LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	    UVM_OBJ_IS_CLEAN(&vp->v_uobj))))
+	    (vp->v_iflag & VI_ONWORKLST) == 0)))
 		return false;
 
 	return true;
@@ -2403,7 +2403,7 @@ ffs_vfs_fsync(vnode_t *vp, int flags)
 	pflags = PGO_ALLPAGES | PGO_CLEANIT;
 	if ((flags & FSYNC_WAIT) != 0)
 		pflags |= PGO_SYNCIO;
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, 0, 0, pflags);
 	if (error)
 		return error;

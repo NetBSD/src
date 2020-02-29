@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel.h,v 1.4 2011/12/04 19:24:59 jym Exp $ */
+/* $NetBSD: secmodel.h,v 1.4.54.1 2020/02/29 20:21:09 ad Exp $ */
 /*-
  * Copyright (c) 2006, 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -28,6 +28,8 @@
 
 #ifndef _SECMODEL_SECMODEL_H_
 #define	_SECMODEL_SECMODEL_H_
+
+#include <sys/queue.h>
 
 #include <prop/proplib.h>
 

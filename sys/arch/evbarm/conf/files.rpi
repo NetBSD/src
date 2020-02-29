@@ -1,4 +1,4 @@
-#	$NetBSD: files.rpi,v 1.11 2018/10/18 09:01:54 skrll Exp $
+#	$NetBSD: files.rpi,v 1.11.6.1 2020/02/29 20:18:22 ad Exp $
 #
 # Raspberry Pi
 #
@@ -14,7 +14,7 @@ file	arch/arm/arm32/arm32_reboot.c			arm32
 file	arch/arm/arm32/irq_dispatch.S			arm32
 file	arch/arm/arm32/armv7_generic_space.c		arm32
 file	arch/arm/arm/bus_space_a4x.S			arm32
-#file	arch/arm/arm/arm_generic_dma.c
+file	arch/arm/arm/arm_generic_dma.c
 
 # CPU support and integrated peripherals
 include "arch/arm/broadcom/files.bcm2835"

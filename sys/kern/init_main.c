@@ -1,4 +1,4 @@
-/*	$NetBSD: init_main.c,v 1.517.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: init_main.c,v 1.517.2.2 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.517.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: init_main.c,v 1.517.2.2 2020/02/29 20:21:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -290,7 +290,7 @@ main(void)
 #ifndef LWP0_CPU_INFO
 	l->l_cpu = curcpu();
 #endif
-	l->l_flag |= LW_RUNNING;
+	l->l_pflag |= LP_RUNNING;
 
 	/*
 	 * Attempt to find console and initialize
@@ -328,6 +328,9 @@ main(void)
 	/* Initialize lock caches. */
 	mutex_obj_init();
 	rw_obj_init();
+
+	/* Initialize radix trees (used by numerous subsystems). */
+	radix_tree_init();
 
 	/* Passive serialization. */
 	pserialize_init();
@@ -463,6 +466,9 @@ main(void)
 	/* Second part of module system initialization. */
 	module_start_unload_thread();
 
+	/* Initialize autoconf data structures before any modules are loaded */
+	config_init_mi();
+
 	/* Initialize the file systems. */
 #ifdef NVNODE_IMPLICIT
 	/*
@@ -480,7 +486,6 @@ main(void)
 	/* Initialize fstrans. */
 	fstrans_init();
 
-	radix_tree_init(); /* used for page cache */
 	vfsinit();
 	lf_init();
 
@@ -718,11 +723,6 @@ main(void)
 	    NULL, NULL, "ioflush"))
 		panic("fork syncer");
 
-	/* Create the aiodone daemon kernel thread. */
-	if (workqueue_create(&uvm.aiodone_queue, "aiodoned",
-	    uvm_aiodone_worker, NULL, PRI_VM, IPL_NONE, WQ_MPSAFE))
-		panic("fork aiodoned");
-
 	/* Wait for final configure threads to complete. */
 	config_finalize_mountroot();
 
@@ -746,8 +746,6 @@ static void
 configure(void)
 {
 
-	/* Initialize autoconf data structures. */
-	config_init_mi();
 	/*
 	 * XXX
 	 * callout_setfunc() requires mutex(9) so it can't be in config_init()

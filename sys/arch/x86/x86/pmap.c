@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.354.2.1 2020/01/17 21:47:28 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.354.2.2 2020/02/29 20:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354.2.1 2020/01/17 21:47:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354.2.2 2020/02/29 20:18:33 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -242,6 +242,15 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.354.2.1 2020/01/17 21:47:28 ad Exp $");
  *   This lock protects the list of active pmaps (headed by "pmaps"). We
  *   lock it when adding or removing pmaps from this list.
  */
+
+/* uvm_object is abused here to index pmap_pages; make assertions happy. */
+#ifdef DIAGNOSTIC
+#define	PMAP_DUMMY_LOCK(pm)	rw_enter(&(pm)->pm_dummy_lock, RW_WRITER)
+#define	PMAP_DUMMY_UNLOCK(pm)	rw_exit(&(pm)->pm_dummy_lock)
+#else
+#define	PMAP_DUMMY_LOCK(pm)
+#define	PMAP_DUMMY_UNLOCK(pm)
+#endif
 
 const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
 const vaddr_t ptp_frames[] = PTP_FRAME_INITIALIZER;
@@ -868,7 +877,7 @@ pmap_changeprot_local(vaddr_t va, vm_prot_t prot)
 	if ((prot & VM_PROT_WRITE) != 0)
 		npte |= PTE_W;
 	else
-		npte &= ~PTE_W;
+		npte &= ~(PTE_W|PTE_D);
 
 	if (opte != npte) {
 		pmap_pte_set(pte, npte);
@@ -1022,9 +1031,10 @@ pmap_bootstrap(vaddr_t kva_start)
 	 */
 	kpm = pmap_kernel();
 	mutex_init(&kpm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&kpm->pm_dummy_lock);
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		uvm_obj_init(&kpm->pm_obj[i], NULL, false, 1);
-		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_lock);
+		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_dummy_lock);
 		kpm->pm_ptphint[i] = NULL;
 	}
 	memset(&kpm->pm_list, 0, sizeof(kpm->pm_list));  /* pm_list not used */
@@ -1258,6 +1268,17 @@ slotspace_rand(int type, size_t sz, size_t align)
 	vaddr_t startva, va;
 
 	sz = roundup(sz, align);
+
+	/*
+	 * Take one more slot with +NBPD_L4, because we may end up choosing
+	 * an area that crosses slots:
+	 *     +------+------+------+
+	 *     | Slot | Slot | Slot |
+	 *     +------+------+------+
+	 *        [Chosen Area]
+	 * And in that case we must take into account the additional slot
+	 * consumed.
+	 */
 	nslots = roundup(sz+NBPD_L4, NBPD_L4) / NBPD_L4;
 
 	/* Get the holes. */
@@ -1279,16 +1300,20 @@ slotspace_rand(int type, size_t sz, size_t align)
 				minnslot = slotspace.area[i].nslot;
 			}
 		}
+
+		/* No hole anymore, stop here. */
 		if (minsslot == 512) {
 			break;
 		}
 
+		/* Register the hole. */
 		if (minsslot - curslot >= nslots) {
 			holes[nholes].start = curslot;
 			holes[nholes].end = minsslot;
 			nholes++;
 		}
 
+		/* Skip that hole, and iterate again. */
 		curslot = minsslot + minnslot;
 	}
 
@@ -1953,7 +1978,9 @@ pmap_find_ptp(struct pmap *pmap, vaddr_t va, paddr_t pa, int level)
 	    pa == VM_PAGE_TO_PHYS(pmap->pm_ptphint[lidx])) {
 		return (pmap->pm_ptphint[lidx]);
 	}
+	PMAP_DUMMY_LOCK(pmap);
 	pg = uvm_pagelookup(&pmap->pm_obj[lidx], ptp_va2o(va, level));
+	PMAP_DUMMY_UNLOCK(pmap);
 	if (pg != NULL) {
 		if (__predict_false(pg->wire_count == 0)) {
 			/* This page is queued to be freed - ignore. */
@@ -2078,7 +2105,9 @@ pmap_get_ptp(struct pmap *pmap, struct pmap_ptparray *pt, vaddr_t va,
 		obj = &pmap->pm_obj[i - 2];
 		off = ptp_va2o(va, i - 1);
 
+		PMAP_DUMMY_LOCK(pmap);
 		pt->pg[i] = uvm_pagelookup(obj, off);
+
 		if (pt->pg[i] == NULL) {
 			pt->pg[i] = uvm_pagealloc(obj, off, NULL, aflags);
 			pt->alloced[i] = true;
@@ -2092,6 +2121,7 @@ pmap_get_ptp(struct pmap *pmap, struct pmap_ptparray *pt, vaddr_t va,
 			KASSERT((VM_PAGE_TO_PP(pt->pg[i])->pp_flags &
 			    PP_FREEING) == 0);
 		}
+		PMAP_DUMMY_UNLOCK(pmap);
 		if (pt->pg[i] == NULL) {
 			pmap_unget_ptp(pmap, pt);
 			return ENOMEM;
@@ -2200,7 +2230,9 @@ pmap_unget_ptp(struct pmap *pmap, struct pmap_ptparray *pt)
 		KASSERT(pt->pg[i]->wire_count == 0);
 		/* pmap zeros all pages before freeing. */
 		pt->pg[i]->flags |= PG_ZERO; 
+		PMAP_DUMMY_LOCK(pmap);
 		uvm_pagefree(pt->pg[i]);
+		PMAP_DUMMY_UNLOCK(pmap);
 		pt->pg[i] = NULL;
 		pmap->pm_ptphint[0] = NULL;
 	}
@@ -2385,6 +2417,7 @@ pmap_ctor(void *arg, void *obj, int flags)
 	KASSERT((flags & PR_WAITOK) != 0);
 
 	mutex_init(&pmap->pm_lock, MUTEX_DEFAULT, IPL_NONE);
+	rw_init(&pmap->pm_dummy_lock);
 	radix_tree_init_tree(&pmap->pm_pvtree);
 	kcpuset_create(&pmap->pm_cpus, true);
 	kcpuset_create(&pmap->pm_kernel_cpus, true);
@@ -2433,6 +2466,7 @@ pmap_dtor(void *arg, void *obj)
 	pool_put(&pmap_pdp_pool, pmap->pm_pdir);
 	radix_tree_fini_tree(&pmap->pm_pvtree);
 	mutex_destroy(&pmap->pm_lock);
+	rw_destroy(&pmap->pm_dummy_lock);
 	kcpuset_destroy(pmap->pm_cpus);
 	kcpuset_destroy(pmap->pm_kernel_cpus);
 #ifdef XENPV
@@ -2454,7 +2488,7 @@ pmap_create(void)
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
 		uvm_obj_init(&pmap->pm_obj[i], NULL, false, 1);
-		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_lock);
+		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_dummy_lock);
 		pmap->pm_ptphint[i] = NULL;
 	}
 	pmap->pm_stats.wired_count = 0;
@@ -3554,7 +3588,7 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	if ((pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
-		KASSERT(uvm_page_owner_locked_p(pg));
+		KASSERT(uvm_page_owner_locked_p(pg, false));
 		pp = VM_PAGE_TO_PP(pg);
 	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
 		paddr_t pa = pmap_pte2pa(opte);
@@ -3887,7 +3921,8 @@ pmap_page_remove(struct vm_page *pg)
 	struct pmap_page *pp;
 	paddr_t pa;
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	/* Need an exclusive lock to prevent PV list changing behind us. */
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 
 	pp = VM_PAGE_TO_PP(pg);
 	pa = VM_PAGE_TO_PHYS(pg);
@@ -3928,7 +3963,8 @@ pmap_test_attrs(struct vm_page *pg, unsigned testbits)
 	u_int result;
 	paddr_t pa;
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	/* Need an exclusive lock to prevent PV list changing behind us. */
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 
 	pp = VM_PAGE_TO_PP(pg);
 	if ((pp->pp_attrs & testbits) != 0) {
@@ -4001,7 +4037,8 @@ pmap_clear_attrs(struct vm_page *pg, unsigned clearbits)
 	struct pmap_page *pp;
 	paddr_t pa;
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	/* Need an exclusive lock to prevent PV list changing behind us. */
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 
 	pp = VM_PAGE_TO_PP(pg);
 	pa = VM_PAGE_TO_PHYS(pg);
@@ -4279,6 +4316,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		/* This is a managed page */
 		npte |= PTE_PVLIST;
 		new_pp = VM_PAGE_TO_PP(new_pg);
+		KASSERT(uvm_page_owner_locked_p(new_pg, false));
 	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
 		/* This is an unmanaged pv-tracked page */
 		npte |= PTE_PVLIST;
@@ -4410,7 +4448,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 	 */
 	if ((~opte & (PTE_P | PTE_PVLIST)) == 0) {
 		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
-			KASSERT(uvm_page_owner_locked_p(old_pg));
+			KASSERT(uvm_page_owner_locked_p(old_pg, false));
 			old_pp = VM_PAGE_TO_PP(old_pg);
 		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
 			panic("%s: PTE_PVLIST with pv-untracked page"
@@ -4804,7 +4842,9 @@ pmap_update(struct pmap *pmap)
 			 * assertions in uvm_pagefree().  Despite uobject
 			 * being set, this isn't a managed page.
 			 */
+			PMAP_DUMMY_LOCK(pmap);
 			uvm_pagerealloc(ptp, NULL, 0);
+			PMAP_DUMMY_UNLOCK(pmap);
 
 			/* pmap zeros all pages before freeing */
 			ptp->flags |= PG_ZERO;
@@ -5172,6 +5212,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		/* This is a managed page */
 		npte |= EPT_PVLIST;
 		new_pp = VM_PAGE_TO_PP(new_pg);
+		KASSERT(uvm_page_owner_locked_p(new_pg, false));
 	} else if ((new_pp = pmap_pv_tracked(pa)) != NULL) {
 		/* This is an unmanaged pv-tracked page */
 		npte |= EPT_PVLIST;
@@ -5288,7 +5329,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 	 */
 	if ((~opte & (EPT_R | EPT_PVLIST)) == 0) {
 		if ((old_pg = PHYS_TO_VM_PAGE(oldpa)) != NULL) {
-			KASSERT(uvm_page_owner_locked_p(old_pg));
+			KASSERT(uvm_page_owner_locked_p(old_pg, false));
 			old_pp = VM_PAGE_TO_PP(old_pg);
 		} else if ((old_pp = pmap_pv_tracked(oldpa)) == NULL) {
 			panic("%s: EPT_PVLIST with pv-untracked page"
@@ -5454,7 +5495,7 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	if ((pg = PHYS_TO_VM_PAGE(pmap_pte2pa(opte))) != NULL) {
-		KASSERT(uvm_page_owner_locked_p(pg));
+		KASSERT(uvm_page_owner_locked_p(pg, false));
 		pp = VM_PAGE_TO_PP(pg);
 	} else if ((pp = pmap_pv_tracked(pmap_pte2pa(opte))) == NULL) {
 		paddr_t pa = pmap_pte2pa(opte);

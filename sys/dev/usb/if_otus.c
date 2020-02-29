@@ -1,4 +1,4 @@
-/*	$NetBSD: if_otus.c,v 1.39.2.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: if_otus.c,v 1.39.2.2 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_otus.c,v 1.18 2010/08/27 17:08:00 jsg Exp $	*/
 
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.39.2.1 2020/01/17 21:47:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_otus.c,v 1.39.2.2 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1734,7 +1734,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	/* Received MPDU. */
 	if (__predict_false(len < AR_PLCP_HDR_LEN + sizeof(*tail))) {
 		DPRINTFN(DBG_RX, sc, "MPDU too short %d\n", len);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	tail = (void *)(plcp + len - sizeof(*tail));
@@ -1749,7 +1749,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 			/* Report Michael MIC failures to net80211. */
 			ieee80211_notify_michael_failure(ic, wh, 0 /* XXX: keyix */);
 		}
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	/* Compute MPDU's length. */
@@ -1761,7 +1761,7 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 	 * want this in IEEE80211_M_MONITOR mode?
 	 */
 	if (__predict_false(mlen < sizeof(*wh))) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1770,13 +1770,13 @@ otus_sub_rxeof(struct otus_softc *sc, uint8_t *buf, int len)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (__predict_false(m == NULL)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	if (align + mlen > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if (__predict_false(!(m->m_flags & M_EXT))) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			return;
 		}
@@ -1917,10 +1917,10 @@ otus_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 		DPRINTFN(DBG_TX, sc, "TX status=%d\n", status);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_data_tx_pipe);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		return;
 	}
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	s = splnet();
 	sc->sc_tx_timer = 0;
@@ -2114,7 +2114,7 @@ otus_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2122,7 +2122,7 @@ otus_start(struct ifnet *ifp)
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2131,7 +2131,7 @@ otus_start(struct ifnet *ifp)
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			/* original m was freed by ieee80211_encap() */
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
  sendit:
@@ -2140,7 +2140,7 @@ otus_start(struct ifnet *ifp)
 		if (otus_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2175,7 +2175,7 @@ otus_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			/* otus_init(ifp); XXX needs a process context! */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

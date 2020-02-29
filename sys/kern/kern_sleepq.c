@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_sleepq.c,v 1.56.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_sleepq.c,v 1.56.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.56.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_sleepq.c,v 1.56.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -114,7 +114,13 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 
 	KASSERT(lwp_locked(l, NULL));
 
-	TAILQ_REMOVE(sq, l, l_sleepchain);
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_NULL) == 0) {
+		KASSERT(sq != NULL);
+		TAILQ_REMOVE(sq, l, l_sleepchain);
+	} else {
+		KASSERT(sq == NULL);
+	}
+
 	l->l_syncobj = &sched_syncobj;
 	l->l_wchan = NULL;
 	l->l_sleepq = NULL;
@@ -137,7 +143,7 @@ sleepq_remove(sleepq_t *sq, lwp_t *l)
 	 * If the LWP is still on the CPU, mark it as LSONPROC.  It may be
 	 * about to call mi_switch(), in which case it will yield.
 	 */
-	if ((l->l_flag & LW_RUNNING) != 0) {
+	if ((l->l_pflag & LP_RUNNING) != 0) {
 		l->l_stat = LSONPROC;
 		l->l_slptime = 0;
 		lwp_setlock(l, spc->spc_lwplock);
@@ -175,9 +181,15 @@ static void
 sleepq_insert(sleepq_t *sq, lwp_t *l, syncobj_t *sobj)
 {
 
+	if ((sobj->sobj_flag & SOBJ_SLEEPQ_NULL) != 0) {
+		KASSERT(sq == NULL); 
+		return;
+	}
+	KASSERT(sq != NULL);
+
 	if ((sobj->sobj_flag & SOBJ_SLEEPQ_SORTED) != 0) {
 		lwp_t *l2;
-		const int pri = lwp_eprio(l);
+		const pri_t pri = lwp_eprio(l);
 
 		TAILQ_FOREACH(l2, sq, l_sleepchain) {
 			if (lwp_eprio(l2) < pri) {
@@ -441,7 +453,7 @@ sleepq_reinsert(sleepq_t *sq, lwp_t *l)
 {
 
 	KASSERT(l->l_sleepq == sq);
-	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) {
+	if ((l->l_syncobj->sobj_flag & SOBJ_SLEEPQ_SORTED) == 0) { 
 		return;
 	}
 

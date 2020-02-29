@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mos.c,v 1.3 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_mos.c,v 1.3.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_mos.c,v 1.40 2019/07/07 06:40:10 kevlo Exp $	*/
 
 /*
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.3 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mos.c,v 1.3.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #include <sys/param.h>
 
@@ -685,7 +685,7 @@ mos_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 	/* evaluate status byte at the end */
 	pktlen = total_len - 1;
 	if (pktlen > un->un_rx_bufsz) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	rxstat = buf[pktlen] & MOS_RXSTS_MASK;
@@ -701,12 +701,12 @@ mos_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			DPRINTF(("CRC error\n"));
 		if (rxstat & MOS_RXSTS_ALIGN_ERROR)
 			DPRINTF(("alignment error\n"));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	if (pktlen < sizeof(struct ether_header) ) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

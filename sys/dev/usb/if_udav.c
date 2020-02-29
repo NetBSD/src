@@ -1,4 +1,4 @@
-/*	$NetBSD: if_udav.c,v 1.73 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_udav.c,v 1.73.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$nabe: if_udav.c,v 1.3 2003/08/21 16:57:19 nabe Exp $	*/
 
 /*
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.73 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_udav.c,v 1.73.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -713,14 +713,14 @@ udav_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	DPRINTF(("%s: RX Length: 0x%02x\n", device_xname(un->un_dev), pkt_len));
 
 	if (pktstat & UDAV_RSR_LCS) {
-		ifp->if_collisions++;
+		if_statinc(ifp, if_collisions);
 		return;
 	}
 
 	if (pkt_len < sizeof(struct ether_header) ||
 	    pkt_len > total_len ||
 	    (pktstat & UDAV_RSR_ERR)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

@@ -1,4 +1,4 @@
-# 	$NetBSD: INSTALL,v 1.65 2018/11/16 17:07:10 martin Exp $
+# 	$NetBSD: INSTALL,v 1.65.6.1 2020/02/29 20:18:28 ad Exp $
 
 #	config for bootable floppy kernel
 #
@@ -18,7 +18,7 @@ options 	CPU_SINGLE		# Will IOP be supported eventually?
 options 	MEMORY_DISK_HOOKS
 options 	MEMORY_DISK_IS_ROOT	# Force root on ram-disk
 options 	MEMORY_DISK_SERVER=0	# no userspace memory disk support
-options 	MEMORY_DISK_ROOT_SIZE=3600	# 1.80 Megabytes
+options 	MEMORY_DISK_ROOT_SIZE=3712	# 1.85 Megabytes
 options 	MEMORY_DISK_RBFLAGS=RB_SINGLE	# boot in single-user mode
 
 # Standard system options
@@ -137,6 +137,7 @@ cd*	at scsibus? target ? lun ?		# SCSI CD-ROMs
 #romcons0 at mainbus0
 
 # Misc.
+pseudo-device	bpfilter		# Berkeley Packet Filter
 pseudo-device	loop			# loopback interface; required
 pseudo-device	pty			# pseudo-terminals
 pseudo-device	md			# memory disk device

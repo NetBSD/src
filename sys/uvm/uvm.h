@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm.h,v 1.73 2019/12/31 22:42:51 ad Exp $	*/
+/*	$NetBSD: uvm.h,v 1.73.2.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -112,12 +112,6 @@ struct uvm {
 		/* page daemon trigger */
 	int pagedaemon;			/* daemon sleeps on this */
 	struct lwp *pagedaemon_lwp;	/* daemon's lid */
-
-		/* aiodone daemon */
-	struct workqueue *aiodone_queue;
-
-	/* aio_done is locked by uvm.pagedaemon_lock and splbio! */
-	TAILQ_HEAD(, buf) aio_done;		/* done async i/o reqs */
 };
 
 /*
@@ -177,6 +171,13 @@ extern struct evcnt uvm_ra_miss;
 #define	UVM_UNLOCK_AND_WAIT(event, slock, intr, msg, timo)		\
 do {									\
 	(void) mtsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
+	    msg, timo, slock);						\
+} while (/*CONSTCOND*/ 0)
+
+/* XXX temporary */
+#define	UVM_UNLOCK_AND_WAIT_RW(event, slock, intr, msg, timo)		\
+do {									\
+	(void) rwtsleep(event, PVM | PNORELOCK | (intr ? PCATCH : 0),	\
 	    msg, timo, slock);						\
 } while (/*CONSTCOND*/ 0)
 

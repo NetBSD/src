@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.37 2019/12/01 08:16:49 msaitoh Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.37.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.37 2019/12/01 08:16:49 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.37.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include "vlan.h"
 
@@ -613,12 +613,12 @@ ale_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	ale_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
@@ -1098,13 +1098,13 @@ ale_watchdog(struct ifnet *ifp)
 	if ((sc->ale_flags & ALE_FLAG_LINK) == 0) {
 		printf("%s: watchdog timeout (missed link)\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		ale_init(ifp);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	ale_init(ifp);
 
 	if (!IFQ_IS_EMPTY(&ifp->if_snd))
@@ -1257,11 +1257,14 @@ ale_stats_update(struct ale_softc *sc)
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
 
 	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	ifp->if_collisions += smb->tx_single_colls +
+	if_statadd_ref(nsr, if_opackets, smb->tx_frames);
+
+	if_statadd_ref(nsr, if_collisions,
+	    smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +
-	    smb->tx_abort * HDPX_CFG_RETRY_DEFAULT;
+	    smb->tx_abort * HDPX_CFG_RETRY_DEFAULT);
 
 	/*
 	 * XXX
@@ -1270,13 +1273,17 @@ ale_stats_update(struct ale_softc *sc)
 	 * the counter name is not correct one so I've removed the
 	 * counter in output errors.
 	 */
-	ifp->if_oerrors += smb->tx_abort + smb->tx_late_colls +
-	    smb->tx_underrun;
+	if_statadd_ref(nsr, if_oerrors,
+	    smb->tx_abort + smb->tx_late_colls +
+	    smb->tx_underrun);
 
-	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
+	if_statadd_ref(nsr, if_ierrors,
+	    smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
 	    smb->rx_fifo_oflows + smb->rx_rrs_errs +
-	    smb->rx_alignerrs;
+	    smb->rx_alignerrs);
+
+	IF_STAT_PUTREF(ifp);
 }
 
 static int
@@ -1532,7 +1539,7 @@ ale_rxeof(struct ale_softc *sc)
 		m = m_devget((char *)(rs + 1), length - ETHER_CRC_LEN,
 		    0, ifp);
 		if (m == NULL) {
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			ale_rx_update_page(sc, &rx_page, length, &prod);
 			continue;
 		}

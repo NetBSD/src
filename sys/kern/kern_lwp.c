@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.217.2.2 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.217.2.3 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -80,7 +80,7 @@
  *	LWP.  The LWP may in fact be executing on a processor, may be
  *	sleeping or idle. It is expected to take the necessary action to
  *	stop executing or become "running" again within a short timeframe.
- *	The LW_RUNNING flag in lwp::l_flag indicates that an LWP is running.
+ *	The LP_RUNNING flag in lwp::l_pflag indicates that an LWP is running.
  *	Importantly, it indicates that its state is tied to a CPU.
  *
  *	LSZOMB:
@@ -176,7 +176,8 @@
  *	LSSLEEP:
  *
  *		Covered by a lock associated with the sleep queue (sometimes
- *		a turnstile sleep queue) that the LWP resides on.
+ *		a turnstile sleep queue) that the LWP resides on.  This can
+ *		be spc_lwplock for SOBJ_SLEEPQ_NULL (an "untracked" sleep).
  *
  *	LSSTOP:
  *
@@ -210,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.217.2.2 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.217.2.3 2020/02/29 20:21:02 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -330,7 +331,6 @@ lwpinit(void)
 
 	LIST_INIT(&alllwp);
 	lwpinit_specificdata();
-	lwp_sys_init();
 	lwp_cache = pool_cache_init(sizeof(lwp_t), MIN_LWP_ALIGNMENT, 0, 0,
 	    "lwppl", NULL, IPL_NONE, NULL, lwp_dtor, NULL);
 
@@ -537,7 +537,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 {
 	const lwpid_t curlid = l->l_lid;
 	proc_t *p = l->l_proc;
-	lwp_t *l2;
+	lwp_t *l2, *next;
 	int error;
 
 	KASSERT(mutex_owned(p->p_lock));
@@ -577,7 +577,29 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 */
 		nfound = 0;
 		error = 0;
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
+
+		/*
+		 * If given a specific LID, go via the tree and make sure
+		 * it's not detached.
+		 */
+		if (lid != 0) {
+			l2 = radix_tree_lookup_node(&p->p_lwptree,
+			    (uint64_t)(lid - 1));
+			if (l2 == NULL) {
+				error = ESRCH;
+				break;
+			}
+			KASSERT(l2->l_lid == lid);
+			if ((l2->l_prflag & LPR_DETACHED) != 0) {
+				error = EINVAL;
+				break;
+			}
+		} else {
+			l2 = LIST_FIRST(&p->p_lwps);
+		}
+		for (; l2 != NULL; l2 = next) {
+			next = (lid != 0 ? NULL : LIST_NEXT(l2, l_sibling));
+
 			/*
 			 * If a specific wait and the target is waiting on
 			 * us, then avoid deadlock.  This also traps LWPs
@@ -598,8 +620,6 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 				continue;
 			}
 			if (lid != 0) {
-				if (l2->l_lid != lid)
-					continue;
 				/*
 				 * Mark this LWP as the first waiter, if there
 				 * is no other.
@@ -652,8 +672,7 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 */
 		if (exiting) {
 			KASSERT(p->p_nlwps > 1);
-			cv_wait(&p->p_lwpcv, p->p_lock);
-			error = EAGAIN;
+			error = cv_timedwait(&p->p_lwpcv, p->p_lock, 1);
 			break;
 		}
 
@@ -661,9 +680,6 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		 * If all other LWPs are waiting for exits or suspends
 		 * and the supply of zombies and potential zombies is
 		 * exhausted, then we are about to deadlock.
-		 *
-		 * If the process is exiting (and this LWP is not the one
-		 * that is coordinating the exit) then bail out now.
 		 */
 		if ((p->p_sflag & PS_WEXIT) != 0 ||
 		    p->p_nrlwps + p->p_nzlwps - p->p_ndlwps <= p->p_nlwpwait) {
@@ -689,13 +705,12 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 	 * so that they can re-check for zombies and for deadlock.
 	 */
 	if (lid != 0) {
-		LIST_FOREACH(l2, &p->p_lwps, l_sibling) {
-			if (l2->l_lid == lid) {
-				if (l2->l_waiter == curlid)
-					l2->l_waiter = 0;
-				break;
-			}
-		}
+		l2 = radix_tree_lookup_node(&p->p_lwptree,
+		    (uint64_t)(lid - 1));
+		KASSERT(l2 == NULL || l2->l_lid == lid);
+
+		if (l2 != NULL && l2->l_waiter == curlid)
+			l2->l_waiter = 0;
 	}
 	p->p_nlwpwait--;
 	l->l_waitingfor = 0;
@@ -704,60 +719,41 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 	return error;
 }
 
+/*
+ * Find an unused LID for a new LWP.
+ */
 static lwpid_t
-lwp_find_free_lid(lwpid_t try_lid, lwp_t * new_lwp, proc_t *p)
+lwp_find_free_lid(struct proc *p)
 {
-	#define LID_SCAN (1u << 31)
-	lwp_t *scan, *free_before;
-	lwpid_t nxt_lid;
+	struct lwp *gang[32];
+	lwpid_t lid;
+	unsigned n;
+
+	KASSERT(mutex_owned(p->p_lock));
+	KASSERT(p->p_nlwpid > 0);
 
 	/*
-	 * We want the first unused lid greater than or equal to
-	 * try_lid (modulo 2^31).
-	 * (If nothing else ld.elf_so doesn't want lwpid with the top bit set.)
-	 * We must not return 0, and avoiding 'LID_SCAN - 1' makes
-	 * the outer test easier.
-	 * This would be much easier if the list were sorted in
-	 * increasing order.
-	 * The list is kept sorted in decreasing order.
-	 * This code is only used after a process has generated 2^31 lwp.
-	 *
-	 * Code assumes it can always find an id.
+	 * Scoot forward through the tree in blocks of LIDs doing gang
+	 * lookup with dense=true, meaning the lookup will terminate the
+	 * instant a hole is encountered.  Most of the time the first entry
+	 * (p->p_nlwpid) is free and the lookup fails fast.
 	 */
-
-	try_lid &= LID_SCAN - 1;
-	if (try_lid <= 1)
-		try_lid = 2;
-
-	free_before = NULL;
-	nxt_lid = LID_SCAN - 1;
-	LIST_FOREACH(scan, &p->p_lwps, l_sibling) {
-		if (scan->l_lid != nxt_lid) {
-			/* There are available lid before this entry */
-			free_before = scan;
-			if (try_lid > scan->l_lid)
-				break;
-		} 
-		if (try_lid == scan->l_lid) {
-			/* The ideal lid is busy, take a higher one */
-			if (free_before != NULL) {
-				try_lid = free_before->l_lid + 1;
-				break;
-			}
-			/* No higher ones, reuse low numbers */
-			try_lid = 2;
+	for (lid = p->p_nlwpid;;) {
+		n = radix_tree_gang_lookup_node(&p->p_lwptree, lid - 1,
+		    (void **)gang, __arraycount(gang), true);
+		if (n == 0) {
+			/* Start point was empty. */
+			break;
 		}
-
-		nxt_lid = scan->l_lid - 1;
-		if (LIST_NEXT(scan, l_sibling) == NULL) {
-		    /* The value we have is lower than any existing lwp */
-		    LIST_INSERT_AFTER(scan, new_lwp, l_sibling);
-		    return try_lid;
+		KASSERT(gang[0]->l_lid == lid);
+		lid = gang[n - 1]->l_lid + 1;
+		if (n < __arraycount(gang)) {
+			/* Scan encountered a hole. */
+			break;
 		}
 	}
 
-	LIST_INSERT_BEFORE(free_before, new_lwp, l_sibling);
-	return try_lid;
+	return (lwpid_t)lid;
 }
 
 /*
@@ -838,7 +834,7 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	l2->l_inheritedprio = -1;
 	l2->l_protectprio = -1;
 	l2->l_auxprio = -1;
-	l2->l_flag = (l1->l_flag & (LW_WEXIT | LW_WREBOOT | LW_WCORE));
+	l2->l_flag = 0;
 	l2->l_pflag = LP_MPSAFE;
 	TAILQ_INIT(&l2->l_ld_locks);
 	l2->l_psrefs = 0;
@@ -894,25 +890,62 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	 * the MD cpu_lwp_fork() can copy the saved state to the new LWP.
 	 */
 	pcu_save_all(l1);
+#if PCU_UNIT_COUNT > 0
+	l2->l_pcu_valid = l1->l_pcu_valid;
+#endif
 
 	uvm_lwp_setuarea(l2, uaddr);
 	uvm_lwp_fork(l1, l2, stack, stacksize, func, (arg != NULL) ? arg : l2);
 
 	if ((flags & LWP_PIDLID) != 0) {
+		/* Linux threads: use a PID. */
 		lid = proc_alloc_pid(p2);
 		l2->l_pflag |= LP_PIDLID;
 	} else if (p2->p_nlwps == 0) {
-		lid = l1->l_lid;
 		/*
-		 * Update next LWP ID, too. If this overflows to LID_SCAN,
-		 * the slow path of scanning will be used for the next LWP.
+		 * First LWP in process.  Copy the parent's LID to avoid
+		 * causing problems for fork() + threads.  Don't give
+		 * subsequent threads the distinction of using LID 1.
 		 */
-		p2->p_nlwpid = lid + 1;
+		lid = l1->l_lid;
+		p2->p_nlwpid = 2;
 	} else {
+		/* Scan the radix tree for a free LID. */
 		lid = 0;
 	}
 
+	/*
+	 * Allocate LID if needed, and insert into the radix tree.  The
+	 * first LWP in most processes has a LID of 1.  It turns out that if
+	 * you insert an item with a key of zero to a radixtree, it's stored
+	 * directly in the root (p_lwptree) and no extra memory is
+	 * allocated.  We therefore always subtract 1 from the LID, which
+	 * means no memory is allocated for the tree unless the program is
+	 * using threads.  NB: the allocation and insert must take place
+	 * under the same hold of p_lock.
+	 */
 	mutex_enter(p2->p_lock);
+	for (;;) {
+		int error;
+
+		l2->l_lid = (lid == 0 ? lwp_find_free_lid(p2) : lid);
+
+		rw_enter(&p2->p_treelock, RW_WRITER);
+		error = radix_tree_insert_node(&p2->p_lwptree,
+		    (uint64_t)(l2->l_lid - 1), l2);
+		rw_exit(&p2->p_treelock);
+
+		if (__predict_true(error == 0)) {
+			if (lid == 0)
+				p2->p_nlwpid = l2->l_lid + 1;
+			break;
+		}
+
+		KASSERT(error == ENOMEM);
+		mutex_exit(p2->p_lock);
+		radix_tree_await_memory();
+		mutex_enter(p2->p_lock);
+	}
 
 	if ((flags & LWP_DETACHED) != 0) {
 		l2->l_prflag = LPR_DETACHED;
@@ -920,30 +953,23 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 	} else
 		l2->l_prflag = 0;
 
+	if (l1->l_proc == p2) {
+		/*
+		 * These flags are set while p_lock is held.  Copy with
+		 * p_lock held too, so the LWP doesn't sneak into the
+		 * process without them being set.
+		 */
+		l2->l_flag |= (l1->l_flag & (LW_WEXIT | LW_WREBOOT | LW_WCORE));
+	} else {
+		/* fork(): pending core/exit doesn't apply to child. */
+		l2->l_flag |= (l1->l_flag & LW_WREBOOT);
+	}
+
 	l2->l_sigstk = *sigstk;
 	l2->l_sigmask = *sigmask;
 	TAILQ_INIT(&l2->l_sigpend.sp_info);
 	sigemptyset(&l2->l_sigpend.sp_set);
-
-	if (__predict_true(lid == 0)) {
-		/*
-		 * XXX: l_lid are expected to be unique (for a process)
-		 * if LWP_PIDLID is sometimes set this won't be true.
-		 * Once 2^31 threads have been allocated we have to
-		 * scan to ensure we allocate a unique value.
-		 */
-		lid = ++p2->p_nlwpid;
-		if (__predict_false(lid & LID_SCAN)) {
-			lid = lwp_find_free_lid(lid, l2, p2);
-			p2->p_nlwpid = lid | LID_SCAN;
-			/* l2 as been inserted into p_lwps in order */
-			goto skip_insert;
-		}
-		p2->p_nlwpid = lid;
-	}
 	LIST_INSERT_HEAD(&p2->p_lwps, l2, l_sibling);
-    skip_insert:
-	l2->l_lid = lid;
 	p2->p_nlwps++;
 	p2->p_nrlwps++;
 
@@ -962,6 +988,8 @@ lwp_create(lwp_t *l1, proc_t *p2, vaddr_t uaddr, int flags,
 		}
 		lwp_unlock(l1);
 	}
+
+	/* This marks the end of the "must be atomic" section. */
 	mutex_exit(p2->p_lock);
 
 	SDT_PROBE(proc, kernel, , lwp__create, l2, 0, 0, 0, 0);
@@ -1016,16 +1044,26 @@ lwp_start(lwp_t *l, int flags)
 void
 lwp_startup(struct lwp *prev, struct lwp *new_lwp)
 {
+	kmutex_t *lock;
 
 	KASSERTMSG(new_lwp == curlwp, "l %p curlwp %p prevlwp %p", new_lwp, curlwp, prev);
 	KASSERT(kpreempt_disabled());
 	KASSERT(prev != NULL);
-	KASSERT((prev->l_flag & LW_RUNNING) != 0);
+	KASSERT((prev->l_pflag & LP_RUNNING) != 0);
 	KASSERT(curcpu()->ci_mtx_count == -2);
 
-	/* Immediately mark previous LWP as no longer running, and unlock. */
-	prev->l_flag &= ~LW_RUNNING;
-	lwp_unlock(prev);
+	/*
+	 * Immediately mark the previous LWP as no longer running and unlock
+	 * (to keep lock wait times short as possible).  If a zombie, don't
+	 * touch after clearing LP_RUNNING as it could be reaped by another
+	 * CPU.  Issue a memory barrier to ensure this.
+	 */
+	lock = prev->l_mutex;
+	if (__predict_false(prev->l_stat == LSZOMB)) {
+		membar_sync();
+	}
+	prev->l_pflag &= ~LP_RUNNING;
+	mutex_spin_exit(lock);
 
 	/* Correct spin mutex count after mi_switch(). */
 	curcpu()->ci_mtx_count = 0;
@@ -1196,8 +1234,6 @@ lwp_exit(struct lwp *l)
 	cpu_lwp_free(l, 0);
 
 	if (current) {
-		/* For the LW_RUNNING check in lwp_free(). */
-		membar_exit();
 		/* Switch away into oblivion. */
 		lwp_lock(l);
 		spc_lock(l->l_cpu);
@@ -1216,6 +1252,7 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 {
 	struct proc *p = l->l_proc;
 	struct rusage *ru;
+	struct lwp *l2 __diagused;
 	ksiginfoq_t kq;
 
 	KASSERT(l != curlwp);
@@ -1231,8 +1268,8 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		(void)chglwpcnt(kauth_cred_getuid(p->p_cred), -1);
 
 	/*
-	 * If this was not the last LWP in the process, then adjust
-	 * counters and unlock.
+	 * If this was not the last LWP in the process, then adjust counters
+	 * and unlock.  This is done differently for the last LWP in exit1().
 	 */
 	if (!last) {
 		/*
@@ -1251,6 +1288,15 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		if ((l->l_prflag & LPR_DETACHED) != 0)
 			p->p_ndlwps--;
 
+		/* Make note of the LID being free, and remove from tree. */
+		if (l->l_lid < p->p_nlwpid)
+			p->p_nlwpid = l->l_lid;
+		rw_enter(&p->p_treelock, RW_WRITER);
+		l2 = radix_tree_remove_node(&p->p_lwptree,
+		    (uint64_t)(l->l_lid - 1));
+		KASSERT(l2 == l);
+		rw_exit(&p->p_treelock);
+
 		/*
 		 * Have any LWPs sleeping in lwp_wait() recheck for
 		 * deadlock.
@@ -1259,18 +1305,14 @@ lwp_free(struct lwp *l, bool recycle, bool last)
 		mutex_exit(p->p_lock);
 	}
 
-#ifdef MULTIPROCESSOR
 	/*
 	 * In the unlikely event that the LWP is still on the CPU,
-	 * then spin until it has switched away.  We need to release
-	 * all locks to avoid deadlock against interrupt handlers on
-	 * the target CPU.
+	 * then spin until it has switched away.
 	 */
-	membar_enter();
-	while (__predict_false((l->l_flag & LW_RUNNING) != 0)) {
+	membar_consumer();
+	while (__predict_false((l->l_pflag & LP_RUNNING) != 0)) {
 		SPINLOCK_BACKOFF_HOOK;
 	}
-#endif
 
 	/*
 	 * Destroy the LWP's remaining signal information.
@@ -1333,7 +1375,7 @@ lwp_migrate(lwp_t *l, struct cpu_info *tci)
 	KASSERT(tci != NULL);
 
 	/* If LWP is still on the CPU, it must be handled like LSONPROC */
-	if ((l->l_flag & LW_RUNNING) != 0) {
+	if ((l->l_pflag & LP_RUNNING) != 0) {
 		lstat = LSONPROC;
 	}
 
@@ -1421,7 +1463,8 @@ lwp_find2(pid_t pid, lwpid_t lid)
 /*
  * Look up a live LWP within the specified process.
  *
- * Must be called with p->p_lock held.
+ * Must be called with p->p_lock held (as it looks at the radix tree,
+ * and also wants to exclude idle and zombie LWPs).
  */
 struct lwp *
 lwp_find(struct proc *p, lwpid_t id)
@@ -1430,10 +1473,8 @@ lwp_find(struct proc *p, lwpid_t id)
 
 	KASSERT(mutex_owned(p->p_lock));
 
-	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
-		if (l->l_lid == id)
-			break;
-	}
+	l = radix_tree_lookup_node(&p->p_lwptree, (uint64_t)(id - 1));
+	KASSERT(l == NULL || l->l_lid == id);
 
 	/*
 	 * No need to lock - all of these conditions will
@@ -1986,6 +2027,40 @@ lwp_setprivate(struct lwp *l, void *ptr)
 	error = cpu_lwp_setprivate(l, ptr);
 #endif
 	return error;
+}
+
+/*
+ * Renumber the first and only LWP in a process on exec() or fork().
+ * Don't bother with p_treelock here as this is the only live LWP in
+ * the proc right now.
+ */
+void
+lwp_renumber(lwp_t *l, lwpid_t lid)
+{
+	lwp_t *l2 __diagused;
+	proc_t *p = l->l_proc;
+	int error;
+
+	KASSERT(p->p_nlwps == 1);
+
+	while (l->l_lid != lid) {
+		mutex_enter(p->p_lock);
+		error = radix_tree_insert_node(&p->p_lwptree, lid - 1, l);
+		if (error == 0) {
+			l2 = radix_tree_remove_node(&p->p_lwptree,
+			    (uint64_t)(l->l_lid - 1));
+			KASSERT(l2 == l);
+			p->p_nlwpid = lid + 1;
+			l->l_lid = lid;
+		}
+		mutex_exit(p->p_lock);
+
+		if (error == 0)
+			break;
+
+		KASSERT(error == ENOMEM);
+		radix_tree_await_memory();
+	}
 }
 
 #if defined(DDB)

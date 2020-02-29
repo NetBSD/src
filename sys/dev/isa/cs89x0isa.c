@@ -1,4 +1,4 @@
-/* $NetBSD: cs89x0isa.c,v 1.18 2016/06/10 13:27:14 ozaki-r Exp $ */
+/* $NetBSD: cs89x0isa.c,v 1.18.26.1 2020/02/29 20:19:09 ad Exp $ */
 
 /*
  * Copyright 1997
@@ -36,7 +36,7 @@
 /* isa DMA routines for cs89x0 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.18 2016/06/10 13:27:14 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cs89x0isa.c,v 1.18.26.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -226,7 +226,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 				printf("%s: cs_process_rx_dma: "
 				    "DMA buffer out of sync about to reset\n",
 				    device_xname(sc->sc_dev));
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 
 				/* skip the rest of the DMA buffer */
 				isa_dmaabort(isc->sc_ic, isc->sc_drq);
@@ -243,7 +243,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 					printf("%s: cs_process_rx_dma: "
 					    "unable to allocate mbuf\n",
 					    device_xname(sc->sc_dev));
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					/*
 					 * couldn't allocate an mbuf so
 					 * things are not good, may as well
@@ -352,7 +352,7 @@ void cs_process_rx_dma(struct cs_softc *sc)
 			else {
 				/* the frame was not received OK */
 				/* Increment the input error count */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 
 				/*
 				 * If debugging is enabled then log error

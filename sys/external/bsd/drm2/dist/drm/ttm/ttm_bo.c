@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $	*/
+/*	$NetBSD: ttm_bo.c,v 1.15.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.15.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -53,9 +53,8 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_bo.c,v 1.15 2019/02/02 21:46:27 mrg Exp $");
 #include <linux/module.h>
 #include <linux/atomic.h>
 #include <linux/reservation.h>
-#include <linux/printk.h>
-#include <linux/export.h>
-#include <linux/fence.h>
+
+#include <linux/nbsd-namespace.h>
 
 #define TTM_ASSERT_LOCKED(param)
 #define TTM_DEBUG(fmt, arg...)	do {} while (0)
@@ -173,11 +172,7 @@ static void ttm_bo_release_list(struct kref *list_kref)
 	atomic_dec(&bo->glob->bo_count);
 	if (bo->resv == &bo->ttm_resv)
 		reservation_object_fini(&bo->ttm_resv);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&bo->wu_mutex);
-#else
 	mutex_destroy(&bo->wu_mutex);
-#endif
 	if (bo->destroy)
 		bo->destroy(bo);
 	else {
@@ -304,7 +299,7 @@ static int ttm_bo_add_ttm(struct ttm_buffer_object *bo, bool zero_alloc)
 	 * set the uao to have the main uvm object's lock.  However,
 	 * uvm_obj_setlock is not safe on uvm_aobjs.
 	 */
-	mutex_obj_hold(bo->ttm->swap_storage->vmobjlock);
+	rw_obj_hold(bo->ttm->swap_storage->vmobjlock);
 	uvm_obj_setlock(&bo->uvmobj, bo->ttm->swap_storage->vmobjlock);
 	return 0;
 #else
@@ -1175,11 +1170,7 @@ int ttm_bo_init(struct ttm_bo_device *bdev,
 	INIT_LIST_HEAD(&bo->ddestroy);
 	INIT_LIST_HEAD(&bo->swap);
 	INIT_LIST_HEAD(&bo->io_reserve_lru);
-#ifdef __NetBSD__
-	linux_mutex_init(&bo->wu_mutex);
-#else
 	mutex_init(&bo->wu_mutex);
-#endif
 	bo->bdev = bdev;
 	bo->glob = bdev->glob;
 	bo->type = type;
@@ -1353,11 +1344,7 @@ int ttm_bo_clean_mm(struct ttm_bo_device *bdev, unsigned mem_type)
 		ret = (*man->func->takedown)(man);
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&man->io_reserve_mutex);
-#else
 	mutex_destroy(&man->io_reserve_mutex);
-#endif
 
 	return ret;
 }
@@ -1392,11 +1379,7 @@ int ttm_bo_init_mm(struct ttm_bo_device *bdev, unsigned type,
 	BUG_ON(man->has_type);
 	man->io_reserve_fastpath = true;
 	man->use_io_reserve_lru = false;
-#ifdef __NetBSD__
-	linux_mutex_init(&man->io_reserve_mutex);
-#else
 	mutex_init(&man->io_reserve_mutex);
-#endif
 	INIT_LIST_HEAD(&man->io_reserve_lru);
 
 	ret = bdev->driver->init_mem_type(bdev, type, man);
@@ -1441,7 +1424,7 @@ void ttm_bo_global_release(struct drm_global_reference *ref)
 	ttm_mem_unregister_shrink(glob->mem_glob, &glob->shrink);
 	BUG_ON(glob->dummy_read_page != NULL);
 	spin_lock_destroy(&glob->lru_lock);
-	linux_mutex_destroy(&glob->device_list_mutex);
+	mutex_destroy(&glob->device_list_mutex);
 	kfree(glob);
 #else
 	kobject_del(&glob->kobj);
@@ -1457,11 +1440,7 @@ int ttm_bo_global_init(struct drm_global_reference *ref)
 	struct ttm_bo_global *glob = ref->object;
 	int ret;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&glob->device_list_mutex);
-#else
 	mutex_init(&glob->device_list_mutex);
-#endif
 	spin_lock_init(&glob->lru_lock);
 	glob->mem_glob = bo_ref->mem_glob;
 #ifdef __NetBSD__
@@ -1643,11 +1622,11 @@ void ttm_bo_unmap_virtual_locked(struct ttm_buffer_object *bo)
 	} else if (bo->ttm != NULL) {
 		unsigned i;
 
-		mutex_enter(bo->uvmobj.vmobjlock);
+		rw_enter(bo->uvmobj.vmobjlock, RW_WRITER);
 		for (i = 0; i < bo->ttm->num_pages; i++)
 			pmap_page_protect(&bo->ttm->pages[i]->p_vmp,
 			    VM_PROT_NONE);
-		mutex_exit(bo->uvmobj.vmobjlock);
+		rw_exit(bo->uvmobj.vmobjlock);
 	}
 #else
 	struct ttm_bo_device *bdev = bo->bdev;

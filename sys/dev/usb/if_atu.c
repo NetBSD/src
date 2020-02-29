@@ -1,4 +1,4 @@
-/*	$NetBSD: if_atu.c,v 1.69 2019/12/27 09:41:51 msaitoh Exp $ */
+/*	$NetBSD: if_atu.c,v 1.69.2.1 2020/02/29 20:19:16 ad Exp $ */
 /*	$OpenBSD: if_atu.c,v 1.48 2004/12/30 01:53:21 dlg Exp $ */
 /*
  * Copyright (c) 2003, 2004
@@ -48,7 +48,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.69 2019/12/27 09:41:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_atu.c,v 1.69.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1689,12 +1689,12 @@ atu_rxeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	wh = mtod(m, struct ieee80211_frame_min *);
 	ni = ieee80211_find_rxnode(ic, wh);
 
-	ifp->if_ipackets++;
+	if_statinc(ifp, if_ipackets);
 
 	s = splnet();
 
 	if (atu_newbuf(sc, c, NULL) == ENOBUFS) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto done1; /* XXX if we can't allocate, why restart it? */
 	}
 
@@ -1754,9 +1754,9 @@ atu_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 	usbd_get_xfer_status(c->atu_xfer, NULL, NULL, NULL, &err);
 
 	if (err)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	else
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 	s = splnet();
 	SLIST_INSERT_HEAD(&sc->atu_cdata.atu_tx_free, c, atu_list);
@@ -1945,7 +1945,7 @@ bad:
 			    atu_list);
 			cd->atu_tx_inuse--;
 			splx(s);
-			/* ifp_if_oerrors++; */
+			/* if_statinc(ifp, if_oerrors); */
 			if (ni != NULL)
 				ieee80211_free_node(ni);
 			continue;
@@ -2183,7 +2183,7 @@ atu_watchdog(struct ifnet *ifp)
 
 	sc = ifp->if_softc;
 	s = splnet();
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	DPRINTF(("%s: watchdog timeout\n", device_xname(sc->atu_dev)));
 
 	/*

@@ -1,4 +1,4 @@
-/*	$NetBSD: yds.c,v 1.64 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: yds.c,v 1.64.4.1 2020/02/29 20:19:14 ad Exp $	*/
 
 /*
  * Copyright (c) 2000, 2001 Kazuki Sakamoto and Minoura Makoto.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.64 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: yds.c,v 1.64.4.1 2020/02/29 20:19:14 ad Exp $");
 
 #include "mpu.h"
 
@@ -1280,7 +1280,7 @@ yds_round_blocksize(void *addr, int blk, int mode,
 	if (blk < 1024)
 		blk = 1024;
 
-	return blk & ~3;
+	return blk;
 }
 
 static uint32_t

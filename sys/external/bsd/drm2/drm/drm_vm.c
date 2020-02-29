@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_vm.c,v 1.10 2018/08/27 15:10:26 riastradh Exp $	*/
+/*	$NetBSD: drm_vm.c,v 1.10.6.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.10 2018/08/27 15:10:26 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_vm.c,v 1.10.6.1 2020/02/29 20:20:17 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/conf.h>
@@ -116,7 +116,7 @@ drm_legacy_mmap_paddr_locked(struct drm_device *dev, off_t byte_offset,
 	 * what guarantees the map will continue to exist.
 	 */
 
-	if (ISSET(map->flags, _DRM_RESTRICTED) && !DRM_SUSER())
+	if (ISSET(map->flags, _DRM_RESTRICTED) && !capable(CAP_SYS_ADMIN))
 		return -1;
 
 	if (!(map->offset <= byte_offset))

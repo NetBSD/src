@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_svm.c,v 1.55 2019/12/10 18:06:50 ad Exp $	*/
+/*	$NetBSD: nvmm_x86_svm.c,v 1.55.2.1 2020/02/29 20:19:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.55 2019/12/10 18:06:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_svm.c,v 1.55.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2314,7 +2314,7 @@ svm_init_asid(uint32_t maxasid)
 static void
 svm_change_cpu(void *arg1, void *arg2)
 {
-	bool enable = (bool)arg1;
+	bool enable = arg1 != NULL;
 	uint64_t msr;
 
 	msr = rdmsr(MSR_VMCR);

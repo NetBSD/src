@@ -1,4 +1,4 @@
-/*	$NetBSD: if_netdock_nubus.c,v 1.31 2019/10/21 08:22:06 msaitoh Exp $	*/
+/*	$NetBSD: if_netdock_nubus.c,v 1.31.2.1 2020/02/29 20:18:26 ad Exp $	*/
 
 /*
  * Copyright (C) 2000,2002 Daishi Kato <daishi@axlight.com>
@@ -43,7 +43,7 @@
 /***********************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.31 2019/10/21 08:22:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.31.2.1 2020/02/29 20:18:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -91,7 +91,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_netdock_nubus.c,v 1.31 2019/10/21 08:22:06 msaito
 #define REG_DATA	0x0008
 #define REG_EFD00	0xefd00
 
-#define ISR_ALL		0x3300	
+#define ISR_ALL		0x3300
 #define ISR_TX		0x0200
 #define ISR_RX		0x0100
 #define ISR_READY	0x0800
@@ -458,7 +458,7 @@ netdock_start(struct ifnet *ifp)
 			return;
 		}
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 }
@@ -518,7 +518,7 @@ netdock_init(struct netdock_softc *sc)
 	/* 1382 */
 	savetmp = NIC_GET_2(sc, REG_000E);
 	NIC_PUT_2(sc, REG_000E, 0x0100);
-	NIC_ORW(sc, REG_ISR, ISR_BIT_03); 
+	NIC_ORW(sc, REG_ISR, ISR_BIT_03);
 	NIC_PUT_2(sc, REG_000E, savetmp);
 	NIC_PUT_2(sc, REG_ISR , saveisr);
 
@@ -674,9 +674,9 @@ netdock_txint(struct netdock_softc *sc)
 		NIC_GET_2(sc, REG_ISR);
 		regdata = NIC_GET_2(sc, REG_DATA);
 		if ((regdata & REG_DATA_BIT_08) == 0) {
-			/* ifp->if_collisions++; */
+			/* if_statinc(ifp, if_collisions); */
 			if (regdata & REG_DATA_BIT_07)
-			/* ifp->if_oerrors++; */
+			/* if_statinc(ifp, if_oerrors); */
 			NIC_PUT_2(sc, REG_000E, 0);
 			NIC_ORW(sc, REG_0000, 0x0100);
 			NIC_PUT_2(sc, REG_000E, 0x0200);
@@ -726,9 +726,9 @@ netdock_rxint(struct netdock_softc *sc)
 
 		if ((regdata1 & 0x00ac) == 0) {
 			if (netdock_read(sc, len) == 0)
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 		} else {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 			if (regdata1 & REG_DATA_BIT_02)
 				NIC_GET_4(sc, REG_EFD00);

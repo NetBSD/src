@@ -74,7 +74,6 @@ int	uda_ssio_query_format(void *, audio_format_query_t *);
 int	uda_ssio_set_format(void *, int,
 		       const audio_params_t *, const audio_params_t *,
 		       audio_filter_reg_t *, audio_filter_reg_t *);
-int	uda_ssio_round_blocksize(void *, int, int, const audio_params_t *);
 int	uda_ssio_start_output(void *, void *, int, void (*)(void *),
 			      void *);
 int	uda_ssio_start_input(void *, void *, int, void (*)(void *),
@@ -93,7 +92,6 @@ struct audio_hw_if uda1341_hw_if = {
 	.close			= uda_ssio_close,
 	.query_format		= uda_ssio_query_format,
 	.set_format		= uda_ssio_set_format,
-	.round_blocksize	= uda_ssio_round_blocksize,
 	.start_output		= uda_ssio_start_output,
 	.start_input		= uda_ssio_start_input,
 	.halt_output		= uda_ssio_halt_output,
@@ -298,18 +296,6 @@ uda_ssio_set_format(void *handle, int setmode,
 	}
 
 	return 0;
-}
-
-int
-uda_ssio_round_blocksize(void *handle, int bs, int mode,
-			 const audio_params_t *param)
-{
-	int out_bs;
-	DPRINTF(("%s: %d\n", __func__, bs));
-
-	out_bs =  (bs + 0x03) & ~0x03;
-	DPRINTF(("%s: out_bs: %d\n", __func__, out_bs));
-	return out_bs;
 }
 
 int

@@ -2,7 +2,7 @@
 | author: chapuni(webmaster@chapuni.com)
 |         ITOH Yasufumi
 |
-| $NetBSD: boot.S,v 1.3.46.2 2020/01/25 22:38:44 ad Exp $
+| $NetBSD: boot.S,v 1.3.46.3 2020/02/29 20:18:33 ad Exp $
 
 |
 | (1) IPL (or previous stage loader) loads first 1KB of this primary
@@ -27,18 +27,19 @@
 |  :            :        +------------+        +------------+    0x003000
 |  :            :        |full primary|        |full primary|
 |  :            :        |boot loader |        |boot loader |
-|  :            :        +------------+        +------------+
-|  :            :        :            :        :            :
-|  :            :        :            :        +------------+    0x006000
+|  :            :        |(text+data) |        |(text+data) |
+|  :            :        +------------+        +------------+    0x005000
+|  :            :        |(bss)       |        |(bss)       |
+|  :            :        +------------+        +------------+    0x006000
 |  :            :        :            :        | /boot      |
 |  :            :        :            :        +------------+
 |  :            :        :            :        :            :
 |  ~            ~        ~            ~        ~            ~
 |  :            :        :            :<-SP    :            :<-SP
 |  + - - - - - -+        + - - - - - -+        + - - - - - -+    0x100000
+|  :            :        :(heap)      :        :(heap)      :
 |  :            :        :            :        :            :
 |
->>>>>>> 1.9
 
 #include <machine/asm.h>
 #include "iocscall.h"
@@ -70,7 +71,7 @@ ASENTRY_NOPROFILE(entry0)
 #define ASRELOC(var)	_RELOC(_ASM_LABEL(var))
 #define RELOC(var)	_RELOC(_C_LABEL(var))
 
-		lea	RELOC(edata),%a1
+		lea	RELOC(__bss_start),%a1
 		bra	_ASM_LABEL(entry)
 
 |	Disklabel= 404bytes

@@ -1,9 +1,8 @@
-$ NetBSD: TODO,v 1.1 2018/04/14 12:06:03 scole Exp $
+$ NetBSD: TODO,v 1.10 2020/02/03 02:54:23 scole Exp $
 
 What works:
   The ski simulator (pkgsrc/emulators/ski) is known to work on NetBSD
-  i386 and amd64, and probably will work on other archs as well.  It
-  can run and step through in assembly.
+  i386, amd64 and macppc. It "should" work on other archs as well.
 
   Netbooting may work on some machines, basically you need to boot
   diskless with the loader.efi (from src/sys/arch/ia64/stand/ia64/)

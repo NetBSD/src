@@ -1,12 +1,12 @@
-#	$NetBSD: Makefile,v 1.38.6.1 2020/01/25 22:38:51 ad Exp $
+#	$NetBSD: Makefile,v 1.38.6.2 2020/02/29 20:21:06 ad Exp $
 
 INCSDIR= /usr/include/net
 
 INCS=	bpf.h bpfjit.h bpfdesc.h dlt.h ethertypes.h if.h if_arc.h if_arp.h \
 	if_bridgevar.h if_dl.h if_ether.h if_gif.h \
 	if_gre.h if_ieee1394.h if_ipsec.h if_llc.h if_media.h if_mpls.h \
-	if_pflog.h if_ppp.h if_pppoe.h if_l2tp.h if_sppp.h if_srt.h if_stf.h \
-	if_tap.h if_tun.h if_types.h if_vlanvar.h net_stats.h \
+	if_pflog.h if_ppp.h if_pppoe.h if_l2tp.h if_sppp.h if_srt.h if_stats.h \
+	if_stf.h if_tap.h if_tun.h if_types.h if_vlanvar.h net_stats.h \
 	netisr.h pfil.h pfkeyv2.h pfvar.h ppp-comp.h ppp_defs.h radix.h \
 	raw_cb.h route.h slcompress.h slip.h zlib.h
 

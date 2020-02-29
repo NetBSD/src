@@ -1,4 +1,4 @@
-/*	$NetBSD: pktqueue.c,v 1.10 2018/08/10 07:24:09 msaitoh Exp $	*/
+/*	$NetBSD: pktqueue.c,v 1.10.6.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.10 2018/08/10 07:24:09 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.10.6.1 2020/02/29 20:21:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -48,6 +48,7 @@ __KERNEL_RCSID(0, "$NetBSD: pktqueue.c,v 1.10 2018/08/10 07:24:09 msaitoh Exp $"
 #include <sys/mbuf.h>
 #include <sys/proc.h>
 #include <sys/percpu.h>
+#include <sys/xcall.h>
 
 #include <net/pktqueue.h>
 
@@ -161,9 +162,13 @@ pktq_collect_counts(void *mem, void *arg, struct cpu_info *ci)
 	const pktq_counters_t *c = mem;
 	pktq_counters_t *sum = arg;
 
+	int s = splnet();
+
 	for (u_int i = 0; i < PQCNT_NCOUNTERS; i++) {
 		sum->count[i] += c->count[i];
 	}
+
+	splx(s);
 }
 
 uint64_t
@@ -173,7 +178,8 @@ pktq_get_count(pktqueue_t *pq, pktq_count_t c)
 
 	if (c != PKTQ_MAXLEN) {
 		memset(&sum, 0, sizeof(sum));
-		percpu_foreach(pq->pq_counters, pktq_collect_counts, &sum);
+		percpu_foreach_xcall(pq->pq_counters,
+		    XC_HIGHPRI_IPL(IPL_SOFTNET), pktq_collect_counts, &sum);
 	}
 	switch (c) {
 	case PKTQ_NITEMS:

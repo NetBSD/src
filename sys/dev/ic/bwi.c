@@ -1,4 +1,4 @@
-/*	$NetBSD: bwi.c,v 1.36 2018/12/22 14:07:53 maxv Exp $	*/
+/*	$NetBSD: bwi.c,v 1.36.6.1 2020/02/29 20:19:08 ad Exp $	*/
 /*	$OpenBSD: bwi.c,v 1.74 2008/02/25 21:13:30 mglocker Exp $	*/
 
 /*
@@ -48,7 +48,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.36 2018/12/22 14:07:53 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bwi.c,v 1.36.6.1 2020/02/29 20:19:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/callout.h>
@@ -7420,7 +7420,7 @@ bwi_start(struct ifnet *ifp)
 			if (m->m_len < sizeof(*eh)) {
 				m = m_pullup(m, sizeof(*eh));
 				if (m == NULL) {
-					ifp->if_oerrors++;
+					if_statinc(ifp, if_oerrors);
 					continue;
 				}
 			}
@@ -7428,7 +7428,7 @@ bwi_start(struct ifnet *ifp)
 
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 			if (ni == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				m_freem(m);
 				continue;
 			}
@@ -7450,7 +7450,7 @@ bwi_start(struct ifnet *ifp)
 				DPRINTF(sc, BWI_DBG_MISC,
 				    "%s: discard, classification failure\n",
 				    __func__);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				m_freem(m);
 				ieee80211_free_node(ni);
 				continue;
@@ -7458,7 +7458,7 @@ bwi_start(struct ifnet *ifp)
 
 			/* [TRC: XXX wi(4) and awi(4) do this; iwi(4)
 			   doesn't.] */
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 			/* [TRC: XXX When should the packet be
 			   filtered?  Different drivers appear to do it
@@ -7467,7 +7467,7 @@ bwi_start(struct ifnet *ifp)
 			bpf_mtap(ifp, m, BPF_D_OUT);
 			m = ieee80211_encap(ic, m, ni);
 			if (m == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				ieee80211_free_node(ni);
 				continue;
 			}
@@ -7478,7 +7478,7 @@ bwi_start(struct ifnet *ifp)
 		/* [TRC: XXX What about ic->ic_flags & IEEE80211_F_PRIVACY?] */
 		if (wh->i_fc[1] & IEEE80211_FC1_WEP) {
 			if (ieee80211_crypto_encap(ic, ni, m) == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				m_freem(m);
 				ieee80211_free_node(ni);
 				continue;
@@ -7488,7 +7488,7 @@ bwi_start(struct ifnet *ifp)
 
 		if (bwi_encap(sc, idx, m, &ni, mgt_pkt) != 0) {
 			/* 'm' is freed in bwi_encap() if we reach here */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			if (ni != NULL)
 				ieee80211_free_node(ni);
 			continue;
@@ -7524,7 +7524,7 @@ bwi_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer) {
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			/* TODO */
 			/* [TRC: XXX TODO what?  Stop the device?
 			   Bring it down?  iwi(4) does this.] */
@@ -8475,7 +8475,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		    rb->rb_dmap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 
 		if (bwi_newbuf(sc, idx, 0)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -8491,7 +8491,7 @@ bwi_rxeof(struct bwi_softc *sc, int end_idx)
 		if (buflen < BWI_FRAME_MIN_LEN(wh_ofs)) {
 			aprint_error_dev(sc->sc_dev, "short frame %d,"
 			    " hdr_extra %d\n", buflen, hdr_extra);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			goto next;
 		}
@@ -9395,7 +9395,7 @@ bwi_txeof(struct bwi_softc *sc)
 
 		_bwi_txeof(sc, tx_id);
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 	if ((ifp->if_flags & IFF_OACTIVE) == 0)

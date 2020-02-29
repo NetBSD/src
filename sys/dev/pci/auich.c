@@ -1,4 +1,4 @@
-/*	$NetBSD: auich.c,v 1.158 2019/12/06 07:27:07 maxv Exp $	*/
+/*	$NetBSD: auich.c,v 1.158.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000, 2004, 2005, 2008 The NetBSD Foundation, Inc.
@@ -111,7 +111,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.158 2019/12/06 07:27:07 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: auich.c,v 1.158.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -259,7 +259,6 @@ static int	auich_query_format(void *, struct audio_format_query *);
 static int	auich_set_format(void *, int,
 		    const audio_params_t *, const audio_params_t *,
 		    audio_filter_reg_t *, audio_filter_reg_t *);
-static int	auich_round_blocksize(void *, int, int, const audio_params_t *);
 static void	auich_halt_pipe(struct auich_softc *, int);
 static int	auich_halt_output(void *);
 static int	auich_halt_input(void *);
@@ -304,7 +303,6 @@ static const struct audio_hw_if auich_hw_if = {
 	.close			= auich_close,
 	.query_format		= auich_query_format,
 	.set_format		= auich_set_format,
-	.round_blocksize	= auich_round_blocksize,
 	.halt_output		= auich_halt_output,
 	.halt_input		= auich_halt_input,
 	.getdev			= auich_getdev,
@@ -1051,17 +1049,6 @@ auich_set_format(void *v, int setmode,
 	}
 
 	return 0;
-}
-
-static int
-auich_round_blocksize(void *v, int blk, int mode,
-    const audio_params_t *param)
-{
-
-	if (blk < 0x40)
-		return 0x40;		/* avoid 0 block size */
-
-	return blk & ~0x3f;		/* keep good alignment */
 }
 
 static void

@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vnops.c,v 1.67.12.1 2020/01/19 21:21:54 ad Exp $	*/
+/*	$NetBSD: layer_vnops.c,v 1.67.12.2 2020/02/29 20:21:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -170,7 +170,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67.12.1 2020/01/19 21:21:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vnops.c,v 1.67.12.2 2020/02/29 20:21:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -796,24 +796,26 @@ layer_getpages(void *v)
 	struct vnode *vp = ap->a_vp;
 	struct mount *mp = vp->v_mount;
 	int error;
+	krw_t op;
 
-	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(rw_lock_held(vp->v_uobj.vmobjlock));
 
 	if (ap->a_flags & PGO_LOCKED) {
 		return EBUSY;
 	}
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
+	KASSERT(vp->v_uobj.vmobjlock == ap->a_vp->v_uobj.vmobjlock);
 
 	/* Just pass the request on to the underlying layer. */
-	mutex_exit(vp->v_interlock);
+	op = rw_lock_op(vp->v_uobj.vmobjlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 	fstrans_start(mp);
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, op);
 	if (mp == vp->v_mount) {
-		/* Will release the interlock. */
+		/* Will release the lock. */
 		error = VCALL(ap->a_vp, VOFFSET(vop_getpages), ap);
 	} else {
-		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		error = ENOENT;
 	}
 	fstrans_done(mp);
@@ -832,13 +834,13 @@ layer_putpages(void *v)
 	} */ *ap = v;
 	struct vnode *vp = ap->a_vp;
 
-	KASSERT(mutex_owned(vp->v_interlock));
+	KASSERT(rw_write_held(vp->v_uobj.vmobjlock));
 
 	ap->a_vp = LAYERVPTOLOWERVP(vp);
-	KASSERT(vp->v_interlock == ap->a_vp->v_interlock);
+	KASSERT(vp->v_uobj.vmobjlock == ap->a_vp->v_uobj.vmobjlock);
 
 	if (ap->a_flags & PGO_RECLAIM) {
-		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		return 0;
 	}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: net_stats.h,v 1.4 2014/09/05 06:01:24 matt Exp $	*/
+/*	$NetBSD: net_stats.h,v 1.4.26.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -35,34 +35,60 @@
 #ifdef _KERNEL
 #include <sys/percpu.h>
 
-#define	_NET_STAT_GETREF(stat)	((uint64_t *)percpu_getref((stat)))
+typedef void *net_stat_ref_t;
+
+#define	_NET_STAT_GETREF(stat)	((net_stat_ref_t)percpu_getref((stat)))
 #define	_NET_STAT_PUTREF(stat)	percpu_putref((stat))
+
+#define	_NET_STATINC_REF(r, x)						\
+do {									\
+	uint64_t *_stat_ = (r);						\
+	_stat_[x]++;							\
+} while (/*CONSTCOND*/0)
 
 #define	_NET_STATINC(stat, x)						\
 do {									\
-	uint64_t *_stat_ = _NET_STAT_GETREF(stat);			\
-	_stat_[x]++;							\
+	net_stat_ref_t _nsr_ = _NET_STAT_GETREF(stat);			\
+	_NET_STATINC_REF(_nsr_, x);					\
 	_NET_STAT_PUTREF(stat);						\
+} while (/*CONSTCOND*/0)
+
+#define	_NET_STATDEC_REF(r, x)						\
+do {									\
+	uint64_t *_stat_ = (r);						\
+	_stat_[x]--;							\
 } while (/*CONSTCOND*/0)
 
 #define	_NET_STATDEC(stat, x)						\
 do {									\
-	uint64_t *_stat_ = _NET_STAT_GETREF(stat);			\
-	_stat_[x]--;							\
+	net_stat_ref_t _nsr_ = _NET_STAT_GETREF(stat);			\
+	_NET_STATDEC_REF(_nsr_, x);					\
 	_NET_STAT_PUTREF(stat);						\
+} while (/*CONSTCOND*/0)
+
+#define	_NET_STATADD_REF(r, x, v)					\
+do {									\
+	uint64_t *_stat_ = (r);						\
+	_stat_[x] += (v);						\
 } while (/*CONSTCOND*/0)
 
 #define	_NET_STATADD(stat, x, v)					\
 do {									\
-	uint64_t *_stat_ = _NET_STAT_GETREF(stat);			\
-	_stat_[x] += (v);						\
+	net_stat_ref_t _nsr_ = _NET_STAT_GETREF(stat);			\
+	_NET_STATADD_REF(_nsr_, x, v);					\
 	_NET_STAT_PUTREF(stat);						\
+} while (/*CONSTCOND*/0)
+
+#define	_NET_STATSUB_REF(r, x, v)					\
+do {									\
+	uint64_t *_stat_ = (r);						\
+	_stat_[x] -= (v);						\
 } while (/*CONSTCOND*/0)
 
 #define	_NET_STATSUB(stat, x, v)					\
 do {									\
-	uint64_t *_stat_ = _NET_STAT_GETREF(stat);			\
-	_stat_[x] -= (v);						\
+	net_stat_ref_t _nsr_ = _NET_STAT_GETREF(stat);			\
+	_NET_STATSUB_REF(_nsr_, x, v);					\
 	_NET_STAT_PUTREF(stat);						\
 } while (/*CONSTCOND*/0)
 

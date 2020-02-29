@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vnops.c,v 1.213 2018/11/06 02:39:49 manu Exp $	*/
+/*	$NetBSD: puffs_vnops.c,v 1.213.6.1 2020/02/29 20:21:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006, 2007  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.213 2018/11/06 02:39:49 manu Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vnops.c,v 1.213.6.1 2020/02/29 20:21:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -1701,7 +1701,7 @@ flushvncache(struct vnode *vp, off_t offlo, off_t offhi, bool wait)
 	if (wait)
 		pflags |= PGO_SYNCIO;
 
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	return VOP_PUTPAGES(vp, trunc_page(offlo), round_page(offhi), pflags);
 }
 
@@ -2448,7 +2448,7 @@ puffs_vnop_write(void *v)
 			 * that gives userland too much say in the kernel.
 			 */
 			if (oldoff >> 16 != uio->uio_offset >> 16) {
-				mutex_enter(vp->v_interlock);
+				rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 				error = VOP_PUTPAGES(vp, oldoff & ~0xffff,
 				    uio->uio_offset & ~0xffff,
 				    PGO_CLEANIT | PGO_SYNCIO);
@@ -2459,14 +2459,14 @@ puffs_vnop_write(void *v)
 
 		/* synchronous I/O? */
 		if (error == 0 && ap->a_ioflag & IO_SYNC) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset),
 			    PGO_CLEANIT | PGO_SYNCIO);
 
 		/* write through page cache? */
 		} else if (error == 0 && pmp->pmp_flags & PUFFS_KFLAG_WTCACHE) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, trunc_page(origoff),
 			    round_page(uio->uio_offset), PGO_CLEANIT);
 		}
@@ -2528,7 +2528,7 @@ puffs_vnop_write(void *v)
 			voff_t off_lo = trunc_page(origoff);
 			voff_t off_hi = round_page(uio->uio_offset);
 
-			mutex_enter(vp->v_uobj.vmobjlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, off_lo, off_hi, PGO_FREE);
 		}
 	}
@@ -2880,10 +2880,10 @@ puffs_vnop_strategy(void *v)
 				DPRINTF(("puffs_strategy: write-protecting "
 				    "vp %p page %p, offset %" PRId64"\n",
 				    vp, vmp, vmp->offset));
-				mutex_enter(uobj->vmobjlock);
+				rw_enter(uobj->vmobjlock, RW_WRITER);
 				vmp->flags |= PG_RDONLY;
 				pmap_page_protect(vmp, VM_PROT_READ);
-				mutex_exit(uobj->vmobjlock);
+				rw_exit(uobj->vmobjlock);
 			}
 		}
 
@@ -3068,13 +3068,13 @@ puffs_vnop_getpages(void *v)
 		if (locked)
 			ERROUT(EBUSY);
 
-		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		vattr_null(&va);
 		va.va_size = vp->v_size;
 		error = dosetattr(vp, &va, FSCRED, 0);
 		if (error)
 			ERROUT(error);
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	}
 
 	if (write && PUFFS_WCACHEINFO(pmp)) {
@@ -3116,7 +3116,7 @@ puffs_vnop_getpages(void *v)
 	 * when the page is actually write-faulted to.
 	 */
 	if (!locked)
-		mutex_enter(vp->v_uobj.vmobjlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	for (i = 0, si = 0, streakon = 0; i < npages; i++) {
 		if (pgs[i] == NULL || pgs[i] == PGO_DONTCARE) {
 			if (streakon && write) {
@@ -3142,7 +3142,7 @@ puffs_vnop_getpages(void *v)
 		si++;
 	}
 	if (!locked)
-		mutex_exit(vp->v_uobj.vmobjlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 
 	KASSERT(si <= (npages / 2) + 1);
 

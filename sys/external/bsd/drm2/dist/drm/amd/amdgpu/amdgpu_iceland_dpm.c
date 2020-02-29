@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_iceland_dpm.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_iceland_dpm.c,v 1.1.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -24,10 +24,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_iceland_dpm.c,v 1.1 2018/08/27 14:10:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_iceland_dpm.c,v 1.1.10.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/firmware.h>
-#include <linux/module.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "iceland_smumgr.h"

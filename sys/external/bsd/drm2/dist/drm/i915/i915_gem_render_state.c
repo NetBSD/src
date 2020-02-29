@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_render_state.c,v 1.9 2018/08/27 14:50:04 riastradh Exp $	*/
+/*	$NetBSD: i915_gem_render_state.c,v 1.9.10.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -28,10 +28,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.9 2018/08/27 14:50:04 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_render_state.c,v 1.9.10.1 2020/02/29 20:20:14 ad Exp $");
 
 #include "i915_drv.h"
 #include "intel_renderstate.h"
+
+#include <linux/nbsd-namespace.h>
 
 static const struct intel_renderstate_rodata *
 render_state_get_rodata(struct drm_device *dev, const int gen)
@@ -166,11 +168,7 @@ static int render_state_setup(struct render_state *so)
 	 * Since we are sending length, we need to strictly conform to
 	 * all requirements. For Gen2 this must be a multiple of 8.
 	 */
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	so->aux_batch_size = round_up(so->aux_batch_size, 8);
-#else
 	so->aux_batch_size = ALIGN(so->aux_batch_size, 8);
-#endif
 
 #ifdef __NetBSD__
 	uvm_unmap(kernel_map, kva, kva + PAGE_SIZE);

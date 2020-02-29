@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cnw.c,v 1.67 2019/12/06 07:12:39 maxv Exp $	*/
+/*	$NetBSD: if_cnw.c,v 1.67.2.1 2020/02/29 20:19:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -105,7 +105,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.67 2019/12/06 07:12:39 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnw.c,v 1.67.2.1 2020/02/29 20:19:15 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -668,7 +668,7 @@ cnw_start(struct ifnet *ifp)
 		bpf_mtap(ifp, m0, BPF_D_OUT);
 
 		cnw_transmit(sc, m0);
-		++ifp->if_opackets;
+		if_statinc(ifp, if_opackets);
 		ifp->if_timer = 3; /* start watchdog timer */
 
 		microtime(&sc->sc_txlast);
@@ -844,7 +844,7 @@ cnw_recv(struct cnw_softc *sc)
 
 		/* Did we manage to get the packet from the interface? */
 		if (m == 0) {
-			++ifp->if_ierrors;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -957,7 +957,7 @@ cnw_intr(void *arg)
 			}
 
 			if (tser & CNW_TSER_ERROR) {
-				++ifp->if_oerrors;
+				if_statinc(ifp, if_oerrors);
 				WAIT_WOC(sc);
 				bus_space_write_1(sc->sc_memt, sc->sc_memh,
 				    sc->sc_memoff + CNW_EREG_TSERW,
@@ -1120,7 +1120,7 @@ cnw_watchdog(struct ifnet *ifp)
 	struct cnw_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout; card reset\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 	cnw_init(sc);
 }
 

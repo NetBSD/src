@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.35 2019/09/14 12:36:35 maxv Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.35.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.35 2019/09/14 12:36:35 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.35.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -2429,13 +2429,13 @@ athn_usb_txeof(struct usbd_xfer *xfer, void * priv,
 		DPRINTFN(DBG_TX, sc, "TX status=%d\n", status);
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(usc->usc_tx_data_pipe);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		splx(s);
 		/* XXX Why return? */
 		return;
 	}
 	sc->sc_tx_timer = 0;
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	/* We just released a Tx buffer, notify Tx. */
 	if (ifp->if_flags & IFF_OACTIVE) {
@@ -2608,14 +2608,14 @@ athn_usb_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2623,7 +2623,7 @@ athn_usb_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
  sendit:
@@ -2632,7 +2632,7 @@ athn_usb_start(struct ifnet *ifp)
 		if (athn_usb_tx(sc, m, ni, data) != 0) {
 			m_freem(m);
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		data = NULL;
@@ -2661,7 +2661,7 @@ athn_usb_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			/* athn_usb_init(ifp); XXX needs a process context! */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

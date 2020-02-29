@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xennet_xenbus.c,v 1.87 2019/10/30 07:40:06 maxv Exp $      */
+/*      $NetBSD: if_xennet_xenbus.c,v 1.87.2.1 2020/02/29 20:18:34 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.87 2019/10/30 07:40:06 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xennet_xenbus.c,v 1.87.2.1 2020/02/29 20:18:34 ad Exp $");
 
 #include "opt_xen.h"
 #include "opt_nfs_boot.h"
@@ -953,9 +953,9 @@ again:
 		if (__predict_false(
 		    RING_GET_RESPONSE(&sc->sc_tx_ring, i)->status !=
 		    NETIF_RSP_OKAY))
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		xengnt_revoke_access(req->txreq_gntref);
 		m_freem(req->txreq_m);
 		SLIST_INSERT_HEAD(&sc->sc_txreq_head, req, txreq_next);
@@ -1033,7 +1033,7 @@ again:
 				 * we can't free this rxreq as no page will be mapped
 				 * here. Instead give it back immediatly to backend.
 				 */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				RING_GET_REQUEST(&sc->sc_rx_ring,
 				    sc->sc_rx_ring.req_prod_pvt)->id = req->rxreq_id;
 				RING_GET_REQUEST(&sc->sc_rx_ring,
@@ -1087,7 +1087,7 @@ again:
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (__predict_false(m == NULL)) {
 			printf("%s: rx no mbuf\n", ifp->if_xname);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			xennet_rx_free_req(req);
 			continue;
 		}
@@ -1105,7 +1105,7 @@ again:
 			    if_xennetrxbuf_cache, PR_NOWAIT, &req->rxreq_pa);
 			if (__predict_false(req->rxreq_va == 0)) {
 				printf("%s: rx no buf\n", ifp->if_xname);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				req->rxreq_va = va;
 				req->rxreq_pa = pa;
 				xennet_rx_free_req(req);
@@ -1121,7 +1121,7 @@ again:
 		if ((rx->flags & NETRXF_csum_blank) != 0) {
 			xennet_checksum_fill(&m);
 			if (m == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				xennet_rx_free_req(req);
 				continue;
 			}

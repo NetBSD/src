@@ -1,4 +1,4 @@
-/*	$NetBSD: lwp.h,v 1.192.2.4 2020/01/25 22:38:53 ad Exp $	*/
+/*	$NetBSD: lwp.h,v 1.192.2.5 2020/02/29 20:21:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2010, 2019, 2020
@@ -103,7 +103,7 @@ struct lwp {
 	int		l_biglocks;	/* l: biglock count before sleep */
 	short		l_stat;		/* l: overall LWP status */
 	short		l_class;	/* l: scheduling class */
-	short		l_kpriority;	/* !: has kernel priority boost */
+	int		l_kpriority;	/* !: has kernel priority boost */
 	pri_t		l_kpribase;	/* !: kernel priority base level */
 	pri_t		l_priority;	/* l: scheduler priority */
 	pri_t		l_inheritedprio;/* l: inherited priority */
@@ -235,7 +235,10 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 
 #endif /* _KERNEL || _KMEMUSER */
 
-/* These flags are kept in l_flag. */
+/*
+ * These flags are kept in l_flag, and they are modified only with the LWP
+ * locked.
+ */
 #define	LW_IDLE		0x00000001 /* Idle lwp. */
 #define	LW_LWPCTL	0x00000002 /* Adjust lwpctl in userret */
 #define	LW_CVLOCKDEBUG	0x00000004 /* Waker does lockdebug */
@@ -250,11 +253,15 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LW_CANCELLED	0x02000000 /* tsleep should not sleep */
 #define	LW_WREBOOT	0x08000000 /* System is rebooting, please suspend */
 #define	LW_UNPARKED	0x10000000 /* Unpark op pending */
-#define	LW_RUNNING	0x20000000 /* Active on a CPU */
 #define	LW_RUMP_CLEAR	0x40000000 /* Clear curlwp in RUMP scheduler */
 #define	LW_RUMP_QEXIT	0x80000000 /* LWP should exit ASAP */
 
-/* The second set of flags is kept in l_pflag. */
+/*
+ * The second set of flags is kept in l_pflag, and they are modified only by
+ * the LWP itself, or modified when it's known the LWP cannot be running. 
+ * LP_RUNNING is typically updated with the LWP locked, but not always in
+ * the case of soft interrupt handlers.
+ */
 #define	LP_KTRACTIVE	0x00000001 /* Executing ktrace operation */
 #define	LP_KTRCSW	0x00000002 /* ktrace context switch marker */
 #define	LP_KTRCSWUSER	0x00000004 /* ktrace context switch marker */
@@ -267,10 +274,14 @@ extern int		maxlwp __read_mostly;	/* max number of lwps */
 #define	LP_SINGLESTEP	0x00000400 /* Single step thread in ptrace(2) */
 #define	LP_TIMEINTR	0x00010000 /* Time this soft interrupt */
 #define	LP_PREEMPTING	0x00020000 /* mi_switch called involuntarily */
+#define	LP_RUNNING	0x20000000 /* Active on a CPU */
 #define	LP_TELEPORT	0x40000000 /* Teleport to new CPU on preempt() */
 #define	LP_BOUND	0x80000000 /* Bound to a CPU */
 
-/* The third set is kept in l_prflag. */
+/*
+ * The third set of flags is kept in l_prflag and they are modified only
+ * with p_lock held.
+ */
 #define	LPR_DETACHED	0x00800000 /* Won't be waited for. */
 #define	LPR_CRMOD	0x00000100 /* Credentials modified */
 
@@ -319,7 +330,6 @@ do {									\
 
 void	lwpinit(void);
 void	lwp0_init(void);
-void	lwp_sys_init(void);
 
 void	lwp_startup(lwp_t *, lwp_t *);
 void	startlwp(void *);
@@ -335,6 +345,7 @@ void	lwp_drainrefs(lwp_t *);
 bool	lwp_alive(lwp_t *);
 lwp_t	*lwp_find_first(proc_t *);
 
+void	lwp_renumber(lwp_t *, lwpid_t);
 int	lwp_wait(lwp_t *, lwpid_t, lwpid_t *, bool);
 void	lwp_continue(lwp_t *);
 void	lwp_unsleep(lwp_t *, bool);
@@ -368,8 +379,8 @@ void	lwp_setspecific(specificdata_key_t, void *);
 void	lwp_setspecific_by_lwp(lwp_t *, specificdata_key_t, void *);
 
 /* Syscalls. */
-int	lwp_park(clockid_t, int, struct timespec *, const void *);
-int	lwp_unpark(lwpid_t, const void *);
+int	lwp_park(clockid_t, int, struct timespec *);
+int	lwp_unpark(const lwpid_t *, const u_int);
 
 /* DDB. */
 void	lwp_whatis(uintptr_t, void (*)(const char *, ...) __printflike(1, 2));

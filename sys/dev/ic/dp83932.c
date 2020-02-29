@@ -1,4 +1,4 @@
-/*	$NetBSD: dp83932.c,v 1.44 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: dp83932.c,v 1.44.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.44 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp83932.c,v 1.44.4.1 2020/02/29 20:19:08 ad Exp $");
 
 
 #include <sys/param.h>
@@ -534,7 +534,7 @@ sonic_watchdog(struct ifnet *ifp)
 	struct sonic_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void)sonic_init(ifp);
 }
@@ -668,11 +668,15 @@ sonic_txintr(struct sonic_softc *sc)
 		/*
 		 * Check for errors and collisions.
 		 */
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (status & TCR_PTX)
-			ifp->if_opackets++;
+			if_statinc_ref(nsr, if_opackets);
 		else
-			ifp->if_oerrors++;
-		ifp->if_collisions += TDA_STATUS_NCOL(status);
+			if_statinc_ref(nsr, if_oerrors);
+		if (TDA_STATUS_NCOL(status))
+			if_statadd_ref(nsr, if_collisions,
+			    TDA_STATUS_NCOL(status));
+		IF_STAT_PUTREF(ifp);
 	}
 
 	/* Update the dirty transmit buffer pointer. */
@@ -755,7 +759,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			else if (status & RCR_CRCR)
 				printf("%s: Rx CRC error\n",
 				    device_xname(sc->sc_dev));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			SONIC_INIT_RXDESC(sc, i);
 			continue;
 		}
@@ -827,7 +831,7 @@ sonic_rxintr(struct sonic_softc *sc)
 			m = ds->ds_mbuf;
 			if (sonic_add_rxbuf(sc, i) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				SONIC_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 				    ds->ds_dmamap->dm_mapsize,

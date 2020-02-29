@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_vfsops.c,v 1.237.6.1 2020/01/17 21:47:36 ad Exp $	*/
+/*	$NetBSD: nfs_vfsops.c,v 1.237.6.2 2020/02/29 20:21:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993, 1995
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.237.6.1 2020/01/17 21:47:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_vfsops.c,v 1.237.6.2 2020/02/29 20:21:08 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_nfs.h"
@@ -963,7 +963,8 @@ nfs_sync_selector(void *cl, struct vnode *vp)
 
 	KASSERT(mutex_owned(vp->v_interlock));
 
-	return !LIST_EMPTY(&vp->v_dirtyblkhd) || !UVM_OBJ_IS_CLEAN(&vp->v_uobj);
+	return !LIST_EMPTY(&vp->v_dirtyblkhd) ||
+	    (vp->v_iflag & VI_ONWORKLST) != 0;
 }
 
 /*

@@ -1,4 +1,4 @@
-/* $NetBSD: if_admsw.c,v 1.27 2019/12/05 06:25:33 msaitoh Exp $ */
+/* $NetBSD: if_admsw.c,v 1.27.2.1 2020/02/29 20:18:27 ad Exp $ */
 
 /*-
  * Copyright (c) 2007 Ruslan Ermilov and Vsevolod Lobko.
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.27 2019/12/05 06:25:33 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_admsw.c,v 1.27.2.1 2020/02/29 20:18:27 ad Exp $");
 
 
 #include <sys/param.h>
@@ -871,7 +871,7 @@ admsw_txintr(struct admsw_softc *sc, int prio)
 		gotone = 1;
 		/* printf("clear tx slot %d\n", i); */
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		sc->sc_txfree++;
 	}
@@ -995,7 +995,7 @@ admsw_rxintr(struct admsw_softc *sc, int high)
 
 		m = ds->ds_mbuf;
 		if (admsw_add_rxlbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			ADMSW_INIT_RXLDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);

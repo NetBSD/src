@@ -1,4 +1,4 @@
-$NetBSD: ixp425-fw.README,v 1.4 2017/02/10 23:11:30 tnn Exp $
+$NetBSD: ixp425-fw.README,v 1.4.20.1 2020/02/29 20:18:20 ad Exp $
 
 IXP425 NPE Microcode
 ~~~~~~~~~~~~~~~~~~~~
@@ -24,13 +24,18 @@ You must grab the NPE microcode from here:
 SHA1 (IPL_ixp400NpeLibrary-3_0.zip) = dda6b27265e6db3dfec68361644197c0f311a07b
 
 or the older version which is archived here:
- https://downloads.openwrt.org/sources/IPL_ixp400NpeLibrary-2_4.zip
+ https://mirror2.openwrt.org/sources/IPL_ixp400NpeLibrary-2_4.zip
 
 SHA1 (IPL_ixp400NpeLibrary-2_4.zip) = abf1562e750e16e6f9baf9892a59640f863a693e
 
 Select the "Download (without Crypto)" link in the "NPE Microcode"
 section. Note that there is no benefit in selecting the "with Cypto"
 microcode at this time since NetBSD does not support it.
+
+For refrence, the "with Crypto" version is available here:
+  https://downloads.openwrt.org/sources/IPL_ixp400NpeLibraryWithCrypto-2_4.zip
+
+SHA1(IPL_ixp400NpeLibraryWithCrypto-2_4.zip)= 48beb80564fbbb7fb7861188cad26e896b5a5afc
 
 Note: At the time of writing (February 2017), the NPE Microcode is at
 version 3.0. However, the last known microcode version to work is 2.4.

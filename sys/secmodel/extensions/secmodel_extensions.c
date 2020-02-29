@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_extensions.c,v 1.10 2018/09/04 14:31:19 maxv Exp $ */
+/* $NetBSD: secmodel_extensions.c,v 1.10.6.1 2020/02/29 20:21:10 ad Exp $ */
 /*-
  * Copyright (c) 2011 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.10 2018/09/04 14:31:19 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_extensions.c,v 1.10.6.1 2020/02/29 20:21:10 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -346,7 +346,7 @@ secmodel_extensions_system_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_system_req req;
 	int error;
 
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 	result = KAUTH_RESULT_DEFER;
 
 	switch (action) {
@@ -420,7 +420,7 @@ secmodel_extensions_process_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_process_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_process_req)arg1;
+	req = (enum kauth_process_req)(uintptr_t)arg1;
 
 	switch (action) {
 	case KAUTH_PROCESS_CANSEE:
@@ -481,7 +481,7 @@ secmodel_extensions_network_cb(kauth_cred_t cred, kauth_action_t action,
 	enum kauth_network_req req;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	if (action != KAUTH_NETWORK_SOCKET ||
 	    req != KAUTH_REQ_NETWORK_SOCKET_CANSEE)

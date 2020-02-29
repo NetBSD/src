@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_object.h,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_object.h,v 1.3.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -30,7 +30,6 @@
 #ifndef __AMDGPU_OBJECT_H__
 #define __AMDGPU_OBJECT_H__
 
-#include <linux/device.h>
 #include <drm/amdgpu_drm.h>
 #include "amdgpu.h"
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.37 2013/01/07 16:58:09 chs Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.37.44.1 2020/02/29 20:18:32 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -32,12 +32,9 @@
 #define __USE_TOPDOWN_VM
 
 /*
- * We use 8K pages on both the sun3 and sun3x.  Override PAGE_*
- * to be compile-time constants.
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
-#define	PAGE_SHIFT	13
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
+#include <m68k/vmparam.h>
 
 #define	USRSTACK	kernbase	/* for modules */
 #define	USRSTACK3	KERNBASE3	/* for asm not in modules */

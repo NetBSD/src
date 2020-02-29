@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gm.c,v 1.56 2019/11/10 21:16:29 chs Exp $	*/
+/*	$NetBSD: if_gm.c,v 1.56.2.1 2020/02/29 20:18:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 Tsubai Masanari.  All rights reserved.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.56 2019/11/10 21:16:29 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gm.c,v 1.56.2.1 2020/02/29 20:18:26 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -362,13 +362,13 @@ gmac_rint(struct gmac_softc *sc)
 		len -= 4;	/* CRC */
 
 		if (le32toh(dp->cmd_hi) & 0x40000000) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
 		m = gmac_get(sc, sc->sc_rxbuf[i], len);
 		if (m == NULL) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -458,7 +458,7 @@ gmac_start(struct ifnet *ifp)
 
 		/* 5 seconds to watch for failing to transmit */
 		ifp->if_timer = 5;
-		ifp->if_opackets++;		/* # of pkts */
+		if_statinc(ifp, if_opackets);		/* # of pkts */
 
 		i = sc->sc_txnext;
 		buff = sc->sc_txbuf[i];
@@ -823,7 +823,7 @@ gmac_watchdog(struct ifnet *ifp)
 	struct gmac_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", ifp->if_xname);
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	gmac_reset(sc);
 	gmac_init(sc);

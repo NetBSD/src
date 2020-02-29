@@ -1,4 +1,4 @@
-/*	$NetBSD: x86_machdep.c,v 1.134 2019/12/28 00:38:08 pgoyette Exp $	*/
+/*	$NetBSD: x86_machdep.c,v 1.134.2.1 2020/02/29 20:18:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007 YAMAMOTO Takashi,
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.134 2019/12/28 00:38:08 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: x86_machdep.c,v 1.134.2.1 2020/02/29 20:18:33 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_physmem.h"
@@ -669,7 +669,7 @@ x86_parse_clusters(struct btinfo_memmap *bim)
 		type = bim->entry[x].type;
 #ifdef DEBUG_MEMLOAD
 		printf("MEMMAP: 0x%016" PRIx64 "-0x%016" PRIx64
-		    ", size=0x%016" PRIx64 ", type=%d(%s)\n",
+		    "\n\tsize=0x%016" PRIx64 ", type=%d(%s)\n",
 		    addr, addr + size - 1, size, type,
 		    (type == BIM_Memory) ?  "Memory" :
 		    (type == BIM_Reserved) ?  "Reserved" :
@@ -909,27 +909,95 @@ init_x86_vm(paddr_t pa_kend)
 		seg_start1 = 0;
 		seg_end1 = 0;
 
+#ifdef DEBUG_MEMLOAD
+		printf("segment %" PRIx64 " - %" PRIx64 "\n",
+		    seg_start, seg_end);
+#endif
+
 		/* Skip memory before our available starting point. */
-		if (seg_end <= lowmem_rsvd)
+		if (seg_end <= lowmem_rsvd) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard segment below starting point "
+			    "%" PRIx64 " - %" PRIx64 "\n", seg_start, seg_end);
+#endif
 			continue;
+		}
 
 		if (seg_start <= lowmem_rsvd && lowmem_rsvd < seg_end) {
 			seg_start = lowmem_rsvd;
-			if (seg_start == seg_end)
+			if (seg_start == seg_end) {
+#ifdef DEBUG_MEMLOAD
+				printf("discard segment below starting point "
+				    "%" PRIx64 " - %" PRIx64 "\n",
+				    seg_start, seg_end);
+
+
+#endif
 				continue;
+			}
 		}
 
 		/*
 		 * If this segment contains the kernel, split it in two, around
 		 * the kernel.
+		 *  [seg_start                       seg_end]
+		 *             [pa_kstart  pa_kend]
 		 */
 		if (seg_start <= pa_kstart && pa_kend <= seg_end) {
+#ifdef DEBUG_MEMLOAD
+			printf("split kernel overlapping to "
+			    "%" PRIx64 " - %lx and %lx - %" PRIx64 "\n",
+			    seg_start, pa_kstart, pa_kend, seg_end);
+#endif
 			seg_start1 = pa_kend;
 			seg_end1 = seg_end;
 			seg_end = pa_kstart;
 			KASSERT(seg_end < seg_end1);
 		}
 
+		/*
+		 * Discard a segment inside the kernel
+		 *  [pa_kstart                       pa_kend]
+		 *             [seg_start  seg_end]
+		 */
+		if (pa_kstart < seg_start && seg_end < pa_kend) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard complete kernel overlap "
+			    "%" PRIx64 " - %" PRIx64 "\n", seg_start, seg_end);
+#endif
+			continue;
+		}
+
+		/*
+		 * Discard leading hunk that overlaps the kernel
+		 *  [pa_kstart             pa_kend]
+		 *            [seg_start            seg_end]
+		 */
+		if (pa_kstart < seg_start &&
+		    seg_start < pa_kend &&
+		    pa_kend < seg_end) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard leading kernel overlap "
+			    "%" PRIx64 " - %lx\n", seg_start, pa_kend);
+#endif
+			seg_start = pa_kend;
+		}
+
+		/*
+		 * Discard trailing hunk that overlaps the kernel
+		 *             [pa_kstart            pa_kend]
+		 *  [seg_start              seg_end]
+		 */
+		if (seg_start < pa_kstart &&
+		    pa_kstart < seg_end &&
+		    seg_end < pa_kend) {
+#ifdef DEBUG_MEMLOAD
+			printf("discard trailing kernel overlap "
+			    "%lx - %" PRIx64 "\n", pa_kstart, seg_end);
+#endif
+			seg_end = pa_kstart;
+		}
+		
 		/* First hunk */
 		if (seg_start != seg_end) {
 			x86_load_region(seg_start, seg_end);

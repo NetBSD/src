@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sn.c,v 1.46 2019/09/13 07:55:06 msaitoh Exp $	*/
+/*	$NetBSD: if_sn.c,v 1.46.2.1 2020/02/29 20:18:28 ad Exp $	*/
 
 /*
  * National Semiconductor  DP8393X SONIC Driver
@@ -16,7 +16,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.46 2019/09/13 07:55:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sn.c,v 1.46.2.1 2020/02/29 20:18:28 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -347,7 +347,7 @@ outloop:
 	sc->mtd_prev = sc->mtd_free;
 	sc->mtd_free = mtd_next;
 
-	ifp->if_opackets++;		/* # of pkts */
+	if_statinc(ifp, if_opackets);		/* # of pkts */
 
 	/* Jump back for possibly more punishment. */
 	goto outloop;
@@ -365,7 +365,7 @@ snreset(struct sn_softc *sc)
 	sninit(sc);
 }
 
-static int 
+static int
 sninit(struct sn_softc *sc)
 {
 	u_long	s_rcr;
@@ -443,7 +443,7 @@ sninit(struct sn_softc *sc)
  * Called on final close of device, or if sninit() fails
  * part way through.
  */
-static int 
+static int
 snstop(struct sn_softc *sc)
 {
 	struct mtd *mtd;
@@ -589,7 +589,7 @@ sonicput(struct sn_softc *sc, struct mbuf *m0, int mtd_next)
 /*
  * CAM support
  */
-static void 
+static void
 caminitialise(struct sn_softc *sc)
 {
 	void	*p_cda = sc->p_cda;
@@ -606,7 +606,7 @@ caminitialise(struct sn_softc *sc)
 	SWO(bitmode, p_cda, CDA_ENABLE, 0);
 }
 
-static void 
+static void
 camentry(struct sn_softc *sc, int entry, const u_char *ea)
 {
 	void	*p_cda = sc->p_cda;
@@ -616,11 +616,11 @@ camentry(struct sn_softc *sc, int entry, const u_char *ea)
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP2, (ea[5] << 8) | ea[4]);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP1, (ea[3] << 8) | ea[2]);
 	SWO(bitmode, p_cda, camoffset + CDA_CAMAP0, (ea[1] << 8) | ea[0]);
-	SWO(bitmode, p_cda, CDA_ENABLE, 
+	SWO(bitmode, p_cda, CDA_ENABLE,
 	    (SRO(bitmode, p_cda, CDA_ENABLE) | (1 << entry)));
 }
 
-static void 
+static void
 camprogram(struct sn_softc *sc)
 {
 	struct ethercom *ec = &sc->sc_ethercom;
@@ -696,7 +696,7 @@ camprogram(struct sn_softc *sc)
 }
 
 #ifdef SNDEBUG
-static void 
+static void
 camdump(struct sn_softc *sc)
 {
 	int	i;
@@ -721,7 +721,7 @@ camdump(struct sn_softc *sc)
 }
 #endif
 
-static void 
+static void
 initialise_tda(struct sn_softc *sc)
 {
 	struct mtd *mtd;
@@ -868,7 +868,7 @@ snintr(void *arg)
 /*
  * Transmit interrupt routine
  */
-static void 
+static void
 sonictxint(struct sn_softc *sc)
 {
 	struct mtd	*mtd;
@@ -916,11 +916,11 @@ sonictxint(struct sn_softc *sc)
 
 		txp_status = SRO(sc->bitmode, txp, TXP_STATUS);
 
-		ifp->if_collisions += (txp_status & TCR_EXC) ? 16 :
-			((txp_status & TCR_NC) >> 12);
+		if_statadd(ifp, if_collisions, (txp_status & TCR_EXC) ? 16 :
+			((txp_status & TCR_NC) >> 12));
 
 		if ((txp_status & TCR_PTX) == 0) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			printf("%s: Tx packet status=0x%x\n",
 			    device_xname(sc->sc_dev), txp_status);
 
@@ -943,7 +943,7 @@ sonictxint(struct sn_softc *sc)
 /*
  * Receive interrupt routine
  */
-static void 
+static void
 sonicrxint(struct sn_softc *sc)
 {
 	void *	rda;
@@ -966,9 +966,9 @@ sonicrxint(struct sn_softc *sc)
 			    (char *)sc->rbuf[orra & RBAMASK] +
 				 (rxpkt_ptr & PGOFSET);
 			if (sonic_read(sc, pkt, len) == 0)
-				sc->sc_if.if_ierrors++;
+				if_statinc(&sc->sc_if, if_ierrors);
 		} else
-			sc->sc_if.if_ierrors++;
+			if_statinc(&sc->sc_if, if_ierrors);
 
 		/*
 		 * give receive buffer area back to chip.
@@ -1032,7 +1032,7 @@ sonicrxint(struct sn_softc *sc)
  * sonic_read -- pull packet off interface and forward to
  * appropriate protocol handler
  */
-static inline int 
+static inline int
 sonic_read(struct sn_softc *sc, void *pkt, int len)
 {
 	struct ifnet *ifp = &sc->sc_if;
@@ -1102,10 +1102,10 @@ sonic_get(struct sn_softc *sc, void *pkt, int datalen)
 
 		if (mp == &top) {
 			char *newdata = (char *)
-			    ALIGN((char *)m->m_data + 
+			    ALIGN((char *)m->m_data +
 				sizeof(struct ether_header)) -
 			    sizeof(struct ether_header);
-			len -= newdata - m->m_data; 
+			len -= newdata - m->m_data;
 			m->m_data = newdata;
 		}
 

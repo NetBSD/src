@@ -1,4 +1,4 @@
-/*	$NetBSD: wdc.c,v 1.296 2019/12/27 09:41:50 msaitoh Exp $ */
+/*	$NetBSD: wdc.c,v 1.296.2.1 2020/02/29 20:19:08 ad Exp $ */
 
 /*
  * Copyright (c) 1998, 2001, 2003 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.296 2019/12/27 09:41:50 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wdc.c,v 1.296.2.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_ata.h"
 #include "opt_wdc.h"
@@ -203,6 +203,7 @@ wdc_allocate_regs(struct wdc_softc *wdc)
 void
 wdc_sataprobe(struct ata_channel *chp)
 {
+	struct wdc_softc *wdc = CHAN_TO_WDC(chp);
 	struct wdc_regs *wdr = CHAN_TO_WDC_REGS(chp);
 	uint8_t st = 0, sc __unused, sn __unused, cl, ch;
 	int i;
@@ -243,7 +244,7 @@ wdc_sataprobe(struct ata_channel *chp)
 		    "cl=0x%x ch=0x%x\n",
 		    device_xname(chp->ch_atac->atac_dev), chp->ch_channel,
 		    sc, sn, cl, ch), DEBUG_PROBE);
-		if (atabus_alloc_drives(chp, 1) != 0)
+		if (atabus_alloc_drives(chp, wdc->wdc_maxdrives) != 0)
 			return;
 		/*
 		 * sc and sn are supposed to be 0x1 for ATAPI, but in some

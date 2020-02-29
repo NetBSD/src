@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_softint.c,v 1.56.2.2 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: kern_softint.c,v 1.56.2.3 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -170,12 +170,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.56.2.2 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_softint.c,v 1.56.2.3 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/proc.h>
 #include <sys/intr.h>
 #include <sys/ipi.h>
+#include <sys/lock.h>
 #include <sys/mutex.h>
 #include <sys/kernel.h>
 #include <sys/kthread.h>
@@ -841,7 +842,24 @@ softint_dispatch(lwp_t *pinned, int s)
 	u_int timing;
 	lwp_t *l;
 
-	KASSERT((pinned->l_flag & LW_RUNNING) != 0);
+#ifdef DIAGNOSTIC
+	if ((pinned->l_pflag & LP_RUNNING) == 0 || curlwp->l_stat != LSIDL) {
+		struct lwp *onproc = curcpu()->ci_onproc;
+		int s2 = splhigh();
+		printf("curcpu=%d, spl=%d curspl=%d\n"
+			"onproc=%p => l_stat=%d l_flag=%08x l_cpu=%d\n"
+			"curlwp=%p => l_stat=%d l_flag=%08x l_cpu=%d\n"
+			"pinned=%p => l_stat=%d l_flag=%08x l_cpu=%d\n",
+			cpu_index(curcpu()), s, s2, onproc, onproc->l_stat,
+			onproc->l_flag, cpu_index(onproc->l_cpu), curlwp,
+			curlwp->l_stat, curlwp->l_flag,
+			cpu_index(curlwp->l_cpu), pinned, pinned->l_stat,
+			pinned->l_flag, cpu_index(pinned->l_cpu));
+		splx(s2);
+		panic("softint screwup");
+	}
+#endif
+
 	l = curlwp;
 	si = l->l_private;
 
@@ -864,13 +882,16 @@ softint_dispatch(lwp_t *pinned, int s)
 		membar_producer();	/* for calcru */
 		l->l_pflag |= LP_TIMEINTR;
 	}
-	l->l_flag |= LW_RUNNING;
+	l->l_pflag |= LP_RUNNING;
 	softint_execute(si, l, s);
 	if (timing) {
 		binuptime(&now);
 		updatertime(l, &now);
 		l->l_pflag &= ~LP_TIMEINTR;
 	}
+
+	/* XXX temporary */
+	kernel_lock_plug_leak();
 
 	/*
 	 * If we blocked while handling the interrupt, the pinned LWP is
@@ -894,7 +915,7 @@ softint_dispatch(lwp_t *pinned, int s)
 		/* NOTREACHED */
 	}
 	l->l_switchto = NULL;
-	l->l_flag &= ~LW_RUNNING;
+	l->l_pflag &= ~LP_RUNNING;
 }
 
 #endif	/* !__HAVE_FAST_SOFTINTS */

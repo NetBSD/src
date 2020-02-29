@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_drv.c,v 1.9 2018/08/28 03:41:39 riastradh Exp $	*/
+/*	$NetBSD: radeon_drv.c,v 1.9.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /**
  * \file radeon_drv.c
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9 2018/08/28 03:41:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -41,7 +41,6 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_drv.c,v 1.9 2018/08/28 03:41:39 riastradh Exp
 #include <drm/drm_pciids.h>
 #include <linux/console.h>
 #include <linux/module.h>
-#include <linux/moduleparam.h>
 #include <linux/pm_runtime.h>
 #include <linux/vga_switcheroo.h>
 #include <drm/drm_gem.h>

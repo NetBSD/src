@@ -1,4 +1,4 @@
-/*	$NetBSD: ieee80211.c,v 1.57 2019/10/03 17:46:56 jmcneill Exp $	*/
+/*	$NetBSD: ieee80211.c,v 1.57.2.1 2020/02/29 20:21:07 ad Exp $	*/
 /*-
  * Copyright (c) 2001 Atsushi Onoe
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -36,7 +36,7 @@
 __FBSDID("$FreeBSD: src/sys/net80211/ieee80211.c,v 1.22 2005/08/10 16:22:29 sam Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.57 2019/10/03 17:46:56 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ieee80211.c,v 1.57.2.1 2020/02/29 20:21:07 ad Exp $");
 #endif
 
 /*
@@ -260,7 +260,7 @@ ieee80211_ifdetach(struct ieee80211com *ic)
 	ieee80211_crypto_detach(ic);
 	ieee80211_node_detach(ic);
 	LIST_REMOVE(ic, ic_list);
-	ifmedia_delete_instance(&ic->ic_media, IFM_INST_ANY);
+	ifmedia_fini(&ic->ic_media);
 
 	IEEE80211_BEACON_LOCK_DESTROY(ic);
 

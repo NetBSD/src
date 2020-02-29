@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls_43.c,v 1.64 2019/01/27 02:08:39 pgoyette Exp $	*/
+/*	$NetBSD: vfs_syscalls_43.c,v 1.64.6.1 2020/02/29 20:21:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64 2019/01/27 02:08:39 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls_43.c,v 1.64.6.1 2020/02/29 20:21:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -79,7 +79,16 @@ static void cvttimespec(struct timespec *, struct timespec50 *);
 static void cvtstat(struct stat *, struct stat43 *);
 
 static struct syscall_package vfs_syscalls_43_syscalls[] = {
-	{ SYS_compat_43_oquota, 0, (sy_call_t *)compat_43_sys_quota },
+	{ SYS_compat_43_oquota,     0, (sy_call_t *)compat_43_sys_quota },
+	{ SYS_compat_43_stat43,     0, (sy_call_t *)compat_43_sys_stat },
+	{ SYS_compat_43_lstat43,    0, (sy_call_t *)compat_43_sys_lstat },
+	{ SYS_compat_43_fstat43,    0, (sy_call_t *)compat_43_sys_fstat },
+	{ SYS_compat_43_otruncate,  0, (sy_call_t *)compat_43_sys_ftruncate },
+	{ SYS_compat_43_oftruncate, 0, (sy_call_t *)compat_43_sys_ftruncate },
+	{ SYS_compat_43_olseek,     0, (sy_call_t *)compat_43_sys_lseek },
+	{ SYS_compat_43_ocreat,     0, (sy_call_t *)compat_43_sys_creat },
+	{ SYS_compat_43_ogetdirentries, 0,
+	    (sy_call_t *)compat_43_sys_getdirentries },
 	{ 0, 0, NULL }
 };
 

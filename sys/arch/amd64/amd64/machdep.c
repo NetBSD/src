@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.344.2.1 2020/01/17 21:47:22 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.344.2.2 2020/02/29 20:18:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 2000, 2006, 2007, 2008, 2011
@@ -110,7 +110,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.344.2.1 2020/01/17 21:47:22 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.344.2.2 2020/02/29 20:18:16 ad Exp $");
 
 #include "opt_modular.h"
 #include "opt_user_ldt.h"
@@ -232,7 +232,7 @@ int cpureset_delay = 2000; /* default to 2s */
 int cpu_class = CPUCLASS_686;
 
 #ifdef MTRR
-struct mtrr_funcs *mtrr_funcs;
+const struct mtrr_funcs *mtrr_funcs;
 #endif
 
 int cpu_class;

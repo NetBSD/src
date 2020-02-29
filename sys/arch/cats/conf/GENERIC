@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.173.4.1 2020/01/25 22:38:39 ad Exp $
+# $NetBSD: GENERIC,v 1.173.4.2 2020/02/29 20:18:21 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -395,9 +395,6 @@ ucom*	at uplcom? portno ?
 
 umct*	at uhub? port ?		# MCT USB-RS232 serial adapter
 ucom*	at umct? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor*	at uhub? port ?

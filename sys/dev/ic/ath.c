@@ -1,4 +1,4 @@
-/*	$NetBSD: ath.c,v 1.129 2019/12/17 04:54:36 christos Exp $	*/
+/*	$NetBSD: ath.c,v 1.129.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002-2005 Sam Leffler, Errno Consulting
@@ -41,7 +41,7 @@
 __FBSDID("$FreeBSD: src/sys/dev/ath/if_ath.c,v 1.104 2005/09/16 10:09:23 ru Exp $");
 #endif
 #ifdef __NetBSD__
-__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.129 2019/12/17 04:54:36 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ath.c,v 1.129.2.1 2020/02/29 20:19:08 ad Exp $");
 #endif
 
 /*
@@ -1400,7 +1400,7 @@ ath_start(struct ifnet *ifp)
 				m_freem(m);
 				goto bad;
 			}
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 			bpf_mtap(ifp, m, BPF_D_OUT);
 			/*
@@ -1462,7 +1462,7 @@ ath_start(struct ifnet *ifp)
 		next = m->m_nextpkt;
 		if (ath_tx_start(sc, ni, bf, m)) {
 	bad:
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 	reclaim:
 			ATH_TXBUF_LOCK(sc);
 			STAILQ_INSERT_TAIL(&sc->sc_txbuf, bf, bf_list);
@@ -3166,7 +3166,7 @@ ath_rx_proc(void *arg, int npending)
 						ds->ds_rxstat.rs_keyix-32 : ds->ds_rxstat.rs_keyix);
 				}
 			}
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/*
 			 * Reject error frames, we normally don't want
 			 * to see them in monitor mode (in monitor mode
@@ -5294,7 +5294,7 @@ ath_watchdog(struct ifnet *ifp)
 			if (sc->sc_txintrperiod > 1)
 				sc->sc_txintrperiod--;
 			ath_reset(ifp);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			sc->sc_stats.ast_watchdog++;
 			break;
 		} else
@@ -5408,20 +5408,24 @@ ath_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 			error = 0;
 		}
 		break;
-	case SIOCGATHSTATS:
+	case SIOCGATHSTATS: {
+		struct ath_stats stats_out;
+		struct if_data ifi;
+
 		/* NB: embed these numbers to get a consistent view */
-		sc->sc_stats.ast_tx_packets = ifp->if_opackets;
-		sc->sc_stats.ast_rx_packets = ifp->if_ipackets;
-		sc->sc_stats.ast_rx_rssi = ieee80211_getrssi(ic);
+
+		stats_out = sc->sc_stats;
+		stats_out.ast_rx_rssi = ieee80211_getrssi(ic);
 		splx(s);
-		/*
-		 * NB: Drop the softc lock in case of a page fault;
-		 * we'll accept any potential inconsisentcy in the
-		 * statistics.  The alternative is to copy the data
-		 * to a local structure.
-		 */
-		return copyout(&sc->sc_stats,
-				ifr->ifr_data, sizeof (sc->sc_stats));
+
+		if_export_if_data(ifp, &ifi, false);
+		stats_out.ast_tx_packets = ifi.ifi_opackets;
+		stats_out.ast_rx_packets = ifi.ifi_ipackets;
+
+		return copyout(&stats_out,
+				ifr->ifr_data, sizeof (stats_out));
+	    }
+
 	case SIOCGATHDIAG:
 		error = kauth_authorize_network(curlwp->l_cred,
 		    KAUTH_NETWORK_INTERFACE,

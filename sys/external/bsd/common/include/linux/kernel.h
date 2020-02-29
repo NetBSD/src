@@ -1,4 +1,4 @@
-/*	$NetBSD: kernel.h,v 1.23 2019/09/30 12:20:54 christos Exp $	*/
+/*	$NetBSD: kernel.h,v 1.23.2.1 2020/02/29 20:20:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -38,7 +38,12 @@
 #include <sys/systm.h>
 
 #include <lib/libkern/libkern.h>
+
+#include <asm/byteorder.h>
+#include <asm/div64.h>
+
 #include <linux/bitops.h>
+#include <linux/log2.h>
 #include <linux/printk.h>
 #include <linux/slab.h>
 
@@ -194,6 +199,18 @@ kstrtol(const char *s, unsigned base, long *vp)
 		return -ERANGE;
 	*vp = v;
 	return 0;
+}
+
+static inline long
+simple_strtol(const char *s, char **endp, unsigned base)
+{
+	long v;
+
+	*endp = NULL;		/* paranoia */
+	v = strtoll(s, endp, base);
+	if (v < LONG_MIN || LONG_MAX < v)
+		return 0;
+	return v;
 }
 
 static __inline char * __printflike(2, 0)

@@ -1,4 +1,4 @@
-/*	$NetBSD: union_subr.c,v 1.77 2018/01/28 15:48:44 christos Exp $	*/
+/*	$NetBSD: union_subr.c,v 1.77.10.1 2020/02/29 20:21:02 ad Exp $	*/
 
 /*
  * Copyright (c) 1994
@@ -72,7 +72,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.77 2018/01/28 15:48:44 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: union_subr.c,v 1.77.10.1 2020/02/29 20:21:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -232,9 +232,10 @@ union_newupper(struct union_node *un, struct vnode *uppervp)
 	unlock_ap.a_desc = VDESC(vop_unlock);
 	unlock_ap.a_vp = UNIONTOV(un);
 	genfs_unlock(&unlock_ap);
-	/* Update union vnode interlock. */
-	mutex_obj_hold(uppervp->v_interlock);
-	uvm_obj_setlock(&UNIONTOV(un)->v_uobj, uppervp->v_interlock);
+	/* Update union vnode interlock & vmobjlock. */
+	vshareilock(UNIONTOV(un), uppervp);
+	rw_obj_hold(uppervp->v_uobj.vmobjlock);
+	uvm_obj_setlock(&UNIONTOV(un)->v_uobj, uppervp->v_uobj.vmobjlock);
 	mutex_exit(&un->un_lock);
 	if (ohash != nhash) {
 		LIST_INSERT_HEAD(&uhashtbl[nhash], un, un_cache);
@@ -572,8 +573,9 @@ union_loadvnode(struct mount *mp, struct vnode *vp,
 	if (svp->v_type == VCHR || svp->v_type == VBLK)
 		spec_node_init(vp, svp->v_rdev);
 
-	mutex_obj_hold(svp->v_interlock);
-	uvm_obj_setlock(&vp->v_uobj, svp->v_interlock);
+	vshareilock(vp, svp);
+	rw_obj_hold(svp->v_uobj.vmobjlock);
+	uvm_obj_setlock(&vp->v_uobj, svp->v_uobj.vmobjlock);
 
 	/* detect the root vnode (and aliases) */
 	if ((un->un_uppervp == um->um_uppervp) &&

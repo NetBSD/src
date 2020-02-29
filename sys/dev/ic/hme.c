@@ -1,4 +1,4 @@
-/*	$NetBSD: hme.c,v 1.105 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: hme.c,v 1.105.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.105 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: hme.c,v 1.105.4.1 2020/02/29 20:19:08 ad Exp $");
 
 /* #define HMEDEBUG */
 
@@ -315,6 +315,7 @@ hme_config(struct hme_softc *sc)
 			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, hme_tick, sc);
 }
 
 void
@@ -327,7 +328,7 @@ hme_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 void
@@ -635,7 +636,7 @@ hme_init(struct ifnet *ifp)
 		return rc;
 
 	/* Start the one second timer. */
-	callout_reset(&sc->sc_tick_ch, hz, hme_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -862,14 +863,14 @@ hme_read(struct hme_softc *sc, int ix, uint32_t flags)
 		printf("%s: invalid packet size %d; dropping\n",
 		    device_xname(sc->sc_dev), len);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	/* Pull packet off interface. */
 	m = hme_get(sc, ix, flags);
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -976,15 +977,17 @@ hme_tint(struct hme_softc *sc)
 	bus_space_handle_t mac = sc->sc_mac;
 	unsigned int ri, txflags;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	/*
 	 * Unload collision counters
 	 */
-	ifp->if_collisions +=
+	if_statadd_ref(nsr, if_collisions,
 		bus_space_read_4(t, mac, HME_MACI_NCCNT) +
-		bus_space_read_4(t, mac, HME_MACI_FCCNT);
-	ifp->if_oerrors +=
+		bus_space_read_4(t, mac, HME_MACI_FCCNT));
+	if_statadd_ref(nsr, if_oerrors,
 		bus_space_read_4(t, mac, HME_MACI_EXCNT) +
-		bus_space_read_4(t, mac, HME_MACI_LTCNT);
+		bus_space_read_4(t, mac, HME_MACI_LTCNT));
 
 	/*
 	 * then clear the hardware counters.
@@ -1007,13 +1010,15 @@ hme_tint(struct hme_softc *sc)
 			break;
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if_statinc_ref(nsr, if_opackets);
 
 		if (++ri == sc->sc_rb.rb_ntbuf)
 			ri = 0;
 
 		--sc->sc_rb.rb_td_nbusy;
 	}
+
+	IF_STAT_PUTREF(ifp);
 
 	/* Update ring */
 	sc->sc_rb.rb_tdtail = ri;
@@ -1067,11 +1072,11 @@ hme_rint(struct hme_softc *sc)
 	sc->sc_rb.rb_rdtail = ri;
 
 	/* Read error counters ... */
-	ifp->if_ierrors +=
+	if_statadd(ifp, if_ierrors,
 	    bus_space_read_4(t, mac, HME_MACI_STAT_LCNT) +
 	    bus_space_read_4(t, mac, HME_MACI_STAT_ACNT) +
 	    bus_space_read_4(t, mac, HME_MACI_STAT_CCNT) +
-	    bus_space_read_4(t, mac, HME_MACI_STAT_CVCNT);
+	    bus_space_read_4(t, mac, HME_MACI_STAT_CVCNT));
 
 	/* ... then clear the hardware counters. */
 	bus_space_write_4(t, mac, HME_MACI_STAT_LCNT, 0);
@@ -1100,14 +1105,16 @@ hme_eint(struct hme_softc *sc, u_int status)
 	}
 
 	/* Receive error counters rolled over */
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (status & HME_SEB_STAT_ACNTEXP)
-		ifp->if_ierrors += 0xff;
+		if_statadd_ref(nsr, if_ierrors, 0xff);
 	if (status & HME_SEB_STAT_CCNTEXP)
-		ifp->if_ierrors += 0xff;
+		if_statadd_ref(nsr, if_ierrors, 0xff);
 	if (status & HME_SEB_STAT_LCNTEXP)
-		ifp->if_ierrors += 0xff;
+		if_statadd_ref(nsr, if_ierrors, 0xff);
 	if (status & HME_SEB_STAT_CVCNTEXP)
-		ifp->if_ierrors += 0xff;
+		if_statadd_ref(nsr, if_ierrors, 0xff);
+	IF_STAT_PUTREF(ifp);
 
 	/* RXTERR locks up the interface, so do a reset */
 	if (status & HME_SEB_STAT_RXTERR)
@@ -1151,7 +1158,7 @@ hme_watchdog(struct ifnet *ifp)
 	struct hme_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	hme_reset(sc);
 }

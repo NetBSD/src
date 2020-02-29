@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs.h,v 1.204 2019/01/10 06:31:04 martin Exp $	*/
+/*	$NetBSD: lfs.h,v 1.204.6.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*  from NetBSD: dinode.h,v 1.25 2016/01/22 23:06:10 dholland Exp  */
 /*  from NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp  */
@@ -596,8 +596,9 @@ typedef union iinfo {
 
 /* magic value for daddrs */
 #define	LFS_UNUSED_DADDR	0	/* out-of-band daddr */
-/* magic value for if_nextfree */
-#define LFS_ORPHAN_NEXTFREE	(~(uint32_t)0) /* indicate orphaned file */
+/* magic value for if_nextfree -- indicate orphaned file */
+#define LFS_ORPHAN_NEXTFREE(fs) \
+	((fs)->lfs_is64 ? ~(uint64_t)0 : ~(uint32_t)0)
 
 typedef struct ifile64 IFILE64;
 struct ifile64 {

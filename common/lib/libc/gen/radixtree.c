@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $	*/
+/*	$NetBSD: radixtree.c,v 1.20.2.1 2020/02/29 20:17:43 ad Exp $	*/
 
 /*-
  * Copyright (c)2011,2012,2013 YAMAMOTO Takashi,
@@ -112,7 +112,7 @@
 #include <sys/cdefs.h>
 
 #if defined(_KERNEL) || defined(_STANDALONE)
-__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.20.2.1 2020/02/29 20:17:43 ad Exp $");
 #include <sys/param.h>
 #include <sys/errno.h>
 #include <sys/pool.h>
@@ -122,7 +122,7 @@ __KERNEL_RCSID(0, "$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
 #include <lib/libsa/stand.h>
 #endif /* defined(_STANDALONE) */
 #else /* defined(_KERNEL) || defined(_STANDALONE) */
-__RCSID("$NetBSD: radixtree.c,v 1.20 2019/12/05 19:03:39 ad Exp $");
+__RCSID("$NetBSD: radixtree.c,v 1.20.2.1 2020/02/29 20:17:43 ad Exp $");
 #include <assert.h>
 #include <errno.h>
 #include <stdbool.h>
@@ -345,10 +345,27 @@ radix_tree_init(void)
 {
 
 	radix_tree_node_cache = pool_cache_init(sizeof(struct radix_tree_node),
-	    coherency_unit, 0, 0, "radixnode", NULL, IPL_NONE,
+	    coherency_unit, 0, PR_LARGECACHE, "radixnode", NULL, IPL_NONE,
 	    radix_tree_node_ctor, NULL, NULL);
 	KASSERT(radix_tree_node_cache != NULL);
 }
+
+/*
+ * radix_tree_await_memory:
+ *
+ * after an insert has failed with ENOMEM, wait for memory to become
+ * available, so the caller can retry.
+ */
+
+void
+radix_tree_await_memory(void)
+{
+	struct radix_tree_node *n;
+
+	n = pool_cache_get(radix_tree_node_cache, PR_WAITOK);
+	pool_cache_put(radix_tree_node_cache, n);
+}
+
 #endif /* defined(_KERNEL) */
 
 static bool __unused
@@ -826,34 +843,16 @@ scan_siblings:
 			break;
 		}
 		n = path_node(t, path, lastidx - 1);
-		/*
-		 * we used to have an integer counter in the node, and this
-		 * optimization made sense then, even though marginal.  it
-		 * no longer provides benefit with the structure cache line
-		 * aligned and the counter replaced by an unrolled sequence
-		 * testing the pointers in batch.
-		 */
-#if 0
-		if (*vpp != NULL && radix_tree_node_count_ptrs(n) == 1) {
-			/*
-			 * optimization; if the node has only a single pointer
-			 * and we've already visited it, there's no point to
-			 * keep scanning in this node.
-			 */
-			goto no_siblings;
-		}
-#endif /* 0 */
 		for (i = vpp - n->n_ptrs + step; i != guard; i += step) {
 			KASSERT(i < RADIX_TREE_PTR_PER_NODE);
 			if (entry_match_p(n->n_ptrs[i], tagmask)) {
 				vpp = &n->n_ptrs[i];
 				break;
+			} else if (dense) {
+				return nfound;
 			}
 		}
 		if (i == guard) {
-#if 0
-no_siblings:
-#endif /* 0 */
 			/*
 			 * not found.  go to parent.
 			 */

@@ -1,4 +1,4 @@
-/* $NetBSD: rk_i2s.c,v 1.2 2020/01/04 13:54:04 jmcneill Exp $ */
+/* $NetBSD: rk_i2s.c,v 1.2.2.1 2020/02/29 20:18:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.2 2020/01/04 13:54:04 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rk_i2s.c,v 1.2.2.1 2020/02/29 20:18:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -231,16 +231,6 @@ rk_i2s_get_props(void *priv)
 	    AUDIO_PROP_FULLDUPLEX;
 }
 
-static int
-rk_i2s_round_blocksize(void *priv, int bs, int mode,
-    const audio_params_t *params)
-{
-	bs &= ~3;
-	if (bs == 0)
-		bs = 4;
-	return bs;
-}
-
 static void *
 rk_i2s_allocm(void *priv, int dir, size_t size)
 {
@@ -360,7 +350,6 @@ static const struct audio_hw_if rk_i2s_hw_if = {
 	.query_format = rk_i2s_query_format,
 	.set_format = rk_i2s_set_format,
 	.get_props = rk_i2s_get_props,
-	.round_blocksize = rk_i2s_round_blocksize,
 	.allocm = rk_i2s_allocm,
 	.freem = rk_i2s_freem,
 	.trigger_output = rk_i2s_trigger_output,

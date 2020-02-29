@@ -1,4 +1,4 @@
-/*	$NetBSD: octeon_gmx.c,v 1.6.2.1 2020/01/25 22:38:41 ad Exp $	*/
+/*	$NetBSD: octeon_gmx.c,v 1.6.2.2 2020/02/29 20:18:27 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Internet Initiative Japan, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.6.2.1 2020/01/25 22:38:41 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: octeon_gmx.c,v 1.6.2.2 2020/02/29 20:18:27 ad Exp $");
 
 #include "opt_octeon.h"
 
@@ -1071,22 +1071,24 @@ octeon_gmx_stats(struct octeon_gmx_port_softc *sc)
          *  receive error of work queue entry.
          *  this is not add to input packet errors of interface.
          */
-	ifp->if_iqdrops +=
-	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_DRP);
-	ifp->if_opackets +=
-	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_TX0_STAT3);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_iqdrops,
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_RX0_STATS_PKTS_DRP));
+	if_statadd_ref(nsr, if_opackets,
+	    (uint32_t)_GMX_PORT_RD8(sc, GMX0_TX0_STAT3));
 
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT0);
-	ifp->if_oerrors +=
-	    (uint32_t)tmp + ((uint32_t)(tmp >> 32) * 16);
-	ifp->if_collisions += (uint32_t)tmp;
+	if_statadd_ref(nsr, if_oerrors,
+	    (uint32_t)tmp + ((uint32_t)(tmp >> 32) * 16));
+	if_statadd_ref(nsr, if_collisions, (uint32_t)tmp);
 
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT1);
-	ifp->if_collisions +=
-	    (uint32_t)tmp + (uint32_t)(tmp >> 32);
+	if_statadd_ref(nsr, if_collisions,
+	    (uint32_t)tmp + (uint32_t)(tmp >> 32));
 
 	tmp = _GMX_PORT_RD8(sc, GMX0_TX0_STAT9);
-	ifp->if_oerrors += (uint32_t)(tmp >> 32);
+	if_statadd_ref(nsr, if_oerrors, (uint32_t)(tmp >> 32));
+	IF_STAT_PUTREF(ifp);
 }
 
 /* ---- DMAC filter */

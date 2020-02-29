@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_abi16.c,v 1.4 2018/08/27 07:31:29 riastradh Exp $	*/
+/*	$NetBSD: nouveau_abi16.c,v 1.4.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_abi16.c,v 1.4 2018/08/27 07:31:29 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_abi16.c,v 1.4.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <nvif/client.h>
 #include <nvif/driver.h>
@@ -509,8 +509,7 @@ nouveau_abi16_ioctl_notifierobj_alloc(ABI16_IOCTL_ARGS)
 	struct nouveau_abi16_ntfy *ntfy;
 	struct nvif_device *device = &abi16->device;
 	struct nvif_client *client;
-	static const struct nv_dma_v0 zero_args;
-	struct nv_dma_v0 args = zero_args;
+	struct nv_dma_v0 args = {};
 	int ret;
 
 	if (unlikely(!abi16))

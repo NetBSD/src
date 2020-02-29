@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.539.2.3 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.539.2.4 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539.2.3 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.539.2.4 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -2282,10 +2282,12 @@ do_sys_mknodat(struct lwp *l, int fdat, const char *pathname, mode_t mode,
 			error = EINVAL;
 			break;
 		}
+
+		if (error == 0 && optype == VOP_MKNOD_DESCOFFSET &&
+		    vattr.va_rdev == VNOVAL)
+			error = EINVAL;
 	}
-	if (error == 0 && optype == VOP_MKNOD_DESCOFFSET
-	    && vattr.va_rdev == VNOVAL)
-		error = EINVAL;
+
 	if (!error) {
 		switch (optype) {
 		case VOP_WHITEOUT_DESCOFFSET:
@@ -4673,9 +4675,9 @@ sys_umask(struct lwp *l, const struct sys_umask_args *uap, register_t *retval)
 
 	/*
 	 * cwdi->cwdi_cmask will be read unlocked elsewhere, and no kind of
-	 * serialization with those reads is required.  All that's important
-	 * is that we get the correct answer for the caller of umask() and
-	 * the atomic operation accomplishes.
+	 * serialization with those reads is required.  It's important to
+	 * return a coherent answer for the caller of umask() though, and
+	 * the atomic operation accomplishes that.
 	 */
 	*retval = atomic_swap_uint(&curproc->p_cwdi->cwdi_cmask,
 	    SCARG(uap, newmask) & ALLPERMS);

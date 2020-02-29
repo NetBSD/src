@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cpsw.c,v 1.10 2020/01/06 06:50:00 msaitoh Exp $	*/
+/*	$NetBSD: if_cpsw.c,v 1.10.2.1 2020/02/29 20:18:20 ad Exp $	*/
 
 /*
  * Copyright (c) 2013 Jonathan A. Kollasch
@@ -53,7 +53,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.10 2020/01/06 06:50:00 msaitoh Exp $");
+__KERNEL_RCSID(1, "$NetBSD: if_cpsw.c,v 1.10.2.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -361,11 +361,11 @@ cpsw_detach(device_t self, int flags)
 	intr_disestablish(sc->sc_txih);
 	intr_disestablish(sc->sc_miscih);
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	/* Free the packet padding buffer */
 	kmem_free(sc->sc_txpad, ETHER_MIN_LEN);
@@ -629,7 +629,7 @@ cpsw_start(struct ifnet *ifp)
 			device_printf(sc->sc_dev, "won't fit\n");
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		} else if (error != 0) {
 			device_printf(sc->sc_dev, "error\n");
@@ -739,7 +739,7 @@ cpsw_watchdog(struct ifnet *ifp)
 
 	device_printf(sc->sc_dev, "device timeout\n");
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	cpsw_init(ifp);
 	cpsw_start(ifp);
 }
@@ -1169,7 +1169,7 @@ cpsw_rxintr(void *arg)
 
 		if (cpsw_new_rxbuf(sc, i) != 0) {
 			/* drop current packet, reuse buffer for new */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next;
 		}
 
@@ -1273,7 +1273,7 @@ cpsw_txintr(void *arg)
 		m_freem(rdp->tx_mb[sc->sc_txhead]);
 		rdp->tx_mb[sc->sc_txhead] = NULL;
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		handled = true;
 

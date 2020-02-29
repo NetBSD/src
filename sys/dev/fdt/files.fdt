@@ -1,4 +1,4 @@
-# $NetBSD: files.fdt,v 1.50 2020/01/02 00:57:10 jmcneill Exp $
+# $NetBSD: files.fdt,v 1.50.2.1 2020/02/29 20:19:07 ad Exp $
 
 include	"external/bsd/libfdt/conf/files.libfdt"
 
@@ -171,3 +171,6 @@ device	simpleamp
 attach	simpleamp at fdt
 file	dev/fdt/simple_amplifier.c		simpleamp
 
+# Broadcom GENET v5
+attach	genet at fdt with genet_fdt
+file	dev/fdt/genet_fdt.c			genet_fdt

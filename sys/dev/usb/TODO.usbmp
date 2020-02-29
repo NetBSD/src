@@ -1,4 +1,4 @@
-$NetBSD: TODO.usbmp,v 1.16.2.1 2020/01/17 21:47:32 ad Exp $
+$NetBSD: TODO.usbmp,v 1.16.2.2 2020/02/29 20:19:16 ad Exp $
 
 
 the majority of the USB MP device interface is documented in usbdivar.h.
@@ -30,7 +30,6 @@ usb_detach_{waitold,wakeup} to usb_detach_{wait,broadcast} conversion:
       uirda.c
       ulpt.c
       umass.c		- done, partially done -- need to check umass_scsipi.c change
-      urio.c
       uscanner.c
       usscanner.c
       ustir.c
@@ -74,7 +73,6 @@ splusb drivers to convert:
   - uirda.c
   - ukbd.c
   - ulpt.c
-  - urio.c
   - usbdi.h
   - uscanner.c
   - usscanner.c
@@ -104,7 +102,6 @@ missing D_MPSAFE drivers:
   - ugen		- partially ready
   - uhso
   - ulpt
-  - urio
   - usb
   - uscanner
   - utoppy
@@ -162,7 +159,6 @@ driver testing:		STATUS
   - upl			working
   - uberry
   - uipad
-  - urio
   - uscanner		? (must take kernel lock for scsipi)
   - usscanner
   - utoppy

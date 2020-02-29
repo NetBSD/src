@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_mxm_nv50.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_mxm_nv50.c,v 1.2.10.1 2020/02/29 20:20:15 ad Exp $	*/
 
 /*
  * Copyright 2011 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_nv50.c,v 1.2 2018/08/27 04:58:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_mxm_nv50.c,v 1.2.10.1 2020/02/29 20:20:15 ad Exp $");
 
 #include "mxms.h"
 
@@ -164,7 +164,6 @@ mxm_dcb_sanitise_entry(struct nvkm_bios *bios, void *data, int idx, u16 pdcb)
 		break;
 	case 0x0e: /* eDP, falls through to DPint */
 		ctx.outp[1] |= 0x00010000;
-		/*FALLTHROUGH*/
 	case 0x07: /* DP internal, wtf is this?? HP8670w */
 		ctx.outp[1] |= 0x00000004; /* use_power_scripts? */
 		type = DCB_CONNECTOR_eDP;

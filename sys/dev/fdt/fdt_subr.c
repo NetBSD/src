@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_subr.c,v 1.31 2019/09/24 15:23:34 jmcneill Exp $ */
+/* $NetBSD: fdt_subr.c,v 1.31.2.1 2020/02/29 20:19:07 ad Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.31 2019/09/24 15:23:34 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.31.2.1 2020/02/29 20:19:07 ad Exp $");
 
 #include "opt_fdt.h"
 
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: fdt_subr.c,v 1.31 2019/09/24 15:23:34 jmcneill Exp $
 
 #include <libfdt.h>
 #include <dev/fdt/fdtvar.h>
+#include <dev/fdt/fdt_private.h>
 
 static const void *fdt_data;
 
@@ -43,13 +44,17 @@ static struct fdt_conslist fdt_console_list =
     TAILQ_HEAD_INITIALIZER(fdt_console_list);
 
 bool
-fdtbus_set_data(const void *data)
+fdtbus_init(const void *data)
 {
 	KASSERT(fdt_data == NULL);
 	if (fdt_check_header(data) != 0) {
 		return false;
 	}
 	fdt_data = data;
+
+	/* Now that we have a FDT blob, initialize other bits that need it. */
+	fdtbus_intr_init();
+
 	return true;
 }
 
@@ -90,7 +95,7 @@ fdtbus_set_decoderegprop(bool decode)
 	fdtbus_decoderegprop = decode;
 }
 
-static int
+int
 fdtbus_get_addr_cells(int phandle)
 {
 	uint32_t addr_cells;
@@ -101,7 +106,7 @@ fdtbus_get_addr_cells(int phandle)
 	return addr_cells;
 }
 
-static int
+int
 fdtbus_get_size_cells(int phandle)
 {
 	uint32_t size_cells;
@@ -188,7 +193,7 @@ fdtbus_get_path(int phandle, char *buf, size_t buflen)
 	return true;
 }
 
-static uint64_t
+uint64_t
 fdtbus_get_cells(const uint8_t *buf, int cells)
 {
 	switch (cells) {
@@ -238,7 +243,7 @@ fdtbus_decode_range(int phandle, uint64_t paddr)
 		buf += size_cells * 4;
 
 #ifdef FDTBUS_DEBUG
-		printf("%s: %s: cba=0x%#" PRIx64 ", pba=0x%#" PRIx64 ", cl=0x%#" PRIx64 "\n", __func__, fdt_get_name(fdtbus_get_data(), fdtbus_phandle2offset(phandle), NULL), cba, pba, cl);
+		printf("%s: %s: cba=%#" PRIx64 ", pba=%#" PRIx64 ", cl=%#" PRIx64 "\n", __func__, fdt_get_name(fdtbus_get_data(), fdtbus_phandle2offset(phandle), NULL), cba, pba, cl);
 #endif
 
 		if (paddr >= cba && paddr < cba + cl)

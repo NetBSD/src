@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82.2.1 2020/01/17 21:47:23 ad Exp $
+#	$NetBSD: genassym.cf,v 1.82.2.2 2020/02/29 20:18:17 ad Exp $
 
 # Copyright (c) 1982, 1990 The Regents of the University of California.
 # All rights reserved.
@@ -94,7 +94,6 @@ define	KERNEL_BASE		KERNEL_BASE
 define	VM_MIN_ADDRESS		VM_MIN_ADDRESS
 define	VM_MAXUSER_ADDRESS	VM_MAXUSER_ADDRESS
 
-define	PV_PA			offsetof(pv_addr_t, pv_pa)
 define	PMAP_DOMAIN_KERNEL	PMAP_DOMAIN_KERNEL
 define	DOMAIN_CLIENT		DOMAIN_CLIENT
 define	DOMAIN_DEFAULT		DOMAIN_DEFAULT
@@ -156,9 +155,6 @@ define	MAXCPUS			MAXCPUS
 # Important offsets into the lwp and proc structs & associated constants
 define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_CPU			offsetof(struct lwp, l_cpu)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
-define	L_STAT			offsetof(struct lwp, l_stat)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_PRIVATE		offsetof(struct lwp, l_private)
 define	L_FLAG			offsetof(struct lwp, l_flag)
@@ -219,28 +215,28 @@ define	CF_CONTEXT_SWITCH	offsetof(struct cpu_functions, cf_context_switch)
 define	CF_SLEEP		offsetof(struct cpu_functions, cf_sleep)
 define	CF_CONTROL		offsetof(struct cpu_functions, cf_control)
 
-define	CI_CURPRIORITY		offsetof(struct cpu_info, ci_schedstate.spc_curpriority)
+define	CPU_INFO_SIZE		sizeof(struct cpu_info)
 define	CI_ARM_CPUID		offsetof(struct cpu_info, ci_arm_cpuid)
-define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
-define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
 define	CI_ASTPENDING		offsetof(struct cpu_info, ci_astpending)
+define	CI_CPL			offsetof(struct cpu_info, ci_cpl)
+define	CI_CURLWP		offsetof(struct cpu_info, ci_curlwp)
 define	CI_INTR_DEPTH		offsetof(struct cpu_info, ci_intr_depth)
+define	CI_MIDR			offsetof(struct cpu_info, ci_midr)
+define	CI_MPIDR		offsetof(struct cpu_info, ci_mpidr)
 define	CI_MTX_COUNT		offsetof(struct cpu_info, ci_mtx_count)
+define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 define	CI_UNDEFSAVE		offsetof(struct cpu_info, ci_undefsave[0])
+define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
+define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
 if defined(EXEC_AOUT)
 define	CI_CTRL			offsetof(struct cpu_info, ci_ctrl)
 endif
 ifdef __HAVE_FAST_SOFTINTS
 define	CI_SOFTINTS		offsetof(struct cpu_info, ci_softints)
 endif
-define	CI_IDLELWP		offsetof(struct cpu_info, ci_data.cpu_idlelwp)
-define	CI_CC_NTRAP		offsetof(struct cpu_info, ci_data.cpu_ntrap)
-define	CI_CC_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)
-define	CI_CC_NSOFT		offsetof(struct cpu_info, ci_data.cpu_nsoft)
 ifdef FPU_VFP
 define	CI_VFP_ID		offsetof(struct cpu_info, ci_vfp_id)
 endif
-define	CI_LASTLWP		offsetof(struct cpu_info, ci_lastlwp)
 
 define	VFP_FPEXC_EN		VFP_FPEXC_EN
 

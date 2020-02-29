@@ -1,4 +1,4 @@
-/*	$NetBSD: ohci.c,v 1.292 2019/11/29 14:15:41 gson Exp $	*/
+/*	$NetBSD: ohci.c,v 1.292.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004, 2005, 2012 The NetBSD Foundation, Inc.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.292 2019/11/29 14:15:41 gson Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ohci.c,v 1.292.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -169,6 +169,7 @@ Static void		ohci_device_isoc_enter(struct usbd_xfer *);
 Static struct usbd_xfer *
 			ohci_allocx(struct usbd_bus *, unsigned int);
 Static void		ohci_freex(struct usbd_bus *, struct usbd_xfer *);
+Static bool		ohci_dying(struct usbd_bus *);
 Static void		ohci_get_lock(struct usbd_bus *, kmutex_t **);
 Static int		ohci_roothub_ctrl(struct usbd_bus *,
 			    usb_device_request_t *, void *, int);
@@ -213,12 +214,10 @@ Static void		ohci_device_isoc_done(struct usbd_xfer *);
 Static usbd_status	ohci_device_setintr(ohci_softc_t *,
 			    struct ohci_pipe *, int);
 
-Static void		ohci_timeout(void *);
-Static void		ohci_timeout_task(void *);
 Static void		ohci_rhsc_enable(void *);
 
 Static void		ohci_close_pipe(struct usbd_pipe *, ohci_soft_ed_t *);
-Static void		ohci_abort_xfer(struct usbd_xfer *, usbd_status);
+Static void		ohci_abortx(struct usbd_xfer *);
 
 Static void		ohci_device_clear_toggle(struct usbd_pipe *);
 Static void		ohci_noop(struct usbd_pipe *);
@@ -287,6 +286,8 @@ Static const struct usbd_bus_methods ohci_bus_methods = {
 	.ubm_dopoll =	ohci_poll,
 	.ubm_allocx =	ohci_allocx,
 	.ubm_freex =	ohci_freex,
+	.ubm_abortx =	ohci_abortx,
+	.ubm_dying =	ohci_dying,
 	.ubm_getlock =	ohci_get_lock,
 	.ubm_rhctrl =	ohci_roothub_ctrl,
 };
@@ -1068,9 +1069,6 @@ ohci_allocx(struct usbd_bus *bus, unsigned int nframes)
 	if (xfer != NULL) {
 		memset(xfer, 0, sizeof(struct ohci_xfer));
 
-		/* Initialise this always so we can call remove on it. */
-		usb_init_task(&xfer->ux_aborttask, ohci_timeout_task, xfer,
-		    USB_TASKQ_MPSAFE);
 #ifdef DIAGNOSTIC
 		xfer->ux_state = XFER_BUSY;
 #endif
@@ -1090,6 +1088,14 @@ ohci_freex(struct usbd_bus *bus, struct usbd_xfer *xfer)
 	xfer->ux_state = XFER_FREE;
 #endif
 	pool_cache_put(sc->sc_xferpool, xfer);
+}
+
+Static bool
+ohci_dying(struct usbd_bus *bus)
+{
+	ohci_softc_t *sc = OHCI_BUS2SC(bus);
+
+	return sc->sc_dying;
 }
 
 Static void
@@ -1463,23 +1469,11 @@ ohci_softintr(void *v)
 		}
 
 		/*
-		 * If software has completed it, either by cancellation
-		 * or timeout, drop it on the floor.
+		 * Try to claim this xfer for completion.  If it has
+		 * already completed or aborted, drop it on the floor.
 		 */
-		if (xfer->ux_status != USBD_IN_PROGRESS) {
-			KASSERT(xfer->ux_status == USBD_CANCELLED ||
-			    xfer->ux_status == USBD_TIMEOUT);
+		if (!usbd_xfer_trycomplete(xfer))
 			continue;
-		}
-
-		/*
-		 * Cancel the timeout and the task, which have not yet
-		 * run.  If they have already fired, at worst they are
-		 * waiting for the lock.  They will see that the xfer
-		 * is no longer in progress and give up.
-		 */
-		callout_stop(&xfer->ux_callout);
-		usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
 
 		len = std->len;
 		if (std->td.td_cbp != 0)
@@ -1553,23 +1547,11 @@ ohci_softintr(void *v)
 			continue;
 
 		/*
-		 * If software has completed it, either by cancellation
-		 * or timeout, drop it on the floor.
+		 * Try to claim this xfer for completion.  If it has
+		 * already completed or aborted, drop it on the floor.
 		 */
-		if (xfer->ux_status != USBD_IN_PROGRESS) {
-			KASSERT(xfer->ux_status == USBD_CANCELLED ||
-			    xfer->ux_status == USBD_TIMEOUT);
+		if (!usbd_xfer_trycomplete(xfer))
 			continue;
-		}
-
-		/*
-		 * Cancel the timeout and the task, which have not yet
-		 * run.  If they have already fired, at worst they are
-		 * waiting for the lock.  They will see that the xfer
-		 * is no longer in progress and give up.
-		 */
-		callout_stop(&xfer->ux_callout);
-		usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask);
 
 		KASSERT(!sitd->isdone);
 #ifdef DIAGNOSTIC
@@ -1716,6 +1698,8 @@ ohci_rhsc(ohci_softc_t *sc, struct usbd_xfer *xfer)
 		/* Just ignore the change. */
 		return;
 	}
+	KASSERT(xfer == sc->sc_intrxfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 
 	p = xfer->ux_buf;
 	m = uimin(sc->sc_noport, xfer->ux_length * 8 - 1);
@@ -1726,6 +1710,7 @@ ohci_rhsc(ohci_softc_t *sc, struct usbd_xfer *xfer)
 			p[i/8] |= 1 << (i%8);
 	}
 	DPRINTF("change=0x%02jx", *p, 0, 0, 0);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_actlen = xfer->ux_length;
 	xfer->ux_status = USBD_NORMAL_COMPLETION;
 
@@ -1739,7 +1724,9 @@ ohci_root_intr_done(struct usbd_xfer *xfer)
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
+	/* Claim the xfer so it doesn't get completed again.  */
 	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status != USBD_IN_PROGRESS);
 	sc->sc_intrxfer = NULL;
 }
 
@@ -1907,37 +1894,6 @@ ohci_hash_find_itd(ohci_softc_t *sc, ohci_physaddr_t a)
 		if (sitd->physaddr == a)
 			return sitd;
 	return NULL;
-}
-
-void
-ohci_timeout(void *addr)
-{
-	OHCIHIST_FUNC(); OHCIHIST_CALLED();
-	struct usbd_xfer *xfer = addr;
-	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
-	struct usbd_device *dev = xfer->ux_pipe->up_dev;
-
-	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-
-	mutex_enter(&sc->sc_lock);
-	if (!sc->sc_dying && xfer->ux_status == USBD_IN_PROGRESS)
-		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
-	mutex_exit(&sc->sc_lock);
-}
-
-void
-ohci_timeout_task(void *addr)
-{
-	struct usbd_xfer *xfer = addr;
-	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
-
-	OHCIHIST_FUNC(); OHCIHIST_CALLED();
-
-	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-
-	mutex_enter(&sc->sc_lock);
-	ohci_abort_xfer(xfer, USBD_TIMEOUT);
-	mutex_exit(&sc->sc_lock);
 }
 
 #ifdef OHCI_DEBUG
@@ -2212,19 +2168,8 @@ ohci_close_pipe(struct usbd_pipe *pipe, ohci_soft_ed_t *head)
 }
 
 /*
- * Cancel or timeout a device request.  We have two cases to deal with
- *
- * 1) A driver wants to stop scheduled or inflight transfers
- * 2) A transfer has timed out
- *
- * It's impossible to guarantee that the requested transfer will not
- * have (partially) happened since the hardware runs concurrently.
- *
- * Transfer state is protected by the bus lock and we set the transfer status
- * as soon as either of the above happens (with bus lock held).
- *
- * Then we arrange for the hardware to tells us that it is not still
- * processing the TDs by setting the sKip bit and requesting a SOF interrupt
+ * Arrange for the hardware to tells us that it is not still processing
+ * the TDs by setting the sKip bit and requesting a SOF interrupt
  *
  * Once we see the SOF interrupt we can check the transfer TDs/iTDs to see if
  * they've been processed and either
@@ -2233,7 +2178,7 @@ ohci_close_pipe(struct usbd_pipe *pipe, ohci_soft_ed_t *head)
  *         used.  The softint handler will free the old ones.
  */
 void
-ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
+ohci_abortx(struct usbd_xfer *xfer)
 {
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	struct ohci_pipe *opipe = OHCI_PIPE2OPIPE(xfer->ux_pipe);
@@ -2243,46 +2188,15 @@ ohci_abort_xfer(struct usbd_xfer *xfer, usbd_status status)
 	ohci_physaddr_t headp;
 	int hit;
 
-	KASSERTMSG((status == USBD_CANCELLED || status == USBD_TIMEOUT),
-	    "invalid status for abort: %d", (int)status);
-
 	DPRINTF("xfer=%#jx pipe=%#jx sed=%#jx", (uintptr_t)xfer,
 	    (uintptr_t)opipe, (uintptr_t)sed, 0);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	ASSERT_SLEEPABLE();
 
-	if (status == USBD_CANCELLED) {
-		/*
-		 * We are synchronously aborting.  Try to stop the
-		 * callout and task, but if we can't, wait for them to
-		 * complete.
-		 */
-		callout_halt(&xfer->ux_callout, &sc->sc_lock);
-		usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
-		    USB_TASKQ_HC, &sc->sc_lock);
-	} else {
-		/* Otherwise, we are timing out.  */
-		KASSERT(status == USBD_TIMEOUT);
-	}
-
-	/*
-	 * The xfer cannot have been cancelled already.  It is the
-	 * responsibility of the caller of usbd_abort_pipe not to try
-	 * to abort a pipe multiple times, whether concurrently or
-	 * sequentially.
-	 */
-	KASSERT(xfer->ux_status != USBD_CANCELLED);
-
-	/* Only the timeout, which runs only once, can time it out.  */
-	KASSERT(xfer->ux_status != USBD_TIMEOUT);
-
-	/* If anyone else beat us, we're done.  */
-	if (xfer->ux_status != USBD_IN_PROGRESS)
-		return;
-
-	/* We beat everyone else.  Claim the status.  */
-	xfer->ux_status = status;
+	KASSERTMSG((xfer->ux_status == USBD_CANCELLED ||
+		xfer->ux_status == USBD_TIMEOUT),
+	    "bad abort status: %d", xfer->ux_status);
 
 	/*
 	 * If we're dying, skip the hardware action and just notify the
@@ -2604,6 +2518,7 @@ ohci_root_intr_start(struct usbd_xfer *xfer)
 		mutex_enter(&sc->sc_lock);
 	KASSERT(sc->sc_intrxfer == NULL);
 	sc->sc_intrxfer = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
 
@@ -2614,11 +2529,21 @@ ohci_root_intr_start(struct usbd_xfer *xfer)
 Static void
 ohci_root_intr_abort(struct usbd_xfer *xfer)
 {
-	ohci_softc_t *sc __diagused = OHCI_XFER2SC(xfer);
+	ohci_softc_t *sc = OHCI_XFER2SC(xfer);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
+	/* If xfer has already completed, nothing to do here.  */
+	if (sc->sc_intrxfer == NULL)
+		return;
+
+	/*
+	 * Otherwise, sc->sc_intrxfer had better be this transfer.
+	 * Cancel it.
+	 */
+	KASSERT(sc->sc_intrxfer == xfer);
+	KASSERT(xfer->ux_status == USBD_IN_PROGRESS);
 	xfer->ux_status = USBD_CANCELLED;
 	usb_transfer_complete(xfer);
 }
@@ -2627,13 +2552,17 @@ ohci_root_intr_abort(struct usbd_xfer *xfer)
 Static void
 ohci_root_intr_close(struct usbd_pipe *pipe)
 {
-	ohci_softc_t *sc = OHCI_PIPE2SC(pipe);
+	ohci_softc_t *sc __diagused = OHCI_PIPE2SC(pipe);
 
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 
-	sc->sc_intrxfer = NULL;
+	/*
+	 * Caller must guarantee the xfer has completed first, by
+	 * closing the pipe only after normal completion or an abort.
+	 */
+	KASSERT(sc->sc_intrxfer == NULL);
 }
 
 /************************/
@@ -2875,10 +2804,7 @@ ohci_device_ctrl_start(struct usbd_xfer *xfer)
 	    sizeof(sed->ed.ed_tailp),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_CLF);
-	if (xfer->ux_timeout && !polling) {
-		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
-			    ohci_timeout, xfer);
-	}
+	usbd_xfer_schedule_timeout(xfer);
 
 	DPRINTF("done", 0, 0, 0, 0);
 
@@ -2899,7 +2825,7 @@ ohci_device_ctrl_abort(struct usbd_xfer *xfer)
 
 	OHCIHIST_FUNC(); OHCIHIST_CALLED();
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-	ohci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device control pipe. */
@@ -2915,6 +2841,8 @@ ohci_device_ctrl_close(struct usbd_pipe *pipe)
 	DPRINTF("pipe=%#jx", (uintptr_t)pipe, 0, 0, 0);
 	ohci_close_pipe(pipe, sc->sc_ctrl_head);
 	ohci_free_std_locked(sc, opipe->tail.td);
+
+	usb_freemem(&sc->sc_bus, &opipe->ctrl.reqdma);
 }
 
 /************************/
@@ -3090,11 +3018,7 @@ ohci_device_bulk_start(struct usbd_xfer *xfer)
 	usb_syncmem(&sed->dma, sed->offs, sizeof(sed->ed),
 	    BUS_DMASYNC_PREWRITE | BUS_DMASYNC_PREREAD);
 	OWRITE4(sc, OHCI_COMMAND_STATUS, OHCI_BLF);
-	if (xfer->ux_timeout && !sc->sc_bus.ub_usepolling) {
-		callout_reset(&xfer->ux_callout, mstohz(xfer->ux_timeout),
-			    ohci_timeout, xfer);
-	}
-
+	usbd_xfer_schedule_timeout(xfer);
 	xfer->ux_status = USBD_IN_PROGRESS;
 	if (!polling)
 		mutex_exit(&sc->sc_lock);
@@ -3112,7 +3036,7 @@ ohci_device_bulk_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 
 	DPRINTF("xfer=%#jx", (uintptr_t)xfer, 0, 0, 0);
-	ohci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /*
@@ -3300,7 +3224,7 @@ ohci_device_intr_abort(struct usbd_xfer *xfer)
 	KASSERT(mutex_owned(&sc->sc_lock));
 	KASSERT(xfer->ux_pipe->up_intrxfer == xfer);
 
-	ohci_abort_xfer(xfer, USBD_CANCELLED);
+	usbd_xfer_abort(xfer);
 }
 
 /* Close a device interrupt pipe. */

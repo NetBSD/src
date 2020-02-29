@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mcx.c,v 1.9 2019/11/29 15:17:14 msaitoh Exp $ */
+/*	$NetBSD: if_mcx.c,v 1.9.2.1 2020/02/29 20:19:10 ad Exp $ */
 /*	$OpenBSD: if_mcx.c,v 1.33 2019/09/12 04:23:59 jmatthew Exp $ */
 
 /*
@@ -2215,7 +2215,10 @@ mcx_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/* Map the PCI memory space */
 	memtype = pci_mapreg_type(sc->sc_pc, sc->sc_tag, MCX_HCA_BAR);
@@ -6438,7 +6441,7 @@ mcx_start(struct ifnet *ifp)
 
 		if (mcx_load_mbuf(sc, ms, m) != 0) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		bf = (uint64_t *)sqe;

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ni.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_ni.c,v 1.1.10.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2010 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ni.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ni.c,v 1.1.10.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <linux/firmware.h>
 #include <linux/slab.h>
@@ -40,6 +40,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_ni.c,v 1.1 2018/08/27 14:38:20 riastradh Exp 
 #include "cayman_blit_shaders.h"
 #include "radeon_ucode.h"
 #include "clearstate_cayman.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * Indirect registers accessor
@@ -731,11 +733,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = EVERGREEN_RLC_UCODE_SIZE * 4;
 		mc_req_size = BTC_MC_UCODE_SIZE * 4;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		smc_req_size = round_up(BARTS_SMC_UCODE_SIZE, 4);
-#else
 		smc_req_size = ALIGN(BARTS_SMC_UCODE_SIZE, 4);
-#endif
 		break;
 	case CHIP_TURKS:
 		chip_name = "TURKS";
@@ -744,11 +742,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = EVERGREEN_RLC_UCODE_SIZE * 4;
 		mc_req_size = BTC_MC_UCODE_SIZE * 4;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		smc_req_size = round_up(TURKS_SMC_UCODE_SIZE, 4);
-#else
 		smc_req_size = ALIGN(TURKS_SMC_UCODE_SIZE, 4);
-#endif
 		break;
 	case CHIP_CAICOS:
 		chip_name = "CAICOS";
@@ -757,11 +751,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = EVERGREEN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = EVERGREEN_RLC_UCODE_SIZE * 4;
 		mc_req_size = BTC_MC_UCODE_SIZE * 4;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		smc_req_size = round_up(CAICOS_SMC_UCODE_SIZE, 4);
-#else
 		smc_req_size = ALIGN(CAICOS_SMC_UCODE_SIZE, 4);
-#endif
 		break;
 	case CHIP_CAYMAN:
 		chip_name = "CAYMAN";
@@ -770,11 +760,7 @@ int ni_init_microcode(struct radeon_device *rdev)
 		me_req_size = CAYMAN_PM4_UCODE_SIZE * 4;
 		rlc_req_size = CAYMAN_RLC_UCODE_SIZE * 4;
 		mc_req_size = CAYMAN_MC_UCODE_SIZE * 4;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		smc_req_size = round_up(CAYMAN_SMC_UCODE_SIZE, 4);
-#else
 		smc_req_size = ALIGN(CAYMAN_SMC_UCODE_SIZE, 4);
-#endif
 		break;
 	case CHIP_ARUBA:
 		chip_name = "ARUBA";

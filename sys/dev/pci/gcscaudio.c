@@ -1,4 +1,4 @@
-/*	$NetBSD: gcscaudio.c,v 1.18 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: gcscaudio.c,v 1.18.4.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 SHIMIZU Ryo <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.18 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gcscaudio.c,v 1.18.4.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -549,9 +549,10 @@ static int
 gcscaudio_round_blocksize(void *arg, int blk, int mode,
                           const audio_params_t *param)
 {
-	blk &= -4;
+
 	if (blk > GCSCAUDIO_PRD_SIZE_MAX)
 		blk = GCSCAUDIO_PRD_SIZE_MAX;
+	blk = rounddown(blk, param->channels * param->precision / NBBY);
 
 	return blk;
 }

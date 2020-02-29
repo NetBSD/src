@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.269 2019/11/14 03:17:08 knakahara Exp $	*/
+/*	$NetBSD: key.c,v 1.269.2.1 2020/02/29 20:21:07 ad Exp $	*/
 /*	$FreeBSD: key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.269 2019/11/14 03:17:08 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.269.2.1 2020/02/29 20:21:07 ad Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -73,6 +73,7 @@ __KERNEL_RCSID(0, "$NetBSD: key.c,v 1.269 2019/11/14 03:17:08 knakahara Exp $");
 #include <sys/localcount.h>
 #include <sys/pserialize.h>
 #include <sys/hash.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 #include <net/route.h>
@@ -3961,7 +3962,8 @@ key_setdumpsa(struct secasvar *sav, u_int8_t type, u_int8_t satype,
 			    time_mono_to_wall(lt.sadb_lifetime_addtime);
 			lt.sadb_lifetime_usetime =
 			    time_mono_to_wall(lt.sadb_lifetime_usetime);
-			percpu_foreach(sav->lft_c_counters_percpu,
+			percpu_foreach_xcall(sav->lft_c_counters_percpu,
+			    XC_HIGHPRI_IPL(IPL_SOFTNET),
 			    key_sum_lifetime_counters, sum);
 			lt.sadb_lifetime_allocations =
 			    sum[LIFETIME_COUNTER_ALLOCATIONS];
@@ -5027,7 +5029,8 @@ restart:
 				uint64_t lft_c_bytes = 0;
 				lifetime_counters_t sum = {0};
 
-				percpu_foreach(sav->lft_c_counters_percpu,
+				percpu_foreach_xcall(sav->lft_c_counters_percpu,
+				    XC_HIGHPRI_IPL(IPL_SOFTNET),
 				    key_sum_lifetime_counters, sum);
 				lft_c_bytes = sum[LIFETIME_COUNTER_BYTES];
 
@@ -5089,7 +5092,8 @@ restart:
 				uint64_t lft_c_bytes = 0;
 				lifetime_counters_t sum = {0};
 
-				percpu_foreach(sav->lft_c_counters_percpu,
+				percpu_foreach_xcall(sav->lft_c_counters_percpu,
+				    XC_HIGHPRI_IPL(IPL_SOFTNET),
 				    key_sum_lifetime_counters, sum);
 				lft_c_bytes = sum[LIFETIME_COUNTER_BYTES];
 
@@ -7425,8 +7429,8 @@ key_expire(struct secasvar *sav)
 	lt = mtod(m, struct sadb_lifetime *);
 	lt->sadb_lifetime_len = PFKEY_UNIT64(sizeof(struct sadb_lifetime));
 	lt->sadb_lifetime_exttype = SADB_EXT_LIFETIME_CURRENT;
-	percpu_foreach(sav->lft_c_counters_percpu,
-	    key_sum_lifetime_counters, sum);
+	percpu_foreach_xcall(sav->lft_c_counters_percpu,
+	    XC_HIGHPRI_IPL(IPL_SOFTNET), key_sum_lifetime_counters, sum);
 	lt->sadb_lifetime_allocations = sum[LIFETIME_COUNTER_ALLOCATIONS];
 	lt->sadb_lifetime_bytes = sum[LIFETIME_COUNTER_BYTES];
 	lt->sadb_lifetime_addtime =

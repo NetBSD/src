@@ -1,4 +1,4 @@
-/*	$NetBSD: ocryptodev.c,v 1.14.2.1 2020/01/17 21:47:36 ad Exp $ */
+/*	$NetBSD: ocryptodev.c,v 1.14.2.2 2020/02/29 20:21:08 ad Exp $ */
 /*	$FreeBSD: src/sys/opencrypto/cryptodev.c,v 1.4.2.4 2003/06/03 00:09:02 sam Exp $	*/
 /*	$OpenBSD: cryptodev.c,v 1.53 2002/07/10 22:21:30 mickey Exp $	*/
 
@@ -69,7 +69,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.14.2.1 2020/01/17 21:47:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ocryptodev.c,v 1.14.2.2 2020/02/29 20:21:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -287,36 +287,3 @@ ocryptodev_msession(struct fcrypt *fcr, struct osession_n_op *osn_ops,
 
 	return 0;
 }
-
-static void
-crypto_50_init(void)
-{
-
-	MODULE_HOOK_SET(ocryptof_50_hook, ocryptof_ioctl);
-}
-
-static void
-crypto_50_fini(void)
-{
-
-	MODULE_HOOK_UNSET(ocryptof_50_hook);
-}
-
-MODULE(MODULE_CLASS_EXEC, compat_crypto_50, "crypto,compat_50");
- 
-static int
-compat_crypto_50_modcmd(modcmd_t cmd, void *arg)
-{
- 
-	switch (cmd) {
-	case MODULE_CMD_INIT:
-		crypto_50_init();
-		return 0;
-	case MODULE_CMD_FINI:
-		crypto_50_fini();
-		return 0;
-	default: 
-		return ENOTTY;
-	}
-}
-

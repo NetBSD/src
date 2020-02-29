@@ -1,4 +1,4 @@
-/*	$NetBSD: dbri.c,v 1.41 2019/06/08 08:02:38 isaki Exp $	*/
+/*	$NetBSD: dbri.c,v 1.41.4.1 2020/02/29 20:19:15 ad Exp $	*/
 
 /*
  * Copyright (C) 1997 Rudolf Koenig (rfkoenig@immd4.informatik.uni-erlangen.de)
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.41 2019/06/08 08:02:38 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dbri.c,v 1.41.4.1 2020/02/29 20:19:15 ad Exp $");
 
 #include "audio.h"
 #if NAUDIO > 0
@@ -1636,8 +1636,8 @@ dbri_round_blocksize(void *hdl, int bs, int mode,
 			const audio_params_t *param)
 {
 
-	if (bs > 0x1fff)
-		return 0x1fff;
+	if (bs > 0x1ffc)
+		return 0x1ffc;
 	return bs;
 }
 

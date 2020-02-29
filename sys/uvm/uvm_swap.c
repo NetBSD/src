@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_swap.c,v 1.185 2019/12/27 09:41:51 msaitoh Exp $	*/
+/*	$NetBSD: uvm_swap.c,v 1.185.2.1 2020/02/29 20:21:12 ad Exp $	*/
 
 /*
  * Copyright (c) 1995, 1996, 1997, 2009 Matthew R. Green
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.185 2019/12/27 09:41:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_swap.c,v 1.185.2.1 2020/02/29 20:21:12 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_compat_netbsd.h"
@@ -1778,10 +1778,6 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	write = (flags & B_READ) == 0;
 	async = (flags & B_ASYNC) != 0;
 
-	/* XXX swap io make take place before the aiodone queue exists */
-	if (uvm.aiodone_queue == NULL)
-		async = 0;
-
 	/*
 	 * allocate a buf for the i/o.
 	 */
@@ -1836,8 +1832,7 @@ uvm_swap_io(struct vm_page **pps, int startslot, int npages, int flags)
 	 */
 
 	if (async) {
-		KASSERT(uvm.aiodone_queue != NULL);
-		bp->b_iodone = uvm_aio_biodone;
+		bp->b_iodone = uvm_aio_aiodone;
 		UVMHIST_LOG(pdhist, "doing async!", 0, 0, 0, 0);
 		if (curlwp == uvm.pagedaemon_lwp)
 			BIO_SETPRIO(bp, BPRIO_TIMECRITICAL);

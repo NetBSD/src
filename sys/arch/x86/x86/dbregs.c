@@ -1,4 +1,4 @@
-/*	$NetBSD: dbregs.c,v 1.14 2019/01/14 18:54:07 maxv Exp $	*/
+/*	$NetBSD: dbregs.c,v 1.14.6.1 2020/02/29 20:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2016 The NetBSD Foundation, Inc.
@@ -297,13 +297,10 @@ x86_dbregs_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	struct pcb *oldpcb, *newpcb;
 	bool olddb, newdb;
 
-	oldpcb = (oldlwp != NULL) ? lwp_getpcb(oldlwp) : NULL;
+	oldpcb = lwp_getpcb(oldlwp);
 	newpcb = lwp_getpcb(newlwp);
 
-	olddb = false;
-	if (oldpcb) {
-		olddb = (oldpcb->pcb_flags & PCB_DBREGS) != 0;
-	}
+	olddb = (oldpcb->pcb_flags & PCB_DBREGS) != 0;
 	newdb = (newpcb->pcb_flags & PCB_DBREGS) != 0;
 
 	if (__predict_true(!olddb && !newdb)) {

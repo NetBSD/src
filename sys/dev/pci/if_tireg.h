@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.22 2019/09/13 07:55:07 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.22.2.1 2020/02/29 20:19:10 ad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -270,7 +270,7 @@
 #define TI_GCR_RXRETURNCONS_IDX		0x680
 #define TI_GCR_CMDRING			0x700
 
-#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE);
+#define TI_GCR_NIC_ADDR(x)		(x - TI_GCR_BASE)
 
 /*
  * Local memory window. The local memory window is a 2K shared
@@ -373,21 +373,15 @@
  */
 #define TI_MEM_MAX		0x7FFFFF
 
-/*
- * Even on the alpha, pci addresses are 32-bit quantities
- */
-
 #ifdef __64_bit_pci_addressing__
 typedef struct {
 	u_int64_t		ti_addr;
 } ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr
 #else
 typedef struct {
 	u_int32_t		ti_addr_hi;
 	u_int32_t		ti_addr_lo;
 } ti_hostaddr;
-#define TI_HOSTADDR(x)	x.ti_addr_lo
 #endif
 
 /*
@@ -1103,6 +1097,8 @@ struct ti_softc {
 	struct ti_tx_desc	*ti_tx_ring_nic;/* pointer to shared mem */
 
 	struct ti_chain_data	ti_cdata;	/* mbufs */
+
+	uint64_t		ti_if_collisions;
 
 	/*
 	 * Function pointers to deal with Tigon 1 vs. Tigon 2 differences.

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tap.c,v 1.115 2020/01/06 20:31:35 christos Exp $	*/
+/*	$NetBSD: if_tap.c,v 1.115.2.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*
  *  Copyright (c) 2003, 2004, 2008, 2009 The NetBSD Foundation.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.115 2020/01/06 20:31:35 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tap.c,v 1.115.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 
@@ -451,7 +451,7 @@ tap_detach(device_t self, int flags)
 		    "sysctl_destroyv returned %d, ignoring\n", error);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
-	ifmedia_removeall(&sc->sc_im);
+	ifmedia_fini(&sc->sc_im);
 	seldestroy(&sc->sc_rsel);
 	mutex_destroy(&sc->sc_lock);
 	cv_destroy(&sc->sc_cv);
@@ -524,8 +524,7 @@ tap_start(struct ifnet *ifp)
 			if (m0 == NULL)
 				goto done;
 
-			ifp->if_opackets++;
-			ifp->if_obytes += m0->m_len;
+			if_statadd2(ifp, if_opackets, 1, if_obytes, m0->m_len);
 			bpf_mtap(ifp, m0, BPF_D_OUT);
 
 			m_freem(m0);
@@ -893,8 +892,7 @@ tap_dev_close(struct tap_softc *sc)
 			if (m == NULL)
 				break;
 
-			ifp->if_opackets++;
-			ifp->if_obytes += m->m_len;
+			if_statadd2(ifp, if_opackets, 1, if_obytes, m->m_len);
 			bpf_mtap(ifp, m, BPF_D_OUT);
 			m_freem(m);
 		}
@@ -980,8 +978,8 @@ tap_dev_read(int unit, struct uio *uio, int flags)
 		goto out;
 	}
 
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_len; // XXX: only first in chain
+	if_statadd2(ifp, if_opackets, 1,
+	    if_obytes, m->m_len);		/* XXX only first in chain */
 	bpf_mtap(ifp, m, BPF_D_OUT);
 	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_OUT)) != 0)
 		goto out;
@@ -1069,7 +1067,7 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 	/* One write, one packet, that's the rule */
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return ENOBUFS;
 	}
 	m->m_pkthdr.len = uio->uio_resid;
@@ -1089,15 +1087,14 @@ tap_dev_write(int unit, struct uio *uio, int flags)
 		mp = &(*mp)->m_next;
 	}
 	if (error) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		return error;
 	}
 
 	m_set_rcvif(m, ifp);
 
-	ifp->if_ipackets++;
-	ifp->if_ibytes += len;
+	if_statadd2(ifp, if_ipackets, 1, if_ibytes, len);
 	bpf_mtap(ifp, m, BPF_D_IN);
 	if ((error = pfil_run_hooks(ifp->if_pfil, &m, ifp, PFIL_IN)) != 0)
 		return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_stolen.c,v 1.12 2019/10/01 18:44:24 msaitoh Exp $	*/
+/*	$NetBSD: i915_gem_stolen.c,v 1.12.2.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2008-2012 Intel Corporation
@@ -29,13 +29,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.12 2019/10/01 18:44:24 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_stolen.c,v 1.12.2.1 2020/02/29 20:20:14 ad Exp $");
 
-#include <linux/printk.h>
-#include <linux/err.h>
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 #define KB(x) ((x) * 1024)
 #define MB(x) (KB(x) * 1024)
@@ -290,11 +290,7 @@ void i915_gem_cleanup_stolen(struct drm_device *dev)
 	if (!drm_mm_initialized(&dev_priv->mm.stolen))
 		return;
 
-#ifdef __NetBSD__
-	linux_mutex_destroy(&dev_priv->mm.stolen_lock);
-#else
 	mutex_destroy(&dev_priv->mm.stolen_lock);
-#endif
 
 	drm_mm_takedown(&dev_priv->mm.stolen);
 }
@@ -415,11 +411,7 @@ int i915_gem_init_stolen(struct drm_device *dev)
 	unsigned long reserved_total, reserved_base = 0, reserved_size;
 	unsigned long stolen_top;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->mm.stolen_lock);
-#else
 	mutex_init(&dev_priv->mm.stolen_lock);
-#endif
 
 #ifdef CONFIG_INTEL_IOMMU
 	if (intel_iommu_gfx_mapped && INTEL_INFO(dev)->gen < 8) {

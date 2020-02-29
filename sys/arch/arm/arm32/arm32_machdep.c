@@ -1,4 +1,4 @@
-/*	$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh Exp $	*/
+/*	$NetBSD: arm32_machdep.c,v 1.130.2.1 2020/02/29 20:18:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1998 Mark Brinicombe.
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.130.2.1 2020/02/29 20:18:17 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_arm_start.h"
@@ -53,24 +53,24 @@ __KERNEL_RCSID(0, "$NetBSD: arm32_machdep.c,v 1.130 2019/12/27 09:45:26 msaitoh 
 #include "opt_pmap_debug.h"
 
 #include <sys/param.h>
+
 #include <sys/atomic.h>
-#include <sys/systm.h>
-#include <sys/reboot.h>
-#include <sys/proc.h>
+#include <sys/buf.h>
+#include <sys/cpu.h>
+#include <sys/device.h>
+#include <sys/intr.h>
+#include <sys/ipi.h>
 #include <sys/kauth.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
-#include <sys/mount.h>
-#include <sys/buf.h>
-#include <sys/msgbuf.h>
-#include <sys/device.h>
-#include <sys/sysctl.h>
-#include <sys/cpu.h>
-#include <sys/intr.h>
 #include <sys/module.h>
-#include <sys/atomic.h>
+#include <sys/mount.h>
+#include <sys/msgbuf.h>
+#include <sys/proc.h>
+#include <sys/reboot.h>
+#include <sys/sysctl.h>
+#include <sys/systm.h>
 #include <sys/xcall.h>
-#include <sys/ipi.h>
 
 #include <uvm/uvm_extern.h>
 
@@ -472,7 +472,7 @@ SYSCTL_SETUP(sysctl_machdep_setup, "sysctl machdep subtree setup")
 	sysctl_createv(clog, 0, NULL, NULL,
 		       CTLFLAG_PERMANENT|CTLFLAG_READONLY,
 		       CTLTYPE_INT, "fpu_id", NULL,
-		       NULL, 0, &cpu_info_store.ci_vfp_id, 0,
+		       NULL, 0, &cpu_info_store[0].ci_vfp_id, 0,
 		       CTL_MACHDEP, CTL_CREATE, CTL_EOL);
 #endif
 	sysctl_createv(clog, 0, NULL, NULL,
@@ -735,7 +735,6 @@ void
 cpu_init_secondary_processor(int cpuindex)
 {
 	// pmap_kernel has been successfully built and we can switch to it
-
 	cpu_domains(DOMAIN_DEFAULT);
 	cpu_idcache_wbinv_all();
 
@@ -777,27 +776,13 @@ cpu_init_secondary_processor(int cpuindex)
 	VPRINTS(")");
 #endif
 
-	VPRINTS(" hatched=");
-	VPRINTX(arm_cpu_hatched | __BIT(cpuindex));
+	VPRINTS(" hatched|=");
+	VPRINTX(__BIT(cpuindex));
 	VPRINTS("\n\r");
 
-	atomic_or_uint(&arm_cpu_hatched, __BIT(cpuindex));
+	cpu_set_hatched(cpuindex);
 
 	/* return to assembly to wait for cpu_boot_secondary_processors */
-}
-
-void
-cpu_boot_secondary_processors(void)
-{
-	VPRINTF("%s: writing mbox with %#x\n", __func__, arm_cpu_hatched);
-	arm_cpu_mbox = arm_cpu_hatched;
-	membar_producer();
-#ifdef _ARM_ARCH_7
-	__asm __volatile("sev; sev; sev");
-#endif
-	while (membar_consumer(), arm_cpu_mbox) {
-		__asm __volatile("wfe" ::: "memory");
-	}
 }
 
 void

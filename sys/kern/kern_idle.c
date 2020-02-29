@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_idle.c,v 1.29.2.2 2020/01/25 22:38:50 ad Exp $	*/
+/*	$NetBSD: kern_idle.c,v 1.29.2.3 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
  * Copyright (c)2002, 2006, 2007 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.29.2.2 2020/01/25 22:38:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_idle.c,v 1.29.2.3 2020/02/29 20:21:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -56,7 +56,7 @@ idle_loop(void *dummy)
 	binuptime(&l->l_stime);
 	spc->spc_flags |= SPCF_RUNNING;
 	KASSERT(l->l_stat == LSONPROC);
-	KASSERT((l->l_flag & LW_RUNNING) != 0);
+	KASSERT((l->l_pflag & LP_RUNNING) != 0);
 	lwp_unlock(l);
 
 	/*
@@ -119,7 +119,7 @@ create_idle_lwp(struct cpu_info *ci)
 		 * takes an interrupt before it calls idle_loop().
 		 */
 		l->l_stat = LSONPROC;
-		l->l_flag |= LW_RUNNING;
+		l->l_pflag |= LP_RUNNING;
 		ci->ci_onproc = l;
 	}
 	lwp_unlock(l);

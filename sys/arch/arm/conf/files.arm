@@ -1,4 +1,4 @@
-#	$NetBSD: files.arm,v 1.149.2.2 2020/01/25 22:38:38 ad Exp $
+#	$NetBSD: files.arm,v 1.149.2.3 2020/02/29 20:18:18 ad Exp $
 
 # temporary define to allow easy moving to ../arch/arm/arm32
 defflag				ARM32
@@ -200,6 +200,7 @@ file	arch/arm/arm/cpufunc_asm_ixp12x0.S	cpu_ixp12x0
 file	arch/arm/arm/cpufunc_asm_sheeva.S	cpu_sheeva
 file	arch/arm/arm/cpu_exec.c
 file	arch/arm/arm/cpu_in_cksum.S		(inet | inet6) & cpu_in_cksum
+file	arch/arm/arm/cpu_subr.c
 file	arch/arm/arm/fusu.S
 file	arch/arm/arm/idle_machdep.c
 file	arch/arm/arm/lock_cas.S

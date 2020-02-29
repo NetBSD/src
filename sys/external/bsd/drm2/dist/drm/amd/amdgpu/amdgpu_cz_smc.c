@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp $	*/
+/*	$NetBSD: amdgpu_cz_smc.c,v 1.2.8.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2014 Advanced Micro Devices, Inc.
@@ -23,10 +23,9 @@
  *
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.2.8.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/firmware.h>
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "smu8.h"
@@ -42,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_cz_smc.c,v 1.2 2019/02/23 19:36:15 kamil Exp 
 #include "smu/smu_8_0_sh_mask.h"
 #include "gca/gfx_8_0_d.h"
 #include "gca/gfx_8_0_sh_mask.h"
+
+#include <linux/nbsd-namespace.h>
 
 uint32_t cz_get_argument(struct amdgpu_device *adev)
 {
@@ -501,7 +502,7 @@ static int cz_smu_populate_single_scratch_entry(struct amdgpu_device *adev,
 
 	priv->smu_buffer_used_bytes += size_in_byte;
 	entry->data_size = size_in_byte;
-	entry->kaddr = (char *)priv->smu_buffer.kaddr + priv->smu_buffer_used_bytes;
+	entry->kaddr = priv->smu_buffer.kaddr + priv->smu_buffer_used_bytes;
 	entry->mc_addr_low = lower_32_bits(mc_addr);
 	entry->mc_addr_high = upper_32_bits(mc_addr);
 	entry->firmware_ID = scratch_type;
@@ -833,21 +834,12 @@ int cz_smu_init(struct amdgpu_device *adev)
 	adev->smu.fw_flags = 0;
 	priv->toc_buffer.data_size = 4096;
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	priv->smu_buffer.data_size =
-				round_up(UCODE_ID_RLC_SCRATCH_SIZE_BYTE, 32) +
-				round_up(UCODE_ID_RLC_SRM_ARAM_SIZE_BYTE, 32) +
-				round_up(UCODE_ID_RLC_SRM_DRAM_SIZE_BYTE, 32) +
-				round_up(sizeof(struct SMU8_MultimediaPowerLogData), 32) +
-				round_up(sizeof(struct SMU8_Fusion_ClkTable), 32);
-#else
 	priv->smu_buffer.data_size =
 				ALIGN(UCODE_ID_RLC_SCRATCH_SIZE_BYTE, 32) +
 				ALIGN(UCODE_ID_RLC_SRM_ARAM_SIZE_BYTE, 32) +
 				ALIGN(UCODE_ID_RLC_SRM_DRAM_SIZE_BYTE, 32) +
 				ALIGN(sizeof(struct SMU8_MultimediaPowerLogData), 32) +
 				ALIGN(sizeof(struct SMU8_Fusion_ClkTable), 32);
-#endif
 
 	/* prepare toc buffer and smu buffer:
 	* 1. create amdgpu_bo for toc buffer and smu buffer

@@ -1,4 +1,4 @@
-/*	$NetBSD: bus_dma_hacks.h,v 1.18.2.1 2020/01/25 22:38:50 ad Exp $	*/
+/*	$NetBSD: bus_dma_hacks.h,v 1.18.2.2 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -118,12 +118,15 @@ bus_dmatag_bounces_paddr(bus_dma_tag_t dmat, paddr_t pa)
 #endif
 }
 
+#define MAX_STACK_SEGS 32	/* XXXMRG: 512 bytes on 16 byte seg platforms */
+
 static inline int
 bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
     struct pglist *pglist, bus_size_t size, int flags)
 {
 	km_flag_t kmflags;
 	bus_dma_segment_t *segs;
+	bus_dma_segment_t stacksegs[MAX_STACK_SEGS];
 	int nsegs, seg;
 	struct vm_page *page;
 	int error;
@@ -136,14 +139,23 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 	}
 
 	KASSERT(nsegs <= (SIZE_MAX / sizeof(segs[0])));
-	switch (flags & (BUS_DMA_WAITOK|BUS_DMA_NOWAIT)) {
-	case BUS_DMA_WAITOK:	kmflags = KM_SLEEP;	break;
-	case BUS_DMA_NOWAIT:	kmflags = KM_NOSLEEP;	break;
-	default:		panic("invalid flags: %d", flags);
+	if (nsegs > MAX_STACK_SEGS) {
+		switch (flags & (BUS_DMA_WAITOK|BUS_DMA_NOWAIT)) {
+		case BUS_DMA_WAITOK:
+			kmflags = KM_SLEEP;
+			break;
+		case BUS_DMA_NOWAIT:
+			kmflags = KM_NOSLEEP;
+			break;
+		default:
+			panic("invalid flags: %d", flags);
+		}
+		segs = kmem_alloc((nsegs * sizeof(segs[0])), kmflags);
+		if (segs == NULL)
+			return ENOMEM;
+	} else {
+		segs = stacksegs;
 	}
-	segs = kmem_alloc((nsegs * sizeof(segs[0])), kmflags);
-	if (segs == NULL)
-		return ENOMEM;
 
 	seg = 0;
 	TAILQ_FOREACH(page, pglist, pageq.queue) {
@@ -166,7 +178,10 @@ bus_dmamap_load_pglist(bus_dma_tag_t tag, bus_dmamap_t map,
 fail1: __unused
 	bus_dmamap_unload(tag, map);
 fail0:	KASSERT(error);
-out:	kmem_free(segs, (nsegs * sizeof(segs[0])));
+out:	if (segs != stacksegs) {
+		KASSERT(nsegs > MAX_STACK_SEGS);
+		kmem_free(segs, (nsegs * sizeof(segs[0])));
+	}
 	return error;
 }
 

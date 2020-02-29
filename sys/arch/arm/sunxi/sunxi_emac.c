@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_emac.c,v 1.28 2019/07/13 21:56:23 thorpej Exp $ */
+/* $NetBSD: sunxi_emac.c,v 1.28.4.1 2020/02/29 20:18:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2016-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -33,7 +33,7 @@
 #include "opt_net_mpsafe.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.28 2019/07/13 21:56:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_emac.c,v 1.28.4.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -828,7 +828,7 @@ sunxi_emac_rxintr(struct sunxi_emac_softc *sc)
 				/* XXX hole in RX ring */
 			}
 		} else
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 		sunxi_emac_dma_sync(sc, sc->rx.desc_tag, sc->rx.desc_map,
 		    index, index + 1,
@@ -876,7 +876,7 @@ sunxi_emac_txintr(struct sunxi_emac_softc *sc)
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	}
 
 	sc->tx.next = i;

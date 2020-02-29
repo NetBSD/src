@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_select.c,v 1.50 2019/11/22 20:04:03 ad Exp $	*/
+/*	$NetBSD: sys_select.c,v 1.50.2.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2019 The NetBSD Foundation, Inc.
@@ -84,7 +84,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.50 2019/11/22 20:04:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_select.c,v 1.50.2.1 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,7 +136,7 @@ static const int sel_flag[] = {
 	POLLRDBAND
 };
 
-static syncobj_t select_sobj = {
+syncobj_t select_sobj = {
 	.sobj_flag	= SOBJ_SLEEPQ_FIFO,
 	.sobj_unsleep	= sleepq_unsleep,
 	.sobj_changepri	= sleepq_changepri,
@@ -354,7 +354,7 @@ selcommon(register_t *retval, int nd, fd_set *u_in, fd_set *u_ou,
 
 	if (nd < 0)
 		return (EINVAL);
-	nf = curlwp->l_fd->fd_dt->dt_nfiles;
+	nf = atomic_load_consume(&curlwp->l_fd->fd_dt)->dt_nfiles;
 	if (nd > nf) {
 		/* forgiving; slightly wrong */
 		nd = nf;

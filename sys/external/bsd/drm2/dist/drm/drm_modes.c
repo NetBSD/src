@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_modes.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $	*/
+/*	$NetBSD: drm_modes.c,v 1.7.6.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright © 1997-2003 by The XFree86 Project, Inc.
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_modes.c,v 1.7 2018/08/27 04:58:19 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_modes.c,v 1.7.6.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/list.h>
 #include <linux/list_sort.h>
@@ -1236,7 +1236,7 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 	const char *name;
 	unsigned int namelen;
 	bool res_specified = false, bpp_specified = false, refresh_specified = false;
-	long xres = 0, yres = 0, bpp = 32, refresh = 0;
+	unsigned int xres = 0, yres = 0, bpp = 32, refresh = 0;
 	bool yres_specified = false, cvt = false, rb = false;
 	bool interlace = false, margins = false, was_digit = false;
 	int i;
@@ -1261,35 +1261,26 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 		case '@':
 			if (!refresh_specified && !bpp_specified &&
 			    !yres_specified && !cvt && !rb && was_digit) {
-				if (kstrtol(&name[i+1], 10, &refresh) == 0) {
-					refresh_specified = true;
-					was_digit = false;
-				} else {
-					goto done;
-				}
+				refresh = simple_strtol(&name[i+1], NULL, 10);
+				refresh_specified = true;
+				was_digit = false;
 			} else
 				goto done;
 			break;
 		case '-':
 			if (!bpp_specified && !yres_specified && !cvt &&
 			    !rb && was_digit) {
-				if (kstrtol(&name[i+1], 10, &bpp) == 0) {
-					bpp_specified = true;
-					was_digit = false;
-				} else {
-					goto done;
-				}
+				bpp = simple_strtol(&name[i+1], NULL, 10);
+				bpp_specified = true;
+				was_digit = false;
 			} else
 				goto done;
 			break;
 		case 'x':
 			if (!yres_specified && was_digit) {
-				if (kstrtol(&name[i+1], 10, &yres) == 0) {
-					yres_specified = true;
-					was_digit = false;
-				} else {
-					goto done;
-				}
+				yres = simple_strtol(&name[i+1], NULL, 10);
+				yres_specified = true;
+				was_digit = false;
 			} else
 				goto done;
 			break;
@@ -1347,8 +1338,8 @@ bool drm_mode_parse_command_line_for_connector(const char *mode_option,
 	}
 
 	if (i < 0 && yres_specified) {
-		char *ch = NULL;
-		xres = strtoll(name, &ch, 10);
+		char *ch;
+		xres = simple_strtol(name, &ch, 10);
 		if ((ch != NULL) && (*ch == 'x'))
 			res_specified = true;
 		else

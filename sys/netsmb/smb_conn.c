@@ -1,4 +1,4 @@
-/*	$NetBSD: smb_conn.c,v 1.30 2019/04/15 21:00:33 christos Exp $	*/
+/*	$NetBSD: smb_conn.c,v 1.30.6.1 2020/02/29 20:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.30 2019/04/15 21:00:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smb_conn.c,v 1.30.6.1 2020/02/29 20:21:07 ad Exp $");
 
 /*
  * Connection engine.
@@ -112,7 +112,7 @@ smb_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 		return KAUTH_RESULT_DEFER;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	switch (req) {
 	case KAUTH_REQ_NETWORK_SMB_SHARE_ACCESS: {

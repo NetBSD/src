@@ -1,4 +1,4 @@
-#	$NetBSD: majors.amd64,v 1.32 2019/01/28 02:28:56 dholland Exp $
+#	$NetBSD: majors.amd64,v 1.32.6.1 2020/02/29 20:18:16 ad Exp $
 #
 # Device majors for amd64
 #
@@ -64,7 +64,7 @@ device-major	ucom		char 66			ucom
 device-major	sysmon		char 67			sysmon
 
 device-major	ld		char 69  block 19	ld
-device-major	urio		char 70			urio
+#device-major	obsolete	char 70			obsolete (urio)
 device-major	bktr		char 71			bktr
 
 device-major	cz		char 73			cz

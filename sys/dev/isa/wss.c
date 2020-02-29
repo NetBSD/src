@@ -1,4 +1,4 @@
-/*	$NetBSD: wss.c,v 1.73 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: wss.c,v 1.73.4.1 2020/02/29 20:19:09 ad Exp $	*/
 
 /*
  * Copyright (c) 1994 John Brezak
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.73 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: wss.c,v 1.73.4.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -89,7 +89,6 @@ const struct audio_hw_if wss_hw_if = {
 	.close			= ad1848_isa_close,
 	.query_format		= ad1848_query_format,
 	.set_format		= ad1848_set_format,
-	.round_blocksize	= ad1848_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= ad1848_isa_halt_output,
 	.halt_input		= ad1848_isa_halt_input,

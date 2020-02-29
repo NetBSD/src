@@ -1,4 +1,4 @@
-/*	$NetBSD: if_jme.c,v 1.46 2019/09/23 06:50:04 maxv Exp $	*/
+/*	$NetBSD: if_jme.c,v 1.46.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Manuel Bouyer.  All rights reserved.
@@ -58,7 +58,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.46 2019/09/23 06:50:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_jme.c,v 1.46.2.1 2020/02/29 20:19:10 ad Exp $");
 
 
 #include <sys/param.h>
@@ -200,9 +200,9 @@ static void jme_ticks(void *);
 static void jme_mac_config(jme_softc_t *);
 static void jme_set_filter(jme_softc_t *);
 
-int jme_mii_read(device_t, int, int, uint16_t *);
-int jme_mii_write(device_t, int, int, uint16_t);
-void jme_statchg(struct ifnet *);
+static int jme_mii_read(device_t, int, int, uint16_t *);
+static int jme_mii_write(device_t, int, int, uint16_t);
+static void jme_statchg(struct ifnet *);
 
 static int jme_eeprom_read_byte(struct jme_softc *, uint8_t, uint8_t *);
 static int jme_eeprom_macaddr(struct jme_softc *);
@@ -280,6 +280,7 @@ jme_pci_attach(device_t parent, device_t self, void *aux)
 	sc->jme_dev = self;
 	aprint_normal("\n");
 	callout_init(&sc->jme_tick_ch, 0);
+	callout_setfunc(&sc->jme_tick_ch, jme_ticks, sc);
 
 	jp = jme_lookup_product(pa->pa_id);
 	if (jp == NULL)
@@ -962,15 +963,14 @@ jme_init(struct ifnet *ifp, int do_ifinit)
 	    sc->jme_txcsr | TXCSR_TX_ENB);
 
 	/* start ticks calls */
-	callout_reset(&sc->jme_tick_ch, hz, jme_ticks, sc);
+	callout_schedule(&sc->jme_tick_ch, hz);
 	sc->jme_if.if_flags |= IFF_RUNNING;
 	sc->jme_if.if_flags &= ~IFF_OACTIVE;
 	splx(s);
 	return 0;
 }
 
-
-int
+static int
 jme_mii_read(device_t self, int phy, int reg, uint16_t *val)
 {
 	struct jme_softc *sc = device_private(self);
@@ -1004,7 +1004,7 @@ jme_mii_read(device_t self, int phy, int reg, uint16_t *val)
 	return 0;
 }
 
-int
+static int
 jme_mii_write(device_t self, int phy, int reg, uint16_t val)
 {
 	struct jme_softc *sc = device_private(self);
@@ -1038,7 +1038,7 @@ jme_mii_write(device_t self, int phy, int reg, uint16_t val)
 	return 0;
 }
 
-void
+static void
 jme_statchg(struct ifnet *ifp)
 {
 	if ((ifp->if_flags & (IFF_UP | IFF_RUNNING)) == (IFF_UP | IFF_RUNNING))
@@ -1095,7 +1095,7 @@ jme_intr_rx(jme_softc_t *sc) {
 			printf("rx error flags 0x%x buflen 0x%x\n",
 			    flags, buflen);
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/* reuse the mbufs */
 			for (seg = 0; seg < nsegs; seg++) {
 				m = sc->jme_rxmbuf[i];
@@ -1139,7 +1139,7 @@ jme_intr_rx(jme_softc_t *sc) {
 				JME_DESC_INC(sc->jme_rx_cons, JME_NBUFS);
 				i = sc->jme_rx_cons;
 			}
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
@@ -1595,13 +1595,14 @@ jme_txeof(struct jme_softc *sc)
 			break;
 
 		if ((status & (JME_TD_TMOUT | JME_TD_RETRY_EXP)) != 0)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		else {
-			ifp->if_opackets++;
-			if ((status & JME_TD_COLLISION) != 0)
-				ifp->if_collisions +=
+			if_statinc(ifp, if_opackets);
+			if ((status & JME_TD_COLLISION) != 0) {
+				if_statadd(ifp, if_collisions,
 				    le32toh(desc->buflen) &
-				    JME_TD_BUF_LEN_MASK;
+				    JME_TD_BUF_LEN_MASK);
+			}
 		}
 		/*
 		 * Only the first descriptor of multi-descriptor
@@ -1673,7 +1674,7 @@ nexttx:
 		/* try to add this mbuf to the TX ring */
 		if (jme_encap(sc, &mb_head)) {
 			if (mb_head == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				/* packet dropped, try next one */
 				goto nexttx;
 			}
@@ -1726,7 +1727,7 @@ jme_ifwatchdog(struct ifnet *ifp)
 	if ((ifp->if_flags & IFF_RUNNING) == 0)
 		return;
 	printf("%s: device timeout\n", device_xname(sc->jme_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	jme_init(ifp, 0);
 }
 
@@ -1755,7 +1756,7 @@ jme_ticks(void *v)
 	mii_tick(&sc->jme_mii);
 
 	/* every seconds */
-	callout_reset(&sc->jme_tick_ch, hz, jme_ticks, sc);
+	callout_schedule(&sc->jme_tick_ch, hz);
 	splx(s);
 }
 

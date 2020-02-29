@@ -1,4 +1,4 @@
-/*	$NetBSD: smbfs_vfsops.c,v 1.106.20.1 2020/01/17 21:47:34 ad Exp $	*/
+/*	$NetBSD: smbfs_vfsops.c,v 1.106.20.2 2020/02/29 20:21:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2000-2001, Boris Popov
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.106.20.1 2020/01/17 21:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smbfs_vfsops.c,v 1.106.20.2 2020/02/29 20:21:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -406,7 +406,7 @@ smbfs_sync_selector(void *cl, struct vnode *vp)
 
 	if ((vp->v_type == VNON || (np->n_flag & NMODIFIED) == 0) &&
 	     LIST_EMPTY(&vp->v_dirtyblkhd) &&
-	     UVM_OBJ_IS_CLEAN(&vp->v_uobj))
+	     (vp->v_iflag & VI_ONWORKLST) == 0)
 		return false;
 
 	return true;

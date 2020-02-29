@@ -1,4 +1,4 @@
-/*	$NetBSD: route.c,v 1.226 2019/11/13 02:51:22 ozaki-r Exp $	*/
+/*	$NetBSD: route.c,v 1.226.2.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2008 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.226 2019/11/13 02:51:22 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: route.c,v 1.226.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #include <sys/param.h>
 #ifdef RTFLUSH_DEBUG
@@ -2231,12 +2231,9 @@ rtcache_percpu_init_cpu(void *p, void *arg __unused, struct cpu_info *ci __unuse
 percpu_t *
 rtcache_percpu_alloc(void)
 {
-	percpu_t *pc;
 
-	pc = percpu_alloc(sizeof(struct route *));
-	percpu_foreach(pc, rtcache_percpu_init_cpu, NULL);
-
-	return pc;
+	return percpu_create(sizeof(struct route *),
+	    rtcache_percpu_init_cpu, NULL, NULL);
 }
 
 const struct sockaddr *

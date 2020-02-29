@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_fb.c,v 1.7 2018/08/27 07:44:22 riastradh Exp $	*/
+/*	$NetBSD: radeon_fb.c,v 1.7.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -26,7 +26,7 @@
  *     David Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.7 2018/08/27 07:44:22 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.7.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <linux/module.h>
 #include <linux/slab.h>
@@ -44,6 +44,8 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_fb.c,v 1.7 2018/08/27 07:44:22 riastradh Exp 
 
 #ifdef __NetBSD__
 #include "radeondrmkmsfb.h"
+
+#include <linux/nbsd-namespace.h>
 #endif
 
 /* object hierarchy -
@@ -133,17 +135,9 @@ static int radeonfb_create_pinned_object(struct radeon_fbdev *rfbdev,
 						  fb_tiled) * ((bpp + 1) / 8);
 
 	if (rdev->family >= CHIP_R600)
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-		height = round_up(mode_cmd->height, 8);
-#else
 		height = ALIGN(mode_cmd->height, 8);
-#endif
 	size = mode_cmd->pitches[0] * height;
-#ifdef __NetBSD__		/* XXX ALIGN means something else.  */
-	aligned_size = round_up(size, PAGE_SIZE);
-#else
 	aligned_size = ALIGN(size, PAGE_SIZE);
-#endif
 	ret = radeon_gem_object_create(rdev, aligned_size, 0,
 				       RADEON_GEM_DOMAIN_VRAM,
 				       0, true, &gobj);

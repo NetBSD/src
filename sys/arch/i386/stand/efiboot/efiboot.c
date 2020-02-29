@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.c,v 1.11 2019/09/13 02:19:45 manu Exp $	*/
+/*	$NetBSD: efiboot.c,v 1.11.2.1 2020/02/29 20:18:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -111,8 +111,6 @@ efi_cleanup(void)
 	UINTN NoEntries, MapKey, DescriptorSize;
 	UINT32 DescriptorVersion;
 	size_t allocsz;
-
-	clearit();
 
 	memset(&btinfo_efi, 0, sizeof(btinfo_efi));
 	btinfo_efi.systblpa = (intptr_t)ST;

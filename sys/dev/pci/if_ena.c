@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.19 2019/12/02 03:06:51 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.19.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1561,7 +1561,7 @@ ena_rx_mbuf(struct ena_ring *rx_ring, struct ena_com_rx_buf_info *ena_bufs,
 	ena_rx_hash_mbuf(rx_ring, ena_rx_ctx, mbuf);
 #endif
 
-	ena_trace(ENA_DBG | ENA_RXPTH, "rx mbuf 0x%p, flags=0x%x, len: %d",
+	ena_trace(ENA_DBG | ENA_RXPTH, "rx mbuf %p, flags=0x%x, len: %d",
 	    mbuf, mbuf->m_flags, mbuf->m_pkthdr.len);
 
 	/* DMA address is not needed anymore, unmap it */
@@ -2261,8 +2261,7 @@ ena_up(struct ena_adapter *adapter)
 		if_setdrvflagbits(adapter->ifp, IFF_RUNNING,
 		    IFF_OACTIVE);
 
-		callout_reset(&adapter->timer_service, hz,
-		    ena_timer_service, (void *)adapter);
+		callout_schedule(&adapter->timer_service, hz);
 
 		adapter->up = true;
 
@@ -3349,7 +3348,6 @@ static void ena_keep_alive_wd(void *adapter_data,
 {
 	struct ena_adapter *adapter = (struct ena_adapter *)adapter_data;
 	struct ena_admin_aenq_keep_alive_desc *desc;
-	sbintime_t stime;
 	uint64_t rx_drops;
 
 	desc = (struct ena_admin_aenq_keep_alive_desc *)aenq_e;
@@ -3358,8 +3356,7 @@ static void ena_keep_alive_wd(void *adapter_data,
 	counter_u64_zero(adapter->hw_stats.rx_drops);
 	counter_u64_add(adapter->hw_stats.rx_drops, rx_drops);
 
-	stime = getsbinuptime();
-	(void) atomic_swap_64(&adapter->keep_alive_timestamp, stime);
+	atomic_store_release(&adapter->keep_alive_timestamp, getsbinuptime());
 }
 
 /* Check for keep alive expiration */
@@ -3373,9 +3370,7 @@ static void check_for_missing_keep_alive(struct ena_adapter *adapter)
 	if (likely(adapter->keep_alive_timeout == 0))
 		return;
 
-	/* FreeBSD uses atomic_load_acq_64() in place of the membar + read */
-	membar_sync();
-	timestamp = adapter->keep_alive_timestamp;
+	timestamp = atomic_load_acquire(&adapter->keep_alive_timestamp);
 
 	time = getsbinuptime() - timestamp;
 	if (unlikely(time > adapter->keep_alive_timeout)) {
@@ -3633,8 +3628,7 @@ ena_reset_task(struct work *wk, void *arg)
 		}
 	}
 
-	callout_reset(&adapter->timer_service, hz,
-	    ena_timer_service, (void *)adapter);
+	callout_schedule(&adapter->timer_service, hz);
 
 	rw_exit(&adapter->ioctl_sx);
 
@@ -3804,6 +3798,7 @@ ena_attach(device_t parent, device_t self, void *aux)
 	}
 
 	callout_init(&adapter->timer_service, CALLOUT_MPSAFE);
+	callout_setfunc(&adapter->timer_service, ena_timer_service, adapter);
 
 	/* Initialize reset task queue */
 	rc = workqueue_create(&adapter->reset_tq, "ena_reset_enq",
@@ -3884,6 +3879,7 @@ ena_detach(device_t pdev, int flags)
 		ether_ifdetach(adapter->ifp);
 		if_free(adapter->ifp);
 	}
+	ifmedia_fini(&adapter->media);
 
 	ena_free_all_io_rings_resources(adapter);
 

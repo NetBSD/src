@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_mixer.c,v 1.10 2019/11/23 23:47:57 jmcneill Exp $ */
+/* $NetBSD: sunxi_mixer.c,v 1.10.2.1 2020/02/29 20:18:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2019 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.10 2019/11/23 23:47:57 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_mixer.c,v 1.10.2.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -173,10 +173,25 @@ enum {
 	MIXER_PORT_OUTPUT = 1,
 };
 
+struct sunxi_mixer_compat_data {
+	uint8_t ovl_ui_count;
+	uint8_t mixer_index;
+};
+
+struct sunxi_mixer_compat_data mixer0_data = {
+	.ovl_ui_count = 3,
+	.mixer_index = 0,
+};
+
+struct sunxi_mixer_compat_data mixer1_data = {
+	.ovl_ui_count = 1,
+	.mixer_index = 1,
+};
+
 static const struct of_compat_data compat_data[] = {
-	{ "allwinner,sun8i-h3-de2-mixer-0",	3 },
-	{ "allwinner,sun50i-a64-de2-mixer-0",	3 },
-	{ "allwinner,sun50i-a64-de2-mixer-1",	1 },
+	{ "allwinner,sun8i-h3-de2-mixer-0",	(uintptr_t)&mixer0_data },
+	{ "allwinner,sun50i-a64-de2-mixer-0",	(uintptr_t)&mixer0_data },
+	{ "allwinner,sun50i-a64-de2-mixer-1",	(uintptr_t)&mixer1_data },
 	{ NULL }
 };
 
@@ -1230,6 +1245,8 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 	struct fdt_attach_args * const faa = aux;
 	struct fdt_endpoint *out_ep;
 	const int phandle = faa->faa_phandle;
+	const struct sunxi_mixer_compat_data * const cd =
+	    (const void *)of_search_compatible(phandle, compat_data)->data;
 	struct clk *clk_bus, *clk_mod;
 	struct fdtbus_reset *rst;
 	bus_addr_t addr;
@@ -1267,7 +1284,7 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 	sc->sc_phandle = faa->faa_phandle;
-	sc->sc_ovl_ui_count = of_search_compatible(phandle, compat_data)->data;
+	sc->sc_ovl_ui_count = cd->ovl_ui_count;
 
 	aprint_naive("\n");
 	aprint_normal(": Display Engine Mixer\n");
@@ -1276,7 +1293,14 @@ sunxi_mixer_attach(device_t parent, device_t self, void *aux)
 	sc->sc_ports.dp_ep_get_data = sunxi_mixer_ep_get_data;
 	fdt_ports_register(&sc->sc_ports, self, phandle, EP_DRM_CRTC);
 
-	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports, MIXER_PORT_OUTPUT, 0);
+	out_ep = fdt_endpoint_get_from_index(&sc->sc_ports,
+	    MIXER_PORT_OUTPUT, cd->mixer_index);
+	if (out_ep == NULL) {
+		/* Couldn't find new-style DE2 endpoint, try old style. */
+		out_ep = fdt_endpoint_get_from_index(&sc->sc_ports,
+		    MIXER_PORT_OUTPUT, 0);
+	}
+
 	if (out_ep != NULL)
 		sunxi_drm_register_endpoint(phandle, out_ep);
 }

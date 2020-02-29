@@ -1,4 +1,4 @@
-/*	$NetBSD: radixtree.h,v 1.6 2019/12/05 18:32:25 ad Exp $	*/
+/*	$NetBSD: radixtree.h,v 1.6.2.1 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -47,6 +47,7 @@ struct radix_tree {
 
 #if defined(_KERNEL)
 void radix_tree_init(void);
+void radix_tree_await_memory(void);
 #endif /* defined(_KERNEL) */
 
 /*

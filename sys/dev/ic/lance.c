@@ -1,4 +1,4 @@
-/*	$NetBSD: lance.c,v 1.59 2019/12/27 09:32:10 msaitoh Exp $	*/
+/*	$NetBSD: lance.c,v 1.59.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 1998 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.59 2019/12/27 09:32:10 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lance.c,v 1.59.2.1 2020/02/29 20:19:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -430,14 +430,14 @@ lance_read(struct lance_softc *sc, int boff, int len)
 		printf("%s: invalid packet size %d; dropping\n",
 		    device_xname(sc->sc_dev), len);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
 	/* Pull packet off interface. */
 	m = lance_get(sc, boff, len);
 	if (m == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -479,7 +479,7 @@ lance_watchdog(struct ifnet *ifp)
 	struct lance_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	lance_reset(sc);
 }

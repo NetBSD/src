@@ -1,4 +1,4 @@
-/*	$NetBSD: layer_vfsops.c,v 1.52.2.1 2020/01/17 21:47:36 ad Exp $	*/
+/*	$NetBSD: layer_vfsops.c,v 1.52.2.2 2020/02/29 20:21:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1999 National Aeronautics & Space Administration
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.52.2.1 2020/01/17 21:47:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: layer_vfsops.c,v 1.52.2.2 2020/02/29 20:21:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sysctl.h>
@@ -205,9 +205,10 @@ layerfs_loadvnode(struct mount *mp, struct vnode *vp,
 
 	xp = kmem_alloc(lmp->layerm_size, KM_SLEEP);
 
-	/* Share the interlock with the lower node. */
-	mutex_obj_hold(lowervp->v_interlock);
-	uvm_obj_setlock(&vp->v_uobj, lowervp->v_interlock);
+	/* Share the interlock and vmobjlock with the lower node. */
+	vshareilock(vp, lowervp);
+	rw_obj_hold(lowervp->v_uobj.vmobjlock);
+	uvm_obj_setlock(&vp->v_uobj, lowervp->v_uobj.vmobjlock);
 
 	vp->v_tag = lmp->layerm_tag;
 	vp->v_type = lowervp->v_type;

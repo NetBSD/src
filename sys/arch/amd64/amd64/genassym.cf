@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.80.2.3 2020/01/22 11:40:16 ad Exp $
+#	$NetBSD: genassym.cf,v 1.80.2.4 2020/02/29 20:18:16 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -123,9 +123,6 @@ include <xen/include/public/xen.h>
 endif  
 
 include <sys/bus.h>
-
-define	LSRUN			LSRUN
-define	LSONPROC		LSONPROC
 
 define	UPAGES			UPAGES
 define	USPACE			USPACE

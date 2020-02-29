@@ -1,4 +1,4 @@
-/* $NetBSD: pci_msi_machdep.c,v 1.7 2019/08/03 12:55:46 jmcneill Exp $ */
+/* $NetBSD: pci_msi_machdep.c,v 1.7.2.1 2020/02/29 20:18:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.7 2019/08/03 12:55:46 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pci_msi_machdep.c,v 1.7.2.1 2020/02/29 20:18:19 ad Exp $");
 
 #include <sys/kernel.h>
 #include <sys/kmem.h>
@@ -59,6 +59,26 @@ arm_pci_msi_find_frame(pci_intr_handle_t ih)
 	return NULL;
 }
 
+static struct arm_pci_msi *
+arm_pci_msi_lookup(const struct pci_attach_args *pa)
+{
+	struct arm_pci_msi *msip;
+	uint32_t devid, frameid;
+	int b, d, f;
+
+	pci_decompose_tag(pa->pa_pc, pa->pa_tag, &b, &d, &f);
+
+	devid = (b << 8) | (d << 3) | f;
+	devid = pci_get_devid(pa->pa_pc, devid);
+	frameid = pci_get_frameid(pa->pa_pc, devid);
+
+	SIMPLEQ_FOREACH(msip, &arm_pci_msi_list, msi_link)
+		if (frameid == msip->msi_id)
+			return msip;
+
+	return NULL;
+}
+
 static int
 arm_pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count, const struct pci_attach_args *pa, bool exact)
 {
@@ -68,7 +88,7 @@ arm_pci_msi_alloc_common(pci_intr_handle_t **ihps, int *count, const struct pci_
 	if ((pa->pa_flags & PCI_FLAGS_MSI_OKAY) == 0)
 		return ENODEV;
 
-	msi = SIMPLEQ_FIRST(&arm_pci_msi_list);		/* XXX multiple frame support */
+	msi = arm_pci_msi_lookup(pa);
 	if (msi == NULL || msi->msi_alloc == NULL)
 		return EINVAL;
 
@@ -90,7 +110,7 @@ arm_pci_msix_alloc_common(pci_intr_handle_t **ihps, u_int *table_indexes, int *c
 	if ((pa->pa_flags & PCI_FLAGS_MSIX_OKAY) == 0)
 		return ENODEV;
 
-	msi = SIMPLEQ_FIRST(&arm_pci_msi_list);		/* XXX multiple frame support */
+	msi = arm_pci_msi_lookup(pa);
 	if (msi == NULL || msi->msix_alloc == NULL)
 		return EINVAL;
 

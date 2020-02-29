@@ -1,4 +1,4 @@
-/*	$NetBSD: am79900.c,v 1.28 2018/06/26 06:48:00 msaitoh Exp $	*/
+/*	$NetBSD: am79900.c,v 1.28.10.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -103,7 +103,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.28 2018/06/26 06:48:00 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: am79900.c,v 1.28.10.1 2020/02/29 20:19:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -278,12 +278,12 @@ am79900_rint(struct lance_softc *sc)
 			if (rmd.rmd1 & LE_R1_BUFF)
 				printf("%s: receive buffer error\n",
 				    device_xname(sc->sc_dev));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 		} else if ((rmd.rmd1 & (LE_R1_STP | LE_R1_ENP)) !=
 		    (LE_R1_STP | LE_R1_ENP)) {
 			printf("%s: dropping chained buffer\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 		} else {
 #ifdef LEDEBUG
 			if (sc->sc_debug)
@@ -360,22 +360,22 @@ am79900_tint(struct lance_softc *sc)
 					    device_xname(sc->sc_dev));
 			}
 			if (tmd.tmd2 & LE_T2_LCOL)
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 			if (tmd.tmd2 & LE_T2_RTRY) {
 #ifdef LEDEBUG
 				printf("%s: excessive collisions\n",
 				    device_xname(sc->sc_dev));
 #endif
-				ifp->if_collisions += 16;
+				if_statadd(ifp, if_collisions, 16);
 			}
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		} else {
 			if (tmd.tmd1 & LE_T1_ONE)
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 			else if (tmd.tmd1 & LE_T1_MORE)
 				/* Real number is unknown. */
-				ifp->if_collisions += 2;
-			ifp->if_opackets++;
+				if_statadd(ifp, if_collisions, 2);
+			if_statinc(ifp, if_opackets);
 		}
 
 		if (++bix == sc->sc_ntbuf)
@@ -419,20 +419,20 @@ am79900_intr(void *arg)
 #ifdef LEDEBUG
 			printf("%s: babble\n", device_xname(sc->sc_dev));
 #endif
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		}
 #if 0
 		if (isr & LE_C0_CERR) {
 			printf("%s: collision error\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 		}
 #endif
 		if (isr & LE_C0_MISS) {
 #ifdef LEDEBUG
 			printf("%s: missed packet\n", device_xname(sc->sc_dev));
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 		}
 		if (isr & LE_C0_MERR) {
 			printf("%s: memory error\n", device_xname(sc->sc_dev));
@@ -443,13 +443,13 @@ am79900_intr(void *arg)
 
 	if ((isr & LE_C0_RXON) == 0) {
 		printf("%s: receiver disabled\n", device_xname(sc->sc_dev));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		lance_reset(sc);
 		return (1);
 	}
 	if ((isr & LE_C0_TXON) == 0) {
 		printf("%s: transmitter disabled\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		lance_reset(sc);
 		return (1);
 	}

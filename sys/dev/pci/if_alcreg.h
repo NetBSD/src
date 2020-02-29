@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alcreg.h,v 1.8 2019/10/17 09:13:48 msaitoh Exp $	*/
+/*	$NetBSD: if_alcreg.h,v 1.8.2.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	$OpenBSD: if_alcreg.h,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1451,7 +1451,7 @@ struct alc_softc {
 	pcitag_t		sc_pcitag;
 
 	void			*sc_irq_handle;
-	struct alc_ident	*alc_ident;
+	const struct alc_ident	*alc_ident;
 	struct mii_data		sc_miibus;
 	int			alc_rev;
 	int			alc_expcap;

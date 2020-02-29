@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_lvds.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: intel_lvds.c,v 1.7.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2006-2007 Intel Corporation
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.7 2018/08/27 04:58:24 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.7.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <acpi/button.h>
 #include <linux/dmi.h>
@@ -44,8 +44,6 @@ __KERNEL_RCSID(0, "$NetBSD: intel_lvds.c,v 1.7 2018/08/27 04:58:24 riastradh Exp
 #include <drm/i915_drm.h>
 #include "i915_drv.h"
 #include <linux/acpi.h>
-#include <linux/err.h>
-#include <linux/notifier.h>
 
 /* Private structure for the integrated LVDS support */
 struct intel_lvds_connector {
@@ -75,7 +73,7 @@ static struct intel_lvds_connector *to_lvds_connector(struct drm_connector *conn
 }
 
 static bool intel_lvds_get_hw_state(struct intel_encoder *encoder,
-				    enum i915_pipe *pipe)
+				    enum pipe *pipe)
 {
 	struct drm_device *dev = encoder->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
@@ -422,7 +420,7 @@ static const struct dmi_system_id intel_no_modeset_on_lid[] = {
 		},
 	},
 
-	{ .callback = NULL }	/* terminating entry */
+	{ }	/* terminating entry */
 };
 
 /*
@@ -784,7 +782,7 @@ static const struct dmi_system_id intel_no_lvds[] = {
 		},
 	},
 
-	{ .callback = NULL }	/* terminating entry */
+	{ }	/* terminating entry */
 };
 
 /*
@@ -869,7 +867,7 @@ static const struct dmi_system_id intel_dual_link_lvds[] = {
 			DMI_MATCH(DMI_PRODUCT_NAME, "MacBookPro9,1"),
 		},
 	},
-	{ .callback = NULL }	/* terminating entry */
+	{ }	/* terminating entry */
 };
 
 bool intel_is_dual_link_lvds(struct drm_device *dev)

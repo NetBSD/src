@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.h,v 1.31 2019/04/06 03:06:25 thorpej Exp $	*/
+/*	$NetBSD: locore.h,v 1.31.6.1 2020/02/29 20:18:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -167,10 +167,6 @@ extern int cpu_media_and_vfp_features[2];
 
 extern bool arm_has_tlbiasid_p;
 extern bool arm_has_mpext_p;
-#ifdef MULTIPROCESSOR
-extern u_int arm_cpu_max;
-extern volatile u_int arm_cpu_hatched;
-#endif
 
 #if !defined(CPU_ARMV7)
 #define	CPU_IS_ARMV7_P()		false

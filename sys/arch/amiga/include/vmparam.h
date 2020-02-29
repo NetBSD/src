@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.47 2019/03/27 17:15:29 christos Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.47.6.1 2020/02/29 20:18:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,12 +46,9 @@
  */
 
 /*
- * We use 8K pages on the Amiga.  Override the PAGE_* definitions
- * to be compie-time constants.
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
-#define	PAGE_SHIFT	PGSHIFT
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
+#include <m68k/vmparam.h>
 
 /*
  * USRSTACK is the top (end) of the user stack.

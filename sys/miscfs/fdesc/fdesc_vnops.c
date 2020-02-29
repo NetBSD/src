@@ -1,4 +1,4 @@
-/*	$NetBSD: fdesc_vnops.c,v 1.131 2020/01/02 15:42:27 thorpej Exp $	*/
+/*	$NetBSD: fdesc_vnops.c,v 1.131.2.1 2020/02/29 20:21:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.131 2020/01/02 15:42:27 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdesc_vnops.c,v 1.131.2.1 2020/02/29 20:21:04 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -206,7 +206,7 @@ fdesc_lookup(void *v)
 	int error, ix = -1;
 	fdtab_t *dt;
 
-	dt = curlwp->l_fd->fd_dt;
+	dt = atomic_load_consume(&curlwp->l_fd->fd_dt);
 
 	if (cnp->cn_namelen == 1 && *pname == '.') {
 		*vpp = dvp;
@@ -567,7 +567,7 @@ fdesc_readdir(void *v)
 		break;
 	}
 
-	dt = curlwp->l_fd->fd_dt;
+	dt = atomic_load_consume(&curlwp->l_fd->fd_dt);
 
 	if (uio->uio_resid < UIO_MX)
 		return EINVAL;
@@ -629,7 +629,6 @@ fdesc_readdir(void *v)
 				*cookies++ = i + 1;
 		}
 	} else {
-		membar_consumer();
 		if (ap->a_ncookies) {
 			ncookies = uimin(ncookies, dt->dt_nfiles + 2);
 			cookies = malloc(ncookies * sizeof(off_t),

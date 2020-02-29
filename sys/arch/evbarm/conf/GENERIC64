@@ -1,5 +1,5 @@
 #
-#	$NetBSD: GENERIC64,v 1.130.2.2 2020/01/25 22:38:39 ad Exp $
+#	$NetBSD: GENERIC64,v 1.130.2.3 2020/02/29 20:18:22 ad Exp $
 #
 #	GENERIC ARM (aarch64) kernel
 #
@@ -288,7 +288,7 @@ sunxigmacclk*	at fdt? pass 2		# Allwinner GMAC MII/RGMII clock mux
 tegra210car*	at fdt? pass 3		# NVIDIA Tegra CAR (T210)
 
 # GPIO controller
-bcmgpio*	at fdt?			# Broadcom BCM283x GPIO
+bcmgpio*	at fdt? pass 3		# Broadcom BCM283x GPIO
 imxgpio*	at fdt? pass 3		# IMX GPIO
 mesonpinctrl*	at fdt? pass 2		# Amlogic Meson GPIO
 plgpio*		at fdt?			# ARM PrimeCell PL061 GPIO
@@ -327,6 +327,8 @@ emac*		at fdt?				# Allwinner Gigabit Ethernet (EMAC)
 enet*		at fdt?				# IMX FEC
 aq*		at pci? dev ? function ?	# Aquantia AQC 10 gigabit
 ena*		at pci? dev ? function ?	# Amazon.com Elastic Network Adapter
+genet*		at acpi?			# Broadcom GENET v5
+genet*		at fdt?
 mcx*		at pci? dev ? function ?	# Mellanox 5th generation Ethernet
 mskc*		at pci? dev ? function ?	# Marvell Yukon 2 Gigabit Ethernet
 msk*		at mskc?
@@ -335,6 +337,7 @@ wm*		at pci? dev ? function ?	# Intel Gigabit Ethernet
 
 # MII/PHY support
 atphy*		at mii? phy ?		# Attansic/Atheros PHYs
+brgphy*		at mii? phy ?		# Broadcom BCM5400-family PHYs
 exphy* 		at mii? phy ?		# 3Com internal PHYs
 gentbi* 	at mii? phy ?		# Generic Ten-Bit 1000BASE-[CLS]X PHYs
 glxtphy*	at mii? phy ?		# Level One LXT-1000 PHYs
@@ -432,6 +435,7 @@ ld1		at sdmmc1
 ld2		at sdmmc2
 ld3		at sdmmc3
 ld*		at sdmmc?
+bwfm*		at sdmmc?		# Broadcom BCM43xxx WiFi Interface
 
 # SATA
 ahcisata*	at fdt?			# AHCI SATA
@@ -554,6 +558,7 @@ usb*		at usbus?
 
 include "dev/usb/usbdevices.config"
 midi*		at midibus?
+pseudo-device	sequencer			# MIDI sequencer
 
 # Virtio devices
 virtio*		at fdt?			# Virtio MMIO device

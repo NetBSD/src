@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.7 2018/08/29 15:52:27 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.7.10.1 2020/02/29 20:20:15 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.7 2018/08/29 15:52:27 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_instmem_nv40.c,v 1.7.10.1 2020/02/29 20:20:15 ad Exp $");
 
 #define nv40_instmem(p) container_of((p), struct nv40_instmem, base)
 #include "priv.h"
@@ -81,7 +81,7 @@ static void __iomem *
 nv40_instobj_acquire(struct nvkm_memory *memory)
 {
 	struct nv40_instobj *iobj = nv40_instobj(memory);
-	return (char __iomem *)iobj->imem->iomem + iobj->node->offset;
+	return iobj->imem->iomem + iobj->node->offset;
 }
 
 static void

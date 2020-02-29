@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.47.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.47.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -66,9 +66,9 @@ __KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.47 2020/01/06 07:57:06 nisimura Exp $")
 #define KSE_LINKDEBUG 0
 
 #define CSR_READ_4(sc, off) \
-	    bus_space_read_4(sc->sc_st, sc->sc_sh, off)
+	    bus_space_read_4((sc)->sc_st, (sc)->sc_sh, (off))
 #define CSR_WRITE_4(sc, off, val) \
-	    bus_space_write_4(sc->sc_st, sc->sc_sh, off, val)
+	    bus_space_write_4((sc)->sc_st, (sc)->sc_sh, (off), (val))
 #define CSR_READ_2(sc, off) \
 	    bus_space_read_2((sc)->sc_st, (sc)->sc_sh, (off))
 #define CSR_WRITE_2(sc, off, val) \
@@ -833,7 +833,7 @@ kse_init(struct ifnet *ifp)
 		    CSR_READ_2(sc, SGCR3) | CR3_USEFC);
 	}
 
-	/* build multicast hash filter if necessary */
+	/* accept multicast frame or run promisc mode */
 	kse_set_filter(sc);
 
 	/* set current media */
@@ -934,7 +934,7 @@ kse_watchdog(struct ifnet *ifp)
 		aprint_error_dev(sc->sc_dev,
 		    "device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		kse_init(ifp);
@@ -1098,16 +1098,18 @@ kse_set_filter(struct kse_softc *sc)
 	int i;
 
 	sc->sc_rxc &= ~(RXC_MHTE | RXC_RM | RXC_RA);
-	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	if (ifp->if_flags & IFF_PROMISC) {
 		ifp->if_flags |= IFF_ALLMULTI;
 		goto update;
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
+	/* clear perfect match filter and prepare mcast hash table */
 	for (i = 0; i < 16; i++)
 		 CSR_WRITE_4(sc, MAAH0 + i*8, 0);
 	crc = mchash[0] = mchash[1] = 0;
+
 	ETHER_LOCK(ec);
 	ETHER_FIRST_MULTI(step, ec, enm);
 	i = 0;
@@ -1269,7 +1271,7 @@ rxintr(struct kse_softc *sc)
 		/* R0_FS | R0_LS must have been marked for this desc */
 
 		if (rxstat & R0_ES) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 #define PRINTERR(bit, str)						\
 			if (rxstat & (bit))				\
 				aprint_error_dev(sc->sc_dev,		\
@@ -1292,7 +1294,7 @@ rxintr(struct kse_softc *sc)
 		m = rxs->rxs_mbuf;
 
 		if (add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			KSE_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat,
 			    rxs->rxs_dmamap, 0,
@@ -1347,7 +1349,7 @@ txreap(struct kse_softc *sc)
 
 		/* There is no way to tell transmission status per frame */
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		sc->sc_txfree += txs->txs_ndesc;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,

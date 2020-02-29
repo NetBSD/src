@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_if.h,v 1.2 2016/01/26 23:25:40 pooka Exp $	*/
+/*	$NetBSD: vfs_if.h,v 1.2.28.1 2020/02/29 20:21:08 ad Exp $	*/
 
 /*
  * Automatically generated.  DO NOT EDIT.
@@ -33,6 +33,8 @@ void rump_vp_rele(struct vnode *);
 typedef void (*rump_vp_rele_fn)(struct vnode *);
 void rump_vp_interlock(struct vnode *);
 typedef void (*rump_vp_interlock_fn)(struct vnode *);
+void rump_vp_vmobjlock(struct vnode *, int);
+typedef void (*rump_vp_vmobjlock_fn)(struct vnode *, int);
 void rump_freecn(struct componentname *, int);
 typedef void (*rump_freecn_fn)(struct componentname *, int);
 int rump_namei(uint32_t, uint32_t, const char *, struct vnode **, struct vnode **, struct componentname **);

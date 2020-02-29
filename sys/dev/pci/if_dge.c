@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.56 2019/11/10 21:16:36 chs Exp $ */
+/*	$NetBSD: if_dge.c,v 1.56.2.1 2020/02/29 20:19:10 ad Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.56 2019/11/10 21:16:36 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.56.2.1 2020/02/29 20:19:10 ad Exp $");
 
 
 
@@ -1425,7 +1425,7 @@ dge_watchdog(struct ifnet *ifp)
 		printf("%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    device_xname(sc->sc_dev), sc->sc_txfree, sc->sc_txsfree,
 		    sc->sc_txnext);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		(void) dge_init(ifp);
@@ -1622,7 +1622,7 @@ dge_txintr(struct dge_softc *sc)
 		    device_xname(sc->sc_dev), i, txs->txs_firstdesc,
 		    txs->txs_lastdesc));
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_txfree += txs->txs_ndesc;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
 		    0, txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
@@ -1706,7 +1706,7 @@ dge_rxintr(struct dge_softc *sc)
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			DGE_INIT_RXDESC(sc, i);
@@ -1761,7 +1761,7 @@ dge_rxintr(struct dge_softc *sc)
 		 */
 		if (errors & (RDESC_ERR_CE | RDESC_ERR_SE | RDESC_ERR_P |
 		    RDESC_ERR_RXE)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			if (errors & RDESC_ERR_SE)
 				printf("%s: symbol error\n",
 				    device_xname(sc->sc_dev));

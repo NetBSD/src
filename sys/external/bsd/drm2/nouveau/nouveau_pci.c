@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_pci.c,v 1.25 2019/10/05 22:37:49 mrg Exp $	*/
+/*	$NetBSD: nouveau_pci.c,v 1.25.2.1 2020/02/29 20:20:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -30,7 +30,13 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.25 2019/10/05 22:37:49 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.25.2.1 2020/02/29 20:20:18 ad Exp $");
+
+#ifdef _KERNEL_OPT
+#if defined(__arm__) || defined(__aarch64__)
+#include "opt_fdt.h"
+#endif
+#endif
 
 #include <sys/types.h>
 #include <sys/device.h>
@@ -42,6 +48,10 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_pci.c,v 1.25 2019/10/05 22:37:49 mrg Exp $")
 
 #include <core/device.h>
 #include <core/pci.h>
+
+#ifdef FDT
+#include <dev/fdt/fdtvar.h>
+#endif
 
 #include "nouveau_drm.h"
 #include "nouveau_pci.h"
@@ -153,6 +163,15 @@ nouveau_pci_attach(device_t parent, device_t self, void *aux)
 	 */
 	sc->sc_dev = NULL;
 	sc->sc_pa = *pa;
+
+#ifdef FDT
+	/*
+	 * XXX Remove the simple framebuffer, assuming that this device
+	 * will take over.
+	 */
+	const char *fb_compatible[] = { "simple-framebuffer", NULL };
+	fdt_remove_bycompat(fb_compatible);
+#endif
 
 	config_mountroot(self, &nouveau_pci_attach_real);
 }

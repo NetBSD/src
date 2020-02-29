@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.38 2019/08/12 09:18:30 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.38.2.1 2020/02/29 20:18:24 ad Exp $	*/
 
 /*	$OpenBSD: pmap.h,v 1.35 2007/12/14 18:32:23 deraadt Exp $	*/
 
@@ -39,7 +39,7 @@
 #include "opt_cputype.h"
 #endif
 
-#include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <machine/pte.h>
 #include <machine/cpufunc.h>
 
@@ -53,7 +53,7 @@
 struct pmap {
 	struct uvm_object pm_obj;	/* object (lck by object lock) */
 #define	pm_lock	pm_obj.vmobjlock
-	kmutex_t	pm_obj_lock;	/* lock for pm_obj */
+	krwlock_t	pm_obj_lock;	/* lock for pm_obj */
 	struct vm_page	*pm_ptphint;
 	struct vm_page	*pm_pdir_pg;	/* vm_page for pdir */
 	volatile uint32_t *pm_pdir;	/* page dir (read-only after create) */

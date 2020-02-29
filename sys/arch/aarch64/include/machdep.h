@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.h,v 1.9 2019/12/18 21:45:43 riastradh Exp $	*/
+/*	$NetBSD: machdep.h,v 1.9.2.1 2020/02/29 20:18:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -65,10 +65,6 @@ extern void (*cpu_reset_address)(void);
 extern void (*cpu_powerdown_address)(void);
 
 extern char *booted_kernel;
-
-#ifdef MULTIPROCESSOR
-extern u_int arm_cpu_max;
-#endif
 
 /*
  * note that we use void * as all the platforms have different ideas on what

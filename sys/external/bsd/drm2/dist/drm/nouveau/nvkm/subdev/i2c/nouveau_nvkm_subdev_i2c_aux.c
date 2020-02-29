@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.3 2018/08/27 07:38:42 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.3.10.1 2020/02/29 20:20:15 ad Exp $	*/
 
 /*
  * Copyright 2009 Red Hat Inc.
@@ -24,10 +24,12 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.3 2018/08/27 07:38:42 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_i2c_aux.c,v 1.3.10.1 2020/02/29 20:20:15 ad Exp $");
 
 #include "aux.h"
 #include "pad.h"
+
+#include <linux/nbsd-namespace.h>
 
 static int
 nvkm_i2c_aux_i2c_xfer(struct i2c_adapter *adap, struct i2c_msg *msgs, int num)
@@ -141,11 +143,7 @@ nvkm_i2c_aux_del(struct nvkm_i2c_aux **paux)
 		AUX_TRACE(aux, "dtor");
 		list_del(&aux->head);
 		i2c_del_adapter(&aux->i2c);
-#ifdef __NetBSD__
-		linux_mutex_destroy(&aux->mutex);
-#else
 		mutex_destroy(&aux->mutex);
-#endif
 		kfree(*paux);
 		*paux = NULL;
 	}
@@ -161,11 +159,7 @@ nvkm_i2c_aux_ctor(const struct nvkm_i2c_aux_func *func,
 	aux->func = func;
 	aux->pad = pad;
 	aux->id = id;
-#ifdef __NetBSD__
-	linux_mutex_init(&aux->mutex);
-#else
 	mutex_init(&aux->mutex);
-#endif
 	list_add_tail(&aux->head, &pad->i2c->aux);
 	AUX_TRACE(aux, "ctor");
 

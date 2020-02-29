@@ -1,4 +1,4 @@
-/*	$NetBSD: ofdisk.c,v 1.53 2019/03/27 19:13:34 martin Exp $	*/
+/*	$NetBSD: ofdisk.c,v 1.53.6.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.53 2019/03/27 19:13:34 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ofdisk.c,v 1.53.6.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/buf.h>
@@ -404,11 +404,11 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		error = setdisklabel(of->sc_dk.dk_label,
 		    lp, /*of->sc_dk.dk_openmask */0,
 		    of->sc_dk.dk_cpulabel);
-		if (error == 0 && cmd == DIOCWDINFO
+		if (error == 0 && (cmd == DIOCWDINFO
 #ifdef __HAVE_OLD_DISKLABEL
-		    || xfer == ODIOCWDINFO
+		    || cmd == ODIOCWDINFO
 #endif
-		    )
+		    ))
 			error = writedisklabel(MAKEDISKDEV(major(dev),
 			    DISKUNIT(dev), RAW_PART), ofdisk_strategy,
 			    of->sc_dk.dk_label, of->sc_dk.dk_cpulabel);
@@ -422,7 +422,7 @@ ofdisk_ioctl(dev_t dev, u_long cmd, void *data, int flag, struct lwp *l)
 		ofdisk_getdefaultlabel(of, (struct disklabel *)data);
 		return 0;
 #ifdef __HAVE_OLD_DISKLABEL
-	case DIOCGDEFLABEL:
+	case ODIOCGDEFLABEL:
 		ofdisk_getdefaultlabel(of, &newlabel);
 		if (newlabel.d_npartitions > OLDMAXPARTITIONS)
 			return ENOTTY;

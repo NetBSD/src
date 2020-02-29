@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_anon.h,v 1.30 2011/08/06 17:25:03 rmind Exp $	*/
+/*	$NetBSD: uvm_anon.h,v 1.30.60.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 struct vm_anon {
-	kmutex_t		*an_lock;	/* Lock for an_ref */
+	krwlock_t		*an_lock;	/* Lock for an_ref */
 	union {
 		uintptr_t	au_ref;		/* Reference count [an_lock] */
 		struct vm_anon	*au_link;	/* Link for deferred free */

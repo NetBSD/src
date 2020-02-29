@@ -1,4 +1,4 @@
-#	$NetBSD: OPENBLOCKS266_OPT,v 1.27.6.1 2020/01/25 22:38:40 ad Exp $
+#	$NetBSD: OPENBLOCKS266_OPT,v 1.27.6.2 2020/02/29 20:18:23 ad Exp $
 #
 
 include		"arch/evbppc/conf/OPENBLOCKS266"
@@ -255,9 +255,6 @@ ucom*	at uvscom? portno ?
 
 # RIM BlackBerry
 uberry* at uhub? port ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor* at uhub? port ?

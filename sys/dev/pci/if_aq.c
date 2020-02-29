@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aq.c,v 1.1.2.2 2020/01/25 22:38:47 ad Exp $	*/
+/*	$NetBSD: if_aq.c,v 1.1.2.3 2020/02/29 20:19:10 ad Exp $	*/
 
 /**
  * aQuantia Corporation Network Driver
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.2 2020/01/25 22:38:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.3 2020/02/29 20:19:10 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_if_aq.h"
@@ -258,7 +258,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.2 2020/01/25 22:38:47 ad Exp $");
 #define AQ_HW_MAC_OWN			0	/* index of own address */
 #define AQ_HW_MAC_NUM			34
 
-/* RPF_MCAST_FILTER_REG[12] 0x5250-0x5280 */
+/* RPF_MCAST_FILTER_REG[8] 0x5250-0x5270 */
 #define RPF_MCAST_FILTER_REG(i)			(0x5250 + (i) * 4)
 #define  RPF_MCAST_FILTER_EN			__BIT(31)
 #define RPF_MCAST_FILTER_MASK_REG		0x5270
@@ -273,7 +273,7 @@ __KERNEL_RCSID(0, "$NetBSD: if_aq.c,v 1.1.2.2 2020/01/25 22:38:47 ad Exp $");
 #define  RPF_VLAN_TPID_OUTER			__BITS(31,16)
 #define  RPF_VLAN_TPID_INNER			__BITS(15,0)
 
-/* RPF_VLAN_FILTER_REG[16] 0x5290-0x52d0 */
+/* RPF_VLAN_FILTER_REG[RPF_VLAN_MAX_FILTERS] 0x5290-0x52d0 */
 #define RPF_VLAN_MAX_FILTERS			16
 #define RPF_VLAN_FILTER_REG(i)			(0x5290 + (i) * 4)
 #define  RPF_VLAN_FILTER_EN			__BIT(31)
@@ -867,12 +867,6 @@ struct aq_txring {
 	unsigned int txr_prodidx;
 	unsigned int txr_considx;
 	int txr_nfree;
-
-	/* counters */
-	uint64_t txr_opackets;
-	uint64_t txr_obytes;
-	uint64_t txr_omcasts;
-	uint64_t txr_oerrors;
 };
 
 struct aq_rxring {
@@ -890,12 +884,6 @@ struct aq_rxring {
 		bus_dmamap_t dmamap;
 	} rxr_mbufs[AQ_RXD_NUM];
 	unsigned int rxr_readidx;
-
-	/* counters */
-	uint64_t rxr_ipackets;
-	uint64_t rxr_ibytes;
-	uint64_t rxr_ierrors;
-	uint64_t rxr_iqdrops;
 };
 
 struct aq_queue {
@@ -985,7 +973,7 @@ struct aq_softc {
 	kmutex_t sc_mutex;
 	kmutex_t sc_mpi_mutex;
 
-	struct aq_firmware_ops *sc_fw_ops;
+	const struct aq_firmware_ops *sc_fw_ops;
 	uint64_t sc_fw_caps;
 	enum aq_media_type sc_media_type;
 	aq_link_speed_t sc_available_rates;
@@ -1016,8 +1004,6 @@ struct aq_softc {
 
 	bool sc_intr_moderation_enable;
 	bool sc_rss_enable;
-
-	int sc_media_active;
 
 	struct ethercom sc_ethercom;
 	struct ether_addr sc_enaddr;
@@ -1063,6 +1049,7 @@ static int aq_establish_msix_intr(struct aq_softc *, bool, bool);
 
 static int aq_ifmedia_change(struct ifnet * const);
 static void aq_ifmedia_status(struct ifnet * const, struct ifmediareq *);
+static int aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set);
 static int aq_ifflags_cb(struct ethercom *);
 static int aq_init(struct ifnet *);
 static void aq_send_common_locked(struct ifnet *, struct aq_softc *,
@@ -1125,7 +1112,7 @@ static int fw2x_get_stats(struct aq_softc *, aq_hw_stats_s_t *);
 static int fw2x_get_temperature(struct aq_softc *, uint32_t *);
 #endif
 
-static struct aq_firmware_ops aq_fw1x_ops = {
+static const struct aq_firmware_ops aq_fw1x_ops = {
 	.reset = fw1x_reset,
 	.set_mode = fw1x_set_mode,
 	.get_mode = fw1x_get_mode,
@@ -1135,7 +1122,7 @@ static struct aq_firmware_ops aq_fw1x_ops = {
 #endif
 };
 
-static struct aq_firmware_ops aq_fw2x_ops = {
+static const struct aq_firmware_ops aq_fw2x_ops = {
 	.reset = fw2x_reset,
 	.set_mode = fw2x_set_mode,
 	.get_mode = fw2x_get_mode,
@@ -1416,14 +1403,15 @@ aq_attach(device_t parent, device_t self, void *aux)
 #if notyet
 	/* TODO */
 	sc->sc_ethercom.ec_capabilities |= ETHERCAP_EEE;
-	sc->sc_ethercom.ec_capabilities |= ETHERCAP_VLAN_HWFILTER;
 #endif
 	sc->sc_ethercom.ec_capabilities |=
 	    ETHERCAP_JUMBO_MTU |
 	    ETHERCAP_VLAN_MTU |
-	    ETHERCAP_VLAN_HWTAGGING;
+	    ETHERCAP_VLAN_HWTAGGING |
+	    ETHERCAP_VLAN_HWFILTER;
 	sc->sc_ethercom.ec_capenable |=
-	    ETHERCAP_VLAN_HWTAGGING;
+	    ETHERCAP_VLAN_HWTAGGING |
+	    ETHERCAP_VLAN_HWFILTER;
 
 	ifp->if_capabilities = 0;
 	ifp->if_capenable = 0;
@@ -1458,6 +1446,7 @@ aq_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, sc->sc_enaddr.ether_addr_octet);
+	ether_set_vlan_cb(&sc->sc_ethercom, aq_vlan_cb);
 	ether_set_ifflags_cb(&sc->sc_ethercom, aq_ifflags_cb);
 
 	aq_enable_intr(sc, true, false);	/* only intr about link */
@@ -1592,6 +1581,8 @@ aq_detach(device_t self, int flags __unused)
 	AQ_EVCNT_DETACH(sc, dpc);
 	AQ_EVCNT_DETACH(sc, cprc);
 #endif
+
+	ifmedia_fini(&sc->sc_media);
 
 	mutex_destroy(&sc->sc_mpi_mutex);
 	mutex_destroy(&sc->sc_mutex);
@@ -2724,39 +2715,6 @@ aq_set_filter(struct aq_softc *sc)
 	return error;
 }
 
-static void
-aq_mediastatus_update(struct aq_softc *sc)
-{
-	sc->sc_media_active = 0;
-
-	if (sc->sc_link_fc & AQ_FC_RX)
-		sc->sc_media_active |= IFM_ETH_RXPAUSE;
-	if (sc->sc_link_fc & AQ_FC_TX)
-		sc->sc_media_active |= IFM_ETH_TXPAUSE;
-
-	switch (sc->sc_link_rate) {
-	case AQ_LINK_100M:
-		/* XXX: need to detect fulldup or halfdup */
-		sc->sc_media_active |= IFM_100_TX | IFM_FDX;
-		break;
-	case AQ_LINK_1G:
-		sc->sc_media_active |= IFM_1000_T | IFM_FDX;
-		break;
-	case AQ_LINK_2G5:
-		sc->sc_media_active |= IFM_2500_T | IFM_FDX;
-		break;
-	case AQ_LINK_5G:
-		sc->sc_media_active |= IFM_5000_T | IFM_FDX;
-		break;
-	case AQ_LINK_10G:
-		sc->sc_media_active |= IFM_10G_T | IFM_FDX;
-		break;
-	default:
-		sc->sc_media_active |= IFM_NONE;
-		break;
-	}
-}
-
 static int
 aq_ifmedia_change(struct ifnet * const ifp)
 {
@@ -2812,13 +2770,39 @@ aq_ifmedia_status(struct ifnet * const ifp, struct ifmediareq *ifmr)
 {
 	struct aq_softc *sc = ifp->if_softc;
 
+	/* update ifm_active */
 	ifmr->ifm_active = IFM_ETHER;
-	ifmr->ifm_status = IFM_AVALID;
+	if (sc->sc_link_fc & AQ_FC_RX)
+		ifmr->ifm_active |= IFM_ETH_RXPAUSE;
+	if (sc->sc_link_fc & AQ_FC_TX)
+		ifmr->ifm_active |= IFM_ETH_TXPAUSE;
 
+	switch (sc->sc_link_rate) {
+	case AQ_LINK_100M:
+		/* XXX: need to detect fulldup or halfdup */
+		ifmr->ifm_active |= IFM_100_TX | IFM_FDX;
+		break;
+	case AQ_LINK_1G:
+		ifmr->ifm_active |= IFM_1000_T | IFM_FDX;
+		break;
+	case AQ_LINK_2G5:
+		ifmr->ifm_active |= IFM_2500_T | IFM_FDX;
+		break;
+	case AQ_LINK_5G:
+		ifmr->ifm_active |= IFM_5000_T | IFM_FDX;
+		break;
+	case AQ_LINK_10G:
+		ifmr->ifm_active |= IFM_10G_T | IFM_FDX;
+		break;
+	default:
+		ifmr->ifm_active |= IFM_NONE;
+		break;
+	}
+
+	/* update ifm_status */
+	ifmr->ifm_status = IFM_AVALID;
 	if (sc->sc_link_rate != AQ_LINK_NONE)
 		ifmr->ifm_status |= IFM_ACTIVE;
-
-	ifmr->ifm_active |= sc->sc_media_active;
 }
 
 static void
@@ -2954,7 +2938,7 @@ aq_hw_init_rx_path(struct aq_softc *sc)
 	    ETHERTYPE_QINQ);
 	AQ_WRITE_REG_BIT(sc, RPF_VLAN_TPID_REG, RPF_VLAN_TPID_INNER,
 	    ETHERTYPE_VLAN);
-	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 1);
+	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 0);
 
 	if (sc->sc_features & FEATURES_REV_B) {
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
@@ -3226,18 +3210,55 @@ aq_hw_l3_filter_set(struct aq_softc *sc)
 }
 
 static void
-aq_update_vlan_filters(struct aq_softc *sc)
+aq_set_vlan_filters(struct aq_softc *sc)
 {
-	/* XXX: notyet. vlan always promisc */
+	struct ethercom *ec = &sc->sc_ethercom;
+	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
+	struct vlanid_list *vlanidp;
 	int i;
 
-	for (i = 0; i < RPF_VLAN_MAX_FILTERS; i++) {
+	ETHER_LOCK(ec);
+
+	/* disable all vlan filters */
+	for (i = 0; i < RPF_VLAN_MAX_FILTERS; i++)
+		AQ_WRITE_REG(sc, RPF_VLAN_FILTER_REG(i), 0);
+
+	/* count VID */
+	i = 0;
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list)
+		i++;
+
+	if (((sc->sc_ethercom.ec_capenable & ETHERCAP_VLAN_HWFILTER) == 0) ||
+	    (ifp->if_flags & IFF_PROMISC) ||
+	    (i > RPF_VLAN_MAX_FILTERS)) {
+		/*
+		 * no vlan hwfilter, in promiscuous mode, or too many VID?
+		 * must receive all VID
+		 */
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG,
+		    RPF_VLAN_MODE_PROMISC, 1);
+		goto done;
+	}
+
+	/* receive only selected VID */
+	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 0);
+	i = 0;
+	SIMPLEQ_FOREACH(vlanidp, &ec->ec_vids, vid_list) {
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
-		    RPF_VLAN_FILTER_EN, 0);
+		    RPF_VLAN_FILTER_EN, 1);
 		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
 		    RPF_VLAN_FILTER_RXQ_EN, 0);
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
+		    RPF_VLAN_FILTER_RXQ, 0);
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
+		    RPF_VLAN_FILTER_ACTION, RPF_ACTION_HOST);
+		AQ_WRITE_REG_BIT(sc, RPF_VLAN_FILTER_REG(i),
+		    RPF_VLAN_FILTER_ID, vlanidp->vid);
+		i++;
 	}
-	AQ_WRITE_REG_BIT(sc, RPF_VLAN_MODE_REG, RPF_VLAN_MODE_PROMISC, 1);
+
+ done:
+	ETHER_UNLOCK(ec);
 }
 
 static int
@@ -3354,8 +3375,6 @@ aq_update_link_status(struct aq_softc *sc)
 		sc->sc_link_rate = rate;
 		sc->sc_link_fc = fc;
 		sc->sc_link_eee = eee;
-
-		aq_mediastatus_update(sc);
 
 		/* update interrupt timing according to new link speed */
 		aq_hw_interrupt_moderation_set(sc);
@@ -4173,6 +4192,8 @@ aq_tx_intr(void *arg)
 		goto tx_intr_done;
 	}
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	for (idx = txring->txr_considx; idx != hw_head;
 	    idx = TXRING_NEXTIDX(idx), n++) {
 
@@ -4180,10 +4201,10 @@ aq_tx_intr(void *arg)
 			bus_dmamap_unload(sc->sc_dmat,
 			    txring->txr_mbufs[idx].dmamap);
 
-			txring->txr_opackets++;
-			txring->txr_obytes += m->m_pkthdr.len;
+			if_statinc_ref(nsr, if_opackets);
+			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
-				txring->txr_omcasts++;
+				if_statinc_ref(nsr, if_omcasts);
 
 			m_freem(m);
 			txring->txr_mbufs[idx].m = NULL;
@@ -4192,6 +4213,8 @@ aq_tx_intr(void *arg)
 		txring->txr_nfree++;
 	}
 	txring->txr_considx = idx;
+
+	IF_STAT_PUTREF(ifp);
 
 	if (ringidx == 0 && txring->txr_nfree >= AQ_TXD_MIN)
 		ifp->if_flags &= ~IFF_OACTIVE;
@@ -4231,6 +4254,8 @@ aq_rx_intr(void *arg)
 		goto rx_intr_done;
 	}
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	m0 = mprev = NULL;
 	for (idx = rxring->rxr_readidx;
 	    idx != AQ_READ_REG_BIT(sc, RX_DMA_DESC_HEAD_PTR_REG(ringidx),
@@ -4254,7 +4279,7 @@ aq_rx_intr(void *arg)
 
 		if ((rxd_status & RXDESC_STATUS_MACERR) ||
 		    (rxd_type & RXDESC_TYPE_MAC_DMA_ERR)) {
-			rxring->rxr_ierrors++;
+			if_statinc_ref(nsr, if_ierrors);
 			goto rx_next;
 		}
 
@@ -4269,7 +4294,7 @@ aq_rx_intr(void *arg)
 			 * cannot allocate new mbuf.
 			 * discard this packet, and reuse mbuf for next.
 			 */
-			rxring->rxr_iqdrops++;
+			if_statinc_ref(nsr, if_iqdrops);
 			goto rx_next;
 		}
 		rxring->rxr_mbufs[idx].m = NULL;
@@ -4371,8 +4396,8 @@ aq_rx_intr(void *arg)
 			}
 #endif
 			m_set_rcvif(m0, ifp);
-			rxring->rxr_ipackets++;
-			rxring->rxr_ibytes += m0->m_pkthdr.len;
+			if_statinc_ref(nsr, if_ipackets);
+			if_statadd_ref(nsr, if_ibytes, m0->m_pkthdr.len);
 			if_percpuq_enqueue(ifp->if_percpuq, m0);
 			m0 = mprev = NULL;
 		}
@@ -4383,11 +4408,23 @@ aq_rx_intr(void *arg)
 	}
 	rxring->rxr_readidx = idx;
 
+	IF_STAT_PUTREF(ifp);
+
  rx_intr_done:
 	mutex_exit(&rxring->rxr_mutex);
 
 	AQ_WRITE_REG(sc, AQ_INTR_STATUS_CLR_REG, __BIT(sc->sc_rx_irq[ringidx]));
 	return n;
+}
+
+static int
+aq_vlan_cb(struct ethercom *ec, uint16_t vid, bool set)
+{
+	struct ifnet *ifp = &ec->ec_if;
+	struct aq_softc *sc = ifp->if_softc;
+
+	aq_set_vlan_filters(sc);
+	return 0;
 }
 
 static int
@@ -4414,6 +4451,10 @@ aq_ifflags_cb(struct ethercom *ec)
 		}
 	}
 
+	/* vlan configuration depends on also interface promiscuous mode */
+	if ((ecchange & ETHERCAP_VLAN_HWFILTER) || (iffchange & IFF_PROMISC))
+		aq_set_vlan_filters(sc);
+
 	sc->sc_ec_capenable = ec->ec_capenable;
 	sc->sc_if_flags = ifp->if_flags;
 
@@ -4430,7 +4471,7 @@ aq_init(struct ifnet *ifp)
 
 	AQ_LOCK(sc);
 
-	aq_update_vlan_filters(sc);
+	aq_set_vlan_filters(sc);
 	aq_set_capability(sc);
 
 	for (i = 0; i < sc->sc_nqueues; i++) {
@@ -4511,7 +4552,7 @@ aq_send_common_locked(struct ifnet *ifp, struct aq_softc *sc,
 		if (error != 0) {
 			/* too many mbuf chains? or not enough descriptors? */
 			m_freem(m);
-			txring->txr_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			if (txring->txr_index == 0 && error == ENOBUFS)
 				ifp->if_flags |= IFF_OACTIVE;
 			break;
@@ -4668,60 +4709,11 @@ aq_ioctl(struct ifnet *ifp, unsigned long cmd, void *data)
 {
 	struct aq_softc *sc __unused;
 	struct ifreq *ifr __unused;
-	uint64_t opackets, oerrors, obytes, omcasts;
-	uint64_t ipackets, ierrors, ibytes, iqdrops;
-	int error, i, s;
+	int error, s;
 
 	sc = (struct aq_softc *)ifp->if_softc;
 	ifr = (struct ifreq *)data;
 	error = 0;
-
-	switch (cmd) {
-	case SIOCGIFDATA:
-	case SIOCZIFDATA:
-		opackets = oerrors = obytes = omcasts = 0;
-		ipackets = ierrors = ibytes = iqdrops = 0;
-		for (i = 0; i < sc->sc_nqueues; i++) {
-			struct aq_txring *txring = &sc->sc_queue[i].txring;
-			mutex_enter(&txring->txr_mutex);
-			if (cmd == SIOCZIFDATA) {
-				txring->txr_opackets = 0;
-				txring->txr_obytes = 0;
-				txring->txr_omcasts = 0;
-				txring->txr_oerrors = 0;
-			} else {
-				opackets += txring->txr_opackets;
-				oerrors += txring->txr_oerrors;
-				obytes += txring->txr_obytes;
-				omcasts += txring->txr_omcasts;
-			}
-			mutex_exit(&txring->txr_mutex);
-
-			struct aq_rxring *rxring = &sc->sc_queue[i].rxring;
-			mutex_enter(&rxring->rxr_mutex);
-			if (cmd == SIOCZIFDATA) {
-				rxring->rxr_ipackets = 0;
-				rxring->rxr_ibytes = 0;
-				rxring->rxr_ierrors = 0;
-				rxring->rxr_iqdrops = 0;
-			} else {
-				ipackets += rxring->rxr_ipackets;
-				ierrors += rxring->rxr_ierrors;
-				ibytes += rxring->rxr_ibytes;
-				iqdrops += rxring->rxr_iqdrops;
-			}
-			mutex_exit(&rxring->rxr_mutex);
-		}
-		ifp->if_opackets = opackets;
-		ifp->if_oerrors = oerrors;
-		ifp->if_obytes = obytes;
-		ifp->if_omcasts = omcasts;
-		ifp->if_ipackets = ipackets;
-		ifp->if_ierrors = ierrors;
-		ifp->if_ibytes = ibytes;
-		ifp->if_iqdrops = iqdrops;
-		break;
-	}
 
 	s = splnet();
 	error = ether_ioctl(ifp, cmd, data);

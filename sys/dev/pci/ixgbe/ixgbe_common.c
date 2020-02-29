@@ -1,4 +1,4 @@
-/* $NetBSD: ixgbe_common.c,v 1.26 2019/12/16 02:50:54 msaitoh Exp $ */
+/* $NetBSD: ixgbe_common.c,v 1.26.2.1 2020/02/29 20:19:15 ad Exp $ */
 
 /******************************************************************************
   SPDX-License-Identifier: BSD-3-Clause
@@ -463,6 +463,8 @@ s32 ixgbe_start_hw_gen2(struct ixgbe_hw *hw)
 {
 	u32 i;
 	u32 regval;
+
+	DEBUGFUNC("ixgbe_start_hw_gen2");
 
 	/* Clear the rate limiters */
 	for (i = 0; i < hw->mac.max_tx_queues; i++) {

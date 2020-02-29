@@ -1,4 +1,4 @@
-/*	$NetBSD: ltsleep.c,v 1.34 2016/01/26 23:12:17 pooka Exp $	*/
+/*	$NetBSD: ltsleep.c,v 1.34.24.1 2020/02/29 20:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2009, 2010 Antti Kantee.  All Rights Reserved.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.34 2016/01/26 23:12:17 pooka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ltsleep.c,v 1.34.24.1 2020/02/29 20:21:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -61,7 +61,7 @@ static LIST_HEAD(, ltsleeper) sleepers = LIST_HEAD_INITIALIZER(sleepers);
 static kmutex_t qlock;
 
 static int
-sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
+sleeper(wchan_t ident, int timo, bool kinterlock)
 {
 	struct ltsleeper lts;
 	struct timespec ts;
@@ -76,37 +76,38 @@ sleeper(wchan_t ident, int timo, kmutex_t *kinterlock)
 		rumpuser_cv_init(&lts.ucv);
 	}
 
-	mutex_spin_enter(&qlock);
 	LIST_INSERT_HEAD(&sleepers, &lts, entries);
-	mutex_exit(&qlock);
 
 	if (timo) {
 		if (kinterlock) {
-			rv = cv_timedwait(&lts.kcv, kinterlock, timo);
+			rv = cv_timedwait(&lts.kcv, &qlock, timo);
 		} else {
 			/*
 			 * Calculate wakeup-time.
 			 */
 			ts.tv_sec = timo / hz;
 			ts.tv_nsec = (timo % hz) * (1000000000/hz);
+			mutex_spin_exit(&qlock);
 			rv = rumpuser_cv_timedwait(lts.ucv, rump_giantlock,
 			    ts.tv_sec, ts.tv_nsec);
+			mutex_spin_enter(&qlock);
 		}
 
 		if (rv != 0)
 			rv = EWOULDBLOCK;
 	} else {
 		if (kinterlock) {
-			cv_wait(&lts.kcv, kinterlock);
+			cv_wait(&lts.kcv, &qlock);
 		} else {
+			mutex_spin_exit(&qlock);
 			rumpuser_cv_wait(lts.ucv, rump_giantlock);
+			mutex_spin_enter(&qlock);
 		}
 		rv = 0;
 	}
 
-	mutex_spin_enter(&qlock);
 	LIST_REMOVE(&lts, entries);
-	mutex_exit(&qlock);
+	mutex_spin_exit(&qlock);
 
 	if (kinterlock)
 		cv_destroy(&lts.kcv);
@@ -129,7 +130,8 @@ tsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo)
 	 * interlock to rumpuser_cv_wait().
 	 */
 	rump_kernel_bigwrap(&nlocks);
-	rv = sleeper(ident, timo, NULL);
+	mutex_spin_enter(&qlock);
+	rv = sleeper(ident, timo, false);
 	rump_kernel_bigunwrap(nlocks);
 
 	return rv;
@@ -140,9 +142,26 @@ mtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo, kmutex_t *lock)
 {
 	int rv;
 
-	rv = sleeper(ident, timo, lock);
-	if (prio & PNORELOCK)
-		mutex_exit(lock);
+	mutex_spin_enter(&qlock);
+	mutex_exit(lock);
+	rv = sleeper(ident, timo, true);
+	if ((prio & PNORELOCK) == 0)
+		mutex_enter(lock);
+
+	return rv;
+}
+
+int
+rwtsleep(wchan_t ident, pri_t prio, const char *wmesg, int timo, krwlock_t *lock)
+{
+	krw_t op = rw_write_held(lock) ? RW_WRITER : RW_READER;
+	int rv;
+
+	mutex_spin_enter(&qlock);
+	rw_exit(lock);
+	rv = sleeper(ident, timo, true);
+	if ((prio & PNORELOCK) == 0)
+		rw_enter(lock, op);
 
 	return rv;
 }

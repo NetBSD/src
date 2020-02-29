@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_machdep.c,v 1.12.2.2 2020/01/25 22:38:37 ad Exp $ */
+/* $NetBSD: acpi_pci_machdep.c,v 1.12.2.3 2020/02/29 20:18:17 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12.2.2 2020/01/25 22:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_machdep.c,v 1.12.2.3 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -101,6 +101,7 @@ static const struct acpi_pci_quirk acpi_pci_quirks[] = {
 	{ "AMAZON",	"GRAVITON",	0,		-1,	acpi_pci_graviton_init },
 	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	0,	acpi_pci_n1sdp_init },
 	{ "ARMLTD",	"ARMN1SDP",	0x20181101,	1,	acpi_pci_n1sdp_init },
+	{ "NXP   ",     "LX2160  ",     0,              -1,	acpi_pci_layerscape_gen4_init },
 };
 
 pci_chipset_tag_t acpi_pci_md_get_chipset_tag(struct acpi_softc *, int, int);
@@ -112,6 +113,7 @@ static pcitag_t	acpi_pci_md_make_tag(void *, int, int, int);
 static void	acpi_pci_md_decompose_tag(void *, pcitag_t, int *, int *, int *);
 static u_int	acpi_pci_md_get_segment(void *);
 static uint32_t	acpi_pci_md_get_devid(void *, uint32_t);
+static uint32_t	acpi_pci_md_get_frameid(void *, uint32_t);
 static pcireg_t	acpi_pci_md_conf_read(void *, pcitag_t, int);
 static void	acpi_pci_md_conf_write(void *, pcitag_t, int, pcireg_t);
 static int	acpi_pci_md_conf_hook(void *, int, int, int, pcireg_t);
@@ -136,6 +138,7 @@ struct arm32_pci_chipset arm_acpi_pci_chipset = {
 	.pc_decompose_tag = acpi_pci_md_decompose_tag,
 	.pc_get_segment = acpi_pci_md_get_segment,
 	.pc_get_devid = acpi_pci_md_get_devid,
+	.pc_get_frameid = acpi_pci_md_get_frameid,
 	.pc_conf_read = acpi_pci_md_conf_read,
 	.pc_conf_write = acpi_pci_md_conf_write,
 	.pc_conf_hook = acpi_pci_md_conf_hook,
@@ -284,6 +287,14 @@ acpi_pci_md_get_devid(void *v, uint32_t devid)
 	struct acpi_pci_context * const ap = v;
 
 	return acpi_iort_pci_root_map(ap->ap_seg, devid);
+}
+
+static uint32_t
+acpi_pci_md_get_frameid(void *v, uint32_t devid)
+{
+	struct acpi_pci_context * const ap = v;
+
+	return acpi_iort_its_id_map(ap->ap_seg, devid);
 }
 
 static pcireg_t

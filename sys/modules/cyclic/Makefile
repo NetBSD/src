@@ -25,6 +25,6 @@ CPPFLAGS+=	-I${OSNETDIR}/sys \
 		-I${OSNETDIR}/dev/cyclic/${ARCH} \
 		-I${OSNETDIR}/dist/uts/common
 
-CPPFLAGS+=	-Wno-unknown-pragmas -Wno-cast-qual
+CPPFLAGS+=	-Wno-unknown-pragmas -Wno-cast-qual -Wno-sign-compare
 
 .include <bsd.kmodule.mk>

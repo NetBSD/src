@@ -1,4 +1,4 @@
-# $NetBSD: XEN3_DOM0,v 1.170.2.1 2020/01/25 22:38:37 ad Exp $
+# $NetBSD: XEN3_DOM0,v 1.170.2.2 2020/02/29 20:18:16 ad Exp $
 
 include 	"arch/amd64/conf/std.xen"
 
@@ -11,7 +11,7 @@ options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 #options 	UVMHIST_PRINT
 #options 	SYSCALL_DEBUG
 
-#ident		"XEN3_DOM0-$Revision: 1.170.2.1 $"
+#ident		"XEN3_DOM0-$Revision: 1.170.2.2 $"
 
 maxusers	32		# estimated number of users
 
@@ -666,9 +666,6 @@ ucom*	at uplcom? portno ?
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
 
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
-
 # USB Handspring Visor
 uvisor* at uhub? port ?
 ucom*	at uvisor?
@@ -709,7 +706,6 @@ auich*	at pci? dev ? function ?	# Intel ICH integrated AC'97 Audio
 auixp*	at pci? dev ? function ?	# ATI IXP AC'97 Audio
 autri*	at pci? dev ? function ?	# Trident 4DWAVE based AC'97 Audio
 auvia*	at pci? dev ? function ?	# VIA VT82C686A integrated AC'97 Audio
-#azalia* at pci? dev ? function ?	# High Definition Audio
 clcs*	at pci? dev ? function ?	# Cirrus Logic CS4280
 clct*	at pci? dev ? function ?	# Cirrus Logic CS4281
 cmpci*	at pci? dev ? function ?	# C-Media CMI8338/8738

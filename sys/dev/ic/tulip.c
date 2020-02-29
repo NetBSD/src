@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.200 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: tulip.c,v 1.200.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.200 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.200.2.1 2020/02/29 20:19:08 ad Exp $");
 
 
 #include <sys/param.h>
@@ -619,13 +619,13 @@ tlp_detach(struct tulip_softc *sc)
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 	}
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->sc_rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < TULIP_NRXDESC; i++) {
 		rxs = &sc->sc_rxsoft[i];
@@ -940,10 +940,10 @@ tlp_watchdog(struct ifnet *ifp)
 	if (doing_setup && doing_transmit) {
 		printf("%s: filter setup and transmit timeout\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	} else if (doing_transmit) {
 		printf("%s: transmit timeout\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	} else if (doing_setup)
 		printf("%s: filter setup timeout\n", device_xname(sc->sc_dev));
 	else
@@ -1251,7 +1251,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 * If any collisions were seen on the wire, count one.
 		 */
 		if (rxstat & TDSTAT_Rx_CS)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 
 		/*
 		 * If an error occurred, update stats, clear the status
@@ -1279,7 +1279,7 @@ tlp_rxintr(struct tulip_softc *sc)
 			if (rxstat & (bit))				\
 				aprint_error_dev(sc->sc_dev,		\
 				    "receive error: %s\n", str)
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			PRINTERR(TDSTAT_Rx_DE, "descriptor error");
 			PRINTERR(TDSTAT_Rx_RF, "runt frame");
 			PRINTERR(TDSTAT_Rx_TL, "frame too long");
@@ -1308,7 +1308,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		 */
 		m = rxs->rxs_mbuf;
 		if (tlp_add_rxbuf(sc, i) != 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			TULIP_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1324,7 +1324,7 @@ tlp_rxintr(struct tulip_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			TULIP_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -1491,18 +1491,20 @@ tlp_txintr(struct tulip_softc *sc)
 		if (txstat & TDSTAT_Tx_LC)
 			sc->sc_stats.ts_tx_lc++;
 #endif
-
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (TDSTAT_Tx_UF | TDSTAT_Tx_TO))
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 
 		if (txstat & TDSTAT_Tx_EC)
-			ifp->if_collisions += 16;
+			if_statadd_ref(nsr, if_collisions, 16);
 		else
-			ifp->if_collisions += TDSTAT_Tx_COLLISIONS(txstat);
+			if_statadd_ref(nsr, if_collisions,
+			    TDSTAT_Tx_COLLISIONS(txstat));
 		if (txstat & TDSTAT_Tx_LC)
-			ifp->if_collisions++;
+			if_statinc_ref(nsr, if_collisions);
 
-		ifp->if_opackets++;
+		if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 	}
 
 	/*

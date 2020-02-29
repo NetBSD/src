@@ -1,5 +1,5 @@
-/*	$Id: at91pmc.c,v 1.7 2019/04/11 14:38:05 kamil Exp $	*/
-/*	$NetBSD: at91pmc.c,v 1.7 2019/04/11 14:38:05 kamil Exp $	*/
+/*	$Id: at91pmc.c,v 1.7.6.1 2020/02/29 20:18:17 ad Exp $	*/
+/*	$NetBSD: at91pmc.c,v 1.7.6.1 2020/02/29 20:18:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Embedtronics Oy
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: at91pmc.c,v 1.7 2019/04/11 14:38:05 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: at91pmc.c,v 1.7.6.1 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -56,10 +56,10 @@ at91pmc_get_clocks(struct at91bus_clocks *clocks)
 	uint32_t		reg;
 
 	if (!((reg = PMCREG(PMC_MOR)) & PMC_MOR_MOSCEN))
-		panic("%s: main oscillator not enabled (MOR=0x%#X)", __FUNCTION__, reg);
+		panic("%s: main oscillator not enabled (MOR=%#X)", __FUNCTION__, reg);
 
 	if (!((reg = PMCREG(PMC_MCFR)) & PMC_MCFR_MAINRDY))
-		panic("%s: main oscillator not ready (MCFR=0x%#X)", __FUNCTION__, reg);
+		panic("%s: main oscillator not ready (MCFR=%#X)", __FUNCTION__, reg);
 
 	mclk  = ((reg & PMC_MCFR_MAINF) * SLOW_CLOCK) / 16U;
 

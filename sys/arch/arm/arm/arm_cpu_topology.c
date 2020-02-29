@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_cpu_topology.c,v 1.2.2.2 2020/01/17 21:47:23 ad Exp $	*/
+/*	$NetBSD: arm_cpu_topology.c,v 1.2.2.3 2020/02/29 20:18:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2020 Matthew R. Green
@@ -33,7 +33,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.2.2.2 2020/01/17 21:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.2.2.3 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -47,7 +47,7 @@ __KERNEL_RCSID(0, "$NetBSD: arm_cpu_topology.c,v 1.2.2.2 2020/01/17 21:47:23 ad 
 #include <prop/proplib.h>
 
 void
-arm_cpu_topology_set(struct cpu_info * const ci, uint64_t mpidr, bool slow)
+arm_cpu_topology_set(struct cpu_info * const ci, mpidr_t mpidr)
 {
 #ifdef MULTIPROCESSOR
 	uint pkgid, coreid, smtid, numaid = 0;
@@ -61,7 +61,7 @@ arm_cpu_topology_set(struct cpu_info * const ci, uint64_t mpidr, bool slow)
 		coreid = __SHIFTOUT(mpidr, MPIDR_AFF0);
 		smtid = 0;
 	}
-	cpu_topology_set(ci, pkgid, coreid, smtid, numaid, slow);
+	cpu_topology_set(ci, pkgid, coreid, smtid, numaid);
 #endif /* MULTIPROCESSOR */
 }
 
@@ -88,8 +88,7 @@ arm_cpu_do_topology(struct cpu_info *const newci)
 	 * mi_cpu_attach() is called and ncpu is bumped, so call it
 	 * directly here.  This also handles the not-MP case.
 	 */
-	arm_cpu_topology_set(newci, arm_cpu_mpidr(newci),
-	    newci->ci_capacity_dmips_mhz < best_cap);
+	cpu_topology_setspeed(newci, newci->ci_capacity_dmips_mhz < best_cap);
 
 	/*
 	 * Using saved largest capacity, refresh previous topology info.
@@ -98,8 +97,8 @@ arm_cpu_do_topology(struct cpu_info *const newci)
 	for (CPU_INFO_FOREACH(cii, ci)) {
 		if (ci == newci)
 			continue;
-		arm_cpu_topology_set(ci, arm_cpu_mpidr(ci),
-		    ci->ci_capacity_dmips_mhz < best_cap);
+		cpu_topology_setspeed(newci,
+		    newci->ci_capacity_dmips_mhz < best_cap);
 	}
 #endif /* MULTIPROCESSOR */
 }

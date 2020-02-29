@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cdce.c,v 1.68 2020/01/07 06:42:26 maxv Exp $ */
+/*	$NetBSD: if_cdce.c,v 1.68.2.1 2020/02/29 20:19:16 ad Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000-2003 Bill Paul <wpaul@windriver.com>
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.68 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cdce.c,v 1.68.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #include <sys/param.h>
 
@@ -282,7 +282,7 @@ cdce_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		total_len -= 4;
 
 	if (total_len < sizeof(struct ether_header)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
