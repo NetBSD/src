@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.123 2020/02/24 12:38:57 rin Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.124 2020/02/29 02:51:14 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.123 2020/02/24 12:38:57 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.124 2020/02/29 02:51:14 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -450,17 +450,13 @@ axe_setiff_locked(struct usbnet *un)
 	rxmode = le16toh(rxmode);
 
 	rxmode &=
-	    ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_PROMISC |
-	    AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST);
+	    ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_PROMISC | AXE_RXCMD_MULTICAST);
 
-	rxmode |=
-	    (ifp->if_flags & IFF_BROADCAST) ? AXE_RXCMD_BROADCAST : 0;
-
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
-		if (ifp->if_flags & IFF_PROMISC)
-			rxmode |= AXE_RXCMD_PROMISC;
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		goto allmulti;
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* Now program new ones */
 	ETHER_LOCK(ec);
@@ -469,6 +465,7 @@ axe_setiff_locked(struct usbnet *un)
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0) {
 			ETHER_UNLOCK(ec);
+			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
 
@@ -477,15 +474,15 @@ axe_setiff_locked(struct usbnet *un)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	rxmode |= AXE_RXCMD_MULTICAST;
 
+	rxmode |= AXE_RXCMD_MULTICAST;
 	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, hashtbl);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 	return;
 
  allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
+	if (ifp->if_flags & IFF_PROMISC)
+		rxmode |= AXE_RXCMD_PROMISC;
 	rxmode |= AXE_RXCMD_ALLMULTI;
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 }
@@ -1323,19 +1320,11 @@ axe_init_locked(struct ifnet *ifp)
 		rxmode |= AXE_172_RXCMD_UNICAST;
 	}
 
-
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		rxmode |= AXE_RXCMD_PROMISC;
-
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxmode |= AXE_RXCMD_BROADCAST;
-
 	DPRINTF("rxmode %#jx", rxmode, 0, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 
-	/* Load the multicast filter. */
+	/* Accept multicast frame or run promisc. */
 	axe_setiff_locked(un);
 
 	usbnet_unlock_mii_un_locked(un);
