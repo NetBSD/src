@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.124 2020/02/29 02:51:14 nisimura Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.125 2020/02/29 04:02:06 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.124 2020/02/29 02:51:14 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.125 2020/02/29 04:02:06 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1288,7 +1288,7 @@ axe_init_locked(struct ifnet *ifp)
 		    ax88772b_mfb_table[AX88772B_MFB_16K].byte_cnt, NULL);
 	}
 	/* Enable receiver, set RX mode */
-	rxmode = (AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE);
+	rxmode = (AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE);
 	if (AXE_IS_178_FAMILY(un)) {
 		if (un->un_flags & AX772B) {
 			/*
