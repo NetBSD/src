@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rge.c,v 1.8 2020/02/27 23:15:34 sevan Exp $	*/
+/*	$NetBSD: if_rge.c,v 1.9 2020/02/29 21:27:19 thorpej Exp $	*/
 /*	$OpenBSD: if_rge.c,v 1.2 2020/01/02 09:00:45 kevlo Exp $	*/
 
 /*
@@ -18,7 +18,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.8 2020/02/27 23:15:34 sevan Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rge.c,v 1.9 2020/02/29 21:27:19 thorpej Exp $");
 
 /* #include "vlan.h" Sevan */
 
@@ -242,7 +242,11 @@ rge_attach(device_t parent, device_t self, void *aux)
 	}
 	printf(": %s", intrstr);
 
-	sc->sc_dmat = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
+
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_tag = pa->pa_tag;
 
