@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.35 2020/01/31 09:23:58 maxv Exp $ */
+/* $NetBSD: armreg.h,v 1.36 2020/02/29 21:29:23 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -674,7 +674,8 @@ AARCH64REG_READ_INLINE(par_el1)		// Physical Address Register
 AARCH64REG_WRITE_INLINE(par_el1)
 
 #define	PAR_ATTR		__BITS(63,56)	// F=0 memory attributes
-#define	PAR_PA			__BITS(47,12)	// F=0 physical address
+#define	PAR_PA			__BITS(51,12)	// F=0 physical address
+#define	PAR_PA_SHIFT		12
 #define	PAR_NS			__BIT(9)	// F=0 non-secure
 #define	PAR_S			__BIT(9)	// F=1 failure stage
 #define	PAR_SHA			__BITS(8,7)	// F=0 shareability attribute
