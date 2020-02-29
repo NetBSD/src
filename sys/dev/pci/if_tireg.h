@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.24 2020/02/29 18:49:53 thorpej Exp $ */
+/* $NetBSD: if_tireg.h,v 1.25 2020/02/29 19:29:38 thorpej Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -373,16 +373,10 @@
  */
 #define TI_MEM_MAX		0x7FFFFF
 
-#ifdef __64_bit_pci_addressing__
-typedef struct {
-	u_int64_t		ti_addr;
-} ti_hostaddr;
-#else
 typedef struct {
 	u_int32_t		ti_addr_hi;
 	u_int32_t		ti_addr_lo;
 } ti_hostaddr;
-#endif
 
 /*
  * Ring control block structure. The rules for the max_len field
