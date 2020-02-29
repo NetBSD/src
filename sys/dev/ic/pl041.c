@@ -1,4 +1,4 @@
-/* $NetBSD: pl041.c,v 1.7 2020/02/23 04:02:46 isaki Exp $ */
+/* $NetBSD: pl041.c,v 1.8 2020/02/29 05:51:11 isaki Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.7 2020/02/23 04:02:46 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.8 2020/02/29 05:51:11 isaki Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -76,7 +76,6 @@ __KERNEL_RCSID(0, "$NetBSD: pl041.c,v 1.7 2020/02/23 04:02:46 isaki Exp $");
 #define	AACIDR			0x90
 
 #define	AACI_FIFO_DEPTH		512
-#define	AACI_BLOCK_ALIGN	4
 
 #define	AACI_READ(sc, reg)			\
 	bus_space_read_4((sc)->sc_bst, (sc)->sc_bsh, (reg))
@@ -212,12 +211,6 @@ aaci_halt_output(void *priv)
 	return 0;
 }
 
-static int
-aaci_round_blocksize(void *priv, int bs, int mode, const audio_params_t *params)
-{
-	return roundup(bs, AACI_BLOCK_ALIGN);
-}
-
 static void
 aaci_get_locks(void *priv, kmutex_t **intr, kmutex_t **thread)
 {
@@ -237,7 +230,6 @@ static const struct audio_hw_if aaci_hw_if = {
 	.get_props = aaci_get_props,
 	.trigger_output = aaci_trigger_output,
 	.halt_output = aaci_halt_output,
-	.round_blocksize = aaci_round_blocksize,
 	.get_locks = aaci_get_locks,
 };
 
