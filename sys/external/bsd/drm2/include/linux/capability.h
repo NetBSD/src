@@ -1,12 +1,8 @@
-/*	$NetBSD: urio.h,v 1.5 2016/04/23 10:15:32 skrll Exp $	*/
+/*	$NetBSD: capability.h,v 1.2.2.2 2020/02/29 20:20:17 ad Exp $	*/
 
-/*
- * Copyright (c) 2000 The NetBSD Foundation, Inc.
+/*-
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
- *
- * This code is derived from software contributed to The NetBSD Foundation
- * by Lennart Augustsson (lennart@augustsson.net) at
- * Carlstedt Research & Technology.
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -30,29 +26,23 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#include <sys/ioccom.h>
+#ifndef _LINUX_CAPABILITY_H_
+#define _LINUX_CAPABILITY_H_
 
-struct urio_command
-{
-	unsigned short	length;
-	int		request;
-	int		requesttype;
-	int		value;
-	int		index;
-	void		*buffer;
-	int		timeout;
+#include <sys/kauth.h>
+
+enum linux_capability {
+	LINUX_CAP_SYS_ADMIN,
+#define	CAP_SYS_ADMIN	LINUX_CAP_SYS_ADMIN
 };
 
-#define URIO_SEND_COMMAND	_IOWR('U', 200, struct urio_command)
-#define URIO_RECV_COMMAND	_IOWR('U', 201, struct urio_command)
+static inline bool
+capable(enum linux_capability cap)
+{
 
-#define URIO_DIR_OUT		0x0
-#define URIO_DIR_IN		0x1
+	KASSERT(cap == CAP_SYS_ADMIN);
+	return kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
+	    NULL) == 0;
+}
 
-#ifndef __KERNEL__
-#define RIO_DIR_OUT URIO_DIR_OUT
-#define RIO_DIR_IN URIO_DIR_IN
-#define RIO_SEND_COMMAND URIO_SEND_COMMAND
-#define RIO_RECV_COMMAND URIO_RECV_COMMAND
-#define RioCommand urio_command
-#endif
+#endif  /* _LINUX_CAPABILITY_H_ */

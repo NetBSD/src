@@ -1,4 +1,4 @@
-/*	$NetBSD: via_dmablit.c,v 1.6 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: via_dmablit.c,v 1.6.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /* via_dmablit.c -- PCI DMA BitBlt support for the VIA Unichrome/Pro
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.6 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.6.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/via_drm.h>
@@ -46,7 +46,6 @@ __KERNEL_RCSID(0, "$NetBSD: via_dmablit.c,v 1.6 2018/08/27 04:58:37 riastradh Ex
 
 #include <linux/pagemap.h>
 #include <linux/slab.h>
-#include <linux/timer.h>
 
 #define VIA_PGDN(x)	     (((unsigned long)(x)) & PAGE_MASK)
 #define VIA_PGOFF(x)	    (((unsigned long)(x)) & ~PAGE_MASK)
@@ -514,7 +513,7 @@ via_dmablit_handler(struct drm_device *dev, int engine, int from_irq)
 
 		via_abort_dmablit(dev, engine);
 		blitq->aborting = 1;
-		blitq->end = jiffies + DRM_HZ;
+		blitq->end = jiffies + HZ;
 	}
 
 	if (!blitq->is_active) {
@@ -523,7 +522,7 @@ via_dmablit_handler(struct drm_device *dev, int engine, int from_irq)
 			blitq->is_active = 1;
 			blitq->cur = cur;
 			blitq->num_outstanding--;
-			blitq->end = jiffies + DRM_HZ;
+			blitq->end = jiffies + HZ;
 			if (!timer_pending(&blitq->poll_timer))
 				mod_timer(&blitq->poll_timer, jiffies + 1);
 		} else {
@@ -603,7 +602,7 @@ via_dmablit_sync(struct drm_device *dev, uint32_t handle, int engine)
 #ifdef __NetBSD__
 	spin_lock(&blitq->blit_lock);
 	if (via_dmablit_active(blitq, engine, handle, &queue)) {
-		DRM_SPIN_WAIT_ON(ret, queue, &blitq->blit_lock, 3*DRM_HZ,
+		DRM_SPIN_WAIT_ON(ret, queue, &blitq->blit_lock, 3*HZ,
 		    !via_dmablit_active(blitq, engine, handle, NULL));
 	}
 	spin_unlock(&blitq->blit_lock);
@@ -881,7 +880,7 @@ via_dmablit_grab_slot(drm_via_blitq_t *blitq, int engine)
 	while (blitq->num_free == 0) {
 #ifdef __NetBSD__
 		DRM_SPIN_WAIT_ON(ret, &blitq->busy_queue, &blitq->blit_lock,
-		    DRM_HZ,
+		    HZ,
 		    blitq->num_free > 0);
 		/* Map -EINTR to -EAGAIN.  */
 		if (ret == -EINTR)

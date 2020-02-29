@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_fbc.c,v 1.4 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: intel_fbc.c,v 1.4.8.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -41,10 +41,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.4 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_fbc.c,v 1.4.8.1 2020/02/29 20:20:14 ad Exp $");
 
 #include "intel_drv.h"
 #include "i915_drv.h"
+
+#include <linux/nbsd-namespace.h>
 
 static inline bool fbc_supported(struct drm_i915_private *dev_priv)
 {
@@ -530,7 +532,7 @@ static void set_no_fbc_reason(struct drm_i915_private *dev_priv,
 static struct drm_crtc *intel_fbc_find_crtc(struct drm_i915_private *dev_priv)
 {
 	struct drm_crtc *crtc = NULL, *tmp_crtc;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	bool pipe_a_only = false;
 
 	if (IS_HASWELL(dev_priv) || INTEL_INFO(dev_priv)->gen >= 8)
@@ -555,7 +557,7 @@ static struct drm_crtc *intel_fbc_find_crtc(struct drm_i915_private *dev_priv)
 
 static bool multiple_pipes_ok(struct drm_i915_private *dev_priv)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	int n_pipes = 0;
 	struct drm_crtc *crtc;
 
@@ -1088,13 +1090,9 @@ void intel_fbc_flush(struct drm_i915_private *dev_priv,
  */
 void intel_fbc_init(struct drm_i915_private *dev_priv)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
-#ifdef __NetBSD__
-	linux_mutex_init(&dev_priv->fbc.lock);
-#else
 	mutex_init(&dev_priv->fbc.lock);
-#endif
 
 	if (!HAS_FBC(dev_priv)) {
 		dev_priv->fbc.enabled = false;

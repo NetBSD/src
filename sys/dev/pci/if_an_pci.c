@@ -1,4 +1,4 @@
-/*	$NetBSD: if_an_pci.c,v 1.36 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_an_pci.c,v 1.36.6.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.36 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_an_pci.c,v 1.36.6.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -116,7 +116,7 @@ an_pci_match(device_t parent, cfdata_t match, void *aux)
 static void
 an_pci_attach(device_t parent, device_t self, void *aux)
 {
-        struct pci_attach_args *pa = (struct pci_attach_args *)aux;
+	struct pci_attach_args *pa = (struct pci_attach_args *)aux;
 	struct an_pci_softc *psc = device_private(self);
 	struct an_softc *sc = &psc->sc_an;
 	char const *intrstr;
@@ -131,21 +131,21 @@ an_pci_attach(device_t parent, device_t self, void *aux)
 
 	pci_aprint_devinfo(pa, "802.11 controller");
 
-        /* Map I/O registers */
-        if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
+	/* Map I/O registers */
+	if (pci_mapreg_map(pa, AN_PCI_IOBA, PCI_MAPREG_TYPE_IO, 0,
 	    &sc->sc_iot, &sc->sc_ioh, NULL, &iosize) != 0) {
-                aprint_error_dev(self, "unable to map registers\n");
-                return;
-        }
+		aprint_error_dev(self, "unable to map registers\n");
+		return;
+	}
 
-        /* Enable the device. */
-        csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
-        pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
-                       csr | PCI_COMMAND_MASTER_ENABLE);
+	/* Enable the device. */
+	csr = pci_conf_read(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG);
+	pci_conf_write(pa->pa_pc, pa->pa_tag, PCI_COMMAND_STATUS_REG,
+	    csr | PCI_COMMAND_MASTER_ENABLE);
 
 	/* Map and establish the interrupt. */
 	if (pci_intr_map(pa, &ih)) {
-        	aprint_error_dev(self, "unable to map interrupt\n");
+		aprint_error_dev(self, "unable to map interrupt\n");
 		return;
 	}
 	intrstr = pci_intr_string(pa->pa_pc, ih, intrbuf, sizeof(intrbuf));

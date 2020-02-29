@@ -1,4 +1,4 @@
-/*      $NetBSD: sgec.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $ */
+/*      $NetBSD: sgec.c,v 1.51.4.1 2020/02/29 20:19:08 ad Exp $ */
 /*
  * Copyright (c) 1999 Ludd, University of Lule}, Sweden. All rights reserved.
  *
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sgec.c,v 1.51.4.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -452,7 +452,7 @@ sgec_intr(struct ze_softc *sc)
 			if (++sc->sc_nextrx == RXDESCS)
 				sc->sc_nextrx = 0;
 			if (len < ETHER_MIN_LEN) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 			} else {
 				m_set_rcvif(m, ifp);
@@ -495,7 +495,7 @@ sgec_intr(struct ze_softc *sc)
 			    sc->sc_txcnt = 0;
 			sc->sc_inq -= map->dm_nsegs;
 			KASSERT(zc->zc_xmit[lastack].ze_tdes1 & ZE_TDES1_LS);
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			bus_dmamap_unload(sc->sc_dmat, map);
 			KASSERT(sc->sc_txmbuf[lastack]);
 			m_freem(sc->sc_txmbuf[lastack]);

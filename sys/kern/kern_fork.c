@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.217 2019/12/16 22:47:54 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.217.2.1 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.217 2019/12/16 22:47:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.217.2.1 2020/02/29 20:21:02 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -327,6 +327,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 
 	LIST_INIT(&p2->p_lwps);
 	LIST_INIT(&p2->p_sigwaiters);
+	radix_tree_init_tree(&p2->p_lwptree);
 
 	/*
 	 * Duplicate sub-structures as needed.
@@ -353,6 +354,7 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
+	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 

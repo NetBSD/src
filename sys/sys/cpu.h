@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.47.2.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.47.2.2 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007 YAMAMOTO Takashi,
@@ -57,7 +57,7 @@ void cpu_need_resched(struct cpu_info *, struct lwp *, int);
 /*
  * CPU_INFO_ITERATOR() may be supplied by machine dependent code as it
  * controls how the cpu_info structures are allocated.
- * 
+ *
  * This macro must always iterate just the boot-CPU when the system has
  * not attached any cpus via mi_cpu_attach() yet, and the "ncpu" variable
  * is zero.
@@ -90,7 +90,8 @@ bool	cpu_kpreempt_disabled(void);
 int	cpu_lwp_setprivate(struct lwp *, void *);
 void	cpu_intr_redistribute(void);
 u_int	cpu_intr_count(struct cpu_info *);
-void	cpu_topology_set(struct cpu_info *, u_int, u_int, u_int, u_int, bool);
+void	cpu_topology_set(struct cpu_info *, u_int, u_int, u_int, u_int);
+void	cpu_topology_setspeed(struct cpu_info *, bool);
 void	cpu_topology_init(void);
 #endif
 

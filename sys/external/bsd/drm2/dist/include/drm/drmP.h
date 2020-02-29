@@ -1,4 +1,4 @@
-/*	$NetBSD: drmP.h,v 1.36 2019/11/05 23:29:28 jmcneill Exp $	*/
+/*	$NetBSD: drmP.h,v 1.36.2.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*
  * Internal Header for the Direct Rendering Manager
@@ -35,12 +35,10 @@
 #define _DRM_P_H_
 
 #include <linux/agp_backend.h>
-#include <linux/atomic.h>
 #include <linux/cdev.h>
 #include <linux/dma-mapping.h>
 #include <linux/file.h>
 #include <linux/fs.h>
-#include <linux/err.h>
 #include <linux/highmem.h>
 #include <linux/idr.h>
 #include <linux/init.h>
@@ -48,24 +46,19 @@
 #include <linux/jiffies.h>
 #include <linux/kernel.h>
 #include <linux/kref.h>
-#include <linux/ktime.h>
 #include <linux/miscdevice.h>
 #include <linux/mm.h>
 #include <linux/mutex.h>
 #include <linux/pci.h>
 #include <linux/platform_device.h>
-#include <linux/pm.h>
 #include <linux/poll.h>
 #include <linux/ratelimit.h>
 #include <linux/sched.h>
 #include <linux/slab.h>
-#include <linux/timer.h>
 #include <linux/types.h>
-#include <linux/uidgid.h>
 #include <linux/vmalloc.h>
 #include <linux/workqueue.h>
 
-#include <asm/barrier.h>
 #include <asm/mman.h>
 #include <asm/pgalloc.h>
 #include <asm/uaccess.h>
@@ -75,6 +68,19 @@
 
 #ifdef __NetBSD__
 #include <drm/drm_os_netbsd.h>
+#include <asm/barrier.h>
+#include <asm/bug.h>
+#include <linux/atomic.h>
+#include <linux/delay.h>
+#include <linux/err.h>
+#include <linux/fence.h>
+#include <linux/interrupt.h>
+#include <linux/ktime.h>
+#include <linux/module.h>
+#include <linux/pm.h>
+#include <linux/string.h>
+#include <linux/timer.h>
+#include <linux/uidgid.h>
 #else
 #include <drm/drm_os_linux.h>
 #endif

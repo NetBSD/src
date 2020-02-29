@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_ptrace_common.c,v 1.77 2020/01/03 00:37:29 kamil Exp $	*/
+/*	$NetBSD: sys_ptrace_common.c,v 1.77.2.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009 The NetBSD Foundation, Inc.
@@ -118,7 +118,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.77 2020/01/03 00:37:29 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_ptrace_common.c,v 1.77.2.1 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ptrace.h"
@@ -804,7 +804,7 @@ ptrace_lwpstatus(struct proc *t, struct ptrace_methods *ptm, struct lwp **lt,
 		        __func__, sizeof(lwpid_t), data, sizeof(pls)));
 		return EINVAL;
 	}
-	error = copyin(addr, &pls, sizeof(lwpid_t));
+	error = copyin(addr, &pls.pl_lwpid, sizeof(lwpid_t));
 	if (error)
 		return error;
 

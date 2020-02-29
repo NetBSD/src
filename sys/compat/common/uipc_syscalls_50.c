@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_syscalls_50.c,v 1.10 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: uipc_syscalls_50.c,v 1.10.2.1 2020/02/29 20:21:00 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -58,6 +58,7 @@
 static int
 compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 {
+	struct if_data ifi;
 	struct oifdatareq *ifdr = data;
 	struct ifnet *ifp;
 	int error;
@@ -78,7 +79,8 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 	/* Do work. */
 	switch (cmd) {
 	case OSIOCGIFDATA:
-		ifdatan2o(&ifdr->ifdr_data, &ifp->if_data);
+		if_export_if_data(ifp, &ifi, false);
+		ifdatan2o(&ifdr->ifdr_data, &ifi);
 		return 0;
 
 	case OSIOCZIFDATA:
@@ -90,13 +92,9 @@ compat_ifdatareq(struct lwp *l, u_long cmd, void *data)
 			if (error != 0)
 				return error;
 		}
-		ifdatan2o(&ifdr->ifdr_data, &ifp->if_data);
-		/*
-		 * Assumes that the volatile counters that can be
-		 * zero'ed are at the end of if_data.
-		 */
-		memset(&ifp->if_data.ifi_ipackets, 0, sizeof(ifp->if_data) -
-		    offsetof(struct if_data, ifi_ipackets));
+		if_export_if_data(ifp, &ifi, true);
+		ifdatan2o(&ifdr->ifdr_data, &ifi);
+		/* XXX if_lastchange? */
 		return 0;
 
 	default:

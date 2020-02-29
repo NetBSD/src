@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.gzboot,v 1.37 2019/10/24 18:46:21 christos Exp $
+#	$NetBSD: Makefile.gzboot,v 1.37.2.1 2020/02/29 20:18:23 ad Exp $
 
 NOMAN=  # defined
 
@@ -49,6 +49,9 @@ CPPFLAGS+= -DHEAP_VARIABLE
 CPPFLAGS+= -DRELOC=${RELOC}
 CPPFLAGS+= -DMAXIMAGESIZE=${MAXIMAGESIZE}
 CPPFLAGS+= -DLOADADDR=${LOADADDR}
+.if defined(GZSRCADDR)
+CPPFLAGS+= -DGZSRCADDR=${GZSRCADDR}
+.endif
 
 COPTS+=	-ffreestanding
 COPTS+=	-fno-stack-protector

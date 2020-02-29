@@ -1,4 +1,4 @@
-/*	$NetBSD: ping.c,v 1.1 2015/05/13 07:07:36 pgoyette Exp $	*/
+/*	$NetBSD: ping.c,v 1.1.30.1 2020/02/29 20:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ping.c,v 1.1 2015/05/13 07:07:36 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ping.c,v 1.1.30.1 2020/02/29 20:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -41,7 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: ping.c,v 1.1 2015/05/13 07:07:36 pgoyette Exp $");
  * Create a device /dev/ping in order to test this module.
  *
  * To use this device you need to do:
- *     mknod /dev/ping c 210 0
+ *     mknod /dev/ping c 351 0
  *
  */
 
@@ -101,7 +101,7 @@ ping_ioctl(dev_t self __unused, u_long cmd, void *data, int flag,
 		printf("ping: pong!\n");
 		return 0;
 	default:
-		return 1;
+		return ENOTTY;
 	}
 }
 
@@ -112,7 +112,7 @@ ping_modcmd(modcmd_t cmd, void *arg __unused)
 {
 	/* The major should be verified and changed if needed to avoid
 	 * conflicts with other devices. */
-	int cmajor = 210, bmajor = -1;
+	int cmajor = 351, bmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

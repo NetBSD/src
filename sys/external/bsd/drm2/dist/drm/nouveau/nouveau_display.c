@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_display.c,v 1.3 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_display.c,v 1.3.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright (C) 2008 Maarten Maathuis.
@@ -27,9 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.3 2018/08/27 04:58:24 riastradh Exp $");
-
-#include <linux/err.h>
+__KERNEL_RCSID(0, "$NetBSD: nouveau_display.c,v 1.3.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_crtc_helper.h>

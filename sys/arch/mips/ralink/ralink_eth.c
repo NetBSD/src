@@ -1,4 +1,4 @@
-/*	$NetBSD: ralink_eth.c,v 1.19 2019/06/03 06:04:20 msaitoh Exp $	*/
+/*	$NetBSD: ralink_eth.c,v 1.19.4.1 2020/02/29 20:18:27 ad Exp $	*/
 /*-
  * Copyright (c) 2011 CradlePoint Technology, Inc.
  * All rights reserved.
@@ -29,7 +29,7 @@
 /* ralink_eth.c -- Ralink Ethernet Driver */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.19 2019/06/03 06:04:20 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ralink_eth.c,v 1.19.4.1 2020/02/29 20:18:27 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -656,9 +656,9 @@ ralink_eth_detach(device_t self, int flags)
 
 	ralink_eth_disable(sc);
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	for (i = 0; i < RALINK_ETH_NUM_RX_DESC; i++) {
 		rxs = &sc->sc_rxstate[i];
@@ -1321,7 +1321,7 @@ ralink_eth_watchdog(struct ifnet *ifp)
 	if (doing_transmit) {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR, "%s: transmit timeout\n",
 		    ifp->if_xname);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		sc->sc_evcnt_wd_tx.ev_count++;
 	} else {
 		RALINK_DEBUG(RALINK_DEBUG_ERROR,
@@ -1626,7 +1626,7 @@ ralink_eth_txintr(ralink_eth_softc_t *sc)
 
 		struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_evcnt_output.ev_count++;
 
 		if (--sc->sc_pending_tx == 0)

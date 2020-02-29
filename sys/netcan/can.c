@@ -1,4 +1,4 @@
-/*	$NetBSD: can.c,v 1.8 2019/08/19 03:24:38 ozaki-r Exp $	*/
+/*	$NetBSD: can.c,v 1.8.2.1 2020/02/29 20:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2017 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.8 2019/08/19 03:24:38 ozaki-r Exp $");
+__KERNEL_RCSID(0, "$NetBSD: can.c,v 1.8.2.1 2020/02/29 20:21:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -249,7 +249,7 @@ can_output(struct mbuf *m, struct canpcb *canp)
 		
 	sotag = m_tag_get(PACKET_TAG_SO, sizeof(struct socket *), PR_NOWAIT);
 	if (sotag == NULL) {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		return ENOMEM;
 	}
 	mutex_enter(&canp->canp_mtx);
@@ -307,8 +307,7 @@ can_input(struct ifnet *ifp, struct mbuf *m)
 	} else {
 		IF_ENQUEUE(inq, m);
 		IFQ_UNLOCK(inq);
-		ifp->if_ipackets++;
-		ifp->if_ibytes += m->m_pkthdr.len;
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, m->m_pkthdr.len);
 		schednetisr(NETISR_CAN);
 	}
 }

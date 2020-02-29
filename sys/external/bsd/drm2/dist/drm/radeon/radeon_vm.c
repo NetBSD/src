@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_vm.c,v 1.6 2018/08/27 07:52:32 riastradh Exp $	*/
+/*	$NetBSD: radeon_vm.c,v 1.6.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2008 Advanced Micro Devices, Inc.
@@ -28,12 +28,14 @@
  *          Jerome Glisse
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_vm.c,v 1.6 2018/08/27 07:52:32 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_vm.c,v 1.6.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
 #include "radeon.h"
 #include "radeon_trace.h"
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * GPUVM
@@ -763,11 +765,7 @@ static void radeon_vm_frag_ptes(struct radeon_device *rdev,
 	uint64_t frag_align = ((rdev->family == CHIP_CAYMAN) ||
 			       (rdev->family == CHIP_ARUBA)) ? 0x200 : 0x80;
 
-#ifdef __NetBSD__		/* XXX ALIGN means something else */
-	uint64_t frag_start = round_up(pe_start, frag_align);
-#else
 	uint64_t frag_start = ALIGN(pe_start, frag_align);
-#endif
 	uint64_t frag_end = pe_end & ~(frag_align - 1);
 
 	unsigned count;
@@ -1192,11 +1190,7 @@ int radeon_vm_init(struct radeon_device *rdev, struct radeon_vm *vm)
 		vm->ids[i].flushed_updates = NULL;
 		vm->ids[i].last_id_use = NULL;
 	}
-#ifdef __NetBSD__
-	linux_mutex_init(&vm->mutex);
-#else
 	mutex_init(&vm->mutex);
-#endif
 #ifdef __NetBSD__
 	interval_tree_init(&vm->va);
 #else
@@ -1278,10 +1272,6 @@ void radeon_vm_fini(struct radeon_device *rdev, struct radeon_vm *vm)
 		radeon_fence_unref(&vm->ids[i].last_id_use);
 	}
 
-#ifdef __NetBSD__
 	spin_lock_destroy(&vm->status_lock);
-	linux_mutex_destroy(&vm->mutex);
-#else
 	mutex_destroy(&vm->mutex);
-#endif
 }

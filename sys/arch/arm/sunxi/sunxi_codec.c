@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_codec.c,v 1.7 2019/06/08 08:02:37 isaki Exp $ */
+/* $NetBSD: sunxi_codec.c,v 1.7.4.1 2020/02/29 20:18:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2014-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #include "opt_ddb.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.7 2019/06/08 08:02:37 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_codec.c,v 1.7.4.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -261,16 +261,6 @@ sunxi_codec_get_props(void *priv)
 }
 
 static int
-sunxi_codec_round_blocksize(void *priv, int bs, int mode,
-    const audio_params_t *params)
-{
-	bs &= ~3;
-	if (bs == 0)
-		bs = 4;
-	return bs;
-}
-
-static int
 sunxi_codec_trigger_output(void *priv, void *start, void *end, int blksize,
     void (*intr)(void *), void *intrarg, const audio_params_t *params)
 {
@@ -475,7 +465,6 @@ static const struct audio_hw_if sunxi_codec_hw_if = {
 	.get_port = sunxi_codec_get_port,
 	.query_devinfo = sunxi_codec_query_devinfo,
 	.get_props = sunxi_codec_get_props,
-	.round_blocksize = sunxi_codec_round_blocksize,
 	.trigger_output = sunxi_codec_trigger_output,
 	.trigger_input = sunxi_codec_trigger_input,
 	.halt_output = sunxi_codec_halt_output,

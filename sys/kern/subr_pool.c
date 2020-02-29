@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_pool.c,v 1.264.2.1 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: subr_pool.c,v 1.264.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1999, 2000, 2002, 2007, 2008, 2010, 2014, 2015, 2018
@@ -33,13 +33,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.264.2.1 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_pool.c,v 1.264.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
 #include "opt_pool.h"
-#include "opt_kleak.h"
 #endif
 
 #include <sys/param.h>
@@ -115,14 +114,6 @@ static inline void pool_cache_put_kmsan(pool_cache_t, void *);
 #define pool_put_kmsan(pp, ptr)		__nothing
 #define pool_cache_get_kmsan(pc, ptr)	__nothing
 #define pool_cache_put_kmsan(pc, ptr)	__nothing
-#endif
-
-#ifdef KLEAK
-static void pool_kleak_fill(struct pool *, void *);
-static void pool_cache_kleak_fill(pool_cache_t, void *);
-#else
-#define pool_kleak_fill(pp, ptr)	__nothing
-#define pool_cache_kleak_fill(pc, ptr)	__nothing
 #endif
 
 #ifdef POOL_QUARANTINE
@@ -1208,8 +1199,6 @@ pool_get(struct pool *pp, int flags)
 	pool_get_kmsan(pp, v);
 	if (flags & PR_ZERO)
 		memset(v, 0, pp->pr_reqsize);
-	else
-		pool_kleak_fill(pp, v);
 	return v;
 }
 
@@ -2530,7 +2519,6 @@ pool_cache_get_slow(pool_cache_cpu_t *cc, int s, void **objectp,
 	}
 
 	FREECHECK_OUT(&pc->pc_freecheck, object);
-	pool_cache_kleak_fill(pc, object);
 	return false;
 }
 
@@ -2579,7 +2567,6 @@ pool_cache_get_paddr(pool_cache_t pc, int flags, paddr_t *pap)
 			FREECHECK_OUT(&pc->pc_freecheck, object);
 			pool_redzone_fill(&pc->pc_pool, object);
 			pool_cache_get_kmsan(pc, object);
-			pool_cache_kleak_fill(pc, object);
 			return object;
 		}
 
@@ -2943,26 +2930,6 @@ static inline void
 pool_cache_put_kmsan(pool_cache_t pc, void *p)
 {
 	pool_put_kmsan(&pc->pc_pool, p);
-}
-#endif
-
-#ifdef KLEAK
-static void
-pool_kleak_fill(struct pool *pp, void *p)
-{
-	if (__predict_false(pp->pr_roflags & PR_NOTOUCH)) {
-		return;
-	}
-	kleak_fill_area(p, pp->pr_size);
-}
-
-static void
-pool_cache_kleak_fill(pool_cache_t pc, void *p)
-{
-	if (__predict_false(pc_has_ctor(pc) || pc_has_dtor(pc))) {
-		return;
-	}
-	pool_kleak_fill(&pc->pc_pool, p);
 }
 #endif
 

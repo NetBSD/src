@@ -1,4 +1,4 @@
-/*	$NetBSD: linux_work.c,v 1.44 2019/03/19 08:17:46 ryo Exp $	*/
+/*	$NetBSD: linux_work.c,v 1.44.6.1 2020/02/29 20:20:12 ad Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.44 2019/03/19 08:17:46 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: linux_work.c,v 1.44.6.1 2020/02/29 20:20:12 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/atomic.h>
@@ -348,8 +348,8 @@ static void __dead
 linux_workqueue_thread(void *cookie)
 {
 	struct workqueue_struct *const wq = cookie;
-	struct work_head queue, dqueue;
-	struct work_head *const q[2] = { &queue, &dqueue };
+	struct work_head *const q[2] = { &wq->wq_queue, &wq->wq_dqueue };
+	struct work_struct marker, *work;
 	unsigned i;
 
 	lwp_setspecific(workqueue_key, wq);
@@ -368,22 +368,22 @@ linux_workqueue_thread(void *cookie)
 			continue;
 		}
 
-		/* Grab a batch of work off the queue.  */
+		/*
+		 * Start a batch of work.  Use a marker to delimit when
+		 * the batch ends so we can advance the generation
+		 * after the batch.
+		 */
 		SDT_PROBE1(sdt, linux, work, batch__start,  wq);
-		TAILQ_INIT(&queue);
-		TAILQ_INIT(&dqueue);
-		TAILQ_CONCAT(&queue, &wq->wq_queue, work_entry);
-		TAILQ_CONCAT(&dqueue, &wq->wq_dqueue, work_entry);
-
-		/* Process each work item in the batch.  */
 		for (i = 0; i < 2; i++) {
-			while (!TAILQ_EMPTY(q[i])) {
-				struct work_struct *work = TAILQ_FIRST(q[i]);
+			if (TAILQ_EMPTY(q[i]))
+				continue;
+			TAILQ_INSERT_TAIL(q[i], &marker, work_entry);
+			while ((work = TAILQ_FIRST(q[i])) != &marker) {
 				void (*func)(struct work_struct *);
 
 				KASSERT(work_queue(work) == wq);
 				KASSERT(work_claimed(work, wq));
-				KASSERTMSG((q[i] != &dqueue ||
+				KASSERTMSG((q[i] != &wq->wq_dqueue ||
 					container_of(work, struct delayed_work,
 					    work)->dw_state ==
 					DELAYED_WORK_IDLE),
@@ -407,6 +407,7 @@ linux_workqueue_thread(void *cookie)
 				wq->wq_current_work = NULL;
 				cv_broadcast(&wq->wq_cv);
 			}
+			TAILQ_REMOVE(q[i], &marker, work_entry);
 		}
 
 		/* Notify flush that we've completed a batch of work.  */

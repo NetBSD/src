@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_fbcon.c,v 1.5 2018/08/27 07:57:34 riastradh Exp $	*/
+/*	$NetBSD: nouveau_fbcon.c,v 1.5.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2007 David Airlie
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.5 2018/08/27 07:57:34 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_fbcon.c,v 1.5.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <linux/module.h>
 #include <linux/kernel.h>
@@ -273,11 +273,11 @@ nouveau_fbcon_accel_fini(struct drm_device *dev)
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	struct nouveau_fbdev *fbcon = drm->fbcon;
 	if (fbcon && drm->channel) {
-#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 		console_lock();
+#ifndef __NetBSD__		/* XXX nouveau fbaccel */
 		fbcon->helper.fbdev->flags |= FBINFO_HWACCEL_DISABLED;
-		console_unlock();
 #endif
+		console_unlock();
 		nouveau_channel_idle(drm->channel);
 		nvif_object_fini(&fbcon->twod);
 		nvif_object_fini(&fbcon->blit);
@@ -356,6 +356,17 @@ nouveau_fbcon_zfill(struct drm_device *dev, struct nouveau_fbdev *fbcon)
 #endif
 }
 
+#ifdef __NetBSD__
+static int
+nouveau_fbcon_print(void *aux, const char *pnp)
+{
+	if (pnp)
+		aprint_normal("nouveaufbbus at %s", pnp);
+
+	return (UNCONF);
+}
+#endif
+
 static int
 nouveau_fbcon_create(struct drm_fb_helper *helper,
 		     struct drm_fb_helper_surface_size *sizes)
@@ -423,21 +434,20 @@ nouveau_fbcon_create(struct drm_fb_helper *helper,
 
 	nouveau_fbcon_zfill(dev, fbcon);
 
-    {
-	static const struct nouveaufb_attach_args zero_nfa;
-	struct nouveaufb_attach_args nfa = zero_nfa;
+	struct nouveaufb_attach_args nfa;
 
+	memset(&nfa, 0, sizeof(nfa));
 	nfa.nfa_fb_helper = helper;
 	nfa.nfa_fb_sizes = *sizes;
 	nfa.nfa_fb_ptr = nvbo_kmap_obj_iovirtual(nvbo);
 	nfa.nfa_fb_linebytes = mode_cmd.pitches[0];
 
-	helper->fbdev = config_found_ia(dev->dev, "nouveaufbbus", &nfa, NULL);
+	helper->fbdev = config_found_ia(dev->dev, "nouveaufbbus", &nfa,
+	    nouveau_fbcon_print);
 	if (helper->fbdev == NULL) {
-		DRM_ERROR("failed to attach nouveaufb\n");
 		goto out_unlock;
 	}
-    }
+
 	helper->fb = fb;
 
 	return 0;
@@ -507,7 +517,7 @@ out_unlock:
 out_unpin:
 	nouveau_bo_unpin(nvbo);
 out_unref:
-	nouveau_bo_ref(NULL, &nvbo);
+	nouveau_gem_object_del(&nvbo->gem);
 out:
 	return ret;
 }
@@ -575,7 +585,6 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 {
 	struct nouveau_drm *drm = nouveau_drm(dev);
 	if (drm->fbcon) {
-#ifndef __NetBSD__
 		console_lock();
 		if (state == FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_restore(dev);
@@ -583,7 +592,6 @@ nouveau_fbcon_set_suspend(struct drm_device *dev, int state)
 		if (state != FBINFO_STATE_RUNNING)
 			nouveau_fbcon_accel_save_disable(dev);
 		console_unlock();
-#endif
 	}
 }
 

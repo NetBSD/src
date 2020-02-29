@@ -1,4 +1,4 @@
-/*	$NetBSD: panic_string.c,v 1.1 2018/05/29 16:53:56 kamil Exp $	*/
+/*	$NetBSD: panic_string.c,v 1.1.10.1 2020/02/29 20:21:05 ad Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -28,7 +28,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: panic_string.c,v 1.1 2018/05/29 16:53:56 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: panic_string.c,v 1.1.10.1 2020/02/29 20:21:05 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -46,7 +46,7 @@ __KERNEL_RCSID(0, "$NetBSD: panic_string.c,v 1.1 2018/05/29 16:53:56 kamil Exp $
  * user input.
  *
  * To use this device you need to do:
- *      mknod /dev/panic c 210 0
+ *      mknod /dev/panic c 351 0
  *
  * To write to the device you might need:
  *      chmod 666 /dev/panic
@@ -173,7 +173,7 @@ panic_string_modcmd(modcmd_t cmd, void *arg __unused)
 {
 	/* The major should be verified and changed if needed to avoid
 	 * conflicts with other devices. */
-	int cmajor = 210, bmajor = -1;
+	int cmajor = 351, bmajor = -1;
 
 	switch (cmd) {
 	case MODULE_CMD_INIT:

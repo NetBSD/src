@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_dp_mst.c,v 1.3 2018/08/27 07:22:08 riastradh Exp $	*/
+/*	$NetBSD: intel_dp_mst.c,v 1.3.10.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2008 Intel Corporation
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_dp_mst.c,v 1.3 2018/08/27 07:22:08 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_dp_mst.c,v 1.3.10.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <drm/drmP.h>
 #include "i915_drv.h"
@@ -234,7 +234,7 @@ static void intel_mst_enable_dp(struct intel_encoder *encoder)
 }
 
 static bool intel_dp_mst_enc_get_hw_state(struct intel_encoder *encoder,
-				      enum i915_pipe *pipe)
+				      enum pipe *pipe)
 {
 	struct intel_dp_mst_encoder *intel_mst = enc_to_mst(&encoder->base);
 	*pipe = intel_mst->pipe;
@@ -407,7 +407,7 @@ static const struct drm_encoder_funcs intel_dp_mst_enc_funcs = {
 static bool intel_dp_mst_get_hw_state(struct intel_connector *connector)
 {
 	if (connector->encoder && connector->base.state->crtc) {
-		enum i915_pipe pipe;
+		enum pipe pipe;
 		if (!connector->encoder->get_hw_state(connector->encoder, &pipe))
 			return false;
 		return true;
@@ -523,7 +523,7 @@ static struct drm_dp_mst_topology_cbs mst_cbs = {
 };
 
 static struct intel_dp_mst_encoder *
-intel_dp_create_fake_mst_encoder(struct intel_digital_port *intel_dig_port, enum i915_pipe pipe)
+intel_dp_create_fake_mst_encoder(struct intel_digital_port *intel_dig_port, enum pipe pipe)
 {
 	struct intel_dp_mst_encoder *intel_mst;
 	struct intel_encoder *intel_encoder;

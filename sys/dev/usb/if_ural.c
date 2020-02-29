@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.61 2019/12/01 08:27:54 maxv Exp $ */
+/*	$NetBSD: if_ural.c,v 1.61.2.1 2020/02/29 20:19:16 ad Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.61 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.61.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -866,7 +866,7 @@ ural_txeof(struct usbd_xfer *xfer, void * priv,
 		if (status == USBD_STALLED)
 			usbd_clear_endpoint_stall_async(sc->sc_tx_pipeh);
 
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		return;
 	}
 
@@ -878,7 +878,7 @@ ural_txeof(struct usbd_xfer *xfer, void * priv,
 	data->ni = NULL;
 
 	sc->tx_queued--;
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	DPRINTFN(10, ("tx done\n"));
 
@@ -916,7 +916,7 @@ ural_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 	if (len < RAL_RX_DESC_SIZE + IEEE80211_MIN_LEN) {
 		DPRINTF(("%s: xfer too short %d\n", device_xname(sc->sc_dev),
 		    len));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
@@ -930,19 +930,19 @@ ural_rxeof(struct usbd_xfer *xfer, void * priv, usbd_status status)
 		 * those frames when we filled RAL_TXRX_CSR2.
 		 */
 		DPRINTFN(5, ("PHY or CRC error\n"));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
 	MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 	if (mnew == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto skip;
 	}
 
 	MCLGET(mnew, M_DONTWAIT);
 	if (!(mnew->m_flags & M_EXT)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(mnew);
 		goto skip;
 	}
@@ -1400,7 +1400,7 @@ ural_start(struct ifnet *ifp)
 			bpf_mtap3(ic->ic_rawbpf, m0, BPF_D_OUT);
 			if (ural_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 		}
@@ -1422,7 +1422,7 @@ ural_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", device_xname(sc->sc_dev));
 			/*ural_init(sc); XXX needs a process context! */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;
@@ -2341,7 +2341,7 @@ ural_amrr_update(struct usbd_xfer *xfer, void * priv,
 	}
 
 	/* count TX retry-fail as Tx errors */
-	ifp->if_oerrors += sc->sta[9];
+	if_statadd(ifp, if_oerrors, sc->sta[9]);
 
 	sc->amn.amn_retrycnt =
 	    sc->sta[7] +	/* TX one-retry ok count */

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_hvn.c,v 1.15 2019/12/27 05:59:53 nonaka Exp $	*/
+/*	$NetBSD: if_hvn.c,v 1.15.2.1 2020/02/29 20:19:07 ad Exp $	*/
 /*	$OpenBSD: if_hvn.c,v 1.39 2018/03/11 14:31:34 mikeb Exp $	*/
 
 /*-
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.15 2019/12/27 05:59:53 nonaka Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_hvn.c,v 1.15.2.1 2020/02/29 20:19:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -362,6 +362,7 @@ hvn_detach(device_t self, int flags)
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
 	if_percpuq_destroy(sc->sc_ipq);
 
 	hvn_rndis_detach(sc);
@@ -498,7 +499,7 @@ hvn_start(struct ifnet *ifp)
 
 		if (hvn_encap(sc, m, &txd)) {
 			/* the chain is too large */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m);
 			continue;
 		}
@@ -507,7 +508,7 @@ hvn_start(struct ifnet *ifp)
 
 		if (hvn_rndis_output(sc, txd)) {
 			hvn_decap(sc, txd);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m);
 			continue;
 		}
@@ -678,7 +679,7 @@ hvn_txeof(struct hvn_softc *sc, uint64_t tid)
 	    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 	bus_dmamap_unload(sc->sc_dmat, txd->txd_dmap);
 	m_freem(m);
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 
 	txd->txd_ready = 1;
 
@@ -1560,7 +1561,7 @@ hvn_rxeof(struct hvn_softc *sc, uint8_t *buf, uint32_t len)
 
 	if ((m = hvn_devget(sc, buf + RNDIS_HEADER_OFFSET + pkt->rm_dataoffset,
 	    pkt->rm_datalen)) == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

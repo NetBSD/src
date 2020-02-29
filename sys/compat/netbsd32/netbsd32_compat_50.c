@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_compat_50.c,v 1.44 2020/01/01 14:52:38 maxv Exp $	*/
+/*	$NetBSD: netbsd32_compat_50.c,v 1.44.2.1 2020/02/29 20:21:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.44 2020/01/01 14:52:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_50.c,v 1.44.2.1 2020/02/29 20:21:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -564,14 +564,12 @@ compat_50_netbsd32__lwp_park(struct lwp *l,
 	}
 
 	if (SCARG(uap, unpark) != 0) {
-		error = lwp_unpark(SCARG(uap, unpark),
-		    SCARG_P32(uap, unparkhint));
+		error = lwp_unpark(&SCARG(uap, unpark), 1);
 		if (error != 0)
 			return error;
 	}
 
-	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
-	    SCARG_P32(uap, hint));
+	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp);
 }
 
 static int
@@ -1039,7 +1037,9 @@ static struct syscall_package compat_netbsd32_50_syscalls[] = {
 	{ 0, 0, NULL }
 }; 
 
-MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50, "compat_netbsd32_60,compat_50");
+MODULE(MODULE_CLASS_EXEC, compat_netbsd32_50,
+    "compat_netbsd32_60,compat_50,compat_50_quota");
+
 
 static int
 compat_netbsd32_50_modcmd(modcmd_t cmd, void *arg)

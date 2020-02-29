@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_inode.c,v 1.107.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: ufs_inode.c,v 1.107.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.107.2.1 2020/01/17 21:47:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_inode.c,v 1.107.2.2 2020/02/29 20:21:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_ffs.h"
@@ -242,7 +242,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	len += delta;
 
 	genfs_node_wrlock(vp);
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	error = VOP_GETPAGES(vp, pagestart, pgs, &npages, 0,
 	    VM_PROT_WRITE, 0, PGO_SYNCIO | PGO_PASTEOF | PGO_NOBLOCKALLOC |
 	    PGO_NOTIMESTAMP | PGO_GLOCKHELD);
@@ -269,7 +269,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 	 */
 
 	GOP_SIZE(vp, off + len, &eob, 0);
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	for (i = 0; i < npages; i++) {
 		KASSERT((pgs[i]->flags & PG_RELEASED) == 0);
 		if (!error) {
@@ -284,7 +284,7 @@ ufs_balloc_range(struct vnode *vp, off_t off, off_t len, kauth_cred_t cred,
 		uvm_pageunlock(pgs[i]);
 	}
 	uvm_page_unbusy(pgs, npages);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
  out:
  	kmem_free(pgs, pgssize);

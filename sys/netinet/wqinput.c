@@ -1,4 +1,4 @@
-/*	$NetBSD: wqinput.c,v 1.6 2019/09/19 04:09:34 ozaki-r Exp $	*/
+/*	$NetBSD: wqinput.c,v 1.6.2.1 2020/02/29 20:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -41,6 +41,7 @@
 #include <sys/queue.h>
 #include <sys/percpu.h>
 #include <sys/sysctl.h>
+#include <sys/xcall.h>
 
 #include <net/if.h>
 #include <netinet/wqinput.h>
@@ -98,7 +99,8 @@ wqinput_sysctl_drops_handler(SYSCTLFN_ARGS)
 	node = *rnode;
 	wqi = node.sysctl_data;
 
-	percpu_foreach(wqi->wqi_worklists, wqinput_drops, &sum);
+	percpu_foreach_xcall(wqi->wqi_worklists, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    wqinput_drops, &sum);
 
 	node.sysctl_data = &sum;
 	error = sysctl_lookup(SYSCTLFN_CALL(&node));
@@ -188,8 +190,8 @@ wqinput_create(const char *name, void (*func)(struct mbuf *, int, int))
 		panic("%s: workqueue_create failed (%d)\n", __func__, error);
 	pool_init(&wqi->wqi_work_pool, sizeof(struct wqinput_work), 0, 0, 0,
 	    name, NULL, IPL_SOFTNET);
-	wqi->wqi_worklists = percpu_alloc(sizeof(struct wqinput_worklist *));
-	percpu_foreach(wqi->wqi_worklists, wqinput_percpu_init_cpu, NULL);
+	wqi->wqi_worklists = percpu_create(sizeof(struct wqinput_worklist *),
+	    wqinput_percpu_init_cpu, NULL, NULL);
 	wqi->wqi_input = func;
 
 	wqinput_sysctl_setup(name, wqi);

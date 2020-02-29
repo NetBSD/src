@@ -1,4 +1,4 @@
-/*	$NetBSD: ipsecif.c,v 1.18 2019/11/01 04:28:14 knakahara Exp $  */
+/*	$NetBSD: ipsecif.c,v 1.18.2.1 2020/02/29 20:21:07 ad Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.18 2019/11/01 04:28:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ipsecif.c,v 1.18.2.1 2020/02/29 20:21:07 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -380,7 +380,17 @@ ipsecif4_output(struct ipsec_variant *var, int family, struct mbuf *m)
 	KASSERT(var->iv_psrc->sa_family == AF_INET);
 	KASSERT(var->iv_pdst->sa_family == AF_INET);
 
-	sp = IV_SP_OUT(var);
+	switch (family) {
+	case AF_INET:
+		sp = IV_SP_OUT(var);
+		break;
+	case AF_INET6:
+		sp = IV_SP_OUT6(var);
+		break;
+	default:
+		m_freem(m);
+		return EAFNOSUPPORT;
+	}
 	KASSERT(sp != NULL);
 	/*
 	 * The SPs in ipsec_variant are prevented from freed by

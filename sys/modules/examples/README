@@ -1,4 +1,4 @@
-	$NetBSD: README,v 1.9 2019/01/17 20:47:42 kamil Exp $
+	$NetBSD: README,v 1.9.6.1 2020/02/29 20:21:05 ad Exp $
 
                            Kernel Developer's Manual
 
@@ -13,6 +13,7 @@ DESCRIPTION
      * mapper          - basic implementation of mmap
      * panic_string    - shows how panic is being called through a device
      * ping            - basic ioctl(9)
+     * ping_block      - basic ioctl(9) with a block device
      * properties      - handle incoming properties during the module load
      * readhappy       - basic implementation of read(9) with happy numbers
      * readhappy_mpsafe- demonstrates how to make a module MPSAFE
@@ -32,10 +33,10 @@ DESCRIPTION
 
          # make S=/data/netbsd/src/sys
 
-     The code of a module does not need to be in src/sys unless you use
+     The code of a module does not need to be in src/sys unless it uses
      the autoconf(9) framework.
 
-     A cross-built of a module for a target platform is possible with the
+     A cross-build of a module for a target platform is possible with the
      build.sh framework. You need to generate the toolchain and set
      appropriately PATH to point bin/ in the TOOLDIR path. An example command
      to cross-build a module with the amd64 toolchain is as follows:
@@ -45,8 +46,8 @@ DESCRIPTION
 
      The example modules should not be used on a production machine.
 
-     All modules that create a cdevsw should be verified that the major number
-     should not conflict with a real device.
+     All modules that create a cdevsw (or bdevsw) should be verified that
+     the major number(s) should not conflict with a real device.
 
 SEE ALSO
      modctl(2), module(7), modload(8), modstat(8), modunload(8), module(9),
@@ -69,6 +70,9 @@ HISTORY
 
      The mapper module first appeared in NetBSD 9.0 and was authored by
      Akul Pillai.
+     
+     The ping_block module first appeared in NetBSD 10.0 and was authored by
+     Nisarg Joshi.
 
 AUTHORS
      This document was written by Kamil Rytarowski.

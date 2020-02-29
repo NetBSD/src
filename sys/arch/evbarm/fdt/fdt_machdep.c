@@ -1,4 +1,4 @@
-/* $NetBSD: fdt_machdep.c,v 1.65.2.1 2020/01/25 22:38:39 ad Exp $ */
+/* $NetBSD: fdt_machdep.c,v 1.65.2.2 2020/02/29 20:18:22 ad Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.65.2.1 2020/01/25 22:38:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fdt_machdep.c,v 1.65.2.2 2020/02/29 20:18:22 ad Exp $");
 
 #include "opt_machdep.h"
 #include "opt_bootconfig.h"
@@ -494,7 +494,7 @@ initarm(void *arg)
 		error = fdt_open_into(fdt_addr_r, fdt_data, sizeof(fdt_data));
 		if (error != 0)
 			panic("fdt_move failed: %s", fdt_strerror(error));
-		fdtbus_set_data(fdt_data);
+		fdtbus_init(fdt_data);
 	} else {
 		panic("fdt_check_header failed: %s", fdt_strerror(error));
 	}

@@ -1,4 +1,4 @@
-/*$NetBSD: ixv.c,v 1.143.2.1 2020/01/25 22:38:49 ad Exp $*/
+/*$NetBSD: ixv.c,v 1.143.2.2 2020/02/29 20:19:15 ad Exp $*/
 
 /******************************************************************************
 
@@ -619,6 +619,7 @@ ixv_detach(device_t dev, int flags)
 	bus_generic_detach(dev);
 #endif
 	if_detach(adapter->ifp);
+	ifmedia_fini(&adapter->media);
 	if_percpuq_destroy(adapter->ipq);
 
 	sysctl_teardown(&adapter->sysctllog);
@@ -2400,12 +2401,8 @@ ixv_update_stats(struct adapter *adapter)
 	    stats->vfgotc);
 	UPDATE_STAT_32(IXGBE_VFMPRC, stats->last_vfmprc, stats->vfmprc);
 
-	/* Fill out the OS statistics structure */
-	/*
-	 * NetBSD: Don't override if_{i|o}{packets|bytes|mcasts} with
-	 * adapter->stats counters. It's required to make ifconfig -z
-	 * (SOICZIFDATA) work.
-	 */
+	/* VF doesn't count errors by hardware */
+
 } /* ixv_update_stats */
 
 /************************************************************************

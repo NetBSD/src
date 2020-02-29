@@ -1,4 +1,4 @@
-/*	$NetBSD: gttwsi_core.c,v 1.10.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: gttwsi_core.c,v 1.10.2.2 2020/02/29 20:19:08 ad Exp $	*/
 /*
  * Copyright (c) 2008 Eiji Kawauchi.
  * All rights reserved.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.10.2.1 2020/01/17 21:47:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gttwsi_core.c,v 1.10.2.2 2020/02/29 20:19:08 ad Exp $");
 #include "locators.h"
 
 #include <sys/param.h>
@@ -316,6 +316,13 @@ gttwsi_wait(struct gttwsi_softc *sc, uint32_t control, uint32_t expect,
 {
 	uint32_t status;
 	int timo, error = 0;
+
+	/*
+	 * XXX Interrupt-driven mode seems to be horribly broken,
+	 * XXX at least on AllWinner implementations.  Force polled
+	 * XXX mode for now.
+	 */
+	flags |= I2C_F_POLL;
 
 	DELAY(5);
 	if (!(flags & I2C_F_POLL))

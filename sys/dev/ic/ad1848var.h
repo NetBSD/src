@@ -1,4 +1,4 @@
-/*	$NetBSD: ad1848var.h,v 1.19 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: ad1848var.h,v 1.19.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2008 The NetBSD Foundation, Inc.
@@ -176,7 +176,6 @@ int	ad1848_query_format(void *, audio_format_query_t *);
 int	ad1848_set_format(void *, int,
 	    const audio_params_t *, const audio_params_t *,
 	    audio_filter_reg_t *, audio_filter_reg_t *);
-int	ad1848_round_blocksize(void *, int, int, const audio_params_t *);
 int	ad1848_commit_settings(void *);
 int	ad1848_set_rec_port(struct ad1848_softc *, int);
 int	ad1848_get_rec_port(struct ad1848_softc *);

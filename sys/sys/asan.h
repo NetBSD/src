@@ -1,4 +1,4 @@
-/*	$NetBSD: asan.h,v 1.12 2019/11/14 17:09:23 maxv Exp $	*/
+/*	$NetBSD: asan.h,v 1.12.2.1 2020/02/29 20:21:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -44,7 +44,7 @@
 #define KASAN_STACK_LEFT	0xF1
 #define KASAN_STACK_MID		0xF2
 #define KASAN_STACK_RIGHT	0xF3
-#define KASAN_STACK_PARTIAL	0xF4
+#define KASAN_USE_AFTER_RET	0xF5
 #define KASAN_USE_AFTER_SCOPE	0xF8
 
 /* Our redzone values. */

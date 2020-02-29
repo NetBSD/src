@@ -1,4 +1,4 @@
-/* $NetBSD: cycv_platform.c,v 1.11 2019/05/20 20:17:25 aymeric Exp $ */
+/* $NetBSD: cycv_platform.c,v 1.11.6.1 2020/02/29 20:18:17 ad Exp $ */
 
 /* This file is in the public domain. */
 
@@ -7,7 +7,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.11 2019/05/20 20:17:25 aymeric Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cycv_platform.c,v 1.11.6.1 2020/02/29 20:18:17 ad Exp $");
 
 #define	_ARM32_BUS_DMA_PRIVATE
 #include <sys/param.h>
@@ -117,7 +117,7 @@ cycv_mpstart(void)
 	int i;
 	for (i = 0x10000000; i > 0; i--) {
 		membar_consumer();
-		if (arm_cpu_hatched == (1 << 1))
+		if (cpu_hatched_p(1))
 			break;
 	}
 	if (i == 0) {

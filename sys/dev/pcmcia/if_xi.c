@@ -1,4 +1,4 @@
-/*	$NetBSD: if_xi.c,v 1.93 2020/01/06 07:15:03 msaitoh Exp $ */
+/*	$NetBSD: if_xi.c,v 1.93.2.1 2020/02/29 20:19:15 ad Exp $ */
 /*	OpenBSD: if_xe.c,v 1.9 1999/09/16 11:28:42 niklas Exp 	*/
 
 /*
@@ -55,7 +55,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.93 2020/01/06 07:15:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xi.c,v 1.93.2.1 2020/02/29 20:19:15 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -259,9 +259,9 @@ xi_detach(device_t self, int flags)
 	rnd_detach_source(&sc->sc_rnd_source);
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	return 0;
 }
@@ -323,7 +323,7 @@ xi_intr(void *arg)
 		if (recvcount > MAX_BYTES_INTR) {
 			DPRINTF(XID_INTR,
 			    ("xi: too many bytes this interrupt\n"));
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			/* Drop packet. */
 			bus_space_write_2(sc->sc_bst, sc->sc_bsh, DO0,
 			    DO_SKIP_RX_PKT);
@@ -336,25 +336,25 @@ xi_intr(void *arg)
 
 	/* Packet too long? */
 	if (rsr & RSR_TOO_LONG) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(XID_INTR, ("xi: packet too long\n"));
 	}
 
 	/* CRC error? */
 	if (rsr & RSR_CRCERR) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(XID_INTR, ("xi: CRC error detected\n"));
 	}
 
 	/* Alignment error? */
 	if (rsr & RSR_ALIGNERR) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		DPRINTF(XID_INTR, ("xi: alignment error detected\n"));
 	}
 
 	/* Check for rx overrun. */
 	if (rx_status & RX_OVERRUN) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, CLR_RX_OVERRUN);
 		DPRINTF(XID_INTR, ("xi: overrun cleared\n"));
 	}
@@ -363,14 +363,14 @@ xi_intr(void *arg)
 	if_schedule_deferred_start(ifp);
 
 	/* Detected excessive collisions? */
-	if ((tx_status & EXCESSIVE_COLL) && ifp->if_opackets > 0) {
+	if ((tx_status & EXCESSIVE_COLL) /* XXX && ifp->if_opackets > 0 */) {
 		DPRINTF(XID_INTR, ("xi: excessive collisions\n"));
 		bus_space_write_1(sc->sc_bst, sc->sc_bsh, CR, RESTART_TX);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 	}
 
-	if ((tx_status & TX_ABORT) && ifp->if_opackets > 0)
-		ifp->if_oerrors++;
+	if ((tx_status & TX_ABORT) /* && XXX ifp->if_opackets > 0 */)
+		if_statinc(ifp, if_oerrors);
 
 	/* have handled the interrupt */
 	rnd_add_uint32(&sc->sc_rnd_source, tx_status);
@@ -645,7 +645,7 @@ xi_watchdog(struct ifnet *ifp)
 	struct xi_softc *sc = ifp->if_softc;
 
 	printf("%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	xi_reset(sc);
 }
@@ -824,7 +824,7 @@ xi_start(struct ifnet *ifp)
 	splx(s);
 
 	ifp->if_timer = 5;
-	++ifp->if_opackets;
+	if_statinc(ifp, if_opackets);
 }
 
 STATIC int

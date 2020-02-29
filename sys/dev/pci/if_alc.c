@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.46 2019/12/18 13:25:00 msaitoh Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.46.2.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -78,7 +78,7 @@
 /*
  * Devices supported by this driver.
  */
-static struct alc_ident alc_ident_table[] = {
+static const struct alc_ident alc_ident_table[] = {
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8131, 9 * 1024,
 		"Atheros AR8131 PCIe Gigabit Ethernet" },
 	{ PCI_VENDOR_ATTANSIC, PCI_PRODUCT_ATTANSIC_AR8132, 9 * 1024,
@@ -128,7 +128,7 @@ static int	alc_dma_alloc(struct alc_softc *);
 static void	alc_dma_free(struct alc_softc *);
 static void	alc_dsp_fixup(struct alc_softc *, int);
 static int	alc_encap(struct alc_softc *, struct mbuf **);
-static struct alc_ident *
+static const struct alc_ident *
 		alc_find_ident(struct pci_attach_args *);
 static void	alc_get_macaddr(struct alc_softc *);
 static void	alc_get_macaddr_813x(struct alc_softc *);
@@ -172,7 +172,7 @@ static void	alc_tick(void *);
 static void	alc_txeof(struct alc_softc *);
 static void	alc_init_pcie(struct alc_softc *);
 
-static uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
+static const uint32_t alc_dma_burst[] = { 128, 256, 512, 1024, 2048, 4096, 0, 0 };
 
 CFATTACH_DECL_NEW(alc, sizeof(struct alc_softc),
     alc_match, alc_attach, alc_detach, NULL);
@@ -574,10 +574,10 @@ alc_mediachange(struct ifnet *ifp)
 	return (error);
 }
 
-static struct alc_ident *
+static const struct alc_ident *
 alc_find_ident(struct pci_attach_args *pa)
 {
-	struct alc_ident *ident;
+	const struct alc_ident *ident;
 	uint16_t vendor, devid;
 
 	vendor = PCI_VENDOR(pa->pa_id);
@@ -1542,12 +1542,12 @@ alc_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	alc_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	alc_phy_down(sc);
 	if (sc->sc_irq_handle != NULL) {
@@ -2059,13 +2059,13 @@ alc_watchdog(struct ifnet *ifp)
 	if ((sc->alc_flags & ALC_FLAG_LINK) == 0) {
 		printf("%s: watchdog timeout (missed link)\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		alc_init_backend(ifp, false);
 		return;
 	}
 
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	alc_init_backend(ifp, false);
 	alc_start(ifp);
 }
@@ -2267,19 +2267,26 @@ alc_stats_update(struct alc_softc *sc)
 	stat->tx_mcast_bytes += smb->tx_mcast_bytes;
 
 	/* Update counters in ifnet. */
-	ifp->if_opackets += smb->tx_frames;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 
-	ifp->if_collisions += smb->tx_single_colls +
+	if_statadd_ref(nsr, if_opackets, smb->tx_frames);
+
+	if_statadd_ref(nsr, if_collisions,
+	    smb->tx_single_colls +
 	    smb->tx_multi_colls * 2 + smb->tx_late_colls +
-	    smb->tx_excess_colls * HDPX_CFG_RETRY_DEFAULT;
+	    smb->tx_excess_colls * HDPX_CFG_RETRY_DEFAULT);
 
-	ifp->if_oerrors += smb->tx_late_colls + smb->tx_excess_colls +
-	    smb->tx_underrun + smb->tx_pkts_truncated;
+	if_statadd_ref(nsr, if_oerrors,
+	    smb->tx_late_colls + smb->tx_excess_colls +
+	    smb->tx_underrun + smb->tx_pkts_truncated);
 
-	ifp->if_ierrors += smb->rx_crcerrs + smb->rx_lenerrs +
+	if_statadd_ref(nsr, if_ierrors,
+	    smb->rx_crcerrs + smb->rx_lenerrs +
 	    smb->rx_runts + smb->rx_pkts_truncated +
 	    smb->rx_fifo_oflows + smb->rx_rrs_errs +
-	    smb->rx_alignerrs;
+	    smb->rx_alignerrs);
+
+	IF_STAT_PUTREF(ifp);
 
 	if ((sc->alc_flags & ALC_FLAG_SMB_BUG) == 0) {
 		/* Update done, clear. */
@@ -2551,7 +2558,7 @@ alc_rxeof(struct alc_softc *sc, struct rx_rdesc *rrd)
 		mp = rxd->rx_m;
 		/* Add a new receive buffer to the ring. */
 		if (alc_newbuf(sc, rxd, false) != 0) {
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			/* Reuse Rx buffers. */
 			if (sc->alc_cdata.alc_rxhead != NULL)
 				m_freem(sc->alc_cdata.alc_rxhead);

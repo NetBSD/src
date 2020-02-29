@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_cpu.c,v 1.5.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: subr_cpu.c,v 1.5.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2010, 2012, 2019, 2020
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.5.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_cpu.c,v 1.5.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -142,21 +142,31 @@ cpu_softintr_p(void)
  */
 void
 cpu_topology_set(struct cpu_info *ci, u_int package_id, u_int core_id,
-    u_int smt_id, u_int numa_id, bool slow)
+    u_int smt_id, u_int numa_id)
 {
 	enum cpu_rel rel;
 
 	cpu_topology_present = true;
-	cpu_topology_haveslow |= slow;
 	ci->ci_package_id = package_id;
 	ci->ci_core_id = core_id;
 	ci->ci_smt_id = smt_id;
 	ci->ci_numa_id = numa_id;
-	ci->ci_is_slow = slow;
+	ci->ci_is_slow = false;
 	for (rel = 0; rel < __arraycount(ci->ci_sibling); rel++) {
 		ci->ci_sibling[rel] = ci;
 		ci->ci_nsibling[rel] = 1;
 	}
+}
+
+/*
+ * Collect CPU relative speed
+ */
+void
+cpu_topology_setspeed(struct cpu_info *ci, bool slow)
+{
+
+	cpu_topology_haveslow |= slow;
+	ci->ci_is_slow = slow;
 }
 
 /*
@@ -261,7 +271,7 @@ cpu_topology_fake(void)
 
 /*
  * Fix up basic CPU topology info.  Right now that means attach each CPU to
- * circular lists of its siblings in the same core, and in the same package. 
+ * circular lists of its siblings in the same core, and in the same package.
  */
 void
 cpu_topology_init(void)
@@ -287,7 +297,7 @@ cpu_topology_init(void)
 			    ci2 != ci) {
 #ifdef DEBUG
 				printf("cpu%u %p pkg %u core %u smt %u same as "
-				       "cpu%u %p pkg %u core %u smt %u\n", 
+				       "cpu%u %p pkg %u core %u smt %u\n",
 				       cpu_index(ci), ci, ci->ci_package_id,
 				       ci->ci_core_id, ci->ci_smt_id,
 				       cpu_index(ci2), ci2, ci2->ci_package_id,

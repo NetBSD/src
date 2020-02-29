@@ -1,11 +1,11 @@
-/*	$NetBSD: drm_auth_netbsd.h,v 1.2 2014/03/18 18:20:43 riastradh Exp $	*/
+/*	$NetBSD: cpuvar.h,v 1.1.2.2 2020/02/29 20:18:19 ad Exp $	*/
 
 /*-
- * Copyright (c) 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
- * by Taylor R. Campbell.
+ * by Nick Hudson
  *
  * Redistribution and use in source and binary forms, with or without
  * modification, are permitted provided that the following conditions
@@ -29,16 +29,15 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _DRM_DRM_AUTH_NETBSD_H_
-#define _DRM_DRM_AUTH_NETBSD_H_
+#ifndef _ARM_CPUVAR_H_
+#define _ARM_CPUVAR_H_
 
-#include <sys/kauth.h>
+#ifdef _KERNEL
 
-static inline bool
-DRM_SUSER(void)
-{
-	return kauth_authorize_generic(kauth_cred_get(), KAUTH_GENERIC_ISSUSER,
-	    NULL) == 0;
-}
+#include <sys/device_if.h>
 
-#endif  /* _DRM_DRM_AUTH_NETBSD_H_ */
+void	cpu_attach(device_t, cpuid_t);
+
+#endif
+
+#endif

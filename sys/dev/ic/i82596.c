@@ -1,4 +1,4 @@
-/* $NetBSD: i82596.c,v 1.42 2019/05/29 10:07:29 msaitoh Exp $ */
+/* $NetBSD: i82596.c,v 1.42.4.1 2020/02/29 20:19:08 ad Exp $ */
 
 /*
  * Copyright (c) 2003 Jochen Kunz.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.42 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82596.c,v 1.42.4.1 2020/02/29 20:19:08 ad Exp $");
 
 /* autoconfig and device stuff */
 #include <sys/param.h>
@@ -348,8 +348,9 @@ iee_intr(void *intarg)
 						    & IEE_CB_MAXCOL;
 					sc->sc_tx_col += col;
 					if ((status & IEE_CB_OK) != 0) {
-						ifp->if_opackets++;
-						ifp->if_collisions += col;
+						if_statadd2(ifp,
+						    if_opackets, 1,
+						    if_collisions, col);
 					}
 				}
 				sc->sc_next_tbd = 0;
@@ -698,6 +699,7 @@ iee_detach(struct iee_softc *sc, int flags)
 		iee_stop(ifp, 1);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_ifmedia);
 	bus_dmamap_unload(sc->sc_dmat, sc->sc_shmem_map);
 	bus_dmamap_destroy(sc->sc_dmat, sc->sc_shmem_map);
 	bus_dmamem_unmap(sc->sc_dmat, sc->sc_shmem_addr, sc->sc_shmem_sz);

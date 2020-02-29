@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smap.c,v 1.31 2019/11/10 21:16:31 chs Exp $	*/
+/*	$NetBSD: if_smap.c,v 1.31.2.1 2020/02/29 20:18:29 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.31 2019/11/10 21:16:31 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smap.c,v 1.31.2.1 2020/02/29 20:18:29 ad Exp $");
 
 #include "debug_playstation2.h"
 
@@ -336,7 +336,7 @@ smap_rxeof(void *arg)
 		if ((stat & SMAP_RXDESC_EMPTY) != 0) {
 			break;
 		} else if (stat & 0x7fff) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
 
@@ -357,7 +357,7 @@ smap_rxeof(void *arg)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
 			printf("%s: unable to allocate Rx mbuf\n", DEVNAME);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
 
@@ -368,7 +368,7 @@ smap_rxeof(void *arg)
 				    DEVNAME);
 				m_freem(m);
 				m = NULL;
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto next_packet;
 			}
 		}
@@ -426,11 +426,11 @@ smap_txeof(void *arg)
 		} else if (stat & 0x7fff) {
 			if (stat & (SMAP_TXDESC_ECOLL | SMAP_TXDESC_LCOLL |
 			    SMAP_TXDESC_MCOLL | SMAP_TXDESC_SCOLL))
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 			else
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 		} else {
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		}
 
 		if (sc->tx_desc_cnt == 0)
@@ -546,7 +546,7 @@ smap_watchdog(struct ifnet *ifp)
 	struct smap_softc *sc = ifp->if_softc;
 
 	printf("%s: watchdog timeout\n", DEVNAME);
-	sc->ethercom.ec_if.if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	smap_fifo_init(sc);
 	smap_desc_init(sc);

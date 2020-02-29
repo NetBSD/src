@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_pset.c,v 1.22 2019/11/21 17:54:04 ad Exp $	*/
+/*	$NetBSD: sys_pset.c,v 1.22.2.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.22 2019/11/21 17:54:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_pset.c,v 1.22.2.1 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 
@@ -72,8 +72,8 @@ psets_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	int result;
 
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
-	id = (psetid_t)(unsigned long)arg1;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
+	id = (psetid_t)(uintptr_t)arg1;
 
 	if (action != KAUTH_SYSTEM_PSET)
 		return result;

@@ -1,4 +1,4 @@
-/*	$NetBSD: mtrr_k6.c,v 1.14 2019/11/10 21:16:28 chs Exp $	*/
+/*	$NetBSD: mtrr_k6.c,v 1.14.2.1 2020/02/29 20:18:25 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.14 2019/11/10 21:16:28 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mtrr_k6.c,v 1.14.2.1 2020/02/29 20:18:25 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -71,7 +71,7 @@ mtrr_var_raw[] = {
 
 static struct mtrr *mtrr_var;
 
-struct mtrr_funcs k6_mtrr_funcs = {
+const struct mtrr_funcs k6_mtrr_funcs = {
 	k6_mtrr_init_cpu,
 	k6_mtrr_reload_cpu,
 	k6_mtrr_clean,

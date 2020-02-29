@@ -1,4 +1,4 @@
-/*	$NetBSD: ahcisata_core.c,v 1.80.2.1 2020/01/25 22:38:46 ad Exp $	*/
+/*	$NetBSD: ahcisata_core.c,v 1.80.2.2 2020/02/29 20:19:08 ad Exp $	*/
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.80.2.1 2020/01/25 22:38:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ahcisata_core.c,v 1.80.2.2 2020/02/29 20:19:08 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/malloc.h>
@@ -99,12 +99,12 @@ static void ahci_atapi_kill_xfer(struct ata_channel *, struct ata_xfer *, int);
 static void ahci_atapi_probe_device(struct atapibus_softc *, int);
 
 static const struct scsipi_bustype ahci_atapi_bustype = {
-	SCSIPI_BUSTYPE_ATAPI,
-	atapi_scsipi_cmd,
-	atapi_interpret_sense,
-	atapi_print_addr,
-	ahci_atapi_kill_pending,
-	NULL,
+	.bustype_type = SCSIPI_BUSTYPE_ATAPI,
+	.bustype_cmd = atapi_scsipi_cmd,
+	.bustype_interpret_sense = atapi_interpret_sense,
+	.bustype_printaddr = atapi_print_addr,
+	.bustype_kill_pending = ahci_atapi_kill_pending,
+	.bustype_async_event_xfer_mode = NULL,
 };
 #endif /* NATAPIBUS */
 

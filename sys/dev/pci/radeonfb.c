@@ -1,4 +1,4 @@
-/*	$NetBSD: radeonfb.c,v 1.105 2019/08/15 00:50:11 rin Exp $ */
+/*	$NetBSD: radeonfb.c,v 1.105.2.1 2020/02/29 20:19:14 ad Exp $ */
 
 /*-
  * Copyright (c) 2006 Itronix Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.105 2019/08/15 00:50:11 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeonfb.c,v 1.105.2.1 2020/02/29 20:19:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1173,6 +1173,9 @@ radeonfb_ioctl(void *v, void *vs,
 		    (*(unsigned int *)d == WSDISPLAYIO_VIDEO_OFF));
 		radeonfb_switch_backlight(dp,
 		    (*(unsigned int *)d == WSDISPLAYIO_VIDEO_ON));
+		pmf_event_inject(NULL, 
+		    (*(unsigned int *)d == WSDISPLAYIO_VIDEO_ON) ?
+		     PMFE_DISPLAY_ON : PMFE_DISPLAY_OFF);
 		return 0;
 
 	case WSDISPLAYIO_GETCMAP:

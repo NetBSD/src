@@ -1,4 +1,4 @@
-/*	$NetBSD: usb_subr.c,v 1.241 2019/10/03 05:20:31 maxv Exp $	*/
+/*	$NetBSD: usb_subr.c,v 1.241.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usb_subr.c,v 1.18 1999/11/17 22:33:47 n_hibma Exp $	*/
 
 /*
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.241 2019/10/03 05:20:31 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.241.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -66,7 +66,6 @@ __KERNEL_RCSID(0, "$NetBSD: usb_subr.c,v 1.241 2019/10/03 05:20:31 maxv Exp $");
 #define	DPRINTF(FMT,A,B,C,D)	USBHIST_LOG(usbdebug,FMT,A,B,C,D)
 #define	DPRINTFN(N,FMT,A,B,C,D)	USBHIST_LOGN(usbdebug,N,FMT,A,B,C,D)
 
-Static usbd_status usbd_set_config(struct usbd_device *, int);
 Static void usbd_devinfo(struct usbd_device *, int, char *, size_t);
 Static int usbd_getnewaddr(struct usbd_bus *);
 Static int usbd_print(void *, const char *);
@@ -111,51 +110,6 @@ usbd_errstr(usbd_status err)
 		snprintf(buffer, sizeof(buffer), "%d", err);
 		return buffer;
 	}
-}
-
-usbd_status
-usbd_get_string_desc(struct usbd_device *dev, int sindex, int langid,
-		     usb_string_descriptor_t *sdesc, int *sizep)
-{
-	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
-	usb_device_request_t req;
-	usbd_status err;
-	int actlen;
-
-	/*
-	 * Pass a full-sized buffer to usbd_do_request_len().  At least
-	 * one device has been seen returning additional data beyond the
-	 * provided buffers (2-bytes written shortly after the request
-	 * claims to have completed and returned the 2 byte header,
-	 * corrupting other memory.)
-	 */
-	req.bmRequestType = UT_READ_DEVICE;
-	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW2(req.wValue, UDESC_STRING, sindex);
-	USETW(req.wIndex, langid);
-	USETW(req.wLength, 2);	/* only size byte first */
-	err = usbd_do_request_len(dev, &req, sizeof(*sdesc), sdesc,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
-	if (err)
-		return err;
-
-	if (actlen < 2)
-		return USBD_SHORT_XFER;
-
-	if (sdesc->bLength > sizeof(*sdesc))
-		return USBD_INVAL;
-	USETW(req.wLength, sdesc->bLength);	/* the whole string */
-	err = usbd_do_request_len(dev, &req, sizeof(*sdesc), sdesc,
-	    USBD_SHORT_XFER_OK, &actlen, USBD_DEFAULT_TIMEOUT);
-	if (err)
-		return err;
-
-	if (actlen != sdesc->bLength) {
-		DPRINTF("expected %jd, got %jd", sdesc->bLength, actlen, 0, 0);
-	}
-
-	*sizep = actlen;
-	return USBD_NORMAL_COMPLETION;
 }
 
 static void
@@ -547,23 +501,6 @@ usbd_free_iface_data(struct usbd_device *dev, int ifcno)
 		size_t sz = nendpt * sizeof(struct usbd_endpoint);
 		kmem_free(ifc->ui_endpoints, sz);
 	}
-}
-
-Static usbd_status
-usbd_set_config(struct usbd_device *dev, int conf)
-{
-	usb_device_request_t req;
-
-	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "dev %#jx conf %jd",
-	    (uintptr_t)dev, conf, 0, 0);
-
-	req.bmRequestType = UT_WRITE_DEVICE;
-	req.bRequest = UR_SET_CONFIG;
-	USETW(req.wValue, conf);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 0);
-	return usbd_do_request(dev, &req, 0);
 }
 
 usbd_status
@@ -1161,36 +1098,6 @@ usbd_reattach_device(device_t parent, struct usbd_device *dev,
 	if (i >= dev->ud_subdevlen)
 		return USBD_NORMAL_COMPLETION;
 	return usbd_attachinterfaces(parent, dev, port, locators);
-}
-
-/*
- * Get the first 8 bytes of the device descriptor.
- * Do as Windows does: try to read 64 bytes -- there are devices which
- * recognize the initial descriptor fetch (before the control endpoint's
- * MaxPacketSize is known by the host) by exactly this length.
- */
-usbd_status
-usbd_get_initial_ddesc(struct usbd_device *dev, usb_device_descriptor_t *desc)
-{
-	USBHIST_FUNC();
-	USBHIST_CALLARGS(usbdebug, "dev %#jx", (uintptr_t)dev, 0, 0, 0);
-	usb_device_request_t req;
-	char buf[64];
-	int res, actlen;
-
-	req.bmRequestType = UT_READ_DEVICE;
-	req.bRequest = UR_GET_DESCRIPTOR;
-	USETW2(req.wValue, UDESC_DEVICE, 0);
-	USETW(req.wIndex, 0);
-	USETW(req.wLength, 8);
-	res = usbd_do_request_flags(dev, &req, buf, USBD_SHORT_XFER_OK,
-		&actlen, USBD_DEFAULT_TIMEOUT);
-	if (res)
-		return res;
-	if (actlen < 8)
-		return USBD_SHORT_XFER;
-	memcpy(desc, buf, 8);
-	return USBD_NORMAL_COMPLETION;
 }
 
 /*

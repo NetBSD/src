@@ -1,4 +1,4 @@
-/*	$NetBSD: ax88190.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $	*/
+/*	$NetBSD: ax88190.c,v 1.15.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.15 2019/05/29 06:17:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ax88190.c,v 1.15.4.1 2020/02/29 20:19:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -108,6 +108,7 @@ ax88190_media_fini(struct dp8390_softc *sc)
 {
 
 	mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+	ifmedia_fini(&sc->sc_mii.mii_media);
 }
 
 int

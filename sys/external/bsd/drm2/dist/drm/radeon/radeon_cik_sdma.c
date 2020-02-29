@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_cik_sdma.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_cik_sdma.c,v 1.1.10.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,10 +24,9 @@
  * Authors: Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_cik_sdma.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_cik_sdma.c,v 1.1.10.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <linux/firmware.h>
-#include <linux/err.h>
 #include <drm/drmP.h>
 #include "radeon.h"
 #include "radeon_ucode.h"

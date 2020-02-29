@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_kv_dpm.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_kv_dpm.c,v 1.2.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2013 Advanced Micro Devices, Inc.
@@ -24,9 +24,8 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_kv_dpm.c,v 1.2 2018/08/27 14:24:03 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_kv_dpm.c,v 1.2.10.1 2020/02/29 20:20:13 ad Exp $");
 
-#include <asm/byteorder.h>
 #include "drmP.h"
 #include "amdgpu.h"
 #include "amdgpu_pm.h"
@@ -2603,7 +2602,7 @@ static int kv_parse_sys_info_table(struct amdgpu_device *adev)
 
 	if (amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset)) {
-		igp_info = (union igp_info *)((char *)mode_info->atom_context->bios +
+		igp_info = (union igp_info *)(mode_info->atom_context->bios +
 					      data_offset);
 
 		if (crev != 8) {
@@ -2754,18 +2753,18 @@ static int kv_parse_power_table(struct amdgpu_device *adev)
 	if (!amdgpu_atom_parse_data_header(mode_info->atom_context, index, NULL,
 				   &frev, &crev, &data_offset))
 		return -EINVAL;
-	power_info = (union power_info *)((char *)mode_info->atom_context->bios + data_offset);
+	power_info = (union power_info *)(mode_info->atom_context->bios + data_offset);
 
 	amdgpu_add_thermal_controller(adev);
 
 	state_array = (struct _StateArray *)
-		((char *)mode_info->atom_context->bios + data_offset +
+		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usStateArrayOffset));
 	clock_info_array = (struct _ClockInfoArray *)
-		((char *)mode_info->atom_context->bios + data_offset +
+		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usClockInfoArrayOffset));
 	non_clock_info_array = (struct _NonClockInfoArray *)
-		((char *)mode_info->atom_context->bios + data_offset +
+		(mode_info->atom_context->bios + data_offset +
 		 le16_to_cpu(power_info->pplib.usNonClockInfoArrayOffset));
 
 	adev->pm.dpm.ps = kzalloc(sizeof(struct amdgpu_ps) *

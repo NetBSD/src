@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.82.2.1 2020/01/17 21:47:27 ad Exp $
+#	$NetBSD: genassym.cf,v 1.82.2.2 2020/02/29 20:18:31 ad Exp $
 
 #
 # Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -116,9 +116,6 @@ define	L_PCB			offsetof(struct lwp, l_addr)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_TF			offsetof(struct lwp, l_md.md_tf)
 define	L_FPSTATE		offsetof(struct lwp, l_md.md_fpstate)
-
-define	LSRUN		LSRUN
-define	LSONPROC	LSONPROC
 
 # proc fields and values
 define	P_MD_SYSCALL	offsetof(struct proc, p_md.md_syscall)

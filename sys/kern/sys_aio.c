@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_aio.c,v 1.45 2019/11/23 19:42:52 ad Exp $	*/
+/*	$NetBSD: sys_aio.c,v 1.45.2.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2007 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.45 2019/11/23 19:42:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_aio.c,v 1.45.2.1 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -630,7 +630,7 @@ sys_aio_cancel(struct lwp *l, const struct sys_aio_cancel_args *uap,
 
 	/* Check for invalid file descriptor */
 	fildes = (unsigned int)SCARG(uap, fildes);
-	dt = fdp->fd_dt;
+	dt = atomic_load_consume(&fdp->fd_dt);
 	if (fildes >= dt->dt_nfiles)
 		return EBADF;
 	if (dt->dt_ff[fildes] == NULL || dt->dt_ff[fildes]->ff_file == NULL)

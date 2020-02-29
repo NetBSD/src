@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.h,v 1.103.2.2 2020/01/25 22:38:38 ad Exp $	*/
+/*	$NetBSD: cpu.h,v 1.103.2.3 2020/02/29 20:18:18 ad Exp $	*/
 
 /*
  * Copyright (c) 1994-1996 Mark Brinicombe.
@@ -47,6 +47,30 @@
 
 #ifndef _ARM_CPU_H_
 #define _ARM_CPU_H_
+
+#ifdef _KERNEL
+#ifndef _LOCORE
+
+typedef unsigned long mpidr_t;
+
+#ifdef MULTIPROCESSOR
+extern u_int arm_cpu_max;
+extern mpidr_t cpu_mpidr[];
+extern kmutex_t cpu_hatch_lock;
+
+void cpu_boot_secondary_processors(void);
+void cpu_mpstart(void);
+bool cpu_hatched_p(u_int);
+
+void cpu_clr_mbox(int);
+void cpu_set_hatched(int);
+
+#endif
+
+void	cpu_proc_fork(struct proc *, struct proc *);
+
+#endif	/* !_LOCORE */
+#endif	/* _KERNEL */
 
 #ifdef __arm__
 
@@ -178,7 +202,6 @@ struct cpu_info {
 
 	uint32_t	ci_midr;
 	uint32_t	ci_mpidr;
-#define arm_cpu_mpidr(ci)	((ci)->ci_mpidr)
 	uint32_t	ci_capacity_dmips_mhz;
 
 	struct arm_cache_info *
@@ -189,7 +212,7 @@ struct cpu_info {
 #endif
 };
 
-extern struct cpu_info cpu_info_store;
+extern struct cpu_info cpu_info_store[];
 
 struct lwp *arm_curlwp(void);
 struct cpu_info *arm_curcpu(void);
@@ -228,7 +251,7 @@ curcpu(void)
 	return (struct cpu_info *) armreg_tpidrprw_read();
 }
 #elif !defined(MULTIPROCESSOR)
-#define	curcpu()	(&cpu_info_store)
+#define	curcpu()	(&cpu_info_store[0])
 #elif !defined(__HAVE_PREEMPTION)
 #error MULTIPROCESSOR && !__HAVE_PREEMPTION requires TPIDRPRW_IS_CURCPU or TPIDRPRW_IS_CURLWP
 #else
@@ -255,16 +278,10 @@ extern struct cpu_info *cpu_info[];
 #endif
 
 #if defined(MULTIPROCESSOR)
-
-extern uint32_t cpu_mpidr[];
-bool cpu_hatched_p(u_int);
-
-void cpu_mpstart(void);
 void cpu_init_secondary_processor(int);
-void cpu_boot_secondary_processors(void);
 #endif
 
-#define	LWP0_CPU_INFO	(&cpu_info_store)
+#define	LWP0_CPU_INFO	(&cpu_info_store[0])
 
 static inline int
 curcpl(void)
@@ -290,8 +307,6 @@ cpu_dosoftints(void)
 #endif
 #endif
 }
-
-void	cpu_proc_fork(struct proc *, struct proc *);
 
 /*
  * Scheduling glue
@@ -323,11 +338,6 @@ void	cpu_proc_fork(struct proc *, struct proc *);
  * This hook allows to return them.
  */
 vaddr_t cpu_uarea_alloc_idlelwp(struct cpu_info *);
-
-/*
- * cpu device glue (belongs in cpuvar.h)
- */
-void	cpu_attach(device_t, cpuid_t);
 
 #ifdef _ARM_ARCH_6
 int	cpu_maxproc_hook(int);

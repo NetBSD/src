@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_resource.c,v 1.183.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: kern_resource.c,v 1.183.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.183.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_resource.c,v 1.183.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -99,7 +99,7 @@ resource_listener_cb(kauth_cred_t cred, kauth_action_t action, void *cookie,
 	case KAUTH_PROCESS_RLIMIT: {
 		enum kauth_process_req req;
 
-		req = (enum kauth_process_req)(unsigned long)arg1;
+		req = (enum kauth_process_req)(uintptr_t)arg1;
 
 		switch (req) {
 		case KAUTH_REQ_PROCESS_RLIMIT_GET:
@@ -506,7 +506,7 @@ calcru(struct proc *p, struct timeval *up, struct timeval *sp,
 	LIST_FOREACH(l, &p->p_lwps, l_sibling) {
 		lwp_lock(l);
 		bintime_add(&tm, &l->l_rtime);
-		if ((l->l_flag & LW_RUNNING) != 0 &&
+		if ((l->l_pflag & LP_RUNNING) != 0 &&
 		    (l->l_pflag & (LP_INTR | LP_TIMEINTR)) != LP_INTR) {
 			struct bintime diff;
 			/*

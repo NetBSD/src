@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.30 2019/12/28 00:22:08 rjs Exp $ */
+/* $NetBSD: armreg.h,v 1.30.2.1 2020/02/29 20:18:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -35,8 +35,8 @@
 #include <arm/cputypes.h>
 #include <sys/types.h>
 
-#define AARCH64REG_READ_INLINE2(regname, regdesc)		\
-static __inline uint64_t					\
+#define AARCH64REG_READ_INLINE3(regname, regdesc, fnattrs)	\
+static __inline uint64_t fnattrs				\
 reg_##regname##_read(void)					\
 {								\
 	uint64_t __rv;						\
@@ -44,12 +44,18 @@ reg_##regname##_read(void)					\
 	return __rv;						\
 }
 
-#define AARCH64REG_WRITE_INLINE2(regname, regdesc)		\
-static __inline void						\
+#define AARCH64REG_READ_INLINE2(regname, regdesc)		\
+	AARCH64REG_READ_INLINE3(regname, regdesc, )
+
+#define AARCH64REG_WRITE_INLINE3(regname, regdesc, fnattrs)	\
+static __inline void fnattrs					\
 reg_##regname##_write(uint64_t __val)				\
 {								\
 	__asm __volatile("msr " #regdesc ", %0" :: "r"(__val));	\
 }
+
+#define AARCH64REG_WRITE_INLINE2(regname, regdesc)		\
+	AARCH64REG_WRITE_INLINE3(regname, regdesc, )
 
 #define AARCH64REG_WRITEIMM_INLINE2(regname, regdesc)		\
 static __inline void						\
@@ -229,6 +235,45 @@ AARCH64REG_READ_INLINE(id_aa64isar0_el1)
 #define	 ID_AA64ISAR0_EL1_AES_PMUL	 2
 
 AARCH64REG_READ_INLINE(id_aa64isar1_el1)
+
+#define	ID_AA64ISAR1_EL1_SPECRES	__BITS(43,40)
+#define	 ID_AA64ISAR1_EL1_SPECRES_NONE	 0
+#define	 ID_AA64ISAR1_EL1_SPECRES_SUPPORTED 1
+#define	ID_AA64ISAR1_EL1_SB		__BITS(39,36)
+#define	 ID_AA64ISAR1_EL1_SB_NONE	 0
+#define	 ID_AA64ISAR1_EL1_SB_SUPPORTED	 1
+#define	ID_AA64ISAR1_EL1_FRINTTS	__BITS(35,32)
+#define	 ID_AA64ISAR1_EL1_FRINTTS_NONE	 0
+#define	 ID_AA64ISAR1_EL1_FRINTTS_SUPPORTED 1
+#define	ID_AA64ISAR1_EL1_GPI		__BITS(31,28)
+#define	 ID_AA64ISAR1_EL1_GPI_NONE	 0
+#define	 ID_AA64ISAR1_EL1_GPI_SUPPORTED	 1
+#define	ID_AA64ISAR1_EL1_GPA		__BITS(27,24)
+#define	 ID_AA64ISAR1_EL1_GPA_NONE	 0
+#define	 ID_AA64ISAR1_EL1_GPA_QARMA	 1
+#define	ID_AA64ISAR1_EL1_LRCPC		__BITS(23,20)
+#define	 ID_AA64ISAR1_EL1_LRCPC_NONE	 0
+#define	 ID_AA64ISAR1_EL1_LRCPC_PR	 1
+#define	 ID_AA64ISAR1_EL1_LRCPC_PR_UR	 2
+#define	ID_AA64ISAR1_EL1_FCMA		__BITS(19,16)
+#define	 ID_AA64ISAR1_EL1_FCMA_NONE	 0
+#define	 ID_AA64ISAR1_EL1_FCMA_SUPPORTED 1
+#define	ID_AA64ISAR1_EL1_JSCVT		__BITS(15,12)
+#define	 ID_AA64ISAR1_EL1_JSCVT_NONE	 0
+#define	 ID_AA64ISAR1_EL1_JSCVT_SUPPORTED 1
+#define	ID_AA64ISAR1_EL1_API		__BITS(11,8)
+#define	 ID_AA64ISAR1_EL1_API_NONE	 0
+#define	 ID_AA64ISAR1_EL1_API_SUPPORTED	 1
+#define	 ID_AA64ISAR1_EL1_API_ENHANCED	 2
+#define	ID_AA64ISAR1_EL1_APA		__BITS(7,4)
+#define	 ID_AA64ISAR1_EL1_APA_NONE	 0
+#define	 ID_AA64ISAR1_EL1_APA_QARMA	 1
+#define	 ID_AA64ISAR1_EL1_APA_QARMA_ENH	 2
+#define	ID_AA64ISAR1_EL1_DPB		__BITS(3,0)
+#define	 ID_AA64ISAR1_EL1_DPB_NONE	 0
+#define	 ID_AA64ISAR1_EL1_DPB_CVAP	 1
+#define	 ID_AA64ISAR1_EL1_DPB_CVAP_CVADP 2
+
 AARCH64REG_READ_INLINE(id_aa64mmfr0_el1)
 
 #define	ID_AA64MMFR0_EL1_TGRAN4		__BITS(31,28)
@@ -260,11 +305,107 @@ AARCH64REG_READ_INLINE(id_aa64mmfr0_el1)
 #define	 ID_AA64MMFR0_EL1_PARANGE_16T	 4
 #define	 ID_AA64MMFR0_EL1_PARANGE_256T	 5
 
-AARCH64REG_READ_INLINE2(a72_cpuactlr_el1, s3_1_c15_c2_0)
 AARCH64REG_READ_INLINE(id_aa64mmfr1_el1)
-AARCH64REG_READ_INLINE(id_aa64mmfr2_el1)
+
+#define	ID_AA64MMFR1_EL1_XNX		__BITS(31,28)
+#define	 ID_AA64MMFR1_EL1_XNX_NONE	 0
+#define	 ID_AA64MMFR1_EL1_XNX_SUPPORTED	 1
+#define	ID_AA64MMFR1_EL1_SPECSEI	__BITS(27,24)
+#define	 ID_AA64MMFR1_EL1_SPECSEI_NONE	 0
+#define	 ID_AA64MMFR1_EL1_SPECSEI_EXTINT 1
+#define	ID_AA64MMFR1_EL1_PAN		__BITS(23,20)
+#define	 ID_AA64MMFR1_EL1_PAN_NONE	 0
+#define	 ID_AA64MMFR1_EL1_PAN_SUPPORTED	 1
+#define	 ID_AA64MMFR1_EL1_PAN_S1E1	 2
+#define	ID_AA64MMFR1_EL1_LO		__BITS(19,16)
+#define	 ID_AA64MMFR1_EL1_LO_NONE	 0
+#define	 ID_AA64MMFR1_EL1_LO_SUPPORTED	 1
+#define	ID_AA64MMFR1_EL1_HPDS		__BITS(15,12)
+#define	 ID_AA64MMFR1_EL1_HPDS_NONE	 0
+#define	 ID_AA64MMFR1_EL1_HPDS_SUPPORTED 1
+#define	 ID_AA64MMFR1_EL1_HPDS_EXTRA_PTD 2
+#define	ID_AA64MMFR1_EL1_VH		__BITS(11,8)
+#define	 ID_AA64MMFR1_EL1_VH_NONE	 0
+#define	 ID_AA64MMFR1_EL1_VH_SUPPORTED	 1
+#define	ID_AA64MMFR1_EL1_VMIDBITS	__BITS(7,4)
+#define	 ID_AA64MMFR1_EL1_VMIDBITS_8BIT	 0
+#define	 ID_AA64MMFR1_EL1_VMIDBITS_16BIT 2
+#define	ID_AA64MMFR1_EL1_HAFDBS		__BITS(3,0)
+#define	 ID_AA64MMFR1_EL1_HAFDBS_NONE	 0
+#define	 ID_AA64MMFR1_EL1_HAFDBS_A	 1
+#define	 ID_AA64MMFR1_EL1_HAFDBS_AD	 2
+
+AARCH64REG_READ_INLINE3(id_aa64mmfr2_el1, id_aa64mmfr2_el1,
+    __attribute__((target("arch=armv8.2-a"))))
+
+#define	ID_AA64MMFR2_EL1_E0PD		__BITS(63,60)
+#define	 ID_AA64MMFR2_EL1_E0PD_NONE	 0
+#define	 ID_AA64MMFR2_EL1_E0PD_SUPPORTED 1
+#define	ID_AA64MMFR2_EL1_EVT		__BITS(59,56)
+#define	 ID_AA64MMFR2_EL1_EVT_NONE	 0
+#define	 ID_AA64MMFR2_EL1_EVT_TO_TI	 1
+#define	 ID_AA64MMFR2_EL1_EVT_TO_TI_TTL	 2
+#define	ID_AA64MMFR2_EL1_BBM		__BITS(55,52)
+#define	 ID_AA64MMFR2_EL1_BBM_L0	 0
+#define	 ID_AA64MMFR2_EL1_BBM_L1	 1
+#define	 ID_AA64MMFR2_EL1_BBM_L2	 2
+#define	ID_AA64MMFR2_EL1_TTL		__BITS(51,48)
+#define	 ID_AA64MMFR2_EL1_TTL_NONE	 0
+#define	 ID_AA64MMFR2_EL1_TTL_SUPPORTED	 1
+#define	ID_AA64MMFR2_EL1_FWB		__BITS(43,40)
+#define	 ID_AA64MMFR2_EL1_FWB_NONE	 0
+#define	 ID_AA64MMFR2_EL1_FWB_SUPPORTED	 1
+#define	ID_AA64MMFR2_EL1_IDS		__BITS(39,36)
+#define	 ID_AA64MMFR2_EL1_IDS_0X0	 0
+#define	 ID_AA64MMFR2_EL1_IDS_0X18	 1
+#define	ID_AA64MMFR2_EL1_AT		__BITS(35,32)
+#define	 ID_AA64MMFR2_EL1_AT_NONE	 0
+#define	 ID_AA64MMFR2_EL1_AT_16BIT	 1
+#define	ID_AA64MMFR2_EL1_ST		__BITS(31,28)
+#define	 ID_AA64MMFR2_EL1_ST_39		 0
+#define	 ID_AA64MMFR2_EL1_ST_48		 1
+#define	ID_AA64MMFR2_EL1_NV		__BITS(27,24)
+#define	 ID_AA64MMFR2_EL1_NV_NONE	 0
+#define	 ID_AA64MMFR2_EL1_NV_HCR	 1
+#define	 ID_AA64MMFR2_EL1_NV_HCR_VNCR	 2
+#define	ID_AA64MMFR2_EL1_CCIDX		__BITS(23,20)
+#define	 ID_AA64MMFR2_EL1_CCIDX_32BIT	 0
+#define	 ID_AA64MMFR2_EL1_CCIDX_64BIT	 1
+#define	ID_AA64MMFR2_EL1_VARANGE	__BITS(19,16)
+#define	 ID_AA64MMFR2_EL1_VARANGE_48BIT	 0
+#define	 ID_AA64MMFR2_EL1_VARANGE_52BIT	 1
+#define	ID_AA64MMFR2_EL1_IESB		__BITS(15,12)
+#define	 ID_AA64MMFR2_EL1_IESB_NONE	 0
+#define	 ID_AA64MMFR2_EL1_IESB_SUPPORTED 1
+#define	ID_AA64MMFR2_EL1_LSM		__BITS(11,8)
+#define	 ID_AA64MMFR2_EL1_LSM_NONE	 0
+#define	 ID_AA64MMFR2_EL1_LSM_SUPPORTED	 1
+#define	ID_AA64MMFR2_EL1_UAO		__BITS(7,4)
+#define	 ID_AA64MMFR2_EL1_UAO_NONE	 0
+#define	 ID_AA64MMFR2_EL1_UAO_SUPPORTED	 1
+#define	ID_AA64MMFR2_EL1_CNP		__BITS(3,0)
+#define	 ID_AA64MMFR2_EL1_CNP_NONE	 0
+#define	 ID_AA64MMFR2_EL1_CNP_SUPPORTED	 1
+
+AARCH64REG_READ_INLINE2(a72_cpuactlr_el1, s3_1_c15_c2_0)
 AARCH64REG_READ_INLINE(id_aa64pfr0_el1)
 AARCH64REG_READ_INLINE(id_aa64pfr1_el1)
+
+#define	ID_AA64PFR1_EL1_RASFRAC		__BITS(15,12)
+#define	 ID_AA64PFR1_EL1_RASFRAC_NORMAL	 0
+#define	 ID_AA64PFR1_EL1_RASFRAC_EXTRA	 1
+#define	ID_AA64PFR1_EL1_MTE		__BITS(11,8)
+#define	 ID_AA64PFR1_EL1_MTE_NONE	 0
+#define	 ID_AA64PFR1_EL1_MTE_PARTIAL	 1
+#define	 ID_AA64PFR1_EL1_MTE_SUPPORTED	 2
+#define	ID_AA64PFR1_EL1_SSBS		__BITS(7,4)
+#define	 ID_AA64PFR1_EL1_SSBS_NONE	 0
+#define	 ID_AA64PFR1_EL1_SSBS_SUPPORTED	 1
+#define	 ID_AA64PFR1_EL1_SSBS_MSR_MRS	 2
+#define	ID_AA64PFR1_EL1_BT		__BITS(3,0)
+#define	 ID_AA64PFR1_EL1_BT_NONE	 0
+#define	 ID_AA64PFR1_EL1_BT_SUPPORTED	 1
+
 AARCH64REG_READ_INLINE(id_aa64zfr0_el1)
 AARCH64REG_READ_INLINE(id_pfr1_el1)
 AARCH64REG_READ_INLINE(isr_el1)
@@ -406,6 +547,7 @@ AARCH64REG_WRITE_INLINE(esr_el1)
 #define	 ESR_EC_FP_ACCESS	 0x07	// AXX: Access to SIMD/FP Registers
 #define	 ESR_EC_FPID		 0x08	// A32: MCR/MRC access to CP10 !EC=7
 #define	 ESR_EC_CP14_RRT	 0x0c	// A32: MRRC access to CP14
+#define	 ESR_EC_BTE_A64		 0x0d	// A64: Branch Target Exception (V8.5)
 #define	 ESR_EC_ILL_STATE	 0x0e	// AXX: Illegal Execution State
 #define	 ESR_EC_SVC_A32		 0x11	// A32: SVC Instruction Execution
 #define	 ESR_EC_HVC_A32		 0x12	// A32: HVC Instruction Execution
@@ -565,23 +707,39 @@ AARCH64REG_WRITE_INLINE(sctlr_el1)
 #define	SCTLR_SA		__BIT(3)
 #define	SCTLR_SA0		__BIT(4)
 #define	SCTLR_CP15BEN		__BIT(5)
-#define	SCTLR_THEE		__BIT(6)
+#define	SCTLR_nAA		__BIT(6)
 #define	SCTLR_ITD		__BIT(7)
 #define	SCTLR_SED		__BIT(8)
 #define	SCTLR_UMA		__BIT(9)
+#define	SCTLR_EnRCTX		__BIT(10)
+#define	SCTLR_EOS		__BIT(11)
 #define	SCTLR_I			__BIT(12)
+#define	SCTLR_EnDB		__BIT(13)
 #define	SCTLR_DZE		__BIT(14)
 #define	SCTLR_UCT		__BIT(15)
 #define	SCTLR_nTWI		__BIT(16)
 #define	SCTLR_nTWE		__BIT(18)
 #define	SCTLR_WXN		__BIT(19)
+#define	SCTLR_TSCXT		__BIT(20)
 #define	SCTLR_IESB		__BIT(21)
+#define	SCTLR_EIS		__BIT(22)
 #define	SCTLR_SPAN		__BIT(23)
 #define	SCTLR_EOE		__BIT(24)
 #define	SCTLR_EE		__BIT(25)
 #define	SCTLR_UCI		__BIT(26)
+#define	SCTLR_EnDA		__BIT(27)
 #define	SCTLR_nTLSMD		__BIT(28)
 #define	SCTLR_LSMAOE		__BIT(29)
+#define	SCTLR_EnIB		__BIT(30)
+#define	SCTLR_EnIA		__BIT(31)
+#define	SCTLR_BT0		__BIT(35)
+#define	SCTLR_BT1		__BIT(36)
+#define	SCTLR_ITFSB		__BIT(37)
+#define	SCTLR_TCF0		__BITS(39,38)
+#define	SCTLR_TCF		__BITS(41,40)
+#define	SCTLR_ATA0		__BIT(42)
+#define	SCTLR_ATA		__BIT(43)
+#define	SCTLR_DSSBS		__BIT(44)
 
 // current EL stack pointer
 static __inline uint64_t
@@ -609,9 +767,8 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	 SPSR_C	 		__BIT(29)	// Carry
 #define	 SPSR_V	 		__BIT(28)	// oVerflow
 #define	SPSR_A32_Q 		__BIT(27)	// A32: Overflow
-#define	SPSR_A32_J 		__BIT(24)	// A32: Jazelle Mode
-#define	SPSR_A32_IT1 		__BIT(23)	// A32: IT[1]
-#define	SPSR_A32_IT0 		__BIT(22)	// A32: IT[0]
+#define	SPSR_A32_IT1 		__BIT(26)	// A32: IT[1]
+#define	SPSR_A32_IT0 		__BIT(25)	// A32: IT[0]
 #define	SPSR_SS	 		__BIT(21)	// Software Step
 #define	SPSR_SS_SHIFT		21
 #define	SPSR_IL	 		__BIT(20)	// Instruction Length
@@ -622,6 +779,7 @@ AARCH64REG_WRITE_INLINE(spsr_el1)
 #define	SPSR_IT4 		__BIT(12)	// A32: IT[4]
 #define	SPSR_IT3 		__BIT(11)	// A32: IT[3]
 #define	SPSR_IT2 		__BIT(10)	// A32: IT[2]
+#define	SPSR_A64_BTYPE 		__BIT(11,10)	// A64: BTYPE
 #define	SPSR_A64_D 		__BIT(9)	// A64: Debug Exception Mask
 #define	SPSR_A32_E 		__BIT(9)	// A32: BE Endian Mode
 #define	SPSR_A	 		__BIT(8)	// Async abort (SError) Mask

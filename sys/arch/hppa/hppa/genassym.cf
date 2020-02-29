@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.1.42.1 2020/01/17 21:47:25 ad Exp $
+#	$NetBSD: genassym.cf,v 1.1.42.2 2020/02/29 20:18:24 ad Exp $
 
 #	$OpenBSD: genassym.cf,v 1.18 2001/09/20 18:31:14 mickey Exp $
 
@@ -191,9 +191,6 @@ struct	lwp
 member	L_PROC		l_proc
 member	L_CPU		l_cpu
 member	L_PCB		l_addr
-member	L_PRIORITY	l_priority
-member	L_STAT		l_stat
-member	L_WCHAN		l_wchan
 member	L_MD		l_md
 member	L_MD_REGS	l_md.md_regs
 

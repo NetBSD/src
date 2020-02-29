@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm53xx_machdep.c,v 1.21.4.1 2020/01/25 22:38:39 ad Exp $	*/
+/*	$NetBSD: bcm53xx_machdep.c,v 1.21.4.2 2020/02/29 20:18:22 ad Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #define IDM_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.21.4.1 2020/01/25 22:38:39 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm53xx_machdep.c,v 1.21.4.2 2020/02/29 20:18:22 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_console.h"
@@ -255,7 +255,7 @@ bcm53xx_mpstart(void)
 				break;
 	}
 	for (size_t i = 1; i < arm_cpu_max; i++) {
-		if ((arm_cpu_hatched & __BIT(i)) == 0) {
+		if (cpu_hatched_p(i)) {)
 			printf("%s: warning: cpu%zu failed to hatch\n",
 			    __func__, i);
 		}

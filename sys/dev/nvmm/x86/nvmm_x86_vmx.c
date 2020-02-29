@@ -1,4 +1,4 @@
-/*	$NetBSD: nvmm_x86_vmx.c,v 1.46.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: nvmm_x86_vmx.c,v 1.46.2.2 2020/02/29 20:19:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.46.2.1 2020/01/17 21:47:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nvmm_x86_vmx.c,v 1.46.2.2 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -3115,7 +3115,7 @@ static void
 vmx_change_cpu(void *arg1, void *arg2)
 {
 	struct cpu_info *ci = curcpu();
-	bool enable = (bool)arg1;
+	bool enable = arg1 != NULL;
 	uint64_t cr4;
 
 	if (!enable) {

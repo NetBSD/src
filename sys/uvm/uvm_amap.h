@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_amap.h,v 1.39 2020/01/02 02:00:35 ad Exp $	*/
+/*	$NetBSD: uvm_amap.h,v 1.39.2.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -151,7 +151,7 @@ bool		amap_swap_off
  */
 
 struct vm_amap {
-	kmutex_t *am_lock;	/* lock [locks all vm_amap fields] */
+	krwlock_t *am_lock;	/* lock [locks all vm_amap fields] */
 	int am_ref;		/* reference count */
 	int am_flags;		/* flags */
 	int am_maxslot;		/* max # of slots allocated */
@@ -251,10 +251,10 @@ struct vm_amap {
  */
 
 #define amap_flags(AMAP)	((AMAP)->am_flags)
-#define amap_lock(AMAP)		mutex_enter((AMAP)->am_lock)
-#define amap_lock_try(AMAP)	mutex_tryenter((AMAP)->am_lock)
+#define amap_lock(AMAP, OP)	rw_enter((AMAP)->am_lock, (OP))
+#define amap_lock_try(AMAP, OP)	rw_tryenter((AMAP)->am_lock, (OP))
 #define amap_refs(AMAP)		((AMAP)->am_ref)
-#define amap_unlock(AMAP)	mutex_exit((AMAP)->am_lock)
+#define amap_unlock(AMAP)	rw_exit((AMAP)->am_lock)
 
 /*
  * if we enable PPREF, then we have a couple of extra functions that

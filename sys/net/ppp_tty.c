@@ -1,4 +1,4 @@
-/*	$NetBSD: ppp_tty.c,v 1.66 2019/09/20 08:45:29 maxv Exp $	*/
+/*	$NetBSD: ppp_tty.c,v 1.66.2.1 2020/02/29 20:21:06 ad Exp $	*/
 /*	Id: ppp_tty.c,v 1.3 1996/07/01 01:04:11 paulus Exp 	*/
 
 /*
@@ -93,7 +93,7 @@
 /* from NetBSD: if_ppp.c,v 1.15.2.2 1994/07/28 05:17:58 cgd Exp */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.66 2019/09/20 08:45:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ppp_tty.c,v 1.66.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1035,7 +1035,7 @@ pppinput(int c, struct tty *tp)
 		if (sc->sc_flags & SC_DEBUG)
 		    printf("%s: bad fcs %x\n", sc->sc_if.if_xname,
 			sc->sc_fcs);
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		sc->sc_stats.ppp_ierrors++;
 	    } else
 		sc->sc_flags &= ~(SC_FLUSH | SC_ESCAPED);
@@ -1048,7 +1048,7 @@ pppinput(int c, struct tty *tp)
 		if (sc->sc_flags & SC_DEBUG)
 		    printf("%s: too short (%d)\n", sc->sc_if.if_xname, ilen);
 		s = spltty();
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		sc->sc_stats.ppp_ierrors++;
 		sc->sc_flags |= SC_PKTLOST;
 		splx(s);
@@ -1192,7 +1192,7 @@ pppinput(int c, struct tty *tp)
  flush:
     if (!(sc->sc_flags & SC_FLUSH)) {
 	s = spltty();
-	sc->sc_if.if_ierrors++;
+	if_statinc(&sc->sc_if, if_ierrors);
 	sc->sc_stats.ppp_ierrors++;
 	sc->sc_flags |= SC_FLUSH;
 	splx(s);

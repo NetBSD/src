@@ -1,4 +1,4 @@
-/*	$NetBSD: makphy.c,v 1.63 2019/12/12 09:25:37 msaitoh Exp $	*/
+/*	$NetBSD: makphy.c,v 1.63.2.1 2020/02/29 20:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2001 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.63 2019/12/12 09:25:37 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: makphy.c,v 1.63.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -213,7 +213,7 @@ page0:
 		!= 0)) {
 		bool fiberonly = false, copperonly = false;
 
-		/* Both copper and fiber is set. check MODE[] */
+		/* Both copper and fiber are set. check MODE[] */
 		switch (sc->mii_mpd_model) {
 		case MII_MODEL_xxMARVELL_E1011:
 		case MII_MODEL_xxMARVELL_E1111:

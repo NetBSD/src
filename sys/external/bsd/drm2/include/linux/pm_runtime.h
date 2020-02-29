@@ -1,4 +1,4 @@
-/*	$NetBSD: pm_runtime.h,v 1.4 2018/08/27 07:30:00 riastradh Exp $	*/
+/*	$NetBSD: pm_runtime.h,v 1.4.6.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -31,6 +31,8 @@
 
 #ifndef _LINUX_PM_RUNTIME_H_
 #define _LINUX_PM_RUNTIME_H_
+
+#include <linux/notifier.h>
 
 struct device;
 

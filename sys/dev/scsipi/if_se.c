@@ -1,4 +1,4 @@
-/*	$NetBSD: if_se.c,v 1.103 2019/11/10 21:16:37 chs Exp $	*/
+/*	$NetBSD: if_se.c,v 1.103.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Ian W. Dall <ian.dall@dsto.defence.gov.au>
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.103 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_se.c,v 1.103.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -467,10 +467,10 @@ se_ifstart(struct ifnet *ifp)
 	    SETIMEOUT, NULL, XS_CTL_NOSLEEP | XS_CTL_ASYNC | XS_CTL_DATA_OUT);
 	if (error) {
 		aprint_error_dev(sc->sc_dev, "not queued, error %d\n", error);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		ifp->if_flags &= ~IFF_OACTIVE;
 	} else
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 	if (sc->sc_flags & SE_NEED_RECV) {
 		sc->sc_flags &= ~SE_NEED_RECV;
 		se_recv((void *) sc);
@@ -648,7 +648,7 @@ se_read(struct se_softc *sc, char *data, int datalen)
 			printf("%s: invalid packet size %d; dropping\n",
 			       device_xname(sc->sc_dev), len);
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
 
@@ -659,7 +659,7 @@ se_read(struct se_softc *sc, char *data, int datalen)
 			if (sc->sc_debug)
 				printf("se_read: se_get returned null\n");
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto next_packet;
 		}
 		if ((ifp->if_flags & IFF_PROMISC) != 0) {
@@ -684,7 +684,7 @@ sewatchdog(struct ifnet *ifp)
 	struct se_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	se_reset(sc);
 }

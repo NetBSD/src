@@ -1,7 +1,7 @@
-/*	$NetBSD: mm.c,v 1.24 2019/03/09 08:42:25 maxv Exp $	*/
+/*	$NetBSD: mm.c,v 1.24.6.1 2020/02/29 20:18:16 ad Exp $	*/
 
 /*
- * Copyright (c) 2017 The NetBSD Foundation, Inc. All rights reserved.
+ * Copyright (c) 2017-2020 The NetBSD Foundation, Inc. All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Maxime Villard.
@@ -289,6 +289,12 @@ mm_shift_segment(vaddr_t va, size_t pagesz, size_t elfsz, size_t elfalign)
 	size_t shiftsize, offset;
 	uint64_t rnd;
 
+	/*
+	 * If possible, shift the segment in memory using a random offset. Once
+	 * shifted the segment remains in the same page, of size pagesz. Make
+	 * sure to respect the ELF alignment constraint.
+	 */
+
 	if (elfalign == 0) {
 		elfalign = ELFROUND;
 	}
@@ -317,6 +323,13 @@ mm_map_head(void)
 	vaddr_t randva;
 
 	/*
+	 * The HEAD window is 1GB below the main KASLR window. This is to
+	 * ensure that head always comes first in virtual memory. The reason
+	 * for that is that we use (headva + sh_offset), and sh_offset is
+	 * unsigned.
+	 */
+
+	/*
 	 * To get the size of the head, we give a look at the read-only
 	 * mapping of the kernel we created in locore. We're identity mapped,
 	 * so kernpa = kernva.
@@ -324,6 +337,10 @@ mm_map_head(void)
 	size = elf_get_head_size((vaddr_t)kernpa_start);
 	npages = size / PAGE_SIZE;
 
+	/*
+	 * Choose a random range of VAs in the HEAD window, and create the page
+	 * tree for it.
+	 */
 	prng_get_rand(&rnd, sizeof(rnd));
 	randva = rounddown(HEAD_WINDOW_BASE + rnd % (HEAD_WINDOW_SIZE - size),
 	    PAGE_SIZE);
@@ -355,22 +372,27 @@ mm_map_segment(int segtype, paddr_t pa, size_t elfsz, size_t elfalign)
 		pagesz = NBPD_L2;
 	}
 
+	/* Create the page tree */
 	size = roundup(elfsz, pagesz);
 	randva = mm_randva_kregion(size, pagesz);
 
+	/* Enter the segment */
 	npages = size / PAGE_SIZE;
 	for (i = 0; i < npages; i++) {
 		mm_enter_pa(pa + i * PAGE_SIZE,
 		    randva + i * PAGE_SIZE, MM_PROT_READ|MM_PROT_WRITE);
 	}
 
+	/* Shift the segment in memory */
 	offset = mm_shift_segment(randva, pagesz, elfsz, elfalign);
 	ASSERT(offset + elfsz <= size);
 
+	/* Fill the paddings */
 	pad = pads[segtype];
 	memset((void *)randva, pad, offset);
 	memset((void *)(randva + offset + elfsz), pad, size - elfsz - offset);
 
+	/* Register the bootspace information */
 	bootspace_addseg(segtype, randva, pa, size);
 
 	return (randva + offset);
@@ -425,12 +447,31 @@ mm_map_boot(void)
 }
 
 /*
- * There is a variable number of independent regions: one head, several kernel
- * segments, one boot. They are all mapped at random VAs.
+ * The bootloader has set up the following layout of physical memory:
+ * +------------+-----------------+---------------+------------------+-------+
+ * | ELF HEADER | SECTION HEADERS | KERN SECTIONS | SYM+REL SECTIONS | EXTRA |
+ * +------------+-----------------+---------------+------------------+-------+
+ * Which we abstract into several "regions":
+ * +------------------------------+---------------+--------------------------+
+ * |         Head region          | Several segs  |       Boot region        |
+ * +------------------------------+---------------+--------------------------+
+ * See loadfile_elf32.c:loadfile_dynamic() for the details.
+ *
+ * There is a variable number of independent regions we create: one head,
+ * several kernel segments, one boot. They are all mapped at random VAs.
  *
  * Head contains the ELF Header and ELF Section Headers, and we use them to
- * map the rest of the regions. Head must be placed in memory *before* the
- * other regions.
+ * map the rest of the regions. Head must be placed in both virtual memory
+ * and physical memory *before* the rest.
+ *
+ * The Kernel Sections are mapped at random VAs using individual segments
+ * in bootspace.
+ *
+ * Boot contains various information, including the ELF Sym+Rel sections,
+ * plus extra memory the prekern has used so far; it is a region that the
+ * kernel will eventually use for module_map. Boot is placed *after* the
+ * other regions in physical memory. In virtual memory however there is no
+ * constraint, so its VA is randomly selected in the main KASLR window.
  *
  * At the end of this function, the bootspace structure is fully constructed.
  */

@@ -1,4 +1,4 @@
-/*	$NetBSD: lfs_inode.c,v 1.157 2017/06/10 05:29:36 maya Exp $	*/
+/*	$NetBSD: lfs_inode.c,v 1.157.12.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2000, 2001, 2002, 2003 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.157 2017/06/10 05:29:36 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lfs_inode.c,v 1.157.12.1 2020/02/29 20:21:11 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_quota.h"
@@ -133,6 +133,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 	struct inode *ip;
 	struct lfs *fs = VFSTOULFS(vp->v_mount)->um_lfs;
 	int flags;
+	int error;
 
 	ASSERT_NO_SEGLOCK(fs);
 	if (vp->v_mount->mnt_flag & MNT_RDONLY)
@@ -175,7 +176,7 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 			      vp->v_iflag | vp->v_vflag | vp->v_uflag,
 			      ip->i_state));
 			if (fs->lfs_dirops == 0)
-				lfs_flush_fs(fs, SEGM_SYNC);
+				break;
 			else
 				mtsleep(&fs->lfs_writer, PRIBIO+1, "lfs_fsync",
 					0, &lfs_lock);
@@ -183,8 +184,18 @@ lfs_update(struct vnode *vp, const struct timespec *acc,
 			twice? */
 		}
 		--fs->lfs_diropwait;
+		fs->lfs_writer++;
+		if (vp->v_uflag & VU_DIROP) {
+			KASSERT(fs->lfs_dirops == 0);
+			lfs_flush_fs(fs, SEGM_SYNC);
+		}
 		mutex_exit(&lfs_lock);
-		return lfs_vflush(vp);
+		error = lfs_vflush(vp);
+		mutex_enter(&lfs_lock);
+		if (--fs->lfs_writer == 0)
+			cv_broadcast(&fs->lfs_diropscv);
+		mutex_exit(&lfs_lock);
+		return error;
 	}
 	return 0;
 }
@@ -280,7 +291,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 					return error;
 				}
 				if (ioflag & IO_SYNC) {
-					mutex_enter(ovp->v_interlock);
+					rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 					VOP_PUTPAGES(ovp,
 					    trunc_page(osize & lfs_sb_getbmask(fs)),
 					    round_page(eob),
@@ -400,7 +411,7 @@ lfs_truncate(struct vnode *ovp, off_t length, int ioflag, kauth_cred_t cred)
 		ubc_zerorange(&ovp->v_uobj, length, eoz - length,
 		    UBC_UNMAP_FLAG(ovp));
 		if (round_page(eoz) > round_page(length)) {
-			mutex_enter(ovp->v_interlock);
+			rw_enter(ovp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(ovp, round_page(length),
 			    round_page(eoz),
 			    PGO_CLEANIT | PGO_DEACTIVATE |
@@ -861,7 +872,7 @@ lfs_vtruncbuf(struct vnode *vp, daddr_t lbn, bool catch, int slptimeo)
 	voff_t off;
 
 	off = round_page((voff_t)lbn << vp->v_mount->mnt_fs_bshift);
-	mutex_enter(vp->v_interlock);
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	error = VOP_PUTPAGES(vp, off, 0, PGO_FREE | PGO_SYNCIO);
 	if (error)
 		return error;

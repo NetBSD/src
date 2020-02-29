@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_rwlock.c,v 1.59.2.6 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: kern_rwlock.c,v 1.59.2.7 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2006, 2007, 2008, 2009, 2019, 2020
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.6 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_rwlock.c,v 1.59.2.7 2020/02/29 20:21:03 ad Exp $");
 
 #include "opt_lockdebug.h"
 
@@ -779,6 +779,21 @@ rw_lock_held(krwlock_t *rw)
 	if (rw == NULL)
 		return 0;
 	return (rw->rw_owner & RW_THREAD) != 0;
+}
+
+/*
+ * rw_lock_op:
+ *
+ *	For a rwlock that is known to be held by the caller, return
+ *	RW_READER or RW_WRITER to describe the hold type.
+ */
+krw_t
+rw_lock_op(krwlock_t *rw)
+{
+
+	RW_ASSERT(rw, rw_lock_held(rw));
+
+	return (rw->rw_owner & RW_WRITE_LOCKED) != 0 ? RW_WRITER : RW_READER;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.174.2.1 2020/01/17 21:47:25 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.174.2.2 2020/02/29 20:18:25 ad Exp $	*/
 
 /*
  * Copyright-o-rama!
@@ -128,7 +128,7 @@
  */
 
 #include <machine/asm.h>
-__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.174.2.1 2020/01/17 21:47:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: locore.S,v 1.174.2.2 2020/02/29 20:18:25 ad Exp $");
 
 #include "opt_copy_symtab.h"
 #include "opt_ddb.h"
@@ -1289,8 +1289,8 @@ END(dumpsys)
  * struct lwp *cpu_switchto(struct lwp *oldlwp, struct lwp *newlwp,
  *     bool returning)
  *
- *	1. if (oldlwp != NULL), save its context.
- *	2. then, restore context of newlwp.
+ *	1. save context of oldlwp.
+ *	2. restore context of newlwp.
  *
  * Note that the stack frame layout is known to "struct switchframe" in
  * <machine/frame.h> and to the code in cpu_lwp_fork() which initializes

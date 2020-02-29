@@ -1,4 +1,4 @@
-# $NetBSD: HDL_G,v 1.57.4.1 2020/01/25 22:38:39 ad Exp $
+# $NetBSD: HDL_G,v 1.57.4.2 2020/02/29 20:18:22 ad Exp $
 #
 #       HDL_G -- I-O DATA HDL-G Kernel
 #
@@ -325,9 +325,6 @@ ucom*	at uplcom? portno ?
 
 uvscom* at uhub? port ? 	# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor*	at uhub? port ?

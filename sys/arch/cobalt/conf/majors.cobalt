@@ -1,4 +1,4 @@
-#	$NetBSD: majors.cobalt,v 1.32 2019/01/28 02:28:57 dholland Exp $
+#	$NetBSD: majors.cobalt,v 1.32.6.1 2020/02/29 20:18:21 ad Exp $
 #
 # Device majors for cobalt
 #
@@ -48,7 +48,7 @@ device-major	uhid		char 41			uhid
 device-major	ulpt		char 42			ulpt
 device-major	ugen		char 43			ugen
 device-major	ucom		char 44			ucom
-device-major	urio		char 45			urio
+#device-major	obsolete	char 45			obsolete (urio)
 device-major	uscanner	char 46			uscanner
 device-major	audio		char 47			audio
 device-major	midi		char 48			midi

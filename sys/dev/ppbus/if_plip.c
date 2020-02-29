@@ -1,4 +1,4 @@
-/* $NetBSD: if_plip.c,v 1.34 2019/11/10 21:16:37 chs Exp $ */
+/* $NetBSD: if_plip.c,v 1.34.2.1 2020/02/29 20:19:15 ad Exp $ */
 
 /*-
  * Copyright (c) 1997 Poul-Henning Kamp
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.34 2019/11/10 21:16:37 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_plip.c,v 1.34.2.1 2020/02/29 20:19:15 ad Exp $");
 
 /*
  * Parallel port TCP/IP interfaces added.  I looked at the driver from
@@ -636,19 +636,19 @@ end:
 	}
 
 	if (top == NULL) {
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		goto err;
 	}
 	if (ifp->if_bpf) {
 		lptap(ifp, top, BPF_D_IN);
 	}
 	if (__predict_false(!pktq_enqueue(ip_pktq, top, 0))) {
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		m_freem(top);
 		goto err;
 	}
-	ifp->if_ipackets++;
-	ifp->if_ibytes += len;
+	if_statinc(ifp, if_ipackets);
+	if_statadd(ifp, if_ibytes, len);
 	sc->sc_iferrs = 0;
 
 	goto done;
@@ -656,7 +656,7 @@ end:
 err:
 	/* Return to idle state */
 	ppbus_wdtr(ppbus, 0);
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 	sc->sc_iferrs++;
 	LP_PRINTF("R");
 	/* Disable interface if there are too many errors */
@@ -724,7 +724,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 	if (dst->sa_family != AF_INET) {
 		LP_PRINTF("%s: af%d not supported\n", ifp->if_xname,
 		    dst->sa_family);
-		ifp->if_noproto++;
+		if_statinc(ifp, if_noproto);
 		err = EAFNOSUPPORT;
 		goto endoutput;
 	}
@@ -735,7 +735,7 @@ lpoutput(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 		if ((ifp->if_flags & IFF_OACTIVE) == 0)
 			lpstart(ifp);
 	} else {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		sc->sc_iferrs++;
 		LP_PRINTF("Q");
 
@@ -908,7 +908,7 @@ nend:
 			/* Go quiescent */
 			ppbus_wdtr(ppbus, 0);
 
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			lp->sc_iferrs++;
 			LP_PRINTF("X");
 
@@ -925,8 +925,8 @@ nend:
 			IFQ_DEQUEUE(&ifp->if_snd, m);
 			if(ifp->if_bpf)
 				lptap(ifp, m, BPF_D_OUT);
-			ifp->if_opackets++;
-			ifp->if_obytes += m->m_pkthdr.len;
+			if_statinc(ifp, if_opackets);
+			if_statadd(ifp, if_obytes, m->m_pkthdr.len);
 			m_freem(m);
 		}
 	}

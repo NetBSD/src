@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.222 2019/09/23 08:04:35 maxv Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.222.2.1 2020/02/29 20:21:10 ad Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -319,9 +319,9 @@ struct _m_ext {
 MBUF_DEFINE(_mbuf_dummy, 1, 1);
 
 /* normal data len */
-#define MLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_dat))
+#define MLEN		((int)(MSIZE - offsetof(struct _mbuf_dummy, m_dat)))
 /* data len w/pkthdr */
-#define MHLEN		(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat))
+#define MHLEN		((int)(MSIZE - offsetof(struct _mbuf_dummy, m_pktdat)))
 
 #define MINCLSIZE	(MHLEN+MLEN+1)	/* smallest amount to put in cluster */
 

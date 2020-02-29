@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pdaemon.c,v 1.122.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_pdaemon.c,v 1.122.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,10 +66,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.122.2.1 2020/01/17 21:47:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pdaemon.c,v 1.122.2.2 2020/02/29 20:21:11 ad Exp $");
 
 #include "opt_uvmhist.h"
 #include "opt_readahead.h"
+
+#define	__RWLOCK_PRIVATE
 
 #include <sys/param.h>
 #include <sys/proc.h>
@@ -342,25 +344,6 @@ uvm_pageout(void *arg)
 	/*NOTREACHED*/
 }
 
-
-/*
- * uvm_aiodone_worker: a workqueue callback for the aiodone daemon.
- */
-
-void
-uvm_aiodone_worker(struct work *wk, void *dummy)
-{
-	struct buf *bp = (void *)wk;
-
-	KASSERT(&bp->b_work == wk);
-
-	/*
-	 * process an i/o that's done.
-	 */
-
-	(*bp->b_iodone)(bp);
-}
-
 void
 uvm_pageout_start(int npages)
 {
@@ -397,14 +380,14 @@ uvm_pageout_done(int npages)
  * => return the locked mutex on success.  otherwise, return NULL.
  */
 
-kmutex_t *
+krwlock_t *
 uvmpd_trylockowner(struct vm_page *pg)
 {
 	struct uvm_object *uobj = pg->uobject;
 	struct vm_anon *anon = pg->uanon;
 	int tries, count;
 	bool running;
-	kmutex_t *slock;
+	krwlock_t *slock;
 
 	KASSERT(mutex_owned(&pg->interlock));
 
@@ -426,7 +409,7 @@ uvmpd_trylockowner(struct vm_page *pg)
 	 */
 	tries = (curlwp == uvm.pagedaemon_lwp ? UVMPD_NUMTRYLOCKOWNER : 1);
 	for (;;) {
-		if (mutex_tryenter(slock)) {
+		if (rw_tryenter(slock, RW_WRITER)) {
 			if (uobj == NULL) {
 				/*
 				 * set PG_ANON if it isn't set already.
@@ -441,7 +424,7 @@ uvmpd_trylockowner(struct vm_page *pg)
 			mutex_exit(&pg->interlock);
 			return slock;
 		}
-		running = mutex_owner_running(slock);
+		running = rw_owner_running(slock);
 		if (!running || --tries <= 0) {
 			break;
 		}
@@ -520,12 +503,12 @@ swapcluster_add(struct swapcluster *swc, struct vm_page *pg)
 	slot = swc->swc_slot + swc->swc_nused;
 	uobj = pg->uobject;
 	if (uobj == NULL) {
-		KASSERT(mutex_owned(pg->uanon->an_lock));
+		KASSERT(rw_write_held(pg->uanon->an_lock));
 		pg->uanon->an_swslot = slot;
 	} else {
 		int result;
 
-		KASSERT(mutex_owned(uobj->vmobjlock));
+		KASSERT(rw_write_held(uobj->vmobjlock));
 		result = uao_set_swslot(uobj, pg->offset >> PAGE_SHIFT, slot);
 		if (result == -1) {
 			return ENOMEM;
@@ -645,7 +628,7 @@ uvmpd_scan_queue(void)
 	struct swapcluster swc;
 #endif /* defined(VMSWAP) */
 	int dirtyreacts;
-	kmutex_t *slock;
+	krwlock_t *slock;
 	UVMHIST_FUNC("uvmpd_scan_queue"); UVMHIST_CALLED(pdhist);
 
 	/*
@@ -700,7 +683,7 @@ uvmpd_scan_queue(void)
 			break;
 		}
 		KASSERT(uvmpdpol_pageisqueued_p(p));
-		KASSERT(uvm_page_owner_locked_p(p));
+		KASSERT(uvm_page_owner_locked_p(p, true));
 		KASSERT(p->wire_count == 0);
 
 		/*
@@ -711,7 +694,7 @@ uvmpd_scan_queue(void)
 		uobj = p->uobject;
 
 		if (p->flags & PG_BUSY) {
-			mutex_exit(slock);
+			rw_exit(slock);
 			uvmexp.pdbusy++;
 			continue;
 		}
@@ -790,7 +773,7 @@ uvmpd_scan_queue(void)
 				KASSERT(uvmexp.swpgonly < uvmexp.swpginuse);
 				atomic_inc_uint(&uvmexp.swpgonly);
 			}
-			mutex_exit(slock);
+			rw_exit(slock);
 			continue;
 		}
 
@@ -801,7 +784,7 @@ uvmpd_scan_queue(void)
 		 */
 
 		if (uvm_availmem() + uvmexp.paging > uvmexp.freetarg << 2) {
-			mutex_exit(slock);
+			rw_exit(slock);
 			continue;
 		}
 
@@ -825,7 +808,7 @@ uvmpd_scan_queue(void)
 			uvm_pagelock(p);
 			uvm_pageactivate(p);
 			uvm_pageunlock(p);
-			mutex_exit(slock);
+			rw_exit(slock);
 			continue;
 		}
 
@@ -857,10 +840,10 @@ uvmpd_scan_queue(void)
 			uvm_pagelock(p);
 			uvm_pageactivate(p);
 			uvm_pageunlock(p);
-			mutex_exit(slock);
+			rw_exit(slock);
 			continue;
 		}
-		mutex_exit(slock);
+		rw_exit(slock);
 
 		swapcluster_flush(&swc, false);
 
@@ -875,7 +858,7 @@ uvmpd_scan_queue(void)
 		uvm_pagelock(p);
 		uvm_pageactivate(p);
 		uvm_pageunlock(p);
-		mutex_exit(slock);
+		rw_exit(slock);
 #endif /* defined(VMSWAP) */
 	}
 

@@ -1,7 +1,7 @@
-/*	$NetBSD: kern_condvar.c,v 1.42 2019/11/20 21:49:00 ad Exp $	*/
+/*	$NetBSD: kern_condvar.c,v 1.42.2.1 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008, 2019 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2019, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.42 2019/11/20 21:49:00 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.42.2.1 2020/02/29 20:21:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -53,7 +53,7 @@ __KERNEL_RCSID(0, "$NetBSD: kern_condvar.c,v 1.42 2019/11/20 21:49:00 ad Exp $")
  *	cv_opaque[2]	description for ps(1)
  *
  * cv_opaque[0..1] is protected by the interlock passed to cv_wait() (enqueue
- * only), and the sleep queue lock acquired with sleeptab_lookup() (enqueue
+ * only), and the sleep queue lock acquired with sleepq_hashlock() (enqueue
  * and dequeue).
  *
  * cv_opaque[2] (the wmesg) is static and does not change throughout the life
@@ -70,7 +70,7 @@ static void		cv_unsleep(lwp_t *, bool);
 static inline void	cv_wakeup_one(kcondvar_t *);
 static inline void	cv_wakeup_all(kcondvar_t *);
 
-static syncobj_t cv_syncobj = {
+syncobj_t cv_syncobj = {
 	.sobj_flag	= SOBJ_SLEEPQ_SORTED,
 	.sobj_unsleep	= cv_unsleep,
 	.sobj_changepri	= sleepq_changepri,

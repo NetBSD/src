@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vr.c,v 1.131 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_vr.c,v 1.131.2.1 2020/02/29 20:19:11 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -97,7 +97,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.131 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vr.c,v 1.131.2.1 2020/02/29 20:19:11 ad Exp $");
 
 
 
@@ -625,7 +625,7 @@ vr_rxeof(struct vr_softc *sc)
 		if (rxstat & VR_RXSTAT_RXERR) {
 			const char *errstr;
 
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			switch (rxstat & 0x000000FF) {
 			case VR_RXSTAT_CRCERR:
 				errstr = "crc error";
@@ -665,7 +665,7 @@ vr_rxeof(struct vr_softc *sc)
 			 * time.  In case we receive a fragment that is not
 			 * a complete packet, we discard it.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 			aprint_error_dev(sc->vr_dev,
 			    "receive error: incomplete frame; "
@@ -689,7 +689,7 @@ vr_rxeof(struct vr_softc *sc)
 			 * missed to handle an error condition above.
 			 * Discard it to avoid a later crash.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 			aprint_error_dev(sc->vr_dev,
 			    "receive error: zero-length packet; "
@@ -733,7 +733,7 @@ vr_rxeof(struct vr_softc *sc)
 			m = ds->ds_mbuf;
 			if (vr_add_rxbuf(sc, i) == ENOBUFS) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				VR_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->vr_dmat,
 				    ds->ds_dmamap, 0,
@@ -752,7 +752,7 @@ vr_rxeof(struct vr_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			VR_INIT_RXDESC(sc, i);
 			bus_dmamap_sync(sc->vr_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -798,7 +798,7 @@ vr_rxeoc(struct vr_softc *sc)
 
 	ifp = &sc->vr_ec.ec_if;
 
-	ifp->if_ierrors++;
+	if_statinc(ifp, if_ierrors);
 
 	VR_CLRBIT16(sc, VR_COMMAND, VR_CMD_RX_ON);
 	for (i = 0; i < VR_TIMEOUT; i++) {
@@ -874,16 +874,19 @@ vr_txeof(struct vr_softc *sc)
 		m_freem(ds->ds_mbuf);
 		ds->ds_mbuf = NULL;
 
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & VR_TXSTAT_ERRSUM) {
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 			if (txstat & VR_TXSTAT_DEFER)
-				ifp->if_collisions++;
+				if_statinc_ref(nsr, if_collisions);
 			if (txstat & VR_TXSTAT_LATECOLL)
-				ifp->if_collisions++;
+				if_statinc_ref(nsr, if_collisions);
 		}
 
-		ifp->if_collisions += (txstat & VR_TXSTAT_COLLCNT) >> 3;
-		ifp->if_opackets++;
+		if_statadd_ref(nsr, if_collisions,
+		    (txstat & VR_TXSTAT_COLLCNT) >> 3);
+		if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 	}
 
 	/* Update the dirty transmit buffer pointer. */
@@ -934,7 +937,7 @@ vr_intr(void *arg)
 
 		if (status & VR_ISR_RX_DROPPED) {
 			aprint_error_dev(sc->vr_dev, "rx packet lost\n");
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		if (status &
@@ -967,7 +970,7 @@ vr_intr(void *arg)
 			if (status & VR_ISR_TX_UDFI)
 				aprint_error_dev(sc->vr_dev,
 				    "transmit underflow\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			dotx = 1;
 			vr_txeof(sc);
 			if (sc->vr_txpending) {
@@ -1272,7 +1275,7 @@ vr_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	/* Start one second timer. */
-	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
+	callout_schedule(&sc->vr_tick_ch, hz);
 
 	/* Attempt to start output on the interface. */
 	vr_start(ifp);
@@ -1330,7 +1333,7 @@ vr_watchdog(struct ifnet *ifp)
 	struct vr_softc *sc = ifp->if_softc;
 
 	aprint_error_dev(sc->vr_dev, "device timeout\n");
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	(void) vr_init(ifp);
 }
@@ -1353,7 +1356,7 @@ vr_tick(void *arg)
 	mii_tick(&sc->vr_mii);
 	splx(s);
 
-	callout_reset(&sc->vr_tick_ch, hz, vr_tick, sc);
+	callout_schedule(&sc->vr_tick_ch, hz);
 }
 
 /*
@@ -1495,6 +1498,7 @@ vr_attach(device_t parent, device_t self, void *aux)
 	sc->vr_tag = pa->pa_tag;
 	sc->vr_id = pa->pa_id;
 	callout_init(&sc->vr_tick_ch, 0);
+	callout_setfunc(&sc->vr_tick_ch, vr_tick, sc);
 
 	pci_aprint_devinfo(pa, NULL);
 

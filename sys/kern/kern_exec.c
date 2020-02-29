@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exec.c,v 1.485.2.3 2020/01/25 22:38:50 ad Exp $	*/
+/*	$NetBSD: kern_exec.c,v 1.485.2.4 2020/02/29 20:21:02 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -62,7 +62,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485.2.3 2020/01/25 22:38:50 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exec.c,v 1.485.2.4 2020/02/29 20:21:02 ad Exp $");
 
 #include "opt_exec.h"
 #include "opt_execfmt.h"
@@ -316,7 +316,7 @@ exec_path_free(struct execve_data *data)
 		PNBUF_PUT(data->ed_resolvedname);
 }
 
-static void
+static int
 exec_resolvename(struct lwp *l, struct exec_package *epp, struct vnode *vp,
     char **rpath)
 {
@@ -328,13 +328,16 @@ exec_resolvename(struct lwp *l, struct exec_package *epp, struct vnode *vp,
 	*rpath = PNBUF_GET();
 	error = vnode_to_path(*rpath, MAXPATHLEN, vp, l, l->l_proc);
 	if (error) {
+		DPRINTF(("%s: can't resolve name for %s, error %d\n",
+		    __func__, epp->ep_kname, error));
 		PNBUF_PUT(*rpath);
 		*rpath = NULL;
-		return;
+		return error;
 	}
 	epp->ep_resolvedname = *rpath;
 	if ((p = strrchr(*rpath, '/')) != NULL)
 		epp->ep_kname = p + 1;
+	return 0;
 }
 
 
@@ -396,7 +399,8 @@ check_exec(struct lwp *l, struct exec_package *epp, struct pathbuf *pb,
 		epp->ep_vp = vp = fp->f_vnode;
 		vref(vp);
 		fd_putfile(epp->ep_xfd);
-		exec_resolvename(l, epp, vp, rpath);
+		if ((error = exec_resolvename(l, epp, vp, rpath)) != 0)
+			return error;
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 	}
 
@@ -633,6 +637,10 @@ exec_autoload(void)
 		"exec_ecoff",
 		"compat_aoutm68k",
 		"compat_netbsd32",
+#if 0
+		"compat_linux",
+		"compat_linux32",
+#endif
 		"compat_sunos",
 		"compat_sunos32",
 		"compat_ultrix",
@@ -641,7 +649,7 @@ exec_autoload(void)
 	char const * const *list;
 	int i;
 
-	list = (nexecs == 0 ? native : compat);
+	list = nexecs == 0 ? native : compat;
 	for (i = 0; list[i] != NULL; i++) {
 		if (module_autoload(list[i], MODULE_CLASS_EXEC) != 0) {
 			continue;
@@ -1141,14 +1149,9 @@ emulexec(struct lwp *l, struct exec_package *epp)
 	    && p->p_emul != epp->ep_esch->es_emul)
 		(*p->p_emul->e_proc_exit)(p);
 
-	/*
-	 * This is now LWP 1.
-	 */
-	/* XXX elsewhere */
-	mutex_enter(p->p_lock);
-	p->p_nlwpid = 1;
-	l->l_lid = 1;
-	mutex_exit(p->p_lock);
+	/* This is now LWP 1.  Re-number the LWP if needed. */
+	if (l->l_lid != 1)
+		lwp_renumber(l, 1);
 
 	/*
 	 * Call exec hook. Emulation code may NOT store reference to anything
@@ -2527,6 +2530,7 @@ do_posix_spawn(struct lwp *l1, pid_t *pid_res, bool *child_ok, const char *path,
 	mutex_init(&p2->p_stmutex, MUTEX_DEFAULT, IPL_HIGH);
 	mutex_init(&p2->p_auxlock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&p2->p_reflock);
+	rw_init(&p2->p_treelock);
 	cv_init(&p2->p_waitcv, "wait");
 	cv_init(&p2->p_lwpcv, "lwpwait");
 

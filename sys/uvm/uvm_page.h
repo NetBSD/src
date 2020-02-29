@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.h,v 1.93.2.2 2020/01/25 22:38:53 ad Exp $	*/
+/*	$NetBSD: uvm_page.h,v 1.93.2.3 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -351,7 +351,7 @@ void uvm_pageunwire(struct vm_page *);
 void uvm_pagewire(struct vm_page *);
 void uvm_pagezero(struct vm_page *);
 bool uvm_pageismanaged(paddr_t);
-bool uvm_page_owner_locked_p(struct vm_page *);
+bool uvm_page_owner_locked_p(struct vm_page *, bool);
 void uvm_pgfl_lock(void);
 void uvm_pgfl_unlock(void);
 unsigned int uvm_pagegetdirty(struct vm_page *);

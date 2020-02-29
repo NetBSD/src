@@ -1,4 +1,4 @@
-/*	$NetBSD: if_es.c,v 1.64 2019/05/29 10:07:28 msaitoh Exp $ */
+/*	$NetBSD: if_es.c,v 1.64.4.1 2020/02/29 20:18:16 ad Exp $ */
 
 /*
  * Copyright (c) 1995 Michael L. Hitch
@@ -33,7 +33,7 @@
 #include "opt_ns.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.64 2019/05/29 10:07:28 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_es.c,v 1.64.4.1 2020/02/29 20:18:16 ad Exp $");
 
 
 #include <sys/param.h>
@@ -389,7 +389,7 @@ esintr(void *arg)
 		    intsts);
 		smc->b2.ist = ACK_RX_OVRN;
 		printf ("->%02x\n", smc->b2.ist);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 	}
 	if (intact & IST_TX_EMPTY) {
 		u_short ecr;
@@ -417,8 +417,8 @@ esintr(void *arg)
 			smc->b0.bsr = BSR_BANK0;
 			ecr = smc->b0.ecr;	/* Get error counters */
 			if (ecr & 0xff00)
-				ifp->if_collisions += ((ecr >> 8) & 15) +
-				    ((ecr >> 11) & 0x1e);
+				if_statadd(ifp, if_collisions,
+				    ((ecr >> 8) & 15) + ((ecr >> 11) & 0x1e));
 			smc->b2.bsr = BSR_BANK2;
 #if 0
 			smc->b2.mmucr = MMUCR_RESET_TX; /* XXX reset TX FIFO */
@@ -468,7 +468,7 @@ zzzz:
 			smc->b0.bsr = BSR_BANK0;
 			smc->b0.tcr |= TCR_TXENA;
 			smc->b2.bsr = BSR_BANK2;
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 		} else {
 			/*
@@ -509,7 +509,7 @@ zzzz:
 		}
 	}
 	if (intact & IST_EPHINT) {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		esreset(sc);
 	}
 	/* output packets */
@@ -601,7 +601,7 @@ esrint(struct es_softc *sc)
 		smc->b2.mmucr = MMUCR_REMRLS_RX;
 		while (smc->b2.mmucr & MMUCR_BUSY)
 			;
-		++ifp->if_ierrors;
+		if_statinc(ifp, if_ierrors);
 #ifdef ESDEBUG
 		if (--sc->sc_smcbusy) {
 			printf("%s: esrintr busy on bad packet exit\n",
@@ -922,7 +922,8 @@ esstart(struct ifnet *ifp)
 			    device_xname(sc->sc_dev), active_pnr, smc->b2.pnr);
 		bpf_mtap(&sc->sc_ethercom.ec_if, m0, BPF_D_OUT);
 		m_freem(m0);
-		sc->sc_ethercom.ec_if.if_opackets++;	/* move to interrupt? */
+				/* move to interrupt? */
+		if_statinc(&sc->sc_ethercom.ec_if, if_opackets);
 		sc->sc_intctl |= MSK_TX_EMPTY | MSK_TX;
 		sc->sc_ethercom.ec_if.if_timer = 5;
 	}
@@ -1048,7 +1049,7 @@ eswatchdog(struct ifnet *ifp)
 	struct es_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	esreset(sc);
 }

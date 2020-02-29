@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_sumo_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $	*/
+/*	$NetBSD: radeon_sumo_dpm.c,v 1.1.10.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2012 Advanced Micro Devices, Inc.
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_sumo_dpm.c,v 1.1 2018/08/27 14:38:20 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_sumo_dpm.c,v 1.1.10.1 2020/02/29 20:20:16 ad Exp $");
 
 #include "drmP.h"
 #include "radeon.h"
@@ -1013,10 +1013,10 @@ u32 sumo_get_sleep_divider_id_from_clock(struct radeon_device *rdev,
 	struct sumo_power_info *pi = sumo_get_pi(rdev);
 	u32 i;
 	u32 temp;
-	u32 vmin = (min_sclk_in_sr > SUMO_MINIMUM_ENGINE_CLOCK) ?
+	u32 min = (min_sclk_in_sr > SUMO_MINIMUM_ENGINE_CLOCK) ?
 		min_sclk_in_sr : SUMO_MINIMUM_ENGINE_CLOCK;
 
-	if (sclk < vmin)
+	if (sclk < min)
 		return 0;
 
 	if (!pi->enable_sclk_ds)
@@ -1025,7 +1025,7 @@ u32 sumo_get_sleep_divider_id_from_clock(struct radeon_device *rdev,
 	for (i = SUMO_MAX_DEEPSLEEP_DIVIDER_ID;  ; i--) {
 		temp = sclk / sumo_get_sleep_divider_from_id(i);
 
-		if (temp >= vmin || i == 0)
+		if (temp >= min || i == 0)
 			break;
 	}
 	return i;

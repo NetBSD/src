@@ -1,4 +1,4 @@
-/*	$NetBSD: micphy.c,v 1.11 2019/12/13 08:30:26 msaitoh Exp $	*/
+/*	$NetBSD: micphy.c,v 1.11.2.1 2020/02/29 20:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.11 2019/12/13 08:30:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: micphy.c,v 1.11.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include "opt_mii.h"
 
@@ -241,7 +241,9 @@ micphyattach(device_t parent, device_t self, void *aux)
 	if (sc->mii_capabilities & BMSR_EXTSTAT)
 		PHY_READ(sc, MII_EXTSR, &sc->mii_extcapabilities);
 
+	aprint_normal_dev(self, "");
 	mii_phy_add_media(sc);
+	aprint_normal("\n");
 }
 
 static void

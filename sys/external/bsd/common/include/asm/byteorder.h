@@ -1,7 +1,7 @@
-/*	$NetBSD: div64.h,v 1.1 2014/07/16 20:56:25 riastradh Exp $	*/
+/*	$NetBSD: byteorder.h,v 1.1.2.2 2020/02/29 20:20:12 ad Exp $	*/
 
 /*-
- * Copyright (c) 2014 The NetBSD Foundation, Inc.
+ * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,21 +29,30 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 
-#ifndef _ASM_DIV64_H_
-#define _ASM_DIV64_H_
+#ifndef _ASM_BYTEORDER_H_
+#define _ASM_BYTEORDER_H_
 
-#include <sys/types.h>
+#include <sys/endian.h>
 
-#define	do_div(n_q, d)	_do_div(&(n_q), (d))
+#define	cpu_to_le16	htole16
+#define	cpu_to_le32	htole32
+#define	cpu_to_le64	htole64
+#define	cpu_to_be16	htobe16
+#define	cpu_to_be32	htobe32
+#define	cpu_to_be64	htobe64
 
-static inline uint32_t
-_do_div(uint64_t *n_q, uint32_t d)
-{
-	const uint32_t r = *n_q % d;
-	const uint32_t q = *n_q / d;
+#define	le16_to_cpu	le16toh
+#define	le32_to_cpu	le32toh
+#define	le64_to_cpu	le64toh
+#define	be16_to_cpu	be16toh
+#define	be32_to_cpu	be32toh
+#define	be64_to_cpu	be64toh
 
-	*n_q = q;
-	return r;
-}
+#define	be16_to_cpup	be16dec
+#define	be32_to_cpup	be32dec
+#define	be64_to_cpup	be64dec
+#define	le16_to_cpup	le16dec
+#define	le32_to_cpup	le32dec
+#define	le64_to_cpup	le64dec
 
-#endif  /* _ASM_DIV64_H_ */
+#endif	/* _ASM_BYTEORDER_H_ */

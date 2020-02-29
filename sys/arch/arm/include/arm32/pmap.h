@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.157.2.2 2020/01/25 22:38:38 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.157.2.3 2020/02/29 20:18:19 ad Exp $	*/
 
 /*
  * Copyright (c) 2002, 2003 Wasabi Systems, Inc.
@@ -221,7 +221,7 @@ struct pmap_devmap {
 		.pd_pa = DEVMAP_ALIGN(pa),		\
 		.pd_size = DEVMAP_SIZE(sz),		\
 		.pd_prot = VM_PROT_READ|VM_PROT_WRITE,	\
-		.pd_cache = PTE_NOCACHE			\
+		.pd_cache = PTE_DEV			\
 	}
 #define	DEVMAP_ENTRY_END	{ 0 }
 
@@ -229,9 +229,8 @@ struct pmap_devmap {
  * The pmap structure itself
  */
 struct pmap {
-	struct uvm_object	pm_obj;
-	kmutex_t		pm_obj_lock;
-#define	pm_lock pm_obj.vmobjlock
+	kmutex_t		pm_lock;
+	u_int			pm_refs;
 #ifndef ARM_HAS_VBAR
 	pd_entry_t		*pm_pl1vec;
 	pd_entry_t		pm_l1vec;
@@ -302,6 +301,7 @@ extern bool arm_has_tlbiasid_p;	/* also in <arm/locore.h> */
 #define	PTE_NOCACHE	0
 #define	PTE_CACHE	1
 #define	PTE_PAGETABLE	2
+#define	PTE_DEV		3
 
 /*
  * Flags that indicate attributes of pages or mappings of pages.
@@ -366,6 +366,9 @@ u_int arm32_mmap_flags(paddr_t);
 #define pmap_mmap_flags(ppn)		arm32_mmap_flags(ppn)
 
 #define	PMAP_PTE			0x10000000 /* kenter_pa */
+#define	PMAP_DEV			0x20000000 /* kenter_pa */
+#define	PMAP_DEV_SO			0x40000000 /* kenter_pa */
+#define	PMAP_DEV_MASK			(PMAP_DEV | PMAP_DEV_SO)
 
 /*
  * Functions that we need to export
@@ -553,8 +556,6 @@ pmap_ptesync(pt_entry_t *ptep, size_t cnt)
 #define l1pte_fpage_p(pde)	(((pde) & L1_TYPE_MASK) == L1_TYPE_F)
 #define l1pte_pa(pde)		((pde) & L1_C_ADDR_MASK)
 #define l1pte_index(v)		((vaddr_t)(v) >> L1_S_SHIFT)
-#define l1pte_pgindex(v)	l1pte_index((v) & L1_ADDR_BITS \
-		& ~(PAGE_SIZE * PAGE_SIZE / sizeof(pt_entry_t) - 1))
 
 static inline void
 l1pte_setone(pt_entry_t *pdep, pt_entry_t pde)
@@ -662,6 +663,9 @@ void	pmap_pte_init_arm11(void);
 #if defined(CPU_ARM11MPCORE)	/* ARM_MMU_V6 */
 void	pmap_pte_init_arm11mpcore(void);
 #endif
+#if ARM_MMU_V6 == 1
+void	pmap_pte_init_armv6(void);
+#endif /* ARM_MMU_V6 */
 #if ARM_MMU_V7 == 1
 void	pmap_pte_init_armv7(void);
 #endif /* ARM_MMU_V7 */
@@ -683,14 +687,13 @@ void	xscale_setup_minidata(vaddr_t, vaddr_t, paddr_t);
 void	pmap_uarea(vaddr_t);
 #endif /* ARM_MMU_XSCALE == 1 */
 
+extern pt_entry_t		pte_l1_s_nocache_mode;
+extern pt_entry_t		pte_l2_l_nocache_mode;
+extern pt_entry_t		pte_l2_s_nocache_mode;
+
 extern pt_entry_t		pte_l1_s_cache_mode;
-extern pt_entry_t		pte_l1_s_cache_mask;
-
 extern pt_entry_t		pte_l2_l_cache_mode;
-extern pt_entry_t		pte_l2_l_cache_mask;
-
 extern pt_entry_t		pte_l2_s_cache_mode;
-extern pt_entry_t		pte_l2_s_cache_mask;
 
 extern pt_entry_t		pte_l1_s_cache_mode_pt;
 extern pt_entry_t		pte_l2_l_cache_mode_pt;
@@ -699,6 +702,10 @@ extern pt_entry_t		pte_l2_s_cache_mode_pt;
 extern pt_entry_t		pte_l1_s_wc_mode;
 extern pt_entry_t		pte_l2_l_wc_mode;
 extern pt_entry_t		pte_l2_s_wc_mode;
+
+extern pt_entry_t		pte_l1_s_cache_mask;
+extern pt_entry_t		pte_l2_l_cache_mask;
+extern pt_entry_t		pte_l2_s_cache_mask;
 
 extern pt_entry_t		pte_l1_s_prot_u;
 extern pt_entry_t		pte_l1_s_prot_w;

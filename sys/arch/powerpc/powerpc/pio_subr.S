@@ -1,4 +1,4 @@
-/*	$NetBSD: pio_subr.S,v 1.16 2014/07/29 16:19:45 joerg Exp $	*/
+/*	$NetBSD: pio_subr.S,v 1.16.34.1 2020/02/29 20:18:30 ad Exp $	*/
 
 /*
  * Copyright (c) 2003 Matt Thomas
@@ -41,7 +41,11 @@
 #endif
 
 #undef DBGSYNC
+#if defined(PPC_IBM4XX) && !defined(PPC_IBM440)
+#define	DBGSYNC /* nothing; eieio is implemented as sync */
+#else
 #define	DBGSYNC	msync
+#endif
 #define	eieio	mbar 0
 
 /* LINTSTUB: include <sys/param.h> */

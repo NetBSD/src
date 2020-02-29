@@ -1,4 +1,4 @@
-/*	$NetBSD: ttm_tt.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $	*/
+/*	$NetBSD: ttm_tt.c,v 1.11.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /**************************************************************************
  *
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.11.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #define pr_fmt(fmt) "[TTM] " fmt
 
@@ -43,7 +43,6 @@ __KERNEL_RCSID(0, "$NetBSD: ttm_tt.c,v 1.11 2018/08/27 04:58:37 riastradh Exp $"
 #include <linux/swap.h>
 #include <linux/slab.h>
 #include <linux/export.h>
-#include <linux/printk.h>
 #include <drm/drm_cache.h>
 #include <drm/drm_mem_util.h>
 #include <drm/ttm/ttm_module.h>

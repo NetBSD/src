@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_gem_fence.c,v 1.5.10.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: i915_gem_fence.c,v 1.5.10.2 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2008-2015 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.5.10.1 2020/01/17 21:47:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_gem_fence.c,v 1.5.10.2 2020/02/29 20:20:14 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/i915_drm.h>
@@ -769,9 +769,9 @@ i915_gem_object_do_bit_17_swizzle(struct drm_i915_gem_object *obj)
 		    (test_bit(i, obj->bit_17) != 0)) {
 			i915_gem_swizzle_page(container_of(page, struct page,
 				p_vmp));
-			mutex_enter(obj->base.filp->vmobjlock);
+			rw_enter(obj->base.filp->vmobjlock, RW_WRITER);
 			uvm_pagemarkdirty(page, UVM_PAGE_STATUS_DIRTY);
-			mutex_exit(obj->base.filp->vmobjlock);
+			rw_exit(obj->base.filp->vmobjlock);
 		}
 		i += 1;
 	}

@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.53.8.1 2020/01/17 21:47:27 ad Exp $
+#	$NetBSD: genassym.cf,v 1.53.8.2 2020/02/29 20:18:32 ad Exp $
 #
 # Copyright (c) 1997 Ludd, University of Lule}, Sweden.
 # All rights reserved.
@@ -46,10 +46,8 @@ include	<machine/frame.h>
 include	<machine/trap.h>
 include	<machine/uvax.h>
 
-define	L_PRIORITY	offsetof(struct lwp, l_priority)
 define	L_PCB		offsetof(struct lwp, l_addr)
 define	L_CPU		offsetof(struct lwp, l_cpu)
-define	L_STAT		offsetof(struct lwp, l_stat)
 define	L_PROC		offsetof(struct lwp, l_proc)
 define	L_PRIVATE	offsetof(struct lwp, l_private)
 

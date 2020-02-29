@@ -1,4 +1,4 @@
-/*	$NetBSD: locore.S,v 1.50.2.2 2020/01/25 22:38:36 ad Exp $	*/
+/*	$NetBSD: locore.S,v 1.50.2.3 2020/02/29 20:18:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -38,7 +38,7 @@
 #include <aarch64/hypervisor.h>
 #include "assym.h"
 
-RCSID("$NetBSD: locore.S,v 1.50.2.2 2020/01/25 22:38:36 ad Exp $")
+RCSID("$NetBSD: locore.S,v 1.50.2.3 2020/02/29 20:18:15 ad Exp $")
 
 #ifdef AARCH64_DEVICE_MEM_STRONGLY_ORDERED
 #define	MAIR_DEVICE_MEM		MAIR_DEVICE_nGnRnE
@@ -47,9 +47,9 @@ RCSID("$NetBSD: locore.S,v 1.50.2.2 2020/01/25 22:38:36 ad Exp $")
 #endif
 #define	MAIR_DEVICE_MEM_SO	MAIR_DEVICE_nGnRnE
 
-/*#define DEBUG_LOCORE			/* debug print */
-/*#define DEBUG_LOCORE_PRINT_LOCK	/* avoid mixing AP's output */
-/*#define DEBUG_MMU			/* dump MMU table */
+/*#define DEBUG_LOCORE			// debug print */
+/*#define DEBUG_LOCORE_PRINT_LOCK	// avoid mixing AP's output */
+/*#define DEBUG_MMU			// dump MMU table */
 
 #define LOCORE_EL2
 
@@ -178,11 +178,13 @@ vstart:
 	msr	tpidr_el1, x0		/* curcpu is cpu_info[0] */
 	DPRINTREG("curcpu           = ", x0);
 
-	/* get cache configuration */
+	/* set topology information */
 	mrs	x0, tpidr_el1		/* curcpu */
 	mrs     x1, mpidr_el1
 	mov	x2, #0
 	bl	arm_cpu_topology_set
+
+	/* get cache configuration */
 	mov	x0, xzr
 	bl	aarch64_getcacheinfo
 
@@ -447,35 +449,43 @@ mp_vstart:
 	mrs	x1, mpidr_el1
 	str	x1, [x0, #CI_MPIDR]	/* curcpu()->ci_mpidr = mpidr_el1 */
 
-	mov	x0, #32
-	udiv	x1, x27, x0
-	adrl	x0, _C_LABEL(aarch64_cpu_hatched)
-	add	x28, x0, x1, lsl #2	/* x28 = &aarch64_cpu_hatched[cpuindex/32] */
+	/* set topology information */
+	mov	x2, #0
+	bl	arm_cpu_topology_set
+
+	/* x28 = &arm_cpu_hatched[cpuindex / (sizeof(u_long) * NBBY)] */
+	adrl	x0, _C_LABEL(arm_cpu_hatched)
+	// Appease clang - mov	x1, x27, lsr #6
+	orr	x1, xzr, x27, lsr #6
+	add	x28, x0, x1, lsl #3
+
+	/* x29 = __BIT(cpuindex % (sizeof(u_long) * NBBY)) */
 	mov	x0, #1
-	mov	x2, #32
-	msub	x1, x1, x2, x27
-	lsl	x29, x0, x1		/* x29 = 1 << (cpuindex % 32) */
+	and	x2, x27, #63
+	lsl	x29, x0, x2
 
 	/*
-	 * atomic_or_uint(&aarch64_cpu_hatched[cpuindex/32], 1<<cpuindex%32)
-	 * to tell my activity to primary processor.
+	 * atomic_or_ulong(&arm_cpu_hatched[cpuindex / (sizeof(u_long)  * NBBY)],
+	 *   _BIT(cpuindex % ((sizeof(u_long) * NBBY)
+	 * to inform the boot processor.
 	 */
 	mov	x0, x28
 	mov	x1, x29
-	bl	_C_LABEL(atomic_or_uint)	/* hatched! */
+	bl	_C_LABEL(atomic_or_ulong)	/* hatched! */
 	dsb	sy
 	sev
 
-	mov	x0, #32
-	udiv	x1, x27, x0
-	adrl	x0, _C_LABEL(aarch64_cpu_mbox)
-	add	x28, x0, x1, lsl #2	/* x28 = &aarch64_cpu_mbox[cpuindex/32] */
+	/* x28 = &arm_cpu_mbox[cpuindex / (sizeof(u_long) * NBBY)] */
+	adrl	x0, _C_LABEL(arm_cpu_mbox)
+	// Appease clang - mov	x1, x27, lsr #6
+	orr	x1, xzr, x27, lsr #6
+	add	x28, x0, x1, lsl #3
 
 	/* wait for the mailbox start bit to become true */
 1:
 	dmb	sy
-	ldr	w20, [x28]
-	tst	w20, w29
+	ldr	x20, [x28]
+	tst	x20, x29
 	bne	9f
 	wfe
 	b	1b
@@ -1016,7 +1026,7 @@ sctlr_clear:
 	    SCTLR_WXN |     /* Write permission implies Execute Never (W^X) */ \
 	    SCTLR_UMA |     /* EL0 Controls access to interrupt masks */ \
 	    SCTLR_ITD |     /* IT instruction disable */ \
-	    SCTLR_THEE |    /* T32EE is not implemented */ \
+	    SCTLR_nAA |     /* ? */ \
 	    SCTLR_CP15BEN | /* CP15 barrier enable */ \
 	    SCTLR_SA0 |     /* Enable EL0 stack alignment check */ \
 	    SCTLR_SA |      /* Enable SP alignment check */ \

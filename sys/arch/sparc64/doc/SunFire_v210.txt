@@ -1,0 +1,47 @@
+This is about the i2c GPIO chips found in the Sun Fire v210, starting at
+/pci/isa@7/i2c@0,320/gpio@0,44
+Input/Output assignments and levels are what the firmware leaves us with -
+all LEDs off except the power one.
+
+All known pin functions were determined by experiment. No idea what the
+undocumented pins do, if anything.
+
+[     1.000000] pcagpio0 at iic0 addr 0x22: PCA9555
+[     1.000000] dir: I-IIIIIIIIIIIIII
+[     1.000000] lvl: X XXXX  XXX XXXX
+[     1.000000] dir: -O--------------
+[     1.000000] lvl:  X              
+                          ^
+0x0400 clears when the case is open
+
+[     1.000000] pcagpio1 at iic0 addr 0x23: PCA9555
+[     1.000000] dir: ------IIIIIIIIII
+[     1.000000] lvl:       XXXXXXXX  
+[     1.000000] dir: OOOOOO----------
+[     1.000000] lvl: XXXXXX          
+Bit 0x0002 gets set when bay 1 is empty, I would assume 0x0001 is for bay 0.
+The output bits seem to control the drive bay LEDs
+0x2000 - bay 1, blue LED
+0x1000 - bay 0, blue LED
+0x0800 - bay 1, both LEDs orange
+0x0400 - bay 0, both LEDs orange
+all low active, the remaining outputs don't seem to do anything.
+
+[     1.000000] pcagpio2 at iic0 addr 0x34: PCA9555
+[     1.000000] dir: --II----IIIIIIII
+[     1.000000] lvl:   X     XXXXXXXX
+[     1.000000] dir: OO--OOOO--------
+[     1.000000] lvl: XX  XXXX        
+clearing 0x0300 reset the machine
+probably controls redundant / hot-swappable power supplies on v240.
+
+[     1.000000] pcagpio3 at iic0 addr 0x38: PCA9556
+[     1.000000] dir: ----------------
+[     1.000000] lvl:                 
+[     1.000000] dir: OOOOOOOOOOOOOOOO
+[     1.000000] lvl:         XXX XXXX
+This controls the front panel LEDs
+0x80 - indicator LED
+0x20 - fault LED
+0x10 - power LED
+all low active, the remaining outputs don't seem to do anything.

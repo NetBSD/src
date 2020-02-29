@@ -1,4 +1,4 @@
-/*	$NetBSD: exec_elf.h,v 1.164 2020/01/02 05:18:07 kamil Exp $	*/
+/*	$NetBSD: exec_elf.h,v 1.164.2.1 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 1994 The NetBSD Foundation, Inc.
@@ -797,6 +797,7 @@ typedef struct {
 #define DT_NUM		34
 
 #define DT_LOOS		0x60000000	/* Operating system specific range */
+#define DT_GNU_HASH	0x6ffffef5	/* GNU-style hash table */
 #define DT_VERSYM	0x6ffffff0	/* Symbol versions */
 #define DT_FLAGS_1	0x6ffffffb	/* ELF dynamic flags */
 #define DT_VERDEF	0x6ffffffc	/* Versions defined by file */

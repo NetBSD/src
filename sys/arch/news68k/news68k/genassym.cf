@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.28 2018/12/19 13:57:49 maxv Exp $
+#	$NetBSD: genassym.cf,v 1.28.6.1 2020/02/29 20:18:28 ad Exp $
 
 #
 # Copyright (c) 1982, 1990, 1993
@@ -91,21 +91,12 @@ define	USRSTACK		USRSTACK
 
 # lwp & proc fields and values
 define	L_PCB			offsetof(struct lwp, l_addr)
-define	L_PRIORITY		offsetof(struct lwp, l_priority)
-define	L_STAT			offsetof(struct lwp, l_stat)
-define	L_WCHAN			offsetof(struct lwp, l_wchan)
 define	L_PROC			offsetof(struct lwp, l_proc)
 define	L_MD_REGS		offsetof(struct lwp, l_md.md_regs)
 define	L_MD_FLAGS		offsetof(struct lwp, l_md.md_flags)
 define	P_FLAG			offsetof(struct proc, p_flag)
 define	P_RASLIST		offsetof(struct proc, p_raslist)
 define	P_VMSPACE		offsetof(struct proc, p_vmspace)
-
-# lwp fields and values
-
-define	LSSLEEP			LSSLEEP
-define	LSRUN			LSRUN
-define	LSONPROC		LSONPROC
 
 # interrupt/fault metering
 define	CI_NINTR		offsetof(struct cpu_info, ci_data.cpu_nintr)

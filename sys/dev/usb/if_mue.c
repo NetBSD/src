@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.56 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.56.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.56 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.56.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1153,7 +1153,7 @@ mue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	do {
 		if (__predict_false(total_len < sizeof(*hdrp))) {
 			MUE_PRINTF(un, "packet length %u too short\n", total_len);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -1167,7 +1167,7 @@ mue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 			 * checksum errors which we handle below.
 			 */
 			MUE_PRINTF(un, "rx_cmd_a: 0x%x\n", rx_cmd_a);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -1179,7 +1179,7 @@ mue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		    pktlen > MCLBYTES - ETHER_ALIGN || /* XXX */
 		    pktlen + sizeof(*hdrp) > total_len)) {
 			MUE_PRINTF(un, "invalid packet length %d\n", pktlen);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 

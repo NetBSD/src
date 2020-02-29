@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.37 2019/12/26 17:51:08 msaitoh Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.37.2.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.37 2019/12/26 17:51:08 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.37.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -732,6 +732,7 @@ cas_config(struct cas_softc *sc, const uint8_t *enaddr)
 	    NULL, device_xname(sc->sc_dev), "interrupts");
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, cas_tick, sc);
 
 	return;
 }
@@ -760,7 +761,7 @@ cas_detach(device_t self, int flags)
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
-		ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		callout_destroy(&sc->sc_tick_ch);
 
@@ -842,20 +843,24 @@ cas_tick(void *arg)
 	int s;
 	uint32_t v;
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
 	/* unload collisions counters */
 	v = bus_space_read_4(t, mac, CAS_MAC_EXCESS_COLL_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_LATE_COLL_CNT);
-	ifp->if_collisions += v +
+	if_statadd_ref(nsr, if_collisions, v +
 	    bus_space_read_4(t, mac, CAS_MAC_NORM_COLL_CNT) +
-	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT);
-	ifp->if_oerrors += v;
+	    bus_space_read_4(t, mac, CAS_MAC_FIRST_COLL_CNT));
+	if_statadd_ref(nsr, if_oerrors, v);
 
 	/* read error counters */
-	ifp->if_ierrors +=
+	if_statadd_ref(nsr, if_ierrors,
 	    bus_space_read_4(t, mac, CAS_MAC_RX_LEN_ERR_CNT) +
 	    bus_space_read_4(t, mac, CAS_MAC_RX_ALIGN_ERR) +
 	    bus_space_read_4(t, mac, CAS_MAC_RX_CRC_ERR_CNT) +
-	    bus_space_read_4(t, mac, CAS_MAC_RX_CODE_VIOL);
+	    bus_space_read_4(t, mac, CAS_MAC_RX_CODE_VIOL));
+
+	IF_STAT_PUTREF(ifp);
 
 	/* clear the hardware counters */
 	bus_space_write_4(t, mac, CAS_MAC_NORM_COLL_CNT, 0);
@@ -871,7 +876,7 @@ cas_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, cas_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 int
@@ -1273,7 +1278,7 @@ cas_init(struct ifnet *ifp)
 		bus_space_write_4(t, h, CAS_RX_KICK2, 4);
 
 	/* Start the one second timer. */
-	callout_reset(&sc->sc_tick_ch, hz, cas_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
@@ -1416,7 +1421,7 @@ cas_rint(struct cas_softc *sc)
 				m->m_pkthdr.csum_flags = 0;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 		}
 
 		len = CAS_RC0_DATA_LEN(word[0]);
@@ -1446,7 +1451,7 @@ cas_rint(struct cas_softc *sc)
 				m->m_pkthdr.csum_flags = 0;
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			} else
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 		}
 
 		if (word[0] & CAS_RC0_SPLIT)
@@ -1586,7 +1591,7 @@ cas_intr(void *v)
 		 * due to a silicon bug so handle them silently.
 		 */
 		if (rxstat & CAS_MAC_RX_OVERFLOW) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			cas_init(ifp);
 		}
 #ifdef CAS_DEBUG
@@ -1612,7 +1617,7 @@ cas_watchdog(struct ifnet *ifp)
 		bus_space_read_4(sc->sc_memt, sc->sc_memh, CAS_MAC_RX_CONFIG)));
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	/* Try to get more packets going. */
 	cas_init(ifp);
@@ -2131,7 +2136,7 @@ cas_tint(struct cas_softc *sc, uint32_t status)
 			bus_dmamap_unload(sc->sc_dmatag, sd->sd_map);
 			m_freem(sd->sd_mbuf);
 			sd->sd_mbuf = NULL;
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		}
 		sc->sc_tx_cnt--;
 		if (++cons == CAS_NTXDESC)

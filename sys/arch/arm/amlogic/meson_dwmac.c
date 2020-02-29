@@ -1,4 +1,4 @@
-/* $NetBSD: meson_dwmac.c,v 1.7 2019/07/21 08:24:32 mrg Exp $ */
+/* $NetBSD: meson_dwmac.c,v 1.7.4.1 2020/02/29 20:18:17 ad Exp $ */
 
 /*-
  * Copyright (c) 2017 Jared McNeill <jmcneill@invisible.ca>
@@ -28,7 +28,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.7 2019/07/21 08:24:32 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.7.4.1 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -60,6 +60,7 @@ __KERNEL_RCSID(0, "$NetBSD: meson_dwmac.c,v 1.7 2019/07/21 08:24:32 mrg Exp $");
 static const char * compatible[] = {
 	"amlogic,meson8b-dwmac",
 	"amlogic,meson-gx-dwmac",
+	"amlogic,meson-gxbb-dwmac",
 	NULL
 };
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.252 2019/09/01 18:54:38 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.252.2.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.252 2019/09/01 18:54:38 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.252.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -129,11 +129,11 @@ if_addrflags(struct ifaddr *ifa)
 	switch (ifa->ifa_addr->sa_family) {
 #ifdef INET
 	case AF_INET:
-		return ((struct in_ifaddr *)ifa)->ia4_flags;
+		return ifatoia(ifa)->ia4_flags;
 #endif
 #ifdef INET6
 	case AF_INET6:
-		return ((struct in6_ifaddr *)ifa)->ia6_flags;
+		return ifatoia6(ifa)->ia6_flags;
 #endif
 	default:
 		return 0;
@@ -239,7 +239,7 @@ sysctl_iflist_if(struct ifnet *ifp, struct rt_walkarg *w,
 	ifm = (struct if_xmsghdr *)w->w_tmem;
 	ifm->ifm_index = ifp->if_index;
 	ifm->ifm_flags = ifp->if_flags;
-	ifm->ifm_data = ifp->if_data;
+	if_export_if_data(ifp, &ifm->ifm_data, false);
 	ifm->ifm_addrs = info->rti_addrs;
 	if ((error = copyout(ifm, w->w_where, len)) == 0)
 		w->w_where = (char *)w->w_where + len;

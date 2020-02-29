@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_fault_i.h,v 1.32 2019/12/16 22:47:55 ad Exp $	*/
+/*	$NetBSD: uvm_fault_i.h,v 1.32.2.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -74,7 +74,7 @@ uvmfault_unlockall(struct uvm_faultinfo *ufi, struct vm_amap *amap,
 {
 
 	if (uobj)
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 	if (amap)
 		amap_unlock(amap);
 	uvmfault_unlockmaps(ufi, false);

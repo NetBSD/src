@@ -1,4 +1,4 @@
-/*	$NetBSD: pciconf.c,v 1.43.2.1 2020/01/25 22:38:47 ad Exp $	*/
+/*	$NetBSD: pciconf.c,v 1.43.2.2 2020/02/29 20:19:11 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.43.2.1 2020/01/25 22:38:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pciconf.c,v 1.43.2.2 2020/02/29 20:19:11 ad Exp $");
 
 #include "opt_pci.h"
 
@@ -772,6 +772,12 @@ setup_iowins(pciconf_bus_t *pb)
 			continue;
 
 		pd = pi->dev;
+		if (pb->ioext == NULL) {
+			/* Bus has no IO ranges, disable IO BAR */
+			pi->address = 0;
+			pd->enable &= ~PCI_CONF_ENABLE_IO;
+			goto write_ioaddr;
+		}
 		pi->address = pci_allocate_range(pb->ioext, pi->size,
 		    pi->align, false);
 		if (~pi->address == 0) {
@@ -798,6 +804,7 @@ setup_iowins(pciconf_bus_t *pb)
 		} else {
 			pd->enable |= PCI_CONF_ENABLE_IO;
 		}
+write_ioaddr:
 		if (pci_conf_debug) {
 			print_tag(pd->pc, pd->tag);
 			printf("Putting %" PRIu64 " I/O bytes @ %#" PRIx64

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.62 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.62.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.62 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.62.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -544,7 +544,8 @@ smsc_setmacaddress(struct usbnet *un, const uint8_t *addr)
 
 	DPRINTF("... %02jx:%0j2x:%02jx", addr[3], addr[4], addr[5], 0);
 
-	val = (addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8) | addr[0];
+	val = ((uint32_t)addr[3] << 24) | (addr[2] << 16) | (addr[1] << 8)
+	    | addr[0];
 	if ((err = smsc_writereg(un, SMSC_MAC_ADDRL, val)) != 0)
 		goto done;
 
@@ -951,7 +952,7 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		if (total_len < sizeof(rxhdr)) {
 			DPRINTF("total_len %jd < sizeof(rxhdr) %jd",
 			    total_len, sizeof(rxhdr), 0, 0);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -961,13 +962,13 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		total_len -= sizeof(rxhdr);
 
 		if (rxhdr & SMSC_RX_STAT_COLLISION)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 
 		if (rxhdr & (SMSC_RX_STAT_ERROR
 			   | SMSC_RX_STAT_LENGTH_ERROR
 			   | SMSC_RX_STAT_MII_ERROR)) {
 			DPRINTF("rx error (hdr 0x%08jx)", rxhdr, 0, 0, 0);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -978,7 +979,7 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		if (pktlen < ETHER_HDR_LEN) {
 			DPRINTF("pktlen %jd < ETHER_HDR_LEN %jd", pktlen,
 			    ETHER_HDR_LEN, 0, 0);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -987,14 +988,14 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		if (pktlen > MCLBYTES) {
 			DPRINTF("pktlen %jd > MCLBYTES %jd", pktlen, MCLBYTES, 0,
 			    0);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
 		if (pktlen > total_len) {
 			DPRINTF("pktlen %jd > total_len %jd", pktlen, total_len,
 			    0, 0);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 

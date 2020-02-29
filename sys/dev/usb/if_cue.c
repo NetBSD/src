@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.88 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.88.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.88 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.88.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -545,12 +545,17 @@ cue_tick(struct usbnet *un)
 {
 	struct ifnet		*ifp = usbnet_ifp(un);
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	if (cue_csr_read_2(un, CUE_RX_FRAMEERR))
-		ifp->if_ierrors++;
+		if_statinc_ref(nsr, if_ierrors);
 
-	ifp->if_collisions += cue_csr_read_2(un, CUE_TX_SINGLECOLL);
-	ifp->if_collisions += cue_csr_read_2(un, CUE_TX_MULTICOLL);
-	ifp->if_collisions += cue_csr_read_2(un, CUE_TX_EXCESSCOLL);
+	if_statadd_ref(nsr, if_collisions,
+	    cue_csr_read_2(un, CUE_TX_SINGLECOLL));
+	if_statadd_ref(nsr, if_collisions,
+	    cue_csr_read_2(un, CUE_TX_MULTICOLL));
+	if_statadd_ref(nsr, if_collisions,
+	    cue_csr_read_2(un, CUE_TX_EXCESSCOLL));
+	IF_STAT_PUTREF(ifp);
 }
 
 static void
@@ -568,7 +573,7 @@ cue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	if (total_len < 2 ||
 	    len > total_len - 2 ||
 	    len < sizeof(struct ether_header)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

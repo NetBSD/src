@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.124 2018/03/03 22:46:30 christos Exp $
+#	$NetBSD: Makefile.rump,v 1.124.10.1 2020/02/29 20:21:08 ad Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -235,7 +235,7 @@ __archivebuild: .USE
 .endif
 	for renameobj in ${RUMP_SYMREN:U${.ALLSRC:C/(${RUMPOBJ_NORENAME:ts|})//g}}; do \
 		${NM} -go $${renameobj} | ${TOOL_AWK} ' \
-		    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE'${_SYMQUIRK}'${RUMP_SYM_NORENAME:D|${RUMP_SYM_NORENAME}})/ \
+		    $$NF!~/^'${_PQ}'(rump|RUMP|__|_GLOBAL_OFFSET_TABLE|\.TOC\.'${_SYMQUIRK}'${RUMP_SYM_NORENAME:D|${RUMP_SYM_NORENAME}})/ \
 		      {s=$$NF;sub(/^'${_PQ}'/, "&rumpns_", s); print $$NF, s}'\
 		    | sort | uniq  > renametab.$${renameobj}; \
 		${OBJCOPY} --preserve-dates --redefine-syms \

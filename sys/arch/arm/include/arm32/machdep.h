@@ -1,4 +1,4 @@
-/* $NetBSD: machdep.h,v 1.30 2019/12/18 21:45:44 riastradh Exp $ */
+/* $NetBSD: machdep.h,v 1.30.2.1 2020/02/29 20:18:19 ad Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
@@ -48,12 +48,7 @@ struct bootmem_info {
 extern struct bootmem_info bootmem_info;
 
 extern char *booted_kernel;
-
-extern volatile uint32_t arm_cpu_hatched;
-extern volatile uint32_t arm_cpu_mbox;
-extern u_int arm_cpu_max;
 extern u_long kern_vtopdiff;
-
 
 /* misc prototypes used by the many arm machdeps */
 void cortex_pmc_ccnt_init(void);

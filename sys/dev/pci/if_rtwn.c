@@ -1,4 +1,4 @@
-/*	$NetBSD: if_rtwn.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $	*/
+/*	$NetBSD: if_rtwn.c,v 1.18.6.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	$OpenBSD: if_rtwn.c,v 1.5 2015/06/14 08:02:47 stsp Exp $	*/
 #define	IEEE80211_NO_HT
 /*-
@@ -23,7 +23,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.18 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_rtwn.c,v 1.18.6.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/sockio.h>
@@ -1689,7 +1689,7 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 		 * This should not happen since we setup our Rx filter
 		 * to not receive these frames.
 		 */
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1700,11 +1700,11 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 	 */
 	if (__predict_false(pktlen < (int)sizeof(struct ieee80211_frame_ack))) {
 		ic->ic_stats.is_rx_tooshort++;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	if (__predict_false(pktlen > MCLBYTES)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1729,14 +1729,14 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 	MGETHDR(m1, M_DONTWAIT, MT_DATA);
 	if (__predict_false(m1 == NULL)) {
 		ic->ic_stats.is_rx_nobuf++;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	MCLGET(m1, M_DONTWAIT);
 	if (__predict_false(!(m1->m_flags & M_EXT))) {
 		m_freem(m1);
 		ic->ic_stats.is_rx_nobuf++;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1761,7 +1761,7 @@ rtwn_rx_frame(struct rtwn_softc *sc, struct r92c_rx_desc_pci *rx_desc,
 		rtwn_setup_rx_desc(sc, rx_desc,
 		    rx_data->map->dm_segs[0].ds_addr, MCLBYTES, desc_idx);
 
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -2059,7 +2059,7 @@ rtwn_tx_done(struct rtwn_softc *sc, int qid)
 		ieee80211_free_node(tx_data->ni);
 		tx_data->ni = NULL;
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->sc_tx_timer = 0;
 		tx_ring->queued--;
 	}
@@ -2106,14 +2106,14 @@ rtwn_start(struct ifnet *ifp)
 
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
 		ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 		if (ni == NULL) {
 			m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2121,7 +2121,7 @@ rtwn_start(struct ifnet *ifp)
 
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 sendit:
@@ -2129,7 +2129,7 @@ sendit:
 
 		if (rtwn_tx(sc, m, ni) != 0) {
 			ieee80211_free_node(ni);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2154,7 +2154,7 @@ rtwn_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			softint_schedule(sc->init_task);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

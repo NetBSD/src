@@ -1,4 +1,4 @@
-/*	$NetBSD: if_bge.c,v 1.342 2019/11/25 05:35:26 msaitoh Exp $	*/
+/*	$NetBSD: if_bge.c,v 1.342.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wind River Systems
@@ -79,7 +79,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.342 2019/11/25 05:35:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_bge.c,v 1.342.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -4010,6 +4010,7 @@ again:
 #endif /* BGE_EVENT_COUNTERS */
 	DPRINTFN(5, ("callout_init\n"));
 	callout_init(&sc->bge_timeout, 0);
+	callout_setfunc(&sc->bge_timeout, bge_tick, sc);
 
 	if (pmf_device_register(self, NULL, NULL))
 		pmf_class_network_register(self, ifp);
@@ -4041,11 +4042,11 @@ bge_detach(device_t self, int flags __unused)
 
 	mii_detach(&sc->bge_mii, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->bge_mii.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->bge_mii.mii_media);
 
 	bge_release_resources(sc);
 
@@ -4453,13 +4454,13 @@ bge_rxeof(struct bge_softc *sc)
 			    mtod(m, char *) - (char *)sc->bge_cdata.bge_jumbo_buf,
 			    BGE_JLEN, BUS_DMASYNC_POSTREAD);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
 				continue;
 			}
 			if (bge_newbuf_jumbo(sc, sc->bge_jumbo,
 					     NULL)== ENOBUFS) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				bge_newbuf_jumbo(sc, sc->bge_jumbo, m);
 				continue;
 			}
@@ -4472,7 +4473,7 @@ bge_rxeof(struct bge_softc *sc)
 			dmamap = sc->bge_cdata.bge_rx_std_map[rxidx];
 			sc->bge_cdata.bge_rx_std_map[rxidx] = NULL;
 			if (dmamap == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
 				continue;
 			}
@@ -4480,13 +4481,13 @@ bge_rxeof(struct bge_softc *sc)
 			    dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			bus_dmamap_unload(sc->bge_dmatag, dmamap);
 			if (cur_rx->bge_flags & BGE_RXBDFLAG_ERROR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
 				continue;
 			}
 			if (bge_newbuf_std(sc, sc->bge_std,
 			    NULL, dmamap) == ENOBUFS) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				bge_newbuf_std(sc, sc->bge_std, m, dmamap);
 				continue;
 			}
@@ -4617,7 +4618,7 @@ bge_txeof(struct bge_softc *sc)
 		idx = sc->bge_tx_saved_considx;
 		cur_tx = &sc->bge_rdata->bge_tx_ring[idx];
 		if (cur_tx->bge_flags & BGE_TXBDFLAG_END)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		m = sc->bge_cdata.bge_tx_chain[idx];
 		if (m != NULL) {
 			sc->bge_cdata.bge_tx_chain[idx] = NULL;
@@ -4802,7 +4803,7 @@ bge_tick(void *xsc)
 	bge_asf_driver_up(sc);
 
 	if (!sc->bge_detaching)
-		callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
+		callout_schedule(&sc->bge_timeout, hz);
 
 	splx(s);
 }
@@ -4812,8 +4813,11 @@ bge_stats_update_regs(struct bge_softc *sc)
 {
 	struct ifnet *ifp = &sc->ethercom.ec_if;
 
-	ifp->if_collisions += CSR_READ_4(sc, BGE_MAC_STATS +
-	    offsetof(struct bge_mac_stats_regs, etherStatsCollisions));
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
+	if_statadd_ref(nsr, if_collisions,
+	    CSR_READ_4(sc, BGE_MAC_STATS +
+	    offsetof(struct bge_mac_stats_regs, etherStatsCollisions)));
 
 	/*
 	 * On BCM5717, BCM5718, BCM5719 A0 and BCM5720 A0,
@@ -4824,10 +4828,15 @@ bge_stats_update_regs(struct bge_softc *sc)
 	if (BGE_ASICREV(sc->bge_chipid) != BGE_ASICREV_BCM5717 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5719_A0 &&
 	    sc->bge_chipid != BGE_CHIPID_BCM5720_A0) {
-		ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS);
+		if_statadd_ref(nsr, if_ierrors,
+		    CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_DROPS));
 	}
-	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS);
-	ifp->if_ierrors += CSR_READ_4(sc, BGE_RXLP_LOCSTAT_OUT_OF_BDS);
+	if_statadd_ref(nsr, if_ierrors,
+	    CSR_READ_4(sc, BGE_RXLP_LOCSTAT_IFIN_ERRORS));
+	if_statadd_ref(nsr, if_ierrors,
+	    CSR_READ_4(sc, BGE_RXLP_LOCSTAT_OUT_OF_BDS));
+
+	IF_STAT_PUTREF(ifp);
 
 	if (sc->bge_flags & BGEF_RDMA_BUG) {
 		uint32_t val, ucast, mcast, bcast;
@@ -4865,12 +4874,15 @@ bge_stats_update(struct bge_softc *sc)
 #define READ_STAT(sc, stats, stat) \
 	  CSR_READ_4(sc, stats + offsetof(struct bge_stats, stat))
 
-	ifp->if_collisions +=
+	uint64_t collisions =
 	  (READ_STAT(sc, stats, dot3StatsSingleCollisionFrames.bge_addr_lo) +
 	   READ_STAT(sc, stats, dot3StatsMultipleCollisionFrames.bge_addr_lo) +
 	   READ_STAT(sc, stats, dot3StatsExcessiveCollisions.bge_addr_lo) +
-	   READ_STAT(sc, stats, dot3StatsLateCollisions.bge_addr_lo)) -
-	  ifp->if_collisions;
+	   READ_STAT(sc, stats, dot3StatsLateCollisions.bge_addr_lo));
+
+	if_statadd(ifp, if_collisions, collisions - sc->bge_if_collisions);
+	sc->bge_if_collisions = collisions;
+
 
 	BGE_EVCNT_UPD(sc->bge_ev_tx_xoff,
 		      READ_STAT(sc, stats, outXoffSent.bge_addr_lo));
@@ -5682,7 +5694,7 @@ bge_init(struct ifnet *ifp)
 	ifp->if_flags |= IFF_RUNNING;
 	ifp->if_flags &= ~IFF_OACTIVE;
 
-	callout_reset(&sc->bge_timeout, hz, bge_tick, sc);
+	callout_schedule(&sc->bge_timeout, hz);
 
 out:
 	sc->bge_if_flags = ifp->if_flags;
@@ -5942,7 +5954,7 @@ bge_watchdog(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_RUNNING;
 	bge_init(ifp);
 
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 }
 
 static void

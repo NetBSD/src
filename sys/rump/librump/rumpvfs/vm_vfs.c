@@ -1,4 +1,4 @@
-/*	$NetBSD: vm_vfs.c,v 1.35.2.1 2020/01/17 21:47:37 ad Exp $	*/
+/*	$NetBSD: vm_vfs.c,v 1.35.2.2 2020/02/29 20:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2008-2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.35.2.1 2020/01/17 21:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vm_vfs.c,v 1.35.2.2 2020/02/29 20:21:09 ad Exp $");
 
 #include <sys/param.h>
 
@@ -59,7 +59,7 @@ uvm_aio_aiodone(struct buf *bp)
 		if (uobj == NULL) {
 			uobj = pgs[i]->uobject;
 			KASSERT(uobj != NULL);
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 		} else {
 			KASSERT(uobj == pgs[i]->uobject);
 		}
@@ -71,10 +71,10 @@ uvm_aio_aiodone(struct buf *bp)
 			pgs[i]->flags |= PG_RELEASED;
 		}
 	}
-	KASSERT(mutex_owned(uobj->vmobjlock));
+	KASSERT(rw_write_held(uobj->vmobjlock));
 
 	uvm_page_unbusy(pgs, npages);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	uvm_pagermapout((vaddr_t)bp->b_data, npages);
 	uvm_pageout_done(pageout);
@@ -88,13 +88,6 @@ uvm_aio_aiodone(struct buf *bp)
 	putiobuf(bp);
 
 	kmem_free(pgs, npages * sizeof(*pgs));
-}
-
-void
-uvm_aio_biodone(struct buf *bp)
-{
-
-	uvm_aio_aiodone(bp);
 }
 
 /*
@@ -114,7 +107,7 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 		return;
 
 	pgs = kmem_alloc(maxpages * sizeof(pgs), KM_SLEEP);
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	while (len) {
 		npages = MIN(maxpages, round_page(len) >> PAGE_SHIFT);
 		memset(pgs, 0, npages * sizeof(struct vm_page *));
@@ -123,7 +116,7 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 		    0, PAGERFLAGS | PGO_PASTEOF);
 		KASSERT(npages > 0);
 
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		for (i = 0; i < npages; i++) {
 			struct vm_page *pg;
 			uint8_t *start;
@@ -148,7 +141,7 @@ ubc_zerorange(struct uvm_object *uobj, off_t off, size_t len, int flags)
 		}
 		uvm_page_unbusy(pgs, npages);
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 	kmem_free(pgs, maxpages * sizeof(pgs));
 }
 
@@ -178,7 +171,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 	if (flags & UBC_WRITE)
 		prot |= VM_PROT_WRITE;
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	do {
 		npages = len2npages(uio->uio_offset, todo);
 		memset(pgs, 0, pgalloc);
@@ -187,7 +180,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 		if (rv)
 			goto out;
 
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		for (i = 0; i < npages; i++) {
 			struct vm_page *pg;
 			size_t xfersize;
@@ -207,7 +200,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 			    xfersize, uio);
 			if (rv) {
 				uvm_page_unbusy(pgs, npages);
-				mutex_exit(uobj->vmobjlock);
+				rw_exit(uobj->vmobjlock);
 				goto out;
 			}
 			if (uio->uio_rw == UIO_WRITE) {
@@ -218,7 +211,7 @@ ubc_uiomove(struct uvm_object *uobj, struct uio *uio, vsize_t todo,
 		}
 		uvm_page_unbusy(pgs, npages);
 	} while (todo);
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
  out:
 	kmem_free(pgs, pgalloc);

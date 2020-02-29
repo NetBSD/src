@@ -1,4 +1,4 @@
-/*	$NetBSD: intel_audio.c,v 1.5 2018/08/27 07:56:59 riastradh Exp $	*/
+/*	$NetBSD: intel_audio.c,v 1.5.10.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright © 2014 Intel Corporation
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.5 2018/08/27 07:56:59 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: intel_audio.c,v 1.5.10.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <linux/kernel.h>
 #include <linux/component.h>
@@ -254,7 +254,7 @@ static void hsw_audio_codec_disable(struct intel_encoder *encoder)
 {
 	struct drm_i915_private *dev_priv = encoder->base.dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->base.crtc);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	uint32_t tmp;
 
 	DRM_DEBUG_KMS("Disable audio codec on pipe %c\n", pipe_name(pipe));
@@ -286,7 +286,7 @@ static void hsw_audio_codec_enable(struct drm_connector *connector,
 {
 	struct drm_i915_private *dev_priv = connector->dev->dev_private;
 	struct intel_crtc *intel_crtc = to_intel_crtc(encoder->base.crtc);
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	struct i915_audio_component *acomp = dev_priv->audio_component;
 	const uint8_t *eld = connector->eld;
 	struct intel_digital_port *intel_dig_port =
@@ -367,7 +367,7 @@ static void ilk_audio_codec_disable(struct intel_encoder *encoder)
 	struct intel_digital_port *intel_dig_port =
 		enc_to_dig_port(&encoder->base);
 	enum port port = intel_dig_port->port;
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	uint32_t tmp, eldv;
 	int aud_config;
 	int aud_cntrl_st2;
@@ -416,7 +416,7 @@ static void ilk_audio_codec_enable(struct drm_connector *connector,
 	struct intel_digital_port *intel_dig_port =
 		enc_to_dig_port(&encoder->base);
 	enum port port = intel_dig_port->port;
-	enum i915_pipe pipe = intel_crtc->pipe;
+	enum pipe pipe = intel_crtc->pipe;
 	uint8_t *eld = connector->eld;
 	uint32_t eldv;
 	uint32_t tmp;
@@ -645,7 +645,7 @@ static int i915_audio_component_sync_audio_rate(struct device *dev,
 	struct intel_crtc *crtc;
 	struct drm_display_mode *mode;
 	struct i915_audio_component *acomp = dev_priv->audio_component;
-	enum i915_pipe pipe = -1;
+	enum pipe pipe = -1;
 	u32 tmp;
 	int n;
 

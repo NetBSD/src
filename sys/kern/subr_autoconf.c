@@ -1,4 +1,4 @@
-/* $NetBSD: subr_autoconf.c,v 1.265 2018/12/01 02:08:16 msaitoh Exp $ */
+/* $NetBSD: subr_autoconf.c,v 1.265.6.1 2020/02/29 20:21:03 ad Exp $ */
 
 /*
  * Copyright (c) 1996, 2000 Christopher G. Demetriou
@@ -77,7 +77,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.265 2018/12/01 02:08:16 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_autoconf.c,v 1.265.6.1 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -442,17 +442,26 @@ static void
 config_interrupts_thread(void *cookie)
 {
 	struct deferred_config *dc;
+	device_t dev;
 
+	mutex_enter(&config_misc_lock);
 	while ((dc = TAILQ_FIRST(&interrupt_config_queue)) != NULL) {
 		TAILQ_REMOVE(&interrupt_config_queue, dc, dc_queue);
-		(*dc->dc_func)(dc->dc_dev);
-		dc->dc_dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
-		if (!device_pmf_is_registered(dc->dc_dev))
-			aprint_debug_dev(dc->dc_dev,
+		mutex_exit(&config_misc_lock);
+
+		dev = dc->dc_dev;
+		(*dc->dc_func)(dev);
+		if (!device_pmf_is_registered(dev))
+			aprint_debug_dev(dev,
 			    "WARNING: power management not supported\n");
-		config_pending_decr(dc->dc_dev);
+		config_pending_decr(dev);
 		kmem_free(dc, sizeof(*dc));
+
+		mutex_enter(&config_misc_lock);
+		dev->dv_flags &= ~DVF_ATTACH_INPROGRESS;
 	}
+	mutex_exit(&config_misc_lock);
+
 	kthread_exit(0);
 }
 
@@ -462,7 +471,7 @@ config_create_interruptthreads(void)
 	int i;
 
 	for (i = 0; i < interrupt_config_threads; i++) {
-		(void)kthread_create(PRI_NONE, 0, NULL,
+		(void)kthread_create(PRI_NONE, 0/*XXXSMP */, NULL,
 		    config_interrupts_thread, NULL, NULL, "configintr");
 	}
 }
@@ -472,11 +481,18 @@ config_mountroot_thread(void *cookie)
 {
 	struct deferred_config *dc;
 
+	mutex_enter(&config_misc_lock);
 	while ((dc = TAILQ_FIRST(&mountroot_config_queue)) != NULL) {
 		TAILQ_REMOVE(&mountroot_config_queue, dc, dc_queue);
+		mutex_exit(&config_misc_lock);
+
 		(*dc->dc_func)(dc->dc_dev);
 		kmem_free(dc, sizeof(*dc));
+
+		mutex_enter(&config_misc_lock);
 	}
+	mutex_exit(&config_misc_lock);
+
 	kthread_exit(0);
 }
 
@@ -495,8 +511,8 @@ config_create_mountrootthreads(void)
 	KASSERT(mountroot_config_lwpids);
 	for (i = 0; i < mountroot_config_threads; i++) {
 		mountroot_config_lwpids[i] = 0;
-		(void)kthread_create(PRI_NONE, KTHREAD_MUSTJOIN, NULL,
-				     config_mountroot_thread, NULL,
+		(void)kthread_create(PRI_NONE, KTHREAD_MUSTJOIN/* XXXSMP */,
+				     NULL, config_mountroot_thread, NULL,
 				     &mountroot_config_lwpids[i],
 				     "configroot");
 	}
@@ -533,9 +549,10 @@ no_devmon_insert(const char *name, prop_dictionary_t p)
 static void
 devmon_report_device(device_t dev, bool isattach)
 {
-	prop_dictionary_t ev;
+	prop_dictionary_t ev, dict = device_properties(dev);
 	const char *parent;
 	const char *what;
+	const char *where;
 	device_t pdev = device_parent(dev);
 
 	/* If currently no drvctl device, just return */
@@ -548,6 +565,11 @@ devmon_report_device(device_t dev, bool isattach)
 
 	what = (isattach ? "device-attach" : "device-detach");
 	parent = (pdev == NULL ? "root" : device_xname(pdev));
+	if (prop_dictionary_get_cstring_nocopy(dict, "location", &where)) {
+		prop_dictionary_set_cstring(ev, "location", where);
+		aprint_debug("ev: %s %s at %s in [%s]\n",
+		    what, device_xname(dev), parent, where); 
+	}
 	if (!prop_dictionary_set_cstring(ev, "device", device_xname(dev)) ||
 	    !prop_dictionary_set_cstring(ev, "parent", parent)) {
 		prop_object_release(ev);
@@ -1958,18 +1980,22 @@ config_defer(device_t dev, void (*func)(device_t))
 	if (dev->dv_parent == NULL)
 		panic("config_defer: can't defer config of a root device");
 
+	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
+
+	config_pending_incr(dev);
+
+	mutex_enter(&config_misc_lock);
 #ifdef DIAGNOSTIC
-	TAILQ_FOREACH(dc, &deferred_config_queue, dc_queue) {
-		if (dc->dc_dev == dev)
+	struct deferred_config *odc;
+	TAILQ_FOREACH(odc, &deferred_config_queue, dc_queue) {
+		if (odc->dc_dev == dev)
 			panic("config_defer: deferred twice");
 	}
 #endif
-
-	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&deferred_config_queue, dc, dc_queue);
-	config_pending_incr(dev);
+	mutex_exit(&config_misc_lock);
 }
 
 /*
@@ -1989,19 +2015,23 @@ config_interrupts(device_t dev, void (*func)(device_t))
 		return;
 	}
 
+	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
+
+	config_pending_incr(dev);
+
+	mutex_enter(&config_misc_lock);
 #ifdef DIAGNOSTIC
-	TAILQ_FOREACH(dc, &interrupt_config_queue, dc_queue) {
-		if (dc->dc_dev == dev)
+	struct deferred_config *odc;
+	TAILQ_FOREACH(odc, &interrupt_config_queue, dc_queue) {
+		if (odc->dc_dev == dev)
 			panic("config_interrupts: deferred twice");
 	}
 #endif
-
-	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&interrupt_config_queue, dc, dc_queue);
-	config_pending_incr(dev);
 	dev->dv_flags |= DVF_ATTACH_INPROGRESS;
+	mutex_exit(&config_misc_lock);
 }
 
 /*
@@ -2021,17 +2051,21 @@ config_mountroot(device_t dev, void (*func)(device_t))
 		return;
 	}
 
+	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
+
+	mutex_enter(&config_misc_lock);
 #ifdef DIAGNOSTIC
-	TAILQ_FOREACH(dc, &mountroot_config_queue, dc_queue) {
-		if (dc->dc_dev == dev)
+	struct deferred_config *odc;
+	TAILQ_FOREACH(odc, &mountroot_config_queue, dc_queue) {
+		if (odc->dc_dev == dev)
 			panic("%s: deferred twice", __func__);
 	}
 #endif
 
-	dc = kmem_alloc(sizeof(*dc), KM_SLEEP);
 	dc->dc_dev = dev;
 	dc->dc_func = func;
 	TAILQ_INSERT_TAIL(&mountroot_config_queue, dc, dc_queue);
+	mutex_exit(&config_misc_lock);
 }
 
 /*
@@ -2040,17 +2074,27 @@ config_mountroot(device_t dev, void (*func)(device_t))
 static void
 config_process_deferred(struct deferred_config_head *queue, device_t parent)
 {
-	struct deferred_config *dc, *ndc;
+	struct deferred_config *dc;
 
-	for (dc = TAILQ_FIRST(queue); dc != NULL; dc = ndc) {
-		ndc = TAILQ_NEXT(dc, dc_queue);
+	mutex_enter(&config_misc_lock);
+	dc = TAILQ_FIRST(queue);
+	while (dc) {
 		if (parent == NULL || dc->dc_dev->dv_parent == parent) {
 			TAILQ_REMOVE(queue, dc, dc_queue);
+			mutex_exit(&config_misc_lock);
+
 			(*dc->dc_func)(dc->dc_dev);
 			config_pending_decr(dc->dc_dev);
 			kmem_free(dc, sizeof(*dc));
+
+			mutex_enter(&config_misc_lock);
+			/* Restart, queue might have changed */
+			dc = TAILQ_FIRST(queue);
+		} else {
+			dc = TAILQ_NEXT(dc, dc_queue);
 		}
 	}
+	mutex_exit(&config_misc_lock);
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ae_nubus.c,v 1.41 2009/01/16 23:43:46 tsutsui Exp $	*/
+/*	$NetBSD: if_ae_nubus.c,v 1.41.72.1 2020/02/29 20:18:26 ad Exp $	*/
 
 /*
  * Copyright (C) 1997 Scott Reynolds
@@ -40,7 +40,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.41 2009/01/16 23:43:46 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ae_nubus.c,v 1.41.72.1 2020/02/29 20:18:26 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -386,7 +386,7 @@ void
 ae_nubus_intr(void *arg)
 {
 	struct dp8390_softc *sc = arg;
-	
+
 	(void)dp8390_intr(sc);
 }
 
@@ -502,7 +502,7 @@ ae_nb_watchdog(struct ifnet *ifp)
 	(*via2itab[1])((void *)1);
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	dp8390_reset(sc);
 }

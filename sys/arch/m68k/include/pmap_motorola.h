@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap_motorola.h,v 1.34 2011/10/29 18:26:19 tsutsui Exp $	*/
+/*	$NetBSD: pmap_motorola.h,v 1.34.60.1 2020/02/29 20:18:25 ad Exp $	*/
 
 /* 
  * Copyright (c) 1991, 1993
@@ -202,7 +202,7 @@ extern struct pv_header	*pv_table;	/* array of entries, one per page */
 #define	pmap_resident_count(pmap)	((pmap)->pm_stats.resident_count)
 #define	pmap_wired_count(pmap)		((pmap)->pm_stats.wired_count)
 
-#define	pmap_update(pmap)		/* nothing (yet) */
+#define	pmap_update(pmap)		__nothing	/* nothing (yet) */
 
 static __inline void
 pmap_remove_all(struct pmap *pmap)

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvideo.c,v 1.53 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: uvideo.c,v 1.53.2.1 2020/02/29 20:19:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Patrick Mahoney
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.53 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvideo.c,v 1.53.2.1 2020/02/29 20:19:17 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -360,12 +360,6 @@ static usbd_status	uvideo_stream_probe_and_commit(struct uvideo_stream *,
 						       void *);
 static void		uvideo_init_probe_data(uvideo_probe_and_commit_data_t *);
 
-
-static const usb_descriptor_t * usb_desc_iter_peek_next(usbd_desc_iter_t *);
-static const usb_interface_descriptor_t * usb_desc_iter_next_interface(
-	usbd_desc_iter_t *);
-static const usb_descriptor_t * usb_desc_iter_next_non_interface(
-	usbd_desc_iter_t *);
 
 static int	usb_guid_cmp(const usb_guid_t *, const guid_t *);
 
@@ -1330,7 +1324,7 @@ uvideo_stream_init_frame_based_format(struct uvideo_stream *vs,
 	/* Iterate through frame descriptors directly following the
 	 * format descriptor, and add a format to the format list for
 	 * each frame descriptor. */
-	while ((uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_peek_next(iter)) &&
+	while ((uvdesc = (const uvideo_descriptor_t *)usb_desc_iter_peek(iter)) &&
 	       (uvdesc != NULL) && (uvdesc->bDescriptorSubtype == subtype))
 	{
 		uvdesc = (const uvideo_descriptor_t *) usb_desc_iter_next(iter);
@@ -2948,60 +2942,6 @@ print_vs_format_dv_descriptor(
 }
 
 #endif /* !UVIDEO_DEBUG */
-
-static const usb_descriptor_t *
-usb_desc_iter_peek_next(usbd_desc_iter_t *iter)
-{
-        const usb_descriptor_t *desc;
-
-        if (iter->cur + sizeof(usb_descriptor_t) >= iter->end) {
-                if (iter->cur != iter->end)
-                        printf("usb_desc_iter_peek_next: bad descriptor\n");
-                return NULL;
-        }
-        desc = (const usb_descriptor_t *)iter->cur;
-        if (desc->bLength == 0) {
-                printf("usb_desc_iter_peek_next: descriptor length = 0\n");
-                return NULL;
-        }
-        if (iter->cur + desc->bLength > iter->end) {
-                printf("usb_desc_iter_peek_next: descriptor length too large\n");
-                return NULL;
-        }
-        return desc;
-}
-
-/* Return the next interface descriptor, skipping over any other
- * descriptors.  Returns NULL at the end or on error. */
-static const usb_interface_descriptor_t *
-usb_desc_iter_next_interface(usbd_desc_iter_t *iter)
-{
-	const usb_descriptor_t *desc;
-
-	while ((desc = usb_desc_iter_peek_next(iter)) != NULL &&
-	       desc->bDescriptorType != UDESC_INTERFACE)
-	{
-		usb_desc_iter_next(iter);
-	}
-
-	return (const usb_interface_descriptor_t *)usb_desc_iter_next(iter);
-}
-
-/* Returns the next non-interface descriptor, returning NULL when the
- * next descriptor would be an interface descriptor. */
-static const usb_descriptor_t *
-usb_desc_iter_next_non_interface(usbd_desc_iter_t *iter)
-{
-	const usb_descriptor_t *desc;
-
-	if ((desc = usb_desc_iter_peek_next(iter)) != NULL &&
-	    desc->bDescriptorType != UDESC_INTERFACE)
-	{
-		return usb_desc_iter_next(iter);
-	} else {
-		return NULL;
-	}
-}
 
 #ifdef UVIDEO_DEBUG
 static void

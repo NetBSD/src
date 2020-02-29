@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_reboot.c,v 1.2 2020/01/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: kern_reboot.c,v 1.2.2.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -33,8 +33,9 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.2 2020/01/01 22:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.2.2.1 2020/02/29 20:21:03 ad Exp $");
 
+#include <sys/atomic.h>
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/proc.h>
@@ -50,7 +51,18 @@ __KERNEL_RCSID(0, "$NetBSD: kern_reboot.c,v 1.2 2020/01/01 22:57:17 thorpej Exp 
 void
 kern_reboot(int howto, char *bootstr)
 {
+	static lwp_t *rebooter;
+	lwp_t *l;
 
+	/*
+	 * If already rebooting then just hang out.  Allow reentry for the
+	 * benfit of ddb, even if questionable.  It would be better to call
+	 * exit1(), but this is called from all sorts of places.
+	 */
+	l = atomic_cas_ptr(&rebooter, NULL, curlwp);
+	while (l != NULL && l != curlwp) {
+		(void)kpause("reboot", true, 0, NULL);
+	}
 	shutting_down = 1;
 
 	/*
@@ -87,8 +99,6 @@ sys_reboot(struct lwp *l, const struct sys_reboot_args *uap, register_t *retval)
 	/*
 	 * Not all ports use the bootstr currently.
 	 */
-	KERNEL_LOCK(1, NULL);
 	kern_reboot(SCARG(uap, opt), bootstr);
-	KERNEL_UNLOCK_ONE(NULL);
 	return (0);
 }

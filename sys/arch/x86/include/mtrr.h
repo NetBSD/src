@@ -1,4 +1,4 @@
-/* $NetBSD: mtrr.h,v 1.5 2011/12/15 09:38:21 abs Exp $ */
+/* $NetBSD: mtrr.h,v 1.5.54.1 2020/02/29 20:18:33 ad Exp $ */
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -124,9 +124,9 @@ struct mtrr_funcs {
 	void (*dump)(const char *tag);
 };
 
-extern struct mtrr_funcs i686_mtrr_funcs;
-extern struct mtrr_funcs k6_mtrr_funcs;
-extern struct mtrr_funcs *mtrr_funcs;
+extern const struct mtrr_funcs i686_mtrr_funcs;
+extern const struct mtrr_funcs k6_mtrr_funcs;
+extern const struct mtrr_funcs *mtrr_funcs;
 
 #define mtrr_init_cpu(ci)	mtrr_funcs->init_cpu(ci)
 #define mtrr_reload_cpu(ci)	mtrr_funcs->reload_cpu(ci)

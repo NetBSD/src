@@ -1,4 +1,4 @@
-/*	$NetBSD: uipc_usrreq.c,v 1.194.4.1 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: uipc_usrreq.c,v 1.194.4.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2000, 2004, 2008, 2009, 2020 The NetBSD Foundation, Inc.
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194.4.1 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uipc_usrreq.c,v 1.194.4.2 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -1431,7 +1431,6 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 			}
 		}
 	}
-	
 
  restart:
 	/*
@@ -1519,7 +1518,7 @@ unp_externalize(struct mbuf *rights, struct lwp *l, int flags)
 	memset(&mtod(rights, char *)[cm->cmsg_len], 0, rights->m_len -
 	    cm->cmsg_len);
 
-	/* Async release please since in the networking code. */
+	/* Async release since in the networking code. */
 	if (rvp != NULL)
 		vrele_async(rvp);
 	return error;
@@ -1529,6 +1528,7 @@ static int
 unp_internalize(struct mbuf **controlp)
 {
 	filedesc_t *fdescp = curlwp->l_fd;
+	fdtab_t *dt;
 	struct mbuf *control = *controlp;
 	struct cmsghdr *newcm, *cm = mtod(control, struct cmsghdr *);
 	file_t **rp, **files;
@@ -1591,7 +1591,8 @@ unp_internalize(struct mbuf **controlp)
 	fdp = (int *)CMSG_DATA(cm) + nfds;
 	rp = files + nfds;
 	for (i = 0; i < nfds; i++) {
-		fp = fdescp->fd_dt->dt_ff[*--fdp]->ff_file;
+		dt = atomic_load_consume(&fdescp->fd_dt);
+		fp = atomic_load_consume(&dt->dt_ff[*--fdp]->ff_file);
 		KASSERT(fp != NULL);
 		mutex_enter(&fp->f_lock);
 		*--rp = fp;

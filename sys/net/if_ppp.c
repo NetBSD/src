@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ppp.c,v 1.166 2019/09/20 08:45:29 maxv Exp $	*/
+/*	$NetBSD: if_ppp.c,v 1.166.2.1 2020/02/29 20:21:06 ad Exp $	*/
 /*	Id: if_ppp.c,v 1.6 1997/03/04 03:33:00 paulus Exp 	*/
 
 /*
@@ -102,7 +102,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.166 2019/09/20 08:45:29 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ppp.c,v 1.166.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "ppp.h"
@@ -1013,14 +1013,13 @@ pppoutput(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		ifq = (m0->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
 		if ((error = ifq_enqueue2(&sc->sc_if, ifq, m0)) != 0) {
 			splx(s);
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 			sc->sc_stats.ppp_oerrors++;
 			return (error);
 		}
 		ppp_restart(sc);
 	}
-	ifp->if_opackets++;
-	ifp->if_obytes += len;
+	if_statadd2(ifp, if_opackets, 1, if_obytes, len);
 
 	splx(s);
 	return (0);
@@ -1065,7 +1064,7 @@ ppp_requeue(struct ppp_softc *sc)
 			m->m_nextpkt = NULL;
 			ifq = (m->m_flags & M_HIGHPRI) ? &sc->sc_fastq : NULL;
 			if ((error = ifq_enqueue2(&sc->sc_if, ifq, m)) != 0) {
-				sc->sc_if.if_oerrors++;
+				if_statinc(&sc->sc_if, if_oerrors);
 				sc->sc_stats.ppp_oerrors++;
 			}
 			break;
@@ -1715,11 +1714,10 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 	if (__predict_true(pktq)) {
 		if (__predict_false(!pktq_enqueue(pktq, m, 0))) {
 			splx(s);
-			ifp->if_iqdrops++;
+			if_statinc(ifp, if_iqdrops);
 			goto bad;
 		}
-		ifp->if_ipackets++;
-		ifp->if_ibytes += ilen;
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, ilen);
 		splx(s);
 		return;
 	}
@@ -1734,13 +1732,12 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 		splx(s);
 		if (sc->sc_flags & SC_DEBUG)
 			printf("%s: input queue full\n", ifp->if_xname);
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		goto bad;
 	}
 	IF_ENQUEUE(inq, m);
 	splx(s);
-	ifp->if_ipackets++;
-	ifp->if_ibytes += ilen;
+	if_statadd2(ifp, if_ipackets, 1, if_ibytes, ilen);
 
 	(*sc->sc_ctlp)(sc);
 
@@ -1748,7 +1745,7 @@ ppp_inproc(struct ppp_softc *sc, struct mbuf *m)
 
 bad:
 	m_freem(m);
-	sc->sc_if.if_ierrors++;
+	if_statinc(&sc->sc_if, if_ierrors);
 	sc->sc_stats.ppp_ierrors++;
 }
 

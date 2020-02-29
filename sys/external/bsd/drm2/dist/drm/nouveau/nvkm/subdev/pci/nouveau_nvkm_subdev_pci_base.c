@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.4 2018/12/19 09:20:56 maya Exp $	*/
+/*	$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.4.8.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2015 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs <bskeggs@redhat.com>
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.4 2018/12/19 09:20:56 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_subdev_pci_base.c,v 1.4.8.1 2020/02/29 20:20:16 ad Exp $");
 
 #include "priv.h"
 #include "agp.h"
@@ -141,22 +141,51 @@ nvkm_pci_init(struct nvkm_subdev *subdev)
 
 #ifdef __NetBSD__
     {
+	const char *const name = device_xname(pci_dev_dev(pdev));
 	const struct pci_attach_args *pa = &pdev->pd_pa;
-	int counts[PCI_INTR_TYPE_SIZE] =  {
-			[PCI_INTR_TYPE_INTX] = 1,
-			[PCI_INTR_TYPE_MSI] = 0,
-			[PCI_INTR_TYPE_MSIX] = 0,
-	};
+	const char *intrstr;
+	char intrbuf[PCI_INTRSTR_LEN];
 
-	/* XXX errno NetBSD->Linux */
-	ret = -pci_intr_alloc(pa, &pci->pci_ihp, counts, PCI_INTR_TYPE_INTX);
-	if (ret)
-		return ret;
+	/* XXX convert to use drm_pci_request_irq() */
+	if (pdev->msi_enabled) {
+		if (pdev->pd_intr_handles == NULL) {
+			if ((ret = pci_msi_alloc_exact(pa, &pci->pci_ihp,
+			    1))) {
+				aprint_error_dev(pci_dev_dev(pdev),
+				    "couldn't allocate MSI (%s)\n", name);
+				/* XXX errno NetBSD->Linux */
+				return -ret;
+			}
+		} else {
+			pci->pci_ihp = pdev->pd_intr_handles;
+			pdev->pd_intr_handles = NULL;
+		}
+	} else {
+		if ((ret = pci_intx_alloc(pa, &pci->pci_ihp))) {
+			aprint_error_dev(pci_dev_dev(pdev),
+			    "couldn't allocate INTx interrupt (%s)\n",
+			    name);
+
+			/* XXX errno NetBSD->Linux */
+			return -ret;
+		}
+	}
+
+	intrstr = pci_intr_string(pa->pa_pc, pci->pci_ihp[0],
+	    intrbuf, sizeof(intrbuf));
 	pci->pci_intrcookie = pci_intr_establish_xname(pa->pa_pc,
 	    pci->pci_ihp[0], IPL_DRM, nvkm_pci_intr, pci,
-	    device_xname(pci_dev_dev(pdev)));
-	if (pci->pci_intrcookie == NULL)
+	    name);
+	if (pci->pci_intrcookie == NULL) {
+		aprint_error_dev(pci_dev_dev(pdev),
+		    "couldn't establish interrupt at %s (%s)\n", intrstr, name);
+		pci_intr_release(pa->pa_pc, pci->pci_ihp, 1);
+		pci->pci_ihp = NULL;
 		return -EIO;	/* XXX er? */
+	}
+
+	aprint_normal_dev(pci_dev_dev(pdev), "interrupting at %s (%s)\n",
+	    intrstr, name);
     }
 #else
 	ret = request_irq(pdev->irq, nvkm_pci_intr, IRQF_SHARED, "nvkm", pci);

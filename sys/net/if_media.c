@@ -1,4 +1,4 @@
-/*	$NetBSD: if_media.c,v 1.48.2.1 2020/01/25 22:38:52 ad Exp $	*/
+/*	$NetBSD: if_media.c,v 1.48.2.2 2020/02/29 20:21:06 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -76,14 +76,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.48.2.1 2020/01/25 22:38:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_media.c,v 1.48.2.2 2020/02/29 20:21:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
 #include <sys/errno.h>
 #include <sys/ioctl.h>
 #include <sys/socket.h>
-#include <sys/malloc.h>
+#include <sys/kmem.h>
 
 #include <net/if.h>
 #include <net/if_media.h>
@@ -106,8 +106,6 @@ int	ifmedia_debug = 0;
 static	void ifmedia_printword(int);
 #endif
 
-MALLOC_DEFINE(M_IFMEDIA, "ifmedia", "interface media state");
-
 /*
  * Initialize if_media struct for a specific interface instance.
  */
@@ -122,6 +120,16 @@ ifmedia_init(struct ifmedia *ifm, int dontcare_mask,
 	ifm->ifm_mask = dontcare_mask;		/* IF don't-care bits */
 	ifm->ifm_change = change_callback;
 	ifm->ifm_status = status_callback;
+}
+
+/*
+ * Free resources associated with an ifmedia.
+ */
+void
+ifmedia_fini(struct ifmedia *ifm)
+{
+
+	ifmedia_removeall(ifm);
 }
 
 int
@@ -162,7 +170,7 @@ ifmedia_add(struct ifmedia *ifm, int mword, int data, void *aux)
 	}
 #endif
 
-	entry = malloc(sizeof(*entry), M_IFMEDIA, M_WAITOK);
+	entry = kmem_zalloc(sizeof(*entry), KM_SLEEP);
 	entry->ifm_media = mword;
 	entry->ifm_data = data;
 	entry->ifm_aux = aux;
@@ -235,6 +243,22 @@ ifmedia_set(struct ifmedia *ifm, int target)
 #endif
 }
 
+static int
+ifmedia_getwords(struct ifmedia * const ifm, int *words, int maxwords)
+{
+	struct ifmedia_entry *ep;
+	int nwords = 0;
+
+	TAILQ_FOREACH(ep, &ifm->ifm_list, ifm_list) {
+		if (words != NULL && nwords < maxwords) {
+			words[nwords] = ep->ifm_media;
+		}
+		nwords++;
+	}
+
+	return nwords;
+}
+
 /*
  * Device-independent media ioctl support function.
  */
@@ -304,8 +328,7 @@ ifmedia_ioctl_locked(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 	/* Get list of available media and current media on interface. */
 	case SIOCGIFMEDIA:
 	{
-		struct ifmedia_entry *ep;
-		size_t nwords;
+		int nwords1, nwords2;
 
 		if (ifmr->ifm_count < 0)
 			return EINVAL;
@@ -320,31 +343,22 @@ ifmedia_ioctl_locked(struct ifnet *ifp, struct ifreq *ifr, struct ifmedia *ifm,
 		 * Count them so we know a-priori how much is the max we'll
 		 * need.
 		 */
-		ep = TAILQ_FIRST(&ifm->ifm_list);
-		for (nwords = 0; ep != NULL; ep = TAILQ_NEXT(ep, ifm_list))
-			nwords++;
+		nwords1 = nwords2 = ifmedia_getwords(ifm, NULL, 0);
 
 		if (ifmr->ifm_count != 0) {
-			size_t count;
-			size_t minwords = nwords > (size_t)ifmr->ifm_count
-			    ? (size_t)ifmr->ifm_count : nwords;
-			int *kptr = malloc(minwords * sizeof(int), M_TEMP,
-			    M_WAITOK);
+			int maxwords = MIN(nwords1, ifmr->ifm_count);
+			int *kptr = kmem_zalloc(maxwords * sizeof(int),
+			    KM_SLEEP);
 
-			/* Get the media words from the interface's list. */
-			ep = TAILQ_FIRST(&ifm->ifm_list);
-			for (count = 0; ep != NULL && count < minwords;
-			    ep = TAILQ_NEXT(ep, ifm_list), count++)
-				kptr[count] = ep->ifm_media;
-
+			nwords2 = ifmedia_getwords(ifm, kptr, maxwords);
 			error = copyout(kptr, ifmr->ifm_ulist,
-			    minwords * sizeof(int));
-			if (error == 0 && ep != NULL)
+			    maxwords * sizeof(int));
+			if (error == 0 && nwords2 > nwords1)
 				error = E2BIG;	/* oops! */
-			free(kptr, M_TEMP);
+			kmem_free(kptr, maxwords * sizeof(int));
 		}
 		/* Update with the real number */
-		ifmr->ifm_count = nwords;
+		ifmr->ifm_count = nwords2;
 		break;
 	}
 
@@ -419,13 +433,13 @@ ifmedia_delete_instance(struct ifmedia *ifm, u_int inst)
 	TAILQ_FOREACH_SAFE(ife, &ifm->ifm_list, ifm_list, nife) {
 		if (inst == IFM_INST_ANY ||
 		    inst == IFM_INST(ife->ifm_media)) {
+			if (ifm->ifm_cur == ife) {
+				ifm->ifm_cur = NULL;
+				ifm->ifm_media = IFM_NONE;
+			}
 			TAILQ_REMOVE(&ifm->ifm_list, ife, ifm_list);
-			free(ife, M_IFMEDIA);
+			kmem_free(ife, sizeof(*ife));
 		}
-	}
-	if (inst == IFM_INST_ANY) {
-		ifm->ifm_cur = NULL;
-		ifm->ifm_media = IFM_NONE;
 	}
 }
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: powerpc_machdep.c,v 1.75 2019/12/05 20:55:24 ad Exp $	*/
+/*	$NetBSD: powerpc_machdep.c,v 1.75.2.1 2020/02/29 20:18:30 ad Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996 Wolfgang Solfrank.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.75 2019/12/05 20:55:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: powerpc_machdep.c,v 1.75.2.1 2020/02/29 20:18:30 ad Exp $");
 
 #include "opt_altivec.h"
 #include "opt_ddb.h"
@@ -89,9 +89,7 @@ extern int powersave;
 char *booted_kernel;
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {
-#if defined(PPC_HAVE_FPU)
 	[PCU_FPU] = &fpu_ops,
-#endif
 #if defined(ALTIVEC) || defined(PPC_HAVE_SPE)
 	[PCU_VEC] = &vec_ops,
 #endif
@@ -373,9 +371,6 @@ void
 cpu_ast(struct lwp *l, struct cpu_info *ci)
 {
 	l->l_md.md_astpending = 0;	/* we are about to do it */
-	__insn_barrier();
-	userret(l, l->l_md.md_utf);
-
 	if (l->l_pflag & LP_OWEUPC) {
 		l->l_pflag &= ~LP_OWEUPC;
 		ADDUPROF(l);

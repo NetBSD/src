@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.106 2019/12/31 13:07:11 ad Exp $	*/
+/*	$NetBSD: machdep.c,v 1.106.2.1 2020/02/29 20:18:28 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106 2019/12/31 13:07:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.106.2.1 2020/02/29 20:18:28 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_compat_netbsd.h"
@@ -189,7 +189,7 @@ news68k_init(void)
 	 */
 	for (i = 0; i < btoc(MSGBUFSIZE); i++)
 		pmap_kenter_pa((vaddr_t)msgbufaddr + i * PAGE_SIZE,
-		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0)
+		    avail_end + i * PAGE_SIZE, VM_PROT_READ|VM_PROT_WRITE, 0);
 	pmap_update(pmap_kernel());
 	initmsgbuf(msgbufaddr, m68k_round_page(MSGBUFSIZE));
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvxpe.c,v 1.31 2019/12/28 03:07:18 gutteridge Exp $	*/
+/*	$NetBSD: if_mvxpe.c,v 1.31.2.1 2020/02/29 20:19:09 ad Exp $	*/
 /*
  * Copyright (c) 2015 Internet Initiative Japan Inc.
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.31 2019/12/28 03:07:18 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvxpe.c,v 1.31.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1709,7 +1709,7 @@ mvxpe_start(struct ifnet *ifp)
 		    sc->sc_tx_ring[q].tx_queue_len);
 		DPRINTIFNET(ifp, 1, "a packet is added to tx ring\n");
 		sc->sc_tx_pending++;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		ifp->if_timer = 1;
 		sc->sc_wdogsoft = 1;
 		bpf_mtap(ifp, m, BPF_D_OUT);
@@ -1937,7 +1937,7 @@ mvxpe_watchdog(struct ifnet *ifp)
 				MVXPE_EVCNT_INCR(&sc->sc_ev.ev_drv_wdogsoft);
 			} else {
 				aprint_error_ifnet(ifp, "watchdog timeout\n");
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				mvxpe_linkreset(sc);
 				mvxpe_sc_unlock(sc);
 
@@ -3264,13 +3264,13 @@ mvxpe_update_mib(struct mvxpe_softc *sc)
 
 		switch (mvxpe_mib_list[i].ext) {
 		case MVXPE_MIBEXT_IF_OERRORS:
-			ifp->if_oerrors += val;
+			if_statadd(ifp, if_oerrors,  val);
 			break;
 		case MVXPE_MIBEXT_IF_IERRORS:
-			ifp->if_ierrors += val;
+			if_statadd(ifp, if_ierrors,  val);
 			break;
 		case MVXPE_MIBEXT_IF_COLLISIONS:
-			ifp->if_collisions += val;
+			if_statadd(ifp, if_collisions, val);
 			break;
 		default:
 			break;

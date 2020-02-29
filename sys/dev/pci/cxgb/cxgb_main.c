@@ -28,7 +28,7 @@ POSSIBILITY OF SUCH DAMAGE.
 ***************************************************************************/
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.7 2018/12/09 11:49:06 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cxgb_main.c,v 1.7.6.1 2020/02/29 20:19:14 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -809,6 +809,8 @@ cxgb_port_detach(device_t self, int flags)
      */
     PORT_LOCK_DEINIT(p);
     if_detach(p->ifp);
+
+    ifmedia_fini(&p->media);
 
     return (0);
 }

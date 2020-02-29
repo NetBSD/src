@@ -1,4 +1,4 @@
-/*      $NetBSD: rdcphy.c,v 1.5 2019/11/27 10:19:21 msaitoh Exp $        */
+/*      $NetBSD: rdcphy.c,v 1.5.2.1 2020/02/29 20:19:09 ad Exp $        */
 
 /*-
  * Copyright (c) 2010, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -33,7 +33,7 @@
  * Driver for the RDC Semiconductor R6040 10/100 PHY.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.5 2019/11/27 10:19:21 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rdcphy.c,v 1.5.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -74,7 +74,7 @@ static const struct mii_phy_funcs rdcphy_funcs = {
 };
 
 static const struct mii_phydesc rdcphys[] = {
-	MII_PHY_DESC(RDC, R6040),
+	MII_PHY_DESC(xxRDC, R6040),
 	MII_PHY_END,
 };
 

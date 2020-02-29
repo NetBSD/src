@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.162 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.162.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.162 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.162.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -888,10 +888,10 @@ aue_intr(struct usbnet *un, usbd_status status)
 	    device_unit(un->un_dev), p->aue_txstat0, 0, 0);
 
 	if (p->aue_txstat0)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	if (p->aue_txstat0 & (AUE_TXSTAT0_LATECOLL | AUE_TXSTAT0_EXCESSCOLL))
-		ifp->if_collisions++;
+		if_statinc(ifp, if_collisions);
 }
 
 static void
@@ -909,7 +909,7 @@ aue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	usbnet_isowned_rx(un);
 
 	if (total_len <= 4 + ETHER_CRC_LEN) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -918,7 +918,7 @@ aue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	/* Turn off all the non-error bits in the rx status word. */
 	r.aue_rxstat &= AUE_RXSTAT_MASK;
 	if (r.aue_rxstat) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

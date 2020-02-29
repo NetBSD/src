@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu_topology.c,v 1.16.2.2 2020/01/25 22:38:44 ad Exp $	*/
+/*	$NetBSD: cpu_topology.c,v 1.16.2.3 2020/02/29 20:18:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 Mindaugas Rasiukevicius <rmind at NetBSD org>,
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.16.2.2 2020/01/25 22:38:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu_topology.c,v 1.16.2.3 2020/02/29 20:18:33 ad Exp $");
 
 #include "acpica.h"
 
@@ -95,14 +95,14 @@ x86_cpu_topology(struct cpu_info *ci)
 	case CPUVENDOR_INTEL:
 		if (cpu_family < 6) {
 			cpu_topology_set(ci, package_id, core_id, smt_id,
-			    numa_id, false);
+			    numa_id);
 			return;
 		}
 		break;
 	case CPUVENDOR_AMD:
 		if (cpu_family < 0xf) {
 			cpu_topology_set(ci, package_id, core_id, smt_id,
-			    numa_id, false);
+			    numa_id);
 			return;
 		}
 		break;
@@ -211,5 +211,5 @@ x86_cpu_topology(struct cpu_info *ci)
 		smt_id = __SHIFTOUT(apic_id, smt_mask);
 	}
 
-	cpu_topology_set(ci, package_id, core_id, smt_id, numa_id, false);
+	cpu_topology_set(ci, package_id, core_id, smt_id, numa_id);
 }

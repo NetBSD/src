@@ -1,4 +1,4 @@
-/*	$NetBSD: ktime.h,v 1.8 2020/01/02 15:42:26 thorpej Exp $	*/
+/*	$NetBSD: ktime.h,v 1.8.2.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -37,6 +37,7 @@
 #include <sys/kernel.h>
 #include <sys/time.h>
 
+#include <linux/jiffies.h>
 #include <linux/time.h>
 
 union ktime {

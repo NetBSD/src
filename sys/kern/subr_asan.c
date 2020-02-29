@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_asan.c,v 1.16.2.1 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: subr_asan.c,v 1.16.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.16.2.1 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_asan.c,v 1.16.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -176,10 +176,12 @@ kasan_code_name(uint8_t code)
 		return "RedZonePartial";
 	case KASAN_STACK_LEFT:
 		return "StackLeft";
+	case KASAN_STACK_MID:
+		return "StackMiddle";
 	case KASAN_STACK_RIGHT:
 		return "StackRight";
-	case KASAN_STACK_PARTIAL:
-		return "StackPartial";
+	case KASAN_USE_AFTER_RET:
+		return "UseAfterRet";
 	case KASAN_USE_AFTER_SCOPE:
 		return "UseAfterScope";
 	default:

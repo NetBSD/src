@@ -1,4 +1,4 @@
-/*	$NetBSD: svs.c,v 1.31 2019/12/08 20:42:48 ad Exp $	*/
+/*	$NetBSD: svs.c,v 1.31.2.1 2020/02/29 20:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2018-2019 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.31 2019/12/08 20:42:48 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: svs.c,v 1.31.2.1 2020/02/29 20:18:33 ad Exp $");
 
 #include "opt_svs.h"
 #include "opt_user_ldt.h"
@@ -540,7 +540,7 @@ svs_lwp_switch(struct lwp *oldlwp, struct lwp *newlwp)
 	}
 
 #ifdef DIAGNOSTIC
-	if (oldlwp != NULL && !(oldlwp->l_flag & LW_SYSTEM)) {
+	if (!(oldlwp->l_flag & LW_SYSTEM)) {
 		pcb = lwp_getpcb(oldlwp);
 		rsp0 = pcb->pcb_rsp0;
 		va = rounddown(rsp0, PAGE_SIZE);

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_wm.c,v 1.658.2.1 2020/01/25 22:38:47 ad Exp $	*/
+/*	$NetBSD: if_wm.c,v 1.658.2.2 2020/02/29 20:19:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002, 2003, 2004 Wasabi Systems, Inc.
@@ -82,7 +82,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.658.2.1 2020/01/25 22:38:47 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_wm.c,v 1.658.2.2 2020/02/29 20:19:11 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -750,7 +750,7 @@ static void	wm_init_rss(struct wm_softc *);
 static void	wm_adjust_qnum(struct wm_softc *, int);
 static inline bool	wm_is_using_msix(struct wm_softc *);
 static inline bool	wm_is_using_multiqueue(struct wm_softc *);
-static int	wm_softhandler_establish(struct wm_softc *, int, int);
+static int	wm_softint_establish(struct wm_softc *, int, int);
 static int	wm_setup_legacy(struct wm_softc *);
 static int	wm_setup_msix(struct wm_softc *);
 static int	wm_init(struct ifnet *);
@@ -1822,6 +1822,7 @@ wm_attach(device_t parent, device_t self, void *aux)
 	prop_number_t pn;
 	uint8_t enaddr[ETHER_ADDR_LEN];
 	char buf[256];
+	char wqname[MAXCOMLEN];
 	uint16_t cfg1, cfg2, swdpin, nvmword;
 	pcireg_t preg, memtype;
 	uint16_t eeprom_data, apme_mask;
@@ -2053,6 +2054,16 @@ alloc_retry:
 			    counts[PCI_INTR_TYPE_INTX]);
 			return;
 		}
+	}
+
+	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(sc->sc_dev));
+	error = workqueue_create(&sc->sc_queue_wq, wqname,
+	    wm_handle_queue_work, sc, WM_WORKQUEUE_PRI, IPL_NET,
+	    WM_WORKQUEUE_FLAGS);
+	if (error) {
+		aprint_error_dev(sc->sc_dev,
+		    "unable to create workqueue\n");
+		goto out;
 	}
 
 	/*
@@ -3116,6 +3127,9 @@ wm_detach(device_t self, int flags __unused)
 	}
 	pci_intr_release(sc->sc_pc, sc->sc_intrs, sc->sc_nintrs);
 
+	/* wm_stop() ensure workqueue is stopped. */
+	workqueue_destroy(sc->sc_queue_wq);
+
 	for (i = 0; i < sc->sc_nqueues; i++)
 		softint_disestablish(sc->sc_queue[i].wmq_si);
 
@@ -3266,7 +3280,7 @@ wm_watchdog_txq_locked(struct ifnet *ifp, struct wm_txqueue *txq,
 		    "%s: device timeout (txfree %d txsfree %d txnext %d)\n",
 		    device_xname(sc->sc_dev), txq->txq_free, txq->txq_sfree,
 		    txq->txq_next);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 #ifdef WM_DEBUG
 		for (i = txq->txq_sdirty; i != txq->txq_snext;
 		    i = WM_NEXTTXS(txq, i)) {
@@ -3331,15 +3345,16 @@ wm_tick(void *arg)
 		WM_EVCNT_ADD(&sc->sc_ev_rx_macctl, CSR_READ(sc, WMREG_FCRUC));
 	}
 
-	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += 0ULL /* ensure quad_t */
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_collisions, CSR_READ(sc, WMREG_COLC));
+	if_statadd_ref(nsr, if_ierrors, 0ULL /* ensure quad_t */
 	    + CSR_READ(sc, WMREG_CRCERRS)
 	    + CSR_READ(sc, WMREG_ALGNERRC)
 	    + CSR_READ(sc, WMREG_SYMERRC)
 	    + CSR_READ(sc, WMREG_RXERRC)
 	    + CSR_READ(sc, WMREG_SEC)
 	    + CSR_READ(sc, WMREG_CEXTERR)
-	    + CSR_READ(sc, WMREG_RLEC);
+	    + CSR_READ(sc, WMREG_RLEC));
 	/*
 	 * WMREG_RNBC is incremented when there is no available buffers in host
 	 * memory. It does not mean the number of dropped packet. Because
@@ -3349,7 +3364,8 @@ wm_tick(void *arg)
 	 * If you want to know the nubmer of WMREG_RMBC, you should use such as
 	 * own EVCNT instead of if_iqdrops.
 	 */
-	ifp->if_iqdrops += CSR_READ(sc, WMREG_MPC);
+	if_statadd_ref(nsr, if_iqdrops, CSR_READ(sc, WMREG_MPC));
+	IF_STAT_PUTREF(ifp);
 
 	if (sc->sc_flags & WM_F_HAS_MII)
 		mii_tick(&sc->sc_mii);
@@ -5307,8 +5323,11 @@ wm_init_rss(struct wm_softc *sc)
 	 */
 	mrqc |= (MRQC_RSS_FIELD_IPV4 | MRQC_RSS_FIELD_IPV4_TCP);
 	mrqc |= (MRQC_RSS_FIELD_IPV6 | MRQC_RSS_FIELD_IPV6_TCP);
+#if 0
 	mrqc |= (MRQC_RSS_FIELD_IPV4_UDP | MRQC_RSS_FIELD_IPV6_UDP);
-	mrqc |= (MRQC_RSS_FIELD_IPV6_UDP_EX | MRQC_RSS_FIELD_IPV6_TCP_EX);
+	mrqc |= MRQC_RSS_FIELD_IPV6_UDP_EX;
+#endif
+	mrqc |= MRQC_RSS_FIELD_IPV6_TCP_EX;
 
 	CSR_WRITE(sc, WMREG_MRQC, mrqc);
 }
@@ -5413,11 +5432,9 @@ wm_is_using_multiqueue(struct wm_softc *sc)
 }
 
 static int
-wm_softhandler_establish(struct wm_softc *sc, int qidx, int intr_idx)
+wm_softint_establish(struct wm_softc *sc, int qidx, int intr_idx)
 {
-	char wqname[MAXCOMLEN];
 	struct wm_queue *wmq = &sc->sc_queue[qidx];
-	int error;
 
 	wmq->wmq_id = qidx;
 	wmq->wmq_intr_idx = intr_idx;
@@ -5426,28 +5443,11 @@ wm_softhandler_establish(struct wm_softc *sc, int qidx, int intr_idx)
 	    | SOFTINT_MPSAFE
 #endif
 	    , wm_handle_queue, wmq);
-	if (wmq->wmq_si == NULL) {
-		aprint_error_dev(sc->sc_dev,
-		    "unable to establish queue[%d] softint handler\n",
-		    wmq->wmq_id);
-		goto err;
-	}
+	if (wmq->wmq_si != NULL)
+		return 0;
 
-	snprintf(wqname, sizeof(wqname), "%sTxRx", device_xname(sc->sc_dev));
-	error = workqueue_create(&sc->sc_queue_wq, wqname,
-	    wm_handle_queue_work, sc, WM_WORKQUEUE_PRI, IPL_NET,
-	    WM_WORKQUEUE_FLAGS);
-	if (error) {
-		softint_disestablish(wmq->wmq_si);
-		aprint_error_dev(sc->sc_dev,
-		    "unable to create queue[%d] workqueue\n",
-		    wmq->wmq_id);
-		goto err;
-	}
-
-	return 0;
-
-err:
+	aprint_error_dev(sc->sc_dev, "unable to establish queue[%d] handler\n",
+	    wmq->wmq_id);
 	pci_intr_disestablish(sc->sc_pc, sc->sc_ihs[wmq->wmq_intr_idx]);
 	sc->sc_ihs[wmq->wmq_intr_idx] = NULL;
 	return ENOMEM;
@@ -5487,7 +5487,7 @@ wm_setup_legacy(struct wm_softc *sc)
 	aprint_normal_dev(sc->sc_dev, "interrupting at %s\n", intrstr);
 	sc->sc_nintrs = 1;
 
-	return wm_softhandler_establish(sc, 0, 0);
+	return wm_softint_establish(sc, 0, 0);
 }
 
 static int
@@ -5565,7 +5565,7 @@ wm_setup_msix(struct wm_softc *sc)
 			    "for TX and RX interrupting at %s\n", intrstr);
 		}
 		sc->sc_ihs[intr_idx] = vih;
-		if (wm_softhandler_establish(sc, qidx, intr_idx) != 0)
+		if (wm_softint_establish(sc, qidx, intr_idx) != 0)
 			goto fail;
 		txrx_established++;
 		intr_idx++;
@@ -5847,8 +5847,8 @@ wm_init_locked(struct ifnet *ifp)
 	wm_stop_locked(ifp, 0);
 
 	/* Update statistics before reset */
-	ifp->if_collisions += CSR_READ(sc, WMREG_COLC);
-	ifp->if_ierrors += CSR_READ(sc, WMREG_RXERRC);
+	if_statadd2(ifp, if_collisions, CSR_READ(sc, WMREG_COLC),
+	    if_ierrors, CSR_READ(sc, WMREG_RXERRC));
 
 	/* PCH_SPT hardware workaround */
 	if (sc->sc_type == WM_T_PCH_SPT)
@@ -6407,6 +6407,16 @@ wm_stop(struct ifnet *ifp, int disable)
 	WM_CORE_LOCK(sc);
 	wm_stop_locked(ifp, disable);
 	WM_CORE_UNLOCK(sc);
+
+	/*
+	 * After wm_set_stopping_flags(), it is guaranteed
+	 * wm_handle_queue_work() does not call workqueue_enqueue().
+	 * However, workqueue_wait() cannot call in wm_stop_locked()
+	 * because it can sleep...
+	 * so, call workqueue_wait() here.
+	 */
+	for (int i = 0; i < sc->sc_nqueues; i++)
+		workqueue_wait(sc->sc_queue_wq, &sc->sc_queue[i].wmq_cookie);
 }
 
 static void
@@ -7562,7 +7572,7 @@ wm_start(struct ifnet *ifp)
 	KASSERT(if_is_mpsafe(ifp));
 #endif
 	/*
-	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
+	 * if_obytes and if_omcasts are added in if_transmit()@if.c.
 	 */
 
 	mutex_enter(txq->txq_lock);
@@ -7596,10 +7606,11 @@ wm_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	/* XXX NOMPSAFE: ifp->if_data should be percpu. */
-	ifp->if_obytes += m->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	if (mutex_tryenter(txq->txq_lock)) {
 		if (!txq->txq_stopping)
@@ -8167,7 +8178,7 @@ wm_nq_start(struct ifnet *ifp)
 	KASSERT(if_is_mpsafe(ifp));
 #endif
 	/*
-	 * ifp->if_obytes and ifp->if_omcasts are added in if_transmit()@if.c.
+	 * if_obytes and if_omcasts are added in if_transmit()@if.c.
 	 */
 
 	mutex_enter(txq->txq_lock);
@@ -8201,10 +8212,11 @@ wm_nq_transmit(struct ifnet *ifp, struct mbuf *m)
 		return ENOBUFS;
 	}
 
-	/* XXX NOMPSAFE: ifp->if_data should be percpu. */
-	ifp->if_obytes += m->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 	if (m->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	/*
 	 * The situations which this mutex_tryenter() fails at running time
@@ -8649,18 +8661,18 @@ wm_txeof(struct wm_txqueue *txq, u_int limit)
 		if (((status & (WTX_ST_EC | WTX_ST_LC)) != 0)
 		    && ((sc->sc_type < WM_T_82574)
 			|| (sc->sc_type == WM_T_80003))) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			if (status & WTX_ST_LC)
 				log(LOG_WARNING, "%s: late collision\n",
 				    device_xname(sc->sc_dev));
 			else if (status & WTX_ST_EC) {
-				ifp->if_collisions +=
-				    TX_COLLISION_THRESHOLD + 1;
+				if_statadd(ifp, if_collisions,
+				    TX_COLLISION_THRESHOLD + 1);
 				log(LOG_WARNING, "%s: excessive collisions\n",
 				    device_xname(sc->sc_dev));
 			}
 		} else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 		txq->txq_packets++;
 		txq->txq_bytes += txs->txs_mbuf->m_pkthdr.len;
@@ -8982,7 +8994,7 @@ wm_rxeof(struct wm_rxqueue *rxq, u_int limit)
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			wm_init_rxdesc(rxq, i);
@@ -15343,12 +15355,13 @@ wm_enable_wakeup(struct wm_softc *sc)
 pme:
 	/* Request PME */
 	pmode = pci_conf_read(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR);
+	pmode |= PCI_PMCSR_PME_STS; /* in case it's already set (W1C) */
 	if ((rv == 0) && (sc->sc_flags & WM_F_WOL) != 0) {
 		/* For WOL */
-		pmode |= PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN;
+		pmode |= PCI_PMCSR_PME_EN;
 	} else {
 		/* Disable WOL */
-		pmode &= ~(PCI_PMCSR_PME_STS | PCI_PMCSR_PME_EN);
+		pmode &= ~PCI_PMCSR_PME_EN;
 	}
 	pci_conf_write(sc->sc_pc, sc->sc_pcitag, pmreg + PCI_PMCSR, pmode);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_drm.c,v 1.17 2019/04/16 10:00:04 mrg Exp $	*/
+/*	$NetBSD: nouveau_drm.c,v 1.17.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.17 2019/04/16 10:00:04 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.17.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <linux/console.h>
 #include <linux/delay.h>
@@ -60,6 +60,12 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_drm.c,v 1.17 2019/04/16 10:00:04 mrg Exp $")
 #include "nouveau_connector.h"
 #include "nouveau_platform.h"
 #include "nouveau_ttm.h"
+
+#ifdef __NetBSD__
+#include <sys/file.h>
+#include <sys/ioccom.h>
+#include <linux/nbsd-namespace.h>
+#endif
 
 MODULE_PARM_DESC(config, "option string to pass to driver core");
 char *nouveau_config;
@@ -133,11 +139,7 @@ nouveau_cli_create(struct drm_device *dev, const char *sname,
 				       nouveau_config, nouveau_debug,
 				       &cli->base);
 		if (ret == 0) {
-#ifdef __NetBSD__
-			linux_mutex_init(&cli->mutex);
-#else
 			mutex_init(&cli->mutex);
-#endif
 			usif_client_init(cli);
 		}
 		return ret;
@@ -151,11 +153,7 @@ nouveau_cli_destroy(struct nouveau_cli *cli)
 	nvkm_vm_ref(NULL, &nvxx_client(&cli->base)->vm, NULL);
 	nvif_client_fini(&cli->base);
 	usif_client_fini(cli);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&cli->mutex);
-#else
 	mutex_destroy(&cli->mutex);
-#endif
 	kfree(cli);
 }
 
@@ -955,8 +953,6 @@ nouveau_ioctls[] = {
 };
 
 #ifdef __NetBSD__
-#include <sys/file.h>
-#include <sys/ioccom.h>
 static int			/* XXX expose to ioc32 */
 nouveau_ioctl_override(struct file *fp, unsigned long cmd, void *data)
 {

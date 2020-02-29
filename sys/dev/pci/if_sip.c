@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.175 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.175.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.175 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.175.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -911,6 +911,7 @@ sipcom_do_detach(device_t self, enum sip_attach_stage stage)
 		ether_ifdetach(ifp);
 		if_detach(ifp);
 		mii_detach(&sc->sc_mii, MII_PHY_ANY, MII_OFFSET_ANY);
+		ifmedia_fini(&sc->sc_mii.mii_media);
 
 		/*FALLTHROUGH*/
 	case SIP_ATTACH_CREATE_RXMAP:
@@ -994,6 +995,7 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	char intrbuf[PCI_INTRSTR_LEN];
 
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, sipcom_tick, sc);
 
 	sip = sipcom_lookup(pa, strcmp(cf->cf_name, "gsip") == 0);
 	if (sip == NULL) {
@@ -1702,7 +1704,7 @@ sipcom_watchdog(struct ifnet *ifp)
 
 	if (sc->sc_txfree != sc->sc_ntxdesc) {
 		printf("%s: device timeout\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		(void) sipcom_init(ifp);
@@ -1995,11 +1997,12 @@ sipcom_txintr(struct sip_softc *sc)
 		SIMPLEQ_INSERT_TAIL(&sc->sc_txfreeq, txs, txs_q);
 
 		/* Check for errors and collisions. */
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (cmdsts & (CMDSTS_Tx_TXA | CMDSTS_Tx_TFU | CMDSTS_Tx_ED |
 		    CMDSTS_Tx_EC)) {
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 			if (cmdsts & CMDSTS_Tx_EC)
-				ifp->if_collisions += 16;
+				if_statadd_ref(nsr, if_collisions, 16);
 			if (ifp->if_flags & IFF_DEBUG) {
 				if (cmdsts & CMDSTS_Tx_ED)
 					printf("%s: excessive deferral\n",
@@ -2010,9 +2013,12 @@ sipcom_txintr(struct sip_softc *sc)
 			}
 		} else {
 			/* Packet was transmitted successfully. */
-			ifp->if_opackets++;
-			ifp->if_collisions += CMDSTS_COLLISIONS(cmdsts);
+			if_statinc_ref(nsr, if_opackets);
+			if (CMDSTS_COLLISIONS(cmdsts))
+				if_statadd_ref(nsr, if_collisions,
+				    CMDSTS_COLLISIONS(cmdsts));
 		}
+		IF_STAT_PUTREF(ifp);
 	}
 
 	/*
@@ -2083,7 +2089,7 @@ gsip_rxintr(struct sip_softc *sc)
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			sip_init_rxdesc(sc, i);
@@ -2123,7 +2129,7 @@ gsip_rxintr(struct sip_softc *sc)
 		/* If an error occurred, update stats and drop the packet. */
 		if (cmdsts & (CMDSTS_Rx_RXA | CMDSTS_Rx_RUNT |
 		    CMDSTS_Rx_ISE | CMDSTS_Rx_CRCE | CMDSTS_Rx_FAE)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
 			    (cmdsts & CMDSTS_Rx_RXO) == 0) {
 				/* Receive overrun handled elsewhere. */
@@ -2154,7 +2160,7 @@ gsip_rxintr(struct sip_softc *sc)
 			struct mbuf *nm;
 			MGETHDR(nm, M_DONTWAIT, MT_DATA);
 			if (nm == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 				continue;
 			}
@@ -2272,7 +2278,7 @@ sip_rxintr(struct sip_softc *sc)
 
 		/* If any collisions were seen on the wire, count one. */
 		if (cmdsts & CMDSTS_Rx_COL)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 
 		/*
 		 * If an error occurred, update stats, clear the status
@@ -2281,7 +2287,7 @@ sip_rxintr(struct sip_softc *sc)
 		 */
 		if (cmdsts & (CMDSTS_Rx_RXA | CMDSTS_Rx_RUNT |
 		    CMDSTS_Rx_ISE | CMDSTS_Rx_CRCE | CMDSTS_Rx_FAE)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			if ((cmdsts & CMDSTS_Rx_RXA) != 0 &&
 			    (cmdsts & CMDSTS_Rx_RXO) == 0) {
 				/* Receive overrun handled elsewhere. */
@@ -2337,7 +2343,7 @@ sip_rxintr(struct sip_softc *sc)
 			m = rxs->rxs_mbuf;
 			if (sipcom_add_rxbuf(sc, i) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				sip_init_rxdesc(sc, i);
 				bus_dmamap_sync(sc->sc_dmat,
 				    rxs->rxs_dmamap, 0,
@@ -2356,7 +2362,7 @@ sip_rxintr(struct sip_softc *sc)
 		MGETHDR(m, M_DONTWAIT, MT_DATA);
 		if (m == NULL) {
  dropit:
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			sip_init_rxdesc(sc, i);
 			bus_dmamap_sync(sc->sc_dmat, rxs->rxs_dmamap, 0,
 			    rxs->rxs_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -2422,7 +2428,7 @@ sipcom_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, sipcom_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -2755,7 +2761,7 @@ sipcom_init(struct ifnet *ifp)
 	/*
 	 * Start the one second MII clock.
 	 */
-	callout_reset(&sc->sc_tick_ch, hz, sipcom_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	/*
 	 * ...all done!

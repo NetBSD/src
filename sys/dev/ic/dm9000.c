@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000.c,v 1.21 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: dm9000.c,v 1.21.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -560,9 +560,9 @@ int dme_intr(void *arg)
 
 		if (tx_status == 0x0) {
 			/* Frame successfully sent */
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		} else {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		}
 
 		/* If we have nothing ready to transmit, prepare something */
@@ -797,18 +797,18 @@ dme_receive(struct dme_softc *sc, struct ifnet *ifp)
 			rx_status = sc->sc_pkt_read(sc, ifp, &m);
 			if (m == NULL) {
 				/* failed to allocate a receive buffer */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				RX_DPRINTF(("dme_receive: "
 					"Error allocating buffer\n"));
 			} else if (rx_status & (DM9000_RSR_CE | DM9000_RSR_PLE)) {
 				/* Error while receiving the packet,
 				 * discard it and keep track of counters
 				 */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				RX_DPRINTF(("dme_receive: "
 					"Error reciving packet\n"));
 			} else if (rx_status & DM9000_RSR_LCS) {
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 			} else {
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}

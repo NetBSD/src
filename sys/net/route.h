@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.125 2019/09/19 04:08:29 ozaki-r Exp $	*/
+/*	$NetBSD: route.h,v 1.125.2.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -270,6 +270,9 @@ struct rt_msghdr {
  * setsockopt defines used for the filtering.
  */
 #define	RO_MSGFILTER	1	/* array of which rtm_type to send to client */
+#define	RO_MISSFILTER	2	/* array of sockaddrs to match miss dst */
+
+#define	RO_FILTSA_MAX	30	/* maximum number of sockaddrs per filter */
 
 #define RTV_MTU		0x1	/* init or lock _mtu */
 #define RTV_HOPCOUNT	0x2	/* init or lock _hopcount */

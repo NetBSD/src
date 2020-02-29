@@ -1,4 +1,4 @@
-/*	$NetBSD: mb86960.c,v 1.93 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: mb86960.c,v 1.93.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*
  * All Rights Reserved, Copyright (C) Fujitsu Limited 1995
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.93 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: mb86960.c,v 1.93.4.1 2020/02/29 20:19:08 ad Exp $");
 
 /*
  * Device driver for Fujitsu MB86960A/MB86965A based Ethernet cards.
@@ -427,7 +427,7 @@ mb86960_watchdog(struct ifnet *ifp)
 #endif
 
 	/* Record how many packets are lost by this accident. */
-	sc->sc_ec.ec_if.if_oerrors += sc->txb_sched + sc->txb_count;
+	if_statadd(ifp, if_oerrors, sc->txb_sched + sc->txb_count);
 
 	mb86960_reset(sc);
 }
@@ -818,9 +818,11 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 		/*
 		 * Update statistics.
 		 */
-		ifp->if_collisions += 16;
-		ifp->if_oerrors++;
-		ifp->if_opackets += sc->txb_sched - left;
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+		if_statadd_ref(nsr, if_collisions, 16);
+		if_statinc_ref(nsr, if_oerrors);
+		if_statadd_ref(nsr, if_opackets, sc->txb_sched - left);
+		IF_STAT_PUTREF(ifp);
 
 		/*
 		 * Collision statistics has been updated.
@@ -889,7 +891,7 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 				col = 1;
 			} else
 				col >>= FE_D4_COL_SHIFT;
-			ifp->if_collisions += col;
+			if_statadd(ifp, if_collisions, col);
 #if FE_DEBUG >= 4
 			log(LOG_WARNING, "%s: %d collision%s (%d)\n",
 			    device_xname(sc->sc_dev), col, col == 1 ? "" : "s",
@@ -901,7 +903,7 @@ mb86960_tint(struct mb86960_softc *sc, uint8_t tstat)
 		 * Update total number of successfully
 		 * transmitted packets.
 		 */
-		ifp->if_opackets += sc->txb_sched;
+		if_statadd(ifp, if_opackets, sc->txb_sched);
 		sc->txb_sched = 0;
 	}
 
@@ -948,7 +950,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 		log(LOG_WARNING, "%s: receive error: %s\n",
 		    device_xname(sc->sc_dev), sbuf);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 	}
 
 	/*
@@ -988,7 +990,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 		 */
 		if ((status & FE_RXSTAT_GOODPKT) == 0) {
 			if ((ifp->if_flags & IFF_PROMISC) == 0) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				mb86960_droppacket(sc);
 				continue;
 			}
@@ -1022,7 +1024,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 			    device_xname(sc->sc_dev),
 			    len < ETHER_HDR_LEN ? "partial" : "big", len);
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			mb86960_droppacket(sc);
 			continue;
 		}
@@ -1051,7 +1053,7 @@ mb86960_rint(struct mb86960_softc *sc, uint8_t rstat)
 			    "%s: out of mbufs; dropping packet (%u bytes)\n",
 			    device_xname(sc->sc_dev), len);
 #endif
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			mb86960_droppacket(sc);
 
 			/*
@@ -1391,7 +1393,7 @@ mb86960_write_mbufs(struct mb86960_softc *sc, struct mbuf *m)
 		log(LOG_ERR, "%s: got a %s packet (%u bytes) to send\n",
 		    device_xname(sc->sc_dev),
 		    totlen < ETHER_HDR_LEN ? "partial" : "big", totlen);
-		sc->sc_ec.ec_if.if_oerrors++;
+		if_statinc(&sc->sc_ec.ec_if, if_oerrors);
 		return;
 	}
 #endif
@@ -1797,14 +1799,14 @@ mb86960_detach(struct mb86960_softc *sc)
 	if ((sc->sc_stat & FE_STAT_ATTACHED) == 0)
 		return 0;
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
 	/* Unhook the entropy source. */
 	rnd_detach_source(&sc->rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_media);
 
 	mb86960_disable(sc);
 	return 0;

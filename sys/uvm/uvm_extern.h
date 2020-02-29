@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_extern.h,v 1.218.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_extern.h,v 1.218.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -736,7 +736,7 @@ int			uvm_mremap(struct vm_map *, vaddr_t, vsize_t,
 /* uvm_object.c */
 void			uvm_obj_init(struct uvm_object *,
 			    const struct uvm_pagerops *, bool, u_int);
-void			uvm_obj_setlock(struct uvm_object *, kmutex_t *);
+void			uvm_obj_setlock(struct uvm_object *, krwlock_t *);
 void			uvm_obj_destroy(struct uvm_object *, bool);
 int			uvm_obj_wirepages(struct uvm_object *, off_t, off_t,
 			    struct pglist *);
@@ -757,7 +757,6 @@ void			uvm_pagerealloc(struct vm_page *,
 void			uvm_setpagesize(void);
 
 /* uvm_pager.c */
-void			uvm_aio_biodone(struct buf *);
 void			uvm_aio_aiodone(struct buf *);
 void			uvm_aio_aiodone_pages(struct vm_page **, int, bool,
 			    int);

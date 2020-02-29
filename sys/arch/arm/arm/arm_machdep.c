@@ -1,4 +1,4 @@
-/*	$NetBSD: arm_machdep.c,v 1.60.2.1 2020/01/25 22:38:37 ad Exp $	*/
+/*	$NetBSD: arm_machdep.c,v 1.60.2.2 2020/02/29 20:18:17 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -80,7 +80,7 @@
 
 #include <sys/param.h>
 
-__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.60.2.1 2020/01/25 22:38:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: arm_machdep.c,v 1.60.2.2 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/atomic.h>
 #include <sys/cpu.h>
@@ -106,24 +106,22 @@ char	machine_arch[] = MACHINE_ARCH;	/* from <machine/param.h> */
 
 extern const uint32_t undefinedinstruction_bounce[];
 
-/* Our exported CPU info; we can have only one. */
-struct cpu_info cpu_info_store = {
-	.ci_cpl = IPL_HIGH,
-	.ci_curlwp = &lwp0,
-	.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
-#if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
-	.ci_pmap_asid_cur = KERNEL_PID,
-#endif
-};
-
 #ifdef MULTIPROCESSOR
 #define	NCPUINFO	MAXCPUS
 #else
 #define	NCPUINFO	1
 #endif
 
-struct cpu_info *cpu_info[NCPUINFO] = {
-	[0] = &cpu_info_store
+/* Our exported CPU info; we can have only one. */
+struct cpu_info cpu_info_store[NCPUINFO] = {
+	[0] = {
+		.ci_cpl = IPL_HIGH,
+		.ci_curlwp = &lwp0,
+		.ci_undefsave[2] = (register_t) undefinedinstruction_bounce,
+#if defined(ARM_MMU_EXTENDED) && KERNEL_PID != 0
+		.ci_pmap_asid_cur = KERNEL_PID,
+#endif
+	}
 };
 
 const pcu_ops_t * const pcu_ops_md_defs[PCU_UNIT_COUNT] = {

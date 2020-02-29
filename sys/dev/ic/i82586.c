@@ -1,4 +1,4 @@
-/*	$NetBSD: i82586.c,v 1.87 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: i82586.c,v 1.87.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998 The NetBSD Foundation, Inc.
@@ -137,7 +137,7 @@ Mode of operation:
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.87 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i82586.c,v 1.87.2.1 2020/02/29 20:19:08 ad Exp $");
 
 
 #include <sys/param.h>
@@ -281,7 +281,7 @@ i82586_watchdog(struct ifnet *ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	i82586_reset(sc, 1);
 }
@@ -401,11 +401,11 @@ i82586_count_errors(struct ie_softc *sc)
 {
 	int scb = sc->scb;
 
-	sc->sc_ethercom.ec_if.if_ierrors +=
+	if_statadd(&sc->sc_ethercom.ec_if, if_ierrors,
 	    sc->ie_bus_read16(sc, IE_SCB_ERRCRC(scb)) +
 	    sc->ie_bus_read16(sc, IE_SCB_ERRALN(scb)) +
 	    sc->ie_bus_read16(sc, IE_SCB_ERRRES(scb)) +
-	    sc->ie_bus_read16(sc, IE_SCB_ERROVR(scb));
+	    sc->ie_bus_read16(sc, IE_SCB_ERROVR(scb)));
 
 	/* Clear error counters */
 	sc->ie_bus_write16(sc, IE_SCB_ERRCRC(scb), 0);
@@ -588,7 +588,7 @@ static	int timesthru = 1024;
 			i82586_drop_frames(sc);
 			if ((status & IE_FD_RNR) != 0)
 				sc->rnr_expect = 1;
-			sc->sc_ethercom.ec_if.if_ierrors++;
+			if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 		} else if (ie_readframe(sc, i) != 0)
 			return (1);
 	}
@@ -638,13 +638,13 @@ static	int timesthru = 1024;
 				return (1);
 
 			i82586_start_transceiver(sc);
-			sc->sc_ethercom.ec_if.if_ierrors++;
+			if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 			return (0);
 		} else
 			printf("%s: receiver not ready; scbstatus=0x%x\n",
 				device_xname(sc->sc_dev), scbstatus);
 
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 		return (1);	/* Ask for a reset */
 	}
 
@@ -689,10 +689,10 @@ i82586_tint(struct ie_softc *sc, int scbstatus)
 	}
 
 	if (status & IE_STAT_OK) {
-		ifp->if_opackets++;
-		ifp->if_collisions += (status & IE_XS_MAXCOLL);
+		if_statadd2(ifp, if_opackets, 1,
+		    if_collisions, status & IE_XS_MAXCOLL);
 	} else {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		/*
 		 * Check SQE and DEFERRED?
 		 * What if more than one bit is set?
@@ -707,7 +707,7 @@ i82586_tint(struct ie_softc *sc, int scbstatus)
 			aprint_error_dev(sc->sc_dev, "DMA underrun\n");
 		else if (status & IE_XS_EXCMAX) {
 			aprint_error_dev(sc->sc_dev, "too many collisions\n");
-			sc->sc_ethercom.ec_if.if_collisions += 16;
+			if_statadd(&sc->sc_ethercom.ec_if, if_collisions, 16);
 		}
 	}
 
@@ -1008,7 +1008,7 @@ ie_readframe(
 	int pktlen;
 
 	if (i82586_get_rbd_list(sc, &bstart, &bend, &pktlen) == 0) {
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 		return (1);
 	}
 
@@ -1016,7 +1016,7 @@ ie_readframe(
 	i82586_release_rbd_list(sc, bstart, bend);
 
 	if (m == 0) {
-		sc->sc_ethercom.ec_if.if_ierrors++;
+		if_statinc(&sc->sc_ethercom.ec_if, if_ierrors);
 		return (0);
 	}
 

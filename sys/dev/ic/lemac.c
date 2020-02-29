@@ -1,4 +1,4 @@
-/* $NetBSD: lemac.c,v 1.54 2019/05/29 10:07:29 msaitoh Exp $ */
+/* $NetBSD: lemac.c,v 1.54.4.1 2020/02/29 20:19:08 ad Exp $ */
 
 /*-
  * Copyright (c) 1994, 1995, 1997 Matt Thomas <matt@3am-software.com>
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.54 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: lemac.c,v 1.54.4.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -151,16 +151,16 @@ lemac_tne_intr(lemac_softc_t *sc)
 	sc->sc_cntrs.cntr_tne_intrs++;
 	while (txcount-- > 0) {
 		unsigned txsts = LEMAC_INB(sc, LEMAC_REG_TDQ);
-		sc->sc_if.if_opackets++;		/* another one done */
+		if_statinc(&sc->sc_if, if_opackets);	/* another one done */
 		if ((txsts & (LEMAC_TDQ_LCL | LEMAC_TDQ_NCL))
 		    || (txsts & LEMAC_TDQ_COL) == LEMAC_TDQ_EXCCOL) {
 			if (txsts & LEMAC_TDQ_NCL)
 				sc->sc_flags &= ~LEMAC_LINKUP;
-			sc->sc_if.if_oerrors++;
+			if_statinc(&sc->sc_if, if_oerrors);
 		} else {
 			sc->sc_flags |= LEMAC_LINKUP;
 			if ((txsts & LEMAC_TDQ_COL) != LEMAC_TDQ_NOCOL)
-				sc->sc_if.if_collisions++;
+				if_statinc(&sc->sc_if, if_collisions);
 		}
 	}
 	sc->sc_if.if_flags &= ~IFF_OACTIVE;
@@ -179,7 +179,7 @@ lemac_txd_intr(lemac_softc_t *sc, unsigned cs_value)
 
 	sc->sc_cntrs.cntr_txd_intrs++;
 	if (sc->sc_txctl & LEMAC_TX_STP) {
-		sc->sc_if.if_oerrors++;
+		if_statinc(&sc->sc_if, if_oerrors);
 		/* return page to free queue */
 		LEMAC_OUTB(sc, LEMAC_REG_FMQ, LEMAC_INB(sc, LEMAC_REG_TDQ));
 	}
@@ -252,7 +252,7 @@ lemac_input(lemac_softc_t *sc, bus_addr_t offset, size_t length)
 	struct mbuf *m;
 
 	if (length - sizeof(eh) > ETHERMTU || length - sizeof(eh) < ETHERMIN) {
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return;
 	}
 	if (LEMAC_USE_PIO_MODE(sc))
@@ -262,14 +262,14 @@ lemac_input(lemac_softc_t *sc, bus_addr_t offset, size_t length)
 
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL) {
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return;
 	}
 	if (length + 2 > MHLEN) {
 		MCLGET(m, M_DONTWAIT);
 		if ((m->m_flags & M_EXT) == 0) {
 			m_free(m);
-			sc->sc_if.if_ierrors++;
+			if_statinc(&sc->sc_if, if_ierrors);
 			return;
 		}
 	}
@@ -320,7 +320,7 @@ lemac_rne_intr(lemac_softc_t *sc)
 			rxlen = ((rxlen >> 8) & 0x7FF) - 4;
 			lemac_input(sc, sizeof(rxlen), rxlen);
 		} else {
-			sc->sc_if.if_ierrors++;
+			if_statinc(&sc->sc_if, if_ierrors);
 		}
 		/* Return this page to Free Memory Queue */
 		LEMAC_OUTB(sc, LEMAC_REG_FMQ, rxpg);

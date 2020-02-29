@@ -1,10 +1,10 @@
-/*	$NetBSD: miidevs.h,v 1.159 2019/11/06 16:00:33 msaitoh Exp $	*/
+/*	$NetBSD: miidevs.h,v 1.159.2.1 2020/02/29 20:19:09 ad Exp $	*/
 
 /*
  * THIS FILE AUTOMATICALLY GENERATED.  DO NOT EDIT.
  *
  * generated from:
- *	NetBSD: miidevs,v 1.161 2019/11/06 16:00:02 msaitoh Exp
+ *	NetBSD: miidevs,v 1.164 2020/02/27 06:17:28 msaitoh Exp
  */
 
 /*-
@@ -77,7 +77,6 @@
 #define	MII_OUI_AQUANTIA	0x0017b6	/* Aquantia Corporation */
 #define	MII_OUI_BROADCOM3	0x001be9	/* Broadcom Corporation */
 #define	MII_OUI_LEVEL1	0x00207b	/* Level 1 */
-#define	MII_OUI_VIA	0x004063	/* VIA Technologies */
 #define	MII_OUI_MARVELL	0x005043	/* Marvell Semiconductor */
 #define	MII_OUI_QUALSEMI	0x006051	/* Quality Semiconductor */
 #define	MII_OUI_AMLOGIC	0x006051	/* Amlogic */
@@ -89,7 +88,6 @@
 #define	MII_OUI_TSC	0x00c039	/* TDK Semiconductor */
 #define	MII_OUI_MYSON	0x00c0b4	/* Myson Technology */
 #define	MII_OUI_ATTANSIC	0x00c82e	/* Attansic Technology */
-#define	MII_OUI_RDC	0x00d02d	/* RDC Semiconductor */
 #define	MII_OUI_JMICRON	0x00d831	/* JMicron */
 #define	MII_OUI_PMCSIERRA	0x00e004	/* PMC-Sierra */
 #define	MII_OUI_SIS	0x00e006	/* Silicon Integrated Systems */
@@ -104,6 +102,7 @@
 /* Unregistered or wrong OUI */
 #define	MII_OUI_yyREALTEK	0x000004	/* Realtek */
 #define	MII_OUI_yyAMD	0x000058	/* Advanced Micro Devices */
+#define	MII_OUI_xxVIA	0x0002c6	/* VIA Technologies */
 #define	MII_OUI_xxMYSON	0x00032d	/* Myson Technology */
 #define	MII_OUI_xxTSC	0x00039c	/* TDK Semiconductor */
 #define	MII_OUI_xxASIX	0x000674	/* Asix Semiconductor */
@@ -122,6 +121,7 @@
 #define	MII_OUI_xxVITESSE	0x008083	/* Vitesse Semiconductor */
 #define	MII_OUI_xxPMCSIERRA2	0x009057	/* PMC-Sierra */
 #define	MII_OUI_xxCICADA	0x00c08f	/* Cicada Semiconductor */
+#define	MII_OUI_xxRDC	0x00d02d	/* RDC Semiconductor */
 #define	MII_OUI_xxNATSEMI	0x1000e8	/* National Semiconductor */
 #define	MII_OUI_xxLEVEL1	0x782000	/* Level 1 */
 #define	MII_OUI_xxXAQTI	0xace000	/* XaQti Corp. */
@@ -302,6 +302,8 @@
 #define	MII_STR_BROADCOM3_BCM53125	"BCM53125 1000BASE-T switch"
 #define	MII_MODEL_BROADCOM3_BCM5720C	0x0036
 #define	MII_STR_BROADCOM3_BCM5720C	"BCM5720C 1000BASE-T media interface"
+#define	MII_MODEL_BROADCOM4_BCM54213PE	0x000a
+#define	MII_STR_BROADCOM4_BCM54213PE	"BCM54213PE 1000BASE-T media interface"
 #define	MII_MODEL_BROADCOM4_BCM5725C	0x0038
 #define	MII_STR_BROADCOM4_BCM5725C	"BCM5725C 1000BASE-T media interface"
 #define	MII_MODEL_xxBROADCOM_ALT1_BCM5906	0x0004
@@ -555,8 +557,8 @@
 #define	MII_STR_xxQUALSEMI_QS6612	"QS6612 10/100 media interface"
 
 /* RDC Semiconductor PHYs */
-#define	MII_MODEL_RDC_R6040	0x0003
-#define	MII_STR_RDC_R6040	"R6040 10/100 media interface"
+#define	MII_MODEL_xxRDC_R6040	0x0003
+#define	MII_STR_xxRDC_R6040	"R6040 10/100 media interface"
 
 /* RealTek PHYs */
 #define	MII_MODEL_xxREALTEK_RTL8169S	0x0011
@@ -615,10 +617,10 @@
 #define	MII_STR_xxTSC_78Q2121	"78Q2121 100BASE-TX media interface"
 
 /* VIA Technologies PHYs */
-#define	MII_MODEL_VIA_VT6103	0x0032
-#define	MII_STR_VIA_VT6103	"VT6103 10/100 PHY"
-#define	MII_MODEL_VIA_VT6103_2	0x0034
-#define	MII_STR_VIA_VT6103_2	"VT6103 10/100 PHY"
+#define	MII_MODEL_xxVIA_VT6103	0x0032
+#define	MII_STR_xxVIA_VT6103	"VT6103 10/100 PHY"
+#define	MII_MODEL_xxVIA_VT6103_2	0x0034
+#define	MII_STR_xxVIA_VT6103_2	"VT6103 10/100 PHY"
 
 /* Vitesse PHYs (Now Microsemi) */
 #define	MII_MODEL_xxVITESSE_VSC8601	0x0002

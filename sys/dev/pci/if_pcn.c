@@ -1,4 +1,4 @@
-/*	$NetBSD: if_pcn.c,v 1.72 2019/10/11 14:22:46 msaitoh Exp $	*/
+/*	$NetBSD: if_pcn.c,v 1.72.2.1 2020/02/29 20:19:10 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.72 2019/10/11 14:22:46 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_pcn.c,v 1.72.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -582,6 +582,7 @@ pcn_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, pcn_tick, sc);
 
 	aprint_normal(": AMD PCnet-PCI Ethernet\n");
 
@@ -1163,7 +1164,7 @@ pcn_watchdog(struct ifnet *ifp)
 	if (sc->sc_txfree != PCN_NTXDESC) {
 		printf("%s: device timeout (txfree %d txsfree %d)\n",
 		    device_xname(sc->sc_dev), sc->sc_txfree, sc->sc_txsfree);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		(void) pcn_init(ifp);
@@ -1248,11 +1249,11 @@ pcn_intr(void *arg)
 		if (csr0 & LE_C0_ERR) {
 			if (csr0 & LE_C0_BABL) {
 				PCN_EVCNT_INCR(&sc->sc_ev_babl);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			}
 			if (csr0 & LE_C0_MISS) {
 				PCN_EVCNT_INCR(&sc->sc_ev_miss);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			}
 			if (csr0 & LE_C0_MERR) {
 				PCN_EVCNT_INCR(&sc->sc_ev_merr);
@@ -1266,14 +1267,14 @@ pcn_intr(void *arg)
 		if ((csr0 & LE_C0_RXON) == 0) {
 			printf("%s: receiver disabled\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			wantinit = 1;
 		}
 
 		if ((csr0 & LE_C0_TXON) == 0) {
 			printf("%s: transmitter disabled\n",
 			    device_xname(sc->sc_dev));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			wantinit = 1;
 		}
 	}
@@ -1349,7 +1350,7 @@ pcn_txintr(struct pcn_softc *sc)
 		for (j = txs->txs_firstdesc;; j = PCN_NEXTTX(j)) {
 			tmd = le32toh(sc->sc_txdescs[j].tmd1);
 			if (tmd & LE_T1_ERR) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				if (sc->sc_swstyle == LE_B20_SSTYLE_PCNETPCI3)
 					tmd2 = le32toh(sc->sc_txdescs[j].tmd0);
 				else
@@ -1380,21 +1381,21 @@ pcn_txintr(struct pcn_softc *sc)
 					    device_xname(sc->sc_dev));
 				}
 				if (tmd2 & LE_T2_LCOL)
-					ifp->if_collisions++;
+					if_statinc(ifp, if_collisions);
 				if (tmd2 & LE_T2_RTRY)
-					ifp->if_collisions += 16;
+					if_statadd(ifp, if_collisions, 16);
 				goto next_packet;
 			}
 			if (j == txs->txs_lastdesc)
 				break;
 		}
 		if (tmd1 & LE_T1_ONE)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 		else if (tmd & LE_T1_MORE) {
 			/* Real number is unknown. */
-			ifp->if_collisions += 2;
+			if_statadd(ifp, if_collisions, 2);
 		}
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
  next_packet:
 		sc->sc_txfree += txs->txs_dmamap->dm_nsegs;
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap,
@@ -1461,7 +1462,7 @@ pcn_rxintr(struct pcn_softc *sc)
 			 * buffer.
 			 */
 			if (rmd1 & LE_R1_ERR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				/*
 				 * If we got an overflow error, chances
 				 * are there will be a CRC error.  In
@@ -1530,7 +1531,7 @@ pcn_rxintr(struct pcn_softc *sc)
 			m = rxs->rxs_mbuf;
 			if (pcn_add_rxbuf(sc, i) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				PCN_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat,
 				    rxs->rxs_dmamap, 0,
@@ -1567,7 +1568,7 @@ pcn_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, pcn_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -1811,7 +1812,7 @@ pcn_init(struct ifnet *ifp)
 
 	if (sc->sc_flags & PCN_F_HAS_MII) {
 		/* Start the one second MII clock. */
-		callout_reset(&sc->sc_tick_ch, hz, pcn_tick, sc);
+		callout_schedule(&sc->sc_tick_ch, hz);
 	}
 
 	/* ...all done! */

@@ -1,4 +1,4 @@
-/*      $NetBSD: xennetback_xenbus.c,v 1.75 2019/03/09 08:42:25 maxv Exp $      */
+/*      $NetBSD: xennetback_xenbus.c,v 1.75.6.1 2020/02/29 20:18:34 ad Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.75 2019/03/09 08:42:25 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xennetback_xenbus.c,v 1.75.6.1 2020/02/29 20:18:34 ad Exp $");
 
 #include "opt_xen.h"
 
@@ -788,7 +788,7 @@ xennetback_evthandler(void *arg)
 			    ifp->if_xname, txreq.size, msg);
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
@@ -801,7 +801,7 @@ xennetback_evthandler(void *arg)
 				    ifp->if_xname);
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
@@ -817,7 +817,7 @@ xennetback_evthandler(void *arg)
 				    ifp->if_xname);
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			continue;
 		}
@@ -826,7 +826,7 @@ xennetback_evthandler(void *arg)
 		if (__predict_false(err == ENOMEM)) {
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_DROPPED);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			pool_put(&xni_pkt_pool, pkt);
 			m_freem(m);
 			continue;
@@ -837,7 +837,7 @@ xennetback_evthandler(void *arg)
 			    xneti->xni_if.if_xname, err);
 			xennetback_tx_response(xneti, txreq.id,
 			    NETIF_RSP_ERROR);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			pool_put(&xni_pkt_pool, pkt);
 			m_freem(m);
 			continue;
@@ -879,7 +879,7 @@ xennetback_evthandler(void *arg)
 			    (void *)(pkt_va + txreq.offset));
 			xni_pkt_unmap(pkt, pkt_va);
 			if (m->m_pkthdr.len < txreq.size) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 				xennetback_tx_response(xneti, txreq.id,
 				    NETIF_RSP_DROPPED);
@@ -900,7 +900,7 @@ xennetback_evthandler(void *arg)
 		if ((txreq.flags & NETTXF_csum_blank) != 0) {
 			xennet_checksum_fill(&m);
 			if (m == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				continue;
 			}
 		}
@@ -1092,7 +1092,7 @@ xennetback_ifsoftstart_transfer(void *arg)
 			mbufs_sent[i] = m;
 			resp_prod++;
 			i++; /* this packet has been queued */
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
 		if (i != 0) {
@@ -1384,7 +1384,7 @@ xennetback_ifsoftstart_copy(void *arg)
 			mbufs_sent[i] = m;
 			resp_prod++;
 			i++; /* this packet has been queued */
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			bpf_mtap(ifp, m, BPF_D_OUT);
 		}
 		if (i != 0) {

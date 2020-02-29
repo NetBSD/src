@@ -1,4 +1,4 @@
-/*	$NetBSD: rt2560.c,v 1.37 2019/11/10 21:16:35 chs Exp $	*/
+/*	$NetBSD: rt2560.c,v 1.37.2.1 2020/02/29 20:19:08 ad Exp $	*/
 /*	$OpenBSD: rt2560.c,v 1.15 2006/04/20 20:31:12 miod Exp $  */
 /*	$FreeBSD: rt2560.c,v 1.3 2006/03/21 21:15:43 damien Exp $*/
 
@@ -24,7 +24,7 @@
  * http://www.ralinktech.com/
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.37 2019/11/10 21:16:35 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rt2560.c,v 1.37.2.1 2020/02/29 20:19:08 ad Exp $");
 
 
 #include <sys/param.h>
@@ -1098,13 +1098,13 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 				ieee80211_rssadapt_raise_rate(ic,
 				    &rn->rssadapt, &data->id);
 			}
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			break;
 
 		case RT2560_TX_SUCCESS_RETRY:
 			DPRINTFN(9, ("data frame sent after %u retries\n",
 			    (le32toh(desc->flags) >> 5) & 0x7));
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			break;
 
 		case RT2560_TX_FAIL_RETRY:
@@ -1114,7 +1114,7 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 				ieee80211_rssadapt_lower_rate(ic, data->ni,
 				    &rn->rssadapt, &data->id);
 			}
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			break;
 
 		case RT2560_TX_FAIL_INVALID:
@@ -1123,7 +1123,7 @@ rt2560_tx_intr(struct rt2560_softc *sc)
 			aprint_error_dev(sc->sc_dev,
 			    "sending data frame failed 0x%08x\n",
 			    le32toh(desc->flags));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, data->map, 0,
@@ -1261,13 +1261,13 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			break;
 
 		if (data->drop) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
 		if ((le32toh(desc->flags) & RT2560_RX_CIPHER_MASK) != 0 &&
 		    (le32toh(desc->flags) & RT2560_RX_ICV_ERROR)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -1280,14 +1280,14 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 		 */
 		MGETHDR(mnew, M_DONTWAIT, MT_DATA);
 		if (mnew == NULL) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
 		MCLGET(mnew, M_DONTWAIT);
 		if (!(mnew->m_flags & M_EXT)) {
 			m_freem(mnew);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -1311,7 +1311,7 @@ rt2560_decryption_intr(struct rt2560_softc *sc)
 			}
 			/* physical address may have changed */
 			desc->physaddr = htole32(data->map->dm_segs->ds_addr);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			goto skip;
 		}
 
@@ -2150,7 +2150,7 @@ rt2560_start(struct ifnet *ifp)
 
 			if (rt2560_tx_data(sc, m0, ni) != 0) {
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				break;
 			}
 		}
@@ -2171,7 +2171,7 @@ rt2560_watchdog(struct ifnet *ifp)
 		if (--sc->sc_tx_timer == 0) {
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			rt2560_init(ifp);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

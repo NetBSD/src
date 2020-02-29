@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.28 2019/11/28 17:09:10 maxv Exp $	*/
+/*	$NetBSD: if_et.c,v 1.28.2.1 2020/02/29 20:19:10 ad Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.28 2019/11/28 17:09:10 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.28.2.1 2020/02/29 20:19:10 ad Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -93,7 +93,6 @@ static int	et_init(struct ifnet *);
 static int	et_ioctl(struct ifnet *, u_long, void *);
 static void	et_start(struct ifnet *);
 static void	et_watchdog(struct ifnet *);
-static int	et_ifmedia_upd(struct ifnet *);
 static void	et_ifmedia_sts(struct ifnet *, struct ifmediareq *);
 
 static int	et_intr(void *);
@@ -280,7 +279,8 @@ et_attach(device_t parent, device_t self, void *aux)
 	mii->mii_statchg = et_miibus_statchg;
 
 	sc->sc_ethercom.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, 0, et_ifmedia_upd, et_ifmedia_sts);
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange,
+	    et_ifmedia_sts);
 	mii_attach(self, mii, 0xffffffff, MII_PHY_ANY, MII_OFFSET_ANY, 0);
 	if (LIST_FIRST(&mii->mii_phys) == NULL) {
 		aprint_error_dev(self, "no PHY found!\n");
@@ -332,12 +332,12 @@ et_detach(device_t self, int flags)
 
 	mii_detach(&sc->sc_miibus, MII_PHY_ANY, MII_OFFSET_ANY);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_miibus.mii_media, IFM_INST_ANY);
-
 	ether_ifdetach(ifp);
 	if_detach(ifp);
 	et_dma_free(sc);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_miibus.mii_media);
 
 	if (sc->sc_irq_handle != NULL) {
 		pci_intr_disestablish(sc->sc_pct, sc->sc_irq_handle);
@@ -542,20 +542,6 @@ et_miibus_statchg(struct ifnet *ifp)
 	sc->sc_flags |= ET_FLAG_TXRX_ENABLED;
 
 #undef NRETRY
-}
-
-static int
-et_ifmedia_upd(struct ifnet *ifp)
-{
-	struct et_softc *sc;
-	struct mii_data *mii;
-	struct mii_softc *miisc;
-
-	sc = ifp->if_softc;
-	mii = &sc->sc_miibus;
-	LIST_FOREACH(miisc, &mii->mii_phys, mii_list)
-		PHY_RESET(miisc);
-	return (mii_mediachg(mii));
 }
 
 static void
@@ -1115,7 +1101,7 @@ et_init(struct ifnet *ifp)
 	ifp->if_flags &= ~IFF_OACTIVE;
 
 	sc->sc_flags &= ~ET_FLAG_LINK;
-	et_ifmedia_upd(ifp);
+	ether_mediachange(ifp);
 back:
 	if (error)
 		et_stop(sc);
@@ -1197,7 +1183,7 @@ et_start(struct ifnet *ifp)
 		}
 
 		if (et_encap(sc, &m)) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			ifp->if_flags |= IFF_OACTIVE;
 			break;
 		}
@@ -1796,13 +1782,13 @@ et_rxeof(struct et_softc *sc)
 		CSR_WRITE_4(sc, ET_RXSTAT_POS, rxstat_pos);
 
 		if (ring_idx >= ET_RX_NRING) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			aprint_error_dev(sc->sc_dev, "invalid ring index %d\n",
 			    ring_idx);
 			continue;
 		}
 		if (buf_idx >= ET_RX_NDESC) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			aprint_error_dev(sc->sc_dev, "invalid buf index %d\n",
 			    buf_idx);
 			continue;
@@ -1817,7 +1803,7 @@ et_rxeof(struct et_softc *sc)
 		if (rbd->rbd_newbuf(rbd, buf_idx, 0) == 0) {
 			if (buflen < ETHER_CRC_LEN) {
 				m_freem(m);
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			} else {
 				m->m_pkthdr.len = m->m_len = buflen -
 				    ETHER_CRC_LEN;
@@ -1826,7 +1812,7 @@ et_rxeof(struct et_softc *sc)
 				if_percpuq_enqueue(ifp->if_percpuq, m);
 			}
 		} else {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 		}
 
 		rx_ring = &sc->sc_rx_ring[ring_idx];
@@ -2018,7 +2004,7 @@ et_txeof(struct et_softc *sc)
 			bus_dmamap_unload(sc->sc_dmat, tb->tb_dmap);
 			m_freem(tb->tb_mbuf);
 			tb->tb_mbuf = NULL;
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		}
 
 		if (++tbd->tbd_start_index == ET_TX_NDESC) {

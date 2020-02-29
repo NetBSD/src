@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_lwp.c,v 1.19.18.1 2020/01/25 22:38:44 ad Exp $	*/
+/*	$NetBSD: netbsd32_lwp.c,v 1.19.18.2 2020/02/29 20:21:00 ad Exp $	*/
 
 /*
  *  Copyright (c) 2005, 2006, 2007, 2020 The NetBSD Foundation.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.19.18.1 2020/01/25 22:38:44 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_lwp.c,v 1.19.18.2 2020/02/29 20:21:00 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -84,12 +84,11 @@ netbsd32__lwp_create(struct lwp *l, const struct netbsd32__lwp_create_args *uap,
 
 	error = copyout(&l2->l_lid, SCARG_P32(uap, new_lwp),
 	    sizeof(l2->l_lid));
-	if (error != 0)
-		lwp_exit(l2);
-	else
+	if (error == 0) { 
 		lwp_start(l2, SCARG(uap, flags));
-	return error;
-
+		return 0;
+	}
+	lwp_exit(l2);
  fail:
 	kmem_free(newuc, sizeof(ucontext_t));
 	return error;
@@ -184,14 +183,12 @@ netbsd32____lwp_park60(struct lwp *l,
 	}
 
 	if (SCARG(uap, unpark) != 0) {
-		error = lwp_unpark(SCARG(uap, unpark),
-		    SCARG_P32(uap, unparkhint));
+		error = lwp_unpark(&SCARG(uap, unpark), 1);
 		if (error != 0)
 			return error;
 	}
 
-	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp,
-	    SCARG_P32(uap, hint));
+	return lwp_park(SCARG(uap, clock_id), SCARG(uap, flags), tsp);
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_bufs.c,v 1.9 2018/08/27 06:44:14 riastradh Exp $	*/
+/*	$NetBSD: drm_bufs.c,v 1.9.6.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Legacy: Generic DRM Buffer Management
@@ -31,16 +31,12 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.9 2018/08/27 06:44:14 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_bufs.c,v 1.9.6.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/vmalloc.h>
 #include <linux/slab.h>
-#include <linux/sched.h>
 #include <linux/log2.h>
 #include <linux/export.h>
-#include <linux/mm.h>
-#include <asm/bug.h>
-#include <asm/io.h>
 #include <asm/shmparam.h>
 #include <drm/drmP.h>
 #include "drm_legacy.h"
@@ -424,17 +420,8 @@ int drm_legacy_addmap_ioctl(struct drm_device *dev, void *data,
 	struct drm_map_list *maplist;
 	int err;
 
-#ifdef __NetBSD__
-#  if 0				/* XXX Old drm did this.  */
-	if (!(dev->flags & (FREAD | FWRITE)))
-		return -EACCES;
-#  endif
-	if (!(DRM_SUSER() || map->type == _DRM_AGP || map->type == _DRM_SHM))
-		return -EACCES;	/* XXX */
-#else
 	if (!(capable(CAP_SYS_ADMIN) || map->type == _DRM_AGP || map->type == _DRM_SHM))
 		return -EPERM;
-#endif
 
 	err = drm_addmap_core(dev, map->offset, map->size, map->type,
 			      map->flags, &maplist);
@@ -856,13 +843,8 @@ int drm_legacy_addbufs_pci(struct drm_device *dev,
 	if (!dma)
 		return -EINVAL;
 
-#ifdef __NetBSD__
-	if (!DRM_SUSER())
-		return -EACCES;	/* XXX */
-#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
-#endif
 
 	count = request->count;
 	order = order_base_2(request->size);
@@ -969,7 +951,7 @@ int drm_legacy_addbufs_pci(struct drm_device *dev,
 			buf->order = order;
 			buf->used = 0;
 			buf->offset = (dma->byte_count + byte_count + offset);
-			buf->address = (void *)((char *)dmah->vaddr + offset);
+			buf->address = (void *)(dmah->vaddr + offset);
 			buf->bus_address = dmah->busaddr + offset;
 			buf->next = NULL;
 			buf->waiting = 0;
@@ -1064,13 +1046,8 @@ static int drm_legacy_addbufs_sg(struct drm_device *dev,
 	if (!dma)
 		return -EINVAL;
 
-#ifdef __NetBSD__
-	if (!DRM_SUSER())
-		return -EACCES;	/* XXX */
-#else
 	if (!capable(CAP_SYS_ADMIN))
 		return -EPERM;
-#endif
 
 	count = request->count;
 	order = order_base_2(request->size);

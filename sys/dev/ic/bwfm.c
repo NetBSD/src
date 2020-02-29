@@ -1,4 +1,4 @@
-/* $NetBSD: bwfm.c,v 1.19 2019/12/27 09:22:20 msaitoh Exp $ */
+/* $NetBSD: bwfm.c,v 1.19.2.1 2020/02/29 20:19:08 ad Exp $ */
 /* $OpenBSD: bwfm.c,v 1.5 2017/10/16 22:27:16 patrick Exp $ */
 /*
  * Copyright (c) 2010-2016 Broadcom Corporation
@@ -329,7 +329,7 @@ bwfm_start(struct ifnet *ifp)
 			break;
 		}
 		if (error != 0) {
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m);
 			continue;
 		}
@@ -511,7 +511,7 @@ bwfm_watchdog(struct ifnet *ifp)
 	if (sc->sc_tx_timer > 0) {
 		if (--sc->sc_tx_timer == 0) {
 			printf("%s: device timeout\n", DEVNAME(sc));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

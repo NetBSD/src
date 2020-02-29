@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.arm,v 1.53 2020/01/06 07:40:45 skrll Exp $
+#	$NetBSD: Makefile.arm,v 1.53.2.1 2020/02/29 20:18:18 ad Exp $
 
 # Makefile for NetBSD
 #
@@ -55,26 +55,6 @@ CPPFLAGS.cpufunc_asm_armv4.S+=	-mcpu=arm8
 CPPFLAGS.cpufunc_asm_armv6.S+=	-mcpu=arm1136j-s
 CPPFLAGS.cpufunc_asm_arm11.S+=	-mcpu=arm1136j-s
 CPPFLAGS.cpufunc_asm_xscale.S+=	-mcpu=xscale
-
-.if !empty(MACHINE_ARCH:Mearmv6*) || !empty(MACHINE_ARCH:Mearmv7*)
-# XXX
-#
-# Workaround for alignment faults on ARMv6+, at least occur with
-# axe(4) and athn(4) drivers.
-#
-# For ARMv6+, unaligned access is enabled by default. However, it
-# cannot be used for non-cacheable memory, which is used as DMA
-# buffers. This results in alignment faults above. A real fix is
-# to use cacheable memory as DMA buffers. However, it breaks some
-# drivers, awge(4) and vchiq(4) at least.
-#
-# Until we figure out problems and fix them, we choose a fail-safe
-# workaround here; forbid unaligned memory access for whole kernel.
-# Affects on performance is negligibly small as far as we can see.
-#
-# See PR kern/54486 for more details.
-CFLAGS+=	-mno-unaligned-access
-.endif
 
 OPT_DDB=	%DDB%
 .if !empty(OPT_DDB) && ${HAVE_GCC:U0} > 0

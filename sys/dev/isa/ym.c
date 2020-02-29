@@ -1,4 +1,4 @@
-/*	$NetBSD: ym.c,v 1.46 2019/05/08 13:40:18 isaki Exp $	*/
+/*	$NetBSD: ym.c,v 1.46.4.1 2020/02/29 20:19:09 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999-2002, 2008 The NetBSD Foundation, Inc.
@@ -60,7 +60,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.46 2019/05/08 13:40:18 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ym.c,v 1.46.4.1 2020/02/29 20:19:09 ad Exp $");
 
 #include "mpu_ym.h"
 #include "opt_ym.h"
@@ -172,7 +172,6 @@ const struct audio_hw_if ym_hw_if = {
 	.close			= ad1848_isa_close,
 	.query_format		= ad1848_query_format,
 	.set_format		= ad1848_set_format,
-	.round_blocksize	= ad1848_round_blocksize,
 	.commit_settings	= ad1848_commit_settings,
 	.halt_output		= ad1848_isa_halt_output,
 	.halt_input		= ad1848_isa_halt_input,

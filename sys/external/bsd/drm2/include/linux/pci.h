@@ -1,4 +1,4 @@
-/*	$NetBSD: pci.h,v 1.37.6.1 2020/01/25 22:38:50 ad Exp $	*/
+/*	$NetBSD: pci.h,v 1.37.6.2 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -61,7 +61,10 @@
 struct acpi_devnode;
 #endif
 
+#include <linux/device.h>
 #include <linux/dma-mapping.h>
+#include <linux/errno.h>
+#include <linux/io.h>
 #include <linux/ioport.h>
 #include <linux/kernel.h>
 

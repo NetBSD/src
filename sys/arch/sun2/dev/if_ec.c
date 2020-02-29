@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ec.c,v 1.34 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: if_ec.c,v 1.34.4.1 2020/02/29 20:18:31 ad Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.34 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ec.c,v 1.34.4.1 2020/02/29 20:18:31 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -419,7 +419,7 @@ ec_intr(void *arg)
 		if (ECREG_CSR_RD & EC_CSR_JAM) {
 			ECREG_CSR_WR(ECREG_CSR_RD &
 			    (EC_CSR_BINT | EC_CSR_AINT | EC_CSR_PAMASK));
-			sc->sc_ethercom.ec_if.if_collisions++;
+			if_statinc(ifp, if_collisions);
 			retval++;
 			ec_coll(sc);
 
@@ -429,7 +429,7 @@ ec_intr(void *arg)
 			ECREG_CSR_WR(ECREG_CSR_RD &
 			    (EC_CSR_BINT | EC_CSR_AINT | EC_CSR_PAMASK));
 			retval++;
-			sc->sc_ethercom.ec_if.if_opackets++;
+			if_statinc(ifp, if_opackets);
 			sc->sc_jammed = 0;
 			ifp->if_flags &= ~IFF_OACTIVE;
 			if_schedule_deferred_start(ifp);
@@ -526,7 +526,7 @@ ec_recv(struct ec_softc *sc, int intbit)
 		/* Something went wrong. */
 		if (m0 != NULL)
 			m_freem(m0);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 	}
 
 	/* Give the receive buffer back to the card. */
@@ -629,7 +629,7 @@ ec_coll(struct ec_softc *sc)
 	u_short jams;
 
 	if ((++sc->sc_colliding) >= EC_COLLISIONS_JAMMED) {
-		sc->sc_ethercom.ec_if.if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		if (!sc->sc_jammed)
 			printf("%s: ethernet jammed\n",
 			    device_xname(sc->sc_dev));
@@ -658,7 +658,7 @@ ec_watchdog(struct ifnet *ifp)
 	struct ec_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	sc->sc_ethercom.ec_if.if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	ec_reset(ifp);
 }

@@ -1,4 +1,4 @@
-/*	$NetBSD: l2cap_signal.c,v 1.19 2018/08/21 14:59:13 plunky Exp $	*/
+/*	$NetBSD: l2cap_signal.c,v 1.19.6.1 2020/02/29 20:21:07 ad Exp $	*/
 
 /*-
  * Copyright (c) 2005 Iain Hibbert.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.19 2018/08/21 14:59:13 plunky Exp $");
+__KERNEL_RCSID(0, "$NetBSD: l2cap_signal.c,v 1.19.6.1 2020/02/29 20:21:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -488,7 +488,7 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 			if (opt.length != L2CAP_OPT_MTU_SIZE)
 				goto reject;
 
-			m_copydata(m, 0, L2CAP_OPT_MTU_SIZE, &val);
+			m_copydata(m, 0, L2CAP_OPT_MTU_SIZE, &val.mtu);
 			val.mtu = le16toh(val.mtu);
 
 			/*
@@ -539,7 +539,7 @@ l2cap_recv_config_req(struct mbuf *m, struct hci_link *link)
 			 * config request is merely advising us of their
 			 * outgoing traffic flow, so be nice.
 			 */
-			m_copydata(m, 0, L2CAP_OPT_QOS_SIZE, &val);
+			m_copydata(m, 0, L2CAP_OPT_QOS_SIZE, &val.qos);
 			switch (val.qos.service_type) {
 			case L2CAP_QOS_NO_TRAFFIC:
 				/*
@@ -729,7 +729,7 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 				if (opt.length != L2CAP_OPT_MTU_SIZE)
 					goto discon;
 
-				m_copydata(m, 0, L2CAP_OPT_MTU_SIZE, &val);
+				m_copydata(m, 0, L2CAP_OPT_MTU_SIZE, &val.mtu);
 				chan->lc_imtu = le16toh(val.mtu);
 				if (chan->lc_imtu < L2CAP_MTU_MINIMUM)
 					chan->lc_imtu = L2CAP_MTU_DEFAULT;
@@ -759,7 +759,7 @@ l2cap_recv_config_rsp(struct mbuf *m, struct hci_link *link)
 				 * We don't support anything, but copy in the
 				 * parameters if no action is good enough.
 				 */
-				m_copydata(m, 0, L2CAP_OPT_QOS_SIZE, &val);
+				m_copydata(m, 0, L2CAP_OPT_QOS_SIZE, &val.qos);
 				switch (val.qos.service_type) {
 				case L2CAP_QOS_NO_TRAFFIC:
 				case L2CAP_QOS_BEST_EFFORT:

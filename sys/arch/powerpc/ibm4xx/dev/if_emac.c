@@ -1,4 +1,4 @@
-/*	$NetBSD: if_emac.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $	*/
+/*	$NetBSD: if_emac.c,v 1.51.4.1 2020/02/29 20:18:29 ad Exp $	*/
 
 /*
  * Copyright 2001, 2002 Wasabi Systems, Inc.
@@ -52,7 +52,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.51 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_emac.c,v 1.51.4.1 2020/02/29 20:18:29 ad Exp $");
 
 #include "opt_emac.h"
 
@@ -1108,7 +1108,7 @@ emac_watchdog(struct ifnet *ifp)
 		aprint_error_ifnet(ifp,
 		    "device timeout (txfree %d txsfree %d txnext %d)\n",
 		    sc->sc_txfree, sc->sc_txsfree, sc->sc_txnext);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		/* Reset the interface. */
 		(void)emac_init(ifp);
@@ -1281,7 +1281,7 @@ emac_txreap(struct emac_softc *sc)
 		 * Check for errors and collisions.
 		 */
 		if (txstat & (EMAC_TXS_UR | EMAC_TXS_ED))
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
 #ifdef EMAC_EVENT_COUNTERS
 		if (txstat & EMAC_TXS_UR)
@@ -1291,15 +1291,15 @@ emac_txreap(struct emac_softc *sc)
 		if (txstat &
 		    (EMAC_TXS_EC | EMAC_TXS_MC | EMAC_TXS_SC | EMAC_TXS_LC)) {
 			if (txstat & EMAC_TXS_EC)
-				ifp->if_collisions += 16;
+				if_statadd(ifp, if_collisions, 16);
 			else if (txstat & EMAC_TXS_MC)
-				ifp->if_collisions += 2;	/* XXX? */
+				if_statadd(ifp, if_collisions, 2); /* XXX? */
 			else if (txstat & EMAC_TXS_SC)
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 			if (txstat & EMAC_TXS_LC)
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 		} else
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 
 		if (ifp->if_flags & IFF_DEBUG) {
 			if (txstat & EMAC_TXS_ED)
@@ -1615,7 +1615,7 @@ emac_rxeob_intr(void *arg)
 			if (rxstat & (bit))			\
 				aprint_error_ifnet(ifp,		\
 				    "receive error: %s\n", str)
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			PRINTERR(EMAC_RXS_OE, "overrun error");
 			PRINTERR(EMAC_RXS_BP, "bad packet");
 			PRINTERR(EMAC_RXS_RP, "runt packet");
@@ -1664,7 +1664,7 @@ emac_rxeob_intr(void *arg)
 			m = rxs->rxs_mbuf;
 			if (emac_add_rxbuf(sc, i) != 0) {
  dropit:
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				EMAC_INIT_RXDESC(sc, i);
 				bus_dmamap_sync(sc->sc_dmat,
 				    rxs->rxs_dmamap, 0,

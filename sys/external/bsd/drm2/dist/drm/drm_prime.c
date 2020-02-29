@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_prime.c,v 1.7 2018/08/27 15:32:39 riastradh Exp $	*/
+/*	$NetBSD: drm_prime.c,v 1.7.6.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright © 2012 Red Hat
@@ -29,7 +29,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.7 2018/08/27 15:32:39 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.7.6.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/export.h>
 #include <linux/dma-buf.h>
@@ -41,6 +41,8 @@ __KERNEL_RCSID(0, "$NetBSD: drm_prime.c,v 1.7 2018/08/27 15:32:39 riastradh Exp 
 #ifdef __NetBSD__
 
 #include <drm/bus_dma_hacks.h>
+
+#include <linux/nbsd-namespace.h>
 
 /*
  * We use struct sg_table just to pass around an array of pages from
@@ -282,7 +284,7 @@ void drm_prime_remove_buf_handle_locked(struct drm_prime_file_private *prime_fpr
 }
 
 static struct sg_table *drm_gem_map_dma_buf(struct dma_buf_attachment *attach,
-						enum dma_data_direction dir)
+					    enum dma_data_direction dir)
 {
 	struct drm_prime_attachment *prime_attach = attach->priv;
 	struct drm_gem_object *obj = attach->dmabuf->priv;
@@ -1012,20 +1014,12 @@ EXPORT_SYMBOL(drm_prime_gem_destroy);
 void drm_prime_init_file_private(struct drm_prime_file_private *prime_fpriv)
 {
 	INIT_LIST_HEAD(&prime_fpriv->head);
-#ifdef __NetBSD__
-	linux_mutex_init(&prime_fpriv->lock);
-#else
 	mutex_init(&prime_fpriv->lock);
-#endif
 }
 
 void drm_prime_destroy_file_private(struct drm_prime_file_private *prime_fpriv)
 {
 	/* by now drm_gem_release should've made sure the list is empty */
 	WARN_ON(!list_empty(&prime_fpriv->head));
-#ifdef __NetBSD__
-	linux_mutex_destroy(&prime_fpriv->lock);
-#else
 	mutex_destroy(&prime_fpriv->lock);
-#endif
 }

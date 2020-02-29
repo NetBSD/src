@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.180 2019/08/21 10:48:37 mrg Exp $	*/
+/*	$NetBSD: usb.c,v 1.180.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.180 2019/08/21 10:48:37 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.180.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -65,6 +65,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.180 2019/08/21 10:48:37 mrg Exp $");
 #include <sys/atomic.h>
 #include <sys/sysctl.h>
 #include <sys/compat_stub.h>
+#include <sys/sdt.h>
 
 #include <dev/usb/usb.h>
 #include <dev/usb/usbdi.h>
@@ -73,6 +74,7 @@ __KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.180 2019/08/21 10:48:37 mrg Exp $");
 #include <dev/usb/usb_verbose.h>
 #include <dev/usb/usb_quirks.h>
 #include <dev/usb/usbhist.h>
+#include <dev/usb/usb_sdt.h>
 
 #include "ioconf.h"
 
@@ -154,6 +156,54 @@ struct usb_taskq {
 };
 
 static struct usb_taskq usb_taskq[USB_NUM_TASKQS];
+
+/* XXX wrong place */
+#ifdef KDTRACE_HOOKS
+#define	__dtrace_used
+#else
+#define	__dtrace_used	__unused
+#endif
+
+SDT_PROVIDER_DEFINE(usb);
+
+SDT_PROBE_DEFINE3(usb, kernel, task, add,
+    "struct usbd_device *"/*dev*/, "struct usb_task *"/*task*/, "int"/*q*/);
+SDT_PROBE_DEFINE2(usb, kernel, task, rem__start,
+    "struct usbd_device *"/*dev*/, "struct usb_task *"/*task*/);
+SDT_PROBE_DEFINE3(usb, kernel, task, rem__done,
+    "struct usbd_device *"/*dev*/,
+    "struct usb_task *"/*task*/,
+    "bool"/*removed*/);
+SDT_PROBE_DEFINE4(usb, kernel, task, rem__wait__start,
+    "struct usbd_device *"/*dev*/,
+    "struct usb_task *"/*task*/,
+    "int"/*queue*/,
+    "kmutex_t *"/*interlock*/);
+SDT_PROBE_DEFINE5(usb, kernel, task, rem__wait__done,
+    "struct usbd_device *"/*dev*/,
+    "struct usb_task *"/*task*/,
+    "int"/*queue*/,
+    "kmutex_t *"/*interlock*/,
+    "bool"/*done*/);
+
+SDT_PROBE_DEFINE1(usb, kernel, task, start,  "struct usb_task *"/*task*/);
+SDT_PROBE_DEFINE1(usb, kernel, task, done,  "struct usb_task *"/*task*/);
+
+SDT_PROBE_DEFINE1(usb, kernel, bus, needs__explore,
+    "struct usbd_bus *"/*bus*/);
+SDT_PROBE_DEFINE1(usb, kernel, bus, needs__reattach,
+    "struct usbd_bus *"/*bus*/);
+SDT_PROBE_DEFINE1(usb, kernel, bus, discover__start,
+    "struct usbd_bus *"/*bus*/);
+SDT_PROBE_DEFINE1(usb, kernel, bus, discover__done,
+    "struct usbd_bus *"/*bus*/);
+SDT_PROBE_DEFINE1(usb, kernel, bus, explore__start,
+    "struct usbd_bus *"/*bus*/);
+SDT_PROBE_DEFINE1(usb, kernel, bus, explore__done,
+    "struct usbd_bus *"/*bus*/);
+
+SDT_PROBE_DEFINE1(usb, kernel, event, add,  "struct usb_event *"/*uep*/);
+SDT_PROBE_DEFINE1(usb, kernel, event, drop,  "struct usb_event *"/*uep*/);
 
 dev_type_open(usbopen);
 dev_type_close(usbclose);
@@ -412,6 +462,7 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 	struct usb_taskq *taskq;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	SDT_PROBE3(usb, kernel, task, add,  dev, task, queue);
 
 	KASSERT(0 <= queue);
 	KASSERT(queue < USB_NUM_TASKQS);
@@ -431,19 +482,22 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 /*
  * usb_rem_task(dev, task)
  *
- *	If task is queued to run, remove it from the queue.
+ *	If task is queued to run, remove it from the queue.  Return
+ *	true if it successfully removed the task from the queue, false
+ *	if not.
  *
  *	Caller is _not_ guaranteed that the task is not running when
  *	this is done.
  *
  *	Never sleeps.
  */
-void
+bool
 usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 {
 	unsigned queue;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	SDT_PROBE2(usb, kernel, task, rem__start,  dev, task);
 
 	while ((queue = task->queue) != USB_NUM_TASKQS) {
 		struct usb_taskq *taskq = &usb_taskq[queue];
@@ -452,10 +506,15 @@ usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = USB_NUM_TASKQS;
 			mutex_exit(&taskq->lock);
-			break;
+			SDT_PROBE3(usb, kernel, task, rem__done,
+			    dev, task, true);
+			return true; /* removed from the queue */
 		}
 		mutex_exit(&taskq->lock);
 	}
+
+	SDT_PROBE3(usb, kernel, task, rem__done,  dev, task, false);
+	return false;		/* was not removed from the queue */
 }
 
 /*
@@ -485,6 +544,8 @@ usb_rem_task_wait(struct usbd_device *dev, struct usb_task *task, int queue,
 	bool removed;
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	SDT_PROBE4(usb, kernel, task, rem__wait__start,
+	    dev, task, queue, interlock);
 	ASSERT_SLEEPABLE();
 	KASSERT(0 <= queue);
 	KASSERT(queue < USB_NUM_TASKQS);
@@ -523,7 +584,26 @@ usb_rem_task_wait(struct usbd_device *dev, struct usb_task *task, int queue,
 	if (interlock && !removed)
 		mutex_enter(interlock);
 
+	SDT_PROBE5(usb, kernel, task, rem__wait__done,
+	    dev, task, queue, interlock, removed);
 	return removed;
+}
+
+/*
+ * usb_task_pending(dev, task)
+ *
+ *	True if task is queued, false if not.  Note that if task is
+ *	already running, it is not considered queued.
+ *
+ *	For _negative_ diagnostic assertions only:
+ *
+ *		KASSERT(!usb_task_pending(dev, task));
+ */
+bool
+usb_task_pending(struct usbd_device *dev, struct usb_task *task)
+{
+
+	return task->queue != USB_NUM_TASKQS;
 }
 
 void
@@ -608,8 +688,10 @@ usb_task_thread(void *arg)
 
 			if (!mpsafe)
 				KERNEL_LOCK(1, curlwp);
+			SDT_PROBE1(usb, kernel, task, start,  task);
 			task->fun(task->arg);
 			/* Can't dereference task after this point.  */
+			SDT_PROBE1(usb, kernel, task, done,  task);
 			if (!mpsafe)
 				KERNEL_UNLOCK_ONE(curlwp);
 
@@ -1000,12 +1082,16 @@ usb_discover(struct usb_softc *sc)
 	 * Also, we now have bus->ub_lock held, and in combination
 	 * with ub_exploring, avoids interferring with polling.
 	 */
+	SDT_PROBE1(usb, kernel, bus, discover__start,  bus);
 	while (bus->ub_needsexplore && !sc->sc_dying) {
 		bus->ub_needsexplore = 0;
 		mutex_exit(sc->sc_bus->ub_lock);
+		SDT_PROBE1(usb, kernel, bus, explore__start,  bus);
 		bus->ub_roothub->ud_hub->uh_explore(bus->ub_roothub);
+		SDT_PROBE1(usb, kernel, bus, explore__done,  bus);
 		mutex_enter(bus->ub_lock);
 	}
+	SDT_PROBE1(usb, kernel, bus, discover__done,  bus);
 }
 
 void
@@ -1013,6 +1099,7 @@ usb_needs_explore(struct usbd_device *dev)
 {
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	SDT_PROBE1(usb, kernel, bus, needs__explore,  dev->ud_bus);
 
 	mutex_enter(dev->ud_bus->ub_lock);
 	dev->ud_bus->ub_needsexplore = 1;
@@ -1025,6 +1112,7 @@ usb_needs_reattach(struct usbd_device *dev)
 {
 
 	USBHIST_FUNC(); USBHIST_CALLED(usbdebug);
+	SDT_PROBE1(usb, kernel, bus, needs__reattach,  dev->ud_bus);
 
 	mutex_enter(dev->ud_bus->ub_lock);
 	dev->ud_powersrc->up_reattach = 1;
@@ -1106,12 +1194,19 @@ usb_add_event(int type, struct usb_event *uep)
 	ueq->ue = *uep;
 	ueq->ue.ue_type = type;
 	TIMEVAL_TO_TIMESPEC(&thetime, &ueq->ue.ue_time);
+	SDT_PROBE1(usb, kernel, event, add,  uep);
 
 	mutex_enter(&usb_event_lock);
 	if (++usb_nevents >= USB_MAX_EVENTS) {
 		/* Too many queued events, drop an old one. */
 		DPRINTF("event dropped", 0, 0, 0, 0);
-		(void)usb_get_next_event(0);
+#ifdef KDTRACE_HOOKS
+		struct usb_event oue;
+		if (usb_get_next_event(&oue))
+			SDT_PROBE1(usb, kernel, event, drop,  &oue);
+#else
+		usb_get_next_event(NULL);
+#endif
 	}
 	SIMPLEQ_INSERT_TAIL(&usb_events, ueq, next);
 	cv_signal(&usb_event_cv);

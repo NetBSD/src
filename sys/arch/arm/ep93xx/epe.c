@@ -1,4 +1,4 @@
-/*	$NetBSD: epe.c,v 1.45 2019/10/21 08:22:06 msaitoh Exp $	*/
+/*	$NetBSD: epe.c,v 1.45.2.1 2020/02/29 20:18:18 ad Exp $	*/
 
 /*
  * Copyright (c) 2004 Jesse Off
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.45 2019/10/21 08:22:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: epe.c,v 1.45.2.1 2020/02/29 20:18:18 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -96,7 +96,6 @@ static void	epe_attach(device_t, device_t, void *);
 static void	epe_init(struct epe_softc *);
 static int	epe_intr(void* arg);
 static int	epe_gctx(struct epe_softc *);
-static int	epe_mediachange(struct ifnet *);
 int		epe_mii_readreg (device_t, int, int, uint16_t *);
 int		epe_mii_writereg (device_t, int, int, uint16_t);
 void		epe_statchg (struct ifnet *);
@@ -172,7 +171,7 @@ epe_gctx(struct epe_softc *sc)
 		struct mbuf *m = sc->txq[tbi].m;
 
 		if ((*sc->TXStsQ_cur & TXStsQ_TxWE) == 0)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
 		bus_dmamap_unload(sc->sc_dmat, sc->txq[tbi].m_dmamap);
 		m_freem(m);
@@ -182,7 +181,7 @@ epe_gctx(struct epe_softc *sc)
 			tbi = (tbi + 1) % TX_QLEN;
 		} while (sc->txq[tbi].m == m);
 
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 		sc->TXStsQ_cur++;
 		if (sc->TXStsQ_cur >= sc->TXStsQ + TX_QLEN) {
 			sc->TXStsQ_cur = sc->TXStsQ;
@@ -243,10 +242,10 @@ begin:
 				if (m != NULL)
 					m_freem(m);
 
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			}
 		} else
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 
 		ndq++;
 
@@ -401,7 +400,7 @@ epe_init(struct epe_softc *sc)
 	mii->mii_writereg = epe_mii_writereg;
 	mii->mii_statchg = epe_statchg;
 	sc->sc_ec.ec_mii = mii;
-	ifmedia_init(&mii->mii_media, IFM_IMASK, epe_mediachange,
+	ifmedia_init(&mii->mii_media, IFM_IMASK, ether_mediachange,
 		ether_mediastatus);
 	mii_attach(sc->sc_dev, mii, 0xffffffff, MII_PHY_ANY,
 	    MII_OFFSET_ANY, 0);
@@ -438,14 +437,6 @@ epe_init(struct epe_softc *sc)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, (sc)->sc_enaddr);
-}
-
-static int
-epe_mediachange(struct ifnet *ifp)
-{
-	if (ifp->if_flags & IFF_UP)
-		epe_ifinit(ifp);
-	return 0;
 }
 
 int
@@ -505,7 +496,7 @@ epe_tick(void *arg)
 	int s;
 	uint32_t misses;
 
-	ifp->if_collisions += EPE_READ(TXCollCnt);
+	if_statadd(ifp, if_collisions, EPE_READ(TXCollCnt));
 	/* These misses are ok, they will happen if the RAM/CPU can't keep up */
 	misses = EPE_READ(RXMissCnt);
 	if (misses > 0)

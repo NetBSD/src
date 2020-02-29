@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_bios.h,v 1.3 2018/08/27 04:58:24 riastradh Exp $	*/
+/*	$NetBSD: nouveau_bios.h,v 1.3.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright 2007-2008 Nouveau Project
@@ -25,8 +25,6 @@
 
 #ifndef __NOUVEAU_DISPBIOS_H__
 #define __NOUVEAU_DISPBIOS_H__
-
-#include <asm/byteorder.h>
 
 #define DCB_MAX_NUM_ENTRIES 16
 #define DCB_MAX_NUM_I2C_ENTRIES 16

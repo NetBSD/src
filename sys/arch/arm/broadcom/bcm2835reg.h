@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835reg.h,v 1.29 2019/12/30 16:19:27 skrll Exp $	*/
+/*	$NetBSD: bcm2835reg.h,v 1.29.2.1 2020/02/29 20:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -123,6 +123,15 @@
 #define	BCM2835_ARMMBOX_SIZE	0x40
 
 #define	BCM2835_INTC_BASE	(0x0)	/* Relative to BCM2835_ARMICU_BASE */
+
+#define	BCM2711_SCB_BASE	0xfc000000
+#define	BCM2711_SCB_SIZE	0x03800000
+#define	BCM2711_SCB_BASE_BUS	0x7c000000
+
+#define	BCM2711_SCB_PHYS_TO_BUS(a) \
+    ((a) - BCM2711_SCB_BASE + BCM2711_SCB_BASE_BUS)
+#define	BCM2711_SCB_BUS_TO_PHYS(a) \
+    ((a) - BCM2711_SCB_BASE_BUS + BCM2711_SCB_BASE)
 
 /* Interrupt controller */
 #define	BCM2835_INTC_IRQBPENDING	(BCM2835_INTC_BASE + 0x00)	/* IRQ Basic pending */

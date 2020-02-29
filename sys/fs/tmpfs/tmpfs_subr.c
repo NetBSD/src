@@ -1,4 +1,4 @@
-/*	$NetBSD: tmpfs_subr.c,v 1.105.2.2 2020/01/24 16:48:58 ad Exp $	*/
+/*	$NetBSD: tmpfs_subr.c,v 1.105.2.3 2020/02/29 20:21:02 ad Exp $	*/
 
 /*
  * Copyright (c) 2005-2013 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.105.2.2 2020/01/24 16:48:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tmpfs_subr.c,v 1.105.2.3 2020/02/29 20:21:02 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cprng.h>
@@ -106,14 +106,14 @@ static void	tmpfs_dir_putseq(tmpfs_node_t *, tmpfs_dirent_t *);
 static void
 tmpfs_init_vnode(struct vnode *vp, tmpfs_node_t *node)
 {
-	kmutex_t *slock;
+	krwlock_t *slock;
 
 	KASSERT(node->tn_vnode == NULL);
 
 	/* Share the interlock with the node. */
 	if (node->tn_type == VREG) {
 		slock = node->tn_spec.tn_reg.tn_aobj->vmobjlock;
-		mutex_obj_hold(slock);
+		rw_obj_hold(slock);
 		uvm_obj_setlock(&vp->v_uobj, slock);
 	}
 
@@ -936,11 +936,9 @@ tmpfs_reg_resize(struct vnode *vp, off_t newsize)
 	 * Free "backing store".
 	 */
 	if (newpages < oldpages) {
-		KASSERT(uobj->vmobjlock == vp->v_interlock);
-
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		uao_dropswap_range(uobj, newpages, oldpages);
-		mutex_exit(uobj->vmobjlock);
+		rw_exit(uobj->vmobjlock);
 
 		/* Decrease the used-memory counter. */
 		tmpfs_mem_decr(tmp, (oldpages - newpages) << PAGE_SHIFT);

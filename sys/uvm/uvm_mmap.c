@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_mmap.c,v 1.174 2019/10/04 22:48:45 kamil Exp $	*/
+/*	$NetBSD: uvm_mmap.c,v 1.174.2.1 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -46,7 +46,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.174 2019/10/04 22:48:45 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_mmap.c,v 1.174.2.1 2020/02/29 20:21:11 ad Exp $");
 
 #include "opt_compat_netbsd.h"
 #include "opt_pax.h"
@@ -200,9 +200,9 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 		uobj = entry->object.uvm_obj;	/* lower layer */
 
 		if (amap != NULL)
-			amap_lock(amap);
+			amap_lock(amap, RW_READER);
 		if (uobj != NULL)
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_READER);
 
 		for (/* nothing */; start < lim; start += PAGE_SIZE, vec++) {
 			pgi = 0;
@@ -238,7 +238,7 @@ sys_mincore(struct lwp *l, const struct sys_mincore_args *uap,
 			(void) ustore_char(vec, pgi);
 		}
 		if (uobj != NULL)
-			mutex_exit(uobj->vmobjlock);
+			rw_exit(uobj->vmobjlock);
 		if (amap != NULL)
 			amap_unlock(amap);
 	}

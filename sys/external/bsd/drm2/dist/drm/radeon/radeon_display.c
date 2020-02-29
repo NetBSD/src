@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_display.c,v 1.10 2019/01/30 01:11:08 mrg Exp $	*/
+/*	$NetBSD: radeon_display.c,v 1.10.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,7 +26,7 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.10 2019/01/30 01:11:08 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.10.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -35,7 +35,6 @@ __KERNEL_RCSID(0, "$NetBSD: radeon_display.c,v 1.10 2019/01/30 01:11:08 mrg Exp 
 #include "atom.h"
 #include <asm/div64.h>
 
-#include <linux/err.h>
 #include <linux/pm_runtime.h>
 #include <drm/drm_crtc_helper.h>
 #include <drm/drm_plane_helper.h>

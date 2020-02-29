@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cwd.c,v 1.4.62.2 2020/01/25 18:42:24 ad Exp $	*/
+/*	$NetBSD: vfs_cwd.c,v 1.4.62.3 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.4.62.2 2020/01/25 18:42:24 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cwd.c,v 1.4.62.3 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -195,9 +195,7 @@ cwdenter(krw_t op)
 		 * reference on the cwdinfo, or curproc has more than one
 		 * LWP, then LWPs other than curlwp can also see the
 		 * cwdinfo.  Run a cross call to get all LWPs out of the
-		 * read section.  This also acts as a global memory barrier,
-		 * meaning we don't need to do anything special with on
-		 * the reader side.
+		 * read section.
 		 */
 		mutex_enter(&cwdi->cwdi_lock);
 		if (cwdi->cwdi_refcnt + curproc->p_nlwps > 2)

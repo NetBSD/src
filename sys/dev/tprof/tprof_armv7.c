@@ -1,4 +1,4 @@
-/* $NetBSD: tprof_armv7.c,v 1.2 2018/07/16 10:56:42 jmcneill Exp $ */
+/* $NetBSD: tprof_armv7.c,v 1.2.12.1 2020/02/29 20:19:16 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.2 2018/07/16 10:56:42 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tprof_armv7.c,v 1.2.12.1 2020/02/29 20:19:16 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -173,7 +173,7 @@ armv7_pmu_start(const tprof_param_t *param)
 	uint64_t xc;
 
 	if (!armv7_pmu_event_implemented(param->p_event)) {
-		printf("%s: event 0x%#llx not implemented on this CPU\n",
+		printf("%s: event %#llx not implemented on this CPU\n",
 		    __func__, param->p_event);
 		return EINVAL;
 	}

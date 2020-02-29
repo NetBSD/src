@@ -1,4 +1,4 @@
-/* $NetBSD: vchiq_netbsd_acpi.c,v 1.1 2019/12/31 01:00:23 jmcneill Exp $ */
+/* $NetBSD: vchiq_netbsd_acpi.c,v 1.1.2.1 2020/02/29 20:20:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_acpi.c,v 1.1 2019/12/31 01:00:23 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vchiq_netbsd_acpi.c,v 1.1.2.1 2020/02/29 20:20:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ vchiq_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
-	if (bus_space_map(sc->sc_iot, mem->ar_base, mem->ar_size, 0,
+	if (bus_space_map(sc->sc_iot, mem->ar_base, mem->ar_length, 0,
 	    &sc->sc_ioh) != 0) {
 		aprint_error_dev(sc->sc_dev, "unable to map device\n");
 		return;

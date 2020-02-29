@@ -1,4 +1,4 @@
-/*	$NetBSD: if_tun.c,v 1.157 2019/12/13 14:13:55 maxv Exp $	*/
+/*	$NetBSD: if_tun.c,v 1.157.2.1 2020/02/29 20:21:06 ad Exp $	*/
 
 /*
  * Copyright (c) 1988, Julian Onions <jpo@cs.nott.ac.uk>
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.157 2019/12/13 14:13:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_tun.c,v 1.157.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -259,13 +259,6 @@ tunattach0(struct tun_softc *tp)
 	ifp->if_extflags = IFEF_NO_LINK_STATE_CHANGE;
 	ifp->if_type = IFT_TUNNEL;
 	ifp->if_snd.ifq_maxlen = ifqmaxlen;
-	ifp->if_collisions = 0;
-	ifp->if_ierrors = 0;
-	ifp->if_oerrors = 0;
-	ifp->if_ipackets = 0;
-	ifp->if_opackets = 0;
-	ifp->if_ibytes   = 0;
-	ifp->if_obytes   = 0;
 	ifp->if_dlt = DLT_NULL;
 	IFQ_SET_READY(&ifp->if_snd);
 	if_attach(ifp);
@@ -612,13 +605,12 @@ tun_output(struct ifnet *ifp, struct mbuf *m0, const struct sockaddr *dst,
 		mlen = m0->m_pkthdr.len;
 		IFQ_ENQUEUE(&ifp->if_snd, m0, error);
 		if (error) {
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 			error = EAFNOSUPPORT;
 			m0 = NULL;
 			goto out;
 		}
-		ifp->if_opackets++;
-		ifp->if_obytes += mlen;
+		if_statadd2(ifp, if_opackets, 1, if_obytes, mlen);
 		break;
 #endif
 	default:
@@ -828,7 +820,7 @@ tunread(dev_t dev, struct uio *uio, int ioflag)
 		m_freem(m0);
 	}
 	if (error)
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 
 	return error;
 
@@ -946,7 +938,7 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 	if (error) {
 		if (top != NULL)
 			m_freem(top);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto out0;
 	}
 
@@ -967,14 +959,13 @@ tunwrite(dev_t dev, struct uio *uio, int ioflag)
 		goto out;
 	}
 	if (__predict_false(!pktq_enqueue(pktq, top, 0))) {
-		ifp->if_collisions++;
+		if_statinc(ifp, if_collisions);
 		mutex_exit(&tp->tun_lock);
 		error = ENOBUFS;
 		m_freem(top);
 		goto out0;
 	}
-	ifp->if_ipackets++;
-	ifp->if_ibytes += tlen;
+	if_statadd2(ifp, if_ipackets, 1, if_ibytes, tlen);
 out:
 	mutex_exit(&tp->tun_lock);
 out0:

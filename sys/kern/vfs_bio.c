@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_bio.c,v 1.286.2.1 2020/01/17 21:47:35 ad Exp $	*/
+/*	$NetBSD: vfs_bio.c,v 1.286.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2007, 2008, 2009, 2019 The NetBSD Foundation, Inc.
@@ -123,7 +123,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.286.2.1 2020/01/17 21:47:35 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.286.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_bufcache.h"
@@ -153,6 +153,28 @@ __KERNEL_RCSID(0, "$NetBSD: vfs_bio.c,v 1.286.2.1 2020/01/17 21:47:35 ad Exp $")
 #include <uvm/uvm.h>	/* extern struct uvm uvm */
 
 #include <miscfs/specfs/specdev.h>
+
+SDT_PROVIDER_DEFINE(io);
+
+SDT_PROBE_DEFINE4(io, kernel, , bbusy__start,
+    "struct buf *"/*bp*/,
+    "bool"/*intr*/, "int"/*timo*/, "kmutex_t *"/*interlock*/);
+SDT_PROBE_DEFINE5(io, kernel, , bbusy__done,
+    "struct buf *"/*bp*/,
+    "bool"/*intr*/,
+    "int"/*timo*/,
+    "kmutex_t *"/*interlock*/,
+    "int"/*error*/);
+SDT_PROBE_DEFINE0(io, kernel, , getnewbuf__start);
+SDT_PROBE_DEFINE1(io, kernel, , getnewbuf__done,  "struct buf *"/*bp*/);
+SDT_PROBE_DEFINE3(io, kernel, , getblk__start,
+    "struct vnode *"/*vp*/, "daddr_t"/*blkno*/, "int"/*size*/);
+SDT_PROBE_DEFINE4(io, kernel, , getblk__done,
+    "struct vnode *"/*vp*/, "daddr_t"/*blkno*/, "int"/*size*/,
+    "struct buf *"/*bp*/);
+SDT_PROBE_DEFINE2(io, kernel, , brelse, "struct buf *"/*bp*/, "int"/*set*/);
+SDT_PROBE_DEFINE1(io, kernel, , wait__start, "struct buf *"/*bp*/);
+SDT_PROBE_DEFINE1(io, kernel, , wait__done, "struct buf *"/*bp*/);
 
 #ifndef	BUFPAGES
 # define BUFPAGES 0
@@ -1027,6 +1049,8 @@ brelsel(buf_t *bp, int set)
 	struct bqueue *bufq;
 	struct vnode *vp;
 
+	SDT_PROBE2(io, kernel, , brelse,  bp, set);
+
 	KASSERT(bp != NULL);
 	KASSERT(mutex_owned(&bufcache_lock));
 	KASSERT(!cv_has_waiters(&bp->b_done));
@@ -1211,6 +1235,7 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 	buf_t *bp;
 
 	mutex_enter(&bufcache_lock);
+	SDT_PROBE3(io, kernel, , getblk__start,  vp, blkno, size);
  loop:
 	bp = incore(vp, blkno);
 	if (bp != NULL) {
@@ -1219,6 +1244,8 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 			if (err == EPASSTHROUGH)
 				goto loop;
 			mutex_exit(&bufcache_lock);
+			SDT_PROBE4(io, kernel, , getblk__done,
+			    vp, blkno, size, NULL);
 			return (NULL);
 		}
 		KASSERT(!cv_has_waiters(&bp->b_done));
@@ -1260,10 +1287,13 @@ getblk(struct vnode *vp, daddr_t blkno, int size, int slpflag, int slptimeo)
 			LIST_REMOVE(bp, b_hash);
 			brelsel(bp, BC_INVAL);
 			mutex_exit(&bufcache_lock);
+			SDT_PROBE4(io, kernel, , getblk__done,
+			    vp, blkno, size, NULL);
 			return NULL;
 		}
 	}
 	BIO_SETPRIO(bp, BPRIO_DEFAULT);
+	SDT_PROBE4(io, kernel, , getblk__done,  vp, blkno, size, bp);
 	return (bp);
 }
 
@@ -1382,6 +1412,8 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 	struct vnode *vp;
 	struct mount *transmp = NULL;
 
+	SDT_PROBE0(io, kernel, , getnewbuf__start);
+
  start:
 	KASSERT(mutex_owned(&bufcache_lock));
 
@@ -1399,6 +1431,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 #if defined(DIAGNOSTIC)
 			bp->b_freelistindex = -1;
 #endif /* defined(DIAGNOSTIC) */
+			SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
 			return (bp);
 		}
 		mutex_enter(&bufcache_lock);
@@ -1441,6 +1474,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 				(void)cv_timedwait(&needbuffer_cv,
 				    &bufcache_lock, slptimeo);
 		}
+		SDT_PROBE1(io, kernel, , getnewbuf__done,  NULL);
 		return (NULL);
 	}
 
@@ -1479,6 +1513,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		KASSERT(transmp != NULL);
 		fstrans_done(transmp);
 		mutex_enter(&bufcache_lock);
+		SDT_PROBE1(io, kernel, , getnewbuf__done,  NULL);
 		return (NULL);
 	}
 
@@ -1508,6 +1543,7 @@ getnewbuf(int slpflag, int slptimeo, int from_bufq)
 		mutex_exit(vp->v_interlock);
 	}
 
+	SDT_PROBE1(io, kernel, , getnewbuf__done,  bp);
 	return (bp);
 }
 
@@ -1556,11 +1592,6 @@ buf_drain(int n)
 
 	return size;
 }
-
-SDT_PROVIDER_DEFINE(io);
-
-SDT_PROBE_DEFINE1(io, kernel, , wait__start, "struct buf *"/*bp*/);
-SDT_PROBE_DEFINE1(io, kernel, , wait__done, "struct buf *"/*bp*/);
 
 /*
  * Wait for operations on the buffer to complete.
@@ -2163,9 +2194,13 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 
 	KASSERT(mutex_owned(&bufcache_lock));
 
+	SDT_PROBE4(io, kernel, , bbusy__start,  bp, intr, timo, interlock);
+
 	if ((bp->b_cflags & BC_BUSY) != 0) {
-		if (curlwp == uvm.pagedaemon_lwp)
-			return EDEADLK;
+		if (curlwp == uvm.pagedaemon_lwp) {
+			error = EDEADLK;
+			goto out;
+		}
 		bp->b_cflags |= BC_WANTED;
 		bref(bp);
 		if (interlock != NULL)
@@ -2181,12 +2216,16 @@ bbusy(buf_t *bp, bool intr, int timo, kmutex_t *interlock)
 		if (interlock != NULL)
 			mutex_enter(interlock);
 		if (error != 0)
-			return error;
-		return EPASSTHROUGH;
+			goto out;
+		error = EPASSTHROUGH;
+		goto out;
 	}
 	bp->b_cflags |= BC_BUSY;
+	error = 0;
 
-	return 0;
+out:	SDT_PROBE5(io, kernel, , bbusy__done,
+	    bp, intr, timo, interlock, error);
+	return error;
 }
 
 /*

@@ -1,4 +1,4 @@
-/*	$NetBSD: be.c,v 1.94 2019/05/29 10:07:30 msaitoh Exp $	*/
+/*	$NetBSD: be.c,v 1.94.4.1 2020/02/29 20:19:15 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999 The NetBSD Foundation, Inc.
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.94 2019/05/29 10:07:30 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: be.c,v 1.94.4.1 2020/02/29 20:19:15 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_inet.h"
@@ -550,7 +550,7 @@ be_read(struct be_softc *sc, int idx, int len)
 			printf("%s: invalid packet size %d; dropping\n",
 			    ifp->if_xname, len);
 #endif
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -559,7 +559,7 @@ be_read(struct be_softc *sc, int idx, int len)
 	 */
 	m = be_get(sc, idx, len);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -686,7 +686,7 @@ bewatchdog(struct ifnet *ifp)
 	struct be_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ethercom.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	bereset(sc);
 }
@@ -850,11 +850,11 @@ betint(struct be_softc *sc)
 	/*
 	 * Unload collision counters
 	 */
-	ifp->if_collisions +=
+	if_statadd(ifp, if_collisions, 
 	    bus_space_read_4(t, br, BE_BRI_NCCNT) +
 	    bus_space_read_4(t, br, BE_BRI_FCCNT) +
 	    bus_space_read_4(t, br, BE_BRI_EXCNT) +
-	    bus_space_read_4(t, br, BE_BRI_LTCNT);
+	    bus_space_read_4(t, br, BE_BRI_LTCNT));
 
 	/*
 	 * the clear the hardware counters
@@ -876,7 +876,7 @@ betint(struct be_softc *sc)
 			break;
 
 		ifp->if_flags &= ~IFF_OACTIVE;
-		ifp->if_opackets++;
+		if_statinc(ifp, if_opackets);
 
 		if (++bix == QEC_XD_RING_MAXSIZE)
 			bix = 0;

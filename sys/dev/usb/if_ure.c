@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ure.c,v 1.34 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_ure.c,v 1.34.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_ure.c,v 1.10 2018/11/02 21:32:30 jcs Exp $	*/
 
 /*-
@@ -30,7 +30,7 @@
 /* RealTek RTL8152/RTL8153 10/100/Gigabit USB Ethernet device */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.34 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ure.c,v 1.34.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1007,7 +1007,7 @@ ure_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	do {
 		if (total_len < sizeof(rxhdr)) {
 			DPRINTF(("too few bytes left for a packet header\n"));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
@@ -1020,7 +1020,7 @@ ure_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		DPRINTFN(4, ("next packet is %d bytes\n", pkt_len));
 		if (pkt_len > total_len) {
 			DPRINTF(("not enough bytes left for next packet\n"));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 

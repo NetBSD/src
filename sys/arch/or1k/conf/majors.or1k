@@ -1,4 +1,4 @@
-#	$NetBSD: majors.or1k,v 1.2 2015/04/23 23:22:52 pgoyette Exp $
+#	$NetBSD: majors.or1k,v 1.2.26.1 2020/02/29 20:18:28 ad Exp $
 #
 # Device majors for OpenRISC 1000
 #
@@ -61,7 +61,6 @@ device-major	uhid		char 81			uhid
 device-major	ugen		char 82			ugen
 device-major	ulpt		char 83			ulpt
 device-major	ucom		char 84			ucom
-device-major	urio		char 85			urio
 device-major	uscanner	char 86			uscanner
 
 device-major	agp		char 90			agp

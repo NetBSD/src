@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_test.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $	*/
+/*	$NetBSD: radeon_test.c,v 1.3.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2009 VMware, Inc.
@@ -24,7 +24,7 @@
  * Authors: Michel Dänzer
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_test.c,v 1.3 2018/08/27 04:58:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_test.c,v 1.3.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/radeon_drm.h>
@@ -114,7 +114,7 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 			goto out_lclean_unpin;
 		}
 
-		for (gtt_start = gtt_map, gtt_end = gtt_start + size;
+		for (gtt_start = gtt_map, gtt_end = gtt_map + size;
 		     gtt_start < gtt_end;
 		     gtt_start++)
 			*gtt_start = gtt_start;
@@ -149,8 +149,8 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 			goto out_lclean_unpin;
 		}
 
-		for (gtt_start = gtt_map, gtt_end = gtt_start + size,
-		     vram_start = vram_map, vram_end = vram_start + size;
+		for (gtt_start = gtt_map, gtt_end = gtt_map + size,
+		     vram_start = vram_map, vram_end = vram_map + size;
 		     vram_start < vram_end;
 		     gtt_start++, vram_start++) {
 			if (*vram_start != gtt_start) {
@@ -160,10 +160,10 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 					  i, *vram_start, gtt_start,
 					  (unsigned long long)
 					  (gtt_addr - rdev->mc.gtt_start +
-					   (u8*)gtt_start - (u8*)gtt_map),
+					   (void*)gtt_start - gtt_map),
 					  (unsigned long long)
 					  (vram_addr - rdev->mc.vram_start +
-					   (u8*)gtt_start - (u8*)gtt_map));
+					   (void*)gtt_start - gtt_map));
 				radeon_bo_kunmap(vram_obj);
 				goto out_lclean_unpin;
 			}
@@ -200,8 +200,8 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 			goto out_lclean_unpin;
 		}
 
-		for (gtt_start = gtt_map, gtt_end = gtt_start + size,
-		     vram_start = vram_map, vram_end = vram_start + size;
+		for (gtt_start = gtt_map, gtt_end = gtt_map + size,
+		     vram_start = vram_map, vram_end = vram_map + size;
 		     gtt_start < gtt_end;
 		     gtt_start++, vram_start++) {
 			if (*gtt_start != vram_start) {
@@ -211,10 +211,10 @@ static void radeon_do_test_moves(struct radeon_device *rdev, int flag)
 					  i, *gtt_start, vram_start,
 					  (unsigned long long)
 					  (vram_addr - rdev->mc.vram_start +
-					   (u8*)vram_start - (u8*)vram_map),
+					   (void*)vram_start - vram_map),
 					  (unsigned long long)
 					  (gtt_addr - rdev->mc.gtt_start +
-					   (u8*)vram_start - (u8*)vram_map));
+					   (void*)vram_start - vram_map));
 				radeon_bo_kunmap(gtt_obj[i]);
 				goto out_lclean_unpin;
 			}

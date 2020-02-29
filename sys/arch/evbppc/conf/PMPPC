@@ -1,4 +1,4 @@
-#	$NetBSD: PMPPC,v 1.50.4.1 2020/01/25 22:38:40 ad Exp $
+#	$NetBSD: PMPPC,v 1.50.4.2 2020/02/29 20:18:23 ad Exp $
 #
 #	PMPPC
 #
@@ -365,9 +365,6 @@ ucom*	at uplcom? portno ?
 
 uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-urio*	at uhub? port ?
 
 # USB Handspring Visor
 uvisor*	at uhub? port ?

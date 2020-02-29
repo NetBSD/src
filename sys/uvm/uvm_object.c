@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_object.c,v 1.19.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_object.c,v 1.19.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 2006, 2010, 2019 The NetBSD Foundation, Inc.
@@ -37,14 +37,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.19.2.1 2020/01/17 21:47:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_object.c,v 1.19.2.2 2020/02/29 20:21:11 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
 #endif
 
 #include <sys/param.h>
-#include <sys/mutex.h>
+#include <sys/rwlock.h>
 #include <sys/queue.h>
 
 #include <uvm/uvm.h>
@@ -67,7 +67,7 @@ uvm_obj_init(struct uvm_object *uo, const struct uvm_pagerops *ops,
 #endif
 	if (alock) {
 		/* Allocate and assign a lock. */
-		uo->vmobjlock = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		uo->vmobjlock = rw_obj_alloc();
 	} else {
 		/* The lock will need to be set via uvm_obj_setlock(). */
 		uo->vmobjlock = NULL;
@@ -93,7 +93,7 @@ uvm_obj_destroy(struct uvm_object *uo, bool dlock)
 
 	/* Destroy the lock, if requested. */
 	if (dlock) {
-		mutex_obj_free(uo->vmobjlock);
+		rw_obj_free(uo->vmobjlock);
 	}
 	radix_tree_fini_tree(&uo->uo_pages);
 }
@@ -105,17 +105,17 @@ uvm_obj_destroy(struct uvm_object *uo, bool dlock)
  * => Only dynamic lock may be previously set.  We drop the reference then.
  */
 void
-uvm_obj_setlock(struct uvm_object *uo, kmutex_t *lockptr)
+uvm_obj_setlock(struct uvm_object *uo, krwlock_t *lockptr)
 {
-	kmutex_t *olockptr = uo->vmobjlock;
+	krwlock_t *olockptr = uo->vmobjlock;
 
 	if (olockptr) {
 		/* Drop the reference on the old lock. */
-		mutex_obj_free(olockptr);
+		rw_obj_free(olockptr);
 	}
 	if (lockptr == NULL) {
 		/* If new lock is not passed - allocate default one. */
-		lockptr = mutex_obj_alloc(MUTEX_DEFAULT, IPL_NONE);
+		lockptr = rw_obj_alloc();
 	}
 	uo->vmobjlock = lockptr;
 }
@@ -137,7 +137,7 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 
 	left = (end - start) >> PAGE_SHIFT;
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	while (left) {
 
 		npages = MIN(FETCH_PAGECOUNT, left);
@@ -151,7 +151,7 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 		if (error)
 			goto error;
 
-		mutex_enter(uobj->vmobjlock);
+		rw_enter(uobj->vmobjlock, RW_WRITER);
 		for (i = 0; i < npages; i++) {
 
 			KASSERT(pgs[i] != NULL);
@@ -164,9 +164,9 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 				while (pgs[i]->loan_count) {
 					pg = uvm_loanbreak(pgs[i]);
 					if (!pg) {
-						mutex_exit(uobj->vmobjlock);
+						rw_exit(uobj->vmobjlock);
 						uvm_wait("uobjwirepg");
-						mutex_enter(uobj->vmobjlock);
+						rw_enter(uobj->vmobjlock, RW_WRITER);
 						continue;
 					}
 				}
@@ -195,7 +195,7 @@ uvm_obj_wirepages(struct uvm_object *uobj, off_t start, off_t end,
 		left -= npages;
 		offset += npages << PAGE_SHIFT;
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 
 	return 0;
 
@@ -219,7 +219,7 @@ uvm_obj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 	struct vm_page *pg;
 	off_t offset;
 
-	mutex_enter(uobj->vmobjlock);
+	rw_enter(uobj->vmobjlock, RW_WRITER);
 	for (offset = start; offset < end; offset += PAGE_SIZE) {
 		pg = uvm_pagelookup(uobj, offset);
 
@@ -230,7 +230,7 @@ uvm_obj_unwirepages(struct uvm_object *uobj, off_t start, off_t end)
 		uvm_pageunwire(pg);
 		uvm_pageunlock(pg);
 	}
-	mutex_exit(uobj->vmobjlock);
+	rw_exit(uobj->vmobjlock);
 }
 
 #if defined(DDB) || defined(DEBUGPRINT)
@@ -248,7 +248,7 @@ uvm_object_printit(struct uvm_object *uobj, bool full,
 	voff_t off;
 
 	(*pr)("OBJECT %p: locked=%d, pgops=%p, npages=%d, ",
-	    uobj, mutex_owned(uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
+	    uobj, rw_write_held(uobj->vmobjlock), uobj->pgops, uobj->uo_npages);
 	if (UVM_OBJ_IS_KERN_OBJECT(uobj))
 		(*pr)("refs=<SYSTEM>\n");
 	else

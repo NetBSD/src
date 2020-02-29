@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.189.4.1 2020/01/25 22:38:42 ad Exp $
+# $NetBSD: GENERIC,v 1.189.4.2 2020/02/29 20:18:30 ad Exp $
 #
 # GENERIC machine description file
 #
@@ -22,7 +22,7 @@ include 	"arch/prep/conf/std.prep"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident		"GENERIC-$Revision: 1.189.4.1 $"
+#ident		"GENERIC-$Revision: 1.189.4.2 $"
 
 maxusers	32
 
@@ -459,9 +459,6 @@ ukphy*	at mii? phy ?			# generic unknown PHYs
 
 #uvscom* at uhub? port ?	# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
 
 # USB Handspring Visor
 #uvisor* at uhub? port ?

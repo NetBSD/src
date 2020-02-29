@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.49 2019/09/29 17:00:29 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf_ruleset.c,v 1.49.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -153,6 +153,9 @@ npf_ruleset_create(size_t slots)
 void
 npf_ruleset_destroy(npf_ruleset_t *rlset)
 {
+	if (rlset == NULL)
+		return;
+
 	size_t len = offsetof(npf_ruleset_t, rs_rules[rlset->rs_slots]);
 	npf_rule_t *rl;
 

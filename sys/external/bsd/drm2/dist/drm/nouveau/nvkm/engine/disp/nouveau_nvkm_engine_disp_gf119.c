@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2.10.1 2020/02/29 20:20:15 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2 2018/08/27 04:58:31 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2.10.1 2020/02/29 20:20:15 ad Exp $");
 
 #include "nv50.h"
 #include "rootnv50.h"
@@ -34,8 +34,6 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_disp_gf119.c,v 1.2 2018/08/27 04
 #include <subdev/bios/init.h>
 #include <subdev/bios/pll.h>
 #include <subdev/devinit.h>
-
-#include <asm/div64.h>		/* XXX */
 
 void
 gf119_disp_vblank_init(struct nv50_disp *disp, int head)

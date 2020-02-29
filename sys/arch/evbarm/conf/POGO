@@ -9,7 +9,6 @@ no options	DEBUG
 no uaudio*
 #no umidi*
 no uberry*
-no urio*
 no uvisor*
 no ukyopon*
 #no uscanner*

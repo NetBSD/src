@@ -1,7 +1,7 @@
-/*	$NetBSD: netbsd32_compat_60.c,v 1.5 2019/12/15 16:48:26 tsutsui Exp $	*/
+/*	$NetBSD: netbsd32_compat_60.c,v 1.5.2.1 2020/02/29 20:21:00 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -29,7 +29,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.5 2019/12/15 16:48:26 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_compat_60.c,v 1.5.2.1 2020/02/29 20:21:00 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -70,14 +70,12 @@ compat_60_netbsd32__lwp_park(struct lwp *l,
 	}
 
 	if (SCARG(uap, unpark) != 0) {
-		error = lwp_unpark(SCARG(uap, unpark),
-		    SCARG_P32(uap, unparkhint));
+		error = lwp_unpark(&SCARG(uap, unpark), 1);
 		if (error != 0)
 			return error;
 	}
 
-	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp,
-	    SCARG_P32(uap, hint));
+	return lwp_park(CLOCK_REALTIME, TIMER_ABSTIME, tsp);
 }
 
 static struct syscall_package compat_netbsd32_60_syscalls[] = {

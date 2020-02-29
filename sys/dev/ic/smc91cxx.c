@@ -1,4 +1,4 @@
-/*	$NetBSD: smc91cxx.c,v 1.103 2019/12/06 07:12:38 maxv Exp $	*/
+/*	$NetBSD: smc91cxx.c,v 1.103.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.103 2019/12/06 07:12:38 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc91cxx.c,v 1.103.2.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -381,6 +381,7 @@ smc91cxx_attach(struct smc91cxx_softc *sc, uint8_t *myea)
 			  RND_TYPE_NET, RND_FLAG_DEFAULT);
 
 	callout_init(&sc->sc_mii_callout, 0);
+	callout_setfunc(&sc->sc_mii_callout, smc91cxx_tick, sc);
 
 	/* The attach is successful. */
 	sc->sc_flags |= SMC_FLAGS_ATTACHED;
@@ -593,7 +594,7 @@ smc91cxx_init(struct smc91cxx_softc *sc)
 
 	if (sc->sc_flags & SMC_FLAGS_HAS_MII) {
 		/* Start the one second clock. */
-		callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
+		callout_schedule(&sc->sc_mii_callout, hz);
 	}
 
 	/* Attempt to start any pending transmission. */
@@ -643,7 +644,7 @@ smc91cxx_start(struct ifnet *ifp)
 	if (len > (ETHER_MAX_LEN - ETHER_CRC_LEN)) {
 		printf("%s: large packet discarded\n",
 		    device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		IFQ_DEQUEUE(&ifp->if_snd, m);
 		m_freem(m);
 		goto readcheck;
@@ -762,7 +763,7 @@ smc91cxx_start(struct ifnet *ifp)
 	/* Hand off a copy to the bpf. */
 	bpf_mtap(ifp, m, BPF_D_OUT);
 
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 	m_freem(m);
 
  readcheck:
@@ -891,7 +892,7 @@ smc91cxx_intr(void *arg)
 	/* Receive overrun interrupts. */
 	if (status & IM_RX_OVRN_INT) {
 		smc91cxx_intr_ack_write(bst, bsh, IM_RX_OVRN_INT, 0);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 	}
 
 	/* Receive interrupts. */
@@ -951,10 +952,10 @@ smc91cxx_intr(void *arg)
 				printf("%s: successful packet caused TX"
 				    " interrupt?!\n", device_xname(sc->sc_dev));
 		} else
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
 		if (tx_status & EPHSR_LATCOL)
-			ifp->if_collisions++;
+			if_statinc(ifp, if_collisions);
 
 		/* Disable this interrupt (start will reenable if needed). */
 		mask &= ~IM_TX_INT;
@@ -995,10 +996,14 @@ smc91cxx_intr(void *arg)
 		card_stats = bus_space_read_2(bst, bsh, COUNTER_REG_W);
 
 		/* Single collisions. */
-		ifp->if_collisions += card_stats & ECR_COLN_MASK;
+		if (card_stats & ECR_COLN_MASK)
+			if_statadd(ifp, if_collisions,
+			    card_stats & ECR_COLN_MASK);
 
 		/* Multiple collisions. */
-		ifp->if_collisions += (card_stats & ECR_MCOLN_MASK) >> 4;
+		if ((card_stats & ECR_MCOLN_MASK) >> 4)
+			if_statadd(ifp, if_collisions,
+			    (card_stats & ECR_MCOLN_MASK) >> 4);
 
 		SMC_SELECT_BANK(sc, 2);
 
@@ -1080,7 +1085,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 
 	packetlen &= RLEN_MASK;
 	if (packetlen < ETHER_MIN_LEN - ETHER_CRC_LEN + 6 || packetlen > 1534) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto out;
 	}
 
@@ -1092,7 +1097,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 
 	/* Account for receive errors and discard. */
 	if (status & RS_ERRORS) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto out;
 	}
 
@@ -1114,7 +1119,7 @@ smc91cxx_read(struct smc91cxx_softc *sc)
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		aprint_error_dev(sc->sc_dev,
 		     "can't allocate cluster for incoming packet\n");
 		goto out;
@@ -1296,7 +1301,7 @@ smc91cxx_watchdog(struct ifnet *ifp)
 	struct smc91cxx_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 	smc91cxx_reset(sc);
 }
 
@@ -1382,13 +1387,13 @@ smc91cxx_detach(device_t self, int flags)
 
 	/* smc91cxx_attach() never fails */
 
-	/* Delete all media. */
-	ifmedia_delete_instance(&sc->sc_mii.mii_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all media. */
+	ifmedia_fini(&sc->sc_mii.mii_media);
 
 	return 0;
 }
@@ -1482,5 +1487,5 @@ smc91cxx_tick(void *arg)
 	mii_tick(&sc->sc_mii);
 	splx(s);
 
-	callout_reset(&sc->sc_mii_callout, hz, smc91cxx_tick, sc);
+	callout_schedule(&sc->sc_mii_callout, hz);
 }

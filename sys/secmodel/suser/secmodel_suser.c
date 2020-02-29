@@ -1,4 +1,4 @@
-/* $NetBSD: secmodel_suser.c,v 1.50 2019/04/10 18:49:04 maxv Exp $ */
+/* $NetBSD: secmodel_suser.c,v 1.50.6.1 2020/02/29 20:21:10 ad Exp $ */
 /*-
  * Copyright (c) 2006 Elad Efrat <elad@NetBSD.org>
  * All rights reserved.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.50 2019/04/10 18:49:04 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: secmodel_suser.c,v 1.50.6.1 2020/02/29 20:21:10 ad Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -236,7 +236,7 @@ secmodel_suser_system_cb(kauth_cred_t cred, kauth_action_t action,
 
 	isroot = suser_isroot(cred);
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_system_req)arg0;
+	req = (enum kauth_system_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_SYSTEM_CPU:
@@ -530,7 +530,7 @@ secmodel_suser_process_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_PROCESS_RLIMIT: {
 		enum kauth_process_req req;
 
-		req = (enum kauth_process_req)(unsigned long)arg1;
+		req = (enum kauth_process_req)(uintptr_t)arg1;
 
 		switch (req) {
 		case KAUTH_REQ_PROCESS_RLIMIT_SET:
@@ -572,7 +572,7 @@ secmodel_suser_network_cb(kauth_cred_t cred, kauth_action_t action,
 
 	isroot = suser_isroot(cred);
 	result = KAUTH_RESULT_DEFER;
-	req = (enum kauth_network_req)arg0;
+	req = (enum kauth_network_req)(uintptr_t)arg0;
 
 	switch (action) {
 	case KAUTH_NETWORK_ALTQ:
@@ -902,7 +902,7 @@ secmodel_suser_device_cb(kauth_cred_t cred, kauth_action_t action,
 	case KAUTH_DEVICE_BLUETOOTH_BTUART: {
 		enum kauth_device_req req;
 
-		req = (enum kauth_device_req)arg0;
+		req = (enum kauth_device_req)(uintptr_t)arg0;
 		switch (req) {
 		case KAUTH_REQ_DEVICE_BLUETOOTH_BCSP_ADD:
 		case KAUTH_REQ_DEVICE_BLUETOOTH_BTUART_ADD:

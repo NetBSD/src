@@ -1,4 +1,4 @@
-/*	$NetBSD: subr_msan.c,v 1.5.2.1 2020/01/25 22:38:51 ad Exp $	*/
+/*	$NetBSD: subr_msan.c,v 1.5.2.2 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2019-2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.5.2.1 2020/01/25 22:38:51 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: subr_msan.c,v 1.5.2.2 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -163,7 +163,7 @@ kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 	orig = (msan_orig_t *)((uintptr_t)orig & ~0x3);
 
 	if (*orig == 0) {
-		REPORT("MSan: Uninitialized Memory In %s() At Offset "
+		REPORT("MSan: Uninitialized Memory In %s At Offset "
 		    "%zu\n", hook, off);
 		goto out;
 	}
@@ -173,13 +173,13 @@ kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 
 	if (kmsan_md_is_pc(ptr)) {
 		if (ksyms_getname(&mod, &sym, (vaddr_t)ptr, KSYMS_PROC)) {
-			REPORT("MSan: Uninitialized %s Memory In %s() "
-			    "At Offset %zu, IP %p\n", typename, hook, off,
-			    (void *)ptr);
+			REPORT("MSan: Uninitialized %s Memory In %s "
+			    "At Offset %zu/%zu, IP %p\n", typename, hook, off,
+			    size, (void *)ptr);
 		} else {
-			REPORT("MSan: Uninitialized %s Memory In %s() "
-			    "At Offset %zu, From %s()\n", typename, hook, off,
-			    sym);
+			REPORT("MSan: Uninitialized %s Memory In %s "
+			    "At Offset %zu/%zu, From %s()\n", typename, hook,
+			    off, size, sym);
 		}
 	} else {
 		var = (char *)ptr + 4;
@@ -187,7 +187,7 @@ kmsan_report_hook(const void *addr, size_t size, size_t off, const char *hook)
 		var = buf;
 		fn = __builtin_strchr(buf, '@');
 		*fn++ = '\0';
-		REPORT("MSan: Uninitialized %s Memory In %s() At Offset "
+		REPORT("MSan: Uninitialized %s Memory In %s At Offset "
 		    "%zu, Variable '%s' From %s()\n", typename, hook, off,
 		    var, fn);
 	}
@@ -513,7 +513,7 @@ kmsan_check_mbuf(void *buf)
 	struct mbuf *m = buf;
 
 	do {
-		kmsan_shadow_check(mtod(m, void *), m->m_len, "if_transmit");
+		kmsan_shadow_check(mtod(m, void *), m->m_len, "if_transmit()");
 	} while ((m = m->m_next) != NULL);
 }
 
@@ -522,7 +522,7 @@ kmsan_check_buf(void *buf)
 {
 	buf_t *bp = buf;
 
-	kmsan_shadow_check(bp->b_data, bp->b_bcount, "bwrite");
+	kmsan_shadow_check(bp->b_data, bp->b_bcount, "bwrite()");
 }
 
 void
@@ -646,13 +646,14 @@ kmsan_memcmp(const void *b1, const void *b2, size_t len)
 	const uint8_t *_b1 = b1, *_b2 = b2;
 	size_t i;
 
-	kmsan_check_arg(sizeof(b1) + sizeof(b2) + sizeof(len), "memcmp");
+	kmsan_check_arg(sizeof(b1) + sizeof(b2) + sizeof(len),
+	    "memcmp():args");
 	kmsan_init_ret(sizeof(int));
 
 	for (i = 0; i < len; i++) {
 		if (*_b1 != *_b2) {
-			kmsan_shadow_check(b1, i + 1, "memcmp");
-			kmsan_shadow_check(b2, i + 1, "memcmp");
+			kmsan_shadow_check(b1, i + 1, "memcmp():arg1");
+			kmsan_shadow_check(b2, i + 1, "memcmp():arg2");
 			return *_b1 - *_b2;
 		}
 		_b1++, _b2++;
@@ -690,7 +691,7 @@ kmsan_strcpy(char *dst, const char *src)
 	char *_dst = dst;
 	size_t len = 0;
 
-	kmsan_check_arg(sizeof(dst) + sizeof(src), "strcpy");
+	kmsan_check_arg(sizeof(dst) + sizeof(src), "strcpy():args");
 
 	while (1) {
 		len++;
@@ -700,7 +701,7 @@ kmsan_strcpy(char *dst, const char *src)
 		src++, dst++;
 	}
 
-	kmsan_shadow_check(_src, len, "strcpy");
+	kmsan_shadow_check(_src, len, "strcpy():arg2");
 	kmsan_shadow_fill(_dst, KMSAN_STATE_INITED, len);
 	kmsan_init_ret(sizeof(char *));
 	return _dst;
@@ -712,7 +713,7 @@ kmsan_strcmp(const char *s1, const char *s2)
 	const char *_s1 = s1, *_s2 = s2;
 	size_t len = 0;
 
-	kmsan_check_arg(sizeof(s1) + sizeof(s2), "strcmp");
+	kmsan_check_arg(sizeof(s1) + sizeof(s2), "strcmp():args");
 	kmsan_init_ret(sizeof(int));
 
 	while (1) {
@@ -720,15 +721,15 @@ kmsan_strcmp(const char *s1, const char *s2)
 		if (*s1 != *s2)
 			break;
 		if (*s1 == '\0') {
-			kmsan_shadow_check(_s1, len, "strcmp");
-			kmsan_shadow_check(_s2, len, "strcmp");
+			kmsan_shadow_check(_s1, len, "strcmp():arg1");
+			kmsan_shadow_check(_s2, len, "strcmp():arg2");
 			return 0;
 		}
 		s1++, s2++;
 	}
 
-	kmsan_shadow_check(_s1, len, "strcmp");
-	kmsan_shadow_check(_s2, len, "strcmp");
+	kmsan_shadow_check(_s1, len, "strcmp():arg1");
+	kmsan_shadow_check(_s2, len, "strcmp():arg2");
 
 	return (*(const unsigned char *)s1 - *(const unsigned char *)s2);
 }
@@ -738,7 +739,7 @@ kmsan_strlen(const char *str)
 {
 	const char *s;
 
-	kmsan_check_arg(sizeof(str), "strlen");
+	kmsan_check_arg(sizeof(str), "strlen():args");
 
 	s = str;
 	while (1) {
@@ -747,7 +748,7 @@ kmsan_strlen(const char *str)
 		s++;
 	}
 
-	kmsan_shadow_check(str, (size_t)(s - str) + 1, "strlen");
+	kmsan_shadow_check(str, (size_t)(s - str) + 1, "strlen():arg1");
 	kmsan_init_ret(sizeof(size_t));
 	return (s - str);
 }
@@ -758,12 +759,12 @@ kmsan_strcat(char *dst, const char *src)
 	size_t ldst, lsrc;
 	char *ret;
 
-	kmsan_check_arg(sizeof(dst) + sizeof(src), "strcat");
+	kmsan_check_arg(sizeof(dst) + sizeof(src), "strcat():args");
 
 	ldst = __builtin_strlen(dst);
 	lsrc = __builtin_strlen(src);
-	kmsan_shadow_check(dst, ldst + 1, "strcat");
-	kmsan_shadow_check(src, lsrc + 1, "strcat");
+	kmsan_shadow_check(dst, ldst + 1, "strcat():arg1");
+	kmsan_shadow_check(src, lsrc + 1, "strcat():arg2");
 	ret = __builtin_strcat(dst, src);
 	kmsan_shadow_fill(dst, KMSAN_STATE_INITED, ldst + lsrc + 1);
 
@@ -776,8 +777,8 @@ kmsan_strchr(const char *s, int c)
 {
 	char *ret;
 
-	kmsan_check_arg(sizeof(s) + sizeof(c), "strchr");
-	kmsan_shadow_check(s, __builtin_strlen(s), "strchr");
+	kmsan_check_arg(sizeof(s) + sizeof(c), "strchr():args");
+	kmsan_shadow_check(s, __builtin_strlen(s), "strchr():arg1");
 	ret = __builtin_strchr(s, c);
 
 	kmsan_init_ret(sizeof(char *));
@@ -789,8 +790,8 @@ kmsan_strrchr(const char *s, int c)
 {
 	char *ret;
 
-	kmsan_check_arg(sizeof(s) + sizeof(c), "strrchr");
-	kmsan_shadow_check(s, __builtin_strlen(s), "strrchr");
+	kmsan_check_arg(sizeof(s) + sizeof(c), "strrchr():args");
+	kmsan_shadow_check(s, __builtin_strlen(s), "strrchr():arg1");
 	ret = __builtin_strrchr(s, c);
 
 	kmsan_init_ret(sizeof(char *));
@@ -821,7 +822,8 @@ int	copyoutstr(const void *, void *, size_t, size_t *);
 int
 kmsan_kcopy(const void *src, void *dst, size_t len)
 {
-	kmsan_check_arg(sizeof(src) + sizeof(dst) + sizeof(len), "kcopy");
+	kmsan_check_arg(sizeof(src) + sizeof(dst) + sizeof(len),
+	    "kcopy():args");
 	if (__predict_true(len != 0)) {
 		kmsan_meta_copy(dst, src, len);
 	}
@@ -836,7 +838,7 @@ kmsan_copystr(const void *kfaddr, void *kdaddr, size_t len, size_t *done)
 	int ret;
 
 	kmsan_check_arg(sizeof(kfaddr) + sizeof(kdaddr) +
-	    sizeof(len) + sizeof(done), "copystr");
+	    sizeof(len) + sizeof(done), "copystr():args");
 	ret = copystr(kfaddr, kdaddr, len, &_done);
 	if (ret == 0)
 		kmsan_meta_copy(kdaddr, kfaddr, _done);
@@ -854,7 +856,8 @@ kmsan_copyin(const void *uaddr, void *kaddr, size_t len)
 {
 	int ret;
 
-	kmsan_check_arg(sizeof(uaddr) + sizeof(kaddr) + sizeof(len), "copyin");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(kaddr) + sizeof(len),
+	    "copyin():args");
 	ret = copyin(uaddr, kaddr, len);
 	if (ret == 0)
 		kmsan_shadow_fill(kaddr, KMSAN_STATE_INITED, len);
@@ -866,8 +869,9 @@ kmsan_copyin(const void *uaddr, void *kaddr, size_t len)
 int
 kmsan_copyout(const void *kaddr, void *uaddr, size_t len)
 {
-	kmsan_check_arg(sizeof(kaddr) + sizeof(uaddr) + sizeof(len), "copyout");
-	kmsan_shadow_check(kaddr, len, "copyout");
+	kmsan_check_arg(sizeof(kaddr) + sizeof(uaddr) + sizeof(len),
+	    "copyout():args");
+	kmsan_shadow_check(kaddr, len, "copyout():arg1");
 	kmsan_init_ret(sizeof(int));
 	return copyout(kaddr, uaddr, len);
 }
@@ -879,9 +883,9 @@ kmsan_copyinstr(const void *uaddr, void *kaddr, size_t len, size_t *done)
 	int ret;
 
 	kmsan_check_arg(sizeof(uaddr) + sizeof(kaddr) +
-	    sizeof(len) + sizeof(done), "copyinstr");
+	    sizeof(len) + sizeof(done), "copyinstr():args");
 	ret = copyinstr(uaddr, kaddr, len, &_done);
-	if (ret == 0)
+	if (ret == 0 || ret == ENAMETOOLONG)
 		kmsan_shadow_fill(kaddr, KMSAN_STATE_INITED, _done);
 	if (done != NULL) {
 		*done = _done;
@@ -899,9 +903,9 @@ kmsan_copyoutstr(const void *kaddr, void *uaddr, size_t len, size_t *done)
 	int ret;
 
 	kmsan_check_arg(sizeof(kaddr) + sizeof(uaddr) +
-	    sizeof(len) + sizeof(done), "copyoutstr");
+	    sizeof(len) + sizeof(done), "copyoutstr():args");
 	ret = copyoutstr(kaddr, uaddr, len, &_done);
-	kmsan_shadow_check(kaddr, _done, "copyoutstr");
+	kmsan_shadow_check(kaddr, _done, "copyoutstr():arg1");
 	if (done != NULL) {
 		*done = _done;
 		kmsan_shadow_fill(done, KMSAN_STATE_INITED, sizeof(size_t));
@@ -934,7 +938,7 @@ kmsan__ucas_32(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
 {
 	int _ret;
 	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
-	    sizeof(new) + sizeof(ret), "ucas_32");
+	    sizeof(new) + sizeof(ret), "ucas_32():args");
 	_ret = _ucas_32(uaddr, old, new, ret);
 	if (_ret == 0)
 		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
@@ -951,7 +955,7 @@ kmsan__ucas_32_mp(volatile uint32_t *uaddr, uint32_t old, uint32_t new,
 {
 	int _ret;
 	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
-	    sizeof(new) + sizeof(ret), "ucas_32_mp");
+	    sizeof(new) + sizeof(ret), "ucas_32_mp():args");
 	_ret = _ucas_32_mp(uaddr, old, new, ret);
 	if (_ret == 0)
 		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
@@ -969,7 +973,7 @@ kmsan__ucas_64(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
 {
 	int _ret;
 	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
-	    sizeof(new) + sizeof(ret), "ucas_64");
+	    sizeof(new) + sizeof(ret), "ucas_64():args");
 	_ret = _ucas_64(uaddr, old, new, ret);
 	if (_ret == 0)
 		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
@@ -986,7 +990,7 @@ kmsan__ucas_64_mp(volatile uint64_t *uaddr, uint64_t old, uint64_t new,
 {
 	int _ret;
 	kmsan_check_arg(sizeof(uaddr) + sizeof(old) +
-	    sizeof(new) + sizeof(ret), "ucas_64_mp");
+	    sizeof(new) + sizeof(ret), "ucas_64_mp():args");
 	_ret = _ucas_64_mp(uaddr, old, new, ret);
 	if (_ret == 0)
 		kmsan_shadow_fill(ret, KMSAN_STATE_INITED, sizeof(*ret));
@@ -1002,7 +1006,7 @@ int
 kmsan__ufetch_8(const uint8_t *uaddr, uint8_t *valp)
 {
 	int _ret;
-	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_8");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_8():args");
 	_ret = _ufetch_8(uaddr, valp);
 	if (_ret == 0)
 		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
@@ -1016,7 +1020,7 @@ int
 kmsan__ufetch_16(const uint16_t *uaddr, uint16_t *valp)
 {
 	int _ret;
-	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_16");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_16():args");
 	_ret = _ufetch_16(uaddr, valp);
 	if (_ret == 0)
 		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
@@ -1030,7 +1034,7 @@ int
 kmsan__ufetch_32(const uint32_t *uaddr, uint32_t *valp)
 {
 	int _ret;
-	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_32");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_32():args");
 	_ret = _ufetch_32(uaddr, valp);
 	if (_ret == 0)
 		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
@@ -1045,7 +1049,7 @@ int
 kmsan__ufetch_64(const uint64_t *uaddr, uint64_t *valp)
 {
 	int _ret;
-	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_64");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(valp), "ufetch_64():args");
 	_ret = _ufetch_64(uaddr, valp);
 	if (_ret == 0)
 		kmsan_shadow_fill(valp, KMSAN_STATE_INITED, sizeof(*valp));
@@ -1059,7 +1063,7 @@ int kmsan__ustore_8(uint8_t *, uint8_t);
 int
 kmsan__ustore_8(uint8_t *uaddr, uint8_t val)
 {
-	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_8");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_8():args");
 	kmsan_init_ret(sizeof(int));
 	return _ustore_8(uaddr, val);
 }
@@ -1069,7 +1073,7 @@ int kmsan__ustore_16(uint16_t *, uint16_t);
 int
 kmsan__ustore_16(uint16_t *uaddr, uint16_t val)
 {
-	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_16");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_16():args");
 	kmsan_init_ret(sizeof(int));
 	return _ustore_16(uaddr, val);
 }
@@ -1079,7 +1083,7 @@ int kmsan__ustore_32(uint32_t *, uint32_t);
 int
 kmsan__ustore_32(uint32_t *uaddr, uint32_t val)
 {
-	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_32");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_32():args");
 	kmsan_init_ret(sizeof(int));
 	return _ustore_32(uaddr, val);
 }
@@ -1090,7 +1094,7 @@ int kmsan__ustore_64(uint64_t *, uint64_t);
 int
 kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 {
-	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_64");
+	kmsan_check_arg(sizeof(uaddr) + sizeof(val), "ustore_64():args");
 	kmsan_init_ret(sizeof(int));
 	return _ustore_64(uaddr, val);
 }
@@ -1165,38 +1169,43 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_add_##name(volatile targ1 *, targ2); \
 	void kmsan_atomic_add_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_add_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_add_" #name "():arg1"); \
 		atomic_add_##name(ptr, val); \
 	} \
 	tret atomic_add_##name##_nv(volatile targ1 *, targ2); \
 	tret kmsan_atomic_add_##name##_nv(volatile targ1 *, targ2); \
 	tret kmsan_atomic_add_##name##_nv(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_add_" #name "_nv():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_add_" #name "_nv():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_add_##name##_nv(ptr, val); \
 	}
+
 #define MSAN_ATOMIC_FUNC_AND(name, tret, targ1, targ2) \
 	void atomic_and_##name(volatile targ1 *, targ2); \
 	void kmsan_atomic_and_##name(volatile targ1 *, targ2); \
 	void kmsan_atomic_and_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_and_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_and_" #name "():arg1"); \
 		atomic_and_##name(ptr, val); \
 	} \
 	tret atomic_and_##name##_nv(volatile targ1 *, targ2); \
 	tret kmsan_atomic_and_##name##_nv(volatile targ1 *, targ2); \
 	tret kmsan_atomic_and_##name##_nv(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_and_" #name "_nv():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_and_" #name "_nv():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_and_##name##_nv(ptr, val); \
 	}
@@ -1206,18 +1215,20 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_or_##name(volatile targ1 *, targ2); \
 	void kmsan_atomic_or_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_or_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_or_" #name "():arg1"); \
 		atomic_or_##name(ptr, val); \
 	} \
 	tret atomic_or_##name##_nv(volatile targ1 *, targ2); \
 	tret kmsan_atomic_or_##name##_nv(volatile targ1 *, targ2); \
 	tret kmsan_atomic_or_##name##_nv(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_or_" #name "_nv():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_or_" #name "_nv():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_or_##name##_nv(ptr, val); \
 	}
@@ -1228,9 +1239,9 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_cas_##name(volatile targ1 *ptr, targ2 exp, targ2 new) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(exp) + sizeof(new), \
-		    __func__); \
+		    "atomic_cas_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_cas_" #name "():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_cas_##name(ptr, exp, new); \
 	} \
@@ -1239,9 +1250,9 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_cas_##name##_ni(volatile targ1 *ptr, targ2 exp, targ2 new) \
 	{ \
 		kmsan_check_arg(sizeof(ptr) + sizeof(exp) + sizeof(new), \
-		    __func__); \
+		    "atomic_cas_" #name "_ni():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_cas_" #name "_ni():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_cas_##name##_ni(ptr, exp, new); \
 	}
@@ -1251,9 +1262,10 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	tret kmsan_atomic_swap_##name(volatile targ1 *, targ2); \
 	tret kmsan_atomic_swap_##name(volatile targ1 *ptr, targ2 val) \
 	{ \
-		kmsan_check_arg(sizeof(ptr) + sizeof(val), __func__); \
+		kmsan_check_arg(sizeof(ptr) + sizeof(val), \
+		    "atomic_swap_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_swap_" #name "():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_swap_##name(ptr, val); \
 	}
@@ -1263,18 +1275,20 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_dec_##name(volatile targ1 *); \
 	void kmsan_atomic_dec_##name(volatile targ1 *ptr) \
 	{ \
-		kmsan_check_arg(sizeof(ptr), __func__); \
+		kmsan_check_arg(sizeof(ptr), \
+		    "atomic_dec_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_dec_" #name "():arg1"); \
 		atomic_dec_##name(ptr); \
 	} \
 	tret atomic_dec_##name##_nv(volatile targ1 *); \
 	tret kmsan_atomic_dec_##name##_nv(volatile targ1 *); \
 	tret kmsan_atomic_dec_##name##_nv(volatile targ1 *ptr) \
 	{ \
-		kmsan_check_arg(sizeof(ptr), __func__); \
+		kmsan_check_arg(sizeof(ptr), \
+		    "atomic_dec_" #name "_nv():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_dec_" #name "_nv():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_dec_##name##_nv(ptr); \
 	}
@@ -1284,18 +1298,20 @@ kmsan__ustore_64(uint64_t *uaddr, uint64_t val)
 	void kmsan_atomic_inc_##name(volatile targ1 *); \
 	void kmsan_atomic_inc_##name(volatile targ1 *ptr) \
 	{ \
-		kmsan_check_arg(sizeof(ptr), __func__); \
+		kmsan_check_arg(sizeof(ptr), \
+		    "atomic_inc_" #name "():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_inc_" #name "():arg1"); \
 		atomic_inc_##name(ptr); \
 	} \
 	tret atomic_inc_##name##_nv(volatile targ1 *); \
 	tret kmsan_atomic_inc_##name##_nv(volatile targ1 *); \
 	tret kmsan_atomic_inc_##name##_nv(volatile targ1 *ptr) \
 	{ \
-		kmsan_check_arg(sizeof(ptr), __func__); \
+		kmsan_check_arg(sizeof(ptr), \
+		    "atomic_inc_" #name "_nv():args"); \
 		kmsan_shadow_check((const void *)(uintptr_t)ptr, sizeof(tret), \
-		    __func__); \
+		    "atomic_inc_" #name "_nv():arg1"); \
 		kmsan_init_ret(sizeof(tret)); \
 		return atomic_inc_##name##_nv(ptr); \
 	}
@@ -1443,7 +1459,7 @@ MSAN_BUS_READ_FUNC(8, 64)
 	    bus_size_t count)							\
 	{									\
 		kmsan_shadow_check(buf, sizeof(uint##bits##_t) * count,		\
-		    "bus_space_write");						\
+		    "bus_space_write()");					\
 		bus_space_write_multi_##bytes(tag, hnd, size, buf, count);	\
 	}									\
 	void bus_space_write_multi_stream_##bytes(bus_space_tag_t,		\
@@ -1455,7 +1471,7 @@ MSAN_BUS_READ_FUNC(8, 64)
 	    bus_size_t count)							\
 	{									\
 		kmsan_shadow_check(buf, sizeof(uint##bits##_t) * count,		\
-		    "bus_space_write");						\
+		    "bus_space_write()");					\
 		bus_space_write_multi_stream_##bytes(tag, hnd, size, buf, count);\
 	}									\
 	void bus_space_write_region_##bytes(bus_space_tag_t, bus_space_handle_t,\
@@ -1467,7 +1483,7 @@ MSAN_BUS_READ_FUNC(8, 64)
 	    bus_size_t count)							\
 	{									\
 		kmsan_shadow_check(buf, sizeof(uint##bits##_t) * count,		\
-		    "bus_space_write");						\
+		    "bus_space_write()");					\
 		bus_space_write_region_##bytes(tag, hnd, size, buf, count);	\
 	}									\
 	void bus_space_write_region_stream_##bytes(bus_space_tag_t,		\
@@ -1479,7 +1495,7 @@ MSAN_BUS_READ_FUNC(8, 64)
 	    bus_size_t count)							\
 	{									\
 		kmsan_shadow_check(buf, sizeof(uint##bits##_t) * count,		\
-		    "bus_space_write");						\
+		    "bus_space_write()");					\
 		bus_space_write_region_stream_##bytes(tag, hnd, size, buf, count);\
 	}
 
@@ -1499,7 +1515,7 @@ kmsan_dma_sync_linear(uint8_t *buf, bus_addr_t offset, bus_size_t len,
 	if (init) {
 		kmsan_shadow_fill(buf + offset, KMSAN_STATE_INITED, len);
 	} else {
-		kmsan_shadow_check(buf + offset, len, "dma_sync_linear");
+		kmsan_shadow_check(buf + offset, len, "LinearDmaSyncOp");
 	}
 }
 
@@ -1522,7 +1538,7 @@ kmsan_dma_sync_mbuf(struct mbuf *m, bus_addr_t offset, bus_size_t len,
 			    KMSAN_STATE_INITED, minlen);
 		} else {
 			kmsan_shadow_check(mtod(m, char *) + offset,
-			    minlen, "dma_sync_mbuf");
+			    minlen, "MbufDmaSyncOp");
 		}
 
 		offset = 0;
@@ -1552,7 +1568,7 @@ kmsan_dma_sync_uio(struct uio *uio, bus_addr_t offset, bus_size_t len,
 			    KMSAN_STATE_INITED, minlen);
 		} else {
 			kmsan_shadow_check(iov[i].iov_base, minlen,
-			    "dma_sync_uio");
+			    "UioDmaSyncOp");
 		}
 
 		resid -= minlen;

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mvgbe.c,v 1.58 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_mvgbe.c,v 1.58.2.1 2020/02/29 20:19:09 ad Exp $	*/
 /*
  * Copyright (c) 2007, 2008, 2013 KIYOHARA Takashi
  * All rights reserved.
@@ -25,7 +25,7 @@
  * POSSIBILITY OF SUCH DAMAGE.
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.58 2019/09/13 07:55:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mvgbe.c,v 1.58.2.1 2020/02/29 20:19:09 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -1455,7 +1455,7 @@ mvgbe_watchdog(struct ifnet *ifp)
 		} else {
 			aprint_error_ifnet(ifp, "watchdog timeout\n");
 
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 
 			mvgbe_init(ifp);
 		}
@@ -1998,15 +1998,15 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 			int err = rxstat & MVGBE_RX_ERROR_CODE_MASK;
 
 			if (err == MVGBE_RX_CRC_ERROR)
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			if (err == MVGBE_RX_OVERRUN_ERROR)
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			if (err == MVGBE_RX_MAX_FRAME_LEN_ERROR)
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 			if (err == MVGBE_RX_RESOURCE_ERROR)
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 #else
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 #endif
 			mvgbe_newbuf(sc, cur, m, dmamap);
 			continue;
@@ -2059,7 +2059,7 @@ mvgbe_rxeof(struct mvgbe_softc *sc)
 				aprint_error_ifnet(ifp,
 				    "no receive buffers available --"
 				    " packet dropped!\n");
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				continue;
 			}
 			m = m0;
@@ -2107,16 +2107,16 @@ mvgbe_txeof(struct mvgbe_softc *sc)
 			break;
 		}
 		if (cur_tx->cmdsts & MVGBE_TX_LAST_DESC)
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 		if (cur_tx->cmdsts & MVGBE_ERROR_SUMMARY) {
 			int err = cur_tx->cmdsts & MVGBE_TX_ERROR_CODE_MASK;
 
 			if (err == MVGBE_TX_LATE_COLLISION_ERROR)
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 			if (err == MVGBE_TX_UNDERRUN_ERROR)
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 			if (err == MVGBE_TX_EXCESSIVE_COLLISION_ERRO)
-				ifp->if_collisions++;
+				if_statinc(ifp, if_collisions);
 		}
 		if (cdata->mvgbe_tx_chain[idx].mvgbe_mbuf != NULL) {
 			entry = cdata->mvgbe_tx_map[idx];

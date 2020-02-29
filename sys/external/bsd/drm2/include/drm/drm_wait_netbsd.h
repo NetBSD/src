@@ -1,4 +1,4 @@
-/*	$NetBSD: drm_wait_netbsd.h,v 1.15 2019/04/16 10:00:04 mrg Exp $	*/
+/*	$NetBSD: drm_wait_netbsd.h,v 1.15.6.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,8 +43,6 @@
 #include <linux/spinlock.h>
 
 typedef kcondvar_t drm_waitqueue_t;
-
-#define	DRM_HZ	hz		/* XXX Hurk...  */
 
 #define	DRM_UDELAY	DELAY
 

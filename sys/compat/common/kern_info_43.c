@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_info_43.c,v 1.38 2020/01/02 15:42:26 thorpej Exp $	*/
+/*	$NetBSD: kern_info_43.c,v 1.38.2.1 2020/02/29 20:21:00 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1991, 1993
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.38 2020/01/02 15:42:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_info_43.c,v 1.38.2.1 2020/02/29 20:21:00 ad Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_compat_netbsd.h"
@@ -172,11 +172,19 @@ compat_43_sys_getkerninfo(struct lwp *l, const struct compat_43_sys_getkerninfo_
 		syscallarg(int) arg;
 	} */
 	int error, name[6];
+	int isize;
 	size_t size;
 
-	if (SCARG(uap, size) && (error = copyin((void *)SCARG(uap, size),
-	    (void *)&size, sizeof(size))))
-		return (error);
+	if (!SCARG(uap, size))
+		return EINVAL;
+
+	if ((error = copyin(SCARG(uap, size), &isize, sizeof(isize))) != 0)
+		return error;
+
+	if (isize < 0 || isize > 4096)
+		return EINVAL;
+
+	size = isize;
 
 	switch (SCARG(uap, op) & 0xff00) {
 

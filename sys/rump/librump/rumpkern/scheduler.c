@@ -1,4 +1,4 @@
-/*      $NetBSD: scheduler.c,v 1.48.2.1 2020/01/17 21:47:37 ad Exp $	*/
+/*      $NetBSD: scheduler.c,v 1.48.2.2 2020/02/29 20:21:09 ad Exp $	*/
 
 /*
  * Copyright (c) 2010, 2011 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.48.2.1 2020/01/17 21:47:37 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: scheduler.c,v 1.48.2.2 2020/02/29 20:21:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/atomic.h>
@@ -409,7 +409,7 @@ rump_unschedule()
 		/* release lwp0 */
 		rump_unschedule_cpu(&lwp0);
 		lwp0.l_mutex = &unruntime_lock;
-		lwp0.l_flag &= ~LW_RUNNING;
+		lwp0.l_pflag &= ~LP_RUNNING;
 		lwp0rele();
 		rump_lwproc_curlwp_clear(&lwp0);
 

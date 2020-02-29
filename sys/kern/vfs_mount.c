@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_mount.c,v 1.73.2.2 2020/01/25 15:54:03 ad Exp $	*/
+/*	$NetBSD: vfs_mount.c,v 1.73.2.3 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997-2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.73.2.2 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_mount.c,v 1.73.2.3 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>

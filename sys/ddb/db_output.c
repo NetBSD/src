@@ -1,4 +1,4 @@
-/*	$NetBSD: db_output.c,v 1.35 2019/09/12 18:43:02 uwe Exp $	*/
+/*	$NetBSD: db_output.c,v 1.35.2.1 2020/02/29 20:21:01 ad Exp $	*/
 
 /*
  * Mach Operating System
@@ -35,7 +35,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.35 2019/09/12 18:43:02 uwe Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_output.c,v 1.35.2.1 2020/02/29 20:21:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -105,7 +105,7 @@ db_force_whitespace(void)
 
 
 /*
- * End the current line if we it exceeds $maxwidth
+ * End the current line if it exceeds $maxwidth
  */
 static void
 db_check_wrap(void)

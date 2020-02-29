@@ -33,7 +33,7 @@
 
 #ifdef _KERNEL
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.41 2019/08/25 13:21:03 rmind Exp $");
+__KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.41.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -41,6 +41,7 @@ __KERNEL_RCSID(0, "$NetBSD: npf.c,v 1.41 2019/08/25 13:21:03 rmind Exp $");
 #include <sys/conf.h>
 #include <sys/kmem.h>
 #include <sys/percpu.h>
+#include <sys/xcall.h>
 #endif
 
 #include "npf_impl.h"
@@ -201,11 +202,13 @@ __dso_public void
 npfk_stats(npf_t *npf, uint64_t *buf)
 {
 	memset(buf, 0, NPF_STATS_SIZE);
-	percpu_foreach(npf->stats_percpu, npf_stats_collect, buf);
+	percpu_foreach_xcall(npf->stats_percpu, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    npf_stats_collect, buf);
 }
 
 __dso_public void
 npfk_stats_clear(npf_t *npf)
 {
-	percpu_foreach(npf->stats_percpu, npf_stats_clear_cb, NULL);
+	percpu_foreach_xcall(npf->stats_percpu, XC_HIGHPRI_IPL(IPL_SOFTNET),
+	    npf_stats_clear_cb, NULL);
 }

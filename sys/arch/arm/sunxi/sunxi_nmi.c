@@ -1,4 +1,4 @@
-/* $NetBSD: sunxi_nmi.c,v 1.4 2020/01/07 10:20:07 skrll Exp $ */
+/* $NetBSD: sunxi_nmi.c,v 1.4.2.1 2020/02/29 20:18:20 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 Jared McNeill <jmcneill@invisible.ca>
@@ -29,7 +29,7 @@
 #define	_INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.4 2020/01/07 10:20:07 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.4.2.1 2020/02/29 20:18:20 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -37,6 +37,8 @@ __KERNEL_RCSID(0, "$NetBSD: sunxi_nmi.c,v 1.4 2020/01/07 10:20:07 skrll Exp $");
 #include <sys/intr.h>
 #include <sys/kernel.h>
 #include <sys/systm.h>
+#include <sys/atomic.h>
+#include <sys/mutex.h>
 #include <sys/lwp.h>
 
 #include <dev/fdt/fdtvar.h>
@@ -99,10 +101,12 @@ struct sunxi_nmi_softc {
 	bus_space_handle_t sc_bsh;
 	int sc_phandle;
 
+	kmutex_t sc_intr_lock;
+
 	const struct sunxi_nmi_config *sc_config;
 
-	int (*sc_func)(void *);
-	void *sc_arg;
+	struct intrsource sc_is;
+	void	*sc_ih;
 };
 
 #define NMI_READ(sc, reg) \
@@ -148,11 +152,17 @@ static int
 sunxi_nmi_intr(void *priv)
 {
 	struct sunxi_nmi_softc * const sc = priv;
+	int (*func)(void *);
 	int rv = 0;
 
-	if (sc->sc_func)
-		rv = sc->sc_func(sc->sc_arg);
+	func = atomic_load_acquire(&sc->sc_is.is_func);
+	if (func)
+		rv = func(sc->sc_is.is_arg);
 
+	/*
+	 * We don't serialize access to this register because we're the
+	 * only thing fiddling wth it.
+	 */
 	sunxi_nmi_irq_ack(sc);
 
 	return rv;
@@ -164,18 +174,12 @@ sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 {
 	struct sunxi_nmi_softc * const sc = device_private(dev);
 	u_int irq_type;
+	int ist;
 
 	/* 1st cell is the interrupt number */
 	const u_int irq = be32toh(specifier[0]);
 	/* 2nd cell is polarity */
 	const u_int pol = be32toh(specifier[1]);
-
-	if (sc->sc_func != NULL) {
-#ifdef DIAGNOSTIC
-		device_printf(dev, "%s in use\n", sc->sc_config->name);
-#endif
-		return NULL;
-	}
 
 	if (irq != 0) {
 #ifdef DIAGNOSTIC
@@ -187,42 +191,100 @@ sunxi_nmi_fdt_establish(device_t dev, u_int *specifier, int ipl, int flags,
 	switch (pol & 0x7) {
 	case 1:	/* IRQ_TYPE_EDGE_RISING */
 		irq_type = NMI_CTRL_IRQ_HIGH_EDGE;
+		ist = IST_EDGE;
 		break;
 	case 2:	/* IRQ_TYPE_EDGE_FALLING */
 		irq_type = NMI_CTRL_IRQ_LOW_EDGE;
+		ist = IST_EDGE;
 		break;
 	case 3:	/* IRQ_TYPE_LEVEL_HIGH */
 		irq_type = NMI_CTRL_IRQ_HIGH_LEVEL;
+		ist = IST_LEVEL;
 		break;
 	case 4:	/* IRQ_TYPE_LEVEL_LOW */
 		irq_type = NMI_CTRL_IRQ_LOW_LEVEL;
+		ist = IST_LEVEL;
 		break;
 	default:
 		irq_type = NMI_CTRL_IRQ_LOW_LEVEL;
+		ist = IST_LEVEL;
 		break;
 	}
 
-	sc->sc_func = func;
-	sc->sc_arg = arg;
+	mutex_enter(&sc->sc_intr_lock);
 
+	if (atomic_load_relaxed(&sc->sc_is.is_func) != NULL) {
+		mutex_exit(&sc->sc_intr_lock);
+#ifdef DIAGNOSTIC
+		device_printf(dev, "%s in use\n", sc->sc_config->name);
+#endif
+		return NULL;
+	}
+
+	sc->sc_is.is_arg = arg;
+	atomic_store_release(&sc->sc_is.is_func, func);
+
+	sc->sc_is.is_type = ist;
+	sc->sc_is.is_ipl = ipl;
+	sc->sc_is.is_mpsafe = (flags & FDT_INTR_MPSAFE) ? true : false;
+
+	mutex_exit(&sc->sc_intr_lock);
+
+	sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, ipl, flags,
+	    sunxi_nmi_intr, sc);
+
+	mutex_enter(&sc->sc_intr_lock);
 	sunxi_nmi_irq_set_type(sc, irq_type);
 	sunxi_nmi_irq_enable(sc, true);
+	mutex_exit(&sc->sc_intr_lock);
 
-	return fdtbus_intr_establish(sc->sc_phandle, 0, ipl, flags,
-	    sunxi_nmi_intr, sc);
+	return &sc->sc_is;
+}
+
+static void
+sunxi_nmi_fdt_mask(device_t dev, void *ih __unused)
+{
+	struct sunxi_nmi_softc * const sc = device_private(dev);
+
+	mutex_enter(&sc->sc_intr_lock);
+	if (sc->sc_is.is_mask_count++ == 0) {
+		sunxi_nmi_irq_enable(sc, false);
+	}
+	mutex_exit(&sc->sc_intr_lock);
+}
+
+static void
+sunxi_nmi_fdt_unmask(device_t dev, void *ih __unused)
+{
+	struct sunxi_nmi_softc * const sc = device_private(dev);
+
+	mutex_enter(&sc->sc_intr_lock);
+	if (sc->sc_is.is_mask_count-- == 1) {
+		sunxi_nmi_irq_enable(sc, true);
+	}
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
 sunxi_nmi_fdt_disestablish(device_t dev, void *ih)
 {
 	struct sunxi_nmi_softc * const sc = device_private(dev);
+	struct intrsource * const is = ih;
 
+	KASSERT(is == &sc->sc_is);
+
+	mutex_enter(&sc->sc_intr_lock);
 	sunxi_nmi_irq_enable(sc, false);
+	is->is_mask_count = 0;
+	mutex_exit(&sc->sc_intr_lock);
 
-	fdtbus_intr_disestablish(sc->sc_phandle, ih);
+	fdtbus_intr_disestablish(sc->sc_phandle, sc->sc_ih);
+	sc->sc_ih = NULL;
 
-	sc->sc_func = NULL;
-	sc->sc_arg = NULL;
+	mutex_enter(&sc->sc_intr_lock);
+	is->is_arg = NULL;
+	is->is_func = NULL;
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static bool
@@ -239,6 +301,8 @@ static const struct fdtbus_interrupt_controller_func sunxi_nmi_fdt_funcs = {
 	.establish = sunxi_nmi_fdt_establish,
 	.disestablish = sunxi_nmi_fdt_disestablish,
 	.intrstr = sunxi_nmi_fdt_intrstr,
+	.mask = sunxi_nmi_fdt_mask,
+	.unmask = sunxi_nmi_fdt_unmask,
 };
 
 static int
@@ -275,6 +339,18 @@ sunxi_nmi_attach(device_t parent, device_t self, void *aux)
 
 	aprint_naive("\n");
 	aprint_normal(": %s\n", sc->sc_config->name);
+
+	mutex_init(&sc->sc_intr_lock, MUTEX_SPIN, IPL_HIGH);
+
+	/*
+	 * Normally it's assumed that an intrsource can be passed to
+	 * interrupt_distribute().  We're providing our own that's
+	 * independent of our parent PIC, but because we will leave
+	 * the intrsource::is_pic field NULL, the right thing
+	 * (i.e. nothing) will happen in interrupt_distribute().
+	 */
+	snprintf(sc->sc_is.is_source, sizeof(sc->sc_is.is_source),
+		 "%s", sc->sc_config->name);
 
 	sunxi_nmi_irq_enable(sc, false);
 	sunxi_nmi_irq_ack(sc);

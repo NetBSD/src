@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_chan.c,v 1.5 2018/08/27 14:48:21 riastradh Exp $	*/
+/*	$NetBSD: nouveau_chan.c,v 1.5.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_chan.c,v 1.5 2018/08/27 14:48:21 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_chan.c,v 1.5.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #include <nvif/os.h>
 #include <nvif/class.h>
@@ -96,8 +96,7 @@ nouveau_channel_prep(struct nouveau_drm *drm, struct nvif_device *device,
 {
 	struct nouveau_cli *cli = (void *)device->object.client;
 	struct nvkm_mmu *mmu = nvxx_mmu(device);
-	static const struct nv_dma_v0 zero_args;
-	struct nv_dma_v0 args = zero_args;
+	struct nv_dma_v0 args = {};
 	struct nouveau_channel *chan;
 	u32 target;
 	int ret;
@@ -301,8 +300,7 @@ nouveau_channel_init(struct nouveau_channel *chan, u32 vram, u32 gart)
 	struct nvif_device *device = chan->device;
 	struct nouveau_cli *cli = (void *)chan->user.client;
 	struct nvkm_mmu *mmu = nvxx_mmu(device);
-	static const struct nv_dma_v0 zero_args;
-	struct nv_dma_v0 args = zero_args;
+	struct nv_dma_v0 args = {};
 	int ret, i;
 
 	ret = nvif_object_map(&chan->user);

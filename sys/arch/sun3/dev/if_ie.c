@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ie.c,v 1.70 2019/05/28 07:41:48 msaitoh Exp $ */
+/*	$NetBSD: if_ie.c,v 1.70.4.1 2020/02/29 20:18:31 ad Exp $ */
 
 /*-
  * Copyright (c) 1993, 1994, 1995 Charles M. Hannum.
@@ -98,7 +98,7 @@
 */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.70 2019/05/28 07:41:48 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ie.c,v 1.70.4.1 2020/02/29 20:18:31 ad Exp $");
 
 #include "opt_inet.h"
 #include "opt_ns.h"
@@ -432,7 +432,7 @@ iewatchdog(struct ifnet *ifp)
 	struct ie_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++ifp->if_oerrors;
+	if_statinc(ifp, if_oerrors);
 	iereset(sc);
 }
 
@@ -504,7 +504,7 @@ ie_intr(void *arg)
 #ifdef IEDEBUG
 		printf("%s: receiver not ready\n", device_xname(sc->sc_dev));
 #endif
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		iereset(sc);
 	}
 
@@ -542,11 +542,11 @@ ierint(struct ie_softc *sc)
 
 		if ((status & IE_FD_COMPLETE) && (status & IE_FD_OK)) {
 			if (!--timesthru) {
-				sc->sc_if.if_ierrors +=
+				if_statadd(&sc->sc_if, if_ierrors,
 				    SWAP(scb->ie_err_crc) +
 				    SWAP(scb->ie_err_align) +
 				    SWAP(scb->ie_err_resource) +
-				    SWAP(scb->ie_err_overrun);
+				    SWAP(scb->ie_err_overrun));
 				scb->ie_err_crc = 0;
 				scb->ie_err_align = 0;
 				scb->ie_err_resource = 0;
@@ -591,10 +591,10 @@ ietint(struct ie_softc *sc)
 		printf("%s: command still busy!\n", __func__);
 
 	if (status & IE_STAT_OK) {
-		ifp->if_opackets++;
-		ifp->if_collisions += SWAP(status & IE_XS_MAXCOLL);
+		if_statadd2(ifp, if_opackets, 1,
+			    if_collisions, SWAP(status & IE_XS_MAXCOLL));
 	} else {
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		/*
 		 * XXX
 		 * Check SQE and DEFERRED?
@@ -613,7 +613,7 @@ ietint(struct ie_softc *sc)
 			printf("%s: DMA underrun\n", device_xname(sc->sc_dev));
 		if (status & IE_XS_EXCMAX) {
 			/* Do not print this one (too noisy). */
-			ifp->if_collisions += 16;
+			if_statadd(ifp, if_collisions, 16);
 		}
 	}
 
@@ -896,7 +896,7 @@ ie_readframe(struct ie_softc *sc, int num)
 		ie_drop_packet_buffer(sc);
 	}
 	if (m == 0) {
-		sc->sc_if.if_ierrors++;
+		if_statinc(&sc->sc_if, if_ierrors);
 		return;
 	}
 

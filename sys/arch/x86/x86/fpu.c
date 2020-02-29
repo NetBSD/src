@@ -1,4 +1,4 @@
-/*	$NetBSD: fpu.c,v 1.60 2019/11/27 06:24:33 maxv Exp $	*/
+/*	$NetBSD: fpu.c,v 1.60.2.1 2020/02/29 20:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2019 The NetBSD Foundation, Inc.  All
@@ -96,7 +96,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.60 2019/11/27 06:24:33 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fpu.c,v 1.60.2.1 2020/02/29 20:18:33 ad Exp $");
 
 #include "opt_multiprocessor.h"
 
@@ -301,7 +301,7 @@ fpu_switch(struct lwp *oldlwp, struct lwp *newlwp)
 {
 	struct pcb *pcb;
 
-	if ((oldlwp != NULL) && (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU)) {
+	if (oldlwp->l_md.md_flags & MDL_FPU_IN_CPU) {
 		KASSERT(!(oldlwp->l_flag & LW_SYSTEM));
 		pcb = lwp_getpcb(oldlwp);
 		fpu_area_save(&pcb->pcb_savefpu, x86_xsave_features);

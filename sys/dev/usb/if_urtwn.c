@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtwn.c,v 1.78.2.1 2020/01/17 21:47:32 ad Exp $	*/
+/*	$NetBSD: if_urtwn.c,v 1.78.2.2 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_urtwn.c,v 1.42 2015/02/10 23:25:46 mpi Exp $	*/
 
 /*-
@@ -25,7 +25,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.78.2.1 2020/01/17 21:47:32 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtwn.c,v 1.78.2.2 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -2380,7 +2380,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 		 * to not receive these frames.
 		 */
 		DPRINTFN(DBG_RX, "CRC error", 0, 0, 0, 0);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	/*
@@ -2391,12 +2391,12 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	if (__predict_false(pktlen < (int)sizeof(struct ieee80211_frame_ack))) {
 		DPRINTFN(DBG_RX, "packet too short %jd", pktlen, 0, 0, 0);
 		ic->ic_stats.is_rx_tooshort++;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	if (__predict_false(pktlen > MCLBYTES)) {
 		DPRINTFN(DBG_RX, "packet too big %jd", pktlen, 0, 0, 0);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -2420,7 +2420,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 	if (__predict_false(m == NULL)) {
 		aprint_error_dev(sc->sc_dev, "couldn't allocate rx mbuf\n");
 		ic->ic_stats.is_rx_nobuf++;
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 	if (pktlen > (int)MHLEN) {
@@ -2430,7 +2430,7 @@ urtwn_rx_frame(struct urtwn_softc *sc, uint8_t *buf, int pktlen)
 			    "couldn't allocate rx mbuf cluster\n");
 			m_freem(m);
 			ic->ic_stats.is_rx_nobuf++;
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			return;
 		}
 	}
@@ -2598,13 +2598,13 @@ urtwn_txeof(struct usbd_xfer *xfer, void *priv, usbd_status status)
 				usbd_clear_endpoint_stall_async(pipe);
 			}
 			printf("ERROR1\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		}
 		splx(s);
 		return;
 	}
 
-	ifp->if_opackets++;
+	if_statinc(ifp, if_opackets);
 	urtwn_start(ifp);
 	splx(s);
 
@@ -2891,7 +2891,7 @@ urtwn_start(struct ifnet *ifp)
 		if (m->m_len < (int)sizeof(*eh) &&
 		    (m = m_pullup(m, sizeof(*eh))) == NULL) {
 			printf("ERROR6\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		eh = mtod(m, struct ether_header *);
@@ -2899,7 +2899,7 @@ urtwn_start(struct ifnet *ifp)
 		if (ni == NULL) {
 			m_freem(m);
 			printf("ERROR5\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 
@@ -2908,7 +2908,7 @@ urtwn_start(struct ifnet *ifp)
 		if ((m = ieee80211_encap(ic, m, ni)) == NULL) {
 			ieee80211_free_node(ni);
 			printf("ERROR4\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
  sendit:
@@ -2918,7 +2918,7 @@ urtwn_start(struct ifnet *ifp)
 			m_freem(m);
 			ieee80211_free_node(ni);
 			printf("ERROR3\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		m_freem(m);
@@ -2942,7 +2942,7 @@ urtwn_watchdog(struct ifnet *ifp)
 			aprint_error_dev(sc->sc_dev, "device timeout\n");
 			/* urtwn_init(ifp); XXX needs a process context! */
 			printf("ERROR2\n");
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			return;
 		}
 		ifp->if_timer = 1;

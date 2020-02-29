@@ -1,4 +1,4 @@
-/*	$NetBSD: sys_sched.c,v 1.46 2016/07/30 15:38:17 christos Exp $	*/
+/*	$NetBSD: sys_sched.c,v 1.46.22.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2011 Mindaugas Rasiukevicius <rmind at NetBSD org>
@@ -38,11 +38,10 @@
  *
  * TODO:
  *  - Handle pthread_setschedprio() as defined by POSIX;
- *  - Handle sched_yield() case for SCHED_FIFO as defined by POSIX;
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.46 2016/07/30 15:38:17 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_sched.c,v 1.46.22.1 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 

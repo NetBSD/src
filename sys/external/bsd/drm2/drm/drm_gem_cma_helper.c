@@ -1,4 +1,4 @@
-/* $NetBSD: drm_gem_cma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $ */
+/* $NetBSD: drm_gem_cma_helper.c,v 1.9.2.1 2020/02/29 20:20:17 ad Exp $ */
 
 /*-
  * Copyright (c) 2015-2017 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.9 2019/11/05 23:29:28 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: drm_gem_cma_helper.c,v 1.9.2.1 2020/02/29 20:20:17 ad Exp $");
 
 #include <drm/drmP.h>
 #include <drm/drm_gem_cma_helper.h>
@@ -246,8 +246,7 @@ drm_gem_cma_fault(struct uvm_faultinfo *ufi, vaddr_t vaddr,
 		    PMAP_CANFAIL | mapprot | mmapflags) != 0) {
 			pmap_update(ufi->orig_map->pmap);
 			uvmfault_unlockall(ufi, ufi->entry->aref.ar_amap, uobj);
-			uvm_wait("drm_gem_cma_fault");
-			return ERESTART;
+			return ENOMEM;
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdivar.h,v 1.119 2019/09/26 01:35:08 christos Exp $	*/
+/*	$NetBSD: usbdivar.h,v 1.119.2.1 2020/02/29 20:19:17 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012 The NetBSD Foundation, Inc.
@@ -96,6 +96,8 @@ struct usbd_bus_methods {
 	void		      (*ubm_dopoll)(struct usbd_bus *);
 	struct usbd_xfer     *(*ubm_allocx)(struct usbd_bus *, unsigned int);
 	void		      (*ubm_freex)(struct usbd_bus *, struct usbd_xfer *);
+	void		      (*ubm_abortx)(struct usbd_xfer *);
+	bool		      (*ubm_dying)(struct usbd_bus *);
 	void		      (*ubm_getlock)(struct usbd_bus *, kmutex_t **);
 	usbd_status	      (*ubm_newdev)(device_t, struct usbd_bus *, int,
 					    int, int, struct usbd_port *);
@@ -288,6 +290,19 @@ struct usbd_xfer {
 
 	struct usb_task		ux_aborttask;
 	struct callout		ux_callout;
+
+	/*
+	 * Protected by bus lock.
+	 *
+	 * - ux_timeout_set: The timeout is scheduled as a callout or
+	 *   usb task, and has not yet acquired the bus lock.
+	 *
+	 * - ux_timeout_reset: The xfer completed, and was resubmitted
+	 *   before the callout or task was able to acquire the bus
+	 *   lock, so one or the other needs to schedule a new callout.
+	 */
+	bool			ux_timeout_set;
+	bool			ux_timeout_reset;
 };
 
 void usbd_init(void);
@@ -334,8 +349,6 @@ int		usb_disconnect_port(struct usbd_port *, device_t, int);
 void		usbd_kill_pipe(struct usbd_pipe *);
 usbd_status	usbd_attach_roothub(device_t, struct usbd_device *);
 usbd_status	usbd_probe_and_attach(device_t, struct usbd_device *, int, int);
-usbd_status	usbd_get_initial_ddesc(struct usbd_device *,
-				       usb_device_descriptor_t *);
 
 /* Routines from usb.c */
 void		usb_needs_explore(struct usbd_device *);

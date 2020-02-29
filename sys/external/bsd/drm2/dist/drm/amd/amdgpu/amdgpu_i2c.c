@@ -1,4 +1,4 @@
-/*	$NetBSD: amdgpu_i2c.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $	*/
+/*	$NetBSD: amdgpu_i2c.c,v 1.3.10.1 2020/02/29 20:20:13 ad Exp $	*/
 
 /*
  * Copyright 2007-8 Advanced Micro Devices, Inc.
@@ -26,10 +26,9 @@
  *          Alex Deucher
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: amdgpu_i2c.c,v 1.3 2018/08/27 14:04:50 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: amdgpu_i2c.c,v 1.3.10.1 2020/02/29 20:20:13 ad Exp $");
 
 #include <linux/export.h>
-#include <linux/module.h>
 
 #include <drm/drmP.h>
 #include <drm/drm_edid.h>
@@ -40,6 +39,8 @@ __KERNEL_RCSID(0, "$NetBSD: amdgpu_i2c.c,v 1.3 2018/08/27 14:04:50 riastradh Exp
 #include "atom.h"
 #include "atombios_dp.h"
 #include "atombios_i2c.h"
+
+#include <linux/nbsd-namespace.h>
 
 /* bit banging i2c */
 static int amdgpu_i2c_pre_xfer(struct i2c_adapter *i2c_adap)
@@ -184,11 +185,7 @@ struct amdgpu_i2c_chan *amdgpu_i2c_create(struct drm_device *dev,
 	i2c->adapter.dev.parent = dev->dev;
 	i2c->dev = dev;
 	i2c_set_adapdata(&i2c->adapter, i2c);
-#ifdef __NetBSD__
-	linux_mutex_init(&i2c->mutex);
-#else
 	mutex_init(&i2c->mutex);
-#endif
 	if (rec->hw_capable &&
 	    amdgpu_hw_i2c) {
 		/* hw i2c using atom */
@@ -223,11 +220,7 @@ struct amdgpu_i2c_chan *amdgpu_i2c_create(struct drm_device *dev,
 
 	return i2c;
 out_free:
-#ifdef __NetBSD__
-	linux_mutex_destroy(&i2c->mutex);
-#else
 	mutex_destroy(&i2c->mutex);
-#endif
 	kfree(i2c);
 	return NULL;
 
@@ -238,11 +231,7 @@ void amdgpu_i2c_destroy(struct amdgpu_i2c_chan *i2c)
 	if (!i2c)
 		return;
 	i2c_del_adapter(&i2c->adapter);
-#ifdef __NetBSD__
-	linux_mutex_destroy(&i2c->mutex);
-#else
 	mutex_destroy(&i2c->mutex);
-#endif
 	kfree(i2c);
 }
 

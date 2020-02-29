@@ -1,4 +1,4 @@
-/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8 2018/08/27 14:51:33 riastradh Exp $	*/
+/*	$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8.10.1 2020/02/29 20:20:15 ad Exp $	*/
 
 /*
  * Copyright 2012 Red Hat Inc.
@@ -24,7 +24,7 @@
  * Authors: Ben Skeggs
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8 2018/08/27 14:51:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8.10.1 2020/02/29 20:20:15 ad Exp $");
 
 #include "priv.h"
 #include "acpi.h"
@@ -35,6 +35,7 @@ __KERNEL_RCSID(0, "$NetBSD: nouveau_nvkm_engine_device_base.c,v 1.8 2018/08/27 1
 #include <subdev/bios.h>
 
 #ifdef __NetBSD__
+#include <linux/nbsd-namespace.h>
 static struct mutex nv_devices_mutex;
 static struct list_head nv_devices = LIST_HEAD_INIT(nv_devices);
 
@@ -2303,11 +2304,7 @@ nvkm_device_del(struct nvkm_device **pdevice)
 			nvkm_subdev_del(&subdev);
 		}
 
-#ifdef __NetBSD__
-		linux_mutex_destroy(&device->mutex);
-#else
 		mutex_destroy(&device->mutex);
-#endif
 
 		nvkm_event_fini(&device->event);
 
@@ -2581,11 +2578,7 @@ nvkm_device_ctor(const struct nvkm_device_func *func,
 #endif
 	}
 
-#ifdef __NetBSD__
-	linux_mutex_init(&device->mutex);
-#else
 	mutex_init(&device->mutex);
-#endif
 
 	for (i = 0; i < NVKM_SUBDEV_NR; i++) {
 #define _(s,m) case s:                                                         \

@@ -1,4 +1,4 @@
-/*	$NetBSD: fault.c,v 1.109 2019/11/29 17:33:43 ryo Exp $	*/
+/*	$NetBSD: fault.c,v 1.109.2.1 2020/02/29 20:18:17 ad Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -81,7 +81,7 @@
 #include "opt_kgdb.h"
 
 #include <sys/types.h>
-__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.109 2019/11/29 17:33:43 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: fault.c,v 1.109.2.1 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -835,7 +835,7 @@ prefetch_abort_handler(trapframe_t *tf)
 	/* Get fault address */
 	fault_pc = tf->tf_pc;
 	KASSERTMSG(tf == lwp_trapframe(l), "tf %p vs %p", tf, lwp_trapframe(l));
-	UVMHIST_LOG(maphist, " (pc=0x%jx, l=0x%#jx, tf=0x%#jx)",
+	UVMHIST_LOG(maphist, " (pc=%#jx, l=%#jx, tf=%#jx)",
 	    fault_pc, (uintptr_t)l, (uintptr_t)tf, 0);
 
 #ifdef THUMB_CODE

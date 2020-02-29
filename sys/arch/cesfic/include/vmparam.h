@@ -1,4 +1,4 @@
-/*	$NetBSD: vmparam.h,v 1.18 2019/06/28 15:17:43 tsutsui Exp $	*/
+/*	$NetBSD: vmparam.h,v 1.18.4.1 2020/02/29 20:18:21 ad Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -46,13 +46,9 @@
  */
 
 /*
- * hp300 pmap derived m68k ports can use 4K or 8K pages.
- * The page size is specified by PGSHIFT in <machine/param.h>.
- * Override the PAGE_* definitions to be compile-time constants.
+ * Use common m68k definitions to define PAGE_SIZE and related constants.
  */
-#define	PAGE_SHIFT	PGSHIFT
-#define	PAGE_SIZE	(1 << PAGE_SHIFT)
-#define	PAGE_MASK	(PAGE_SIZE - 1)
+#include <m68k/vmparam.h>
 
 /*
  * USRSTACK is the top (end) of the user stack.

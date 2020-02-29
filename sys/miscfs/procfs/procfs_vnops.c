@@ -1,4 +1,4 @@
-/*	$NetBSD: procfs_vnops.c,v 1.207.2.1 2020/01/25 15:54:04 ad Exp $	*/
+/*	$NetBSD: procfs_vnops.c,v 1.207.2.2 2020/02/29 20:21:04 ad Exp $	*/
 
 /*-
  * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -105,9 +105,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.207.2.1 2020/01/25 15:54:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: procfs_vnops.c,v 1.207.2.2 2020/02/29 20:21:04 ad Exp $");
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/time.h>
 #include <sys/kernel.h>
@@ -1390,7 +1391,7 @@ procfs_readdir(void *v)
 			return ESRCH;
 		}
 
-		nfd = p->p_fd->fd_dt->dt_nfiles;
+		nfd = atomic_load_consume(&p->p_fd->fd_dt)->dt_nfiles;
 
 		lim = uimin((int)p->p_rlimit[RLIMIT_NOFILE].rlim_cur, maxfiles);
 		if (i >= lim) {
@@ -1738,7 +1739,7 @@ procfs_getpages(void *v)
 	} */ *ap = v;
 
 	if ((ap->a_flags & PGO_LOCKED) == 0)
-		mutex_exit(ap->a_vp->v_interlock);
+		rw_exit(ap->a_vp->v_uobj.vmobjlock);
 
 	return (EFAULT);
 }

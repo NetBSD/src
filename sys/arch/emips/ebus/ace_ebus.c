@@ -1,4 +1,4 @@
-/*	$NetBSD: ace_ebus.c,v 1.22 2019/12/14 02:58:19 tsutsui Exp $	*/
+/*	$NetBSD: ace_ebus.c,v 1.22.2.1 2020/02/29 20:18:21 ad Exp $	*/
 
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -31,7 +31,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.22 2019/12/14 02:58:19 tsutsui Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ace_ebus.c,v 1.22.2.1 2020/02/29 20:18:21 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2393,7 +2393,7 @@ acedump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	}
 #else	/* ACE_DUMP_NOT_TRUSTED */
 	/* Let's just talk about this first... */
-	device_printf(ace->sc_dev, ": dump addr 0x%p, size %zu blkno %llx\n",
+	device_printf(ace->sc_dev, ": dump addr %p, size %zu blkno %llx\n",
 	    va, size, blkno);
 	DELAY(500 * 1000);	/* half a second */
 	err = 0;

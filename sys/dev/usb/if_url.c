@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.72 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_url.c,v 1.72.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.72 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.72.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -576,7 +576,7 @@ url_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	DPRINTF(("%s: %s: enter\n", device_xname(un->un_dev),__func__));
 
 	if (total_len <= ETHER_CRC_LEN || total_len <= sizeof(rxhdr)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -591,7 +591,7 @@ url_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 		 UGETW(rxhdr) & URL_RXHDR_MCASTPKT_MASK ? ", Multicast" : ""));
 
 	if ((UGETW(rxhdr) & URL_RXHDR_VALID_MASK) == 0) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 

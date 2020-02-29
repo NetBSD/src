@@ -1,4 +1,4 @@
-/*	$NetBSD: puffs_vfsops.c,v 1.123.2.1 2020/01/17 21:47:34 ad Exp $	*/
+/*	$NetBSD: puffs_vfsops.c,v 1.123.2.2 2020/02/29 20:21:01 ad Exp $	*/
 
 /*
  * Copyright (c) 2005, 2006  Antti Kantee.  All Rights Reserved.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.123.2.1 2020/01/17 21:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: puffs_vfsops.c,v 1.123.2.2 2020/02/29 20:21:01 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kernel.h>
@@ -517,7 +517,9 @@ pageflush_selector(void *cl, struct vnode *vp)
 	KASSERT(mutex_owned(vp->v_interlock));
 
 	return vp->v_type == VREG &&
-	    !(LIST_EMPTY(&vp->v_dirtyblkhd) && UVM_OBJ_IS_CLEAN(&vp->v_uobj));
+	    !(LIST_EMPTY(&vp->v_dirtyblkhd) &&
+	    (vp->v_iflag & VI_ONWORKLST) == 0);
+
 }
 
 static int

@@ -1,7 +1,7 @@
-/*	$NetBSD: proc.h,v 1.357 2019/10/12 19:38:57 kamil Exp $	*/
+/*	$NetBSD: proc.h,v 1.357.2.1 2020/02/29 20:21:10 ad Exp $	*/
 
 /*-
- * Copyright (c) 2006, 2007, 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * This code is derived from software contributed to The NetBSD Foundation
@@ -87,6 +87,7 @@
 #include <sys/mutex.h>
 #include <sys/condvar.h>
 #include <sys/queue.h>
+#include <sys/radixtree.h>
 #include <sys/signalvar.h>
 #include <sys/siginfo.h>
 #include <sys/event.h>
@@ -222,6 +223,8 @@ struct emul {
  * l:	proc_lock
  * t:	p_stmutex
  * p:	p_lock
+ * r:	p_treelock (only for use by LWPs in the same proc)
+ * p,r:	p_lock + p_treelock to modify, either to inspect
  * (:	updated atomically
  * ::	unlocked, stable
  */
@@ -229,11 +232,7 @@ struct vmspace;
 
 struct proc {
 	LIST_ENTRY(proc) p_list;	/* l: List of all processes */
-
-	kmutex_t	p_auxlock;	/* :: secondary, longer term lock */
 	kmutex_t	*p_lock;	/* :: general mutex */
-	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
-	krwlock_t	p_reflock;	/* p: lock for debugger, procfs */
 	kcondvar_t	p_waitcv;	/* p: wait, stop CV on children */
 	kcondvar_t	p_lwpcv;	/* p: wait, stop CV on LWPs */
 
@@ -266,6 +265,7 @@ struct proc {
 	LIST_ENTRY(proc) p_sibling;	/* l: List of sibling processes. */
 	LIST_HEAD(, proc) p_children;	/* l: List of children. */
 	LIST_HEAD(, lwp) p_lwps;	/* p: List of LWPs. */
+	struct radix_tree p_lwptree;	/* p,r: Tree of LWPs. */
 	struct ras	*p_raslist;	/* a: List of RAS entries */
 
 /* The following fields are all zeroed upon creation in fork. */
@@ -342,6 +342,14 @@ struct proc {
 	struct mdproc	p_md;		/* p: Any machine-dependent fields */
 	vaddr_t		p_stackbase;	/* :: ASLR randomized stack base */
 	struct kdtrace_proc *p_dtrace;	/* :: DTrace-specific data. */
+/*
+ * Locks in their own cache line towards the end.
+ */
+	kmutex_t	p_auxlock	/* :: secondary, longer term lock */
+	    __aligned(COHERENCY_UNIT);
+	kmutex_t	p_stmutex;	/* :: mutex on profiling state */
+	krwlock_t	p_reflock;	/* :: lock for debugger, procfs */
+	krwlock_t	p_treelock;	/* :: lock on p_lwptree */
 };
 
 #define	p_rlimit	p_limit->pl_rlimit
@@ -505,6 +513,7 @@ void	fixjobc(struct proc *, struct pgrp *, int);
 
 int	tsleep(wchan_t, pri_t, const char *, int);
 int	mtsleep(wchan_t, pri_t, const char *, int, kmutex_t *);
+int	rwtsleep(wchan_t, pri_t, const char *, int, krwlock_t *);
 void	wakeup(wchan_t);
 int	kpause(const char *, bool, int, kmutex_t *);
 void	exit1(struct lwp *, int, int) __dead;

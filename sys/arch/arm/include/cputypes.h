@@ -1,4 +1,4 @@
-/*	$NetBSD: cputypes.h,v 1.11 2019/12/28 19:18:31 jmcneill Exp $	*/
+/*	$NetBSD: cputypes.h,v 1.11.2.1 2020/02/29 20:18:19 ad Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Ben Harris
@@ -208,6 +208,7 @@
 
 #define CPU_ID_SA110		0x4401a100
 #define CPU_ID_SA1100		0x4401a110
+#define CPU_ID_NVIDIADENVER2	0x4e0f0030
 #define CPU_ID_EMAG8180		0x503f0002
 #define CPU_ID_TI925T		0x54029250
 #define CPU_ID_MV88FR571_VD	0x56155710

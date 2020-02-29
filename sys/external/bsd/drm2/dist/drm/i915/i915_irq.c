@@ -1,4 +1,4 @@
-/*	$NetBSD: i915_irq.c,v 1.17 2018/09/13 08:25:55 mrg Exp $	*/
+/*	$NetBSD: i915_irq.c,v 1.17.6.1 2020/02/29 20:20:14 ad Exp $	*/
 
 /* i915_irq.c -- IRQ support for the I915 -*- linux-c -*-
  */
@@ -29,16 +29,10 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.17 2018/09/13 08:25:55 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: i915_irq.c,v 1.17.6.1 2020/02/29 20:20:14 ad Exp $");
 
 #define pr_fmt(fmt) KBUILD_MODNAME ": " fmt
 
-#ifdef __NetBSD__
-#include <sys/cdefs.h>
-#endif
-
-#include <linux/hardirq.h>
-#include <linux/printk.h>
 #include <linux/sysrq.h>
 #include <linux/slab.h>
 #ifdef CONFIG_DEBUG_FS
@@ -487,7 +481,7 @@ void ibx_display_interrupt_update(struct drm_i915_private *dev_priv,
 }
 
 static void
-__i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+__i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		       u32 enable_mask, u32 status_mask)
 {
 	u32 reg = PIPESTAT(pipe);
@@ -514,7 +508,7 @@ __i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
 }
 
 static void
-__i915_disable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+__i915_disable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		        u32 enable_mask, u32 status_mask)
 {
 	u32 reg = PIPESTAT(pipe);
@@ -568,7 +562,7 @@ static u32 vlv_get_pipestat_enable_mask(struct drm_device *dev, u32 status_mask)
 }
 
 void
-i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+i915_enable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		     u32 status_mask)
 {
 	u32 enable_mask;
@@ -582,7 +576,7 @@ i915_enable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
 }
 
 void
-i915_disable_pipestat(struct drm_i915_private *dev_priv, enum i915_pipe pipe,
+i915_disable_pipestat(struct drm_i915_private *dev_priv, enum pipe pipe,
 		      u32 status_mask)
 {
 	u32 enable_mask;
@@ -742,7 +736,7 @@ static int __intel_get_crtc_scanline(struct intel_crtc *crtc)
 	struct drm_device *dev = crtc->base.dev;
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	const struct drm_display_mode *mode = &crtc->base.hwmode;
-	enum i915_pipe pipe = crtc->pipe;
+	enum pipe pipe = crtc->pipe;
 	int position, vtotal;
 
 	vtotal = mode->crtc_vtotal;
@@ -1518,7 +1512,7 @@ static void dp_aux_irq_handler(struct drm_device *dev)
 }
 
 #if defined(CONFIG_DEBUG_FS)
-static void display_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe,
+static void display_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe,
 					 uint32_t crc0, uint32_t crc1,
 					 uint32_t crc2, uint32_t crc3,
 					 uint32_t crc4)
@@ -1563,14 +1557,14 @@ static void display_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe 
 }
 #else
 static inline void
-display_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe,
+display_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe,
 			     uint32_t crc0, uint32_t crc1,
 			     uint32_t crc2, uint32_t crc3,
 			     uint32_t crc4) {}
 #endif
 
 
-static void hsw_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe)
+static void hsw_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -1579,7 +1573,7 @@ static void hsw_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe
 				     0, 0, 0, 0);
 }
 
-static void ivb_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe)
+static void ivb_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 
@@ -1591,7 +1585,7 @@ static void ivb_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe
 				     I915_READ(PIPE_CRC_RES_5_IVB(pipe)));
 }
 
-static void i9xx_pipe_crc_irq_handler(struct drm_device *dev, enum i915_pipe pipe)
+static void i9xx_pipe_crc_irq_handler(struct drm_device *dev, enum pipe pipe)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	uint32_t res1, res2;
@@ -1640,7 +1634,7 @@ static void gen6_rps_irq_handler(struct drm_i915_private *dev_priv, u32 pm_iir)
 	}
 }
 
-static bool intel_pipe_handle_vblank(struct drm_device *dev, enum i915_pipe pipe)
+static bool intel_pipe_handle_vblank(struct drm_device *dev, enum pipe pipe)
 {
 	if (!drm_handle_vblank(dev, pipe))
 		return false;
@@ -1922,7 +1916,7 @@ static void ivb_err_int_handler(struct drm_device *dev)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
 	u32 err_int = I915_READ(GEN7_ERR_INT);
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	if (err_int & ERR_INT_POISON)
 		DRM_ERROR("Poison interrupt\n");
@@ -2056,7 +2050,7 @@ static void ilk_hpd_irq_handler(struct drm_device *dev, u32 hotplug_trigger,
 static void ilk_display_irq_handler(struct drm_device *dev, u32 de_iir)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	u32 hotplug_trigger = de_iir & DE_DP_A_HOTPLUG;
 
 	if (hotplug_trigger)
@@ -2109,7 +2103,7 @@ static void ilk_display_irq_handler(struct drm_device *dev, u32 de_iir)
 static void ivb_display_irq_handler(struct drm_device *dev, u32 de_iir)
 {
 	struct drm_i915_private *dev_priv = dev->dev_private;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	u32 hotplug_trigger = de_iir & DE_DP_A_HOTPLUG_IVB;
 
 	if (hotplug_trigger)
@@ -2249,7 +2243,7 @@ static irqreturn_t gen8_irq_handler(DRM_IRQ_ARGS)
 	u32 master_ctl;
 	irqreturn_t ret = IRQ_NONE;
 	uint32_t tmp = 0;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 	u32 aux_mask = GEN8_AUX_CHANNEL_A;
 
 	if (!intel_irqs_enabled(dev_priv))
@@ -3268,7 +3262,7 @@ static void ironlake_irq_reset(struct drm_device *dev)
 
 static void vlv_display_irq_reset(struct drm_i915_private *dev_priv)
 {
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	i915_hotplug_interrupt_update(dev_priv, 0xFFFFFFFF, 0);
 	I915_WRITE(PORT_HOTPLUG_STAT, I915_READ(PORT_HOTPLUG_STAT));
@@ -3592,7 +3586,7 @@ static void valleyview_display_irqs_install(struct drm_i915_private *dev_priv)
 {
 	u32 pipestat_mask;
 	u32 iir_mask;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	pipestat_mask = PIPESTAT_INT_STATUS_MASK |
 			PIPE_FIFO_UNDERRUN_STATUS;
@@ -3626,7 +3620,7 @@ static void valleyview_display_irqs_uninstall(struct drm_i915_private *dev_priv)
 {
 	u32 pipestat_mask;
 	u32 iir_mask;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	iir_mask = I915_DISPLAY_PORT_INTERRUPT |
 		   I915_DISPLAY_PIPE_A_EVENT_INTERRUPT |
@@ -3757,7 +3751,7 @@ static void gen8_de_irq_postinstall(struct drm_i915_private *dev_priv)
 	uint32_t de_pipe_enables;
 	u32 de_port_masked = GEN8_AUX_CHANNEL_A;
 	u32 de_port_enables;
-	enum i915_pipe pipe;
+	enum pipe pipe;
 
 	if (INTEL_INFO(dev_priv)->gen >= 9) {
 		de_pipe_masked |= GEN9_PIPE_PLANE1_FLIP_DONE |

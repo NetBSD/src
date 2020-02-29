@@ -1,4 +1,4 @@
-/*	$NetBSD: if_upl.c,v 1.69 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_upl.c,v 1.69.2.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.69 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_upl.c,v 1.69.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -307,11 +307,10 @@ upl_input(struct ifnet *ifp, struct mbuf *m)
 
 	s = splnet();
 	if (__predict_false(!pktq_enqueue(ip_pktq, m, 0))) {
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		m_freem(m);
 	} else {
-		ifp->if_ipackets++;
-		ifp->if_ibytes += pktlen;
+		if_statadd2(ifp, if_ipackets, 1, if_ibytes, pktlen);
 	}
 	splx(s);
 #endif

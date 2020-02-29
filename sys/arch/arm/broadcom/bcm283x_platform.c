@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm283x_platform.c,v 1.34 2020/01/01 13:54:32 skrll Exp $	*/
+/*	$NetBSD: bcm283x_platform.c,v 1.34.2.1 2020/02/29 20:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2017 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.34 2020/01/01 13:54:32 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.34.2.1 2020/02/29 20:18:18 ad Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_bcm283x.h"
@@ -109,7 +109,6 @@ __KERNEL_RCSID(0, "$NetBSD: bcm283x_platform.c,v 1.34 2020/01/01 13:54:32 skrll 
 #endif
 
 #define RPI_CPU_MAX	4
-#define BCM2711_DMA_SIZE	0x3c000000
 
 void bcm2835_platform_early_putchar(char c);
 void bcm2836_platform_early_putchar(char c);
@@ -187,6 +186,10 @@ bcm2711_bus_to_phys(bus_addr_t ba)
 	if (ba >= BCM283X_PERIPHERALS_BASE_BUS &&
 	    ba < BCM283X_PERIPHERALS_BASE_BUS + BCM283X_PERIPHERALS_SIZE)
 		return BCM2711_PERIPHERALS_BUS_TO_PHYS(ba);
+
+	if (ba >= BCM2711_SCB_BASE_BUS &&
+	    ba < BCM2711_SCB_BASE_BUS + BCM2711_SCB_SIZE)
+		return BCM2711_SCB_BUS_TO_PHYS(ba);
 
 	if (ba >= BCM2711_ARM_LOCAL_BASE_BUS &&
 	    ba < BCM2711_ARM_LOCAL_BASE_BUS + BCM2711_ARM_LOCAL_SIZE)
@@ -266,28 +269,6 @@ bcm2711_a4x_bs_mmap(void *t, bus_addr_t ba, off_t offset, int prot, int flags)
 
 	return bcm2711_bs_mmap(t, ba, 4 * offset, prot, flags);
 }
-
-struct arm32_dma_range bcm2835_dma_ranges[] = {
-	[0] = {
-		.dr_sysbase = 0,
-		.dr_busbase = BCM2835_BUSADDR_CACHE_COHERENT,
-	}
-};
-
-struct arm32_dma_range bcm2836_dma_ranges[] = {
-	[0] = {
-		.dr_sysbase = 0,
-		.dr_busbase = BCM2835_BUSADDR_CACHE_DIRECT,
-	}
-};
-
-struct arm32_dma_range bcm2711_dma_ranges[] = {
-	[0] = {
-		.dr_sysbase = 0,
-		.dr_busbase = BCM2835_BUSADDR_CACHE_DIRECT,
-	}
-};
-
 
 #if defined(SOC_BCM2835)
 static const struct pmap_devmap *
@@ -1321,11 +1302,6 @@ bcm2835_platform_init_attach_args(struct fdt_attach_args *faa)
 
 	faa->faa_bst = &bcm2835_bs_tag;
 	faa->faa_a4x_bst = &bcm2835_a4x_bs_tag;
-	faa->faa_dmat = &bcm2835_bus_dma_tag;
-
-	bcm2835_bus_dma_tag._ranges = bcm2835_dma_ranges;
-	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2835_dma_ranges);
-	bcm2835_dma_ranges[0].dr_len = bcm283x_memorysize;
 }
 #endif
 
@@ -1336,11 +1312,6 @@ bcm2836_platform_init_attach_args(struct fdt_attach_args *faa)
 
 	faa->faa_bst = &bcm2836_bs_tag;
 	faa->faa_a4x_bst = &bcm2836_a4x_bs_tag;
-	faa->faa_dmat = &bcm2835_bus_dma_tag;
-
-	bcm2835_bus_dma_tag._ranges = bcm2836_dma_ranges;
-	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2836_dma_ranges);
-	bcm2836_dma_ranges[0].dr_len = bcm283x_memorysize;
 }
 
 static void
@@ -1349,11 +1320,6 @@ bcm2711_platform_init_attach_args(struct fdt_attach_args *faa)
 
 	faa->faa_bst = &bcm2711_bs_tag;
 	faa->faa_a4x_bst = &bcm2711_a4x_bs_tag;
-	faa->faa_dmat = &bcm2835_bus_dma_tag;
-
-	bcm2835_bus_dma_tag._ranges = bcm2711_dma_ranges;
-	bcm2835_bus_dma_tag._nranges = __arraycount(bcm2711_dma_ranges);
-	bcm2711_dma_ranges[0].dr_len = BCM2711_DMA_SIZE;
 }
 #endif
 
@@ -1449,7 +1415,9 @@ bcm283x_platform_device_register(device_t dev, void *aux)
 		booted_device = dev;
 	}
 #endif
-	if ((device_is_a(dev, "usmsc") || device_is_a(dev, "mue")) &&
+	if ((device_is_a(dev, "usmsc") ||
+	     device_is_a(dev, "mue") ||
+	     device_is_a(dev, "genet")) &&
 	    vcprop_tag_success_p(&vb.vbt_macaddr.tag)) {
 		const uint8_t enaddr[ETHER_ADDR_LEN] = {
 		     (vb.vbt_macaddr.addr >> 0) & 0xff,

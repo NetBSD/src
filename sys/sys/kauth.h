@@ -1,4 +1,4 @@
-/* $NetBSD: kauth.h,v 1.82 2019/04/10 18:49:04 maxv Exp $ */
+/* $NetBSD: kauth.h,v 1.82.6.1 2020/02/29 20:21:10 ad Exp $ */
 
 /*-
  * Copyright (c) 2005, 2006 Elad Efrat <elad@NetBSD.org>  
@@ -45,6 +45,8 @@ struct proc;
 struct tty;
 struct vnode;
 struct cwdinfo;
+
+enum uio_seg;
 
 /* Types. */
 typedef struct kauth_scope     *kauth_scope_t;

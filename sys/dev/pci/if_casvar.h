@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casvar.h,v 1.7 2019/12/26 17:51:08 msaitoh Exp $ */
+/*	$NetBSD: if_casvar.h,v 1.7.2.1 2020/02/29 20:19:10 ad Exp $ */
 /*	$OpenBSD: if_casvar.h,v 1.6 2009/06/13 12:18:58 kettenis Exp $	*/
 
 /*
@@ -183,7 +183,7 @@ struct cas_softc {
 	 * Software state for transmit and receive descriptors.
 	 */
 	struct cas_sxd sc_txd[CAS_NTXDESC];
-	u_int32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
+	uint32_t sc_tx_cnt, sc_tx_prod, sc_tx_cons;
 
 	struct cas_rxsoft sc_rxsoft[CAS_NRXDESC];
 	struct cas_rxsoft sc_rxsoft2[CAS_NRXDESC];

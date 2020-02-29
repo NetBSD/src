@@ -1,4 +1,4 @@
-#	$NetBSD: files.drmkms,v 1.33 2019/12/09 15:37:26 jakllsch Exp $
+#	$NetBSD: files.drmkms,v 1.33.2.1 2020/02/29 20:20:17 ad Exp $
 
 include "external/bsd/drm2/linux/files.drmkms_linux"
 
@@ -52,8 +52,11 @@ file	external/bsd/drm2/drm/drmfb.c			drmfb
 include "external/bsd/drm2/ttm/files.ttm"
 
 makeoptions 	drmkms 	"CWARNFLAGS.drm_atomic_helper.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_bufs.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-missing-field-initializers"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_crtc.c"+="-Wno-shadow"
+makeoptions 	drmkms 	"CWARNFLAGS.drm_dp_helper.c"+="-Wno-pointer-arith"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_edid.c"+="-Wno-shadow"
 makeoptions 	drmkms 	"CWARNFLAGS.drm_ioctl.c"+="-Wno-shadow"
 

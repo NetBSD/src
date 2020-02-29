@@ -1,4 +1,4 @@
-/*	$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $	*/
+/*	$NetBSD: sdhc_acpi.c,v 1.9.2.1 2020/02/29 20:19:07 ad Exp $	*/
 
 /*
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@NetBSD.org>
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.9.2.1 2020/02/29 20:19:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -40,6 +40,10 @@ __KERNEL_RCSID(0, "$NetBSD: sdhc_acpi.c,v 1.9 2019/12/29 12:46:43 jmcneill Exp $
 #include <dev/sdmmc/sdhcreg.h>
 #include <dev/sdmmc/sdhcvar.h>
 #include <dev/sdmmc/sdmmcvar.h>
+
+/* Freescale ESDHC */
+#define	SDHC_ESDHC_FLAGS	\
+    (SDHC_FLAG_HAVE_DVS|SDHC_FLAG_NO_PWR0|SDHC_FLAG_32BIT_ACCESS|SDHC_FLAG_ENHANCED)
 
 #define _COMPONENT	ACPI_RESOURCE_COMPONENT
 ACPI_MODULE_NAME	("sdhc_acpi")
@@ -72,20 +76,27 @@ static const struct sdhc_acpi_slot {
 	int type;
 #define	SLOT_TYPE_SD	0	/* SD or SDIO */
 #define	SLOT_TYPE_EMMC	1	/* eMMC */
+	uint32_t flags;
 } sdhc_acpi_slot_map[] = {
-	{ "80865ACA",	NULL,	SLOT_TYPE_SD },
-	{ "80865ACC",	NULL,	SLOT_TYPE_EMMC },
-	{ "80865AD0",	NULL,	SLOT_TYPE_SD },
-	{ "80860F14",   "1",	SLOT_TYPE_EMMC },
-	{ "80860F14",   "3",	SLOT_TYPE_SD },
-	{ "80860F16",   NULL,	SLOT_TYPE_SD },
-	{ "INT33BB",	"2",	SLOT_TYPE_SD },
-	{ "INT33BB",	"3",	SLOT_TYPE_SD },
-	{ "INT33C6",	NULL,	SLOT_TYPE_SD },
-	{ "INT3436",	NULL,	SLOT_TYPE_SD },
-	{ "INT344D",	NULL,	SLOT_TYPE_SD },
-	{ "PNP0D40",	NULL,	SLOT_TYPE_SD },
-	{ "PNP0FFF",	"3",	SLOT_TYPE_SD },
+	{ .hid = "80865ACA",		 .type = SLOT_TYPE_SD },
+	{ .hid = "80865ACC",		 .type = SLOT_TYPE_EMMC },
+	{ .hid = "80865AD0",		 .type = SLOT_TYPE_SD },
+	{ .hid = "80860F14", .uid = "1", .type = SLOT_TYPE_EMMC },
+	{ .hid = "80860F14", .uid = "3", .type = SLOT_TYPE_SD },
+	{ .hid = "80860F16",   		 .type = SLOT_TYPE_SD },
+	{ .hid = "INT33BB",  .uid = "2", .type = SLOT_TYPE_SD },
+	{ .hid = "INT33BB",  .uid = "3", .type = SLOT_TYPE_SD },
+	{ .hid = "INT33C6",		 .type = SLOT_TYPE_SD },
+	{ .hid = "INT3436",		 .type = SLOT_TYPE_SD },
+	{ .hid = "INT344D",		 .type = SLOT_TYPE_SD },
+	{ .hid = "NXP0003",  .uid = "0", .type = SLOT_TYPE_SD,
+					 .flags = SDHC_ESDHC_FLAGS },
+	{ .hid = "NXP0003",  .uid = "1", .type = SLOT_TYPE_EMMC,
+					 .flags = SDHC_ESDHC_FLAGS },
+
+	/* Generic IDs last */
+	{ .hid = "PNP0D40",		 .type = SLOT_TYPE_SD },
+	{ .hid = "PNP0FFF",  .uid = "3", .type = SLOT_TYPE_SD },
 };
 
 static const struct sdhc_acpi_slot *
@@ -103,7 +114,8 @@ sdhc_acpi_find_slot(ACPI_DEVICE_INFO *ad)
 
 	for (i = 0; i < __arraycount(sdhc_acpi_slot_map); i++) {
 		slot = &sdhc_acpi_slot_map[i];
-		if (strcmp(hid, slot->hid) == 0) {
+		const char * const slot_id[] = { slot->hid, NULL };
+		if (acpi_match_hid(ad, slot_id)) {
 			if (slot->uid == NULL ||
 			    ((ad->Valid & ACPI_VALID_UID) != 0 &&
 			     uid != NULL &&
@@ -190,6 +202,8 @@ sdhc_acpi_attach(device_t parent, device_t self, void *opaque)
 	}
 
 	sc->sc.sc_host = kmem_zalloc(sizeof(struct sdhc_host *), KM_SLEEP);
+
+	sc->sc.sc_flags |= slot->flags;
 
 	/* Enable DMA transfer */
 	sc->sc.sc_flags |= SDHC_FLAG_USE_DMA;

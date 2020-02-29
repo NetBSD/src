@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $	*/
+/*	$NetBSD: pmap.c,v 1.76.22.1 2020/02/29 20:18:29 ad Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76 2016/12/24 19:02:16 cherry Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.76.22.1 2020/02/29 20:18:29 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1021,7 +1021,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	int s;
 
 	s = splvm();
-	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn])) {
+	if (pm->pm_ptbl[seg] && (pa = pm->pm_ptbl[seg][ptn]) && pap) {
 		*pap = TTE_PA(pa) | (va & PGOFSET);
 	}
 	splx(s);
@@ -1276,7 +1276,7 @@ ppc4xx_tlb_find_victim(void)
 			    (tlb_info[tlbnext].ti_ctx == KERNEL_PID) &&
 			     (flags & TLBF_USED)) {
 				/* Kernel stack page */
-				flags |= TLBF_USED;
+				flags |= TLBF_REF;
 				tlb_info[tlbnext].ti_flags = flags;
 			} else {
 				/* Found it! */
@@ -1535,6 +1535,7 @@ ctx_flush(int cnum)
 #endif
 			/* Invalidate particular TLB entry regardless of locked status */
 			__asm volatile("tlbwe %0,%1,0" : :"r"(0),"r"(i));
+			tlb_info[i].ti_ctx = 0;
 			tlb_info[i].ti_flags = 0;
 		}
 	}
@@ -1563,7 +1564,7 @@ ctx_alloc(struct pmap *pm)
 	/* Find a likely context. */
 	cnum = next;
 	do {
-		if ((++cnum) > NUMCTX)
+		if ((++cnum) >= NUMCTX)
 			cnum = MINCTX;
 	} while (ctxbusy[cnum] != NULL && cnum != next);
 
@@ -1573,7 +1574,7 @@ oops:
 		cnum = MINCTX; /* Never steal ctx 0 or 1 */
 	if (ctx_flush(cnum)) {
 		/* oops -- something's wired. */
-		if ((++cnum) > NUMCTX)
+		if ((++cnum) >= NUMCTX)
 			cnum = MINCTX;
 		goto oops;
 	}

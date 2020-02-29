@@ -1,4 +1,4 @@
-/* $NetBSD: ix_txrx.c,v 1.58.2.1 2020/01/25 22:38:49 ad Exp $ */
+/* $NetBSD: ix_txrx.c,v 1.58.2.2 2020/02/29 20:19:14 ad Exp $ */
 
 /******************************************************************************
 
@@ -540,12 +540,11 @@ retry:
 	++txr->total_packets.ev_count;
 	IXGBE_WRITE_REG(&adapter->hw, txr->tail, i);
 
-	/*
-	 * XXXX NOMPSAFE: ifp->if_data should be percpu.
-	 */
-	ifp->if_obytes += m_head->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statadd_ref(nsr, if_obytes, m_head->m_pkthdr.len);
 	if (m_head->m_flags & M_MCAST)
-		ifp->if_omcasts++;
+		if_statinc_ref(nsr, if_omcasts);
+	IF_STAT_PUTREF(ifp);
 
 	/* Mark queue as having work */
 	if (txr->busy == 0)
@@ -1191,7 +1190,7 @@ ixgbe_txeof(struct tx_ring *txr)
 		}
 		++txr->packets;
 		++processed;
-		++ifp->if_opackets;
+		if_statinc(ifp, if_opackets);
 
 		/* Try the next packet */
 		++txd;
@@ -1557,7 +1556,6 @@ ixgbe_setup_receive_ring(struct rx_ring *rxr)
 		rxbuf->addr = htole64(rxbuf->pmap->dm_segs[0].ds_addr);
 	}
 
-
 	/* Setup our descriptor indices */
 	rxr->next_to_check = 0;
 	rxr->next_to_refresh = 0;
@@ -1613,6 +1611,7 @@ ixgbe_setup_receive_structures(struct adapter *adapter)
 	struct rx_ring *rxr = adapter->rx_rings;
 	int            j;
 
+	INIT_DEBUGOUT("ixgbe_setup_receive_structures");
 	for (j = 0; j < adapter->num_queues; j++, rxr++)
 		if (ixgbe_setup_receive_ring(rxr))
 			goto fail;

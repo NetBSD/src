@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.121 2020/01/07 06:42:26 maxv Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.121.2.1 2020/02/29 20:19:16 ad Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.121 2020/01/07 06:42:26 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.121.2.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -321,7 +321,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	usbd_status err;
 	uint16_t data;
 
-	DPRINTFN(30, "phy 0x%jx reg 0x%jx\n", phy, reg, 0, 0);
+	DPRINTFN(30, "phy %#jx reg %#jx\n", phy, reg, 0, 0);
 
 	if (un->un_phyno != phy)
 		return EINVAL;
@@ -347,7 +347,7 @@ axe_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 		*val &= ~BMSR_EXTCAP;
 	}
 
-	DPRINTFN(30, "phy 0x%jx reg 0x%jx val %#jx", phy, reg, *val, 0);
+	DPRINTFN(30, "phy %#jx reg %#jx val %#jx", phy, reg, *val, 0);
 
 	return 0;
 }
@@ -417,7 +417,7 @@ axe_mii_statchg(struct ifnet *ifp)
 		}
 	}
 
-	DPRINTF("val=0x%jx", val, 0, 0, 0);
+	DPRINTF("val=%#jx", val, 0, 0, 0);
 	usbnet_lock_mii(un);
 	err = axe_cmd(sc, AXE_CMD_WRITE_MEDIA, 0, val, NULL);
 	usbnet_unlock_mii(un);
@@ -450,17 +450,13 @@ axe_setiff_locked(struct usbnet *un)
 	rxmode = le16toh(rxmode);
 
 	rxmode &=
-	    ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_PROMISC |
-	    AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST);
+	    ~(AXE_RXCMD_ALLMULTI | AXE_RXCMD_PROMISC | AXE_RXCMD_MULTICAST);
 
-	rxmode |=
-	    (ifp->if_flags & IFF_BROADCAST) ? AXE_RXCMD_BROADCAST : 0;
-
-	if (ifp->if_flags & (IFF_ALLMULTI | IFF_PROMISC)) {
-		if (ifp->if_flags & IFF_PROMISC)
-			rxmode |= AXE_RXCMD_PROMISC;
+	if (ifp->if_flags & IFF_PROMISC) {
+		ifp->if_flags |= IFF_ALLMULTI;
 		goto allmulti;
 	}
+	ifp->if_flags &= ~IFF_ALLMULTI;
 
 	/* Now program new ones */
 	ETHER_LOCK(ec);
@@ -469,6 +465,7 @@ axe_setiff_locked(struct usbnet *un)
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi,
 		    ETHER_ADDR_LEN) != 0) {
 			ETHER_UNLOCK(ec);
+			ifp->if_flags |= IFF_ALLMULTI;
 			goto allmulti;
 		}
 
@@ -477,16 +474,16 @@ axe_setiff_locked(struct usbnet *un)
 		ETHER_NEXT_MULTI(step, enm);
 	}
 	ETHER_UNLOCK(ec);
-	ifp->if_flags &= ~IFF_ALLMULTI;
-	rxmode |= AXE_RXCMD_MULTICAST;
 
+	rxmode |= AXE_RXCMD_MULTICAST;	/* activate mcast hash filter */
 	axe_cmd(sc, AXE_CMD_WRITE_MCAST, 0, 0, hashtbl);
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 	return;
 
  allmulti:
-	ifp->if_flags |= IFF_ALLMULTI;
-	rxmode |= AXE_RXCMD_ALLMULTI;
+	if (ifp->if_flags & IFF_PROMISC)
+		rxmode |= AXE_RXCMD_PROMISC; /* run promisc. mode */
+	rxmode |= AXE_RXCMD_ALLMULTI;	/* accept all mcast frames */
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 }
 
@@ -597,7 +594,7 @@ axe_ax88178_init(struct axe_softc *sc)
 
 	eeprom = le16toh(eeprom);
 
-	DPRINTF("EEPROM is 0x%jx", eeprom, 0, 0, 0);
+	DPRINTF("EEPROM is %#jx", eeprom, 0, 0, 0);
 
 	/* if EEPROM is invalid we have to use to GPIO0 */
 	if (eeprom == 0xffff) {
@@ -1034,13 +1031,13 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			struct axe_sframe_hdr hdr;
 
 			if (total_len < sizeof(hdr)) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
 			memcpy(&hdr, buf, sizeof(hdr));
 
-			DPRINTFN(20, "total_len %#jx len %jx ilen %#jx",
+			DPRINTFN(20, "total_len %#jx len %#jx ilen %#jx",
 			    total_len,
 			    (le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK),
 			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK), 0);
@@ -1051,7 +1048,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			if (((le16toh(hdr.len) & AXE_RH1M_RXLEN_MASK) ^
 			    (le16toh(hdr.ilen) & AXE_RH1M_RXLEN_MASK)) !=
 			    AXE_RH1M_RXLEN_MASK) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
@@ -1069,7 +1066,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			struct axe_csum_hdr csum_hdr;
 
 			if (total_len <	sizeof(csum_hdr)) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 
@@ -1087,7 +1084,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 			    AXE_CSUM_RXBYTES(csum_hdr.ilen)) !=
 			    sc->sc_lenmask) {
 				/* we lost sync */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				DPRINTFN(20, "len %#jx ilen %#jx lenmask %#jx "
 				    "err",
 				    AXE_CSUM_RXBYTES(csum_hdr.len),
@@ -1107,7 +1104,7 @@ axe_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 				DPRINTFN(20, "total_len %#jx < len %#jx",
 				    total_len, len, 0, 0);
 				/* invalid length */
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				break;
 			}
 			buf += sizeof(csum_hdr);
@@ -1291,7 +1288,7 @@ axe_init_locked(struct ifnet *ifp)
 		    ax88772b_mfb_table[AX88772B_MFB_16K].byte_cnt, NULL);
 	}
 	/* Enable receiver, set RX mode */
-	rxmode = (AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE);
+	rxmode = (AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE);
 	if (AXE_IS_178_FAMILY(un)) {
 		if (un->un_flags & AX772B) {
 			/*
@@ -1323,19 +1320,11 @@ axe_init_locked(struct ifnet *ifp)
 		rxmode |= AXE_172_RXCMD_UNICAST;
 	}
 
-
-	/* If we want promiscuous mode, set the allframes bit. */
-	if (ifp->if_flags & IFF_PROMISC)
-		rxmode |= AXE_RXCMD_PROMISC;
-
-	if (ifp->if_flags & IFF_BROADCAST)
-		rxmode |= AXE_RXCMD_BROADCAST;
-
-	DPRINTF("rxmode 0x%#jx", rxmode, 0, 0, 0);
+	DPRINTF("rxmode %#jx", rxmode, 0, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 
-	/* Load the multicast filter. */
+	/* Accept multicast frame or run promisc. */
 	axe_setiff_locked(un);
 
 	usbnet_unlock_mii_un_locked(un);

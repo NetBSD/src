@@ -1,4 +1,4 @@
-/*	$NetBSD: nfs_clntsubs.c,v 1.3 2018/09/03 16:29:36 riastradh Exp $	*/
+/*	$NetBSD: nfs_clntsubs.c,v 1.3.6.1 2020/02/29 20:21:08 ad Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.3 2018/09/03 16:29:36 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: nfs_clntsubs.c,v 1.3.6.1 2020/02/29 20:21:08 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_nfs.h"
@@ -285,7 +285,7 @@ nfs_loadattrcache(struct vnode **vpp, struct nfs_fattr *fp, struct vattr *vaper,
 					np->n_flag |= NTRUNCDELAYED;
 				} else {
 					genfs_node_wrlock(vp);
-					mutex_enter(vp->v_interlock);
+					rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 					(void)VOP_PUTPAGES(vp, 0,
 					    0, PGO_SYNCIO | PGO_CLEANIT |
 					    PGO_FREE | PGO_ALLPAGES);
@@ -359,7 +359,7 @@ nfs_delayedtruncate(struct vnode *vp)
 	if (np->n_flag & NTRUNCDELAYED) {
 		np->n_flag &= ~NTRUNCDELAYED;
 		genfs_node_wrlock(vp);
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		(void)VOP_PUTPAGES(vp, 0,
 		    0, PGO_SYNCIO | PGO_CLEANIT | PGO_FREE | PGO_ALLPAGES);
 		uvm_vnp_setsize(vp, np->n_size);

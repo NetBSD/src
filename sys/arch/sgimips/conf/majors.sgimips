@@ -1,4 +1,4 @@
-#	$NetBSD: majors.sgimips,v 1.31 2019/01/28 02:29:00 dholland Exp $
+#	$NetBSD: majors.sgimips,v 1.31.6.1 2020/02/29 20:18:30 ad Exp $
 #
 # Device majors for sgimips
 #
@@ -59,7 +59,7 @@ device-major	audio		char 64			audio
 device-major	pci		char 65			pci
 device-major	irframe		char 66			irframedrv
 device-major	cir		char 67			cir
-device-major	urio		char 68			urio
+#device-major	obsolete	char 68			obsolete (urio)
 device-major	ucom		char 69			ucom
 device-major	ugen		char 70			ugen
 device-major	usb		char 71			usb

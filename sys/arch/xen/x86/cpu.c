@@ -1,4 +1,4 @@
-/*	$NetBSD: cpu.c,v 1.131.2.1 2020/01/17 21:47:28 ad Exp $	*/
+/*	$NetBSD: cpu.c,v 1.131.2.2 2020/02/29 20:18:33 ad Exp $	*/
 
 /*-
  * Copyright (c) 2000 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131.2.1 2020/01/17 21:47:28 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cpu.c,v 1.131.2.2 2020/02/29 20:18:33 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_multiprocessor.h"
@@ -505,7 +505,7 @@ cpu_attach_common(device_t parent, device_t self, void *aux)
 		struct pcb *pcb = lwp_getpcb(l);
 
 		aprint_verbose_dev(self,
-		    "idle lwp at %p, idle sp at 0x%p\n",
+		    "idle lwp at %p, idle sp at %p\n",
 		    l,
 #ifdef i386
 		    (void *)pcb->pcb_esp

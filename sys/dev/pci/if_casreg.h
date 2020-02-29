@@ -1,4 +1,4 @@
-/*	$NetBSD: if_casreg.h,v 1.2 2019/12/26 17:51:08 msaitoh Exp $ */
+/*	$NetBSD: if_casreg.h,v 1.2.2.1 2020/02/29 20:19:10 ad Exp $ */
 /*	$OpenBSD: if_casreg.h,v 1.10 2008/05/31 22:49:03 kettenis Exp $	*/
 
 /*
@@ -586,7 +586,7 @@ struct cas_desc {
 
 /* Completion ring */
 struct cas_comp {
-	u_int64_t	cc_word[4];
+	uint64_t	cc_word[4];
 };
 
 #define	CAS_RC0_TYPE		0xc000000000000000ULL

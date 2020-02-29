@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.7 2019/09/13 02:19:45 manu Exp $	*/
+/*	$NetBSD: eficons.c,v 1.7.2.1 2020/02/29 20:18:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -33,6 +33,11 @@
 
 #include "bootinfo.h"
 #include "vbe.h"
+
+#ifndef DEFAULT_GOP_MODE
+#define DEFAULT_GOP_MODE	"1024x768"
+#endif
+#define FALLBACK_GOP_MODE	0
 
 extern struct x86_boot_params boot_params;
 
@@ -70,6 +75,8 @@ static int efi_com_getc(void);
 static int efi_com_putc(int);
 static int efi_com_status(int);
 static int efi_com_waitforinputevent(uint64_t);
+
+static int efi_find_gop_mode(char *);
 
 static int iodev;
 static int (*internal_getchar)(void) = efi_cons_getc;
@@ -414,47 +421,37 @@ bi_framebuffer(void)
 	EFI_STATUS status;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 	struct btinfo_framebuffer fb;
-	INT32 bestmode = -1;
+	INT32 bestmode;
+	UINTN sz;
 
-	if (efi_gop == NULL) {
-		framebuffer_configure(NULL);
-		return;
-	}
+	if (efi_gop == NULL)
+		goto nofb;
 
 	if (efi_gop_mode >= 0) {
 		bestmode = efi_gop_mode;
 	} else {
-#if 0
-		UINT64 res, bestres = 0;
-		UINTN sz;
-		UINT32 i;
-
-		/* XXX EDID? EFI_EDID_DISCOVERED_PROTOCOL */
-		for (i = 0; i < efi_gop->Mode->MaxMode; i++) {
-			status = uefi_call_wrapper(efi_gop->QueryMode, 4,
-			    efi_gop, i, &sz, &info);
-			if (EFI_ERROR(status))
-				continue;
-
-			res = (UINT64)info->HorizontalResolution *
-			    (UINT64)info->VerticalResolution *
-			    (UINT64)getdepth(info);
-			if (res > bestres) {
-				bestmode = i;
-				bestres = res;
-			}
-		}
-#endif
-	}
-	if (bestmode >= 0) {
-		status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
-		    bestmode);
-		if (EFI_ERROR(status) || efi_gop->Mode->Mode != bestmode)
-			printf("GOP setmode failed: %" PRIxMAX "\n",
-			    (uintmax_t)status);
+		/* If a mode has not been selected, choose a default */
+		bestmode = efi_find_gop_mode(DEFAULT_GOP_MODE);
+		if (bestmode == -1)
+			bestmode = FALLBACK_GOP_MODE;
 	}
 
-	info = efi_gop->Mode->Info;
+	status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
+	    bestmode);
+	if (EFI_ERROR(status) || efi_gop->Mode->Mode != bestmode) {
+		printf("GOP setmode failed: %" PRIxMAX "\n",
+		    (uintmax_t)status);
+		goto nofb;
+	}
+
+	status = uefi_call_wrapper(efi_gop->QueryMode, 4,
+	    efi_gop, bestmode, &sz, &info);
+	if (EFI_ERROR(status)) {
+		printf("GOP querymode failed: %" PRIxMAX "\n",
+		    (uintmax_t)status);
+		goto nofb;
+	}
+
 	memset(&fb, 0, sizeof(fb));
 	fb.physaddr = efi_gop->Mode->FrameBufferBase;
 	fb.flags = 0;
@@ -499,6 +496,10 @@ bi_framebuffer(void)
 	}
 
 	framebuffer_configure(&fb);
+	return;
+
+nofb:
+	framebuffer_configure(NULL);
 }
 
 int
@@ -658,8 +659,14 @@ efi_find_gop_mode(char *arg)
 
 		snprintf(mode, sizeof(mode), "%lux%lux%u",
 		    (long)info->HorizontalResolution,
-		    (long)info->HorizontalResolution,
+		    (long)info->VerticalResolution,
 		    depth);
+		if (strcmp(arg, mode) == 0)
+			return i;
+
+		snprintf(mode, sizeof(mode), "%lux%lu",
+		    (long)info->HorizontalResolution,
+		    (long)info->VerticalResolution);
 		if (strcmp(arg, mode) == 0)
 			return i;
 	}

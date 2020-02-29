@@ -1,7 +1,7 @@
-/*	$NetBSD: sys_descrip.c,v 1.35 2019/09/15 16:25:57 christos Exp $	*/
+/*	$NetBSD: sys_descrip.c,v 1.35.2.1 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
- * Copyright (c) 2008 The NetBSD Foundation, Inc.
+ * Copyright (c) 2008, 2020 The NetBSD Foundation, Inc.
  * All rights reserved.
  *
  * Redistribution and use in source and binary forms, with or without
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.35 2019/09/15 16:25:57 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sys_descrip.c,v 1.35.2.1 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -345,6 +345,7 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 	} */
 	int fd, i, tmp, error, cmd, newmin;
 	filedesc_t *fdp;
+	fdtab_t *dt;
 	file_t *fp;
 	struct flock fl;
 	bool cloexec = false;
@@ -413,7 +414,8 @@ sys_fcntl(struct lwp *l, const struct sys_fcntl_args *uap, register_t *retval)
 		break;
 
 	case F_GETFD:
-		*retval = fdp->fd_dt->dt_ff[fd]->ff_exclose;
+		dt = atomic_load_consume(&fdp->fd_dt);
+		*retval = dt->dt_ff[fd]->ff_exclose;
 		break;
 
 	case F_SETFD:
@@ -740,7 +742,7 @@ do_posix_fadvise(int fd, off_t offset, off_t len, int advice)
 		 */
 		if (round_page(offset) < trunc_page(endoffset) &&
 		    offset <= round_page(offset)) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp,
 			    round_page(offset), trunc_page(endoffset),
 			    PGO_DEACTIVATE | PGO_CLEANIT);

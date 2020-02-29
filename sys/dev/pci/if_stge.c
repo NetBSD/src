@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.75.2.1 2020/01/17 21:47:31 ad Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.75.2.2 2020/02/29 20:19:10 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.75.2.1 2020/01/17 21:47:31 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.75.2.2 2020/02/29 20:19:10 ad Exp $");
 
 
 #include <sys/param.h>
@@ -409,6 +409,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_dev = self;
 	callout_init(&sc->sc_tick_ch, 0);
+	callout_setfunc(&sc->sc_tick_ch, stge_tick, sc);
 
 	sp = stge_lookup(pa);
 	if (sp == NULL) {
@@ -1028,7 +1029,7 @@ stge_watchdog(struct ifnet *ifp)
 	stge_txintr(sc);
 	if (sc->sc_txpending != 0) {
 		printf("%s: device timeout\n", device_xname(sc->sc_dev));
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 		(void) stge_init(ifp);
 
@@ -1261,7 +1262,7 @@ stge_rxintr(struct stge_softc *sc)
 			 * Failed, throw away what we've done so
 			 * far, and discard the rest of the packet.
 			 */
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			bus_dmamap_sync(sc->sc_dmat, ds->ds_dmamap, 0,
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_POSTREAD);
 			STGE_INIT_RXDESC(sc, i);
@@ -1331,7 +1332,7 @@ stge_rxintr(struct stge_softc *sc)
 			struct mbuf *nm;
 			MGETHDR(nm, M_DONTWAIT, MT_DATA);
 			if (nm == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				m_freem(m);
 				continue;
 			}
@@ -1416,7 +1417,7 @@ stge_tick(void *arg)
 	stge_stats_update(sc);
 	splx(s);
 
-	callout_reset(&sc->sc_tick_ch, hz, stge_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 }
 
 /*
@@ -1433,22 +1434,26 @@ stge_stats_update(struct stge_softc *sc)
 
 	(void) CSR_READ_4(sc, STGE_FramesRcvdOk);
 
-	ifp->if_ierrors +=
-	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors);
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+
+	if_statadd_ref(nsr, if_ierrors,
+	    (u_int) CSR_READ_2(sc, STGE_FramesLostRxErrors));
 
 	(void) CSR_READ_4(sc, STGE_OctetXmtdOk);
 
-	ifp->if_opackets +=
-	    CSR_READ_4(sc, STGE_FramesXmtdOk);
+	if_statadd_ref(nsr, if_opackets,
+	    CSR_READ_4(sc, STGE_FramesXmtdOk));
 
-	ifp->if_collisions +=
+	if_statadd_ref(nsr, if_collisions,
 	    CSR_READ_4(sc, STGE_LateCollisions) +
 	    CSR_READ_4(sc, STGE_MultiColFrames) +
-	    CSR_READ_4(sc, STGE_SingleColFrames);
+	    CSR_READ_4(sc, STGE_SingleColFrames));
 
-	ifp->if_oerrors +=
+	if_statadd_ref(nsr, if_oerrors,
 	    (u_int) CSR_READ_2(sc, STGE_FramesAbortXSColls) +
-	    (u_int) CSR_READ_2(sc, STGE_FramesWEXDeferal);
+	    (u_int) CSR_READ_2(sc, STGE_FramesWEXDeferal));
+
+	IF_STAT_PUTREF(ifp);
 }
 
 /*
@@ -1680,7 +1685,7 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Start the one second MII clock.
 	 */
-	callout_reset(&sc->sc_tick_ch, hz, stge_tick, sc);
+	callout_schedule(&sc->sc_tick_ch, hz);
 
 	/*
 	 * ...all done!

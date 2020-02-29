@@ -1,4 +1,4 @@
-/*	$NetBSD: jiffies.h,v 1.12 2018/08/27 13:57:50 riastradh Exp $	*/
+/*	$NetBSD: jiffies.h,v 1.12.6.1 2020/02/29 20:20:17 ad Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -34,6 +34,10 @@
 
 #include <sys/param.h>
 #include <sys/kernel.h>
+
+#include <asm/param.h>		/* HZ */
+
+#include <linux/math64.h>
 
 #define	jiffies		hardclock_ticks
 #define	jiffies_64	hardclock_ticks /* XXX */

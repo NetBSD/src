@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mpls.c,v 1.35 2019/04/27 06:18:15 pgoyette Exp $ */
+/*	$NetBSD: if_mpls.c,v 1.35.4.1 2020/02/29 20:21:06 ad Exp $ */
 
 /*
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.35 2019/04/27 06:18:15 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mpls.c,v 1.35.4.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -286,12 +286,11 @@ mpls_output(struct ifnet *ifp, struct mbuf *m, const struct sockaddr *dst,
 
 	if (m == NULL) {
 		IF_DROP(&ifp->if_snd);
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 		return ENOBUFS;
 	}
 
-	ifp->if_opackets++;
-	ifp->if_obytes += m->m_pkthdr.len;
+	if_statadd2(ifp, if_opackets, 1, if_obytes, m->m_pkthdr.len);
 
 	if ((rt1 = rtalloc1(rt->rt_gateway, 1)) == NULL) {
 		m_freem(m);

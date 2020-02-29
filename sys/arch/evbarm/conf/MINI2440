@@ -1,4 +1,4 @@
-#	$NetBSD: MINI2440,v 1.26.6.1 2020/01/25 22:38:39 ad Exp $
+#	$NetBSD: MINI2440,v 1.26.6.2 2020/02/29 20:18:22 ad Exp $
 #
 #	MINI2440 -- Friendly ARM evaluation board based on Samsung S3C2440
 #
@@ -319,9 +319,6 @@ umass*	at uhub? port ? configuration ? interface ?
 #
 #uvscom*	at uhub? port ?		# SUNTAC Slipper U VS-10U serial adapter
 #ucom*	at uvscom? portno ?
-
-# Diamond Multimedia Rio 500
-#urio*	at uhub? port ?
 
 # USB Handspring Visor
 #uvisor*	at uhub? port ?

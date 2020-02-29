@@ -1,4 +1,4 @@
-/* $NetBSD: vfs_getcwd.c,v 1.53.2.4 2020/01/25 15:54:03 ad Exp $ */
+/* $NetBSD: vfs_getcwd.c,v 1.53.2.5 2020/02/29 20:21:03 ad Exp $ */
 
 /*-
  * Copyright (c) 1999, 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.53.2.4 2020/01/25 15:54:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_getcwd.c,v 1.53.2.5 2020/02/29 20:21:03 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>

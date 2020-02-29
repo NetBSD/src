@@ -1,4 +1,4 @@
-/* $NetBSD: acpi_pci_n1sdp.c,v 1.1.2.2 2020/01/17 21:47:23 ad Exp $ */
+/* $NetBSD: acpi_pci_n1sdp.c,v 1.1.2.3 2020/02/29 20:18:17 ad Exp $ */
 
 /*-
  * Copyright (c) 2020 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.1.2.2 2020/01/17 21:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_pci_n1sdp.c,v 1.1.2.3 2020/02/29 20:18:17 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -186,8 +186,6 @@ acpi_pci_n1sdp_init(struct acpi_pci_context *ap)
 	ap->ap_conf_read = acpi_pci_n1sdp_conf_read;
 	ap->ap_conf_write = acpi_pci_n1sdp_conf_write;
 
-	/* IO space access and MSI seems to cause async SErrors, so disable for now */
-	ap->ap_pciflags_clear = PCI_FLAGS_IO_OKAY |
-				PCI_FLAGS_MSI_OKAY |
-				PCI_FLAGS_MSIX_OKAY;
+	/* IO space access seems to cause async SErrors, so disable for now */
+	ap->ap_pciflags_clear = PCI_FLAGS_IO_OKAY;
 }

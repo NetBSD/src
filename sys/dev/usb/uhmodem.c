@@ -1,4 +1,4 @@
-/*	$NetBSD: uhmodem.c,v 1.20 2019/05/27 03:08:13 maya Exp $	*/
+/*	$NetBSD: uhmodem.c,v 1.20.4.1 2020/02/29 20:19:16 ad Exp $	*/
 
 /*
  * Copyright (c) 2008 Yojiro UO <yuo@nui.org>.
@@ -71,7 +71,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.20 2019/05/27 03:08:13 maya Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhmodem.c,v 1.20.4.1 2020/02/29 20:19:16 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -506,7 +506,6 @@ e220_modechange_request(struct usbd_device *dev)
 static  usbd_status
 uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 {
-	usb_device_request_t req;
 	usb_endpoint_descriptor_t *ed;
 	usb_interface_descriptor_t *id;
 	usbd_status err;
@@ -521,13 +520,8 @@ uhmodem_endpointhalt(struct ubsa_softc *sc, int iface)
 			return EIO;
 
 		if (UE_GET_XFERTYPE(ed->bmAttributes) == UE_BULK) {
-			/* issue ENDPOINT_HALT request */
-			req.bmRequestType = UT_WRITE_ENDPOINT;
-			req.bRequest = UR_CLEAR_FEATURE;
-			USETW(req.wValue, UF_ENDPOINT_HALT);
-			USETW(req.wIndex, ed->bEndpointAddress);
-			USETW(req.wLength, 0);
-			err = usbd_do_request(sc->sc_udev, &req, 0);
+			err = usbd_clear_endpoint_feature(sc->sc_udev,
+			    ed->bEndpointAddress, UF_ENDPOINT_HALT);
 			if (err) {
 				DPRINTF(("%s: ENDPOINT_HALT to EP:%d fail\n",
 					__func__, ed->bEndpointAddress));

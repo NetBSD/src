@@ -1,4 +1,4 @@
-/*	$NetBSD: opencrypto_component.c,v 1.5 2017/06/29 08:51:27 knakahara Exp $ */
+/*	$NetBSD: opencrypto_component.c,v 1.5.12.1 2020/02/29 20:21:08 ad Exp $ */
 
 /*
  * Copyright (c) 2009 Antti Kantee.  All Rights Reserved.
@@ -26,7 +26,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.5 2017/06/29 08:51:27 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: opencrypto_component.c,v 1.5.12.1 2020/02/29 20:21:08 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/conf.h>
@@ -75,8 +75,8 @@ RUMP_COMPONENT(RUMP_COMPONENT_DEV)
 	 * only.
 	 *
 	 * TODO:
-	 * There is still "crypto: unable to register devsw" message. it should
-	 * be suppressed.
+	 * There is still "crypto: unable to register devsw, error 17" message.
+	 * it should be suppressed.
 	 */
 	rump_pdev_add(swcryptoattach, 0);
 #endif

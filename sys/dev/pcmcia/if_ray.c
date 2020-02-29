@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ray.c,v 1.96 2020/01/06 07:15:03 msaitoh Exp $	*/
+/*	$NetBSD: if_ray.c,v 1.96.2.1 2020/02/29 20:19:15 ad Exp $	*/
 
 /*
  * Copyright (c) 2000 Christian E. Hopps
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.96 2020/01/06 07:15:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ray.c,v 1.96.2.1 2020/02/29 20:19:15 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -642,9 +642,9 @@ ray_detach(device_t self, int flags)
 	if (sc->sc_if.if_flags & IFF_UP)
 		ray_disable(sc);
 
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+	ifmedia_fini(&sc->sc_media);
 
 	pcmcia_function_unconfigure(sc->sc_pf);
 
@@ -1113,7 +1113,7 @@ ray_intr_start(struct ray_softc *sc)
 			RAY_DPRINTF((
 			    "%s: mbuf too long %ld\n", ifp->if_xname,
 			    (u_long)pktlen));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			m_freem(m0);
 			continue;
 		}
@@ -1125,7 +1125,7 @@ ray_intr_start(struct ray_softc *sc)
 		if (!m0) {
 			RAY_DPRINTF(( "%s: couldn\'t pullup ether header\n",
 			    ifp->if_xname));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		RAY_DPRINTF(("%s: got pulled up mbuf 0x%lx\n", ifp->if_xname,
@@ -1138,7 +1138,7 @@ ray_intr_start(struct ray_softc *sc)
 			/* don't support llc for windows compat operation */
 			if (et <= ETHERMTU) {
 				m_freem(m0);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 			tmplen = sizeof(struct ieee80211_frame);
@@ -1156,7 +1156,7 @@ ray_intr_start(struct ray_softc *sc)
 		if (!m0) {
 			RAY_DPRINTF(("%s: couldn\'t prepend header\n",
 			    ifp->if_xname));
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 		/* copy the frame into the mbuf for tapping */
@@ -1256,7 +1256,7 @@ ray_intr_start(struct ray_softc *sc)
 		printf("%s: dropping tx packets device busy\n",
 		    device_xname(sc->sc_dev));
 		ray_free_ccs_chain(sc, firsti);
-		ifp->if_oerrors += pcount;
+		if_statadd(ifp, if_oerrors, pcount);
 		return;
 	}
 
@@ -1266,7 +1266,7 @@ ray_intr_start(struct ray_softc *sc)
 	SRAM_WRITE_1(sc, RAY_SCB_CCSI, firsti);
 	RAY_ECF_START_CMD(sc);
 
-	ifp->if_opackets += pcount;
+	if_statadd(ifp, if_opackets, pcount);
 }
 
 /*
@@ -1324,13 +1324,13 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 	if (pktlen > MCLBYTES || pktlen < sizeof(*frame)) {
 		RAY_DPRINTF(("%s: PKTLEN TOO BIG OR TOO SMALL\n",
 		    device_xname(sc->sc_dev)));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto done;
 	}
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (!m) {
 		RAY_DPRINTF(("%s: MGETHDR FAILED\n", device_xname(sc->sc_dev)));
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		goto done;
 	}
 	if ((pktlen + fudge) > MHLEN) {
@@ -1339,7 +1339,7 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 		if ((m->m_flags & M_EXT) == 0) {
 			RAY_DPRINTF(("%s: MCLGET FAILED\n",
 			    device_xname(sc->sc_dev)));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			m = 0;
 			goto done;
@@ -1373,7 +1373,7 @@ ray_recv(struct ray_softc *sc, bus_size_t ccs)
 			RAY_DPRINTF(("%s: BAD LEN current 0x%lx pktlen 0x%lx\n",
 			    device_xname(sc->sc_dev), (u_long)(len + lenread),
 			    (u_long)pktlen));
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			m_freem(m);
 			m = 0;
 			goto done;

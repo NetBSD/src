@@ -1,4 +1,4 @@
-/* $NetBSD: udf_vnops.c,v 1.107.2.1 2020/01/17 21:47:34 ad Exp $ */
+/* $NetBSD: udf_vnops.c,v 1.107.2.2 2020/02/29 20:21:02 ad Exp $ */
 
 /*
  * Copyright (c) 2006, 2008 Reinoud Zandijk
@@ -32,7 +32,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.107.2.1 2020/01/17 21:47:34 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udf_vnops.c,v 1.107.2.2 2020/02/29 20:21:02 ad Exp $");
 #endif /* not lint */
 
 
@@ -379,7 +379,7 @@ udf_write(void *v)
 		 */
 		if ((vp->v_type != VDIR) &&
 		  (old_offset >> 16 != uio->uio_offset >> 16)) {
-			mutex_enter(vp->v_interlock);
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			error = VOP_PUTPAGES(vp, (old_offset >> 16) << 16,
 			    (uio->uio_offset >> 16) << 16,
 			    PGO_CLEANIT | PGO_LAZY);
@@ -1379,7 +1379,7 @@ udf_close(void *v)
 	udf_node = udf_node;	/* shut up gcc */
 
 	if (!async && (vp->v_type != VDIR)) {
-		mutex_enter(vp->v_interlock);
+		rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 		error = VOP_PUTPAGES(vp, 0, 0, PGO_CLEANIT);
 		if (error)
 			return error;

@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page_status.c,v 1.1.26.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_page_status.c,v 1.1.26.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*-
  * Copyright (c)2011 YAMAMOTO Takashi,
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.26.1 2020/01/17 21:47:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page_status.c,v 1.1.26.2 2020/02/29 20:21:11 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -63,7 +63,7 @@ uvm_pagegetdirty(struct vm_page *pg)
 	const uint64_t idx __diagused = pg->offset >> PAGE_SHIFT;
 
 	KASSERT((~pg->flags & (PG_CLEAN|PG_DIRTY)) != 0);
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, false));
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
 	    !!radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 	return pg->flags & (PG_CLEAN|PG_DIRTY);
@@ -91,7 +91,7 @@ uvm_pagemarkdirty(struct vm_page *pg, unsigned int newstatus)
 
 	KASSERT((~newstatus & (PG_CLEAN|PG_DIRTY)) != 0);
 	KASSERT((newstatus & ~(PG_CLEAN|PG_DIRTY)) == 0);
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 	KASSERT(uobj == NULL || ((pg->flags & PG_CLEAN) == 0) ==
 	    !!radix_tree_get_tag(&uobj->uo_pages, idx, UVM_PAGE_DIRTY_TAG));
 
@@ -153,7 +153,7 @@ uvm_pagecheckdirty(struct vm_page *pg, bool pgprotected)
 	const unsigned int oldstatus = uvm_pagegetdirty(pg);
 	bool modified;
 
-	KASSERT(uvm_page_owner_locked_p(pg));
+	KASSERT(uvm_page_owner_locked_p(pg, true));
 
 	/*
 	 * if pgprotected is true, mark the page CLEAN.

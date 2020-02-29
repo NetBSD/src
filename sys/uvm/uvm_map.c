@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_map.c,v 1.370.2.1 2020/01/17 21:47:38 ad Exp $	*/
+/*	$NetBSD: uvm_map.c,v 1.370.2.2 2020/02/29 20:21:11 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.370.2.1 2020/01/17 21:47:38 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_map.c,v 1.370.2.2 2020/02/29 20:21:11 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_pax.h"
@@ -2312,7 +2312,7 @@ uvm_unmap_remove(struct vm_map *map, vaddr_t start, vaddr_t end,
 			 * change while in pmap_remove().
 			 */
 
-			uvm_map_lock_entry(entry);
+			uvm_map_lock_entry(entry, RW_WRITER);
 			pmap_remove(map->pmap, entry->start, entry->end);
 
 			/*
@@ -2887,7 +2887,7 @@ uvm_map_extract(struct vm_map *srcmap, vaddr_t start, vsize_t len,
 
 			/* we advance "entry" in the following if statement */
 			if (flags & UVM_EXTRACT_REMOVE) {
-				uvm_map_lock_entry(entry);
+				uvm_map_lock_entry(entry, RW_WRITER);
 				pmap_remove(srcmap->pmap, entry->start,
 						entry->end);
 				uvm_map_unlock_entry(entry);
@@ -3119,7 +3119,7 @@ uvm_map_protect(struct vm_map *map, vaddr_t start, vaddr_t end,
 
 		if (current->protection != old_prot) {
 			/* update pmap! */
-			uvm_map_lock_entry(current);
+			uvm_map_lock_entry(current, RW_WRITER);
 			pmap_protect(map->pmap, current->start, current->end,
 			    current->protection & MASK(current));
 			uvm_map_unlock_entry(current);
@@ -3915,7 +3915,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		size = MIN(end, current->end) - start;
 		anon_tofree = NULL;
 
-		amap_lock(amap);
+		amap_lock(amap, RW_WRITER);
 		for ( ; size != 0; size -= PAGE_SIZE, offset += PAGE_SIZE) {
 			anon = amap_lookup(&current->aref, offset);
 			if (anon == NULL)
@@ -3992,7 +3992,7 @@ uvm_map_clean(struct vm_map *map, vaddr_t start, vaddr_t end, int flags)
 		uoff = current->offset + (start - current->start);
 		size = MIN(end, current->end) - start;
 		if (uobj != NULL) {
-			mutex_enter(uobj->vmobjlock);
+			rw_enter(uobj->vmobjlock, RW_WRITER);
 			if (uobj->pgops->pgo_put != NULL)
 				error = (uobj->pgops->pgo_put)(uobj, uoff,
 				    uoff + size, flags | PGO_CLEANIT);
@@ -4460,7 +4460,7 @@ uvm_mapent_forkcopy(struct vm_map *new_map, struct vm_map *old_map,
 		if (old_entry->aref.ar_amap &&
 		    !UVM_ET_ISNEEDSCOPY(old_entry)) {
 			if (old_entry->max_protection & VM_PROT_WRITE) {
-				uvm_map_lock_entry(old_entry);
+				uvm_map_lock_entry(old_entry, RW_WRITER);
 				pmap_protect(old_map->pmap,
 				    old_entry->start, old_entry->end,
 				    old_entry->protection & ~VM_PROT_WRITE);
@@ -4782,14 +4782,14 @@ uvm_map_reference(struct vm_map *map)
 }
 
 void
-uvm_map_lock_entry(struct vm_map_entry *entry)
+uvm_map_lock_entry(struct vm_map_entry *entry, krw_t op)
 {
 
 	if (entry->aref.ar_amap != NULL) {
-		amap_lock(entry->aref.ar_amap);
+		amap_lock(entry->aref.ar_amap, op);
 	}
 	if (UVM_ET_ISOBJ(entry)) {
-		mutex_enter(entry->object.uvm_obj->vmobjlock);
+		rw_enter(entry->object.uvm_obj->vmobjlock, op);
 	}
 }
 
@@ -4798,7 +4798,7 @@ uvm_map_unlock_entry(struct vm_map_entry *entry)
 {
 
 	if (UVM_ET_ISOBJ(entry)) {
-		mutex_exit(entry->object.uvm_obj->vmobjlock);
+		rw_exit(entry->object.uvm_obj->vmobjlock);
 	}
 	if (entry->aref.ar_amap != NULL) {
 		amap_unlock(entry->aref.ar_amap);

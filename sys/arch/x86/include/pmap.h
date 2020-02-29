@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.108.2.1 2020/01/17 21:47:28 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.108.2.2 2020/02/29 20:18:33 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -113,6 +113,7 @@
 
 #if defined(_KERNEL)
 #include <sys/kcpuset.h>
+#include <sys/rwlock.h>
 #include <x86/pmap_pv.h>
 #include <uvm/pmap/pmap_pvt.h>
 
@@ -291,6 +292,7 @@ struct pmap {
 
 	kmutex_t pm_lock		/* locks for pm_objs */
 	    __aligned(64);		/* give lock own cache line */
+	krwlock_t pm_dummy_lock;	/* ugly hack for abusing uvm_object */
 };
 
 /* macro to access pm_pdirpa slots */

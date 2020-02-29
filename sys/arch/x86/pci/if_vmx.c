@@ -1,4 +1,4 @@
-/*	$NetBSD: if_vmx.c,v 1.54 2020/01/06 07:15:03 msaitoh Exp $	*/
+/*	$NetBSD: if_vmx.c,v 1.54.2.1 2020/02/29 20:18:33 ad Exp $	*/
 /*	$OpenBSD: if_vmx.c,v 1.16 2014/01/22 06:04:17 brad Exp $	*/
 
 /*
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.54 2020/01/06 07:15:03 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vmx.c,v 1.54.2.1 2020/02/29 20:18:33 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -179,9 +179,11 @@ struct vmxnet3_comp_ring {
 };
 
 struct vmxnet3_txq_stats {
+#if 0
 	uint64_t vmtxs_opackets;	/* if_opackets */
 	uint64_t vmtxs_obytes;		/* if_obytes */
 	uint64_t vmtxs_omcasts;		/* if_omcasts */
+#endif
 	uint64_t vmtxs_csum;
 	uint64_t vmtxs_tso;
 	uint64_t vmtxs_full;
@@ -211,12 +213,14 @@ struct vmxnet3_txqueue {
 	struct evcnt vxtxq_defrag_failed;
 };
 
+#if 0
 struct vmxnet3_rxq_stats {
 	uint64_t vmrxs_ipackets;	/* if_ipackets */
 	uint64_t vmrxs_ibytes;		/* if_ibytes */
 	uint64_t vmrxs_iqdrops;		/* if_iqdrops */
 	uint64_t vmrxs_ierrors;		/* if_ierrors */
 };
+#endif
 
 struct vmxnet3_rxqueue {
 	kmutex_t *vxrxq_mtx;
@@ -225,7 +229,9 @@ struct vmxnet3_rxqueue {
 	struct mbuf *vxrxq_mtail;
 	struct vmxnet3_rxring vxrxq_cmd_ring[VMXNET3_RXRINGS_PERQ];
 	struct vmxnet3_comp_ring vxrxq_comp_ring;
+#if 0
 	struct vmxnet3_rxq_stats vxrxq_stats;
+#endif
 	struct vmxnet3_rxq_shared *vxrxq_rs;
 	char vxrxq_name[16];
 
@@ -667,12 +673,12 @@ vmxnet3_detach(device_t self, int flags)
 		VMXNET3_CORE_LOCK(sc);
 		vmxnet3_stop_locked(sc);
 		callout_halt(&sc->vmx_tick, sc->vmx_mtx);
+		callout_destroy(&sc->vmx_tick);
 		VMXNET3_CORE_UNLOCK(sc);
-
-		ifmedia_delete_instance(&sc->vmx_media, IFM_INST_ANY);
 
 		ether_ifdetach(ifp);
 		if_detach(ifp);
+		ifmedia_fini(&sc->vmx_media);
 	}
 
 	vmxnet3_teardown_stats(sc);
@@ -1966,9 +1972,9 @@ vmxnet3_setup_stats(struct vmxnet3_softc *sc)
 		evcnt_attach_dynamic(&txq->vxtxq_transmitdef, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "Deferred transmit");
 		evcnt_attach_dynamic(&txq->vxtxq_watchdogto, EVCNT_TYPE_MISC,
-		    NULL, txq->vxtxq_name, "Watchdog timeount");
+		    NULL, txq->vxtxq_name, "Watchdog timeout");
 		evcnt_attach_dynamic(&txq->vxtxq_defragged, EVCNT_TYPE_MISC,
-		    NULL, txq->vxtxq_name, "m_defrag sucessed");
+		    NULL, txq->vxtxq_name, "m_defrag successed");
 		evcnt_attach_dynamic(&txq->vxtxq_defrag_failed, EVCNT_TYPE_MISC,
 		    NULL, txq->vxtxq_name, "m_defrag failed");
 	}
@@ -2108,6 +2114,7 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 	struct vmxnet3_comp_ring *txc;
 	struct vmxnet3_txcompdesc *txcd;
 	struct vmxnet3_txbuf *txb;
+	struct ifnet *ifp;
 	struct mbuf *m;
 	u_int sop;
 	bool more = false;
@@ -2115,9 +2122,11 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 	sc = txq->vxtxq_sc;
 	txr = &txq->vxtxq_cmd_ring;
 	txc = &txq->vxtxq_comp_ring;
+	ifp = &sc->vmx_ethercom.ec_if;
 
 	VMXNET3_TXQ_LOCK_ASSERT(txq);
 
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 	for (;;) {
 		if (limit-- == 0) {
 			more = true;
@@ -2143,10 +2152,10 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 			    BUS_DMASYNC_POSTWRITE);
 			bus_dmamap_unload(sc->vmx_dmat, txb->vtxb_dmamap);
 
-			txq->vxtxq_stats.vmtxs_opackets++;
-			txq->vxtxq_stats.vmtxs_obytes += m->m_pkthdr.len;
+			if_statinc_ref(nsr, if_opackets);
+			if_statadd_ref(nsr, if_obytes, m->m_pkthdr.len);
 			if (m->m_flags & M_MCAST)
-				txq->vxtxq_stats.vmtxs_omcasts++;
+				if_statinc_ref(nsr, if_omcasts);
 
 			m_freem(m);
 			txb->vtxb_m = NULL;
@@ -2154,6 +2163,7 @@ vmxnet3_txq_eof(struct vmxnet3_txqueue *txq, u_int limit)
 
 		txr->vxtxr_next = (txcd->eop_idx + 1) % txr->vxtxr_ndesc;
 	}
+	IF_STAT_PUTREF(ifp);
 
 	if (txr->vxtxr_head == txr->vxtxr_next)
 		txq->vxtxq_watchdog = 0;
@@ -2309,7 +2319,7 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 	ifp = &sc->vmx_ethercom.ec_if;
 
 	if (rxcd->error) {
-		rxq->vxrxq_stats.vmrxs_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		return;
 	}
@@ -2319,8 +2329,10 @@ vmxnet3_rxq_input(struct vmxnet3_rxqueue *rxq,
 	if (rxcd->vlan)
 		vlan_set_tag(m, rxcd->vtag);
 
-	rxq->vxrxq_stats.vmrxs_ipackets++;
-	rxq->vxrxq_stats.vmrxs_ibytes += m->m_pkthdr.len;
+	net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
+	if_statinc_ref(nsr, if_ipackets);
+	if_statadd_ref(nsr, if_ibytes, m->m_pkthdr.len);
+	IF_STAT_PUTREF(ifp);
 
 	if_percpuq_enqueue(ifp->if_percpuq, m);
 }
@@ -2411,7 +2423,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 			}
 
 			if (vmxnet3_newbuf(sc, rxq, rxr) != 0) {
-				rxq->vxrxq_stats.vmrxs_iqdrops++;
+				if_statinc(ifp, if_iqdrops);
 				vmxnet3_rxq_eof_discard(rxq, rxr, idx);
 				if (!rxcd->eop)
 					vmxnet3_rxq_discard_chain(rxq);
@@ -2430,7 +2442,7 @@ vmxnet3_rxq_eof(struct vmxnet3_rxqueue *rxq, u_int limit)
 			KASSERT(m_head != NULL);
 
 			if (vmxnet3_newbuf(sc, rxq, rxr) != 0) {
-				rxq->vxrxq_stats.vmrxs_iqdrops++;
+				if_statinc(ifp, if_iqdrops);
 				vmxnet3_rxq_eof_discard(rxq, rxr, idx);
 				if (!rxcd->eop)
 					vmxnet3_rxq_discard_chain(rxq);
@@ -3384,45 +3396,7 @@ vmxnet3_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 		}
 		break;
 	}
-	case SIOCGIFDATA:
-	case SIOCZIFDATA:
-		ifp->if_ipackets = 0;
-		ifp->if_ibytes = 0;
-		ifp->if_iqdrops = 0;
-		ifp->if_ierrors = 0;
-		for (int i = 0; i < sc->vmx_nrxqueues; i++) {
-			struct vmxnet3_rxqueue *rxq;
-			rxq = &sc->vmx_queue[i].vxq_rxqueue;
 
-			VMXNET3_RXQ_LOCK(rxq);
-			ifp->if_ipackets += rxq->vxrxq_stats.vmrxs_ipackets;
-			ifp->if_ibytes += rxq->vxrxq_stats.vmrxs_ibytes;
-			ifp->if_iqdrops += rxq->vxrxq_stats.vmrxs_iqdrops;
-			ifp->if_ierrors += rxq->vxrxq_stats.vmrxs_ierrors;
-			if (cmd == SIOCZIFDATA) {
-				memset(&rxq->vxrxq_stats, 0,
-				    sizeof(rxq->vxrxq_stats));
-			}
-			VMXNET3_RXQ_UNLOCK(rxq);
-		}
-		ifp->if_opackets = 0;
-		ifp->if_obytes = 0;
-		ifp->if_omcasts = 0;
-		for (int i = 0; i < sc->vmx_ntxqueues; i++) {
-			struct vmxnet3_txqueue *txq;
-			txq = &sc->vmx_queue[i].vxq_txqueue;
-
-			VMXNET3_TXQ_LOCK(txq);
-			ifp->if_opackets += txq->vxtxq_stats.vmtxs_opackets;
-			ifp->if_obytes += txq->vxtxq_stats.vmtxs_obytes;
-			ifp->if_omcasts += txq->vxtxq_stats.vmtxs_omcasts;
-			if (cmd == SIOCZIFDATA) {
-				memset(&txq->vxtxq_stats, 0,
-				    sizeof(txq->vxtxq_stats));
-			}
-			VMXNET3_TXQ_UNLOCK(txq);
-		}
-		/* FALLTHROUGH */
 	default:
 		s = splnet();
 		error = ether_ioctl(ifp, cmd, data);

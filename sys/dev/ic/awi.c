@@ -1,4 +1,4 @@
-/*	$NetBSD: awi.c,v 1.99 2019/12/05 03:11:40 msaitoh Exp $	*/
+/*	$NetBSD: awi.c,v 1.99.2.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999,2000,2001 The NetBSD Foundation, Inc.
@@ -78,7 +78,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.99 2019/12/05 03:11:40 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: awi.c,v 1.99.2.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -706,12 +706,12 @@ awi_start(struct ifnet *ifp)
 				break;
 			}
 			IFQ_DEQUEUE(&ifp->if_snd, m0);
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			bpf_mtap(ifp, m0, BPF_D_OUT);
 			eh = mtod(m0, struct ether_header *);
 			ni = ieee80211_find_txnode(ic, eh->ether_dhost);
 			if (ni == NULL) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 			if ((ifp->if_flags & IFF_LINK0) || sc->sc_adhoc_ap)
@@ -721,7 +721,7 @@ awi_start(struct ifnet *ifp)
 			}
 			if (m0 == NULL) {
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 			wh = mtod(m0, struct ieee80211_frame *);
@@ -734,7 +734,7 @@ awi_start(struct ifnet *ifp)
 			    IEEE80211_FC0_TYPE_DATA) {
 				m_freem(m0);
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 		}
@@ -743,7 +743,7 @@ awi_start(struct ifnet *ifp)
 			if ((ieee80211_crypto_encap(ic, ni, m0)) == NULL) {
 				m_freem(m0);
 				ieee80211_free_node(ni);
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				continue;
 			}
 		}
@@ -753,7 +753,7 @@ awi_start(struct ifnet *ifp)
 			printf("%s: length %d should be %d\n",
 			    sc->sc_if.if_xname, m0->m_pkthdr.len, len);
 			m_freem(m0);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			continue;
 		}
 #endif
@@ -806,7 +806,7 @@ awi_watchdog(struct ifnet *ifp)
 			prevdone = sc->sc_txdone;
 			awi_tx_int(sc);
 			if (sc->sc_txdone == prevdone) {
-				ifp->if_oerrors++;
+				if_statinc(ifp, if_oerrors);
 				awi_init(ifp);
 				goto out;
 			}
@@ -1084,7 +1084,7 @@ awi_rx_int(struct awi_softc *sc)
 			if (sc->sc_substate != AWI_ST_NONE)
 				goto rx_next;
 			if (state & AWI_RXD_ST_RXERROR) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto rx_next;
 			}
 			len    = awi_read_2(sc, rxoff + AWI_RXD_LEN);
@@ -1095,7 +1095,7 @@ awi_rx_int(struct awi_softc *sc)
 			rstamp = awi_read_4(sc, rxoff + AWI_RXD_LOCALTIME);
 			m = awi_devget(sc, frame, len);
 			if (m == NULL) {
-				ifp->if_ierrors++;
+				if_statinc(ifp, if_ierrors);
 				goto rx_next;
 			}
 			if (state & AWI_RXD_ST_LF) {
@@ -1115,7 +1115,7 @@ awi_rx_int(struct awi_softc *sc)
 				else
 					m = m_pullup(m, sizeof(*wh));
 				if (m == NULL) {
-					ifp->if_ierrors++;
+					if_statinc(ifp, if_ierrors);
 					goto rx_next;
 				}
 				wh = mtod(m, struct ieee80211_frame_min *);
@@ -1159,7 +1159,7 @@ awi_tx_int(struct awi_softc *sc)
 		if ((flags & AWI_TXD_ST_OWN) || !(flags & AWI_TXD_ST_DONE))
 			break;
 		if (flags & AWI_TXD_ST_ERROR)
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		sc->sc_txdone = awi_read_4(sc, sc->sc_txdone + AWI_TXD_NEXT) &
 		    0x7fff;
 	}

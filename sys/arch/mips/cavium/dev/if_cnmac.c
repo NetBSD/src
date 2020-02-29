@@ -1,8 +1,8 @@
-/*	$NetBSD: if_cnmac.c,v 1.15 2019/12/28 02:58:59 gutteridge Exp $	*/
+/*	$NetBSD: if_cnmac.c,v 1.15.2.1 2020/02/29 20:18:27 ad Exp $	*/
 
 #include <sys/cdefs.h>
 #if 0
-__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.15 2019/12/28 02:58:59 gutteridge Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cnmac.c,v 1.15.2.1 2020/02/29 20:18:27 ad Exp $");
 #endif
 
 #include "opt_octeon.h"
@@ -121,7 +121,6 @@ static void	octeon_eth_mii_statchg(struct ifnet *);
 
 static int	octeon_eth_mediainit(struct octeon_eth_softc *);
 static void	octeon_eth_mediastatus(struct ifnet *, struct ifmediareq *);
-static int	octeon_eth_mediachange(struct ifnet *);
 
 static inline void octeon_eth_send_queue_flush_prefetch(struct octeon_eth_softc *);
 static inline void octeon_eth_send_queue_flush_fetch(struct octeon_eth_softc *);
@@ -546,7 +545,7 @@ octeon_eth_mediainit(struct octeon_eth_softc *sc)
 	sc->sc_ethercom.ec_mii = mii;
 
 	/* Initialize ifmedia structures. */
-	ifmedia_init(&mii->mii_media, 0, octeon_eth_mediachange,
+	ifmedia_init(&mii->mii_media, 0, ether_mediachange,
 	    octeon_eth_mediastatus);
 
 	phy = prop_dictionary_get(device_properties(sc->sc_dev), "phy-addr");
@@ -584,16 +583,6 @@ octeon_eth_mediastatus(struct ifnet *ifp, struct ifmediareq *ifmr)
 	ifmr->ifm_active = sc->sc_mii.mii_media_active;
 	ifmr->ifm_active = (sc->sc_mii.mii_media_active & ~IFM_ETH_FMASK) |
 	    sc->sc_gmx_port->sc_port_flowflags;
-}
-
-static int
-octeon_eth_mediachange(struct ifnet *ifp)
-{
-	struct octeon_eth_softc *sc = ifp->if_softc;
-
-	mii_mediachg(&sc->sc_mii);
-
-	return 0;
 }
 
 /* ---- send buffer garbage collection */
@@ -1226,7 +1215,7 @@ octeon_eth_init(struct ifnet *ifp)
 	} else {
 		octeon_gmx_port_enable(sc->sc_gmx_port, 1);
 	}
-	octeon_eth_mediachange(ifp);
+	mii_ifmedia_change(&sc->sc_mii);
 
 	octeon_gmx_set_filter(sc->sc_gmx_port);
 
@@ -1487,14 +1476,14 @@ octeon_eth_recv(struct octeon_eth_softc *sc, uint64_t *work)
 	OCTEON_ETH_KASSERT(ifp != NULL);
 
 	if (__predict_false(octeon_eth_recv_check(sc, word2) != 0)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		result = 1;
 		octeon_eth_buf_free_work(sc, work, word2);
 		goto drop;
 	}
 
 	if (__predict_false(octeon_eth_recv_mbuf(sc, work, &m) != 0)) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		result = 1;
 		octeon_eth_buf_free_work(sc, work, word2);
 		goto drop;

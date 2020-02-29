@@ -1,4 +1,4 @@
-/* $NetBSD: axppmic.c,v 1.28 2019/12/23 14:34:23 thorpej Exp $ */
+/* $NetBSD: axppmic.c,v 1.28.2.1 2020/02/29 20:19:07 ad Exp $ */
 
 /*-
  * Copyright (c) 2014-2018 Jared McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.28 2019/12/23 14:34:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.28.2.1 2020/02/29 20:19:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -36,6 +36,7 @@ __KERNEL_RCSID(0, "$NetBSD: axppmic.c,v 1.28 2019/12/23 14:34:23 thorpej Exp $")
 #include <sys/conf.h>
 #include <sys/bus.h>
 #include <sys/kmem.h>
+#include <sys/workqueue.h>
 
 #include <dev/i2c/i2cvar.h>
 
@@ -366,6 +367,13 @@ struct axppmic_softc {
 	i2c_addr_t	sc_addr;
 	int		sc_phandle;
 
+	void		*sc_ih;
+	struct workqueue *sc_wq;
+
+	kmutex_t	sc_intr_lock;
+	struct work	sc_work;
+	bool		sc_work_scheduled;
+
 	const struct axppmic_config *sc_conf;
 
 	struct sysmon_pswitch sc_smpsw;
@@ -481,7 +489,6 @@ axppmic_write(i2c_tag_t tag, i2c_addr_t addr, uint8_t reg, uint8_t val, int flag
 static int
 axppmic_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c, u_int min, u_int max)
 {
-	const int flags = 0;
 	u_int vol, reg_val;
 	int nstep, error;
 	uint8_t val;
@@ -512,13 +519,13 @@ axppmic_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c
 	if (vol > max)
 		return EINVAL;
 
-	iic_acquire_bus(tag, flags);
-	if ((error = axppmic_read(tag, addr, c->c_voltage_reg, &val, flags)) == 0) {
+	iic_acquire_bus(tag, 0);
+	if ((error = axppmic_read(tag, addr, c->c_voltage_reg, &val, 0)) == 0) {
 		val &= ~c->c_voltage_mask;
 		val |= __SHIFTIN(reg_val, c->c_voltage_mask);
-		error = axppmic_write(tag, addr, c->c_voltage_reg, val, flags);
+		error = axppmic_write(tag, addr, c->c_voltage_reg, val, 0);
 	}
-	iic_release_bus(tag, flags);
+	iic_release_bus(tag, 0);
 
 	return error;
 }
@@ -526,16 +533,15 @@ axppmic_set_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c
 static int
 axppmic_get_voltage(i2c_tag_t tag, i2c_addr_t addr, const struct axppmic_ctrl *c, u_int *pvol)
 {
-	const int flags = 0;
 	int reg_val, error;
 	uint8_t val;
 
 	if (!c->c_voltage_mask)
 		return EINVAL;
 
-	iic_acquire_bus(tag, flags);
-	error = axppmic_read(tag, addr, c->c_voltage_reg, &val, flags);
-	iic_release_bus(tag, flags);
+	iic_acquire_bus(tag, 0);
+	error = axppmic_read(tag, addr, c->c_voltage_reg, &val, 0);
+	iic_release_bus(tag, 0);
 	if (error)
 		return error;
 
@@ -561,11 +567,11 @@ axppmic_power_poweroff(device_t dev)
 
 	delay(1000000);
 
-	error = iic_acquire_bus(sc->sc_i2c, I2C_F_POLL);
+	error = iic_acquire_bus(sc->sc_i2c, 0);
 	if (error == 0) {
 		error = axppmic_write(sc->sc_i2c, sc->sc_addr,
-		    AXP_POWER_DISABLE_REG, AXP_POWER_DISABLE_CTRL, I2C_F_POLL);
-		iic_release_bus(sc->sc_i2c, I2C_F_POLL);
+		    AXP_POWER_DISABLE_REG, AXP_POWER_DISABLE_CTRL, 0);
+		iic_release_bus(sc->sc_i2c, 0);
 	}
 	if (error) {
 		device_printf(dev, "WARNING: unable to power off, error %d\n",
@@ -590,7 +596,6 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 {
 	struct axppmic_softc *sc = sme->sme_cookie;
 	const struct axppmic_config *c = sc->sc_conf;
-	const int flags = I2C_F_POLL;
 	uint8_t val, lo, hi;
 
 	e->state = ENVSYS_SINVALID;
@@ -601,19 +606,19 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 
 	switch (e->private) {
 	case AXP_SENSOR_ACIN_PRESENT:
-		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0) {
+		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, 0) == 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = !!(val & AXP_POWER_SOURCE_ACIN_PRESENT);
 		}
 		break;
 	case AXP_SENSOR_VBUS_PRESENT:
-		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0) {
+		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, 0) == 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = !!(val & AXP_POWER_SOURCE_VBUS_PRESENT);
 		}
 		break;
 	case AXP_SENSOR_BATT_PRESENT:
-		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, flags) == 0) {
+		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, 0) == 0) {
 			if (val & AXP_POWER_MODE_BATT_VALID) {
 				e->state = ENVSYS_SVALID;
 				e->value_cur = !!(val & AXP_POWER_MODE_BATT_PRESENT);
@@ -621,14 +626,14 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 		}
 		break;
 	case AXP_SENSOR_BATT_CHARGING:
-		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, flags) == 0) {
+		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_MODE_REG, &val, 0) == 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = !!(val & AXP_POWER_MODE_BATT_CHARGING);
 		}
 		break;
 	case AXP_SENSOR_BATT_CHARGE_STATE:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, 0) == 0 &&
 		    (val & AXP_BATT_CAP_VALID) != 0) {
 			const u_int batt_val = __SHIFTOUT(val, AXP_BATT_CAP_PERCENT);
 			if (batt_val <= sc->sc_shut_thres) {
@@ -645,7 +650,7 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 		break;
 	case AXP_SENSOR_BATT_CAPACITY_PERCENT:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_REG, &val, 0) == 0 &&
 		    (val & AXP_BATT_CAP_VALID) != 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = __SHIFTOUT(val, AXP_BATT_CAP_PERCENT);
@@ -653,44 +658,44 @@ axppmic_sensor_update(struct sysmon_envsys *sme, envsys_data_t *e)
 		break;
 	case AXP_SENSOR_BATT_VOLTAGE:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATSENSE_HI_REG, &hi, flags) == 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATSENSE_LO_REG, &lo, flags) == 0) {
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATSENSE_HI_REG, &hi, 0) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATSENSE_LO_REG, &lo, 0) == 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = AXP_ADC_RAW(hi, lo) * c->batsense_step;
 		}
 		break;
 	case AXP_SENSOR_BATT_CHARGE_CURRENT:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, 0) == 0 &&
 		    (val & AXP_POWER_SOURCE_CHARGE_DIRECTION) != 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTCHG_HI_REG, &hi, flags) == 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTCHG_LO_REG, &lo, flags) == 0) {
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTCHG_HI_REG, &hi, 0) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTCHG_LO_REG, &lo, 0) == 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = AXP_ADC_RAW(hi, lo) * c->charge_step;
 		}
 		break;
 	case AXP_SENSOR_BATT_DISCHARGE_CURRENT:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, flags) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_POWER_SOURCE_REG, &val, 0) == 0 &&
 		    (val & AXP_POWER_SOURCE_CHARGE_DIRECTION) == 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTDISCHG_HI_REG, &hi, flags) == 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTDISCHG_LO_REG, &lo, flags) == 0) {
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTDISCHG_HI_REG, &hi, 0) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATTDISCHG_LO_REG, &lo, 0) == 0) {
 			e->state = ENVSYS_SVALID;
 			e->value_cur = AXP_ADC_RAW(hi, lo) * c->discharge_step;
 		}
 		break;
 	case AXP_SENSOR_BATT_MAXIMUM_CAPACITY:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_MAX_CAP_HI_REG, &hi, flags) == 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_MAX_CAP_LO_REG, &lo, flags) == 0) {
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_MAX_CAP_HI_REG, &hi, 0) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_MAX_CAP_LO_REG, &lo, 0) == 0) {
 			e->state = (hi & AXP_BATT_MAX_CAP_VALID) ? ENVSYS_SVALID : ENVSYS_SINVALID;
 			e->value_cur = AXP_COULOMB_RAW(hi, lo) * c->maxcap_step;
 		}
 		break;
 	case AXP_SENSOR_BATT_CURRENT_CAPACITY:
 		if (battery_present &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_COULOMB_HI_REG, &hi, flags) == 0 &&
-		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_COULOMB_LO_REG, &lo, flags) == 0) {
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_COULOMB_HI_REG, &hi, 0) == 0 &&
+		    axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_COULOMB_LO_REG, &lo, 0) == 0) {
 			e->state = (hi & AXP_BATT_COULOMB_VALID) ? ENVSYS_SVALID : ENVSYS_SINVALID;
 			e->value_cur = AXP_COULOMB_RAW(hi, lo) * c->coulomb_step;
 		}
@@ -702,7 +707,6 @@ static void
 axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 {
 	struct axppmic_softc *sc = sme->sme_cookie;
-	const int flags = I2C_F_POLL;
 
 	switch (e->private) {
 	case AXP_SENSOR_BATT_CAPACITY_PERCENT:
@@ -710,16 +714,16 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 	case AXP_SENSOR_BATT_CHARGE_CURRENT:
 	case AXP_SENSOR_BATT_DISCHARGE_CURRENT:
 		/* Always update battery capacity and ADCs */
-		iic_acquire_bus(sc->sc_i2c, flags);
+		iic_acquire_bus(sc->sc_i2c, 0);
 		axppmic_sensor_update(sme, e);
-		iic_release_bus(sc->sc_i2c, flags);
+		iic_release_bus(sc->sc_i2c, 0);
 		break;
 	default:
 		/* Refresh if the sensor is not in valid state */
 		if (e->state != ENVSYS_SVALID) {
-			iic_acquire_bus(sc->sc_i2c, flags);
+			iic_acquire_bus(sc->sc_i2c, 0);
 			axppmic_sensor_update(sme, e);
-			iic_release_bus(sc->sc_i2c, flags);
+			iic_release_bus(sc->sc_i2c, 0);
 		}
 		break;
 	}
@@ -728,15 +732,42 @@ axppmic_sensor_refresh(struct sysmon_envsys *sme, envsys_data_t *e)
 static int
 axppmic_intr(void *priv)
 {
-	struct axppmic_softc *sc = priv;
-	const struct axppmic_config *c = sc->sc_conf;
-	const int flags = I2C_F_POLL;
+	struct axppmic_softc * const sc = priv;
+
+	mutex_enter(&sc->sc_intr_lock);
+
+	fdtbus_intr_mask(sc->sc_phandle, sc->sc_ih);
+
+	/* Interrupt is always masked when work is scheduled! */
+	KASSERT(!sc->sc_work_scheduled);
+	sc->sc_work_scheduled = true;
+	workqueue_enqueue(sc->sc_wq, &sc->sc_work, NULL);
+
+	mutex_exit(&sc->sc_intr_lock);
+
+	return 1;
+}
+
+static void
+axppmic_work(struct work *work, void *arg)
+{
+	struct axppmic_softc * const sc =
+	    container_of(work, struct axppmic_softc, sc_work);
+	const struct axppmic_config * const c = sc->sc_conf;
+	const int flags = 0;
 	uint8_t stat;
 	u_int n;
+
+	KASSERT(sc->sc_work_scheduled);
 
 	iic_acquire_bus(sc->sc_i2c, flags);
 	for (n = 1; n <= c->irq_regs; n++) {
 		if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_IRQ_STATUS_REG(n), &stat, flags) == 0) {
+			if (stat != 0) {
+				axppmic_write(sc->sc_i2c, sc->sc_addr,
+				    AXP_IRQ_STATUS_REG(n), stat, flags);
+			}
+
 			if (n == c->poklirq.reg && (stat & c->poklirq.mask) != 0)
 				sysmon_task_queue_sched(0, axppmic_task_shut, sc);
 			if (n == c->acinirq.reg && (stat & c->acinirq.mask) != 0)
@@ -749,15 +780,14 @@ axppmic_intr(void *priv)
 				axppmic_sensor_update(sc->sc_sme, &sc->sc_sensor[AXP_SENSOR_BATT_CHARGING]);
 			if (n == c->chargestirq.reg && (stat & c->chargestirq.mask) != 0)
 				axppmic_sensor_update(sc->sc_sme, &sc->sc_sensor[AXP_SENSOR_BATT_CHARGE_STATE]);
-
-			if (stat != 0)
-				axppmic_write(sc->sc_i2c, sc->sc_addr,
-				    AXP_IRQ_STATUS_REG(n), stat, flags);
 		}
 	}
 	iic_release_bus(sc->sc_i2c, flags);
 
-	return 1;
+	mutex_enter(&sc->sc_intr_lock);
+	sc->sc_work_scheduled = false;
+	fdtbus_intr_unmask(sc->sc_phandle, sc->sc_ih);
+	mutex_exit(&sc->sc_intr_lock);
 }
 
 static void
@@ -788,7 +818,7 @@ axppmic_attach_battery(struct axppmic_softc *sc)
 	uint8_t val;
 
 	iic_acquire_bus(sc->sc_i2c, 0);
-	if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_WARN_REG, &val, I2C_F_POLL) == 0) {
+	if (axppmic_read(sc->sc_i2c, sc->sc_addr, AXP_BATT_CAP_WARN_REG, &val, 0) == 0) {
 		sc->sc_warn_thres = __SHIFTOUT(val, AXP_BATT_CAP_WARN_LV1) + 5;
 		sc->sc_shut_thres = __SHIFTOUT(val, AXP_BATT_CAP_WARN_LV2);
 	}
@@ -917,7 +947,6 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	int phandle, child, i;
 	uint8_t irq_mask, val;
 	int error;
-	void *ih;
 
 	(void) iic_compatible_match(ia, compat_data, &dce);
 	KASSERT(dce != NULL);
@@ -955,30 +984,57 @@ axppmic_attach(device_t parent, device_t self, void *aux)
 	sc->sc_smpsw.smpsw_type = PSWITCH_TYPE_POWER;
 	sysmon_pswitch_register(&sc->sc_smpsw);
 
-	if (c->irq_regs > 0) {
-		iic_acquire_bus(sc->sc_i2c, 0);
-		for (i = 1; i <= c->irq_regs; i++) {
-			irq_mask = 0;
-			if (i == c->poklirq.reg)
-				irq_mask |= c->poklirq.mask;
-			if (i == c->acinirq.reg)
-				irq_mask |= c->acinirq.mask;
-			if (i == c->vbusirq.reg)
-				irq_mask |= c->vbusirq.mask;
-			if (i == c->battirq.reg)
-				irq_mask |= c->battirq.mask;
-			if (i == c->chargeirq.reg)
-				irq_mask |= c->chargeirq.mask;
-			if (i == c->chargestirq.reg)
-				irq_mask |= c->chargestirq.mask;
-			axppmic_write(sc->sc_i2c, sc->sc_addr, AXP_IRQ_ENABLE_REG(i), irq_mask, 0);
-		}
-		iic_release_bus(sc->sc_i2c, 0);
+	mutex_init(&sc->sc_intr_lock, MUTEX_DEFAULT, IPL_VM);
 
-		ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM, FDT_INTR_MPSAFE,
-		    axppmic_intr, sc);
-		if (ih == NULL) {
-			aprint_error_dev(self, "WARNING: couldn't establish interrupt handler\n");
+	if (c->irq_regs > 0) {
+		char intrstr[128];
+
+		if (!fdtbus_intr_str(sc->sc_phandle, 0,
+				     intrstr, sizeof(intrstr))) {
+			aprint_error_dev(self,
+			    "WARNING: failed to decode interrupt\n");
+		}
+
+		sc->sc_ih = fdtbus_intr_establish(sc->sc_phandle, 0, IPL_VM,
+						  FDT_INTR_MPSAFE,
+						  axppmic_intr, sc);
+		if (sc->sc_ih == NULL) {
+			aprint_error_dev(self,
+			    "WARNING: couldn't establish interrupt handler\n");
+		}
+
+		error = workqueue_create(&sc->sc_wq, device_xname(self),
+					 axppmic_work, NULL,
+					 PRI_SOFTSERIAL, IPL_VM,
+					 WQ_MPSAFE);
+		if (error) {
+			sc->sc_wq = NULL;
+			aprint_error_dev(self,
+			    "WARNING: couldn't create work queue: error %d\n",
+			    error);
+		}
+
+		if (sc->sc_ih != NULL && sc->sc_wq != NULL) {
+			iic_acquire_bus(sc->sc_i2c, 0);
+			for (i = 1; i <= c->irq_regs; i++) {
+				irq_mask = 0;
+				if (i == c->poklirq.reg)
+					irq_mask |= c->poklirq.mask;
+				if (i == c->acinirq.reg)
+					irq_mask |= c->acinirq.mask;
+				if (i == c->vbusirq.reg)
+					irq_mask |= c->vbusirq.mask;
+				if (i == c->battirq.reg)
+					irq_mask |= c->battirq.mask;
+				if (i == c->chargeirq.reg)
+					irq_mask |= c->chargeirq.mask;
+				if (i == c->chargestirq.reg)
+					irq_mask |= c->chargestirq.mask;
+				axppmic_write(sc->sc_i2c, sc->sc_addr,
+					      AXP_IRQ_ENABLE_REG(i),
+					      irq_mask, 0);
+			}
+			iic_release_bus(sc->sc_i2c, 0);
 		}
 	}
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_vnops.c,v 1.204.2.2 2020/01/19 21:23:36 ad Exp $	*/
+/*	$NetBSD: vfs_vnops.c,v 1.204.2.3 2020/02/29 20:21:03 ad Exp $	*/
 
 /*-
  * Copyright (c) 2009 The NetBSD Foundation, Inc.
@@ -66,7 +66,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.204.2.2 2020/01/19 21:23:36 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_vnops.c,v 1.204.2.3 2020/02/29 20:21:03 ad Exp $");
 
 #include "veriexec.h"
 
@@ -342,6 +342,7 @@ vn_markexec(struct vnode *vp)
 		return;
 	}
 
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	mutex_enter(vp->v_interlock);
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
 		cpu_count(CPU_COUNT_FILEPAGES, -vp->v_uobj.uo_npages);
@@ -349,6 +350,7 @@ vn_markexec(struct vnode *vp)
 		vp->v_iflag |= VI_EXECMAP;
 	}
 	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 }
 
 /*
@@ -364,10 +366,12 @@ vn_marktext(struct vnode *vp)
 		return (0);
 	}
 
+	rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 	mutex_enter(vp->v_interlock);
 	if (vp->v_writecount != 0) {
 		KASSERT((vp->v_iflag & VI_TEXT) == 0);
 		mutex_exit(vp->v_interlock);
+		rw_exit(vp->v_uobj.vmobjlock);
 		return (ETXTBSY);
 	}
 	if ((vp->v_iflag & VI_EXECMAP) == 0) {
@@ -376,6 +380,7 @@ vn_marktext(struct vnode *vp)
 	}
 	vp->v_iflag |= (VI_TEXT | VI_EXECMAP);
 	mutex_exit(vp->v_interlock);
+	rw_exit(vp->v_uobj.vmobjlock);
 	return (0);
 }
 
@@ -982,9 +987,11 @@ vn_mmap(struct file *fp, off_t *offp, size_t size, int prot, int *flagsp,
 		vn_lock(vp, LK_EXCLUSIVE | LK_RETRY);
 		vp->v_vflag |= VV_MAPPED;
 		if (needwritemap) {
+			rw_enter(vp->v_uobj.vmobjlock, RW_WRITER);
 			mutex_enter(vp->v_interlock);
 			vp->v_iflag |= VI_WRMAP;
 			mutex_exit(vp->v_interlock);
+			rw_exit(vp->v_uobj.vmobjlock);
 		}
 		VOP_UNLOCK(vp);
 	}
@@ -1165,33 +1172,6 @@ vn_extattr_rm(struct vnode *vp, int ioflg, int attrnamespace,
 	}
 
 	return (error);
-}
-
-void
-vn_ra_allocctx(struct vnode *vp)
-{
-	struct uvm_ractx *ra = NULL;
-
-	KASSERT(mutex_owned(vp->v_interlock));
-
-	if (vp->v_type != VREG) {
-		return;
-	}
-	if (vp->v_ractx != NULL) {
-		return;
-	}
-	if (vp->v_ractx == NULL) {
-		mutex_exit(vp->v_interlock);
-		ra = uvm_ra_allocctx();
-		mutex_enter(vp->v_interlock);
-		if (ra != NULL && vp->v_ractx == NULL) {
-			vp->v_ractx = ra;
-			ra = NULL;
-		}
-	}
-	if (ra != NULL) {
-		uvm_ra_freectx(ra);
-	}
 }
 
 int

@@ -1,4 +1,4 @@
-/*	$NetBSD: radeon_ttm.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $	*/
+/*	$NetBSD: radeon_ttm.c,v 1.15.6.1 2020/02/29 20:20:16 ad Exp $	*/
 
 /*
  * Copyright 2009 Jerome Glisse.
@@ -32,7 +32,7 @@
  *    Dave Airlie
  */
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.15 2018/08/27 15:22:54 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: radeon_ttm.c,v 1.15.6.1 2020/02/29 20:20:16 ad Exp $");
 
 #include <ttm/ttm_bo_api.h>
 #include <ttm/ttm_bo_driver.h>
@@ -546,38 +546,118 @@ struct radeon_ttm_tt {
 	u64				offset;
 
 	uint64_t			userptr;
+#ifdef __NetBSD__
+	struct vmspace			*usermm;
+#else
 	struct mm_struct		*usermm;
+#endif
 	uint32_t			userflags;
 };
 
 /* prepare the sg table with the user pages */
 static int radeon_ttm_tt_pin_userptr(struct ttm_tt *ttm)
 {
-#ifdef __NetBSD__
-	panic("we don't handle user pointers round these parts");
-#else
 	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	struct radeon_ttm_tt *gtt = (void *)ttm;
+#ifndef __NetBSD__
 	unsigned pinned = 0, nents;
+#endif
 	int r;
 
 	int write = !(gtt->userflags & RADEON_GEM_USERPTR_READONLY);
+#ifndef __NetBSD__
 	enum dma_data_direction direction = write ?
 		DMA_BIDIRECTIONAL : DMA_TO_DEVICE;
+#endif
 
+#ifdef __NetBSD__
+	if (curproc->p_vmspace != gtt->usermm)
+		return -EPERM;
+#else
 	if (current->mm != gtt->usermm)
 		return -EPERM;
+#endif
 
 	if (gtt->userflags & RADEON_GEM_USERPTR_ANONONLY) {
 		/* check that we only pin down anonymous memory
 		   to prevent problems with writeback */
 		unsigned long end = gtt->userptr + ttm->num_pages * PAGE_SIZE;
+#ifdef __NetBSD__
+		/* XXX ???  TOCTOU, anyone?  */
+		/* XXX should do range_test */
+		struct vm_map_entry *entry;
+		bool ok;
+		vm_map_lock_read(&gtt->usermm->vm_map);
+		ok = uvm_map_lookup_entry(&gtt->usermm->vm_map,
+		    (vaddr_t)gtt->userptr, &entry);
+		if (ok)
+			ok = !UVM_ET_ISOBJ(entry) && end <= entry->end;
+		vm_map_unlock_read(&gtt->usermm->vm_map);
+		if (!ok)
+			return -EPERM;
+#else
 		struct vm_area_struct *vma;
 		vma = find_vma(gtt->usermm, gtt->userptr);
 		if (!vma || vma->vm_file || vma->vm_end < end)
 			return -EPERM;
+#endif
 	}
 
+#ifdef __NetBSD__
+	struct iovec iov = {
+		.iov_base = (void *)(vaddr_t)gtt->userptr,
+		.iov_len = ttm->num_pages << PAGE_SHIFT,
+	};
+	struct uio uio = {
+		.uio_iov = &iov,
+		.uio_iovcnt = 1,
+		.uio_offset = 0,
+		.uio_resid = ttm->num_pages << PAGE_SHIFT,
+		.uio_rw = (write ? UIO_READ : UIO_WRITE), /* XXX ??? */
+		.uio_vmspace = gtt->usermm,
+	};
+	unsigned long i;
+
+	/* Wire the relevant part of the user's address space.  */
+	/* XXX What happens if user does munmap?  */
+	/* XXX errno NetBSD->Linux */
+	r = -uvm_vslock(gtt->usermm, (void *)(vaddr_t)gtt->userptr,
+	    ttm->num_pages << PAGE_SHIFT,
+	    (write ? VM_PROT_WRITE : VM_PROT_READ)); /* XXX ??? */
+	if (r)
+		goto fail0;
+
+	/* Load it up for DMA.  */
+	/* XXX errno NetBSD->Linux */
+	r = -bus_dmamap_load_uio(rdev->ddev->dmat, gtt->ttm.dma_address, &uio,
+	    BUS_DMA_WAITOK);
+	if (r)
+		goto fail1;
+
+	/* Get each of the pages as ttm requests.  */
+	for (i = 0; i < ttm->num_pages; i++) {
+		vaddr_t va = (vaddr_t)gtt->userptr + (i << PAGE_SHIFT);
+		paddr_t pa;
+		struct vm_page *vmp;
+
+		if (!pmap_extract(gtt->usermm->vm_map.pmap, va, &pa)) {
+			r = -EFAULT;
+			goto fail2;
+		}
+		vmp = PHYS_TO_VM_PAGE(pa);
+		ttm->pages[i] = container_of(vmp, struct page, p_vmp);
+	}
+
+	/* Success!  */
+	return 0;
+
+fail2:	while (i --> 0)
+		ttm->pages[i] = NULL; /* paranoia */
+	bus_dmamap_unload(rdev->ddev->dmat, gtt->ttm.dma_address);
+fail1:	uvm_vsunlock(gtt->usermm, (void *)(vaddr_t)gtt->userptr,
+	    ttm->num_pages << PAGE_SHIFT);
+fail0:	return r;
+#else
 	do {
 		unsigned num_pages = ttm->num_pages - pinned;
 		uint64_t userptr = gtt->userptr + pinned * PAGE_SIZE;
@@ -620,7 +700,12 @@ release_pages:
 static void radeon_ttm_tt_unpin_userptr(struct ttm_tt *ttm)
 {
 #ifdef __NetBSD__
-	panic("some varmint pinned a userptr to my hat");
+	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
+	struct radeon_ttm_tt *gtt = (void *)ttm;
+
+	bus_dmamap_unload(rdev->ddev->dmat, gtt->ttm.dma_address);
+	uvm_vsunlock(gtt->usermm, (void *)(vaddr_t)gtt->userptr,
+	    ttm->num_pages << PAGE_SHIFT);
 #else
 	struct radeon_device *rdev = radeon_get_rdev(ttm->bdev);
 	struct radeon_ttm_tt *gtt = (void *)ttm;
@@ -758,15 +843,15 @@ static int radeon_ttm_tt_populate(struct ttm_tt *ttm)
 
 	if (gtt && gtt->userptr) {
 #ifdef __NetBSD__
-		panic("don't point at users, it's not polite");
+		ttm->sg = NULL;
 #else
 		ttm->sg = kzalloc(sizeof(struct sg_table), GFP_KERNEL);
 		if (!ttm->sg)
 			return -ENOMEM;
+#endif
 
 		ttm->page_flags |= TTM_PAGE_FLAG_SG;
 		ttm->state = tt_unbound;
-#endif
 		return 0;
 	}
 
@@ -903,25 +988,19 @@ static const struct uvm_pagerops radeon_uvm_ops = {
 int radeon_ttm_tt_set_userptr(struct ttm_tt *ttm, uint64_t addr,
 			      uint32_t flags)
 {
-#ifdef __NetBSD__
-	/*
-	 * XXX Too painful to contemplate for now.  If you add this,
-	 * make sure to update radeon_cs.c radeon_cs_parser_relocs
-	 * (need_mmap_lock), and anything else using
-	 * radeon_ttm_tt_has_userptr.
-	 */
-	return -ENODEV;
-#else
 	struct radeon_ttm_tt *gtt = radeon_ttm_tt_to_gtt(ttm);
 
 	if (gtt == NULL)
 		return -EINVAL;
 
 	gtt->userptr = addr;
+#ifdef __NetBSD__
+	gtt->usermm = curproc->p_vmspace;
+#else
 	gtt->usermm = current->mm;
+#endif
 	gtt->userflags = flags;
 	return 0;
-#endif
 }
 
 bool radeon_ttm_tt_has_userptr(struct ttm_tt *ttm)

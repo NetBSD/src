@@ -1,4 +1,4 @@
-/*	$NetBSD: acpi_mcfg.c,v 1.17 2019/10/14 00:15:13 jmcneill Exp $	*/
+/*	$NetBSD: acpi_mcfg.c,v 1.17.2.1 2020/02/29 20:19:07 ad Exp $	*/
 
 /*-
  * Copyright (C) 2015 NONAKA Kimihiro <nonaka@NetBSD.org>
@@ -28,7 +28,7 @@
 #include "opt_pci.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.17 2019/10/14 00:15:13 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: acpi_mcfg.c,v 1.17.2.1 2020/02/29 20:19:07 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -961,4 +961,29 @@ acpimcfg_conf_write(pci_chipset_tag_t pc, pcitag_t tag, int reg, pcireg_t data)
 
 	mcfg_ops->ao_write(seg->ms_bst, mb->bsh[dev][func], reg, data);
 	return 0;
+}
+
+bool
+acpimcfg_conf_valid(pci_chipset_tag_t pc, pcitag_t tag, int reg)
+{
+	struct mcfg_segment *seg = NULL;
+	struct mcfg_bus *mb;
+	int bus, dev, func;
+
+	if (!mcfg_inited)
+		return false;
+
+	pci_decompose_tag(pc, tag, &bus, &dev, &func);
+
+	seg = acpimcfg_get_segment(pc, bus);
+	if (seg == NULL)
+		return false;
+
+	mb = &seg->ms_bus[bus - seg->ms_bus_start];
+	if (!PCIDEV_IS_VALID(mb, dev, func))
+		return false;
+	if (!EXTCONF_IS_VALID(mb, dev, func) && reg >= PCI_CONF_SIZE)
+		return false;
+
+	return true;
 }

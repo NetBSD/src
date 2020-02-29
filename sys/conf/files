@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1248.2.2 2020/01/25 22:38:45 ad Exp $
+#	$NetBSD: files,v 1.1248.2.3 2020/02/29 20:21:00 ad Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -35,7 +35,6 @@ defflag				KCSAN
 defflag opt_kcsan.h		KCSAN_PANIC
 defflag				KMSAN
 defflag opt_kmsan.h		KMSAN_PANIC
-defflag				KLEAK
 defflag				KCOV
 defflag opt_pool.h		POOL_QUARANTINE
 
@@ -1470,6 +1469,10 @@ file	dev/ic/dw_hdmi_phy.c		dwhdmi
 # Analogix DisplayPort
 device	anxdp: edid, videomode, drmkms, drmkms_i2c
 file	dev/ic/anx_dp.c			anxdp
+
+# Broadcom GENET v5 ethernet
+device	genet: arp, ether, ifnet, mii
+file	dev/ic/bcmgenet.c		genet
 
 #
 # File systems

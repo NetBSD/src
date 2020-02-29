@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.358.2.2 2020/01/25 22:38:41 ad Exp $
+# $NetBSD: GENERIC,v 1.358.2.3 2020/02/29 20:18:26 ad Exp $
 #
 # GENERIC machine description file
 # 
@@ -22,7 +22,7 @@ include		"arch/macppc/conf/std.macppc"
 
 options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.358.2.2 $"
+#ident 		"GENERIC-$Revision: 1.358.2.3 $"
 
 maxusers	32
 
@@ -445,7 +445,8 @@ usb*	at slhci?					# USB bus support
 
 include "dev/usb/usbdevices.config"
 
-pbms*	at uhidev? reportid ?				# PowerBook 15" mouse
+uatp*	at uhidev? reportid ?	# Apple multi-touchpads found in late *Books
+#pbms*	at uhidev? reportid ?	# older driver for touchpads
 
 # Bluetooth Controller and Device support
 

@@ -1,4 +1,4 @@
-/*	$NetBSD: efiboot.h,v 1.3 2016/08/04 16:22:40 scole Exp $	*/
+/*	$NetBSD: efiboot.h,v 1.3.22.1 2020/02/29 20:18:25 ad Exp $	*/
 
 /*-
  * Copyright (c) 1996
@@ -65,7 +65,7 @@ typedef unsigned long physaddr_t;
 
 /* exported devices XXX rename? */
 extern struct devsw devsw[];
-extern struct netif_driver efi_net; 
+extern struct netif_driver efi_net;
 
 /* Find EFI network resources */
 extern void efinet_init_driver(void);

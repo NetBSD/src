@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.234.2.1 2020/01/25 22:38:51 ad Exp $
+#	$NetBSD: Makefile,v 1.234.2.2 2020/02/29 20:21:04 ad Exp $
 
 .include <bsd.own.mk>
 
@@ -181,7 +181,6 @@ SUBDIR+=	wsbell
 SUBDIR+=	zlib
 SUBDIR+=	tprof
 .if (defined(NOTYET))
-SUBDIR+=	hifn		# Builds on architectures with PCI bus
 SUBDIR+=	unionfs
 .endif
 .if ${MKBINUTILS} != "no"
@@ -231,9 +230,14 @@ SUBDIR+=	vmt
 SUBDIR+=	nvmm
 .endif
 
-.if ${MACHINE_ARCH} == "i386" || \
-    ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=	ubsec		# Builds on architectures with PCI bus
+# Builds on architectures with PCI bus
+.if \
+     ${MACHINE_ARCH} == "evbarm" || \
+     ${MACHINE_ARCH} == "i386" || \
+     ${MACHINE_ARCH} == "x86_64"
+#SUBDIR+=	hifn
+SUBDIR+=	if_ixl
+SUBDIR+=	ubsec
 .endif
 
 .if ${MKSLJIT} != "no"
@@ -327,7 +331,6 @@ SUBDIR+=	viadrmums
 
 .if ${MACHINE_ARCH} == "i386" || \
     ${MACHINE_ARCH} == "x86_64"
-SUBDIR+=	azalia
 SUBDIR+=	compat_linux
 SUBDIR+=	drm
 SUBDIR+=	drmkms
@@ -440,7 +443,6 @@ SUBDIR+=	cac
 SUBDIR+=	cac_eisa
 SUBDIR+=	cac_pci
 SUBDIR+=	if_aq
-SUBDIR+=	if_ixl
 SUBDIR+=	if_vioif
 SUBDIR+=	ld
 SUBDIR+=	ld_aac

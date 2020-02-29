@@ -1,4 +1,4 @@
-/*	$NetBSD: dp8390.c,v 1.95 2019/05/29 10:07:29 msaitoh Exp $	*/
+/*	$NetBSD: dp8390.c,v 1.95.4.1 2020/02/29 20:19:08 ad Exp $	*/
 
 /*
  * Device driver for National Semiconductor DS8390/WD83C690 based ethernet
@@ -14,7 +14,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.95 2019/05/29 10:07:29 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dp8390.c,v 1.95.4.1 2020/02/29 20:19:08 ad Exp $");
 
 #include "opt_inet.h"
 
@@ -237,7 +237,7 @@ dp8390_watchdog(struct ifnet *ifp)
 	struct dp8390_softc *sc = ifp->if_softc;
 
 	log(LOG_ERR, "%s: device timeout\n", device_xname(sc->sc_dev));
-	++sc->sc_ec.ec_if.if_oerrors;
+	if_statinc(ifp, if_oerrors);
 
 	dp8390_reset(sc);
 }
@@ -581,7 +581,7 @@ dp8390_rint(struct dp8390_softc *sc)
 			log(LOG_ERR, "%s: NIC memory corrupt - "
 			    "invalid packet length %d\n",
 			    device_xname(sc->sc_dev), len);
-			++sc->sc_ec.ec_if.if_ierrors;
+			if_statinc(&sc->sc_ec.ec_if, if_ierrors);
 			dp8390_reset(sc);
 			return;
 		}
@@ -653,6 +653,7 @@ dp8390_intr(void *arg)
 		 */
 		if ((isr & (ED_ISR_PTX | ED_ISR_TXE)) != 0 &&
 		    sc->txb_inuse != 0) {
+			net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 			uint8_t collisions =
 			    NIC_GET(regt, regh, ED_P0_NCR) & 0x0f;
 
@@ -678,7 +679,7 @@ dp8390_intr(void *arg)
 				}
 
 				/* Update output errors counter. */
-				++ifp->if_oerrors;
+				if_statinc_ref(nsr, if_oerrors);
 			} else {
 				/*
 				 * Throw away the non-error status bits.
@@ -693,7 +694,7 @@ dp8390_intr(void *arg)
 				 * Update total number of successfully
 				 * transmitted packets.
 				 */
-				++ifp->if_opackets;
+				if_statinc_ref(nsr, if_opackets);
 			}
 
 			/* Clear watchdog timer. */
@@ -704,7 +705,10 @@ dp8390_intr(void *arg)
 			 * Add in total number of collisions on last
 			 * transmission.
 			 */
-			ifp->if_collisions += collisions;
+			if (collisions)
+				if_statadd_ref(nsr, if_collisions, collisions);
+
+			IF_STAT_PUTREF(ifp);
 
 			/*
 			 * Decrement buffer in-use count if not zero (can only
@@ -729,7 +733,7 @@ dp8390_intr(void *arg)
 			 * fixed in later revs.  -DG
 			 */
 			if ((isr & ED_ISR_OVW) != 0) {
-				++ifp->if_ierrors;
+				if_statinc(ifp, if_ierrors);
 #ifdef DIAGNOSTIC
 				log(LOG_WARNING, "%s: warning - receiver "
 				    "ring buffer overrun\n",
@@ -744,7 +748,7 @@ dp8390_intr(void *arg)
 				 * missed packet.
 				 */
 				if ((isr & ED_ISR_RXE) != 0) {
-					++ifp->if_ierrors;
+					if_statinc(ifp, if_ierrors);
 #ifdef DEBUG
 					if (dp8390_debug) {
 						printf("%s: receive error %x\n",
@@ -914,7 +918,7 @@ dp8390_read(struct dp8390_softc *sc, int buf, u_short len)
 	/* Pull packet off interface. */
 	m = dp8390_get(sc, buf, len);
 	if (m == NULL) {
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -1216,12 +1220,12 @@ dp8390_detach(struct dp8390_softc *sc, int flags)
 	if (sc->sc_media_fini != NULL)
 		(*sc->sc_media_fini)(sc);
 
-	/* Delete all remaining media. */
-	ifmedia_delete_instance(&sc->sc_media, IFM_INST_ANY);
-
 	rnd_detach_source(&sc->rnd_source);
 	ether_ifdetach(ifp);
 	if_detach(ifp);
+
+	/* Delete all remaining media. */
+	ifmedia_fini(&sc->sc_media);
 
 	return 0;
 }

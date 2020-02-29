@@ -1,4 +1,4 @@
-/*	$NetBSD: kernfs.h,v 1.41.2.1 2020/01/17 21:47:36 ad Exp $	*/
+/*	$NetBSD: kernfs.h,v 1.41.2.2 2020/02/29 20:21:04 ad Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -122,6 +122,7 @@ extern const struct kern_target kern_targets[];
 extern int nkern_targets;
 extern const int static_nkern_targets;
 extern int (**kernfs_vnodeop_p)(void *);
+extern int (**kernfs_specop_p)(void *);
 extern struct vfsops kernfs_vfsops;
 extern dev_t rrootdev;
 extern kmutex_t kfs_lock;

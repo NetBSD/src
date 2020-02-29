@@ -1,4 +1,4 @@
-/* $NetBSD: gicv3_its.c,v 1.23.2.1 2020/01/17 21:47:23 ad Exp $ */
+/* $NetBSD: gicv3_its.c,v 1.23.2.2 2020/02/29 20:18:18 ad Exp $ */
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #define _INTR_PRIVATE
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.23.2.1 2020/01/17 21:47:23 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gicv3_its.c,v 1.23.2.2 2020/02/29 20:18:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/kmem.h>
@@ -284,18 +284,19 @@ gicv3_its_msi_alloc_lpi(struct gicv3_its *its,
     const struct pci_attach_args *pa)
 {
 	struct pci_attach_args *new_pa;
-	int n;
+	vmem_addr_t n;
 
-	for (n = 0; n < its->its_pic->pic_maxsources; n++) {
-		if (its->its_pa[n] == NULL) {
-			new_pa = kmem_alloc(sizeof(*new_pa), KM_SLEEP);
-			memcpy(new_pa, pa, sizeof(*new_pa));
-			its->its_pa[n] = new_pa;
-			return n + its->its_pic->pic_irqbase;
-		}
-	}
+	KASSERT(its->its_gic->sc_lpi_pool != NULL);
 
-        return -1;
+	if (vmem_alloc(its->its_gic->sc_lpi_pool, 1, VM_INSTANTFIT|VM_SLEEP, &n) != 0)
+		return -1;
+	
+	KASSERT(its->its_pa[n] == NULL);
+
+	new_pa = kmem_alloc(sizeof(*new_pa), KM_SLEEP);
+	memcpy(new_pa, pa, sizeof(*new_pa));
+	its->its_pa[n] = new_pa;
+	return n + its->its_pic->pic_irqbase;
 }
 
 static void
@@ -303,11 +304,14 @@ gicv3_its_msi_free_lpi(struct gicv3_its *its, int lpi)
 {
 	struct pci_attach_args *pa;
 
+	KASSERT(its->its_gic->sc_lpi_pool != NULL);
 	KASSERT(lpi >= its->its_pic->pic_irqbase);
 
 	pa = its->its_pa[lpi - its->its_pic->pic_irqbase];
 	its->its_pa[lpi - its->its_pic->pic_irqbase] = NULL;
 	kmem_free(pa, sizeof(*pa));
+
+	vmem_free(its->its_gic->sc_lpi_pool, lpi - its->its_pic->pic_irqbase, 1);
 }
 
 static uint32_t
@@ -802,7 +806,6 @@ gicv3_its_get_affinity(void *priv, size_t irq, kcpuset_t *affinity)
 	struct gicv3_its * const its = priv;
 	struct cpu_info *ci;
 
-	kcpuset_zero(affinity);
 	ci = its->its_targets[irq];
 	if (ci)
 		kcpuset_set(affinity, cpu_index(ci));
@@ -821,7 +824,7 @@ gicv3_its_set_affinity(void *priv, size_t irq, const kcpuset_t *affinity)
 
 	pa = its->its_pa[irq];
 	if (pa == NULL)
-		return EINVAL;
+		return EPASSTHROUGH;
 
 	ci = cpu_lookup(kcpuset_ffs(affinity) - 1);
 	its->its_targets[irq] = ci;
@@ -846,7 +849,7 @@ gicv3_its_init(struct gicv3_softc *sc, bus_space_handle_t bsh,
 	if ((typer & GITS_TYPER_Physical) == 0)
 		return ENXIO;
 
-	its = kmem_alloc(sizeof(*its), KM_SLEEP);
+	its = kmem_zalloc(sizeof(*its), KM_SLEEP);
 	its->its_id = its_id;
 	its->its_bst = sc->sc_bst;
 	its->its_bsh = bsh;

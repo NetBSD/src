@@ -1,4 +1,4 @@
-/* $NetBSD: if_vge.c,v 1.78 2019/12/27 07:41:23 msaitoh Exp $ */
+/* $NetBSD: if_vge.c,v 1.78.2.1 2020/02/29 20:19:11 ad Exp $ */
 
 /*-
  * Copyright (c) 2004
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.78 2019/12/27 07:41:23 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_vge.c,v 1.78.2.1 2020/02/29 20:19:11 ad Exp $");
 
 /*
  * VIA Networking Technologies VT612x PCI gigabit ethernet NIC driver.
@@ -1231,7 +1231,7 @@ vge_rxeof(struct vge_softc *sc)
 		if ((rxstat & VGE_RDSTS_RXOK) == 0 &&
 		    (rxstat & VGE_RDSTS_VIDM) == 0 &&
 		    (rxstat & VGE_RDSTS_CSUMERR) == 0) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			/*
 			 * If this is part of a multi-fragment packet,
 			 * discard all the pieces.
@@ -1250,7 +1250,7 @@ vge_rxeof(struct vge_softc *sc)
 		 */
 
 		if (vge_newbuf(sc, idx, NULL)) {
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			if (sc->sc_rx_mhead != NULL) {
 				m_freem(sc->sc_rx_mhead);
 				sc->sc_rx_mhead = sc->sc_rx_mtail = NULL;
@@ -1363,12 +1363,14 @@ vge_txeof(struct vge_softc *sc)
 		bus_dmamap_sync(sc->sc_dmat, txs->txs_dmamap, 0,
 		    txs->txs_dmamap->dm_mapsize, BUS_DMASYNC_POSTWRITE);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
+		net_stat_ref_t nsr = IF_STAT_GETREF(ifp);
 		if (txstat & (VGE_TDSTS_EXCESSCOLL | VGE_TDSTS_COLL))
-			ifp->if_collisions++;
+			if_statinc_ref(nsr, if_collisions);
 		if (txstat & VGE_TDSTS_TXERR)
-			ifp->if_oerrors++;
+			if_statinc_ref(nsr, if_oerrors);
 		else
-			ifp->if_opackets++;
+			if_statinc_ref(nsr, if_opackets);
+		IF_STAT_PUTREF(ifp);
 	}
 
 	sc->sc_tx_considx = idx;
@@ -2019,7 +2021,7 @@ vge_watchdog(struct ifnet *ifp)
 	sc = ifp->if_softc;
 	s = splnet();
 	printf("%s: watchdog timeout\n", device_xname(sc->sc_dev));
-	ifp->if_oerrors++;
+	if_statinc(ifp, if_oerrors);
 
 	vge_txeof(sc);
 	vge_rxeof(sc);

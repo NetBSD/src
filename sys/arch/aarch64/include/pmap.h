@@ -1,4 +1,4 @@
-/* $NetBSD: pmap.h,v 1.30 2020/01/06 08:29:08 skrll Exp $ */
+/* $NetBSD: pmap.h,v 1.30.2.1 2020/02/29 20:18:15 ad Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@
 #define PMAP_STEAL_MEMORY
 
 #define __HAVE_VM_PAGE_MD
+#define __HAVE_PMAP_PV_TRACK	1
 
 #ifndef KASAN
 #define PMAP_MAP_POOLPAGE(pa)		AARCH64_PA_TO_KVA(pa)
@@ -73,7 +74,7 @@ struct pmap {
 	pd_entry_t *pm_l0table;			/* L0 table: 512G*512 */
 	paddr_t pm_l0table_pa;
 
-	TAILQ_HEAD(, vm_page) pm_vmlist;	/* for L[0123] tables */
+	LIST_HEAD(, vm_page) pm_vmlist;		/* for L[0123] tables */
 
 	struct pmap_statistics pm_stats;
 	unsigned int pm_refcnt;
@@ -83,22 +84,28 @@ struct pmap {
 };
 
 struct pv_entry;
-struct vm_page_md {
-	kmutex_t mdpg_pvlock;
-	TAILQ_ENTRY(vm_page) mdpg_vmlist;	/* L[0123] table vm_page list */
-	TAILQ_HEAD(, pv_entry) mdpg_pvhead;
 
-	pd_entry_t *mdpg_ptep_parent;	/* for page descriptor page only */
+struct pmap_page {
+	kmutex_t pp_pvlock;
+	LIST_HEAD(, pv_entry) pp_pvhead;
 
 	/* VM_PROT_READ means referenced, VM_PROT_WRITE means modified */
-	uint32_t mdpg_flags;
+	uint32_t pp_flags;
+#define PMAP_PAGE_FLAGS_PV_TRACKED	0x80000000
 };
 
-/* each mdpg_pvlock will be initialized in pmap_init() */
-#define VM_MDPAGE_INIT(pg)				\
-	do {						\
-		TAILQ_INIT(&(pg)->mdpage.mdpg_pvhead);	\
-		(pg)->mdpage.mdpg_flags = 0;		\
+struct vm_page_md {
+	LIST_ENTRY(vm_page) mdpg_vmlist;	/* L[0123] table vm_page list */
+	pd_entry_t *mdpg_ptep_parent;	/* for page descriptor page only */
+
+	struct pmap_page mdpg_pp;
+};
+
+/* each mdpg_pp.pp_pvlock will be initialized in pmap_init() */
+#define VM_MDPAGE_INIT(pg)					\
+	do {							\
+		LIST_INIT(&(pg)->mdpage.mdpg_pp.pp_pvhead);	\
+		(pg)->mdpage.mdpg_pp.pp_flags = 0;		\
 	} while (/*CONSTCOND*/ 0)
 
 
@@ -242,7 +249,7 @@ aarch64_mmap_flags(paddr_t mdpgno)
 	 * aarch64 arch has 5 memory attribute:
 	 *
 	 *  WriteBack      - write back cache
-	 *  WriteThru      - wite through cache
+	 *  WriteThru      - write through cache
 	 *  NoCache        - no cache
 	 *  Device(nGnRE)  - no Gathering, no Reordering, Early write ack
 	 *  Device(nGnRnE) - no Gathering, no Reordering, no Early write ack
@@ -281,6 +288,11 @@ aarch64_mmap_flags(paddr_t mdpgno)
 void	pmap_procwr(struct proc *, vaddr_t, int);
 bool	pmap_extract_coherency(pmap_t, vaddr_t, paddr_t *, bool *);
 void	pmap_icache_sync_range(pmap_t, vaddr_t, vaddr_t);
+
+void	pmap_pv_init(void);
+void	pmap_pv_track(paddr_t, psize_t);
+void	pmap_pv_untrack(paddr_t, psize_t);
+void	pmap_pv_protect(paddr_t, vm_prot_t);
 
 #define	PMAP_MAPSIZE1	L2_SIZE
 

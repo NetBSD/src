@@ -1,4 +1,4 @@
-/*	$NetBSD: bcm2835_mbox_acpi.c,v 1.1 2019/12/30 18:43:38 jmcneill Exp $	*/
+/*	$NetBSD: bcm2835_mbox_acpi.c,v 1.1.2.1 2020/02/29 20:18:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 2012 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_acpi.c,v 1.1 2019/12/30 18:43:38 jmcneill Exp $");
+__KERNEL_RCSID(0, "$NetBSD: bcm2835_mbox_acpi.c,v 1.1.2.1 2020/02/29 20:18:18 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,12 +103,14 @@ bcmmbox_acpi_attach(device_t parent, device_t self, void *aux)
 		return;
 	}
 
+#if notyet
 	sc->sc_intrh = acpi_intr_establish(self, (uint64_t)aa->aa_node->ad_handle,
 	    IPL_VM, false, bcmmbox_intr, sc, device_xname(self));
 	if (sc->sc_intrh == NULL) {
 		aprint_error_dev(self, "failed to establish interrupt\n");
 		return;
 	}
+#endif
 
 	bcmmbox_attach(sc);
 }

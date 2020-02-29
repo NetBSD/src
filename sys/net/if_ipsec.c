@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.25 2019/11/01 04:28:14 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.25.2.1 2020/02/29 20:21:06 ad Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,13 +27,14 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.25 2019/11/01 04:28:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.25.2.1 2020/02/29 20:21:06 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
 #endif
 
 #include <sys/param.h>
+#include <sys/atomic.h>
 #include <sys/systm.h>
 #include <sys/kernel.h>
 #include <sys/mbuf.h>
@@ -538,7 +539,7 @@ end:
 	curlwp_bindx(bound);
 noref_end:
 	if (error)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	return error;
 }
@@ -566,8 +567,7 @@ if_ipsec_out_direct(struct ipsec_variant *var, struct mbuf *m, int family)
 	if (error)
 		return error;
 
-	ifp->if_opackets++;
-	ifp->if_obytes += len;
+	if_statadd2(ifp, if_opackets, 1, if_obytes, len);
 
 	return 0;
 }
@@ -609,7 +609,7 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 		break;
 #endif
 	default:
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		m_freem(m);
 		return;
 	}
@@ -621,10 +621,9 @@ if_ipsec_in_enqueue(struct mbuf *m, int af, struct ifnet *ifp)
 #endif
 	pktlen = m->m_pkthdr.len;
 	if (__predict_true(pktq_enqueue(pktq, m, h))) {
-		ifp->if_ibytes += pktlen;
-		ifp->if_ipackets++;
+		if_statadd2(ifp, if_ibytes, pktlen, if_ipackets, 1);
 	} else {
-		ifp->if_iqdrops++;
+		if_statinc(ifp, if_iqdrops);
 		m_freem(m);
 	}
 
@@ -1132,7 +1131,6 @@ if_ipsec_set_tunnel(struct ifnet *ifp,
 	if_ipsec_copy_variant(nullvar, ovar);
 	if_ipsec_clear_config(nullvar);
 	psref_target_init(&nullvar->iv_psref, iv_psref_class);
-	membar_producer();
 	/*
 	 * (2-3) Swap variant include its SPs.
 	 */
@@ -1238,7 +1236,6 @@ if_ipsec_delete_tunnel(struct ifnet *ifp)
 	if_ipsec_copy_variant(nullvar, ovar);
 	if_ipsec_clear_config(nullvar);
 	psref_target_init(&nullvar->iv_psref, iv_psref_class);
-	membar_producer();
 	/*
 	 * (2-3) Swap variant include its SPs.
 	 */
@@ -1325,7 +1322,6 @@ if_ipsec_ensure_flags(struct ifnet *ifp, u_short oflags)
 	if_ipsec_copy_variant(nullvar, ovar);
 	if_ipsec_clear_config(nullvar);
 	psref_target_init(&nullvar->iv_psref, iv_psref_class);
-	membar_producer();
 	/*
 	 * (2-3) Swap variant include its SPs.
 	 */
@@ -1896,16 +1892,16 @@ if_ipsec_update_variant(struct ipsec_softc *sc, struct ipsec_variant *nvar,
 	 * we stop packet processing while replacing SPs, that is, we set
 	 * "null" config variant to sc->ipsec_var.
 	 */
-	sc->ipsec_var = nullvar;
+	atomic_store_release(&sc->ipsec_var, nullvar);
 	pserialize_perform(sc->ipsec_psz);
 	psref_target_destroy(&ovar->iv_psref, iv_psref_class);
 
 	error = if_ipsec_replace_sp(sc, ovar, nvar);
 	if (!error)
-		sc->ipsec_var = nvar;
+		atomic_store_release(&sc->ipsec_var, nvar);
 	else {
-		sc->ipsec_var = ovar; /* rollback */
 		psref_target_init(&ovar->iv_psref, iv_psref_class);
+		atomic_store_release(&sc->ipsec_var, ovar); /* rollback */
 	}
 
 	pserialize_perform(sc->ipsec_psz);

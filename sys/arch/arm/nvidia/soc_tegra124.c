@@ -1,4 +1,4 @@
-/* $NetBSD: soc_tegra124.c,v 1.21 2019/01/31 13:19:19 skrll Exp $ */
+/* $NetBSD: soc_tegra124.c,v 1.21.6.1 2020/02/29 20:18:19 ad Exp $ */
 
 /*-
  * Copyright (c) 2015 Jared D. McNeill <jmcneill@invisible.ca>
@@ -30,7 +30,7 @@
 #include "opt_multiprocessor.h"
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.21 2019/01/31 13:19:19 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: soc_tegra124.c,v 1.21.6.1 2020/02/29 20:18:19 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -70,21 +70,28 @@ tegra124_mpstart(void)
 	    (uint32_t)KERN_VTOPHYS((vaddr_t)cpu_mpstart));
 	bus_space_barrier(bst, bsh, EVP_RESET_VECTOR_0_REG, 4,
 	    BUS_SPACE_BARRIER_READ | BUS_SPACE_BARRIER_WRITE);
-	uint32_t started = 0;
 
-	tegra_pmc_power(PMC_PARTID_CPU1, true); started |= __BIT(1);
-	tegra_pmc_power(PMC_PARTID_CPU2, true); started |= __BIT(2);
-	tegra_pmc_power(PMC_PARTID_CPU3, true); started |= __BIT(3);
+	for (u_int cpuindex = 1; cpuindex < arm_cpu_max; cpuindex++) {
+		static u_int tegra_cpu_pmu[] = {
+		    0,
+		    PMC_PARTID_CPU1,
+		    PMC_PARTID_CPU2,
+		    PMC_PARTID_CPU3
+		};
 
-	u_int i;
-	for (i = 0x10000000; i > 0; i--) {
-		arm_dmb();
-		if (arm_cpu_hatched == started)
-			break;
-	}
-	if (i == 0) {
-		ret++;
-		aprint_error("cpu%d: WARNING: AP failed to start\n", i);
+		tegra_pmc_power(tegra_cpu_pmu[cpuindex], true);
+
+		u_int i;
+		for (i = 0x10000000; i > 0; i--) {
+			if (cpu_hatched_p(cpuindex))
+				break;
+		}
+
+		if (i == 0) {
+			ret++;
+			aprint_error("cpu%d: WARNING: AP failed to start\n",
+			    cpuindex);
+		}
 	}
 #endif
 	return ret;

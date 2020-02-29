@@ -1,4 +1,4 @@
-#	$NetBSD: genassym.cf,v 1.117.2.3 2020/01/22 11:40:16 ad Exp $
+#	$NetBSD: genassym.cf,v 1.117.2.4 2020/02/29 20:18:25 ad Exp $
 
 #
 # Copyright (c) 1998, 2006, 2007, 2008 The NetBSD Foundation, Inc.
@@ -131,9 +131,6 @@ endif
 include <sys/bus.h>
 
 define	PAGE_SIZE		PAGE_SIZE
-
-define	LSRUN			LSRUN
-define	LSONPROC		LSONPROC
 
 define	UPAGES			UPAGES
 define	USPACE			USPACE

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_fwip.c,v 1.29 2018/11/15 10:23:55 maxv Exp $	*/
+/*	$NetBSD: if_fwip.c,v 1.29.6.1 2020/02/29 20:19:09 ad Exp $	*/
 /*-
  * Copyright (c) 2004
  *	Doug Rabson
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.29 2018/11/15 10:23:55 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_fwip.c,v 1.29.6.1 2020/02/29 20:19:09 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bus.h>
@@ -270,7 +270,7 @@ fwip_start(struct ifnet *ifp)
 			IF_DEQUEUE(&ifp->if_snd, m);
 			if (m != NULL)
 				m_freem(m);
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 		} while (m != NULL);
 
 		return;
@@ -511,7 +511,7 @@ fwip_output_callback(struct fw_xfer *xfer)
 	/* XXX error check */
 	FWIPDEBUG(ifp, "resp = %d\n", xfer->resp);
 	if (xfer->resp != 0)
-		ifp->if_oerrors++;
+		if_statinc(ifp, if_oerrors);
 
 	m_freem(xfer->mbuf);
 	fw_xfer_unload(xfer);
@@ -625,7 +625,7 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 				fd = fw_noderesolve_eui64(fc, &eui);
 				if (!fd) {
 					/* error */
-					ifp->if_oerrors++;
+					if_statinc(ifp, if_oerrors);
 					/* XXX set error code */
 					fwip_output_callback(xfer);
 					continue;
@@ -668,12 +668,12 @@ fwip_async_output(struct fwip_softc *sc, struct ifnet *ifp)
 		}
 		if (error) {
 			/* error */
-			ifp->if_oerrors++;
+			if_statinc(ifp, if_oerrors);
 			/* XXX set error code */
 			fwip_output_callback(xfer);
 			continue;
 		} else {
-			ifp->if_opackets++;
+			if_statinc(ifp, if_opackets);
 			i++;
 		}
 	}
@@ -726,7 +726,7 @@ fwip_stream_input(struct fw_xferq *xferq)
 		if (sxfer->resp != 0 ||
 		    fp->mode.stream.len < 2 * sizeof(uint32_t)) {
 			m_freem(m);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 		m->m_len = m->m_pkthdr.len = fp->mode.stream.len
@@ -753,7 +753,7 @@ fwip_stream_input(struct fw_xferq *xferq)
 			FWIPDEBUG(ifp, "Unrecognised GASP header %#08x %#08x\n",
 			    ntohl(p[1]), ntohl(p[2]));
 			m_freem(m);
-			ifp->if_ierrors++;
+			if_statinc(ifp, if_ierrors);
 			continue;
 		}
 
@@ -788,7 +788,7 @@ fwip_stream_input(struct fw_xferq *xferq)
 		m_adj(m, 3*sizeof(uint32_t));
 		m_set_rcvif(m, ifp);
 		ieee1394_input(ifp, m, src);
-		ifp->if_ipackets++;
+		if_statinc(ifp, if_ipackets);
 	}
 	if (STAILQ_FIRST(&xferq->stfree) != NULL)
 		sc->sc_fd.fc->irx_enable(sc->sc_fd.fc, sc->sc_dma_ch);
@@ -857,7 +857,7 @@ fwip_unicast_input(struct fw_xfer *xfer)
 	 */
 	if (rtcode != FWRCODE_COMPLETE) {
 		m_freem(m);
-		ifp->if_ierrors++;
+		if_statinc(ifp, if_ierrors);
 		return;
 	}
 
@@ -893,5 +893,5 @@ fwip_unicast_input(struct fw_xfer *xfer)
 	m->m_len = m->m_pkthdr.len = fp->mode.wreqb.len;
 	m_set_rcvif(m, ifp);
 	ieee1394_input(ifp, m, fp->mode.wreqb.src);
-	ifp->if_ipackets++;
+	if_statinc(ifp, if_ipackets);
 }
