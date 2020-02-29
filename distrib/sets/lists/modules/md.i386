@@ -1,4 +1,4 @@
-# $NetBSD: md.i386,v 1.85 2020/02/11 11:36:53 uki Exp $
+# $NetBSD: md.i386,v 1.86 2020/02/29 18:46:12 skrll Exp $
 #
 # NOTE that there are two sets of files here: @MODULEDIR@ and i386pae-xen
 #
@@ -111,6 +111,8 @@
 ./@MODULEDIR@/hpqlb/hpqlb.kmod			modules-base-kernel	kmod
 ./@MODULEDIR@/ichsmb				modules-base-kernel     kmod
 ./@MODULEDIR@/ichsmb/ichsmb.kmod		modules-base-kernel     kmod
+./@MODULEDIR@/if_ixl				modules-base-kernel	kmod
+./@MODULEDIR@/if_ixl/if_ixl.kmod		modules-base-kernel	kmod
 ./@MODULEDIR@/imc				modules-base-kernel     kmod
 ./@MODULEDIR@/imc/imc.kmod			modules-base-kernel     kmod
 ./@MODULEDIR@/imcsmb				modules-base-kernel     kmod
