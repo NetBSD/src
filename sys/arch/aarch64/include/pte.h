@@ -1,4 +1,4 @@
-/* $NetBSD: pte.h,v 1.11 2020/01/31 09:23:58 maxv Exp $ */
+/* $NetBSD: pte.h,v 1.12 2020/02/29 21:34:37 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -134,8 +134,6 @@ typedef uint64_t pt_entry_t;	/* L3(4k) table entry */
 #define Ln_ENTRIES_SHIFT	9
 #define Ln_ENTRIES		(1 << Ln_ENTRIES_SHIFT)
 #define Ln_TABLE_SIZE		(8 << Ln_ENTRIES_SHIFT)
-
-#define TTBR_SEL_VA		__BIT(63)	/* which TTBR is selected */
 
 #elif defined(__arm__)
 

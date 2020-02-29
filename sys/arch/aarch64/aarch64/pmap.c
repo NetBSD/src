@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.65 2020/02/29 21:10:09 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.66 2020/02/29 21:34:37 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2020/02/29 21:10:09 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2020/02/29 21:34:37 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -49,6 +49,7 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.65 2020/02/29 21:10:09 ryo Exp $");
 #include <aarch64/pte.h>
 #include <aarch64/armreg.h>
 #include <aarch64/cpufunc.h>
+#include <aarch64/locore.h>
 #include <aarch64/machdep.h>
 #ifdef DDB
 #include <aarch64/db_machdep.h>
@@ -281,15 +282,25 @@ phys_to_pp(paddr_t pa)
 #define IN_KSEG_ADDR(va)	\
 	IN_RANGE((va), AARCH64_KSEG_START, AARCH64_KSEG_END)
 
-#define KASSERT_PM_ADDR(pm, va)						\
+#ifdef DIAGNOSTIC
+#define KASSERT_PM_ADDR(pm,va)						\
 	do {								\
+		int space = aarch64_addressspace(va);			\
 		if ((pm) == pmap_kernel()) {				\
+			KASSERTMSG(space == AARCH64_ADDRSPACE_UPPER,	\
+			    "%s: kernel pm %p: va=%016lx"		\
+			    " is out of upper address space\n",		\
+			    __func__, (pm), (va));			\
 			KASSERTMSG(IN_RANGE((va), VM_MIN_KERNEL_ADDRESS, \
 			    VM_MAX_KERNEL_ADDRESS),			\
 			    "%s: kernel pm %p: va=%016lx"		\
 			    " is not kernel address\n",			\
 			    __func__, (pm), (va));			\
 		} else {						\
+			KASSERTMSG(space == AARCH64_ADDRSPACE_LOWER,	\
+			    "%s: user pm %p: va=%016lx"			\
+			    " is out of lower address space\n",		\
+			    __func__, (pm), (va));			\
 			KASSERTMSG(IN_RANGE((va),			\
 			    VM_MIN_ADDRESS, VM_MAX_ADDRESS),		\
 			    "%s: user pm %p: va=%016lx"			\
@@ -297,6 +308,9 @@ phys_to_pp(paddr_t pa)
 			    __func__, (pm), (va));			\
 		}							\
 	} while (0 /* CONSTCOND */)
+#else /* DIAGNOSTIC */
+#define KASSERT_PM_ADDR(pm,va)
+#endif /* DIAGNOSTIC */
 
 
 static const struct pmap_devmap *pmap_devmap_table;
@@ -739,25 +753,56 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 	pt_entry_t *ptep, pte;
 	paddr_t pa;
 	vsize_t blocksize = 0;
+	int space;
 	extern char __kernel_text[];
 	extern char _end[];
 
-	if (IN_RANGE(va, (vaddr_t)__kernel_text, (vaddr_t)_end)) {
-		/* fast loookup */
-		pa = KERN_VTOPHYS(va);
-	} else if (IN_KSEG_ADDR(va)) {
-		/* fast loookup. should be used only if actually mapped? */
-		pa = AARCH64_KVA_TO_PA(va);
+	space = aarch64_addressspace(va);
+	if (pm == pmap_kernel()) {
+		if (space != AARCH64_ADDRSPACE_UPPER)
+			return false;
+
+		if (IN_RANGE(va, (vaddr_t)__kernel_text, (vaddr_t)_end)) {
+			/* kernel text/data/bss are definitely linear mapped */
+			pa = KERN_VTOPHYS(va);
+			goto mapped;
+		} else if (IN_KSEG_ADDR(va)) {
+			/*
+			 * also KSEG is linear mapped, but areas that have no
+			 * physical memory haven't been mapped.
+			 * fast lookup by using the S1E1R/PAR_EL1 registers.
+			 */
+			register_t s = daif_disable(DAIF_I|DAIF_F);
+			reg_s1e1r_write(va);
+			__asm __volatile ("isb");
+			uint64_t par = reg_par_el1_read();
+			daif_enable(s);
+
+			if (par & PAR_F)
+				return false;
+			pa = (__SHIFTOUT(par, PAR_PA) << PAR_PA_SHIFT) +
+			    (va & __BITS(PAR_PA_SHIFT - 1, 0));
+			goto mapped;
+		}
 	} else {
-		ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
-		if (ptep == NULL)
+		if (space != AARCH64_ADDRSPACE_LOWER)
 			return false;
-		pte = *ptep;
-		if (!lxpde_valid(pte))
-			return false;
-		pa = lxpde_pa(pte) + (va & (blocksize - 1));
 	}
 
+	/*
+	 * other areas, it isn't able to examined using the PAR_EL1 register,
+	 * because the page may be in an access fault state due to
+	 * reference bit emulation.
+	 */
+	ptep = _pmap_pte_lookup_bs(pm, va, &blocksize);
+	if (ptep == NULL)
+		return false;
+	pte = *ptep;
+	if (!lxpde_valid(pte))
+		return false;
+	pa = lxpde_pa(pte) + (va & (blocksize - 1));
+
+ mapped:
 	if (pap != NULL)
 		*pap = pa;
 	return true;
@@ -769,7 +814,8 @@ vtophys(vaddr_t va)
 	struct pmap *pm;
 	paddr_t pa;
 
-	if (va & TTBR_SEL_VA)
+	/* even if TBI is disabled, AARCH64_ADDRTOP_TAG means KVA */
+	if ((uint64_t)va & AARCH64_ADDRTOP_TAG)
 		pm = pmap_kernel();
 	else
 		pm = curlwp->l_proc->p_vmspace->vm_map.pmap;
@@ -790,13 +836,6 @@ _pmap_pte_lookup_bs(struct pmap *pm, vaddr_t va, vsize_t *bs)
 	pd_entry_t pde;
 	vsize_t blocksize;
 	unsigned int idx;
-
-	if (((pm == pmap_kernel()) && ((va & TTBR_SEL_VA) == 0)) ||
-	    ((pm != pmap_kernel()) && ((va & TTBR_SEL_VA) != 0))) {
-		blocksize = 0;
-		ptep = NULL;
-		goto done;
-	}
 
 	/*
 	 * traverse L0 -> L1 -> L2 -> L3
@@ -855,6 +894,8 @@ pmap_icache_sync_range(pmap_t pm, vaddr_t sva, vaddr_t eva)
 	pt_entry_t *ptep = NULL, pte;
 	vaddr_t va;
 	vsize_t blocksize = 0;
+
+	KASSERT_PM_ADDR(pm, sva);
 
 	pm_lock(pm);
 
@@ -2553,12 +2594,18 @@ pmap_db_pteinfo(vaddr_t va, void (*pr)(const char *, ...) __printflike(1, 2))
 	paddr_t pa;
 	unsigned int idx;
 
-	if (va & TTBR_SEL_VA) {
+	switch (aarch64_addressspace(va)) {
+	case AARCH64_ADDRSPACE_UPPER:
 		user = false;
 		ttbr = reg_ttbr1_el1_read();
-	} else {
+		break;
+	case AARCH64_ADDRSPACE_LOWER:
 		user = true;
 		ttbr = reg_ttbr0_el1_read();
+		break;
+	default:
+		pr("illegal address space\n");
+		return;
 	}
 	pa = ttbr & TTBR_BADDR;
 	l0 = (pd_entry_t *)AARCH64_PA_TO_KVA(pa);
