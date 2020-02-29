@@ -1,10 +1,11 @@
-#	$NetBSD: Makefile,v 1.31 2020/02/27 00:24:40 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2020/02/29 20:44:15 mgorny Exp $
 
 .include <bsd.own.mk>
 
 .include "../Makefile.inc"
 
 CWARNFLAGS.clang+=	-Wno-error=sizeof-array-div
+CWARNFLAGS.clang+=	-Wno-error=format-nonliteral
 LIB=	ssh
 SRCS=\
 addrmatch.c \
