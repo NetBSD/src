@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.360 2020/02/29 20:17:11 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.361 2020/03/01 21:42:58 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.360 2020/02/29 20:17:11 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.361 2020/03/01 21:42:58 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -251,6 +251,10 @@ __KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.360 2020/02/29 20:17:11 ad Exp $");
 #define	PMAP_DUMMY_LOCK(pm)
 #define	PMAP_DUMMY_UNLOCK(pm)
 #endif
+
+static const struct uvm_pagerops pmap_pager = {
+	/* nothing */
+};
 
 const vaddr_t ptp_masks[] = PTP_MASK_INITIALIZER;
 const vaddr_t ptp_frames[] = PTP_FRAME_INITIALIZER;
@@ -444,7 +448,6 @@ static void pmap_alloc_level(struct pmap *, vaddr_t, long *);
 
 static void pmap_load1(struct lwp *, struct pmap *, struct pmap *);
 static void pmap_reactivate(struct pmap *);
-static void pmap_dropref(struct pmap *);
 
 /*
  * p m a p   h e l p e r   f u n c t i o n s
@@ -677,7 +680,7 @@ pmap_unmap_ptes(struct pmap *pmap, struct pmap * pmap2)
 
 	/* Toss reference to other pmap taken earlier. */
 	if (pmap2 != NULL) {
-		pmap_dropref(pmap2);
+		pmap_destroy(pmap2);
 	}
 }
 
@@ -1024,16 +1027,12 @@ pmap_bootstrap(vaddr_t kva_start)
 	 *
 	 * The kernel pmap's pm_obj is not used for much. However, in user pmaps
 	 * the pm_obj contains the list of active PTPs.
-	 *
-	 * The pm_obj currently does not have a pager. It might be possible to
-	 * add a pager that would allow a process to read-only mmap its own page
-	 * tables (fast user-level vtophys?). This may or may not be useful.
 	 */
 	kpm = pmap_kernel();
 	mutex_init(&kpm->pm_lock, MUTEX_DEFAULT, IPL_NONE);
 	rw_init(&kpm->pm_dummy_lock);
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_obj_init(&kpm->pm_obj[i], NULL, false, 1);
+		uvm_obj_init(&kpm->pm_obj[i], &pmap_pager, false, 1);
 		uvm_obj_setlock(&kpm->pm_obj[i], &kpm->pm_dummy_lock);
 		kpm->pm_ptphint[i] = NULL;
 	}
@@ -1930,7 +1929,7 @@ pmap_enter_pv(struct pmap *pmap, struct pmap_page *pp, struct pv_entry *pve,
  * => we return the removed pve
  * => caller can optionally supply pve, if looked up already
  */
-static struct pv_entry *
+static void
 pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
     vaddr_t va, struct pv_entry *pve)
 {
@@ -1947,19 +1946,13 @@ pmap_remove_pv(struct pmap *pmap, struct pmap_page *pp, struct vm_page *ptp,
 		pp->pp_flags &= ~PP_EMBEDDED;
 		pp->pp_pte.pte_ptp = NULL;
 		pp->pp_pte.pte_va = 0;
-		return NULL;
-	}
-
-	if (pve == NULL) {
-		pve = pmap_pvmap_lookup(pmap, va);
-		KASSERT(pve != NULL);
 	} else {
+		KASSERT(pve != NULL);
 		KASSERT(pve == pmap_pvmap_lookup(pmap, va));
+		KASSERT(pve->pve_pte.pte_ptp == ptp);
+		KASSERT(pve->pve_pte.pte_va == va);
+		LIST_REMOVE(pve, pve_list);
 	}
-	KASSERT(pve->pve_pte.pte_ptp == ptp);
-	KASSERT(pve->pve_pte.pte_va == va);
-	LIST_REMOVE(pve, pve_list);
-	return pve;
 }
 
 /*
@@ -2487,7 +2480,7 @@ pmap_create(void)
 
 	/* init uvm_object */
 	for (i = 0; i < PTP_LEVELS - 1; i++) {
-		uvm_obj_init(&pmap->pm_obj[i], NULL, false, 1);
+		uvm_obj_init(&pmap->pm_obj[i], &pmap_pager, false, 1);
 		uvm_obj_setlock(&pmap->pm_obj[i], &pmap->pm_dummy_lock);
 		pmap->pm_ptphint[i] = NULL;
 	}
@@ -2545,7 +2538,7 @@ pmap_check_inuse(struct pmap *pmap)
 		for (int i = 0; i < PDIR_SLOT_USERLIM; i++) {
 			if (pmap->pm_pdir[i] != 0 &&
 			    ci->ci_kpm_pdir[i] == pmap->pm_pdir[i]) {
-				printf("pmap_dropref(%p) pmap_kernel %p "
+				printf("pmap_destroy(%p) pmap_kernel %p "
 				    "curcpu %d cpu %d ci_pmap %p "
 				    "ci->ci_kpm_pdir[%d]=%" PRIx64
 				    " pmap->pm_pdir[%d]=%" PRIx64 "\n",
@@ -2562,28 +2555,21 @@ pmap_check_inuse(struct pmap *pmap)
 }
 
 /*
- * pmap_destroy:  pmap is being destroyed by UVM.
- */
-void
-pmap_destroy(struct pmap *pmap)
-{
-
-	/* Undo pmap_remove_all(), then drop the reference. */
-	pmap_update(pmap);
-	pmap_dropref(pmap);
-}
-
-/*
- * pmap_dropref:  drop reference count on pmap.  free pmap if reference
+ * pmap_destroy:  drop reference count on pmap.  free pmap if reference
  * count goes to zero.
  *
  * => we can be called from pmap_unmap_ptes() with a different, unrelated
  *    pmap's lock held.  be careful!
  */
-static void
-pmap_dropref(struct pmap *pmap)
+void
+pmap_destroy(struct pmap *pmap)
 {
 	int i;
+
+	/* Undo pmap_remove_all(). */
+	if (pmap->pm_remove_all == curlwp) {
+		pmap_update(pmap);
+	}
 
 	/*
 	 * drop reference count
@@ -2972,7 +2958,7 @@ pmap_load(void)
 	 * to the old pmap.  if we block, we need to go around again.
 	 */
 
-	pmap_dropref(oldpmap);
+	pmap_destroy(oldpmap);
 	__insn_barrier();
 	if (l->l_ncsw != ncsw) {
 		goto retry;
@@ -3597,8 +3583,9 @@ pmap_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	/* Sync R/M bits. */
+	pve = pmap_pvmap_lookup(pmap, va);
 	pp->pp_attrs |= pmap_pte_to_pp_attrs(opte);
-	pve = pmap_remove_pv(pmap, pp, ptp, va, NULL);
+	pmap_remove_pv(pmap, pp, ptp, va, pve);
 
 	if (pve) {
 		pve->pve_next = *pv_tofree;
@@ -3868,16 +3855,17 @@ startover:
 			KERNEL_UNLOCK_ALL(curlwp, &hold_count);
 			mutex_exit(&pmap->pm_lock);
 			if (ptp != NULL) {
-				pmap_dropref(pmap);
+				pmap_destroy(pmap);
 			}
 			SPINLOCK_BACKOFF(count);
 			KERNEL_LOCK(hold_count, curlwp);
 			goto startover;
 		}
 
-		pp->pp_attrs |= oattrs;
 		va = pvpte->pte_va;
-		pve = pmap_remove_pv(pmap, pp, ptp, va, NULL);
+		pve = pmap_pvmap_lookup(pmap, va);
+		pp->pp_attrs |= oattrs;
+		pmap_remove_pv(pmap, pp, ptp, va, pve);
 
 		/* Update the PTP reference count. Free if last reference. */
 		if (ptp != NULL) {
@@ -3902,7 +3890,7 @@ startover:
 		}
 		mutex_exit(&pmap->pm_lock);
 		if (ptp != NULL) {
-			pmap_dropref(pmap);
+			pmap_destroy(pmap);
 		}
 	}
 	pmap_tlb_shootnow();
@@ -4345,7 +4333,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 				return error;
 			}
 			panic("%s: alloc pve failed", __func__);
-		}	
+		}
 		error = pmap_pvmap_insert(pmap, va, pve);
 		if (error != 0) {
 			if (flags & PMAP_CANFAIL) {
@@ -4445,7 +4433,7 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 			    __func__, va, oldpa, atop(pa));
 		}
 
-		(void)pmap_remove_pv(pmap, old_pp, ptp, va, pve);
+		pmap_remove_pv(pmap, old_pp, ptp, va, pve);
 		old_pp->pp_attrs |= pmap_pte_to_pp_attrs(opte);
 	}
 
@@ -4797,8 +4785,7 @@ pmap_update(struct pmap *pmap)
 	 * removed.
 	 */
 	kpreempt_disable();
-	if (pmap->pm_remove_all != NULL) {
-		KASSERT(pmap->pm_remove_all == curlwp);
+	if (pmap->pm_remove_all == curlwp) {
 		pmap->pm_remove_all = NULL;
 		pmap_tlb_shootdown(pmap, (vaddr_t)-1LL, 0, TLBSHOOT_UPDATE);
 	}
@@ -5324,7 +5311,7 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 			    __func__, va, oldpa, atop(pa));
 		}
 
-		(void)pmap_remove_pv(pmap, old_pp, ptp, va, pve);
+		pmap_remove_pv(pmap, old_pp, ptp, va, pve);
 		old_pp->pp_attrs |= pmap_ept_to_pp_attrs(opte);
 	}
 
@@ -5490,8 +5477,9 @@ pmap_ept_remove_pte(struct pmap *pmap, struct vm_page *ptp, pt_entry_t *pte,
 	}
 
 	/* Sync R/M bits. */
+	pve = pmap_pvmap_lookup(pmap, va);
 	pp->pp_attrs |= pmap_ept_to_pp_attrs(opte);
-	pve = pmap_remove_pv(pmap, pp, ptp, va, NULL);
+	pmap_remove_pv(pmap, pp, ptp, va, pve);
 
 	if (pve) {
 		pve->pve_next = *pv_tofree;
