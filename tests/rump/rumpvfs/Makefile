@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.4 2014/06/10 04:28:40 he Exp $
+# $NetBSD: Makefile,v 1.5 2020/03/01 18:08:16 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -8,7 +8,7 @@ TESTS_C=	t_basic
 TESTS_C+=	t_etfs
 TESTS_C+=	t_p2kifs
 
-LDADD=	-lrumpvfs -lrump -lrumpuser -lrump -lpthread
+LDADD=	${LIBRUMPBASE}
 
 WARNS=	4
 
