@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.22 2019/05/13 17:55:09 bad Exp $
+# $NetBSD: Makefile,v 1.23 2020/03/01 18:08:16 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -22,8 +22,8 @@ TESTS_SH_SRC_t_${name}=	../net_common.sh t_${name}.sh
 
 LDADD.t_pktinfo_send+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net
 LDADD.t_pktinfo_send+=	-lrumpnet_shmif -lrumpnet
-LDADD.t_pktinfo_send+=	-lrumpvfs -lrump -lrumpuser -lrump -lpthread
+LDADD.t_pktinfo_send+=	${LIBRUMPBASE}
 LDADD.t_raw+=	-lrumpnet_local -lrumpnet_netinet -lrumpnet_net
-LDADD.t_raw+=	-lrumpnet -lrumpvfs -lrump -lrumpuser -lrump -lpthread
+LDADD.t_raw+=	-lrumpnet ${LIBRUMPBASE}
 
 .include <bsd.test.mk>
