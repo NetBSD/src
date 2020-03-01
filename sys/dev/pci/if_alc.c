@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.50 2020/03/01 02:28:14 thorpej Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.51 2020/03/01 03:00:31 thorpej Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1277,9 +1277,13 @@ alc_attach(device_t parent, device_t self, void *aux)
 	aprint_normal(": %s\n", sc->alc_ident->name);
 
 	sc->sc_dev = self;
-	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/*
 	 * Allocate IO memory
@@ -1608,6 +1612,13 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	sc->alc_rdata.alc_tx_ring_paddr =
 	    sc->alc_cdata.alc_tx_ring_map->dm_segs[0].ds_addr;
+
+	/*
+	 * NOTE: If we used more than one Rx / Rx Return ring,
+	 * we would need to ensure ALL of the Rx-related stuff
+	 * ended up in the same 4G segment, since the hardware
+	 * requires this.
+	 */
 
 	/*
 	 * Create DMA stuffs for RX ring
