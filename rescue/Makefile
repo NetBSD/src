@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.40 2020/02/27 17:17:34 christos Exp $
+#	$NetBSD: Makefile,v 1.41 2020/03/01 20:59:54 christos Exp $
 
 NOLIBCSANITIZER=	# defined
 NOSANITIZER=		# defined
@@ -57,9 +57,8 @@ PARSELISTENV+=	SMB_LIBDIR=${SMB_LIBDIR}
 #	various library functions
 #
 
-OVERRIDEOBJS=	rcmd.o ssh-sk-client.o
-.PATH:	${NETBSDSRCDIR}/lib/libc/net \
-	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
+OVERRIDEOBJS=	rcmd.o
+.PATH:	${NETBSDSRCDIR}/lib/libc/net
 CPPFLAGS.rcmd.c+=-I${NETBSDSRCDIR}/lib/libc/include -DRESCUEDIR=\"${RESCUEDIR}\"
 
 LIBOVERRIDE=	liboverride.o
