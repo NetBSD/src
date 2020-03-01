@@ -1,4 +1,4 @@
-/*	$NetBSD: db_lex.c,v 1.22.60.1 2020/01/26 11:25:22 martin Exp $	*/
+/*	$NetBSD: db_lex.c,v 1.22.60.2 2020/03/01 12:45:09 martin Exp $	*/
 
 /*
  * Mach Operating System
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.22.60.1 2020/01/26 11:25:22 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_lex.c,v 1.22.60.2 2020/03/01 12:45:09 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -62,10 +62,17 @@ db_read_line(void)
 {
 	int	i;
 
+#ifdef _KERNEL
+	/*
+	 * crash(8) prints the prompt using libedit.  That's why we used to
+	 * print it in db_readline().  But now people are using db_read_line()
+	 * for general purpose input, so..
+	 */
 #ifdef MULTIPROCESSOR
 	db_printf("db{%ld}> ", (long)cpu_number());
 #else
 	db_printf("db> ");
+#endif
 #endif
 	i = db_readline(db_line, sizeof(db_line));
 	if (i == 0)
