@@ -1,4 +1,4 @@
-/*	$NetBSD: if_gem_pci.c,v 1.48 2018/12/09 11:14:02 jdolecek Exp $ */
+/*	$NetBSD: if_gem_pci.c,v 1.49 2020/03/01 05:51:46 thorpej Exp $ */
 
 /*
  *
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.48 2018/12/09 11:14:02 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_gem_pci.c,v 1.49 2020/03/01 05:51:46 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -184,7 +184,10 @@ gem_pci_attach(device_t parent, device_t self, void *aux)
 
 	sc->sc_variant = GEM_UNKNOWN;
 
-	sc->sc_dmatag = pa->pa_dmat;
+	if (pci_dma64_available(pa))
+		sc->sc_dmatag = pa->pa_dmat64;
+	else
+		sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sc_flags |= GEM_PCI;
 
