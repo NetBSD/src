@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ale.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $	*/
+/*	$NetBSD: if_ale.c,v 1.40 2020/03/01 02:28:14 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2008, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -32,7 +32,7 @@
 /* Driver for Atheros AR8121/AR8113/AR8114 PCIe Ethernet. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.39 2020/02/04 05:44:14 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ale.c,v 1.40 2020/03/01 02:28:14 thorpej Exp $");
 
 #include "vlan.h"
 
@@ -658,7 +658,7 @@ ale_dma_alloc(struct ale_softc *sc)
 
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_RING_SZ,
-	    0, 0, &sc->ale_cdata.ale_tx_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->ale_cdata.ale_tx_ring_seg, 1,
 	    &nsegs, BUS_DMA_WAITOK);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring, "
@@ -701,7 +701,7 @@ ale_dma_alloc(struct ale_softc *sc)
 
 		/* Allocate DMA'able memory for RX pages */
 		error = bus_dmamem_alloc(sc->sc_dmat, sc->ale_pagesize,
-		    ETHER_ALIGN, 0, &sc->ale_cdata.ale_rx_page[i].page_seg,
+		    PAGE_SIZE, 0, &sc->ale_cdata.ale_rx_page[i].page_seg,
 		    1, &nsegs, BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s: could not allocate DMA'able memory for "
@@ -746,7 +746,7 @@ ale_dma_alloc(struct ale_softc *sc)
 	}
 
 	/* Allocate DMA'able memory for Tx CMB. */
-	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_CMB_SZ, ETHER_ALIGN, 0,
+	error = bus_dmamem_alloc(sc->sc_dmat, ALE_TX_CMB_SZ, PAGE_SIZE, 0,
 	    &sc->ale_cdata.ale_tx_cmb_seg, 1, &nsegs, BUS_DMA_WAITOK);
 
 	if (error) {
@@ -791,7 +791,7 @@ ale_dma_alloc(struct ale_softc *sc)
 
 		/* Allocate DMA'able memory for Rx CMB */
 		error = bus_dmamem_alloc(sc->sc_dmat, ALE_RX_CMB_SZ,
-		    ETHER_ALIGN, 0, &sc->ale_cdata.ale_rx_page[i].cmb_seg, 1,
+		    PAGE_SIZE, 0, &sc->ale_cdata.ale_rx_page[i].cmb_seg, 1,
 		    &nsegs, BUS_DMA_WAITOK);
 		if (error) {
 			printf("%s: could not allocate DMA'able memory for "
