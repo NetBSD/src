@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_fork.c,v 1.218 2020/01/29 15:47:52 ad Exp $	*/
+/*	$NetBSD: kern_fork.c,v 1.219 2020/03/01 21:37:26 ad Exp $	*/
 
 /*-
  * Copyright (c) 1999, 2001, 2004, 2006, 2007, 2008, 2019
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.218 2020/01/29 15:47:52 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_fork.c,v 1.219 2020/03/01 21:37:26 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -627,23 +627,20 @@ fork1(struct lwp *l1, int flags, int exitsig, void *stack, size_t stacksize,
 void
 child_return(void *arg)
 {
-	struct lwp *l = arg;
+	struct lwp *l = curlwp;
 	struct proc *p = l->l_proc;
 
-	if (p->p_slflag & PSL_TRACED) {
+	if ((p->p_slflag & PSL_TRACED) != 0) {
 		/* Paranoid check */
 		mutex_enter(proc_lock);
-		if (!(p->p_slflag & PSL_TRACED)) {
+		if ((p->p_slflag & PSL_TRACED) != 0) {
+			mutex_enter(p->p_lock);
+			eventswitch(TRAP_CHLD, ISSET(p->p_lflag, PL_PPWAIT) ?
+			    PTRACE_VFORK : PTRACE_FORK, p->p_opptr->p_pid);
+		} else
 			mutex_exit(proc_lock);
-			goto my_tracer_is_gone;
-		}
-		mutex_enter(p->p_lock);
-		eventswitch(TRAP_CHLD,
-		    ISSET(p->p_lflag, PL_PPWAIT) ? PTRACE_VFORK : PTRACE_FORK,
-		    p->p_opptr->p_pid);
 	}
 
-my_tracer_is_gone:
 	md_child_return(l);
 
 	/*
