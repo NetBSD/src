@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.119 2020/01/17 19:31:30 ad Exp $ */
+/* $NetBSD: cgd.c,v 1.120 2020/03/01 03:21:54 riastradh Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.119 2020/01/17 19:31:30 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.120 2020/03/01 03:21:54 riastradh Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -737,7 +737,7 @@ cgddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 	DPRINTF_FOLLOW(("cgddump(0x%"PRIx64", %" PRId64 ", %p, %lu)\n",
 	    dev, blkno, va, (unsigned long)size));
 	GETCGD_SOFTC(cs, dev);
-	return dk_dump(&cs->sc_dksc, dev, blkno, va, size);
+	return dk_dump(&cs->sc_dksc, dev, blkno, va, size, DK_DUMP_RECURSIVE);
 }
 
 /*
