@@ -1,4 +1,4 @@
-/*	$NetBSD: atomic_swap.S,v 1.7 2014/03/07 07:17:54 matt Exp $	*/
+/*	$NetBSD: atomic_swap.S,v 1.8 2020/03/01 23:23:36 rin Exp $	*/
 
 /*-
  * Copyright (c) 2007 The NetBSD Foundation, Inc.
@@ -31,12 +31,13 @@
 
 #include "atomic_op_asm.h"
 
-__RCSID("$NetBSD: atomic_swap.S,v 1.7 2014/03/07 07:17:54 matt Exp $")
+__RCSID("$NetBSD: atomic_swap.S,v 1.8 2020/03/01 23:23:36 rin Exp $")
 
 	.text
 ENTRY(_atomic_swap_32)
 	mr	%r10,%r3
 1:	lwarx	%r3,0,%r10
+	IBM405_ERRATA77_DCBT(0,%r10)
 	stwcx.	%r4,0,%r10
 	beqlr+
 	b	1b
