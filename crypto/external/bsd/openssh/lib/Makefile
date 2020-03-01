@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.32 2020/02/29 20:44:15 mgorny Exp $
+#	$NetBSD: Makefile,v 1.33 2020/03/01 20:59:53 christos Exp $
 
 .include <bsd.own.mk>
 
@@ -59,6 +59,7 @@ sntrup4591761.c \
 ssh-ed25519.c \
 ssh-ed25519-sk.c \
 ssh-pkcs11.c \
+ssh-sk-client.c \
 ssh-xmss.c \
 sshbuf-getput-basic.c \
 sshbuf-getput-crypto.c \

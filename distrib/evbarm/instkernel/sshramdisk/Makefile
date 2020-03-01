@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.22 2020/02/28 13:00:51 christos Exp $
+#	$NetBSD: Makefile,v 1.23 2020/03/01 20:59:54 christos Exp $
 
 .include <bsd.own.mk>
 .include "${NETBSDSRCDIR}/distrib/common/Makefile.distrib"
@@ -31,18 +31,10 @@ IMAGEDEPENDS=	${CRUNCHBIN} \
 		${DISTRIBDIR}/common/services
 IMAGEPREBUILD=	${TOOL_PAX} ${PAX_TIMESTAMP} -rw -pp ${DESTDIR}/libdata/firmware ${WORKDIR}
 
-.PATH:	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
-liboverride.o: ssh-sk-client.o
-	${_MKTARGET_LINK}
-	${LD} -r -o ${.TARGET} ${.ALLSRC}
-
-CLEANFILES+=	liboverride.o ssh-sk-client.o
-
-
 # Use stubs to eliminate some large stuff from libc
 HACKSRC=	${DISTRIBDIR}/utils/libhack
 .include	"${HACKSRC}/Makefile.inc"
-${CRUNCHBIN}:	libhack.o liboverride.o
+${CRUNCHBIN}:	libhack.o
 
 USE_PAM := no
 USE_YP := no

@@ -1,9 +1,9 @@
-#	$NetBSD: Makefile,v 1.4 2020/02/27 00:24:39 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2020/03/01 20:59:53 christos Exp $
 
 BINDIR=/usr/bin
 
 PROG=	ssh-agent
-SRCS=	ssh-agent.c ssh-pkcs11-client.c ssh-sk-client.c
+SRCS=	ssh-agent.c ssh-pkcs11-client.c
 
 COPTS.ssh-agent.c+=	${GCC_NO_FORMAT_TRUNCATION}
 
