@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.65 2020/02/11 03:15:10 riastradh Exp $
+# $NetBSD: Makefile,v 1.66 2020/03/01 18:08:15 christos Exp $
 
 NOMAN=		# defined
 
@@ -51,11 +51,9 @@ TESTS_SUBDIRS+=	tty
 TESTS_C+=	t_extattrctl
 TESTS_C+=	t_filedesc
 TESTS_C+=	t_rnd
-LDADD.t_extattrctl+= -lrumpvfs -lrump -lrumpuser
-LDADD.t_extattrctl+= -lrump -lpthread
+LDADD.t_extattrctl+= ${LIBRUMPBASE}
 LDADD.t_filedesc+=  ${LDADD.t_rnd}
-LDADD.t_rnd+=  -lrumpvfs -lrumpdev_rnd -lrumpdev -lrump -lrumpuser
-LDADD.t_rnd+=  -lrump -lpthread
+LDADD.t_rnd+=  -lrumpdev_rnd -lrumpdev ${LIBRUMPBASE}
 
 .endif
 
