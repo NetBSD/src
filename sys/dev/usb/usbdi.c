@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.c,v 1.182.4.2 2020/02/20 14:53:09 martin Exp $	*/
+/*	$NetBSD: usbdi.c,v 1.182.4.3 2020/03/01 12:35:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2012, 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.182.4.2 2020/02/20 14:53:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usbdi.c,v 1.182.4.3 2020/03/01 12:35:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -71,6 +71,10 @@ static void usbd_free_buffer(struct usbd_xfer *);
 static struct usbd_xfer *usbd_alloc_xfer(struct usbd_device *, unsigned int);
 static usbd_status usbd_free_xfer(struct usbd_xfer *);
 static void usbd_request_async_cb(struct usbd_xfer *, void *, usbd_status);
+static void usbd_xfer_timeout(void *);
+static void usbd_xfer_timeout_task(void *);
+static bool usbd_xfer_probe_timeout(struct usbd_xfer *);
+static void usbd_xfer_cancel_timeout_async(struct usbd_xfer *);
 
 #if defined(USB_DEBUG)
 void
@@ -474,7 +478,10 @@ usbd_alloc_xfer(struct usbd_device *dev, unsigned int nframes)
 		goto out;
 	xfer->ux_bus = dev->ud_bus;
 	callout_init(&xfer->ux_callout, CALLOUT_MPSAFE);
+	callout_setfunc(&xfer->ux_callout, usbd_xfer_timeout, xfer);
 	cv_init(&xfer->ux_cv, "usbxfer");
+	usb_init_task(&xfer->ux_aborttask, usbd_xfer_timeout_task, xfer,
+	    USB_TASKQ_MPSAFE);
 
 out:
 	USBHIST_CALLARGS(usbdebug, "returns %#jx", (uintptr_t)xfer, 0, 0, 0);
@@ -491,12 +498,15 @@ usbd_free_xfer(struct usbd_xfer *xfer)
 	if (xfer->ux_buf) {
 		usbd_free_buffer(xfer);
 	}
-#if defined(DIAGNOSTIC)
-	if (callout_pending(&xfer->ux_callout)) {
-		callout_stop(&xfer->ux_callout);
-		printf("usbd_free_xfer: timeout_handle pending\n");
-	}
-#endif
+
+	/* Wait for any straggling timeout to complete. */
+	mutex_enter(xfer->ux_bus->ub_lock);
+	xfer->ux_timeout_reset = false; /* do not resuscitate */
+	callout_halt(&xfer->ux_callout, xfer->ux_bus->ub_lock);
+	usb_rem_task_wait(xfer->ux_pipe->up_dev, &xfer->ux_aborttask,
+	    USB_TASKQ_HC, xfer->ux_bus->ub_lock);
+	mutex_exit(xfer->ux_bus->ub_lock);
+
 	cv_destroy(&xfer->ux_cv);
 	xfer->ux_bus->ub_methods->ubm_freex(xfer->ux_bus, xfer);
 	return USBD_NORMAL_COMPLETION;
@@ -1368,4 +1378,382 @@ usbd_get_string0(struct usbd_device *dev, int si, char *buf, int unicode)
 	}
 #endif
 	return USBD_NORMAL_COMPLETION;
+}
+
+/*
+ * usbd_xfer_trycomplete(xfer)
+ *
+ *	Try to claim xfer for completion.  Return true if successful,
+ *	false if the xfer has been synchronously aborted or has timed
+ *	out.
+ *
+ *	If this returns true, caller is responsible for setting
+ *	xfer->ux_status and calling usb_transfer_complete.  To be used
+ *	in a host controller interrupt handler.
+ *
+ *	Caller must either hold the bus lock or have the bus in polling
+ *	mode.
+ */
+bool
+usbd_xfer_trycomplete(struct usbd_xfer *xfer)
+{
+	struct usbd_bus *bus __diagused = xfer->ux_bus;
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
+	/*
+	 * If software has completed it, either by synchronous abort or
+	 * by timeout, too late.
+	 */
+	if (xfer->ux_status != USBD_IN_PROGRESS)
+		return false;
+
+	/*
+	 * We are completing the xfer.  Cancel the timeout if we can,
+	 * but only asynchronously.  See usbd_xfer_cancel_timeout_async
+	 * for why we need not wait for the callout or task here.
+	 */
+	usbd_xfer_cancel_timeout_async(xfer);
+
+	/* Success!  Note: Caller must set xfer->ux_status afterwar.  */
+	return true;
+}
+
+/*
+ * usbd_xfer_abort(xfer)
+ *
+ *	Try to claim xfer to abort.  If successful, mark it completed
+ *	with USBD_CANCELLED and call the bus-specific method to abort
+ *	at the hardware level.
+ *
+ *	To be called in thread context from struct
+ *	usbd_pipe_methods::upm_abort.
+ *
+ *	Caller must hold the bus lock.
+ */
+void
+usbd_xfer_abort(struct usbd_xfer *xfer)
+{
+	struct usbd_bus *bus = xfer->ux_bus;
+
+	KASSERT(mutex_owned(bus->ub_lock));
+
+	/*
+	 * If host controller interrupt or timer interrupt has
+	 * completed it, too late.  But the xfer cannot be
+	 * cancelled already -- only one caller can synchronously
+	 * abort.
+	 */
+	KASSERT(xfer->ux_status != USBD_CANCELLED);
+	if (xfer->ux_status != USBD_IN_PROGRESS)
+		return;
+
+	/*
+	 * Cancel the timeout if we can, but only asynchronously; see
+	 * usbd_xfer_cancel_timeout_async for why we need not wait for
+	 * the callout or task here.
+	 */
+	usbd_xfer_cancel_timeout_async(xfer);
+
+	/*
+	 * We beat everyone else.  Claim the status as cancelled and do
+	 * the bus-specific dance to abort the hardware.
+	 */
+	xfer->ux_status = USBD_CANCELLED;
+	bus->ub_methods->ubm_abortx(xfer);
+}
+
+/*
+ * usbd_xfer_timeout(xfer)
+ *
+ *	Called at IPL_SOFTCLOCK when too much time has elapsed waiting
+ *	for xfer to complete.  Since we can't abort the xfer at
+ *	IPL_SOFTCLOCK, defer to a usb_task to run it in thread context,
+ *	unless the xfer has completed or aborted concurrently -- and if
+ *	the xfer has also been resubmitted, take care of rescheduling
+ *	the callout.
+ */
+static void
+usbd_xfer_timeout(void *cookie)
+{
+	struct usbd_xfer *xfer = cookie;
+	struct usbd_bus *bus = xfer->ux_bus;
+	struct usbd_device *dev = xfer->ux_pipe->up_dev;
+
+	/* Acquire the lock so we can transition the timeout state.  */
+	mutex_enter(bus->ub_lock);
+
+	/*
+	 * Use usbd_xfer_probe_timeout to check whether the timeout is
+	 * still valid, or to reschedule the callout if necessary.  If
+	 * it is still valid, schedule the task.
+	 */
+	if (usbd_xfer_probe_timeout(xfer))
+		usb_add_task(dev, &xfer->ux_aborttask, USB_TASKQ_HC);
+
+	/*
+	 * Notify usbd_xfer_cancel_timeout_async that we may have
+	 * scheduled the task.  This causes callout_invoking to return
+	 * false in usbd_xfer_cancel_timeout_async so that it can tell
+	 * which stage in the callout->task->abort process we're at.
+	 */
+	callout_ack(&xfer->ux_callout);
+
+	/* All done -- release the lock.  */
+	mutex_exit(bus->ub_lock);
+}
+
+/*
+ * usbd_xfer_timeout_task(xfer)
+ *
+ *	Called in thread context when too much time has elapsed waiting
+ *	for xfer to complete.  Abort the xfer with USBD_TIMEOUT, unless
+ *	it has completed or aborted concurrently -- and if the xfer has
+ *	also been resubmitted, take care of rescheduling the callout.
+ */
+static void
+usbd_xfer_timeout_task(void *cookie)
+{
+	struct usbd_xfer *xfer = cookie;
+	struct usbd_bus *bus = xfer->ux_bus;
+
+	/* Acquire the lock so we can transition the timeout state.  */
+	mutex_enter(bus->ub_lock);
+
+	/*
+	 * Use usbd_xfer_probe_timeout to check whether the timeout is
+	 * still valid, or to reschedule the callout if necessary.  If
+	 * it is not valid -- the timeout has been asynchronously
+	 * cancelled, or the xfer has already been resubmitted -- then
+	 * we're done here.
+	 */
+	if (!usbd_xfer_probe_timeout(xfer))
+		goto out;
+
+	/*
+	 * May have completed or been aborted, but we're the only one
+	 * who can time it out.  If it has completed or been aborted,
+	 * no need to timeout.
+	 */
+	KASSERT(xfer->ux_status != USBD_TIMEOUT);
+	if (xfer->ux_status != USBD_IN_PROGRESS)
+		goto out;
+
+	/*
+	 * We beat everyone else.  Claim the status as timed out and do
+	 * the bus-specific dance to abort the hardware.
+	 */
+	xfer->ux_status = USBD_TIMEOUT;
+	bus->ub_methods->ubm_abortx(xfer);
+
+out:	/* All done -- release the lock.  */
+	mutex_exit(bus->ub_lock);
+}
+
+/*
+ * usbd_xfer_probe_timeout(xfer)
+ *
+ *	Probe the status of xfer's timeout.  Acknowledge and process a
+ *	request to reschedule.  Return true if the timeout is still
+ *	valid and the caller should take further action (queueing a
+ *	task or aborting the xfer), false if it must stop here.
+ */
+static bool
+usbd_xfer_probe_timeout(struct usbd_xfer *xfer)
+{
+	struct usbd_bus *bus = xfer->ux_bus;
+	bool valid;
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
+	/* The timeout must be set.  */
+	KASSERT(xfer->ux_timeout_set);
+
+	/*
+	 * Neither callout nor task may be pending; they execute
+	 * alternately in lock step.
+	 */
+	KASSERT(!callout_pending(&xfer->ux_callout));
+	KASSERT(!usb_task_pending(xfer->ux_pipe->up_dev, &xfer->ux_aborttask));
+
+	/* There are a few cases... */
+	if (bus->ub_methods->ubm_dying(bus)) {
+		/* Host controller dying.  Drop it all on the floor.  */
+		xfer->ux_timeout_set = false;
+		xfer->ux_timeout_reset = false;
+		valid = false;
+	} else if (xfer->ux_timeout_reset) {
+		/*
+		 * The xfer completed _and_ got resubmitted while we
+		 * waited for the lock.  Acknowledge the request to
+		 * reschedule, and reschedule it if there is a timeout
+		 * and the bus is not polling.
+		 */
+		xfer->ux_timeout_reset = false;
+		if (xfer->ux_timeout && !bus->ub_usepolling) {
+			KASSERT(xfer->ux_timeout_set);
+			callout_schedule(&xfer->ux_callout,
+			    mstohz(xfer->ux_timeout));
+		} else {
+			/* No more callout or task scheduled.  */
+			xfer->ux_timeout_set = false;
+		}
+		valid = false;
+	} else if (xfer->ux_status != USBD_IN_PROGRESS) {
+		/*
+		 * The xfer has completed by hardware completion or by
+		 * software abort, and has not been resubmitted, so the
+		 * timeout must be unset, and is no longer valid for
+		 * the caller.
+		 */
+		xfer->ux_timeout_set = false;
+		valid = false;
+	} else {
+		/*
+		 * The xfer has not yet completed, so the timeout is
+		 * valid.
+		 */
+		valid = true;
+	}
+
+	/* Any reset must have been processed.  */
+	KASSERT(!xfer->ux_timeout_reset);
+
+	/*
+	 * Either we claim the timeout is set, or the callout is idle.
+	 * If the timeout is still set, we may be handing off to the
+	 * task instead, so this is an if but not an iff.
+	 */
+	KASSERT(xfer->ux_timeout_set || !callout_pending(&xfer->ux_callout));
+
+	/*
+	 * The task must be idle now.
+	 *
+	 * - If the caller is the callout, _and_ the timeout is still
+	 *   valid, the caller will schedule it, but it hasn't been
+	 *   scheduled yet.  (If the timeout is not valid, the task
+	 *   should not be scheduled.)
+	 *
+	 * - If the caller is the task, it cannot be scheduled again
+	 *   until the callout runs again, which won't happen until we
+	 *   next release the lock.
+	 */
+	KASSERT(!usb_task_pending(xfer->ux_pipe->up_dev, &xfer->ux_aborttask));
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
+	return valid;
+}
+
+/*
+ * usbd_xfer_schedule_timeout(xfer)
+ *
+ *	Ensure that xfer has a timeout.  If the callout is already
+ *	queued or the task is already running, request that they
+ *	reschedule the callout.  If not, and if we're not polling,
+ *	schedule the callout anew.
+ *
+ *	To be called in thread context from struct
+ *	usbd_pipe_methods::upm_start.
+ */
+void
+usbd_xfer_schedule_timeout(struct usbd_xfer *xfer)
+{
+	struct usbd_bus *bus = xfer->ux_bus;
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
+	if (xfer->ux_timeout_set) {
+		/*
+		 * Callout or task has fired from a prior completed
+		 * xfer but has not yet noticed that the xfer is done.
+		 * Ask it to reschedule itself to ux_timeout.
+		 */
+		xfer->ux_timeout_reset = true;
+	} else if (xfer->ux_timeout && !bus->ub_usepolling) {
+		/* Callout is not scheduled.  Schedule it.  */
+		KASSERT(!callout_pending(&xfer->ux_callout));
+		callout_schedule(&xfer->ux_callout, mstohz(xfer->ux_timeout));
+		xfer->ux_timeout_set = true;
+	}
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+}
+
+/*
+ * usbd_xfer_cancel_timeout_async(xfer)
+ *
+ *	Cancel the callout and the task of xfer, which have not yet run
+ *	to completion, but don't wait for the callout or task to finish
+ *	running.
+ *
+ *	If they have already fired, at worst they are waiting for the
+ *	bus lock.  They will see that the xfer is no longer in progress
+ *	and give up, or they will see that the xfer has been
+ *	resubmitted with a new timeout and reschedule the callout.
+ *
+ *	If a resubmitted request completed so fast that the callout
+ *	didn't have time to process a timer reset, just cancel the
+ *	timer reset.
+ */
+static void
+usbd_xfer_cancel_timeout_async(struct usbd_xfer *xfer)
+{
+	struct usbd_bus *bus __diagused = xfer->ux_bus;
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
+
+	/*
+	 * If the timer wasn't running anyway, forget about it.  This
+	 * can happen if we are completing an isochronous transfer
+	 * which doesn't use the same timeout logic.
+	 */
+	if (!xfer->ux_timeout_set)
+		return;
+
+	xfer->ux_timeout_reset = false;
+	if (!callout_stop(&xfer->ux_callout)) {
+		/*
+		 * We stopped the callout before it ran.  The timeout
+		 * is no longer set.
+		 */
+		xfer->ux_timeout_set = false;
+	} else if (callout_invoking(&xfer->ux_callout)) {
+		/*
+		 * The callout has begun to run but it has not yet
+		 * acquired the lock and called callout_ack.  The task
+		 * cannot be queued yet, and the callout cannot have
+		 * been rescheduled yet.
+		 *
+		 * By the time the callout acquires the lock, we will
+		 * have transitioned from USBD_IN_PROGRESS to a
+		 * completed status, and possibly also resubmitted the
+		 * xfer and set xfer->ux_timeout_reset = true.  In both
+		 * cases, the callout will DTRT, so no further action
+		 * is needed here.
+		 */
+	} else if (usb_rem_task(xfer->ux_pipe->up_dev, &xfer->ux_aborttask)) {
+		/*
+		 * The callout had fired and scheduled the task, but we
+		 * stopped the task before it could run.  The timeout
+		 * is therefore no longer set -- the next resubmission
+		 * of the xfer must schedule a new timeout.
+		 *
+		 * The callout should not be be pending at this point:
+		 * it is scheduled only under the lock, and only when
+		 * xfer->ux_timeout_set is false, or by the callout or
+		 * task itself when xfer->ux_timeout_reset is true.
+		 */
+		xfer->ux_timeout_set = false;
+	}
+
+	/*
+	 * The callout cannot be scheduled and the task cannot be
+	 * queued at this point.  Either we cancelled them, or they are
+	 * already running and waiting for the bus lock.
+	 */
+	KASSERT(!callout_pending(&xfer->ux_callout));
+	KASSERT(!usb_task_pending(xfer->ux_pipe->up_dev, &xfer->ux_aborttask));
+
+	KASSERT(bus->ub_usepolling || mutex_owned(bus->ub_lock));
 }
