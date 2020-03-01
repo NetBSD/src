@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.59 2020/03/01 18:08:15 christos Exp $
+# $NetBSD: Makefile,v 1.60 2020/03/01 20:24:07 christos Exp $
 
 MKMAN=	no
 
@@ -98,7 +98,7 @@ LDADD.t_ptrace_waitpid+=	-pthread -lm -lelf
 .if (${MKRUMP} != "no") && !defined(BSD_MK_COMPAT_FILE)
 CPPFLAGS.t_posix_fadvise.c += -D_KERNTYPES
 TESTS_C+=		t_posix_fadvise
-LDADD.t_posix_fadvise+= ${RUMPVFSLIB}
+LDADD.t_posix_fadvise+= ${LIBRUMPBASE}
 .endif
 
 CPPFLAGS.t_lwp_create.c		+= -D_KERNTYPES
