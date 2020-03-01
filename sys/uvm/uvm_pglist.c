@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_pglist.c,v 1.80 2020/02/20 04:54:47 rin Exp $	*/
+/*	$NetBSD: uvm_pglist.c,v 1.81 2020/03/01 21:43:56 ad Exp $	*/
 
 /*-
  * Copyright (c) 1997, 2019 The NetBSD Foundation, Inc.
@@ -35,10 +35,11 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.80 2020/02/20 04:54:47 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_pglist.c,v 1.81 2020/03/01 21:43:56 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
+#include <sys/cpu.h>
 
 #include <uvm/uvm.h>
 #include <uvm/uvm_pdpolicy.h>
@@ -514,6 +515,8 @@ uvm_pglistalloc(psize_t size, paddr_t low, paddr_t high, paddr_t alignment,
 {
 	int num, res;
 
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 	KASSERT((alignment & (alignment - 1)) == 0);
 	KASSERT((boundary & (boundary - 1)) == 0);
 
@@ -561,6 +564,9 @@ uvm_pglistfree(struct pglist *list)
 	struct pgflbucket *pgb;
 	struct vm_page *pg;
 	int c, b;
+
+	KASSERT(!cpu_intr_p());
+	KASSERT(!cpu_softintr_p());
 
 	/*
 	 * Lock the free list and free each page.
