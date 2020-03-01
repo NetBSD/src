@@ -1,4 +1,4 @@
-/*	$NetBSD: gem.c,v 1.128 2020/02/07 00:56:48 thorpej Exp $ */
+/*	$NetBSD: gem.c,v 1.129 2020/03/01 05:50:56 thorpej Exp $ */
 
 /*
  *
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.128 2020/02/07 00:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gem.c,v 1.129 2020/03/01 05:50:56 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -815,8 +815,8 @@ gem_reset_rxdma(struct gem_softc *sc)
 	GEM_CDSYNC(sc, BUS_DMASYNC_PREREAD);
 
 	/* Reprogram Descriptor Ring Base Addresses */
-	/* NOTE: we use only 32-bit DMA addresses here. */
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI, 0);
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI,
+	    ((uint64_t)GEM_CDRXADDR(sc, 0)) >> 32);
 	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO, GEM_CDRXADDR(sc, 0));
 
 	/* Redo ERX Configuration */
@@ -1171,11 +1171,12 @@ gem_init(struct ifnet *ifp)
 	gem_setladrf(sc);
 
 	/* step 6 & 7. Program Descriptor Ring Base Addresses */
-	/* NOTE: we use only 32-bit DMA addresses here. */
-	bus_space_write_4(t, h, GEM_TX_RING_PTR_HI, 0);
+	bus_space_write_4(t, h, GEM_TX_RING_PTR_HI,
+	    ((uint64_t)GEM_CDTXADDR(sc, 0)) >> 32);
 	bus_space_write_4(t, h, GEM_TX_RING_PTR_LO, GEM_CDTXADDR(sc, 0));
 
-	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI, 0);
+	bus_space_write_4(t, h, GEM_RX_RING_PTR_HI,
+	    ((uint64_t)GEM_CDRXADDR(sc, 0)) >> 32);
 	bus_space_write_4(t, h, GEM_RX_RING_PTR_LO, GEM_CDRXADDR(sc, 0));
 
 	/* step 8. Global Configuration & Interrupt Mask */
