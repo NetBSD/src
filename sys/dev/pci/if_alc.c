@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.49 2020/02/08 07:24:46 maxv Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.50 2020/03/01 02:28:14 thorpej Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1581,7 +1581,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for TX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_TX_RING_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_tx_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_tx_ring_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Tx ring.\n",
@@ -1619,7 +1619,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for RX ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_RX_RING_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_rx_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_rx_ring_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx ring.\n",
@@ -1657,7 +1657,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for RX return ring */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_RR_RING_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_rr_ring_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_rr_ring_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for Rx "
@@ -1696,7 +1696,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for CMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_CMB_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_cmb_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_cmb_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
@@ -1736,7 +1736,7 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	/* Allocate DMA'able memory for SMB block */
 	error = bus_dmamem_alloc(sc->sc_dmat, ALC_SMB_SZ,
-	    ETHER_ALIGN, 0, &sc->alc_rdata.alc_smb_seg, 1,
+	    PAGE_SIZE, 0, &sc->alc_rdata.alc_smb_seg, 1,
 	    &nsegs, BUS_DMA_NOWAIT);
 	if (error) {
 		printf("%s: could not allocate DMA'able memory for "
