@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.8 2019/06/01 06:59:17 kre Exp $
+# $NetBSD: Makefile,v 1.9 2020/03/01 18:08:15 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -14,6 +14,6 @@ PAXCTL_FLAGS=	+m
 
 LDADD+=		-lrumpnet_bpfjit -lrumpkern_sljit
 LDADD+=		-lrumpdev_bpf -lrumpnet_net -lrumpnet
-LDADD+=		-lrump -lrumpvfs -lrumpuser -lpthread
+LDADD+=		${LIBRUMPBASE}
 
 .include <bsd.test.mk>
