@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.60 2020/03/01 07:40:03 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.61 2020/03/01 07:42:07 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.60 2020/03/01 07:40:03 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.61 2020/03/01 07:42:07 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -4777,8 +4777,13 @@ audio_mixer_init(struct audio_softc *sc, int mode,
 			if ((rounded * NBBY) % (mixer->hwbuf.fmt.stride *
 			    mixer->hwbuf.fmt.channels) != 0) {
 				device_printf(sc->sc_dev,
-				    "blksize not configured %d -> %d\n",
-				    blksize, rounded);
+				    "round_blocksize must return blocksize "
+				    "divisible by framesize: "
+				    "blksize=%d rounded=%d "
+				    "stride=%ubit channels=%u\n",
+				    blksize, rounded,
+				    mixer->hwbuf.fmt.stride,
+				    mixer->hwbuf.fmt.channels);
 				return EINVAL;
 			}
 			/* Recalculation */
