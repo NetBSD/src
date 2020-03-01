@@ -1,4 +1,4 @@
-/*      $NetBSD: xbd_xenbus.c,v 1.94 2019/10/16 19:52:08 jdolecek Exp $      */
+/*      $NetBSD: xbd_xenbus.c,v 1.95 2020/03/01 03:21:54 riastradh Exp $      */
 
 /*
  * Copyright (c) 2006 Manuel Bouyer.
@@ -50,7 +50,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.94 2019/10/16 19:52:08 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: xbd_xenbus.c,v 1.95 2020/03/01 03:21:54 riastradh Exp $");
 
 #include "opt_xen.h"
 
@@ -929,7 +929,7 @@ xbddump(dev_t dev, daddr_t blkno, void *va, size_t size)
 
 	DPRINTF(("xbddump(%d, %" PRId64 ", %p, %lu)\n", dev, blkno, va,
 	    (unsigned long)size));
-	return dk_dump(&sc->sc_dksc, dev, blkno, va, size);
+	return dk_dump(&sc->sc_dksc, dev, blkno, va, size, 0);
 }
 
 static int
