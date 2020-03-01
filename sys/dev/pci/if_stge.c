@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.81 2020/03/01 15:46:32 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.82 2020/03/01 16:31:01 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.81 2020/03/01 15:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.82 2020/03/01 16:31:01 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -450,7 +450,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 	if (pci_dma64_available(pa)) {
 		if (bus_dmatag_subregion(pa->pa_dmat64,
 					 0,
-					 FRAG_ADDR_MASK + 1ULL,
+					 (bus_addr_t)(FRAG_ADDR_MASK + 1ULL),
 					 &sc->sc_dmat,
 					 BUS_DMA_WAITOK) != 0) {
 			aprint_error_dev(self,
