@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.127 2020/03/01 08:32:15 nisimura Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.128 2020/03/01 10:16:17 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.127 2020/03/01 08:32:15 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.128 2020/03/01 10:16:17 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -1000,14 +1000,9 @@ axe_attach(device_t parent, device_t self, void *aux)
 		 * not possible to announce IFCAP_VLAN_HWTAGGING.
 		 */
 	}
-	u_int adv_pause;
 	if (un->un_flags & (AX772A | AX772B | AX178))
-		adv_pause = MIIF_DOPAUSE;
-	else
-		adv_pause = 0;
-	adv_pause = 0;
+		unm.un_mii_flags = MIIF_DOPAUSE;
 
-	unm.un_mii_flags = adv_pause;
 	usbnet_attach_ifp(un, IFF_SIMPLEX | IFF_BROADCAST | IFF_MULTICAST,
 	    0, &unm);
 }
