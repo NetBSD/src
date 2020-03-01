@@ -1,4 +1,4 @@
-/*	$NetBSD: stddef.h,v 1.21 2020/03/01 15:08:16 kamil Exp $	*/
+/*	$NetBSD: stddef.h,v 1.22 2020/03/01 15:18:34 kamil Exp $	*/
 
 /*-
  * Copyright (c) 1990, 1993
@@ -68,7 +68,7 @@ typedef	_BSD_WCHAR_T_	wchar_t;
 #endif  
 
 #if (__STDC_VERSION__ - 0) > 199901L || defined(__cplusplus)
-/* Introduced in C99/C++11, as an extension exposed to C99/C++98 */
+/* Introduced in C11/C++11, as an extension exposed to C99/C++98 */
 typedef union {
 	void *_v;
 	long double _ld;
