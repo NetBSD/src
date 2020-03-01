@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.126 2020/02/29 04:27:53 nisimura Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.127 2020/03/01 08:32:15 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.126 2020/02/29 04:27:53 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.127 2020/03/01 08:32:15 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -387,14 +387,12 @@ axe_mii_statchg(struct ifnet *ifp)
 		return;
 
 	val = 0;
-	if ((IFM_OPTIONS(mii->mii_media_active) & IFM_FDX) != 0) {
+	if (mii->mii_media_active & IFM_FDX) {
 		val |= AXE_MEDIA_FULL_DUPLEX;
 		if (AXE_IS_178_FAMILY(un)) {
-			if ((IFM_OPTIONS(mii->mii_media_active) &
-			    IFM_ETH_TXPAUSE) != 0)
+			if (mii->mii_media_active & IFM_ETH_TXPAUSE)
 				val |= AXE_178_MEDIA_TXFLOW_CONTROL_EN;
-			if ((IFM_OPTIONS(mii->mii_media_active) &
-			    IFM_ETH_RXPAUSE) != 0)
+			if (mii->mii_media_active & IFM_ETH_RXPAUSE)
 				val |= AXE_178_MEDIA_RXFLOW_CONTROL_EN;
 		}
 	}
