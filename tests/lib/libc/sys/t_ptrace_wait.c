@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.166 2020/02/24 23:46:45 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.167 2020/03/01 18:22:00 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.166 2020/02/24 23:46:45 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.167 2020/03/01 18:22:00 kamil Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -7458,8 +7458,23 @@ ATF_TC_BODY(resume, tc)
 
 /// ----------------------------------------------------------------------------
 
+static int test_syscall_caught;
+
 static void
-syscall_body(bool killed)
+syscall_sighand(int arg)
+{
+
+	DPRINTF("Caught a signal %d in process %d\n", arg, getpid());
+
+	FORKEE_ASSERT_EQ(arg, SIGINFO);
+
+	++test_syscall_caught;
+
+	FORKEE_ASSERT_EQ(test_syscall_caught, 1);
+}
+
+static void
+syscall_body(const char *op)
 {
 	const int exitval = 5;
 	const int sigval = SIGSTOP;
@@ -7468,7 +7483,14 @@ syscall_body(bool killed)
 	int status;
 #endif
 	struct ptrace_siginfo info;
+
 	memset(&info, 0, sizeof(info));
+
+#if defined(TWAIT_HAVE_STATUS)
+	if (strstr(op, "signal") != NULL) {
+		atf_tc_expect_fail("XXX: behavior under investigation");
+	}
+#endif
 
 	DPRINTF("Before forking process PID=%d\n", getpid());
 	SYSCALL_REQUIRE((child = fork()) != -1);
@@ -7476,10 +7498,16 @@ syscall_body(bool killed)
 		DPRINTF("Before calling PT_TRACE_ME from child %d\n", getpid());
 		FORKEE_ASSERT(ptrace(PT_TRACE_ME, 0, NULL, 0) != -1);
 
+		signal(SIGINFO, syscall_sighand);
+
 		DPRINTF("Before raising %s from child\n", strsignal(sigval));
 		FORKEE_ASSERT(raise(sigval) == 0);
 
 		syscall(SYS_getpid);
+
+		if (strstr(op, "signal") != NULL) {
+			FORKEE_ASSERT_EQ(test_syscall_caught, 1);
+		}
 
 		DPRINTF("Before exiting of the child process\n");
 		_exit(exitval);
@@ -7508,7 +7536,7 @@ syscall_body(bool killed)
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
 	ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCE);
 
-	if (killed) {
+	if (strstr(op, "killed") != NULL) {
 		SYSCALL_REQUIRE(ptrace(PT_KILL, child, NULL, 0) != -1);
 
 		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
@@ -7517,29 +7545,45 @@ syscall_body(bool killed)
 
 		validate_status_signaled(status, SIGKILL, 0);
 	} else {
-		DPRINTF("Before resuming the child process where it left off "
-		    "and without signal to be sent\n");
-		SYSCALL_REQUIRE(ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
+		if (strstr(op, "signal") != NULL) {
+			DPRINTF("Before resuming the child %d and sending a "
+			    "signal SIGINFO\n", child);
+			SYSCALL_REQUIRE(
+			    ptrace(PT_CONTINUE, child, (void *)1, SIGINFO)
+			    != -1);
+		} else if (strstr(op, "detach") != NULL) {
+			DPRINTF("Before detaching the child %d\n", child);
+			SYSCALL_REQUIRE(
+			    ptrace(PT_DETACH, child, (void *)1, 0) != -1);
+		} else {
+			DPRINTF("Before resuming the child process where it "
+			    "left off and without signal to be sent\n");
+			SYSCALL_REQUIRE(
+			    ptrace(PT_SYSCALL, child, (void *)1, 0) != -1);
 
-		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
-		TWAIT_REQUIRE_SUCCESS(
-		    wpid = TWAIT_GENERIC(child, &status, 0), child);
+			DPRINTF("Before calling %s() for the child\n",
+			    TWAIT_FNAME);
+			TWAIT_REQUIRE_SUCCESS(
+			    wpid = TWAIT_GENERIC(child, &status, 0), child);
 
-		validate_status_stopped(status, SIGTRAP);
+			validate_status_stopped(status, SIGTRAP);
 
-		DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO for "
-		    "child\n");
-		SYSCALL_REQUIRE(
-		    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info)) != -1);
+			DPRINTF("Before calling ptrace(2) with PT_GET_SIGINFO "
+			    "for child\n");
+			SYSCALL_REQUIRE(
+			    ptrace(PT_GET_SIGINFO, child, &info, sizeof(info))
+			    != -1);
 
-		DPRINTF("Before checking siginfo_t and lwpid\n");
-		ATF_REQUIRE_EQ(info.psi_lwpid, 1);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
-		ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
+			DPRINTF("Before checking siginfo_t and lwpid\n");
+			ATF_REQUIRE_EQ(info.psi_lwpid, 1);
+			ATF_REQUIRE_EQ(info.psi_siginfo.si_signo, SIGTRAP);
+			ATF_REQUIRE_EQ(info.psi_siginfo.si_code, TRAP_SCX);
 
-		DPRINTF("Before resuming the child process where it left off "
-		    "and without signal to be sent\n");
-		SYSCALL_REQUIRE(ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+			DPRINTF("Before resuming the child process where it "
+			    "left off and without signal to be sent\n");
+			SYSCALL_REQUIRE(
+			    ptrace(PT_CONTINUE, child, (void *)1, 0) != -1);
+		}
 
 		DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 		TWAIT_REQUIRE_SUCCESS(
@@ -7548,28 +7592,29 @@ syscall_body(bool killed)
 		validate_status_exited(status, exitval);
 	}
 
-
 	DPRINTF("Before calling %s() for the child\n", TWAIT_FNAME);
 	TWAIT_REQUIRE_FAILURE(ECHILD, wpid = TWAIT_GENERIC(child, &status, 0));
 }
 
-#define SYSCALL_TEST(name,killed)						\
+#define SYSCALL_TEST(name,op)						\
 ATF_TC(name);								\
 ATF_TC_HEAD(name, tc)							\
 {									\
 	atf_tc_set_md_var(tc, "descr",					\
 	    "Verify that getpid(2) can be traced with PT_SYSCALL %s",	\
-	   killed ? "and killed on syscall entry" : "" );		\
+	   #op );							\
 }									\
 									\
 ATF_TC_BODY(name, tc)							\
 {									\
 									\
-	syscall_body(killed);						\
+	syscall_body(op);						\
 }
 
-SYSCALL_TEST(syscall, false)
-SYSCALL_TEST(syscall_killed_on_sce, true)
+SYSCALL_TEST(syscall, "")
+SYSCALL_TEST(syscall_killed_on_sce, "and killed")
+SYSCALL_TEST(syscall_signal_on_sce, "and signaled")
+SYSCALL_TEST(syscall_detach_on_sce, "and detached")
 
 /// ----------------------------------------------------------------------------
 
@@ -9561,6 +9606,8 @@ ATF_TP_ADD_TCS(tp)
 
 	ATF_TP_ADD_TC(tp, syscall);
 	ATF_TP_ADD_TC(tp, syscall_killed_on_sce);
+	ATF_TP_ADD_TC(tp, syscall_signal_on_sce);
+	ATF_TP_ADD_TC(tp, syscall_detach_on_sce);
 
 	ATF_TP_ADD_TC(tp, syscallemu1);
 
