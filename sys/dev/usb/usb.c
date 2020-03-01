@@ -1,4 +1,4 @@
-/*	$NetBSD: usb.c,v 1.179.2.1 2019/09/01 13:00:36 martin Exp $	*/
+/*	$NetBSD: usb.c,v 1.179.2.2 2020/03/01 12:35:16 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2002, 2008, 2012 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.179.2.1 2019/09/01 13:00:36 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: usb.c,v 1.179.2.2 2020/03/01 12:35:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -431,14 +431,16 @@ usb_add_task(struct usbd_device *dev, struct usb_task *task, int queue)
 /*
  * usb_rem_task(dev, task)
  *
- *	If task is queued to run, remove it from the queue.
+ *	If task is queued to run, remove it from the queue.  Return
+ *	true if it successfully removed the task from the queue, false
+ *	if not.
  *
  *	Caller is _not_ guaranteed that the task is not running when
  *	this is done.
  *
  *	Never sleeps.
  */
-void
+bool
 usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 {
 	unsigned queue;
@@ -452,10 +454,12 @@ usb_rem_task(struct usbd_device *dev, struct usb_task *task)
 			TAILQ_REMOVE(&taskq->tasks, task, next);
 			task->queue = USB_NUM_TASKQS;
 			mutex_exit(&taskq->lock);
-			break;
+			return true; /* removed from the queue */
 		}
 		mutex_exit(&taskq->lock);
 	}
+
+	return false;		/* was not removed from the queue */
 }
 
 /*
@@ -524,6 +528,23 @@ usb_rem_task_wait(struct usbd_device *dev, struct usb_task *task, int queue,
 		mutex_enter(interlock);
 
 	return removed;
+}
+
+/*
+ * usb_task_pending(dev, task)
+ *
+ *	True if task is queued, false if not.  Note that if task is
+ *	already running, it is not considered queued.
+ *
+ *	For _negative_ diagnostic assertions only:
+ *
+ *		KASSERT(!usb_task_pending(dev, task));
+ */
+bool
+usb_task_pending(struct usbd_device *dev, struct usb_task *task)
+{
+
+	return task->queue != USB_NUM_TASKQS;
 }
 
 void

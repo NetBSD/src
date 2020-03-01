@@ -1,4 +1,4 @@
-/*	$NetBSD: dwc2var.h,v 1.6 2018/11/18 11:48:57 skrll Exp $	*/
+/*	$NetBSD: dwc2var.h,v 1.6.4.1 2020/03/01 12:35:16 martin Exp $	*/
 
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
@@ -43,6 +43,7 @@ struct dwc2_xfer {
 	struct dwc2_hcd_urb *urb;
 
 	TAILQ_ENTRY(dwc2_xfer) xnext;		/* list of complete xfers */
+	usbd_status intr_status;
 };
 
 struct dwc2_pipe {

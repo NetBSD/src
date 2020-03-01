@@ -1,4 +1,4 @@
-/*	$NetBSD: sl811hs.c,v 1.101 2019/02/17 04:17:52 rin Exp $	*/
+/*	$NetBSD: sl811hs.c,v 1.101.4.1 2020/03/01 12:35:16 martin Exp $	*/
 
 /*
  * Not (c) 2007 Matthew Orgass
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.101 2019/02/17 04:17:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: sl811hs.c,v 1.101.4.1 2020/03/01 12:35:16 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_slhci.h"
@@ -1030,7 +1030,9 @@ slhci_root_start(struct usbd_xfer *xfer)
 	KASSERT(spipe->ptype == PT_ROOT_INTR);
 
 	mutex_enter(&sc->sc_intr_lock);
+	KASSERT(t->rootintr == NULL);
 	t->rootintr = xfer;
+	xfer->ux_status = USBD_IN_PROGRESS;
 	mutex_exit(&sc->sc_intr_lock);
 
 	return USBD_IN_PROGRESS;
@@ -2389,6 +2391,8 @@ slhci_callback(struct slhci_softc *sc)
 			if (t->rootintr != NULL) {
 				u_char *p;
 
+				KASSERT(t->rootintr->ux_status ==
+				    USBD_IN_PROGRESS);
 				p = t->rootintr->ux_buf;
 				p[0] = 2;
 				t->rootintr->ux_actlen = 1;

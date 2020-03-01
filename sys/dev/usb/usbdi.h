@@ -1,4 +1,4 @@
-/*	$NetBSD: usbdi.h,v 1.96.4.1 2019/09/01 13:00:37 martin Exp $	*/
+/*	$NetBSD: usbdi.h,v 1.96.4.2 2020/03/01 12:35:16 martin Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/usbdi.h,v 1.18 1999/11/17 22:33:49 n_hibma Exp $	*/
 
 /*
@@ -188,6 +188,11 @@ int usbd_ratecheck(struct timeval *);
 usbd_status usbd_get_string(struct usbd_device *, int, char *);
 usbd_status usbd_get_string0(struct usbd_device *, int, char *, int);
 
+/* For use by HCI drivers, not USB device drivers */
+void usbd_xfer_schedule_timeout(struct usbd_xfer *);
+bool usbd_xfer_trycomplete(struct usbd_xfer *);
+void usbd_xfer_abort(struct usbd_xfer *);
+
 /* An iterator for descriptors. */
 typedef struct {
 	const uByte *cur;
@@ -219,9 +224,10 @@ struct usb_task {
 #define	USB_TASKQ_MPSAFE	0x80
 
 void usb_add_task(struct usbd_device *, struct usb_task *, int);
-void usb_rem_task(struct usbd_device *, struct usb_task *);
+bool usb_rem_task(struct usbd_device *, struct usb_task *);
 bool usb_rem_task_wait(struct usbd_device *, struct usb_task *, int,
     kmutex_t *);
+bool usb_task_pending(struct usbd_device *, struct usb_task *);
 #define usb_init_task(t, f, a, fl) ((t)->fun = (f), (t)->arg = (a), (t)->queue = USB_NUM_TASKQS, (t)->flags = (fl))
 
 struct usb_devno {
