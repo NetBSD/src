@@ -1,4 +1,4 @@
-/*	$NetBSD: if_et.c,v 1.31 2020/02/28 05:13:19 msaitoh Exp $	*/
+/*	$NetBSD: if_et.c,v 1.32 2020/03/01 15:15:49 thorpej Exp $	*/
 /*	$OpenBSD: if_et.c,v 1.12 2008/07/11 09:29:02 kevlo $	*/
 /*
  * Copyright (c) 2007 The DragonFly Project.  All rights reserved.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.31 2020/02/28 05:13:19 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_et.c,v 1.32 2020/03/01 15:15:49 thorpej Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -230,9 +230,13 @@ et_attach(device_t parent, device_t self, void *aux)
 	}
 	aprint_normal_dev(self, "interrupting at %s\n", intrstr);
 
-	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pct = pa->pa_pc;
 	sc->sc_pcitag = pa->pa_tag;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	if (pa->pa_id == PCI_PRODUCT_LUCENT_ET1301)
 		sc->sc_flags |= ET_FLAG_FASTETHER;
