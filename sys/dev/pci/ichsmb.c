@@ -1,4 +1,4 @@
-/*	$NetBSD: ichsmb.c,v 1.60 2018/12/10 06:23:54 jdolecek Exp $	*/
+/*	$NetBSD: ichsmb.c,v 1.60.4.1 2020/03/01 12:48:25 martin Exp $	*/
 /*	$OpenBSD: ichiic.c,v 1.18 2007/05/03 09:36:26 dlg Exp $	*/
 
 /*
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.60 2018/12/10 06:23:54 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ichsmb.c,v 1.60.4.1 2020/03/01 12:48:25 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -265,7 +265,8 @@ ichsmb_detach(device_t self, int flags)
 		sc->sc_pihp = NULL;
 	}
 
-	bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
+	if (sc->sc_size != 0)
+		bus_space_unmap(sc->sc_iot, sc->sc_ioh, sc->sc_size);
 
 	return 0;
 }
