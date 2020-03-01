@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.4 2020/03/01 18:08:13 christos Exp $
+#	$NetBSD: Makefile,v 1.5 2020/03/01 20:19:54 christos Exp $
 #
 
 NOMAN=
@@ -18,8 +18,8 @@ LIBHIDDIR!= cd ${.CURDIR}/../libhid && ${PRINTOBJDIR}
 LDFLAGS+= -L${LIBHIDDIR}
 LDADD+= -Wl,--whole-archive -lrumpdev_hid -Wl,--no-whole-archive
 DPADD+= ${LIBHIDDIR}/librumpdev_hid.a
-DPADD+= ${ATF_C}
+DPADD+= ${ATF_C} 
 
-LDADD+= -latf-c ${LIBRUMPBASE}
+LDADD+= ${LIBRUMPBASE} -latf-c
 
 .include <bsd.prog.mk>
