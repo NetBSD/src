@@ -1,4 +1,4 @@
-/*	$NetBSD: if_axe.c,v 1.128 2020/03/01 10:16:17 nisimura Exp $	*/
+/*	$NetBSD: if_axe.c,v 1.129 2020/03/01 12:23:12 nisimura Exp $	*/
 /*	$OpenBSD: if_axe.c,v 1.137 2016/04/13 11:03:37 mpi Exp $ */
 
 /*
@@ -87,7 +87,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.128 2020/03/01 10:16:17 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_axe.c,v 1.129 2020/03/01 12:23:12 nisimura Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -123,11 +123,13 @@ struct axe_softc {
 
 };
 
-#define	AXE_IS_178_FAMILY(un)				\
-	((un)->un_flags & (AX772 | AX772A | AX772B | AX178))
+#define AXE_IS_178_FAMILY(un)				\
+	((un)->un_flags & (AX178 | AX772 | AX772A | AX772B))
 
-#define	AXE_IS_772(un)					\
+#define AXE_IS_772(un)					\
 	((un)->un_flags & (AX772 | AX772A | AX772B))
+
+#define AXE_IS_172(un) (AXE_IS_178_FAMILY(un) == 0)
 
 #define AX_RXCSUM					\
     (IFCAP_CSUM_IPv4_Rx | 				\
@@ -200,42 +202,42 @@ fail:
  * Various supported device vendors/products.
  */
 static const struct axe_type axe_devs[] = {
-	{ { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE2000}, 0 },
-	{ { USB_VENDOR_ACERCM,		USB_PRODUCT_ACERCM_EP1427X2}, 0 },
+	{ { USB_VENDOR_ABOCOM,		USB_PRODUCT_ABOCOM_UFE2000 }, 0 },
+	{ { USB_VENDOR_ACERCM,		USB_PRODUCT_ACERCM_EP1427X2 }, 0 },
 	{ { USB_VENDOR_APPLE,		USB_PRODUCT_APPLE_ETHERNET }, AX772 },
-	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172}, 0 },
-	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772}, AX772 },
-	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772A}, AX772 },
-	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B}, AX772B },
-	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B_1}, AX772B },
-	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88178}, AX178 },
-	{ { USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC210T}, 0 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88172 }, 0 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772 }, AX772 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772A }, AX772 },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B }, AX772B },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88772B_1 }, AX772B },
+	{ { USB_VENDOR_ASIX,		USB_PRODUCT_ASIX_AX88178 }, AX178 },
+	{ { USB_VENDOR_ATEN,		USB_PRODUCT_ATEN_UC210T }, 0 },
 	{ { USB_VENDOR_BELKIN,		USB_PRODUCT_BELKIN_F5D5055 }, AX178 },
-	{ { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB2AR}, 0},
-	{ { USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_USB200MV2}, AX772A },
-	{ { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0},
-	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100}, 0 },
+	{ { USB_VENDOR_BILLIONTON,	USB_PRODUCT_BILLIONTON_USB2AR }, 0},
+	{ { USB_VENDOR_CISCOLINKSYS,	USB_PRODUCT_CISCOLINKSYS_USB200MV2 }, AX772A },
+	{ { USB_VENDOR_COREGA,		USB_PRODUCT_COREGA_FETHER_USB2_TX }, 0 },
+	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100 }, 0 },
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100B1 }, AX772 },
 	{ { USB_VENDOR_DLINK2,		USB_PRODUCT_DLINK2_DUBE100B1 }, AX772 },
 	{ { USB_VENDOR_DLINK,		USB_PRODUCT_DLINK_DUBE100C1 }, AX772B },
-	{ { USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_GWUSB2E}, 0 },
+	{ { USB_VENDOR_GOODWAY,		USB_PRODUCT_GOODWAY_GWUSB2E }, 0 },
 	{ { USB_VENDOR_IODATA,		USB_PRODUCT_IODATA_ETGUS2 }, AX178 },
-	{ { USB_VENDOR_JVC,		USB_PRODUCT_JVC_MP_PRX1}, 0 },
+	{ { USB_VENDOR_JVC,		USB_PRODUCT_JVC_MP_PRX1 }, 0 },
 	{ { USB_VENDOR_LENOVO,		USB_PRODUCT_LENOVO_ETHERNET }, AX772B },
-	{ { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_HG20F9}, AX772B },
-	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M}, 0 },
+	{ { USB_VENDOR_LINKSYS,		USB_PRODUCT_LINKSYS_HG20F9 }, AX772B },
+	{ { USB_VENDOR_LINKSYS2,	USB_PRODUCT_LINKSYS2_USB200M }, 0 },
 	{ { USB_VENDOR_LINKSYS4,	USB_PRODUCT_LINKSYS4_USB1000 }, AX178 },
-	{ { USB_VENDOR_LOGITEC,		USB_PRODUCT_LOGITEC_LAN_GTJU2}, AX178 },
-	{ { USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2GT}, AX178 },
-	{ { USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2KTX}, 0 },
-	{ { USB_VENDOR_MSI,		USB_PRODUCT_MSI_AX88772A}, AX772 },
-	{ { USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120}, 0 },
+	{ { USB_VENDOR_LOGITEC,		USB_PRODUCT_LOGITEC_LAN_GTJU2 }, AX178 },
+	{ { USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2GT }, AX178 },
+	{ { USB_VENDOR_MELCO,		USB_PRODUCT_MELCO_LUAU2KTX }, 0 },
+	{ { USB_VENDOR_MSI,		USB_PRODUCT_MSI_AX88772A }, AX772 },
+	{ { USB_VENDOR_NETGEAR,		USB_PRODUCT_NETGEAR_FA120 }, 0 },
 	{ { USB_VENDOR_OQO,		USB_PRODUCT_OQO_ETHER01PLUS }, AX772 },
 	{ { USB_VENDOR_PLANEX3,		USB_PRODUCT_PLANEX3_GU1000T }, AX178 },
-	{ { USB_VENDOR_SITECOM,		USB_PRODUCT_SITECOM_LN029}, 0 },
+	{ { USB_VENDOR_SITECOM,		USB_PRODUCT_SITECOM_LN029 }, 0 },
 	{ { USB_VENDOR_SITECOMEU,	USB_PRODUCT_SITECOMEU_LN028 }, AX178 },
 	{ { USB_VENDOR_SITECOMEU,	USB_PRODUCT_SITECOMEU_LN031 }, AX178 },
-	{ { USB_VENDOR_SYSTEMTALKS,	USB_PRODUCT_SYSTEMTALKS_SGCX2UL}, 0 },
+	{ { USB_VENDOR_SYSTEMTALKS,	USB_PRODUCT_SYSTEMTALKS_SGCX2UL }, 0 },
 };
 #define axe_lookup(v, p) ((const struct axe_type *)usb_lookup(axe_devs, v, p))
 
@@ -387,16 +389,17 @@ axe_mii_statchg(struct ifnet *ifp)
 		return;
 
 	val = 0;
-	if (mii->mii_media_active & IFM_FDX) {
-		val |= AXE_MEDIA_FULL_DUPLEX;
-		if (AXE_IS_178_FAMILY(un)) {
+	if (AXE_IS_172(un)) {
+		if (mii->mii_media_active & IFM_FDX)
+			val |= AXE_MEDIA_FULL_DUPLEX;
+	} else {
+		if (mii->mii_media_active & IFM_FDX) {
+			val |= AXE_MEDIA_FULL_DUPLEX;
 			if (mii->mii_media_active & IFM_ETH_TXPAUSE)
 				val |= AXE_178_MEDIA_TXFLOW_CONTROL_EN;
 			if (mii->mii_media_active & IFM_ETH_RXPAUSE)
 				val |= AXE_178_MEDIA_RXFLOW_CONTROL_EN;
 		}
-	}
-	if (AXE_IS_178_FAMILY(un)) {
 		val |= AXE_178_MEDIA_RX_EN | AXE_178_MEDIA_MAGIC;
 		if (un->un_flags & AX178)
 			val |= AXE_178_MEDIA_ENCK;
@@ -905,11 +908,11 @@ axe_attach(device_t parent, device_t self, void *aux)
 	id = usbd_get_interface_descriptor(un->un_iface);
 
 	/* decide on what our bufsize will be */
-	if (AXE_IS_178_FAMILY(un))
+	if (AXE_IS_172(un))
+		bufsz = AXE_172_BUFSZ;
+	else
 		bufsz = (un->un_udev->ud_speed == USB_SPEED_HIGH) ?
 		    AXE_178_MAX_BUFSZ : AXE_178_MIN_BUFSZ;
-	else
-		bufsz = AXE_172_BUFSZ;
 	un->un_rx_bufsz = un->un_tx_bufsz = bufsz;
 
 	un->un_ed[USBNET_ENDPT_RX] = 0;
@@ -981,7 +984,7 @@ axe_attach(device_t parent, device_t self, void *aux)
 
 	usbnet_unlock_mii(un);
 
-	if (AXE_IS_178_FAMILY(un))
+	if (!AXE_IS_172(un))
 		usbnet_ec(un)->ec_capabilities = ETHERCAP_VLAN_MTU;
 	if (un->un_flags & AX772B) {
 		struct ifnet *ifp = usbnet_ifp(un);
@@ -1150,7 +1153,7 @@ axe_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 
 	usbnet_isowned_tx(un);
 
-	if (AXE_IS_178_FAMILY(un)) {
+	if (!AXE_IS_172(un)) {
 		/*
 		 * Copy the mbuf data into a contiguous buffer, leaving two
 		 * bytes at the beginning to hold the frame length.
@@ -1249,17 +1252,16 @@ axe_init_locked(struct ifnet *ifp)
 			      AX_GPIO_GPO2EN, 5, in_pm);
 #endif
 	/* Set MAC address and transmitter IPG values. */
-	if (AXE_IS_178_FAMILY(un)) {
-		axe_cmd(sc, AXE_178_CMD_WRITE_NODEID, 0, 0, un->un_eaddr);
-		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, sc->axe_ipgs[2],
-		    (sc->axe_ipgs[1] << 8) | (sc->axe_ipgs[0]), NULL);
-	} else {
+	if (AXE_IS_172(un)) {
 		axe_cmd(sc, AXE_172_CMD_WRITE_NODEID, 0, 0, un->un_eaddr);
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG0, 0, sc->axe_ipgs[0], NULL);
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG1, 0, sc->axe_ipgs[1], NULL);
 		axe_cmd(sc, AXE_172_CMD_WRITE_IPG2, 0, sc->axe_ipgs[2], NULL);
-	}
-	if (AXE_IS_178_FAMILY(un)) {
+	} else {
+		axe_cmd(sc, AXE_178_CMD_WRITE_NODEID, 0, 0, un->un_eaddr);
+		axe_cmd(sc, AXE_178_CMD_WRITE_IPG012, sc->axe_ipgs[2],
+		    (sc->axe_ipgs[1] << 8) | (sc->axe_ipgs[0]), NULL);
+
 		un->un_flags &= ~(AXSTD_FRAME | AXCSUM_FRAME);
 		if ((un->un_flags & AX772B) != 0 &&
 		    (ifp->if_capenable & AX_RXCSUM) != 0) {
@@ -1282,7 +1284,9 @@ axe_init_locked(struct ifnet *ifp)
 	}
 	/* Enable receiver, set RX mode */
 	rxmode = (AXE_RXCMD_BROADCAST | AXE_RXCMD_MULTICAST | AXE_RXCMD_ENABLE);
-	if (AXE_IS_178_FAMILY(un)) {
+	if (AXE_IS_172(un))
+		rxmode |= AXE_172_RXCMD_UNICAST;
+	else {
 		if (un->un_flags & AX772B) {
 			/*
 			 * Select RX header format type 1.  Aligning IP
@@ -1309,15 +1313,13 @@ axe_init_locked(struct ifnet *ifp)
 #endif
 			rxmode |= AXE_178_RXCMD_MFB_16384;
 		}
-	} else {
-		rxmode |= AXE_172_RXCMD_UNICAST;
 	}
 
 	DPRINTF("rxmode %#jx", rxmode, 0, 0, 0);
 
 	axe_cmd(sc, AXE_CMD_RXCTL_WRITE, 0, rxmode, NULL);
 
-	/* Accept multicast frame or run promisc. */
+	/* Accept multicast frame or run promisc. mode */
 	axe_setiff_locked(un);
 
 	usbnet_unlock_mii_un_locked(un);
