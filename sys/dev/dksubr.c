@@ -1,4 +1,4 @@
-/* $NetBSD: dksubr.c,v 1.111 2019/12/08 12:15:24 mlelstv Exp $ */
+/* $NetBSD: dksubr.c,v 1.112 2020/03/01 03:21:54 riastradh Exp $ */
 
 /*-
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2008 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.111 2019/12/08 12:15:24 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: dksubr.c,v 1.112 2020/03/01 03:21:54 riastradh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -767,7 +767,7 @@ static volatile int	dk_dumping = 0;
 /* ARGSUSED */
 int
 dk_dump(struct dk_softc *dksc, dev_t dev,
-    daddr_t blkno, void *vav, size_t size)
+    daddr_t blkno, void *vav, size_t size, int flags)
 {
 	const struct dkdriver *dkd = dksc->sc_dkdev.dk_driver;
 	struct disk_geom *dg = &dksc->sc_dkdev.dk_geom;
@@ -790,7 +790,8 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 	/* ensure that we are not already dumping */
 	if (dk_dumping)
 		return EFAULT;
-	dk_dumping = 1;
+	if ((flags & DK_DUMP_RECURSIVE) == 0)
+		dk_dumping = 1;
 
 	if (dkd->d_dumpblocks == NULL) {
 		DPRINTF(DKDB_DUMP, ("%s: no dumpblocks\n", __func__));
@@ -869,7 +870,8 @@ dk_dump(struct dk_softc *dksc, dev_t dev,
 		va += nblk * lp->d_secsize;
 	}
 
-	dk_dumping = 0;
+	if ((flags & DK_DUMP_RECURSIVE) == 0)
+		dk_dumping = 0;
 
 	return 0;
 }
