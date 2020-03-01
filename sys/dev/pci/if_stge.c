@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.80 2020/02/29 20:39:09 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.81 2020/03/01 15:46:32 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.80 2020/02/29 20:39:09 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.81 2020/03/01 15:46:32 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -454,8 +454,8 @@ stge_attach(device_t parent, device_t self, void *aux)
 					 &sc->sc_dmat,
 					 BUS_DMA_WAITOK) != 0) {
 			aprint_error_dev(self,
-			    "unable to create 40-bit DMA tag\n");
-			return;
+			    "WARNING: failed to restrict dma range,"
+			    " falling back to parent bus dma range\n");
 		}
 	} else {
 		sc->sc_dmat = pa->pa_dmat;
