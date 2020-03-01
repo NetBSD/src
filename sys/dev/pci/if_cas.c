@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cas.c,v 1.40 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_cas.c,v 1.41 2020/03/01 05:39:05 thorpej Exp $	*/
 /*	$OpenBSD: if_cas.c,v 1.29 2009/11/29 16:19:38 kettenis Exp $	*/
 
 /*
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.40 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cas.c,v 1.41 2020/03/01 05:39:05 thorpej Exp $");
 
 #ifndef _MODULE
 #include "opt_inet.h"
@@ -411,7 +411,11 @@ cas_attach(device_t parent, device_t self, void *aux)
 	sc->sc_dev = self;
 	pci_aprint_devinfo(pa, NULL);
 	sc->sc_rev = PCI_REVISION(pa->pa_class);
-	sc->sc_dmatag = pa->pa_dmat;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmatag = pa->pa_dmat64;
+	else
+		sc->sc_dmatag = pa->pa_dmat;
 
 	sc->sc_variant = CAS_UNKNOWN;
 	for (i = 0; cas_pci_devlist[i].cpd_vendor != 0; i++) {
