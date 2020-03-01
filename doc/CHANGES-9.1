@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.6 2020/03/01 11:52:35 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.7 2020/03/01 12:52:01 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -244,4 +244,55 @@ sys/arch/arm/include/arm32/pmap.h		1.161
 	Fix the armv[67] memory attributes for uncached memory.
 	Remove workaround for unaligned access faults.
 	[skrll, ticket #742]
+
+etc/rc.d/random_seed				1.8
+
+	Allow random seed on zfs.
+	[riastradh, ticket #743]
+
+sys/arch/mips/adm5120/dev/ahci.c		1.18-1.20
+sys/dev/ic/sl811hs.c				1.103
+sys/dev/usb/ehci.c				1.270-1.273
+sys/dev/usb/motg.c				1.26-1.33
+sys/dev/usb/ohci.c				1.293-1.295
+sys/dev/usb/uhci.c				1.289-1.293
+sys/dev/usb/usb.c				1.181,1.182
+sys/dev/usb/usbdi.c				1.190-1.192
+sys/dev/usb/usbdi.h				1.99-1.101
+sys/dev/usb/usbdivar.h				1.121,1.122
+sys/dev/usb/xhci.c				1.116-1.118
+sys/external/bsd/dwc2/dwc2.c			1.67-1.71
+sys/external/bsd/dwc2/dwc2var.h			1.7
+
+	Fix various race conditions in USB abort and timeout.
+	[riastradh, ticket #744]
+
+sys/dev/usb/umass.c				1.177-1.179
+
+	Abort default pipe too on detach before detaching children.
+	Consolidate logic to call the transfer callback.
+	Make sure the umass transfer callback is run in error branches.
+	[riastradh, ticket #745]
+
+sys/ddb/db_lex.c				1.25
+
+	Fix crash(8) prompt.
+	[riastradh, ticket #746]
+
+sys/dev/pci/if_mcx.c				1.11
+
+	mcx(4): use 64-bit PCI DMA if available.
+	[thorpej, ticket #747]
+
+sys/dev/pci/ichsmb.c				1.61
+
+	If attach fails, don't panic on detach.
+	[riastradh, ticket #748]
+
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.25
+
+	List the PCI ID range for new nvidia TU117 and TU116.
+	Adjust the check to simply be >= 0x1580, which is the
+	first pciid not supported. Fixes PR 54600.
+	[mrg, ticket #749]
 
