@@ -1,4 +1,4 @@
-/*      $NetBSD: whois.c,v 1.37 2020/03/01 02:19:43 sevan Exp $    */
+/*      $NetBSD: whois.c,v 1.38 2020/03/01 02:26:16 sevan Exp $    */
 /*      $OpenBSD: whois.c,v 1.58 2018/06/19 11:28:11 jca Exp $   */
 
 /*
@@ -41,7 +41,7 @@ __COPYRIGHT("@(#) Copyright (c) 1980, 1993\
 #if 0
 static const char sccsid[] = "@(#)whois.c	8.1 (Berkeley) 6/6/93";
 #else
-__RCSID("$NetBSD: whois.c,v 1.37 2020/03/01 02:19:43 sevan Exp $");
+__RCSID("$NetBSD: whois.c,v 1.38 2020/03/01 02:26:16 sevan Exp $");
 #endif
 #endif /* not lint */
 
@@ -99,7 +99,7 @@ main(int argc, char *argv[])
 
 	country = host = NULL;
 	flags = rval = 0;
-	while ((ch = getopt(argc, argv, "aAc:dfgh:Iilmp:PqQRr")) != -1)
+	while ((ch = getopt(argc, argv, "Aac:dfgh:Iilmp:PqQRr")) != -1)
 		switch (ch) {
 		case 'a':
 			host = ANICHOST;
