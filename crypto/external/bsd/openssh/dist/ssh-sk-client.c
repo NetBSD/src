@@ -1,4 +1,4 @@
-/*	$NetBSD: ssh-sk-client.c,v 1.2 2020/02/27 00:24:40 christos Exp $	*/
+/*	$NetBSD: ssh-sk-client.c,v 1.3 2020/03/01 14:51:06 christos Exp $	*/
 /* $OpenBSD: ssh-sk-client.c,v 1.7 2020/01/23 07:10:22 dtucker Exp $ */
 /*
  * Copyright (c) 2019 Google LLC
@@ -16,7 +16,7 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  */
 #include "includes.h"
-__RCSID("$NetBSD: ssh-sk-client.c,v 1.2 2020/02/27 00:24:40 christos Exp $");
+__RCSID("$NetBSD: ssh-sk-client.c,v 1.3 2020/03/01 14:51:06 christos Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -160,7 +160,7 @@ client_converse(struct sshbuf *msg, struct sshbuf **respp, u_int type)
 	ll = log_level_get();
 	if ((r = sshbuf_put_u32(req, type)) != 0 ||
 	   (r = sshbuf_put_u8(req, log_is_on_stderr() != 0)) != 0 ||
-	   (r = sshbuf_put_u32(req, ll < 0 ? 0 : ll)) != 0 ||
+	   (r = sshbuf_put_u32(req, (uint32_t)(ll < 0 ? 0 : ll))) != 0 ||
 	   (r = sshbuf_putb(req, msg)) != 0) {
 		error("%s: build: %s", __func__, ssh_err(r));
 		goto out;
