@@ -1,4 +1,4 @@
-/*	$NetBSD: if_dge.c,v 1.57 2020/01/30 05:24:53 thorpej Exp $ */
+/*	$NetBSD: if_dge.c,v 1.58 2020/03/01 15:11:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -80,7 +80,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.57 2020/01/30 05:24:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_dge.c,v 1.58 2020/03/01 15:11:31 thorpej Exp $");
 
 
 
@@ -403,10 +403,11 @@ do {									\
 	struct dge_rxsoft *__rxs = &(sc)->sc_rxsoft[(x)];		\
 	struct dge_rdes *__rxd = &(sc)->sc_rxdescs[(x)];		\
 	struct mbuf *__m = __rxs->rxs_mbuf;				\
+	const bus_addr_t __rxaddr = sc->sc_bugmap->dm_segs[0].ds_addr +	\
+	    (mtod((__m), char *) - (char *)sc->sc_bugbuf);		\
 									\
-	__rxd->dr_baddrl = htole32(sc->sc_bugmap->dm_segs[0].ds_addr +	\
-	    (mtod((__m), char *) - (char *)sc->sc_bugbuf));		\
-	__rxd->dr_baddrh = 0;						\
+	__rxd->dr_baddrl = htole32(__rxaddr);				\
+	__rxd->dr_baddrh = htole32(((uint64_t)__rxaddr) >> 32);		\
 	__rxd->dr_len = 0;						\
 	__rxd->dr_cksum = 0;						\
 	__rxd->dr_status = 0;						\
@@ -439,10 +440,12 @@ do {									\
 	 */								\
 	__m->m_data = __m->m_ext.ext_buf + (sc)->sc_align_tweak;	\
 									\
-	__rxd->dr_baddrl =						\
-	    htole32(__rxs->rxs_dmamap->dm_segs[0].ds_addr +		\
-		(sc)->sc_align_tweak);					\
-	__rxd->dr_baddrh = 0;						\
+	const bus_addr_t __rxaddr =					\
+	    __rxs->rxs_dmamap->dm_segs[0].ds_addr +			\
+	    (sc)->sc_align_tweak;					\
+									\
+	__rxd->dr_baddrl = htole32(__rxaddr);				\
+	__rxd->dr_baddrh = htole32(((uint64_t)__rxaddr) >> 32);		\
 	__rxd->dr_len = 0;						\
 	__rxd->dr_cksum = 0;						\
 	__rxd->dr_status = 0;						\
@@ -713,9 +716,13 @@ dge_attach(device_t parent, device_t self, void *aux)
 	}
 
 	sc->sc_dev = self;
-	sc->sc_dmat = pa->pa_dmat;
 	sc->sc_pc = pa->pa_pc;
 	sc->sc_pt = pa->pa_tag;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	pci_aprint_devinfo_fancy(pa, "Ethernet controller",
 		dgep->dgep_name, 1);
@@ -1332,11 +1339,8 @@ dge_start(struct ifnet *ifp)
 		for (nexttx = sc->sc_txnext, seg = 0;
 		     seg < dmamap->dm_nsegs;
 		     seg++, nexttx = DGE_NEXTTX(nexttx)) {
-			/*
-			 * Note: we currently only use 32-bit DMA
-			 * addresses.
-			 */
-			sc->sc_txdescs[nexttx].dt_baddrh = 0;
+			sc->sc_txdescs[nexttx].dt_baddrh =
+			    htole32(((uint64_t)dmamap->dm_segs[seg].ds_addr) >> 32);
 			sc->sc_txdescs[nexttx].dt_baddrl =
 			    htole32(dmamap->dm_segs[seg].ds_addr);
 			sc->sc_txdescs[nexttx].dt_ctl =
@@ -1347,10 +1351,11 @@ dge_start(struct ifnet *ifp)
 			lasttx = nexttx;
 
 			DPRINTF(DGE_DEBUG_TX,
-			    ("%s: TX: desc %d: low 0x%08lx, len 0x%04lx\n",
+			    ("%s: TX: desc %d: high 0x%08lx, low 0x%08lx, len 0x%04lx\n",
 			    device_xname(sc->sc_dev), nexttx,
-			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_addr),
-			    (unsigned long)le32toh(dmamap->dm_segs[seg].ds_len)));
+			    (unsigned long)(((uint64_t)dmamap->dm_segs[seg].ds_addr) >> 32),
+			    (unsigned long)((uint32_t)dmamap->dm_segs[seg].ds_addr),
+			    (unsigned long)dmamap->dm_segs[seg].ds_len));
 		}
 
 		KASSERT(lasttx != -1);
@@ -1924,7 +1929,7 @@ dge_init(struct ifnet *ifp)
 	sc->sc_txctx_ipcs = 0xffffffff;
 	sc->sc_txctx_tucs = 0xffffffff;
 
-	CSR_WRITE(sc, DGE_TDBAH, 0);
+	CSR_WRITE(sc, DGE_TDBAH, ((uint64_t)DGE_CDTXADDR(sc, 0)) >> 32);
 	CSR_WRITE(sc, DGE_TDBAL, DGE_CDTXADDR(sc, 0));
 	CSR_WRITE(sc, DGE_TDLEN, sizeof(sc->sc_txdescs));
 	CSR_WRITE(sc, DGE_TDH, 0);
@@ -1951,7 +1956,7 @@ dge_init(struct ifnet *ifp)
 	 * Initialize the receive descriptor and receive job
 	 * descriptor rings.
 	 */
-	CSR_WRITE(sc, DGE_RDBAH, 0);
+	CSR_WRITE(sc, DGE_RDBAH, ((uint64_t)DGE_CDRXADDR(sc, 0)) >> 32);
 	CSR_WRITE(sc, DGE_RDBAL, DGE_CDRXADDR(sc, 0));
 	CSR_WRITE(sc, DGE_RDLEN, sizeof(sc->sc_rxdescs));
 	CSR_WRITE(sc, DGE_RDH, DGE_RXSPACE);
