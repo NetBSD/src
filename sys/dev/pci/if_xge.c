@@ -1,4 +1,4 @@
-/*      $NetBSD: if_xge.c,v 1.33 2020/01/30 06:10:26 thorpej Exp $ */
+/*      $NetBSD: if_xge.c,v 1.34 2020/03/01 15:54:18 thorpej Exp $ */
 
 /*
  * Copyright (c) 2004, SUNET, Swedish University Computer Network.
@@ -43,7 +43,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.33 2020/01/30 06:10:26 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_xge.c,v 1.34 2020/03/01 15:54:18 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -287,7 +287,11 @@ xge_attach(device_t parent, device_t self, void *aux)
 
 	sc = device_private(self);
 	sc->sc_dev = self;
-	sc->sc_dmat = pa->pa_dmat;
+
+	if (pci_dma64_available(pa))
+		sc->sc_dmat = pa->pa_dmat64;
+	else
+		sc->sc_dmat = pa->pa_dmat;
 
 	/* Get BAR0 address */
 	memtype = pci_mapreg_type(pa->pa_pc, pa->pa_tag, XGE_PIF_BAR);
