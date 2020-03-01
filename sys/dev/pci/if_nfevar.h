@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfevar.h,v 1.11 2019/09/13 07:55:07 msaitoh Exp $	*/
+/*	$NetBSD: if_nfevar.h,v 1.12 2020/03/01 15:43:58 thorpej Exp $	*/
 /*	$OpenBSD: if_nfevar.h,v 1.13 2007/12/05 08:30:33 jsg Exp $	*/
 
 /*-
@@ -77,6 +77,7 @@ struct nfe_softc {
 	bus_size_t		sc_mems;
 	void			*sc_ih;
 	bus_dma_tag_t		sc_dmat;
+	bool			sc_dmat_needs_free;
 	struct mii_data		sc_mii;
 	struct callout		sc_tick_ch;
 
