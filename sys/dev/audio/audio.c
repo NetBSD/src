@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.58 2020/02/29 09:38:10 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.59 2020/03/01 07:35:33 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.58 2020/02/29 09:38:10 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.59 2020/03/01 07:35:33 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -6506,6 +6506,18 @@ audio_mixers_set_format(struct audio_softc *sc, const struct audio_info *ai)
 	error = audio_mixers_init(sc, mode, &phwfmt, &rhwfmt, &pfil, &rfil);
 	if (error)
 		return error;
+
+	/*
+	 * Reinitialize the sticky parameters for /dev/sound.
+	 * If the number of the hardware channels becomes less than the number
+	 * of channels that sticky parameters remember, subsequent /dev/sound
+	 * open will fail.  To prevent this, reinitialize the sticky
+	 * parameters whenever the hardware format is changed.
+	 */
+	sc->sc_sound_pparams = params_to_format2(&audio_default);
+	sc->sc_sound_rparams = params_to_format2(&audio_default);
+	sc->sc_sound_ppause = false;
+	sc->sc_sound_rpause = false;
 
 	return 0;
 }
