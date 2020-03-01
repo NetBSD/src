@@ -1,4 +1,4 @@
-#	$NetBSD: sshd_config,v 1.24 2020/02/28 10:59:58 kim Exp $
+#	$NetBSD: sshd_config,v 1.25 2020/03/01 08:21:38 kim Exp $
 #	$OpenBSD: sshd_config,v 1.103 2018/04/09 20:41:22 tj Exp $
 
 # This is the sshd server system-wide configuration file.  See
@@ -60,6 +60,27 @@ AuthorizedKeysFile	.ssh/authorized_keys
 # Change to no to disable s/key passwords
 #ChallengeResponseAuthentication yes
 
+# Kerberos options
+#KerberosAuthentication no
+#KerberosOrLocalPasswd yes
+#KerberosTicketCleanup yes
+#KerberosGetAFSToken no
+
+# GSSAPI options
+#GSSAPIAuthentication no
+#GSSAPICleanupCredentials yes
+
+# Set this to 'yes' to enable PAM authentication, account processing,
+# and session processing. If this is enabled, PAM authentication will
+# be allowed through the ChallengeResponseAuthentication and
+# PasswordAuthentication.  Depending on your PAM configuration,
+# PAM authentication via ChallengeResponseAuthentication may bypass
+# the setting of "PermitRootLogin without-password".
+# If you just want the PAM account and session checks to run without
+# PAM authentication, then enable this but set PasswordAuthentication
+# and ChallengeResponseAuthentication to 'no'.
+UsePAM yes
+
 #AllowAgentForwarding yes
 #AllowTcpForwarding yes
 #GatewayPorts no
@@ -72,7 +93,6 @@ AuthorizedKeysFile	.ssh/authorized_keys
 #PrintMotd yes
 #PrintLastLog yes
 #TCPKeepAlive yes
-UsePAM yes
 #PermitUserEnvironment no
 #Compression delayed
 #ClientAliveInterval 0
