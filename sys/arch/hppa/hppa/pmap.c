@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.104 2020/02/24 20:42:18 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.105 2020/03/01 21:40:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -65,7 +65,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.104 2020/02/24 20:42:18 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.105 2020/03/01 21:40:45 ad Exp $");
 
 #include "opt_cputype.h"
 
@@ -157,6 +157,10 @@ static kmutex_t	pmaps_lock;
 
 u_int	hppa_prot[8];
 u_int	sid_counter;
+
+static const struct uvm_pagerops pmap_pager = {
+	/* nothing */
+};
 
 /*
  * Page 3-6 of the "PA-RISC 1.1 Architecture and Instruction Set
@@ -696,7 +700,7 @@ pmap_bootstrap(vaddr_t vstart)
 	memset(kpm, 0, sizeof(*kpm));
 
 	rw_init(&kpm->pm_obj_lock);
-	uvm_obj_init(&kpm->pm_obj, NULL, false, 1);
+	uvm_obj_init(&kpm->pm_obj, &pmap_pager, false, 1);
 	uvm_obj_setlock(&kpm->pm_obj, &kpm->pm_obj_lock);
 
 	kpm->pm_space = HPPA_SID_KERNEL;
@@ -1059,7 +1063,7 @@ pmap_create(void)
 	DPRINTF(PDB_FOLLOW|PDB_PMAP, ("%s: pmap = %p\n", __func__, pmap));
 
 	rw_init(&pmap->pm_obj_lock);
-	uvm_obj_init(&pmap->pm_obj, NULL, false, 1);
+	uvm_obj_init(&pmap->pm_obj, &pmap_pager, false, 1);
 	uvm_obj_setlock(&pmap->pm_obj, &pmap->pm_obj_lock);
 
 	mutex_enter(&pmaps_lock);
