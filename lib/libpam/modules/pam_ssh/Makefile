@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.12 2020/03/01 14:50:43 christos Exp $
+# $NetBSD: Makefile,v 1.13 2020/03/01 20:59:54 christos Exp $
 # PAM module for SSH
 # $FreeBSD: src/lib/libpam/modules/pam_ssh/Makefile,v 1.18 2004/08/06 07:27:04 cperciva Exp $
 
@@ -13,7 +13,7 @@ SSHSRC=	${NETBSDSRCDIR}/crypto/external/bsd/openssh/dist
 .PATH: ${SSHSRC}
 LIB=	pam_ssh
 MAN=	pam_ssh.8
-SRCS=	pam_ssh.c ssh-sk-client.c
+SRCS=	pam_ssh.c
 
 CPPFLAGS+= -I${SSHSRC}
 
