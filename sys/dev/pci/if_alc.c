@@ -1,4 +1,4 @@
-/*	$NetBSD: if_alc.c,v 1.51 2020/03/01 03:00:31 thorpej Exp $	*/
+/*	$NetBSD: if_alc.c,v 1.52 2020/03/01 03:06:08 thorpej Exp $	*/
 /*	$OpenBSD: if_alc.c,v 1.1 2009/08/08 09:31:13 kevlo Exp $	*/
 /*-
  * Copyright (c) 2009, Pyun YongHyeon <yongari@FreeBSD.org>
@@ -1614,13 +1614,6 @@ alc_dma_alloc(struct alc_softc *sc)
 	    sc->alc_cdata.alc_tx_ring_map->dm_segs[0].ds_addr;
 
 	/*
-	 * NOTE: If we used more than one Rx / Rx Return ring,
-	 * we would need to ensure ALL of the Rx-related stuff
-	 * ended up in the same 4G segment, since the hardware
-	 * requires this.
-	 */
-
-	/*
 	 * Create DMA stuffs for RX ring
 	 */
 	error = bus_dmamap_create(sc->sc_dmat, ALC_RX_RING_SZ, 1,
@@ -1695,6 +1688,23 @@ alc_dma_alloc(struct alc_softc *sc)
 
 	sc->alc_rdata.alc_rr_ring_paddr =
 	    sc->alc_cdata.alc_rr_ring_map->dm_segs[0].ds_addr;
+
+	/*
+	 * All of the memory we allocated for the Rx ring / Rx Return
+	 * ring need to be in the same 4GB segment.  Make sure this is
+	 * so.
+	 *
+	 * XXX We don't care WHAT 4GB segment they're in, just that
+	 * XXX they're all in the same one.  Need some bus_dma API
+	 * XXX help to make this easier to enforce when we actually
+	 * XXX perform the allocation.
+	 */
+	if (ALC_ADDR_HI(sc->alc_rdata.alc_rx_ring_paddr) !=
+	    ALC_ADDR_HI(sc->alc_rdata.alc_rr_ring_paddr)) {
+		aprint_error_dev(sc->sc_dev,
+		    "Rx control data allocation constraints failed\n");
+		return ENOBUFS;
+	}
 
 	/*
 	 * Create DMA stuffs for CMB block
