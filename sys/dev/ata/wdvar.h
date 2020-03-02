@@ -1,4 +1,4 @@
-/*	$NetBSD: wdvar.h,v 1.49 2019/04/05 18:23:45 bouyer Exp $	*/
+/*	$NetBSD: wdvar.h,v 1.50 2020/03/02 16:01:56 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 2001 Manuel Bouyer.
@@ -59,6 +59,7 @@ struct wd_softc {
 	uint64_t sc_capacity512; /* ... in DEV_BSIZE blocks */
 	uint32_t sc_capacity28; /* capacity accessible with LBA28 commands */
 	uint32_t sc_blksize; /* logical block size, in bytes */
+	struct disk_sectoralign sc_sectoralign; /* sector alignment */
 
 #ifdef WD_SOFTBADSECT
 	SLIST_HEAD(, disk_badsectors)	sc_bslist;
