@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.7 2020/03/01 12:52:01 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.8 2020/03/02 08:02:16 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -295,4 +295,21 @@ sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.25
 	Adjust the check to simply be >= 0x1580, which is the
 	first pciid not supported. Fixes PR 54600.
 	[mrg, ticket #749]
+
+sys/arch/amd64/amd64/db_interface.c		1.37
+
+	Fix boot -c or -d by avoiding ipi handling before the vector is
+	initialized.
+	[christos, ticket #750]
+
+sys/arch/cobalt/dev/gt.c			1.30
+
+	Fix mapping of the PCI I/O space.
+	[thorpej, ticket #751]
+
+sys/arch/powerpc/booke/copyin.c			1.8
+
+	Let copyinstr(9) return ENAMETOOLONG correctly if source is not
+	NUL-terminated.
+	[rin, ticket #752]
 
