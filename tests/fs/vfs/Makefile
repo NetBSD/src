@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.26 2020/03/01 18:08:14 christos Exp $
+#	$NetBSD: Makefile,v 1.27 2020/03/02 11:09:13 christos Exp $
 #
 
 .include <bsd.own.mk>
@@ -45,7 +45,7 @@ LDADD+=-lrumpnet						# static linking
 LDADD+=-lutil
 
 .if (${MKZFS} != "no")
-LDADD+=-lrumpfs_zfs -lrumpkern_solaris -lrumpdev_rnd
+LDADD+=-lrumpfs_zfs -lrumpkern_solaris -lrumpdev_rnd -lrumpkern_sysproxy
 CPPFLAGS+=-DWANT_ZFS_TESTS
 .endif
 
