@@ -1,4 +1,4 @@
-/*	$NetBSD: if_kse.c,v 1.49 2020/02/17 06:05:31 nisimura Exp $	*/
+/*	$NetBSD: if_kse.c,v 1.50 2020/03/02 19:16:02 nisimura Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.49 2020/02/17 06:05:31 nisimura Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_kse.c,v 1.50 2020/03/02 19:16:02 nisimura Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -1114,11 +1114,6 @@ kse_set_filter(struct kse_softc *sc)
 	ETHER_FIRST_MULTI(step, ec, enm);
 	i = 0;
 	while (enm != NULL) {
-#if KSE_MCASTDEBUG == 1
-		printf("%s: addrs %s %s\n", __func__,
-		   ether_sprintf(enm->enm_addrlo),
-		   ether_sprintf(enm->enm_addrhi));
-#endif
 		if (memcmp(enm->enm_addrlo, enm->enm_addrhi, ETHER_ADDR_LEN)) {
 			/*
 			 * We must listen to a range of multicast addresses.
@@ -1132,6 +1127,9 @@ kse_set_filter(struct kse_softc *sc)
 			ifp->if_flags |= IFF_ALLMULTI;
 			goto update;
 		}
+#if KSE_MCASTDEBUG == 1
+		printf("[%d] %s\n", i, ether_sprintf(enm->enm_addrlo));
+#endif
 		if (i < 16) {
 			/* use 16 additional MAC addr to accept mcast */
 			uint32_t addr;
@@ -1139,8 +1137,8 @@ kse_set_filter(struct kse_softc *sc)
 			addr = (ep[3] << 24) | (ep[2] << 16)
 			     | (ep[1] << 8)  |  ep[0];
 			CSR_WRITE_4(sc, MAAL0 + i*8, addr);
-			addr = (ep[5] << 8) | ep[4] | (1U<<31);
-			CSR_WRITE_4(sc, MAAH0 + i*8, addr);
+			addr = (ep[5] << 8) | ep[4];
+			CSR_WRITE_4(sc, MAAH0 + i*8, addr | (1U << 31));
 		} else {
 			/* use hash table when too many */
 			crc = ether_crc32_le(enm->enm_addrlo, ETHER_ADDR_LEN);
@@ -1151,11 +1149,10 @@ kse_set_filter(struct kse_softc *sc)
 	}
 	ETHER_UNLOCK(ec);
 
-	if (crc) {
-		CSR_WRITE_4(sc, MTR0, mchash[0]);
-		CSR_WRITE_4(sc, MTR1, mchash[1]);
+	if (crc)
 		sc->sc_rxc |= RXC_MHTE;
-	}
+	CSR_WRITE_4(sc, MTR0, mchash[0]);
+	CSR_WRITE_4(sc, MTR1, mchash[1]);
 	return;
 
  update:
