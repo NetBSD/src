@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.82 2020/03/01 16:31:01 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.83 2020/03/02 15:13:23 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.82 2020/03/01 16:31:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.83 2020/03/02 15:13:23 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1593,11 +1593,13 @@ stge_init(struct ifnet *ifp)
 	/*
 	 * Give the transmit and receive ring to the chip.
 	 */
-	CSR_WRITE_4(sc, STGE_TFDListPtrHi, 0); /* NOTE: 32-bit DMA */
+	CSR_WRITE_4(sc, STGE_TFDListPtrHi,
+	    ((uint64_t)STGE_CDTXADDR(sc, sc->sc_txdirty)) >> 32);
 	CSR_WRITE_4(sc, STGE_TFDListPtrLo,
 	    STGE_CDTXADDR(sc, sc->sc_txdirty));
 
-	CSR_WRITE_4(sc, STGE_RFDListPtrHi, 0); /* NOTE: 32-bit DMA */
+	CSR_WRITE_4(sc, STGE_RFDListPtrHi,
+	    ((uint64_t)STGE_CDRXADDR(sc, sc->sc_rxptr)) >> 32);
 	CSR_WRITE_4(sc, STGE_RFDListPtrLo,
 	    STGE_CDRXADDR(sc, sc->sc_rxptr));
 
