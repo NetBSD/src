@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.101 2020/02/27 14:45:30 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.102 2020/03/02 08:10:28 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2081,7 +2081,9 @@ sys/dev/usb/usbdevs_data.h			(regen)
 	[manu, ticket #1508]
 
 sys/ufs/ufs/ufs_vnops.c				1.249
+sys/ufs/ufs/dir.h				1.26
+sys/ufs/ufs/ufs_lookup.c			1.149
 
-	Zero out the padding in 'd_namlen', to prevent info leaks.
+	Zero out struct dirent padding, to avoid kernel memory disclosure.
 	[maxv, ticket #1511]
 
