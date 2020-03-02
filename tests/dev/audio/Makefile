@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.8 2020/03/01 18:08:12 christos Exp $
+#	$NetBSD: Makefile,v 1.9 2020/03/02 04:25:08 isaki Exp $
 #
 
 .include <bsd.own.mk>
@@ -21,7 +21,7 @@ BINDIR=		${TESTSDIR}
 MKMAN=no
 
 CPPFLAGS+=	-D_KERNTYPES
-LDADD+=	-lrumpdev_pad -lrumpdev_audio ${LIBRUMPBASE}
+LDADD+=	-lrumpdev_pad -lrumpdev_audio -lrumpdev ${LIBRUMPBASE}
 
 WARNS=	4
 NOMAN=
