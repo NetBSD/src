@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.66 2020/02/29 21:34:37 ryo Exp $	*/
+/*	$NetBSD: pmap.c,v 1.67 2020/03/02 08:39:36 ryo Exp $	*/
 
 /*
  * Copyright (c) 2017 Ryo Shimizu <ryo@nerv.org>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.66 2020/02/29 21:34:37 ryo Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.67 2020/03/02 08:39:36 ryo Exp $");
 
 #include "opt_arm_debug.h"
 #include "opt_ddb.h"
@@ -776,7 +776,7 @@ pmap_extract(struct pmap *pm, vaddr_t va, paddr_t *pap)
 			reg_s1e1r_write(va);
 			__asm __volatile ("isb");
 			uint64_t par = reg_par_el1_read();
-			daif_enable(s);
+			reg_daif_write(s);
 
 			if (par & PAR_F)
 				return false;
