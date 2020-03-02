@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_lookup.c,v 1.146 2017/03/30 09:11:45 hannken Exp $	*/
+/*	$NetBSD: ufs_lookup.c,v 1.146.6.1 2020/03/02 08:07:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.146 2017/03/30 09:11:45 hannken Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ufs_lookup.c,v 1.146.6.1 2020/03/02 08:07:22 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ffs.h"
@@ -793,10 +793,15 @@ void
 ufs_makedirentry(struct inode *ip, struct componentname *cnp,
     struct direct *newdirp)
 {
+	size_t namelen = cnp->cn_namelen;
+
 	newdirp->d_ino = ip->i_number;
-	newdirp->d_namlen = cnp->cn_namelen;
-	memcpy(newdirp->d_name, cnp->cn_nameptr, (size_t)cnp->cn_namelen);
-	newdirp->d_name[cnp->cn_namelen] = '\0';
+	newdirp->d_namlen = namelen;
+	memcpy(newdirp->d_name, cnp->cn_nameptr, namelen);
+
+	/* Zero out padding */
+	memset(&newdirp->d_name[namelen], 0, UFS_NAMEPAD(namelen));
+
 	if (FSFMT(ITOV(ip)))
 		newdirp->d_type = 0;
 	else

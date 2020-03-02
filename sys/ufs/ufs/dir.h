@@ -1,4 +1,4 @@
-/*	$NetBSD: dir.h,v 1.25 2015/09/01 06:16:03 dholland Exp $	*/
+/*	$NetBSD: dir.h,v 1.25.10.1 2020/03/02 08:07:22 martin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -111,8 +111,11 @@ struct	direct {
  * without the d_name field, plus enough space for the name with a terminating
  * null byte (dp->d_namlen+1), rounded up to a 4 byte boundary.
  */
+#define DIR_ROUNDUP	4
+#define UFS_NAMEROUNDUP(namlen)	(((namlen) + DIR_ROUNDUP) & ~(DIR_ROUNDUP - 1))
+#define UFS_NAMEPAD(namlen)	(DIR_ROUNDUP - ((namlen) & (DIR_ROUNDUP - 1)))
 #define	UFS_DIRECTSIZ(namlen) \
-	((sizeof(struct direct) - (FFS_MAXNAMLEN+1)) + (((namlen)+1 + 3) &~ 3))
+	((sizeof(struct direct) - (FFS_MAXNAMLEN+1)) + UFS_NAMEROUNDUP(namlen))
 
 #if (BYTE_ORDER == LITTLE_ENDIAN)
 #define UFS_DIRSIZ(oldfmt, dp, needswap)	\
