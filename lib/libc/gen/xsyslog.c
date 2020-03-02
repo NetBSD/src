@@ -1,4 +1,4 @@
-/*	$NetBSD: xsyslog.c,v 1.6 2020/03/02 14:10:24 christos Exp $	*/
+/*	$NetBSD: xsyslog.c,v 1.7 2020/03/02 15:30:25 christos Exp $	*/
 
 /*
  * Copyright (c) 1983, 1988, 1993
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)syslog.c	8.5 (Berkeley) 4/29/95";
 #else
-__RCSID("$NetBSD: xsyslog.c,v 1.6 2020/03/02 14:10:24 christos Exp $");
+__RCSID("$NetBSD: xsyslog.c,v 1.7 2020/03/02 15:30:25 christos Exp $");
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -124,7 +124,7 @@ _closelog_unlocked_r(struct syslog_data *data)
 	data->log_connected = 0;
 }
 
-static void
+static __sysloglike(6, 7) void
 _xsyslogp_r(int pri, struct syslog_fun *fun,
     struct syslog_data *data, const char *msgid,
     const char *sdfmt, const char *msgfmt, ...)
