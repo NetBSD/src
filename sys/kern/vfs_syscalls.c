@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_syscalls.c,v 1.542 2020/02/23 22:14:04 ad Exp $	*/
+/*	$NetBSD: vfs_syscalls.c,v 1.543 2020/03/03 19:55:16 christos Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2009, 2019, 2020 The NetBSD Foundation, Inc.
@@ -70,7 +70,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.542 2020/02/23 22:14:04 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_syscalls.c,v 1.543 2020/03/03 19:55:16 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_fileassoc.h"
@@ -1108,18 +1108,19 @@ dostatvfs(struct mount *mp, struct statvfs *sp, struct lwp *l, int flags,
 	 * refresh the fsstat cache. MNT_WAIT or MNT_LAZY
 	 * overrides MNT_NOWAIT.
 	 */
+	KASSERT(l == curlwp);
+	rvp = cwdrdir();
 	if (flags == MNT_NOWAIT	|| flags == MNT_LAZY ||
 	    (flags != MNT_WAIT && flags != 0)) {
 		memcpy(sp, &mp->mnt_stat, sizeof(*sp));
-		rvp = NULL;
 	} else {
 		/* Get the filesystem stats now */
 		memset(sp, 0, sizeof(*sp));
 		if ((error = VFS_STATVFS(mp, sp)) != 0) {
+			if (rvp)
+				vrele(rvp);
 			return error;
 		}
-		KASSERT(l == curlwp);
-		rvp = cwdrdir();
 		if (rvp == NULL)
 			(void)memcpy(&mp->mnt_stat, sp, sizeof(mp->mnt_stat));
 	}
