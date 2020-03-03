@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.278 2020/03/03 14:29:57 rin Exp $
+#	$NetBSD: Makefile,v 1.279 2020/03/03 20:01:01 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -266,7 +266,6 @@ SUBDIR+=	.WAIT
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on heimdal, libssh
-SUBDIR+=	../external/bsd/pam-u2f/lib
 .endif
 
 
@@ -278,6 +277,10 @@ SUBDIR+=	../crypto/external/cpl/trousers/lib
 
 #==================== 5th library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+.if (${MKPAM} != "no")
+SUBDIR+=	../external/bsd/pam-u2f/lib	# depends on libpam
+.endif
 
 SUBDIR+=	libp2k		# depends on libukfs, librumpvfs, libpuffs
 
