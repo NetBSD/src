@@ -1,4 +1,4 @@
-#	$NetBSD: NetBSD.dist.base,v 1.210 2020/02/07 18:48:58 kamil Exp $
+#	$NetBSD: NetBSD.dist.base,v 1.211 2020/03/03 00:42:33 christos Exp $
 #	@(#)4.4BSD.dist	8.1 (Berkeley) 6/13/93
 
 # Do not customize this file as it may be overwritten on upgrades.
@@ -111,6 +111,7 @@
 ./usr/include/c++
 ./usr/include/c++/experimental
 ./usr/include/c++/ext
+./usr/include/cbor
 ./usr/include/clang-9.0
 ./usr/include/crypto
 ./usr/include/dev
@@ -147,6 +148,7 @@
 ./usr/include/dev/vme
 ./usr/include/dev/wscons
 ./usr/include/event2
+./usr/include/fido
 ./usr/include/filecorefs
 ./usr/include/fs
 ./usr/include/fs/autofs
