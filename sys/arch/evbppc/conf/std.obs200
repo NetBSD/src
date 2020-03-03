@@ -1,8 +1,10 @@
-#	$NetBSD: std.obs200,v 1.4 2010/03/18 14:15:38 kiyohara Exp $
+#	$NetBSD: std.obs200,v 1.4.64.1 2020/03/03 18:54:59 martin Exp $
 #
 # Standard/required options for obs200
 
 include		"arch/evbppc/conf/std.obs405"
+
+options 	IBM405_ERRATA77
 
 makeoptions	PRDCTTYPE="obs200"
 makeoptions	TEXTADDR=0x450000
