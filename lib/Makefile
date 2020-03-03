@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.277 2020/03/03 12:54:51 christos Exp $
+#	$NetBSD: Makefile,v 1.278 2020/03/03 14:29:57 rin Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -265,7 +265,7 @@ SUBDIR+=	../external/bsd/mdocml/lib
 SUBDIR+=	.WAIT
 
 .if (${MKPAM} != "no")
-SUBDIR+=	libpam		# depends on heimdal
+SUBDIR+=	libpam		# depends on heimdal, libssh
 SUBDIR+=	../external/bsd/pam-u2f/lib
 .endif
 
