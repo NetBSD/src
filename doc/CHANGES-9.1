@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.8 2020/03/02 08:02:16 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.9 2020/03/03 18:56:34 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -312,4 +312,38 @@ sys/arch/powerpc/booke/copyin.c			1.8
 	Let copyinstr(9) return ENAMETOOLONG correctly if source is not
 	NUL-terminated.
 	[rin, ticket #752]
+
+sys/fs/tmpfs/tmpfs_vfsops.c			1.75
+
+	Remove an always false check.
+	[rin, ticket #753]
+
+sys/kern/files.kern				1.44
+
+	Include kern_crashme.c in non-DEBUG kernels.
+	This is useful for simulating crashes in production to test failover.
+	[rin, ticket #754]
+
+common/lib/libc/arch/powerpc/atomic/atomic_cas.S 1.9
+common/lib/libc/arch/powerpc/atomic/atomic_op_asm.h 1.7
+common/lib/libc/arch/powerpc/atomic/atomic_swap.S 1.8
+sys/arch/evbppc/conf/std.obs200			1.5
+sys/arch/evbppc/conf/std.obs266			1.3
+sys/arch/evbppc/conf/std.virtex			1.4
+sys/arch/evbppc/conf/std.walnut			1.9
+sys/arch/powerpc/ibm4xx/4xx_trap_subr.S		1.8
+sys/arch/powerpc/ibm4xx/trap_subr.S		1.28
+sys/arch/powerpc/include/asm.h			1.49
+sys/arch/powerpc/include/lock.h			1.15
+sys/arch/powerpc/powerpc/lock_stubs.S		1.12
+sys/arch/powerpc/powerpc/locore_subr.S		1.61
+sys/arch/powerpc/powerpc/trap_subr.S		1.81
+
+	Work around IBM405 Errata 77 (CPU_210) for kernel and userland. 
+	[rin, ticket #755]
+
+lib/Makefile					1.276
+
+	Avoid running useless makes in every subdirectory.
+	[riastradh, ticket #756]
 
