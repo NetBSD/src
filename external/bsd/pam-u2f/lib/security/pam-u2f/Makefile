@@ -1,11 +1,11 @@
-# $NetBSD: Makefile,v 1.1 2020/03/03 00:28:51 christos Exp $
+# $NetBSD: Makefile,v 1.2 2020/03/03 00:44:12 christos Exp $
 
 NOMAN=
 .include <bsd.own.mk>
 .PATH: ${NETBSDSRCDIR}/external/bsd/pam-u2f/dist
 
 CPPFLAGS+= -DHAVE_SECURITY_PAM_APPL_H #-DHAVE_SECURITY_PAM_MODULES_H
-CPPFLAGS+= -DPAM_DEBUG -DDEBUG_PAM
+#CPPFLAGS+= -DPAM_DEBUG -DDEBUG_PAM
 
 LIB=	pam_u2f
 SRCS=	pam-u2f.c drop_privs.c util.c b64.c explicit_bzero.c
