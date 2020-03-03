@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_vnode.c,v 1.107 2020/02/27 22:12:54 ad Exp $	*/
+/*	$NetBSD: uvm_vnode.c,v 1.108 2020/03/03 13:32:44 rjs Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -45,7 +45,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.107 2020/02/27 22:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_vnode.c,v 1.108 2020/03/03 13:32:44 rjs Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_uvmhist.h"
@@ -314,7 +314,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 					return 0;
 				}
 				rw_exit(uobj->vmobjlock);
-				uvm_wait("uvn_fp1");
+				uvm_wait("uvnfp1");
 				uvm_page_array_clear(a);
 				rw_enter(uobj->vmobjlock, RW_WRITER);
 				continue;
@@ -339,7 +339,7 @@ uvn_findpage(struct uvm_object *uobj, voff_t offset, struct vm_page **pgp,
 			UVMHIST_LOG(ubchist, "wait %#jx (color %ju)",
 			    (uintptr_t)pg, VM_PGCOLOR(pg), 0, 0);
 			UVM_UNLOCK_AND_WAIT_RW(pg, uobj->vmobjlock, 0,
-					       "uvn_fp2", 0);
+					       "uvnfp2", 0);
 			uvm_page_array_clear(a);
 			rw_enter(uobj->vmobjlock, RW_WRITER);
 			continue;
