@@ -25,7 +25,7 @@
 #if defined(DEBUG_PAM)
 #define D(file, ...) _debug(file, __FILE__, __LINE__, __func__, __VA_ARGS__)
 #else
-#define D(file, ...)
+#define D(file, ...) ((void)0)
 #endif /* DEBUG_PAM */
 
 typedef struct {
