@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2020/03/03 00:36:18 christos Exp $
+# $NetBSD: Makefile,v 1.2 2020/03/03 23:32:58 mlelstv Exp $
 
 NOLINT=
 NOMAN=
@@ -97,7 +97,7 @@ cbor/configuration.h: ${VERS_FILE}
 	echo	'#define CBOR_RESTRICT_SPECIFIER restrict' && \
 	echo	'#define CBOR_INLINE_SPECIFIER ') > ${.TARGET}
 
-CLEANFILES+= cbor/configuration.h cbor
+CLEANFILES+= cbor/configuration.h
 
 .BEGIN:
 
