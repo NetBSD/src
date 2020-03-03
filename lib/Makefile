@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.274 2019/12/18 02:46:21 christos Exp $
+#	$NetBSD: Makefile,v 1.275 2020/03/03 00:37:05 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -173,6 +173,7 @@ SUBDIR+=	../external/gpl3/${EXTERNAL_GCC_SUBDIR}/lib/libsupc++
 SUBDIR+=	../external/apache2/llvm/include
 .endif
 
+SUBDIR+=	../external/mit/libcbor/lib
 #==================== 2nd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
@@ -217,7 +218,7 @@ SUBDIR+=	../crypto/external/bsd/heimdal/lib	# depends on libcrypto
 							# libedit, libterminfo,
 .endif
 
-SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz
+SUBDIR+=	../external/bsd/libfido2/lib	# depends on libcbor
 SUBDIR+=	../crypto/external/bsd/netpgp/lib  # depends on libcrypto, ...
 SUBDIR+=	../external/bsd/libevent/lib	# depends on libcrypto
 .if ${MKDTRACE} != "no"
@@ -238,6 +239,8 @@ SUBDIR+= 	../libexec/httpd/libbozohttpd 	# depends on libssl & libcrypto
 #==================== 3rd library dependency barrier ====================
 SUBDIR+=	.WAIT
 
+SUBDIR+=	../crypto/external/bsd/openssh/lib # depends on libcrypto, libz,
+						   # libfido2
 SUBDIR+=	../crypto/external/bsd/netpgp/bindings/lua  # depends on netpgp/lib
 SUBDIR+=	../external/mpl/bind/lib	# depends on heimdal, libcrypto
 .if ${MKUNBOUND} != "no"
@@ -256,6 +259,7 @@ SUBDIR+=	librumpvfs	# depends on librump
 
 .if (${MKPAM} != "no")
 SUBDIR+=	libpam		# depends on heimdal
+SUBDIR+=	../external/bsd/pam-u2f/lib
 .endif
 
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
