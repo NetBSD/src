@@ -1,4 +1,4 @@
-#	$NetBSD: mi,v 1.2311 2020/02/22 21:24:44 ad Exp $
+#	$NetBSD: mi,v 1.2312 2020/03/03 00:38:12 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 ./etc/mtree/set.comp				comp-sys-root
@@ -322,6 +322,22 @@
 ./usr/include/c++/utility			comp-cxx-include	libcxx
 ./usr/include/c++/valarray			comp-cxx-include	libcxx
 ./usr/include/c++/vector			comp-cxx-include	libcxx
+./usr/include/cbor				comp-c-include
+./usr/include/cbor.h				comp-c-include
+./usr/include/cbor/arrays.h			comp-c-include
+./usr/include/cbor/bytestrings.h		comp-c-include
+./usr/include/cbor/callbacks.h			comp-c-include
+./usr/include/cbor/common.h			comp-c-include
+./usr/include/cbor/configuration.h		comp-c-include
+./usr/include/cbor/data.h			comp-c-include
+./usr/include/cbor/encoding.h			comp-c-include
+./usr/include/cbor/floats_ctrls.h		comp-c-include
+./usr/include/cbor/ints.h			comp-c-include
+./usr/include/cbor/maps.h			comp-c-include
+./usr/include/cbor/serialization.h		comp-c-include
+./usr/include/cbor/streaming.h			comp-c-include
+./usr/include/cbor/strings.h			comp-c-include
+./usr/include/cbor/tags.h			comp-c-include
 ./usr/include/cdbr.h				comp-c-include
 ./usr/include/cdbw.h				comp-c-include
 ./usr/include/cdk/alphalist.h			comp-obsolete		obsolete
@@ -827,6 +843,16 @@
 ./usr/include/fcntl.h				comp-c-include
 ./usr/include/fenv.h				comp-c-include
 ./usr/include/fetch.h				comp-c-include
+./usr/include/fido.h				comp-c-include
+./usr/include/fido				comp-c-include
+./usr/include/fido/bio.h			comp-c-include
+./usr/include/fido/credman.h			comp-c-include
+./usr/include/fido/eddsa.h			comp-c-include
+./usr/include/fido/err.h			comp-c-include
+./usr/include/fido/es256.h			comp-c-include
+./usr/include/fido/param.h			comp-c-include
+./usr/include/fido/rs256.h			comp-c-include
+./usr/include/fido/types.h			comp-c-include
 ./usr/include/filecorefs/filecore_mount.h	comp-c-include
 ./usr/include/float.h				comp-c-include
 ./usr/include/fmtmsg.h				comp-c-include
@@ -3414,6 +3440,8 @@
 ./usr/lib/libc++_p.a				comp-c-proflib		compatfile,libcxx,compatfile,profile
 ./usr/lib/libc.a				comp-c-lib		compatfile
 ./usr/lib/libc_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libcbor.a				comp-c-lib		compatfile
+./usr/lib/libcbor_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libcdk.a				comp-obsolete		obsolete
 ./usr/lib/libcdk_p.a				comp-obsolete		obsolete
 ./usr/lib/libcom_err.a				comp-krb5-lib		compatfile,kerberos
@@ -3462,6 +3490,8 @@
 ./usr/lib/libexecinfo_p.a			comp-c-proflib		compatfile,profile
 ./usr/lib/libexpat.a				comp-c-lib		compatfile
 ./usr/lib/libexpat_p.a				comp-c-proflib		compatfile,profile
+./usr/lib/libfido2.a				comp-c-lib		compatfile
+./usr/lib/libfido2_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libfetch.a				comp-c-lib		compatfile
 ./usr/lib/libfetch_p.a				comp-c-proflib		compatfile,profile
 ./usr/lib/libfl.a				comp-c-lib		compatfile
@@ -3907,6 +3937,7 @@
 ./usr/lib/pkgconfig/expat.pc			comp-c-lib
 ./usr/lib/pkgconfig/kyua-testers.pc		comp-kyua-lib		kyua,share
 ./usr/lib/pkgconfig/libcrypto.pc		comp-crypto-lib		share
+./usr/lib/pkgconfig/libfido2.pc			comp-c-lib		share
 ./usr/lib/pkgconfig/libssl.pc			comp-crypto-lib		share
 ./usr/lib/pkgconfig/lutok.pc			comp-crypto-lib		kyua,share
 ./usr/lib/pkgconfig/openssl.pc			comp-crypto-lib		share
