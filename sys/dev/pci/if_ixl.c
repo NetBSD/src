@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.57 2020/03/03 04:19:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.58 2020/03/03 04:22:45 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.57 2020/03/03 04:19:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.58 2020/03/03 04:22:45 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -3807,6 +3807,7 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	bus_dmamap_sync(sc->sc_dmat, IXL_DMA_MAP(&sc->sc_atq),
 	    0, IXL_DMA_LEN(&sc->sc_atq), BUS_DMASYNC_POSTWRITE);
 
+	KASSERT(iatq->iatq_fn != NULL);
 	*slot = iatq->iatq_desc;
 	slot->iaq_cookie = (uint64_t)((intptr_t)iatq);
 
