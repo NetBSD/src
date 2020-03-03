@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.275 2020/03/03 00:37:05 christos Exp $
+#	$NetBSD: Makefile,v 1.276 2020/03/03 04:20:50 riastradh Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -297,22 +297,6 @@ SUBDIR+=	lua
 
 # Needed by rump and rescue which are outside the smbfs tree
 SUBDIR+=	../external/bsd/smbfs/lib
-
-.for S in ${SUBDIR}
-.if ${S} != ".WAIT"
-SUBLIB_${S}!=	cd ${S} && ${MAKE} -V LIB
-SUBDEP_${S}!=	cd ${S} && ${MAKE} -V LIBDPLIBS
-.endif
-.endfor
-
-showdeps:
-.for S in ${SUBDIR}
-.if ${S} != ".WAIT"
-.for DL DD in ${SUBDEP_${S}}
-	@echo ${S} ${SUBLIB_${S}} ${DL} ${DD:C,^${.CURDIR}/,,}
-.endfor
-.endif
-.endfor
 
 .include <bsd.buildinstall.mk>
 .include <bsd.subdir.mk>
