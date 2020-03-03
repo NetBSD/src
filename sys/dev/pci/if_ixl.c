@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.56 2020/02/25 08:05:24 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.57 2020/03/03 04:19:20 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.56 2020/02/25 08:05:24 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.57 2020/03/03 04:19:20 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -775,7 +775,6 @@ static int	ixl_atq_poll(struct ixl_softc *, struct ixl_aq_desc *,
 		    unsigned int);
 static void	ixl_atq_set(struct ixl_atq *,
 		    void (*)(struct ixl_softc *, const struct ixl_aq_desc *));
-static int	ixl_atq_post(struct ixl_softc *, struct ixl_atq *);
 static int	ixl_atq_post_locked(struct ixl_softc *, struct ixl_atq *);
 static void	ixl_atq_done(struct ixl_softc *);
 static int	ixl_atq_exec(struct ixl_softc *, struct ixl_atq *);
@@ -798,6 +797,8 @@ static int	ixl_set_vsi(struct ixl_softc *);
 static void	ixl_set_filter_control(struct ixl_softc *);
 static void	ixl_get_link_status(void *);
 static int	ixl_get_link_status_poll(struct ixl_softc *, int *);
+static void	ixl_get_link_status_done(struct ixl_softc *,
+		    const struct ixl_aq_desc *);
 static int	ixl_set_link_status(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
 static uint64_t	ixl_search_link_speed(uint8_t);
@@ -1412,6 +1413,7 @@ ixl_attach(device_t parent, device_t self, void *aux)
 		link = LINK_STATE_UNKNOWN;
 	if_link_state_change(ifp, link);
 
+	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
 	ixl_work_set(&sc->sc_link_state_task, ixl_get_link_status, sc);
 
 	ixl_config_other_intr(sc);
@@ -3659,14 +3661,16 @@ ixl_get_link_status(void *xsc)
 	struct ixl_aq_desc *iaq;
 	struct ixl_aq_link_param *param;
 
-	memset(&sc->sc_link_state_atq, 0, sizeof(sc->sc_link_state_atq));
+	mutex_enter(&sc->sc_atq_lock);
+
 	iaq = &sc->sc_link_state_atq.iatq_desc;
+	memset(iaq, 0, sizeof(*iaq));
 	iaq->iaq_opcode = htole16(IXL_AQ_OP_PHY_LINK_STATUS);
 	param = (struct ixl_aq_link_param *)iaq->iaq_param;
 	param->notify = IXL_AQ_LINK_NOTIFY;
 
-	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
-	(void)ixl_atq_post(sc, &sc->sc_link_state_atq);
+	(void)ixl_atq_post_locked(sc, &sc->sc_link_state_atq);
+	mutex_exit(&sc->sc_atq_lock);
 }
 
 static void
@@ -3816,18 +3820,6 @@ ixl_atq_post_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
 	ixl_wr(sc, sc->sc_aq_regs->atq_tail, sc->sc_atq_prod);
 
 	return 0;
-}
-
-static int
-ixl_atq_post(struct ixl_softc *sc, struct ixl_atq *iatq)
-{
-	int rv;
-
-	mutex_enter(&sc->sc_atq_lock);
-	rv = ixl_atq_post_locked(sc, iatq);
-	mutex_exit(&sc->sc_atq_lock);
-
-	return rv;
 }
 
 static void
