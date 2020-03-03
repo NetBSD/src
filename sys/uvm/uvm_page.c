@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.229 2020/03/03 07:51:26 skrll Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.230 2020/03/03 08:13:44 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.229 2020/03/03 07:51:26 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.230 2020/03/03 08:13:44 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -778,7 +778,7 @@ uvm_page_redim(int newncolors, int newnbuckets)
 	struct pgfreelist npgfl;
 	struct pgflbucket *opgb, *npgb;
 	struct pgflist *ohead, *nhead;
-	struct vm_page *pg; 
+	struct vm_page *pg;
 	size_t bucketsize, bucketmemsize, oldbucketmemsize;
 	int fl, ob, oc, nb, nc, obuckets, ocolors;
 	char *bucketarray, *oldbucketmem, *bucketmem;
@@ -940,7 +940,7 @@ uvm_page_rebucket(void)
 		 * locality strategy.
 		 */
 		aprint_debug("UVM: using NUMA allocation scheme\n");
-		for (CPU_INFO_FOREACH(cii, ci)) {	
+		for (CPU_INFO_FOREACH(cii, ci)) {
 			ci->ci_data.cpu_uvm->pgflbucket = ci->ci_numa_id;
 		}
 		uvm.numa_alloc = true;
@@ -957,7 +957,7 @@ uvm_page_rebucket(void)
 	 * freeing CPU's preferred bucket on free.
 	 */
 	npackage = curcpu()->ci_nsibling[CPUREL_PACKAGE1ST];
-	
+
 	/*
 	 * Figure out how to arrange the packages & buckets, and the total
 	 * number of buckets we need.  XXX 2 may not be the best factor.
@@ -1102,7 +1102,7 @@ uvm_pagealloc_pgb(struct uvm_cpu *ucpu, int f, int b, int *trycolorp, int flags)
 			KASSERT(pg->flags & PG_FREE);
 			pg->flags &= PG_ZERO;
 			pgb->pgb_nfree--;
-	
+
 			/*
 			 * While we have the bucket locked and our data
 			 * structures fresh in L1 cache, we have an ideal
@@ -1891,7 +1891,7 @@ uvm_pageactivate(struct vm_page *pg)
 
 /*
  * uvm_pagedequeue: remove a page from any paging queue
- * 
+ *
  * => caller must lock objects
  * => caller must hold pg->interlock
  */
@@ -1953,7 +1953,7 @@ uvm_pagelock2(struct vm_page *pg1, struct vm_page *pg2)
 /*
  * uvm_pageunlock: release page interlock, and if a page replacement intent
  * is set on the page, pass it to uvmpdpol to make real.
- * 
+ *
  * => caller must hold pg->interlock
  */
 void
@@ -1974,7 +1974,7 @@ uvm_pageunlock(struct vm_page *pg)
  * uvm_pageunlock2: release two page interlocks, and for both pages if a
  * page replacement intent is set on the page, pass it to uvmpdpol to make
  * real.
- * 
+ *
  * => caller must hold pg->interlock
  */
 void
@@ -2284,7 +2284,7 @@ uvm_page_print_freelists(void (*pr)(const char *, ...))
 
 	(*pr)("There are %d freelists with %d buckets of %d colors.\n\n",
 	    VM_NFREELIST, uvm.bucketcount, uvmexp.ncolors);
-	    
+
 	for (fl = 0; fl < VM_NFREELIST; fl++) {
 		pgfl = &uvm.page_free[fl];
 		(*pr)("freelist(%d) @ %p\n", fl, pgfl);
