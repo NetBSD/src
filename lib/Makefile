@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.276 2020/03/03 04:20:50 riastradh Exp $
+#	$NetBSD: Makefile,v 1.277 2020/03/03 12:54:51 christos Exp $
 #	from: @(#)Makefile	5.25.1.1 (Berkeley) 5/7/91
 
 .include <bsd.own.mk>
@@ -257,17 +257,18 @@ SUBDIR+=	librumpnet	# depends on librump
 SUBDIR+=	librumpvfs	# depends on librump
 .endif
 
-.if (${MKPAM} != "no")
-SUBDIR+=	libpam		# depends on heimdal
-SUBDIR+=	../external/bsd/pam-u2f/lib
-.endif
-
 SUBDIR+=	../crypto/external/bsd/libsaslc	# depends on heimdal, openssl
 SUBDIR+=	../external/bsd/mdocml/lib
 
 .if (${MKRUMP} != "no")
 #==================== 4th library dependency barrier ====================
 SUBDIR+=	.WAIT
+
+.if (${MKPAM} != "no")
+SUBDIR+=	libpam		# depends on heimdal
+SUBDIR+=	../external/bsd/pam-u2f/lib
+.endif
+
 
 SUBDIR+=	libukfs		# depends on librumpvfs, librump
 
