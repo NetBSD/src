@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.22 2020/02/22 19:44:07 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.23 2020/03/03 17:09:22 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -684,7 +684,7 @@ struct lwp_event_count {
 	int lec_count;
 };
 
-static int *
+static int * __used
 find_event_count(struct lwp_event_count list[], lwpid_t lwp, size_t max_lwps)
 {
 	size_t i;
