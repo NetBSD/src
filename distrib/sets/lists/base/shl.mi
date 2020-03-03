@@ -1,4 +1,4 @@
-# $NetBSD: shl.mi,v 1.877 2020/02/27 00:25:49 christos Exp $
+# $NetBSD: shl.mi,v 1.878 2020/03/03 00:38:12 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -248,7 +248,10 @@
 ./usr/lib/libc.so				base-sys-shlib		compatfile
 ./usr/lib/libc.so.12				base-sys-shlib		compatfile
 ./usr/lib/libc.so.12.214			base-sys-shlib		compatfile
-./usr/lib/libcdk.so				base-obsolete		compatfile,obsolete
+./usr/lib/libcbor.so				base-sys-shlib		compatfile
+./usr/lib/libcbor.so.0				base-sys-shlib		compatfile
+./usr/lib/libcbor.so.0.5			base-sys-shlib		compatfile
+./usr/usr/lib/libcdk.so				base-obsolete		compatfile,obsolete
 ./usr/lib/libcom_err.so				base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libcom_err.so.8			base-krb5-shlib		compatfile,kerberos
 ./usr/lib/libcom_err.so.8.0			base-krb5-shlib		compatfile,kerberos
@@ -320,6 +323,9 @@
 ./usr/lib/libfetch.so				base-sys-shlib		compatfile
 ./usr/lib/libfetch.so.3				base-sys-shlib		compatfile
 ./usr/lib/libfetch.so.3.0			base-sys-shlib		compatfile
+./usr/lib/libfido2.so				base-sys-shlib		compatfile
+./usr/lib/libfido2.so.2				base-sys-shlib		compatfile
+./usr/lib/libfido2.so.2.0			base-sys-shlib		compatfile
 ./usr/lib/libform.so				base-sys-shlib		compatfile
 ./usr/lib/libform.so.7				base-sys-shlib		compatfile
 ./usr/lib/libform.so.7.0			base-sys-shlib		compatfile
@@ -968,5 +974,6 @@
 ./usr/lib/security/pam_self.so.4		base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_skey.so.4		base-sys-shlib		compatfile,skey,pam
 ./usr/lib/security/pam_ssh.so.4			base-sys-shlib		compatfile,pam
+./usr/lib/security/pam_u2f.so.4			base-sys-shlib		compatfile,pam
 ./usr/lib/security/pam_unix.so.4		base-sys-shlib		compatfile,pam
 ./usr/libexec/ld.elf_so				base-sys-shlib		dynamicroot
