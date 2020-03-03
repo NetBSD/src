@@ -1,4 +1,4 @@
-/*	$NetBSD: locore_subr.S,v 1.57.4.1 2020/02/27 18:50:43 martin Exp $	*/
+/*	$NetBSD: locore_subr.S,v 1.57.4.2 2020/03/03 18:54:59 martin Exp $	*/
 
 /*
  * Copyright (c) 2001 Wasabi Systems, Inc.
@@ -288,6 +288,7 @@ switchto_restore:
  */
 	ldreg	%r31,CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,CFRAME_R30(%r1)
+	IBM405_ERRATA77_DCBT(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 #if 1
 	addi	%r1,%r1,CALLFRAMELEN
@@ -329,6 +330,7 @@ _ENTRY(softint_cleanup)
 	mtmsr	%r0
 	isync
 #endif
+	IBM405_ERRATA77_DCBT(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 	addi	%r1, %r1, CALLFRAMELEN
 	ldreg	%r0, CFRAME_LR(%r1)
@@ -480,6 +482,7 @@ _ENTRY(softint_fast_dispatch)
 	ldreg	%r29,SFRAME_R29(%r1)	/* R29 */
 	ldreg	%r31,SFRAMELEN+CFRAME_R31(%r1)	/* restore saved registers */
 	ldreg	%r30,SFRAMELEN+CFRAME_R30(%r1)
+	IBM405_ERRATA77_DCBT(0,%r1)
 	stwcx.	%r1,0,%r1		/* clear reservation */
 	addi	%r1,%r1,SFRAMELEN+2*CALLFRAMELEN /* remove switch & callframes */
 #endif
@@ -588,6 +591,7 @@ ENTRY(do_ucas_32)
 	lwarx	%r10,0,%r3
 	cmpw	%r10, %r4
 	bne	2f
+	IBM405_ERRATA77_DCBT(0,%r3)
 	stwcx.	%r5,0,%r3
 	bne	1b
 	mr	%r5,%r10
