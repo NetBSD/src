@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.59 2020/03/03 04:34:45 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.60 2020/03/03 04:55:46 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.59 2020/03/03 04:34:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.60 2020/03/03 04:55:46 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2733,8 +2733,7 @@ ixl_tx_common_locked(struct ifnet *ifp, struct ixl_tx_ring *txr,
 
 	KASSERT(mutex_owned(&txr->txr_lock));
 
-	if (ifp->if_link_state != LINK_STATE_UP
-	    || !ISSET(ifp->if_flags, IFF_RUNNING)
+	if (!ISSET(ifp->if_flags, IFF_RUNNING)
 	    || (!is_transmit && ISSET(ifp->if_flags, IFF_OACTIVE))) {
 		if (!is_transmit)
 			IFQ_PURGE(&ifp->if_snd);
