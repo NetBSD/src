@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.58 2020/03/03 04:22:45 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.59 2020/03/03 04:34:45 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.58 2020/03/03 04:22:45 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.59 2020/03/03 04:34:45 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -778,6 +778,7 @@ static void	ixl_atq_set(struct ixl_atq *,
 static int	ixl_atq_post_locked(struct ixl_softc *, struct ixl_atq *);
 static void	ixl_atq_done(struct ixl_softc *);
 static int	ixl_atq_exec(struct ixl_softc *, struct ixl_atq *);
+static int	ixl_atq_exec_locked(struct ixl_softc *, struct ixl_atq *);
 static int	ixl_get_version(struct ixl_softc *);
 static int	ixl_get_nvm_version(struct ixl_softc *);
 static int	ixl_get_hw_capabilities(struct ixl_softc *);
@@ -3660,6 +3661,7 @@ ixl_get_link_status(void *xsc)
 	struct ixl_softc *sc = xsc;
 	struct ixl_aq_desc *iaq;
 	struct ixl_aq_link_param *param;
+	int error;
 
 	mutex_enter(&sc->sc_atq_lock);
 
@@ -3669,7 +3671,13 @@ ixl_get_link_status(void *xsc)
 	param = (struct ixl_aq_link_param *)iaq->iaq_param;
 	param->notify = IXL_AQ_LINK_NOTIFY;
 
-	(void)ixl_atq_post_locked(sc, &sc->sc_link_state_atq);
+	error = ixl_atq_exec_locked(sc, &sc->sc_link_state_atq);
+	if (error == 0) {
+		ixl_get_link_status_done(sc, iaq);
+	}
+
+	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
+
 	mutex_exit(&sc->sc_atq_lock);
 }
 
@@ -3894,20 +3902,29 @@ ixl_atq_exec(struct ixl_softc *sc, struct ixl_atq *iatq)
 {
 	int error;
 
+	mutex_enter(&sc->sc_atq_lock);
+	error = ixl_atq_exec_locked(sc, iatq);
+	mutex_exit(&sc->sc_atq_lock);
+
+	return error;
+}
+
+static int
+ixl_atq_exec_locked(struct ixl_softc *sc, struct ixl_atq *iatq)
+{
+	int error;
+
+	KASSERT(mutex_owned(&sc->sc_atq_lock));
 	KASSERT(iatq->iatq_desc.iaq_cookie == 0);
 
 	ixl_atq_set(iatq, ixl_wakeup);
 
-	mutex_enter(&sc->sc_atq_lock);
 	error = ixl_atq_post_locked(sc, iatq);
-	if (error) {
-		mutex_exit(&sc->sc_atq_lock);
+	if (error)
 		return error;
-	}
 
 	error = cv_timedwait(&sc->sc_atq_cv, &sc->sc_atq_lock,
 	    IXL_ATQ_EXEC_TIMEOUT);
-	mutex_exit(&sc->sc_atq_lock);
 
 	return error;
 }
