@@ -1,4 +1,4 @@
-#	$NetBSD: 3RDPARTY,v 1.1694 2020/02/27 00:29:17 christos Exp $
+#	$NetBSD: 3RDPARTY,v 1.1695 2020/03/03 00:41:42 christos Exp $
 #
 # This file contains a list of the software that has been integrated into
 # NetBSD where we are not the primary maintainer.
@@ -2180,7 +2180,6 @@ Notes:
 
 Package:	terminfo
 Version:	20190609
-
 Current Vers:	20190609
 Maintainer:	Thomas Dickey (ncurses)
 Archive Site:	ftp://ftp.invisible-island.net/ncurses/current
@@ -2192,3 +2191,42 @@ License:	none
 Location:	sys/external/bsd/ena-com
 Notes:
 Use the import script in /usr/src/share/terminfo
+
+Package:	libcbor
+Version:	20200302
+Current Vers:	20200302
+Maintainer:	Pavel Kalvoda
+Archive Site:	https://github.com/PJK/libcbor.git
+Home Page:	
+Date:		2020-03-02
+Mailing List:	christos
+Responsible:
+License:	mit
+Location:	sys/external/mit/libcbor
+Notes:
+
+Package:	pam-u2f
+Version:	1.0.8
+Current Vers:	1.0.8
+Maintainer:	Yubico
+Archive Site:	https://github.com/Yubico/pam-u2f.git
+Home Page:	https://developers.yubico.com/pam-u2f/
+Date:		2020-03-02
+Mailing List:	christos
+Responsible:
+License:	bsd
+Location:	sys/external/bsd/pam-u2f
+Notes:
+
+Package:	libfido2
+Version:	0.5.0
+Current Vers:	0.5.0
+Maintainer:	Yubico
+Archive Site:	https://github.com/Yubico/libfido2.git
+Home Page:	https://developers.yubico.com/libfido2/Manuals/
+Date:		2020-03-02
+Mailing List:	christos
+Responsible:
+License:	bsd
+Location:	sys/external/bsd/libfido2
+Notes:
