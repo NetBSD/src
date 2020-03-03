@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.115 2020/02/29 18:49:53 thorpej Exp $ */
+/* $NetBSD: if_ti.c,v 1.116 2020/03/03 05:41:36 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.115 2020/02/29 18:49:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.116 2020/03/03 05:41:36 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -2032,10 +2032,8 @@ ti_rxeof(struct ti_softc *sc)
 			break;
 		}
 
-		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG) {
-			/* ti_vlan_tag also has the priority, trim it */
-			vlan_set_tag(m, cur_rx->ti_vlan_tag & 0x0fff);
-		}
+		if (cur_rx->ti_flags & TI_BDFLAG_VLAN_TAG)
+			vlan_set_tag(m, cur_rx->ti_vlan_tag);
 
 		if_percpuq_enqueue(ifp->if_percpuq, m);
 	}
