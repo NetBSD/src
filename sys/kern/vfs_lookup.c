@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_lookup.c,v 1.212.4.10 2020/02/29 20:21:03 ad Exp $	*/
+/*	$NetBSD: vfs_lookup.c,v 1.212.4.11 2020/03/03 22:30:57 ad Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.10 2020/02/29 20:21:03 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_lookup.c,v 1.212.4.11 2020/03/03 22:30:57 ad Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_magiclinks.h"
@@ -1308,6 +1308,13 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 			}
 		}
 
+		/* Can't deal with -o union lookups. */
+		if ((searchdir->v_vflag & VV_ROOT) != 0 &&
+		    (searchdir->v_mount->mnt_flag & MNT_UNION) != 0) {
+		    	error = EOPNOTSUPP;
+		    	break;
+		}
+
 		/*
 		 * Good, now look for it in cache.  cache_lookup_linked()
 		 * will fail if there's nothing there, or if there's no
@@ -1323,7 +1330,6 @@ lookup_fastforward(struct namei_state *state, struct vnode **searchdir_ret,
 
 		/* Scored a hit.  Negative is good too (ENOENT). */
 		if (foundobj == NULL) {
-			/* XXXAD need to handle -o union mount. */
 			error = ENOENT;
 			break;
 		}
