@@ -168,9 +168,10 @@ int pam_sm_authenticate(pam_handle_t *pamh, int flags, int argc,
   int should_free_appid = 0;
   int should_free_auth_file = 0;
   int should_free_authpending_file = 0;
-  PAM_MODUTIL_DEF_PRIVS(privs);
 
   parse_cfg(flags, argc, argv, cfg);
+
+  PAM_MODUTIL_DEF_PRIVS(privs);
 
   if (!cfg->origin) {
     strcpy(buffer, DEFAULT_ORIGIN_PREFIX);
@@ -427,24 +428,24 @@ done:
     free(buf);
     buf = NULL;
   }
-
+#define free_const(a)	free((void *)(uintptr_t)(a))
   if (should_free_origin) {
-    free((char *) cfg->origin);
+    free_const(cfg->origin);
     cfg->origin = NULL;
   }
 
   if (should_free_appid) {
-    free((char *) cfg->appid);
+    free_const(cfg->appid);
     cfg->appid = NULL;
   }
 
   if (should_free_auth_file) {
-    free((char *) cfg->auth_file);
+    free_const(cfg->auth_file);
     cfg->auth_file = NULL;
   }
 
   if (should_free_authpending_file) {
-    free((char *) cfg->authpending_file);
+    free_const(cfg->authpending_file);
     cfg->authpending_file = NULL;
   }
 
@@ -470,3 +471,7 @@ PAM_EXTERN int pam_sm_setcred(pam_handle_t *pamh, int flags, int argc,
 
   return PAM_SUCCESS;
 }
+
+#ifdef PAM_MODULE_ENTRY
+PAM_MODULE_ENTRY("pam_u2f"); 
+#endif
