@@ -1,4 +1,4 @@
-/*	$NetBSD: uvm_page.c,v 1.228 2020/02/27 22:12:54 ad Exp $	*/
+/*	$NetBSD: uvm_page.c,v 1.229 2020/03/03 07:51:26 skrll Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -95,7 +95,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.228 2020/02/27 22:12:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uvm_page.c,v 1.229 2020/03/03 07:51:26 skrll Exp $");
 
 #include "opt_ddb.h"
 #include "opt_uvm.h"
@@ -1532,7 +1532,7 @@ uvm_pagefree(struct vm_page *pg)
 		rw_write_held(pg->uanon->an_lock));
 
 	/*
-	 * remove the page from the object's tree beore acquiring any page
+	 * remove the page from the object's tree before acquiring any page
 	 * interlocks: this can acquire locks to free radixtree nodes.
 	 */
 	if (pg->uobject != NULL) {
