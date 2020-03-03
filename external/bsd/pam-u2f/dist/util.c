@@ -1165,8 +1165,8 @@ void _debug(FILE *debug_file, const char *file, int line, const char *func,
   va_start(ap, fmt);
 #ifdef LOG_DEBUG
   if (debug_file == (FILE *) -1) {
-    syslog(LOG_AUTHPRIV | LOG_ERR, DEBUG_STR, file, line, func);
-    vsyslog(LOG_AUTHPRIV | LOG_ERR, fmt, ap);
+    syslog(LOG_AUTHPRIV | LOG_DEBUG, DEBUG_STR, file, line, func);
+    vsyslog(LOG_AUTHPRIV | LOG_DEBUG, fmt, ap);
   } else {
     fprintf(debug_file, DEBUG_STR, file, line, func);
     vfprintf(debug_file, fmt, ap);
