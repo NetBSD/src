@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.295 2020/03/03 00:38:12 christos Exp $
+# $NetBSD: mi,v 1.296 2020/03/04 22:09:00 christos Exp $
 ./etc/mtree/set.debug                           comp-sys-root
 ./usr/lib					comp-sys-usr		compatdir
 ./usr/lib/i18n/libBIG5_g.a			comp-c-debuglib		debuglib,compatfile
@@ -706,7 +706,7 @@
 ./usr/libdata/debug/usr/bin/openpgp.debug	comp-obsolete		obsolete
 ./usr/libdata/debug/usr/bin/openssl.debug	comp-crypto-debug	debug
 ./usr/libdata/debug/usr/bin/p++.debug		comp-obsolete		obsolete
-./usr/libdata/debug/usr/bin/pamu2fcfg.debug	comp-util-debug		debug
+./usr/libdata/debug/usr/bin/pamu2fcfg.debug	comp-util-debug		debug,pam
 ./usr/libdata/debug/usr/bin/passwd.debug	comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/paste.debug		comp-util-debug		debug
 ./usr/libdata/debug/usr/bin/patch.debug		comp-util-debug		debug
