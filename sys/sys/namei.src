@@ -1,4 +1,4 @@
-/*	$NetBSD: namei.src,v 1.47.2.6 2020/01/24 16:48:59 ad Exp $	*/
+/*	$NetBSD: namei.src,v 1.47.2.7 2020/03/04 20:21:05 ad Exp $	*/
 
 /*
  * Copyright (c) 1985, 1989, 1991, 1993
@@ -203,8 +203,7 @@ NAMEIFL	PARAMASK	0x02ef800	/* mask of parameter descriptors */
  *
  * This structure describes the elements in the cache of recent names looked
  * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
- * good use of space and the CPU caches; nc_name is aligned on an 8-byte
- * boundary to make string comparisons cheaper.
+ * good use of space and the CPU caches.
  *
  * Field markings and their corresponding locks:
  *
