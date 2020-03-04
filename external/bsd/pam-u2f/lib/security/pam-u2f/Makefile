@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2020/03/03 00:44:12 christos Exp $
+# $NetBSD: Makefile,v 1.3 2020/03/04 17:32:27 christos Exp $
 
 NOMAN=
 .include <bsd.own.mk>
@@ -16,6 +16,7 @@ COPTS.util.c += -Wno-error=stack-protector
 LIBDPLIBS+= \
 	fido2	${NETBSDSRCDIR}/external/bsd/libfido2/lib \
 	cbor	${NETBSDSRCDIR}/external/mit/libcbor/lib \
-	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto
+	crypto	${NETBSDSRCDIR}/crypto/external/bsd/${EXTERNAL_OPENSSL_SUBDIR}/lib/libcrypto \
+	m	${NETBSDSRCDIR}/lib/libm
 
 .include "${NETBSDSRCDIR}/lib/libpam/modules/mod.mk"
