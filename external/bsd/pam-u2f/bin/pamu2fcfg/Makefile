@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.1 2020/03/03 03:10:32 christos Exp $
+# $NetBSD: Makefile,v 1.2 2020/03/04 17:32:27 christos Exp $
 
 NOMAN=
 
@@ -21,7 +21,7 @@ PROG=pamu2fcfg
 SRCS=pamu2fcfg.c cmdline.c b64.c readpassphrase.c explicit_bzero.c util.c
 COPTS.util.c += -Wno-error=stack-protector
 
-LDADD+=-lpam -lfido2 -lcbor -lusbhid -lcrypto
-DPADD+=${LIBPAM} ${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBCRYPTO}
+LDADD+=-lpam -lfido2 -lcbor -lusbhid -lcrypto -lm
+DPADD+=${LIBPAM} ${LIBFIDO2} ${LIBCBOR} ${LIBUSBHID} ${LIBCRYPTO} ${LIBM}
 
 .include <bsd.prog.mk>
