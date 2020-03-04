@@ -1,4 +1,4 @@
-/*	$NetBSD: ehcivar.h,v 1.46 2018/09/18 02:00:06 mrg Exp $ */
+/*	$NetBSD: ehcivar.h,v 1.47 2020/03/04 16:17:23 skrll Exp $ */
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -80,13 +80,13 @@ typedef struct ehci_soft_itd {
 	int slot;
 	struct timeval t; /* store free time */
 } ehci_soft_itd_t;
-#define EHCI_ITD_SIZE ((sizeof(struct ehci_soft_itd) + EHCI_QH_ALIGN - 1) / EHCI_ITD_ALIGN * EHCI_ITD_ALIGN)
+#define EHCI_ITD_SIZE ((sizeof(struct ehci_soft_itd) + EHCI_ITD_ALIGN - 1) / EHCI_ITD_ALIGN * EHCI_ITD_ALIGN)
 #define EHCI_ITD_CHUNK (EHCI_PAGE_SIZE / EHCI_ITD_SIZE)
 
 #define ehci_soft_sitd_t ehci_soft_itd_t
 #define ehci_soft_sitd ehci_soft_itd
 #define sc_softsitds sc_softitds
-#define EHCI_SITD_SIZE ((sizeof(struct ehci_soft_sitd) + EHCI_QH_ALIGN - 1) / EHCI_SITD_ALIGN * EHCI_SITD_ALIGN)
+#define EHCI_SITD_SIZE ((sizeof(struct ehci_soft_sitd) + EHCI_SITD_ALIGN - 1) / EHCI_SITD_ALIGN * EHCI_SITD_ALIGN)
 #define EHCI_SITD_CHUNK (EHCI_PAGE_SIZE / EHCI_SITD_SIZE)
 
 struct ehci_xfer {
