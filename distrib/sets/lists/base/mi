@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1230 2020/03/03 00:38:12 christos Exp $
+# $NetBSD: mi,v 1.1231 2020/03/04 22:09:00 christos Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -894,7 +894,7 @@
 ./usr/bin/openssl				base-crypto-bin
 ./usr/bin/page					base-util-bin
 ./usr/bin/pagesize				base-util-bin
-./usr/bin/pamu2fcfg				base-util-bin
+./usr/bin/pamu2fcfg				base-util-bin		pam
 ./usr/bin/passwd				base-util-bin
 ./usr/bin/paste					base-util-bin
 ./usr/bin/patch					base-util-bin
