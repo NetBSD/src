@@ -1,4 +1,4 @@
-/*	$NetBSD: audio.c,v 1.61 2020/03/01 07:42:07 isaki Exp $	*/
+/*	$NetBSD: audio.c,v 1.62 2020/03/04 14:19:41 isaki Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -142,7 +142,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.61 2020/03/01 07:42:07 isaki Exp $");
+__KERNEL_RCSID(0, "$NetBSD: audio.c,v 1.62 2020/03/04 14:19:41 isaki Exp $");
 
 #ifdef _KERNEL_OPT
 #include "audio.h"
@@ -542,8 +542,8 @@ static int audio_query_devinfo(struct audio_softc *, mixer_devinfo_t *);
 static __inline int audio_track_readablebytes(const audio_track_t *);
 static int audio_file_setinfo(struct audio_softc *, audio_file_t *,
 	const struct audio_info *);
-static int audio_track_setinfo_check(audio_format2_t *,
-	const struct audio_prinfo *, const audio_format2_t *);
+static int audio_track_setinfo_check(audio_track_t *,
+	audio_format2_t *, const struct audio_prinfo *);
 static void audio_track_setinfo_water(audio_track_t *,
 	const struct audio_info *);
 static int audio_hw_setinfo(struct audio_softc *, const struct audio_info *,
@@ -6745,20 +6745,30 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 	memset(&saved_pfmt, 0, sizeof(saved_pfmt));
 	memset(&saved_rfmt, 0, sizeof(saved_rfmt));
 
-	/* Set default value and save current parameters */
+	/*
+	 * Set default value and save current parameters.
+	 * For backward compatibility, use sticky parameters for nonexistent
+	 * track.
+	 */
 	if (ptrack) {
 		pfmt = ptrack->usrbuf.fmt;
 		saved_pfmt = ptrack->usrbuf.fmt;
 		saved_ai.play.pause = ptrack->is_pause;
+	} else {
+		pfmt = sc->sc_sound_pparams;
 	}
 	if (rtrack) {
 		rfmt = rtrack->usrbuf.fmt;
 		saved_rfmt = rtrack->usrbuf.fmt;
 		saved_ai.record.pause = rtrack->is_pause;
+	} else {
+		rfmt = sc->sc_sound_rparams;
 	}
 	saved_ai.mode = file->mode;
 
-	/* Overwrite if specified */
+	/*
+	 * Overwrite if specified.
+	 */
 	mode = file->mode;
 	if (SPECIFIED(ai->mode)) {
 		/*
@@ -6777,39 +6787,35 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 		}
 	}
 
-	if (ptrack) {
-		pchanges = audio_track_setinfo_check(&pfmt, pi,
-		    &sc->sc_pmixer->hwbuf.fmt);
-		if (pchanges == -1) {
+	pchanges = audio_track_setinfo_check(ptrack, &pfmt, pi);
+	if (pchanges == -1) {
 #if defined(AUDIO_DEBUG)
-			TRACET(1, ptrack, "check play.params failed: "
-			    "%s %ubit %uch %uHz",
-			    audio_encoding_name(pi->encoding),
-			    pi->precision,
-			    pi->channels,
-			    pi->sample_rate);
+		TRACEF(1, file, "check play.params failed: "
+		    "%s %ubit %uch %uHz",
+		    audio_encoding_name(pi->encoding),
+		    pi->precision,
+		    pi->channels,
+		    pi->sample_rate);
 #endif
-			return EINVAL;
-		}
-		if (SPECIFIED(ai->mode))
-			pchanges = 1;
+		return EINVAL;
 	}
-	if (rtrack) {
-		rchanges = audio_track_setinfo_check(&rfmt, ri,
-		    &sc->sc_rmixer->hwbuf.fmt);
-		if (rchanges == -1) {
+
+	rchanges = audio_track_setinfo_check(rtrack, &rfmt, ri);
+	if (rchanges == -1) {
 #if defined(AUDIO_DEBUG)
-			TRACET(1, rtrack, "check record.params failed: "
-			    "%s %ubit %uch %uHz",
-			    audio_encoding_name(ri->encoding),
-			    ri->precision,
-			    ri->channels,
-			    ri->sample_rate);
+		TRACEF(1, file, "check record.params failed: "
+		    "%s %ubit %uch %uHz",
+		    audio_encoding_name(ri->encoding),
+		    ri->precision,
+		    ri->channels,
+		    ri->sample_rate);
 #endif
-			return EINVAL;
-		}
-		if (SPECIFIED(ai->mode))
-			rchanges = 1;
+		return EINVAL;
+	}
+
+	if (SPECIFIED(ai->mode)) {
+		pchanges = 1;
+		rchanges = 1;
 	}
 
 	/*
@@ -6819,16 +6825,27 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 	if (pchanges || rchanges) {
 		audio_file_clear(sc, file);
 #if defined(AUDIO_DEBUG)
+		char nbuf[16];
 		char fmtbuf[64];
 		if (pchanges) {
+			if (ptrack) {
+				snprintf(nbuf, sizeof(nbuf), "%d", ptrack->id);
+			} else {
+				snprintf(nbuf, sizeof(nbuf), "-");
+			}
 			audio_format2_tostr(fmtbuf, sizeof(fmtbuf), &pfmt);
-			DPRINTF(1, "audio track#%d play mode: %s\n",
-			    ptrack->id, fmtbuf);
+			DPRINTF(1, "audio track#%s play mode: %s\n",
+			    nbuf, fmtbuf);
 		}
 		if (rchanges) {
+			if (rtrack) {
+				snprintf(nbuf, sizeof(nbuf), "%d", rtrack->id);
+			} else {
+				snprintf(nbuf, sizeof(nbuf), "-");
+			}
 			audio_format2_tostr(fmtbuf, sizeof(fmtbuf), &rfmt);
-			DPRINTF(1, "audio track#%d rec  mode: %s\n",
-			    rtrack->id, fmtbuf);
+			DPRINTF(1, "audio track#%s rec  mode: %s\n",
+			    nbuf, fmtbuf);
 		}
 #endif
 	}
@@ -6838,15 +6855,19 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 	if (error)
 		goto abort1;
 
-	/* Set to track and update sticky parameters */
+	/*
+	 * Set to track and update sticky parameters.
+	 */
 	error = 0;
 	file->mode = mode;
-	if (ptrack) {
-		if (SPECIFIED_CH(pi->pause)) {
+
+	if (SPECIFIED_CH(pi->pause)) {
+		if (ptrack)
 			ptrack->is_pause = pi->pause;
-			sc->sc_sound_ppause = pi->pause;
-		}
-		if (pchanges) {
+		sc->sc_sound_ppause = pi->pause;
+	}
+	if (pchanges) {
+		if (ptrack) {
 			audio_track_lock_enter(ptrack);
 			error = audio_track_set_format(ptrack, &pfmt);
 			audio_track_lock_exit(ptrack);
@@ -6854,18 +6875,22 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 				TRACET(1, ptrack, "set play.params failed");
 				goto abort2;
 			}
-			sc->sc_sound_pparams = pfmt;
 		}
-		/* Change water marks after initializing the buffers. */
-		if (SPECIFIED(ai->hiwat) || SPECIFIED(ai->lowat))
+		sc->sc_sound_pparams = pfmt;
+	}
+	/* Change water marks after initializing the buffers. */
+	if (SPECIFIED(ai->hiwat) || SPECIFIED(ai->lowat)) {
+		if (ptrack)
 			audio_track_setinfo_water(ptrack, ai);
 	}
-	if (rtrack) {
-		if (SPECIFIED_CH(ri->pause)) {
+
+	if (SPECIFIED_CH(ri->pause)) {
+		if (rtrack)
 			rtrack->is_pause = ri->pause;
-			sc->sc_sound_rpause = ri->pause;
-		}
-		if (rchanges) {
+		sc->sc_sound_rpause = ri->pause;
+	}
+	if (rchanges) {
+		if (rtrack) {
 			audio_track_lock_enter(rtrack);
 			error = audio_track_set_format(rtrack, &rfmt);
 			audio_track_lock_exit(rtrack);
@@ -6873,8 +6898,8 @@ audio_file_setinfo(struct audio_softc *sc, audio_file_t *file,
 				TRACET(1, rtrack, "set record.params failed");
 				goto abort3;
 			}
-			sc->sc_sound_rparams = rfmt;
 		}
+		sc->sc_sound_rparams = rfmt;
 	}
 
 	return 0;
@@ -6887,15 +6912,17 @@ abort3:
 		audio_track_set_format(rtrack, &saved_rfmt);
 		audio_track_lock_exit(rtrack);
 	}
+	sc->sc_sound_rpause = saved_ai.record.pause;
+	sc->sc_sound_rparams = saved_rfmt;
 abort2:
 	if (ptrack && error != ENOMEM) {
 		ptrack->is_pause = saved_ai.play.pause;
 		audio_track_lock_enter(ptrack);
 		audio_track_set_format(ptrack, &saved_pfmt);
 		audio_track_lock_exit(ptrack);
-		sc->sc_sound_pparams = saved_pfmt;
-		sc->sc_sound_ppause = saved_ai.play.pause;
 	}
+	sc->sc_sound_ppause = saved_ai.play.pause;
+	sc->sc_sound_pparams = saved_pfmt;
 	file->mode = saved_ai.mode;
 abort1:
 	audio_hw_setinfo(sc, &saved_ai, NULL);
@@ -6905,14 +6932,16 @@ abort1:
 
 /*
  * Write SPECIFIED() parameters within info back to fmt.
+ * Note that track can be NULL here.
  * Return value of 1 indicates that fmt is modified.
  * Return value of 0 indicates that fmt is not modified.
  * Return value of -1 indicates that error EINVAL has occurred.
  */
 static int
-audio_track_setinfo_check(audio_format2_t *fmt, const struct audio_prinfo *info,
-	const audio_format2_t *hwfmt)
+audio_track_setinfo_check(audio_track_t *track,
+	audio_format2_t *fmt, const struct audio_prinfo *info)
 {
+	const audio_format2_t *hwfmt;
 	int changes;
 
 	changes = 0;
@@ -6940,8 +6969,19 @@ audio_track_setinfo_check(audio_format2_t *fmt, const struct audio_prinfo *info,
 		 * We can reduce than the number of channels that the hardware
 		 * supports.
 		 */
-		if (info->channels > 2 && info->channels > hwfmt->channels)
-			return -1;
+		if (info->channels > 2) {
+			if (track) {
+				hwfmt = &track->mixer->hwbuf.fmt;
+				if (info->channels > hwfmt->channels)
+					return -1;
+			} else {
+				/*
+				 * This should never happen.
+				 * If track == NULL, channels should be <= 2.
+				 */
+				return -1;
+			}
+		}
 		fmt->channels = info->channels;
 		changes = 1;
 	}
@@ -7213,62 +7253,51 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int need_mixerinfo,
 		pi->channels    = ptrack->usrbuf.fmt.channels;
 		pi->precision   = ptrack->usrbuf.fmt.precision;
 		pi->encoding    = ptrack->usrbuf.fmt.encoding;
+		pi->pause       = ptrack->is_pause;
 	} else {
-		/* Set default parameters if the track is not available. */
-		if (ISDEVAUDIO(file->dev)) {
-			pi->sample_rate = audio_default.sample_rate;
-			pi->channels    = audio_default.channels;
-			pi->precision   = audio_default.precision;
-			pi->encoding    = audio_default.encoding;
-		} else {
-			pi->sample_rate = sc->sc_sound_pparams.sample_rate;
-			pi->channels    = sc->sc_sound_pparams.channels;
-			pi->precision   = sc->sc_sound_pparams.precision;
-			pi->encoding    = sc->sc_sound_pparams.encoding;
-		}
+		/* Use sticky parameters if the track is not available. */
+		pi->sample_rate = sc->sc_sound_pparams.sample_rate;
+		pi->channels    = sc->sc_sound_pparams.channels;
+		pi->precision   = sc->sc_sound_pparams.precision;
+		pi->encoding    = sc->sc_sound_pparams.encoding;
+		pi->pause       = sc->sc_sound_ppause;
 	}
 	if (rtrack) {
 		ri->sample_rate = rtrack->usrbuf.fmt.sample_rate;
 		ri->channels    = rtrack->usrbuf.fmt.channels;
 		ri->precision   = rtrack->usrbuf.fmt.precision;
 		ri->encoding    = rtrack->usrbuf.fmt.encoding;
+		ri->pause       = rtrack->is_pause;
 	} else {
-		/* Set default parameters if the track is not available. */
-		if (ISDEVAUDIO(file->dev)) {
-			ri->sample_rate = audio_default.sample_rate;
-			ri->channels    = audio_default.channels;
-			ri->precision   = audio_default.precision;
-			ri->encoding    = audio_default.encoding;
-		} else {
-			ri->sample_rate = sc->sc_sound_rparams.sample_rate;
-			ri->channels    = sc->sc_sound_rparams.channels;
-			ri->precision   = sc->sc_sound_rparams.precision;
-			ri->encoding    = sc->sc_sound_rparams.encoding;
-		}
+		/* Use sticky parameters if the track is not available. */
+		ri->sample_rate = sc->sc_sound_rparams.sample_rate;
+		ri->channels    = sc->sc_sound_rparams.channels;
+		ri->precision   = sc->sc_sound_rparams.precision;
+		ri->encoding    = sc->sc_sound_rparams.encoding;
+		ri->pause       = sc->sc_sound_rpause;
 	}
 
 	if (ptrack) {
 		pi->seek = ptrack->usrbuf.used;
 		pi->samples = ptrack->usrbuf_stamp;
 		pi->eof = ptrack->eofcounter;
-		pi->pause = ptrack->is_pause;
 		pi->error = (ptrack->dropframes != 0) ? 1 : 0;
-		pi->waiting = 0;		/* open never hangs */
 		pi->open = 1;
-		pi->active = sc->sc_pbusy;
 		pi->buffer_size = ptrack->usrbuf.capacity;
 	}
+	pi->waiting = 0;		/* open never hangs */
+	pi->active = sc->sc_pbusy;
+
 	if (rtrack) {
 		ri->seek = rtrack->usrbuf.used;
 		ri->samples = rtrack->usrbuf_stamp;
 		ri->eof = 0;
-		ri->pause = rtrack->is_pause;
 		ri->error = (rtrack->dropframes != 0) ? 1 : 0;
-		ri->waiting = 0;		/* open never hangs */
 		ri->open = 1;
-		ri->active = sc->sc_rbusy;
 		ri->buffer_size = rtrack->usrbuf.capacity;
 	}
+	ri->waiting = 0;		/* open never hangs */
+	ri->active = sc->sc_rbusy;
 
 	/*
 	 * XXX There may be different number of channels between playback
@@ -7287,6 +7316,20 @@ audiogetinfo(struct audio_softc *sc, struct audio_info *ai, int need_mixerinfo,
 		ai->lowat = track->usrbuf_usedlow / track->usrbuf_blksize;
 	}
 	ai->mode = file->mode;
+
+	/*
+	 * For backward compatibility, we have to pad these five fields
+	 * a fake non-zero value even if there are no tracks.
+	 */
+	if (ptrack == NULL)
+		pi->buffer_size = 65536;
+	if (rtrack == NULL)
+		ri->buffer_size = 65536;
+	if (ptrack == NULL && rtrack == NULL) {
+		ai->blocksize = 2048;
+		ai->hiwat = ai->play.buffer_size / ai->blocksize;
+		ai->lowat = ai->hiwat * 3 / 4;
+	}
 
 	if (need_mixerinfo) {
 		KASSERT(sc->sc_exlock);
