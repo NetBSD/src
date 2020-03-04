@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.361 2020/03/01 21:42:58 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.362 2020/03/04 22:00:03 ad Exp $	*/
 
 /*
  * Copyright (c) 2008, 2010, 2016, 2017, 2019, 2020 The NetBSD Foundation, Inc.
@@ -130,7 +130,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.361 2020/03/01 21:42:58 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.362 2020/03/04 22:00:03 ad Exp $");
 
 #include "opt_user_ldt.h"
 #include "opt_lockdebug.h"
@@ -4415,8 +4415,8 @@ pmap_enter_ma(struct pmap *pmap, vaddr_t va, paddr_t ma, paddr_t pa,
 		if ((opte & PTE_PVLIST) != 0 && pve != NULL) {
 			KASSERT(pve->pve_pte.pte_ptp == ptp);
 			KASSERT(pve->pve_pte.pte_va == va);
+			pve = NULL;
 		}
-		pve = NULL;
 		goto same_pa;
 	}
 
@@ -5293,8 +5293,8 @@ pmap_ept_enter(struct pmap *pmap, vaddr_t va, paddr_t pa, vm_prot_t prot,
 		if ((opte & EPT_PVLIST) != 0 && pve != NULL) {
 			KASSERT(pve->pve_pte.pte_ptp == ptp);
 			KASSERT(pve->pve_pte.pte_va == va);
+			pve = NULL;
 		}
-		pve = NULL;
 		goto same_pa;
 	}
 
