@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.68 2020/03/04 22:07:08 christos Exp $
+#	$NetBSD: Makefile,v 1.69 2020/03/04 22:56:08 jmcneill Exp $
 
 .include <bsd.own.mk>
 
@@ -31,7 +31,7 @@ SUBDIR+= libc++
 SUBDIR+= nsd
 .endif
 .if ${MKPAM} != "no"
-SUBDIR+= pam-u2f"
+SUBDIR+= pam-u2f
 .endif
 .if (${MKPCC} != "no")
 SUBDIR+= pcc
