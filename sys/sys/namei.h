@@ -1,11 +1,11 @@
-/*	$NetBSD: namei.h,v 1.103.2.5 2020/01/24 16:49:12 ad Exp $	*/
+/*	$NetBSD: namei.h,v 1.103.2.6 2020/03/04 20:26:29 ad Exp $	*/
 
 
 /*
  * WARNING: GENERATED FILE.  DO NOT EDIT
  * (edit namei.src and run make namei in src/sys/sys)
  *   by:   NetBSD: gennameih.awk,v 1.5 2009/12/23 14:17:19 pooka Exp 
- *   from: NetBSD: namei.src,v 1.47.2.6 2020/01/24 16:48:59 ad Exp 
+ *   from: NetBSD: namei.src,v 1.47.2.7 2020/03/04 20:21:05 ad Exp 
  */
 
 /*
@@ -211,8 +211,7 @@ struct nameidata {
  *
  * This structure describes the elements in the cache of recent names looked
  * up by namei.  It's carefully sized to take up 128 bytes on _LP64, to make
- * good use of space and the CPU caches; nc_name is aligned on an 8-byte
- * boundary to make string comparisons cheaper.
+ * good use of space and the CPU caches.
  *
  * Field markings and their corresponding locks:
  *
