@@ -1,4 +1,4 @@
-# $NetBSD: Makefile,v 1.2 2020/03/03 23:32:58 mlelstv Exp $
+# $NetBSD: Makefile,v 1.3 2020/03/04 17:22:49 christos Exp $
 
 NOLINT=
 NOMAN=
@@ -10,9 +10,17 @@ DIST = ${.CURDIR}/../dist
 
 CPPFLAGS+= -I${DIST}/src -DHAVE_ENDIAN_H -I. -DEIGHT_BYTE_SIZE_T
 
+.if ${MACHINE} == "vax"
+# vax does not have NaN (no ieee754, so this code will not work anyway)
+CPPFLAGS+=-DNAN=INFINITY
+.endif
+
 LIB=    cbor
 
 SRCS+=   cbor.c
+
+# For ldexp
+LIBDPLIBS = m ${NETBSDSRCDIR}/lib/libm
 
 VERS_FILE=${DIST}/CMakeLists.txt
 
