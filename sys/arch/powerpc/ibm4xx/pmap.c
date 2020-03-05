@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.82 2020/03/05 01:33:36 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.83 2020/03/05 01:35:00 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2020/03/05 01:33:36 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2020/03/05 01:35:00 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1183,7 +1183,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"mtpid %2;"
 		"sync; isync;"
 		"1:"
-		"dcbf 0,%3;"
+		"dcbst 0,%3;"
 		"icbi 0,%3;"
 		"add %3,%3,%5;"
 		"addc. %4,%4,%6;"
