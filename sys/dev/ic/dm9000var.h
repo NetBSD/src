@@ -1,4 +1,4 @@
-/*	$NetBSD: dm9000var.h,v 1.4 2020/03/05 08:08:33 riastradh Exp $	*/
+/*	$NetBSD: dm9000var.h,v 1.5 2020/03/05 15:18:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 2009 Paul Fleischer
@@ -62,10 +62,6 @@
 
 #ifndef _DEV_IC_DM9000VAR_H_
 #define _DEV_IC_DM9000VAR_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 #include <sys/callout.h>
 

@@ -1,11 +1,7 @@
-/* $NetBSD: machdep.h,v 1.32 2020/03/05 08:08:32 riastradh Exp $ */
+/* $NetBSD: machdep.h,v 1.33 2020/03/05 15:18:54 riastradh Exp $ */
 
 #ifndef _ARM32_MACHDEP_H_
 #define _ARM32_MACHDEP_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 /* Define various stack sizes in pages */
 #ifndef IRQ_STACK_SIZE
