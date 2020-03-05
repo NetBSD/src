@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.22 2020/03/05 15:56:55 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.23 2020/03/05 17:58:08 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -51,6 +51,7 @@ struct kmutex {
 		/* Adaptive mutex */
 		volatile uintptr_t	mtxa_owner;	/* 0-3 */
 
+#ifdef _KERNEL
 		/* Spin mutex */
 		struct {
 			/*
@@ -63,6 +64,7 @@ struct kmutex {
 			__cpu_simple_lock_t	mtxs_lock;
 			volatile uint8_t	mtxs_unused;
 		} s;
+#endif
 	} u;
 };
 
