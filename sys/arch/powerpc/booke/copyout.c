@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.7 2020/03/05 00:33:56 rin Exp $	*/
+/*	$NetBSD: copyout.c,v 1.8 2020/03/05 02:02:08 rin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.7 2020/03/05 00:33:56 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.8 2020/03/05 02:02:08 rin Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 
@@ -432,13 +432,15 @@ copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *done)
 		const uint8_t data = *ksaddr8++;
 		copyout_uint8(udaddr8++, data, ds_msr);
 		if (data == 0)
-			break;
+			goto out;
 	}
+	rv = ENAMETOOLONG;
 
+out:
 	pcb->pcb_onfault = NULL;
 	if (done)
 		*done = copylen;
-	return 0;
+	return rv;
 }
 #else
 /* XXX This version of copyoutstr(9) has never beeen enabled so far. */
