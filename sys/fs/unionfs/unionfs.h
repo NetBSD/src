@@ -39,10 +39,6 @@
 #ifndef _MISCFS_UNION_H_
 #define _MISCFS_UNION_H_
 
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
-
 #define	UNIONFS_DEBUG
 
 struct union_args {

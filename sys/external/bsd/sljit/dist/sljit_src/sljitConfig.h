@@ -1,4 +1,4 @@
-/*	$NetBSD: sljitConfig.h,v 1.16 2020/03/05 08:08:33 riastradh Exp $	*/
+/*	$NetBSD: sljitConfig.h,v 1.17 2020/03/05 15:18:55 riastradh Exp $	*/
 
 /*
  *    Stack-less Just-In-Time compiler
@@ -73,10 +73,6 @@
 
 
 #ifdef _KERNEL
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 #ifdef DIAGNOSTIC
 #define SLJIT_DEBUG 1
