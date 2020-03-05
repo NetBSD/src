@@ -281,7 +281,7 @@ fix_small_cpu_struct(tdata_t *td, size_t ptrsize)
 
 /*
  * XXX: A crude hack to bring down the number of types for a
- * GENRIC kernel below 2**15-1 (from ~34000 to ~29800).
+ * GENERIC kernel below 2**15-1 (from ~34000 to ~29800).
  *
  * Remove the type attributes "volatile", "const" and "restrict",
  * for DTRACE these attributes are of little value.
