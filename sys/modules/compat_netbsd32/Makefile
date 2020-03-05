@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.30 2019/11/20 19:37:54 pgoyette Exp $
+#	$NetBSD: Makefile,v 1.31 2020/03/05 15:58:33 christos Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -43,7 +43,8 @@ SRCS+=	netbsd32_time.c		netbsd32_wait.c
 SRCS+=	netbsd32_vm.c
 SRCS+=	netbsd32_module.c
 
-.if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "powerpc"
+.if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "powerpc" && \
+    ${MACHINE_CPU} != "aarch64"
 CPPFLAGS+=	-DEXEC_AOUT -DCOMPAT_NOMID
 SRCS+=	netbsd32_exec_aout.c
 .endif
