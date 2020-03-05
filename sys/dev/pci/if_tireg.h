@@ -1,4 +1,4 @@
-/* $NetBSD: if_tireg.h,v 1.26 2020/03/05 15:36:39 msaitoh Exp $ */
+/* $NetBSD: if_tireg.h,v 1.27 2020/03/05 15:56:20 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -96,7 +96,7 @@
 #define TI_FIRMWARE_FIX			0xd
 
 /*
- * Miscelaneous Local Control register.
+ * Miscellaneous Local Control register.
  */
 #define TI_MLC_EE_WRITE_ENB		0x00000010
 #define TI_MLC_SRAM_BANK_256K		0x00000200
