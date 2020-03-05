@@ -1,4 +1,4 @@
-/*	$NetBSD: tlb.h,v 1.5 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: tlb.h,v 1.6 2020/03/05 02:14:53 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -89,7 +89,6 @@
 
 #ifndef _LOCORE
 
-typedef u_short tlbpid_t;
 typedef struct tlb_s {
 	u_int tlb_hi;
 	u_int tlb_lo;

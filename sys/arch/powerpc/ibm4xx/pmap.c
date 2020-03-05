@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.83 2020/03/05 01:35:00 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.84 2020/03/05 02:14:52 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.83 2020/03/05 01:35:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2020/03/05 02:14:52 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1293,8 +1293,7 @@ void
 ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 {
 	u_long th, tl, idx;
-	tlbpid_t pid;
-	u_short msr;
+	int msr, pid;
 	paddr_t pa;
 	int sz;
 
