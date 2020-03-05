@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.12 2020/03/05 01:13:00 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.13 2020/03/05 01:15:35 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.12 2020/03/05 01:13:00 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.13 2020/03/05 01:15:35 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -79,7 +79,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		"sync; isync;"
 
 		"1:"
-		"mtpid %1;sync;"
+		"mtpid %1; sync;"
 		"lbz %2,0(%6); addi %6,%6,1;"	/* Store kernel byte */
 		"sync; isync;"
 		"mtpid %4; sync;"		/* Load user ctx */
