@@ -1,4 +1,4 @@
-/*	$NetBSD: audiodef.h,v 1.10 2020/02/23 07:17:01 isaki Exp $	*/
+/*	$NetBSD: audiodef.h,v 1.11 2020/03/05 08:08:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 2017 Tetsuya Isaki. All rights reserved.
@@ -31,6 +31,7 @@
 
 #ifdef _KERNEL_OPT
 #include "opt_audio.h"
+#include "opt_diagnostic.h"
 #endif
 
 /* Number of HW buffer's blocks. */

@@ -1,4 +1,4 @@
-/*	$NetBSD: ufs_wapbl.h,v 1.16 2018/12/10 20:48:34 jdolecek Exp $	*/
+/*	$NetBSD: ufs_wapbl.h,v 1.17 2020/03/05 08:08:34 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2003,2006,2008 The NetBSD Foundation, Inc.
@@ -34,6 +34,7 @@
 #define	_UFS_UFS_UFS_WAPBL_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_diagnostic.h"
 #include "opt_wapbl.h"
 #endif
 

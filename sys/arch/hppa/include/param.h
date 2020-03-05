@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.23 2019/04/16 12:25:17 skrll Exp $	*/
+/*	$NetBSD: param.h,v 1.24 2020/03/05 08:08:32 riastradh Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -22,8 +22,12 @@
  * CSL requests users of this software to return to csl-dist@cs.utah.edu any
  * improvements that they make and grant CSL redistribution rights.
  *
- * 	Utah $Hdr: param.h 1.18 94/12/16$
+ * 	Utah $Hdr$
  */
+
+#ifdef _KERNEL_OPT
+#include "opt_diagnostic.h"
+#endif
 
 #ifdef _KERNEL
 #include <machine/cpu.h>

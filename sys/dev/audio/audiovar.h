@@ -1,4 +1,4 @@
-/*	$NetBSD: audiovar.h,v 1.8 2020/02/23 07:17:01 isaki Exp $	*/
+/*	$NetBSD: audiovar.h,v 1.9 2020/03/05 08:08:33 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -66,6 +66,10 @@
 
 #ifndef _SYS_DEV_AUDIO_AUDIOVAR_H_
 #define _SYS_DEV_AUDIO_AUDIOVAR_H_
+
+#ifdef _KERNEL_OPT
+#include "opt_diagnostic.h"
+#endif
 
 #include <sys/condvar.h>
 #include <sys/proc.h>

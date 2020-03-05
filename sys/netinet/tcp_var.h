@@ -1,4 +1,4 @@
-/*	$NetBSD: tcp_var.h,v 1.190 2018/12/27 16:59:17 maxv Exp $	*/
+/*	$NetBSD: tcp_var.h,v 1.191 2020/03/05 08:08:33 riastradh Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -136,9 +136,9 @@
 #define _NETINET_TCP_VAR_H_
 
 #if defined(_KERNEL_OPT)
+#include "opt_diagnostic.h"
 #include "opt_inet.h"
 #include "opt_mbuftrace.h"
-
 #endif
 
 /*
