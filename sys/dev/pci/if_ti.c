@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.117 2020/03/05 15:33:13 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.118 2020/03/05 15:36:39 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.117 2020/03/05 15:33:13 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.118 2020/03/05 15:36:39 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -226,7 +226,7 @@ ti_eeprom_putbyte(struct ti_softc *sc, int byte)
 	TI_SETBIT(sc, TI_MISC_LOCAL_CTL, TI_MLC_EE_TXEN);
 
 	/*
-	 * Feed in each bit and stobe the clock.
+	 * Feed in each bit and strobe the clock.
 	 */
 	for (i = 0x80; i; i >>= 1) {
 		if (byte & i) {
@@ -2208,7 +2208,7 @@ ti_stats_update(struct ti_softc *sc)
 }
 
 /*
- * Encapsulate an mbuf chain in the tx ring  by coupling the mbuf data
+ * Encapsulate an mbuf chain in the tx ring by coupling the mbuf data
  * pointers to descriptors.
  */
 static int
@@ -2687,7 +2687,7 @@ ti_ifmedia_sts(struct ifnet *ifp, struct ifmediareq *ifmr)
 static int
 ti_ether_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 {
-	struct ifaddr *ifa = (struct ifaddr *) data;
+	struct ifaddr *ifa = (struct ifaddr *)data;
 	struct ti_softc *sc = ifp->if_softc;
 
 	if ((ifp->if_flags & IFF_UP) == 0) {
@@ -2720,7 +2720,7 @@ static int
 ti_ioctl(struct ifnet *ifp, u_long command, void *data)
 {
 	struct ti_softc		*sc = ifp->if_softc;
-	struct ifreq		*ifr = (struct ifreq *) data;
+	struct ifreq		*ifr = (struct ifreq *)data;
 	int			s, error = 0;
 	struct ti_cmd_desc	cmd;
 
