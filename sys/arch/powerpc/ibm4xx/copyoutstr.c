@@ -1,4 +1,4 @@
-/*	$NetBSD: copyoutstr.c,v 1.10 2020/03/05 00:54:13 rin Exp $	*/
+/*	$NetBSD: copyoutstr.c,v 1.11 2020/03/05 01:10:57 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.10 2020/03/05 00:54:13 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyoutstr.c,v 1.11 2020/03/05 01:10:57 rin Exp $");
 
 #include <sys/param.h>
 #include <uvm/uvm_extern.h>
@@ -46,7 +46,8 @@ int
 copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 {
 	struct pmap *pm = curproc->p_vmspace->vm_map.pmap;
-	int rv, msr, pid, tmp, ctx;
+	size_t resid;
+	int rv, msr, pid, data, ctx;
 	struct faultbuf env;
 
 	if (__predict_false(len == 0)) {
@@ -68,6 +69,7 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		ctx = pm->pm_ctx;
 	}
 
+	resid = len;
 	__asm volatile(
 		"mtctr %3;"			/* Set up counter */
 		"mfmsr %0;"			/* Save MSR */
@@ -75,8 +77,6 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		"andc %1,%0,%1; mtmsr %1;"	/* Disable IMMU */
 		"mfpid %1;"			/* Save old PID */
 		"sync; isync;"
-
-		"li %3,0;"			/* Clear len */
 
 		"1:"
 		"mtpid %1;sync;"
@@ -86,17 +86,20 @@ copyoutstr(const void *kaddr, void *udaddr, size_t len, size_t *done)
 		"stb %2,0(%5); dcbf 0,%5; addi %5,%5,1;"
 						/* Load byte */
 		"sync; isync;"
-		"addi %3,%3,1;"			/* Inc len */
 		"or. %2,%2,%2;"
 		"bdnzf 2,1b;"			/* while(ctr-- && !zero) */
 
 		"mtpid %1; mtmsr %0;"		/* Restore PID, MSR */
 		"sync; isync;"
-		: "=&r" (msr), "=&r" (pid), "=&r" (tmp), "+b" (len)
+		"mfctr %3;"			/* Restore resid */
+		: "=&r" (msr), "=&r" (pid), "=&r" (data), "+r" (resid)
 		: "r" (ctx), "b" (udaddr), "b" (kaddr));
 
 	curpcb->pcb_onfault = NULL;
 	if (done)
-		*done = len;
-	return 0;
+		*done = len - resid;
+	if (resid == 0 && (char)data != '\0')
+		return ENAMETOOLONG;
+	else
+		return 0;
 }
