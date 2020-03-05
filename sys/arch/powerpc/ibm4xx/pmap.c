@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.81 2020/03/05 01:31:27 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.82 2020/03/05 01:33:36 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2020/03/05 01:31:27 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.82 2020/03/05 01:33:36 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1321,8 +1321,8 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	__asm volatile(
 		"mfmsr %0;"			/* Save MSR */
 		"li %1,0;"
-		"tlbwe %1,%3,0;"		/* Invalidate old entry. */
 		"mtmsr %1;"			/* Clear MSR */
+		"tlbwe %1,%3,0;"		/* Invalidate old entry. */
 		"mfpid %1;"			/* Save old PID */
 		"mtpid %2;"			/* Load translation ctx */
 		"sync; isync;"
