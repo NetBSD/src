@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.84 2020/03/05 02:14:52 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.85 2020/03/05 11:44:54 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.84 2020/03/05 02:14:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.85 2020/03/05 11:44:54 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1175,8 +1175,9 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 	}
 	__asm volatile(
 		"mfmsr %0;"
-		"li %1, %7;"
+		"li %1,0x20;"		/* Turn off IMMU */
 		"andc %1,%0,%1;"
+		"ori %1,%1,0x10;"	/* Turn on DMMU for sure */
 		"mtmsr %1;"
 		"sync;isync;"
 		"mfpid %1;"
@@ -1192,8 +1193,7 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		"mtmsr %0;"
 		"sync; isync"
 		: "=&r" (msr), "=&r" (opid)
-		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step),
-		  "K" (PSL_IR | PSL_DR));
+		: "r" (ctx), "r" (va), "r" (len), "r" (step), "r" (-step));
 }
 
 
