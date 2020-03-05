@@ -1,4 +1,4 @@
-/*	$NetBSD: mutex.h,v 1.21 2019/11/29 22:55:33 riastradh Exp $	*/
+/*	$NetBSD: mutex.h,v 1.22 2020/03/05 15:56:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2002, 2007 The NetBSD Foundation, Inc.
@@ -46,14 +46,6 @@
  * 
  */
 
-#ifndef __MUTEX_PRIVATE
-
-struct kmutex {
-	uintptr_t	mtx_pad1;
-};
-
-#else	/* __MUTEX_PRIVATE */
-
 struct kmutex {
 	union {
 		/* Adaptive mutex */
@@ -73,6 +65,8 @@ struct kmutex {
 		} s;
 	} u;
 };
+
+#ifdef __MUTEX_PRIVATE
 
 #define	mtx_owner		u.mtxa_owner
 #define	mtx_ipl			u.s.mtxs_ipl
