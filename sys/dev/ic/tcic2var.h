@@ -1,4 +1,4 @@
-/*	$NetBSD: tcic2var.h,v 1.14 2020/03/05 08:08:33 riastradh Exp $	*/
+/*	$NetBSD: tcic2var.h,v 1.15 2020/03/05 15:18:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1998, 1999 Christoph Badura.  All rights reserved.
@@ -32,10 +32,6 @@
 
 #ifndef _TCIC2VAR_H
 #define _TCIC2VAR_H
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 #include <sys/device.h>
 
