@@ -1,4 +1,4 @@
-/*	$NetBSD: param.h,v 1.24 2020/03/05 08:08:32 riastradh Exp $	*/
+/*	$NetBSD: param.h,v 1.25 2020/03/05 15:18:54 riastradh Exp $	*/
 
 /*	$OpenBSD: param.h,v 1.12 2001/07/06 02:07:41 provos Exp $	*/
 
@@ -24,10 +24,6 @@
  *
  * 	Utah $Hdr$
  */
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 #ifdef _KERNEL
 #include <machine/cpu.h>

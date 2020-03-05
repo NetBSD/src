@@ -1,4 +1,4 @@
-/* $NetBSD: gtmr_var.h,v 1.13 2020/03/05 08:08:32 riastradh Exp $ */
+/* $NetBSD: gtmr_var.h,v 1.14 2020/03/05 15:18:54 riastradh Exp $ */
 /*-
  * Copyright (c) 2013 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -30,10 +30,6 @@
 
 #ifndef _ARM_CORTEX_GTMR_VAR_
 #define _ARM_CORTEX_GTMR_VAR_
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 #include <sys/percpu.h>
 

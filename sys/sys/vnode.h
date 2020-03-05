@@ -1,4 +1,4 @@
-/*	$NetBSD: vnode.h,v 1.291 2020/03/05 08:08:33 riastradh Exp $	*/
+/*	$NetBSD: vnode.h,v 1.292 2020/03/05 15:18:55 riastradh Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,10 +59,6 @@
 
 #ifndef _SYS_VNODE_H_
 #define	_SYS_VNODE_H_
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
 
 #include <sys/event.h>
 #include <sys/queue.h>

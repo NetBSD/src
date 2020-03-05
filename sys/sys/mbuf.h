@@ -1,4 +1,4 @@
-/*	$NetBSD: mbuf.h,v 1.224 2020/03/05 08:08:33 riastradh Exp $	*/
+/*	$NetBSD: mbuf.h,v 1.225 2020/03/05 15:18:55 riastradh Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1999, 2001, 2007 The NetBSD Foundation, Inc.
@@ -65,7 +65,6 @@
 #define _SYS_MBUF_H_
 
 #ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
 #include "opt_mbuftrace.h"
 #endif
 

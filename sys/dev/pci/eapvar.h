@@ -1,8 +1,4 @@
-/* $NetBSD: eapvar.h,v 1.5 2020/03/05 08:08:33 riastradh Exp $ */
-
-#ifdef _KERNEL_OPT
-#include "opt_diagnostic.h"
-#endif
+/* $NetBSD: eapvar.h,v 1.6 2020/03/05 15:18:55 riastradh Exp $ */
 
 #include <dev/pci/pcivar.h>
 
