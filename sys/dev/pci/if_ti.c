@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.118 2020/03/05 15:36:39 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.119 2020/03/05 15:40:06 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.118 2020/03/05 15:36:39 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.119 2020/03/05 15:40:06 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -906,7 +906,7 @@ ti_init_rx_ring_std(struct ti_softc *sc)
 	for (i = 0; i < TI_SSLOTS; i++) {
 		if (ti_newbuf_std(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_STDPROD(sc, i - 1);
 	sc->ti_std = i - 1;
@@ -944,7 +944,7 @@ ti_init_rx_ring_jumbo(struct ti_softc *sc)
 	for (i = 0; i < TI_JUMBO_RX_RING_CNT; i++) {
 		if (ti_newbuf_jumbo(sc, i, NULL) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_JUMBOPROD(sc, i - 1);
 	sc->ti_jumbo = i - 1;
@@ -977,7 +977,7 @@ ti_init_rx_ring_mini(struct ti_softc *sc)
 	for (i = 0; i < TI_MSLOTS; i++) {
 		if (ti_newbuf_mini(sc, i, NULL, 0) == ENOBUFS)
 			return (ENOBUFS);
-	};
+	}
 
 	TI_UPDATE_MINIPROD(sc, i - 1);
 	sc->ti_mini = i - 1;
@@ -2196,7 +2196,7 @@ ti_stats_update(struct ti_softc *sc)
 
 	TI_CDSTATSSYNC(sc, BUS_DMASYNC_POSTREAD);
 
-	uint64_t collisions = 
+	uint64_t collisions =
 	   (sc->ti_rdata->ti_info.ti_stats.dot3StatsSingleCollisionFrames +
 	    sc->ti_rdata->ti_info.ti_stats.dot3StatsMultipleCollisionFrames +
 	    sc->ti_rdata->ti_info.ti_stats.dot3StatsExcessiveCollisions +
