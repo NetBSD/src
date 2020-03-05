@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.116 2020/03/03 05:41:36 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.117 2020/03/05 15:33:13 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.116 2020/03/03 05:41:36 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.117 2020/03/05 15:33:13 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -765,7 +765,7 @@ ti_newbuf_std(struct ti_softc *sc, int i, struct mbuf *m, bus_dmamap_t dmamap)
 }
 
 /*
- * Intialize a mini receive ring descriptor. This only applies to
+ * Initialize a mini receive ring descriptor. This only applies to
  * the Tigon 2.
  */
 static int
