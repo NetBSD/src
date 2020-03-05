@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.80 2020/02/21 13:16:16 rin Exp $	*/
+/*	$NetBSD: pmap.c,v 1.81 2020/03/05 01:31:27 rin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.80 2020/02/21 13:16:16 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.81 2020/03/05 01:31:27 rin Exp $");
 
 #include <sys/param.h>
 #include <sys/cpu.h>
@@ -1173,7 +1173,8 @@ pmap_procwr(struct proc *p, vaddr_t va, size_t len)
 		ctx_alloc(pm);
 		ctx = pm->pm_ctx;
 	}
-	__asm volatile("mfmsr %0;"
+	__asm volatile(
+		"mfmsr %0;"
 		"li %1, %7;"
 		"andc %1,%0,%1;"
 		"mtmsr %1;"
@@ -1207,7 +1208,8 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 	if (!pid)
 		return;
 
-	__asm( 	"mfpid %1;"		/* Save PID */
+	__asm volatile(
+		"mfpid %1;"		/* Save PID */
 		"mfmsr %2;"		/* Save MSR */
 		"li %0,0;"		/* Now clear MSR */
 		"mtmsr %0;"
@@ -1225,7 +1227,6 @@ ppc4xx_tlb_flush(vaddr_t va, int pid)
 		: "=&r" (i), "=&r" (found), "=&r" (msr)
 		: "r" (va), "r" (pid));
 	if (found && !TLB_LOCKED(i)) {
-
 		/* Now flush translation */
 		__asm volatile(
 			"tlbwe %0,%1,0;"
@@ -1308,7 +1309,7 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 	idx = ppc4xx_tlb_find_victim();
 
 #ifdef DIAGNOSTIC
-	if ((idx < tlb_nreserved) || (idx >= NTLB)) {
+	if ((idx < tlb_nreserved) || (idx >= NTLB) || (idx & 63) == 0) {
 		panic("ppc4xx_tlb_enter: replacing entry %ld", idx);
 	}
 #endif
@@ -1325,10 +1326,6 @@ ppc4xx_tlb_enter(int ctx, vaddr_t va, u_int pte)
 		"mfpid %1;"			/* Save old PID */
 		"mtpid %2;"			/* Load translation ctx */
 		"sync; isync;"
-#ifdef DEBUG
-		"andi. %3,%3,63;"
-		"tweqi %3,0;" 			/* XXXXX DEBUG trap on index 0 */
-#endif
 		"tlbwe %4,%3,1; tlbwe %5,%3,0;"	/* Set TLB */
 		"sync; isync;"
 		"mtpid %1; mtmsr %0;"		/* Restore PID and MSR */
