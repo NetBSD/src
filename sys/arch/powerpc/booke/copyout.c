@@ -1,4 +1,4 @@
-/*	$NetBSD: copyout.c,v 1.6 2020/03/04 13:01:52 rin Exp $	*/
+/*	$NetBSD: copyout.c,v 1.7 2020/03/05 00:33:56 rin Exp $	*/
 
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.6 2020/03/04 13:01:52 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: copyout.c,v 1.7 2020/03/05 00:33:56 rin Exp $");
 
 #define	__UFETCHSTORE_PRIVATE
 
@@ -402,22 +402,24 @@ copyout(const void *vksaddr, void *vudaddr, size_t len)
 
 #if 1
 int
-copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *lenp)
+copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *done)
 {
 	struct pcb * const pcb = lwp_getpcb(curlwp);
 	struct faultbuf env;
+	int rv;
 
 	if (__predict_false(len == 0)) {
-		if (lenp)
-			*lenp = 0;
+		if (done)
+			*done = 0;
 		return 0;
 	}
 
-	if (setfault(&env)) {
+	rv = setfault(&env);
+	if (rv != 0) {
 		pcb->pcb_onfault = NULL;
-		if (lenp)
-			*lenp = 0;
-		return EFAULT;
+		if (done)
+			*done = 0;
+		return rv;
 	}
 
 	const register_t ds_msr = mfmsr() | PSL_DS;
@@ -434,8 +436,8 @@ copyoutstr(const void *ksaddr, void *udaddr, size_t len, size_t *lenp)
 	}
 
 	pcb->pcb_onfault = NULL;
-	if (lenp)
-		*lenp = copylen;
+	if (done)
+		*done = copylen;
 	return 0;
 }
 #else
