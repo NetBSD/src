@@ -1,4 +1,4 @@
-/* $NetBSD: if_ti.c,v 1.119 2020/03/05 15:40:06 msaitoh Exp $ */
+/* $NetBSD: if_ti.c,v 1.120 2020/03/05 15:45:48 msaitoh Exp $ */
 
 /*
  * Copyright (c) 1997, 1998, 1999
@@ -81,7 +81,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.119 2020/03/05 15:40:06 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ti.c,v 1.120 2020/03/05 15:45:48 msaitoh Exp $");
 
 #include "opt_inet.h"
 
@@ -150,6 +150,8 @@ static const struct ti_type ti_devs[] = {
 		"Netgear GA620 1000BASE-T Ethernet" },
 	{ PCI_VENDOR_SGI, PCI_PRODUCT_SGI_TIGON,
 		"Silicon Graphics Gigabit Ethernet" },
+	{ PCI_VENDOR_DEC, PCI_PRODUCT_DEC_PN9000SX,
+		"Farallon PN9000SX Gigabit Ethernet" },
 	{ 0, 0, NULL }
 };
 
