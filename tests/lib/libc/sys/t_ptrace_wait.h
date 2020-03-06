@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.23 2020/03/03 17:09:22 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.24 2020/03/06 17:03:35 kamil Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -461,6 +461,33 @@ await_stopped_child(pid_t process)
 	FORKEE_ASSERT_EQ(reallocarr(&p, 0, sizeof(struct kinfo_proc2)), 0);
 
 	return child;
+}
+
+static void __used
+await_collected(pid_t process)
+{
+	struct kinfo_proc2 p;
+	size_t len = sizeof(p);
+
+	const int name[] = {
+		[0] = CTL_KERN,
+		[1] = KERN_PROC2,
+		[2] = KERN_PROC_PID,
+		[3] = process,
+		[4] = sizeof(p),
+		[5] = 1
+	};
+
+	const size_t namelen = __arraycount(name);
+
+	/* Await the process to disappear */
+	while(1) {
+		FORKEE_ASSERT_EQ(sysctl(name, namelen, &p, &len, NULL, 0), 0);
+		if (len == 0)
+			break;
+
+		ATF_REQUIRE(usleep(1000) == 0);
+	}
 }
 
 /* Happy number sequence -- this function is used to just consume cpu cycles */
