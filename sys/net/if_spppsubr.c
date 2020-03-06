@@ -1,4 +1,4 @@
-/*	$NetBSD: if_spppsubr.c,v 1.186 2020/02/04 05:46:32 thorpej Exp $	 */
+/*	$NetBSD: if_spppsubr.c,v 1.187 2020/03/06 10:26:59 knakahara Exp $	 */
 
 /*
  * Synchronous PPP/Cisco link level subroutines.
@@ -41,7 +41,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.186 2020/02/04 05:46:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_spppsubr.c,v 1.187 2020/03/06 10:26:59 knakahara Exp $");
 
 #if defined(_KERNEL_OPT)
 #include "opt_inet.h"
@@ -972,11 +972,10 @@ sppp_mediachange(struct ifnet *ifp)
 static void
 sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 {
-	struct sppp *sp = (struct sppp *)ifp;
+	int link_state;
 
-	SPPP_LOCK(sp, RW_WRITER);
-
-	switch (ifp->if_link_state) {
+	link_state = atomic_load_relaxed(&ifp->if_link_state);
+	switch (link_state) {
 	case LINK_STATE_UP:
 		imr->ifm_status = IFM_AVALID | IFM_ACTIVE;
 		break;
@@ -988,8 +987,6 @@ sppp_mediastatus(struct ifnet *ifp, struct ifmediareq *imr)
 		imr->ifm_status = 0;
 		break;
 	}
-
-	SPPP_UNLOCK(sp);
 }
 
 void
