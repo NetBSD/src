@@ -1,4 +1,4 @@
-/* $NetBSD: armreg.h,v 1.37 2020/03/06 20:13:24 ryo Exp $ */
+/* $NetBSD: armreg.h,v 1.38 2020/03/06 20:28:26 ryo Exp $ */
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -208,7 +208,7 @@ AARCH64REG_READ_INLINE(id_aa64dfr0_el1)
 #define	ID_AA64DFR0_EL1_TRACEFILT	__BITS(43,40)
 #define	 ID_AA64DFR0_EL1_TRACEFILT_NONE	 0
 #define	 ID_AA64DFR0_EL1_TRACEFILT_IMPL	 1
-#define	ID_AA64DFR0_EL1_DBLLOCK		__BITS(39,36
+#define	ID_AA64DFR0_EL1_DBLLOCK		__BITS(39,36)
 #define	 ID_AA64DFR0_EL1_DBLLOCK_IMPL	 0
 #define	 ID_AA64DFR0_EL1_DBLLOCK_NONE	 15
 #define	ID_AA64DFR0_EL1_PMSVER		__BITS(35,32)
