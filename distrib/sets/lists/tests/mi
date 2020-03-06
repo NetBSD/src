@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.830 2020/02/11 07:03:16 isaki Exp $
+# $NetBSD: mi,v 1.831 2020/03/06 18:32:35 kamil Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -3149,6 +3149,7 @@
 ./usr/tests/lib/libc/sys/t_posix_fadvise	tests-lib-tests		atf,rump
 ./usr/tests/lib/libc/sys/t_posix_fallocate	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace		tests-lib-tests		compattestfile,atf
+./usr/tests/lib/libc/sys/t_ptrace_sigchld	tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace_wait		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace_wait3		tests-lib-tests		compattestfile,atf
 ./usr/tests/lib/libc/sys/t_ptrace_wait4		tests-lib-tests		compattestfile,atf
