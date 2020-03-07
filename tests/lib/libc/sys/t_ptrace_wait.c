@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.c,v 1.168 2020/03/06 14:06:56 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_ptrace_wait.c,v 1.168 2020/03/06 14:06:56 kamil Exp $");
+__RCSID("$NetBSD: t_ptrace_wait.c,v 1.169 2020/03/07 14:53:14 christos Exp $");
 
 #define __LEGACY_PT_LWPINFO
 
@@ -59,11 +59,6 @@ __RCSID("$NetBSD: t_ptrace_wait.c,v 1.168 2020/03/06 14:06:56 kamil Exp $");
 #include <strings.h>
 #include <time.h>
 #include <unistd.h>
-
-#include <fenv.h>
-#if (__arm__ && !__SOFTFP__) || __aarch64__
-#include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
-#endif
 
 #if defined(__i386__) || defined(__x86_64__)
 #include <cpuid.h>
