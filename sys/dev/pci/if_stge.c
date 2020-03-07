@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.83 2020/03/02 15:13:23 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.84 2020/03/07 07:33:39 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.83 2020/03/02 15:13:23 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.84 2020/03/07 07:33:39 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -456,6 +456,7 @@ stge_attach(device_t parent, device_t self, void *aux)
 			aprint_error_dev(self,
 			    "WARNING: failed to restrict dma range,"
 			    " falling back to parent bus dma range\n");
+			sc->sc_dmat = pa->pa_dmat64;
 		}
 	} else {
 		sc->sc_dmat = pa->pa_dmat;
