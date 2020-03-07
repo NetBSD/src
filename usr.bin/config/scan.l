@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.27 2020/03/07 19:26:13 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.26 2016/08/07 10:37:24 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.27 2020/03/07 19:26:13 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -97,8 +97,7 @@ int st;
 struct incl {
 	struct	incl *in_prev;	/* previous includes in effect, if any */
 	YY_BUFFER_STATE in_buf;	/* previous lex state */
-	const char *in_fname;	/* previous file name */
-	int	in_lineno;	/* previous line number */
+	struct where in_where;
 	int	in_ateof;	/* token to insert at EOF */
 	int	in_interesting;	/* previous value for "interesting" */
 	int	in_ifdefstate;	/* conditional level */
@@ -526,8 +525,8 @@ include(const char *fname, int ateof, int conditional, int direct)
 	in = ecalloc(1, sizeof *in);
 	in->in_prev = incl;
 	in->in_buf = YY_CURRENT_BUFFER;
-	in->in_fname = yyfile;
-	in->in_lineno = yyline;
+	in->in_where.w_srcfile = yyfile;
+	in->in_where.w_srcline = (u_short)yyline;
 	in->in_ateof = ateof;
 	in->in_interesting = interesting;
 	in->in_ifdefstate = ifdefstate;
@@ -597,8 +596,8 @@ endinclude(void)
 	yy_delete_buffer(YY_CURRENT_BUFFER);
 	(void)fclose(yyin);
 	yy_switch_to_buffer(in->in_buf);
-	yyfile = in->in_fname;
-	yyline = in->in_lineno;
+	yyfile = in->in_where.w_srcfile;
+	yyline = in->in_where.w_srcline;
 	ateof  = in->in_ateof;
 	interesting = in->in_interesting;
 	free(in);
