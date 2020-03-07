@@ -803,7 +803,7 @@ namespace std
 #define _GLIBCXX_HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef _GLIBCXX_HAVE_FREXPL */
+#define _GLIBCXX_HAVE_FREXPL 1
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define _GLIBCXX_HAVE_GETIPINFO 1
@@ -1098,7 +1098,7 @@ namespace std
 #define _GLIBCXX_HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef _GLIBCXX_HAVE_TGMATH_H */
+#define _GLIBCXX_HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
 #define _GLIBCXX_HAVE_TLS 1
