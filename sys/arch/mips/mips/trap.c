@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.249 2019/04/06 11:54:20 kamil Exp $	*/
+/*	$NetBSD: trap.c,v 1.250 2020/03/07 18:49:49 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1988 University of Utah.
@@ -39,7 +39,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.249 2019/04/06 11:54:20 kamil Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.250 2020/03/07 18:49:49 thorpej Exp $");
 
 #include "opt_cputype.h"	/* which mips CPU levels do we support? */
 #include "opt_ddb.h"
@@ -298,7 +298,7 @@ trap(uint32_t status, uint32_t cause, vaddr_t vaddr, vaddr_t pc,
 		kpreempt_enable();
 		if (ok != 1)
 			printf("pmap_tlb_update_addr(%p,%#"
-			    PRIxVADDR",%#"PRIxPTE", 0) returned %d",
+			    PRIxVADDR",%#"PRIxPTE", 0) returned %d\n",
 			    pmap, vaddr, pte_value(pte), ok);
 		paddr_t pa = pte_to_paddr(pte);
 		KASSERTMSG(uvm_pageismanaged(pa),
