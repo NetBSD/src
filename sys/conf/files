@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1259 2020/03/05 21:08:36 pgoyette Exp $
+#	$NetBSD: files,v 1.1260 2020/03/07 18:08:47 thorpej Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20171118
@@ -169,10 +169,12 @@ defflag				COMPAT_ULTRIX: COMPAT_50
 # other users of COMPAT_NETBSD32 need EXEC_AOUT
 ifdef mips
 defflag				COMPAT_NETBSD32
-elifdef aarch64
+else
+ifdef aarch64
 defflag				COMPAT_NETBSD32
 else
 defflag				COMPAT_NETBSD32	: EXEC_AOUT
+endif
 endif
 
 defflag				COMPAT_SYSV
