@@ -186,7 +186,7 @@
 #define HAVE_FREXPF 1
 
 /* Define to 1 if you have the `frexpl' function. */
-/* #undef HAVE_FREXPL */
+#define HAVE_FREXPL 1
 
 /* Define if _Unwind_GetIPInfo is available. */
 #define HAVE_GETIPINFO 1
@@ -481,7 +481,7 @@
 #define HAVE_TANL 1
 
 /* Define to 1 if you have the <tgmath.h> header file. */
-/* #undef HAVE_TGMATH_H */
+#define HAVE_TGMATH_H 1
 
 /* Define to 1 if the target supports thread-local storage. */
 #define HAVE_TLS 1
