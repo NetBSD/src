@@ -1,5 +1,5 @@
 /*	$OpenBSD: via.c,v 1.8 2006/11/17 07:47:56 tom Exp $	*/
-/*	$NetBSD: via_padlock.c,v 1.27 2020/03/07 12:31:50 fcambus Exp $ */
+/*	$NetBSD: via_padlock.c,v 1.28 2020/03/07 13:28:45 maya Exp $ */
 
 /*-
  * Copyright (c) 2003 Jason Wright
@@ -20,7 +20,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.27 2020/03/07 12:31:50 fcambus Exp $");
+__KERNEL_RCSID(0, "$NetBSD: via_padlock.c,v 1.28 2020/03/07 13:28:45 maya Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -370,7 +370,6 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
     struct via_padlock_session *ses, struct via_padlock_softc *sc, void *buf)
 {
 	uint32_t *key;
-	int err = 0;
 
 	if ((crd->crd_len % 16) != 0)
 		return (EINVAL);
@@ -461,7 +460,7 @@ via_padlock_crypto_encdec(struct cryptop *crp, struct cryptodesc *crd,
 		sc->op_buf = NULL;
 	}
 
-	return (err);
+	return 0;
 }
 
 int
