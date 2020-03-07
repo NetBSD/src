@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.24 2020/03/06 17:03:35 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.25 2020/03/07 14:53:14 christos Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -654,10 +654,14 @@ trigger_ill(void)
 #endif
 }
 
+#include <fenv.h>
+
+#if (__arm__ && !__SOFTFP__) || __aarch64__
+#include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
+
 static bool __used
 are_fpu_exceptions_supported(void)
 {
-#if (__arm__ && !__SOFTFP__) || __aarch64__
 	/*
 	 * Some NEON fpus do not trap on IEEE 754 FP exceptions.
 	 * Skip these tests if running on them and compiled for
@@ -665,9 +669,11 @@ are_fpu_exceptions_supported(void)
 	 */
 	if (0 == fpsetmask(fpsetmask(FP_X_INV)))
 		return false;
-#endif
 	return true;
 }
+#else
+#define are_fpu_exceptions_supporter() 1
+#endif
 
 static void __used
 trigger_fpe(void)
