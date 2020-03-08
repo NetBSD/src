@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1399 2020/03/05 15:43:00 msaitoh Exp $
+$NetBSD: pcidevs,v 1.1400 2020/03/08 06:43:06 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6497,9 +6497,14 @@ product NVIDIA	GF_FX5900XT	0x0332	GeForce FX 5900XT
 product NVIDIA	GF_FX5950U	0x0333	GeForce FX 5950 Ultra
 product NVIDIA	QUADRO_FX_3000	0x0338	Quadro FX 3000
 product NVIDIA	GF_FX5700_LE	0x0343	GeForce FX 5700 LE
+product NVIDIA	MCP55_LPC1	0x0360	nForce MCP55 LPC Bridge
 product NVIDIA	MCP55_LPC2	0x0361	nForce MCP55 LPC Bridge
-product NVIDIA	MCP55_ISA	0x0362	nForce MCP55 PCI-ISA Bridge
-product NVIDIA	MCP55_LPC	0x0364	nForce MCP55 LPC Bridge
+product NVIDIA	MCP55_LPC3	0x0362	nForce MCP55 LPC Bridge
+product NVIDIA	MCP55_LPC4	0x0363	nForce MCP55 LPC Bridge
+product NVIDIA	MCP55_LPC5	0x0364	nForce MCP55 LPC Bridge
+product NVIDIA	MCP55_LPC6	0x0365	nForce MCP55 LPC Bridge
+product NVIDIA	MCP55_LPC7	0x0366	nForce MCP55 LPC Bridge
+product NVIDIA	MCP55_LPC8	0x0367	nForce MCP55 LPC Bridge
 product NVIDIA	MCP55_SMB	0x0368	nForce MCP55 SMBus Controller
 product NVIDIA	MCP55_MEM	0x0369	nForce MCP55 Memory Controller
 product NVIDIA	MCP55_MEM2	0x036a	nForce MCP55 Memory Controller
