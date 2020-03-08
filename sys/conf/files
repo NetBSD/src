@@ -1,4 +1,4 @@
-#	$NetBSD: files,v 1.1173.2.8 2019/09/03 12:08:22 martin Exp $
+#	$NetBSD: files,v 1.1173.2.9 2020/03/08 09:42:29 martin Exp $
 #	@(#)files.newconf	7.5 (Berkeley) 5/10/93
 
 version 	20170615
@@ -160,7 +160,13 @@ defflag				COMPAT_OSF1
 defflag				COMPAT_SUNOS: COMPAT_30
 defflag	opt_compat_svr4.h	COMPAT_SVR4 COMPAT_SVR4_32 SVR4_COMPAT_SOLARIS2
 defflag				COMPAT_ULTRIX: COMPAT_50
+# mips64 has COMPAT_NETBSD32 but cannot have EXEC_AOUT; all
+# other users of COMPAT_NETBSD32 need EXEC_AOUT
+ifdef mips
 defflag				COMPAT_NETBSD32
+else
+defflag				COMPAT_NETBSD32	: EXEC_AOUT
+endif
 defflag				COMPAT_LINUX32 : COMPAT_LINUX, COMPAT_NETBSD32
 defflag				COMPAT_AOUT_M68K: COMPAT_40
 defflag				COMPAT_M68K4K
