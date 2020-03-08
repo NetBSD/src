@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_wapbl.c,v 1.103 2018/12/10 21:19:33 jdolecek Exp $	*/
+/*	$NetBSD: vfs_wapbl.c,v 1.104 2020/03/08 18:26:59 ad Exp $	*/
 
 /*-
  * Copyright (c) 2003, 2008, 2009 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
 #define WAPBL_INTERNAL
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.103 2018/12/10 21:19:33 jdolecek Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_wapbl.c,v 1.104 2020/03/08 18:26:59 ad Exp $");
 
 #include <sys/param.h>
 #include <sys/bitops.h>
@@ -356,7 +356,7 @@ wapbl_sysctl_init(void)
 	rv = sysctl_createv(&wapbl_sysctl, 0, &rnode, &cnode,
 		       CTLFLAG_PERMANENT|CTLFLAG_READWRITE,
 		       CTLTYPE_INT, "allow_dpofua",
-		       SYSCTL_DESCR("allow use of FUA/DPO instead of cash flush if available"),
+		       SYSCTL_DESCR("allow use of FUA/DPO instead of cache flush if available"),
 		       NULL, 0, &wapbl_allow_dpofua, 0,
 		       CTL_CREATE, CTL_EOL);
 	if (rv)
