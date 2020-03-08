@@ -1,4 +1,4 @@
-/*	$NetBSD: tms320av110.c,v 1.23 2012/10/27 17:18:23 chs Exp $	*/
+/*	$NetBSD: tms320av110.c,v 1.23.12.1 2020/03/08 09:15:34 martin Exp $	*/
 
 /*-
  * Copyright (c) 1997 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.23 2012/10/27 17:18:23 chs Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tms320av110.c,v 1.23.12.1 2020/03/08 09:15:34 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -251,9 +251,7 @@ tav_drain(void *hdl)
 int
 tav_query_encoding(void *hdl, struct audio_encoding *ae)
 {
-	struct tav_softc *sc;
 
-	sc = hdl;
 	if (ae->index >= sizeof(tav_encodings)/sizeof(*ae))
 		return EINVAL;
 
@@ -473,9 +471,7 @@ tav_set_params(void *hdl, int setmode, int usemode, audio_params_t *p,
 int
 tav_set_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct tav_softc *sc;
 
-	sc = hdl;
 	/* dummy */
 	return 0;
 }
@@ -483,9 +479,7 @@ tav_set_port(void *hdl, mixer_ctrl_t *mc)
 int
 tav_get_port(void *hdl, mixer_ctrl_t *mc)
 {
-	struct tav_softc *sc;
 
-	sc = hdl;
 	/* dummy */
 	return 0;
 }
