@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_exit.c,v 1.284 2020/02/22 21:07:46 ad Exp $	*/
+/*	$NetBSD: kern_exit.c,v 1.285 2020/03/08 15:05:18 ad Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2006, 2007, 2008, 2020 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.284 2020/02/22 21:07:46 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_exit.c,v 1.285 2020/03/08 15:05:18 ad Exp $");
 
 #include "opt_ktrace.h"
 #include "opt_dtrace.h"
@@ -206,12 +206,12 @@ exit1(struct lwp *l, int exitcode, int signo)
 
 	p = l->l_proc;
 
-	/* XXX Temporary. */
-	kernel_lock_plug_leak();
-
 	/* Verify that we hold no locks other than p->p_lock. */
 	LOCKDEBUG_BARRIER(p->p_lock, 0);
-	KASSERTMSG(curcpu()->ci_biglock_count == 0, "kernel_lock leaked");
+
+	/* XXX Temporary: something is leaking kernel_lock. */
+	KERNEL_UNLOCK_ALL(l, NULL);
+
 	KASSERT(mutex_owned(p->p_lock));
 	KASSERT(p->p_vmspace != NULL);
 
