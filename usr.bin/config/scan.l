@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.28 2020/03/07 22:35:16 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.29 2020/03/08 00:04:11 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.28 2020/03/07 22:35:16 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.29 2020/03/08 00:04:11 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -107,6 +107,7 @@ QCHARS	\"(\\.|[^\\"])*\"
 WORD	[A-Za-z_][-A-Za-z_0-9]*
 FILENAME	({PATH}|{QCHARS})
 RESTOFLINE	[ \t]*(#[^\n]*)?\n
+WS	^[ \t]*
 
 %x	IGNORED
 
@@ -169,7 +170,7 @@ with		return WITH;
 \+=		return PLUSEQ;
 :=		return COLONEQ;
 
-<*>ifdef[ \t]+{WORD}{RESTOFLINE} {
+<*>{WS}ifdef[ \t]+{WORD}{RESTOFLINE} {
 		ifdefstate <<= IDS_SHIFT;
 		if (++ifdefshift >= IDS_MAX_DEPTH) {
 			yyerror("too many levels of conditional");
@@ -183,7 +184,7 @@ with		return WITH;
 		yyline++;
 	}
 
-<*>ifndef[ \t]+{WORD}{RESTOFLINE} {
+<*>{WS}ifndef[ \t]+{WORD}{RESTOFLINE} {
 		ifdefstate <<= IDS_SHIFT;
 		if (++ifdefshift >= IDS_MAX_DEPTH) {
 			yyerror("too many levels of conditional");
@@ -198,7 +199,7 @@ with		return WITH;
 	}
 
 
-<*>elifdef[ \t]+{WORD}{RESTOFLINE} {
+<*>{WS}elifdef[ \t]+{WORD}{RESTOFLINE} {
 		int st = ifdefstate & IDS_BITS;
 		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched elifdef");
@@ -213,7 +214,7 @@ with		return WITH;
 		yyline++;
 	}
 
-<*>elifndef[ \t]+{WORD}{RESTOFLINE} {
+<*>{WS}elifndef[ \t]+{WORD}{RESTOFLINE} {
 		int st = ifdefstate & IDS_BITS;
 		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched elifndef");
@@ -228,7 +229,7 @@ with		return WITH;
 		yyline++;
 	}
 
-<*>else{RESTOFLINE} {
+<*>{WS}else{RESTOFLINE} {
 		int st = ifdefstate & IDS_BITS;
 		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched else");
@@ -243,7 +244,7 @@ with		return WITH;
 		yyline++;
 	}
 
-<*>endif{RESTOFLINE} {
+<*>{WS}endif{RESTOFLINE} {
 		if (ifdefshift == -1) {
 			yyerror("mismatched endif");
 		}
