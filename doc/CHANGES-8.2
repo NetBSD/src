@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.104 2020/03/08 09:29:10 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.105 2020/03/08 10:03:19 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2098,4 +2098,31 @@ sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.24,1.25 (patch)
 	availability of / before trying to load firmware.
 	Limit the list of supported devices.
 	[mrg, ticket #1512]
+
+sys/conf/files					1.1257-1.1258
+
+	Fix COMPAT_NETBSD32 to properly handle EXEC_AOUT binaries.
+	[pgoyette, ticket #1514]
+
+sys/kern/sys_select.c				1.42-1.45
+
+	PR 54158: fix resource limits for poll(2).
+	[mlelstv, ticket #1515]
+
+sys/dev/ic/tms320av110.c			1.24
+
+	Remove unused variables.
+	[is, ticket #1516]
+
+sys/arch/amiga/dev/gayle_pcmcia.c		1.32
+
+	The Gayle interface uses swapped (little-endian) word accesses, so we
+	need to use the amiga_bus_stride_1swap methods for the word accesses.
+	[is, ticket #1517]
+
+sys/arch/amigappc/include/bus_defs.h		1.8
+
+	Gayle wants stride_1swap now, so declare the rest of the bus
+	methods since we already define them anyway.
+	[is, ticket #1518]
 
