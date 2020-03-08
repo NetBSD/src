@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.67 2020/03/08 20:49:31 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.68 2020/03/08 22:26:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.67 2020/03/08 20:49:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.68 2020/03/08 22:26:03 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -978,8 +978,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	sc->sc_txhir.r_off = &sc->sc_hostvar->hv_tx_hi_desc_read_idx;
 	for (i = 0; i < TX_ENTRIES; i++) {
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN,
-		    TX_ENTRIES - 4, TXP_MAX_SEGLEN, 0,
-		    BUS_DMA_NOWAIT, &sc->sc_txd[i].sd_map) != 0) {
+		    TXP_MAXTXSEGS, TXP_MAX_SEGLEN, 0, BUS_DMA_NOWAIT,
+		    &sc->sc_txd[i].sd_map) != 0) {
 			for (j = 0; j < i; j++) {
 				bus_dmamap_destroy(sc->sc_dmat,
 				    sc->sc_txd[j].sd_map);
@@ -1403,7 +1403,8 @@ txp_start(struct ifnet *ifp)
 	struct txp_frag_desc *fxd;
 	struct mbuf *m, *mnew;
 	struct txp_swdesc *sd;
-	uint32_t firstprod, firstcnt, prod, cnt, i;
+	uint32_t prod, cnt, i;
+	int error;
 
 	if ((ifp->if_flags & (IFF_RUNNING | IFF_OACTIVE)) != IFF_RUNNING)
 		return;
@@ -1412,41 +1413,66 @@ txp_start(struct ifnet *ifp)
 	cnt = r->r_cnt;
 
 	while (1) {
+		if (cnt >= TX_ENTRIES - TXP_MAXTXSEGS - 4) {
+			ifp->if_flags |= IFF_OACTIVE;
+			break;
+		}
+
 		IFQ_POLL(&ifp->if_snd, m);
 		if (m == NULL)
 			break;
 		mnew = NULL;
 
-		firstprod = prod;
-		firstcnt = cnt;
-
 		sd = sc->sc_txd + prod;
-		sd->sd_mbuf = m;
 
+		/*
+		 * Load the DMA map.  If this fails, the packet either
+		 * didn't fit in the alloted number of segments, or we
+		 * were short on resources.  In this case, we'll copy
+		 * and try again.
+		 */
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
-		    BUS_DMA_NOWAIT)) {
+		    BUS_DMA_NOWAIT) != 0) {
 			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-			if (mnew == NULL)
-				goto oactive1;
+			if (mnew == NULL) {
+				printf("%s: unable to allocate Tx mbuf\n",
+				    device_xname(sc->sc_dev));
+				break;
+			}
 			if (m->m_pkthdr.len > MHLEN) {
 				MCLGET(mnew, M_DONTWAIT);
 				if ((mnew->m_flags & M_EXT) == 0) {
+					printf("%s: unable to allocate Tx "
+					    "cluster\n",
+					    device_xname(sc->sc_dev));
 					m_freem(mnew);
-					goto oactive1;
+					break;
 				}
 			}
 			m_copydata(m, 0, m->m_pkthdr.len, mtod(mnew, void *));
 			mnew->m_pkthdr.len = mnew->m_len = m->m_pkthdr.len;
-			IFQ_DEQUEUE(&ifp->if_snd, m);
-			m_freem(m);
-			m = mnew;
-			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, m,
-			    BUS_DMA_NOWAIT))
-				goto oactive1;
+			error = bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map,
+			    mnew, BUS_DMA_NOWAIT);
+			if (error) {
+				printf("%s: unable to load Tx buffer, "
+				    "error = %d\n", device_xname(sc->sc_dev),
+				    error);
+				m_freem(mnew);
+				break;
+			}
 		}
 
-		if ((TX_ENTRIES - cnt) < 4)
-			goto oactive;
+		IFQ_DEQUEUE(&ifp->if_snd, m);
+		if (mnew != NULL) {
+			m_freem(m);
+			m = mnew;
+		}
+
+		/*
+		 * WE ARE NOW COMMITTED TO TRANSMITTING THE PACKET.
+		 */
+
+		sd->sd_mbuf = m;
 
 		txd = r->r_desc + prod;
 		txdidx = prod;
@@ -1460,9 +1486,6 @@ txp_start(struct ifnet *ifp)
 
 		if (++prod == TX_ENTRIES)
 			prod = 0;
-
-		if (++cnt >= (TX_ENTRIES - 4))
-			goto oactive;
 
 		if (vlan_has_tag(m))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
@@ -1484,13 +1507,6 @@ txp_start(struct ifnet *ifp)
 
 		fxd = (struct txp_frag_desc *)(r->r_desc + prod);
 		for (i = 0; i < sd->sd_map->dm_nsegs; i++) {
-			if (++cnt >= (TX_ENTRIES - 4)) {
-				bus_dmamap_sync(sc->sc_dmat, sd->sd_map,
-				    0, sd->sd_map->dm_mapsize,
-				    BUS_DMASYNC_POSTWRITE);
-				goto oactive;
-			}
-
 			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG |
 			    FRAG_FLAGS_VALID;
 			fxd->frag_rsvd1 = 0;
@@ -1513,13 +1529,6 @@ txp_start(struct ifnet *ifp)
 				fxd++;
 
 		}
-
-		/*
-		 * if mnew isn't NULL, we already dequeued and copied
-		 * the packet.
-		 */
-		if (mnew == NULL)
-			IFQ_DEQUEUE(&ifp->if_snd, m);
 
 		ifp->if_timer = 5;
 
@@ -1553,14 +1562,6 @@ txp_start(struct ifnet *ifp)
 
 	r->r_prod = prod;
 	r->r_cnt = cnt;
-	return;
-
-oactive:
-	bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
-oactive1:
-	ifp->if_flags |= IFF_OACTIVE;
-	r->r_prod = firstprod;
-	r->r_cnt = firstcnt;
 }
 
 /*
