@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.104 2020/03/08 06:25:10 rin Exp $
+# $NetBSD: GENERIC,v 1.105 2020/03/08 06:32:41 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -19,7 +19,7 @@
 # device.
 
 # Supports Sun2 (2/120, 2/170, 2/50, ...)
-# Supports root on: ie0, sd*, ...
+# Supports root on: sd*, ... (FFS)
 
 include 	"arch/sun2/conf/std.sun2"
 
@@ -29,7 +29,7 @@ options 	INSECURE		# allow modload(8) in multiuser mode
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.104 $"
+#ident 		"GENERIC-$Revision: 1.105 $"
 
 makeoptions	COPTS="-Os -fno-inline-small-functions"
 					# bootloader has size limit (~2MB)
