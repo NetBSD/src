@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.66 2020/03/08 19:24:40 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.67 2020/03/08 20:49:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.66 2020/03/08 19:24:40 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.67 2020/03/08 20:49:31 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -454,6 +454,11 @@ txp_download_fw(struct txp_softc *sc)
 
 	/* Tell boot firmware to get ready for image */
 	WRITE_REG(sc, TXP_H2A_1, le32toh(fileheader->addr));
+	WRITE_REG(sc, TXP_H2A_2, le32toh(fileheader->hmac[0]));
+	WRITE_REG(sc, TXP_H2A_3, le32toh(fileheader->hmac[1]));
+	WRITE_REG(sc, TXP_H2A_4, le32toh(fileheader->hmac[2]));
+	WRITE_REG(sc, TXP_H2A_5, le32toh(fileheader->hmac[3]));
+	WRITE_REG(sc, TXP_H2A_6, le32toh(fileheader->hmac[4]));
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_RUNTIME_IMAGE);
 
 	if (txp_download_fw_wait(sc)) {
