@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.178 2020/02/07 00:04:28 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.179 2020/03/08 02:44:12 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.178 2020/02/07 00:04:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.179 2020/03/08 02:44:12 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -208,8 +208,13 @@ struct sip_softc {
 	struct ethercom sc_ethercom;	/* ethernet common data */
 
 	const struct sip_product *sc_model; /* which model are we? */
-	int sc_gigabit;			/* 1: 83820, 0: other */
+	bool sc_gigabit;		/* 1: 83820, 0: other */
+	bool sc_dma64;			/* using 64-bit DMA addresses */
 	int sc_rev;			/* chip revision */
+
+	unsigned int sc_bufptr_idx;
+	unsigned int sc_cmdsts_idx;
+	unsigned int sc_extsts_idx;	/* DP83820 only */
 
 	void *sc_ih;			/* interrupt cookie */
 
@@ -471,6 +476,24 @@ sip_rxchain_link(struct sip_softc *sc, struct mbuf *m)
 #define	SIP_CDRXADDR(sc, x)	((sc)->sc_cddma + SIP_CDRXOFF((x)))
 
 static inline void
+sip_set_rxdp(struct sip_softc *sc, bus_addr_t addr)
+{
+	if (sc->sc_gigabit)
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXDP_HI,
+		    BUS_ADDR_HI32(addr));
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_RXDP, BUS_ADDR_LO32(addr));
+}
+
+static inline void
+sip_set_txdp(struct sip_softc *sc, bus_addr_t addr)
+{
+	if (sc->sc_gigabit)
+		bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXDP_HI,
+		    BUS_ADDR_HI32(addr));
+	bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXDP, BUS_ADDR_LO32(addr));
+}
+
+static inline void
 sip_cdtxsync(struct sip_softc *sc, const int x0, const int n0, const int ops)
 {
 	int x, n;
@@ -499,26 +522,51 @@ sip_cdrxsync(struct sip_softc *sc, int x, int ops)
 	    SIP_CDRXOFF(x), sizeof(struct sip_desc), ops);
 }
 
-#if 0
-#ifdef DP83820
-	uint32_t	sipd_bufptr;	/* pointer to DMA segment */
-	uint32_t	sipd_cmdsts;	/* command/status word */
-#else
-	uint32_t	sipd_cmdsts;	/* command/status word */
-	uint32_t	sipd_bufptr;	/* pointer to DMA segment */
-#endif /* DP83820 */
-#endif /* 0 */
-
-static inline volatile uint32_t *
-sipd_cmdsts(struct sip_softc *sc, struct sip_desc *sipd)
+static void
+sip_init_txring(struct sip_softc *sc)
 {
-	return &sipd->sipd_cbs[(sc->sc_gigabit) ? 1 : 0];
+	struct sip_desc *sipd;
+	bus_addr_t next_desc;
+	int i;
+
+	memset(sc->sc_txdescs, 0, sizeof(sc->sc_txdescs));
+	for (i = 0; i < sc->sc_ntxdesc; i++) {
+		sipd = &sc->sc_txdescs[i];
+		next_desc = SIP_CDTXADDR(sc, sip_nexttx(sc, i));
+		if (sc->sc_dma64) {
+			sipd->sipd_words[GSIP64_DESC_LINK_LO] =
+			    htole32(BUS_ADDR_LO32(next_desc));
+			sipd->sipd_words[GSIP64_DESC_LINK_HI] =
+			    htole32(BUS_ADDR_HI32(next_desc));
+		} else {
+			/* SIP_DESC_LINK == GSIP_DESC_LINK */
+			sipd->sipd_words[SIP_DESC_LINK] = htole32(next_desc);
+		}
+	}
+	sip_cdtxsync(sc, 0, sc->sc_ntxdesc,
+	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
+	sc->sc_txfree = sc->sc_ntxdesc;
+	sc->sc_txnext = 0;
+	sc->sc_txwin = 0;
 }
 
-static inline volatile uint32_t *
-sipd_bufptr(struct sip_softc *sc, struct sip_desc *sipd)
+static inline void
+sip_init_txdesc(struct sip_softc *sc, int x, bus_addr_t bufptr, uint32_t cmdsts)
 {
-	return &sipd->sipd_cbs[(sc->sc_gigabit) ? 0 : 1];
+	struct sip_desc *sipd = &sc->sc_txdescs[x];
+
+	if (sc->sc_dma64) {
+		sipd->sipd_words[GSIP64_DESC_BUFPTR_LO] =
+		    htole32(BUS_ADDR_LO32(bufptr));
+		sipd->sipd_words[GSIP64_DESC_BUFPTR_HI] =
+		    htole32(BUS_ADDR_HI32(bufptr));
+	} else {
+		sipd->sipd_words[sc->sc_bufptr_idx] = htole32(bufptr);
+	}
+	sipd->sipd_words[sc->sc_extsts_idx] = 0;
+	membar_producer();
+	sipd->sipd_words[sc->sc_cmdsts_idx] = htole32(cmdsts);
+	/* sip_cdtxsync() will be done later. */
 }
 
 static inline void
@@ -526,12 +574,27 @@ sip_init_rxdesc(struct sip_softc *sc, int x)
 {
 	struct sip_rxsoft *rxs = &sc->sc_rxsoft[x];
 	struct sip_desc *sipd = &sc->sc_rxdescs[x];
+	const bus_addr_t next_desc = SIP_CDRXADDR(sc, sip_nextrx(sc, x));
 
-	sipd->sipd_link = htole32(SIP_CDRXADDR(sc, sip_nextrx(sc, x)));
-	*sipd_bufptr(sc, sipd) = htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
-	*sipd_cmdsts(sc, sipd) = htole32(CMDSTS_INTR |
-	    (sc->sc_parm->p_rxbuf_len & sc->sc_bits.b_cmdsts_size_mask));
-	sipd->sipd_extsts = 0;
+	if (sc->sc_dma64) {
+		sipd->sipd_words[GSIP64_DESC_LINK_LO] =
+		    htole32(BUS_ADDR_LO32(next_desc));
+		sipd->sipd_words[GSIP64_DESC_LINK_HI] =
+		    htole32(BUS_ADDR_HI32(next_desc));
+		sipd->sipd_words[GSIP64_DESC_BUFPTR_LO] =
+		    htole32(BUS_ADDR_LO32(rxs->rxs_dmamap->dm_segs[0].ds_addr));
+		sipd->sipd_words[GSIP64_DESC_BUFPTR_HI] =
+		    htole32(BUS_ADDR_HI32(rxs->rxs_dmamap->dm_segs[0].ds_addr));
+	} else {
+		sipd->sipd_words[SIP_DESC_LINK] = htole32(next_desc);
+		sipd->sipd_words[sc->sc_bufptr_idx] =
+		    htole32(rxs->rxs_dmamap->dm_segs[0].ds_addr);
+	}
+	sipd->sipd_words[sc->sc_extsts_idx] = 0;
+	membar_producer();
+	sipd->sipd_words[sc->sc_cmdsts_idx] =
+	    htole32(CMDSTS_INTR | (sc->sc_parm->p_rxbuf_len &
+	    			   sc->sc_bits.b_cmdsts_size_mask));
 	sip_cdrxsync(sc, x, BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
 }
 
@@ -670,25 +733,26 @@ static const struct sip_product {
 	pci_product_id_t	sip_product;
 	const char		*sip_name;
 	const struct sip_variant *sip_variant;
-	int			sip_gigabit;
+	bool			sip_gigabit;
 } sipcom_products[] = {
 	{ PCI_VENDOR_NS,	PCI_PRODUCT_NS_DP83820,
 	  "NatSemi DP83820 Gigabit Ethernet",
-	  &sipcom_variant_dp83820, 1 },
+	  &sipcom_variant_dp83820, true },
+
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_900,
 	  "SiS 900 10/100 Ethernet",
-	  &sipcom_variant_sis900, 0 },
+	  &sipcom_variant_sis900, false },
 	{ PCI_VENDOR_SIS,	PCI_PRODUCT_SIS_7016,
 	  "SiS 7016 10/100 Ethernet",
-	  &sipcom_variant_sis900, 0 },
+	  &sipcom_variant_sis900, false },
 
 	{ PCI_VENDOR_NS,	PCI_PRODUCT_NS_DP83815,
 	  "NatSemi DP83815 10/100 Ethernet",
-	  &sipcom_variant_dp83815, 0 },
+	  &sipcom_variant_dp83815, false },
 
 	{ 0,			0,
 	  NULL,
-	  NULL, 0 },
+	  NULL, false },
 };
 
 static const struct sip_product *
@@ -812,24 +876,30 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 		}
 		printf("\n");
 	}
-
+	
 	/*
-	 * XXX Need some PCI flags indicating support for
-	 * XXX 64-bit addressing.
+	 * The T64ADDR bit is loaded by the chip from the EEPROM and
+	 * is read-only.
 	 */
-#if 0
-	if (reg & CFG_M64ADDR)
-		sc->sc_cfg |= CFG_M64ADDR;
 	if (reg & CFG_T64ADDR)
 		sc->sc_cfg |= CFG_T64ADDR;
-#endif
+
+	/*
+	 * We can use 64-bit DMA addressing regardless of what
+	 * sort of slot we're in.
+	 */
+	if (pci_dma64_available(pa)) {
+		sc->sc_dmat = pa->pa_dmat64;
+		sc->sc_cfg |= CFG_M64ADDR;
+		sc->sc_dma64 = true;
+	}
 
 	if (reg & (CFG_TBI_EN | CFG_EXT_125)) {
 		const char *sep = "";
 		printf("%s: using ", device_xname(sc->sc_dev));
 		if (reg & CFG_EXT_125) {
 			sc->sc_cfg |= CFG_EXT_125;
-			printf("%s125MHz clock", sep);
+			printf("%sexternal 125MHz clock", sep);
 			sep = ", ";
 		}
 		if (reg & CFG_TBI_EN) {
@@ -1004,15 +1074,32 @@ sipcom_attach(device_t parent, device_t self, void *aux)
 	}
 	sc->sc_dev = self;
 	sc->sc_gigabit = sip->sip_gigabit;
+	sc->sc_dma64 = false;
 	pmf_self_suspensor_init(self, &sc->sc_suspensor, &sc->sc_qual);
 	sc->sc_pc = pc;
 
 	if (sc->sc_gigabit) {
+		if (sc->sc_dma64) {
+			sc->sc_bufptr_idx = GSIP64_DESC_BUFPTR_LO;
+			sc->sc_cmdsts_idx = GSIP64_DESC_CMDSTS;
+			sc->sc_extsts_idx = GSIP64_DESC_EXTSTS;
+		} else {
+			sc->sc_bufptr_idx = GSIP_DESC_BUFPTR;
+			sc->sc_cmdsts_idx = GSIP_DESC_CMDSTS;
+			sc->sc_extsts_idx = GSIP_DESC_EXTSTS;
+		}
 		sc->sc_rxintr = gsip_rxintr;
 		sc->sc_parm = &gsip_parm;
 	} else {
 		sc->sc_rxintr = sip_rxintr;
 		sc->sc_parm = &sip_parm;
+		sc->sc_bufptr_idx = SIP_DESC_BUFPTR;
+		sc->sc_cmdsts_idx = SIP_DESC_CMDSTS;
+		/*
+		 * EXTSTS doesn't really exist on non-GigE parts,
+		 * but we initialize the index for simplicity later.
+		 */
+		sc->sc_extsts_idx = GSIP_DESC_EXTSTS;
 	}
 	tx_dmamap_size = sc->sc_parm->p_tx_dmamap_size;
 	ntxsegs_alloc = sc->sc_parm->p_ntxsegs_alloc;
@@ -1376,7 +1463,7 @@ static inline void
 sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
     uint64_t capenable)
 {
-	uint32_t extsts;
+	uint32_t extsts = 0;
 #ifdef DEBUG
 	struct ifnet *ifp = &sc->sc_ethercom.ec_if;
 #endif
@@ -1397,7 +1484,7 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 	 * unconditional swap instead of htons() inside.
 	 */
 	if (vlan_has_tag(m0)) {
-		sc->sc_txdescs[lasttx].sipd_extsts |=
+		sc->sc_txdescs[lasttx].sipd_words[sc->sc_extsts_idx] |=
 		    htole32(EXTSTS_VPKT |
 				(bswap16(vlan_get_tag(m0)) &
 				 EXTSTS_VTCI));
@@ -1413,7 +1500,6 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 	 *
 	 * Byte-swap constants so the compiler can optimize.
 	 */
-	extsts = 0;
 	if (m0->m_pkthdr.csum_flags & M_CSUM_IPv4) {
 		KDASSERT(ifp->if_capenable & IFCAP_CSUM_IPv4_Tx);
 		SIP_EVCNT_INCR(&sc->sc_ev_txipsum);
@@ -1428,7 +1514,7 @@ sipcom_set_extsts(struct sip_softc *sc, int lasttx, struct mbuf *m0,
 		SIP_EVCNT_INCR(&sc->sc_ev_txudpsum);
 		extsts |= htole32(EXTSTS_UDPPKT);
 	}
-	sc->sc_txdescs[sc->sc_txnext].sipd_extsts |= extsts;
+	sc->sc_txdescs[sc->sc_txnext].sipd_words[sc->sc_extsts_idx] |= extsts;
 }
 
 /*
@@ -1446,6 +1532,7 @@ sipcom_start(struct ifnet *ifp)
 	bus_dmamap_t dmamap;
 	int error, nexttx, lasttx, seg;
 	int ofree = sc->sc_txfree;
+	uint32_t cmdsts;
 #if 0
 	int firsttx = sc->sc_txnext;
 #endif
@@ -1586,18 +1673,16 @@ sipcom_start(struct ifnet *ifp)
 			 * yet.  That could cause a race condition.
 			 * We'll do it below.
 			 */
-			*sipd_bufptr(sc, &sc->sc_txdescs[nexttx]) =
-			    htole32(dmamap->dm_segs[seg].ds_addr);
-			*sipd_cmdsts(sc, &sc->sc_txdescs[nexttx]) =
-			    htole32((nexttx == sc->sc_txnext ? 0 : CMDSTS_OWN)
-				| CMDSTS_MORE | dmamap->dm_segs[seg].ds_len);
-			sc->sc_txdescs[nexttx].sipd_extsts = 0;
+
+			cmdsts = dmamap->dm_segs[seg].ds_len;
+			if (nexttx != sc->sc_txnext)
+				cmdsts |= CMDSTS_OWN;
+			if (seg < dmamap->dm_nsegs - 1)
+				cmdsts |= CMDSTS_MORE;
+			sip_init_txdesc(sc, nexttx,
+					dmamap->dm_segs[seg].ds_addr, cmdsts);
 			lasttx = nexttx;
 		}
-
-		/* Clear the MORE bit on the last segment. */
-		*sipd_cmdsts(sc, &sc->sc_txdescs[lasttx]) &=
-		    htole32(~CMDSTS_MORE);
 
 		/*
 		 * If we're in the interrupt delay window, delay the
@@ -1605,7 +1690,7 @@ sipcom_start(struct ifnet *ifp)
 		 */
 		if (++sc->sc_txwin >= (SIP_TXQUEUELEN * 2 / 3)) {
 			SIP_EVCNT_INCR(&sc->sc_ev_txforceintr);
-			*sipd_cmdsts(sc, &sc->sc_txdescs[lasttx]) |=
+			sc->sc_txdescs[lasttx].sipd_words[sc->sc_cmdsts_idx] |=
 			    htole32(CMDSTS_INTR);
 			sc->sc_txwin = 0;
 		}
@@ -1621,7 +1706,7 @@ sipcom_start(struct ifnet *ifp)
 		 * The entire packet is set up.  Give the first descrptor
 		 * to the chip now.
 		 */
-		*sipd_cmdsts(sc, &sc->sc_txdescs[sc->sc_txnext]) |=
+		sc->sc_txdescs[sc->sc_txnext].sipd_words[sc->sc_cmdsts_idx] |=
 		    htole32(CMDSTS_OWN);
 		sip_cdtxsync(sc, sc->sc_txnext, 1,
 		    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
@@ -1670,8 +1755,7 @@ sipcom_start(struct ifnet *ifp)
 #if 0
 		if ((bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CR) &
 		     CR_TXE) == 0) {
-			bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_TXDP,
-			    SIP_CDTXADDR(sc, firsttx));
+			sip_set_txdp(sc, SIP_CDTXADDR(sc, firsttx));
 			bus_space_write_4(sc->sc_st, sc->sc_sh, SIP_CR, CR_TXE);
 		}
 #else
@@ -1862,8 +1946,8 @@ sipcom_intr(void *arg)
 				    device_xname(sc->sc_dev));
 
 				/* Get the receive process going again. */
-				bus_space_write_4(sc->sc_st, sc->sc_sh,
-				    SIP_RXDP, SIP_CDRXADDR(sc, sc->sc_rxptr));
+				sip_set_rxdp(sc,
+				    SIP_CDRXADDR(sc, sc->sc_rxptr));
 				bus_space_write_4(sc->sc_st, sc->sc_sh,
 				    SIP_CR, CR_RXE);
 			}
@@ -1979,8 +2063,8 @@ sipcom_txintr(struct sip_softc *sc)
 		sip_cdtxsync(sc, txs->txs_firstdesc, txs->txs_dmamap->dm_nsegs,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(*sipd_cmdsts(sc,
-			&sc->sc_txdescs[txs->txs_lastdesc]));
+		cmdsts = le32toh(sc->sc_txdescs[
+		    txs->txs_lastdesc].sipd_words[sc->sc_cmdsts_idx]);
 		if (cmdsts & CMDSTS_OWN)
 			break;
 
@@ -2051,8 +2135,10 @@ gsip_rxintr(struct sip_softc *sc)
 		sip_cdrxsync(sc, i,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_rxdescs[i]));
-		extsts = le32toh(sc->sc_rxdescs[i].sipd_extsts);
+		cmdsts =
+		    le32toh(sc->sc_rxdescs[i].sipd_words[sc->sc_cmdsts_idx]);
+		extsts =
+		    le32toh(sc->sc_rxdescs[i].sipd_words[sc->sc_extsts_idx]);
 		len = CMDSTS_SIZE(sc, cmdsts);
 
 		/*
@@ -2262,7 +2348,8 @@ sip_rxintr(struct sip_softc *sc)
 		sip_cdrxsync(sc, i,
 		    BUS_DMASYNC_POSTREAD | BUS_DMASYNC_POSTWRITE);
 
-		cmdsts = le32toh(*sipd_cmdsts(sc, &sc->sc_rxdescs[i]));
+		cmdsts =
+		    le32toh(sc->sc_rxdescs[i].sipd_words[sc->sc_cmdsts_idx]);
 
 		/*
 		 * NOTE: OWN is set if owned by _consumer_.  We're the
@@ -2527,7 +2614,6 @@ sipcom_init(struct ifnet *ifp)
 	bus_space_handle_t sh = sc->sc_sh;
 	struct sip_txsoft *txs;
 	struct sip_rxsoft *rxs;
-	struct sip_desc *sipd;
 	int i, error = 0;
 
 	if (device_is_active(sc->sc_dev)) {
@@ -2574,19 +2660,8 @@ sipcom_init(struct ifnet *ifp)
 		bus_space_write_4(st, sh, 0x00cc, 0x0000);
 	}
 
-	/*
-	 * Initialize the transmit descriptor ring.
-	 */
-	for (i = 0; i < sc->sc_ntxdesc; i++) {
-		sipd = &sc->sc_txdescs[i];
-		memset(sipd, 0, sizeof(struct sip_desc));
-		sipd->sipd_link = htole32(SIP_CDTXADDR(sc, sip_nexttx(sc, i)));
-	}
-	sip_cdtxsync(sc, 0, sc->sc_ntxdesc,
-	    BUS_DMASYNC_PREREAD | BUS_DMASYNC_PREWRITE);
-	sc->sc_txfree = sc->sc_ntxdesc;
-	sc->sc_txnext = 0;
-	sc->sc_txwin = 0;
+	/* Initialize the transmit descriptor ring. */
+	sip_init_txring(sc);
 
 	/*
 	 * Initialize the transmit job descriptors.
@@ -2708,8 +2783,8 @@ sipcom_init(struct ifnet *ifp)
 	/*
 	 * Give the transmit and receive rings to the chip.
 	 */
-	bus_space_write_4(st, sh, SIP_TXDP, SIP_CDTXADDR(sc, sc->sc_txnext));
-	bus_space_write_4(st, sh, SIP_RXDP, SIP_CDRXADDR(sc, sc->sc_rxptr));
+	sip_set_txdp(sc, SIP_CDTXADDR(sc, sc->sc_txnext));
+	sip_set_rxdp(sc, SIP_CDRXADDR(sc, sc->sc_rxptr));
 
 	/*
 	 * Initialize the interrupt mask.
@@ -2840,8 +2915,9 @@ sipcom_stop(struct ifnet *ifp, int disable)
 	while ((txs = SIMPLEQ_FIRST(&sc->sc_txdirtyq)) != NULL) {
 		if ((ifp->if_flags & IFF_DEBUG) != 0 &&
 		    SIMPLEQ_NEXT(txs, txs_q) == NULL &&
-		    (le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc])) &
-		     CMDSTS_INTR) == 0)
+		    (sc->sc_txdescs[
+		     txs->txs_lastdesc].sipd_words[
+		     sc->sc_cmdsts_idx] & htole32(CMDSTS_INTR)) == 0)
 			printf("%s: sip_stop: last descriptor does not "
 			    "have INTR bit set\n", device_xname(sc->sc_dev));
 		SIMPLEQ_REMOVE_HEAD(&sc->sc_txdirtyq, txs_q);
@@ -2853,7 +2929,8 @@ sipcom_stop(struct ifnet *ifp, int disable)
 		}
 #endif
 		cmdsts |=		/* DEBUG */
-		    le32toh(*sipd_cmdsts(sc, &sc->sc_txdescs[txs->txs_lastdesc]));
+		    le32toh(sc->sc_txdescs[
+			txs->txs_lastdesc].sipd_words[sc->sc_cmdsts_idx]);
 		bus_dmamap_unload(sc->sc_dmat, txs->txs_dmamap);
 		m_freem(txs->txs_mbuf);
 		txs->txs_mbuf = NULL;
