@@ -191,6 +191,10 @@ $ ENOLINK
 95 Link has been severed
 $ EPROTO
 96 Protocol error
+$ EOWNERDEAD
+97 Previous owner died
+$ ENOTRECOVERABLE
+98 State not recoverable
 $set 2
 $ SIGHUP
 1 Hangup
