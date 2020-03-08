@@ -1,4 +1,4 @@
-/*	$NetBSD: compat_stub.h,v 1.18.2.2 2019/11/11 17:11:07 martin Exp $	*/
+/*	$NetBSD: compat_stub.h,v 1.18.2.3 2020/03/08 10:54:43 martin Exp $	*/
 
 /*-
  * Copyright (c) 2018 The NetBSD Foundation, Inc.
@@ -370,5 +370,12 @@ MODULE_HOOK(sendsig_sigcontext_16_hook, void,
  * Hook for coredumps
  */
 MODULE_HOOK(coredump_hook, int, (struct lwp *, const char *));
+
+/*
+ * Hook for amd64 handler for oosyscall for COMPAT_NETBSD32 && COMPAT_10)
+ */
+struct proc;
+struct trapframe;
+MODULE_HOOK(amd64_oosyscall_hook, int, (struct proc *, struct trapframe *));
 
 #endif	/* _SYS_COMPAT_STUB_H */
