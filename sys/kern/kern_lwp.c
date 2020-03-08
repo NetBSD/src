@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_lwp.c,v 1.228 2020/02/27 20:52:25 ad Exp $	*/
+/*	$NetBSD: kern_lwp.c,v 1.229 2020/03/08 17:04:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2006, 2007, 2008, 2009, 2019, 2020
@@ -211,7 +211,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.228 2020/02/27 20:52:25 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_lwp.c,v 1.229 2020/03/08 17:04:45 ad Exp $");
 
 #include "opt_ddb.h"
 #include "opt_lockdebug.h"
@@ -677,12 +677,13 @@ lwp_wait(struct lwp *l, lwpid_t lid, lwpid_t *departed, bool exiting)
 		}
 
 		/*
-		 * If all other LWPs are waiting for exits or suspends
-		 * and the supply of zombies and potential zombies is
-		 * exhausted, then we are about to deadlock.
+		 * Break out if the process is exiting, or if all LWPs are
+		 * in _lwp_wait().  There are other ways to hang the process
+		 * with _lwp_wait(), but the sleep is interruptable so
+		 * little point checking for them.
 		 */
 		if ((p->p_sflag & PS_WEXIT) != 0 ||
-		    p->p_nrlwps + p->p_nzlwps - p->p_ndlwps <= p->p_nlwpwait) {
+		    p->p_nlwpwait == p->p_nlwps) {
 			error = EDEADLK;
 			break;
 		}
