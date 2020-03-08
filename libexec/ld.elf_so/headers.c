@@ -1,4 +1,4 @@
-/*	$NetBSD: headers.c,v 1.65 2018/12/30 11:55:15 martin Exp $	 */
+/*	$NetBSD: headers.c,v 1.65.2.1 2020/03/08 10:22:29 martin Exp $	 */
 
 /*
  * Copyright 1996 John D. Polstra.
@@ -40,7 +40,7 @@
 
 #include <sys/cdefs.h>
 #ifndef lint
-__RCSID("$NetBSD: headers.c,v 1.65 2018/12/30 11:55:15 martin Exp $");
+__RCSID("$NetBSD: headers.c,v 1.65.2.1 2020/03/08 10:22:29 martin Exp $");
 #endif /* not lint */
 
 #include <err.h>
@@ -435,9 +435,9 @@ _rtld_digest_phdr(const Elf_Phdr *phdr, int phnum, caddr_t entry)
 
 #ifdef GNU_RELRO
 		case PT_GNU_RELRO:
-			obj->relro_page = obj->relocbase
-			    + round_down(ph->p_vaddr);
-			obj->relro_size = round_up(ph->p_memsz);
+			/* rounding happens later. */
+			obj->relro_page = obj->relocbase + ph->p_vaddr;
+			obj->relro_size = ph->p_memsz;
 			dbg(("headers: %s %p phsize %" PRImemsz,
 			    "PT_GNU_RELRO", (void *)(uintptr_t)vaddr,
 			     ph->p_memsz));
