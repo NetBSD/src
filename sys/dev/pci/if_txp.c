@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.64 2020/02/29 21:31:55 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.65 2020/03/08 19:02:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.64 2020/02/29 21:31:55 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.65 2020/03/08 19:02:03 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -589,8 +589,8 @@ txp_download_fw_section(struct txp_softc *sc,
 	WRITE_REG(sc, TXP_H2A_1, le32toh(sect->nbytes));
 	WRITE_REG(sc, TXP_H2A_2, le32toh(sect->cksum));
 	WRITE_REG(sc, TXP_H2A_3, le32toh(sect->addr));
-	WRITE_REG(sc, TXP_H2A_4, dma.dma_paddr >> 32);
-	WRITE_REG(sc, TXP_H2A_5, dma.dma_paddr & 0xffffffff);
+	WRITE_REG(sc, TXP_H2A_4, BUS_ADDR_HI32(dma.dma_paddr));
+	WRITE_REG(sc, TXP_H2A_5, BUS_ADDR_LO32(dma.dma_paddr));
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_SEGMENT_AVAILABLE);
 
 	if (txp_download_fw_wait(sc)) {
@@ -825,10 +825,10 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		/* stash away pointer */
 		memcpy(__UNVOLATILE(&rbd->rb_vaddrlo), &sd, sizeof(sd));
 
-		rbd->rb_paddrlo = ((uint64_t)sd->sd_map->dm_segs[0].ds_addr)
-		    & 0xffffffff;
-		rbd->rb_paddrhi = ((uint64_t)sd->sd_map->dm_segs[0].ds_addr)
-		    >> 32;
+		rbd->rb_paddrlo =
+		    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[0].ds_addr));
+		rbd->rb_paddrhi =
+		    htole32(BUS_ADDR_HI32(sd->sd_map->dm_segs[0].ds_addr));
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
@@ -955,8 +955,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		goto bail_boot;
 	}
 	memset(sc->sc_host_dma.dma_vaddr, 0, sizeof(struct txp_hostvar));
-	boot->br_hostvar_lo = htole32(sc->sc_host_dma.dma_paddr & 0xffffffff);
-	boot->br_hostvar_hi = htole32(sc->sc_host_dma.dma_paddr >> 32);
+	boot->br_hostvar_lo = htole32(BUS_ADDR_LO32(sc->sc_host_dma.dma_paddr));
+	boot->br_hostvar_hi = htole32(BUS_ADDR_HI32(sc->sc_host_dma.dma_paddr));
 	sc->sc_hostvar = (struct txp_hostvar *)sc->sc_host_dma.dma_vaddr;
 
 	/* high priority tx ring */
@@ -967,11 +967,14 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_txhiring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_tx_desc) * TX_ENTRIES);
-	boot->br_txhipri_lo = htole32(sc->sc_txhiring_dma.dma_paddr & 0xffffffff);
-	boot->br_txhipri_hi = htole32(sc->sc_txhiring_dma.dma_paddr >> 32);
+	boot->br_txhipri_lo =
+	    htole32(BUS_ADDR_LO32(sc->sc_txhiring_dma.dma_paddr));
+	boot->br_txhipri_hi =
+	    htole32(BUS_ADDR_HI32(sc->sc_txhiring_dma.dma_paddr));
 	boot->br_txhipri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
 	sc->sc_txhir.r_reg = TXP_H2A_1;
-	sc->sc_txhir.r_desc = (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
+	sc->sc_txhir.r_desc =
+	    (struct txp_tx_desc *)sc->sc_txhiring_dma.dma_vaddr;
 	sc->sc_txhir.r_cons = sc->sc_txhir.r_prod = sc->sc_txhir.r_cnt = 0;
 	sc->sc_txhir.r_off = &sc->sc_hostvar->hv_tx_hi_desc_read_idx;
 	for (i = 0; i < TX_ENTRIES; i++) {
@@ -995,11 +998,14 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_txloring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_tx_desc) * TX_ENTRIES);
-	boot->br_txlopri_lo = htole32(sc->sc_txloring_dma.dma_paddr & 0xffffffff);
-	boot->br_txlopri_hi = htole32(sc->sc_txloring_dma.dma_paddr >> 32);
+	boot->br_txlopri_lo =
+	    htole32(BUS_ADDR_LO32(sc->sc_txloring_dma.dma_paddr));
+	boot->br_txlopri_hi =
+	    htole32(BUS_ADDR_HI32(sc->sc_txloring_dma.dma_paddr));
 	boot->br_txlopri_siz = htole32(TX_ENTRIES * sizeof(struct txp_tx_desc));
 	sc->sc_txlor.r_reg = TXP_H2A_3;
-	sc->sc_txlor.r_desc = (struct txp_tx_desc *)sc->sc_txloring_dma.dma_vaddr;
+	sc->sc_txlor.r_desc =
+	    (struct txp_tx_desc *)sc->sc_txloring_dma.dma_vaddr;
 	sc->sc_txlor.r_cons = sc->sc_txlor.r_prod = sc->sc_txlor.r_cnt = 0;
 	sc->sc_txlor.r_off = &sc->sc_hostvar->hv_tx_lo_desc_read_idx;
 
@@ -1011,8 +1017,10 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rxhiring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rx_desc) * RX_ENTRIES);
-	boot->br_rxhipri_lo = htole32(sc->sc_rxhiring_dma.dma_paddr & 0xffffffff);
-	boot->br_rxhipri_hi = htole32(sc->sc_rxhiring_dma.dma_paddr >> 32);
+	boot->br_rxhipri_lo =
+	    htole32(BUS_ADDR_LO32(sc->sc_rxhiring_dma.dma_paddr));
+	boot->br_rxhipri_hi =
+	    htole32(BUS_ADDR_HI32(sc->sc_rxhiring_dma.dma_paddr));
 	boot->br_rxhipri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
 	sc->sc_rxhir.r_desc =
 	    (struct txp_rx_desc *)sc->sc_rxhiring_dma.dma_vaddr;
@@ -1029,8 +1037,10 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rxloring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rx_desc) * RX_ENTRIES);
-	boot->br_rxlopri_lo = htole32(sc->sc_rxloring_dma.dma_paddr & 0xffffffff);
-	boot->br_rxlopri_hi = htole32(sc->sc_rxloring_dma.dma_paddr >> 32);
+	boot->br_rxlopri_lo =
+	    htole32(BUS_ADDR_LO32(sc->sc_rxloring_dma.dma_paddr));
+	boot->br_rxlopri_hi =
+	    htole32(BUS_ADDR_HI32(sc->sc_rxloring_dma.dma_paddr));
 	boot->br_rxlopri_siz = htole32(RX_ENTRIES * sizeof(struct txp_rx_desc));
 	sc->sc_rxlor.r_desc =
 	    (struct txp_rx_desc *)sc->sc_rxloring_dma.dma_vaddr;
@@ -1047,8 +1057,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_cmdring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_cmd_desc) * CMD_ENTRIES);
-	boot->br_cmd_lo = htole32(sc->sc_cmdring_dma.dma_paddr & 0xffffffff);
-	boot->br_cmd_hi = htole32(sc->sc_cmdring_dma.dma_paddr >> 32);
+	boot->br_cmd_lo = htole32(BUS_ADDR_LO32(sc->sc_cmdring_dma.dma_paddr));
+	boot->br_cmd_hi = htole32(BUS_ADDR_HI32(sc->sc_cmdring_dma.dma_paddr));
 	boot->br_cmd_siz = htole32(CMD_ENTRIES * sizeof(struct txp_cmd_desc));
 	sc->sc_cmdring.base = (struct txp_cmd_desc *)sc->sc_cmdring_dma.dma_vaddr;
 	sc->sc_cmdring.size = CMD_ENTRIES * sizeof(struct txp_cmd_desc);
@@ -1062,8 +1072,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rspring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rsp_desc) * RSP_ENTRIES);
-	boot->br_resp_lo = htole32(sc->sc_rspring_dma.dma_paddr & 0xffffffff);
-	boot->br_resp_hi = htole32(sc->sc_rspring_dma.dma_paddr >> 32);
+	boot->br_resp_lo = htole32(BUS_ADDR_LO32(sc->sc_rspring_dma.dma_paddr));
+	boot->br_resp_hi = htole32(BUS_ADDR_HI32(sc->sc_rspring_dma.dma_paddr));
 	boot->br_resp_siz = htole32(CMD_ENTRIES * sizeof(struct txp_rsp_desc));
 	sc->sc_rspring.base = (struct txp_rsp_desc *)sc->sc_rspring_dma.dma_vaddr;
 	sc->sc_rspring.size = RSP_ENTRIES * sizeof(struct txp_rsp_desc);
@@ -1077,8 +1087,8 @@ txp_alloc_rings(struct txp_softc *sc)
 	}
 	memset(sc->sc_rxbufring_dma.dma_vaddr, 0,
 	    sizeof(struct txp_rxbuf_desc) * RXBUF_ENTRIES);
-	boot->br_rxbuf_lo = htole32(sc->sc_rxbufring_dma.dma_paddr & 0xffffffff);
-	boot->br_rxbuf_hi = htole32(sc->sc_rxbufring_dma.dma_paddr >> 32);
+	boot->br_rxbuf_lo = htole32(BUS_ADDR_LO32(sc->sc_rxbufring_dma.dma_paddr));
+	boot->br_rxbuf_hi = htole32(BUS_ADDR_HI32(sc->sc_rxbufring_dma.dma_paddr));
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
 	for (nb = 0; nb < RXBUF_ENTRIES; nb++) {
@@ -1112,9 +1122,9 @@ txp_alloc_rings(struct txp_softc *sc)
 
 
 		sc->sc_rxbufs[nb].rb_paddrlo =
-		    ((uint64_t)sd->sd_map->dm_segs[0].ds_addr) & 0xffffffff;
+		    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[0].ds_addr));
 		sc->sc_rxbufs[nb].rb_paddrhi =
-		    ((uint64_t)sd->sd_map->dm_segs[0].ds_addr) >> 32;
+		    htole32(BUS_ADDR_HI32(sd->sd_map->dm_segs[0].ds_addr));
 	}
 	bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
 	    0, sc->sc_rxbufring_dma.dma_map->dm_mapsize,
@@ -1129,8 +1139,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		goto bail_rxbufring;
 	}
 	memset(sc->sc_zero_dma.dma_vaddr, 0, sizeof(uint32_t));
-	boot->br_zero_lo = htole32(sc->sc_zero_dma.dma_paddr & 0xffffffff);
-	boot->br_zero_hi = htole32(sc->sc_zero_dma.dma_paddr >> 32);
+	boot->br_zero_lo = htole32(BUS_ADDR_LO32(sc->sc_zero_dma.dma_paddr));
+	boot->br_zero_hi = htole32(BUS_ADDR_HI32(sc->sc_zero_dma.dma_paddr));
 
 	/* See if it's waiting for boot, and try to boot it */
 	for (i = 0; i < 10000; i++) {
@@ -1143,8 +1153,8 @@ txp_alloc_rings(struct txp_softc *sc)
 		printf(": not waiting for boot\n");
 		goto bail;
 	}
-	WRITE_REG(sc, TXP_H2A_2, sc->sc_boot_dma.dma_paddr >> 32);
-	WRITE_REG(sc, TXP_H2A_1, sc->sc_boot_dma.dma_paddr & 0xffffffff);
+	WRITE_REG(sc, TXP_H2A_2, BUS_ADDR_HI32(sc->sc_boot_dma.dma_paddr));
+	WRITE_REG(sc, TXP_H2A_1, BUS_ADDR_LO32(sc->sc_boot_dma.dma_paddr));
 	WRITE_REG(sc, TXP_H2A_0, TXP_BOOTCMD_REGISTER_BOOT_RECORD);
 
 	/* See if it booted */
@@ -1485,13 +1495,11 @@ txp_start(struct ifnet *ifp)
 			fxd->frag_flags = FRAG_FLAGS_TYPE_FRAG |
 			    FRAG_FLAGS_VALID;
 			fxd->frag_rsvd1 = 0;
-			fxd->frag_len = sd->sd_map->dm_segs[i].ds_len;
+			fxd->frag_len = htole16(sd->sd_map->dm_segs[i].ds_len);
 			fxd->frag_addrlo =
-			    ((uint64_t)sd->sd_map->dm_segs[i].ds_addr) &
-			    0xffffffff;
+			    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[i].ds_addr));
 			fxd->frag_addrhi =
-			    ((uint64_t)sd->sd_map->dm_segs[i].ds_addr) >>
-			    32;
+			    htole32(BUS_ADDR_HI32(sd->sd_map->dm_segs[i].ds_addr));
 			fxd->frag_rsvd2 = 0;
 
 			bus_dmamap_sync(sc->sc_dmat,
