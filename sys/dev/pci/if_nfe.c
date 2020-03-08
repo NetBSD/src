@@ -1,4 +1,4 @@
-/*	$NetBSD: if_nfe.c,v 1.76 2020/03/01 16:31:01 thorpej Exp $	*/
+/*	$NetBSD: if_nfe.c,v 1.77 2020/03/08 14:10:24 msaitoh Exp $	*/
 /*	$OpenBSD: if_nfe.c,v 1.77 2008/02/05 16:52:50 brad Exp $	*/
 
 /*-
@@ -21,7 +21,7 @@
 /* Driver for NVIDIA nForce MCP Fast Ethernet and Gigabit Ethernet */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.76 2020/03/01 16:31:01 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_nfe.c,v 1.77 2020/03/08 14:10:24 msaitoh Exp $");
 
 #include "opt_inet.h"
 #include "vlan.h"
@@ -1924,11 +1924,11 @@ done:
 	addr[0] |= 0x01;	/* make sure multicast bit is set */
 
 	NFE_WRITE(sc, NFE_MULTIADDR_HI,
-	    addr[3] << 24 | addr[2] << 16 | addr[1] << 8 | addr[0]);
+	    (uint32_t)addr[3] << 24 | addr[2] << 16 | addr[1] << 8 | addr[0]);
 	NFE_WRITE(sc, NFE_MULTIADDR_LO,
 	    addr[5] <<  8 | addr[4]);
 	NFE_WRITE(sc, NFE_MULTIMASK_HI,
-	    mask[3] << 24 | mask[2] << 16 | mask[1] << 8 | mask[0]);
+	    (uint32_t)mask[3] << 24 | mask[2] << 16 | mask[1] << 8 | mask[0]);
 	NFE_WRITE(sc, NFE_MULTIMASK_LO,
 	    mask[5] <<  8 | mask[4]);
 
@@ -1971,7 +1971,7 @@ nfe_set_macaddr(struct nfe_softc *sc, const uint8_t *addr)
 	NFE_WRITE(sc, NFE_MACADDR_LO,
 	    addr[5] <<  8 | addr[4]);
 	NFE_WRITE(sc, NFE_MACADDR_HI,
-	    addr[3] << 24 | addr[2] << 16 | addr[1] << 8 | addr[0]);
+	    (uint32_t)addr[3] << 24 | addr[2] << 16 | addr[1] << 8 | addr[0]);
 }
 
 void
