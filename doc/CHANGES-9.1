@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.9 2020/03/03 18:56:34 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.10 2020/03/08 11:22:49 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -346,4 +346,93 @@ lib/Makefile					1.276
 
 	Avoid running useless makes in every subdirectory.
 	[riastradh, ticket #756]
+
+sys/conf/files					1.1257-1.1259
+
+	Fix COMPAT_NETBSD32 to properly handle EXEC_AOUT binaries.
+	[pgoyette, ticket #757]
+
+libexec/ld.elf_so/headers.c			1.68
+libexec/ld.elf_so/map_object.c			1.61
+libexec/ld.elf_so/rtld.c			1.203
+
+	PR 55043: fix protection update for the last page of a PT_GNU_RELRO
+	segment.
+	[thorpej, ticket #758]
+
+sys/dev/pci/if_ena.c				1.24
+
+	PR 55044: replace #if condition for irq_slot with __diagused on the
+	cleanup path.
+	[jdolecek, ticket #759]
+
+sys/arch/amiga/dev/gayle_pcmcia.c		1.32
+sys/arch/amigappc/include/bus_defs.h		1.8
+
+	The Gayle interface uses swapped (little-endian) word accesses, so we
+	need to use the amiga_bus_stride_1swap methods for the word accesses.
+	[is, ticket #760]
+
+sys/compat/netbsd32/netbsd32_compat_43.c	1.60
+sys/compat/netbsd32/syscalls.master		1.132
+sys/compat/netbsd32/netbsd32_syscallargs.h	(regen)
+sys/compat/netbsd32/netbsd32_syscall.h		(regen)
+sys/compat/netbsd32/netbsd32_sysent.c		(regen)
+sys/compat/netbsd32/netbsd32_syscalls.c		(regen)
+sys/compat/netbsd32/netbsd32_syscalls_autoload.c (regen)
+sys/compat/netbsd32/netbsd32_systrace_args.c	(regen)
+
+	PR 55047: properly mark netbsd32_compat_43 syscalls that are
+	directly implemented by calling their compat_43 equivalents.
+	[pgoyette, ticket #761]
+
+sys/arch/amd64/amd64/trap.c			1.126
+sys/compat/netbsd32/netbsd32_mod.c		1.17,1.18
+sys/sys/compat_stub.h				1.23
+
+	PR 55038: fix handling of "oosyscall" under compat_netbsd32.
+	[pgoyette, ticket #762]
+
+lib/libkvm/kvm.c				1.105
+lib/libkvm/kvm_x86_64.c				1.11
+
+	Only do bounce buffering for character devices.
+	Uuse a binary search in _kvm_pa2off().
+	[chs, ticket #763]
+
+sys/uvm/uvm_fault.c				1.207
+
+	 - in uvm_fault_check(), if the map entry is wired, handle the fault
+	   the same way that we would handle UVM_FAULT_WIRE.
+	   Faulting on wired mappings is valid if the mapped object was
+	   truncated and then later grown again.
+
+	 - in uvm_fault_unwire_locked(), we must hold the locks for the
+	   vm_map_entry while calling pmap_extract() in order to avoid
+	   races with the mapped object being truncated while we are
+	   unwiring it.
+	[chs, ticket #764]
+
+sys/dev/acpi/acpi_pci_link.c			1.25
+
+	Fix a use-after-free bug for extended IRQ resource.
+	[chs, ticket #765]
+
+sys/kern/subr_pool.c				1.265
+
+	Fix assertions about when it is ok for pool_get() to return NULL.
+	[chs, ticket #766]
+
+sys/ufs/ufs/ufs_dirhash.c			1.38
+
+	In ufsdirhash_free(), only examine dh->dh_onlist after taking the
+	dirhashlist lock.
+	[chs, ticket #767]
+
+sys/kern/kern_mutex.c				1.90
+
+	Split an "a && b" assertion into two so it's clear in the dump
+	which condition was not true even if both are true by the time
+	the dump is written.
+	[chs, ticket #768]
 
