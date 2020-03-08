@@ -1,4 +1,4 @@
-/*	$NetBSD: errno.h,v 1.40 2013/01/02 18:51:53 dsl Exp $	*/
+/*	$NetBSD: errno.h,v 1.41 2020/03/08 22:05:40 mgorny Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1989, 1993
@@ -168,7 +168,7 @@
 #define	ENOATTR		93		/* Attribute not found */
 
 /* Realtime, XSI STREAMS option errors */
-#define	EMULTIHOP	94		/* Multihop attempted */ 
+#define	EMULTIHOP	94		/* Multihop attempted */
 #define	ENOLINK		95		/* Link has been severed */
 #define	EPROTO		96		/* Protocol error */
 

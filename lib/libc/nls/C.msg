@@ -118,7 +118,7 @@ $ ESHUTDOWN
 $ ETOOMANYREFS
 59 Too many references: can't splice
 $ ETIMEDOUT
-60 Connection timed out
+60 Operation timed out
 $ ECONNREFUSED
 61 Connection refused
 $ ELOOP
@@ -172,7 +172,7 @@ $ EILSEQ
 $ ENOTSUP
 86 Not supported
 $ ECANCELED
-87 Operation Canceled
+87 Operation canceled
 $ EBADMSG
 88 Bad or Corrupt message
 $ ENODATA
