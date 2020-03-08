@@ -1,4 +1,4 @@
-/*	$NetBSD: machdep.c,v 1.81 2020/03/08 06:05:05 rin Exp $	*/
+/*	$NetBSD: machdep.c,v 1.82 2020/03/08 06:06:46 rin Exp $	*/
 
 /*
  * Copyright (c) 1982, 1986, 1990, 1993
@@ -149,7 +149,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2020/03/08 06:05:05 rin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.82 2020/03/08 06:06:46 rin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_fpu_emulate.h"
@@ -172,6 +172,7 @@ __KERNEL_RCSID(0, "$NetBSD: machdep.c,v 1.81 2020/03/08 06:05:05 rin Exp $");
 #include <sys/ksyms.h>
 #include <sys/malloc.h>
 #include <sys/mbuf.h>
+#include <sys/module.h>
 #include <sys/mount.h>
 #include <sys/msgbuf.h>
 #include <sys/proc.h>
@@ -1167,3 +1168,13 @@ mm_md_kernacc(void *ptr, vm_prot_t prot, bool *handled)
 		return 0;
 	return EFAULT;
 }
+
+#ifdef MODULAR
+/*
+ * Push any modules loaded by the bootloader etc.
+ */
+void
+module_init_md(void)
+{
+}
+#endif
