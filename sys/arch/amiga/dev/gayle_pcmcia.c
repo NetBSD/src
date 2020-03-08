@@ -1,9 +1,9 @@
-/*	$NetBSD: gayle_pcmcia.c,v 1.29.4.2 2015/02/16 12:48:32 martin Exp $ */
+/*	$NetBSD: gayle_pcmcia.c,v 1.29.4.3 2020/03/08 09:18:34 martin Exp $ */
 
 /* public domain */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.29.4.2 2015/02/16 12:48:32 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: gayle_pcmcia.c,v 1.29.4.3 2020/03/08 09:18:34 martin Exp $");
 
 /* PCMCIA front-end driver for A1200's and A600's. */
 
@@ -131,7 +131,7 @@ pccard_attach(device_t parent, device_t self, void *aux)
 	pmap_update(vm_map_pmap(kernel_map));
 
 	/* override the one-byte access methods for I/O space */
-	pcmio_bs_methods = amiga_bus_stride_1;
+	pcmio_bs_methods = amiga_bus_stride_1swap;
 	pcmio_bs_methods.bsr1 = pcmio_bsr1;
 	pcmio_bs_methods.bsw1 = pcmio_bsw1;
 	pcmio_bs_methods.bsrm1 = pcmio_bsrm1;
