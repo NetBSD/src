@@ -31,7 +31,7 @@
 #if 0
 __FBSDID("$FreeBSD: head/sys/dev/ena/ena.c 333456 2018-05-10 09:37:54Z mw $");
 #endif
-__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.15.2.1 2019/08/09 16:06:39 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ena.c,v 1.15.2.2 2020/03/08 14:44:06 martin Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -2085,9 +2085,7 @@ err:
 	kcpuset_destroy(affinity);
 
 	for (i--; i >= 0; i--) {
-#if defined(DEBUG) || defined(DIAGNOSTIC)
-		int irq_slot = i + irq_off;
-#endif
+		int irq_slot __diagused = i + irq_off;
 		KASSERT(adapter->sc_ihs[irq_slot] != NULL);
 		pci_intr_disestablish(adapter->sc_pa.pa_pc, adapter->sc_ihs[i]);
 		adapter->sc_ihs[i] = NULL;
