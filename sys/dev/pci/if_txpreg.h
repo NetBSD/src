@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.7 2020/03/08 19:02:03 thorpej Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.8 2020/03/08 20:49:31 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -603,6 +603,7 @@ struct txp_fw_file_header {
 	u_int32_t	version;
 	u_int32_t	nsections;
 	u_int32_t	addr;
+	u_int32_t	hmac[5];
 };
 
 struct txp_fw_section_header {
