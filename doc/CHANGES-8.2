@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.103 2020/03/03 18:41:42 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.104 2020/03/08 09:29:10 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2091,4 +2091,11 @@ lib/Makefile					1.276
 
 	Avoid running useless makes in every subdirectory.
 	[riastradh, ticket #1513]
+
+sys/external/bsd/drm2/nouveau/nouveau_pci.c	1.24,1.25 (patch)
+
+	Improve nouveau pci attachment code so it waits for the
+	availability of / before trying to load firmware.
+	Limit the list of supported devices.
+	[mrg, ticket #1512]
 
