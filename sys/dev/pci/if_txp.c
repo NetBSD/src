@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.65 2020/03/08 19:02:03 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.66 2020/03/08 19:24:40 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.65 2020/03/08 19:02:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.66 2020/03/08 19:24:40 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -297,20 +297,14 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if (flags & TXP_FIBER) {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX | IFM_HDX,
-			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_FX | IFM_FDX,
 			    0, NULL);
 	} else {
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T,
 			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T | IFM_HDX,
-			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_10_T | IFM_FDX,
 			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX,
-			    0, NULL);
-		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX | IFM_HDX,
 			    0, NULL);
 		ifmedia_add(&sc->sc_ifmedia, IFM_ETHER | IFM_100_TX | IFM_FDX,
 			    0, NULL);
