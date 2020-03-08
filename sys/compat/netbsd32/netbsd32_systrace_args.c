@@ -1,4 +1,4 @@
-/* $NetBSD: netbsd32_systrace_args.c,v 1.32.2.1 2019/11/04 14:47:33 martin Exp $ */
+/* $NetBSD: netbsd32_systrace_args.c,v 1.32.2.2 2020/03/08 10:38:10 martin Exp $ */
 
 /*
  * System call argument to DTrace register array converstion.
@@ -1103,11 +1103,6 @@ systrace_args(register_t sysnum, const void *params, uintptr_t *uarg, size_t *n_
 		iarg[2] = SCARG(p, uid); /* int */
 		uarg[3] = (intptr_t) SCARG(p, arg).i32; /* netbsd32_voidp */
 		*n_args = 4;
-		break;
-	}
-	/* sys_quota */
-	case 149: {
-		*n_args = 0;
 		break;
 	}
 #else
@@ -5265,9 +5260,6 @@ systrace_entry_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		default:
 			break;
 		};
-		break;
-	/* sys_quota */
-	case 149:
 		break;
 #else
 #endif
@@ -10067,8 +10059,6 @@ systrace_return_setargdesc(int sysnum, int ndx, char *desc, size_t descsz)
 		if (ndx == 0 || ndx == 1)
 			p = "int";
 		break;
-	/* sys_quota */
-	case 149:
 #else
 #endif
 	/* netbsd32_ogetsockname */
