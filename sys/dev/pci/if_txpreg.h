@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.8 2020/03/08 20:49:31 thorpej Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.9 2020/03/08 22:26:03 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -615,6 +615,8 @@ struct txp_fw_section_header {
 
 #define	TXP_MAX_SEGLEN	0xffff
 #define	TXP_MAX_PKTLEN	0x0800
+
+#define	TXP_MAXTXSEGS	16
 
 #define	WRITE_REG(sc,reg,val) \
     bus_space_write_4((sc)->sc_bt, (sc)->sc_bh, reg, val)
