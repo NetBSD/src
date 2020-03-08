@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.17 2020/03/08 00:53:12 pgoyette Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.18 2020/03/08 04:17:49 pgoyette Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.17 2020/03/08 00:53:12 pgoyette Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.18 2020/03/08 04:17:49 pgoyette Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -173,7 +173,8 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 			netbsd32_machdep_md_init();
 			netbsd32_kern_proc_32_init();
 #if defined(__amd64__)
-		MODULE_HOOK_SET(amd64_oosyscall_hook, amd64_oosyscall_handle);
+			MODULE_HOOK_SET(amd64_oosyscall_hook,
+			    amd64_oosyscall_handle);
 #endif
 		}
 		return error;
