@@ -225,9 +225,9 @@ $ SIGTERM
 $ SIGURG
 16 Urgent I/O condition
 $ SIGSTOP
-17 Stopped (signal)
+17 Suspended (signal)
 $ SIGTSTP
-18 Stopped
+18 Suspended
 $ SIGCONT
 19 Continued
 $ SIGCHLD
@@ -239,15 +239,15 @@ $ SIGTTOU
 $ SIGIO
 23 I/O possible
 $ SIGXCPU
-24 Cputime limit exceeded
+24 CPU time limit exceeded
 $ SIGXFSZ
-25 Filesize limit exceeded
+25 File size limit exceeded
 $ SIGVTALRM
 26 Virtual timer expired
 $ SIGPROF
 27 Profiling timer expired
 $ SIGWINCH
-28 Window size changes
+28 Window size changed
 $ SIGINFO
 29 Information request
 $ SIGUSR1
