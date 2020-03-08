@@ -1,4 +1,4 @@
-# $NetBSD: GENERIC,v 1.103 2020/03/08 06:23:18 rin Exp $
+# $NetBSD: GENERIC,v 1.104 2020/03/08 06:25:10 rin Exp $
 #
 # GENERIC machine description file
 # 
@@ -29,7 +29,7 @@ options 	INSECURE		# allow modload(8) in multiuser mode
 
 #options 	INCLUDE_CONFIG_FILE	# embed config file in kernel binary
 
-#ident 		"GENERIC-$Revision: 1.103 $"
+#ident 		"GENERIC-$Revision: 1.104 $"
 
 makeoptions	COPTS="-Os -fno-inline-small-functions"
 					# bootloader has size limit (~2MB)
@@ -228,7 +228,7 @@ options 	SCSI_OLD_NOINQUIRY
 #pseudo-device   accf_http		# "httpready" accept filter
 
 ## Memory-disk device.
-pseudo-device	md		
+#pseudo-device	md		
 
 #### Network interfaces.
 
