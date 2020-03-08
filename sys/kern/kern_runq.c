@@ -1,4 +1,4 @@
-/*	$NetBSD: kern_runq.c,v 1.62 2020/01/25 15:09:54 ad Exp $	*/
+/*	$NetBSD: kern_runq.c,v 1.63 2020/03/08 15:00:31 ad Exp $	*/
 
 /*-
  * Copyright (c) 2019, 2020 The NetBSD Foundation, Inc.
@@ -56,7 +56,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.62 2020/01/25 15:09:54 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: kern_runq.c,v 1.63 2020/03/08 15:00:31 ad Exp $");
 
 #include "opt_dtrace.h"
 
@@ -908,6 +908,7 @@ sched_preempted(struct lwp *l)
 		if ((tspc->spc_flags & flags) == flags &&
 		    sched_migratable(l, tci)) {
 		    	l->l_target_cpu = tci;
+			l->l_pflag &= ~LP_TELEPORT;
 		    	return;
 		}
 		tci = tci->ci_sibling[CPUREL_CORE];
