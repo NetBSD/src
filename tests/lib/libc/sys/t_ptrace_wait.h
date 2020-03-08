@@ -1,4 +1,4 @@
-/*	$NetBSD: t_ptrace_wait.h,v 1.26 2020/03/07 19:47:44 kamil Exp $	*/
+/*	$NetBSD: t_ptrace_wait.h,v 1.27 2020/03/08 15:07:44 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016, 2017, 2018, 2019 The NetBSD Foundation, Inc.
@@ -654,7 +654,9 @@ trigger_ill(void)
 #endif
 }
 
+#ifdef __HAVE_FENV
 #include <fenv.h>
+#endif
 
 #if (__arm__ && !__SOFTFP__) || __aarch64__
 #include <ieeefp.h> /* only need for ARM Cortex/Neon hack */
