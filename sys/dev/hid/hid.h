@@ -1,4 +1,4 @@
-/*	$NetBSD: hid.h,v 1.4 2020/03/02 18:15:28 christos Exp $	*/
+/*	$NetBSD: hid.h,v 1.5 2020/03/08 14:09:32 msaitoh Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/hid.h,v 1.7 1999/11/17 22:33:40 n_hibma Exp $ */
 
 /*
@@ -123,8 +123,8 @@ int hid_is_collection(const void *, int, uint8_t, uint32_t);
 #define HUP_CAMERA_CONTROL	0x0090
 #define HUP_ARCADE		0x0091
 #define HUP_VENDOR		0x00ff
-#define HUP_FIDO		0xf1d0
-#define HUP_MICROSOFT		0xff00
+#define HUP_FIDO		0xf1d0U
+#define HUP_MICROSOFT		0xff00U
 /* XXX compat */
 #define HUP_APPLE		0x00ff
 #define HUP_WACOM		0xff00
