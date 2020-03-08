@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.29 2020/03/08 00:04:11 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.30 2020/03/08 17:38:37 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.29 2020/03/08 00:04:11 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.30 2020/03/08 17:38:37 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -79,7 +79,25 @@ int	 ifdefshift = -1;
 #define IDS_PARENT_DISABLED \
 	(ifdefshift > 0 && !IDS_ISMATCH(ifdefstate >> IDS_SHIFT))
 #define IDS_MAX_DEPTH	21 /* 64 / 3 */
- 
+
+#ifdef IDS_DEBUG
+# define IDS_PRINT(s, st, x) \
+	do { \
+		for (int i = 0; i < ifdefshift + 1; i++) \
+			fprintf(stderr, " "); \
+		printf("%s%s [%d,%d,%d] %#" PRIx64 "\n", x, # s, \
+		    IDS_PARENT_DISABLED, IDS_ISMATCH(st), getcurifdef(), \
+		    ifdefstate); \
+	} while (/*CONSTCOND*/0)
+#else
+# define IDS_PRINT(s, st, x) __nothing
+#endif
+
+#define IDS_ENTER(s, st) \
+	IDS_PRINT(s, st, ">")
+#define IDS_EXIT(s, st) \
+	IDS_PRINT(s, st, "<")
+
 /*
  * Data for returning to previous files from include files.
  */
@@ -175,12 +193,14 @@ with		return WITH;
 		if (++ifdefshift >= IDS_MAX_DEPTH) {
 			yyerror("too many levels of conditional");
 		}
+		IDS_ENTER(ifdef, 0);
 		if (IDS_PARENT_DISABLED || !getcurifdef()) {
 			BEGIN(IGNORED);
 		} else {
 			ifdefstate |= IDS_MATCH;
 			BEGIN(INITIAL);
 		}
+		IDS_EXIT(ifdef, 0);
 		yyline++;
 	}
 
@@ -189,18 +209,21 @@ with		return WITH;
 		if (++ifdefshift >= IDS_MAX_DEPTH) {
 			yyerror("too many levels of conditional");
 		}
+		IDS_ENTER(ifndef, 0);
 		if (IDS_PARENT_DISABLED || getcurifdef()) {
 			BEGIN(IGNORED);
 		} else {
 			ifdefstate |= IDS_MATCH;
 			BEGIN(INITIAL);
 		}
+		IDS_EXIT(ifndef, 0);
 		yyline++;
 	}
 
 
 <*>{WS}elifdef[ \t]+{WORD}{RESTOFLINE} {
 		int st = ifdefstate & IDS_BITS;
+		IDS_ENTER(elifdef, st);
 		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched elifdef");
 		}
@@ -211,11 +234,13 @@ with		return WITH;
 			BEGIN(INITIAL);
 		}
 		ifdefstate |= IDS_ELIF;
+		IDS_EXIT(elifdef, st);
 		yyline++;
 	}
 
 <*>{WS}elifndef[ \t]+{WORD}{RESTOFLINE} {
 		int st = ifdefstate & IDS_BITS;
+		IDS_ENTER(elifndef, st);
 		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched elifndef");
 		}
@@ -226,11 +251,13 @@ with		return WITH;
 			BEGIN(INITIAL);
 		}
 		ifdefstate |= IDS_ELIF;
+		IDS_EXIT(elifndef, st);
 		yyline++;
 	}
 
 <*>{WS}else{RESTOFLINE} {
 		int st = ifdefstate & IDS_BITS;
+		IDS_ENTER(else, st);
 		if (ifdefshift == -1 || (st & IDS_ELSE) != 0) {
 			yyerror("mismatched else");
 		}
@@ -241,16 +268,19 @@ with		return WITH;
 			BEGIN(INITIAL);
 		}
 		ifdefstate |= IDS_ELSE;
+		IDS_ENTER(else, st);
 		yyline++;
 	}
 
 <*>{WS}endif{RESTOFLINE} {
+		IDS_ENTER(endif, 0);
 		if (ifdefshift == -1) {
 			yyerror("mismatched endif");
 		}
 		if (!IDS_PARENT_DISABLED) {
 			BEGIN(INITIAL);
 		}
+		IDS_EXIT(endif, 0);
 		ifdefshift--;
 		ifdefstate >>= IDS_SHIFT;
 		yyline++;
