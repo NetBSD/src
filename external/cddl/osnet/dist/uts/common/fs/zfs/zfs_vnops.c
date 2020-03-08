@@ -5858,10 +5858,10 @@ zfs_netbsd_reclaim(void *v)
 			zp->z_atime_dirty = 0;
 			dmu_tx_commit(tx);
 		}
-	}
 
-	if (zfsvfs->z_log)
-		zil_commit(zfsvfs->z_log, zp->z_id);
+		if (zfsvfs->z_os->os_sync == ZFS_SYNC_ALWAYS)
+			zil_commit(zfsvfs->z_log, zp->z_id);
+	}
 
 	if (zp->z_sa_hdl == NULL)
 		zfs_znode_free(zp);
