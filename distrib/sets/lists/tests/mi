@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.831 2020/03/06 18:32:35 kamil Exp $
+# $NetBSD: mi,v 1.832 2020/03/08 17:23:55 christos Exp $
 #
 # Note: don't delete entries from here - mark them as "obsolete" instead.
 #
@@ -4216,6 +4216,7 @@
 ./usr/tests/usr.bin/config/Kyuafile		tests-usr.bin-tests	compattestfile,atf,kyua
 ./usr/tests/usr.bin/config/Makefile.regress	tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/d_deffs_redef	tests-usr.bin-tests	compattestfile,atf
+./usr/tests/usr.bin/config/d_ifconfig		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/d_loop		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/d_loop2		tests-usr.bin-tests	compattestfile,atf
 ./usr/tests/usr.bin/config/d_min		tests-usr.bin-tests	compattestfile,atf
