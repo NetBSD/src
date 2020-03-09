@@ -1,4 +1,4 @@
-/*	$NetBSD: eficons.c,v 1.4.2.5 2020/02/11 11:38:33 martin Exp $	*/
+/*	$NetBSD: eficons.c,v 1.4.2.6 2020/03/09 09:48:00 martin Exp $	*/
 
 /*-
  * Copyright (c) 2016 Kimihiro Nonaka <nonaka@netbsd.org>
@@ -37,6 +37,7 @@
 #ifndef DEFAULT_GOP_MODE
 #define DEFAULT_GOP_MODE	"1024x768"
 #endif
+#define FALLBACK_GOP_MODE	0
 
 extern struct x86_boot_params boot_params;
 
@@ -420,7 +421,7 @@ bi_framebuffer(void)
 	EFI_STATUS status;
 	EFI_GRAPHICS_OUTPUT_MODE_INFORMATION *info;
 	struct btinfo_framebuffer fb;
-	INT32 bestmode = -1;
+	INT32 bestmode;
 	UINTN sz;
 
 	if (efi_gop == NULL)
@@ -431,9 +432,9 @@ bi_framebuffer(void)
 	} else {
 		/* If a mode has not been selected, choose a default */
 		bestmode = efi_find_gop_mode(DEFAULT_GOP_MODE);
+		if (bestmode == -1)
+			bestmode = FALLBACK_GOP_MODE;
 	}
-	if (bestmode == -1)
-		goto nofb;
 
 	status = uefi_call_wrapper(efi_gop->SetMode, 2, efi_gop,
 	    bestmode);
