@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.167 2020/01/01 22:57:17 thorpej Exp $	*/
+/*	$NetBSD: db_command.c,v 1.168 2020/03/09 01:46:24 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.167 2020/01/01 22:57:17 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.168 2020/03/09 01:46:24 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -120,6 +120,11 @@ db_addr_t	db_last_addr;
 db_addr_t	db_prev;
 db_addr_t	db_next;
 
+
+#ifndef _KERNEL
+#define db_kernelonly() \
+    db_printf("%s: can only be used in-kernel.\n", __func__)
+#endif
 
 /*
  * New DDB api for adding and removing commands uses three lists, because
@@ -1012,6 +1017,8 @@ db_map_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 		addr = (db_expr_t)(uintptr_t)db_read_ptr("kernel_map");
 
 	uvm_map_printit((struct vm_map *)(uintptr_t) addr, full, db_printf);
+#else
+	db_kernelonly();
 #endif	/* XXX CRASH(8) */
 }
 
@@ -1028,6 +1035,8 @@ db_object_print_cmd(db_expr_t addr, bool have_addr,
 
 	uvm_object_printit((struct uvm_object *)(uintptr_t) addr, full,
 	    db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1043,6 +1052,8 @@ db_page_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	uvm_page_printit((struct vm_page *)(uintptr_t) addr, full, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1054,6 +1065,8 @@ db_show_all_pages(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL /* XXX CRASH(8) */
 	uvm_page_printall(db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1069,6 +1082,8 @@ db_buf_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	vfs_buf_print((struct buf *)(uintptr_t) addr, full, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1142,6 +1157,8 @@ db_vnode_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	vfs_vnode_print((struct vnode *)(uintptr_t) addr, full, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1157,6 +1174,8 @@ db_vnode_lock_print_cmd(db_expr_t addr, bool have_addr,
 		full = true;
 
 	vfs_vnode_lock_print((struct vnode *)(uintptr_t) addr, full, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1168,6 +1187,8 @@ db_vmem_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL /* XXX CRASH(8) */
 	vmem_print((uintptr_t) addr, modif, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1195,6 +1216,8 @@ db_show_all_mount(db_expr_t addr, bool have_addr, db_expr_t count, const char *m
 		full = true;
 
 	vfs_mount_print_all(full, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1206,6 +1229,8 @@ db_mbuf_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL /* XXX CRASH(8) */
 	m_print((const struct mbuf *)(uintptr_t) addr, modif, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1217,6 +1242,8 @@ db_pool_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL /* XXX CRASH(8) */
 	pool_printit((struct pool *)(uintptr_t) addr, modif, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1228,6 +1255,8 @@ db_namecache_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL /* XXX CRASH(8) */
 	namecache_print((struct vnode *)(uintptr_t) addr, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1239,6 +1268,8 @@ db_uvmexp_print_cmd(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	uvmexp_print(db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1250,6 +1281,8 @@ db_socket_print_cmd(db_expr_t addr, bool have_addr, db_expr_t count,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	socket_print(modif, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1272,10 +1305,8 @@ db_lock_print_cmd(db_expr_t addr, bool have_addr,
     db_expr_t count, const char *modif)
 {
 
-#ifdef _KERNEL	/* XXX CRASH(8) */
 	lockdebug_lock_print(have_addr ? (void *)(uintptr_t)addr : NULL,
 	    db_printf);
-#endif
 }
 
 static void
@@ -1285,6 +1316,8 @@ db_show_all_locks(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	lockdebug_show_all_locks(db_printf, modif);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1295,6 +1328,8 @@ db_show_all_freelists(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	uvm_page_print_freelists(db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1305,6 +1340,8 @@ db_show_lockstats(db_expr_t addr, bool have_addr,
 
 #ifdef _KERNEL	/* XXX CRASH(8) */
 	lockdebug_show_lockstats(db_printf);
+#else
+	db_kernelonly();
 #endif
 }
 
@@ -1368,7 +1405,7 @@ db_fncall(db_expr_t addr, bool have_addr,
 			 args[5], args[6], args[7], args[8], args[9]);
 	db_printf("%s\n", db_num_to_str(retval));
 #else	/* _KERNEL */
-	db_printf("This command can only be used in-kernel.\n");
+	db_kernelonly();
 #endif	/* _KERNEL */
 }
 
@@ -1399,7 +1436,7 @@ db_reboot_cmd(db_expr_t addr, bool have_addr,
 	spl0();
 	kern_reboot((int)bootflags, NULL);
 #else	/* _KERNEL */
-	db_printf("This command can only be used in-kernel.\n");
+	db_kernelonly();
 #endif	/* _KERNEL */
 }
 
@@ -1466,7 +1503,7 @@ db_sync_cmd(db_expr_t addr, bool have_addr,
 	panicstr = "dump forced via kernel debugger";
 	kern_reboot(RB_DUMP, NULL);
 #else	/* _KERNEL */
-	db_printf("This command can only be used in-kernel.\n");
+	db_kernelonly();
 #endif	/* _KERNEL */
 }
 
@@ -1485,5 +1522,7 @@ db_whatis_cmd(db_expr_t address, bool have_addr,
 	vmem_whatis(addr, db_printf);
 	uvm_whatis(addr, db_printf);
 	module_whatis(addr, db_printf);
+#else
+	db_kernelonly();
 #endif
 }
