@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock.c,v 1.254 2020/02/03 20:34:13 roy Exp $	*/
+/*	$NetBSD: rtsock.c,v 1.255 2020/03/09 21:20:55 roy Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.254 2020/02/03 20:34:13 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock.c,v 1.255 2020/03/09 21:20:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -145,8 +145,8 @@ if_addrflags(struct ifaddr *ifa)
  * Send a routing message as mimicing that a cloned route is added.
  */
 void
-rt_clonedmsg(int type, const struct sockaddr *dst, const uint8_t *lladdr,
-    const struct ifnet *ifp)
+rt_clonedmsg(int type, const struct sockaddr *src, const struct sockaddr *dst,
+    const uint8_t *lladdr, const struct ifnet *ifp)
 {
 	struct rt_addrinfo info;
 	/* Mimic flags exactly */
@@ -164,6 +164,7 @@ rt_clonedmsg(int type, const struct sockaddr *dst, const uint8_t *lladdr,
 	if (type == RTM_ADD || type == RTM_CHANGE)
 		flags |= RTF_UP;
 	memset(&info, 0, sizeof(info));
+	info.rti_info[RTAX_AUTHOR] = src;
 	info.rti_info[RTAX_DST] = dst;
 	sockaddr_dl_init(&u.sdl, sizeof(u.ss), ifp->if_index, ifp->if_type,
 	    NULL, 0, lladdr, ifp->if_addrlen);
