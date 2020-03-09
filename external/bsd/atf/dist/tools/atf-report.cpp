@@ -47,7 +47,7 @@ extern "C" {
 #include "text.hpp"
 #include "ui.hpp"
 
-typedef std::auto_ptr< std::ostream > ostream_ptr;
+typedef std::unique_ptr< std::ostream > ostream_ptr;
 
 static ostream_ptr
 open_outfile(const tools::fs::path& path)
