@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.292 2020/01/23 17:27:35 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.293 2020/03/09 17:57:19 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.292 2020/01/23 17:27:35 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.293 2020/03/09 17:57:19 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -307,18 +307,22 @@ arptimer(void *arg)
 
 	/* Guard against race with other llentry_free(). */
 	if (lle->la_flags & LLE_LINKED) {
+		int rt_cmd;
+		struct in_addr *in;
+		struct sockaddr_in sin;
+		const char *lladdr;
 		size_t pkts_dropped;
 
+		in = &lle->r_l3addr.addr4;
+		sockaddr_in_init(&sin, in, 0);
 		if (lle->la_flags & LLE_VALID) {
-			struct in_addr *in;
-			struct sockaddr_in sin;
-			const char *lladdr;
-
-			in = &lle->r_l3addr.addr4;
-			sockaddr_in_init(&sin, in, 0);
+			rt_cmd = RTM_DELETE;
 			lladdr = (const char *)&lle->ll_addr;
-			rt_clonedmsg(RTM_DELETE, sintosa(&sin), lladdr, ifp);
+		} else {
+			rt_cmd = RTM_MISS;
+			lladdr = NULL;
 		}
+		rt_clonedmsg(rt_cmd, sintosa(&sin), lladdr, ifp);
 
 		LLE_REMREF(lle);
 		pkts_dropped = llentry_free(lle);
