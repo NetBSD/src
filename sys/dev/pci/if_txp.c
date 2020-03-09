@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.69 2020/03/09 00:32:53 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.70 2020/03/09 01:53:11 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.69 2020/03/09 00:32:53 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.70 2020/03/09 01:53:11 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -678,6 +678,13 @@ txp_rxd_free(struct txp_softc *sc, struct txp_swdesc *sd)
 	sc->sc_rxd_pool[sc->sc_txd_pool_ptr++] = sd;
 }
 
+static inline uint32_t
+txp_rxd_idx(struct txp_softc *sc, struct txp_swdesc *sd)
+{
+	KASSERT(sd >= &sc->sc_rxd[0] && sd < &sc->sc_rxd[RXBUF_ENTRIES]);
+	return (uint32_t)(sd - &sc->sc_rxd[0]);
+}
+
 static void
 txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
     struct txp_dma_alloc *dma)
@@ -709,7 +716,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		}
 
 		/* retrieve stashed pointer */
-		memcpy(&sd, __UNVOLATILE(&rxd->rx_vaddrlo), sizeof(sd));
+		sd = &sc->sc_rxd[rxd->rx_vaddrlo];
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
@@ -834,7 +841,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		    sizeof(struct txp_rxbuf_desc), BUS_DMASYNC_POSTWRITE);
 
 		/* stash away pointer */
-		memcpy(__UNVOLATILE(&rbd->rb_vaddrlo), &sd, sizeof(sd));
+		rbd->rb_vaddrlo = txp_rxd_idx(sc, sd);
 
 		rbd->rb_paddrlo =
 		    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[0].ds_addr));
@@ -1104,9 +1111,9 @@ txp_alloc_rings(struct txp_softc *sc)
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
 	for (nb = 0; nb < RXBUF_ENTRIES; nb++) {
 		sd = &sc->sc_rxd[nb];
+
 		/* stash away pointer */
-		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd,
-		    sizeof(sd));
+		sc->sc_rxbufs[nb].rb_vaddrlo = txp_rxd_idx(sc, sd);
 
 		MGETHDR(sd->sd_mbuf, M_WAIT, MT_DATA);
 		if (sd->sd_mbuf == NULL) {
