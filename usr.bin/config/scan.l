@@ -1,5 +1,5 @@
 %{
-/*	$NetBSD: scan.l,v 1.30 2020/03/08 17:38:37 christos Exp $	*/
+/*	$NetBSD: scan.l,v 1.31 2020/03/09 17:27:03 christos Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -42,7 +42,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: scan.l,v 1.30 2020/03/08 17:38:37 christos Exp $");
+__RCSID("$NetBSD: scan.l,v 1.31 2020/03/09 17:27:03 christos Exp $");
 
 #include <sys/param.h>
 #include <errno.h>
@@ -68,19 +68,21 @@ int	 ifdefshift = -1;
 /*
  * The state is represented by 3 bits.
  */
-#define IDS_MATCH	1ll
-#define IDS_ELIF	2ll
-#define	IDS_ELSE	4ll
+#define	IDS_ENABLED	1ll
+#define	IDS_MATCH	2ll
+#define	IDS_ELIF	4ll
+#define	IDS_ELSE	8ll
 
-#define IDS_BITS	7
-#define IDS_SHIFT	3
+#define	IDS_BITS	0xf
+#define	IDS_SHIFT	4
 
-#define IDS_ISMATCH(st) (((st) & IDS_MATCH) != 0)
-#define IDS_PARENT_DISABLED \
-	(ifdefshift > 0 && !IDS_ISMATCH(ifdefstate >> IDS_SHIFT))
-#define IDS_MAX_DEPTH	21 /* 64 / 3 */
+#define	IDS_ISMATCH(st) (((st) & IDS_MATCH) != 0)
+#define	IDS_ISENABLED(st) (((st) & IDS_ENABLED) != 0)
+#define	IDS_PARENT_DISABLED \
+	(ifdefshift > 0 && !IDS_ISENABLED(ifdefstate >> IDS_SHIFT))
+#define IDS_MAX_DEPTH	16 /* 64 / 4 */
 
-#ifdef IDS_DEBUG
+#ifdef	IDS_DEBUG
 # define IDS_PRINT(s, st, x) \
 	do { \
 		for (int i = 0; i < ifdefshift + 1; i++) \
@@ -90,12 +92,12 @@ int	 ifdefshift = -1;
 		    ifdefstate); \
 	} while (/*CONSTCOND*/0)
 #else
-# define IDS_PRINT(s, st, x) __nothing
+# define IDS_PRINT(s, st, x) ((void)0)
 #endif
 
-#define IDS_ENTER(s, st) \
+#define	IDS_ENTER(s, st) \
 	IDS_PRINT(s, st, ">")
-#define IDS_EXIT(s, st) \
+#define	IDS_EXIT(s, st) \
 	IDS_PRINT(s, st, "<")
 
 /*
@@ -195,9 +197,10 @@ with		return WITH;
 		}
 		IDS_ENTER(ifdef, 0);
 		if (IDS_PARENT_DISABLED || !getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate |= IDS_MATCH;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
 		IDS_EXIT(ifdef, 0);
@@ -211,9 +214,10 @@ with		return WITH;
 		}
 		IDS_ENTER(ifndef, 0);
 		if (IDS_PARENT_DISABLED || getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate |= IDS_MATCH;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
 		IDS_EXIT(ifndef, 0);
@@ -228,9 +232,10 @@ with		return WITH;
 			yyerror("mismatched elifdef");
 		}
 		if (IDS_PARENT_DISABLED || IDS_ISMATCH(st) || !getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate |= IDS_MATCH;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
 		ifdefstate |= IDS_ELIF;
@@ -245,9 +250,10 @@ with		return WITH;
 			yyerror("mismatched elifndef");
 		}
 		if (IDS_PARENT_DISABLED || IDS_ISMATCH(st) || getcurifdef()) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate |= IDS_MATCH;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
 		ifdefstate |= IDS_ELIF;
@@ -262,9 +268,10 @@ with		return WITH;
 			yyerror("mismatched else");
 		}
 		if (IDS_PARENT_DISABLED || IDS_ISMATCH(st)) {
+			ifdefstate &= (uint64_t)~IDS_ENABLED;
 			BEGIN(IGNORED);
 		} else {
-			ifdefstate |= IDS_MATCH;
+			ifdefstate |= IDS_MATCH|IDS_ENABLED;
 			BEGIN(INITIAL);
 		}
 		ifdefstate |= IDS_ELSE;
