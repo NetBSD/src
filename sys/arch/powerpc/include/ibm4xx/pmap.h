@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 2019/07/17 08:39:03 skrll Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19.2.1 2020/03/09 10:36:42 martin Exp $	*/
 
 /*
  * Copyright 2001 Wasabi Systems, Inc.
@@ -143,7 +143,7 @@
  * Pmap stuff
  */
 struct pmap {
-	volatile tlbpid_t pm_ctx;	/* PID to identify PMAP's entries in TLB */
+	volatile int pm_ctx;	/* PID to identify PMAP's entries in TLB */
 	int pm_refs;			/* ref count */
 	struct pmap_statistics pm_stats; /* pmap statistics */
 	volatile u_int *pm_ptbl[STSZ];	/* Array of 64 pointers to page tables. */
