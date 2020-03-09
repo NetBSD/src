@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.15.4.2 2020/03/09 05:36:24 martin Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.15.4.3 2020/03/09 09:55:52 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.15.4.2 2020/03/09 05:36:24 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.15.4.3 2020/03/09 09:55:52 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -148,8 +148,9 @@ amd64_oosyscall_handle(struct proc *p, struct trapframe *frame)
 	    copyin((void *)frame->tf_rip, tmp, sz) == 0 &&
 	    memcmp(tmp, lcall, sz) == 0) {
 
-		/* Advance past the lcall. */
+		/* Advance past the lcall and save instruction size. */
 		frame->tf_rip += sz;
+		frame->tf_err = sz;
 
 		/* Do the syscall */
 		p->p_md.md_syscall(frame);
@@ -157,7 +158,7 @@ amd64_oosyscall_handle(struct proc *p, struct trapframe *frame)
 	} else
 		return EPASSTHROUGH;
 }
-#endif
+#endif /* defined(__amd64__) */
 
 static int
 compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
@@ -175,14 +176,14 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 #if defined(__amd64__)
 			MODULE_HOOK_SET(amd64_oosyscall_hook, "nb32oo",
 			    amd64_oosyscall_handle);
-#endif
+#endif /* defined(__amd64__) */
 		}
 		return error;
 
 	case MODULE_CMD_FINI:
 #if defined(__amd64__)
 		MODULE_HOOK_UNSET(amd64_oosyscall_hook);
-#endif
+#endif /* defined(__amd64__) */
 		netbsd32_machdep_md_fini();
 		netbsd32_sysctl_fini();
 		netbsd32_kern_proc_32_fini();
@@ -196,7 +197,7 @@ compat_netbsd32_modcmd(modcmd_t cmd, void *arg)
 #if defined(__amd64__)
 			MODULE_HOOK_SET(amd64_oosyscall_hook, "nb32oo",
 			    amd64_oosyscall_handle);
-#endif
+#endif /* defined(__amd64__) */
 		}
 		return error;
 
