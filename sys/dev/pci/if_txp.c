@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.68 2020/03/08 22:26:03 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.69 2020/03/09 00:32:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.68 2020/03/08 22:26:03 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.69 2020/03/09 00:32:53 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -121,6 +121,9 @@ static void txp_tx_reclaim(struct txp_softc *, struct txp_tx_ring *,
 static void txp_rxbuf_reclaim(struct txp_softc *);
 static void txp_rx_reclaim(struct txp_softc *, struct txp_rx_ring *,
     struct txp_dma_alloc *);
+
+static void txp_rxd_free(struct txp_softc *, struct txp_swdesc *);
+static struct txp_swdesc *txp_rxd_alloc(struct txp_softc *);
 
 CFATTACH_DECL_NEW(txp, sizeof(struct txp_softc), txp_probe, txp_attach,
 	      NULL, NULL);
@@ -660,6 +663,21 @@ txp_intr(void *vsc)
 	return (claimed);
 }
 
+static struct txp_swdesc *
+txp_rxd_alloc(struct txp_softc *sc)
+{
+	if (sc->sc_txd_pool_ptr == 0)
+		return NULL;
+	return sc->sc_rxd_pool[--sc->sc_txd_pool_ptr];
+}
+
+static void
+txp_rxd_free(struct txp_softc *sc, struct txp_swdesc *sd)
+{
+	KASSERT(sc->sc_txd_pool_ptr < RXBUF_ENTRIES);
+	sc->sc_rxd_pool[sc->sc_txd_pool_ptr++] = sd;
+}
+
 static void
 txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
     struct txp_dma_alloc *dma)
@@ -696,9 +714,8 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
-		bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 		m = sd->sd_mbuf;
-		free(sd, M_DEVBUF);
+		txp_rxd_free(sc, sd);
 		m->m_pkthdr.len = m->m_len = le16toh(rxd->rx_len);
 
 #ifdef __STRICT_ALIGNMENT
@@ -794,8 +811,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 	rbd = sc->sc_rxbufs + i;
 
 	while (i != end) {
-		sd = (struct txp_swdesc *)malloc(sizeof(struct txp_swdesc),
-		    M_DEVBUF, M_NOWAIT);
+		sd = txp_rxd_alloc(sc);
 		if (sd == NULL)
 			break;
 
@@ -808,12 +824,8 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 			goto err_mbuf;
 		m_set_rcvif(sd->sd_mbuf, ifp);
 		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
-		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
-		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map))
-			goto err_mbuf;
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
 		    BUS_DMA_NOWAIT)) {
-			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 			goto err_mbuf;
 		}
 
@@ -849,7 +861,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 err_mbuf:
 	m_freem(sd->sd_mbuf);
 err_sd:
-	free(sd, M_DEVBUF);
+	txp_rxd_free(sc, sd);
 }
 
 /*
@@ -1091,34 +1103,33 @@ txp_alloc_rings(struct txp_softc *sc)
 	boot->br_rxbuf_siz = htole32(RXBUF_ENTRIES * sizeof(struct txp_rxbuf_desc));
 	sc->sc_rxbufs = (struct txp_rxbuf_desc *)sc->sc_rxbufring_dma.dma_vaddr;
 	for (nb = 0; nb < RXBUF_ENTRIES; nb++) {
-		sd = malloc(sizeof(struct txp_swdesc), M_DEVBUF, M_WAITOK);
+		sd = &sc->sc_rxd[nb];
 		/* stash away pointer */
 		memcpy(__UNVOLATILE(&sc->sc_rxbufs[nb].rb_vaddrlo), &sd,
 		    sizeof(sd));
 
-		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
+		MGETHDR(sd->sd_mbuf, M_WAIT, MT_DATA);
 		if (sd->sd_mbuf == NULL) {
 			goto bail_rxbufring;
 		}
 
-		MCLGET(sd->sd_mbuf, M_DONTWAIT);
+		MCLGET(sd->sd_mbuf, M_WAIT);
 		if ((sd->sd_mbuf->m_flags & M_EXT) == 0) {
 			goto bail_rxbufring;
 		}
 		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
 		m_set_rcvif(sd->sd_mbuf, ifp);
 		if (bus_dmamap_create(sc->sc_dmat, TXP_MAX_PKTLEN, 1,
-		    TXP_MAX_PKTLEN, 0, BUS_DMA_NOWAIT, &sd->sd_map)) {
+		    TXP_MAX_PKTLEN, 0, BUS_DMA_WAITOK, &sd->sd_map)) {
 			goto bail_rxbufring;
 		}
 		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
-		    BUS_DMA_NOWAIT)) {
+		    BUS_DMA_WAITOK)) {
 			bus_dmamap_destroy(sc->sc_dmat, sd->sd_map);
 			goto bail_rxbufring;
 		}
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_PREREAD);
-
 
 		sc->sc_rxbufs[nb].rb_paddrlo =
 		    htole32(BUS_ADDR_LO32(sd->sd_map->dm_segs[0].ds_addr));
@@ -1184,8 +1195,7 @@ bail_rxbufring:
 	for (i = 0; i <= nb; i++) {
 		memcpy(&sd, __UNVOLATILE(&sc->sc_rxbufs[i].rb_vaddrlo),
 		    sizeof(sd));
-		if (sd)
-			free(sd, M_DEVBUF);
+		/* XXXJRT */
 	}
 	txp_dma_free(sc, &sc->sc_rxbufring_dma);
 bail_rspring:
