@@ -1,4 +1,4 @@
-/*	$NetBSD: if_arp.c,v 1.293 2020/03/09 17:57:19 roy Exp $	*/
+/*	$NetBSD: if_arp.c,v 1.294 2020/03/09 21:20:55 roy Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2008 The NetBSD Foundation, Inc.
@@ -68,7 +68,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.293 2020/03/09 17:57:19 roy Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_arp.c,v 1.294 2020/03/09 21:20:55 roy Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_ddb.h"
@@ -309,20 +309,31 @@ arptimer(void *arg)
 	if (lle->la_flags & LLE_LINKED) {
 		int rt_cmd;
 		struct in_addr *in;
-		struct sockaddr_in sin;
+		struct sockaddr_in dsin, ssin;
+		struct sockaddr *sa;
 		const char *lladdr;
 		size_t pkts_dropped;
 
 		in = &lle->r_l3addr.addr4;
-		sockaddr_in_init(&sin, in, 0);
+		sockaddr_in_init(&dsin, in, 0);
 		if (lle->la_flags & LLE_VALID) {
 			rt_cmd = RTM_DELETE;
+			sa = NULL;
 			lladdr = (const char *)&lle->ll_addr;
 		} else {
+			if (lle->la_hold != NULL) {
+				struct mbuf *m = lle->la_hold;
+				const struct ip *ip = mtod(m, const struct ip *);
+
+				sockaddr_in_init(&ssin, &ip->ip_src, 0);
+				sa = sintosa(&ssin);
+			} else
+				sa = NULL;
 			rt_cmd = RTM_MISS;
 			lladdr = NULL;
+
 		}
-		rt_clonedmsg(rt_cmd, sintosa(&sin), lladdr, ifp);
+		rt_clonedmsg(rt_cmd, sa, sintosa(&dsin), lladdr, ifp);
 
 		LLE_REMREF(lle);
 		pkts_dropped = llentry_free(lle);
@@ -834,8 +845,14 @@ notfound:
 		la->la_asked++;
 
 		sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
-		if (error != EWOULDBLOCK)
-			rt_clonedmsg(RTM_MISS, sintosa(&sin), NULL, ifp);
+		if (error != EWOULDBLOCK) {
+			const struct ip *ip = mtod(m, const struct ip *);
+			struct sockaddr_in ssin;
+
+			sockaddr_in_init(&ssin, &ip->ip_src, 0);
+			rt_clonedmsg(RTM_MISS, sintosa(&ssin), sintosa(&sin),
+			    NULL, ifp);
+		}
 
 		LLE_WUNLOCK(la);
 
@@ -1236,7 +1253,7 @@ again:
 		struct sockaddr_in sin;
 
 		sockaddr_in_init(&sin, &la->r_l3addr.addr4, 0);
-		rt_clonedmsg(rt_cmd, sintosa(&sin), ar_sha(ah), ifp);
+		rt_clonedmsg(rt_cmd, NULL, sintosa(&sin), ar_sha(ah), ifp);
 	}
 
 	if (la->la_hold != NULL) {
