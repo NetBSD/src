@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.11 2020/03/09 05:37:37 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.12 2020/03/09 10:39:43 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -440,4 +440,52 @@ sys/compat/netbsd32/netbsd32_mod.c		1.17,1.18
 
 	Fix MODULE_HOOK_SET arguments (broken in ticket #762).
 	[pgoyette, ticket #775]
+
+external/cddl/osnet/dist/uts/common/fs/zfs/zfs_vnops.c 1.63
+
+	Avoid unnecessary zil_commit on rm.
+	[riastradh, ticket #769]
+
+sys/compat/netbsd32/netbsd32_mod.c		1.19
+
+	Fix restarting of syscalls in compat_netbsd32.
+	[pgoyette, ticket #770]
+
+sys/arch/powerpc/booke/copyout.c		1.6-1.8
+
+	copyoutstr(9):
+	 - sync style with copyinstr(9)
+	 - return  ENAMETOOLONG correctly when source string is not
+	   NUL-terminated.
+	Comment out full function of optimized version of copyoutstr(9),
+	which has never been enabled so far.
+	[rin, ticket #771]
+
+sys/arch/powerpc/ibm4xx/copyinstr.c		1.10-1.13
+sys/arch/powerpc/ibm4xx/copyoutstr.c		1.10-1.13
+
+	copy{in,out}str: sync style with booke.
+	copy{in,out}str: Correctly return ENAMETOOLONG if source is not
+	NUL-terminated.
+	Use dcbst instead of dcbf to flush cache.
+	Cosmetic changes.
+	[rin, ticket #772]
+
+sys/arch/powerpc/ibm4xx/pmap.c			1.81-1.85
+sys/arch/powerpc/include/ibm4xx/pmap.h		1.20
+sys/arch/powerpc/include/ibm4xx/tlb.h		1.6
+
+	Misc non-critical fixes.
+	ppc4xx_tlb_enter(): invalidate entry after clearing MSR for sure.
+	pmap_procwr(): use dcbst instead of dcbf as a tiny optimization.
+	Retire tlbpid_t (u_short).
+	Fix pmap_procwr().
+	[rin, ticket #773]
+
+sys/arch/powerpc/ibm4xx/cpu.c			1.34
+sys/arch/powerpc/ibm4xx/pic_uic.c		1.5
+
+	Cosmetic change. No binary changes.
+	Remove unused macros.
+	[rin, ticket #774]
 
