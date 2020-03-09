@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.6 2013/09/07 19:06:29 chs Exp $	*/
+/*	$NetBSD: ffs.S,v 1.7 2020/03/09 13:36:10 rin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,7 +39,7 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.6 2013/09/07 19:06:29 chs Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.7 2020/03/09 13:36:10 rin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
@@ -76,6 +76,7 @@ ENTRY(ffs)
 	jcc	.L1		| keep looping while carry is clear.
 .L2:
 	rts
+END(ffs)
 
 #else	/* __mc68010__ */
 
