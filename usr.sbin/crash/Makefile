@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.42 2019/10/13 07:28:18 mrg Exp $
+#	$NetBSD: Makefile,v 1.43 2020/03/09 01:54:31 christos Exp $
 
 PROG=		crash
 MAN=		crash.8
@@ -29,6 +29,10 @@ REALCRASH=yes
 .else
 REALCRASH=no
 .endif
+
+CPPFLAGS +=-DLOCKDEBUG
+CPPFLAGS.subr_lockdebug.c += -DCRASH -DDDB
+SRCS += subr_lockdebug.c
 
 .if ${REALCRASH} != "no"	# {
 
