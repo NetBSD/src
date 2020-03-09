@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.105 2020/03/08 10:03:19 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.106 2020/03/09 09:48:51 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2125,4 +2125,10 @@ sys/arch/amigappc/include/bus_defs.h		1.8
 	Gayle wants stride_1swap now, so declare the rest of the bus
 	methods since we already define them anyway.
 	[is, ticket #1518]
+
+sys/arch/i386/stand/efiboot/eficons.c		1.10,1.11
+
+	PR 55000: if the default GOP mode is unavailable, fallback to the
+	first mode defined.
+	[nonaka, ticket #1519]
 
