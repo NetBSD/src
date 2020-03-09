@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.70 2020/03/09 01:53:11 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.71 2020/03/09 01:55:16 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.70 2020/03/09 01:53:11 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.71 2020/03/09 01:55:16 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -716,6 +716,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		}
 
 		/* retrieve stashed pointer */
+		KASSERT(rxd->rx_vaddrlo < RXBUF_ENTRIES);
 		sd = &sc->sc_rxd[rxd->rx_vaddrlo];
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
