@@ -55,7 +55,7 @@ namespace io {
 //!
 //! A \a file_handle object can be copied but doing so invalidates the
 //! source object.  There can only be a single valid \a file_handle object
-//! for a given system file handle.  This is similar to std::auto_ptr\<\>'s
+//! for a given system file handle.  This is similar to std::unique_ptr\<\>'s
 //! semantics.
 //!
 //! This class also provides some convenience methods to issue special file
