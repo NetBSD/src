@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile.rump,v 1.126 2020/03/09 00:03:00 kamil Exp $
+#	$NetBSD: Makefile.rump,v 1.127 2020/03/09 14:45:41 kamil Exp $
 #
 
 .if !defined(_RUMP_MK)
@@ -22,9 +22,7 @@ CPPFLAGS+=	-D_RUMPKERNEL -I${RUMPTOP}/librump/rumpkern
 # We are compiling the kernel code with no-delete-null-pointer-checks,
 # and compiling without it, causes issues at least on sh3 by adding
 # aborts after kern_assert on NULL pointer checks.
-# no-delete-null-pointer-checks is required in Clang/LLVM at least for
-# NULL + 0 operations that trigger LLVM UBSan and could be miscompiled.
-CFLAGS+=    -fno-delete-null-pointer-checks
+CFLAGS+=    ${${ACTIVE_CC} == "gcc":? -fno-delete-null-pointer-checks :}
 
 # Define baseline cpu for mips ports, required for
 # rumpcomp_sync_icache() hypercall.
