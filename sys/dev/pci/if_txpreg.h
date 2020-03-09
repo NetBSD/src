@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.9 2020/03/08 22:26:03 thorpej Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.10 2020/03/09 00:32:53 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -581,6 +581,9 @@ struct txp_softc {
 	struct txp_tx_ring	sc_txhir, sc_txlor;
 	struct txp_rxbuf_desc	*sc_rxbufs;
 	struct txp_rx_ring	sc_rxhir, sc_rxlor;
+	struct txp_swdesc	sc_rxd[RXBUF_ENTRIES];
+	struct txp_swdesc	*sc_rxd_pool[RXBUF_ENTRIES];
+	unsigned int		sc_txd_pool_ptr;
 	u_int16_t		sc_xcvr;
 	u_int16_t		sc_seq;
 	struct txp_dma_alloc	sc_boot_dma, sc_host_dma, sc_zero_dma;
