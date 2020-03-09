@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.14 2020/03/09 18:29:16 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.15 2020/03/09 18:51:35 snj Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -500,4 +500,10 @@ usr.bin/config/util.c                           up to 1.21
 
 	config(1): fix issue with incorrect handling of elifdef statements.
 	[christos, ticket #776]
+
+usr.sbin/sysinst/arch/alpha/md.c		1.8
+
+	The (unused) md_pre_disklabel() function needs to return
+	success, otherwise all installations will be aborted.
+	[martin, ticket #777]
 
