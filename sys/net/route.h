@@ -1,4 +1,4 @@
-/*	$NetBSD: route.h,v 1.126 2020/02/08 14:17:30 roy Exp $	*/
+/*	$NetBSD: route.h,v 1.127 2020/03/09 21:20:55 roy Exp $	*/
 
 /*
  * Copyright (c) 1980, 1986, 1993
@@ -543,8 +543,8 @@ void	rt_addrmsg_rt(int, struct ifaddr *, int, struct rtentry *);
 void	route_enqueue(struct mbuf *, int);
 
 struct llentry;
-void	rt_clonedmsg(int, const struct sockaddr *, const uint8_t *,
-            const struct ifnet *);
+void	rt_clonedmsg(int, const struct sockaddr *, const struct sockaddr *,
+	    const uint8_t *, const struct ifnet *);
 
 void	rt_setmetrics(void *, struct rtentry *);
 
