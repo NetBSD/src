@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.10 2020/03/08 11:22:49 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.11 2020/03/09 05:37:37 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -435,4 +435,9 @@ sys/kern/kern_mutex.c				1.90
 	which condition was not true even if both are true by the time
 	the dump is written.
 	[chs, ticket #768]
+
+sys/compat/netbsd32/netbsd32_mod.c		1.17,1.18
+
+	Fix MODULE_HOOK_SET arguments (broken in ticket #762).
+	[pgoyette, ticket #775]
 
