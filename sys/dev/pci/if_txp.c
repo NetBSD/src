@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.72 2020/03/10 00:26:47 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.72 2020/03/10 00:26:47 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.73 2020/03/10 01:23:42 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -714,6 +714,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 	struct mbuf *m;
 	struct txp_swdesc *sd;
 	uint32_t roff, woff;
+	uint16_t len;
 	int sumflags = 0;
 	int idx;
 
@@ -741,44 +742,43 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 
 		bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
+
+		len = le16toh(rxd->rx_len);
+
+#ifdef __NO_STRICT_ALIGNMENT
 		bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 		m = sd->sd_mbuf;
 		sd->sd_mbuf = NULL;
 		txp_rxd_free(sc, sd);
-		m->m_pkthdr.len = m->m_len = le16toh(rxd->rx_len);
-
-#ifdef __STRICT_ALIGNMENT
-		{
-			/*
-			 * XXX Nice chip, except it won't accept "off by 2"
-			 * buffers, so we're force to copy.  Supposedly
-			 * this will be fixed in a newer firmware rev
-			 * and this will be temporary.
-			 */
-			struct mbuf *mnew;
-
-			MGETHDR(mnew, M_DONTWAIT, MT_DATA);
-			if (mnew == NULL) {
-				m_freem(m);
-				goto next;
-			}
-			MCLAIM(mnew, &sc->sc_arpcom.ec_rx_mowner);
-			if (m->m_len > (MHLEN - 2)) {
-				MCLGET(mnew, M_DONTWAIT);
-				if (!(mnew->m_flags & M_EXT)) {
-					m_freem(mnew);
-					m_freem(m);
-					goto next;
-				}
-			}
-			m_set_rcvif(mnew, ifp);
-			mnew->m_pkthdr.len = mnew->m_len = m->m_len;
-			mnew->m_data += 2;
-			memcpy(mnew->m_data, m->m_data, m->m_len);
-			m_freem(m);
-			m = mnew;
+#else
+		/*
+		 * The Typhoon's receive buffers must be 4-byte aligned.
+		 * But this means the data after the Ethernet header
+		 * is misaligned.  We must allocate a new buffer and
+		 * copy the data, shifted forward 2 bytes.
+		 */
+		MGETHDR(m, M_DONTWAIT, MT_DATA);
+		if (m == NULL) {
+ dropit:
+			if_statinc(ifp, if_ierrors);
+			txp_rxd_free(sc, sd);
+			goto next;
 		}
-#endif
+		MCLAIM(m, &sc->sc_arpcom.ec_rx_mowner);
+		if (len > (MHLEN - ETHER_ALIGN)) {
+			MCLGET(m, M_DONTWAIT);
+			if ((m->m_flags & M_EXT) == 0) {
+				m_freem(m);
+				goto dropit;
+			}
+		}
+		m_set_rcvif(m, ifp);
+		m->m_data += ETHER_ALIGN;
+		memcpy(mtod(m, void *), mtod(sd->sd_mbuf, void *), len);
+		txp_rxd_free(sc, sd);
+#endif /* __NO_STRICT_ALIGNMENT */
+
+		m->m_pkthdr.len = m->m_len = len;
 
 		if (rxd->rx_stat & htole32(RX_STAT_IPCKSUMBAD))
 			sumflags |= (M_CSUM_IPv4 | M_CSUM_IPv4_BAD);
@@ -845,19 +845,23 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		if (sd == NULL)
 			break;
 
-		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
-		if (sd->sd_mbuf == NULL)
-			goto err_sd;
-		MCLAIM(sd->sd_mbuf, &sc->sc_arpcom.ec_rx_mowner);
+		/* We might already have a buffer allocated. */
+		if (sd->sd_mbuf == NULL) {
+			MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
+			if (sd->sd_mbuf == NULL)
+				goto err_sd;
+			MCLAIM(sd->sd_mbuf, &sc->sc_arpcom.ec_rx_mowner);
 
-		MCLGET(sd->sd_mbuf, M_DONTWAIT);
-		if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
-			goto err_mbuf;
-		m_set_rcvif(sd->sd_mbuf, ifp);
-		sd->sd_mbuf->m_pkthdr.len = sd->sd_mbuf->m_len = MCLBYTES;
-		if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map, sd->sd_mbuf,
-		    BUS_DMA_NOWAIT)) {
-			goto err_mbuf;
+			MCLGET(sd->sd_mbuf, M_DONTWAIT);
+			if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
+				goto err_mbuf;
+			m_set_rcvif(sd->sd_mbuf, ifp);
+			sd->sd_mbuf->m_pkthdr.len =
+			    sd->sd_mbuf->m_len = MCLBYTES;
+			if (bus_dmamap_load_mbuf(sc->sc_dmat, sd->sd_map,
+			    sd->sd_mbuf, BUS_DMA_NOWAIT)) {
+				goto err_mbuf;
+			}
 		}
 
 		bus_dmamap_sync(sc->sc_dmat, sc->sc_rxbufring_dma.dma_map,
