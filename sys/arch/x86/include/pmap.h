@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.110 2020/02/23 15:46:39 ad Exp $	*/
+/*	$NetBSD: pmap.h,v 1.111 2020/03/10 22:38:41 ad Exp $	*/
 
 /*
  * Copyright (c) 1997 Charles D. Cranor and Washington University.
@@ -66,8 +66,6 @@
 
 #ifndef _X86_PMAP_H_
 #define	_X86_PMAP_H_
-
-#include <sys/radixtree.h>
 
 /*
  * pl*_pi: index in the ptp page for a pde mapping a VA.
@@ -257,7 +255,6 @@ struct pmap {
 	paddr_t pm_pdirpa[PDP_SIZE];	/* PA of PDs (read-only after create) */
 	struct vm_page *pm_ptphint[PTP_LEVELS-1];
 					/* pointer to a PTP in our pmap */
-	struct radix_tree pm_pvtree;	/* tree of non-embedded pv entries */
 	struct pmap_statistics pm_stats;  /* pmap stats */
 
 #if !defined(__x86_64__)
