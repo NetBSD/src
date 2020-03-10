@@ -1,4 +1,4 @@
-/* $NetBSD: if_txpreg.h,v 1.10 2020/03/09 00:32:53 thorpej Exp $ */
+/* $NetBSD: if_txpreg.h,v 1.11 2020/03/10 00:24:08 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001 Aaron Campbell <aaron@monkey.org>.
@@ -25,6 +25,9 @@
  * IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF
  * THE POSSIBILITY OF SUCH DAMAGE.
  */
+
+#ifndef _DEV_PCI_IF_TXPREG_H_
+#define	_DEV_PCI_IF_TXPREG_H_
 
 #define	TXP_PCI_LOMEM			0x14	/* pci conf, memory map BAR */
 #define	TXP_PCI_LOIO			0x10	/* pci conf, IO map BAR */
@@ -626,3 +629,4 @@ struct txp_fw_section_header {
 #define	READ_REG(sc,reg) \
     bus_space_read_4((sc)->sc_bt, (sc)->sc_bh, reg)
 
+#endif /* _DEV_PCI_IF_TXPREG_H_ */
