@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.27 2020/02/01 02:57:55 riastradh Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.28 2020/03/10 10:35:14 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.27 2020/02/01 02:57:55 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.28 2020/03/10 10:35:14 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1679,7 +1679,7 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	ext_msg_len += PFKEY_UNIT64(size);
 	size = if_ipsec_set_sadb_dst(&xdst, dst, proto);
 	ext_msg_len += PFKEY_UNIT64(size);
-	size = if_ipsec_set_sadb_x_policy(&xpl, &xisr, policy, dir, 0, level, src, dst);
+	size = if_ipsec_set_sadb_x_policy(&xpl, &xisr, policy, dir, 0, level, NULL, NULL);
 	ext_msg_len += PFKEY_UNIT64(size);
 	if_ipsec_set_sadb_msg_add(&msg, ext_msg_len);
 
