@@ -1,4 +1,4 @@
-/*	$NetBSD: ffs.S,v 1.7 2020/03/09 13:36:10 rin Exp $	*/
+/*	$NetBSD: ffs.S,v 1.8 2020/03/10 08:15:44 rin Exp $	*/
 
 /*-
  * Copyright (c) 1990 The Regents of the University of California.
@@ -39,13 +39,22 @@
 #if 0
 	RCSID("from: @(#)ffs.s	5.1 (Berkeley) 5/12/90")
 #else
-	RCSID("$NetBSD: ffs.S,v 1.7 2020/03/09 13:36:10 rin Exp $")
+	RCSID("$NetBSD: ffs.S,v 1.8 2020/03/10 08:15:44 rin Exp $")
 #endif
 #endif /* LIBC_SCCS and not lint */
 
 /* bit = ffs(value) */
 
+#ifdef _LIBC
 WEAK_ALIAS(__ffssi2,ffs)
+#else /* KERNEL */
+/*
+ * Our in-kernel linker does not understand weak references, which
+ * prevents modules depended on __ffssi2 from being loaded. Also,
+ * we do not provide ffs(9) as a kernel routine. Let's rename it!
+ */
+#define ffs __ffssi2
+#endif
 
 #if (!defined(__mc68010__) && !defined(__mcoldfire__)) || defined(__mcfisac__)
 
