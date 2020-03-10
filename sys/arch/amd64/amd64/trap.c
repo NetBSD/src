@@ -1,4 +1,4 @@
-/*	$NetBSD: trap.c,v 1.121.2.2 2020/03/09 13:12:14 martin Exp $	*/
+/*	$NetBSD: trap.c,v 1.121.2.3 2020/03/10 06:47:55 martin Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000, 2017 The NetBSD Foundation, Inc.
@@ -64,7 +64,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.2.2 2020/03/09 13:12:14 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: trap.c,v 1.121.2.3 2020/03/10 06:47:55 martin Exp $");
 
 #include "opt_ddb.h"
 #include "opt_kgdb.h"
@@ -356,8 +356,11 @@ trap(struct trapframe *frame)
 
 		MODULE_HOOK_CALL(amd64_oosyscall_hook, (p, frame),
 			ENOSYS, hook_ret);
-		if (hook_ret == 0)
+		if (hook_ret == 0) {
+			/* Do the syscall */
+			p->p_md.md_syscall(frame);
 			goto out;
+		}
 	}
 		/* FALLTHROUGH */
 	case T_TSSFLT|T_USER:

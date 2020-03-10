@@ -1,4 +1,4 @@
-/*	$NetBSD: netbsd32_mod.c,v 1.15.4.3 2020/03/09 09:55:52 martin Exp $	*/
+/*	$NetBSD: netbsd32_mod.c,v 1.15.4.4 2020/03/10 06:47:55 martin Exp $	*/
 
 /*-
  * Copyright (c) 2008 The NetBSD Foundation, Inc.
@@ -59,7 +59,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.15.4.3 2020/03/09 09:55:52 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: netbsd32_mod.c,v 1.15.4.4 2020/03/10 06:47:55 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_execfmt.h"
@@ -151,9 +151,6 @@ amd64_oosyscall_handle(struct proc *p, struct trapframe *frame)
 		/* Advance past the lcall and save instruction size. */
 		frame->tf_rip += sz;
 		frame->tf_err = sz;
-
-		/* Do the syscall */
-		p->p_md.md_syscall(frame);
 		return 0;
 	} else
 		return EPASSTHROUGH;
