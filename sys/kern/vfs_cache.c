@@ -1,4 +1,4 @@
-/*	$NetBSD: vfs_cache.c,v 1.126.2.12 2020/02/16 22:00:53 ad Exp $	*/
+/*	$NetBSD: vfs_cache.c,v 1.126.2.13 2020/03/10 21:53:45 ad Exp $	*/
 
 /*-
  * Copyright (c) 2008, 2019, 2020 The NetBSD Foundation, Inc.
@@ -171,7 +171,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.12 2020/02/16 22:00:53 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: vfs_cache.c,v 1.126.2.13 2020/03/10 21:53:45 ad Exp $");
 
 #define __NAMECACHE_PRIVATE
 #ifdef _KERNEL_OPT
@@ -242,7 +242,7 @@ static int doingcache = 1;			/* 1 => enable the cache */
 static struct	sysctllog *cache_sysctllog;
 
 /* Read-black tree */
-static rb_tree_ops_t cache_rbtree_ops __read_mostly = {
+static const rb_tree_ops_t cache_rbtree_ops = {
 	.rbto_compare_nodes = cache_compare_nodes,
 	.rbto_compare_key = cache_compare_key,
 	.rbto_node_offset = offsetof(struct namecache, nc_tree),
