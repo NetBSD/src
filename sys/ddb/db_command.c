@@ -1,4 +1,4 @@
-/*	$NetBSD: db_command.c,v 1.168 2020/03/09 01:46:24 christos Exp $	*/
+/*	$NetBSD: db_command.c,v 1.169 2020/03/10 15:58:36 christos Exp $	*/
 
 /*
  * Copyright (c) 1996, 1997, 1998, 1999, 2002, 2009, 2019
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.168 2020/03/09 01:46:24 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: db_command.c,v 1.169 2020/03/10 15:58:36 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_aio.h"
@@ -120,11 +120,6 @@ db_addr_t	db_last_addr;
 db_addr_t	db_prev;
 db_addr_t	db_next;
 
-
-#ifndef _KERNEL
-#define db_kernelonly() \
-    db_printf("%s: can only be used in-kernel.\n", __func__)
-#endif
 
 /*
  * New DDB api for adding and removing commands uses three lists, because
