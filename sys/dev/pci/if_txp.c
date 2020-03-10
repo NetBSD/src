@@ -1,4 +1,4 @@
-/* $NetBSD: if_txp.c,v 1.71 2020/03/09 01:55:16 thorpej Exp $ */
+/* $NetBSD: if_txp.c,v 1.72 2020/03/10 00:26:47 thorpej Exp $ */
 
 /*
  * Copyright (c) 2001
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.71 2020/03/09 01:55:16 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_txp.c,v 1.72 2020/03/10 00:26:47 thorpej Exp $");
 
 #include "opt_inet.h"
 
@@ -342,6 +342,19 @@ txp_attach(device_t parent, device_t self, void *aux)
 	if_attach(ifp);
 	if_deferred_start_init(ifp, NULL);
 	ether_ifattach(ifp, enaddr);
+
+	/*
+	 * XXX Because we allocate Rx buffers in txp_alloc_rings(),
+	 * XXX we have to go back and claim them now that our mowners
+	 * XXX have been initialized (in ether_ifattach()).
+	 *
+	 * XXX FIXME by allocating Rx buffers only when interface is
+	 * XXX running, like other drivers do.
+	 */
+	for (i = 0; i < RXBUF_ENTRIES; i++) {
+		KASSERT(sc->sc_rxd[i].sd_mbuf != NULL);
+		MCLAIM(sc->sc_rxd[i].sd_mbuf, &sc->sc_arpcom.ec_rx_mowner);
+	}
 
 	if (pmf_device_register1(self, NULL, NULL, txp_shutdown))
 		pmf_class_network_register(self, ifp);
@@ -685,6 +698,13 @@ txp_rxd_idx(struct txp_softc *sc, struct txp_swdesc *sd)
 	return (uint32_t)(sd - &sc->sc_rxd[0]);
 }
 
+static inline uint32_t
+txp_txd_idx(struct txp_softc *sc, struct txp_swdesc *sd)
+{
+	KASSERT(sd >= &sc->sc_txd[0] && sd < &sc->sc_txd[TX_ENTRIES]);
+	return (uint32_t)(sd - &sc->sc_txd[0]);
+}
+
 static void
 txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
     struct txp_dma_alloc *dma)
@@ -723,6 +743,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 		    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTREAD);
 		bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 		m = sd->sd_mbuf;
+		sd->sd_mbuf = NULL;
 		txp_rxd_free(sc, sd);
 		m->m_pkthdr.len = m->m_len = le16toh(rxd->rx_len);
 
@@ -741,6 +762,7 @@ txp_rx_reclaim(struct txp_softc *sc, struct txp_rx_ring *r,
 				m_freem(m);
 				goto next;
 			}
+			MCLAIM(mnew, &sc->sc_arpcom.ec_rx_mowner);
 			if (m->m_len > (MHLEN - 2)) {
 				MCLGET(mnew, M_DONTWAIT);
 				if (!(mnew->m_flags & M_EXT)) {
@@ -826,6 +848,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 		MGETHDR(sd->sd_mbuf, M_DONTWAIT, MT_DATA);
 		if (sd->sd_mbuf == NULL)
 			goto err_sd;
+		MCLAIM(sd->sd_mbuf, &sc->sc_arpcom.ec_rx_mowner);
 
 		MCLGET(sd->sd_mbuf, M_DONTWAIT);
 		if ((sd->sd_mbuf->m_flags & M_EXT) == 0)
@@ -868,6 +891,7 @@ txp_rxbuf_reclaim(struct txp_softc *sc)
 
 err_mbuf:
 	m_freem(sd->sd_mbuf);
+	sd->sd_mbuf = NULL;
 err_sd:
 	txp_rxd_free(sc, sd);
 }
@@ -883,7 +907,7 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 	uint32_t idx = TXP_OFFSET2IDX(le32toh(*(r->r_off)));
 	uint32_t cons = r->r_cons, cnt = r->r_cnt;
 	struct txp_tx_desc *txd = r->r_desc + cons;
-	struct txp_swdesc *sd = sc->sc_txd + cons;
+	struct txp_swdesc *sd;
 	struct mbuf *m;
 
 	while (cons != idx) {
@@ -897,11 +921,15 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 
 		if ((txd->tx_flags & TX_FLAGS_TYPE_M) ==
 		    TX_FLAGS_TYPE_DATA) {
-			bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
-			    sd->sd_map->dm_mapsize, BUS_DMASYNC_POSTWRITE);
-			bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
+			KASSERT(txd->tx_addrlo < TX_ENTRIES);
+			sd = &sc->sc_txd[txd->tx_addrlo];
 			m = sd->sd_mbuf;
+			sd->sd_mbuf = NULL;
 			if (m != NULL) {
+				bus_dmamap_sync(sc->sc_dmat, sd->sd_map, 0,
+				    sd->sd_map->dm_mapsize,
+				    BUS_DMASYNC_POSTWRITE);
+				bus_dmamap_unload(sc->sc_dmat, sd->sd_map);
 				m_freem(m);
 				txd->tx_addrlo = 0;
 				txd->tx_addrhi = 0;
@@ -913,11 +941,8 @@ txp_tx_reclaim(struct txp_softc *sc, struct txp_tx_ring *r,
 		if (++cons == TX_ENTRIES) {
 			txd = r->r_desc;
 			cons = 0;
-			sd = sc->sc_txd;
-		} else {
+		} else
 			txd++;
-			sd++;
-		}
 
 		cnt--;
 	}
@@ -1457,6 +1482,7 @@ txp_start(struct ifnet *ifp)
 				    device_xname(sc->sc_dev));
 				break;
 			}
+			MCLAIM(mnew, &sc->sc_arpcom.ec_tx_mowner);
 			if (m->m_pkthdr.len > MHLEN) {
 				MCLGET(mnew, M_DONTWAIT);
 				if ((mnew->m_flags & M_EXT) == 0) {
@@ -1496,7 +1522,7 @@ txp_start(struct ifnet *ifp)
 		txdidx = prod;
 		txd->tx_flags = TX_FLAGS_TYPE_DATA;
 		txd->tx_numdesc = 0;
-		txd->tx_addrlo = 0;
+		txd->tx_addrlo = txp_txd_idx(sc, sd);
 		txd->tx_addrhi = 0;
 		txd->tx_totlen = m->m_pkthdr.len;
 		txd->tx_pflags = 0;
@@ -1504,6 +1530,7 @@ txp_start(struct ifnet *ifp)
 
 		if (++prod == TX_ENTRIES)
 			prod = 0;
+		cnt++;
 
 		if (vlan_has_tag(m))
 			txd->tx_pflags = TX_PFLAGS_VLAN |
@@ -1545,7 +1572,7 @@ txp_start(struct ifnet *ifp)
 				prod = 0;
 			} else
 				fxd++;
-
+			cnt++;
 		}
 
 		ifp->if_timer = 5;
