@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.18 2018/04/19 21:50:07 christos Exp $	*/
+/*	$NetBSD: pmap.h,v 1.19 2020/03/11 13:30:31 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -94,9 +94,7 @@ void	pmap_md_init(void);
 bool	pmap_md_tlb_check_entry(void *, vaddr_t, tlb_asid_t, pt_entry_t);
 
 #ifdef MULTIPROCESSOR
-#define	PMAP_MD_NEED_TLB_MISS_LOCK
-void	pmap_md_tlb_miss_lock_enter(void);
-void	pmap_md_tlb_miss_lock_exit(void);
+#define	PMAP_NEED_TLB_MISS_LOCK
 #endif	/* MULTIPROCESSOR */
 
 #ifdef PMAP_MINIMALTLB
