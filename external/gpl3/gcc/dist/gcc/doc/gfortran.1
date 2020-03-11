@@ -133,7 +133,7 @@
 .\" ========================================================================
 .\"
 .IX Title "GFORTRAN 1"
-.TH GFORTRAN 1 "2018-12-06" "gcc-7.4.0" "GNU"
+.TH GFORTRAN 1 "2020-03-04" "gcc-8.4.0" "GNU"
 .\" For nroff, turn off justification.  Always turn off hyphenation; it makes
 .\" way too many mistakes in technical documents.
 .if n .ad l
@@ -224,7 +224,8 @@ by type.  Explanations are in the following sections.
 .IP "\fICode Generation Options\fR" 4
 .IX Item "Code Generation Options"
 \&\fB\-faggressive\-function\-elimination \-fblas\-matmul\-limit=\fR\fIn\fR 
-\&\fB\-fbounds\-check \-fcheck\-array\-temporaries 
+\&\fB\-fbounds\-check \-ftail\-call\-workaround \-ftail\-call\-workaround=\fR\fIn\fR 
+\&\fB\-fcheck\-array\-temporaries 
 \&\-fcheck=\fR\fI<all|array\-temps|bounds|do|mem|pointer|recursion>\fR 
 \&\fB\-fcoarray=\fR\fI<none|single|lib>\fR \fB\-fexternal\-blas \-ff2c
 \&\-ffrontend\-optimize 
@@ -1276,6 +1277,41 @@ warnings for generated array temporaries.
 .IP "\fB\-fbounds\-check\fR" 4
 .IX Item "-fbounds-check"
 Deprecated alias for \fB\-fcheck=bounds\fR.
+.IP "\fB\-ftail\-call\-workaround\fR" 4
+.IX Item "-ftail-call-workaround"
+.PD 0
+.IP "\fB\-ftail\-call\-workaround=\fR\fIn\fR" 4
+.IX Item "-ftail-call-workaround=n"
+.PD
+Some C interfaces to Fortran codes violate the gfortran \s-1ABI\s0 by
+omitting the hidden character length arguments as described in
+  This can lead to crashes
+because pushing arguments for tail calls can overflow the stack.
+.Sp
+To provide a workaround for existing binary packages, this option
+disables tail call optimization for gfortran procedures with character
+arguments.  With \fB\-ftail\-call\-workaround=2\fR tail call optimization
+is disabled in all gfortran procedures with character arguments,
+with \fB\-ftail\-call\-workaround=1\fR or equivalent
+\&\fB\-ftail\-call\-workaround\fR only in gfortran procedures with character
+arguments that call implicitly prototyped procedures.
+.Sp
+Using this option can lead to problems including crashes due to
+insufficient stack space.
+.Sp
+It is \fIvery strongly\fR recommended to fix the code in question.
+The \fB\-fc\-prototypes\-external\fR option can be used to generate
+prototypes which conform to gfortran's \s-1ABI,\s0 for inclusion in the
+source code.
+.Sp
+Support for this option will likely be withdrawn in a future release
+of gfortran.
+.Sp
+The negative form, \fB\-fno\-tail\-call\-workaround\fR or equivalent
+\&\fB\-ftail\-call\-workaround=0\fR, can be used to disable this option.
+.Sp
+Default is currently \fB\-ftail\-call\-workaround\fR, this will change
+in future releases.
 .IP "\fB\-fcheck\-array\-temporaries\fR" 4
 .IX Item "-fcheck-array-temporaries"
 Deprecated alias for \fB\-fcheck=array\-temps\fR.
