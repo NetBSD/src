@@ -38,7 +38,7 @@
 #define _GLIBCXX_RELEASE 8
 
 // The datestamp of the C++ library in compressed ISO date format.
-#define __GLIBCXX__ 20190222
+#define __GLIBCXX__ 20200304
 
 // Macros for various attributes.
 //   _GLIBCXX_PURE
@@ -1383,6 +1383,9 @@ namespace std
 /* Version number of package */
 /* #undef _GLIBCXX_VERSION */
 
+/* Number of bits in a file offset, on hosts where this is settable. */
+/* #undef _GLIBCXX_FILE_OFFSET_BITS */
+
 /* Define if C99 functions in <complex.h> should be used in <complex> for
    C++11. Using compiler builtins for these functions requires corresponding
    C99 library functions to be present. */
@@ -1609,6 +1612,9 @@ namespace std
 
 /* Define to 1 if mutex_timedlock is available. */
 #define _GTHREAD_USE_MUTEX_TIMEDLOCK 0
+
+/* Define for large files, on AIX-style hosts. */
+/* #undef _GLIBCXX_LARGE_FILES */
 
 /* Define if all C++11 floating point overloads are available in <math.h>.  */
 #if __cplusplus >= 201103L
