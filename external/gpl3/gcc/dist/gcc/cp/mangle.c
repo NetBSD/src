@@ -875,7 +875,16 @@ decl_mangling_context (tree decl)
   else if (template_type_parameter_p (decl))
      /* template type parms have no mangling context.  */
       return NULL_TREE;
-  return CP_DECL_CONTEXT (decl);
+
+  tcontext = CP_DECL_CONTEXT (decl);
+
+  /* Ignore the artificial declare reduction functions.  */
+  if (tcontext
+      && TREE_CODE (tcontext) == FUNCTION_DECL
+      && DECL_OMP_DECLARE_REDUCTION_P (tcontext))
+    return decl_mangling_context (tcontext);
+
+  return tcontext;
 }
 
 /* <name> ::= <unscoped-name>
@@ -3047,7 +3056,8 @@ write_expression (tree expr)
 	{
 	  scope = TREE_OPERAND (expr, 0);
 	  member = TREE_OPERAND (expr, 1);
-	  gcc_assert (!BASELINK_P (member));
+	  if (BASELINK_P (member))
+	    member = BASELINK_FUNCTIONS (member);
 	}
       else
 	{
