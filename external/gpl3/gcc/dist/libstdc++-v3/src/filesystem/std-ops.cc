@@ -27,6 +27,7 @@
 # define NEED_DO_COPY_FILE
 #endif
 
+#include <bits/largefile-config.h>
 #include <filesystem>
 #include <experimental/filesystem>
 #include <functional>
@@ -77,6 +78,9 @@ fs::absolute(const path& p)
 	std::make_error_code(errc::not_supported)));
   return ret;
 #else
+  if (p.empty())
+    _GLIBCXX_THROW_OR_ABORT(filesystem_error("cannot make absolute path", p,
+	  make_error_code(std::errc::invalid_argument)));
   return current_path() / p;
 #endif
 }
@@ -87,7 +91,7 @@ fs::absolute(const path& p, error_code& ec)
   path ret;
   if (p.empty())
     {
-      ec = make_error_code(std::errc::no_such_file_or_directory);
+      ec = make_error_code(std::errc::invalid_argument);
       return ret;
     }
   if (p.is_absolute())
@@ -1031,7 +1035,7 @@ fs::file_size(const path& p, error_code& ec) noexcept
     S(const stat_type& st) : type(make_file_type(st)), size(st.st_size) { }
     S() : type(file_type::not_found) { }
     file_type type;
-    size_t size;
+    uintmax_t size;
   };
   auto s = do_stat(p, ec, [](const auto& st) { return S{st}; }, S{});
   if (s.type == file_type::regular)
@@ -1347,12 +1351,17 @@ fs::remove_all(const path& p, error_code& ec)
   uintmax_t count = 0;
   if (s.type() == file_type::directory)
     {
-      for (directory_iterator d(p, ec), end; !ec && d != end; d.increment(ec))
-	count += fs::remove_all(d->path(), ec);
-      if (ec.value() == ENOENT)
-	ec.clear();
-      else if (ec)
-	return -1;
+      directory_iterator d(p, ec), end;
+      while (!ec && d != end)
+	{
+	  const auto removed = fs::remove_all(d->path(), ec);
+	  if (removed == numeric_limits<uintmax_t>::max())
+	    return -1;
+	  count += removed;
+	  d.increment(ec);
+	  if (ec)
+	    return -1;
+	}
     }
 
   if (fs::remove(p, ec))
