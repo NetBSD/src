@@ -1,4 +1,4 @@
-/*	$NetBSD: blacklistd.c,v 1.41 2020/03/11 02:12:08 roy Exp $	*/
+/*	$NetBSD: blacklistd.c,v 1.42 2020/03/11 02:33:18 roy Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #include "config.h"
 #endif
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: blacklistd.c,v 1.41 2020/03/11 02:12:08 roy Exp $");
+__RCSID("$NetBSD: blacklistd.c,v 1.42 2020/03/11 02:33:18 roy Exp $");
 
 #include <sys/types.h>
 #include <sys/socket.h>
@@ -230,24 +230,19 @@ process(bl_t bl)
 	case BL_ADD:
 		dbi.count++;
 		dbi.last = ts.tv_sec;
-		if (dbi.id[0]) {
-			/*
-			 * We should not be getting this since the rule
-			 * should have blocked the address. A possible
-			 * explanation is that someone removed that rule,
-			 * and another would be that we got another attempt
-			 * before we added the rule. In anycase, we remove
-			 * and re-add the rule because we don't want to add
-			 * it twice, because then we'd lose track of it.
-			 */
-			(*lfun)(LOG_DEBUG, "rule exists %s", dbi.id);
-			(void)run_change("rem", &c, dbi.id, 0);
-			dbi.id[0] = '\0';
-		}
 		if (c.c_nfail != -1 && dbi.count >= c.c_nfail) {
-			int res = run_change("add", &c, dbi.id, sizeof(dbi.id));
-			if (res == -1)
-				goto out;
+			/*
+			 * No point in re-adding the rule.
+			 * It might exist already due to latency in processing
+			 * and removing the rule is the wrong thing to do as
+			 * it allows a window to attack again.
+			 */
+			if (dbi.id[0] == '\0') {
+				int res = run_change("add", &c,
+				    dbi.id, sizeof(dbi.id));
+				if (res == -1)
+					goto out;
+			}
 			sockaddr_snprintf(rbuf, sizeof(rbuf), "%a",
 			    (void *)&rss);
 			(*lfun)(LOG_INFO,
