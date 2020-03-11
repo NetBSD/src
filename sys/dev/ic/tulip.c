@@ -1,4 +1,4 @@
-/*	$NetBSD: tulip.c,v 1.202 2020/02/04 05:25:39 thorpej Exp $	*/
+/*	$NetBSD: tulip.c,v 1.203 2020/03/11 16:20:57 msaitoh Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999, 2000, 2002 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.202 2020/02/04 05:25:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: tulip.c,v 1.203 2020/03/11 16:20:57 msaitoh Exp $");
 
 
 #include <sys/param.h>
@@ -1887,9 +1887,9 @@ tlp_init(struct ifnet *ifp)
 		const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
-		      (enaddr[1] << 8) |
-		      (enaddr[2] << 16) |
-		      (enaddr[3] << 24);
+		    (enaddr[1] << 8) |
+		    (enaddr[2] << 16) |
+		    ((uint32_t)enaddr[3] << 24);
 		bus_space_write_4(sc->sc_st, sc->sc_sh, CSR_ADM_PAR0, reg);
 
 		reg = enaddr[4] |
@@ -1905,9 +1905,9 @@ tlp_init(struct ifnet *ifp)
 		const uint8_t *enaddr = CLLADDR(ifp->if_sadl);
 
 		reg = enaddr[0] |
-		      (enaddr[1] << 8) |
-		      (enaddr[2] << 16) |
-		      (enaddr[3] << 24);
+		    (enaddr[1] << 8) |
+		    (enaddr[2] << 16) |
+		    ((uint32_t)enaddr[3] << 24);
 		TULIP_WRITE(sc, CSR_AX_FILTIDX, AX_FILTIDX_PAR0);
 		TULIP_WRITE(sc, CSR_AX_FILTDATA, reg);
 
