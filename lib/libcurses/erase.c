@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.28 2019/06/09 07:40:14 blymn Exp $	*/
+/*	$NetBSD: erase.c,v 1.29 2020/03/11 23:47:40 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.28 2019/06/09 07:40:14 blymn Exp $");
+__RCSID("$NetBSD: erase.c,v 1.29 2020/03/11 23:47:40 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -79,27 +79,31 @@ werase(WINDOW *win)
 	for (y = 0; y < win->maxy; y++) {
 		start = win->alines[y]->line;
 		end = &start[win->maxx];
-		for (sp = start; sp < end; sp++)
+		for (sp = start; sp < end; sp++) {
 #ifndef HAVE_WCHAR
-			if (sp->ch != win->bch || sp->attr != 0) {
+			if (sp->ch == win->bch && sp->attr == 0)
+				continue;
 #else
-			if (sp->ch != ( wchar_t )btowc(( int ) win->bch ) ||
-			    (sp->attr & WA_ATTRIBUTES) != 0 || sp->nsp) {
-#endif /* HAVE_WCHAR */
-				if (sp->attr & __ALTCHARSET)
-					sp->attr = attr | __ALTCHARSET;
-				else
-					sp->attr = attr;
-#ifdef HAVE_WCHAR
-				sp->ch = ( wchar_t )btowc(( int ) win->bch);
-				if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
-					return ERR;
-				SET_WCOL( *sp, 1 );
+			if (sp->ch == (wchar_t)btowc((int)win->bch) &&
+			    sp->attr == 0 &&
+			    sp->nsp == NULL)
+				continue;
+#endif
+			if (sp->attr & __ALTCHARSET)
+				sp->attr = attr | __ALTCHARSET;
+			else
+				sp->attr = attr;
+#ifndef HAVE_WCHAR
+			sp->ch = win->bch;
 #else
-				sp->ch = win->bch;
+			sp->ch = (wchar_t)btowc((int)win->bch);
+			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
+				return ERR;
+			SET_WCOL(*sp, 1);
 #endif /* HAVE_WCHAR */
-			}
+		}
 	}
+
 	/*
 	 * Mark the whole window as changed in case we have overlapping
 	 * windows - this will result in the (intended) clearing of the
