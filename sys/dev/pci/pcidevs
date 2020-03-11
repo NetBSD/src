@@ -1,4 +1,4 @@
-$NetBSD: pcidevs,v 1.1401 2020/03/11 10:53:07 fcambus Exp $
+$NetBSD: pcidevs,v 1.1402 2020/03/11 16:13:13 msaitoh Exp $
 
 /*
  * Copyright (c) 1995, 1996 Christopher G. Demetriou
@@ -6520,6 +6520,9 @@ product NVIDIA	MCP55_PCIE2	0x0378	nForce MCP55 PCI-Express 16x Port
 product NVIDIA  MCP55_SATA      0x037e  nForce MCP55 Serial ATA Controller
 product NVIDIA  MCP55_SATA2     0x037f  nForce MCP55 Serial ATA Controller
 product NVIDIA	GF_GO_7600	0x0398	GeForce Go 7600
+product NVIDIA	GF_6100_430	0x03d0	GeForce 6100 nForce 430
+product NVIDIA	GF_6100_405	0x03d1	GeForce 6100 nForce 405
+product NVIDIA	GF_7025_630A	0x03d6	GeForce 7025 nForce 630a
 product NVIDIA	MCP61_ISA	0x03e0  nForce MCP61 PCI-ISA Bridge
 product NVIDIA	MCP61_HDA	0x03e4	nForce MCP61 High Definition Audio Controller
 product NVIDIA	MCP61_LAN1	0x03e5	nForce MCP61 Gigabit Ethernet Controller
