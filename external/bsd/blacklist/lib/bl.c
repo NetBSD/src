@@ -1,4 +1,4 @@
-/*	$NetBSD: bl.c,v 1.29 2020/03/10 13:36:08 roy Exp $	*/
+/*	$NetBSD: bl.c,v 1.30 2020/03/11 02:12:08 roy Exp $	*/
 
 /*-
  * Copyright (c) 2014 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: bl.c,v 1.29 2020/03/10 13:36:08 roy Exp $");
+__RCSID("$NetBSD: bl.c,v 1.30 2020/03/11 02:12:08 roy Exp $");
 
 #include <sys/param.h>
 #include <sys/types.h>
@@ -384,7 +384,6 @@ bl_send(bl_t b, bl_type_t e, int pfd, const struct sockaddr *sa,
 	if (bl_getsock(b, &ub.bl.bl_ss, sa, slen, ctx) == -1)
 		return -1;
 
-
 	ub.bl.bl_salen = slen;
 	memcpy(ub.bl.bl_data, ctx, ctxlen);
 
@@ -394,15 +393,17 @@ bl_send(bl_t b, bl_type_t e, int pfd, const struct sockaddr *sa,
 	msg.msg_iovlen = 1;
 	msg.msg_flags = 0;
 
-	msg.msg_control = ua.ctrl;
-	msg.msg_controllen = sizeof(ua.ctrl);
+	if (pfd != -1) {
+		msg.msg_control = ua.ctrl;
+		msg.msg_controllen = sizeof(ua.ctrl);
 
-	cmsg = CMSG_FIRSTHDR(&msg);
-	cmsg->cmsg_len = CMSG_LEN(sizeof(int));
-	cmsg->cmsg_level = SOL_SOCKET;
-	cmsg->cmsg_type = SCM_RIGHTS;
+		cmsg = CMSG_FIRSTHDR(&msg);
+		cmsg->cmsg_len = CMSG_LEN(sizeof(int));
+		cmsg->cmsg_level = SOL_SOCKET;
+		cmsg->cmsg_type = SCM_RIGHTS;
 
-	memcpy(CMSG_DATA(cmsg), &pfd, sizeof(pfd));
+		memcpy(CMSG_DATA(cmsg), &pfd, sizeof(pfd));
+	}
 
 	tried = 0;
 again:
@@ -494,14 +495,15 @@ bl_recv(bl_t b)
 
 	}
 
-	if (got != (GOT_CRED|GOT_FD)) {
-		bl_log(b->b_fun, LOG_ERR, "message missing %s %s",
+	if (!(got & GOT_FD))
+		bi->bi_fd = -1;
+
 #if GOT_CRED != 0
-		    (got & GOT_CRED) == 0 ? "cred" :
-#endif
-		    "", (got & GOT_FD) == 0 ? "fd" : "");
+	if (!(got & GOT_CRED)) {
+		bl_log(b->b_fun, LOG_ERR, "message missing cred");
 		return NULL;
 	}
+#endif
 
 	if ((size_t)rlen <= sizeof(ub.bl)) {
 		bl_log(b->b_fun, LOG_ERR, "message too short %zd", rlen);
