@@ -1,4 +1,4 @@
-/* $NetBSD: cgd.c,v 1.122 2020/03/09 08:33:15 mlelstv Exp $ */
+/* $NetBSD: cgd.c,v 1.123 2020/03/11 13:48:45 mlelstv Exp $ */
 
 /*-
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.122 2020/03/09 08:33:15 mlelstv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: cgd.c,v 1.123 2020/03/11 13:48:45 mlelstv Exp $");
 
 #include <sys/types.h>
 #include <sys/param.h>
@@ -636,7 +636,7 @@ cgd_getdata(struct cgd_softc *sc, unsigned long size)
 	if (data)
 		return data;
 
-	return malloc(size, M_DEVBUF, M_WAITOK);
+	return malloc(size, M_DEVBUF, M_NOWAIT);
 }
 
 static void
