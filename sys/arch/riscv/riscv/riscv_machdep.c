@@ -31,7 +31,7 @@
 
 #include "opt_modular.h"
 
-__RCSID("$NetBSD: riscv_machdep.c,v 1.8 2019/12/31 13:07:12 ad Exp $");
+__RCSID("$NetBSD: riscv_machdep.c,v 1.9 2020/03/11 13:30:31 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -333,4 +333,7 @@ cpu_startup(void)
 void
 init_riscv(vaddr_t kernstart, vaddr_t kernend)
 {
+
+	/* Early VM bootstrap. */
+	pmap_bootstrap();
 }

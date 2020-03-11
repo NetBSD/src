@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.12 2019/06/01 12:42:28 maxv Exp $	*/
+/*	$NetBSD: pmap.h,v 1.13 2020/03/11 13:30:31 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1992, 1993
@@ -103,6 +103,7 @@ typedef union pmap_segtab {
 struct pmap;
 typedef bool (*pte_callback_t)(struct pmap *, vaddr_t, vaddr_t,
 	pt_entry_t *, uintptr_t);
+void pmap_bootstrap_common(void);
 pt_entry_t *pmap_pte_lookup(struct pmap *, vaddr_t);
 pt_entry_t *pmap_pte_reserve(struct pmap *, vaddr_t, int);
 void pmap_pte_process(struct pmap *, vaddr_t, vaddr_t, pte_callback_t,
