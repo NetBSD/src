@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.27 2020/03/11 02:12:08 roy Exp $	*/
+/*	$NetBSD: conf.c,v 1.28 2020/03/12 11:31:23 roy Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.27 2020/03/11 02:12:08 roy Exp $");
+__RCSID("$NetBSD: conf.c,v 1.28 2020/03/12 11:31:23 roy Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -1009,14 +1009,6 @@ conf_find(int fd, uid_t uid, const struct sockaddr_storage *rss,
 	char buf[BUFSIZ];
 
 	memset(cr, 0, sizeof(*cr));
-
-	if (fd == -1) {
-		cr->c_proto = FSTAR;
-		cr->c_port = FSTAR;
-		memcpy(&lss, rss, sizeof(lss));
-		goto done_fd;
-	}
-
 	slen = sizeof(lss);
 	memset(&lss, 0, slen);
 	if (getsockname(fd, (void *)&lss, &slen) == -1) {
@@ -1059,7 +1051,6 @@ conf_find(int fd, uid_t uid, const struct sockaddr_storage *rss,
 		return NULL;
 	}
 
-done_fd:
 	cr->c_ss = lss;
 	cr->c_lmask = FSTAR;
 	cr->c_uid = (int)uid;
