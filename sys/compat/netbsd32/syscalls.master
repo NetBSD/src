@@ -1,4 +1,4 @@
-	$NetBSD: syscalls.master,v 1.132 2020/03/07 00:56:41 pgoyette Exp $
+	$NetBSD: syscalls.master,v 1.133 2020/03/12 15:02:29 pgoyette Exp $
 
 ;	from: NetBSD: syscalls.master,v 1.81 1998/07/05 08:49:50 jonathan Exp
 ;	@(#)syscalls.master	8.2 (Berkeley) 1/13/94
@@ -356,13 +356,9 @@
 146	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||killpg(int pgid, int signum); }
 147	NOARGS		{ int|sys||setsid(void); }
-#if defined(QUOTA) || !defined(_KERNEL_OPT)
-148	COMPAT_50 MODULAR compat_netbsd32_50	\
+148	COMPAT_50 MODULAR compat_netbsd32_quota_50	\
 			{ int|netbsd32||quotactl(netbsd32_charp path, int cmd, \
 			    int uid, netbsd32_voidp arg); }
-#else
-148	EXCL 		compat_netbsd32_quotactl
-#endif
 149	EXCL 		compat_netbsd32_quota
 150	COMPAT_43 MODULAR compat_netbsd32_43	\
 			{ int|netbsd32||ogetsockname(int fdec, \
@@ -1127,12 +1123,9 @@
 			    int flag); }
 472	STD  		{ int|netbsd32||futimens(int fd, \
 			    const netbsd32_timespecp_t tptr); }
-#if defined(QUOTA) || !defined(_KERNEL_OPT)
-473	STD		{ int|netbsd32||__quotactl(const netbsd32_charp path, \
+473	STD MODULAR compat_netbsd32_quota	\
+			{ int|netbsd32||__quotactl(const netbsd32_charp path, \
 			    netbsd32_voidp args); }
-#else
-473	EXCL		netbsd32___quotactl
-#endif
 474	NOERR		{ int|netbsd32||posix_spawn(netbsd32_pid_tp pid, \
 			    const netbsd32_charp path, \
 			    const netbsd32_posix_spawn_file_actionsp \
