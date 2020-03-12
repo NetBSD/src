@@ -1,4 +1,4 @@
-/*	$NetBSD: curses.h,v 1.126 2019/09/03 13:43:34 roy Exp $	*/
+/*	$NetBSD: curses.h,v 1.127 2020/03/12 12:17:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -275,7 +275,9 @@ typedef struct __screen SCREEN;
 #define WA_VERTICAL	0x00000010	/* Vertical highlight */
 #define WA_LEFT		0x00000020	/* Left highlight */
 #define WA_RIGHT	0x00000040	/* Right highlight */
-#endif /* HAVE_WCHAR */
+#else /* HAVE_WCHAR */
+#define WA_ATTRIBUTES	0		/* Just to make our code easier */
+#endif /* !HAVE_WCHAR */
 
 /*
  * Alternate character set definitions

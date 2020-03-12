@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.29 2020/03/11 23:47:40 roy Exp $	*/
+/*	$NetBSD: erase.c,v 1.30 2020/03/12 12:17:15 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.29 2020/03/11 23:47:40 roy Exp $");
+__RCSID("$NetBSD: erase.c,v 1.30 2020/03/12 12:17:15 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -64,13 +64,18 @@ erase(void)
 int
 werase(WINDOW *win)
 {
-
 	int     y;
 	__LDATA *sp, *end, *start;
+	wchar_t	bch;
 	attr_t	attr;
 
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "werase: (%p)\n", win);
+#endif
+#ifdef HAVE_WCHAR
+	bch = (wchar_t)btowc((int)win->bch);
+#else
+	bch = win->bch;
 #endif
 	if (win != curscr)
 		attr = win->battr & __ATTRIBUTES;
@@ -80,27 +85,20 @@ werase(WINDOW *win)
 		start = win->alines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++) {
-#ifndef HAVE_WCHAR
-			if (sp->ch == win->bch && sp->attr == 0)
-				continue;
-#else
-			if (sp->ch == (wchar_t)btowc((int)win->bch) &&
-			    sp->attr == 0 &&
-			    sp->nsp == NULL)
-				continue;
+			if (sp->ch == bch &&
+#ifdef HAVE_WCHAR
+			    sp->nsp == NULL && WCOL(*sp) >= 0 &&
 #endif
-			if (sp->attr & __ALTCHARSET)
-				sp->attr = attr | __ALTCHARSET;
-			else
-				sp->attr = attr;
-#ifndef HAVE_WCHAR
-			sp->ch = win->bch;
-#else
-			sp->ch = (wchar_t)btowc((int)win->bch);
+			    (sp->attr & WA_ATTRIBUTES) == attr)
+				continue;
+
+			sp->attr = attr | (sp->attr & __ALTCHARSET);
+			sp->ch = bch;
+#ifdef HAVE_WCHAR
 			if (_cursesi_copy_nsp(win->bnsp, sp) == ERR)
 				return ERR;
 			SET_WCOL(*sp, 1);
-#endif /* HAVE_WCHAR */
+#endif
 		}
 	}
 
