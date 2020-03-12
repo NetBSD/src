@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.h,v 1.19 2020/03/11 13:30:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.h,v 1.20 2020/03/12 23:09:59 thorpej Exp $	*/
 /*-
  * Copyright (c) 2010, 2011 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -45,6 +45,7 @@
 #endif
 
 #ifdef _KERNEL_OPT
+#include "opt_multiprocessor.h"
 #include "opt_pmap.h"
 #endif
 
