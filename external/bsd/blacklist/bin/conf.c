@@ -1,4 +1,4 @@
-/*	$NetBSD: conf.c,v 1.29 2020/03/12 19:35:11 christos Exp $	*/
+/*	$NetBSD: conf.c,v 1.30 2020/03/12 19:47:32 christos Exp $	*/
 
 /*-
  * Copyright (c) 2015 The NetBSD Foundation, Inc.
@@ -33,7 +33,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: conf.c,v 1.29 2020/03/12 19:35:11 christos Exp $");
+__RCSID("$NetBSD: conf.c,v 1.30 2020/03/12 19:47:32 christos Exp $");
 
 #include <stdio.h>
 #ifdef HAVE_LIBUTIL_H
@@ -1005,7 +1005,8 @@ confset_match(const struct confset *cs, struct conf *c,
 #ifdef AF_ROUTE
 static int
 conf_route_perm(int fd) {
-#if defined(RTM_IFANNOUNCE) && defined(RT_ROUNDUP)
+/* Disable for now, the access check in the routing socket uses curlwp */
+#if defined(RTM_IFANNOUNCE) && defined(RT_ROUNDUP) && 0
 	/*
 	 * Send a routing message that is not supported to check for access
 	 * We expect EOPNOTSUPP for having access, since we are sending a
