@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.46 2020/03/11 13:30:31 thorpej Exp $	*/
+/*	$NetBSD: pmap.c,v 1.47 2020/03/12 23:10:27 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 2001 The NetBSD Foundation, Inc.
@@ -67,7 +67,7 @@
 
 #include <sys/cdefs.h>
 
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.46 2020/03/11 13:30:31 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.47 2020/03/12 23:10:27 thorpej Exp $");
 
 /*
  *	Manages physical address maps.
@@ -277,7 +277,7 @@ struct pool_allocator pmap_pv_page_allocator = {
 #define	pmap_tlb_miss_lock_enter()	pmap_md_tlb_miss_lock_enter()
 #define	pmap_tlb_miss_lock_exit()	pmap_md_tlb_miss_lock_exit()
 #else
-static kmutex_t pmap_tlb_miss_lock __cacheline_aligned;
+kmutex_t pmap_tlb_miss_lock 		__cacheline_aligned;
 
 static void
 pmap_tlb_miss_lock_init(void)
