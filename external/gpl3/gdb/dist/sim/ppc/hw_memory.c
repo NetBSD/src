@@ -29,8 +29,6 @@
 
 #include "device_table.h"
 
-#include <stdlib.h>
-
 /* DEVICE
 
 
