@@ -1,4 +1,4 @@
-/*	$NetBSD: smc83c170.c,v 1.93 2020/02/07 00:56:48 thorpej Exp $	*/
+/*	$NetBSD: smc83c170.c,v 1.94 2020/03/12 03:01:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 1998, 1999 The NetBSD Foundation, Inc.
@@ -36,7 +36,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.93 2020/02/07 00:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: smc83c170.c,v 1.94 2020/03/12 03:01:46 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -415,6 +415,7 @@ epic_start(struct ifnet *ifp)
 				    device_xname(sc->sc_dev));
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -687,6 +688,7 @@ epic_intr(void *arg)
 				MGETHDR(m, M_DONTWAIT, MT_DATA);
 				if (m == NULL)
 					goto dropit;
+				MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 				memcpy(mtod(m, void *),
 				    mtod(ds->ds_mbuf, void *), len);
 				EPIC_INIT_RXDESC(sc, i);
@@ -1220,6 +1222,7 @@ epic_add_rxbuf(struct epic_softc *sc, int idx)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return ENOBUFS;
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {

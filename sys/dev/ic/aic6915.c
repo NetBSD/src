@@ -1,4 +1,4 @@
-/*	$NetBSD: aic6915.c,v 1.42 2020/02/07 00:56:48 thorpej Exp $	*/
+/*	$NetBSD: aic6915.c,v 1.43 2020/03/12 03:01:46 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.42 2020/02/07 00:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aic6915.c,v 1.43 2020/03/12 03:01:46 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -404,6 +404,7 @@ sf_start(struct ifnet *ifp)
 				    "unable to allocate Tx mbuf\n");
 				break;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_tx_mowner);
 			if (m0->m_pkthdr.len > MHLEN) {
 				MCLGET(m, M_DONTWAIT);
 				if ((m->m_flags & M_EXT) == 0) {
@@ -769,6 +770,7 @@ sf_rxintr(struct sf_softc *sc)
 			    ds->ds_dmamap->dm_mapsize, BUS_DMASYNC_PREREAD);
 			continue;
 		}
+		MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 		if (len > (MHLEN - 2)) {
 			MCLGET(m, M_DONTWAIT);
 			if ((m->m_flags & M_EXT) == 0) {
@@ -1203,6 +1205,7 @@ sf_add_rxbuf(struct sf_softc *sc, int idx)
 	MGETHDR(m, M_DONTWAIT, MT_DATA);
 	if (m == NULL)
 		return (ENOBUFS);
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
