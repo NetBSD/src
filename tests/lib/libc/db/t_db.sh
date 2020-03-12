@@ -1,4 +1,4 @@
-# $NetBSD: t_db.sh,v 1.7 2016/09/24 20:12:33 christos Exp $
+# $NetBSD: t_db.sh,v 1.8 2020/03/12 14:03:42 martin Exp $
 #
 # Copyright (c) 2008 The NetBSD Foundation, Inc.
 # All rights reserved.
@@ -934,6 +934,7 @@ btree_weird_page_split_head()
 	    "be the only item on the left page results in index 0 of " \
 	    "the right page being erroneously skipped; this only " \
 	    "happens with one particular key+data length for each page size."
+	atf_set "timeout" "900"
 }
 btree_weird_page_split_body()
 {
