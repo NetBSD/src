@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.164 2020/02/07 00:56:48 thorpej Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.165 2020/03/12 03:01:46 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.164 2020/02/07 00:56:48 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.165 2020/03/12 03:01:46 thorpej Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -1076,6 +1076,7 @@ re_newbuf(struct rtk_softc *sc, int idx, struct mbuf *m)
 		if (n == NULL)
 			return ENOBUFS;
 
+		MCLAIM(n, &sc->ethercom.ec_rx_mowner);
 		MCLGET(n, M_DONTWAIT);
 		if ((n->m_flags & M_EXT) == 0) {
 			m_freem(n);
