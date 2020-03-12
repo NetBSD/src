@@ -24,7 +24,6 @@
 #include "basics.h"
 #include "events.h"
 
-#include <stdlib.h>
 #include <signal.h>
 #include <stdlib.h>
 
