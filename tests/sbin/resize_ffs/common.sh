@@ -140,7 +140,7 @@ resize_ffs()
 		then
 			atf_skip 'No PUFFS available in kernel'
 		else
-			aft_fail "rump_ffs mount failed: $(tail -r S.Err |
+			atf_fail "rump_ffs mount failed: $(tail -r S.Err |
 				sed -e '/^$/d' -e p -e q )"
 		fi
 	fi
