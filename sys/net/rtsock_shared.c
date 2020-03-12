@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.15 2020/02/22 09:30:42 maxv Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.16 2020/03/12 19:36:33 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.15 2020/02/22 09:30:42 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.16 2020/03/12 19:36:33 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -686,6 +686,10 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		senderr(EINVAL);
 	}
 	info.rti_flags = rtm->rtm_flags;
+	if (info.rti_info[RTAX_DST] == NULL ||
+	    (info.rti_info[RTAX_DST]->sa_family >= AF_MAX)) {
+		senderr(EINVAL);
+	}
 #ifdef RTSOCK_DEBUG
 	if (info.rti_info[RTAX_DST]->sa_family == AF_INET) {
 		char abuf[INET_ADDRSTRLEN];
@@ -693,10 +697,6 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 		    RT_IN_PRINT(&info, abuf, RTAX_DST));
 	}
 #endif /* RTSOCK_DEBUG */
-	if (info.rti_info[RTAX_DST] == NULL ||
-	    (info.rti_info[RTAX_DST]->sa_family >= AF_MAX)) {
-		senderr(EINVAL);
-	}
 	if (info.rti_info[RTAX_GATEWAY] != NULL &&
 	    (info.rti_info[RTAX_GATEWAY]->sa_family >= AF_MAX)) {
 		senderr(EINVAL);
