@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.61 2020/03/12 09:34:41 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.62 2020/03/12 09:38:10 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.61 2020/03/12 09:34:41 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.62 2020/03/12 09:38:10 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -800,7 +800,7 @@ static void	ixl_get_link_status(void *);
 static int	ixl_get_link_status_poll(struct ixl_softc *, int *);
 static void	ixl_get_link_status_done(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
-static int	ixl_set_link_status(struct ixl_softc *,
+static int	ixl_set_link_status_locked(struct ixl_softc *,
 		    const struct ixl_aq_desc *);
 static uint64_t	ixl_search_link_speed(uint8_t);
 static uint8_t	ixl_search_baudrate(uint64_t);
@@ -1686,8 +1686,10 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 {
 	struct ixl_softc *sc = ifp->if_softc;
 
+	mutex_enter(&sc->sc_cfg_lock);
 	ifmr->ifm_status = sc->sc_media_status;
 	ifmr->ifm_active = sc->sc_media_active;
+	mutex_exit(&sc->sc_cfg_lock);
 }
 
 static int
@@ -3645,8 +3647,17 @@ static void
 ixl_get_link_status_done(struct ixl_softc *sc,
     const struct ixl_aq_desc *iaq)
 {
+	struct ixl_aq_desc iaq_buf;
 
-	ixl_link_state_update(sc, iaq);
+	memcpy(&iaq_buf, iaq, sizeof(iaq_buf));
+
+	/*
+	 * The lock can be released here
+	 * because there is no post processing about ATQ
+	 */
+	mutex_exit(&sc->sc_atq_lock);
+	ixl_link_state_update(sc, &iaq_buf);
+	mutex_enter(&sc->sc_atq_lock);
 }
 
 static void
@@ -3666,11 +3677,12 @@ ixl_get_link_status(void *xsc)
 	param->notify = IXL_AQ_LINK_NOTIFY;
 
 	error = ixl_atq_exec_locked(sc, &sc->sc_link_state_atq);
+	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
+
 	if (error == 0) {
 		ixl_get_link_status_done(sc, iaq);
 	}
 
-	ixl_atq_set(&sc->sc_link_state_atq, ixl_get_link_status_done);
 
 	mutex_exit(&sc->sc_atq_lock);
 }
@@ -3681,15 +3693,17 @@ ixl_link_state_update(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	struct ifnet *ifp = &sc->sc_ec.ec_if;
 	int link_state;
 
-	KASSERT(kpreempt_disabled());
-
-	link_state = ixl_set_link_status(sc, iaq);
+	mutex_enter(&sc->sc_cfg_lock);
+	link_state = ixl_set_link_status_locked(sc, iaq);
+	mutex_exit(&sc->sc_cfg_lock);
 
 	if (ifp->if_link_state != link_state)
 		if_link_state_change(ifp, link_state);
 
 	if (link_state != LINK_STATE_DOWN) {
+		kpreempt_disable();
 		if_schedule_deferred_start(ifp);
+		kpreempt_enable();
 	}
 }
 
@@ -3751,9 +3765,7 @@ ixl_arq(void *xsc)
 
 		switch (iaq->iaq_opcode) {
 		case htole16(IXL_AQ_OP_PHY_LINK_STATUS):
-			kpreempt_disable();
 			ixl_link_state_update(sc, iaq);
-			kpreempt_enable();
 			break;
 		}
 
@@ -4500,7 +4512,8 @@ ixl_get_link_status_poll(struct ixl_softc *sc, int *l)
 		return EIO;
 	}
 
-	link = ixl_set_link_status(sc, &iaq);
+	/* It is unneccessary to hold lock */
+	link = ixl_set_link_status_locked(sc, &iaq);
 
 	if (l != NULL)
 		*l = link;
@@ -5690,7 +5703,7 @@ out:
 }
 
 static int
-ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
+ixl_set_link_status_locked(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 {
 	const struct ixl_aq_link_status *status;
 	const struct ixl_phy_type *itype;
@@ -5722,6 +5735,7 @@ ixl_set_link_status(struct ixl_softc *sc, const struct ixl_aq_desc *iaq)
 	baudrate = ixl_search_link_speed(status->link_speed);
 
 done:
+	/* sc->sc_cfg_lock held expect during attach */
 	sc->sc_media_active = ifm_active;
 	sc->sc_media_status = ifm_status;
 
