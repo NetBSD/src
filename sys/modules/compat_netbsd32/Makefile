@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.31 2020/03/05 15:58:33 christos Exp $
+#	$NetBSD: Makefile,v 1.32 2020/03/12 15:02:29 pgoyette Exp $
 
 .include "../Makefile.inc"
 .include "../Makefile.assym"
@@ -12,7 +12,7 @@ NETBSD32_DRMKMS?=yes
 CPPFLAGS+=	-DCOMPAT_NETBSD32
 CPPFLAGS+=	-DEXEC_ELF32 -DEXEC_ELF64
 CPPFLAGS+=	-DNTP -DVMSWAP
-CPPFLAGS+=	-DKTRACE -DMODULAR -DQUOTA
+CPPFLAGS+=	-DKTRACE -DMODULAR
 CPPFLAGS+=	-I${NETBSDSRCDIR}/sys/external/bsd/libnv/dist
 
 .if ${NETBSD32_DRMKMS:Uno} == "yes"
@@ -34,14 +34,13 @@ SRCS+=	netbsd32_exec_elf32.c	netbsd32_execve.c
 SRCS+=	netbsd32_fd.c		netbsd32_fs.c
 SRCS+=	netbsd32_ioctl.c	netbsd32_kern_proc.c
 SRCS+=	netbsd32_lwp.c		netbsd32_mod.c
-SRCS+=	netbsd32_netbsd.c	netbsd32_quota.c
+SRCS+=	netbsd32_module.c	netbsd32_netbsd.c
 SRCS+=	netbsd32_rlimit.c	netbsd32_select.c
 SRCS+=	netbsd32_sem.c		netbsd32_signal.c
 SRCS+=	netbsd32_socket.c	netbsd32_syscalls.c
 SRCS+=	netbsd32_sysctl.c	netbsd32_sysent.c
 SRCS+=	netbsd32_time.c		netbsd32_wait.c	
 SRCS+=	netbsd32_vm.c
-SRCS+=	netbsd32_module.c
 
 .if ${MACHINE_CPU} != "mips" && ${MACHINE_CPU} != "powerpc" && \
     ${MACHINE_CPU} != "aarch64"

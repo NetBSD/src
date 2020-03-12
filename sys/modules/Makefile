@@ -1,4 +1,4 @@
-#	$NetBSD: Makefile,v 1.242 2020/03/11 08:31:08 skrll Exp $
+#	$NetBSD: Makefile,v 1.243 2020/03/12 15:02:29 pgoyette Exp $
 
 .include <bsd.own.mk>
 
@@ -301,11 +301,13 @@ SUBDIR+=	compat_netbsd32_43
 SUBDIR+=	compat_netbsd32_mqueue
 SUBDIR+=	compat_netbsd32_nfssrv
 SUBDIR+=	compat_netbsd32_ptrace
+SUBDIR+=	compat_netbsd32_quota
+SUBDIR+=	compat_netbsd32_quota_50
+SUBDIR+=	compat_netbsd32_raid
 SUBDIR+=	compat_netbsd32_sysvipc
 SUBDIR+=	compat_netbsd32_sysvipc_10
 SUBDIR+=	compat_netbsd32_sysvipc_14
 SUBDIR+=	compat_netbsd32_sysvipc_50
-SUBDIR+=	compat_netbsd32_raid
 
 .if ${MACHINE_ARCH} == "x86_64"
 SUBDIR+=	compat_linux32
