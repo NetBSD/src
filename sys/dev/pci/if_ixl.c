@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.60 2020/03/03 04:55:46 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.61 2020/03/12 09:34:41 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.60 2020/03/03 04:55:46 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.61 2020/03/12 09:34:41 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -1688,11 +1688,6 @@ ixl_media_status(struct ifnet *ifp, struct ifmediareq *ifmr)
 
 	ifmr->ifm_status = sc->sc_media_status;
 	ifmr->ifm_active = sc->sc_media_active;
-
-	mutex_enter(&sc->sc_cfg_lock);
-	if (ifp->if_link_state == LINK_STATE_UP)
-		SET(ifmr->ifm_status, IFM_ACTIVE);
-	mutex_exit(&sc->sc_cfg_lock);
 }
 
 static int
