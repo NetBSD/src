@@ -1,4 +1,4 @@
-/* $NetBSD: compile.c,v 1.12 2017/05/04 09:46:30 roy Exp $ */
+/* $NetBSD: compile.c,v 1.13 2020/03/12 14:52:04 roy Exp $ */
 
 /*
  * Copyright (c) 2009, 2010, 2011 The NetBSD Foundation, Inc.
@@ -32,7 +32,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: compile.c,v 1.12 2017/05/04 09:46:30 roy Exp $");
+__RCSID("$NetBSD: compile.c,v 1.13 2020/03/12 14:52:04 roy Exp $");
 
 #if !HAVE_NBTOOL_CONFIG_H || HAVE_SYS_ENDIAN_H
 #include <sys/endian.h>
@@ -579,7 +579,11 @@ _ti_compile(char *cap, int flags)
 				    tic->name, token);
 				continue;
 			}
-			num = (short)cnum;
+
+			if (cnum > SHRT_MAX)
+				num = SHRT_MAX;
+			else
+				num = (short)cnum;
 			if (ind == -1)
 				_ti_store_extra(tic, 1, token, 'n', -1,
 				    num, NULL, 0, flags);
