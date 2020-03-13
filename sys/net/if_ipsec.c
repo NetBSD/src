@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.3.2.12 2019/09/24 18:27:09 martin Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.3.2.13 2020/03/13 08:35:26 martin Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.12 2019/09/24 18:27:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.3.2.13 2020/03/13 08:35:26 martin Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1450,7 +1450,10 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 		xisr->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
 		xisr->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 		xisr->sadb_x_ipsecrequest_level = level;
-		xisr->sadb_x_ipsecrequest_reqid = key_newreqid();
+		if (level == IPSEC_LEVEL_UNIQUE)
+			xisr->sadb_x_ipsecrequest_reqid = key_newreqid();
+		else
+			xisr->sadb_x_ipsecrequest_reqid = 0;
 	}
 
 	return size;
@@ -1545,7 +1548,7 @@ if_ipsec_add_sp0(struct sockaddr *src, in_port_t sport,
 	ext_msg_len += PFKEY_UNIT64(size);
 	size = if_ipsec_set_sadb_dst(&xdst, dst, proto);
 	ext_msg_len += PFKEY_UNIT64(size);
-	size = if_ipsec_set_sadb_x_policy(&xpl, &xisr, policy, dir, 0, level, src, dst);
+	size = if_ipsec_set_sadb_x_policy(&xpl, &xisr, policy, dir, 0, level, NULL, NULL);
 	ext_msg_len += PFKEY_UNIT64(size);
 	if_ipsec_set_sadb_msg_add(&msg, ext_msg_len);
 
