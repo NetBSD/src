@@ -1,4 +1,4 @@
-# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2656 $>
+# LIST OF CHANGES FROM LAST RELEASE:			<$Revision: 1.2657 $>
 #
 #
 # [Note: This file does not mention every change made to the NetBSD source tree.
@@ -152,3 +152,4 @@ Changes from NetBSD 9.0 to NetBSD 10.0:
 	libcbor: Import for libfido2 support [christos 20200302]
 	libfido2: Import for pam-u2f support [christos 20200302]
 	pam-u2f: Import token authenticator [christos 20200302]
+	terminfo: Support numeric parameters as int [roy 20200313]
