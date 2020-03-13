@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.7 2020/03/13 20:48:33 rillig Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.8 2020/03/13 21:44:25 rillig Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.7 2020/03/13 20:48:33 rillig Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.8 2020/03/13 21:44:25 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -56,32 +56,32 @@ __RCSID("$NetBSD: t_glob.c,v 1.7 2020/03/13 20:48:33 rillig Exp $");
 #define DPRINTF(a)
 #endif
 
-struct gl_file {
+struct vfs_file {
 	const char *name;
 	int dir;
 };
 
-static struct gl_file a[] = {
+static struct vfs_file a[] = {
 	{ "1", 0 },
 	{ "b", 1 },
 	{ "3", 0 },
 	{ "4", 0 },
 };
 
-static struct gl_file b[] = {
+static struct vfs_file b[] = {
 	{ "x", 0 },
 	{ "y", 0 },
 	{ "z", 0 },
 	{ "w", 0 },
 };
 
-struct gl_dir {
+struct vfs_dir {
 	const char *name;	/* directory name */
-	const struct gl_file *dir;
+	const struct vfs_file *dir;
 	size_t len, pos;
 };
 
-static struct gl_dir d[] = {
+static struct vfs_dir d[] = {
 	{ "a", a, __arraycount(a), 0 },
 	{ "a/b", b, __arraycount(b), 0 },
 };
@@ -98,7 +98,7 @@ trim(char *buf, size_t len, const char *name)
 }
 
 static void *
-gl_opendir(const char *dir)
+vfs_opendir(const char *dir)
 {
 	size_t i;
 	char buf[MAXPATHLEN];
@@ -114,12 +114,12 @@ gl_opendir(const char *dir)
 }
 
 static struct dirent *
-gl_readdir(void *v)
+vfs_readdir(void *v)
 {
 	static struct dirent dir;
-	struct gl_dir *dd = v;
+	struct vfs_dir *dd = v;
 	if (dd->pos < dd->len) {
-		const struct gl_file *f = &dd->dir[dd->pos++];
+		const struct vfs_file *f = &dd->dir[dd->pos++];
 		strcpy(dir.d_name, f->name);
 		dir.d_namlen = strlen(f->name);
 		dir.d_ino = dd->pos;
@@ -132,7 +132,7 @@ gl_readdir(void *v)
 }
 
 static int
-gl_stat(const char *name , __gl_stat_t *st)
+vfs_stat(const char *name , __gl_stat_t *st)
 {
 	char buf[MAXPATHLEN];
 	trim(buf, sizeof(buf), name);
@@ -144,7 +144,7 @@ gl_stat(const char *name , __gl_stat_t *st)
 	}
 
 	if (buf[0] == 'a' && buf[1] == '/') {
-		struct gl_file *f;
+		struct vfs_file *f;
 		size_t offs, count;
 
 		if (buf[2] == 'b' && buf[3] == '/') {
@@ -167,15 +167,15 @@ gl_stat(const char *name , __gl_stat_t *st)
 }
 
 static int
-gl_lstat(const char *name , __gl_stat_t *st)
+vfs_lstat(const char *name , __gl_stat_t *st)
 {
-	return gl_stat(name, st);
+	return vfs_stat(name, st);
 }
 
 static void
-gl_closedir(void *v)
+vfs_closedir(void *v)
 {
-	struct gl_dir *dd = v;
+	struct vfs_dir *dd = v;
 	dd->pos = 0;
 	DPRINTF(("closedir %p\n", dd));
 }
@@ -189,11 +189,11 @@ run(const char *p, int flags, /* const char *res */ ...)
 
 	DPRINTF(("pattern %s\n", p));
 	memset(&gl, 0, sizeof(gl));
-	gl.gl_opendir = gl_opendir;
-	gl.gl_readdir = gl_readdir;
-	gl.gl_closedir = gl_closedir;
-	gl.gl_stat = gl_stat;
-	gl.gl_lstat = gl_lstat;
+	gl.gl_opendir = vfs_opendir;
+	gl.gl_readdir = vfs_readdir;
+	gl.gl_closedir = vfs_closedir;
+	gl.gl_stat = vfs_stat;
+	gl.gl_lstat = vfs_lstat;
 
 	switch ((e = glob(p, GLOB_ALTDIRFUNC | flags, NULL, &gl))) {
 	case 0:
