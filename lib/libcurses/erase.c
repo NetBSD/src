@@ -1,4 +1,4 @@
-/*	$NetBSD: erase.c,v 1.30 2020/03/12 12:17:15 roy Exp $	*/
+/*	$NetBSD: erase.c,v 1.31 2020/03/13 02:57:26 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)erase.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: erase.c,v 1.30 2020/03/12 12:17:15 roy Exp $");
+__RCSID("$NetBSD: erase.c,v 1.31 2020/03/13 02:57:26 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -81,17 +81,13 @@ werase(WINDOW *win)
 		attr = win->battr & __ATTRIBUTES;
 	else
 		attr = 0;
+
 	for (y = 0; y < win->maxy; y++) {
 		start = win->alines[y]->line;
 		end = &start[win->maxx];
 		for (sp = start; sp < end; sp++) {
-			if (sp->ch == bch &&
-#ifdef HAVE_WCHAR
-			    sp->nsp == NULL && WCOL(*sp) >= 0 &&
-#endif
-			    (sp->attr & WA_ATTRIBUTES) == attr)
+			if (!(__NEED_ERASE(sp, bch, attr)))
 				continue;
-
 			sp->attr = attr | (sp->attr & __ALTCHARSET);
 			sp->ch = bch;
 #ifdef HAVE_WCHAR
