@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.7 2020/03/13 20:48:33 rillig Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.7 2020/03/13 20:48:33 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -41,6 +41,7 @@ __RCSID("$NetBSD: t_glob.c,v 1.6 2017/04/26 14:52:57 christos Exp $");
 
 #include <dirent.h>
 #include <glob.h>
+#include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
@@ -83,22 +84,6 @@ struct gl_dir {
 static struct gl_dir d[] = {
 	{ "a", a, __arraycount(a), 0 },
 	{ "a/b", b, __arraycount(b), 0 },
-};
-
-static const char *glob_range[] = {
-	"a/b/x", "a/b/y", "a/b/z",
-};
-
-static const char *glob_range_not[] = {
-	"a/b/w",
-};
-
-static const char *glob_star[] = {
-	"a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z",
-};
-
-static const char *glob_star_not[] = {
-	"a/1", "a/3", "a/4", "a/b",
 };
 
 static void
@@ -171,7 +156,7 @@ gl_stat(const char *name , __gl_stat_t *st)
 			count = __arraycount(a);
 			f = a;
 		}
-		
+
 		for (size_t i = 0; i < count; i++)
 			if (strcmp(f[i].name, buf + offs) == 0)
 				return 0;
@@ -196,7 +181,7 @@ gl_closedir(void *v)
 }
 
 static void
-run(const char *p, int flags, const char **res, size_t len)
+run(const char *p, int flags, /* const char *res */ ...)
 {
 	glob_t gl;
 	size_t i;
@@ -233,9 +218,14 @@ run(const char *p, int flags, const char **res, size_t len)
 	for (i = 0; i < gl.gl_pathc; i++)
 		DPRINTF(("%s\n", gl.gl_pathv[i]));
 
-	ATF_CHECK(len == gl.gl_pathc);
-	for (i = 0; i < gl.gl_pathc && i < len; i++)
-		ATF_CHECK_STREQ(gl.gl_pathv[i], res[i]);
+	va_list res;
+	va_start(res, flags);
+	const char *expected = NULL;
+	for (i = 0; (expected = va_arg(res, const char *)) != NULL && i < gl.gl_pathc; i++)
+		ATF_CHECK_STREQ(gl.gl_pathv[i], expected);
+	va_end(res);
+	ATF_CHECK_EQ(i, gl.gl_pathc);
+	ATF_CHECK_MSG(expected == NULL, "expected \"%s\" to be matched", expected);
 
 	globfree(&gl);
 	return;
@@ -243,6 +233,7 @@ bad:
 	ATF_REQUIRE_MSG(e == 0, "No match for `%s'", p);
 }
 
+#define run(p, flags, ...) (run)(p, flags, __VA_ARGS__, (const char *) 0)
 
 ATF_TC(glob_range);
 ATF_TC_HEAD(glob_range, tc)
@@ -253,7 +244,8 @@ ATF_TC_HEAD(glob_range, tc)
 
 ATF_TC_BODY(glob_range, tc)
 {
-	run("a/b/[x-z]", 0, glob_range, __arraycount(glob_range));
+	run("a/b/[x-z]", 0,
+	    "a/b/x", "a/b/y", "a/b/z");
 }
 
 ATF_TC(glob_range_not);
@@ -265,7 +257,8 @@ ATF_TC_HEAD(glob_range_not, tc)
 
 ATF_TC_BODY(glob_range_not, tc)
 {
-	run("a/b/[!x-z]", 0, glob_range_not, __arraycount(glob_range_not));
+	run("a/b/[!x-z]", 0,
+	    "a/b/w");
 }
 
 ATF_TC(glob_star);
@@ -277,7 +270,8 @@ ATF_TC_HEAD(glob_star, tc)
 
 ATF_TC_BODY(glob_star, tc)
 {
-	run("a/**", GLOB_STAR, glob_star, __arraycount(glob_star));
+	run("a/**", GLOB_STAR,
+	    "a/1", "a/3", "a/4", "a/b", "a/b/w", "a/b/x", "a/b/y", "a/b/z");
 }
 
 ATF_TC(glob_star_not);
@@ -287,10 +281,10 @@ ATF_TC_HEAD(glob_star_not, tc)
 	    "Test glob(3) ** without GLOB_STAR");
 }
 
-
 ATF_TC_BODY(glob_star_not, tc)
 {
-	run("a/**", 0, glob_star_not, __arraycount(glob_star_not));
+	run("a/**", 0,
+	    "a/1", "a/3", "a/4", "a/b");
 }
 
 #if 0
