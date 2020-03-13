@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-8.2,v 1.1.2.106 2020/03/09 09:48:51 martin Exp $
+# $NetBSD: CHANGES-8.2,v 1.1.2.107 2020/03/13 08:36:23 martin Exp $
 
 A complete list of changes from the NetBSD 8.1 release to the NetBSD 8.2
 release:
@@ -2131,4 +2131,12 @@ sys/arch/i386/stand/efiboot/eficons.c		1.10,1.11
 	PR 55000: if the default GOP mode is unavailable, fallback to the
 	first mode defined.
 	[nonaka, ticket #1519]
+
+sys/net/if_ipsec.c				1.28,1.29
+sys/netipsec/key.c				1.271
+
+	Fix ipsecif(4) SPDADD pfkey message contains garbage.
+	Reduce unnecessary reqid of NAT-T ipsecif(4).
+	Fix kern/55066.
+	[knakahara, ticket #1520]
 
