@@ -1,4 +1,4 @@
-/*	$NetBSD: atphy.c,v 1.27 2019/12/13 08:30:26 msaitoh Exp $ */
+/*	$NetBSD: atphy.c,v 1.28 2020/03/13 04:44:34 msaitoh Exp $ */
 /*	$OpenBSD: atphy.c,v 1.1 2008/09/25 20:47:16 brad Exp $	*/
 
 /*-
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.27 2019/12/13 08:30:26 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: atphy.c,v 1.28 2020/03/13 04:44:34 msaitoh Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -103,7 +103,6 @@ const struct mii_phy_funcs atphy_funcs = {
 };
 
 static const struct mii_phydesc atphys[] = {
-	MII_PHY_DESC(ATHEROS, F1),
 	MII_PHY_DESC(ATTANSIC, L1),
 	MII_PHY_DESC(ATTANSIC, L2),
 	MII_PHY_DESC(ATTANSIC, AR8021),
