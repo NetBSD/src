@@ -1,4 +1,4 @@
-/*	$NetBSD: key.c,v 1.163.2.14 2019/09/24 18:27:09 martin Exp $	*/
+/*	$NetBSD: key.c,v 1.163.2.15 2020/03/13 08:35:26 martin Exp $	*/
 /*	$FreeBSD: src/sys/netipsec/key.c,v 1.3.2.3 2004/02/14 22:23:23 bms Exp $	*/
 /*	$KAME: key.c,v 1.191 2001/06/27 10:46:49 sakane Exp $	*/
 
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163.2.14 2019/09/24 18:27:09 martin Exp $");
+__KERNEL_RCSID(0, "$NetBSD: key.c,v 1.163.2.15 2020/03/13 08:35:26 martin Exp $");
 
 /*
  * This code is referred to RFC 2367
@@ -4741,7 +4741,7 @@ key_portcomp(in_port_t port1, in_port_t port2, int howport)
 	case PORT_STRICT:
 		if (port1 != port2) {
 			KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
-			    "port fail %d != %d\n", port1, port2);
+			    "port fail %d != %d\n", ntohs(port1), ntohs(port2));
 			return 1;
 		}
 		return 0;
@@ -4793,9 +4793,9 @@ key_sockaddr_match(
 		KEYDEBUG_PRINTF(KEYDEBUG_MATCH,
 		    "addr success %s[%d] == %s[%d]\n",
 		    (in_print(s1, sizeof(s1), &sin1->sin_addr), s1),
-		    sin1->sin_port,
+		    ntohs(sin1->sin_port),
 		    (in_print(s2, sizeof(s2), &sin2->sin_addr), s2),
-		    sin2->sin_port);
+		    ntohs(sin2->sin_port));
 		break;
 	case AF_INET6:
 		sin61 = (const struct sockaddr_in6 *)sa1;
