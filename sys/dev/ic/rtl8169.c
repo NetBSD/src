@@ -1,4 +1,4 @@
-/*	$NetBSD: rtl8169.c,v 1.165 2020/03/12 03:01:46 thorpej Exp $	*/
+/*	$NetBSD: rtl8169.c,v 1.166 2020/03/13 04:08:07 thorpej Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998-2003
@@ -33,7 +33,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.165 2020/03/12 03:01:46 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtl8169.c,v 1.166 2020/03/13 04:08:07 thorpej Exp $");
 /* $FreeBSD: /repoman/r/ncvs/src/sys/dev/re/if_re.c,v 1.20 2004/04/11 20:34:08 ru Exp $ */
 
 /*
@@ -176,11 +176,8 @@ static inline void
 re_set_bufaddr(struct re_desc *d, bus_addr_t addr)
 {
 
-	d->re_bufaddr_lo = htole32((uint32_t)addr);
-	if (sizeof(bus_addr_t) == sizeof(uint64_t))
-		d->re_bufaddr_hi = htole32((uint64_t)addr >> 32);
-	else
-		d->re_bufaddr_hi = 0;
+	d->re_bufaddr_lo = htole32(RE_ADDR_LO(addr));
+	d->re_bufaddr_hi = htole32(RE_ADDR_HI(addr));
 }
 
 static int
