@@ -1,4 +1,4 @@
-/* $NetBSD: aubtfwl.c,v 1.7 2018/09/03 16:29:33 riastradh Exp $ */
+/* $NetBSD: aubtfwl.c,v 1.8 2020/03/13 18:17:40 christos Exp $ */
 
 /*
  * Copyright (c) 2011 Jonathan A. Kollasch
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.7 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: aubtfwl.c,v 1.8 2020/03/13 18:17:40 christos Exp $");
 
 #include <sys/param.h>
 #include <dev/usb/usb.h>
@@ -289,11 +289,11 @@ aubtfwl_attach_hook(device_t self)
 			return;
 		}
 
-		aprint_verbose_dev(self, "state is 0x%02x\n", state);
+		aprint_verbose_dev(self, "state is %#02x\n", state);
 
 		if (!(state & AR3K_STATE_IS_PATCHED)) {
 			snprintf(firmware_name, sizeof(firmware_name),
-				"ar3k/AthrBT_0x%08x.dfu", ver.rom);
+				"ar3k/AthrBT_%#08x.dfu", ver.rom);
 			error = aubtfwl_firmware_load(self, firmware_name);
 
 			if (error)
@@ -313,7 +313,7 @@ aubtfwl_attach_hook(device_t self)
 		}
 
 		snprintf(firmware_name, sizeof(firmware_name),
-			"ar3k/ramps_0x%08x_%d.dfu", ver.rom, clock);
+			"ar3k/ramps_%#08x_%d.dfu", ver.rom, clock);
 		aubtfwl_firmware_load(self, firmware_name);
 
 		if ((state & AR3K_STATE_MODE_MASK) != AR3K_STATE_MODE_NORMAL) {

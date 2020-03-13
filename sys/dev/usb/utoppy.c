@@ -1,4 +1,4 @@
-/*	$NetBSD: utoppy.c,v 1.33 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: utoppy.c,v 1.34 2020/03/13 18:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2006 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.33 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: utoppy.c,v 1.34 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -535,7 +535,7 @@ utoppy_send_packet(struct utoppy_softc *sc, uint16_t cmd, uint32_t timeout)
 
 	h = sc->sc_out_data;
 
-	DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: utoppy_send_packet: cmd 0x%04x, "
+	DPRINTF(UTOPPY_DBG_SEND_PACKET, ("%s: utoppy_send_packet: cmd %#04x, "
 	    "len %d\n", device_xname(sc->sc_dev), (u_int)cmd, h->h_len));
 
 	dlen = h->h_len;
@@ -734,7 +734,7 @@ utoppy_recv_packet(struct utoppy_softc *sc, uint16_t *respp, uint32_t timeout)
 	sc->sc_in_offset = 0;
 
 	DPRINTF(UTOPPY_DBG_RECV_PACKET, ("%s: utoppy_recv_packet: len %d, "
-	    "crc 0x%04x, hdrcrc 0x%04x\n", device_xname(sc->sc_dev),
+	    "crc %#04x, hdrcrc %#04x\n", device_xname(sc->sc_dev),
 	    (int)len, crc, h->h_crc));
 	DDUMP_PACKET(h, len);
 
@@ -1188,7 +1188,7 @@ utoppy_readdir_next(struct utoppy_softc *sc)
 
 	default:
 		DPRINTF(UTOPPY_DBG_READDIR, ("%s: utoppy_readdir_next: "
-		    "bad response: 0x%x\n", device_xname(sc->sc_dev), resp));
+		    "bad response: %#x\n", device_xname(sc->sc_dev), resp));
 		sc->sc_state = UTOPPY_STATE_IDLE;
 		sc->sc_in_len = 0;
 		return EIO;
@@ -1227,7 +1227,7 @@ utoppy_readdir_decode(struct utoppy_softc *sc, struct utoppy_dirent *ud)
 	}
 
 	DPRINTF(UTOPPY_DBG_READDIR, ("%s: utoppy_readdir_decode: %s '%s', "
-	    "size %lld, time 0x%08lx, attr 0x%08x\n", device_xname(sc->sc_dev),
+	    "size %lld, time %#08lx, attr %#08x\n", device_xname(sc->sc_dev),
 	    (ftype == UTOPPY_FTYPE_DIR) ? "DIR" :
 	    ((ftype == UTOPPY_FTYPE_FILE) ? "FILE" : "UNKNOWN"), ud->ud_path,
 	    ud->ud_size, (u_long)ud->ud_mtime, ud->ud_attributes));
@@ -1303,7 +1303,7 @@ utoppy_readfile_next(struct utoppy_softc *sc)
 	case UTOPPY_RESP_ERROR:
 	default:
 		DPRINTF(UTOPPY_DBG_READ, ("%s: utoppy_readfile_next: bad "
-		    "response code 0x%0x\n", device_xname(sc->sc_dev), resp));
+		    "response code %#0x\n", device_xname(sc->sc_dev), resp));
 		utoppy_cancel(sc);
 		return EIO;
 	}
@@ -1557,7 +1557,7 @@ utoppywrite(dev_t dev, struct uio *uio, int flags)
 		if (resp != UTOPPY_RESP_SUCCESS) {
 			DPRINTF(UTOPPY_DBG_WRITE, ("%s: utoppywrite: "
 			    "utoppy_command(UTOPPY_RESP_FILE_DATA) returned "
-			    "bad response 0x%x\n", device_xname(sc->sc_dev),
+			    "bad response %#x\n", device_xname(sc->sc_dev),
 			    resp));
 			utoppy_cancel(sc);
 			err = EIO;
@@ -1616,7 +1616,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 	if (sc->sc_dying)
 		return EIO;
 
-	DPRINTF(UTOPPY_DBG_IOCTL, ("%s: utoppyioctl: cmd 0x%08lx, state '%s'\n",
+	DPRINTF(UTOPPY_DBG_IOCTL, ("%s: utoppyioctl: cmd %#08lx, state '%s'\n",
 	    device_xname(sc->sc_dev), cmd, utoppy_state_string(sc->sc_state)));
 
 	if (sc->sc_state != UTOPPY_STATE_IDLE && cmd != UTOPPYIOCANCEL) {
@@ -1805,7 +1805,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (resp != UTOPPY_RESP_SUCCESS) {
 			DPRINTF(UTOPPY_DBG_WRITE,("%s: utoppyioctl: "
 			    "utoppy_command(UTOPPY_CMD_FILE) returned "
-			    "bad response 0x%x\n", device_xname(sc->sc_dev),
+			    "bad response %#x\n", device_xname(sc->sc_dev),
 			    resp));
 			err = EIO;
 			break;
@@ -1829,7 +1829,7 @@ utoppyioctl(dev_t dev, u_long cmd, void *data, int flag,
 		if (resp != UTOPPY_RESP_SUCCESS) {
 			DPRINTF(UTOPPY_DBG_WRITE,("%s: utoppyioctl: "
 			    "utoppy_command(UTOPPY_RESP_FILE_HEADER) "
-			    "returned bad response 0x%x\n",
+			    "returned bad response %#x\n",
 			    device_xname(sc->sc_dev), resp));
 			err = EIO;
 			break;

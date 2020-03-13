@@ -1,4 +1,4 @@
-/*	$NetBSD: if_aue.c,v 1.163 2020/01/29 06:24:10 thorpej Exp $	*/
+/*	$NetBSD: if_aue.c,v 1.164 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -76,7 +76,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.163 2020/01/29 06:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_aue.c,v 1.164 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -299,7 +299,7 @@ aue_csr_read_1(struct aue_softc *sc, int reg)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%d: aue_csr_read_1: reg=%#x err=%d",
+		AUEHIST_CALLARGS("aue%jd: reg=%#jx err=%jd",
 		    device_unit(un->un_dev), reg, err, 0);
 		return 0;
 	}
@@ -330,7 +330,7 @@ aue_csr_read_2(struct aue_softc *sc, int reg)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%d: aue_csr_read_2: reg=%#x err=%d",
+		AUEHIST_CALLARGS("auw%jd: reg=%#jx err=%jd",
 		    device_unit(un->un_dev), reg, err, 0);
 		return 0;
 	}
@@ -362,7 +362,7 @@ aue_csr_write_1(struct aue_softc *sc, int reg, int aval)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%d: aue_csr_write_1: reg=%#x err=%d",
+		AUEHIST_CALLARGS("%jd: reg=%#jx err=%jd",
 		    device_unit(un->un_dev), reg, err, 0);
 		return -1;
 	}
@@ -394,7 +394,7 @@ aue_csr_write_2(struct aue_softc *sc, int reg, int aval)
 
 	if (err) {
 		AUEHIST_FUNC();
-		AUEHIST_CALLARGS("%s: aue_csr_write_2: reg=%#x err=%d",
+		AUEHIST_CALLARGS("aue%jd: reg=%#jx err=%jd",
 		    device_unit(un->un_dev), reg, err, 0);
 		return -1;
 	}
@@ -443,7 +443,7 @@ aue_read_mac(struct usbnet *un)
 	usbnet_isowned_mii(un);
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGS("%d: enter",
+	AUEHIST_CALLARGS("aue%jd: enter",
 	    device_unit(un->un_dev), 0, 0, 0);
 
 	for (i = 0; i < 3; i++) {
@@ -490,14 +490,14 @@ aue_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		AUEHIST_CALLARGS("%d: phy=%jx reg=%jx read timed out",
+		AUEHIST_CALLARGS("aue%jd: phy=%#jx reg=%#jx read timed out",
 		    device_unit(un->un_dev), phy, reg, 0);
 		return ETIMEDOUT;
 	}
 
 	*val = aue_csr_read_2(sc, AUE_PHY_DATA);
 
-	AUEHIST_CALLARGSN(11, "%d: phy=%jx reg=%jx => %#04hx",
+	AUEHIST_CALLARGSN(11, "aue%jd: phy=%#jx reg=%#jx => %#04jx",
 	    device_unit(un->un_dev), phy, reg, *val);
 
 	return 0;
@@ -512,7 +512,7 @@ aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	usbnet_isowned_mii(un);
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(11, "%d: phy=%d reg=%d data=%#04hx",
+	AUEHIST_CALLARGSN(11, "aue%jd: phy=%jd reg=%jd data=%#04jx",
 	    device_unit(un->un_dev), phy, reg, val);
 
 #if 0
@@ -533,7 +533,7 @@ aue_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 	}
 
 	if (i == AUE_TIMEOUT) {
-		DPRINTF("%d: phy=%jx reg=%jx val=%jx write timed out",
+		DPRINTF("%d: phy=%#jx reg=%#jx val=%#jx write timed out",
 		    device_unit(un->un_dev), phy, reg, val);
 		return ETIMEDOUT;
 	}
@@ -550,7 +550,7 @@ aue_mii_statchg(struct ifnet *ifp)
 	const bool hadlink __diagused = usbnet_havelink(un);
 
 	AUEHIST_FUNC(); AUEHIST_CALLED();
-	AUEHIST_CALLARGSN(5, "%d: ifp=%jx link=%d",
+	AUEHIST_CALLARGSN(5, "aue%jd: ifp=%#jx link=%jd",
 	    device_unit(un->un_dev), (uintptr_t)ifp, hadlink, 0);
 
 	usbnet_lock_mii(un);
@@ -624,7 +624,7 @@ aue_setiff_locked(struct usbnet *un)
 	uint8_t hashtbl[8] = { 0, 0, 0, 0, 0, 0, 0, 0 };
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(5, "%d: enter", device_unit(un->un_dev), 0, 0, 0);
+	AUEHIST_CALLARGSN(5, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
 
 	usbnet_isowned_mii(un);
 
@@ -689,7 +689,7 @@ aue_reset(struct aue_softc *sc)
 	int		i;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(2, "%d: enter", device_unit(un->un_dev), 0, 0, 0);
+	AUEHIST_CALLARGSN(2, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
 
 	AUE_SETBIT(sc, AUE_CTL1, AUE_CTL1_RESETMAC);
 
@@ -790,7 +790,7 @@ aue_attach(device_t parent, device_t self, void *aux)
 	int			i;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(2, "%d: enter sc=%jx",
+	AUEHIST_CALLARGSN(2, "aue%jd: enter sc=%#jx",
 	    device_unit(self), (uintptr_t)sc, 0, 0);
 
 	KASSERT((void *)sc == un);
@@ -884,7 +884,7 @@ aue_intr(struct usbnet *un, usbd_status status)
 	struct aue_intrpkt	*p = &sc->aue_ibuf;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(20, "%d: enter txstat0 %x\n",
+	AUEHIST_CALLARGSN(20, "aue%jd: enter txstat0 %#jx\n",
 	    device_unit(un->un_dev), p->aue_txstat0, 0, 0);
 
 	if (p->aue_txstat0)
@@ -903,7 +903,7 @@ aue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 	uint32_t		pktlen;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(10, "%d: enter len %ju",
+	AUEHIST_CALLARGSN(10, "aue%jd: enter len %ju",
 	    device_unit(un->un_dev), total_len, 0, 0);
 
 	usbnet_isowned_rx(un);
@@ -935,7 +935,7 @@ aue_tx_prepare(struct usbnet *un, struct mbuf *m, struct usbnet_chain *c)
 	int			total_len;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(10, "%d: enter pktlen=%d",
+	AUEHIST_CALLARGSN(10, "aue%jd: enter pktlen=%jd",
 	    device_unit(un->un_dev), m->m_pkthdr.len, 0, 0);
 
 	usbnet_isowned_tx(un);
@@ -974,7 +974,7 @@ aue_init_locked(struct ifnet *ifp)
 	const u_char		*eaddr;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(5, "%d: enter link=%d",
+	AUEHIST_CALLARGSN(5, "aue%jd: enter link=%jd",
 	    device_unit(un->un_dev), usbnet_havelink(un), 0, 0);
 
 	if (usbnet_isdying(un))
@@ -1037,7 +1037,7 @@ aue_ioctl_cb(struct ifnet *ifp, u_long cmd, void *data)
 	struct usbnet * const un = ifp->if_softc;
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(5, "%d: enter cmd %lx data %jx",
+	AUEHIST_CALLARGSN(5, "aue%jd: enter cmd %#jx data %#jx",
 	    device_unit(un->un_dev), cmd, (uintptr_t)data, 0);
 
 	switch (cmd) {
@@ -1060,7 +1060,7 @@ aue_stop_cb(struct ifnet *ifp, int disable)
 	struct aue_softc * const sc = usbnet_softc(un);
 
 	AUEHIST_FUNC();
-	AUEHIST_CALLARGSN(5, "%d: enter", device_unit(un->un_dev), 0, 0, 0);
+	AUEHIST_CALLARGSN(5, "aue%jd: enter", device_unit(un->un_dev), 0, 0, 0);
 
 	usbnet_lock_mii_un_locked(un);
 	aue_csr_write_1(sc, AUE_CTL0, 0);

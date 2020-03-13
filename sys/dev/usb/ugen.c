@@ -1,4 +1,4 @@
-/*	$NetBSD: ugen.c,v 1.148 2019/12/11 11:54:23 bouyer Exp $	*/
+/*	$NetBSD: ugen.c,v 1.149 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2004 The NetBSD Foundation, Inc.
@@ -37,7 +37,7 @@
 
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.148 2019/12/11 11:54:23 bouyer Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ugen.c,v 1.149 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_compat_netbsd.h"
@@ -380,7 +380,7 @@ ugen_set_config(struct ugen_softc *sc, int configno, int chkopen)
 			endpt = ed->bEndpointAddress;
 			dir = UE_GET_DIR(endpt) == UE_DIR_IN ? IN : OUT;
 			sce = &sc->sc_endpoints[UE_GET_ADDR(endpt)][dir];
-			DPRINTFN(1,("ugen_set_config: endptno %d, endpt=0x%02x"
+			DPRINTFN(1,("ugen_set_config: endptno %d, endpt=%#02x"
 				    "(%d,%d), sce=%p\n",
 				    endptno, endpt, UE_GET_ADDR(endpt),
 				    UE_GET_DIR(endpt), sce));

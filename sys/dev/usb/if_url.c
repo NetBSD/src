@@ -1,4 +1,4 @@
-/*	$NetBSD: if_url.c,v 1.73 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: if_url.c,v 1.74 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2001, 2002
@@ -44,7 +44,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.73 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_url.c,v 1.74 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -646,7 +646,7 @@ url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 
 	usbnet_isowned_mii(un);
 
-	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x\n",
+	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=%#04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg));
 
 	/* XXX: one PHY only for the RTL8150 internal PHY */
@@ -690,7 +690,7 @@ url_int_mii_read_reg(struct usbnet *un, int phy, int reg, uint16_t *val)
 	*val = data;
 
  R_DONE:
-	DPRINTFN(0xff, ("%s: %s: phy=%d reg=0x%04x => 0x%04hx\n",
+	DPRINTFN(0xff, ("%s: %s: phy=%d reg=%#04x => %#04hx\n",
 		 device_xname(un->un_dev), __func__, phy, reg, *val));
 
 	return err;
@@ -701,7 +701,7 @@ url_int_mii_write_reg(struct usbnet *un, int phy, int reg, uint16_t val)
 {
 	usbnet_isowned_mii(un);
 
-	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=0x%04x val=0x%04hx\n",
+	DPRINTFN(0xff, ("%s: %s: enter, phy=%d reg=%#04x val=%#04hx\n",
 		 device_xname(un->un_dev), __func__, phy, reg, val));
 
 	/* XXX: one PHY only for the RTL8150 internal PHY */
@@ -764,7 +764,7 @@ url_ext_mii_read_reg(struct usbnet *un, int phy, int reg)
 {
 	uint16_t val;
 
-	DPRINTF(("%s: %s: enter, phy=%d reg=0x%04x\n",
+	DPRINTF(("%s: %s: enter, phy=%d reg=%#04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg));
 
 	url_csr_write_1(un, URL_PHYADD, phy & URL_PHYADD_MASK);
@@ -785,7 +785,7 @@ url_ext_mii_read_reg(struct usbnet *un, int phy, int reg)
 
 	val = url_csr_read_2(un, URL_PHYDAT);
 
-	DPRINTF(("%s: %s: phy=%d reg=0x%04x => 0x%04x\n",
+	DPRINTF(("%s: %s: phy=%d reg=%#04x => %#04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg, val));
 
 	return USBD_NORMAL_COMPLETION;
@@ -795,7 +795,7 @@ static usbd_status
 url_ext_mii_write_reg(struct usbnet *un, int phy, int reg, int data)
 {
 
-	DPRINTF(("%s: %s: enter, phy=%d reg=0x%04x data=0x%04x\n",
+	DPRINTF(("%s: %s: enter, phy=%d reg=%#04x data=%#04x\n",
 		 device_xname(un->un_dev), __func__, phy, reg, data));
 
 	url_csr_write_2(un, URL_PHYDAT, data);

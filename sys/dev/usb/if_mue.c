@@ -1,4 +1,4 @@
-/*	$NetBSD: if_mue.c,v 1.57 2020/01/29 06:26:32 thorpej Exp $	*/
+/*	$NetBSD: if_mue.c,v 1.58 2020/03/13 18:17:40 christos Exp $	*/
 /*	$OpenBSD: if_mue.c,v 1.3 2018/08/04 16:42:46 jsg Exp $	*/
 
 /*
@@ -20,7 +20,7 @@
 /* Driver for Microchip LAN7500/LAN7800 chipsets. */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.57 2020/01/29 06:26:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_mue.c,v 1.58 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -158,7 +158,7 @@ mue_csr_read(struct usbnet *un, uint32_t reg)
 
 	err = usbd_do_request(un->un_udev, &req, &val);
 	if (err) {
-		MUE_PRINTF(un, "reg = 0x%x: %s\n", reg, usbd_errstr(err));
+		MUE_PRINTF(un, "reg = %#x: %s\n", reg, usbd_errstr(err));
 		return 0;
 	}
 
@@ -184,7 +184,7 @@ mue_csr_write(struct usbnet *un, uint32_t reg, uint32_t aval)
 
 	err = usbd_do_request(un->un_udev, &req, &val);
 	if (err) {
-		MUE_PRINTF(un, "reg = 0x%x: %s\n", reg, usbd_errstr(err));
+		MUE_PRINTF(un, "reg = %#x: %s\n", reg, usbd_errstr(err));
 		return -1;
 	}
 
@@ -291,7 +291,7 @@ mue_mii_statchg(struct ifnet *ifp)
 
 	/* Lost link, do nothing. */
 	if (!usbnet_havelink(un)) {
-		DPRINTF(un, "mii_media_status = 0x%x\n", mii->mii_media_status);
+		DPRINTF(un, "mii_media_status = %#x\n", mii->mii_media_status);
 		return;
 	}
 
@@ -863,7 +863,7 @@ mue_attach(device_t parent, device_t self, void *aux)
 	/* A Microchip chip was detected.  Inform the world. */
 	id_rev = mue_csr_read(un, MUE_ID_REV);
 	descr = (un->un_flags & LAN7500) ? "LAN7500" : "LAN7800";
-	aprint_normal_dev(self, "%s id 0x%x rev 0x%x\n", descr,
+	aprint_normal_dev(self, "%s id %#x rev %#x\n", descr,
 		(unsigned)__SHIFTOUT(id_rev, MUE_ID_REV_ID),
 		(unsigned)__SHIFTOUT(id_rev, MUE_ID_REV_REV));
 
@@ -1166,7 +1166,7 @@ mue_rx_loop(struct usbnet *un, struct usbnet_chain *c, uint32_t total_len)
 			 * it is turned on in the cases of L3/L4
 			 * checksum errors which we handle below.
 			 */
-			MUE_PRINTF(un, "rx_cmd_a: 0x%x\n", rx_cmd_a);
+			MUE_PRINTF(un, "rx_cmd_a: %#x\n", rx_cmd_a);
 			if_statinc(ifp, if_ierrors);
 			return;
 		}

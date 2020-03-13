@@ -1,4 +1,4 @@
-/*	$NetBSD: if_athn_usb.c,v 1.36 2020/01/29 06:24:10 thorpej Exp $	*/
+/*	$NetBSD: if_athn_usb.c,v 1.37 2020/03/13 18:17:40 christos Exp $	*/
 /*	$OpenBSD: if_athn_usb.c,v 1.12 2013/01/14 09:50:31 jsing Exp $	*/
 
 /*-
@@ -22,7 +22,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.36 2020/01/29 06:24:10 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_athn_usb.c,v 1.37 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef	_KERNEL_OPT
 #include "opt_inet.h"
@@ -1478,7 +1478,7 @@ athn_usb_newstate_cb(struct athn_usb_softc *usc, void *arg)
 			break;
 
 		/* Create node entry for our BSS. */
-		DPRINTFN(DBG_NODES, sc, "create node for AID=0x%x\n",
+		DPRINTFN(DBG_NODES, sc, "create node for AID=%#x\n",
 		    ic->ic_bss->ni_associd);
 		athn_usb_create_node(usc, ic->ic_bss);	/* XXX: handle error? */
 
@@ -1540,7 +1540,7 @@ athn_usb_newassoc_cb(struct athn_usb_softc *usc, void *arg)
 	s = splnet();
 	/* NB: Node may have left before we got scheduled. */
 	if (ni->ni_associd != 0) {
-		DPRINTFN(DBG_NODES, usc, "creating node for AID=0x%x\n",
+		DPRINTFN(DBG_NODES, usc, "creating node for AID=%#x\n",
 		    ni->ni_associd);
 		(void)athn_usb_create_node(usc, ni);	/* XXX: handle error? */
 	}
@@ -1657,7 +1657,7 @@ athn_usb_create_node(struct athn_usb_softc *usc, struct ieee80211_node *ni)
 	struct ar_htc_target_rate rate;
 	int error;
 
-	DPRINTFN(DBG_FN | DBG_NODES, usc, "AID=0x%x\n", ni->ni_associd);
+	DPRINTFN(DBG_FN | DBG_NODES, usc, "AID=%#x\n", ni->ni_associd);
 
 	/*
 	 * NB: this is called by ic_newstate and (in HOSTAP mode by)
@@ -2066,7 +2066,7 @@ athn_usb_rx_wmi_ctrl(struct athn_usb_softc *usc, uint8_t *buf, size_t len)
 #endif
 		break;
 	default:
-		DPRINTFN(DBG_TX, usc, "WMI event 0x%x (%d) ignored\n", cmd_id, cmd_id);
+		DPRINTFN(DBG_TX, usc, "WMI event %#x (%d) ignored\n", cmd_id, cmd_id);
 		break;
 	}
 }
@@ -2349,7 +2349,7 @@ athn_usb_rxeof(struct usbd_xfer *xfer, void * priv,
 	while (len >= (int)sizeof(*hdr)) {
 		hdr = (struct ar_stream_hdr *)buf;
 		if (hdr->tag != htole16(AR_USB_RX_STREAM_TAG)) {
-			DPRINTFN(DBG_RX, usc, "invalid tag 0x%x\n", hdr->tag);
+			DPRINTFN(DBG_RX, usc, "invalid tag %#x\n", hdr->tag);
 			break;
 		}
 		pktlen = le16toh(hdr->len);
@@ -2680,7 +2680,7 @@ athn_usb_ioctl(struct ifnet *ifp, u_long cmd, void *data)
 	if (usc->usc_dying)
 		return EIO;
 
-	DPRINTFN(DBG_FN, sc, "cmd=0x%08lx\n", cmd);
+	DPRINTFN(DBG_FN, sc, "cmd=%#08lx\n", cmd);
 
 	s = splnet();
 

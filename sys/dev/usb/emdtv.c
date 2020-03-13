@@ -1,4 +1,4 @@
-/* $NetBSD: emdtv.c,v 1.13 2018/09/03 16:29:33 riastradh Exp $ */
+/* $NetBSD: emdtv.c,v 1.14 2020/03/13 18:17:40 christos Exp $ */
 
 /*-
  * Copyright (c) 2008, 2011 Jared D. McNeill <jmcneill@invisible.ca>
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.13 2018/09/03 16:29:33 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: emdtv.c,v 1.14 2020/03/13 18:17:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -104,7 +104,7 @@ emdtv_attach(device_t parent, device_t self, void *opaque)
 	sc->sc_board = emdtv_board_lookup(sc->sc_vendor, sc->sc_product);
 	if (sc->sc_board == NULL) {
 		aprint_error_dev(sc->sc_dev,
-		    "unsupported board 0x%04x:0x%04x\n",
+		    "unsupported board %#04x:%#04x\n",
 		    sc->sc_vendor, sc->sc_product);
 		sc->sc_dying = true;
 		return;
@@ -232,7 +232,7 @@ emdtv_read_eeprom(struct emdtv_softc *sc)
 	}
 
 	aprint_normal_dev(sc->sc_dev,
-	    "id 0x%08x vendor 0x%04x product 0x%04x\n",
+	    "id %#08x vendor %#04x product %#04x\n",
 	    eeprom->id, eeprom->vendor, eeprom->product);
 
 	sc->sc_vendor = eeprom->vendor;
@@ -257,7 +257,7 @@ emdtv_board_setup(struct emdtv_softc *sc)
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
-			    "unknown EMPIA board 0x%04x/0x%04x\n",
+			    "unknown EMPIA board %#04x/%#04x\n",
 			    sc->sc_vendor, sc->sc_product);
 			break;
 		}
@@ -269,7 +269,7 @@ emdtv_board_setup(struct emdtv_softc *sc)
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
-			    "unknown AMD board 0x%04x/0x%04x\n",
+			    "unknown AMD board %#04x/%#04x\n",
 			    sc->sc_vendor, sc->sc_product);
 		}
 		break;
@@ -280,13 +280,13 @@ emdtv_board_setup(struct emdtv_softc *sc)
 			break;
 		default:
 			aprint_normal_dev(sc->sc_dev,
-			    "unknown Pinnacle board 0x%04x/0x%04x\n",
+			    "unknown Pinnacle board %#04x/%#04x\n",
 			    sc->sc_vendor, sc->sc_product);
 		}
 		break;
 	default:
 		aprint_normal_dev(sc->sc_dev,
-		    "unknown board 0x%04x:0x%04x\n",
+		    "unknown board %#04x:%#04x\n",
 		    sc->sc_vendor, sc->sc_product);
 		break;
 	}

@@ -1,4 +1,4 @@
-/*	$NetBSD: if_urtw.c,v 1.21 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: if_urtw.c,v 1.22 2020/03/13 18:17:40 christos Exp $	*/
 /*	$OpenBSD: if_urtw.c,v 1.39 2011/07/03 15:47:17 matthew Exp $	*/
 
 /*-
@@ -19,7 +19,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.21 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_urtw.c,v 1.22 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -637,7 +637,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187_B;
-			aprint_normal("RTL8187 rev 0x%02x", data >> 25);
+			aprint_normal("RTL8187 rev %#02x", data >> 25);
 			break;
 		}
 	} else {
@@ -658,7 +658,7 @@ urtw_attach(device_t parent, device_t self, void *aux)
 			break;
 		default:
 			sc->sc_hwrev |= URTW_HWREV_8187B_B;
-			aprint_normal("RTL8187B rev 0x%02x", data8);
+			aprint_normal("RTL8187B rev %#02x", data8);
 			break;
 		}
 	}
@@ -1835,12 +1835,12 @@ urtw_led_on(struct urtw_softc *sc, int type)
 			urtw_write8_m(sc, URTW_GP_ENABLE, 0x00);
 			break;
 		default:
-			panic("unsupported LED PIN type 0x%x",
+			panic("unsupported LED PIN type %#x",
 			    sc->sc_gpio_ledpin);
 			/* NOTREACHED */
 		}
 	} else {
-		panic("unsupported LED type 0x%x", type);
+		panic("unsupported LED type %#x", type);
 		/* NOTREACHED */
 	}
 
@@ -1861,12 +1861,12 @@ urtw_led_off(struct urtw_softc *sc, int type)
 			urtw_write8_m(sc, URTW_GP_ENABLE, 0x01);
 			break;
 		default:
-			panic("unsupported LED PIN type 0x%x",
+			panic("unsupported LED PIN type %#x",
 			    sc->sc_gpio_ledpin);
 			/* NOTREACHED */
 		}
 	} else {
-		panic("unsupported LED type 0x%x", type);
+		panic("unsupported LED type %#x", type);
 		/* NOTREACHED */
 	}
 
@@ -1894,7 +1894,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		sc->sc_gpio_ledstate = URTW_LED_ON;
 		break;
 	default:
-		panic("unsupported LED mode 0x%x", mode);
+		panic("unsupported LED mode %#x", mode);
 		/* NOTREACHED */
 	}
 
@@ -1919,7 +1919,7 @@ urtw_led_mode0(struct urtw_softc *sc, int mode)
 		urtw_led_off(sc, URTW_LED_GPIO);
 		break;
 	default:
-		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
+		panic("unknown LED status %#x", sc->sc_gpio_ledstate);
 		/* NOTREACHED */
 	}
 	return 0;
@@ -1949,7 +1949,7 @@ urtw_ledusbtask(void *arg)
 	struct urtw_softc *sc = arg;
 
 	if (sc->sc_strategy != URTW_SW_LED_MODE0)
-		panic("could not process a LED strategy 0x%x", sc->sc_strategy);
+		panic("could not process a LED strategy %#x", sc->sc_strategy);
 
 	urtw_led_blink(sc);
 }
@@ -2032,7 +2032,7 @@ urtw_led_blink(struct urtw_softc *sc)
 			callout_schedule(&sc->sc_led_ch, mstohz(100));
 		break;
 	default:
-		panic("unknown LED status 0x%x", sc->sc_gpio_ledstate);
+		panic("unknown LED status %#x", sc->sc_gpio_ledstate);
 		/* NOTREACHED */
 	}
 	return 0;
@@ -2059,7 +2059,7 @@ urtw_update_msr(struct urtw_softc *sc)
 			data |= URTW_MSR_LINK_STA;
 			break;
 		default:
-			panic("unsupported operation mode 0x%x",
+			panic("unsupported operation mode %#x",
 			    ic->ic_opmode);
 			/* NOTREACHED */
 		}
@@ -3310,7 +3310,7 @@ urtw_8225v2_rf_init(struct urtw_rf *rf)
 	if (error != 0)
 		goto fail;
 	if (data32 != 0xe6)
-		printf("%s: expect 0xe6!! (0x%x)\n", device_xname(sc->sc_dev),
+		printf("%s: expect 0xe6!! (%#x)\n", device_xname(sc->sc_dev),
 		    data32);
 	if (!(data32 & 0x80)) {
 		urtw_8225_write(sc, 0x02, 0x0c4d);
