@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.63 2020/03/13 05:40:20 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.64 2020/03/13 05:49:52 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.63 2020/03/13 05:40:20 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.64 2020/03/13 05:49:52 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -137,6 +137,8 @@ struct ixl_softc; /* defined */
 #define I40E_ITR_INDEX_TX		0x1
 #define I40E_ITR_INDEX_OTHER		0x2
 #define I40E_ITR_INDEX_NONE		0x3
+#define IXL_ITR_RX			0x7a /* 4K intrs/sec */
+#define IXL_ITR_TX			0x7a /* 4K intrs/sec */
 
 #define I40E_INTR_NOTX_QUEUE		0
 #define I40E_INTR_NOTX_INTR		0
@@ -704,6 +706,8 @@ struct ixl_softc {
 	unsigned int		 sc_nqueue_pairs_max;
 	unsigned int		 sc_nqueue_pairs_device;
 	struct ixl_queue_pair	*sc_qps;
+	uint32_t		 sc_itr_rx;
+	uint32_t		 sc_itr_tx;
 
 	struct evcnt		 sc_event_atq;
 	struct evcnt		 sc_event_link;
@@ -1453,6 +1457,8 @@ ixl_attach(device_t parent, device_t self, void *aux)
 
 	if (pmf_device_register(self, NULL, NULL) != true)
 		aprint_debug_dev(self, "couldn't establish power handler\n");
+	sc->sc_itr_rx = IXL_ITR_RX;
+	sc->sc_itr_tx = IXL_ITR_TX;
 	sc->sc_attached = true;
 	return;
 
@@ -5914,13 +5920,18 @@ ixl_config_queue_intr(struct ixl_softc *sc)
 		     I40E_QINT_TQCTL_NEXTQ_TYPE_SHIFT) |
 		     I40E_QINT_TQCTL_CAUSE_ENA_MASK);
 
-		if (sc->sc_intrtype == PCI_INTR_TYPE_MSIX)
+		if (sc->sc_intrtype == PCI_INTR_TYPE_MSIX) {
+			ixl_wr(sc, I40E_PFINT_ITRN(I40E_ITR_INDEX_RX, i),
+			    sc->sc_itr_rx);
+			ixl_wr(sc, I40E_PFINT_ITRN(I40E_ITR_INDEX_TX, i),
+			    sc->sc_itr_tx);
 			vector++;
+		}
 	}
 	ixl_flush(sc);
 
-	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_RX), 0x7a);
-	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_TX), 0x7a);
+	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_RX), sc->sc_itr_rx);
+	ixl_wr(sc, I40E_PFINT_ITR0(I40E_ITR_INDEX_TX), sc->sc_itr_tx);
 	ixl_flush(sc);
 }
 
