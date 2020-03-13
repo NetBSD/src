@@ -1,4 +1,4 @@
-# $NetBSD: mi,v 1.1231 2020/03/04 22:09:00 christos Exp $
+# $NetBSD: mi,v 1.1232 2020/03/13 15:19:25 roy Exp $
 #
 # Note:	Don't delete entries from here - mark them as "obsolete" instead,
 #	unless otherwise stated below.
@@ -4833,7 +4833,7 @@
 ./usr/share/misc/more.help			base-obsolete		obsolete
 ./usr/share/misc/nslookup.help			base-obsolete		obsolete
 ./usr/share/misc/terminfo			base-terminfo-share	share
-./usr/share/misc/terminfo.cdb			base-terminfo-share	share
+./usr/share/misc/terminfo2.cdb			base-terminfo-share	share
 ./usr/share/misc/units.lib			base-reference-share	share
 ./usr/share/misc/usb_hid_usages			base-reference-share	share
 ./usr/share/misc/vgrindefs.db			base-groff-share	share
