@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.395 2020/03/13 16:12:06 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.396 2020/03/13 16:14:18 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -47,7 +47,7 @@
  *    notice, this list of conditions and the following disclaimer in the
  *    documentation and/or other materials provided with the distribution.
  * 3. The name of the company nor the name of the author may be used to
- *    endorse or promote products derived from this software without specific
+ *   endorse or promote products derived from this software without specific
  *    prior written permission.
  *
  * THIS SOFTWARE IS PROVIDED BY THE AUTHOR ``AS IS'' AND ANY EXPRESS OR IMPLIED
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.395 2020/03/13 16:12:06 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.396 2020/03/13 16:14:18 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -5827,7 +5827,7 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 	}
 
 	/*
-	 *  Enter it via pmap_kenter_pa and let that routine do the hard work.
+	 * Enter it via pmap_kenter_pa and let that routine do the hard work.
 	 */
 	pmap_kenter_pa(va, pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
