@@ -1,4 +1,4 @@
-/*	$NetBSD: rtsock_shared.c,v 1.16 2020/03/12 19:36:33 christos Exp $	*/
+/*	$NetBSD: rtsock_shared.c,v 1.17 2020/03/13 16:37:12 christos Exp $	*/
 
 /*
  * Copyright (C) 1995, 1996, 1997, and 1998 WIDE Project.
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.16 2020/03/12 19:36:33 christos Exp $");
+__KERNEL_RCSID(0, "$NetBSD: rtsock_shared.c,v 1.17 2020/03/13 16:37:12 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -703,10 +703,10 @@ COMPATNAME(route_output)(struct mbuf *m, struct socket *so)
 	}
 
 	/*
-	 * Verify that the caller has the appropriate privilege; RTM_GET
+	 * Verify that the socket has the appropriate privilege; RTM_GET
 	 * is the only operation the non-superuser is allowed.
 	 */
-	if (kauth_authorize_network(curlwp->l_cred, KAUTH_NETWORK_ROUTE,
+	if (kauth_authorize_network(so->so_cred, KAUTH_NETWORK_ROUTE,
 	    0, rtm, NULL, NULL) != 0)
 		senderr(EACCES);
 
