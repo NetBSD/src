@@ -1,7 +1,7 @@
-/* $NetBSD: infocmp.c,v 1.12 2017/05/16 09:21:54 roy Exp $ */
+/* $NetBSD: infocmp.c,v 1.13 2020/03/13 15:19:25 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -28,7 +28,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: infocmp.c,v 1.12 2017/05/16 09:21:54 roy Exp $");
+__RCSID("$NetBSD: infocmp.c,v 1.13 2020/03/13 15:19:25 roy Exp $");
 
 #include <sys/ioctl.h>
 
@@ -48,7 +48,7 @@ typedef struct tient {
 	char type;
 	const char *id;
 	signed char flag;
-	short num;
+	int num;
 	const char *str;
 } TIENT;
 
@@ -441,9 +441,11 @@ load_term(const char *name)
 		return t;
 
 	if (_ti_database == NULL)
-		errx(EXIT_FAILURE, "no terminal definition found in internal database");
+		errx(EXIT_FAILURE,
+		    "no terminal definition found in internal database");
 	else
-		errx(EXIT_FAILURE, "no terminal definition found in %s.db", _ti_database);
+		errx(EXIT_FAILURE,
+		    "no terminal definition found in %s.db", _ti_database);
 }
 
 static void
