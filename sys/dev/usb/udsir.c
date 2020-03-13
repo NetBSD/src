@@ -1,4 +1,4 @@
-/*	$NetBSD: udsir.c,v 1.9 2019/09/22 07:29:16 dsainty Exp $	*/
+/*	$NetBSD: udsir.c,v 1.10 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -30,7 +30,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.9 2019/09/22 07:29:16 dsainty Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsir.c,v 1.10 2020/03/13 18:17:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/device.h>
@@ -495,7 +495,7 @@ udsir_read(void *h, struct uio *uio, int flag)
 		splx(s);
 
 		uframelen = sc->sc_ur_framelen;
-		DPRINTFN(1, ("%s: sc=%p framelen=%u, hdr=0x%02x\n",
+		DPRINTFN(1, ("%s: sc=%p framelen=%u, hdr=%#02x\n",
 			     __func__, sc, uframelen, sc->sc_ur_buf[0]));
 		if (uframelen > uio->uio_resid)
 			error = EINVAL;

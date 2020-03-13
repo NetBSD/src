@@ -1,4 +1,4 @@
-/*	$NetBSD: if_cue.c,v 1.89 2020/01/29 06:26:32 thorpej Exp $	*/
+/*	$NetBSD: if_cue.c,v 1.90 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1997, 1998, 1999, 2000
@@ -57,7 +57,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.89 2020/01/29 06:26:32 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_cue.c,v 1.90 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -175,12 +175,12 @@ cue_csr_read_1(struct usbnet *un, int reg)
 	err = usbd_do_request(un->un_udev, &req, &val);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_read_1: reg=0x%x err=%s\n",
+		DPRINTF(("%s: cue_csr_read_1: reg=%#x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return 0;
 	}
 
-	DPRINTFN(10,("%s: cue_csr_read_1 reg=0x%x val=0x%x\n",
+	DPRINTFN(10,("%s: cue_csr_read_1 reg=%#x val=%#x\n",
 	    device_xname(un->un_dev), reg, val));
 
 	return val;
@@ -205,11 +205,11 @@ cue_csr_read_2(struct usbnet *un, int reg)
 
 	err = usbd_do_request(un->un_udev, &req, &val);
 
-	DPRINTFN(10,("%s: cue_csr_read_2 reg=0x%x val=0x%x\n",
+	DPRINTFN(10,("%s: cue_csr_read_2 reg=%#x val=%#x\n",
 	    device_xname(un->un_dev), reg, UGETW(val)));
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_read_2: reg=0x%x err=%s\n",
+		DPRINTF(("%s: cue_csr_read_2: reg=%#x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return 0;
 	}
@@ -226,7 +226,7 @@ cue_csr_write_1(struct usbnet *un, int reg, int val)
 	if (usbnet_isdying(un))
 		return 0;
 
-	DPRINTFN(10,("%s: cue_csr_write_1 reg=0x%x val=0x%x\n",
+	DPRINTFN(10,("%s: cue_csr_write_1 reg=%#x val=%#x\n",
 	    device_xname(un->un_dev), reg, val));
 
 	req.bmRequestType = UT_WRITE_VENDOR_DEVICE;
@@ -238,12 +238,12 @@ cue_csr_write_1(struct usbnet *un, int reg, int val)
 	err = usbd_do_request(un->un_udev, &req, NULL);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_write_1: reg=0x%x err=%s\n",
+		DPRINTF(("%s: cue_csr_write_1: reg=%#x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return -1;
 	}
 
-	DPRINTFN(20,("%s: cue_csr_write_1, after reg=0x%x val=0x%x\n",
+	DPRINTFN(20,("%s: cue_csr_write_1, after reg=%#x val=%#x\n",
 	    device_xname(un->un_dev), reg, cue_csr_read_1(un, reg)));
 
 	return 0;
@@ -261,7 +261,7 @@ cue_csr_write_2(struct usbnet *un, int reg, int aval)
 	if (usbnet_isdying(un))
 		return 0;
 
-	DPRINTFN(10,("%s: cue_csr_write_2 reg=0x%x val=0x%x\n",
+	DPRINTFN(10,("%s: cue_csr_write_2 reg=%#x val=%#x\n",
 	    device_xname(un->un_dev), reg, aval));
 
 	USETW(val, aval);
@@ -274,7 +274,7 @@ cue_csr_write_2(struct usbnet *un, int reg, int aval)
 	err = usbd_do_request(un->un_udev, &req, NULL);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_write_2: reg=0x%x err=%s\n",
+		DPRINTF(("%s: cue_csr_write_2: reg=%#x err=%s\n",
 		    device_xname(un->un_dev), reg, usbd_errstr(err)));
 		return -1;
 	}
@@ -289,7 +289,7 @@ cue_mem(struct usbnet *un, int cmd, int addr, void *buf, int len)
 	usb_device_request_t	req;
 	usbd_status		err;
 
-	DPRINTFN(10,("%s: cue_mem cmd=0x%x addr=0x%x len=%d\n",
+	DPRINTFN(10,("%s: cue_mem cmd=%#x addr=%#x len=%d\n",
 	    device_xname(un->un_dev), cmd, addr, len));
 
 	if (cmd == CUE_CMD_READSRAM)
@@ -304,7 +304,7 @@ cue_mem(struct usbnet *un, int cmd, int addr, void *buf, int len)
 	err = usbd_do_request(un->un_udev, &req, buf);
 
 	if (err) {
-		DPRINTF(("%s: cue_csr_mem: addr=0x%x err=%s\n",
+		DPRINTF(("%s: cue_csr_mem: addr=%#x err=%s\n",
 		    device_xname(un->un_dev), addr, usbd_errstr(err)));
 		return -1;
 	}
@@ -366,7 +366,7 @@ cue_setiff(struct usbnet *un)
 	struct ether_multistep	step;
 	uint32_t		h, i;
 
-	DPRINTFN(2,("%s: cue_setiff if_flags=0x%x\n",
+	DPRINTFN(2,("%s: cue_setiff if_flags=%#x\n",
 	    device_xname(un->un_dev), ifp->if_flags));
 
 	if (ifp->if_flags & IFF_PROMISC) {

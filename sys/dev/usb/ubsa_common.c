@@ -1,4 +1,4 @@
-/*	$NetBSD: ubsa_common.c,v 1.12 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: ubsa_common.c,v 1.13 2020/03/13 18:17:40 christos Exp $	*/
 /*-
  * Copyright (c) 2002, Alexander Kabaev <kan.FreeBSD.org>.
  * All rights reserved.
@@ -54,7 +54,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.12 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ubsa_common.c,v 1.13 2020/03/13 18:17:40 christos Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -262,7 +262,7 @@ ubsa_parity(struct ubsa_softc *sc, int portno, tcflag_t cflag)
 {
 	int value;
 
-	DPRINTF(("ubsa_parity: cflag = 0x%x\n", cflag));
+	DPRINTF(("ubsa_parity: cflag = %#x\n", cflag));
 
 	if (cflag & PARENB)
 		value = (cflag & PARODD) ? UBSA_PARITY_ODD : UBSA_PARITY_EVEN;
@@ -277,7 +277,7 @@ ubsa_databits(struct ubsa_softc *sc, int portno, tcflag_t cflag)
 {
 	int value;
 
-	DPRINTF(("ubsa_databits: cflag = 0x%x\n", cflag));
+	DPRINTF(("ubsa_databits: cflag = %#x\n", cflag));
 
 	switch (cflag & CSIZE) {
 	case CS5: value = 0; break;
@@ -299,7 +299,7 @@ ubsa_stopbits(struct ubsa_softc *sc, int portno, tcflag_t cflag)
 {
 	int value;
 
-	DPRINTF(("ubsa_stopbits: cflag = 0x%x\n", cflag));
+	DPRINTF(("ubsa_stopbits: cflag = %#x\n", cflag));
 
 	value = (cflag & CSTOPB) ? 1 : 0;
 
@@ -311,7 +311,7 @@ ubsa_flow(struct ubsa_softc *sc, int portno, tcflag_t cflag, tcflag_t iflag)
 {
 	int value;
 
-	DPRINTF(("ubsa_flow: cflag = 0x%x, iflag = 0x%x\n", cflag, iflag));
+	DPRINTF(("ubsa_flow: cflag = %#x, iflag = %#x\n", cflag, iflag));
 
 	value = 0;
 	if (cflag & CRTSCTS)
@@ -430,7 +430,7 @@ ubsa_intr(struct usbd_xfer *xfer, void *priv,
 	sc->sc_lsr = buf[2];
 	sc->sc_msr = buf[3];
 
-	DPRINTF(("%s: ubsa lsr = 0x%02x, msr = 0x%02x\n",
+	DPRINTF(("%s: ubsa lsr = %#02x, msr = %#02x\n",
 	    device_xname(sc->sc_dev), sc->sc_lsr, sc->sc_msr));
 
 	for (i = 0; i < sc->sc_numif; i++) {
