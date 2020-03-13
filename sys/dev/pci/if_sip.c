@@ -1,4 +1,4 @@
-/*	$NetBSD: if_sip.c,v 1.179 2020/03/08 02:44:12 thorpej Exp $	*/
+/*	$NetBSD: if_sip.c,v 1.180 2020/03/13 00:45:59 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001, 2002 The NetBSD Foundation, Inc.
@@ -73,7 +73,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.179 2020/03/08 02:44:12 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.180 2020/03/13 00:45:59 thorpej Exp $");
 
 #include <sys/param.h>
 #include <sys/systm.h>
@@ -136,6 +136,12 @@ __KERNEL_RCSID(0, "$NetBSD: if_sip.c,v 1.179 2020/03/08 02:44:12 thorpej Exp $")
 #define	SIP_NRXDESC		128
 
 #define	MAX_SIP_NRXDESC	MAX(GSIP_NRXDESC, SIP_NRXDESC)
+
+/*
+ * Set this to 1 to force-disable using the 64-bit data path
+ * on DP83820.
+ */
+static int gsip_disable_data64 = 0;
 
 /*
  * Control structures are DMA'd to the SiS900 chip.  We allocate them in
@@ -860,21 +866,31 @@ sipcom_dp83820_attach(struct sip_softc *sc, struct pci_attach_args *pa)
 
 	reg = bus_space_read_4(sc->sc_st, sc->sc_sh, SIP_CFG);
 	if (reg & CFG_PCI64_DET) {
-		printf("%s: 64-bit PCI slot detected", device_xname(sc->sc_dev));
-		/*
-		 * Check to see if this card is 64-bit.  If so, enable 64-bit
-		 * data transfers.
-		 *
-		 * We can't use the DATA64_EN bit in the EEPROM, because
-		 * vendors of 32-bit cards fail to clear that bit in many
-		 * cases (yet the card still detects that it's in a 64-bit
-		 * slot; go figure).
-		 */
-		if (sipcom_check_64bit(pa)) {
-			sc->sc_cfg |= CFG_DATA64_EN;
-			printf(", using 64-bit data transfers");
+		const char *using64 = NULL;
+
+		if (reg & CFG_DATA64_EN) {
+			/*
+			 * Check to see if this card is 64-bit.  If so,
+			 * enable 64-bit data transfers.
+			 *
+			 * We can't trust the DATA64_EN bit in the EEPROM,
+			 * because vendors of 32-bit cards fail to clear
+			 * that bit in many cases (yet the card still detects
+			 * that it's in a 64-bit slot because I guess they
+			 * wired up ACK64# and REQ64#).
+			 */
+			if (gsip_disable_data64)
+				using64 = "force-disabled";
+			else if (sipcom_check_64bit(pa)) {
+				sc->sc_cfg |= CFG_DATA64_EN;
+				using64 = "enabled";
+			} else
+				using64 = "disabled (32-bit card)";
+		} else {
+			using64 = "disabled in EEPROM";
 		}
-		printf("\n");
+		printf("%s: 64-bit slot detected, 64-bit tranfers %s\n",
+		    device_xname(sc->sc_dev), using64);
 	}
 	
 	/*
