@@ -1,4 +1,4 @@
-/*	$NetBSD: if_stge.c,v 1.84 2020/03/07 07:33:39 thorpej Exp $	*/
+/*	$NetBSD: if_stge.c,v 1.85 2020/03/13 03:45:58 thorpej Exp $	*/
 
 /*-
  * Copyright (c) 2001 The NetBSD Foundation, Inc.
@@ -35,7 +35,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.84 2020/03/07 07:33:39 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_stge.c,v 1.85 2020/03/13 03:45:58 thorpej Exp $");
 
 
 #include <sys/param.h>
@@ -1354,6 +1354,7 @@ stge_rxintr(struct stge_softc *sc)
 				m_freem(m);
 				continue;
 			}
+			MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 			nm->m_data += 2;
 			nm->m_pkthdr.len = nm->m_len = len;
 			m_copydata(m, 0, len, mtod(nm, void *));
@@ -1853,6 +1854,7 @@ stge_add_rxbuf(struct stge_softc *sc, int idx)
 	if (m == NULL)
 		return (ENOBUFS);
 
+	MCLAIM(m, &sc->sc_ethercom.ec_rx_mowner);
 	MCLGET(m, M_DONTWAIT);
 	if ((m->m_flags & M_EXT) == 0) {
 		m_freem(m);
