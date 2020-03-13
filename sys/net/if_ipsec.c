@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ipsec.c,v 1.28 2020/03/10 10:35:14 knakahara Exp $  */
+/*	$NetBSD: if_ipsec.c,v 1.29 2020/03/13 02:43:31 knakahara Exp $  */
 
 /*
  * Copyright (c) 2017 Internet Initiative Japan Inc.
@@ -27,7 +27,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.28 2020/03/10 10:35:14 knakahara Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ipsec.c,v 1.29 2020/03/13 02:43:31 knakahara Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -1584,7 +1584,10 @@ if_ipsec_set_sadb_x_policy(struct sadb_x_policy *xpl,
 		xisr->sadb_x_ipsecrequest_proto = IPPROTO_ESP;
 		xisr->sadb_x_ipsecrequest_mode = IPSEC_MODE_TRANSPORT;
 		xisr->sadb_x_ipsecrequest_level = level;
-		xisr->sadb_x_ipsecrequest_reqid = key_newreqid();
+		if (level == IPSEC_LEVEL_UNIQUE)
+			xisr->sadb_x_ipsecrequest_reqid = key_newreqid();
+		else
+			xisr->sadb_x_ipsecrequest_reqid = 0;
 	}
 
 	return size;
