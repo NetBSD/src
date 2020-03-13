@@ -1,4 +1,4 @@
-/*	$NetBSD: t_glob.c,v 1.9 2020/03/13 22:58:31 rillig Exp $	*/
+/*	$NetBSD: t_glob.c,v 1.10 2020/03/13 23:27:54 rillig Exp $	*/
 /*-
  * Copyright (c) 2010 The NetBSD Foundation, Inc.
  * All rights reserved.
@@ -32,7 +32,7 @@
  */
 
 #include <sys/cdefs.h>
-__RCSID("$NetBSD: t_glob.c,v 1.9 2020/03/13 22:58:31 rillig Exp $");
+__RCSID("$NetBSD: t_glob.c,v 1.10 2020/03/13 23:27:54 rillig Exp $");
 
 #include <atf-c.h>
 
@@ -57,38 +57,39 @@ __RCSID("$NetBSD: t_glob.c,v 1.9 2020/03/13 22:58:31 rillig Exp $");
 #endif
 
 struct vfs_file {
+	char type;		/* 'd' or '-', like in ls(1) */
 	const char *name;
-	int dir;
 };
 
 static struct vfs_file a[] = {
-	{ "1", 0 },
-	{ "b", 1 },
-	{ "3", 0 },
-	{ "4", 0 },
+	{ '-', "1" },
+	{ 'd', "b" },
+	{ '-', "3" },
+	{ '-', "4" },
 };
 
 static struct vfs_file b[] = {
-	{ "x", 0 },
-	{ "y", 0 },
-	{ "z", 0 },
-	{ "w", 0 },
+	{ '-', "x" },
+	{ '-', "y" },
+	{ '-', "z" },
+	{ '-', "w" },
 };
 
 static struct vfs_file hidden_dir[] = {
-	{ "visible-file", 0 },
-	{ ".hidden-file", 0 },
+	{ '-', "visible-file" },
+	{ '-', ".hidden-file" },
 };
 
 static struct vfs_file dot[] = {
-	{ "a", 1 },
-	{ ".hidden-dir", 1 },
+	{ 'd', "a" },
+	{ 'd', ".hidden-dir" },
 };
 
 struct vfs_dir {
-	const char *name;	/* directory name */
-	const struct vfs_file *dir;
-	size_t len, pos;
+	const char *name;	/* full directory name */
+	const struct vfs_file *entries;
+	size_t entries_len;
+	size_t pos;		/* only between opendir/closedir */
 };
 
 #define VFS_DIR_INIT(name, entries) \
@@ -134,12 +135,12 @@ vfs_readdir(void *v)
 {
 	static struct dirent dir;
 	struct vfs_dir *dd = v;
-	if (dd->pos < dd->len) {
-		const struct vfs_file *f = &dd->dir[dd->pos++];
+	if (dd->pos < dd->entries_len) {
+		const struct vfs_file *f = &dd->entries[dd->pos++];
 		strcpy(dir.d_name, f->name);
 		dir.d_namlen = strlen(f->name);
 		dir.d_ino = dd->pos;
-		dir.d_type = f->dir ? DT_DIR : DT_REG;
+		dir.d_type = f->type == 'd' ? DT_DIR : DT_REG;
 		DPRINTF(("readdir %s %d\n", dir.d_name, dir.d_type));
 		dir.d_reclen = _DIRENT_RECLEN(&dir, dir.d_namlen);
 		return &dir;
@@ -167,16 +168,15 @@ vfs_stat(const char *name , __gl_stat_t *st)
 		if (buf[dir_len] != '/')
 			continue;
 		const char *base = buf + dir_len + 1;
-		if (strcspn(base, "/") != strlen(base))
-			continue;
 
-		for (size_t j = 0; j < d[i].len; j++)
-			if (strcmp(d[i].dir[j].name, base) == 0) {
-				st->st_mode = d[i].dir[j].dir
-				    ? S_IFDIR | 0755
-				    : S_IFREG | 0644;
-				goto out;
-			}
+		for (size_t j = 0; j < d[i].entries_len; j++) {
+			const struct vfs_file *f = &d[i].entries[j];
+			if (strcmp(f->name, base) != 0)
+				continue;
+			ATF_CHECK(f->type != 'd'); // handled above
+			st->st_mode = S_IFREG | 0644;
+			goto out;
+		}
 	}
 	DPRINTF(("stat %s ENOENT\n", buf));
 	errno = ENOENT;
