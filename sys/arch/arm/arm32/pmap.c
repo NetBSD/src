@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.394 2020/02/24 20:31:56 ad Exp $	*/
+/*	$NetBSD: pmap.c,v 1.395 2020/03/13 16:12:06 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.394 2020/02/24 20:31:56 ad Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.395 2020/03/13 16:12:06 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -5820,13 +5820,15 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 			return 1;
 		pa = VM_PAGE_TO_PHYS(pg);
 		/*
-		 * This new page must not have any mappings.  Enter it via
-		 * pmap_kenter_pa and let that routine do the hard work.
+		 * This new page must not have any mappings.
 		 */
 		struct vm_page_md *md __diagused = VM_PAGE_TO_MD(pg);
 		KASSERT(SLIST_EMPTY(&md->pvh_list));
 	}
 
+	/*
+	 *  Enter it via pmap_kenter_pa and let that routine do the hard work.
+	 */
 	pmap_kenter_pa(va, pa,
 	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
 
