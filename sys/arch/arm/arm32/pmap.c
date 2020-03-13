@@ -1,4 +1,4 @@
-/*	$NetBSD: pmap.c,v 1.396 2020/03/13 16:14:18 skrll Exp $	*/
+/*	$NetBSD: pmap.c,v 1.397 2020/03/13 16:16:29 skrll Exp $	*/
 
 /*
  * Copyright 2003 Wasabi Systems, Inc.
@@ -198,7 +198,7 @@
 #endif
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.396 2020/03/13 16:14:18 skrll Exp $");
+__KERNEL_RCSID(0, "$NetBSD: pmap.c,v 1.397 2020/03/13 16:16:29 skrll Exp $");
 
 #include <sys/atomic.h>
 #include <sys/param.h>
@@ -5829,8 +5829,8 @@ pmap_grow_map(vaddr_t va, paddr_t *pap)
 	/*
 	 * Enter it via pmap_kenter_pa and let that routine do the hard work.
 	 */
-	pmap_kenter_pa(va, pa,
-	    VM_PROT_READ|VM_PROT_WRITE, PMAP_KMPAGE|PMAP_PTE);
+	pmap_kenter_pa(va, pa, VM_PROT_READ | VM_PROT_WRITE,
+	    PMAP_KMPAGE | PMAP_PTE);
 
 	if (pap)
 		*pap = pa;
