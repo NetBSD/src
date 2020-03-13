@@ -1,4 +1,4 @@
-# $NetBSD: CHANGES-9.1,v 1.1.2.17 2020/03/13 05:36:47 martin Exp $
+# $NetBSD: CHANGES-9.1,v 1.1.2.18 2020/03/13 08:34:25 martin Exp $
 
 A complete list of changes from the NetBSD 9.0 release to the NetBSD 9.1
 release:
@@ -518,4 +518,11 @@ sys/arch/mips/mips/bus_dma.c			1.39
 	Allow len == 0 in bus_dmamap_sync().
 	[thorpej, ticket #779]
 
+sys/net/if_ipsec.c				1.28,1.29
+sys/netipsec/key.c				1.271
+
+	Fix ipsecif(4) SPDADD pfkey message contains garbage.
+	Reduce unnecessary reqid of NAT-T ipsecif(4).
+	Fix kern/55066.
+	[knakahara, ticket #780]
 
