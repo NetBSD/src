@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ixl.c,v 1.62 2020/03/12 09:38:10 yamaguchi Exp $	*/
+/*	$NetBSD: if_ixl.c,v 1.63 2020/03/13 05:40:20 yamaguchi Exp $	*/
 
 /*
  * Copyright (c) 2013-2015, Intel Corporation
@@ -74,7 +74,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.62 2020/03/12 09:38:10 yamaguchi Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ixl.c,v 1.63 2020/03/13 05:40:20 yamaguchi Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_net_mpsafe.h"
@@ -2116,8 +2116,6 @@ ixl_init_locked(struct ixl_softc *sc)
 	SET(ifp->if_flags, IFF_RUNNING);
 	CLR(ifp->if_flags, IFF_OACTIVE);
 
-	(void)ixl_get_link_status(sc);
-
 	ixl_config_rss(sc);
 	ixl_config_queue_intr(sc);
 
@@ -2145,6 +2143,9 @@ ixl_init(struct ifnet *ifp)
 	mutex_enter(&sc->sc_cfg_lock);
 	error = ixl_init_locked(sc);
 	mutex_exit(&sc->sc_cfg_lock);
+
+	if (error == 0)
+		(void)ixl_get_link_status(sc);
 
 	return error;
 }
@@ -3682,7 +3683,6 @@ ixl_get_link_status(void *xsc)
 	if (error == 0) {
 		ixl_get_link_status_done(sc, iaq);
 	}
-
 
 	mutex_exit(&sc->sc_atq_lock);
 }
