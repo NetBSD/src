@@ -1,4 +1,4 @@
-/*	$NetBSD: ucom.c,v 1.125 2019/05/09 02:43:35 mrg Exp $	*/
+/*	$NetBSD: ucom.c,v 1.126 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 1998, 2000 The NetBSD Foundation, Inc.
@@ -34,7 +34,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.125 2019/05/09 02:43:35 mrg Exp $");
+__KERNEL_RCSID(0, "$NetBSD: ucom.c,v 1.126 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -915,7 +915,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data, int flag,
 
 	UCOMHIST_FUNC(); UCOMHIST_CALLED();
 
-	DPRINTF("cmd=0x%08jx", cmd, 0, 0, 0);
+	DPRINTF("cmd=%#08jx", cmd, 0, 0, 0);
 
 	error = (*tp->t_linesw->l_ioctl)(tp, cmd, data, flag, l);
 	if (error != EPASSTHROUGH)
@@ -934,7 +934,7 @@ ucom_do_ioctl(struct ucom_softc *sc, u_long cmd, void *data, int flag,
 
 	error = 0;
 
-	DPRINTF("our cmd=0x%08jx", cmd, 0, 0, 0);
+	DPRINTF("our cmd=%#08jx", cmd, 0, 0, 0);
 
 	switch (cmd) {
 	case TIOCSBRK:

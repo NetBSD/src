@@ -1,4 +1,4 @@
-/*	$NetBSD: udsbr.c,v 1.29 2019/12/01 08:27:54 maxv Exp $	*/
+/*	$NetBSD: udsbr.c,v 1.30 2020/03/13 18:17:40 christos Exp $	*/
 
 /*
  * Copyright (c) 2002 The NetBSD Foundation, Inc.
@@ -38,7 +38,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.29 2019/12/01 08:27:54 maxv Exp $");
+__KERNEL_RCSID(0, "$NetBSD: udsbr.c,v 1.30 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -202,7 +202,7 @@ udsbr_req(struct udsbr_softc *sc, int ureq, int value, int index)
 	usbd_status err;
 	u_char data;
 
-	DPRINTFN(1,("udsbr_req: ureq=0x%02x value=0x%04x index=0x%04x\n",
+	DPRINTFN(1,("udsbr_req: ureq=%#02x value=%#04x index=%#04x\n",
 		    ureq, value, index));
 	req.bmRequestType = UT_READ_VENDOR_DEVICE;
 	req.bRequest = ureq;

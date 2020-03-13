@@ -1,4 +1,4 @@
-/*	$NetBSD: if_ural.c,v 1.62 2020/01/29 06:35:28 thorpej Exp $ */
+/*	$NetBSD: if_ural.c,v 1.63 2020/03/13 18:17:40 christos Exp $ */
 /*	$FreeBSD: /repoman/r/ncvs/src/sys/dev/usb/if_ural.c,v 1.40 2006/06/02 23:14:40 sam Exp $	*/
 
 /*-
@@ -24,7 +24,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.62 2020/01/29 06:35:28 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_ural.c,v 1.63 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -429,7 +429,7 @@ ural_attach(device_t parent, device_t self, void *aux)
 	/* retrieve MAC address and various other things from EEPROM */
 	ural_read_eeprom(sc);
 
-	aprint_normal_dev(self, "MAC/BBP RT2570 (rev 0x%02x), RF %s\n",
+	aprint_normal_dev(self, "MAC/BBP RT2570 (rev %#02x), RF %s\n",
 	    sc->asic_rev, ural_get_rf(sc->rf_rev));
 
 	ifp->if_softc = sc;
@@ -1686,7 +1686,7 @@ ural_rf_write(struct ural_softc *sc, uint8_t reg, uint32_t val)
 	/* remember last written value in sc */
 	sc->rf_regs[reg] = val;
 
-	DPRINTFN(15, ("RF R[%u] <- 0x%05x\n", reg & 0x3, val & 0xfffff));
+	DPRINTFN(15, ("RF R[%u] <- %#05x\n", reg & 0x3, val & 0xfffff));
 }
 
 Static void

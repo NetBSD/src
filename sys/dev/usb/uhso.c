@@ -1,4 +1,4 @@
-/*	$NetBSD: uhso.c,v 1.32 2020/01/29 06:39:07 thorpej Exp $	*/
+/*	$NetBSD: uhso.c,v 1.33 2020/03/13 18:17:41 christos Exp $	*/
 
 /*-
  * Copyright (c) 2009 Iain Hibbert
@@ -37,7 +37,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.32 2020/01/29 06:39:07 thorpej Exp $");
+__KERNEL_RCSID(0, "$NetBSD: uhso.c,v 1.33 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_inet.h"
@@ -774,7 +774,7 @@ uhso_mux_attach(struct uhso_softc *sc, struct usbd_interface *ifh, int index)
 		}
 	}
 
-	DPRINTF(1, "addr=%d, size=%zd, mux=0x%02x\n", addr, size, mux);
+	DPRINTF(1, "addr=%d, size=%zd, mux=%#02x\n", addr, size, mux);
 
 	buf = kmem_alloc(size, KM_SLEEP);
 	status = usbd_open_pipe_intr(ifh, addr, USBD_SHORT_XFER_OK, &pipe,
@@ -1007,7 +1007,7 @@ uhso_mux_intr(struct usbd_xfer *xfer, void * p, usbd_status status)
 	if (cc == 0)
 		return;
 
-	DPRINTF(5, "mux mask 0x%02x, cc=%u\n", buf[0], cc);
+	DPRINTF(5, "mux mask %#02x, cc=%u\n", buf[0], cc);
 
 	for (i = 0; i < __arraycount(uhso_mux_port); i++) {
 		if (!ISSET(buf[0], __BIT(i)))

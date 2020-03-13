@@ -1,4 +1,4 @@
-/*	$NetBSD: if_smsc.c,v 1.64 2020/02/05 07:24:07 msaitoh Exp $	*/
+/*	$NetBSD: if_smsc.c,v 1.65 2020/03/13 18:17:40 christos Exp $	*/
 
 /*	$OpenBSD: if_smsc.c,v 1.4 2012/09/27 12:38:11 jsg Exp $	*/
 /*	$FreeBSD: src/sys/dev/usb/net/if_smsc.c,v 1.1 2012/08/15 04:03:55 gonzo Exp $ */
@@ -61,7 +61,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.64 2020/02/05 07:24:07 msaitoh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: if_smsc.c,v 1.65 2020/03/13 18:17:40 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -222,7 +222,7 @@ smsc_readreg(struct usbnet *un, uint32_t off, uint32_t *data)
 
 	err = usbd_do_request(un->un_udev, &req, &buf);
 	if (err != 0)
-		smsc_warn_printf(un, "Failed to read register 0x%0x\n", off);
+		smsc_warn_printf(un, "Failed to read register %#0x\n", off);
 
 	*data = le32toh(buf);
 
@@ -251,7 +251,7 @@ smsc_writereg(struct usbnet *un, uint32_t off, uint32_t data)
 
 	err = usbd_do_request(un->un_udev, &req, &buf);
 	if (err != 0)
-		smsc_warn_printf(un, "Failed to write register 0x%0x\n", off);
+		smsc_warn_printf(un, "Failed to write register %#0x\n", off);
 
 	return err;
 }
@@ -946,7 +946,7 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 
 	usbnet_isowned_rx(un);
 
-	DPRINTF("total_len %jd/0x%jx", total_len, total_len, 0, 0);
+	DPRINTF("total_len %jd/%#jx", total_len, total_len, 0, 0);
 	while (total_len != 0) {
 		uint32_t rxhdr;
 		if (total_len < sizeof(rxhdr)) {
@@ -967,13 +967,13 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 		if (rxhdr & (SMSC_RX_STAT_ERROR
 			   | SMSC_RX_STAT_LENGTH_ERROR
 			   | SMSC_RX_STAT_MII_ERROR)) {
-			DPRINTF("rx error (hdr 0x%08jx)", rxhdr, 0, 0, 0);
+			DPRINTF("rx error (hdr %#08jx)", rxhdr, 0, 0, 0);
 			if_statinc(ifp, if_ierrors);
 			return;
 		}
 
 		uint16_t pktlen = (uint16_t)SMSC_RX_STAT_FRM_LENGTH(rxhdr);
-		DPRINTF("total_len %jd pktlen %jd rxhdr 0x%08jx", total_len,
+		DPRINTF("total_len %jd pktlen %jd rxhdr %#08jx", total_len,
 		    pktlen, rxhdr, 0);
 
 		if (pktlen < ETHER_HDR_LEN) {
@@ -1048,7 +1048,7 @@ smsc_rx_loop(struct usbnet * un, struct usbnet_chain *c, uint32_t total_len)
 				 * in host network order.
 				 */
 				csum_data = ntohs(csum_data);
-				DPRINTF("RX checksum offloaded (0x%04jx)",
+				DPRINTF("RX checksum offloaded (%#04jx)",
 				    csum_data, 0, 0, 0);
 			}
 		}

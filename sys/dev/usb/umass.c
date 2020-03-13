@@ -1,4 +1,4 @@
-/*	$NetBSD: umass.c,v 1.180 2020/02/19 16:04:01 riastradh Exp $	*/
+/*	$NetBSD: umass.c,v 1.181 2020/03/13 18:17:41 christos Exp $	*/
 
 /*
  * Copyright (c) 2003 The NetBSD Foundation, Inc.
@@ -124,7 +124,7 @@
  */
 
 #include <sys/cdefs.h>
-__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.180 2020/02/19 16:04:01 riastradh Exp $");
+__KERNEL_RCSID(0, "$NetBSD: umass.c,v 1.181 2020/03/13 18:17:41 christos Exp $");
 
 #ifdef _KERNEL_OPT
 #include "opt_usb.h"
@@ -823,7 +823,7 @@ umass_attach(device_t parent, device_t self, void *aux)
 		break;
 
 	default:
-		aprint_error_dev(self, "command protocol=0x%x not supported\n",
+		aprint_error_dev(self, "command protocol=%#x not supported\n",
 		    sc->sc_cmd);
 		umass_disco(sc);
 		return;
@@ -1020,7 +1020,7 @@ umass_setup_transfer(struct umass_softc *sc, struct usbd_pipe *pipe,
 	    sc->sc_methods->wire_state);
 
 	err = usbd_transfer(xfer);
-	DPRINTFM(UDMASS_XFER, "start xfer buffer=%#jx buflen=%jd flags=0x%jx "
+	DPRINTFM(UDMASS_XFER, "start xfer buffer=%#jx buflen=%jd flags=%#jx "
 	    "timeout=%d", (uintptr_t)buffer, buflen, flags, sc->timeout);
 	if (err && err != USBD_IN_PROGRESS) {
 		DPRINTFM(UDMASS_BBB, "failed to setup transfer... err=%jd",
@@ -1071,7 +1071,7 @@ umass_clear_endpoint_stall(struct umass_softc *sc, int endpt,
 		return;
 	}
 
-	DPRINTFM(UDMASS_BBB, "Clear endpoint 0x%02jx stall",
+	DPRINTFM(UDMASS_BBB, "Clear endpoint %#02jx stall",
 	    sc->sc_epaddr[endpt], 0, 0, 0);
 
 	usbd_clear_endpoint_toggle(sc->sc_pipe[endpt]);
@@ -1145,7 +1145,7 @@ umass_bbb_reset(struct umass_softc *sc, int status)
 	UMASSHIST_FUNC(); UMASSHIST_CALLED();
 	SDT_PROBE2(usb, umass, bbb, reset,  sc, status);
 	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
-		   "sc->sc_wire == 0x%02x wrong for umass_bbb_reset\n",
+		   "sc->sc_wire == %#02x wrong for umass_bbb_reset\n",
 		   sc->sc_wire);
 
 	if (sc->sc_dying) {
@@ -1195,11 +1195,11 @@ umass_bbb_transfer(struct umass_softc *sc, int lun, void *cmd, int cmdlen,
 	    sc, cb, priv, data, datalen, dir, timeout);
 	static int dCBWtag = 42;	/* unique for CBW of transfer */
 
-	DPRINTFM(UDMASS_BBB, "sc %#jx cmd=0x%02jx", (uintptr_t)sc,
+	DPRINTFM(UDMASS_BBB, "sc %#jx cmd=%#02jx", (uintptr_t)sc,
 	    *(u_char *)cmd, 0, 0);
 
 	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
-		   "sc->sc_wire == 0x%02x wrong for umass_bbb_transfer\n",
+		   "sc->sc_wire == %#02x wrong for umass_bbb_transfer\n",
 		   sc->sc_wire);
 
 	if (sc->sc_dying) {
@@ -1321,7 +1321,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 	SDT_PROBE3(usb, umass, bbb, state,  sc, xfer, err);
 
 	KASSERTMSG(sc->sc_wire & UMASS_WPROTO_BBB,
-		   "sc->sc_wire == 0x%02x wrong for umass_bbb_state\n",
+		   "sc->sc_wire == %#02x wrong for umass_bbb_state\n",
 		   sc->sc_wire);
 
 	/*
@@ -1527,7 +1527,7 @@ umass_bbb_state(struct usbd_xfer *xfer, void *priv,
 			/* Invalid CSW: Wrong signature or wrong tag might
 			 * indicate that the device is confused -> reset it.
 			 */
-			printf("%s: Invalid CSW: sig 0x%08x should be 0x%08x\n",
+			printf("%s: Invalid CSW: sig %#08x should be %#08x\n",
 				device_xname(sc->sc_dev),
 				UGETDW(sc->csw.dCSWSignature),
 				CSWSIGNATURE);
@@ -1638,7 +1638,7 @@ umass_cbi_adsc(struct umass_softc *sc, char *buffer, int buflen, int flags,
 	       struct usbd_xfer *xfer)
 {
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		   "sc->sc_wire == 0x%02x wrong for umass_cbi_adsc\n",
+		   "sc->sc_wire == %#02x wrong for umass_cbi_adsc\n",
 		   sc->sc_wire);
 
 	if ((sc->sc_cmd == UMASS_CPROTO_RBC) &&
@@ -1666,7 +1666,7 @@ umass_cbi_reset(struct umass_softc *sc, int status)
 #	define SEND_DIAGNOSTIC_CMDLEN	12
 
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		   "sc->sc_wire == 0x%02x wrong for umass_cbi_reset\n",
+		   "sc->sc_wire == %#02x wrong for umass_cbi_reset\n",
 		   sc->sc_wire);
 
 	if (sc->sc_dying) {
@@ -1723,11 +1723,11 @@ umass_cbi_transfer(struct umass_softc *sc, int lun,
 	SDT_PROBE7(usb, umass, transfer, start__cbi,
 	    sc, cb, priv, data, datalen, dir, timeout);
 
-	DPRINTFM(UDMASS_CBI, "sc %#jx: cmd=0x%02jx, len=%jd",
+	DPRINTFM(UDMASS_CBI, "sc %#jx: cmd=%#02jx, len=%jd",
 	     (uintptr_t)sc, *(u_char *)cmd, datalen, 0);
 
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		   "sc->sc_wire == 0x%02x wrong for umass_cbi_transfer\n",
+		   "sc->sc_wire == %#02x wrong for umass_cbi_transfer\n",
 		   sc->sc_wire);
 
 	if (sc->sc_dying) {
@@ -1792,7 +1792,7 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 	SDT_PROBE3(usb, umass, bbb, state,  sc, xfer, err);
 
 	KASSERTMSG(sc->sc_wire & (UMASS_WPROTO_CBI|UMASS_WPROTO_CBI_I),
-		   "sc->sc_wire == 0x%02x wrong for umass_cbi_state\n",
+		   "sc->sc_wire == %#02x wrong for umass_cbi_state\n",
 		   sc->sc_wire);
 
 	if (err == USBD_CANCELLED) {
@@ -1963,8 +1963,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 			 * data block.
 			 */
 
-			DPRINTFM(UDMASS_CBI, "sc %#jx: UFI CCI, ASC = 0x%02jx, "
-			    "ASCQ = 0x%02jx", (uintptr_t)sc, sc->sbl.ufi.asc,
+			DPRINTFM(UDMASS_CBI, "sc %#jx: UFI CCI, ASC = %#02jx, "
+			    "ASCQ = %#02jx", (uintptr_t)sc, sc->sbl.ufi.asc,
 			    sc->sbl.ufi.ascq, 0);
 
 			if ((sc->sbl.ufi.asc == 0 && sc->sbl.ufi.ascq == 0) ||
@@ -1982,8 +1982,8 @@ umass_cbi_state(struct usbd_xfer *xfer, void *priv,
 
 			/* Command Interrupt Data Block */
 
-			DPRINTFM(UDMASS_CBI, "sc %#jx: type=0x%02jx, "
-			    "value=0x%02jx", (uintptr_t)sc,
+			DPRINTFM(UDMASS_CBI, "sc %#jx: type=%#02jx, "
+			    "value=%#02jx", (uintptr_t)sc,
 			    sc->sbl.common.type, sc->sbl.common.value, 0);
 
 			if (sc->sbl.common.type == IDB_TYPE_CCI) {
@@ -2145,11 +2145,11 @@ umass_bbb_dump_cbw(struct umass_softc *sc, umass_bbb_cbw_t *cbw)
 
 	DPRINTFM(UDMASS_BBB, "sc %#jx: CBW %jd: cmdlen=%jd",
 	    (uintptr_t)sc, tag, clen, 0);
-	DPRINTFM(UDMASS_BBB, "  0x%02jx%02jx%02jx%02jx...",
+	DPRINTFM(UDMASS_BBB, "  %#02jx%02jx%02jx%02jx...",
 	    c[0], c[1], c[2], c[3]);
-	DPRINTFM(UDMASS_BBB, "  0x%02jx%02jx%02jx%02jx...",
+	DPRINTFM(UDMASS_BBB, "  %#02jx%02jx%02jx%02jx...",
 	    c[4], c[5], c[6], c[7]);
-	DPRINTFM(UDMASS_BBB, "  0x%02jx%02jx...", c[8], c[9], 0, 0);
+	DPRINTFM(UDMASS_BBB, "  %#02jx%02jx...", c[8], c[9], 0, 0);
 	DPRINTFM(UDMASS_BBB, "  data = %jd bytes, flags = %jx", dlen, flags, 0,
 	    0);
 }
@@ -2163,9 +2163,9 @@ umass_bbb_dump_csw(struct umass_softc *sc, umass_bbb_csw_t *csw)
 	int res = UGETDW(csw->dCSWDataResidue);
 	int status = csw->bCSWStatus;
 
-	DPRINTFM(UDMASS_BBB, "sc %#jx: CSW %jd: sig = 0x%08jx, tag = %jd",
+	DPRINTFM(UDMASS_BBB, "sc %#jx: CSW %jd: sig = %#08jx, tag = %jd",
 	    (uintptr_t)sc, (uintptr_t)csw, sig, tag);
-	DPRINTFM(UDMASS_BBB, "  res = %jd, status = 0x%02jx",
+	DPRINTFM(UDMASS_BBB, "  res = %jd, status = %#02jx",
 	    res, status, 0, 0);
 }
 
@@ -2180,20 +2180,20 @@ umass_dump_buffer(struct umass_softc *sc, uint8_t *buffer, int buflen,
 	    (uintptr_t)buffer, 0, 0);
 	for (i = 0; i < buflen && i < printlen;) {
 		if (i + 3 < buflen && i + 3 < printlen) {
-			DPRINTFM(UDMASS_GEN, "   0x%02jx%02jx%02jx%02jx",
+			DPRINTFM(UDMASS_GEN, "   %#02jx%02jx%02jx%02jx",
 			    buffer[i], buffer[i + 1],
 			    buffer[i + 2], buffer[i + 3]);
 			i += 4;
 		} else if (i + 2 < buflen && i + 2 < printlen) {
-			DPRINTFM(UDMASS_GEN, "   0x%02jx%02jx%02jx",
+			DPRINTFM(UDMASS_GEN, "   %#02jx%02jx%02jx",
 			    buffer[i], buffer[i + 1], buffer[i + 2], 0);
 			i += 3;
 		} else if (i + 1 < buflen && i + 2 < printlen) {
-			DPRINTFM(UDMASS_GEN, "   0x%02jx%02jx",
+			DPRINTFM(UDMASS_GEN, "   %#02jx%02jx",
 			    buffer[i], buffer[i + 1], 0, 0);
 			i += 2;
 		} else {
-			DPRINTFM(UDMASS_GEN, "   0x%02jx", buffer[i], 0, 0, 0);
+			DPRINTFM(UDMASS_GEN, "   %#02jx", buffer[i], 0, 0, 0);
 			i += 1;
 		}
 	}
