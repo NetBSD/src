@@ -1,4 +1,4 @@
-/*	$NetBSD: clrtoeol.c,v 1.29 2020/03/12 12:17:15 roy Exp $	*/
+/*	$NetBSD: clrtoeol.c,v 1.30 2020/03/13 02:57:26 roy Exp $	*/
 
 /*
  * Copyright (c) 1981, 1993, 1994
@@ -34,7 +34,7 @@
 #if 0
 static char sccsid[] = "@(#)clrtoeol.c	8.2 (Berkeley) 5/4/94";
 #else
-__RCSID("$NetBSD: clrtoeol.c,v 1.29 2020/03/12 12:17:15 roy Exp $");
+__RCSID("$NetBSD: clrtoeol.c,v 1.30 2020/03/13 02:57:26 roy Exp $");
 #endif
 #endif				/* not lint */
 
@@ -92,14 +92,10 @@ wclrtoeol(WINDOW *win)
 		attr = win->battr & __ATTRIBUTES;
 	else
 		attr = 0;
-	for (sp = maxx; sp < end; sp++) {
-		if (sp->ch == bch &&
-#ifdef HAVE_WCHAR
-		    sp->nsp == NULL && WCOL(*sp) >= 0 &&
-#endif
-		    (sp->attr & WA_ATTRIBUTES) == attr)
-			continue;
 
+	for (sp = maxx; sp < end; sp++) {
+		if (!(__NEED_ERASE(sp, bch, attr)))
+			continue;
 		maxx = sp;
 		if (minx == -1)
 			minx = (int)(sp - win->alines[y]->line);
@@ -111,6 +107,7 @@ wclrtoeol(WINDOW *win)
 		SET_WCOL(*sp, 1);
 #endif
 	}
+
 #ifdef DEBUG
 	__CTRACE(__CTRACE_ERASE, "CLRTOEOL: y = %d, minx = %d, maxx = %d, "
 	    "firstch = %d, lastch = %d\n",
