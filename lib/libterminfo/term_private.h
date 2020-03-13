@@ -1,7 +1,7 @@
-/* $NetBSD: term_private.h,v 1.11 2013/01/24 10:41:28 roy Exp $ */
+/* $NetBSD: term_private.h,v 1.12 2020/03/13 15:19:25 roy Exp $ */
 
 /*
- * Copyright (c) 2009, 2010, 2013 The NetBSD Foundation, Inc.
+ * Copyright (c) 2009, 2010, 2013, 2020 The NetBSD Foundation, Inc.
  *
  * This code is derived from software contributed to The NetBSD Foundation
  * by Roy Marples.
@@ -34,16 +34,22 @@
 
 /* The terminfo database structure is private to us,
  * so it's documented here.
+ *
+ * Version 1 - types 1 and 2.
  * terminfo defines the largest number as 32767 and the largest
- * compiled entry as 4093 bytes long.
+ * compiled entry as 4093 bytes long. Negative numbers are not allowed.
  * Thus, we store all numbers as uint16_t, including string length.
+ * We reserve negative numbers -1 and -2 to mean absent or cancelled.
  * All strings are prefixed by length, including the null terminator.
  * The largest string length we can handle is 65535 bytes,
  * including the null terminator.
  * The largest capability block we can handle is 65535 bytes.
- * This means that we exceed the current terminfo defined limits.
  *
- * Version 1 capabilities are defined as:
+ * Version 2 - type 3
+ * Extends terminfo numbers upto 2147483647 by storing the value as a uint32_t.
+ * This means that we exceed the current terminfo defined limits in every way.
+ *
+ * Type 1 capabilities are defined as:
  * header byte (always 1)
  * name
  * description,
@@ -52,10 +58,13 @@
  * cap length, num strings, index, string,
  * cap length, num undefined caps, name, type (char), flag, number, string
  *
- * Version 2 entries are aliases and defined as:
+ * Type 2 entries are aliases and defined as:
  * header byte (always 2)
  * 32bit id of the corresponding terminal in the file
  * name
+ *
+ * Type 3 extends Type 1 so that it can store terminfo numbers
+ * as uint32_t. All other numerics are still stored as uint16_t.
  *
  * The database itself is created using cdbw(3) and the numbers are
  * always stored as little endian.
@@ -64,6 +73,9 @@
 #include <sys/types.h>
 
 #define _TERMINFO
+#define TERMINFO_RTYPE_O1	1
+#define TERMINFO_ALIAS		2
+#define TERMINFO_RTYPE		3
 
 /* We use the same ncurses tic macros so that our data is identical
  * when a caller uses the long name macros to access te terminfo data
@@ -82,7 +94,7 @@ typedef struct {
 	const char *id;
 	char type;
 	char flag;
-	short num;
+	int num;
 	const char *str;
 } TERMUSERDEF;
 
@@ -92,7 +104,7 @@ typedef struct {
 	const char *name;
 	const char *desc;
 	signed char *flags;
-	short *nums;
+	int *nums;
 	const char **strs;
 	/* Storage area for terminfo data */
 	char *_area;
@@ -152,7 +164,7 @@ char *_ti_grow_tbuf(TBUF *, size_t);
 char *_ti_get_token(char **, char);
 char *_ti_find_cap(TBUF *, char,  short);
 char *_ti_find_extra(TBUF *, const char *);
-size_t _ti_store_extra(TIC *, int, char *, char, char, short,
+size_t _ti_store_extra(TIC *, int, char *, char, char, int,
     char *, size_t, int);
 TIC *_ti_compile(char *, int);
 ssize_t _ti_flatten(uint8_t **, const TIC *);
